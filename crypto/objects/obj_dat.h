@@ -60,12 +60,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1036
-#define NUM_SN 1029
-#define NUM_LN 1029
-#define NUM_OBJ 951
+#define NUM_NID 1058
+#define NUM_SN 1049
+#define NUM_LN 1049
+#define NUM_OBJ 953
 
-static const unsigned char lvalues[6722]={
+static const unsigned char lvalues[6744]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  0] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  6] OBJ_pkcs */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,     /* [ 13] OBJ_md2 */
@@ -1011,6 +1011,8 @@ static const unsigned char lvalues[6722]={
 0x2B,0x06,0x01,0x05,0x02,0x03,0x05,          /* [6696] OBJ_pkInitKDC */
 0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x01,/* [6703] OBJ_X25519 */
 0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x02,/* [6712] OBJ_X448 */
+0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x01,0x10,/* [6721] OBJ_blake2b512 */
+0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x02,0x08,/* [6732] OBJ_blake2s256 */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2704,6 +2706,28 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"pkInitKDC","Signing KDC Response",NID_pkInitKDC,7,&(lvalues[6696]),0},
 {"X25519","X25519",NID_X25519,9,&(lvalues[6703]),0},
 {"X448","X448",NID_X448,9,&(lvalues[6712]),0},
+{"HKDF","hkdf",NID_hkdf,0,NULL,0},
+{"KxRSA","kx-rsa",NID_kx_rsa,0,NULL,0},
+{"KxECDHE","kx-ecdhe",NID_kx_ecdhe,0,NULL,0},
+{"KxDHE","kx-dhe",NID_kx_dhe,0,NULL,0},
+{"KxECDHE-PSK","kx-ecdhe-psk",NID_kx_ecdhe_psk,0,NULL,0},
+{"KxDHE-PSK","kx-dhe-psk",NID_kx_dhe_psk,0,NULL,0},
+{"KxRSA_PSK","kx-rsa-psk",NID_kx_rsa_psk,0,NULL,0},
+{"KxPSK","kx-psk",NID_kx_psk,0,NULL,0},
+{"KxSRP","kx-srp",NID_kx_srp,0,NULL,0},
+{"KxGOST","kx-gost",NID_kx_gost,0,NULL,0},
+{"AuthRSA","auth-rsa",NID_auth_rsa,0,NULL,0},
+{"AuthECDSA","auth-ecdsa",NID_auth_ecdsa,0,NULL,0},
+{"AuthPSK","auth-psk",NID_auth_psk,0,NULL,0},
+{"AuthDSS","auth-dss",NID_auth_dss,0,NULL,0},
+{"AuthGOST01","auth-gost01",NID_auth_gost01,0,NULL,0},
+{"AuthGOST12","auth-gost12",NID_auth_gost12,0,NULL,0},
+{"AuthSRP","auth-srp",NID_auth_srp,0,NULL,0},
+{"AuthNULL","auth-null",NID_auth_null,0,NULL,0},
+{NULL,NULL,NID_undef,0,NULL,0},
+{NULL,NULL,NID_undef,0,NULL,0},
+{"BLAKE2b512","blake2b512",NID_blake2b512,11,&(lvalues[6721]),0},
+{"BLAKE2s256","blake2s256",NID_blake2s256,11,&(lvalues[6732]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2740,10 +2764,20 @@ static const unsigned int sn_objs[NUM_SN]={
 960,	/* "AES-256-OCB" */
 428,	/* "AES-256-OFB" */
 914,	/* "AES-256-XTS" */
+1049,	/* "AuthDSS" */
+1047,	/* "AuthECDSA" */
+1050,	/* "AuthGOST01" */
+1051,	/* "AuthGOST12" */
+1053,	/* "AuthNULL" */
+1048,	/* "AuthPSK" */
+1046,	/* "AuthRSA" */
+1052,	/* "AuthSRP" */
 91,	/* "BF-CBC" */
 93,	/* "BF-CFB" */
 92,	/* "BF-ECB" */
 94,	/* "BF-OFB" */
+1056,	/* "BLAKE2b512" */
+1057,	/* "BLAKE2s256" */
 14,	/* "C" */
 751,	/* "CAMELLIA-128-CBC" */
 962,	/* "CAMELLIA-128-CCM" */
@@ -2813,6 +2847,7 @@ static const unsigned int sn_objs[NUM_SN]={
 67,	/* "DSA-old" */
 297,	/* "DVCS" */
 99,	/* "GN" */
+1036,	/* "HKDF" */
 855,	/* "HMAC" */
 780,	/* "HMAC-MD5" */
 781,	/* "HMAC-SHA1" */
@@ -2827,6 +2862,15 @@ static const unsigned int sn_objs[NUM_SN]={
 645,	/* "ITU-T" */
 646,	/* "JOINT-ISO-ITU-T" */
 773,	/* "KISA" */
+1039,	/* "KxDHE" */
+1041,	/* "KxDHE-PSK" */
+1038,	/* "KxECDHE" */
+1040,	/* "KxECDHE-PSK" */
+1045,	/* "KxGOST" */
+1043,	/* "KxPSK" */
+1037,	/* "KxRSA" */
+1042,	/* "KxRSA_PSK" */
+1044,	/* "KxSRP" */
 15,	/* "L" */
 856,	/* "LocalKeySet" */
  3,	/* "MD2" */
@@ -3959,11 +4003,21 @@ static const unsigned int ln_objs[NUM_LN]={
 484,	/* "associatedDomain" */
 485,	/* "associatedName" */
 501,	/* "audio" */
+1049,	/* "auth-dss" */
+1047,	/* "auth-ecdsa" */
+1050,	/* "auth-gost01" */
+1051,	/* "auth-gost12" */
+1053,	/* "auth-null" */
+1048,	/* "auth-psk" */
+1046,	/* "auth-rsa" */
+1052,	/* "auth-srp" */
 882,	/* "authorityRevocationList" */
 91,	/* "bf-cbc" */
 93,	/* "bf-cfb" */
 92,	/* "bf-ecb" */
 94,	/* "bf-ofb" */
+1056,	/* "blake2b512" */
+1057,	/* "blake2s256" */
 921,	/* "brainpoolP160r1" */
 922,	/* "brainpoolP160t1" */
 923,	/* "brainpoolP192r1" */
@@ -4152,6 +4206,7 @@ static const unsigned int ln_objs[NUM_LN]={
 1012,	/* "grasshopper-ecb" */
 1017,	/* "grasshopper-mac" */
 1014,	/* "grasshopper-ofb" */
+1036,	/* "hkdf" */
 855,	/* "hmac" */
 780,	/* "hmac-md5" */
 781,	/* "hmac-sha1" */
@@ -4418,6 +4473,15 @@ static const unsigned int ln_objs[NUM_LN]={
 956,	/* "jurisdictionStateOrProvinceName" */
 150,	/* "keyBag" */
 773,	/* "kisa" */
+1039,	/* "kx-dhe" */
+1041,	/* "kx-dhe-psk" */
+1038,	/* "kx-ecdhe" */
+1040,	/* "kx-ecdhe-psk" */
+1045,	/* "kx-gost" */
+1043,	/* "kx-psk" */
+1037,	/* "kx-rsa" */
+1042,	/* "kx-rsa-psk" */
+1044,	/* "kx-srp" */
 477,	/* "lastModifiedBy" */
 476,	/* "lastModifiedTime" */
 157,	/* "localKeyID" */
@@ -5722,5 +5786,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 955,	/* OBJ_jurisdictionLocalityName     1 3 6 1 4 1 311 60 2 1 1 */
 956,	/* OBJ_jurisdictionStateOrProvinceName 1 3 6 1 4 1 311 60 2 1 2 */
 957,	/* OBJ_jurisdictionCountryName      1 3 6 1 4 1 311 60 2 1 3 */
+1056,	/* OBJ_blake2b512                   1 3 6 1 4 1 1722 12 2 1 16 */
+1057,	/* OBJ_blake2s256                   1 3 6 1 4 1 1722 12 2 2 8 */
 };
 

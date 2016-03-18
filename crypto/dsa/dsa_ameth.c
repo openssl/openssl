@@ -488,13 +488,16 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
     dsa_sig = d2i_DSA_SIG(NULL, &p, sig->length);
     if (dsa_sig) {
         int rv = 0;
+        BIGNUM *r, *s;
+
+        DSA_SIG_get0(&r, &s, dsa_sig);
 
         if (BIO_write(bp, "\n", 1) != 1)
             goto err;
 
-        if (!ASN1_bn_print(bp, "r:   ", dsa_sig->r, NULL, indent))
+        if (!ASN1_bn_print(bp, "r:   ", r, NULL, indent))
             goto err;
-        if (!ASN1_bn_print(bp, "s:   ", dsa_sig->s, NULL, indent))
+        if (!ASN1_bn_print(bp, "s:   ", s, NULL, indent))
             goto err;
         rv = 1;
  err:

@@ -14,7 +14,7 @@ AR=		ar r
 WP_ASM_OBJ=wp_block.o
 
 CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG) $(SHARED_CFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
@@ -40,10 +40,10 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 wp-mmx.s:	asm/wp-mmx.pl ../perlasm/x86asm.pl
-	$(PERL) asm/wp-mmx.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/wp-mmx.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 
 wp-x86_64.s: asm/wp-x86_64.pl
-	$(PERL) asm/wp-x86_64.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/wp-x86_64.pl $(PERLASM_SCHEME) $@
 
 $(LIBOBJ): $(LIBSRC)
 

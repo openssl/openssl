@@ -30,6 +30,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output = pop;
+open STDOUT,">$output";
+ 
 &asm_init($ARGV[0],$0);
 
 $sse2=0;
@@ -84,6 +87,23 @@ $frame=32;				# size of above frame rounded up to 16n
 	&sub	("esp","edx");		# this splits them apart modulo 4096
 
 	&and	("esp",-64);		# align to cache line
+
+	# An OS-agnostic version of __chkstk.
+	#
+	# Some OSes (Windows) insist on stack being "wired" to
+	# physical memory in strictly sequential manner, i.e. if stack
+	# allocation spans two pages, then reference to farmost one can
+	# be punishable by SEGV. But page walking can do good even on
+	# other OSes, because it guarantees that villain thread hits
+	# the guard page before it can make damage to innocent one...
+	&mov	("eax","ebp");
+	&sub	("eax","esp");
+	&and	("eax",-4096);
+&set_label("page_walk");
+	&mov	("edx",&DWP(0,"esp","eax"));
+	&sub	("eax",4096);
+	&data_byte(0x2e);
+	&jnc	(&label("page_walk"));
 
 	################################# load argument block...
 	&mov	("eax",&DWP(0*4,"esi"));# BN_ULONG *rp
@@ -591,3 +611,5 @@ $sbit=$num;
 &asciz("Montgomery Multiplication for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();
+
+close STDOUT;

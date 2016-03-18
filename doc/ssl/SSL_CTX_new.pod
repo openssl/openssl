@@ -33,29 +33,39 @@ functions
  const SSL_METHOD *SSLv3_client_method(void);
  #endif
 
+ #ifndef OPENSSL_NO_TLS1_METHOD
  const SSL_METHOD *TLSv1_method(void);
  const SSL_METHOD *TLSv1_server_method(void);
  const SSL_METHOD *TLSv1_client_method(void);
+ #endif
 
+ #ifndef OPENSSL_NO_TLS1_1_METHOD
  const SSL_METHOD *TLSv1_1_method(void);
  const SSL_METHOD *TLSv1_1_server_method(void);
  const SSL_METHOD *TLSv1_1_client_method(void);
+ #endif
 
+ #ifndef OPENSSL_NO_TLS1_2_METHOD
  const SSL_METHOD *TLSv1_2_method(void);
  const SSL_METHOD *TLSv1_2_server_method(void);
  const SSL_METHOD *TLSv1_2_client_method(void);
+ #endif
 
  const SSL_METHOD *DTLS_method(void);
  const SSL_METHOD *DTLS_server_method(void);
  const SSL_METHOD *DTLS_client_method(void);
 
+ #ifndef OPENSSL_NO_DTLS1_METHOD
  const SSL_METHOD *DTLSv1_method(void);
  const SSL_METHOD *DTLSv1_server_method(void);
  const SSL_METHOD *DTLSv1_client_method(void);
+ #endif
 
+ #ifndef OPENSSL_NO_DTLS1_2_METHOD
  const SSL_METHOD *DTLSv1_2_method(void);
  const SSL_METHOD *DTLSv1_2_server_method(void);
  const SSL_METHOD *DTLSv1_2_client_method(void);
+ #endif
 
 =head1 DESCRIPTION
 
@@ -82,7 +92,7 @@ These are the general-purpose I<version-flexible> SSL/TLS methods.
 The actual protocol version used will be negotiated to the highest version
 mutually supported by the client and the server.
 The supported protocols are SSLv3, TLSv1, TLSv1.1 and TLSv1.2.
-Most applications should use these method, and avoid the version specific
+Applications should use these methods, and avoid the version-specific
 methods described below.
 
 =item SSLv23_method(), SSLv23_server_method(), SSLv23_client_method()
@@ -185,6 +195,8 @@ removed in OpenSSL 1.1.0.
 SSLv23_method(), SSLv23_server_method() and SSLv23_client_method()
 were deprecated and the preferred TLS_method(), TLS_server_method()
 and TLS_client_method() functions were introduced in OpenSSL 1.1.0.
+
+All version-specific methods were deprecated in OpenSSL 1.1.0.
 
 =head1 SEE ALSO
 

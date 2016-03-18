@@ -194,12 +194,14 @@ passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX> structure.  The actual NID
 value is an internal value which may not have a corresponding OBJECT
 IDENTIFIER.
 
-EVP_CIPHER_CTX_set_padding() enables or disables padding. By default
-encryption operations are padded using standard block padding and the
-padding is checked and removed when decrypting. If the B<pad> parameter
-is zero then no padding is performed, the total amount of data encrypted
-or decrypted must then be a multiple of the block size or an error will
-occur.
+EVP_CIPHER_CTX_set_padding() enables or disables padding. This
+function should be called after the context is set up for encryption
+or decryption with EVP_EncryptInit_ex(), EVP_DecryptInit_ex() or
+EVP_CipherInit_ex(). By default encryption operations are padded using
+standard block padding and the padding is checked and removed when
+decrypting. If the B<pad> parameter is zero then no padding is
+performed, the total amount of data encrypted or decrypted must then
+be a multiple of the block size or an error will occur.
 
 EVP_CIPHER_key_length() and EVP_CIPHER_CTX_key_length() return the key
 length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>

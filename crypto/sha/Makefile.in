@@ -14,7 +14,7 @@ AR=             ar r
 SHA1_ASM_OBJ=
 
 CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG) $(SHARED_CFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
@@ -40,36 +40,36 @@ lib:    $(LIBOBJ)
 	@touch lib
 
 sha1-586.s:	asm/sha1-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/sha1-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/sha1-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 sha256-586.s:	asm/sha256-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/sha256-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/sha256-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 sha512-586.s:	asm/sha512-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/sha512-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/sha512-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 
 sha1-ia64.s:   asm/sha1-ia64.pl
-	(cd asm; $(PERL) sha1-ia64.pl ../$@ $(CFLAGS))
+	(cd asm; $(PERL) sha1-ia64.pl $(CFLAGS) ../$@)
 sha256-ia64.s: asm/sha512-ia64.pl
-	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
+	(cd asm; $(PERL) sha512-ia64.pl $(CFLAGS) ../$@)
 sha512-ia64.s: asm/sha512-ia64.pl
-	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
+	(cd asm; $(PERL) sha512-ia64.pl $(CFLAGS) ../$@)
 
 sha256-armv4.S: asm/sha256-armv4.pl
 	$(PERL) $< $(PERLASM_SCHEME) $@
 
 sha1-alpha.s:	asm/sha1-alpha.pl
 	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
-	$(PERL) asm/sha1-alpha.pl > $$preproc && \
+	$(PERL) asm/sha1-alpha.pl $$preproc && \
 	$(CC) -E -P $$preproc > $@ && rm $$preproc)
 
 # Solaris make has to be explicitly told
-sha1-x86_64.s:	asm/sha1-x86_64.pl;	$(PERL) asm/sha1-x86_64.pl $(PERLASM_SCHEME) > $@
-sha1-mb-x86_64.s:	asm/sha1-mb-x86_64.pl;	$(PERL) asm/sha1-mb-x86_64.pl $(PERLASM_SCHEME) > $@
+sha1-x86_64.s:	asm/sha1-x86_64.pl;	$(PERL) asm/sha1-x86_64.pl $(PERLASM_SCHEME) $@
+sha1-mb-x86_64.s:	asm/sha1-mb-x86_64.pl;	$(PERL) asm/sha1-mb-x86_64.pl $(PERLASM_SCHEME) $@
 sha256-x86_64.s:asm/sha512-x86_64.pl;	$(PERL) asm/sha512-x86_64.pl $(PERLASM_SCHEME) $@
-sha256-mb-x86_64.s:	asm/sha256-mb-x86_64.pl;	$(PERL) asm/sha256-mb-x86_64.pl $(PERLASM_SCHEME) > $@
+sha256-mb-x86_64.s:	asm/sha256-mb-x86_64.pl;	$(PERL) asm/sha256-mb-x86_64.pl $(PERLASM_SCHEME) $@
 sha512-x86_64.s:asm/sha512-x86_64.pl;	$(PERL) asm/sha512-x86_64.pl $(PERLASM_SCHEME) $@
-sha1-sparcv9.S:	asm/sha1-sparcv9.pl;	$(PERL) asm/sha1-sparcv9.pl $@ $(CFLAGS)
-sha256-sparcv9.S:asm/sha512-sparcv9.pl;	$(PERL) asm/sha512-sparcv9.pl $@ $(CFLAGS)
-sha512-sparcv9.S:asm/sha512-sparcv9.pl;	$(PERL) asm/sha512-sparcv9.pl $@ $(CFLAGS)
+sha1-sparcv9.S:	asm/sha1-sparcv9.pl;	$(PERL) asm/sha1-sparcv9.pl $(PERLASM_SCHEME) $@
+sha256-sparcv9.S:asm/sha512-sparcv9.pl;	$(PERL) asm/sha512-sparcv9.pl $(PERLASM_SCHEME) $@
+sha512-sparcv9.S:asm/sha512-sparcv9.pl;	$(PERL) asm/sha512-sparcv9.pl $(PERLASM_SCHEME) $@
 
 sha1-ppc.s:	asm/sha1-ppc.pl;	$(PERL) asm/sha1-ppc.pl $(PERLASM_SCHEME) $@
 sha256-ppc.s:	asm/sha512-ppc.pl;	$(PERL) asm/sha512-ppc.pl $(PERLASM_SCHEME) $@

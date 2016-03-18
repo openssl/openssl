@@ -133,12 +133,10 @@ struct X509_pubkey_st {
     X509_ALGOR *algor;
     ASN1_BIT_STRING *public_key;
     EVP_PKEY *pkey;
+    CRYPTO_RWLOCK *lock;
 };
 
-typedef struct X509_sig_st {
-    X509_ALGOR *algor;
-    ASN1_OCTET_STRING *digest;
-} X509_SIG;
+typedef struct X509_sig_st X509_SIG;
 
 typedef struct X509_name_entry_st X509_NAME_ENTRY;
 
@@ -311,6 +309,7 @@ typedef struct private_key_st {
     /* expanded version of 'enc_algor' */
     EVP_CIPHER_INFO cipher;
     int references;
+    CRYPTO_RWLOCK *lock;
 } X509_PKEY;
 
 typedef struct X509_info_st {
@@ -321,6 +320,7 @@ typedef struct X509_info_st {
     int enc_len;
     char *enc_data;
     int references;
+    CRYPTO_RWLOCK *lock;
 } X509_INFO;
 
 DEFINE_STACK_OF(X509_INFO)
@@ -375,23 +375,6 @@ typedef struct PBKDF2PARAM_st {
     ASN1_INTEGER *keylength;
     X509_ALGOR *prf;
 } PBKDF2PARAM;
-
-/* PKCS#8 private key info structure */
-
-struct pkcs8_priv_key_info_st {
-    /* Flag for various broken formats */
-    int broken;
-# define PKCS8_OK                0
-# define PKCS8_NO_OCTET          1
-# define PKCS8_EMBEDDED_PARAM    2
-# define PKCS8_NS_DB             3
-# define PKCS8_NEG_PRIVKEY       4
-    ASN1_INTEGER *version;
-    X509_ALGOR *pkeyalg;
-    /* Should be OCTET STRING but some are broken */
-    ASN1_TYPE *pkey;
-    STACK_OF(X509_ATTRIBUTE) *attributes;
-};
 
 #ifdef  __cplusplus
 }
@@ -600,6 +583,9 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length);
 # endif
 
 DECLARE_ASN1_FUNCTIONS(X509_SIG)
+void X509_SIG_get0(X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest,
+                   X509_SIG *sig);
+
 DECLARE_ASN1_FUNCTIONS(X509_REQ_INFO)
 DECLARE_ASN1_FUNCTIONS(X509_REQ)
 
@@ -812,11 +798,11 @@ unsigned long X509_NAME_hash_old(X509_NAME *x);
 
 int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
 int X509_CRL_match(const X509_CRL *a, const X509_CRL *b);
+int X509_aux_print(BIO *out, X509 *x, int indent);
 # ifndef OPENSSL_NO_STDIO
 int X509_print_ex_fp(FILE *bp, X509 *x, unsigned long nmflag,
                      unsigned long cflag);
 int X509_print_fp(FILE *bp, X509 *x);
-int X509_aux_print(BIO *out, X509 *x, int indent);
 int X509_CRL_print_fp(FILE *bp, X509_CRL *x);
 int X509_REQ_print_fp(FILE *bp, X509_REQ *req);
 int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent,
@@ -1040,8 +1026,6 @@ DECLARE_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)
 
 EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8);
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey);
-PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken);
-PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 
 int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
                     int version, int ptype, void *pval,
@@ -1049,6 +1033,10 @@ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
 int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
                     const unsigned char **pk, int *ppklen,
                     X509_ALGOR **pa, PKCS8_PRIV_KEY_INFO *p8);
+
+STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(PKCS8_PRIV_KEY_INFO *p8);
+int PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
+                                const unsigned char *bytes, int len);
 
 int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
                            int ptype, void *pval,

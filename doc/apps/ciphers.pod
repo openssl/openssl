@@ -36,9 +36,21 @@ Print a usage message.
 
 =item B<-s>
 
-Only list supported ciphers: those consistent with the security level. This
-is the actual cipher list an application will support. If this option is
-not used then ciphers excluded by the security level will still be listed.
+Only list supported ciphers: those consistent with the security level, and
+minimum and maximum protocol version.
+This is closer to the actual cipher list an application will support.
+
+This program does not set up support for SRP and so SRP based ciphers will
+always be excluded when using this option.
+PSK ciphers are not enabled by default and it requires the B<-psk> to enable
+them.
+It also does not change the default list of supported signature algorithms.
+
+On a server the list of supported ciphers might also exclude other ciphers
+depending on the configured certificates and presence of DH parameters.
+
+If this option is not used then all ciphers that match the cipherlist will be
+listed.
 
 =item B<-psk>
 
@@ -144,9 +156,10 @@ When used, this must be the first cipherstring specified.
 =item B<COMPLEMENTOFDEFAULT>
 
 The ciphers included in B<ALL>, but not enabled by default. Currently
-this includes all RC4, DES, RC2 and anonymous ciphers. Note that this rule does
+this includes all RC4 and anonymous ciphers. Note that this rule does
 not cover B<eNULL>, which is not included by B<ALL> (use B<COMPLEMENTOFALL> if
-necessary).
+necessary). Note that RC4 based ciphersuites are not built into OpenSSL by
+default (see the enable-weak-ssl-ciphers option to Configure).
 
 =item B<ALL>
 

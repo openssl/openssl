@@ -55,11 +55,15 @@
 #include <string.h>
 
 #include "bio_lcl.h"
+#include "internal/threads.h"
 
 #ifndef OPENSSL_NO_SOCK
 #include <openssl/err.h>
 #include <openssl/buffer.h>
 #include <ctype.h>
+
+static CRYPTO_RWLOCK *bio_lookup_lock;
+static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /*
  * Throughout this file and bio_lcl.h, the existence of the macro
@@ -623,6 +627,11 @@ static int addrinfo_wrap(int family, int socktype,
     return 1;
 }
 
+static void do_bio_lookup_init(void)
+{
+    bio_lookup_lock = CRYPTO_THREAD_lock_new();
+}
+
 /*-
  * BIO_lookup - look up the node and service you want to connect to.
  * @node: the node you want to connect to.
@@ -735,8 +744,9 @@ int BIO_lookup(const char *host, const char *service,
 #endif
         char *proto = NULL;
 
-        CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
-        CRYPTO_w_lock(CRYPTO_LOCK_GETSERVBYNAME);
+        CRYPTO_THREAD_run_once(&bio_lookup_init, do_bio_lookup_init);
+
+        CRYPTO_THREAD_write_lock(bio_lookup_lock);
         he_fallback_address = INADDR_ANY;
         if (host == NULL) {
             he = &he_fallback;
@@ -838,8 +848,7 @@ int BIO_lookup(const char *host, const char *service,
             ret = 1;
         }
      err:
-        CRYPTO_w_unlock(CRYPTO_LOCK_GETSERVBYNAME);
-        CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
+        CRYPTO_THREAD_unlock(bio_lookup_lock);
     }
 
     return ret;

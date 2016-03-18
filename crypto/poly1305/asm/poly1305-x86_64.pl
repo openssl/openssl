@@ -165,10 +165,16 @@ $code.=<<___;
 	and	8($inp),%rcx
 	mov	%rax,24($ctx)
 	mov	%rcx,32($ctx)
-
+___
+$code.=<<___	if ($flavour !~ /elf32/);
 	mov	%r10,0(%rdx)
 	mov	%r11,8(%rdx)
-
+___
+$code.=<<___	if ($flavour =~ /elf32/);
+	mov	%r10d,0(%rdx)
+	mov	%r11d,4(%rdx)
+___
+$code.=<<___;
 	mov	\$1,%eax
 .Lno_key:
 	ret

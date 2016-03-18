@@ -109,7 +109,7 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
     STACK_OF(PKCS12_SAFEBAG) *bags;
     int i, bagnid, pbe_nid = 0, pbe_iter = 0, pbe_saltlen = 0;
     PKCS7 *p7, *p7new;
-    ASN1_OCTET_STRING *p12_data_tmp = NULL, *macnew = NULL;
+    ASN1_OCTET_STRING *p12_data_tmp = NULL, *macoct = NULL;
     unsigned char mac[EVP_MAX_MD_SIZE];
     unsigned int maclen;
 
@@ -165,12 +165,9 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 
     if (!PKCS12_gen_mac(p12, newpass, -1, mac, &maclen))
         goto saferr;
-    if ((macnew = ASN1_OCTET_STRING_new()) == NULL)
+    X509_SIG_get0(NULL, &macoct, p12->mac->dinfo);
+    if (!ASN1_OCTET_STRING_set(macoct, mac, maclen))
         goto saferr;
-    if (!ASN1_OCTET_STRING_set(macnew, mac, maclen))
-        goto saferr;
-    ASN1_OCTET_STRING_free(p12->mac->dinfo->digest);
-    p12->mac->dinfo->digest = macnew;
     ASN1_OCTET_STRING_free(p12_data_tmp);
 
     return 1;
@@ -178,7 +175,6 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
  saferr:
     /* Restore old safe */
     ASN1_OCTET_STRING_free(p12->authsafes->d.data);
-    ASN1_OCTET_STRING_free(macnew);
     p12->authsafes->d.data = p12_data_tmp;
     return 0;
 
@@ -202,13 +198,15 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
     PKCS8_PRIV_KEY_INFO *p8;
     X509_SIG *p8new;
     int p8_nid, p8_saltlen, p8_iter;
+    X509_ALGOR *shalg;
 
     if (PKCS12_SAFEBAG_get_nid(bag) != NID_pkcs8ShroudedKeyBag)
         return 1;
 
     if ((p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1)) == NULL)
         return 0;
-    if (!alg_get(bag->value.shkeybag->algor, &p8_nid, &p8_iter, &p8_saltlen))
+    X509_SIG_get0(&shalg, NULL, bag->value.shkeybag);
+    if (!alg_get(shalg, &p8_nid, &p8_iter, &p8_saltlen))
         return 0;
     if ((p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
                                 p8_iter, p8)) == NULL)

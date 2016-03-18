@@ -718,10 +718,6 @@ int main(int argc, char *argv[])
         printf("fast crypt error, %s should be yA1Rp/1hZXIJk\n", str);
         err = 1;
     }
-# ifdef OPENSSL_SYS_NETWARE
-    if (err)
-        printf("ERROR: %d\n", err);
-# endif
     printf("\n");
     return (err);
 }

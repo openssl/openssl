@@ -85,6 +85,7 @@ struct ctlog_store_st {
 typedef struct ctlog_store_load_ctx_st {
     CTLOG_STORE *log_store;
     CONF *conf;
+    size_t invalid_log_entries;
 } CTLOG_STORE_LOAD_CTX;
 
 /*
@@ -201,17 +202,31 @@ int CTLOG_STORE_load_default_file(CTLOG_STORE *store)
     return CTLOG_STORE_load_file(store, fpath);
 }
 
-static int ctlog_store_load_log(const char *log_name, int log_name_len, void *arg)
+/*
+ * Called by CONF_parse_list, which stops if this returns <= 0, so don't unless
+ * something very bad happens. Otherwise, one bad log entry would stop loading
+ * of any of the following log entries.
+ */
+static int ctlog_store_load_log(const char *log_name, int log_name_len,
+                                void *arg)
 {
     CTLOG_STORE_LOAD_CTX *load_ctx = arg;
     CTLOG *ct_log;
     /* log_name may not be null-terminated, so fix that before using it */
-    char *tmp = OPENSSL_strndup(log_name, log_name_len);
+    char *tmp;
 
+    /* log_name will be NULL for empty list entries */
+    if (log_name == NULL)
+        return 1;
+
+    tmp = OPENSSL_strndup(log_name, log_name_len);
     ct_log = ctlog_new_from_conf(load_ctx->conf, tmp);
     OPENSSL_free(tmp);
-    if (ct_log == NULL)
-        return 0;
+    if (ct_log == NULL) {
+        /* If we can't load this log, record that fact and skip it */
+        ++load_ctx->invalid_log_entries;
+        return 1;
+    }
 
     sk_CTLOG_push(load_ctx->log_store->logs, ct_log);
     return 1;
@@ -219,7 +234,7 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len, void *ar
 
 int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
 {
-    int ret = -1;
+    int ret = 0;
     char *enabled_logs;
     CTLOG_STORE_LOAD_CTX* load_ctx = ctlog_store_load_ctx_new();
 
@@ -228,15 +243,24 @@ int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
     if (load_ctx->conf == NULL)
         goto end;
 
-    ret = NCONF_load(load_ctx->conf, file, NULL);
-    if (ret <= 0) {
+    if (NCONF_load(load_ctx->conf, file, NULL) <= 0) {
         CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
         goto end;
     }
 
     enabled_logs = NCONF_get_string(load_ctx->conf, NULL, "enabled_logs");
-    CONF_parse_list(enabled_logs, ',', 1, ctlog_store_load_log, load_ctx);
+    if (enabled_logs == NULL) {
+        CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
+        goto end;
+    }
 
+    if (!CONF_parse_list(enabled_logs, ',', 1, ctlog_store_load_log, load_ctx) ||
+        load_ctx->invalid_log_entries > 0) {
+        CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
+        goto end;
+    }
+
+    ret = 1;
 end:
     NCONF_free(load_ctx->conf);
     ctlog_store_load_ctx_free(load_ctx);
@@ -289,18 +313,19 @@ void CTLOG_free(CTLOG *log)
     }
 }
 
-const char *CTLOG_get0_name(CTLOG *log)
+const char *CTLOG_get0_name(const CTLOG *log)
 {
     return log->name;
 }
 
-void CTLOG_get0_log_id(CTLOG *log, uint8_t **log_id, size_t *log_id_len)
+void CTLOG_get0_log_id(const CTLOG *log, const uint8_t **log_id,
+                       size_t *log_id_len)
 {
     *log_id = log->log_id;
     *log_id_len = CT_V1_HASHLEN;
 }
 
-EVP_PKEY *CTLOG_get0_public_key(CTLOG *log)
+EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log)
 {
     return log->public_key;
 }
@@ -309,14 +334,14 @@ EVP_PKEY *CTLOG_get0_public_key(CTLOG *log)
  * Given a log ID, finds the matching log.
  * Returns NULL if no match found.
  */
-CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
-                                  const uint8_t *log_id,
-                                  size_t log_id_len)
+const CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
+                                        const uint8_t *log_id,
+                                        size_t log_id_len)
 {
     int i;
 
     for (i = 0; i < sk_CTLOG_num(store->logs); ++i) {
-        CTLOG *log = sk_CTLOG_value(store->logs, i);
+        const CTLOG *log = sk_CTLOG_value(store->logs, i);
         if (memcmp(log->log_id, log_id, log_id_len) == 0)
             return log;
     }

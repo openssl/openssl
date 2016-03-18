@@ -101,11 +101,14 @@ int SCT_set_version(SCT *sct, sct_version_t version)
         return 0;
     }
     sct->version = version;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
     return 1;
 }
 
 int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type)
 {
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
+
     switch (entry_type) {
     case CT_LOG_ENTRY_TYPE_X509:
     case CT_LOG_ENTRY_TYPE_PRECERT:
@@ -127,6 +130,7 @@ int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len)
     OPENSSL_free(sct->log_id);
     sct->log_id = log_id;
     sct->log_id_len = log_id_len;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
     return 1;
 }
 
@@ -140,6 +144,7 @@ int SCT_set1_log_id(SCT *sct, const unsigned char *log_id, size_t log_id_len)
     OPENSSL_free(sct->log_id);
     sct->log_id = NULL;
     sct->log_id_len = 0;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
     if (log_id != NULL && log_id_len > 0) {
         sct->log_id = OPENSSL_memdup(log_id, log_id_len);
@@ -156,6 +161,7 @@ int SCT_set1_log_id(SCT *sct, const unsigned char *log_id, size_t log_id_len)
 void SCT_set_timestamp(SCT *sct, uint64_t timestamp)
 {
     sct->timestamp = timestamp;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 }
 
 int SCT_set_signature_nid(SCT *sct, int nid)
@@ -164,10 +170,12 @@ int SCT_set_signature_nid(SCT *sct, int nid)
     case NID_sha256WithRSAEncryption:
         sct->hash_alg = TLSEXT_hash_sha256;
         sct->sig_alg = TLSEXT_signature_rsa;
+        sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
         return 1;
     case NID_ecdsa_with_SHA256:
         sct->hash_alg = TLSEXT_hash_sha256;
         sct->sig_alg = TLSEXT_signature_ecdsa;
+        sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
         return 1;
     default:
         CTerr(CT_F_SCT_SET_SIGNATURE_NID, CT_R_UNRECOGNIZED_SIGNATURE_NID);
@@ -180,6 +188,7 @@ void SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len)
     OPENSSL_free(sct->ext);
     sct->ext = ext;
     sct->ext_len = ext_len;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 }
 
 int SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len)
@@ -187,6 +196,7 @@ int SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len)
     OPENSSL_free(sct->ext);
     sct->ext = NULL;
     sct->ext_len = 0;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
     if (ext != NULL && ext_len > 0) {
         sct->ext = OPENSSL_memdup(ext, ext_len);
@@ -204,6 +214,7 @@ void SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len)
     OPENSSL_free(sct->sig);
     sct->sig = sig;
     sct->sig_len = sig_len;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 }
 
 int SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len)
@@ -211,6 +222,7 @@ int SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len)
     OPENSSL_free(sct->sig);
     sct->sig = NULL;
     sct->sig_len = 0;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
     if (sig != NULL && sig_len > 0) {
         sct->sig = OPENSSL_memdup(sig, sig_len);
@@ -237,11 +249,6 @@ size_t SCT_get0_log_id(const SCT *sct, unsigned char **log_id)
 {
     *log_id = sct->log_id;
     return sct->log_id_len;
-}
-
-const char *SCT_get0_log_name(const SCT *sct)
-{
-    return CTLOG_get0_name(sct->log);
 }
 
 uint64_t SCT_get_timestamp(const SCT *sct)
@@ -315,48 +322,6 @@ int SCT_set_source(SCT *sct, sct_source_t source)
     }
 }
 
-int SCT_LIST_set_source(const STACK_OF(SCT) *scts, sct_source_t source)
-{
-    int i, ret = 1;
-
-    for (i = 0; i < sk_SCT_num(scts); ++i) {
-        ret = SCT_set_source(sk_SCT_value(scts, i), source);
-        if (ret != 1)
-            break;
-    }
-
-    return ret;
-}
-
-CTLOG *SCT_get0_log(const SCT *sct)
-{
-    return sct->log;
-}
-
-int SCT_set0_log(SCT *sct, const CTLOG_STORE *ct_logs)
-{
-    sct->log = CTLOG_STORE_get0_log_by_id(ct_logs, sct->log_id, sct->log_id_len);
-
-    return sct->log != NULL;
-}
-
-int SCT_LIST_set0_logs(STACK_OF(SCT) *sct_list, const CTLOG_STORE *ct_logs)
-{
-    int sct_logs_found = 0;
-    int i;
-
-    for (i = 0; i < sk_SCT_num(sct_list); ++i) {
-        SCT *sct = sk_SCT_value(sct_list, i);
-
-        if (sct->log == NULL)
-            SCT_set0_log(sct, ct_logs);
-        if (sct->log != NULL)
-            ++sct_logs_found;
-    }
-
-    return sct_logs_found;
-}
-
 sct_validation_status_t SCT_get_validation_status(const SCT *sct)
 {
     return sct->validation_status;
@@ -367,20 +332,17 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     int is_sct_valid = -1;
     SCT_CTX *sctx = NULL;
     X509_PUBKEY *pub = NULL, *log_pkey = NULL;
+    const CTLOG *log;
 
-    switch (sct->version) {
-    case SCT_VERSION_V1:
-        if (sct->log == NULL)
-            sct->log = CTLOG_STORE_get0_log_by_id(ctx->log_store,
-                                                  sct->log_id,
-                                                  CT_V1_HASHLEN);
-        break;
-    default:
+    if (sct->version != SCT_VERSION_V1) {
         sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_VERSION;
         goto end;
     }
 
-    if (sct->log == NULL) {
+    log = CTLOG_STORE_get0_log_by_id(ctx->log_store,
+                                     sct->log_id, sct->log_id_len);
+
+    if (log == NULL) {
         sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_LOG;
         goto end;
     }
@@ -389,7 +351,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     if (sctx == NULL)
         goto err;
 
-    if (X509_PUBKEY_set(&log_pkey, CTLOG_get0_public_key(sct->log)) != 1)
+    if (X509_PUBKEY_set(&log_pkey, CTLOG_get0_public_key(log)) != 1)
         goto err;
     if (SCT_CTX_set1_pubkey(sctx, log_pkey) != 1)
         goto err;
@@ -402,7 +364,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
             goto end;
         }
 
-        issuer_pkey = X509_get_pubkey(ctx->issuer);
+        issuer_pkey = X509_get0_pubkey(ctx->issuer);
 
         if (X509_PUBKEY_set(&pub, issuer_pkey) != 1)
             goto err;

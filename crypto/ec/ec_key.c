@@ -98,7 +98,7 @@ void EC_KEY_free(EC_KEY *r)
     if (r == NULL)
         return;
 
-    i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_EC);
+    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
     REF_PRINT_COUNT("EC_KEY", r);
     if (i > 0)
         return;
@@ -115,6 +115,7 @@ void EC_KEY_free(EC_KEY *r)
         r->group->meth->keyfinish(r);
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, r, &r->ex_data);
+    CRYPTO_THREAD_lock_free(r->lock);
     EC_GROUP_free(r->group);
     EC_POINT_free(r->pub_key);
     BN_clear_free(r->priv_key);
@@ -204,6 +205,7 @@ EC_KEY *EC_KEY_dup(EC_KEY *ec_key)
 
     if (ret == NULL)
         return NULL;
+
     if (EC_KEY_copy(ret, ec_key) == NULL) {
         EC_KEY_free(ret);
         return NULL;
@@ -213,7 +215,10 @@ EC_KEY *EC_KEY_dup(EC_KEY *ec_key)
 
 int EC_KEY_up_ref(EC_KEY *r)
 {
-    int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_EC);
+    int i;
+
+    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+        return 0;
 
     REF_PRINT_COUNT("EC_KEY", r);
     REF_ASSERT_ISNT(i < 2);

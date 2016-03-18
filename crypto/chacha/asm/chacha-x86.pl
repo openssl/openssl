@@ -31,6 +31,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"chacha-x86.pl",$ARGV[$#ARGV] eq "386");
 
 $xmm=$ymm=0;
@@ -1130,3 +1133,5 @@ sub XOPROUND {
 }
 
 &asm_finish();
+
+close STDOUT;

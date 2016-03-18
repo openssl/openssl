@@ -122,9 +122,17 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
 
     if (ret == NULL) {
         ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -134,6 +142,8 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
     if (engine != NULL) {
         if (!ENGINE_init(engine)) {
             ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
+            CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data);
+            CRYPTO_THREAD_lock_free(ret->lock);
             OPENSSL_free(ret);
             return NULL;
         }
@@ -145,6 +155,8 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
         if (ret->meth == NULL) {
             ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
             ENGINE_finish(ret->engine);
+            CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data);
+            CRYPTO_THREAD_lock_free(ret->lock);
             OPENSSL_free(ret);
             return NULL;
         }
@@ -154,6 +166,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
     ret->version = 1;
     ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
     ret->references = 1;
+
     if (ret->meth->init != NULL && ret->meth->init(ret) == 0) {
         EC_KEY_free(ret);
         return NULL;

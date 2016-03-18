@@ -14,7 +14,7 @@ AR=		ar r
 CMLL_ENC= camellia.o cmll_misc.o cmll_cbc.o
 
 CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG) $(SHARED_CFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
@@ -42,11 +42,11 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 cmll-x86.s:	asm/cmll-x86.pl ../perlasm/x86asm.pl
-	$(PERL) asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 cmll-x86_64.s:  asm/cmll-x86_64.pl
-	$(PERL) asm/cmll-x86_64.pl $(PERLASM_SCHEME) > $@
-cmllt4-sparcv9.s: asm/cmllt4-sparcv9.pl ../perlasm/sparcv9_modes.pl
-	$(PERL) asm/cmllt4-sparcv9.pl $(CFLAGS) > $@
+	$(PERL) asm/cmll-x86_64.pl $(PERLASM_SCHEME) $@
+cmllt4-sparcv9.S: asm/cmllt4-sparcv9.pl ../perlasm/sparcv9_modes.pl
+	$(PERL) asm/cmllt4-sparcv9.pl $(PERLASM_SCHEME) $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

@@ -132,7 +132,7 @@ OPTIONS s_time_options[] = {
     {"bugs", OPT_BUGS, '-', "Turn on SSL bug compatibility"},
     {"verify", OPT_VERIFY, 'p',
      "Turn on peer certificate verification, set depth"},
-    {"time", OPT_TIME, 'p', "Sf seconds to collect data, default" SECONDSSTR},
+    {"time", OPT_TIME, 'p', "Seconds to collect data, default " SECONDSSTR},
     {"www", OPT_WWW, 's', "Fetch specified page from the site"},
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
@@ -162,6 +162,7 @@ int s_time_main(int argc, char **argv)
         0, ver;
     long bytes_read = 0, finishtime = 0;
     OPTION_CHOICE o;
+    int max_version = 0;
 
     meth = TLS_client_method();
     verify_depth = 0;
@@ -230,9 +231,7 @@ int s_time_main(int argc, char **argv)
             }
             break;
         case OPT_SSL3:
-#ifndef OPENSSL_NO_SSL3
-            meth = SSLv3_client_method();
-#endif
+            max_version = SSL3_VERSION;
             break;
         }
     }
@@ -251,6 +250,8 @@ int s_time_main(int argc, char **argv)
         goto end;
 
     SSL_CTX_set_quiet_shutdown(ctx, 1);
+    if (SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
+        goto end;
 
     if (st_bugs)
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
@@ -292,7 +293,7 @@ int s_time_main(int argc, char **argv)
 #else
         SSL_shutdown(scon);
 #endif
-        SHUTDOWN2(SSL_get_fd(scon));
+        BIO_closesocket(SSL_get_fd(scon));
 
         nConn += 1;
         if (SSL_session_reused(scon))
@@ -349,7 +350,7 @@ int s_time_main(int argc, char **argv)
 #else
     SSL_shutdown(scon);
 #endif
-    SHUTDOWN2(SSL_get_fd(scon));
+    BIO_closesocket(SSL_get_fd(scon));
 
     nConn = 0;
     totalTime = 0.0;
@@ -380,7 +381,7 @@ int s_time_main(int argc, char **argv)
 #else
         SSL_shutdown(scon);
 #endif
-        SHUTDOWN2(SSL_get_fd(scon));
+        BIO_closesocket(SSL_get_fd(scon));
 
         nConn += 1;
         if (SSL_session_reused(scon))

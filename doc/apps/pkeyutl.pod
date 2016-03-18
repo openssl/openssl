@@ -25,6 +25,8 @@ B<openssl> B<pkeyutl>
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-derive>]
+[B<-kdf algorithm>]
+[B<-kdflen length>]
 [B<-pkeyopt opt:value>]
 [B<-hexdump>]
 [B<-asn1parse>]
@@ -119,6 +121,18 @@ decrypt the input data using a private key.
 
 derive a shared secret using the peer key.
 
+=item B<-kdf algorithm>
+
+Use key derivation function B<algorithm>.  The supported algorithms are
+at present B<TLS1-PRF> and B<HKDF>.
+Note: additional paramers and the KDF output length will normally have to be
+set for this to work.  See L<EVP_PKEY_HKDF(3)> and L<EVP_PKEY_TLS1_PRF(3)>
+for the supported string parameters of each algorithm.
+
+=item B<-kdflen length>
+
+Set the output length for KDF.
+
 =item B<-pkeyopt opt:value>
 
 Public key options specified as opt:value. See NOTES below for more details.
@@ -143,7 +157,6 @@ for all available algorithms.
 
 When used with the B<-engine> option, it specifies to also use
 engine B<id> for crypto operations.
-
 
 =back
 
@@ -249,7 +262,14 @@ Derive a shared secret value:
 
  openssl pkeyutl -derive -inkey key.pem -peerkey pubkey.pem -out secret
 
+Hexdump 48 bytes of TLS1 PRF using digest B<SHA256> and shared secret and
+seed consisting of the single byte 0xFF:
+
+ openssl pkeyutl -kdf TLS1-PRF -kdflen 48 -pkeyopt md:SHA256 \
+    -pkeyopt hexsecret:ff -pkeyopt hexseed:ff -hexdump
+
 =head1 SEE ALSO
 
 L<genpkey(1)>, L<pkey(1)>, L<rsautl(1)>
-L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>
+L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>,
+L<EVP_PKEY_HKDF(3)>, L<EVP_PKEY_TLS1_PRF(3)>

@@ -57,6 +57,7 @@
 
 #include "e_os.h"
 
+#include <internal/threads.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <assert.h>
@@ -64,86 +65,9 @@
 
 static int stopped;
 
-/* Implement "once" functionality */
-#if !defined(OPENSSL_THREADS)
-typedef int OPENSSL_INIT_ONCE;
-# define OPENSSL_INIT_ONCE_STATIC_INIT          0
-
-static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
-{
-    if (*once == OPENSSL_INIT_ONCE_STATIC_INIT) {
-        *once = 1;
-        init();
-    }
-}
-#elif defined(OPENSSL_SYS_WINDOWS)
-# include <windows.h>
-
-# if _WIN32_WINNT < 0x0600
-
-/*
- * Versions before 0x0600 (Windows Vista, Windows Server 2008 or later) do not
- * have InitOnceExecuteOnce, so we fall back to using a spinlock instead.
- */
-typedef LONG OPENSSL_INIT_ONCE;
-#  define OPENSSL_INIT_ONCE_STATIC_INIT          0
-
-#  define ONCE_UNINITED     0
-#  define ONCE_ININIT       1
-#  define ONCE_DONE         2
-
-static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
-{
-    LONG volatile *lock = (LONG *)once;
-    LONG result;
-
-    if (*lock == ONCE_DONE)
-        return;
-
-    do {
-        result = InterlockedCompareExchange(lock, ONCE_ININIT, ONCE_UNINITED);
-        if (result == ONCE_UNINITED) {
-            init();
-            *lock = ONCE_DONE;
-            return;
-        }
-    } while (result == ONCE_ININIT);
-}
-
-# else
-
-typedef INIT_ONCE OPENSSL_INIT_ONCE;
-#  define OPENSSL_INIT_ONCE_STATIC_INIT          INIT_ONCE_STATIC_INIT
-
-static BOOL CALLBACK once_cb(PINIT_ONCE once, PVOID initfp, PVOID *unused)
-{
-    void (*init)(void) = initfp;
-
-    init();
-
-    return TRUE;
-}
-
-static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
-{
-    InitOnceExecuteOnce((INIT_ONCE *)once, once_cb, init, NULL);
-}
-# endif
-#else /* pthreads */
-# include <pthread.h>
-
-typedef pthread_once_t OPENSSL_INIT_ONCE;
-# define OPENSSL_INIT_ONCE_STATIC_INIT          PTHREAD_ONCE_INIT
-
-static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
-{
-    pthread_once(once, init);
-}
-#endif
-
 static void ssl_library_stop(void);
 
-static OPENSSL_INIT_ONCE ssl_base = OPENSSL_INIT_ONCE_STATIC_INIT;
+static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
 static void ossl_init_ssl_base(void)
 {
@@ -238,7 +162,7 @@ static void ossl_init_ssl_base(void)
     ssl_base_inited = 1;
 }
 
-static OPENSSL_INIT_ONCE ssl_strings = OPENSSL_INIT_ONCE_STATIC_INIT;
+static CRYPTO_ONCE ssl_strings = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_strings_inited = 0;
 static void ossl_init_load_ssl_strings(void)
 {
@@ -321,13 +245,18 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
                              | OPENSSL_INIT_ADD_ALL_DIGESTS, settings))
         return 0;
 
-    ossl_init_once_run(&ssl_base, ossl_init_ssl_base);
+    if (!CRYPTO_THREAD_run_once(&ssl_base, ossl_init_ssl_base))
+        return 0;
 
-    if (opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS)
-        ossl_init_once_run(&ssl_strings, ossl_init_no_load_ssl_strings);
+    if ((opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS)
+            && !CRYPTO_THREAD_run_once(&ssl_strings,
+                                       ossl_init_no_load_ssl_strings))
+        return 0;
 
-    if (opts & OPENSSL_INIT_LOAD_SSL_STRINGS)
-        ossl_init_once_run(&ssl_strings, ossl_init_load_ssl_strings);
+    if ((opts & OPENSSL_INIT_LOAD_SSL_STRINGS)
+            && !CRYPTO_THREAD_run_once(&ssl_strings,
+                                       ossl_init_load_ssl_strings))
+        return 0;
 
     return 1;
 }

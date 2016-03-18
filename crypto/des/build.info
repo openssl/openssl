@@ -8,16 +8,11 @@ SOURCE[../../libcrypto]=\
         fcrypt.c xcbc_enc.c rpc_enc.c  cbc_cksm.c \
         read2pwd.c
 
-BEGINRAW[Makefile]
-##### DES assembler implementations
+GENERATE[des_enc-sparc.S]=asm/des_enc.m4
+GENERATE[dest4-sparcv9.S]=asm/dest4-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[dest4-sparcv9.o]=..
 
-{- $builddir -}/des_enc-sparc.S:	{- $sourcedir -}/asm/des_enc.m4
-	m4 -B 8192 {- $sourcedir -}/asm/des_enc.m4 > $@
-{- $builddir -}/dest4-sparcv9.s:	{- $sourcedir -}/asm/dest4-sparcv9.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/dest4-sparcv9.pl $(CFLAGS) > $@
-
-{- $builddir -}/des-586.s:	{- $sourcedir -}/asm/des-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl {- $sourcetop -}/crypto/perlasm/cbc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/des-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
-{- $builddir -}/crypt586.s:	{- $sourcedir -}/asm/crypt586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl {- $sourcetop -}/crypto/perlasm/cbc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/crypt586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
-ENDRAW[Makefile]
+GENERATE[des-586.s]=asm/des-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS)
+DEPEND[des-586.s]=../perlasm/x86asm.pl ../perlasm/cbc.pl
+GENERATE[crypt586.s]=asm/crypt586.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS)
+DEPEND[crypt586.s]=../perlasm/x86asm.pl ../perlasm/cbc.pl

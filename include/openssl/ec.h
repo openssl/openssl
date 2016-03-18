@@ -115,19 +115,10 @@ typedef enum {
 } point_conversion_form_t;
 
 typedef struct ec_method_st EC_METHOD;
-
-typedef struct ec_group_st
-    /*-
-     EC_METHOD *meth;
-     -- field definition
-     -- curve coefficients
-     -- optional generator with associated information (order, cofactor)
-     -- optional extra data (precomputed table for fast computation of multiples of generator)
-     -- ASN1 stuff
-    */
-    EC_GROUP;
-
+typedef struct ec_group_st EC_GROUP;
 typedef struct ec_point_st EC_POINT;
+typedef struct ecpk_parameters_st ECPKPARAMETERS;
+typedef struct ec_parameters_st ECPARAMETERS;
 
 /********************************************************************/
 /*               EC_METHODs for curves over GF(p)                   */
@@ -410,12 +401,45 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
 EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
                                   const BIGNUM *b, BN_CTX *ctx);
 # endif
+
 /** Creates a EC_GROUP object with a curve specified by a NID
  *  \param  nid  NID of the OID of the curve name
  *  \return newly created EC_GROUP object with specified curve or NULL
  *          if an error occurred
  */
 EC_GROUP *EC_GROUP_new_by_curve_name(int nid);
+
+/** Creates a new EC_GROUP object from an ECPARAMETERS object
+ *  \param  params  pointer to the ECPARAMETERS object
+ *  \return newly created EC_GROUP object with specified curve or NULL
+ *          if an error occurred
+ */
+EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params);
+
+/** Creates an ECPARAMETERS object for the the given EC_GROUP object.
+ *  \param  group   pointer to the EC_GROUP object
+ *  \param  params  pointer to an existing ECPARAMETERS object or NULL
+ *  \return pointer to the new ECPARAMETERS object or NULL
+ *          if an error occurred.
+ */
+ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
+                                        ECPARAMETERS *params);
+
+/** Creates a new EC_GROUP object from an ECPKPARAMETERS object
+ *  \param  params  pointer to an existing ECPKPARAMETERS object, or NULL
+ *  \return newly created EC_GROUP object with specified curve, or NULL
+ *          if an error occurred
+ */
+EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params);
+
+/** Creates an ECPKPARAMETERS object for the the given EC_GROUP object.
+ *  \param  group   pointer to the EC_GROUP object
+ *  \param  params  pointer to an existing ECPKPARAMETERS object or NULL
+ *  \return pointer to the new ECPKPARAMETERS object or NULL
+ *          if an error occurred.
+ */
+ECPKPARAMETERS *EC_GROUP_get_ecpkparameters(const EC_GROUP *group,
+                                            ECPKPARAMETERS *params);
 
 /********************************************************************/
 /*               handling of internal curves                        */
@@ -740,6 +764,9 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 /*                       ASN1 stuff                                 */
 /********************************************************************/
 
+DECLARE_ASN1_ITEM(ECPKPARAMETERS)
+DECLARE_ASN1_ITEM(ECPARAMETERS)
+
 /*
  * EC_GROUP_get_basis_type() returns the NID of the basis type used to
  * represent the field elements
@@ -753,8 +780,6 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
 
 # define OPENSSL_EC_EXPLICIT_CURVE  0x000
 # define OPENSSL_EC_NAMED_CURVE     0x001
-
-typedef struct ecpk_parameters_st ECPKPARAMETERS;
 
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
@@ -1489,12 +1514,16 @@ void ERR_load_EC_strings(void);
 # define EC_F_EC_GROUP_GET_CURVE_GF2M                     172
 # define EC_F_EC_GROUP_GET_CURVE_GFP                      130
 # define EC_F_EC_GROUP_GET_DEGREE                         173
+# define EC_F_EC_GROUP_GET_ECPARAMETERS                   261
+# define EC_F_EC_GROUP_GET_ECPKPARAMETERS                 262
 # define EC_F_EC_GROUP_GET_ORDER                          141
 # define EC_F_EC_GROUP_GET_PENTANOMIAL_BASIS              193
 # define EC_F_EC_GROUP_GET_TRINOMIAL_BASIS                194
 # define EC_F_EC_GROUP_NEW                                108
 # define EC_F_EC_GROUP_NEW_BY_CURVE_NAME                  174
 # define EC_F_EC_GROUP_NEW_FROM_DATA                      175
+# define EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS              263
+# define EC_F_EC_GROUP_NEW_FROM_ECPKPARAMETERS            264
 # define EC_F_EC_GROUP_PRECOMPUTE_MULT                    142
 # define EC_F_EC_GROUP_SET_CURVE_GF2M                     176
 # define EC_F_EC_GROUP_SET_CURVE_GFP                      109

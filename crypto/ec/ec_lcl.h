@@ -74,6 +74,8 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 
+#include "e_os.h"
+
 #if defined(__SUNPRO_C)
 # if __SUNPRO_C >= 0x520
 #  pragma error_messages (off,E_ARRAY_OF_INCOMPLETE_NONAME,E_ARRAY_OF_INCOMPLETE)
@@ -310,6 +312,7 @@ struct ec_key_st {
     int references;
     int flags;
     CRYPTO_EX_DATA ex_data;
+    CRYPTO_RWLOCK *lock;
 } /* EC_KEY */ ;
 
 struct ec_point_st {

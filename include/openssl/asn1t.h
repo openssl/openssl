@@ -207,8 +207,8 @@ extern "C" {
         static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
         ASN1_SEQUENCE(tname)
 
-# define ASN1_SEQUENCE_ref(tname, cb, lck) \
-        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), lck, cb, 0}; \
+# define ASN1_SEQUENCE_ref(tname, cb) \
+        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), offsetof(tname, lock), cb, 0}; \
         ASN1_SEQUENCE(tname)
 
 # define ASN1_SEQUENCE_enc(tname, enc, cb) \
@@ -463,12 +463,12 @@ extern "C" {
 
 # ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
 
-#  define ASN1_ADB_END(name, flags, field, app_table, def, none) \
+#  define ASN1_ADB_END(name, flags, field, adb_cb, def, none) \
         ;\
         static const ASN1_ADB name##_adb = {\
                 flags,\
                 offsetof(name, field),\
-                app_table,\
+                adb_cb,\
                 name##_adbtbl,\
                 sizeof(name##_adbtbl) / sizeof(ASN1_ADB_TABLE),\
                 def,\
@@ -477,7 +477,7 @@ extern "C" {
 
 # else
 
-#  define ASN1_ADB_END(name, flags, field, app_table, def, none) \
+#  define ASN1_ADB_END(name, flags, field, adb_cb, def, none) \
         ;\
         static const ASN1_ITEM *name##_adb(void) \
         { \
@@ -485,7 +485,7 @@ extern "C" {
                 {\
                 flags,\
                 offsetof(name, field),\
-                app_table,\
+                adb_cb,\
                 name##_adbtbl,\
                 sizeof(name##_adbtbl) / sizeof(ASN1_ADB_TABLE),\
                 def,\
@@ -529,7 +529,7 @@ typedef struct ASN1_ADB_st ASN1_ADB;
 struct ASN1_ADB_st {
     unsigned long flags;        /* Various flags */
     unsigned long offset;       /* Offset of selector field */
-    STACK_OF(ASN1_ADB_TABLE) **app_items; /* Application defined items */
+    int (*adb_cb)(long *psel);  /* Application callback */
     const ASN1_ADB_TABLE *tbl;  /* Table of possible types */
     long tblcount;              /* Number of entries in tbl */
     const ASN1_TEMPLATE *default_tt; /* Type to use if no match */

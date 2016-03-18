@@ -63,6 +63,7 @@
 #include <string.h>
 #include <openssl/err.h>
 
+#include "internal/cryptlib.h"
 #include "internal/bn_int.h"
 #include "ec_lcl.h"
 
@@ -85,6 +86,7 @@ struct ec_pre_comp_st {
                                  * objects followed by a NULL */
     size_t num;                 /* numblocks * 2^(w-1) */
     int references;
+    CRYPTO_RWLOCK *lock;
 };
 
 static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
@@ -99,25 +101,41 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
         ECerr(EC_F_EC_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }
+
     ret->group = group;
     ret->blocksize = 8;         /* default */
     ret->w = 4;                 /* default */
     ret->references = 1;
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        ECerr(EC_F_EC_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ret);
+        return NULL;
+    }
     return ret;
 }
 
 EC_PRE_COMP *EC_ec_pre_comp_dup(EC_PRE_COMP *pre)
 {
+    int i;
     if (pre != NULL)
-        CRYPTO_add(&pre->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
+        CRYPTO_atomic_add(&pre->references, 1, &i, pre->lock);
     return pre;
 }
 
 void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
 {
-    if (pre == NULL
-        || CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP) > 0)
+    int i;
+
+    if (pre == NULL)
         return;
+
+    CRYPTO_atomic_add(&pre->references, -1, &i, pre->lock);
+    REF_PRINT_COUNT("EC_ec", pre);
+    if (i > 0)
+        return;
+    REF_ASSERT_ISNT(i < 0);
 
     if (pre->points != NULL) {
         EC_POINT **pts;
@@ -126,6 +144,7 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
             EC_POINT_free(*pts);
         OPENSSL_free(pre->points);
     }
+    CRYPTO_THREAD_lock_free(pre->lock);
     OPENSSL_free(pre);
 }
 
@@ -320,8 +339,6 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                 wNAF[num] = tmp_wNAF;
                 wNAF[num + 1] = NULL;
                 wNAF_len[num] = tmp_len;
-                if (tmp_len > max_len)
-                    max_len = tmp_len;
                 /*
                  * pre_comp->points starts with the points that we need here:
                  */

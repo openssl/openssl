@@ -207,55 +207,6 @@ static char *make_config_name()
     return p;
 }
 
-static void lock_dbg_cb(int mode, int type, const char *file, int line)
-{
-    static int modes[CRYPTO_NUM_LOCKS];
-    const char *errstr = NULL;
-    int rw = mode & (CRYPTO_READ | CRYPTO_WRITE);
-
-    if (rw != CRYPTO_READ && rw != CRYPTO_WRITE) {
-        errstr = "invalid mode";
-        goto err;
-    }
-
-    if (type < 0 || type >= CRYPTO_NUM_LOCKS) {
-        errstr = "type out of bounds";
-        goto err;
-    }
-
-    if (mode & CRYPTO_LOCK) {
-        if (modes[type]) {
-            errstr = "already locked";
-            /* must not happen in a single-threaded program --> deadlock! */
-            goto err;
-        }
-        modes[type] = rw;
-    } else if (mode & CRYPTO_UNLOCK) {
-        if (!modes[type]) {
-            errstr = "not locked";
-            goto err;
-        }
-
-        if (modes[type] != rw) {
-            errstr = (rw == CRYPTO_READ) ?
-                "CRYPTO_r_unlock on write lock" :
-                "CRYPTO_w_unlock on read lock";
-        }
-
-        modes[type] = 0;
-    } else {
-        errstr = "invalid mode";
-        goto err;
-    }
-
- err:
-    if (errstr) {
-        BIO_printf(bio_err,
-                   "openssl (lock_dbg_cb): %s (mode=%d, type=%d) at %s:%d\n",
-                   errstr, mode, type, file, line);
-    }
-}
-
 #if defined( OPENSSL_SYS_VMS)
 extern char **copy_argv(int *argc, char **argv);
 #endif
@@ -288,7 +239,6 @@ int main(int argc, char *argv[])
     if (p != NULL && strcmp(p, "on") == 0)
         CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    CRYPTO_set_locking_callback(lock_dbg_cb);
 
     if (getenv("OPENSSL_FIPS")) {
 #ifdef OPENSSL_FIPS
@@ -699,6 +649,9 @@ static void list_disabled(void)
 #endif
 #ifdef OPENSSL_NO_BF
     BIO_puts(bio_out, "BF\n");
+#endif
+#ifndef OPENSSL_NO_BLAKE2
+    BIO_puts(bio_out, "BLAKE2\n");
 #endif
 #ifdef OPENSSL_NO_CAMELLIA
     BIO_puts(bio_out, "CAMELLIA\n");

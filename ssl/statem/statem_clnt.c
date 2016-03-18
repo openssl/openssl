@@ -1143,17 +1143,15 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_UNKNOWN_CIPHER_RETURNED);
         goto f_err;
     }
-    /* Set version disabled mask now we know version */
-    if (!SSL_USE_TLS1_2_CIPHERS(s))
-        s->s3->tmp.mask_ssl = SSL_TLSV1_2;
-    else
-        s->s3->tmp.mask_ssl = 0;
-    /* Skip TLS v1.0 ciphersuites if SSLv3 */
-    if ((c->algorithm_ssl & SSL_TLSV1) && s->version == SSL3_VERSION)
-        s->s3->tmp.mask_ssl |= SSL_TLSV1;
     /*
-     * If it is a disabled cipher we didn't send it in client hello, so
-     * return an error.
+     * Now that we know the version, update the check to see if it's an allowed
+     * version.
+     */
+    s->s3->tmp.min_ver = s->version;
+    s->s3->tmp.max_ver = s->version;
+    /*
+     * If it is a disabled cipher we either didn't send it in client hello,
+     * or it's not allowed for the selected protocol. So we return an error.
      */
     if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_CHECK)) {
         al = SSL_AD_ILLEGAL_PARAMETER;
@@ -2057,6 +2055,15 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
             return MSG_PROCESS_ERROR;
         }
     }
+
+#ifndef OPENSSL_NO_CT
+    if (s->ct_validation_callback != NULL) {
+        if (!ssl_validate_ct(s)) {
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+            return MSG_PROCESS_ERROR;
+        }
+    }
+#endif
 
 #ifndef OPENSSL_NO_SCTP
     /* Only applies to renegotiation */
