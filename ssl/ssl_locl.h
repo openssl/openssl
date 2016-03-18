@@ -149,24 +149,16 @@
 # include "e_os.h"
 
 # include <openssl/buffer.h>
-# ifndef OPENSSL_NO_COMP
-#  include <openssl/comp.h>
-# endif
+# include <openssl/comp.h>
 # include <openssl/bio.h>
 # include <openssl/stack.h>
-# ifndef OPENSSL_NO_RSA
-#  include <openssl/rsa.h>
-# endif
-# ifndef OPENSSL_NO_DSA
-#  include <openssl/dsa.h>
-# endif
+# include <openssl/rsa.h>
+# include <openssl/dsa.h>
 # include <openssl/err.h>
 # include <openssl/ssl.h>
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
-# ifndef OPENSSL_NO_CT
-#  include <openssl/ct.h>
-# endif
+# include <openssl/ct.h>
 #include "record/record.h"
 #include "statem/statem.h"
 #include "packet_locl.h"

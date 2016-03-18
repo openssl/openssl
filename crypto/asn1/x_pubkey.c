@@ -61,12 +61,8 @@
 #include <openssl/x509.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 
 /* Minor tweak to operation: free up EVP_PKEY */
 static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,

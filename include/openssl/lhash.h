@@ -63,10 +63,6 @@
 # define HEADER_LHASH_H
 
 # include <openssl/e_os2.h>
-# ifndef OPENSSL_NO_STDIO
-#  include <stdio.h>
-# endif
-
 # include <openssl/bio.h>
 
 #ifdef  __cplusplus

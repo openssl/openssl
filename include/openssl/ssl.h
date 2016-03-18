@@ -144,10 +144,7 @@
 
 # include <openssl/e_os2.h>
 # include <openssl/opensslconf.h>
-
-#ifndef OPENSSL_NO_COMP
 # include <openssl/comp.h>
-#endif
 # include <openssl/bio.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/x509.h>
@@ -161,9 +158,7 @@
 
 # include <openssl/safestack.h>
 # include <openssl/symhacks.h>
-# ifndef OPENSSL_NO_CT
-#  include <openssl/ct.h>
-# endif
+# include <openssl/ct.h>
 
 #ifdef  __cplusplus
 extern "C" {

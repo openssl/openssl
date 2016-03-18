@@ -4,6 +4,10 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Headers are now wrapped, if necessary, with OPENSSL_NO_xxx, so
+     it is always safe to #include a header now.
+     [Rich Salz]
+
   *) Removed the aged BC-32 config and all its supporting scripts
      [Richard Levitte]
 

@@ -61,9 +61,7 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include <openssl/pem.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include <openssl/ts.h>
 
 /* Macro definitions for the configuration file. */

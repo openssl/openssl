@@ -54,9 +54,7 @@
 
 /* Custom extension utility functions */
 
-#ifndef OPENSSL_NO_CT
-# include <openssl/ct.h>
-#endif
+#include <openssl/ct.h>
 #include "ssl_locl.h"
 
 

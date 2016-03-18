@@ -59,9 +59,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/dh.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 
 static const DH_METHOD *default_DH_method = NULL;
 

@@ -59,9 +59,7 @@
 #include "ssl_locl.h"
 #include <openssl/conf.h>
 #include <openssl/objects.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/dh.h>
 
 /*
  * structure holding name tables. This is used for pemitted elements in lists

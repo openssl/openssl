@@ -155,13 +155,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/dh.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 
 static ossl_inline int cert_req_allowed(SSL *s);
 static int key_exchange_expected(SSL *s);

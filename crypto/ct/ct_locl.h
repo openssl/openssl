@@ -50,10 +50,6 @@
  * ====================================================================
  */
 
-#ifdef OPENSSL_NO_CT
-# error CT is disabled.
-#endif
-
 #include <stddef.h>
 #include <openssl/ct.h>
 #include <openssl/evp.h>

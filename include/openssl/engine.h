@@ -66,37 +66,23 @@
 
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_ENGINE
-#  error ENGINE is disabled.
-# endif
-
+# ifndef OPENSSL_NO_ENGINE
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
-#  ifndef OPENSSL_NO_RSA
-#   include <openssl/rsa.h>
-#  endif
-#  ifndef OPENSSL_NO_DSA
-#   include <openssl/dsa.h>
-#  endif
-#  ifndef OPENSSL_NO_DH
-#   include <openssl/dh.h>
-#  endif
-#  ifndef OPENSSL_NO_EC
-#   include <openssl/ec.h>
-#  endif
+#  include <openssl/rsa.h>
+#  include <openssl/dsa.h>
+#  include <openssl/dh.h>
+#  include <openssl/ec.h>
 #  include <openssl/rand.h>
 #  include <openssl/ui.h>
 #  include <openssl/err.h>
 # endif
-
 # include <openssl/ossl_typ.h>
 # include <openssl/symhacks.h>
-
 # include <openssl/x509.h>
-
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
+# endif
 
 /*
  * These flags are used to control combinations of algorithm (methods) by
@@ -905,7 +891,9 @@ void ERR_load_ENGINE_strings(void);
 # define ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD         101
 # define ENGINE_R_VERSION_INCOMPATIBILITY                 145
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

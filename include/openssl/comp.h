@@ -56,15 +56,14 @@
 #ifndef HEADER_COMP_H
 # define HEADER_COMP_H
 
-# include <openssl/crypto.h>
+# include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_COMP
-#  error COMP is disabled.
+# ifndef OPENSSL_NO_COMP
+# include <openssl/crypto.h>
+# ifdef  __cplusplus
+extern "C" {
 # endif
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 
 COMP_CTX *COMP_CTX_new(COMP_METHOD *meth);
@@ -110,5 +109,7 @@ void ERR_load_COMP_strings(void);
 
 #ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

@@ -125,9 +125,7 @@
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/dh.h>
 #include <openssl/bn.h>
 #include "internal/threads.h"
 #include "ssl_locl.h"

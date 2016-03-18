@@ -158,9 +158,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/x509.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/dh.h>
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 

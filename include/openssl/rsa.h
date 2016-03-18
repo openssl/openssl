@@ -59,26 +59,18 @@
 # define HEADER_RSA_H
 
 # include <openssl/opensslconf.h>
-# include <openssl/asn1.h>
 
+# ifndef OPENSSL_NO_RSA
+# include <openssl/asn1.h>
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 # endif
-
-# ifdef OPENSSL_NO_RSA
-#  error RSA is disabled.
-# endif
-
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
-
-/* Declared already in ossl_typ.h */
-/* typedef struct rsa_st RSA; */
-/* typedef struct rsa_meth_st RSA_METHOD; */
+# endif
 
 struct rsa_meth_st {
     const char *name;
@@ -638,7 +630,9 @@ void ERR_load_RSA_strings(void);
 # define RSA_R_VALUE_MISSING                              147
 # define RSA_R_WRONG_SIGNATURE_LENGTH                     119
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

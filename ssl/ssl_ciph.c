@@ -141,12 +141,8 @@
 
 #include <stdio.h>
 #include <openssl/objects.h>
-#ifndef OPENSSL_NO_COMP
-# include <openssl/comp.h>
-#endif
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/comp.h>
+#include <openssl/engine.h>
 #include "internal/threads.h"
 #include "ssl_locl.h"
 

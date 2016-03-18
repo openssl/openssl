@@ -72,21 +72,12 @@
 # include <openssl/stack.h>
 # include <openssl/asn1.h>
 # include <openssl/safestack.h>
-
-# ifndef OPENSSL_NO_EC
-#  include <openssl/ec.h>
-# endif
+# include <openssl/ec.h>
 
 # if OPENSSL_API_COMPAT < 0x10100000L
-#  ifndef OPENSSL_NO_RSA
-#   include <openssl/rsa.h>
-#  endif
-#  ifndef OPENSSL_NO_DSA
-#   include <openssl/dsa.h>
-#  endif
-#  ifndef OPENSSL_NO_DH
-#   include <openssl/dh.h>
-#  endif
+#  include <openssl/rsa.h>
+#  include <openssl/dsa.h>
+#  include <openssl/dh.h>
 # endif
 
 # include <openssl/sha.h>

@@ -54,6 +54,8 @@
 #include "../async_locl.h"
 
 #ifdef ASYNC_NULL
+# include <openssl/ct.h>
+# include <openssl/x509v3.h>
 
 int ASYNC_is_capable(void)
 {

@@ -126,7 +126,7 @@
 
 # include <openssl/e_os2.h>
 # ifndef OPENSSL_NO_STDIO
-#  include <stdio.h>            /* FILE */
+#  include <stdio.h>
 # endif
 # include <openssl/opensslconf.h>
 # include <openssl/ossl_typ.h>

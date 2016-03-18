@@ -151,9 +151,7 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 #include <openssl/md5.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/dh.h>
 #include <openssl/rand.h>
 
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
