@@ -167,7 +167,10 @@ int rsa_main(int argc, char **argv)
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     int i, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, check = 0;
-    int noout = 0, modulus = 0, pubin = 0, pubout = 0, pvk_encr = 2, ret = 1;
+    int noout = 0, modulus = 0, pubin = 0, pubout = 0, ret = 1;
+# if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
+    int pvk_encr = 2;
+#endif
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, rsa_options);
@@ -217,7 +220,7 @@ int rsa_main(int argc, char **argv)
         case OPT_RSAPUBKEY_OUT:
             pubout = 2;
             break;
-#ifndef OPENSSL_NO_RC4
+# if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
         case OPT_PVK_STRONG:
             pvk_encr = 2;
             break;

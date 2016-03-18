@@ -115,6 +115,7 @@ static int cryptodev_rsa_nocrt_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa,
                                        BN_CTX *ctx);
 static int cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa,
                                  BN_CTX *ctx);
+#ifndef OPENSSL_NO_DSA
 static int cryptodev_dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a,
                                     const BIGNUM *p, const BIGNUM *m,
                                     BN_CTX *ctx, BN_MONT_CTX *m_ctx);
@@ -126,6 +127,7 @@ static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen,
                                       DSA *dsa);
 static int cryptodev_dsa_verify(const unsigned char *dgst, int dgst_len,
                                 DSA_SIG *sig, DSA *dsa);
+#endif
 #ifndef OPENSSL_NO_DH
 static int cryptodev_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
                                 const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
@@ -1384,6 +1386,7 @@ static RSA_METHOD cryptodev_rsa = {
     NULL                        /* rsa_verify */
 };
 
+#ifndef OPENSSL_NO_DSA
 static int
 cryptodev_dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
                          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
@@ -1526,6 +1529,7 @@ static DSA_METHOD cryptodev_dsa = {
     0,                          /* flags */
     NULL                        /* app_data */
 };
+#endif
 
 #ifndef OPENSSL_NO_DH
 static int
@@ -1665,6 +1669,7 @@ void engine_load_cryptodev_internal(void)
         }
     }
 
+#ifndef OPENSSL_NO_DSA
     if (ENGINE_set_DSA(engine, &cryptodev_dsa)) {
         const DSA_METHOD *meth = DSA_OpenSSL();
 
@@ -1678,6 +1683,7 @@ void engine_load_cryptodev_internal(void)
         if (cryptodev_asymfeat & CRF_DSA_VERIFY)
             cryptodev_dsa.dsa_do_verify = cryptodev_dsa_verify;
     }
+#endif
 
 #ifndef OPENSSL_NO_DH
     if (ENGINE_set_DH(engine, &cryptodev_dh)) {
