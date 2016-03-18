@@ -57,7 +57,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#if !defined(OPENSSL_NO_DES)
+#if defined(OPENSSL_NO_DES)
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # include <stdio.h>
 # include <stdlib.h>

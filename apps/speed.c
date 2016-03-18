@@ -1386,7 +1386,9 @@ int speed_main(int argc, char **argv)
     memset(results, 0, sizeof(results));
 
     memset(c, 0, sizeof(c));
+#ifndef OPENSSL_NO_DES
     memset(DES_iv, 0, sizeof(DES_iv));
+#endif
     memset(iv, 0, sizeof(iv));
 
     for (i = 0; i < ALGOR_NUM; i++)

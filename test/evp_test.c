@@ -1083,6 +1083,14 @@ static int mac_test_run(struct evp_test *t)
     unsigned char *mac = NULL;
     size_t mac_len;
 
+#ifdef OPENSSL_NO_DES
+    if (strstr(mdata->alg, "DES") != NULL) {
+        /* Skip DES */
+        err = NULL;
+        goto err;
+    }
+#endif
+
     err = "MAC_PKEY_CTX_ERROR";
     genctx = EVP_PKEY_CTX_new_id(mdata->type, NULL);
     if (!genctx)
