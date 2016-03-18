@@ -200,7 +200,7 @@
 # elif !defined(OPENSSL_SYS_VMS) \
 	&& !defined(OPENSSL_SYS_MSDOS) \
 	&& !defined(MAC_OS_GUSI_SOURCE) \
-	&& !defined(OPENSSL_SYS_VXWORKS) \
+	&& !defined(OPENSSL_SYS_VXWORKS)
 #  define TERMIOS
 #  undef  TERMIO
 #  undef  SGTTY
