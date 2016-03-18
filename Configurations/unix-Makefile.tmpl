@@ -617,7 +617,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects
 lint:
 	lint -DLINT $(INCLUDES) $(SRCS)
 
-generate_apps: $(SRCDIR)/apps/openssl-vms.cnf $(SRCDIR)/apps/progs.h
+generate_apps: $(SRCDIR)/apps/openssl-vms.cnf
 
 generate_crypto_bn: $(SRCDIR)/crypto/bn/bn_prime.h
 
@@ -694,17 +694,6 @@ $(BLDDIR)/util/shlib_wrap.sh: configdata.pm
 $(SRCDIR)/apps/openssl-vms.cnf: $(SRCDIR)/apps/openssl.cnf
 	$(PERL) $(SRCDIR)/VMS/VMSify-conf.pl \
                 < $(SRCDIR)/apps/openssl.cnf > $(SRCDIR)/apps/openssl-vms.cnf
-
-{- # because the program apps/openssl has object files as sources, and
-   # they then have the corresponding C files as source, we need to chain
-   # the lookups in %unified_info
-   my $apps_openssl = catfile("apps","openssl");
-   our @openssl_source = map { @{$unified_info{sources}->{$_}} }
-                         @{$unified_info{sources}->{$apps_openssl}};
-   ""; -}
-$(SRCDIR)/apps/progs.h:
-	$(RM) $@
-	$(PERL) $(SRCDIR)/apps/progs.pl {- join(" ", @openssl_source) -} > $@
 
 $(SRCDIR)/crypto/bn/bn_prime.h: $(SRCDIR)/crypto/bn/bn_prime.pl
 	$(PERL) $(SRCDIR)/crypto/bn/bn_prime.pl > $(SRCDIR)/crypto/bn/bn_prime.h
