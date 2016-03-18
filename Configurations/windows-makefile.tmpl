@@ -61,9 +61,11 @@ PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test\\| } @{$unified_info{pr
 TESTPROGS={- join(" ", map { $_.$exeext } grep { m|^test\\| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
 
+{- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
+{- output_on() if $disabled{makedepend}; "" -}
 
 # Do not edit these manually. Use Configure with --prefix or --openssldir
 # to change this!  Short explanation in the top comment in Configure
@@ -311,7 +313,7 @@ $obj$objext: $deps
 	\$(AS) \$(ASFLAGS) \$(ASOUTFLAG)\$\@ $srcs
 EOF
      }
-     return <<"EOF";
+     return <<"EOF"	if (!$disabled{makedepend});
 $obj$depext: $deps
 	\$(CC) \$(CFLAGS) $ecflags$inc /Zs /showIncludes $srcs 2>&1 | \\
 	    \$(PERL) -n << > $obj$depext
@@ -324,6 +326,10 @@ $obj$objext: $obj$depext
 	\$(CC) \$(CFLAGS) $ecflags$incs -c \$(COUTFLAG)\$\@ @<<
 $srcs
 <<
+EOF
+    return <<"EOF"	if ($disabled{makedepend});
+$obj$objext: $deps
+	\$(CC) \$(CFLAGS) $ecflags$incs -c \$(COUTFLAG)\$\@ $srcs
 EOF
  }
 
