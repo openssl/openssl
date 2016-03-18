@@ -414,7 +414,7 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                  const unsigned char *in, size_t inl)
 {
     struct crypt_op cryp;
-    struct dev_crypto_state *state = EVP_CIPHER_CTX_cipher_data(ctx);
+    struct dev_crypto_state *state = EVP_CIPHER_CTX_get_cipher_data(ctx);
     struct session_op *sess = &state->d_sess;
     const void *iiv;
     unsigned char save_iv[EVP_MAX_IV_LENGTH];
@@ -469,7 +469,7 @@ static int
 cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                    const unsigned char *iv, int enc)
 {
-    struct dev_crypto_state *state = EVP_CIPHER_CTX_cipher_data(ctx);
+    struct dev_crypto_state *state = EVP_CIPHER_CTX_get_cipher_data(ctx);
     struct session_op *sess = &state->d_sess;
     int cipher = -1, i;
 
@@ -510,7 +510,7 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 {
     int ret = 0;
-    struct dev_crypto_state *state = EVP_CIPHER_CTX_cipher_data(ctx);
+    struct dev_crypto_state *state = EVP_CIPHER_CTX_get_cipher_data(ctx);
     struct session_op *sess = &state->d_sess;
 
     if (state->d_fd < 0)
@@ -1432,14 +1432,12 @@ static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen,
 {
     struct crypt_kop kop;
     BIGNUM *r = NULL, *s = NULL;
-    DSA_SIG *dsaret = NULL;
+    DSA_SIG *dsasig, *dsaret = NULL;
 
-    if ((r = BN_new()) == NULL)
+    dsasig = DSA_SIG_new();
+    if (dsasig == NULL)
         goto err;
-    if ((s = BN_new()) == NULL) {
-        BN_free(r);
-        goto err;
-    }
+    DSA_SIG_get0(&r, &s, dsasig);
 
     memset(&kop, 0, sizeof(kop));
     kop.crk_op = CRK_DSA_SIGN;
@@ -1459,21 +1457,17 @@ static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen,
 
     if (cryptodev_asym(&kop, BN_num_bytes(dsa->q), r,
                        BN_num_bytes(dsa->q), s) == 0) {
-        dsaret = DSA_SIG_new();
-        if (dsaret == NULL)
-            goto err;
-        dsaret->r = r;
-        dsaret->s = s;
+        dsaret = dsasig;
     } else {
         const DSA_METHOD *meth = DSA_OpenSSL();
-        BN_free(r);
-        BN_free(s);
         dsaret = (meth->dsa_do_sign) (dgst, dlen, dsa);
     }
  err:
+    if (dsaret != dsasig)
+        DSA_SIG_free(dsasig);
     kop.crk_param[0].crp_p = NULL;
     zapparams(&kop);
-    return (dsaret);
+    return dsaret;
 }
 
 static int
@@ -1482,6 +1476,7 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
 {
     struct crypt_kop kop;
     int dsaret = 1;
+    BIGNUM *pr, *ps;
 
     memset(&kop, 0, sizeof(kop));
     kop.crk_op = CRK_DSA_VERIFY;
@@ -1497,9 +1492,10 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
         goto err;
     if (bn2crparam(dsa->pub_key, &kop.crk_param[4]))
         goto err;
-    if (bn2crparam(sig->r, &kop.crk_param[5]))
+    DSA_SIG_get0(&pr, &ps, sig);
+    if (bn2crparam(pr, &kop.crk_param[5]))
         goto err;
-    if (bn2crparam(sig->s, &kop.crk_param[6]))
+    if (bn2crparam(ps, &kop.crk_param[6]))
         goto err;
     kop.crk_iparams = 7;
 

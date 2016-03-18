@@ -158,92 +158,22 @@ extern "C" {
 #  define SSLEAY_BUILT_ON         OPENSSL_BUILT_ON
 #  define SSLEAY_PLATFORM         OPENSSL_PLATFORM
 #  define SSLEAY_DIR              OPENSSL_DIR
-# endif /* OPENSSL_API_COMPAT */
 
-/*
- * When changing the CRYPTO_LOCK_* list, be sure to maintin the text lock
- * names in cryptlib.c
- */
-
-# define CRYPTO_LOCK_ERR                 1
-# define CRYPTO_LOCK_EX_DATA             2
-# define CRYPTO_LOCK_X509                3
-# define CRYPTO_LOCK_X509_INFO           4
-# define CRYPTO_LOCK_X509_PKEY           5
-# define CRYPTO_LOCK_X509_CRL            6
-# define CRYPTO_LOCK_X509_REQ            7
-# define CRYPTO_LOCK_DSA                 8
-# define CRYPTO_LOCK_RSA                 9
-# define CRYPTO_LOCK_EVP_PKEY            10
-# define CRYPTO_LOCK_X509_STORE          11
-# define CRYPTO_LOCK_SSL_CTX             12
-# define CRYPTO_LOCK_SSL_CERT            13
-# define CRYPTO_LOCK_SSL_SESSION         14
-# define CRYPTO_LOCK_SSL_SESS_CERT       15
-# define CRYPTO_LOCK_SSL                 16
-# define CRYPTO_LOCK_SSL_METHOD          17
-# define CRYPTO_LOCK_RAND                18
-# define CRYPTO_LOCK_RAND2               19
-# define CRYPTO_LOCK_MALLOC              20
-# define CRYPTO_LOCK_BIO                 21
-# define CRYPTO_LOCK_GETHOSTBYNAME       22
-# define CRYPTO_LOCK_GETSERVBYNAME       23
-# define CRYPTO_LOCK_READDIR             24
-# define CRYPTO_LOCK_RSA_BLINDING        25
-# define CRYPTO_LOCK_DH                  26
-# define CRYPTO_LOCK_MALLOC2             27
-# define CRYPTO_LOCK_DSO                 28
-# define CRYPTO_LOCK_DYNLOCK             29
-# define CRYPTO_LOCK_ENGINE              30
-# define CRYPTO_LOCK_UI                  31
-# define CRYPTO_LOCK_ECDSA               32
-# define CRYPTO_LOCK_EC                  33
-# define CRYPTO_LOCK_ECDH                34
-# define CRYPTO_LOCK_BN                  35
-# define CRYPTO_LOCK_EC_PRE_COMP         36
-# define CRYPTO_LOCK_STORE               37
-# define CRYPTO_LOCK_COMP                38
-# define CRYPTO_LOCK_FIPS                39
-# define CRYPTO_LOCK_FIPS2               40
-# define CRYPTO_LOCK_INIT                41
-# define CRYPTO_NUM_LOCKS                42
-
-# define CRYPTO_LOCK             1
-# define CRYPTO_UNLOCK           2
-# define CRYPTO_READ             4
-# define CRYPTO_WRITE            8
-
-# ifndef OPENSSL_NO_LOCKING
-#  ifndef CRYPTO_w_lock
-#   define CRYPTO_w_lock(type)     \
-        CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,OPENSSL_FILE,OPENSSL_LINE)
-#   define CRYPTO_w_unlock(type)   \
-        CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,OPENSSL_FILE,OPENSSL_LINE)
-#   define CRYPTO_r_lock(type)     \
-        CRYPTO_lock(CRYPTO_LOCK|CRYPTO_READ,type,OPENSSL_FILE,OPENSSL_LINE)
-#   define CRYPTO_r_unlock(type)   \
-        CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,OPENSSL_FILE,OPENSSL_LINE)
-#   define CRYPTO_add(addr,amount,type)    \
-        CRYPTO_add_lock(addr,amount,type,OPENSSL_FILE,OPENSSL_LINE)
-#  endif
-# else
 #  define CRYPTO_w_lock(a)
 #  define CRYPTO_w_unlock(a)
 #  define CRYPTO_r_lock(a)
 #  define CRYPTO_r_unlock(a)
 #  define CRYPTO_add(a,b,c)       ((*(a))+=(b))
-# endif
 
 /*
- * Some applications as well as some parts of OpenSSL need to allocate and
- * deallocate locks in a dynamic fashion.  The following typedef makes this
- * possible in a type-safe manner.
- * struct CRYPTO_dynlock_value has to be defined by the application.
+ * Old type for allocating dynamic locks. No longer used. Use the new thread
+ * API instead.
  */
 typedef struct {
-    int references;
-    struct CRYPTO_dynlock_value *data;
+    int dummy;
 } CRYPTO_dynlock;
+
+# endif /* OPENSSL_API_COMPAT */
 
 typedef void CRYPTO_RWLOCK;
 
@@ -380,65 +310,60 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
  */
 void CRYPTO_cleanup_all_ex_data(void);
 
-int CRYPTO_get_new_lockid(char *name);
+# if OPENSSL_API_COMPAT < 0x10100000L
+/*
+ * These are the functions for the old threading API. These are all now no-ops
+ * and should not be used.
+ */
+#  define CRYPTO_get_new_lockid(name)   (0)
+#  define CRYPTO_num_locks()            (0)
+/*
+ * The old CRYPTO_lock() function has been removed completely without a
+ * compatibility macro. This is because previously it could not return an error
+ * response, but if any applications are using this they will not work and could
+ * fail in strange ways. Better for them to fail at compile time.
+ * 
+ * void CRYPTO_lock(int mode, int type, const char *file, int line);
+ */
+#  define CRYPTO_set_locking_callback(func)
+#  define CRYPTO_get_locking_callback()         (NULL)
+#  define CRYPTO_set_add_lock_callback(func)
+#  define CRYPTO_get_add_lock_callback()        (NULL)
 
-int CRYPTO_num_locks(void);     /* return CRYPTO_NUM_LOCKS (shared libs!) */
-void CRYPTO_lock(int mode, int type, const char *file, int line);
-void CRYPTO_set_locking_callback(void (*func) (int mode, int type,
-                                               const char *file, int line));
-void (*CRYPTO_get_locking_callback(void)) (int mode, int type,
-                                           const char *file, int line);
-void CRYPTO_set_add_lock_callback(int (*func)
-                                   (int *num, int mount, int type,
-                                    const char *file, int line));
-int (*CRYPTO_get_add_lock_callback(void)) (int *num, int mount, int type,
-                                           const char *file, int line);
-
-/* Don't use this structure directly. */
+/* This structure is no longer used */
 typedef struct crypto_threadid_st {
-    void *ptr;
-    unsigned long val;
+    int dummy;
 } CRYPTO_THREADID;
 /* Only use CRYPTO_THREADID_set_[numeric|pointer]() within callbacks */
-void CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val);
-void CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr);
-int CRYPTO_THREADID_set_callback(void (*threadid_func) (CRYPTO_THREADID *));
-void (*CRYPTO_THREADID_get_callback(void)) (CRYPTO_THREADID *);
-void CRYPTO_THREADID_current(CRYPTO_THREADID *id);
-int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b);
-void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src);
-unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
-DEPRECATEDIN_1_0_0(void CRYPTO_set_id_callback(unsigned long (*func) (void)))
-DEPRECATEDIN_1_0_0(unsigned long (*CRYPTO_get_id_callback(void)) (void))
-DEPRECATEDIN_1_0_0(unsigned long CRYPTO_thread_id(void))
+#  define CRYPTO_THREADID_set_numeric(id, val)
+#  define CRYPTO_THREADID_set_pointer(id, ptr)
+#  define CRYPTO_THREADID_set_callback(threadid_func)   (0)
+#  define CRYPTO_THREADID_get_callback()                (NULL)
+#  define CRYPTO_THREADID_current(id)
+#  define CRYPTO_THREADID_cmp(a, b)                     (-1)
+#  define CRYPTO_THREADID_cpy(dest, src)
+#  define CRYPTO_THREADID_hash(id)                      (0UL)
 
-const char *CRYPTO_get_lock_name(int type);
-int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
-                    int line);
+#  if OPENSSL_API_COMPAT < 0x10000000L
+#   define CRYPTO_set_id_callback(func)
+#   define CRYPTO_get_id_callback()                     (NULL)
+#   define CRYPTO_thread_id()                           (0UL)
+#  endif /* OPENSSL_API_COMPAT < 0x10000000L */
 
-int CRYPTO_get_new_dynlockid(void);
-void CRYPTO_destroy_dynlockid(int i);
-struct CRYPTO_dynlock_value *CRYPTO_get_dynlock_value(int i);
-void CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value
-                                        *(*dyn_create_function) (const char
-                                                                 *file,
-                                                                 int line));
-void CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)
-                                       (int mode,
-                                        struct CRYPTO_dynlock_value *l,
-                                        const char *file, int line));
-void CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)
-                                          (struct CRYPTO_dynlock_value *l,
-                                           const char *file, int line));
-struct CRYPTO_dynlock_value
-*(*CRYPTO_get_dynlock_create_callback(void)) (const char *file, int line);
-void (*CRYPTO_get_dynlock_lock_callback(void)) (int mode,
-                                                struct CRYPTO_dynlock_value
-                                                *l, const char *file,
-                                                int line);
-void (*CRYPTO_get_dynlock_destroy_callback(void)) (struct CRYPTO_dynlock_value
-                                                   *l, const char *file,
-                                                   int line);
+#  define CRYPTO_get_lock_name(type)                    (NULL)
+#  define CRYPTO_add_lock(pointer, amount, type, file, line) \
+                                                        (0)
+
+#  define CRYPTO_get_new_dynlockid()                    (0)
+#  define CRYPTO_destroy_dynlockid(i)
+#  define CRYPTO_get_dynlock_value(i)                   (NULL)
+#  define CRYPTO_set_dynlock_create_callback(dyn_create_function)
+#  define CRYPTO_set_dynlock_lock_callback(dyn_lock_function)
+#  define CRYPTO_set_dynlock_destroy_callback(dyn_destroy_function)
+#  define CRYPTO_get_dynlock_create_callback()          (NULL)
+#  define CRYPTO_get_dynlock_lock_callback()            (NULL)
+#  define CRYPTO_get_dynlock_destroy_callback()         (NULL)
+# endif /* OPENSSL_API_COMPAT < 0x10100000L */
 
 int CRYPTO_set_mem_functions(
         void *(*m) (size_t, const char *, int),
@@ -501,8 +426,12 @@ int CRYPTO_mem_leaks(struct bio_st *bio);
 # endif
 
 /* die if we have to */
-void OpenSSLDie(const char *file, int line, const char *assertion);
-# define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(OPENSSL_FILE, OPENSSL_LINE, #e),1))
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define OpenSSLDie(f,l,a) OPENSSL_die((a),(f),(l))
+# endif
+void OPENSSL_die(const char *assertion, const char *file, int line);
+# define OPENSSL_assert(e) \
+    (void)((e) ? 0 : (OPENSSL_die("assertion failed: " #e, OPENSSL_FILE, OPENSSL_LINE), 1))
 
 unsigned int *OPENSSL_ia32cap_loc(void);
 # define OPENSSL_ia32cap ((OPENSSL_ia32cap_loc())[0])
@@ -547,6 +476,7 @@ int CRYPTO_memcmp(const volatile void * volatile in_a,
 # define OPENSSL_INIT_ENGINE_PADLOCK         0x00004000L
 # define OPENSSL_INIT_ENGINE_DASYNC          0x00008000L
 /* OPENSSL_INIT flag 0x00010000 reserved for internal use */
+# define OPENSSL_INIT_ENGINE_AFALG           0x00020000L
 /* OPENSSL_INIT flag range 0xfff00000 reserved for OPENSSL_init_ssl() */
 /* Max OPENSSL_INIT flag value is 0x80000000 */
 
@@ -565,8 +495,10 @@ void OPENSSL_thread_stop(void);
 
 /* Low-level control of initialization */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
+#ifndef OPENSSL_NO_STDIO
 void OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
                                       const char *config_file);
+#endif
 void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings);
 
 /* BEGIN ERROR CODES */

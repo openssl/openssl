@@ -4,6 +4,10 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC, "${dir}perlasm", "perlasm");
 require "x86asm.pl";
 
+$output = pop;
+open OUT,">$output";
+*STDOUT=*OUT;
+
 &asm_init($ARGV[0],"x86cpuid");
 
 for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
@@ -487,3 +491,5 @@ my $max = "ebp";
 &hidden("OPENSSL_ia32cap_P");
 
 &asm_finish();
+
+close STDOUT;

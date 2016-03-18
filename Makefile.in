@@ -95,8 +95,8 @@ CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
 CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cflags} -} {- $config{cflags} -}
 CFLAG_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
-LDFLAG= {- $config{lflags} -}
-PLIB_LDFLAG= {- $config{plib_lflags} -}
+LDFLAG= {- $target{lflags} -} {- $config{lflags} -}
+PLIB_LDFLAG= {- $target{plib_lflags} -} {- $config{plib_lflags} -}
 EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 EXE_EXT= {- $target{exe_extension} -}
 ARFLAGS= {- $target{arflags} -}
@@ -137,6 +137,7 @@ RC5_ENC= {- $target{rc5_obj} -}
 MD5_ASM_OBJ= {- $target{md5_obj} -}
 SHA1_ASM_OBJ= {- $target{sha1_obj} -}
 RMD160_ASM_OBJ= {- $target{rmd160_obj} -}
+BLAKE2_OBJ= {- $target{blake2_obj} -}
 WP_ASM_OBJ= {- $target{wp_obj} -}
 CMLL_ENC= {- $target{cmll_obj} -}
 MODES_ASM_OBJ= {- $target{modes_obj} -}
@@ -230,6 +231,8 @@ INSTALLDIRS=	\
 		$(DESTDIR)$(OPENSSLDIR)/certs \
 		$(DESTDIR)$(OPENSSLDIR)/private
 
+ENGDIRS={- join(" ", @{$config{engdirs}}) -}
+
 all: Makefile build_all_but_tests
 
 # as we stick to -e, CLEARENV ensures that local variables in lower
@@ -275,9 +278,11 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		AES_ENC='$(AES_ENC)' CMLL_ENC='$(CMLL_ENC)'	\
 		BF_ENC='$(BF_ENC)' CAST_ENC='$(CAST_ENC)'	\
 		RC4_ENC='$(RC4_ENC)' RC5_ENC='$(RC5_ENC)'	\
+		ENGDIRS='$(ENGDIRS)'    \
 		SHA1_ASM_OBJ='$(SHA1_ASM_OBJ)'			\
 		MD5_ASM_OBJ='$(MD5_ASM_OBJ)'			\
 		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
+		BLAKE2_OBJ='$(BLAKE2_OBJ)'                      \
 		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
 		MODES_ASM_OBJ='$(MODES_ASM_OBJ)'		\
 		PADLOCK_ASM_OBJ='$(PADLOCK_ASM_OBJ)'		\
@@ -510,10 +515,10 @@ errors:
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
 
-ordinals: util/libeay.num util/ssleay.num test_ordinals TABLE
-util/libeay.num::
+ordinals: util/libcrypto.num util/libssl.num test_ordinals TABLE
+util/libcrypto.num::
 	$(PERL) util/mkdef.pl crypto update
-util/ssleay.num::
+util/libssl.num::
 	$(PERL) util/mkdef.pl ssl update
 test_ordinals:
 	TOP=$(TOP) PERL=$(PERL) $(PERL) test/run_tests.pl test_ordinals

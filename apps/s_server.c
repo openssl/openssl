@@ -147,11 +147,6 @@
 
 #include <openssl/e_os2.h>
 
-/* conflicts with winsock2 stuff on netware */
-#if !defined(OPENSSL_SYS_NETWARE)
-# include <sys/types.h>
-#endif
-
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
  * recursive header file inclusion, resulting in the compiler complaining
@@ -244,6 +239,8 @@ static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
 
 static int async = 0;
+static unsigned int split_send_fragment = 0;
+static unsigned int max_pipelines = 0;
 
 #ifndef OPENSSL_NO_ENGINE
 static char *engine_id = NULL;
@@ -402,6 +399,8 @@ static void s_server_init(void)
     s_quiet = 0;
     s_brief = 0;
     async = 0;
+    split_send_fragment = 0;
+    max_pipelines = 0;
 #ifndef OPENSSL_NO_ENGINE
     engine_id = NULL;
 #endif
@@ -739,7 +738,7 @@ static int next_proto_cb(SSL *s, const unsigned char **data,
 /* This the context that we pass to alpn_cb */
 typedef struct tlsextalpnctx_st {
     unsigned char *data;
-    unsigned short len;
+    size_t len;
 } tlsextalpnctx;
 
 static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
@@ -749,7 +748,7 @@ static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
 
     if (!s_quiet) {
         /* We can assume that |in| is syntactically valid. */
-        unsigned i;
+        unsigned int i;
         BIO_printf(bio_s_out, "ALPN protocols advertised by the client: ");
         for (i = 0; i < inlen;) {
             if (i)
@@ -805,8 +804,8 @@ typedef enum OPTION_choice {
     OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
-    OPT_SSL_CONFIG, OPT_SSL3,
-    OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
+    OPT_SSL_CONFIG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
+    OPT_SSL3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_CHAIN, OPT_LISTEN,
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
@@ -938,6 +937,12 @@ OPTIONS s_server_options[] = {
     {"async", OPT_ASYNC, '-', "Operate in asynchronous mode"},
     {"ssl_config", OPT_SSL_CONFIG, 's', \
      "Configure SSL_CTX using the configuration 'val'"},
+    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'n',
+     "Size used to split data for encrypt pipelines"},
+    {"max_pipelines", OPT_MAX_PIPELINES, 'n',
+     "Maximum number of encrypt/decrypt pipelines to be used"},
+    {"read_buf", OPT_READ_BUF, 'n',
+     "Default read buffer size to be used for connections"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -1041,6 +1046,7 @@ int s_server_main(int argc, char *argv[])
     X509 *s_cert2 = NULL;
     tlsextctx tlsextcbp = { NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING };
     const char *ssl_config = NULL;
+    int read_buf_len = 0;
 #ifndef OPENSSL_NO_NEXTPROTONEG
     const char *next_proto_neg_in = NULL;
     tlsextnextprotoctx next_proto = { NULL, 0 };
@@ -1055,6 +1061,7 @@ int s_server_main(int argc, char *argv[])
     char *srpuserseed = NULL;
     char *srp_verifier_file = NULL;
 #endif
+    int min_version = 0, max_version = 0;
 
     local_argc = argc;
     local_argv = argv;
@@ -1378,13 +1385,15 @@ int s_server_main(int argc, char *argv[])
         case OPT_SRPVFILE:
 #ifndef OPENSSL_NO_SRP
             srp_verifier_file = opt_arg();
-            meth = TLSv1_server_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
 #endif
             break;
         case OPT_SRPUSERSEED:
 #ifndef OPENSSL_NO_SRP
             srpuserseed = opt_arg();
-            meth = TLSv1_server_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
 #endif
             break;
         case OPT_REV:
@@ -1403,24 +1412,20 @@ int s_server_main(int argc, char *argv[])
             ssl_config = opt_arg();
             break;
         case OPT_SSL3:
-#ifndef OPENSSL_NO_SSL3
-            meth = SSLv3_server_method();
-#endif
+            min_version = SSL3_VERSION;
+            max_version = SSL3_VERSION;
             break;
         case OPT_TLS1_2:
-#ifndef OPENSSL_NO_TLS1_2
-            meth = TLSv1_2_server_method();
-#endif
+            min_version = TLS1_2_VERSION;
+            max_version = TLS1_2_VERSION;
             break;
         case OPT_TLS1_1:
-#ifndef OPENSSL_NO_TLS1_1
-            meth = TLSv1_1_server_method();
-#endif
+            min_version = TLS1_1_VERSION;
+            max_version = TLS1_1_VERSION;
             break;
         case OPT_TLS1:
-#ifndef OPENSSL_NO_TLS1
-            meth = TLSv1_server_method();
-#endif
+            min_version = TLS1_VERSION;
+            max_version = TLS1_VERSION;
             break;
         case OPT_DTLS:
 #ifndef OPENSSL_NO_DTLS
@@ -1429,14 +1434,18 @@ int s_server_main(int argc, char *argv[])
 #endif
             break;
         case OPT_DTLS1:
-#ifndef OPENSSL_NO_DTLS1
-            meth = DTLSv1_server_method();
+#ifndef OPENSSL_NO_DTLS
+            meth = DTLS_server_method();
+            min_version = DTLS1_VERSION;
+            max_version = DTLS1_VERSION;
             socket_type = SOCK_DGRAM;
 #endif
             break;
         case OPT_DTLS1_2:
-#ifndef OPENSSL_NO_DTLS1_2
-            meth = DTLSv1_2_server_method();
+#ifndef OPENSSL_NO_DTLS
+            meth = DTLS_server_method();
+            min_version = DTLS1_2_VERSION;
+            max_version = DTLS1_2_VERSION;
             socket_type = SOCK_DGRAM;
 #endif
             break;
@@ -1503,6 +1512,23 @@ int s_server_main(int argc, char *argv[])
         case OPT_ASYNC:
             async = 1;
             break;
+        case OPT_SPLIT_SEND_FRAG:
+            split_send_fragment = atoi(opt_arg());
+            if (split_send_fragment == 0) {
+                /*
+                 * Not allowed - set to a deliberately bad value so we get an
+                 * error message below
+                 */
+                split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH + 1;
+            }
+            break;
+        case OPT_MAX_PIPELINES:
+            max_pipelines = atoi(opt_arg());
+            break;
+        case OPT_READ_BUF:
+            read_buf_len = atoi(opt_arg());
+            break;
+
         }
     }
     argc = opt_num_rest();
@@ -1527,6 +1553,16 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 #endif
+
+    if (split_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
+        BIO_printf(bio_err, "Bad split send fragment size\n");
+        goto end;
+    }
+
+    if (max_pipelines > SSL_MAX_PIPELINES) {
+        BIO_printf(bio_err, "Bad max pipelines value\n");
+        goto end;
+    }
 
     if (!app_passwd(passarg, dpassarg, &pass, &dpass)) {
         BIO_printf(bio_err, "Error getting password\n");
@@ -1582,7 +1618,7 @@ int s_server_main(int argc, char *argv[])
     }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto_neg_in) {
-        unsigned short len;
+        size_t len;
         next_proto.data = next_protos_parse(&len, next_proto_neg_in);
         if (next_proto.data == NULL)
             goto end;
@@ -1593,7 +1629,7 @@ int s_server_main(int argc, char *argv[])
 #endif
     alpn_ctx.data = NULL;
     if (alpn_in) {
-        unsigned short len;
+        size_t len;
         alpn_ctx.data = next_protos_parse(&len, alpn_in);
         if (alpn_ctx.data == NULL)
             goto end;
@@ -1690,6 +1726,10 @@ int s_server_main(int argc, char *argv[])
         goto end;
         }
     }
+    if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
+        goto end;
+    if (SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
+        goto end;
 
     if (session_id_prefix) {
         if (strlen(session_id_prefix) >= 32)
@@ -1717,6 +1757,16 @@ int s_server_main(int argc, char *argv[])
 
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
+    }
+    if (split_send_fragment > 0) {
+        SSL_CTX_set_split_send_fragment(ctx, split_send_fragment);
+    }
+    if (max_pipelines > 0) {
+        SSL_CTX_set_max_pipelines(ctx, max_pipelines);
+    }
+
+    if (read_buf_len > 0) {
+        SSL_CTX_set_default_read_buffer_len(ctx, read_buf_len);
     }
 
 #ifndef OPENSSL_NO_SRTP
@@ -2057,7 +2107,7 @@ static int sv_body(int s, int stype, unsigned char *context)
     SSL *con = NULL;
     BIO *sbio;
     struct timeval timeout;
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
     struct timeval tv;
 #else
     struct timeval *timeoutp;
@@ -2168,12 +2218,12 @@ static int sv_body(int s, int stype, unsigned char *context)
         int read_from_sslcon;
 
         read_from_terminal = 0;
-        read_from_sslcon = SSL_pending(con)
+        read_from_sslcon = SSL_has_pending(con)
                            || (async && SSL_waiting_for_async(con));
 
         if (!read_from_sslcon) {
             FD_ZERO(&readfds);
-#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE)
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
             openssl_fdset(fileno(stdin), &readfds);
 #endif
             openssl_fdset(s, &readfds);
@@ -2184,7 +2234,7 @@ static int sv_body(int s, int stype, unsigned char *context)
              * if you do have a cast then you can either go for (int *) or
              * (void *).
              */
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
             /*
              * Under DOS (non-djgpp) and Windows we can't select on stdin:
              * only on sockets. As a workaround we timeout the select every
@@ -2245,7 +2295,7 @@ static int sv_body(int s, int stype, unsigned char *context)
                 if ((i <= 0) || (buf[0] == 'Q')) {
                     BIO_printf(bio_s_out, "DONE\n");
                     (void)BIO_flush(bio_s_out);
-                    SHUTDOWN(s);
+                    BIO_closesocket(s);
                     close_accept_socket();
                     ret = -11;
                     goto err;
@@ -2254,7 +2304,7 @@ static int sv_body(int s, int stype, unsigned char *context)
                     BIO_printf(bio_s_out, "DONE\n");
                     (void)BIO_flush(bio_s_out);
                     if (SSL_version(con) != DTLS1_VERSION)
-                        SHUTDOWN(s);
+                        BIO_closesocket(s);
                     /*
                      * close_accept_socket(); ret= -11;
                      */
@@ -2406,7 +2456,7 @@ static int sv_body(int s, int stype, unsigned char *context)
                     ascii2ebcdic(buf, buf, i);
 #endif
                     raw_write_stdout(buf, (unsigned int)i);
-                    if (SSL_pending(con))
+                    if (SSL_has_pending(con))
                         goto again;
                     break;
                 case SSL_ERROR_WANT_ASYNC:
@@ -2451,7 +2501,7 @@ static void close_accept_socket(void)
 {
     BIO_printf(bio_err, "shutdown accept socket\n");
     if (accept_socket >= 0) {
-        SHUTDOWN2(accept_socket);
+        BIO_closesocket(accept_socket);
     }
 }
 
@@ -2563,6 +2613,7 @@ static int init_ssl_connection(SSL *con)
         X509_NAME_oneline(X509_get_issuer_name(peer), buf, sizeof buf);
         BIO_printf(bio_s_out, "issuer=%s\n", buf);
         X509_free(peer);
+        peer = NULL;
     }
 
     if (SSL_get_shared_ciphers(con, buf, sizeof buf) != NULL)
@@ -2737,9 +2788,7 @@ static int www_body(int s, int stype, unsigned char *context)
                     continue;
                 }
 #endif
-#if defined(OPENSSL_SYS_NETWARE)
-                delay(1000);
-#elif !defined(OPENSSL_SYS_MSDOS)
+#if !defined(OPENSSL_SYS_MSDOS)
                 sleep(1);
 #endif
                 continue;
@@ -2753,7 +2802,7 @@ static int www_body(int s, int stype, unsigned char *context)
         if (((www == 1) && (strncmp("GET ", buf, 4) == 0)) ||
             ((www == 2) && (strncmp("GET /stats ", buf, 11) == 0))) {
             char *p;
-            X509 *peer;
+            X509 *peer = NULL;
             STACK_OF(SSL_CIPHER) *sk;
             static const char *space = "                          ";
 
@@ -2782,7 +2831,7 @@ static int www_body(int s, int stype, unsigned char *context)
                     goto err;
                 }
                 /*
-                 * We're not acutally expecting any data here and we ignore
+                 * We're not actually expecting any data here and we ignore
                  * any that is sent. This is just to force the handshake that
                  * we're expecting to come from the client. If they haven't
                  * sent one there's not much we can do.
@@ -2794,7 +2843,7 @@ static int www_body(int s, int stype, unsigned char *context)
                      "HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
             BIO_puts(io, "<HTML><BODY BGCOLOR=\"#ffffff\">\n");
             BIO_puts(io, "<pre>\n");
-/*                      BIO_puts(io,OpenSSL_version(OPENSSL_VERSION));*/
+            /* BIO_puts(io, OpenSSL_version(OPENSSL_VERSION)); */
             BIO_puts(io, "\n");
             for (i = 0; i < local_argc; i++) {
                 const char *myp;
@@ -2873,6 +2922,8 @@ static int www_body(int s, int stype, unsigned char *context)
                 BIO_printf(io, "Client certificate\n");
                 X509_print(io, peer);
                 PEM_write_bio_X509(io, peer);
+                X509_free(peer);
+                peer = NULL;
             } else
                 BIO_puts(io, "no client certificate available\n");
             BIO_puts(io, "</BODY></HTML>\r\n\r\n");
@@ -3128,9 +3179,7 @@ static int rev_body(int s, int stype, unsigned char *context)
                     continue;
                 }
 #endif
-#if defined(OPENSSL_SYS_NETWARE)
-                delay(1000);
-#elif !defined(OPENSSL_SYS_MSDOS)
+#if !defined(OPENSSL_SYS_MSDOS)
                 sleep(1);
 #endif
                 continue;

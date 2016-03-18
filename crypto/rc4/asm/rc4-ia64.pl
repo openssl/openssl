@@ -164,6 +164,9 @@
 #     random input data).
 #
 
+$output = pop;
+open STDOUT,">$output";
+
 $phases = 4;		# number of stages/phases in the pipelined-loop
 $unroll_count = 6;	# number of times we unrolled it
 $pComI = (1 << 0);
@@ -753,3 +756,5 @@ $code.=<<___;
 ___
 
 print $code;
+
+close STDOUT;

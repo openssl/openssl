@@ -13,7 +13,7 @@ AR=		ar r
 POLY1305_ASM_OBJ=
 
 CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG) $(SHARED_CFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
@@ -37,11 +37,11 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 poly1305-sparcv9.S:	asm/poly1305-sparcv9.pl
-	$(PERL) asm/poly1305-sparcv9.pl > $@
+	$(PERL) asm/poly1305-sparcv9.pl $(PERLASM_SCHEME) $@
 poly1305-x86.s:		asm/poly1305-x86.pl
-	$(PERL) asm/poly1305-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/poly1305-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 poly1305-x86_64.s:	asm/poly1305-x86_64.pl
-	$(PERL) asm/poly1305-x86_64.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/poly1305-x86_64.pl $(PERLASM_SCHEME) $@
 poly1305-ppc.s:		asm/poly1305-ppc.pl
 	$(PERL) asm/poly1305-ppc.pl $(PERLASM_SCHEME) $@
 poly1305-ppcfp.s:	asm/poly1305-ppcfp.pl

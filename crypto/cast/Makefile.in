@@ -14,7 +14,7 @@ AR=		ar r
 CAST_ENC=c_enc.o
 
 CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG) $(SHARED_CFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
@@ -40,7 +40,7 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 cast-586.s:	asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	$(PERL)	asm/cast-586.pl $(PERLASM_SCHEME) $(CLAGS) $(PROCESSOR) > $@
+	$(PERL)	asm/cast-586.pl $(PERLASM_SCHEME) $(CLAGS) $(PROCESSOR) $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

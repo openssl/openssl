@@ -60,10 +60,20 @@
 
 #define STACKSIZE       32768
 
+int ASYNC_is_capable(void)
+{
+    ucontext_t ctx;
+
+    /*
+     * Some platforms provide getcontext() but it does not work (notably
+     * MacOSX PPC64). Check for a working getcontext();
+     */
+    return getcontext(&ctx) == 0;
+}
+
 void async_local_cleanup(void)
 {
 }
-
 
 int async_fibre_makecontext(async_fibre *fibre)
 {

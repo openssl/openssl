@@ -35,6 +35,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"ecp_nistz256-x86.pl",$ARGV[$#ARGV] eq "386");
 
 $sse2=0;
@@ -1829,3 +1832,5 @@ for ($i=0;$i<7;$i++) {
 } &function_end("ecp_nistz256_point_add_affine");
 
 &asm_finish();
+
+close STDOUT;

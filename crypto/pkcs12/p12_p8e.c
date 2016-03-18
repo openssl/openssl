@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "internal/x509_int.h"
 
 X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
                         const char *pass, int passlen,
@@ -103,13 +104,13 @@ X509_SIG *PKCS8_set0_pbe(const char *pass, int passlen,
         return NULL;
     }
 
-    if ((p8 = X509_SIG_new()) == NULL) {
+    p8 = OPENSSL_zalloc(sizeof(*p8));
+
+    if (p8 == NULL) {
         PKCS12err(PKCS12_F_PKCS8_SET0_PBE, ERR_R_MALLOC_FAILURE);
         ASN1_OCTET_STRING_free(enckey);
         return NULL;
     }
-    X509_ALGOR_free(p8->algor);
-    ASN1_OCTET_STRING_free(p8->digest);
     p8->algor = pbe;
     p8->digest = enckey;
 

@@ -204,13 +204,13 @@ static int sct_ctx_update(EVP_MD_CTX *ctx, const SCT_CTX *sctx, const SCT *sct)
 int SCT_verify(const SCT_CTX *sctx, const SCT *sct)
 {
     EVP_MD_CTX *ctx = NULL;
-    int ret = -1;
+    int ret = 0;
 
     if (!SCT_is_complete(sct) || sctx->pkey == NULL ||
         sct->entry_type == CT_LOG_ENTRY_TYPE_NOT_SET ||
         (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT && sctx->ihash == NULL)) {
         CTerr(CT_F_SCT_VERIFY, CT_R_SCT_NOT_SET);
-        return -1;
+        return 0;
     }
     if (sct->version != SCT_VERSION_V1) {
         CTerr(CT_F_SCT_VERIFY, CT_R_SCT_UNSUPPORTED_VERSION);
@@ -251,7 +251,7 @@ int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
 
     if (!SCT_is_complete(sct)) {
         CTerr(CT_F_SCT_VERIFY_V1, CT_R_SCT_NOT_SET);
-        return -1;
+        return 0;
     }
 
     if (sct->version != 0) {
@@ -263,22 +263,17 @@ int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
     if (sctx == NULL)
         goto done;
 
-    ret = SCT_CTX_set1_pubkey(sctx, log_pubkey);
-    if (ret <= 0)
+    if (!SCT_CTX_set1_pubkey(sctx, log_pubkey))
         goto done;
 
-    ret = SCT_CTX_set1_cert(sctx, cert, preissuer);
-    if (ret <= 0)
+    if (!SCT_CTX_set1_cert(sctx, cert, preissuer))
         goto done;
 
-    if (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT) {
-        ret = SCT_CTX_set1_issuer(sctx, issuer_cert);
-        if (ret <= 0)
-            goto done;
-    }
+    if (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT &&
+        !SCT_CTX_set1_issuer(sctx, issuer_cert))
+        goto done;
 
     ret = SCT_verify(sctx, sct);
-
 done:
     SCT_CTX_free(sctx);
     return ret;

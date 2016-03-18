@@ -78,7 +78,7 @@ static char prog[40];
 /*
  * Return the simple name of the program; removing various platform gunk.
  */
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WIN32)
 char *opt_progname(const char *argv0)
 {
     size_t i, n;
@@ -97,11 +97,6 @@ char *opt_progname(const char *argv0)
     if (n > 4 &&
         (strcmp(&p[n - 4], ".exe") == 0 || strcmp(&p[n - 4], ".EXE") == 0))
         n -= 4;
-#if defined(OPENSSL_SYS_NETWARE)
-    if (n > 4 &&
-        (strcmp(&p[n - 4], ".nlm") == 0 || strcmp(&p[n - 4], ".NLM") == 0))
-        n -= 4;
-#endif
 
     /* Copy over the name, in lowercase. */
     if (n > sizeof prog - 1)

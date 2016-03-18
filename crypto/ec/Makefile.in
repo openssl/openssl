@@ -11,7 +11,7 @@ MAKEFILE=	Makefile
 AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG) $(SHARED_CFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
@@ -49,16 +49,16 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 ecp_nistz256-x86.s:	asm/ecp_nistz256-x86.pl
-	$(PERL) asm/ecp_nistz256-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/ecp_nistz256-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 
 ecp_nistz256-x86_64.s: asm/ecp_nistz256-x86_64.pl
-	$(PERL) asm/ecp_nistz256-x86_64.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/ecp_nistz256-x86_64.pl $(PERLASM_SCHEME) $@
 
 ecp_nistz256-avx2.s:   asm/ecp_nistz256-avx2.pl
-	$(PERL) asm/ecp_nistz256-avx2.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/ecp_nistz256-avx2.pl $(PERLASM_SCHEME) $@
 
 ecp_nistz256-sparcv9.S:	asm/ecp_nistz256-sparcv9.pl
-	$(PERL) asm/ecp_nistz256-sparcv9.pl $(CFLAGS) > $@
+	$(PERL) asm/ecp_nistz256-sparcv9.pl $(PERLASM_SCHEME) $@
 
 ecp_nistz256-%.S:	asm/ecp_nistz256-%.pl;  $(PERL) $< $(PERLASM_SCHEME) $@
 ecp_nistz256-armv4.o:	ecp_nistz256-armv4.S

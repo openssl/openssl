@@ -61,12 +61,11 @@ my $test_name = "test_sslextension";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^VMS$/;
+    if $^O =~ /^(VMS|MSWin32)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
 
-$ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&vers_tolerance_filter,
@@ -84,7 +83,8 @@ ok(TLSProxy::Message->success(), "Version tolerance test, TLS 1.3");
 
 #Test 2: Testing something below SSLv3 should fail
 $client_version = TLSProxy::Record::VERS_SSL_3_0 - 1;
-$proxy->restart();
+$proxy->clear();
+$proxy->start();
 ok(TLSProxy::Message->fail(), "Version tolerance test, SSL < 3.0");
 
 sub vers_tolerance_filter

@@ -477,7 +477,7 @@ $code.=<<___;
 	$PUSH	r29,`$FRAME-$SIZE_T*3`($sp)
 	$PUSH	r30,`$FRAME-$SIZE_T*2`($sp)
 	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
-	li	12,-1
+	li	r12,-1
 	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
 	mtspr	256,r12				# preserve all AltiVec registers
 

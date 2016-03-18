@@ -5,6 +5,9 @@ push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 require "cbc.pl";
 
+$output = pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"bf-586.pl",$ARGV[$#ARGV] eq "386");
 
 $BF_ROUNDS=16;
@@ -21,6 +24,8 @@ $tmp4="edx";
 &BF_encrypt("BF_decrypt",0);
 &cbc("BF_cbc_encrypt","BF_encrypt","BF_decrypt",1,4,5,3,-1,-1);
 &asm_finish();
+
+close STDOUT;
 
 sub BF_encrypt
 	{

@@ -22,7 +22,7 @@ err - error codes
  int ERR_GET_REASON(unsigned long e);
 
  void ERR_clear_error(void);
- void ERR_remove_thread_state(const CRYPTO_THREADID *tid);
+ void ERR_remove_thread_state(void);
 
  char *ERR_error_string(unsigned long e, char *buf);
  const char *ERR_lib_error_string(unsigned long e);
@@ -164,15 +164,14 @@ TBA more details
 
 =head1 INTERNALS
 
-The error queues are stored in a hash table with one B<ERR_STATE>
-entry for each pid. ERR_get_state() returns the current thread's
+The error queues are stored in a thread-local storage with one B<ERR_STATE>
+entry for each thread. ERR_get_state() returns the current thread's
 B<ERR_STATE>. An B<ERR_STATE> can hold up to B<ERR_NUM_ERRORS> error
 codes. When more error codes are added, the old ones are overwritten,
 on the assumption that the most recent errors are most important.
 
-Error strings are also stored in hash table. The hash tables can
-be obtained by calling ERR_get_err_state_table(void) and
-ERR_get_string_table(void) respectively.
+Error strings are also stored in a hash table that can be obtained
+by calling ERR_get_string_table(void).
 
 =head1 SEE ALSO
 

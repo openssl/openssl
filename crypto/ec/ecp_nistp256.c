@@ -1760,6 +1760,7 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 struct nistp256_pre_comp_st {
     smallfelem g_pre_comp[2][16][3];
     int references;
+    CRYPTO_RWLOCK *lock;
 };
 
 const EC_METHOD *EC_GFp_nistp256_method(void)
@@ -1834,21 +1835,38 @@ static NISTP256_PRE_COMP *nistp256_pre_comp_new()
     }
 
     ret->references = 1;
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        ECerr(EC_F_NISTP256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ret);
+        return NULL;
+    }
     return ret;
 }
 
 NISTP256_PRE_COMP *EC_nistp256_pre_comp_dup(NISTP256_PRE_COMP *p)
 {
+    int i;
     if (p != NULL)
-        CRYPTO_add(&p->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
+        CRYPTO_atomic_add(&p->references, 1, &i, p->lock);
     return p;
 }
 
 void EC_nistp256_pre_comp_free(NISTP256_PRE_COMP *pre)
 {
-    if (pre == NULL
-            || CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP) > 0)
+    int i;
+
+    if (pre == NULL)
         return;
+
+    CRYPTO_atomic_add(&pre->references, -1, &i, pre->lock);
+    REF_PRINT_COUNT("EC_nistp256", x);
+    if (i > 0)
+        return;
+    REF_ASSERT_ISNT(i < 0);
+
+    CRYPTO_THREAD_lock_free(pre->lock);
     OPENSSL_free(pre);
 }
 

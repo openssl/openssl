@@ -1589,6 +1589,7 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 struct nistp521_pre_comp_st {
     felem g_pre_comp[16][3];
     int references;
+    CRYPTO_RWLOCK *lock;
 };
 
 const EC_METHOD *EC_GFp_nistp521_method(void)
@@ -1661,22 +1662,40 @@ static NISTP521_PRE_COMP *nistp521_pre_comp_new()
         ECerr(EC_F_NISTP521_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }
+
     ret->references = 1;
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        ECerr(EC_F_NISTP521_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ret);
+        return NULL;
+    }
     return ret;
 }
 
 NISTP521_PRE_COMP *EC_nistp521_pre_comp_dup(NISTP521_PRE_COMP *p)
 {
+    int i;
     if (p != NULL)
-        CRYPTO_add(&p->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
+        CRYPTO_atomic_add(&p->references, 1, &i, p->lock);
     return p;
 }
 
 void EC_nistp521_pre_comp_free(NISTP521_PRE_COMP *p)
 {
-    if (p == NULL
-            || CRYPTO_add(&p->references, -1, CRYPTO_LOCK_EC_PRE_COMP) > 0)
+    int i;
+
+    if (p == NULL)
         return;
+
+    CRYPTO_atomic_add(&p->references, -1, &i, p->lock);
+    REF_PRINT_COUNT("EC_nistp521", x);
+    if (i > 0)
+        return;
+    REF_ASSERT_ISNT(i < 0);
+
+    CRYPTO_THREAD_lock_free(p->lock);
     OPENSSL_free(p);
 }
 

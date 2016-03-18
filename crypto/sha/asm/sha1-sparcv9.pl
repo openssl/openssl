@@ -25,7 +25,7 @@
 # single-process result on 8-core processor, or ~9GBps per 2.85GHz
 # socket.
 
-$output=shift;
+$output=pop;
 open STDOUT,">$output";
 
 @X=("%o0","%o1","%o2","%o3","%o4","%o5","%g1","%o7");

@@ -59,6 +59,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 
 ASN1_SEQUENCE(X509_SIG) = {
         ASN1_SIMPLE(X509_SIG, algor, X509_ALGOR),
@@ -66,3 +67,12 @@ ASN1_SEQUENCE(X509_SIG) = {
 } ASN1_SEQUENCE_END(X509_SIG)
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_SIG)
+
+void X509_SIG_get0(X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest,
+                   X509_SIG *sig)
+{
+    if (palg)
+        *palg = sig->algor;
+    if (pdigest)
+        *pdigest = sig->digest;
+}

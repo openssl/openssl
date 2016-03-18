@@ -8,7 +8,7 @@ ERR_remove_thread_state, ERR_remove_state - free a thread's error queue
 
  #include <openssl/err.h>
 
- void ERR_remove_thread_state(const CRYPTO_THREADID *tid);
+ void ERR_remove_thread_state(void);
 
 Deprecated:
 
@@ -18,17 +18,16 @@ Deprecated:
 
 =head1 DESCRIPTION
 
-ERR_remove_thread_state() frees the error queue associated with thread B<tid>.
-If B<tid> == B<NULL>, the current thread will have its error queue removed.
+ERR_remove_thread_state() frees the error queue associated with the current
+thread.
 
 Since error queue data structures are allocated automatically for new
 threads, they must be freed when threads are terminated in order to
 avoid memory leaks.
 
 ERR_remove_state is deprecated and has been replaced by
-ERR_remove_thread_state. Since threads in OpenSSL are no longer identified
-by unsigned long values any argument to this function is ignored. Calling
-ERR_remove_state is equivalent to B<ERR_remove_thread_state(NULL)>.
+ERR_remove_thread_state. Any argument to this function is ignored and
+calling ERR_remove_state is equivalent to B<ERR_remove_thread_state()>.
 
 =head1 RETURN VALUE
 
@@ -41,7 +40,6 @@ L<err(3)>
 =head1 HISTORY
 
 ERR_remove_state()
-was deprecated in OpenSSL 1.0.0 when ERR_remove_thread_state() was introduced
-and thread IDs were introduced to identify threads instead of 'unsigned long'. 
+was deprecated in OpenSSL 1.0.0 when ERR_remove_thread_state() was introduced.
 
 =cut

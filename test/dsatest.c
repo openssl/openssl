@@ -217,10 +217,6 @@ int main(int argc, char **argv)
 #endif
     BIO_free(bio_err);
     bio_err = NULL;
-# ifdef OPENSSL_SYS_NETWARE
-    if (!ret)
-        printf("ERROR\n");
-# endif
     EXIT(!ret);
 }
 

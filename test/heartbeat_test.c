@@ -124,7 +124,7 @@ static HEARTBEAT_TEST_FIXTURE set_up(const char *const test_case_name,
 static HEARTBEAT_TEST_FIXTURE set_up_dtls(const char *const test_case_name)
 {
     HEARTBEAT_TEST_FIXTURE fixture = set_up(test_case_name,
-                                            DTLSv1_server_method());
+                                            DTLS_server_method());
     fixture.process_heartbeat = dtls1_process_heartbeat;
 
     /*

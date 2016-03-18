@@ -61,7 +61,7 @@ my $test_name = "test_sslskewith0p";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^VMS$/;
+    if $^O =~ /^(VMS|MSWin32)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
@@ -69,7 +69,6 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "dh is not supported by this OpenSSL build"
     if disabled("dh");
 
-$ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&ske_0_p_filter,

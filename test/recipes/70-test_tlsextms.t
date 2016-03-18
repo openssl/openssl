@@ -62,12 +62,11 @@ my $test_name = "test_tlsextms";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^VMS$/;
+    if $^O =~ /^(VMS|MSWin32)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
 
-$ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 sub checkmessages($$$$$);
@@ -136,7 +135,7 @@ setrmextms(0, 0);
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(5, "Session resumption extended master secret test", 1, 1, 0);
@@ -152,7 +151,7 @@ setrmextms(1, 0);
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 setrmextms(0, 0);
 $proxy->clientstart();
@@ -168,7 +167,7 @@ setrmextms(0, 0);
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 setrmextms(1, 0);
 $proxy->clientstart();
@@ -184,7 +183,7 @@ setrmextms(0, 0);
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 setrmextms(0, 1);
 $proxy->clientstart();
@@ -200,7 +199,7 @@ setrmextms(0, 1);
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 setrmextms(0, 0);
 $proxy->clientstart();

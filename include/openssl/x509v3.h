@@ -737,6 +737,8 @@ STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x);
 # define X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS 0x8
 /* Constraint verifier subdomain patterns to match a single labels. */
 # define X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS 0x10
+/* Never check the subject CN */
+# define X509_CHECK_FLAG_NEVER_CHECK_SUBJECT    0x20
 /*
  * Match reference identifiers starting with "." to any sub-domain.
  * This is a non-public flag, turned on implicitly when the subject

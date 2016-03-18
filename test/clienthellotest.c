@@ -72,19 +72,13 @@
 #define EXTENSION_SIZE_LEN      2
 
 
-#define TOTAL_NUM_TESTS                         2
-
-/*
- * Test that explicitly setting ticket data results in it appearing in the
- * ClientHello for TLS1.2
- */
-#define TEST_SET_SESSION_TICK_DATA_TLS_1_2      0
+#define TOTAL_NUM_TESTS                         1
 
 /*
  * Test that explicitly setting ticket data results in it appearing in the
  * ClientHello for a negotiated SSL/TLS version
  */
-#define TEST_SET_SESSION_TICK_DATA_VER_NEG      1
+#define TEST_SET_SESSION_TICK_DATA_VER_NEG      0
 
 int main(int argc, char *argv[])
 {
@@ -114,15 +108,7 @@ int main(int argc, char *argv[])
      */
     for (; currtest < TOTAL_NUM_TESTS; currtest++) {
         testresult = 0;
-        if (currtest == TEST_SET_SESSION_TICK_DATA_TLS_1_2) {
-#ifndef OPENSSL_NO_TLS1_2
-            ctx = SSL_CTX_new(TLSv1_2_method());
-#else
-            continue;
-#endif
-        } else {
-            ctx = SSL_CTX_new(TLS_method());
-        }
+        ctx = SSL_CTX_new(TLS_method());
         con = SSL_new(ctx);
 
         rbio = BIO_new(BIO_s_mem());
@@ -130,8 +116,7 @@ int main(int argc, char *argv[])
         SSL_set_bio(con, rbio, wbio);
         SSL_set_connect_state(con);
 
-        if (currtest == TEST_SET_SESSION_TICK_DATA_TLS_1_2
-                || currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
+        if (currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
             if (!SSL_set_session_ticket_ext(con, dummytick, strlen(dummytick)))
                 goto end;
         }
@@ -183,8 +168,7 @@ int main(int argc, char *argv[])
                 goto end;
 
             if (type == TLSEXT_TYPE_session_ticket) {
-                if (currtest == TEST_SET_SESSION_TICK_DATA_TLS_1_2
-                        || currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
+                if (currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
                     if (size == strlen(dummytick)
                             && memcmp(data, dummytick, size) == 0) {
                         /* Ticket data is as we expected */

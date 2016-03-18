@@ -77,13 +77,9 @@ int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name,
 
 int PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage)
 {
-    unsigned char us_val;
-    us_val = (unsigned char)usage;
-    if (X509at_add1_attr_by_NID(&p8->attributes, NID_key_usage,
-                                V_ASN1_BIT_STRING, &us_val, 1))
-        return 1;
-    else
-        return 0;
+    unsigned char us_val = (unsigned char)usage;
+    return PKCS8_pkey_add1_attr_by_NID(p8, NID_key_usage,
+                                       V_ASN1_BIT_STRING, &us_val, 1);
 }
 
 /* Add a friendlyname to a safebag */

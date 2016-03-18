@@ -235,6 +235,19 @@ int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
     return SSL_CTX_load_verify_locations(ctx, CAfile, CApath);
 }
 
+#ifndef OPENSSL_NO_CT
+
+int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
+{
+    if (path == NULL) {
+        return SSL_CTX_set_default_ctlog_list_file(ctx);
+    }
+
+    return SSL_CTX_set_ctlog_list_file(ctx, path);
+}
+
+#endif
+
 int dump_cert_text(BIO *out, X509 *x)
 {
     char *p;
@@ -1947,7 +1960,7 @@ void policies_print(X509_STORE_CTX *ctx)
  *
  *   returns: a malloced buffer or NULL on failure.
  */
-unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
+unsigned char *next_protos_parse(size_t *outlen, const char *in)
 {
     size_t len;
     unsigned char *out;
@@ -2190,30 +2203,6 @@ double app_tminterval(int stop, int usertime)
 
     return (ret);
 }
-#elif defined(OPENSSL_SYS_NETWARE)
-# include <time.h>
-
-double app_tminterval(int stop, int usertime)
-{
-    static clock_t tmstart;
-    static int warning = 1;
-    double ret = 0;
-
-    if (usertime && warning) {
-        BIO_printf(bio_err, "To get meaningful results, run "
-                   "this program on idle system.\n");
-        warning = 0;
-    }
-
-    if (stop == TM_START)
-        tmstart = clock();
-    else
-        ret = (clock() - tmstart) / (double)CLOCKS_PER_SEC;
-
-    return (ret);
-}
-
-
 #elif defined(OPENSSL_SYSTEM_VXWORKS)
 # include <time.h>
 

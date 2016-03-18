@@ -4,6 +4,71 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Removed the aged BC-32 config and all its supporting scripts
+     [Richard Levitte]
+
+  *) Removed support for Ultrix, Netware, and OS/2.
+     [Rich Salz]
+
+  *) Add support for HKDF.
+     [Alessandro Ghedini]
+
+  *) Add support for blake2b and blake2s
+     [Bill Cox]
+
+  *) Added support for "pipelining". Ciphers that have the
+     EVP_CIPH_FLAG_PIPELINE flag set have a capability to process multiple
+     encryptions/decryptions simultaneously. There are currently no built-in
+     ciphers with this property but the expectation is that engines will be able
+     to offer it to significantly improve throughput. Support has been extended
+     into libssl so that multiple records for a single connection can be
+     processed in one go (for >=TLS 1.1).
+     [Matt Caswell]
+
+  *) Added the AFALG engine. This is an async capable engine which is able to
+     offload work to the Linux kernel. In this initial version it only supports
+     AES128-CBC. The kernel must be version 4.1.0 or greater.
+     [Catriona Lucey]
+
+  *) OpenSSL now uses a new threading API. It is no longer necessary to
+     set locking callbacks to use OpenSSL in a multi-threaded environment. There
+     are two supported threading models: pthreads and windows threads. It is
+     also possible to configure OpenSSL at compile time for "no-threads". The
+     old threading API should no longer be used. The functions have been
+     replaced with "no-op" compatibility macros.
+     [Alessandro Ghedini, Matt Caswell]
+
+  *) Modify behavior of ALPN to invoke callback after SNI/servername
+     callback, such that updates to the SSL_CTX affect ALPN.
+     [Todd Short]
+
+  *) Add SSL_CIPHER queries for authentication and key-exchange.
+     [Todd Short]
+
+  *) Changes to the DEFAULT cipherlist:
+       - Prefer (EC)DHE handshakes over plain RSA.
+       - Prefer AEAD ciphers over legacy ciphers.
+       - Prefer ECDSA over RSA when both certificates are available.
+       - Prefer TLSv1.2 ciphers/PRF.
+       - Remove DSS, SEED, IDEA, CAMELLIA, and AES-CCM from the
+         default cipherlist.
+     [Emilia Käsper]
+
+  *) Change the ECC default curve list to be this, in order: x25519,
+     secp256r1, secp521r1, secp384r1.
+     [Rich Salz]
+
+  *) RC4 based libssl ciphersuites are now classed as "weak" ciphers and are
+     disabled by default. They can be re-enabled using the
+     enable-weak-ssl-ciphers option to Configure.
+     [Matt Caswell]
+
+  *) If the server has ALPN configured, but supports no protocols that the
+     client advertises, send a fatal "no_application_protocol" alert.
+     This behaviour is SHALL in RFC 7301, though it isn't universally
+     implemented by other servers.
+     [Emilia Käsper]
+
   *) Add X25519 support.
      Integrate support for X25519 into EC library. This includes support
      for public and private key encoding using the format documented in
@@ -857,6 +922,11 @@
      is enable if DEBUG_UNUSED is set. Add to several functions in evp.h
      whose return value is often ignored. 
      [Steve Henson]
+
+  *) New -noct, -requestct, -requirect and -ctlogfile options for s_client.
+     These allow SCTs (signed certificate timestamps) to be requested and
+     validated when establishing a connection.
+     [Rob Percival <robpercival@google.com>]
 
  Changes between 1.0.2f and 1.0.2g [1 Mar 2016]
 

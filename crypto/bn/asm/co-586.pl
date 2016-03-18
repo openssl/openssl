@@ -4,6 +4,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output = pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],$0);
 
 &bn_mul_comba("bn_mul_comba8",8);
@@ -12,6 +15,8 @@ require "x86asm.pl";
 &bn_sqr_comba("bn_sqr_comba4",4);
 
 &asm_finish();
+
+close STDOUT;
 
 sub mul_add_c
 	{

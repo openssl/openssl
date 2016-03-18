@@ -72,7 +72,7 @@ NETDB_DEFINE_CONTEXT
 # else
 #  define MAX_LISTEN  32
 # endif
-# if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
+# if defined(OPENSSL_SYS_WINDOWS)
 static int wsa_init_done = 0;
 # endif
 
@@ -202,34 +202,12 @@ int BIO_sock_init(void)
         return (-1);
 # endif
 
-# if defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
-    WORD wVerReq;
-    WSADATA wsaData;
-    int err;
-
-    if (!wsa_init_done) {
-        wsa_init_done = 1;
-        wVerReq = MAKEWORD(2, 0);
-        err = WSAStartup(wVerReq, &wsaData);
-        if (err != 0) {
-            SYSerr(SYS_F_WSASTARTUP, err);
-            BIOerr(BIO_F_BIO_SOCK_INIT, BIO_R_WSASTARTUP);
-            return (-1);
-        }
-    }
-# endif
-
     return (1);
 }
 
 void BIO_sock_cleanup(void)
 {
 # ifdef OPENSSL_SYS_WINDOWS
-    if (wsa_init_done) {
-        wsa_init_done = 0;
-        WSACleanup();
-    }
-# elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
     if (wsa_init_done) {
         wsa_init_done = 0;
         WSACleanup();

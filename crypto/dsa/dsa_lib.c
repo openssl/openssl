@@ -115,7 +115,7 @@ DSA *DSA_new_method(ENGINE *engine)
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
     ret->meth = DSA_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
@@ -141,17 +141,25 @@ DSA *DSA_new_method(ENGINE *engine)
 
     ret->references = 1;
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
+
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
-    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
 #ifndef OPENSSL_NO_ENGINE
         ENGINE_finish(ret->engine);
 #endif
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
         OPENSSL_free(ret);
+        return NULL;
+    }
+
+    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
+        DSA_free(ret);
         ret = NULL;
     }
 
-    return (ret);
+    return ret;
 }
 
 void DSA_free(DSA *r)
@@ -161,7 +169,7 @@ void DSA_free(DSA *r)
     if (r == NULL)
         return;
 
-    i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DSA);
+    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
     REF_PRINT_COUNT("DSA", r);
     if (i > 0)
         return;
@@ -175,19 +183,22 @@ void DSA_free(DSA *r)
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
 
+    CRYPTO_THREAD_lock_free(r->lock);
+
     BN_clear_free(r->p);
     BN_clear_free(r->q);
     BN_clear_free(r->g);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
-    BN_clear_free(r->kinv);
-    BN_clear_free(r->r);
     OPENSSL_free(r);
 }
 
 int DSA_up_ref(DSA *r)
 {
-    int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DSA);
+    int i;
+
+    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+        return 0;
 
     REF_PRINT_COUNT("DSA", r);
     REF_ASSERT_ISNT(i < 2);

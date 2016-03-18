@@ -498,6 +498,7 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_session_ticket, "session_ticket"},
     {TLSEXT_TYPE_renegotiate, "renegotiate"},
     {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"},
+    {TLSEXT_TYPE_signed_certificate_timestamp, "signed_certificate_timestamps"},
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"}

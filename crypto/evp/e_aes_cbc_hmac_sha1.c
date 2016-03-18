@@ -116,7 +116,7 @@ void aesni256_cbc_sha1_dec(const void *inp, void *out, size_t blocks,
                            const AES_KEY *key, unsigned char iv[16],
                            SHA_CTX *ctx, const void *in0);
 
-#  define data(ctx) ((EVP_AES_HMAC_SHA1 *)EVP_CIPHER_CTX_cipher_data(ctx))
+#  define data(ctx) ((EVP_AES_HMAC_SHA1 *)EVP_CIPHER_CTX_get_cipher_data(ctx))
 
 static int aesni_cbc_hmac_sha1_init_key(EVP_CIPHER_CTX *ctx,
                                         const unsigned char *inkey,
