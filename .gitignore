@@ -41,10 +41,11 @@ Makefile
 
 
 # Auto generated headers
+/apps/progs.h
 /crypto/buildinf.h
-/openssl/include/opensslconf.h
 /crypto/include/internal/*_conf.h
-util/domd
+/openssl/include/opensslconf.h
+/util/domd
 
 # Auto generated assembly language source files
 *.s
