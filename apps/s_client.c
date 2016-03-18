@@ -242,7 +242,7 @@ typedef struct srp_arg_st {
     int msg;                    /* copy from c_msg */
     int debug;                  /* copy from c_debug */
     int amp;                    /* allow more groups */
-    int strength /* minimal size for N */ ;
+    int strength;               /* minimal size for N */
 } SRP_ARG;
 
 # define SRP_NUMBER_ITERATIONS_FOR_PRIME 64
@@ -276,7 +276,7 @@ static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
  * The callback is only called for a non default group.
  *
  * An application does not need the call back at all if
- * only the stanard groups are used.  In real life situations,
+ * only the standard groups are used.  In real life situations,
  * client and server already share well known groups,
  * thus there is no need to verify them.
  * Furthermore, in case that a server actually proposes a group that
@@ -549,8 +549,14 @@ typedef enum OPTION_choice {
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
-    OPT_PSK_IDENTITY, OPT_PSK, OPT_SRPUSER, OPT_SRPPASS, OPT_SRP_STRENGTH,
-    OPT_SRP_LATEUSER, OPT_SRP_MOREGROUPS, OPT_SSL3, OPT_SSL_CONFIG,
+#ifndef OPENSSL_NO_PSK
+    OPT_PSK_IDENTITY, OPT_PSK,
+#endif
+#ifndef OPENSSL_NO_SRP
+    OPT_SRPUSER, OPT_SRPPASS, OPT_SRP_STRENGTH, OPT_SRP_LATEUSER,
+    OPT_SRP_MOREGROUPS,
+#endif
+    OPT_SSL3, OPT_SSL_CONFIG,
     OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
@@ -711,7 +717,7 @@ OPTIONS s_client_options[] = {
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
 #endif
 #ifndef OPENSSL_NO_SRP
-    {"srpuser", OPT_SRPUSER, 's', "SRP authentification for 'user'"},
+    {"srpuser", OPT_SRPUSER, 's', "SRP authentication for 'user'"},
     {"srppass", OPT_SRPPASS, 's', "Password for 'user'"},
     {"srp_lateuser", OPT_SRP_LATEUSER, '-',
      "SRP username into second ClientHello message"},
@@ -733,7 +739,7 @@ OPTIONS s_client_options[] = {
     {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
     {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
 #endif
-    {NULL}
+    {NULL, OPT_EOF, 0x00, NULL}
 };
 
 typedef enum PROTOCOL_choice {
@@ -749,7 +755,7 @@ typedef enum PROTOCOL_choice {
     PROTO_IRC
 } PROTOCOL_CHOICE;
 
-static OPT_PAIR services[] = {
+static const OPT_PAIR services[] = {
     {"smtp", PROTO_SMTP},
     {"pop3", PROTO_POP3},
     {"imap", PROTO_IMAP},
@@ -758,7 +764,7 @@ static OPT_PAIR services[] = {
     {"xmpp-server", PROTO_XMPP_SERVER},
     {"telnet", PROTO_TELNET},
     {"irc", PROTO_IRC},
-    {NULL}
+    {NULL, 0}
 };
 
 int s_client_main(int argc, char **argv)
@@ -1034,7 +1040,6 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "Error getting client auth engine\n");
                 goto opthelp;
             }
-            break;
 #endif
             break;
         case OPT_RAND:
@@ -1098,10 +1103,6 @@ int s_client_main(int argc, char **argv)
                 goto end;
             }
             break;
-#else
-        case OPT_PSK_IDENTITY:
-        case OPT_PSK:
-            break;
 #endif
 #ifndef OPENSSL_NO_SRP
         case OPT_SRPUSER:
@@ -1130,13 +1131,6 @@ int s_client_main(int argc, char **argv)
             srp_arg.amp = 1;
             if (min_version < TLS1_VERSION)
                 min_version = TLS1_VERSION;
-            break;
-#else
-        case OPT_SRPUSER:
-        case OPT_SRPPASS:
-        case OPT_SRP_STRENGTH:
-        case OPT_SRP_LATEUSER:
-        case OPT_SRP_MOREGROUPS:
             break;
 #endif
         case OPT_SSL_CONFIG:
@@ -1700,9 +1694,9 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
     } else if (dane_tlsa_rrset != NULL) {
-            BIO_printf(bio_err, "%s: DANE TLSA authentication requires the "
-                       "-dane_tlsa_domain option.\n", prog);
-            goto end;
+        BIO_printf(bio_err, "%s: DANE TLSA authentication requires the "
+                   "-dane_tlsa_domain option.\n", prog);
+        goto end;
     }
 
  re_start:
@@ -2572,6 +2566,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                SSL_CIPHER_get_version(c), SSL_CIPHER_get_name(c));
     if (peer != NULL) {
         EVP_PKEY *pktmp;
+
         pktmp = X509_get0_pubkey(peer);
         BIO_printf(bio, "Server public key is %d bit\n",
                    EVP_PKEY_bits(pktmp));
