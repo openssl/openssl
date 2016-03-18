@@ -1664,7 +1664,7 @@ use warnings;
 use Exporter;
 #use vars qw(\@ISA \@EXPORT);
 our \@ISA = qw(Exporter);
-our \@EXPORT = qw(\%config \%target \%disabled \%withargs \%unified_info);
+our \@EXPORT = qw(\%config \%target \%disabled \%withargs \%unified_info \@disablables);
 
 EOF
 print OUT "our %config = (\n";
@@ -1698,6 +1698,14 @@ EOF
 print OUT "our \%available_protocols = (\n";
 print OUT "  tls => [ ", join(", ", map { quotify("perl", $_) } @tls), " ],\n";
 print OUT "  dtls => [ ", join(", ", map { quotify("perl", $_) } @dtls), " ],\n";
+print OUT <<"EOF";
+);
+
+EOF
+print OUT "our \@disablables = (\n";
+foreach (@disablables) {
+    print OUT "  ", quotify("perl", $_), ",\n";
+}
 print OUT <<"EOF";
 );
 
