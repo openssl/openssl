@@ -3164,6 +3164,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     if (sdec == NULL
             || EVP_DecryptUpdate(ctx, sdec, &slen, p, eticklen) <= 0) {
         EVP_CIPHER_CTX_free(ctx);
+        OPENSSL_free(sdec);
         return -1;
     }
     if (EVP_DecryptFinal(ctx, sdec + slen, &mlen) <= 0) {
