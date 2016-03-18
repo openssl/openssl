@@ -884,14 +884,13 @@ int s_client_main(int argc, char **argv)
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
     char *xmpphost = NULL;
     const char *ehlo = "mail.example.com";
-    struct sockaddr peer;
     struct timeval timeout, *timeoutp;
     fd_set readfds, writefds;
     int noCApath = 0, noCAfile = 0;
     int build_chain = 0, cbuf_len, cbuf_off, cert_format = FORMAT_PEM;
     int key_format = FORMAT_PEM, crlf = 0, full_log = 1, mbuf_len = 0;
     int prexit = 0;
-    int enable_timeouts = 0, sdebug = 0, peerlen = sizeof peer;
+    int sdebug = 0;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, s = -1, k, width, state = 0;
     int sbuf_len, sbuf_off, cmdletters = 1;
@@ -900,8 +899,12 @@ int s_client_main(int argc, char **argv)
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
     int read_buf_len = 0;
     int fallback_scsv = 0;
-    long socket_mtu = 0, randamt = 0;
+    long randamt = 0;
     OPTION_CHOICE o;
+#ifndef OPENSSL_NO_DTLS
+    int enable_timeouts = 0;
+    long socket_mtu = 0;
+#endif
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *ssl_client_engine = NULL;
 #endif
@@ -1813,7 +1816,10 @@ int s_client_main(int argc, char **argv)
         }
         BIO_printf(bio_c_out, "Turned on non blocking io\n");
     }
+#ifndef OPENSSL_NO_DTLS
     if (socket_type == SOCK_DGRAM) {
+        struct sockaddr peer;
+        int peerlen = sizeof peer;
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);
         if (getsockname(s, &peer, (void *)&peerlen) < 0) {
@@ -1852,6 +1858,7 @@ int s_client_main(int argc, char **argv)
             /* want to do MTU discovery */
             BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
     } else
+#endif /* OPENSSL_NO_DTLS */
         sbio = BIO_new_socket(s, BIO_NOCLOSE);
 
     if (nbio_test) {
