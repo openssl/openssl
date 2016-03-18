@@ -324,12 +324,17 @@ sub run {
     my @r = ();
     my $r = 0;
     my $e = 0;
+
+    # The dance we do with $? is the same dance the Unix shells appear to
+    # do.  For example, a program that gets aborted (and therefore signals
+    # SIGABRT = 6) will appear to exit with the code 134.  We mimic this
+    # to make it easier to compare with a manual run of the command.
     if ($opts{capture}) {
 	@r = `$prefix$cmd`;
-	$e = $? >> 8;
+	$e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
     } else {
 	system("$prefix$cmd");
-	$e = $? >> 8;
+	$e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
 	$r = $hooks{exit_checker}->($e);
     }
 

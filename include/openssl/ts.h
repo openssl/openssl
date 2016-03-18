@@ -60,6 +60,7 @@
 # define HEADER_TS_H
 
 # include <openssl/opensslconf.h>
+# ifndef OPENSSL_NO_TS
 # include <openssl/symhacks.h>
 # include <openssl/buffer.h>
 # include <openssl/evp.h>
@@ -698,5 +699,6 @@ void ERR_load_TS_strings(void);
 
 #ifdef  __cplusplus
 }
+#endif
 #endif
 #endif

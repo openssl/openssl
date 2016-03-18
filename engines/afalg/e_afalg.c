@@ -60,6 +60,7 @@
 
 #include <openssl/engine.h>
 #include <openssl/async.h>
+#include <openssl/err.h>
 
 #include <linux/version.h>
 #define K_MAJ   4

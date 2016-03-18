@@ -230,7 +230,7 @@ static int padlock_bind_fn(ENGINE *e, const char *id)
 }
 
 IMPLEMENT_DYNAMIC_CHECK_FN()
-    IMPLEMENT_DYNAMIC_BIND_FN(padlock_bind_fn)
+IMPLEMENT_DYNAMIC_BIND_FN(padlock_bind_fn)
 #   endif                       /* DYNAMIC_ENGINE */
 /* ===== Here comes the "real" engine ===== */
 #   ifndef OPENSSL_NO_AES
@@ -798,8 +798,13 @@ static RAND_METHOD padlock_rand = {
     padlock_rand_status,        /* rand status */
 };
 
-#  else                         /* !COMPILE_HW_PADLOCK */
-#   ifndef OPENSSL_NO_DYNAMIC_ENGINE
+#  endif                        /* COMPILE_HW_PADLOCK */
+# endif                         /* !OPENSSL_NO_HW_PADLOCK */
+#endif                          /* !OPENSSL_NO_HW */
+
+#if defined(OPENSSL_NO_HW) || defined(OPENSSL_NO_HW_PADLOCK) \
+        || !defined(COMPILE_HW_PADLOCK)
+# ifndef OPENSSL_NO_DYNAMIC_ENGINE
 OPENSSL_EXPORT
     int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
 OPENSSL_EXPORT
@@ -809,7 +814,5 @@ OPENSSL_EXPORT
 }
 
 IMPLEMENT_DYNAMIC_CHECK_FN()
-#   endif
-#  endif                        /* COMPILE_HW_PADLOCK */
-# endif                         /* !OPENSSL_NO_HW_PADLOCK */
-#endif                          /* !OPENSSL_NO_HW */
+# endif
+#endif

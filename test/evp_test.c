@@ -1022,11 +1022,16 @@ static int mac_test_init(struct evp_test *t, const char *alg)
 {
     int type;
     struct mac_data *mdat;
-    if (strcmp(alg, "HMAC") == 0)
+    if (strcmp(alg, "HMAC") == 0) {
         type = EVP_PKEY_HMAC;
-    else if (strcmp(alg, "CMAC") == 0)
+    } else if (strcmp(alg, "CMAC") == 0) {
+#ifndef OPENSSL_NO_CMAC
         type = EVP_PKEY_CMAC;
-    else
+#else
+        t->skip = 1;
+        return 1;
+#endif
+    } else
         return 0;
 
     mdat = OPENSSL_malloc(sizeof(*mdat));
@@ -1077,6 +1082,14 @@ static int mac_test_run(struct evp_test *t)
     const EVP_MD *md = NULL;
     unsigned char *mac = NULL;
     size_t mac_len;
+
+#ifdef OPENSSL_NO_DES
+    if (strstr(mdata->alg, "DES") != NULL) {
+        /* Skip DES */
+        err = NULL;
+        goto err;
+    }
+#endif
 
     err = "MAC_PKEY_CTX_ERROR";
     genctx = EVP_PKEY_CTX_new_id(mdata->type, NULL);
