@@ -617,13 +617,35 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects
 lint:
 	lint -DLINT $(INCLUDES) $(SRCS)
 
-generate_apps: $(SRCDIR)/apps/openssl-vms.cnf $(SRCDIR)/apps/progs.h
+{- # because the program apps/openssl has object files as sources, and
+   # they then have the corresponding C files as source, we need to chain
+   # the lookups in %unified_info
+   my $apps_openssl = catfile("apps","openssl");
+   our @openssl_source = map { @{$unified_info{sources}->{$_}} }
+                         @{$unified_info{sources}->{$apps_openssl}};
+   ""; -}
+generate_apps:
+	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
+				< apps/openssl.cnf > apps/openssl-vms.cnf )
+	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b apps/progs.pl \
+					{- join(" ", @openssl_source) -} \
+					> apps/progs.h )
 
-generate_crypto_bn: $(SRCDIR)/crypto/bn/bn_prime.h
+generate_crypto_bn:
+	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )
 
-generate_crypto_objects: $(SRCDIR)/crypto/objects/obj_dat.h \
-                         $(SRCDIR)/include/openssl/obj_mac.h \
-                         $(SRCDIR)/crypto/objects/obj_xref.h
+generate_crypto_objects:
+	( cd $(SRCDIR); $(PERL) crypto/objects/obj_dat.pl \
+				include/openssl/obj_mac.h \
+				crypto/objects/obj_dat.h )
+	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl \
+				crypto/objects/objects.txt \
+				crypto/objects/obj_mac.num \
+				include/openssl/obj_mac.h )
+	( cd $(SRCDIR); $(PERL) crypto/objects/objxref.pl \
+				crypto/objects/obj_mac.num \
+				crypto/objects/obj_xref.txt \
+				> crypto/objects/obj_xref.h )
 
 errors:
 	( cd $(SRCDIR); $(PERL) util/ck_errf.pl -strict */*.c */*/*.c )
@@ -690,49 +712,6 @@ $(BLDDIR)/util/shlib_wrap.sh: configdata.pm
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/shlib_wrap.sh" "$(BLDDIR)/util"; \
 	fi
-
-$(SRCDIR)/apps/openssl-vms.cnf: $(SRCDIR)/apps/openssl.cnf
-	$(PERL) $(SRCDIR)/VMS/VMSify-conf.pl \
-                < $(SRCDIR)/apps/openssl.cnf > $(SRCDIR)/apps/openssl-vms.cnf
-
-{- # because the program apps/openssl has object files as sources, and
-   # they then have the corresponding C files as source, we need to chain
-   # the lookups in %unified_info
-   my $apps_openssl = catfile("apps","openssl");
-   our @openssl_source = map { @{$unified_info{sources}->{$_}} }
-                         @{$unified_info{sources}->{$apps_openssl}};
-   ""; -}
-$(SRCDIR)/apps/progs.h:
-	$(RM) $@
-	$(PERL) $(SRCDIR)/apps/progs.pl {- join(" ", @openssl_source) -} > $@
-
-$(SRCDIR)/crypto/bn/bn_prime.h: $(SRCDIR)/crypto/bn/bn_prime.pl
-	$(PERL) $(SRCDIR)/crypto/bn/bn_prime.pl > $(SRCDIR)/crypto/bn/bn_prime.h
-
-$(SRCDIR)/crypto/objects/obj_dat.h: $(SRCDIR)/crypto/objects/obj_dat.pl \
-                                    $(SRCDIR)/include/openssl/obj_mac.h
-	$(PERL) $(SRCDIR)/crypto/objects/obj_dat.pl \
-                $(SRCDIR)/include/openssl/obj_mac.h \
-                $(SRCDIR)/crypto/objects/obj_dat.h
-
-# objects.pl both reads and writes obj_mac.num
-$(SRCDIR)/include/openssl/obj_mac.h: $(SRCDIR)/crypto/objects/objects.pl \
-                                     $(SRCDIR)/crypto/objects/objects.txt \
-                                     $(SRCDIR)/crypto/objects/obj_mac.num
-	$(PERL) $(SRCDIR)/crypto/objects/objects.pl \
-                $(SRCDIR)/crypto/objects/objects.txt \
-                $(SRCDIR)/crypto/objects/obj_mac.num \
-                $(SRCDIR)/include/openssl/obj_mac.h
-	@sleep 1; touch $(SRCDIR)/include/openssl/obj_mac.h; sleep 1
-
-$(SRCDIR)/crypto/objects/obj_xref.h: $(SRCDIR)/crypto/objects/objxref.pl \
-                                     $(SRCDIR)/crypto/objects/obj_xref.txt \
-                                     $(SRCDIR)/crypto/objects/obj_mac.num
-	$(PERL) $(SRCDIR)/crypto/objects/objxref.pl \
-                $(SRCDIR)/crypto/objects/obj_mac.num \
-                $(SRCDIR)/crypto/objects/obj_xref.txt \
-                > $(SRCDIR)/crypto/objects/obj_xref.h
-	@sleep 1; touch $(SRCDIR)/crypto/objects/obj_xref.h; sleep 1
 
 FORCE:
 
