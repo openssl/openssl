@@ -494,6 +494,12 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
         return (0);
     }
     param = X509_STORE_CTX_get0_param(&ctx);
+    /*
+     * XXX: Separate @AUTHSECLEVEL and @TLSSECLEVEL would be useful at some
+     * point, for now a single @SECLEVEL sets the same policy for TLS crypto
+     * and PKI authentication.
+     */
+    X509_VERIFY_PARAM_set_auth_level(param, SSL_get_security_level(s));
 
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(&ctx, tls1_suiteb(s));
@@ -520,17 +526,8 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 
     if (s->ctx->app_verify_callback != NULL)
         i = s->ctx->app_verify_callback(&ctx, s->ctx->app_verify_arg);
-    else {
+    else
         i = X509_verify_cert(&ctx);
-# if 0
-        /* Dummy error calls so mkerr generates them */
-        SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, SSL_R_EE_KEY_TOO_SMALL);
-        SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, SSL_R_CA_KEY_TOO_SMALL);
-        SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, SSL_R_CA_MD_TOO_WEAK);
-# endif
-        if (i > 0)
-            i = ssl_security_cert_chain(s, ctx.chain, NULL, 1);
-    }
 
     s->verify_result = ctx.error;
     sk_X509_pop_free(s->verified_chain, X509_free);
@@ -894,12 +891,18 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
          * ignore the error return from this call. We're not actually verifying
          * the cert - we're just building as much of the chain as we can
          */
-        X509_verify_cert(&xs_ctx);
+        (void) X509_verify_cert(&xs_ctx);
         /* Don't leave errors in the queue */
         ERR_clear_error();
         i = ssl_security_cert_chain(s, xs_ctx.chain, NULL, 0);
         if (i != 1) {
             X509_STORE_CTX_cleanup(&xs_ctx);
+#if 0
+            /* Dummy error calls so mkerr generates them */
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_EE_KEY_TOO_SMALL);
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_CA_KEY_TOO_SMALL);
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_CA_MD_TOO_WEAK);
+#endif
             SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
             return 0;
         }

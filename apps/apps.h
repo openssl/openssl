@@ -180,6 +180,7 @@ void wait_for_async(SSL *s);
         OPT_V_POLICY_PRINT, OPT_V_CHECK_SS_SIG, OPT_V_TRUSTED_FIRST, \
         OPT_V_SUITEB_128_ONLY, OPT_V_SUITEB_128, OPT_V_SUITEB_192, \
         OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME, \
+        OPT_V_VERIFY_AUTH_LEVEL, \
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
@@ -187,8 +188,10 @@ void wait_for_async(SSL *s);
         { "purpose", OPT_V_PURPOSE, 's', \
             "certificate chain purpose"}, \
         { "verify_name", OPT_V_VERIFY_NAME, 's', "verification policy name"}, \
-        { "verify_depth", OPT_V_VERIFY_DEPTH, 'p', \
-            "chain depth limit"}, \
+        { "verify_depth", OPT_V_VERIFY_DEPTH, 'n', \
+            "chain depth limit" }, \
+        { "auth_level", OPT_V_VERIFY_AUTH_LEVEL, 'n', \
+            "chain authentication security level" }, \
         { "attime", OPT_V_ATTIME, 'M', "verification epoch time" }, \
         { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's', \
             "expected peer hostname" }, \
@@ -235,6 +238,7 @@ void wait_for_async(SSL *s);
         case OPT_V_PURPOSE: \
         case OPT_V_VERIFY_NAME: \
         case OPT_V_VERIFY_DEPTH: \
+        case OPT_V_VERIFY_AUTH_LEVEL: \
         case OPT_V_ATTIME: \
         case OPT_V_VERIFY_HOSTNAME: \
         case OPT_V_VERIFY_EMAIL: \

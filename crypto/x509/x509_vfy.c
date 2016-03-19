@@ -126,6 +126,8 @@ static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
 static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
 static int check_dane_issuer(X509_STORE_CTX *ctx, int depth);
+static int check_key_level(X509_STORE_CTX *ctx, X509 *cert);
+static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
                          unsigned int *preasons, X509_CRL *crl, X509 *x);
@@ -221,6 +223,35 @@ static int verify_cb_crl(X509_STORE_CTX *ctx, int err)
     return ctx->verify_cb(0, ctx);
 }
 
+static int check_auth_level(X509_STORE_CTX *ctx)
+{
+    int i;
+    int num = sk_X509_num(ctx->chain);
+
+    if (ctx->param->auth_level <= 0)
+        return 1;
+
+    for (i = 0; i < num; ++i) {
+        X509 *cert = sk_X509_value(ctx->chain, i);
+
+        /*
+         * We've already checked the security of the leaf key, so here we only
+         * check the security of issuer keys.
+         */
+        if (i > 0 && !check_key_level(ctx, cert) &&
+            verify_cb_cert(ctx, cert, i, X509_V_ERR_CA_KEY_TOO_SMALL) == 0)
+            return 0;
+        /*
+         * We also check the signature algorithm security of all certificates
+         * except those of the trust anchor at index num-1.
+         */
+        if (i < num - 1 && !check_sig_level(ctx, cert) &&
+            verify_cb_cert(ctx, cert, i, X509_V_ERR_CA_MD_TOO_WEAK) == 0)
+            return 0;
+    }
+    return 1;
+}
+
 static int verify_chain(X509_STORE_CTX *ctx)
 {
     int err;
@@ -232,6 +263,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
      */
     if ((ok = build_chain(ctx)) == 0 ||
         (ok = check_chain_extensions(ctx)) == 0 ||
+        (ok = check_auth_level(ctx)) == 0 ||
         (ok = check_name_constraints(ctx)) == 0 ||
         (ok = check_id(ctx)) == 0 || 1)
         X509_get_pubkey_parameters(NULL, ctx->chain);
@@ -294,6 +326,11 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     X509_up_ref(ctx->cert);
     ctx->num_untrusted = 1;
 
+    /* If the peer's public key is too weak, we can stop early. */
+    if (!check_key_level(ctx, ctx->cert) &&
+        !verify_cb_cert(ctx, ctx->cert, 0, X509_V_ERR_EE_KEY_TOO_SMALL))
+        return 0;
+
     /*
      * If dane->trecs is an empty stack, we'll fail, since the user enabled
      * DANE.  If none of the TLSA records were usable, and it makes sense to
@@ -308,20 +345,19 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 /*
  * Given a STACK_OF(X509) find the issuer of cert (if any)
  */
-
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 {
     int i;
-    X509 *issuer, *rv = NULL;;
+
     for (i = 0; i < sk_X509_num(sk); i++) {
-        issuer = sk_X509_value(sk, i);
-        if (ctx->check_issued(ctx, x, issuer)) {
-            rv = issuer;
-            if (x509_check_cert_time(ctx, rv, -1))
-                break;
-        }
+        X509 *issuer = sk_X509_value(sk, i);
+
+        if (!ctx->check_issued(ctx, x, issuer))
+            continue;
+        if (x509_check_cert_time(ctx, issuer, -1))
+            return issuer;
     }
-    return rv;
+    return NULL;
 }
 
 /* Given a possible certificate and issuer check them */
@@ -2656,6 +2692,19 @@ static int dane_verify(X509_STORE_CTX *ctx)
     return verify_chain(ctx);
 }
 
+/* Get issuer, without duplicate suppression */
+static int get_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *cert)
+{
+    STACK_OF(X509) *saved_chain = ctx->chain;
+    int ok;
+
+    ctx->chain = NULL;
+    ok = ctx->get_issuer(issuer, ctx, cert);
+    ctx->chain = saved_chain;
+
+    return ok;
+}
+
 static int build_chain(X509_STORE_CTX *ctx)
 {
     struct dane_st *dane = (struct dane_st *)ctx->dane;
@@ -2735,12 +2784,19 @@ static int build_chain(X509_STORE_CTX *ctx)
 
         /*
          * Look in the trust store if enabled for first lookup, or we've run
-         * out of untrusted issuers and search here is not disabled.  When
-         * we exceed the depth limit, we simulate absence of a match.
+         * out of untrusted issuers and search here is not disabled.  When we
+         * reach the depth limit, we stop extending the chain, if by that point
+         * we've not found a trust-anchor, any trusted chain would be too long.
+         *
+         * The error reported to the application verify callback is at the
+         * maximal valid depth with the current certificate equal to the last
+         * not ultimately-trusted issuer.  For example, with verify_depth = 0,
+         * the callback will report errors at depth=1 when the immediate issuer
+         * of the leaf certificate is not a trust anchor.  No attempt will be
+         * made to locate an issuer for that certificate, since such a chain
+         * would be a-priori too long.
          */
         if ((search & S_DOTRUSTED) != 0) {
-            STACK_OF(X509) *hide = ctx->chain;
-
             i = num = sk_X509_num(ctx->chain);
             if ((search & S_DOALTERNATE) != 0) {
                 /*
@@ -2762,10 +2818,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             }
             x = sk_X509_value(ctx->chain, i-1);
 
-            /* Suppress duplicate suppression */
-            ctx->chain = NULL;
-            ok = (depth < num) ? 0 : ctx->get_issuer(&xtmp, ctx, x);
-            ctx->chain = hide;
+            ok = (depth < num) ? 0 : get_issuer(&xtmp, ctx, x);
 
             if (ok < 0) {
                 trust = X509_TRUST_REJECTED;
@@ -2892,12 +2945,12 @@ static int build_chain(X509_STORE_CTX *ctx)
             num = sk_X509_num(ctx->chain);
             OPENSSL_assert(num == ctx->num_untrusted);
             x = sk_X509_value(ctx->chain, num-1);
-            xtmp = (depth < num) ? NULL : find_issuer(ctx, sktmp, x);
 
             /*
              * Once we run out of untrusted issuers, we stop looking for more
              * and start looking only in the trust store if enabled.
              */
+            xtmp = (ss || depth < num) ? NULL : find_issuer(ctx, sktmp, x);
             if (xtmp == NULL) {
                 search &= ~S_DOUNTRUSTED;
                 if (may_trusted)
@@ -2905,21 +2958,19 @@ static int build_chain(X509_STORE_CTX *ctx)
                 continue;
             }
 
-            if (!sk_X509_push(ctx->chain, x = xtmp)) {
+            /* Drop this issuer from future consideration */
+            (void) sk_X509_delete_ptr(sktmp, xtmp);
+
+            if (!sk_X509_push(ctx->chain, xtmp)) {
                 X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
                 trust = X509_TRUST_REJECTED;
                 search = 0;
                 continue;
             }
-            X509_up_ref(x);
+
+            X509_up_ref(x = xtmp);
             ++ctx->num_untrusted;
             ss = cert_self_signed(xtmp);
-
-            /*
-             * Not strictly necessary, but saves cycles looking at the same
-             * certificates over and over.
-             */
-            (void) sk_X509_delete_ptr(sktmp, x);
 
             /*
              * Check for DANE-TA trust of the topmost untrusted certificate.
@@ -2973,4 +3024,61 @@ static int build_chain(X509_STORE_CTX *ctx)
         return verify_cb_cert(ctx, NULL, num-1,
                               X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY);
     }
+}
+
+static const int minbits_table[] = { 80, 112, 128, 192, 256 };
+static const int NUM_AUTH_LEVELS = OSSL_NELEM(minbits_table);
+
+/*
+ * Check whether the public key of ``cert`` meets the security level of
+ * ``ctx``.
+ *
+ * Returns 1 on success, 0 otherwise.
+ */
+static int check_key_level(X509_STORE_CTX *ctx, X509 *cert)
+{
+    EVP_PKEY *pkey = X509_get0_pubkey(cert);
+    int level = ctx->param->auth_level;
+
+    /* Unsupported or malformed keys are not secure */
+    if (pkey == NULL)
+        return 0;
+
+    if (level <= 0)
+        return 1;
+    if (level > NUM_AUTH_LEVELS)
+        level = NUM_AUTH_LEVELS;
+
+    return EVP_PKEY_security_bits(pkey) >= minbits_table[level - 1];
+}
+
+/*
+ * Check whether the signature digest algorithm of ``cert`` meets the security
+ * level of ``ctx``.  Should not be checked for trust anchors (whether
+ * self-signed or otherwise).
+ *
+ * Returns 1 on success, 0 otherwise.
+ */
+static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
+{
+    int nid = X509_get_signature_nid(cert);
+    int mdnid = NID_undef;
+    int secbits = -1;
+    int level = ctx->param->auth_level;
+
+    if (level <= 0)
+        return 1;
+    if (level > NUM_AUTH_LEVELS)
+        level = NUM_AUTH_LEVELS;
+
+    /* Lookup signature algorithm digest */
+    if (nid && OBJ_find_sigid_algs(nid, &mdnid, NULL)) {
+        const EVP_MD *md;
+
+        /* Assume 4 bits of collision resistance for each hash octet */
+        if (mdnid != NID_undef && (md = EVP_get_digestbynid(mdnid)) != NULL)
+            secbits = EVP_MD_size(md) * 4;
+    }
+
+    return secbits >= minbits_table[level - 1];
 }

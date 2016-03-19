@@ -526,6 +526,11 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         if (i >= 0)
             X509_VERIFY_PARAM_set_depth(vpm, i);
         break;
+    case OPT_V_VERIFY_AUTH_LEVEL:
+        i = atoi(opt_arg());
+        if (i >= 0)
+            X509_VERIFY_PARAM_set_auth_level(vpm, i);
+        break;
     case OPT_V_ATTIME:
         if (!opt_imax(opt_arg(), &t))
             return 0;
