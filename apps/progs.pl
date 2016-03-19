@@ -67,6 +67,8 @@ foreach (@ARGV) {
 	printf "extern OPTIONS %s_options[];\n", $_;
 }
 
+print "\n#ifdef INCLUDE_FUNCTION_TABLE\n";
+print "static FUNCTION functions[] = {\n";
 my %cmd_disabler = (
     ciphers  => "sock",
     genrsa   => "rsa",
@@ -78,7 +80,6 @@ my %cmd_disabler = (
     ecparam  => "ec",
     pkcs12   => "des",
     );
-print "\nstatic FUNCTION functions[] = {\n";
 foreach my $cmd (@ARGV) {
 	my $str="    { FT_general, \"$cmd\", ${cmd}_main, ${cmd}_options },\n";
 	if ($cmd =~ /^s_/) {
@@ -157,3 +158,4 @@ foreach my $cmd (
 }
 
 print "    { 0, NULL, NULL}\n};\n";
+print "#endif\n";
