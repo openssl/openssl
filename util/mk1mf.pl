@@ -273,6 +273,7 @@ $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 $cflags.=" -DOPENSSL_NO_ASYNC" if $no_async;
 $cflags.=" -DOPENSSL_NO_AUTOALGINIT" if $no_autoalginit;
 $cflags.=" -DOPENSSL_NO_AUTOERRINIT" if $no_autoerrinit;
+$cflags.=" -DOPENSSL_NO_NEXTPROTONEG" if $no_nextprotoneg;
 $cflags.=" -DOPENSSL_FIPS"    if $fips;
 $cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
 $cflags.=" -DZLIB" if $zlib_opt;
