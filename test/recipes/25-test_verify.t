@@ -10,7 +10,7 @@ setup("test_verify");
 
 sub verify {
     my ($cert, $purpose, $trusted, $untrusted, @opts) = @_;
-    my @args = qw(openssl verify -purpose);
+    my @args = qw(openssl verify -auth_level 1 -purpose);
     my @path = qw(test certs);
     push(@args, "$purpose", @opts);
     for (@$trusted) { push(@args, "-trusted", srctop_file(@path, "$_.pem")) }
@@ -19,7 +19,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 83;
+plan tests => 101;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -214,3 +214,47 @@ ok(verify("ee-client", "sslclient", [qw(ee+clientAuth)], [], "-partial_chain"),
    "accept direct match with client trust");
 ok(!verify("ee-client", "sslclient", [qw(ee-clientAuth)], [], "-partial_chain"),
    "reject direct match with client mistrust");
+
+# Security level tests
+ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
+   "accept RSA 2048 chain at auth level 2");
+ok(!verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "3"),
+   "reject RSA 2048 root at auth level 3");
+ok(verify("ee-cert", "sslserver", ["root-cert-768"], ["ca-cert-768i"], "-auth_level", "0"),
+   "accept RSA 768 root at auth level 0");
+ok(!verify("ee-cert", "sslserver", ["root-cert-768"], ["ca-cert-768i"]),
+   "reject RSA 768 root at auth level 1");
+ok(verify("ee-cert-768i", "sslserver", ["root-cert"], ["ca-cert-768"], "-auth_level", "0"),
+   "accept RSA 768 intermediate at auth level 0");
+ok(!verify("ee-cert-768i", "sslserver", ["root-cert"], ["ca-cert-768"]),
+   "reject RSA 768 intermediate at auth level 1");
+ok(verify("ee-cert-768", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "0"),
+   "accept RSA 768 leaf at auth level 0");
+ok(!verify("ee-cert-768", "sslserver", ["root-cert"], ["ca-cert"]),
+   "reject RSA 768 leaf at auth level 1");
+#
+ok(verify("ee-cert", "sslserver", ["root-cert-md5"], ["ca-cert"], "-auth_level", "2"),
+   "accept md5 self-signed TA at auth level 2");
+ok(verify("ee-cert", "sslserver", ["ca-cert-md5-any"], [], "-auth_level", "2"),
+   "accept md5 intermediate TA at auth level 2");
+ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert-md5"], "-auth_level", "0"),
+   "accept md5 intermediate at auth level 0");
+ok(!verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert-md5"]),
+   "reject md5 intermediate at auth level 1");
+ok(verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "0"),
+   "accept md5 leaf at auth level 0");
+ok(!verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"]),
+   "reject md5 leaf at auth level 1");
+
+# Depth tests, note the depth limit bounds the number of CA certificates
+# between the trust-anchor and the leaf, so, for example, with a root->ca->leaf
+# chain, depth = 1 is sufficient, but depth == 0 is not.
+#
+ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"], "-verify_depth", "2"),
+   "accept chain with verify_depth 2");
+ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"], "-verify_depth", "1"),
+   "accept chain with verify_depth 1");
+ok(!verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"], "-verify_depth", "0"),
+   "accept chain with verify_depth 0");
+ok(verify("ee-cert", "sslserver", ["ca-cert-md5-any"], [], "-verify_depth", "0"),
+   "accept md5 intermediate TA with verify_depth 0");

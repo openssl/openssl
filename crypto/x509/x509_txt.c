@@ -203,6 +203,12 @@ const char *X509_verify_cert_error_string(long n)
         return ("IP address mismatch");
     case X509_V_ERR_DANE_NO_MATCH:
         return ("No matching DANE TLSA records");
+    case X509_V_ERR_EE_KEY_TOO_SMALL:
+        return ("EE certificate key too weak");
+    case X509_V_ERR_CA_KEY_TOO_SMALL:
+        return ("CA certificate key too weak");
+    case X509_V_ERR_CA_MD_TOO_WEAK:
+        return ("CA signature digest algorithm too weak");
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */

@@ -32,6 +32,14 @@ openssl x509 -in root-nonca.pem -trustout \
 openssl x509 -in root-nonca.pem -trustout \
     -addtrust anyExtendedKeyUsage -out nroot+anyEKU.pem
 
+# Root CA security level variants:
+# MD5 self-signature
+OPENSSL_SIGALG=md5 \
+./mkcert.sh genroot "Root CA" root-key root-cert-md5
+# 768-bit key
+OPENSSL_KEYBITS=768 \
+./mkcert.sh genroot "Root CA" root-key-768 root-cert-768
+
 # primary client-EKU root: croot-cert
 # trust variants: +serverAuth -serverAuth +clientAuth +anyEKU -anyEKU
 #
@@ -97,6 +105,18 @@ openssl x509 -in ca-nonca.pem -trustout \
 openssl x509 -in ca-nonca.pem -trustout \
     -addtrust serverAuth -out nca+anyEKU.pem
 
+# Intermediate CA security variants:
+# MD5 issuer signature,
+OPENSSL_SIGALG=md5 \
+./mkcert.sh genca "CA" ca-key ca-cert-md5 root-key root-cert
+openssl x509 -in ca-cert-md5.pem -trustout \
+    -addtrust anyExtendedKeyUsage -out ca-cert-md5-any.pem
+# Issuer has 768-bit key
+./mkcert.sh genca "CA" ca-key ca-cert-768i root-key-768 root-cert-768
+# CA has 768-bit key
+OPENSSL_KEYBITS=768 \
+./mkcert.sh genca "CA" ca-key-768 ca-cert-768 root-key root-cert
+
 # client intermediate ca: cca-cert
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth
 #
@@ -152,3 +172,13 @@ openssl x509 -in ee-client.pem -trustout \
     -addtrust clientAuth -out ee+clientAuth.pem
 openssl x509 -in ee-client.pem -trustout \
     -addreject clientAuth -out ee-clientAuth.pem
+
+# Leaf cert security level variants
+# MD5 issuer signature
+OPENSSL_SIGALG=md5 \
+./mkcert.sh genee server.example ee-key ee-cert-md5 ca-key ca-cert
+# 768-bit issuer key
+./mkcert.sh genee server.example ee-key ee-cert-768i ca-key-768 ca-cert-768
+# 768-bit leaf key
+OPENSSL_KEYBITS=768 \
+./mkcert.sh genee server.example ee-key-768 ee-cert-768 ca-key ca-cert

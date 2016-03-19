@@ -38,6 +38,7 @@ B<openssl> B<verify>
 [B<-trusted file>]
 [B<-use_deltas>]
 [B<-verbose>]
+[B<-auth_level level>]
 [B<-verify_depth num>]
 [B<-verify_email email>]
 [B<-verify_hostname hostname>]
@@ -227,9 +228,30 @@ Enable support for delta CRLs.
 
 Print extra information about the operations being performed.
 
+=item B<-auth_level level>
+
+Set the certificate chain authentication security level to B<level>.
+The authentication security level determines the acceptable signature and
+public key strength when verifying certificate chains.
+For a certificate chain to validate, the public keys of all the certificates
+must meet the specified security B<level>.
+The signature algorithm security level is enforced for all the certificates in
+the chain except for the chain's I<trust anchor>, which is either directly
+trusted or validated by means other than its signature.
+See L<SSL_CTX_set_security_level(3)> for the definitions of the available
+levels.
+The default security level is -1, or "not set".
+At security level 0 or lower all algorithms are acceptable.
+Security level 1 requires at least 80-bit-equivalent security and is broadly
+interoperable, though it will, for example, reject MD5 signatures or RSA keys
+shorter than 1024 bits.
+
 =item B<-verify_depth num>
 
-Limit the maximum depth of the certificate chain to B<num> certificates.
+Limit the certificate chain to B<num> intermediate CA certificates.
+A maximal depth chain can have up to B<num+2> certificates, since neither the
+end-entity certificate nor the trust-anchor certificate count against the
+B<-verify_depth> limit.
 
 =item B<-verify_email email>
 

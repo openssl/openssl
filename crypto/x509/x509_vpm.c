@@ -140,6 +140,7 @@ static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
     param->inh_flags = 0;
     param->flags = 0;
     param->depth = -1;
+    param->auth_level = -1; /* -1 means unset, 0 is explicit */
     sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
     param->policies = NULL;
     sk_OPENSSL_STRING_pop_free(param->hosts, str_free);
@@ -245,6 +246,7 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
     x509_verify_param_copy(purpose, 0);
     x509_verify_param_copy(trust, X509_TRUST_DEFAULT);
     x509_verify_param_copy(depth, -1);
+    x509_verify_param_copy(auth_level, -1);
 
     /* If overwrite or check time not set, copy across */
 
@@ -366,6 +368,11 @@ int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust)
 void X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth)
 {
     param->depth = depth;
+}
+
+void X509_VERIFY_PARAM_set_auth_level(X509_VERIFY_PARAM *param, int auth_level)
+{
+    param->auth_level = auth_level;
 }
 
 void X509_VERIFY_PARAM_set_time(X509_VERIFY_PARAM *param, time_t t)
@@ -493,6 +500,11 @@ int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param)
     return param->depth;
 }
 
+int X509_VERIFY_PARAM_get_auth_level(const X509_VERIFY_PARAM *param)
+{
+    return param->auth_level;
+}
+
 const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param)
 {
     return param->name;
@@ -515,6 +527,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      0,                         /* purpose */
      0,                         /* trust */
      100,                       /* depth */
+     -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id},
     {
@@ -525,6 +538,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      X509_PURPOSE_SMIME_SIGN,   /* purpose */
      X509_TRUST_EMAIL,          /* trust */
      -1,                        /* depth */
+     -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id},
     {
@@ -535,6 +549,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      X509_PURPOSE_SMIME_SIGN,   /* purpose */
      X509_TRUST_EMAIL,          /* trust */
      -1,                        /* depth */
+     -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id},
     {
@@ -545,6 +560,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      X509_PURPOSE_SSL_CLIENT,   /* purpose */
      X509_TRUST_SSL_CLIENT,     /* trust */
      -1,                        /* depth */
+     -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id},
     {
@@ -555,6 +571,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      X509_PURPOSE_SSL_SERVER,   /* purpose */
      X509_TRUST_SSL_SERVER,     /* trust */
      -1,                        /* depth */
+     -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id}
 };
