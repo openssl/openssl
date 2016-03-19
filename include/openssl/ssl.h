@@ -1367,7 +1367,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s, SSL_CTRL_SET_MAX_PROTO_VERSION, version, NULL)
 
 
-__owur BIO_METHOD *BIO_f_ssl(void);
+__owur const BIO_METHOD *BIO_f_ssl(void);
 __owur BIO *BIO_new_ssl(SSL_CTX *ctx, int client);
 __owur BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
 __owur BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);

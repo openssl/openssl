@@ -78,7 +78,7 @@ static int md_new(BIO *h);
 static int md_free(BIO *data);
 static long md_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 
-static BIO_METHOD methods_md = {
+static const BIO_METHOD methods_md = {
     BIO_TYPE_MD, "message digest",
     md_write,
     md_read,
@@ -90,7 +90,7 @@ static BIO_METHOD methods_md = {
     md_callback_ctrl,
 };
 
-BIO_METHOD *BIO_f_md(void)
+const BIO_METHOD *BIO_f_md(void)
 {
     return (&methods_md);
 }

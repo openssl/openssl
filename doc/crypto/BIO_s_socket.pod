@@ -8,7 +8,7 @@ BIO_s_socket, BIO_new_socket - socket BIO
 
  #include <openssl/bio.h>
 
- BIO_METHOD *BIO_s_socket(void);
+ const BIO_METHOD *BIO_s_socket(void);
 
  long BIO_set_fd(BIO *b, int fd, long close_flag);
  long BIO_get_fd(BIO *b, int *c);

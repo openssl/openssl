@@ -103,7 +103,7 @@ void BIO_CONNECT_free(BIO_CONNECT *a);
 #define BIO_CONN_S_OK                    5
 #define BIO_CONN_S_BLOCKED_CONNECT       6
 
-static BIO_METHOD methods_connectp = {
+static const BIO_METHOD methods_connectp = {
     BIO_TYPE_CONNECT,
     "socket connect",
     conn_write,
@@ -285,7 +285,7 @@ void BIO_CONNECT_free(BIO_CONNECT *a)
     OPENSSL_free(a);
 }
 
-BIO_METHOD *BIO_s_connect(void)
+const BIO_METHOD *BIO_s_connect(void)
 {
     return (&methods_connectp);
 }

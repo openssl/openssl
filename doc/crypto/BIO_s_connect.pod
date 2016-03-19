@@ -11,7 +11,7 @@ BIO_set_nbio, BIO_do_connect - connect BIO
 
  #include <openssl/bio.h>
 
- BIO_METHOD * BIO_s_connect(void);
+ const BIO_METHOD * BIO_s_connect(void);
 
  BIO *BIO_new_connect(char *name);
 

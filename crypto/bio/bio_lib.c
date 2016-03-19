@@ -62,7 +62,7 @@
 #include <openssl/bio.h>
 #include <openssl/stack.h>
 
-BIO *BIO_new(BIO_METHOD *method)
+BIO *BIO_new(const BIO_METHOD *method)
 {
     BIO *ret = OPENSSL_malloc(sizeof(*ret));
 
@@ -77,7 +77,7 @@ BIO *BIO_new(BIO_METHOD *method)
     return (ret);
 }
 
-int BIO_set(BIO *bio, BIO_METHOD *method)
+int BIO_set(BIO *bio, const BIO_METHOD *method)
 {
     bio->method = method;
     bio->callback = NULL;

@@ -310,7 +310,7 @@ typedef struct bio_method_st {
 } BIO_METHOD;
 
 struct bio_st {
-    BIO_METHOD *method;
+    const BIO_METHOD *method;
     /* bio, mode, argp, argi, argl, ret */
     long (*callback) (struct bio_st *, int, const char *, int, long, long);
     char *cb_arg;               /* first argument for the callback */
@@ -627,13 +627,13 @@ int BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix,
 int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
                         asn1_ps_func **psuffix_free);
 
-BIO_METHOD *BIO_s_file(void);
+const BIO_METHOD *BIO_s_file(void);
 BIO *BIO_new_file(const char *filename, const char *mode);
 # ifndef OPENSSL_NO_STDIO
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 # endif
-BIO *BIO_new(BIO_METHOD *type);
-int BIO_set(BIO *a, BIO_METHOD *type);
+BIO *BIO_new(const BIO_METHOD *type);
+int BIO_set(BIO *a, const BIO_METHOD *type);
 int BIO_free(BIO *a);
 void BIO_vfree(BIO *a);
 int BIO_up_ref(BIO *a);
@@ -665,30 +665,28 @@ int BIO_nwrite(BIO *bio, char **buf, int num);
 long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
                         long argl, long ret);
 
-BIO_METHOD *BIO_s_mem(void);
-BIO_METHOD *BIO_s_secmem(void);
+const BIO_METHOD *BIO_s_mem(void);
+const BIO_METHOD *BIO_s_secmem(void);
 BIO *BIO_new_mem_buf(const void *buf, int len);
-BIO_METHOD *BIO_s_socket(void);
-BIO_METHOD *BIO_s_connect(void);
-BIO_METHOD *BIO_s_accept(void);
-BIO_METHOD *BIO_s_fd(void);
-BIO_METHOD *BIO_s_log(void);
-BIO_METHOD *BIO_s_bio(void);
-BIO_METHOD *BIO_s_null(void);
-BIO_METHOD *BIO_f_null(void);
-BIO_METHOD *BIO_f_buffer(void);
+const BIO_METHOD *BIO_s_socket(void);
+const BIO_METHOD *BIO_s_connect(void);
+const BIO_METHOD *BIO_s_accept(void);
+const BIO_METHOD *BIO_s_fd(void);
+const BIO_METHOD *BIO_s_log(void);
+const BIO_METHOD *BIO_s_bio(void);
+const BIO_METHOD *BIO_s_null(void);
+const BIO_METHOD *BIO_f_null(void);
+const BIO_METHOD *BIO_f_buffer(void);
 # ifdef OPENSSL_SYS_VMS
-BIO_METHOD *BIO_f_linebuffer(void);
+const BIO_METHOD *BIO_f_linebuffer(void);
 # endif
-BIO_METHOD *BIO_f_nbio_test(void);
+const BIO_METHOD *BIO_f_nbio_test(void);
 # ifndef OPENSSL_NO_DGRAM
-BIO_METHOD *BIO_s_datagram(void);
+const BIO_METHOD *BIO_s_datagram(void);
 #  ifndef OPENSSL_NO_SCTP
-BIO_METHOD *BIO_s_datagram_sctp(void);
+const BIO_METHOD *BIO_s_datagram_sctp(void);
 #  endif
 # endif
-
-/* BIO_METHOD *BIO_f_ber(void); */
 
 int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);

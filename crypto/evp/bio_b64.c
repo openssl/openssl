@@ -93,7 +93,7 @@ typedef struct b64_struct {
     char tmp[B64_BLOCK_SIZE];
 } BIO_B64_CTX;
 
-static BIO_METHOD methods_b64 = {
+static const BIO_METHOD methods_b64 = {
     BIO_TYPE_BASE64, "base64 encoding",
     b64_write,
     b64_read,
@@ -105,7 +105,7 @@ static BIO_METHOD methods_b64 = {
     b64_callback_ctrl,
 };
 
-BIO_METHOD *BIO_f_base64(void)
+const BIO_METHOD *BIO_f_base64(void)
 {
     return (&methods_b64);
 }

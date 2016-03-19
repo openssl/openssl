@@ -75,7 +75,7 @@ static long linebuffer_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 
 /* #define DEBUG */
 
-static BIO_METHOD methods_linebuffer = {
+static const BIO_METHOD methods_linebuffer = {
     BIO_TYPE_LINEBUFFER,
     "linebuffer",
     linebuffer_write,
@@ -88,7 +88,7 @@ static BIO_METHOD methods_linebuffer = {
     linebuffer_callback_ctrl,
 };
 
-BIO_METHOD *BIO_f_linebuffer(void)
+const BIO_METHOD *BIO_f_linebuffer(void)
 {
     return (&methods_linebuffer);
 }

@@ -331,7 +331,7 @@ static int bio_zlib_write(BIO *b, const char *in, int inl);
 static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr);
 static long bio_zlib_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp);
 
-static BIO_METHOD bio_meth_zlib = {
+static const BIO_METHOD bio_meth_zlib = {
     BIO_TYPE_COMP,
     "zlib",
     bio_zlib_write,
@@ -344,7 +344,7 @@ static BIO_METHOD bio_meth_zlib = {
     bio_zlib_callback_ctrl
 };
 
-BIO_METHOD *BIO_f_zlib(void)
+const BIO_METHOD *BIO_f_zlib(void)
 {
     return &bio_meth_zlib;
 }

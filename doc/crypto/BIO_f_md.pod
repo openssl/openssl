@@ -9,7 +9,7 @@ BIO_f_md, BIO_set_md, BIO_get_md, BIO_get_md_ctx - message digest BIO filter
  #include <openssl/bio.h>
  #include <openssl/evp.h>
 
- BIO_METHOD *	BIO_f_md(void);
+ const BIO_METHOD *	BIO_f_md(void);
  int BIO_set_md(BIO *b,EVP_MD *md);
  int BIO_get_md(BIO *b,EVP_MD **mdp);
  int BIO_get_md_ctx(BIO *b,EVP_MD_CTX **mdcp);

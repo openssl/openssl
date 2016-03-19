@@ -10,7 +10,7 @@ BIO_rw_filename - FILE bio
 
  #include <openssl/bio.h>
 
- BIO_METHOD *	BIO_s_file(void);
+ const BIO_METHOD *	BIO_s_file(void);
  BIO *BIO_new_file(const char *filename, const char *mode);
  BIO *BIO_new_fp(FILE *stream, int flags);
 
