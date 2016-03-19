@@ -492,11 +492,11 @@ uninstall_runtime:
 
 # A method to extract all names from a .pod file
 # The first sed extracts everything between "=head1 NAME" and the next =head1
-# The second sed joins all the lines into one
-# The third sed removes the description and turns all commas into spaces
+# The perl command joins all the lines into one
+# The second sed removes the description and turns all commas into spaces
 # Voilà, you have a space separated list of names!
 EXTRACT_NAMES=sed -e '1,/^=head1  *NAME *$$/d;/^=head1/,$$d' | \
-              sed -e ':a;{N;s/\n/ /;ba}' | \
+              $(PERL) -p -0 -e 's/\n/ /g; END {print "\n"}' | \
               sed -e 's/ - .*$$//;s/,/ /g'
 PROCESS_PODS=\
 	set -e; \
