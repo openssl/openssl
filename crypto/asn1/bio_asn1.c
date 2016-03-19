@@ -124,7 +124,7 @@ static int asn1_bio_setup_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
                              asn1_bio_state_t ex_state,
                              asn1_bio_state_t other_state);
 
-static BIO_METHOD methods_asn1 = {
+static const BIO_METHOD methods_asn1 = {
     BIO_TYPE_ASN1,
     "asn1",
     asn1_bio_write,
@@ -137,7 +137,7 @@ static BIO_METHOD methods_asn1 = {
     asn1_bio_callback_ctrl,
 };
 
-BIO_METHOD *BIO_f_asn1(void)
+const BIO_METHOD *BIO_f_asn1(void)
 {
     return (&methods_asn1);
 }

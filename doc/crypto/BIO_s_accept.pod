@@ -10,7 +10,7 @@ BIO_get_bind_mode, BIO_do_accept - accept BIO
 
  #include <openssl/bio.h>
 
- BIO_METHOD *BIO_s_accept(void);
+ const BIO_METHOD *BIO_s_accept(void);
 
  long BIO_set_accept_port(BIO *b, char *name);
  char *BIO_get_accept_port(BIO *b);

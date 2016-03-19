@@ -96,7 +96,7 @@ static int file_gets(BIO *h, char *str, int size);
 static long file_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int file_new(BIO *h);
 static int file_free(BIO *data);
-static BIO_METHOD methods_filep = {
+static const BIO_METHOD methods_filep = {
     BIO_TYPE_FILE,
     "FILE pointer",
     file_write,
@@ -198,7 +198,7 @@ BIO *BIO_new_fp(FILE *stream, int close_flag)
     return (ret);
 }
 
-BIO_METHOD *BIO_s_file(void)
+const BIO_METHOD *BIO_s_file(void)
 {
     return (&methods_filep);
 }
@@ -479,7 +479,7 @@ static int file_free(BIO *a)
     return 0;
 }
 
-static BIO_METHOD methods_filep = {
+static const BIO_METHOD methods_filep = {
     BIO_TYPE_FILE,
     "FILE pointer",
     file_write,
@@ -492,7 +492,7 @@ static BIO_METHOD methods_filep = {
     NULL,
 };
 
-BIO_METHOD *BIO_s_file(void)
+const BIO_METHOD *BIO_s_file(void)
 {
     return (&methods_filep);
 }

@@ -9,7 +9,7 @@ BIO_f_cipher, BIO_set_cipher, BIO_get_cipher_status, BIO_get_cipher_ctx - cipher
  #include <openssl/bio.h>
  #include <openssl/evp.h>
 
- BIO_METHOD *	BIO_f_cipher(void);
+ const BIO_METHOD *	BIO_f_cipher(void);
  void BIO_set_cipher(BIO *b,const EVP_CIPHER *cipher,
 		unsigned char *key, unsigned char *iv, int enc);
  int BIO_get_cipher_status(BIO *b)

@@ -9,8 +9,8 @@ BIO_get_mem_ptr, BIO_new_mem_buf - memory BIO
 
  #include <openssl/bio.h>
 
- BIO_METHOD *	BIO_s_mem(void);
- BIO_METHOD *	BIO_s_secmem(void);
+ const BIO_METHOD *	BIO_s_mem(void);
+ const BIO_METHOD *	BIO_s_secmem(void);
 
  BIO_set_mem_eof_return(BIO *b,int v)
  long BIO_get_mem_data(BIO *b, char **pp)

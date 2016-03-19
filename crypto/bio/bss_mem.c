@@ -68,7 +68,7 @@ static long mem_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int mem_new(BIO *h);
 static int secmem_new(BIO *h);
 static int mem_free(BIO *data);
-static BIO_METHOD mem_method = {
+static const BIO_METHOD mem_method = {
     BIO_TYPE_MEM,
     "memory buffer",
     mem_write,
@@ -80,7 +80,7 @@ static BIO_METHOD mem_method = {
     mem_free,
     NULL,
 };
-static BIO_METHOD secmem_method = {
+static const BIO_METHOD secmem_method = {
     BIO_TYPE_MEM,
     "secure memory buffer",
     mem_write,
@@ -98,12 +98,12 @@ static BIO_METHOD secmem_method = {
  * should_retry is not set
  */
 
-BIO_METHOD *BIO_s_mem(void)
+const BIO_METHOD *BIO_s_mem(void)
 {
     return (&mem_method);
 }
 
-BIO_METHOD *BIO_s_secmem(void)
+const BIO_METHOD *BIO_s_secmem(void)
 {
     return(&secmem_method);
 }

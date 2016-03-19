@@ -155,7 +155,7 @@ typedef struct ok_struct {
     unsigned char buf[IOBS];
 } BIO_OK_CTX;
 
-static BIO_METHOD methods_ok = {
+static const BIO_METHOD methods_ok = {
     BIO_TYPE_CIPHER, "reliable",
     ok_write,
     ok_read,
@@ -167,7 +167,7 @@ static BIO_METHOD methods_ok = {
     ok_callback_ctrl,
 };
 
-BIO_METHOD *BIO_f_reliable(void)
+const BIO_METHOD *BIO_f_reliable(void)
 {
     return (&methods_ok);
 }

@@ -90,7 +90,7 @@ typedef struct enc_struct {
     char buf[ENC_BLOCK_SIZE + BUF_OFFSET + 2];
 } BIO_ENC_CTX;
 
-static BIO_METHOD methods_enc = {
+static const BIO_METHOD methods_enc = {
     BIO_TYPE_CIPHER, "cipher",
     enc_write,
     enc_read,
@@ -102,7 +102,7 @@ static BIO_METHOD methods_enc = {
     enc_callback_ctrl,
 };
 
-BIO_METHOD *BIO_f_cipher(void)
+const BIO_METHOD *BIO_f_cipher(void)
 {
     return (&methods_enc);
 }

@@ -83,7 +83,7 @@ void COMP_zlib_cleanup(void);
 
 # ifdef HEADER_BIO_H
 #  ifdef ZLIB
-BIO_METHOD *BIO_f_zlib(void);
+const BIO_METHOD *BIO_f_zlib(void);
 #  endif
 # endif
 

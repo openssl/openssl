@@ -81,7 +81,7 @@ typedef struct bio_ssl_st {
     unsigned long last_time;
 } BIO_SSL;
 
-static BIO_METHOD methods_sslp = {
+static const BIO_METHOD methods_sslp = {
     BIO_TYPE_SSL, "ssl",
     ssl_write,
     ssl_read,
@@ -93,7 +93,7 @@ static BIO_METHOD methods_sslp = {
     ssl_callback_ctrl,
 };
 
-BIO_METHOD *BIO_f_ssl(void)
+const BIO_METHOD *BIO_f_ssl(void)
 {
     return (&methods_sslp);
 }
