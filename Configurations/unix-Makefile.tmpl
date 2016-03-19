@@ -260,7 +260,7 @@ clean: libclean
 # concatenate only if that is true.
 depend:
 	@: {- output_off() if $disabled{makedepend}; "" -}
-	@if [ -z "`find $(DEPS) -newer Makefile`" ]; then \
+	@if [ -z "`find $(DEPS) -newer Makefile 2>/dev/null`" ]; then \
 	  ( sed -e '/^# DO NOT DELETE THIS LINE.*/,$$d' < Makefile; \
 	    echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
 	    echo; \
