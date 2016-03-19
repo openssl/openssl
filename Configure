@@ -1596,9 +1596,9 @@ EOF
                 # and that there are lines to build it in a BEGINRAW..ENDRAW
                 # section or in the Makefile template.
                 if (! -f $d
-                    || !(grep { $d eq $_ }
-                         map { cleanfile($srcdir, $_, $blddir) }
-                         (@generated_headers, @generated_by_make_headers))) {
+                    || (grep { $d eq $_ }
+                        map { cleanfile($srcdir, $_, $blddir) }
+                        (@generated_headers, @generated_by_make_headers))) {
                     $d = cleanfile($buildd, $_, $blddir);
                 }
                 # Take note if the file to depend on is being renamed
