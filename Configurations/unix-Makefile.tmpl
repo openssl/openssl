@@ -841,7 +841,12 @@ EOF
   sub src2obj {
       my %args = @_;
       my $obj = $args{obj};
-      my @srcs = map { (my $x = $_) =~ s/\.S$/.s/; $x } ( @{$args{srcs}} );
+      my @srcs = map { if ($unified_info{generate}->{$_}) {
+                           (my $x = $_) =~ s/\.S$/.s/; $x
+                       } else {
+                           $_
+                       }
+                     } ( @{$args{srcs}} );
       my $srcs = join(" ",  @srcs);
       my $deps = join(" ", @srcs, @{$args{deps}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
