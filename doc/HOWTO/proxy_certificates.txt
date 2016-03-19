@@ -258,7 +258,7 @@ Here is some skeleton code you can fill in:
           }
         else if (!(xs->ex_flags & EXFLAG_CA))
           {
-            /* We have a EE certificate, let's use it to set default!
+            /* We have an EE certificate, let's use it to set default!
             */
             YOUR_RIGHTS *rights =
               (YOUR_RIGHTS *)X509_STORE_CTX_get_ex_data(ctx,

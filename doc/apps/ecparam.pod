@@ -101,7 +101,7 @@ the preprocessor macro B<OPENSSL_EC_BIN_PT_COMP> at compile time.
 
 This specifies how the elliptic curve parameters are encoded.
 Possible value are: B<named_curve>, i.e. the ec parameters are
-specified by a OID, or B<explicit> where the ec parameters are
+specified by an OID, or B<explicit> where the ec parameters are
 explicitly given (see RFC 3279 for the definition of the 
 EC parameters structures). The default value is B<named_curve>.
 B<Note> the B<implicitlyCA> alternative ,as specified in RFC 3279,
@@ -114,13 +114,13 @@ is included in the ECParameters structure (see RFC 3279).
 
 =item B<-genkey>
 
-This option will generate a EC private key using the specified parameters.
+This option will generate an EC private key using the specified parameters.
 
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
-Multiple files can be specified separated by a OS-dependent character.
+Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
