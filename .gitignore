@@ -41,7 +41,6 @@ Makefile
 
 
 # Auto generated headers
-/apps/progs.h
 /crypto/buildinf.h
 /crypto/include/internal/*_conf.h
 /openssl/include/opensslconf.h
