@@ -1,4 +1,4 @@
-{- use File::Spec::Functions qw/catdir rel2abs/;
+{- use File::Spec::Functions qw/catdir catfile rel2abs/;
    our @cmd_srcs = (
         "asn1pars.c", "ca.c", "ciphers.c", "cms.c", "crl.c", "crl2p7.c",
         "dgst.c", "dhparam.c", "dsa.c", "dsaparam.c", "ec.c", "ecparam.c",
@@ -20,7 +20,7 @@ SOURCE[openssl]=\
         {- $target{apps_aux_src} -}
 DEPEND[openssl.o]=progs.h
 DEPEND[progs.h]={- join(" ", @cmd_srcs); -} ../configdata.pm
-GENERATE[progs.h]=progs.pl {- join(" ", map { catdir($sourcedir, $_) } @cmd_srcs); -}
+GENERATE[progs.h]=progs.pl {- join(" ", map { catfile($sourcedir, $_) } @cmd_srcs); -}
 
 INCLUDE[openssl]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
 DEPEND[openssl]=../libssl
