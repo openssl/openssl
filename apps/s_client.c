@@ -2072,7 +2072,7 @@ int s_client_main(int argc, char **argv)
             BIO *fbio = BIO_new(BIO_f_buffer());
 
             BIO_push(fbio, sbio);
-            BIO_printf(fbio, "CONNECT %s\r\n\r\n", connectstr);
+            BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n\r\n", connectstr);
             (void)BIO_flush(fbio);
             /* wait for multi-line response to end CONNECT response */
             do {
