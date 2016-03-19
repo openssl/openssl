@@ -176,8 +176,8 @@ install_docs:
 uninstall_docs:
 
 install_ssldirs:
-	@$(PERL) $(SRCDIR)\util\mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)\certs
-	@$(PERL) $(SRCDIR)\util\mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)\private
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)\certs"
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)\private"
 
 install_dev:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
