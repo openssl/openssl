@@ -292,7 +292,7 @@ This next example shows how to expand environment variables safely.
 
 Suppose you want a variable called B<tmpfile> to refer to a
 temporary filename. The directory it is placed in can determined by
-the the B<TEMP> or B<TMP> environment variables but they may not be
+the B<TEMP> or B<TMP> environment variables but they may not be
 set to any value at all. If you just include the environment variable
 names and the variable doesn't exist then this will cause an error when
 an attempt is made to load the configuration file. By making use of the
@@ -344,7 +344,7 @@ More complex OpenSSL library configuration. Add OID and don't enter FIPS mode:
  # New OID shortname and long name
  newoid2 = New OID 2 long name, 1.2.3.4.2
 
-The above examples can be used with with any application supporting library
+The above examples can be used with any application supporting library
 configuration if "openssl_conf" is modified to match the appropriate "appname".
 
 For example if the second sample file above is saved to "example.cnf" then

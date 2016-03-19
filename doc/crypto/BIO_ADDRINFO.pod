@@ -71,7 +71,7 @@ with the given one.
 
 =head1 RETURN VALUES
 
-BIO_lookup() returns 1 on success and 0 when an error occured, and
+BIO_lookup() returns 1 on success and 0 when an error occurred, and
 will leave an error indicaton on the OpenSSL error stack in that case.
 
 All other functions described here return 0 or B<NULL> when the
