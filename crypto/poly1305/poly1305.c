@@ -699,6 +699,35 @@ static const struct poly1305_test poly1305_tests[] = {
      "746869732069732033322d6279746520""6b657920666f7220506f6c7931333035",
      "49ec78090e481ec6c26b33b91ccc0307"
     },
+    {
+     "89dab80b7717c1db5db437860a3f70218e93e1b8f461fb677f16f35f6f87e2a9"
+     "1c99bc3a47ace47640cc95c345be5ecca5a3523c35cc01893af0b64a62033427"
+     "0372ec12482d1b1e363561698a578b359803495bb4e2ef1930b17a5190b580f1"
+     "41300df30adbeca28f6427a8bc1a999fd51c554a017d095d8c3e3127daf9f595",
+     "2d773be37adb1e4d683bf0075e79c4ee""037918535a7f99ccb7040fb5f5f43aea",
+     "c85d15ed44c378d6b00e23064c7bcd51"
+    },
+    {
+     "000000000000000b1703030200000000"
+     "06db1f1f368d696a810a349c0c714c9a5e7850c2407d721acded95e018d7a852"
+     "66a6e1289cdb4aeb18da5ac8a2b0026d24a59ad485227f3eaedbb2e7e35e1c66"
+     "cd60f9abf716dcc9ac42682dd7dab287a7024c4eefc321cc0574e16793e37cec"
+     "03c5bda42b54c114a80b57af26416c7be742005e20855c73e21dc8e2edc9d435"
+     "cb6f6059280011c270b71570051c1c9b3052126620bc1e2730fa066c7a509d53"
+     "c60e5ae1b40aa6e39e49669228c90eecb4a50db32a50bc49e90b4f4b359a1dfd"
+     "11749cd3867fcf2fb7bb6cd4738f6a4ad6f7ca5058f7618845af9f020f6c3b96"
+     "7b8f4cd4a91e2813b507ae66f2d35c18284f7292186062e10fd5510d18775351"
+     "ef334e7634ab4743f5b68f49adcab384d3fd75f7390f4006ef2a295c8c7a076a"
+     "d54546cd25d2107fbe1436c840924aaebe5b370893cd63d1325b8616fc481088"
+     "6bc152c53221b6df373119393255ee72bcaa880174f1717f9184fa91646f17a2"
+     "4ac55d16bfddca9581a92eda479201f0edbf633600d6066d1ab36d5d2415d713"
+     "51bbcd608a25108d25641992c1f26c531cf9f90203bc4cc19f5927d834b0a471"
+     "16d3884bbb164b8ec883d1ac832e56b3918a98601a08d171881541d594db399c"
+     "6ae6151221745aec814c45b0b05b565436fd6f137aa10a0c0b643761dbd6f9a9"
+     "dcb99b1a6e690854ce0769cde39761d82fcdec15f0d92d7d8e94ade8eb83fbe0",
+     "99e5822dd4173c995e3dae0ddefb9774""3fde3b080134b39f76e9bf8d0e88d546",
+     "2637408fe13086ea73f971e3425e2820"
+    },
     /*
      * test vectors from Andrew Moon
      */
@@ -866,7 +895,8 @@ int main()
                 Poly1305_Final(&poly1305, out);
 
                 if (memcmp(out, expected, sizeof(expected)) != 0) {
-                    printf("Poly1305 test #%d/%d failed.\n", i, half);
+                    printf("Poly1305 test #%d/%d+%d failed.\n",
+                                           i, half, inlen-half);
                     printf("got:      ");
                     hexdump(out, sizeof(out));
                     printf("\nexpected: ");
