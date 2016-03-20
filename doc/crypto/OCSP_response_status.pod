@@ -26,7 +26,7 @@ contained in B<resp>.
 OCSP_response_create() creates and returns an B<OCSP_RESPONSE> structure for
 B<status> and optionally including basic response B<bs>.
 
-OCSP_RESPONSE_free() frees up OCSP reponse B<resp>.
+OCSP_RESPONSE_free() frees up OCSP response B<resp>.
 
 =head1 RETURN VALUES
 

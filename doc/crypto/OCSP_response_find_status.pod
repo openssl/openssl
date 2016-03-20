@@ -1,6 +1,6 @@
 =pod
 
-OCSP_resp_find_status, OCSP_resp_count, OCSP_resp_get0, OCSP_resp_find, OCSP_single_get0_status, OCSP_check_validity - OCSP reponse utility functions.
+OCSP_resp_find_status, OCSP_resp_count, OCSP_resp_get0, OCSP_resp_find, OCSP_single_get0_status, OCSP_check_validity - OCSP response utility functions.
 
 =head1 SYNOPSIS
 

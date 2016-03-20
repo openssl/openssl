@@ -482,7 +482,7 @@ implemented by ENGINEs should be numbered from. Any command value lower than
 this symbol is considered a "generic" command is handled directly by the
 OpenSSL core routines.
 
-It is using these "core" control commands that one can discover the the control
+It is using these "core" control commands that one can discover the control
 commands implemented by a given ENGINE, specifically the commands;
 
  #define ENGINE_HAS_CTRL_FUNCTION		10

@@ -96,13 +96,13 @@ combined with EVP_MD_FLAG_DIGALGID_ABSENT, the latter will override.>
 
 When setting up a DigestAlgorithmIdentifier, this flag will have the
 parameter be left absent by default.  I<Note: if combined with
-EVP_MD_FLAG_DIGALGID_NULL, the latter will be overriden.>
+EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.>
 
 =item EVP_MD_FLAG_DIGALGID_CUSTOM
 
 Custom DigestAlgorithmIdentifier handling via ctrl, with
 B<EVP_MD_FLAG_DIGALGID_ABSENT> as default.  I<Note: if combined with
-EVP_MD_FLAG_DIGALGID_NULL, the latter will be overriden.>
+EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.>
 Currently unused.
 
 =back

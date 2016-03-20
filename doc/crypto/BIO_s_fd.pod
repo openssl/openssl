@@ -23,7 +23,7 @@ round the platforms file descriptor routines such as read() and write().
 BIO_read() and BIO_write() read or write the underlying descriptor.
 BIO_puts() is supported but BIO_gets() is not.
 
-If the close flag is set then then close() is called on the underlying
+If the close flag is set then close() is called on the underlying
 file descriptor when the BIO is freed.
 
 BIO_reset() attempts to change the file pointer to the start of file
