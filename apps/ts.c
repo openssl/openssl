@@ -154,7 +154,7 @@ OPTIONS ts_options[] = {
     {"text", OPT_TEXT, '-', "Output text (not DER)"},
     {"reply", OPT_REPLY, '-', "Generate a TS reply"},
     {"queryfile", OPT_QUERYFILE, '<', "File containing a TS query"},
-    {"passin", OPT_PASSIN, 's'},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"inkey", OPT_INKEY, '<', "File with private key for reply"},
     {"signer", OPT_SIGNER, 's'},
     {"chain", OPT_CHAIN, '<', "File with signer CA chain"},

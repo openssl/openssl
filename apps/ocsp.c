@@ -178,7 +178,8 @@ OPTIONS ocsp_options[] = {
      "Don't verify additional certificates"},
     {"no_intern", OPT_NO_INTERN, '-',
      "Don't search certificates contained in response for signer"},
-    {"badsig", OPT_BADSIG, '-'},
+    {"badsig", OPT_BADSIG, '-',
+        "Corrupt last byte of loaded OSCP response signature (for test)"},
     {"text", OPT_TEXT, '-', "Print text form of request and response"},
     {"req_text", OPT_REQ_TEXT, '-', "Print text form of request"},
     {"resp_text", OPT_RESP_TEXT, '-', "Print text form of response"},
@@ -205,7 +206,7 @@ OPTIONS ocsp_options[] = {
     {"path", OPT_PATH, 's', "Path to use in OCSP request"},
     {"issuer", OPT_ISSUER, '<', "Issuer certificate"},
     {"cert", OPT_CERT, '<', "Certificate to check"},
-    {"serial", OPT_SERIAL, 's', "Nerial number to check"},
+    {"serial", OPT_SERIAL, 's', "Serial number to check"},
     {"index", OPT_INDEX, '<', "Certificate status index file"},
     {"CA", OPT_CA, '<', "CA certificate"},
     {"nmin", OPT_NMIN, 'p', "Number of minutes before next update"},
@@ -216,9 +217,9 @@ OPTIONS ocsp_options[] = {
      "Sesponder certificate to sign responses with"},
     {"rkey", OPT_RKEY, '<', "Responder key to sign responses with"},
     {"rother", OPT_ROTHER, '<', "Other certificates to include in response"},
-    {"rmd", OPT_RMD, 's'},
+    {"rmd", OPT_RMD, 's', "Digest Algorithm to use in signature of OCSP response"},
     {"header", OPT_HEADER, 's', "key=value header to add"},
-    {"", OPT_MD, '-', "Any supported digest"},
+    {"", OPT_MD, '-', "Any supported digest algorithm (sha1,sha256, ... )"},
     OPT_V_OPTIONS,
     {NULL}
 };
@@ -473,7 +474,7 @@ int ocsp_main(int argc, char **argv)
         case OPT_ROTHER:
             rcertfile = opt_arg();
             break;
-        case OPT_RMD:
+        case OPT_RMD:   /* Response MessageDigest */
             if (!opt_md(opt_arg(), &rsign_md))
                 goto end;
             break;

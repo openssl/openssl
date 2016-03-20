@@ -109,7 +109,7 @@ OPTIONS pkeyutl_options[] = {
     {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
     {"inkey", OPT_INKEY, 's', "Input private key file"},
     {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
-    {"passin", OPT_PASSIN, 's', "Pass phrase source"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
     {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
