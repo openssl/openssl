@@ -60,12 +60,7 @@
 # error "CT is disabled"
 #endif
 
-#include <openssl/bio.h>
-#include <openssl/ct.h>
-#include <openssl/obj_mac.h>
-#include <openssl/x509v3.h>
-
-#include "internal/ct_int.h"
+#include "ct_locl.h"
 
 static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
 {
