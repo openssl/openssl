@@ -148,7 +148,7 @@ OPTIONS smime_options[] = {
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"md", OPT_MD, 's'},
+    {"md", OPT_MD, 's', "Digest algorithm to use when signing or resigning"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
     OPT_V_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE

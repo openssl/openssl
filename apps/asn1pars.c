@@ -82,7 +82,7 @@ OPTIONS asn1parse_options[] = {
     {"in", OPT_IN, '<', "input file"},
     {"out", OPT_OUT, '>', "output file (output format is always DER)"},
     {"i", OPT_INDENT, 0, "indents the output"},
-    {"noout", OPT_NOOUT, 0, "don't produce any output"},
+    {"noout", OPT_NOOUT, 0, "do not produce any output"},
     {"offset", OPT_OFFSET, 'p', "offset into file"},
     {"length", OPT_LENGTH, 'p', "length of section in file"},
     {"oid", OPT_OID, '<', "file of extra oid definitions"},

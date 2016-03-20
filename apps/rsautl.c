@@ -105,7 +105,7 @@ OPTIONS rsautl_options[] = {
     {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
-    {"passin", OPT_PASSIN, 's', "Pass phrase source"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
