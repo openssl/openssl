@@ -90,7 +90,7 @@ continue on those parameters.
 =item Z<>0
 
 This indicates that it was not possible to set/retrieve a session ticket and 
-the SSL/TLS session will continue by by negotiating a set of cryptographic
+the SSL/TLS session will continue by negotiating a set of cryptographic
 parameters or using the alternate SSL/TLS resumption mechanism, session ids.
 
 If called with enc equal to 0 the library will call the I<cb> again to get

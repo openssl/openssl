@@ -78,15 +78,15 @@ C<|> operator, for example:
 =head1 RETURN VALUES
 
 BIO_socket() returns the socket number on success or B<INVALID_SOCKET>
-(-1) on error.  When an error has occured, the OpenSSL error stack
+(-1) on error.  When an error has occurred, the OpenSSL error stack
 will hold the error data and errno has the system error.
 
 BIO_connect() and BIO_listen() return 1 on success or 0 on error.
-When an error has occured, the OpenSSL error stack will hold the error
+When an error has occurred, the OpenSSL error stack will hold the error
 data and errno has the system error.
 
 BIO_accept_ex() returns the accepted socket on success or
-B<INVALID_SOCKET> (-1) on error.  When an error has occured, the
+B<INVALID_SOCKET> (-1) on error.  When an error has occurred, the
 OpenSSL error stack will hold the error data and errno has the system
 error.
 

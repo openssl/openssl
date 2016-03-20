@@ -123,7 +123,7 @@ The error codes can be obtained by L<ERR_get_error(3)>.
 Creating an ECDSA signature of a given SHA-256 hash value using the
 named curve prime256v1 (aka P-256).
 
-First step: create a EC_KEY object (note: this part is B<not> ECDSA
+First step: create an EC_KEY object (note: this part is B<not> ECDSA
 specific)
 
  int        ret;
