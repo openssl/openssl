@@ -19,7 +19,7 @@
 #include <openssl/crypto.h>
 #include "e_os.h"
 
-#include "internal/blake2_locl.h"
+#include "blake2_locl.h"
 #include "blake2_impl.h"
 
 static const uint32_t blake2s_IV[8] =
