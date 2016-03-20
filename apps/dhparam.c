@@ -150,7 +150,7 @@ OPTIONS dhparam_options[] = {
     {"out", OPT_OUT, '>', "Output file"},
     {"check", OPT_CHECK, '-', "Check the DH parameters"},
     {"text", OPT_TEXT, '-', "Print a text form of the DH parameters"},
-    {"noout", OPT_NOOUT, '-'},
+    {"noout", OPT_NOOUT, '-', "Don't output any DH parameters"},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"C", OPT_C, '-', "Print C code"},
