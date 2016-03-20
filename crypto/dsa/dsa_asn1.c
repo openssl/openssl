@@ -75,7 +75,7 @@ ASN1_SEQUENCE(DSA_SIG) = {
 
 IMPLEMENT_ASN1_FUNCTIONS_const(DSA_SIG)
 
-void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, DSA_SIG *sig)
+void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig)
 {
     *pr = sig->r;
     *ps = sig->s;

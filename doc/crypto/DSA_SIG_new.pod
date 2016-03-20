@@ -10,7 +10,7 @@ DSA_SIG_new, DSA_SIG_free - allocate and free DSA signature objects
 
  DSA_SIG *DSA_SIG_new(void);
  void DSA_SIG_free(DSA_SIG *a);
- void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, DSA_SIG *sig);
+ void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig);
 
 =head1 DESCRIPTION
 
