@@ -666,7 +666,7 @@ typedef enum OPTION_choice {
     OPT_S_ENUM,
     OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_DANE_TLSA_DOMAIN,
 #ifndef OPENSSL_NO_CT
-    OPT_NOCT, OPT_REQUESTCT, OPT_REQUIRECT, OPT_CTLOG_FILE,
+    OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
     OPT_DANE_TLSA_RRDATA
 } OPTION_CHOICE;
@@ -831,9 +831,8 @@ OPTIONS s_client_options[] = {
      "Specify engine to be used for client certificate operations"},
 #endif
 #ifndef OPENSSL_NO_CT
+    {"ct", OPT_CT, '-', "Request and parse SCTs (also enables OCSP stapling)"},
     {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
-    {"requestct", OPT_REQUESTCT, '-', "Request SCTs (enables OCSP stapling)"},
-    {"requirect", OPT_REQUIRECT, '-', "Require at least 1 SCT (enables OCSP stapling)"},
     {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
 #endif
     {NULL}
@@ -935,7 +934,7 @@ int s_client_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_CT
     char *ctlog_file = NULL;
-    ct_validation_cb ct_validation = NULL;
+    int ct_validation = 0;
 #endif
     int min_version = 0, max_version = 0;
 
@@ -1335,13 +1334,10 @@ int s_client_main(int argc, char **argv)
             break;
 #ifndef OPENSSL_NO_CT
         case OPT_NOCT:
-            ct_validation = NULL;
+            ct_validation = 0;
             break;
-        case OPT_REQUESTCT:
-            ct_validation = CT_verify_no_bad_scts;
-            break;
-        case OPT_REQUIRECT:
-            ct_validation = CT_verify_at_least_one_good_sct;
+        case OPT_CT:
+            ct_validation = 1;
             break;
         case OPT_CTLOG_FILE:
             ctlog_file = opt_arg();
@@ -1684,13 +1680,17 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
 
 #ifndef OPENSSL_NO_CT
-    if (!SSL_CTX_set_ct_validation_callback(ctx, ct_validation, NULL)) {
+    /*
+     * Enable SCT processing, without early connection termination
+     */
+    if (ct_validation &&
+        !SSL_CTX_enable_ct(ctx, SSL_CT_VALIDATION_PERMISSIVE)) {
         ERR_print_errors(bio_err);
         goto end;
     }
 
     if (!ctx_set_ctlog_list_file(ctx, ctlog_file)) {
-        if (ct_validation != NULL) {
+        if (ct_validation) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -2570,7 +2570,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #endif
     unsigned char *exportedkeymat;
 #ifndef OPENSSL_NO_CT
-    const STACK_OF(SCT) *scts;
     const SSL_CTX *ctx = SSL_get_SSL_CTX(s);
 #endif
 
@@ -2626,21 +2625,31 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         ssl_print_tmp_key(bio, s);
 
 #ifndef OPENSSL_NO_CT
-        scts = SSL_get0_peer_scts(s);
-        BIO_printf(bio, "---\nSCTs present (%i)\n",
-                   scts != NULL ? sk_SCT_num(scts) : 0);
+        /*
+         * When the SSL session is anonymous, or resumed via an abbreviated
+         * handshake, no SCTs are provided, and it makes little sense to
+         * attempt to display SCTs from a resumed session's certificate.
+         */
+        if (peer != NULL && !SSL_session_reused(s) && SSL_ct_is_enabled(s)) {
+            const STACK_OF(SCT) *scts = SSL_get0_peer_scts(s);
+            int sct_count = scts != NULL ? sk_SCT_num(scts) : 0;
 
-        if (SSL_get_ct_validation_callback(s) == NULL) {
-          BIO_printf(bio, "Warning: CT validation is disabled, so not all "
-                     "SCTs may be displayed. Re-run with \"-requestct\".\n");
-        }
+            BIO_printf(bio, "---\nSCTs present (%i)\n", sct_count);
+            if (sct_count > 0) {
+                const CTLOG_STORE *log_store = SSL_CTX_get0_ctlog_store(ctx);
 
-        if (scts != NULL && sk_SCT_num(scts) > 0) {
-            const CTLOG_STORE *log_store = SSL_CTX_get0_ctlog_store(ctx);
+                BIO_printf(bio, "---\n");
+                for (i = 0; i < sct_count; ++i) {
+                    SCT *sct = sk_SCT_value(scts, i);
 
-            BIO_printf(bio, "---\n");
-            SCT_LIST_print(scts, bio, 0, "\n---\n", log_store);
-            BIO_printf(bio, "\n");
+                    BIO_printf(bio, "SCT validation status: %s\n",
+                               SCT_validation_status_string(sct));
+                    SCT_print(sct, bio, 0, log_store);
+                    if (i < sct_count - 1)
+                        BIO_printf(bio, "\n---\n");
+                }
+                BIO_printf(bio, "\n");
+            }
         }
 #endif
 

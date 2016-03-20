@@ -811,20 +811,21 @@ sub testssl {
 	plan tests => 3;
 
       SKIP: {
-	  skip "Certificate Transparency is not supported by this OpenSSL build", 3
-	      if $no_ct;
-	  skip "TLSv1.0 is not supported by this OpenSSL build", 3
-	      if $no_tls1;
+        skip "Certificate Transparency is not supported by this OpenSSL build", 3
+            if $no_ct;
+        skip "TLSv1.0 is not supported by this OpenSSL build", 3
+            if $no_tls1;
 
-    $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-noct"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-requestct"])));
-	  # No SCTs provided, so this should fail.
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-requirect",
-	               "-should_negotiate", "fail-client"])));
-	}
+        $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
+        my @ca = qw(-CAfile certCA.ss);
+        ok(run(test([@ssltest, @ca, "-bio_pair", "-tls1", "-noct"])));
+        # No SCTs provided, so this should fail.
+        ok(run(test([@ssltest, @ca, "-bio_pair", "-tls1", "-ct",
+                     "-should_negotiate", "fail-client"])));
+        # No SCTs provided, unverified chains still succeed.
+        ok(run(test([@ssltest, "-bio_pair", "-tls1", "-ct"])));
+        }
     };
-
 }
 
 sub testsslproxy {
