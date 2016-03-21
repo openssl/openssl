@@ -114,19 +114,19 @@ print <<"EOF";
  * regenerate it.
  */
 
-#define CONF_NUMBER             1
-#define CONF_UPPER              2
-#define CONF_LOWER              4
-#define CONF_UNDER              256
-#define CONF_PUNCTUATION        512
-#define CONF_WS                 16
-#define CONF_ESC                32
-#define CONF_QUOTE              64
-#define CONF_DQUOTE             1024
-#define CONF_COMMENT            128
-#define CONF_FCOMMENT           2048
-#define CONF_EOF                8
-#define CONF_HIGHBIT            4096
+#define CONF_NUMBER             $NUMBER
+#define CONF_UPPER              $UPPER
+#define CONF_LOWER              $LOWER
+#define CONF_UNDER              $UNDER
+#define CONF_PUNCTUATION        $PUNCTUATION
+#define CONF_WS                 $WS
+#define CONF_ESC                $ESC
+#define CONF_QUOTE              $QUOTE
+#define CONF_DQUOTE             $DQUOTE
+#define CONF_COMMENT            $COMMENT
+#define CONF_FCOMMENT           $FCOMMENT
+#define CONF_EOF                $EOF
+#define CONF_HIGHBIT            $HIGHBIT
 #define CONF_ALPHA              (CONF_UPPER|CONF_LOWER)
 #define CONF_ALPHA_NUMERIC      (CONF_ALPHA|CONF_NUMBER|CONF_UNDER)
 #define CONF_ALPHA_NUMERIC_PUNCT (CONF_ALPHA|CONF_NUMBER|CONF_UNDER| \\
