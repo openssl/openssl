@@ -180,17 +180,20 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
         goto err;
     }
 
-    if (piv) {
-        calg->parameter = ASN1_TYPE_new();
-        if (!calg->parameter) {
-            CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-        if (EVP_CIPHER_param_to_asn1(ctx, calg->parameter) <= 0) {
-            CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
-                   CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
-            goto err;
-        }
+    calg->parameter = ASN1_TYPE_new();
+    if (calg->parameter == NULL) {
+        CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (EVP_CIPHER_param_to_asn1(ctx, calg->parameter) <= 0) {
+        CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
+               CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+        goto err;
+    }
+    /* If parameter type not set omit parameter */
+    if (calg->parameter->type == V_ASN1_UNDEF) {
+        ASN1_TYPE_free(calg->parameter);
+        calg->parameter = NULL;
     }
     ok = 1;
 
