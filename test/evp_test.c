@@ -209,6 +209,8 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
     *buflen = len;
     return 1;
 }
+#ifndef OPENSSL_NO_SCRYPT
+/* Currently only used by scrypt tests */
 /* Parse unsigned decimal 64 bit integer value */
 static int test_uint64(const char *value, uint64_t *pr)
 {
@@ -233,6 +235,7 @@ static int test_uint64(const char *value, uint64_t *pr)
     }
     return 1;
 }
+#endif
 
 /* Structure holding test information */
 struct evp_test {
@@ -1509,16 +1512,20 @@ static int pbe_test_init(struct evp_test *t, const char *alg)
     struct pbe_data *pdat;
     int pbe_type = 0;
 
+    if (strcmp(alg, "scrypt") == 0) {
 #ifndef OPENSSL_NO_SCRYPT
-    if (strcmp(alg, "scrypt") == 0)
         pbe_type = PBE_TYPE_SCRYPT;
+#else
+        t->skip = 1;
+        return 1;
 #endif
-    else if (strcmp(alg, "pbkdf2") == 0)
+    } else if (strcmp(alg, "pbkdf2") == 0) {
         pbe_type = PBE_TYPE_PBKDF2;
-    else if (strcmp(alg, "pkcs12") == 0)
+    } else if (strcmp(alg, "pkcs12") == 0) {
         pbe_type = PBE_TYPE_PKCS12;
-    else
+    } else {
         fprintf(stderr, "Unknown pbe algorithm %s\n", alg);
+    }
     pdat = OPENSSL_malloc(sizeof(*pdat));
     pdat->pbe_type = pbe_type;
     pdat->pass = NULL;
