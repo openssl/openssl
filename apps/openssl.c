@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
     default_config_file = make_config_name();
     bio_in = dup_bio_in(FORMAT_TEXT);
     bio_out = dup_bio_out(FORMAT_TEXT);
-    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+    bio_err = dup_bio_err(FORMAT_TEXT);
 
 #if defined( OPENSSL_SYS_VMS)
     copied_argv = argv = copy_argv(&argc, argv);
