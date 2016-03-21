@@ -218,8 +218,8 @@ static FUNCTION functions[] = {
 #ifndef OPENSSL_NO_MD5
     { FT_md, "md5", dgst_main},
 #endif
-#ifndef OPENSSL_NO_MD_GHOST94
-    { FT_md, "md_ghost94", dgst_main},
+#ifndef OPENSSL_NO_GOST
+    { FT_md, "gost", dgst_main},
 #endif
 #ifndef OPENSSL_NO_SHA
     { FT_md, "sha1", dgst_main},
