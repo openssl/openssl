@@ -2486,6 +2486,17 @@ BIO *dup_bio_out(int format)
     return b;
 }
 
+BIO *dup_bio_err(int format)
+{
+    BIO *b = BIO_new_fp(stderr,
+                        BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
+#ifdef OPENSSL_SYS_VMS
+    if (istext(format))
+        b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
+#endif
+    return b;
+}
+
 void unbuffer(FILE *fp)
 {
     setbuf(fp, NULL);
