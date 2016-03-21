@@ -2496,7 +2496,7 @@ static SSL_CIPHER ssl3_ciphers[] =
 
 #endif /* OPENSSL_NO_CAMELLIA */
 
-#ifndef OPENSL_NO_GOST
+#ifndef OPENSSL_NO_GOST
     {
      1,
      "GOST2001-GOST89-GOST89",
@@ -2556,7 +2556,7 @@ static SSL_CIPHER ssl3_ciphers[] =
      SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_STREAM_MAC,
      0,
      0},
-#endif /* OPENSL_NO_GOST */
+#endif /* OPENSSL_NO_GOST */
 
 #ifndef OPENSSL_NO_IDEA
     {
