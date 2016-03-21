@@ -55,8 +55,12 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#ifndef OPENSSL_NO_OCSP
 
+#include <openssl/opensslconf.h>
+
+#ifdef OPENSSL_NO_OCSP
+NON_EMPTY_TRANSLATION_UNIT
+#else
 # ifdef OPENSSL_SYS_VMS
 #  define _XOPEN_SOURCE_EXTENDED/* So fd_set and friends get properly defined
                                  * on OpenVMS */
@@ -69,8 +73,9 @@
 # include <string.h>
 # include <time.h>
 # include <ctype.h>
-# include "apps.h"              /* needs to be included before the openssl
-                                 * headers! */
+
+/* Needs to be included before the openssl headers */
+# include "apps.h"
 # include <openssl/e_os2.h>
 # include <openssl/crypto.h>
 # include <openssl/err.h>

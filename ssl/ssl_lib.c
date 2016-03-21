@@ -1057,7 +1057,9 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->tlsext_ellipticcurvelist);
 #endif                         /* OPENSSL_NO_EC */
     sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts, X509_EXTENSION_free);
+#ifndef OPENSSL_NO_OCSP
     sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
+#endif
 #ifndef OPENSSL_NO_CT
     SCT_LIST_free(s->scts);
     OPENSSL_free(s->tlsext_scts);
@@ -3951,6 +3953,7 @@ static int ct_extract_tls_extension_scts(SSL *s)
  */
 static int ct_extract_ocsp_response_scts(SSL *s)
 {
+#ifndef OPENSSL_NO_OCSP
     int scts_extracted = 0;
     const unsigned char *p;
     OCSP_BASICRESP *br = NULL;
@@ -3987,6 +3990,10 @@ err:
     OCSP_BASICRESP_free(br);
     OCSP_RESPONSE_free(rsp);
     return scts_extracted;
+#else
+    /* Behave as if no OCSP response exists */
+    return 0;
+#endif
 }
 
 /*
