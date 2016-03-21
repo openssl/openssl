@@ -111,7 +111,10 @@ int pkcs8_main(int argc, char **argv)
     const EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *prog;
-    char pass[50], *passin = NULL, *passout = NULL, *p8pass = NULL;
+#ifndef OPENSSL_NO_UI
+    char pass[50];
+#endif
+    char *passin = NULL, *passout = NULL, *p8pass = NULL;
     OPTION_CHOICE o;
     int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
@@ -272,13 +275,18 @@ int pkcs8_main(int argc, char **argv)
             }
             if (passout)
                 p8pass = passout;
-            else {
+            else if (1) {
+#ifndef OPENSSL_NO_UI
                 p8pass = pass;
                 if (EVP_read_pw_string
                     (pass, sizeof pass, "Enter Encryption Password:", 1)) {
                     X509_ALGOR_free(pbe);
                     goto end;
                 }
+            } else {
+#endif
+                BIO_printf(bio_err, "Password required\n");
+                goto end;
             }
             app_RAND_load_file(NULL, 0);
             p8 = PKCS8_set0_pbe(p8pass, strlen(p8pass), p8inf, pbe);
@@ -330,9 +338,14 @@ int pkcs8_main(int argc, char **argv)
         }
         if (passin)
             p8pass = passin;
-        else {
+        else if (1) {
+#ifndef OPENSSL_NO_UI
             p8pass = pass;
             EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0);
+        } else {
+#endif
+            BIO_printf(bio_err, "Password required\n");
+            goto end;
         }
         p8inf = PKCS8_decrypt(p8, p8pass, strlen(p8pass));
     }
