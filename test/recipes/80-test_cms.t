@@ -11,6 +11,9 @@ use OpenSSL::Test::Utils;
 
 setup("test_cms");
 
+plan skip_all => "CMS is not supported by this OpenSSL build"
+    if disabled("cms");
+
 my $smdir    = srctop_dir("test", "smime-certs");
 my $smcont   = srctop_file("test", "smcont.txt");
 my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
