@@ -147,6 +147,8 @@
 
 #include <openssl/e_os2.h>
 
+#ifndef OPENSSL_NO_SOCK
+
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
  * recursive header file inclusion, resulting in the compiler complaining
@@ -3363,3 +3365,5 @@ static void free_sessions(void)
     }
     first = NULL;
 }
+
+#endif

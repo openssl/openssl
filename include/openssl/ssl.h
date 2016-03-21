@@ -1892,7 +1892,9 @@ void SSL_trace(int write_p, int version, int content_type,
 __owur const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
 # endif
 
+# ifndef OPENSSL_NO_SOCK
 int DTLSv1_listen(SSL *s, BIO_ADDR *client);
+# endif
 
 # ifndef OPENSSL_NO_CT
 

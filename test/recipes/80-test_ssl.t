@@ -435,14 +435,14 @@ sub testssl {
 
         SKIP: {
             skip "No IPv4 available on this machine", 1
-                unless have_IPv4();
+                unless !disabled("sock") && have_IPv4();
             ok(run(test([@ssltest, "-ipv4", @extra])),
                'test TLS via IPv4');
           }
           
         SKIP: {
             skip "No IPv6 available on this machine", 1
-                unless have_IPv6();
+                unless !disabled("sock") && have_IPv6();
             ok(run(test([@ssltest, "-ipv6", @extra])),
                'test TLS via IPv6');
           }
