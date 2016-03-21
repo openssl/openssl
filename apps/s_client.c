@@ -207,7 +207,9 @@ static int c_ign_eof = 0;
 static int c_brief = 0;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
+#ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg);
+#endif
 
 static int saved_errno;
 
@@ -757,7 +759,9 @@ OPTIONS s_client_options[] = {
      "Set TLS extension servername in ClientHello"},
     {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
      "Hex dump of all TLS extensions received"},
+#ifndef OPENSSL_NO_OCSP
     {"status", OPT_STATUS, '-', "Request certificate status from server"},
+#endif
     {"serverinfo", OPT_SERVERINFO, 's',
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
     {"alpn", OPT_ALPN, 's',
@@ -1888,11 +1892,13 @@ int s_client_main(int argc, char **argv)
         SSL_set_tlsext_debug_callback(con, tlsext_cb);
         SSL_set_tlsext_debug_arg(con, bio_c_out);
     }
+#ifndef OPENSSL_NO_OCSP
     if (c_status_req) {
         SSL_set_tlsext_status_type(con, TLSEXT_STATUSTYPE_ocsp);
         SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
         SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
     }
+#endif
 
     SSL_set_bio(con, sbio, sbio);
     SSL_set_connect_state(con);
@@ -2736,6 +2742,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     (void)BIO_flush(bio);
 }
 
+# ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg)
 {
     const unsigned char *p;
@@ -2759,5 +2766,6 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     OCSP_RESPONSE_free(rsp);
     return 1;
 }
+# endif
 
 #endif

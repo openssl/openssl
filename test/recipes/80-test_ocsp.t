@@ -7,8 +7,12 @@ use POSIX;
 use File::Spec::Functions qw/devnull catfile/;
 use File::Copy;
 use OpenSSL::Test qw/:DEFAULT with pipe srctop_dir/;
+use OpenSSL::Test::Utils;
 
 setup("test_ocsp");
+
+plan skip_all => "OCSP is not supported by this OpenSSL build"
+    if disabled("ocsp");
 
 my $ocspdir=srctop_dir("test", "ocsp-tests");
 # 17 December 2012 so we don't get certificate expiry errors.

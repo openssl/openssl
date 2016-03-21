@@ -230,7 +230,6 @@ static BIO *bio_s_msg = NULL;
 static int s_debug = 0;
 static int s_tlsextdebug = 0;
 static int s_tlsextstatus = 0;
-static int cert_status_cb(SSL *s, void *arg);
 static int no_resume_ephemeral = 0;
 static int s_msg = 0;
 static int s_quiet = 0;
@@ -604,6 +603,7 @@ typedef struct tlsextstatusctx_st {
 
 static tlsextstatusctx tlscstatp = { NULL, NULL, NULL, 0, -1, 0 };
 
+#ifndef OPENSSL_NO_OCSP
 /*
  * Certificate Status callback. This is called when a client includes a
  * certificate status request extension. This is a simplified version. It
@@ -717,6 +717,7 @@ static int cert_status_cb(SSL *s, void *arg)
     ret = SSL_TLSEXT_ERR_ALERT_FATAL;
     goto done;
 }
+#endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
 /* This is the context that we pass to next_proto_cb */
@@ -919,12 +920,14 @@ OPTIONS s_server_options[] = {
      "CA file for certificate verification (PEM format)"},
     {"ign_eof", OPT_IGN_EOF, '-', "ignore input eof (default when -quiet)"},
     {"no_ign_eof", OPT_NO_IGN_EOF, '-', "Do not ignore input eof"},
+#ifndef OPENSSL_NO_OCSP
     {"status", OPT_STATUS, '-', "Request certificate status from server"},
     {"status_verbose", OPT_STATUS_VERBOSE, '-',
      "Print more output in certificate status callback"},
     {"status_timeout", OPT_STATUS_TIMEOUT, 'n',
      "Status request responder timeout"},
     {"status_url", OPT_STATUS_URL, 's', "Status request fallback URL"},
+#endif
 #ifndef OPENSSL_NO_SSL_TRACE
     {"trace", OPT_TRACE, '-', "trace protocol messages"},
 #endif
@@ -1323,6 +1326,7 @@ int s_server_main(int argc, char *argv[])
             tlscstatp.timeout = atoi(opt_arg());
             break;
         case OPT_STATUS_URL:
+#ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
             if (!OCSP_parse_url(opt_arg(),
                                 &tlscstatp.host,
@@ -1331,6 +1335,7 @@ int s_server_main(int argc, char *argv[])
                 BIO_printf(bio_err, "Error parsing URL\n");
                 goto end;
             }
+#endif
             break;
         case OPT_MSG:
             s_msg = 1;
@@ -2009,6 +2014,7 @@ int s_server_main(int argc, char *argv[])
         if (ctx2)
             SSL_CTX_set_client_CA_list(ctx2, SSL_load_client_CA_file(CAfile));
     }
+#ifndef OPENSSL_NO_OCSP
     if (s_tlsextstatus) {
         SSL_CTX_set_tlsext_status_cb(ctx, cert_status_cb);
         SSL_CTX_set_tlsext_status_arg(ctx, &tlscstatp);
@@ -2017,6 +2023,7 @@ int s_server_main(int argc, char *argv[])
             SSL_CTX_set_tlsext_status_arg(ctx2, &tlscstatp);
         }
     }
+#endif
 
     BIO_printf(bio_s_out, "ACCEPT\n");
     (void)BIO_flush(bio_s_out);

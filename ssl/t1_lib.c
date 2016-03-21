@@ -1347,6 +1347,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         ret += salglen;
     }
 
+#ifndef OPENSSL_NO_OCSP
     if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
         int i;
         long extlen, idlen, itmp;
@@ -1390,6 +1391,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         if (extlen > 0)
             i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &ret);
     }
+#endif
 #ifndef OPENSSL_NO_HEARTBEATS
     if (SSL_IS_DTLS(s)) {
         /* Add Heartbeat extension */
@@ -2128,14 +2130,14 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                 }
             }
         } else if (type == TLSEXT_TYPE_status_request) {
-            const unsigned char *ext_data;
-
             if (!PACKET_get_1(&extension,
                               (unsigned int *)&s->tlsext_status_type)) {
                 return 0;
             }
 
+#ifndef OPENSSL_NO_OCSP
             if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
+                const unsigned char *ext_data;
                 PACKET responder_id_list, exts;
                 if (!PACKET_get_length_prefixed_2(&extension, &responder_id_list))
                     return 0;
@@ -2192,10 +2194,12 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                         return 0;
                     }
                 }
-            /*
-             * We don't know what to do with any other type * so ignore it.
-             */
-            } else {
+            } else
+#endif
+            {
+                /*
+                 * We don't know what to do with any other type so ignore it.
+                 */
                 s->tlsext_status_type = -1;
             }
         }
