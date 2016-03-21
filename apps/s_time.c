@@ -66,6 +66,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/opensslconf.h>
+
+#ifndef OPENSSL_NO_SOCK
+
 #define USE_SOCKETS
 #include "apps.h"
 #include <openssl/x509.h>
@@ -474,3 +478,4 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
 
     return serverCon;
 }
+#endif /* OPENSSL_NO_SOCK */

@@ -141,6 +141,8 @@
 #include <errno.h>
 #include <openssl/e_os2.h>
 
+#ifndef OPENSSL_NO_SOCK
+
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
  * recursive header file inclusion, resulting in the compiler complaining
@@ -2757,3 +2759,5 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     OCSP_RESPONSE_free(rsp);
     return 1;
 }
+
+#endif

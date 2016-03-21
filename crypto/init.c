@@ -490,7 +490,9 @@ void OPENSSL_cleanup(void)
     ENGINE_cleanup();
 #endif
     CRYPTO_cleanup_all_ex_data();
+#ifndef OPENSSL_NO_SOCK
     BIO_sock_cleanup();
+#endif
     EVP_cleanup();
     OBJ_cleanup();
     base_inited = 0;

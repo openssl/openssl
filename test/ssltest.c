@@ -1234,11 +1234,15 @@ int main(int argc, char *argv[])
             CAfile = *(++argv);
         } else if (strcmp(*argv, "-bio_pair") == 0) {
             bio_type = BIO_PAIR;
-        } else if (strcmp(*argv, "-ipv4") == 0) {
+        }
+#ifndef OPENSSL_NO_SOCK
+        else if (strcmp(*argv, "-ipv4") == 0) {
             bio_type = BIO_IPV4;
         } else if (strcmp(*argv, "-ipv6") == 0) {
             bio_type = BIO_IPV6;
-        } else if (strcmp(*argv, "-f") == 0) {
+        }
+#endif
+        else if (strcmp(*argv, "-f") == 0) {
             force = 1;
         } else if (strcmp(*argv, "-time") == 0) {
             print_time = 1;
@@ -1857,6 +1861,7 @@ int main(int argc, char *argv[])
         case BIO_PAIR:
             ret = doit_biopair(s_ssl, c_ssl, bytes, &s_time, &c_time);
             break;
+#ifndef OPENSSL_NO_SOCK
         case BIO_IPV4:
             ret = doit_localhost(s_ssl, c_ssl, BIO_FAMILY_IPV4,
                                  bytes, &s_time, &c_time);
@@ -1865,6 +1870,12 @@ int main(int argc, char *argv[])
             ret = doit_localhost(s_ssl, c_ssl, BIO_FAMILY_IPV6,
                                  bytes, &s_time, &c_time);
             break;
+#else
+        case BIO_IPV4:
+        case BIO_IPV6:
+            ret = 1;
+            goto err;
+#endif
         }
         if (ret)  break;
     }
@@ -1931,6 +1942,7 @@ int main(int argc, char *argv[])
     EXIT(ret);
 }
 
+#ifndef OPENSSL_NO_SOCK
 int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
                    clock_t *s_time, clock_t *c_time)
 {
@@ -2170,12 +2182,12 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
 
     if (verbose)
         print_details(c_ssl, "DONE via TCP connect: ");
-#ifndef OPENSSL_NO_NEXTPROTONEG
+# ifndef OPENSSL_NO_NEXTPROTONEG
     if (verify_npn(c_ssl, s_ssl) < 0) {
         ret = 1;
         goto end;
     }
-#endif
+# endif
     if (verify_serverinfo() < 0) {
         fprintf(stderr, "Server info verify error\n");
         ret = 1;
@@ -2215,6 +2227,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
 
     return ret;
 }
+#endif
 
 int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                  clock_t *s_time, clock_t *c_time)
