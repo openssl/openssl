@@ -391,7 +391,8 @@ install_engines:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/
 	@echo "*** Installing engines"
-	@set -e; for e in $(ENGINES); do \
+	@set -e; for e in dummy $(ENGINES); do \
+		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \
 		if [ "$$fn" = '{- dso("ossltest") -}' ]; then \
 			continue; \
@@ -405,7 +406,8 @@ install_engines:
 
 uninstall_engines:
 	@echo "*** Uninstalling engines"
-	@set -e; for e in $(ENGINES); do \
+	@set -e; for e in dummy $(ENGINES); do \
+		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \
 		if [ "$$fn" = '{- dso("ossltest") -}' ]; then \
 			continue; \
@@ -421,7 +423,8 @@ install_runtime:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/misc
 	@echo "*** Installing runtime files"
 	: {- output_off() unless windowsdll(); "" -};
-	@set -e; for s in $(SHLIBS); do \
+	@set -e; for s in dummy $(SHLIBS); do \
+		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
 		echo "install $$s -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		cp $$s $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
@@ -430,7 +433,8 @@ install_runtime:
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
 	: {- output_on() unless windowsdll(); "" -};
-	@set -e; for x in $(PROGRAMS); do \
+	@set -e; for x in dummy $(PROGRAMS); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		cp $$x $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
@@ -438,7 +442,8 @@ install_runtime:
 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	@set -e; for x in $(BIN_SCRIPTS); do \
+	@set -e; for x in dummy $(BIN_SCRIPTS); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		cp $$x $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
@@ -446,7 +451,8 @@ install_runtime:
 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	@set -e; for x in $(MISC_SCRIPTS); do \
+	@set -e; for x in dummy $(MISC_SCRIPTS); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "install $$x -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
 		cp $$x $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
@@ -461,26 +467,30 @@ install_runtime:
 
 uninstall_runtime:
 	@echo "*** Uninstalling runtime files"
-	@set -e; for x in $(PROGRAMS); \
+	@set -e; for x in dummy $(PROGRAMS); \
 	do  \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done;
-	@set -e; for x in $(BIN_SCRIPTS); \
+	@set -e; for x in dummy $(BIN_SCRIPTS); \
 	do  \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	@set -e; for x in $(MISC_SCRIPTS); \
+	@set -e; for x in dummy $(MISC_SCRIPTS); \
 	do  \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
 		$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$fn; \
 	done
 	: {- output_off() unless windowsdll(); "" -};
-	@set -e; for s in $(SHLIBS); do \
+	@set -e; for s in dummy $(SHLIBS); do \
+		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
