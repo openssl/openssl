@@ -67,6 +67,11 @@ static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
     return OPENSSL_strdup("NULL");
 }
 
+static void *s2i_poison(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx, const char *str)
+{
+   return ASN1_NULL_new();
+}
+
 static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
                  BIO *out, int indent)
 {
@@ -88,7 +93,7 @@ const X509V3_EXT_METHOD v3_ct_scts[] = {
     /* X509v3 extension to mark a certificate as a pre-certificate */
     { NID_ct_precert_poison, 0, ASN1_ITEM_ref(ASN1_NULL),
     NULL, NULL, NULL, NULL,
-    i2s_poison, NULL,
+    i2s_poison, s2i_poison,
     NULL, NULL,
     NULL, NULL,
     NULL },
