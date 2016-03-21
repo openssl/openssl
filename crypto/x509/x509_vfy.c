@@ -2591,7 +2591,7 @@ static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
         return  X509_TRUST_UNTRUSTED;
 
     /*
-     * Record any DANE trust anchor matches, for the first depth to test, if
+     * Record any DANE trust-anchor matches, for the first depth to test, if
      * there's one at that depth. (This'll be false for length 1 chains looking
      * for an exact match for the leaf certificate).
      */
@@ -2676,6 +2676,18 @@ static int dane_verify(X509_STORE_CTX *ctx)
 
     dane_reset(dane);
 
+    /*-
+     * When testing the leaf certificate, if we match a DANE-EE(3) record,
+     * dane_match() returns 1 and we're done.  If however we match a PKIX-EE(1)
+     * record, the match depth and matching TLSA record are recorded, but the
+     * return value is 0, because we still need to find a PKIX trust-anchor.
+     * Therefore, when DANE authentication is enabled (required), we're done
+     * if:
+     *   + matched < 0, internal error.
+     *   + matched == 1, we matched a DANE-EE(3) record
+     *   + matched == 0, mdepth < 0 (no PKIX-EE match) and there are no
+     *     DANE-TA(2) or PKIX-TA(0) to test.
+     */
     matched = dane_match(ctx, ctx->cert, 0);
     done = matched != 0 || (!DANETLS_HAS_TA(dane) && dane->mdpth < 0);
 
