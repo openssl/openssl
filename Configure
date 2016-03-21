@@ -290,7 +290,6 @@ my @disablables = (
     "rc5",
     "rdrand",
     "rfc3779",
-    "rijndael",			# Old AES name
     "ripemd",
     "rmd160",
     "rsa",
@@ -356,7 +355,6 @@ my @disable_cascades = (
     "ssl"		=> [ "ssl3" ],
     "ssl3-method"	=> [ "ssl3" ],
     "zlib"		=> [ "zlib-dynamic" ],
-    "rijndael"		=> [ "aes" ],
     "des"		=> [ "mdc2" ],
     "ec"		=> [ "ecdsa", "ecdh" ],
 

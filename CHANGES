@@ -4,6 +4,9 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Removed no-rijndael as a config option. Rijndael is an old name for AES.
+     [Matt Caswell}
+
   *) Removed the mk1mf build scripts.
      [Richard Levitte]
 
