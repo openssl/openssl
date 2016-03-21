@@ -104,7 +104,7 @@ my %md_disabler = (
     );
 foreach my $cmd (
 	"md2", "md4", "md5",
-	"md_ghost94",
+	"gost",
 	"sha1", "sha224", "sha256", "sha384", "sha512",
 	"mdc2", "rmd160", "blake2b512", "blake2s256"
 ) {
