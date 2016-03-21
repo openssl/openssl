@@ -347,26 +347,33 @@ int enc_main(int argc, char **argv)
     }
 
     if ((str == NULL) && (cipher != NULL) && (hkey == NULL)) {
-        for (;;) {
-            char prompt[200];
+        if (1) {
+#ifndef OPENSSL_NO_UI
+            for (;;) {
+                char prompt[200];
 
-            BIO_snprintf(prompt, sizeof prompt, "enter %s %s password:",
-                         OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
-                         (enc) ? "encryption" : "decryption");
-            strbuf[0] = '\0';
-            i = EVP_read_pw_string((char *)strbuf, SIZE, prompt, enc);
-            if (i == 0) {
-                if (strbuf[0] == '\0') {
-                    ret = 1;
+                BIO_snprintf(prompt, sizeof prompt, "enter %s %s password:",
+                             OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
+                             (enc) ? "encryption" : "decryption");
+                strbuf[0] = '\0';
+                i = EVP_read_pw_string((char *)strbuf, SIZE, prompt, enc);
+                if (i == 0) {
+                    if (strbuf[0] == '\0') {
+                        ret = 1;
+                        goto end;
+                    }
+                    str = strbuf;
+                    break;
+                }
+                if (i < 0) {
+                    BIO_printf(bio_err, "bad password read\n");
                     goto end;
                 }
-                str = strbuf;
-                break;
             }
-            if (i < 0) {
-                BIO_printf(bio_err, "bad password read\n");
-                goto end;
-            }
+        } else {
+#endif
+            BIO_printf(bio_err, "password required\n");
+            goto end;
         }
     }
 
