@@ -18,8 +18,10 @@ if(defined $ENV{'OPENSSL'}) {
 our $verbose = 1;
 
 our $OPENSSL_CONFIG = defined $ENV{'OPENSSL_CONFIG'} ? $ENV{'OPENSSL_CONFIG'} : "";
-our $DAYS = "-days 365";
-our $CADAYS = "-days 1095";	# 3 years
+our $OPENSSL_CONFIG_PAIRBAG = "-config /etc/pki/tls/openssl-pairbag.cnf";
+our $CERTTOP = defined $ENV{'CERTTOP'} ? $ENV{'CERTTOP'} : "/etc/pki/pairbag";
+our $DAYS = "-days 730";
+our $CADAYS = "-days 3650";
 our $REQ = "$openssl req " . "$OPENSSL_CONFIG";
 our $CA = "$openssl ca" . "$OPENSSL_CONFIG";
 our $VERIFY = "$openssl verify";
@@ -29,14 +31,14 @@ our $CNAMETXT = "My Certificate";
 our $PASSOPT;
 
 # default openssl.cnf file has setup as per the following
-our $CATOP = defined $ENV{'CATOP'} ? $ENV{'CATOP'} : "./demoCA";
+our $CATOP = defined $ENV{'CATOP'} ? $ENV{'CATOP'} : "/etc/pki/CA";
 our $CAKEY = "cakey.pem";
 our $CAREQ = "careq.pem";
 our $CACERT = "cacert.pem";
 our $CACRL = "crl.pem";
 our $DIRMODE = 0755;
 
-our $NEWKEY = "newkey.pem";
+our $NEWKEY = "newkey.key";
 our $NEWREQ = "newreq.pem";
 our $NEWCERT = "newcert.pem";
 our $NEWP12 = "newcert.p12";
@@ -49,6 +51,8 @@ sub help
     print STDERR "usage: $ME -newcert|-newreq|-newreq-nodes|-newca|-sign|-verify\n";
     print STDERR "       $ME -pkcs12 [certname]\n";
     print STDERR "       $ME -crl|-revoke cert-filename [reason]\n";
+    print STDERR "       $ME -newpairbag cname [certname]\n";
+    print STDERR "       $ME -revoke-pairbag cname [reason]\n";
 }
 
 # See if reason for a CRL entry is valid; exit if not.
@@ -225,6 +229,69 @@ sub verify
     }
 }
 
+# Create a cert/key pair and PKCS#12
+sub newpairbag
+{
+    $OPENSSL_CONFIG = $OPENSSL_CONFIG_PAIRBAG unless $OPENSSL_CONFIG;
+    my ($cname,$cnametxt) = @_;
+    unless ($cname) {
+        print STDERR "Certificate name is required.\n";
+        exit 1;
+    }
+    $cnametxt = "$CNAMETXT" unless $cnametxt;
+    # create the directory hierarchy
+    unless (-d "$CERTTOP") {
+        mkdir ${CERTTOP}, $DIRMODE;
+        mkdir "${CERTTOP}/certs", $DIRMODE;
+        mkdir "${CERTTOP}/newcerts", $DIRMODE;
+        mkdir "${CERTTOP}/private", $DIRMODE;
+    }
+    if (-f "${CERTTOP}/certs/${cname}.pem") {
+        print STDERR "Certificate file ${cname}.pem already exists!\n"
+        . "Please run \'$ME -revoke-pairbag $cname\' and then try again\n";
+        exit 1
+    }
+    chdir "${CERTTOP}/newcerts";
+    # create a certificate request with a private key
+    &newreq_nodes();
+    if ($RET != 0) {
+        print STDERR "Request (and private key) generation failed\n";
+        exit 1;
+    }
+    $RET = run("$CA $OPENSSL_CONFIG -out $NEWCERT $DAYS"
+           . " -infiles $NEWREQ");
+    if ($RET != 0) {
+        print STDERR "Signing of certificate failed\n";
+        exit 1;
+    }
+    print "Signed certificate is in $NEWCERT\n";
+    if (-f "${CERTTOP}/private/exportpw") {
+        $PASSOPT="-passout file:${CERTTOP}/private/exportpw";
+    }
+    # create a PKCS#12 file from the signed cert and key
+    &pkcs12($cnametxt);
+    if ($RET != 0) {
+        print STDERR "Creation of PKCS#12 failed\n";
+        exit 1;
+    }
+    # tidy up the keys
+    copy_any($NEWP12,"${CERTTOP}/private/${cname}.p12");
+    copy_any($NEWKEY,"${CERTTOP}/private/${cname}.key");
+    copy_any($NEWCERT,"${CERTTOP}/certs/${cname}.pem");
+    unlink $NEWP12;
+    unlink $NEWKEY;
+    unlink $NEWCERT;
+    unlink $NEWREQ;
+    my $msg = <<"EOM";
+Keys generated successfully:
+${CERTTOP}/certs/${cname}.pem     public key(signed)
+${CERTTOP}/private/${cname}.key   private key
+${CERTTOP}/private/${cname}.p12   PKCS#12(the bag of above two)
+${CATOP}/cacert.crt              Private-CA public key
+EOM
+    print $msg. "\n";
+}
+
 # Update Certificate Revocation List
 sub crl
 {
@@ -262,6 +329,28 @@ sub revoke
     }
 }
 
+# Revoke and delete a set of cert, key and PKCS#12 files
+sub revoke_pairbag
+{
+    my ($cname,$reason) = @_;
+    unless ($cname) {
+        print "Certificate name is required; reason optional.\n";
+        exit 1;
+    }
+    $reason = "" unless defined $reason;
+    unless (-f "${CERTTOP}/certs/${cname}.pem") {
+        print STDERR "No such file ${cname}.pem\n";
+        exit 1;
+    }
+    &revoke("${CERTTOP}/certs/${cname}.pem",$reason);
+    # remove the revoked key set
+    run("rm -i ${CERTTOP}/certs/${cname}.pem");
+    run("rm -i ${CERTTOP}/private/${cname}.key");
+    run("rm -i ${CERTTOP}/private/${cname}.p12");
+    print "cname $cname successfully revoked.\n";
+    &crl();
+}
+
 
 unless ($WHAT) {
     &help();
@@ -290,10 +379,14 @@ if ($WHAT eq '-newcert' ) {
     &signcert();
 } elsif ($WHAT eq '-verify' ) {
     &verify();
+} elsif ($WHAT eq '-newpairbag' ) {
+    &newpairbag($ARGV[0],$ARGV[1]);
 } elsif ($WHAT eq '-crl' ) {
     &crl();
 } elsif ($WHAT eq '-revoke' ) {
     &revoke($ARGV[0],$ARGV[1]);
+} elsif ($WHAT eq '-revoke-pairbag' ) {
+    &revoke_pairbag($ARGV[0],$ARGV[1]);
 } else {
     print STDERR "Unknown arg \"$WHAT\"\n";
     print STDERR "Use -help for help.\n";
