@@ -393,6 +393,7 @@ my @disable_cascades = (
     "pic"               => [ "shared" ],
     "shared"            => [ "dynamic-engine" ],
     "engine"            => [ "afalgeng" ],
+    "comp"		=> [ "zlib" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
