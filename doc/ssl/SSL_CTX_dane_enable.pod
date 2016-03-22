@@ -36,7 +36,7 @@ applications that override L<X509_verify_cert(3)> via
 L<SSL_CTX_set_cert_verify_callback(3)> are responsible to authenticate the peer
 chain in whatever manner they see fit.
 
-SSL_CTX_dane_mtype_set() may then be called zero or more times to to adjust the
+SSL_CTX_dane_mtype_set() may then be called zero or more times to adjust the
 supported digest algorithms.
 This must be done before any SSL handles are created for the context.
 

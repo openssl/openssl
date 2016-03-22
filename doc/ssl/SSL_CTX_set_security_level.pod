@@ -54,7 +54,7 @@ application specific value.
 
 =head1 DEFAULT CALLBACK BEHAVIOUR
 
-If an application doesn't set it's own security callback the default
+If an application doesn't set its own security callback the default
 callback is used. It is intended to provide sane defaults. The meaning
 of each level is described below.
 

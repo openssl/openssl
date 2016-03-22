@@ -97,7 +97,7 @@ the B<BN_BLINDING> object, 0 otherwise.
 BN_BLINDING_set_current_thread() doesn't return anything.
 
 BN_BLINDING_lock(), BN_BLINDING_unlock() return 1 if the operation
-succeded or 0 on error.
+succeeded or 0 on error.
 
 BN_BLINDING_get_flags() returns the currently set B<BN_BLINDING> flags
 (a B<unsigned long> value).

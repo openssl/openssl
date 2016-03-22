@@ -78,7 +78,7 @@ sk_X509_insert() inserts B<ptr> into B<sk> at position B<idx>. Any existing
 elements at or after B<idx> are moved downwards. If B<idx> is out of range
 the new element is appended to B<sk>. sk_X509_insert() either returns the
 number of elements in B<sk> after the new element is inserted or zero if
-an error occured: which will happen if there is a memory allocation failure.
+an error occurred: which will happen if there is a memory allocation failure.
 
 sk_X509_push() appends B<ptr> to B<sk> it is equivalent to:
 
@@ -93,7 +93,7 @@ sk_X509_pop() returns and removes the last element from B<sk>.
 sk_X509_shift() returns and removes the first element from B<sk>.
 
 sk_X509_set() sets element B<idx> of B<sk> to B<ptr> replacing the current
-element. The new element value is returned or B<NULL> if an error occured:
+element. The new element value is returned or B<NULL> if an error occurred:
 this will only happen if B<sk> is B<NULL> or B<idx> is out of range.
 
 sk_X509_find() and int sk_X509_find_ex() search B<sk> using the supplied
