@@ -31,7 +31,7 @@ our $CNAMETXT = "My Certificate";
 our $PASSOPT;
 
 # default openssl.cnf file has setup as per the following
-our $CATOP = defined $ENV{'CATOP'} ? $ENV{'CATOP'} : "/etc/pki/CA";
+our $CATOP = defined $ENV{'CATOP'} ? $ENV{'CATOP'} : "./demoCA";
 our $CAKEY = "cakey.pem";
 our $CAREQ = "careq.pem";
 our $CACERT = "cacert.pem";
