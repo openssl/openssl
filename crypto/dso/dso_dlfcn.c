@@ -65,10 +65,7 @@
 # define _GNU_SOURCE            /* make sure dladdr is declared */
 #endif
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/dso.h>
-#include "internal/dso_conf.h"
+#include "dso_locl.h"
 
 #ifndef DSO_DLFCN
 DSO_METHOD *DSO_METHOD_dlfcn(void)

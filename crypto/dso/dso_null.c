@@ -61,9 +61,7 @@
  * appropriate support for "shared-libraries".
  */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/dso.h>
+#include "dso_locl.h"
 
 static DSO_METHOD dso_meth_null = {
     "NULL shared library method",
@@ -82,5 +80,5 @@ static DSO_METHOD dso_meth_null = {
 
 DSO_METHOD *DSO_METHOD_null(void)
 {
-    return (&dso_meth_null);
+    return &dso_meth_null;
 }

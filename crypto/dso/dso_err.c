@@ -58,9 +58,7 @@
  * only reason strings will be preserved.
  */
 
-#include <stdio.h>
-#include <openssl/err.h>
-#include <openssl/dso.h>
+#include "dso_locl.h"
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
