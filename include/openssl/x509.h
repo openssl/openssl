@@ -292,8 +292,6 @@ typedef struct private_key_st {
     int key_free;               /* true if we should auto free key_data */
     /* expanded version of 'enc_algor' */
     EVP_CIPHER_INFO cipher;
-    int references;
-    CRYPTO_RWLOCK *lock;
 } X509_PKEY;
 
 typedef struct X509_info_st {
@@ -303,8 +301,6 @@ typedef struct X509_info_st {
     EVP_CIPHER_INFO enc_cipher;
     int enc_len;
     char *enc_data;
-    int references;
-    CRYPTO_RWLOCK *lock;
 } X509_INFO;
 
 DEFINE_STACK_OF(X509_INFO)
