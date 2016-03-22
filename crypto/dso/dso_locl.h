@@ -72,8 +72,6 @@ struct dso_meth_st {
     int (*dso_load) (DSO *dso);
     /* Unloads a shared library */
     int (*dso_unload) (DSO *dso);
-    /* Binds a variable */
-    void *(*dso_bind_var) (DSO *dso, const char *symname);
     /*
      * Binds a function - assumes a return type of DSO_FUNC_TYPE. This should
      * be cast to the real function prototype by the caller. Platforms that
@@ -100,8 +98,6 @@ struct dso_meth_st {
     /* [De]Initialisation handlers. */
     int (*init) (DSO *dso);
     int (*finish) (DSO *dso);
-    /* Return pathname of the module containing location */
-    int (*pathbyaddr) (void *addr, char *path, int sz);
     /* Perform global symbol lookup, i.e. among *all* modules */
     void *(*globallookup) (const char *symname);
 };

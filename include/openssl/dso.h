@@ -72,15 +72,13 @@ extern "C" {
 
 /*
  * By default, DSO_load() will translate the provided filename into a form
- * typical for the platform (more specifically the DSO_METHOD) using the
- * dso_name_converter function of the method. Eg. win32 will transform "blah"
- * into "blah.dll", and dlfcn will transform it into "libblah.so". The
- * behaviour can be overriden by setting the name_converter callback in the
- * DSO object (using DSO_set_name_converter()). This callback could even
- * utilise the DSO_METHOD's converter too if it only wants to override
- * behaviour for one or two possible DSO methods. However, the following flag
- * can be set in a DSO to prevent *any* native name-translation at all - eg.
- * if the caller has prompted the user for a path to a driver library so the
+ * typical for the platform using the dso_name_converter function of the
+ * method. Eg. win32 will transform "blah" into "blah.dll", and dlfcn will
+ * transform it into "libblah.so". This callback could even utilise the
+ * DSO_METHOD's converter too if it only wants to override behaviour for
+ * one or two possible DSO methods. However, the following flag can be
+ * set in a DSO to prevent *any* native name-translation at all - eg. if
+ * the caller has prompted the user for a path to a driver library so the
  * filename should be interpreted as-is.
  */
 # define DSO_FLAG_NO_NAME_TRANSLATION            0x01
@@ -138,20 +136,11 @@ typedef char *(*DSO_NAME_CONVERTER_FUNC)(DSO *, const char *);
 typedef char *(*DSO_MERGER_FUNC)(DSO *, const char *, const char *);
 
 DSO *DSO_new(void);
-DSO *DSO_new_method(DSO_METHOD *method);
 int DSO_free(DSO *dso);
 int DSO_flags(DSO *dso);
 int DSO_up_ref(DSO *dso);
 long DSO_ctrl(DSO *dso, int cmd, long larg, void *parg);
 
-/*
- * This function sets the DSO's name_converter callback. If it is non-NULL,
- * then it will be used instead of the associated DSO_METHOD's function. If
- * oldcb is non-NULL then it is set to the function pointer value being
- * replaced. Return value is non-zero for success.
- */
-int DSO_set_name_converter(DSO *dso, DSO_NAME_CONVERTER_FUNC cb,
-                           DSO_NAME_CONVERTER_FUNC *oldcb);
 /*
  * These functions can be used to get/set the platform-independent filename
  * used for a DSO. NB: set will fail if the DSO is already loaded.
@@ -176,33 +165,15 @@ char *DSO_convert_filename(DSO *dso, const char *filename);
  * OPENSSL_free()'d.
  */
 char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2);
-/*
- * If the DSO is currently loaded, this returns the filename that it was
- * loaded under, otherwise it returns NULL. So it is also useful as a test as
- * to whether the DSO is currently loaded. NB: This will not necessarily
- * return the same value as DSO_convert_filename(dso, dso->filename), because
- * the DSO_METHOD's load function may have tried a variety of filenames (with
- * and/or without the aid of the converters) before settling on the one it
- * actually loaded.
- */
-const char *DSO_get_loaded_filename(DSO *dso);
-
-void DSO_set_default_method(DSO_METHOD *meth);
-DSO_METHOD *DSO_get_default_method(void);
-DSO_METHOD *DSO_get_method(DSO *dso);
-DSO_METHOD *DSO_set_method(DSO *dso, DSO_METHOD *meth);
 
 /*
  * The all-singing all-dancing load function, you normally pass NULL for the
- * first and third parameters. Use DSO_up and DSO_free for subsequent
+ * first and third parameters. Use DSO_up_ref and DSO_free for subsequent
  * reference count handling. Any flags passed in will be set in the
  * constructed DSO after its init() function but before the load operation.
  * If 'dso' is non-NULL, 'flags' is ignored.
  */
 DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags);
-
-/* This function binds to a variable inside a shared library. */
-void *DSO_bind_var(DSO *dso, const char *symname);
 
 /* This function binds to a function inside a shared library. */
 DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname);
@@ -213,17 +184,6 @@ DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname);
  * DSO_METH_null() if necessary).
  */
 DSO_METHOD *DSO_METHOD_openssl(void);
-
-/*
- * This function writes null-terminated pathname of DSO module containing
- * 'addr' into 'sz' large caller-provided 'path' and returns the number of
- * characters [including trailing zero] written to it. If 'sz' is 0 or
- * negative, 'path' is ignored and required amount of charachers [including
- * trailing zero] to accommodate pathname is returned. If 'addr' is NULL, then
- * pathname of cryptolib itself is returned. Negative or zero return value
- * denotes error.
- */
-int DSO_pathbyaddr(void *addr, char *path, int sz);
 
 /*
  * This function should be used with caution! It looks up symbols in *all*
@@ -264,7 +224,6 @@ void ERR_load_DSO_strings(void);
 # define DSO_F_DL_NAME_CONVERTER                          124
 # define DSO_F_DL_UNLOAD                                  107
 # define DSO_F_DSO_BIND_FUNC                              108
-# define DSO_F_DSO_BIND_VAR                               109
 # define DSO_F_DSO_CONVERT_FILENAME                       126
 # define DSO_F_DSO_CTRL                                   110
 # define DSO_F_DSO_FREE                                   111
@@ -274,12 +233,9 @@ void ERR_load_DSO_strings(void);
 # define DSO_F_DSO_LOAD                                   112
 # define DSO_F_DSO_MERGE                                  132
 # define DSO_F_DSO_NEW_METHOD                             113
-# define DSO_F_DSO_PATHBYADDR                             140
 # define DSO_F_DSO_SET_FILENAME                           129
-# define DSO_F_DSO_SET_NAME_CONVERTER                     122
 # define DSO_F_DSO_UP_REF                                 114
 # define DSO_F_GLOBAL_LOOKUP_FUNC                         138
-# define DSO_F_PATHBYADDR                                 137
 # define DSO_F_VMS_BIND_SYM                               115
 # define DSO_F_VMS_LOAD                                   116
 # define DSO_F_VMS_MERGER                                 133
@@ -292,7 +248,6 @@ void ERR_load_DSO_strings(void);
 # define DSO_F_WIN32_LOAD                                 120
 # define DSO_F_WIN32_MERGER                               134
 # define DSO_F_WIN32_NAME_CONVERTER                       125
-# define DSO_F_WIN32_PATHBYADDR                           141
 # define DSO_F_WIN32_SPLITTER                             136
 # define DSO_F_WIN32_UNLOAD                               121
 
