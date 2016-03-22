@@ -58,7 +58,7 @@ SSL_get0_dane_authority                 57	1_1_0	EXIST::FUNCTION:
 SSL_set_purpose                         58	1_1_0	EXIST::FUNCTION:
 SSL_CTX_use_PrivateKey_file             59	1_1_0	EXIST::FUNCTION:
 SSL_get_rfd                             60	1_1_0	EXIST::FUNCTION:
-DTLSv1_listen                           61	1_1_0	EXIST::FUNCTION:
+DTLSv1_listen                           61	1_1_0	EXIST::FUNCTION:SOCK
 SSL_set_ssl_method                      62	1_1_0	EXIST::FUNCTION:
 SSL_get0_security_ex_data               63	1_1_0	EXIST::FUNCTION:
 SSLv3_client_method                     64	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,SSL3_METHOD

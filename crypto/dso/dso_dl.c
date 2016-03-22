@@ -58,12 +58,7 @@
 
 #include "dso_locl.h"
 
-#ifndef DSO_DL
-DSO_METHOD *DSO_METHOD_dl(void)
-{
-    return NULL;
-}
-#else
+#ifdef DSO_DL
 
 # include <dl.h>
 
@@ -95,9 +90,9 @@ static DSO_METHOD dso_meth_dl = {
     dl_globallookup
 };
 
-DSO_METHOD *DSO_METHOD_dl(void)
+DSO_METHOD *DSO_METHOD_openssl(void)
 {
-    return (&dso_meth_dl);
+    return &dso_meth_dl;
 }
 
 /*
