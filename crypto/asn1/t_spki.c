@@ -70,10 +70,12 @@ int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki)
 {
     EVP_PKEY *pkey;
     ASN1_IA5STRING *chal;
+    ASN1_OBJECT *spkioid;
     int i, n;
     char *s;
     BIO_printf(out, "Netscape SPKI:\n");
-    i = OBJ_obj2nid(spki->spkac->pubkey->algor->algorithm);
+    X509_PUBKEY_get0_param(&spkioid, NULL, NULL, NULL, spki->spkac->pubkey);
+    i = OBJ_obj2nid(spkioid);
     BIO_printf(out, "  Public Key Algorithm: %s\n",
                (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
     pkey = X509_PUBKEY_get(spki->spkac->pubkey);
