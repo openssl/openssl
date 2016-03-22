@@ -60,6 +60,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include "internal/evp_int.h"
+#include "internal/bio.h"
 #include "asn1_locl.h"
 
 /*

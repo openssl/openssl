@@ -63,7 +63,7 @@
  */
 
 #include <string.h>
-#include <openssl/bio.h>
+#include <internal/bio.h>
 #include <openssl/asn1.h>
 
 /* Must be large enough for biggest tag+length */
@@ -152,9 +152,9 @@ static int asn1_bio_new(BIO *b)
         OPENSSL_free(ctx);
         return 0;
     }
-    b->init = 1;
-    b->ptr = (char *)ctx;
-    b->flags = 0;
+    BIO_set_data(b, ctx);
+    BIO_set_init(b, 1);
+
     return 1;
 }
 
@@ -178,15 +178,20 @@ static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 
 static int asn1_bio_free(BIO *b)
 {
-    BIO_ASN1_BUF_CTX *ctx = (BIO_ASN1_BUF_CTX *)b->ptr;
+    BIO_ASN1_BUF_CTX *ctx;
 
+    if (b == NULL)
+        return 0;
+
+    ctx = BIO_get_data(b);
     if (ctx == NULL)
         return 0;
+
     OPENSSL_free(ctx->buf);
     OPENSSL_free(ctx);
-    b->init = 0;
-    b->ptr = NULL;
-    b->flags = 0;
+    BIO_set_data(b, NULL);
+    BIO_set_init(b, 0);
+
     return 1;
 }
 
@@ -195,10 +200,11 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
     BIO_ASN1_BUF_CTX *ctx;
     int wrmax, wrlen, ret;
     unsigned char *p;
-    if (!in || (inl < 0) || (b->next_bio == NULL))
-        return 0;
-    ctx = (BIO_ASN1_BUF_CTX *)b->ptr;
-    if (ctx == NULL)
+    BIO *next;
+
+    ctx = BIO_get_data(b);
+    next = BIO_next(b);
+    if (in == NULL || inl < 0 || ctx == NULL || next == NULL)
         return 0;
 
     wrlen = 0;
@@ -236,7 +242,7 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
             break;
 
         case ASN1_STATE_HEADER_COPY:
-            ret = BIO_write(b->next_bio, ctx->buf + ctx->bufpos, ctx->buflen);
+            ret = BIO_write(next, ctx->buf + ctx->bufpos, ctx->buflen);
             if (ret <= 0)
                 goto done;
 
@@ -256,7 +262,7 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
                 wrmax = ctx->copylen;
             else
                 wrmax = inl;
-            ret = BIO_write(b->next_bio, in, wrmax);
+            ret = BIO_write(next, in, wrmax);
             if (ret <= 0)
                 break;
             wrlen += ret;
@@ -292,10 +298,11 @@ static int asn1_bio_flush_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
                              asn1_ps_func *cleanup, asn1_bio_state_t next)
 {
     int ret;
+
     if (ctx->ex_len <= 0)
         return 1;
     for (;;) {
-        ret = BIO_write(b->next_bio, ctx->ex_buf + ctx->ex_pos, ctx->ex_len);
+        ret = BIO_write(BIO_next(b), ctx->ex_buf + ctx->ex_pos, ctx->ex_len);
         if (ret <= 0)
             break;
         ctx->ex_len -= ret;
@@ -330,9 +337,10 @@ static int asn1_bio_setup_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
 
 static int asn1_bio_read(BIO *b, char *in, int inl)
 {
-    if (!b->next_bio)
+    BIO *next = BIO_next(b);
+    if (next == NULL)
         return 0;
-    return BIO_read(b->next_bio, in, inl);
+    return BIO_read(next, in, inl);
 }
 
 static int asn1_bio_puts(BIO *b, const char *str)
@@ -342,16 +350,18 @@ static int asn1_bio_puts(BIO *b, const char *str)
 
 static int asn1_bio_gets(BIO *b, char *str, int size)
 {
-    if (!b->next_bio)
+    BIO *next = BIO_next(b);
+    if (next == NULL)
         return 0;
-    return BIO_gets(b->next_bio, str, size);
+    return BIO_gets(next, str, size);
 }
 
 static long asn1_bio_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 {
-    if (b->next_bio == NULL)
-        return (0);
-    return BIO_callback_ctrl(b->next_bio, cmd, fp);
+    BIO *next = BIO_next(b);
+    if (next == NULL)
+        return 0;
+    return BIO_callback_ctrl(next, cmd, fp);
 }
 
 static long asn1_bio_ctrl(BIO *b, int cmd, long arg1, void *arg2)
@@ -359,9 +369,12 @@ static long asn1_bio_ctrl(BIO *b, int cmd, long arg1, void *arg2)
     BIO_ASN1_BUF_CTX *ctx;
     BIO_ASN1_EX_FUNCS *ex_func;
     long ret = 1;
-    ctx = (BIO_ASN1_BUF_CTX *)b->ptr;
+    BIO *next;
+
+    ctx = BIO_get_data(b);
     if (ctx == NULL)
         return 0;
+    next = BIO_next(b);
     switch (cmd) {
 
     case BIO_C_SET_PREFIX:
@@ -397,7 +410,7 @@ static long asn1_bio_ctrl(BIO *b, int cmd, long arg1, void *arg2)
         break;
 
     case BIO_CTRL_FLUSH:
-        if (!b->next_bio)
+        if (next == NULL)
             return 0;
 
         /* Call post function if possible */
@@ -415,16 +428,16 @@ static long asn1_bio_ctrl(BIO *b, int cmd, long arg1, void *arg2)
         }
 
         if (ctx->state == ASN1_STATE_DONE)
-            return BIO_ctrl(b->next_bio, cmd, arg1, arg2);
+            return BIO_ctrl(next, cmd, arg1, arg2);
         else {
             BIO_clear_retry_flags(b);
             return 0;
         }
 
     default:
-        if (!b->next_bio)
+        if (next == NULL)
             return 0;
-        return BIO_ctrl(b->next_bio, cmd, arg1, arg2);
+        return BIO_ctrl(next, cmd, arg1, arg2);
 
     }
 

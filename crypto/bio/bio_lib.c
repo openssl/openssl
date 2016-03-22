@@ -58,8 +58,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <openssl/crypto.h>
+#include "bio_lcl.h"
 #include "internal/cryptlib.h"
-#include <openssl/bio.h>
 #include <openssl/stack.h>
 
 BIO *BIO_new(const BIO_METHOD *method)
@@ -140,6 +140,36 @@ int BIO_free(BIO *a)
     OPENSSL_free(a);
 
     return 1;
+}
+
+void BIO_set_data(BIO *a, void *ptr)
+{
+    a->ptr = ptr;
+}
+
+void *BIO_get_data(BIO *a)
+{
+    return a->ptr;
+}
+
+void BIO_set_init(BIO *a, int init)
+{
+    a->init = init;
+}
+
+int BIO_get_init(BIO *a)
+{
+    return a->init;
+}
+
+void BIO_set_shutdown(BIO *a, int shut)
+{
+    a->shutdown = shut;
+}
+
+int BIO_get_shutdown(BIO *a)
+{
+    return a->shutdown;
 }
 
 void BIO_vfree(BIO *a)
@@ -487,6 +517,11 @@ int BIO_get_retry_reason(BIO *bio)
     return (bio->retry_reason);
 }
 
+void BIO_set_retry_reason(BIO *bio, int reason)
+{
+    bio->retry_reason = reason;
+}
+
 BIO *BIO_find_type(BIO *bio, int type)
 {
     int mt, mask;
@@ -514,6 +549,11 @@ BIO *BIO_next(BIO *b)
     if (b == NULL)
         return NULL;
     return b->next_bio;
+}
+
+void BIO_set_next(BIO *b, BIO *next)
+{
+    b->next_bio = next;
 }
 
 void BIO_free_all(BIO *bio)

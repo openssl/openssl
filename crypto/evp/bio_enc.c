@@ -60,6 +60,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+#include "internal/bio.h"
 
 static int enc_write(BIO *h, const char *buf, int num);
 static int enc_read(BIO *h, char *buf, int size);
@@ -122,9 +123,9 @@ static int enc_new(BIO *bi)
     }
     ctx->cont = 1;
     ctx->ok = 1;
-    bi->init = 0;
-    bi->ptr = (char *)ctx;
-    bi->flags = 0;
+    BIO_set_data(bi, ctx);
+    BIO_set_init(bi, 1);
+
     return 1;
 }
 
@@ -133,27 +134,33 @@ static int enc_free(BIO *a)
     BIO_ENC_CTX *b;
 
     if (a == NULL)
-        return (0);
-    b = (BIO_ENC_CTX *)a->ptr;
+        return 0;
+
+    b = BIO_get_data(a);
+    if (b == NULL)
+        return 0;
+
     EVP_CIPHER_CTX_free(b->cipher);
-    OPENSSL_clear_free(a->ptr, sizeof(BIO_ENC_CTX));
-    a->ptr = NULL;
-    a->init = 0;
-    a->flags = 0;
-    return (1);
+    OPENSSL_clear_free(b, sizeof(BIO_ENC_CTX));
+    BIO_set_data(a, NULL);
+    BIO_set_init(a, 0);
+
+    return 1;
 }
 
 static int enc_read(BIO *b, char *out, int outl)
 {
     int ret = 0, i;
     BIO_ENC_CTX *ctx;
+    BIO *next;
 
     if (out == NULL)
         return (0);
-    ctx = (BIO_ENC_CTX *)b->ptr;
+    ctx = BIO_get_data(b);
 
-    if ((ctx == NULL) || (b->next_bio == NULL))
-        return (0);
+    next = BIO_next(b);
+    if ((ctx == NULL) || (next == NULL))
+        return 0;
 
     /* First check if there are bytes decoded/encoded */
     if (ctx->buf_len > 0) {
@@ -183,11 +190,11 @@ static int enc_read(BIO *b, char *out, int outl)
         /*
          * read in at IV offset, read the EVP_Cipher documentation about why
          */
-        i = BIO_read(b->next_bio, &(ctx->buf[BUF_OFFSET]), ENC_BLOCK_SIZE);
+        i = BIO_read(next, &(ctx->buf[BUF_OFFSET]), ENC_BLOCK_SIZE);
 
         if (i <= 0) {
             /* Should be continue next time we are called? */
-            if (!BIO_should_retry(b->next_bio)) {
+            if (!BIO_should_retry(next)) {
                 ctx->cont = i;
                 i = EVP_CipherFinal_ex(ctx->cipher,
                                        (unsigned char *)ctx->buf,
@@ -239,14 +246,19 @@ static int enc_write(BIO *b, const char *in, int inl)
 {
     int ret = 0, n, i;
     BIO_ENC_CTX *ctx;
+    BIO *next;
 
-    ctx = (BIO_ENC_CTX *)b->ptr;
+    ctx = BIO_get_data(b);
+    next = BIO_next(b);
+    if ((ctx == NULL) || (next == NULL))
+        return 0;
+
     ret = inl;
 
     BIO_clear_retry_flags(b);
     n = ctx->buf_len - ctx->buf_off;
     while (n > 0) {
-        i = BIO_write(b->next_bio, &(ctx->buf[ctx->buf_off]), n);
+        i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
         if (i <= 0) {
             BIO_copy_next_retry(b);
             return (i);
@@ -274,7 +286,7 @@ static int enc_write(BIO *b, const char *in, int inl)
         ctx->buf_off = 0;
         n = ctx->buf_len;
         while (n > 0) {
-            i = BIO_write(b->next_bio, &(ctx->buf[ctx->buf_off]), n);
+            i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
             if (i <= 0) {
                 BIO_copy_next_retry(b);
                 return (ret == inl) ? i : ret - inl;
@@ -296,8 +308,12 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     int i;
     EVP_CIPHER_CTX **c_ctx;
+    BIO *next;
 
-    ctx = (BIO_ENC_CTX *)b->ptr;
+    ctx = BIO_get_data(b);
+    next = BIO_next(b);
+    if (ctx == NULL)
+        return 0;
 
     switch (cmd) {
     case BIO_CTRL_RESET:
@@ -306,23 +322,23 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
         if (!EVP_CipherInit_ex(ctx->cipher, NULL, NULL, NULL, NULL,
                                EVP_CIPHER_CTX_encrypting(ctx->cipher)))
             return 0;
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_EOF:         /* More to read */
         if (ctx->cont <= 0)
             ret = 1;
         else
-            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+            ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_WPENDING:
         ret = ctx->buf_len - ctx->buf_off;
         if (ret <= 0)
-            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+            ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_PENDING:     /* More to read in buffer */
         ret = ctx->buf_len - ctx->buf_off;
         if (ret <= 0)
-            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+            ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_FLUSH:
         /* do a final write */
@@ -348,33 +364,33 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
 
         /* Finally flush the underlying BIO */
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_C_GET_CIPHER_STATUS:
         ret = (long)ctx->ok;
         break;
     case BIO_C_DO_STATE_MACHINE:
         BIO_clear_retry_flags(b);
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         BIO_copy_next_retry(b);
         break;
     case BIO_C_GET_CIPHER_CTX:
         c_ctx = (EVP_CIPHER_CTX **)ptr;
         *c_ctx = ctx->cipher;
-        b->init = 1;
+        BIO_set_init(b, 1);
         break;
     case BIO_CTRL_DUP:
         dbio = (BIO *)ptr;
-        dctx = (BIO_ENC_CTX *)dbio->ptr;
+        dctx = BIO_get_data(dbio);
         dctx->cipher = EVP_CIPHER_CTX_new();
         if (dctx->cipher == NULL)
             return 0;
         ret = EVP_CIPHER_CTX_copy(dctx->cipher, ctx->cipher);
         if (ret)
-            dbio->init = 1;
+            BIO_set_init(dbio, 1);
         break;
     default:
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     }
     return (ret);
@@ -383,12 +399,13 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
 static long enc_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 {
     long ret = 1;
+    BIO *next = BIO_next(b);
 
-    if (b->next_bio == NULL)
+    if (next == NULL)
         return (0);
     switch (cmd) {
     default:
-        ret = BIO_callback_ctrl(b->next_bio, cmd, fp);
+        ret = BIO_callback_ctrl(next, cmd, fp);
         break;
     }
     return (ret);
@@ -418,22 +435,25 @@ int BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
                    const unsigned char *i, int e)
 {
     BIO_ENC_CTX *ctx;
+    long (*callback) (struct bio_st *, int, const char *, int, long, long);
 
-    if (b == NULL)
+    ctx = BIO_get_data(b);
+    if (ctx == NULL)
         return 0;
 
-    if ((b->callback != NULL) &&
-        (b->callback(b, BIO_CB_CTRL, (const char *)c, BIO_CTRL_SET, e, 0L) <=
-         0))
+    callback = BIO_get_callback(b);
+
+    if ((callback != NULL) &&
+            (callback(b, BIO_CB_CTRL, (const char *)c, BIO_CTRL_SET, e,
+                      0L) <= 0))
         return 0;
 
-    b->init = 1;
-    ctx = (BIO_ENC_CTX *)b->ptr;
+    BIO_set_init(b, 1);
+
     if (!EVP_CipherInit_ex(ctx->cipher, c, NULL, k, i, e))
         return 0;
 
-    if (b->callback != NULL)
-        return b->callback(b, BIO_CB_CTRL, (const char *)c, BIO_CTRL_SET, e,
-                           1L);
+    if (callback != NULL)
+        return callback(b, BIO_CB_CTRL, (const char *)c, BIO_CTRL_SET, e, 1L);
     return 1;
 }

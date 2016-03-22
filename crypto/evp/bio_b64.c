@@ -60,6 +60,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+#include "internal/bio.h"
 
 static int b64_write(BIO *h, const char *buf, int num);
 static int b64_read(BIO *h, char *buf, int size);
@@ -105,9 +106,10 @@ static const BIO_METHOD methods_b64 = {
     b64_callback_ctrl,
 };
 
+
 const BIO_METHOD *BIO_f_base64(void)
 {
-    return (&methods_b64);
+    return &methods_b64;
 }
 
 static int b64_new(BIO *bi)
@@ -121,23 +123,28 @@ static int b64_new(BIO *bi)
     ctx->cont = 1;
     ctx->start = 1;
     ctx->base64 = EVP_ENCODE_CTX_new();
-    bi->init = 1;
-    bi->ptr = (char *)ctx;
-    bi->flags = 0;
-    bi->num = 0;
-    return (1);
+    BIO_set_data(bi, ctx);
+    BIO_set_init(bi, 1);
+
+    return 1;
 }
 
 static int b64_free(BIO *a)
 {
+    BIO_B64_CTX *ctx;
     if (a == NULL)
-        return (0);
-    EVP_ENCODE_CTX_free(((BIO_B64_CTX *)a->ptr)->base64);
-    OPENSSL_free(a->ptr);
-    a->ptr = NULL;
-    a->init = 0;
-    a->flags = 0;
-    return (1);
+        return 0;
+
+    ctx = BIO_get_data(a);
+    if (ctx == NULL)
+        return 0;
+
+    EVP_ENCODE_CTX_free(ctx->base64);
+    OPENSSL_free(ctx);
+    BIO_set_data(a, NULL);
+    BIO_set_init(a, 0);
+
+    return 1;
 }
 
 static int b64_read(BIO *b, char *out, int outl)
@@ -145,13 +152,15 @@ static int b64_read(BIO *b, char *out, int outl)
     int ret = 0, i, ii, j, k, x, n, num, ret_code = 0;
     BIO_B64_CTX *ctx;
     unsigned char *p, *q;
+    BIO *next;
 
     if (out == NULL)
         return (0);
-    ctx = (BIO_B64_CTX *)b->ptr;
+    ctx = (BIO_B64_CTX *)BIO_get_data(b);
 
-    if ((ctx == NULL) || (b->next_bio == NULL))
-        return (0);
+    next = BIO_next(b);
+    if ((ctx == NULL) || (next == NULL))
+        return 0;
 
     BIO_clear_retry_flags(b);
 
@@ -191,14 +200,14 @@ static int b64_read(BIO *b, char *out, int outl)
         if (ctx->cont <= 0)
             break;
 
-        i = BIO_read(b->next_bio, &(ctx->tmp[ctx->tmp_len]),
+        i = BIO_read(next, &(ctx->tmp[ctx->tmp_len]),
                      B64_BLOCK_SIZE - ctx->tmp_len);
 
         if (i <= 0) {
             ret_code = i;
 
             /* Should we continue next time we are called? */
-            if (!BIO_should_retry(b->next_bio)) {
+            if (!BIO_should_retry(next)) {
                 ctx->cont = i;
                 /* If buffer empty break */
                 if (ctx->tmp_len == 0)
@@ -354,8 +363,13 @@ static int b64_write(BIO *b, const char *in, int inl)
     int n;
     int i;
     BIO_B64_CTX *ctx;
+    BIO *next;
 
-    ctx = (BIO_B64_CTX *)b->ptr;
+    ctx = (BIO_B64_CTX *)BIO_get_data(b);
+    next = BIO_next(b);
+    if ((ctx == NULL) || (next == NULL))
+        return 0;
+
     BIO_clear_retry_flags(b);
 
     if (ctx->encode != B64_ENCODE) {
@@ -371,7 +385,7 @@ static int b64_write(BIO *b, const char *in, int inl)
     OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
     n = ctx->buf_len - ctx->buf_off;
     while (n > 0) {
-        i = BIO_write(b->next_bio, &(ctx->buf[ctx->buf_off]), n);
+        i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
         if (i <= 0) {
             BIO_copy_next_retry(b);
             return (i);
@@ -445,7 +459,7 @@ static int b64_write(BIO *b, const char *in, int inl)
         ctx->buf_off = 0;
         n = ctx->buf_len;
         while (n > 0) {
-            i = BIO_write(b->next_bio, &(ctx->buf[ctx->buf_off]), n);
+            i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
             if (i <= 0) {
                 BIO_copy_next_retry(b);
                 return ((ret == 0) ? i : ret);
@@ -467,21 +481,25 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
     BIO_B64_CTX *ctx;
     long ret = 1;
     int i;
+    BIO *next;
 
-    ctx = (BIO_B64_CTX *)b->ptr;
+    ctx = (BIO_B64_CTX *)BIO_get_data(b);
+    next = BIO_next(b);
+    if ((ctx == NULL) || (next == NULL))
+        return 0;
 
     switch (cmd) {
     case BIO_CTRL_RESET:
         ctx->cont = 1;
         ctx->start = 1;
         ctx->encode = B64_NONE;
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_EOF:         /* More to read */
         if (ctx->cont <= 0)
             ret = 1;
         else
-            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+            ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_WPENDING:    /* More to write in buffer */
         OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
@@ -490,13 +508,13 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
             && (EVP_ENCODE_CTX_num(ctx->base64) != 0))
             ret = 1;
         else if (ret <= 0)
-            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+            ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_PENDING:     /* More to read in buffer */
         OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
         ret = ctx->buf_len - ctx->buf_off;
         if (ret <= 0)
-            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+            ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_FLUSH:
         /* do a final write */
@@ -524,12 +542,12 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
             goto again;
         }
         /* Finally flush the underlying BIO */
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
 
     case BIO_C_DO_STATE_MACHINE:
         BIO_clear_retry_flags(b);
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         BIO_copy_next_retry(b);
         break;
 
@@ -539,21 +557,22 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_GET:
     case BIO_CTRL_SET:
     default:
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static long b64_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 {
     long ret = 1;
+    BIO *next = BIO_next(b);
 
-    if (b->next_bio == NULL)
-        return (0);
+    if (next == NULL)
+        return 0;
     switch (cmd) {
     default:
-        ret = BIO_callback_ctrl(b->next_bio, cmd, fp);
+        ret = BIO_callback_ctrl(next, cmd, fp);
         break;
     }
     return (ret);

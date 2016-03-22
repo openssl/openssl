@@ -57,9 +57,9 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include "bio_lcl.h"
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
-#include <openssl/bio.h>
 
 /*
  * BIO_put and BIO_get both add to the digest, BIO_gets returns the digest

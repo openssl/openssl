@@ -65,7 +65,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/bio.h>
+#include "bio_lcl.h"
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
