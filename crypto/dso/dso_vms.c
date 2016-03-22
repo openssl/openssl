@@ -56,11 +56,7 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include "internal/cryptlib.h"
-#include <openssl/dso.h>
+#include "dso_locl.h"
 
 #ifndef OPENSSL_SYS_VMS
 DSO_METHOD *DSO_METHOD_vms(void)
@@ -70,6 +66,7 @@ DSO_METHOD *DSO_METHOD_vms(void)
 #else
 
 # pragma message disable DOLLARID
+# include <errno.h>
 # include <rms.h>
 # include <lib$routines.h>
 # include <stsdef.h>

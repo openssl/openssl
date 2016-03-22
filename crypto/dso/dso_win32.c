@@ -56,10 +56,7 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include "internal/cryptlib.h"
-#include <openssl/dso.h>
+#include "dso_locl.h"
 
 #if !defined(DSO_WIN32)
 DSO_METHOD *DSO_METHOD_win32(void)

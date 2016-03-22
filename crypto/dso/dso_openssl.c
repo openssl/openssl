@@ -56,9 +56,7 @@
  *
  */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/dso.h>
+#include "dso_locl.h"
 
 /* We just pinch the method from an appropriate "default" method. */
 
