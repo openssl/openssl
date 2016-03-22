@@ -64,6 +64,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include "bio_lcl.h"
 #include "internal/cryptlib.h"
 
 #if defined(OPENSSL_SYS_WINCE)

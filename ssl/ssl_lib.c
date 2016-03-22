@@ -1105,8 +1105,8 @@ void SSL_set_wbio(SSL *s, BIO *wbio)
      */
     if (s->bbio != NULL) {
         if (s->wbio == s->bbio) {
-            s->wbio = s->wbio->next_bio;
-            s->bbio->next_bio = NULL;
+            s->wbio = BIO_next(s->wbio);
+            BIO_set_next(s->bbio, NULL);
         }
     }
     if (s->wbio != wbio && s->rbio != s->wbio)

@@ -65,7 +65,50 @@ union bio_addr_st {
 /* END BIO_ADDRINFO/BIO_ADDR stuff. */
 
 #include "internal/cryptlib.h"
-#include <openssl/bio.h>
+#include <internal/bio.h>
+
+typedef struct bio_f_buffer_ctx_struct {
+    /*-
+     * Buffers are setup like this:
+     *
+     * <---------------------- size ----------------------->
+     * +---------------------------------------------------+
+     * | consumed | remaining          | free space        |
+     * +---------------------------------------------------+
+     * <-- off --><------- len ------->
+     */
+    /*- BIO *bio; *//*
+     * this is now in the BIO struct
+     */
+    int ibuf_size;              /* how big is the input buffer */
+    int obuf_size;              /* how big is the output buffer */
+    char *ibuf;                 /* the char array */
+    int ibuf_len;               /* how many bytes are in it */
+    int ibuf_off;               /* write/read offset */
+    char *obuf;                 /* the char array */
+    int obuf_len;               /* how many bytes are in it */
+    int obuf_off;               /* write/read offset */
+} BIO_F_BUFFER_CTX;
+
+struct bio_st {
+    const BIO_METHOD *method;
+    /* bio, mode, argp, argi, argl, ret */
+    long (*callback) (struct bio_st *, int, const char *, int, long, long);
+    char *cb_arg;               /* first argument for the callback */
+    int init;
+    int shutdown;
+    int flags;                  /* extra storage */
+    int retry_reason;
+    int num;
+    void *ptr;
+    struct bio_st *next_bio;    /* used by filter BIOs */
+    struct bio_st *prev_bio;    /* used by filter BIOs */
+    int references;
+    uint64_t num_read;
+    uint64_t num_write;
+    CRYPTO_EX_DATA ex_data;
+    CRYPTO_RWLOCK *lock;
+};
 
 #ifndef OPENSSL_NO_SOCK
 # ifdef OPENSSL_SYS_VMS
