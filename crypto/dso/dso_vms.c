@@ -84,7 +84,6 @@ void *_malloc32(__size_t);
 
 static int vms_load(DSO *dso);
 static int vms_unload(DSO *dso);
-static void *vms_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE vms_bind_func(DSO *dso, const char *symname);
 static char *vms_name_converter(DSO *dso, const char *filename);
 static char *vms_merger(DSO *dso, const char *filespec1,
@@ -94,7 +93,6 @@ static DSO_METHOD dso_meth_vms = {
     "OpenSSL 'VMS' shared library method",
     vms_load,
     NULL,                       /* unload */
-    vms_bind_var,
     vms_bind_func,
     NULL,                       /* ctrl */
     vms_name_converter,
@@ -402,13 +400,6 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
         return;
     }
     return;
-}
-
-static void *vms_bind_var(DSO *dso, const char *symname)
-{
-    void *sym = 0;
-    vms_bind_sym(dso, symname, &sym);
-    return sym;
 }
 
 static DSO_FUNC_TYPE vms_bind_func(DSO *dso, const char *symname)
