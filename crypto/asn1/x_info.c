@@ -71,34 +71,17 @@ X509_INFO *X509_INFO_new(void)
         return NULL;
     }
 
-    ret->references = 1;
-
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        X509_INFO_free(ret);
-        return NULL;
-    }
-
     return ret;
 }
 
 void X509_INFO_free(X509_INFO *x)
 {
-    int i;
-
     if (x == NULL)
         return;
-
-    CRYPTO_atomic_add(&x->references, -1, &i, x->lock);
-    REF_PRINT_COUNT("X509_INFO", x);
-    if (i > 0)
-        return;
-    REF_ASSERT_ISNT(i < 0);
 
     X509_free(x->x509);
     X509_CRL_free(x->crl);
     X509_PKEY_free(x->x_pkey);
     OPENSSL_free(x->enc_data);
-    CRYPTO_THREAD_lock_free(x->lock);
     OPENSSL_free(x);
 }
