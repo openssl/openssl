@@ -67,12 +67,7 @@
 
 #include "dso_locl.h"
 
-#ifndef DSO_DLFCN
-DSO_METHOD *DSO_METHOD_dlfcn(void)
-{
-    return NULL;
-}
-#else
+#ifdef DSO_DLFCN
 
 # ifdef HAVE_DLFCN_H
 #  ifdef __osf__
@@ -117,9 +112,9 @@ static DSO_METHOD dso_meth_dlfcn = {
     dlfcn_globallookup
 };
 
-DSO_METHOD *DSO_METHOD_dlfcn(void)
+DSO_METHOD *DSO_METHOD_openssl(void)
 {
-    return (&dso_meth_dlfcn);
+    return &dso_meth_dlfcn;
 }
 
 /*

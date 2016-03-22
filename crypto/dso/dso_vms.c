@@ -58,12 +58,7 @@
 
 #include "dso_locl.h"
 
-#ifndef OPENSSL_SYS_VMS
-DSO_METHOD *DSO_METHOD_vms(void)
-{
-    return NULL;
-}
-#else
+#ifdef OPENSSL_SYS_VMS
 
 # pragma message disable DOLLARID
 # include <errno.h>
@@ -129,9 +124,9 @@ typedef struct dso_internal_st {
     char imagename[NAMX_MAXRSS + 1];
 } DSO_VMS_INTERNAL;
 
-DSO_METHOD *DSO_METHOD_vms(void)
+DSO_METHOD *DSO_METHOD_openssl(void)
 {
-    return (&dso_meth_vms);
+    return &dso_meth_vms;
 }
 
 static int vms_load(DSO *dso)

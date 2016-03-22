@@ -105,4 +105,3 @@ struct dso_meth_st {
     /* Perform global symbol lookup, i.e. among *all* modules */
     void *(*globallookup) (const char *symname);
 };
-

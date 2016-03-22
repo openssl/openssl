@@ -138,7 +138,7 @@ X509v3_add_ext                          135	1_1_0	EXIST::FUNCTION:
 v3_addr_subset                          136	1_1_0	EXIST::FUNCTION:RFC3779
 CRYPTO_strndup                          137	1_1_0	EXIST::FUNCTION:
 OCSP_REQ_CTX_free                       138	1_1_0	EXIST::FUNCTION:
-DSO_METHOD_dlfcn                        139	1_1_0	EXIST::FUNCTION:
+DSO_METHOD_dlfcn                        139	1_1_0	NOEXIST::FUNCTION:
 X509_STORE_new                          140	1_1_0	EXIST::FUNCTION:
 ASN1_TYPE_free                          141	1_1_0	EXIST::FUNCTION:
 PKCS12_BAGS_new                         142	1_1_0	EXIST::FUNCTION:
@@ -1491,7 +1491,7 @@ EVP_CIPHER_CTX_set_padding              1444	1_1_0	EXIST::FUNCTION:
 CTLOG_new_from_base64                   1445	1_1_0	EXIST::FUNCTION:CT
 AES_bi_ige_encrypt                      1446	1_1_0	EXIST::FUNCTION:AES
 ERR_pop_to_mark                         1447	1_1_0	EXIST::FUNCTION:
-DSO_METHOD_win32                        1448	1_1_0	EXIST::FUNCTION:
+DSO_METHOD_win32                        1448	1_1_0	NOEXIST::FUNCTION:
 CRL_DIST_POINTS_new                     1449	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_get0_asn1                      1450	1_1_0	EXIST::FUNCTION:
 EVP_camellia_192_ctr                    1451	1_1_0	EXIST::FUNCTION:CAMELLIA
@@ -1888,7 +1888,7 @@ ASN1_VISIBLESTRING_it                   1831	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION
 ASN1_VISIBLESTRING_it                   1831	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 X509V3_EXT_REQ_add_conf                 1832	1_1_0	EXIST::FUNCTION:
 ASN1_STRING_to_UTF8                     1833	1_1_0	EXIST::FUNCTION:
-DSO_METHOD_null                         1834	1_1_0	EXIST::FUNCTION:
+DSO_METHOD_null                         1834	1_1_0	NOEXIST::FUNCTION:
 EVP_MD_meth_set_update                  1835	1_1_0	EXIST::FUNCTION:
 EVP_camellia_192_cbc                    1836	1_1_0	EXIST::FUNCTION:CAMELLIA
 lh_stats_bio                            1837	1_1_0	EXIST::FUNCTION:
@@ -3116,7 +3116,7 @@ PEM_read_bio_RSAPublicKey               3009	1_1_0	EXIST::FUNCTION:RSA
 EVP_PKEY_asn1_set_private               3010	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_get0_RSA                       3011	1_1_0	EXIST::FUNCTION:RSA
 DES_ede3_cfb64_encrypt                  3012	1_1_0	EXIST::FUNCTION:DES
-DSO_METHOD_vms                          3013	1_1_0	EXIST::FUNCTION:
+DSO_METHOD_vms                          3013	1_1_0	NOEXIST::FUNCTION:
 POLICY_MAPPING_free                     3014	1_1_0	EXIST::FUNCTION:
 EVP_aes_128_gcm                         3015	1_1_0	EXIST::FUNCTION:AES
 BIO_dgram_non_fatal_error               3016	1_1_0	EXIST::FUNCTION:
@@ -3677,7 +3677,7 @@ EVP_CIPHER_CTX_cipher_data              3561	1_1_0	NOEXIST::FUNCTION:
 PKCS7_decrypt                           3562	1_1_0	EXIST::FUNCTION:
 X509_STORE_set1_param                   3563	1_1_0	EXIST::FUNCTION:
 RAND_file_name                          3564	1_1_0	EXIST::FUNCTION:
-DSO_METHOD_dl                           3565	1_1_0	EXIST::FUNCTION:
+DSO_METHOD_dl                           3565	1_1_0	NOEXIST::FUNCTION:
 EVP_CipherInit_ex                       3566	1_1_0	EXIST::FUNCTION:
 BIO_dgram_sctp_notification_cb          3567	1_1_0	EXIST::FUNCTION:SCTP
 ERR_load_RAND_strings                   3568	1_1_0	EXIST::FUNCTION:
