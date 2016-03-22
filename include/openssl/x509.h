@@ -120,13 +120,6 @@ typedef struct X509_val_st {
     ASN1_TIME *notAfter;
 } X509_VAL;
 
-struct X509_pubkey_st {
-    X509_ALGOR *algor;
-    ASN1_BIT_STRING *public_key;
-    EVP_PKEY *pkey;
-    CRYPTO_RWLOCK *lock;
-};
-
 typedef struct X509_sig_st X509_SIG;
 
 typedef struct X509_name_entry_st X509_NAME_ENTRY;
