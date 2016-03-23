@@ -165,26 +165,27 @@ NODEBUG=@
         $(NODEBUG) DEFINE openssl 'openssl_inc1','openssl_inc2'
         $(NODEBUG) DEFINE internal 'internal_inc1','internal_inc2','internal_inc3'
         $(NODEBUG) staging_dir = "$(DESTDIR)"
+        $(NODEBUG) staging_instdir = ""
+        $(NODEBUG) staging_datadir = ""
         $(NODEBUG) IF staging_dir .NES. "" THEN -
-                staging_dir = F$PARSE("A.;",staging_dir,"[]",,"SYNTAX_ONLY") - "A.;"
+                staging_instdir = F$PARSE("A.;",staging_dir,"[]",,"SYNTAX_ONLY")
+        $(NODEBUG) IF staging_instdir - "]A.;" .NES. staging_instdir THEN -
+                staging_instdir = staging_instdir - "]A.;" + ".OPENSSL-INSTALL]"
+        $(NODEBUG) IF staging_instdir - "A.;" .NES. staging_instdir THEN -
+                staging_instdir = staging_instdir - "A.;" + "[OPENSSL-INSTALL]"
+        $(NODEBUG) IF staging_dir .NES. "" THEN -
+                staging_datadir = F$PARSE("A.;",staging_dir,"[]",,"SYNTAX_ONLY")
+        $(NODEBUG) IF staging_datadir - "]A.;" .NES. staging_datadir THEN -
+                staging_datadir = staging_datadir - "]A.;" + ".OPENSSL-COMMON]"
+        $(NODEBUG) IF staging_datadir - "A.;" .NES. staging_datadir THEN -
+                staging_datadir = staging_datadir - "A.;" + "[OPENSSL-COMMON]"
         $(NODEBUG) !
         $(NODEBUG) ! Installation logical names
         $(NODEBUG) !
-        $(NODEBUG) installtop_dev = F$PARSE(staging_dir,"$(INSTALLTOP)",,"DEVICE","SYNTAX_ONLY")
-        $(NODEBUG) ! Because there are no routines to merge directories, we have to
-        $(NODEBUG) ! do it ourselves
-        $(NODEBUG) IF staging_dir .NES. "" THEN -
-                staging_dir = F$PARSE(staging_dir,"[000000]",,"DIRECTORY","SYNTAX_ONLY")
-        $(NODEBUG) installtop_dir = F$PARSE("$(INSTALLTOP)","[000000]",,"DIRECTORY","SYNTAX_ONLY")
-        $(NODEBUG) IF staging_dir .NES. "" .AND. staging_dir .NES. "[000000]" THEN -
-                installtop_dir = staging_dir - "]" + "." + (installtop_dir - "[")
-        $(NODEBUG) installtop_dir = installtop_dir - "]" + ".]"
-        $(NODEBUG) DEFINE ossl_installroot 'installtop_dev''installtop_dir'
-        $(NODEBUG) !
-        $(NODEBUG) datatop = F$PARSE("$(OPENSSLDIR)","[000000]A.;",,,"SYNTAX_ONLY") -
-                - "]A.;" + ".]"
-        $(NODEBUG) IF "$(DESTDIR)" .EQS. "" THEN -
-                DEFINE ossl_dataroot 'datatop'
+        $(NODEBUG) installtop = F$PARSE(staging_instdir,"$(INSTALLTOP)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+        $(NODEBUG) datatop = F$PARSE(staging_datadir,"$(OPENSSLDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+        $(NODEBUG) DEFINE ossl_installroot 'installtop'
+        $(NODEBUG) DEFINE ossl_dataroot 'datatop'
         $(NODEBUG) !
         $(NODEBUG) ! Figure out the architecture
         $(NODEBUG) !
@@ -197,7 +198,7 @@ NODEBUG=@
 
 .LAST :
         $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) || "!" -}
-        $(NODEBUG) IF "$(DESTDIR)" .EQS. "" THEN DEASSIGN ossl_dataroot
+        $(NODEBUG) DEASSIGN ossl_dataroot
         $(NODEBUG) DEASSIGN ossl_installroot
         $(NODEBUG) DEASSIGN internal
         $(NODEBUG) DEASSIGN openssl
@@ -248,10 +249,24 @@ install : install_sw install_docs
         @ WRITE SYS$OUTPUT ""
         @ WRITE SYS$OUTPUT "######################################################################"
         @ WRITE SYS$OUTPUT ""
-        @ WRITE SYS$OUTPUT "Installation complete"
-        @ WRITE SYS$OUTPUT ""
         @ IF "$(DESTDIR)" .EQS. "" THEN -
-             PIPE ( WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names" ; -
+             PIPE ( WRITE SYS$OUTPUT "Installation complete" ; -
+                    WRITE SYS$OUTPUT "" ; -
+                    WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names" ; -
+                    WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands" ; -
+                    WRITE SYS$OUTPUT "" )
+        @ IF "$(DESTDIR)" .NES. "" THEN -
+             PIPE ( WRITE SYS$OUTPUT "Staging installation complete" ; -
+                    WRITE SYS$OUTPUT "" ; -
+                    WRITE SYS$OUTPUT "Finish or package in such a way that the contents of the directory tree" ; -
+                    WRITE SYS$OUTPUT staging_instdir ; -
+                    WRITE SYS$OUTPUT "ends up in $(INSTALLTOP)," ; -
+                    WRITE SYS$OUTPUT "and that the contents of the contents of the directory tree" ; -
+                    WRITE SYS$OUTPUT staging_datadir ; -
+                    WRITE SYS$OUTPUT "ends up in $(OPENSSLDIR)" ; -
+                    WRITE SYS$OUTPUT "" ; -
+                    WRITE SYS$OUTPUT "When in its final destination," ; -
+                    WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names" ; -
                     WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands" ; -
                     WRITE SYS$OUTPUT "" )
 
@@ -333,12 +348,10 @@ install_engines : check_INSTALLTOP
 
 install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                  check_INSTALLTOP
-        IF "$(DESTDIR)" .EQS. "" THEN -
-                IF F$SEARCH("OSSL_DATAROOT:[000000]CERTS.DIR;1") .EQS. "" THEN -
+        IF F$SEARCH("OSSL_DATAROOT:[000000]CERTS.DIR;1") .EQS. "" THEN -
                 CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[CERTS]
-        IF "$(DESTDIR)" .EQS. "" THEN -
-                IF F$SEARCH("OSSL_DATAROOT:[000000]PRIVATE.DIR;1") .EQS. "" THEN -
-                CREATE/DIR/PROT=(S:RWED,O:RWE,G:,W:) OSSL_DATAROOT:[PRIVATE]
+        IF F$SEARCH("OSSL_DATAROOT:[000000]PRIVATE.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[PRIVATE]
         CREATE/DIR ossl_installroot:[SYS$STARTUP]
         COPY/PROT=W:RE -
                 [.VMS]openssl_startup.com,openssl_shutdown.com -
