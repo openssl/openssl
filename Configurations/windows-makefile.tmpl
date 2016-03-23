@@ -154,7 +154,8 @@ install: install_sw install_ssldirs install_docs
 uninstall: uninstall_docs uninstall_sw
 
 libclean:
-	del /Q /F $(LIBS) $(SHLIBS)
+	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*""" } @ARGV" $(SHLIBS)
+	del /Q /F $(LIBS)
 	del lib.pdb
 
 clean: libclean
@@ -227,7 +228,7 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)\Configure
 	@echo "***   Please run the same make command again   ***"
 	@echo "***                                            ***"
 	@echo "**************************************************"
-	@( exit 1 )
+	@exit 1
 
 {-
  use File::Basename;
@@ -294,12 +295,8 @@ EOF
  sub src2obj {
      my %args = @_;
      my $obj = $args{obj};
-      my @srcs = map { if ($unified_info{generate}->{$_}) {
-                           (my $x = $_) =~ s/\.[sS]$/.asm/; $x
-                       } else {
-                           $_
-                       }
-                     } ( @{$args{srcs}} );
+     my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x
+                    } ( @{$args{srcs}} );
      my $srcs = join(" ",  @srcs);
      my $deps = join(" ", @srcs, @{$args{deps}});
      my $incs = join("", map { " /I ".$_ } @{$args{incs}});
