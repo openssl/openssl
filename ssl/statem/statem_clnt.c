@@ -1146,8 +1146,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     if (s->version != s->session->ssl_version) {
         al = SSL_AD_PROTOCOL_VERSION;
 
-        /* XXX(indutny): introduce new error code */
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_SSL_SESSION_ID_CONFLICT);
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
+               SSL_R_SSL_SESSION_VERSION_MISMATCH);
         goto f_err;
     }
 
