@@ -3,7 +3,8 @@
 =head1 NAME
 
 d2i_RSAPublicKey, i2d_RSAPublicKey, d2i_RSAPrivateKey, i2d_RSAPrivateKey,
-d2i_RSA_PUBKEY, i2d_RSA_PUBKEY, i2d_Netscape_RSA,
+d2i_RSA_PUBKEY, i2d_RSA_PUBKEY, d2i_RSA_PUBKEY_bio, d2i_RSA_PUBKEY_fp,
+i2d_RSA_PUBKEY_bio, i2d_RSA_PUBKEY_fp, i2d_Netscape_RSA,
 d2i_Netscape_RSA - RSA public and private key encoding functions.
 
 =head1 SYNOPSIS
@@ -19,6 +20,12 @@ d2i_Netscape_RSA - RSA public and private key encoding functions.
 
  int i2d_RSA_PUBKEY(RSA *a, unsigned char **pp);
 
+ RSA *d2i_RSA_PUBKEY_bio(BIO *bp, RSA **rsa);
+ RSA *d2i_RSA_PUBKEY_fp(FILE *fp, RSA **rsa);
+
+ int i2d_RSA_PUBKEY_bio(BIO *bp, RSA *rsa);
+ int i2d_RSA_PUBKEY_fp(FILE *fp, RSA *rsa);
+
  RSA * d2i_RSAPrivateKey(RSA **a, const unsigned char **pp, long length);
 
  int i2d_RSAPrivateKey(RSA *a, unsigned char **pp);
@@ -29,20 +36,24 @@ d2i_Netscape_RSA - RSA public and private key encoding functions.
 
 =head1 DESCRIPTION
 
-d2i_RSAPublicKey() and i2d_RSAPublicKey() decode and encode a PKCS#1 RSAPublicKey
-structure.
+d2i_RSAPublicKey() and i2d_RSAPublicKey() decode and encode a PKCS#1
+RSAPublicKey structure.
 
 d2i_RSA_PUBKEY() and i2d_RSA_PUBKEY() decode and encode an RSA public key using
 a SubjectPublicKeyInfo (certificate public key) structure.
 
-d2i_RSAPrivateKey(), i2d_RSAPrivateKey() decode and encode a PKCS#1 RSAPrivateKey
-structure.
+d2i_RSA_PUBKEY_bio(), d2i_RSA_PUBKEY_fp(), i2d_RSA_PUBKEY_bio() and
+i2d_RSA_PUBKEY_fp() are similar to d2i_RSA_PUBKEY() and i2d_RSA_PUBKEY()
+except they decode or encode using a B<BIO> or B<FILE> pointer.
+
+d2i_RSAPrivateKey(), i2d_RSAPrivateKey() decode and encode a PKCS#1
+RSAPrivateKey structure.
 
 d2i_Netscape_RSA(), i2d_Netscape_RSA() decode and encode an RSA private key in
 NET format.
 
-The usage of all of these functions is similar to the d2i_X509() and
-i2d_X509() described in the L<d2i_X509(3)> manual page.
+The usage of all of these functions is similar to the d2i_X509() and i2d_X509()
+described in the L<d2i_X509(3)> manual page.
 
 =head1 NOTES
 
