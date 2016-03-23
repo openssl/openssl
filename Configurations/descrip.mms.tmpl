@@ -334,8 +334,9 @@ install_runtime : check_INSTALLTOP
         COPY/PROT=W:RE [.APPS]CA.pl ossl_installroot:[EXE]
         COPY/PROT=W:RE [.TOOLS]c_rehash. ossl_installroot:[EXE]c_rehash.pl
         @ ! Install configuration file
+        - CREATE/DIR ossl_dataroot:[000000]
         COPY/PROT=W:RE {- sourcefile("apps", "openssl-vms.cnf") -} -
-                ossl_installroot:[000000]openssl.cnf
+                ossl_dataroot:[000000]openssl.cnf
 
 install_engines : check_INSTALLTOP
         @ {- output_off() unless scalar @{$unified_info{engines}}; "" -} !
