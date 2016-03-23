@@ -46,7 +46,7 @@ $	IF F$GETSYI("CPU") .LT. 128
 $	THEN
 $	    arch := VAX
 $	ELSE
-$	    arch := F$EDIT(F$GETSYI("ARCH_NAME"),"UPCASE")
+$	    arch = F$EDIT(F$GETSYI("ARCH_NAME"),"UPCASE")
 $	    IF arch .EQS. "" THEN GOTO unknown_arch
 $	ENDIF
 $
@@ -54,14 +54,14 @@ $	! Generated information
 $	VERSION := {- $config{version} -}
 $	INSTALLTOP := {- $config{INSTALLTOP} -}
 $	OPENSSLDIR := {- $config{OPENSSLDIR} -}
-$	POINTER_SIZE = {- $config{pointersize} -}
+$	POINTER_SIZE := {- $config{pointersize} -}
 $
 $	! Make sure that INSTALLTOP and OPENSSLDIR become something one
 $	! can build concealed logical names on
-$	INSTALLTOP_ = F$PARSE("A.;",INSTALLTOP,,,"NO_CONCEAL") - "A.;" -
-		     - ".][000000" - "[000000." - "][" - "]" + ".]"
-$	OPENSSLDIR_ = F$PARSE("A.;",OPENSSLDIR,,,"NO_CONCEAL") - "A.;" -
-		     - ".][000000" - "[000000." - "][" - "]" + ".]"
+$	INSTALLTOP_ = F$PARSE("A.;",INSTALLTOP,,,"NO_CONCEAL") -
+		     - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+$	OPENSSLDIR_ = F$PARSE("A.;",OPENSSLDIR,,,"NO_CONCEAL") -
+		     - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
 $	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_INSTALLTOP 'INSTALLTOP_'
 $
 $	! Check that things are in place, and specifically, the stuff
@@ -70,7 +70,7 @@ $	IF F$SEARCH("WRK_INSTALLTOP:[000000]INCLUDE.DIR;1") .EQS. "" -
 	   .OR. F$SEARCH("WRK_INSTALLTOP:[000000]''arch'.DIR;1") .EQS. "" -
 	   .OR. F$SEARCH("WRK_INSTALLTOP:[''arch']LIB.DIR;1") .EQS. "" -
 	   .OR. F$SEARCH("WRK_INSTALLTOP:[''arch']EXE.DIR;1") .EQS. "" -
-	   .OR. F$SEARCH("WRK_INSTALLTOP:[000000]openssl.cnf;1") .EQS. ""
+	   .OR. F$SEARCH("WRK_INSTALLTOP:[000000]openssl.cnf") .EQS. ""
 $	THEN
 $	    WRITE SYS$ERROR "''INSTALLTOP' doesn't look like an OpenSSL installation for ''arch'"
 $	    status = %x00018292 ! RMS$_FNF, file not found
