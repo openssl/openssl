@@ -5,8 +5,8 @@
  Requirement details
  -------------------
 
- In addition to the requirements listed in INSTALL, these are required
- as well:
+ In addition to the requirements and instructions listed in INSTALL,
+ this are required as well:
 
   * At least ODS-5 disk organization for source and build.
     Installation can be done on any existing disk organization.
@@ -20,6 +20,17 @@
 
  We have only tested with DEC C (a.k.a HP VMS C / VSI C), compiling with
  a different ANSI C compiler may require some work.
+
+
+ About MMS and DCL
+ -----------------
+
+ MMS has certain limitations when it comes to line length, and DCL has
+ certain limitations when it comes to total command length.  We do
+ what we can to mitigate, but there is the possibility that it's not
+ enough.  Should you run into issues, a very simple solution is to set
+ yourself up a few logical names for the directory trees you're going
+ to use.
 
 
  Checking the distribution
