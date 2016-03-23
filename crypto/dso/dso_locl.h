@@ -8,7 +8,7 @@
  */
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/dso.h>
+#include "internal/dso.h"
 #include "internal/dso_conf.h"
 
 /**********************************************************************/

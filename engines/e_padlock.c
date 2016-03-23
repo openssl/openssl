@@ -67,7 +67,6 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
-#include <openssl/dso.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #ifndef OPENSSL_NO_AES
