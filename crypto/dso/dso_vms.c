@@ -64,6 +64,7 @@
 # include <errno.h>
 # include <rms.h>
 # include <lib$routines.h>
+# include <libfisdef.h>
 # include <stsdef.h>
 # include <descrip.h>
 # include <starlet.h>
@@ -313,11 +314,10 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
 {
     DSO_VMS_INTERNAL *ptr;
     int status;
-# if 0
-    int flags = (1 << 4);       /* LIB$M_FIS_MIXEDCASE, but this symbol isn't
-                                 * defined in VMS older than 7.0 or so */
+# ifdef LIB$M_FIS_MIXEDCASE
+    int flags = LIB$M_FIS_MIXEDCASE;
 # else
-    int flags = 0;
+    int flags = (1 << 4);
 # endif
     struct dsc$descriptor_s symname_dsc;
 
