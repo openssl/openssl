@@ -823,7 +823,7 @@ int tls_construct_client_hello(SSL *s)
 
     if ((sess == NULL) ||
         /* Only destroy session which version is bigger than maximum supported,
-         * or session which version is not support by the current ssl->method
+         * or session which version is not supported by the current ssl->method
          */
         !ssl_strict_version_check(s, sess->ssl_version) ||
         /*
