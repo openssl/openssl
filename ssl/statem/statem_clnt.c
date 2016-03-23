@@ -1140,9 +1140,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
                session_id_len);
     }
 
-    /* Session version and negotiated protocol version should match
-     * (This may not be the case when reusing old session)
-     */
+    /* Session version and negotiated protocol version should match */
     if (s->version != s->session->ssl_version) {
         al = SSL_AD_PROTOCOL_VERSION;
 
