@@ -448,12 +448,19 @@ EOF
       my $srcs =
           join(", ",
                map { abs2rel(rel2abs($_), rel2abs($forward)) } @{$args{srcs}});
-      my $incs =
-          "/INCLUDE=(".join(",",
-                            map {
-                               file_name_is_absolute($_)
-                               ? $_ : catdir($backward,$_)
-                            } @{$args{incs}}).")";
+      my $incs_on = "\@ !";
+      my $incs_off = "\@ !";
+      my $incs = "";
+      if (@{$args{incs}}) {
+          $incs_on =
+              "DEFINE tmp_includes "
+              .join(",-\n\t\t\t", map {
+                                      file_name_is_absolute($_)
+                                      ? $_ : catdir($backward,$_)
+                                  } @{$args{incs}});
+          $incs_off = "DEASSIGN tmp_includes";
+          $incs = " /INCLUDE=(tmp_includes:)";
+      }
       my $before = $unified_info{before}->{$obj.".OBJ"} || "\@ !";
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
       my $depbuild = $disabled{makedepend} ? ""
@@ -463,7 +470,9 @@ EOF
 $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
+        $incs_on
         \$(CC) \$(CFLAGS)${incs}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
+        $incs_off
         SET DEFAULT $backward
         ${after}
         \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.MMS"",""$obj.tmp-MMS""); exit(0x10000000 + (\$x == 0));" || -
