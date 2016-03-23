@@ -55,8 +55,8 @@
 
   Unix:    normal installation directories under /usr/local
   OpenVMS: SYS$COMMON:[OPENSSL-'version'...], where 'version' is the
-           OpenSSL version number ('major'_'minor').
-  Windows: currently don't have an install function     <TBA>
+           OpenSSL version number with underscores instead of periods.
+  Windows: C:\Program Files\OpenSSL or C:\Program Files (x86)\OpenSSL
 
  If you want to install it anywhere else, run config like this:
 
@@ -87,10 +87,10 @@
   --openssldir=DIR Directory for OpenSSL configuration files, and also the
                    default certificate and key store.  Defaults are:
 
-                   Unix:           PREFIX/ssl (PREFIX is given by --prefix)
+                   Unix:           /usr/local/ssl
                    Windows:        C:\Program Files\Common Files\SSL
                                 or C:\Program Files (x86)\Common Files\SSL
-                   OpenVMS:        SYS$COMMON:[SSL]
+                   OpenVMS:        SYS$COMMON:[OPENSSL-COMMON]
 
   --api=x.y.z      Don't build with support for deprecated APIs below the
                    specified version number. For example "--api=1.1.0" will
