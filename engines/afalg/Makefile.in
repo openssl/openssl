@@ -53,9 +53,6 @@ install:
 depend:
 	@[ -z "$(THIS)" ] || $(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff *.so *.dll *.dylib
 

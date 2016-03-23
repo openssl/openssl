@@ -63,22 +63,20 @@
 #ifndef HEADER_DSA_H
 # define HEADER_DSA_H
 
-# include <openssl/e_os2.h>
+# include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_DSA
-#  error DSA is disabled.
+# ifndef OPENSSL_NO_DSA
+# ifdef  __cplusplus
+extern "C" {
 # endif
-
+# include <openssl/e_os2.h>
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/opensslconf.h>
-
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
-#  ifndef OPENSSL_NO_DH
-#   include <openssl/dh.h>
-#  endif
+#  include <openssl/dh.h>
 # endif
 
 # ifndef OPENSSL_DSA_MAX_MODULUS_BITS
@@ -112,10 +110,6 @@
 
 # define DSA_FLAG_NON_FIPS_ALLOW                 0x0400
 # define DSA_FLAG_FIPS_CHECKED                   0x0800
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 /* Already defined in ossl_typ.h */
 /* typedef struct dsa_st DSA; */
@@ -184,7 +178,7 @@ DSA_SIG *DSA_SIG_new(void);
 void DSA_SIG_free(DSA_SIG *a);
 int i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
 DSA_SIG *d2i_DSA_SIG(DSA_SIG **v, const unsigned char **pp, long length);
-void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, DSA_SIG *sig);
+void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig);
 
 DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 int DSA_do_verify(const unsigned char *dgst, int dgst_len,
@@ -323,7 +317,9 @@ void ERR_load_DSA_strings(void);
 # define DSA_R_PARAMETER_ENCODING_ERROR                   105
 # define DSA_R_Q_NOT_PRIME                                113
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

@@ -18,7 +18,7 @@ LIB=$(TOP)/libcrypto.a
 LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	a_print.c a_type.c a_dup.c a_d2i_fp.c a_i2d_fp.c \
 	a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c \
-	x_algor.c x_val.c x_pubkey.c x_sig.c x_bignum.c \
+	x_algor.c x_val.c x_sig.c x_bignum.c \
 	x_long.c x_info.c x_spki.c nsseq.c \
 	d2i_pu.c d2i_pr.c i2d_pu.c i2d_pr.c\
 	t_pkey.c t_spki.c t_bitst.c \
@@ -32,7 +32,7 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	a_print.o a_type.o a_dup.o a_d2i_fp.o a_i2d_fp.o \
 	a_utf8.o a_sign.o a_digest.o a_verify.o a_mbstr.o a_strex.o \
-	x_algor.o x_val.o x_pubkey.o x_sig.o x_bignum.o \
+	x_algor.o x_val.o x_sig.o x_bignum.o \
 	x_long.o x_info.o x_spki.o nsseq.o \
 	d2i_pu.o d2i_pr.o i2d_pu.o i2d_pr.o \
 	t_pkey.o t_spki.o t_bitst.o \
@@ -67,9 +67,6 @@ lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
-
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)

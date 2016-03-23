@@ -56,17 +56,9 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include "internal/cryptlib.h"
-#include <openssl/dso.h>
+#include "dso_locl.h"
 
-#if !defined(DSO_WIN32)
-DSO_METHOD *DSO_METHOD_win32(void)
-{
-    return NULL;
-}
-#else
+#if defined(DSO_WIN32)
 
 # ifdef _WIN32_WCE
 #  if _WIN32_WCE < 300
@@ -141,9 +133,9 @@ static DSO_METHOD dso_meth_win32 = {
     win32_globallookup
 };
 
-DSO_METHOD *DSO_METHOD_win32(void)
+DSO_METHOD *DSO_METHOD_openssl(void)
 {
-    return (&dso_meth_win32);
+    return &dso_meth_win32;
 }
 
 /*

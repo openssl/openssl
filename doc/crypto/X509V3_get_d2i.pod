@@ -168,7 +168,7 @@ The following are CRL extensions from PKIX standards such as RFC5280.
  Delta CRL Indicator                NID_delta_crl
  Freshest CRL                       NID_freshest_crl
  Invalidity Date                    NID_invalidity_date
- Issuing Distrubution Point         NID_issuing_distribution_point
+ Issuing Distribution Point         NID_issuing_distribution_point
 
 The following are CRL entry extensions from PKIX standards such as RFC5280.
 

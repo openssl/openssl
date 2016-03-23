@@ -117,10 +117,13 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(const char *port);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
+
+# ifndef OPENSSL_NO_SOCK
 static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
                                       const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
                                       OCSP_REQUEST *req, int req_timeout);
+# endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -244,7 +247,10 @@ int ocsp_main(int argc, char **argv)
     int noCAfile = 0, noCApath = 0;
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
-    int req_text = 0, resp_text = 0, req_timeout = -1, ret = 1;
+    int req_text = 0, resp_text = 0, ret = 1;
+#ifndef OPENSSL_NO_SOCK
+    int req_timeout = -1;
+#endif
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
     unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
     OPTION_CHOICE o;
@@ -275,7 +281,9 @@ int ocsp_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_TIMEOUT:
+#ifndef OPENSSL_NO_SOCK
             req_timeout = atoi(opt_arg());
+#endif
             break;
         case OPT_URL:
             OPENSSL_free(thost);
@@ -1170,6 +1178,7 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
     return 1;
 }
 
+# ifndef OPENSSL_NO_SOCK
 static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
                                       const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
@@ -1300,5 +1309,6 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
     SSL_CTX_free(ctx);
     return resp;
 }
+# endif
 
 #endif

@@ -18,10 +18,6 @@
 #include <stddef.h>
 #include "e_os.h"
 
-# ifdef OPENSSL_NO_BLAKE2
-#  error BLAKE2 is disabled.
-# endif
-
 #define BLAKE2S_BLOCKBYTES    64
 #define BLAKE2S_OUTBYTES      32
 #define BLAKE2S_KEYBYTES      32

@@ -8,7 +8,7 @@ BIO_s_fd, BIO_set_fd, BIO_get_fd, BIO_new_fd - file descriptor BIO
 
  #include <openssl/bio.h>
 
- BIO_METHOD *	BIO_s_fd(void);
+ const BIO_METHOD *	BIO_s_fd(void);
 
  #define BIO_set_fd(b,fd,c)	BIO_int_ctrl(b,BIO_C_SET_FD,c,fd)
  #define BIO_get_fd(b,c)	BIO_ctrl(b,BIO_C_GET_FD,0,(char *)c)
@@ -23,7 +23,7 @@ round the platforms file descriptor routines such as read() and write().
 BIO_read() and BIO_write() read or write the underlying descriptor.
 BIO_puts() is supported but BIO_gets() is not.
 
-If the close flag is set then then close() is called on the underlying
+If the close flag is set then close() is called on the underlying
 file descriptor when the BIO is freed.
 
 BIO_reset() attempts to change the file pointer to the start of file

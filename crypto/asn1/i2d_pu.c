@@ -60,15 +60,9 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
-#endif
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/ec.h>
 
 int i2d_PublicKey(EVP_PKEY *a, unsigned char **pp)
 {

@@ -58,14 +58,11 @@
 #ifndef HEADER_CAST_H
 # define HEADER_CAST_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_CAST
-#  error CAST is disabled.
+# ifndef OPENSSL_NO_CAST
+# ifdef  __cplusplus
+extern "C" {
 # endif
 
 # define CAST_ENCRYPT    1
@@ -96,8 +93,9 @@ void CAST_ofb64_encrypt(const unsigned char *in, unsigned char *out,
                         long length, const CAST_KEY *schedule,
                         unsigned char *ivec, int *num);
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
 
 #endif

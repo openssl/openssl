@@ -7,8 +7,12 @@ use POSIX;
 use File::Spec::Functions qw/splitdir curdir catfile/;
 use File::Compare;
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_tsa");
+
+plan skip_all => "TS is not supported by this OpenSSL build"
+    if disabled("ts");
 
 # All these are modified inside indir further down. They need to exist
 # here, however, to be available in all subroutines.

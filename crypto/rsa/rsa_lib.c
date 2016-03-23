@@ -62,9 +62,7 @@
 #include "internal/bn_int.h"
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 
 static const RSA_METHOD *default_RSA_meth = NULL;
 

@@ -76,7 +76,7 @@ links to mostly all other structures.
 =head1 HEADER FILES
 
 Currently the OpenSSL B<ssl> library provides the following C header files
-containing the prototypes for the data structures and and functions:
+containing the prototypes for the data structures and functions:
 
 =over 4
 

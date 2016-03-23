@@ -64,9 +64,7 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>
-#ifndef OPENSSL_NO_CMS
-# include <openssl/cms.h>
-#endif
+#include <openssl/cms.h>
 #include "internal/evp_int.h"
 #include "rsa_locl.h"
 

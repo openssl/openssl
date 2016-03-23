@@ -141,12 +141,8 @@
 
 #include <stdio.h>
 #include <openssl/objects.h>
-#ifndef OPENSSL_NO_COMP
-# include <openssl/comp.h>
-#endif
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/comp.h>
+#include <openssl/engine.h>
 #include "internal/threads.h"
 #include "ssl_locl.h"
 
@@ -974,7 +970,8 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                 continue;
             if (min_tls && (min_tls != cp->min_tls))
                 continue;
-            if (algo_strength && !(algo_strength & cp->algo_strength))
+            if ((algo_strength & SSL_STRONG_MASK)
+                && !(algo_strength & SSL_STRONG_MASK & cp->algo_strength))
                 continue;
             if ((algo_strength & SSL_DEFAULT_MASK)
                 && !(algo_strength & SSL_DEFAULT_MASK & cp->algo_strength))
@@ -1241,15 +1238,17 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                     alg_mac = ca_list[j]->algorithm_mac;
             }
 
-            if (ca_list[j]->algo_strength) {
-                if (algo_strength) {
-                    algo_strength &= ca_list[j]->algo_strength;
-                    if (!algo_strength) {
+            if (ca_list[j]->algo_strength & SSL_STRONG_MASK) {
+                if (algo_strength & SSL_STRONG_MASK) {
+                    algo_strength &=
+                        (ca_list[j]->algo_strength & SSL_STRONG_MASK) |
+                        ~SSL_STRONG_MASK;
+                    if (!(algo_strength & SSL_STRONG_MASK)) {
                         found = 0;
                         break;
                     }
                 } else
-                    algo_strength = ca_list[j]->algo_strength;
+                    algo_strength = ca_list[j]->algo_strength & SSL_STRONG_MASK;
             }
 
             if (ca_list[j]->algo_strength & SSL_DEFAULT_MASK) {

@@ -69,15 +69,9 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/dh.h>
 
 #include <openssl/hmac.h>
 #include <openssl/x509v3.h>

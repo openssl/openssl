@@ -58,18 +58,19 @@
 #ifndef HEADER_DH_H
 # define HEADER_DH_H
 
-# include <openssl/e_os2.h>
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_DH
-#  error DH is disabled.
-# endif
-
+# ifndef OPENSSL_NO_DH
+# include <openssl/e_os2.h>
 # include <openssl/bio.h>
 # include <openssl/asn1.h>
 # include <openssl/ossl_typ.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
+# endif
+
+# ifdef  __cplusplus
+extern "C" {
 # endif
 
 # ifndef OPENSSL_DH_MAX_MODULUS_BITS
@@ -79,15 +80,6 @@
 # define OPENSSL_DH_FIPS_MIN_MODULUS_BITS 1024
 
 # define DH_FLAG_CACHE_MONT_P     0x01
-
-/*
- * new with 0.9.7h; the built-in DH
- * implementation now uses constant time
- * modular exponentiation for secret exponents
- * by default. This flag causes the
- * faster variable sliding window method to
- * be used for all exponents.
- */
 # define DH_FLAG_NO_EXP_CONSTTIME 0x02
 
 /*
@@ -106,10 +98,6 @@
  */
 
 # define DH_FLAG_NON_FIPS_ALLOW                  0x0400
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 /* Already defined in ossl_typ.h */
 /* typedef struct dh_st DH; */
@@ -389,7 +377,9 @@ void ERR_load_DH_strings(void);
 # define DH_R_PEER_KEY_ERROR                              111
 # define DH_R_SHARED_INFO_ERROR                           113
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

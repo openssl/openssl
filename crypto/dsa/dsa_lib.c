@@ -62,12 +62,8 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/asn1.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/engine.h>
+#include <openssl/dh.h>
 
 static const DSA_METHOD *default_DSA_method = NULL;
 

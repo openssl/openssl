@@ -200,7 +200,7 @@ effect.
 =item B<-untrusted file>
 
 A B<file> of additional untrusted certificates (intermediate issuer CAs) used
-to constuct a certificate chain from the subject certificate to a trust-anchor.
+to construct a certificate chain from the subject certificate to a trust-anchor.
 The B<file> should contain one or more certificates in PEM format.
 This option can be specified more than once to include untrusted certiificates
 from multiple B<files>.

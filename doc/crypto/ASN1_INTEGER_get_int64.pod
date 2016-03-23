@@ -106,7 +106,7 @@ B<ASN1_ENUMERATED> structure respectively or NULL if an error occurs. They will
 only fail due to a memory allocation error.
 
 ASN1_INTEGER_to_BN() and ASN1_ENUMERATED_to_BN() return a B<BIGNUM> structure
-of NULL if an error occurs. They can fail if the pased type is incorrect
+of NULL if an error occurs. They can fail if the passed type is incorrect
 (due to programming error) or due to a memory allocation failure.
 
 =head1 SEE ALSO

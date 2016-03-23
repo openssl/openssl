@@ -547,15 +547,17 @@ static OPT_PAIR doit_choices[] = {
     {NULL}
 };
 
-#define R_DSA_512       0
-#define R_DSA_1024      1
-#define R_DSA_2048      2
+#ifndef OPENSSL_NO_DSA
+# define R_DSA_512       0
+# define R_DSA_1024      1
+# define R_DSA_2048      2
 static OPT_PAIR dsa_choices[] = {
     {"dsa512", R_DSA_512},
     {"dsa1024", R_DSA_1024},
     {"dsa2048", R_DSA_2048},
     {NULL},
 };
+#endif
 
 #define R_RSA_512       0
 #define R_RSA_1024      1
@@ -1247,7 +1249,10 @@ int speed_main(int argc, char **argv)
     double d = 0.0;
     OPTION_CHOICE o;
     int multiblock = 0, doit[ALGOR_NUM], pr_header = 0;
-    int dsa_doit[DSA_NUM], rsa_doit[RSA_NUM];
+#ifndef OPENSSL_NO_DSA
+    int dsa_doit[DSA_NUM];
+#endif
+    int rsa_doit[RSA_NUM];
     int ret = 1, i, k, misalign = 0;
     long c[ALGOR_NUM][SIZE_NUM], count = 0, save_count = 0;
 #ifndef NO_FORK
@@ -1395,8 +1400,10 @@ int speed_main(int argc, char **argv)
         doit[i] = 0;
     for (i = 0; i < RSA_NUM; i++)
         rsa_doit[i] = 0;
+#ifndef OPENSSL_NO_DSA
     for (i = 0; i < DSA_NUM; i++)
         dsa_doit[i] = 0;
+#endif
 #ifndef OPENSSL_NO_EC
     for (i = 0; i < EC_NUM; i++)
         ecdsa_doit[i] = 0;
@@ -1612,8 +1619,10 @@ int speed_main(int argc, char **argv)
                 doit[i] = 1;
         for (i = 0; i < RSA_NUM; i++)
             rsa_doit[i] = 1;
+#ifndef OPENSSL_NO_DSA
         for (i = 0; i < DSA_NUM; i++)
             dsa_doit[i] = 1;
+#endif
 #ifndef OPENSSL_NO_EC
         for (i = 0; i < EC_NUM; i++)
             ecdsa_doit[i] = 1;

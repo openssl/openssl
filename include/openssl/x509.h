@@ -72,21 +72,12 @@
 # include <openssl/stack.h>
 # include <openssl/asn1.h>
 # include <openssl/safestack.h>
-
-# ifndef OPENSSL_NO_EC
-#  include <openssl/ec.h>
-# endif
+# include <openssl/ec.h>
 
 # if OPENSSL_API_COMPAT < 0x10100000L
-#  ifndef OPENSSL_NO_RSA
-#   include <openssl/rsa.h>
-#  endif
-#  ifndef OPENSSL_NO_DSA
-#   include <openssl/dsa.h>
-#  endif
-#  ifndef OPENSSL_NO_DH
-#   include <openssl/dh.h>
-#  endif
+#  include <openssl/rsa.h>
+#  include <openssl/dsa.h>
+#  include <openssl/dh.h>
 # endif
 
 # include <openssl/sha.h>
@@ -128,13 +119,6 @@ typedef struct X509_val_st {
     ASN1_TIME *notBefore;
     ASN1_TIME *notAfter;
 } X509_VAL;
-
-struct X509_pubkey_st {
-    X509_ALGOR *algor;
-    ASN1_BIT_STRING *public_key;
-    EVP_PKEY *pkey;
-    CRYPTO_RWLOCK *lock;
-};
 
 typedef struct X509_sig_st X509_SIG;
 
@@ -308,8 +292,6 @@ typedef struct private_key_st {
     int key_free;               /* true if we should auto free key_data */
     /* expanded version of 'enc_algor' */
     EVP_CIPHER_INFO cipher;
-    int references;
-    CRYPTO_RWLOCK *lock;
 } X509_PKEY;
 
 typedef struct X509_info_st {
@@ -319,8 +301,6 @@ typedef struct X509_info_st {
     EVP_CIPHER_INFO enc_cipher;
     int enc_len;
     char *enc_data;
-    int references;
-    CRYPTO_RWLOCK *lock;
 } X509_INFO;
 
 DEFINE_STACK_OF(X509_INFO)

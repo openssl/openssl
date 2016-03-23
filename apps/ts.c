@@ -57,8 +57,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_TS
-
+#ifdef OPENSSL_NO_TS
+NON_EMPTY_TRANSLATION_UNIT
+#else
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>

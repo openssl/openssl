@@ -13,7 +13,7 @@ algorithm (ECDSA) functions.
 
  ECDSA_SIG *ECDSA_SIG_new(void);
  void ECDSA_SIG_free(ECDSA_SIG *sig);
- void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, ECDSA_SIG *sig);
+ void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig);
  int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
  ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
  int ECDSA_size(const EC_KEY *eckey);
@@ -123,7 +123,7 @@ The error codes can be obtained by L<ERR_get_error(3)>.
 Creating an ECDSA signature of a given SHA-256 hash value using the
 named curve prime256v1 (aka P-256).
 
-First step: create a EC_KEY object (note: this part is B<not> ECDSA
+First step: create an EC_KEY object (note: this part is B<not> ECDSA
 specific)
 
  int        ret;

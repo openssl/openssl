@@ -53,7 +53,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_SEED
+#ifdef OPENSSL_NO_SEED
+NON_EMPTY_TRANSLATION_UNIT
+#else
 # include <openssl/evp.h>
 # include <openssl/err.h>
 # include <string.h>

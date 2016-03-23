@@ -147,6 +147,8 @@
 
 #include <openssl/e_os2.h>
 
+#ifndef OPENSSL_NO_SOCK
+
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
  * recursive header file inclusion, resulting in the compiler complaining
@@ -419,7 +421,7 @@ static int ebcdic_gets(BIO *bp, char *buf, int size);
 static int ebcdic_puts(BIO *bp, const char *str);
 
 # define BIO_TYPE_EBCDIC_FILTER  (18|0x0200)
-static BIO_METHOD methods_ebcdic = {
+static const BIO_METHOD methods_ebcdic = {
     BIO_TYPE_EBCDIC_FILTER,
     "EBCDIC/ASCII filter",
     ebcdic_write,
@@ -437,7 +439,7 @@ typedef struct {
     char buff[1];
 } EBCDIC_OUTBUFF;
 
-BIO_METHOD *BIO_f_ebcdic_filter()
+const BIO_METHOD *BIO_f_ebcdic_filter()
 {
     return (&methods_ebcdic);
 }
@@ -3363,3 +3365,5 @@ static void free_sessions(void)
     }
     first = NULL;
 }
+
+#endif

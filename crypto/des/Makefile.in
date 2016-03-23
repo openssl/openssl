@@ -63,9 +63,6 @@ des-586.s:	asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 crypt586.s:	asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	$(PERL) asm/crypt586.pl $(PERLASM_SCHEME) $(CFLAGS) $@
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 

@@ -267,6 +267,7 @@ my @disablables = (
     "engine",
     "err",
     "filenames",
+    "gost",
     "heartbeats",
     "hmac",
     "hw(-.+)?",
@@ -276,7 +277,6 @@ my @disablables = (
     "md4",
     "md5",
     "mdc2",
-    "md[-_]ghost94",
     "multiblock",
     "nextprotoneg",
     "ocb",
@@ -290,7 +290,6 @@ my @disablables = (
     "rc5",
     "rdrand",
     "rfc3779",
-    "rijndael",			# Old AES name
     "ripemd",
     "rmd160",
     "rsa",
@@ -356,11 +355,10 @@ my @disable_cascades = (
     "ssl"		=> [ "ssl3" ],
     "ssl3-method"	=> [ "ssl3" ],
     "zlib"		=> [ "zlib-dynamic" ],
-    "rijndael"		=> [ "aes" ],
     "des"		=> [ "mdc2" ],
     "ec"		=> [ "ecdsa", "ecdh" ],
 
-    "dgram"		=> [ "dtls" ],
+    "dgram"		=> [ "dtls", "sctp" ],
     "dtls"		=> [ @dtls ],
 
     # SSL 3.0, (D)TLS 1.0 and TLS 1.1 require MD5 and SHA
@@ -395,6 +393,7 @@ my @disable_cascades = (
     "pic"               => [ "shared" ],
     "shared"            => [ "dynamic-engine" ],
     "engine"            => [ "afalgeng" ],
+    "comp"		=> [ "zlib" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -1596,9 +1595,9 @@ EOF
                 # and that there are lines to build it in a BEGINRAW..ENDRAW
                 # section or in the Makefile template.
                 if (! -f $d
-                    || !(grep { $d eq $_ }
-                         map { cleanfile($srcdir, $_, $blddir) }
-                         (@generated_headers, @generated_by_make_headers))) {
+                    || (grep { $d eq $_ }
+                        map { cleanfile($srcdir, $_, $blddir) }
+                        (@generated_headers, @generated_by_make_headers))) {
                     $d = cleanfile($buildd, $_, $blddir);
                 }
                 # Take note if the file to depend on is being renamed
@@ -1664,7 +1663,7 @@ use warnings;
 use Exporter;
 #use vars qw(\@ISA \@EXPORT);
 our \@ISA = qw(Exporter);
-our \@EXPORT = qw(\%config \%target %disabled %withargs %unified_info);
+our \@EXPORT = qw(\%config \%target \%disabled \%withargs \%unified_info \@disablables);
 
 EOF
 print OUT "our %config = (\n";
@@ -1698,6 +1697,14 @@ EOF
 print OUT "our \%available_protocols = (\n";
 print OUT "  tls => [ ", join(", ", map { quotify("perl", $_) } @tls), " ],\n";
 print OUT "  dtls => [ ", join(", ", map { quotify("perl", $_) } @dtls), " ],\n";
+print OUT <<"EOF";
+);
+
+EOF
+print OUT "our \@disablables = (\n";
+foreach (@disablables) {
+    print OUT "  ", quotify("perl", $_), ",\n";
+}
 print OUT <<"EOF";
 );
 
@@ -1770,7 +1777,6 @@ print OUT "1;\n";
 close(OUT);
 
 
-print "IsMK1MF       =", ($builder eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
 print "CFLAG         =$target{cflags} $config{cflags}\n";
 print "SHARED_CFLAG  =$target{shared_cflag}\n";
@@ -1861,71 +1867,6 @@ my %builders = (
 
         run_dofile("util/domd", "util/domd.in");
         chmod 0755, "util/domd";
-    },
-    mk1mf => sub {
-        my $platform = shift;
-        # The only reason we do this is to have something to build MINFO from
-        build_Makefile();
-
-	# create the ms/version32.rc file if needed
-        my ($v1, $v2, $v3, $v4);
-        if ($config{version_num} =~ /^0x([0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{1})L$/i) {
-            $v1=hex $1;
-            $v2=hex $2;
-            $v3=hex $3;
-            $v4=hex $4;
-        }
-        open (OUT,">ms/version32.rc") || die "Can't open ms/version32.rc";
-        print OUT <<"EOF";
-#include <winver.h>
-
-LANGUAGE 0x09,0x01
-
-1 VERSIONINFO
-  FILEVERSION $v1,$v2,$v3,$v4
-  PRODUCTVERSION $v1,$v2,$v3,$v4
-  FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
-  FILEFLAGS 0x01L
-#else
-  FILEFLAGS 0x00L
-#endif
-  FILEOS VOS__WINDOWS32
-  FILETYPE VFT_DLL
-  FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-	BLOCK "040904b0"
-	BEGIN
-	    // Required:
-	    VALUE "CompanyName", "The OpenSSL Project, http://www.openssl.org/\\0"
-	    VALUE "FileDescription", "OpenSSL Shared Library\\0"
-	    VALUE "FileVersion", "$config{version}\\0"
-#if defined(CRYPTO)
-	    VALUE "InternalName", "libcrypto32\\0"
-	    VALUE "OriginalFilename", "libcrypto32.dll\\0"
-#elif defined(SSL)
-	    VALUE "InternalName", "libssl32\\0"
-	    VALUE "OriginalFilename", "libssl32.dll\\0"
-#endif
-	    VALUE "ProductName", "The OpenSSL Toolkit\\0"
-	    VALUE "ProductVersion", "$config{version}\\0"
-	    // Optional:
-	    //VALUE "Comments", "\\0"
-	    VALUE "LegalCopyright", "Copyright © 1998-2015 The OpenSSL Project. Copyright © 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
-	    //VALUE "LegalTrademarks", "\\0"
-	    //VALUE "PrivateBuild", "\\0"
-	    //VALUE "SpecialBuild", "\\0"
-	END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 0x4b0
-    END
-END
-EOF
-        close(OUT);
     },
     );
 

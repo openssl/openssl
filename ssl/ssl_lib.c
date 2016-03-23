@@ -152,16 +152,10 @@
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/dh.h>
+#include <openssl/engine.h>
 #include <openssl/async.h>
-#ifndef OPENSSL_NO_CT
-# include <openssl/ct.h>
-#endif
+#include <openssl/ct.h>
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 

@@ -100,8 +100,7 @@ OPENSSL_secure_malloc() and OPENSSL_secure_zalloc() return a pointer into
 the secure heap of the requested size, or C<NULL> if memory could not be
 allocated.
 
-CRYPTO_secure_allocated() returns 1 if the pointer is in the
-the secure heap, or 0 if not.
+CRYPTO_secure_allocated() returns 1 if the pointer is in the secure heap, or 0 if not.
 
 CRYPTO_secure_malloc_done() and OPENSSL_secure_free()
 return no values.

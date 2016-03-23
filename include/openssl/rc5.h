@@ -58,14 +58,11 @@
 #ifndef HEADER_RC5_H
 # define HEADER_RC5_H
 
-# include <openssl/opensslconf.h>/* OPENSSL_NO_RC5 */
+# include <openssl/opensslconf.h>
 
-#ifdef  __cplusplus
+# ifndef OPENSSL_NO_RC5
+# ifdef  __cplusplus
 extern "C" {
-#endif
-
-# ifdef OPENSSL_NO_RC5
-#  error RC5 is disabled.
 # endif
 
 # define RC5_ENCRYPT     1
@@ -106,8 +103,9 @@ void RC5_32_ofb64_encrypt(const unsigned char *in, unsigned char *out,
                           long length, RC5_32_KEY *schedule,
                           unsigned char *ivec, int *num);
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
 
 #endif

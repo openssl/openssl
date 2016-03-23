@@ -116,7 +116,10 @@ int dsa_main(int argc, char **argv)
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
-    int i, modulus = 0, pubin = 0, pubout = 0, pvk_encr = 2, ret = 1;
+    int i, modulus = 0, pubin = 0, pubout = 0, ret = 1;
+# ifndef OPENSSL_NO_RC4
+    int pvk_encr = 2;
+# endif
     int private = 0;
 
     prog = opt_init(argc, argv, dsa_options);

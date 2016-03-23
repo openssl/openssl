@@ -53,11 +53,11 @@
 
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_CAMELLIA
-#  error CAMELLIA is disabled.
-# endif
-
+# ifndef OPENSSL_NO_CAMELLIA
 # include <stddef.h>
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 # define CAMELLIA_ENCRYPT        1
 # define CAMELLIA_DECRYPT        0
@@ -66,10 +66,6 @@
  * Because array size can't be a const in C, the following two are macros.
  * Both sizes are in bytes.
  */
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 /* This should be a hidden type, but EVP requires that the size be known */
 
@@ -120,8 +116,9 @@ void Camellia_ctr128_encrypt(const unsigned char *in, unsigned char *out,
                              unsigned char ecount_buf[CAMELLIA_BLOCK_SIZE],
                              unsigned int *num);
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
 
-#endif                          /* !HEADER_Camellia_H */
+#endif

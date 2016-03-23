@@ -79,7 +79,7 @@ int BIO_fd_should_retry(int i)
     return 0;
 }
 
-BIO_METHOD *BIO_s_fd(void)
+const BIO_METHOD *BIO_s_fd(void)
 {
     return NULL;
 }
@@ -105,7 +105,7 @@ static int fd_new(BIO *h);
 static int fd_free(BIO *data);
 int BIO_fd_should_retry(int s);
 
-static BIO_METHOD methods_fdp = {
+static const BIO_METHOD methods_fdp = {
     BIO_TYPE_FD, "file descriptor",
     fd_write,
     fd_read,
@@ -117,7 +117,7 @@ static BIO_METHOD methods_fdp = {
     NULL,
 };
 
-BIO_METHOD *BIO_s_fd(void)
+const BIO_METHOD *BIO_s_fd(void)
 {
     return (&methods_fdp);
 }

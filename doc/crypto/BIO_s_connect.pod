@@ -11,7 +11,7 @@ BIO_set_nbio, BIO_do_connect - connect BIO
 
  #include <openssl/bio.h>
 
- BIO_METHOD * BIO_s_connect(void);
+ const BIO_METHOD * BIO_s_connect(void);
 
  BIO *BIO_new_connect(char *name);
 
@@ -55,7 +55,7 @@ it also returns the socket . If B<c> is not NULL it should be of
 type (int *).
 
 BIO_set_conn_hostname() uses the string B<name> to set the hostname.
-The hostname can be an IP address; if the address is a IPv6 one, it
+The hostname can be an IP address; if the address is an IPv6 one, it
 must be enclosed with brackets. The hostname can also include the
 port in the form hostname:port.
 

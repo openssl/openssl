@@ -69,6 +69,9 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "dh is not supported by this OpenSSL build"
     if disabled("dh");
 
+plan skip_all => "$test_name needs the sock feature enabled"
+    if disabled("sock");
+
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&ske_0_p_filter,

@@ -60,8 +60,9 @@
 
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_IDEA
-#  error IDEA is disabled.
+# ifndef OPENSSL_NO_IDEA
+# ifdef  __cplusplus
+extern "C" {
 # endif
 
 typedef unsigned int IDEA_INT;
@@ -71,10 +72,6 @@ typedef unsigned int IDEA_INT;
 
 # define IDEA_BLOCK      8
 # define IDEA_KEY_LENGTH 16
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 typedef struct idea_key_st {
     IDEA_INT data[9][6];
@@ -95,8 +92,9 @@ void idea_ofb64_encrypt(const unsigned char *in, unsigned char *out,
                         long length, IDEA_KEY_SCHEDULE *ks, unsigned char *iv,
                         int *num);
 void idea_encrypt(unsigned long *in, IDEA_KEY_SCHEDULE *ks);
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
 
 #endif

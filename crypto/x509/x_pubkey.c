@@ -61,12 +61,16 @@
 #include <openssl/x509.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
+#include "internal/x509_int.h"
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+
+struct X509_pubkey_st {
+    X509_ALGOR *algor;
+    ASN1_BIT_STRING *public_key;
+    EVP_PKEY *pkey;
+    CRYPTO_RWLOCK *lock;
+};
 
 /* Minor tweak to operation: free up EVP_PKEY */
 static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
@@ -378,4 +382,11 @@ int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
     if (pa)
         *pa = pub->algor;
     return 1;
+}
+
+ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
+{
+    if (x == NULL)
+        return NULL;
+    return x->cert_info.key->public_key;
 }

@@ -68,9 +68,6 @@ shared: lib
 		(cd ..; $(MAKE) $(SHARED_LIB)); \
 	fi
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 

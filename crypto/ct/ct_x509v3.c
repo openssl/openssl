@@ -60,16 +60,16 @@
 # error "CT is disabled"
 #endif
 
-#include <openssl/bio.h>
-#include <openssl/ct.h>
-#include <openssl/obj_mac.h>
-#include <openssl/x509v3.h>
-
-#include "internal/ct_int.h"
+#include "ct_locl.h"
 
 static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
 {
     return OPENSSL_strdup("NULL");
+}
+
+static void *s2i_poison(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx, const char *str)
+{
+   return ASN1_NULL_new();
 }
 
 static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
@@ -93,7 +93,7 @@ const X509V3_EXT_METHOD v3_ct_scts[] = {
     /* X509v3 extension to mark a certificate as a pre-certificate */
     { NID_ct_precert_poison, 0, ASN1_ITEM_ref(ASN1_NULL),
     NULL, NULL, NULL, NULL,
-    i2s_poison, NULL,
+    i2s_poison, s2i_poison,
     NULL, NULL,
     NULL, NULL,
     NULL },

@@ -115,15 +115,9 @@
 #include <openssl/x509.h>
 #include <openssl/pkcs7.h>
 #include <openssl/pem.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/dh.h>
 
 #ifndef OPENSSL_NO_RSA
 static RSA *pkey_get_rsa(EVP_PKEY *key, RSA **rsa);

@@ -131,8 +131,10 @@ int verify_depth = 0;
 int verify_quiet = 0;
 int verify_error = X509_V_OK;
 int verify_return_error = 0;
+#ifndef OPENSSL_NO_SOCK
 static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 static int cookie_initialized = 0;
+#endif
 
 static const char *lookup(int val, const STRINT_PAIR* list, const char* def)
 {
@@ -741,6 +743,7 @@ void tlsext_cb(SSL *s, int client_server, int type,
     (void)BIO_flush(bio);
 }
 
+#ifndef OPENSSL_NO_SOCK
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
@@ -803,6 +806,7 @@ int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
 
     return 0;
 }
+#endif
 
 /*
  * Example of extended certificate handling. Where the standard support of

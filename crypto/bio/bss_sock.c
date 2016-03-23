@@ -78,7 +78,7 @@ static int sock_new(BIO *h);
 static int sock_free(BIO *data);
 int BIO_sock_should_retry(int s);
 
-static BIO_METHOD methods_sockp = {
+static const BIO_METHOD methods_sockp = {
     BIO_TYPE_SOCKET,
     "socket",
     sock_write,
@@ -91,7 +91,7 @@ static BIO_METHOD methods_sockp = {
     NULL,
 };
 
-BIO_METHOD *BIO_s_socket(void)
+const BIO_METHOD *BIO_s_socket(void)
 {
     return (&methods_sockp);
 }

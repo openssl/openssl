@@ -318,13 +318,6 @@ EVP_PKEY *X509_get_pubkey(X509 *x)
     return X509_PUBKEY_get(x->cert_info.key);
 }
 
-ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
-{
-    if (!x)
-        return NULL;
-    return x->cert_info.key->public_key;
-}
-
 int X509_check_private_key(X509 *x, EVP_PKEY *k)
 {
     EVP_PKEY *xk;

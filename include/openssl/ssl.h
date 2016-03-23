@@ -144,10 +144,7 @@
 
 # include <openssl/e_os2.h>
 # include <openssl/opensslconf.h>
-
-#ifndef OPENSSL_NO_COMP
 # include <openssl/comp.h>
-#endif
 # include <openssl/bio.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/x509.h>
@@ -161,9 +158,7 @@
 
 # include <openssl/safestack.h>
 # include <openssl/symhacks.h>
-# ifndef OPENSSL_NO_CT
-#  include <openssl/ct.h>
-# endif
+# include <openssl/ct.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -1372,7 +1367,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s, SSL_CTRL_SET_MAX_PROTO_VERSION, version, NULL)
 
 
-__owur BIO_METHOD *BIO_f_ssl(void);
+__owur const BIO_METHOD *BIO_f_ssl(void);
 __owur BIO *BIO_new_ssl(SSL_CTX *ctx, int client);
 __owur BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
 __owur BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);
@@ -1897,7 +1892,9 @@ void SSL_trace(int write_p, int version, int content_type,
 __owur const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
 # endif
 
+# ifndef OPENSSL_NO_SOCK
 int DTLSv1_listen(SSL *s, BIO_ADDR *client);
+# endif
 
 # ifndef OPENSSL_NO_CT
 

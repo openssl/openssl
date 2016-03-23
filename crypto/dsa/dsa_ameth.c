@@ -62,9 +62,7 @@
 #include <openssl/asn1.h>
 #include <openssl/dsa.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_CMS
-# include <openssl/cms.h>
-#endif
+#include <openssl/cms.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 

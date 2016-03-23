@@ -384,13 +384,13 @@ bits and 12 rounds.
 
 AES Galois Counter Mode (GCM) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
-the L<GCM and OCB modes> section below for details.
+the L</GCM and OCB modes> section below for details.
 
 =item EVP_aes_128_ocb(void), EVP_aes_192_ocb(void), EVP_aes_256_ocb(void)
 
 Offest Codebook Mode (OCB) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
-the L<GCM and OCB modes> section below for details.
+the L</GCM and OCB modes> section below for details.
 
 =item EVP_aes_128_ccm(), EVP_aes_192_ccm(), EVP_aes_256_ccm()
 
@@ -441,7 +441,7 @@ length can only be set before specifying an IV. If not called a default tag
 length is used. For OCB AES the default is 16 (i.e. 128 bits). This is also the
 maximum tag length for OCB.
 
-See L<EXAMPLES> below for an example of the use of GCM mode.
+See L</EXAMPLES> below for an example of the use of GCM mode.
 
 =head1 CCM Mode
 

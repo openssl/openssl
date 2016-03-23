@@ -128,7 +128,7 @@ static void xopenlog(BIO *bp, char *name, int level);
 static void xsyslog(BIO *bp, int priority, const char *string);
 static void xcloselog(BIO *bp);
 
-static BIO_METHOD methods_slg = {
+static const BIO_METHOD methods_slg = {
     BIO_TYPE_MEM, "syslog",
     slg_write,
     NULL,
@@ -140,7 +140,7 @@ static BIO_METHOD methods_slg = {
     NULL,
 };
 
-BIO_METHOD *BIO_s_log(void)
+const BIO_METHOD *BIO_s_log(void)
 {
     return (&methods_slg);
 }

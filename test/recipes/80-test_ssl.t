@@ -435,14 +435,14 @@ sub testssl {
 
         SKIP: {
             skip "No IPv4 available on this machine", 1
-                unless have_IPv4();
+                unless !disabled("sock") && have_IPv4();
             ok(run(test([@ssltest, "-ipv4", @extra])),
                'test TLS via IPv4');
           }
           
         SKIP: {
             skip "No IPv6 available on this machine", 1
-                unless have_IPv6();
+                unless !disabled("sock") && have_IPv6();
             ok(run(test([@ssltest, "-ipv6", @extra])),
                'test TLS via IPv6');
           }
@@ -627,10 +627,10 @@ sub testssl {
     subtest 'ALPN tests' => sub {
 	######################################################################
 
-	plan tests => 12;
+	plan tests => 13;
 
       SKIP: {
-	  skip "TLSv1.0 is not supported by this OpenSSL build", 12
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 13
 	      if $no_tls1;
 
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo"])));
@@ -656,6 +656,10 @@ sub testssl {
 	  ok(run(test([@ssltest, "-bio_pair",
 		       "-alpn_client", "foo,bar", "-sn_client", "bob",
 		       "-alpn_server1", "foo,123", "-sn_server1", "alice",
+		       "-alpn_server2", "bar,456", "-sn_server2", "bob",
+		       "-alpn_expected", "bar"])));
+	  ok(run(test([@ssltest, "-bio_pair",
+		       "-alpn_client", "foo,bar", "-sn_client", "bob",
 		       "-alpn_server2", "bar,456", "-sn_server2", "bob",
 		       "-alpn_expected", "bar"])));
 	}

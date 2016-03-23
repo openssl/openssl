@@ -153,7 +153,7 @@ static EX_CALLBACKS *get_and_lock(int class_index)
     EX_CALLBACKS *ip;
 
     if (class_index < 0 || class_index >= CRYPTO_EX_INDEX__COUNT) {
-        CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
+        CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 
