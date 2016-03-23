@@ -693,7 +693,7 @@ int ssl_allow_compression(SSL *s)
     return ssl_security(s, SSL_SECOP_COMPRESSION, 0, 0, NULL);
 }
 
-int ssl_version_cmp(const SSL *s, int a, int b)
+static int version_cmp(const SSL *s, int a, int b)
 {
     int dtls = SSL_IS_DTLS(s);
 
@@ -702,6 +702,19 @@ int ssl_version_cmp(const SSL *s, int a, int b)
     if (!dtls)
         return a < b ? -1 : 1;
     return DTLS_VERSION_LT(a, b) ? -1 : 1;
+}
+
+int ssl_strict_version_check(const SSL *s, int version)
+{
+    switch (s->method->version) {
+    default:
+        /* Version should be match method version for non-ANY method */
+        return version_cmp(s, version, s->version) == 0;
+    case TLS_ANY_VERSION:
+    case DTLS_ANY_VERSION:
+        /* Version should be <= max supported for ANY method */
+        return version_cmp(s, version, s->version) <= 0;
+    }
 }
 
 typedef struct {
@@ -769,12 +782,12 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
     int version = method->version;
 
     if ((s->min_proto_version != 0 &&
-         ssl_version_cmp(s, version, s->min_proto_version) < 0) ||
+         version_cmp(s, version, s->min_proto_version) < 0) ||
         ssl_security(s, SSL_SECOP_VERSION, 0, version, NULL) == 0)
         return SSL_R_VERSION_TOO_LOW;
 
     if (s->max_proto_version != 0 &&
-             ssl_version_cmp(s, version, s->max_proto_version) > 0)
+             version_cmp(s, version, s->max_proto_version) > 0)
         return SSL_R_VERSION_TOO_HIGH;
 
     if ((s->options & method->mask) != 0)
@@ -915,7 +928,7 @@ int ssl_choose_server_version(SSL *s)
 
     switch (server_version) {
     default:
-        if (ssl_version_cmp(s, client_version, s->version) < 0)
+        if (version_cmp(s, client_version, s->version) < 0)
             return SSL_R_WRONG_SSL_VERSION;
         /*
          * If this SSL handle is not from a version flexible method we don't
@@ -937,7 +950,7 @@ int ssl_choose_server_version(SSL *s)
         const SSL_METHOD *method;
 
         if (vent->smeth == NULL ||
-            ssl_version_cmp(s, client_version, vent->version) < 0)
+            version_cmp(s, client_version, vent->version) < 0)
             continue;
         method = vent->smeth();
         if (ssl_method_error(s, method) == 0) {
