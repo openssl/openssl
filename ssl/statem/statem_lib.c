@@ -706,6 +706,31 @@ static int version_cmp(const SSL *s, int a, int b)
 
 int ssl_strict_version_check(const SSL *s, int version)
 {
+    int mask;
+
+    switch (version) {
+    case SSL2_VERSION:
+      mask = SSL_OP_NO_SSLv2;
+    case SSL3_VERSION:
+      mask = SSL_OP_NO_SSLv3;
+    case TLS1_VERSION:
+      mask = SSL_OP_NO_TLSv1;
+      break;
+    case TLS1_1_VERSION:
+      mask = SSL_OP_NO_TLSv1_1;
+      break;
+    case TLS1_2_VERSION:
+      mask = SSL_OP_NO_TLSv1_2;
+      break;
+    default:
+      mask = 0;
+      break;
+    }
+
+    /* Version should not be disabled by SSL_set_options */
+    if ((s->options & mask) != 0)
+        return 0;
+
     switch (s->method->version) {
     default:
         /* Version should be match method version for non-ANY method */
