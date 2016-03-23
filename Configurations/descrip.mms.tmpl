@@ -119,11 +119,12 @@ DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
 DESTDIR=
 
 # Do not edit this manually. Use Configure --prefix=DIR to change this!
-INSTALLTOP={- catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL-\$(MAJOR).\$(MINOR)]" -}
+INSTALLTOP={- (my $x = $config{version}) =~ s|\.|_|g;
+              catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL-$x]" -}
 # This is the standard central area to store certificates, private keys...
 OPENSSLDIR={- catdir($config{openssldir}) ||
-              $config{prefix} ? catdir($config{prefix},"SSL")
-                              : "SYS\$COMMON:[SSL]" -}
+              $config{prefix} ? catdir($config{prefix},"COMMON")
+                              : "SYS\$COMMON:[OPENSSL-COMMON]" -}
 # Where installed engines reside
 ENGINESDIR={- $osslprefix -}ENGINES:
 
