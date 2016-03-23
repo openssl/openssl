@@ -310,10 +310,10 @@ uninstall_docs : uninstall_man_docs uninstall_html_docs
 install_dev : check_INSTALLTOP
         @ WRITE SYS$OUTPUT "*** Installing development files"
         @ ! Install header files
-        CREATE/DIR ossl_installroot:[include.openssl]
+        - CREATE/DIR ossl_installroot:[include.openssl]
         COPY/PROT=W:R openssl:*.h ossl_installroot:[include.openssl]
         @ ! Install libraries
-        CREATE/DIR ossl_installroot:[LIB.'arch']
+        - CREATE/DIR ossl_installroot:[LIB.'arch']
         {- join("\n        ",
                 map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
                 @{$unified_info{libraries}}) -}
@@ -327,10 +327,10 @@ install_dev : check_INSTALLTOP
 install_runtime : check_INSTALLTOP
         @ WRITE SYS$OUTPUT "*** Installing runtime files"
         @ ! Install the main program
-        CREATE/DIR ossl_installroot:[EXE.'arch']
+        - CREATE/DIR ossl_installroot:[EXE.'arch']
         COPY/PROT=W:RE [.APPS]openssl.EXE ossl_installroot:[EXE.'arch']
         @ ! Install scripts
-        CREATE/DIR ossl_installroot:[EXE]
+        - CREATE/DIR ossl_installroot:[EXE]
         COPY/PROT=W:RE [.APPS]CA.pl ossl_installroot:[EXE]
         COPY/PROT=W:RE [.TOOLS]c_rehash. ossl_installroot:[EXE]c_rehash.pl
         @ ! Install configuration file
@@ -340,7 +340,7 @@ install_runtime : check_INSTALLTOP
 install_engines : check_INSTALLTOP
         @ {- output_off() unless scalar @{$unified_info{engines}}; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing engines"
-        CREATE/DIR ossl_installroot:[ENGINES.'arch']
+        - CREATE/DIR ossl_installroot:[ENGINES.'arch']
         {- join("\n        ",
                 map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES.'arch']" }
                 grep(!m|ossltest$|i, @{$unified_info{engines}})) -}
@@ -352,7 +352,7 @@ install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                 CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[CERTS]
         IF F$SEARCH("OSSL_DATAROOT:[000000]PRIVATE.DIR;1") .EQS. "" THEN -
                 CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[PRIVATE]
-        CREATE/DIR ossl_installroot:[SYS$STARTUP]
+        - CREATE/DIR ossl_installroot:[SYS$STARTUP]
         COPY/PROT=W:RE -
                 [.VMS]openssl_startup.com,openssl_shutdown.com -
                 ossl_installroot:[SYS$STARTUP]
@@ -361,13 +361,13 @@ install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                 ossl_installroot:[SYS$STARTUP]
 
 [.VMS]openssl_startup.com : vmsconfig.pm
-        CREATE/DIR [.VMS]
+        - CREATE/DIR [.VMS]
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
                 {- sourcefile("VMS", "openssl_startup.com.in") -} -
                 > [.VMS]openssl_startup.com
 
 [.VMS]openssl_shutdown.com : vmsconfig.pm
-        CREATE/DIR [.VMS]
+        - CREATE/DIR [.VMS]
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
                 {- sourcefile("VMS", "openssl_shutdown.com.in") -} -
                 > [.VMS]openssl_shutdown.com
