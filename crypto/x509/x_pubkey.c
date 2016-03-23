@@ -69,23 +69,26 @@ struct X509_pubkey_st {
     X509_ALGOR *algor;
     ASN1_BIT_STRING *public_key;
     EVP_PKEY *pkey;
-    CRYPTO_RWLOCK *lock;
 };
 
 /* Minor tweak to operation: free up EVP_PKEY */
 static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                      void *exarg)
 {
-    if (operation == ASN1_OP_NEW_POST) {
-        X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
-        pubkey->lock = CRYPTO_THREAD_lock_new();
-        if (pubkey->lock == NULL)
-            return 0;
-    }
     if (operation == ASN1_OP_FREE_POST) {
         X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
-        CRYPTO_THREAD_lock_free(pubkey->lock);
         EVP_PKEY_free(pubkey->pkey);
+    } else if (operation == ASN1_OP_D2I_POST) {
+        /* Attempt to decode public key and cache in pubkey structure. */
+        X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
+        EVP_PKEY_free(pubkey->pkey);
+        /*
+         * Remove any errors from the queue: subsequent decode attempts will
+         * return an appropriate error.
+         */
+        ERR_set_mark();
+        pubkey->pkey = X509_PUBKEY_get0(pubkey);
+        ERR_pop_to_mark();
     }
     return 1;
 }
@@ -163,17 +166,6 @@ EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key)
     } else {
         X509err(X509_F_X509_PUBKEY_GET0, X509_R_METHOD_NOT_SUPPORTED);
         goto error;
-    }
-
-    /* Check to see if another thread set key->pkey first */
-    CRYPTO_THREAD_write_lock(key->lock);
-    if (key->pkey) {
-        CRYPTO_THREAD_unlock(key->lock);
-        EVP_PKEY_free(ret);
-        ret = key->pkey;
-    } else {
-        key->pkey = ret;
-        CRYPTO_THREAD_unlock(key->lock);
     }
 
     return ret;
