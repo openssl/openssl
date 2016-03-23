@@ -74,7 +74,7 @@
 #include <openssl/conf.h>
 #include <openssl/pkcs12.h>
 #include <openssl/rand.h>
-#include <openssl/dso.h>
+#include "internal/dso.h"
 #include <openssl/engine.h>
 #include <openssl/ui.h>
 #include <openssl/ocsp.h>

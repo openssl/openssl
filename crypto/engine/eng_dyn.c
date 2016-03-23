@@ -57,7 +57,7 @@
  */
 
 #include "eng_int.h"
-#include <openssl/dso.h>
+#include "internal/dso.h"
 #include <openssl/crypto.h>
 
 /*

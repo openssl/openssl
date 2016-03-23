@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,7 +58,9 @@
  * only reason strings will be preserved.
  */
 
-#include "dso_locl.h"
+#include <stdio.h>
+#include <openssl/err.h>
+#include "internal/dso.h"
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
@@ -85,16 +87,15 @@ static ERR_STRING_DATA DSO_str_functs[] = {
     {ERR_FUNC(DSO_F_DSO_GLOBAL_LOOKUP), "DSO_global_lookup"},
     {ERR_FUNC(DSO_F_DSO_LOAD), "DSO_load"},
     {ERR_FUNC(DSO_F_DSO_MERGE), "DSO_merge"},
+    {ERR_FUNC(DSO_F_DSO_NEW_METHOD), "DSO_new_method"},
     {ERR_FUNC(DSO_F_DSO_SET_FILENAME), "DSO_set_filename"},
     {ERR_FUNC(DSO_F_DSO_UP_REF), "DSO_up_ref"},
-    {ERR_FUNC(DSO_F_GLOBAL_LOOKUP_FUNC), "GLOBAL_LOOKUP_FUNC"},
     {ERR_FUNC(DSO_F_VMS_BIND_SYM), "vms_bind_sym"},
     {ERR_FUNC(DSO_F_VMS_LOAD), "vms_load"},
     {ERR_FUNC(DSO_F_VMS_MERGER), "vms_merger"},
     {ERR_FUNC(DSO_F_VMS_UNLOAD), "vms_unload"},
     {ERR_FUNC(DSO_F_WIN32_BIND_FUNC), "win32_bind_func"},
     {ERR_FUNC(DSO_F_WIN32_GLOBALLOOKUP), "win32_globallookup"},
-    {ERR_FUNC(DSO_F_WIN32_GLOBALLOOKUP_FUNC), "WIN32_GLOBALLOOKUP_FUNC"},
     {ERR_FUNC(DSO_F_WIN32_JOINER), "win32_joiner"},
     {ERR_FUNC(DSO_F_WIN32_LOAD), "win32_load"},
     {ERR_FUNC(DSO_F_WIN32_MERGER), "win32_merger"},
@@ -115,7 +116,6 @@ static ERR_STRING_DATA DSO_str_reasons[] = {
     {ERR_REASON(DSO_R_LOAD_FAILED), "could not load the shared library"},
     {ERR_REASON(DSO_R_NAME_TRANSLATION_FAILED), "name translation failed"},
     {ERR_REASON(DSO_R_NO_FILENAME), "no filename"},
-    {ERR_REASON(DSO_R_NO_FILE_SPECIFICATION), "no file specification"},
     {ERR_REASON(DSO_R_NULL_HANDLE), "a null shared library handle was used"},
     {ERR_REASON(DSO_R_SET_FILENAME_FAILED), "set filename failed"},
     {ERR_REASON(DSO_R_STACK_ERROR), "the meth_data stack is corrupt"},

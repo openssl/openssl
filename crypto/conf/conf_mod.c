@@ -61,7 +61,7 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
-#include <openssl/dso.h>
+#include "internal/dso.h"
 #include <openssl/x509.h>
 
 #define DSO_mod_init_name "OPENSSL_init"

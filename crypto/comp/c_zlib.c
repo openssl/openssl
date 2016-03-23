@@ -123,7 +123,7 @@ static COMP_METHOD zlib_stateful_method = {
                                  * OPENSSL_SYS_WIN32) */
 
 # ifdef ZLIB_SHARED
-#  include <openssl/dso.h>
+#  include "internal/dso.h"
 
 /* Function pointers */
 typedef int (*compress_ft) (Bytef *dest, uLongf * destLen,

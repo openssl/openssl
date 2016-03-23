@@ -23,7 +23,7 @@ L PKCS7		include/openssl/pkcs7.h		crypto/pkcs7/pkcs7err.c
 L X509V3	include/openssl/x509v3.h	crypto/x509v3/v3err.c
 L PKCS12	include/openssl/pkcs12.h	crypto/pkcs12/pk12err.c
 L RAND		include/openssl/rand.h		crypto/rand/rand_err.c
-L DSO		include/openssl/dso.h		crypto/dso/dso_err.c
+L DSO		include/internal/dso.h		crypto/dso/dso_err.c
 L ENGINE	include/openssl/engine.h	crypto/engine/eng_err.c
 L OCSP		include/openssl/ocsp.h		crypto/ocsp/ocsp_err.c
 L UI		include/openssl/ui.h		crypto/ui/ui_err.c
