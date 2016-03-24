@@ -704,44 +704,6 @@ static int version_cmp(const SSL *s, int a, int b)
     return DTLS_VERSION_LT(a, b) ? -1 : 1;
 }
 
-int ssl_strict_version_check(const SSL *s, int version)
-{
-    int mask;
-
-    switch (version) {
-    case SSL2_VERSION:
-      mask = SSL_OP_NO_SSLv2;
-    case SSL3_VERSION:
-      mask = SSL_OP_NO_SSLv3;
-    case TLS1_VERSION:
-      mask = SSL_OP_NO_TLSv1;
-      break;
-    case TLS1_1_VERSION:
-      mask = SSL_OP_NO_TLSv1_1;
-      break;
-    case TLS1_2_VERSION:
-      mask = SSL_OP_NO_TLSv1_2;
-      break;
-    default:
-      mask = 0;
-      break;
-    }
-
-    /* Version should not be disabled by SSL_set_options */
-    if ((s->options & mask) != 0)
-        return 0;
-
-    switch (s->method->version) {
-    default:
-        /* Version should be match method version for non-ANY method */
-        return version_cmp(s, version, s->version) == 0;
-    case TLS_ANY_VERSION:
-    case DTLS_ANY_VERSION:
-        /* Version should be <= max supported for ANY method */
-        return version_cmp(s, version, s->version) <= 0;
-    }
-}
-
 typedef struct {
     int version;
     const SSL_METHOD *(*cmeth)(void);
@@ -822,6 +784,52 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
     else if ((method->flags & SSL_METHOD_NO_FIPS) != 0 && FIPS_mode())
         return SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE;
 
+    return 0;
+}
+
+/*
+ * ssl_strict_version_check - Check that the specified `version` is supported by
+ * `SSL *` instance
+ *
+ * @s: The SSL handle for the candidate method
+ * @version: Protocol version to test against
+ *
+ * Returns 1 on success, otherwise 0
+ */
+int ssl_strict_version_check(const SSL *s, int version)
+{
+    const version_info *vent;
+    const version_info *table;
+
+    switch (s->method->version) {
+    default:
+        /* Version should be match method version for non-ANY method */
+        return version_cmp(s, version, s->version) == 0;
+    case TLS_ANY_VERSION:
+        table = tls_version_table;
+        break;
+    case DTLS_ANY_VERSION:
+        table = dtls_version_table;
+        break;
+    }
+
+    for (vent = table; vent->version != 0; ++vent) {
+        int cmp;
+
+        if (vent->smeth != NULL &&
+            ssl_method_error(s, vent->smeth()) == 0) {
+          cmp = version_cmp(s, version, vent->version);
+
+          if (cmp < 0) {
+            continue;
+          }
+
+          /* `version` is either bigger than the rest of the table entries, or
+           * is an exact match. In any case - our search is over now
+           */
+          return cmp == 0;
+        }
+    }
     return 0;
 }
 
