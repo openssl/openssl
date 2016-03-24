@@ -300,14 +300,6 @@ extern FILE *_imp___iob;
 #   define OPENSSL_NO_POSIX_IO
 #  endif
 
-#  if defined (__BORLANDC__)
-#   define _setmode setmode
-#   define _O_TEXT O_TEXT
-#   define _O_BINARY O_BINARY
-#   define _int64 __int64
-#   define _kbhit kbhit
-#  endif
-
 #  define EXIT(n) exit(n)
 #  define LIST_SEPARATOR_CHAR ';'
 #  ifndef X_OK

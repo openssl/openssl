@@ -234,13 +234,8 @@ typedef struct err_state_st {
 # define ASYNCerr(f,r) ERR_PUT_error(ERR_LIB_ASYNC,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define KDFerr(f,r) ERR_PUT_error(ERR_LIB_KDF,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
-/*
- * Borland C seems too stupid to be able to shift and do longs in the
- * pre-processor :-(
- */
-# define ERR_PACK(l,f,r)         (((((unsigned long)l)&0xffL)*0x1000000)| \
-                                ((((unsigned long)f)&0xfffL)*0x1000)| \
-                                ((((unsigned long)r)&0xfffL)))
+# define ERR_PACK(l,f,r) \
+    ( (((l) & 0x0FF) << 24L) | (((f) & 0xFFF) << 12L) | ((r) & 0xFFF) )
 # define ERR_GET_LIB(l)          (int)((((unsigned long)l)>>24L)&0xffL)
 # define ERR_GET_FUNC(l)         (int)((((unsigned long)l)>>12L)&0xfffL)
 # define ERR_GET_REASON(l)       (int)((l)&0xfffL)
