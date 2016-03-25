@@ -73,9 +73,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/ssl.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #ifndef OPENSSL_NO_RSA
