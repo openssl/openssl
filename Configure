@@ -266,6 +266,7 @@ my @dtls = qw(dtls1 dtls1_2);
 
 my @disablables = (
     "afalgeng",
+    "asan",
     "asm",
     "async",
     "autoalginit",
@@ -299,6 +300,7 @@ my @disablables = (
     "engine",
     "err",
     "filenames",
+    "fuzz",
     "gost",
     "heartbeats",
     "hw(-.+)?",
@@ -337,6 +339,7 @@ my @disablables = (
     "threads",
     "tls",
     "ts",
+    "ubsan",
     "ui",
     "unit-test",
     "whirlpool",
@@ -357,14 +360,17 @@ my @deprecated_disablables = (
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 our %disabled = ( # "what"         => "comment"
+                  "asan"		=> "default",
 		  "ec_nistp_64_gcc_128" => "default",
 		  "egd"                 => "default",
+		  "fuzz"		=> "default",
 		  "md2"                 => "default",
 		  "rc5"                 => "default",
 		  "sctp"                => "default",
 		  "ssl-trace"           => "default",
 		  "ssl3"                => "default",
 		  "ssl3-method"         => "default",
+                  "ubsan"		=> "default",
 		  "unit-test"           => "default",
 		  "weak-ssl-ciphers"    => "default",
 		  "zlib"                => "default",
@@ -1029,6 +1035,24 @@ if ($disabled{"dynamic-engine"}) {
         $config{dynamic_engines} = 1;
 }
 
+unless ($disabled{fuzz}) {
+    push $config{dirs}, "fuzz";
+    $config{cflags} .= "-fsanitize-coverage=edge,indirect-calls ";
+}
+
+unless ($disabled{asan}) {
+    $config{cflags} .= "-fsanitize=address ";
+}
+
+unless ($disabled{ubsan}) {
+    # -DPEDANTIC or -fnosanitize=aligmnent may also be required on some
+    # platforms.
+    $config{cflags} .= "-fsanitize=undefined -fno-sanitize-recover=all ";
+}
+
+unless ($disabled{fuzz} && $disabled{asan} && $disabled{ubsan}) {
+    $config{cflags} .= "-fno-omit-frame-pointer -g ";
+}
 #
 # Platform fix-ups
 #
