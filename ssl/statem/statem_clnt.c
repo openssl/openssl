@@ -822,9 +822,6 @@ int tls_construct_client_hello(SSL *s)
     }
 
     if ((sess == NULL) ||
-        /* Only destroy session which version is bigger than maximum supported,
-         * or session which version is not supported by the current ssl->method
-         */
         !ssl_version_supported(s, sess->ssl_version) ||
         /*
          * In the case of EAP-FAST, we can have a pre-shared
