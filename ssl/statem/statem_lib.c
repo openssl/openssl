@@ -814,7 +814,7 @@ int ssl_strict_version_check(const SSL *s, int version)
     }
 
     for (vent = table;
-         vent->version != 0 && version_cmp(s, version, vent->version) >= 0;
+         vent->version != 0 && version_cmp(s, version, vent->version) <= 0;
          ++vent) {
         if (vent->cmeth != NULL &&
             ssl_method_error(s, vent->cmeth()) == 0 &&
