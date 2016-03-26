@@ -1998,7 +1998,7 @@ __owur int ssl3_handshake_write(SSL *s);
 
 __owur int ssl_allow_compression(SSL *s);
 
-__owur int ssl_strict_version_check(const SSL *s, int version);
+__owur int ssl_version_supported(const SSL *s, int version);
 
 __owur int ssl_set_client_hello_version(SSL *s);
 __owur int ssl_check_version_downgrade(SSL *s);

@@ -788,15 +788,15 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 }
 
 /*
- * ssl_strict_version_check - Check that the specified `version` is supported by
+ * ssl_version_supported - Check that the specified `version` is supported by
  * `SSL *` instance
  *
  * @s: The SSL handle for the candidate method
  * @version: Protocol version to test against
  *
- * Returns 1 on success, otherwise 0
+ * Returns 1 when supported, otherwise 0
  */
-int ssl_strict_version_check(const SSL *s, int version)
+int ssl_version_supported(const SSL *s, int version)
 {
     const version_info *vent;
     const version_info *table;
