@@ -549,6 +549,7 @@ foreach (@argvcopy)
                                 {
                                 $disabled{$proto} = "option(dtls)";
                                 }
+                        $disabled{"dtls"} = "option(dtls)";
                         }
                 elsif ($1 eq "ssl")
                         {
