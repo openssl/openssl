@@ -359,6 +359,7 @@ my @disable_cascades = (
     "ec"		=> [ "ecdsa", "ecdh" ],
 
     "dgram"		=> [ "dtls", "sctp" ],
+    "sock"		=> [ "sctp" ],
     "dtls"		=> [ @dtls ],
 
     # SSL 3.0, (D)TLS 1.0 and TLS 1.1 require MD5 and SHA
@@ -394,6 +395,7 @@ my @disable_cascades = (
     "shared"            => [ "dynamic-engine" ],
     "engine"            => [ "afalgeng" ],
     "comp"		=> [ "zlib" ],
+    sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
