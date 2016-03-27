@@ -63,10 +63,13 @@ my $P2req="reqP2.ss";
 my $P2cert="certP2.ss";
 my $P2intermediate="tmp_intP2.ss";
 
+my $server_sess="server.ss";
+my $client_sess="client.ss";
+
 plan tests =>
     1				# For testss
     + 1				# For ssltest -test_cipherlist
-    + 13			# For the first testssl
+    + 15			# For the first testssl
     + 16			# For the first testsslproxy
     + 16			# For the second testsslproxy
     ;
@@ -803,6 +806,49 @@ sub testssl {
             }
             ok($ok);
         }}}}}
+    };
+
+    subtest 'TLS session reuse' => sub {
+        plan tests => 12;
+
+        ok(run(test([@ssltest, "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+        ok(run(test([@ssltest, "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.1"])));
+
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.2"])));
+
+        ok(run(test([@ssltest, "-no_ticket", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+        ok(run(test([@ssltest, "-no_ticket", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-no_ticket", "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.1"])));
+
+        ok(run(test([@ssltest, "-no_ticket", "-server_max_proto", "tls1.1", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+        ok(run(test([@ssltest, "-no_ticket", "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-no_ticket", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.2"])));
+    };
+
+    subtest 'DTLS session reuse' => sub {
+        plan tests => 12;
+      SKIP: {
+        skip "DTLS disabled", 12 if $no_dtls;
+
+        ok(run(test([@ssltest, "-dtls", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+        ok(run(test([@ssltest, "-dtls", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "dtls1.2"])));
+        ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "dtls1"])));
+
+        ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+        ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "dtls1"])));
+        ok(run(test([@ssltest, "-dtls", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "dtls1.2"])));
+
+        ok(run(test([@ssltest, "-dtls", "-no_ticket", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+        ok(run(test([@ssltest, "-dtls", "-no_ticket", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "dtls1.2"])));
+        ok(run(test([@ssltest, "-dtls", "-no_ticket", "-server_max_proto", "dtls1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "dtls1"])));
+
+        ok(run(test([@ssltest, "-dtls", "-no_ticket", "-server_max_proto", "dtls1", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+        ok(run(test([@ssltest, "-dtls", "-no_ticket", "-server_max_proto", "dtls1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "dtls1"])));
+        ok(run(test([@ssltest, "-dtls", "-no_ticket", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "dtls1.2"])));
+	}
     };
 
     subtest 'Certificate Transparency tests' => sub {

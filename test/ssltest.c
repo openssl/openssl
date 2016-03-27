@@ -383,6 +383,12 @@ static const char *sn_client;
 static const char *sn_server1;
 static const char *sn_server2;
 static int sn_expect = 0;
+static const char *server_sess_out;
+static const char *server_sess_in;
+static const char *client_sess_out;
+static const char *client_sess_in;
+static SSL_SESSION *server_sess;
+static SSL_SESSION *client_sess;
 
 static int servername_cb(SSL *s, int *ad, void *arg)
 {
@@ -900,6 +906,12 @@ static void sv_usage(void)
     fprintf(stderr, " -sn_server2 <string> - have server context 2 respond to this servername\n");
     fprintf(stderr, " -sn_expect1          - expected server 1\n");
     fprintf(stderr, " -sn_expect2          - expected server 2\n");
+    fprintf(stderr, " -server_sess_out <file>    - Save the server session to a file\n");
+    fprintf(stderr, " -server_sess_in <file>     - Read the server session from a file\n");
+    fprintf(stderr, " -client_sess_out <file>    - Save the client session to a file\n");
+    fprintf(stderr, " -client_sess_in <file>     - Read the client session from a file\n");
+    fprintf(stderr, " -should_reuse <number>     - The expected state of reusing the session\n");
+    fprintf(stderr, " -no_ticket    - do not issue TLS session ticket\n");
 }
 
 static void print_key_details(BIO *out, EVP_PKEY *key)
@@ -997,6 +1009,43 @@ static int protocol_from_string(const char *value)
     return -1;
 }
 
+static SSL_SESSION *read_session(const char *filename)
+{
+    SSL_SESSION *sess;
+    BIO *f = BIO_new_file(filename, "r");
+
+    if (f == NULL) {
+        BIO_printf(bio_err, "Can't open session file %s\n", filename);
+        ERR_print_errors(bio_err);
+        return NULL;
+    }
+    sess = PEM_read_bio_SSL_SESSION(f, NULL, 0, NULL);
+    if (sess == NULL) {
+        BIO_printf(bio_err, "Can't parse session file %s\n", filename);
+        ERR_print_errors(bio_err);
+    }
+    BIO_free(f);
+    return sess;
+}
+
+static int write_session(const char *filename, SSL_SESSION *sess)
+{
+    BIO *f = BIO_new_file(filename, "w");
+
+    if (sess == NULL) {
+        BIO_printf(bio_err, "No session information\n");
+        return 0;
+    }
+    if (f == NULL) {
+        BIO_printf(bio_err, "Can't open session file %s\n", filename);
+        ERR_print_errors(bio_err);
+        return 0;
+    }
+    PEM_write_bio_SSL_SESSION(f, sess);
+    BIO_free(f);
+    return 1;
+}
+
 /*
  * set_protocol_version - Sets protocol version minimum or maximum
  *
@@ -1031,6 +1080,8 @@ int main(int argc, char *argv[])
     const SSL_METHOD *meth = NULL;
     SSL *c_ssl, *s_ssl;
     int number = 1, reuse = 0;
+    int should_reuse = -1;
+    int no_ticket = 0;
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
     DH *dh;
@@ -1342,6 +1393,28 @@ int main(int argc, char *argv[])
             sn_expect = 1;
         } else if (strcmp(*argv, "-sn_expect2") == 0) {
             sn_expect = 2;
+        } else if (strcmp(*argv, "-server_sess_out") == 0) {
+            if (--argc < 1)
+                goto bad;
+            server_sess_out = *(++argv);
+        } else if (strcmp(*argv, "-server_sess_in") == 0) {
+            if (--argc < 1)
+                goto bad;
+            server_sess_in = *(++argv);
+        } else if (strcmp(*argv, "-client_sess_out") == 0) {
+            if (--argc < 1)
+                goto bad;
+            client_sess_out = *(++argv);
+        } else if (strcmp(*argv, "-client_sess_in") == 0) {
+            if (--argc < 1)
+                goto bad;
+            client_sess_in = *(++argv);
+        } else if (strcmp(*argv, "-should_reuse") == 0) {
+            if (--argc < 1)
+                goto bad;
+            should_reuse = !!atoi(*(++argv));
+        } else if (strcmp(*argv, "-no_ticket") == 0) {
+            no_ticket = 1;
         } else {
             int rv;
             arg = argv[0];
@@ -1535,6 +1608,11 @@ int main(int argc, char *argv[])
     SSL_CTX_set_security_level(c_ctx, 0);
     SSL_CTX_set_security_level(s_ctx, 0);
     SSL_CTX_set_security_level(s_ctx2, 0);
+
+    if (no_ticket) {
+        SSL_CTX_set_options(c_ctx, SSL_OP_NO_TICKET);
+        SSL_CTX_set_options(s_ctx, SSL_OP_NO_TICKET);
+    }
 
     if (SSL_CTX_set_min_proto_version(c_ctx, min_version) == 0)
         goto end;
@@ -1828,6 +1906,28 @@ int main(int argc, char *argv[])
         OPENSSL_free(alpn);
     }
 
+    if (server_sess_in != NULL) {
+        server_sess = read_session(server_sess_in);
+        if (server_sess == NULL)
+            goto end;
+    }
+    if (client_sess_in != NULL) {
+        client_sess = read_session(client_sess_in);
+        if (client_sess == NULL)
+            goto end;
+    }
+
+    if (server_sess_out != NULL || server_sess_in != NULL) {
+        char *keys;
+        long size;
+
+        /* Use a fixed key so that we can decrypt the ticket. */
+        size = SSL_CTX_set_tlsext_ticket_keys(s_ctx, NULL, 0);
+        keys = OPENSSL_zalloc(size);
+        SSL_CTX_set_tlsext_ticket_keys(s_ctx, keys, size);
+        OPENSSL_free(keys);
+    }
+
     if (sn_server1 != NULL || sn_server2 != NULL)
         SSL_CTX_set_tlsext_servername_callback(s_ctx, servername_cb);
 
@@ -1846,11 +1946,26 @@ int main(int argc, char *argv[])
     if (!set_protocol_version(client_max_proto, c_ssl, SSL_CTRL_SET_MAX_PROTO_VERSION))
         goto end;
 
+    if (server_sess) {
+        if (SSL_CTX_add_session(s_ctx, server_sess) == 0) {
+            BIO_printf(bio_err, "Can't add server session\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+
     BIO_printf(bio_stdout, "Doing handshakes=%d bytes=%ld\n", number, bytes);
     for (i = 0; i < number; i++) {
         if (!reuse) {
             if (!SSL_set_session(c_ssl, NULL)) {
                 BIO_printf(bio_err, "Failed to set session\n");
+                goto end;
+            }
+        }
+        if (client_sess_in != NULL) {
+            if (SSL_set_session(c_ssl, client_sess) == 0) {
+                BIO_printf(bio_err, "Can't set client session\n");
+                ERR_print_errors(bio_err);
                 goto end;
             }
         }
@@ -1897,6 +2012,30 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (should_reuse != -1) {
+        if (SSL_session_reused(s_ssl) != should_reuse ||
+            SSL_session_reused(c_ssl) != should_reuse) {
+            BIO_printf(bio_err, "Unexpected session reuse state. "
+                "Expected: %d, server: %d, client: %d\n", should_reuse,
+                SSL_session_reused(s_ssl), SSL_session_reused(c_ssl));
+            ret = 1;
+            goto err;
+        }
+    }
+
+    if (server_sess_out != NULL) {
+        if (write_session(server_sess_out, SSL_get_session(s_ssl)) == 0) {
+            ret = 1;
+            goto err;
+        }
+    }
+    if (client_sess_out != NULL) {
+        if (write_session(client_sess_out, SSL_get_session(c_ssl)) == 0) {
+            ret = 1;
+            goto err;
+        }
+    }
+
     if (!verbose) {
         print_details(c_ssl, "");
     }
@@ -1933,6 +2072,9 @@ int main(int argc, char *argv[])
     sk_OPENSSL_STRING_free(conf_args);
 
     BIO_free(bio_stdout);
+
+    SSL_SESSION_free(server_sess);
+    SSL_SESSION_free(client_sess);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks(bio_err) <= 0)
