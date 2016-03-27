@@ -180,7 +180,7 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
 # define LHASH_OF(type) struct lhash_st_##type
 
 # define DEFINE_LHASH_OF(type) \
-    LHASH_OF(type) { union { void* d1; unsigned long d2; int d3; }; }; \
+    LHASH_OF(type) { union lh_##type##_dummy { void* d1; unsigned long d2; int d3; } dummy; }; \
     static ossl_inline LHASH_OF(type) * \
         lh_##type##_new(unsigned long (*hfn)(const type *), \
                         int (*cfn)(const type *, const type *)) \
