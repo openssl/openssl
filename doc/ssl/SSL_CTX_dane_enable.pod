@@ -214,7 +214,7 @@ the lifetime of the SSL connection.
 
   /* Perform SSL_connect() handshake and handle errors here */
 
-  if (SSL_session_resumed(ssl)) {
+  if (SSL_session_reused(ssl)) {
       if (SSL_get_verify_result(ssl) == X509_V_OK) {
         /*
          * Resumed session was originally verified, this connection is
