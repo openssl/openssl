@@ -542,7 +542,6 @@ struct ssl_method_st {
     int (*ssl_pending) (const SSL *s);
     int (*num_ciphers) (void);
     const SSL_CIPHER *(*get_cipher) (unsigned ncipher);
-    const struct ssl_method_st *(*get_ssl_method) (int version);
     long (*get_timeout) (void);
     const struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
     int (*ssl_version) (void);
@@ -1761,7 +1760,7 @@ extern const SSL3_ENC_METHOD DTLSv1_2_enc_data;
 #define SSL_METHOD_NO_SUITEB    (1U<<1)
 
 # define IMPLEMENT_tls_meth_func(version, flags, mask, func_name, s_accept, \
-                                 s_connect, s_get_meth, enc_data) \
+                                 s_connect, enc_data) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
@@ -1789,7 +1788,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_pending, \
                 ssl3_num_ciphers, \
                 ssl3_get_cipher, \
-                s_get_meth, \
                 tls1_default_timeout, \
                 &enc_data, \
                 ssl_undefined_void_function, \
@@ -1799,7 +1797,7 @@ const SSL_METHOD *func_name(void)  \
         return &func_name##_data; \
         }
 
-# define IMPLEMENT_ssl3_meth_func(func_name, s_accept, s_connect, s_get_meth) \
+# define IMPLEMENT_ssl3_meth_func(func_name, s_accept, s_connect) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
@@ -1827,7 +1825,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_pending, \
                 ssl3_num_ciphers, \
                 ssl3_get_cipher, \
-                s_get_meth, \
                 ssl3_default_timeout, \
                 &SSLv3_enc_data, \
                 ssl_undefined_void_function, \
@@ -1838,7 +1835,7 @@ const SSL_METHOD *func_name(void)  \
         }
 
 # define IMPLEMENT_dtls1_meth_func(version, flags, mask, func_name, s_accept, \
-                                        s_connect, s_get_meth, enc_data) \
+                                        s_connect, enc_data) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
@@ -1866,7 +1863,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_pending, \
                 ssl3_num_ciphers, \
                 ssl3_get_cipher, \
-                s_get_meth, \
                 dtls1_default_timeout, \
                 &enc_data, \
                 ssl_undefined_void_function, \
@@ -1995,6 +1991,8 @@ __owur int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
 __owur int ssl3_handshake_write(SSL *s);
 
 __owur int ssl_allow_compression(SSL *s);
+
+__owur int ssl_version_supported(const SSL *s, int version);
 
 __owur int ssl_set_client_hello_version(SSL *s);
 __owur int ssl_check_version_downgrade(SSL *s);

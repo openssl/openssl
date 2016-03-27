@@ -2511,6 +2511,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_SSL_SESSION_ID_CONFLICT                    302
 # define SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG            273
 # define SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH              303
+# define SSL_R_SSL_SESSION_VERSION_MISMATCH               210
 # define SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER       232
 # define SSL_R_TLS_HEARTBEAT_PEER_DOESNT_ACCEPT           365
 # define SSL_R_TLS_HEARTBEAT_PENDING                      366

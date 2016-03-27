@@ -817,7 +817,8 @@ int tls_construct_client_hello(SSL *s)
         goto err;
     }
 
-    if ((sess == NULL) || (sess->ssl_version != s->version) ||
+    if ((sess == NULL) ||
+        !ssl_version_supported(s, sess->ssl_version) ||
         /*
          * In the case of EAP-FAST, we can have a pre-shared
          * "ticket" without a session ID.
@@ -1126,10 +1127,20 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
             }
         }
 
+        s->session->ssl_version = s->version;
         s->session->session_id_length = session_id_len;
         /* session_id_len could be 0 */
         memcpy(s->session->session_id, PACKET_data(&session_id),
                session_id_len);
+    }
+
+    /* Session version and negotiated protocol version should match */
+    if (s->version != s->session->ssl_version) {
+        al = SSL_AD_PROTOCOL_VERSION;
+
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
+               SSL_R_SSL_SESSION_VERSION_MISMATCH);
+        goto f_err;
     }
 
     c = ssl_get_cipher_by_char(s, cipherchars);
