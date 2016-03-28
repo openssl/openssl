@@ -173,12 +173,6 @@ int ssl23_connect(SSL *s)
         case SSL_ST_BEFORE | SSL_ST_CONNECT:
         case SSL_ST_OK | SSL_ST_CONNECT:
 
-            if (s->session != NULL) {
-                SSLerr(SSL_F_SSL23_CONNECT,
-                       SSL_R_SSL23_DOING_SESSION_ID_REUSE);
-                ret = -1;
-                goto end;
-            }
             s->server = 0;
             if (cb != NULL)
                 cb(s, SSL_CB_HANDSHAKE_START, 1);
@@ -375,12 +369,20 @@ static int ssl23_client_hello(SSL *s)
 
     buf = (unsigned char *)s->init_buf->data;
     if (s->state == SSL23_ST_CW_CLNT_HELLO_A) {
-        /*
-         * Since we're sending s23 client hello, we're not reusing a session, as
-         * we'd be using the method from the saved session instead
-         */
-        if (!ssl_get_new_session(s, 0)) {
-            return -1;
+        if ((s->session == NULL) ||
+            !ssl23_version_supported(s, s->session->ssl_version) ||
+#ifdef OPENSSL_NO_TLSEXT
+            !s->session->session_id_length ||
+#else
+            /*
+             * In the case of EAP-FAST, we can have a pre-shared
+             * "ticket" without a session ID.
+             */
+            (!s->session->session_id_length && !s->session->tlsext_tick) ||
+#endif
+            (s->session->not_resumable)) {
+            if (!ssl_get_new_session(s, 0))
+                return -1;
         }
 
         p = s->s3->client_random;
@@ -498,8 +500,21 @@ static int ssl23_client_hello(SSL *s)
             memcpy(p, s->s3->client_random, SSL3_RANDOM_SIZE);
             p += SSL3_RANDOM_SIZE;
 
-            /* Session ID (zero since there is no reuse) */
-            *(p++) = 0;
+            /* Session ID */
+            if (s->new_session || s->session == NULL)
+                i = 0;
+            else
+                i = s->session->session_id_length;
+            *(p++) = i;
+            if (i != 0) {
+                if (i > (int) sizeof(s->session->session_id)) {
+                    SSLerr(SSL_F_SSL23_CLIENT_HELLO,
+                           SSL_R_SSL_SESSION_VERSION_MISMATCH);
+                    return -1;
+                }
+                memcpy(p, s->session->session_id, i);
+                p += i;
+            }
 
             /* Ciphers supported (using SSL 3.0/TLS 1.0 format) */
             i = ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &(p[2]),
@@ -735,8 +750,6 @@ static int ssl23_get_server_hello(SSL *s)
             SSLerr(SSL_F_SSL23_GET_SERVER_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
             goto err;
         }
-
-        s->session->ssl_version = s->version;
 
         /* ensure that TLS_MAX_VERSION is up-to-date */
         OPENSSL_assert(s->version <= TLS_MAX_VERSION);

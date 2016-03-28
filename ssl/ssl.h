@@ -3089,6 +3089,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG            273
 # define SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH              303
 # define SSL_R_SSL_SESSION_ID_IS_DIFFERENT                231
+# define SSL_R_SSL_SESSION_VERSION_MISMATCH               394
 # define SSL_R_TLSV1_ALERT_ACCESS_DENIED                  1049
 # define SSL_R_TLSV1_ALERT_DECODE_ERROR                   1050
 # define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED              1021

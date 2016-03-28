@@ -1205,6 +1205,8 @@ long ssl3_default_timeout(void);
 void ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
 int ssl3_handshake_write(SSL *s);
 
+int ssl23_version_supported(const SSL *s, int version);
+
 int ssl23_num_ciphers(void);
 const SSL_CIPHER *ssl23_get_cipher(unsigned int u);
 int ssl23_read(SSL *s, void *buf, int len);
