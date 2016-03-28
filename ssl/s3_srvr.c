@@ -905,7 +905,7 @@ int ssl3_get_client_hello(SSL *s)
     unsigned int cookie_len;
     long n;
     unsigned long id;
-    unsigned char *p, *d;
+    unsigned char *p, *d, *session_id;
     SSL_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
     unsigned char *q;
@@ -1010,48 +1010,9 @@ int ssl3_get_client_hello(SSL *s)
         goto f_err;
     }
 
-    s->hit = 0;
-    /*
-     * Versions before 0.9.7 always allow clients to resume sessions in
-     * renegotiation. 0.9.7 and later allow this by default, but optionally
-     * ignore resumption requests with flag
-     * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION (it's a new flag rather
-     * than a change to default behavior so that applications relying on this
-     * for security won't even compile against older library versions).
-     * 1.0.1 and later also have a function SSL_renegotiate_abbreviated() to
-     * request renegotiation but not a new session (s->new_session remains
-     * unset): for servers, this essentially just means that the
-     * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION setting will be ignored.
-     */
-    if ((s->new_session
-         && (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION))) {
-        if (!ssl_get_new_session(s, 1))
-            goto err;
-    } else {
-        i = ssl_get_prev_session(s, p, j, d + n);
-        /*
-         * Only resume if the session's version matches the negotiated
-         * version.
-         * RFC 5246 does not provide much useful advice on resumption
-         * with a different protocol version. It doesn't forbid it but
-         * the sanity of such behaviour would be questionable.
-         * In practice, clients do not accept a version mismatch and
-         * will abort the handshake with an error.
-         */
-        if (i == 1 && s->version == s->session->ssl_version) { /* previous
-                                                                * session */
-            s->hit = 1;
-        } else if (i == -1)
-            goto err;
-        else {                  /* i == 0 */
-
-            if (!ssl_get_new_session(s, 1))
-                goto err;
-        }
-    }
+    session_id = p;
 
     p += j;
-
     if (SSL_IS_DTLS(s)) {
         /* cookie stuff */
         if (p + 1 > d + n) {
@@ -1104,6 +1065,7 @@ int ssl3_get_client_hello(SSL *s)
         }
 
         p += cookie_len;
+
         if (s->method->version == DTLS_ANY_VERSION) {
             /* Select version to use */
             if (s->client_version <= DTLS1_2_VERSION &&
@@ -1127,7 +1089,46 @@ int ssl3_get_client_hello(SSL *s)
                 al = SSL_AD_PROTOCOL_VERSION;
                 goto f_err;
             }
-            s->session->ssl_version = s->version;
+        }
+    }
+
+    s->hit = 0;
+    /*
+     * Versions before 0.9.7 always allow clients to resume sessions in
+     * renegotiation. 0.9.7 and later allow this by default, but optionally
+     * ignore resumption requests with flag
+     * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION (it's a new flag rather
+     * than a change to default behavior so that applications relying on this
+     * for security won't even compile against older library versions).
+     * 1.0.1 and later also have a function SSL_renegotiate_abbreviated() to
+     * request renegotiation but not a new session (s->new_session remains
+     * unset): for servers, this essentially just means that the
+     * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION setting will be ignored.
+     */
+    if ((s->new_session
+         && (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION))) {
+        if (!ssl_get_new_session(s, 1))
+            goto err;
+    } else {
+        i = ssl_get_prev_session(s, session_id, j, d + n);
+        /*
+         * Only resume if the session's version matches the negotiated
+         * version.
+         * RFC 5246 does not provide much useful advice on resumption
+         * with a different protocol version. It doesn't forbid it but
+         * the sanity of such behaviour would be questionable.
+         * In practice, clients do not accept a version mismatch and
+         * will abort the handshake with an error.
+         */
+        if (i == 1 && s->version == s->session->ssl_version) { /* previous
+                                                                * session */
+            s->hit = 1;
+        } else if (i == -1)
+            goto err;
+        else {                  /* i == 0 */
+
+            if (!ssl_get_new_session(s, 1))
+                goto err;
         }
     }
 

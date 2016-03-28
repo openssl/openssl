@@ -750,6 +750,8 @@ struct servent *getservbyname(const char *name, const char *proto);
 # endif
 /* end vxworks */
 
+#define OSSL_NELEM(x)    (sizeof(x)/sizeof(x[0]))
+
 /* beos */
 # if defined(OPENSSL_SYS_BEOS_R5)
 #  define SO_ERROR 0

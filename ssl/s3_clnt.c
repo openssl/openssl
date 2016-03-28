@@ -684,7 +684,8 @@ int ssl3_client_hello(SSL *s)
     buf = (unsigned char *)s->init_buf->data;
     if (s->state == SSL3_ST_CW_CLNT_HELLO_A) {
         SSL_SESSION *sess = s->session;
-        if ((sess == NULL) || (sess->ssl_version != s->version) ||
+        if ((sess == NULL) ||
+            !ssl23_version_supported(s, sess->ssl_version) ||
 #ifdef OPENSSL_NO_TLSEXT
             !sess->session_id_length ||
 #else
@@ -958,7 +959,6 @@ int ssl3_get_server_hello(SSL *s)
             al = SSL_AD_PROTOCOL_VERSION;
             goto f_err;
         }
-        s->session->ssl_version = s->version = s->method->version;
     }
 
     if ((p[0] != (s->version >> 8)) || (p[1] != (s->version & 0xff))) {
@@ -1039,8 +1039,17 @@ int ssl3_get_server_hello(SSL *s)
                 goto f_err;
             }
         }
+        s->session->ssl_version = s->version;
         s->session->session_id_length = j;
         memcpy(s->session->session_id, p, j); /* j could be 0 */
+    }
+    /* Session version and negotiated protocol version should match */
+    if (s->version != s->session->ssl_version) {
+        al = SSL_AD_PROTOCOL_VERSION;
+
+        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
+               SSL_R_SSL_SESSION_VERSION_MISMATCH);
+        goto f_err;
     }
     p += j;
     c = ssl_get_cipher_by_char(s, p);

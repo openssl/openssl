@@ -31,6 +31,8 @@ else
 fi
 
 serverinfo="./serverinfo.pem"
+server_sess="server.ss"
+client_sess="client.ss"
 
 #############################################################################
 
@@ -272,5 +274,43 @@ if [ -z "$extra" -a `uname -m` = "x86_64" ]; then
   $ssltest -cipher AES128-SHA    -bytes 8m	|| exit 1
   $ssltest -cipher AES128-SHA256 -bytes 8m	|| exit 1
 fi
+
+#############################################################################
+# TLS session reuse
+
+$ssltest -server_sess_out $server_sess -client_sess_out $client_sess || exit 1
+$ssltest -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 1 -should_negotiate tls1.2 || exit 1
+$ssltest -no-srv-tls1_2 -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 0 -should_negotiate tls1.1 || exit 1
+
+$ssltest -no-srv-tls1_2 -server_sess_out $server_sess -client_sess_out $client_sess || exit 1
+$ssltest -no-srv-tls1_2 -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 1 -should_negotiate tls1.1 || exit 1
+$ssltest -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 0 -should_negotiate tls1.2 || exit 1
+
+$ssltest -no_ticket -server_sess_out $server_sess -client_sess_out $client_sess || exit 1
+$ssltest -no_ticket -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 1 -should_negotiate tls1.2 || exit 1
+$ssltest -no_ticket -no-srv-tls1_2 -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 0 -should_negotiate tls1.1 || exit 1
+
+$ssltest -no_ticket -no-srv-tls1_2 -server_sess_out $server_sess -client_sess_out $client_sess || exit 1
+$ssltest -no_ticket -no-srv-tls1_2 -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 1 -should_negotiate tls1.1 || exit 1
+$ssltest -no_ticket -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 0 -should_negotiate tls1.2 || exit 1
+
+#############################################################################
+# DTLS session reuse
+
+$ssltest -dtls -server_sess_out $server_sess -client_sess_out $client_sess || exit 1
+$ssltest -dtls -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 1 -should_negotiate dtls1.2 || exit 1
+$ssltest -dtls1 -no-srv-dtls1_2 -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 0 -should_negotiate dtls1 || exit 1
+
+$ssltest -dtls1 -no-srv-dtls1_2 -server_sess_out $server_sess -client_sess_out $client_sess || exit 1
+$ssltest -dtls1 -no-srv-dtls1_2 -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 1 -should_negotiate dtls1 || exit 1
+$ssltest -dtls -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 0 -should_negotiate dtls1.2 || exit 1
+
+$ssltest -dtls -no_ticket -server_sess_out $server_sess -client_sess_out $client_sess || exit 1
+$ssltest -dtls -no_ticket -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 1 -should_negotiate dtls1.2 || exit 1
+$ssltest -dtls1 -no_ticket -no-srv-dtls1_2 -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 0 -should_negotiate dtls1 || exit 1
+
+$ssltest -dtls1 -no_ticket -no-srv-dtls1_2 -server_sess_out $server_sess -client_sess_out $client_sess || exit 1
+$ssltest -dtls1 -no_ticket -no-srv-dtls1_2 -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 1 -should_negotiate dtls1 || exit 1
+$ssltest -dtls -no_ticket -server_sess_in $server_sess -client_sess_in $client_sess -should_reuse 0 -should_negotiate dtls1.2 || exit 1
 
 exit 0

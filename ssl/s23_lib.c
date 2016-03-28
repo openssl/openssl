@@ -65,6 +65,42 @@ long ssl23_default_timeout(void)
     return (300);
 }
 
+ /*
+ * ssl23_version_supported - Check that the specified `version` is supported by
+ * `SSL *` instance
+ *
+ * @s: The SSL handle for the candidate method
+ * @version: Protocol version to test against
+ *
+ * Returns 1 when supported, otherwise 0
+ */
+int ssl23_version_supported(const SSL *s, int version)
+{
+    if (s->method == SSLv23_method()) {
+#ifndef OPENSSL_NO_SSL3
+        if ((s->options & SSL_OP_NO_SSLv3) == 0 && version == SSL3_VERSION)
+            return 1;
+#endif
+        if ((s->options & SSL_OP_NO_TLSv1) == 0 && version == TLS1_VERSION)
+            return 1;
+        if ((s->options & SSL_OP_NO_TLSv1_1) == 0 && version == TLS1_1_VERSION)
+            return 1;
+        if ((s->options & SSL_OP_NO_TLSv1_2) == 0 && version == TLS1_2_VERSION)
+            return 1;
+    } else if (s->version == DTLS_ANY_VERSION) {
+        if ((s->options & SSL_OP_NO_DTLSv1) == 0 && version == DTLS1_VERSION)
+            return 1;
+        if ((s->options & SSL_OP_NO_DTLSv1_2) == 0 &&
+            version == DTLS1_2_VERSION) {
+            return 1;
+        }
+    } else {
+        return s->version == version;
+    }
+
+    return 0;
+}
+
 int ssl23_num_ciphers(void)
 {
     return (ssl3_num_ciphers()

@@ -303,6 +303,13 @@ static const char *alpn_client;
 static const char *alpn_server;
 static const char *alpn_expected;
 static unsigned char *alpn_selected;
+static const char *should_negotiate;
+static const char *server_sess_out;
+static const char *server_sess_in;
+static const char *client_sess_out;
+static const char *client_sess_in;
+static SSL_SESSION *server_sess;
+static SSL_SESSION *client_sess;
 
 /*-
  * next_protos_parse parses a comma separated list of strings into a string
@@ -476,6 +483,34 @@ static int verify_serverinfo()
     if (serverinfo_other_seen)
         return -1;
     return 0;
+}
+
+/*
+ * protocol_from_string - converts a protocol version string to a number
+ *
+ * Returns -1 on failure or the version on success
+ */
+static int protocol_from_string(const char *value)
+{
+    struct protocol_versions {
+        const char *name;
+        int version;
+    };
+    static const struct protocol_versions versions[] = {
+        {"ssl2", SSL2_VERSION},
+        {"ssl3", SSL3_VERSION},
+        {"tls1", TLS1_VERSION},
+        {"tls1.1", TLS1_1_VERSION},
+        {"tls1.2", TLS1_2_VERSION},
+        {"dtls1", DTLS1_VERSION},
+        {"dtls1.2", DTLS1_2_VERSION}};
+    size_t i;
+    size_t n = OSSL_NELEM(versions);
+
+    for (i = 0; i < n; i++)
+        if (strcmp(versions[i].name, value) == 0)
+            return versions[i].version;
+    return -1;
 }
 
 /*-
@@ -720,8 +755,11 @@ static void sv_usage(void)
     fprintf(stderr, " -tls1         - use TLSv1\n");
 #endif
 #ifndef OPENSSL_NO_DTLS
+    fprintf(stderr, " -dtls         - use any DTLS\n");
     fprintf(stderr, " -dtls1        - use DTLSv1\n");
     fprintf(stderr, " -dtls12       - use DTLSv1.2\n");
+    fprintf(stderr, " -no-ssl2      - do not use SSLv2\n");
+    fprintf(stderr, " -no-ssl3      - do not use SSLv3\n");
 #endif
     fprintf(stderr, " -CApath arg   - PEM format directory of CA's\n");
     fprintf(stderr, " -CAfile arg   - PEM format file of CA's\n");
@@ -758,6 +796,18 @@ static void sv_usage(void)
     fprintf(stderr, " -alpn_server <string> - have server side offer ALPN\n");
     fprintf(stderr,
             " -alpn_expected <string> - the ALPN protocol that should be negotiated\n");
+    fprintf(stderr, " -server_sess_out <file>    - Save the server session to a file\n");
+    fprintf(stderr, " -server_sess_in <file>     - Read the server session from a file\n");
+    fprintf(stderr, " -client_sess_out <file>    - Save the client session to a file\n");
+    fprintf(stderr, " -client_sess_in <file>     - Read the client session from a file\n");
+    fprintf(stderr, " -should_reuse <number>     - The expected state of reusing the session\n");
+    fprintf(stderr, " -no_ticket    - do not issue TLS session ticket\n");
+    fprintf(stderr, " -no-srv-tls1      - do not use TLSv1 on server\n");
+    fprintf(stderr, " -no-srv-tls1_1    - do not use TLSv1_1 on server\n");
+    fprintf(stderr, " -no-srv-tls1_2    - do not use TLSv1_2 on server\n");
+    fprintf(stderr, " -no-srv-dtls1     - do not use DTLSv1 on server\n");
+    fprintf(stderr, " -no-srv-dtls12    - do not use DTLSv12 on server\n");
+    fprintf(stderr, " -should_negotiate <string> - The version that should be negotiated\n");
 }
 
 static void print_details(SSL *c_ssl, const char *prefix)
@@ -798,6 +848,43 @@ static void print_details(SSL *c_ssl, const char *prefix)
      * otherwise we should print their lengths too
      */
     BIO_printf(bio_stdout, "\n");
+}
+
+static SSL_SESSION *read_session(const char *filename)
+{
+    SSL_SESSION *sess;
+    BIO *f = BIO_new_file(filename, "r");
+
+    if (f == NULL) {
+        BIO_printf(bio_err, "Can't open session file %s\n", filename);
+        ERR_print_errors(bio_err);
+        return NULL;
+    }
+    sess = PEM_read_bio_SSL_SESSION(f, NULL, 0, NULL);
+    if (sess == NULL) {
+        BIO_printf(bio_err, "Can't parse session file %s\n", filename);
+        ERR_print_errors(bio_err);
+    }
+    BIO_free(f);
+    return sess;
+}
+
+static int write_session(const char *filename, SSL_SESSION *sess)
+{
+    BIO *f = BIO_new_file(filename, "w");
+
+    if (sess == NULL) {
+        BIO_printf(bio_err, "No session information\n");
+        return 0;
+    }
+    if (f == NULL) {
+        BIO_printf(bio_err, "Can't open session file %s\n", filename);
+        ERR_print_errors(bio_err);
+        return 0;
+    }
+    PEM_write_bio_SSL_SESSION(f, sess);
+    BIO_free(f);
+    return 1;
 }
 
 static void lock_dbg_cb(int mode, int type, const char *file, int line)
@@ -884,7 +971,7 @@ int main(int argc, char *argv[])
     int badop = 0;
     int bio_pair = 0;
     int force = 0;
-    int dtls1 = 0, dtls12 = 0, tls1 = 0, ssl2 = 0, ssl3 = 0, ret = 1;
+    int dtls = 0, dtls1 = 0, dtls12 = 0, tls1 = 0, ssl2 = 0, ssl3 = 0, ret = 1;
     int client_auth = 0;
     int server_auth = 0, i;
     struct app_verify_arg app_verify_arg =
@@ -901,6 +988,8 @@ int main(int argc, char *argv[])
     const SSL_METHOD *meth = NULL;
     SSL *c_ssl, *s_ssl;
     int number = 1, reuse = 0;
+    int should_reuse = -1;
+    int no_ticket = 0;
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
     DH *dh;
@@ -930,6 +1019,7 @@ int main(int argc, char *argv[])
     int fips_mode = 0;
 #endif
     int no_protocol = 0;
+    int srv_options = 0;
 
     verbose = 0;
     debug = 0;
@@ -1044,6 +1134,11 @@ int main(int argc, char *argv[])
             no_protocol = 1;
 #endif
             ssl3 = 1;
+        } else if (strcmp(*argv, "-dtls") == 0) {
+#ifdef OPENSSL_NO_DTLS
+            no_protocol = 1;
+#endif
+            dtls = 1;
         } else if (strcmp(*argv, "-dtls1") == 0) {
 #ifdef OPENSSL_NO_DTLS
             no_protocol = 1;
@@ -1159,6 +1254,46 @@ int main(int argc, char *argv[])
             if (--argc < 1)
                 goto bad;
             alpn_expected = *(++argv);
+        } else if (strcmp(*argv, "-server_sess_out") == 0) {
+            if (--argc < 1)
+                goto bad;
+            server_sess_out = *(++argv);
+        } else if (strcmp(*argv, "-server_sess_in") == 0) {
+            if (--argc < 1)
+                goto bad;
+            server_sess_in = *(++argv);
+        } else if (strcmp(*argv, "-client_sess_out") == 0) {
+            if (--argc < 1)
+                goto bad;
+            client_sess_out = *(++argv);
+        } else if (strcmp(*argv, "-client_sess_in") == 0) {
+            if (--argc < 1)
+                goto bad;
+            client_sess_in = *(++argv);
+        } else if (strcmp(*argv, "-should_reuse") == 0) {
+            if (--argc < 1)
+                goto bad;
+            should_reuse = !!atoi(*(++argv));
+        } else if (strcmp(*argv, "-no_ticket") == 0) {
+            no_ticket = 1;
+        } else if (strcmp(*argv, "-no-srv-ssl2") == 0) {
+            srv_options |= SSL_OP_NO_SSLv2;
+        } else if (strcmp(*argv, "-no-srv-ssl3") == 0) {
+            srv_options |= SSL_OP_NO_SSLv3;
+        } else if (strcmp(*argv, "-no-srv-tls1") == 0) {
+            srv_options |= SSL_OP_NO_TLSv1;
+        } else if (strcmp(*argv, "-no-srv-tls1_1") == 0) {
+            srv_options |= SSL_OP_NO_TLSv1_1;
+        } else if (strcmp(*argv, "-no-srv-tls1_2") == 0) {
+            srv_options |= SSL_OP_NO_TLSv1_2;
+        } else if (strcmp(*argv, "-no-srv-dtls1") == 0) {
+            srv_options |= SSL_OP_NO_DTLSv1;
+        } else if (strcmp(*argv, "-no-srv-dtls1_2") == 0) {
+            srv_options |= SSL_OP_NO_DTLSv1_2;
+        } else if (strcmp(*argv, "-should_negotiate") == 0) {
+            if (--argc < 1)
+                goto bad;
+            should_negotiate = *(++argv);
         } else {
             fprintf(stderr, "unknown option %s\n", *argv);
             badop = 1;
@@ -1189,8 +1324,8 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (ssl2 + ssl3 + tls1 + dtls1 + dtls12 > 1) {
-        fprintf(stderr, "At most one of -ssl2, -ssl3, -tls1, -dtls1 or -dtls12 should "
+    if (ssl2 + ssl3 + tls1 + dtls + dtls1 + dtls12 > 1) {
+        fprintf(stderr, "At most one of -ssl2, -ssl3, -tls1, -dtls, -dtls1 or -dtls12 should "
                 "be requested.\n");
         EXIT(1);
     }
@@ -1207,10 +1342,10 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (!ssl2 && !ssl3 && !tls1 && !dtls1 && !dtls12 && number > 1 && !reuse && !force) {
+    if (!ssl2 && !ssl3 && !tls1 && !dtls && !dtls1 && !dtls12 && number > 1 && !reuse && !force) {
         fprintf(stderr, "This case cannot work.  Use -f to perform "
                 "the test anyway (and\n-d to see what happens), "
-                "or add one of ssl2, -ssl3, -tls1, -dtls1, -dtls12, -reuse\n"
+                "or add one of ssl2, -ssl3, -tls1, -dtls, -dtls1, -dtls12, -reuse\n"
                 "to avoid protocol mismatch.\n");
         EXIT(1);
     }
@@ -1289,7 +1424,9 @@ int main(int argc, char *argv[])
     else
 #endif
 #ifndef OPENSSL_NO_DTLS
-    if (dtls1)
+    if (dtls)
+        meth = DTLS_method();
+    else if (dtls1)
         meth = DTLSv1_method();
     else if (dtls12)
         meth = DTLSv1_2_method();
@@ -1307,6 +1444,13 @@ int main(int argc, char *argv[])
     if ((c_ctx == NULL) || (s_ctx == NULL)) {
         ERR_print_errors(bio_err);
         goto end;
+    }
+
+    SSL_CTX_set_options(s_ctx, srv_options);
+
+    if (no_ticket) {
+        SSL_CTX_set_options(c_ctx, SSL_OP_NO_TICKET);
+        SSL_CTX_set_options(s_ctx, SSL_OP_NO_TICKET);
     }
 
     if (cipher != NULL) {
@@ -1532,6 +1676,29 @@ int main(int argc, char *argv[])
         OPENSSL_free(alpn);
     }
 
+    if (server_sess_in != NULL) {
+        server_sess = read_session(server_sess_in);
+        if (server_sess == NULL)
+            goto end;
+    }
+    if (client_sess_in != NULL) {
+        client_sess = read_session(client_sess_in);
+        if (client_sess == NULL)
+            goto end;
+    }
+
+    if (server_sess_out != NULL || server_sess_in != NULL) {
+        char *keys;
+        long size;
+
+        /* Use a fixed key so that we can decrypt the ticket. */
+        size = SSL_CTX_set_tlsext_ticket_keys(s_ctx, NULL, 0);
+        keys = OPENSSL_malloc(size);
+        memset(keys, 0, size);
+        SSL_CTX_set_tlsext_ticket_keys(s_ctx, keys, size);
+        OPENSSL_free(keys);
+    }
+
     c_ssl = SSL_new(c_ctx);
     s_ssl = SSL_new(s_ctx);
 
@@ -1550,13 +1717,68 @@ int main(int argc, char *argv[])
     }
 #endif                          /* OPENSSL_NO_KRB5 */
 
+    if (server_sess) {
+        if (SSL_CTX_add_session(s_ctx, server_sess) == 0) {
+            BIO_printf(bio_err, "Can't add server session\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+
     for (i = 0; i < number; i++) {
         if (!reuse)
             SSL_set_session(c_ssl, NULL);
+        if (client_sess_in != NULL) {
+            if (SSL_set_session(c_ssl, client_sess) == 0) {
+                BIO_printf(bio_err, "Can't set client session\n");
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+        }
         if (bio_pair)
             ret = doit_biopair(s_ssl, c_ssl, bytes, &s_time, &c_time);
         else
             ret = doit(s_ssl, c_ssl, bytes);
+    }
+
+    if (should_reuse != -1) {
+        if (SSL_session_reused(s_ssl) != should_reuse ||
+            SSL_session_reused(c_ssl) != should_reuse) {
+            BIO_printf(bio_err, "Unexpected session reuse state. "
+                "Expected: %d, server: %d, client: %d\n", should_reuse,
+                (int) SSL_session_reused(s_ssl),
+                (int) SSL_session_reused(c_ssl));
+            ret = 1;
+            goto err;
+        }
+    }
+
+    if (server_sess_out != NULL) {
+        if (write_session(server_sess_out, SSL_get_session(s_ssl)) == 0) {
+            ret = 1;
+            goto err;
+        }
+    }
+    if (client_sess_out != NULL) {
+        if (write_session(client_sess_out, SSL_get_session(c_ssl)) == 0) {
+            ret = 1;
+            goto err;
+        }
+    }
+
+    if (should_negotiate && ret == 0) {
+        int version = protocol_from_string(should_negotiate);
+        if (version < 0) {
+            BIO_printf(bio_err, "Error parsing: %s\n", should_negotiate);
+            ret = 1;
+            goto err;
+        }
+        if (SSL_version(c_ssl) != version) {
+            BIO_printf(bio_err, "Unxpected version negotiated. "
+                "Expected: %s, got %s\n", should_negotiate, SSL_get_version(c_ssl));
+            ret = 1;
+            goto err;
+        }
     }
 
     if (!verbose) {
@@ -1588,6 +1810,7 @@ int main(int argc, char *argv[])
 #endif
     }
 
+ err:
     SSL_free(s_ssl);
     SSL_free(c_ssl);
 
@@ -1599,6 +1822,9 @@ int main(int argc, char *argv[])
 
     if (bio_stdout != NULL)
         BIO_free(bio_stdout);
+
+    SSL_SESSION_free(server_sess);
+    SSL_SESSION_free(client_sess);
 
 #ifndef OPENSSL_NO_RSA
     free_tmp_rsa();
