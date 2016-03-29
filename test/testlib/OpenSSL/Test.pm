@@ -642,9 +642,11 @@ failures will result in a C<BAIL_OUT> at the end of its run.
 sub __env {
     $directories{SRCTOP}  = $ENV{SRCTOP} || $ENV{TOP};
     $directories{BLDTOP}  = $ENV{BLDTOP} || $ENV{TOP};
-    $directories{APPS}    = $ENV{BIN_D}  || __bldtop_dir("apps");
-    $directories{TEST}    = $ENV{TEST_D} || __bldtop_dir("test");
-    $directories{RESULTS} = $ENV{RESULT_D} || $directories{TEST};
+    $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
+    $directories{SRCAPPS} =                 __srctop_dir("apps");
+    $directories{BLDTEST} = $ENV{TEST_D} || __bldtop_dir("test");
+    $directories{SRCTEST} =                 __srctop_dir("test");
+    $directories{RESULTS} = $ENV{RESULT_D} || $directories{BLDTEST};
 
     $end_with_bailout	  = $ENV{STOPTEST} ? 1 : 0;
 };
@@ -679,28 +681,36 @@ sub __test_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{TEST},@_,$f);
+    $f = catfile($directories{BLDTEST},@_,$f);
+    $f = catfile($directories{SRCTEST},@_,$f) unless -x $f;
+    return $f;
 }
 
 sub __perltest_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return ($^X, catfile($directories{TEST},@_,$f));
+    $f = catfile($directories{BLDTEST},@_,$f);
+    $f = catfile($directories{SRCTEST},@_,$f) unless -f $f;
+    return ($^X, $f);
 }
 
 sub __apps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{APPS},@_,$f);
+    $f = catfile($directories{BLDAPPS},@_,$f);
+    $f = catfile($directories{SRCAPPS},@_,$f) unless -x $f;
+    return $f;
 }
 
 sub __perlapps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return ($^X, catfile($directories{APPS},@_,$f));
+    $f = catfile($directories{BLDAPPS},@_,$f);
+    $f = catfile($directories{SRCAPPS},@_,$f) unless -f $f;
+    return ($^X, $f);
 }
 
 sub __results_file {
@@ -757,9 +767,11 @@ sub __cwd {
 
     if ($debug) {
 	print STDERR "DEBUG: __cwd(), directories and files:\n";
-	print STDERR "  \$directories{TEST}    = \"$directories{TEST}\"\n";
+	print STDERR "  \$directories{BLDTEST} = \"$directories{BLDTEST}\"\n";
+	print STDERR "  \$directories{SRCTEST} = \"$directories{SRCTEST}\"\n";
 	print STDERR "  \$directories{RESULTS} = \"$directories{RESULTS}\"\n";
-	print STDERR "  \$directories{APPS}    = \"$directories{APPS}\"\n";
+	print STDERR "  \$directories{BLDAPPS} = \"$directories{BLDAPPS}\"\n";
+	print STDERR "  \$directories{SRCAPPS} = \"$directories{SRCAPPS}\"\n";
 	print STDERR "  \$directories{SRCTOP}  = \"$directories{SRCTOP}\"\n";
 	print STDERR "  \$directories{BLDTOP}  = \"$directories{BLDTOP}\"\n";
 	print STDERR "\n";
