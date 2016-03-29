@@ -16,10 +16,10 @@
 #		IALU/gcc-4.9	NEON
 #
 # Apple A7	1.86/+5%	0.72
-# Cortex-A53	2.63/+58%	1.47
+# Cortex-A53	2.69/+58%	1.47
 # Cortex-A57	2.70/+7%	1.14
-# Denver	1.39/+50%	1.18(*)
-# X-Gene	2.00/+68%	2.19
+# Denver	1.64/+50%	1.18(*)
+# X-Gene	2.13/+68%	2.19
 #
 # (*)	estimate based on resources availability is less than 1.0,
 #	i.e. measured result is worse than expected, presumably binary
@@ -151,7 +151,8 @@ poly1305_blocks:
 	and	$h2,$d2,#3
 	add	$t0,$t0,$d2,lsr#2
 	adds	$h0,$d0,$t0
-	adc	$h1,$d1,xzr
+	adcs	$h1,$d1,xzr
+	adc	$h2,$h2,xzr
 
 	cbnz	$len,.Loop
 
@@ -235,7 +236,8 @@ poly1305_mult:
 	and	$h2,$d2,#3
 	add	$t0,$t0,$d2,lsr#2
 	adds	$h0,$d0,$t0
-	adc	$h1,$d1,xzr
+	adcs	$h1,$d1,xzr
+	adc	$h2,$h2,xzr
 
 	ret
 .size	poly1305_mult,.-poly1305_mult
@@ -310,7 +312,8 @@ poly1305_blocks_neon:
 	and	$h2,$d2,#3
 	add	$t0,$t0,$d2,lsr#2
 	adds	$h0,$h0,$t0
-	adc	$h1,$h1,xzr
+	adcs	$h1,$h1,xzr
+	adc	$h2,$h2,xzr
 
 #ifdef	__ARMEB__
 	rev	$d0,$d0
@@ -870,7 +873,8 @@ poly1305_emit_neon:
 	add	$d0,$d0,$h2,lsr#2
 	and	$h2,$h2,#3
 	adds	$h0,$h0,$d0
-	adc	$h1,$h1,xzr
+	adcs	$h1,$h1,xzr
+	adc	$h2,$h2,xzr
 
 	adds	$d0,$h0,#5		// compare to modulus
 	adcs	$d1,$h1,xzr

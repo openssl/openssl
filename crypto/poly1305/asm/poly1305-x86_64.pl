@@ -15,16 +15,16 @@
 # measured with rdtsc at fixed clock frequency.
 #
 #		IALU/gcc-4.8(*)	AVX(**)		AVX2
-# P4		4.90/+120%      -
-# Core 2	2.39/+90%	-
-# Westmere	1.86/+120%	-
+# P4		4.46/+120%	-
+# Core 2	2.41/+90%	-
+# Westmere	1.88/+120%	-
 # Sandy Bridge	1.39/+140%	1.10
-# Haswell	1.10/+175%	1.11		0.65
-# Skylake	1.12/+120%	0.96		0.51
+# Haswell	1.14/+175%	1.11		0.65
+# Skylake	1.13/+120%	0.96		0.51
 # Silvermont	2.83/+95%	-
 # VIA Nano	1.82/+150%	-
 # Sledgehammer	1.38/+160%	-
-# Bulldozer	2.21/+130%	0.97
+# Bulldozer	2.30/+130%	0.97
 #
 # (*)	improvement coefficients relative to clang are more modest and
 #	are ~50% on most processors, in both cases we are comparing to
@@ -114,6 +114,7 @@ $code.=<<___;
 	add	$d3,%rax
 	add	%rax,$h0
 	adc	\$0,$h1
+	adc	\$0,$h2
 ___
 }
 
@@ -184,8 +185,8 @@ $code.=<<___;
 .align	32
 poly1305_blocks:
 .Lblocks:
-	sub	\$16,$len		# too short?
-	jc	.Lno_data
+	shr	\$4,$len
+	jz	.Lno_data		# too short
 
 	push	%rbx
 	push	%rbp
@@ -220,8 +221,8 @@ ___
 	&poly1305_iteration();
 $code.=<<___;
 	mov	$r1,%rax
-	sub	\$16,%r15		# len-=16
-	jnc	.Loop
+	dec	%r15			# len-=16
+	jnz	.Loop
 
 	mov	$h0,0($ctx)		# store hash value
 	mov	$h1,8($ctx)
@@ -521,6 +522,7 @@ poly1305_blocks_avx:
 	add	$d2,$d1			# =*5
 	add	$d1,$h0
 	adc	\$0,$h1
+	adc	\$0,$h2
 
 	mov	$s1,$r1
 	mov	$s1,%rax
@@ -1315,6 +1317,7 @@ poly1305_emit_avx:
 	add	%rcx,%rax
 	add	%rax,%r8
 	adc	\$0,%r9
+	adc	\$0,%r10
 
 	mov	%r8,%rax
 	add	\$5,%r8		# compare to modulus
@@ -1407,6 +1410,7 @@ poly1305_blocks_avx2:
 	add	$d2,$d1			# =*5
 	add	$d1,$h0
 	adc	\$0,$h1
+	adc	\$0,$h2
 
 	mov	$s1,$r1
 	mov	$s1,%rax
