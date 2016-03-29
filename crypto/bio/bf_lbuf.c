@@ -57,8 +57,8 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include "bio_lcl.h"
 #include "internal/cryptlib.h"
-#include <openssl/bio.h>
 #include <openssl/evp.h>
 
 static int linebuffer_write(BIO *h, const char *buf, int num);
