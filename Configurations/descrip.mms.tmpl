@@ -120,7 +120,10 @@ DESTDIR=
 
 # Do not edit this manually. Use Configure --prefix=DIR to change this!
 INSTALLTOP={- (my $x = $config{version}) =~ s|\.|_|g;
-              catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL-$x]" -}
+              our $installtop =
+                  catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL-$x]";
+              $installtop -}
+SYSTARTUP={- catdir($installtop, '[.SYS$STARTUP]'); -}
 # This is the standard central area to store certificates, private keys...
 OPENSSLDIR={- catdir($config{openssldir}) ||
               $config{prefix} ? catdir($config{prefix},"COMMON")
@@ -266,8 +269,8 @@ install : install_sw install_docs
                     WRITE SYS$OUTPUT "ends up in $(OPENSSLDIR)" ; -
                     WRITE SYS$OUTPUT "" ; -
                     WRITE SYS$OUTPUT "When in its final destination," ; -
-                    WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names" ; -
-                    WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands" ; -
+                    WRITE SYS$OUTPUT "Run @$(SYSTARTUP)openssl_startup to set up logical names" ; -
+                    WRITE SYS$OUTPUT "then run @$(SYSTARTUP)openssl_utils to define commands" ; -
                     WRITE SYS$OUTPUT "" )
 
 uninstall : uninstall_docs uninstall_sw
