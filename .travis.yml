@@ -23,7 +23,7 @@ compiler:
     - gcc
 
 env:
-    - CONFIG_OPTS=""
+    - CONFIG_OPTS="" DESTDIR="_install"
     - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
     - CONFIG_OPTS="--strict-warnings no-shared" BUILDONLY="yes"
     - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
@@ -84,6 +84,10 @@ script:
           HARNESS_VERBOSE=yes make test;
       else
           make build_tests;
+      fi
+    - if [ -n "$DESTDIR" ]; then
+          mkdir "../$DESTDIR";
+          make install DESTDIR="../$DESTDIR";
       fi
     - cd ..
 
