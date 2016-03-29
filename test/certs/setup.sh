@@ -74,6 +74,7 @@ openssl x509 -in sroot-cert.pem -trustout \
 #
 ./mkcert.sh genca "CA" ca-key ca-cert root-key root-cert
 ./mkcert.sh genee "CA" ca-key ca-nonca root-key root-cert
+./mkcert.sh gen_nonbc_ca "CA" ca-key ca-nonbc root-key root-cert
 ./mkcert.sh genca "CA" ca-key2 ca-cert2 root-key root-cert
 ./mkcert.sh genca "CA2" ca-key ca-name2 root-key root-cert
 ./mkcert.sh genca "CA" ca-key ca-root2 root-key2 root-cert2

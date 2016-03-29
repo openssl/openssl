@@ -114,6 +114,27 @@ genca() {
 	    -set_serial 2 -days "${DAYS}"
 }
 
+gen_nonbc_ca() {
+    local cn=$1; shift
+    local key=$1; shift
+    local cert=$1; shift
+    local cakey=$1; shift
+    local cacert=$1; shift
+    local skid="subjectKeyIdentifier = hash"
+    local akid="authorityKeyIdentifier = keyid"
+
+    exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid")
+    exts=$(printf "%s\nkeyUsage = %s\n" "$exts" "keyCertSign, cRLSign")
+    for eku in "$@"
+    do
+        exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")
+    done
+    csr=$(req "$key" "$cn") || return 1
+    echo "$csr" |
+        cert "$cert" "$exts" -CA "${cacert}.pem" -CAkey "${cakey}.pem" \
+	    -set_serial 2 -days "${DAYS}"
+}
+
 genee() {
     local OPTIND=1
     local purpose=serverAuth

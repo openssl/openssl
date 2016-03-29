@@ -484,8 +484,9 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                 ret = 1;
             break;
         default:
+            /* X509_V_FLAG_X509_STRICT is implicit for intermediate CAs */
             if ((ret == 0)
-                || ((ctx->param->flags & X509_V_FLAG_X509_STRICT)
+                || ((i + 1 < num || ctx->param->flags & X509_V_FLAG_X509_STRICT)
                     && (ret != 1))) {
                 ret = 0;
                 ctx->error = X509_V_ERR_INVALID_CA;
