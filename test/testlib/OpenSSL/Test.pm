@@ -354,6 +354,9 @@ sub run {
 	$r = $hooks{exit_checker}->($e);
     }
 
+    print STDERR "$prefix$cmd => $e\n"
+        if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
     # non-zero.
