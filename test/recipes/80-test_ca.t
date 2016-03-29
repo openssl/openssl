@@ -19,20 +19,20 @@ plan tests => 4;
  SKIP: {
      $ENV{OPENSSL_CONFIG} = "-config ".srctop_file("test", "CAss.cnf");
      skip "failed creating CA structure", 3
-	 if !ok(run(perlapp(["CA.pl","-newca"], stdin => undef, stderr => undef)),
+	 if !ok(run(perlapp(["CA.pl","-newca"], stdin => undef)),
 		'creating CA structure');
 
      $ENV{OPENSSL_CONFIG} = "-config ".srctop_file("test", "Uss.cnf");
      skip "failed creating new certificate request", 2
-	 if !ok(run(perlapp(["CA.pl","-newreq"], stderr => undef)),
+	 if !ok(run(perlapp(["CA.pl","-newreq"])),
 		'creating CA structure');
 
      $ENV{OPENSSL_CONFIG} = "-config ".$std_openssl_cnf;
      skip "failed to sign certificate request", 1
-	 if !is(yes(cmdstr(perlapp(["CA.pl", "-sign"], stderr => undef))), 0,
+	 if !is(yes(cmdstr(perlapp(["CA.pl", "-sign"]))), 0,
 		'signing certificate request');
 
-     ok(run(perlapp(["CA.pl", "-verify", "newcert.pem"], stderr => undef)),
+     ok(run(perlapp(["CA.pl", "-verify", "newcert.pem"])),
 	'verifying new certificate');
 }
 
