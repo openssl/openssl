@@ -1303,6 +1303,7 @@ if ($builder eq "unified") {
 
         my %ordinals = ();
         my %sources = ();
+        my %shared_sources = ();
         my %includes = ();
         my %depends = ();
         my %renames = ();
@@ -1381,6 +1382,9 @@ if ($builder eq "unified") {
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
             => sub { push @{$sources{$1}}, split(/\s+/, $2)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*SHARED_SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { push @{$shared_sources{$1}}, split(/\s+/, $2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*INCLUDE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
             => sub { push @{$includes{$1}}, split(/\s+/, $2)
@@ -1567,6 +1571,32 @@ EOF
             }
         }
 
+        foreach (keys %shared_sources) {
+            my $dest = $_;
+            my $ddest = cleanfile($buildd, $_, $blddir);
+            if ($unified_info{rename}->{$ddest}) {
+                $ddest = $unified_info{rename}->{$ddest};
+            }
+            foreach (@{$shared_sources{$dest}}) {
+                my $s = cleanfile($sourced, $_, $blddir);
+
+                # If it isn't in the source tree, we assume it's generated
+                # in the build tree
+                if (! -f $s) {
+                    $s = cleanfile($buildd, $_, $blddir);
+                }
+                # We recognise C and asm files
+                if ($s =~ /\.[csS]\b$/) {
+                    (my $o = $_) =~ s/\.[csS]\b$/.o/;
+                    $o = cleanfile($buildd, $o, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$o} = 1;
+                    $unified_info{sources}->{$o}->{$s} = 1;
+                } else {
+                    die "unrecognised source file type for shared library: $s\n";
+                }
+            }
+        }
+
         foreach (keys %generate) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
@@ -1636,7 +1666,7 @@ EOF
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
-    foreach my $l1 (("sources", "ldadd", "depends")) {
+    foreach my $l1 (("sources", "shared_sources", "ldadd", "depends")) {
         foreach my $l2 (sort keys %{$unified_info{$l1}}) {
             $unified_info{$l1}->{$l2} =
                 [ sort keys %{$unified_info{$l1}->{$l2}} ];

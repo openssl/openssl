@@ -358,6 +358,11 @@ sense at all to just have a rename like that (why not just use
 "libbar" everywhere?), it does make sense when it can be used
 conditionally.  See a little further below for an example.
 
+In some cases, it's desirable to include some source files in the
+shared form of a library only:
+
+    SHARED_SOURCE[libfoo]=dllmain.c
+
 For any file to be built, it's also possible to tell what extra
 include paths the build of their source files should use:
 

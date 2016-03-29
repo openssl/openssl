@@ -233,6 +233,10 @@ indexes:
                SOURCE variables, and AS source files for programs and
                libraries.
 
+  shared_sources =>
+               a hash table just like 'sources', but only as source
+               files (object files) for building shared libraries.
+
 As an example, here is how the build.info files example from the
 section above would be digested into a %unified_info table:
 
