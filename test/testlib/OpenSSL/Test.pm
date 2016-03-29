@@ -244,7 +244,23 @@ string PATH, I<or>, if the value is C<undef>, C</dev/null> or similar.
 =item B<perltest ARRAYREF, OPTS>
 
 Both these functions function the same way as B<app> and B<test>, except
-that they expect the command to be a perl script.
+that they expect the command to be a perl script.  Also, they support one
+more option:
+
+=over 4
+
+=item B<interpreter_args =E<gt> ARRAYref>
+
+The array reference is a set of arguments for perl rather than the script.
+Take care so that none of them can be seen as a script!  Flags and their
+eventual arguments only!
+
+=back
+
+An example:
+
+  ok(run(perlapp(["foo.pl", "arg1"],
+                 interpreter_args => [ "-I", srctop_dir("test") ])));
 
 =back
 
@@ -801,6 +817,7 @@ sub __build_cmd {
     my $path_builder = shift;
     # Make a copy to not destroy the caller's array
     my @cmdarray = ( @{$_[0]} ); shift;
+    my %opts = @_;
 
     # We do a little dance, as $path_builder might return a list of
     # more than one.  If so, only the first is to be considered a
@@ -820,8 +837,9 @@ sub __build_cmd {
 	}
     }
     my @args = (@prog, @cmdarray);
-
-    my %opts = @_;
+    if (defined($opts{interpreter_args})) {
+        unshift @args, @{$opts{interpreter_args}};
+    }
 
     return () if !$cmd;
 
