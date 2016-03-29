@@ -207,7 +207,17 @@ poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit)
         c = (h2 >> 2) + (h2 & ~3UL);
         h2 &= 3;
         h0 += c;
-        h1 += (c = CONSTANT_TIME_CARRY(h0,c));   /* doesn't overflow */
+        h1 += (c = CONSTANT_TIME_CARRY(h0,c));
+        h2 += CONSTANT_TIME_CARRY(h1,c);
+        /*
+         * Occasional overflows to 3rd bit of h2 are taken care of
+         * "naturally". If after this point we end up at the top of
+         * this loop, then the overflow bit will be accounted for
+         * in next iteration. If we end up in poly1305_emit, then
+         * comparison to modulus below will still count as "carry
+         * into 131st bit", so that properly reduced value will be
+         * picked in conditional move.
+         */
 
         inp += POLY1305_BLOCK_SIZE;
         len -= POLY1305_BLOCK_SIZE;
@@ -231,12 +241,12 @@ static void poly1305_emit(void *ctx, unsigned char mac[16],
     h1 = st->h[1];
     h2 = st->h[2];
 
-    /* compute h + -p */
+    /* compare to modulus by computing h + -p */
     g0 = (u64)(t = (u128)h0 + 5);
     g1 = (u64)(t = (u128)h1 + (t >> 64));
     g2 = h2 + (u64)(t >> 64);
 
-    /* if there was carry into 130th bit, h1:h0 = g1:g0 */
+    /* if there was carry into 131st bit, h1:h0 = g1:g0 */
     mask = 0 - (g2 >> 2);
     g0 &= mask;
     g1 &= mask;
@@ -361,7 +371,17 @@ poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit)
         h0 += c;
         h1 += (c = CONSTANT_TIME_CARRY(h0,c));
         h2 += (c = CONSTANT_TIME_CARRY(h1,c));
-        h3 += (c = CONSTANT_TIME_CARRY(h2,c));   /* doesn't overflow */
+        h3 += (c = CONSTANT_TIME_CARRY(h2,c));
+        h4 += CONSTANT_TIME_CARRY(h3,c);
+        /*
+         * Occasional overflows to 3rd bit of h4 are taken care of
+         * "naturally". If after this point we end up at the top of
+         * this loop, then the overflow bit will be accounted for
+         * in next iteration. If we end up in poly1305_emit, then
+         * comparison to modulus below will still count as "carry
+         * into 131st bit", so that properly reduced value will be
+         * picked in conditional move.
+         */
 
         inp += POLY1305_BLOCK_SIZE;
         len -= POLY1305_BLOCK_SIZE;
@@ -389,14 +409,14 @@ static void poly1305_emit(void *ctx, unsigned char mac[16],
     h3 = st->h[3];
     h4 = st->h[4];
 
-    /* compute h + -p */
+    /* compare to modulus by computing h + -p */
     g0 = (u32)(t = (u64)h0 + 5);
     g1 = (u32)(t = (u64)h1 + (t >> 32));
     g2 = (u32)(t = (u64)h2 + (t >> 32));
     g3 = (u32)(t = (u64)h3 + (t >> 32));
     g4 = h4 + (u32)(t >> 32);
 
-    /* if there was carry into 130th bit, h3:h0 = g3:g0 */
+    /* if there was carry into 131st bit, h3:h0 = g3:g0 */
     mask = 0 - (g4 >> 2);
     g0 &= mask;
     g1 &= mask;
@@ -727,6 +747,58 @@ static const struct poly1305_test poly1305_tests[] = {
      "dcb99b1a6e690854ce0769cde39761d82fcdec15f0d92d7d8e94ade8eb83fbe0",
      "99e5822dd4173c995e3dae0ddefb9774""3fde3b080134b39f76e9bf8d0e88d546",
      "2637408fe13086ea73f971e3425e2820"
+    },
+    /*
+     * test vectors from Hanno Böck
+     */
+    {
+     "cccccccccccccccccccccccccccccccccccccccccccccccccc80cccccccccccc"
+     "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccecccccc"
+     "ccccccccccccccccccccccccccccccc5cccccccccccccccccccccccccccccccc"
+     "cccccccccce3cccccccccccccccccccccccccccccccccccccccccccccccccccc"
+     "ccccccccaccccccccccccccccccccce6cccccccccc000000afcccccccccccccc"
+     "ccccfffffff50000000000000000000000000000000000000000000000000000"
+     "00ffffffe7000000000000000000000000000000000000000000000000000000"
+     "0000000000000000000000000000000000000000000000000000719205a8521d"
+     "fc",
+     "7f1b0264000000000000000000000000""0000000000000000cccccccccccccccc",
+     "8559b876eceed66eb37798c0457baff9"
+    },
+    {
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000"
+     "00000000800264",
+     "e0001600000000000000000000000000""0000aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "00bd1258978e205444c9aaaa82006fed"
+    },
+    {
+     "02fc",
+     "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c""0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+     "06120c0c0c0c0c0c0c0c0c0c0c0c0c0c"
+    },
+    {
+     "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b7b7b7b7b7b7a7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b7b5c7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b6e7b007b7b7b7b7b7b7b7b7b"
+     "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7a7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b5c7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b6e7b001300000000b300000000000000000000000000000000000000000000"
+     "f20000000000000000000000000000000000002000efff000900000000000000"
+     "0000000000100000000009000000640000000000000000000000001300000000"
+     "b300000000000000000000000000000000000000000000f20000000000000000"
+     "000000000000000000002000efff00090000000000000000007a000010000000"
+     "000900000064000000000000000000000000000000000000000000000000fc",
+     "00ff0000000000000000000000000000""00000000001e00000000000000007b7b",
+     "33205bbf9e9f8f7212ab9e2ab9b7e4a5"
+    },
+    {
+     "7777777777777777777777777777777777777777777777777777777777777777"
+     "7777777777777777777777777777777777777777777777777777777777777777"
+     "777777777777777777777777ffffffe9e9acacacacacacacacacacac0000acac"
+     "ec0100acacac2caca2acacacacacacacacacacac64f2",
+     "0000007f0000007f0100002000000000""0000cf77777777777777777777777777",
+     "02ee7c8c546ddeb1a467e4c3981158b9"
     },
     /*
      * test vectors from Andrew Moon

@@ -16,10 +16,10 @@
 #
 #			IALU(*)		FMA
 #
-# UltraSPARC III	11.9(**)
-# SPARC T3		7.85
-# SPARC T4		1.67(***)	6.55
-# SPARC64 X		5.54		3.64
+# UltraSPARC III	12.3(**)
+# SPARC T3		7.92
+# SPARC T4		1.70(***)	6.55
+# SPARC64 X		5.60		3.64
 #
 # (*)	Comparison to compiler-generated code is really problematic,
 #	because latter's performance varies too much depending on too
@@ -251,8 +251,9 @@ poly1305_blocks:
 	addcc	$t0,$d0,$h0
 	addccc	%g0,$h1,$h1
 	addccc	%g0,$h2,$h2
+	addccc	%g0,$h3,$h3
 	brnz,pt	$len,.Loop
-	addc	%g0,$h3,$h3
+	addc	%g0,$h4,$h4
 
 	st	$h1,[$ctx+0]		! store hash value
 	st	$h0,[$ctx+4]
@@ -295,6 +296,7 @@ poly1305_blocks_vis3:
 	neg	$shr,$shl
 
 	srlx	$R1,2,$S1
+	b	.Loop_vis3
 	add	$R1,$S1,$S1
 
 .Loop_vis3:
@@ -342,8 +344,9 @@ poly1305_blocks_vis3:
 	add	$T1,$T0,$T0
 
 	addcc	$T0,$D0,$H0
+	addxccc	%g0,$D1,$H1
 	brnz,pt	$len,.Loop_vis3
-	addxc	%g0,$D1,$H1
+	addxc	%g0,$H2,$H2
 
 	stx	$H0,[$ctx+0]		! store hash value
 	stx	$H1,[$ctx+8]

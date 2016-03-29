@@ -299,6 +299,7 @@ if ($sse2) {
 	&adc	("ebx",0);
 	&adc	("ecx",0);
 	&adc	("esi",0);
+	&adc	("edi",0);
 
 	&cmp	("ebp",&wparam(2));		# done yet?
 	&jne	(&label("loop"));
@@ -1166,11 +1167,12 @@ my $addr = shift;
 	&shr	("edi",2);
 	&lea	("ebp",&DWP(0,"edi","edi",4));	# *5
 	 &mov	("edi",&wparam(1));		# output
-	add	("eax","ebp");
+	&add	("eax","ebp");
 	 &mov	("ebp",&wparam(2));		# key
-	adc	("ebx",0);
-	adc	("ecx",0);
-	adc	("edx",0);
+	&adc	("ebx",0);
+	&adc	("ecx",0);
+	&adc	("edx",0);
+	&adc	("esi",0);
 
 	&movd	($D0,"eax");			# offload original hash value
 	&add	("eax",5);			# compare to modulus

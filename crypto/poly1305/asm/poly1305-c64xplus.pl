@@ -11,7 +11,7 @@
 #
 # October 2015
 #
-# Performance is [incredible for a 32-bit processor] 1.76 cycles per
+# Performance is [incredible for a 32-bit processor] 1.82 cycles per
 # processed byte. Comparison to compiler-generated code is problematic,
 # because results were observed to vary from 2.1 to 7.6 cpb depending
 # on compiler's ability to inline small functions. Compiler also
@@ -128,7 +128,7 @@ _poly1305_blocks:
 ||	SWAP2	$D1,$D1
 
 	ADDU	$D0,B24,$D0:$H0		; h0+=inp[0]
-||	ADD	$D0,B24,B31		; B-copy of h0+inp[0]
+||	ADD	$D0,B24,B27		; B-copy of h0+inp[0]
 ||	SWAP4	$D1,$D1
 	ADDU	$D1,B25,$D1:$H1		; h1+=inp[1]
 ||	MVK	3,$THREE
@@ -140,12 +140,12 @@ _poly1305_blocks:
 
 loop?:
 	MPY32U	$H0,$R0,A17:A16
-||	MPY32U	B31,$R1,B17:B16		; MPY32U	$H0,$R1,B17:B16
+||	MPY32U	B27,$R1,B17:B16		; MPY32U	$H0,$R1,B17:B16
 ||	ADDU	$D0,$D1:$H1,B25:B24	; ADDU		$D0,$D1:$H1,$D1:$H1
 ||	ADDU	$D2,B28,$D2:$H2		; h2+=inp[2]
 ||	SWAP2	$D3,$D3
 	MPY32U	$H0,$R2,A19:A18
-||	MPY32U	B31,$R3,B19:B18		; MPY32U	$H0,$R3,B19:B18
+||	MPY32U	B27,$R3,B19:B18		; MPY32U	$H0,$R3,B19:B18
 ||	ADD	$D0,$H1,A24		; A-copy of B24
 ||	SWAP4	$D3,$D3
 || [A2]	SUB	A2,1,A2			; decrement loop counter
@@ -227,8 +227,8 @@ loop?:
 
 	SHRU	$H4,2,B16		; last reduction step
 ||	AND	$H4,$THREE,$H4
-|| [A2]	BNOP	loop?
 	ADDAW	B16,B16,B16		; 5*(h4>>2)
+|| [A2]	BNOP	loop?
 
 	ADDU	B24,B16,B25:B24		; B24 is h0
 || [A2]	SWAP2	$D2,$D2
@@ -236,8 +236,9 @@ loop?:
 || [A2]	SWAP4	$D2,$D2
 	ADDU	B28,B27,B29:B28		; B28 is h2
 || [A2]	ADDU	$D0,B24,$D0:$H0		; h0+=inp[0]
-|| [A2]	ADD	$D0,B24,B31		; B-copy of h0+inp[0]
-	ADD	B30,B29,B30		; B30 is h3
+|| [A2]	ADD	$D0,B24,B27		; B-copy of h0+inp[0]
+	ADDU	B30,B29,B31:B30		; B30 is h3
+	ADD	B31,$H4,$H4
 || [A2]	ADDU	$D1,B26,$D1:$H1		; h1+=inp[1]
 ;;===== branch to loop? is taken here
 

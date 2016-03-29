@@ -10,10 +10,10 @@
 #			IALU(*)/gcc-4.4		NEON
 #
 # ARM11xx(ARMv6)	7.78/+100%		-
-# Cortex-A5		6.30/+130%		2.96
+# Cortex-A5		6.35/+130%		2.96
 # Cortex-A8		6.25/+115%		2.36
 # Cortex-A9		5.10/+95%		2.55
-# Cortex-A15		3.79/+85%		1.25(**)
+# Cortex-A15		3.85/+85%		1.25(**)
 # Snapdragon S4		5.70/+100%		1.48(**)
 #
 # (*)	this is for -march=armv6, i.e. with bunch of ldrb loading data;
@@ -313,7 +313,8 @@ poly1305_blocks:
 	adds	$h0,$h0,r1
 	adcs	$h1,$h1,#0
 	adcs	$h2,$h2,#0
-	adc	$h3,$h3,#0
+	adcs	$h3,$h3,#0
+	adc	$h4,$h4,#0
 
 	cmp	r0,lr			@ done yet?
 	bhi	.Loop
@@ -735,9 +736,7 @@ poly1305_blocks_neon:
 .align	4
 .Leven:
 	subs		$len,$len,#64
-# ifdef	__thumb2__
 	it		lo
-# endif
 	movlo		$in2,$zeros
 
 	vmov.i32	$H4,#1<<24		@ padbit, yes, always
@@ -745,9 +744,7 @@ poly1305_blocks_neon:
 	add		$inp,$inp,#64
 	vld4.32		{$H0#hi,$H1#hi,$H2#hi,$H3#hi},[$in2]	@ inp[2:3] (or 0)
 	add		$in2,$in2,#64
-# ifdef	__thumb2__
 	itt		hi
-# endif
 	addhi		$tbl1,$ctx,#(48+1*9*4)
 	addhi		$tbl0,$ctx,#(48+3*9*4)
 
@@ -817,9 +814,7 @@ poly1305_blocks_neon:
 	vmull.u32	$D4,$H4#hi,${R0}[1]
 	subs		$len,$len,#64
 	vmlal.u32	$D0,$H4#hi,${S1}[1]
-# ifdef	__thumb2__
 	it		lo
-# endif
 	movlo		$in2,$zeros
 	vmlal.u32	$D3,$H2#hi,${R1}[1]
 	vld1.32		${S4}[1],[$tbl1,:32]
@@ -946,9 +941,7 @@ poly1305_blocks_neon:
 	add		$tbl1,$ctx,#(48+0*9*4)
 	add		$tbl0,$ctx,#(48+1*9*4)
 	adds		$len,$len,#32
-# ifdef	__thumb2__
 	it		ne
-# endif
 	movne		$len,#0
 	bne		.Long_tail
 
@@ -990,14 +983,10 @@ poly1305_blocks_neon:
 	vmlal.u32	$D2,$H0#hi,$R2
 
 	vmlal.u32	$D3,$H0#hi,$R3
-# ifdef	__thumb2__
-	it		ne
-# endif
+	 it		ne
 	 addne		$tbl1,$ctx,#(48+2*9*4)
 	vmlal.u32	$D0,$H2#hi,$S3
-# ifdef	__thumb2__
-	it		ne
-# endif
+	 it		ne
 	 addne		$tbl0,$ctx,#(48+3*9*4)
 	vmlal.u32	$D4,$H1#hi,$R3
 	vmlal.u32	$D1,$H3#hi,$S3
@@ -1138,7 +1127,8 @@ poly1305_emit_neon:
 	adds	$h0,$h0,$g0
 	adcs	$h1,$h1,#0
 	adcs	$h2,$h2,#0
-	adc	$h3,$h3,#0
+	adcs	$h3,$h3,#0
+	adc	$h4,$h4,#0
 
 	adds	$g0,$h0,#5		@ compare to modulus
 	adcs	$g1,$h1,#0
@@ -1147,24 +1137,16 @@ poly1305_emit_neon:
 	adc	$g4,$h4,#0
 	tst	$g4,#4			@ did it carry/borrow?
 
-# ifdef	__thumb2__
 	it	ne
-# endif
 	movne	$h0,$g0
 	ldr	$g0,[$nonce,#0]
-# ifdef	__thumb2__
 	it	ne
-# endif
 	movne	$h1,$g1
 	ldr	$g1,[$nonce,#4]
-# ifdef	__thumb2__
 	it	ne
-# endif
 	movne	$h2,$g2
 	ldr	$g2,[$nonce,#8]
-# ifdef	__thumb2__
 	it	ne
-# endif
 	movne	$h3,$g3
 	ldr	$g3,[$nonce,#12]
 
