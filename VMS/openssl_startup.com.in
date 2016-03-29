@@ -63,14 +63,16 @@ $	INSTALLTOP_ = F$PARSE("A.;",INSTALLTOP,,,"NO_CONCEAL") -
 $	OPENSSLDIR_ = F$PARSE("A.;",OPENSSLDIR,,,"NO_CONCEAL") -
 		     - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
 $	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_INSTALLTOP 'INSTALLTOP_'
+$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_OPENSSLDIR 'OPENSSLDIR_'
 $
 $	! Check that things are in place, and specifically, the stuff
 $	! belonging to this architecture
 $	IF F$SEARCH("WRK_INSTALLTOP:[000000]INCLUDE.DIR;1") .EQS. "" -
-	   .OR. F$SEARCH("WRK_INSTALLTOP:[000000]''arch'.DIR;1") .EQS. "" -
-	   .OR. F$SEARCH("WRK_INSTALLTOP:[''arch']LIB.DIR;1") .EQS. "" -
-	   .OR. F$SEARCH("WRK_INSTALLTOP:[''arch']EXE.DIR;1") .EQS. "" -
-	   .OR. F$SEARCH("WRK_INSTALLTOP:[000000]openssl.cnf") .EQS. ""
+	   .OR. F$SEARCH("WRK_INSTALLTOP:[000000]LIB.DIR;1") .EQS. "" -
+	   .OR. F$SEARCH("WRK_INSTALLTOP:[000000]EXE.DIR;1") .EQS. "" -
+	   .OR. F$SEARCH("WRK_INSTALLTOP:[LIB]''arch'.DIR;1") .EQS. "" -
+	   .OR. F$SEARCH("WRK_INSTALLTOP:[EXE]''arch'.DIR;1") .EQS. "" -
+	   .OR. F$SEARCH("WRK_OPENSSLDIR:[000000]openssl.cnf") .EQS. ""
 $	THEN
 $	    WRITE SYS$ERROR "''INSTALLTOP' doesn't look like an OpenSSL installation for ''arch'"
 $	    status = %x00018292 ! RMS$_FNF, file not found
@@ -84,10 +86,10 @@ $	v    =  VERSION - "." - "."
 $
 $	DEFT OSSL$INSTROOT'v'	'INSTALLTOP_'
 $	DEFT OSSL$INCLUDE'v'	OSSL$INSTROOT:[INCLUDE.]
-$	DEF  OSSL$LIB'v'	OSSL$INSTROOT:['arch'.LIB]
-$	DEF  OSSL$SHARE'v'	OSSL$INSTROOT:['arch'.LIB]
-$	DEF  OSSL$ENGINES'v'	OSSL$INSTROOT:['arch'.ENGINES]
-$	DEF  OSSL$EXE'v'	OSSL$INSTROOT:['arch'.EXE]
+$	DEF  OSSL$LIB'v'	OSSL$INSTROOT:[LIB.'arch']
+$	DEF  OSSL$SHARE'v'	OSSL$INSTROOT:[LIB.'arch']
+$	DEF  OSSL$ENGINES'v'	OSSL$INSTROOT:[ENGINES.'arch']
+$	DEF  OSSL$EXE'v'	OSSL$INSTROOT:[EXE.'arch']
 $       {- output_off() if $disabled{shared} -}
 $       {- join("\n\$       ", map { "DEF  $_'v' OSSL\$SHARE:$_" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
 $       {- output_on() -}
