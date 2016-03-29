@@ -4,7 +4,8 @@
 
 BIO_should_retry, BIO_should_read, BIO_should_write,
 BIO_should_io_special, BIO_retry_type, BIO_should_retry,
-BIO_get_retry_BIO, BIO_get_retry_reason - BIO retry functions
+BIO_get_retry_BIO, BIO_get_retry_reason, BIO_set_retry_reason - BIO retry
+functions
 
 =head1 SYNOPSIS
 
@@ -22,8 +23,9 @@ BIO_get_retry_BIO, BIO_get_retry_reason - BIO retry functions
  #define BIO_FLAGS_RWS (BIO_FLAGS_READ|BIO_FLAGS_WRITE|BIO_FLAGS_IO_SPECIAL)
  #define BIO_FLAGS_SHOULD_RETRY	0x08
 
- BIO *	BIO_get_retry_BIO(BIO *bio, int *reason);
- int	BIO_get_retry_reason(BIO *bio);
+ BIO *BIO_get_retry_BIO(BIO *bio, int *reason);
+ int BIO_get_retry_reason(BIO *bio);
+ void BIO_set_retry_reason(BIO *bio, int reason);
 
 =head1 DESCRIPTION
 
@@ -58,6 +60,9 @@ the type of BIO that resulted in this condition.
 
 BIO_get_retry_reason() returns the reason for a special condition if
 passed the relevant BIO, for example as returned by BIO_get_retry_BIO().
+
+BIO_set_retry_reason() sets the retry reason for a special condition for a given
+BIO. This would usually only be called by BIO implementations.
 
 =head1 NOTES
 
@@ -111,4 +116,11 @@ the entire structure can be read or written.
 
 =head1 SEE ALSO
 
-TBA
+L<bio>
+
+=head1 HISTORY
+
+The BIO_get_retry_reason() and BIO_set_retry_reason() functions were added in
+OpenSSL version 1.1.0.
+
+=cut
