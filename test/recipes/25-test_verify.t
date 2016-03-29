@@ -19,7 +19,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 81;
+plan tests => 83;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -104,8 +104,12 @@ ok(!verify("ee-cert", "sslserver", [qw(root-cert root2+clientAuth ca-root2)],
 # CA variants
 ok(!verify("ee-cert", "sslserver", [qw(root-cert)], [qw(ca-nonca)]),
    "fail non-CA untrusted intermediate");
+ok(!verify("ee-cert", "sslserver", [qw(root-cert)], [qw(ca-nonbc)]),
+   "fail non-CA untrusted intermediate");
 ok(!verify("ee-cert", "sslserver", [qw(root-cert ca-nonca)], []),
-   "fail non-CA trusted intermediate");
+   "fail non-CA trust-store intermediate");
+ok(!verify("ee-cert", "sslserver", [qw(root-cert ca-nonbc)], []),
+   "fail non-CA trust-store intermediate");
 ok(!verify("ee-cert", "sslserver", [qw(root-cert nca+serverAuth)], []),
    "fail non-CA server trust intermediate");
 ok(!verify("ee-cert", "sslserver", [qw(root-cert nca+anyEKU)], []),
