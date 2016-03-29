@@ -92,9 +92,11 @@
          $OUT .= libobj2shlib(shlib => $unified_info{sharednames}->{$lib},
                               lib => $lib,
                               objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                                        @{$unified_info{sources}->{$lib}} ],
+                                        (@{$unified_info{sources}->{$lib}},
+                                         @{$unified_info{shared_sources}->{$lib}}) ],
                               deps => [ reducedepends(resolvedepends($lib)) ],
                               %ordinals);
+         map { doobj($_, $lib, intent => "lib") } @{$unified_info{shared_sources}->{$lib}};
      }
      $OUT .= obj2lib(lib => $lib,
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
@@ -111,9 +113,11 @@
      return "" if $cache{$lib};
      $OUT .= obj2dso(lib => $lib,
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                               @{$unified_info{sources}->{$lib}} ],
+                               (@{$unified_info{sources}->{$lib}},
+                                @{$unified_info{shared_sources}->{$lib}}) ],
                      deps => [ resolvedepends($lib) ]);
-     map { doobj($_, $lib, intent => "dso") } @{$unified_info{sources}->{$lib}};
+     map { doobj($_, $lib, intent => "dso") } (@{$unified_info{sources}->{$lib}},
+                                               @{$unified_info{shared_sources}->{$lib}});
      $cache{$lib} = 1;
  }
 
