@@ -9,8 +9,16 @@ use warnings;
 use File::Basename;
 use File::Spec::Functions;
 
-use lib catdir(dirname(__FILE__),"../util");  # for with_fallback
-use lib catdir(dirname(__FILE__),"ssl-tests");  # for ssltests_base
+use OpenSSL::Test qw/srctop_dir srctop_file/;
+use OpenSSL::Test::Utils;
+
+# This block needs to run before 'use lib srctop_dir' directives.
+BEGIN {
+OpenSSL::Test::setup("no_test_here");
+}
+
+use lib srctop_dir("util");  # for with_fallback
+use lib srctop_dir("test", "ssl-tests");  # for ssltests_base
 
 use with_fallback qw(Text::Template);
 
@@ -20,7 +28,8 @@ push (@ISA, qw/Text::Template/);
 use ssltests_base;
 
 sub print_templates {
-    my $template = Text::Template->new(TYPE => 'FILE', SOURCE => "ssl_test.tmpl");
+    my $source = srctop_file("test", "ssl_test.tmpl");
+    my $template = Text::Template->new(TYPE => 'FILE', SOURCE => $source);
 
     print "# Generated with generate_ssl_tests.pl\n\n";
 

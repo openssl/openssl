@@ -16,7 +16,8 @@ generated test, you should run
 ```
 $ ./config
 $ cd test
-$ TOP=.. perl generate_ssl_tests.pl ssl-tests/my.conf.in > ssl-tests/my.conf
+$ TOP=.. perl -I testlib/ generate_ssl_tests.pl ssl-tests/my.conf.in \
+  > ssl-tests/my.conf
 ```
 
 where `my.conf.in` is your test input file.

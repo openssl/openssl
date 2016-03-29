@@ -6,10 +6,6 @@ package ssltests;
 
 use List::Util qw/max min/;
 
-use lib 'testlib';
-
-# TODO(emilia, levitte): there must be a better way to call test utilities
-# without pretending to run a test?
 use OpenSSL::Test;
 use OpenSSL::Test::Utils qw/anydisabled alldisabled/;
 setup("no_test_here");
