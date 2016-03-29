@@ -4,8 +4,13 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Made BIO and BIO_METHOD opaque. The structures for managing BIOs have been
+     moved out of the public header files. New functions for managing these
+     have been added.
+     [Matt Caswell]
+
   *) Removed no-rijndael as a config option. Rijndael is an old name for AES.
-     [Matt Caswell}
+     [Matt Caswell]
 
   *) Removed the mk1mf build scripts.
      [Richard Levitte]
