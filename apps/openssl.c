@@ -207,15 +207,12 @@ static char *make_config_name()
     return p;
 }
 
-#if defined( OPENSSL_SYS_VMS)
-extern char **copy_argv(int *argc, char **argv);
-#endif
-
 int main(int argc, char *argv[])
 {
     FUNCTION f, *fp;
     LHASH_OF(FUNCTION) *prog = NULL;
     char **copied_argv = NULL;
+    char **argv_alias  = NULL;
     char *p, *pname;
     char buf[1024];
     const char *prompt;
@@ -231,8 +228,10 @@ int main(int argc, char *argv[])
     bio_out = dup_bio_out(FORMAT_TEXT);
     bio_err = dup_bio_err(FORMAT_TEXT);
 
-#if defined( OPENSSL_SYS_VMS)
-    copied_argv = argv = copy_argv(&argc, argv);
+#if defined( OPENSSL_SYS_VMS) && defined(__DECC)
+    copied_argv = argv_alias = copy_argv(&argc, argv);
+#else
+    argv_alias = argv;
 #endif
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
@@ -256,22 +255,22 @@ int main(int argc, char *argv[])
         goto end;
 
     prog = prog_init();
-    pname = opt_progname(argv[0]);
+    pname = opt_progname(argv_alias[0]);
 
     /* first check the program name */
     f.name = pname;
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp != NULL) {
-        argv[0] = pname;
-        ret = fp->func(argc, argv);
+        argv_alias[0] = pname;
+        ret = fp->func(argc, argv_alias);
         goto end;
     }
 
     /* If there is stuff on the command line, run with that. */
     if (argc != 1) {
         argc--;
-        argv++;
-        ret = do_cmd(prog, argc, argv);
+        argv_alias++;
+        ret = do_cmd(prog, argc, argv_alias);
         if (ret < 0)
             ret = 0;
         goto end;

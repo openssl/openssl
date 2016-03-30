@@ -445,6 +445,17 @@ typedef struct args_st {
     char **argv;
 } ARGS;
 
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size save
+# pragma pointer_size 32
+typedef char **argv_t;
+# pragma pointer_size restore
+char **copy_argv(int *argc, argv_t argv);
+#else
+typedef char **argv_t;
+#endif
+
+
 # define PW_MIN_LENGTH 4
 typedef struct pw_cb_data {
     const void *password;
