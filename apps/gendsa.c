@@ -168,7 +168,7 @@ int gendsa_main(int argc, char **argv)
         BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
                    app_RAND_load_files(inrand));
 
-    BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(dsa->p));
+    BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(DSA_get0_p(dsa)));
     if (!DSA_generate_key(dsa))
         goto end;
 

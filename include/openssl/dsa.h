@@ -143,29 +143,6 @@ struct dsa_method {
     int (*dsa_keygen) (DSA *dsa);
 };
 
-struct dsa_st {
-    /*
-     * This first variable is used to pick up errors where a DSA is passed
-     * instead of of a EVP_PKEY
-     */
-    int pad;
-    long version;
-    BIGNUM *p;
-    BIGNUM *q;                  /* == 20 */
-    BIGNUM *g;
-    BIGNUM *pub_key;            /* y public key */
-    BIGNUM *priv_key;           /* x private key */
-    int flags;
-    /* Normally used to cache montgomery values */
-    BN_MONT_CTX *method_mont_p;
-    int references;
-    CRYPTO_EX_DATA ex_data;
-    const DSA_METHOD *meth;
-    /* functional reference if 'meth' is ENGINE-provided */
-    ENGINE *engine;
-    CRYPTO_RWLOCK *lock;
-};
-
 # define d2i_DSAparams_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
                 (char *(*)())d2i_DSAparams,(fp),(unsigned char **)(x))
 # define i2d_DSAparams_fp(fp,x) ASN1_i2d_fp(i2d_DSAparams,(fp), \
@@ -263,6 +240,18 @@ DH *DSA_dup_DH(const DSA *r);
 # define EVP_PKEY_CTRL_DSA_PARAMGEN_BITS         (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS       (EVP_PKEY_ALG_CTRL + 2)
 # define EVP_PKEY_CTRL_DSA_PARAMGEN_MD           (EVP_PKEY_ALG_CTRL + 3)
+
+BIGNUM *DSA_get0_p(const DSA *d);
+BIGNUM *DSA_get0_q(const DSA *d);
+BIGNUM *DSA_get0_g(const DSA *d);
+int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g);
+BIGNUM *DSA_get0_priv_key(const DSA *d);
+BIGNUM *DSA_get0_pub_key(const DSA *d);
+int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key);
+void DSA_clear_flags(DSA *d, int flags);
+int DSA_test_flags(const DSA *d, int flags);
+void DSA_set_flags(DSA *d, int flags);
+ENGINE *DSA_get0_engine(DSA *d);
 
 /* BEGIN ERROR CODES */
 /*

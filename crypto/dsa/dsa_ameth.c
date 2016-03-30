@@ -60,7 +60,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
-#include <openssl/dsa.h>
+#include "dsa_locl.h"
 #include <openssl/bn.h>
 #include <openssl/cms.h>
 #include "internal/asn1_int.h"

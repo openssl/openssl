@@ -735,7 +735,7 @@ int x509_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_DSA
                 if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA)
-                    BN_print(out, EVP_PKEY_get0_DSA(pkey)->pub_key);
+                    BN_print(out, DSA_get0_pub_key(EVP_PKEY_get0_DSA(pkey)));
                 else
 #endif
                     BIO_printf(out, "Wrong Algorithm type");

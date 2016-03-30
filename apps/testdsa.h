@@ -92,18 +92,35 @@ static unsigned char dsa512_g[] = {
 DSA *get_dsa512()
 {
     DSA *dsa;
+    BIGNUM *priv_key, *pub_key, *p, *q, *g;
 
     if ((dsa = DSA_new()) == NULL)
         return (NULL);
-    dsa->priv_key = BN_bin2bn(dsa512_priv, sizeof(dsa512_priv), NULL);
-    dsa->pub_key = BN_bin2bn(dsa512_pub, sizeof(dsa512_pub), NULL);
-    dsa->p = BN_bin2bn(dsa512_p, sizeof(dsa512_p), NULL);
-    dsa->q = BN_bin2bn(dsa512_q, sizeof(dsa512_q), NULL);
-    dsa->g = BN_bin2bn(dsa512_g, sizeof(dsa512_g), NULL);
-    if ((dsa->priv_key == NULL) || (dsa->pub_key == NULL) || (dsa->p == NULL)
-        || (dsa->q == NULL) || (dsa->g == NULL))
-        return (NULL);
-    return (dsa);
+    priv_key = BN_bin2bn(dsa512_priv, sizeof(dsa512_priv), NULL);
+    pub_key = BN_bin2bn(dsa512_pub, sizeof(dsa512_pub), NULL);
+    p = BN_bin2bn(dsa512_p, sizeof(dsa512_p), NULL);
+    q = BN_bin2bn(dsa512_q, sizeof(dsa512_q), NULL);
+    g = BN_bin2bn(dsa512_g, sizeof(dsa512_g), NULL);
+    if ((priv_key == NULL) || (pub_key == NULL) || (p == NULL) || (q == NULL)
+            || (g == NULL)) {
+        goto err;
+    }
+    if (!DSA_set0_pqg(dsa, p, q, g))
+        goto err;
+    p = q = g = NULL;
+
+    if (!DSA_set0_key(dsa, pub_key, priv_key))
+        goto err;
+
+    return dsa;
+ err:
+    DSA_free(dsa);
+    BN_free(priv_key);
+    BN_free(pub_key);
+    BN_free(p);
+    BN_free(q);
+    BN_free(g);
+    return NULL;
 }
 
 static unsigned char dsa1024_priv[] = {
@@ -161,18 +178,35 @@ static unsigned char dsa1024_g[] = {
 DSA *get_dsa1024()
 {
     DSA *dsa;
+    BIGNUM *priv_key, *pub_key, *p, *q, *g;
 
     if ((dsa = DSA_new()) == NULL)
         return (NULL);
-    dsa->priv_key = BN_bin2bn(dsa1024_priv, sizeof(dsa1024_priv), NULL);
-    dsa->pub_key = BN_bin2bn(dsa1024_pub, sizeof(dsa1024_pub), NULL);
-    dsa->p = BN_bin2bn(dsa1024_p, sizeof(dsa1024_p), NULL);
-    dsa->q = BN_bin2bn(dsa1024_q, sizeof(dsa1024_q), NULL);
-    dsa->g = BN_bin2bn(dsa1024_g, sizeof(dsa1024_g), NULL);
-    if ((dsa->priv_key == NULL) || (dsa->pub_key == NULL) || (dsa->p == NULL)
-        || (dsa->q == NULL) || (dsa->g == NULL))
-        return (NULL);
-    return (dsa);
+    priv_key = BN_bin2bn(dsa1024_priv, sizeof(dsa1024_priv), NULL);
+    pub_key = BN_bin2bn(dsa1024_pub, sizeof(dsa1024_pub), NULL);
+    p = BN_bin2bn(dsa1024_p, sizeof(dsa1024_p), NULL);
+    q = BN_bin2bn(dsa1024_q, sizeof(dsa1024_q), NULL);
+    g = BN_bin2bn(dsa1024_g, sizeof(dsa1024_g), NULL);
+    if ((priv_key == NULL) || (pub_key == NULL) || (p == NULL) || (q == NULL)
+            || (g == NULL)) {
+        goto err;
+    }
+    if (!DSA_set0_pqg(dsa, p, q, g))
+        goto err;
+    p = q = g = NULL;
+
+    if (!DSA_set0_key(dsa, pub_key, priv_key))
+        goto err;
+
+    return dsa;
+ err:
+    DSA_free(dsa);
+    BN_free(priv_key);
+    BN_free(pub_key);
+    BN_free(p);
+    BN_free(q);
+    BN_free(g);
+    return NULL;
 }
 
 static unsigned char dsa2048_priv[] = {
@@ -263,18 +297,35 @@ static unsigned char dsa2048_g[] = {
 DSA *get_dsa2048()
 {
     DSA *dsa;
+    BIGNUM *priv_key, *pub_key, *p, *q, *g;
 
     if ((dsa = DSA_new()) == NULL)
         return (NULL);
-    dsa->priv_key = BN_bin2bn(dsa2048_priv, sizeof(dsa2048_priv), NULL);
-    dsa->pub_key = BN_bin2bn(dsa2048_pub, sizeof(dsa2048_pub), NULL);
-    dsa->p = BN_bin2bn(dsa2048_p, sizeof(dsa2048_p), NULL);
-    dsa->q = BN_bin2bn(dsa2048_q, sizeof(dsa2048_q), NULL);
-    dsa->g = BN_bin2bn(dsa2048_g, sizeof(dsa2048_g), NULL);
-    if ((dsa->priv_key == NULL) || (dsa->pub_key == NULL) || (dsa->p == NULL)
-        || (dsa->q == NULL) || (dsa->g == NULL))
-        return (NULL);
-    return (dsa);
+    priv_key = BN_bin2bn(dsa2048_priv, sizeof(dsa2048_priv), NULL);
+    pub_key = BN_bin2bn(dsa2048_pub, sizeof(dsa2048_pub), NULL);
+    p = BN_bin2bn(dsa2048_p, sizeof(dsa2048_p), NULL);
+    q = BN_bin2bn(dsa2048_q, sizeof(dsa2048_q), NULL);
+    g = BN_bin2bn(dsa2048_g, sizeof(dsa2048_g), NULL);
+    if ((priv_key == NULL) || (pub_key == NULL) || (p == NULL) || (q == NULL)
+            || (g == NULL)) {
+        goto err;
+    }
+    if (!DSA_set0_pqg(dsa, p, q, g))
+        goto err;
+    p = q = g = NULL;
+
+    if (!DSA_set0_key(dsa, pub_key, priv_key))
+        goto err;
+
+    return dsa;
+ err:
+    DSA_free(dsa);
+    BN_free(priv_key);
+    BN_free(pub_key);
+    BN_free(p);
+    BN_free(q);
+    BN_free(g);
+    return NULL;
 }
 
 static const char rnd_seed[] =
