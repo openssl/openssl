@@ -71,6 +71,8 @@ struct X509_pubkey_st {
     EVP_PKEY *pkey;
 };
 
+static int x509_pubkey_decode(EVP_PKEY **pk, X509_PUBKEY *key);
+
 /* Minor tweak to operation: free up EVP_PKEY */
 static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                      void *exarg)
@@ -83,11 +85,13 @@ static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
         EVP_PKEY_free(pubkey->pkey);
         /*
-         * Remove any errors from the queue: subsequent decode attempts will
-         * return an appropriate error.
+         * Opportunistically decode the key but remove any non fatal errors
+         * from the queue. Subsequent explicit attempts to decode/use the key
+         * will return an appropriate error.
          */
         ERR_set_mark();
-        pubkey->pkey = X509_PUBKEY_get0(pubkey);
+        if (x509_pubkey_decode(&pubkey->pkey, pubkey) == -1)
+            return 0;
         ERR_pop_to_mark();
     }
     return 1;
@@ -128,6 +132,8 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 
     X509_PUBKEY_free(*x);
     *x = pk;
+    pk->pkey = pkey;
+    EVP_PKEY_up_ref(pkey);
     return 1;
 
  error:
@@ -135,44 +141,76 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
     return 0;
 }
 
+/*
+ * Attempt to decode a public key.
+ * Returns 1 on success, 0 for a decode failure and -1 for a fatal
+ * error e.g. malloc failure.
+ */
+
+
+static int x509_pubkey_decode(EVP_PKEY **ppkey, X509_PUBKEY *key)
+    {
+    EVP_PKEY *pkey = EVP_PKEY_new();
+
+    if (pkey == NULL) {
+        X509err(X509_F_X509_PUBKEY_DECODE, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+
+    if (!EVP_PKEY_set_type(pkey, OBJ_obj2nid(key->algor->algorithm))) {
+        X509err(X509_F_X509_PUBKEY_DECODE, X509_R_UNSUPPORTED_ALGORITHM);
+        goto error;
+    }
+
+    if (pkey->ameth->pub_decode) {
+        /*
+         * Treat any failure of pub_decode as a decode error. In
+         * future we could have different return codes for decode
+         * errors and fatal errors such as malloc failure.
+         */
+        if (!pkey->ameth->pub_decode(pkey, key)) {
+            X509err(X509_F_X509_PUBKEY_DECODE, X509_R_PUBLIC_KEY_DECODE_ERROR);
+            goto error;
+        }
+    } else {
+        X509err(X509_F_X509_PUBKEY_DECODE, X509_R_METHOD_NOT_SUPPORTED);
+        goto error;
+    }
+
+    *ppkey = pkey;
+    return 1;
+
+ error:
+    EVP_PKEY_free(pkey);
+    return 0;
+}
+
 EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key)
 {
     EVP_PKEY *ret = NULL;
 
-    if (key == NULL)
-        goto error;
+    if (key == NULL || key->public_key == NULL)
+        return NULL;
 
     if (key->pkey != NULL)
         return key->pkey;
 
-    if (key->public_key == NULL)
-        goto error;
-
-    if ((ret = EVP_PKEY_new()) == NULL) {
-        X509err(X509_F_X509_PUBKEY_GET0, ERR_R_MALLOC_FAILURE);
-        goto error;
+    /*
+     * When the key ASN.1 is initially parsed an attempt is made to
+     * decode the public key and cache the EVP_PKEY structure. If this
+     * operation fails the cached value will be NULL. Parsing continues
+     * to allow parsing of unknown key types or unsupported forms.
+     * We repeat the decode operation so the appropriate errors are left
+     * in the queue.
+     */
+    x509_pubkey_decode(&ret, key);
+    /* If decode doesn't fail something bad happened */
+    if (ret != NULL) {
+        X509err(X509_F_X509_PUBKEY_GET0, ERR_R_INTERNAL_ERROR);
+        EVP_PKEY_free(ret);
     }
 
-    if (!EVP_PKEY_set_type(ret, OBJ_obj2nid(key->algor->algorithm))) {
-        X509err(X509_F_X509_PUBKEY_GET0, X509_R_UNSUPPORTED_ALGORITHM);
-        goto error;
-    }
-
-    if (ret->ameth->pub_decode) {
-        if (!ret->ameth->pub_decode(ret, key)) {
-            X509err(X509_F_X509_PUBKEY_GET0, X509_R_PUBLIC_KEY_DECODE_ERROR);
-            goto error;
-        }
-    } else {
-        X509err(X509_F_X509_PUBKEY_GET0, X509_R_METHOD_NOT_SUPPORTED);
-        goto error;
-    }
-
-    return ret;
-
- error:
-    EVP_PKEY_free(ret);
-    return (NULL);
+    return NULL;
 }
 
 EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)

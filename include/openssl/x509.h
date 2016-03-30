@@ -1078,6 +1078,7 @@ void ERR_load_X509_strings(void);
 # define X509_F_X509_NAME_ONELINE                         116
 # define X509_F_X509_NAME_PRINT                           117
 # define X509_F_X509_PRINT_EX_FP                          118
+# define X509_F_X509_PUBKEY_DECODE                        148
 # define X509_F_X509_PUBKEY_GET0                          119
 # define X509_F_X509_PUBKEY_SET                           120
 # define X509_F_X509_REQ_CHECK_PRIVATE_KEY                144
