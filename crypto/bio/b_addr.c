@@ -742,7 +742,6 @@ int BIO_lookup(const char *host, const char *service,
 #else
         struct servent se_fallback = { NULL, NULL, 0, NULL };
 #endif
-        char *proto = NULL;
 
         CRYPTO_THREAD_run_once(&bio_lookup_init, do_bio_lookup_init);
 
@@ -778,11 +777,21 @@ int BIO_lookup(const char *host, const char *service,
 
         if (service == NULL) {
             se_fallback.s_port = 0;
-            se_fallback.s_proto = proto;
+            se_fallback.s_proto = NULL;
             se = &se_fallback;
         } else {
             char *endp = NULL;
             long portnum = strtol(service, &endp, 10);
+            char *proto = NULL;
+
+            switch (socktype) {
+            case SOCK_STREAM:
+                proto = "tcp";
+                break;
+            case SOCK_DGRAM:
+                proto = "udp";
+                break;
+            }
 
             if (endp != service && *endp == '\0'
                     && portnum > 0 && portnum < 65536) {
@@ -790,14 +799,6 @@ int BIO_lookup(const char *host, const char *service,
                 se_fallback.s_proto = proto;
                 se = &se_fallback;
             } else if (endp == service) {
-                switch (socktype) {
-                case SOCK_STREAM:
-                    proto = "tcp";
-                    break;
-                case SOCK_DGRAM:
-                    proto = "udp";
-                    break;
-                }
                 se = getservbyname(service, proto);
 
                 if (se == NULL) {
