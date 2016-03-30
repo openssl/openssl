@@ -70,6 +70,7 @@ static int secmem_new(BIO *h);
 static int mem_free(BIO *data);
 static int mem_buf_free(BIO *data, int free_all);
 static int mem_buf_sync(BIO *h);
+
 static const BIO_METHOD mem_method = {
     BIO_TYPE_MEM,
     "memory buffer",
@@ -82,6 +83,7 @@ static const BIO_METHOD mem_method = {
     mem_free,
     NULL,
 };
+
 static const BIO_METHOD secmem_method = {
     BIO_TYPE_MEM,
     "secure memory buffer",
@@ -94,6 +96,12 @@ static const BIO_METHOD secmem_method = {
     mem_free,
     NULL,
 };
+
+/* BIO memory stores buffer and read pointer  */
+typedef struct bio_buf_mem_st {
+    struct buf_mem_st *buf;   /* allocated buffer */
+    struct buf_mem_st *readp; /* read pointer */
+} BIO_BUF_MEM;
 
 /*
  * bio->num is used to hold the value to return on 'empty', if it is 0,
