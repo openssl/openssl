@@ -1385,7 +1385,7 @@ BN_free                                 1342	1_1_0	EXIST::FUNCTION:
 EVP_aes_128_cfb1                        1343	1_1_0	EXIST::FUNCTION:AES
 EC_KEY_get0_group                       1344	1_1_0	EXIST::FUNCTION:EC
 PEM_write_bio_CMS_stream                1345	1_1_0	EXIST::FUNCTION:CMS
-BIO_f_linebuffer                        1346	1_1_0	EXIST:VMS:FUNCTION:
+BIO_f_linebuffer                        1346	1_1_0	EXIST::FUNCTION:
 ASN1_item_d2i_bio                       1347	1_1_0	EXIST::FUNCTION:
 ENGINE_get_flags                        1348	1_1_0	EXIST::FUNCTION:ENGINE
 OCSP_resp_find                          1349	1_1_0	EXIST::FUNCTION:
