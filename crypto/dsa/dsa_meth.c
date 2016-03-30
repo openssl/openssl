@@ -1,0 +1,243 @@
+/* ====================================================================
+ * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
+
+#include "dsa_locl.h"
+#include <string.h>
+
+DSA_METHOD *DSA_meth_new(const char *name, int flags)
+{
+    DSA_METHOD *dsam = OPENSSL_zalloc(sizeof(DSA_METHOD));
+
+    if (dsam != NULL) {
+        dsam->name = OPENSSL_strdup(name);
+        dsam->flags = flags;
+    }
+
+    return dsam;
+}
+
+void DSA_meth_free(DSA_METHOD *dsam)
+{
+    if (dsam != NULL) {
+        if (dsam->name != NULL)
+            OPENSSL_free(dsam->name);
+        OPENSSL_free(dsam);
+    }
+}
+
+DSA_METHOD *DSA_meth_dup(const DSA_METHOD *meth)
+{
+    DSA_METHOD *ret;
+
+    ret = OPENSSL_malloc(sizeof(DSA_METHOD));
+
+    if (ret != NULL) {
+        memcpy(ret, meth, sizeof(*meth));
+        ret->name = OPENSSL_strdup(meth->name);
+    }
+
+    return ret;
+}
+
+const char *DSA_meth_get_name(const DSA_METHOD *dsam)
+{
+    return dsam->name;
+}
+
+int DSA_meth_set_name(DSA_METHOD *dsam, const char *name)
+{
+    OPENSSL_free(dsam->name);
+    dsam->name = OPENSSL_strdup(name);
+
+    return dsam->name != NULL;
+}
+
+int DSA_meth_get_flags(DSA_METHOD *dsam)
+{
+    return dsam->flags;
+}
+
+int DSA_meth_set_flags(DSA_METHOD *dsam, int flags)
+{
+    dsam->flags = flags;
+    return 1;
+}
+
+void *DSA_meth_get_app_data(const DSA_METHOD *dsam)
+{
+    return dsam->app_data;
+}
+
+int DSA_meth_set_app_data(DSA_METHOD *dsam, void *app_data)
+{
+    dsam->app_data = app_data;
+    return 1;
+}
+
+DSA_SIG *(*DSA_meth_get_sign(const DSA_METHOD *dsam))
+        (const unsigned char *, int, DSA *)
+{
+    return dsam->dsa_do_sign;
+}
+
+int DSA_meth_set_sign(DSA_METHOD *dsam,
+                       DSA_SIG *(*sign) (const unsigned char *, int, DSA *))
+{
+    dsam->dsa_do_sign = sign;
+    return 1;
+}
+
+int (*DSA_meth_get_sign_setup(const DSA_METHOD *dsam))
+        (DSA *, BN_CTX *, BIGNUM **, BIGNUM **)
+{
+    return dsam->dsa_sign_setup;
+}
+
+int DSA_meth_set_sign_setup(DSA_METHOD *dsam,
+        int (*sign_setup) (DSA *, BN_CTX *, BIGNUM **, BIGNUM **))
+{
+    dsam->dsa_sign_setup = sign_setup;
+    return 1;
+}
+
+int (*DSA_meth_get_verify(const DSA_METHOD *dsam))
+        (const unsigned char *, int , DSA_SIG *, DSA *)
+{
+    return dsam->dsa_do_verify;
+}
+
+int DSA_meth_set_verify(DSA_METHOD *dsam,
+    int (*verify) (const unsigned char *, int, DSA_SIG *, DSA *))
+{
+    dsam->dsa_do_verify = verify;
+    return 1;
+}
+
+int (*DSA_meth_get_mod_exp(const DSA_METHOD *dsam))
+        (DSA *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *,
+         BN_CTX *, BN_MONT_CTX *)
+{
+    return dsam->dsa_mod_exp;
+}
+
+int DSA_meth_set_mod_exp(DSA_METHOD *dsam,
+    int (*mod_exp) (DSA *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *,
+                    BIGNUM *, BN_CTX *, BN_MONT_CTX *))
+{
+    dsam->dsa_mod_exp = mod_exp;
+    return 1;
+}
+
+int (*DSA_meth_get_bn_mod_exp(const DSA_METHOD *dsam))
+    (DSA *, BIGNUM *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *,
+     BN_MONT_CTX *)
+{
+    return dsam->bn_mod_exp;
+}
+
+int DSA_meth_set_bn_mod_exp(DSA_METHOD *dsam,
+    int (*bn_mod_exp) (DSA *, BIGNUM *, BIGNUM *, const BIGNUM *,
+                       const BIGNUM *, BN_CTX *, BN_MONT_CTX *))
+{
+    dsam->bn_mod_exp = bn_mod_exp;
+    return 1;
+}
+
+int (*DSA_meth_get_init(const DSA_METHOD *dsam))(DSA *)
+{
+    return dsam->init;
+}
+
+int DSA_meth_set_init(DSA_METHOD *dsam, int (*init)(DSA *))
+{
+    dsam->init = init;
+    return 1;
+}
+
+int (*DSA_meth_get_finish(const DSA_METHOD *dsam)) (DSA *)
+{
+    return dsam->finish;
+}
+
+int DSA_meth_set_finish(DSA_METHOD *dsam, int (*finish) (DSA *))
+{
+    dsam->finish = finish;
+    return 1;
+}
+
+int (*DSA_meth_get_paramgen(const DSA_METHOD *dsam))
+        (DSA *, int, const unsigned char *, int, int *, unsigned long *,
+         BN_GENCB *)
+{
+    return dsam->dsa_paramgen;
+}
+
+int DSA_meth_set_paramgen(DSA_METHOD *dsam,
+        int (*paramgen) (DSA *, int, const unsigned char *, int, int *,
+                         unsigned long *, BN_GENCB *))
+{
+    dsam->dsa_paramgen = paramgen;
+    return 1;
+}
+
+int (*DSA_meth_get_keygen(const DSA_METHOD *dsam)) (DSA *)
+{
+    return dsam->dsa_keygen;
+}
+
+int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *))
+{
+    dsam->dsa_keygen = keygen;
+    return 1;
+}

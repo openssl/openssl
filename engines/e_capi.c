@@ -447,20 +447,7 @@ static RSA_METHOD capi_rsa_method = {
     0                           /* rsa_verify */
 };
 
-static DSA_METHOD capi_dsa_method = {
-    "CryptoAPI DSA method",
-    capi_dsa_do_sign,           /* dsa_do_sign */
-    0,                          /* dsa_sign_setup */
-    0,                          /* dsa_do_verify */
-    0,                          /* dsa_mod_exp */
-    0,                          /* bn_mod_exp */
-    0,                          /* init */
-    capi_dsa_free,              /* finish */
-    0,                          /* flags */
-    NULL,                       /* app_data */
-    0,                          /* dsa_paramgen */
-    0                           /* dsa_keygen */
-};
+static DSA_METHOD *capi_dsa_method = NULL;
 
 static int use_aes_csp = 0;
 
@@ -489,9 +476,12 @@ static int capi_init(ENGINE *e)
         /* Setup DSA Method */
         dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
         ossl_dsa_meth = DSA_OpenSSL();
-        capi_dsa_method.dsa_do_verify = ossl_dsa_meth->dsa_do_verify;
-        capi_dsa_method.dsa_mod_exp = ossl_dsa_meth->dsa_mod_exp;
-        capi_dsa_method.bn_mod_exp = ossl_dsa_meth->bn_mod_exp;
+        DSA_meth_set_sign(capi_dsa_method, capi_dsa_do_sign);
+        DSA_meth_set_verify(capi_dsa_method, DSA_meth_get_verify(ossl_dsa_meth));
+        DSA_meth_set_finish(capi_dsa_method, capi_dsa_free);
+        DSA_meth_set_mod_exp(capi_dsa_method, DSA_meth_get_mod_exp(ossl_dsa_meth));
+        DSA_meth_set_bn_mod_exp(capi_dsa_method,
+                                DSA_meth_get_bn_mod_exp(ossl_dsa_meth));
     }
 
     ctx = capi_ctx_new();
@@ -535,6 +525,8 @@ static int capi_init(ENGINE *e)
 
 static int capi_destroy(ENGINE *e)
 {
+    DSA_meth_free(capi_dsa_method);
+    capi_dsa_method = NULL;
     ERR_unload_CAPI_strings();
     return 1;
 }
@@ -564,6 +556,9 @@ struct CAPI_KEY_st {
 
 static int bind_capi(ENGINE *e)
 {
+    capi_dsa_method = DSA_meth_new("CryptoAPI DSA method", 0);
+    if (capi_dsa_method == NULL)
+        return 0;
     if (!ENGINE_set_id(e, engine_capi_id)
         || !ENGINE_set_name(e, engine_capi_name)
         || !ENGINE_set_flags(e, ENGINE_FLAGS_NO_REGISTER_ALL)
@@ -571,7 +566,7 @@ static int bind_capi(ENGINE *e)
         || !ENGINE_set_finish_function(e, capi_finish)
         || !ENGINE_set_destroy_function(e, capi_destroy)
         || !ENGINE_set_RSA(e, &capi_rsa_method)
-        || !ENGINE_set_DSA(e, &capi_dsa_method)
+        || !ENGINE_set_DSA(e, capi_dsa_method)
         || !ENGINE_set_load_privkey_function(e, capi_load_privkey)
         || !ENGINE_set_load_ssl_client_cert_function(e,
                                                      capi_load_ssl_client_cert)
@@ -716,6 +711,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
         DSSPUBKEY *dp;
         DWORD dsa_plen;
         unsigned char *btmp;
+        BIGNUM *p, *q, *g, *pub_key;
         dp = (DSSPUBKEY *) (bh + 1);
         if (dp->magic != 0x31535344) {
             char magstr[10];
@@ -730,23 +726,24 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
         dkey = DSA_new_method(eng);
         if (!dkey)
             goto memerr;
-        dkey->p = BN_new();
-        dkey->q = BN_new();
-        dkey->g = BN_new();
-        dkey->pub_key = BN_new();
-        if (dkey->p == NULL || dkey->q == NULL || dkey->g == NULL
-                || dkey->pub_key == NULL)
+        p = BN_new();
+        q = BN_new();
+        g = BN_new();
+        pub_key = BN_new();
+        if (p == NULL || q == NULL || g == NULL || pub_key == NULL)
             goto memerr;
-        if (!lend_tobn(dkey->p, btmp, dsa_plen))
+        DSA_set0_pqg(dkey, p, q, g);
+        DSA_set0_key(dkey, pub_key, NULL);
+        if (!lend_tobn(p, btmp, dsa_plen))
             goto memerr;
         btmp += dsa_plen;
-        if (!lend_tobn(dkey->q, btmp, 20))
+        if (!lend_tobn(q, btmp, 20))
             goto memerr;
         btmp += 20;
-        if (!lend_tobn(dkey->g, btmp, dsa_plen))
+        if (!lend_tobn(g, btmp, dsa_plen))
             goto memerr;
         btmp += dsa_plen;
-        if (!lend_tobn(dkey->pub_key, btmp, dsa_plen))
+        if (!lend_tobn(pub_key, btmp, dsa_plen))
             goto memerr;
         btmp += dsa_plen;
 
@@ -985,7 +982,7 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
     CAPI_CTX *ctx;
     unsigned char csigbuf[40];
 
-    ctx = ENGINE_get_ex_data(dsa->engine, capi_idx);
+    ctx = ENGINE_get_ex_data(DSA_get0_engine(dsa), capi_idx);
 
     CAPI_trace(ctx, "Called CAPI_dsa_do_sign()\n");
 

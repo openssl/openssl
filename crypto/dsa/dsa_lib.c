@@ -104,6 +104,11 @@ int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
     return 1;
 }
 
+const DSA_METHOD *DSA_get_method(DSA *d)
+{
+    return d->meth;
+}
+
 DSA *DSA_new_method(ENGINE *engine)
 {
     DSA *ret;
@@ -281,19 +286,14 @@ DH *DSA_dup_DH(const DSA *r)
 }
 #endif
 
-BIGNUM *DSA_get0_p(const DSA *d)
+void DSA_get0_pqg(const DSA *d, BIGNUM **p, BIGNUM **q, BIGNUM **g)
 {
-    return d->p;
-}
-
-BIGNUM *DSA_get0_q(const DSA *d)
-{
-    return d->q;
-}
-
-BIGNUM *DSA_get0_g(const DSA *d)
-{
-    return d->g;
+    if (p != NULL)
+        *p = d->p;
+    if (q != NULL)
+        *q = d->q;
+    if (g != NULL)
+        *g = d->g;
 }
 
 int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
@@ -310,17 +310,15 @@ int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
     return 1;
 }
 
-BIGNUM *DSA_get0_priv_key(const DSA *d)
+void DSA_get0_key(const DSA *d, BIGNUM **pub_key, BIGNUM **priv_key)
 {
-    return d->priv_key;
+    if (pub_key != NULL)
+        *pub_key = d->pub_key;
+    if (priv_key != NULL)
+        *priv_key = d->priv_key;
 }
 
-BIGNUM *DSA_get0_pub_key(const DSA *d)
-{
-    return d->pub_key;
-}
-
-void DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
+int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 {
     /* Note that it is valid for priv_key to be NULL */
     if (pub_key == NULL)

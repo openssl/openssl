@@ -74,8 +74,8 @@ extern "C" {
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/opensslconf.h>
+# include <openssl/bn.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
-#  include <openssl/bn.h>
 #  include <openssl/dh.h>
 # endif
 
@@ -117,32 +117,6 @@ extern "C" {
 
 typedef struct DSA_SIG_st DSA_SIG;
 
-struct dsa_method {
-    const char *name;
-    DSA_SIG *(*dsa_do_sign) (const unsigned char *dgst, int dlen, DSA *dsa);
-    int (*dsa_sign_setup) (DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
-                           BIGNUM **rp);
-    int (*dsa_do_verify) (const unsigned char *dgst, int dgst_len,
-                          DSA_SIG *sig, DSA *dsa);
-    int (*dsa_mod_exp) (DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
-                        BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
-                        BN_MONT_CTX *in_mont);
-    /* Can be null */
-    int (*bn_mod_exp) (DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-                       const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-    int (*init) (DSA *dsa);
-    int (*finish) (DSA *dsa);
-    int flags;
-    char *app_data;
-    /* If this is non-NULL, it is used to generate DSA parameters */
-    int (*dsa_paramgen) (DSA *dsa, int bits,
-                         const unsigned char *seed, int seed_len,
-                         int *counter_ret, unsigned long *h_ret,
-                         BN_GENCB *cb);
-    /* If this is non-NULL, it is used to generate DSA keys */
-    int (*dsa_keygen) (DSA *dsa);
-};
-
 # define d2i_DSAparams_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
                 (char *(*)())d2i_DSAparams,(fp),(unsigned char **)(x))
 # define i2d_DSAparams_fp(fp,x) ASN1_i2d_fp(i2d_DSAparams,(fp), \
@@ -166,6 +140,7 @@ const DSA_METHOD *DSA_OpenSSL(void);
 void DSA_set_default_method(const DSA_METHOD *);
 const DSA_METHOD *DSA_get_default_method(void);
 int DSA_set_method(DSA *dsa, const DSA_METHOD *);
+const DSA_METHOD *DSA_get_method(DSA *d);
 
 DSA *DSA_new(void);
 DSA *DSA_new_method(ENGINE *engine);
@@ -241,17 +216,60 @@ DH *DSA_dup_DH(const DSA *r);
 # define EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS       (EVP_PKEY_ALG_CTRL + 2)
 # define EVP_PKEY_CTRL_DSA_PARAMGEN_MD           (EVP_PKEY_ALG_CTRL + 3)
 
-BIGNUM *DSA_get0_p(const DSA *d);
-BIGNUM *DSA_get0_q(const DSA *d);
-BIGNUM *DSA_get0_g(const DSA *d);
+void DSA_get0_pqg(const DSA *d, BIGNUM **p, BIGNUM **q, BIGNUM **g);
 int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g);
-BIGNUM *DSA_get0_priv_key(const DSA *d);
-BIGNUM *DSA_get0_pub_key(const DSA *d);
+void DSA_get0_key(const DSA *d, BIGNUM **pub_key, BIGNUM **priv_key);
 int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key);
 void DSA_clear_flags(DSA *d, int flags);
 int DSA_test_flags(const DSA *d, int flags);
 void DSA_set_flags(DSA *d, int flags);
 ENGINE *DSA_get0_engine(DSA *d);
+
+DSA_METHOD *DSA_meth_new(const char *name, int flags);
+void DSA_meth_free(DSA_METHOD *dsam);
+DSA_METHOD *DSA_meth_dup(const DSA_METHOD *meth);
+const char *DSA_meth_get_name(const DSA_METHOD *dsam);
+int DSA_meth_set_name(DSA_METHOD *dsam, const char *name);
+int DSA_meth_get_flags(DSA_METHOD *dsam);
+int DSA_meth_set_flags(DSA_METHOD *dsam, int flags);
+void *DSA_meth_get_app_data(const DSA_METHOD *dsam);
+int DSA_meth_set_app_data(DSA_METHOD *dsam, void *app_data);
+DSA_SIG *(*DSA_meth_get_sign(const DSA_METHOD *dsam))
+        (const unsigned char *, int, DSA *);
+int DSA_meth_set_sign(DSA_METHOD *dsam,
+                       DSA_SIG *(*sign) (const unsigned char *, int, DSA *));
+int (*DSA_meth_get_sign_setup(const DSA_METHOD *dsam))
+        (DSA *, BN_CTX *, BIGNUM **, BIGNUM **);
+int DSA_meth_set_sign_setup(DSA_METHOD *dsam,
+        int (*sign_setup) (DSA *, BN_CTX *, BIGNUM **, BIGNUM **));
+int (*DSA_meth_get_verify(const DSA_METHOD *dsam))
+        (const unsigned char *, int , DSA_SIG *, DSA *);
+int DSA_meth_set_verify(DSA_METHOD *dsam,
+    int (*verify) (const unsigned char *, int, DSA_SIG *, DSA *));
+int (*DSA_meth_get_mod_exp(const DSA_METHOD *dsam))
+        (DSA *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *,
+         BN_CTX *, BN_MONT_CTX *);
+int DSA_meth_set_mod_exp(DSA_METHOD *dsam,
+    int (*mod_exp) (DSA *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *,
+                    BIGNUM *, BN_CTX *, BN_MONT_CTX *));
+int (*DSA_meth_get_bn_mod_exp(const DSA_METHOD *dsam))
+    (DSA *, BIGNUM *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *,
+     BN_MONT_CTX *);
+int DSA_meth_set_bn_mod_exp(DSA_METHOD *dsam,
+    int (*bn_mod_exp) (DSA *, BIGNUM *, BIGNUM *, const BIGNUM *,
+                       const BIGNUM *, BN_CTX *, BN_MONT_CTX *));
+int (*DSA_meth_get_init(const DSA_METHOD *dsam))(DSA *);
+int DSA_meth_set_init(DSA_METHOD *dsam, int (*init)(DSA *));
+int (*DSA_meth_get_finish(const DSA_METHOD *dsam)) (DSA *);
+int DSA_meth_set_finish(DSA_METHOD *dsam, int (*finish) (DSA *));
+int (*DSA_meth_get_paramgen(const DSA_METHOD *dsam))
+        (DSA *, int, const unsigned char *, int, int *, unsigned long *,
+         BN_GENCB *);
+int DSA_meth_set_paramgen(DSA_METHOD *dsam,
+        int (*paramgen) (DSA *, int, const unsigned char *, int, int *,
+                         unsigned long *, BN_GENCB *));
+int (*DSA_meth_get_keygen(const DSA_METHOD *dsam)) (DSA *);
+int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *));
 
 /* BEGIN ERROR CODES */
 /*

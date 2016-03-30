@@ -503,16 +503,20 @@ static int do_i2b_bio(BIO *out, EVP_PKEY *pk, int ispub)
 static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 {
     int bitlen;
-    bitlen = BN_num_bits(DSA_get0_p(dsa));
-    if ((bitlen & 7) || (BN_num_bits(DSA_get0_q(dsa)) != 160)
-        || (BN_num_bits(DSA_get0_g(dsa)) > bitlen))
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+
+    DSA_get0_pqg(dsa, &p, &q, &g);
+    DSA_get0_key(dsa, &pub_key, &priv_key);
+    bitlen = BN_num_bits(p);
+    if ((bitlen & 7) || (BN_num_bits(q) != 160)
+        || (BN_num_bits(g) > bitlen))
         goto badkey;
     if (ispub) {
-        if (BN_num_bits(DSA_get0_pub_key(dsa)) > bitlen)
+        if (BN_num_bits(pub_key) > bitlen)
             goto badkey;
         *pmagic = MS_DSS1MAGIC;
     } else {
-        if (BN_num_bits(DSA_get0_priv_key(dsa)) > 160)
+        if (BN_num_bits(priv_key) > 160)
             goto badkey;
         *pmagic = MS_DSS2MAGIC;
     }
@@ -574,14 +578,18 @@ static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 static void write_dsa(unsigned char **out, DSA *dsa, int ispub)
 {
     int nbyte;
-    nbyte = BN_num_bytes(DSA_get0_p(dsa));
-    write_lebn(out, DSA_get0_p(dsa), nbyte);
-    write_lebn(out, DSA_get0_q(dsa), 20);
-    write_lebn(out, DSA_get0_g(dsa), nbyte);
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+
+    DSA_get0_pqg(dsa, &p, &q, &g);
+    DSA_get0_key(dsa, &pub_key, &priv_key);
+    nbyte = BN_num_bytes(p);
+    write_lebn(out, p, nbyte);
+    write_lebn(out, q, 20);
+    write_lebn(out, g, nbyte);
     if (ispub)
-        write_lebn(out, DSA_get0_pub_key(dsa), nbyte);
+        write_lebn(out, pub_key, nbyte);
     else
-        write_lebn(out, DSA_get0_priv_key(dsa), 20);
+        write_lebn(out, priv_key, 20);
     /* Set "invalid" for seed structure values */
     memset(*out, 0xff, 24);
     *out += 24;
