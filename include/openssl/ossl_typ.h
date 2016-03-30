@@ -128,7 +128,6 @@ typedef struct bn_recp_ctx_st BN_RECP_CTX;
 typedef struct bn_gencb_st BN_GENCB;
 
 typedef struct buf_mem_st BUF_MEM;
-typedef struct bio_buf_mem_st BIO_BUF_MEM;
 
 typedef struct evp_cipher_st EVP_CIPHER;
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
