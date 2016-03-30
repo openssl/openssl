@@ -397,8 +397,14 @@ $(D2ITEST)$(EXE_EXT): $(D2ITEST).o $(DLIBCRYPTO) testutil.o
 $(SSLTESTCTXTEST)$(EXE_EXT): $(SSLTESTCTXTEST).o testutil.o $(DLIBCRYPTO)
 	@target=$(SSLTESTCTXTEST); $(BUILD_CMD)
 
+$(SSLTESTCTXTEST)$(EXE_EXT): $(SSLTESTCTXTEST).o testutil.o ssl_test_ctx.o \
+	$(DLIBCRYPTO)
+	@target=$(SSLTESTCTXTEST) testutil="testutil.o ssl_test_ctx.o"; \
+	$(BUILD_CMD)
+
 $(NEWSSLTEST)$(EXE_EXT): $(NEWSSLTEST).o testutil.o ssl_test_ctx.o \
 	handshake_helper.o $(DLIBSSL) $(DLIBCRYPTO)
-	@target=$(NEWSSLTEST); $(BUILD_CMD)
+	@target=$(NEWSSLTEST) testutil="testutil.o ssl_test_ctx.o \
+	handshake_helper.o"; $(BUILD_CMD)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
