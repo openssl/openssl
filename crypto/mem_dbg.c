@@ -536,7 +536,6 @@ void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num,
 typedef struct mem_leak_st {
     BIO *bio;
     int chunks;
-    int seen;
     long bytes;
 } MEM_LEAK;
 
@@ -559,12 +558,6 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
     CRYPTO_THREAD_ID ti;
 
 #define BUF_REMAIN (sizeof buf - (size_t)(bufp - buf))
-
-    /* Is one "leak" the BIO we were given? */
-    if (m->addr == (char *)l->bio) {
-        l->seen = 1;
-        return;
-    }
 
     lcl = localtime(&m->time);
     BIO_snprintf(bufp, BUF_REMAIN, "[%02d:%02d:%02d] ",
@@ -653,14 +646,9 @@ int CRYPTO_mem_leaks(BIO *b)
     ml.bio = b;
     ml.bytes = 0;
     ml.chunks = 0;
-    ml.seen = 0;
     if (mh != NULL)
         lh_MEM_doall_MEM_LEAK(mh, print_leak, &ml);
-    /* Don't count the BIO that was passed in as a "leak" */
-    if (ml.seen && ml.chunks >= 1 && ml.bytes >= (int)sizeof (*b)) {
-        ml.chunks--;
-        ml.bytes -= (int)sizeof (*b);
-    }
+
     if (ml.chunks != 0) {
         BIO_printf(b, "%ld bytes leaked in %d chunks\n", ml.bytes, ml.chunks);
     } else {
