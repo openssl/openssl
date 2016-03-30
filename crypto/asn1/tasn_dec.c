@@ -617,6 +617,8 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
                                      ASN1_ITEM_ptr(tt->item), -1, 0, 0, ctx)) {
                 ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
                         ERR_R_NESTED_ASN1_ERROR);
+                /* |skfield| may be partially allocated despite failure. */
+                ASN1_item_free(skfield, ASN1_ITEM_ptr(tt->item));
                 goto err;
             }
             len -= p - q;
