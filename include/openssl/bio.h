@@ -631,9 +631,7 @@ const BIO_METHOD *BIO_s_bio(void);
 const BIO_METHOD *BIO_s_null(void);
 const BIO_METHOD *BIO_f_null(void);
 const BIO_METHOD *BIO_f_buffer(void);
-# ifdef OPENSSL_SYS_VMS
 const BIO_METHOD *BIO_f_linebuffer(void);
-# endif
 const BIO_METHOD *BIO_f_nbio_test(void);
 # ifndef OPENSSL_NO_DGRAM
 const BIO_METHOD *BIO_s_datagram(void);
