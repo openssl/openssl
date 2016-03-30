@@ -14,7 +14,7 @@ PROGRAMS=\
         danetest heartbeat_test p5_crpt2_test \
         constant_time_test verify_extra_test clienthellotest \
         packettest asynctest secmemtest srptest memleaktest \
-        dtlsv1listentest ct_test threadstest afalgtest
+        dtlsv1listentest ct_test threadstest afalgtest d2i_test
 
 SOURCE[aborttest]=aborttest.c
 INCLUDE[aborttest]={- rel2abs(catdir($builddir,"../include")) -} ../include
@@ -219,5 +219,9 @@ DEPEND[threadstest]=../libcrypto
 SOURCE[afalgtest]=afalgtest.c
 INCLUDE[afalgtest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
 DEPEND[afalgtest]=../libcrypto
+
+SOURCE[d2i_test]=d2i_test.c testutil.c
+INCLUDE[d2i_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+DEPEND[d2i_test]=../libcrypto
 
 INCLUDE[testutil.o]=..
