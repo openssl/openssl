@@ -722,6 +722,15 @@ int BIO_lookup(const char *host, const char *service,
     } else {
 #endif
         const struct hostent *he;
+/*
+ * Because struct hostent is defined for 32-bit pointers only with
+ * VMS C, we need to make sure that '&he_fallback_address' and
+ * '&he_fallback_addresses' are 32-bit pointers
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
         /* Windows doesn't seem to have in_addr_t */
 #ifdef OPENSSL_SYS_WINDOWS
         static uint32_t he_fallback_address;
@@ -735,6 +744,10 @@ int BIO_lookup(const char *host, const char *service,
         static const struct hostent he_fallback =
             { NULL, NULL, AF_INET, sizeof(he_fallback_address),
               (char **)&he_fallback_addresses };
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size restore
+#endif
+
         struct servent *se;
         /* Apprently, on WIN64, s_proto and s_port have traded places... */
 #ifdef _WIN64
@@ -782,7 +795,19 @@ int BIO_lookup(const char *host, const char *service,
         } else {
             char *endp = NULL;
             long portnum = strtol(service, &endp, 10);
+
+/*
+ * Because struct servent is defined for 32-bit pointers only with
+ * VMS C, we need to make sure that 'proto' is a 32-bit pointer.
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
             char *proto = NULL;
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size restore
+#endif
 
             switch (socktype) {
             case SOCK_STREAM:
@@ -819,7 +844,19 @@ int BIO_lookup(const char *host, const char *service,
         *res = NULL;
 
         {
+/*
+ * Because hostent::h_addr_list is an array of 32-bit pointers with VMS C,
+ * we must make sure our iterator designates the same element type, hence
+ * the pointer size dance.
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
             char **addrlistp;
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size restore
+#endif
             size_t addresses;
             BIO_ADDRINFO *tmp_bai = NULL;
 
