@@ -42,9 +42,9 @@ static void info_callback(const SSL *s, int where, int ret)
 }
 
 typedef enum {
-    SUCCESS,
-    RETRY,
-    ERROR
+    PEER_SUCCESS,
+    PEER_RETRY,
+    PEER_ERROR
 } peer_status_t;
 
 static peer_status_t do_handshake_step(SSL *ssl)
@@ -54,15 +54,15 @@ static peer_status_t do_handshake_step(SSL *ssl)
     ret = SSL_do_handshake(ssl);
 
     if (ret == 1) {
-        return SUCCESS;
+        return PEER_SUCCESS;
     } else if (ret == 0) {
-        return ERROR;
+        return PEER_ERROR;
     } else {
         int error = SSL_get_error(ssl, ret);
         if (error == SSL_ERROR_WANT_READ)
-            return RETRY;
+            return PEER_RETRY;
         else
-            return ERROR;
+            return PEER_ERROR;
     }
 }
 
@@ -90,16 +90,15 @@ static handshake_status_t handshake_status(peer_status_t last_status,
                                            int client_went_last)
 {
     switch (last_status) {
-    case SUCCESS:
+    case PEER_SUCCESS:
         switch (previous_status) {
-        case SUCCESS:
+        case PEER_SUCCESS:
             /* Both succeeded. */
             return HANDSHAKE_SUCCESS;
-            break;
-        case RETRY:
+        case PEER_RETRY:
             /* Let the first peer finish. */
             return HANDSHAKE_RETRY;
-        case ERROR:
+        case PEER_ERROR:
             /*
              * Second peer succeeded despite the fact that the first peer
              * already errored. This shouldn't happen.
@@ -107,8 +106,8 @@ static handshake_status_t handshake_status(peer_status_t last_status,
             return INTERNAL_ERROR;
         }
 
-    case RETRY:
-        if (previous_status == RETRY) {
+    case PEER_RETRY:
+        if (previous_status == PEER_RETRY) {
             /* Neither peer is done. */
             return HANDSHAKE_RETRY;
         } else {
@@ -118,9 +117,9 @@ static handshake_status_t handshake_status(peer_status_t last_status,
              */
             return INTERNAL_ERROR;
         }
-    case ERROR:
+    case PEER_ERROR:
         switch (previous_status) {
-        case SUCCESS:
+        case PEER_SUCCESS:
             /*
              * First peer succeeded but second peer errored.
              * TODO(emilia): we should be able to continue here (with some
@@ -128,10 +127,10 @@ static handshake_status_t handshake_status(peer_status_t last_status,
              * alert / close_notify.
              */
             return client_went_last ? CLIENT_ERROR : SERVER_ERROR;
-        case RETRY:
+        case PEER_RETRY:
             /* We errored; let the peer finish. */
             return HANDSHAKE_RETRY;
-        case ERROR:
+        case PEER_ERROR:
             /* Both peers errored. Return the one that errored first. */
             return client_went_last ? SERVER_ERROR : CLIENT_ERROR;
         }
@@ -147,7 +146,7 @@ HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *client_ctx)
     HANDSHAKE_EX_DATA server_ex_data, client_ex_data;
     HANDSHAKE_RESULT ret;
     int client_turn = 1;
-    peer_status_t client_status = RETRY, server_status = RETRY;
+    peer_status_t client_status = PEER_RETRY, server_status = PEER_RETRY;
     handshake_status_t status = HANDSHAKE_RETRY;
 
     server = SSL_new(server_ctx);
