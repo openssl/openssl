@@ -289,34 +289,48 @@ static EVP_PKEY *b2i_dss(const unsigned char **in,
     DSA *dsa = NULL;
     BN_CTX *ctx = NULL;
     unsigned int nbyte;
+    BIGNUM *pbn = NULL, *qbn = NULL, *gbn = NULL, *priv_key = NULL;
+    BIGNUM *pub_key = NULL;
+
     nbyte = (bitlen + 7) >> 3;
 
     dsa = DSA_new();
     ret = EVP_PKEY_new();
     if (dsa == NULL || ret == NULL)
         goto memerr;
-    if (!read_lebn(&p, nbyte, &dsa->p))
+    if (!read_lebn(&p, nbyte, &pbn))
         goto memerr;
-    if (!read_lebn(&p, 20, &dsa->q))
+
+    if (!read_lebn(&p, 20, &qbn))
         goto memerr;
-    if (!read_lebn(&p, nbyte, &dsa->g))
+
+    if (!read_lebn(&p, nbyte, &gbn))
         goto memerr;
+
     if (ispub) {
-        if (!read_lebn(&p, nbyte, &dsa->pub_key))
+        if (!read_lebn(&p, nbyte, &pub_key))
             goto memerr;
     } else {
-        if (!read_lebn(&p, 20, &dsa->priv_key))
+        if (!read_lebn(&p, 20, &priv_key))
             goto memerr;
+
         /* Calculate public key */
-        if ((dsa->pub_key = BN_new()) == NULL)
+        pub_key = BN_new();
+        if (pub_key == NULL)
             goto memerr;
         if ((ctx = BN_CTX_new()) == NULL)
             goto memerr;
 
-        if (!BN_mod_exp(dsa->pub_key, dsa->g, dsa->priv_key, dsa->p, ctx))
+        if (!BN_mod_exp(pub_key, gbn, priv_key, pbn, ctx))
             goto memerr;
+
         BN_CTX_free(ctx);
     }
+    if (!DSA_set0_pqg(dsa, pbn, qbn, gbn))
+        goto memerr;
+    pbn = qbn = gbn = NULL;
+    if (!DSA_set0_key(dsa, pub_key, priv_key))
+        goto memerr;
 
     EVP_PKEY_set1_DSA(ret, dsa);
     DSA_free(dsa);
@@ -326,6 +340,11 @@ static EVP_PKEY *b2i_dss(const unsigned char **in,
  memerr:
     PEMerr(PEM_F_B2I_DSS, ERR_R_MALLOC_FAILURE);
     DSA_free(dsa);
+    BN_free(pbn);
+    BN_free(qbn);
+    BN_free(gbn);
+    BN_free(pub_key);
+    BN_free(priv_key);
     EVP_PKEY_free(ret);
     BN_CTX_free(ctx);
     return NULL;
@@ -484,16 +503,16 @@ static int do_i2b_bio(BIO *out, EVP_PKEY *pk, int ispub)
 static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 {
     int bitlen;
-    bitlen = BN_num_bits(dsa->p);
-    if ((bitlen & 7) || (BN_num_bits(dsa->q) != 160)
-        || (BN_num_bits(dsa->g) > bitlen))
+    bitlen = BN_num_bits(DSA_get0_p(dsa));
+    if ((bitlen & 7) || (BN_num_bits(DSA_get0_q(dsa)) != 160)
+        || (BN_num_bits(DSA_get0_g(dsa)) > bitlen))
         goto badkey;
     if (ispub) {
-        if (BN_num_bits(dsa->pub_key) > bitlen)
+        if (BN_num_bits(DSA_get0_pub_key(dsa)) > bitlen)
             goto badkey;
         *pmagic = MS_DSS1MAGIC;
     } else {
-        if (BN_num_bits(dsa->priv_key) > 160)
+        if (BN_num_bits(DSA_get0_priv_key(dsa)) > 160)
             goto badkey;
         *pmagic = MS_DSS2MAGIC;
     }
@@ -555,14 +574,14 @@ static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 static void write_dsa(unsigned char **out, DSA *dsa, int ispub)
 {
     int nbyte;
-    nbyte = BN_num_bytes(dsa->p);
-    write_lebn(out, dsa->p, nbyte);
-    write_lebn(out, dsa->q, 20);
-    write_lebn(out, dsa->g, nbyte);
+    nbyte = BN_num_bytes(DSA_get0_p(dsa));
+    write_lebn(out, DSA_get0_p(dsa), nbyte);
+    write_lebn(out, DSA_get0_q(dsa), 20);
+    write_lebn(out, DSA_get0_g(dsa), nbyte);
     if (ispub)
-        write_lebn(out, dsa->pub_key, nbyte);
+        write_lebn(out, DSA_get0_pub_key(dsa), nbyte);
     else
-        write_lebn(out, dsa->priv_key, 20);
+        write_lebn(out, DSA_get0_priv_key(dsa), 20);
     /* Set "invalid" for seed structure values */
     memset(*out, 0xff, 24);
     *out += 24;

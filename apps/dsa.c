@@ -244,7 +244,7 @@ int dsa_main(int argc, char **argv)
 
     if (modulus) {
         BIO_printf(out, "Public Key=");
-        BN_print(out, dsa->pub_key);
+        BN_print(out, DSA_get0_pub_key(dsa));
         BIO_printf(out, "\n");
     }
 

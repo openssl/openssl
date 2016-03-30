@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/dsa.h>
+#include "dsa_locl.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>

@@ -54,6 +54,29 @@
 
 #include <openssl/dsa.h>
 
+struct dsa_st {
+    /*
+     * This first variable is used to pick up errors where a DSA is passed
+     * instead of of a EVP_PKEY
+     */
+    int pad;
+    long version;
+    BIGNUM *p;
+    BIGNUM *q;                  /* == 20 */
+    BIGNUM *g;
+    BIGNUM *pub_key;            /* y public key */
+    BIGNUM *priv_key;           /* x private key */
+    int flags;
+    /* Normally used to cache montgomery values */
+    BN_MONT_CTX *method_mont_p;
+    int references;
+    CRYPTO_EX_DATA ex_data;
+    const DSA_METHOD *meth;
+    /* functional reference if 'meth' is ENGINE-provided */
+    ENGINE *engine;
+    CRYPTO_RWLOCK *lock;
+};
+
 int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
                          const EVP_MD *evpmd, const unsigned char *seed_in,
                          size_t seed_len, unsigned char *seed_out,

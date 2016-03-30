@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/dsa.h>
+#include "dsa_locl.h"
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
 #include <openssl/dh.h>
@@ -280,3 +280,76 @@ DH *DSA_dup_DH(const DSA *r)
     return NULL;
 }
 #endif
+
+BIGNUM *DSA_get0_p(const DSA *d)
+{
+    return d->p;
+}
+
+BIGNUM *DSA_get0_q(const DSA *d)
+{
+    return d->q;
+}
+
+BIGNUM *DSA_get0_g(const DSA *d)
+{
+    return d->g;
+}
+
+int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
+{
+    if (p == NULL || q == NULL || g == NULL)
+        return 0;
+    BN_free(d->p);
+    BN_free(d->q);
+    BN_free(d->g);
+    d->p = p;
+    d->q = q;
+    d->g = g;
+
+    return 1;
+}
+
+BIGNUM *DSA_get0_priv_key(const DSA *d)
+{
+    return d->priv_key;
+}
+
+BIGNUM *DSA_get0_pub_key(const DSA *d)
+{
+    return d->pub_key;
+}
+
+void DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
+{
+    /* Note that it is valid for priv_key to be NULL */
+    if (pub_key == NULL)
+        return 0;
+
+    BN_free(d->pub_key);
+    BN_free(d->priv_key);
+    d->pub_key = pub_key;
+    d->priv_key = priv_key;
+
+    return 1;
+}
+
+void DSA_clear_flags(DSA *d, int flags)
+{
+    d->flags &= ~flags;
+}
+
+int DSA_test_flags(const DSA *d, int flags)
+{
+    return d->flags & flags;
+}
+
+void DSA_set_flags(DSA *d, int flags)
+{
+    d->flags |= flags;
+}
+
+ENGINE *DSA_get0_engine(DSA *d)
+{
+    return d->engine;
+}
