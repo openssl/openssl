@@ -680,10 +680,20 @@ sub __bldtop_dir {
     return catdir($directories{BLDTOP},@_);
 }
 
+sub __exeext {
+    my $ext = "";
+    if ($^O eq "VMS" ) {	# VMS
+	$ext = ".exe";
+    } elsif ($^O eq "MSWin32") { # Windows
+	$ext = ".exe";
+    }
+    return $ENV{"EXE_EXT"} || $ext;
+}
+
 sub __test_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    my $f = pop;
+    my $f = pop . __exeext();
     $f = catfile($directories{BLDTEST},@_,$f);
     $f = catfile($directories{SRCTEST},@_,$f) unless -x $f;
     return $f;
@@ -701,7 +711,7 @@ sub __perltest_file {
 sub __apps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    my $f = pop;
+    my $f = pop . __exeext();
     $f = catfile($directories{BLDAPPS},@_,$f);
     $f = catfile($directories{SRCAPPS},@_,$f) unless -x $f;
     return $f;
@@ -790,23 +800,20 @@ sub __fixup_cmd {
     my $exe_shell = shift;
 
     my $prefix = __bldtop_file("util", "shlib_wrap.sh")." ";
-    my $ext = $ENV{"EXE_EXT"} || "";
 
     if (defined($exe_shell)) {
 	$prefix = "$exe_shell ";
     } elsif ($^O eq "VMS" ) {	# VMS
 	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
-	$ext = ".exe";
     } elsif ($^O eq "MSWin32") { # Windows
 	$prefix = "";
-	$ext = ".exe";
     }
 
     # We test both with and without extension.  The reason
     # is that we might be passed a complete file spec, with
     # extension.
     if ( ! -x $prog ) {
-	my $prog = "$prog$ext";
+	my $prog = "$prog";
 	if ( ! -x $prog ) {
 	    $prog = undef;
 	}
