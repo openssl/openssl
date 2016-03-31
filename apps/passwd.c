@@ -201,14 +201,20 @@ int passwd_main(int argc, char **argv)
         goto opthelp;
 # endif
 
-    if (infile && in_stdin) {
+    if (infile != NULL && in_stdin) {
         BIO_printf(bio_err, "%s: Can't combine -in and -stdin\n", prog);
         goto end;
     }
 
-    in = bio_open_default(infile, 'r', FORMAT_TEXT);
-    if (in == NULL)
-        goto end;
+    if (infile != NULL || in_stdin) {
+        /*
+         * If in_stdin is true, we know that infile is NULL, and that
+         * bio_open_default() will give us back an alias for stdin.
+         */
+        in = bio_open_default(infile, 'r', FORMAT_TEXT);
+        if (in == NULL)
+            goto end;
+    }
 
     if (usecrypt)
         pw_maxlen = 8;
