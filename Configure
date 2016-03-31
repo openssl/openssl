@@ -875,7 +875,7 @@ $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
     if $config{cross_compile_prefix} eq "";
 
 # Allow overriding the names of some tools.  USE WITH CARE
-$config{perl} =    $ENV{'PERL'}    || which("perl5") || which("perl") || "perl";
+$config{perl} =    $ENV{'PERL'}    || ($^O ne "VMS" ? $^X : "perl");
 $target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
 $target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  || which("ranlib") || "true";
 $target{ar} =      $ENV{'AR'}      || $target{ar}      || "ar";
