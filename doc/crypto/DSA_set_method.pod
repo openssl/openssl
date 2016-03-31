@@ -47,54 +47,13 @@ be released during the change. It is possible to have DSA keys that only
 work with certain DSA_METHOD implementations (eg. from an ENGINE module
 that supports embedded hardware-protected keys), and in such cases
 attempting to change the DSA_METHOD for the key can have unexpected
-results.
+results. See L<DSA_meth_new> for information on constructing custom DSA_METHOD
+objects;
 
 DSA_new_method() allocates and initializes a DSA structure so that B<engine>
 will be used for the DSA operations. If B<engine> is NULL, the default engine
 for DSA operations is used, and if no default ENGINE is set, the DSA_METHOD
 controlled by DSA_set_default_method() is used.
-
-=head1 THE DSA_METHOD STRUCTURE
-
-struct
- {
-     /* name of the implementation */
-        const char *name;
-
-     /* sign */
-	DSA_SIG *(*dsa_do_sign)(const unsigned char *dgst, int dlen,
-                                 DSA *dsa);
-
-     /* pre-compute k^-1 and r */
-	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
-                                 BIGNUM **rp);
-
-     /* verify */
-	int (*dsa_do_verify)(const unsigned char *dgst, int dgst_len,
-                                 DSA_SIG *sig, DSA *dsa);
-
-     /* compute rr = a1^p1 * a2^p2 mod m (May be NULL for some
-                                          implementations) */
-	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
-                                 BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
-                                 BN_CTX *ctx, BN_MONT_CTX *in_mont);
-
-     /* compute r = a ^ p mod m (May be NULL for some implementations) */
-        int (*bn_mod_exp)(DSA *dsa, BIGNUM *r, BIGNUM *a,
-                                 const BIGNUM *p, const BIGNUM *m,
-                                 BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-
-     /* called at DSA_new */
-        int (*init)(DSA *DSA);
-
-     /* called at DSA_free */
-        int (*finish)(DSA *DSA);
-
-        int flags;
-
-        char *app_data; /* ?? */
-
- } DSA_METHOD;
 
 =head1 RETURN VALUES
 
@@ -113,6 +72,6 @@ fails. Otherwise it returns a pointer to the newly allocated structure.
 
 =head1 SEE ALSO
 
-L<dsa(3)>, L<DSA_new(3)>
+L<dsa(3)>, L<DSA_new(3)>, L<DSA_meth_new(3)>
 
 =cut
