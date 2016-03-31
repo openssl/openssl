@@ -14,5 +14,6 @@ SOURCE[openssl]=\
 INCLUDE[openssl]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
 DEPEND[openssl]=../libssl
 
-SCRIPTS=CA.pl
+SCRIPTS=CA.pl tsget
 SOURCE[CA.pl]=CA.pl.in
+SOURCE[tsget]=tsget.in

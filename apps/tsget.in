@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!{- $config{perl} -}
 # Written by Zoltan Glozik <zglozik@stones.com>.
 # Copyright (c) 2002 The OpenTSA Project.  All rights reserved.
 $::version = '$Id: tsget,v 1.3 2009/09/07 17:57:18 steve Exp $';
