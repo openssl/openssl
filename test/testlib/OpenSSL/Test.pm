@@ -354,7 +354,7 @@ sub run {
 	$r = $hooks{exit_checker}->($e);
     }
 
-    print STDERR "$prefix$cmd => $e\n"
+    print STDERR "$prefix$display_cmd => $e\n"
         if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
 
     # At this point, $? stops being interesting, and unfortunately,
@@ -560,7 +560,7 @@ command as a string.
 sub cmdstr {
     my ($cmd, $display_cmd) = shift->(0);
 
-    return $display_cmd;
+    return $cmd;
 }
 
 =over 4
