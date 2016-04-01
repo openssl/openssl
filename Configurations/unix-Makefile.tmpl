@@ -89,7 +89,7 @@ GENERATED={- join(" ", map { (my $x = $_) =~ s|\.S$|\.s|; $x } keys %{$unified_i
 BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
 MISC_SCRIPTS=$(SRCDIR)/tools/c_hash $(SRCDIR)/tools/c_info \
 	     $(SRCDIR)/tools/c_issuer $(SRCDIR)/tools/c_name \
-	     $(BLDDIR)/apps/CA.pl $(BDLDIR)/apps/tsget
+	     $(BLDDIR)/apps/CA.pl $(BLDDIR)/apps/tsget
 
 SHLIB_INFO={- join(" ", map { "\"".shlib($_).";".shlib_simple($_)."\"" } @{$unified_info{libraries}}) -}
 
