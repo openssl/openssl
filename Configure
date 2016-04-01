@@ -912,6 +912,8 @@ if ($target{build_scheme}->[0] eq "unified" && $classic) {
 my ($builder, $builder_platform, @builder_opts) =
     @{$target{build_scheme}};
 
+push @{$config{defines}}, "NDEBUG"    if $config{build_type} eq "release";
+
 if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	{
 	$config{cflags} .= " -mno-cygwin";
