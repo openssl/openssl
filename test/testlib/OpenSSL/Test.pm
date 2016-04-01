@@ -548,10 +548,28 @@ sub with {
 
 =over 4
 
-=item B<cmdstr CODEREF>
+=item B<cmdstr CODEREF, OPTS>
 
 C<cmdstr> takes a CODEREF from C<app> or C<test> and simply returns the
 command as a string.
+
+C<cmdstr> takes some additiona options OPTS that affect the string returned:
+
+=over 4
+
+=item B<display =E<gt> 0|1>
+
+When set to 0, the returned string will be with all decorations, such as a
+possible redirect of stderr to the null device.  This is suitable if the
+string is to be used directly in a recipe.
+
+When set to 1, the returned string will be without extra decorations.  This
+is suitable for display if that is desired (doesn't confuse people with all
+internal stuff), or if it's used to pass a command down to a subprocess.
+
+Default: 0
+
+=back
 
 =back
 
@@ -559,8 +577,13 @@ command as a string.
 
 sub cmdstr {
     my ($cmd, $display_cmd) = shift->(0);
+    my %opts = @_;
 
-    return $cmd;
+    if ($opts{display}) {
+        return $display_cmd;
+    } else {
+        return $cmd;
+    }
 }
 
 =over 4
