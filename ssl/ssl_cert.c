@@ -1160,6 +1160,25 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx, int o
         if (level >= 3)
             return 0;
         break;
+#ifndef OPENSSL_NO_EC
+    case SSL_SECOP_SIGALG_SHARED:
+	if (s && s->cert && s->cert->key && s->cert->key->privatekey) {
+		EVP_PKEY *skey = s->cert->key->privatekey;
+
+		/*
+		 * RFC 5480 Section 4, Security Considerations.
+		 * For a curve with keysize of 384 bits (secp384r1) we
+		 * allow SHA-384 and higher
+		 */
+		if (EVP_PKEY_id(skey) == EVP_PKEY_EC) {
+			if (EVP_PKEY_bits(skey) > (bits * 2))
+				return 0;
+		}
+	}
+	if (bits < minbits)
+		return 0;
+	break;
+#endif
     default:
         if (bits < minbits)
             return 0;
