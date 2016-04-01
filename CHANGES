@@ -4,6 +4,11 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Made DSA and DSA_METHOD opaque. The structures for managing DSA objects
+     have been moved out of the public header files. New functions for managing
+     these have been added.
+     [Matt Caswell]
+
   *) Made BIO and BIO_METHOD opaque. The structures for managing BIOs have been
      moved out of the public header files. New functions for managing these
      have been added.
