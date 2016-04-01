@@ -79,7 +79,7 @@ indir "tsa" => sub
     $ENV{OPENSSL_CONF} = srctop_file("test", "CAtsa.cnf");
     # Because that's what ../apps/CA.pl really looks at
     $ENV{OPENSSL_CONFIG} = "-config ".$ENV{OPENSSL_CONF};
-    $ENV{OPENSSL} = cmdstr(app(["openssl"]));
+    $ENV{OPENSSL} = cmdstr(app(["openssl"]), display => 1);
     $testtsa = srctop_file("test", "recipes", "80-test_tsa.t");
     $CAtsa = srctop_file("test", "CAtsa.cnf");
 

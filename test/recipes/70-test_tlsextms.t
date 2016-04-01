@@ -84,7 +84,7 @@ my $fullhand = 0;
 
 my $proxy = TLSProxy::Proxy->new(
     \&extms_filter,
-    cmdstr(app(["openssl"])),
+    cmdstr(app(["openssl"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );

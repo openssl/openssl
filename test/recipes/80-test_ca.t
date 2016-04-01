@@ -9,7 +9,7 @@ use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file/;
 
 setup("test_ca");
 
-$ENV{OPENSSL} = cmdstr(app(["openssl"]));
+$ENV{OPENSSL} = cmdstr(app(["openssl"]), display => 1);
 my $std_openssl_cnf =
     srctop_file("apps", $^O eq "VMS" ? "openssl-vms.cnf" : "openssl.cnf");
 
