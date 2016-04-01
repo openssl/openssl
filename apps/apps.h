@@ -445,15 +445,12 @@ typedef struct args_st {
     char **argv;
 } ARGS;
 
-#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-# pragma pointer_size save
-# pragma pointer_size 32
-typedef char **argv_t;
-# pragma pointer_size restore
-char **copy_argv(int *argc, argv_t argv);
-#else
-typedef char **argv_t;
-#endif
+/*
+ * VMS C only for now, implemented in vms_decc_init.c
+ * If other C compilers forget to terminate argv with NULL, this function
+ * can be re-used.
+ */
+char **copy_argv(int *argc, char *argv[]);
 
 
 # define PW_MIN_LENGTH 4

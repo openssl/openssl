@@ -106,7 +106,7 @@ decc_feat_t decc_feat_array[] = {
 };
 
 
-char **copy_argv(int *argc, argv_t argv)
+char **copy_argv(int *argc, char *argv[])
 {
     /*-
      * The note below is for historical purpose.  On VMS now we always
