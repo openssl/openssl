@@ -151,5 +151,9 @@ CA.pl: CA.pl.in
 	$(PERL) -I$(TOP) -Mconfigdata $(TOP)/util/dofile.pl -oapps/Makefile CA.pl.in > CA.pl.new
 	mv CA.pl.new CA.pl
 
+tsget:	tsget.in
+	$(PERL) -I$(TOP) -Mconfigdata $(TOP)/util/dofile.pl -oapps/Makefile tsget.in > tsget.new
+	mv tsget.new tsget
+
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
