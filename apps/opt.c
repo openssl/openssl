@@ -163,8 +163,8 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
     unknown = NULL;
 
     for (; o->name; ++o) {
-        const OPTIONS *next;
 #ifndef NDEBUG
+        const OPTIONS *next;
         int duplicated, i;
 #endif
 
