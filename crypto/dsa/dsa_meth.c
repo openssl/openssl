@@ -68,12 +68,12 @@ int DSA_meth_set_flags(DSA_METHOD *dsam, int flags)
     return 1;
 }
 
-void *DSA_meth_get_app_data(const DSA_METHOD *dsam)
+void *DSA_meth_get0_app_data(const DSA_METHOD *dsam)
 {
     return dsam->app_data;
 }
 
-int DSA_meth_set_app_data(DSA_METHOD *dsam, void *app_data)
+int DSA_meth_set0_app_data(DSA_METHOD *dsam, void *app_data)
 {
     dsam->app_data = app_data;
     return 1;

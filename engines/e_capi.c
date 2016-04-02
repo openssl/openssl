@@ -478,12 +478,12 @@ static int capi_init(ENGINE *e)
         ossl_dsa_meth = DSA_OpenSSL();
         if (   !DSA_meth_set_sign(capi_dsa_method, capi_dsa_do_sign)
             || !DSA_meth_set_verify(capi_dsa_method,
-                    DSA_meth_get_verify(ossl_dsa_meth))
+                                    DSA_meth_get_verify(ossl_dsa_meth))
             || !DSA_meth_set_finish(capi_dsa_method, capi_dsa_free)
             || !DSA_meth_set_mod_exp(capi_dsa_method,
-                    DSA_meth_get_mod_exp(ossl_dsa_meth))
+                                     DSA_meth_get_mod_exp(ossl_dsa_meth))
             || !DSA_meth_set_bn_mod_exp(capi_dsa_method,
-                    DSA_meth_get_bn_mod_exp(ossl_dsa_meth))) {
+                                    DSA_meth_get_bn_mod_exp(ossl_dsa_meth))) {
             goto memerr;
         }
     }

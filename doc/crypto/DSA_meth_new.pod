@@ -4,7 +4,7 @@
 
 DSA_meth_new, DSA_meth_free, DSA_meth_dup, DSA_meth_get0_name,
 DSA_meth_set1_name, DSA_meth_get_flags, DSA_meth_set_flags,
-DSA_meth_get_app_data, DSA_meth_set_app_data, DSA_meth_get_sign,
+DSA_meth_get0_app_data, DSA_meth_set0_app_data, DSA_meth_get_sign,
 DSA_meth_set_sign, DSA_meth_get_sign_setup, DSA_meth_set_sign_setup,
 DSA_meth_get_verify, DSA_meth_set_verify, DSA_meth_get_mod_exp,
 DSA_meth_set_mod_exp, DSA_meth_get_bn_mod_exp, DSA_meth_set_bn_mod_exp,
@@ -23,8 +23,8 @@ DSA_meth_set_keygen  - Routines to build up DSA methods
  int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name);
  int DSA_meth_get_flags(DSA_METHOD *dsam);
  int DSA_meth_set_flags(DSA_METHOD *dsam, int flags);
- void *DSA_meth_get_app_data(const DSA_METHOD *dsam);
- int DSA_meth_set_app_data(DSA_METHOD *dsam, void *app_data);
+ void *DSA_meth_get0_app_data(const DSA_METHOD *dsam);
+ int DSA_meth_set0_app_data(DSA_METHOD *dsam, void *app_data);
  DSA_SIG *(*DSA_meth_get_sign(const DSA_METHOD *dsam))
          (const unsigned char *, int, DSA *);
  int DSA_meth_set_sign(DSA_METHOD *dsam,
@@ -92,7 +92,7 @@ caller remains responsible for freeing the memory associated with the name.
 DSA_meth_get_flags() returns the current value of the flags associated with this
 DSA_METHOD. DSA_meth_set_flags() provides the ability to set these flags.
 
-The functions DSA_meth_get_app_data() and DSA_meth_set_app_data() provide the
+The functions DSA_meth_get0_app_data() and DSA_meth_set0_app_data() provide the
 ability to associate implementation specific data with the DSA_METHOD. It is
 the application's responsibility to free this data before the DSA_METHOD is
 freed via a call to DSA_meth_free().

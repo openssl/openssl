@@ -232,8 +232,8 @@ const char *DSA_meth_get0_name(const DSA_METHOD *dsam);
 int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name);
 int DSA_meth_get_flags(DSA_METHOD *dsam);
 int DSA_meth_set_flags(DSA_METHOD *dsam, int flags);
-void *DSA_meth_get_app_data(const DSA_METHOD *dsam);
-int DSA_meth_set_app_data(DSA_METHOD *dsam, void *app_data);
+void *DSA_meth_get0_app_data(const DSA_METHOD *dsam);
+int DSA_meth_set0_app_data(DSA_METHOD *dsam, void *app_data);
 DSA_SIG *(*DSA_meth_get_sign(const DSA_METHOD *dsam))
         (const unsigned char *, int, DSA *);
 int DSA_meth_set_sign(DSA_METHOD *dsam,
