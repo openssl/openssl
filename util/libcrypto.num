@@ -4097,13 +4097,13 @@ DSA_get0_pqg                            3962	1_1_0	EXIST::FUNCTION:DSA
 DSA_meth_get_app_data                   3963	1_1_0	EXIST::FUNCTION:DSA
 DSA_meth_get_keygen                     3964	1_1_0	EXIST::FUNCTION:DSA
 DSA_clear_flags                         3965	1_1_0	EXIST::FUNCTION:DSA
-DSA_meth_get_name                       3966	1_1_0	EXIST::FUNCTION:DSA
+DSA_meth_get0_name                      3966	1_1_0	EXIST::FUNCTION:DSA
 DSA_meth_get_paramgen                   3967	1_1_0	EXIST::FUNCTION:DSA
 DSA_meth_get_sign                       3968	1_1_0	EXIST::FUNCTION:DSA
 DSA_meth_set_paramgen                   3969	1_1_0	EXIST::FUNCTION:DSA
 DSA_test_flags                          3970	1_1_0	EXIST::FUNCTION:DSA
 DSA_meth_set_app_data                   3971	1_1_0	EXIST::FUNCTION:DSA
-DSA_meth_set_name                       3972	1_1_0	EXIST::FUNCTION:DSA
+DSA_meth_set1_name                      3972	1_1_0	EXIST::FUNCTION:DSA
 DSA_get0_key                            3973	1_1_0	EXIST::FUNCTION:DSA
 DSA_meth_get_mod_exp                    3974	1_1_0	EXIST::FUNCTION:DSA
 DSA_set0_pqg                            3975	1_1_0	EXIST::FUNCTION:DSA
