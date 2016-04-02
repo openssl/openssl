@@ -26,8 +26,6 @@ env:
     - CONFIG_OPTS=""
     - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
     - CONFIG_OPTS="--strict-warnings no-shared" BUILDONLY="yes"
-    - CONFIG_OPTS="--classic no-shared" BUILDONLY="yes"
-    - CONFIG_OPTS="--classic" BUILDONLY="yes"
     - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
     - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
 
@@ -60,34 +58,24 @@ matrix:
 before_script:
     - sh .travis-create-release.sh $TRAVIS_OS_NAME
     - tar -xvzf _srcdist.tar.gz
-    - if echo "$CONFIG_OPTS" | grep -e "--classic" >/dev/null; then
-          srcdir=.;
-          cd _srcdist;
-      else
-          srcdir=../_srcdist;
-          mkdir _build;
-          cd _build;
-      fi
+    - mkdir _build;
+    - cd _build;
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
-          $srcdir/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
+          ../_srcdir/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
       elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
-          $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
+          ../_srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
           if which ccache >/dev/null && [ "$CC" != clang-3.6 ]; then
               CC="ccache $CC";
           fi;
-          $srcdir/config $CONFIG_OPTS;
+          ../_srcdir/config $CONFIG_OPTS;
       fi
     - cd ..
 
 script:
-    - if echo "$CONFIG_OPTS" | grep -e "--classic" >/dev/null; then
-          cd _srcdist;
-      else
-          cd _build;
-      fi
+    - cd _build;
     - make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
