@@ -458,8 +458,6 @@ my $target="";
 $config{options}="";
 $config{build_type} = "release";
 
-my $classic = 0;
-
 my @argvcopy=@ARGV;
 
 if (grep /^reconf(igure)?$/, @argvcopy) {
@@ -644,11 +642,7 @@ foreach (@argvcopy)
 		}
 	elsif (/^[-+]/)
 		{
-		if (/^--classic$/)
-			{
-			$classic=1;
-			}
-		elsif (/^--prefix=(.*)$/)
+		if (/^--prefix=(.*)$/)
 			{
 			$config{prefix}=$1;
 			die "Directory given with --prefix MUST be absolute\n"
@@ -903,22 +897,6 @@ $config{shared_ldflag} = "";
 # Make sure build_scheme is consistent.
 $target{build_scheme} = [ $target{build_scheme} ]
     if ref($target{build_scheme}) ne "ARRAY";
-
-###### TO BE REMOVED WHEN CLASSIC BUILD IS REMOVED
-######
-###### If the user has chosen --classic, we give it to them.
-###### If they try that with an out-of-source config, we complain.
-if ($target{build_scheme}->[0] eq "unified" && $classic) {
-    die "Can't perform a classic build out of source tree\n"
-        if $srcdir ne $blddir;
-
-    $target{build_scheme} = { unix    => [ "unixmake" ],
-                              windows => undef,
-                              VMS     => undef } -> {$target{build_scheme}->[1]};
-
-    die "Classic mode unavailable on this platform\n"
-        unless defined($target{build_scheme});
-}
 
 my ($builder, $builder_platform, @builder_opts) =
     @{$target{build_scheme}};
