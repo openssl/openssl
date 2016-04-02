@@ -136,9 +136,9 @@ BOOL CALLBACK once_cb(PINIT_ONCE once, PVOID p, PVOID *pp)
 int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
 {
     if (InitOnceExecuteOnce(once, once_cb, init, NULL))
-        return 0;
+        return 1;
 
-    return 1;
+    return 0;
 }
 
 # endif
