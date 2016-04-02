@@ -72,51 +72,7 @@
 extern "C" {
 # endif
 
-/* The type RSA is defined in ossl_typ.h */
-struct rsa_meth_st {
-    const char *name;
-    int (*rsa_pub_enc) (int flen, const unsigned char *from,
-                        unsigned char *to, RSA *rsa, int padding);
-    int (*rsa_pub_dec) (int flen, const unsigned char *from,
-                        unsigned char *to, RSA *rsa, int padding);
-    int (*rsa_priv_enc) (int flen, const unsigned char *from,
-                         unsigned char *to, RSA *rsa, int padding);
-    int (*rsa_priv_dec) (int flen, const unsigned char *from,
-                         unsigned char *to, RSA *rsa, int padding);
-    /* Can be null */
-    int (*rsa_mod_exp) (BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
-    /* Can be null */
-    int (*bn_mod_exp) (BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-                       const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-    /* called at new */
-    int (*init) (RSA *rsa);
-    /* called at free */
-    int (*finish) (RSA *rsa);
-    /* RSA_METHOD_FLAG_* things */
-    int flags;
-    /* may be needed! */
-    char *app_data;
-    /*
-     * New sign and verify functions: some libraries don't allow arbitrary
-     * data to be signed/verified: this allows them to be used. Note: for
-     * this to work the RSA_public_decrypt() and RSA_private_encrypt() should
-     * *NOT* be used RSA_sign(), RSA_verify() should be used instead.
-     */
-    int (*rsa_sign) (int type,
-                     const unsigned char *m, unsigned int m_length,
-                     unsigned char *sigret, unsigned int *siglen,
-                     const RSA *rsa);
-    int (*rsa_verify) (int dtype, const unsigned char *m,
-                       unsigned int m_length, const unsigned char *sigbuf,
-                       unsigned int siglen, const RSA *rsa);
-    /*
-     * If this callback is NULL, the builtin software RSA key-gen will be
-     * used. This is for behavioural compatibility whilst the code gets
-     * rewired, but one day it would be nice to assume there are no such
-     * things as "builtin software" implementations.
-     */
-    int (*rsa_keygen) (RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
-};
+/* The types RSA and RSA_METHOD are defined in ossl_typ.h */
 
 # ifndef OPENSSL_RSA_MAX_MODULUS_BITS
 #  define OPENSSL_RSA_MAX_MODULUS_BITS   16384
@@ -467,6 +423,87 @@ RSA *RSAPrivateKey_dup(RSA *rsa);
  * check.
  */
 # define RSA_FLAG_CHECKED                        0x0800
+
+RSA_METHOD *RSA_meth_new(const char *name, int flags);
+void RSA_meth_free(RSA_METHOD *meth);
+RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth);
+const char *RSA_meth_get0_name(const RSA_METHOD *meth);
+int RSA_meth_set1_name(RSA_METHOD *meth, const char *name);
+int RSA_meth_get_flags(RSA_METHOD *meth);
+int RSA_meth_set_flags(RSA_METHOD *meth, int flags);
+void *RSA_meth_get0_app_data(const RSA_METHOD *meth);
+int RSA_meth_set0_app_data(RSA_METHOD *meth, void *app_data);
+int (*RSA_meth_get_pub_enc(const RSA_METHOD *meth))
+    (int flen, const unsigned char *from,
+     unsigned char *to, RSA *rsa, int padding);
+int RSA_meth_set_pub_enc(RSA_METHOD *rsa,
+                         int (*pub_enc) (int flen, const unsigned char *from,
+                                         unsigned char *to, RSA *rsa,
+                                         int padding));
+int (*RSA_meth_get_pub_dec(const RSA_METHOD *meth))
+    (int flen, const unsigned char *from,
+     unsigned char *to, RSA *rsa, int padding);
+int RSA_meth_set_pub_dec(RSA_METHOD *rsa,
+                         int (*pub_dec) (int flen, const unsigned char *from,
+                                         unsigned char *to, RSA *rsa,
+                                         int padding));
+int (*RSA_meth_get_priv_enc(const RSA_METHOD *meth))
+    (int flen, const unsigned char *from,
+     unsigned char *to, RSA *rsa, int padding);
+int RSA_meth_set_priv_enc(RSA_METHOD *rsa,
+                          int (*priv_enc) (int flen, const unsigned char *from,
+                                           unsigned char *to, RSA *rsa,
+                                           int padding));
+int (*RSA_meth_get_priv_dec(const RSA_METHOD *meth))
+    (int flen, const unsigned char *from,
+     unsigned char *to, RSA *rsa, int padding);
+int RSA_meth_set_priv_dec(RSA_METHOD *rsa,
+                          int (*priv_dec) (int flen, const unsigned char *from,
+                                           unsigned char *to, RSA *rsa,
+                                           int padding));
+int (*RSA_meth_get_mod_exp(const RSA_METHOD *meth))
+    (BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
+int RSA_meth_set_mod_exp(RSA_METHOD *rsa,
+                         int (*mod_exp) (BIGNUM *r0, const BIGNUM *I, RSA *rsa,
+                                         BN_CTX *ctx));
+int (*RSA_meth_get_bn_mod_exp(const RSA_METHOD *meth))
+    (BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+int RSA_meth_set_bn_mod_exp(RSA_METHOD *rsa,
+                            int (*bn_mod_exp) (BIGNUM *r,
+                                               const BIGNUM *a,
+                                               const BIGNUM *p,
+                                               const BIGNUM *m,
+                                               BN_CTX *ctx,
+                                               BN_MONT_CTX *m_ctx));
+int (*RSA_meth_get_init(const RSA_METHOD *meth)) (RSA *rsa);
+int RSA_meth_set_init(RSA_METHOD *rsa, int (*init) (RSA *rsa));
+int (*RSA_meth_get_finish(const RSA_METHOD *meth)) (RSA *rsa);
+int RSA_meth_set_finish(RSA_METHOD *rsa, int (*finish) (RSA *rsa));
+int (*RSA_meth_get_sign(const RSA_METHOD *meth))
+    (int type,
+     const unsigned char *m, unsigned int m_length,
+     unsigned char *sigret, unsigned int *siglen,
+     const RSA *rsa);
+int RSA_meth_set_sign(RSA_METHOD *rsa,
+                      int (*sign) (int type, const unsigned char *m,
+                                   unsigned int m_length,
+                                   unsigned char *sigret, unsigned int *siglen,
+                                   const RSA *rsa));
+int (*RSA_meth_get_verify(const RSA_METHOD *meth))
+    (int dtype, const unsigned char *m,
+     unsigned int m_length, const unsigned char *sigbuf,
+     unsigned int siglen, const RSA *rsa);
+int RSA_meth_set_verify(RSA_METHOD *rsa,
+                        int (*verify) (int dtype, const unsigned char *m,
+                                       unsigned int m_length,
+                                       const unsigned char *sigbuf,
+                                       unsigned int siglen, const RSA *rsa));
+int (*RSA_meth_get_keygen(const RSA_METHOD *meth))
+    (RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+int RSA_meth_set_keygen(RSA_METHOD *rsa,
+                        int (*keygen) (RSA *rsa, int bits, BIGNUM *e,
+                                       BN_GENCB *cb));
 
 /* BEGIN ERROR CODES */
 /*
