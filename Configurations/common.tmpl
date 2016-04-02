@@ -1,7 +1,9 @@
 {- # -*- Mode: perl -*-
 
-     # A cache of objects for which a recipe has already been generated
-     my %cache;
+ use File::Basename;
+
+ # A cache of objects for which a recipe has already been generated
+ my %cache;
 
  # resolvedepends and reducedepends work in tandem to make sure
  # there are no duplicate dependencies and that they are in the
@@ -158,8 +160,46 @@
      $cache{$script} = 1;
  }
 
+ sub dodir {
+     my $dir = shift;
+     return "" if !exists(&generatedir) or $cache{$dir};
+     $OUT .= generatedir(dir => $dir,
+                         deps => $unified_info{dirinfo}->{$dir}->{deps},
+                         %{$unified_info{dirinfo}->{$_}->{products}});
+     $cache{$dir} = 1;
+ }
+
  # Start with populating the cache with all the overrides
  %cache = map { $_ => 1 } @{$unified_info{overrides}};
+
+ # For convenience collect information regarding directories where
+ # files are generated, those generated files and the end product
+ # they end up in where applicable.  Then, add build rules for those
+ # directories
+ if (exists &generatedir) {
+     my %loopinfo = ( "dso" => [ @{$unified_info{engines}} ],
+                      "lib" => [ @{$unified_info{libraries}} ],
+                      "bin" => [ @{$unified_info{programs}} ],
+                      "script" => [ @{$unified_info{scripts}} ] );
+     foreach my $type (keys %loopinfo) {
+         foreach my $product (@{$loopinfo{$type}}) {
+             my %dirs = ();
+             my $pd = dirname($product);
+             foreach (@{$unified_info{sources}->{$product}}) {
+                 my $d = dirname($_);
+                 next if $d eq "test";    # we already have a test target
+                 next if $d eq ".";       # current directory is just silly
+                 $dirs{$d} = 1;
+                 push @{$unified_info{dirinfo}->{$d}->{deps}}, $_
+                     if $d ne $pd;
+             }
+             foreach (keys %dirs) {
+                 push @{$unified_info{dirinfo}->{$_}->{products}->{$type}},
+                 $product;
+             }
+         }
+     }
+ }
 
  # Build all known libraries, engines, programs and scripts.
  # Everything else will be handled as a consequence.
@@ -167,6 +207,8 @@
  foreach (@{$unified_info{engines}})   { doengine($_); }
  foreach (@{$unified_info{programs}})  { dobin($_);    }
  foreach (@{$unified_info{scripts}})   { doscript($_); }
+
+ foreach (sort keys %{$unified_info{dirinfo}})  { dodir($_); }
 
  # Finally, should there be any applicable BEGINRAW/ENDRAW sections,
  # they are added here.
