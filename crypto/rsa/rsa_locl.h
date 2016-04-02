@@ -46,6 +46,51 @@ struct rsa_st {
     CRYPTO_RWLOCK *lock;
 };
 
+struct rsa_meth_st {
+    char *name;
+    int (*rsa_pub_enc) (int flen, const unsigned char *from,
+                        unsigned char *to, RSA *rsa, int padding);
+    int (*rsa_pub_dec) (int flen, const unsigned char *from,
+                        unsigned char *to, RSA *rsa, int padding);
+    int (*rsa_priv_enc) (int flen, const unsigned char *from,
+                         unsigned char *to, RSA *rsa, int padding);
+    int (*rsa_priv_dec) (int flen, const unsigned char *from,
+                         unsigned char *to, RSA *rsa, int padding);
+    /* Can be null */
+    int (*rsa_mod_exp) (BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
+    /* Can be null */
+    int (*bn_mod_exp) (BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+                       const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+    /* called at new */
+    int (*init) (RSA *rsa);
+    /* called at free */
+    int (*finish) (RSA *rsa);
+    /* RSA_METHOD_FLAG_* things */
+    int flags;
+    /* may be needed! */
+    char *app_data;
+    /*
+     * New sign and verify functions: some libraries don't allow arbitrary
+     * data to be signed/verified: this allows them to be used. Note: for
+     * this to work the RSA_public_decrypt() and RSA_private_encrypt() should
+     * *NOT* be used RSA_sign(), RSA_verify() should be used instead.
+     */
+    int (*rsa_sign) (int type,
+                     const unsigned char *m, unsigned int m_length,
+                     unsigned char *sigret, unsigned int *siglen,
+                     const RSA *rsa);
+    int (*rsa_verify) (int dtype, const unsigned char *m,
+                       unsigned int m_length, const unsigned char *sigbuf,
+                       unsigned int siglen, const RSA *rsa);
+    /*
+     * If this callback is NULL, the builtin software RSA key-gen will be
+     * used. This is for behavioural compatibility whilst the code gets
+     * rewired, but one day it would be nice to assume there are no such
+     * things as "builtin software" implementations.
+     */
+    int (*rsa_keygen) (RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+};
+
 extern int int_rsa_verify(int dtype, const unsigned char *m,
                           unsigned int m_len, unsigned char *rm,
                           size_t *prm_len, const unsigned char *sigbuf,
