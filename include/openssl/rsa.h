@@ -72,6 +72,7 @@
 extern "C" {
 # endif
 
+/* The type RSA is defined in ossl_typ.h */
 struct rsa_meth_st {
     const char *name;
     int (*rsa_pub_enc) (int flen, const unsigned char *from,
@@ -115,42 +116,6 @@ struct rsa_meth_st {
      * things as "builtin software" implementations.
      */
     int (*rsa_keygen) (RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
-};
-
-struct rsa_st {
-    /*
-     * The first parameter is used to pickup errors where this is passed
-     * instead of aEVP_PKEY, it is set to 0
-     */
-    int pad;
-    long version;
-    const RSA_METHOD *meth;
-    /* functional reference if 'meth' is ENGINE-provided */
-    ENGINE *engine;
-    BIGNUM *n;
-    BIGNUM *e;
-    BIGNUM *d;
-    BIGNUM *p;
-    BIGNUM *q;
-    BIGNUM *dmp1;
-    BIGNUM *dmq1;
-    BIGNUM *iqmp;
-    /* be careful using this if the RSA structure is shared */
-    CRYPTO_EX_DATA ex_data;
-    int references;
-    int flags;
-    /* Used to cache montgomery values */
-    BN_MONT_CTX *_method_mod_n;
-    BN_MONT_CTX *_method_mod_p;
-    BN_MONT_CTX *_method_mod_q;
-    /*
-     * all BIGNUM values are actually in the following data, if it is not
-     * NULL
-     */
-    char *bignum_data;
-    BN_BLINDING *blinding;
-    BN_BLINDING *mt_blinding;
-    CRYPTO_RWLOCK *lock;
 };
 
 # ifndef OPENSSL_RSA_MAX_MODULUS_BITS
@@ -307,6 +272,18 @@ RSA *RSA_new_method(ENGINE *engine);
 int RSA_bits(const RSA *rsa);
 int RSA_size(const RSA *rsa);
 int RSA_security_bits(const RSA *rsa);
+
+int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);
+int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
+int RSA_set0_crt_params(RSA *r,BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp);
+void RSA_get0_key(const RSA *r, BIGNUM **n, BIGNUM **e, BIGNUM **d);
+void RSA_get0_factors(const RSA *r, BIGNUM **p, BIGNUM **q);
+void RSA_get0_crt_params(const RSA *r,
+                         BIGNUM **dmp1, BIGNUM **dmq1, BIGNUM **iqmp);
+void RSA_clear_flags(RSA *r, int flags);
+int RSA_test_flags(const RSA *r, int flags);
+void RSA_set_flags(RSA *r, int flags);
+ENGINE *RSA_get0_engine(RSA *r);
 
 /* Deprecated version */
 DEPRECATEDIN_0_9_8(RSA *RSA_generate_key(int bits, unsigned long e, void

@@ -104,9 +104,10 @@ int genrsa_main(int argc, char **argv)
 {
     BN_GENCB *cb = BN_GENCB_new();
     PW_CB_DATA cb_data;
-    ENGINE *e = NULL;
+    ENGINE *eng = NULL;
     BIGNUM *bn = BN_new();
     BIO *out = NULL;
+    BIGNUM *e;
     RSA *rsa = NULL;
     const EVP_CIPHER *enc = NULL;
     int ret = 1, num = DEFBITS, private = 0;
@@ -141,7 +142,7 @@ int genrsa_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
+            eng = setup_engine(opt_arg(), 0);
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -182,7 +183,7 @@ int genrsa_main(int argc, char **argv)
 
     BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus\n",
                num);
-    rsa = e ? RSA_new_method(e) : RSA_new();
+    rsa = eng ? RSA_new_method(eng) : RSA_new();
     if (rsa == NULL)
         goto end;
 
@@ -191,8 +192,9 @@ int genrsa_main(int argc, char **argv)
 
     app_RAND_write_file(NULL);
 
-    hexe = BN_bn2hex(rsa->e);
-    dece = BN_bn2dec(rsa->e);
+    RSA_get0_key(rsa, NULL, &e, NULL);
+    hexe = BN_bn2hex(e);
+    dece = BN_bn2dec(e);
     if (hexe && dece) {
         BIO_printf(bio_err, "e is %s (0x%s)\n", dece, hexe);
     }

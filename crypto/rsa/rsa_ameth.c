@@ -60,11 +60,11 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/cms.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "rsa_locl.h"
 
 #ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);
