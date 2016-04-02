@@ -1,55 +1,9 @@
-/* ====================================================================
- * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+/*
+ * Licensed under the OpenSSL licenses, (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * https://www.openssl.org/source/license.html
+ * or in the file LICENSE in the source distribution.
  */
 
 #include "dsa_locl.h"
@@ -76,26 +30,26 @@ void DSA_meth_free(DSA_METHOD *dsam)
     }
 }
 
-DSA_METHOD *DSA_meth_dup(const DSA_METHOD *meth)
+DSA_METHOD *DSA_meth_dup(const DSA_METHOD *dsam)
 {
     DSA_METHOD *ret;
 
     ret = OPENSSL_malloc(sizeof(DSA_METHOD));
 
     if (ret != NULL) {
-        memcpy(ret, meth, sizeof(*meth));
-        ret->name = OPENSSL_strdup(meth->name);
+        memcpy(ret, dsam, sizeof(*dsam));
+        ret->name = OPENSSL_strdup(dsam->name);
     }
 
     return ret;
 }
 
-const char *DSA_meth_get_name(const DSA_METHOD *dsam)
+const char *DSA_meth_get0_name(const DSA_METHOD *dsam)
 {
     return dsam->name;
 }
 
-int DSA_meth_set_name(DSA_METHOD *dsam, const char *name)
+int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name)
 {
     OPENSSL_free(dsam->name);
     dsam->name = OPENSSL_strdup(name);

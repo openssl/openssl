@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DSA_get0_pqg, DSA_set0_pgg, DSA_get0_key, DSA_set0_key, DSA_clear_flags,
+DSA_get0_pqg, DSA_set0_pqg, DSA_get0_key, DSA_set0_key, DSA_clear_flags,
 DSA_test_flags, DSA_set_flags, DSA_get0_engine - Routines for getting and
 setting data in a DSA object
 
@@ -52,7 +52,7 @@ been called.
 DSA_set_flags() sets the flags in the B<flags> parameter on the DSA object.
 Multiple flags can be passed in one go (bitwise ORed together). Any flags that
 are already set are left set. DSA_test_flags() tests to see whether the flags
-passed in the B<flags> parameter are currently set in the DSA object. Multple
+passed in the B<flags> parameter are currently set in the DSA object. Multiple
 flags can be tested in one go. All flags that are currently set are returned, or
 zero if none of the flags are set. DSA_clear_flags() clears the specified flags
 within the DSA object.
@@ -71,9 +71,9 @@ has been set.
 
 =head1 SEE ALSO
 
-L<dsa>, L<DSA_new>, L<DSA_generate_parameters>, L<DSA_generate_key>,
-L<DSA_dup_DH>, L<DSA_do_sign>, L<DSA_set_method>, L<DSA_SIG_new>, L<DSA_sign>,
-L<DSA_size>, L<DSA_meth_new>
+L<dsa(3)>, L<DSA_new(3)>, L<DSA_generate_parameters(3)>, L<DSA_generate_key(3)>,
+L<DSA_dup_DH(3)>, L<DSA_do_sign(3)>, L<DSA_set_method(3)>, L<DSA_SIG_new(3)>,
+L<DSA_sign(3)>, L<DSA_size(3)>, L<DSA_meth_new(3)>
 
 =head1 HISTORY
 

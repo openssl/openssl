@@ -2,25 +2,25 @@
 
 =head1 NAME
 
-DSA_meth_new, DSA_meth_free, DSA_meth_dup, DSA_meth_get_name, DSA_meth_set_name,
-DSA_meth_get_flags, DSA_meth_set_flags, DSA_meth_get_app_data,
-DSA_meth_set_app_data, DSA_meth_get_sign, DSA_meth_set_sign,
-DSA_meth_get_sign_setup, DSA_meth_set_sign_setup, DSA_meth_get_verify,
-DSA_meth_set_verify, DSA_meth_get_mod_exp, DSA_meth_set_mod_exp,
-DSA_meth_get_bn_mod_exp, DSA_meth_set_bn_mod_exp, DSA_meth_get_init,
-DSA_meth_set_init, DSA_meth_get_finish, DSA_meth_set_finish,
+DSA_meth_new, DSA_meth_free, DSA_meth_dup, DSA_meth_get0_name,
+DSA_meth_set1_name, DSA_meth_get_flags, DSA_meth_set_flags,
+DSA_meth_get_app_data, DSA_meth_set_app_data, DSA_meth_get_sign,
+DSA_meth_set_sign, DSA_meth_get_sign_setup, DSA_meth_set_sign_setup,
+DSA_meth_get_verify, DSA_meth_set_verify, DSA_meth_get_mod_exp,
+DSA_meth_set_mod_exp, DSA_meth_get_bn_mod_exp, DSA_meth_set_bn_mod_exp,
+DSA_meth_get_init, DSA_meth_set_init, DSA_meth_get_finish, DSA_meth_set_finish,
 DSA_meth_get_paramgen, DSA_meth_set_paramgen, DSA_meth_get_keygen,
 DSA_meth_set_keygen  - Routines to build up DSA methods
 
 =head1 SYNOPSIS
 
- #include <openssl/bio.h>
+ #include <openssl/dsa.h>
 
  DSA_METHOD *DSA_meth_new(const char *name, int flags);
  void DSA_meth_free(DSA_METHOD *dsam);
  DSA_METHOD *DSA_meth_dup(const DSA_METHOD *meth);
- const char *DSA_meth_get_name(const DSA_METHOD *dsam);
- int DSA_meth_set_name(DSA_METHOD *dsam, const char *name);
+ const char *DSA_meth_get0_name(const DSA_METHOD *dsam);
+ int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name);
  int DSA_meth_get_flags(DSA_METHOD *dsam);
  int DSA_meth_set_flags(DSA_METHOD *dsam, int flags);
  void *DSA_meth_get_app_data(const DSA_METHOD *dsam);
@@ -82,6 +82,12 @@ existing one, but with some differences.
 
 DSA_meth_free() destroys a B<DSA_METHOD> structure and frees up any memory
 associated with it.
+
+DSA_meth_get0_name() will return a pointer to the name of this DSA_METHOD. This
+is a pointer to the internal name string and so should not be freed by the
+caller. DSA_meth_set1_name() sets the name of the DSA_METHOD to B<name>. The
+string is duplicated and the copy is stored in the DSA_METHOD structure, so the
+caller remains responsible for freeing the memory associated with the name.
 
 DSA_meth_get_flags() returns the current value of the flags associated with this
 DSA_METHOD. DSA_meth_set_flags() provides the ability to set these flags.
@@ -155,20 +161,21 @@ for the function has the same meaning as for DSA_generate_key().
 DSA_meth_new() and DSA_meth_dup() return the newly allocated DSA_METHOD object
 or NULL on failure.
 
-DSA_meth_get_name() and DSA_meth_get_flags() return the name and flags
+DSA_meth_get0_name() and DSA_meth_get_flags() return the name and flags
 associated with the DSA_METHOD respectively.
 
 All other DSA_meth_get_*() functions return the appropriate function pointer
 that has been set in the DSA_METHOD, or NULL if no such pointer has yet been
 set.
 
-All DSA_meth_set_*() functions return 1 on success or 0 on failure.
+DSA_meth_set1_name() and all DSA_meth_set_*() functions return 1 on success or
+0 on failure.
 
 =head1 SEE ALSO
 
-L<dsa>, L<DSA_new>, L<DSA_generate_parameters>, L<DSA_generate_key>,
-L<DSA_dup_DH>, L<DSA_do_sign>, L<DSA_set_method>, L<DSA_SIG_new>, L<DSA_sign>,
-L<DSA_size>, L<DSA_get0_p>
+L<dsa(3)>, L<DSA_new(3)>, L<DSA_generate_parameters(3)>, L<DSA_generate_key(3)>,
+L<DSA_dup_DH(3)>, L<DSA_do_sign(3)>, L<DSA_set_method(3)>, L<DSA_SIG_new3)>,
+L<DSA_sign(3)>, L<DSA_size(3)>, L<DSA_get0_pqg(3)>
 
 =head1 HISTORY
 

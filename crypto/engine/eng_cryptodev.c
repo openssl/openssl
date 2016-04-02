@@ -1682,7 +1682,7 @@ void engine_load_cryptodev_internal(void)
 #ifndef OPENSSL_NO_DSA
     cryptodev_dsa = DSA_meth_dup(DSA_OpenSSL());
     if (cryptodev_dsa != NULL) {
-        DSA_meth_set_name(cryptodev_dsa, "cryptodev DSA method");
+        DSA_meth_set1_name(cryptodev_dsa, "cryptodev DSA method");
         DSA_meth_set_flags(cryptodev_dsa, 0);
         if (ENGINE_set_DSA(engine, cryptodev_dsa)) {
             if (cryptodev_asymfeat & CRF_DSA_SIGN)
