@@ -353,8 +353,9 @@ static EVP_PKEY *b2i_dss(const unsigned char **in,
 static EVP_PKEY *b2i_rsa(const unsigned char **in,
                          unsigned int bitlen, int ispub)
 {
-    const unsigned char *p = *in;
+    const unsigned char *pin = *in;
     EVP_PKEY *ret = NULL;
+    BIGNUM *e = NULL, *n = NULL, *d = NULL;
     RSA *rsa = NULL;
     unsigned int nbyte, hnbyte;
     nbyte = (bitlen + 7) >> 3;
@@ -363,31 +364,35 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in,
     ret = EVP_PKEY_new();
     if (rsa == NULL || ret == NULL)
         goto memerr;
-    rsa->e = BN_new();
-    if (rsa->e == NULL)
+    e = BN_new();
+    if (e == NULL)
         goto memerr;
-    if (!BN_set_word(rsa->e, read_ledword(&p)))
+    if (!BN_set_word(e, read_ledword(&pin)))
         goto memerr;
-    if (!read_lebn(&p, nbyte, &rsa->n))
+    if (!read_lebn(&pin, nbyte, &n))
         goto memerr;
     if (!ispub) {
-        if (!read_lebn(&p, hnbyte, &rsa->p))
+        BIGNUM *p = NULL, *q = NULL, *dmp1 = NULL, *dmq1 = NULL, *iqmp = NULL;
+        if (!read_lebn(&pin, hnbyte, &p))
             goto memerr;
-        if (!read_lebn(&p, hnbyte, &rsa->q))
+        if (!read_lebn(&pin, hnbyte, &q))
             goto memerr;
-        if (!read_lebn(&p, hnbyte, &rsa->dmp1))
+        if (!read_lebn(&pin, hnbyte, &dmp1))
             goto memerr;
-        if (!read_lebn(&p, hnbyte, &rsa->dmq1))
+        if (!read_lebn(&pin, hnbyte, &dmq1))
             goto memerr;
-        if (!read_lebn(&p, hnbyte, &rsa->iqmp))
+        if (!read_lebn(&pin, hnbyte, &iqmp))
             goto memerr;
-        if (!read_lebn(&p, nbyte, &rsa->d))
+        if (!read_lebn(&pin, nbyte, &d))
             goto memerr;
+        RSA_set0_factors(rsa, p, q);
+        RSA_set0_crt_params(rsa, dmp1, dmq1, iqmp);
     }
+    RSA_set0_key(rsa, e, n, d);
 
     EVP_PKEY_set1_RSA(ret, rsa);
     RSA_free(rsa);
-    *in = p;
+    *in = pin;
     return ret;
  memerr:
     PEMerr(PEM_F_B2I_RSA, ERR_R_MALLOC_FAILURE);
@@ -530,26 +535,35 @@ static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 {
     int nbyte, hnbyte, bitlen;
-    if (BN_num_bits(rsa->e) > 32)
+    BIGNUM *e;
+
+    RSA_get0_key(rsa, &e, NULL, NULL);
+    if (BN_num_bits(e) > 32)
         goto badkey;
-    bitlen = BN_num_bits(rsa->n);
-    nbyte = BN_num_bytes(rsa->n);
-    hnbyte = (BN_num_bits(rsa->n) + 15) >> 4;
+    bitlen = RSA_bits(rsa);
+    nbyte = RSA_size(rsa);
+    hnbyte = (bitlen + 15) >> 4;
     if (ispub) {
         *pmagic = MS_RSA1MAGIC;
         return bitlen;
     } else {
+        BIGNUM *d, *p, *q, *iqmp, *dmp1, *dmq1;
+
         *pmagic = MS_RSA2MAGIC;
+
         /*
          * For private key each component must fit within nbyte or hnbyte.
          */
-        if (BN_num_bytes(rsa->d) > nbyte)
+        RSA_get0_key(rsa, NULL, NULL, &d);
+        if (BN_num_bytes(d) > nbyte)
             goto badkey;
-        if ((BN_num_bytes(rsa->iqmp) > hnbyte)
-            || (BN_num_bytes(rsa->p) > hnbyte)
-            || (BN_num_bytes(rsa->q) > hnbyte)
-            || (BN_num_bytes(rsa->dmp1) > hnbyte)
-            || (BN_num_bytes(rsa->dmq1) > hnbyte))
+        RSA_get0_factors(rsa, &p, &q);
+        RSA_get0_crt_params(rsa, &dmp1, &dmq1, &iqmp);
+        if ((BN_num_bytes(iqmp) > hnbyte)
+            || (BN_num_bytes(p) > hnbyte)
+            || (BN_num_bytes(q) > hnbyte)
+            || (BN_num_bytes(dmp1) > hnbyte)
+            || (BN_num_bytes(dmq1) > hnbyte))
             goto badkey;
     }
     return bitlen;
@@ -561,18 +575,23 @@ static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 {
     int nbyte, hnbyte;
-    nbyte = BN_num_bytes(rsa->n);
-    hnbyte = (BN_num_bits(rsa->n) + 15) >> 4;
-    write_lebn(out, rsa->e, 4);
-    write_lebn(out, rsa->n, -1);
+    BIGNUM *n, *d, *e, *p, *q, *iqmp, *dmp1, *dmq1;
+
+    nbyte = RSA_size(rsa);
+    hnbyte = (RSA_bits(rsa) + 15) >> 4;
+    RSA_get0_key(rsa, &e, &n, &d);
+    write_lebn(out, e, 4);
+    write_lebn(out, n, -1);
     if (ispub)
         return;
-    write_lebn(out, rsa->p, hnbyte);
-    write_lebn(out, rsa->q, hnbyte);
-    write_lebn(out, rsa->dmp1, hnbyte);
-    write_lebn(out, rsa->dmq1, hnbyte);
-    write_lebn(out, rsa->iqmp, hnbyte);
-    write_lebn(out, rsa->d, nbyte);
+    RSA_get0_factors(rsa, &p, &q);
+    RSA_get0_crt_params(rsa, &dmp1, &dmq1, &iqmp);
+    write_lebn(out, p, hnbyte);
+    write_lebn(out, q, hnbyte);
+    write_lebn(out, dmp1, hnbyte);
+    write_lebn(out, dmq1, hnbyte);
+    write_lebn(out, iqmp, hnbyte);
+    write_lebn(out, d, nbyte);
 }
 
 static void write_dsa(unsigned char **out, DSA *dsa, int ispub)

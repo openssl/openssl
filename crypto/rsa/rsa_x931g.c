@@ -60,7 +60,7 @@
 #include <time.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
+#include "rsa_locl.h"
 
 /* X9.31 RSA key derivation and generation */
 

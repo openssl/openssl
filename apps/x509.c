@@ -727,9 +727,11 @@ int x509_main(int argc, char **argv)
                 }
                 BIO_printf(out, "Modulus=");
 #ifndef OPENSSL_NO_RSA
-                if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA)
-                    BN_print(out, EVP_PKEY_get0_RSA(pkey)->n);
-                else
+                if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
+                    BIGNUM *n;
+                    RSA_get0_key(EVP_PKEY_get0_RSA(pkey), &n, NULL, NULL);
+                    BN_print(out, n);
+                } else
 #endif
 #ifndef OPENSSL_NO_DSA
                 if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA) {

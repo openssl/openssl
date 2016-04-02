@@ -310,8 +310,10 @@ int rsa_main(int argc, char **argv)
     }
 
     if (modulus) {
+        BIGNUM *n;
+        RSA_get0_key(rsa, &n, NULL, NULL);
         BIO_printf(out, "Modulus=");
-        BN_print(out, rsa->n);
+        BN_print(out, n);
         BIO_printf(out, "\n");
     }
 

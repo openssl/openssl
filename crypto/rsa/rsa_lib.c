@@ -60,9 +60,9 @@
 #include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include "internal/bn_int.h"
-#include <openssl/rsa.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>
+#include "rsa_locl.h"
 
 static const RSA_METHOD *default_RSA_meth = NULL;
 
@@ -282,4 +282,97 @@ int RSA_memory_lock(RSA *r)
 int RSA_security_bits(const RSA *rsa)
 {
     return BN_security_bits(BN_num_bits(rsa->n), -1);
+}
+
+int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
+{
+    /* d is the private component and may be NULL */
+    if (n == NULL || e == NULL)
+        return 0;
+
+    BN_free(r->n);
+    BN_free(r->e);
+    BN_free(r->d);
+    r->n = n;
+    r->e = e;
+    r->d = d;
+
+    return 1;
+}
+
+int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
+{
+    if (p == NULL || q == NULL)
+        return 0;
+
+    BN_free(r->p);
+    BN_free(r->q);
+    r->p = p;
+    r->q = q;
+
+    return 1;
+}
+
+int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
+{
+    if (dmp1 == NULL || dmq1 == NULL || iqmp == NULL)
+        return 0;
+
+    BN_free(r->dmp1);
+    BN_free(r->dmq1);
+    BN_free(r->iqmp);
+    r->dmp1 = dmp1;
+    r->dmq1 = dmq1;
+    r->iqmp = iqmp;
+
+    return 1;
+}
+
+void RSA_get0_key(const RSA *r, BIGNUM **n, BIGNUM **e, BIGNUM **d)
+{
+    if (n != NULL)
+        *n = r->n;
+    if (e != NULL)
+        *e = r->e;
+    if (d != NULL)
+        *d = r->d;
+}
+
+void RSA_get0_factors(const RSA *r, BIGNUM **p, BIGNUM **q)
+{
+    if (p != NULL)
+        *p = r->p;
+    if (q != NULL)
+        *q = r->q;
+}
+
+void RSA_get0_crt_params(const RSA *r,
+                         BIGNUM **dmp1, BIGNUM **dmq1, BIGNUM **iqmp)
+{
+    if (dmp1 != NULL)
+        *dmp1 = r->dmp1;
+    if (dmq1 != NULL)
+        *dmq1 = r->dmq1;
+    if (iqmp != NULL)
+        *iqmp = r->iqmp;
+}
+
+void RSA_clear_flags(RSA *r, int flags)
+{
+    r->flags &= ~flags;
+}
+
+int RSA_test_flags(const RSA *r, int flags)
+{
+    return r->flags & flags;
+}
+
+void RSA_set_flags(RSA *r, int flags)
+{
+    r->flags |= flags;
+}
+
+ENGINE *RSA_get0_engine(RSA *r)
+{
+    return r->engine;
 }
