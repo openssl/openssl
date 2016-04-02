@@ -58,25 +58,12 @@ rsa - RSA public key cryptosystem
 These functions implement RSA public key encryption and signatures
 as defined in PKCS #1 v2.0 [RFC 2437].
 
-The B<RSA> structure consists of several BIGNUM components. It can
-contain public as well as private RSA keys:
+The B<RSA> structure consists of the BIGNUM components B<n>, B<e>,
+B<d>, B<p>, B<q>, B<dmp1>, B<dmq1> and B<iqmp>, which represent public
+as well as private RSA keys.
 
- struct
-        {
-        BIGNUM *n;		// public modulus
-        BIGNUM *e;		// public exponent
-        BIGNUM *d;		// private exponent
-        BIGNUM *p;		// secret prime factor
-        BIGNUM *q;		// secret prime factor
-        BIGNUM *dmp1;		// d mod (p-1)
-        BIGNUM *dmq1;		// d mod (q-1)
-        BIGNUM *iqmp;		// q^-1 mod p
-	// ...
-        };
- RSA
-
-In public keys, the private exponent and the related secret values are
-B<NULL>.
+In public keys, the private exponent B<d> and the related secret
+values B<p>, B<q>, B<dmp1>, B<dmq1> and B<iqmp> are B<NULL>.
 
 B<p>, B<q>, B<dmp1>, B<dmq1> and B<iqmp> may be B<NULL> in private
 keys, but the RSA operations are much faster when these values are
@@ -101,7 +88,7 @@ RSA was covered by a US patent which expired in September 2000.
 =head1 SEE ALSO
 
 L<rsa(1)>, L<bn(3)>, L<dsa(3)>, L<dh(3)>,
-L<rand(3)>, L<engine(3)>, L<RSA_new(3)>,
+L<rand(3)>, L<engine(3)>, L<RSA_new(3)>, L<RSA_set0_key(3)>
 L<RSA_public_encrypt(3)>,
 L<RSA_sign(3)>, L<RSA_size(3)>,
 L<RSA_generate_key(3)>,
