@@ -490,5 +490,41 @@ $script: $sources
 	    "-o$target{build_file}" $sources > "$script"
 EOF
   }
+  sub generatedir {
+      my %args = @_;
+      my $dir = $args{dir};
+      my @deps = map { s|\.o$|$objext|; $_ } @{$args{deps}};
+      my @actions = ();
+      my %extinfo = ( dso => $dsoext,
+                      lib => $libext,
+                      bin => $exeext );
+
+      foreach my $type (("dso", "lib", "bin", "script")) {
+          next unless defined($unified_info{dirinfo}->{$dir}->{products}->{$type});
+          if ($type eq "lib") {
+              foreach my $lib (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
+                  push @actions, <<"EOF";
+	\$(AR) \$(ARFLAGS) \$(AROUTFLAG)$lib$libext @<<
+\$\?
+<<
+EOF
+              }
+          } else {
+              foreach my $prod (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
+                  if (dirname($prod) eq $dir) {
+                      push @deps, $prod.$extinfo{$type};
+                  } else {
+                      push @actions, "\t@ : No support to produce $type ".join(", ", @{$unified_info{dirinfo}->{$dir}->{products}->{$type}});
+                  }
+              }
+          }
+      }
+
+      my $deps = join(" ", @deps);
+      my $actions = join("\n", "", @actions);
+      return <<"EOF";
+$args{dir} $args{dir}\\ : $deps$actions
+EOF
+  }
   ""    # Important!  This becomes part of the template result.
 -}
