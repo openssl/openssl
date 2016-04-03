@@ -981,7 +981,7 @@ EOF
       my $objs = join(" ", map { $_.$objext } @{$args{objs}});
       return <<"EOF";
 $lib$libext: $objs
-	\$(AR) \$\@ $objs
+	\$(AR) \$\@ \$\?
 	\$(RANLIB) \$\@ || echo Never mind.
 EOF
   }

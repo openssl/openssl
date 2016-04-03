@@ -404,7 +404,7 @@ EOF
      return <<"EOF";
 $lib$libext: $deps
 	\$(AR) \$(ARFLAGS) \$(AROUTFLAG)$lib$libext @<<
-$objs
+\$\?
 <<
 EOF
  }
