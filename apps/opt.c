@@ -373,6 +373,7 @@ int opt_long(const char *value, long *result)
     long l;
     char *endp;
 
+    errno = 0;
     l = strtol(value, &endp, 0);
     if (*endp
             || endp == value
@@ -398,6 +399,7 @@ int opt_imax(const char *value, intmax_t *result)
     intmax_t m;
     char *endp;
 
+    errno = 0;
     m = strtoimax(value, &endp, 0);
     if (*endp
             || endp == value
@@ -420,6 +422,7 @@ int opt_umax(const char *value, uintmax_t *result)
     uintmax_t m;
     char *endp;
 
+    errno = 0;
     m = strtoumax(value, &endp, 0);
     if (*endp
             || endp == value
@@ -445,6 +448,7 @@ int opt_ulong(const char *value, unsigned long *result)
     char *endptr;
     unsigned long l;
 
+    errno = 0;
     l = strtoul(value, &endptr, 0);
     if (*endptr
             || endptr == value
