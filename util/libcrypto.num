@@ -4124,3 +4124,4 @@ DSA_meth_get_sign_setup                 3989	1_1_0	EXIST::FUNCTION:DSA
 DSA_get0_engine                         3990	1_1_0	EXIST::FUNCTION:DSA
 X509_VERIFY_PARAM_set_auth_level        3991	1_1_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_auth_level        3992	1_1_0	EXIST::FUNCTION:
+X509_REQ_get0_pubkey                    3993	1_1_0	EXIST::FUNCTION:
