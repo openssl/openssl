@@ -159,12 +159,6 @@ extern "C" {
 #  define SSLEAY_PLATFORM         OPENSSL_PLATFORM
 #  define SSLEAY_DIR              OPENSSL_DIR
 
-#  define CRYPTO_w_lock(a)
-#  define CRYPTO_w_unlock(a)
-#  define CRYPTO_r_lock(a)
-#  define CRYPTO_r_unlock(a)
-#  define CRYPTO_add(a,b,c)       ((*(a))+=(b))
-
 /*
  * Old type for allocating dynamic locks. No longer used. Use the new thread
  * API instead.
@@ -311,19 +305,16 @@ void CRYPTO_cleanup_all_ex_data(void);
 
 # if OPENSSL_API_COMPAT < 0x10100000L
 /*
- * These are the functions for the old threading API. These are all now no-ops
- * and should not be used.
+ * The old locking functions have been removed completely without compatibility
+ * macros. This is because the old functions either could not properly report
+ * errors, or the returned error values were not clearly documented.
+ * Replacing the locking functions with with no-ops would cause race condition
+ * issues in the affected applications. It is far better for them to fail at
+ * compile time.
+ * On the other hand, the locking callbacks are no longer used.  Consequently,
+ * the callback management functions can be safely replaced with no-op macros.
  */
-#  define CRYPTO_get_new_lockid(name)   (0)
 #  define CRYPTO_num_locks()            (0)
-/*
- * The old CRYPTO_lock() function has been removed completely without a
- * compatibility macro. This is because previously it could not return an error
- * response, but if any applications are using this they will not work and could
- * fail in strange ways. Better for them to fail at compile time.
- * 
- * void CRYPTO_lock(int mode, int type, const char *file, int line);
- */
 #  define CRYPTO_set_locking_callback(func)
 #  define CRYPTO_get_locking_callback()         (NULL)
 #  define CRYPTO_set_add_lock_callback(func)
@@ -349,13 +340,6 @@ typedef struct crypto_threadid_st {
 #   define CRYPTO_thread_id()                           (0UL)
 #  endif /* OPENSSL_API_COMPAT < 0x10000000L */
 
-#  define CRYPTO_get_lock_name(type)                    (NULL)
-#  define CRYPTO_add_lock(pointer, amount, type, file, line) \
-                                                        (0)
-
-#  define CRYPTO_get_new_dynlockid()                    (0)
-#  define CRYPTO_destroy_dynlockid(i)
-#  define CRYPTO_get_dynlock_value(i)                   (NULL)
 #  define CRYPTO_set_dynlock_create_callback(dyn_create_function)
 #  define CRYPTO_set_dynlock_lock_callback(dyn_lock_function)
 #  define CRYPTO_set_dynlock_destroy_callback(dyn_destroy_function)
