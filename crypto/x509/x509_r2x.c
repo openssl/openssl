@@ -101,21 +101,14 @@ X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
         NULL)
         goto err;
 
-    pubkey = X509_REQ_get_pubkey(r);
-    if (pubkey == NULL)
+    pubkey = X509_REQ_get0_pubkey(r);
+    if (pubkey == NULL || !X509_set_pubkey(ret, pubkey))
         goto err;
-
-    if (!X509_set_pubkey(ret, pubkey))
-        goto err_pkey;
-
-    EVP_PKEY_free(pubkey);
 
     if (!X509_sign(ret, pkey, EVP_md5()))
         goto err;
     return ret;
 
- err_pkey:
-    EVP_PKEY_free(pubkey);
  err:
     X509_free(ret);
     return NULL;

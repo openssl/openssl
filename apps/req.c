@@ -375,6 +375,7 @@ int req_main(int argc, char **argv)
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
 
+    /* TODO: simplify this as pkey is still always NULL here */ 
     private = newreq && (pkey == NULL) ? 1 : 0;
 
     if (!app_passwd(passargin, passargout, &passin, &passout)) {
@@ -666,10 +667,9 @@ int req_main(int argc, char **argv)
             if (!X509_set_subject_name
                 (x509ss, X509_REQ_get_subject_name(req)))
                 goto end;
-            tmppkey = X509_REQ_get_pubkey(req);
+            tmppkey = X509_REQ_get0_pubkey(req);
             if (!tmppkey || !X509_set_pubkey(x509ss, tmppkey))
                 goto end;
-            EVP_PKEY_free(tmppkey);
 
             /* Set up V3 context struct */
 
@@ -739,20 +739,15 @@ int req_main(int argc, char **argv)
     }
 
     if (verify && !x509) {
-        int tmp = 0;
+        EVP_PKEY *pubkey = pkey;
 
-        if (pkey == NULL) {
-            pkey = X509_REQ_get_pubkey(req);
-            tmp = 1;
-            if (pkey == NULL)
+        if (pubkey == NULL) {
+            pubkey = X509_REQ_get0_pubkey(req);
+            if (pubkey == NULL)
                 goto end;
         }
 
-        i = X509_REQ_verify(req, pkey);
-        if (tmp) {
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
-        }
+        i = X509_REQ_verify(req, pubkey);
 
         if (i < 0) {
             goto end;

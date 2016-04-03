@@ -1351,12 +1351,12 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
         ok = 0;
         goto end;
     }
-    if ((pktmp = X509_REQ_get_pubkey(req)) == NULL) {
+    if ((pktmp = X509_REQ_get0_pubkey(req)) == NULL) {
         BIO_printf(bio_err, "error unpacking public key\n");
         goto end;
     }
     i = X509_REQ_verify(req, pktmp);
-    EVP_PKEY_free(pktmp);
+    pktmp = NULL;
     if (i < 0) {
         ok = 0;
         BIO_printf(bio_err, "Signature verification problems....\n");
@@ -1790,7 +1790,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     pktmp = X509_REQ_get_pubkey(req);
     i = X509_set_pubkey(ret, pktmp);
-    EVP_PKEY_free(pktmp);
     if (!i)
         goto end;
 
