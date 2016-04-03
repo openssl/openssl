@@ -75,10 +75,9 @@ int (*BIO_meth_get_write(BIO_METHOD *biom)) (BIO *, const char *, int)
     return biom->bwrite;
 }
 
-int BIO_meth_set_write(BIO_METHOD *biom,
-                       int (*write) (BIO *, const char *, int))
+int BIO_meth_set_write(BIO_METHOD *biom, int (*f) (BIO *, const char *, int))
 {
-    biom->bwrite = write;
+    biom->bwrite = f;
     return 1;
 }
 
@@ -87,10 +86,9 @@ int (*BIO_meth_get_read(BIO_METHOD *biom)) (BIO *, char *, int)
     return biom->bread;
 }
 
-int BIO_meth_set_read(BIO_METHOD *biom,
-                      int (*read) (BIO *, char *, int))
+int BIO_meth_set_read(BIO_METHOD *biom, int (*f) (BIO *, char *, int))
 {
-    biom->bread = read;
+    biom->bread = f;
     return 1;
 }
 
@@ -99,10 +97,9 @@ int (*BIO_meth_get_puts(BIO_METHOD *biom)) (BIO *, const char *)
     return biom->bputs;
 }
 
-int BIO_meth_set_puts(BIO_METHOD *biom,
-                      int (*puts) (BIO *, const char *))
+int BIO_meth_set_puts(BIO_METHOD *biom, int (*f) (BIO *, const char *))
 {
-    biom->bputs = puts;
+    biom->bputs = f;
     return 1;
 }
 
@@ -111,10 +108,9 @@ int (*BIO_meth_get_gets(BIO_METHOD *biom)) (BIO *, char *, int)
     return biom->bgets;
 }
 
-int BIO_meth_set_gets(BIO_METHOD *biom,
-                      int (*gets) (BIO *, char *, int))
+int BIO_meth_set_gets(BIO_METHOD *biom, int (*f) (BIO *, char *, int))
 {
-    biom->bgets = gets;
+    biom->bgets = f;
     return 1;
 }
 
