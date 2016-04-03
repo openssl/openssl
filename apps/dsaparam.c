@@ -265,12 +265,13 @@ int dsaparam_main(int argc, char **argv)
     if (C) {
         BIGNUM *p = NULL, *q = NULL, *g = NULL;
         int len, bits_p;
+        unsigned char *data;
 
         DSA_get0_pqg(dsa, &p, &q, &g);
         len = BN_num_bytes(p);
         bits_p = BN_num_bits(p);
 
-        unsigned char *data = app_malloc(len + 20, "BN space");
+        data = app_malloc(len + 20, "BN space");
 
         BIO_printf(bio_out, "DSA *get_dsa%d()\n{\n", bits_p);
         print_bignum_var(bio_out, p, "dsap", len, data);
