@@ -776,7 +776,7 @@ static int padlock_rand_bytes(unsigned char *output, int count)
         *output++ = (unsigned char)buf;
         count--;
     }
-    *(volatile unsigned int *)&buf = 0;
+    OPENSSL_cleanse(&buf, sizeof(buf));
 
     return 1;
 }
