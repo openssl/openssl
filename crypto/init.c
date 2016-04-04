@@ -460,7 +460,7 @@ void OPENSSL_cleanup(void)
                     "CONF_modules_free()\n");
 #ifndef OPENSSL_NO_ENGINE
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "ENGINE_cleanup()\n");
+                    "engine_cleanup_intern()\n");
 #endif
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "crypto_cleanup_all_ex_data_intern()\n");
@@ -474,16 +474,16 @@ void OPENSSL_cleanup(void)
     /*
      * Note that cleanup order is important:
      * - rand_cleanup_intern could call an ENINGE's RAND cleanup function so
-     * must be called before ENGINE_cleanup()
+     * must be called before engine_cleanup_intern()
      * - ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
      * before the ex data handlers are wiped in CRYPTO_cleanup_all_ex_data().
      * - CONF_modules_free() can end up in ENGINE code so must be called before
-     * ENGINE_cleanup()
+     * engine_cleanup_intern()
      */
     rand_cleanup_intern();
     CONF_modules_free();
 #ifndef OPENSSL_NO_ENGINE
-    ENGINE_cleanup();
+    engine_cleanup_intern();
 #endif
     crypto_cleanup_all_ex_data_intern();
 #ifndef OPENSSL_NO_SOCK
