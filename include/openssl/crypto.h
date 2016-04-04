@@ -297,13 +297,14 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
  */
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
 void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
+
+# if OPENSSL_API_COMPAT < 0x10100000L
 /*
  * This function cleans up all "ex_data" state. It mustn't be called under
  * potential race-conditions.
  */
-void CRYPTO_cleanup_all_ex_data(void);
+# define CRYPTO_cleanup_all_ex_data()
 
-# if OPENSSL_API_COMPAT < 0x10100000L
 /*
  * The old locking functions have been removed completely without compatibility
  * macros. This is because the old functions either could not properly report
