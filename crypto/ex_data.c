@@ -175,7 +175,7 @@ static void cleanup_cb(EX_CALLBACK *funcs)
  * called under potential race-conditions anyway (it's for program shutdown
  * after all).
  */
-void CRYPTO_cleanup_all_ex_data(void)
+void crypto_cleanup_all_ex_data_intern(void)
 {
     int i;
 
