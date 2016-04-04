@@ -653,7 +653,6 @@ int srp_main(int argc, char **argv)
         app_RAND_write_file(randfile);
     NCONF_free(conf);
     free_index(db);
-    OBJ_cleanup();
     return (ret);
 }
 #endif

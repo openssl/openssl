@@ -58,7 +58,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
-#include <openssl/objects.h>
+#include <internal/objects.h>
 #include <openssl/x509.h>
 #include "internal/evp_int.h"
 
@@ -142,7 +142,7 @@ void evp_cleanup_intern(void)
     EVP_PBE_cleanup();
     if (obj_cleanup_defer == 2) {
         obj_cleanup_defer = 0;
-        OBJ_cleanup();
+        obj_cleanup_intern();
     }
     OBJ_sigid_free();
 }

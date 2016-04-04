@@ -61,7 +61,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include <openssl/asn1.h>
-#include <openssl/objects.h>
+#include "internal/objects.h"
 #include <openssl/bn.h>
 #include "internal/asn1_int.h"
 #include "obj_lcl.h"
@@ -210,7 +210,7 @@ void check_defer(int nid)
         obj_cleanup_defer = 1;
 }
 
-void OBJ_cleanup(void)
+void obj_cleanup_intern(void)
 {
     if (obj_cleanup_defer) {
         obj_cleanup_defer = 2;

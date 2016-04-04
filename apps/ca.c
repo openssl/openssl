@@ -1307,7 +1307,6 @@ end_of_options:
     X509_CRL_free(crl);
     NCONF_free(conf);
     NCONF_free(extconf);
-    OBJ_cleanup();
     return (ret);
 }
 
