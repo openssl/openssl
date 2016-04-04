@@ -64,7 +64,7 @@
 #include <internal/conf.h>
 #include <internal/async.h>
 #include <internal/engine.h>
-#include <openssl/comp.h>
+#include <internal/comp.h>
 #include <internal/err.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -427,9 +427,9 @@ void OPENSSL_cleanup(void)
     if (zlib_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                        "COMP_zlib_cleanup()\n");
+                        "comp_zlib_cleanup_internal()\n");
 #endif
-        COMP_zlib_cleanup();
+        comp_zlib_cleanup_internal();
     }
 #endif
 
