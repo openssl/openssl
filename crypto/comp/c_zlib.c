@@ -56,7 +56,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/objects.h>
-#include <openssl/comp.h>
+#include "internal/comp.h"
 #include <openssl/err.h>
 #include "internal/cryptlib_int.h"
 #include "internal/bio.h"
@@ -282,7 +282,7 @@ COMP_METHOD *COMP_zlib(void)
                 zlib_loaded++;
 
             if (!OPENSSL_init_crypto(OPENSSL_INIT_ZLIB, NULL)) {
-                COMP_zlib_cleanup();
+                comp_zlib_cleanup_internal();
                 return meth;
             }
             if (zlib_loaded)
@@ -297,7 +297,7 @@ COMP_METHOD *COMP_zlib(void)
     return (meth);
 }
 
-void COMP_zlib_cleanup(void)
+void comp_zlib_cleanup_internal(void)
 {
 #ifdef ZLIB_SHARED
     if (zlib_dso != NULL)
