@@ -60,7 +60,7 @@
 #include <ctype.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
+#include "internal/conf.h"
 #include "internal/dso.h"
 #include <openssl/x509.h>
 
@@ -460,7 +460,7 @@ int CONF_module_add(const char *name, conf_init_func *ifunc,
         return 0;
 }
 
-void CONF_modules_free(void)
+void conf_modules_free_intern(void)
 {
     CONF_modules_finish();
     CONF_modules_unload(1);

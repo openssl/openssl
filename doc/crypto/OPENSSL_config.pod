@@ -23,9 +23,6 @@ Multiple calls have no effect.
 OPENSSL_no_config() disables configuration. If called before OPENSSL_config()
 no configuration takes place.
 
-Applications should free up configuration at application closedown by calling
-CONF_modules_free().
-
 If the application is built with B<OPENSSL_LOAD_CONF> defined, then a
 call to OpenSSL_add_all_algorithms() will implicitly call OPENSSL_config()
 first.
@@ -57,8 +54,7 @@ Neither OPENSSL_config() nor OPENSSL_no_config() return a value.
 =head1 SEE ALSO
 
 L<conf(5)>,
-L<CONF_modules_load_file(3)>,
-L<CONF_modules_free(3)>
+L<CONF_modules_load_file(3)>
 
 =head1 HISTORY
 
