@@ -2195,6 +2195,8 @@ __owur int custom_ext_add(SSL *s, int server,
 __owur int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src);
 void custom_exts_free(custom_ext_methods *exts);
 
+void ssl_comp_free_compression_methods_intern(void);
+
 # else
 
 #  define ssl_init_wbio_buffer SSL_test_functions()->p_ssl_init_wbio_buffer

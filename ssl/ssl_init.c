@@ -198,9 +198,9 @@ static void ssl_library_stop(void)
 #ifndef OPENSSL_NO_COMP
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                        "SSL_COMP_free_compression_methods()\n");
+                        "ssl_comp_free_compression_methods_intern()\n");
 #endif
-        SSL_COMP_free_compression_methods();
+        ssl_comp_free_compression_methods_intern();
 #endif
     }
 
