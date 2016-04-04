@@ -695,7 +695,9 @@ int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);
 int BIO_sock_init(void);
-void BIO_sock_cleanup(void);
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define BIO_sock_cleanup()
+#endif
 int BIO_set_tcp_ndelay(int sock, int turn_on);
 
 DEPRECATEDIN_1_1_0(struct hostent *BIO_gethostbyname(const char *name))

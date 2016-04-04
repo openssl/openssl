@@ -59,6 +59,7 @@
 #include <internal/cryptlib_int.h>
 #include <openssl/err.h>
 #include <internal/rand.h>
+#include <internal/bio.h>
 #include <openssl/evp.h>
 #include <internal/evp_int.h>
 #include <internal/conf.h>
@@ -463,7 +464,7 @@ void OPENSSL_cleanup(void)
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "crypto_cleanup_all_ex_data_intern()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "BIO_sock_cleanup()\n");
+                    "bio_sock_cleanup_intern()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "EVP_cleanup()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
@@ -485,7 +486,7 @@ void OPENSSL_cleanup(void)
 #endif
     crypto_cleanup_all_ex_data_intern();
 #ifndef OPENSSL_NO_SOCK
-    BIO_sock_cleanup();
+    bio_sock_cleanup_intern();
 #endif
     EVP_cleanup();
     OBJ_cleanup();
