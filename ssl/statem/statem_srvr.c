@@ -1376,7 +1376,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         if (k >= complen) {
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
-                   SSL_R_REQUIRED_COMPRESSSION_ALGORITHM_MISSING);
+                   SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING);
             goto f_err;
         }
     } else if (s->hit)
