@@ -466,7 +466,7 @@ void OPENSSL_cleanup(void)
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "bio_sock_cleanup_intern()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "EVP_cleanup()\n");
+                    "evp_cleanup_intern()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "OBJ_cleanup()\n");
 #endif
@@ -488,7 +488,7 @@ void OPENSSL_cleanup(void)
 #ifndef OPENSSL_NO_SOCK
     bio_sock_cleanup_intern();
 #endif
-    EVP_cleanup();
+    evp_cleanup_intern();
     OBJ_cleanup();
     base_inited = 0;
 }

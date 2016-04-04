@@ -888,11 +888,11 @@ const EVP_CIPHER *EVP_seed_ofb(void);
 # endif
 
 # if OPENSSL_API_COMPAT < 0x10100000L
-#   define OPENSSL_add_all_algorithms_conf() \
+#  define OPENSSL_add_all_algorithms_conf() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
                         | OPENSSL_INIT_ADD_ALL_DIGESTS \
                         | OPENSSL_INIT_LOAD_CONFIG, NULL)
-#   define OPENSSL_add_all_algorithms_noconf() \
+#  define OPENSSL_add_all_algorithms_noconf() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
                         | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
 
@@ -907,10 +907,12 @@ const EVP_CIPHER *EVP_seed_ofb(void);
                         | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
 #  endif
 
-#   define OpenSSL_add_all_ciphers() \
+#  define OpenSSL_add_all_ciphers() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL)
-#   define OpenSSL_add_all_digests() \
+#  define OpenSSL_add_all_digests() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
+
+#  define EVP_cleanup()
 # endif
 
 int EVP_add_cipher(const EVP_CIPHER *cipher);
@@ -918,7 +920,6 @@ int EVP_add_digest(const EVP_MD *digest);
 
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
 const EVP_MD *EVP_get_digestbyname(const char *name);
-void EVP_cleanup(void);
 
 void EVP_CIPHER_do_all(void (*fn) (const EVP_CIPHER *ciph,
                                    const char *from, const char *to, void *x),
