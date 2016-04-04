@@ -57,7 +57,8 @@
 
 #include "e_os.h"
 
-#include <internal/threads.h>
+#include "internal/threads.h"
+#include "internal/err.h"
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <assert.h>
@@ -206,15 +207,15 @@ static void ssl_library_stop(void)
     if (ssl_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                        "ERR_free_strings()\n");
+                        "err_free_strings_intern()\n");
 #endif
         /*
          * If both crypto and ssl error strings are inited we will end up
-         * calling ERR_free_strings() twice - but that's ok. The second time
-         * will be a no-op. It's easier to do that than to try and track
+         * calling err_free_strings_intern() twice - but that's ok. The second
+         * time will be a no-op. It's easier to do that than to try and track
          * between the two libraries whether they have both been inited.
          */
-        ERR_free_strings();
+        err_free_strings_intern();
     }
 }
 

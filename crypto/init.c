@@ -444,9 +444,9 @@ void OPENSSL_cleanup(void)
     if (load_crypto_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                        "ERR_free_strings()\n");
+                        "err_free_strings_intern()\n");
 #endif
-        ERR_free_strings();
+        err_free_strings_intern();
     }
 
     CRYPTO_THREAD_cleanup_local(&threadstopkey);
