@@ -545,7 +545,7 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
      "renegotiation encoding err"},
     {ERR_REASON(SSL_R_RENEGOTIATION_MISMATCH), "renegotiation mismatch"},
     {ERR_REASON(SSL_R_REQUIRED_CIPHER_MISSING), "required cipher missing"},
-    {ERR_REASON(SSL_R_REQUIRED_COMPRESSSION_ALGORITHM_MISSING),
+    {ERR_REASON(SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING),
      "required compression algorithm missing"},
     {ERR_REASON(SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING),
      "scsv received when renegotiating"},

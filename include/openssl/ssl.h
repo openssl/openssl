@@ -2522,7 +2522,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_RENEGOTIATION_ENCODING_ERR                 336
 # define SSL_R_RENEGOTIATION_MISMATCH                     337
 # define SSL_R_REQUIRED_CIPHER_MISSING                    215
-# define SSL_R_REQUIRED_COMPRESSSION_ALGORITHM_MISSING    342
+# define SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING     342
 # define SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING           345
 # define SSL_R_SCT_VERIFICATION_FAILED                    208
 # define SSL_R_SERVERHELLO_TLSEXT                         275
