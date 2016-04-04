@@ -76,7 +76,9 @@ long ssl23_default_timeout(void)
  */
 int ssl23_version_supported(const SSL *s, int version)
 {
-    if (s->method == SSLv23_method()) {
+    if (s->method == SSLv23_method() ||
+        s->method == SSLv23_client_method() ||
+        s->method == SSLv23_server_method()) {
 #ifndef OPENSSL_NO_SSL3
         if ((s->options & SSL_OP_NO_SSLv3) == 0 && version == SSL3_VERSION)
             return 1;
