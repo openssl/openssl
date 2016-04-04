@@ -356,9 +356,8 @@ void ERR_load_ERR_strings(void);
 #if OPENSSL_API_COMPAT < 0x10100000L
 # define ERR_load_crypto_strings() \
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+# define ERR_free_strings()
 #endif
-
-void ERR_free_strings(void);
 
 void ERR_remove_thread_state(void);
 DEPRECATEDIN_1_0_0(void ERR_remove_state(unsigned long pid)) /* if zero we
