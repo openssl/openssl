@@ -739,15 +739,15 @@ int req_main(int argc, char **argv)
     }
 
     if (verify && !x509) {
-        EVP_PKEY *pubkey = pkey;
+        EVP_PKEY *tpubkey = pkey;
 
-        if (pubkey == NULL) {
-            pubkey = X509_REQ_get0_pubkey(req);
-            if (pubkey == NULL)
+        if (tpubkey == NULL) {
+            tpubkey = X509_REQ_get0_pubkey(req);
+            if (tpubkey == NULL)
                 goto end;
         }
 
-        i = X509_REQ_verify(req, pubkey);
+        i = X509_REQ_verify(req, tpubkey);
 
         if (i < 0) {
             goto end;
