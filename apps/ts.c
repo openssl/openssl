@@ -383,7 +383,6 @@ int ts_main(int argc, char **argv)
     app_RAND_write_file(NULL);
     NCONF_free(conf);
     OPENSSL_free(password);
-    OBJ_cleanup();
     return (ret);
 }
 

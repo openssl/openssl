@@ -67,6 +67,7 @@
 #include <internal/engine.h>
 #include <internal/comp.h>
 #include <internal/err.h>
+#include <internal/objects.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -468,7 +469,7 @@ void OPENSSL_cleanup(void)
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "evp_cleanup_intern()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "OBJ_cleanup()\n");
+                    "obj_cleanup_intern()\n");
 #endif
     /*
      * Note that cleanup order is important:
@@ -489,7 +490,7 @@ void OPENSSL_cleanup(void)
     bio_sock_cleanup_intern();
 #endif
     evp_cleanup_intern();
-    OBJ_cleanup();
+    obj_cleanup_intern();
     base_inited = 0;
 }
 

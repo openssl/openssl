@@ -919,7 +919,6 @@ int x509_main(int argc, char **argv)
  end:
     if (need_rand)
         app_RAND_write_file(NULL);
-    OBJ_cleanup();
     NCONF_free(extconf);
     BIO_free_all(out);
     X509_STORE_free(ctx);
