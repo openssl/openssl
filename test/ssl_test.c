@@ -20,9 +20,12 @@
 
 static CONF *conf = NULL;
 
+/* Currently the section names are of the form test-<number>, e.g. test-15. */
+#define MAX_TESTCASE_NAME_LENGTH 100
+
 typedef struct ssl_test_ctx_test_fixture {
     const char *test_case_name;
-    char test_app[100];
+    char test_app[MAX_TESTCASE_NAME_LENGTH];
 } SSL_TEST_FIXTURE;
 
 static SSL_TEST_FIXTURE set_up(const char *const test_case_name)
@@ -149,9 +152,9 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
 
     OPENSSL_assert(CONF_modules_load(conf, fixture.test_app, 0) > 0);
 
-    if(!SSL_CTX_config(server_ctx, "server")
+    if (!SSL_CTX_config(server_ctx, "server")
        || !SSL_CTX_config(client_ctx, "client")) {
-           goto err;
+        goto err;
     }
 
     test_ctx = SSL_TEST_CTX_create(conf, fixture.test_app);

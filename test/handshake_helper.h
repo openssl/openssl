@@ -8,6 +8,9 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#ifndef HEADER_HANDSHAKE_HELPER_H
+#define HEADER_HANDSHAKE_HELPER_H
+
 #include "ssl_test_ctx.h"
 
 typedef struct handshake_result {
@@ -28,3 +31,5 @@ typedef struct handshake_result {
 
 /* Do a handshake and report some information about the result. */
 HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *client_ctx);
+
+#endif  /* HEADER_HANDSHAKE_HELPER_H */

@@ -17,11 +17,13 @@ my @max_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", undef);
 
 my @is_disabled = anydisabled("ssl3", "tls1", "tls1_1", "tls1_2");
 
-# Protocol configuration works in cascades, i.e.,
-# $no_tls1_1 disables TLSv1.1 and below.
-# We now have at least one protocol enabled.
 my $min_enabled; my $max_enabled;
 
+# Protocol configuration works in cascades, i.e.,
+# $no_tls1_1 disables TLSv1.1 and below.
+#
+# $min_enabled and $max_enabled will be correct if there is at least one
+# protocol enabled.
 foreach my $i (0..$#protocols) {
     if (!$is_disabled[$i]) {
         $min_enabled = $i;
@@ -81,6 +83,8 @@ sub expected_result {
     $s_min = $s_min == 0 ? 0 : $s_min - 1;
     $s_max = $s_max == scalar(@max_protocols) - 1 ? $s_max - 1 : $s_max;
 
+    # We now have at least one protocol enabled, so $min_enabled and
+    # $max_enabled are well-defined.
     $c_min = max $c_min, $min_enabled;
     $s_min = max $s_min, $min_enabled;
     $c_max = min $c_max, $max_enabled;
@@ -105,7 +109,7 @@ sub expected_result {
         # Server and client ranges overlap.
         my $max_common = $s_max < $c_max ? $s_max : $c_max;
         return ("Success", $protocols[$max_common]);
-    }        
+    }
 }
 
 generate_tests();

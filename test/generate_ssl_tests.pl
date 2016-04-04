@@ -14,7 +14,7 @@ use OpenSSL::Test::Utils;
 
 # This block needs to run before 'use lib srctop_dir' directives.
 BEGIN {
-OpenSSL::Test::setup("no_test_here");
+    OpenSSL::Test::setup("no_test_here");
 }
 
 use lib srctop_dir("util");  # for with_fallback
@@ -89,10 +89,8 @@ sub read_config {
     my $fname = shift;
     open(INPUT, "< $fname")
 	or die "Can't open input file '$fname'!\n";
-    my $x = $/;
-    undef $/;
+    local $/ = undef;
     my $content = <INPUT>;
-    $/ = $x;
     close(INPUT);
     eval $content;
     warn $@ if $@;

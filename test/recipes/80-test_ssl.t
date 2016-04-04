@@ -66,6 +66,9 @@ my $P2intermediate="tmp_intP2.ss";
 my $server_sess="server.ss";
 my $client_sess="client.ss";
 
+# ssltest.c is deprecated in favour of the new framework in ssl_test.c
+# If you're adding tests here, you probably want to convert them to the
+# new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
     + 1				# For ssltest -test_cipherlist

@@ -38,7 +38,6 @@ static void info_callback(const SSL *s, int where, int ret)
             ex_data->alert_received = ret;
         }
     }
-        /* Else do nothing. */
 }
 
 typedef enum {
@@ -59,6 +58,7 @@ static peer_status_t do_handshake_step(SSL *ssl)
         return PEER_ERROR;
     } else {
         int error = SSL_get_error(ssl, ret);
+        /* Memory bios should never block with SSL_ERROR_WANT_WRITE. */
         if (error == SSL_ERROR_WANT_READ)
             return PEER_RETRY;
         else
@@ -83,11 +83,11 @@ typedef enum {
  * Determine the handshake outcome.
  * last_status: the status of the peer to have acted last.
  * previous_status: the status of the peer that didn't act last.
- * client_went_last: 1 if the client went last.
+ * client_spoke_last: 1 if the client went last.
  */
 static handshake_status_t handshake_status(peer_status_t last_status,
                                            peer_status_t previous_status,
-                                           int client_went_last)
+                                           int client_spoke_last)
 {
     switch (last_status) {
     case PEER_SUCCESS:
@@ -126,13 +126,13 @@ static handshake_status_t handshake_status(peer_status_t last_status,
              * application data?) to ensure the first peer receives the
              * alert / close_notify.
              */
-            return client_went_last ? CLIENT_ERROR : SERVER_ERROR;
+            return client_spoke_last ? CLIENT_ERROR : SERVER_ERROR;
         case PEER_RETRY:
             /* We errored; let the peer finish. */
             return HANDSHAKE_RETRY;
         case PEER_ERROR:
             /* Both peers errored. Return the one that errored first. */
-            return client_went_last ? SERVER_ERROR : CLIENT_ERROR;
+            return client_spoke_last ? SERVER_ERROR : CLIENT_ERROR;
         }
     }
     /* Control should never reach here. */
@@ -187,6 +187,14 @@ HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *client_ctx)
     SSL_set_info_callback(server, &info_callback);
     SSL_set_info_callback(client, &info_callback);
 
+    /*
+     * Half-duplex handshake loop.
+     * Client and server speak to each other synchronously in the same process.
+     * We use non-blocking BIOs, so whenever one peer blocks for read, it
+     * returns PEER_RETRY to indicate that it's the other peer's turn to write.
+     * The handshake succeeds once both peers have succeeded. If one peer
+     * errors out, we also let the other peer retry (and presumably fail).
+     */
     for(;;) {
         if (client_turn) {
             client_status = do_handshake_step(client);

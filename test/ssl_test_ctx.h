@@ -8,8 +8,8 @@
  * or in the file LICENSE in the source distribution.
  */
 
-#ifndef HEADER_SSL_TEST_CONF_H
-#define HEADER_SSL_TEST_CONF_H
+#ifndef HEADER_SSL_TEST_CTX_H
+#define HEADER_SSL_TEST_CTX_H
 
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
@@ -49,4 +49,5 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section);
 SSL_TEST_CTX *SSL_TEST_CTX_new(void);
 
 void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx);
-#endif
+
+#endif  /* HEADER_SSL_TEST_CTX_H */

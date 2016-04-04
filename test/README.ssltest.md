@@ -52,9 +52,9 @@ The test section supports the following options:
   - ServerFail - serverside handshake failure
   - ClientFail - clientside handshake failure
   - InternalError - some other error
-  
-* ClientAlert, ServerAlert - expected alert. One of
-  - UnknownCA
+
+* ClientAlert, ServerAlert - expected alert. See `ssl_test_ctx.c` for known
+  values.
 
 * Protocol - expected negotiated protocol. One of
   SSLv3, TLSv1, TLSv1.1, TLSv1.2.
@@ -68,8 +68,8 @@ Give your configurations as a dictionary of CONF commands, e.g.
 
 ```
 server => {
-    "CipherString = DEFAULT",
-    "MinProtocol = TLSv1",
+    "CipherString" => "DEFAULT",
+    "MinProtocol" => "TLSv1",
 }
 ```
 
@@ -106,13 +106,34 @@ HARNESS_VERBOSE=yes make TESTS=test_ssl_new test
 
 ## Running a test manually
 
-Set the `TEST_CERTS_DIR` environment variable to point to the location of the
-certs. E.g., from the root OpenSSL directory, do
+These steps are only needed during development. End users should run `make test`
+or follow the instructions above to run the SSL test suite.
+
+To run an SSL test manually from the command line, the `TEST_CERTS_DIR`
+environment variable to point to the location of the certs. E.g., from the root
+OpenSSL directory, do
 
 ```
 $ TEST_CERTS_DIR=test/certs test/ssl_test test/ssl-tests/01-simple.conf
 ```
 
-Note that the `test/ssl-tests/*.conf` files correspond to expected outputs in
-the default configuration. To run tests manually in a different configuration,
-you may need to generate the right file from the `*.conf.in` input first.
+or for shared builds
+
+```
+$ TEST_CERTS_DIR=test/certs util/shlib_wrap.sh test/ssl_test \
+  test/ssl-tests/01-simple.conf
+```
+
+Note that the test expectations sometimes depend on the Configure settings. For
+example, the negotiated protocol depends on the set of available (enabled)
+protocols: a build with `enable-ssl3` has different test expectations than a
+build with `no-ssl3`.
+
+The Perl test harness automatically generates expected outputs, so users who
+just run `make test` do not need any extra steps.
+
+However, when running a test manually, keep in mind that the repository version
+of the generated `test/ssl-tests/*.conf` correspond to expected outputs in with
+the default Configure options. To run `ssl_test` manually from the command line
+in a build with a different configuration, you may need to generate the right
+`*.conf` file from the `*.conf.in` input first.

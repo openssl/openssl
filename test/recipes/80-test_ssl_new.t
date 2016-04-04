@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 
+use File::Basename;
 use File::Compare qw/compare_text/;
 
 use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file/;
@@ -12,22 +13,25 @@ setup("test_ssl_new");
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
 
-plan tests => 2;
+my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.conf"));
+my @conf_files = map {basename($_)} @conf_srcs;
 
 # 02-protocol-version.conf test results depend on the configuration of enabled
 # protocols. We only verify generated sources in the default configuration.
 my $is_default = (disabled("ssl3") && !disabled("tls1") &&
                   !disabled("tls1_1") && !disabled("tls1_2"));
 
-# [file, check_source]
-my @conf_files = (["01-simple.conf", 1],
-                  ["02-protocol-version.conf", $is_default]);
+my %conf_dependent_tests = ("02-protocol-version.conf" => 1);
 
 foreach my $conf (@conf_files) {
-    subtest "Test configuration $conf->[0]" => sub {
-        test_conf(@$conf);
+    subtest "Test configuration $conf" => sub {
+        test_conf($conf, $conf_dependent_tests{$conf} ?  0 : 1);
     }
 }
+
+# We hard-code the number of tests to double-check that the globbing above
+# finds all files as expected.
+plan tests => 2;  # = scalar @conf_files
 
 sub test_conf {
     plan tests => 3;
@@ -35,7 +39,7 @@ sub test_conf {
     my ($conf, $check_source) = @_;
 
     my $conf_file = srctop_file("test", "ssl-tests", $conf);
-    my $tmp_file = srctop_file("test", "ssl-tests", "${conf}.tmp");
+    my $tmp_file = "${conf}.$$.tmp";
     my $run_test = 1;
 
   SKIP: {
@@ -60,7 +64,7 @@ sub test_conf {
       my $no_tls = alldisabled(available_protocols("tls"));
       skip "No TLS tests available; skipping tests", 1 if $no_tls;
       skip "Stale sources; skipping tests", 1 if !$run_test;
-      
+
       ok(run(test(["ssl_test", $tmp_file])), "running ssl_test $conf");
     }
 
