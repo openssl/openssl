@@ -1835,7 +1835,9 @@ __owur const char *SSL_COMP_get_name(const COMP_METHOD *comp);
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 __owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths);
-void SSL_COMP_free_compression_methods(void);
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define SSL_COMP_free_compression_methods()
+#endif
 __owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
 
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
