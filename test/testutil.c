@@ -113,14 +113,14 @@ int run_tests(const char *test_prog_name)
 
     for (i = 0; i != num_tests; ++i) {
         if (all_tests[i].num == -1) {
-            if (all_tests[i].test_fn()) {
+            if (!all_tests[i].test_fn()) {
                 printf("** %s failed **\n--------\n",
                        all_tests[i].test_case_name);
                 ++num_failed;
             }
         } else {
             for (j = 0; j < all_tests[i].num; j++) {
-                if (all_tests[i].param_test_fn(j)) {
+                if (!all_tests[i].param_test_fn(j)) {
                     printf("** %s failed test %d\n--------\n",
                            all_tests[i].test_case_name, j);
                     ++num_failed;

@@ -40,13 +40,13 @@ static int execute_test(D2I_TEST_FIXTURE fixture)
 {
     BIO *bio = NULL;
     ASN1_VALUE *value = NULL;
-    int ret = 1;
+    int ret = 0;
     unsigned char buf[2048];
     const unsigned char *buf_ptr = buf;
     int len;
 
     if ((bio = BIO_new_file(test_file, "r")) == NULL)
-        return 1;
+        return 0;
 
     /*
      * We don't use ASN1_item_d2i_bio because it, apparently,
@@ -60,7 +60,7 @@ static int execute_test(D2I_TEST_FIXTURE fixture)
     if (value != NULL)
         goto err;
 
-    ret = 0;
+    ret = 1;
 
  err:
     BIO_free(bio);

@@ -140,8 +140,7 @@ static int check_test(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
 
 static int execute_test(SSL_TEST_FIXTURE fixture)
 {
-    /* TODO(emilia): this is confusing. Flip to return 1 on success. */
-    int ret = 1;
+    int ret = 0;
     SSL_CTX *server_ctx = NULL, *client_ctx = NULL;
     SSL_TEST_CTX *test_ctx = NULL;
     HANDSHAKE_RESULT result;
@@ -163,15 +162,14 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
 
     result = do_handshake(server_ctx, client_ctx);
 
-    if (check_test(result, test_ctx))
-        ret = 0;
+    ret = check_test(result, test_ctx);
 
 err:
     CONF_modules_unload(0);
     SSL_CTX_free(server_ctx);
     SSL_CTX_free(client_ctx);
     SSL_TEST_CTX_free(test_ctx);
-    if (ret != 0)
+    if (ret != 1)
         ERR_print_errors_fp(stderr);
     return ret;
 }

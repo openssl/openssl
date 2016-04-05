@@ -74,7 +74,7 @@ static SSL_TEST_CTX_TEST_FIXTURE set_up(const char *const test_case_name)
 
 static int execute_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
 {
-    int ret = 1;
+    int success = 0;
 
     SSL_TEST_CTX *ctx = SSL_TEST_CTX_create(conf, fixture.test_section);
 
@@ -87,10 +87,10 @@ static int execute_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
     if (!SSL_TEST_CTX_equal(ctx, fixture.expected_ctx))
         goto err;
 
-    ret = 0;
+    success = 1;
  err:
     SSL_TEST_CTX_free(ctx);
-    return ret;
+    return success;
 }
 
 static int execute_failure_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
@@ -101,10 +101,10 @@ static int execute_failure_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
         fprintf(stderr, "Parsing bad configuration %s succeeded.\n",
                 fixture.test_section);
         SSL_TEST_CTX_free(ctx);
-        return 1;
+        return 0;
     }
 
-    return 0;
+    return 1;
 }
 
 static void tear_down(SSL_TEST_CTX_TEST_FIXTURE fixture)
