@@ -1788,7 +1788,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     if (!X509_set_subject_name(ret, subject))
         goto end;
 
-    pktmp = X509_REQ_get_pubkey(req);
+    pktmp = X509_REQ_get0_pubkey(req);
     i = X509_set_pubkey(ret, pktmp);
     if (!i)
         goto end;
