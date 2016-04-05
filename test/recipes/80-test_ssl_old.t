@@ -66,12 +66,12 @@ my $P2intermediate="tmp_intP2.ss";
 my $server_sess="server.ss";
 my $client_sess="client.ss";
 
-# ssltest.c is deprecated in favour of the new framework in ssl_test.c
+# ssltest_old.c is deprecated in favour of the new framework in ssl_test.c
 # If you're adding tests here, you probably want to convert them to the
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
-    + 1				# For ssltest -test_cipherlist
+    + 1				# For ssltest_old -test_cipherlist
     + 14			# For the first testssl
     + 16			# For the first testsslproxy
     + 16			# For the second testsslproxy
@@ -89,10 +89,10 @@ subtest 'test_ss' => sub {
     }
 };
 
-my $check = ok(run(test(["ssltest","-test_cipherlist"])), "running ssltest");
+my $check = ok(run(test(["ssltest_old","-test_cipherlist"])), "running ssltest_old");
 
   SKIP: {
-      skip "ssltest ended with error, skipping the rest", 3
+      skip "ssltest_old ended with error, skipping the rest", 3
 	  if !$check;
 
       note('test_ssl -- key U');
@@ -320,7 +320,7 @@ sub testssl {
     my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", bldtop_dir("certs"));
     my @extra = @_;
 
-    my @ssltest = ("ssltest",
+    my @ssltest = ("ssltest_old",
 		   "-s_key", $key, "-s_cert", $cert,
 		   "-c_key", $key, "-c_cert", $cert);
 
@@ -445,7 +445,7 @@ sub testssl {
             ok(run(test([@ssltest, "-ipv4", @extra])),
                'test TLS via IPv4');
           }
-          
+
         SKIP: {
             skip "No IPv6 available on this machine", 1
                 unless !disabled("sock") && have_IPv6();
@@ -536,13 +536,13 @@ sub testssl {
 	    skip "skipping RSA tests", 2
 		if $no_rsa;
 
-	    ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time", @extra])),
+	    ok(run(test(["ssltest_old", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time", @extra])),
 	       'test tlsv1 with 1024bit RSA, no (EC)DHE, multiple handshakes');
 
 	    skip "skipping RSA+DHE tests", 1
 		if $no_dh;
 
-	    ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
+	    ok(run(test(["ssltest_old", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
 	       'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
 	  }
 
@@ -834,7 +834,7 @@ sub testsslproxy {
     my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", bldtop_dir("certs"));
     my @extra = @_;
 
-    my @ssltest = ("ssltest",
+    my @ssltest = ("ssltest_old",
 		   "-s_key", $key, "-s_cert", $cert,
 		   "-c_key", $key, "-c_cert", $cert);
 
@@ -848,7 +848,7 @@ sub testsslproxy {
     # letters get combined into just "B".
     # The policy letter(s) then get filtered with the given auth letter
     # in the table below, and the result gets tested with the given
-    # condition.  For details, read ssltest.c
+    # condition.  For details, read ssltest_old.c
     #
     # certfilename => [ [ auth, cond, expected result ] ... ]
     my %expected = ( "certP1.ss" => [ [ [ 'A',  'A'      ], 1 ],
