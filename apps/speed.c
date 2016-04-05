@@ -1174,6 +1174,16 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
                 max_fd = job_fd;
         }
 
+        if (max_fd >= FD_SETSIZE) {
+            BIO_printf(bio_err,
+                    "Error: max_fd (%d) must be smaller than FD_SETSIZE (%d). "
+                    "Decrease the value of async_jobs\n",
+                    max_fd, FD_SETSIZE);
+            ERR_print_errors(bio_err);
+            error = 1;
+            break;
+        }
+
         select_result = select(max_fd + 1, &waitfdset, NULL, NULL, NULL);
         if (select_result == -1 && errno == EINTR)
             continue;
