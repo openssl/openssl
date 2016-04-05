@@ -68,7 +68,7 @@
  *
  * EXECUTE_TEST will pass fixture to execute_func() by value, call
  * tear_down(), and return the result of execute_func(). execute_func() should
- * take a TEST_FIXTURE_TYPE by value and return zero on success or one on
+ * take a TEST_FIXTURE_TYPE by value and return 1 on success and 0 on
  * failure.
  *
  * Unit tests can define their own SETUP_TEST_FIXTURE and EXECUTE_TEST
@@ -94,7 +94,7 @@
     int result = 0
 
 # define EXECUTE_TEST(execute_func, tear_down)\
-        if (execute_func(fixture) != 0) result = 1;\
+        result = execute_func(fixture);\
         tear_down(fixture);\
         return result
 
