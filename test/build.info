@@ -9,7 +9,7 @@ PROGRAMS=\
         destest sha1test sha256t sha512t \
         mdc2test rmdtest \
         randtest dhtest enginetest casttest \
-        bftest ssltest dsatest exptest rsa_test \
+        bftest ssltest_old dsatest exptest rsa_test \
         evp_test evp_extra_test igetest v3nametest \
         danetest heartbeat_test p5_crpt2_test \
         constant_time_test verify_extra_test clienthellotest \
@@ -129,9 +129,9 @@ SOURCE[bftest]=bftest.c
 INCLUDE[bftest]={- rel2abs(catdir($builddir,"../include")) -} ../include
 DEPEND[bftest]=../libcrypto
 
-SOURCE[ssltest]=ssltest.c
-INCLUDE[ssltest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
-DEPEND[ssltest]=../libcrypto ../libssl
+SOURCE[ssltest_old]=ssltest_old.c
+INCLUDE[ssltest_old]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+DEPEND[ssltest_old]=../libcrypto ../libssl
 
 SOURCE[dsatest]=dsatest.c
 INCLUDE[dsatest]={- rel2abs(catdir($builddir,"../include")) -} ../include
