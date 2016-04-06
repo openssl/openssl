@@ -55,11 +55,6 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef BN_DEBUG
-# undef NDEBUG                  /* avoid conflicting definitions */
-# define NDEBUG
-#endif
-
 #include <assert.h>
 #include <limits.h>
 #include "internal/cryptlib.h"

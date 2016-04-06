@@ -142,9 +142,7 @@
  * OTHERWISE.
  */
 
-#ifdef REF_DEBUG
-# include <assert.h>
-#endif
+#include <assert.h>
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/objects.h>
@@ -3318,13 +3316,7 @@ void ssl_free_wbio_buffer(SSL *s)
     if (s->bbio == s->wbio) {
         /* remove buffering */
         s->wbio = BIO_pop(s->wbio);
-#ifdef REF_DEBUG
-        /*
-         * not the usual REF_DEBUG, but this avoids
-         * adding one more preprocessor symbol
-         */
         assert(s->wbio != NULL);
-#endif
     }
     BIO_free(s->bbio);
     s->bbio = NULL;
