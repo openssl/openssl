@@ -4165,3 +4165,13 @@ RSA_meth_set_init                       4031	1_1_0	EXIST::FUNCTION:RSA
 RSA_meth_get_priv_enc                   4032	1_1_0	EXIST::FUNCTION:RSA
 RSA_set0_crt_params                     4037	1_1_0	EXIST::FUNCTION:RSA
 RSA_get0_crt_params                     4038	1_1_0	EXIST::FUNCTION:RSA
+DH_set0_pqg                             4039	1_1_0	EXIST::FUNCTION:DH
+DH_set_flags                            4040	1_1_0	EXIST::FUNCTION:DH
+DH_clear_flags                          4041	1_1_0	EXIST::FUNCTION:DH
+DH_get0_key                             4042	1_1_0	EXIST::FUNCTION:DH
+DH_get0_engine                          4043	1_1_0	EXIST::FUNCTION:DH
+DH_set0_key                             4044	1_1_0	EXIST::FUNCTION:DH
+DH_set_length                           4045	1_1_0	EXIST::FUNCTION:DH
+DH_test_flags                           4046	1_1_0	EXIST::FUNCTION:DH
+DH_get_length                           4047	1_1_0	EXIST::FUNCTION:DH
+DH_get0_pqg                             4048	1_1_0	EXIST::FUNCTION:DH
