@@ -158,10 +158,10 @@
 
  # Build all known libraries, engines, programs and scripts.
  # Everything else will be handled as a consequence.
- dolib($_)     foreach @{$unified_info{libraries}};
- doengine($_)  foreach @{$unified_info{engines}};
- dobin($_)     foreach @{$unified_info{programs}};
- doscript($_)  foreach @{$unified_info{scripts}};
+ foreach (@{$unified_info{libraries}}) { dolib($_);    }
+ foreach (@{$unified_info{engines}})   { doengine($_); }
+ foreach (@{$unified_info{programs}})  { dobin($_);    }
+ foreach (@{$unified_info{scripts}})   { doscript($_); }
 
  # Finally, should there be any applicable BEGINRAW/ENDRAW sections,
  # they are added here.
