@@ -1947,8 +1947,8 @@ enum {
  * least one valid SCT, or else handshake termination will be requested.  The
  * handshake may continue anyway if SSL_VERIFY_NONE is in effect.
  */
-int SSL_enable_ct(SSL *s, int vtype);
-int SSL_CTX_enable_ct(SSL_CTX *ctx, int vtype);
+int SSL_enable_ct(SSL *s, int validation_mode);
+int SSL_CTX_enable_ct(SSL_CTX *ctx, int validation_mode);
 
 /*
  * Report whether a non-NULL callback is enabled.

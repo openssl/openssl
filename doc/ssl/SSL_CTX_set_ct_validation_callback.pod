@@ -11,8 +11,8 @@ control Certificate Transparency policy
 
  #include <openssl/ssl.h>
 
- int SSL_ct_enable(SSL *s, int vtype);
- int SSL_CTX_ct_enable(SSL_CTX *ctx, int vtype);
+ int SSL_ct_enable(SSL *s, int validation_mode);
+ int SSL_CTX_ct_enable(SSL_CTX *ctx, int validation_mode);
  int SSL_set_ct_validation_callback(SSL *s, ssl_ct_validation_cb callback,
                                     void *arg);
  int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx,
@@ -29,12 +29,14 @@ SSL_ct_enable() and SSL_CTX_ct_enable() enable the processing of signed
 certificate timestamps (SCTs) either for a given SSL connection or for all
 connections that share the given SSL context, respectively.
 This is accomplished by setting a built-in CT validation callback.
-The behaviour of the callback is determined by the B<vtype> argument.
+The behaviour of the callback is determined by the B<validation_mode> argument,
+which can be either of B<SSL_CT_VALIDATION_PERMISSIVE> or
+B<SSL_CT_VALIDATION_STRICT> as described below.
 
-If B<vtype> is equal to B<SSL_CT_VALIDATION_PERMISSIVE>, then the
+If B<validation_mode> is equal to B<SSL_CT_VALIDATION_PERMISSIVE>, then the
 handshake continues regardless of the validation status of any SCTs.
-The application can inspect the validation status of the SCTs at
-handshake completion.
+The application can inspect the validation status of the SCTs at handshake
+completion.
 Note that with session resumption there will not be any SCTs presented during
 the handshake.
 Therefore, in applications that delay SCT policy enforcement until after
@@ -42,8 +44,8 @@ handshake completion, SCT checks should only be performed when the session is
 not reused.
 See L<SSL_session_reused(3)>.
 
-If B<vtype> is equal to B<SSL_CT_VALIDATION_STRICT>, then in a full TLS
-handshake with the verification mode set to B<SSL_VERIFY_PEER>, if the peer
+If B<validation_mode> is equal to B<SSL_CT_VALIDATION_STRICT>, then in a full
+TLS handshake with the verification mode set to B<SSL_VERIFY_PEER>, if the peer
 presents no valid SCTs the handshake will be aborted.
 See L<SSL_set_verify(3)>.
 

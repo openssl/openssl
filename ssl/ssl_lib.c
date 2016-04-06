@@ -4095,12 +4095,12 @@ int SSL_CTX_ct_is_enabled(const SSL_CTX *ctx)
     return ctx->ct_validation_callback != NULL;
 }
 
-static void *ssl_ct_arg(int vtype)
+static void *ssl_ct_arg(int validation_mode)
 {
     static int permissive = SSL_CT_VALIDATION_PERMISSIVE;
     static int strict = SSL_CT_VALIDATION_STRICT;
 
-    switch (vtype) {
+    switch (validation_mode) {
     default:
         SSLerr(SSL_F_SSL_CT_ARG, SSL_R_INVALID_CT_VALIDATION_TYPE);
         return NULL;
@@ -4140,18 +4140,18 @@ static int ssl_ct_cb(const CT_POLICY_EVAL_CTX *ctx,
     return 0;
 }
 
-int SSL_CTX_enable_ct(SSL_CTX *ctx, int vtype)
+int SSL_CTX_enable_ct(SSL_CTX *ctx, int validation_mode)
 {
-    void *arg = ssl_ct_arg(vtype);
+    void *arg = ssl_ct_arg(validation_mode);
 
     if (arg == NULL)
         return 0;
     return SSL_CTX_set_ct_validation_callback(ctx, ssl_ct_cb, arg);
 }
 
-int SSL_enable_ct(SSL *s, int vtype)
+int SSL_enable_ct(SSL *s, int validation_mode)
 {
-    void *arg = ssl_ct_arg(vtype);
+    void *arg = ssl_ct_arg(validation_mode);
 
     if (arg == NULL)
         return 0;
