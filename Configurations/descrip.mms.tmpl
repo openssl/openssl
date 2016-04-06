@@ -51,7 +51,7 @@
   my $sd1 = sourcedir("ssl","record");
   my $sd2 = sourcedir("ssl","statem");
   $unified_info{before}->{"[.test]heartbeat_test.OBJ"}
-      = $unified_info{before}->{"[.test]ssltest.OBJ"}
+      = $unified_info{before}->{"[.test]ssltest_old.OBJ"}
       = qq(record = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
         define record 'record'
         statem = F\$PARSE("$sd2","A.;",,,"SYNTAX_ONLY") - "A.;"
