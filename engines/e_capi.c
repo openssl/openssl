@@ -431,22 +431,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 
 }
 
-static RSA_METHOD capi_rsa_method = {
-    "CryptoAPI RSA method",
-    0,                          /* pub_enc */
-    0,                          /* pub_dec */
-    capi_rsa_priv_enc,          /* priv_enc */
-    capi_rsa_priv_dec,          /* priv_dec */
-    0,                          /* rsa_mod_exp */
-    0,                          /* bn_mod_exp */
-    0,                          /* init */
-    capi_rsa_free,              /* finish */
-    0,                          /* flags */
-    NULL,                       /* app_data */
-    capi_rsa_sign,              /* rsa_sign */
-    0                           /* rsa_verify */
-};
-
+static RSA_METHOD *capi_rsa_method = NULL;
 static DSA_METHOD *capi_dsa_method = NULL;
 
 static int use_aes_csp = 0;
@@ -468,10 +453,20 @@ static int capi_init(ENGINE *e)
         /* Setup RSA_METHOD */
         rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
         ossl_rsa_meth = RSA_PKCS1_OpenSSL();
-        capi_rsa_method.rsa_pub_enc = ossl_rsa_meth->rsa_pub_enc;
-        capi_rsa_method.rsa_pub_dec = ossl_rsa_meth->rsa_pub_dec;
-        capi_rsa_method.rsa_mod_exp = ossl_rsa_meth->rsa_mod_exp;
-        capi_rsa_method.bn_mod_exp = ossl_rsa_meth->bn_mod_exp;
+        if (   !RSA_meth_set_pub_enc(capi_rsa_method,
+                                     RSA_meth_get_pub_enc(ossl_rsa_meth))
+            || !RSA_meth_set_pub_dec(capi_rsa_method,
+                                     RSA_meth_get_pub_dec(ossl_rsa_meth))
+            || !RSA_meth_set_priv_enc(capi_rsa_method, capi_rsa_priv_enc)
+            || !RSA_meth_set_priv_dec(capi_rsa_method, capi_rsa_priv_dec)
+            || !RSA_meth_set_mod_exp(capi_rsa_method,
+                                     RSA_meth_get_mod_exp(ossl_rsa_meth))
+            || !RSA_meth_set_bn_mod_exp(capi_rsa_method,
+                                        RSA_meth_get_bn_mod_exp(ossl_rsa_meth))
+            || !RSA_meth_set_finish(capi_rsa_method, capi_rsa_free)
+            || !RSA_meth_set_sign(capi_rsa_method, capi_rsa_sign)) {
+            goto memerr;
+        }
 
         /* Setup DSA Method */
         dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
@@ -529,6 +524,8 @@ static int capi_init(ENGINE *e)
 
 static int capi_destroy(ENGINE *e)
 {
+    RSA_meth_free(capi_rsa_method);
+    capi_rsa_method = NULL;
     DSA_meth_free(capi_dsa_method);
     capi_dsa_method = NULL;
     ERR_unload_CAPI_strings();
@@ -560,27 +557,35 @@ struct CAPI_KEY_st {
 
 static int bind_capi(ENGINE *e)
 {
+    capi_rsa_method = RSA_meth_new("CryptoAPI RSA method", 0);
+    if (capi_rsa_method == NULL)
+        return 0;
     capi_dsa_method = DSA_meth_new("CryptoAPI DSA method", 0);
     if (capi_dsa_method == NULL)
-        return 0;
+        goto memerr;
     if (!ENGINE_set_id(e, engine_capi_id)
         || !ENGINE_set_name(e, engine_capi_name)
         || !ENGINE_set_flags(e, ENGINE_FLAGS_NO_REGISTER_ALL)
         || !ENGINE_set_init_function(e, capi_init)
         || !ENGINE_set_finish_function(e, capi_finish)
         || !ENGINE_set_destroy_function(e, capi_destroy)
-        || !ENGINE_set_RSA(e, &capi_rsa_method)
+        || !ENGINE_set_RSA(e, capi_rsa_method)
         || !ENGINE_set_DSA(e, capi_dsa_method)
         || !ENGINE_set_load_privkey_function(e, capi_load_privkey)
         || !ENGINE_set_load_ssl_client_cert_function(e,
                                                      capi_load_ssl_client_cert)
         || !ENGINE_set_cmd_defns(e, capi_cmd_defns)
         || !ENGINE_set_ctrl_function(e, capi_ctrl))
-        return 0;
+        goto memerr;
     ERR_load_CAPI_strings();
 
     return 1;
-
+ memerr:
+    RSA_meth_free(capi_rsa_method);
+    capi_rsa_method = NULL;
+    DSA_meth_free(capi_dsa_method);
+    capi_dsa_method = NULL;
+    return 0;
 }
 
 # ifndef OPENSSL_NO_DYNAMIC_ENGINE
@@ -675,6 +680,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
     if (bh->aiKeyAlg == CALG_RSA_SIGN || bh->aiKeyAlg == CALG_RSA_KEYX) {
         RSAPUBKEY *rp;
         DWORD rsa_modlen;
+        BIGNUM *e = NULL, *n = NULL;
         unsigned char *rsa_modulus;
         rp = (RSAPUBKEY *) (bh + 1);
         if (rp->magic != 0x31415352) {
@@ -690,17 +696,22 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
         if (!rkey)
             goto memerr;
 
-        rkey->e = BN_new();
-        rkey->n = BN_new();
+        e = BN_new();
+        n = BN_new();
 
-        if (rkey->e == NULL || rkey->n == NULL)
+        if (e == NULL || n == NULL) {
+            BN_free(e);
+            BN_free(n);
             goto memerr;
+        }
 
-        if (!BN_set_word(rkey->e, rp->pubexp))
+        RSA_set0_key(rkey, n, e, NULL);
+
+        if (!BN_set_word(e, rp->pubexp))
             goto memerr;
 
         rsa_modlen = rp->bitlen / 8;
-        if (!lend_tobn(rkey->n, rsa_modulus, rsa_modlen))
+        if (!lend_tobn(n, rsa_modulus, rsa_modlen))
             goto memerr;
 
         RSA_set_ex_data(rkey, rsa_capi_idx, key);
@@ -734,8 +745,13 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
         q = BN_new();
         g = BN_new();
         pub_key = BN_new();
-        if (p == NULL || q == NULL || g == NULL || pub_key == NULL)
+        if (p == NULL || q == NULL || g == NULL || pub_key == NULL) {
+            BN_free(p);
+            BN_free(q);
+            BN_free(g);
+            BN_free(pub_key);
             goto memerr;
+        }
         DSA_set0_pqg(dkey, p, q, g);
         DSA_set0_key(dkey, pub_key, NULL);
         if (!lend_tobn(p, btmp, dsa_plen))
@@ -828,7 +844,7 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
     CAPI_KEY *capi_key;
     CAPI_CTX *ctx;
 
-    ctx = ENGINE_get_ex_data(rsa->engine, capi_idx);
+    ctx = ENGINE_get_ex_data(RSA_get0_engine(rsa), capi_idx);
 
     CAPI_trace(ctx, "Called CAPI_rsa_sign()\n");
 
@@ -924,7 +940,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
     if (flen <= 0)
         return flen;
 
-    ctx = ENGINE_get_ex_data(rsa->engine, capi_idx);
+    ctx = ENGINE_get_ex_data(RSA_get0_engine(rsa), capi_idx);
 
     CAPI_trace(ctx, "Called capi_rsa_priv_dec()\n");
 
