@@ -696,7 +696,7 @@ int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);
 int BIO_sock_init(void);
 #if OPENSSL_API_COMPAT < 0x10100000L
-# define BIO_sock_cleanup()
+# define BIO_sock_cleanup() while(0) continue
 #endif
 int BIO_set_tcp_ndelay(int sock, int turn_on);
 
