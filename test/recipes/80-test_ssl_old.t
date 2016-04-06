@@ -78,7 +78,6 @@ my $client_sess="client.ss";
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
-    + 1				# For ssltest_old -test_cipherlist
     + 14			# For the first testssl
     + 16			# For the first testsslproxy
     + 16			# For the second testsslproxy
@@ -96,21 +95,15 @@ subtest 'test_ss' => sub {
     }
 };
 
-my $check = ok(run(test(["ssltest_old","-test_cipherlist"])), "running ssltest_old");
+note('test_ssl -- key U');
+testssl("keyU.ss", $Ucert, $CAcert);
 
-  SKIP: {
-      skip "ssltest_old ended with error, skipping the rest", 3
-	  if !$check;
+note('test_ssl -- key P1');
+testsslproxy("keyP1.ss", "certP1.ss", "intP1.ss", "AB");
 
-      note('test_ssl -- key U');
-      testssl("keyU.ss", $Ucert, $CAcert);
+note('test_ssl -- key P2');
+testsslproxy("keyP2.ss", "certP2.ss", "intP2.ss", "BC");
 
-      note('test_ssl -- key P1');
-      testsslproxy("keyP1.ss", "certP1.ss", "intP1.ss", "AB");
-
-      note('test_ssl -- key P2');
-      testsslproxy("keyP2.ss", "certP2.ss", "intP2.ss", "BC");
-    }
 
 # -----------
 # subtest functions

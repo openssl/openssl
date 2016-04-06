@@ -39,7 +39,7 @@ if (@ARGV) {
     @tests = @ARGV;
 }
 my $list_mode = scalar(grep /^list$/, @tests) != 0;
-if (grep /^alltests|list$/, @tests) {
+if (grep /^(alltests|list)$/, @tests) {
     @tests = grep {
 	basename($_) =~ /^[0-9][0-9]-[^\.]*\.t$/
     } glob(catfile($recipesdir,"*.t"));
