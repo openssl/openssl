@@ -240,7 +240,7 @@ static int test_uint64(const char *value, uint64_t *pr)
 /* Structure holding test information */
 struct evp_test {
     /* file being read */
-    FILE *in;
+    BIO *in;
     /* List of public and private keys */
     struct key_list *private;
     struct key_list *public;
@@ -465,8 +465,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
     if (!parse_line(&keyword, &value, buf))
         return 1;
     if (strcmp(keyword, "PrivateKey") == 0) {
-        save_pos = ftell(t->in);
-        pk = PEM_read_PrivateKey(t->in, NULL, 0, NULL);
+        save_pos = BIO_tell(t->in);
+        pk = PEM_read_bio_PrivateKey(t->in, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading private key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -476,8 +476,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         add_key = 1;
     }
     if (strcmp(keyword, "PublicKey") == 0) {
-        save_pos = ftell(t->in);
-        pk = PEM_read_PUBKEY(t->in, NULL, 0, NULL);
+        save_pos = BIO_tell(t->in);
+        pk = PEM_read_bio_PUBKEY(t->in, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading public key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -501,8 +501,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         key->next = *lst;
         *lst = key;
         /* Rewind input, read to end and update line numbers */
-        fseek(t->in, save_pos, SEEK_SET);
-        while (fgets(tmpbuf, sizeof(tmpbuf), t->in)) {
+        (void)BIO_seek(t->in, save_pos);
+        while (BIO_gets(t->in,tmpbuf, sizeof(tmpbuf))) {
             t->line++;
             if (strncmp(tmpbuf, "-----END", 8) == 0)
                 return 1;
@@ -584,7 +584,7 @@ static int check_output(struct evp_test *t,
 
 int main(int argc, char **argv)
 {
-    FILE *in = NULL;
+    BIO *in = NULL;
     char buf[10240];
     struct evp_test t;
 
@@ -597,9 +597,9 @@ int main(int argc, char **argv)
 
     memset(&t, 0, sizeof(t));
     t.start_line = -1;
-    in = fopen(argv[1], "r");
+    in = BIO_new_file(argv[1], "r");
     t.in = in;
-    while (fgets(buf, sizeof(buf), in)) {
+    while (BIO_gets(in, buf, sizeof(buf))) {
         t.line++;
         if (!process_test(&t, buf, 0))
             exit(1);
@@ -611,7 +611,7 @@ int main(int argc, char **argv)
             t.ntests, t.errors, t.nskip);
     free_key_list(t.public);
     free_key_list(t.private);
-    fclose(in);
+    BIO_free(in);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
