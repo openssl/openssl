@@ -199,7 +199,7 @@ static void cleanup3_doall(ADDED_OBJ *a)
 }
 
 /*
- * The purpose of obj_cleanup_defer is to avoid evp_cleanup_intern() attempting
+ * The purpose of obj_cleanup_defer is to avoid int_evp_cleanup() attempting
  * to use freed up OIDs. If necessary the actual freeing up of OIDs is delayed.
  */
 int obj_cleanup_defer = 0;
@@ -210,7 +210,7 @@ void check_defer(int nid)
         obj_cleanup_defer = 1;
 }
 
-void obj_cleanup_intern(void)
+void int_obj_cleanup(void)
 {
     if (obj_cleanup_defer) {
         obj_cleanup_defer = 2;

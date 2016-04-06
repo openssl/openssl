@@ -86,7 +86,7 @@ static const char *engine_dasync_name = "Dummy Async engine support";
 static int dasync_destroy(ENGINE *e);
 static int dasync_init(ENGINE *e);
 static int dasync_finish(ENGINE *e);
-void engine_load_dasync_internal(void);
+void int_engine_load_dasync(void);
 
 
 /* Set up digests. Just SHA1 for now */
@@ -347,7 +347,7 @@ static ENGINE *engine_dasync(void)
     return ret;
 }
 
-void engine_load_dasync_internal(void)
+void int_engine_load_dasync(void)
 {
     ENGINE *toadd = engine_dasync();
     if (!toadd)

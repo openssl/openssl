@@ -189,7 +189,7 @@ static ENGINE *engine_openssl(void)
     return ret;
 }
 
-void engine_load_openssl_internal(void)
+void int_engine_load_openssl(void)
 {
     ENGINE *toadd = engine_openssl();
     if (!toadd)

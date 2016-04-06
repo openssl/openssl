@@ -205,7 +205,7 @@ int BIO_sock_init(void)
     return (1);
 }
 
-void bio_sock_cleanup_intern(void)
+void int_bio_sock_cleanup(void)
 {
 # ifdef OPENSSL_SYS_WINDOWS
     if (wsa_init_done) {

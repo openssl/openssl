@@ -63,7 +63,7 @@
 
 #ifndef HAVE_CRYPTODEV
 
-void engine_load_cryptodev_internal(void)
+void int_engine_load_cryptodev(void)
 {
     /* This is a NOP on platforms without /dev/crypto */
     return;
@@ -141,7 +141,7 @@ static int cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key,
 #endif
 static int cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p,
                           void (*f) (void));
-void engine_load_cryptodev_internal(void);
+void int_engine_load_cryptodev(void);
 
 static const ENGINE_CMD_DEFN cryptodev_defns[] = {
     {0, NULL, NULL, 0}
@@ -1628,7 +1628,7 @@ cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     return (1);
 }
 
-void engine_load_cryptodev_internal(void)
+void int_engine_load_cryptodev(void)
 {
     ENGINE *engine = ENGINE_new();
     int fd;

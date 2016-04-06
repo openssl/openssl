@@ -113,7 +113,7 @@ void OPENSSL_cpuid_setup(void);
 extern unsigned int OPENSSL_ia32cap_P[];
 void OPENSSL_showfatal(const char *fmta, ...);
 extern int OPENSSL_NONPIC_relocated;
-void crypto_cleanup_all_ex_data_intern(void);
+void int_crypto_cleanup_all_ex_data(void);
 
 #ifdef  __cplusplus
 }

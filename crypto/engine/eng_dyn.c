@@ -295,7 +295,7 @@ static ENGINE *engine_dynamic(void)
     return ret;
 }
 
-void engine_load_dynamic_internal(void)
+void int_engine_load_dynamic(void)
 {
     ENGINE *toadd = engine_dynamic();
     if (!toadd)

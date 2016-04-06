@@ -55,5 +55,5 @@
  *
  */
 
-void err_load_crypto_strings_intern(void);
-void err_free_strings_intern(void);
+void int_err_load_crypto_strings(void);
+void int_err_free_strings(void);

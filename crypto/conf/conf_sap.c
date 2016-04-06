@@ -84,7 +84,7 @@ void OPENSSL_config(const char *config_name)
 }
 #endif
 
-void openssl_config_internal(const char *config_name)
+void int_openssl_config(const char *config_name)
 {
     if (openssl_configured)
         return;
@@ -103,7 +103,7 @@ void openssl_config_internal(const char *config_name)
     openssl_configured = 1;
 }
 
-void openssl_no_config_internal(void)
+void int_openssl_no_config(void)
 {
     openssl_configured = 1;
 }

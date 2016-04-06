@@ -104,7 +104,7 @@
 #define ALG_MAX_SALG_TYPE       14
 
 # ifdef OPENSSL_NO_DYNAMIC_ENGINE
-void engine_load_afalg_internal(void);
+void int_engine_load_afalg(void);
 # endif
 
 /* Local Linkage Functions */
@@ -816,7 +816,7 @@ static ENGINE *engine_afalg(void)
     return ret;
 }
 
-void engine_load_afalg_internal(void)
+void int_engine_load_afalg(void)
 {
     ENGINE *toadd;
 

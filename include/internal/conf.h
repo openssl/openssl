@@ -51,9 +51,9 @@ struct ossl_init_settings_st {
     char *config_name;
 };
 
-void openssl_config_internal(const char *config_name);
-void openssl_no_config_internal(void);
-void conf_modules_free_intern(void);
+void int_openssl_config(const char *config_name);
+void int_openssl_no_config(void);
+void int_conf_modules_free(void);
 
 #ifdef __cplusplus
 }

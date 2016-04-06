@@ -88,7 +88,7 @@
 #include <openssl/async.h>
 #include <openssl/kdf.h>
 
-void err_load_crypto_strings_intern(void)
+void int_err_load_crypto_strings(void)
 {
 #ifdef OPENSSL_FIPS
     FIPS_set_error_callbacks(ERR_put_error, ERR_add_error_vdata);
