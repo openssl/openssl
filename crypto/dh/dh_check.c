@@ -58,7 +58,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/dh.h>
+#include "dh_locl.h"
 
 /*-
  * Check that p is a safe prime and

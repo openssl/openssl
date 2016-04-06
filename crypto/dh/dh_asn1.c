@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/dh.h>
+#include "dh_locl.h"
 #include <openssl/objects.h>
 #include <openssl/asn1t.h>
 

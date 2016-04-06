@@ -58,7 +58,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
-#include <openssl/dh.h>
+#include "dh_locl.h"
 #include "internal/bn_int.h"
 
 static int generate_key(DH *dh);

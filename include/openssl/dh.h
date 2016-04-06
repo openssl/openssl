@@ -121,33 +121,6 @@ struct dh_method {
                             BN_GENCB *cb);
 };
 
-struct dh_st {
-    /*
-     * This first argument is used to pick up errors when a DH is passed
-     * instead of a EVP_PKEY
-     */
-    int pad;
-    int version;
-    BIGNUM *p;
-    BIGNUM *g;
-    long length;                /* optional */
-    BIGNUM *pub_key;            /* g^x % p */
-    BIGNUM *priv_key;           /* x */
-    int flags;
-    BN_MONT_CTX *method_mont_p;
-    /* Place holders if we want to do X9.42 DH */
-    BIGNUM *q;
-    BIGNUM *j;
-    unsigned char *seed;
-    int seedlen;
-    BIGNUM *counter;
-    int references;
-    CRYPTO_EX_DATA ex_data;
-    const DH_METHOD *meth;
-    ENGINE *engine;
-    CRYPTO_RWLOCK *lock;
-};
-
 DECLARE_ASN1_ITEM(DHparams)
 
 # define DH_GENERATOR_2          2
@@ -237,6 +210,18 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                  ASN1_OBJECT *key_oid,
                  const unsigned char *ukm, size_t ukmlen, const EVP_MD *md);
 # endif
+
+void DH_get0_pqg(const DH *dh, BIGNUM **p, BIGNUM **q, BIGNUM **g);
+int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
+void DH_get0_key(const DH *dh, BIGNUM **pub_key, BIGNUM **priv_key);
+int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
+void DH_clear_flags(DH *dh, int flags);
+int DH_test_flags(const DH *dh, int flags);
+void DH_set_flags(DH *dh, int flags);
+ENGINE *DH_get0_engine(DH *d);
+long DH_get_length(const DH *dh);
+int DH_set_length(DH *dh, long length);
+
 
 # define EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, len) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN, \

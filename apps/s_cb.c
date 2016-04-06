@@ -1371,7 +1371,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     case SSL_SECOP_OTHER_DH:
         {
             DH *dh = other;
-            BIO_printf(sdb->out, "%d", BN_num_bits(dh->p));
+            BIO_printf(sdb->out, "%d", DH_bits(dh));
             break;
         }
 #endif
