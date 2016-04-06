@@ -1908,7 +1908,7 @@ static void cmeth_free(SSL_COMP *cm)
     OPENSSL_free(cm);
 }
 
-void ssl_comp_free_compression_methods_intern(void)
+void int_ssl_comp_free_compression_methods(void)
 {
     STACK_OF(SSL_COMP) *old_meths = ssl_comp_methods;
     ssl_comp_methods = NULL;

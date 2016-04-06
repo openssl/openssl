@@ -62,7 +62,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 
-void openssl_add_all_ciphers_internal(void)
+void int_openssl_add_all_ciphers(void)
 {
 
 #ifndef OPENSSL_NO_DES

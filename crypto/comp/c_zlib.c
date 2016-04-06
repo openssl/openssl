@@ -282,7 +282,7 @@ COMP_METHOD *COMP_zlib(void)
                 zlib_loaded++;
 
             if (!OPENSSL_init_crypto(OPENSSL_INIT_ZLIB, NULL)) {
-                comp_zlib_cleanup_internal();
+                int_comp_zlib_cleanup();
                 return meth;
             }
             if (zlib_loaded)
@@ -297,7 +297,7 @@ COMP_METHOD *COMP_zlib(void)
     return (meth);
 }
 
-void comp_zlib_cleanup_internal(void)
+void int_comp_zlib_cleanup(void)
 {
 #ifdef ZLIB_SHARED
     if (zlib_dso != NULL)

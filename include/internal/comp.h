@@ -8,4 +8,4 @@
 
 #include <openssl/comp.h>
 
-void comp_zlib_cleanup_internal(void);
+void int_comp_zlib_cleanup(void);

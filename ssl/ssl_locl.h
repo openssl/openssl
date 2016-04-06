@@ -2195,7 +2195,7 @@ __owur int custom_ext_add(SSL *s, int server,
 __owur int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src);
 void custom_exts_free(custom_ext_methods *exts);
 
-void ssl_comp_free_compression_methods_intern(void);
+void int_ssl_comp_free_compression_methods(void);
 
 # else
 

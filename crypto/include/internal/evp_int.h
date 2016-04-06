@@ -420,6 +420,6 @@ struct evp_pkey_st {
 } /* EVP_PKEY */ ;
 
 
-void openssl_add_all_ciphers_internal(void);
-void openssl_add_all_digests_internal(void);
-void evp_cleanup_intern(void);
+void int_openssl_add_all_ciphers(void);
+void int_openssl_add_all_digests(void);
+void int_evp_cleanup(void);

@@ -144,9 +144,9 @@ static void ossl_init_load_crypto_strings(void)
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
 # ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_load_crypto_strings: "
-                    "err_load_crypto_strings_intern()\n");
+                    "int_err_load_crypto_strings()\n");
 # endif
-    err_load_crypto_strings_intern();
+    int_err_load_crypto_strings();
 #endif
     load_crypto_strings_inited = 1;
 }
@@ -161,9 +161,9 @@ static void ossl_init_add_all_ciphers(void)
 #ifndef OPENSSL_NO_AUTOALGINIT
 # ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_add_all_ciphers: "
-                    "openssl_add_all_ciphers_internal()\n");
+                    "int_openssl_add_all_ciphers()\n");
 # endif
-    openssl_add_all_ciphers_internal();
+    int_openssl_add_all_ciphers();
 # ifndef OPENSSL_NO_ENGINE
 #  if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
     ENGINE_setup_bsd_cryptodev();
@@ -182,9 +182,9 @@ static void ossl_init_add_all_digests(void)
 #ifndef OPENSSL_NO_AUTOALGINIT
 # ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_add_all_digests: "
-                    "openssl_add_all_digests_internal()\n");
+                    "int_openssl_add_all_digests()\n");
 # endif
-    openssl_add_all_digests_internal();
+    int_openssl_add_all_digests();
 # ifndef OPENSSL_NO_ENGINE
 #  if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
     ENGINE_setup_bsd_cryptodev();
@@ -206,19 +206,19 @@ static void ossl_init_config(void)
 {
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr,
-            "OPENSSL_INIT: ossl_init_config: openssl_config_internal(%s)\n",
+            "OPENSSL_INIT: ossl_init_config: int_openssl_config(%s)\n",
             config_filename==NULL?"NULL":config_filename);
 #endif
-    openssl_config_internal(config_filename);
+    int_openssl_config(config_filename);
     config_inited = 1;
 }
 static void ossl_init_no_config(void)
 {
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr,
-            "OPENSSL_INIT: ossl_init_config: openssl_no_config_internal()\n");
+            "OPENSSL_INIT: ossl_init_config: int_openssl_no_config()\n");
 #endif
-    openssl_no_config_internal();
+    int_openssl_no_config();
     config_inited = 1;
 }
 
@@ -239,9 +239,9 @@ static void ossl_init_engine_openssl(void)
 {
 # ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_openssl: "
-                    "engine_load_openssl_internal()\n");
+                    "int_engine_load_openssl()\n");
 # endif
-    engine_load_openssl_internal();
+    int_engine_load_openssl();
 }
 # if !defined(OPENSSL_NO_HW) && \
     (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
@@ -250,9 +250,9 @@ static void ossl_init_engine_cryptodev(void)
 {
 #  ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_cryptodev: "
-                    "engine_load_cryptodev_internal()\n");
+                    "int_engine_load_cryptodev()\n");
 #  endif
-    engine_load_cryptodev_internal();
+    int_engine_load_cryptodev();
 }
 # endif
 
@@ -262,9 +262,9 @@ static void ossl_init_engine_rdrand(void)
 {
 #  ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_rdrand: "
-                    "engine_load_rdrand_internal()\n");
+                    "int_engine_load_rdrand()\n");
 #  endif
-    engine_load_rdrand_internal();
+    int_engine_load_rdrand();
 }
 # endif
 static CRYPTO_ONCE engine_dynamic = CRYPTO_ONCE_STATIC_INIT;
@@ -272,9 +272,9 @@ static void ossl_init_engine_dynamic(void)
 {
 # ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_dynamic: "
-                    "engine_load_dynamic_internal()\n");
+                    "int_engine_load_dynamic()\n");
 # endif
-    engine_load_dynamic_internal();
+    int_engine_load_dynamic();
 }
 # ifndef OPENSSL_NO_STATIC_ENGINE
 #  if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_PADLOCK)
@@ -283,9 +283,9 @@ static void ossl_init_engine_padlock(void)
 {
 #   ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_padlock: "
-                    "engine_load_padlock_internal()\n");
+                    "int_engine_load_padlock()\n");
 #   endif
-    engine_load_padlock_internal();
+    int_engine_load_padlock();
 }
 #  endif
 #  if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
@@ -294,9 +294,9 @@ static void ossl_init_engine_capi(void)
 {
 #   ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_capi: "
-                    "engine_load_capi_internal()\n");
+                    "int_engine_load_capi()\n");
 #   endif
-    engine_load_capi_internal();
+    int_engine_load_capi();
 }
 #  endif
 static CRYPTO_ONCE engine_dasync = CRYPTO_ONCE_STATIC_INIT;
@@ -304,9 +304,9 @@ static void ossl_init_engine_dasync(void)
 {
 # ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_dasync: "
-                    "engine_load_dasync_internal()\n");
+                    "int_engine_load_dasync()\n");
 # endif
-    engine_load_dasync_internal();
+    int_engine_load_dasync();
 }
 #  if !defined(OPENSSL_NO_AFALGENG)
 static CRYPTO_ONCE engine_afalg = CRYPTO_ONCE_STATIC_INIT;
@@ -314,9 +314,9 @@ static void ossl_init_engine_afalg(void)
 {
 #   ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_afalg: "
-                    "engine_load_afalg_internal()\n");
+                    "int_engine_load_afalg()\n");
 #   endif
-    engine_load_afalg_internal();
+    int_engine_load_afalg();
 }
 #  endif
 # endif
@@ -429,9 +429,9 @@ void OPENSSL_cleanup(void)
     if (zlib_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                        "comp_zlib_cleanup_internal()\n");
+                        "int_comp_zlib_cleanup()\n");
 #endif
-        comp_zlib_cleanup_internal();
+        int_comp_zlib_cleanup();
     }
 #endif
 
@@ -446,51 +446,51 @@ void OPENSSL_cleanup(void)
     if (load_crypto_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                        "err_free_strings_intern()\n");
+                        "int_err_free_strings()\n");
 #endif
-        err_free_strings_intern();
+        int_err_free_strings();
     }
 
     CRYPTO_THREAD_cleanup_local(&threadstopkey);
 
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "rand_cleanup_intern()\n");
+                    "int_rand_cleanup()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "conf_modules_free_intern()\n");
+                    "int_conf_modules_free()\n");
 #ifndef OPENSSL_NO_ENGINE
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "engine_cleanup_intern()\n");
+                    "int_engine_cleanup()\n");
 #endif
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "crypto_cleanup_all_ex_data_intern()\n");
+                    "int_crypto_cleanup_all_ex_data()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "bio_sock_cleanup_intern()\n");
+                    "int_bio_sock_cleanup()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "evp_cleanup_intern()\n");
+                    "int_evp_cleanup()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "obj_cleanup_intern()\n");
+                    "int_obj_cleanup()\n");
 #endif
     /*
      * Note that cleanup order is important:
      * - rand_cleanup_intern could call an ENINGE's RAND cleanup function so
-     * must be called before engine_cleanup_intern()
+     * must be called before int_engine_cleanup()
      * - ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
      * before the ex data handlers are wiped in CRYPTO_cleanup_all_ex_data().
-     * - conf_modules_free_intern() can end up in ENGINE code so must be called
-     * before engine_cleanup_intern()
+     * - int_conf_modules_free() can end up in ENGINE code so must be called
+     * before int_engine_cleanup()
      */
-    rand_cleanup_intern();
-    conf_modules_free_intern();
+    int_rand_cleanup();
+    int_conf_modules_free();
 #ifndef OPENSSL_NO_ENGINE
-    engine_cleanup_intern();
+    int_engine_cleanup();
 #endif
-    crypto_cleanup_all_ex_data_intern();
+    int_crypto_cleanup_all_ex_data();
 #ifndef OPENSSL_NO_SOCK
-    bio_sock_cleanup_intern();
+    int_bio_sock_cleanup();
 #endif
-    evp_cleanup_intern();
-    obj_cleanup_intern();
+    int_evp_cleanup();
+    int_obj_cleanup();
     base_inited = 0;
 }
 

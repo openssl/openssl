@@ -93,7 +93,7 @@ static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
 
 static void oid_module_finish(CONF_IMODULE *md)
 {
-    obj_cleanup_intern();
+    int_obj_cleanup();
 }
 
 void ASN1_add_oid_module(void)

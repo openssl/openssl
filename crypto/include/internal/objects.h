@@ -8,4 +8,4 @@
 
 #include <openssl/objects.h>
 
-void obj_cleanup_intern(void);
+void int_obj_cleanup(void);
