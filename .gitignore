@@ -37,6 +37,7 @@ Makefile
 
 # Links under apps
 /apps/CA.pl
+/apps/tsget
 /apps/md4.c
 
 
@@ -59,6 +60,7 @@ Makefile
 /test/sha256t
 /test/sha512t
 /test/gost2814789t
+/test/ssltest_old
 /test/*test
 /test/fips_aesavs
 /test/fips_desmovs
