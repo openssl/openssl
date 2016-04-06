@@ -58,7 +58,7 @@
 #include <internal/threads.h>
 #include <internal/cryptlib_int.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
+#include <internal/rand.h>
 #include <openssl/evp.h>
 #include <internal/evp_int.h>
 #include <internal/conf.h>
@@ -453,7 +453,7 @@ void OPENSSL_cleanup(void)
 
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                    "RAND_cleanup()\n");
+                    "rand_cleanup_intern()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "CONF_modules_free()\n");
 #ifndef OPENSSL_NO_ENGINE
@@ -471,14 +471,14 @@ void OPENSSL_cleanup(void)
 #endif
     /*
      * Note that cleanup order is important:
-     * - RAND_cleanup could call an ENINGE's RAND cleanup function so must be
-     * called before ENGINE_cleanup()
+     * - rand_cleanup_intern could call an ENINGE's RAND cleanup function so
+     * must be called before ENGINE_cleanup()
      * - ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
      * before the ex data handlers are wiped in CRYPTO_cleanup_all_ex_data().
      * - CONF_modules_free() can end up in ENGINE code so must be called before
      * ENGINE_cleanup()
      */
-    RAND_cleanup();
+    rand_cleanup_intern();
     CONF_modules_free();
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_cleanup();

@@ -313,7 +313,6 @@ static double ecdh_results[EC_NUM][1];
 #if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
-static int rnd_fake = 0;
 #endif
 
 #ifdef SIGALRM
@@ -2448,7 +2447,6 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DSA
     if (RAND_status() != 1) {
         RAND_seed(rnd_seed, sizeof rnd_seed);
-        rnd_fake = 1;
     }
     for (testnum = 0; testnum < DSA_NUM; testnum++) {
         int st = 0;
@@ -2512,14 +2510,11 @@ int speed_main(int argc, char **argv)
                 dsa_doit[testnum] = 0;
         }
     }
-    if (rnd_fake)
-        RAND_cleanup();
 #endif
 
 #ifndef OPENSSL_NO_EC
     if (RAND_status() != 1) {
         RAND_seed(rnd_seed, sizeof rnd_seed);
-        rnd_fake = 1;
     }
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         int st = 1;
@@ -2601,14 +2596,11 @@ int speed_main(int argc, char **argv)
             }
         }
     }
-    if (rnd_fake)
-        RAND_cleanup();
 #endif
 
 #ifndef OPENSSL_NO_EC
     if (RAND_status() != 1) {
         RAND_seed(rnd_seed, sizeof rnd_seed);
-        rnd_fake = 1;
     }
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         if (!ecdh_doit[testnum])
@@ -2700,8 +2692,6 @@ int speed_main(int argc, char **argv)
                 ecdh_doit[testnum] = 0;
         }
     }
-    if (rnd_fake)
-        RAND_cleanup();
 #endif
 #ifndef NO_FORK
  show_res:
