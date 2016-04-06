@@ -553,7 +553,7 @@ void *ENGINE_get_ex_data(const ENGINE *e, int idx);
  * This function previously cleaned up anything that needs it. Auto-deinit will
  * now take care of it so it is no longer required to call this function.
  */
-# define ENGINE_cleanup()
+# define ENGINE_cleanup() while(0) continue
 #endif
 
 /*

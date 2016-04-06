@@ -303,7 +303,7 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
  * This function cleans up all "ex_data" state. It mustn't be called under
  * potential race-conditions.
  */
-# define CRYPTO_cleanup_all_ex_data()
+# define CRYPTO_cleanup_all_ex_data() while(0) continue
 
 /*
  * The old locking functions have been removed completely without compatibility

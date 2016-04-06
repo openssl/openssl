@@ -356,7 +356,7 @@ void ERR_load_ERR_strings(void);
 #if OPENSSL_API_COMPAT < 0x10100000L
 # define ERR_load_crypto_strings() \
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
-# define ERR_free_strings()
+# define ERR_free_strings() while(0) continue
 #endif
 
 void ERR_remove_thread_state(void);

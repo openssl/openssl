@@ -81,7 +81,7 @@ int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
 COMP_METHOD *COMP_zlib(void);
 
 #if OPENSSL_API_COMPAT < 0x10100000L
-#define COMP_zlib_cleanup()
+#define COMP_zlib_cleanup() while(0) continue
 #endif
 
 # ifdef HEADER_BIO_H

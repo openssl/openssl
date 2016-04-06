@@ -1104,7 +1104,7 @@ int OBJ_new_nid(int num);
 int OBJ_add_object(const ASN1_OBJECT *obj);
 int OBJ_create(const char *oid, const char *sn, const char *ln);
 #if OPENSSL_API_COMPAT < 0x10100000L
-# define OBJ_cleanup()
+# define OBJ_cleanup() while(0) continue
 #endif
 int OBJ_create_objects(BIO *in);
 
