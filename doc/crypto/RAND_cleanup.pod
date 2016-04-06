@@ -9,7 +9,7 @@ RAND_cleanup - erase the PRNG state
  #include <openssl/rand.h>
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- # define RAND_cleanup()
+ void RAND_cleanup(void)
  #endif
 
 =head1 DESCRIPTION

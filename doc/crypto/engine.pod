@@ -135,7 +135,7 @@ engine - ENGINE cryptographic module support
 Deprecated:
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- # define ENGINE_cleanup()
+ void ENGINE_cleanup(void)
  #endif
 
 =head1 DESCRIPTION
@@ -304,7 +304,7 @@ dynamically allocated and populated with these implementations and linked
 into OpenSSL's internal linked list. At this point it is important to
 mention an important API function;
 
- ENGINE_cleanup()
+ void ENGINE_cleanup(void)
 
 If no ENGINE API functions are called at all in an application, then there
 are no inherent memory leaks to worry about from the ENGINE functionality.
