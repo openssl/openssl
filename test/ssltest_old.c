@@ -3527,13 +3527,16 @@ static DH *get_dh512()
         0x02,
     };
     DH *dh;
+    BIGNUM *p, *g;
 
     if ((dh = DH_new()) == NULL)
         return (NULL);
-    dh->p = BN_bin2bn(dh512_p, sizeof(dh512_p), NULL);
-    dh->g = BN_bin2bn(dh512_g, sizeof(dh512_g), NULL);
-    if ((dh->p == NULL) || (dh->g == NULL)) {
+    p = BN_bin2bn(dh512_p, sizeof(dh512_p), NULL);
+    g = BN_bin2bn(dh512_g, sizeof(dh512_g), NULL);
+    if ((p == NULL) || (g == NULL) || !DH_set0_pqg(dh, p, NULL, g)) {
         DH_free(dh);
+        BN_free(p);
+        BN_free(g);
         return (NULL);
     }
     return (dh);
@@ -3568,13 +3571,16 @@ static DH *get_dh1024()
         0x02,
     };
     DH *dh;
+    BIGNUM *p, *g;
 
     if ((dh = DH_new()) == NULL)
         return (NULL);
-    dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
-    dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
-    if ((dh->p == NULL) || (dh->g == NULL)) {
+    p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+    g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+    if ((p == NULL) || (g == NULL) || !DH_set0_pqg(dh, p, NULL, g)) {
         DH_free(dh);
+        BN_free(p);
+        BN_free(g);
         return (NULL);
     }
     return (dh);
@@ -3629,16 +3635,19 @@ static DH *get_dh1024dsa()
         0x07, 0xE7, 0x68, 0x1A, 0x82, 0x5D, 0x32, 0xA2,
     };
     DH *dh;
+    BIGNUM *p, *g;
 
     if ((dh = DH_new()) == NULL)
         return (NULL);
-    dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
-    dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
-    if ((dh->p == NULL) || (dh->g == NULL)) {
+    p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+    g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+    if ((p == NULL) || (g == NULL) || !DH_set0_pqg(dh, p, NULL, g)) {
         DH_free(dh);
+        BN_free(p);
+        BN_free(g);
         return (NULL);
     }
-    dh->length = 160;
+    DH_set_length(dh, 160);
     return (dh);
 }
 #endif

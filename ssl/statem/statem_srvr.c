@@ -1772,9 +1772,8 @@ int tls_construct_server_key_exchange(SSL *s)
         EVP_PKEY_free(pkdh);
         pkdh = NULL;
 
-        r[0] = dh->p;
-        r[1] = dh->g;
-        r[2] = dh->pub_key;
+        DH_get0_pqg(dh, &r[0], NULL, &r[1]);
+        DH_get0_key(dh, &r[2], NULL);
     } else
 #endif
 #ifndef OPENSSL_NO_EC
@@ -2301,6 +2300,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         EVP_PKEY *skey = NULL;
         DH *cdh;
         unsigned int i;
+        BIGNUM *pub_key;
 
         if (!PACKET_get_net_2(pkt, &i)) {
             if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
@@ -2343,9 +2343,12 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
         cdh = EVP_PKEY_get0_DH(ckey);
-        cdh->pub_key = BN_bin2bn(data, i, NULL);
-        if (cdh->pub_key == NULL) {
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_BN_LIB);
+        pub_key = BN_bin2bn(data, i, NULL);
+
+        if (pub_key == NULL || !DH_set0_key(cdh, pub_key, NULL)) {
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            if (pub_key != NULL)
+                BN_free(pub_key);
             goto err;
         }
 

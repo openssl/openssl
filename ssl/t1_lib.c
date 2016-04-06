@@ -4091,17 +4091,20 @@ DH *ssl_get_auto_dh(SSL *s)
 
     if (dh_secbits >= 128) {
         DH *dhp = DH_new();
+        BIGNUM *p, *g;
         if (dhp == NULL)
             return NULL;
-        dhp->g = BN_new();
-        if (dhp->g != NULL)
-            BN_set_word(dhp->g, 2);
+        g = BN_new();
+        if (g != NULL)
+            BN_set_word(g, 2);
         if (dh_secbits >= 192)
-            dhp->p = get_rfc3526_prime_8192(NULL);
+            p = get_rfc3526_prime_8192(NULL);
         else
-            dhp->p = get_rfc3526_prime_3072(NULL);
-        if (dhp->p == NULL || dhp->g == NULL) {
+            p = get_rfc3526_prime_3072(NULL);
+        if (p == NULL || g == NULL || !DH_set0_pqg(dhp, p, NULL, g)) {
             DH_free(dhp);
+            BN_free(p);
+            BN_free(g);
             return NULL;
         }
         return dhp;

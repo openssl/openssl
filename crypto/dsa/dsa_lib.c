@@ -254,33 +254,49 @@ DH *DSA_dup_DH(const DSA *r)
      */
 
     DH *ret = NULL;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
 
     if (r == NULL)
         goto err;
     ret = DH_new();
     if (ret == NULL)
         goto err;
-    if (r->p != NULL)
-        if ((ret->p = BN_dup(r->p)) == NULL)
+    if (r->p != NULL || r->g != NULL || r->q != NULL) {
+        if (r->p == NULL || r->g == NULL || r->q == NULL) {
+            /* Shouldn't happen */
             goto err;
-    if (r->q != NULL) {
-        ret->length = BN_num_bits(r->q);
-        if ((ret->q = BN_dup(r->q)) == NULL)
+        }
+        p = BN_dup(r->p);
+        g = BN_dup(r->g);
+        q = BN_dup(r->q);
+        if (p == NULL || g == NULL || q == NULL || !DH_set0_pqg(ret, p, q, g))
             goto err;
     }
-    if (r->g != NULL)
-        if ((ret->g = BN_dup(r->g)) == NULL)
+
+    if (r->pub_key != NULL) {
+        pub_key = BN_dup(r->pub_key);
+        if (pub_key == NULL)
             goto err;
-    if (r->pub_key != NULL)
-        if ((ret->pub_key = BN_dup(r->pub_key)) == NULL)
+        if (r->priv_key != NULL) {
+            priv_key = BN_dup(r->priv_key);
+            if (priv_key == NULL)
+                goto err;
+        }
+        if (!DH_set0_key(ret, pub_key, priv_key))
             goto err;
-    if (r->priv_key != NULL)
-        if ((ret->priv_key = BN_dup(r->priv_key)) == NULL)
-            goto err;
+    } else if (r->priv_key != NULL) {
+        /* Shouldn't happen */
+        goto err;
+    }
 
     return ret;
 
  err:
+    BN_free(p);
+    BN_free(g);
+    BN_free(q);
+    BN_free(pub_key);
+    BN_free(priv_key);
     DH_free(ret);
     return NULL;
 }
