@@ -81,7 +81,8 @@ enabled via the built-in or the custom callbacks, by setting a NULL callback.
 These may be implemented as macros.
 
 SSL_ct_is_enabled() and SSL_CTX_ct_is_enabled() return 1 if CT processing is
-enabled via a non-null validation callback, and 0 otherwise.
+enabled via either SSL_ct_enable() or a non-null custom callback, and 0
+otherwise.
 
 =head1 NOTES
 
