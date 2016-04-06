@@ -384,11 +384,11 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
      * processed.  So it may make more sense to to do this just once, perhaps
      * associated with the shared (by all SCTs) policy eval ctx.
      *
-     * XXX: Failure here is global (SCT independent) and represents either an issue
-     * with the certificate (e.g. duplicate extensions) or an out of memory
-     * condition.  When the certificate is incompatible with CT, we really
-     * should mark the SCTs invalid, rather than report a failure to determine
-     * the validation status.  That way, callbacks that want to do "soft" SCT
+     * XXX: Failure here is global (SCT independent) and represents either an
+     * issue with the certificate (e.g. duplicate extensions) or an out of
+     * memory condition.  When the certificate is incompatible with CT, we just
+     * mark the SCTs invalid, rather than report a failure to determine the
+     * validation status.  That way, callbacks that want to do "soft" SCT
      * processing will not abort handshakes with false positive internal
      * errors.  Since the function does not distinguish between certificate
      * issues (peer's fault) and internal problems (out fault) the safe thing
