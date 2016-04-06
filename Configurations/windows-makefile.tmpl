@@ -360,7 +360,7 @@ $target: $deps $ordinalsfile $mkdef_pl
 	\$(PERL) $mkrc_pl $shlib$shlibext > $shlib.rc
 	\$(RC) \$(RCOUTFLAG)$shlib.res $shlib.rc
 	\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) \\
-		/implib:$target \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<<
+		/implib:\$@ \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<< || (DEL /Q \$(\@B).* $shlib.* && EXIT 1)
 $objs $shlib.res$linklibs \$(EX_LIBS)
 <<
 	DEL /F apps\\$shlib$shlibext
