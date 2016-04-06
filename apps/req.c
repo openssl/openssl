@@ -727,15 +727,14 @@ int req_main(int argc, char **argv)
         goto end;
 
     if (pubkey) {
-        EVP_PKEY *tpubkey;
-        tpubkey = X509_REQ_get_pubkey(req);
+        EVP_PKEY *tpubkey = X509_REQ_get0_pubkey(req);
+
         if (tpubkey == NULL) {
             BIO_printf(bio_err, "Error getting public key\n");
             ERR_print_errors(bio_err);
             goto end;
         }
         PEM_write_bio_PUBKEY(out, tpubkey);
-        EVP_PKEY_free(tpubkey);
     }
 
     if (text) {
@@ -758,9 +757,9 @@ int req_main(int argc, char **argv)
         EVP_PKEY *tpubkey;
 
         if (x509)
-            tpubkey = X509_get_pubkey(x509ss);
+            tpubkey = X509_get0_pubkey(x509ss);
         else
-            tpubkey = X509_REQ_get_pubkey(req);
+            tpubkey = X509_REQ_get0_pubkey(req);
         if (tpubkey == NULL) {
             fprintf(stdout, "Modulus=unavailable\n");
             goto end;
@@ -774,7 +773,6 @@ int req_main(int argc, char **argv)
         } else
 #endif
             fprintf(stdout, "Wrong Algorithm type");
-        EVP_PKEY_free(tpubkey);
         fprintf(stdout, "\n");
     }
 

@@ -86,13 +86,12 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
         if (BIO_puts(bp, "\n") <= 0)
             goto err;
 
-        pkey = X509_REQ_get_pubkey(x);
+        pkey = X509_REQ_get0_pubkey(x);
         if (pkey == NULL) {
             BIO_printf(bp, "%12sUnable to load Public Key\n", "");
             ERR_print_errors(bp);
         } else {
             EVP_PKEY_print_public(bp, pkey, 16, NULL);
-            EVP_PKEY_free(pkey);
         }
     }
 
