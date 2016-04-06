@@ -15,11 +15,6 @@
  * can be found at https://blake2.net.
  */
 
-#ifndef BLAKE_DEBUG
-# undef NDEBUG                  /* avoid conflicting definitions */
-# define NDEBUG
-#endif
-
 #include <assert.h>
 #include <string.h>
 #include <openssl/crypto.h>

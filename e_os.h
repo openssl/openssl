@@ -72,15 +72,12 @@ extern "C" {
 
 /* Used to checking reference counts, most while doing perl5 stuff :-) */
 # if defined(OPENSSL_NO_STDIO)
-#  if defined(REF_DEBUG)
-#   error "REF_DEBUG requires stdio"
-#  endif
 #  if defined(REF_PRINT)
 #   error "REF_PRINT requires stdio"
 #  endif
 # endif
 
-# if defined(REF_DEBUG)
+# if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
 #  define REF_ASSERT_ISNT(test) \
     (void)((test) ? (OPENSSL_die("refcount error", __FILE__, __LINE__), 1) : 0)
 # else
