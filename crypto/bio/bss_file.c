@@ -241,7 +241,7 @@ static int file_read(BIO *b, char *out, int outl)
             ret = fread(out, 1, (int)outl, (FILE *)b->ptr);
         if (ret == 0
             && (b->flags & BIO_FLAGS_UPLINK) ? UP_ferror((FILE *)b->ptr) :
-            ferror((FILE *)b->ptr)) {
+                                               ferror((FILE *)b->ptr)) {
             SYSerr(SYS_F_FREAD, get_last_sys_error());
             BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);
             ret = -1;
@@ -308,8 +308,11 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
 #   if defined(__MINGW32__) && defined(__MSVCRT__) && !defined(_IOB_ENTRIES)
 #    define _IOB_ENTRIES 20
 #   endif
-#   if defined(_IOB_ENTRIES)
         /* Safety net to catch purely internal BIO_set_fp calls */
+#   if defined(_MSC_VER) && _MSC_VER>=1900
+        if (ptr == stdin || ptr == stdout || ptr == stderr)
+            BIO_clear_flags(b, BIO_FLAGS_UPLINK);
+#   elif defined(_IOB_ENTRIES)
         if ((size_t)ptr >= (size_t)stdin &&
             (size_t)ptr < (size_t)(stdin + _IOB_ENTRIES))
             BIO_clear_flags(b, BIO_FLAGS_UPLINK);
