@@ -4169,27 +4169,12 @@ int ssl_validate_ct(SSL *s)
 
     /*
      * If no callback is set, the peer is anonymous, or its chain is invalid,
-     * skip SCT callbacks - just return success.  Note, that SCT internal
-     * processing has already taken place, just by virtue of the fact that a
-     * callback is defined, the only reason to issue the callback is to give
-     * the application the opportunity to inspect the SCTs early and
-     * potentially abort the connection early.
+     * skip SCT validation - just return success.  Applications that continue
+     * handshakes without certificates, with unverified chains, or pinned leaf
+     * certificates are outside the scope of the WebPKI and CT.
      *
-     * Applications can still check the processed SCTs at handshake completion.
-     *
-     * In applications that continue with unverified peers, SCT is the least of
-     * their concerns.  It makes little sense to process SCTs for an invalid
-     * chain, and might lead to greater false trust of an invalid peer.
-     * Clients that disable chain verification (continue despite failure) are
-     * not further confused with potentially misleading SCTs from unverified
-     * chains.
-     *
-     * Chains consisting of just a directly trusted leaf certificate (this case
-     * overlaps with DANE-EE(3)) don't have an issuer CA and so certificate
-     * transparency is again out of scope.
-     *
-     * The above exclusions notwithstanding the vast majority of non-DANE peers
-     * will have rather ordinary certificate chains validated by typical
+     * The above exclusions notwithstanding the vast majority of peers will
+     * have rather ordinary certificate chains validated by typical
      * applications that perform certificate verification and therefore will
      * process SCTs when enabled.
      */
