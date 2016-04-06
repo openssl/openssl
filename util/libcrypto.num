@@ -4196,3 +4196,5 @@ DH_meth_set_bn_mod_exp                  4066	1_1_0	EXIST::FUNCTION:DH
 DH_meth_set_generate_key                4067	1_1_0	EXIST::FUNCTION:DH
 DH_meth_free                            4068	1_1_0	EXIST::FUNCTION:DH
 DH_meth_get_generate_key                4069	1_1_0	EXIST::FUNCTION:DH
+int_err_load_crypto_strings             4070	1_1_0	EXIST::FUNCTION:
+int_err_free_strings                    4071	1_1_0	EXIST::FUNCTION:
