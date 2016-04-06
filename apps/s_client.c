@@ -2627,8 +2627,12 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #ifndef OPENSSL_NO_CT
         /*
          * When the SSL session is anonymous, or resumed via an abbreviated
-         * handshake, no SCTs are provided, and it makes little sense to
-         * attempt to display SCTs from a resumed session's certificate.
+         * handshake, no SCTs are provided as part of the handshake.  While in
+         * a resumed session SCTs may be present in the session's certificate,
+         * no callbacks are invoked to revalidate these, and in any case that
+         * set of SCTs may be incomplete.  Thus it makes little sense to
+         * attempt to display SCTs from a resumed session's certificate, and of
+         * course none are associated with an anonymous peer.
          */
         if (peer != NULL && !SSL_session_reused(s) && SSL_ct_is_enabled(s)) {
             const STACK_OF(SCT) *scts = SSL_get0_peer_scts(s);
