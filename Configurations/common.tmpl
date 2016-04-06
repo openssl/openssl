@@ -96,12 +96,16 @@
                                          @{$unified_info{shared_sources}->{$lib}}) ],
                               deps => [ reducedepends(resolvedepends($lib)) ],
                               %ordinals);
-         map { doobj($_, $lib, intent => "lib") } @{$unified_info{shared_sources}->{$lib}};
+         foreach (@{$unified_info{shared_sources}->{$lib}}) {
+             doobj($_, $lib, intent => "lib");
+         }
      }
      $OUT .= obj2lib(lib => $lib,
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
                                @{$unified_info{sources}->{$lib}} ]);
-     map { doobj($_, $lib, intent => "lib") } @{$unified_info{sources}->{$lib}};
+     foreach (@{$unified_info{sources}->{$lib}}) {
+         doobj($_, $lib, intent => "lib");
+     }
      $cache{$lib} = 1;
  }
 
@@ -116,8 +120,10 @@
                                (@{$unified_info{sources}->{$lib}},
                                 @{$unified_info{shared_sources}->{$lib}}) ],
                      deps => [ resolvedepends($lib) ]);
-     map { doobj($_, $lib, intent => "dso") } (@{$unified_info{sources}->{$lib}},
-                                               @{$unified_info{shared_sources}->{$lib}});
+     foreach ((@{$unified_info{sources}->{$lib}},
+               @{$unified_info{shared_sources}->{$lib}})) {
+         doobj($_, $lib, intent => "dso");
+     }
      $cache{$lib} = 1;
  }
 
@@ -131,7 +137,9 @@
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
                                @{$unified_info{sources}->{$bin}} ],
                      deps => $deps);
-     map { doobj($_, $bin, intent => "bin") } @{$unified_info{sources}->{$bin}};
+     foreach (@{$unified_info{sources}->{$bin}}) {
+         doobj($_, $bin, intent => "bin");
+     }
      $cache{$bin} = 1;
  }
 
@@ -150,12 +158,12 @@
 
  # Build all known libraries, engines, programs and scripts.
  # Everything else will be handled as a consequence.
- map { dolib($_) } @{$unified_info{libraries}};
- map { doengine($_) } @{$unified_info{engines}};
- map { dobin($_) } @{$unified_info{programs}};
- map { doscript($_) } @{$unified_info{scripts}};
+ dolib($_)     foreach @{$unified_info{libraries}};
+ doengine($_)  foreach @{$unified_info{engines}};
+ dobin($_)     foreach @{$unified_info{programs}};
+ doscript($_)  foreach @{$unified_info{scripts}};
 
  # Finally, should there be any applicable BEGINRAW/ENDRAW sections,
  # they are added here.
- $OUT .= $_."\n" foreach(@{$unified_info{rawlines}});
+ $OUT .= $_."\n" foreach @{$unified_info{rawlines}};
 -}

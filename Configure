@@ -743,9 +743,9 @@ while (@tocheckfor) {
     while (@cascade_copy) {
 	my ($test, $descendents) = (shift @cascade_copy, shift @cascade_copy);
 	if (ref($test) eq "CODE" ? $test->() : defined($disabled{$test})) {
-	    map {
+	    foreach(grep { !defined($disabled{$_}) } @$descendents) {
 		$new_tocheckfor{$_} = 1; $disabled{$_} = "forced";
-	    } grep { !defined($disabled{$_}) } @$descendents;
+	    }
 	}
     }
     @tocheckfor = (keys %new_tocheckfor);
@@ -2128,12 +2128,12 @@ sub resolve_config {
 	    # the config that had it.
 	    delete $inherited_config{template};
 
-	    map {
+	    foreach (keys %inherited_config) {
 		if (!$combined_inheritance{$_}) {
 		    $combined_inheritance{$_} = [];
 		}
 		push @{$combined_inheritance{$_}}, $inherited_config{$_};
-	    } keys %inherited_config;
+	    }
 	}
     }
 
@@ -2415,7 +2415,7 @@ sub quotify {
     my $processor =
 	defined($processors{$for}) ? $processors{$for} : sub { shift; };
 
-    map { $processor->($_); } @_;
+    return map { $processor->($_); } @_;
 }
 
 # collect_from_file($filename, $line_concat_cond_re, $line_concat)
