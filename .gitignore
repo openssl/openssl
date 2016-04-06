@@ -79,6 +79,7 @@ Makefile
 /test/fips_ecdsavs
 /test/fips_rngvs
 /test/fips_test_suite
+/test/ssltest_old
 *.so*
 *.dylib*
 *.dll*
