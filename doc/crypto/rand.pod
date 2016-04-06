@@ -34,7 +34,7 @@ rand - pseudo-random number generator
 Deprecated:
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- # define RAND_cleanup()
+ void RAND_cleanup(void)
  #endif
 
 =head1 DESCRIPTION

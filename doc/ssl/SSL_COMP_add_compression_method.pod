@@ -13,7 +13,7 @@ SSL_COMP_add_compression_method, SSL_COMP_free_compression_methods - handle SSL/
 Deprecated:
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- # define SSL_COMP_free_compression_methods()
+ void SSL_COMP_free_compression_methods(void)
  #endif
 
 =head1 DESCRIPTION

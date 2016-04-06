@@ -34,7 +34,7 @@ functions
 Deprecated:
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- # define OBJ_cleanup()
+ void OBJ_cleanup(void)
  #endif
 
 =head1 DESCRIPTION

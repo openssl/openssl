@@ -15,7 +15,7 @@
 Deprecated:
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- # define CONF_modules_free()
+ void CONF_modules_free(void)
  #endif
 
 =head1 DESCRIPTION
@@ -33,9 +33,9 @@ B<all> is B<1> all modules, including builtin modules will be unloaded.
 =head1 NOTES
 
 Normally in versions of OpenSSL prior to 1.1.0 applications will only call
-CONF_modules_free() at application to tidy up any configuration performed. From
-1.1.0 CONF_modules_free() is deprecated an no explicit CONF cleanup as required
-at all. For more information see L<OPENSSL_init_crypto(3)>.
+CONF_modules_free() at application exit to tidy up any configuration performed.
+From 1.1.0 CONF_modules_free() is deprecated and no explicit CONF cleanup is
+required at all. For more information see L<OPENSSL_init_crypto(3)>.
 
 =head1 RETURN VALUE
 

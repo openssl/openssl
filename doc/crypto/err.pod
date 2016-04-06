@@ -49,7 +49,7 @@ Deprecated:
  #endif
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- # define ERR_free_strings()
+ void ERR_free_strings(void)
  #endif
 
 

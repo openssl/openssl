@@ -12,19 +12,16 @@ Deprecated:
  #include <openssl/err.h>
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- # define ERR_load_crypto_strings() \
-     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
- # define ERR_free_strings()
+ void ERR_load_crypto_strings(void);
+ void ERR_free_strings(void);
  #endif
 
  #include <openssl/ssl.h>
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- # define SSL_load_error_strings() \
-     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS \
-                     | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+ void SSL_load_error_strings(void);
  #endif
-
+ 
 =head1 DESCRIPTION
 
 All of the following functions are deprecated from OpenSSL 1.1.0. No explicit
