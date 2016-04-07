@@ -59,6 +59,11 @@ The test section supports the following options:
 * Protocol - expected negotiated protocol. One of
   SSLv3, TLSv1, TLSv1.1, TLSv1.2.
 
+* ClientVerifyCallback - the client's custom certificate verify callback.
+  Used to test callback behaviour. One of
+  - AcceptAll - accepts all certificates.
+  - RejectAll - rejects all certificates.
+
 ## Configuring the client and server
 
 The client and server configurations can be any valid `SSL_CTX`

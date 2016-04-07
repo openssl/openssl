@@ -20,8 +20,9 @@ setup("test_ssl_new");
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
 
-my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.conf"));
-my @conf_files = map {basename($_)} @conf_srcs;
+my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.conf.in"));
+my @conf_files = map { basename($_) } @conf_srcs;
+map { s/\.in// } @conf_files;
 
 # 02-protocol-version.conf test results depend on the configuration of enabled
 # protocols. We only verify generated sources in the default configuration.
@@ -39,7 +40,7 @@ foreach my $conf (@conf_files) {
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 2;  # = scalar @conf_files
+plan tests => 3;  # = scalar @conf_srcs
 
 sub test_conf {
     plan tests => 3;
