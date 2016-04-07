@@ -79,8 +79,6 @@ my $client_sess="client.ss";
 plan tests =>
     1				# For testss
     + 14			# For the first testssl
-    + 16			# For the first testsslproxy
-    + 16			# For the second testsslproxy
     ;
 
 subtest 'test_ss' => sub {
@@ -97,13 +95,6 @@ subtest 'test_ss' => sub {
 
 note('test_ssl -- key U');
 testssl("keyU.ss", $Ucert, $CAcert);
-
-note('test_ssl -- key P1');
-testsslproxy("keyP1.ss", "certP1.ss", "intP1.ss", "AB");
-
-note('test_ssl -- key P2');
-testsslproxy("keyP2.ss", "certP2.ss", "intP2.ss", "BC");
-
 
 # -----------
 # subtest functions
@@ -831,78 +822,4 @@ sub testssl {
         ok(run(test([@ssltest, "-bio_pair", "-tls1", "-ct"])));
         }
     };
-}
-
-sub testsslproxy {
-    my $key = shift || srctop_file("apps","server.pem");
-    my $cert = shift || srctop_file("apps","server.pem");
-    my $CAtmp = shift;
-    my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", bldtop_dir("certs"));
-    my @extra = @_;
-
-    my @ssltest = ("ssltest_old",
-		   "-s_key", $key, "-s_cert", $cert,
-		   "-c_key", $key, "-c_cert", $cert);
-
-    # plan tests => 16;
-
-    note('Testing a lot of proxy conditions.');
-
-    # We happen to know that certP1.ss has policy letters "AB" and
-    # certP2.ss has policy letters "BC".  However, because certP2.ss
-    # has certP1.ss as issuer, when it's used, both their policy
-    # letters get combined into just "B".
-    # The policy letter(s) then get filtered with the given auth letter
-    # in the table below, and the result gets tested with the given
-    # condition.  For details, read ssltest_old.c
-    #
-    # certfilename => [ [ auth, cond, expected result ] ... ]
-    my %expected = ( "certP1.ss" => [ [ [ 'A',  'A'      ], 1 ],
-                                      [ [ 'A',  'B'      ], 0 ],
-                                      [ [ 'A',  'C'      ], 0 ],
-                                      [ [ 'A',  'A|B&!C' ], 1 ],
-                                      [ [ 'B',  'A'      ], 0 ],
-                                      [ [ 'B',  'B'      ], 1 ],
-                                      [ [ 'B',  'C'      ], 0 ],
-                                      [ [ 'B',  'A|B&!C' ], 1 ],
-                                      [ [ 'C',  'A'      ], 0 ],
-                                      [ [ 'C',  'B'      ], 0 ],
-                                      [ [ 'C',  'C'      ], 0 ],
-                                      [ [ 'C',  'A|B&!C' ], 0 ],
-                                      [ [ 'BC', 'A'      ], 0 ],
-                                      [ [ 'BC', 'B'      ], 1 ],
-                                      [ [ 'BC', 'C'      ], 0 ],
-                                      [ [ 'BC', 'A|B&!C' ], 1 ] ],
-                     "certP2.ss" => [ [ [ 'A',  'A'      ], 0 ],
-                                      [ [ 'A',  'B'      ], 0 ],
-                                      [ [ 'A',  'C'      ], 0 ],
-                                      [ [ 'A',  'A|B&!C' ], 0 ],
-                                      [ [ 'B',  'A'      ], 0 ],
-                                      [ [ 'B',  'B'      ], 1 ],
-                                      [ [ 'B',  'C'      ], 0 ],
-                                      [ [ 'B',  'A|B&!C' ], 1 ],
-                                      [ [ 'C',  'A'      ], 0 ],
-                                      [ [ 'C',  'B'      ], 0 ],
-                                      [ [ 'C',  'C'      ], 0 ],
-                                      [ [ 'C',  'A|B&!C' ], 0 ],
-                                      [ [ 'BC', 'A'      ], 0 ],
-                                      [ [ 'BC', 'B'      ], 1 ],
-                                      [ [ 'BC', 'C'      ], 0 ],
-                                      [ [ 'BC', 'A|B&!C' ], 1 ] ] );
-
-  SKIP: {
-      skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", scalar(@{$expected{$cert}})
-	  if $no_anytls;
-
-      foreach (@{$expected{$cert}}) {
-	  my $auth = $_->[0]->[0];
-	  my $cond = $_->[0]->[1];
-	  my $res  = $_->[1];
-	  is(run(test([@ssltest, "-server_auth", @CA,
-		       "-proxy", "-proxy_auth", $auth,
-		       "-proxy_cond", $cond])), $res,
-	     "test tlsv1, server auth, proxy auth $auth and cond $cond (expect "
-	     .($res ? "success" : "failure").")");
-      }
-    }
 }

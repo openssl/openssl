@@ -30,6 +30,7 @@ typedef struct handshake_result {
 } HANDSHAKE_RESULT;
 
 /* Do a handshake and report some information about the result. */
-HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *client_ctx);
+HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *client_ctx,
+                              const SSL_TEST_CTX *test_ctx);
 
 #endif  /* HEADER_HANDSHAKE_HELPER_H */

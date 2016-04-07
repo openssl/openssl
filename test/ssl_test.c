@@ -44,8 +44,8 @@ static int check_result(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
 {
     if (result.result != test_ctx->expected_result) {
         fprintf(stderr, "ExpectedResult mismatch: expected %s, got %s.\n",
-                ssl_test_result_t_name(test_ctx->expected_result),
-                ssl_test_result_t_name(result.result));
+                ssl_test_result_name(test_ctx->expected_result),
+                ssl_test_result_name(result.result));
         return 0;
     }
     return 1;
@@ -160,7 +160,7 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
     if (test_ctx == NULL)
         goto err;
 
-    result = do_handshake(server_ctx, client_ctx);
+    result = do_handshake(server_ctx, client_ctx, test_ctx);
 
     ret = check_test(result, test_ctx);
 

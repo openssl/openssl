@@ -37,26 +37,32 @@ static int SSL_TEST_CTX_equal(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
 {
     if (ctx->expected_result != ctx2->expected_result) {
         fprintf(stderr, "ExpectedResult mismatch: %s vs %s.\n",
-                ssl_test_result_t_name(ctx->expected_result),
-                ssl_test_result_t_name(ctx2->expected_result));
+                ssl_test_result_name(ctx->expected_result),
+                ssl_test_result_name(ctx2->expected_result));
         return 0;
     }
     if (ctx->client_alert != ctx2->client_alert) {
         fprintf(stderr, "ClientAlert mismatch: %s vs %s.\n",
-                ssl_alert_name(ctx->expected_result),
-                ssl_alert_name(ctx2->expected_result));
+                ssl_alert_name(ctx->client_alert),
+                ssl_alert_name(ctx2->client_alert));
         return 0;
     }
     if (ctx->server_alert != ctx2->server_alert) {
         fprintf(stderr, "ServerAlert mismatch: %s vs %s.\n",
-                ssl_alert_name(ctx->expected_result),
-                ssl_alert_name(ctx2->expected_result));
+                ssl_alert_name(ctx->server_alert),
+                ssl_alert_name(ctx2->server_alert));
         return 0;
     }
     if (ctx->protocol != ctx2->protocol) {
         fprintf(stderr, "ClientAlert mismatch: %s vs %s.\n",
-                ssl_protocol_name(ctx->expected_result),
-                ssl_protocol_name(ctx2->expected_result));
+                ssl_protocol_name(ctx->protocol),
+                ssl_protocol_name(ctx2->protocol));
+        return 0;
+    }
+    if (ctx->client_verify_callback != ctx2->client_verify_callback) {
+        fprintf(stderr, "ClientVerifyCallback mismatch: %s vs %s.\n",
+                ssl_verify_callback_name(ctx->client_verify_callback),
+                ssl_verify_callback_name(ctx2->client_verify_callback));
         return 0;
     }
 
@@ -136,6 +142,7 @@ static int test_good_configuration()
     fixture.expected_ctx->client_alert = SSL_AD_UNKNOWN_CA;
     fixture.expected_ctx->server_alert = 0;  /* No alert. */
     fixture.expected_ctx->protocol = TLS1_1_VERSION;
+    fixture.expected_ctx->client_verify_callback = SSL_TEST_VERIFY_REJECT_ALL,
     EXECUTE_SSL_TEST_CTX_TEST();
 }
 
@@ -144,6 +151,7 @@ static const char *bad_configurations[] = {
     "ssltest_unknown_expected_result",
     "ssltest_unknown_alert",
     "ssltest_unknown_protocol",
+    "ssltest_unknown_verify_callback",
 };
 
 static int test_bad_configuration(int idx)
