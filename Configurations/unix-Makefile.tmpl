@@ -711,8 +711,7 @@ dist:
 
 # Helper targets #####################################################
 
-link-utils: $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/shlib_wrap.sh \
-	    $(BLDDIR)/test/generate_ssl_tests.pl
+link-utils: $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/shlib_wrap.sh
 
 $(BLDDIR)/util/opensslwrap.sh: configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
@@ -723,11 +722,6 @@ $(BLDDIR)/util/shlib_wrap.sh: configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/shlib_wrap.sh" "$(BLDDIR)/util"; \
-	fi
-$(BLDDIR)/test/generate_ssl_tests.pl: configdata.pm
-	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
-	    mkdir -p "$(BLDDIR)/test"; \
-	    ln -sf "../$(SRCDIR)/test/generate_ssl_tests.pl" "$(BLDDIR)/test"; \
 	fi
 FORCE:
 
