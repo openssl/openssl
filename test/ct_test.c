@@ -402,6 +402,17 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
             goto end;
         }
 
+        if (fixture.test_validity && cert != NULL) {
+            int is_sct_validated = SCT_validate(sct, ct_policy_ctx);
+            if (is_sct_validated < 0) {
+                fprintf(stderr, "Error validating SCT\n");
+                goto end;
+            } else if (!is_sct_validated) {
+                fprintf(stderr, "SCT failed verification\n");
+                goto end;
+            }
+        }
+
         if (fixture.sct_text_file
             && compare_sct_printout(sct, expected_sct_text)) {
                 goto end;
@@ -412,17 +423,6 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
             memcmp(fixture.tls_sct, tls_sct, tls_sct_len) != 0) {
             fprintf(stderr, "Failed to encode SCT into TLS format correctly\n");
             goto end;
-        }
-
-        if (fixture.test_validity && cert != NULL) {
-            int is_sct_validated = SCT_validate(sct, ct_policy_ctx);
-            if (is_sct_validated < 0) {
-                fprintf(stderr, "Error validating SCT\n");
-                goto end;
-            } else if (!is_sct_validated) {
-                fprintf(stderr, "SCT failed verification\n");
-                goto end;
-            }
         }
     }
     success = 1;

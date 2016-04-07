@@ -260,12 +260,6 @@ int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                                   custom_ext_parse_cb parse_cb,
                                   void *parse_arg)
 {
-    int ret = custom_ext_meth_add(&ctx->cert->cli_ext, ext_type, add_cb,
-                                  free_cb, add_arg, parse_cb, parse_arg);
-
-    if (ret != 1)
-        goto end;
-
 #ifndef OPENSSL_NO_CT
     /*
      * We don't want applications registering callbacks for SCT extensions
@@ -273,12 +267,11 @@ int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
      * these two things may not play well together.
      */
     if (ext_type == TLSEXT_TYPE_signed_certificate_timestamp &&
-        SSL_CTX_get_ct_validation_callback(ctx) != NULL) {
-        ret = 0;
-    }
+        SSL_CTX_ct_is_enabled(ctx))
+        return 0;
 #endif
-end:
-    return ret;
+    return custom_ext_meth_add(&ctx->cert->cli_ext, ext_type, add_cb,
+                               free_cb, add_arg, parse_cb, parse_arg);
 }
 
 int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,

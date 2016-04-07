@@ -334,17 +334,22 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     X509_PUBKEY *pub = NULL, *log_pkey = NULL;
     const CTLOG *log;
 
+    /*
+     * With an unrecognized SCT version we don't know what such an SCT means,
+     * let alone validate one.  So we return validation failure (0).
+     */
     if (sct->version != SCT_VERSION_V1) {
         sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_VERSION;
-        goto end;
+        return 0;
     }
 
     log = CTLOG_STORE_get0_log_by_id(ctx->log_store,
                                      sct->log_id, sct->log_id_len);
 
+    /* Similarly, an SCT from an unknown log also cannot be validated. */
     if (log == NULL) {
         sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_LOG;
-        goto end;
+        return 0;
     }
 
     sctx = SCT_CTX_new();
@@ -372,10 +377,28 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
             goto err;
     }
 
+    /*
+     * XXX: Potential for optimization.  This repeats some idempotent heavy
+     * lifting on the certificate for each candidate SCT, and appears to not
+     * use any information in the SCT itself, only the certificate is
+     * processed.  So it may make more sense to to do this just once, perhaps
+     * associated with the shared (by all SCTs) policy eval ctx.
+     *
+     * XXX: Failure here is global (SCT independent) and represents either an
+     * issue with the certificate (e.g. duplicate extensions) or an out of
+     * memory condition.  When the certificate is incompatible with CT, we just
+     * mark the SCTs invalid, rather than report a failure to determine the
+     * validation status.  That way, callbacks that want to do "soft" SCT
+     * processing will not abort handshakes with false positive internal
+     * errors.  Since the function does not distinguish between certificate
+     * issues (peer's fault) and internal problems (out fault) the safe thing
+     * to do is to report a validation failure and let the callback or
+     * application decide what to do.
+     */
     if (SCT_CTX_set1_cert(sctx, ctx->cert, NULL) != 1)
-        goto err;
-
-    sct->validation_status = SCT_verify(sctx, sct) == 1 ?
+        sct->validation_status = SCT_VALIDATION_STATUS_UNVERIFIED;
+    else
+        sct->validation_status = SCT_verify(sctx, sct) == 1 ?
             SCT_VALIDATION_STATUS_VALID : SCT_VALIDATION_STATUS_INVALID;
 
 end:
