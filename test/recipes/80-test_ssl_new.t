@@ -48,6 +48,7 @@ sub test_conf {
 
       skip 'failure', 2 unless
         ok(run(perltest(["generate_ssl_tests.pl", $input_file],
+                        interpreter_args => [ "-I", srctop_dir("test", "testlib")],
                         stdout => $tmp_file)),
            "Getting output from generate_ssl_tests.pl.");
 
