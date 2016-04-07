@@ -4040,7 +4040,7 @@ err:
 }
 
 static int ct_permissive(const CT_POLICY_EVAL_CTX *ctx,
-                             const STACK_OF(SCT) *scts, void *unused_arg)
+                         const STACK_OF(SCT) *scts, void *unused_arg)
 {
     return 1;
 }
