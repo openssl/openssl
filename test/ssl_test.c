@@ -186,8 +186,8 @@ static void tear_down(SSL_TEST_FIXTURE fixture)
 static int test_handshake(int idx)
 {
     SETUP_SSL_TEST_FIXTURE();
-    snprintf(fixture.test_app, sizeof(fixture.test_app),
-             "test-%d", idx);
+    BIO_snprintf(fixture.test_app, sizeof(fixture.test_app),
+                 "test-%d", idx);
     EXECUTE_SSL_TEST();
 }
 
