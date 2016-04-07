@@ -1334,7 +1334,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     }
 
     i = ssl_verify_cert_chain(s, sk);
-    if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
+    if ((s->verify_mode & SSL_VERIFY_PEER) && i <= 0) {
         al = ssl_verify_alarm_type(s->verify_result);
         SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
                SSL_R_CERTIFICATE_VERIFY_FAILED);
@@ -2067,7 +2067,8 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
 
 #ifndef OPENSSL_NO_CT
     if (s->ct_validation_callback != NULL) {
-        if (!ssl_validate_ct(s)) {
+        /* Note we validate the SCTs whether or not we abort on error */
+        if (!ssl_validate_ct(s) && (s->verify_mode & SSL_VERIFY_PEER)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
             return MSG_PROCESS_ERROR;
         }

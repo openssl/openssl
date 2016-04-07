@@ -1899,6 +1899,15 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client);
 # ifndef OPENSSL_NO_CT
 
 /*
+ * A callback for verifying that the received SCTs are sufficient.
+ * Expected to return 1 if they are sufficient, otherwise 0.
+ * May return a negative integer if an error occurs.
+ * A connection should be aborted if the SCTs are deemed insufficient.
+ */
+typedef int(*ssl_ct_validation_cb)(const CT_POLICY_EVAL_CTX *ctx,
+                                   const STACK_OF(SCT) *scts, void *arg);
+
+/*
  * Sets a |callback| that is invoked upon receipt of ServerHelloDone to validate
  * the received SCTs.
  * If the callback returns a non-positive result, the connection is terminated.
@@ -1910,18 +1919,42 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client);
  * NOTE: A side-effect of setting a CT callback is that an OCSP stapled response
  *       will be requested.
  */
-__owur int SSL_set_ct_validation_callback(SSL *s,
-                                          ct_validation_cb callback,
-                                          void *arg);
-__owur int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx,
-                                              ct_validation_cb callback,
-                                              void *arg);
+int SSL_set_ct_validation_callback(SSL *s, ssl_ct_validation_cb callback,
+                                   void *arg);
+int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx,
+                                       ssl_ct_validation_cb callback,
+                                       void *arg);
+#define SSL_disable_ct(s) \
+        ((void) SSL_set_validation_callback((s), NULL, NULL))
+#define SSL_CTX_disable_ct(ctx) \
+        ((void) SSL_CTX_set_validation_callback((ctx), NULL, NULL))
+
 /*
- * Gets the callback being used to validate SCTs.
- * This will return NULL if SCTs are neither being requested nor validated.
+ * The validation type enumerates the available behaviours of the built-in SSL
+ * CT validation callback selected via SSL_enable_ct() and SSL_CTX_enable_ct().
+ * The underlying callback is a static function in libssl.
  */
-__owur ct_validation_cb SSL_get_ct_validation_callback(const SSL *s);
-__owur ct_validation_cb SSL_CTX_get_ct_validation_callback(const SSL_CTX *ctx);
+enum {
+    SSL_CT_VALIDATION_PERMISSIVE = 0,
+    SSL_CT_VALIDATION_STRICT
+};
+
+/*
+ * Enable CT by setting up a callback that implements one of the built-in
+ * validation variants.  The SSL_CT_VALIDATION_PERMISSIVE variant always
+ * continues the handshake, the application can make appropriate decisions at
+ * handshake completion.  The SSL_CT_VALIDATION_STRICT variant requires at
+ * least one valid SCT, or else handshake termination will be requested.  The
+ * handshake may continue anyway if SSL_VERIFY_NONE is in effect.
+ */
+int SSL_enable_ct(SSL *s, int validation_mode);
+int SSL_CTX_enable_ct(SSL_CTX *ctx, int validation_mode);
+
+/*
+ * Report whether a non-NULL callback is enabled.
+ */
+int SSL_ct_is_enabled(const SSL *s);
+int SSL_CTX_ct_is_enabled(const SSL_CTX *ctx);
 
 /* Gets the SCTs received from a connection */
 const STACK_OF(SCT) *SSL_get0_peer_scts(SSL *s);
@@ -2073,6 +2106,7 @@ void ERR_load_SSL_strings(void);
 /* Function codes. */
 # define SSL_F_CHECK_SUITEB_CIPHER_LIST                   331
 # define SSL_F_CT_MOVE_SCTS                               345
+# define SSL_F_CT_STRICT                                  349
 # define SSL_F_D2I_SSL_SESSION                            103
 # define SSL_F_DANE_CTX_ENABLE                            347
 # define SSL_F_DANE_MTYPE_SET                             393
@@ -2155,7 +2189,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CREATE_CIPHER_LIST                     166
 # define SSL_F_SSL_CTRL                                   232
 # define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY                  168
-# define SSL_F_SSL_CTX_GET_CT_VALIDATION_CALLBACK         349
+# define SSL_F_SSL_CTX_ENABLE_CT                          398
 # define SSL_F_SSL_CTX_MAKE_PROFILES                      309
 # define SSL_F_SSL_CTX_NEW                                169
 # define SSL_F_SSL_CTX_SET_ALPN_PROTOS                    343
@@ -2181,8 +2215,8 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_DANE_ENABLE                            395
 # define SSL_F_SSL_DO_CONFIG                              391
 # define SSL_F_SSL_DO_HANDSHAKE                           180
+# define SSL_F_SSL_ENABLE_CT                              402
 # define SSL_F_SSL_GET0_PEER_SCTS                         397
-# define SSL_F_SSL_GET_CT_VALIDATION_CALLBACK             398
 # define SSL_F_SSL_GET_NEW_SESSION                        181
 # define SSL_F_SSL_GET_PREV_SESSION                       217
 # define SSL_F_SSL_GET_SERVER_CERT_INDEX                  322
@@ -2405,6 +2439,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_COMMAND                            280
 # define SSL_R_INVALID_COMPRESSION_ALGORITHM              341
 # define SSL_R_INVALID_CONFIGURATION_NAME                 113
+# define SSL_R_INVALID_CT_VALIDATION_TYPE                 212
 # define SSL_R_INVALID_NULL_CMD_NAME                      385
 # define SSL_R_INVALID_PURPOSE                            278
 # define SSL_R_INVALID_SEQUENCE_NUMBER                    402
@@ -2453,6 +2488,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_NO_SHARED_CIPHER                           193
 # define SSL_R_NO_SHARED_SIGATURE_ALGORITHMS              376
 # define SSL_R_NO_SRTP_PROFILES                           359
+# define SSL_R_NO_VALID_SCTS                              217
 # define SSL_R_NO_VERIFY_CALLBACK                         194
 # define SSL_R_NO_VERIFY_COOKIE_CALLBACK                  403
 # define SSL_R_NULL_SSL_CTX                               195

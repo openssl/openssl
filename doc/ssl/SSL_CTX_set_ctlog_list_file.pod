@@ -49,6 +49,6 @@ the case of an error, the log list may have been partially loaded.
 =head1 SEE ALSO
 
 L<ssl(3)>,
-L<ct_validation_cb(3)>
+L<ssl_ct_validation_cb(3)>
 
 =cut
