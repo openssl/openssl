@@ -60,6 +60,11 @@ my $test_name = undef;
 # (mandatory), BIN_D, TEST_D, UTIL_D and RESULT_D.
 my %directories = ();
 
+# The environment variables that gave us the contents in %directories.  These
+# get modified whenever we change directories, so that subprocesses can use
+# the values of those environment variables as well
+my @direnv = ();
+
 # A bool saying if we shall stop all testing if the current recipe has failing
 # tests or not.  This is set by setup() if the environment variable STOPTEST
 # is defined with a non-empty value.
@@ -674,6 +679,13 @@ sub __env {
     $directories{SRCTEST} =                 __srctop_dir("test");
     $directories{RESULTS} = $ENV{RESULT_D} || $directories{BLDTEST};
 
+    push @direnv, "TOP"       if $ENV{TOP};
+    push @direnv, "SRCTOP"    if $ENV{SRCTOP};
+    push @direnv, "BLDTOP"    if $ENV{BLDTOP};
+    push @direnv, "BIN_D"     if $ENV{BIN_D};
+    push @direnv, "TEST_D"    if $ENV{TEST_D};
+    push @direnv, "RESULT_D"  if $ENV{RESULT_D};
+
     $end_with_bailout	  = $ENV{STOPTEST} ? 1 : 0;
 };
 
@@ -798,6 +810,16 @@ sub __cwd {
 	if (!file_name_is_absolute($directories{$_})) {
 	    my $newpath = abs2rel(rel2abs($directories{$_}), rel2abs($dir));
 	    $directories{$_} = $newpath;
+	}
+    }
+
+    # Treat each environment variable that was used to get us the values in
+    # %directories the same was as the paths in %directories, so any sub
+    # process can use their values properly as well
+    foreach (@direnv) {
+	if (!file_name_is_absolute($ENV{$_})) {
+	    my $newpath = abs2rel(rel2abs($ENV{$_}), rel2abs($dir));
+	    $ENV{$_} = $newpath;
 	}
     }
 
