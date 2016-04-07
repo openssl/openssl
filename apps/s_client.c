@@ -1680,9 +1680,7 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
 
 #ifndef OPENSSL_NO_CT
-    /*
-     * Enable SCT processing, without early connection termination
-     */
+    /* Enable SCT processing, without early connection termination */
     if (ct_validation &&
         !SSL_CTX_enable_ct(ctx, SSL_CT_VALIDATION_PERMISSIVE)) {
         ERR_print_errors(bio_err);
