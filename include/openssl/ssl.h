@@ -2106,6 +2106,7 @@ void ERR_load_SSL_strings(void);
 /* Function codes. */
 # define SSL_F_CHECK_SUITEB_CIPHER_LIST                   331
 # define SSL_F_CT_MOVE_SCTS                               345
+# define SSL_F_CT_STRICT                                  349
 # define SSL_F_D2I_SSL_SESSION                            103
 # define SSL_F_DANE_CTX_ENABLE                            347
 # define SSL_F_DANE_MTYPE_SET                             393
@@ -2188,7 +2189,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CREATE_CIPHER_LIST                     166
 # define SSL_F_SSL_CTRL                                   232
 # define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY                  168
-# define SSL_F_SSL_CTX_GET_CT_VALIDATION_CALLBACK         349
+# define SSL_F_SSL_CTX_ENABLE_CT                          398
 # define SSL_F_SSL_CTX_MAKE_PROFILES                      309
 # define SSL_F_SSL_CTX_NEW                                169
 # define SSL_F_SSL_CTX_SET_ALPN_PROTOS                    343
@@ -2214,8 +2215,8 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_DANE_ENABLE                            395
 # define SSL_F_SSL_DO_CONFIG                              391
 # define SSL_F_SSL_DO_HANDSHAKE                           180
+# define SSL_F_SSL_ENABLE_CT                              402
 # define SSL_F_SSL_GET0_PEER_SCTS                         397
-# define SSL_F_SSL_GET_CT_VALIDATION_CALLBACK             398
 # define SSL_F_SSL_GET_NEW_SESSION                        181
 # define SSL_F_SSL_GET_PREV_SESSION                       217
 # define SSL_F_SSL_GET_SERVER_CERT_INDEX                  322
@@ -2438,6 +2439,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_COMMAND                            280
 # define SSL_R_INVALID_COMPRESSION_ALGORITHM              341
 # define SSL_R_INVALID_CONFIGURATION_NAME                 113
+# define SSL_R_INVALID_CT_VALIDATION_TYPE                 212
 # define SSL_R_INVALID_NULL_CMD_NAME                      385
 # define SSL_R_INVALID_PURPOSE                            278
 # define SSL_R_INVALID_SEQUENCE_NUMBER                    402
@@ -2486,6 +2488,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_NO_SHARED_CIPHER                           193
 # define SSL_R_NO_SHARED_SIGATURE_ALGORITHMS              376
 # define SSL_R_NO_SRTP_PROFILES                           359
+# define SSL_R_NO_VALID_SCTS                              216
 # define SSL_R_NO_VERIFY_CALLBACK                         194
 # define SSL_R_NO_VERIFY_COOKIE_CALLBACK                  403
 # define SSL_R_NULL_SSL_CTX                               195

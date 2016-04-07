@@ -544,8 +544,6 @@ void ERR_load_CT_strings(void);
 # define CT_F_CT_POLICY_EVAL_CTX_SET0_ISSUER              135
 # define CT_F_CT_POLICY_EVAL_CTX_SET0_LOG_STORE           136
 # define CT_F_CT_V1_LOG_ID_FROM_PKEY                      125
-# define CT_F_CT_VERIFY_AT_LEAST_ONE_GOOD_SCT             137
-# define CT_F_CT_VERIFY_NO_BAD_SCTS                       138
 # define CT_F_D2I_SCT_LIST                                105
 # define CT_F_I2D_SCT_LIST                                106
 # define CT_F_I2O_SCT                                     107

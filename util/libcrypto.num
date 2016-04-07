@@ -238,7 +238,6 @@ EVP_PKEY_meth_set_decrypt               233	1_1_0	EXIST::FUNCTION:
 EVP_rc2_ecb                             234	1_1_0	EXIST::FUNCTION:RC2
 i2b_PublicKey_bio                       235	1_1_0	EXIST::FUNCTION:
 d2i_ASN1_SET_ANY                        236	1_1_0	EXIST::FUNCTION:
-CT_verify_no_bad_scts                   237	1_1_0	EXIST::FUNCTION:CT
 ASN1_item_i2d                           238	1_1_0	EXIST::FUNCTION:
 OCSP_copy_nonce                         239	1_1_0	EXIST::FUNCTION:
 OBJ_txt2nid                             240	1_1_0	EXIST::FUNCTION:
@@ -716,7 +715,6 @@ OPENSSL_isservice                       697	1_1_0	EXIST::FUNCTION:
 DH_compute_key                          698	1_1_0	EXIST::FUNCTION:DH
 TS_RESP_CTX_set_signer_key              699	1_1_0	EXIST::FUNCTION:TS
 i2d_DSAPrivateKey_bio                   700	1_1_0	EXIST::FUNCTION:DSA
-CT_verify_at_least_one_good_sct         701	1_1_0	EXIST::FUNCTION:CT
 ASN1_item_d2i                           702	1_1_0	EXIST::FUNCTION:
 BIO_int_ctrl                            703	1_1_0	EXIST::FUNCTION:
 CMS_ReceiptRequest_it                   704	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:CMS
@@ -1240,6 +1238,7 @@ OBJ_obj2nid                             1202	1_1_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_free                     1203	1_1_0	EXIST::FUNCTION:
 EVP_cast5_cfb64                         1204	1_1_0	EXIST::FUNCTION:CAST
 OPENSSL_uni2asc                         1205	1_1_0	EXIST::FUNCTION:
+SCT_validation_status_string            1206	1_1_0	EXIST::FUNCTION:CT
 PKCS7_add_attribute                     1207	1_1_0	EXIST::FUNCTION:
 ENGINE_register_DSA                     1208	1_1_0	EXIST::FUNCTION:ENGINE
 lh_node_stats                           1209	1_1_0	EXIST::FUNCTION:STDIO
