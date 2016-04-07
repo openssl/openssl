@@ -271,6 +271,7 @@ DH *DSA_dup_DH(const DSA *r)
         q = BN_dup(r->q);
         if (p == NULL || g == NULL || q == NULL || !DH_set0_pqg(ret, p, q, g))
             goto err;
+        p = g = q = NULL;
     }
 
     if (r->pub_key != NULL) {
