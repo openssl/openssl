@@ -377,10 +377,10 @@ SSL_CTX_set_ctlog_list_file             376	1_1_0	EXIST::FUNCTION:CT
 SSL_set_ct_validation_callback          377	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_set_default_ctlog_list_file     378	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_has_client_custom_ext           379	1_1_0	EXIST::FUNCTION:
-SSL_get_ct_validation_callback          380	1_1_0	EXIST::FUNCTION:CT
+SSL_ct_is_enabled                       380	1_1_0	EXIST::FUNCTION:CT
 SSL_get0_peer_scts                      381	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_set_ct_validation_callback      382	1_1_0	EXIST::FUNCTION:CT
-SSL_CTX_get_ct_validation_callback      383	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_ct_is_enabled                   383	1_1_0	EXIST::FUNCTION:CT
 SSL_set_default_read_buffer_len         384	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set_default_read_buffer_len     385	1_1_0	EXIST::FUNCTION:
 SSL_has_pending                         386	1_1_0	EXIST::FUNCTION:
@@ -390,3 +390,5 @@ SSL_CIPHER_is_aead                      389	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_up_ref                      390	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set0_ctlog_store                391	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_get0_ctlog_store                392	1_1_0	EXIST::FUNCTION:CT
+SSL_enable_ct                           393	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_enable_ct                       394	1_1_0	EXIST::FUNCTION:CT
