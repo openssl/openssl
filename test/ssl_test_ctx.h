@@ -15,11 +15,17 @@
 #include <openssl/ssl.h>
 
 typedef enum {
-    SSL_TEST_SUCCESS,  /* Default */
+    SSL_TEST_SUCCESS = 0,  /* Default */
     SSL_TEST_SERVER_FAIL,
     SSL_TEST_CLIENT_FAIL,
     SSL_TEST_INTERNAL_ERROR
 } ssl_test_result_t;
+
+typedef enum {
+    SSL_TEST_VERIFY_NONE = 0, /* Default */
+    SSL_TEST_VERIFY_ACCEPT_ALL,
+    SSL_TEST_VERIFY_REJECT_ALL
+} ssl_verify_callback_t;
 
 typedef struct ssl_test_ctx {
     /* Test expectations. */
@@ -34,11 +40,14 @@ typedef struct ssl_test_ctx {
     /* Negotiated protocol version. 0 if no expectation. */
     /* See ssl.h for protocol versions. */
     int protocol;
+    /* One of a number of predefined custom callbacks. */
+    ssl_verify_callback_t client_verify_callback;
 } SSL_TEST_CTX;
 
-const char *ssl_test_result_t_name(ssl_test_result_t result);
+const char *ssl_test_result_name(ssl_test_result_t result);
 const char *ssl_alert_name(int alert);
 const char *ssl_protocol_name(int protocol);
+const char *ssl_verify_callback_name(ssl_verify_callback_t verify_callback);
 
 /*
  * Load the test case context from |conf|.
