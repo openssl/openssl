@@ -583,7 +583,7 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
  * family, such as AF_UNIX
  *
  * the return value is 1 on success, or 0 on failure, which
- * only happens if a memory allocation error occured.
+ * only happens if a memory allocation error occurred.
  */
 static int addrinfo_wrap(int family, int socktype,
                          const void *where, size_t wherelen,
@@ -749,7 +749,7 @@ int BIO_lookup(const char *host, const char *service,
 #endif
 
         struct servent *se;
-        /* Apprently, on WIN64, s_proto and s_port have traded places... */
+        /* Apparently, on WIN64, s_proto and s_port have traded places... */
 #ifdef _WIN64
         struct servent se_fallback = { NULL, NULL, NULL, 0 };
 #else

@@ -54,7 +54,7 @@
 
 /*****************************************************************************
  *                                                                           *
- * These emums should be considered PRIVATE to the state machine. No         *
+ * These enums should be considered PRIVATE to the state machine. No         *
  * non-state machine code should need to use these                           *
  *                                                                           *
  *****************************************************************************/

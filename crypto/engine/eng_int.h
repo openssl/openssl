@@ -207,7 +207,7 @@ struct engine_st {
     int struct_ref;
     /*
      * reference count on usability of the engine type. NB: This controls the
-     * loading and initialisation of any functionlity required by this
+     * loading and initialisation of any functionality required by this
      * engine, whereas the previous count is simply to cope with
      * (de)allocation of this structure. Hence, running_ref <= struct_ref at
      * all times.

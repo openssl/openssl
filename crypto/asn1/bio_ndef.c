@@ -119,7 +119,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
     BIO_asn1_set_suffix(asn_bio, ndef_suffix, ndef_suffix_free);
 
     /*
-     * Now let callback prepend any digest, cipher etc BIOs ASN1 structure
+     * Now let callback prepends any digest, cipher etc BIOs ASN1 structure
      * needs.
      */
 

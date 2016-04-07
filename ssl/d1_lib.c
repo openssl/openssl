@@ -797,7 +797,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             }
 
             /*
-             * This is unneccessary if rbio and wbio are one and the same - but
+             * This is unnecessary if rbio and wbio are one and the same - but
              * maybe they're not. We ignore errors here - some BIOs do not
              * support this.
              */
