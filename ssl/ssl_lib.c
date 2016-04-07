@@ -4039,6 +4039,29 @@ err:
     return NULL;
 }
 
+static int ct_permissive(const CT_POLICY_EVAL_CTX *ctx,
+                             const STACK_OF(SCT) *scts, void *unused_arg)
+{
+    return 1;
+}
+
+static int ct_strict(const CT_POLICY_EVAL_CTX *ctx,
+                     const STACK_OF(SCT) *scts, void *unused_arg)
+{
+    int count = scts != NULL ? sk_SCT_num(scts) : 0;
+    int i;
+
+    for (i = 0; i < count; ++i) {
+        SCT *sct = sk_SCT_value(scts, i);
+        int status = SCT_get_validation_status(sct);
+
+        if (status == SCT_VALIDATION_STATUS_VALID)
+            return 1;
+    }
+    SSLerr(SSL_F_CT_STRICT, SSL_R_NO_VALID_SCTS);
+    return 0;
+}
+
 int SSL_set_ct_validation_callback(SSL *s, ssl_ct_validation_cb callback,
                                    void *arg)
 {
@@ -4093,69 +4116,6 @@ int SSL_ct_is_enabled(const SSL *s)
 int SSL_CTX_ct_is_enabled(const SSL_CTX *ctx)
 {
     return ctx->ct_validation_callback != NULL;
-}
-
-static void *ssl_ct_arg(int validation_mode)
-{
-    static int permissive = SSL_CT_VALIDATION_PERMISSIVE;
-    static int strict = SSL_CT_VALIDATION_STRICT;
-
-    switch (validation_mode) {
-    default:
-        SSLerr(SSL_F_SSL_CT_ARG, SSL_R_INVALID_CT_VALIDATION_TYPE);
-        return NULL;
-    case SSL_CT_VALIDATION_PERMISSIVE:
-        return &permissive;
-    case SSL_CT_VALIDATION_STRICT:
-        return &strict;
-    }
-}
-
-static int ssl_ct_cb(const CT_POLICY_EVAL_CTX *ctx,
-                     const STACK_OF(SCT) *scts, void *arg)
-{
-    int count;
-    int i;
-
-    switch (arg == NULL ? -1 : *(int *)arg) {
-    default:
-        SSLerr(SSL_F_SSL_CT_CB, SSL_R_INVALID_CT_VALIDATION_TYPE);
-        return -1;
-
-    case SSL_CT_VALIDATION_PERMISSIVE:
-        return 1;
-
-    case SSL_CT_VALIDATION_STRICT:
-        count = scts != NULL ? sk_SCT_num(scts) : 0;
-        for (i = 0; i < count; ++i) {
-            SCT *sct = sk_SCT_value(scts, i);
-            int status = SCT_get_validation_status(sct);
-
-            if (status == SCT_VALIDATION_STATUS_VALID)
-                return 1;
-        }
-        SSLerr(SSL_F_SSL_CT_CB, SSL_R_NO_VALID_SCTS);
-        break;
-    }
-    return 0;
-}
-
-int SSL_CTX_enable_ct(SSL_CTX *ctx, int validation_mode)
-{
-    void *arg = ssl_ct_arg(validation_mode);
-
-    if (arg == NULL)
-        return 0;
-    return SSL_CTX_set_ct_validation_callback(ctx, ssl_ct_cb, arg);
-}
-
-int SSL_enable_ct(SSL *s, int validation_mode)
-{
-    void *arg = ssl_ct_arg(validation_mode);
-
-    if (arg == NULL)
-        return 0;
-    return SSL_set_ct_validation_callback(s, ssl_ct_cb, arg);
 }
 
 int ssl_validate_ct(SSL *s)
@@ -4235,6 +4195,32 @@ int ssl_validate_ct(SSL *s)
 end:
     CT_POLICY_EVAL_CTX_free(ctx);
     return ret;
+}
+
+int SSL_CTX_enable_ct(SSL_CTX *ctx, int validation_mode)
+{
+    switch (validation_mode) {
+    default:
+        SSLerr(SSL_F_SSL_CTX_ENABLE_CT, SSL_R_INVALID_CT_VALIDATION_TYPE);
+        return 0;
+    case SSL_CT_VALIDATION_PERMISSIVE:
+        return SSL_CTX_set_ct_validation_callback(ctx, ct_permissive, NULL);
+    case SSL_CT_VALIDATION_STRICT:
+        return SSL_CTX_set_ct_validation_callback(ctx, ct_strict, NULL);
+    }
+}
+
+int SSL_enable_ct(SSL *s, int validation_mode)
+{
+    switch (validation_mode) {
+    default:
+        SSLerr(SSL_F_SSL_ENABLE_CT, SSL_R_INVALID_CT_VALIDATION_TYPE);
+        return 0;
+    case SSL_CT_VALIDATION_PERMISSIVE:
+        return SSL_set_ct_validation_callback(s, ct_permissive, NULL);
+    case SSL_CT_VALIDATION_STRICT:
+        return SSL_set_ct_validation_callback(s, ct_strict, NULL);
+    }
 }
 
 int SSL_CTX_set_default_ctlog_list_file(SSL_CTX *ctx)
