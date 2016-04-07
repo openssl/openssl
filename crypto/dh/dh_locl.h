@@ -36,3 +36,21 @@ struct dh_st {
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
 };
+
+struct dh_method {
+    char *name;
+    /* Methods here */
+    int (*generate_key) (DH *dh);
+    int (*compute_key) (unsigned char *key, const BIGNUM *pub_key, DH *dh);
+    /* Can be null */
+    int (*bn_mod_exp) (const DH *dh, BIGNUM *r, const BIGNUM *a,
+                       const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
+                       BN_MONT_CTX *m_ctx);
+    int (*init) (DH *dh);
+    int (*finish) (DH *dh);
+    int flags;
+    char *app_data;
+    /* If this is non-NULL, it will be used to generate parameters */
+    int (*generate_params) (DH *dh, int prime_len, int generator,
+                            BN_GENCB *cb);
+};
