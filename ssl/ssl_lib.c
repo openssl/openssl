@@ -4039,10 +4039,32 @@ err:
     return NULL;
 }
 
-int SSL_set_ct_validation_callback(SSL *s, ct_validation_cb callback, void *arg)
+static int ct_permissive(const CT_POLICY_EVAL_CTX *ctx,
+                         const STACK_OF(SCT) *scts, void *unused_arg)
 {
-    int ret = 0;
+    return 1;
+}
 
+static int ct_strict(const CT_POLICY_EVAL_CTX *ctx,
+                     const STACK_OF(SCT) *scts, void *unused_arg)
+{
+    int count = scts != NULL ? sk_SCT_num(scts) : 0;
+    int i;
+
+    for (i = 0; i < count; ++i) {
+        SCT *sct = sk_SCT_value(scts, i);
+        int status = SCT_get_validation_status(sct);
+
+        if (status == SCT_VALIDATION_STATUS_VALID)
+            return 1;
+    }
+    SSLerr(SSL_F_CT_STRICT, SSL_R_NO_VALID_SCTS);
+    return 0;
+}
+
+int SSL_set_ct_validation_callback(SSL *s, ssl_ct_validation_cb callback,
+                                   void *arg)
+{
     /*
      * Since code exists that uses the custom extension handler for CT, look
      * for this and throw an error if they have already registered to use CT.
@@ -4051,28 +4073,25 @@ int SSL_set_ct_validation_callback(SSL *s, ct_validation_cb callback, void *arg)
             TLSEXT_TYPE_signed_certificate_timestamp)) {
         SSLerr(SSL_F_SSL_SET_CT_VALIDATION_CALLBACK,
                SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED);
-        goto err;
+        return 0;
+    }
+
+    if (callback != NULL) {
+        /* If we are validating CT, then we MUST accept SCTs served via OCSP */
+        if (!SSL_set_tlsext_status_type(s, TLSEXT_STATUSTYPE_ocsp))
+            return 0;
     }
 
     s->ct_validation_callback = callback;
     s->ct_validation_callback_arg = arg;
 
-    if (callback != NULL) {
-        /* If we are validating CT, then we MUST accept SCTs served via OCSP */
-        if (!SSL_set_tlsext_status_type(s, TLSEXT_STATUSTYPE_ocsp))
-            goto err;
-    }
-
-    ret = 1;
-err:
-    return ret;
+    return 1;
 }
 
-int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx, ct_validation_cb callback,
+int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx,
+                                       ssl_ct_validation_cb callback,
                                        void *arg)
 {
-    int ret = 0;
-
     /*
      * Since code exists that uses the custom extension handler for CT, look for
      * this and throw an error if they have already registered to use CT.
@@ -4081,45 +4100,61 @@ int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx, ct_validation_cb callback,
             TLSEXT_TYPE_signed_certificate_timestamp)) {
         SSLerr(SSL_F_SSL_CTX_SET_CT_VALIDATION_CALLBACK,
                SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED);
-        goto err;
+        return 0;
     }
 
     ctx->ct_validation_callback = callback;
     ctx->ct_validation_callback_arg = arg;
-    ret = 1;
-err:
-    return ret;
+    return 1;
 }
 
-ct_validation_cb SSL_get_ct_validation_callback(const SSL *s)
+int SSL_ct_is_enabled(const SSL *s)
 {
-    return s->ct_validation_callback;
+    return s->ct_validation_callback != NULL;
 }
 
-ct_validation_cb SSL_CTX_get_ct_validation_callback(const SSL_CTX *ctx)
+int SSL_CTX_ct_is_enabled(const SSL_CTX *ctx)
 {
-    return ctx->ct_validation_callback;
+    return ctx->ct_validation_callback != NULL;
 }
 
 int ssl_validate_ct(SSL *s)
 {
     int ret = 0;
     X509 *cert = s->session != NULL ? s->session->peer : NULL;
-    X509 *issuer = NULL;
+    X509 *issuer;
+    struct dane_st *dane = &s->dane;
     CT_POLICY_EVAL_CTX *ctx = NULL;
     const STACK_OF(SCT) *scts;
 
-    /* If no callback is set, attempt no validation - just return success */
-    if (s->ct_validation_callback == NULL)
+    /*
+     * If no callback is set, the peer is anonymous, or its chain is invalid,
+     * skip SCT validation - just return success.  Applications that continue
+     * handshakes without certificates, with unverified chains, or pinned leaf
+     * certificates are outside the scope of the WebPKI and CT.
+     *
+     * The above exclusions notwithstanding the vast majority of peers will
+     * have rather ordinary certificate chains validated by typical
+     * applications that perform certificate verification and therefore will
+     * process SCTs when enabled.
+     */
+    if (s->ct_validation_callback == NULL || cert == NULL ||
+        s->verify_result != X509_V_OK ||
+        s->verified_chain == NULL ||
+        sk_X509_num(s->verified_chain) <= 1)
         return 1;
 
-    if (cert == NULL) {
-        SSLerr(SSL_F_SSL_VALIDATE_CT, SSL_R_NO_CERTIFICATE_ASSIGNED);
-        goto end;
+    /*
+     * CT not applicable for chains validated via DANE-TA(2) or DANE-EE(3)
+     * trust-anchors.  See https://tools.ietf.org/html/rfc7671#section-4.2
+     */
+    if (DANETLS_ENABLED(dane) && dane->mtlsa != NULL) {
+        switch (dane->mtlsa->usage) {
+        case DANETLS_USAGE_DANE_TA:
+        case DANETLS_USAGE_DANE_EE:
+            return 1;
+        }
     }
-
-    if (s->verified_chain != NULL && sk_X509_num(s->verified_chain) > 1)
-        issuer = sk_X509_value(s->verified_chain, 1);
 
     ctx = CT_POLICY_EVAL_CTX_new();
     if (ctx == NULL) {
@@ -4127,13 +4162,28 @@ int ssl_validate_ct(SSL *s)
         goto end;
     }
 
+    issuer = sk_X509_value(s->verified_chain, 1);
     CT_POLICY_EVAL_CTX_set0_cert(ctx, cert);
     CT_POLICY_EVAL_CTX_set0_issuer(ctx, issuer);
     CT_POLICY_EVAL_CTX_set0_log_store(ctx, s->ctx->ctlog_store);
 
     scts = SSL_get0_peer_scts(s);
 
-    if (SCT_LIST_validate(scts, ctx) != 1) {
+    /*
+     * This function returns success (> 0) only when all the SCTs are valid, 0
+     * when some are invalid, and < 0 on various internal errors (out of
+     * memory, etc.).  Having some, or even all, invalid SCTs is not sufficient
+     * reason to abort the handshake, that decision is up to the callback.
+     * Therefore, we error out only in the unexpected case that the return
+     * value is negative.
+     *
+     * XXX: One might well argue that the return value of this function is an
+     * unforunate design choice.  Its job is only to determine the validation
+     * status of each of the provided SCTs.  So long as it correctly separates
+     * the wheat from the chaff it should return success.  Failure in this case
+     * ought to correspond to an inability to carry out its duties.
+     */
+    if (SCT_LIST_validate(scts, ctx) < 0) {
         SSLerr(SSL_F_SSL_VALIDATE_CT, SSL_R_SCT_VERIFICATION_FAILED);
         goto end;
     }
@@ -4145,6 +4195,32 @@ int ssl_validate_ct(SSL *s)
 end:
     CT_POLICY_EVAL_CTX_free(ctx);
     return ret;
+}
+
+int SSL_CTX_enable_ct(SSL_CTX *ctx, int validation_mode)
+{
+    switch (validation_mode) {
+    default:
+        SSLerr(SSL_F_SSL_CTX_ENABLE_CT, SSL_R_INVALID_CT_VALIDATION_TYPE);
+        return 0;
+    case SSL_CT_VALIDATION_PERMISSIVE:
+        return SSL_CTX_set_ct_validation_callback(ctx, ct_permissive, NULL);
+    case SSL_CT_VALIDATION_STRICT:
+        return SSL_CTX_set_ct_validation_callback(ctx, ct_strict, NULL);
+    }
+}
+
+int SSL_enable_ct(SSL *s, int validation_mode)
+{
+    switch (validation_mode) {
+    default:
+        SSLerr(SSL_F_SSL_ENABLE_CT, SSL_R_INVALID_CT_VALIDATION_TYPE);
+        return 0;
+    case SSL_CT_VALIDATION_PERMISSIVE:
+        return SSL_set_ct_validation_callback(s, ct_permissive, NULL);
+    case SSL_CT_VALIDATION_STRICT:
+        return SSL_set_ct_validation_callback(s, ct_strict, NULL);
+    }
 }
 
 int SSL_CTX_set_default_ctlog_list_file(SSL_CTX *ctx)
