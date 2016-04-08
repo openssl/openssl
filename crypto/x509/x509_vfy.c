@@ -298,7 +298,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
 
 int X509_verify_cert(X509_STORE_CTX *ctx)
 {
-    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    SSL_DANE *dane = ctx->dane;
 
     if (ctx->cert == NULL) {
         X509err(X509_F_X509_VERIFY_CERT, X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
@@ -665,7 +665,7 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     int i;
     X509 *x = NULL;
     X509 *mx;
-    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
     int trust;
 
@@ -2369,7 +2369,7 @@ void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param)
     ctx->param = param;
 }
 
-void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, struct dane_st *dane)
+void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane)
 {
     ctx->dane = dane;
 }
@@ -2410,7 +2410,7 @@ static unsigned char *dane_i2d(
 
 static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
 {
-    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    SSL_DANE *dane = ctx->dane;
     unsigned usage = DANETLS_NONE;
     unsigned selector = DANETLS_NONE;
     unsigned ordinal = DANETLS_NONE;
@@ -2553,7 +2553,7 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
 
 static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
 {
-    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    SSL_DANE *dane = ctx->dane;
     int matched = 0;
     X509 *cert;
 
@@ -2578,7 +2578,7 @@ static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
 
 static int check_dane_pkeys(X509_STORE_CTX *ctx)
 {
-    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    SSL_DANE *dane = ctx->dane;
     danetls_record *t;
     int num = ctx->num_untrusted;
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
@@ -2613,7 +2613,7 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
     return X509_TRUST_UNTRUSTED;
 }
 
-static void dane_reset(struct dane_st *dane)
+static void dane_reset(SSL_DANE *dane)
 {
     /*
      * Reset state to verify another chain, or clear after failure.
@@ -2637,7 +2637,7 @@ static int check_leaf_suiteb(X509_STORE_CTX *ctx, X509 *cert)
 static int dane_verify(X509_STORE_CTX *ctx)
 {
     X509 *cert = ctx->cert;
-    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    SSL_DANE *dane = ctx->dane;
     int matched;
     int done;
 
@@ -2707,7 +2707,7 @@ static int get_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *cert)
 
 static int build_chain(X509_STORE_CTX *ctx)
 {
-    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
     int ss = cert_self_signed(cert);

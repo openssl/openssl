@@ -1015,7 +1015,7 @@ struct ssl_st {
     X509_VERIFY_PARAM *param;
 
     /* Per connection DANE state */
-    struct dane_st dane;
+    SSL_DANE dane;
 
     /* crypto */
     STACK_OF(SSL_CIPHER) *cipher_list;
