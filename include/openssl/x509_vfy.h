@@ -262,7 +262,7 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* For CRL path validation: parent context */
     X509_STORE_CTX *parent;
     CRYPTO_EX_DATA ex_data;
-    struct dane_st *dane;
+    SSL_DANE *dane;
     /* signed via bare TA public key, rather than CA certificate */
     int bare_ta_signed;
 } /* X509_STORE_CTX */ ;
@@ -536,7 +536,7 @@ int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name);
  * Bridge opacity barrier between libcrypt and libssl, also needed to support
  * offline testing in test/danetest.c
  */
-void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, struct dane_st *dane);
+void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane);
 
 /* X509_VERIFY_PARAM functions */
 

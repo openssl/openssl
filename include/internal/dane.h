@@ -110,7 +110,7 @@ struct dane_ctx_st {
 /*
  * Per connection DANE state
  */
-struct dane_st {
+struct ssl_dane_st {
     struct dane_ctx_st *dctx;
     STACK_OF(danetls_record) *trecs;
     STACK_OF(X509) *certs;      /* DANE-TA(2) Cert(0) Full(0) certs */

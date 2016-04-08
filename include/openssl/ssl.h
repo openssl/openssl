@@ -1578,7 +1578,7 @@ __owur int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
  * Bridge opacity barrier between libcrypt and libssl, also needed to support
  * offline testing in test/danetest.c
  */
-struct dane_st *SSL_get0_dane(SSL *ssl);
+SSL_DANE *SSL_get0_dane(SSL *ssl);
 
 __owur int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm);
 __owur int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);

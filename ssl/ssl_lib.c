@@ -257,7 +257,7 @@ static void tlsa_free(danetls_record *t)
     OPENSSL_free(t);
 }
 
-static void dane_final(struct dane_st *dane)
+static void dane_final(SSL_DANE *dane)
 {
     sk_danetls_record_pop_free(dane->trecs, tlsa_free);
     dane->trecs = NULL;
@@ -344,7 +344,7 @@ static int dane_mtype_set(
     return 1;
 }
 
-static const EVP_MD *tlsa_md_get(struct dane_st *dane, uint8_t mtype)
+static const EVP_MD *tlsa_md_get(SSL_DANE *dane, uint8_t mtype)
 {
     if (mtype > dane->dctx->mdmax)
         return NULL;
@@ -352,7 +352,7 @@ static const EVP_MD *tlsa_md_get(struct dane_st *dane, uint8_t mtype)
 }
 
 static int dane_tlsa_add(
-    struct dane_st *dane,
+    SSL_DANE *dane,
     uint8_t usage,
     uint8_t selector,
     uint8_t mtype,
@@ -883,7 +883,7 @@ int SSL_CTX_dane_enable(SSL_CTX *ctx)
 
 int SSL_dane_enable(SSL *s, const char *basedomain)
 {
-    struct dane_st *dane = &s->dane;
+    SSL_DANE *dane = &s->dane;
 
     if (s->ctx->dane.mdmax == 0) {
         SSLerr(SSL_F_SSL_DANE_ENABLE, SSL_R_CONTEXT_NOT_DANE_ENABLED);
@@ -926,7 +926,7 @@ int SSL_dane_enable(SSL *s, const char *basedomain)
 
 int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
 {
-    struct dane_st *dane = &s->dane;
+    SSL_DANE *dane = &s->dane;
 
     if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
@@ -942,7 +942,7 @@ int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
 int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
                        uint8_t *mtype, unsigned const char **data, size_t *dlen)
 {
-    struct dane_st *dane = &s->dane;
+    SSL_DANE *dane = &s->dane;
 
     if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
@@ -961,7 +961,7 @@ int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
     return dane->mdpth;
 }
 
-struct dane_st *SSL_get0_dane(SSL *s)
+SSL_DANE *SSL_get0_dane(SSL *s)
 {
     return &s->dane;
 }
@@ -4115,7 +4115,7 @@ int ssl_validate_ct(SSL *s)
     int ret = 0;
     X509 *cert = s->session != NULL ? s->session->peer : NULL;
     X509 *issuer;
-    struct dane_st *dane = &s->dane;
+    SSL_DANE *dane = &s->dane;
     CT_POLICY_EVAL_CTX *ctx = NULL;
     const STACK_OF(SCT) *scts;
 
