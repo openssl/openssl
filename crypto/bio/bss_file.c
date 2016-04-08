@@ -164,6 +164,10 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 {
     BIO  *ret;
     FILE *file = file_fopen(filename, mode);
+    int fp_flags = BIO_CLOSE;
+
+    if (strchr(mode, 'b') == NULL)
+        fp_flags |= BIO_FP_TEXT;
 
     if (file == NULL) {
         SYSerr(SYS_F_FOPEN, get_last_sys_error());
@@ -181,7 +185,7 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 
     BIO_clear_flags(ret, BIO_FLAGS_UPLINK); /* we did fopen -> we disengage
                                              * UPLINK */
-    BIO_set_fp(ret, file, BIO_CLOSE);
+    BIO_set_fp(ret, file, fp_flags);
     return (ret);
 }
 
