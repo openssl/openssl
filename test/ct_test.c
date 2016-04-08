@@ -101,7 +101,11 @@ static CT_TEST_FIXTURE set_up(const char *const test_case_name)
 {
     CT_TEST_FIXTURE fixture;
     int setup_ok = 1;
-    CTLOG_STORE *ctlog_store = CTLOG_STORE_new();
+    CTLOG_STORE *ctlog_store;
+
+    memset(&fixture, 0, sizeof(fixture));
+
+    ctlog_store = CTLOG_STORE_new();
 
     if (ctlog_store == NULL) {
         setup_ok = 0;
@@ -115,7 +119,6 @@ static CT_TEST_FIXTURE set_up(const char *const test_case_name)
         goto end;
     }
 
-    memset(&fixture, 0, sizeof(fixture));
     fixture.test_case_name = test_case_name;
     fixture.ctlog_store = ctlog_store;
 

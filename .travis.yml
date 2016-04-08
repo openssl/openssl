@@ -24,12 +24,12 @@ compiler:
 
 env:
     - CONFIG_OPTS="shared"
-    - CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="" BUILDONLY="yes"
+    - CONFIG_OPTS="--debug enable-crypto-mdebug enable-rc5 enable-md2"
+    - CONFIG_OPTS="--strict-warnings" BUILDONLY="yes"
     - CONFIG_OPTS="--classic" BUILDONLY="yes"
     - CONFIG_OPTS="--classic shared" BUILDONLY="yes"
-    - CONFIG_OPTS="no-pic" BUILDONLY="yes"
-    - CONFIG_OPTS="no-engine" BUILDONLY="yes"
+    - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
+    - CONFIG_OPTS="no-engine --strict-warnings" BUILDONLY="yes"
 
 matrix:
     include:
@@ -38,13 +38,13 @@ matrix:
           env: CONFIG_OPTS="-fsanitize=address"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
+          env: CONFIG_OPTS="no-asm -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2 -fno-sanitize=alignment"
         - os: linux
           compiler: gcc-5
           env: CONFIG_OPTS="-fsanitize=address"
         - os: linux
           compiler: gcc-5
-          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
+          env: CONFIG_OPTS="no-asm -fno-sanitize-recover -DPEDANTIC -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
         - os: linux
           compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
