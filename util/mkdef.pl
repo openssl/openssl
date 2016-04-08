@@ -97,6 +97,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "PSK", "SRP", "HEARTBEATS",
 			 # CMS
 			 "CMS",
+                         "OCSP",
 			 # CryptoAPI Engine
 			 "CAPIENG",
 			 # SSL methods
