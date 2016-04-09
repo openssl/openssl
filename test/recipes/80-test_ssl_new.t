@@ -25,7 +25,8 @@ my %conf_dependent_tests = ("02-protocol-version.conf" => 1);
 
 foreach my $conf (@conf_files) {
     subtest "Test configuration $conf" => sub {
-        test_conf($conf, $conf_dependent_tests{$conf} ?  0 : 1);
+        test_conf($conf,
+                  $conf_dependent_tests{$conf} || $^O eq "VMS" ?  0 : 1);
     }
 }
 
