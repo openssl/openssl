@@ -239,6 +239,8 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item X509_STORE *B<SSL_CTX_get_cert_store>(SSL_CTX *ctx);
 
+=item STACK *B<SSL_CTX_get_ciphers>(const SSL_CTX *ctx);
+
 =item STACK *B<SSL_CTX_get_client_CA_list>(const SSL_CTX *ctx);
 
 =item int (*B<SSL_CTX_get_client_cert_cb>(SSL_CTX *ctx))(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
