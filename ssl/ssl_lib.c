@@ -1999,6 +1999,15 @@ const char *SSL_get_cipher_list(const SSL *s, int n)
     return (c->name);
 }
 
+/** return a STACK of the ciphers available for the SSL_CTX and in order of
+ * preference */
+STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx)
+{
+    if (ctx != NULL)
+        return ctx->cipher_list;
+    return NULL;
+}
+
 /** specify the ciphers to be used by default by the SSL_CTX */
 int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 {
