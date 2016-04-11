@@ -252,7 +252,7 @@ int RAND_write_file(const char *file)
     if (out == NULL)
         goto err;
 
-#ifndef NO_CHMOD
+#if !defined(NO_CHMOD) && !defined(OPENSSL_NO_POSIX_IO)
     chmod(file, 0600);
 #endif
     n = RAND_DATA;
