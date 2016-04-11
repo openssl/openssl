@@ -767,21 +767,24 @@ sub testssl {
     subtest 'TLS session reuse' => sub {
         plan tests => 12;
 
-        ok(run(test([@ssltest, "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
-        ok(run(test([@ssltest, "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.2"])));
-        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.1"])));
+        SKIP: {
+        skip "TLS disabled", 12 if $no_anytls;
+            ok(run(test([@ssltest, "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+            ok(run(test([@ssltest, "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.1"])));
 
-        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
-        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.1"])));
-        ok(run(test([@ssltest, "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.2"])));
 
-        ok(run(test([@ssltest, "-no_ticket", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
-        ok(run(test([@ssltest, "-no_ticket", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.2"])));
-        ok(run(test([@ssltest, "-no_ticket", "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-no_ticket", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+            ok(run(test([@ssltest, "-no_ticket", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-no_ticket", "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.1"])));
 
-        ok(run(test([@ssltest, "-no_ticket", "-server_max_proto", "tls1.1", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
-        ok(run(test([@ssltest, "-no_ticket", "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.1"])));
-        ok(run(test([@ssltest, "-no_ticket", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-no_ticket", "-server_max_proto", "tls1.1", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
+            ok(run(test([@ssltest, "-no_ticket", "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-no_ticket", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.2"])));
+        }
     };
 
     subtest 'DTLS session reuse' => sub {
