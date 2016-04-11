@@ -2348,7 +2348,9 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
         goto err;
     }
 
+# ifndef OPENSSL_NO_NEXTPROTONEG
  end:
+# endif
     ret = 0;
 
  err:
@@ -2729,7 +2731,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
         goto err;
     }
 
+#ifndef OPENSSL_NO_NEXTPROTONEG
  end:
+#endif
     ret = 0;
 
  err:

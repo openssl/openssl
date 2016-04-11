@@ -568,6 +568,8 @@ sub testssl {
       SKIP: {
 	  skip "TLSv1.0 is not supported by this OpenSSL build", 7
 	      if $no_tls1;
+	  skip "Next Protocol Negotiation is not supported by this OpenSSL build", 7
+	      if disabled("nextprotoneg");
 
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_server"])));

@@ -1362,7 +1362,9 @@ int s_client_main(int argc, char **argv)
             }
             break;
         case OPT_NEXTPROTONEG:
+#ifndef OPENSSL_NO_NEXTPROTONEG
             next_proto_neg_in = opt_arg();
+#endif
             break;
         case OPT_ALPN:
             alpn_in = opt_arg();
