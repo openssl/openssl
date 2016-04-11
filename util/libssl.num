@@ -393,3 +393,4 @@ SSL_CTX_get0_ctlog_store                392	1_1_0	EXIST::FUNCTION:CT
 SSL_enable_ct                           393	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_enable_ct                       394	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_get_ciphers                     395	1_1_0	EXIST::FUNCTION:
+SSL_SESSION_get0_hostname               396	1_1_0	EXIST::FUNCTION:
