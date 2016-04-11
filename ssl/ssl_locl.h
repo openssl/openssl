@@ -1464,7 +1464,6 @@ pitem *pqueue_pop(pqueue *pq);
 pitem *pqueue_find(pqueue *pq, unsigned char *prio64be);
 pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
-void pqueue_print(pqueue *pq);
 int pqueue_size(pqueue *pq);
 
 typedef struct dtls1_state_st {
