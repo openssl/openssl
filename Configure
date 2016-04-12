@@ -672,7 +672,7 @@ foreach (@argvcopy)
 			}
 		elsif (/^--with-zlib-include=(.*)$/)
 			{
-			$withargs{zlib_include}="-I$1";
+			$withargs{zlib_include}=$1;
 			}
 		elsif (/^--with-fipslibdir=(.*)$/)
 			{

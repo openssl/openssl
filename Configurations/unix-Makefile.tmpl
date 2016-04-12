@@ -860,6 +860,11 @@ EOF
       my $srcs = join(" ",  @srcs);
       my $deps = join(" ", @srcs, @{$args{deps}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      unless ($disabled{zlib}) {
+          if ($withargs{zlib_include}) {
+              $incs .= " -I".$withargs{zlib_include};
+          }
+      }
       my $ecflags = { lib => '$(LIB_CFLAGS)',
                       dso => '$(DSO_CFLAGS)',
                       bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
