@@ -460,7 +460,7 @@ int CONF_module_add(const char *name, conf_init_func *ifunc,
         return 0;
 }
 
-void int_conf_modules_free(void)
+void conf_modules_free_int(void)
 {
     CONF_modules_finish();
     CONF_modules_unload(1);

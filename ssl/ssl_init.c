@@ -198,24 +198,24 @@ static void ssl_library_stop(void)
 #ifndef OPENSSL_NO_COMP
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                        "int_ssl_comp_free_compression_methods()\n");
+                        "ssl_comp_free_compression_methods_int()\n");
 #endif
-        int_ssl_comp_free_compression_methods();
+        ssl_comp_free_compression_methods_int();
 #endif
     }
 
     if (ssl_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                        "int_err_free_strings()\n");
+                        "err_free_strings_int()\n");
 #endif
         /*
          * If both crypto and ssl error strings are inited we will end up
-         * calling int_err_free_strings() twice - but that's ok. The second
+         * calling err_free_strings_int() twice - but that's ok. The second
          * time will be a no-op. It's easier to do that than to try and track
          * between the two libraries whether they have both been inited.
          */
-        int_err_free_strings();
+        err_free_strings_int();
     }
 }
 

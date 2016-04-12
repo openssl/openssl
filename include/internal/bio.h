@@ -67,4 +67,4 @@ struct bio_method_st {
     long (*callback_ctrl) (BIO *, int, bio_info_cb *);
 };
 
-void int_bio_sock_cleanup(void);
+void bio_sock_cleanup_int(void);

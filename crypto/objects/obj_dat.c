@@ -210,7 +210,7 @@ void check_defer(int nid)
         obj_cleanup_defer = 1;
 }
 
-void int_obj_cleanup(void)
+void obj_cleanup_int(void)
 {
     if (obj_cleanup_defer) {
         obj_cleanup_defer = 2;

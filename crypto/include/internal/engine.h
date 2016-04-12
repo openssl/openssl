@@ -54,12 +54,12 @@
 
 #include <openssl/engine.h>
 
-void int_engine_load_openssl(void);
-void int_engine_load_cryptodev(void);
-void int_engine_load_rdrand(void);
-void int_engine_load_dynamic(void);
-void int_engine_load_padlock(void);
-void int_engine_load_capi(void);
-void int_engine_load_dasync(void);
-void int_engine_load_afalg(void);
-void int_engine_cleanup(void);
+void engine_load_openssl_int(void);
+void engine_load_cryptodev_int(void);
+void engine_load_rdrand_int(void);
+void engine_load_dynamic_int(void);
+void engine_load_padlock_int(void);
+void engine_load_capi_int(void);
+void engine_load_dasync_int(void);
+void engine_load_afalg_int(void);
+void engine_cleanup_int(void);
