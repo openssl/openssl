@@ -256,12 +256,19 @@ COMP_METHOD *COMP_zlib(void)
     COMP_METHOD *meth = &zlib_method_nozlib;
 
 #ifdef ZLIB_SHARED
-    if (!zlib_loaded) {
-# if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-        zlib_dso = DSO_load(NULL, "ZLIB1", NULL, 0);
-# else
-        zlib_dso = DSO_load(NULL, "z", NULL, 0);
+    /* LIBZ may be externally defined, and we should respect that value */
+# ifndef LIBZ
+#  if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+#   define LIBZ "ZLIB1"
+#  elif defined(OPENSSL_SYS_VMS)
+#   define LIBZ "LIBZ"
+#  else
+#   define LIBZ "z"
+#  endif
 # endif
+
+    if (!zlib_loaded) {
+        zlib_dso = DSO_load(NULL, LIBZ, NULL, 0);
         if (zlib_dso != NULL) {
             p_compress = (compress_ft) DSO_bind_func(zlib_dso, "compress");
             p_inflateEnd
