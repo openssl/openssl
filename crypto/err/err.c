@@ -447,7 +447,7 @@ void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
     CRYPTO_THREAD_unlock(err_string_lock);
 }
 
-void int_err_free_strings(void)
+void err_free_strings_int(void)
 {
     CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
 

@@ -58,7 +58,7 @@
 #ifndef INTERNAL_ERR_H
 # define INTERNAL_ERR_H
 
-void int_err_load_crypto_strings(void);
-void int_err_free_strings(void);
+void err_load_crypto_strings_int(void);
+void err_free_strings_int(void);
 
 #endif

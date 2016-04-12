@@ -125,7 +125,7 @@ int RAND_set_rand_engine(ENGINE *engine)
 }
 #endif
 
-void int_rand_cleanup(void)
+void rand_cleanup_int(void)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
     if (meth && meth->cleanup)

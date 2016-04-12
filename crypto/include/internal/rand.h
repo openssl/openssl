@@ -8,4 +8,4 @@
 
 #include <openssl/rand.h>
 
-void int_rand_cleanup(void);
+void rand_cleanup_int(void);

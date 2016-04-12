@@ -128,7 +128,7 @@ const EVP_MD *EVP_get_digestbyname(const char *name)
     return (cp);
 }
 
-void int_evp_cleanup(void)
+void evp_cleanup_int(void)
 {
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
@@ -142,7 +142,7 @@ void int_evp_cleanup(void)
     EVP_PBE_cleanup();
     if (obj_cleanup_defer == 2) {
         obj_cleanup_defer = 0;
-        int_obj_cleanup();
+        obj_cleanup_int();
     }
     OBJ_sigid_free();
 }
