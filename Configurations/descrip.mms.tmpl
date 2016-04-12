@@ -468,13 +468,20 @@ EOF
       my $incs_on = "\@ !";
       my $incs_off = "\@ !";
       my $incs = "";
-      if (@{$args{incs}}) {
+      my @incs = ();
+      push @incs, @{$args{incs}} if @{$args{incs}};
+      unless ($disabled{zlib}) {
+          # GNV$ZLIB_INCLUDE is the standard logical name for later zlib
+          # incarnations.
+          push @incs, ($withargs{zlib_include} || 'GNV$ZLIB_INCLUDE:');
+      }
+      if (@incs) {
           $incs_on =
               "DEFINE tmp_includes "
               .join(",-\n\t\t\t", map {
                                       file_name_is_absolute($_)
                                       ? $_ : catdir($backward,$_)
-                                  } @{$args{incs}});
+                                  } @incs);
           $incs_off = "DEASSIGN tmp_includes";
           $incs = " /INCLUDE=(tmp_includes:)";
       }
