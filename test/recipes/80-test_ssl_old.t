@@ -768,7 +768,7 @@ sub testssl {
         plan tests => 12;
 
         SKIP: {
-        skip "TLS disabled", 12 if $no_anytls;
+            skip "TLS1.1 or TLS1.2 disabled", 12 if $no_tls1_1 || $no_tls1_2;
             ok(run(test([@ssltest, "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
             ok(run(test([@ssltest, "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "tls1.2"])));
             ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "0", "-should_negotiate", "tls1.1"])));
