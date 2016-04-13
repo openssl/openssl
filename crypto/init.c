@@ -474,12 +474,14 @@ void OPENSSL_cleanup(void)
 #endif
     /*
      * Note that cleanup order is important:
-     * - rand_cleanup_int could call an ENINGE's RAND cleanup function so
+     * - rand_cleanup_int could call an ENGINE's RAND cleanup function so
      * must be called before engine_cleanup_int()
      * - ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
      * before the ex data handlers are wiped in CRYPTO_cleanup_all_ex_data().
      * - conf_modules_free_int() can end up in ENGINE code so must be called
      * before engine_cleanup_int()
+     * - ENGINEs and additional EVP algorithms might use added OIDs names so
+     * obj_cleanup_int() must be called last
      */
     rand_cleanup_int();
     conf_modules_free_int();
