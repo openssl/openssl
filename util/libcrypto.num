@@ -2955,7 +2955,7 @@ PEM_write_bio_PrivateKey                2855	1_1_0	EXIST::FUNCTION:
 ASN1_UTCTIME_check                      2856	1_1_0	EXIST::FUNCTION:
 ACCESS_DESCRIPTION_it                   2857	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ACCESS_DESCRIPTION_it                   2857	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-check_defer                             2858	1_1_0	EXIST::FUNCTION:
+check_defer                             2858	1_1_0	NOEXIST::FUNCTION:
 TS_MSG_IMPRINT_get_msg                  2859	1_1_0	EXIST::FUNCTION:TS
 PKCS8_add_keyusage                      2860	1_1_0	EXIST::FUNCTION:
 X509_EXTENSION_dup                      2861	1_1_0	EXIST::FUNCTION:
