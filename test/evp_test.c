@@ -199,7 +199,7 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
         return 1;
     }
 
-    *buf = string_to_hex(value, &len);
+    *buf = OPENSSL_hexstr2buf(value, &len);
     if (!*buf) {
         fprintf(stderr, "Value=%s\n", value);
         ERR_print_errors_fp(stderr);

@@ -90,14 +90,14 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
 {
     char *tmp;
     if (akeyid->keyid) {
-        tmp = hex_to_string(akeyid->keyid->data, akeyid->keyid->length);
+        tmp = OPENSSL_buf2hexstr(akeyid->keyid->data, akeyid->keyid->length);
         X509V3_add_value("keyid", tmp, &extlist);
         OPENSSL_free(tmp);
     }
     if (akeyid->issuer)
         extlist = i2v_GENERAL_NAMES(NULL, akeyid->issuer, extlist);
     if (akeyid->serial) {
-        tmp = hex_to_string(akeyid->serial->data, akeyid->serial->length);
+        tmp = OPENSSL_buf2hexstr(akeyid->serial->data, akeyid->serial->length);
         X509V3_add_value("serial", tmp, &extlist);
         OPENSSL_free(tmp);
     }

@@ -119,11 +119,9 @@ static int process_pci_value(CONF_VALUE *val,
         }
         if (strncmp(val->value, "hex:", 4) == 0) {
             unsigned char *tmp_data2 =
-                string_to_hex(val->value + 4, &val_len);
+                OPENSSL_hexstr2buf(val->value + 4, &val_len);
 
             if (!tmp_data2) {
-                X509V3err(X509V3_F_PROCESS_PCI_VALUE,
-                          X509V3_R_ILLEGAL_HEX_DIGIT);
                 X509V3_conf_err(val);
                 goto err;
             }

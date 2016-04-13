@@ -210,7 +210,7 @@ static int handle_symlink(const char *filename, const char *fullpath)
         if (!isxdigit(ch))
             return -1;
         hash <<= 4;
-        hash += app_hex(ch);
+        hash += OPENSSL_hexchar2int(ch);
     }
     if (filename[i++] != '.')
         return -1;

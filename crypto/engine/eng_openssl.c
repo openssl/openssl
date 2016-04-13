@@ -618,7 +618,7 @@ static int ossl_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
         unsigned char *key;
         int r;
         long keylen;
-        key = string_to_hex(value, &keylen);
+        key = OPENSSL_hexstr2buf(value, &keylen);
         if (!key)
             return 0;
         r = ossl_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, keylen, key);
