@@ -105,7 +105,8 @@
                    on a platform that does not support AFALG.
 
   no-asm
-                   Do not use assembler code.
+                   Do not use assembler code. On some platforms a small amount
+                   of assembler code may still be used.
 
   no-async
                    Do not build support for async operations.
@@ -204,7 +205,7 @@
                    Don't build the padlock engine.
 
   no-makedepend
-                   ??
+                   Don't generate dependencies.
 
   no-multiblock
                    Don't build support for writing multiple records in one
@@ -265,7 +266,7 @@
                    compiled with CPU_ENABLE_SSE, and there is a way to
                    disengage SSE2 code pathes upon application start-up,
                    but if you aim for wider "audience" running such kernel,
-                   consider no-sse2. Both 386 and no-the asm options imply
+                   consider no-sse2. Both the 386 and no-asm options imply
                    no-sse2.
 
   enable-ssl-trace
