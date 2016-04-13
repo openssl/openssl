@@ -674,7 +674,7 @@ __ecp_nistz256_div_by_2:
 .size	__ecp_nistz256_div_by_2,.-__ecp_nistz256_div_by_2
 ___
 ########################################################################
-# following subroutines are "literal" implemetation of those found in
+# following subroutines are "literal" implementation of those found in
 # ecp_nistz256.c
 #
 ########################################################################
