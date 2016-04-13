@@ -99,9 +99,7 @@
 #ifndef OPENSSL_NO_DES
 # include <openssl/des.h>
 #endif
-#ifndef OPENSSL_NO_AES
-# include <openssl/aes.h>
-#endif
+#include <openssl/aes.h>
 #ifndef OPENSSL_NO_CAMELLIA
 # include <openssl/camellia.h>
 #endif
@@ -249,7 +247,6 @@ static int RC4_loop(void *args);
 static int DES_ncbc_encrypt_loop(void *args);
 static int DES_ede3_cbc_encrypt_loop(void *args);
 #endif
-#ifndef OPENSSL_NO_AES
 static int AES_cbc_128_encrypt_loop(void *args);
 static int AES_cbc_192_encrypt_loop(void *args);
 static int AES_ige_128_encrypt_loop(void *args);
@@ -257,7 +254,6 @@ static int AES_cbc_256_encrypt_loop(void *args);
 static int AES_ige_192_encrypt_loop(void *args);
 static int AES_ige_256_encrypt_loop(void *args);
 static int CRYPTO_gcm128_aad_loop(void *args);
-#endif
 static int EVP_Update_loop(void *args);
 static int EVP_Digest_loop(void *args);
 #ifndef OPENSSL_NO_RSA
@@ -508,14 +504,12 @@ static OPT_PAIR doit_choices[] = {
     {"des-cbc", D_CBC_DES},
     {"des-ede3", D_EDE3_DES},
 #endif
-#ifndef OPENSSL_NO_AES
     {"aes-128-cbc", D_CBC_128_AES},
     {"aes-192-cbc", D_CBC_192_AES},
     {"aes-256-cbc", D_CBC_256_AES},
     {"aes-128-ige", D_IGE_128_AES},
     {"aes-192-ige", D_IGE_192_AES},
     {"aes-256-ige", D_IGE_256_AES},
-#endif
 #ifndef OPENSSL_NO_RC2
     {"rc2-cbc", D_CBC_RC2},
     {"rc2", D_CBC_RC2},
@@ -819,14 +813,9 @@ static int DES_ede3_cbc_encrypt_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_AES
-# define MAX_BLOCK_SIZE 128
-#else
-# define MAX_BLOCK_SIZE 64
-#endif
+#define MAX_BLOCK_SIZE 128
 
 static unsigned char iv[2 * MAX_BLOCK_SIZE / 8];
-#ifndef OPENSSL_NO_AES
 static AES_KEY aes_ks1, aes_ks2, aes_ks3;
 static int AES_cbc_128_encrypt_loop(void *args)
 {
@@ -913,8 +902,6 @@ static int CRYPTO_gcm128_aad_loop(void *args)
         CRYPTO_gcm128_aad(gcm_ctx, buf, lengths[testnum]);
     return count;
 }
-
-#endif
 
 static int decrypt = 0;
 static int EVP_Update_loop(void *args)
@@ -1294,7 +1281,6 @@ int speed_main(int argc, char **argv)
         0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
         0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12
     };
-#ifndef OPENSSL_NO_AES
     static const unsigned char key24[24] = {
         0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
         0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12,
@@ -1306,7 +1292,6 @@ int speed_main(int argc, char **argv)
         0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34,
         0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56
     };
-#endif
 #ifndef OPENSSL_NO_CAMELLIA
     static const unsigned char ckey24[24] = {
         0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
@@ -1542,13 +1527,11 @@ int speed_main(int argc, char **argv)
             continue;
         }
 #endif
-#ifndef OPENSSL_NO_AES
         if (strcmp(*argv, "aes") == 0) {
             doit[D_CBC_128_AES] = doit[D_CBC_192_AES] =
                 doit[D_CBC_256_AES] = 1;
             continue;
         }
-#endif
 #ifndef OPENSSL_NO_CAMELLIA
         if (strcmp(*argv, "camellia") == 0) {
             doit[D_CBC_128_CML] = doit[D_CBC_192_CML] =
@@ -1675,11 +1658,9 @@ int speed_main(int argc, char **argv)
     DES_set_key_unchecked(&key2, &sch2);
     DES_set_key_unchecked(&key3, &sch3);
 #endif
-#ifndef OPENSSL_NO_AES
     AES_set_encrypt_key(key16, 128, &aes_ks1);
     AES_set_encrypt_key(key24, 192, &aes_ks2);
     AES_set_encrypt_key(key32, 256, &aes_ks3);
-#endif
 #ifndef OPENSSL_NO_CAMELLIA
     Camellia_set_key(key16, 128, &camellia_ks1);
     Camellia_set_key(ckey24, 192, &camellia_ks2);
@@ -2079,7 +2060,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_AES
+
     if (doit[D_CBC_128_AES]) {
         for (testnum = 0; testnum < SIZE_NUM; testnum++) {
             print_message(names[D_CBC_128_AES], c[D_CBC_128_AES][testnum],
@@ -2157,7 +2138,7 @@ int speed_main(int argc, char **argv)
         for (i = 0; i < loopargs_len; i++)
             CRYPTO_gcm128_release(loopargs[i].gcm_ctx);
     }
-#endif
+
 #ifndef OPENSSL_NO_CAMELLIA
     if (doit[D_CBC_128_CML]) {
         for (testnum = 0; testnum < SIZE_NUM; testnum++) {
@@ -2710,9 +2691,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DES
         printf("%s ", DES_options());
 #endif
-#ifndef OPENSSL_NO_AES
         printf("%s ", AES_options());
-#endif
 #ifndef OPENSSL_NO_IDEA
         printf("%s ", idea_options());
 #endif

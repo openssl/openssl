@@ -644,9 +644,6 @@ static int SortFnByName(const void *_f1, const void *_f2)
 static void list_disabled(void)
 {
     BIO_puts(bio_out, "Disabled algorithms:\n");
-#ifdef OPENSSL_NO_AES
-    BIO_puts(bio_out, "AES\n");
-#endif
 #ifdef OPENSSL_NO_BF
     BIO_puts(bio_out, "BF\n");
 #endif
