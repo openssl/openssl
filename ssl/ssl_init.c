@@ -97,7 +97,6 @@ static void ossl_init_ssl_base(void)
      */
     EVP_add_cipher(EVP_rc2_40_cbc());
 #endif
-#ifndef OPENSSL_NO_AES
     EVP_add_cipher(EVP_aes_128_cbc());
     EVP_add_cipher(EVP_aes_192_cbc());
     EVP_add_cipher(EVP_aes_256_cbc());
@@ -109,7 +108,6 @@ static void ossl_init_ssl_base(void)
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha1());
     EVP_add_cipher(EVP_aes_128_cbc_hmac_sha256());
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha256());
-#endif
 #ifndef OPENSSL_NO_CAMELLIA
     EVP_add_cipher(EVP_camellia_128_cbc());
     EVP_add_cipher(EVP_camellia_256_cbc());

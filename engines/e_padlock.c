@@ -69,9 +69,7 @@
 #include <openssl/crypto.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
-#ifndef OPENSSL_NO_AES
-# include <openssl/aes.h>
-#endif
+#include <openssl/aes.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/modes.h>
@@ -137,10 +135,8 @@ static int padlock_init(ENGINE *e);
 static RAND_METHOD padlock_rand;
 
 /* Cipher Stuff */
-#   ifndef OPENSSL_NO_AES
 static int padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                            const int **nids, int nid);
-#   endif
 
 /* Engine names */
 static const char *padlock_id = "padlock";
@@ -174,9 +170,7 @@ static int padlock_bind_helper(ENGINE *e)
     if (!ENGINE_set_id(e, padlock_id) ||
         !ENGINE_set_name(e, padlock_name) ||
         !ENGINE_set_init_function(e, padlock_init) ||
-#   ifndef OPENSSL_NO_AES
         (padlock_use_ace && !ENGINE_set_ciphers(e, padlock_ciphers)) ||
-#   endif
         (padlock_use_rng && !ENGINE_set_RAND(e, &padlock_rand))) {
         return 0;
     }
@@ -232,12 +226,12 @@ IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(padlock_bind_fn)
 #   endif                       /* DYNAMIC_ENGINE */
 /* ===== Here comes the "real" engine ===== */
-#   ifndef OPENSSL_NO_AES
+
 /* Some AES-related constants */
-#    define AES_BLOCK_SIZE          16
-#    define AES_KEY_SIZE_128        16
-#    define AES_KEY_SIZE_192        24
-#    define AES_KEY_SIZE_256        32
+#   define AES_BLOCK_SIZE          16
+#   define AES_KEY_SIZE_128        16
+#   define AES_KEY_SIZE_192        24
+#   define AES_KEY_SIZE_256        32
     /*
      * Here we store the status information relevant to the current context.
      */
@@ -263,7 +257,6 @@ struct padlock_cipher_data {
     } cword;                    /* Control word */
     AES_KEY ks;                 /* Encryption key */
 };
-#   endif
 
 /* Interface to assembler module */
 unsigned int padlock_capability();
@@ -303,31 +296,30 @@ static int padlock_available(void)
 }
 
 /* ===== AES encryption/decryption ===== */
-#   ifndef OPENSSL_NO_AES
 
-#    if defined(NID_aes_128_cfb128) && ! defined (NID_aes_128_cfb)
-#     define NID_aes_128_cfb NID_aes_128_cfb128
-#    endif
+#   if defined(NID_aes_128_cfb128) && ! defined (NID_aes_128_cfb)
+#    define NID_aes_128_cfb NID_aes_128_cfb128
+#   endif
 
-#    if defined(NID_aes_128_ofb128) && ! defined (NID_aes_128_ofb)
-#     define NID_aes_128_ofb NID_aes_128_ofb128
-#    endif
+#   if defined(NID_aes_128_ofb128) && ! defined (NID_aes_128_ofb)
+#    define NID_aes_128_ofb NID_aes_128_ofb128
+#   endif
 
-#    if defined(NID_aes_192_cfb128) && ! defined (NID_aes_192_cfb)
-#     define NID_aes_192_cfb NID_aes_192_cfb128
-#    endif
+#   if defined(NID_aes_192_cfb128) && ! defined (NID_aes_192_cfb)
+#    define NID_aes_192_cfb NID_aes_192_cfb128
+#   endif
 
-#    if defined(NID_aes_192_ofb128) && ! defined (NID_aes_192_ofb)
-#     define NID_aes_192_ofb NID_aes_192_ofb128
-#    endif
+#   if defined(NID_aes_192_ofb128) && ! defined (NID_aes_192_ofb)
+#    define NID_aes_192_ofb NID_aes_192_ofb128
+#   endif
 
-#    if defined(NID_aes_256_cfb128) && ! defined (NID_aes_256_cfb)
-#     define NID_aes_256_cfb NID_aes_256_cfb128
-#    endif
+#   if defined(NID_aes_256_cfb128) && ! defined (NID_aes_256_cfb)
+#    define NID_aes_256_cfb NID_aes_256_cfb128
+#   endif
 
-#    if defined(NID_aes_256_ofb128) && ! defined (NID_aes_256_ofb)
-#     define NID_aes_256_ofb NID_aes_256_ofb128
-#    endif
+#   if defined(NID_aes_256_ofb128) && ! defined (NID_aes_256_ofb)
+#    define NID_aes_256_ofb NID_aes_256_ofb128
+#   endif
 
 /* List of supported ciphers. */
 static const int padlock_cipher_nids[] = {
@@ -357,9 +349,9 @@ static int padlock_cipher_nids_num = (sizeof(padlock_cipher_nids) /
 static int padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                 const unsigned char *iv, int enc);
 
-#    define NEAREST_ALIGNED(ptr) ( (unsigned char *)(ptr) +         \
+#   define NEAREST_ALIGNED(ptr) ( (unsigned char *)(ptr) +         \
         ( (0x10 - ((size_t)(ptr) & 0x0F)) & 0x0F )      )
-#    define ALIGNED_CIPHER_DATA(ctx) ((struct padlock_cipher_data *)\
+#   define ALIGNED_CIPHER_DATA(ctx) ((struct padlock_cipher_data *)\
         NEAREST_ALIGNED(EVP_CIPHER_CTX_get_cipher_data(ctx)))
 
 static int
@@ -534,17 +526,17 @@ padlock_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
     return 1;
 }
 
-#    define EVP_CIPHER_block_size_ECB       AES_BLOCK_SIZE
-#    define EVP_CIPHER_block_size_CBC       AES_BLOCK_SIZE
-#    define EVP_CIPHER_block_size_OFB       1
-#    define EVP_CIPHER_block_size_CFB       1
-#    define EVP_CIPHER_block_size_CTR       1
+#   define EVP_CIPHER_block_size_ECB       AES_BLOCK_SIZE
+#   define EVP_CIPHER_block_size_CBC       AES_BLOCK_SIZE
+#   define EVP_CIPHER_block_size_OFB       1
+#   define EVP_CIPHER_block_size_CFB       1
+#   define EVP_CIPHER_block_size_CTR       1
 
 /*
  * Declaring so many ciphers by hand would be a pain. Instead introduce a bit
  * of preprocessor magic :-)
  */
-#    define DECLARE_AES_EVP(ksize,lmode,umode)      \
+#   define DECLARE_AES_EVP(ksize,lmode,umode)      \
 static EVP_CIPHER *_hidden_aes_##ksize##_##lmode = NULL; \
 static const EVP_CIPHER *padlock_aes_##ksize##_##lmode(void) \
 {                                                                       \
@@ -707,12 +699,12 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             AES_set_decrypt_key(key, key_len, &cdata->ks);
         else
             AES_set_encrypt_key(key, key_len, &cdata->ks);
-#    ifndef AES_ASM
+#   ifndef AES_ASM
         /*
          * OpenSSL C functions use byte-swapped extended key.
          */
         padlock_key_bswap(&cdata->ks);
-#    endif
+#   endif
         cdata->cword.b.keygen = 1;
         break;
 
@@ -730,8 +722,6 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
     return 1;
 }
-
-#   endif                       /* OPENSSL_NO_AES */
 
 /* ===== Random Number Generator ===== */
 /*

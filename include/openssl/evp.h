@@ -793,13 +793,12 @@ const EVP_CIPHER *EVP_rc5_32_12_16_cfb64(void);
 #  define EVP_rc5_32_12_16_cfb EVP_rc5_32_12_16_cfb64
 const EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 # endif
-# ifndef OPENSSL_NO_AES
 const EVP_CIPHER *EVP_aes_128_ecb(void);
 const EVP_CIPHER *EVP_aes_128_cbc(void);
 const EVP_CIPHER *EVP_aes_128_cfb1(void);
 const EVP_CIPHER *EVP_aes_128_cfb8(void);
 const EVP_CIPHER *EVP_aes_128_cfb128(void);
-#  define EVP_aes_128_cfb EVP_aes_128_cfb128
+# define EVP_aes_128_cfb EVP_aes_128_cfb128
 const EVP_CIPHER *EVP_aes_128_ofb(void);
 const EVP_CIPHER *EVP_aes_128_ctr(void);
 const EVP_CIPHER *EVP_aes_128_ccm(void);
@@ -807,30 +806,30 @@ const EVP_CIPHER *EVP_aes_128_gcm(void);
 const EVP_CIPHER *EVP_aes_128_xts(void);
 const EVP_CIPHER *EVP_aes_128_wrap(void);
 const EVP_CIPHER *EVP_aes_128_wrap_pad(void);
-#  ifndef OPENSSL_NO_OCB
+# ifndef OPENSSL_NO_OCB
 const EVP_CIPHER *EVP_aes_128_ocb(void);
-#  endif
+# endif
 const EVP_CIPHER *EVP_aes_192_ecb(void);
 const EVP_CIPHER *EVP_aes_192_cbc(void);
 const EVP_CIPHER *EVP_aes_192_cfb1(void);
 const EVP_CIPHER *EVP_aes_192_cfb8(void);
 const EVP_CIPHER *EVP_aes_192_cfb128(void);
-#  define EVP_aes_192_cfb EVP_aes_192_cfb128
+# define EVP_aes_192_cfb EVP_aes_192_cfb128
 const EVP_CIPHER *EVP_aes_192_ofb(void);
 const EVP_CIPHER *EVP_aes_192_ctr(void);
 const EVP_CIPHER *EVP_aes_192_ccm(void);
 const EVP_CIPHER *EVP_aes_192_gcm(void);
 const EVP_CIPHER *EVP_aes_192_wrap(void);
 const EVP_CIPHER *EVP_aes_192_wrap_pad(void);
-#  ifndef OPENSSL_NO_OCB
+# ifndef OPENSSL_NO_OCB
 const EVP_CIPHER *EVP_aes_192_ocb(void);
-#  endif
+# endif
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
 const EVP_CIPHER *EVP_aes_256_cfb1(void);
 const EVP_CIPHER *EVP_aes_256_cfb8(void);
 const EVP_CIPHER *EVP_aes_256_cfb128(void);
-#  define EVP_aes_256_cfb EVP_aes_256_cfb128
+# define EVP_aes_256_cfb EVP_aes_256_cfb128
 const EVP_CIPHER *EVP_aes_256_ofb(void);
 const EVP_CIPHER *EVP_aes_256_ctr(void);
 const EVP_CIPHER *EVP_aes_256_ccm(void);
@@ -838,14 +837,13 @@ const EVP_CIPHER *EVP_aes_256_gcm(void);
 const EVP_CIPHER *EVP_aes_256_xts(void);
 const EVP_CIPHER *EVP_aes_256_wrap(void);
 const EVP_CIPHER *EVP_aes_256_wrap_pad(void);
-#  ifndef OPENSSL_NO_OCB
+# ifndef OPENSSL_NO_OCB
 const EVP_CIPHER *EVP_aes_256_ocb(void);
-#  endif
+# endif
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256(void);
-# endif
 # ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);
 const EVP_CIPHER *EVP_camellia_128_cbc(void);

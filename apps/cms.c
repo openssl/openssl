@@ -214,11 +214,9 @@ OPTIONS cms_options[] = {
     {"receipt_request_to", OPT_RR_TO, 's'},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
     OPT_V_OPTIONS,
-# ifndef OPENSSL_NO_AES
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
     {"aes192-wrap", OPT_AES192_WRAP, '-', "Use AES192 to wrap key"},
     {"aes256-wrap", OPT_AES256_WRAP, '-', "Use AES256 to wrap key"},
-# endif
 # ifndef OPENSSL_NO_DES
     {"des3-wrap", OPT_3DES_WRAP, '-', "Use 3DES-EDE to wrap key"},
 # endif
@@ -603,7 +601,6 @@ int cms_main(int argc, char **argv)
             wrap_cipher = EVP_des_ede3_wrap();
 # endif
             break;
-# ifndef OPENSSL_NO_AES
         case OPT_AES128_WRAP:
             wrap_cipher = EVP_aes_128_wrap();
             break;
@@ -613,12 +610,6 @@ int cms_main(int argc, char **argv)
         case OPT_AES256_WRAP:
             wrap_cipher = EVP_aes_256_wrap();
             break;
-# else
-        case OPT_AES128_WRAP:
-        case OPT_AES192_WRAP:
-        case OPT_AES256_WRAP:
-            break;
-# endif
         }
     }
     argc = opt_num_rest();

@@ -248,24 +248,12 @@ static FUNCTION functions[] = {
 #ifndef OPENSSL_NO_BLAKE2
     { FT_md, "blake2s256", dgst_main},
 #endif
-#ifndef OPENSSL_NO_AES
     { FT_cipher, "aes-128-cbc", enc_main, enc_options },
-#endif
-#ifndef OPENSSL_NO_AES
     { FT_cipher, "aes-128-ecb", enc_main, enc_options },
-#endif
-#ifndef OPENSSL_NO_AES
     { FT_cipher, "aes-192-cbc", enc_main, enc_options },
-#endif
-#ifndef OPENSSL_NO_AES
     { FT_cipher, "aes-192-ecb", enc_main, enc_options },
-#endif
-#ifndef OPENSSL_NO_AES
     { FT_cipher, "aes-256-cbc", enc_main, enc_options },
-#endif
-#ifndef OPENSSL_NO_AES
     { FT_cipher, "aes-256-ecb", enc_main, enc_options },
-#endif
 #ifndef OPENSSL_NO_CAMELLIA
     { FT_cipher, "camellia-128-cbc", enc_main, enc_options },
 #endif

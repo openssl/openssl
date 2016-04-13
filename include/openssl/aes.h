@@ -53,7 +53,6 @@
 
 # include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_AES
 # include <stddef.h>
 # ifdef  __cplusplus
 extern "C" {
@@ -129,7 +128,6 @@ int AES_unwrap_key(AES_KEY *key, const unsigned char *iv,
 
 # ifdef  __cplusplus
 }
-# endif
 # endif
 
 #endif
