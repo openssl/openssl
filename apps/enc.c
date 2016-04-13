@@ -323,13 +323,6 @@ int enc_main(int argc, char **argv)
     strbuf = app_malloc(SIZE, "strbuf");
     buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
 
-    if (debug) {
-        BIO_set_callback(in, BIO_debug_callback);
-        BIO_set_callback(out, BIO_debug_callback);
-        BIO_set_callback_arg(in, (char *)bio_err);
-        BIO_set_callback_arg(out, (char *)bio_err);
-    }
-
     if (infile == NULL) {
         unbuffer(stdin);
         in = dup_bio_in(informat);
@@ -381,6 +374,13 @@ int enc_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
+    if (debug) {
+        BIO_set_callback(in, BIO_debug_callback);
+        BIO_set_callback(out, BIO_debug_callback);
+        BIO_set_callback_arg(in, (char *)bio_err);
+        BIO_set_callback_arg(out, (char *)bio_err);
+    }
+
     rbio = in;
     wbio = out;
 
@@ -388,6 +388,10 @@ int enc_main(int argc, char **argv)
     if (do_zlib) {
         if ((bzl = BIO_new(BIO_f_zlib())) == NULL)
             goto end;
+        if (debug) {
+            BIO_set_callback(bzl, BIO_debug_callback);
+            BIO_set_callback_arg(bzl, (char *)bio_err);
+        }
         if (enc)
             wbio = BIO_push(bzl, wbio);
         else
