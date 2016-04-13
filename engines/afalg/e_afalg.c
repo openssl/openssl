@@ -69,6 +69,9 @@
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)
 # warning "AFALG ENGINE requires Kernel Headers >= 4.1.0"
 # warning "Skipping Compilation of AFALG engine"
+void engine_load_afalg_int(void)
+{
+}
 #else
 
 # include <linux/if_alg.h>
