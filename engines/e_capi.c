@@ -613,7 +613,7 @@ static ENGINE *engine_capi(void)
     return ret;
 }
 
-void int_engine_load_capi(void)
+void engine_load_capi_int(void)
 {
     /* Copied from eng_[openssl|dyn].c */
     ENGINE *toadd = engine_capi();
