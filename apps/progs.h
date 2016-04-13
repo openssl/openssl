@@ -181,9 +181,7 @@ static FUNCTION functions[] = {
     { FT_general, "rand", rand_main, rand_options },
     { FT_general, "rehash", rehash_main, rehash_options },
     { FT_general, "req", req_main, req_options },
-#ifndef OPENSSL_NO_RSA
     { FT_general, "rsa", rsa_main, rsa_options },
-#endif
 #ifndef OPENSSL_NO_RSA
     { FT_general, "rsautl", rsautl_main, rsautl_options },
 #endif
@@ -221,11 +219,21 @@ static FUNCTION functions[] = {
 #ifndef OPENSSL_NO_GOST
     { FT_md, "gost", dgst_main},
 #endif
+#ifndef OPENSSL_NO_SHA
     { FT_md, "sha1", dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA
     { FT_md, "sha224", dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA
     { FT_md, "sha256", dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA
     { FT_md, "sha384", dgst_main},
+#endif
+#ifndef OPENSSL_NO_SHA
     { FT_md, "sha512", dgst_main},
+#endif
 #ifndef OPENSSL_NO_MDC2
     { FT_md, "mdc2", dgst_main},
 #endif
