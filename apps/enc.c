@@ -313,12 +313,15 @@ int enc_main(int argc, char **argv)
     if (verbose)
         BIO_printf(bio_err, "bufsize=%d\n", bsize);
 
-    if (base64) {
-        if (enc)
-            outformat = FORMAT_BASE64;
-        else
-            informat = FORMAT_BASE64;
-    }
+#ifdef ZLIB
+    if (!do_zlib)
+#endif
+        if (base64) {
+            if (enc)
+                outformat = FORMAT_BASE64;
+            else
+                informat = FORMAT_BASE64;
+        }
 
     strbuf = app_malloc(SIZE, "strbuf");
     buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
