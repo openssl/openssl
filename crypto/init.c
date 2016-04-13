@@ -67,6 +67,7 @@
 #include <internal/engine.h>
 #include <internal/comp.h>
 #include <internal/err.h>
+#include <internal/err_int.h>
 #include <internal/objects.h>
 #include <stdlib.h>
 #include <assert.h>
