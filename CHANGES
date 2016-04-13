@@ -3,7 +3,12 @@
  _______________
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
- 
+
+  *) Remove the no-aes, no-hmac, no-rsa, no-sha and no-md5 Configure options.
+     All of these option have not worked for some while and are fundamental
+     algorithms.
+     [Matt Caswell]
+
   *) Make various cleanup routines no-ops and mark them as deprecated. Most
      global cleanup functions are no longer required because they are handled
      via auto-deinit (see OPENSSL_init_crypto and OPENSSL_init_ssl man pages).
