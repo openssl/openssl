@@ -56,7 +56,7 @@
  */
 
 #include <stdio.h>
-#include <internal/err.h>
+#include "internal/err_int.h"
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
