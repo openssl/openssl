@@ -253,7 +253,7 @@ RSA_get_ex_data                         249	1_1_0	EXIST::FUNCTION:RSA
 EVP_PKEY_meth_get_decrypt               250	1_1_0	EXIST::FUNCTION:
 DES_cfb_encrypt                         251	1_1_0	EXIST::FUNCTION:DES
 CMS_SignerInfo_set1_signer_cert         252	1_1_0	EXIST::FUNCTION:CMS
-X509_CRL_http_nbio                      253	1_1_0	EXIST::FUNCTION:
+X509_CRL_http_nbio                      253	1_1_0	EXIST::FUNCTION:OCSP
 ENGINE_register_all_ciphers             254	1_1_0	EXIST::FUNCTION:ENGINE
 SXNET_new                               255	1_1_0	EXIST::FUNCTION:
 EVP_camellia_256_ctr                    256	1_1_0	EXIST::FUNCTION:CAMELLIA
@@ -316,7 +316,7 @@ X509_STORE_CTX_init                     311	1_1_0	EXIST::FUNCTION:
 OCSP_RESPONSE_free                      312	1_1_0	EXIST::FUNCTION:
 ENGINE_set_DH                           313	1_1_0	EXIST::FUNCTION:ENGINE
 EVP_CIPHER_CTX_set_flags                314	1_1_0	EXIST::FUNCTION:
-ERR_free_strings                        315	1_1_0	NOEXIST::FUNCTION:
+err_free_strings_int                    315	1_1_0	EXIST::FUNCTION:
 PEM_write_bio_PKCS7_stream              316	1_1_0	EXIST::FUNCTION:
 d2i_X509_CERT_AUX                       317	1_1_0	EXIST::FUNCTION:
 UI_process                              318	1_1_0	EXIST::FUNCTION:
@@ -1309,7 +1309,7 @@ TS_REQ_set_cert_req                     1271	1_1_0	EXIST::FUNCTION:TS
 TXT_DB_get_by_index                     1272	1_1_0	EXIST::FUNCTION:
 X509_check_ca                           1273	1_1_0	EXIST::FUNCTION:
 DH_get_2048_224                         1274	1_1_0	EXIST::FUNCTION:DH
-X509_http_nbio                          1275	1_1_0	EXIST::FUNCTION:
+X509_http_nbio                          1275	1_1_0	EXIST::FUNCTION:OCSP
 i2d_AUTHORITY_INFO_ACCESS               1276	1_1_0	EXIST::FUNCTION:
 EVP_get_cipherbyname                    1277	1_1_0	EXIST::FUNCTION:
 CONF_dump_fp                            1278	1_1_0	EXIST::FUNCTION:STDIO
@@ -4196,5 +4196,3 @@ DH_meth_set_bn_mod_exp                  4066	1_1_0	EXIST::FUNCTION:DH
 DH_meth_set_generate_key                4067	1_1_0	EXIST::FUNCTION:DH
 DH_meth_free                            4068	1_1_0	EXIST::FUNCTION:DH
 DH_meth_get_generate_key                4069	1_1_0	EXIST::FUNCTION:DH
-err_load_crypto_strings_int             4070	1_1_0	EXIST::FUNCTION:
-err_free_strings_int                    4071	1_1_0	EXIST::FUNCTION:
