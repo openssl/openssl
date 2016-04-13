@@ -567,7 +567,7 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
         EVP_MD_CTX_free(md_ctx);
     } else {
         long digest_len;
-        *md_value = string_to_hex(digest, &digest_len);
+        *md_value = OPENSSL_hexstr2buf(digest, &digest_len);
         if (!*md_value || md_value_len != digest_len) {
             OPENSSL_free(*md_value);
             *md_value = NULL;
@@ -939,7 +939,7 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
                 goto err;
         } else if (digest != NULL) {
             long imprint_len;
-            unsigned char *hexstr = string_to_hex(digest, &imprint_len);
+            unsigned char *hexstr = OPENSSL_hexstr2buf(digest, &imprint_len);
             f |= TS_VFY_IMPRINT;
             if (TS_VERIFY_CTX_set_imprint(ctx, hexstr, imprint_len) == NULL) {
                 BIO_printf(bio_err, "invalid digest string\n");

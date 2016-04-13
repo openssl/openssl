@@ -255,6 +255,9 @@ int CRYPTO_mem_ctrl(int mode);
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strnlen(const char *str, size_t maxlen);
+char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len);
+unsigned char *OPENSSL_hexstr2buf(const char *str, long *len);
+int OPENSSL_hexchar2int(unsigned char c);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
@@ -510,12 +513,15 @@ void ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_INT_DUP_EX_DATA                         106
 # define CRYPTO_F_INT_FREE_EX_DATA                        107
 # define CRYPTO_F_INT_NEW_EX_DATA                         108
+# define CRYPTO_F_OPENSSL_BUF2HEXSTR                      117
 # define CRYPTO_F_OPENSSL_INIT_CRYPTO                     116
 # define CRYPTO_F_OPENSSL_MEMDUP                          114
+# define CRYPTO_F_OPENSSL_HEXSTR2BUF                      118
 
 /* Reason codes. */
 # define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED                 101
-# define CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK              100
+# define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
+# define CRYPTO_R_ODD_NUMBER_OF_DIGITS                    103
 
 #ifdef  __cplusplus
 }

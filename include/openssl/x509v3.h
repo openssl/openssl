@@ -679,8 +679,11 @@ X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
 int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
                     int crit, unsigned long flags);
 
-char *hex_to_string(const unsigned char *buffer, long len);
-unsigned char *string_to_hex(const char *str, long *len);
+#if OPENSSL_API_COMPAT < 0x00101000L
+/* The new declarations are in crypto.h, but the old ones were here. */
+# define hex_to_string OPENSSL_buf2hexstr
+# define string_to_hex OPENSSL_hexstr2buf
+#endif
 
 void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
                         int ml);
@@ -930,7 +933,6 @@ void ERR_load_X509V3_strings(void);
 # define X509V3_F_DO_EXT_NCONF                            151
 # define X509V3_F_DO_I2V_NAME_CONSTRAINTS                 148
 # define X509V3_F_GNAMES_FROM_SECTNAME                    156
-# define X509V3_F_HEX_TO_STRING                           111
 # define X509V3_F_I2S_ASN1_ENUMERATED                     121
 # define X509V3_F_I2S_ASN1_IA5STRING                      149
 # define X509V3_F_I2S_ASN1_INTEGER                        120
@@ -947,7 +949,6 @@ void ERR_load_X509V3_strings(void);
 # define X509V3_F_S2I_ASN1_SKEY_ID                        114
 # define X509V3_F_S2I_SKEY_ID                             115
 # define X509V3_F_SET_DIST_POINT_NAME                     158
-# define X509V3_F_STRING_TO_HEX                           113
 # define X509V3_F_SXNET_ADD_ID_ASC                        125
 # define X509V3_F_SXNET_ADD_ID_INTEGER                    126
 # define X509V3_F_SXNET_ADD_ID_ULONG                      127
@@ -970,7 +971,6 @@ void ERR_load_X509V3_strings(void);
 # define X509V3_F_V2I_POLICY_MAPPINGS                     145
 # define X509V3_F_V2I_SUBJECT_ALT                         154
 # define X509V3_F_V2I_TLS_FEATURE                         165
-# define X509V3_F_V3_ADDR_VALIDATE_PATH_INTERNAL          160
 # define X509V3_F_V3_GENERIC_EXTENSION                    116
 # define X509V3_F_X509V3_ADD1_I2D                         140
 # define X509V3_F_X509V3_ADD_VALUE                        105
@@ -1004,7 +1004,6 @@ void ERR_load_X509V3_strings(void);
 # define X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED         103
 # define X509V3_R_EXTENSION_VALUE_ERROR                   116
 # define X509V3_R_ILLEGAL_EMPTY_EXTENSION                 151
-# define X509V3_R_ILLEGAL_HEX_DIGIT                       113
 # define X509V3_R_INCORRECT_POLICY_SYNTAX_TAG             152
 # define X509V3_R_INVALID_ASNUMBER                        162
 # define X509V3_R_INVALID_ASRANGE                         163

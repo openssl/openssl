@@ -402,7 +402,7 @@ int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)
     long binlen;
     int rv = -1;
 
-    bin = string_to_hex(hex, &binlen);
+    bin = OPENSSL_hexstr2buf(hex, &binlen);
     if (bin == NULL)
         return 0;
     if (binlen <= INT_MAX)

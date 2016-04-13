@@ -636,7 +636,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
         unsigned char *lab;
         long lablen;
         int ret;
-        lab = string_to_hex(value, &lablen);
+        lab = OPENSSL_hexstr2buf(value, &lablen);
         if (!lab)
             return 0;
         ret = EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, lab, lablen);

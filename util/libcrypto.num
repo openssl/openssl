@@ -1084,7 +1084,7 @@ X509_STORE_CTX_set_error                1052	1_1_0	EXIST::FUNCTION:
 EC_KEY_METHOD_set_keygen                1053	1_1_0	EXIST::FUNCTION:EC
 CRYPTO_free                             1054	1_1_0	EXIST::FUNCTION:
 BN_GF2m_mod_exp                         1055	1_1_0	EXIST::FUNCTION:EC2M
-hex_to_string                           1056	1_1_0	EXIST::FUNCTION:
+OPENSSL_buf2hexstr                      1056	1_1_0	EXIST::FUNCTION:
 DES_encrypt2                            1057	1_1_0	EXIST::FUNCTION:DES
 DH_up_ref                               1058	1_1_0	EXIST::FUNCTION:DH
 RC2_ofb64_encrypt                       1059	1_1_0	EXIST::FUNCTION:RC2
@@ -1869,7 +1869,7 @@ X509_EXTENSION_get_data                 1815	1_1_0	EXIST::FUNCTION:
 RC5_32_encrypt                          1816	1_1_0	EXIST::FUNCTION:RC5
 DIST_POINT_set_dpname                   1817	1_1_0	EXIST::FUNCTION:
 BIO_sock_info                           1818	1_1_0	EXIST::FUNCTION:
-string_to_hex                           1819	1_1_0	EXIST::FUNCTION:
+OPENSSL_hexstr2buf                      1819	1_1_0	EXIST::FUNCTION:
 EVP_add_cipher                          1820	1_1_0	EXIST::FUNCTION:
 X509V3_EXT_add_list                     1821	1_1_0	EXIST::FUNCTION:
 CMS_compress                            1822	1_1_0	EXIST::FUNCTION:CMS
@@ -4206,3 +4206,4 @@ X509_STORE_CTX_get_verify_cb            4080	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get_cert                 4081	1_1_0	NOEXIST::FUNCTION:
 X509_STORE_CTX_set0_verified_chain      4082	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_set0_untrusted           4083	1_1_0	EXIST::FUNCTION:
+OPENSSL_hexchar2int                     4084	1_1_0	EXIST::FUNCTION:

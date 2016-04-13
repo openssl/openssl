@@ -1075,7 +1075,9 @@ static int urldecode(char *p)
         if (*p != '%')
             *out++ = *p;
         else if (isxdigit(_UC(p[1])) && isxdigit(_UC(p[2]))) {
-            *out++ = (app_hex(p[1]) << 4) | app_hex(p[2]);
+            /* Don't check, can't fail because of ixdigit() call. */
+            *out++ = (OPENSSL_hexchar2int(p[1]) << 4)
+                   | OPENSSL_hexchar2int(p[2]);
             p += 2;
         }
         else

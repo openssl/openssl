@@ -283,7 +283,7 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, char *value,
     }
 
     if (gen_type == 1)
-        ext_der = string_to_hex(value, &ext_len);
+        ext_der = OPENSSL_hexstr2buf(value, &ext_len);
     else if (gen_type == 2)
         ext_der = generic_asn1(value, ctx, &ext_len);
 

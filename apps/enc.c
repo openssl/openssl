@@ -636,7 +636,7 @@ static int set_hex(char *in, unsigned char *out, int size)
             BIO_printf(bio_err, "non-hex digit\n");
             return (0);
         }
-        j = (unsigned char)app_hex(j);
+        j = (unsigned char)OPENSSL_hexchar2int(j);
         if (i & 1)
             out[i / 2] |= j;
         else
