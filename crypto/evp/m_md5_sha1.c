@@ -51,7 +51,7 @@
  * ====================================================================
  */
 
-#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_SHA1)
+#if !defined(OPENSSL_NO_MD5)
 
 # include <openssl/evp.h>
 # include <openssl/objects.h>
