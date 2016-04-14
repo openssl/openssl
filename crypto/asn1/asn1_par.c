@@ -189,18 +189,19 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                     }
                 }
             } else {
+                long tmp = len;
+
                 while (p < ep) {
                     sp = p;
-                    r = asn1_parse2(bp, &p, len,
+                    r = asn1_parse2(bp, &p, tmp,
                                     offset + (p - *pp), depth + 1,
                                     indent, dump);
                     if (r == 0) {
                         ret = 0;
                         goto end;
                     }
-                    len -= p - sp;
+                    tmp -= p - sp;
                 }
-                len = length;
             }
         } else if (xclass != 0) {
             p += len;
