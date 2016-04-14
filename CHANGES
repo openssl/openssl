@@ -4,6 +4,10 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) "shared" builds are now the default. To create only static libraries use
+     the "no-shared" Configure option.
+     [Matt Caswell]
+
   *) Remove the no-aes, no-hmac, no-rsa, no-sha and no-md5 Configure options.
      All of these option have not worked for some while and are fundamental
      algorithms.

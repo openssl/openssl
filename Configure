@@ -341,7 +341,6 @@ our %disabled = ( # "what"         => "comment"
 		  "md2"                 => "default",
 		  "rc5"                 => "default",
 		  "sctp"                => "default",
-		  "shared"              => "default",
 		  "ssl-trace"           => "default",
 		  "ssl3"                => "default",
 		  "ssl3-method"         => "default",
