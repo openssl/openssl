@@ -226,6 +226,7 @@ build_tests_nodep : $(TESTPROGS)
 test tests : configdata.pm, -
              build_apps_nodep, build_engines_nodep, build_tests_nodep, -
              depend
+        @ ! {- output_off() if $disabled{tests}; "" -}
         SET DEFAULT [.test]{- move("test") -}
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
@@ -235,6 +236,9 @@ test tests : configdata.pm, -
         DEASSIGN BLDTOP
         DEASSIGN SRCTOP
         SET DEFAULT [-]{- move("..") -}
+        @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+        @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
+        @ ! {- output_on() if !$disabled{tests}; "" -}
 
 list-tests :
         @ TOP=$(SRCDIR) PERL=$(PERL) $(PERL) {- catfile($config{sourcedir},"test", "run_tests.pl") -} list
