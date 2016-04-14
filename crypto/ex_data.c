@@ -134,18 +134,12 @@ typedef struct ex_callbacks_st {
 
 static EX_CALLBACKS ex_data[CRYPTO_EX_INDEX__COUNT];
 
-static CRYPTO_RWLOCK *ex_data_lock;
+static CRYPTO_RWLOCK *ex_data_lock = NULL;
 static CRYPTO_ONCE ex_data_init = CRYPTO_ONCE_STATIC_INIT;
 
 static void do_ex_data_init(void)
 {
     ex_data_lock = CRYPTO_THREAD_lock_new();
-}
-
-void ex_data_cleanup(void)
-{
-    CRYPTO_THREAD_lock_free(ex_data_lock);
-    ex_data_lock = NULL;
 }
 
 /*
@@ -162,6 +156,19 @@ static EX_CALLBACKS *get_and_lock(int class_index)
     }
 
     CRYPTO_THREAD_run_once(&ex_data_init, do_ex_data_init);
+
+    if (ex_data_lock == NULL) {
+        /*
+         * This can happen in normal operation when using CRYPTO_mem_leaks().
+         * The CRYPTO_mem_leaks() function calls OPENSSL_cleanup() which cleans
+         * up the locks. Subsequently the BIO that CRYPTO_mem_leaks() uses gets
+         * freed, which also attempts to free the ex_data. However
+         * CRYPTO_mem_leaks() ensures that the ex_data is freed early (i.e.
+         * before OPENSSL_cleanup() is called), so if we get here we can safely
+         * ignore this operation. We just treat it as an error.
+         */
+         return NULL;
+    }
 
     ip = &ex_data[class_index];
     CRYPTO_THREAD_write_lock(ex_data_lock);
@@ -189,6 +196,9 @@ void crypto_cleanup_all_ex_data_int(void)
         sk_EX_CALLBACK_pop_free(ip->meth, cleanup_cb);
         ip->meth = NULL;
     }
+
+    CRYPTO_THREAD_lock_free(ex_data_lock);
+    ex_data_lock = NULL;
 }
 
 

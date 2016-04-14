@@ -65,7 +65,6 @@ struct thread_local_inits_st {
 };
 
 int ossl_init_thread_start(uint64_t opts);
-void ex_data_cleanup(void);
 
 /*
  * OPENSSL_INIT flags. The primary list of these is in crypto.h. Flags below
