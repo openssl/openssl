@@ -114,11 +114,11 @@
 #include <internal/cryptlib_int.h>
 #include <internal/threads.h>
 #include <internal/err.h>
+#include <internal/err_int.h>
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
-#include "internal/err.h"
 #include <openssl/opensslconf.h>
 
 static void err_load_strings(int lib, ERR_STRING_DATA *str);
