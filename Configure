@@ -400,6 +400,12 @@ my @disable_cascades = (
     "pic"               => [ "shared" ],
     "shared"            => [ "dynamic-engine" ],
     "engine"            => [ "afalgeng" ],
+
+    # no-autoalginit is only useful when building non-shared
+    "autoalginit"       => [ "shared", "apps" ],
+
+    "stdio"             => [ "apps" ],
+    "apps"              => [ "tests" ],
     "comp"		=> [ "zlib" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
     );
