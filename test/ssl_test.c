@@ -210,6 +210,5 @@ int main(int argc, char **argv)
     ADD_ALL_TESTS(test_handshake, (int)(num_tests));
     result = run_tests(argv[0]);
 
-    CONF_modules_free();
     return result;
 }
