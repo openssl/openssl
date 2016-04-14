@@ -12,5 +12,6 @@
 # define INTERNAL_ERR_INT_H
 
 void err_load_crypto_strings_int(void);
+void err_cleanup(void);
 
 #endif
