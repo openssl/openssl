@@ -332,6 +332,7 @@ install_dev : check_INSTALLTOP
         @ {- output_on() if $disabled{shared}; "" -} !
 
 install_runtime : check_INSTALLTOP
+        @ ! {- output_off() if $disabled{apps}; "" -}
         @ WRITE SYS$OUTPUT "*** Installing runtime files"
         @ ! Install the main program
         - CREATE/DIR ossl_installroot:[EXE.'arch']
@@ -340,6 +341,7 @@ install_runtime : check_INSTALLTOP
         - CREATE/DIR ossl_installroot:[EXE]
         COPY/PROT=W:RE [.APPS]CA.pl ossl_installroot:[EXE]
         COPY/PROT=W:RE [.TOOLS]c_rehash. ossl_installroot:[EXE]c_rehash.pl
+        @ ! {- output_on() if $disabled{apps}; "" -}
         @ ! Install configuration file
         - CREATE/DIR ossl_dataroot:[000000]
         COPY/PROT=W:RE {- sourcefile("apps", "openssl-vms.cnf") -} -
