@@ -115,7 +115,7 @@
 #include "internal/threads.h"
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
-#include <openssl/bio.h>
+#include "internal/bio.h"
 #include <openssl/lhash.h>
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
@@ -635,6 +635,12 @@ IMPLEMENT_LHASH_DOALL_ARG_CONST(MEM, MEM_LEAK);
 int CRYPTO_mem_leaks(BIO *b)
 {
     MEM_LEAK ml;
+
+    /*
+     * OPENSSL_cleanup() will free the ex_data locks so we can't have any
+     * ex_data hanging around
+     */
+    bio_free_ex_data(b);
 
     /* Ensure all resources are released */
     OPENSSL_cleanup();

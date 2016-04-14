@@ -645,6 +645,10 @@ uint64_t BIO_number_written(BIO *bio)
     return 0;
 }
 
+void bio_free_ex_data(BIO *bio)
+{
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
+}
 
 void bio_cleanup(void)
 {

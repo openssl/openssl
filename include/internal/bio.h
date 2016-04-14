@@ -67,4 +67,5 @@ struct bio_method_st {
     long (*callback_ctrl) (BIO *, int, bio_info_cb *);
 };
 
+void bio_free_ex_data(BIO *bio);
 void bio_cleanup(void);
