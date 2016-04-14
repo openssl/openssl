@@ -240,10 +240,9 @@
   sctp
                    Build support for SCTP
 
-  shared
-                   In addition to the usual static libraries, create shared
-                   libraries on platforms where it's supported.  See "Note on
-                   shared libraries" below.
+  no-shared
+                   Do not create shared libraries, only static ones.  See "Note
+                   on shared libraries" below.
 
   no-sock
                    Don't build support for socket BIOs
@@ -638,15 +637,12 @@
  Note on shared libraries
  ------------------------
 
- Shared libraries have certain caveats.  Binary backward compatibility
- can't be guaranteed before OpenSSL version 1.0.  The only reason to
- use them would be to conserve memory on systems where several programs
- are using OpenSSL.
-
- For most systems, the OpenSSL Configure script knows what is needed to
- build shared libraries for libcrypto and libssl.  On these systems,
- the shared libraries are currently not created by default, but giving
- the option "shared" will get them created.
+ For most systems the OpenSSL Configure script knows what is needed to
+ build shared libraries for libcrypto and libssl. On these systems
+ the shared libraries will be created by default. This can be suppressed and
+ only static libraries created by using the "no-shared" option. On systems
+ where OpenSSL does not know how to build shared libraries the "no-shared"
+ option will be forced and only static libraries will be created.
 
  Note on random number generation
  --------------------------------

@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.0.2g and OpenSSL 1.1.0 [in pre-release]
 
+      o "shared" builds are now the default
       o Added support for "pipelining"
       o Added the AFALG engine
       o New threading API implemented
