@@ -622,8 +622,8 @@ static int cert_status_cb(SSL *s, void *arg)
     int rspderlen;
     STACK_OF(OPENSSL_STRING) *aia = NULL;
     X509 *x = NULL;
-    X509_STORE_CTX inctx;
-    X509_OBJECT obj;
+    X509_STORE_CTX *inctx = NULL;
+    X509_OBJECT *obj;
     OCSP_REQUEST *req = NULL;
     OCSP_RESPONSE *resp = NULL;
     OCSP_CERTID *id = NULL;
@@ -657,22 +657,24 @@ static int cert_status_cb(SSL *s, void *arg)
         use_ssl = srctx->use_ssl;
     }
 
-    if (!X509_STORE_CTX_init(&inctx,
+    inctx = X509_STORE_CTX_new();
+    if (inctx == NULL)
+        goto err;
+    if (!X509_STORE_CTX_init(inctx,
                              SSL_CTX_get_cert_store(SSL_get_SSL_CTX(s)),
                              NULL, NULL))
         goto err;
-    if (X509_STORE_get_by_subject(&inctx, X509_LU_X509,
-                                  X509_get_issuer_name(x), &obj) <= 0) {
+    obj = X509_STORE_get_X509_by_subject(inctx, X509_LU_X509,
+                                         X509_get_issuer_name(x));
+    if (obj == NULL) {
         BIO_puts(bio_err, "cert_status: Can't retrieve issuer certificate.\n");
-        X509_STORE_CTX_cleanup(&inctx);
         goto done;
     }
     req = OCSP_REQUEST_new();
     if (req == NULL)
         goto err;
-    id = OCSP_cert_to_id(NULL, x, obj.data.x509);
-    X509_free(obj.data.x509);
-    X509_STORE_CTX_cleanup(&inctx);
+    id = OCSP_cert_to_id(NULL, x, X509_OBJECT_get0_X509(obj));
+    X509_OBJECT_free(obj);
     if (!id)
         goto err;
     if (!OCSP_request_add0_id(req, id))
@@ -700,6 +702,10 @@ static int cert_status_cb(SSL *s, void *arg)
         OCSP_RESPONSE_print(bio_err, resp, 2);
     }
     ret = SSL_TLSEXT_ERR_OK;
+    goto done;
+
+ err:
+    ret = SSL_TLSEXT_ERR_ALERT_FATAL;
  done:
     if (ret != SSL_TLSEXT_ERR_OK)
         ERR_print_errors(bio_err);
@@ -712,10 +718,8 @@ static int cert_status_cb(SSL *s, void *arg)
     OCSP_CERTID_free(id);
     OCSP_REQUEST_free(req);
     OCSP_RESPONSE_free(resp);
+    X509_STORE_CTX_free(inctx);
     return ret;
- err:
-    ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-    goto done;
 }
 #endif
 

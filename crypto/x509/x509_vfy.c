@@ -1994,7 +1994,7 @@ X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
     return ctx->current_cert;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
+STACK_OF(X509) *X509_STORE_CTX_get0_chain(X509_STORE_CTX *ctx)
 {
     return ctx->chain;
 }
@@ -2024,11 +2024,6 @@ X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx)
 void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
 {
     ctx->cert = x;
-}
-
-void X509_STORE_CTX_set_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
-{
-    ctx->untrusted = sk;
 }
 
 void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
@@ -2278,8 +2273,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
  * Set alternative lookup method: just a STACK of trusted certificates. This
  * avoids X509_STORE nastiness where it isn't needed.
  */
-
-void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
+void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 {
     ctx->other_ctx = sk;
     ctx->get_issuer = get_issuer_sk;
@@ -2329,9 +2323,41 @@ void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
 }
 
 void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
-                                  int (*verify_cb) (int, X509_STORE_CTX *))
+                                  X509_STORE_CTX_verify_cb verify_cb)
 {
     ctx->verify_cb = verify_cb;
+}
+
+X509_STORE_CTX_verify_cb X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx)
+{
+    return ctx->verify_cb;
+}
+
+X509 *X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx)
+{
+    return ctx->cert;
+}
+
+STACK_OF(X509) *X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx)
+{
+    return ctx->untrusted;
+}
+
+void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
+{
+    sk_X509_pop_free(ctx->chain, X509_free);
+    ctx->chain = sk;
+}
+
+void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx,
+                               X509_STORE_CTX_verify verify)
+{
+    ctx->verify = verify;
+}
+
+X509_STORE_CTX_verify X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx)
+{
+    return ctx->verify;
 }
 
 X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx)

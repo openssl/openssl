@@ -3072,32 +3072,36 @@ static int verify_callback(int ok, X509_STORE_CTX *ctx)
 {
     char *s, buf[256];
 
-    s = X509_NAME_oneline(X509_get_subject_name(ctx->current_cert), buf,
-                          sizeof buf);
+    s = X509_NAME_oneline(X509_get_subject_name(X509_STORE_CTX_get_current_cert(ctx)),
+                          buf, sizeof buf);
     if (s != NULL) {
         if (ok)
-            printf("depth=%d %s\n", ctx->error_depth, buf);
+            printf("depth=%d %s\n", X509_STORE_CTX_get_error_depth(ctx), buf);
         else {
             fprintf(stderr, "depth=%d error=%d %s\n",
-                    ctx->error_depth, ctx->error, buf);
+                    X509_STORE_CTX_get_error_depth(ctx),
+                    X509_STORE_CTX_get_error(ctx), buf);
         }
     }
 
     if (ok == 0) {
-        switch (ctx->error) {
+        int i = X509_STORE_CTX_get_error(ctx);
+
+        switch (i) {
         default:
             fprintf(stderr, "Error string: %s\n",
-                    X509_verify_cert_error_string(ctx->error));
+                    X509_verify_cert_error_string(i));
             break;
         case X509_V_ERR_CERT_NOT_YET_VALID:
         case X509_V_ERR_CERT_HAS_EXPIRED:
         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
             ok = 1;
+            break;
         }
     }
 
     if (ok == 1) {
-        X509 *xs = ctx->current_cert;
+        X509 *xs = X509_STORE_CTX_get_current_cert(ctx);
         if (X509_get_extension_flags(xs) & EXFLAG_PROXY) {
             unsigned int *letters = X509_STORE_CTX_get_ex_data(ctx,
                                                                get_proxy_auth_ex_data_idx
@@ -3434,15 +3438,17 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 
     if (cb_arg->app_verify) {
         char *s = NULL, buf[256];
+        X509 *c = X509_STORE_CTX_get0_cert(ctx);
 
         printf("In app_verify_callback, allowing cert. ");
         printf("Arg is: %s\n", cb_arg->string);
         printf("Finished printing do we have a context? 0x%p a cert? 0x%p\n",
-                (void *)ctx, (void *)ctx->cert);
-        if (ctx->cert)
-            s = X509_NAME_oneline(X509_get_subject_name(ctx->cert), buf, 256);
+                (void *)ctx, (void *)c);
+        if (c)
+            s = X509_NAME_oneline(X509_get_subject_name(c), buf, 256);
         if (s != NULL) {
-            printf("cert depth=%d %s\n", ctx->error_depth, buf);
+            printf("cert depth=%d %s\n",
+                    X509_STORE_CTX_get_error_depth(ctx), buf);
         }
         return (1);
     }

@@ -269,7 +269,7 @@ static int check(X509_STORE *ctx, char *file,
         goto end;
     }
     if (tchain)
-        X509_STORE_CTX_trusted_stack(csc, tchain);
+        X509_STORE_CTX_set0_trusted_stack(csc, tchain);
     if (crls)
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);

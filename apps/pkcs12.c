@@ -758,21 +758,28 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 static int get_cert_chain(X509 *cert, X509_STORE *store,
                           STACK_OF(X509) **chain)
 {
-    X509_STORE_CTX store_ctx;
+    X509_STORE_CTX *store_ctx = NULL;
     STACK_OF(X509) *chn = NULL;
     int i = 0;
 
-    if (!X509_STORE_CTX_init(&store_ctx, store, cert, NULL)) {
-        *chain = NULL;
-        return X509_V_ERR_UNSPECIFIED;
+    store_ctx = X509_STORE_CTX_new();
+    if (store_ctx == NULL) {
+        i =  X509_V_ERR_UNSPECIFIED;
+        goto end;
+    }
+    if (!X509_STORE_CTX_init(store_ctx, store, cert, NULL)) {
+        i =  X509_V_ERR_UNSPECIFIED;
+        goto end;
     }
 
-    if (X509_verify_cert(&store_ctx) > 0)
-        chn = X509_STORE_CTX_get1_chain(&store_ctx);
-    else if ((i = X509_STORE_CTX_get_error(&store_ctx)) == 0)
+
+    if (X509_verify_cert(store_ctx) > 0)
+        chn = X509_STORE_CTX_get1_chain(store_ctx);
+    else if ((i = X509_STORE_CTX_get_error(store_ctx)) == 0)
         i = X509_V_ERR_UNSPECIFIED;
 
-    X509_STORE_CTX_cleanup(&store_ctx);
+end:
+    X509_STORE_CTX_free(store_ctx);
     *chain = chn;
     return i;
 }
