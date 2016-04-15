@@ -292,7 +292,6 @@ int enc_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
 
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
