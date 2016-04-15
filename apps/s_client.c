@@ -1384,6 +1384,7 @@ int s_client_main(int argc, char **argv)
         case OPT_STARTTLS:
             if (!opt_pair(opt_arg(), services, &starttls_proto))
                 goto end;
+            break;
         case OPT_SERVERNAME:
             servername = opt_arg();
             break;
