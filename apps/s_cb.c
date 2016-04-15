@@ -406,8 +406,6 @@ int ssl_print_point_formats(BIO *out, SSL *s)
 
         }
     }
-    if (nformats <= 0)
-        BIO_puts(out, "NONE");
     BIO_puts(out, "\n");
     return 1;
 }
@@ -439,8 +437,6 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
             BIO_printf(out, "%s", cname);
         }
     }
-    if (ncurves == 0)
-        BIO_puts(out, "NONE");
     OPENSSL_free(curves);
     if (noshared) {
         BIO_puts(out, "\n");
