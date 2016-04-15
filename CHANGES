@@ -4,6 +4,11 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) The following datatypes were made opaque: X509_OBJECT, X509_STORE_CTX,
+     X509_STORE, X509_LOOKUP, and X509_LOOKUP_METHOD.  The unused type
+     X509_CERT_FILE_CTX was removed.
+     [Rich Salz]
+
   *) "shared" builds are now the default. To create only static libraries use
      the "no-shared" Configure option.
      [Matt Caswell]

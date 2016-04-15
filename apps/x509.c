@@ -987,13 +987,14 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 {
     int ret = 0;
     ASN1_INTEGER *bs = NULL;
-    X509_STORE_CTX xsc;
+    X509_STORE_CTX *xsc = NULL;
     EVP_PKEY *upkey;
 
     upkey = X509_get0_pubkey(xca);
     EVP_PKEY_copy_parameters(upkey, pkey);
 
-    if (!X509_STORE_CTX_init(&xsc, ctx, x, NULL)) {
+    xsc = X509_STORE_CTX_new();
+    if (xsc == NULL || !X509_STORE_CTX_init(xsc, ctx, x, NULL)) {
         BIO_printf(bio_err, "Error initialising X509 store\n");
         goto end;
     }
@@ -1006,9 +1007,9 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
      * NOTE: this certificate can/should be self signed, unless it was a
      * certificate request in which case it is not.
      */
-    X509_STORE_CTX_set_cert(&xsc, x);
-    X509_STORE_CTX_set_flags(&xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
-    if (!reqfile && X509_verify_cert(&xsc) <= 0)
+    X509_STORE_CTX_set_cert(xsc, x);
+    X509_STORE_CTX_set_flags(xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
+    if (!reqfile && X509_verify_cert(xsc) <= 0)
         goto end;
 
     if (!X509_check_private_key(xca, pkey)) {
@@ -1047,7 +1048,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
         goto end;
     ret = 1;
  end:
-    X509_STORE_CTX_cleanup(&xsc);
+    X509_STORE_CTX_free(xsc);
     if (!ret)
         ERR_print_errors(bio_err);
     if (!sno)

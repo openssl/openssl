@@ -1096,6 +1096,7 @@ void ERR_load_X509_strings(void);
 # define X509_F_X509_STORE_CTX_INIT                       143
 # define X509_F_X509_STORE_CTX_NEW                        142
 # define X509_F_X509_STORE_CTX_PURPOSE_INHERIT            134
+# define X509_F_X509_STORE_GET_X509_BY_SUBJECT            149
 # define X509_F_X509_TO_X509_REQ                          126
 # define X509_F_X509_TRUST_ADD                            133
 # define X509_F_X509_TRUST_SET                            141
