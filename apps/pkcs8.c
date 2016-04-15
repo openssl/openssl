@@ -341,7 +341,10 @@ int pkcs8_main(int argc, char **argv)
         else if (1) {
 #ifndef OPENSSL_NO_UI
             p8pass = pass;
-            EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0);
+            if (EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0)) {
+                BIO_printf(bio_err, "Can't read Password\n");
+                goto end;
+            }
         } else {
 #endif
             BIO_printf(bio_err, "Password required\n");
