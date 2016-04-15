@@ -1160,7 +1160,7 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
                 max_fd = job_fd;
         }
 
-        if (max_fd >= FD_SETSIZE) {
+        if (max_fd >= (OSSL_ASYNC_FD)FD_SETSIZE) {
             BIO_printf(bio_err,
                     "Error: max_fd (%d) must be smaller than FD_SETSIZE (%d). "
                     "Decrease the value of async_jobs\n",
