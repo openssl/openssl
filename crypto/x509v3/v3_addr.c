@@ -897,7 +897,8 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
         IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
         if (a != NULL && a->type == IPAddressOrRange_addressRange) {
             unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
-            extract_min_max(a, a_min, a_max, length);
+            if (!extract_min_max(a, a_min, a_max, length))
+                return 0;
             if (memcmp(a_min, a_max, length) > 0)
                 return 0;
         }
