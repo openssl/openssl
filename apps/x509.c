@@ -763,7 +763,7 @@ int x509_main(int argc, char **argv)
                 BIO_printf(out, "/*\n"
                                 " * Subject: %s\n", buf);
 
-                m = X509_NAME_oneline(X509_get_issuer_name(x), buf, sizeof buf);
+                X509_NAME_oneline(X509_get_issuer_name(x), buf, sizeof buf);
                 BIO_printf(out, " * Issuer:  %s\n"
                                 " */\n", buf);
 

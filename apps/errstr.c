@@ -107,7 +107,6 @@ int errstr_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
 
     ret = 0;
     for (argv = opt_rest(); *argv; argv++) {

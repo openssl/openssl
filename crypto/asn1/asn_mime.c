@@ -187,7 +187,7 @@ static ASN1_VALUE *b64_read_asn1(BIO *bio, const ASN1_ITEM *it)
     if (!val)
         ASN1err(ASN1_F_B64_READ_ASN1, ASN1_R_DECODE_ERROR);
     (void)BIO_flush(bio);
-    bio = BIO_pop(bio);
+    BIO_pop(bio);
     BIO_free(b64);
     return val;
 }

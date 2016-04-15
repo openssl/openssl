@@ -492,7 +492,6 @@ int help_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
 
     if (argc != 0) {
         BIO_printf(bio_err, "Usage: %s\n", prog);
