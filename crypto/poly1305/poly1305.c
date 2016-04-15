@@ -590,7 +590,8 @@ static const struct poly1305_test poly1305_tests[] = {
      "5154ad0d2cb26e01274fc51148491f1b"
     },
     /*
-     * self-generated
+     * self-generated vectors exercise "significant" lengths, such that
+     * are handled by different code paths
      */
     {
      "ab0812724a7f1e342742cbed374d94d136c6b8795d45b3819830f2c04491faf0"
@@ -671,6 +672,21 @@ static const struct poly1305_test poly1305_tests[] = {
      "812059a5da198637cac7c4a631bee4665b88d7f6228b11e2e28579a5c0c1f761",
      "12976a08c4426d0ce8a82407c4f48207""80f8c20aa71202d1e29179cbcb555a57",
      "b846d44e9bbd53cedffbfbb6b7fa4933"
+    },
+    /*
+     * 4th power of the key spills to 131th bit in SIMD key setup
+     */
+    {
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+     "ad628107e8351d0f2c231a05dc4a4106""00000000000000000000000000000000",
+     "07145a4c02fe5fa32036de68fabe9066"
     },
     {
     /*

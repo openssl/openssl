@@ -541,11 +541,12 @@ my $base = shift; $base = "esp" if (!defined($base));
 
 sub lazy_reduction {
 my $extra = shift;
-my $paddx = defined($extra) ? paddq : paddd;
 
 	################################################################
 	# lazy reduction as discussed in "NEON crypto" by D.J. Bernstein
 	# and P. Schwabe
+	#
+	# [(*) see discussion in poly1305-armv4 module]
 
 	 &movdqa	($T0,$D3);
 	 &pand		($D3,$MASK);
@@ -567,7 +568,7 @@ my $paddx = defined($extra) ? paddq : paddd;
 							# on Atom
 	 &psllq		($T0,2);
 	&paddq		($T1,$D2);			# h1 -> h2
-	 &$paddx	($T0,$D0);			# h4 -> h0
+	 &paddq		($T0,$D0);			# h4 -> h0 (*)
 	&pand		($D1,$MASK);
 	&movdqa		($D2,$T1);
 	&psrlq		($T1,26);
