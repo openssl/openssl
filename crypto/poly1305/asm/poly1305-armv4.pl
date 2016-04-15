@@ -10,7 +10,7 @@
 #			IALU(*)/gcc-4.4		NEON
 #
 # ARM11xx(ARMv6)	7.78/+100%		-
-# Cortex-A5		6.35/+130%		2.96
+# Cortex-A5		6.35/+130%		3.00
 # Cortex-A8		6.25/+115%		2.36
 # Cortex-A9		5.10/+95%		2.55
 # Cortex-A15		3.85/+85%		1.25(**)
@@ -523,6 +523,51 @@ poly1305_init_neon:
 	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	@ lazy reduction as discussed in "NEON crypto" by D.J. Bernstein
 	@ and P. Schwabe
+	@
+	@ H0>>+H1>>+H2>>+H3>>+H4
+	@ H3>>+H4>>*5+H0>>+H1
+	@
+	@ Trivia.
+	@
+	@ Result of multiplication of n-bit number by m-bit number is
+	@ n+m bits wide. However! Even though 2^n is a n+1-bit number,
+	@ m-bit number multiplied by 2^n is still n+m bits wide.
+	@
+	@ Sum of two n-bit numbers is n+1 bits wide, sum of three - n+2,
+	@ and so is sum of four. Sum of 2^m n-m-bit numbers and n-bit
+	@ one is n+1 bits wide.
+	@
+	@ >>+ denotes Hnext += Hn>>26, Hn &= 0x3ffffff. This means that
+	@ H0, H2, H3 are guaranteed to be 26 bits wide, while H1 and H4
+	@ can be 27. However! In cases when their width exceeds 26 bits
+	@ they are limited by 2^26+2^6. This in turn means that *sum*
+	@ of the products with these values can still be viewed as sum
+	@ of 52-bit numbers as long as the amount of addends is not a
+	@ power of 2. For example,
+	@
+	@ H4 = H4*R0 + H3*R1 + H2*R2 + H1*R3 + H0 * R4,
+	@
+	@ which can't be larger than 5 * (2^26 + 2^6) * (2^26 + 2^6), or
+	@ 5 * (2^52 + 2*2^32 + 2^12), which in turn is smaller than
+	@ 8 * (2^52) or 2^55. However, the value is then multiplied by
+	@ by 5, so we should be looking at 5 * 5 * (2^52 + 2^33 + 2^12),
+	@ which is less than 32 * (2^52) or 2^57. And when processing
+	@ data we are looking at triple as many addends...
+	@
+	@ In key setup procedure pre-reduced H0 is limited by 5*4+1 and
+	@ 5*H4 - by 5*5 52-bit addends, or 57 bits. But when hashing the
+	@ input H0 is limited by (5*4+1)*3 addends, or 58 bits, while
+	@ 5*H4 by 5*5*3, or 59[!] bits. How is this relevant? vmlal.u32
+	@ instruction accepts 2x32-bit input and writes 2x64-bit result.
+	@ This means that result of reduction have to be compressed upon
+	@ loop wrap-around. This can be done in the process of reduction
+	@ to minimize amount of instructions [as well as amount of
+	@ 128-bit instructions, which benefits low-end processors], but
+	@ one has to watch for H2 (which is narrower than H0) and 5*H4
+	@ not being wider than 58 bits, so that result of right shift
+	@ by 26 bits fits in 32 bits. This is also useful on x86,
+	@ because it allows to use paddd in place for paddq, which
+	@ benefits Atom, where paddq is ridiculously slow.
 
 	vshr.u64	$T0,$D3,#26
 	vmovn.i64	$D3#lo,$D3
@@ -887,7 +932,8 @@ poly1305_blocks_neon:
 # endif
 
 	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	@ lazy reduction interleaved with base 2^32 -> base 2^26
+	@ lazy reduction interleaved with base 2^32 -> base 2^26 of
+	@ inp[0:3] previously loaded to $H0-$H3 and smashed to $H0-$H4.
 
 	vshr.u64	$T0,$D3,#26
 	vmovn.i64	$D3#lo,$D3
@@ -915,19 +961,20 @@ poly1305_blocks_neon:
 	  vbic.i32	$H3,#0xfc000000
 	 vshrn.u64	$T1#lo,$D2,#26
 	 vmovn.i64	$D2#lo,$D2
-	vadd.i32	$D0#lo,$D0#lo,$T0#lo	@ h4 -> h0
+	vaddl.u32	$D0,$D0#lo,$T0#lo	@ h4 -> h0 [widen for a sec]
 	  vsri.u32	$H2,$H1,#20
 	 vadd.i32	$D3#lo,$D3#lo,$T1#lo	@ h2 -> h3
 	  vshl.u32	$H1,$H1,#6
 	 vbic.i32	$D2#lo,#0xfc000000
 	  vbic.i32	$H2,#0xfc000000
 
-	vshr.u32	$T0#lo,$D0#lo,#26
-	vbic.i32	$D0#lo,#0xfc000000
+	vshrn.u64	$T0#lo,$D0,#26		@ re-narrow
+	vmovn.i64	$D0#lo,$D0
 	  vsri.u32	$H1,$H0,#26
 	  vbic.i32	$H0,#0xfc000000
 	 vshr.u32	$T1#lo,$D3#lo,#26
 	 vbic.i32	$D3#lo,#0xfc000000
+	vbic.i32	$D0#lo,#0xfc000000
 	vadd.i32	$D1#lo,$D1#lo,$T0#lo	@ h0 -> h1
 	 vadd.i32	$D4#lo,$D4#lo,$T1#lo	@ h3 -> h4
 	  vbic.i32	$H1,#0xfc000000
