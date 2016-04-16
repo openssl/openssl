@@ -1671,6 +1671,9 @@ void engine_load_cryptodev_int(void)
                                          cryptodev_rsa_nocrt_mod_exp);
             }
         }
+    } else {
+        ENGINE_free(engine);
+        return;
     }
 
 #ifndef OPENSSL_NO_DSA
@@ -1708,6 +1711,9 @@ void engine_load_cryptodev_int(void)
                                             cryptodev_dh_compute_key);
             }
         }
+    } else {
+        ENGINE_free(engine);
+        return;
     }
 #endif
 
