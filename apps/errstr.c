@@ -106,7 +106,6 @@ int errstr_main(int argc, char **argv)
             goto end;
         }
     }
-    argc = opt_num_rest();
 
     ret = 0;
     for (argv = opt_rest(); *argv; argv++) {
