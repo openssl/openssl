@@ -306,6 +306,7 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
 X509_STORE *X509_STORE_CTX_get0_store(X509_STORE_CTX *ctx);
 X509 *X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx);
 STACK_OF(X509)* X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx);
+void X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 typedef int (*X509_STORE_CTX_verify_cb)(int, X509_STORE_CTX *);
 typedef int (*X509_STORE_CTX_verify)(X509_STORE_CTX *);
 void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
