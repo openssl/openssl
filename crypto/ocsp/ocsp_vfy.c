@@ -151,7 +151,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 
         /* If fatal error or valid match then finish */
         if (ret != 0)
-            goto err;
+            goto end;
 
         /*
          * Easy case: explicitly trusted. Get root CA and check for explicit
@@ -166,8 +166,8 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
             goto err;
         }
         ret = 1;
-        goto end;
     }
+    goto end;
 
  err:
     ret = 0;
