@@ -84,8 +84,12 @@ struct dev_crypto_state {
 
 static u_int32_t cryptodev_asymfeat = 0;
 
+static RSA_METHOD *cryptodev_rsa;
 #ifndef OPENSSL_NO_DSA
 static DSA_METHOD *cryptodev_dsa = NULL;
+#endif
+#ifndef OPENSSL_NO_DH
+static DH_METHOD *cryptodev_dh;
 #endif
 
 static int get_asym_dev_crypto(void);
@@ -1176,9 +1180,15 @@ static int cryptodev_engine_destroy(ENGINE *e)
     EVP_MD_meth_free(md5_md);
     md5_md = NULL;
 # endif
+    RSA_meth_free(cryptodev_rsa);
+    cryptodev_rsa = NULL;
 #ifndef OPENSSL_NO_DSA
     DSA_meth_free(cryptodev_dsa);
     cryptodev_dsa = NULL;
+#endif
+#ifndef OPENSSL_NO_DH
+    DH_meth_free(cryptodev_dh);
+    cryptodev_dh = NULL;
 #endif
     return 1;
 }
@@ -1392,8 +1402,6 @@ cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     return (ret);
 }
 
-static RSA_METHOD *cryptodev_rsa;
-
 #ifndef OPENSSL_NO_DSA
 static int
 cryptodev_dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
@@ -1596,8 +1604,6 @@ cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     zapparams(&kop);
     return (dhret);
 }
-
-static DH_METHOD *cryptodev_dh;
 
 #endif /* ndef OPENSSL_NO_DH */
 
