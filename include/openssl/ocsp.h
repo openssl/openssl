@@ -432,6 +432,7 @@ void ERR_load_OCSP_strings(void);
 # define OCSP_R_NO_PUBLIC_KEY                             107
 # define OCSP_R_NO_RESPONSE_DATA                          108
 # define OCSP_R_NO_REVOKED_TIME                           109
+# define OCSP_R_NO_SIGNER_KEY                             130
 # define OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE    110
 # define OCSP_R_REQUEST_NOT_SIGNED                        128
 # define OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA      111
