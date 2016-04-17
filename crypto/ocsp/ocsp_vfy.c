@@ -3,7 +3,7 @@
  * 2000.
  */
 /* ====================================================================
- * Copyright (c) 2000-2004 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000-2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -88,23 +88,26 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
     if (!ret) {
         OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,
                 OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
-        goto err;
+        goto end;
     }
     ctx = X509_STORE_CTX_new();
     if (ctx == NULL) {
         OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, ERR_R_MALLOC_FAILURE);
-        goto err;
+        goto f_err;
     }
     if ((ret == 2) && (flags & OCSP_TRUSTOTHER))
         flags |= OCSP_NOVERIFY;
     if (!(flags & OCSP_NOSIGS)) {
         EVP_PKEY *skey;
         skey = X509_get0_pubkey(signer);
-        if (skey)
-            ret = OCSP_BASICRESP_verify(bs, skey, 0);
-        if (!skey || ret <= 0) {
-            OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, OCSP_R_SIGNATURE_FAILURE);
+        if (skey == NULL) {
+            OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, OCSP_R_NO_SIGNER_KEY);
             goto err;
+        }
+        ret = OCSP_BASICRESP_verify(bs, skey, 0);
+        if (ret <= 0) {
+            OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, OCSP_R_SIGNATURE_FAILURE);
+            goto end;
         }
     }
     if (!(flags & OCSP_NOVERIFY)) {
@@ -116,7 +119,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
             for (i = 0; i < sk_X509_num(certs); i++) {
                 if (!sk_X509_push(untrusted, sk_X509_value(certs, i))) {
                     OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, ERR_R_MALLOC_FAILURE);
-                    goto err;
+                    goto f_err;
                 }
             }
         } else {
@@ -125,7 +128,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
         init_res = X509_STORE_CTX_init(ctx, st, signer, untrusted);
         if (!init_res) {
             OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, ERR_R_X509_LIB);
-            goto err;
+            goto f_err;
         }
 
         X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_OCSP_HELPER);
@@ -137,7 +140,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
                     OCSP_R_CERTIFICATE_VERIFY_ERROR);
             ERR_add_error_data(2, "Verify error:",
                                X509_verify_cert_error_string(i));
-            goto err;
+            goto end;
         }
         if (flags & OCSP_NOCHECKS) {
             ret = 1;
@@ -167,16 +170,20 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
         }
         ret = 1;
     }
-    goto end;
-
- err:
-    ret = 0;
  end:
     X509_STORE_CTX_free(ctx);
     sk_X509_pop_free(chain, X509_free);
     if (bs->certs && certs)
         sk_X509_free(untrusted);
     return ret;
+    goto end;
+
+ err:
+    ret = 0;
+    goto end;
+ f_err:
+    ret = -1;
+    goto end;
 }
 
 static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
