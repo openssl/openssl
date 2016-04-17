@@ -4204,6 +4204,6 @@ X509_STORE_CTX_get0_cert                4076	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_set_verify               4077	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get_verify               4079	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get_verify_cb            4080	1_1_0	EXIST::FUNCTION:
-X509_STORE_CTX_get_cert                 4081	1_1_0	EXIST::FUNCTION:
+X509_STORE_CTX_get_cert                 4081	1_1_0	NOEXIST::FUNCTION:
 X509_STORE_CTX_set0_verified_chain      4082	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_set0_untrusted           4083	1_1_0	EXIST::FUNCTION:
