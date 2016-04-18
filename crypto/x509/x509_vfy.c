@@ -284,9 +284,9 @@ static int verify_chain(X509_STORE_CTX *ctx)
 
 #ifndef OPENSSL_NO_RFC3779
     /* RFC 3779 path validation, now that CRL check has been done */
-    if ((ok = v3_asid_validate_path(ctx)) == 0)
+    if ((ok = X509v3_asid_validate_path(ctx)) == 0)
         return ok;
-    if ((ok = v3_addr_validate_path(ctx)) == 0)
+    if ((ok = X509v3_addr_validate_path(ctx)) == 0)
         return ok;
 #endif
 

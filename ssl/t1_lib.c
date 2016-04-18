@@ -4098,9 +4098,9 @@ DH *ssl_get_auto_dh(SSL *s)
         if (g != NULL)
             BN_set_word(g, 2);
         if (dh_secbits >= 192)
-            p = get_rfc3526_prime_8192(NULL);
+            p = BN_get_rfc3526_prime_8192(NULL);
         else
-            p = get_rfc3526_prime_3072(NULL);
+            p = BN_get_rfc3526_prime_3072(NULL);
         if (p == NULL || g == NULL || !DH_set0_pqg(dhp, p, NULL, g)) {
             DH_free(dhp);
             BN_free(p);

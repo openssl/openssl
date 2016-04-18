@@ -59,12 +59,12 @@
 #include "idea_lcl.h"
 #include <openssl/opensslv.h>
 
-const char *idea_options(void)
+const char *IDEA_options(void)
 {
     return ("idea(int)");
 }
 
-void idea_ecb_encrypt(const unsigned char *in, unsigned char *out,
+void IDEA_ecb_encrypt(const unsigned char *in, unsigned char *out,
                       IDEA_KEY_SCHEDULE *ks)
 {
     unsigned long l0, l1, d[2];
@@ -73,7 +73,7 @@ void idea_ecb_encrypt(const unsigned char *in, unsigned char *out,
     d[0] = l0;
     n2l(in, l1);
     d[1] = l1;
-    idea_encrypt(d, ks);
+    IDEA_encrypt(d, ks);
     l0 = d[0];
     l2n(l0, out);
     l1 = d[1];

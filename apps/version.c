@@ -222,7 +222,7 @@ int version_main(int argc, char **argv)
         printf("%s ", DES_options());
 #endif
 #ifndef OPENSSL_NO_IDEA
-        printf("%s ", idea_options());
+        printf("%s ", IDEA_options());
 #endif
 #ifndef OPENSSL_NO_BF
         printf("%s ", BF_options());

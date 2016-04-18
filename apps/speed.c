@@ -1667,7 +1667,7 @@ int speed_main(int argc, char **argv)
     Camellia_set_key(ckey32, 256, &camellia_ks3);
 #endif
 #ifndef OPENSSL_NO_IDEA
-    idea_set_encrypt_key(key16, &idea_ks);
+    IDEA_set_encrypt_key(key16, &idea_ks);
 #endif
 #ifndef OPENSSL_NO_SEED
     SEED_set_key(key16, &seed_ks);
@@ -2202,7 +2202,7 @@ int speed_main(int argc, char **argv)
             }
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_IDEA][testnum]); count++)
-                idea_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
+                IDEA_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                  (unsigned long)lengths[testnum], &idea_ks,
                                  iv, IDEA_ENCRYPT);
             d = Time_F(STOP);
@@ -2693,7 +2693,7 @@ int speed_main(int argc, char **argv)
 #endif
         printf("%s ", AES_options());
 #ifndef OPENSSL_NO_IDEA
-        printf("%s ", idea_options());
+        printf("%s ", IDEA_options());
 #endif
 #ifndef OPENSSL_NO_BF
         printf("%s ", BF_options());

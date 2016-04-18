@@ -197,7 +197,7 @@ static int ASIdOrRange_cmp(const ASIdOrRange *const *a_,
 /*
  * Add an inherit element.
  */
-int v3_asid_add_inherit(ASIdentifiers *asid, int which)
+int X509v3_asid_add_inherit(ASIdentifiers *asid, int which)
 {
     ASIdentifierChoice **choice;
     if (asid == NULL)
@@ -226,8 +226,8 @@ int v3_asid_add_inherit(ASIdentifiers *asid, int which)
 /*
  * Add an ID or range to an ASIdentifierChoice.
  */
-int v3_asid_add_id_or_range(ASIdentifiers *asid,
-                            int which, ASN1_INTEGER *min, ASN1_INTEGER *max)
+int X509v3_asid_add_id_or_range(ASIdentifiers *asid,
+                                int which, ASN1_INTEGER *min, ASN1_INTEGER *max)
 {
     ASIdentifierChoice **choice;
     ASIdOrRange *aor;
@@ -383,7 +383,7 @@ static int ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
 /*
  * Check whether an ASIdentifier extension is in canonical form.
  */
-int v3_asid_is_canonical(ASIdentifiers *asid)
+int X509v3_asid_is_canonical(ASIdentifiers *asid)
 {
     return (asid == NULL ||
             (ASIdentifierChoice_is_canonical(asid->asnum) &&
@@ -531,7 +531,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 /*
  * Whack an ASIdentifier extension into canonical form.
  */
-int v3_asid_canonize(ASIdentifiers *asid)
+int X509v3_asid_canonize(ASIdentifiers *asid)
 {
     return (asid == NULL ||
             (ASIdentifierChoice_canonize(asid->asnum) &&
@@ -576,7 +576,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
          * Handle inheritance.
          */
         if (strcmp(val->value, "inherit") == 0) {
-            if (v3_asid_add_inherit(asid, which))
+            if (X509v3_asid_add_inherit(asid, which))
                 continue;
             X509V3err(X509V3_F_V2I_ASIDENTIFIERS,
                       X509V3_R_INVALID_INHERITANCE);
@@ -638,7 +638,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
                 goto err;
             }
         }
-        if (!v3_asid_add_id_or_range(asid, which, min, max)) {
+        if (!X509v3_asid_add_id_or_range(asid, which, min, max)) {
             X509V3err(X509V3_F_V2I_ASIDENTIFIERS, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -648,7 +648,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
     /*
      * Canonize the result, then we're done.
      */
-    if (!v3_asid_canonize(asid))
+    if (!X509v3_asid_canonize(asid))
         goto err;
     return asid;
 
@@ -679,7 +679,7 @@ const X509V3_EXT_METHOD v3_asid = {
 /*
  * Figure out whether extension uses inheritance.
  */
-int v3_asid_inherits(ASIdentifiers *asid)
+int X509v3_asid_inherits(ASIdentifiers *asid)
 {
     return (asid != NULL &&
             ((asid->asnum != NULL &&
@@ -722,13 +722,13 @@ static int asid_contains(ASIdOrRanges *parent, ASIdOrRanges *child)
 /*
  * Test whether a is a subset of b.
  */
-int v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
+int X509v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
 {
     return (a == NULL ||
             a == b ||
             (b != NULL &&
-             !v3_asid_inherits(a) &&
-             !v3_asid_inherits(b) &&
+             !X509v3_asid_inherits(a) &&
+             !X509v3_asid_inherits(b) &&
              asid_contains(b->asnum->u.asIdsOrRanges,
                            a->asnum->u.asIdsOrRanges) &&
              asid_contains(b->rdi->u.asIdsOrRanges,
@@ -755,9 +755,9 @@ int v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
 /*
  * Core code for RFC 3779 3.3 path validation.
  */
-static int v3_asid_validate_path_internal(X509_STORE_CTX *ctx,
-                                          STACK_OF(X509) *chain,
-                                          ASIdentifiers *ext)
+static int asid_validate_path_internal(X509_STORE_CTX *ctx,
+                                       STACK_OF(X509) *chain,
+                                       ASIdentifiers *ext)
 {
     ASIdOrRanges *child_as = NULL, *child_rdi = NULL;
     int i, ret = 1, inherit_as = 0, inherit_rdi = 0;
@@ -782,7 +782,7 @@ static int v3_asid_validate_path_internal(X509_STORE_CTX *ctx,
         if ((ext = x->rfc3779_asid) == NULL)
             goto done;
     }
-    if (!v3_asid_is_canonical(ext))
+    if (!X509v3_asid_is_canonical(ext))
         validation_err(X509_V_ERR_INVALID_EXTENSION);
     if (ext->asnum != NULL) {
         switch (ext->asnum->type) {
@@ -817,7 +817,7 @@ static int v3_asid_validate_path_internal(X509_STORE_CTX *ctx,
                 validation_err(X509_V_ERR_UNNESTED_RESOURCE);
             continue;
         }
-        if (!v3_asid_is_canonical(x->rfc3779_asid))
+        if (!X509v3_asid_is_canonical(x->rfc3779_asid))
             validation_err(X509_V_ERR_INVALID_EXTENSION);
         if (x->rfc3779_asid->asnum == NULL && child_as != NULL) {
             validation_err(X509_V_ERR_UNNESTED_RESOURCE);
@@ -876,25 +876,25 @@ static int v3_asid_validate_path_internal(X509_STORE_CTX *ctx,
 /*
  * RFC 3779 3.3 path validation -- called from X509_verify_cert().
  */
-int v3_asid_validate_path(X509_STORE_CTX *ctx)
+int X509v3_asid_validate_path(X509_STORE_CTX *ctx)
 {
-    return v3_asid_validate_path_internal(ctx, ctx->chain, NULL);
+    return asid_validate_path_internal(ctx, ctx->chain, NULL);
 }
 
 /*
  * RFC 3779 3.3 path validation of an extension.
  * Test whether chain covers extension.
  */
-int v3_asid_validate_resource_set(STACK_OF(X509) *chain,
-                                  ASIdentifiers *ext, int allow_inheritance)
+int X509v3_asid_validate_resource_set(STACK_OF(X509) *chain,
+                                      ASIdentifiers *ext, int allow_inheritance)
 {
     if (ext == NULL)
         return 1;
     if (chain == NULL || sk_X509_num(chain) == 0)
         return 0;
-    if (!allow_inheritance && v3_asid_inherits(ext))
+    if (!allow_inheritance && X509v3_asid_inherits(ext))
         return 0;
-    return v3_asid_validate_path_internal(NULL, chain, ext);
+    return asid_validate_path_internal(NULL, chain, ext);
 }
 
 #endif                          /* OPENSSL_NO_RFC3779 */
