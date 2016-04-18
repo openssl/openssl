@@ -243,6 +243,7 @@ unsigned char *OPENSSL_hexstr2buf(const char *str, long *len)
 {
     unsigned char *hexbuf, *q;
     unsigned char ch, cl;
+    int chi, cli;
     const unsigned char *p;
     size_t s;
 
@@ -262,14 +263,14 @@ unsigned char *OPENSSL_hexstr2buf(const char *str, long *len)
             OPENSSL_free(hexbuf);
             return NULL;
         }
-        cl = OPENSSL_hexchar2int(cl);
-        ch = OPENSSL_hexchar2int(ch);
-        if (cl < 0 || ch < 0) {
+        cli = OPENSSL_hexchar2int(cl);
+        chi = OPENSSL_hexchar2int(ch);
+        if (cli < 0 || chi < 0) {
             OPENSSL_free(hexbuf);
             CRYPTOerr(CRYPTO_F_OPENSSL_HEXSTR2BUF, CRYPTO_R_ILLEGAL_HEX_DIGIT);
             return NULL;
         }
-        *q++ = (ch << 4) | cl;
+        *q++ = (unsigned char)((chi << 4) | cli);
     }
 
     if (len)
