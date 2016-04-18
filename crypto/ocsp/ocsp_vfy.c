@@ -176,7 +176,6 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
     if (bs->certs && certs)
         sk_X509_free(untrusted);
     return ret;
-    goto end;
 
  err:
     ret = 0;
