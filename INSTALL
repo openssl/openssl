@@ -17,8 +17,8 @@
     header files
   * a supported operating system
 
- For more details regarding specific platforms, there are these notes
- available:
+ For additional platform specific requirements and other details,
+ please read one of these:
 
   * NOTES.VMS (OpenVMS)
   * NOTES.WIN (any Windows except for Windows CE)
