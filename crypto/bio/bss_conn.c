@@ -198,7 +198,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             ret = BIO_connect(b->num, BIO_ADDRINFO_address(c->addr_iter),
                               BIO_SOCK_KEEPALIVE | c->connect_mode);
             b->retry_reason = 0;
-            if (ret < 0) {
+            if (ret == 0) {
                 if (BIO_sock_should_retry(ret)) {
                     BIO_set_retry_special(b);
                     c->state = BIO_CONN_S_BLOCKED_CONNECT;
