@@ -156,7 +156,9 @@ typedef struct {
     unsigned long mask;
 } NAME_EX_TBL;
 
+#if !defined(OPENSSL_NO_UI) || !defined(OPENSSL_NO_ENGINE)
 static UI_METHOD *ui_method = NULL;
+#endif
 
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
