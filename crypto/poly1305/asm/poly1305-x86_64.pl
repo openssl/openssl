@@ -495,10 +495,10 @@ poly1305_blocks_avx:
 
 	################################# base 2^26 -> base 2^64
 	mov	$d1#d,$h0#d
-	and	\$-1<<31,$d1
+	and	\$`-1<<31`,$d1
 	mov	$d2,$r1			# borrow $r1
 	mov	$d2#d,$h1#d
-	and	\$-1<<31,$d2
+	and	\$`-1<<31`,$d2
 
 	shr	\$6,$d1
 	shl	\$52,$r1
@@ -1383,10 +1383,10 @@ poly1305_blocks_avx2:
 
 	################################# base 2^26 -> base 2^64
 	mov	$d1#d,$h0#d
-	and	\$-1<<31,$d1
+	and	\$`-1<<31`,$d1
 	mov	$d2,$r1			# borrow $r1
 	mov	$d2#d,$h1#d
-	and	\$-1<<31,$d2
+	and	\$`-1<<31`,$d2
 
 	shr	\$6,$d1
 	shl	\$52,$r1
@@ -1991,7 +1991,7 @@ $code.=<<___;
 .Lmask24:
 .long	0x0ffffff,0,0x0ffffff,0,0x0ffffff,0,0x0ffffff,0
 .L129:
-.long	1<<24,0,1<<24,0,1<<24,0,1<<24,0
+.long	`1<<24`,0,`1<<24`,0,`1<<24`,0,`1<<24`,0
 .Lmask26:
 .long	0x3ffffff,0,0x3ffffff,0,0x3ffffff,0,0x3ffffff,0
 .Lfive:
