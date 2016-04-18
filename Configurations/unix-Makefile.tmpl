@@ -217,8 +217,9 @@ build_apps_nodep: $(PROGRAMS) $(SCRIPTS)
 build_tests: configdata.pm build_tests_nodep depend
 build_tests_nodep: $(TESTPROGS)
 
-test tests: build_tests_nodep build_apps_nodep build_engines_nodep \
-            depend link-utils
+test: tests
+tests: build_tests_nodep build_apps_nodep build_engines_nodep \
+       depend link-utils
 	@ : {- output_off() if $disabled{tests}; "" -}
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
