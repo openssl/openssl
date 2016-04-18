@@ -286,7 +286,7 @@ my %globals;
 	    (opcode->mnemonic() =~ /^v?mov([qd])$/)		&& ($sz=$1)  ||
 	    (opcode->mnemonic() =~ /^v?pinsr([qdwb])$/)		&& ($sz=$1)  ||
 	    (opcode->mnemonic() =~ /^vpbroadcast([qdwb])$/)	&& ($sz=$1)  ||
-	    (opcode->mnemonic() =~ /^vinsert[fi]128$/)		&& ($sz="x");
+	    (opcode->mnemonic() =~ /^v(?!perm)[a-z]+[fi]128$/)	&& ($sz="x");
 
 	    if (defined($self->{index})) {
 		sprintf "%s[%s%s*%d%s]",$szmap{$sz},
@@ -607,7 +607,10 @@ my %globals;
 				    }
 				    last;
 				  };
-		/\.align/   && do { $self->{value} = "ALIGN\t".$line; last; };
+		/\.align/   && do { my $max = ($masm && $masm>=$masmref) ? 256 : 4096;
+				    $self->{value} = "ALIGN\t".($line>$max?$max:$line);
+				    last;
+				  };
 		/\.(value|long|rva|quad)/
 			    && do { my $sz  = substr($1,0,1);
 				    my @arr = split(/,\s*/,$line);
