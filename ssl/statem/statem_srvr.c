@@ -2079,7 +2079,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     EVP_PKEY *ckey = NULL;
 #endif
     PACKET enc_premaster;
-    const unsigned char *data;
     unsigned char *rsa_decrypt = NULL;
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
@@ -2301,6 +2300,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         DH *cdh;
         unsigned int i;
         BIGNUM *pub_key;
+        const unsigned char *data;
 
         if (!PACKET_get_net_2(pkt, &i)) {
             if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
@@ -2378,6 +2378,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             goto f_err;
         } else {
             unsigned int i;
+            const unsigned char *data;
 
             /*
              * Get client's public key from encoded point in the
@@ -2425,6 +2426,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_SRP
     if (alg_k & SSL_kSRP) {
         unsigned int i;
+        const unsigned char *data;
 
         if (!PACKET_get_net_2(pkt, &i)
                 || !PACKET_get_bytes(pkt, &data, i)) {
@@ -2467,6 +2469,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         int Ttag, Tclass;
         long Tlen;
         long sess_key_len;
+        const unsigned char *data;
 
         /* Get our certificate private key */
         alg_a = s->s3->tmp.new_cipher->algorithm_auth;
