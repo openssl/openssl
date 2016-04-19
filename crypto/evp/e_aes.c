@@ -184,7 +184,7 @@ void AES_xts_decrypt(const char *inp, char *out, size_t len,
                      const unsigned char iv[16]);
 #endif
 
-#if     defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
+#if defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
 # include "ppc_arch.h"
 # ifdef VPAES_ASM
 #  define VPAES_CAPABLE (OPENSSL_ppccap_P & PPC_ALTIVEC)
@@ -586,6 +586,15 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 # include "sparc_arch.h"
 
 extern unsigned int OPENSSL_sparcv9cap_P[];
+
+/*
+ * Initial Fujitsu SPARC64 X support
+ */
+# define HWAES_CAPABLE           (OPENSSL_sparcv9cap_P[0] & SPARCV9_FJAESX)
+# define HWAES_set_encrypt_key aes_fx_set_encrypt_key
+# define HWAES_set_decrypt_key aes_fx_set_decrypt_key
+# define HWAES_encrypt aes_fx_encrypt
+# define HWAES_decrypt aes_fx_decrypt
 
 # define SPARC_AES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_AES)
 
