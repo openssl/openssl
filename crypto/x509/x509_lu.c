@@ -743,6 +743,16 @@ void X509_STORE_set_lookup_crls_cb(X509_STORE *ctx,
     ctx->lookup_crls = cb;
 }
 
+int X509_STORE_set_ex_data(X509_STORE *ctx, int idx, void *data)
+{
+    return CRYPTO_set_ex_data(&ctx->ex_data, idx, data);
+}
+
+void *X509_STORE_get_ex_data(X509_STORE *ctx, int idx)
+{
+    return CRYPTO_get_ex_data(&ctx->ex_data, idx);
+}
+
 X509_STORE *X509_STORE_CTX_get0_store(X509_STORE_CTX *ctx)
 {
     return ctx->ctx;
