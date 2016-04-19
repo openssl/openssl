@@ -292,6 +292,10 @@ void X509_STORE_set_lookup_crls_cb(X509_STORE *ctx,
                                    STACK_OF(X509_CRL) *(*cb) (X509_STORE_CTX
                                                               *ctx,
                                                               X509_NAME *nm));
+#define X509_STORE_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_STORE, l, p, newf, dupf, freef)
+int X509_STORE_set_ex_data(X509_STORE *ctx, int idx, void *data);
+void *X509_STORE_get_ex_data(X509_STORE *ctx, int idx);
 
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 
