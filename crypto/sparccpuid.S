@@ -349,6 +349,14 @@ _sparcv9_random:
 .type	_sparcv9_random,#function
 .size	_sparcv9_random,.-_sparcv9_vis3_probe
 
+.global	_sparcv9_fjaesx_probe
+.align	8
+_sparcv9_fjaesx_probe:
+	.word	0x81b09206	!faesencx %f2,%f6,%f0
+	retl
+	nop
+.size	_sparcv9_fjaesx_probe,.-_sparcv9_fjaesx_probe
+
 .global	OPENSSL_cleanse
 .align	32
 OPENSSL_cleanse:

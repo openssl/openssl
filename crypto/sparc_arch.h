@@ -10,6 +10,7 @@
 # define SPARCV9_VIS3            (1<<6)
 # define SPARCV9_RANDOM          (1<<7)
 # define SPARCV9_64BIT_STACK     (1<<8)
+# define SPARCV9_FJAESX          (1<<9)/* Fujitsu SPARC64 X AES */
 
 /*
  * OPENSSL_sparcv9cap_P[1] is copy of Compatibility Feature Register,

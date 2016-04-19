@@ -149,11 +149,12 @@ void OPENSSL_cpuid_setup(void)
         unsigned int vec[1];
 
         if (getisax (vec,1)) {
-            if (vec[0]&0x0020) OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS1;
-            if (vec[0]&0x0040) OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS2;
-            if (vec[0]&0x0080) OPENSSL_sparcv9cap_P[0] |= SPARCV9_BLK;
-            if (vec[0]&0x0100) OPENSSL_sparcv9cap_P[0] |= SPARCV9_FMADD;
-            if (vec[0]&0x0400) OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS3;
+            if (vec[0]&0x0020)  OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS1;
+            if (vec[0]&0x0040)  OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS2;
+            if (vec[0]&0x0080)  OPENSSL_sparcv9cap_P[0] |= SPARCV9_BLK;
+            if (vec[0]&0x0100)  OPENSSL_sparcv9cap_P[0] |= SPARCV9_FMADD;
+            if (vec[0]&0x0400)  OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS3;
+            if (vec[0]&0x10000) OPENSSL_sparcv9cap_P[0] |= SPARCV9_FJAESX;
 
             /* reconstruct %cfr copy */
             OPENSSL_sparcv9cap_P[1] = (vec[0]>>17)&0x3ff;
@@ -231,6 +232,11 @@ void OPENSSL_cpuid_setup(void)
     if (sigsetjmp(common_jmp, 1) == 0) {
         _sparcv9_vis3_probe();
         OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS3;
+    }
+
+    if (sigsetjmp(common_jmp, 1) == 0) {
+        _sparcv9_fjaesx_probe();
+        OPENSSL_sparcv9cap_P[0] |= SPARCV9_FJAESX;
     }
 
     /*
