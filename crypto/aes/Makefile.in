@@ -70,6 +70,8 @@ aes-sparcv9.S: asm/aes-sparcv9.pl
 	$(PERL) asm/aes-sparcv9.pl $(PERLASM_SCHEME) $@
 aest4-sparcv9.S: asm/aest4-sparcv9.pl ../perlasm/sparcv9_modes.pl
 	$(PERL) asm/aest4-sparcv9.pl $(PERLASM_SCHEME) $@
+aesfx-sparcv9.S: asm/aesfx-sparcv9.pl
+	$(PERL) asm/aesfx-sparcv9.pl $(PERLASM_SCHEME) $@
 
 aes-ppc.s:	asm/aes-ppc.pl
 	$(PERL) asm/aes-ppc.pl $(PERLASM_SCHEME) $@
