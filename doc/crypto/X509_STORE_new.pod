@@ -32,5 +32,10 @@ X509_STORE_free() does not return values.
 =head1 SEE ALSO
 
 L<X509_STORE_set_verify_cb_func(3)>
+L<X509_STORE_get0_param(3)>
+
+=head1 HISTORY
+
+The B<X509_STORE_up_ref> function was added in OpenSSL 1.1.0
 
 =cut
