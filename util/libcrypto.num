@@ -4209,3 +4209,6 @@ X509_STORE_CTX_set0_untrusted           4082	1_1_0	EXIST::FUNCTION:
 OPENSSL_hexchar2int                     4083	1_1_0	EXIST::FUNCTION:
 X509_STORE_set_ex_data                  4084	1_1_0	EXIST::FUNCTION:
 X509_STORE_get_ex_data                  4085	1_1_0	EXIST::FUNCTION:
+X509_STORE_get0_objects                 4086	1_1_0	EXIST::FUNCTION:
+X509_STORE_get0_param                   4087	1_1_0	EXIST::FUNCTION:
+X509_OBJECT_get_type                    4088	1_1_0	EXIST::FUNCTION:
