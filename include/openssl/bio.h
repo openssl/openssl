@@ -637,14 +637,24 @@ const BIO_METHOD *BIO_f_linebuffer(void);
 const BIO_METHOD *BIO_f_nbio_test(void);
 # ifndef OPENSSL_NO_DGRAM
 const BIO_METHOD *BIO_s_datagram(void);
+int BIO_dgram_non_fatal_error(int error);
+BIO *BIO_new_dgram(int fd, int close_flag);
 #  ifndef OPENSSL_NO_SCTP
 const BIO_METHOD *BIO_s_datagram_sctp(void);
+BIO *BIO_new_dgram_sctp(int fd, int close_flag);
+int BIO_dgram_is_sctp(BIO *bio);
+int BIO_dgram_sctp_notification_cb(BIO *b,
+                                   void (*handle_notifications) (BIO *bio,
+                                                                 void *context,
+                                                                 void *buf),
+                                   void *context);
+int BIO_dgram_sctp_wait_for_dry(BIO *b);
+int BIO_dgram_sctp_msg_waiting(BIO *b);
 #  endif
 # endif
 
 int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);
-int BIO_dgram_non_fatal_error(int error);
 
 int BIO_fd_should_retry(int i);
 int BIO_fd_non_fatal_error(int error);
@@ -728,19 +738,6 @@ int BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options);
 int BIO_closesocket(int sock);
 
 BIO *BIO_new_socket(int sock, int close_flag);
-BIO *BIO_new_dgram(int fd, int close_flag);
-# ifndef OPENSSL_NO_SCTP
-BIO *BIO_new_dgram_sctp(int fd, int close_flag);
-int BIO_dgram_is_sctp(BIO *bio);
-int BIO_dgram_sctp_notification_cb(BIO *b,
-                                   void (*handle_notifications) (BIO *bio,
-                                                                 void
-                                                                 *context,
-                                                                 void *buf),
-                                   void *context);
-int BIO_dgram_sctp_wait_for_dry(BIO *b);
-int BIO_dgram_sctp_msg_waiting(BIO *b);
-# endif
 BIO *BIO_new_fd(int fd, int close_flag);
 BIO *BIO_new_connect(const char *host_port);
 BIO *BIO_new_accept(const char *host_port);
