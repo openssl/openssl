@@ -17,10 +17,10 @@ setup("test_d2i");
 
 plan tests => 2;
 
-ok(run(test(["d2i_test", "x509",
+ok(run(test(["d2i_test", "X509", "decode",
              srctop_file('test','d2i-tests','bad_cert.der')])),
    "Running d2i_test bad_cert.der");
 
-ok(run(test(["d2i_test", "generalname",
+ok(run(test(["d2i_test", "GENERAL_NAME", "decode",
              srctop_file('test','d2i-tests','bad_generalname.der')])),
    "Running d2i_test bad_generalname.der");
