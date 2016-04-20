@@ -392,10 +392,6 @@ extern FILE *_imp___iob;
 
 /*************/
 
-# if defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_DGRAM)
-#  define OPENSSL_NO_DGRAM
-# endif
-
 # ifdef USE_SOCKETS
 #  ifdef OPENSSL_NO_SOCK
 #  elif defined(WINDOWS) || defined(MSDOS)
