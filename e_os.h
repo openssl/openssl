@@ -223,7 +223,7 @@ extern "C" {
         */
 #    define _WIN32_WINNT 0x0501
 #   endif
-#   if !defined(OPENSSL_NO_SOCK) && (defined(_WIN32_WINNT) || defined(_WIN32_WCE))
+#   if defined(_WIN32_WINNT) || defined(_WIN32_WCE)
        /*
         * Just like defining _WIN32_WINNT including winsock2.h implies
         * certain "discipline" for maintaining [broad] binary compatibility.
