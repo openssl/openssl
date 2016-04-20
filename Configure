@@ -307,7 +307,6 @@ my @disablables = (
     "ripemd",
     "rmd160",
     "scrypt",
-    "sct",
     "sctp",
     "seed",
     "shared",
