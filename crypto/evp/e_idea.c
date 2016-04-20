@@ -82,13 +82,13 @@ static int idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                            const unsigned char *in, size_t inl)
 {
     BLOCK_CIPHER_ecb_loop()
-        idea_ecb_encrypt(in + i, out + i, &EVP_C_DATA(EVP_IDEA_KEY,ctx)->ks);
+        IDEA_ecb_encrypt(in + i, out + i, &EVP_C_DATA(EVP_IDEA_KEY,ctx)->ks);
     return 1;
 }
 
-BLOCK_CIPHER_func_cbc(idea, idea, EVP_IDEA_KEY, ks)
-BLOCK_CIPHER_func_ofb(idea, idea, 64, EVP_IDEA_KEY, ks)
-BLOCK_CIPHER_func_cfb(idea, idea, 64, EVP_IDEA_KEY, ks)
+BLOCK_CIPHER_func_cbc(idea, IDEA, EVP_IDEA_KEY, ks)
+BLOCK_CIPHER_func_ofb(idea, IDEA, 64, EVP_IDEA_KEY, ks)
+BLOCK_CIPHER_func_cfb(idea, IDEA, 64, EVP_IDEA_KEY, ks)
 
 BLOCK_CIPHER_defs(idea, IDEA_KEY_SCHEDULE, NID_idea, 8, 16, 8, 64,
                   0, idea_init_key, NULL,
