@@ -400,48 +400,51 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_set_app_data(s,arg)         BIO_set_ex_data(s,0,arg)
 # define BIO_get_app_data(s)             BIO_get_ex_data(s,0)
 
-/* IP families we support, for BIO_s_connect() and BIO_s_accept() */
-/* Note: the underlying operating system may not support some of them */
-# define BIO_FAMILY_IPV4                         4
-# define BIO_FAMILY_IPV6                         6
-# define BIO_FAMILY_IPANY                        256
-
-/* BIO_s_connect() */
-# define BIO_set_conn_hostname(b,name) BIO_ctrl(b,BIO_C_SET_CONNECT,0,(char *)name)
-# define BIO_set_conn_port(b,port)     BIO_ctrl(b,BIO_C_SET_CONNECT,1,(char *)port)
-# define BIO_set_conn_address(b,addr)  BIO_ctrl(b,BIO_C_SET_CONNECT,2,(char *)addr)
-# define BIO_set_conn_ip_family(b,f)   BIO_int_ctrl(b,BIO_C_SET_CONNECT,3,f)
-# define BIO_get_conn_hostname(b)      ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,0,NULL))
-# define BIO_get_conn_port(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,1,NULL))
-# define BIO_get_conn_address(b)       ((const BIO_ADDR *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,2,NULL))
-# define BIO_get_conn_ip_family(b)     BIO_ctrl(b,BIO_C_GET_CONNECT,3,NULL)
-# define BIO_set_conn_mode(b,n)        BIO_ctrl(b,BIO_C_SET_CONNECT_MODE,(n),NULL)
-
 # define BIO_set_nbio(b,n)             BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
 
+# ifndef OPENSSL_NO_SOCK
+/* IP families we support, for BIO_s_connect() and BIO_s_accept() */
+/* Note: the underlying operating system may not support some of them */
+#  define BIO_FAMILY_IPV4                         4
+#  define BIO_FAMILY_IPV6                         6
+#  define BIO_FAMILY_IPANY                        256
+
+/* BIO_s_connect() */
+#  define BIO_set_conn_hostname(b,name) BIO_ctrl(b,BIO_C_SET_CONNECT,0,(char *)name)
+#  define BIO_set_conn_port(b,port)     BIO_ctrl(b,BIO_C_SET_CONNECT,1,(char *)port)
+#  define BIO_set_conn_address(b,addr)  BIO_ctrl(b,BIO_C_SET_CONNECT,2,(char *)addr)
+#  define BIO_set_conn_ip_family(b,f)   BIO_int_ctrl(b,BIO_C_SET_CONNECT,3,f)
+#  define BIO_get_conn_hostname(b)      ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,0,NULL))
+#  define BIO_get_conn_port(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,1,NULL))
+#  define BIO_get_conn_address(b)       ((const BIO_ADDR *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,2,NULL))
+#  define BIO_get_conn_ip_family(b)     BIO_ctrl(b,BIO_C_GET_CONNECT,3,NULL)
+#  define BIO_set_conn_mode(b,n)        BIO_ctrl(b,BIO_C_SET_CONNECT_MODE,(n),NULL)
+
 /* BIO_s_accept() */
-# define BIO_set_accept_name(b,name)   BIO_ctrl(b,BIO_C_SET_ACCEPT,0,(char *)name)
-# define BIO_set_accept_port(b,port)   BIO_ctrl(b,BIO_C_SET_ACCEPT,1,(char *)port)
-# define BIO_get_accept_name(b)        ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,0))
-# define BIO_get_accept_port(b)        ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,1))
-# define BIO_get_peer_name(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,2))
-# define BIO_get_peer_port(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,3))
+#  define BIO_set_accept_name(b,name)   BIO_ctrl(b,BIO_C_SET_ACCEPT,0,(char *)name)
+#  define BIO_set_accept_port(b,port)   BIO_ctrl(b,BIO_C_SET_ACCEPT,1,(char *)port)
+#  define BIO_get_accept_name(b)        ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,0))
+#  define BIO_get_accept_port(b)        ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,1))
+#  define BIO_get_peer_name(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,2))
+#  define BIO_get_peer_port(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,3))
 /* #define BIO_set_nbio(b,n)    BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL) */
-# define BIO_set_nbio_accept(b,n)      BIO_ctrl(b,BIO_C_SET_ACCEPT,2,(n)?(void *)"a":NULL)
-# define BIO_set_accept_bios(b,bio)    BIO_ctrl(b,BIO_C_SET_ACCEPT,3,(char *)bio)
-# define BIO_set_accept_ip_family(b,f) BIO_int_ctrl(b,BIO_C_SET_ACCEPT,4,f)
-# define BIO_get_accept_ip_family(b)   BIO_ctrl(b,BIO_C_GET_ACCEPT,4,NULL)
+#  define BIO_set_nbio_accept(b,n)      BIO_ctrl(b,BIO_C_SET_ACCEPT,2,(n)?(void *)"a":NULL)
+#  define BIO_set_accept_bios(b,bio)    BIO_ctrl(b,BIO_C_SET_ACCEPT,3,(char *)bio)
+#  define BIO_set_accept_ip_family(b,f) BIO_int_ctrl(b,BIO_C_SET_ACCEPT,4,f)
+#  define BIO_get_accept_ip_family(b)   BIO_ctrl(b,BIO_C_GET_ACCEPT,4,NULL)
 
 /* Aliases kept for backward compatibility */
-# define BIO_BIND_NORMAL                 0
-# define BIO_BIND_REUSEADDR              BIO_SOCK_REUSEADDR
-# define BIO_BIND_REUSEADDR_IF_UNUSED    BIO_SOCK_REUSEADDR
-# define BIO_set_bind_mode(b,mode) BIO_ctrl(b,BIO_C_SET_BIND_MODE,mode,NULL)
-# define BIO_get_bind_mode(b)    BIO_ctrl(b,BIO_C_GET_BIND_MODE,0,NULL)
+#  define BIO_BIND_NORMAL                 0
+#  define BIO_BIND_REUSEADDR              BIO_SOCK_REUSEADDR
+#  define BIO_BIND_REUSEADDR_IF_UNUSED    BIO_SOCK_REUSEADDR
+#  define BIO_set_bind_mode(b,mode) BIO_ctrl(b,BIO_C_SET_BIND_MODE,mode,NULL)
+#  define BIO_get_bind_mode(b)    BIO_ctrl(b,BIO_C_GET_BIND_MODE,0,NULL)
 
 /* BIO_s_accept() and BIO_s_connect() */
-# define BIO_do_connect(b)       BIO_do_handshake(b)
-# define BIO_do_accept(b)        BIO_do_handshake(b)
+#  define BIO_do_connect(b)       BIO_do_handshake(b)
+#  define BIO_do_accept(b)        BIO_do_handshake(b)
+# endif /* OPENSSL_NO_SOCK */
+
 # define BIO_do_handshake(b)     BIO_ctrl(b,BIO_C_DO_STATE_MACHINE,0,NULL)
 
 /* BIO_s_datagram(), BIO_s_fd(), BIO_s_socket(), BIO_s_accept() and BIO_s_connect() */
@@ -624,9 +627,11 @@ long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
 const BIO_METHOD *BIO_s_mem(void);
 const BIO_METHOD *BIO_s_secmem(void);
 BIO *BIO_new_mem_buf(const void *buf, int len);
+# ifndef OPENSSL_NO_SOCK
 const BIO_METHOD *BIO_s_socket(void);
 const BIO_METHOD *BIO_s_connect(void);
 const BIO_METHOD *BIO_s_accept(void);
+# endif
 const BIO_METHOD *BIO_s_fd(void);
 const BIO_METHOD *BIO_s_log(void);
 const BIO_METHOD *BIO_s_bio(void);
@@ -653,8 +658,10 @@ int BIO_dgram_sctp_msg_waiting(BIO *b);
 #  endif
 # endif
 
+# ifndef OPENSSL_NO_SOCK
 int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);
+# endif
 
 int BIO_fd_should_retry(int i);
 int BIO_fd_non_fatal_error(int error);
@@ -671,6 +678,7 @@ int BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent);
 int BIO_hex_string(BIO *out, int indent, int width, unsigned char *data,
                    int datalen);
 
+# ifndef OPENSSL_NO_SOCK
 BIO_ADDR *BIO_ADDR_new(void);
 int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
                      const void *where, size_t wherelen, unsigned short port);
@@ -705,9 +713,9 @@ int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);
 int BIO_sock_init(void);
-#if OPENSSL_API_COMPAT < 0x10100000L
-# define BIO_sock_cleanup() while(0) continue
-#endif
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define BIO_sock_cleanup() while(0) continue
+# endif
 int BIO_set_tcp_ndelay(int sock, int turn_on);
 
 DEPRECATEDIN_1_1_0(struct hostent *BIO_gethostbyname(const char *name))
@@ -725,11 +733,11 @@ enum BIO_sock_info_type {
 int BIO_sock_info(int sock,
                   enum BIO_sock_info_type type, union BIO_sock_info_u *info);
 
-# define BIO_SOCK_REUSEADDR    0x01
-# define BIO_SOCK_V6_ONLY      0x02
-# define BIO_SOCK_KEEPALIVE    0x04
-# define BIO_SOCK_NONBLOCK     0x08
-# define BIO_SOCK_NODELAY      0x10
+#  define BIO_SOCK_REUSEADDR    0x01
+#  define BIO_SOCK_V6_ONLY      0x02
+#  define BIO_SOCK_KEEPALIVE    0x04
+#  define BIO_SOCK_NONBLOCK     0x08
+#  define BIO_SOCK_NODELAY      0x10
 
 int BIO_socket(int domain, int socktype, int protocol, int options);
 int BIO_connect(int sock, const BIO_ADDR *addr, int options);
@@ -738,9 +746,11 @@ int BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options);
 int BIO_closesocket(int sock);
 
 BIO *BIO_new_socket(int sock, int close_flag);
-BIO *BIO_new_fd(int fd, int close_flag);
 BIO *BIO_new_connect(const char *host_port);
 BIO *BIO_new_accept(const char *host_port);
+# endif /* OPENSSL_NO_SOCK*/
+
+BIO *BIO_new_fd(int fd, int close_flag);
 
 int BIO_new_bio_pair(BIO **bio1, size_t writebuf1,
                      BIO **bio2, size_t writebuf2);

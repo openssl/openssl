@@ -1027,13 +1027,13 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
 
 static BIO *init_responder(const char *port)
 {
-    BIO *acbio = NULL, *bufbio = NULL;
-
 # ifdef OPENSSL_NO_SOCK
     BIO_printf(bio_err,
                "Error setting up accept BIO - sockets not supported.\n");
     return NULL;
-# endif
+# else
+    BIO *acbio = NULL, *bufbio = NULL;
+
     bufbio = BIO_new(BIO_f_buffer());
     if (bufbio == NULL)
         goto err;
@@ -1060,9 +1060,10 @@ static BIO *init_responder(const char *port)
     BIO_free_all(acbio);
     BIO_free(bufbio);
     return NULL;
+# endif
 }
 
-
+# ifndef OPENSSL_NO_SOCK
 /*
  * Decode %xx URL-decoding in-place. Ignores mal-formed sequences.
  */
@@ -1086,9 +1087,13 @@ static int urldecode(char *p)
     *out = '\0';
     return (int)(out - save);
 }
+# endif
 
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
 {
+# ifdef OPENSSL_NO_SOCK
+    return 0;
+# else
     int len;
     OCSP_REQUEST *req = NULL;
     char inbuf[2048], reqbuf[2048];
@@ -1169,7 +1174,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
     *preq = req;
 
     return 1;
-
+# endif
 }
 
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
