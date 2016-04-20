@@ -16,18 +16,35 @@
 #include "testutil.h"
 
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "e_os.h"
 
 static const ASN1_ITEM *item_type;
 static const char *test_file;
 
+typedef enum {
+    ASN1_UNKNOWN,
+    ASN1_OK,
+    ASN1_BIO,
+    ASN1_DECODE,
+    ASN1_ENCODE,
+    ASN1_COMPARE
+} expected_error_t;
+
+typedef struct {
+    const char *str;
+    expected_error_t code;
+} error_enum;
+
+static expected_error_t expected_error = ASN1_UNKNOWN;
+
 typedef struct d2i_test_fixture {
     const char *test_case_name;
 } D2I_TEST_FIXTURE;
-
 
 static D2I_TEST_FIXTURE set_up(const char *const test_case_name)
 {
@@ -43,27 +60,56 @@ static int execute_test(D2I_TEST_FIXTURE fixture)
     int ret = 0;
     unsigned char buf[2048];
     const unsigned char *buf_ptr = buf;
+    unsigned char *der = NULL;
+    int derlen;
     int len;
 
     if ((bio = BIO_new_file(test_file, "r")) == NULL)
         return 0;
 
+    if (expected_error == ASN1_BIO) {
+        value = ASN1_item_d2i_bio(item_type, bio, NULL);
+        if (value == NULL)
+            ret = 1;
+        goto err;
+    }
+
     /*
-     * We don't use ASN1_item_d2i_bio because it, apparently,
-     * errors too early for some inputs.
+     * Unless we are testing it we don't use ASN1_item_d2i_bio because it
+     * performs sanity checks on the input and can reject it before the
+     * decoder is called.
      */
     len = BIO_read(bio, buf, sizeof buf);
     if (len < 0)
         goto err;
 
     value = ASN1_item_d2i(NULL, &buf_ptr, len, item_type);
-    if (value != NULL)
+    if (value == NULL) {
+        if (expected_error == ASN1_DECODE)
+            ret = 1;
         goto err;
+    }
 
-    ret = 1;
+    derlen = ASN1_item_i2d(value, &der, item_type);
+
+    if (der == NULL || derlen < 0) {
+        if (expected_error == ASN1_ENCODE)
+            ret = 1;
+        goto err;
+    }
+
+    if (derlen != len || memcmp(der, buf, derlen) != 0) {
+        if (expected_error == ASN1_COMPARE)
+            ret = 1;
+        goto err;
+    }
+
+    if (expected_error == ASN1_OK)
+        ret = 1;
 
  err:
     BIO_free(bio);
+    OPENSSL_free(der);
     ASN1_item_free(value, item_type);
     return ret;
 }
@@ -93,19 +139,59 @@ int main(int argc, char **argv)
 {
     int result = 0;
     const char *test_type_name;
+    const char *expected_error_string;
 
-    if (argc != 3)
+    size_t i;
+    static ASN1_ITEM_EXP *items[] = {
+        ASN1_ITEM_ref(ASN1_ANY),
+        ASN1_ITEM_ref(X509),
+        ASN1_ITEM_ref(GENERAL_NAME)
+    };
+
+    static error_enum expected_errors[] = {
+        {"OK", ASN1_OK},
+        {"BIO", ASN1_BIO},
+        {"decode", ASN1_DECODE},
+        {"encode", ASN1_ENCODE},
+        {"compare", ASN1_COMPARE}
+    };
+
+    if (argc != 4) {
+        fprintf(stderr,
+                "Usage: d2i_test item_name expected_error file.der\n");
         return 1;
+    }
 
     test_type_name = argv[1];
-    test_file = argv[2];
+    expected_error_string = argv[2];
+    test_file = argv[3];
 
-    if (strcmp(test_type_name, "generalname") == 0) {
-        item_type = ASN1_ITEM_rptr(GENERAL_NAME);
-    } else if (strcmp(test_type_name, "x509") == 0) {
-        item_type = ASN1_ITEM_rptr(X509);
-    } else {
-        fprintf(stderr, "Bad type %s\n", test_type_name);
+    for (i = 0; i < OSSL_NELEM(items); i++) {
+        const ASN1_ITEM *it = ASN1_ITEM_ptr(items[i]);
+        if (strcmp(test_type_name, it->sname) == 0) {
+            item_type = it;
+            break;
+        }
+    }
+    if (item_type == NULL) {
+        fprintf(stderr, "Unknown type %s\n", test_type_name);
+        fprintf(stderr, "Supported types:\n");
+        for (i = 0; i < OSSL_NELEM(items); i++) {
+            const ASN1_ITEM *it = ASN1_ITEM_ptr(items[i]);
+            fprintf(stderr, "\t%s\n", it->sname);
+        }
+        return 1;
+    }
+
+    for (i = 0; i < OSSL_NELEM(expected_errors); i++) {
+        if (strcmp(expected_errors[i].str, expected_error_string) == 0) {
+            expected_error = expected_errors[i].code;
+            break;
+        }
+    }
+
+    if (expected_error == ASN1_UNKNOWN) {
+        fprintf(stderr, "Unknown expected error %s\n", expected_error_string);
         return 1;
     }
 
