@@ -268,7 +268,7 @@ EVP_des_ede3                            264	1_1_0	EXIST::FUNCTION:DES
 PKCS7_add1_attrib_digest                265	1_1_0	EXIST::FUNCTION:
 EC_POINT_get_affine_coordinates_GFp     266	1_1_0	EXIST::FUNCTION:EC
 EVP_seed_ecb                            267	1_1_0	EXIST::FUNCTION:SEED
-BIO_dgram_sctp_wait_for_dry             268	1_1_0	EXIST::FUNCTION:SCTP
+BIO_dgram_sctp_wait_for_dry             268	1_1_0	EXIST::FUNCTION:DGRAM,SCTP
 ASN1_OCTET_STRING_NDEF_it               269	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ASN1_OCTET_STRING_NDEF_it               269	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 EVP_PKEY_asn1_get_count                 270	1_1_0	EXIST::FUNCTION:
@@ -333,7 +333,7 @@ X509_OBJECT_up_ref_count                328	1_1_0	EXIST::FUNCTION:
 RAND_load_file                          329	1_1_0	EXIST::FUNCTION:
 BIO_ctrl_reset_read_request             330	1_1_0	EXIST::FUNCTION:
 CRYPTO_ccm128_tag                       331	1_1_0	EXIST::FUNCTION:
-BIO_new_dgram_sctp                      332	1_1_0	EXIST::FUNCTION:SCTP
+BIO_new_dgram_sctp                      332	1_1_0	EXIST::FUNCTION:DGRAM,SCTP
 d2i_RSAPrivateKey_fp                    333	1_1_0	EXIST::FUNCTION:RSA,STDIO
 s2i_ASN1_IA5STRING                      334	1_1_0	EXIST::FUNCTION:
 UI_get_ex_data                          335	1_1_0	EXIST::FUNCTION:
@@ -1000,7 +1000,7 @@ d2i_DSAPublicKey                        972	1_1_0	EXIST::FUNCTION:DSA
 ENGINE_get_name                         973	1_1_0	EXIST::FUNCTION:ENGINE
 CRYPTO_THREAD_read_lock                 974	1_1_0	EXIST::FUNCTION:
 ASIdentifierChoice_free                 975	1_1_0	EXIST::FUNCTION:RFC3779
-BIO_dgram_sctp_msg_waiting              976	1_1_0	EXIST::FUNCTION:SCTP
+BIO_dgram_sctp_msg_waiting              976	1_1_0	EXIST::FUNCTION:DGRAM,SCTP
 CRYPTO_get_dynlock_value                977	1_1_0	NOEXIST::FUNCTION:
 BN_is_bit_set                           978	1_1_0	EXIST::FUNCTION:
 AES_ofb128_encrypt                      979	1_1_0	EXIST::FUNCTION:
@@ -1496,7 +1496,7 @@ EVP_PKEY_get0_asn1                      1450	1_1_0	EXIST::FUNCTION:
 EVP_camellia_192_ctr                    1451	1_1_0	EXIST::FUNCTION:CAMELLIA
 EVP_PKEY_free                           1452	1_1_0	EXIST::FUNCTION:
 X509_ATTRIBUTE_count                    1453	1_1_0	EXIST::FUNCTION:
-BIO_new_dgram                           1454	1_1_0	EXIST::FUNCTION:
+BIO_new_dgram                           1454	1_1_0	EXIST::FUNCTION:DGRAM
 CMS_RecipientInfo_kari_get0_reks        1455	1_1_0	EXIST::FUNCTION:CMS
 BASIC_CONSTRAINTS_new                   1456	1_1_0	EXIST::FUNCTION:
 PEM_read_bio_X509_REQ                   1457	1_1_0	EXIST::FUNCTION:
@@ -2439,7 +2439,7 @@ OTHERNAME_it                            2363	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION
 OTHERNAME_it                            2363	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 X509at_add1_attr_by_txt                 2364	1_1_0	EXIST::FUNCTION:
 PKCS7_SIGN_ENVELOPE_free                2365	1_1_0	EXIST::FUNCTION:
-BIO_dgram_is_sctp                       2366	1_1_0	EXIST::FUNCTION:SCTP
+BIO_dgram_is_sctp                       2366	1_1_0	EXIST::FUNCTION:DGRAM,SCTP
 DH_check                                2367	1_1_0	EXIST::FUNCTION:DH
 Camellia_set_key                        2368	1_1_0	EXIST::FUNCTION:CAMELLIA
 X509_LOOKUP_by_issuer_serial            2369	1_1_0	EXIST::FUNCTION:
@@ -3117,7 +3117,7 @@ DES_ede3_cfb64_encrypt                  3012	1_1_0	EXIST::FUNCTION:DES
 DSO_METHOD_vms                          3013	1_1_0	NOEXIST::FUNCTION:
 POLICY_MAPPING_free                     3014	1_1_0	EXIST::FUNCTION:
 EVP_aes_128_gcm                         3015	1_1_0	EXIST::FUNCTION:
-BIO_dgram_non_fatal_error               3016	1_1_0	EXIST::FUNCTION:
+BIO_dgram_non_fatal_error               3016	1_1_0	EXIST::FUNCTION:DGRAM
 OCSP_request_is_signed                  3017	1_1_0	EXIST::FUNCTION:
 i2d_BASIC_CONSTRAINTS                   3018	1_1_0	EXIST::FUNCTION:
 EC_KEY_get_method                       3019	1_1_0	EXIST::FUNCTION:EC
@@ -3677,7 +3677,7 @@ X509_STORE_set1_param                   3563	1_1_0	EXIST::FUNCTION:
 RAND_file_name                          3564	1_1_0	EXIST::FUNCTION:
 DSO_METHOD_dl                           3565	1_1_0	NOEXIST::FUNCTION:
 EVP_CipherInit_ex                       3566	1_1_0	EXIST::FUNCTION:
-BIO_dgram_sctp_notification_cb          3567	1_1_0	EXIST::FUNCTION:SCTP
+BIO_dgram_sctp_notification_cb          3567	1_1_0	EXIST::FUNCTION:DGRAM,SCTP
 ERR_load_RAND_strings                   3568	1_1_0	EXIST::FUNCTION:
 X509_ATTRIBUTE_it                       3569	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_ATTRIBUTE_it                       3569	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
