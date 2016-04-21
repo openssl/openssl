@@ -379,6 +379,18 @@ item muct be the generator file.  It is, however, entirely up to the
 build file template to define exactly how those command lines should
 be handled, how the output is captured and so on.
 
+Sometimes, the generator file itself depends on other files, for
+example if it is a perl script that depends on other perl modules.
+This can be expressed using DEPEND like this:
+
+    DEPEND[asm/something.pl]=../perlasm/Foo.pm
+
+There may also be cases where the exact file isn't easily specified,
+but an inclusion directory still needs to be specified.  INCLUDE can
+be used in that case:
+
+    INCLUDE[asm/something.pl]=../perlasm
+
 NOTE: GENERATE lines are limited to one command only per GENERATE.
 
 As a last resort, it's possible to have raw build file lines, between
@@ -498,6 +510,8 @@ They are all expected to return a string with the lines they produce.
 
                         generatesrc(src => "PATH/TO/tobegenerated",
                                     generator => [ "generatingfile", ... ]
+                                    generator_incs => [ "INCL/PATH", ... ]
+                                    generator_deps => [ "dep1", ... ]
                                     generator => [ "generatingfile", ... ]
                                     incs => [ "INCL/PATH", ... ],
                                     deps => [ "dep1", ... ],
@@ -509,11 +523,14 @@ They are all expected to return a string with the lines they produce.
                   expected to be the file to generate from.
                   generatesrc() is expected to analyse and figure out
                   exactly how to apply that file and how to capture
-                  the result.  'incs' and 'deps' are include
-                  directories and files that are used if $(CC) used as
-                  an intermediary step when generating the end product
-                  (the file indicated by 'src').  'intent' indicates
-                  what the generated file is going to be used for.
+                  the result.  'generator_incs' and 'generator_deps'
+                  are include directories and files that the generator
+                  file itself depends on.  'incs' and 'deps' are
+                  include directories and files that are used if $(CC)
+                  is used as an intermediary step when generating the
+                  end product (the file indicated by 'src').  'intent'
+                  indicates what the generated file is going to be
+                  used for.
 
     src2obj     - function that produces build file lines to build an
                   object file from source files and associated data.
