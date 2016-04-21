@@ -498,6 +498,8 @@ They are all expected to return a string with the lines they produce.
 
                         generatesrc(src => "PATH/TO/tobegenerated",
                                     generator => [ "generatingfile", ... ]
+                                    generator => [ "generatingfile", ... ]
+                                    incs => [ "INCL/PATH", ... ],
                                     deps => [ "dep1", ... ],
                                     intent => one of "libs", "dso", "bin" );
 
@@ -507,9 +509,11 @@ They are all expected to return a string with the lines they produce.
                   expected to be the file to generate from.
                   generatesrc() is expected to analyse and figure out
                   exactly how to apply that file and how to capture
-                  the result.  'deps' is a list of explicit
-                  dependencies.  'intent' indicates what the generated
-                  file is going to be used for.
+                  the result.  'incs' and 'deps' are include
+                  directories and files that are used if $(CC) used as
+                  an intermediary step when generating the end product
+                  (the file indicated by 'src').  'intent' indicates
+                  what the generated file is going to be used for.
 
     src2obj     - function that produces build file lines to build an
                   object file from source files and associated data.
