@@ -483,8 +483,8 @@ int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 {
     if (key->group == NULL || key->group->meth == NULL)
         return 0;
-    if (key->group->meth->set_private
-        && key->meth->set_private(key, priv_key) == 0)
+    if (key->group->meth->set_private != NULL
+        && key->group->meth->set_private(key, priv_key) == 0)
         return 0;
     if (key->meth->set_private != NULL
         && key->meth->set_private(key, priv_key) == 0)
