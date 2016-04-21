@@ -439,6 +439,18 @@ struct bn_gencb_st {
 # define BN_MUL_LOW_RECURSIVE_SIZE_NORMAL        (32)/* 32 */
 # define BN_MONT_CTX_SET_SIZE_WORD               (64)/* 32 */
 
+/* Helper macros to make static bignums */
+#define BN_STATIC_INIT(x) { (BN_ULONG *) x, \
+            sizeof(x)/sizeof(x[0]), \
+            sizeof(x)/sizeof(x[0]), \
+            0, BN_FLG_STATIC_DATA }
+
+#if (BN_BITS2 == 64)
+#    define BN_PACK2(a1,a2) ((((BN_ULONG)0x##a1)<<32)|0x##a2)
+#elif (BN_BITS2 == 32)
+#    define BN_PACK2(a1,a2) 0x##a2, 0x##a1
+#endif
+
 /*
  * 2011-02-22 SMS. In various places, a size_t variable or a type cast to
  * size_t was used to perform integer-only operations on pointers.  This
