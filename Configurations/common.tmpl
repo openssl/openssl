@@ -42,8 +42,11 @@
      my $bin = shift;
      my %opts = @_;
      if ($unified_info{generate}->{$src}) {
+         my $script = $unified_info{generate}->{$src}->[0];
          $OUT .= generatesrc(src => $src,
                              generator => $unified_info{generate}->{$src},
+                             generator_incs => $unified_info{includes}->{$script},
+                             generator_deps => $unified_info{depends}->{$script},
                              deps => $unified_info{depends}->{$src},
                              incs => [ @{$unified_info{includes}->{$bin}},
                                        @{$unified_info{includes}->{$obj}} ],

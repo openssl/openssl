@@ -808,19 +808,20 @@ configdata.pm: $(SRCDIR)/Configurations/unix-Makefile.tmpl $(SRCDIR)/Configurati
   sub generatesrc {
       my %args = @_;
       my $generator = join(" ", @{$args{generator}});
+      my $generator_incs = join("", map { " -I".$_ } @{$args{generator_incs}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
-      my $deps = join(" ", @{$args{deps}});
+      my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
 
       if ($args{src} !~ /\.[sS]$/) {
           return <<"EOF";
 $args{src}: $args{generator}->[0] $deps
-	\$(PERL) $generator > \$@
+	\$(PERL)$generator_incs $generator > \$@
 EOF
       } else {
           if ($args{generator}->[0] =~ /\.pl$/) {
-              $generator = 'CC="$(CC)" $(PERL) '.$generator;
+              $generator = 'CC="$(CC)" $(PERL)'.$generator_incs.' '.$generator;
           } elsif ($args{generator}->[0] =~ /\.m4$/) {
-              $generator = 'm4 -B 8192 '.$generator.' >'
+              $generator = 'm4 -B 8192'.$generator_incs.' '.$generator.' >'
           } elsif ($args{generator}->[0] =~ /\.S$/) {
               $generator = undef;
           } else {

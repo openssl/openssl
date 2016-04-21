@@ -441,12 +441,13 @@ configdata.pm : {- join(" ", sourcefile("Configurations", "descrip.mms.tmpl"), s
   sub generatesrc {
       my %args = @_;
       my $generator = join(" ", @{$args{generator}});
-      my $deps = join(", -\n\t\t", @{$args{deps}});
+      my $generator_incs = join("", map { ' "-I'.$_.'"' } @{$args{generator_incs}});
+      my $deps = join(", -\n\t\t", @{$args{generator_deps}}, @{$args{deps}});
 
       if ($args{src} !~ /\.[sS]$/) {
           return <<"EOF";
 $args{src} : $args{generator}->[0] $deps
-	\$(PERL) $generator > \$@
+	\$(PERL)$generator_incs $generator > \$@
 EOF
       } else {
           die "No method to generate assembler source present.\n";
