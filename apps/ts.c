@@ -319,8 +319,7 @@ int ts_main(int argc, char **argv)
             break;
         }
     }
-    argc = opt_num_rest();
-    if (mode == OPT_ERR || argc != 0)
+    if (mode == OPT_ERR || opt_num_rest() != 0)
         goto opthelp;
 
     /* Seed the random number generator if it is going to be used. */
