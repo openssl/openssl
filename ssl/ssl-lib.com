@@ -26,9 +26,10 @@ $!  information.
 $!
 $!  Specify which compiler at P3 to try to compile under.
 $!
-$!	   VAXC	 For VAX C.
-$!	   DECC	 For DEC C.
-$!	   GNUC	 For GNU C.
+$!	   VAXC		For VAX C.
+$!	   DECC		For DEC C.
+$!	   DECC_AI	For DEC C using /NAMES=AS_IS.
+$!	   GNUC		For GNU C.
 $!
 $!  If you don't specify a compiler, it will try to determine which
 $!  "C" compiler to use.
@@ -919,7 +920,7 @@ $ ENDIF
 $!
 $!  Check To See If The User Entered A Valid Parameter.
 $!
-$ IF (P3.EQS."VAXC").OR.(P3.EQS."DECC").OR.(P3.EQS."GNUC")
+$ IF (P3.EQS."VAXC").OR.(P3.EQS."DECC").OR.(P3.EQS."DECC_AI").OR.(P3.EQS."GNUC")
 $ THEN
 $!
 $!  Check To See If The User Wanted DECC.
@@ -942,6 +943,36 @@ $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + " /''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
        "''POINTER_SIZE' /NOLIST /PREFIX=ALL" + -
+       " /INCLUDE=(''CC_INCLUDES') " + CCEXTRAFLAGS
+$!
+$!    Define The Linker Options File Name.
+$!
+$     OPT_FILE = "VAX_DECC_OPTIONS.OPT"
+$!
+$!  End DECC Check.
+$!
+$   ENDIF
+$!
+$!  Check To See If The User Wanted DECC_AI.
+$!
+$   IF (P3.EQS."DECC_AI")
+$   THEN
+$!
+$!    Looks Like DECC, Set To Use DECC.
+$!
+$     COMPILER = "DECC"
+$!
+$!    Tell The User We Are Using DECC.
+$!
+$     WRITE SYS$OUTPUT "Using DECC 'C' Compiler with /NAMES=AS_IS."
+$!
+$!    Use DECC...
+$!
+$     CC = "CC"
+$     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
+	 THEN CC = "CC/DECC"
+$     CC = CC + " /''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
+       "''POINTER_SIZE' /NOLIST /PREFIX=ALL /NAMES=AS_IS " + -
        " /INCLUDE=(''CC_INCLUDES') " + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
@@ -1074,9 +1105,10 @@ $!
 $   WRITE SYS$OUTPUT ""
 $   WRITE SYS$OUTPUT "The Option ",P3," Is Invalid.  The Valid Options Are:"
 $   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "    VAXC  :  To Compile With VAX C."
-$   WRITE SYS$OUTPUT "    DECC  :  To Compile With DEC C."
-$   WRITE SYS$OUTPUT "    GNUC  :  To Compile With GNU C."
+$   WRITE SYS$OUTPUT "    VAXC     :  To Compile With VAX C."
+$   WRITE SYS$OUTPUT "    DECC     :  To Compile With DEC C."
+$   WRITE SYS$OUTPUT "    DECC_AI  :  To Compile With DEC C with /NAMES=AS_IS."
+$   WRITE SYS$OUTPUT "    GNUC     :  To Compile With GNU C."
 $   WRITE SYS$OUTPUT ""
 $!
 $!  Time To EXIT.
