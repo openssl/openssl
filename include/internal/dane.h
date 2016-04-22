@@ -121,7 +121,8 @@ struct ssl_dane_st {
     int             pdpth;      /* Depth of PKIX trust */
 };
 
-#define DANETLS_ENABLED(dane)  ((dane) != NULL && ((dane)->trecs != NULL))
+#define DANETLS_ENABLED(dane)  \
+    ((dane) != NULL && sk_danetls_record_num((dane)->trecs) > 0)
 
 #define DANETLS_USAGE_BIT(u)   (((uint32_t)1) << u)
 
