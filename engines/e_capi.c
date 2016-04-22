@@ -176,9 +176,11 @@ static int capi_rsa_priv_dec(int flen, const unsigned char *from,
                              unsigned char *to, RSA *rsa, int padding);
 static int capi_rsa_free(RSA *rsa);
 
+# ifndef OPENSSL_NO_DSA
 static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
                                  DSA *dsa);
 static int capi_dsa_free(DSA *dsa);
+# endif
 
 static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
                                      STACK_OF(X509_NAME) *ca_dn, X509 **pcert,
@@ -432,7 +434,9 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 }
 
 static RSA_METHOD *capi_rsa_method = NULL;
+# ifndef OPENSSL_NO_DSA
 static DSA_METHOD *capi_dsa_method = NULL;
+# endif
 
 static int use_aes_csp = 0;
 
@@ -440,7 +444,9 @@ static int capi_init(ENGINE *e)
 {
     CAPI_CTX *ctx;
     const RSA_METHOD *ossl_rsa_meth;
+# ifndef OPENSSL_NO_DSA
     const DSA_METHOD *ossl_dsa_meth;
+# endif
     HCRYPTPROV hprov;
 
     if (capi_idx < 0) {
@@ -468,6 +474,7 @@ static int capi_init(ENGINE *e)
             goto memerr;
         }
 
+# ifndef OPENSSL_NO_DSA
         /* Setup DSA Method */
         dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
         ossl_dsa_meth = DSA_OpenSSL();
@@ -481,6 +488,7 @@ static int capi_init(ENGINE *e)
                                     DSA_meth_get_bn_mod_exp(ossl_dsa_meth))) {
             goto memerr;
         }
+# endif
     }
 
     ctx = capi_ctx_new();
@@ -526,8 +534,10 @@ static int capi_destroy(ENGINE *e)
 {
     RSA_meth_free(capi_rsa_method);
     capi_rsa_method = NULL;
+# ifndef OPENSSL_NO_DSA
     DSA_meth_free(capi_dsa_method);
     capi_dsa_method = NULL;
+# endif
     ERR_unload_CAPI_strings();
     return 1;
 }
@@ -560,9 +570,11 @@ static int bind_capi(ENGINE *e)
     capi_rsa_method = RSA_meth_new("CryptoAPI RSA method", 0);
     if (capi_rsa_method == NULL)
         return 0;
+# ifndef OPENSSL_NO_DSA
     capi_dsa_method = DSA_meth_new("CryptoAPI DSA method", 0);
     if (capi_dsa_method == NULL)
         goto memerr;
+# endif
     if (!ENGINE_set_id(e, engine_capi_id)
         || !ENGINE_set_name(e, engine_capi_name)
         || !ENGINE_set_flags(e, ENGINE_FLAGS_NO_REGISTER_ALL)
@@ -570,7 +582,9 @@ static int bind_capi(ENGINE *e)
         || !ENGINE_set_finish_function(e, capi_finish)
         || !ENGINE_set_destroy_function(e, capi_destroy)
         || !ENGINE_set_RSA(e, capi_rsa_method)
+# ifndef OPENSSL_NO_DSA
         || !ENGINE_set_DSA(e, capi_dsa_method)
+# endif
         || !ENGINE_set_load_privkey_function(e, capi_load_privkey)
         || !ENGINE_set_load_ssl_client_cert_function(e,
                                                      capi_load_ssl_client_cert)
@@ -583,8 +597,10 @@ static int bind_capi(ENGINE *e)
  memerr:
     RSA_meth_free(capi_rsa_method);
     capi_rsa_method = NULL;
+# ifndef OPENSSL_NO_DSA
     DSA_meth_free(capi_dsa_method);
     capi_dsa_method = NULL;
+# endif
     return 0;
 }
 
@@ -722,6 +738,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
         EVP_PKEY_assign_RSA(ret, rkey);
         rkey = NULL;
 
+# ifndef OPENSSL_NO_DSA
     } else if (bh->aiKeyAlg == CALG_DSS_SIGN) {
         DSSPUBKEY *dp;
         DWORD dsa_plen;
@@ -774,6 +791,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
 
         EVP_PKEY_assign_DSA(ret, dkey);
         dkey = NULL;
+# endif
     } else {
         char algstr[10];
         BIO_snprintf(algstr, 10, "%ux", bh->aiKeyAlg);
@@ -787,7 +805,9 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
     OPENSSL_free(pubkey);
     if (!ret) {
         RSA_free(rkey);
+# ifndef OPENSSL_NO_DSA
         DSA_free(dkey);
+# endif
     }
 
     return ret;
@@ -990,6 +1010,7 @@ static int capi_rsa_free(RSA *rsa)
     return 1;
 }
 
+# ifndef OPENSSL_NO_DSA
 /* CryptoAPI DSA operations */
 
 static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
@@ -1068,6 +1089,7 @@ static int capi_dsa_free(DSA *dsa)
     DSA_set_ex_data(dsa, dsa_capi_idx, 0);
     return 1;
 }
+# endif
 
 static void capi_vtrace(CAPI_CTX * ctx, int level, char *format,
                         va_list argptr)
