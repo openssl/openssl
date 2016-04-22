@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_d2i");
 
-plan tests => 2;
+plan tests => 3;
 
 ok(run(test(["d2i_test", "X509", "decode",
              srctop_file('test','d2i-tests','bad_cert.der')])),
@@ -24,3 +24,7 @@ ok(run(test(["d2i_test", "X509", "decode",
 ok(run(test(["d2i_test", "GENERAL_NAME", "decode",
              srctop_file('test','d2i-tests','bad_generalname.der')])),
    "Running d2i_test bad_generalname.der");
+
+ok(run(test(["d2i_test", "ASN1_ANY", "BIO",
+             srctop_file('test','d2i-tests','bad_bio.der')])),
+   "Running d2i_test bad_bio.der");
