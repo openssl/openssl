@@ -142,7 +142,7 @@ DSO_METHOD_dlfcn                        139	1_1_0	NOEXIST::FUNCTION:
 X509_STORE_new                          140	1_1_0	EXIST::FUNCTION:
 ASN1_TYPE_free                          141	1_1_0	EXIST::FUNCTION:
 PKCS12_BAGS_new                         142	1_1_0	EXIST::FUNCTION:
-CMAC_CTX_new                            143	1_1_0	EXIST::FUNCTION:
+CMAC_CTX_new                            143	1_1_0	EXIST::FUNCTION:CMAC
 ASIdentifierChoice_new                  144	1_1_0	EXIST::FUNCTION:RFC3779
 EVP_PKEY_asn1_set_public                145	1_1_0	EXIST::FUNCTION:
 IDEA_set_decrypt_key                    146	1_1_0	EXIST::FUNCTION:IDEA
@@ -585,7 +585,7 @@ SCT_verify                              573	1_1_0	EXIST::FUNCTION:CT
 d2i_X509                                574	1_1_0	EXIST::FUNCTION:
 a2i_ASN1_STRING                         575	1_1_0	EXIST::FUNCTION:
 EC_GROUP_get_mont_data                  576	1_1_0	EXIST::FUNCTION:EC
-CMAC_CTX_copy                           577	1_1_0	EXIST::FUNCTION:
+CMAC_CTX_copy                           577	1_1_0	EXIST::FUNCTION:CMAC
 CRYPTO_set_add_lock_callback            578	1_1_0	NOEXIST::FUNCTION:
 EVP_camellia_128_cfb128                 579	1_1_0	EXIST::FUNCTION:CAMELLIA
 DH_compute_key_padded                   580	1_1_0	EXIST::FUNCTION:DH
@@ -1796,7 +1796,7 @@ EC_POINT_cmp                            1745	1_1_0	EXIST::FUNCTION:EC
 ASN1_buf_print                          1746	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_hex2ctrl                   1747	1_1_0	EXIST::FUNCTION:
 PEM_write_bio_PKCS8PrivateKey           1748	1_1_0	EXIST::FUNCTION:
-CMAC_Update                             1749	1_1_0	EXIST::FUNCTION:
+CMAC_Update                             1749	1_1_0	EXIST::FUNCTION:CMAC
 d2i_ASN1_UTCTIME                        1750	1_1_0	EXIST::FUNCTION:
 sk_insert                               1751	1_1_0	EXIST::FUNCTION:
 DSO_up_ref                              1752	1_1_0	EXIST::FUNCTION:
@@ -2239,7 +2239,7 @@ AUTHORITY_INFO_ACCESS_it                2167	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 X509_EXTENSION_create_by_NID            2168	1_1_0	EXIST::FUNCTION:
 i2d_RSAPrivateKey                       2169	1_1_0	EXIST::FUNCTION:RSA
 d2i_CERTIFICATEPOLICIES                 2170	1_1_0	EXIST::FUNCTION:
-CMAC_CTX_get0_cipher_ctx                2171	1_1_0	EXIST::FUNCTION:
+CMAC_CTX_get0_cipher_ctx                2171	1_1_0	EXIST::FUNCTION:CMAC
 X509_STORE_load_locations               2172	1_1_0	EXIST::FUNCTION:
 OBJ_find_sigid_algs                     2173	1_1_0	EXIST::FUNCTION:
 TS_RESP_CTX_set_accuracy                2174	1_1_0	EXIST::FUNCTION:TS
@@ -2272,7 +2272,7 @@ X509_STORE_CTX_set_depth                2199	1_1_0	EXIST::FUNCTION:
 X509v3_delete_ext                       2200	1_1_0	EXIST::FUNCTION:
 ASN1_STRING_set0                        2201	1_1_0	EXIST::FUNCTION:
 BN_GF2m_add                             2202	1_1_0	EXIST::FUNCTION:EC2M
-CMAC_resume                             2203	1_1_0	EXIST::FUNCTION:
+CMAC_resume                             2203	1_1_0	EXIST::FUNCTION:CMAC
 TS_ACCURACY_set_millis                  2204	1_1_0	EXIST::FUNCTION:TS
 X509V3_EXT_conf                         2205	1_1_0	EXIST::FUNCTION:
 i2d_DHxparams                           2206	1_1_0	EXIST::FUNCTION:DH
@@ -3256,7 +3256,7 @@ BF_cfb64_encrypt                        3147	1_1_0	EXIST::FUNCTION:BF
 ASN1_GENERALIZEDTIME_adj                3148	1_1_0	EXIST::FUNCTION:
 ECDSA_verify                            3149	1_1_0	EXIST::FUNCTION:EC
 EVP_camellia_256_cfb128                 3150	1_1_0	EXIST::FUNCTION:CAMELLIA
-CMAC_Init                               3151	1_1_0	EXIST::FUNCTION:
+CMAC_Init                               3151	1_1_0	EXIST::FUNCTION:CMAC
 OCSP_basic_add1_status                  3152	1_1_0	EXIST::FUNCTION:OCSP
 X509_CRL_get0_by_cert                   3153	1_1_0	EXIST::FUNCTION:
 TS_TST_INFO_set_tsa                     3154	1_1_0	EXIST::FUNCTION:TS
@@ -3588,14 +3588,14 @@ ASYNC_WAIT_CTX_get_changed_fds          3474	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_save_parameters                3475	1_1_0	EXIST::FUNCTION:
 SCT_set_source                          3476	1_1_0	EXIST::FUNCTION:CT
 DES_set_odd_parity                      3477	1_1_0	EXIST::FUNCTION:DES
-CMAC_CTX_free                           3478	1_1_0	EXIST::FUNCTION:
+CMAC_CTX_free                           3478	1_1_0	EXIST::FUNCTION:CMAC
 d2i_ESS_ISSUER_SERIAL                   3479	1_1_0	EXIST::FUNCTION:TS
 HMAC_CTX_set_flags                      3480	1_1_0	EXIST::FUNCTION:
 d2i_PKCS8_bio                           3481	1_1_0	EXIST::FUNCTION:
 OCSP_ONEREQ_get_ext_count               3482	1_1_0	EXIST::FUNCTION:OCSP
 PEM_read_bio_PKCS8_PRIV_KEY_INFO        3483	1_1_0	EXIST::FUNCTION:
 i2d_OCSP_BASICRESP                      3484	1_1_0	EXIST::FUNCTION:OCSP
-CMAC_Final                              3485	1_1_0	EXIST::FUNCTION:
+CMAC_Final                              3485	1_1_0	EXIST::FUNCTION:CMAC
 X509V3_EXT_add_alias                    3486	1_1_0	EXIST::FUNCTION:
 BN_get_params                           3487	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_0_9_8
 PKCS5_pbkdf2_set                        3488	1_1_0	EXIST::FUNCTION:
@@ -3838,7 +3838,7 @@ TS_RESP_verify_response                 3719	1_1_0	EXIST::FUNCTION:TS
 X509_REVOKED_get0_serialNumber          3720	1_1_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_free                  3721	1_1_0	EXIST::FUNCTION:
 ASN1_TYPE_new                           3722	1_1_0	EXIST::FUNCTION:
-CMAC_CTX_cleanup                        3723	1_1_0	EXIST::FUNCTION:
+CMAC_CTX_cleanup                        3723	1_1_0	EXIST::FUNCTION:CMAC
 i2d_PKCS7_NDEF                          3724	1_1_0	EXIST::FUNCTION:
 sk_pop_free                             3725	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_policy_tree         3726	1_1_0	EXIST::FUNCTION:
