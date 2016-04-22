@@ -129,6 +129,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "TS",
 			 # OCB mode
 			 "OCB",
+			 "CMAC",
                          # APPLINK (win build feature?)
                          "APPLINK"
                      );
