@@ -108,6 +108,9 @@ static int execute_test(D2I_TEST_FIXTURE fixture)
         ret = 1;
 
  err:
+    /* Don't indicate success for memory allocation errors */
+    if (ret == 1 && ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE)
+        ret = 0;
     BIO_free(bio);
     OPENSSL_free(der);
     ASN1_item_free(value, item_type);
