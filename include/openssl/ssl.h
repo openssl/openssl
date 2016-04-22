@@ -2216,6 +2216,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE             179
 # define SSL_F_SSL_CTX_USE_SERVERINFO                     336
 # define SSL_F_SSL_CTX_USE_SERVERINFO_FILE                337
+# define SSL_F_SSL_DANE_DUP                               403
 # define SSL_F_SSL_DANE_ENABLE                            395
 # define SSL_F_SSL_DO_CONFIG                              391
 # define SSL_F_SSL_DO_HANDSHAKE                           180
