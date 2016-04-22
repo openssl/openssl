@@ -4,6 +4,8 @@ $! P1: "64" for 64-bit pointers.
 $!
 $! P2: Zlib object library path (optional).
 $!
+$! p3: "AI" FOR CASE_SENSITIVE
+$!
 $! Input:	[.UTIL]LIBEAY.NUM,[.xxx.EXE.CRYPTO]SSL_LIBCRYPTO[32].OLB
 $!		[.UTIL]SSLEAY.NUM,[.xxx.EXE.SSL]SSL_LIBSSL[32].OLB
 $!		[.CRYPTO.xxx]OPENSSLCONF.H
@@ -196,6 +198,7 @@ $   open /write opt 'libopt'
 $   write opt "identification=""",libid," ",libverstr,""""
 $   write opt libolb, " /library"
 $   if libref .nes. "" then write opt libref,"/SHARE"
+$   if (p3 .eqs. "AI") then write opt "CASE_SENSITIVE=YES"
 $   write opt "SYMBOL_VECTOR=(-"
 $   libfirstentry := true
 $   libwrch   := opt
