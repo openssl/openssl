@@ -1,5 +1,5 @@
 d2i_EC_PUBKEY                           1	1_1_0	EXIST::FUNCTION:EC
-b2i_PVK_bio                             2	1_1_0	EXIST::FUNCTION:RC4
+b2i_PVK_bio                             2	1_1_0	EXIST::FUNCTION:DSA,RC4
 PEM_read_bio_NETSCAPE_CERT_SEQUENCE     3	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_chain               4	1_1_0	EXIST::FUNCTION:
 COMP_expand_block                       5	1_1_0	EXIST::FUNCTION:COMP
@@ -216,7 +216,7 @@ RSA_X931_hash_id                        212	1_1_0	EXIST::FUNCTION:RSA
 EC_KEY_set_method                       213	1_1_0	EXIST::FUNCTION:EC
 PEM_write_PKCS8_PRIV_KEY_INFO           214	1_1_0	EXIST::FUNCTION:
 X509at_get0_data_by_OBJ                 215	1_1_0	EXIST::FUNCTION:
-b2i_PublicKey_bio                       216	1_1_0	EXIST::FUNCTION:
+b2i_PublicKey_bio                       216	1_1_0	EXIST::FUNCTION:DSA
 s2i_ASN1_OCTET_STRING                   217	1_1_0	EXIST::FUNCTION:
 POLICYINFO_it                           218	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 POLICYINFO_it                           218	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -236,7 +236,7 @@ DIST_POINT_NAME_new                     231	1_1_0	EXIST::FUNCTION:
 X509_LOOKUP_file                        232	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_meth_set_decrypt               233	1_1_0	EXIST::FUNCTION:
 EVP_rc2_ecb                             234	1_1_0	EXIST::FUNCTION:RC2
-i2b_PublicKey_bio                       235	1_1_0	EXIST::FUNCTION:
+i2b_PublicKey_bio                       235	1_1_0	EXIST::FUNCTION:DSA
 d2i_ASN1_SET_ANY                        236	1_1_0	EXIST::FUNCTION:
 ASN1_item_i2d                           238	1_1_0	EXIST::FUNCTION:
 OCSP_copy_nonce                         239	1_1_0	EXIST::FUNCTION:OCSP
@@ -1359,7 +1359,7 @@ RAND_event                              1318	1_1_0	EXIST:WIN32:FUNCTION:
 i2d_PKCS12_fp                           1319	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_init                  1320	1_1_0	EXIST::FUNCTION:
 X509_check_trust                        1321	1_1_0	EXIST::FUNCTION:
-b2i_PrivateKey                          1322	1_1_0	EXIST::FUNCTION:
+b2i_PrivateKey                          1322	1_1_0	EXIST::FUNCTION:DSA
 HMAC_Init_ex                            1323	1_1_0	EXIST::FUNCTION:
 SMIME_read_CMS                          1324	1_1_0	EXIST::FUNCTION:CMS
 X509_subject_name_cmp                   1325	1_1_0	EXIST::FUNCTION:
@@ -1747,7 +1747,7 @@ PKCS12_SAFEBAG_get_bag_nid              1696	1_1_0	EXIST::FUNCTION:
 TS_CONF_set_digests                     1697	1_1_0	EXIST::FUNCTION:TS
 PKCS7_SIGNED_it                         1698	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS7_SIGNED_it                         1698	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-b2i_PublicKey                           1699	1_1_0	EXIST::FUNCTION:
+b2i_PublicKey                           1699	1_1_0	EXIST::FUNCTION:DSA
 X509_PURPOSE_cleanup                    1700	1_1_0	EXIST::FUNCTION:
 ESS_SIGNING_CERT_dup                    1701	1_1_0	EXIST::FUNCTION:TS
 ENGINE_set_default_DSA                  1702	1_1_0	EXIST::FUNCTION:ENGINE
@@ -1912,7 +1912,7 @@ UI_method_set_reader                    1854	1_1_0	EXIST::FUNCTION:UI
 BIO_next                                1855	1_1_0	EXIST::FUNCTION:
 ASN1_STRING_set_default_mask_asc        1856	1_1_0	EXIST::FUNCTION:
 X509_CRL_new                            1857	1_1_0	EXIST::FUNCTION:
-i2b_PrivateKey_bio                      1858	1_1_0	EXIST::FUNCTION:
+i2b_PrivateKey_bio                      1858	1_1_0	EXIST::FUNCTION:DSA
 ASN1_STRING_length_set                  1859	1_1_0	EXIST::FUNCTION:
 PEM_write_PKCS8                         1860	1_1_0	EXIST::FUNCTION:
 PKCS7_digest_from_attributes            1861	1_1_0	EXIST::FUNCTION:
@@ -2907,7 +2907,7 @@ ENGINE_register_all_DH                  2809	1_1_0	EXIST::FUNCTION:ENGINE
 ERR_clear_error                         2810	1_1_0	EXIST::FUNCTION:
 EC_KEY_dup                              2811	1_1_0	EXIST::FUNCTION:EC
 X509_LOOKUP_init                        2812	1_1_0	EXIST::FUNCTION:
-i2b_PVK_bio                             2813	1_1_0	EXIST::FUNCTION:RC4
+i2b_PVK_bio                             2813	1_1_0	EXIST::FUNCTION:DSA,RC4
 OCSP_ONEREQ_free                        2814	1_1_0	EXIST::FUNCTION:OCSP
 X509V3_EXT_print_fp                     2815	1_1_0	EXIST::FUNCTION:STDIO
 OBJ_bsearch_ex_                         2816	1_1_0	EXIST::FUNCTION:
@@ -3286,7 +3286,7 @@ CRYPTO_get_dynlock_create_callback      3177	1_1_0	NOEXIST::FUNCTION:
 i2a_ACCESS_DESCRIPTION                  3178	1_1_0	EXIST::FUNCTION:
 EC_KEY_set_enc_flags                    3179	1_1_0	EXIST::FUNCTION:EC
 i2d_PUBKEY_fp                           3180	1_1_0	EXIST::FUNCTION:STDIO
-b2i_PrivateKey_bio                      3181	1_1_0	EXIST::FUNCTION:
+b2i_PrivateKey_bio                      3181	1_1_0	EXIST::FUNCTION:DSA
 OCSP_REQUEST_add_ext                    3182	1_1_0	EXIST::FUNCTION:OCSP
 SXNET_add_id_INTEGER                    3183	1_1_0	EXIST::FUNCTION:
 CTLOG_get0_public_key                   3184	1_1_0	EXIST::FUNCTION:CT
