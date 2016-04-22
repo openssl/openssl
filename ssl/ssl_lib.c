@@ -284,10 +284,18 @@ static int ssl_dane_dup(SSL *to, SSL *from)
         return 1;
 
     dane_final(&to->dane);
+    to->dane.dctx = &to->ctx->dane;
+    to->dane.trecs = sk_danetls_record_new_null();
+
+    if (to->dane.trecs == NULL) {
+        SSLerr(SSL_F_SSL_DANE_DUP, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
 
     num  = sk_danetls_record_num(from->dane.trecs);
     for (i = 0; i < num; ++i) {
         danetls_record *t = sk_danetls_record_value(from->dane.trecs, i);
+
         if (SSL_dane_tlsa_add(to, t->usage, t->selector, t->mtype,
                               t->data, t->dlen) <= 0)
             return 0;
@@ -363,6 +371,7 @@ static int dane_tlsa_add(
     const EVP_MD *md = NULL;
     int ilen = (int)dlen;
     int i;
+    int num;
 
     if (dane->trecs == NULL) {
         SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_NOT_ENABLED);
@@ -495,8 +504,10 @@ static int dane_tlsa_add(
      * The choice of order for the selector is not significant, so we
      * use the same descending order for consistency.
      */
-    for (i = 0; i < sk_danetls_record_num(dane->trecs); ++i) {
+    num = sk_danetls_record_num(dane->trecs);
+    for (i = 0; i < num; ++i) {
         danetls_record *rec = sk_danetls_record_value(dane->trecs, i);
+
         if (rec->usage > usage)
             continue;
         if (rec->usage < usage)
@@ -3135,7 +3146,8 @@ SSL *SSL_dup(SSL *s)
             goto err;
     }
 
-    ssl_dane_dup(ret, s);
+    if (!ssl_dane_dup(ret, s))
+        goto err;
     ret->version = s->version;
     ret->options = s->options;
     ret->mode = s->mode;
