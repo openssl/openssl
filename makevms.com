@@ -47,8 +47,9 @@ $!    information.
 $!
 $! P4 specifies which compiler to try to compile under.
 $!
-$!	  VAXC	 For VAX C.
-$!	  DECC	 For DEC C.
+$!	  VAXC		For VAX C.
+$!	  DECC		For DEC C.
+$!	  DECC_AI	For DEC C with /NAMES=AS_IS.
 $!	  GNUC	 For GNU C.
 $!	  LINK   To only link the programs from existing object files.
 $!               (not yet implemented)
@@ -1216,7 +1217,7 @@ $ ELSE
 $!
 $!  Check To See If The User Entered A Valid Parameter.
 $!
-$   IF (P4.EQS."VAXC").OR.(P4.EQS."DECC").OR.(P4.EQS."GNUC")!.OR.(P4.EQS."LINK")
+$   IF (P4.EQS."VAXC").OR.(P4.EQS."DECC").OR.(P4.EQS."DECC_AI").OR.(P4.EQS."GNUC")!.OR.(P4.EQS."LINK")
 $   THEN
 $!
 $!    Check To See If The User Wanted To Just LINK.
@@ -1244,6 +1245,23 @@ $!
 $!      Looks Like DECC, Set To Use DECC.
 $!
 $       COMPILER = "DECC"
+$!
+$!      Tell The User We Are Using DECC.
+$!
+$       WRITE SYS$OUTPUT "Using DECC 'C' Compiler."
+$!
+$!    End DECC Check.
+$!
+$     ENDIF
+$!
+$!    Check To See If The User Wanted DECC_AI.
+$!
+$     IF (P4.EQS."DECC_AI")
+$     THEN
+$!
+$!      Looks Like DECC, Set To Use DECC.
+$!
+$       COMPILER = "DECC_AI"
 $!
 $!      Tell The User We Are Using DECC.
 $!
@@ -1296,9 +1314,10 @@ $!
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "The Option ",P4," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "    VAXC  :  To Compile With VAX C."
-$     WRITE SYS$OUTPUT "    DECC  :  To Compile With DEC C."
-$     WRITE SYS$OUTPUT "    GNUC  :  To Compile With GNU C."
+$     WRITE SYS$OUTPUT "    VAXC    :  To Compile With VAX C."
+$     WRITE SYS$OUTPUT "    DECC    :  To Compile With DEC C."
+$     WRITE SYS$OUTPUT "    DECC_AI :  To Compile With DEC C."
+$     WRITE SYS$OUTPUT "    GNUC    :  To Compile With GNU C."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
