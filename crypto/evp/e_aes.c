@@ -555,6 +555,8 @@ extern unsigned int OPENSSL_sparcv9cap_P[];
 # define HWAES_set_decrypt_key aes_fx_set_decrypt_key
 # define HWAES_encrypt aes_fx_encrypt
 # define HWAES_decrypt aes_fx_decrypt
+# define HWAES_cbc_encrypt aes_fx_cbc_encrypt
+# define HWAES_ctr32_encrypt_blocks aes_fx_ctr32_encrypt_blocks
 
 # define SPARC_AES_CAPABLE       (OPENSSL_sparcv9cap_P[1] & CFR_AES)
 
@@ -2424,7 +2426,7 @@ void HWAES_ocb_encrypt(const unsigned char *in, unsigned char *out,
                        const unsigned char L_[][16],
                        unsigned char checksum[16]);
 #  else
-#    define HWAES_ocb_encrypt NULL
+#    define HWAES_ocb_encrypt ((ocb128_f)NULL)
 #  endif
 #  ifdef HWAES_ocb_decrypt
 void HWAES_ocb_decrypt(const unsigned char *in, unsigned char *out,
@@ -2434,7 +2436,7 @@ void HWAES_ocb_decrypt(const unsigned char *in, unsigned char *out,
                        const unsigned char L_[][16],
                        unsigned char checksum[16]);
 #  else
-#    define HWAES_ocb_decrypt NULL
+#    define HWAES_ocb_decrypt ((ocb128_f)NULL)
 #  endif
 # endif
 
