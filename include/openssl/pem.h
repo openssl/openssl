@@ -472,9 +472,11 @@ void ERR_load_PEM_strings(void);
 # define PEM_R_ERROR_CONVERTING_PRIVATE_KEY               115
 # define PEM_R_EXPECTING_PRIVATE_KEY_BLOB                 119
 # define PEM_R_EXPECTING_PUBLIC_KEY_BLOB                  120
+# define PEM_R_HEADER_TOO_LONG                            128
 # define PEM_R_INCONSISTENT_HEADER                        121
 # define PEM_R_KEYBLOB_HEADER_PARSE_ERROR                 122
 # define PEM_R_KEYBLOB_TOO_SHORT                          123
+# define PEM_R_MISSING_DEK_IV                             129
 # define PEM_R_NOT_DEK_INFO                               105
 # define PEM_R_NOT_ENCRYPTED                              106
 # define PEM_R_NOT_PROC_TYPE                              107
@@ -485,6 +487,7 @@ void ERR_load_PEM_strings(void);
 # define PEM_R_PVK_TOO_SHORT                              125
 # define PEM_R_READ_KEY                                   111
 # define PEM_R_SHORT_HEADER                               112
+# define PEM_R_UNEXPECTED_DEK_IV                          130
 # define PEM_R_UNSUPPORTED_CIPHER                         113
 # define PEM_R_UNSUPPORTED_ENCRYPTION                     114
 # define PEM_R_UNSUPPORTED_KEY_COMPONENTS                 126
