@@ -92,7 +92,11 @@ void openssl_add_all_ciphers_int(void)
 
     EVP_add_cipher(EVP_des_ecb());
     EVP_add_cipher(EVP_des_ede());
+    EVP_add_cipher_alias(SN_des_ede_ecb, "DES-EDE-ECB");
+    EVP_add_cipher_alias(SN_des_ede_ecb, "des-ede-ecb");
     EVP_add_cipher(EVP_des_ede3());
+    EVP_add_cipher_alias(SN_des_ede3_ecb, "DES-EDE3-ECB");
+    EVP_add_cipher_alias(SN_des_ede3_ecb, "des-ede3-ecb");
     EVP_add_cipher(EVP_des_ede3_wrap());
     EVP_add_cipher_alias(SN_id_smime_alg_CMS3DESwrap, "des3-wrap");
 #endif
