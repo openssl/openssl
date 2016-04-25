@@ -366,6 +366,7 @@ void *X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx);
 int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int s);
 int X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
+void X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth);
 X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
 X509 *X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx);
 X509_CRL *X509_STORE_CTX_get0_current_crl(X509_STORE_CTX *ctx);
