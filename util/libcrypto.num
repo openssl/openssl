@@ -4198,12 +4198,11 @@ X509_STORE_get_X509_by_subject          4071	1_1_0	EXIST::FUNCTION:
 X509_OBJECT_free                        4072	1_1_0	EXIST::FUNCTION:
 X509_OBJECT_get0_X509                   4073	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_untrusted           4074	1_1_0	EXIST::FUNCTION:
-X509_STORE_CTX_set0_chain               4075	1_1_0	NOEXIST::FUNCTION:
+X509_STORE_CTX_set_error_depth          4075	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_cert                4076	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_set_verify               4077	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get_verify               4079	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get_verify_cb            4080	1_1_0	EXIST::FUNCTION:
-X509_STORE_CTX_get_cert                 4081	1_1_0	NOEXIST::FUNCTION:
-X509_STORE_CTX_set0_verified_chain      4082	1_1_0	EXIST::FUNCTION:
-X509_STORE_CTX_set0_untrusted           4083	1_1_0	EXIST::FUNCTION:
-OPENSSL_hexchar2int                     4084	1_1_0	EXIST::FUNCTION:
+X509_STORE_CTX_set0_verified_chain      4081	1_1_0	EXIST::FUNCTION:
+X509_STORE_CTX_set0_untrusted           4082	1_1_0	EXIST::FUNCTION:
+OPENSSL_hexchar2int                     4083	1_1_0	EXIST::FUNCTION:
