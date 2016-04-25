@@ -175,7 +175,7 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
         *inf = 0;
         i = *p & 0x7f;
         if (*(p++) & 0x80) {
-            if (i > sizeof(ret) || max < i)
+            if (i > sizeof(ret) || max < (long)i)
                 return 0;
             while (i-- > 0) {
                 ret <<= 8L;
