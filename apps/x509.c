@@ -943,6 +943,10 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
     EVP_PKEY *upkey;
 
     upkey = X509_get0_pubkey(xca);
+    if (upkey == NULL) {
+        BIO_printf(bio_err, "Error obtaining CA X509 public key\n");
+        goto end;
+    }
     EVP_PKEY_copy_parameters(upkey, pkey);
 
     xsc = X509_STORE_CTX_new();
