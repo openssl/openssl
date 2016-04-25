@@ -1627,7 +1627,8 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     /* ssl3_enc can only have an error on read */
     if (bs) {                   /* bs != 0 in case of CBC */
-        RAND_pseudo_bytes(p, bs);
+        if (RAND_bytes(p, bs) <= 0)
+            goto err;
         /*
          * master IV and last CBC residue stand for the rest of randomness
          */

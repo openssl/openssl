@@ -1833,7 +1833,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->tlsext_servername_callback = 0;
     ret->tlsext_servername_arg = NULL;
     /* Setup RFC4507 ticket keys */
-    if ((RAND_pseudo_bytes(ret->tlsext_tick_key_name, 16) <= 0)
+    if ((RAND_bytes(ret->tlsext_tick_key_name, 16) <= 0)
         || (RAND_bytes(ret->tlsext_tick_hmac_key, 16) <= 0)
         || (RAND_bytes(ret->tlsext_tick_aes_key, 16) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
