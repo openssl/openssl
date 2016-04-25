@@ -403,9 +403,10 @@ static int b64_write(BIO *b, const char *in, int inl)
                 ret += n;
             }
         } else {
-            EVP_EncodeUpdate(ctx->base64,
-                             (unsigned char *)ctx->buf, &ctx->buf_len,
-                             (unsigned char *)in, n);
+            if (!EVP_EncodeUpdate(ctx->base64,
+                                 (unsigned char *)ctx->buf, &ctx->buf_len,
+                                 (unsigned char *)in, n))
+                return ((ret == 0) ? -1 : ret);
             OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
             OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
             ret += n;

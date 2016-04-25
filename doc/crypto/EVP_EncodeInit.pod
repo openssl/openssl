@@ -15,8 +15,8 @@ routines
  void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
  int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx);
  void EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
- void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
-                       const unsigned char *in, int inl);
+ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
+                      const unsigned char *in, int inl);
  void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl);
  int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int n);
 
@@ -66,7 +66,8 @@ any remainder). This gives the number of blocks of data that will be processed.
 Ensure the output buffer contains 65 bytes of storage for each block, plus an
 additional byte for a NUL terminator. EVP_EncodeUpdate() may be called
 repeatedly to process large amounts of input data. In the event of an error
-EVP_EncodeUpdate() will set B<*outl> to 0.
+EVP_EncodeUpdate() will set B<*outl> to 0 and return 0. On success 1 wil be
+returned.
 
 EVP_EncodeFinal() must be called at the end of an encoding operation. It will
 process any partial block of data remaining in the B<ctx> object. The output
@@ -128,6 +129,8 @@ object or NULL on error.
 
 EVP_ENCODE_CTX_num() returns the number of bytes pending encoding or decoding in
 B<ctx>.
+
+EVP_EncodeUpdate() returns 0 on error or 1 on success.
 
 EVP_EncodeBlock() returns the number of bytes encoded excluding the NUL
 terminator.
