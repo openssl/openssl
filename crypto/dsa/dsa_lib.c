@@ -315,14 +315,27 @@ void DSA_get0_pqg(const DSA *d, BIGNUM **p, BIGNUM **q, BIGNUM **g)
 
 int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
-    if (p == NULL || q == NULL || g == NULL)
+    /* If the fields in d are NULL, the corresponding input
+     * parameters MUST be non-NULL.
+     *
+     * It is an error to give the results from get0 on d
+     * as input parameters.
+     */
+    if (p == d->p || q == d->q || g == d->g)
         return 0;
-    BN_free(d->p);
-    BN_free(d->q);
-    BN_free(d->g);
-    d->p = p;
-    d->q = q;
-    d->g = g;
+
+    if (p != NULL) {
+        BN_free(d->p);
+        d->p = p;
+    }
+    if (q != NULL) {
+        BN_free(d->q);
+        d->q = q;
+    }
+    if (g != NULL) {
+        BN_free(d->g);
+        d->g = g;
+    }
 
     return 1;
 }
@@ -337,14 +350,25 @@ void DSA_get0_key(const DSA *d, BIGNUM **pub_key, BIGNUM **priv_key)
 
 int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 {
-    /* Note that it is valid for priv_key to be NULL */
-    if (pub_key == NULL)
+    /* If the pub_key in d is NULL, the corresponding input
+     * parameters MUST be non-NULL.  The priv_key field may
+     * be left NULL.
+     *
+     * It is an error to give the results from get0 on d
+     * as input parameters.
+     */
+    if (d->pub_key == pub_key
+        || (d->priv_key != NULL && priv_key != d->priv_key))
         return 0;
 
-    BN_free(d->pub_key);
-    BN_free(d->priv_key);
-    d->pub_key = pub_key;
-    d->priv_key = priv_key;
+    if (pub_key != NULL) {
+        BN_free(d->pub_key);
+        d->pub_key = pub_key;
+    }
+    if (priv_key != NULL) {
+        BN_free(d->priv_key);
+        d->priv_key = priv_key;
+    }
 
     return 1;
 }
