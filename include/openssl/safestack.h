@@ -17,124 +17,104 @@
 extern "C" {
 #endif
 
-# ifndef CHECKED_PTR_OF
-#  define CHECKED_PTR_OF(type, p) ((void*) (1 ? p : (type*)0))
-# endif
-
-/*
- * In C++ we get problems because an explicit cast is needed from (void *) we
- * use CHECKED_STACK_OF to ensure the correct type is passed in the macros
- * below.
- */
-
-# define CHECKED_STACK_OF(type, p) \
-    ((_STACK*) (1 ? p : (STACK_OF(type)*)0))
-
-# define CHECKED_SK_COPY_FUNC(type, p) \
-    ((void *(*)(void *)) ((1 ? p : (type *(*)(const type *))0)))
-
-# define CHECKED_SK_FREE_FUNC(type, p) \
-    ((void (*)(void *)) ((1 ? p : (void (*)(type *))0)))
-
-# define CHECKED_SK_CMP_FUNC(type, p) \
-    ((int (*)(const void *, const void *)) \
-        ((1 ? p : (int (*)(const type * const *, const type * const *))0)))
-
 # define STACK_OF(type) struct stack_st_##type
 
 # define SKM_DEFINE_STACK_OF(t1, t2, t3) \
     STACK_OF(t1); \
+    typedef int (*sk_##t1##_compfunc)(const t3 * const *a, const t3 *const *b); \
+    typedef void (*sk_##t1##_freefunc)(t3 *a); \
+    typedef t3 * (*sk_##t1##_copyfunc)(const t3 *a); \
     static ossl_inline int sk_##t1##_num(const STACK_OF(t1) *sk) \
     { \
-        return sk_num((const _STACK *)sk); \
+        return OPENSSL_sk_num((const OPENSSL_STACK *)sk); \
     } \
     static ossl_inline t2 *sk_##t1##_value(const STACK_OF(t1) *sk, int idx) \
     { \
-        return (t2 *)sk_value((const _STACK *)sk, idx); \
+        return (t2 *)OPENSSL_sk_value((const OPENSSL_STACK *)sk, idx); \
     } \
-    static ossl_inline STACK_OF(t1) *sk_##t1##_new(int (*cmpf)(const t3 * const *a, const t3 * const *b)) \
+    static ossl_inline STACK_OF(t1) *sk_##t1##_new(sk_##t1##_compfunc compare) \
     { \
-        return (STACK_OF(t1) *)sk_new((int (*)(const void *a, const void *b))cmpf); \
+        return (STACK_OF(t1) *)OPENSSL_sk_new((OPENSSL_sk_compfunc)compare); \
     } \
     static ossl_inline STACK_OF(t1) *sk_##t1##_new_null(void) \
     { \
-        return (STACK_OF(t1) *)sk_new_null(); \
+        return (STACK_OF(t1) *)OPENSSL_sk_new_null(); \
     } \
     static ossl_inline void sk_##t1##_free(STACK_OF(t1) *sk) \
     { \
-        sk_free((_STACK *)sk); \
+        OPENSSL_sk_free((OPENSSL_STACK *)sk); \
     } \
     static ossl_inline void sk_##t1##_zero(STACK_OF(t1) *sk) \
     { \
-        sk_zero((_STACK *)sk); \
+        OPENSSL_sk_zero((OPENSSL_STACK *)sk); \
     } \
     static ossl_inline t2 *sk_##t1##_delete(STACK_OF(t1) *sk, int i) \
     { \
-        return (t2 *)sk_delete((_STACK *)sk, i); \
+        return (t2 *)OPENSSL_sk_delete((OPENSSL_STACK *)sk, i); \
     } \
     static ossl_inline t2 *sk_##t1##_delete_ptr(STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return (t2 *)sk_delete_ptr((_STACK *)sk, (void *)ptr); \
+        return (t2 *)OPENSSL_sk_delete_ptr((OPENSSL_STACK *)sk, (void *)ptr); \
     } \
     static ossl_inline int sk_##t1##_push(STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return sk_push((_STACK *)sk, (void *)ptr); \
+        return OPENSSL_sk_push((OPENSSL_STACK *)sk, (void *)ptr); \
     } \
     static ossl_inline int sk_##t1##_unshift(STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return sk_unshift((_STACK *)sk, (void *)ptr); \
+        return OPENSSL_sk_unshift((OPENSSL_STACK *)sk, (void *)ptr); \
     } \
     static ossl_inline t2 *sk_##t1##_pop(STACK_OF(t1) *sk) \
     { \
-        return (t2 *)sk_pop((_STACK *)sk); \
+        return (t2 *)OPENSSL_sk_pop((OPENSSL_STACK *)sk); \
     } \
     static ossl_inline t2 *sk_##t1##_shift(STACK_OF(t1) *sk) \
     { \
-        return (t2 *)sk_shift((_STACK *)sk); \
+        return (t2 *)OPENSSL_sk_shift((OPENSSL_STACK *)sk); \
     } \
-    static ossl_inline void sk_##t1##_pop_free(STACK_OF(t1) *sk, void (*func)(t3 *a)) \
+    static ossl_inline void sk_##t1##_pop_free(STACK_OF(t1) *sk, sk_##t1##_freefunc freefunc) \
     { \
-        sk_pop_free((_STACK *)sk, (void (*)(void *))func); \
+        OPENSSL_sk_pop_free((OPENSSL_STACK *)sk, (OPENSSL_sk_freefunc)freefunc); \
     } \
     static ossl_inline int sk_##t1##_insert(STACK_OF(t1) *sk, t2 *ptr, int idx) \
     { \
-        return sk_insert((_STACK *)sk, (void *)ptr, idx); \
+        return OPENSSL_sk_insert((OPENSSL_STACK *)sk, (void *)ptr, idx); \
     } \
     static ossl_inline t2 *sk_##t1##_set(STACK_OF(t1) *sk, int idx, t2 *ptr) \
     { \
-        return (t2 *)sk_set((_STACK *)sk, idx, (void *)ptr); \
+        return (t2 *)OPENSSL_sk_set((OPENSSL_STACK *)sk, idx, (void *)ptr); \
     } \
     static ossl_inline int sk_##t1##_find(STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return sk_find((_STACK *)sk, (void *)ptr); \
+        return OPENSSL_sk_find((OPENSSL_STACK *)sk, (void *)ptr); \
     } \
     static ossl_inline int sk_##t1##_find_ex(STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return sk_find_ex((_STACK *)sk, (void *)ptr); \
+        return OPENSSL_sk_find_ex((OPENSSL_STACK *)sk, (void *)ptr); \
     } \
     static ossl_inline void sk_##t1##_sort(STACK_OF(t1) *sk) \
     { \
-        sk_sort((_STACK *)sk); \
+        OPENSSL_sk_sort((OPENSSL_STACK *)sk); \
     } \
     static ossl_inline int sk_##t1##_is_sorted(const STACK_OF(t1) *sk) \
     { \
-        return sk_is_sorted((const _STACK *)sk); \
+        return OPENSSL_sk_is_sorted((const OPENSSL_STACK *)sk); \
     } \
     static ossl_inline STACK_OF(t1) * sk_##t1##_dup(STACK_OF(t1) *sk) \
     { \
-        return (STACK_OF(t1) *)sk_dup((_STACK *)sk); \
+        return (STACK_OF(t1) *)OPENSSL_sk_dup((OPENSSL_STACK *)sk); \
     } \
     static ossl_inline STACK_OF(t1) *sk_##t1##_deep_copy(STACK_OF(t1) *sk, \
-                                                    t3 *(*copyfn)(const t3 *), \
-                                                    void (*freefn)(t3 *)) \
+                                                    sk_##t1##_copyfunc copyfunc, \
+                                                    sk_##t1##_freefunc freefunc) \
     { \
-        return (STACK_OF(t1) *)sk_deep_copy((_STACK *)sk, \
-                                            (void * (*)(void *a))copyfn, \
-                                            (void (*)(void *a))freefn); \
+        return (STACK_OF(t1) *)OPENSSL_sk_deep_copy((OPENSSL_STACK *)sk, \
+                                            (OPENSSL_sk_copyfunc)copyfunc, \
+                                            (OPENSSL_sk_freefunc)freefunc); \
     } \
-    static ossl_inline int (*sk_##t1##_set_cmp_func(STACK_OF(t1) *sk, int (*cmpf)(const t3 * const *a, const t3 * const *b)))(const t3 * const *, const t3 * const *) \
+    static ossl_inline sk_##t1##_compfunc sk_##t1##_set_cmp_func(STACK_OF(t1) *sk, sk_##t1##_compfunc compare) \
     { \
-        return (int (*)(const t3 * const *,const t3 * const *))sk_set_cmp_func((_STACK *)sk, (int (*)(const void *a, const void *b))cmpf); \
+        return (sk_##t1##_compfunc)OPENSSL_sk_set_cmp_func((OPENSSL_STACK *)sk, (OPENSSL_sk_compfunc)compare); \
     }
 
 # define DEFINE_SPECIAL_STACK_OF(t1, t2) SKM_DEFINE_STACK_OF(t1, t2, t2)

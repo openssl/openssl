@@ -977,10 +977,10 @@ void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
         return;
     tp.time = t;
     CRYPTO_THREAD_write_lock(s->lock);
-    i = CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load;
-    CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = 0;
+    i = lh_SSL_SESSION_get_down_load(s->sessions);
+    lh_SSL_SESSION_set_down_load(s->sessions, 0);
     lh_SSL_SESSION_doall_TIMEOUT_PARAM(tp.cache, timeout_cb, &tp);
-    CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = i;
+    lh_SSL_SESSION_set_down_load(s->sessions, i);
     CRYPTO_THREAD_unlock(s->lock);
 }
 
