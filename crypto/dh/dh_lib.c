@@ -246,14 +246,21 @@ void DH_get0_pqg(const DH *dh, BIGNUM **p, BIGNUM **q, BIGNUM **g)
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
     /* q is optional */
-    if (p == NULL || g == NULL)
+    if ((p == NULL && dh->p == NULL)
+        || (g == NULL && dh->g == NULL))
         return 0;
-    BN_free(dh->p);
-    BN_free(dh->q);
-    BN_free(dh->g);
-    dh->p = p;
-    dh->q = q;
-    dh->g = g;
+    if (p != NULL) {
+        BN_free(dh->p);
+        dh->p = p;
+    }
+    if (q != NULL) {
+        BN_free(dh->q);
+        dh->q = q;
+    }
+    if (g != NULL) {
+        BN_free(dh->g);
+        dh->g = g;
+    }
 
     if (q != NULL) {
         dh->length = BN_num_bits(q);
@@ -284,13 +291,17 @@ void DH_get0_key(const DH *dh, BIGNUM **pub_key, BIGNUM **priv_key)
 int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 {
     /* Note that it is valid for priv_key to be NULL */
-    if (pub_key == NULL)
+    if (dh->pub_key == NULL && pub_key == NULL)
         return 0;
 
-    BN_free(dh->pub_key);
-    BN_free(dh->priv_key);
-    dh->pub_key = pub_key;
-    dh->priv_key = priv_key;
+    if (pub_key != NULL) {
+        BN_free(dh->pub_key);
+        dh->pub_key = pub_key;
+    }
+    if (priv_key != NULL) {
+        BN_free(dh->priv_key);
+        dh->priv_key = priv_key;
+    }
 
     return 1;
 }

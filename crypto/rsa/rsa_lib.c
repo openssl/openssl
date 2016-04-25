@@ -287,43 +287,63 @@ int RSA_security_bits(const RSA *rsa)
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
 {
     /* d is the private component and may be NULL */
-    if (n == NULL || e == NULL)
+    if ((n == NULL && r->n == NULL)
+        || (e == NULL && r->e == NULL))
         return 0;
 
-    BN_free(r->n);
-    BN_free(r->e);
-    BN_free(r->d);
-    r->n = n;
-    r->e = e;
-    r->d = d;
+    if (n != NULL) {
+        BN_free(r->n);
+        r->n = n;
+    }
+    if (e != NULL) {
+        BN_free(r->e);
+        r->e = e;
+    }
+    if (d != NULL) {
+        BN_free(r->d);
+        r->d = d;
+    }
 
     return 1;
 }
 
 int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
 {
-    if (p == NULL || q == NULL)
+    if ((p == NULL && r->p == NULL)
+        || (q == NULL && r->q == NULL))
         return 0;
 
-    BN_free(r->p);
-    BN_free(r->q);
-    r->p = p;
-    r->q = q;
+    if (p != NULL) {
+        BN_free(r->p);
+        r->p = p;
+    }
+    if (q != NULL) {
+        BN_free(r->q);
+        r->q = q;
+    }
 
     return 1;
 }
 
 int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
 {
-    if (dmp1 == NULL || dmq1 == NULL || iqmp == NULL)
+    if ((dmp1 == NULL && r->dmp1 == NULL)
+        || (dmq1 == NULL && r->dmq1 == NULL)
+        || (iqmp == NULL && r->iqmp == NULL))
         return 0;
 
-    BN_free(r->dmp1);
-    BN_free(r->dmq1);
-    BN_free(r->iqmp);
-    r->dmp1 = dmp1;
-    r->dmq1 = dmq1;
-    r->iqmp = iqmp;
+    if (dmp1 != NULL) {
+        BN_free(r->dmp1);
+        r->dmp1 = dmp1;
+    }
+    if (dmq1 != NULL) {
+        BN_free(r->dmq1);
+        r->dmq1 = dmq1;
+    }
+    if (iqmp != NULL) {
+        BN_free(r->iqmp);
+        r->iqmp = iqmp;
+    }
 
     return 1;
 }
