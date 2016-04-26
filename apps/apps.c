@@ -1984,8 +1984,10 @@ static STACK_OF(X509_CRL) *crls_http_cb(X509_STORE_CTX *ctx, X509_NAME *nm)
     crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
     crl = load_crl_crldp(crldp);
     sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
-    if (!crl)
+    if (!crl) {
+        sk_X509_CRL_free(crls);
         return NULL;
+    }
     sk_X509_CRL_push(crls, crl);
     /* Try to download delta CRL */
     crldp = X509_get_ext_d2i(x, NID_freshest_crl, NULL, NULL);
