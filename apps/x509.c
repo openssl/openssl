@@ -145,7 +145,7 @@ OPTIONS x509_options[] = {
 int x509_main(int argc, char **argv)
 {
     ASN1_INTEGER *sno = NULL;
-    ASN1_OBJECT *objtmp;
+    ASN1_OBJECT *objtmp = NULL;
     BIO *out = NULL;
     CONF *extconf = NULL;
     EVP_PKEY *Upkey = NULL, *CApkey = NULL, *fkey = NULL;
@@ -277,6 +277,7 @@ int x509_main(int argc, char **argv)
             if (trust == NULL && (trust = sk_ASN1_OBJECT_new_null()) == NULL)
                 goto end;
             sk_ASN1_OBJECT_push(trust, objtmp);
+            objtmp = NULL;
             trustout = 1;
             break;
         case OPT_ADDREJECT:
@@ -290,6 +291,7 @@ int x509_main(int argc, char **argv)
                 && (reject = sk_ASN1_OBJECT_new_null()) == NULL)
                 goto end;
             sk_ASN1_OBJECT_push(reject, objtmp);
+            objtmp = NULL;
             trustout = 1;
             break;
         case OPT_SETALIAS:
@@ -590,6 +592,7 @@ int x509_main(int argc, char **argv)
             objtmp = sk_ASN1_OBJECT_value(trust, i);
             X509_add1_trust_object(x, objtmp);
         }
+        objtmp = NULL;
     }
 
     if (reject) {
@@ -597,6 +600,7 @@ int x509_main(int argc, char **argv)
             objtmp = sk_ASN1_OBJECT_value(reject, i);
             X509_add1_reject_object(x, objtmp);
         }
+        objtmp = NULL;
     }
 
     if (num) {
@@ -885,6 +889,7 @@ int x509_main(int argc, char **argv)
     ASN1_INTEGER_free(sno);
     sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
+    ASN1_OBJECT_free(objtmp);
     OPENSSL_free(passin);
     return (ret);
 }
