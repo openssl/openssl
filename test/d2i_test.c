@@ -148,7 +148,8 @@ int main(int argc, char **argv)
     static ASN1_ITEM_EXP *items[] = {
         ASN1_ITEM_ref(ASN1_ANY),
         ASN1_ITEM_ref(X509),
-        ASN1_ITEM_ref(GENERAL_NAME)
+        ASN1_ITEM_ref(GENERAL_NAME),
+        ASN1_ITEM_ref(ASN1_INTEGER)
     };
 
     static error_enum expected_errors[] = {
