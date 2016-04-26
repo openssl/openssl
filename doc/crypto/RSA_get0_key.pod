@@ -46,7 +46,10 @@ RSA_set0_key() and passing the new values for B<n>, B<e> and B<d> as
 parameters to the function. Calling this function transfers the memory
 management of the values to the RSA object, and therefore the values
 that have been passed in should not be freed by the caller after this
-function has been called.
+function has been called.  The first time this function is called for
+a specific RSA object, B<n> and B<e> must be non-C<NULL>; however,
+this function may be called again with B<n> or B<e> being NULL to
+complete or set of values, typically to add a value for B<d>.
 
 In a similar fashion, the B<p> and B<q> parameters can be obtained and
 set with RSA_get0_factors() and RSA_set0_factors(), and the B<dmp1>,
