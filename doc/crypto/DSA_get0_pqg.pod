@@ -44,7 +44,9 @@ be. The values point to the internal representation of the public key and
 private key values. This memory should not be freed directly.
 
 The public and private key values can be set using DSA_set0_key(). The public
-key must always be non-NULL. The private key may be NULL. As for DSA_set0_pqg()
+key must be non-NULL the first time this function is called on a given DSA
+object. The private key may be NULL.  On subsequent calls, either may be NULL,
+which means the corresponding DSA field is left untouched. As for DSA_set0_pqg()
 this function transfers the memory management of the key values to the DSA
 object, and therefore they should not be freed directly after this function has
 been called.
@@ -59,6 +61,13 @@ within the DSA object.
 
 DSA_get0_engine() returns a handle to the ENGINE that has been set for this DSA
 object, or NULL if no such ENGINE has been set.
+
+=head1 NOTES
+
+Values retrieved with DSA_get0_key() are owned by the DSA object used
+in the call and may therefore I<not> be passed to DSA_set0_key().  If
+needed, duplicate the received value using BN_dup() and pass the
+duplicate.  The same applies to DSA_get0_pqg() and DSA_set0_pqg().
 
 =head1 RETURN VALUES
 

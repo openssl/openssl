@@ -43,10 +43,13 @@ by the caller.
 
 The B<n>, B<e> and B<d> parameter values can be set by calling
 RSA_set0_key() and passing the new values for B<n>, B<e> and B<d> as
-parameters to the function. Calling this function transfers the memory
-management of the values to the RSA object, and therefore the values
-that have been passed in should not be freed by the caller after this
-function has been called.
+parameters to the function.  The values B<n> and B<e> must be non-NULL
+the first time this function is called on a given RSA object. The
+value B<d> may be NULL. On subsequent calls any of these values may be
+NULL which means the corresponding RSA field is left untouched.
+Calling this function transfers the memory management of the values to
+the RSA object, and therefore the values that have been passed in
+should not be freed by the caller after this function has been called.
 
 In a similar fashion, the B<p> and B<q> parameters can be obtained and
 set with RSA_get0_factors() and RSA_set0_factors(), and the B<dmp1>,
@@ -64,6 +67,14 @@ RSA object.
 
 RSA_get0_engine() returns a handle to the ENGINE that has been set for
 this RSA object, or NULL if no such ENGINE has been set.
+
+=head1 NOTES
+
+Values retrieved with RSA_get0_key() are owned by the RSA object used
+in the call and may therefore I<not> be passed to RSA_set0_key().  If
+needed, duplicate the received value using BN_dup() and pass the
+duplicate.  The same applies to RSA_get0_factors() and RSA_set0_factors()
+as well as RSA_get0_crt_params() and RSA_set0_crt_params().
 
 =head1 RETURN VALUES
 
