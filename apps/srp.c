@@ -597,6 +597,8 @@ int srp_main(int argc, char **argv)
     if (verbose)
         BIO_printf(bio_err, "SRP terminating with code %d.\n", ret);
 
+    OPENSSL_free(passin);
+    OPENSSL_free(passout);
     if (ret)
         ERR_print_errors(bio_err);
     if (randfile)
