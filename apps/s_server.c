@@ -2481,6 +2481,8 @@ static int init_ssl_connection(SSL *con)
             BIO_ADDR_free(client);
             dtlslisten = 0;
             i = SSL_accept(con);
+        } else {
+            BIO_ADDR_free(client);
         }
     } else
 #endif
