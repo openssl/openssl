@@ -576,12 +576,12 @@ static int cert_status_cb(SSL *s, void *arg)
         BIO_puts(bio_err, "cert_status: Can't retrieve issuer certificate.\n");
         goto done;
     }
-    req = OCSP_REQUEST_new();
-    if (req == NULL)
-        goto err;
     id = OCSP_cert_to_id(NULL, x, X509_OBJECT_get0_X509(obj));
     X509_OBJECT_free(obj);
     if (!id)
+        goto err;
+    req = OCSP_REQUEST_new();
+    if (req == NULL)
         goto err;
     if (!OCSP_request_add0_id(req, id))
         goto err;
