@@ -424,10 +424,11 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         dbs = BIO_get_data(dbio);
         SSL_free(dbs->ssl);
         dbs->ssl = SSL_dup(ssl);
-        dbs->renegotiate_count = dbs->renegotiate_count;
-        dbs->byte_count = dbs->byte_count;
-        dbs->renegotiate_timeout = dbs->renegotiate_timeout;
-        dbs->last_time = dbs->last_time;
+        dbs->num_renegotiates = bs->num_renegotiates;
+        dbs->renegotiate_count = bs->renegotiate_count;
+        dbs->byte_count = bs->byte_count;
+        dbs->renegotiate_timeout = bs->renegotiate_timeout;
+        dbs->last_time = bs->last_time;
         ret = (dbs->ssl != NULL);
         break;
     case BIO_C_GET_FD:
