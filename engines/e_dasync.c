@@ -228,7 +228,7 @@ static int bind_dasync(ENGINE *e)
         || RSA_meth_set_pub_enc(dasync_rsa_method, dasync_pub_enc) == 0
         || RSA_meth_set_pub_dec(dasync_rsa_method, dasync_pub_dec) == 0
         || RSA_meth_set_priv_enc(dasync_rsa_method, dasync_rsa_priv_enc) == 0
-        || RSA_meth_set_priv_enc(dasync_rsa_method, dasync_rsa_priv_dec) == 0
+        || RSA_meth_set_priv_dec(dasync_rsa_method, dasync_rsa_priv_dec) == 0
         || RSA_meth_set_mod_exp(dasync_rsa_method, dasync_rsa_mod_exp) == 0
         || RSA_meth_set_bn_mod_exp(dasync_rsa_method, BN_mod_exp_mont) == 0
         || RSA_meth_set_init(dasync_rsa_method, dasync_rsa_init) == 0
