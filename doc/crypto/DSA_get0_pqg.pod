@@ -46,7 +46,7 @@ private key values. This memory should not be freed directly.
 The public and private key values can be set using DSA_set0_key(). The public
 key must be non-NULL the first time this function is called on a given DSA
 object. The private key may be NULL.  On subsequent calls, either may be NULL,
-which means the correspond DSA field is left untouched. As for DSA_set0_pqg()
+which means the corresponding DSA field is left untouched. As for DSA_set0_pqg()
 this function transfers the memory management of the key values to the DSA
 object, and therefore they should not be freed directly after this function has
 been called.
