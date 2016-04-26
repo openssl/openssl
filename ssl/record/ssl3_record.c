@@ -276,7 +276,7 @@ int ssl3_get_record(SSL *s)
 
                 rr[num_recs].length = ((p[0] & 0x7f) << 8) | p[1];
 
-                if (rr[num_recs].length > SSL3_BUFFER_get_len(&rbuf[num_recs])
+                if (rr[num_recs].length > SSL3_BUFFER_get_len(rbuf)
                                  - SSL2_RT_HEADER_LENGTH) {
                     al = SSL_AD_RECORD_OVERFLOW;
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
