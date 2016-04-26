@@ -175,6 +175,7 @@ int passwd_main(int argc, char **argv)
             if (pw_source_defined)
                 goto opthelp;
             in_stdin = 1;
+            pw_source_defined = 1;
             break;
         }
     }
