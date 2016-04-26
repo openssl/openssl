@@ -420,7 +420,8 @@ int ssl3_get_record(SSL *s)
 
         /* we have pulled in a full packet so zero things */
         RECORD_LAYER_reset_packet_length(&s->rlayer);
-    } while (num_recs < max_recs && rr->type == SSL3_RT_APPLICATION_DATA
+    } while (num_recs < max_recs
+             && rr[num_recs-1].type == SSL3_RT_APPLICATION_DATA
              && SSL_USE_EXPLICIT_IV(s)
              && s->enc_read_ctx != NULL
              && (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx))
