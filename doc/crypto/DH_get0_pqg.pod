@@ -47,7 +47,9 @@ be. The values point to the internal representation of the public key and
 private key values. This memory should not be freed directly.
 
 The public and private key values can be set using DH_set0_key(). The public
-key must always be non-NULL. The private key may be NULL. As for DH_set0_pqg()
+key must be non-NULL the first time this function is called on a given DH
+object. The private key may be NULL.  On subsequent calls, either may be NULL,
+which means the corresponding DH field is left untouched. As for DH_set0_pqg()
 this function transfers the memory management of the key values to the DH
 object, and therefore they should not be freed directly after this function has
 been called.
@@ -67,6 +69,13 @@ The DH_get_length() and DH_set_length() functions get and set the optional
 length parameter associated with this DH object. If the length is non-zero then
 it is used, otherwise it is ignored. The B<length> parameter indicates the
 length of the secret exponent (private key) in bits.
+
+=head1 NOTES
+
+Values retrieved with DH_get0_key() are owned by the DH object used
+in the call and may therefore I<not> be passed to DH_set0_key().  If
+needed, duplicate the received value using BN_dup() and pass the
+duplicate.  The same applies to DH_get0_pqg() and DH_set0_pqg().
 
 =head1 RETURN VALUES
 
