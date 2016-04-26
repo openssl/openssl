@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_d2i");
 
-plan tests => 4;
+plan tests => 13;
 
 ok(run(test(["d2i_test", "X509", "decode",
              srctop_file('test','d2i-tests','bad_cert.der')])),
@@ -37,3 +37,45 @@ ok(run(test(["d2i_test", "ASN1_ANY", "BIO",
 ok(run(test(["d2i_test", "ASN1_ANY", "OK",
              srctop_file('test','d2i-tests','high_tag.der')])),
    "Running d2i_test high_tag.der");
+
+# Above test data but interpeted as ASN.1 INTEGER: this will be rejected
+# because the tag is invalid.
+ok(run(test(["d2i_test", "ASN1_INTEGER", "decode",
+             srctop_file('test','d2i-tests','high_tag.der')])),
+   "Running d2i_test high_tag.der INTEGER");
+
+# Parse valid 0, 1 and -1 ASN.1 INTEGER as INTEGER or ANY.
+
+ok(run(test(["d2i_test", "ASN1_INTEGER", "OK",
+             srctop_file('test','d2i-tests','int0.der')])),
+   "Running d2i_test int0.der INTEGER");
+
+ok(run(test(["d2i_test", "ASN1_INTEGER", "OK",
+             srctop_file('test','d2i-tests','int1.der')])),
+   "Running d2i_test int1.der INTEGER");
+
+ok(run(test(["d2i_test", "ASN1_INTEGER", "OK",
+             srctop_file('test','d2i-tests','intminus1.der')])),
+   "Running d2i_test intminus1.der INTEGER");
+
+ok(run(test(["d2i_test", "ASN1_ANY", "OK",
+             srctop_file('test','d2i-tests','int0.der')])),
+   "Running d2i_test int0.der ANY");
+
+ok(run(test(["d2i_test", "ASN1_ANY", "OK",
+             srctop_file('test','d2i-tests','int1.der')])),
+   "Running d2i_test int1.der ANY");
+
+ok(run(test(["d2i_test", "ASN1_ANY", "OK",
+             srctop_file('test','d2i-tests','intminus1.der')])),
+   "Running d2i_test intminus1.der ANY");
+
+# Integers with illegal additional padding.
+
+ok(run(test(["d2i_test", "ASN1_INTEGER", "decode",
+             srctop_file('test','d2i-tests','bad-int-pad0.der')])),
+   "Running d2i_test bad-int-pad0.der INTEGER");
+
+ok(run(test(["d2i_test", "ASN1_INTEGER", "decode",
+             srctop_file('test','d2i-tests','bad-int-padminus1.der')])),
+   "Running d2i_test bad-int-padminus1.der INTEGER");
