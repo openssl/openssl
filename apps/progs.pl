@@ -93,11 +93,6 @@ foreach my $cmd (@ARGV) {
 }
 
 my %md_disabler = (
-    sha1       => "sha",
-    sha224     => "sha",
-    sha256     => "sha",
-    sha384     => "sha",
-    sha512     => "sha",
     blake2b512 => "blake2",
     blake2s256 => "blake2",
     );

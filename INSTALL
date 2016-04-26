@@ -234,9 +234,6 @@
                    Don't build support for RFC3779 ("X.509 Extensions for IP
                    Addresses and AS Identifiers")
 
-  no-sct
-                   ??
-
   sctp
                    Build support for SCTP
 
