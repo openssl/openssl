@@ -356,6 +356,7 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in,
     const unsigned char *pin = *in;
     EVP_PKEY *ret = NULL;
     BIGNUM *e = NULL, *n = NULL, *d = NULL;
+    BIGNUM *p = NULL, *q = NULL, *dmp1 = NULL, *dmq1 = NULL, *iqmp = NULL;
     RSA *rsa = NULL;
     unsigned int nbyte, hnbyte;
     nbyte = (bitlen + 7) >> 3;
@@ -372,7 +373,6 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in,
     if (!read_lebn(&pin, nbyte, &n))
         goto memerr;
     if (!ispub) {
-        BIGNUM *p = NULL, *q = NULL, *dmp1 = NULL, *dmq1 = NULL, *iqmp = NULL;
         if (!read_lebn(&pin, hnbyte, &p))
             goto memerr;
         if (!read_lebn(&pin, hnbyte, &q))
@@ -396,6 +396,14 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in,
     return ret;
  memerr:
     PEMerr(PEM_F_B2I_RSA, ERR_R_MALLOC_FAILURE);
+    BN_free(e);
+    BN_free(n);
+    BN_free(p);
+    BN_free(q);
+    BN_free(dmp1);
+    BN_free(dmq1);
+    BN_free(iqmp);
+    BN_free(d);
     RSA_free(rsa);
     EVP_PKEY_free(ret);
     return NULL;
