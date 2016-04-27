@@ -132,6 +132,7 @@ void OPENSSL_fpu_probe(void);
 void OPENSSL_ppc64_probe(void);
 void OPENSSL_altivec_probe(void);
 void OPENSSL_crypto207_probe(void);
+void OPENSSL_madd300_probe(void);
 
 /*
  * Use a weak reference to getauxval() so we can use it if it is available
