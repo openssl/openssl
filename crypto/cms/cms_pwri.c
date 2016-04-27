@@ -323,7 +323,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
     CMS_PasswordRecipientInfo *pwri;
     int r = 0;
     X509_ALGOR *algtmp, *kekalg = NULL;
-    EVP_CIPHER_CTX *kekctx;
+    EVP_CIPHER_CTX *kekctx = NULL;
     const EVP_CIPHER *kekcipher;
     unsigned char *key = NULL;
     size_t keylen;
@@ -331,7 +331,6 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
     ec = cms->d.envelopedData->encryptedContentInfo;
 
     pwri = ri->d.pwri;
-    kekctx = EVP_CIPHER_CTX_new();
 
     if (!pwri->pass) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, CMS_R_NO_PASSWORD);
@@ -358,9 +357,14 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 
     if (!kekcipher) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, CMS_R_UNKNOWN_CIPHER);
-        goto err;
+        return 0;
     }
 
+    kekctx = EVP_CIPHER_CTX_new();
+    if (kekctx == NULL) {
+        CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
     /* Fixup cipher based on AlgorithmIdentifier to set IV etc */
     if (!EVP_CipherInit_ex(kekctx, kekcipher, NULL, NULL, NULL, en_de))
         goto err;
