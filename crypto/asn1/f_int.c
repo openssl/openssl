@@ -148,6 +148,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
     return 1;
  err:
     ASN1err(ASN1_F_A2I_ASN1_INTEGER, ASN1_R_SHORT_LINE);
+    OPENSSL_free(s);
     return 0;
 }
 
