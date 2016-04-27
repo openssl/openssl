@@ -588,7 +588,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 
     if (!si->pkey) {
         CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, CMS_R_NO_PRIVATE_KEY);
-        return 0;
+        goto err;
     }
 
     if (!cms_DigestAlgorithm_find_ctx(mctx, chain, si->digestAlgorithm))
