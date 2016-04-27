@@ -73,7 +73,8 @@ this RSA object, or NULL if no such ENGINE has been set.
 Values retrieved with RSA_get0_key() are owned by the RSA object used
 in the call and may therefore I<not> be passed to RSA_set0_key().  If
 needed, duplicate the received value using BN_dup() and pass the
-duplicate.
+duplicate.  The same applies to RSA_get0_factors() and RSA_set0_factors()
+as well as RSA_get0_crt_params() and RSA_set0_crt_params().
 
 =head1 RETURN VALUES
 

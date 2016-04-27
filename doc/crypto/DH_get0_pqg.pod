@@ -70,6 +70,13 @@ length parameter associated with this DH object. If the length is non-zero then
 it is used, otherwise it is ignored. The B<length> parameter indicates the
 length of the secret exponent (private key) in bits.
 
+=head1 NOTES
+
+Values retrieved with DH_get0_key() are owned by the DH object used
+in the call and may therefore I<not> be passed to DH_set0_key().  If
+needed, duplicate the received value using BN_dup() and pass the
+duplicate.  The same applies to DH_get0_pqg() and DH_set0_pqg().
+
 =head1 RETURN VALUES
 
 DH_set0_pqg() and DH_set0_key() return 1 on success or 0 on failure.

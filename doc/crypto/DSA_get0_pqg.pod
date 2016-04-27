@@ -62,6 +62,13 @@ within the DSA object.
 DSA_get0_engine() returns a handle to the ENGINE that has been set for this DSA
 object, or NULL if no such ENGINE has been set.
 
+=head1 NOTES
+
+Values retrieved with DSA_get0_key() are owned by the DSA object used
+in the call and may therefore I<not> be passed to DSA_set0_key().  If
+needed, duplicate the received value using BN_dup() and pass the
+duplicate.  The same applies to DSA_get0_pqg() and DSA_set0_pqg().
+
 =head1 RETURN VALUES
 
 DSA_set0_pqg() and DSA_set0_key() return 1 on success or 0 on failure.
