@@ -201,9 +201,10 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
     }
 
     ret = CRYPTO_malloc(num, file, line);
-    if (ret)
+    if (ret != NULL) {
         memcpy(ret, str, old_len);
-    CRYPTO_clear_free(str, old_len, file, line);
+        CRYPTO_clear_free(str, old_len, file, line);
+    }
     return ret;
 }
 

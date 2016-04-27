@@ -58,15 +58,13 @@
 #ifndef HEADER_MD4_H
 # define HEADER_MD4_H
 
+# include <openssl/opensslconf.h>
+
+# ifndef OPENSSL_NO_MD4
 # include <openssl/e_os2.h>
 # include <stddef.h>
-
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
-
-# ifdef OPENSSL_NO_MD4
-#  error MD4 is disabled.
 # endif
 
 /*-
@@ -92,8 +90,10 @@ int MD4_Update(MD4_CTX *c, const void *data, size_t len);
 int MD4_Final(unsigned char *md, MD4_CTX *c);
 unsigned char *MD4(const unsigned char *d, size_t n, unsigned char *md);
 void MD4_Transform(MD4_CTX *c, const unsigned char *b);
-#ifdef  __cplusplus
+
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
 
 #endif

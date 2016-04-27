@@ -11,7 +11,7 @@ BIO_ctrl_get_read_request, BIO_ctrl_reset_read_request - BIO pair BIO
 
  #include <openssl/bio.h>
 
- BIO_METHOD *BIO_s_bio(void);
+ const BIO_METHOD *BIO_s_bio(void);
 
  #define BIO_make_bio_pair(b1,b2)   (int)BIO_ctrl(b1,BIO_C_MAKE_BIO_PAIR,0,b2)
  #define BIO_destroy_bio_pair(b)    (int)BIO_ctrl(b,BIO_C_DESTROY_BIO_PAIR,0,NULL)
@@ -172,7 +172,7 @@ SSL_operation() can successfully be continued.
 
 =head1 WARNING
 
-As the data is buffered, SSL_operation() may return with a ERROR_SSL_WANT_READ
+As the data is buffered, SSL_operation() may return with an ERROR_SSL_WANT_READ
 condition, but there is still data in the write buffer. An application must
 not rely on the error value of SSL_operation() but must assure that the
 write buffer is always flushed first. Otherwise a deadlock may occur as

@@ -126,7 +126,7 @@
 
 # include <openssl/e_os2.h>
 # ifndef OPENSSL_NO_STDIO
-#  include <stdio.h>            /* FILE */
+#  include <stdio.h>
 # endif
 # include <openssl/opensslconf.h>
 # include <openssl/ossl_typ.h>
@@ -558,16 +558,27 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
                           size_t message_len, BN_CTX *ctx);
 
 /* Primes from RFC 2409 */
-BIGNUM *get_rfc2409_prime_768(BIGNUM *bn);
-BIGNUM *get_rfc2409_prime_1024(BIGNUM *bn);
+BIGNUM *BN_get_rfc2409_prime_768(BIGNUM *bn);
+BIGNUM *BN_get_rfc2409_prime_1024(BIGNUM *bn);
 
 /* Primes from RFC 3526 */
-BIGNUM *get_rfc3526_prime_1536(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_2048(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_3072(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_4096(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_6144(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_8192(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_1536(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_2048(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_3072(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
+
+# if OPENSSL_API_COMPAT < 0x00101000L
+#  define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
+#  define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
+#  define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536
+#  define get_rfc3526_prime_2048 BN_get_rfc3526_prime_2048
+#  define get_rfc3526_prime_3072 BN_get_rfc3526_prime_3072
+#  define get_rfc3526_prime_4096 BN_get_rfc3526_prime_4096
+#  define get_rfc3526_prime_6144 BN_get_rfc3526_prime_6144
+#  define get_rfc3526_prime_8192 BN_get_rfc3526_prime_8192
+# endif
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
 

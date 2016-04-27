@@ -99,7 +99,7 @@ static void BIO_ACCEPT_free(BIO_ACCEPT *a);
 # define ACPT_S_ACCEPT                   5
 # define ACPT_S_OK                       6
 
-static BIO_METHOD methods_acceptp = {
+static const BIO_METHOD methods_acceptp = {
     BIO_TYPE_ACCEPT,
     "socket accept",
     acpt_write,
@@ -112,7 +112,7 @@ static BIO_METHOD methods_acceptp = {
     NULL,
 };
 
-BIO_METHOD *BIO_s_accept(void)
+const BIO_METHOD *BIO_s_accept(void)
 {
     return (&methods_acceptp);
 }

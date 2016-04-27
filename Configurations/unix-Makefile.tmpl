@@ -86,10 +86,12 @@ DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED={- join(" ", map { (my $x = $_) =~ s|\.S$|\.s|; $x } keys %{$unified_info{generate}}) -}
 
+{- output_off() if $disabled{apps}; "" -}
 BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
 MISC_SCRIPTS=$(SRCDIR)/tools/c_hash $(SRCDIR)/tools/c_info \
 	     $(SRCDIR)/tools/c_issuer $(SRCDIR)/tools/c_name \
-	     $(BLDDIR)/apps/CA.pl $(SRCDIR)/apps/tsget
+	     $(BLDDIR)/apps/CA.pl $(BLDDIR)/apps/tsget
+{- output_on() if $disabled{apps}; "" -}
 
 SHLIB_INFO={- join(" ", map { "\"".shlib($_).";".shlib_simple($_)."\"" } @{$unified_info{libraries}}) -}
 
@@ -215,12 +217,19 @@ build_apps_nodep: $(PROGRAMS) $(SCRIPTS)
 build_tests: configdata.pm build_tests_nodep depend
 build_tests_nodep: $(TESTPROGS)
 
-test tests: build_tests_nodep build_apps_nodep build_engines_nodep depend
+test: tests
+tests: build_tests_nodep build_apps_nodep build_engines_nodep \
+       depend link-utils
+	@ : {- output_off() if $disabled{tests}; "" -}
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
 	  EXE_EXT={- $exeext -} \
+	  OPENSSL_ENGINES=../$(BLDDIR)/engines \
 	    $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
+	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+	@echo "Tests are not supported with your chosen Configure options"
+	@ : {- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
 	@TOP=$(SRCDIR) PERL=$(PERL) $(PERL) $(SRCDIR)/test/run_tests.pl list
@@ -256,37 +265,20 @@ clean: libclean
 # This exists solely for those who still type 'make depend'
 #
 # We check if any depfile is newer than Makefile and decide to
-# concatenate only if that is true, or if 'test' (a.k.a [ )
-# doesn't have the option to figure it out (-nt).
-#
-# To check if test has the file age comparison operator, we
-# simply try, and rely test to exit with 0 if the comparison
-# was true, 1 if false, and most importantly, 2 if it doesn't
-# recognise the operator.
+# concatenate only if that is true.
 depend:
 	@: {- output_off() if $disabled{makedepend}; "" -}
-	@catdepends=false; \
-	if [ Makefile -nt Makefile ] 2>/dev/null || [ $$? = 1 ]; then \
-	  for d in $(DEPS); do \
-	    if [ $$d -nt Makefile ]; then \
-	      catdepends=true; \
-	      break; \
-	    fi; \
-	  done; \
-	else \
-	  catdepends=true; \
-	fi; \
-	if [ $$catdepends = true ]; then \
+	@if [ -n "`find $(DEPS) -newer Makefile 2>/dev/null; exit 0`" ]; then \
 	  ( sed -e '/^# DO NOT DELETE THIS LINE.*/,$$d' < Makefile; \
 	    echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
 	    echo; \
-	    for d in $(DEPS); do \
-	      if [ -f $$d ]; then cat $$d; fi; \
+	    for f in $(DEPS); do \
+	      if [ -f $$f ]; then cat $$f; fi; \
 	    done ) > Makefile.new; \
-	  if ! cmp Makefile.new Makefile >/dev/null 2>&1; then \
-	    mv -f Makefile.new Makefile; \
-	  else \
+	  if cmp Makefile.new Makefile >/dev/null 2>&1; then \
 	    rm -f Makefile.new; \
+	  else \
+	    mv -f Makefile.new Makefile; \
 	  fi; \
 	fi
 	@: {- output_on() if $disabled{makedepend}; "" -}
@@ -407,7 +399,8 @@ install_engines:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/
 	@echo "*** Installing engines"
-	@set -e; for e in $(ENGINES); do \
+	@set -e; for e in dummy $(ENGINES); do \
+		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \
 		if [ "$$fn" = '{- dso("ossltest") -}' ]; then \
 			continue; \
@@ -421,7 +414,8 @@ install_engines:
 
 uninstall_engines:
 	@echo "*** Uninstalling engines"
-	@set -e; for e in $(ENGINES); do \
+	@set -e; for e in dummy $(ENGINES); do \
+		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \
 		if [ "$$fn" = '{- dso("ossltest") -}' ]; then \
 			continue; \
@@ -437,7 +431,8 @@ install_runtime:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/misc
 	@echo "*** Installing runtime files"
 	: {- output_off() unless windowsdll(); "" -};
-	@set -e; for s in $(SHLIBS); do \
+	@set -e; for s in dummy $(SHLIBS); do \
+		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
 		echo "install $$s -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		cp $$s $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
@@ -446,7 +441,8 @@ install_runtime:
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
 	: {- output_on() unless windowsdll(); "" -};
-	@set -e; for x in $(PROGRAMS); do \
+	@set -e; for x in dummy $(PROGRAMS); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		cp $$x $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
@@ -454,7 +450,8 @@ install_runtime:
 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	@set -e; for x in $(BIN_SCRIPTS); do \
+	@set -e; for x in dummy $(BIN_SCRIPTS); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		cp $$x $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
@@ -462,7 +459,8 @@ install_runtime:
 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	@set -e; for x in $(MISC_SCRIPTS); do \
+	@set -e; for x in dummy $(MISC_SCRIPTS); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "install $$x -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
 		cp $$x $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
@@ -477,26 +475,30 @@ install_runtime:
 
 uninstall_runtime:
 	@echo "*** Uninstalling runtime files"
-	@set -e; for x in $(PROGRAMS); \
+	@set -e; for x in dummy $(PROGRAMS); \
 	do  \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done;
-	@set -e; for x in $(BIN_SCRIPTS); \
+	@set -e; for x in dummy $(BIN_SCRIPTS); \
 	do  \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	@set -e; for x in $(MISC_SCRIPTS); \
+	@set -e; for x in dummy $(MISC_SCRIPTS); \
 	do  \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		echo "$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
 		$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$fn; \
 	done
 	: {- output_off() unless windowsdll(); "" -};
-	@set -e; for s in $(SHLIBS); do \
+	@set -e; for s in dummy $(SHLIBS); do \
+		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
@@ -508,11 +510,11 @@ uninstall_runtime:
 
 # A method to extract all names from a .pod file
 # The first sed extracts everything between "=head1 NAME" and the next =head1
-# The second sed joins all the lines into one
-# The third sed removes the description and turns all commas into spaces
+# The perl command joins all the lines into one
+# The second sed removes the description and turns all commas into spaces
 # Voilà, you have a space separated list of names!
 EXTRACT_NAMES=sed -e '1,/^=head1  *NAME *$$/d;/^=head1/,$$d' | \
-              sed -e ':a;{N;s/\n/ /;ba}' | \
+              $(PERL) -p -0 -e 's/\n/ /g; END {print "\n"}' | \
               sed -e 's/ - .*$$//;s/,/ /g'
 PROCESS_PODS=\
 	set -e; \
@@ -633,13 +635,35 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects
 lint:
 	lint -DLINT $(INCLUDES) $(SRCS)
 
-generate_apps: $(SRCDIR)/apps/openssl-vms.cnf $(SRCDIR)/apps/progs.h
+{- # because the program apps/openssl has object files as sources, and
+   # they then have the corresponding C files as source, we need to chain
+   # the lookups in %unified_info
+   my $apps_openssl = catfile("apps","openssl");
+   our @openssl_source = map { @{$unified_info{sources}->{$_}} }
+                         @{$unified_info{sources}->{$apps_openssl}};
+   ""; -}
+generate_apps:
+	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
+				< apps/openssl.cnf > apps/openssl-vms.cnf )
+	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b apps/progs.pl \
+					{- join(" ", @openssl_source) -} \
+					> apps/progs.h )
 
-generate_crypto_bn: $(SRCDIR)/crypto/bn/bn_prime.h
+generate_crypto_bn:
+	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )
 
-generate_crypto_objects: $(SRCDIR)/crypto/objects/obj_dat.h \
-                         $(SRCDIR)/include/openssl/obj_mac.h \
-                         $(SRCDIR)/crypto/objects/obj_xref.h
+generate_crypto_objects:
+	( cd $(SRCDIR); $(PERL) crypto/objects/obj_dat.pl \
+				include/openssl/obj_mac.h \
+				crypto/objects/obj_dat.h )
+	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl \
+				crypto/objects/objects.txt \
+				crypto/objects/obj_mac.num \
+				include/openssl/obj_mac.h )
+	( cd $(SRCDIR); $(PERL) crypto/objects/objxref.pl \
+				crypto/objects/obj_mac.num \
+				crypto/objects/obj_xref.txt \
+				> crypto/objects/obj_xref.h )
 
 errors:
 	( cd $(SRCDIR); $(PERL) util/ck_errf.pl -strict */*.c */*/*.c )
@@ -706,50 +730,6 @@ $(BLDDIR)/util/shlib_wrap.sh: configdata.pm
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/shlib_wrap.sh" "$(BLDDIR)/util"; \
 	fi
-
-$(SRCDIR)/apps/openssl-vms.cnf: $(SRCDIR)/apps/openssl.cnf
-	$(PERL) $(SRCDIR)/VMS/VMSify-conf.pl \
-                < $(SRCDIR)/apps/openssl.cnf > $(SRCDIR)/apps/openssl-vms.cnf
-
-{- # because the program apps/openssl has object files as sources, and
-   # they then have the corresponding C files as source, we need to chain
-   # the lookups in %unified_info
-   my $apps_openssl = catfile("apps","openssl");
-   our @openssl_source = map { @{$unified_info{sources}->{$_}} }
-                         @{$unified_info{sources}->{$apps_openssl}};
-   ""; -}
-$(SRCDIR)/apps/progs.h:
-	$(RM) $@
-	$(PERL) $(SRCDIR)/apps/progs.pl {- join(" ", @openssl_source) -} > $@
-
-$(SRCDIR)/crypto/bn/bn_prime.h: $(SRCDIR)/crypto/bn/bn_prime.pl
-	$(PERL) $(SRCDIR)/crypto/bn/bn_prime.pl > $(SRCDIR)/crypto/bn/bn_prime.h
-
-$(SRCDIR)/crypto/objects/obj_dat.h: $(SRCDIR)/crypto/objects/obj_dat.pl \
-                                    $(SRCDIR)/include/openssl/obj_mac.h
-	$(PERL) $(SRCDIR)/crypto/objects/obj_dat.pl \
-                $(SRCDIR)/include/openssl/obj_mac.h \
-                $(SRCDIR)/crypto/objects/obj_dat.h
-
-# objects.pl both reads and writes obj_mac.num
-$(SRCDIR)/include/openssl/obj_mac.h: $(SRCDIR)/crypto/objects/objects.pl \
-                                     $(SRCDIR)/crypto/objects/objects.txt \
-                                     $(SRCDIR)/crypto/objects/obj_mac.num
-	$(PERL) $(SRCDIR)/crypto/objects/objects.pl \
-                $(SRCDIR)/crypto/objects/objects.txt \
-                $(SRCDIR)/crypto/objects/obj_mac.num \
-                $(SRCDIR)/include/openssl/obj_mac.h
-	@sleep 1; touch $(SRCDIR)/include/openssl/obj_mac.h; sleep 1
-
-$(SRCDIR)/crypto/objects/obj_xref.h: $(SRCDIR)/crypto/objects/objxref.pl \
-                                     $(SRCDIR)/crypto/objects/obj_xref.txt \
-                                     $(SRCDIR)/crypto/objects/obj_mac.num
-	$(PERL) $(SRCDIR)/crypto/objects/objxref.pl \
-                $(SRCDIR)/crypto/objects/obj_mac.num \
-                $(SRCDIR)/crypto/objects/obj_xref.txt \
-                > $(SRCDIR)/crypto/objects/obj_xref.h
-	@sleep 1; touch $(SRCDIR)/crypto/objects/obj_xref.h; sleep 1
-
 FORCE:
 
 # Building targets ###################################################
@@ -797,7 +777,7 @@ openssl.pc:
 # wasn't passed down automatically.  It's quite safe to use it like we do
 # below; if it doesn't exist, the result will be empty and 'make' will pick
 # up $(MAKEFLAGS) which is passed down as an environment variable.
-configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configurations/common.tmpl $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_infos}}) -}
+configdata.pm: $(SRCDIR)/Configurations/unix-Makefile.tmpl $(SRCDIR)/Configurations/common.tmpl $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_infos}}) -}
 	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
 	$(SRCDIR)/Configure reconf
@@ -828,18 +808,20 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configurations/commo
   sub generatesrc {
       my %args = @_;
       my $generator = join(" ", @{$args{generator}});
+      my $generator_incs = join("", map { " -I".$_ } @{$args{generator_incs}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
 
       if ($args{src} !~ /\.[sS]$/) {
           return <<"EOF";
-$args{src}: $args{generator}->[0]
-	\$(PERL) $generator > \$@
+$args{src}: $args{generator}->[0] $deps
+	\$(PERL)$generator_incs $generator > \$@
 EOF
       } else {
           if ($args{generator}->[0] =~ /\.pl$/) {
-              $generator = 'CC="$(CC)" $(PERL) '.$generator;
+              $generator = 'CC="$(CC)" $(PERL)'.$generator_incs.' '.$generator;
           } elsif ($args{generator}->[0] =~ /\.m4$/) {
-              $generator = 'm4 -B 8192 '.$generator.' >'
+              $generator = 'm4 -B 8192'.$generator_incs.' '.$generator.' >'
           } elsif ($args{generator}->[0] =~ /\.S$/) {
               $generator = undef;
           } else {
@@ -852,7 +834,7 @@ EOF
               if ($args{src} =~ /\.S$/) {
                    (my $target = $args{src}) =~ s|\.S$|.s|;
                    return <<"EOF";
-$target: $args{generator}->[0]
+$target: $args{generator}->[0] $deps
 	( trap "rm -f \$@.*" INT 0; \\
 	  $generator \$@.S; \\
 	  \$(CC) \$(CFLAGS) $incs -E -P \$@.S > \$@.i && mv -f \$@.i \$@ )
@@ -860,12 +842,12 @@ EOF
               }
               # Otherwise....
               return <<"EOF";
-$args{src}: $args{generator}->[0]
+$args{src}: $args{generator}->[0] $deps
 	$generator \$@
 EOF
           }
           return <<"EOF";
-$args{src}: $args{generator}->[0]
+$args{src}: $args{generator}->[0] $deps
 	\$(CC) \$(CFLAGS) $incs -E -P \$< > \$@
 EOF
       }
@@ -877,10 +859,20 @@ EOF
   sub src2obj {
       my %args = @_;
       my $obj = $args{obj};
-      my @srcs = map { (my $x = $_) =~ s/\.S$/.s/; $x } ( @{$args{srcs}} );
+      my @srcs = map { if ($unified_info{generate}->{$_}) {
+                           (my $x = $_) =~ s/\.S$/.s/; $x
+                       } else {
+                           $_
+                       }
+                     } ( @{$args{srcs}} );
       my $srcs = join(" ",  @srcs);
       my $deps = join(" ", @srcs, @{$args{deps}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      unless ($disabled{zlib}) {
+          if ($withargs{zlib_include}) {
+              $incs .= " -I".$withargs{zlib_include};
+          }
+      }
       my $ecflags = { lib => '$(LIB_CFLAGS)',
                       dso => '$(DSO_CFLAGS)',
                       bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
@@ -889,16 +881,13 @@ EOF
       if (!$disabled{makedepend} && $makedepprog =~ /\/makedepend/) {
           $recipe .= <<"EOF";
 $obj$depext: $deps
-	rm -f \$\@.tmp; touch \$\@.tmp
-	-\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj$objext" -- \$(CFLAGS) $ecflags$incs -- $srcs \\
-	    2>/dev/null
-	perl -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//;               #\\
-	             \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); #\\
-	             \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' \$\@.tmp
-	\@if ! cmp \$\@.tmp \$\@ > /dev/null 2> /dev/null; then \\
-		mv \$\@.tmp \$\@; \\
-	else \\
+	-\$(MAKEDEPEND) -f- -o"|$obj$objext" -- \$(CFLAGS) $ecflags$incs -- $srcs \\
+	    >\$\@.tmp 2>/dev/null
+	-\$(PERL) -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//; \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' \$\@.tmp
+	\@if cmp \$\@.tmp \$\@ > /dev/null 2> /dev/null; then \\
 		rm -f \$\@.tmp; \\
+	else \\
+		mv \$\@.tmp \$\@; \\
 	fi
 EOF
           $deps = $obj.$depext;
@@ -914,10 +903,10 @@ EOF
 $obj$objext: $deps
 	\$(CC) \$(CFLAGS) $ecflags$incs -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
 	\@touch $obj$depext.tmp
-	\@if ! cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
-		mv $obj$depext.tmp $obj$depext; \\
-	else \\
+	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
 		rm -f $obj$depext.tmp; \\
+	else \\
+		mv $obj$depext.tmp $obj$depext; \\
 	fi
 EOF
       }
@@ -1004,7 +993,7 @@ EOF
       my $objs = join(" ", map { $_.$objext } @{$args{objs}});
       return <<"EOF";
 $lib$libext: $objs
-	\$(AR) \$\@ $objs
+	\$(AR) \$\@ \$\?
 	\$(RANLIB) \$\@ || echo Never mind.
 EOF
   }

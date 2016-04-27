@@ -62,7 +62,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 
-void openssl_add_all_digests_internal(void)
+void openssl_add_all_digests_int(void)
 {
 #ifndef OPENSSL_NO_MD4
     EVP_add_digest(EVP_md4());

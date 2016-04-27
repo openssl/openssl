@@ -199,7 +199,7 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
         return 1;
     }
 
-    *buf = string_to_hex(value, &len);
+    *buf = OPENSSL_hexstr2buf(value, &len);
     if (!*buf) {
         fprintf(stderr, "Value=%s\n", value);
         ERR_print_errors_fp(stderr);
@@ -209,6 +209,8 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
     *buflen = len;
     return 1;
 }
+#ifndef OPENSSL_NO_SCRYPT
+/* Currently only used by scrypt tests */
 /* Parse unsigned decimal 64 bit integer value */
 static int test_uint64(const char *value, uint64_t *pr)
 {
@@ -233,11 +235,12 @@ static int test_uint64(const char *value, uint64_t *pr)
     }
     return 1;
 }
+#endif
 
 /* Structure holding test information */
 struct evp_test {
     /* file being read */
-    FILE *in;
+    BIO *in;
     /* List of public and private keys */
     struct key_list *private;
     struct key_list *public;
@@ -462,8 +465,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
     if (!parse_line(&keyword, &value, buf))
         return 1;
     if (strcmp(keyword, "PrivateKey") == 0) {
-        save_pos = ftell(t->in);
-        pk = PEM_read_PrivateKey(t->in, NULL, 0, NULL);
+        save_pos = BIO_tell(t->in);
+        pk = PEM_read_bio_PrivateKey(t->in, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading private key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -473,8 +476,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         add_key = 1;
     }
     if (strcmp(keyword, "PublicKey") == 0) {
-        save_pos = ftell(t->in);
-        pk = PEM_read_PUBKEY(t->in, NULL, 0, NULL);
+        save_pos = BIO_tell(t->in);
+        pk = PEM_read_bio_PUBKEY(t->in, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading public key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -498,8 +501,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         key->next = *lst;
         *lst = key;
         /* Rewind input, read to end and update line numbers */
-        fseek(t->in, save_pos, SEEK_SET);
-        while (fgets(tmpbuf, sizeof(tmpbuf), t->in)) {
+        (void)BIO_seek(t->in, save_pos);
+        while (BIO_gets(t->in,tmpbuf, sizeof(tmpbuf))) {
             t->line++;
             if (strncmp(tmpbuf, "-----END", 8) == 0)
                 return 1;
@@ -581,7 +584,7 @@ static int check_output(struct evp_test *t,
 
 int main(int argc, char **argv)
 {
-    FILE *in = NULL;
+    BIO *in = NULL;
     char buf[10240];
     struct evp_test t;
 
@@ -594,9 +597,9 @@ int main(int argc, char **argv)
 
     memset(&t, 0, sizeof(t));
     t.start_line = -1;
-    in = fopen(argv[1], "r");
+    in = BIO_new_file(argv[1], "r");
     t.in = in;
-    while (fgets(buf, sizeof(buf), in)) {
+    while (BIO_gets(in, buf, sizeof(buf))) {
         t.line++;
         if (!process_test(&t, buf, 0))
             exit(1);
@@ -608,7 +611,7 @@ int main(int argc, char **argv)
             t.ntests, t.errors, t.nskip);
     free_key_list(t.public);
     free_key_list(t.private);
-    fclose(in);
+    BIO_free(in);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
@@ -1022,11 +1025,16 @@ static int mac_test_init(struct evp_test *t, const char *alg)
 {
     int type;
     struct mac_data *mdat;
-    if (strcmp(alg, "HMAC") == 0)
+    if (strcmp(alg, "HMAC") == 0) {
         type = EVP_PKEY_HMAC;
-    else if (strcmp(alg, "CMAC") == 0)
+    } else if (strcmp(alg, "CMAC") == 0) {
+#ifndef OPENSSL_NO_CMAC
         type = EVP_PKEY_CMAC;
-    else
+#else
+        t->skip = 1;
+        return 1;
+#endif
+    } else
         return 0;
 
     mdat = OPENSSL_malloc(sizeof(*mdat));
@@ -1077,6 +1085,14 @@ static int mac_test_run(struct evp_test *t)
     const EVP_MD *md = NULL;
     unsigned char *mac = NULL;
     size_t mac_len;
+
+#ifdef OPENSSL_NO_DES
+    if (strstr(mdata->alg, "DES") != NULL) {
+        /* Skip DES */
+        err = NULL;
+        goto err;
+    }
+#endif
 
     err = "MAC_PKEY_CTX_ERROR";
     genctx = EVP_PKEY_CTX_new_id(mdata->type, NULL);
@@ -1496,16 +1512,20 @@ static int pbe_test_init(struct evp_test *t, const char *alg)
     struct pbe_data *pdat;
     int pbe_type = 0;
 
+    if (strcmp(alg, "scrypt") == 0) {
 #ifndef OPENSSL_NO_SCRYPT
-    if (strcmp(alg, "scrypt") == 0)
         pbe_type = PBE_TYPE_SCRYPT;
+#else
+        t->skip = 1;
+        return 1;
 #endif
-    else if (strcmp(alg, "pbkdf2") == 0)
+    } else if (strcmp(alg, "pbkdf2") == 0) {
         pbe_type = PBE_TYPE_PBKDF2;
-    else if (strcmp(alg, "pkcs12") == 0)
+    } else if (strcmp(alg, "pkcs12") == 0) {
         pbe_type = PBE_TYPE_PKCS12;
-    else
+    } else {
         fprintf(stderr, "Unknown pbe algorithm %s\n", alg);
+    }
     pdat = OPENSSL_malloc(sizeof(*pdat));
     pdat->pbe_type = pbe_type;
     pdat->pass = NULL;

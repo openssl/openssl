@@ -562,12 +562,11 @@ int x509_main(int argc, char **argv)
             goto end;
         }
 
-        if ((pkey = X509_REQ_get_pubkey(req)) == NULL) {
+        if ((pkey = X509_REQ_get0_pubkey(req)) == NULL) {
             BIO_printf(bio_err, "error unpacking public key\n");
             goto end;
         }
         i = X509_REQ_verify(req, pkey);
-        EVP_PKEY_free(pkey);
         if (i < 0) {
             BIO_printf(bio_err, "Signature verification error\n");
             ERR_print_errors(bio_err);
@@ -607,9 +606,8 @@ int x509_main(int argc, char **argv)
         if (fkey)
             X509_set_pubkey(x, fkey);
         else {
-            pkey = X509_REQ_get_pubkey(req);
+            pkey = X509_REQ_get0_pubkey(req);
             X509_set_pubkey(x, pkey);
-            EVP_PKEY_free(pkey);
         }
     } else
         x = load_cert(infile, informat, "Certificate");
@@ -729,16 +727,22 @@ int x509_main(int argc, char **argv)
                 }
                 BIO_printf(out, "Modulus=");
 #ifndef OPENSSL_NO_RSA
-                if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA)
-                    BN_print(out, EVP_PKEY_get0_RSA(pkey)->n);
-                else
+                if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
+                    BIGNUM *n;
+                    RSA_get0_key(EVP_PKEY_get0_RSA(pkey), &n, NULL, NULL);
+                    BN_print(out, n);
+                } else
 #endif
 #ifndef OPENSSL_NO_DSA
-                if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA)
-                    BN_print(out, EVP_PKEY_get0_DSA(pkey)->pub_key);
-                else
+                if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA) {
+                    BIGNUM *dsapub = NULL;
+                    DSA_get0_key(EVP_PKEY_get0_DSA(pkey), &dsapub, NULL);
+                    BN_print(out, dsapub);
+                } else
 #endif
+                {
                     BIO_printf(out, "Wrong Algorithm type");
+                }
                 BIO_printf(out, "\n");
             } else if (pubkey == i) {
                 EVP_PKEY *pkey;
@@ -759,7 +763,7 @@ int x509_main(int argc, char **argv)
                 BIO_printf(out, "/*\n"
                                 " * Subject: %s\n", buf);
 
-                m = X509_NAME_oneline(X509_get_issuer_name(x), buf, sizeof buf);
+                X509_NAME_oneline(X509_get_issuer_name(x), buf, sizeof buf);
                 BIO_printf(out, " * Issuer:  %s\n"
                                 " */\n", buf);
 
@@ -915,7 +919,6 @@ int x509_main(int argc, char **argv)
  end:
     if (need_rand)
         app_RAND_write_file(NULL);
-    OBJ_cleanup();
     NCONF_free(extconf);
     BIO_free_all(out);
     X509_STORE_free(ctx);
@@ -984,13 +987,14 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 {
     int ret = 0;
     ASN1_INTEGER *bs = NULL;
-    X509_STORE_CTX xsc;
+    X509_STORE_CTX *xsc = NULL;
     EVP_PKEY *upkey;
 
     upkey = X509_get0_pubkey(xca);
     EVP_PKEY_copy_parameters(upkey, pkey);
 
-    if (!X509_STORE_CTX_init(&xsc, ctx, x, NULL)) {
+    xsc = X509_STORE_CTX_new();
+    if (xsc == NULL || !X509_STORE_CTX_init(xsc, ctx, x, NULL)) {
         BIO_printf(bio_err, "Error initialising X509 store\n");
         goto end;
     }
@@ -1003,9 +1007,9 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
      * NOTE: this certificate can/should be self signed, unless it was a
      * certificate request in which case it is not.
      */
-    X509_STORE_CTX_set_cert(&xsc, x);
-    X509_STORE_CTX_set_flags(&xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
-    if (!reqfile && X509_verify_cert(&xsc) <= 0)
+    X509_STORE_CTX_set_cert(xsc, x);
+    X509_STORE_CTX_set_flags(xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
+    if (!reqfile && X509_verify_cert(xsc) <= 0)
         goto end;
 
     if (!X509_check_private_key(xca, pkey)) {
@@ -1044,7 +1048,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
         goto end;
     ret = 1;
  end:
-    X509_STORE_CTX_cleanup(&xsc);
+    X509_STORE_CTX_free(xsc);
     if (!ret)
         ERR_print_errors(bio_err);
     if (!sno)

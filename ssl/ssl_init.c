@@ -57,7 +57,8 @@
 
 #include "e_os.h"
 
-#include <internal/threads.h>
+#include "internal/threads.h"
+#include "internal/err.h"
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <assert.h>
@@ -96,7 +97,6 @@ static void ossl_init_ssl_base(void)
      */
     EVP_add_cipher(EVP_rc2_40_cbc());
 #endif
-#ifndef OPENSSL_NO_AES
     EVP_add_cipher(EVP_aes_128_cbc());
     EVP_add_cipher(EVP_aes_192_cbc());
     EVP_add_cipher(EVP_aes_256_cbc());
@@ -108,7 +108,6 @@ static void ossl_init_ssl_base(void)
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha1());
     EVP_add_cipher(EVP_aes_128_cbc_hmac_sha256());
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha256());
-#endif
 #ifndef OPENSSL_NO_CAMELLIA
     EVP_add_cipher(EVP_camellia_128_cbc());
     EVP_add_cipher(EVP_camellia_256_cbc());
@@ -124,9 +123,7 @@ static void ossl_init_ssl_base(void)
 #ifndef OPENSSL_NO_MD5
     EVP_add_digest(EVP_md5());
     EVP_add_digest_alias(SN_md5, "ssl3-md5");
-# ifndef OPENSSL_NO_SHA
     EVP_add_digest(EVP_md5_sha1());
-# endif
 #endif
     EVP_add_digest(EVP_sha1()); /* RSA with sha1 */
     EVP_add_digest_alias(SN_sha1, "ssl3-sha1");
@@ -197,24 +194,24 @@ static void ssl_library_stop(void)
 #ifndef OPENSSL_NO_COMP
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                        "SSL_COMP_free_compression_methods()\n");
+                        "ssl_comp_free_compression_methods_int()\n");
 #endif
-        SSL_COMP_free_compression_methods();
+        ssl_comp_free_compression_methods_int();
 #endif
     }
 
     if (ssl_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                        "ERR_free_strings()\n");
+                        "err_free_strings_int()\n");
 #endif
         /*
          * If both crypto and ssl error strings are inited we will end up
-         * calling ERR_free_strings() twice - but that's ok. The second time
-         * will be a no-op. It's easier to do that than to try and track
+         * calling err_free_strings_int() twice - but that's ok. The second
+         * time will be a no-op. It's easier to do that than to try and track
          * between the two libraries whether they have both been inited.
          */
-        ERR_free_strings();
+        err_free_strings_int();
     }
 }
 

@@ -61,7 +61,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include <openssl/asn1.h>
-#include <openssl/objects.h>
+#include "internal/objects.h"
 #include <openssl/bn.h>
 #include "internal/asn1_int.h"
 #include "obj_lcl.h"
@@ -198,24 +198,8 @@ static void cleanup3_doall(ADDED_OBJ *a)
     OPENSSL_free(a);
 }
 
-/*
- * The purpose of obj_cleanup_defer is to avoid EVP_cleanup() attempting to
- * use freed up OIDs. If necessary the actual freeing up of OIDs is delayed.
- */
-int obj_cleanup_defer = 0;
-
-void check_defer(int nid)
+void obj_cleanup_int(void)
 {
-    if (!obj_cleanup_defer && nid >= NUM_NID)
-        obj_cleanup_defer = 1;
-}
-
-void OBJ_cleanup(void)
-{
-    if (obj_cleanup_defer) {
-        obj_cleanup_defer = 2;
-        return;
-    }
     if (added == NULL)
         return;
     lh_ADDED_OBJ_set_down_load(added, 0);

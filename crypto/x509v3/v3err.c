@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -82,7 +82,6 @@ static ERR_STRING_DATA X509V3_str_functs[] = {
     {ERR_FUNC(X509V3_F_DO_EXT_NCONF), "do_ext_nconf"},
     {ERR_FUNC(X509V3_F_DO_I2V_NAME_CONSTRAINTS), "DO_I2V_NAME_CONSTRAINTS"},
     {ERR_FUNC(X509V3_F_GNAMES_FROM_SECTNAME), "gnames_from_sectname"},
-    {ERR_FUNC(X509V3_F_HEX_TO_STRING), "hex_to_string"},
     {ERR_FUNC(X509V3_F_I2S_ASN1_ENUMERATED), "i2s_ASN1_ENUMERATED"},
     {ERR_FUNC(X509V3_F_I2S_ASN1_IA5STRING), "i2s_ASN1_IA5STRING"},
     {ERR_FUNC(X509V3_F_I2S_ASN1_INTEGER), "i2s_ASN1_INTEGER"},
@@ -100,7 +99,6 @@ static ERR_STRING_DATA X509V3_str_functs[] = {
     {ERR_FUNC(X509V3_F_S2I_ASN1_SKEY_ID), "S2I_ASN1_SKEY_ID"},
     {ERR_FUNC(X509V3_F_S2I_SKEY_ID), "s2i_skey_id"},
     {ERR_FUNC(X509V3_F_SET_DIST_POINT_NAME), "set_dist_point_name"},
-    {ERR_FUNC(X509V3_F_STRING_TO_HEX), "string_to_hex"},
     {ERR_FUNC(X509V3_F_SXNET_ADD_ID_ASC), "SXNET_add_id_asc"},
     {ERR_FUNC(X509V3_F_SXNET_ADD_ID_INTEGER), "SXNET_add_id_INTEGER"},
     {ERR_FUNC(X509V3_F_SXNET_ADD_ID_ULONG), "SXNET_add_id_ulong"},
@@ -124,8 +122,8 @@ static ERR_STRING_DATA X509V3_str_functs[] = {
     {ERR_FUNC(X509V3_F_V2I_POLICY_MAPPINGS), "v2i_POLICY_MAPPINGS"},
     {ERR_FUNC(X509V3_F_V2I_SUBJECT_ALT), "v2i_subject_alt"},
     {ERR_FUNC(X509V3_F_V2I_TLS_FEATURE), "v2i_TLS_FEATURE"},
-    {ERR_FUNC(X509V3_F_V3_ADDR_VALIDATE_PATH_INTERNAL),
-     "v3_addr_validate_path_internal"},
+    {ERR_FUNC(X509V3_F_ADDR_VALIDATE_PATH_INTERNAL),
+     "addr_validate_path_internal"},
     {ERR_FUNC(X509V3_F_V3_GENERIC_EXTENSION), "v3_generic_extension"},
     {ERR_FUNC(X509V3_F_X509V3_ADD1_I2D), "X509V3_add1_i2d"},
     {ERR_FUNC(X509V3_F_X509V3_ADD_VALUE), "X509V3_add_value"},
@@ -164,7 +162,6 @@ static ERR_STRING_DATA X509V3_str_reasons[] = {
      "extension setting not supported"},
     {ERR_REASON(X509V3_R_EXTENSION_VALUE_ERROR), "extension value error"},
     {ERR_REASON(X509V3_R_ILLEGAL_EMPTY_EXTENSION), "illegal empty extension"},
-    {ERR_REASON(X509V3_R_ILLEGAL_HEX_DIGIT), "illegal hex digit"},
     {ERR_REASON(X509V3_R_INCORRECT_POLICY_SYNTAX_TAG),
      "incorrect policy syntax tag"},
     {ERR_REASON(X509V3_R_INVALID_ASNUMBER), "invalid asnumber"},

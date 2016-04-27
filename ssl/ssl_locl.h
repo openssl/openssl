@@ -149,24 +149,16 @@
 # include "e_os.h"
 
 # include <openssl/buffer.h>
-# ifndef OPENSSL_NO_COMP
-#  include <openssl/comp.h>
-# endif
+# include <openssl/comp.h>
 # include <openssl/bio.h>
 # include <openssl/stack.h>
-# ifndef OPENSSL_NO_RSA
-#  include <openssl/rsa.h>
-# endif
-# ifndef OPENSSL_NO_DSA
-#  include <openssl/dsa.h>
-# endif
+# include <openssl/rsa.h>
+# include <openssl/dsa.h>
 # include <openssl/err.h>
 # include <openssl/ssl.h>
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
-# ifndef OPENSSL_NO_CT
-#  include <openssl/ct.h>
-# endif
+# include <openssl/ct.h>
 #include "record/record.h"
 #include "statem/statem.h"
 #include "packet_locl.h"
@@ -425,6 +417,7 @@
  */
 # define TLS1_STREAM_MAC 0x10000
 
+# define SSL_STRONG_MASK         0x0000001FU
 # define SSL_DEFAULT_MASK        0X00000020U
 
 # define SSL_STRONG_NONE         0x00000001U
@@ -549,7 +542,6 @@ struct ssl_method_st {
     int (*ssl_pending) (const SSL *s);
     int (*num_ciphers) (void);
     const SSL_CIPHER *(*get_cipher) (unsigned ncipher);
-    const struct ssl_method_st *(*get_ssl_method) (int version);
     long (*get_timeout) (void);
     const struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
     int (*ssl_version) (void);
@@ -824,7 +816,7 @@ struct ssl_ctx_st {
     * Validates that the SCTs (Signed Certificate Timestamps) are sufficient.
     * If they are not, the connection should be aborted.
     */
-    ct_validation_cb ct_validation_callback;
+    ssl_ct_validation_cb ct_validation_callback;
     void *ct_validation_callback_arg;
 #  endif
 
@@ -1023,7 +1015,7 @@ struct ssl_st {
     X509_VERIFY_PARAM *param;
 
     /* Per connection DANE state */
-    struct dane_st dane;
+    SSL_DANE dane;
 
     /* crypto */
     STACK_OF(SSL_CIPHER) *cipher_list;
@@ -1131,7 +1123,7 @@ struct ssl_st {
     * Validates that the SCTs (Signed Certificate Timestamps) are sufficient.
     * If they are not, the connection should be aborted.
     */
-    ct_validation_cb ct_validation_callback;
+    ssl_ct_validation_cb ct_validation_callback;
     /* User-supplied argument tha tis passed to the ct_validation_callback */
     void *ct_validation_callback_arg;
     /*
@@ -1472,7 +1464,6 @@ pitem *pqueue_pop(pqueue *pq);
 pitem *pqueue_find(pqueue *pq, unsigned char *prio64be);
 pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
-void pqueue_print(pqueue *pq);
 int pqueue_size(pqueue *pq);
 
 typedef struct dtls1_state_st {
@@ -1768,7 +1759,7 @@ extern const SSL3_ENC_METHOD DTLSv1_2_enc_data;
 #define SSL_METHOD_NO_SUITEB    (1U<<1)
 
 # define IMPLEMENT_tls_meth_func(version, flags, mask, func_name, s_accept, \
-                                 s_connect, s_get_meth, enc_data) \
+                                 s_connect, enc_data) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
@@ -1796,7 +1787,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_pending, \
                 ssl3_num_ciphers, \
                 ssl3_get_cipher, \
-                s_get_meth, \
                 tls1_default_timeout, \
                 &enc_data, \
                 ssl_undefined_void_function, \
@@ -1806,7 +1796,7 @@ const SSL_METHOD *func_name(void)  \
         return &func_name##_data; \
         }
 
-# define IMPLEMENT_ssl3_meth_func(func_name, s_accept, s_connect, s_get_meth) \
+# define IMPLEMENT_ssl3_meth_func(func_name, s_accept, s_connect) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
@@ -1834,7 +1824,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_pending, \
                 ssl3_num_ciphers, \
                 ssl3_get_cipher, \
-                s_get_meth, \
                 ssl3_default_timeout, \
                 &SSLv3_enc_data, \
                 ssl_undefined_void_function, \
@@ -1845,7 +1834,7 @@ const SSL_METHOD *func_name(void)  \
         }
 
 # define IMPLEMENT_dtls1_meth_func(version, flags, mask, func_name, s_accept, \
-                                        s_connect, s_get_meth, enc_data) \
+                                        s_connect, enc_data) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
@@ -1873,7 +1862,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_pending, \
                 ssl3_num_ciphers, \
                 ssl3_get_cipher, \
-                s_get_meth, \
                 dtls1_default_timeout, \
                 &enc_data, \
                 ssl_undefined_void_function, \
@@ -1949,6 +1937,7 @@ __owur int ssl_cert_type(X509 *x, EVP_PKEY *pkey);
 void ssl_set_masks(SSL *s);
 __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 __owur int ssl_verify_alarm_type(long type);
+void ssl_sort_cipher_list(void);
 void ssl_load_ciphers(void);
 __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field, int len);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
@@ -2001,6 +1990,8 @@ __owur int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
 __owur int ssl3_handshake_write(SSL *s);
 
 __owur int ssl_allow_compression(SSL *s);
+
+__owur int ssl_version_supported(const SSL *s, int version);
 
 __owur int ssl_set_client_hello_version(SSL *s);
 __owur int ssl_check_version_downgrade(SSL *s);
@@ -2203,6 +2194,8 @@ __owur int custom_ext_add(SSL *s, int server,
 
 __owur int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src);
 void custom_exts_free(custom_ext_methods *exts);
+
+void ssl_comp_free_compression_methods_int(void);
 
 # else
 

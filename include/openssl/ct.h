@@ -51,20 +51,19 @@
 * ====================================================================
 */
 
-#ifdef OPENSSL_NO_CT
-# error "CT is disabled"
-#endif
-
 #ifndef HEADER_CT_H
 # define HEADER_CT_H
 
+# include <openssl/opensslconf.h>
+
+# ifndef OPENSSL_NO_CT
 # include <openssl/ossl_typ.h>
 # include <openssl/safestack.h>
 # include <openssl/x509.h>
-
 # ifdef  __cplusplus
 extern "C" {
 # endif
+
 
 /* Minimum RSA key size, from RFC6962 */
 # define SCT_MIN_RSA_BITS 2048
@@ -130,21 +129,6 @@ const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *c
 /* Sets the log store that is in use */
 void CT_POLICY_EVAL_CTX_set0_log_store(CT_POLICY_EVAL_CTX *ctx,
                                        CTLOG_STORE *log_store);
-
-/*
- * A callback for verifying that the received SCTs are sufficient.
- * Expected to return 1 if they are sufficient, otherwise 0.
- * May return a negative integer if an error occurs.
- * A connection should be aborted if the SCTs are deemed insufficient.
- */
-typedef int(*ct_validation_cb)(const CT_POLICY_EVAL_CTX *ctx,
-                               const STACK_OF(SCT) *scts, void *arg);
-/* Returns 0 if there are invalid SCTs */
-int CT_verify_no_bad_scts(const CT_POLICY_EVAL_CTX *ctx,
-                          const STACK_OF(SCT) *scts, void *arg);
-/* Returns 0 if there are invalid SCTS or fewer than one valid SCT */
-int CT_verify_at_least_one_good_sct(const CT_POLICY_EVAL_CTX *ctx,
-                                    const STACK_OF(SCT) *scts, void *arg);
 
 /*****************
  * SCT functions *
@@ -298,6 +282,11 @@ sct_source_t SCT_get_source(const SCT *sct);
  * Returns 1 on success, 0 otherwise.
  */
 __owur int SCT_set_source(SCT *sct, sct_source_t source);
+
+/*
+ * Returns a text string describing the validation status of |sct|.
+ */
+const char *SCT_validation_status_string(const SCT *sct);
 
 /*
  * Pretty-prints an |sct| to |out|.
@@ -555,8 +544,6 @@ void ERR_load_CT_strings(void);
 # define CT_F_CT_POLICY_EVAL_CTX_SET0_ISSUER              135
 # define CT_F_CT_POLICY_EVAL_CTX_SET0_LOG_STORE           136
 # define CT_F_CT_V1_LOG_ID_FROM_PKEY                      125
-# define CT_F_CT_VERIFY_AT_LEAST_ONE_GOOD_SCT             137
-# define CT_F_CT_VERIFY_NO_BAD_SCTS                       138
 # define CT_F_D2I_SCT_LIST                                105
 # define CT_F_I2D_SCT_LIST                                106
 # define CT_F_I2O_SCT                                     107
@@ -601,7 +588,9 @@ void ERR_load_CT_strings(void);
 # define CT_R_UNSUPPORTED_ENTRY_TYPE                      102
 # define CT_R_UNSUPPORTED_VERSION                         103
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

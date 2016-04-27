@@ -57,7 +57,7 @@
  */
 
 #include "eng_int.h"
-#include <openssl/dso.h>
+#include "internal/dso.h"
 #include <openssl/crypto.h>
 
 /*
@@ -295,7 +295,7 @@ static ENGINE *engine_dynamic(void)
     return ret;
 }
 
-void engine_load_dynamic_internal(void)
+void engine_load_dynamic_int(void)
 {
     ENGINE *toadd = engine_dynamic();
     if (!toadd)

@@ -59,7 +59,7 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/dsa.h>
+#include "dsa_locl.h"
 #include <openssl/rand.h>
 
 static int dsa_builtin_keygen(DSA *dsa);

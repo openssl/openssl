@@ -141,6 +141,8 @@
 #include <errno.h>
 #include <openssl/e_os2.h>
 
+#ifndef OPENSSL_NO_SOCK
+
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
  * recursive header file inclusion, resulting in the compiler complaining
@@ -205,7 +207,9 @@ static int c_ign_eof = 0;
 static int c_brief = 0;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
+#ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg);
+#endif
 
 static int saved_errno;
 
@@ -662,7 +666,7 @@ typedef enum OPTION_choice {
     OPT_S_ENUM,
     OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_DANE_TLSA_DOMAIN,
 #ifndef OPENSSL_NO_CT
-    OPT_NOCT, OPT_REQUESTCT, OPT_REQUIRECT, OPT_CTLOG_FILE,
+    OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
     OPT_DANE_TLSA_RRDATA
 } OPTION_CHOICE;
@@ -755,7 +759,9 @@ OPTIONS s_client_options[] = {
      "Set TLS extension servername in ClientHello"},
     {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
      "Hex dump of all TLS extensions received"},
+#ifndef OPENSSL_NO_OCSP
     {"status", OPT_STATUS, '-', "Request certificate status from server"},
+#endif
     {"serverinfo", OPT_SERVERINFO, 's',
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
     {"alpn", OPT_ALPN, 's',
@@ -825,9 +831,8 @@ OPTIONS s_client_options[] = {
      "Specify engine to be used for client certificate operations"},
 #endif
 #ifndef OPENSSL_NO_CT
+    {"ct", OPT_CT, '-', "Request and parse SCTs (also enables OCSP stapling)"},
     {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
-    {"requestct", OPT_REQUESTCT, '-', "Request SCTs (enables OCSP stapling)"},
-    {"requirect", OPT_REQUIRECT, '-', "Require at least 1 SCT (enables OCSP stapling)"},
     {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
 #endif
     {NULL}
@@ -884,14 +889,13 @@ int s_client_main(int argc, char **argv)
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
     char *xmpphost = NULL;
     const char *ehlo = "mail.example.com";
-    struct sockaddr peer;
     struct timeval timeout, *timeoutp;
     fd_set readfds, writefds;
     int noCApath = 0, noCAfile = 0;
     int build_chain = 0, cbuf_len, cbuf_off, cert_format = FORMAT_PEM;
     int key_format = FORMAT_PEM, crlf = 0, full_log = 1, mbuf_len = 0;
     int prexit = 0;
-    int enable_timeouts = 0, sdebug = 0, peerlen = sizeof peer;
+    int sdebug = 0;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, s = -1, k, width, state = 0;
     int sbuf_len, sbuf_off, cmdletters = 1;
@@ -900,13 +904,17 @@ int s_client_main(int argc, char **argv)
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
     int read_buf_len = 0;
     int fallback_scsv = 0;
-    long socket_mtu = 0, randamt = 0;
+    long randamt = 0;
     OPTION_CHOICE o;
+#ifndef OPENSSL_NO_DTLS
+    int enable_timeouts = 0;
+    long socket_mtu = 0;
+#endif
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *ssl_client_engine = NULL;
 #endif
     ENGINE *e = NULL;
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
     struct timeval tv;
 #endif
     char *servername = NULL;
@@ -926,7 +934,7 @@ int s_client_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_CT
     char *ctlog_file = NULL;
-    ct_validation_cb ct_validation = NULL;
+    int ct_validation = 0;
 #endif
     int min_version = 0, max_version = 0;
 
@@ -1326,13 +1334,10 @@ int s_client_main(int argc, char **argv)
             break;
 #ifndef OPENSSL_NO_CT
         case OPT_NOCT:
-            ct_validation = NULL;
+            ct_validation = 0;
             break;
-        case OPT_REQUESTCT:
-            ct_validation = CT_verify_no_bad_scts;
-            break;
-        case OPT_REQUIRECT:
-            ct_validation = CT_verify_at_least_one_good_sct;
+        case OPT_CT:
+            ct_validation = 1;
             break;
         case OPT_CTLOG_FILE:
             ctlog_file = opt_arg();
@@ -1357,7 +1362,9 @@ int s_client_main(int argc, char **argv)
             }
             break;
         case OPT_NEXTPROTONEG:
+#ifndef OPENSSL_NO_NEXTPROTONEG
             next_proto_neg_in = opt_arg();
+#endif
             break;
         case OPT_ALPN:
             alpn_in = opt_arg();
@@ -1377,6 +1384,7 @@ int s_client_main(int argc, char **argv)
         case OPT_STARTTLS:
             if (!opt_pair(opt_arg(), services, &starttls_proto))
                 goto end;
+            break;
         case OPT_SERVERNAME:
             servername = opt_arg();
             break;
@@ -1675,13 +1683,15 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
 
 #ifndef OPENSSL_NO_CT
-    if (!SSL_CTX_set_ct_validation_callback(ctx, ct_validation, NULL)) {
+    /* Enable SCT processing, without early connection termination */
+    if (ct_validation &&
+        !SSL_CTX_enable_ct(ctx, SSL_CT_VALIDATION_PERMISSIVE)) {
         ERR_print_errors(bio_err);
         goto end;
     }
 
     if (!ctx_set_ctlog_list_file(ctx, ctlog_file)) {
-        if (ct_validation != NULL) {
+        if (ct_validation) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -1813,7 +1823,10 @@ int s_client_main(int argc, char **argv)
         }
         BIO_printf(bio_c_out, "Turned on non blocking io\n");
     }
+#ifndef OPENSSL_NO_DTLS
     if (socket_type == SOCK_DGRAM) {
+        struct sockaddr peer;
+        int peerlen = sizeof peer;
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);
         if (getsockname(s, &peer, (void *)&peerlen) < 0) {
@@ -1852,6 +1865,7 @@ int s_client_main(int argc, char **argv)
             /* want to do MTU discovery */
             BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
     } else
+#endif /* OPENSSL_NO_DTLS */
         sbio = BIO_new_socket(s, BIO_NOCLOSE);
 
     if (nbio_test) {
@@ -1879,11 +1893,13 @@ int s_client_main(int argc, char **argv)
         SSL_set_tlsext_debug_callback(con, tlsext_cb);
         SSL_set_tlsext_debug_arg(con, bio_c_out);
     }
+#ifndef OPENSSL_NO_OCSP
     if (c_status_req) {
         SSL_set_tlsext_status_type(con, TLSEXT_STATUSTYPE_ocsp);
         SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
         SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
     }
+#endif
 
     SSL_set_bio(con, sbio, sbio);
     SSL_set_connect_state(con);
@@ -2065,7 +2081,7 @@ int s_client_main(int argc, char **argv)
             BIO *fbio = BIO_new(BIO_f_buffer());
 
             BIO_push(fbio, sbio);
-            BIO_printf(fbio, "CONNECT %s\r\n\r\n", connectstr);
+            BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n\r\n", connectstr);
             (void)BIO_flush(fbio);
             /* wait for multi-line response to end CONNECT response */
             do {
@@ -2210,7 +2226,7 @@ int s_client_main(int argc, char **argv)
         ssl_pending = read_ssl && SSL_has_pending(con);
 
         if (!ssl_pending) {
-#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE)
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
             if (tty_on) {
                 if (read_tty)
                     openssl_fdset(fileno(stdin), &readfds);
@@ -2264,17 +2280,6 @@ int s_client_main(int argc, char **argv)
                                || !read_tty))
                         continue;
 # endif
-                } else
-                    i = select(width, (void *)&readfds, (void *)&writefds,
-                               NULL, timeoutp);
-            }
-#elif defined(OPENSSL_SYS_NETWARE)
-            if (!write_tty) {
-                if (read_tty) {
-                    tv.tv_sec = 1;
-                    tv.tv_usec = 0;
-                    i = select(width, (void *)&readfds, (void *)&writefds,
-                               NULL, &tv);
                 } else
                     i = select(width, (void *)&readfds, (void *)&writefds,
                                NULL, timeoutp);
@@ -2360,7 +2365,7 @@ int s_client_main(int argc, char **argv)
                 goto shut;
             }
         }
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
         /* Assume Windows/DOS/BeOS can always write */
         else if (!ssl_pending && write_tty)
 #else
@@ -2455,8 +2460,6 @@ int s_client_main(int argc, char **argv)
                  || (WAIT_OBJECT_0 ==
                      WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 # endif
-#elif defined (OPENSSL_SYS_NETWARE)
-        else if (_kbhit())
 #else
         else if (FD_ISSET(fileno(stdin), &readfds))
 #endif
@@ -2568,7 +2571,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #endif
     unsigned char *exportedkeymat;
 #ifndef OPENSSL_NO_CT
-    const STACK_OF(SCT) *scts;
     const SSL_CTX *ctx = SSL_get_SSL_CTX(s);
 #endif
 
@@ -2624,21 +2626,35 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         ssl_print_tmp_key(bio, s);
 
 #ifndef OPENSSL_NO_CT
-        scts = SSL_get0_peer_scts(s);
-        BIO_printf(bio, "---\nSCTs present (%i)\n",
-                   scts != NULL ? sk_SCT_num(scts) : 0);
+        /*
+         * When the SSL session is anonymous, or resumed via an abbreviated
+         * handshake, no SCTs are provided as part of the handshake.  While in
+         * a resumed session SCTs may be present in the session's certificate,
+         * no callbacks are invoked to revalidate these, and in any case that
+         * set of SCTs may be incomplete.  Thus it makes little sense to
+         * attempt to display SCTs from a resumed session's certificate, and of
+         * course none are associated with an anonymous peer.
+         */
+        if (peer != NULL && !SSL_session_reused(s) && SSL_ct_is_enabled(s)) {
+            const STACK_OF(SCT) *scts = SSL_get0_peer_scts(s);
+            int sct_count = scts != NULL ? sk_SCT_num(scts) : 0;
 
-        if (SSL_get_ct_validation_callback(s) == NULL) {
-          BIO_printf(bio, "Warning: CT validation is disabled, so not all "
-                     "SCTs may be displayed. Re-run with \"-requestct\".\n");
-        }
+            BIO_printf(bio, "---\nSCTs present (%i)\n", sct_count);
+            if (sct_count > 0) {
+                const CTLOG_STORE *log_store = SSL_CTX_get0_ctlog_store(ctx);
 
-        if (scts != NULL && sk_SCT_num(scts) > 0) {
-            const CTLOG_STORE *log_store = SSL_CTX_get0_ctlog_store(ctx);
+                BIO_printf(bio, "---\n");
+                for (i = 0; i < sct_count; ++i) {
+                    SCT *sct = sk_SCT_value(scts, i);
 
-            BIO_printf(bio, "---\n");
-            SCT_LIST_print(scts, bio, 0, "\n---\n", log_store);
-            BIO_printf(bio, "\n");
+                    BIO_printf(bio, "SCT validation status: %s\n",
+                               SCT_validation_status_string(sct));
+                    SCT_print(sct, bio, 0, log_store);
+                    if (i < sct_count - 1)
+                        BIO_printf(bio, "\n---\n");
+                }
+                BIO_printf(bio, "\n");
+            }
         }
 #endif
 
@@ -2740,6 +2756,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     (void)BIO_flush(bio);
 }
 
+# ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg)
 {
     const unsigned char *p;
@@ -2763,3 +2780,6 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     OCSP_RESPONSE_free(rsp);
     return 1;
 }
+# endif
+
+#endif

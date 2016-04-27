@@ -236,8 +236,6 @@ digest name passed on the command line.
  	printf("%02x", md_value[i]);
  printf("\n");
 
- /* Call this once before exit. */
- EVP_cleanup();
  exit(0);
  }
 

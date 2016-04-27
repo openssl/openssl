@@ -55,8 +55,12 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#ifndef OPENSSL_NO_OCSP
 
+#include <openssl/opensslconf.h>
+
+#ifdef OPENSSL_NO_OCSP
+NON_EMPTY_TRANSLATION_UNIT
+#else
 # ifdef OPENSSL_SYS_VMS
 #  define _XOPEN_SOURCE_EXTENDED/* So fd_set and friends get properly defined
                                  * on OpenVMS */
@@ -69,8 +73,9 @@
 # include <string.h>
 # include <time.h>
 # include <ctype.h>
-# include "apps.h"              /* needs to be included before the openssl
-                                 * headers! */
+
+/* Needs to be included before the openssl headers */
+# include "apps.h"
 # include <openssl/e_os2.h>
 # include <openssl/crypto.h>
 # include <openssl/err.h>
@@ -117,10 +122,13 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(const char *port);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
+
+# ifndef OPENSSL_NO_SOCK
 static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
                                       const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
                                       OCSP_REQUEST *req, int req_timeout);
+# endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -244,7 +252,10 @@ int ocsp_main(int argc, char **argv)
     int noCAfile = 0, noCApath = 0;
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
-    int req_text = 0, resp_text = 0, req_timeout = -1, ret = 1;
+    int req_text = 0, resp_text = 0, ret = 1;
+#ifndef OPENSSL_NO_SOCK
+    int req_timeout = -1;
+#endif
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
     unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
     OPTION_CHOICE o;
@@ -275,7 +286,9 @@ int ocsp_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_TIMEOUT:
+#ifndef OPENSSL_NO_SOCK
             req_timeout = atoi(opt_arg());
+#endif
             break;
         case OPT_URL:
             OPENSSL_free(thost);
@@ -1014,13 +1027,13 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
 
 static BIO *init_responder(const char *port)
 {
-    BIO *acbio = NULL, *bufbio = NULL;
-
 # ifdef OPENSSL_NO_SOCK
     BIO_printf(bio_err,
                "Error setting up accept BIO - sockets not supported.\n");
     return NULL;
-# endif
+# else
+    BIO *acbio = NULL, *bufbio = NULL;
+
     bufbio = BIO_new(BIO_f_buffer());
     if (bufbio == NULL)
         goto err;
@@ -1047,9 +1060,10 @@ static BIO *init_responder(const char *port)
     BIO_free_all(acbio);
     BIO_free(bufbio);
     return NULL;
+# endif
 }
 
-
+# ifndef OPENSSL_NO_SOCK
 /*
  * Decode %xx URL-decoding in-place. Ignores mal-formed sequences.
  */
@@ -1062,7 +1076,9 @@ static int urldecode(char *p)
         if (*p != '%')
             *out++ = *p;
         else if (isxdigit(_UC(p[1])) && isxdigit(_UC(p[2]))) {
-            *out++ = (app_hex(p[1]) << 4) | app_hex(p[2]);
+            /* Don't check, can't fail because of ixdigit() call. */
+            *out++ = (OPENSSL_hexchar2int(p[1]) << 4)
+                   | OPENSSL_hexchar2int(p[2]);
             p += 2;
         }
         else
@@ -1071,9 +1087,13 @@ static int urldecode(char *p)
     *out = '\0';
     return (int)(out - save);
 }
+# endif
 
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
 {
+# ifdef OPENSSL_NO_SOCK
+    return 0;
+# else
     int len;
     OCSP_REQUEST *req = NULL;
     char inbuf[2048], reqbuf[2048];
@@ -1154,7 +1174,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
     *preq = req;
 
     return 1;
-
+# endif
 }
 
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
@@ -1170,6 +1190,7 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
     return 1;
 }
 
+# ifndef OPENSSL_NO_SOCK
 static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
                                       const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
@@ -1300,5 +1321,6 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
     SSL_CTX_free(ctx);
     return resp;
 }
+# endif
 
 #endif

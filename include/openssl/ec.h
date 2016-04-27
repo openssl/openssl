@@ -1,11 +1,5 @@
-
-/* crypto/ec/ec.h */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
- */
-/**
- * \file crypto/ec/ec.h Include file for the OpenSSL EC functions
- * \author Originally written by Bodo Moeller for the OpenSSL project
  */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
@@ -79,22 +73,14 @@
 
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_EC
-#  error EC is disabled.
-# endif
-
+# ifndef OPENSSL_NO_EC
 # include <openssl/asn1.h>
 # include <openssl/symhacks.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 # endif
-
 # ifdef  __cplusplus
 extern "C" {
-# elif defined(__SUNPRO_C)
-#  if __SUNPRO_C >= 0x520
-#   pragma error_messages (off,E_ARRAY_OF_INCOMPLETE_NONAME,E_ARRAY_OF_INCOMPLETE)
-#  endif
 # endif
 
 # ifndef OPENSSL_ECC_MAX_FIELD_BITS
@@ -1139,7 +1125,7 @@ ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
  *  \param  pr   pointer to BIGNUM pointer for r (may be NULL)
  *  \param  ps   pointer to BIGNUM pointer for s (may be NULL)
  */
-void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, ECDSA_SIG *sig);
+void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig);
 
 /** Computes the ECDSA signature of the given hash value using
  *  the supplied private key and returns the created signature.
@@ -1650,7 +1636,9 @@ void ERR_load_EC_strings(void);
 # define EC_R_WRONG_CURVE_PARAMETERS                      145
 # define EC_R_WRONG_ORDER                                 130
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

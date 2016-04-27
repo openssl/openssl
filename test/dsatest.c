@@ -133,6 +133,7 @@ int main(int argc, char **argv)
     unsigned long h;
     unsigned char sig[256];
     unsigned int siglen;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL;
 
     if (bio_err == NULL)
         bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
@@ -172,34 +173,35 @@ int main(int argc, char **argv)
         goto end;
     }
 
-    i = BN_bn2bin(dsa->q, buf);
+    DSA_get0_pqg(dsa, &p, &q, &g);
+    i = BN_bn2bin(q, buf);
     j = sizeof(out_q);
     if ((i != j) || (memcmp(buf, out_q, i) != 0)) {
         BIO_printf(bio_err, "q value is wrong\n");
         goto end;
     }
 
-    i = BN_bn2bin(dsa->p, buf);
+    i = BN_bn2bin(p, buf);
     j = sizeof(out_p);
     if ((i != j) || (memcmp(buf, out_p, i) != 0)) {
         BIO_printf(bio_err, "p value is wrong\n");
         goto end;
     }
 
-    i = BN_bn2bin(dsa->g, buf);
+    i = BN_bn2bin(g, buf);
     j = sizeof(out_g);
     if ((i != j) || (memcmp(buf, out_g, i) != 0)) {
         BIO_printf(bio_err, "g value is wrong\n");
         goto end;
     }
 
-    dsa->flags |= DSA_FLAG_NO_EXP_CONSTTIME;
+    DSA_set_flags(dsa, DSA_FLAG_NO_EXP_CONSTTIME);
     DSA_generate_key(dsa);
     DSA_sign(0, str1, 20, sig, &siglen, dsa);
     if (DSA_verify(0, str1, 20, sig, siglen, dsa) == 1)
         ret = 1;
 
-    dsa->flags &= ~DSA_FLAG_NO_EXP_CONSTTIME;
+    DSA_clear_flags(dsa, DSA_FLAG_NO_EXP_CONSTTIME);
     DSA_generate_key(dsa);
     DSA_sign(0, str1, 20, sig, &siglen, dsa);
     if (DSA_verify(0, str1, 20, sig, siglen, dsa) == 1)
@@ -217,10 +219,6 @@ int main(int argc, char **argv)
 #endif
     BIO_free(bio_err);
     bio_err = NULL;
-# ifdef OPENSSL_SYS_NETWARE
-    if (!ret)
-        printf("ERROR\n");
-# endif
     EXIT(!ret);
 }
 

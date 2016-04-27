@@ -59,9 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>
 #include "internal/asn1_int.h"
@@ -86,7 +84,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &ec_pkey_meth,
 #endif
     &hmac_pkey_meth,
+#ifndef OPENSSL_NO_CMAC
     &cmac_pkey_meth,
+#endif
 #ifndef OPENSSL_NO_DH
     &dhx_pkey_meth,
 #endif
@@ -402,7 +402,7 @@ int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)
     long binlen;
     int rv = -1;
 
-    bin = string_to_hex(hex, &binlen);
+    bin = OPENSSL_hexstr2buf(hex, &binlen);
     if (bin == NULL)
         return 0;
     if (binlen <= INT_MAX)

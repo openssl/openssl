@@ -91,10 +91,6 @@
 # include OPENSSL_UNISTD
 #endif
 
-#ifndef OPENSSL_SYS_NETWARE
-# include <signal.h>
-#endif
-
 #if defined(_WIN32)
 # include <windows.h>
 #endif
@@ -103,9 +99,7 @@
 #ifndef OPENSSL_NO_DES
 # include <openssl/des.h>
 #endif
-#ifndef OPENSSL_NO_AES
-# include <openssl/aes.h>
-#endif
+#include <openssl/aes.h>
 #ifndef OPENSSL_NO_CAMELLIA
 # include <openssl/camellia.h>
 #endif
@@ -165,7 +159,7 @@
 #include <openssl/modes.h>
 
 #ifndef HAVE_FORK
-# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS)
 #  define HAVE_FORK 0
 # else
 #  define HAVE_FORK 1
@@ -253,7 +247,6 @@ static int RC4_loop(void *args);
 static int DES_ncbc_encrypt_loop(void *args);
 static int DES_ede3_cbc_encrypt_loop(void *args);
 #endif
-#ifndef OPENSSL_NO_AES
 static int AES_cbc_128_encrypt_loop(void *args);
 static int AES_cbc_192_encrypt_loop(void *args);
 static int AES_ige_128_encrypt_loop(void *args);
@@ -261,7 +254,6 @@ static int AES_cbc_256_encrypt_loop(void *args);
 static int AES_ige_192_encrypt_loop(void *args);
 static int AES_ige_256_encrypt_loop(void *args);
 static int CRYPTO_gcm128_aad_loop(void *args);
-#endif
 static int EVP_Update_loop(void *args);
 static int EVP_Digest_loop(void *args);
 #ifndef OPENSSL_NO_RSA
@@ -314,10 +306,9 @@ static double ecdsa_results[EC_NUM][2];
 static double ecdh_results[EC_NUM][1];
 #endif
 
-#if defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_EC)
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
-static int rnd_fake = 0;
 #endif
 
 #ifdef SIGALRM
@@ -513,14 +504,12 @@ static OPT_PAIR doit_choices[] = {
     {"des-cbc", D_CBC_DES},
     {"des-ede3", D_EDE3_DES},
 #endif
-#ifndef OPENSSL_NO_AES
     {"aes-128-cbc", D_CBC_128_AES},
     {"aes-192-cbc", D_CBC_192_AES},
     {"aes-256-cbc", D_CBC_256_AES},
     {"aes-128-ige", D_IGE_128_AES},
     {"aes-192-ige", D_IGE_192_AES},
     {"aes-256-ige", D_IGE_256_AES},
-#endif
 #ifndef OPENSSL_NO_RC2
     {"rc2-cbc", D_CBC_RC2},
     {"rc2", D_CBC_RC2},
@@ -551,15 +540,17 @@ static OPT_PAIR doit_choices[] = {
     {NULL}
 };
 
-#define R_DSA_512       0
-#define R_DSA_1024      1
-#define R_DSA_2048      2
+#ifndef OPENSSL_NO_DSA
+# define R_DSA_512       0
+# define R_DSA_1024      1
+# define R_DSA_2048      2
 static OPT_PAIR dsa_choices[] = {
     {"dsa512", R_DSA_512},
     {"dsa1024", R_DSA_1024},
     {"dsa2048", R_DSA_2048},
     {NULL},
 };
+#endif
 
 #define R_RSA_512       0
 #define R_RSA_1024      1
@@ -822,14 +813,9 @@ static int DES_ede3_cbc_encrypt_loop(void *args)
 }
 #endif
 
-#ifndef OPENSSL_NO_AES
-# define MAX_BLOCK_SIZE 128
-#else
-# define MAX_BLOCK_SIZE 64
-#endif
+#define MAX_BLOCK_SIZE 128
 
 static unsigned char iv[2 * MAX_BLOCK_SIZE / 8];
-#ifndef OPENSSL_NO_AES
 static AES_KEY aes_ks1, aes_ks2, aes_ks3;
 static int AES_cbc_128_encrypt_loop(void *args)
 {
@@ -916,8 +902,6 @@ static int CRYPTO_gcm128_aad_loop(void *args)
         CRYPTO_gcm128_aad(gcm_ctx, buf, lengths[testnum]);
     return count;
 }
-
-#endif
 
 static int decrypt = 0;
 static int EVP_Update_loop(void *args)
@@ -1176,6 +1160,16 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
                 max_fd = job_fd;
         }
 
+        if (max_fd >= (OSSL_ASYNC_FD)FD_SETSIZE) {
+            BIO_printf(bio_err,
+                    "Error: max_fd (%d) must be smaller than FD_SETSIZE (%d). "
+                    "Decrease the value of async_jobs\n",
+                    max_fd, FD_SETSIZE);
+            ERR_print_errors(bio_err);
+            error = 1;
+            break;
+        }
+
         select_result = select(max_fd + 1, &waitfdset, NULL, NULL, NULL);
         if (select_result == -1 && errno == EINTR)
             continue;
@@ -1251,7 +1245,10 @@ int speed_main(int argc, char **argv)
     double d = 0.0;
     OPTION_CHOICE o;
     int multiblock = 0, doit[ALGOR_NUM], pr_header = 0;
-    int dsa_doit[DSA_NUM], rsa_doit[RSA_NUM];
+#ifndef OPENSSL_NO_DSA
+    int dsa_doit[DSA_NUM];
+#endif
+    int rsa_doit[RSA_NUM];
     int ret = 1, i, k, misalign = 0;
     long c[ALGOR_NUM][SIZE_NUM], count = 0, save_count = 0;
 #ifndef NO_FORK
@@ -1284,7 +1281,6 @@ int speed_main(int argc, char **argv)
         0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
         0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12
     };
-#ifndef OPENSSL_NO_AES
     static const unsigned char key24[24] = {
         0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
         0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12,
@@ -1296,7 +1292,6 @@ int speed_main(int argc, char **argv)
         0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34,
         0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56
     };
-#endif
 #ifndef OPENSSL_NO_CAMELLIA
     static const unsigned char ckey24[24] = {
         0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
@@ -1390,15 +1385,19 @@ int speed_main(int argc, char **argv)
     memset(results, 0, sizeof(results));
 
     memset(c, 0, sizeof(c));
+#ifndef OPENSSL_NO_DES
     memset(DES_iv, 0, sizeof(DES_iv));
+#endif
     memset(iv, 0, sizeof(iv));
 
     for (i = 0; i < ALGOR_NUM; i++)
         doit[i] = 0;
     for (i = 0; i < RSA_NUM; i++)
         rsa_doit[i] = 0;
+#ifndef OPENSSL_NO_DSA
     for (i = 0; i < DSA_NUM; i++)
         dsa_doit[i] = 0;
+#endif
 #ifndef OPENSSL_NO_EC
     for (i = 0; i < EC_NUM; i++)
         ecdsa_doit[i] = 0;
@@ -1528,13 +1527,11 @@ int speed_main(int argc, char **argv)
             continue;
         }
 #endif
-#ifndef OPENSSL_NO_AES
         if (strcmp(*argv, "aes") == 0) {
             doit[D_CBC_128_AES] = doit[D_CBC_192_AES] =
                 doit[D_CBC_256_AES] = 1;
             continue;
         }
-#endif
 #ifndef OPENSSL_NO_CAMELLIA
         if (strcmp(*argv, "camellia") == 0) {
             doit[D_CBC_128_CML] = doit[D_CBC_192_CML] =
@@ -1614,8 +1611,10 @@ int speed_main(int argc, char **argv)
                 doit[i] = 1;
         for (i = 0; i < RSA_NUM; i++)
             rsa_doit[i] = 1;
+#ifndef OPENSSL_NO_DSA
         for (i = 0; i < DSA_NUM; i++)
             dsa_doit[i] = 1;
+#endif
 #ifndef OPENSSL_NO_EC
         for (i = 0; i < EC_NUM; i++)
             ecdsa_doit[i] = 1;
@@ -1659,18 +1658,16 @@ int speed_main(int argc, char **argv)
     DES_set_key_unchecked(&key2, &sch2);
     DES_set_key_unchecked(&key3, &sch3);
 #endif
-#ifndef OPENSSL_NO_AES
     AES_set_encrypt_key(key16, 128, &aes_ks1);
     AES_set_encrypt_key(key24, 192, &aes_ks2);
     AES_set_encrypt_key(key32, 256, &aes_ks3);
-#endif
 #ifndef OPENSSL_NO_CAMELLIA
     Camellia_set_key(key16, 128, &camellia_ks1);
     Camellia_set_key(ckey24, 192, &camellia_ks2);
     Camellia_set_key(ckey32, 256, &camellia_ks3);
 #endif
 #ifndef OPENSSL_NO_IDEA
-    idea_set_encrypt_key(key16, &idea_ks);
+    IDEA_set_encrypt_key(key16, &idea_ks);
 #endif
 #ifndef OPENSSL_NO_SEED
     SEED_set_key(key16, &seed_ks);
@@ -2063,7 +2060,7 @@ int speed_main(int argc, char **argv)
         }
     }
 #endif
-#ifndef OPENSSL_NO_AES
+
     if (doit[D_CBC_128_AES]) {
         for (testnum = 0; testnum < SIZE_NUM; testnum++) {
             print_message(names[D_CBC_128_AES], c[D_CBC_128_AES][testnum],
@@ -2141,7 +2138,7 @@ int speed_main(int argc, char **argv)
         for (i = 0; i < loopargs_len; i++)
             CRYPTO_gcm128_release(loopargs[i].gcm_ctx);
     }
-#endif
+
 #ifndef OPENSSL_NO_CAMELLIA
     if (doit[D_CBC_128_CML]) {
         for (testnum = 0; testnum < SIZE_NUM; testnum++) {
@@ -2205,7 +2202,7 @@ int speed_main(int argc, char **argv)
             }
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_IDEA][testnum]); count++)
-                idea_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
+                IDEA_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
                                  (unsigned long)lengths[testnum], &idea_ks,
                                  iv, IDEA_ENCRYPT);
             d = Time_F(STOP);
@@ -2431,7 +2428,6 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DSA
     if (RAND_status() != 1) {
         RAND_seed(rnd_seed, sizeof rnd_seed);
-        rnd_fake = 1;
     }
     for (testnum = 0; testnum < DSA_NUM; testnum++) {
         int st = 0;
@@ -2495,14 +2491,11 @@ int speed_main(int argc, char **argv)
                 dsa_doit[testnum] = 0;
         }
     }
-    if (rnd_fake)
-        RAND_cleanup();
 #endif
 
 #ifndef OPENSSL_NO_EC
     if (RAND_status() != 1) {
         RAND_seed(rnd_seed, sizeof rnd_seed);
-        rnd_fake = 1;
     }
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         int st = 1;
@@ -2584,14 +2577,11 @@ int speed_main(int argc, char **argv)
             }
         }
     }
-    if (rnd_fake)
-        RAND_cleanup();
 #endif
 
 #ifndef OPENSSL_NO_EC
     if (RAND_status() != 1) {
         RAND_seed(rnd_seed, sizeof rnd_seed);
-        rnd_fake = 1;
     }
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         if (!ecdh_doit[testnum])
@@ -2683,8 +2673,6 @@ int speed_main(int argc, char **argv)
                 ecdh_doit[testnum] = 0;
         }
     }
-    if (rnd_fake)
-        RAND_cleanup();
 #endif
 #ifndef NO_FORK
  show_res:
@@ -2703,11 +2691,9 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DES
         printf("%s ", DES_options());
 #endif
-#ifndef OPENSSL_NO_AES
         printf("%s ", AES_options());
-#endif
 #ifndef OPENSSL_NO_IDEA
-        printf("%s ", idea_options());
+        printf("%s ", IDEA_options());
 #endif
 #ifndef OPENSSL_NO_BF
         printf("%s ", BF_options());

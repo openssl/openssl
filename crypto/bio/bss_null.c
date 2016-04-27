@@ -57,8 +57,8 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include "bio_lcl.h"
 #include "internal/cryptlib.h"
-#include <openssl/bio.h>
 
 static int null_write(BIO *h, const char *buf, int num);
 static int null_read(BIO *h, char *buf, int size);
@@ -67,7 +67,7 @@ static int null_gets(BIO *h, char *str, int size);
 static long null_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int null_new(BIO *h);
 static int null_free(BIO *data);
-static BIO_METHOD null_method = {
+static const BIO_METHOD null_method = {
     BIO_TYPE_NULL,
     "NULL",
     null_write,
@@ -80,7 +80,7 @@ static BIO_METHOD null_method = {
     NULL,
 };
 
-BIO_METHOD *BIO_s_null(void)
+const BIO_METHOD *BIO_s_null(void)
 {
     return (&null_method);
 }

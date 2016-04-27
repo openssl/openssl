@@ -92,23 +92,6 @@ void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
     }
 }
 
-#ifndef OPENSSL_NO_STDIO
-static int print_fp(const char *str, size_t len, void *fp)
-{
-    BIO bio;
-
-    BIO_set(&bio, BIO_s_file());
-    BIO_set_fp(&bio, fp, BIO_NOCLOSE);
-
-    return BIO_printf(&bio, "%s", str);
-}
-
-void ERR_print_errors_fp(FILE *fp)
-{
-    ERR_print_errors_cb(print_fp, fp);
-}
-#endif
-
 static int print_bio(const char *str, size_t len, void *bp)
 {
     return BIO_write((BIO *)bp, str, len);
@@ -118,3 +101,15 @@ void ERR_print_errors(BIO *bp)
 {
     ERR_print_errors_cb(print_bio, bp);
 }
+
+#ifndef OPENSSL_NO_STDIO
+void ERR_print_errors_fp(FILE *fp)
+{
+    BIO *bio = BIO_new_fp(fp, BIO_NOCLOSE);
+    if (bio == NULL)
+        return;
+
+    ERR_print_errors_cb(print_bio, bio);
+    BIO_free(bio);
+}
+#endif

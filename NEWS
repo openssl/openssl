@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.0.2g and OpenSSL 1.1.0 [in pre-release]
 
+      o "shared" builds are now the default when possible
       o Added support for "pipelining"
       o Added the AFALG engine
       o New threading API implemented
@@ -14,8 +15,8 @@
       o Support for extended master secret
       o CCM ciphersuites
       o Reworked test suite, now based on perl, Test::Harness and Test::More
-      o Various libcrypto structures made opaque including: BIGNUM, EVP_MD,
-        EVP_MD_CTX, HMAC_CTX, EVP_CIPHER and EVP_CIPHER_CTX.
+      o *Most* libcrypto and libssl structures were made opaque including:
+        <TBA>
       o libssl internal structures made opaque
       o SSLv2 support removed
       o Kerberos ciphersuite support removed
@@ -43,6 +44,7 @@
       o Extended SSL_CONF support using configuration files
       o KDF algorithm support. Implement TLS PRF as a KDF.
       o Support for Certificate Transparency
+      o HKDF support.
 
   Major changes between OpenSSL 1.0.2f and OpenSSL 1.0.2g [1 Mar 2016]
 

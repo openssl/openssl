@@ -56,42 +56,11 @@
  *
  */
 
-#include <stdio.h>
-#include <openssl/crypto.h>
-#include "internal/cryptlib.h"
-#include <openssl/dso.h>
+#include "dso_locl.h"
 
 static DSO_METHOD *default_DSO_meth = NULL;
 
-DSO *DSO_new(void)
-{
-    return (DSO_new_method(NULL));
-}
-
-void DSO_set_default_method(DSO_METHOD *meth)
-{
-    default_DSO_meth = meth;
-}
-
-DSO_METHOD *DSO_get_default_method(void)
-{
-    return (default_DSO_meth);
-}
-
-DSO_METHOD *DSO_get_method(DSO *dso)
-{
-    return (dso->meth);
-}
-
-DSO_METHOD *DSO_set_method(DSO *dso, DSO_METHOD *meth)
-{
-    DSO_METHOD *mtmp;
-    mtmp = dso->meth;
-    dso->meth = meth;
-    return (mtmp);
-}
-
-DSO *DSO_new_method(DSO_METHOD *meth)
+static DSO *DSO_new_method(DSO_METHOD *meth)
 {
     DSO *ret;
 
@@ -115,12 +84,8 @@ DSO *DSO_new_method(DSO_METHOD *meth)
         OPENSSL_free(ret);
         return (NULL);
     }
-    if (meth == NULL)
-        ret->meth = default_DSO_meth;
-    else
-        ret->meth = meth;
+    ret->meth = default_DSO_meth;
     ret->references = 1;
-
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         sk_void_free(ret->meth_data);
@@ -134,6 +99,11 @@ DSO *DSO_new_method(DSO_METHOD *meth)
     }
 
     return ret;
+}
+
+DSO *DSO_new(void)
+{
+    return DSO_new_method(NULL);
 }
 
 int DSO_free(DSO *dso)
@@ -245,26 +215,6 @@ DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
     return (NULL);
 }
 
-void *DSO_bind_var(DSO *dso, const char *symname)
-{
-    void *ret = NULL;
-
-    if ((dso == NULL) || (symname == NULL)) {
-        DSOerr(DSO_F_DSO_BIND_VAR, ERR_R_PASSED_NULL_PARAMETER);
-        return (NULL);
-    }
-    if (dso->meth->dso_bind_var == NULL) {
-        DSOerr(DSO_F_DSO_BIND_VAR, DSO_R_UNSUPPORTED);
-        return (NULL);
-    }
-    if ((ret = dso->meth->dso_bind_var(dso, symname)) == NULL) {
-        DSOerr(DSO_F_DSO_BIND_VAR, DSO_R_SYM_FAILURE);
-        return (NULL);
-    }
-    /* Success */
-    return (ret);
-}
-
 DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname)
 {
     DSO_FUNC_TYPE ret = NULL;
@@ -321,19 +271,6 @@ long DSO_ctrl(DSO *dso, int cmd, long larg, void *parg)
         return (-1);
     }
     return (dso->meth->dso_ctrl(dso, cmd, larg, parg));
-}
-
-int DSO_set_name_converter(DSO *dso, DSO_NAME_CONVERTER_FUNC cb,
-                           DSO_NAME_CONVERTER_FUNC *oldcb)
-{
-    if (dso == NULL) {
-        DSOerr(DSO_F_DSO_SET_NAME_CONVERTER, ERR_R_PASSED_NULL_PARAMETER);
-        return (0);
-    }
-    if (oldcb)
-        *oldcb = dso->name_converter;
-    dso->name_converter = cb;
-    return (1);
 }
 
 const char *DSO_get_filename(DSO *dso)
@@ -413,27 +350,6 @@ char *DSO_convert_filename(DSO *dso, const char *filename)
         }
     }
     return (result);
-}
-
-const char *DSO_get_loaded_filename(DSO *dso)
-{
-    if (dso == NULL) {
-        DSOerr(DSO_F_DSO_GET_LOADED_FILENAME, ERR_R_PASSED_NULL_PARAMETER);
-        return (NULL);
-    }
-    return (dso->loaded_filename);
-}
-
-int DSO_pathbyaddr(void *addr, char *path, int sz)
-{
-    DSO_METHOD *meth = default_DSO_meth;
-    if (meth == NULL)
-        meth = DSO_METHOD_openssl();
-    if (meth->pathbyaddr == NULL) {
-        DSOerr(DSO_F_DSO_PATHBYADDR, DSO_R_UNSUPPORTED);
-        return -1;
-    }
-    return (*meth->pathbyaddr) (addr, path, sz);
 }
 
 void *DSO_global_lookup(const char *name)

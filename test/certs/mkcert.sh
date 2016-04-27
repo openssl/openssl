@@ -10,6 +10,10 @@
 #
 DAYS=36525
 
+if [ -z "$OPENSSL_SIGALG" ]; then
+    OPENSSL_SIGALG=sha256
+fi
+
 stderr_onerror() {
     (
         err=$("$@" >&3 2>&1) || {
@@ -53,7 +57,7 @@ req() {
     local errs
 
     stderr_onerror \
-        openssl req -new -sha256 -key "${key}.pem" \
+        openssl req -new -"${OPENSSL_SIGALG}" -key "${key}.pem" \
             -config <(printf "[req]\n%s\n%s\n[dn]\nCN=%s\n" \
 		      "prompt = no" "distinguished_name = dn" "${cn}")
 }
@@ -63,7 +67,7 @@ req_nocn() {
 
     key "$key"
     stderr_onerror \
-        openssl req -new -sha256 -subj / -key "${key}.pem" \
+        openssl req -new -"${OPENSSL_SIGALG}" -subj / -key "${key}.pem" \
             -config <(printf "[req]\n%s\n[dn]\nCN_default =\n" \
 		      "distinguished_name = dn")
 }
@@ -73,7 +77,7 @@ cert() {
     local exts=$1; shift
 
     stderr_onerror \
-        openssl x509 -req -sha256 -out "${cert}.pem" \
+        openssl x509 -req -"${OPENSSL_SIGALG}" -out "${cert}.pem" \
             -extfile <(printf "%s\n" "$exts") "$@"
 }
 
@@ -104,6 +108,27 @@ genca() {
     local akid="authorityKeyIdentifier = keyid"
 
     exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = CA:true")
+    for eku in "$@"
+    do
+        exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")
+    done
+    csr=$(req "$key" "$cn") || return 1
+    echo "$csr" |
+        cert "$cert" "$exts" -CA "${cacert}.pem" -CAkey "${cakey}.pem" \
+	    -set_serial 2 -days "${DAYS}"
+}
+
+gen_nonbc_ca() {
+    local cn=$1; shift
+    local key=$1; shift
+    local cert=$1; shift
+    local cakey=$1; shift
+    local cacert=$1; shift
+    local skid="subjectKeyIdentifier = hash"
+    local akid="authorityKeyIdentifier = keyid"
+
+    exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid")
+    exts=$(printf "%s\nkeyUsage = %s\n" "$exts" "keyCertSign, cRLSign")
     for eku in "$@"
     do
         exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")

@@ -151,7 +151,7 @@ this option prevents output of the encoded version of the request.
 
 =item B<-pubkey>
 
-outputs the the certificate's SubjectPublicKeyInfo block in PEM format.
+outputs the certificate's SubjectPublicKeyInfo block in PEM format.
 
 =item B<-modulus>
 

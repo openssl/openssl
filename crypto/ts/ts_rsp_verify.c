@@ -211,27 +211,36 @@ int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
                           X509 *signer, STACK_OF(X509) **chain)
 {
-    X509_STORE_CTX cert_ctx;
+    X509_STORE_CTX *cert_ctx = NULL;
     int i;
-    int ret = 1;
+    int ret = 0;
 
     *chain = NULL;
-    if (!X509_STORE_CTX_init(&cert_ctx, store, signer, untrusted))
-        return 0;
-    X509_STORE_CTX_set_purpose(&cert_ctx, X509_PURPOSE_TIMESTAMP_SIGN);
-    i = X509_verify_cert(&cert_ctx);
+    cert_ctx = X509_STORE_CTX_new();
+    if (cert_ctx == NULL) {
+        TSerr(TS_F_TS_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!X509_STORE_CTX_init(cert_ctx, store, signer, untrusted))
+        goto end;
+    X509_STORE_CTX_set_purpose(cert_ctx, X509_PURPOSE_TIMESTAMP_SIGN);
+    i = X509_verify_cert(cert_ctx);
     if (i <= 0) {
-        int j = X509_STORE_CTX_get_error(&cert_ctx);
+        int j = X509_STORE_CTX_get_error(cert_ctx);
         TSerr(TS_F_TS_VERIFY_CERT, TS_R_CERTIFICATE_VERIFY_ERROR);
         ERR_add_error_data(2, "Verify error:",
                            X509_verify_cert_error_string(j));
-        ret = 0;
-    } else {
-        *chain = X509_STORE_CTX_get1_chain(&cert_ctx);
+        goto err;
     }
+    *chain = X509_STORE_CTX_get1_chain(cert_ctx);
+    ret = 1;
+    goto end;
 
-    X509_STORE_CTX_cleanup(&cert_ctx);
+err:
+    ret = 0;
 
+end:
+    X509_STORE_CTX_free(cert_ctx);
     return ret;
 }
 

@@ -142,9 +142,7 @@
  * OTHERWISE.
  */
 
-#ifdef REF_DEBUG
-# include <assert.h>
-#endif
+#include <assert.h>
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/objects.h>
@@ -152,16 +150,10 @@
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/dh.h>
+#include <openssl/engine.h>
 #include <openssl/async.h>
-#ifndef OPENSSL_NO_CT
-# include <openssl/ct.h>
-#endif
+#include <openssl/ct.h>
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 
@@ -266,7 +258,7 @@ static void tlsa_free(danetls_record *t)
     OPENSSL_free(t);
 }
 
-static void dane_final(struct dane_st *dane)
+static void dane_final(SSL_DANE *dane)
 {
     sk_danetls_record_pop_free(dane->trecs, tlsa_free);
     dane->trecs = NULL;
@@ -293,10 +285,18 @@ static int ssl_dane_dup(SSL *to, SSL *from)
         return 1;
 
     dane_final(&to->dane);
+    to->dane.dctx = &to->ctx->dane;
+    to->dane.trecs = sk_danetls_record_new_null();
+
+    if (to->dane.trecs == NULL) {
+        SSLerr(SSL_F_SSL_DANE_DUP, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
 
     num  = sk_danetls_record_num(from->dane.trecs);
     for (i = 0; i < num; ++i) {
         danetls_record *t = sk_danetls_record_value(from->dane.trecs, i);
+
         if (SSL_dane_tlsa_add(to, t->usage, t->selector, t->mtype,
                               t->data, t->dlen) <= 0)
             return 0;
@@ -353,7 +353,7 @@ static int dane_mtype_set(
     return 1;
 }
 
-static const EVP_MD *tlsa_md_get(struct dane_st *dane, uint8_t mtype)
+static const EVP_MD *tlsa_md_get(SSL_DANE *dane, uint8_t mtype)
 {
     if (mtype > dane->dctx->mdmax)
         return NULL;
@@ -361,7 +361,7 @@ static const EVP_MD *tlsa_md_get(struct dane_st *dane, uint8_t mtype)
 }
 
 static int dane_tlsa_add(
-    struct dane_st *dane,
+    SSL_DANE *dane,
     uint8_t usage,
     uint8_t selector,
     uint8_t mtype,
@@ -372,6 +372,7 @@ static int dane_tlsa_add(
     const EVP_MD *md = NULL;
     int ilen = (int)dlen;
     int i;
+    int num;
 
     if (dane->trecs == NULL) {
         SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_NOT_ENABLED);
@@ -504,8 +505,10 @@ static int dane_tlsa_add(
      * The choice of order for the selector is not significant, so we
      * use the same descending order for consistency.
      */
-    for (i = 0; i < sk_danetls_record_num(dane->trecs); ++i) {
+    num = sk_danetls_record_num(dane->trecs);
+    for (i = 0; i < num; ++i) {
         danetls_record *rec = sk_danetls_record_value(dane->trecs, i);
+
         if (rec->usage > usage)
             continue;
         if (rec->usage < usage)
@@ -892,7 +895,7 @@ int SSL_CTX_dane_enable(SSL_CTX *ctx)
 
 int SSL_dane_enable(SSL *s, const char *basedomain)
 {
-    struct dane_st *dane = &s->dane;
+    SSL_DANE *dane = &s->dane;
 
     if (s->ctx->dane.mdmax == 0) {
         SSLerr(SSL_F_SSL_DANE_ENABLE, SSL_R_CONTEXT_NOT_DANE_ENABLED);
@@ -935,7 +938,7 @@ int SSL_dane_enable(SSL *s, const char *basedomain)
 
 int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
 {
-    struct dane_st *dane = &s->dane;
+    SSL_DANE *dane = &s->dane;
 
     if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
@@ -951,7 +954,7 @@ int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
 int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
                        uint8_t *mtype, unsigned const char **data, size_t *dlen)
 {
-    struct dane_st *dane = &s->dane;
+    SSL_DANE *dane = &s->dane;
 
     if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
@@ -970,7 +973,7 @@ int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
     return dane->mdpth;
 }
 
-struct dane_st *SSL_get0_dane(SSL *s)
+SSL_DANE *SSL_get0_dane(SSL *s)
 {
     return &s->dane;
 }
@@ -1064,7 +1067,9 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->tlsext_ellipticcurvelist);
 #endif                         /* OPENSSL_NO_EC */
     sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts, X509_EXTENSION_free);
+#ifndef OPENSSL_NO_OCSP
     sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
+#endif
 #ifndef OPENSSL_NO_CT
     SCT_LIST_free(s->scts);
     OPENSSL_free(s->tlsext_scts);
@@ -1112,8 +1117,8 @@ void SSL_set_wbio(SSL *s, BIO *wbio)
      */
     if (s->bbio != NULL) {
         if (s->wbio == s->bbio) {
-            s->wbio = s->wbio->next_bio;
-            s->bbio->next_bio = NULL;
+            s->wbio = BIO_next(s->wbio);
+            BIO_set_next(s->bbio, NULL);
         }
     }
     if (s->wbio != wbio && s->rbio != s->wbio)
@@ -1869,7 +1874,7 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             return 0;
         ctx->max_send_fragment = larg;
         if (ctx->max_send_fragment < ctx->split_send_fragment)
-            ctx->split_send_fragment = ctx->split_send_fragment;
+            ctx->split_send_fragment = ctx->max_send_fragment;
         return 1;
     case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
         if ((unsigned int)larg > ctx->max_send_fragment || larg == 0)
@@ -2004,6 +2009,15 @@ const char *SSL_get_cipher_list(const SSL *s, int n)
     if (c == NULL)
         return (NULL);
     return (c->name);
+}
+
+/** return a STACK of the ciphers available for the SSL_CTX and in order of
+ * preference */
+STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx)
+{
+    if (ctx != NULL)
+        return ctx->cipher_list;
+    return NULL;
 }
 
 /** specify the ciphers to be used by default by the SSL_CTX */
@@ -3068,7 +3082,7 @@ const char *ssl_protocol_to_string(int version)
     else if (version == TLS1_1_VERSION)
         return "TLSv1.1";
     else if (version == TLS1_VERSION)
-        return "TLSv1.0";
+        return "TLSv1";
     else if (version == SSL3_VERSION)
         return "SSLv3";
     else if (version == DTLS1_BAD_VER)
@@ -3133,7 +3147,8 @@ SSL *SSL_dup(SSL *s)
             goto err;
     }
 
-    ssl_dane_dup(ret, s);
+    if (!ssl_dane_dup(ret, s))
+        goto err;
     ret->version = s->version;
     ret->options = s->options;
     ret->mode = s->mode;
@@ -3323,13 +3338,7 @@ void ssl_free_wbio_buffer(SSL *s)
     if (s->bbio == s->wbio) {
         /* remove buffering */
         s->wbio = BIO_pop(s->wbio);
-#ifdef REF_DEBUG
-        /*
-         * not the usual REF_DEBUG, but this avoids
-         * adding one more preprocessor symbol
-         */
         assert(s->wbio != NULL);
-#endif
     }
     BIO_free(s->bbio);
     s->bbio = NULL;
@@ -3958,6 +3967,7 @@ static int ct_extract_tls_extension_scts(SSL *s)
  */
 static int ct_extract_ocsp_response_scts(SSL *s)
 {
+#ifndef OPENSSL_NO_OCSP
     int scts_extracted = 0;
     const unsigned char *p;
     OCSP_BASICRESP *br = NULL;
@@ -3994,6 +4004,10 @@ err:
     OCSP_BASICRESP_free(br);
     OCSP_RESPONSE_free(rsp);
     return scts_extracted;
+#else
+    /* Behave as if no OCSP response exists */
+    return 0;
+#endif
 }
 
 /*
@@ -4039,10 +4053,32 @@ err:
     return NULL;
 }
 
-int SSL_set_ct_validation_callback(SSL *s, ct_validation_cb callback, void *arg)
+static int ct_permissive(const CT_POLICY_EVAL_CTX *ctx,
+                         const STACK_OF(SCT) *scts, void *unused_arg)
 {
-    int ret = 0;
+    return 1;
+}
 
+static int ct_strict(const CT_POLICY_EVAL_CTX *ctx,
+                     const STACK_OF(SCT) *scts, void *unused_arg)
+{
+    int count = scts != NULL ? sk_SCT_num(scts) : 0;
+    int i;
+
+    for (i = 0; i < count; ++i) {
+        SCT *sct = sk_SCT_value(scts, i);
+        int status = SCT_get_validation_status(sct);
+
+        if (status == SCT_VALIDATION_STATUS_VALID)
+            return 1;
+    }
+    SSLerr(SSL_F_CT_STRICT, SSL_R_NO_VALID_SCTS);
+    return 0;
+}
+
+int SSL_set_ct_validation_callback(SSL *s, ssl_ct_validation_cb callback,
+                                   void *arg)
+{
     /*
      * Since code exists that uses the custom extension handler for CT, look
      * for this and throw an error if they have already registered to use CT.
@@ -4051,28 +4087,25 @@ int SSL_set_ct_validation_callback(SSL *s, ct_validation_cb callback, void *arg)
             TLSEXT_TYPE_signed_certificate_timestamp)) {
         SSLerr(SSL_F_SSL_SET_CT_VALIDATION_CALLBACK,
                SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED);
-        goto err;
+        return 0;
+    }
+
+    if (callback != NULL) {
+        /* If we are validating CT, then we MUST accept SCTs served via OCSP */
+        if (!SSL_set_tlsext_status_type(s, TLSEXT_STATUSTYPE_ocsp))
+            return 0;
     }
 
     s->ct_validation_callback = callback;
     s->ct_validation_callback_arg = arg;
 
-    if (callback != NULL) {
-        /* If we are validating CT, then we MUST accept SCTs served via OCSP */
-        if (!SSL_set_tlsext_status_type(s, TLSEXT_STATUSTYPE_ocsp))
-            goto err;
-    }
-
-    ret = 1;
-err:
-    return ret;
+    return 1;
 }
 
-int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx, ct_validation_cb callback,
+int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx,
+                                       ssl_ct_validation_cb callback,
                                        void *arg)
 {
-    int ret = 0;
-
     /*
      * Since code exists that uses the custom extension handler for CT, look for
      * this and throw an error if they have already registered to use CT.
@@ -4081,45 +4114,61 @@ int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx, ct_validation_cb callback,
             TLSEXT_TYPE_signed_certificate_timestamp)) {
         SSLerr(SSL_F_SSL_CTX_SET_CT_VALIDATION_CALLBACK,
                SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED);
-        goto err;
+        return 0;
     }
 
     ctx->ct_validation_callback = callback;
     ctx->ct_validation_callback_arg = arg;
-    ret = 1;
-err:
-    return ret;
+    return 1;
 }
 
-ct_validation_cb SSL_get_ct_validation_callback(const SSL *s)
+int SSL_ct_is_enabled(const SSL *s)
 {
-    return s->ct_validation_callback;
+    return s->ct_validation_callback != NULL;
 }
 
-ct_validation_cb SSL_CTX_get_ct_validation_callback(const SSL_CTX *ctx)
+int SSL_CTX_ct_is_enabled(const SSL_CTX *ctx)
 {
-    return ctx->ct_validation_callback;
+    return ctx->ct_validation_callback != NULL;
 }
 
 int ssl_validate_ct(SSL *s)
 {
     int ret = 0;
     X509 *cert = s->session != NULL ? s->session->peer : NULL;
-    X509 *issuer = NULL;
+    X509 *issuer;
+    SSL_DANE *dane = &s->dane;
     CT_POLICY_EVAL_CTX *ctx = NULL;
     const STACK_OF(SCT) *scts;
 
-    /* If no callback is set, attempt no validation - just return success */
-    if (s->ct_validation_callback == NULL)
+    /*
+     * If no callback is set, the peer is anonymous, or its chain is invalid,
+     * skip SCT validation - just return success.  Applications that continue
+     * handshakes without certificates, with unverified chains, or pinned leaf
+     * certificates are outside the scope of the WebPKI and CT.
+     *
+     * The above exclusions notwithstanding the vast majority of peers will
+     * have rather ordinary certificate chains validated by typical
+     * applications that perform certificate verification and therefore will
+     * process SCTs when enabled.
+     */
+    if (s->ct_validation_callback == NULL || cert == NULL ||
+        s->verify_result != X509_V_OK ||
+        s->verified_chain == NULL ||
+        sk_X509_num(s->verified_chain) <= 1)
         return 1;
 
-    if (cert == NULL) {
-        SSLerr(SSL_F_SSL_VALIDATE_CT, SSL_R_NO_CERTIFICATE_ASSIGNED);
-        goto end;
+    /*
+     * CT not applicable for chains validated via DANE-TA(2) or DANE-EE(3)
+     * trust-anchors.  See https://tools.ietf.org/html/rfc7671#section-4.2
+     */
+    if (DANETLS_ENABLED(dane) && dane->mtlsa != NULL) {
+        switch (dane->mtlsa->usage) {
+        case DANETLS_USAGE_DANE_TA:
+        case DANETLS_USAGE_DANE_EE:
+            return 1;
+        }
     }
-
-    if (s->verified_chain != NULL && sk_X509_num(s->verified_chain) > 1)
-        issuer = sk_X509_value(s->verified_chain, 1);
 
     ctx = CT_POLICY_EVAL_CTX_new();
     if (ctx == NULL) {
@@ -4127,13 +4176,28 @@ int ssl_validate_ct(SSL *s)
         goto end;
     }
 
+    issuer = sk_X509_value(s->verified_chain, 1);
     CT_POLICY_EVAL_CTX_set0_cert(ctx, cert);
     CT_POLICY_EVAL_CTX_set0_issuer(ctx, issuer);
     CT_POLICY_EVAL_CTX_set0_log_store(ctx, s->ctx->ctlog_store);
 
     scts = SSL_get0_peer_scts(s);
 
-    if (SCT_LIST_validate(scts, ctx) != 1) {
+    /*
+     * This function returns success (> 0) only when all the SCTs are valid, 0
+     * when some are invalid, and < 0 on various internal errors (out of
+     * memory, etc.).  Having some, or even all, invalid SCTs is not sufficient
+     * reason to abort the handshake, that decision is up to the callback.
+     * Therefore, we error out only in the unexpected case that the return
+     * value is negative.
+     *
+     * XXX: One might well argue that the return value of this function is an
+     * unforunate design choice.  Its job is only to determine the validation
+     * status of each of the provided SCTs.  So long as it correctly separates
+     * the wheat from the chaff it should return success.  Failure in this case
+     * ought to correspond to an inability to carry out its duties.
+     */
+    if (SCT_LIST_validate(scts, ctx) < 0) {
         SSLerr(SSL_F_SSL_VALIDATE_CT, SSL_R_SCT_VERIFICATION_FAILED);
         goto end;
     }
@@ -4145,6 +4209,32 @@ int ssl_validate_ct(SSL *s)
 end:
     CT_POLICY_EVAL_CTX_free(ctx);
     return ret;
+}
+
+int SSL_CTX_enable_ct(SSL_CTX *ctx, int validation_mode)
+{
+    switch (validation_mode) {
+    default:
+        SSLerr(SSL_F_SSL_CTX_ENABLE_CT, SSL_R_INVALID_CT_VALIDATION_TYPE);
+        return 0;
+    case SSL_CT_VALIDATION_PERMISSIVE:
+        return SSL_CTX_set_ct_validation_callback(ctx, ct_permissive, NULL);
+    case SSL_CT_VALIDATION_STRICT:
+        return SSL_CTX_set_ct_validation_callback(ctx, ct_strict, NULL);
+    }
+}
+
+int SSL_enable_ct(SSL *s, int validation_mode)
+{
+    switch (validation_mode) {
+    default:
+        SSLerr(SSL_F_SSL_ENABLE_CT, SSL_R_INVALID_CT_VALIDATION_TYPE);
+        return 0;
+    case SSL_CT_VALIDATION_PERMISSIVE:
+        return SSL_set_ct_validation_callback(s, ct_permissive, NULL);
+    case SSL_CT_VALIDATION_STRICT:
+        return SSL_set_ct_validation_callback(s, ct_strict, NULL);
+    }
 }
 
 int SSL_CTX_set_default_ctlog_list_file(SSL_CTX *ctx)

@@ -60,9 +60,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 
@@ -86,7 +84,9 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
     &eckey_asn1_meth,
 #endif
     &hmac_asn1_meth,
+#ifndef OPENSSL_NO_CMAC
     &cmac_asn1_meth,
+#endif
 #ifndef OPENSSL_NO_DH
     &dhx_asn1_meth
 #endif

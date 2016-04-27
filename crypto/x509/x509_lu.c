@@ -294,6 +294,23 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
     }
 }
 
+X509_OBJECT *X509_STORE_get_X509_by_subject(X509_STORE_CTX *vs, int type,
+                                                  X509_NAME *name)
+{
+    X509_OBJECT *ret;
+
+    ret = OPENSSL_malloc(sizeof (*ret));
+    if (ret == NULL) {
+        X509err(X509_F_X509_STORE_GET_X509_BY_SUBJECT, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    if (!X509_STORE_get_by_subject(vs, type, name, ret)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+    return ret;
+}
+
 int X509_STORE_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
                               X509_NAME *name, X509_OBJECT *ret)
 {
@@ -414,9 +431,22 @@ void X509_OBJECT_up_ref_count(X509_OBJECT *a)
     }
 }
 
+X509 *X509_OBJECT_get0_X509(X509_OBJECT *a)
+{
+    return a->data.x509;
+}
+
+void X509_OBJECT_free(X509_OBJECT *a)
+{
+    if (a == NULL)
+        return;
+    X509_OBJECT_free_contents(a);
+    OPENSSL_free(a);
+}
+
 void X509_OBJECT_free_contents(X509_OBJECT *a)
 {
-    if (!a)
+    if (a == NULL)
         return;
     switch (a->type) {
     default:
@@ -613,6 +643,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     X509_NAME *xn;
     X509_OBJECT obj, *pobj;
     int i, ok, idx, ret;
+
     *issuer = NULL;
     xn = X509_get_issuer_name(x);
     ok = X509_STORE_get_by_subject(ctx, X509_LU_X509, xn, &obj);
@@ -630,7 +661,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     }
     /* If certificate matches all OK */
     if (ctx->check_issued(ctx, x, obj.data.x509)) {
-        if (x509_check_cert_time(ctx, obj.data.x509, 1)) {
+        if (x509_check_cert_time(ctx, obj.data.x509, -1)) {
             *issuer = obj.data.x509;
             return 1;
         }
@@ -661,7 +692,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
                  * match if no certificate time is OK.
                  */
 
-                if (x509_check_cert_time(ctx, *issuer, 1))
+                if (x509_check_cert_time(ctx, *issuer, -1))
                     break;
             }
         }

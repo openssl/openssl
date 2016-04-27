@@ -11,7 +11,7 @@
 #
 # June 2015
 #
-# ~6.4/2.2 cpb on z10/z196+, >2x improvement over compiler-generated
+# ~6.6/2.3 cpb on z10/z196+, >2x improvement over compiler-generated
 # code. For older compiler improvement coefficient is >3x, because
 # then base 2^64 and base 2^32 implementations are compared.
 #
@@ -138,11 +138,12 @@ poly1305_blocks:
 	ngr	$h0,$h2
 	srlg	$t0,$h2,2
 	algr	$h0,$t0
+	lghi	$t1,3
+	ngr	$h2,$t1
 
 	algr	$h0,$d0lo
-	lghi	$t1,3
 	alcgr	$h1,$d1hi		# $d1hi is still zero
-	ngr	$h2,$t1
+	alcgr	$h2,$d1hi		# $d1hi is still zero
 
 	brct$g	$len,.Loop
 

@@ -91,6 +91,7 @@ depends on the library 'libssl' to function properly.
     
     GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)"
     DEPEND[buildinf.h]=../Makefile
+    DEPEND[../util/mkbuildinf.pl]=../util/Foo.pm
 
 This is the build.info file in 'crypto', and it tells us a little more
 about what's needed to produce 'libcrypto'.  LIBS is used again to
@@ -103,9 +104,9 @@ This build.info file informs us that 'libcrypto' is built from a few
 source files, 'crypto/aes.c', 'crypto/evp.c' and 'crypto/cversion.c'.
 It also shows us that building the object file inferred from
 'crypto/cversion.c' depends on 'crypto/buildinf.h'.  Finally, it 
-also shows the possibility to include raw build-file statements in a
-build.info file, in this case showing how 'buildinf.h' is built on
-Unix-like operating systems.
+also shows the possibility to declare how some files are generated
+using some script, in this case a perl script, and how such scripts
+can be declared to depend on other files, in this case a perl module.
 
 Two things are worth an extra note:
 
@@ -153,13 +154,14 @@ information comes down to this:
     INCLUDE[apps/openssl]=. include
     DEPEND[apps/openssl]=libssl
 
-    ENGINES=engines/libossltest
-    SOURCE[engines/libossltest]=engines/e_ossltest.c
-    DEPEND[engines/libossltest]=libcrypto
-    INCLUDE[engines/libossltest]=include
+    ENGINES=engines/ossltest
+    SOURCE[engines/ossltest]=engines/e_ossltest.c
+    DEPEND[engines/ossltest]=libcrypto
+    INCLUDE[engines/ossltest]=include
     
     GENERATE[crypto/buildinf.h]=util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)"
     DEPEND[crypto/buildinf.h]=Makefile
+    DEPEND[util/mkbuildinf.pl]=util/Foo.pm
 
 
 A few notes worth mentioning:
@@ -170,13 +172,14 @@ PROGRAMS may be used to declare programs only.
 
 ENGINES may be used to declare engines only.
 
-The indexes for SOURCE, INCLUDE and ORDINALS must only be end product
-files, such as libraries, programs or engines.  The values of SOURCE
+The indexes for SOURCE and ORDINALS must only be end product files,
+such as libraries, programs or engines.  The values of SOURCE
 variables must only be source files (possibly generated)
 
-DEPEND shows a relationship between different produced files, such
-as a program depending on a library, or between an object file and
-some extra source file.
+INCLUDE and DEPEND shows a relationship between different files
+(usually produced files) or between files and directories, such as a
+program depending on a library, or between an object file and some
+extra source file.
 
 When Configure processes the build.info files, it will take it as
 truth without question, and will therefore perform very few checks.
@@ -201,6 +204,10 @@ indexes:
 
   engines   => a list of engines.  These are directly inferred from
                the ENGINES variable in build.info files.
+
+  generate  => a hash table containing 'file' => [ 'generator' ... ]
+               pairs.  These are directly inferred from the GENERATE
+               variables in build.info files.
 
   includes  => a hash table containing 'file' => [ 'include' ... ]
                pairs.  These are directly inferred from the INCLUDE
@@ -233,6 +240,10 @@ indexes:
                SOURCE variables, and AS source files for programs and
                libraries.
 
+  shared_sources =>
+               a hash table just like 'sources', but only as source
+               files (object files) for building shared libraries.
+
 As an example, here is how the build.info files example from the
 section above would be digested into a %unified_info table:
 
@@ -243,11 +254,15 @@ section above would be digested into a %unified_info table:
                     [
                         "libssl",
                     ],
+                "crypto/buildinf.h" =>
+                    [
+                        "Makefile",
+                    ],
                 "crypto/cversion.o" =>
                     [
                         "crypto/buildinf.h",
                     ],
-                "engines/libossltest" =>
+                "engines/ossltest" =>
                     [
                         "libcrypto",
                     ],
@@ -255,11 +270,25 @@ section above would be digested into a %unified_info table:
                     [
                         "libcrypto",
                     ],
+                "util/mkbuildinf.pl" =>
+                    [
+                        "util/Foo.pm",
+                    ],
             },
         "engines" =>
             [
-                "engines/libossltest",
+                "engines/ossltest",
             ],
+        "generate" =>
+            {
+                "crypto/buildinf.h" =>
+                    [
+                        "util/mkbuildinf.pl",
+                        "\"\$(CC)",
+                        "\$(CFLAGS)\"",
+                        "\"$(PLATFORM)\"",
+                    ],
+            },
         "includes" =>
             {
                 "apps/openssl" =>
@@ -267,7 +296,7 @@ section above would be digested into a %unified_info table:
                         ".",
                         "include",
                     ],
-                "engines/libossltest" =>
+                "engines/ossltest" =>
                     [
                         "include"
                     ],
@@ -278,6 +307,10 @@ section above would be digested into a %unified_info table:
                 "libssl" =>
                     [
                         "include",
+                    ],
+                "util/mkbuildinf.pl" =>
+                    [
+                        "util",
                     ],
             }
         "libraries" =>
@@ -304,9 +337,6 @@ section above would be digested into a %unified_info table:
             ],
         "rawlines" =>
             [
-                "crypto/buildinf.h : Makefile",
-                "	perl util/mkbuildinf.h \"\$(CC) \$(CFLAGS)\" \"\$(PLATFORM)\" \\"
-                "	    > crypto/buildinf.h"
             ],
         "sources" =>
             {
@@ -334,7 +364,7 @@ section above would be digested into a %unified_info table:
                     [
                         "engines/e_ossltest.c",
                     ],
-                "engines/libossltest" =>
+                "engines/ossltest" =>
                     [
                         "engines/e_ossltest.o",
                     ],
@@ -377,6 +407,34 @@ functions that are used to generates specific build-file rules, to
 build static libraries from object files, to build shared libraries
 from static libraries, to programs from object files and libraries,
 etc.
+
+    generatesrc - function that produces build file lines to generate
+                  a source file from some input.
+
+                  It's called like this:
+
+                        generatesrc(src => "PATH/TO/tobegenerated",
+                                    generator => [ "generatingfile", ... ]
+                                    generator_incs => [ "INCL/PATH", ... ]
+                                    generator_deps => [ "dep1", ... ]
+                                    incs => [ "INCL/PATH", ... ],
+                                    deps => [ "dep1", ... ],
+                                    intent => one of "libs", "dso", "bin" );
+
+                  'src' has the name of the file to be generated.
+                  'generator' is the command or part of command to
+                  generate the file, of which the first item is
+                  expected to be the file to generate from.
+                  generatesrc() is expected to analyse and figure out
+                  exactly how to apply that file and how to capture
+                  the result.  'generator_incs' and 'generator_deps'
+                  are include directories and files that the generator
+                  file itself depends on.  'incs' and 'deps' are
+                  include directories and files that are used if $(CC)
+                  is used as an intermediary step when generating the
+                  end product (the file indicated by 'src').  'intent'
+                  indicates what the generated file is going to be
+                  used for.
 
     src2obj     - function that produces build file lines to build an
                   object file from source files and associated data.
@@ -497,7 +555,7 @@ programs and all intermediate files, using the rule generating
 functions defined in the build-file template.
 
 As an example with the smaller build.info set we've seen as an
-example, producing the rules to build 'libssl' would result in the
+example, producing the rules to build 'libcrypto' would result in the
 following calls:
 
     # Note: libobj2shlib will only be called if shared libraries are
@@ -505,25 +563,43 @@ following calls:
     # Note 2: libobj2shlib gets both the name of the static library
     # and the names of all the object files that go into it.  It's up
     # to the implementation to decide which to use as input.
-    libobj2shlib(shlib => "libssl",
-                 lib => "libssl",
-                 objs => [ "ssl/tls.o" ],
-                 deps => [ "libcrypto" ]
-                 ordinals => [ "ssl", "util/libssl.num" ]);
+    # Note 3: common.tmpl peals off the ".o" extension from all object
+    # files, as the platform at hand may have a different one.
+    libobj2shlib(shlib => "libcrypto",
+                 lib => "libcrypto",
+                 objs => [ "crypto/aes", "crypto/evp", "crypto/cversion" ],
+                 deps => [  ]
+                 ordinals => [ "crypto", "util/libcrypto.num" ]);
 
-    obj2lib(lib => "libssl"
-            objs => [ "ssl/tls.o" ]);
+    obj2lib(lib => "libcrypto"
+            objs => [ "crypto/aes", "crypto/evp", "crypto/cversion" ]);
 
-    # Note 3: common.tmpl peals off the ".o" extension, as the
-    # platform at hand may have a different one.
-    src2obj(obj => "ssl/tls"
-            srcs => [ "ssl/tls.c" ],
+    src2obj(obj => "crypto/aes"
+            srcs => [ "crypto/aes.c" ],
             deps => [ ],
-            incs => [ "include" ]);
+            incs => [ "include" ],
+            intent => "lib");
 
-    src2dep(obj => "ssl/tls"
-            srcs => [ "ssl/tls.c" ],
-            incs => [ "include" ]);
+    src2obj(obj => "crypto/evp"
+            srcs => [ "crypto/evp.c" ],
+            deps => [ ],
+            incs => [ "include" ],
+            intent => "lib");
+
+    src2obj(obj => "crypto/cversion"
+            srcs => [ "crypto/cversion.c" ],
+            deps => [ "crypto/buildinf.h" ],
+            incs => [ "include" ],
+            intent => "lib");
+
+    generatesrc(src => "crypto/buildinf.h",
+                generator => [ "util/mkbuildinf.pl", "\"$(CC)",
+                               "$(CFLAGS)\"", "\"$(PLATFORM)\"" ],
+                generator_incs => [ "util" ],
+                generator_deps => [ "util/Foo.pm" ],
+                incs => [ ],
+                deps => [ ],
+                intent => "lib");
 
 The returned strings from all those calls are then concatenated
 together and written to the resulting build-file.

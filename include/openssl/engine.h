@@ -66,37 +66,23 @@
 
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_ENGINE
-#  error ENGINE is disabled.
-# endif
-
+# ifndef OPENSSL_NO_ENGINE
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
-#  ifndef OPENSSL_NO_RSA
-#   include <openssl/rsa.h>
-#  endif
-#  ifndef OPENSSL_NO_DSA
-#   include <openssl/dsa.h>
-#  endif
-#  ifndef OPENSSL_NO_DH
-#   include <openssl/dh.h>
-#  endif
-#  ifndef OPENSSL_NO_EC
-#   include <openssl/ec.h>
-#  endif
+#  include <openssl/rsa.h>
+#  include <openssl/dsa.h>
+#  include <openssl/dh.h>
+#  include <openssl/ec.h>
 #  include <openssl/rand.h>
 #  include <openssl/ui.h>
 #  include <openssl/err.h>
 # endif
-
 # include <openssl/ossl_typ.h>
 # include <openssl/symhacks.h>
-
 # include <openssl/x509.h>
-
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
+# endif
 
 /*
  * These flags are used to control combinations of algorithm (methods) by
@@ -420,8 +406,7 @@ void ENGINE_set_table_flags(unsigned int flags);
  *   ENGINE_register_***(e) - registers the implementation from 'e' (if it has one)
  *   ENGINE_unregister_***(e) - unregister the implementation from 'e'
  *   ENGINE_register_all_***() - call ENGINE_register_***() for each 'e' in the list
- * Cleanup is automatically registered from each table when required, so
- * ENGINE_cleanup() will reverse any "register" operations.
+ * Cleanup is automatically registered from each table when required.
  */
 
 int ENGINE_register_RSA(ENGINE *e);
@@ -563,13 +548,13 @@ int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
 void *ENGINE_get_ex_data(const ENGINE *e, int idx);
 
+#if OPENSSL_API_COMPAT < 0x10100000L
 /*
- * This function cleans up anything that needs it. Eg. the ENGINE_add()
- * function automatically ensures the list cleanup function is registered to
- * be called from ENGINE_cleanup(). Similarly, all ENGINE_register_***
- * functions ensure ENGINE_cleanup() will clean up after them.
+ * This function previously cleaned up anything that needs it. Auto-deinit will
+ * now take care of it so it is no longer required to call this function.
  */
-void ENGINE_cleanup(void);
+# define ENGINE_cleanup() while(0) continue
+#endif
 
 /*
  * These return values from within the ENGINE structure. These can be useful
@@ -905,7 +890,9 @@ void ERR_load_ENGINE_strings(void);
 # define ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD         101
 # define ENGINE_R_VERSION_INCOMPATIBILITY                 145
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

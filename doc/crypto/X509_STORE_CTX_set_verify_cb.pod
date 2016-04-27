@@ -2,14 +2,19 @@
 
 =head1 NAME
 
-X509_STORE_CTX_set_verify_cb - set verification callback
+X509_STORE_CTX_get_verify_cb,
+X509_STORE_CTX_set_verify_cb - get and set verification callback
 
 =head1 SYNOPSIS
 
  #include <openssl/x509_vfy.h>
 
+ typedef int (*X509_STORE_CTX_verify_cb)(int, X509_STORE_CTX *);
+
+ X509_STORE_CTX_verify_cb X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx);
+
  void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
-				int (*verify_cb)(int ok, X509_STORE_CTX *ctx));
+				   X509_STORE_CTX_verify_cb verify_cb);
 
 =head1 DESCRIPTION
 
@@ -34,6 +39,9 @@ is performing the verification operation. A callback can examine this
 structure and receive additional information about the error, for example
 by calling X509_STORE_CTX_get_current_cert(). Additional application data can
 be passed to the callback via the B<ex_data> mechanism.
+
+X509_STORE_CTX_get_verify_cb() returns the value of the current callback
+for the specific B<ctx>.
 
 =head1 WARNING
 

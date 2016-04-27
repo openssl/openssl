@@ -291,8 +291,6 @@ int enc_main(int argc, char **argv)
             break;
         }
     }
-    argc = opt_num_rest();
-    argv = opt_rest();
 
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
@@ -313,22 +311,18 @@ int enc_main(int argc, char **argv)
     if (verbose)
         BIO_printf(bio_err, "bufsize=%d\n", bsize);
 
-    if (base64) {
-        if (enc)
-            outformat = FORMAT_BASE64;
-        else
-            informat = FORMAT_BASE64;
-    }
+#ifdef ZLIB
+    if (!do_zlib)
+#endif
+        if (base64) {
+            if (enc)
+                outformat = FORMAT_BASE64;
+            else
+                informat = FORMAT_BASE64;
+        }
 
     strbuf = app_malloc(SIZE, "strbuf");
     buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
-
-    if (debug) {
-        BIO_set_callback(in, BIO_debug_callback);
-        BIO_set_callback(out, BIO_debug_callback);
-        BIO_set_callback_arg(in, (char *)bio_err);
-        BIO_set_callback_arg(out, (char *)bio_err);
-    }
 
     if (infile == NULL) {
         unbuffer(stdin);
@@ -347,32 +341,46 @@ int enc_main(int argc, char **argv)
     }
 
     if ((str == NULL) && (cipher != NULL) && (hkey == NULL)) {
-        for (;;) {
-            char prompt[200];
+        if (1) {
+#ifndef OPENSSL_NO_UI
+            for (;;) {
+                char prompt[200];
 
-            BIO_snprintf(prompt, sizeof prompt, "enter %s %s password:",
-                         OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
-                         (enc) ? "encryption" : "decryption");
-            strbuf[0] = '\0';
-            i = EVP_read_pw_string((char *)strbuf, SIZE, prompt, enc);
-            if (i == 0) {
-                if (strbuf[0] == '\0') {
-                    ret = 1;
+                BIO_snprintf(prompt, sizeof prompt, "enter %s %s password:",
+                             OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
+                             (enc) ? "encryption" : "decryption");
+                strbuf[0] = '\0';
+                i = EVP_read_pw_string((char *)strbuf, SIZE, prompt, enc);
+                if (i == 0) {
+                    if (strbuf[0] == '\0') {
+                        ret = 1;
+                        goto end;
+                    }
+                    str = strbuf;
+                    break;
+                }
+                if (i < 0) {
+                    BIO_printf(bio_err, "bad password read\n");
                     goto end;
                 }
-                str = strbuf;
-                break;
             }
-            if (i < 0) {
-                BIO_printf(bio_err, "bad password read\n");
-                goto end;
-            }
+        } else {
+#endif
+            BIO_printf(bio_err, "password required\n");
+            goto end;
         }
     }
 
     out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
+
+    if (debug) {
+        BIO_set_callback(in, BIO_debug_callback);
+        BIO_set_callback(out, BIO_debug_callback);
+        BIO_set_callback_arg(in, (char *)bio_err);
+        BIO_set_callback_arg(out, (char *)bio_err);
+    }
 
     rbio = in;
     wbio = out;
@@ -381,6 +389,10 @@ int enc_main(int argc, char **argv)
     if (do_zlib) {
         if ((bzl = BIO_new(BIO_f_zlib())) == NULL)
             goto end;
+        if (debug) {
+            BIO_set_callback(bzl, BIO_debug_callback);
+            BIO_set_callback_arg(bzl, (char *)bio_err);
+        }
         if (enc)
             wbio = BIO_push(bzl, wbio);
         else
@@ -622,7 +634,7 @@ static int set_hex(char *in, unsigned char *out, int size)
             BIO_printf(bio_err, "non-hex digit\n");
             return (0);
         }
-        j = (unsigned char)app_hex(j);
+        j = (unsigned char)OPENSSL_hexchar2int(j);
         if (i & 1)
             out[i / 2] |= j;
         else

@@ -743,7 +743,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
         }
 
         if (format == ASN1_GEN_FORMAT_HEX) {
-            if ((rdata = string_to_hex((char *)str, &rdlen)) == NULL) {
+            if ((rdata = OPENSSL_hexstr2buf((char *)str, &rdlen)) == NULL) {
                 ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_HEX);
                 goto bad_str;
             }

@@ -60,6 +60,7 @@
 
 #include <openssl/engine.h>
 #include <openssl/async.h>
+#include <openssl/err.h>
 
 #include <linux/version.h>
 #define K_MAJ   4
@@ -68,6 +69,9 @@
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)
 # warning "AFALG ENGINE requires Kernel Headers >= 4.1.0"
 # warning "Skipping Compilation of AFALG engine"
+void engine_load_afalg_int(void)
+{
+}
 #else
 
 # include <linux/if_alg.h>
@@ -103,7 +107,7 @@
 #define ALG_MAX_SALG_TYPE       14
 
 # ifdef OPENSSL_NO_DYNAMIC_ENGINE
-void engine_load_afalg_internal(void);
+void engine_load_afalg_int(void);
 # endif
 
 /* Local Linkage Functions */
@@ -815,7 +819,7 @@ static ENGINE *engine_afalg(void)
     return ret;
 }
 
-void engine_load_afalg_internal(void)
+void engine_load_afalg_int(void)
 {
     ENGINE *toadd;
 

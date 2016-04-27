@@ -9,7 +9,7 @@ BIO_f_base64 - base64 BIO filter
  #include <openssl/bio.h>
  #include <openssl/evp.h>
 
- BIO_METHOD *	BIO_f_base64(void);
+ const BIO_METHOD *	BIO_f_base64(void);
 
 =head1 DESCRIPTION
 

@@ -62,7 +62,13 @@
 
 int ASYNC_is_capable(void)
 {
-    return 1;
+    ucontext_t ctx;
+
+    /*
+     * Some platforms provide getcontext() but it does not work (notably
+     * MacOSX PPC64). Check for a working getcontext();
+     */
+    return getcontext(&ctx) == 0;
 }
 
 void async_local_cleanup(void)

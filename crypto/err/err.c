@@ -113,11 +113,12 @@
 #include <string.h>
 #include <internal/cryptlib_int.h>
 #include <internal/threads.h>
+#include <internal/err.h>
+#include <internal/err_int.h>
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/opensslconf.h>
 
 static void err_load_strings(int lib, ERR_STRING_DATA *str);
@@ -389,9 +390,13 @@ static void ERR_STATE_free(ERR_STATE *s)
 
 static void do_err_strings_init(void)
 {
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     err_string_lock = CRYPTO_THREAD_lock_new();
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+}
+
+void err_cleanup(void)
+{
+    CRYPTO_THREAD_lock_free(err_string_lock);
+    err_string_lock = NULL;
 }
 
 void ERR_load_ERR_strings(void)
@@ -447,7 +452,7 @@ void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
     CRYPTO_THREAD_unlock(err_string_lock);
 }
 
-void ERR_free_strings(void)
+void err_free_strings_int(void)
 {
     CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
 

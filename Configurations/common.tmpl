@@ -42,8 +42,11 @@
      my $bin = shift;
      my %opts = @_;
      if ($unified_info{generate}->{$src}) {
+         my $script = $unified_info{generate}->{$src}->[0];
          $OUT .= generatesrc(src => $src,
                              generator => $unified_info{generate}->{$src},
+                             generator_incs => $unified_info{includes}->{$script},
+                             generator_deps => $unified_info{depends}->{$script},
                              deps => $unified_info{depends}->{$src},
                              incs => [ @{$unified_info{includes}->{$bin}},
                                        @{$unified_info{includes}->{$obj}} ],
@@ -92,14 +95,20 @@
          $OUT .= libobj2shlib(shlib => $unified_info{sharednames}->{$lib},
                               lib => $lib,
                               objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                                        @{$unified_info{sources}->{$lib}} ],
+                                        (@{$unified_info{sources}->{$lib}},
+                                         @{$unified_info{shared_sources}->{$lib}}) ],
                               deps => [ reducedepends(resolvedepends($lib)) ],
                               %ordinals);
+         foreach (@{$unified_info{shared_sources}->{$lib}}) {
+             doobj($_, $lib, intent => "lib");
+         }
      }
      $OUT .= obj2lib(lib => $lib,
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
                                @{$unified_info{sources}->{$lib}} ]);
-     map { doobj($_, $lib, intent => "lib") } @{$unified_info{sources}->{$lib}};
+     foreach (@{$unified_info{sources}->{$lib}}) {
+         doobj($_, $lib, intent => "lib");
+     }
      $cache{$lib} = 1;
  }
 
@@ -111,9 +120,13 @@
      return "" if $cache{$lib};
      $OUT .= obj2dso(lib => $lib,
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                               @{$unified_info{sources}->{$lib}} ],
+                               (@{$unified_info{sources}->{$lib}},
+                                @{$unified_info{shared_sources}->{$lib}}) ],
                      deps => [ resolvedepends($lib) ]);
-     map { doobj($_, $lib, intent => "dso") } @{$unified_info{sources}->{$lib}};
+     foreach ((@{$unified_info{sources}->{$lib}},
+               @{$unified_info{shared_sources}->{$lib}})) {
+         doobj($_, $lib, intent => "dso");
+     }
      $cache{$lib} = 1;
  }
 
@@ -127,7 +140,9 @@
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
                                @{$unified_info{sources}->{$bin}} ],
                      deps => $deps);
-     map { doobj($_, $bin, intent => "bin") } @{$unified_info{sources}->{$bin}};
+     foreach (@{$unified_info{sources}->{$bin}}) {
+         doobj($_, $bin, intent => "bin");
+     }
      $cache{$bin} = 1;
  }
 
@@ -146,12 +161,12 @@
 
  # Build all known libraries, engines, programs and scripts.
  # Everything else will be handled as a consequence.
- map { dolib($_) } @{$unified_info{libraries}};
- map { doengine($_) } @{$unified_info{engines}};
- map { dobin($_) } @{$unified_info{programs}};
- map { doscript($_) } @{$unified_info{scripts}};
+ foreach (@{$unified_info{libraries}}) { dolib($_);    }
+ foreach (@{$unified_info{engines}})   { doengine($_); }
+ foreach (@{$unified_info{programs}})  { dobin($_);    }
+ foreach (@{$unified_info{scripts}})   { doscript($_); }
 
  # Finally, should there be any applicable BEGINRAW/ENDRAW sections,
  # they are added here.
- $OUT .= $_."\n" foreach(@{$unified_info{rawlines}});
+ $OUT .= $_."\n" foreach @{$unified_info{rawlines}};
 -}

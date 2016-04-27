@@ -110,7 +110,7 @@ struct dane_ctx_st {
 /*
  * Per connection DANE state
  */
-struct dane_st {
+struct ssl_dane_st {
     struct dane_ctx_st *dctx;
     STACK_OF(danetls_record) *trecs;
     STACK_OF(X509) *certs;      /* DANE-TA(2) Cert(0) Full(0) certs */
@@ -121,7 +121,8 @@ struct dane_st {
     int             pdpth;      /* Depth of PKIX trust */
 };
 
-#define DANETLS_ENABLED(dane)  ((dane) != NULL && ((dane)->trecs != NULL))
+#define DANETLS_ENABLED(dane)  \
+    ((dane) != NULL && sk_danetls_record_num((dane)->trecs) > 0)
 
 #define DANETLS_USAGE_BIT(u)   (((uint32_t)1) << u)
 

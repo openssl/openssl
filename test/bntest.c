@@ -154,6 +154,9 @@ int main(int argc, char *argv[])
     BIO *out;
     char *outfile = NULL;
 
+    CRYPTO_set_mem_debug(1);
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+
     results = 0;
 
     RAND_seed(rnd_seed, sizeof rnd_seed); /* or BN_generate_prime may fail */
@@ -353,12 +356,20 @@ int main(int argc, char *argv[])
     BN_CTX_free(ctx);
     BIO_free(out);
 
+    ERR_print_errors_fp(stderr);
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        EXIT(1);
+#endif
     EXIT(0);
  err:
     BIO_puts(out, "1\n");       /* make sure the Perl script fed by bc
                                  * notices the failure, see test_bn in
                                  * test/Makefile.ssl */
     (void)BIO_flush(out);
+    BN_CTX_free(ctx);
+    BIO_free(out);
 
     ERR_print_errors_fp(stderr);
     EXIT(1);

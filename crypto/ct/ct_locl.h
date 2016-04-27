@@ -50,15 +50,11 @@
  * ====================================================================
  */
 
-#ifdef OPENSSL_NO_CT
-# error CT is disabled.
-#endif
-
 #include <stddef.h>
-
 #include <openssl/ct.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/safestack.h>
 
 /*
@@ -152,8 +148,6 @@ struct ct_policy_eval_ctx_st {
     X509 *cert;
     X509 *issuer;
     CTLOG_STORE *log_store;
-    STACK_OF(SCT) *good_scts;
-    STACK_OF(SCT) *bad_scts;
 };
 
 /*
@@ -214,3 +208,7 @@ __owur int SCT_is_complete(const SCT *sct);
 __owur int SCT_signature_is_complete(const SCT *sct);
 
 
+/*
+ * Handlers for Certificate Transparency X509v3/OCSP extensions
+ */
+extern const X509V3_EXT_METHOD v3_ct_scts[];

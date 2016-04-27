@@ -250,44 +250,30 @@ void SSL_set_default_read_buffer_len(SSL *s, size_t len)
 
 const char *SSL_rstate_string_long(const SSL *s)
 {
-    const char *str;
-
     switch (s->rlayer.rstate) {
     case SSL_ST_READ_HEADER:
-        str = "read header";
-        break;
+        return "read header";
     case SSL_ST_READ_BODY:
-        str = "read body";
-        break;
+        return "read body";
     case SSL_ST_READ_DONE:
-        str = "read done";
-        break;
+        return "read done";
     default:
-        str = "unknown";
-        break;
+        return "unknown";
     }
-    return (str);
 }
 
 const char *SSL_rstate_string(const SSL *s)
 {
-    const char *str;
-
     switch (s->rlayer.rstate) {
     case SSL_ST_READ_HEADER:
-        str = "RH";
-        break;
+        return "RH";
     case SSL_ST_READ_BODY:
-        str = "RB";
-        break;
+        return "RB";
     case SSL_ST_READ_DONE:
-        str = "RD";
-        break;
+        return "RD";
     default:
-        str = "unknown";
-        break;
+        return "unknown";
     }
-    return (str);
 }
 
 int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold)

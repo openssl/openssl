@@ -266,6 +266,7 @@ int dump_cert_text(BIO *out, X509 *x)
     return 0;
 }
 
+#ifndef OPENSSL_NO_UI
 static int ui_open(UI *ui)
 {
     return UI_method_get_opener(UI_OpenSSL())(ui);
@@ -335,20 +336,25 @@ void destroy_ui_method(void)
         ui_method = NULL;
     }
 }
+#endif
 
 int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
 {
-    UI *ui = NULL;
     int res = 0;
+#ifndef OPENSSL_NO_UI
+    UI *ui = NULL;
     const char *prompt_info = NULL;
+#endif
     const char *password = NULL;
     PW_CB_DATA *cb_data = (PW_CB_DATA *)cb_tmp;
 
     if (cb_data) {
         if (cb_data->password)
             password = cb_data->password;
+#ifndef OPENSSL_NO_UI
         if (cb_data->prompt_info)
             prompt_info = cb_data->prompt_info;
+#endif
     }
 
     if (password) {
@@ -359,6 +365,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
         return res;
     }
 
+#ifndef OPENSSL_NO_UI
     ui = UI_new_method(ui_method);
     if (ui) {
         int ok = 0;
@@ -408,6 +415,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
         UI_free(ui);
         OPENSSL_free(prompt);
     }
+#endif
     return res;
 }
 
@@ -640,7 +648,7 @@ static int load_pkcs12(BIO *in, const char *desc,
     return ret;
 }
 
-#ifndef OPENSSL_NO_OCSP
+#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
 static int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
 {
     char *host = NULL, *port = NULL, *path = NULL;
@@ -695,7 +703,7 @@ X509 *load_cert(const char *file, int format, const char *cert_descrip)
     BIO *cert;
 
     if (format == FORMAT_HTTP) {
-#ifndef OPENSSL_NO_OCSP
+#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
         load_cert_crl_http(file, &x, NULL);
 #endif
         return x;
@@ -736,7 +744,7 @@ X509_CRL *load_crl(const char *infile, int format)
     BIO *in = NULL;
 
     if (format == FORMAT_HTTP) {
-#ifndef OPENSSL_NO_OCSP
+#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
         load_cert_crl_http(infile, NULL, &x);
 #endif
         return x;
@@ -2203,30 +2211,6 @@ double app_tminterval(int stop, int usertime)
 
     return (ret);
 }
-#elif defined(OPENSSL_SYS_NETWARE)
-# include <time.h>
-
-double app_tminterval(int stop, int usertime)
-{
-    static clock_t tmstart;
-    static int warning = 1;
-    double ret = 0;
-
-    if (usertime && warning) {
-        BIO_printf(bio_err, "To get meaningful results, run "
-                   "this program on idle system.\n");
-        warning = 0;
-    }
-
-    if (stop == TM_START)
-        tmstart = clock();
-    else
-        ret = (clock() - tmstart) / (double)CLOCKS_PER_SEC;
-
-    return (ret);
-}
-
-
 #elif defined(OPENSSL_SYSTEM_VXWORKS)
 # include <time.h>
 
@@ -2356,45 +2340,6 @@ int app_access(const char* name, int flag)
 #endif
 }
 
-int app_hex(char c)
-{
-    switch (c) {
-    default:
-    case '0':
-        return 0;
-    case '1':
-        return 1;
-    case '2':
-        return 2;
-    case '3':
-        return 3;
-    case '4':
-          return 4;
-    case '5':
-          return 5;
-    case '6':
-          return 6;
-    case '7':
-          return 7;
-    case '8':
-          return 8;
-    case '9':
-          return 9;
-    case 'a': case 'A':
-          return 0x0A;
-    case 'b': case 'B':
-          return 0x0B;
-    case 'c': case 'C':
-          return 0x0C;
-    case 'd': case 'D':
-          return 0x0D;
-    case 'e': case 'E':
-          return 0x0E;
-    case 'f': case 'F':
-          return 0x0F;
-    }
-}
-
 /* app_isdir section */
 #ifdef _WIN32
 int app_isdir(const char *name)
@@ -2510,9 +2455,34 @@ BIO *dup_bio_out(int format)
     return b;
 }
 
+BIO *dup_bio_err(int format)
+{
+    BIO *b = BIO_new_fp(stderr,
+                        BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
+#ifdef OPENSSL_SYS_VMS
+    if (istext(format))
+        b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
+#endif
+    return b;
+}
+
 void unbuffer(FILE *fp)
 {
+/*
+ * On VMS, setbuf() will only take 32-bit pointers, and a compilation
+ * with /POINTER_SIZE=64 will give off a MAYLOSEDATA2 warning here.
+ * However, we trust that the C RTL will never give us a FILE pointer
+ * above the first 4 GB of memory, so we simply turn off the warning
+ * temporarily.
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment save
+# pragma message disable maylosedata2
+#endif
     setbuf(fp, NULL);
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment restore
+#endif
 }
 
 static const char *modestr(char mode, int format)
@@ -2651,6 +2621,8 @@ BIO *bio_open_default_quiet(const char *filename, char mode, int format)
 
 void wait_for_async(SSL *s)
 {
+    /* On Windows select only works for sockets, so we simply don't wait  */
+#ifndef OPENSSL_SYS_WINDOWS
     int width = 0;
     fd_set asyncfds;
     OSSL_ASYNC_FD *fds;
@@ -2674,4 +2646,5 @@ void wait_for_async(SSL *s)
         fds++;
     }
     select(width, (void *)&asyncfds, NULL, NULL, NULL);
+#endif
 }

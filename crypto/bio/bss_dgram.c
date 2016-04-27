@@ -125,7 +125,7 @@ static int BIO_dgram_should_retry(int s);
 
 static void get_current_time(struct timeval *t);
 
-static BIO_METHOD methods_dgramp = {
+static const BIO_METHOD methods_dgramp = {
     BIO_TYPE_DGRAM,
     "datagram socket",
     dgram_write,
@@ -139,7 +139,7 @@ static BIO_METHOD methods_dgramp = {
 };
 
 # ifndef OPENSSL_NO_SCTP
-static BIO_METHOD methods_dgramp_sctp = {
+static const BIO_METHOD methods_dgramp_sctp = {
     BIO_TYPE_DGRAM_SCTP,
     "datagram sctp socket",
     dgram_sctp_write,
@@ -189,7 +189,7 @@ typedef struct bio_dgram_sctp_data_st {
 } bio_dgram_sctp_data;
 # endif
 
-BIO_METHOD *BIO_s_datagram(void)
+const BIO_METHOD *BIO_s_datagram(void)
 {
     return (&methods_dgramp);
 }
@@ -858,7 +858,7 @@ static int dgram_puts(BIO *bp, const char *str)
 }
 
 # ifndef OPENSSL_NO_SCTP
-BIO_METHOD *BIO_s_datagram_sctp(void)
+const BIO_METHOD *BIO_s_datagram_sctp(void)
 {
     return (&methods_dgramp_sctp);
 }

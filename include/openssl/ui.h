@@ -59,12 +59,15 @@
 #ifndef HEADER_UI_H
 # define HEADER_UI_H
 
-# if OPENSSL_API_COMPAT < 0x10100000L
-#  include <openssl/crypto.h>
-# endif
-# include <openssl/safestack.h>
-# include <openssl/ossl_typ.h>
 # include <openssl/opensslconf.h>
+
+# ifndef OPENSSL_NO_UI
+
+#  if OPENSSL_API_COMPAT < 0x10100000L
+#   include <openssl/crypto.h>
+#  endif
+#  include <openssl/safestack.h>
+#  include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -160,7 +163,7 @@ int UI_dup_error_string(UI *ui, const char *text);
  * each UI being marked with this flag, or the application might get
  * confused.
  */
-# define UI_INPUT_FLAG_DEFAULT_PWD       0x02
+#  define UI_INPUT_FLAG_DEFAULT_PWD       0x02
 
 /*-
  * The user of these routines may want to define flags of their own.  The core
@@ -172,7 +175,7 @@ int UI_dup_error_string(UI *ui, const char *text);
  *    #define MY_UI_FLAG1       (0x01 << UI_INPUT_FLAG_USER_BASE)
  *
 */
-# define UI_INPUT_FLAG_USER_BASE 16
+#  define UI_INPUT_FLAG_USER_BASE 16
 
 /*-
  * The following function helps construct a prompt.  object_desc is a
@@ -229,7 +232,7 @@ int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void));
  * OpenSSL error stack before printing any info or added error messages and
  * before any prompting.
  */
-# define UI_CTRL_PRINT_ERRORS            1
+#  define UI_CTRL_PRINT_ERRORS            1
 /*
  * Check if a UI_process() is possible to do again with the same instance of
  * a user interface.  This makes UI_ctrl() return 1 if it is redoable, and 0
@@ -413,4 +416,5 @@ void ERR_load_UI_strings(void);
 #ifdef  __cplusplus
 }
 #endif
+# endif /* OPENSSL_NO_UI */
 #endif

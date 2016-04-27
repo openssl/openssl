@@ -90,7 +90,7 @@ void OPENSSL_Uplink(volatile void **table, int index)
     table[index] = func;
 }
 
-#if defined(_MSC_VER) && defined(_M_IX86) && !defined(OPENSSL_NO_INLINE_ASM)
+#if defined(_MSC_VER) && defined(_M_IX86)
 # define LAZY(i)         \
 __declspec(naked) static void lazy##i (void) {  \
         _asm    push i                          \

@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/dsa.h>
+#include "dsa_locl.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
@@ -75,7 +75,7 @@ ASN1_SEQUENCE(DSA_SIG) = {
 
 IMPLEMENT_ASN1_FUNCTIONS_const(DSA_SIG)
 
-void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, DSA_SIG *sig)
+void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig)
 {
     *pr = sig->r;
     *ps = sig->s;

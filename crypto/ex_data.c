@@ -108,7 +108,7 @@
  *
  */
 
-#include "internal/cryptlib.h"
+#include "internal/cryptlib_int.h"
 #include "internal/threads.h"
 #include <openssl/lhash.h>
 
@@ -134,14 +134,12 @@ typedef struct ex_callbacks_st {
 
 static EX_CALLBACKS ex_data[CRYPTO_EX_INDEX__COUNT];
 
-static CRYPTO_RWLOCK *ex_data_lock;
+static CRYPTO_RWLOCK *ex_data_lock = NULL;
 static CRYPTO_ONCE ex_data_init = CRYPTO_ONCE_STATIC_INIT;
 
 static void do_ex_data_init(void)
 {
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     ex_data_lock = CRYPTO_THREAD_lock_new();
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
 }
 
 /*
@@ -153,11 +151,24 @@ static EX_CALLBACKS *get_and_lock(int class_index)
     EX_CALLBACKS *ip;
 
     if (class_index < 0 || class_index >= CRYPTO_EX_INDEX__COUNT) {
-        CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
+        CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 
     CRYPTO_THREAD_run_once(&ex_data_init, do_ex_data_init);
+
+    if (ex_data_lock == NULL) {
+        /*
+         * This can happen in normal operation when using CRYPTO_mem_leaks().
+         * The CRYPTO_mem_leaks() function calls OPENSSL_cleanup() which cleans
+         * up the locks. Subsequently the BIO that CRYPTO_mem_leaks() uses gets
+         * freed, which also attempts to free the ex_data. However
+         * CRYPTO_mem_leaks() ensures that the ex_data is freed early (i.e.
+         * before OPENSSL_cleanup() is called), so if we get here we can safely
+         * ignore this operation. We just treat it as an error.
+         */
+         return NULL;
+    }
 
     ip = &ex_data[class_index];
     CRYPTO_THREAD_write_lock(ex_data_lock);
@@ -175,7 +186,7 @@ static void cleanup_cb(EX_CALLBACK *funcs)
  * called under potential race-conditions anyway (it's for program shutdown
  * after all).
  */
-void CRYPTO_cleanup_all_ex_data(void)
+void crypto_cleanup_all_ex_data_int(void)
 {
     int i;
 
@@ -185,6 +196,9 @@ void CRYPTO_cleanup_all_ex_data(void)
         sk_EX_CALLBACK_pop_free(ip->meth, cleanup_cb);
         ip->meth = NULL;
     }
+
+    CRYPTO_THREAD_lock_free(ex_data_lock);
+    ex_data_lock = NULL;
 }
 
 

@@ -109,6 +109,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <openssl/opensslconf.h>
 
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of

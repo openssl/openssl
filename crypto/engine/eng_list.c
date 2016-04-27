@@ -79,7 +79,7 @@ static ENGINE *engine_list_tail = NULL;
 
 /*
  * This cleanup function is only needed internally. If it should be called,
- * we register it with the "ENGINE_cleanup()" stack to be called during
+ * we register it with the "engine_cleanup_int()" stack to be called during
  * cleanup.
  */
 

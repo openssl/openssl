@@ -135,10 +135,14 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
     if (sct->version == SCT_VERSION_V1) {
         int sig_len;
         size_t len2;
-        /*
-         * Fixed-length header: struct { (1 byte) Version sct_version; (32
-         * bytes) log_id id; (8 bytes) uint64 timestamp; (2 bytes + ?)
-         * CtExtensions extensions;
+        /*-
+         * Fixed-length header:
+         *   struct {
+         *     Version sct_version;     (1 byte)
+         *     log_id id;               (32 bytes)
+         *     uint64 timestamp;        (8 bytes)
+         *     CtExtensions extensions; (2 bytes + ?)
+         *   }
          */
         if (len < 43) {
             CTerr(CT_F_O2I_SCT, CT_R_SCT_INVALID);

@@ -121,16 +121,10 @@
 # include <openssl/lhash.h>
 # include <openssl/conf.h>
 # include <openssl/txt_db.h>
-# ifndef OPENSSL_NO_ENGINE
-#  include <openssl/engine.h>
-# endif
-# ifndef OPENSSL_NO_OCSP
-#  include <openssl/ocsp.h>
-# endif
+# include <openssl/engine.h>
+# include <openssl/ocsp.h>
 # include <openssl/ossl_typ.h>
-# ifndef OPENSSL_SYS_NETWARE
-#  include <signal.h>
-# endif
+# include <signal.h>
 
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
@@ -162,6 +156,7 @@ extern BIO *bio_out;
 extern BIO *bio_err;
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
+BIO *dup_bio_err(int format);
 BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
@@ -185,6 +180,7 @@ void wait_for_async(SSL *s);
         OPT_V_POLICY_PRINT, OPT_V_CHECK_SS_SIG, OPT_V_TRUSTED_FIRST, \
         OPT_V_SUITEB_128_ONLY, OPT_V_SUITEB_128, OPT_V_SUITEB_192, \
         OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME, \
+        OPT_V_VERIFY_AUTH_LEVEL, \
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
@@ -192,8 +188,10 @@ void wait_for_async(SSL *s);
         { "purpose", OPT_V_PURPOSE, 's', \
             "certificate chain purpose"}, \
         { "verify_name", OPT_V_VERIFY_NAME, 's', "verification policy name"}, \
-        { "verify_depth", OPT_V_VERIFY_DEPTH, 'p', \
-            "chain depth limit"}, \
+        { "verify_depth", OPT_V_VERIFY_DEPTH, 'n', \
+            "chain depth limit" }, \
+        { "auth_level", OPT_V_VERIFY_AUTH_LEVEL, 'n', \
+            "chain authentication security level" }, \
         { "attime", OPT_V_ATTIME, 'M', "verification epoch time" }, \
         { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's', \
             "expected peer hostname" }, \
@@ -240,6 +238,7 @@ void wait_for_async(SSL *s);
         case OPT_V_PURPOSE: \
         case OPT_V_VERIFY_NAME: \
         case OPT_V_VERIFY_DEPTH: \
+        case OPT_V_VERIFY_AUTH_LEVEL: \
         case OPT_V_ATTIME: \
         case OPT_V_VERIFY_HOSTNAME: \
         case OPT_V_VERIFY_EMAIL: \
@@ -450,6 +449,14 @@ typedef struct args_st {
     char **argv;
 } ARGS;
 
+/*
+ * VMS C only for now, implemented in vms_decc_init.c
+ * If other C compilers forget to terminate argv with NULL, this function
+ * can be re-used.
+ */
+char **copy_argv(int *argc, char *argv[]);
+
+
 # define PW_MIN_LENGTH 4
 typedef struct pw_cb_data {
     const void *password;
@@ -617,7 +624,6 @@ void store_setup_crl_download(X509_STORE *st);
 
 # define SERIAL_RAND_BITS        64
 
-int app_hex(char);
 int app_isdir(const char *);
 int app_access(const char *, int flag);
 int raw_read_stdin(void *, int);

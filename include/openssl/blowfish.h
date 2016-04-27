@@ -58,14 +58,12 @@
 #ifndef HEADER_BLOWFISH_H
 # define HEADER_BLOWFISH_H
 
+# include <openssl/opensslconf.h>
+
+# ifndef OPENSSL_NO_BF
 # include <openssl/e_os2.h>
-
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
-
-# ifdef OPENSSL_NO_BF
-#  error BF is disabled.
 # endif
 
 # define BF_ENCRYPT      1
@@ -103,8 +101,9 @@ void BF_ofb64_encrypt(const unsigned char *in, unsigned char *out,
                       unsigned char *ivec, int *num);
 const char *BF_options(void);
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
 
 #endif

@@ -4,6 +4,75 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) The following datatypes were made opaque: X509_OBJECT, X509_STORE_CTX,
+     X509_STORE, X509_LOOKUP, and X509_LOOKUP_METHOD.  The unused type
+     X509_CERT_FILE_CTX was removed.
+     [Rich Salz]
+
+  *) "shared" builds are now the default. To create only static libraries use
+     the "no-shared" Configure option.
+     [Matt Caswell]
+
+  *) Remove the no-aes, no-hmac, no-rsa, no-sha and no-md5 Configure options.
+     All of these option have not worked for some while and are fundamental
+     algorithms.
+     [Matt Caswell]
+
+  *) Make various cleanup routines no-ops and mark them as deprecated. Most
+     global cleanup functions are no longer required because they are handled
+     via auto-deinit (see OPENSSL_init_crypto and OPENSSL_init_ssl man pages).
+     Explicitly de-initing can cause problems (e.g. where a library that uses
+     OpenSSL de-inits, but an application is still using it). The affected
+     functions are CONF_modules_free(), ENGINE_cleanup(), OBJ_cleanup(),
+     EVP_cleanup(), BIO_sock_cleanup(), CRYPTO_cleanup_all_ex_data(),
+     RAND_cleanup(), SSL_COMP_free_compression_methods(), ERR_free_strings() and
+     COMP_zlib_cleanup().
+     [Matt Caswell]
+
+  *) --strict-warnings no longer enables runtime debugging options
+     such as REF_DEBUG. Instead, debug options are automatically
+     enabled with '--debug' builds.
+     [Andy Polyakov, Emilia Käsper]
+
+  *) Made DH and DH_METHOD opaque. The structures for managing DH objects
+     have been moved out of the public header files. New functions for managing
+     these have been added.
+     [Matt Caswell]
+
+  *) Made RSA and RSA_METHOD opaque. The structures for managing RSA
+     objects have been moved out of the public header files. New
+     functions for managing these have been added.
+     [Richard Levitte]
+
+  *) Made DSA and DSA_METHOD opaque. The structures for managing DSA objects
+     have been moved out of the public header files. New functions for managing
+     these have been added.
+     [Matt Caswell]
+
+  *) Made BIO and BIO_METHOD opaque. The structures for managing BIOs have been
+     moved out of the public header files. New functions for managing these
+     have been added.
+     [Matt Caswell]
+
+  *) Removed no-rijndael as a config option. Rijndael is an old name for AES.
+     [Matt Caswell]
+
+  *) Removed the mk1mf build scripts.
+     [Richard Levitte]
+
+  *) Headers are now wrapped, if necessary, with OPENSSL_NO_xxx, so
+     it is always safe to #include a header now.
+     [Rich Salz]
+
+  *) Removed the aged BC-32 config and all its supporting scripts
+     [Richard Levitte]
+
+  *) Removed support for Ultrix, Netware, and OS/2.
+     [Rich Salz]
+
+  *) Add support for HKDF.
+     [Alessandro Ghedini]
+
   *) Add support for blake2b and blake2s
      [Bill Cox]
 
@@ -34,9 +103,6 @@
      [Todd Short]
 
   *) Add SSL_CIPHER queries for authentication and key-exchange.
-
-  *) Modify behavior of ALPN to invoke callback after SNI/servername
-     callback, such that updates to the SSL_CTX affect ALPN.
      [Todd Short]
 
   *) Changes to the DEFAULT cipherlist:

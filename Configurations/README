@@ -99,8 +99,7 @@ In each table entry, the following keys are significant:
                            some options.  In this case, the first
                            string in the list is the name of the build
                            scheme.
-                           Currently recognised build schemes are
-                           "mk1mf" and "unixmake" and "unified".
+                           Currently recognised build scheme is "unified".
                            For the "unified" build scheme, this item
                            *must* be an array with the first being the
                            word "unified" and the second being a word
@@ -358,6 +357,11 @@ sense at all to just have a rename like that (why not just use
 "libbar" everywhere?), it does make sense when it can be used
 conditionally.  See a little further below for an example.
 
+In some cases, it's desirable to include some source files in the
+shared form of a library only:
+
+    SHARED_SOURCE[libfoo]=dllmain.c
+
 For any file to be built, it's also possible to tell what extra
 include paths the build of their source files should use:
 
@@ -374,6 +378,18 @@ Configure places no rules on the command line, except the the first
 item muct be the generator file.  It is, however, entirely up to the
 build file template to define exactly how those command lines should
 be handled, how the output is captured and so on.
+
+Sometimes, the generator file itself depends on other files, for
+example if it is a perl script that depends on other perl modules.
+This can be expressed using DEPEND like this:
+
+    DEPEND[asm/something.pl]=../perlasm/Foo.pm
+
+There may also be cases where the exact file isn't easily specified,
+but an inclusion directory still needs to be specified.  INCLUDE can
+be used in that case:
+
+    INCLUDE[asm/something.pl]=../perlasm
 
 NOTE: GENERATE lines are limited to one command only per GENERATE.
 
@@ -494,6 +510,10 @@ They are all expected to return a string with the lines they produce.
 
                         generatesrc(src => "PATH/TO/tobegenerated",
                                     generator => [ "generatingfile", ... ]
+                                    generator_incs => [ "INCL/PATH", ... ]
+                                    generator_deps => [ "dep1", ... ]
+                                    generator => [ "generatingfile", ... ]
+                                    incs => [ "INCL/PATH", ... ],
                                     deps => [ "dep1", ... ],
                                     intent => one of "libs", "dso", "bin" );
 
@@ -503,9 +523,14 @@ They are all expected to return a string with the lines they produce.
                   expected to be the file to generate from.
                   generatesrc() is expected to analyse and figure out
                   exactly how to apply that file and how to capture
-                  the result.  'deps' is a list of explicit
-                  dependencies.  'intent' indicates what the generated
-                  file is going to be used for.
+                  the result.  'generator_incs' and 'generator_deps'
+                  are include directories and files that the generator
+                  file itself depends on.  'incs' and 'deps' are
+                  include directories and files that are used if $(CC)
+                  is used as an intermediary step when generating the
+                  end product (the file indicated by 'src').  'intent'
+                  indicates what the generated file is going to be
+                  used for.
 
     src2obj     - function that produces build file lines to build an
                   object file from source files and associated data.

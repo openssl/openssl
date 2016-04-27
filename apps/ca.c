@@ -81,7 +81,7 @@
 #  else
 #   include <unixlib.h>
 #  endif
-# elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_NETWARE)
+# elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS)
 #  include <sys/file.h>
 # endif
 #endif
@@ -1307,7 +1307,6 @@ end_of_options:
     X509_CRL_free(crl);
     NCONF_free(conf);
     NCONF_free(extconf);
-    OBJ_cleanup();
     return (ret);
 }
 
@@ -1351,12 +1350,12 @@ static int certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
         ok = 0;
         goto end;
     }
-    if ((pktmp = X509_REQ_get_pubkey(req)) == NULL) {
+    if ((pktmp = X509_REQ_get0_pubkey(req)) == NULL) {
         BIO_printf(bio_err, "error unpacking public key\n");
         goto end;
     }
     i = X509_REQ_verify(req, pktmp);
-    EVP_PKEY_free(pktmp);
+    pktmp = NULL;
     if (i < 0) {
         ok = 0;
         BIO_printf(bio_err, "Signature verification problems....\n");
@@ -1788,9 +1787,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     if (!X509_set_subject_name(ret, subject))
         goto end;
 
-    pktmp = X509_REQ_get_pubkey(req);
+    pktmp = X509_REQ_get0_pubkey(req);
     i = X509_set_pubkey(ret, pktmp);
-    EVP_PKEY_free(pktmp);
     if (!i)
         goto end;
 
@@ -2072,6 +2070,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey,
 
     j = NETSCAPE_SPKI_verify(spki, pktmp);
     if (j <= 0) {
+        EVP_PKEY_free(pktmp);
         BIO_printf(bio_err,
                    "signature verification failed on SPKAC public key\n");
         goto end;

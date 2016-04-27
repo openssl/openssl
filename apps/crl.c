@@ -112,9 +112,9 @@ int crl_main(int argc, char **argv)
     X509_CRL *x = NULL;
     BIO *out = NULL;
     X509_STORE *store = NULL;
-    X509_STORE_CTX ctx;
+    X509_STORE_CTX *ctx = NULL;
     X509_LOOKUP *lookup = NULL;
-    X509_OBJECT xobj;
+    X509_OBJECT *xobj = NULL;
     EVP_PKEY *pkey;
     const EVP_MD *digest = EVP_sha1();
     unsigned long nmflag = 0;
@@ -243,24 +243,26 @@ int crl_main(int argc, char **argv)
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
         if (lookup == NULL)
             goto end;
-        if (!X509_STORE_CTX_init(&ctx, store, NULL, NULL)) {
+        ctx = X509_STORE_CTX_new();
+        if (!X509_STORE_CTX_init(ctx, store, NULL, NULL)) {
             BIO_printf(bio_err, "Error initialising X509 store\n");
             goto end;
         }
 
-        i = X509_STORE_get_by_subject(&ctx, X509_LU_X509,
-                                      X509_CRL_get_issuer(x), &xobj);
-        if (i <= 0) {
+        xobj = X509_STORE_get_X509_by_subject(ctx, X509_LU_X509,
+                                              X509_CRL_get_issuer(x));
+        if (xobj == NULL) {
             BIO_printf(bio_err, "Error getting CRL issuer certificate\n");
             goto end;
         }
-        pkey = X509_get0_pubkey(xobj.data.x509);
-        X509_OBJECT_free_contents(&xobj);
+        pkey = X509_get_pubkey(X509_OBJECT_get0_X509(xobj));
+        X509_OBJECT_free(xobj);
         if (!pkey) {
             BIO_printf(bio_err, "Error getting CRL issuer public key\n");
             goto end;
         }
         i = X509_CRL_verify(x, pkey);
+        EVP_PKEY_free(pkey);
         if (i < 0)
             goto end;
         if (i == 0)
@@ -388,9 +390,7 @@ int crl_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     BIO_free_all(out);
     X509_CRL_free(x);
-    if (store) {
-        X509_STORE_CTX_cleanup(&ctx);
-        X509_STORE_free(store);
-    }
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
     return (ret);
 }

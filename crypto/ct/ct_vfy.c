@@ -71,65 +71,6 @@ typedef enum sct_signature_type_t {
     SIGNATURE_TYPE_TREE_HASH
 } SCT_SIGNATURE_TYPE;
 
-int CT_verify_no_bad_scts(const CT_POLICY_EVAL_CTX *ctx,
-                          const STACK_OF(SCT) *scts, void *arg)
-{
-    int sct_count = scts != NULL ? sk_SCT_num(scts) : 0;
-    int i;
-
-    for (i = 0; i < sct_count; ++i) {
-        SCT *sct = sk_SCT_value(scts, i);
-
-        switch (SCT_get_validation_status(sct)) {
-            case SCT_VALIDATION_STATUS_INVALID:
-                return 0;
-            case SCT_VALIDATION_STATUS_NOT_SET:
-                CTerr(CT_F_CT_VERIFY_NO_BAD_SCTS,
-                      CT_R_SCT_VALIDATION_STATUS_NOT_SET);
-                return -1;
-            default:
-                /* Ignore other validation statuses. */
-                break;
-        }
-    }
-
-    return 1;
-}
-
-int CT_verify_at_least_one_good_sct(const CT_POLICY_EVAL_CTX *ctx,
-                                    const STACK_OF(SCT) *scts, void *arg)
-{
-    int sct_count = scts != NULL ? sk_SCT_num(scts) : 0;
-    int valid_scts = 0;
-    int i;
-
-    for (i = 0; i < sct_count; ++i) {
-        SCT *sct = sk_SCT_value(scts, i);
-
-        switch (SCT_get_validation_status(sct)) {
-            case SCT_VALIDATION_STATUS_VALID:
-                ++valid_scts;
-                break;
-            case SCT_VALIDATION_STATUS_INVALID:
-                return 0;
-            case SCT_VALIDATION_STATUS_NOT_SET:
-                CTerr(CT_F_CT_VERIFY_AT_LEAST_ONE_GOOD_SCT,
-                      CT_R_SCT_VALIDATION_STATUS_NOT_SET);
-                return -1;
-            default:
-                /* Ignore other validation statuses. */
-                break;
-        }
-    }
-
-    if (valid_scts == 0) {
-        CTerr(CT_F_CT_VERIFY_AT_LEAST_ONE_GOOD_SCT, CT_R_NOT_ENOUGH_SCTS);
-        return 0;
-    }
-
-    return 1;
-}
-
 /*
  * Update encoding for SCT signature verification/generation to supplied
  * EVP_MD_CTX.

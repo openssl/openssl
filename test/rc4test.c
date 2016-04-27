@@ -218,10 +218,6 @@ int main(int argc, char *argv[])
         } else
             printf("ok\n");
     }
-# ifdef OPENSSL_SYS_NETWARE
-    if (err)
-        printf("ERROR: %d\n", err);
-# endif
     EXIT(err);
 }
 #endif

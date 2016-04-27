@@ -114,15 +114,13 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/ocsp.h>
+#include <openssl/conf.h>
+#include <openssl/x509v3.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-# include <openssl/bn.h>
-#endif
+#include <openssl/dh.h>
+#include <openssl/bn.h>
 #include "ssl_locl.h"
-#ifndef OPENSSL_NO_CT
-# include <openssl/ct.h>
-#endif
+#include <openssl/ct.h>
 
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
                               const unsigned char *sess_id, int sesslen,
@@ -1351,6 +1349,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         ret += salglen;
     }
 
+#ifndef OPENSSL_NO_OCSP
     if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
         int i;
         long extlen, idlen, itmp;
@@ -1394,6 +1393,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         if (extlen > 0)
             i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &ret);
     }
+#endif
 #ifndef OPENSSL_NO_HEARTBEATS
     if (SSL_IS_DTLS(s)) {
         /* Add Heartbeat extension */
@@ -1805,6 +1805,10 @@ static int tls1_alpn_handle_client_hello_late(SSL *s, int *ret, int *al)
                 return 0;
             }
             s->s3->alpn_selected_len = selected_len;
+#ifndef OPENSSL_NO_NEXTPROTONEG
+            /* ALPN takes precedence over NPN. */
+            s->s3->next_proto_neg_seen = 0;
+#endif
         } else {
             *al = SSL_AD_NO_APPLICATION_PROTOCOL;
             *ret = SSL_TLSEXT_ERR_ALERT_FATAL;
@@ -1906,6 +1910,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
 
     OPENSSL_free(s->s3->alpn_selected);
     s->s3->alpn_selected = NULL;
+    s->s3->alpn_selected_len = 0;
+    OPENSSL_free(s->s3->alpn_proposed);
+    s->s3->alpn_proposed = NULL;
+    s->s3->alpn_proposed_len = 0;
 #ifndef OPENSSL_NO_HEARTBEATS
     s->tlsext_heartbeat &= ~(SSL_DTLSEXT_HB_ENABLED |
                              SSL_DTLSEXT_HB_DONT_SEND_REQUESTS);
@@ -2124,14 +2132,14 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                 }
             }
         } else if (type == TLSEXT_TYPE_status_request) {
-            const unsigned char *ext_data;
-
             if (!PACKET_get_1(&extension,
                               (unsigned int *)&s->tlsext_status_type)) {
                 return 0;
             }
 
+#ifndef OPENSSL_NO_OCSP
             if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
+                const unsigned char *ext_data;
                 PACKET responder_id_list, exts;
                 if (!PACKET_get_length_prefixed_2(&extension, &responder_id_list))
                     return 0;
@@ -2188,10 +2196,12 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                         return 0;
                     }
                 }
-            /*
-             * We don't know what to do with any other type * so ignore it.
-             */
-            } else {
+            } else
+#endif
+            {
+                /*
+                 * We don't know what to do with any other type so ignore it.
+                 */
                 s->tlsext_status_type = -1;
             }
         }
@@ -2220,8 +2230,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
         else if (type == TLSEXT_TYPE_next_proto_neg &&
-                 s->s3->tmp.finish_md_len == 0 &&
-                 s->s3->alpn_selected == NULL) {
+                 s->s3->tmp.finish_md_len == 0) {
             /*-
              * We shouldn't accept this extension on a
              * renegotiation.
@@ -2247,10 +2256,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                  s->s3->tmp.finish_md_len == 0) {
             if (!tls1_alpn_handle_client_hello(s, &extension, al))
                 return 0;
-#ifndef OPENSSL_NO_NEXTPROTONEG
-            /* ALPN takes precedence over NPN. */
-            s->s3->next_proto_neg_seen = 0;
-#endif
         }
 
         /* session ticket processed earlier */
@@ -3162,6 +3167,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     if (sdec == NULL
             || EVP_DecryptUpdate(ctx, sdec, &slen, p, eticklen) <= 0) {
         EVP_CIPHER_CTX_free(ctx);
+        OPENSSL_free(sdec);
         return -1;
     }
     if (EVP_DecryptFinal(ctx, sdec + slen, &mlen) <= 0) {
@@ -4087,17 +4093,20 @@ DH *ssl_get_auto_dh(SSL *s)
 
     if (dh_secbits >= 128) {
         DH *dhp = DH_new();
+        BIGNUM *p, *g;
         if (dhp == NULL)
             return NULL;
-        dhp->g = BN_new();
-        if (dhp->g != NULL)
-            BN_set_word(dhp->g, 2);
+        g = BN_new();
+        if (g != NULL)
+            BN_set_word(g, 2);
         if (dh_secbits >= 192)
-            dhp->p = get_rfc3526_prime_8192(NULL);
+            p = BN_get_rfc3526_prime_8192(NULL);
         else
-            dhp->p = get_rfc3526_prime_3072(NULL);
-        if (dhp->p == NULL || dhp->g == NULL) {
+            p = BN_get_rfc3526_prime_3072(NULL);
+        if (p == NULL || g == NULL || !DH_set0_pqg(dhp, p, NULL, g)) {
             DH_free(dhp);
+            BN_free(p);
+            BN_free(g);
             return NULL;
         }
         return dhp;

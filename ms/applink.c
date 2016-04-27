@@ -81,9 +81,9 @@ void **
  * decoration right with Borland C. Otherwise it works
  * purely incidentally, as we pass no parameters.
  */
- __stdcall
+__stdcall
 # else
- __cdecl
+__cdecl
 # endif
 OPENSSL_Applink(void)
 {

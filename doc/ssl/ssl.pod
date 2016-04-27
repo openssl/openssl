@@ -76,7 +76,7 @@ links to mostly all other structures.
 =head1 HEADER FILES
 
 Currently the OpenSSL B<ssl> library provides the following C header files
-containing the prototypes for the data structures and and functions:
+containing the prototypes for the data structures and functions:
 
 =over 4
 
@@ -238,6 +238,8 @@ protocol context defined in the B<SSL_CTX> structure.
 =item char *B<SSL_CTX_get_app_data>(SSL_CTX *ctx);
 
 =item X509_STORE *B<SSL_CTX_get_cert_store>(SSL_CTX *ctx);
+
+=item STACK *B<SSL_CTX_get_ciphers>(const SSL_CTX *ctx);
 
 =item STACK *B<SSL_CTX_get_client_CA_list>(const SSL_CTX *ctx);
 

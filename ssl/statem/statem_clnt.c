@@ -155,13 +155,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/dh.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 
 static ossl_inline int cert_req_allowed(SSL *s);
 static int key_exchange_expected(SSL *s);
@@ -821,7 +817,8 @@ int tls_construct_client_hello(SSL *s)
         goto err;
     }
 
-    if ((sess == NULL) || (sess->ssl_version != s->version) ||
+    if ((sess == NULL) ||
+        !ssl_version_supported(s, sess->ssl_version) ||
         /*
          * In the case of EAP-FAST, we can have a pre-shared
          * "ticket" without a session ID.
@@ -1130,10 +1127,20 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
             }
         }
 
+        s->session->ssl_version = s->version;
         s->session->session_id_length = session_id_len;
         /* session_id_len could be 0 */
         memcpy(s->session->session_id, PACKET_data(&session_id),
                session_id_len);
+    }
+
+    /* Session version and negotiated protocol version should match */
+    if (s->version != s->session->ssl_version) {
+        al = SSL_AD_PROTOCOL_VERSION;
+
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
+               SSL_R_SSL_SESSION_VERSION_MISMATCH);
+        goto f_err;
     }
 
     c = ssl_get_cipher_by_char(s, cipherchars);
@@ -1327,7 +1334,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     }
 
     i = ssl_verify_cert_chain(s, sk);
-    if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
+    if ((s->verify_mode & SSL_VERIFY_PEER) && i <= 0) {
         al = ssl_verify_alarm_type(s->verify_result);
         SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
                SSL_R_CERTIFICATE_VERIFY_FAILED);
@@ -1518,8 +1525,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_DH
     else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         PACKET prime, generator, pub_key;
+        EVP_PKEY *peer_tmp = NULL;
 
-        DH *dh;
+        DH *dh = NULL;
+        BIGNUM *p = NULL, *g = NULL, *bnpub_key = NULL;
 
         if (!PACKET_get_length_prefixed_2(pkt, &prime)
             || !PACKET_get_length_prefixed_2(pkt, &generator)
@@ -1528,42 +1537,69 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto f_err;
         }
 
-        s->s3->peer_tmp = EVP_PKEY_new();
+        peer_tmp = EVP_PKEY_new();
         dh = DH_new();
 
-        if (s->s3->peer_tmp == NULL || dh == NULL) {
+        if (peer_tmp == NULL || dh == NULL) {
+            al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
-            DH_free(dh);
-            goto err;
+            goto dherr;
         }
 
-        if (EVP_PKEY_assign_DH(s->s3->peer_tmp, dh) == 0) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
-            DH_free(dh);
-            goto err;
-        }
-
-        if ((dh->p = BN_bin2bn(PACKET_data(&prime),
-                               PACKET_remaining(&prime), NULL)) == NULL
-            || (dh->g = BN_bin2bn(PACKET_data(&generator),
-                                  PACKET_remaining(&generator), NULL)) == NULL
-            || (dh->pub_key =
-                BN_bin2bn(PACKET_data(&pub_key),
-                          PACKET_remaining(&pub_key), NULL)) == NULL) {
+        p = BN_bin2bn(PACKET_data(&prime), PACKET_remaining(&prime), NULL);
+        g = BN_bin2bn(PACKET_data(&generator), PACKET_remaining(&generator),
+                      NULL);
+        bnpub_key = BN_bin2bn(PACKET_data(&pub_key), PACKET_remaining(&pub_key),
+                              NULL);
+        if (p == NULL || g == NULL || bnpub_key == NULL) {
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
-            goto err;
+            goto dherr;
         }
 
-        if (BN_is_zero(dh->p) || BN_is_zero(dh->g) || BN_is_zero(dh->pub_key)) {
+        if (BN_is_zero(p) || BN_is_zero(g) || BN_is_zero(bnpub_key)) {
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_DH_VALUE);
-            goto f_err;
+            goto dherr;
+        }
+
+        if (!DH_set0_pqg(dh, p, NULL, g)) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
+            goto dherr;
+        }
+
+        if (!DH_set0_key(dh, bnpub_key, NULL)) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
+            goto dherr;
         }
 
         if (!ssl_security(s, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0, dh)) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_DH_KEY_TOO_SMALL);
-            goto f_err;
+            goto dherr;
         }
+
+        if (EVP_PKEY_assign_DH(peer_tmp, dh) == 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
+            goto dherr;
+        }
+
+        s->s3->peer_tmp = peer_tmp;
+
+        goto dhend;
+ dherr:
+        BN_free(p);
+        BN_free(g);
+        BN_free(bnpub_key);
+        DH_free(dh);
+        EVP_PKEY_free(peer_tmp);
+        goto f_err;
+ dhend:
+        /*
+         * FIXME: This makes assumptions about which ciphersuites come with
+         * public keys. We should have a less ad-hoc way of doing this
+         */
         if (alg_a & (SSL_aRSA|SSL_aDSS))
             pkey = X509_get0_pubkey(s->session->peer);
         /* else anonymous DH, so no certificate or pkey. */
@@ -1856,6 +1892,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        xn = NULL;
     }
 
     /* we should setup a certificate to return.... */
@@ -1870,6 +1907,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
  err:
     ossl_statem_set_error(s);
  done:
+    X509_NAME_free(xn);
     sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
     return ret;
 }
@@ -2058,7 +2096,8 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
 
 #ifndef OPENSSL_NO_CT
     if (s->ct_validation_callback != NULL) {
-        if (!ssl_validate_ct(s)) {
+        /* Note we validate the SCTs whether or not we abort on error */
+        if (!ssl_validate_ct(s) && (s->verify_mode & SSL_VERIFY_PEER)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
             return MSG_PROCESS_ERROR;
         }
@@ -2244,6 +2283,7 @@ psk_err:
 #ifndef OPENSSL_NO_DH
     else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         DH *dh_clnt = NULL;
+        BIGNUM *pub_key;
         skey = s->s3->peer_tmp;
         if (skey == NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
@@ -2261,9 +2301,10 @@ psk_err:
 
 
         /* send off the data */
-        n = BN_num_bytes(dh_clnt->pub_key);
+        DH_get0_key(dh_clnt, &pub_key, NULL);
+        n = BN_num_bytes(pub_key);
         s2n(n, p);
-        BN_bn2bin(dh_clnt->pub_key, p);
+        BN_bn2bin(pub_key, p);
         n += 2;
         EVP_PKEY_free(ckey);
         ckey = NULL;

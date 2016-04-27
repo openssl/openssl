@@ -61,21 +61,6 @@
 #include <openssl/crypto.h>
 #include <../apps/apps.h>
 
-#if (defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_CYGWIN)) && defined(OPENSSL_THREADS)
-# include <unistd.h>
-# if _POSIX_VERSION >= 200112L
-#  define ASYNC_POSIX
-# endif
-#elif defined(_WIN32)
-# define ASYNC_WIN
-#endif
-
-#if !defined(ASYNC_POSIX) && !defined(ASYNC_WIN)
-# define ASYNC_NULL
-#endif
-
-#ifndef ASYNC_NULL
-
 static int ctr = 0;
 static ASYNC_JOB *currjob = NULL;
 
@@ -308,25 +293,23 @@ static int test_ASYNC_block_pause()
     return 1;
 }
 
-#endif
-
 int main(int argc, char **argv)
 {
+    if (!ASYNC_is_capable()) {
+        fprintf(stderr,
+                "OpenSSL build is not ASYNC capable - skipping async tests\n");
+    } else {
+        CRYPTO_set_mem_debug(1);
+        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-#ifdef ASYNC_NULL
-    fprintf(stderr, "NULL implementation - skipping async tests\n");
-#else
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-    if (       !test_ASYNC_init_thread()
-            || !test_ASYNC_start_job()
-            || !test_ASYNC_get_current_job()
-            || !test_ASYNC_WAIT_CTX_get_all_fds()
-            || !test_ASYNC_block_pause()) {
-        return 1;
+        if (       !test_ASYNC_init_thread()
+                || !test_ASYNC_start_job()
+                || !test_ASYNC_get_current_job()
+                || !test_ASYNC_WAIT_CTX_get_all_fds()
+                || !test_ASYNC_block_pause()) {
+            return 1;
+        }
     }
-#endif
     printf("PASS\n");
     return 0;
 }

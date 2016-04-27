@@ -12,7 +12,7 @@ BIO_ssl_shutdown - SSL BIO
  #include <openssl/bio.h>
  #include <openssl/ssl.h>
 
- BIO_METHOD *BIO_f_ssl(void);
+ const BIO_METHOD *BIO_f_ssl(void);
 
  #define BIO_set_ssl(b,ssl,c)	BIO_ctrl(b,BIO_C_SET_SSL,c,(char *)ssl)
  #define BIO_get_ssl(b,sslp)	BIO_ctrl(b,BIO_C_GET_SSL,0,(char *)sslp)
