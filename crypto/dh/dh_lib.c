@@ -303,7 +303,7 @@ int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
      * as input parameters.
      */
     if (dh->pub_key == pub_key
-        || (dh->priv_key != NULL && priv_key != dh->priv_key))
+        || (dh->priv_key != NULL && priv_key == dh->priv_key))
         return 0;
 
     if (pub_key != NULL) {
