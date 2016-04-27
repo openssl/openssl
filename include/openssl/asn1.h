@@ -46,13 +46,11 @@ extern "C" {
 # define V_ASN1_OTHER                    -3/* used in ASN1_TYPE */
 # define V_ASN1_ANY                      -4/* used in ASN1 template code */
 
-# define V_ASN1_NEG                      0x100/* negative flag */
-
 # define V_ASN1_UNDEF                    -1
+/* ASN.1 tag values */
 # define V_ASN1_EOC                      0
 # define V_ASN1_BOOLEAN                  1 /**/
 # define V_ASN1_INTEGER                  2
-# define V_ASN1_NEG_INTEGER              (2 | V_ASN1_NEG)
 # define V_ASN1_BIT_STRING               3
 # define V_ASN1_OCTET_STRING             4
 # define V_ASN1_NULL                     5
@@ -61,7 +59,6 @@ extern "C" {
 # define V_ASN1_EXTERNAL                 8
 # define V_ASN1_REAL                     9
 # define V_ASN1_ENUMERATED               10
-# define V_ASN1_NEG_ENUMERATED           (10 | V_ASN1_NEG)
 # define V_ASN1_UTF8STRING               12
 # define V_ASN1_SEQUENCE                 16
 # define V_ASN1_SET                      17
@@ -79,6 +76,17 @@ extern "C" {
 # define V_ASN1_GENERALSTRING            27 /**/
 # define V_ASN1_UNIVERSALSTRING          28 /**/
 # define V_ASN1_BMPSTRING                30
+
+/*
+ * NB the constants below are used internally by ASN1_INTEGER
+ * and ASN1_ENUMERATED to indicate the sign. They are *not* on
+ * the wire tag values.
+ */
+
+# define V_ASN1_NEG                      0x100
+# define V_ASN1_NEG_INTEGER              (2 | V_ASN1_NEG)
+# define V_ASN1_NEG_ENUMERATED           (10 | V_ASN1_NEG)
+
 /* For use with d2i_ASN1_type_bytes() */
 # define B_ASN1_NUMERICSTRING    0x0001
 # define B_ASN1_PRINTABLESTRING  0x0002
