@@ -79,6 +79,7 @@ void sha512_block_data_order(void *ctx, const void *inp, size_t len)
         sha512_block_ppc(ctx, inp, len);
 }
 
+#ifndef OPENSSL_NO_CHACHA
 void ChaCha20_ctr32_int(unsigned char *out, const unsigned char *inp,
                         size_t len, const unsigned int key[8],
                         const unsigned int counter[4]);
@@ -93,7 +94,9 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
         ? ChaCha20_ctr32_vmx(out, inp, len, key, counter)
         : ChaCha20_ctr32_int(out, inp, len, key, counter);
 }
+#endif
 
+#ifndef OPENSSL_NO_POLY1305
 void poly1305_init_int(void *ctx, const unsigned char key[16]);
 void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
                          unsigned int padbit);
@@ -117,6 +120,7 @@ int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
     }
     return 1;
 }
+#endif
 
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)
