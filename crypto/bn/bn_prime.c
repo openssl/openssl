@@ -208,9 +208,6 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
     prime_t *mods = NULL;
     int checks = BN_prime_checks_for_size(bits);
 
-    mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
-    if (mods == NULL)
-        goto err;
     if (bits < 2) {
         /* There are no prime numbers this small. */
         BNerr(BN_F_BN_GENERATE_PRIME_EX, BN_R_BITS_TOO_SMALL);
@@ -220,6 +217,10 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
         BNerr(BN_F_BN_GENERATE_PRIME_EX, BN_R_BITS_TOO_SMALL);
         return 0;
     }
+
+    mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
+    if (mods == NULL)
+        goto err;
 
     ctx = BN_CTX_new();
     if (ctx == NULL)
