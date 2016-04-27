@@ -143,8 +143,6 @@ int crl2pkcs7_main(int argc, char **argv)
             }
         }
 
-    sk_OPENSSL_STRING_free(certflst);
-
     out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
@@ -160,6 +158,7 @@ int crl2pkcs7_main(int argc, char **argv)
     }
     ret = 0;
  end:
+    sk_OPENSSL_STRING_free(certflst);
     BIO_free(in);
     BIO_free_all(out);
     PKCS7_free(p7);
