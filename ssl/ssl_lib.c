@@ -215,6 +215,7 @@ static int dane_ctx_enable(struct dane_ctx_st *dctx)
     mdord = OPENSSL_zalloc(n * sizeof(*mdord));
 
     if (mdord == NULL || mdevp == NULL) {
+        OPENSSL_free(mdord);
         OPENSSL_free(mdevp);
         SSLerr(SSL_F_DANE_CTX_ENABLE, ERR_R_MALLOC_FAILURE);
         return 0;
