@@ -807,25 +807,28 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
 {
     int outlen = 24, pklen;
     unsigned char *p, *salt = NULL;
-    EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
+    EVP_CIPHER_CTX *cctx = NULL;
     if (enclevel)
         outlen += PVK_SALTLEN;
     pklen = do_i2b(NULL, pk, 0);
     if (pklen < 0)
         return -1;
     outlen += pklen;
-    if (!out)
+    if (out == NULL)
         return outlen;
-    if (*out)
+    if (*out != NULL) {
         p = *out;
-    else {
+    } else {
         p = OPENSSL_malloc(outlen);
         if (p == NULL) {
             PEMerr(PEM_F_I2B_PVK, ERR_R_MALLOC_FAILURE);
             return -1;
         }
-        *out = p;
     }
+
+    cctx = EVP_CIPHER_CTX_new();
+    if (cctx == NULL)
+        return -1;
 
     write_ledword(&p, MS_PVKMAGIC);
     write_ledword(&p, 0);
@@ -843,9 +846,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
         p += PVK_SALTLEN;
     }
     do_i2b(&p, pk, 0);
-    if (enclevel == 0)
-        return outlen;
-    else {
+    if (enclevel != 0) {
         char psbuf[PEM_BUFSIZE];
         unsigned char keybuf[20];
         int enctmplen, inlen;
@@ -871,7 +872,12 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
         if (!EVP_DecryptFinal_ex(cctx, p + enctmplen, &enctmplen))
             goto error;
     }
+
     EVP_CIPHER_CTX_free(cctx);
+
+    if (*out == NULL)
+        *out = p;
+
     return outlen;
 
  error:
