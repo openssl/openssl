@@ -172,41 +172,48 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
     struct tm *ts;
     struct tm data;
     size_t len = 20;
+    ASN1_GENERALIZEDTIME *tmps = NULL;
 
     if (s == NULL)
-        s = ASN1_GENERALIZEDTIME_new();
-    if (s == NULL)
-        return (NULL);
+        tmps = ASN1_GENERALIZEDTIME_new();
+    else
+        tmps = s;
+    if (tmps == NULL)
+        return NULL;
 
     ts = OPENSSL_gmtime(&t, &data);
     if (ts == NULL)
-        return (NULL);
+        goto err;
 
     if (offset_day || offset_sec) {
         if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
-            return NULL;
+            goto err;
     }
 
-    p = (char *)s->data;
-    if ((p == NULL) || ((size_t)s->length < len)) {
+    p = (char *)tmps->data;
+    if ((p == NULL) || ((size_t)tmps->length < len)) {
         p = OPENSSL_malloc(len);
         if (p == NULL) {
             ASN1err(ASN1_F_ASN1_GENERALIZEDTIME_ADJ, ERR_R_MALLOC_FAILURE);
-            return (NULL);
+            goto err;
         }
-        OPENSSL_free(s->data);
-        s->data = (unsigned char *)p;
+        OPENSSL_free(tmps->data);
+        tmps->data = (unsigned char *)p;
     }
 
     BIO_snprintf(p, len, "%04d%02d%02d%02d%02d%02dZ", ts->tm_year + 1900,
                  ts->tm_mon + 1, ts->tm_mday, ts->tm_hour, ts->tm_min,
                  ts->tm_sec);
-    s->length = strlen(p);
-    s->type = V_ASN1_GENERALIZEDTIME;
+    tmps->length = strlen(p);
+    tmps->type = V_ASN1_GENERALIZEDTIME;
 #ifdef CHARSET_EBCDIC_not
-    ebcdic2ascii(s->data, s->data, s->length);
+    ebcdic2ascii(tmps->data, tmps->data, tmps->length);
 #endif
-    return (s);
+    return tmps;
+ err:
+    if (s == NULL)
+        ASN1_GENERALIZEDTIME_free(tmps);
+    return NULL;
 }
 
 const char *_asn1_mon[12] = {
