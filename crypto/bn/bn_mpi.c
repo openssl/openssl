@@ -94,34 +94,36 @@ BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *a)
 
     if (n < 4) {
         BNerr(BN_F_BN_MPI2BN, BN_R_INVALID_LENGTH);
-        return (NULL);
+        return NULL;
     }
     len = ((long)d[0] << 24) | ((long)d[1] << 16) | ((int)d[2] << 8) | (int)
         d[3];
     if ((len + 4) != n) {
         BNerr(BN_F_BN_MPI2BN, BN_R_ENCODING_ERROR);
-        return (NULL);
+        return NULL;
     }
 
     if (a == NULL)
         a = BN_new();
     if (a == NULL)
-        return (NULL);
+        return NULL;
 
     if (len == 0) {
         a->neg = 0;
         a->top = 0;
-        return (a);
+        return a;
     }
     d += 4;
     if ((*d) & 0x80)
         neg = 1;
-    if (BN_bin2bn(d, (int)len, a) == NULL)
-        return (NULL);
+    if (BN_bin2bn(d, (int)len, a) == NULL) {
+        BN_free(a);
+        return NULL;
+    }
     a->neg = neg;
     if (neg) {
         BN_clear_bit(a, BN_num_bits(a) - 1);
     }
     bn_check_top(a);
-    return (a);
+    return a;
 }
