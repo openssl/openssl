@@ -188,6 +188,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
             pol = POLICYINFO_new();
             if (pol == NULL) {
                 X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_MALLOC_FAILURE);
+                ASN1_OBJECT_free(pobj);
                 goto err;
             }
             pol->policyid = pobj;
