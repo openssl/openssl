@@ -110,8 +110,12 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
         inp += todo;
         len -= todo;
 
-        /* advance counter */
-        if (++input[12] == 0)
-            input[13]++;
+        /*
+         * Advance 32-bit counter. Note that as subroutine is so to
+         * say nonce-agnostic, this limited counter width doesn't
+         * prevent caller from implementing wider counter. It would
+         * simply take two calls split on counter overflow...
+         */
+        input[12]++;
     }
 }
