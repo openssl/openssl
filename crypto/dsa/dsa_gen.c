@@ -406,6 +406,8 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     X = BN_CTX_get(ctx);
     c = BN_CTX_get(ctx);
     test = BN_CTX_get(ctx);
+    if (test == NULL)
+        goto err;
 
     /* if p, q already supplied generate g only */
     if (ret->p && ret->q) {
