@@ -849,10 +849,11 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     if (!rsa_md_to_mgf1(&oaep->maskGenFunc, mgf1md))
         goto err;
     if (labellen > 0) {
-        ASN1_OCTET_STRING *los = ASN1_OCTET_STRING_new();
+        ASN1_OCTET_STRING *los;
         oaep->pSourceFunc = X509_ALGOR_new();
         if (oaep->pSourceFunc == NULL)
             goto err;
+        los = ASN1_OCTET_STRING_new();
         if (los == NULL)
             goto err;
         if (!ASN1_OCTET_STRING_set(los, label, labellen)) {
