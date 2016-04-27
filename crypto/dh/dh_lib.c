@@ -245,10 +245,15 @@ void DH_get0_pqg(const DH *dh, BIGNUM **p, BIGNUM **q, BIGNUM **g)
 
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
-    /* q is optional */
-    if ((p == NULL && dh->p == NULL)
-        || (g == NULL && dh->g == NULL))
+    /* If the fields p and g in d are NULL, the corresponding input
+     * parameters MUST be non-NULL.  q may remain NULL.
+     *
+     * It is an error to give the results from get0 on d
+     * as input parameters.
+     */
+    if (p == dh->p || (dh->q != NULL && q == dh->q) || g == dh->g)
         return 0;
+
     if (p != NULL) {
         BN_free(dh->p);
         dh->p = p;
@@ -290,8 +295,15 @@ void DH_get0_key(const DH *dh, BIGNUM **pub_key, BIGNUM **priv_key)
 
 int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 {
-    /* Note that it is valid for priv_key to be NULL */
-    if (dh->pub_key == NULL && pub_key == NULL)
+    /* If the pub_key in dh is NULL, the corresponding input
+     * parameters MUST be non-NULL.  The priv_key field may
+     * be left NULL.
+     *
+     * It is an error to give the results from get0 on dh
+     * as input parameters.
+     */
+    if (dh->pub_key == pub_key
+        || (dh->priv_key != NULL && priv_key != dh->priv_key))
         return 0;
 
     if (pub_key != NULL) {

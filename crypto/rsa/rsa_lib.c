@@ -286,9 +286,15 @@ int RSA_security_bits(const RSA *rsa)
 
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
 {
-    /* d is the private component and may be NULL */
-    if ((n == NULL && r->n == NULL)
-        || (e == NULL && r->e == NULL))
+    /* If the fields in r are NULL, the corresponding input
+     * parameters MUST be non-NULL for n and e.  d may be
+     * left NULL (in case only the public key is used).
+     *
+     * It is an error to give the results from get0 on r
+     * as input parameters.
+     */
+    if (n == r->n || e == r->e
+        || (r->d != NULL && d == r->d))
         return 0;
 
     if (n != NULL) {
@@ -309,8 +315,13 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
 
 int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
 {
-    if ((p == NULL && r->p == NULL)
-        || (q == NULL && r->q == NULL))
+    /* If the fields in r are NULL, the corresponding input
+     * parameters MUST be non-NULL.
+     *
+     * It is an error to give the results from get0 on r
+     * as input parameters.
+     */
+    if (p == r->p || q == r->q)
         return 0;
 
     if (p != NULL) {
@@ -327,9 +338,13 @@ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
 
 int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
 {
-    if ((dmp1 == NULL && r->dmp1 == NULL)
-        || (dmq1 == NULL && r->dmq1 == NULL)
-        || (iqmp == NULL && r->iqmp == NULL))
+    /* If the fields in r are NULL, the corresponding input
+     * parameters MUST be non-NULL.
+     *
+     * It is an error to give the results from get0 on r
+     * as input parameters.
+     */
+    if (dmp1 == r->dmp1 || dmq1 == r->dmq1 || iqmp == r->iqmp)
         return 0;
 
     if (dmp1 != NULL) {
