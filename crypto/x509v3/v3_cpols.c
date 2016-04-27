@@ -295,6 +295,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
             if (!nos || !sk_CONF_VALUE_num(nos)) {
                 X509V3err(X509V3_F_NOTICE_SECTION, X509V3_R_INVALID_NUMBERS);
                 X509V3_conf_err(cnf);
+                sk_CONF_VALUE_pop_free(nos, X509V3_conf_free);
                 goto err;
             }
             ret = nref_nos(nref->noticenos, nos);
