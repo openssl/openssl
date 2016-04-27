@@ -143,12 +143,16 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     }
 
     akeyid->issuer = gens;
+    gen = NULL;
+    gens = NULL;
     akeyid->serial = serial;
     akeyid->keyid = ikeyid;
 
     return akeyid;
 
  err:
+    sk_GENERAL_NAME_free(gens);
+    GENERAL_NAME_free(gen);
     X509_NAME_free(isname);
     ASN1_INTEGER_free(serial);
     ASN1_OCTET_STRING_free(ikeyid);
