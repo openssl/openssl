@@ -1240,7 +1240,7 @@ static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
                                                 *rr_to, int rr_allorfirst, STACK_OF(OPENSSL_STRING)
                                                 *rr_from)
 {
-    STACK_OF(GENERAL_NAMES) *rct_to, *rct_from;
+    STACK_OF(GENERAL_NAMES) *rct_to = NULL, *rct_from = NULL;
     CMS_ReceiptRequest *rr;
     rct_to = make_names_stack(rr_to);
     if (!rct_to)
@@ -1255,6 +1255,7 @@ static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
                                     rct_to);
     return rr;
  err:
+    sk_GENERAL_NAMES_pop_free(rct_to, GENERAL_NAMES_free);
     return NULL;
 }
 
