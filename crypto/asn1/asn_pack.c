@@ -17,28 +17,35 @@ ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 {
     ASN1_STRING *octmp;
 
-     if (oct == NULL|| *oct== NULL) {
+     if (oct == NULL || *oct == NULL) {
         if ((octmp = ASN1_STRING_new()) == NULL) {
             ASN1err(ASN1_F_ASN1_ITEM_PACK, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
-        if (oct)
-            *oct = octmp;
-    } else
+    } else {
         octmp = *oct;
+    }
 
     OPENSSL_free(octmp->data);
     octmp->data = NULL;
 
     if ((octmp->length = ASN1_item_i2d(obj, &octmp->data, it)) == 0) {
         ASN1err(ASN1_F_ASN1_ITEM_PACK, ASN1_R_ENCODE_ERROR);
-        return NULL;
+        goto err;
     }
-    if (!octmp->data) {
+    if (octmp->data == NULL) {
         ASN1err(ASN1_F_ASN1_ITEM_PACK, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
+
+    if (oct != NULL && *oct == NULL)
+        *oct = octmp;
+
     return octmp;
+ err:
+    if (oct == NULL || *oct == NULL)
+        ASN1_STRING_free(octmp);
+    return NULL;
 }
 
 /* Extract an ASN1 object from an ASN1_STRING */
