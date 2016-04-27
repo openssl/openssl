@@ -150,17 +150,22 @@ static int mem_init(BIO *bi, unsigned long flags)
     BIO_BUF_MEM *bb = OPENSSL_zalloc(sizeof(*bb));
 
     if (bb == NULL)
-        return(0);
-    if ((bb->buf = BUF_MEM_new_ex(flags)) == NULL)
-        return(0);
-    if ((bb->readp = OPENSSL_zalloc(sizeof(*bb->readp))) == NULL)
-        return(0);
+        return 0;
+    if ((bb->buf = BUF_MEM_new_ex(flags)) == NULL) {
+        OPENSSL_free(bb);
+        return 0;
+    }
+    if ((bb->readp = OPENSSL_zalloc(sizeof(*bb->readp))) == NULL) {
+        BUF_MEM_free(bb->buf);
+        OPENSSL_free(bb);
+        return 0;
+    }
     *bb->readp = *bb->buf;
     bi->shutdown = 1;
     bi->init = 1;
     bi->num = -1;
     bi->ptr = (char *)bb;
-    return(1);
+    return 1;
 }
 
 static int mem_new(BIO *bi)
