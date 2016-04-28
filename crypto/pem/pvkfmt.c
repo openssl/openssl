@@ -388,7 +388,7 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in,
         RSA_set0_factors(rsa, p, q);
         RSA_set0_crt_params(rsa, dmp1, dmq1, iqmp);
     }
-    RSA_set0_key(rsa, e, n, d);
+    RSA_set0_key(rsa, n, e, d);
 
     EVP_PKEY_set1_RSA(ret, rsa);
     RSA_free(rsa);
