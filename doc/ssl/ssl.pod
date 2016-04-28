@@ -330,6 +330,8 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item void B<SSL_CTX_set_client_cert_cb>(SSL_CTX *ctx, int (*cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey));
 
+=item int B<SSL_CTX_set_ct_validation_callback>(SSL_CTX *ctx, ssl_ct_validation_cb callback, void *arg);
+
 =item void B<SSL_CTX_set_default_passwd_cb>(SSL_CTX *ctx, int (*cb);(void))
 
 =item void B<SSL_CTX_set_default_read_ahead>(SSL_CTX *ctx, int m);
@@ -630,6 +632,8 @@ fresh handle for each connection.
 
 =item void B<SSL_set_connect_state>(SSL *ssl);
 
+=item int B<SSL_set_ct_validation_callback>(SSL *ssl, ssl_ct_validation_cb callback, void *arg);
+
 =item int B<SSL_set_ex_data>(SSL *ssl, int idx, char *arg);
 
 =item int B<SSL_set_fd>(SSL *ssl, int fd);
@@ -770,6 +774,7 @@ L<SSL_CTX_set_verify(3)>,
 L<SSL_CTX_use_certificate(3)>,
 L<SSL_alert_type_string(3)>,
 L<SSL_do_handshake(3)>,
+L<SSL_enable_ct(3)>,
 L<SSL_get_SSL_CTX(3)>,
 L<SSL_get_ciphers(3)>,
 L<SSL_get_client_CA_list(3)>,
