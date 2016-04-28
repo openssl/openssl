@@ -141,7 +141,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 int BIO_sock_error(int sock)
 {
     int j = 0, i;
-    socklen_t size = 0;
+    socklen_t size = sizeof(j);
 
     /*
      * Note: under Windows the third parameter is of type (char *) whereas
@@ -151,7 +151,7 @@ int BIO_sock_error(int sock)
      */
     i = getsockopt(sock, SOL_SOCKET, SO_ERROR, (void *)&j, &size);
     if (i < 0)
-        return (1);
+        return (get_last_socket_error());
     else
         return (j);
 }
