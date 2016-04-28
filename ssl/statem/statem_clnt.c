@@ -2547,6 +2547,9 @@ int tls_client_key_exchange_post_work(SSL *s)
     unsigned char *pms = NULL;
     size_t pmslen = 0;
 
+    pms = s->s3->tmp.pms;
+    pmslen = s->s3->tmp.pmslen;
+
 #ifndef OPENSSL_NO_SRP
     /* Check for SRP */
     if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
@@ -2558,8 +2561,6 @@ int tls_client_key_exchange_post_work(SSL *s)
         return 1;
     }
 #endif
-    pms = s->s3->tmp.pms;
-    pmslen = s->s3->tmp.pmslen;
 
     if (pms == NULL && !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
@@ -2569,8 +2570,13 @@ int tls_client_key_exchange_post_work(SSL *s)
     if (!ssl_generate_master_secret(s, pms, pmslen, 1)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         SSLerr(SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK, ERR_R_INTERNAL_ERROR);
+        /* ssl_generate_master_secret frees the pms even on error */
+        pms = NULL;
+        pmslen = 0;
         goto err;
     }
+    pms = NULL;
+    pmslen = 0;
 
 #ifndef OPENSSL_NO_SCTP
     if (SSL_IS_DTLS(s)) {
