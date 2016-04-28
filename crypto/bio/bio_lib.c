@@ -98,6 +98,7 @@ int BIO_set(BIO *bio, const BIO_METHOD *method)
 
     bio->lock = CRYPTO_THREAD_lock_new();
     if (bio->lock == NULL) {
+        BIOerr(BIO_F_BIO_SET, ERR_R_MALLOC_FAILURE);
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
         return 0;
     }
@@ -131,12 +132,12 @@ int BIO_free(BIO *a)
         ((i = (int)a->callback(a, BIO_CB_FREE, NULL, 0, 0L, 1L)) <= 0))
         return i;
 
+    if ((a->method != NULL) && (a->method->destroy != NULL))
+        a->method->destroy(a);
+
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, a, &a->ex_data);
 
     CRYPTO_THREAD_lock_free(a->lock);
-
-    if ((a->method != NULL) && (a->method->destroy != NULL))
-        a->method->destroy(a);
 
     OPENSSL_free(a);
 
