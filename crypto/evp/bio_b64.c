@@ -118,11 +118,15 @@ static int b64_new(BIO *bi)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
-        return (0);
+        return 0;
 
     ctx->cont = 1;
     ctx->start = 1;
     ctx->base64 = EVP_ENCODE_CTX_new();
+    if (ctx->base64 == NULL) {
+        OPENSSL_free(ctx);
+        return 0;
+    }
     BIO_set_data(bi, ctx);
     BIO_set_init(bi, 1);
 
