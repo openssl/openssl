@@ -180,7 +180,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     ptmp->sname = OPENSSL_strdup(sname);
     if (!ptmp->name || !ptmp->sname) {
         X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto err;
     }
     /* Keep the dynamic flag of existing entry */
     ptmp->flags &= X509_PURPOSE_DYNAMIC;
@@ -197,14 +197,21 @@ int X509_PURPOSE_add(int id, int trust, int flags,
         if (xptable == NULL
             && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL) {
             X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
-            return 0;
+            goto err;
         }
         if (!sk_X509_PURPOSE_push(xptable, ptmp)) {
             X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
-            return 0;
+            goto err;
         }
     }
     return 1;
+ err:
+    if (idx == -1) {
+        OPENSSL_free(ptmp->name);
+        OPENSSL_free(ptmp->sname);
+        OPENSSL_free(ptmp);
+    }
+    return 0;
 }
 
 static void xptable_free(X509_PURPOSE *p)
