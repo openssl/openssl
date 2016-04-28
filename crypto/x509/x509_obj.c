@@ -86,6 +86,8 @@ char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
             goto err;
         b->data[0] = '\0';
         len = 200;
+    } else if (len == 0) {
+        return NULL;
     }
     if (a == NULL) {
         if (b) {
