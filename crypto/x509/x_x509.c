@@ -99,7 +99,8 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 #endif
         ret->aux = NULL;
         ret->crldp = NULL;
-        CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
+        if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
+            return 0;
         break;
 
     case ASN1_OP_FREE_POST:

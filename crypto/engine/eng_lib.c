@@ -83,7 +83,10 @@ ENGINE *ENGINE_new(void)
     }
     ret->struct_ref = 1;
     engine_ref_debug(ret, 0, 1);
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data);
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
     return ret;
 }
 

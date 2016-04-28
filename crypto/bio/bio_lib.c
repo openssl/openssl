@@ -93,7 +93,8 @@ int BIO_set(BIO *bio, const BIO_METHOD *method)
     bio->references = 1;
     bio->num_read = 0L;
     bio->num_write = 0L;
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data))
+        return 0;
 
     bio->lock = CRYPTO_THREAD_lock_new();
     if (bio->lock == NULL) {
