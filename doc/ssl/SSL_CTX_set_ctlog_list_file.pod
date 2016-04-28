@@ -18,24 +18,13 @@ SSL_CTX_set_default_ctlog_list_file() loads a list of Certificate Transparency
 (CT) logs from the default file location, "ct_log_list.cnf", found in the
 directory where OpenSSL is installed.
 
-SSL_CTX_set_ctlog_list_file() loads a list of CT logs from a given path.
-
-The expected format of the log list file is:
-
- enabled_logs=foo,bar
-
- [foo]
- description = Log 1
- key = <base64-encoded public key here>
-
- [bar]
- description = Log 2
- key = <base64-encoded public key here>
+SSL_CTX_set_ctlog_list_file() loads a list of CT logs from a specific path.
+See L<CTLOG_STORE_new(3)> for the file format.
 
 =head1 NOTES
 
 These functions will not clear the existing CT log list - it will be appended
-to.
+to. To replace the existing list, use L<SSL_CTX_set0_ctlog_store> first. 
 
 If an error occurs whilst parsing a particular log entry in the file, that log
 entry will be skipped.
@@ -49,7 +38,8 @@ the case of an error, the log list may have been partially loaded.
 =head1 SEE ALSO
 
 L<ssl(3)>,
-L<ssl_ct_validation_cb(3)>
+L<SSL_CTX_set_ct_validation_callback(3)>,
+L<CTLOG_STORE_new(3)>
 
 =head1 COPYRIGHT
 
