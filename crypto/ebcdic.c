@@ -4,7 +4,7 @@
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
-# include "ebcdic.h"
+# include <openssl/ebcdic.h>
 
 /*-
  *      Initial Port for  Apache-1.3     by <Martin.Kraemer@Mch.SNI.De>
