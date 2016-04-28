@@ -140,7 +140,6 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     BN_CTX *ctx = NULL;
     int reason = ERR_R_BN_LIB;
     DSA_SIG *ret = NULL;
-    int noredo = 0;
     int rv = 0;
 
     m = BN_new();
@@ -191,13 +190,8 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
      * Redo if r or s is zero as required by FIPS 186-3: this is very
      * unlikely.
      */
-    if (BN_is_zero(r) || BN_is_zero(s)) {
-        if (noredo) {
-            reason = DSA_R_NEED_NEW_SETUP_VALUES;
-            goto err;
-        }
+    if (BN_is_zero(r) || BN_is_zero(s))
         goto redo;
-    }
 
     rv = 1;
 
