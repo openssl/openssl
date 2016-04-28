@@ -806,7 +806,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
                    pem_password_cb *cb, void *u)
 {
     int outlen = 24, pklen;
-    unsigned char *p, *salt = NULL;
+    unsigned char *p = NULL, *salt = NULL;
     EVP_CIPHER_CTX *cctx = NULL;
     if (enclevel)
         outlen += PVK_SALTLEN;
@@ -828,7 +828,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
 
     cctx = EVP_CIPHER_CTX_new();
     if (cctx == NULL)
-        return -1;
+        goto error;
 
     write_ledword(&p, MS_PVKMAGIC);
     write_ledword(&p, 0);
@@ -882,6 +882,8 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
 
  error:
     EVP_CIPHER_CTX_free(cctx);
+    if (*out == NULL)
+        OPENSSL_free(p);
     return -1;
 }
 
