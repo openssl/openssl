@@ -140,6 +140,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
 #include <openssl/engine.h>

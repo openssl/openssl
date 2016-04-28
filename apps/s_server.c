@@ -181,6 +181,9 @@ typedef unsigned int u_int;
 #endif
 #include "s_apps.h"
 #include "timeouts.h"
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, unsigned char *context);
@@ -420,17 +423,7 @@ static int ebcdic_gets(BIO *bp, char *buf, int size);
 static int ebcdic_puts(BIO *bp, const char *str);
 
 # define BIO_TYPE_EBCDIC_FILTER  (18|0x0200)
-static const BIO_METHOD methods_ebcdic = {
-    BIO_TYPE_EBCDIC_FILTER,
-    "EBCDIC/ASCII filter",
-    ebcdic_write,
-    ebcdic_read,
-    ebcdic_puts,
-    ebcdic_gets,
-    ebcdic_ctrl,
-    ebcdic_new,
-    ebcdic_free,
-};
+static BIO_METHOD *methods_ebcdic = NULL;
 
 /* This struct is "unwarranted chumminess with the compiler." */
 typedef struct {
@@ -438,9 +431,22 @@ typedef struct {
     char buff[1];
 } EBCDIC_OUTBUFF;
 
-const BIO_METHOD *BIO_f_ebcdic_filter()
+static const BIO_METHOD *BIO_f_ebcdic_filter()
 {
-    return (&methods_ebcdic);
+    if (methods_ebcdic == NULL) {
+        methods_ebcdic = BIO_meth_new(BIO_TYPE_EBCDIC_FILTER,
+            "EBCDIC/ASCII filter");
+        if (   methods_ebcdic == NULL
+            || !BIO_meth_set_write(methods_ebcdic, ebcdic_write)
+            || !BIO_meth_set_read(methods_ebcdic, ebcdic_read)
+            || !BIO_meth_set_puts(methods_ebcdic, ebcdic_puts)
+            || !BIO_meth_set_gets(methods_ebcdic, ebcdic_gets)
+            || !BIO_meth_set_ctrl(methods_ebcdic, ebcdic_ctrl)
+            || !BIO_meth_set_create(methods_ebcdic, ebcdic_new)
+            || !BIO_meth_set_destroy(methods_ebcdic, ebcdic_free))
+            return NULL;
+    }
+    return methods_ebcdic;
 }
 
 static int ebcdic_new(BIO *bi)
@@ -451,68 +457,71 @@ static int ebcdic_new(BIO *bi)
     wbuf->alloced = 1024;
     wbuf->buff[0] = '\0';
 
-    bi->ptr = (char *)wbuf;
-    bi->init = 1;
-    bi->flags = 0;
-    return (1);
+    BIO_set_data(bi, wbuf);
+    BIO_set_init(bi, 1);
+    return 1;
 }
 
 static int ebcdic_free(BIO *a)
 {
+    EBCDIC_OUTBUFF *wbuf;
+
     if (a == NULL)
-        return (0);
-    OPENSSL_free(a->ptr);
-    a->ptr = NULL;
-    a->init = 0;
-    a->flags = 0;
-    return (1);
+        return 0;
+    wbuf = BIO_get_data(a);
+    OPENSSL_free(wbuf);
+    BIO_set_data(a, NULL);
+    BIO_set_init(a, 0);
+
+    return 1;
 }
 
 static int ebcdic_read(BIO *b, char *out, int outl)
 {
     int ret = 0;
+    BIO *next = BIO_next(b);
 
     if (out == NULL || outl == 0)
         return (0);
-    if (b->next_bio == NULL)
+    if (next == NULL)
         return (0);
 
-    ret = BIO_read(b->next_bio, out, outl);
+    ret = BIO_read(next, out, outl);
     if (ret > 0)
         ascii2ebcdic(out, out, ret);
-    return (ret);
+    return ret;
 }
 
 static int ebcdic_write(BIO *b, const char *in, int inl)
 {
     EBCDIC_OUTBUFF *wbuf;
+    BIO *next = BIO_next(b);
     int ret = 0;
     int num;
-    unsigned char n;
 
     if ((in == NULL) || (inl <= 0))
         return (0);
-    if (b->next_bio == NULL)
-        return (0);
+    if (next == NULL)
+        return 0;
 
-    wbuf = (EBCDIC_OUTBUFF *) b->ptr;
+    wbuf = (EBCDIC_OUTBUFF *) BIO_get_data(b);
 
     if (inl > (num = wbuf->alloced)) {
         num = num + num;        /* double the size */
         if (num < inl)
             num = inl;
+        OPENSSL_free(wbuf);
         wbuf = app_malloc(sizeof(*wbuf) + num, "grow ebcdic wbuf");
-        OPENSSL_free(b->ptr);
 
         wbuf->alloced = num;
         wbuf->buff[0] = '\0';
 
-        b->ptr = (char *)wbuf;
+        BIO_set_data(b, wbuf);
     }
 
     ebcdic2ascii(wbuf->buff, in, inl);
 
-    ret = BIO_write(b->next_bio, wbuf->buff, inl);
+    ret = BIO_write(next, wbuf->buff, inl);
 
     return (ret);
 }
@@ -520,15 +529,16 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
 static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret;
+    BIO *next = BIO_next(b);
 
-    if (b->next_bio == NULL)
+    if (next == NULL)
         return (0);
     switch (cmd) {
     case BIO_CTRL_DUP:
         ret = 0L;
         break;
     default:
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     }
     return (ret);
@@ -537,8 +547,10 @@ static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr)
 static int ebcdic_gets(BIO *bp, char *buf, int size)
 {
     int i, ret = 0;
-    if (bp->next_bio == NULL)
-        return (0);
+    BIO *next = BIO_next(bp);
+
+    if (next == NULL)
+        return 0;
 /*      return(BIO_gets(bp->next_bio,buf,size));*/
     for (i = 0; i < size - 1; ++i) {
         ret = ebcdic_read(bp, &buf[i], 1);
@@ -556,8 +568,8 @@ static int ebcdic_gets(BIO *bp, char *buf, int size)
 
 static int ebcdic_puts(BIO *bp, const char *str)
 {
-    if (bp->next_bio == NULL)
-        return (0);
+    if (BIO_next(bp) == NULL)
+        return 0;
     return ebcdic_write(bp, str, strlen(str));
 }
 #endif
@@ -2079,6 +2091,9 @@ int s_server_main(int argc, char *argv[])
     bio_s_out = NULL;
     BIO_free(bio_s_msg);
     bio_s_msg = NULL;
+#ifdef CHARSET_EBCDIC
+    BIO_meth_free(methods_ebcdic);
+#endif
     return (ret);
 }
 
