@@ -209,7 +209,7 @@ OPENSSL_cleanse:
 .align	16
 .Lot:
 	test	\$7,$arg1
-	jz	.Laligned
+	jz	.Lret
 	mov	%al,($arg1)
 	lea	-1($arg2),$arg2
 	lea	1($arg1),$arg1
