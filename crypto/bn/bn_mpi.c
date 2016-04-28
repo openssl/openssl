@@ -87,10 +87,11 @@ int BN_bn2mpi(const BIGNUM *a, unsigned char *d)
     return (num + 4 + ext);
 }
 
-BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *a)
+BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)
 {
     long len;
     int neg = 0;
+    BIGNUM *a = NULL;
 
     if (n < 4) {
         BNerr(BN_F_BN_MPI2BN, BN_R_INVALID_LENGTH);
@@ -103,8 +104,11 @@ BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *a)
         return NULL;
     }
 
-    if (a == NULL)
+    if (ain == NULL)
         a = BN_new();
+    else
+        a = ain;
+
     if (a == NULL)
         return NULL;
 
@@ -117,7 +121,8 @@ BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *a)
     if ((*d) & 0x80)
         neg = 1;
     if (BN_bin2bn(d, (int)len, a) == NULL) {
-        BN_free(a);
+        if (ain == NULL)
+            BN_free(a);
         return NULL;
     }
     a->neg = neg;
