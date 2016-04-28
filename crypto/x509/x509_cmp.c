@@ -187,9 +187,10 @@ int X509_cmp(const X509 *a, const X509 *b)
         return rv;
     /* Check for match against stored encoding too */
     if (!a->cert_info.enc.modified && !b->cert_info.enc.modified) {
-        rv = (int)(a->cert_info.enc.len - b->cert_info.enc.len);
-        if (rv)
-            return rv;
+        if (a->cert_info.enc.len < b->cert_info.enc.len)
+            return -1;
+        if (a->cert_info.enc.len > b->cert_info.enc.len)
+            return 1;
         return memcmp(a->cert_info.enc.enc, b->cert_info.enc.enc,
                       a->cert_info.enc.len);
     }
