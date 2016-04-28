@@ -150,10 +150,10 @@ static int set_reasons(ASN1_BIT_STRING **preas, char *value)
     const char *bnam;
     int i, ret = 0;
     rsk = X509V3_parse_list(value);
-    if (!rsk)
+    if (rsk == NULL)
         return 0;
-    if (*preas)
-        return 0;
+    if (*preas != NULL)
+        goto err;
     for (i = 0; i < sk_CONF_VALUE_num(rsk); i++) {
         bnam = sk_CONF_VALUE_value(rsk, i)->name;
         if (*preas == NULL) {
