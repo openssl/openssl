@@ -104,8 +104,15 @@ DEFINE_STACK_OF(X509_VERIFY_PARAM)
 
 int X509_STORE_set_depth(X509_STORE *store, int depth);
 
-# define X509_STORE_set_verify_cb_func(ctx,func) ((ctx)->verify_cb=(func))
-# define X509_STORE_set_verify_func(ctx,func)    ((ctx)->verify=(func))
+# define X509_STORE_set_verify_cb_func(ctx,func) \
+            X509_STORE_set_verify_cb((ctx),(func))
+
+typedef int (*X509_STORE_CTX_verify_cb)(int, X509_STORE_CTX *);
+typedef int (*X509_STORE_CTX_verify)(X509_STORE_CTX *);
+
+void X509_STORE_set_verify(X509_STORE *ctx, X509_STORE_CTX_verify verify);
+#define X509_STORE_set_verify_func(ctx, func) \
+            X509_STORE_set_verify((ctx),(func))
 
 void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
@@ -314,8 +321,6 @@ X509_STORE *X509_STORE_CTX_get0_store(X509_STORE_CTX *ctx);
 X509 *X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx);
 STACK_OF(X509)* X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
-typedef int (*X509_STORE_CTX_verify_cb)(int, X509_STORE_CTX *);
-typedef int (*X509_STORE_CTX_verify)(X509_STORE_CTX *);
 void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
                                   X509_STORE_CTX_verify_cb verify);
 X509_STORE_CTX_verify_cb X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx);
