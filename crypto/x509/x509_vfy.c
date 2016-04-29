@@ -2171,11 +2171,10 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     /* Zero ex_data to make sure we're cleanup-safe */
     memset(&ctx->ex_data, 0, sizeof(ctx->ex_data));
 
-    if (store) {
-        ctx->verify_cb = store->verify_cb;
-        /* Seems to always be 0 in OpenSSL, else must be idempotent */
+    /* store->cleanup is always 0 in OpenSSL, if set must be idempotent */
+    if (store)
         ctx->cleanup = store->cleanup;
-    } else
+    else
         ctx->cleanup = 0;
 
     if (store && store->check_issued)
