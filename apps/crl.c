@@ -244,7 +244,7 @@ int crl_main(int argc, char **argv)
         if (lookup == NULL)
             goto end;
         ctx = X509_STORE_CTX_new();
-        if (!X509_STORE_CTX_init(ctx, store, NULL, NULL)) {
+        if (ctx == NULL || !X509_STORE_CTX_init(ctx, store, NULL, NULL)) {
             BIO_printf(bio_err, "Error initialising X509 store\n");
             goto end;
         }
