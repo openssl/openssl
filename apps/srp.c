@@ -256,7 +256,6 @@ OPTIONS srp_options[] = {
 int srp_main(int argc, char **argv)
 {
     CA_DB *db = NULL;
-    DB_ATTR db_attr;
     CONF *conf = NULL;
     int gNindex = -1, maxgN = -1, ret = 1, errors = 0, verbose = 0, i;
     int doupdatedb = 0, mode = OPT_ERR;
@@ -401,7 +400,7 @@ int srp_main(int argc, char **argv)
         BIO_printf(bio_err, "Trying to read SRP verifier file \"%s\"\n",
                    srpvfile);
 
-    db = load_index(srpvfile, &db_attr);
+    db = load_index(srpvfile, NULL);
     if (db == NULL)
         goto end;
 
