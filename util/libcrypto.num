@@ -4212,3 +4212,4 @@ X509_STORE_get_ex_data                  4085	1_1_0	EXIST::FUNCTION:
 X509_STORE_get0_objects                 4086	1_1_0	EXIST::FUNCTION:
 X509_STORE_get0_param                   4087	1_1_0	EXIST::FUNCTION:
 X509_OBJECT_get_type                    4088	1_1_0	EXIST::FUNCTION:
+X509_STORE_set_verify                   4089	1_1_0	EXIST::FUNCTION:
