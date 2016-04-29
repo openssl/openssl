@@ -83,6 +83,9 @@ BIO_ADDR *BIO_ADDR_new(void)
 {
     BIO_ADDR *ret = OPENSSL_zalloc(sizeof(*ret));
 
+    if (ret == NULL)
+        return NULL;
+
     ret->sa.sa_family = AF_UNSPEC;
     return ret;
 }
