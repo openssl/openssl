@@ -678,11 +678,9 @@ static void fe_invert(fe out, const fe z) {
   /* t0 = z ** 2 */
   fe_sq(t0, z);
 
-  /* t1 = t0 ** 3 = z ** 8 */
+  /* t1 = t0 ** (2 ** 2) = z ** 8 */
   fe_sq(t1, t0);
-  for (i = 1; i < 2; ++i) {
-    fe_sq(t1, t1);
-  }
+  fe_sq(t1, t1);
 
   /* t1 = z * t1 = z ** 9 */
   fe_mul(t1, z, t1);
