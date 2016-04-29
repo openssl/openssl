@@ -108,7 +108,7 @@ foreach my $cmd (
         } elsif (my $disabler = $md_disabler{$cmd}) {
                 print "#ifndef OPENSSL_NO_".uc($disabler)."\n${str}#endif\n";
         } else {
-                print "#ifndef OPENSSL_NO_".uc($cmd)."\n${str}#endif\n";
+                print $str;
         }
 }
 
