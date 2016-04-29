@@ -75,16 +75,15 @@ int main(int argc, char *argv[])
 #  include <openssl/ebcdic.h>
 # endif
 
-static char *test[] = {
-    "",
-    "a",
-    "abc",
-    "message digest",
-    "abcdefghijklmnopqrstuvwxyz",
-    "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-    "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-    NULL,
+static char test[][100] = {
+    { "" },
+    { "a" },
+    { "abc" },
+    { "message digest" },
+    { "abcdefghijklmnopqrstuvwxyz" },
+    { "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq" },
+    { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" },
+    { "12345678901234567890123456789012345678901234567890123456789012345678901234567890" }
 };
 
 static char *ret[] = {
@@ -101,30 +100,29 @@ static char *ret[] = {
 static char *pt(unsigned char *md);
 int main(int argc, char *argv[])
 {
-    int i, err = 0;
-    char **P, **R;
+    unsigned int i;
+    int err = 0;
+    char **R;
     char *p;
     unsigned char md[RIPEMD160_DIGEST_LENGTH];
 
-    P = test;
     R = ret;
-    i = 1;
-    while (*P != NULL) {
+    i = 0;
+    while (i < OSSL_NELEM(test)) {
 # ifdef CHARSET_EBCDIC
-        ebcdic2ascii((char *)*P, (char *)*P, strlen((char *)*P));
+        ebcdic2ascii(test[i], test[i], strlen(test[i]));
 # endif
-        EVP_Digest(&(P[0][0]), strlen((char *)*P), md, NULL, EVP_ripemd160(),
+        EVP_Digest(test[i], strlen(test[i]), md, NULL, EVP_ripemd160(),
                    NULL);
         p = pt(md);
         if (strcmp(p, (char *)*R) != 0) {
-            printf("error calculating RIPEMD160 on '%s'\n", *P);
+            printf("error calculating RIPEMD160 on '%s'\n", test[i]);
             printf("got %s instead of %s\n", p, *R);
             err++;
         } else
-            printf("test %d ok\n", i);
+            printf("test %d ok\n", i + 1);
         i++;
         R++;
-        P++;
     }
     EXIT(err);
 }

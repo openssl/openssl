@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 #  include <openssl/ebcdic.h>
 # endif
 
-static char *bf_key[2] = {
+static char bf_key[2][30] = {
     "abcdefghijklmnopqrstuvwxyz",
     "Who is John Galt?"
 };
