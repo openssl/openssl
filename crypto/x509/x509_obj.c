@@ -76,7 +76,7 @@ char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
     int gs_doit[4];
     char tmp_buf[80];
 #ifdef CHARSET_EBCDIC
-    char ebcdic_buf[1024];
+    unsigned char ebcdic_buf[1024];
 #endif
 
     if (buf == NULL) {
@@ -117,8 +117,8 @@ char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
             type == V_ASN1_PRINTABLESTRING ||
             type == V_ASN1_TELETEXSTRING ||
             type == V_ASN1_VISIBLESTRING || type == V_ASN1_IA5STRING) {
-            ascii2ebcdic(ebcdic_buf, q, (num > sizeof ebcdic_buf)
-                         ? sizeof ebcdic_buf : num);
+            ascii2ebcdic(ebcdic_buf, q, (num > (int)sizeof(ebcdic_buf))
+                         ? (int)sizeof(ebcdic_buf) : num);
             q = ebcdic_buf;
         }
 #endif
