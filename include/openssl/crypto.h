@@ -409,7 +409,7 @@ void CRYPTO_mem_debug_free(void *addr, int flag,
 #  ifndef OPENSSL_NO_STDIO
 int CRYPTO_mem_leaks_fp(FILE *);
 #  endif
-int CRYPTO_mem_leaks(struct bio_st *bio);
+int CRYPTO_mem_leaks(BIO *bio);
 # endif
 
 /* die if we have to */
