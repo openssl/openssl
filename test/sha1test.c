@@ -92,8 +92,7 @@ int main(int argc, char *argv[])
 
     c = EVP_MD_CTX_new();
     R = ret;
-    i = 0;
-    while (i < OSSL_NELEM(test)) {
+    for (i = 0; i < OSSL_NELEM(test); i++) {
 # ifdef CHARSET_EBCDIC
         ebcdic2ascii(test[i], test[i], strlen(test[i]));
 # endif
@@ -105,7 +104,6 @@ int main(int argc, char *argv[])
             err++;
         } else
             printf("test %d ok\n", i + 1);
-        i++;
         R++;
     }
 
