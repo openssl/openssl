@@ -184,16 +184,13 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
 int i2d_X509_AUX(X509 *a, unsigned char **pp)
 {
     int length, tmplen;
-    unsigned char *start = *pp;
     length = i2d_X509(a, pp);
     if (length < 0 || a == NULL)
         return length;
 
     tmplen = i2d_X509_CERT_AUX(a->aux, pp);
-    if (tmplen < 0) {
-        *pp = start;
+    if (tmplen < 0)
         return tmplen;
-    }
     length += tmplen;
 
     return length;
