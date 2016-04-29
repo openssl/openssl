@@ -284,10 +284,10 @@ void BIO_clear_flags(BIO *b, int flags);
 # define BIO_cb_pre(a)   (!((a)&BIO_CB_RETURN))
 # define BIO_cb_post(a)  ((a)&BIO_CB_RETURN)
 
-long (*BIO_get_callback(const BIO *b)) (struct bio_st *, int, const char *,
+long (*BIO_get_callback(const BIO *b)) (BIO *, int, const char *,
                                         int, long, long);
 void BIO_set_callback(BIO *b,
-                      long (*callback) (struct bio_st *, int, const char *,
+                      long (*callback) (BIO *, int, const char *,
                                         int, long, long));
 char *BIO_get_callback_arg(const BIO *b);
 void BIO_set_callback_arg(BIO *b, char *arg);
@@ -297,7 +297,7 @@ typedef struct bio_method_st BIO_METHOD;
 const char *BIO_method_name(const BIO *b);
 int BIO_method_type(const BIO *b);
 
-typedef void bio_info_cb (struct bio_st *, int, const char *, int, long,
+typedef void bio_info_cb (BIO *, int, const char *, int, long,
                           long);
 
 DEFINE_STACK_OF(BIO)
@@ -601,8 +601,7 @@ int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
 long BIO_callback_ctrl(BIO *b, int cmd,
-                       void (*fp) (struct bio_st *, int, const char *, int,
-                                   long, long));
+                       void (*fp) (BIO *, int, const char *, int, long, long));
 void *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
 long BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
 BIO *BIO_push(BIO *b, BIO *append);
