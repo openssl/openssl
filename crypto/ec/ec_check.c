@@ -73,9 +73,6 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
             goto err;
         }
     }
-    BN_CTX_start(ctx);
-    if ((order = BN_CTX_get(ctx)) == NULL)
-        goto err;
 
     /* check the discriminant */
     if (!EC_GROUP_check_discriminant(group, ctx)) {
@@ -114,8 +111,6 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
     ret = 1;
 
  err:
-    if (ctx != NULL)
-        BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     EC_POINT_free(point);
     return ret;
