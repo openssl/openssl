@@ -148,28 +148,29 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, EC_KEY *src)
             return NULL;
         if (!EC_GROUP_copy(dest->group, src->group))
             return NULL;
-    }
-    /*  copy the public key */
-    if (src->pub_key != NULL && src->group != NULL) {
-        EC_POINT_free(dest->pub_key);
-        dest->pub_key = EC_POINT_new(src->group);
-        if (dest->pub_key == NULL)
-            return NULL;
-        if (!EC_POINT_copy(dest->pub_key, src->pub_key))
-            return NULL;
-    }
-    /* copy the private key */
-    if (src->priv_key != NULL) {
-        if (dest->priv_key == NULL) {
-            dest->priv_key = BN_new();
-            if (dest->priv_key == NULL)
+
+        /*  copy the public key */
+        if (src->pub_key != NULL) {
+            EC_POINT_free(dest->pub_key);
+            dest->pub_key = EC_POINT_new(src->group);
+            if (dest->pub_key == NULL)
+                return NULL;
+            if (!EC_POINT_copy(dest->pub_key, src->pub_key))
                 return NULL;
         }
-        if (!BN_copy(dest->priv_key, src->priv_key))
-            return NULL;
-        if (src->group->meth->keycopy
-            && src->group->meth->keycopy(dest, src) == 0)
-            return NULL;
+        /* copy the private key */
+        if (src->priv_key != NULL) {
+            if (dest->priv_key == NULL) {
+                dest->priv_key = BN_new();
+                if (dest->priv_key == NULL)
+                    return NULL;
+            }
+            if (!BN_copy(dest->priv_key, src->priv_key))
+                return NULL;
+            if (src->group->meth->keycopy
+                && src->group->meth->keycopy(dest, src) == 0)
+                return NULL;
+        }
     }
 
 
