@@ -876,7 +876,6 @@ static int serverinfo_process_buffer(const unsigned char *serverinfo,
             custom_ext_methods *exts = &ctx->cert->srv_ext;
             custom_ext_method *meth = exts->meths;
 
-            /* check for existing callbacks for this extension */
             for (i = 0; i < exts->meths_count; i++, meth++) {
                 if (ext_type == meth->ext_type) {
                     have_ext_cbs = 1;
