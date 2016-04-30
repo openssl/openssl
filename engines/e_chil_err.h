@@ -39,6 +39,8 @@ static void ERR_HWCRHK_error(int function, int reason, char *file, int line);
 # define HWCRHK_F_HWCRHK_MOD_EXP                          107
 # define HWCRHK_F_HWCRHK_RAND_BYTES                       108
 # define HWCRHK_F_HWCRHK_RSA_MOD_EXP                      109
+# define HWCRHK_F_BIND_HELPER                             110
+# define HWCRHK_F_HWCRHK_MUTEX_INIT                       111
 
 /* Reason codes. */
 # define HWCRHK_R_ALREADY_LOADED                          100

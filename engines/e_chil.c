@@ -309,8 +309,10 @@ static int bind_helper(ENGINE *e)
 #  endif
 
     chil_lock = CRYPTO_THREAD_lock_new();
-    if (chil_lock == NULL)
+    if (chil_lock == NULL) {
+        HWCRHKerr(HWCRHK_F_BIND_HELPER, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     if (!ENGINE_set_id(e, engine_hwcrhk_id) ||
         !ENGINE_set_name(e, engine_hwcrhk_name) ||
@@ -1092,8 +1094,10 @@ static int hwcrhk_mutex_init(HWCryptoHook_Mutex * mt,
                              HWCryptoHook_CallerContext * cactx)
 {
     mt->lock = CRYPTO_THREAD_lock_new();
-    if (mt->lock == NULL)
+    if (mt->lock == NULL) {
+        HWCRHKerr(HWCRHK_F_HWCRHK_MUTEX_INIT, ERR_R_MALLOC_FAILURE);
         return 1;               /* failure */
+    }
     return 0;                   /* success */
 }
 
