@@ -50,6 +50,7 @@ int asn1_set_choice_selector(ASN1_VALUE **pval, int value,
  * then the count is incremented. If op is 0 count is set to 1. If op is -1
  * count is decremented and the return value is the current reference count
  * or 0 if no reference count exists.
+ * FIXME: return and manage any error from inside this method
  */
 
 int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
@@ -68,8 +69,10 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
     if (op == 0) {
         *lck = 1;
         *lock = CRYPTO_THREAD_lock_new();
-        if (*lock == NULL)
+        if (*lock == NULL) {
+            /* FIXME: should report an error (-1) at this point */
             return 0;
+        }
         return 1;
     }
     CRYPTO_atomic_add(lck, op, &ret, *lock);

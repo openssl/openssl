@@ -39,6 +39,7 @@ static DSO *DSO_new_method(DSO_METHOD *meth)
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
+        DSOerr(DSO_F_DSO_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         sk_void_free(ret->meth_data);
         OPENSSL_free(ret);
         return NULL;
