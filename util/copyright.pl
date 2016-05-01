@@ -30,6 +30,12 @@ sub check_comment()
         }
     }
 
+    # Look for a multi-line "written by" comment.
+    if ( ! $skipit ) {
+        my $text = join('', @lines);
+        $skipit = 1 if $text =~ m/Written by.*for the OpenSSL Project/is;
+    }
+
     print @lines unless $skipit;
     return $skipit;
 }
