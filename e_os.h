@@ -504,13 +504,6 @@ struct servent *getservbyname(const char *name, const char *proto);
 # endif
 /* end vxworks */
 
-/* haiku */
-# if defined(OPENSSL_SYS_HAIKU)
-#  include <sys/select.h>
-#  include <sys/time.h>
-# endif
-/* end haiku */
-
 #define OSSL_NELEM(x)    (sizeof(x)/sizeof(x[0]))
 
 #ifdef  __cplusplus
