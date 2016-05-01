@@ -25,7 +25,7 @@ B<openssl engine>
 
 The B<engine> command is used to query the status and capabilities
 of the specified B<engine>'s.
-Engines may be speicifed before and after all other command-line flags.
+Engines may be specified before and after all other command-line flags.
 Only those specified are queried.
 
 =head1 OPTIONS

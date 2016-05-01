@@ -111,7 +111,7 @@ for the B<job>. ASYNC_WAIT_CTXs can have a "wait" file descriptor associated
 with them. Applications can wait for the file descriptor to be ready for "read"
 using a system function call such as select or poll (being ready for "read"
 indicates that the job should be resumed). If no file descriptor is made
-available then an application will have to priodically "poll" the job by
+available then an application will have to periodically "poll" the job by
 attempting to restart it to see if it is ready to continue.
 
 An example of typical usage might be an async capable engine. User code would

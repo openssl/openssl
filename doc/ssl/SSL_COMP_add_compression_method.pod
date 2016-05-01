@@ -26,7 +26,7 @@ It cannot be set for specific SSL_CTX or SSL objects.
 In versions of OpenSSL prior to 1.1.0 SSL_COMP_free_compression_methods() freed
 the internal table of compression methods that were built internally, and
 possibly augmented by adding SSL_COMP_add_compression_method(). However this is
-now unncessary from version 1.1.0.  No explicit initialisation or
+now unnecessary from version 1.1.0.  No explicit initialisation or
 de-initialisation is necessary. See L<OPENSSL_init_crypto(3)> and
 L<OPENSSL_init_ssl(3)>. From OpenSSL 1.1.0 calling this function does nothing.
 

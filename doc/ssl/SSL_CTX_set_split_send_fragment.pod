@@ -58,7 +58,7 @@ explained further below. OpenSSL will only every use more than one pipeline if
 a ciphersuite is negotiated that uses a pipeline capable cipher provided by an
 engine.
 
-Pipelining operates slighly differently for reading encrypted data compared to
+Pipelining operates slightly differently for reading encrypted data compared to
 writing encrypted data. SSL_CTX_set_split_send_fragment() and
 SSL_set_split_send_fragment() define how data is split up into pipelines when
 writing encrypted data. The number of pipelines used will be determined by the
