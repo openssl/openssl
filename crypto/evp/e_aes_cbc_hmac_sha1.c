@@ -90,8 +90,7 @@ typedef struct {
 
 #if     defined(AES_ASM) &&     ( \
         defined(__x86_64)       || defined(__x86_64__)  || \
-        defined(_M_AMD64)       || defined(_M_X64)      || \
-        defined(__INTEL__)      )
+        defined(_M_AMD64)       || defined(_M_X64)      )
 
 extern unsigned int OPENSSL_ia32cap_P[];
 # define AESNI_CAPABLE   (1<<(57-32))
