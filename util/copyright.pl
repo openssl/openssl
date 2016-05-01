@@ -31,6 +31,7 @@ sub check_comment()
     }
 
     print @lines unless $skipit;
+    return $skipit;
 }
 
 # Look for leading copyright blocks and process (print/swallow) them.
@@ -61,7 +62,7 @@ EOF
     }
     next if m@^$@;
     last if not m@/\*@;
-    &check_comment($_);
+    last unless &check_comment($_);
 }
 
 if (defined($_)) {
