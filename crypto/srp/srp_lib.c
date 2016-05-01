@@ -279,9 +279,9 @@ BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x,
     if (!BN_mod_sub(tmp, B, tmp2, N, bn_ctx))
         goto err;
 
-    if (!BN_mod_mul(tmp3, u, x, N, bn_ctx))
+    if (!BN_mul(tmp3, u, x, bn_ctx))
         goto err;
-    if (!BN_mod_add(tmp2, a, tmp3, N, bn_ctx))
+    if (!BN_add(tmp2, a, tmp3))
         goto err;
     if (!BN_mod_exp(K, tmp, tmp2, N, bn_ctx))
         goto err;
