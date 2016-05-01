@@ -99,8 +99,7 @@
 #  if !defined(I386_ONLY) && !defined(OPENSSL_NO_ASM)
 #   if    defined(__i386__) || defined(__i386) ||    \
         defined(__x86_64__) || defined(__x86_64) || \
-        defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64) || \
-        defined(__INTEL__)
+        defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64)
 #    define COMPILE_HW_PADLOCK
 #    ifdef OPENSSL_NO_DYNAMIC_ENGINE
 static ENGINE *ENGINE_padlock(void);
