@@ -622,7 +622,8 @@ uninstall_html_docs:
 
 update: generate errors ordinals
 
-generate: generate_apps generate_crypto_bn generate_crypto_objects
+generate: generate_apps generate_crypto_bn generate_crypto_objects \
+          generate_crypto_conf generate_crypto_asn1
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
@@ -664,6 +665,14 @@ generate_crypto_objects:
 				crypto/objects/obj_mac.num \
 				crypto/objects/obj_xref.txt \
 				> crypto/objects/obj_xref.h )
+
+generate_crypto_conf:
+	( cd $(SRCDIR); $(PERL) crypto/conf/keysets.pl \
+			        > crypto/conf/conf_def.h )
+
+generate_crypto_asn1:
+	( cd $(SRCDIR); $(PERL) crypto/asn1/charmap.pl \
+			        > crypto/asn1/charmap.h )
 
 errors:
 	( cd $(SRCDIR); $(PERL) util/ck_errf.pl -strict */*.c */*/*.c )
