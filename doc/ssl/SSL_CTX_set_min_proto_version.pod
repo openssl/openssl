@@ -17,7 +17,7 @@ and maximum supported protocol version
 
 =head1 DESCRIPTION
 
-The functions set the minimum and maximum supported portocol versions
+The functions set the minimum and maximum supported protocol versions
 for the B<ctx> or B<ssl>.
 This works in combination with the options set via
 L<SSL_CTX_set_options(3)> that also make it possible to disable

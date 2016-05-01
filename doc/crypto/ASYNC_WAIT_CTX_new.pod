@@ -53,7 +53,7 @@ ASYNC_WAIT_CTX_get_all_fds() with a NULL B<fd> value will return no file
 descriptors but will still populate B<*numfds>. Therefore application code is
 typically expected to call this function twice: once to get the number of fds,
 and then again when sufficient memory has been allocated. If only one
-asynchronous engine is being used then noramlly this call will only ever return
+asynchronous engine is being used then normally this call will only ever return
 one fd. If multiple asynchronous engines are being used then more could be
 returned.
 

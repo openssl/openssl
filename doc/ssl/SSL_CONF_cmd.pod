@@ -465,7 +465,7 @@ Set supported signature algorithms:
 
  SSL_CONF_cmd(ctx, "SignatureAlgorithms", "ECDSA+SHA256:RSA+SHA256:DSA+SHA256");
 
-There are various ways to select the supported procotols.
+There are various ways to select the supported protocols.
 
 This set the minimum protocol version to TLSv1, and so disables SSLv3.
 This is the recommended way to disable protocols.
