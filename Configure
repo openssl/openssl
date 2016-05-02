@@ -1238,12 +1238,27 @@ my $buildinfo_debug = defined($ENV{CONFIGURE_DEBUG_BUILDINFO});
 if ($builder eq "unified") {
     # Store the name of the template file we will build the build file from
     # in %config.  This may be useful for the build file itself.
-    my $build_file_template =
-        catfile($srcdir, "Configurations",
-                $builder_platform."-".$target{build_file}.".tmpl");
-    $build_file_template =
-        catfile($srcdir, "Configurations", $target{build_file}.".tmpl")
-        if (! -f $build_file_template);
+    my $build_file_template;
+
+    for my $filename (( $builder_platform."-".$target{build_file}.".tmpl",
+                        $target{build_file}.".tmpl" )) {
+        if (defined $ENV{$local_config_envname}) {
+            if ($^O eq 'VMS') {
+                # VMS environment variables are logical names,
+                # which can be used as is
+                $build_file_template = $local_config_envname . ':' . $filename;
+            } else {
+                $build_file_template = catfile($ENV{$local_config_envname},
+                                               $filename);
+            }
+        }
+
+        last if -f $build_file_template;
+
+        $build_file_template = catfile($srcdir, "Configurations", $filename);
+
+        last if -f $build_file_template;
+    }
     $config{build_file_template} = $build_file_template;
 
     use lib catdir(dirname(__FILE__),"util");
