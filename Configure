@@ -178,6 +178,8 @@ my $srcdir = catdir(absolutedir(dirname($0))); # catdir ensures local syntax
 my $blddir = catdir(absolutedir("."));         # catdir ensures local syntax
 my $dofile = abs2rel(catfile($srcdir, "util/dofile.pl"));
 
+my $local_config_envname = 'OPENSSL_LOCAL_CONFIG_DIR';
+
 $config{sourcedir} = abs2rel($srcdir);
 $config{builddir} = abs2rel($blddir);
 
@@ -210,6 +212,20 @@ die "erroneous version information in opensslv.h: ",
 my $pattern = catfile(dirname($0), "Configurations", "*.conf");
 foreach (sort glob($pattern) ) {
     &read_config($_);
+}
+
+if (defined $ENV{$local_config_envname}) {
+    if ($^O eq 'VMS') {
+        # VMS environment variables are logical names,
+        # which can be used as is
+        $pattern = $local_config_envname . ':' . '*.conf';
+    } else {
+        $pattern = catfile($ENV{$local_config_envname}, '*.conf');
+    }
+
+    foreach (sort glob($pattern) ) {
+        &read_config($_);
+    }
 }
 
 
