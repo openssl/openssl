@@ -8,7 +8,7 @@
 
 
 $output = pop;
-open STDOUT,">$stdout";
+open STDOUT,">$output";
 
 print <<'___';
 .text
