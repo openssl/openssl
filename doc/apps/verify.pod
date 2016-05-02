@@ -24,6 +24,7 @@ B<openssl> B<verify>
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
+[B<-no_check_time>]
 [B<-partial_chain>]
 [B<-policy arg>]
 [B<-policy_check>]
@@ -144,6 +145,12 @@ Set policy variable inhibit-any-policy (see RFC5280).
 =item B<-inhibit_map>
 
 Set policy variable inhibit-policy-mapping (see RFC5280).
+
+=item B<-no_check_time>
+
+This option suppresses checking the validity period of certificates and CRLs 
+against the current time. If option B<-attime timestamp> is used to specify 
+a verification time, the check is not suppressed.
 
 =item B<-partial_chain>
 
