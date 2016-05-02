@@ -4,6 +4,13 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) To enable users to have their own config files and build file templates,
+     Configure looks in the directory indicated by the environment variable
+     OPENSSL_LOCAL_CONFIG_DIR as well as the in-source Configurations/
+     directory.  On VMS, OPENSSL_LOCAL_CONFIG_DIR is expected to be a logical
+     name and is used as is.
+     [Richard Levitte]
+
   *) The following datatypes were made opaque: X509_OBJECT, X509_STORE_CTX,
      X509_STORE, X509_LOOKUP, and X509_LOOKUP_METHOD.  The unused type
      X509_CERT_FILE_CTX was removed.
