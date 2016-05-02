@@ -16,7 +16,7 @@ IF[{- !$disabled{tests} -}]
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
-          ssl_test_ctx_test ssl_test
+          ssl_test_ctx_test ssl_test x509aux
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]={- rel2abs(catdir($builddir,"../include")) -} ../include
@@ -237,4 +237,8 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[testutil.o]=..
   INCLUDE[ssl_test_ctx.o]={- rel2abs(catdir($builddir,"../include")) -} ../include
   INCLUDE[handshake_helper.o]={- rel2abs(catdir($builddir,"../include")) -} ../include
+
+  SOURCE[x509aux]=x509aux.c
+  INCLUDE[x509aux]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[x509aux]=../libcrypto
 ENDIF

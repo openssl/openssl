@@ -475,7 +475,7 @@ int main(int argc, char *argv[])
     progname = argv[0];
     if (argc != 4) {
         test_usage();
-        EXIT(1);
+        EXIT(ret);
     }
     basedomain = argv[1];
     CAfile = argv[2];
@@ -492,9 +492,8 @@ int main(int argc, char *argv[])
     if (f == NULL) {
         fprintf(stderr, "%s: Error opening tlsa record file: '%s': %s\n",
                 progname, tlsafile, strerror(errno));
-        return 0;
+        EXIT(ret);
     }
-
 
     ctx = SSL_CTX_new(TLS_client_method());
     if (SSL_CTX_dane_enable(ctx) <= 0) {
