@@ -473,6 +473,8 @@ DEFINE_STACK_OF(ASN1_INTEGER)
 
 DEFINE_STACK_OF(ASN1_GENERALSTRING)
 
+DEFINE_STACK_OF(ASN1_UTF8STRING)
+
 typedef struct asn1_type_st {
     int type;
     union {
