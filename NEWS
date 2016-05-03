@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.1t and OpenSSL 1.0.1u [under development]
+
+      o
+
   Major changes between OpenSSL 1.0.1s and OpenSSL 1.0.1t [3 May 2016]
 
       o Prevent padding oracle in AES-NI CBC MAC check (CVE-2016-2107)
