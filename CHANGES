@@ -1021,7 +1021,7 @@
      amounts of input data then a length check can overflow resulting in a heap
      corruption.
 
-     Internally to OpenSSL the EVP_EncodeUpdate() function is primarly used by
+     Internally to OpenSSL the EVP_EncodeUpdate() function is primarily used by
      the PEM_write_bio* family of functions. These are mainly used within the
      OpenSSL command line applications, so any application which processes data
      from an untrusted source and outputs it as a PEM file should be considered
@@ -1058,7 +1058,7 @@
   *) Prevent ASN.1 BIO excessive memory allocation
 
      When ASN.1 data is read from a BIO using functions such as d2i_CMS_bio()
-     a short invalid encoding can casuse allocation of large amounts of memory
+     a short invalid encoding can cause allocation of large amounts of memory
      potentially consuming excessive resources or exhausting memory.
 
      Any application parsing untrusted data through d2i BIO functions is
@@ -1330,7 +1330,7 @@
 
   *) Alternate chains certificate forgery
 
-     During certificate verfification, OpenSSL will attempt to find an
+     During certificate verification, OpenSSL will attempt to find an
      alternative certificate chain if the first attempt to build such a chain
      fails. An error in the implementation of this logic can mean that an
      attacker could cause certain checks on untrusted certificates to be
@@ -1588,7 +1588,7 @@
 
   *) Facilitate "universal" ARM builds targeting range of ARM ISAs, e.g.
      ARMv5 through ARMv8, as opposite to "locking" it to single one.
-     So far those who have to target multiple plaforms would compromise
+     So far those who have to target multiple platforms would compromise
      and argue that binary targeting say ARMv5 would still execute on
      ARMv8. "Universal" build resolves this compromise by providing
      near-optimal performance even on newer platforms.
@@ -1648,7 +1648,7 @@
      [Steve Henson]
 
   *) Use algorithm specific chains in SSL_CTX_use_certificate_chain_file():
-     this fixes a limiation in previous versions of OpenSSL.
+     this fixes a limitation in previous versions of OpenSSL.
      [Steve Henson]
 
   *) Extended RSA OAEP support via EVP_PKEY API. Options to specify digest,
@@ -1757,7 +1757,7 @@
 
   *) Add support for certificate stores in CERT structure. This makes it
      possible to have different stores per SSL structure or one store in
-     the parent SSL_CTX. Include distint stores for certificate chain
+     the parent SSL_CTX. Include distinct stores for certificate chain
      verification and chain building. New ctrl SSL_CTRL_BUILD_CERT_CHAIN
      to build and store a certificate chain in CERT structure: returing
      an error if the chain cannot be built: this will allow applications
@@ -1820,7 +1820,7 @@
      [Steve Henson]
 
   *) Integrate hostname, email address and IP address checking with certificate
-     verification. New verify options supporting checking in opensl utility.
+     verification. New verify options supporting checking in openssl utility.
      [Steve Henson]
 
   *) Fixes and wildcard matching support to hostname and email checking
