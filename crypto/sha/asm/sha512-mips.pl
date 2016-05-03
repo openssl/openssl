@@ -52,6 +52,7 @@
 $flavour = shift || "o32"; # supported flavours are o32,n32,64,nubi32,nubi64
 
 if ($flavour =~ /64|n32/i) {
+	$PTR_LA="dla";
 	$PTR_ADD="dadd";	# incidentally works even on n32
 	$PTR_SUB="dsub";	# incidentally works even on n32
 	$REG_S="sd";
@@ -59,6 +60,7 @@ if ($flavour =~ /64|n32/i) {
 	$PTR_SLL="dsll";	# incidentally works even on n32
 	$SZREG=8;
 } else {
+	$PTR_LA="la";
 	$PTR_ADD="add";
 	$PTR_SUB="sub";
 	$REG_S="sw";
@@ -286,7 +288,7 @@ ___
 }
 
 $FRAMESIZE=16*$SZ+16*$SZREG;
-$SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0xc0fff008 : 0xc0ff0000;
+$SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? "0xc0fff008" : "0xc0ff0000";
 
 $code.=<<___;
 #ifdef OPENSSL_FIPSCANISTER
@@ -343,7 +345,7 @@ $code.=<<___ if ($flavour !~ /o32/i);	# non-o32 PIC-ification
 ___
 $code.=<<___;
 	.set	reorder
-	la	$Ktbl,K${label}		# PIC-ified 'load address'
+	$PTR_LA	$Ktbl,K${label}		# PIC-ified 'load address'
 
 	$LD	$A,0*$SZ($ctx)		# load context
 	$LD	$B,1*$SZ($ctx)
