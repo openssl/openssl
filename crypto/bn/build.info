@@ -57,7 +57,7 @@ GENERATE[bn-ppc.s]=asm/ppc.pl $(PERLASM_SCHEME)
 GENERATE[ppc-mont.s]=asm/ppc-mont.pl $(PERLASM_SCHEME)
 GENERATE[ppc64-mont.s]=asm/ppc64-mont.pl $(PERLASM_SCHEME)
 
-GENERATE[alpha-mont.s]=asm/alpha-mont.pl
+GENERATE[alpha-mont.S]=asm/alpha-mont.pl $(PERLASM_SCHEME)
 
 GENERATE[armv4-mont.S]=asm/armv4-mont.pl $(PERLASM_SCHEME)
 INCLUDE[armv4-mont.o]=..

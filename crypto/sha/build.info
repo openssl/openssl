@@ -13,7 +13,7 @@ GENERATE[sha1-ia64.s]=asm/sha1-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
 GENERATE[sha256-ia64.s]=asm/sha512-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
 GENERATE[sha512-ia64.s]=asm/sha512-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
 
-GENERATE[sha1-alpha.s]=asm/sha1-alpha.pl
+GENERATE[sha1-alpha.S]=asm/sha1-alpha.pl $(PERLASM_SCHEME)
 
 GENERATE[sha1-x86_64.s]=asm/sha1-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[sha1-mb-x86_64.s]=asm/sha1-mb-x86_64.pl $(PERLASM_SCHEME)
