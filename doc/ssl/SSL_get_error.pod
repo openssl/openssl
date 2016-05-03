@@ -99,6 +99,16 @@ L<SSL_get_async_wait_fd(3)>. The TLS/SSL I/O function should be called again
 later. The function B<must> be called from the same thread that the original
 call was made from.
 
+=item SSL_ERROR_WANT_ASYNC_JOB
+
+The asynchronous job could not be started because there were no async jobs
+available in the pool (see ASYNC_init_thread(3)). This will only occur if the
+mode has been set to SSL_MODE_ASYNC using L<SSL_CTX_set_mode(3)> or
+L<SSL_set_mode(3)> and a maximum limit has been set on the async job pool
+through a call to L<ASYNC_init_thread(3)>. The application should retry the
+operation after a currently executing asynchronous operation for the current
+thread has completed.
+
 =item SSL_ERROR_SYSCALL
 
 Some I/O error occurred.  The OpenSSL error queue may contain more

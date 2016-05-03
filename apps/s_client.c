@@ -238,6 +238,7 @@ static void do_ssl_shutdown(SSL *ssl)
             case SSL_ERROR_WANT_READ:
             case SSL_ERROR_WANT_WRITE:
             case SSL_ERROR_WANT_ASYNC:
+            case SSL_ERROR_WANT_ASYNC_JOB:
                 /* We just do busy waiting. Nothing clever */
                 continue;
             }
@@ -2360,6 +2361,8 @@ int s_client_main(int argc, char **argv)
                     write_ssl = 0;
                 }
                 break;
+            case SSL_ERROR_WANT_ASYNC_JOB:
+                /* This shouldn't ever happen in s_client - treat as an error */
             case SSL_ERROR_SSL:
                 ERR_print_errors(bio_err);
                 goto shut;
@@ -2446,6 +2449,8 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_c_out, "closed\n");
                 ret = 0;
                 goto shut;
+            case SSL_ERROR_WANT_ASYNC_JOB:
+                /* This shouldn't ever happen in s_client. Treat as an error */
             case SSL_ERROR_SSL:
                 ERR_print_errors(bio_err);
                 goto shut;

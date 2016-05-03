@@ -1516,6 +1516,9 @@ static int ssl_start_async_job(SSL *s, struct ssl_async_args *args,
     case ASYNC_PAUSE:
         s->rwstate = SSL_ASYNC_PAUSED;
         return -1;
+    case ASYNC_NO_JOBS:
+        s->rwstate = SSL_ASYNC_NO_JOBS;
+        return -1;
     case ASYNC_FINISH:
         s->job = NULL;
         return ret;
@@ -2939,56 +2942,61 @@ int SSL_get_error(const SSL *s, int i)
             return (SSL_ERROR_SSL);
     }
 
-    if ((i < 0) && SSL_want_read(s)) {
-        bio = SSL_get_rbio(s);
-        if (BIO_should_read(bio))
-            return (SSL_ERROR_WANT_READ);
-        else if (BIO_should_write(bio))
-            /*
-             * This one doesn't make too much sense ... We never try to write
-             * to the rbio, and an application program where rbio and wbio
-             * are separate couldn't even know what it should wait for.
-             * However if we ever set s->rwstate incorrectly (so that we have
-             * SSL_want_read(s) instead of SSL_want_write(s)) and rbio and
-             * wbio *are* the same, this test works around that bug; so it
-             * might be safer to keep it.
-             */
-            return (SSL_ERROR_WANT_WRITE);
-        else if (BIO_should_io_special(bio)) {
-            reason = BIO_get_retry_reason(bio);
-            if (reason == BIO_RR_CONNECT)
-                return (SSL_ERROR_WANT_CONNECT);
-            else if (reason == BIO_RR_ACCEPT)
-                return (SSL_ERROR_WANT_ACCEPT);
-            else
-                return (SSL_ERROR_SYSCALL); /* unknown */
+    if (i < 0) {
+        if (SSL_want_read(s)) {
+            bio = SSL_get_rbio(s);
+            if (BIO_should_read(bio))
+                return (SSL_ERROR_WANT_READ);
+            else if (BIO_should_write(bio))
+                /*
+                 * This one doesn't make too much sense ... We never try to write
+                 * to the rbio, and an application program where rbio and wbio
+                 * are separate couldn't even know what it should wait for.
+                 * However if we ever set s->rwstate incorrectly (so that we have
+                 * SSL_want_read(s) instead of SSL_want_write(s)) and rbio and
+                 * wbio *are* the same, this test works around that bug; so it
+                 * might be safer to keep it.
+                 */
+                return (SSL_ERROR_WANT_WRITE);
+            else if (BIO_should_io_special(bio)) {
+                reason = BIO_get_retry_reason(bio);
+                if (reason == BIO_RR_CONNECT)
+                    return (SSL_ERROR_WANT_CONNECT);
+                else if (reason == BIO_RR_ACCEPT)
+                    return (SSL_ERROR_WANT_ACCEPT);
+                else
+                    return (SSL_ERROR_SYSCALL); /* unknown */
+            }
         }
-    }
 
-    if ((i < 0) && SSL_want_write(s)) {
-        bio = SSL_get_wbio(s);
-        if (BIO_should_write(bio))
-            return (SSL_ERROR_WANT_WRITE);
-        else if (BIO_should_read(bio))
-            /*
-             * See above (SSL_want_read(s) with BIO_should_write(bio))
-             */
-            return (SSL_ERROR_WANT_READ);
-        else if (BIO_should_io_special(bio)) {
-            reason = BIO_get_retry_reason(bio);
-            if (reason == BIO_RR_CONNECT)
-                return (SSL_ERROR_WANT_CONNECT);
-            else if (reason == BIO_RR_ACCEPT)
-                return (SSL_ERROR_WANT_ACCEPT);
-            else
-                return (SSL_ERROR_SYSCALL);
+        if (SSL_want_write(s)) {
+            bio = SSL_get_wbio(s);
+            if (BIO_should_write(bio))
+                return (SSL_ERROR_WANT_WRITE);
+            else if (BIO_should_read(bio))
+                /*
+                 * See above (SSL_want_read(s) with BIO_should_write(bio))
+                 */
+                return (SSL_ERROR_WANT_READ);
+            else if (BIO_should_io_special(bio)) {
+                reason = BIO_get_retry_reason(bio);
+                if (reason == BIO_RR_CONNECT)
+                    return (SSL_ERROR_WANT_CONNECT);
+                else if (reason == BIO_RR_ACCEPT)
+                    return (SSL_ERROR_WANT_ACCEPT);
+                else
+                    return (SSL_ERROR_SYSCALL);
+            }
         }
-    }
-    if ((i < 0) && SSL_want_x509_lookup(s)) {
-        return (SSL_ERROR_WANT_X509_LOOKUP);
-    }
-    if ((i < 0) && SSL_want_async(s)) {
-        return SSL_ERROR_WANT_ASYNC;
+        if (SSL_want_x509_lookup(s)) {
+            return (SSL_ERROR_WANT_X509_LOOKUP);
+        }
+        if (SSL_want_async(s)) {
+            return SSL_ERROR_WANT_ASYNC;
+        }
+        if (SSL_want_async_job(s)) {
+            return SSL_ERROR_WANT_ASYNC_JOB;
+        }
     }
 
     if (i == 0) {
