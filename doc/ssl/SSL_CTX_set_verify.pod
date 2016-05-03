@@ -256,7 +256,7 @@ L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
   */
  mydata.verify_depth = verify_depth; ...
  SSL_set_ex_data(ssl, mydata_index, &mydata);
-					     
+
  ...
  SSL_accept(ssl);	/* check of success left out for clarity */
  if (peer = SSL_get_peer_certificate(ssl))

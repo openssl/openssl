@@ -223,8 +223,8 @@ int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen)
         if (datalen > BLAKE2S_BLOCKBYTES)  {
             size_t stashlen = datalen % BLAKE2S_BLOCKBYTES;
             /*
-	     * If |datalen| is a multiple of the blocksize, stash
-	     * last complete block, it can be final one...
+             * If |datalen| is a multiple of the blocksize, stash
+             * last complete block, it can be final one...
              */
             stashlen = stashlen ? stashlen : BLAKE2S_BLOCKBYTES;
             datalen -= stashlen;

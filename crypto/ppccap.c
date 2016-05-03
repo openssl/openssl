@@ -225,7 +225,7 @@ void OPENSSL_cpuid_setup(void)
         unsigned long hwcap = getauxval(HWCAP);
 
         if (hwcap & HWCAP_FPU) {
-	    OPENSSL_ppccap_P |= PPC_FPU;
+            OPENSSL_ppccap_P |= PPC_FPU;
 
             if (sizeof(size_t) == 4) {
                 /* In 32-bit case PPC_FPU64 is always fastest [if option] */

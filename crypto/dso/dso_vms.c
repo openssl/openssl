@@ -150,7 +150,7 @@ static int vms_load(DSO *dso)
 # endif                         /* __INITIAL_POINTER_SIZE == 64 */
 
     const char *sp1, *sp2;      /* Search result */
-    const char *ext = NULL;	/* possible extension to add */
+    const char *ext = NULL;     /* possible extension to add */
 
     if (filename == NULL) {
         DSOerr(DSO_F_VMS_LOAD, DSO_R_NO_FILENAME);

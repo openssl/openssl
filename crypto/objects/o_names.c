@@ -23,7 +23,7 @@
 #if defined(OPENSSL_SYS_VMS_DECC) || defined(OPENSSL_SYS_UEFI)
 static int obj_strcmp(const char *a, const char *b)
 {
-	return strcmp(a, b);
+    return strcmp(a, b);
 }
 #else
 #define obj_strcmp strcmp
