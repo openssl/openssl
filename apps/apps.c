@@ -570,9 +570,9 @@ int app_load_modules(const CONF *config)
     CONF *to_free = NULL;
 
     if (config == NULL)
-	config = to_free = app_load_config_quiet(default_config_file);
+        config = to_free = app_load_config_quiet(default_config_file);
     if (config == NULL)
-	return 1;
+        return 1;
 
     if (CONF_modules_load(config, NULL, 0) <= 0) {
         BIO_printf(bio_err, "Error configuring OpenSSL modules\n");

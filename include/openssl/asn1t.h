@@ -228,7 +228,7 @@ extern "C" {
         ASN1_ITEM_end(tname)
 # define static_ASN1_NDEF_SEQUENCE_END(tname) \
         ;\
-        static_ASN1_ITEM_start(tname)			\
+        static_ASN1_ITEM_start(tname) \
                 ASN1_ITYPE_NDEF_SEQUENCE,\
                 V_ASN1_SEQUENCE,\
                 tname##_seq_tt,\
@@ -240,7 +240,7 @@ extern "C" {
 
 # define ASN1_BROKEN_SEQUENCE_END(stname) ASN1_SEQUENCE_END_ref(stname, stname)
 # define static_ASN1_BROKEN_SEQUENCE_END(stname) \
-	static_ASN1_SEQUENCE_END_ref(stname, stname)
+        static_ASN1_SEQUENCE_END_ref(stname, stname)
 
 # define ASN1_SEQUENCE_END_enc(stname, tname) ASN1_SEQUENCE_END_ref(stname, tname)
 

@@ -913,9 +913,9 @@ int SSL_dane_enable(SSL *s, const char *basedomain)
      * invalid input, set the SNI name first.
      */
     if (s->tlsext_hostname == NULL) {
-	if (!SSL_set_tlsext_host_name(s, basedomain)) {
+        if (!SSL_set_tlsext_host_name(s, basedomain)) {
             SSLerr(SSL_F_SSL_DANE_ENABLE, SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN);
-	    return -1;
+            return -1;
         }
     }
 
@@ -1759,8 +1759,8 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         }
     case SSL_CTRL_GET_EXTMS_SUPPORT:
         if (!s->session || SSL_in_init(s) || ossl_statem_get_in_handshake(s))
-		return -1;
-	if (s->session->flags & SSL_SESS_FLAG_EXTMS)
+                return -1;
+        if (s->session->flags & SSL_SESS_FLAG_EXTMS)
             return 1;
         else
             return 0;

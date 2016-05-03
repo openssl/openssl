@@ -616,10 +616,10 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         break;
     case OPT_V_NO_ALT_CHAINS:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_NO_ALT_CHAINS);
-	break;
+        break;
     case OPT_V_NO_CHECK_TIME:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_NO_CHECK_TIME);
-	break;
+        break;
     }
     return 1;
 
