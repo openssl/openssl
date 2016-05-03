@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.1s and 1.0.1t [xx XXX xxxx]
+ Changes between 1.0.1s and 1.0.1t [3 May 2016]
 
   *) Prevent padding oracle in AES-NI CBC MAC check
 
