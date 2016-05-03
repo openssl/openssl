@@ -2,18 +2,14 @@
 
 =head1 NAME
 
-EVP_ENCODE_CTX_new, EVP_ENCODE_CTX_free, EVP_ENCODE_CTX_num, EVP_EncodeInit,
-EVP_EncodeUpdate, EVP_EncodeFinal, EVP_EncodeBlock, EVP_DecodeInit,
-EVP_DecodeUpdate, EVP_DecodeFinal, EVP_DecodeBlock - EVP base 64 encode/decode
-routines
+EVP_EncodeInit, EVP_EncodeUpdate, EVP_EncodeFinal, EVP_EncodeBlock,
+EVP_DecodeInit, EVP_DecodeUpdate, EVP_DecodeFinal, EVP_DecodeBlock - EVP base 64
+encode/decode routines
 
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
 
- EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
- void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
- int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx);
  void EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
  void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
                        const unsigned char *in, int inl);
@@ -36,12 +32,6 @@ bytes of binary data provided 4 bytes of base 64 encoded data will be produced
 plus some occasional newlines (see below). If the input data length is not a
 multiple of 3 then the output data will be padded at the end using the "="
 character.
-
-EVP_ENCODE_CTX_new() allocates, initializes and returns a context to be used for
-the encode/decode functions.
-
-EVP_ENCODE_CTX_free() cleans up an encode/decode context B<ctx> and frees up the
-space allocated to it.
 
 Encoding of binary data is performed in blocks of 48 input bytes (or less for
 the final block). For each 48 byte input block encoded 64 bytes of base 64 data
@@ -74,9 +64,6 @@ data will be stored in B<out> and the length of the data written will be stored
 in B<*outl>. It is the caller's responsibility to ensure that B<out> is
 sufficiently large to accommodate the output data which will never be more than
 65 bytes plus an additional NUL terminator (i.e. 66 bytes in total).
-
-EVP_ENCODE_CTX_num() will return the number of as yet unprocessed bytes still to
-be encoded or decoded that are pending in the B<ctx> object.
 
 EVP_EncodeBlock() encodes a full block of input data in B<f> and of length
 B<dlen> and stores it in B<t>. For every 3 bytes of input provided 4 bytes of
@@ -122,12 +109,6 @@ always 3 bytes for every 4 input bytes. This function will return the length of
 the data decoded or -1 on error.
 
 =head1 RETURN VALUES
-
-EVP_ENCODE_CTX_new() returns a pointer to the newly allocated EVP_ENCODE_CTX
-object or NULL on error.
-
-EVP_ENCODE_CTX_num() returns the number of bytes pending encoding or decoding in
-B<ctx>.
 
 EVP_EncodeBlock() returns the number of bytes encoded excluding the NUL
 terminator.
