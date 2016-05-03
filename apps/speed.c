@@ -2650,20 +2650,20 @@ int speed_main(int argc, char **argv)
                         break;
                     }
                 }
-                if (ecdh_checks != 0) {
-                    pkey_print_message("", "ecdh",
-                            ecdh_c[testnum][0],
-                            test_curves_bits[testnum], ECDH_SECONDS);
-                    Time_F(START);
-                    count = run_benchmark(async_jobs, ECDH_compute_key_loop, loopargs);
-                    d = Time_F(STOP);
-                    BIO_printf(bio_err,
-                            mr ? "+R7:%ld:%d:%.2f\n" :
-                            "%ld %d-bit ECDH ops in %.2fs\n", count,
-                            test_curves_bits[testnum], d);
-                    ecdh_results[testnum][0] = d / (double)count;
-                    rsa_count = count;
-                }
+            }
+            if (ecdh_checks != 0) {
+                pkey_print_message("", "ecdh",
+                        ecdh_c[testnum][0],
+                        test_curves_bits[testnum], ECDH_SECONDS);
+                Time_F(START);
+                count = run_benchmark(async_jobs, ECDH_compute_key_loop, loopargs);
+                d = Time_F(STOP);
+                BIO_printf(bio_err,
+                        mr ? "+R7:%ld:%d:%.2f\n" :
+                        "%ld %d-bit ECDH ops in %.2fs\n", count,
+                        test_curves_bits[testnum], d);
+                ecdh_results[testnum][0] = d / (double)count;
+                rsa_count = count;
             }
         }
 
