@@ -185,9 +185,9 @@ poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit)
         h0 = (u64)(d0 = (u128)h0 + U8TOU64(inp + 0));
         h1 = (u64)(d1 = (u128)h1 + (d0 >> 64) + U8TOU64(inp + 8));
         /*
-	 * padbit can be zero only when original len was
-	 * POLY1306_BLOCK_SIZE, but we don't check
-	 */
+         * padbit can be zero only when original len was
+         * POLY1306_BLOCK_SIZE, but we don't check
+         */
         h2 += (u64)(d1 >> 64) + padbit;
 
         /* h *= r "%" p, where "%" stands for "partial remainder" */
@@ -195,7 +195,7 @@ poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit)
              ((u128)h1 * s1);
         d1 = ((u128)h0 * r1) +
              ((u128)h1 * r0) +
-	     (h2 * s1);
+             (h2 * s1);
         h2 = (h2 * r0);
 
         /* last reduction step: */
@@ -1012,14 +1012,14 @@ int main()
         Poly1305_Init(&poly1305, key);
 
         for (i=0;i<100000;i++)
-	    Poly1305_Update(&poly1305,buf,sizeof(buf));
+            Poly1305_Update(&poly1305,buf,sizeof(buf));
 
-	stopwatch = OPENSSL_rdtsc();
+        stopwatch = OPENSSL_rdtsc();
         for (i=0;i<10000;i++)
-	    Poly1305_Update(&poly1305,buf,sizeof(buf));
-	stopwatch = OPENSSL_rdtsc() - stopwatch;
+            Poly1305_Update(&poly1305,buf,sizeof(buf));
+        stopwatch = OPENSSL_rdtsc() - stopwatch;
 
-	printf("%g\n",stopwatch/(double)(i*sizeof(buf)));
+        printf("%g\n",stopwatch/(double)(i*sizeof(buf)));
 
         stopwatch = OPENSSL_rdtsc();
         for (i=0;i<10000;i++) {

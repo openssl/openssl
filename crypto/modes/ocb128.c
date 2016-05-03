@@ -415,7 +415,7 @@ int CRYPTO_ocb128_encrypt(OCB128_CONTEXT *ctx,
 
             /* C_i = Offset_i xor ENCIPHER(K, P_i xor Offset_i) */
             inblock =
-	        (OCB_BLOCK *)(in + ((i - ctx->blocks_processed - 1) * 16));
+                (OCB_BLOCK *)(in + ((i - ctx->blocks_processed - 1) * 16));
             ocb_block16_xor_misaligned(&ctx->offset, inblock, &tmp1);
             /* Checksum_i = Checksum_{i-1} xor P_i */
             ocb_block16_xor_misaligned(&ctx->checksum, inblock, &ctx->checksum);

@@ -625,9 +625,9 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
         }
 
         /*
-	 * row[0] is implicitly (0,0,0) (the point at infinity), therefore it
-	 * is not stored. All other values are actually stored with an offset
-	 * of -1 in table.
+         * row[0] is implicitly (0,0,0) (the point at infinity), therefore it
+         * is not stored. All other values are actually stored with an offset
+         * of -1 in table.
          */
 
         ecp_nistz256_scatter_w5  (row, &temp[0], 1);
