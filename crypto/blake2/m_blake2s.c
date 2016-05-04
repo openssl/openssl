@@ -49,7 +49,7 @@ static const EVP_MD blake2s_md = {
     final,
     NULL,
     NULL,
-    0,
+    BLAKE2S_BLOCKBYTES,
     sizeof(EVP_MD *) + sizeof(BLAKE2S_CTX),
 };
 
