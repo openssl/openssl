@@ -228,19 +228,33 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
                          ntohs(BIO_ADDR_rawport(ap)));
         }
 
-        if (hostname)
+        if (hostname != NULL)
             *hostname = OPENSSL_strdup(host);
-        if (service)
+        if (service != NULL)
             *service = OPENSSL_strdup(serv);
     } else {
 #endif
-        if (hostname)
+        if (hostname != NULL)
             *hostname = OPENSSL_strdup(inet_ntoa(ap->s_in.sin_addr));
-        if (service) {
+        if (service != NULL) {
             char serv[6];        /* port is 16 bits => max 5 decimal digits */
             BIO_snprintf(serv, sizeof(serv), "%d", ntohs(ap->s_in.sin_port));
             *service = OPENSSL_strdup(serv);
         }
+    }
+
+    if ((hostname != NULL && *hostname == NULL)
+            || (service != NULL && *service == NULL)) {
+        if (hostname != NULL) {
+            OPENSSL_free(*hostname);
+            *hostname = NULL;
+        }
+        if (service != NULL) {
+            OPENSSL_free(*service);
+            *service = NULL;
+        }
+        BIOerr(BIO_F_ADDR_STRINGS, ERR_R_MALLOC_FAILURE);
+        return 0;
     }
 
     return 1;
