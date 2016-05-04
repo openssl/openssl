@@ -128,7 +128,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 #endif
     v = EVP_MD_block_size(md_type);
     u = EVP_MD_size(md_type);
-    if (u < 0)
+    if (u < 0 || v <= 0)
         goto err;
     D = OPENSSL_malloc(v);
     Ai = OPENSSL_malloc(u);
