@@ -536,8 +536,13 @@ UI_METHOD *UI_create_method(char *name)
 {
     UI_METHOD *ui_method = OPENSSL_zalloc(sizeof(*ui_method));
 
-    if (ui_method != NULL)
+    if (ui_method != NULL) {
         ui_method->name = OPENSSL_strdup(name);
+        if (ui_method->name == NULL) {
+            OPENSSL_free(ui_method);
+            return NULL;
+        }
+    }
     return ui_method;
 }
 

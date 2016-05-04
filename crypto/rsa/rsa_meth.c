@@ -16,6 +16,10 @@ RSA_METHOD *RSA_meth_new(const char *name, int flags)
 
     if (meth != NULL) {
         meth->name = OPENSSL_strdup(name);
+        if (meth->name == NULL) {
+            OPENSSL_free(meth);
+            return NULL;
+        }
         meth->flags = flags;
     }
 
@@ -40,6 +44,10 @@ RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth)
     if (ret != NULL) {
         memcpy(ret, meth, sizeof(*meth));
         ret->name = OPENSSL_strdup(meth->name);
+        if (ret->name == NULL) {
+            OPENSSL_free(ret);
+            return NULL;
+        }
     }
 
     return ret;
@@ -52,10 +60,16 @@ const char *RSA_meth_get0_name(const RSA_METHOD *meth)
 
 int RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
 {
-    OPENSSL_free(meth->name);
-    meth->name = OPENSSL_strdup(name);
+    char *tmpname;
 
-    return meth->name != NULL;
+    tmpname = OPENSSL_strdup(name);
+    if (tmpname == NULL)
+        return 0;
+
+    OPENSSL_free(meth->name);
+    meth->name = tmpname;
+
+    return 1;
 }
 
 int RSA_meth_get_flags(RSA_METHOD *meth)
