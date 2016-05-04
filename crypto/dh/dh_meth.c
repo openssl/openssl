@@ -16,6 +16,10 @@ DH_METHOD *DH_meth_new(const char *name, int flags)
 
     if (dhm != NULL) {
         dhm->name = OPENSSL_strdup(name);
+        if (dhm->name == NULL) {
+            OPENSSL_free(dhm);
+            return NULL;
+        }
         dhm->flags = flags;
     }
 
@@ -40,6 +44,10 @@ DH_METHOD *DH_meth_dup(const DH_METHOD *dhm)
     if (ret != NULL) {
         memcpy(ret, dhm, sizeof(*dhm));
         ret->name = OPENSSL_strdup(dhm->name);
+        if (ret->name == NULL) {
+            OPENSSL_free(ret);
+            return NULL;
+        }
     }
 
     return ret;
@@ -52,10 +60,16 @@ const char *DH_meth_get0_name(const DH_METHOD *dhm)
 
 int DH_meth_set1_name(DH_METHOD *dhm, const char *name)
 {
-    OPENSSL_free(dhm->name);
-    dhm->name = OPENSSL_strdup(name);
+    char *tmpname;
 
-    return dhm->name != NULL;
+    tmpname = OPENSSL_strdup(name);
+    if (tmpname == NULL)
+        return 0;
+
+    OPENSSL_free(dhm->name);
+    dhm->name = tmpname;
+
+    return 1;
 }
 
 int DH_meth_get_flags(DH_METHOD *dhm)
