@@ -195,6 +195,8 @@ int init_client(int *sock, const char *host, const char *port,
     if (*sock == INVALID_SOCKET) {
         ERR_print_errors(bio_err);
     } else {
+        /* Remove any stale errors from previous connection attempts */
+        ERR_clear_error();
         ret = 1;
     }
     BIO_ADDRINFO_free(res);
