@@ -314,6 +314,7 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 {
     int i, flags;
     const char *sname, *fname;
+    ASN1_VALUE *tfld;
     flags = tt->flags;
     if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_FIELD_STRUCT_NAME)
         sname = ASN1_ITEM_ptr(tt->item)->sname;
@@ -323,6 +324,16 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
         fname = NULL;
     else
         fname = tt->field_name;
+
+    /*
+     * If field is embedded then fld needs fixing so it is a pointer to
+     * a pointer to a field.
+     */
+    if (flags & ASN1_TFLG_EMBED) {
+        tfld = (ASN1_VALUE *)fld;
+        fld = &tfld;
+    }
+
     if (flags & ASN1_TFLG_SK_MASK) {
         char *tname;
         ASN1_VALUE *skitem;
