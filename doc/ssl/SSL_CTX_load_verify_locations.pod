@@ -2,8 +2,9 @@
 
 =head1 NAME
 
-SSL_CTX_load_verify_locations - set default locations for trusted CA
-certificates
+SSL_CTX_load_verify_locations, SSL_CTX_set_default_verify_paths,
+SSL_CTX_set_default_verify_dir, SSL_CTX_set_default_verify_file - set
+default locations for trusted CA certificates
 
 =head1 SYNOPSIS
 
