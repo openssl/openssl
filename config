@@ -134,10 +134,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	esac
 	;;
 
-    IRIX:5.*)
-	echo "mips2-sgi-irix"; exit 0
-	;;
-
     IRIX:6.*)
 	echo "mips3-sgi-irix"; exit 0
 	;;
@@ -460,14 +456,6 @@ case "$GUESSOS" in
 	;;
   uClinux*)
     OUT=uClinux-dist
-	;;
-  mips2-sgi-irix)
-	CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
-	CPU=${CPU:-0}
-	if [ $CPU -ge 4000 ]; then
-		options="$options -mips2"
-	fi
-	OUT="irix-$CC"
 	;;
   mips3-sgi-irix)
 	#CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`

@@ -4,6 +4,9 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Remove support for MIPS o32 ABI on IRIX (and IRIX only).
+     [Andy Polyakov]
+
   *) Triple-DES ciphers have been moved from HIGH to MEDIUM.
      [Rich Salz]
 
