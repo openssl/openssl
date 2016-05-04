@@ -295,6 +295,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     int ret = 1;
     CAPI_CTX *ctx;
     BIO *out;
+    LPSTR tmpstr;
     if (capi_idx == -1) {
         CAPIerr(CAPI_F_CAPI_CTRL, CAPI_R_ENGINE_NOT_INITIALIZED);
         return 0;
@@ -323,9 +324,15 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         break;
 
     case CAPI_CMD_STORE_NAME:
-        OPENSSL_free(ctx->storename);
-        ctx->storename = OPENSSL_strdup(p);
-        CAPI_trace(ctx, "Setting store name to %s\n", p);
+        tmpstr = OPENSSL_strdup(p);
+        if (tmpstr != NULL) {
+            OPENSSL_free(ctx->storename);
+            ctx->storename = tmpstr;
+            CAPI_trace(ctx, "Setting store name to %s\n", p);
+        } else {
+            CAPIerr(CAPI_F_CAPI_CTRL, ERR_R_MALLOC_FAILURE);
+            ret = 0;
+        }
         break;
 
     case CAPI_CMD_STORE_FLAGS:
@@ -345,8 +352,14 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         break;
 
     case CAPI_CMD_DEBUG_FILE:
-        ctx->debug_file = OPENSSL_strdup(p);
-        CAPI_trace(ctx, "Setting debug file to %s\n", ctx->debug_file);
+        tmpstr = OPENSSL_strdup(p);
+        if (tmpstr != NULL) {
+            ctx->debug_file = tmpstr;
+            CAPI_trace(ctx, "Setting debug file to %s\n", ctx->debug_file);
+        } else {
+            CAPIerr(CAPI_F_CAPI_CTRL, ERR_R_MALLOC_FAILURE);
+            ret = 0;
+        }
         break;
 
     case CAPI_CMD_KEYTYPE:
@@ -1625,6 +1638,8 @@ static void capi_ctx_free(CAPI_CTX * ctx)
 static int capi_ctx_set_provname(CAPI_CTX * ctx, LPSTR pname, DWORD type,
                                  int check)
 {
+    LPSTR tmpcspname;
+
     CAPI_trace(ctx, "capi_ctx_set_provname, name=%s, type=%d\n", pname, type);
     if (check) {
         HCRYPTPROV hprov;
@@ -1648,8 +1663,13 @@ static int capi_ctx_set_provname(CAPI_CTX * ctx, LPSTR pname, DWORD type,
         }
         CryptReleaseContext(hprov, 0);
     }
+    tmpcspname = OPENSSL_strdup(pname);
+    if (tmpcspname == NULL) {
+        CAPIerr(CAPI_F_CAPI_CTX_SET_PROVNAME, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
     OPENSSL_free(ctx->cspname);
-    ctx->cspname = OPENSSL_strdup(pname);
+    ctx->cspname = tmpcspname;
     ctx->csptype = type;
     return 1;
 }
