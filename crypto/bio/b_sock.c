@@ -311,10 +311,20 @@ int BIO_accept(int sock, char **ip_port)
     if (ip_port != NULL) {
         char *host = BIO_ADDR_hostname_string(&res, 1);
         char *port = BIO_ADDR_service_string(&res, 1);
-        *ip_port = OPENSSL_zalloc(strlen(host) + strlen(port) + 2);
-        strcpy(*ip_port, host);
-        strcat(*ip_port, ":");
-        strcat(*ip_port, port);
+        if (host != NULL && port != NULL)
+            *ip_port = OPENSSL_zalloc(strlen(host) + strlen(port) + 2);
+        else
+            *ip_port = NULL;
+
+        if (*ip_port == NULL) {
+            BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
+            BIO_closesocket(ret);
+            ret = (int)INVALID_SOCKET;
+        } else {
+            strcpy(*ip_port, host);
+            strcat(*ip_port, ":");
+            strcat(*ip_port, port);
+        }
         OPENSSL_free(host);
         OPENSSL_free(port);
     }
