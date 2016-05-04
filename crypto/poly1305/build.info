@@ -12,6 +12,7 @@ GENERATE[poly1305-armv4.S]=asm/poly1305-armv4.pl $(PERLASM_SCHEME)
 INCLUDE[poly1305-armv4.o]=..
 GENERATE[poly1305-armv8.S]=asm/poly1305-armv8.pl $(PERLASM_SCHEME)
 INCLUDE[poly1305-armv8.o]=..
+GENERATE[poly1305-mips.S]=asm/poly1305-mips.pl $(PERLASM_SCHEME)
 
 BEGINRAW[Makefile(unix)]
 {- $builddir -}/poly1305-%.S:	{- $sourcedir -}/asm/poly1305-%.pl
