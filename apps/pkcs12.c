@@ -832,6 +832,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
     EVP_PKEY *pkey;
     PKCS8_PRIV_KEY_INFO *p8;
     X509 *x509;
+    int ret = 0;
 
     switch (M_PKCS12_bag_type(bag)) {
     case NID_keyBag:
@@ -844,7 +845,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         if (!(pkey = EVP_PKCS82PKEY(p8)))
             return 0;
         print_attribs(out, p8->attributes, "Key Attributes");
-        PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, pempass);
+        ret = PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, pempass);
         EVP_PKEY_free(pkey);
         break;
 
@@ -864,7 +865,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         }
         print_attribs(out, p8->attributes, "Key Attributes");
         PKCS8_PRIV_KEY_INFO_free(p8);
-        PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, pempass);
+        ret = PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, pempass);
         EVP_PKEY_free(pkey);
         break;
 
@@ -884,7 +885,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         if (!(x509 = PKCS12_certbag2x509(bag)))
             return 0;
         dump_cert_text(out, x509);
-        PEM_write_bio_X509(out, x509);
+        ret = PEM_write_bio_X509(out, x509);
         X509_free(x509);
         break;
 
@@ -902,7 +903,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         return 1;
         break;
     }
-    return 1;
+    return ret;
 }
 
 /* Given a single certificate return a verified chain or NULL if error */
