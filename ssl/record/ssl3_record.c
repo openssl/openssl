@@ -1299,7 +1299,6 @@ void ssl3_cbc_copy_mac(unsigned char *out,
      */
     unsigned scan_start = 0;
     unsigned i, j;
-    unsigned div_spoiler;
     unsigned rotate_offset;
 
     OPENSSL_assert(rec->orig_len >= md_size);
@@ -1312,17 +1311,92 @@ void ssl3_cbc_copy_mac(unsigned char *out,
     /* This information is public so it's safe to branch based on it. */
     if (rec->orig_len > md_size + 255 + 1)
         scan_start = rec->orig_len - (md_size + 255 + 1);
+
     /*
-     * div_spoiler contains a multiple of md_size that is used to cause the
-     * modulo operation to be constant time. Without this, the time varies
-     * based on the amount of padding when running on Intel chips at least.
-     * The aim of right-shifting md_size is so that the compiler doesn't
-     * figure out that it can remove div_spoiler as that would require it to
-     * prove that md_size is always even, which I hope is beyond it.
+     * Ideally the next statement would be:
+     *   rotate_offset = (mac_start - scan_start) % md_size;
+     *
+     * However, division is not a constant-time operation (at least on Intel
+     * chips). Thus we enumerate the possible values of md_size and handle each
+     * separately. The value of |md_size| is public information (it's determined
+     * by the cipher suite in the ServerHello) so our timing can vary based on
+     * its value.
      */
-    div_spoiler = md_size >> 1;
-    div_spoiler <<= (sizeof(div_spoiler) - 1) * 8;
-    rotate_offset = (div_spoiler + mac_start - scan_start) % md_size;
+
+    rotate_offset = mac_start - scan_start;
+    /*
+     * rotate_offset can be, at most, 255 (bytes of padding) + 1 (padding
+     * length) + md_size = 256 + 48 (since SHA-384 is the largest hash) = 304.
+     *
+     * Here is an SMT-LIB2 verification that the Barrett reductions below are
+     * correct within this range:
+     *
+     * (define-fun barrett (
+     *     (x (_ BitVec 32))
+     *     (mul (_ BitVec 32))
+     *     (shift (_ BitVec 32))
+     *     (divisor (_ BitVec 32)) ) (_ BitVec 32)
+     *   (let ((q (bvsub x (bvmul divisor (bvlshr (bvmul x mul) shift)))))
+     *     (ite (bvuge q divisor)
+     *       (bvsub q divisor)
+     *       q)))
+     *
+     * (declare-fun x () (_ BitVec 32))
+     *
+     * (assert (or
+     *   (let (
+     *     (divisor (_ bv20 32))
+     *     (mul (_ bv25 32))
+     *     (shift (_ bv9 32))
+     *     (limit (_ bv853 32)))
+     *
+     *     (and (bvule x limit) (not (= (bvurem x divisor)
+     *                                  (barrett x mul shift divisor)))))
+     *
+     *   (let (
+     *     (divisor (_ bv48 32))
+     *     (mul (_ bv10 32))
+     *     (shift (_ bv9 32))
+     *     (limit (_ bv768 32)))
+     *
+     *     (and (bvule x limit) (not (= (bvurem x divisor)
+     *                                  (barrett x mul shift divisor)))))
+     * ))
+     *
+     * (check-sat)
+     * (get-model)
+     */
+
+    if (md_size == 16) {
+        rotate_offset &= 15;
+    } else if (md_size == 20) {
+        /*
+         * 1/20 is approximated as 25/512 and then Barrett reduction is used.
+         * Analytically, this is correct for 0 <= rotate_offset <= 853.
+         */
+        unsigned q = (rotate_offset * 25) >> 9;
+        rotate_offset -= q * 20;
+        rotate_offset -=
+            constant_time_select(constant_time_ge(rotate_offset, 20), 20, 0);
+    } else if (md_size == 32) {
+        rotate_offset &= 31;
+    } else if (md_size == 48) {
+        /*
+         * 1/48 is approximated as 10/512 and then Barrett reduction is used.
+         * Analytically, this is correct for 0 <= rotate_offset <= 768.
+         */
+        unsigned q = (rotate_offset * 10) >> 9;
+        rotate_offset -= q * 48;
+        rotate_offset -=
+            constant_time_select(constant_time_ge(rotate_offset, 48), 48, 0);
+    } else {
+        /*
+         * This should be impossible therefore this path doesn't run in constant
+         * time.
+         */
+        OPENSSL_assert(0);
+        rotate_offset = rotate_offset % md_size;
+    }
 
     memset(rotated_mac, 0, md_size);
     for (i = scan_start, j = 0; i < rec->orig_len; i++) {
