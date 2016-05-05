@@ -942,11 +942,11 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data,
         0x02, 0x03,             /* SHA-1/ECDSA */
     };
 
-    if (data >= (limit - 2))
+    if (limit - data <= 2)
         return;
     data += 2;
 
-    if (data > (limit - 4))
+    if (limit - data < 4)
         return;
     n2s(data, type);
     n2s(data, size);
@@ -954,7 +954,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data,
     if (type != TLSEXT_TYPE_server_name)
         return;
 
-    if (data + size > limit)
+    if (limit - data < size)
         return;
     data += size;
 
@@ -962,7 +962,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data,
         const size_t len1 = sizeof(kSafariExtensionsBlock);
         const size_t len2 = sizeof(kSafariTLS12ExtensionsBlock);
 
-        if (data + len1 + len2 != limit)
+        if (limit - data != (int)(len1 + len2))
             return;
         if (memcmp(data, kSafariExtensionsBlock, len1) != 0)
             return;
@@ -971,7 +971,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data,
     } else {
         const size_t len = sizeof(kSafariExtensionsBlock);
 
-        if (data + len != limit)
+        if (limit - data != (int)(len))
             return;
         if (memcmp(data, kSafariExtensionsBlock, len) != 0)
             return;
@@ -1019,19 +1019,19 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p,
     if (data == limit)
         goto ri_check;
 
-    if (data > (limit - 2))
+    if (limit - data < 2)
         goto err;
 
     n2s(data, len);
 
-    if (data + len != limit)
+    if (limit - data != len)
         goto err;
 
-    while (data <= (limit - 4)) {
+    while (limit - data >= 4) {
         n2s(data, type);
         n2s(data, size);
 
-        if (data + size > (limit))
+        if (limit - data < size)
             goto err;
 # if 0
         fprintf(stderr, "Received extension type %d size %d\n", type, size);
@@ -1460,20 +1460,20 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
                              SSL_TLSEXT_HB_DONT_SEND_REQUESTS);
 # endif
 
-    if (data >= (d + n - 2))
+    if ((d + n) - data <= 2)
         goto ri_check;
 
     n2s(data, length);
-    if (data + length != d + n) {
+    if ((d + n) - data != length) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
-    while (data <= (d + n - 4)) {
+    while ((d + n) - data >= 4) {
         n2s(data, type);
         n2s(data, size);
 
-        if (data + size > (d + n))
+        if ((d + n) - data < size)
             goto ri_check;
 
         if (s->tlsext_debug_cb)
@@ -2179,29 +2179,33 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
     /* Skip past DTLS cookie */
     if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER) {
         i = *(p++);
-        p += i;
-        if (p >= limit)
+
+        if (limit - p <= i)
             return -1;
+
+        p += i;
     }
     /* Skip past cipher list */
     n2s(p, i);
-    p += i;
-    if (p >= limit)
+    if (limit - p <= i)
         return -1;
+    p += i;
+
     /* Skip past compression algorithm list */
     i = *(p++);
-    p += i;
-    if (p > limit)
+    if (limit - p < i)
         return -1;
+    p += i;
+
     /* Now at start of extensions */
-    if ((p + 2) >= limit)
+    if (limit - p <= 2)
         return 0;
     n2s(p, i);
-    while ((p + 4) <= limit) {
+    while (limit - p >= 4) {
         unsigned short type, size;
         n2s(p, type);
         n2s(p, size);
-        if (p + size > limit)
+        if (limit - p < size)
             return 0;
         if (type == TLSEXT_TYPE_session_ticket) {
             int r;
