@@ -105,18 +105,19 @@ int PKCS12_newpass(PKCS12 *p12, char *oldpass, char *newpass)
 
 static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 {
-    STACK_OF(PKCS7) *asafes, *newsafes;
-    STACK_OF(PKCS12_SAFEBAG) *bags;
+    STACK_OF(PKCS7) *asafes = NULL, *newsafes = NULL;
+    STACK_OF(PKCS12_SAFEBAG) *bags = NULL;
     int i, bagnid, pbe_nid = 0, pbe_iter = 0, pbe_saltlen = 0;
     PKCS7 *p7, *p7new;
     ASN1_OCTET_STRING *p12_data_tmp = NULL, *macoct = NULL;
     unsigned char mac[EVP_MAX_MD_SIZE];
     unsigned int maclen;
+    int rv = 0;
 
     if ((asafes = PKCS12_unpack_authsafes(p12)) == NULL)
-        return 0;
+        goto err;
     if ((newsafes = sk_PKCS7_new_null()) == NULL)
-        return 0;
+        goto err;
     for (i = 0; i < sk_PKCS7_num(asafes); i++) {
         p7 = sk_PKCS7_value(asafes, i);
         bagnid = OBJ_obj2nid(p7->type);
@@ -125,59 +126,55 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
         } else if (bagnid == NID_pkcs7_encrypted) {
             bags = PKCS12_unpack_p7encdata(p7, oldpass, -1);
             if (!alg_get(p7->d.encrypted->enc_data->algorithm,
-                         &pbe_nid, &pbe_iter, &pbe_saltlen)) {
-                sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-                bags = NULL;
-            }
-        } else
+                         &pbe_nid, &pbe_iter, &pbe_saltlen))
+                goto err;
+        } else {
             continue;
-        if (!bags) {
-            sk_PKCS7_pop_free(asafes, PKCS7_free);
-            return 0;
         }
-        if (!newpass_bags(bags, oldpass, newpass)) {
-            sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-            sk_PKCS7_pop_free(asafes, PKCS7_free);
-            return 0;
-        }
+        if (bags == NULL)
+            goto err;
+        if (!newpass_bags(bags, oldpass, newpass))
+            goto err;
         /* Repack bag in same form with new password */
         if (bagnid == NID_pkcs7_data)
             p7new = PKCS12_pack_p7data(bags);
         else
             p7new = PKCS12_pack_p7encdata(pbe_nid, newpass, -1, NULL,
                                           pbe_saltlen, pbe_iter, bags);
+        if (!p7new || !sk_PKCS7_push(newsafes, p7new))
+            goto err;
         sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-        if (!p7new) {
-            sk_PKCS7_pop_free(asafes, PKCS7_free);
-            return 0;
-        }
-        sk_PKCS7_push(newsafes, p7new);
+        bags = NULL;
     }
-    sk_PKCS7_pop_free(asafes, PKCS7_free);
 
     /* Repack safe: save old safe in case of error */
 
     p12_data_tmp = p12->authsafes->d.data;
     if ((p12->authsafes->d.data = ASN1_OCTET_STRING_new()) == NULL)
-        goto saferr;
+        goto err;
     if (!PKCS12_pack_authsafes(p12, newsafes))
-        goto saferr;
+        goto err;
 
     if (!PKCS12_gen_mac(p12, newpass, -1, mac, &maclen))
-        goto saferr;
+        goto err;
     X509_SIG_get0(NULL, &macoct, p12->mac->dinfo);
     if (!ASN1_OCTET_STRING_set(macoct, mac, maclen))
-        goto saferr;
-    ASN1_OCTET_STRING_free(p12_data_tmp);
+        goto err;
 
-    return 1;
+    rv = 1;
 
- saferr:
-    /* Restore old safe */
-    ASN1_OCTET_STRING_free(p12->authsafes->d.data);
-    p12->authsafes->d.data = p12_data_tmp;
-    return 0;
-
+err:
+    /* Restore old safe if necessary */
+    if (rv == 1) {
+        ASN1_OCTET_STRING_free(p12_data_tmp);
+    } else if (p12_data_tmp != NULL) {
+        ASN1_OCTET_STRING_free(p12->authsafes->d.data);
+        p12->authsafes->d.data = p12_data_tmp;
+    }
+    sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
+    sk_PKCS7_pop_free(asafes, PKCS7_free);
+    sk_PKCS7_pop_free(newsafes, PKCS7_free);
+    return rv;
 }
 
 static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass,
@@ -208,8 +205,10 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
     X509_SIG_get0(&shalg, NULL, bag->value.shkeybag);
     if (!alg_get(shalg, &p8_nid, &p8_iter, &p8_saltlen))
         return 0;
-    if ((p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
-                                p8_iter, p8)) == NULL)
+    p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
+                          p8_iter, p8);
+    PKCS8_PRIV_KEY_INFO_free(p8);
+    if (p8new == NULL)
         return 0;
     X509_SIG_free(bag->value.shkeybag);
     bag->value.shkeybag = p8new;
