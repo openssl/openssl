@@ -112,6 +112,17 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
     return 1;
 }
 
+static void pkey_dh_cleanup(EVP_PKEY_CTX *ctx)
+{
+    DH_PKEY_CTX *dctx = ctx->data;
+    if (dctx != NULL) {
+        OPENSSL_free(dctx->kdf_ukm);
+        ASN1_OBJECT_free(dctx->kdf_oid);
+        OPENSSL_free(dctx);
+    }
+}
+
+
 static int pkey_dh_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 {
     DH_PKEY_CTX *dctx, *sctx;
@@ -128,25 +139,17 @@ static int pkey_dh_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 
     dctx->kdf_type = sctx->kdf_type;
     dctx->kdf_oid = OBJ_dup(sctx->kdf_oid);
-    if (!dctx->kdf_oid)
+    if (dctx->kdf_oid == NULL)
         return 0;
     dctx->kdf_md = sctx->kdf_md;
-    if (dctx->kdf_ukm) {
+    if (sctx->kdf_ukm != NULL) {
         dctx->kdf_ukm = OPENSSL_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
+        if (dctx->kdf_ukm == NULL)
+          return 0;
         dctx->kdf_ukmlen = sctx->kdf_ukmlen;
     }
     dctx->kdf_outlen = sctx->kdf_outlen;
     return 1;
-}
-
-static void pkey_dh_cleanup(EVP_PKEY_CTX *ctx)
-{
-    DH_PKEY_CTX *dctx = ctx->data;
-    if (dctx) {
-        OPENSSL_free(dctx->kdf_ukm);
-        ASN1_OBJECT_free(dctx->kdf_oid);
-        OPENSSL_free(dctx);
-    }
 }
 
 static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
