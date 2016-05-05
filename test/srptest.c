@@ -26,7 +26,7 @@ static void showbn(const char *name, const BIGNUM *bn)
 # define RANDOM_SIZE 32         /* use 256 bits on each side */
 
 static int run_srp(const char *username, const char *client_pass,
-                   const char *server_pass)
+                   const char *server_pass, const char *gN)
 {
     int ret = -1;
     BIGNUM *s = NULL;
@@ -41,7 +41,7 @@ static int run_srp(const char *username, const char *client_pass,
     BIGNUM *Kserver = NULL;
     unsigned char rand_tmp[RANDOM_SIZE];
     /* use builtin 1024-bit params */
-    const SRP_gN *GN = SRP_get_default_gN("1024");
+    const SRP_gN *GN = SRP_get_default_gN(gN);
 
     if (GN == NULL) {
         fprintf(stderr, "Failed to get SRP parameters\n");
@@ -131,13 +131,19 @@ int main(int argc, char **argv)
 
 
     /* "Negative" test, expect a mismatch */
-    if (run_srp("alice", "password1", "password2") == 0) {
+    if (run_srp("alice", "password1", "password2", "1024") == 0) {
         fprintf(stderr, "Mismatched SRP run failed\n");
         return 1;
     }
 
     /* "Positive" test, should pass */
-    if (run_srp("alice", "password", "password") != 0) {
+    if (run_srp("alice", "password", "password", "256") != 0) {
+        fprintf(stderr, "Plain SRP run failed\n");
+        return 1;
+    }
+
+    /* "Positive" test, should pass */
+    if (run_srp("alice", "password", "password", "1024") != 0) {
         fprintf(stderr, "Plain SRP run failed\n");
         return 1;
     }
