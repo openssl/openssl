@@ -446,7 +446,7 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     cryp.op = EVP_CIPHER_CTX_encrypting(ctx) ? COP_ENCRYPT : COP_DECRYPT;
 
     if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
-        cryp.iv = *(caddr_t*) EVP_CIPHER_CTX_iv(ctx);
+        cryp.iv = (caddr_t) EVP_CIPHER_CTX_iv(ctx);
         if (!EVP_CIPHER_CTX_encrypting(ctx)) {
             iiv = in + inl - EVP_CIPHER_CTX_iv_length(ctx);
             memcpy(save_iv, iiv, EVP_CIPHER_CTX_iv_length(ctx));
