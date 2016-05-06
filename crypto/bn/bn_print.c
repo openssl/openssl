@@ -187,7 +187,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
     for (i = 0; i <= (INT_MAX/4) && isxdigit((unsigned char)a[i]); i++)
         continue;
 
-    if (i > INT_MAX/4)
+    if (i == 0 || i > INT_MAX/4)
         goto err;
 
     num = i + neg;
@@ -262,7 +262,7 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
     for (i = 0; i <= (INT_MAX/4) && isdigit((unsigned char)a[i]); i++)
         continue;
 
-    if (i > INT_MAX/4)
+    if (i == 0 || i > INT_MAX/4)
         goto err;
 
     num = i + neg;
