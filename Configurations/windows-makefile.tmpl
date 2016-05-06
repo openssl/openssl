@@ -19,10 +19,14 @@
      ? "CommonProgramFiles(x86)" : "CommonProgramW6432";
  our $win_installroot =
      defined($ENV{$win_installenv})
-     ? '%'.$win_installenv.'%' : '%ProgramFiles%';
+     ? $win_installenv : 'ProgramFiles';
  our $win_commonroot =
      defined($ENV{$win_commonenv})
-     ? '%'.$win_commonenv.'%' : '%CommonProgramFiles%';
+     ? $win_commonenv : 'CommonProgramFiles';
+
+ # expand variables early
+ $win_installroot = $ENV{$win_installroot};
+ $win_commonroot = $ENV{$win_commonroot};
 
  sub shlib {
      return () if $disabled{shared};
