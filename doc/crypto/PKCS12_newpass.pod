@@ -8,7 +8,7 @@ PKCS12_newpass - change the password of a PKCS12 structure
 
  #include <openssl/pkcs12.h>
 
- int PKCS12_newpass(PKCS12 *p12, char *oldpass, char *newpass);
+ int PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass);
 
 =head1 DESCRIPTION
 
