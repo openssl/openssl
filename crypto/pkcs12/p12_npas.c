@@ -66,17 +66,18 @@
 
 /* PKCS#12 password change routine */
 
-static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass);
-static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass,
-                        char *newpass);
-static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass);
+static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass);
+static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
+                        const char *newpass);
+static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
+                        const char *newpass);
 static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen);
 
 /*
  * Change the password on a PKCS#12 structure.
  */
 
-int PKCS12_newpass(PKCS12 *p12, char *oldpass, char *newpass)
+int PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass)
 {
     /* Check for NULL PKCS12 structure */
 
@@ -103,7 +104,7 @@ int PKCS12_newpass(PKCS12 *p12, char *oldpass, char *newpass)
 
 /* Parse the outer PKCS#12 structure */
 
-static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
+static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
 {
     STACK_OF(PKCS7) *asafes = NULL, *newsafes = NULL;
     STACK_OF(PKCS12_SAFEBAG) *bags = NULL;
@@ -175,8 +176,8 @@ err:
     return rv;
 }
 
-static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass,
-                        char *newpass)
+static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
+                        const char *newpass)
 {
     int i;
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
@@ -188,7 +189,8 @@ static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass,
 
 /* Change password of safebag: only needs handle shrouded keybags */
 
-static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
+static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
+                       const char *newpass)
 {
     PKCS8_PRIV_KEY_INFO *p8;
     X509_SIG *p8new;
