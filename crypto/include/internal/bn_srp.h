@@ -1,8 +1,6 @@
 
 #ifndef OPENSSL_NO_SRP
 
-extern const BIGNUM bn_group_256;
-
 extern const BIGNUM bn_group_1024;
 
 extern const BIGNUM bn_group_1536;

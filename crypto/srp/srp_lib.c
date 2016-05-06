@@ -328,7 +328,6 @@ static SRP_gN knowngN[] = {
     {"2048", (BIGNUM *)&bn_generator_2, (BIGNUM *)&bn_group_2048},
     {"1536", (BIGNUM *)&bn_generator_2, (BIGNUM *)&bn_group_1536},
     {"1024", (BIGNUM *)&bn_generator_2, (BIGNUM *)&bn_group_1024},
-    {"256", (BIGNUM *)&bn_generator_2, (BIGNUM *)&bn_group_256},
 };
 
 # define KNOWN_GN_NUMBER sizeof(knowngN) / sizeof(SRP_gN)

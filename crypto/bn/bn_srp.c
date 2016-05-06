@@ -47,22 +47,6 @@ const BIGNUM bn_group_1024 = {
     BN_FLG_STATIC_DATA
 };
 
-static const BN_ULONG bn_group_256_value[] = {
-
-    bn_pack4(0xA03A, 0x6819, 0xE21F, 0x8460),
-    bn_pack4(0x97ED, 0x4FFF, 0x6A08, 0x6D9D),
-    bn_pack4(0xBD99, 0xA7E3, 0x7ED4, 0x6079),
-    bn_pack4(0xA0E4, 0x21F7, 0x6A44, 0xDC97)
-};
-
-const BIGNUM bn_group_256 = {
-    (BN_ULONG *)bn_group_256_value,
-    OSSL_NELEM(bn_group_256_value),
-    OSSL_NELEM(bn_group_256_value),
-    0,
-    BN_FLG_STATIC_DATA
-};
-
 static const BN_ULONG bn_group_1536_value[] = {
     bn_pack4(0xCF76, 0xE3FE, 0xD135, 0xF9BB),
     bn_pack4(0x1518, 0x0F93, 0x499A, 0x234D),
