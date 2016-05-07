@@ -253,7 +253,7 @@ sub newpairbag
     }
     chdir "${CERTTOP}/newcerts";
     # create a certificate request with a private key
-    &newreq_nodes();
+    newreq_nodes();
     if ($RET != 0) {
         print STDERR "Request (and private key) generation failed\n";
         exit 1;
@@ -269,7 +269,7 @@ sub newpairbag
         $PASSOPT="-passout file:${CERTTOP}/private/exportpw";
     }
     # create a PKCS#12 file from the signed cert and key
-    &pkcs12($cnametxt);
+    pkcs12($cnametxt);
     if ($RET != 0) {
         print STDERR "Creation of PKCS#12 failed\n";
         exit 1;
@@ -293,7 +293,7 @@ EOM
 }
 
 # Update Certificate Revocation List
-sub crl
+sub gencrl
 {
     $RET = run("$CA $OPENSSL_CONFIG -gencrl -out ${CATOP}/crl/$CACRL");
     if ($RET != 0) {
@@ -342,51 +342,51 @@ sub revoke_pairbag
         print STDERR "No such file ${cname}.pem\n";
         exit 1;
     }
-    &revoke("${CERTTOP}/certs/${cname}.pem",$reason);
+    revoke("${CERTTOP}/certs/${cname}.pem",$reason);
     # remove the revoked key set
     run("rm -i ${CERTTOP}/certs/${cname}.pem");
     run("rm -i ${CERTTOP}/private/${cname}.key");
     run("rm -i ${CERTTOP}/private/${cname}.p12");
     print "cname $cname successfully revoked.\n";
-    &crl();
+    gencrl();
 }
 
 
 unless ($WHAT) {
-    &help();
+    help();
     exit 0;
 }
 if ( $WHAT =~ /^(-\?|-h|-help)$/ ) {
-    &help();
+    help();
     exit 0;
 }
 if ($WHAT eq '-newcert' ) {
 } elsif ($WHAT eq '-newreq' ) {
-    &newreq();
+    newreq();
 } elsif ($WHAT eq '-newreq-nodes' ) {
-    &newreq_nodes();
+    newreq_nodes();
 } elsif ($WHAT eq '-newca' ) {
-    &newca();
+    newca();
 } elsif ($WHAT eq '-pkcs12' ) {
-    &pkcs12($ARGV[0]);
+    pkcs12($ARGV[0]);
 } elsif ($WHAT eq '-xsign' ) {
-    &xsign();
+    xsign();
 } elsif ($WHAT eq '-sign' ) {
-    &sign();
+    sign();
 } elsif ($WHAT eq '-signCA' ) {
-    &signCA();
+    signCA();
 } elsif ($WHAT eq '-signcert' ) {
-    &signcert();
+    signcert();
 } elsif ($WHAT eq '-verify' ) {
-    &verify();
+    verify();
 } elsif ($WHAT eq '-newpairbag' ) {
-    &newpairbag($ARGV[0],$ARGV[1]);
+    newpairbag($ARGV[0],$ARGV[1]);
 } elsif ($WHAT eq '-crl' ) {
-    &crl();
+    gencrl();
 } elsif ($WHAT eq '-revoke' ) {
-    &revoke($ARGV[0],$ARGV[1]);
+    revoke($ARGV[0],$ARGV[1]);
 } elsif ($WHAT eq '-revoke-pairbag' ) {
-    &revoke_pairbag($ARGV[0],$ARGV[1]);
+    revoke_pairbag($ARGV[0],$ARGV[1]);
 } else {
     print STDERR "Unknown arg \"$WHAT\"\n";
     print STDERR "Use -help for help.\n";
