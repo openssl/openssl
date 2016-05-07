@@ -31,8 +31,7 @@ RSA_METHOD *RSA_meth_new(const char *name, int flags)
 void RSA_meth_free(RSA_METHOD *meth)
 {
     if (meth != NULL) {
-        if (meth->name != NULL)
-            OPENSSL_free(meth->name);
+        OPENSSL_free(meth->name);
         OPENSSL_free(meth);
     }
 }
