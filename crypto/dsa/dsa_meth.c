@@ -39,8 +39,7 @@ DSA_METHOD *DSA_meth_new(const char *name, int flags)
 void DSA_meth_free(DSA_METHOD *dsam)
 {
     if (dsam != NULL) {
-        if (dsam->name != NULL)
-            OPENSSL_free(dsam->name);
+        OPENSSL_free(dsam->name);
         OPENSSL_free(dsam);
     }
 }
