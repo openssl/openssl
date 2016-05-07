@@ -300,7 +300,8 @@ my @disablables = (
     "engine",
     "err",
     "filenames",
-    "fuzz",
+    "fuzz-libfuzzer",
+    "fuzz-afl",
     "gost",
     "heartbeats",
     "hw(-.+)?",
@@ -363,7 +364,8 @@ our %disabled = ( # "what"         => "comment"
                   "asan"		=> "default",
 		  "ec_nistp_64_gcc_128" => "default",
 		  "egd"                 => "default",
-		  "fuzz"		=> "default",
+		  "fuzz-libfuzzer"	=> "default",
+		  "fuzz-afl"		=> "default",
 		  "md2"                 => "default",
 		  "rc5"                 => "default",
 		  "sctp"                => "default",
@@ -694,6 +696,14 @@ foreach (@argvcopy)
 		elsif (/^--with-zlib-include=(.*)$/)
 			{
 			$withargs{zlib_include}=$1;
+			}
+		elsif (/^--with-fuzzer-lib=(.*)$/)
+			{
+			$withargs{fuzzer_lib}=$1;
+			}
+		elsif (/^--with-fuzzer-include=(.*)$/)
+			{
+			$withargs{fuzzer_include}=$1;
 			}
 		elsif (/^--with-fipslibdir=(.*)$/)
 			{
@@ -1037,9 +1047,13 @@ if ($disabled{"dynamic-engine"}) {
         $config{dynamic_engines} = 1;
 }
 
-unless ($disabled{fuzz}) {
+unless ($disabled{"fuzz-libfuzzer"}) {
     push @{$config{dirs}}, "fuzz";
     $config{cflags} .= "-fsanitize-coverage=edge,indirect-calls ";
+}
+
+unless ($disabled{"fuzz-afl"}) {
+    push @{$config{dirs}}, "fuzz";
 }
 
 unless ($disabled{asan}) {
@@ -1374,6 +1388,7 @@ if ($builder eq "unified") {
             $template->fill_in(HASH => { config => \%config,
                                          target => \%target,
                                          disabled => \%disabled,
+                                         withargs => \%withargs,
                                          builddir => abs2rel($buildd, $blddir),
                                          sourcedir => abs2rel($sourced, $blddir),
                                          buildtop => abs2rel($blddir, $blddir),

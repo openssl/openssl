@@ -28,7 +28,7 @@
 
 static const ASN1_ITEM *item_type;
 
-int LLVMFuzzerInitialize(int *argc, char ***argv) {
+int FuzzerInitialize(int *argc, char ***argv) {
     const char *cmd;
     OPENSSL_assert(*argc > 1);
 
@@ -78,7 +78,7 @@ int LLVMFuzzerInitialize(int *argc, char ***argv) {
     return 0;
 }
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     const uint8_t *b = buf;
     ASN1_VALUE *o = ASN1_item_d2i(NULL, &b, len, item_type);
     ASN1_item_free(o, item_type);
