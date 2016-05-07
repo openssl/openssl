@@ -1,8 +1,4 @@
-PROGRAMS=server asn1 asn1parse cms conf bignum bndiv
-
-SOURCE[server]=server.c
-INCLUDE[server]=../include ../../../svn-work/Fuzzer
-DEPEND[server]=../libcrypto ../libssl ../../../svn-work/Fuzzer/libFuzzer
+PROGRAMS=asn1 asn1parse bignum bndiv cms conf server
 
 SOURCE[asn1]=asn1.c
 INCLUDE[asn1]=../include ../../../svn-work/Fuzzer
@@ -12,6 +8,14 @@ SOURCE[asn1parse]=asn1parse.c
 INCLUDE[asn1parse]=../include ../../../svn-work/Fuzzer
 DEPEND[asn1parse]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
 
+SOURCE[bignum]=bignum.c
+INCLUDE[bignum]=../include ../../../svn-work/Fuzzer
+DEPEND[bignum]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+
+SOURCE[bndiv]=bndiv.c
+INCLUDE[bndiv]=../include ../../../svn-work/Fuzzer
+DEPEND[bndiv]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+
 SOURCE[cms]=cms.c
 INCLUDE[cms]=../include ../../../svn-work/Fuzzer
 DEPEND[cms]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
@@ -20,10 +24,6 @@ SOURCE[conf]=conf.c
 INCLUDE[conf]=../include ../../../svn-work/Fuzzer
 DEPEND[conf]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
 
-SOURCE[bignum]=bignum.c
-INCLUDE[bignum]=../include ../../../svn-work/Fuzzer
-DEPEND[bignum]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
-
-SOURCE[bndiv]=bndiv.c
-INCLUDE[bndiv]=../include ../../../svn-work/Fuzzer
-DEPEND[bndiv]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+SOURCE[server]=server.c
+INCLUDE[server]=../include ../../../svn-work/Fuzzer
+DEPEND[server]=../libcrypto ../libssl ../../../svn-work/Fuzzer/libFuzzer
