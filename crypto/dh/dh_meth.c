@@ -31,8 +31,7 @@ DH_METHOD *DH_meth_new(const char *name, int flags)
 void DH_meth_free(DH_METHOD *dhm)
 {
     if (dhm != NULL) {
-        if (dhm->name != NULL)
-            OPENSSL_free(dhm->name);
+        OPENSSL_free(dhm->name);
         OPENSSL_free(dhm);
     }
 }
