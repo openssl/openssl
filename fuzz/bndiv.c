@@ -17,7 +17,7 @@
 #include <openssl/bn.h>
 #include "fuzzer.h"
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     int success = 0;
     static BN_CTX *ctx;
     static BIGNUM *b1;

@@ -1,5 +1,8 @@
 # I Can Haz Fuzz?
 
+LibFuzzer
+=========
+
 Or, how to fuzz OpenSSL with [libfuzzer](llvm.org/docs/LibFuzzer.html).
 
 Starting from a vanilla+OpenSSH server Ubuntu install.
@@ -32,7 +35,10 @@ https://github.com/llvm-mirror/llvm/tree/master/lib/Fuzzer if you prefer):
 
 Configure for fuzzing:
 
-    $ CC=clang ./config enable-fuzz enable-asan enable-ubsan no-shared
+    $ CC=clang ./config enable-fuzz-libfuzzer \
+            --with-fuzzer-include=../../svn-work/Fuzzer \
+            --with-fuzzer-lib=../../svn-work/Fuzzer/libFuzzer \
+            enable-asan enable-ubsan no-shared
     $ sudo apt-get install make
     $ LDCMD=clang++ make -j
     $ fuzz/helper.py <fuzzer> <arguments>
@@ -45,3 +51,20 @@ If you get a crash, you should find a corresponding input file in
 `fuzz/corpora/<fuzzer>-crash/`. You can reproduce the crash with
 
     $ fuzz/<fuzzer> <crashfile>
+
+AFL
+===
+
+Configure for fuzzing:
+
+    $ sudo apt-get install afl-clang
+    $ CC=afl-clang-fast ./config enable-fuzz-afl no-shared
+    $ make
+
+Run one of the fuzzers:
+
+    $ afl-fuzz fuzz/<fuzzer> -i fuzz/corpora/<fuzzer> -o fuzz/corpora/<fuzzer>/out <fuzzer> <arguments>
+
+Where `<fuzzer>` is one of the executables in `fuzz/`. Most fuzzers do not
+need any command line arguments, but, for example, `asn1` needs the name of a
+data type.

@@ -15,7 +15,7 @@
 #include <openssl/conf.h>
 #include "fuzzer.h"
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     CONF *conf = NCONF_new(NULL);
     BIO *in = BIO_new(BIO_s_mem());
     long eline;
