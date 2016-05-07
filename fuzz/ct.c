@@ -16,7 +16,7 @@
 #include <openssl/ct.h>
 #include "fuzzer.h"
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     const uint8_t **pp = &buf;
     STACK_OF(SCT) *scts = d2i_SCT_LIST(NULL, pp, len);
     SCT_LIST_free(scts);

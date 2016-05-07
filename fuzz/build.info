@@ -1,33 +1,42 @@
+{- use File::Spec::Functions;
+   our $ex_inc = $withargs{fuzzer_include} &&
+       (file_name_is_absolute($withargs{fuzzer_include}) ?
+        $withargs{fuzzer_include} : catdir(updir(), $withargs{fuzzer_include}));
+   our $ex_lib = $withargs{fuzzer_lib} &&
+       (file_name_is_absolute($withargs{fuzzer_lib}) ?
+        $withargs{fuzzer_lib} : catfile(updir(), $withargs{fuzzer_lib}));
+   ""
+-}
 PROGRAMS=asn1 asn1parse bignum bndiv cms conf ct server
 
-SOURCE[asn1]=asn1.c
-INCLUDE[asn1]=../include ../../../svn-work/Fuzzer
-DEPEND[asn1]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+SOURCE[asn1]=asn1.c driver.c
+INCLUDE[asn1]=../include {- $ex_inc -}
+DEPEND[asn1]=../libcrypto {- $ex_lib -}
 
-SOURCE[asn1parse]=asn1parse.c
-INCLUDE[asn1parse]=../include ../../../svn-work/Fuzzer
-DEPEND[asn1parse]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+SOURCE[asn1parse]=asn1parse.c driver.c
+INCLUDE[asn1parse]=../include {- $ex_inc -}
+DEPEND[asn1parse]=../libcrypto {- $ex_lib -}
 
-SOURCE[bignum]=bignum.c
-INCLUDE[bignum]=../include ../../../svn-work/Fuzzer
-DEPEND[bignum]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+SOURCE[bignum]=bignum.c driver.c
+INCLUDE[bignum]=../include {- $ex_inc -}
+DEPEND[bignum]=../libcrypto {- $ex_lib -}
 
-SOURCE[bndiv]=bndiv.c
-INCLUDE[bndiv]=../include ../../../svn-work/Fuzzer
-DEPEND[bndiv]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+SOURCE[bndiv]=bndiv.c driver.c
+INCLUDE[bndiv]=../include {- $ex_inc -}
+DEPEND[bndiv]=../libcrypto {- $ex_lib -}
 
-SOURCE[cms]=cms.c
-INCLUDE[cms]=../include ../../../svn-work/Fuzzer
-DEPEND[cms]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+SOURCE[cms]=cms.c driver.c
+INCLUDE[cms]=../include {- $ex_inc -}
+DEPEND[cms]=../libcrypto {- $ex_lib -}
 
-SOURCE[conf]=conf.c
-INCLUDE[conf]=../include ../../../svn-work/Fuzzer
-DEPEND[conf]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+SOURCE[conf]=conf.c driver.c
+INCLUDE[conf]=../include {- $ex_inc -}
+DEPEND[conf]=../libcrypto {- $ex_lib -}
 
-SOURCE[ct]=ct.c
-INCLUDE[ct]=../include ../../../svn-work/Fuzzer
-DEPEND[ct]=../libcrypto ../../../svn-work/Fuzzer/libFuzzer
+SOURCE[ct]=ct.c driver.c
+INCLUDE[ct]=../include {- $ex_inc -}
+DEPEND[ct]=../libcrypto {- $ex_lib -}
 
-SOURCE[server]=server.c
-INCLUDE[server]=../include ../../../svn-work/Fuzzer
-DEPEND[server]=../libcrypto ../libssl ../../../svn-work/Fuzzer/libFuzzer
+SOURCE[server]=server.c driver.c
+INCLUDE[server]=../include {- $ex_inc -}
+DEPEND[server]=../libcrypto ../libssl {- $ex_lib -}

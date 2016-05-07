@@ -60,7 +60,7 @@ static const ASN1_ITEM *item_type[] = {
     NULL
 };
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     for (int n = 0; item_type[n] != NULL; ++n) {
         const uint8_t *b = buf;
         ASN1_VALUE *o = ASN1_item_d2i(NULL, &b, len, item_type[n]);

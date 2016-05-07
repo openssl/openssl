@@ -208,7 +208,7 @@ static void Init() {
     X509_free(cert);
   }
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     if (ctx == NULL)
         Init();
     // TODO: make this work for OpenSSL. There's a PREDICT define that may do

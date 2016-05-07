@@ -16,7 +16,7 @@
 #include <openssl/cms.h>
 #include "fuzzer.h"
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     BIO *in = BIO_new(BIO_s_mem());
     OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
     CMS_ContentInfo *i = d2i_CMS_bio(in, NULL);
