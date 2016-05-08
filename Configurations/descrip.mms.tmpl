@@ -82,6 +82,10 @@ CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
 SRCDIR={- $config{sourcedir} -}
 BUILDDIR={- $config{builddir} -}
 
+# Allow both V and VERBOSE to indicate verbosity.  This only applies
+# to testing.
+VERBOSE=$(V)
+
 VERSION={- $config{version} -}
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
@@ -234,6 +238,7 @@ test tests : configdata.pm, -
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
         DEFINE OPENSSL_ENGINES {- builddir("engines") -}
+        IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
         $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
         DEASSIGN OPENSSL_ENGINES
         DEASSIGN BLDTOP
