@@ -351,9 +351,9 @@ static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
     if (locals->err_state) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ossl_init_thread_stop: "
-                        "ERR_remove_thread_state()\n");
+                        "err_delete_thread_state()\n");
 #endif
-        ERR_remove_thread_state();
+        err_delete_thread_state();
     }
 
     OPENSSL_free(locals);

@@ -22,7 +22,6 @@ err - error codes
  int ERR_GET_REASON(unsigned long e);
 
  void ERR_clear_error(void);
- void ERR_remove_thread_state(void);
 
  char *ERR_error_string(unsigned long e, char *buf);
  const char *ERR_lib_error_string(unsigned long e);
@@ -49,6 +48,10 @@ Deprecated:
  #endif
 
  #if OPENSSL_API_COMPAT < 0x10100000L
+ void ERR_remove_thread_state(void *);
+ #endif
+
+ #if OPENSSL_API_COMPAT < 0x10100000L
  void ERR_free_strings(void)
  #endif
 
@@ -70,9 +73,6 @@ messages is described in L<ERR_error_string(3)>.
 
 L<ERR_clear_error(3)> can be used to clear the
 error queue.
-
-Note that L<ERR_remove_thread_state(3)> should be used to
-avoid memory leaks when threads are terminated.
 
 =head1 ADDING NEW ERROR CODES TO OPENSSL
 
@@ -186,7 +186,6 @@ L<ERR_clear_error(3)>,
 L<ERR_error_string(3)>,
 L<ERR_print_errors(3)>,
 L<ERR_load_crypto_strings(3)>,
-L<ERR_remove_thread_state(3)>,
 L<ERR_put_error(3)>,
 L<ERR_load_strings(3)>,
 L<SSL_get_error(3)>
