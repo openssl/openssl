@@ -495,8 +495,7 @@
 
        $ make VERBOSE=1 test                            # Unix
 
-       $ DEFINE VERBOSE 1
-       $ mms test                                       ! OpenVMS
+       $ mms /macro=(VERBOSE=1) test                    ! OpenVMS
 
        $ nmake VERBOSE=1 test                           # Windows
 
