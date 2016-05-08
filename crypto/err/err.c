@@ -740,7 +740,7 @@ const char *ERR_reason_error_string(unsigned long e)
     return ((p == NULL) ? NULL : p->string);
 }
 
-void ERR_remove_thread_state(void)
+void err_delete_thread_state(void)
 {
     ERR_STATE *state = ERR_get_state();
     if (state == NULL)
@@ -751,9 +751,14 @@ void ERR_remove_thread_state(void)
 }
 
 #if OPENSSL_API_COMPAT < 0x10000000L
+void ERR_remove_thread_state(void *dummy)
+{
+}
+#endif
+
+#if OPENSSL_API_COMPAT < 0x10000000L
 void ERR_remove_state(unsigned long pid)
 {
-    ERR_remove_thread_state();
 }
 #endif
 
