@@ -9,6 +9,11 @@
 use strict;
 use warnings;
 
+# Recognise VERBOSE and V which is common on other projects.
+BEGIN {
+    $ENV{HARNESS_VERBOSE} = "yes" if $ENV{VERBOSE} || $ENV{V};
+}
+
 use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
 use File::Basename;
 use Test::Harness qw/runtests $switches/;

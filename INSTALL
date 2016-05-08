@@ -493,13 +493,12 @@
      malfunction with Perl).  You may want increased verbosity, that
      can be accomplished like this:
 
-       $ HARNESS_VERBOSE=yes make test                  # Unix
+       $ make VERBOSE=1 test                            # Unix
 
-       $ DEFINE HARNESS_VERBOSE YES
+       $ DEFINE VERBOSE 1
        $ mms test                                       ! OpenVMS
 
-       $ set HARNESS_VERBOSE=yes
-       $ nmake test                                     # Windows
+       $ nmake VERBOSE=1 test                           # Windows
 
      If you want to run just one or a few specific tests, you can use
      the make variable TESTS to specify them, like this:
@@ -510,7 +509,7 @@
 
      And of course, you can combine (Unix example shown):
        
-       $ HARNESS_VERBOSE=yes make TESTS='test_rsa test_dsa' test
+       $ make VERBOSE=1 TESTS='test_rsa test_dsa' test
 
      You can find the list of available tests like this:
 
