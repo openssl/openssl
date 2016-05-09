@@ -304,11 +304,6 @@ int ca_main(int argc, char **argv)
     X509_REVOKED *r = NULL;
     OPTION_CHOICE o;
 
-    conf = NULL;
-    section = NULL;
-    preserve = 0;
-    msie_hack = 0;
-
     prog = opt_init(argc, argv, ca_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -481,13 +476,11 @@ end_of_options:
     argv = opt_rest();
 
     BIO_printf(bio_err, "Using configuration from %s\n", configfile);
-    /* We already loaded the default config file */
-    if (configfile != default_config_file) {
-        if ((conf = app_load_config(configfile)) == NULL)
-            goto end;
-        if (!app_load_modules(conf))
-            goto end;
-    }
+    
+    if ((conf = app_load_config(configfile)) == NULL)
+        goto end;
+    if (!app_load_modules(conf))
+        goto end;
 
     /* Lets get the config section we are using */
     if (section == NULL) {
