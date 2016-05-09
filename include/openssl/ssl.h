@@ -1741,6 +1741,7 @@ __owur int SSL_get_quiet_shutdown(const SSL *ssl);
 void SSL_set_shutdown(SSL *ssl, int mode);
 __owur int SSL_get_shutdown(const SSL *ssl);
 __owur int SSL_version(const SSL *ssl);
+__owur int SSL_client_version(const SSL *s);
 __owur int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
 __owur int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx);
 __owur int SSL_CTX_set_default_verify_file(SSL_CTX *ctx);
