@@ -405,7 +405,10 @@ vmsconfig.pm : configdata.pm
         WRITE CONFIG "  OPENSSLDIR => '$(OPENSSLDIR)',"
         WRITE CONFIG "  pointersize => '","{- $target{pointersize} -}","',"
         WRITE CONFIG "  shared_libs => ["
-        {- join("\n        ", map { "WRITE CONFIG \"    '$_'," } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) || "\@ !" -}
+        {- $disabled{shared}
+           ? "\@ !"
+           : join("\n        ", map { "WRITE CONFIG \"    '$_'," } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}})
+        -}
         WRITE CONFIG "  ],"
         WRITE CONFIG ");"
         WRITE CONFIG "our %target = ();"
