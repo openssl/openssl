@@ -30,13 +30,6 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int w, void *key)
 {
-#if defined(OPENSSL_NO_STDIO) || defined(OPENSSL_NO_UI)
-    /*
-     * We should not ever call the default callback routine from windows.
-     */
-    PEMerr(PEM_F_PEM_DEF_CALLBACK, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-    return (-1);
-#else
     int i, j;
     const char *prompt;
     if (key) {
@@ -46,6 +39,13 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
         return (i);
     }
 
+#if defined(OPENSSL_NO_STDIO) || defined(OPENSSL_NO_UI)
+    /*
+     * We should not ever call the default callback routine from windows.
+     */
+    PEMerr(PEM_F_PEM_DEF_CALLBACK, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+    return (-1);
+#else
     prompt = EVP_get_pw_prompt();
     if (prompt == NULL)
         prompt = "Enter PEM pass phrase:";
