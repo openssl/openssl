@@ -265,7 +265,7 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item int B<SSL_CTX_get_verify_mode>(SSL_CTX *ctx);
 
-=item int B<SSL_CTX_load_verify_locations>(SSL_CTX *ctx, char *CAfile, char *CApath);
+=item int B<SSL_CTX_load_verify_locations>(SSL_CTX *ctx, const char *CAfile, const char *CApath);
 
 =item long B<SSL_CTX_need_tmp_RSA>(SSL_CTX *ctx);
 
@@ -380,19 +380,19 @@ Use the file path to locate trusted CA certificates.
 
 =item int B<SSL_CTX_use_PrivateKey_ASN1>(int type, SSL_CTX *ctx, unsigned char *d, long len);
 
-=item int B<SSL_CTX_use_PrivateKey_file>(SSL_CTX *ctx, char *file, int type);
+=item int B<SSL_CTX_use_PrivateKey_file>(SSL_CTX *ctx, const char *file, int type);
 
 =item int B<SSL_CTX_use_RSAPrivateKey>(SSL_CTX *ctx, RSA *rsa);
 
 =item int B<SSL_CTX_use_RSAPrivateKey_ASN1>(SSL_CTX *ctx, unsigned char *d, long len);
 
-=item int B<SSL_CTX_use_RSAPrivateKey_file>(SSL_CTX *ctx, char *file, int type);
+=item int B<SSL_CTX_use_RSAPrivateKey_file>(SSL_CTX *ctx, const char *file, int type);
 
 =item int B<SSL_CTX_use_certificate>(SSL_CTX *ctx, X509 *x);
 
 =item int B<SSL_CTX_use_certificate_ASN1>(SSL_CTX *ctx, int len, unsigned char *d);
 
-=item int B<SSL_CTX_use_certificate_file>(SSL_CTX *ctx, char *file, int type);
+=item int B<SSL_CTX_use_certificate_file>(SSL_CTX *ctx, const char *file, int type);
 
 =item X509 *B<SSL_CTX_get0_certificate>(const SSL_CTX *ctx);
 
@@ -595,7 +595,7 @@ fresh handle for each connection.
 
 =item int B<SSL_is_init_finished>(SSL *ssl);
 
-=item STACK *B<SSL_load_client_CA_file>(char *file);
+=item STACK *B<SSL_load_client_CA_file>(const char *file);
 
 =item SSL *B<SSL_new>(SSL_CTX *ctx);
 
@@ -683,19 +683,19 @@ Returns the current handshake state.
 
 =item int B<SSL_use_PrivateKey_ASN1>(int type, SSL *ssl, unsigned char *d, long len);
 
-=item int B<SSL_use_PrivateKey_file>(SSL *ssl, char *file, int type);
+=item int B<SSL_use_PrivateKey_file>(SSL *ssl, const char *file, int type);
 
 =item int B<SSL_use_RSAPrivateKey>(SSL *ssl, RSA *rsa);
 
 =item int B<SSL_use_RSAPrivateKey_ASN1>(SSL *ssl, unsigned char *d, long len);
 
-=item int B<SSL_use_RSAPrivateKey_file>(SSL *ssl, char *file, int type);
+=item int B<SSL_use_RSAPrivateKey_file>(SSL *ssl, const char *file, int type);
 
 =item int B<SSL_use_certificate>(SSL *ssl, X509 *x);
 
 =item int B<SSL_use_certificate_ASN1>(SSL *ssl, int len, unsigned char *d);
 
-=item int B<SSL_use_certificate_file>(SSL *ssl, char *file, int type);
+=item int B<SSL_use_certificate_file>(SSL *ssl, const char *file, int type);
 
 =item int B<SSL_version>(const SSL *ssl);
 
