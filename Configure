@@ -1036,7 +1036,7 @@ if ($disabled{"dynamic-engine"}) {
 }
 
 unless ($disabled{fuzz}) {
-    push $config{dirs}, "fuzz";
+    push @{$config{dirs}}, "fuzz";
     $config{cflags} .= "-fsanitize-coverage=edge,indirect-calls ";
 }
 
