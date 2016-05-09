@@ -90,9 +90,7 @@ $	DEF  OSSL$LIB'v'	OSSL$INSTROOT:[LIB.'arch']
 $	DEF  OSSL$SHARE'v'	OSSL$INSTROOT:[LIB.'arch']
 $	DEF  OSSL$ENGINES'v'	OSSL$INSTROOT:[ENGINES.'arch']
 $	DEF  OSSL$EXE'v'	OSSL$INSTROOT:[EXE.'arch']
-$       {- output_off() if $disabled{shared} -}
-$       {- join("\n\$       ", map { "DEF  $_'v' OSSL\$SHARE:$_" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
-$       {- output_on() -}
+$       {- join("\n\$       ", map { my $x = uc $_; "DEF  ${x}'v' OSSL\$SHARE:${x}" } @{$config{shared_libs}}) -}
 $	IF P2 .NES. "NOALIASES"
 $	THEN
 $	    DEF OSSL$INSTROOT	OSSL$INSTROOT'v'
@@ -102,9 +100,7 @@ $	    DEF OSSL$SHARE	OSSL$SHARE'v'
 $	    DEF OSSL$ENGINES	OSSL$ENGINES'v'
 $	    DEF OSSL$EXE	OSSL$EXE'v'
 $	    DEF OPENSSL		OSSL$INCLUDE:[OPENSSL]
-$       {- output_off() if $disabled{shared} -}
-$       {- join("\n\$           ", map { "DEF  $_ $_'v'" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
-$       {- output_on() -}
+$           {- join("\n\$           ", map { my $x = uc $_; "DEF ${x} ${x}'v'" } @{$config{shared_libs}}) -}
 $	ENDIF
 $
 $	DEFT OSSL$DATAROOT	'OPENSSLDIR_'
