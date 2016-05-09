@@ -6,6 +6,7 @@
 
 use strict;
 use warnings;
+use File::Copy;
 
 our ($ME) = ($0 =~ m|/([^/]+)$|);
 our $openssl = "openssl";
@@ -89,19 +90,6 @@ sub copy_pemfile
     close IN;
     close OUT;
     return $found == 2 ? 0 : 1;
-}
-
-sub copy_any
-{
-    my ($infile, $outfile) = @_;
-
-    open IN, $infile || die "Cannot open $infile, $!";
-    open OUT, ">$outfile" || die "Cannot write to $outfile, $!";
-    while (<IN>) {
-        print OUT $_;
-    }
-    close IN;
-    close OUT;
 }
 
 # Wrapper around system; useful for debugging.  Returns just the exit status
@@ -275,12 +263,9 @@ sub newpairbag
         exit 1;
     }
     # tidy up the keys
-    copy_any($NEWP12,"${CERTTOP}/private/${cname}.p12");
-    copy_any($NEWKEY,"${CERTTOP}/private/${cname}.key");
-    copy_any($NEWCERT,"${CERTTOP}/certs/${cname}.pem");
-    unlink $NEWP12;
-    unlink $NEWKEY;
-    unlink $NEWCERT;
+    move($NEWP12,"${CERTTOP}/private/${cname}.p12");
+    move($NEWKEY,"${CERTTOP}/private/${cname}.key");
+    move($NEWCERT,"${CERTTOP}/certs/${cname}.pem");
     unlink $NEWREQ;
     my $msg = <<"EOM";
 Keys generated successfully:
