@@ -909,7 +909,9 @@ $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
 # Allow overriding the names of some tools.  USE WITH CARE
 $config{perl} =    $ENV{'PERL'}    || ($^O ne "VMS" ? $^X : "perl");
 $target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
-$target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  || which("ranlib") || "true";
+$target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  ||
+                   (which("$config{cross_compile_prefix}ranlib") ?
+                          "\$(CROSS_COMPILE)ranlib" : "true");
 $target{ar} =      $ENV{'AR'}      || $target{ar}      || "ar";
 $target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
 
@@ -1873,7 +1875,7 @@ print OUT "1;\n";
 close(OUT);
 
 
-print "CC            =$target{cc}\n";
+print "CC            =$config{cross_compile_prefix}$target{cc}\n";
 print "CFLAG         =$target{cflags} $config{cflags}\n";
 print "SHARED_CFLAG  =$target{shared_cflag}\n";
 print "DEFINES       =",join(" ", @{$target{defines}}, @{$config{defines}}),"\n";
@@ -1901,7 +1903,9 @@ print "CHACHA_ENC    =$target{chacha_obj}\n";
 print "POLY1305_OBJ  =$target{poly1305_obj}\n";
 print "BLAKE2_OBJ    =$target{blake2_obj}\n";
 print "PROCESSOR     =$config{processor}\n";
-print "RANLIB        =$target{ranlib}\n";
+print "RANLIB        =", $target{ranlib} eq '$(CROSS_COMPILE)ranlib' ?
+                             "$config{cross_compile_prefix}ranlib" :
+                             "$target{ranlib}", "\n";
 print "ARFLAGS       =$target{arflags}\n";
 print "PERL          =$config{perl}\n";
 print "\n";
