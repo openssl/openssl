@@ -5,6 +5,7 @@
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
   *) Triple-DES ciphers have been moved from HIGH to MEDIUM.
+     [Rich Salz]
 
   *) To enable users to have their own config files and build file templates,
      Configure looks in the directory indicated by the environment variable
