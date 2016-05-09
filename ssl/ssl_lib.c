@@ -3381,17 +3381,22 @@ void SSL_set_shutdown(SSL *s, int mode)
 
 int SSL_get_shutdown(const SSL *s)
 {
-    return (s->shutdown);
+    return s->shutdown;
 }
 
 int SSL_version(const SSL *s)
 {
-    return (s->version);
+    return s->version;
+}
+
+int SSL_client_version(const SSL *s)
+{
+    return s->client_version;
 }
 
 SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 {
-    return (ssl->ctx);
+    return ssl->ctx;
 }
 
 SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
