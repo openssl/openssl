@@ -860,21 +860,31 @@ static int cipher_test_enc(struct evp_test *t, int enc,
         out = cdat->plaintext;
         out_len = cdat->plaintext_len;
     }
-    inp_misalign += 16 - ((out_misalign + in_len) & 15);
-    /*
-     * 'tmp' will store both output and copy of input. We make the copy
-     * of input to specifically aligned part of 'tmp'. So we just
-     * figured out how much padding would ensure the required alignment,
-     * now we allocate extended buffer and finally copy the input just
-     * past inp_misalign in expression below. Output will be written
-     * past out_misalign...
-     */
-    tmp = OPENSSL_malloc(out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH +
-                         inp_misalign + in_len);
-    if (!tmp)
-        goto err;
-    in = memcpy(tmp + out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH +
-                inp_misalign, in, in_len);
+    if (inp_misalign == (size_t)-1) {
+        /*
+         * Exercise in-place encryption
+         */
+        tmp = OPENSSL_malloc(out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH);
+        if (!tmp)
+            goto err;
+        in = memcpy(tmp + out_misalign, in, in_len);
+    } else {
+        inp_misalign += 16 - ((out_misalign + in_len) & 15);
+        /*
+         * 'tmp' will store both output and copy of input. We make the copy
+         * of input to specifically aligned part of 'tmp'. So we just
+         * figured out how much padding would ensure the required alignment,
+         * now we allocate extended buffer and finally copy the input just
+         * past inp_misalign in expression below. Output will be written
+         * past out_misalign...
+         */
+        tmp = OPENSSL_malloc(out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH +
+                             inp_misalign + in_len);
+        if (!tmp)
+            goto err;
+        in = memcpy(tmp + out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH +
+                    inp_misalign, in, in_len);
+    }
     err = "CIPHERINIT_ERROR";
     if (!EVP_CipherInit_ex(ctx, cdat->cipher, NULL, NULL, NULL, enc))
         goto err;
@@ -999,10 +1009,16 @@ static int cipher_test_run(struct evp_test *t)
     for (out_misalign = 0; out_misalign <= 1; out_misalign++) {
         static char aux_err[64];
         t->aux_err = aux_err;
-        for (inp_misalign = 0; inp_misalign <= 1; inp_misalign++) {
-            BIO_snprintf(aux_err, sizeof(aux_err), "%s output and %s input",
-                         out_misalign ? "misaligned" : "aligned",
-                         inp_misalign ? "misaligned" : "aligned");
+        for (inp_misalign = (size_t)-1; inp_misalign != 2; inp_misalign++) {
+            if (inp_misalign == (size_t)-1) {
+                /* kludge: inp_misalign == -1 means "exercise in-place" */
+                BIO_snprintf(aux_err, sizeof(aux_err), "%s in-place",
+                             out_misalign ? "misaligned" : "aligned");
+            } else {
+                BIO_snprintf(aux_err, sizeof(aux_err), "%s output and %s input",
+                             out_misalign ? "misaligned" : "aligned",
+                             inp_misalign ? "misaligned" : "aligned");
+            }
             if (cdat->enc) {
                 rv = cipher_test_enc(t, 1, out_misalign, inp_misalign);
                 /* Not fatal errors: return */
