@@ -14,6 +14,7 @@ use strict;
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 use File::Path qw/mkpath/;
+use IPC::Cmd qw/can_run/;
 
 # see INSTALL for instructions.
 
@@ -910,7 +911,7 @@ $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
 $config{perl} =    $ENV{'PERL'}    || ($^O ne "VMS" ? $^X : "perl");
 $target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
 $target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  ||
-                   (which("$config{cross_compile_prefix}ranlib") ?
+                   (scalar can_run("$config{cross_compile_prefix}ranlib") ?
                           "\$(CROSS_COMPILE)ranlib" : "true");
 $target{ar} =      $ENV{'AR'}      || $target{ar}      || "ar";
 $target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
@@ -1153,7 +1154,7 @@ if ($^O ne "VMS" && !$disabled{makedepend}) {
     }
     close(PIPE);
 
-    $config{makedepprog} = which('makedepend') unless $config{makedepprog};
+    $config{makedepprog} = scalar can_run('makedepend') unless $config{makedepprog};
     $disabled{makedepend} = "unavailable" unless $config{makedepprog};
 }
 
@@ -2461,22 +2462,6 @@ sub absolutedir {
 
     return realpath($dir);
 }
-
-sub which
-	{
-	my($name)=@_;
-	my $path;
-	foreach $path (split /:/, $ENV{PATH})
-		{
-		my $fullpath = "$path/$name$target{exe_extension}";
-		if (-f $fullpath and -x $fullpath)
-			{
-			return $fullpath
-			    unless ($name eq "perl" and
-				    system("$fullpath -e " . '\'exit($]<5.0);\''));
-			}
-		}
-	}
 
 sub quotify {
     my %processors = (
