@@ -2137,27 +2137,28 @@ static int get_certificate_status(const char *serial, CA_DB *db)
 {
     char *row[DB_NUMBER], **rrow;
     int ok = -1, i;
+    size_t serial_len = strlen(serial);
 
     /* Free Resources */
     for (i = 0; i < DB_NUMBER; i++)
         row[i] = NULL;
 
     /* Malloc needed char spaces */
-    row[DB_serial] = app_malloc(strlen(serial) + 2, "row serial#");
+    row[DB_serial] = app_malloc(serial_len + 2, "row serial#");
 
-    if (strlen(serial) % 2) {
+    if (serial_len % 2) {
         /*
          * Set the first char to 0
          */ ;
         row[DB_serial][0] = '0';
 
         /* Copy String from serial to row[DB_serial] */
-        memcpy(row[DB_serial] + 1, serial, strlen(serial));
-        row[DB_serial][strlen(serial) + 1] = '\0';
+        memcpy(row[DB_serial] + 1, serial, serial_len);
+        row[DB_serial][serial_len + 1] = '\0';
     } else {
         /* Copy String from serial to row[DB_serial] */
-        memcpy(row[DB_serial], serial, strlen(serial));
-        row[DB_serial][strlen(serial)] = '\0';
+        memcpy(row[DB_serial], serial, serial_len);
+        row[DB_serial][serial_len] = '\0';
     }
 
     /* Make it Upper Case */

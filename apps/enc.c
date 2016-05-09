@@ -382,6 +382,8 @@ int enc_main(int argc, char **argv)
              * output BIO. If decrypting read salt from input BIO.
              */
             unsigned char *sptr;
+            size_t str_len = strlen(str);
+
             if (nosalt)
                 sptr = NULL;
             else {
@@ -421,7 +423,7 @@ int enc_main(int argc, char **argv)
 
             if (!EVP_BytesToKey(cipher, dgst, sptr,
                                 (unsigned char *)str,
-                                strlen(str), 1, key, iv)) {
+                                str_len, 1, key, iv)) {
                 BIO_printf(bio_err, "EVP_BytesToKey failed\n");
                 goto end;
             }
@@ -432,7 +434,7 @@ int enc_main(int argc, char **argv)
             if (str == strbuf)
                 OPENSSL_cleanse(str, SIZE);
             else
-                OPENSSL_cleanse(str, strlen(str));
+                OPENSSL_cleanse(str, str_len);
         }
         if (hiv != NULL) {
             int siz = EVP_CIPHER_iv_length(cipher);
