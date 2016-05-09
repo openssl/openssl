@@ -1325,11 +1325,11 @@ EOF
                                             print OUT $symline;
                                             $symvtextcount += length($symline) - 2;
 					} elsif($v) {
-						printf OUT "    %s%-39s @%-8d DATA\n",
-								($W32)?"":"_",$s2,$n;
+						printf OUT "    %s%-39s DATA\n",
+								($W32)?"":"_",$s2;
 					} else {
-						printf OUT "    %s%-39s @%d\n",
-								($W32)?"":"_",$s2,$n;
+						printf OUT "    %s%s\n",
+								($W32)?"":"_",$s2;
 					}
 				}
 			}
