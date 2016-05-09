@@ -163,19 +163,19 @@ install: install_sw install_ssldirs install_docs
 uninstall: uninstall_docs uninstall_sw
 
 libclean:
-	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*""" } @ARGV" $(SHLIBS)
-	del /Q /F $(LIBS)
-	del lib.pdb
+	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*"""; } @ARGV" $(SHLIBS)
+	-del /Q /F $(LIBS)
+	-del lib.pdb
 
 clean: libclean
-	del /Q /F $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
-	del /Q /S /F *.asm
-	del /Q /S /F *.d
-	del /Q /S /F *.obj
-	del /Q /S /F *.pdb
-	del /Q /S /F *.exp
-	del /Q /S /F engines\*.ilk
-	del /Q /S /F engines\*.lib
+	-del /Q /F $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
+	-del /Q /S /F *.asm
+	-del /Q /S /F *.d
+	-del /Q /S /F *.obj
+	-del /Q /S /F *.pdb
+	-del /Q /S /F *.exp
+	-del /Q /S /F engines\*.ilk
+	-del /Q /S /F engines\*.lib
 
 depend:
 
@@ -281,7 +281,6 @@ EOF
                    return <<"EOF";
 $target: $args{generator}->[0] $deps
 	set ASM=\$(AS)
-	set CC=\$(CC)
 	$generator \$@.S
 	\$(CC) \$(CFLAGS) $incs /EP /C \$@.S > \$@.i && move /Y \$@.i \$@
         del /Q \$@.S
@@ -291,7 +290,6 @@ EOF
               return <<"EOF";
 $target: $args{generator}->[0] $deps
 	set ASM=\$(AS)
-	set CC=\$(CC)
 	$generator \$@
 EOF
           }
