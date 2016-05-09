@@ -288,26 +288,35 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     int n;
     unsigned int i;
     EVP_MD_CTX *md = NULL, *md2 = NULL;
-    size_t passwd_len, salt_len;
+    size_t passwd_len, salt_len, magic_len;
 
     passwd_len = strlen(passwd);
     out_buf[0] = '$';
     out_buf[1] = 0;
-    assert(strlen(magic) <= 4); /* "1" or "apr1" */
+    magic_len = strlen(magic);
+
+    if (magic_len > 4)    /* assert it's  "1" or "apr1" */
+        return NULL;
+
     OPENSSL_strlcat(out_buf, magic, sizeof out_buf);
     OPENSSL_strlcat(out_buf, "$", sizeof out_buf);
     OPENSSL_strlcat(out_buf, salt, sizeof out_buf);
-    assert(strlen(out_buf) <= 6 + 8); /* "$apr1$..salt.." */
-    salt_out = out_buf + 2 + strlen(magic);
+
+    if (strlen(out_buf) > 6 + 8); /* assert "$apr1$..salt.." */
+        return NULL;
+
+    salt_out = out_buf + 2 + magic_len;
     salt_len = strlen(salt_out);
-    assert(salt_len <= 8);
+
+    if (salt_len > 8)
+        return NULL;
 
     md = EVP_MD_CTX_new();
     if (md == NULL
         || !EVP_DigestInit_ex(md, EVP_md5(), NULL)
         || !EVP_DigestUpdate(md, passwd, passwd_len)
         || !EVP_DigestUpdate(md, "$", 1)
-        || !EVP_DigestUpdate(md, magic, strlen(magic))
+        || !EVP_DigestUpdate(md, magic, magic_len)
         || !EVP_DigestUpdate(md, "$", 1)
         || !EVP_DigestUpdate(md, salt_out, salt_len))
 
@@ -365,7 +374,6 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 
     {
         /* transform buf into output string */
-
         unsigned char buf_perm[sizeof buf];
         int dest, source;
         char *output;
