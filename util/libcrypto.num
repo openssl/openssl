@@ -1069,7 +1069,7 @@ TS_REQ_set_msg_imprint                  1037	1_1_0	EXIST::FUNCTION:TS
 BN_mod_sub_quick                        1038	1_1_0	EXIST::FUNCTION:
 SMIME_write_CMS                         1039	1_1_0	EXIST::FUNCTION:CMS
 i2d_DSAPublicKey                        1040	1_1_0	EXIST::FUNCTION:DSA
-DES_enc_write                           1041	1_1_0	EXIST::FUNCTION:DES
+DES_enc_write                           1041	1_1_0	NOEXIST::FUNCTION:
 SMIME_text                              1042	1_1_0	EXIST::FUNCTION:
 PKCS7_add_recipient_info                1043	1_1_0	EXIST::FUNCTION:
 BN_get_word                             1044	1_1_0	EXIST::FUNCTION:
@@ -1407,8 +1407,7 @@ ASN1_SCTX_get_app_data                  1365	1_1_0	EXIST::FUNCTION:
 X509_get_default_cert_file_env          1366	1_1_0	EXIST::FUNCTION:
 X509v3_addr_validate_resource_set       1367	1_1_0	EXIST::FUNCTION:RFC3779
 d2i_X509_VAL                            1368	1_1_0	EXIST::FUNCTION:
-_shadow_DES_rw_mode                     1369	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:DES
-_shadow_DES_rw_mode                     1369	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:DES
+_shadow_DES_rw_mode                     1369	1_1_0	NOEXIST::FUNCTION:
 CRYPTO_gcm128_decrypt_ctr32             1370	1_1_0	EXIST::FUNCTION:
 DHparams_print                          1371	1_1_0	EXIST::FUNCTION:DH
 sk_unshift                              1372	1_1_0	EXIST::FUNCTION:
@@ -2246,7 +2245,7 @@ TS_RESP_CTX_set_accuracy                2174	1_1_0	EXIST::FUNCTION:TS
 NETSCAPE_SPKI_get_pubkey                2175	1_1_0	EXIST::FUNCTION:
 ECDSA_do_sign_ex                        2176	1_1_0	EXIST::FUNCTION:EC
 OCSP_ONEREQ_get_ext                     2177	1_1_0	EXIST::FUNCTION:OCSP
-DES_read_password                       2178	1_1_0	EXIST::FUNCTION:DES,UI
+DES_read_password                       2178	1_1_0	NOEXIST::FUNCTION:
 BN_get_rfc3526_prime_4096               2179	1_1_0	EXIST::FUNCTION:
 d2i_PKCS7_fp                            2180	1_1_0	EXIST::FUNCTION:STDIO
 PEM_write_bio_NETSCAPE_CERT_SEQUENCE    2181	1_1_0	EXIST::FUNCTION:
@@ -3496,7 +3495,7 @@ X509_CINF_new                           3382	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_keygen_init                    3383	1_1_0	EXIST::FUNCTION:
 EVP_aes_192_ocb                         3384	1_1_0	EXIST::FUNCTION:OCB
 EVP_camellia_256_cfb1                   3385	1_1_0	EXIST::FUNCTION:CAMELLIA
-DES_read_2passwords                     3386	1_1_0	EXIST::FUNCTION:DES,UI
+DES_read_2passwords                     3386	1_1_0	NOEXIST::FUNCTION:
 CRYPTO_secure_actual_size               3387	1_1_0	EXIST::FUNCTION:
 COMP_CTX_free                           3388	1_1_0	EXIST::FUNCTION:COMP
 i2d_PBE2PARAM                           3389	1_1_0	EXIST::FUNCTION:
@@ -3931,7 +3930,7 @@ USERNOTICE_it                           3809	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 PKEY_USAGE_PERIOD_it                    3810	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKEY_USAGE_PERIOD_it                    3810	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 BN_mul_word                             3811	1_1_0	EXIST::FUNCTION:
-DES_enc_read                            3812	1_1_0	EXIST::FUNCTION:DES
+DES_enc_read                            3812	1_1_0	NOEXIST::FUNCTION:
 i2d_IPAddressRange                      3813	1_1_0	EXIST::FUNCTION:RFC3779
 CMS_unsigned_add1_attr_by_txt           3814	1_1_0	EXIST::FUNCTION:CMS
 d2i_RSA_PUBKEY                          3815	1_1_0	EXIST::FUNCTION:RSA

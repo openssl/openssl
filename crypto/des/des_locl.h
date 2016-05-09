@@ -60,37 +60,11 @@
 
 # include <openssl/e_os2.h>
 
-# if defined(OPENSSL_SYS_WIN32)
-#  ifndef OPENSSL_SYS_MSDOS
-#   define OPENSSL_SYS_MSDOS
-#  endif
-# endif
-
 # include <stdio.h>
 # include <stdlib.h>
+# include <string.h>
 
-# ifndef OPENSSL_SYS_MSDOS
-#  if !defined(OPENSSL_SYS_VMS) || defined(__DECC)
-#   ifdef OPENSSL_UNISTD
-#    include OPENSSL_UNISTD
-#   else
-#    include <unistd.h>
-#   endif
-#   include <math.h>
-#  endif
-# endif
 # include <openssl/des.h>
-
-# ifdef OPENSSL_SYS_MSDOS       /* Visual C++ 2.1 (Windows NT/95) */
-#  include <stdlib.h>
-#  include <errno.h>
-#  include <time.h>
-#  include <io.h>
-# endif
-
-# if defined(__STDC__) || defined(OPENSSL_SYS_VMS) || defined(M_XENIX) || defined(OPENSSL_SYS_MSDOS)
-#  include <string.h>
-# endif
 
 # ifdef OPENSSL_BUILD_SHLIBCRYPTO
 #  undef OPENSSL_EXTERN

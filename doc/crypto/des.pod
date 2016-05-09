@@ -10,7 +10,7 @@ DES_ofb64_encrypt, DES_xcbc_encrypt, DES_ede2_cbc_encrypt,
 DES_ede2_cfb64_encrypt, DES_ede2_ofb64_encrypt, DES_ede3_cbc_encrypt,
 DES_ede3_cfb64_encrypt, DES_ede3_ofb64_encrypt,
 DES_cbc_cksum, DES_quad_cksum, DES_string_to_key, DES_string_to_2keys,
-DES_fcrypt, DES_crypt, DES_enc_read, DES_enc_write - DES encryption
+DES_fcrypt, DES_crypt - DES encryption
 
 =head1 SYNOPSIS
 
@@ -92,11 +92,6 @@ DES_fcrypt, DES_crypt, DES_enc_read, DES_enc_write - DES encryption
 
  char *DES_fcrypt(const char *buf, const char *salt, char *ret);
  char *DES_crypt(const char *buf, const char *salt);
-
- int DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,
-        DES_cblock *iv);
- int DES_enc_write(int fd, const void *buf, int len,
-        DES_key_schedule *sched, DES_cblock *iv);
 
 =head1 DESCRIPTION
 
@@ -255,25 +250,6 @@ data send down I<fd> consists of 4 bytes (in network byte order)
 containing the length of the following encrypted data.  The encrypted
 data then follows, padded with random data out to a multiple of 8
 bytes.
-
-DES_enc_read() is used to read I<len> bytes from file descriptor
-I<fd> into buffer I<buf>. The data being read from I<fd> is assumed to
-have come from DES_enc_write() and is decrypted using I<sched> for
-the key schedule and I<iv> for the initial vector.
-
-B<Warning:> The data format used by DES_enc_write() and DES_enc_read()
-has a cryptographic weakness: When asked to write more than MAXWRITE
-bytes, DES_enc_write() will split the data into several chunks that
-are all encrypted using the same IV.  So don't use these functions
-unless you are sure you know what you do (in which case you might not
-want to use them anyway).  They cannot handle non-blocking sockets.
-DES_enc_read() uses an internal state and thus cannot be used on
-multiple files.
-
-I<DES_rw_mode> is used to specify the encryption mode to use with
-DES_enc_read() and DES_end_write().  If set to I<DES_PCBC_MODE> (the
-default), DES_pcbc_encrypt is used.  If set to I<DES_CBC_MODE>
-DES_cbc_encrypt is used.
 
 =head1 BUGS
 
