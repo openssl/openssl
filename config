@@ -261,6 +261,9 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	    Power*)
 		echo "ppc-apple-darwin${VERSION}"
 		;;
+	    x86_64)
+		echo "x86_64-apple-darwin${VERSION}"
+		;;
 	    *)
 		echo "i686-apple-darwin${VERSION}"
 		;;
@@ -503,7 +506,7 @@ case "$GUESSOS" in
 	ISA64=`(sysctl -n hw.optional.x86_64) 2>/dev/null`
 	if [ "$ISA64" = "1" -a -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 64-bit library, then you have to"
-	    echo "         invoke '$THERE/Configure darwin64-x86_64-cc $options' *manually*."
+	    echo "         invoke 'KERNEL_BITS=64 $THERE/config $options'."
 	    if [ "$TEST" = "false" -a -t 1 ]; then
 	      echo "         You have about 5 seconds to press Ctrl-C to abort."
 	      # The stty technique used elsewhere doesn't work on
@@ -515,6 +518,22 @@ case "$GUESSOS" in
 	    OUT="darwin64-x86_64-cc"
 	else
 	    OUT="darwin-i386-cc"
+	fi ;;
+  x86_64-apple-darwin*)
+	if [ -z "$KERNEL_BITS" ]; then
+	    echo "WARNING! If you wish to build 32-bit library, then you have to"
+	    echo "         invoke 'KERNEL_BITS=32 $THERE/config $options'."
+	    if [ "$TEST" = "false" -a -t 1 ]; then
+	      echo "         You have about 5 seconds to press Ctrl-C to abort."
+	      # The stty technique used elsewhere doesn't work on
+	      # MacOS. At least, right now on this Mac.
+	      sleep 5
+	    fi
+	fi
+	if [ "$KERNEL_BITS" = "32" ]; then
+	    OUT="darwin-i386-cc"
+	else
+	    OUT="darwin64-x86_64-cc"
 	fi ;;
   armv6+7-*-iphoneos)
 	options="$options -arch%20armv6 -arch%20armv7"
