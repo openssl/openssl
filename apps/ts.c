@@ -138,9 +138,9 @@ static char* opt_helplist[] = {
     "          [-chain certs_file.pem] [-tspolicy oid]",
     "          [-in file] [-token_in] [-out file] [-token_out]",
 # ifndef OPENSSL_NO_ENGINE
-    "          [-text]",
-# else
     "          [-text] [-engine id]",
+# else
+    "          [-text]",
 # endif
     "  or",
     "ts -verify -CApath dir -CAfile file.pem -untrusted file.pem",
