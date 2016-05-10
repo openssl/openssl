@@ -862,9 +862,9 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 /* Check exists RSA AES Crypto provider. Init it with key container id
  * first - for all supported windows except win xp. second - win xp sp3
  * if crypto provider not found, then use capi_key->hprov */
-    if (!CryptAcquireContext(&hprov, capi_key->id, 
+    if (!CryptAcquireContext(&hprov, capi_key->id,
                              MS_ENH_RSA_AES_PROV, PROV_RSA_AES, 0)) {
-        if (!CryptAcquireContext(&hprov, capi_key->id, 
+        if (!CryptAcquireContext(&hprov, capi_key->id,
                                  MS_ENH_RSA_AES_PROV_XP, PROV_RSA_AES, 0)) {
             hprov = capi_key->hprov;
         }
