@@ -92,8 +92,8 @@ typedef enum OPTION_choice {
 
 OPTIONS ec_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"in", OPT_IN, '<', "Input file"},
-    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
+    {"in", OPT_IN, 's', "Input file"},
+    {"inform", OPT_INFORM, 'f', "Input format - DER or PEM"},
     {"out", OPT_OUT, '>', "Output file"},
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
@@ -118,6 +118,7 @@ OPTIONS ec_options[] = {
 int ec_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
+    ENGINE *e;
     EC_KEY *eckey = NULL;
     const EC_GROUP *group;
     const EVP_CIPHER *enc = NULL;
@@ -143,7 +144,7 @@ int ec_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &informat))
                 goto opthelp;
             break;
         case OPT_IN:
@@ -178,7 +179,7 @@ int ec_main(int argc, char **argv)
             passoutarg = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_CIPHER:
             if (!opt_cipher(opt_unknown(), &enc))
@@ -217,9 +218,11 @@ int ec_main(int argc, char **argv)
         goto end;
     }
 
-    in = bio_open_default(infile, 'r', informat);
-    if (in == NULL)
-        goto end;
+    if (informat != FORMAT_ENGINE) {
+        in = bio_open_default(infile, 'r', informat);
+        if (in == NULL)
+            goto end;
+    }
 
     BIO_printf(bio_err, "read EC key\n");
     if (informat == FORMAT_ASN1) {
@@ -227,6 +230,16 @@ int ec_main(int argc, char **argv)
             eckey = d2i_EC_PUBKEY_bio(in, NULL);
         else
             eckey = d2i_ECPrivateKey_bio(in, NULL);
+    } else if (informat == FORMAT_ENGINE) {
+        EVP_PKEY *pkey;
+        if (pubin)
+            pkey = load_pubkey(infile, informat , 1, passin, e, "Public Key");
+        else
+            pkey = load_key(infile, informat, 1, passin, e, "Private Key");
+        if (pkey != NULL) {
+            eckey = EVP_PKEY_get1_EC_KEY(pkey);
+            EVP_PKEY_free(pkey);
+        }
     } else {
         if (pubin)
             eckey = PEM_read_bio_EC_PUBKEY(in, NULL, NULL, NULL);
