@@ -133,6 +133,26 @@
 #  define CALG_SHA_512            (ALG_CLASS_HASH | ALG_TYPE_ANY | ALG_SID_SHA_512)
 # endif
 
+# ifndef MS_ENH_RSA_AES_PROV
+#  define MS_ENH_RSA_AES_PROV_A   "Microsoft Enhanced RSA and AES Cryptographic Provider"
+#  define MS_ENH_RSA_AES_PROV_W   L"Microsoft Enhanced RSA and AES Cryptographic Provider"
+#  ifdef UNICODE
+#   define MS_ENH_RSA_AES_PROV     MS_ENH_RSA_AES_PROV_W
+#  else
+#   define MS_ENH_RSA_AES_PROV     MS_ENH_RSA_AES_PROV_A
+#  endif
+# endif
+
+# ifndef MS_ENH_RSA_AES_PROV_XP
+#  define MS_ENH_RSA_AES_PROV_XP_A "Microsoft Enhanced RSA and AES Cryptographic Provider (Prototype)"
+#  define MS_ENH_RSA_AES_PROV_XP_W L"Microsoft Enhanced RSA and AES Cryptographic Provider (Prototype)"
+#  ifdef UNICODE
+#   define MS_ENH_RSA_AES_PROV_XP  MS_ENH_RSA_AES_PROV_XP_W
+#  else
+#   define MS_ENH_RSA_AES_PROV_XP  MS_ENH_RSA_AES_PROV_XP_A
+#  endif
+# endif
+
 # ifndef PROV_RSA_AES
 #  define PROV_RSA_AES 24
 # endif
@@ -560,6 +580,7 @@ struct CAPI_KEY_st {
     HCRYPTPROV hprov;
     HCRYPTKEY key;
     DWORD keyspec;
+    TCHAR *id;
 };
 
 static int bind_capi(ENGINE *e)
@@ -820,12 +841,13 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
                   unsigned char *sigret, unsigned int *siglen, const RSA *rsa)
 {
     ALG_ID alg;
-    HCRYPTHASH hash;
+    HCRYPTHASH hash = 0;
     DWORD slen;
     unsigned int i;
     int ret = -1;
     CAPI_KEY *capi_key;
     CAPI_CTX *ctx;
+    HCRYPTPROV hprov;
 
     ctx = ENGINE_get_ex_data(rsa->engine, capi_idx);
 
@@ -836,6 +858,18 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
         CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_GET_KEY);
         return -1;
     }
+
+/* Check exists RSA AES Crypto provider. Init it with key container id
+ * first - for all supported windows except win xp. second - win xp sp3
+ * if crypto provider not found, then use capi_key->hprov */
+    if (!CryptAcquireContext(&hprov, capi_key->id, 
+                             MS_ENH_RSA_AES_PROV, PROV_RSA_AES, 0)) {
+        if (!CryptAcquireContext(&hprov, capi_key->id, 
+                                 MS_ENH_RSA_AES_PROV_XP, PROV_RSA_AES, 0)) {
+            hprov = capi_key->hprov;
+        }
+    }
+
 /* Convert the signature type to a CryptoAPI algorithm ID */
     switch (dtype) {
     case NID_sha256:
@@ -872,10 +906,10 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
     }
 
 /* Create the hash object */
-    if (!CryptCreateHash(capi_key->hprov, alg, 0, 0, &hash)) {
+    if (!CryptCreateHash(hprov, alg, 0, 0, &hash)) {
         CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_CREATE_HASH_OBJECT);
         capi_addlasterror();
-        return -1;
+        goto err;
     }
 /* Set the hash value to the value passed */
 
@@ -906,7 +940,10 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
     /* Now cleanup */
 
  err:
+    if  (hash)
     CryptDestroyHash(hash);
+    if (capi_key->hprov != hprov)
+        CryptReleaseContext(hprov, 0);
 
     return ret;
 }
@@ -1466,6 +1503,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
 {
     DWORD dwFlags = 0;
     CAPI_KEY *key = OPENSSL_malloc(sizeof(*key));
+    int len;
 
     if (key == NULL)
         return NULL;
@@ -1500,6 +1538,10 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
         CryptReleaseContext(key->hprov, 0);
         goto err;
     }
+    len = strlen(contname);
+    key->id = OPENSSL_malloc(len+1);
+    memcpy(key->id, contname, len * sizeof(TCHAR));
+    key->id[len] = '\0';
     key->keyspec = keyspec;
     key->pcert = NULL;
     return key;
@@ -1594,6 +1636,7 @@ void capi_free_key(CAPI_KEY * key)
     CryptReleaseContext(key->hprov, 0);
     if (key->pcert)
         CertFreeCertificateContext(key->pcert);
+    OPENSSL_free(key->id);
     OPENSSL_free(key);
 }
 
