@@ -133,9 +133,7 @@ char *make_revocation_str(int rev_type, char *rev_arg);
 int make_revoked(X509_REVOKED *rev, const char *str);
 static int old_entry_print(ASN1_OBJECT *obj, ASN1_STRING *str);
 
-static CONF *conf = NULL;
 static CONF *extconf = NULL;
-static char *section = NULL;
 static int preserve = 0;
 static int msie_hack = 0;
 
@@ -220,6 +218,7 @@ OPTIONS ca_options[] = {
 
 int ca_main(int argc, char **argv)
 {
+    CONF *conf = NULL;
     ENGINE *e = NULL;
     BIGNUM *crlnumber = NULL, *serial = NULL;
     EVP_PKEY *pkey = NULL;
@@ -233,7 +232,7 @@ int ca_main(int argc, char **argv)
     STACK_OF(X509) *cert_sk = NULL;
     X509_CRL *crl = NULL;
     const EVP_MD *dgst = NULL;
-    char *configfile = default_config_file;
+    char *configfile = default_config_file, *section = NULL;
     char *md = NULL, *policy = NULL, *keyfile = NULL;
     char *certfile = NULL, *crl_ext = NULL, *crlnumberfile = NULL;
     char *infile = NULL, *spkac_file = NULL, *ss_cert_file = NULL;
