@@ -89,9 +89,6 @@ extern int verify_return_error;
 extern int verify_quiet;
 
 static char *prog;
-static int async = 0;
-static unsigned int split_send_fragment = 0;
-static unsigned int max_pipelines = 0;
 static int c_nbio = 0;
 static int c_tlsextdebug = 0;
 static int c_status_req = 0;
@@ -841,6 +838,9 @@ int s_client_main(int argc, char **argv)
     int ct_validation = 0;
 #endif
     int min_version = 0, max_version = 0;
+    int async = 0;
+    unsigned int split_send_fragment = 0;
+    unsigned int max_pipelines = 0;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
