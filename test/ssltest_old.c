@@ -799,7 +799,6 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family,
 int doit_biopair(SSL *s_ssl, SSL *c_ssl, long bytes, clock_t *s_time,
                  clock_t *c_time);
 int doit(SSL *s_ssl, SSL *c_ssl, long bytes);
-static int do_test_cipherlist(void);
 
 static void sv_usage(void)
 {
@@ -870,10 +869,6 @@ static void sv_usage(void)
     fprintf(stderr,
             " -time         - measure processor time used by client and server\n");
     fprintf(stderr, " -zlib         - use zlib compression\n");
-    fprintf(stderr,
-            " -test_cipherlist - Verifies the order of the ssl cipher lists.\n"
-            "                    When this option is requested, the cipherlist\n"
-            "                    tests are run instead of handshake tests.\n");
 #ifndef OPENSSL_NO_NEXTPROTONEG
     fprintf(stderr, " -npn_client - have client side offer NPN\n");
     fprintf(stderr, " -npn_server - have server side offer NPN\n");
@@ -1102,7 +1097,6 @@ int main(int argc, char *argv[])
     COMP_METHOD *cm = NULL;
     STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 #endif
-    int test_cipherlist = 0;
 #ifdef OPENSSL_FIPS
     int fips_mode = 0;
 #endif
@@ -1315,11 +1309,9 @@ int main(int argc, char *argv[])
             app_verify_arg.app_verify = 1;
         } else if (strcmp(*argv, "-proxy") == 0) {
             app_verify_arg.allow_proxy_certs = 1;
-        } else if (strcmp(*argv, "-test_cipherlist") == 0) {
-            test_cipherlist = 1;
         }
 #ifndef OPENSSL_NO_NEXTPROTONEG
-        else if (strcmp(*argv, "-npn_client") == 0) {
+          else if (strcmp(*argv, "-npn_client") == 0) {
             npn_client = 1;
         } else if (strcmp(*argv, "-npn_server") == 0) {
             npn_server = 1;
@@ -1451,22 +1443,6 @@ int main(int argc, char *argv[])
     if (badop) {
  bad:
         sv_usage();
-        goto end;
-    }
-
-    /*
-     * test_cipherlist prevails over protocol switch: we test the cipherlist
-     * for all enabled protocols.
-     */
-    if (test_cipherlist == 1) {
-        /*
-         * ensure that the cipher list are correctly sorted and exit
-         */
-        fprintf(stdout, "Testing cipherlist order only. Ignoring all "
-                "other options.\n");
-        if (do_test_cipherlist() == 0)
-            EXIT(1);
-        ret = 0;
         goto end;
     }
 
@@ -3726,33 +3702,3 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity,
     return psk_len;
 }
 #endif
-
-static int do_test_cipherlist(void)
-{
-#ifndef OPENSSL_NO_TLS
-    int i = 0;
-    const SSL_METHOD *meth;
-    const SSL_CIPHER *ci, *tci = NULL;
-
-    /*
-     * This is required because ssltest "cheats" and uses internal headers to
-     * call functions, thus avoiding auto-init
-     */
-    OPENSSL_init_crypto(0, NULL);
-    OPENSSL_init_ssl(0, NULL);
-
-    meth = TLS_method();
-    tci = NULL;
-    while ((ci = meth->get_cipher(i++)) != NULL) {
-        if (tci != NULL)
-            if (ci->id >= tci->id) {
-                fprintf(stderr, "testing SSLv3 cipher list order: ");
-                fprintf(stderr, "failed %x vs. %x\n", ci->id, tci->id);
-                return 0;
-            }
-        tci = ci;
-    }
-#endif
-
-    return 1;
-}
