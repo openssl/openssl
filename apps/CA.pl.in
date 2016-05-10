@@ -96,7 +96,7 @@ sub run
 
 
 if ( $WHAT =~ /^(-\?|-h|-help)$/ ) {
-    print STDERR "usage: CA -newcert|-newreq|-newreq-nodes|-newca|-sign|-verify\n";
+    print STDERR "usage: CA -newcert|-newreq|-newreq-nodes|-newca|-sign|-signcert|-verify\n";
     print STDERR "       CA -pkcs12 [certname]\n";
     print STDERR "       CA -crl|-revoke cert-filename [reason]\n";
     exit 0;
