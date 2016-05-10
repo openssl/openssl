@@ -83,7 +83,7 @@ typedef enum OPTION_choice {
 
 OPTIONS dsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format, DER PEM PVK"},
+    {"inform", OPT_INFORM, 'f', "Input format, DER PEM PVK"},
     {"outform", OPT_OUTFORM, 'F', "Output format, DER PEM PVK"},
     {"in", OPT_IN, 's', "Input key"},
     {"out", OPT_OUT, '>', "Output file"},

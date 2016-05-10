@@ -71,7 +71,7 @@ typedef enum OPTION_choice {
 
 OPTIONS pkey_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format (DER or PEM)"},
+    {"inform", OPT_INFORM, 'f', "Input format (DER or PEM)"},
     {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
