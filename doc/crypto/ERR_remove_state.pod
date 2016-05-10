@@ -21,8 +21,9 @@ Deprecated:
 The functions described here were used to free the error queue
 associated with the current or specificed thread.
 
-They are now deprecated and do nothing, please use
-OPENSSL_thread_stop() instead.
+They are now deprecated and do nothing, as the OpenSSL libraries now
+normally do all thread initialisation and deinitialisation
+automatically (see L<OPENSSL_init_crypto(3)>).
 
 =head1 RETURN VALUE
 
@@ -30,7 +31,7 @@ The functions described here return no value.
 
 =head1 SEE ALSO
 
-L<err(3)>, L<OPENSSL_thread_stop(3)>
+L<err(3)>, L<OPENSSL_init_crypto(3)>
 
 =head1 HISTORY
 
