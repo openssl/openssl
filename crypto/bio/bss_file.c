@@ -154,6 +154,36 @@ static FILE *file_fopen(const char *filename, const char *mode)
     } else if (GetLastError() == ERROR_NO_UNICODE_TRANSLATION) {
         file = fopen(filename, mode);
     }
+#  elif defined(__DJGPP__)
+    {
+        char *newname = NULL;
+
+        if (!HAS_LFN_SUPPORT(filename)) {
+            char *iterator;
+            char lastchar;
+
+            newname = OPENSSL_malloc(strlen(filename) + 1);
+            if (newname == NULL)
+                return NULL;
+
+            for(iterator = newname, lastchar = '\0';
+                *filename; filename++, iterator++) {
+                if (lastchar == '/' && filename[0] == '.'
+                    && filename[1] != '.' && filename[1] != '/') {
+                    /* Leading dots are not permitted in plain DOS. */
+                    *iterator = '_';
+                } else {
+                    *iterator = *filename;
+                }
+                lastchar = *filename;
+            }
+            *iterator = '\0';
+            filename = newname;
+        }
+        file = fopen(filename, mode);
+
+        OPENSSL_free(newname);
+    }
 #  else
     file = fopen(filename, mode);
 #  endif

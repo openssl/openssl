@@ -66,7 +66,11 @@
 # include <openssl/bio.h>
 
 # ifdef WATT32
-#  define sock_write SockWrite  /* Watt-32 uses same names */
+/* Watt-32 uses same names */
+#  undef sock_write
+#  undef sock_read
+#  undef sock_puts
+#  define sock_write SockWrite
 #  define sock_read  SockRead
 #  define sock_puts  SockPuts
 # endif

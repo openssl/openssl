@@ -19,7 +19,7 @@
  files to download, see the DJGPP "ZIP PICKER" page at
  "http://www.delorie.com/djgpp/zip-picker.html". You also need to have
  the WATT-32 networking package installed before you try to compile
- OpenSSL. This can be obtained from "http://www.bgnett.no/~giva/".
+ OpenSSL. This can be obtained from "http://www.watt-32.net/".
  The Makefile assumes that the WATT-32 code is in the directory
  specified by the environment variable WATT_ROOT. If you have watt-32
  in directory "watt32" under your main DJGPP directory, specify
