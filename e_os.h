@@ -151,6 +151,7 @@ extern "C" {
 #  define writesocket(s,b,n)      send((s),(b),(n),0)
 # elif defined(__DJGPP__)
 #  define WATT32
+#  define WATT32_NO_OLDIES
 #  define get_last_socket_error() errno
 #  define clear_socket_error()    errno=0
 #  define closesocket(s)          close_s(s)
@@ -185,11 +186,14 @@ extern "C" {
 #   include <unistd.h>
 #   include <sys/stat.h>
 #   include <sys/socket.h>
+#   include <sys/un.h>
 #   include <tcp.h>
 #   include <netdb.h>
 #   define _setmode setmode
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
+#   define HAS_LFN_SUPPORT(name)  (pathconf((name), _PC_NAME_MAX) > 12)
+#   undef DEVRANDOM_EGD  /*  Neither MS-DOS nor FreeDOS provide 'egd' sockets.  */
 #   undef DEVRANDOM
 #   define DEVRANDOM "/dev/urandom\x24"
 #  endif                        /* __DJGPP__ */

@@ -89,6 +89,10 @@
 
 # if !defined(OPENSSL_NO_STDIO)
 
+#ifdef OPENSSL_SYS_MSDOS
+# include <libc/unconst.h>
+static void dosify_filename(const char *filename);
+#endif
 static int file_write(BIO *h, const char *buf, int num);
 static int file_read(BIO *h, char *buf, int size);
 static int file_puts(BIO *h, const char *str);
@@ -155,6 +159,9 @@ static FILE *file_fopen(const char *filename, const char *mode)
         file = fopen(filename, mode);
     }
 #  else
+#   ifdef OPENSSL_SYS_MSDOS
+    dosify_filename(filename);
+#   endif
     file = fopen(filename, mode);
 #  endif
     return (file);
@@ -455,6 +462,23 @@ static int file_puts(BIO *bp, const char *str)
     return (ret);
 }
 
+#ifdef OPENSSL_SYS_MSDOS
+static void dosify_filename(const char *filename)
+{
+    if (filename && *filename && !HAS_LFN_SUPPORT(filename)) {
+        char *namestart = unconst(filename, char *);
+
+        do {
+            if (namestart[0] == '/' && namestart[2] != '.' && namestart[2] != '/') {
+
+                /* Leading dot not allowed on plain DOS.  */
+                if (namestart[1] == '.')
+                    *++namestart = '_';
+            }
+        } while (*++namestart);
+    }
+}
+#endif
 #else
 
 static int file_write(BIO *b, const char *in, int inl)
