@@ -122,11 +122,19 @@ int prime_main(int argc, char **argv)
             goto end;
         }
         bn = BN_new();
+        if (bn == NULL) {
+            BIO_printf(bio_err, "Out of memory.\n");
+            goto end;
+        }
         if (!BN_generate_prime_ex(bn, bits, safe, NULL, NULL, NULL)) {
             BIO_printf(bio_err, "Failed to generate prime.\n");
             goto end;
         }
         s = hex ? BN_bn2hex(bn) : BN_bn2dec(bn);
+        if (s == NULL) {
+            BIO_printf(bio_err, "Out of memory.\n");
+            goto end;
+        }
         BIO_printf(bio_out, "%s\n", s);
         OPENSSL_free(s);
     } else {
