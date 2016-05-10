@@ -4,6 +4,15 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Automatic Darwin/OSX configuration has had a refresh, it will now
+     recognise x86_64 architectures automatically.  You can still decide
+     to build for a different bitness with the environment variable
+     KERNEL_BITS (can be 32 or 64), for example:
+
+         KERNEL_BITS=32 ./config
+
+     [Richard Levitte]
+
   *) Change default algorithms in pkcs8 utility to use PKCS#5 v2.0,
      256 bit AES and HMAC with SHA256.
      [Steve Henson]
