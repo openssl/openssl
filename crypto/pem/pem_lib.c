@@ -30,21 +30,23 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int w, void *key)
 {
+#if defined(OPENSSL_NO_STDIO) || defined(OPENSSL_NO_UI)
+    int i;
+#else
     int i, j;
     const char *prompt;
+#endif
+
     if (key) {
         i = strlen(key);
         i = (i > num) ? num : i;
         memcpy(buf, key, i);
-        return (i);
+        return i;
     }
 
 #if defined(OPENSSL_NO_STDIO) || defined(OPENSSL_NO_UI)
-    /*
-     * We should not ever call the default callback routine from windows.
-     */
     PEMerr(PEM_F_PEM_DEF_CALLBACK, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-    return (-1);
+    return -1;
 #else
     prompt = EVP_get_pw_prompt();
     if (prompt == NULL)
@@ -61,7 +63,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
         if (i != 0) {
             PEMerr(PEM_F_PEM_DEF_CALLBACK, PEM_R_PROBLEMS_GETTING_PASSWORD);
             memset(buf, 0, (unsigned int)num);
-            return (-1);
+            return -1;
         }
         j = strlen(buf);
         if (min_len && j < min_len) {
@@ -71,7 +73,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
         } else
             break;
     }
-    return (j);
+    return j;
 #endif
 }
 
