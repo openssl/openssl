@@ -226,12 +226,14 @@ sub clientstart
     do {
         my $servaddr = $self->server_addr;
         $servaddr =~ s/[\[\]]//g; # Remove [ and ]
-        $server_sock = $IP_factory->(
-            PeerAddr => $servaddr,
-            PeerPort => $self->server_port,
-            MultiHomed => 1,
-            Proto => 'tcp'
-        );
+        eval {
+            $server_sock = $IP_factory->(
+                PeerAddr => $servaddr,
+                PeerPort => $self->server_port,
+                MultiHomed => 1,
+                Proto => 'tcp'
+            );
+        };
 
         $retry--;
         if ($@ || !defined($server_sock)) {
