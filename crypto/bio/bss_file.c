@@ -177,6 +177,7 @@ static FILE *file_fopen(const char *filename, const char *mode)
                 }
                 lastchar = *filename;
             }
+            *iterator = '\0';
             filename = newname;
         }
         file = fopen(filename, mode);
