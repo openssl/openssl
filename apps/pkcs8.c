@@ -177,6 +177,8 @@ int pkcs8_main(int argc, char **argv)
                            "%s: Unknown PRF algorithm %s\n", prog, opt_arg());
                 goto opthelp;
             }
+            if (cipher == NULL)
+                cipher = EVP_aes_256_cbc();
             break;
         case OPT_ITER:
             if (!opt_int(opt_arg(), &iter))
@@ -225,8 +227,8 @@ int pkcs8_main(int argc, char **argv)
         goto end;
     }
 
-    if ((pbe_nid == -1) && !cipher)
-        pbe_nid = NID_pbeWithMD5AndDES_CBC;
+    if ((pbe_nid == -1) && cipher == NULL)
+        cipher = EVP_aes_256_cbc();
 
     in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
