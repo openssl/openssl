@@ -45,7 +45,7 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 8;
+plan tests => 10;
 
 #Test 1: By default with no existing session we should get a session ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
@@ -128,6 +128,23 @@ $proxy->clientstart();
 #                 NewSessionTicket message not seen; Abbreviated handshake.
 checkmessages(8, "Empty ticket resumption test",  1, 0, 0, 0);
 
+#Test 9: Bad server sends the ServerHello extension but does not send a
+#NewSessionTicket
+#Expected result: Connection failure
+clearall();
+$proxy->serverflags("-no_ticket");
+$proxy->filter(\&inject_ticket_extension_filter);
+$proxy->start();
+ok(TLSProxy::Message->fail, "Server sends ticket extension but no ticket test");
+
+#Test10: Bad server does not send the ServerHello extension but does send a
+#NewSessionTicket
+#Expected result: Connection failure
+clearall();
+$proxy->serverflags("-no_ticket");
+$proxy->filter(\&inject_empty_ticket_filter);
+$proxy->start();
+ok(TLSProxy::Message->fail, "No server ticket extension but ticket sent test");
 
 sub ticket_filter
 {
@@ -169,6 +186,26 @@ sub inject_empty_ticket_filter {
         }
     }
     $proxy->message_list([@new_message_list]);
+}
+
+sub inject_ticket_extension_filter
+{
+    my $proxy = shift;
+
+    # We're only interested in the initial ServerHello
+    if ($proxy->flight != 1) {
+        return;
+    }
+
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
+            #Add the session ticket extension to the ServerHello even though
+            #we are not going to send a NewSessionTicket message
+            $message->set_extension(TLSProxy::Message::EXT_SESSION_TICKET, "");
+
+            $message->repack();
+        }
+    }
 }
 
 sub checkmessages($$$$$$)
