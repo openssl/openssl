@@ -89,10 +89,6 @@
 
 # if !defined(OPENSSL_NO_STDIO)
 
-#  if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WINDOWS)
-#   include <libc/unconst.h>
-static void dosify_filename(const char *filename);
-#  endif
 static int file_write(BIO *h, const char *buf, int num);
 static int file_read(BIO *h, char *buf, int size);
 static int file_puts(BIO *h, const char *str);
@@ -158,10 +154,36 @@ static FILE *file_fopen(const char *filename, const char *mode)
     } else if (GetLastError() == ERROR_NO_UNICODE_TRANSLATION) {
         file = fopen(filename, mode);
     }
+#  elif defined(__DJGPP__)
+    {
+        char *newname = NULL;
+
+        if (!HAS_LFN_SUPPORT(filename)) {
+            char *iterator;
+            char lastchar;
+
+            newname = OPENSSL_malloc(strlen(filename));
+            if (newname == NULL)
+                return NULL;
+
+            for(iterator = newname, lastchar = '\0';
+                *filename; filename++, iterator++) {
+                if (lastchar == '/' && filename[0] == '.'
+                    && filename[1] != '.' && filename[1] != '/') {
+                    /* Leading dots are not permitted in plain DOS. */
+                    *iterator = '_';
+                } else {
+                    *iterator = *filename;
+                }
+                lastchar = *filename;
+            }
+            filename = newname;
+        }
+        file = fopen(filename, mode);
+
+        OPENSSL_free(newname);
+    }
 #  else
-#   if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WINDOWS)
-    dosify_filename(filename);
-#   endif
     file = fopen(filename, mode);
 #  endif
     return (file);
@@ -462,23 +484,6 @@ static int file_puts(BIO *bp, const char *str)
     return (ret);
 }
 
-# if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WINDOWS)
-static void dosify_filename(const char *filename)
-{
-    if (filename && *filename && !HAS_LFN_SUPPORT(filename)) {
-        char *namestart = unconst(filename, char *);
-
-        do {
-            if (namestart[0] == '/' && namestart[2] != '.' && namestart[2] != '/') {
-
-                /* Leading dot not allowed on plain DOS.  */
-                if (namestart[1] == '.')
-                    *++namestart = '_';
-            }
-        } while (*++namestart);
-    }
-}
-# endif
 #else
 
 static int file_write(BIO *b, const char *in, int inl)
