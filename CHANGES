@@ -4,6 +4,9 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Remove openssl.spec.  Packaging files belong with the packagers.
+     [Richard Levitte]
+
   *) Automatic Darwin/OSX configuration has had a refresh, it will now
      recognise x86_64 architectures automatically.  You can still decide
      to build for a different bitness with the environment variable
