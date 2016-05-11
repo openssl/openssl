@@ -26,61 +26,45 @@
 #include <openssl/x509v3.h>
 #include "fuzzer.h"
 
-static const ASN1_ITEM *item_type;
-
-int LLVMFuzzerInitialize(int *argc, char ***argv) {
-    const char *cmd;
-    OPENSSL_assert(*argc > 1);
-
-    cmd = (*argv)[1];
-    (*argv)[1] = (*argv)[0];
-    ++*argv;
-    --*argc;
-
-    // TODO: make this work like d2i_test.c does, once its decided what the
-    // common scheme is!
-#define Y(t)  if (!strcmp(cmd, #t)) item_type = ASN1_ITEM_rptr(t)
-#define X(t)  else Y(t)
-
-    Y(ASN1_SEQUENCE);
-    X(AUTHORITY_INFO_ACCESS);
-    X(BIGNUM);
-    X(ECPARAMETERS);
-    X(ECPKPARAMETERS);
-    X(GENERAL_NAME);
-    X(GENERAL_SUBTREE);
-    X(NAME_CONSTRAINTS);
-    X(OCSP_BASICRESP);
-    X(OCSP_RESPONSE);
-    X(PKCS12);
-    X(PKCS12_AUTHSAFES);
-    X(PKCS12_SAFEBAGS);
-    X(PKCS7);
-    X(PKCS7_ATTR_SIGN);
-    X(PKCS7_ATTR_VERIFY);
-    X(PKCS7_DIGEST);
-    X(PKCS7_ENC_CONTENT);
-    X(PKCS7_ENCRYPT);
-    X(PKCS7_ENVELOPE);
-    X(PKCS7_RECIP_INFO);
-    X(PKCS7_SIGN_ENVELOPE);
-    X(PKCS7_SIGNED);
-    X(PKCS7_SIGNER_INFO);
-    X(POLICY_CONSTRAINTS);
-    X(POLICY_MAPPINGS);
-    X(SXNET);
-    //X(TS_RESP);  want to do this, but type is hidden, however d2i exists...
-    X(X509);
-    X(X509_CRL);
-    else
-        OPENSSL_assert(!"Bad type");
-
-    return 0;
-}
+static const ASN1_ITEM *item_type[] = {
+    ASN1_ITEM_rptr(ASN1_SEQUENCE),
+    ASN1_ITEM_rptr(AUTHORITY_INFO_ACCESS),
+    ASN1_ITEM_rptr(BIGNUM),
+    ASN1_ITEM_rptr(ECPARAMETERS),
+    ASN1_ITEM_rptr(ECPKPARAMETERS),
+    ASN1_ITEM_rptr(GENERAL_NAME),
+    ASN1_ITEM_rptr(GENERAL_SUBTREE),
+    ASN1_ITEM_rptr(NAME_CONSTRAINTS),
+    ASN1_ITEM_rptr(OCSP_BASICRESP),
+    ASN1_ITEM_rptr(OCSP_RESPONSE),
+    ASN1_ITEM_rptr(PKCS12),
+    ASN1_ITEM_rptr(PKCS12_AUTHSAFES),
+    ASN1_ITEM_rptr(PKCS12_SAFEBAGS),
+    ASN1_ITEM_rptr(PKCS7),
+    ASN1_ITEM_rptr(PKCS7_ATTR_SIGN),
+    ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY),
+    ASN1_ITEM_rptr(PKCS7_DIGEST),
+    ASN1_ITEM_rptr(PKCS7_ENC_CONTENT),
+    ASN1_ITEM_rptr(PKCS7_ENCRYPT),
+    ASN1_ITEM_rptr(PKCS7_ENVELOPE),
+    ASN1_ITEM_rptr(PKCS7_RECIP_INFO),
+    ASN1_ITEM_rptr(PKCS7_SIGN_ENVELOPE),
+    ASN1_ITEM_rptr(PKCS7_SIGNED),
+    ASN1_ITEM_rptr(PKCS7_SIGNER_INFO),
+    ASN1_ITEM_rptr(POLICY_CONSTRAINTS),
+    ASN1_ITEM_rptr(POLICY_MAPPINGS),
+    ASN1_ITEM_rptr(SXNET),
+    //ASN1_ITEM_rptr(TS_RESP),  want to do this, but type is hidden, however d2i exists...
+    ASN1_ITEM_rptr(X509),
+    ASN1_ITEM_rptr(X509_CRL),
+    NULL
+};
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
-    const uint8_t *b = buf;
-    ASN1_VALUE *o = ASN1_item_d2i(NULL, &b, len, item_type);
-    ASN1_item_free(o, item_type);
+    for (int n = 0; item_type[n] != NULL; ++n) {
+        const uint8_t *b = buf;
+        ASN1_VALUE *o = ASN1_item_d2i(NULL, &b, len, item_type[n]);
+        ASN1_item_free(o, item_type[n]);
+    }
     return 0;
 }
