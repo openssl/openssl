@@ -162,7 +162,7 @@ static FILE *file_fopen(const char *filename, const char *mode)
             char *iterator;
             char lastchar;
 
-            newname = OPENSSL_malloc(strlen(filename));
+            newname = OPENSSL_malloc(strlen(filename) + 1);
             if (newname == NULL)
                 return NULL;
 
