@@ -288,7 +288,7 @@ int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj)
         return (0);
     ASN1_OBJECT_free(attr->object);
     attr->object = OBJ_dup(obj);
-    return (1);
+    return attr->object != NULL;
 }
 
 int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,

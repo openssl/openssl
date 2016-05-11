@@ -235,7 +235,7 @@ int X509_EXTENSION_set_object(X509_EXTENSION *ex, ASN1_OBJECT *obj)
         return (0);
     ASN1_OBJECT_free(ex->object);
     ex->object = OBJ_dup(obj);
-    return (1);
+    return ex->object != NULL;
 }
 
 int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit)
