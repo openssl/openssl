@@ -131,7 +131,7 @@ static int afalg_chk_platform(void);
 
 /* Engine Id and Name */
 static const char *engine_afalg_id = "afalg";
-static const char *engine_afalg_name = "AFLAG engine support";
+static const char *engine_afalg_name = "AFALG engine support";
 
 static int afalg_cipher_nids[] = {
     NID_aes_128_cbc
