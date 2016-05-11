@@ -68,7 +68,7 @@
 static int cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
-                 STACK_OF(X509_CRL) *crls, ENGINE *e, int show_chain);
+                 STACK_OF(X509_CRL) *crls, int show_chain);
 static int v_verbose = 0, vflags = 0;
 
 typedef enum OPTION_choice {
@@ -108,7 +108,6 @@ OPTIONS verify_options[] = {
 
 int verify_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
     STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
     X509_STORE *store = NULL;
@@ -167,7 +166,7 @@ int verify_main(int argc, char **argv)
             break;
         case OPT_UNTRUSTED:
             /* Zero or more times */
-            if (!load_certs(opt_arg(), &untrusted, FORMAT_PEM, NULL, e,
+            if (!load_certs(opt_arg(), &untrusted, FORMAT_PEM, NULL,
                             "untrusted certificates"))
                 goto end;
             break;
@@ -175,25 +174,27 @@ int verify_main(int argc, char **argv)
             /* Zero or more times */
             noCAfile = 1;
             noCApath = 1;
-            if (!load_certs(opt_arg(), &trusted, FORMAT_PEM, NULL, e,
+            if (!load_certs(opt_arg(), &trusted, FORMAT_PEM, NULL,
                             "trusted certificates"))
                 goto end;
             break;
         case OPT_CRLFILE:
             /* Zero or more times */
-            if (!load_crls(opt_arg(), &crls, FORMAT_PEM, NULL, e,
+            if (!load_crls(opt_arg(), &crls, FORMAT_PEM, NULL,
                            "other CRLs"))
                 goto end;
             break;
         case OPT_CRL_DOWNLOAD:
             crl_download = 1;
             break;
+        case OPT_ENGINE:
+            if (setup_engine(opt_arg(), 0) == NULL) {
+                /* Failure message already displayed */
+                goto end;
+            }
+            break;
         case OPT_SHOW_CHAIN:
             show_chain = 1;
-            break;
-        case OPT_ENGINE:
-            /* Specify *before* -trusted/-untrusted/-CRLfile */
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_VERBOSE:
             v_verbose = 1;
@@ -223,11 +224,11 @@ int verify_main(int argc, char **argv)
 
     ret = 0;
     if (argc < 1) {
-        if (check(store, NULL, untrusted, trusted, crls, e, show_chain) != 1)
+        if (check(store, NULL, untrusted, trusted, crls, show_chain) != 1)
             ret = -1;
     } else {
         for (i = 0; i < argc; i++)
-            if (check(store, argv[i], untrusted, trusted, crls, e,
+            if (check(store, argv[i], untrusted, trusted, crls,
                       show_chain) != 1)
                 ret = -1;
     }
@@ -243,7 +244,7 @@ int verify_main(int argc, char **argv)
 
 static int check(X509_STORE *ctx, char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
-                 STACK_OF(X509_CRL) *crls, ENGINE *e, int show_chain)
+                 STACK_OF(X509_CRL) *crls, int show_chain)
 {
     X509 *x = NULL;
     int i = 0, ret = 0;
@@ -251,7 +252,7 @@ static int check(X509_STORE *ctx, char *file,
     STACK_OF(X509) *chain = NULL;
     int num_untrusted;
 
-    x = load_cert(file, FORMAT_PEM, NULL, e, "certificate file");
+    x = load_cert(file, FORMAT_PEM, "certificate file");
     if (x == NULL)
         goto end;
 
@@ -268,7 +269,7 @@ static int check(X509_STORE *ctx, char *file,
         goto end;
     }
     if (tchain)
-        X509_STORE_CTX_trusted_stack(csc, tchain);
+        X509_STORE_CTX_set0_trusted_stack(csc, tchain);
     if (crls)
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);

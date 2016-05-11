@@ -6,7 +6,7 @@ EVP_PKEY_set1_RSA, EVP_PKEY_set1_DSA, EVP_PKEY_set1_DH, EVP_PKEY_set1_EC_KEY,
 EVP_PKEY_get1_RSA, EVP_PKEY_get1_DSA, EVP_PKEY_get1_DH, EVP_PKEY_get1_EC_KEY,
 EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH, EVP_PKEY_get0_EC_KEY,
 EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH, EVP_PKEY_assign_EC_KEY,
-EVP_PKEY_type - EVP_PKEY assignment functions.
+EVP_PKEY_type, EVP_PKEY_id, EVP_PKEY_base_id - EVP_PKEY assignment functions.
 
 =head1 SYNOPSIS
 
@@ -32,6 +32,8 @@ EVP_PKEY_type - EVP_PKEY assignment functions.
  int EVP_PKEY_assign_DH(EVP_PKEY *pkey,DH *key);
  int EVP_PKEY_assign_EC_KEY(EVP_PKEY *pkey,EC_KEY *key);
 
+ int EVP_PKEY_id(const EVP_PKEY *pkey);
+ int EVP_PKEY_base_id(const EVP_PKEY *pkey);
  int EVP_PKEY_type(int type);
 
 =head1 DESCRIPTION
@@ -54,11 +56,18 @@ and EVP_PKEY_assign_EC_KEY() also set the referenced key to B<key>
 however these use the supplied B<key> internally and so B<key>
 will be freed when the parent B<pkey> is freed.
 
-EVP_PKEY_type() returns the type of key corresponding to the value
-B<type>. The type of a key can be obtained with
-EVP_PKEY_type(pkey->type). The return value will be EVP_PKEY_RSA,
-EVP_PKEY_DSA, EVP_PKEY_DH or EVP_PKEY_EC for the corresponding
-key types or NID_undef if the key type is unassigned.
+EVP_PKEY_base_id() returns the type of B<pkey>. For example
+an RSA key will return B<EVP_PKEY_RSA>.
+
+EVP_PKEY_id() returns the actual OID associated with B<pkey>. Historically keys
+using the same algorithm could use different OIDs. For example an RSA key could
+use the OIDs corresponding to the NIDs B<NID_rsaEncryption> (equivalent to
+B<EVP_PKEY_RSA>) or B<NID_rsa> (equivalent to B<EVP_PKEY_RSA2>). The use of
+alternative non-standard OIDs is now rare so B<EVP_PKEY_RSA2> et al are not
+often seen in practice.
+
+EVP_PKEY_type() returns the underlying type of the NID B<type>. For example
+EVP_PKEY_type(EVP_PKEY_RSA2) will return B<EVP_PKEY_RSA>.
 
 =head1 NOTES
 
@@ -69,24 +78,31 @@ freed as well as B<pkey>.
 EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH()
 and EVP_PKEY_assign_EC_KEY() are implemented as macros.
 
+Most applications wishing to know a key type will simply call
+EVP_PKEY_base_id() and will not care about the actual type:
+which will be identical in almost all cases.
+
+Previous versions of this document suggested using EVP_PKEY_type(pkey->type)
+to determine the type of a key. Since B<EVP_PKEY> is now opaque this
+is no longer possible: the equivalent is EVP_PKEY_base_id(pkey).
+
 =head1 RETURN VALUES
 
 EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and
 EVP_PKEY_set1_EC_KEY() return 1 for success or 0 for failure.
 
 EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
-EVP_PKEY_get1_EC_KEY() return the referenced key or B<NULL> if 
+EVP_PKEY_get1_EC_KEY() return the referenced key or B<NULL> if
 an error occurred.
 
 EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH()
 and EVP_PKEY_assign_EC_KEY() return 1 for success and 0 for failure.
 
+EVP_PKEY_base_id(), EVP_PKEY_id() and EVP_PKEY_type() return a key
+type or B<NID_undef> (equivalently B<EVP_PKEY_NONE>) on error.
+
 =head1 SEE ALSO
 
 L<EVP_PKEY_new(3)>
-
-=head1 HISTORY
-
-TBA
 
 =cut

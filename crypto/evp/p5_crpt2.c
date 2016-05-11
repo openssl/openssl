@@ -64,9 +64,9 @@
 # include "evp_locl.h"
 
 /* set this to print out info about the keygen algorithm */
-/* #define DEBUG_PKCS5V2 */
+/* #define OPENSSL_DEBUG_PKCS5V2 */
 
-# ifdef DEBUG_PKCS5V2
+# ifdef OPENSSL_DEBUG_PKCS5V2
 static void h__dump(const unsigned char *p, int len);
 # endif
 
@@ -157,7 +157,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     }
     HMAC_CTX_free(hctx);
     HMAC_CTX_free(hctx_tpl);
-# ifdef DEBUG_PKCS5V2
+# ifdef OPENSSL_DEBUG_PKCS5V2
     fprintf(stderr, "Password:\n");
     h__dump(pass, passlen);
     fprintf(stderr, "Salt:\n");
@@ -213,7 +213,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
     /* See if we recognise the key derivation function */
     if (!EVP_PBE_find(EVP_PBE_TYPE_KDF, OBJ_obj2nid(pbe2->keyfunc->algorithm),
-			NULL, NULL, &kdf)) {
+                        NULL, NULL, &kdf)) {
         EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,
                EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION);
         goto err;
@@ -315,7 +315,7 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     return rv;
 }
 
-# ifdef DEBUG_PKCS5V2
+# ifdef OPENSSL_DEBUG_PKCS5V2
 static void h__dump(const unsigned char *p, int len)
 {
     for (; len--; p++)

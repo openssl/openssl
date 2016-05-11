@@ -16,21 +16,21 @@ CYRPTO_secure_malloc_used - secure heap storage
 
  int CRYPTO_secure_malloc_initialized();
 
- void CRYPTO_secure_malloc_done();
+ int CRYPTO_secure_malloc_done();
 
- void *OPENSSL_secure_malloc(int num);
- void *CRYPTO_secure_malloc(int num, const char *file, int line);
+ void *OPENSSL_secure_malloc(size_t num);
+ void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
 
- void *OPENSSL_secure_zalloc(int num);
- void *CRYPTO_secure_zalloc(int num, const char *file, int line);
+ void *OPENSSL_secure_zalloc(size_t num);
+ void *CRYPTO_secure_zalloc(size_t num, const char *file, int line);
 
  void OPENSSL_secure_free(void* ptr);
- void CRYPTO_secure_free(void *ptr);
+ void CRYPTO_secure_free(void *ptr, const char *, int);
 
  size_t OPENSSL_secure_actual_size(const void *ptr);
  int OPENSSL_secure_allocated(const void *ptr);
 
- size_t CYRPTO_secure_malloc_used();
+ size_t CYRPTO_secure_used();
 
 =head1 DESCRIPTION
 
@@ -49,14 +49,14 @@ put all intermediate values and computations there.
 CRYPTO_secure_malloc_init() creates the secure heap, with the specified
 C<size> in bytes. The C<minsize> parameter is the minimum size to
 allocate from the heap. Both C<size> and C<minsize> must be a power
-of two.  It is an error to call this after any OPENSSL_secure_malloc()
-calls have been made.
+of two.
 
 CRYPTO_secure_malloc_initialized() indicates whether or not the secure
 heap as been initialized and is available.
 
 CRYPTO_secure_malloc_done() releases the heap and makes the memory unavailable
-to the process. It can take noticeably long to complete.
+to the process if all secure memory has been freed.
+It can take noticeably long to complete. 
 
 OPENSSL_secure_malloc() allocates C<num> bytes from the heap.
 If CRYPTO_secure_malloc_init() is not called, this is equivalent to
@@ -74,7 +74,8 @@ OPENSSL_secure_malloc().
 If CRYPTO_secure_malloc_init() is not called, this is equivalent to
 calling OPENSSL_free().
 It exists for consistency with OPENSSL_secure_malloc() , and
-is a macro that expands to CRYPTO_secure_free().
+is a macro that expands to CRYPTO_secure_free() and adds the C<__FILE__>
+and C<__LINE__> parameters..
 
 OPENSSL_secure_allocated() tells whether or not a pointer is within
 the secure heap.
@@ -82,7 +83,7 @@ OPENSSL_secure_actual_size() tells the actual size allocated to the
 pointer; implementations may allocate more space than initially
 requested, in order to "round up" and reduce secure heap fragmentation.
 
-CRYPTO_secure_malloc_used() returns the number of bytes allocated in the
+CRYPTO_secure_used() returns the number of bytes allocated in the
 secure heap.
 
 =head1 RETURN VALUES
@@ -93,22 +94,17 @@ mapping.
 
 CRYPTO_secure_malloc_initialized() returns 1 if the secure heap is
 available (that is, if CRYPTO_secure_malloc_init() has been called,
-but CRYPTO_secure_malloc_done() has not) or 0 if not.
+but CRYPTO_secure_malloc_done() has not been called or failed) or 0 if not.
 
 OPENSSL_secure_malloc() and OPENSSL_secure_zalloc() return a pointer into
 the secure heap of the requested size, or C<NULL> if memory could not be
 allocated.
 
-CRYPTO_secure_allocated() returns 1 if the pointer is in the
-the secure heap, or 0 if not.
+CRYPTO_secure_allocated() returns 1 if the pointer is in the secure heap, or 0 if not.
 
-CRYPTO_secure_malloc_done() and OPENSSL_secure_free()
-return no values.
+CRYPTO_secure_malloc_done() returns 1 if the secure memory area is released, or 0 if not.
 
-=head1 BUGS
-
-The size parameters should be B<size_t> not B<int> and will be changed
-in a future release.
+OPENSSL_secure_free() returns no values.
 
 =head1 SEE ALSO
 

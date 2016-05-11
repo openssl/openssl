@@ -68,37 +68,70 @@
 typedef struct test_info {
     const char *test_case_name;
     int (*test_fn) ();
+    int (*param_test_fn)(int idx);
+    int num;
 } TEST_INFO;
 
 static TEST_INFO all_tests[1024];
 static int num_tests = 0;
+/*
+ * A parameterised tests runs a loop of test cases.
+ * |num_test_cases| counts the total number of test cases
+ * across all tests.
+ */
+static int num_test_cases = 0;
 
 void add_test(const char *test_case_name, int (*test_fn) ())
 {
     assert(num_tests != OSSL_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
     all_tests[num_tests].test_fn = test_fn;
+    all_tests[num_tests].num = -1;
+    ++num_test_cases;
     ++num_tests;
+}
+
+void add_all_tests(const char *test_case_name, int(*test_fn)(int idx),
+                   int num)
+{
+    assert(num_tests != OSSL_NELEM(all_tests));
+    all_tests[num_tests].test_case_name = test_case_name;
+    all_tests[num_tests].param_test_fn = test_fn;
+    all_tests[num_tests].num = num;
+    ++num_tests;
+    num_test_cases += num;
 }
 
 int run_tests(const char *test_prog_name)
 {
     int num_failed = 0;
-    int i = 0;
 
-    printf("%s: %d test case%s\n", test_prog_name, num_tests,
-           num_tests == 1 ? "" : "s");
+    int i, j;
+
+    printf("%s: %d test case%s\n", test_prog_name, num_test_cases,
+           num_test_cases == 1 ? "" : "s");
+
     for (i = 0; i != num_tests; ++i) {
-        if (all_tests[i].test_fn()) {
-            printf("** %s failed **\n--------\n",
-                   all_tests[i].test_case_name);
-            ++num_failed;
+        if (all_tests[i].num == -1) {
+            if (!all_tests[i].test_fn()) {
+                printf("** %s failed **\n--------\n",
+                       all_tests[i].test_case_name);
+                ++num_failed;
+            }
+        } else {
+            for (j = 0; j < all_tests[i].num; j++) {
+                if (!all_tests[i].param_test_fn(j)) {
+                    printf("** %s failed test %d\n--------\n",
+                           all_tests[i].test_case_name, j);
+                    ++num_failed;
+                }
+            }
         }
     }
 
     if (num_failed != 0) {
         printf("%s: %d test%s failed (out of %d)\n", test_prog_name,
-               num_failed, num_failed != 1 ? "s" : "", num_tests);
+               num_failed, num_failed != 1 ? "s" : "", num_test_cases);
         return EXIT_FAILURE;
     }
     printf("  All tests passed.\n");

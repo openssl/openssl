@@ -15,16 +15,16 @@
 # measured with rdtsc at fixed clock frequency.
 #
 #		IALU/gcc-4.8(*)	AVX(**)		AVX2
-# P4		4.90/+120%      -
-# Core 2	2.39/+90%	-
-# Westmere	1.86/+120%	-
+# P4		4.46/+120%	-
+# Core 2	2.41/+90%	-
+# Westmere	1.88/+120%	-
 # Sandy Bridge	1.39/+140%	1.10
-# Haswell	1.10/+175%	1.11		0.65
-# Skylake	1.12/+120%	0.96		0.51
+# Haswell	1.14/+175%	1.11		0.65
+# Skylake	1.13/+120%	0.96		0.51
 # Silvermont	2.83/+95%	-
 # VIA Nano	1.82/+150%	-
 # Sledgehammer	1.38/+160%	-
-# Bulldozer	2.21/+130%	0.97
+# Bulldozer	2.30/+130%	0.97
 #
 # (*)	improvement coefficients relative to clang are more modest and
 #	are ~50% on most processors, in both cases we are comparing to
@@ -114,6 +114,7 @@ $code.=<<___;
 	add	$d3,%rax
 	add	%rax,$h0
 	adc	\$0,$h1
+	adc	\$0,$h2
 ___
 }
 
@@ -129,8 +130,12 @@ $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	poly1305_init
+.hidden	poly1305_init
 .globl	poly1305_blocks
+.hidden	poly1305_blocks
 .globl	poly1305_emit
+.hidden	poly1305_emit
+
 .type	poly1305_init,\@function,3
 .align	32
 poly1305_init:
@@ -165,10 +170,16 @@ $code.=<<___;
 	and	8($inp),%rcx
 	mov	%rax,24($ctx)
 	mov	%rcx,32($ctx)
-
+___
+$code.=<<___	if ($flavour !~ /elf32/);
 	mov	%r10,0(%rdx)
 	mov	%r11,8(%rdx)
-
+___
+$code.=<<___	if ($flavour =~ /elf32/);
+	mov	%r10d,0(%rdx)
+	mov	%r11d,4(%rdx)
+___
+$code.=<<___;
 	mov	\$1,%eax
 .Lno_key:
 	ret
@@ -178,8 +189,8 @@ $code.=<<___;
 .align	32
 poly1305_blocks:
 .Lblocks:
-	sub	\$16,$len		# too short?
-	jc	.Lno_data
+	shr	\$4,$len
+	jz	.Lno_data		# too short
 
 	push	%rbx
 	push	%rbp
@@ -214,8 +225,8 @@ ___
 	&poly1305_iteration();
 $code.=<<___;
 	mov	$r1,%rax
-	sub	\$16,%r15		# len-=16
-	jnc	.Loop
+	dec	%r15			# len-=16
+	jnz	.Loop
 
 	mov	$h0,0($ctx)		# store hash value
 	mov	$h1,8($ctx)
@@ -488,10 +499,10 @@ poly1305_blocks_avx:
 
 	################################# base 2^26 -> base 2^64
 	mov	$d1#d,$h0#d
-	and	\$-1<<31,$d1
+	and	\$`-1*(1<<31)`,$d1
 	mov	$d2,$r1			# borrow $r1
 	mov	$d2#d,$h1#d
-	and	\$-1<<31,$d2
+	and	\$`-1*(1<<31)`,$d2
 
 	shr	\$6,$d1
 	shl	\$52,$r1
@@ -515,6 +526,7 @@ poly1305_blocks_avx:
 	add	$d2,$d1			# =*5
 	add	$d1,$h0
 	adc	\$0,$h1
+	adc	\$0,$h2
 
 	mov	$s1,$r1
 	mov	$s1,%rax
@@ -1198,6 +1210,20 @@ $code.=<<___;
 
 .Lshort_tail_avx:
 	################################################################
+	# horizontal addition
+
+	vpsrldq		\$8,$D4,$T4
+	vpsrldq		\$8,$D3,$T3
+	vpsrldq		\$8,$D1,$T1
+	vpsrldq		\$8,$D0,$T0
+	vpsrldq		\$8,$D2,$T2
+	vpaddq		$T3,$D3,$D3
+	vpaddq		$T4,$D4,$D4
+	vpaddq		$T0,$D0,$D0
+	vpaddq		$T1,$D1,$D1
+	vpaddq		$T2,$D2,$D2
+
+	################################################################
 	# lazy reduction
 
 	vpsrlq		\$26,$D3,$H3
@@ -1231,25 +1257,11 @@ $code.=<<___;
 	vpand		$MASK,$D3,$D3
 	vpaddq		$H3,$D4,$D4		# h3 -> h4
 
-	################################################################
-	# horizontal addition
-
-	vpsrldq		\$8,$D2,$T2
-	vpsrldq		\$8,$D0,$T0
-	vpsrldq		\$8,$D1,$T1
-	vpsrldq		\$8,$D3,$T3
-	vpsrldq		\$8,$D4,$T4
-	vpaddq		$T2,$D2,$H2
-	vpaddq		$T0,$D0,$H0
-	vpaddq		$T1,$D1,$H1
-	vpaddq		$T3,$D3,$H3
-	vpaddq		$T4,$D4,$H4
-
-	vmovd		$H0,`4*0-48-64`($ctx)	# save partially reduced
-	vmovd		$H1,`4*1-48-64`($ctx)
-	vmovd		$H2,`4*2-48-64`($ctx)
-	vmovd		$H3,`4*3-48-64`($ctx)
-	vmovd		$H4,`4*4-48-64`($ctx)
+	vmovd		$D0,`4*0-48-64`($ctx)	# save partially reduced
+	vmovd		$D1,`4*1-48-64`($ctx)
+	vmovd		$D2,`4*2-48-64`($ctx)
+	vmovd		$D3,`4*3-48-64`($ctx)
+	vmovd		$D4,`4*4-48-64`($ctx)
 ___
 $code.=<<___	if ($win64);
 	vmovdqa		0x50(%r11),%xmm6
@@ -1309,6 +1321,7 @@ poly1305_emit_avx:
 	add	%rcx,%rax
 	add	%rax,%r8
 	adc	\$0,%r9
+	adc	\$0,%r10
 
 	mov	%r8,%rax
 	add	\$5,%r8		# compare to modulus
@@ -1374,10 +1387,10 @@ poly1305_blocks_avx2:
 
 	################################# base 2^26 -> base 2^64
 	mov	$d1#d,$h0#d
-	and	\$-1<<31,$d1
+	and	\$`-1*(1<<31)`,$d1
 	mov	$d2,$r1			# borrow $r1
 	mov	$d2#d,$h1#d
-	and	\$-1<<31,$d2
+	and	\$`-1*(1<<31)`,$d2
 
 	shr	\$6,$d1
 	shl	\$52,$r1
@@ -1401,6 +1414,7 @@ poly1305_blocks_avx2:
 	add	$d2,$d1			# =*5
 	add	$d1,$h0
 	adc	\$0,$h1
+	adc	\$0,$h2
 
 	mov	$s1,$r1
 	mov	$s1,%rax
@@ -1888,6 +1902,31 @@ $code.=<<___;
 	vpaddq		$H0,$D0,$H0		# h0 = d0 + h1*s4
 
 	################################################################
+	# horizontal addition
+
+	vpsrldq		\$8,$D1,$T1
+	vpsrldq		\$8,$H2,$T2
+	vpsrldq		\$8,$H3,$T3
+	vpsrldq		\$8,$H4,$T4
+	vpsrldq		\$8,$H0,$T0
+	vpaddq		$T1,$D1,$D1
+	vpaddq		$T2,$H2,$H2
+	vpaddq		$T3,$H3,$H3
+	vpaddq		$T4,$H4,$H4
+	vpaddq		$T0,$H0,$H0
+
+	vpermq		\$0x2,$H3,$T3
+	vpermq		\$0x2,$H4,$T4
+	vpermq		\$0x2,$H0,$T0
+	vpermq		\$0x2,$D1,$T1
+	vpermq		\$0x2,$H2,$T2
+	vpaddq		$T3,$H3,$H3
+	vpaddq		$T4,$H4,$H4
+	vpaddq		$T0,$H0,$H0
+	vpaddq		$T1,$D1,$D1
+	vpaddq		$T2,$H2,$H2
+
+	################################################################
 	# lazy reduction
 
 	vpsrlq		\$26,$H3,$D3
@@ -1920,31 +1959,6 @@ $code.=<<___;
 	vpsrlq		\$26,$H3,$D3
 	vpand		$MASK,$H3,$H3
 	vpaddq		$D3,$H4,$H4		# h3 -> h4
-
-	################################################################
-	# horizontal addition
-
-	vpsrldq		\$8,$H2,$T2
-	vpsrldq		\$8,$H0,$T0
-	vpsrldq		\$8,$H1,$T1
-	vpsrldq		\$8,$H3,$T3
-	vpsrldq		\$8,$H4,$T4
-	vpaddq		$T2,$H2,$H2
-	vpaddq		$T0,$H0,$H0
-	vpaddq		$T1,$H1,$H1
-	vpaddq		$T3,$H3,$H3
-	vpaddq		$T4,$H4,$H4
-
-	vpermq		\$0x2,$H2,$T2
-	vpermq		\$0x2,$H0,$T0
-	vpermq		\$0x2,$H1,$T1
-	vpermq		\$0x2,$H3,$T3
-	vpermq		\$0x2,$H4,$T4
-	vpaddq		$T2,$H2,$H2
-	vpaddq		$T0,$H0,$H0
-	vpaddq		$T1,$H1,$H1
-	vpaddq		$T3,$H3,$H3
-	vpaddq		$T4,$H4,$H4
 
 	vmovd		%x#$H0,`4*0-48-64`($ctx)# save partially reduced
 	vmovd		%x#$H1,`4*1-48-64`($ctx)
@@ -1981,7 +1995,7 @@ $code.=<<___;
 .Lmask24:
 .long	0x0ffffff,0,0x0ffffff,0,0x0ffffff,0,0x0ffffff,0
 .L129:
-.long	1<<24,0,1<<24,0,1<<24,0,1<<24,0
+.long	`1<<24`,0,`1<<24`,0,`1<<24`,0,`1<<24`,0
 .Lmask26:
 .long	0x3ffffff,0,0x3ffffff,0,0x3ffffff,0,0x3ffffff,0
 .Lfive:

@@ -58,36 +58,28 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/dsa.h>
+#include "dsa_locl.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
 
-/* Override the default new methods */
-static int sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                  void *exarg)
-{
-    if (operation == ASN1_OP_NEW_PRE) {
-        DSA_SIG *sig;
-        sig = OPENSSL_malloc(sizeof(*sig));
-        if (sig == NULL) {
-            DSAerr(DSA_F_SIG_CB, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-        sig->r = NULL;
-        sig->s = NULL;
-        *pval = (ASN1_VALUE *)sig;
-        return 2;
-    }
-    return 1;
-}
+struct DSA_SIG_st {
+    BIGNUM *r;
+    BIGNUM *s;
+};
 
-ASN1_SEQUENCE_cb(DSA_SIG, sig_cb) = {
+ASN1_SEQUENCE(DSA_SIG) = {
         ASN1_SIMPLE(DSA_SIG, r, CBIGNUM),
         ASN1_SIMPLE(DSA_SIG, s, CBIGNUM)
-} static_ASN1_SEQUENCE_END_cb(DSA_SIG, DSA_SIG)
+} static_ASN1_SEQUENCE_END(DSA_SIG)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(DSA_SIG)
+
+void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig)
+{
+    *pr = sig->r;
+    *ps = sig->s;
+}
 
 /* Override the default free and new methods */
 static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,

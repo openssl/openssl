@@ -257,7 +257,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
     X509 *signer;
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
     PKCS7_SIGNER_INFO *si;
-    X509_STORE_CTX cert_ctx;
+    X509_STORE_CTX *cert_ctx = NULL;
     char *buf = NULL;
     int i, j = 0, k, ret = 0;
     BIO *p7bio = NULL;
@@ -279,10 +279,18 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         return 0;
     }
 
-    /* Check for data and content: two sets of data */
-    if (!PKCS7_get_detached(p7) && indata) {
-        PKCS7err(PKCS7_F_PKCS7_VERIFY, PKCS7_R_CONTENT_AND_DATA_PRESENT);
-        return 0;
+    if (flags & PKCS7_NO_DUAL_CONTENT) {
+        /*
+         * This was originally "#if 0" because we thought that only old broken
+         * Netscape did this.  It turns out that Authenticode uses this kind
+         * of "extended" PKCS7 format, and things like UEFI secure boot and
+         * tools like osslsigncode need it.  In Authenticode the verification
+         * process is different, but the existing PKCs7 verification works.
+         */
+        if (!PKCS7_get_detached(p7) && indata) {
+            PKCS7err(PKCS7_F_PKCS7_VERIFY, PKCS7_R_CONTENT_AND_DATA_PRESENT);
+            return 0;
+        }
     }
 
     sinfos = PKCS7_get_signer_info(p7);
@@ -298,26 +306,29 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 
     /* Now verify the certificates */
 
+    cert_ctx = X509_STORE_CTX_new();
+    if (cert_ctx == NULL)
+        goto err;
     if (!(flags & PKCS7_NOVERIFY))
         for (k = 0; k < sk_X509_num(signers); k++) {
             signer = sk_X509_value(signers, k);
             if (!(flags & PKCS7_NOCHAIN)) {
-                if (!X509_STORE_CTX_init(&cert_ctx, store, signer,
+                if (!X509_STORE_CTX_init(cert_ctx, store, signer,
                                          p7->d.sign->cert)) {
                     PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_X509_LIB);
                     goto err;
                 }
-                X509_STORE_CTX_set_default(&cert_ctx, "smime_sign");
-            } else if (!X509_STORE_CTX_init(&cert_ctx, store, signer, NULL)) {
+                X509_STORE_CTX_set_default(cert_ctx, "smime_sign");
+            } else if (!X509_STORE_CTX_init(cert_ctx, store, signer, NULL)) {
                 PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_X509_LIB);
                 goto err;
             }
             if (!(flags & PKCS7_NOCRL))
-                X509_STORE_CTX_set0_crls(&cert_ctx, p7->d.sign->crl);
-            i = X509_verify_cert(&cert_ctx);
+                X509_STORE_CTX_set0_crls(cert_ctx, p7->d.sign->crl);
+            i = X509_verify_cert(cert_ctx);
             if (i <= 0)
-                j = X509_STORE_CTX_get_error(&cert_ctx);
-            X509_STORE_CTX_cleanup(&cert_ctx);
+                j = X509_STORE_CTX_get_error(cert_ctx);
+            X509_STORE_CTX_cleanup(cert_ctx);
             if (i <= 0) {
                 PKCS7err(PKCS7_F_PKCS7_VERIFY,
                          PKCS7_R_CERTIFICATE_VERIFY_ERROR);
@@ -396,6 +407,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
     ret = 1;
 
  err:
+    X509_STORE_CTX_free(cert_ctx);
     OPENSSL_free(buf);
     if (tmpin == indata) {
         if (indata)

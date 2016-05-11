@@ -70,6 +70,7 @@ typedef enum OPTION_choice {
     OPT_TLS1_1,
     OPT_TLS1_2,
     OPT_PSK,
+    OPT_SRP,
     OPT_V, OPT_UPPER_V, OPT_S
 } OPTION_CHOICE;
 
@@ -96,6 +97,9 @@ OPTIONS ciphers_options[] = {
 #ifndef OPENSSL_NO_PSK
     {"psk", OPT_PSK, '-', "include ciphersuites requiring PSK"},
 #endif
+#ifndef OPENSSL_NO_SRP
+    {"srp", OPT_SRP, '-', "include ciphersuites requiring SRP"},
+#endif
     {NULL}
 };
 
@@ -106,6 +110,12 @@ static unsigned int dummy_psk(SSL *ssl, const char *hint, char *identity,
                               unsigned int max_psk_len)
 {
     return 0;
+}
+#endif
+#ifndef OPENSSL_NO_SRP
+static char *dummy_srp(SSL *ssl, void *arg)
+{
+    return "";
 }
 #endif
 
@@ -122,10 +132,14 @@ int ciphers_main(int argc, char **argv)
 #ifndef OPENSSL_NO_PSK
     int psk = 0;
 #endif
+#ifndef OPENSSL_NO_SRP
+    int srp = 0;
+#endif
     const char *p;
     char *ciphers = NULL, *prog;
     char buf[512];
     OPTION_CHOICE o;
+    int min_version = 0, max_version = 0;
 
     prog = opt_init(argc, argv, ciphers_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -154,28 +168,28 @@ int ciphers_main(int argc, char **argv)
 #endif
             break;
         case OPT_SSL3:
-#ifndef OPENSSL_NO_SSL3
-            meth = SSLv3_client_method();
-#endif
+            min_version = SSL3_VERSION;
+            max_version = SSL3_VERSION;
             break;
         case OPT_TLS1:
-#ifndef OPENSSL_NO_TLS1
-            meth = TLSv1_client_method();
-#endif
+            min_version = TLS1_VERSION;
+            max_version = TLS1_VERSION;
             break;
         case OPT_TLS1_1:
-#ifndef OPENSSL_NO_TLS1_1
-            meth = TLSv1_1_client_method();
-#endif
+            min_version = TLS1_1_VERSION;
+            max_version = TLS1_1_VERSION;
             break;
         case OPT_TLS1_2:
-#ifndef OPENSSL_NO_TLS1_2
-            meth = TLSv1_2_client_method();
-#endif
+            min_version = TLS1_2_VERSION;
+            max_version = TLS1_2_VERSION;
             break;
         case OPT_PSK:
 #ifndef OPENSSL_NO_PSK
             psk = 1;
+#endif
+        case OPT_SRP:
+#ifndef OPENSSL_NO_SRP
+            srp = 1;
 #endif
             break;
         }
@@ -191,9 +205,18 @@ int ciphers_main(int argc, char **argv)
     ctx = SSL_CTX_new(meth);
     if (ctx == NULL)
         goto err;
+    if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
+        goto err;
+    if (SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
+        goto err;
+
 #ifndef OPENSSL_NO_PSK
     if (psk)
         SSL_CTX_set_psk_client_callback(ctx, dummy_psk);
+#endif
+#ifndef OPENSSL_NO_SRP
+    if (srp)
+        SSL_CTX_set_srp_client_pwd_callback(ctx, dummy_srp);
 #endif
     if (ciphers != NULL) {
         if (!SSL_CTX_set_cipher_list(ctx, ciphers)) {

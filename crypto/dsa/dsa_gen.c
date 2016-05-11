@@ -62,15 +62,13 @@
  */
 #define xxxHASH    EVP_sha1()
 
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_SHA is defined */
-
+#include <openssl/opensslconf.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
-
 #include "dsa_locl.h"
 
 int DSA_generate_parameters_ex(DSA *ret, int bits,
@@ -408,6 +406,8 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     X = BN_CTX_get(ctx);
     c = BN_CTX_get(ctx);
     test = BN_CTX_get(ctx);
+    if (test == NULL)
+        goto err;
 
     /* if p, q already supplied generate g only */
     if (ret->p && ret->q) {

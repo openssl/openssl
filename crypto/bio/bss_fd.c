@@ -79,7 +79,7 @@ int BIO_fd_should_retry(int i)
     return 0;
 }
 
-BIO_METHOD *BIO_s_fd(void)
+const BIO_METHOD *BIO_s_fd(void)
 {
     return NULL;
 }
@@ -105,7 +105,7 @@ static int fd_new(BIO *h);
 static int fd_free(BIO *data);
 int BIO_fd_should_retry(int s);
 
-static BIO_METHOD methods_fdp = {
+static const BIO_METHOD methods_fdp = {
     BIO_TYPE_FD, "file descriptor",
     fd_write,
     fd_read,
@@ -117,7 +117,7 @@ static BIO_METHOD methods_fdp = {
     NULL,
 };
 
-BIO_METHOD *BIO_s_fd(void)
+const BIO_METHOD *BIO_s_fd(void)
 {
     return (&methods_fdp);
 }
@@ -266,12 +266,6 @@ int BIO_fd_should_retry(int i)
 
     if ((i == 0) || (i == -1)) {
         err = get_last_sys_error();
-
-# if defined(OPENSSL_SYS_WINDOWS) && 0/* more microsoft stupidity? perhaps
-                                       * not? Ben 4/1/99 */
-        if ((i == -1) && (err == 0))
-            return (1);
-# endif
 
         return (BIO_fd_non_fatal_error(err));
     }

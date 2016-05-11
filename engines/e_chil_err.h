@@ -67,7 +67,7 @@ extern "C" {
 static void ERR_load_HWCRHK_strings(void);
 static void ERR_unload_HWCRHK_strings(void);
 static void ERR_HWCRHK_error(int function, int reason, char *file, int line);
-# define HWCRHKerr(f,r) ERR_HWCRHK_error((f),(r),__FILE__,__LINE__)
+# define HWCRHKerr(f,r) ERR_HWCRHK_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 /* Error codes for the HWCRHK functions. */
 

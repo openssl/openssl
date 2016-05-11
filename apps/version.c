@@ -190,7 +190,7 @@ int version_main(int argc, char **argv)
             dirty = version = 1;
             break;
         case OPT_A:
-            cflags = version = date = platform = dir = 1;
+            cflags = version = date = platform = dir = engdir = 1;
             break;
         }
     }
@@ -222,7 +222,7 @@ int version_main(int argc, char **argv)
         printf("%s ", DES_options());
 #endif
 #ifndef OPENSSL_NO_IDEA
-        printf("%s ", idea_options());
+        printf("%s ", IDEA_options());
 #endif
 #ifndef OPENSSL_NO_BF
         printf("%s ", BF_options());

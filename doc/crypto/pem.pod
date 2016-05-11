@@ -399,7 +399,7 @@ The encryption key is derived using EVP_BytesToKey(). The cipher's
 initialization vector is passed to EVP_BytesToKey() as the B<salt>
 parameter. Internally, B<PKCS5_SALT_LEN> bytes of the salt are used
 (regardless of the size of the initialization vector). The user's
-password is passed to to EVP_BytesToKey() using the B<data> and B<datal>
+password is passed to EVP_BytesToKey() using the B<data> and B<datal>
 parameters. Finally, the library uses an iteration count of 1 for
 EVP_BytesToKey().
 

@@ -51,7 +51,7 @@
  * ====================================================================
  */
 
-#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_SHA1)
+#if !defined(OPENSSL_NO_MD5)
 
 # include <openssl/evp.h>
 # include <openssl/objects.h>
@@ -60,9 +60,7 @@
 # include <openssl/sha.h>
 # include "internal/cryptlib.h"
 # include "internal/evp_int.h"
-# ifndef OPENSSL_NO_RSA
-#  include <openssl/rsa.h>
-# endif
+# include <openssl/rsa.h>
 
 struct md5_sha1_ctx {
     MD5_CTX md5;

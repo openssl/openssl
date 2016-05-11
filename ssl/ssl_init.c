@@ -57,6 +57,8 @@
 
 #include "e_os.h"
 
+#include "internal/threads.h"
+#include "internal/err.h"
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <assert.h>
@@ -64,86 +66,9 @@
 
 static int stopped;
 
-/* Implement "once" functionality */
-#if !defined(OPENSSL_THREADS)
-typedef int OPENSSL_INIT_ONCE;
-# define OPENSSL_INIT_ONCE_STATIC_INIT          0
-
-static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
-{
-    if (*once == OPENSSL_INIT_ONCE_STATIC_INIT) {
-        *once = 1;
-        init();
-    }
-}
-#elif defined(OPENSSL_SYS_WINDOWS)
-# include <windows.h>
-
-# if _WIN32_WINNT < 0x0600
-
-/*
- * Versions before 0x0600 (Windows Vista, Windows Server 2008 or later) do not
- * have InitOnceExecuteOnce, so we fall back to using a spinlock instead.
- */
-typedef LONG OPENSSL_INIT_ONCE;
-#  define OPENSSL_INIT_ONCE_STATIC_INIT          0
-
-#  define ONCE_UNINITED     0
-#  define ONCE_ININIT       1
-#  define ONCE_DONE         2
-
-static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
-{
-    LONG volatile *lock = (LONG *)once;
-    LONG result;
-
-    if (*lock == ONCE_DONE)
-        return;
-
-    do {
-        result = InterlockedCompareExchange(lock, ONCE_ININIT, ONCE_UNINITED);
-        if (result == ONCE_UNINITED) {
-            init();
-            *lock = ONCE_DONE;
-            return;
-        }
-    } while (result == ONCE_ININIT);
-}
-
-# else
-
-typedef INIT_ONCE OPENSSL_INIT_ONCE;
-#  define OPENSSL_INIT_ONCE_STATIC_INIT          INIT_ONCE_STATIC_INIT
-
-static BOOL CALLBACK once_cb(PINIT_ONCE once, PVOID initfp, PVOID *unused)
-{
-    void (*init)(void) = initfp;
-
-    init();
-
-    return TRUE;
-}
-
-static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
-{
-    InitOnceExecuteOnce((INIT_ONCE *)once, once_cb, init, NULL);
-}
-# endif
-#else /* pthreads */
-# include <pthread.h>
-
-typedef pthread_once_t OPENSSL_INIT_ONCE;
-# define OPENSSL_INIT_ONCE_STATIC_INIT          PTHREAD_ONCE_INIT
-
-static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
-{
-    pthread_once(once, init);
-}
-#endif
-
 static void ssl_library_stop(void);
 
-static OPENSSL_INIT_ONCE ssl_base = OPENSSL_INIT_ONCE_STATIC_INIT;
+static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
 static void ossl_init_ssl_base(void)
 {
@@ -172,7 +97,6 @@ static void ossl_init_ssl_base(void)
      */
     EVP_add_cipher(EVP_rc2_40_cbc());
 #endif
-#ifndef OPENSSL_NO_AES
     EVP_add_cipher(EVP_aes_128_cbc());
     EVP_add_cipher(EVP_aes_192_cbc());
     EVP_add_cipher(EVP_aes_256_cbc());
@@ -184,7 +108,6 @@ static void ossl_init_ssl_base(void)
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha1());
     EVP_add_cipher(EVP_aes_128_cbc_hmac_sha256());
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha256());
-#endif
 #ifndef OPENSSL_NO_CAMELLIA
     EVP_add_cipher(EVP_camellia_128_cbc());
     EVP_add_cipher(EVP_camellia_256_cbc());
@@ -200,9 +123,7 @@ static void ossl_init_ssl_base(void)
 #ifndef OPENSSL_NO_MD5
     EVP_add_digest(EVP_md5());
     EVP_add_digest_alias(SN_md5, "ssl3-md5");
-# ifndef OPENSSL_NO_SHA
     EVP_add_digest(EVP_md5_sha1());
-# endif
 #endif
     EVP_add_digest(EVP_sha1()); /* RSA with sha1 */
     EVP_add_digest_alias(SN_sha1, "ssl3-sha1");
@@ -238,7 +159,7 @@ static void ossl_init_ssl_base(void)
     ssl_base_inited = 1;
 }
 
-static OPENSSL_INIT_ONCE ssl_strings = OPENSSL_INIT_ONCE_STATIC_INIT;
+static CRYPTO_ONCE ssl_strings = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_strings_inited = 0;
 static void ossl_init_load_ssl_strings(void)
 {
@@ -273,24 +194,24 @@ static void ssl_library_stop(void)
 #ifndef OPENSSL_NO_COMP
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                        "SSL_COMP_free_compression_methods()\n");
+                        "ssl_comp_free_compression_methods_int()\n");
 #endif
-        SSL_COMP_free_compression_methods();
+        ssl_comp_free_compression_methods_int();
 #endif
     }
 
     if (ssl_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                        "ERR_free_strings()\n");
+                        "err_free_strings_int()\n");
 #endif
         /*
          * If both crypto and ssl error strings are inited we will end up
-         * calling ERR_free_strings() twice - but that's ok. The second time
-         * will be a no-op. It's easier to do that than to try and track
+         * calling err_free_strings_int() twice - but that's ok. The second
+         * time will be a no-op. It's easier to do that than to try and track
          * between the two libraries whether they have both been inited.
          */
-        ERR_free_strings();
+        err_free_strings_int();
     }
 }
 
@@ -321,13 +242,18 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
                              | OPENSSL_INIT_ADD_ALL_DIGESTS, settings))
         return 0;
 
-    ossl_init_once_run(&ssl_base, ossl_init_ssl_base);
+    if (!CRYPTO_THREAD_run_once(&ssl_base, ossl_init_ssl_base))
+        return 0;
 
-    if (opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS)
-        ossl_init_once_run(&ssl_strings, ossl_init_no_load_ssl_strings);
+    if ((opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS)
+            && !CRYPTO_THREAD_run_once(&ssl_strings,
+                                       ossl_init_no_load_ssl_strings))
+        return 0;
 
-    if (opts & OPENSSL_INIT_LOAD_SSL_STRINGS)
-        ossl_init_once_run(&ssl_strings, ossl_init_load_ssl_strings);
+    if ((opts & OPENSSL_INIT_LOAD_SSL_STRINGS)
+            && !CRYPTO_THREAD_run_once(&ssl_strings,
+                                       ossl_init_load_ssl_strings))
+        return 0;
 
     return 1;
 }

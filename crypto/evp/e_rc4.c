@@ -73,7 +73,7 @@ typedef struct {
     RC4_KEY ks;                 /* working key */
 } EVP_RC4_KEY;
 
-# define data(ctx) ((EVP_RC4_KEY *)EVP_CIPHER_CTX_cipher_data(ctx))
+# define data(ctx) ((EVP_RC4_KEY *)EVP_CIPHER_CTX_get_cipher_data(ctx))
 
 static int rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc);

@@ -125,7 +125,7 @@ static int BIO_dgram_should_retry(int s);
 
 static void get_current_time(struct timeval *t);
 
-static BIO_METHOD methods_dgramp = {
+static const BIO_METHOD methods_dgramp = {
     BIO_TYPE_DGRAM,
     "datagram socket",
     dgram_write,
@@ -139,7 +139,7 @@ static BIO_METHOD methods_dgramp = {
 };
 
 # ifndef OPENSSL_NO_SCTP
-static BIO_METHOD methods_dgramp_sctp = {
+static const BIO_METHOD methods_dgramp_sctp = {
     BIO_TYPE_DGRAM_SCTP,
     "datagram sctp socket",
     dgram_sctp_write,
@@ -189,7 +189,7 @@ typedef struct bio_dgram_sctp_data_st {
 } bio_dgram_sctp_data;
 # endif
 
-BIO_METHOD *BIO_s_datagram(void)
+const BIO_METHOD *BIO_s_datagram(void)
 {
     return (&methods_dgramp);
 }
@@ -236,7 +236,7 @@ static int dgram_clear(BIO *a)
         return (0);
     if (a->shutdown) {
         if (a->init) {
-            SHUTDOWN2(a->num);
+            BIO_closesocket(a->num);
         }
         a->init = 0;
         a->flags = 0;
@@ -458,6 +458,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     int *ip;
     bio_dgram_data *data = NULL;
     int sockopt_val = 0;
+    int d_errno;
 # if defined(OPENSSL_SYS_LINUX) && (defined(IP_MTU_DISCOVER) || defined(IP_MTU))
     socklen_t sockopt_len;      /* assume that system supporting IP_MTU is
                                  * modern enough to define socklen_t */
@@ -760,11 +761,11 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         /* fall-through */
     case BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP:
 # ifdef OPENSSL_SYS_WINDOWS
-        if (data->_errno == WSAETIMEDOUT)
+        d_errno = (data->_errno == WSAETIMEDOUT);
 # else
-        if (data->_errno == EAGAIN)
+        d_errno = (data->_errno == EAGAIN);
 # endif
-        {
+        if (d_errno) {
             ret = 1;
             data->_errno = 0;
         } else
@@ -857,7 +858,7 @@ static int dgram_puts(BIO *bp, const char *str)
 }
 
 # ifndef OPENSSL_NO_SCTP
-BIO_METHOD *BIO_s_datagram_sctp(void)
+const BIO_METHOD *BIO_s_datagram_sctp(void)
 {
     return (&methods_dgramp_sctp);
 }

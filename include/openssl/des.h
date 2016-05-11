@@ -55,14 +55,16 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_NEW_DES_H
-# define HEADER_NEW_DES_H
+#ifndef HEADER_DES_H
+# define HEADER_DES_H
 
-# include <openssl/e_os2.h>
+# include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_DES
-#  error DES is disabled.
+# ifndef OPENSSL_NO_DES
+# ifdef  __cplusplus
+extern "C" {
 # endif
+# include <openssl/e_os2.h>
 
 typedef unsigned int DES_LONG;
 
@@ -70,10 +72,6 @@ typedef unsigned int DES_LONG;
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
 # endif
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 typedef unsigned char DES_cblock[8];
 typedef /* const */ unsigned char const_DES_cblock[8];
@@ -115,8 +113,6 @@ typedef struct DES_ks {
 
 OPENSSL_DECLARE_GLOBAL(int, DES_check_key); /* defaults to false */
 # define DES_check_key OPENSSL_GLOBAL_REF(DES_check_key)
-OPENSSL_DECLARE_GLOBAL(int, DES_rw_mode); /* defaults to DES_PCBC_MODE */
-# define DES_rw_mode OPENSSL_GLOBAL_REF(DES_rw_mode)
 
 const char *DES_options(void);
 void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,
@@ -184,10 +180,6 @@ void DES_ede3_ofb64_encrypt(const unsigned char *in, unsigned char *out,
                             long length, DES_key_schedule *ks1,
                             DES_key_schedule *ks2, DES_key_schedule *ks3,
                             DES_cblock *ivec, int *num);
-int DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,
-                 DES_cblock *iv);
-int DES_enc_write(int fd, const void *buf, int len, DES_key_schedule *sched,
-                  DES_cblock *iv);
 char *DES_fcrypt(const char *buf, const char *salt, char *ret);
 char *DES_crypt(const char *buf, const char *salt);
 void DES_ofb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
@@ -220,14 +212,11 @@ void DES_ofb64_encrypt(const unsigned char *in, unsigned char *out,
                        long length, DES_key_schedule *schedule,
                        DES_cblock *ivec, int *num);
 
-int DES_read_password(DES_cblock *key, const char *prompt, int verify);
-int DES_read_2passwords(DES_cblock *key1, DES_cblock *key2,
-                        const char *prompt, int verify);
-
 # define DES_fixup_key_parity DES_set_odd_parity
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
 
 #endif

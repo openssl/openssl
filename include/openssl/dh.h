@@ -58,17 +58,19 @@
 #ifndef HEADER_DH_H
 # define HEADER_DH_H
 
-# include <openssl/e_os2.h>
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_DH
-#  error DH is disabled.
-# endif
-
+# ifndef OPENSSL_NO_DH
+# include <openssl/e_os2.h>
 # include <openssl/bio.h>
+# include <openssl/asn1.h>
 # include <openssl/ossl_typ.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
+# endif
+
+# ifdef  __cplusplus
+extern "C" {
 # endif
 
 # ifndef OPENSSL_DH_MAX_MODULUS_BITS
@@ -78,21 +80,12 @@
 # define OPENSSL_DH_FIPS_MIN_MODULUS_BITS 1024
 
 # define DH_FLAG_CACHE_MONT_P     0x01
-
-/*
- * new with 0.9.7h; the built-in DH
- * implementation now uses constant time
- * modular exponentiation for secret exponents
- * by default. This flag causes the
- * faster variable sliding window method to
- * be used for all exponents.
- */
 # define DH_FLAG_NO_EXP_CONSTTIME 0x02
 
 /*
  * If this flag is set the DH method is FIPS compliant and can be used in
  * FIPS mode. This is set in the validated module method. If an application
- * sets this flag in its own methods it is its reposibility to ensure the
+ * sets this flag in its own methods it is its responsibility to ensure the
  * result is compliant.
  */
 
@@ -106,57 +99,11 @@
 
 # define DH_FLAG_NON_FIPS_ALLOW                  0x0400
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 /* Already defined in ossl_typ.h */
 /* typedef struct dh_st DH; */
 /* typedef struct dh_method DH_METHOD; */
 
-struct dh_method {
-    const char *name;
-    /* Methods here */
-    int (*generate_key) (DH *dh);
-    int (*compute_key) (unsigned char *key, const BIGNUM *pub_key, DH *dh);
-    /* Can be null */
-    int (*bn_mod_exp) (const DH *dh, BIGNUM *r, const BIGNUM *a,
-                       const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
-                       BN_MONT_CTX *m_ctx);
-    int (*init) (DH *dh);
-    int (*finish) (DH *dh);
-    int flags;
-    char *app_data;
-    /* If this is non-NULL, it will be used to generate parameters */
-    int (*generate_params) (DH *dh, int prime_len, int generator,
-                            BN_GENCB *cb);
-};
-
-struct dh_st {
-    /*
-     * This first argument is used to pick up errors when a DH is passed
-     * instead of a EVP_PKEY
-     */
-    int pad;
-    int version;
-    BIGNUM *p;
-    BIGNUM *g;
-    long length;                /* optional */
-    BIGNUM *pub_key;            /* g^x % p */
-    BIGNUM *priv_key;           /* x */
-    int flags;
-    BN_MONT_CTX *method_mont_p;
-    /* Place holders if we want to do X9.42 DH */
-    BIGNUM *q;
-    BIGNUM *j;
-    unsigned char *seed;
-    int seedlen;
-    BIGNUM *counter;
-    int references;
-    CRYPTO_EX_DATA ex_data;
-    const DH_METHOD *meth;
-    ENGINE *engine;
-};
+DECLARE_ASN1_ITEM(DHparams)
 
 # define DH_GENERATOR_2          2
 /* #define DH_GENERATOR_3       3 */
@@ -245,6 +192,48 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                  ASN1_OBJECT *key_oid,
                  const unsigned char *ukm, size_t ukmlen, const EVP_MD *md);
 # endif
+
+void DH_get0_pqg(const DH *dh, BIGNUM **p, BIGNUM **q, BIGNUM **g);
+int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
+void DH_get0_key(const DH *dh, BIGNUM **pub_key, BIGNUM **priv_key);
+int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
+void DH_clear_flags(DH *dh, int flags);
+int DH_test_flags(const DH *dh, int flags);
+void DH_set_flags(DH *dh, int flags);
+ENGINE *DH_get0_engine(DH *d);
+long DH_get_length(const DH *dh);
+int DH_set_length(DH *dh, long length);
+
+DH_METHOD *DH_meth_new(const char *name, int flags);
+void DH_meth_free(DH_METHOD *dhm);
+DH_METHOD *DH_meth_dup(const DH_METHOD *dhm);
+const char *DH_meth_get0_name(const DH_METHOD *dhm);
+int DH_meth_set1_name(DH_METHOD *dhm, const char *name);
+int DH_meth_get_flags(DH_METHOD *dhm);
+int DH_meth_set_flags(DH_METHOD *dhm, int flags);
+void *DH_meth_get0_app_data(const DH_METHOD *dhm);
+int DH_meth_set0_app_data(DH_METHOD *dhm, void *app_data);
+int (*DH_meth_get_generate_key(const DH_METHOD *dhm)) (DH *);
+int DH_meth_set_generate_key(DH_METHOD *dhm, int (*generate_key) (DH *));
+int (*DH_meth_get_compute_key(const DH_METHOD *dhm))
+        (unsigned char *key, const BIGNUM *pub_key, DH *dh);
+int DH_meth_set_compute_key(DH_METHOD *dhm,
+        int (*compute_key) (unsigned char *key, const BIGNUM *pub_key, DH *dh));
+int (*DH_meth_get_bn_mod_exp(const DH_METHOD *dhm))
+    (const DH *, BIGNUM *, const BIGNUM *, const BIGNUM *, const BIGNUM *,
+     BN_CTX *, BN_MONT_CTX *);
+int DH_meth_set_bn_mod_exp(DH_METHOD *dhm,
+    int (*bn_mod_exp) (const DH *, BIGNUM *, const BIGNUM *, const BIGNUM *,
+                       const BIGNUM *, BN_CTX *, BN_MONT_CTX *));
+int (*DH_meth_get_init(const DH_METHOD *dhm))(DH *);
+int DH_meth_set_init(DH_METHOD *dhm, int (*init)(DH *));
+int (*DH_meth_get_finish(const DH_METHOD *dhm)) (DH *);
+int DH_meth_set_finish(DH_METHOD *dhm, int (*finish) (DH *));
+int (*DH_meth_get_generate_params(const DH_METHOD *dhm))
+        (DH *, int, int, BN_GENCB *);
+int DH_meth_set_generate_params(DH_METHOD *dhm,
+        int (*generate_params) (DH *, int, int, BN_GENCB *));
+
 
 # define EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, len) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN, \
@@ -385,7 +374,9 @@ void ERR_load_DH_strings(void);
 # define DH_R_PEER_KEY_ERROR                              111
 # define DH_R_SHARED_INFO_ERROR                           113
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

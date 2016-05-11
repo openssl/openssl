@@ -119,6 +119,7 @@ typedef struct asn1_sctx_st ASN1_SCTX;
 # ifdef BIGNUM
 #  undef BIGNUM
 # endif
+struct dane_st;
 typedef struct bio_st BIO;
 typedef struct bignum_st BIGNUM;
 typedef struct bignum_ctx BN_CTX;
@@ -158,6 +159,7 @@ typedef struct ec_key_method_st EC_KEY_METHOD;
 
 typedef struct rand_meth_st RAND_METHOD;
 
+typedef struct ssl_dane_st SSL_DANE;
 typedef struct x509_st X509;
 typedef struct X509_algor_st X509_ALGOR;
 typedef struct X509_crl_st X509_CRL;
@@ -167,6 +169,11 @@ typedef struct X509_name_st X509_NAME;
 typedef struct X509_pubkey_st X509_PUBKEY;
 typedef struct x509_store_st X509_STORE;
 typedef struct x509_store_ctx_st X509_STORE_CTX;
+
+typedef struct x509_object_st X509_OBJECT;
+typedef struct x509_lookup_st X509_LOOKUP;
+typedef struct x509_lookup_method_st X509_LOOKUP_METHOD;
+typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
 typedef struct pkcs8_priv_key_info_st PKCS8_PRIV_KEY_INFO;
 
@@ -199,6 +206,12 @@ typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
 typedef struct ocsp_req_ctx_st OCSP_REQ_CTX;
 typedef struct ocsp_response_st OCSP_RESPONSE;
 typedef struct ocsp_responder_id_st OCSP_RESPID;
+
+typedef struct sct_st SCT;
+typedef struct sct_ctx_st SCT_CTX;
+typedef struct ctlog_st CTLOG;
+typedef struct ctlog_store_st CTLOG_STORE;
+typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)

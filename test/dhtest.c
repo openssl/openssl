@@ -88,6 +88,8 @@ int main(int argc, char *argv[])
     BN_GENCB *_cb = NULL;
     DH *a = NULL;
     DH *b = NULL;
+    BIGNUM *ap = NULL, *ag = NULL, *bp = NULL, *bg = NULL, *apub_key = NULL;
+    BIGNUM *bpub_key = NULL, *priv_key = NULL;
     char buf[12] = {0};
     unsigned char *abuf = NULL;
     unsigned char *bbuf = NULL;
@@ -124,39 +126,43 @@ int main(int argc, char *argv[])
     if (i & DH_NOT_SUITABLE_GENERATOR)
         BIO_puts(out, "the g value is not a generator\n");
 
+    DH_get0_pqg(a, &ap, NULL, &ag);
     BIO_puts(out, "\np    =");
-    BN_print(out, a->p);
+    BN_print(out, ap);
     BIO_puts(out, "\ng    =");
-    BN_print(out, a->g);
+    BN_print(out, ag);
     BIO_puts(out, "\n");
 
     b = DH_new();
     if (b == NULL)
         goto err;
 
-    b->p = BN_dup(a->p);
-    b->g = BN_dup(a->g);
-    if ((b->p == NULL) || (b->g == NULL))
+    bp = BN_dup(ap);
+    bg = BN_dup(ag);
+    if ((bp == NULL) || (bg == NULL) || !DH_set0_pqg(b, bp, NULL, bg))
         goto err;
+    bp = bg = NULL;
 
     /* Set a to run with normal modexp and b to use constant time */
-    a->flags &= ~DH_FLAG_NO_EXP_CONSTTIME;
-    b->flags |= DH_FLAG_NO_EXP_CONSTTIME;
+    DH_clear_flags(a, DH_FLAG_NO_EXP_CONSTTIME);
+    DH_set_flags(b, DH_FLAG_NO_EXP_CONSTTIME);
 
     if (!DH_generate_key(a))
         goto err;
+    DH_get0_key(a, &apub_key, &priv_key);
     BIO_puts(out, "pri 1=");
-    BN_print(out, a->priv_key);
+    BN_print(out, priv_key);
     BIO_puts(out, "\npub 1=");
-    BN_print(out, a->pub_key);
+    BN_print(out, apub_key);
     BIO_puts(out, "\n");
 
     if (!DH_generate_key(b))
         goto err;
+    DH_get0_key(b, &bpub_key, &priv_key);
     BIO_puts(out, "pri 2=");
-    BN_print(out, b->priv_key);
+    BN_print(out, priv_key);
     BIO_puts(out, "\npub 2=");
-    BN_print(out, b->pub_key);
+    BN_print(out, bpub_key);
     BIO_puts(out, "\n");
 
     alen = DH_size(a);
@@ -164,7 +170,7 @@ int main(int argc, char *argv[])
     if (abuf == NULL)
         goto err;
 
-    aout = DH_compute_key(abuf, b->pub_key, a);
+    aout = DH_compute_key(abuf, bpub_key, a);
 
     BIO_puts(out, "key1 =");
     for (i = 0; i < aout; i++) {
@@ -178,7 +184,7 @@ int main(int argc, char *argv[])
     if (bbuf == NULL)
         goto err;
 
-    bout = DH_compute_key(bbuf, a->pub_key, b);
+    bout = DH_compute_key(bbuf, apub_key, b);
 
     BIO_puts(out, "key2 =");
     for (i = 0; i < bout; i++) {
@@ -194,18 +200,23 @@ int main(int argc, char *argv[])
     if (!run_rfc5114_tests())
         ret = 1;
  err:
+    (void)BIO_flush(out);
     ERR_print_errors_fp(stderr);
 
     OPENSSL_free(abuf);
     OPENSSL_free(bbuf);
     DH_free(b);
     DH_free(a);
+    BN_free(bp);
+    BN_free(bg);
     BN_GENCB_free(_cb);
     BIO_free(out);
-# ifdef OPENSSL_SYS_NETWARE
-    if (ret)
-        printf("ERROR: %d\n", ret);
-# endif
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        ret = 1;
+#endif
+
     EXIT(ret);
 }
 
@@ -516,7 +527,7 @@ static int run_rfc5114_tests(void)
     unsigned char *Z1 = NULL;
     unsigned char *Z2 = NULL;
     const rfc5114_td *td = NULL;
-    BIGNUM *bady = NULL;
+    BIGNUM *bady = NULL, *priv_key = NULL, *pub_key = NULL;
 
     for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
         td = rfctd + i;
@@ -526,15 +537,19 @@ static int run_rfc5114_tests(void)
         if ((dhA == NULL) || (dhB == NULL))
             goto bad_err;
 
-        dhA->priv_key = BN_bin2bn(td->xA, td->xA_len, NULL);
-        dhA->pub_key = BN_bin2bn(td->yA, td->yA_len, NULL);
-
-        dhB->priv_key = BN_bin2bn(td->xB, td->xB_len, NULL);
-        dhB->pub_key = BN_bin2bn(td->yB, td->yB_len, NULL);
-
-        if ((dhA->priv_key == NULL) || (dhA->pub_key == NULL)
-            || (dhB->priv_key == NULL) || (dhB->pub_key == NULL))
+        priv_key = BN_bin2bn(td->xA, td->xA_len, NULL);
+        pub_key = BN_bin2bn(td->yA, td->yA_len, NULL);
+        if (priv_key == NULL || pub_key == NULL
+                || !DH_set0_key(dhA, pub_key, priv_key))
             goto bad_err;
+
+        priv_key = BN_bin2bn(td->xB, td->xB_len, NULL);
+        pub_key = BN_bin2bn(td->yB, td->yB_len, NULL);
+
+        if (priv_key == NULL || pub_key == NULL
+                || !DH_set0_key(dhB, pub_key, priv_key))
+            goto bad_err;
+        priv_key = pub_key = NULL;
 
         if ((td->Z_len != (size_t)DH_size(dhA))
             || (td->Z_len != (size_t)DH_size(dhB)))
@@ -548,10 +563,17 @@ static int run_rfc5114_tests(void)
          * Work out shared secrets using both sides and compare with expected
          * values.
          */
-        if (DH_compute_key(Z1, dhB->pub_key, dhA) == -1)
+        DH_get0_key(dhB, &pub_key, NULL);
+        if (DH_compute_key(Z1, pub_key, dhA) == -1) {
+            pub_key = NULL;
             goto bad_err;
-        if (DH_compute_key(Z2, dhA->pub_key, dhB) == -1)
+        }
+        DH_get0_key(dhA, &pub_key, NULL);
+        if (DH_compute_key(Z2, pub_key, dhB) == -1) {
+            pub_key = NULL;
             goto bad_err;
+        }
+        pub_key = NULL;
 
         if (memcmp(Z1, td->Z, td->Z_len))
             goto err;
@@ -608,10 +630,12 @@ static int run_rfc5114_tests(void)
     BN_free(bady);
     DH_free(dhA);
     DH_free(dhB);
+    BN_free(pub_key);
+    BN_free(priv_key);
     OPENSSL_free(Z1);
     OPENSSL_free(Z2);
 
-    fprintf(stderr, "Initalisation error RFC5114 set %d\n", i + 1);
+    fprintf(stderr, "Initialisation error RFC5114 set %d\n", i + 1);
     ERR_print_errors_fp(stderr);
     return 0;
  err:

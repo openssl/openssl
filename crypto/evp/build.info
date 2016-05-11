@@ -14,7 +14,9 @@ SOURCE[../../libcrypto]=\
         e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_rc4_hmac_md5.c \
         e_chacha20_poly1305.c cmeth_lib.c
 
-INCLUDE[e_aes.o]=../modes
+INCLUDE[e_aes.o]=.. ../modes
 INCLUDE[e_aes_cbc_hmac_sha1.o]=../modes
 INCLUDE[e_aes_cbc_hmac_sha256.o]=../modes
-INCLUDE[e_camellia.o]=../modes
+INCLUDE[e_camellia.o]=.. ../modes
+INCLUDE[e_des.o]=..
+INCLUDE[e_des3.o]=..

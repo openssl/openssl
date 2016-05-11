@@ -46,7 +46,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "sparcv9_modes.pl";
 
-&asm_init(@ARGV);
+$output = pop;
+open STDOUT,">$output";
 
 $::evp=1;	# if $evp is set to 0, script generates module with
 # Camellia_[en|de]crypt, Camellia_set_key and Camellia_cbc_encrypt
@@ -59,6 +60,8 @@ $::evp=1;	# if $evp is set to 0, script generates module with
 my ($inp,$out,$key,$rounds,$tmp,$mask)=map("%o$_",(0..5));
 
 $code=<<___;
+#include "sparc_arch.h"
+
 .text
 
 .globl	cmll_t4_encrypt

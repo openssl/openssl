@@ -317,6 +317,6 @@ $code.=<<___;
 .ascii	"SHA1 block transform for Alpha, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 ___
-$output=shift and open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 print $code;
 close STDOUT;

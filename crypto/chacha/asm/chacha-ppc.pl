@@ -477,7 +477,7 @@ $code.=<<___;
 	$PUSH	r29,`$FRAME-$SIZE_T*3`($sp)
 	$PUSH	r30,`$FRAME-$SIZE_T*2`($sp)
 	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
-	li	12,-1
+	li	r12,-1
 	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
 	mtspr	256,r12				# preserve all AltiVec registers
 
@@ -527,9 +527,11 @@ $code.=<<___;
 	?lvsl	$outperm,0,$out			# prepare for unaligned store
 	?vperm	$outmask,$outmask,$T0,$outperm
 
+	be?lvsl	$T0,0,@x[0]			# 0x00..0f
 	be?vspltisb $T1,3			# 0x03..03
-	be?vxor	$inpperm,$inpperm,$T1		# swap bytes within words
+	be?vxor	$T0,$T0,$T1			# swap bytes within words
 	be?vxor	$outperm,$outperm,$T1
+	be?vperm $inpperm,$inpperm,$inpperm,$T0
 
 	b	Loop_outer_vmx
 

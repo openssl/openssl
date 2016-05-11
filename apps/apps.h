@@ -112,6 +112,9 @@
 # define HEADER_APPS_H
 
 # include "e_os.h"
+# if defined(__unix) || defined(__unix__)
+#  include <sys/time.h> /* struct timeval for DTLS */
+# endif
 # include <assert.h>
 
 # include <openssl/e_os2.h>
@@ -121,16 +124,10 @@
 # include <openssl/lhash.h>
 # include <openssl/conf.h>
 # include <openssl/txt_db.h>
-# ifndef OPENSSL_NO_ENGINE
-#  include <openssl/engine.h>
-# endif
-# ifndef OPENSSL_NO_OCSP
-#  include <openssl/ocsp.h>
-# endif
+# include <openssl/engine.h>
+# include <openssl/ocsp.h>
 # include <openssl/ossl_typ.h>
-# ifndef OPENSSL_SYS_NETWARE
-#  include <signal.h>
-# endif
+# include <signal.h>
 
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
@@ -138,16 +135,12 @@
 #  define openssl_fdset(a,b) FD_SET(a, b)
 # endif
 
-# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
-int opt_imax(const char *value, intmax_t *result);
-int opt_umax(const char *value, uintmax_t *result);
-# else
-#  define opt_imax opt_long
-#  define opt_umax opt_ulong
-#  define intmax_t long
-#  define uintmax_t unsigned long
-# endif
+/*
+ * quick macro when you need to pass an unsigned char instead of a char.
+ * this is true for some implementations of the is*() functions, for
+ * example.
+ */
+#define _UC(c) ((unsigned char)(c))
 
 int app_RAND_load_file(const char *file, int dont_warn);
 int app_RAND_write_file(const char *file);
@@ -166,6 +159,7 @@ extern BIO *bio_out;
 extern BIO *bio_err;
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
+BIO *dup_bio_err(int format);
 BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
@@ -189,6 +183,7 @@ void wait_for_async(SSL *s);
         OPT_V_POLICY_PRINT, OPT_V_CHECK_SS_SIG, OPT_V_TRUSTED_FIRST, \
         OPT_V_SUITEB_128_ONLY, OPT_V_SUITEB_128, OPT_V_SUITEB_192, \
         OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME, \
+        OPT_V_VERIFY_AUTH_LEVEL, \
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
@@ -196,8 +191,10 @@ void wait_for_async(SSL *s);
         { "purpose", OPT_V_PURPOSE, 's', \
             "certificate chain purpose"}, \
         { "verify_name", OPT_V_VERIFY_NAME, 's', "verification policy name"}, \
-        { "verify_depth", OPT_V_VERIFY_DEPTH, 'p', \
-            "chain depth limit"}, \
+        { "verify_depth", OPT_V_VERIFY_DEPTH, 'n', \
+            "chain depth limit" }, \
+        { "auth_level", OPT_V_VERIFY_AUTH_LEVEL, 'n', \
+            "chain authentication security level" }, \
         { "attime", OPT_V_ATTIME, 'M', "verification epoch time" }, \
         { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's', \
             "expected peer hostname" }, \
@@ -244,6 +241,7 @@ void wait_for_async(SSL *s);
         case OPT_V_PURPOSE: \
         case OPT_V_VERIFY_NAME: \
         case OPT_V_VERIFY_DEPTH: \
+        case OPT_V_VERIFY_AUTH_LEVEL: \
         case OPT_V_ATTIME: \
         case OPT_V_VERIFY_HOSTNAME: \
         case OPT_V_VERIFY_EMAIL: \
@@ -420,7 +418,7 @@ typedef struct string_int_pair_st {
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);
-int opt_next();
+int opt_next(void);
 int opt_format(const char *s, unsigned long flags, int *result);
 int opt_int(const char *arg, int *result);
 int opt_ulong(const char *arg, unsigned long *result);
@@ -429,6 +427,11 @@ int opt_long(const char *arg, long *result);
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
 int opt_imax(const char *arg, intmax_t *result);
 int opt_umax(const char *arg, uintmax_t *result);
+#else
+# define opt_imax opt_long
+# define opt_umax opt_ulong
+# define intmax_t long
+# define uintmax_t unsigned long
 #endif
 int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
@@ -442,13 +445,20 @@ int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 void opt_help(const OPTIONS * list);
 int opt_format_error(const char *s, unsigned long flags);
-int opt_next(void);
 
 typedef struct args_st {
     int size;
     int argc;
     char **argv;
 } ARGS;
+
+/*
+ * VMS C only for now, implemented in vms_decc_init.c
+ * If other C compilers forget to terminate argv with NULL, this function
+ * can be re-used.
+ */
+char **copy_argv(int *argc, char *argv[]);
+
 
 # define PW_MIN_LENGTH 4
 typedef struct pw_cb_data {
@@ -475,22 +485,33 @@ int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 int app_passwd(char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(CONF *conf);
-X509 *load_cert(const char *file, int format,
-                const char *pass, ENGINE *e, const char *cert_descrip);
+X509 *load_cert(const char *file, int format, const char *cert_descrip);
 X509_CRL *load_crl(const char *infile, int format);
-int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl);
 EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *key_descrip);
 EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *key_descrip);
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
-               const char *pass, ENGINE *e, const char *cert_descrip);
+               const char *pass, const char *cert_descrip);
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
-              const char *pass, ENGINE *e, const char *cert_descrip);
+              const char *pass, const char *cert_descrip);
 X509_STORE *setup_verify(char *CAfile, char *CApath,
                          int noCAfile, int noCApath);
-int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
-                             const char *CApath, int noCAfile, int noCApath);
+__owur int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
+                                    const char *CApath, int noCAfile,
+                                    int noCApath);
+
+#ifndef OPENSSL_NO_CT
+
+/*
+ * Sets the file to load the Certificate Transparency log list from.
+ * If path is NULL, loads from the default file path.
+ * Returns 1 on success, 0 otherwise.
+ */
+__owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
+
+#endif
+
 # ifdef OPENSSL_NO_ENGINE
 #  define setup_engine(engine, debug) NULL
 # else
@@ -564,12 +585,8 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
 # ifndef OPENSSL_NO_PSK
 extern char *psk_key;
 # endif
-# ifndef OPENSSL_NO_JPAKE
-void jpake_client_auth(BIO *out, BIO *conn, const char *secret);
-void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
-# endif
 
-unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
+unsigned char *next_protos_parse(size_t *outlen, const char *in);
 
 void print_cert_checks(BIO *bio, X509 *x,
                        const char *checkhost,
@@ -610,7 +627,6 @@ void store_setup_crl_download(X509_STORE *st);
 
 # define SERIAL_RAND_BITS        64
 
-int app_hex(char);
 int app_isdir(const char *);
 int app_access(const char *, int flag);
 int raw_read_stdin(void *, int);

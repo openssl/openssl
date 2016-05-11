@@ -49,6 +49,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"wp-mmx.pl");
 
 sub L()  { &data_byte(@_); }
@@ -493,3 +496,5 @@ for($i=0;$i<8;$i++) {
 
 &function_end_B("whirlpool_block_mmx");
 &asm_finish(); 
+
+close STDOUT;

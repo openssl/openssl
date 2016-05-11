@@ -35,6 +35,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../crypto/perlasm");
 require "x86asm.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],$0);
 
 %PADLOCK_PREFETCH=(ecb=>128, cbc=>64);	# prefetch errata
@@ -604,3 +607,5 @@ my ($mode,$opcode) = @_;
 &data_word(0);
 
 &asm_finish();
+
+close STDOUT;

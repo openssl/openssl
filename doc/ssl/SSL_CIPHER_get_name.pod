@@ -14,6 +14,9 @@ SSL_CIPHER_get_name, SSL_CIPHER_get_bits, SSL_CIPHER_get_version, SSL_CIPHER_des
  char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int size);
  int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
  int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
+ int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
+ int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
+ int SSL_CIPHER_is_aead(const SSL_CIPHER *c);
 
 =head1 DESCRIPTION
 
@@ -33,6 +36,25 @@ B<NID_undef> is returned.
 SSL_CIPHER_get_digest_nid() returns the digest NID corresponding to the MAC
 used by B<c>. If there is no digest (e.g. for AEAD ciphersuites) then
 B<NID_undef> is returned.
+
+SSL_CIPHER_get_kx_nid() returns the key exchange NID corresponding to the method
+used by B<c>. If there is no key exchange, then B<NID_undef> is returned. Examples (not comprehensive):
+
+ NID_kx_rsa
+ NID_kx_ecdhe
+ NID_kx_dhe
+ NID_kx_psk
+
+SSL_CIPHER_get_auth_nid() returns the authentication NID corresponding to the method
+used by B<c>. If there is no authentication, then B<NID_undef> is returned.
+Examples (not comprehensive):
+
+ NID_auth_rsa
+ NID_auth_ecdsa
+ NID_auth_psk
+
+SSL_CIPHER_is_aead() returns 1 if the cipher B<c> is AEAD (e.g. GCM or
+ChaCha20/Poly1305), and 0 if it is not AEAD.
 
 SSL_CIPHER_description() returns a textual description of the cipher used
 into the buffer B<buf> of length B<len> provided.  If B<buf> is provided, it

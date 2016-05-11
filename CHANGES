@@ -2,7 +2,213 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
+ Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
+
+  *) Change default algorithms in pkcs8 utility to use PKCS#5 v2.0,
+     256 bit AES and HMAC with SHA256.
+     [Steve Henson]
+
+  *) Remove support for MIPS o32 ABI on IRIX (and IRIX only).
+     [Andy Polyakov]
+
+  *) Triple-DES ciphers have been moved from HIGH to MEDIUM.
+     [Rich Salz]
+
+  *) To enable users to have their own config files and build file templates,
+     Configure looks in the directory indicated by the environment variable
+     OPENSSL_LOCAL_CONFIG_DIR as well as the in-source Configurations/
+     directory.  On VMS, OPENSSL_LOCAL_CONFIG_DIR is expected to be a logical
+     name and is used as is.
+     [Richard Levitte]
+
+  *) The following datatypes were made opaque: X509_OBJECT, X509_STORE_CTX,
+     X509_STORE, X509_LOOKUP, and X509_LOOKUP_METHOD.  The unused type
+     X509_CERT_FILE_CTX was removed.
+     [Rich Salz]
+
+  *) "shared" builds are now the default. To create only static libraries use
+     the "no-shared" Configure option.
+     [Matt Caswell]
+
+  *) Remove the no-aes, no-hmac, no-rsa, no-sha and no-md5 Configure options.
+     All of these option have not worked for some while and are fundamental
+     algorithms.
+     [Matt Caswell]
+
+  *) Make various cleanup routines no-ops and mark them as deprecated. Most
+     global cleanup functions are no longer required because they are handled
+     via auto-deinit (see OPENSSL_init_crypto and OPENSSL_init_ssl man pages).
+     Explicitly de-initing can cause problems (e.g. where a library that uses
+     OpenSSL de-inits, but an application is still using it). The affected
+     functions are CONF_modules_free(), ENGINE_cleanup(), OBJ_cleanup(),
+     EVP_cleanup(), BIO_sock_cleanup(), CRYPTO_cleanup_all_ex_data(),
+     RAND_cleanup(), SSL_COMP_free_compression_methods(), ERR_free_strings() and
+     COMP_zlib_cleanup().
+     [Matt Caswell]
+
+  *) --strict-warnings no longer enables runtime debugging options
+     such as REF_DEBUG. Instead, debug options are automatically
+     enabled with '--debug' builds.
+     [Andy Polyakov, Emilia Käsper]
+
+  *) Made DH and DH_METHOD opaque. The structures for managing DH objects
+     have been moved out of the public header files. New functions for managing
+     these have been added.
+     [Matt Caswell]
+
+  *) Made RSA and RSA_METHOD opaque. The structures for managing RSA
+     objects have been moved out of the public header files. New
+     functions for managing these have been added.
+     [Richard Levitte]
+
+  *) Made DSA and DSA_METHOD opaque. The structures for managing DSA objects
+     have been moved out of the public header files. New functions for managing
+     these have been added.
+     [Matt Caswell]
+
+  *) Made BIO and BIO_METHOD opaque. The structures for managing BIOs have been
+     moved out of the public header files. New functions for managing these
+     have been added.
+     [Matt Caswell]
+
+  *) Removed no-rijndael as a config option. Rijndael is an old name for AES.
+     [Matt Caswell]
+
+  *) Removed the mk1mf build scripts.
+     [Richard Levitte]
+
+  *) Headers are now wrapped, if necessary, with OPENSSL_NO_xxx, so
+     it is always safe to #include a header now.
+     [Rich Salz]
+
+  *) Removed the aged BC-32 config and all its supporting scripts
+     [Richard Levitte]
+
+  *) Removed support for Ultrix, Netware, and OS/2.
+     [Rich Salz]
+
+  *) Add support for HKDF.
+     [Alessandro Ghedini]
+
+  *) Add support for blake2b and blake2s
+     [Bill Cox]
+
+  *) Added support for "pipelining". Ciphers that have the
+     EVP_CIPH_FLAG_PIPELINE flag set have a capability to process multiple
+     encryptions/decryptions simultaneously. There are currently no built-in
+     ciphers with this property but the expectation is that engines will be able
+     to offer it to significantly improve throughput. Support has been extended
+     into libssl so that multiple records for a single connection can be
+     processed in one go (for >=TLS 1.1).
+     [Matt Caswell]
+
+  *) Added the AFALG engine. This is an async capable engine which is able to
+     offload work to the Linux kernel. In this initial version it only supports
+     AES128-CBC. The kernel must be version 4.1.0 or greater.
+     [Catriona Lucey]
+
+  *) OpenSSL now uses a new threading API. It is no longer necessary to
+     set locking callbacks to use OpenSSL in a multi-threaded environment. There
+     are two supported threading models: pthreads and windows threads. It is
+     also possible to configure OpenSSL at compile time for "no-threads". The
+     old threading API should no longer be used. The functions have been
+     replaced with "no-op" compatibility macros.
+     [Alessandro Ghedini, Matt Caswell]
+
+  *) Modify behavior of ALPN to invoke callback after SNI/servername
+     callback, such that updates to the SSL_CTX affect ALPN.
+     [Todd Short]
+
+  *) Add SSL_CIPHER queries for authentication and key-exchange.
+     [Todd Short]
+
+  *) Changes to the DEFAULT cipherlist:
+       - Prefer (EC)DHE handshakes over plain RSA.
+       - Prefer AEAD ciphers over legacy ciphers.
+       - Prefer ECDSA over RSA when both certificates are available.
+       - Prefer TLSv1.2 ciphers/PRF.
+       - Remove DSS, SEED, IDEA, CAMELLIA, and AES-CCM from the
+         default cipherlist.
+     [Emilia Käsper]
+
+  *) Change the ECC default curve list to be this, in order: x25519,
+     secp256r1, secp521r1, secp384r1.
+     [Rich Salz]
+
+  *) RC4 based libssl ciphersuites are now classed as "weak" ciphers and are
+     disabled by default. They can be re-enabled using the
+     enable-weak-ssl-ciphers option to Configure.
+     [Matt Caswell]
+
+  *) If the server has ALPN configured, but supports no protocols that the
+     client advertises, send a fatal "no_application_protocol" alert.
+     This behaviour is SHALL in RFC 7301, though it isn't universally
+     implemented by other servers.
+     [Emilia Käsper]
+
+  *) Add X25519 support.
+     Integrate support for X25519 into EC library. This includes support
+     for public and private key encoding using the format documented in
+     draft-josefsson-pkix-newcurves-01: specifically X25519 uses the
+     OID from that draft, encodes public keys using little endian
+     format in the ECPoint structure and private keys using
+     little endian form in the privateKey field of the ECPrivateKey
+     structure. TLS support complies with draft-ietf-tls-rfc4492bis-06
+     and uses X25519(29).
+
+     Note: the current version supports key generation, public and
+     private key encoding and ECDH key agreement using the EC API.
+     Low level point operations such as EC_POINT_add(), EC_POINT_mul()
+     are NOT supported.
+     [Steve Henson]
+
+  *) Deprecate SRP_VBASE_get_by_user.
+     SRP_VBASE_get_by_user had inconsistent memory management behaviour.
+     In order to fix an unavoidable memory leak (CVE-2016-0798),
+     SRP_VBASE_get_by_user was changed to ignore the "fake user" SRP
+     seed, even if the seed is configured.
+
+     Users should use SRP_VBASE_get1_by_user instead. Note that in
+     SRP_VBASE_get1_by_user, caller must free the returned value. Note
+     also that even though configuring the SRP seed attempts to hide
+     invalid usernames by continuing the handshake with fake
+     credentials, this behaviour is not constant time and no strong
+     guarantees are made that the handshake is indistinguishable from
+     that of a valid user.
+     [Emilia Käsper]
+
+  *) Configuration change; it's now possible to build dynamic engines
+     without having to build shared libraries and vice versa.  This
+     only applies to the engines in engines/, those in crypto/engine/
+     will always be built into libcrypto (i.e. "static").
+
+     Building dynamic engines is enabled by default; to disable, use
+     the configuration option "disable-dynamic-engine".
+
+     The only requirements for building dynamic engines are the
+     presence of the DSO module and building with position independent
+     code, so they will also automatically be disabled if configuring
+     with "disable-dso" or "disable-pic".
+
+     The macros OPENSSL_NO_STATIC_ENGINE and OPENSSL_NO_DYNAMIC_ENGINE
+     are also taken away from openssl/opensslconf.h, as they are
+     irrelevant.
+     [Richard Levitte]
+
+  *) Configuration change; if there is a known flag to compile
+     position independent code, it will always be applied on the
+     libcrypto and libssl object files, and never on the application
+     object files.  This means other libraries that use routines from
+     libcrypto / libssl can be made into shared libraries regardless
+     of how OpenSSL was configured.
+
+     If this isn't desirable, the configuration options "disable-pic"
+     or "no-pic" can be used to disable the use of PIC.  This will
+     also disable building shared libraries and dynamic engines.
+     [Richard Levitte]
+
+  *) Removed JPAKE code.  It was experimental and has no wide use.
+     [Rich Salz]
 
   *) The INSTALL_PREFIX Makefile variable has been renamed to
      DESTDIR.  That makes for less confusion on what this variable
@@ -23,7 +229,7 @@
      The "unified" build system is aimed to be a common system for all
      platforms we support.  With it comes new support for VMS.
 
-     This system builds supports building in a differnt directory tree
+     This system builds supports building in a different directory tree
      than the source tree.  It produces one Makefile (for unix family
      or lookalikes), or one descrip.mms (for VMS).
 
@@ -275,7 +481,7 @@
      [Rich Salz]
 
   *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron, gmp,
-     and sureware.
+     sureware and ubsec.
      [Matt Caswell, Rich Salz]
 
   *) New ASN.1 embed macro.
@@ -794,6 +1000,240 @@
      whose return value is often ignored. 
      [Steve Henson]
 
+  *) New -noct, -requestct, -requirect and -ctlogfile options for s_client.
+     These allow SCTs (signed certificate timestamps) to be requested and
+     validated when establishing a connection.
+     [Rob Percival <robpercival@google.com>]
+
+ Changes between 1.0.2g and 1.0.2h [3 May 2016]
+
+  *) Prevent padding oracle in AES-NI CBC MAC check
+
+     A MITM attacker can use a padding oracle attack to decrypt traffic
+     when the connection uses an AES CBC cipher and the server support
+     AES-NI.
+
+     This issue was introduced as part of the fix for Lucky 13 padding
+     attack (CVE-2013-0169). The padding check was rewritten to be in
+     constant time by making sure that always the same bytes are read and
+     compared against either the MAC or padding bytes. But it no longer
+     checked that there was enough data to have both the MAC and padding
+     bytes.
+
+     This issue was reported by Juraj Somorovsky using TLS-Attacker.
+     (CVE-2016-2107)
+     [Kurt Roeckx]
+
+  *) Fix EVP_EncodeUpdate overflow
+
+     An overflow can occur in the EVP_EncodeUpdate() function which is used for
+     Base64 encoding of binary data. If an attacker is able to supply very large
+     amounts of input data then a length check can overflow resulting in a heap
+     corruption.
+
+     Internally to OpenSSL the EVP_EncodeUpdate() function is primarily used by
+     the PEM_write_bio* family of functions. These are mainly used within the
+     OpenSSL command line applications, so any application which processes data
+     from an untrusted source and outputs it as a PEM file should be considered
+     vulnerable to this issue. User applications that call these APIs directly
+     with large amounts of untrusted data may also be vulnerable.
+
+     This issue was reported by Guido Vranken.
+     (CVE-2016-2105)
+     [Matt Caswell]
+
+  *) Fix EVP_EncryptUpdate overflow
+
+     An overflow can occur in the EVP_EncryptUpdate() function. If an attacker
+     is able to supply very large amounts of input data after a previous call to
+     EVP_EncryptUpdate() with a partial block then a length check can overflow
+     resulting in a heap corruption. Following an analysis of all OpenSSL
+     internal usage of the EVP_EncryptUpdate() function all usage is one of two
+     forms. The first form is where the EVP_EncryptUpdate() call is known to be
+     the first called function after an EVP_EncryptInit(), and therefore that
+     specific call must be safe. The second form is where the length passed to
+     EVP_EncryptUpdate() can be seen from the code to be some small value and
+     therefore there is no possibility of an overflow. Since all instances are
+     one of these two forms, it is believed that there can be no overflows in
+     internal code due to this problem. It should be noted that
+     EVP_DecryptUpdate() can call EVP_EncryptUpdate() in certain code paths.
+     Also EVP_CipherUpdate() is a synonym for EVP_EncryptUpdate(). All instances
+     of these calls have also been analysed too and it is believed there are no
+     instances in internal usage where an overflow could occur.
+
+     This issue was reported by Guido Vranken.
+     (CVE-2016-2106)
+     [Matt Caswell]
+
+  *) Prevent ASN.1 BIO excessive memory allocation
+
+     When ASN.1 data is read from a BIO using functions such as d2i_CMS_bio()
+     a short invalid encoding can cause allocation of large amounts of memory
+     potentially consuming excessive resources or exhausting memory.
+
+     Any application parsing untrusted data through d2i BIO functions is
+     affected. The memory based functions such as d2i_X509() are *not* affected.
+     Since the memory based functions are used by the TLS library, TLS
+     applications are not affected.
+
+     This issue was reported by Brian Carpenter.
+     (CVE-2016-2109)
+     [Stephen Henson]
+
+  *) EBCDIC overread
+
+     ASN1 Strings that are over 1024 bytes can cause an overread in applications
+     using the X509_NAME_oneline() function on EBCDIC systems. This could result
+     in arbitrary stack data being returned in the buffer.
+
+     This issue was reported by Guido Vranken.
+     (CVE-2016-2176)
+     [Matt Caswell]
+
+  *) Modify behavior of ALPN to invoke callback after SNI/servername
+     callback, such that updates to the SSL_CTX affect ALPN.
+     [Todd Short]
+
+  *) Remove LOW from the DEFAULT cipher list.  This removes singles DES from the
+     default.
+     [Kurt Roeckx]
+
+  *) Only remove the SSLv2 methods with the no-ssl2-method option. When the
+     methods are enabled and ssl2 is disabled the methods return NULL.
+     [Kurt Roeckx]
+
+ Changes between 1.0.2f and 1.0.2g [1 Mar 2016]
+
+  * Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
+    Builds that are not configured with "enable-weak-ssl-ciphers" will not
+    provide any "EXPORT" or "LOW" strength ciphers.
+    [Viktor Dukhovni]
+
+  * Disable SSLv2 default build, default negotiation and weak ciphers.  SSLv2
+    is by default disabled at build-time.  Builds that are not configured with
+    "enable-ssl2" will not support SSLv2.  Even if "enable-ssl2" is used,
+    users who want to negotiate SSLv2 via the version-flexible SSLv23_method()
+    will need to explicitly call either of:
+
+        SSL_CTX_clear_options(ctx, SSL_OP_NO_SSLv2);
+    or
+        SSL_clear_options(ssl, SSL_OP_NO_SSLv2);
+
+    as appropriate.  Even if either of those is used, or the application
+    explicitly uses the version-specific SSLv2_method() or its client and
+    server variants, SSLv2 ciphers vulnerable to exhaustive search key
+    recovery have been removed.  Specifically, the SSLv2 40-bit EXPORT
+    ciphers, and SSLv2 56-bit DES are no longer available.
+    (CVE-2016-0800)
+    [Viktor Dukhovni]
+
+  *) Fix a double-free in DSA code
+
+     A double free bug was discovered when OpenSSL parses malformed DSA private
+     keys and could lead to a DoS attack or memory corruption for applications
+     that receive DSA private keys from untrusted sources.  This scenario is
+     considered rare.
+
+     This issue was reported to OpenSSL by Adam Langley(Google/BoringSSL) using
+     libFuzzer.
+     (CVE-2016-0705)
+     [Stephen Henson]
+
+  *) Disable SRP fake user seed to address a server memory leak.
+
+     Add a new method SRP_VBASE_get1_by_user that handles the seed properly.
+
+     SRP_VBASE_get_by_user had inconsistent memory management behaviour.
+     In order to fix an unavoidable memory leak, SRP_VBASE_get_by_user
+     was changed to ignore the "fake user" SRP seed, even if the seed
+     is configured.
+
+     Users should use SRP_VBASE_get1_by_user instead. Note that in
+     SRP_VBASE_get1_by_user, caller must free the returned value. Note
+     also that even though configuring the SRP seed attempts to hide
+     invalid usernames by continuing the handshake with fake
+     credentials, this behaviour is not constant time and no strong
+     guarantees are made that the handshake is indistinguishable from
+     that of a valid user.
+     (CVE-2016-0798)
+     [Emilia Käsper]
+
+  *) Fix BN_hex2bn/BN_dec2bn NULL pointer deref/heap corruption
+
+     In the BN_hex2bn function the number of hex digits is calculated using an
+     int value |i|. Later |bn_expand| is called with a value of |i * 4|. For
+     large values of |i| this can result in |bn_expand| not allocating any
+     memory because |i * 4| is negative. This can leave the internal BIGNUM data
+     field as NULL leading to a subsequent NULL ptr deref. For very large values
+     of |i|, the calculation |i * 4| could be a positive value smaller than |i|.
+     In this case memory is allocated to the internal BIGNUM data field, but it
+     is insufficiently sized leading to heap corruption. A similar issue exists
+     in BN_dec2bn. This could have security consequences if BN_hex2bn/BN_dec2bn
+     is ever called by user applications with very large untrusted hex/dec data.
+     This is anticipated to be a rare occurrence.
+
+     All OpenSSL internal usage of these functions use data that is not expected
+     to be untrusted, e.g. config file data or application command line
+     arguments. If user developed applications generate config file data based
+     on untrusted data then it is possible that this could also lead to security
+     consequences. This is also anticipated to be rare.
+
+     This issue was reported to OpenSSL by Guido Vranken.
+     (CVE-2016-0797)
+     [Matt Caswell]
+
+  *) Fix memory issues in BIO_*printf functions
+
+     The internal |fmtstr| function used in processing a "%s" format string in
+     the BIO_*printf functions could overflow while calculating the length of a
+     string and cause an OOB read when printing very long strings.
+
+     Additionally the internal |doapr_outch| function can attempt to write to an
+     OOB memory location (at an offset from the NULL pointer) in the event of a
+     memory allocation failure. In 1.0.2 and below this could be caused where
+     the size of a buffer to be allocated is greater than INT_MAX. E.g. this
+     could be in processing a very long "%s" format string. Memory leaks can
+     also occur.
+
+     The first issue may mask the second issue dependent on compiler behaviour.
+     These problems could enable attacks where large amounts of untrusted data
+     is passed to the BIO_*printf functions. If applications use these functions
+     in this way then they could be vulnerable. OpenSSL itself uses these
+     functions when printing out human-readable dumps of ASN.1 data. Therefore
+     applications that print this data could be vulnerable if the data is from
+     untrusted sources. OpenSSL command line applications could also be
+     vulnerable where they print out ASN.1 data, or if untrusted data is passed
+     as command line arguments.
+
+     Libssl is not considered directly vulnerable. Additionally certificates etc
+     received via remote connections via libssl are also unlikely to be able to
+     trigger these issues because of message size limits enforced within libssl.
+
+     This issue was reported to OpenSSL Guido Vranken.
+     (CVE-2016-0799)
+     [Matt Caswell]
+
+  *) Side channel attack on modular exponentiation
+
+     A side-channel attack was found which makes use of cache-bank conflicts on
+     the Intel Sandy-Bridge microarchitecture which could lead to the recovery
+     of RSA keys.  The ability to exploit this issue is limited as it relies on
+     an attacker who has control of code in a thread running on the same
+     hyper-threaded core as the victim thread which is performing decryptions.
+
+     This issue was reported to OpenSSL by Yuval Yarom, The University of
+     Adelaide and NICTA, Daniel Genkin, Technion and Tel Aviv University, and
+     Nadia Heninger, University of Pennsylvania with more information at
+     http://cachebleed.info.
+     (CVE-2016-0702)
+     [Andy Polyakov]
+
+  *) Change the req app to generate a 2048-bit RSA/DSA key by default,
+     if no keysize is specified with default_bits. This fixes an
+     omission in an earlier change that changed all RSA/DSA key generation
+     apps to use 2048 bits by default.
+     [Emilia Käsper]
+
  Changes between 1.0.2e and 1.0.2f [28 Jan 2016]
   *) DH small subgroups
 
@@ -900,7 +1340,7 @@
 
   *) Alternate chains certificate forgery
 
-     During certificate verfification, OpenSSL will attempt to find an
+     During certificate verification, OpenSSL will attempt to find an
      alternative certificate chain if the first attempt to build such a chain
      fails. An error in the implementation of this logic can mean that an
      attacker could cause certain checks on untrusted certificates to be
@@ -1158,7 +1598,7 @@
 
   *) Facilitate "universal" ARM builds targeting range of ARM ISAs, e.g.
      ARMv5 through ARMv8, as opposite to "locking" it to single one.
-     So far those who have to target multiple plaforms would compromise
+     So far those who have to target multiple platforms would compromise
      and argue that binary targeting say ARMv5 would still execute on
      ARMv8. "Universal" build resolves this compromise by providing
      near-optimal performance even on newer platforms.
@@ -1218,7 +1658,7 @@
      [Steve Henson]
 
   *) Use algorithm specific chains in SSL_CTX_use_certificate_chain_file():
-     this fixes a limiation in previous versions of OpenSSL.
+     this fixes a limitation in previous versions of OpenSSL.
      [Steve Henson]
 
   *) Extended RSA OAEP support via EVP_PKEY API. Options to specify digest,
@@ -1327,7 +1767,7 @@
 
   *) Add support for certificate stores in CERT structure. This makes it
      possible to have different stores per SSL structure or one store in
-     the parent SSL_CTX. Include distint stores for certificate chain
+     the parent SSL_CTX. Include distinct stores for certificate chain
      verification and chain building. New ctrl SSL_CTRL_BUILD_CERT_CHAIN
      to build and store a certificate chain in CERT structure: returing
      an error if the chain cannot be built: this will allow applications
@@ -1390,7 +1830,7 @@
      [Steve Henson]
 
   *) Integrate hostname, email address and IP address checking with certificate
-     verification. New verify options supporting checking in opensl utility.
+     verification. New verify options supporting checking in openssl utility.
      [Steve Henson]
 
   *) Fixes and wildcard matching support to hostname and email checking

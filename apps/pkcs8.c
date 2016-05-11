@@ -67,7 +67,7 @@
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
-    OPT_TOPK8, OPT_NOITER, OPT_NOCRYPT, OPT_NOOCT, OPT_NSDB, OPT_EMBED,
+    OPT_TOPK8, OPT_NOITER, OPT_NOCRYPT,
 #ifndef OPENSSL_NO_SCRYPT
     OPT_SCRYPT, OPT_SCRYPT_N, OPT_SCRYPT_R, OPT_SCRYPT_P,
 #endif
@@ -83,10 +83,6 @@ OPTIONS pkcs8_options[] = {
     {"topk8", OPT_TOPK8, '-', "Output PKCS8 file"},
     {"noiter", OPT_NOITER, '-', "Use 1 as iteration count"},
     {"nocrypt", OPT_NOCRYPT, '-', "Use or expect unencrypted private key"},
-    {"nooct", OPT_NOOCT, '-', "Use (nonstandard) no octet format"},
-    {"nsdb", OPT_NSDB, '-', "Use (nonstandard) DSA Netscape DB format"},
-    {"embed", OPT_EMBED, '-',
-     "Use (nonstandard) embedded DSA parameters format"},
     {"v2", OPT_V2, 's', "Use PKCS#5 v2.0 and cipher"},
     {"v1", OPT_V1, 's', "Use PKCS#5 v1.5 and cipher"},
     {"v2prf", OPT_V2PRF, 's'},
@@ -115,9 +111,12 @@ int pkcs8_main(int argc, char **argv)
     const EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *prog;
-    char pass[50], *passin = NULL, *passout = NULL, *p8pass = NULL;
+#ifndef OPENSSL_NO_UI
+    char pass[50];
+#endif
+    char *passin = NULL, *passout = NULL, *p8pass = NULL;
     OPTION_CHOICE o;
-    int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER, p8_broken = PKCS8_OK;
+    int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
     int private = 0;
 #ifndef OPENSSL_NO_SCRYPT
@@ -159,15 +158,6 @@ int pkcs8_main(int argc, char **argv)
         case OPT_NOCRYPT:
             nocrypt = 1;
             break;
-        case OPT_NOOCT:
-            p8_broken = PKCS8_NO_OCTET;
-            break;
-        case OPT_NSDB:
-            p8_broken = PKCS8_NS_DB;
-            break;
-        case OPT_EMBED:
-            p8_broken = PKCS8_EMBEDDED_PARAM;
-            break;
         case OPT_V2:
             if (!opt_cipher(opt_arg(), &cipher))
                 goto opthelp;
@@ -187,6 +177,8 @@ int pkcs8_main(int argc, char **argv)
                            "%s: Unknown PRF algorithm %s\n", prog, opt_arg());
                 goto opthelp;
             }
+            if (cipher == NULL)
+                cipher = EVP_aes_256_cbc();
             break;
         case OPT_ITER:
             if (!opt_int(opt_arg(), &iter))
@@ -203,9 +195,9 @@ int pkcs8_main(int argc, char **argv)
             break;
 #ifndef OPENSSL_NO_SCRYPT
         case OPT_SCRYPT:
-            scrypt_N = 1024;
+            scrypt_N = 16384;
             scrypt_r = 8;
-            scrypt_p = 16;
+            scrypt_p = 1;
             if (cipher == NULL)
                 cipher = EVP_aes_256_cbc();
             break;
@@ -225,7 +217,9 @@ int pkcs8_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
@@ -233,8 +227,8 @@ int pkcs8_main(int argc, char **argv)
         goto end;
     }
 
-    if ((pbe_nid == -1) && !cipher)
-        pbe_nid = NID_pbeWithMD5AndDES_CBC;
+    if ((pbe_nid == -1) && cipher == NULL)
+        cipher = EVP_aes_256_cbc();
 
     in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
@@ -247,7 +241,7 @@ int pkcs8_main(int argc, char **argv)
         pkey = load_key(infile, informat, 1, passin, e, "key");
         if (!pkey)
             goto end;
-        if ((p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken)) == NULL) {
+        if ((p8inf = EVP_PKEY2PKCS8(pkey)) == NULL) {
             BIO_printf(bio_err, "Error converting key\n");
             ERR_print_errors(bio_err);
             goto end;
@@ -283,13 +277,18 @@ int pkcs8_main(int argc, char **argv)
             }
             if (passout)
                 p8pass = passout;
-            else {
+            else if (1) {
+#ifndef OPENSSL_NO_UI
                 p8pass = pass;
                 if (EVP_read_pw_string
                     (pass, sizeof pass, "Enter Encryption Password:", 1)) {
                     X509_ALGOR_free(pbe);
                     goto end;
                 }
+            } else {
+#endif
+                BIO_printf(bio_err, "Password required\n");
+                goto end;
             }
             app_RAND_load_file(NULL, 0);
             p8 = PKCS8_set0_pbe(p8pass, strlen(p8pass), p8inf, pbe);
@@ -341,9 +340,17 @@ int pkcs8_main(int argc, char **argv)
         }
         if (passin)
             p8pass = passin;
-        else {
+        else if (1) {
+#ifndef OPENSSL_NO_UI
             p8pass = pass;
-            EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0);
+            if (EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0)) {
+                BIO_printf(bio_err, "Can't read Password\n");
+                goto end;
+            }
+        } else {
+#endif
+            BIO_printf(bio_err, "Password required\n");
+            goto end;
         }
         p8inf = PKCS8_decrypt(p8, p8pass, strlen(p8pass));
     }
@@ -358,31 +365,6 @@ int pkcs8_main(int argc, char **argv)
         BIO_printf(bio_err, "Error converting key\n");
         ERR_print_errors(bio_err);
         goto end;
-    }
-
-    if (p8inf->broken) {
-        BIO_printf(bio_err, "Warning: broken key encoding: ");
-        switch (p8inf->broken) {
-        case PKCS8_NO_OCTET:
-            BIO_printf(bio_err, "No Octet String in PrivateKey\n");
-            break;
-
-        case PKCS8_EMBEDDED_PARAM:
-            BIO_printf(bio_err, "DSA parameters included in PrivateKey\n");
-            break;
-
-        case PKCS8_NS_DB:
-            BIO_printf(bio_err, "DSA public key include in PrivateKey\n");
-            break;
-
-        case PKCS8_NEG_PRIVKEY:
-            BIO_printf(bio_err, "DSA private key value is negative\n");
-            break;
-
-        default:
-            BIO_printf(bio_err, "Unknown broken type\n");
-            break;
-        }
     }
 
     assert(private);

@@ -58,7 +58,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
-#include <openssl/objects.h>
+#include <internal/objects.h>
 #include <openssl/x509.h>
 #include "internal/evp_int.h"
 
@@ -73,7 +73,6 @@ int EVP_add_cipher(const EVP_CIPHER *c)
                      (const char *)c);
     if (r == 0)
         return (0);
-    check_defer(c->nid);
     r = OBJ_NAME_add(OBJ_nid2ln(c->nid), OBJ_NAME_TYPE_CIPHER_METH,
                      (const char *)c);
     return (r);
@@ -88,7 +87,6 @@ int EVP_add_digest(const EVP_MD *md)
     r = OBJ_NAME_add(name, OBJ_NAME_TYPE_MD_METH, (const char *)md);
     if (r == 0)
         return (0);
-    check_defer(md->type);
     r = OBJ_NAME_add(OBJ_nid2ln(md->type), OBJ_NAME_TYPE_MD_METH,
                      (const char *)md);
     if (r == 0)
@@ -99,7 +97,6 @@ int EVP_add_digest(const EVP_MD *md)
                          OBJ_NAME_TYPE_MD_METH | OBJ_NAME_ALIAS, name);
         if (r == 0)
             return (0);
-        check_defer(md->pkey_type);
         r = OBJ_NAME_add(OBJ_nid2ln(md->pkey_type),
                          OBJ_NAME_TYPE_MD_METH | OBJ_NAME_ALIAS, name);
     }
@@ -128,7 +125,7 @@ const EVP_MD *EVP_get_digestbyname(const char *name)
     return (cp);
 }
 
-void EVP_cleanup(void)
+void evp_cleanup_int(void)
 {
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
@@ -140,10 +137,6 @@ void EVP_cleanup(void)
     OBJ_NAME_cleanup(-1);
 
     EVP_PBE_cleanup();
-    if (obj_cleanup_defer == 2) {
-        obj_cleanup_defer = 0;
-        OBJ_cleanup();
-    }
     OBJ_sigid_free();
 }
 

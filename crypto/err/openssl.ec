@@ -23,7 +23,7 @@ L PKCS7		include/openssl/pkcs7.h		crypto/pkcs7/pkcs7err.c
 L X509V3	include/openssl/x509v3.h	crypto/x509v3/v3err.c
 L PKCS12	include/openssl/pkcs12.h	crypto/pkcs12/pk12err.c
 L RAND		include/openssl/rand.h		crypto/rand/rand_err.c
-L DSO		include/openssl/dso.h		crypto/dso/dso_err.c
+L DSO		include/internal/dso.h		crypto/dso/dso_err.c
 L ENGINE	include/openssl/engine.h	crypto/engine/eng_err.c
 L OCSP		include/openssl/ocsp.h		crypto/ocsp/ocsp_err.c
 L UI		include/openssl/ui.h		crypto/ui/ui_err.c
@@ -32,18 +32,19 @@ L STORE		include/openssl/store.h		crypto/store/str_err.c
 L TS		include/openssl/ts.h		crypto/ts/ts_err.c
 L HMAC		include/openssl/hmac.h		crypto/hmac/hmac_err.c
 L CMS		include/openssl/cms.h		crypto/cms/cms_err.c
-L JPAKE		include/openssl/jpake.h		crypto/jpake/jpake_err.c
 L FIPS		include/openssl/fips.h		crypto/fips_err.h
+L CT		include/openssl/ct.h		crypto/ct/ct_err.c
 L ASYNC		include/openssl/async.h		crypto/async/async_err.c
+L KDF		include/openssl/kdf.h		crypto/kdf/kdf_err.c
 
 # additional header files to be scanned for function names
 L NONE		crypto/x509/x509_vfy.h		NONE
 L NONE		crypto/ec/ec_lcl.h		NONE
 L NONE		crypto/asn1/asn_lcl.h		NONE
 L NONE		crypto/cms/cms_lcl.h		NONE
+L NONE		crypto/ct/ct_locl.h		NONE
 L NONE		fips/rand/fips_rand.h		NONE
 L NONE		ssl/ssl_locl.h			NONE
-
 
 F RSAREF_F_RSA_BN2BIN
 F RSAREF_F_RSA_PRIVATE_DECRYPT

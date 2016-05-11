@@ -24,6 +24,7 @@ B<openssl> B<verify>
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
+[B<-no_check_time>]
 [B<-partial_chain>]
 [B<-policy arg>]
 [B<-policy_check>]
@@ -38,6 +39,7 @@ B<openssl> B<verify>
 [B<-trusted file>]
 [B<-use_deltas>]
 [B<-verbose>]
+[B<-auth_level level>]
 [B<-verify_depth num>]
 [B<-verify_email email>]
 [B<-verify_hostname hostname>]
@@ -97,8 +99,6 @@ because it doesn't add any security.
 The B<file> should contain one or more CRLs in PEM format.
 This option can be specified more than once to include CRLs from multiple
 B<files>.
-If you want to enable an B<engine> via the B<-engine> option, that option has
-to be specified before this one.
 
 =item B<-crl_download>
 
@@ -145,6 +145,12 @@ Set policy variable inhibit-any-policy (see RFC5280).
 =item B<-inhibit_map>
 
 Set policy variable inhibit-policy-mapping (see RFC5280).
+
+=item B<-no_check_time>
+
+This option suppresses checking the validity period of certificates and CRLs 
+against the current time. If option B<-attime timestamp> is used to specify 
+a verification time, the check is not suppressed.
 
 =item B<-partial_chain>
 
@@ -202,12 +208,10 @@ effect.
 =item B<-untrusted file>
 
 A B<file> of additional untrusted certificates (intermediate issuer CAs) used
-to constuct a certificate chain from the subject certificate to a trust-anchor.
+to construct a certificate chain from the subject certificate to a trust-anchor.
 The B<file> should contain one or more certificates in PEM format.
 This option can be specified more than once to include untrusted certiificates
 from multiple B<files>.
-If you want to enable an B<engine> via the B<-engine> option, that option has
-to be specified before this one.
 
 =item B<-trusted file>
 
@@ -222,8 +226,6 @@ from multiple B<files>.
 This option implies the B<-no-CAfile> and B<-no-CApath> options.
 This option cannot be used in combination with either of the B<-CAfile> or
 B<-CApath> options.
-If you want to enable an B<engine> via the B<-engine> option, that option has
-to be specified before this one.
 
 =item B<-use_deltas>
 
@@ -233,9 +235,30 @@ Enable support for delta CRLs.
 
 Print extra information about the operations being performed.
 
+=item B<-auth_level level>
+
+Set the certificate chain authentication security level to B<level>.
+The authentication security level determines the acceptable signature and
+public key strength when verifying certificate chains.
+For a certificate chain to validate, the public keys of all the certificates
+must meet the specified security B<level>.
+The signature algorithm security level is enforced for all the certificates in
+the chain except for the chain's I<trust anchor>, which is either directly
+trusted or validated by means other than its signature.
+See L<SSL_CTX_set_security_level(3)> for the definitions of the available
+levels.
+The default security level is -1, or "not set".
+At security level 0 or lower all algorithms are acceptable.
+Security level 1 requires at least 80-bit-equivalent security and is broadly
+interoperable, though it will, for example, reject MD5 signatures or RSA keys
+shorter than 1024 bits.
+
 =item B<-verify_depth num>
 
-Limit the maximum depth of the certificate chain to B<num> certificates.
+Limit the certificate chain to B<num> intermediate CA certificates.
+A maximal depth chain can have up to B<num+2> certificates, since neither the
+end-entity certificate nor the trust-anchor certificate count against the
+B<-verify_depth> limit.
 
 =item B<-verify_email email>
 

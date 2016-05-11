@@ -14,6 +14,8 @@
 # Performance under big-endian OS such as HP-UX is 179MBps*1GHz, which
 # is >50% better than HP C and >2x better than gcc.
 
+$output = pop;
+
 $code=<<___;
 .ident  \"sha1-ia64.s, version 1.3\"
 .ident  \"IA-64 ISA artwork by Andy Polyakov <appro\@fy.chalmers.se>\"
@@ -301,5 +303,5 @@ $code.=<<___;
 stringz	"SHA1 block transform for IA64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
-$output=shift and open STDOUT,">$output";
+open STDOUT,">$output" if $output;
 print $code;

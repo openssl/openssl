@@ -10,15 +10,23 @@
 #include "obj_lcl.h"
 
 /*
- * Later versions of DEC C has started to add linkage information to certain
- * functions, which makes it tricky to use them as values to regular function
- * pointers.  One way is to define a macro that takes care of casting them
- * correctly.
+ * We define this wrapper for two reasons. Firstly, later versions of
+ * DEC C add linkage information to certain functions, which makes it
+ * tricky to use them as values to regular function pointers.
+ * Secondly, in the EDK2 build environment, the strcmp function is
+ * actually an external function (AsciiStrCmp) with the Microsoft ABI,
+ * so we can't transparently assign function pointers to it.
+ * Arguably the latter is a stupidity of the UEFI environment, but
+ * since the wrapper solves the DEC C issue too, let's just use the
+ * same solution.
  */
-#ifdef OPENSSL_SYS_VMS_DECC
-# define OPENSSL_strcmp (int (*)(const char *,const char *))strcmp
+#if defined(OPENSSL_SYS_VMS_DECC) || defined(OPENSSL_SYS_UEFI)
+static int obj_strcmp(const char *a, const char *b)
+{
+    return strcmp(a, b);
+}
 #else
-# define OPENSSL_strcmp strcmp
+#define obj_strcmp strcmp
 #endif
 
 /*
@@ -83,7 +91,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
             return (0);
         }
         name_funcs->hash_func = lh_strhash;
-        name_funcs->cmp_func = OPENSSL_strcmp;
+        name_funcs->cmp_func = obj_strcmp;
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
         sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);

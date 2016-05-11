@@ -142,7 +142,7 @@ OPTIONS cms_options[] = {
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt message"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt encrypted message"},
     {"sign", OPT_SIGN, '-', "Sign message"},
-    {"sign_receipt", OPT_SIGN_RECEIPT, '-'},
+    {"sign_receipt", OPT_SIGN_RECEIPT, '-', "Generate a signed receipt for the message"},
     {"resign", OPT_RESIGN, '-'},
     {"verify", OPT_VERIFY, '-', "Verify signed message"},
     {"verify_retcode", OPT_VERIFY_RETCODE, '-'},
@@ -177,7 +177,7 @@ OPTIONS cms_options[] = {
     {"noindef", OPT_NOINDEF, '-'},
     {"nooldmime", OPT_NOOLDMIME, '-'},
     {"crlfeol", OPT_CRLFEOL, '-'},
-    {"noout", OPT_NOOUT, '-'},
+    {"noout", OPT_NOOUT, '-', "For the -cmsout operation do not output the parsed CMS structure"},
     {"receipt_request_print", OPT_RR_PRINT, '-'},
     {"receipt_request_all", OPT_RR_ALL, '-'},
     {"receipt_request_first", OPT_RR_FIRST, '-'},
@@ -191,7 +191,7 @@ OPTIONS cms_options[] = {
      "Do not load certificates from the default certificates directory"},
     {"content", OPT_CONTENT, '<',
      "Supply or override content for detached signature"},
-    {"print", OPT_PRINT, '-'},
+    {"print", OPT_PRINT, '-', "For the -cmsout operation print out all fields of the CMS structure"},
     {"secretkey", OPT_SECRETKEY, 's'},
     {"secretkeyid", OPT_SECRETKEYID, 's'},
     {"pwri_password", OPT_PWRI_PASSWORD, 's'},
@@ -205,7 +205,7 @@ OPTIONS cms_options[] = {
     {"signer", OPT_SIGNER, 's', "Signer certificate file"},
     {"recip", OPT_RECIP, '<', "Recipient cert file for decryption"},
     {"certsout", OPT_CERTSOUT, '>', "Certificate output file"},
-    {"md", OPT_MD, 's'},
+    {"md", OPT_MD, 's', "Digest algorithm to use when signing or resigning"},
     {"inkey", OPT_INKEY, 's',
      "Input private key (if not signer or recipient)"},
     {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
@@ -214,11 +214,9 @@ OPTIONS cms_options[] = {
     {"receipt_request_to", OPT_RR_TO, 's'},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
     OPT_V_OPTIONS,
-# ifndef OPENSSL_NO_AES
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
     {"aes192-wrap", OPT_AES192_WRAP, '-', "Use AES192 to wrap key"},
     {"aes256-wrap", OPT_AES256_WRAP, '-', "Use AES256 to wrap key"},
-# endif
 # ifndef OPENSSL_NO_DES
     {"des3-wrap", OPT_3DES_WRAP, '-', "Use 3DES-EDE to wrap key"},
 # endif
@@ -455,7 +453,7 @@ int cms_main(int argc, char **argv)
             noout = print = 1;
             break;
         case OPT_SECRETKEY:
-            secret_key = string_to_hex(opt_arg(), &ltmp);
+            secret_key = OPENSSL_hexstr2buf(opt_arg(), &ltmp);
             if (secret_key == NULL) {
                 BIO_printf(bio_err, "Invalid key %s\n", opt_arg());
                 goto end;
@@ -463,7 +461,7 @@ int cms_main(int argc, char **argv)
             secret_keylen = (size_t)ltmp;
             break;
         case OPT_SECRETKEYID:
-            secret_keyid = string_to_hex(opt_arg(), &ltmp);
+            secret_keyid = OPENSSL_hexstr2buf(opt_arg(), &ltmp);
             if (secret_keyid == NULL) {
                 BIO_printf(bio_err, "Invalid id %s\n", opt_arg());
                 goto opthelp;
@@ -550,7 +548,7 @@ int cms_main(int argc, char **argv)
             if (operation == SMIME_ENCRYPT) {
                 if (encerts == NULL && (encerts = sk_X509_new_null()) == NULL)
                     goto end;
-                cert = load_cert(opt_arg(), FORMAT_PEM, NULL, e,
+                cert = load_cert(opt_arg(), FORMAT_PEM,
                                  "recipient certificate file");
                 if (cert == NULL)
                     goto end;
@@ -603,7 +601,6 @@ int cms_main(int argc, char **argv)
             wrap_cipher = EVP_des_ede3_wrap();
 # endif
             break;
-# ifndef OPENSSL_NO_AES
         case OPT_AES128_WRAP:
             wrap_cipher = EVP_aes_128_wrap();
             break;
@@ -613,12 +610,6 @@ int cms_main(int argc, char **argv)
         case OPT_AES256_WRAP:
             wrap_cipher = EVP_aes_256_wrap();
             break;
-# else
-        case OPT_AES128_WRAP:
-        case OPT_AES192_WRAP:
-        case OPT_AES256_WRAP:
-            break;
-# endif
         }
     }
     argc = opt_num_rest();
@@ -725,7 +716,7 @@ int cms_main(int argc, char **argv)
             if ((encerts = sk_X509_new_null()) == NULL)
                 goto end;
         while (*argv) {
-            if ((cert = load_cert(*argv, FORMAT_PEM, NULL, e,
+            if ((cert = load_cert(*argv, FORMAT_PEM,
                                   "recipient certificate file")) == NULL)
                 goto end;
             sk_X509_push(encerts, cert);
@@ -735,7 +726,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile) {
-        if (!load_certs(certfile, &other, FORMAT_PEM, NULL, e,
+        if (!load_certs(certfile, &other, FORMAT_PEM, NULL,
                         "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
@@ -743,7 +734,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (recipfile && (operation == SMIME_DECRYPT)) {
-        if ((recip = load_cert(recipfile, FORMAT_PEM, NULL, e,
+        if ((recip = load_cert(recipfile, FORMAT_PEM,
                                "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -751,7 +742,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (operation == SMIME_SIGN_RECEIPT) {
-        if ((signer = load_cert(signerfile, FORMAT_PEM, NULL, e,
+        if ((signer = load_cert(signerfile, FORMAT_PEM,
                                 "receipt signer certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -968,8 +959,7 @@ int cms_main(int argc, char **argv)
             signerfile = sk_OPENSSL_STRING_value(sksigners, i);
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
 
-            signer = load_cert(signerfile, FORMAT_PEM, NULL,
-                               e, "signer certificate");
+            signer = load_cert(signerfile, FORMAT_PEM, "signer certificate");
             if (!signer)
                 goto end;
             key = load_key(keyfile, keyform, 0, passin, e, "signing key file");

@@ -62,7 +62,7 @@
 
 /* Define this to dump decrypted output to files called DERnnn */
 /*
- * #define DEBUG_DECRYPT
+ * #define OPENSSL_DEBUG_DECRYPT
  */
 
 /*
@@ -144,7 +144,7 @@ void *PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
         return NULL;
     }
     p = out;
-#ifdef DEBUG_DECRYPT
+#ifdef OPENSSL_DEBUG_DECRYPT
     {
         FILE *op;
 

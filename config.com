@@ -2,14 +2,15 @@ $	! OpenSSL config: determine the architecture and run Configure
 $	!
 $	! Very simple for the moment, it will take the following arguments:
 $	!
-$	! 32		sets /POINTER_SIZE=32
-$	! 64		sets /POINTER_SIZE=64
-$	! DEBUG		sets debugging
-$	! HELP		prints a usage and exits
+$	! -32 or 32	sets /POINTER_SIZE=32
+$	! -64 or 64	sets /POINTER_SIZE=64
+$	! -d		sets debugging
+$	! -h		prints a usage and exits
+$	! -t		test mode, doesn't run Configure
 $
 $	arch == f$edit( f$getsyi( "arch_name"), "lowercase")
 $	pointer_size = ""
-$	debug = ""
+$	test = 0
 $	here = F$PARSE("A.;",F$ENVIRONMENT("PROCEDURE"),,,"SYNTAX_ONLY") - "A.;"
 $
 $	collected_args = ""
@@ -17,24 +18,47 @@ $	P_index = 0
 $	LOOP1:
 $	    P_index = P_index + 1
 $	    IF P_index .GT. 8 THEN GOTO ENDLOOP1
-$	    P1 = F$EDIT(P1,"TRIM")
-$	    IF P1 .EQS. "HELP" THEN GOTO USAGE
-$	    IF P1 .EQS. "32"
+$	    P = F$EDIT(P1,"TRIM,LOWERCASE")
+$	    IF P .EQS. "-h"
+$           THEN
+$               TEST = 1
+$               P = ""
+$               TYPE SYS$INPUT
+$               DECK
+Usage: @config [options]
+
+  -32 or 32	Build with 32-bit pointer size.
+  -64 or 64	Build with 64-bit pointer size.
+  -d		Build with debugging.
+  -t            Test mode, do not run the Configure perl script.
+  -h		This help.
+
+Any other text will be passed to the Configure perl script.
+See INSTALL for instructions.
+
+$               EOD
+$           ENDIF
+$	    IF P .EQS. "-t"
+$	    THEN
+$		test = 1
+$		P = ""
+$	    ENDIF
+$	    IF P .EQS. "-32" .OR. P .EQS. "32"
 $	    THEN
 $		pointer_size = "-P32"
-$		P1 = ""
+$		P = ""
 $	    ENDIF
-$	    IF P1 .EQS. "64"
+$	    IF P .EQS. "-64" .OR. P .EQS. "64"
 $	    THEN
 $		pointer_size = "-P64"
-$		P1 = ""
+$		P = ""
 $	    ENDIF
-$	    IF P1 .EQS. "DEBUG"
+$	    IF P .EQS. "-d"
 $	    THEN
-$		debug = "--debug"
-$		P1 = ""
+$               collected_args = collected_args + " --debug"
+$		P = ""
 $	    ENDIF
-$	    IF P1 .NES. "" THEN -
+$	    IF P .NES. "" THEN -
 	       collected_args = collected_args + " " + P1
 $	    P1 = P2
 $	    P2 = P3
@@ -48,18 +72,12 @@ $	    GOTO LOOP1
 $	ENDLOOP1:
 $
 $	target = "vms-''arch'''pointer_size'"
-$	PERL 'here'Configure "''target'" 'debug' 'collected_args'
-$	EXIT $STATUS
+$       IF test
+$       THEN
+$           WRITE SYS$OUTPUT "PERL ''here'Configure ""''target'""''collected_args'"
+$       ELSE
+$           PERL 'here'Configure "''target'" 'debug' 'collected_args'
+$       ENDIF
+$       EXIT $STATUS
 $
 $ USAGE:
-$	TYPE SYS$INPUT
-$	DECK
-usage: @config [options]
-
-  32		build with 32-bit pointer size
-  64		build with 64-bit pointer size
-  DEBUG		build with debugging
-  HELP		this text
-
-Any other option is simply passed to Configure.
-$	EOD

@@ -65,6 +65,8 @@
 
 #include "../e_os.h"
 
+#define _UC(c) ((unsigned char)(c))
+
 static const char *progname;
 
 /*
@@ -123,7 +125,7 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
         return -1;
 
     if (!X509_STORE_CTX_init(store_ctx, store, cert, chain))
-	return 0;
+        return 0;
     X509_STORE_CTX_set_ex_data(store_ctx, store_ctx_idx, ssl);
 
     X509_STORE_CTX_set_default(store_ctx,
@@ -133,7 +135,7 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
     store_ctx_dane_init(store_ctx, ssl);
 
     if (SSL_get_verify_callback(ssl))
-	X509_STORE_CTX_set_verify_cb(store_ctx, SSL_get_verify_callback(ssl));
+        X509_STORE_CTX_set_verify_cb(store_ctx, SSL_get_verify_callback(ssl));
 
     ret = X509_verify_cert(store_ctx);
 
@@ -144,56 +146,56 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
     return (ret);
 }
 
-static STACK_OF(X509) *load_chain(FILE *fp, int nelem)
+static STACK_OF(X509) *load_chain(BIO *fp, int nelem)
 {
     int count;
     char *name = 0;
     char *header = 0;
     unsigned char *data = 0;
     long len;
-    char *errtype = 0;		/* if error: cert or pkey? */
+    char *errtype = 0;                /* if error: cert or pkey? */
     STACK_OF(X509) *chain;
     typedef X509 *(*d2i_X509_t)(X509 **, const unsigned char **, long);
 
     if ((chain = sk_X509_new_null()) == 0) {
-	perror("malloc");
-	exit(1);
+        perror("malloc");
+        exit(1);
     }
 
     for (count = 0;
-	 count < nelem && errtype == 0
-         && PEM_read(fp, &name, &header, &data, &len);
-	 ++count) {
-	const unsigned char *p = data;
+         count < nelem && errtype == 0
+         && PEM_read_bio(fp, &name, &header, &data, &len);
+         ++count) {
+        const unsigned char *p = data;
 
-	if (strcmp(name, PEM_STRING_X509) == 0
-	    || strcmp(name, PEM_STRING_X509_TRUSTED) == 0
-	    || strcmp(name, PEM_STRING_X509_OLD) == 0) {
-	    d2i_X509_t d = strcmp(name, PEM_STRING_X509_TRUSTED) ?
-		d2i_X509_AUX : d2i_X509;
-	    X509 *cert = d(0, &p, len);
+        if (strcmp(name, PEM_STRING_X509) == 0
+            || strcmp(name, PEM_STRING_X509_TRUSTED) == 0
+            || strcmp(name, PEM_STRING_X509_OLD) == 0) {
+            d2i_X509_t d = strcmp(name, PEM_STRING_X509_TRUSTED) ?
+                d2i_X509_AUX : d2i_X509;
+            X509 *cert = d(0, &p, len);
 
-	    if (cert == 0 || (p - data) != len)
-		errtype = "certificate";
-	    else if (sk_X509_push(chain, cert) == 0) {
-		perror("malloc");
-		goto err;
-	    }
-	} else {
-	    fprintf(stderr, "unexpected chain file object: %s\n", name);
-	    goto err;
-	}
+            if (cert == 0 || (p - data) != len)
+                errtype = "certificate";
+            else if (sk_X509_push(chain, cert) == 0) {
+                perror("malloc");
+                goto err;
+            }
+        } else {
+            fprintf(stderr, "unexpected chain file object: %s\n", name);
+            goto err;
+        }
 
-	/*
-	 * If any of these were null, PEM_read() would have failed.
-	 */
-	OPENSSL_free(name);
-	OPENSSL_free(header);
-	OPENSSL_free(data);
+        /*
+         * If any of these were null, PEM_read() would have failed.
+         */
+        OPENSSL_free(name);
+        OPENSSL_free(header);
+        OPENSSL_free(data);
     }
 
     if (errtype) {
-	fprintf(stderr, "error reading: malformed %s\n", errtype);
+        fprintf(stderr, "error reading: malformed %s\n", errtype);
         goto err;
     }
     
@@ -209,12 +211,12 @@ err:
     return NULL;
 }
 
-static char *read_to_eol(FILE *f)
+static char *read_to_eol(BIO *f)
 {
     static char buf[1024];
     int n;
 
-    if (fgets(buf, sizeof(buf), f)== NULL)
+    if (!BIO_gets(f, buf, sizeof(buf)))
         return NULL;
 
     n = strlen(buf);
@@ -229,7 +231,7 @@ static char *read_to_eol(FILE *f)
     }
 
     /* Trim trailing whitespace */
-    while (n > 0 && isspace(buf[n-1]))
+    while (n > 0 && isspace(_UC(buf[n-1])))
         buf[--n] = '\0';
 
     return buf;
@@ -252,9 +254,9 @@ static ossl_ssize_t hexdecode(const char *in, void *result)
     for (byte = 0; *in; ++in) {
         char c;
 
-        if (isspace(*in))
+        if (isspace(_UC(*in)))
             continue;
-        c = tolower(*in);
+        c = tolower(_UC(*in));
         if ('0' <= c && c <= '9') {
             byte |= c - '0';
         } else if ('a' <= c && c <= 'f') {
@@ -291,11 +293,11 @@ static ossl_ssize_t checked_uint8(const char *in, void *out)
     e = restore_errno();
 
     if (((v == LONG_MIN || v == LONG_MAX) && e == ERANGE) ||
-        endp == cp || !isspace(*endp) ||
+        endp == cp || !isspace(_UC(*endp)) ||
         v != (*(uint8_t *)result = (uint8_t) v)) {
         return -1;
     }
-    for (cp = endp; isspace(*cp); ++cp)
+    for (cp = endp; isspace(_UC(*cp)); ++cp)
         continue;
     return cp - in;
 }
@@ -351,13 +353,13 @@ static int tlsa_import_rr(SSL *ssl, const char *rrdata)
 static int allws(const char *cp)
 {
     while (*cp)
-        if (!isspace(*cp++))
+        if (!isspace(_UC(*cp++)))
             return 0;
     return 1;
 }
 
 static int test_tlsafile(SSL_CTX *ctx, const char *basename,
-                         FILE *f, const char *path)
+                         BIO *f, const char *path)
 {
     char *line;
     int testno = 0;
@@ -461,7 +463,7 @@ static int test_tlsafile(SSL_CTX *ctx, const char *basename,
 
 int main(int argc, char *argv[])
 {
-    FILE *f;
+    BIO *f;
     BIO *bio_err;
     SSL_CTX *ctx = NULL;
     const char *basedomain;
@@ -473,7 +475,7 @@ int main(int argc, char *argv[])
     progname = argv[0];
     if (argc != 4) {
         test_usage();
-        EXIT(1);
+        EXIT(ret);
     }
     basedomain = argv[1];
     CAfile = argv[2];
@@ -486,13 +488,12 @@ int main(int argc, char *argv[])
         CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    f = fopen(tlsafile, "r");
+    f = BIO_new_file(tlsafile, "r");
     if (f == NULL) {
         fprintf(stderr, "%s: Error opening tlsa record file: '%s': %s\n",
                 progname, tlsafile, strerror(errno));
-        return 0;
+        EXIT(ret);
     }
-
 
     ctx = SSL_CTX_new(TLS_client_method());
     if (SSL_CTX_dane_enable(ctx) <= 0) {
@@ -521,7 +522,7 @@ int main(int argc, char *argv[])
 
 end:
 
-    (void) fclose(f);
+    BIO_free(f);
     SSL_CTX_free(ctx);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG

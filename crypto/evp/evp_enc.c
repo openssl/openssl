@@ -60,9 +60,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include "internal/evp_int.h"
 #include "evp_locl.h"
 
@@ -79,12 +77,7 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *c)
     }
     OPENSSL_free(c->cipher_data);
 #ifndef OPENSSL_NO_ENGINE
-    if (c->engine)
-        /*
-         * The EVP_CIPHER we used belongs to an ENGINE, release the
-         * functional reference we held for this reason.
-         */
-        ENGINE_finish(c->engine);
+    ENGINE_finish(c->engine);
 #endif
     memset(c, 0, sizeof(*c));
     return 1;
@@ -339,7 +332,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     bl = ctx->cipher->block_size;
     OPENSSL_assert(bl <= (int)sizeof(ctx->buf));
     if (i != 0) {
-        if (i + inl < bl) {
+        if (bl - i > inl) {
             memcpy(&(ctx->buf[i]), in, inl);
             ctx->buf_len += inl;
             *outl = 0;

@@ -57,7 +57,7 @@
  */
 
 #include "eng_int.h"
-#include <openssl/dso.h>
+#include "internal/dso.h"
 #include <openssl/crypto.h>
 
 /*
@@ -217,7 +217,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
     c->DYNAMIC_F1 = "v_check";
     c->DYNAMIC_F2 = "bind_engine";
     c->dir_load = 1;
-    CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+    CRYPTO_THREAD_write_lock(global_engine_lock);
     if ((*ctx = (dynamic_data_ctx *)ENGINE_get_ex_data(e,
                                                        dynamic_ex_data_idx))
         == NULL) {
@@ -226,7 +226,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
         *ctx = c;
         c = NULL;
     }
-    CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+    CRYPTO_THREAD_unlock(global_engine_lock);
     /*
      * If we lost the race to set the context, c is non-NULL and *ctx is the
      * context of the thread that won.
@@ -256,14 +256,14 @@ static dynamic_data_ctx *dynamic_get_data_ctx(ENGINE *e)
             ENGINEerr(ENGINE_F_DYNAMIC_GET_DATA_CTX, ENGINE_R_NO_INDEX);
             return NULL;
         }
-        CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_write_lock(global_engine_lock);
         /* Avoid a race by checking again inside this lock */
         if (dynamic_ex_data_idx < 0) {
             /* Good, someone didn't beat us to it */
             dynamic_ex_data_idx = new_idx;
             new_idx = -1;
         }
-        CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_unlock(global_engine_lock);
         /*
          * In theory we could "give back" the index here if (new_idx>-1), but
          * it's not possible and wouldn't gain us much if it were.
@@ -295,7 +295,7 @@ static ENGINE *engine_dynamic(void)
     return ret;
 }
 
-void engine_load_dynamic_internal(void)
+void engine_load_dynamic_int(void)
 {
     ENGINE *toadd = engine_dynamic();
     if (!toadd)
@@ -447,6 +447,8 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
     if (!ctx->DYNAMIC_LIBNAME) {
         if (!ctx->engine_id)
             return 0;
+        DSO_ctrl(ctx->dynamic_dso, DSO_CTRL_SET_FLAGS,
+                 DSO_FLAG_NAME_TRANSLATION_EXT_ONLY, NULL);
         ctx->DYNAMIC_LIBNAME =
             DSO_convert_filename(ctx->dynamic_dso, ctx->engine_id);
     }
@@ -508,11 +510,8 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
      * would also increase opaqueness.
      */
     fns.static_state = ENGINE_get_static_state();
-    fns.lock_fns.lock_locking_cb = CRYPTO_get_locking_callback();
-    fns.lock_fns.lock_add_lock_cb = CRYPTO_get_add_lock_callback();
-    fns.lock_fns.dynlock_create_cb = CRYPTO_get_dynlock_create_callback();
-    fns.lock_fns.dynlock_lock_cb = CRYPTO_get_dynlock_lock_callback();
-    fns.lock_fns.dynlock_destroy_cb = CRYPTO_get_dynlock_destroy_callback();
+    CRYPTO_get_mem_functions(&fns.mem_fns.malloc_fn, &fns.mem_fns.realloc_fn,
+                             &fns.mem_fns.free_fn);
     /*
      * Now that we've loaded the dynamic engine, make sure no "dynamic"
      * ENGINE elements will show through.

@@ -17,6 +17,7 @@ B<openssl> B<ciphers>
 [B<-tls1_2>]
 [B<-s>]
 [B<-psk>]
+[B<-srp>]
 [B<-stdname>]
 [B<cipherlist>]
 
@@ -32,17 +33,32 @@ the appropriate cipherlist.
 
 =item B<-help>
 
-Print out a usage message.
+Print a usage message.
 
 =item B<-s>
 
-Only list supported ciphers: those consistent with the security level. This
-is the actual cipher list an application will support. If this option is
-not used then ciphers excluded by the security level will still be listed.
+Only list supported ciphers: those consistent with the security level, and
+minimum and maximum protocol version.  This is closer to the actual cipher list
+an application will support.
+
+PSK and SRP ciphers are not enabled by default: they require B<-psk> or B<-srp>
+to enable them.
+
+It also does not change the default list of supported signature algorithms.
+
+On a server the list of supported ciphers might also exclude other ciphers
+depending on the configured certificates and presence of DH parameters.
+
+If this option is not used then all ciphers that match the cipherlist will be
+listed.
 
 =item B<-psk>
 
 When combined with B<-s> includes cipher suites which require PSK.
+
+=item B<-srp>
+
+When combined with B<-s> includes cipher suites which require SRP.
 
 =item B<-v>
 
@@ -53,21 +69,25 @@ L<SSL_CIPHER_description(3)>.
 
 Like B<-v>, but include the official cipher suite values in hex.
 
+=item B<-tls1_2>
+
+In combination with the B<-s> option, list the ciphers which would be used if
+TLSv1.2 were negotiated.
+
 =item B<-ssl3>
 
-List the ciphers which would be used if SSL v3 was negotiated.
+In combination with the B<-s> option, list the ciphers which would be used if
+SSLv3 were negotiated.
 
 =item B<-tls1>
 
-List the ciphers which would be used if TLS v1.0 was negotiated.
+In combination with the B<-s> option, list the ciphers which would be used if
+TLSv1 were negotiated.
 
 =item B<-tls1_1>
 
-List the ciphers which would be used if TLS v1.1 was negotiated.
-
-=item B<-tls1_2>
-
-List the ciphers which would be used if TLS v1.2 was negotiated.
+In combination with the B<-s> option, list the ciphers which would be used if
+TLSv1.1 were negotiated.
 
 =item B<-stdname>
 
@@ -132,25 +152,28 @@ The following is a list of all permitted cipher strings and their meanings.
 
 =item B<DEFAULT>
 
-the default cipher list. This is determined at compile time and
-is B<ALL:!COMPLEMENTOFDEFAULT:!eNULL>. This must be the first cipher
-string specified.
+The default cipher list.
+This is determined at compile time and is normally
+B<ALL:!COMPLEMENTOFDEFAULT:!eNULL>.
+When used, this must be the first cipherstring specified.
 
 =item B<COMPLEMENTOFDEFAULT>
 
-the ciphers included in B<ALL>, but not enabled by default. Currently
-this includes all RC4, DES, RC2 and anonymous ciphers. Note that this rule does
+The ciphers included in B<ALL>, but not enabled by default. Currently
+this includes all RC4 and anonymous ciphers. Note that this rule does
 not cover B<eNULL>, which is not included by B<ALL> (use B<COMPLEMENTOFALL> if
-necessary).
+necessary). Note that RC4 based ciphersuites are not built into OpenSSL by
+default (see the enable-weak-ssl-ciphers option to Configure).
 
 =item B<ALL>
 
-all cipher suites except the B<eNULL> ciphers which must be explicitly enabled;
-as of OpenSSL, the B<ALL> cipher suites are reasonably ordered by default
+All cipher suites except the B<eNULL> ciphers (which must be explicitly enabled
+if needed).
+As of OpenSSL 1.0.0, the B<ALL> cipher suites are sensibly ordered by default.
 
 =item B<COMPLEMENTOFALL>
 
-the cipher suites not enabled by B<ALL>, currently being B<eNULL>.
+The cipher suites not enabled by B<ALL>, currently B<eNULL>.
 
 =item B<HIGH>
 
@@ -170,83 +193,86 @@ ciphersuites have been removed as of OpenSSL 1.1.0.
 
 =item B<eNULL>, B<NULL>
 
-the "NULL" ciphers that is those offering no encryption. Because these offer no
-encryption at all and are a security risk they are disabled unless explicitly
-included.
+The "NULL" ciphers that is those offering no encryption. Because these offer no
+encryption at all and are a security risk they are not enabled via either the
+B<DEFAULT> or B<ALL> cipher strings.
+Be careful when building cipherlists out of lower-level primitives such as
+B<kRSA> or B<aECDSA> as these do overlap with the B<eNULL> ciphers.  When in
+doubt, include B<!eNULL> in your cipherlist.
 
 =item B<aNULL>
 
-the cipher suites offering no authentication. This is currently the anonymous
+The cipher suites offering no authentication. This is currently the anonymous
 DH algorithms and anonymous ECDH algorithms. These cipher suites are vulnerable
-to a "man in the middle" attack and so their use is normally discouraged.
+to "man in the middle" attacks and so their use is discouraged.
+These are excluded from the B<DEFAULT> ciphers, but included in the B<ALL>
+ciphers.
+Be careful when building cipherlists out of lower-level primitives such as
+B<kDHE> or B<AES> as these do overlap with the B<aNULL> ciphers.
+When in doubt, include B<!aNULL> in your cipherlist.
 
 =item B<kRSA>, B<aRSA>, B<RSA>
 
-cipher suites using RSA key exchange, authentication or either respectively.
+Cipher suites using RSA key exchange, authentication or either respectively.
 
 =item B<kDHr>, B<kDHd>, B<kDH>
 
-cipher suites using DH key agreement and DH certificates signed by CAs with RSA
-and DSS keys or either respectively.
+Cipher suites using static DH key agreement and DH certificates signed by CAs
+with RSA and DSS keys or either respectively.
+All these cipher suites have been removed in OpenSSL 1.1.0.
 
-=item B<kDHE>, B<kEDH>
+=item B<kDHE>, B<kEDH>, B<DH>
 
-cipher suites using ephemeral DH key agreement, including anonymous cipher
+Cipher suites using ephemeral DH key agreement, including anonymous cipher
 suites.
 
 =item B<DHE>, B<EDH>
 
-cipher suites using authenticated ephemeral DH key agreement.
+Cipher suites using authenticated ephemeral DH key agreement.
 
 =item B<ADH>
 
-anonymous DH cipher suites, note that this does not include anonymous Elliptic
+Anonymous DH cipher suites, note that this does not include anonymous Elliptic
 Curve DH (ECDH) cipher suites.
 
-=item B<DH>
+=item B<kEECDH>, B<kECDHE>, B<ECDH>
 
-cipher suites using DH, including anonymous DH, ephemeral DH and fixed DH.
-
-=item B<kEECDH>, B<kECDHE>
-
-cipher suites using ephemeral ECDH key agreement, including anonymous
+Cipher suites using ephemeral ECDH key agreement, including anonymous
 cipher suites.
 
 =item B<ECDHE>, B<EECDH>
 
-cipher suites using authenticated ephemeral ECDH key agreement.
+Cipher suites using authenticated ephemeral ECDH key agreement.
 
 =item B<AECDH>
 
-anonymous Elliptic Curve Diffie Hellman cipher suites.
-
-=item B<ECDH>
-
-cipher suites using ECDH key exchange, including anonymous and ephemeral.
+Anonymous Elliptic Curve Diffie Hellman cipher suites.
 
 =item B<aDSS>, B<DSS>
 
-cipher suites using DSS authentication, i.e. the certificates carry DSS keys.
+Cipher suites using DSS authentication, i.e. the certificates carry DSS keys.
 
 =item B<aDH>
 
-cipher suites effectively using DH authentication, i.e. the certificates carry
+Cipher suites effectively using DH authentication, i.e. the certificates carry
 DH keys.
+All these cipher suites have been removed in OpenSSL 1.1.0.
 
 =item B<aECDSA>, B<ECDSA>
 
-cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
+Cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
 keys.
 
 =item B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
 
-Lists ciphersuites which are only supported in at least TLS v1.2, TLS v1.0
-or SSL v3.0 respectively. Note: there are no ciphersuites specific to TLS v1.1.
-Since this is only the minimum version if, for example, TLS v1.0 is supported
-then both TLS v1.0 and SSL v3.0 ciphersuites are included.
+Lists ciphersuites which are only supported in at least TLS v1.2, TLS v1.0 or
+SSL v3.0 respectively.
+Note: there are no ciphersuites specific to TLS v1.1.
+Since this is only the minimum version, if, for example, TLSv1.0 is negotiated
+then both TLSv1.0 and SSLv3.0 ciphersuites are available.
 
 Note: these cipher strings B<do not> change the negotiated version of SSL or
-TLS only the list of cipher suites.
+TLS, they only affect the list of available cipher suites.
 
 =item B<AES128>, B<AES256>, B<AES>
 
@@ -279,81 +305,85 @@ cipher suites using triple DES.
 
 =item B<DES>
 
-cipher suites using DES (not triple DES).
+Cipher suites using DES (not triple DES).
+All these cipher suites have been removed in OpenSSL 1.1.0.
 
 =item B<RC4>
 
-cipher suites using RC4.
+Cipher suites using RC4.
 
 =item B<RC2>
 
-cipher suites using RC2.
+Cipher suites using RC2.
 
 =item B<IDEA>
 
-cipher suites using IDEA.
+Cipher suites using IDEA.
 
 =item B<SEED>
 
-cipher suites using SEED.
+Cipher suites using SEED.
 
 =item B<MD5>
 
-cipher suites using MD5.
+Cipher suites using MD5.
 
 =item B<SHA1>, B<SHA>
 
-cipher suites using SHA1.
+Cipher suites using SHA1.
 
 =item B<SHA256>, B<SHA384>
 
-ciphersuites using SHA256 or SHA384.
+Ciphersuites using SHA256 or SHA384.
 
-=item B<aGOST> 
+=item B<aGOST>
 
-cipher suites using GOST R 34.10 (either 2001 or 94) for authentication
-(needs an engine supporting GOST algorithms). 
+Cipher suites using GOST R 34.10 (either 2001 or 94) for authentication
+(needs an engine supporting GOST algorithms).
 
 =item B<aGOST01>
 
-cipher suites using GOST R 34.10-2001 authentication.
+Cipher suites using GOST R 34.10-2001 authentication.
 
 =item B<kGOST>
 
-cipher suites, using VKO 34.10 key exchange, specified in the RFC 4357.
+Cipher suites, using VKO 34.10 key exchange, specified in the RFC 4357.
 
 =item B<GOST94>
 
-cipher suites, using HMAC based on GOST R 34.11-94.
+Cipher suites, using HMAC based on GOST R 34.11-94.
 
 =item B<GOST89MAC>
 
-cipher suites using GOST 28147-89 MAC B<instead of> HMAC.
+Cipher suites using GOST 28147-89 MAC B<instead of> HMAC.
 
 =item B<PSK>
 
-all cipher suites using pre-shared keys (PSK).
+All cipher suites using pre-shared keys (PSK).
 
 =item B<kPSK>, B<kECDHEPSK>, B<kDHEPSK>, B<kRSAPSK>
 
-cipher suites using PSK key exchange, ECDHE_PSK, DHE_PSK or RSA_PSK.
+Cipher suites using PSK key exchange, ECDHE_PSK, DHE_PSK or RSA_PSK.
 
 =item B<aPSK>
 
-cipher suites using PSK authentication (currently all PSK modes apart from
+Cipher suites using PSK authentication (currently all PSK modes apart from
 RSA_PSK).
 
 =item B<SUITEB128>, B<SUITEB128ONLY>, B<SUITEB192>
 
-enables suite B mode operation using 128 (permitting 192 bit mode by peer)
+Enables suite B mode of operation using 128 (permitting 192 bit mode by peer)
 128 bit (not permitting 192 bit by peer) or 192 bit level of security
-respectively. If used these cipherstrings should appear first in the cipher
-list and anything after them is ignored. Setting Suite B mode has additional
-consequences required to comply with RFC6460. In particular the supported
-signature algorithms is reduced to support only ECDSA and SHA256 or SHA384,
-only the elliptic curves P-256 and P-384 can be used and only the two suite B
-compliant ciphersuites (ECDHE-ECDSA-AES128-GCM-SHA256 and
-ECDHE-ECDSA-AES256-GCM-SHA384) are permissible.
+respectively.
+If used these cipherstrings should appear first in the cipher
+list and anything after them is ignored.
+Setting Suite B mode has additional consequences required to comply with
+RFC6460.
+In particular the supported signature algorithms is reduced to support only
+ECDSA and SHA256 or SHA384, only the elliptic curves P-256 and P-384 can be
+used and only the two suite B compliant ciphersuites
+(ECDHE-ECDSA-AES128-GCM-SHA256 and ECDHE-ECDSA-AES256-GCM-SHA384) are
+permissible.
 
 =back
 
@@ -473,13 +503,13 @@ Note: these ciphers can also be used in SSL v3.
  TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA     ECDHE-RSA-DES-CBC3-SHA
  TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA      ECDHE-RSA-AES128-SHA
  TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA      ECDHE-RSA-AES256-SHA
- 
+
  TLS_ECDHE_ECDSA_WITH_NULL_SHA           ECDHE-ECDSA-NULL-SHA
  TLS_ECDHE_ECDSA_WITH_RC4_128_SHA        ECDHE-ECDSA-RC4-SHA
  TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA   ECDHE-ECDSA-DES-CBC3-SHA
  TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA    ECDHE-ECDSA-AES128-SHA
  TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA    ECDHE-ECDSA-AES256-SHA
- 
+
  TLS_ECDH_anon_WITH_NULL_SHA             AECDH-NULL-SHA
  TLS_ECDH_anon_WITH_RC4_128_SHA          AECDH-RC4-SHA
  TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA     AECDH-DES-CBC3-SHA

@@ -107,10 +107,6 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-/* conflicts with winsock2 stuff on netware */
-#if !defined(OPENSSL_SYS_NETWARE)
-# include <sys/types.h>
-#endif
 #include <openssl/opensslconf.h>
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
@@ -149,11 +145,11 @@ typedef fd_mask fd_set;
 #define PORT            "4433"
 #define PROTOCOL        "tcp"
 
+typedef int (*do_server_cb)(int s, int stype, unsigned char *context);
 int do_server(int *accept_sock, const char *host, const char *port,
               int family, int type,
-              int (*cb) (const char *hostname, int s, int stype,
-                         unsigned char *context), unsigned char *context,
-              int naccept);
+              do_server_cb cb,
+              unsigned char *context, int naccept);
 #ifdef HEADER_X509_H
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 #endif
@@ -195,8 +191,7 @@ int load_excert(SSL_EXCERT **pexc);
 void print_verify_detail(SSL *s, BIO *bio);
 void print_ssl_summary(SSL *s);
 #ifdef HEADER_SSL_H
-int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
-               SSL_CTX *ctx, int no_jpake);
+int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str, SSL_CTX *ctx);
 int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls,
                      int crl_download);
 int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,

@@ -61,7 +61,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/sha.h>
-#include <openssl/dsa.h>
+#include "dsa_locl.h"
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
 
@@ -133,13 +133,14 @@ const DSA_METHOD *DSA_OpenSSL(void)
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 {
-    BIGNUM *kinv = NULL, *r = NULL, *s = NULL;
+    BIGNUM *kinv = NULL;
     BIGNUM *m;
     BIGNUM *xr;
+    BIGNUM *r, *s;
     BN_CTX *ctx = NULL;
     int reason = ERR_R_BN_LIB;
     DSA_SIG *ret = NULL;
-    int noredo = 0;
+    int rv = 0;
 
     m = BN_new();
     xr = BN_new();
@@ -151,23 +152,18 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
         goto err;
     }
 
-    s = BN_new();
-    if (s == NULL)
+    ret = DSA_SIG_new();
+    if (ret == NULL)
         goto err;
+
+    DSA_SIG_get0(&r, &s, ret);
+
     ctx = BN_CTX_new();
     if (ctx == NULL)
         goto err;
  redo:
-    if ((dsa->kinv == NULL) || (dsa->r == NULL)) {
-        if (!dsa_sign_setup(dsa, ctx, &kinv, &r, dgst, dlen))
-            goto err;
-    } else {
-        kinv = dsa->kinv;
-        dsa->kinv = NULL;
-        r = dsa->r;
-        dsa->r = NULL;
-        noredo = 1;
-    }
+    if (!dsa_sign_setup(dsa, ctx, &kinv, &r, dgst, dlen))
+        goto err;
 
     if (dlen > BN_num_bytes(dsa->q))
         /*
@@ -194,30 +190,22 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
      * Redo if r or s is zero as required by FIPS 186-3: this is very
      * unlikely.
      */
-    if (BN_is_zero(r) || BN_is_zero(s)) {
-        if (noredo) {
-            reason = DSA_R_NEED_NEW_SETUP_VALUES;
-            goto err;
-        }
+    if (BN_is_zero(r) || BN_is_zero(s))
         goto redo;
-    }
-    ret = DSA_SIG_new();
-    if (ret == NULL)
-        goto err;
-    ret->r = r;
-    ret->s = s;
+
+    rv = 1;
 
  err:
-    if (ret == NULL) {
+    if (rv == 0) {
         DSAerr(DSA_F_DSA_DO_SIGN, reason);
-        BN_free(r);
-        BN_free(s);
+        DSA_SIG_free(ret);
+        ret = NULL;
     }
     BN_CTX_free(ctx);
     BN_clear_free(m);
     BN_clear_free(xr);
     BN_clear_free(kinv);
-    return (ret);
+    return ret;
 }
 
 static int dsa_sign_setup_no_digest(DSA *dsa, BN_CTX *ctx_in,
@@ -231,7 +219,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
                           const unsigned char *dgst, int dlen)
 {
     BN_CTX *ctx = NULL;
-    BIGNUM *k, *kq, *K, *kinv = NULL, *r = NULL;
+    BIGNUM *k, *kq, *K, *kinv = NULL, *r = *rp;
     int ret = 0;
 
     if (!dsa->p || !dsa->q || !dsa->g) {
@@ -249,9 +237,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
             goto err;
     } else
         ctx = ctx_in;
-
-    if ((r = BN_new()) == NULL)
-        goto err;
 
     /* Get random k */
     do {
@@ -273,7 +258,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
         if (!BN_MONT_CTX_set_locked(&dsa->method_mont_p,
-                                    CRYPTO_LOCK_DSA, dsa->p, ctx))
+                                    dsa->lock, dsa->p, ctx))
             goto err;
     }
 
@@ -313,19 +298,15 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     BN_clear_free(*kinvp);
     *kinvp = kinv;
     kinv = NULL;
-    BN_clear_free(*rp);
-    *rp = r;
     ret = 1;
  err:
-    if (!ret) {
+    if (!ret)
         DSAerr(DSA_F_DSA_SIGN_SETUP, ERR_R_BN_LIB);
-        BN_clear_free(r);
-    }
     if (ctx != ctx_in)
         BN_CTX_free(ctx);
     BN_clear_free(k);
     BN_clear_free(kq);
-    return (ret);
+    return ret;
 }
 
 static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
@@ -334,6 +315,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     BN_CTX *ctx;
     BIGNUM *u1, *u2, *t1;
     BN_MONT_CTX *mont = NULL;
+    BIGNUM *r, *s;
     int ret = -1, i;
     if (!dsa->p || !dsa->q || !dsa->g) {
         DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MISSING_PARAMETERS);
@@ -358,13 +340,15 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     if (u1 == NULL || u2 == NULL || t1 == NULL || ctx == NULL)
         goto err;
 
-    if (BN_is_zero(sig->r) || BN_is_negative(sig->r) ||
-        BN_ucmp(sig->r, dsa->q) >= 0) {
+    DSA_SIG_get0(&r, &s, sig);
+
+    if (BN_is_zero(r) || BN_is_negative(r) ||
+        BN_ucmp(r, dsa->q) >= 0) {
         ret = 0;
         goto err;
     }
-    if (BN_is_zero(sig->s) || BN_is_negative(sig->s) ||
-        BN_ucmp(sig->s, dsa->q) >= 0) {
+    if (BN_is_zero(s) || BN_is_negative(s) ||
+        BN_ucmp(s, dsa->q) >= 0) {
         ret = 0;
         goto err;
     }
@@ -372,7 +356,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     /*
      * Calculate W = inv(S) mod Q save W in u2
      */
-    if ((BN_mod_inverse(u2, sig->s, dsa->q, ctx)) == NULL)
+    if ((BN_mod_inverse(u2, s, dsa->q, ctx)) == NULL)
         goto err;
 
     /* save M in u1 */
@@ -391,12 +375,12 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
         goto err;
 
     /* u2 = r * w mod q */
-    if (!BN_mod_mul(u2, sig->r, u2, dsa->q, ctx))
+    if (!BN_mod_mul(u2, r, u2, dsa->q, ctx))
         goto err;
 
     if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
         mont = BN_MONT_CTX_set_locked(&dsa->method_mont_p,
-                                      CRYPTO_LOCK_DSA, dsa->p, ctx);
+                                      dsa->lock, dsa->p, ctx);
         if (!mont)
             goto err;
     }
@@ -411,7 +395,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     /*
      * V is now in u1.  If the signature is correct, it will be equal to R.
      */
-    ret = (BN_ucmp(u1, sig->r) == 0);
+    ret = (BN_ucmp(u1, r) == 0);
 
  err:
     if (ret < 0)

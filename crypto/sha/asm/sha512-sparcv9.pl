@@ -49,7 +49,7 @@
 # saturates at 11.5x single-process result on 8-core processor, or
 # ~11/16GBps per 2.85GHz socket.
 
-$output=shift;
+$output=pop;
 open STDOUT,">$output";
 
 if ($output =~ /512/) {

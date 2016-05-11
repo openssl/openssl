@@ -101,10 +101,10 @@ int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
     engine_ref_debug(e, 1, -1);
     if ((e->funct_ref == 0) && e->finish) {
         if (unlock_for_handlers)
-            CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+            CRYPTO_THREAD_unlock(global_engine_lock);
         to_return = e->finish(e);
         if (unlock_for_handlers)
-            CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+            CRYPTO_THREAD_write_lock(global_engine_lock);
         if (!to_return)
             return 0;
     }
@@ -125,9 +125,10 @@ int ENGINE_init(ENGINE *e)
         ENGINEerr(ENGINE_F_ENGINE_INIT, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    CRYPTO_THREAD_write_lock(global_engine_lock);
     ret = engine_unlocked_init(e);
-    CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+    CRYPTO_THREAD_unlock(global_engine_lock);
     return ret;
 }
 
@@ -136,13 +137,11 @@ int ENGINE_finish(ENGINE *e)
 {
     int to_return = 1;
 
-    if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_FINISH, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-    CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+    if (e == NULL)
+        return 1;
+    CRYPTO_THREAD_write_lock(global_engine_lock);
     to_return = engine_unlocked_finish(e, 1);
-    CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+    CRYPTO_THREAD_unlock(global_engine_lock);
     if (!to_return) {
         ENGINEerr(ENGINE_F_ENGINE_FINISH, ENGINE_R_FINISH_FAILED);
         return 0;

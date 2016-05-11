@@ -33,7 +33,7 @@ case "$i" in
 -t*) TEST="true";;
 -h*) TEST="true"; cat <<EOF
 Usage: config [options]
- -d	Add a debug- prefix to machine choice.
+ -d	Build with debugging when possible.
  -t	Test mode, do not run the Configure perl script.
  -h	This help.
 
@@ -134,10 +134,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	esac
 	;;
 
-    IRIX:5.*)
-	echo "mips2-sgi-irix"; exit 0
-	;;
-
     IRIX:6.*)
 	echo "mips3-sgi-irix"; exit 0
 	;;
@@ -200,6 +196,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     FreeBSD:*)
 	echo "${MACHINE}-whatever-freebsd"; exit 0
+	;;
+
+    Haiku:*)
+	echo "${MACHINE}-whatever-haiku"; exit 0
 	;;
 
     NetBSD:*:*:*386*)
@@ -457,14 +457,6 @@ case "$GUESSOS" in
   uClinux*)
     OUT=uClinux-dist
 	;;
-  mips2-sgi-irix)
-	CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
-	CPU=${CPU:-0}
-	if [ $CPU -ge 4000 ]; then
-		options="$options -mips2"
-	fi
-	OUT="irix-$CC"
-	;;
   mips3-sgi-irix)
 	#CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
 	#CPU=${CPU:-0}
@@ -480,7 +472,7 @@ case "$GUESSOS" in
 	echo "         invoke '$THERE/Configure irix64-mips4-$CC' *manually*."
 	if [ "$TEST" = "false" -a -t 1 ]; then
 	  echo "         You have about 5 seconds to press Ctrl-C to abort."
-	  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	fi
         #CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
         #CPU=${CPU:-0}
@@ -499,7 +491,7 @@ case "$GUESSOS" in
 	    echo "         invoke '$THERE/Configure darwin64-ppc-cc' *manually*."
 	    if [ "$TEST" = "false" -a -t 1 ]; then
 	      echo "         You have about 5 seconds to press Ctrl-C to abort."
-	      (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	      (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	    fi
 	fi
 	if [ "$ISA64" = "1" -a "$KERNEL_BITS" = "64" ]; then
@@ -552,7 +544,7 @@ case "$GUESSOS" in
 	    echo "         invoke '$THERE/Configure linux-ppc64' *manually*."
 	    if [ "$TEST" = "false" -a -t 1 ]; then
 		echo "         You have about 5 seconds to press Ctrl-C to abort."
-		(trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		(trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	    fi
 	fi
 	if [ "$KERNEL_BITS" = "64" ]; then
@@ -569,7 +561,7 @@ case "$GUESSOS" in
 	echo "         invoke '$THERE/Configure linux64-mips64' *manually*."
 	if [ "$TEST" = "false" -a -t 1 ]; then
 	    echo "         You have about 5 seconds to press Ctrl-C to abort."
-	    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	    (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	fi
 	OUT="linux-mips64"
 	;;
@@ -586,7 +578,7 @@ case "$GUESSOS" in
 	echo "         invoke '$THERE/Configure linux64-sparcv9' *manually*."
 	if [ "$TEST" = "false" -a -t 1 ]; then
 	  echo "          You have about 5 seconds to press Ctrl-C to abort."
-	  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	fi
 	OUT="linux-sparcv9" ;;
   sparc-*-linux2)
@@ -634,7 +626,7 @@ case "$GUESSOS" in
 	#  echo "         have to invoke './Configure linux32-s390x' *manually*."
 	#  if [ "$TEST" = "false" -a -t -1 ]; then
 	#    echo "         You have about 5 seconds to press Ctrl-C to abort."
-	#    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	#    (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	#  fi
 	#fi
 	OUT="linux64-s390x"
@@ -663,7 +655,7 @@ case "$GUESSOS" in
 		echo "         invoke '$THERE/Configure solaris64-sparcv9-cc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	    elif [ "$CC" = "gcc" -a "$GCC_ARCH" = "-m64" ]; then
 		# $GCC_ARCH denotes default ABI chosen by compiler driver
@@ -675,7 +667,7 @@ case "$GUESSOS" in
 		echo "         invoke '$THERE/Configure solaris-sparcv9-gcc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	    elif [ "$GCC_ARCH" = "-m32" ]; then
 		echo "NOTICE! If you *know* that your GNU C supports 64-bit/V9 ABI"
@@ -683,7 +675,7 @@ case "$GUESSOS" in
 		echo "        invoke '$THERE/Configure solaris64-sparcv9-gcc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	    fi
 	fi
@@ -724,6 +716,8 @@ case "$GUESSOS" in
 			*ELF*)	OUT="BSD-x86-elf" ;;
 			*)	OUT="BSD-x86"; options="$options no-sse2" ;;
 			esac ;;
+  x86_64-*-haiku)	OUT="haiku-x86_64" ;;
+  *-*-haiku)		OUT="haiku-x86" ;;
   *-*-*bsd*)		OUT="BSD-generic32" ;;
 
   *-*-osf)		OUT="osf1-alpha-cc" ;;
@@ -764,11 +758,16 @@ case "$GUESSOS" in
 		echo "         invoke '$THERE/Configure hpux64-parisc2-cc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	     fi
+	     # PA-RISC 2.0 is no longer supported as separate 32-bit
+	     # target. This is compensated for by run-time detection
+	     # in most critical assembly modules and taking advantage
+	     # of 2.0 architecture in PA-RISC 1.1 build.
+	     OUT="hpux-parisc1_1-${CC}"
 	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
-	     OUT="hpux-parisc-${CC}"
+	     OUT="hpux-parisc1_1-${CC}"
 	elif [ $CPU_VERSION -ge 523 ]; then	# PA-RISC 1.0 CPU
 	     OUT="hpux-parisc-${CC}"
 	else					# Motorola(?) CPU
@@ -796,7 +795,7 @@ case "$GUESSOS" in
 		echo "         invoke '$THERE/Configure aix64-cc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		    echo "         You have ~5 seconds to press Ctrl-C to abort."
-		    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		    (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	    fi
 	fi
@@ -812,7 +811,9 @@ case "$GUESSOS" in
   x86pc-*-qnx6) OUT="QNX6-i386" ;;
   *-*-qnx6) OUT="QNX6" ;;
   x86-*-android|i?86-*-android) OUT="android-x86" ;;
-  armv[7-9]*-*-android) OUT="android-armv7" ;;
+  armv[7-9]*-*-android)
+      OUT="android-armeabi"; options="$options -march=armv7-a" ;;
+  arm*-*-android) OUT="android-armeabi" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 

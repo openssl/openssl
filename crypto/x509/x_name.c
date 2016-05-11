@@ -64,6 +64,13 @@
 #include "internal/asn1_int.h"
 #include "x509_lcl.h"
 
+/*
+ * Maximum length of X509_NAME: much larger than anything we should
+ * ever see in practice.
+ */
+
+#define X509_NAME_MAX (1024 * 1024)
+
 static int x509_name_ex_d2i(ASN1_VALUE **val,
                             const unsigned char **in, long len,
                             const ASN1_ITEM *it,
@@ -187,6 +194,8 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     int i, j, ret;
     STACK_OF(X509_NAME_ENTRY) *entries;
     X509_NAME_ENTRY *entry;
+    if (len > X509_NAME_MAX)
+        len = X509_NAME_MAX;
     q = p;
 
     /* Get internal representation of Name */
@@ -335,7 +344,7 @@ static int x509_name_canon(X509_NAME *a)
     STACK_OF(STACK_OF_X509_NAME_ENTRY) *intname = NULL;
     STACK_OF(X509_NAME_ENTRY) *entries = NULL;
     X509_NAME_ENTRY *entry, *tmpentry = NULL;
-    int i, set = -1, ret = 0;
+    int i, set = -1, ret = 0, len;
 
     OPENSSL_free(a->canon_enc);
     a->canon_enc = NULL;
@@ -370,7 +379,10 @@ static int x509_name_canon(X509_NAME *a)
 
     /* Finally generate encoding */
 
-    a->canon_enclen = i2d_name_canon(intname, NULL);
+    len = i2d_name_canon(intname, NULL);
+    if (len < 0)
+        goto err;
+    a->canon_enclen = len;
 
     p = OPENSSL_malloc(a->canon_enclen);
 

@@ -263,14 +263,20 @@ int dsaparam_main(int argc, char **argv)
     }
 
     if (C) {
-        int len = BN_num_bytes(dsa->p);
-        int bits_p = BN_num_bits(dsa->p);
-        unsigned char *data = app_malloc(len + 20, "BN space");
+        BIGNUM *p = NULL, *q = NULL, *g = NULL;
+        unsigned char *data;
+        int len, bits_p;
+
+        DSA_get0_pqg(dsa, &p, &q, &g);
+        len = BN_num_bytes(p);
+        bits_p = BN_num_bits(p);
+
+        data = app_malloc(len + 20, "BN space");
 
         BIO_printf(bio_out, "DSA *get_dsa%d()\n{\n", bits_p);
-        print_bignum_var(bio_out, dsa->p, "dsap", len, data);
-        print_bignum_var(bio_out, dsa->q, "dsaq", len, data);
-        print_bignum_var(bio_out, dsa->g, "dsag", len, data);
+        print_bignum_var(bio_out, p, "dsap", len, data);
+        print_bignum_var(bio_out, q, "dsaq", len, data);
+        print_bignum_var(bio_out, g, "dsag", len, data);
         BIO_printf(bio_out, "    DSA *dsa = DSA_new();\n"
                             "\n");
         BIO_printf(bio_out, "    if (dsa == NULL)\n"

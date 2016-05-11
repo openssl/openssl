@@ -51,13 +51,6 @@
 #include "modes_lcl.h"
 #include <string.h>
 
-#ifndef MODES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-#include <assert.h>
-
 /*
  * First you setup M and L parameters and pass the key schedule. This is
  * called once per session setup...

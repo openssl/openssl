@@ -66,12 +66,8 @@
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include "internal/asn1_int.h"
-#ifndef OPENSSL_NO_DES
-# include <openssl/des.h>
-#endif
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/des.h>
+#include <openssl/engine.h>
 
 #define MIN_LENGTH      4
 
@@ -81,7 +77,7 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int w, void *key)
 {
-#ifdef OPENSSL_NO_STDIO
+#if defined(OPENSSL_NO_STDIO) || defined(OPENSSL_NO_UI)
     /*
      * We should not ever call the default callback routine from windows.
      */
@@ -218,8 +214,7 @@ static int check_pem(const char *nm, const char *name)
                 else
                     r = 0;
 #ifndef OPENSSL_NO_ENGINE
-                if (e)
-                    ENGINE_finish(e);
+                ENGINE_finish(e);
 #endif
                 return r;
             }
@@ -349,7 +344,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 
     if (enc != NULL) {
         objstr = OBJ_nid2sn(EVP_CIPHER_nid(enc));
-        if (objstr == NULL) {
+        if (objstr == NULL || EVP_CIPHER_iv_length(enc) == 0) {
             PEMerr(PEM_F_PEM_ASN1_WRITE_BIO, PEM_R_UNSUPPORTED_CIPHER);
             goto err;
         }
@@ -489,7 +484,6 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
 {
     const EVP_CIPHER *enc = NULL;
     char *dekinfostart, c;
-    char **header_pp = &header;
 
     cipher->cipher = NULL;
     if ((header == NULL) || (*header == '\0') || (*header == '\n'))
@@ -536,13 +530,13 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
     }
     *header = '\0';
     cipher->cipher = enc = EVP_get_cipherbyname(dekinfostart);
-    *header = c;
+    *header++ = c;
 
     if (enc == NULL) {
         PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_UNSUPPORTED_ENCRYPTION);
         return (0);
     }
-    if (!load_iv(header_pp, &(cipher->iv[0]), EVP_CIPHER_iv_length(enc)))
+    if (!load_iv(&header, cipher->iv, EVP_CIPHER_iv_length(enc)))
         return (0);
 
     return (1);

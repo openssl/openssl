@@ -66,37 +66,23 @@
 
 # include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_ENGINE
-#  error ENGINE is disabled.
-# endif
-
+# ifndef OPENSSL_NO_ENGINE
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
-#  ifndef OPENSSL_NO_RSA
-#   include <openssl/rsa.h>
-#  endif
-#  ifndef OPENSSL_NO_DSA
-#   include <openssl/dsa.h>
-#  endif
-#  ifndef OPENSSL_NO_DH
-#   include <openssl/dh.h>
-#  endif
-#  ifndef OPENSSL_NO_EC
-#   include <openssl/ec.h>
-#  endif
+#  include <openssl/rsa.h>
+#  include <openssl/dsa.h>
+#  include <openssl/dh.h>
+#  include <openssl/ec.h>
 #  include <openssl/rand.h>
 #  include <openssl/ui.h>
 #  include <openssl/err.h>
 # endif
-
 # include <openssl/ossl_typ.h>
 # include <openssl/symhacks.h>
-
 # include <openssl/x509.h>
-
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
+# endif
 
 /*
  * These flags are used to control combinations of algorithm (methods) by
@@ -398,6 +384,8 @@ ENGINE *ENGINE_by_id(const char *id);
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CAPI, NULL)
 #  define ENGINE_load_dasync() \
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_DASYNC, NULL)
+#  define ENGINE_load_afalg() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_AFALG, NULL)
 # endif
 # define ENGINE_load_cryptodev() \
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CRYPTODEV, NULL)
@@ -418,8 +406,7 @@ void ENGINE_set_table_flags(unsigned int flags);
  *   ENGINE_register_***(e) - registers the implementation from 'e' (if it has one)
  *   ENGINE_unregister_***(e) - unregister the implementation from 'e'
  *   ENGINE_register_all_***() - call ENGINE_register_***() for each 'e' in the list
- * Cleanup is automatically registered from each table when required, so
- * ENGINE_cleanup() will reverse any "register" operations.
+ * Cleanup is automatically registered from each table when required.
  */
 
 int ENGINE_register_RSA(ENGINE *e);
@@ -561,13 +548,13 @@ int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
 void *ENGINE_get_ex_data(const ENGINE *e, int idx);
 
+#if OPENSSL_API_COMPAT < 0x10100000L
 /*
- * This function cleans up anything that needs it. Eg. the ENGINE_add()
- * function automatically ensures the list cleanup function is registered to
- * be called from ENGINE_cleanup(). Similarly, all ENGINE_register_***
- * functions ensure ENGINE_cleanup() will clean up after them.
+ * This function previously cleaned up anything that needs it. Auto-deinit will
+ * now take care of it so it is no longer required to call this function.
  */
-void ENGINE_cleanup(void);
+# define ENGINE_cleanup() while(0) continue
+#endif
 
 /*
  * These return values from within the ENGINE structure. These can be useful
@@ -723,29 +710,22 @@ void ENGINE_add_conf_module(void);
  * same static data as the calling application (or library), and thus whether
  * these callbacks need to be set or not.
  */
+typedef void *(*dyn_MEM_malloc_fn) (size_t, const char *, int);
+typedef void *(*dyn_MEM_realloc_fn) (void *, size_t, const char *, int);
+typedef void (*dyn_MEM_free_fn) (void *, const char *, int);
+typedef struct st_dynamic_MEM_fns {
+    dyn_MEM_malloc_fn malloc_fn;
+    dyn_MEM_realloc_fn realloc_fn;
+    dyn_MEM_free_fn free_fn;
+} dynamic_MEM_fns;
 /*
  * FIXME: Perhaps the memory and locking code (crypto.h) should declare and
  * use these types so we (and any other dependant code) can simplify a bit??
  */
-typedef void (*dyn_lock_locking_cb) (int, int, const char *, int);
-typedef int (*dyn_lock_add_lock_cb) (int *, int, int, const char *, int);
-typedef struct CRYPTO_dynlock_value *(*dyn_dynlock_create_cb) (const char *,
-                                                               int);
-typedef void (*dyn_dynlock_lock_cb) (int, struct CRYPTO_dynlock_value *,
-                                     const char *, int);
-typedef void (*dyn_dynlock_destroy_cb) (struct CRYPTO_dynlock_value *,
-                                        const char *, int);
-typedef struct st_dynamic_LOCK_fns {
-    dyn_lock_locking_cb lock_locking_cb;
-    dyn_lock_add_lock_cb lock_add_lock_cb;
-    dyn_dynlock_create_cb dynlock_create_cb;
-    dyn_dynlock_lock_cb dynlock_lock_cb;
-    dyn_dynlock_destroy_cb dynlock_destroy_cb;
-} dynamic_LOCK_fns;
 /* The top-level structure */
 typedef struct st_dynamic_fns {
     void *static_state;
-    dynamic_LOCK_fns lock_fns;
+    dynamic_MEM_fns mem_fns;
 } dynamic_fns;
 
 /*
@@ -793,11 +773,9 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
         OPENSSL_EXPORT \
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
                 if(ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
-                CRYPTO_set_locking_callback(fns->lock_fns.lock_locking_cb); \
-                CRYPTO_set_add_lock_callback(fns->lock_fns.lock_add_lock_cb); \
-                CRYPTO_set_dynlock_create_callback(fns->lock_fns.dynlock_create_cb); \
-                CRYPTO_set_dynlock_lock_callback(fns->lock_fns.dynlock_lock_cb); \
-                CRYPTO_set_dynlock_destroy_callback(fns->lock_fns.dynlock_destroy_cb); \
+                CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
+                                         fns->mem_fns.realloc_fn, \
+                                         fns->mem_fns.free_fn); \
         skip_cbs: \
                 if(!fn(e,id)) return 0; \
                 return 1; }
@@ -912,7 +890,9 @@ void ERR_load_ENGINE_strings(void);
 # define ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD         101
 # define ENGINE_R_VERSION_INCOMPATIBILITY                 145
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

@@ -1124,3 +1124,4 @@ foreach (split("\n",$code)) {
 
 	print $_,"\n";
 }
+close STDOUT;	# flush

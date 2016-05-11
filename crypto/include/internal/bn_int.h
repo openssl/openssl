@@ -56,13 +56,12 @@
 # define HEADER_BN_INT_H
 
 # include <openssl/bn.h>
+# include <limits.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-# define bn_expand(a,bits) ((((((bits+BN_BITS2-1))/BN_BITS2)) <= (a)->dmax)?\
-        (a):bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2))
 BIGNUM *bn_wexpand(BIGNUM *a, int words);
 BIGNUM *bn_expand2(BIGNUM *a, int words);
 

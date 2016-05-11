@@ -119,10 +119,14 @@ static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
 # define MS_PVKMAGIC             0xb0b5f11eL
 /* Salt length for PVK files */
 # define PVK_SALTLEN             0x10
+/* Maximum length in PVK header */
+# define PVK_MAX_KEYLEN          102400
+/* Maximum salt length */
+# define PVK_MAX_SALTLEN         10240
 
-static EVP_PKEY *b2i_rsa(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_rsa(const unsigned char **in,
                          unsigned int bitlen, int ispub);
-static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_dss(const unsigned char **in,
                          unsigned int bitlen, int ispub);
 
 static int do_blob_header(const unsigned char **in, unsigned int length,
@@ -235,9 +239,9 @@ static EVP_PKEY *do_b2i(const unsigned char **in, unsigned int length,
         return NULL;
     }
     if (isdss)
-        return b2i_dss(&p, length, bitlen, ispub);
+        return b2i_dss(&p, bitlen, ispub);
     else
-        return b2i_rsa(&p, length, bitlen, ispub);
+        return b2i_rsa(&p, bitlen, ispub);
 }
 
 static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
@@ -268,16 +272,16 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
     }
 
     if (isdss)
-        ret = b2i_dss(&p, length, bitlen, ispub);
+        ret = b2i_dss(&p, bitlen, ispub);
     else
-        ret = b2i_rsa(&p, length, bitlen, ispub);
+        ret = b2i_rsa(&p, bitlen, ispub);
 
  err:
     OPENSSL_free(buf);
     return ret;
 }
 
-static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_dss(const unsigned char **in,
                          unsigned int bitlen, int ispub)
 {
     const unsigned char *p = *in;
@@ -285,34 +289,48 @@ static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
     DSA *dsa = NULL;
     BN_CTX *ctx = NULL;
     unsigned int nbyte;
+    BIGNUM *pbn = NULL, *qbn = NULL, *gbn = NULL, *priv_key = NULL;
+    BIGNUM *pub_key = NULL;
+
     nbyte = (bitlen + 7) >> 3;
 
     dsa = DSA_new();
     ret = EVP_PKEY_new();
     if (dsa == NULL || ret == NULL)
         goto memerr;
-    if (!read_lebn(&p, nbyte, &dsa->p))
+    if (!read_lebn(&p, nbyte, &pbn))
         goto memerr;
-    if (!read_lebn(&p, 20, &dsa->q))
+
+    if (!read_lebn(&p, 20, &qbn))
         goto memerr;
-    if (!read_lebn(&p, nbyte, &dsa->g))
+
+    if (!read_lebn(&p, nbyte, &gbn))
         goto memerr;
+
     if (ispub) {
-        if (!read_lebn(&p, nbyte, &dsa->pub_key))
+        if (!read_lebn(&p, nbyte, &pub_key))
             goto memerr;
     } else {
-        if (!read_lebn(&p, 20, &dsa->priv_key))
+        if (!read_lebn(&p, 20, &priv_key))
             goto memerr;
+
         /* Calculate public key */
-        if ((dsa->pub_key = BN_new()) == NULL)
+        pub_key = BN_new();
+        if (pub_key == NULL)
             goto memerr;
         if ((ctx = BN_CTX_new()) == NULL)
             goto memerr;
 
-        if (!BN_mod_exp(dsa->pub_key, dsa->g, dsa->priv_key, dsa->p, ctx))
+        if (!BN_mod_exp(pub_key, gbn, priv_key, pbn, ctx))
             goto memerr;
+
         BN_CTX_free(ctx);
     }
+    if (!DSA_set0_pqg(dsa, pbn, qbn, gbn))
+        goto memerr;
+    pbn = qbn = gbn = NULL;
+    if (!DSA_set0_key(dsa, pub_key, priv_key))
+        goto memerr;
 
     EVP_PKEY_set1_DSA(ret, dsa);
     DSA_free(dsa);
@@ -322,16 +340,23 @@ static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
  memerr:
     PEMerr(PEM_F_B2I_DSS, ERR_R_MALLOC_FAILURE);
     DSA_free(dsa);
+    BN_free(pbn);
+    BN_free(qbn);
+    BN_free(gbn);
+    BN_free(pub_key);
+    BN_free(priv_key);
     EVP_PKEY_free(ret);
     BN_CTX_free(ctx);
     return NULL;
 }
 
-static EVP_PKEY *b2i_rsa(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_rsa(const unsigned char **in,
                          unsigned int bitlen, int ispub)
 {
-    const unsigned char *p = *in;
+    const unsigned char *pin = *in;
     EVP_PKEY *ret = NULL;
+    BIGNUM *e = NULL, *n = NULL, *d = NULL;
+    BIGNUM *p = NULL, *q = NULL, *dmp1 = NULL, *dmq1 = NULL, *iqmp = NULL;
     RSA *rsa = NULL;
     unsigned int nbyte, hnbyte;
     nbyte = (bitlen + 7) >> 3;
@@ -340,34 +365,45 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in, unsigned int length,
     ret = EVP_PKEY_new();
     if (rsa == NULL || ret == NULL)
         goto memerr;
-    rsa->e = BN_new();
-    if (rsa->e == NULL)
+    e = BN_new();
+    if (e == NULL)
         goto memerr;
-    if (!BN_set_word(rsa->e, read_ledword(&p)))
+    if (!BN_set_word(e, read_ledword(&pin)))
         goto memerr;
-    if (!read_lebn(&p, nbyte, &rsa->n))
+    if (!read_lebn(&pin, nbyte, &n))
         goto memerr;
     if (!ispub) {
-        if (!read_lebn(&p, hnbyte, &rsa->p))
+        if (!read_lebn(&pin, hnbyte, &p))
             goto memerr;
-        if (!read_lebn(&p, hnbyte, &rsa->q))
+        if (!read_lebn(&pin, hnbyte, &q))
             goto memerr;
-        if (!read_lebn(&p, hnbyte, &rsa->dmp1))
+        if (!read_lebn(&pin, hnbyte, &dmp1))
             goto memerr;
-        if (!read_lebn(&p, hnbyte, &rsa->dmq1))
+        if (!read_lebn(&pin, hnbyte, &dmq1))
             goto memerr;
-        if (!read_lebn(&p, hnbyte, &rsa->iqmp))
+        if (!read_lebn(&pin, hnbyte, &iqmp))
             goto memerr;
-        if (!read_lebn(&p, nbyte, &rsa->d))
+        if (!read_lebn(&pin, nbyte, &d))
             goto memerr;
+        RSA_set0_factors(rsa, p, q);
+        RSA_set0_crt_params(rsa, dmp1, dmq1, iqmp);
     }
+    RSA_set0_key(rsa, n, e, d);
 
     EVP_PKEY_set1_RSA(ret, rsa);
     RSA_free(rsa);
-    *in = p;
+    *in = pin;
     return ret;
  memerr:
     PEMerr(PEM_F_B2I_RSA, ERR_R_MALLOC_FAILURE);
+    BN_free(e);
+    BN_free(n);
+    BN_free(p);
+    BN_free(q);
+    BN_free(dmp1);
+    BN_free(dmq1);
+    BN_free(iqmp);
+    BN_free(d);
     RSA_free(rsa);
     EVP_PKEY_free(ret);
     return NULL;
@@ -480,16 +516,20 @@ static int do_i2b_bio(BIO *out, EVP_PKEY *pk, int ispub)
 static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 {
     int bitlen;
-    bitlen = BN_num_bits(dsa->p);
-    if ((bitlen & 7) || (BN_num_bits(dsa->q) != 160)
-        || (BN_num_bits(dsa->g) > bitlen))
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+
+    DSA_get0_pqg(dsa, &p, &q, &g);
+    DSA_get0_key(dsa, &pub_key, &priv_key);
+    bitlen = BN_num_bits(p);
+    if ((bitlen & 7) || (BN_num_bits(q) != 160)
+        || (BN_num_bits(g) > bitlen))
         goto badkey;
     if (ispub) {
-        if (BN_num_bits(dsa->pub_key) > bitlen)
+        if (BN_num_bits(pub_key) > bitlen)
             goto badkey;
         *pmagic = MS_DSS1MAGIC;
     } else {
-        if (BN_num_bits(dsa->priv_key) > 160)
+        if (BN_num_bits(priv_key) > 160)
             goto badkey;
         *pmagic = MS_DSS2MAGIC;
     }
@@ -503,26 +543,35 @@ static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 {
     int nbyte, hnbyte, bitlen;
-    if (BN_num_bits(rsa->e) > 32)
+    BIGNUM *e;
+
+    RSA_get0_key(rsa, &e, NULL, NULL);
+    if (BN_num_bits(e) > 32)
         goto badkey;
-    bitlen = BN_num_bits(rsa->n);
-    nbyte = BN_num_bytes(rsa->n);
-    hnbyte = (BN_num_bits(rsa->n) + 15) >> 4;
+    bitlen = RSA_bits(rsa);
+    nbyte = RSA_size(rsa);
+    hnbyte = (bitlen + 15) >> 4;
     if (ispub) {
         *pmagic = MS_RSA1MAGIC;
         return bitlen;
     } else {
+        BIGNUM *d, *p, *q, *iqmp, *dmp1, *dmq1;
+
         *pmagic = MS_RSA2MAGIC;
+
         /*
          * For private key each component must fit within nbyte or hnbyte.
          */
-        if (BN_num_bytes(rsa->d) > nbyte)
+        RSA_get0_key(rsa, NULL, NULL, &d);
+        if (BN_num_bytes(d) > nbyte)
             goto badkey;
-        if ((BN_num_bytes(rsa->iqmp) > hnbyte)
-            || (BN_num_bytes(rsa->p) > hnbyte)
-            || (BN_num_bytes(rsa->q) > hnbyte)
-            || (BN_num_bytes(rsa->dmp1) > hnbyte)
-            || (BN_num_bytes(rsa->dmq1) > hnbyte))
+        RSA_get0_factors(rsa, &p, &q);
+        RSA_get0_crt_params(rsa, &dmp1, &dmq1, &iqmp);
+        if ((BN_num_bytes(iqmp) > hnbyte)
+            || (BN_num_bytes(p) > hnbyte)
+            || (BN_num_bytes(q) > hnbyte)
+            || (BN_num_bytes(dmp1) > hnbyte)
+            || (BN_num_bytes(dmq1) > hnbyte))
             goto badkey;
     }
     return bitlen;
@@ -534,31 +583,40 @@ static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 {
     int nbyte, hnbyte;
-    nbyte = BN_num_bytes(rsa->n);
-    hnbyte = (BN_num_bits(rsa->n) + 15) >> 4;
-    write_lebn(out, rsa->e, 4);
-    write_lebn(out, rsa->n, -1);
+    BIGNUM *n, *d, *e, *p, *q, *iqmp, *dmp1, *dmq1;
+
+    nbyte = RSA_size(rsa);
+    hnbyte = (RSA_bits(rsa) + 15) >> 4;
+    RSA_get0_key(rsa, &e, &n, &d);
+    write_lebn(out, e, 4);
+    write_lebn(out, n, -1);
     if (ispub)
         return;
-    write_lebn(out, rsa->p, hnbyte);
-    write_lebn(out, rsa->q, hnbyte);
-    write_lebn(out, rsa->dmp1, hnbyte);
-    write_lebn(out, rsa->dmq1, hnbyte);
-    write_lebn(out, rsa->iqmp, hnbyte);
-    write_lebn(out, rsa->d, nbyte);
+    RSA_get0_factors(rsa, &p, &q);
+    RSA_get0_crt_params(rsa, &dmp1, &dmq1, &iqmp);
+    write_lebn(out, p, hnbyte);
+    write_lebn(out, q, hnbyte);
+    write_lebn(out, dmp1, hnbyte);
+    write_lebn(out, dmq1, hnbyte);
+    write_lebn(out, iqmp, hnbyte);
+    write_lebn(out, d, nbyte);
 }
 
 static void write_dsa(unsigned char **out, DSA *dsa, int ispub)
 {
     int nbyte;
-    nbyte = BN_num_bytes(dsa->p);
-    write_lebn(out, dsa->p, nbyte);
-    write_lebn(out, dsa->q, 20);
-    write_lebn(out, dsa->g, nbyte);
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+
+    DSA_get0_pqg(dsa, &p, &q, &g);
+    DSA_get0_key(dsa, &pub_key, &priv_key);
+    nbyte = BN_num_bytes(p);
+    write_lebn(out, p, nbyte);
+    write_lebn(out, q, 20);
+    write_lebn(out, g, nbyte);
     if (ispub)
-        write_lebn(out, dsa->pub_key, nbyte);
+        write_lebn(out, pub_key, nbyte);
     else
-        write_lebn(out, dsa->priv_key, 20);
+        write_lebn(out, priv_key, 20);
     /* Set "invalid" for seed structure values */
     memset(*out, 0xff, 24);
     *out += 24;
@@ -607,6 +665,9 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
     is_encrypted = read_ledword(&p);
     *psaltlen = read_ledword(&p);
     *pkeylen = read_ledword(&p);
+
+    if (*pkeylen > PVK_MAX_KEYLEN || *psaltlen > PVK_MAX_SALTLEN)
+        return 0;
 
     if (is_encrypted && !*psaltlen) {
         PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_INCONSISTENT_HEADER);
@@ -745,26 +806,29 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
                    pem_password_cb *cb, void *u)
 {
     int outlen = 24, pklen;
-    unsigned char *p, *salt = NULL;
-    EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
+    unsigned char *p = NULL, *salt = NULL;
+    EVP_CIPHER_CTX *cctx = NULL;
     if (enclevel)
         outlen += PVK_SALTLEN;
     pklen = do_i2b(NULL, pk, 0);
     if (pklen < 0)
         return -1;
     outlen += pklen;
-    if (!out)
+    if (out == NULL)
         return outlen;
-    if (*out)
+    if (*out != NULL) {
         p = *out;
-    else {
+    } else {
         p = OPENSSL_malloc(outlen);
         if (p == NULL) {
             PEMerr(PEM_F_I2B_PVK, ERR_R_MALLOC_FAILURE);
             return -1;
         }
-        *out = p;
     }
+
+    cctx = EVP_CIPHER_CTX_new();
+    if (cctx == NULL)
+        goto error;
 
     write_ledword(&p, MS_PVKMAGIC);
     write_ledword(&p, 0);
@@ -782,9 +846,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
         p += PVK_SALTLEN;
     }
     do_i2b(&p, pk, 0);
-    if (enclevel == 0)
-        return outlen;
-    else {
+    if (enclevel != 0) {
         char psbuf[PEM_BUFSIZE];
         unsigned char keybuf[20];
         int enctmplen, inlen;
@@ -810,11 +872,18 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
         if (!EVP_DecryptFinal_ex(cctx, p + enctmplen, &enctmplen))
             goto error;
     }
+
     EVP_CIPHER_CTX_free(cctx);
+
+    if (*out == NULL)
+        *out = p;
+
     return outlen;
 
  error:
     EVP_CIPHER_CTX_free(cctx);
+    if (*out == NULL)
+        OPENSSL_free(p);
     return -1;
 }
 

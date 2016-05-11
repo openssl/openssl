@@ -60,8 +60,12 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
-#include <openssl/engine.h>
+#ifndef OPENSSL_NO_ENGINE
+ #include <openssl/engine.h>
+#endif
 #include "e_os.h"
+
+#ifndef OPENSSL_NO_SOCK
 
 /* Just a ClientHello without a cookie */
 static const unsigned char clienthello_nocookie[] = {
@@ -337,7 +341,7 @@ static struct {
     }
 };
 
-#define COOKIE_LEN  20
+# define COOKIE_LEN  20
 
 static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 {
@@ -366,9 +370,11 @@ static int cookie_verify(SSL *ssl, const unsigned char *cookie,
 
     return 1;
 }
+#endif
 
 int main(void)
 {
+#ifndef OPENSSL_NO_SOCK
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
     BIO *outbio = NULL;
@@ -457,9 +463,12 @@ int main(void)
     SSL_CTX_free(ctx);
     BIO_free(inbio);
     OPENSSL_free(peer);
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+# ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks_fp(stderr);
-#endif
+# endif
     return success ? 0 : 1;
+#else
+    printf("DTLSv1_listen() is not supported by this build - skipping\n");
+    return 0;
+#endif
 }
-

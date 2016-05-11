@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # Ascetic x86_64 AT&T to MASM/NASM assembler translator by <appro>.
 #
@@ -195,6 +202,7 @@ my %globals;
     sub out {
     	my $self = shift;
 
+	$self->{value} =~ s/\b(0b[0-1]+)/oct($1)/eig;
 	if ($gas) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{value}
@@ -205,7 +213,6 @@ my %globals;
 	    }
 	    sprintf "\$%s",$self->{value};
 	} else {
-	    $self->{value} =~ s/(0b[0-1]+)/oct($1)/eig;
 	    $self->{value} =~ s/0x([0-9a-f]+)/0$1h/ig if ($masm);
 	    sprintf "%s",$self->{value};
 	}
@@ -286,7 +293,7 @@ my %globals;
 	    (opcode->mnemonic() =~ /^v?mov([qd])$/)		&& ($sz=$1)  ||
 	    (opcode->mnemonic() =~ /^v?pinsr([qdwb])$/)		&& ($sz=$1)  ||
 	    (opcode->mnemonic() =~ /^vpbroadcast([qdwb])$/)	&& ($sz=$1)  ||
-	    (opcode->mnemonic() =~ /^vinsert[fi]128$/)		&& ($sz="x");
+	    (opcode->mnemonic() =~ /^v(?!perm)[a-z]+[fi]128$/)	&& ($sz="x");
 
 	    if (defined($self->{index})) {
 		sprintf "%s[%s%s*%d%s]",$szmap{$sz},
@@ -607,7 +614,10 @@ my %globals;
 				    }
 				    last;
 				  };
-		/\.align/   && do { $self->{value} = "ALIGN\t".$line; last; };
+		/\.align/   && do { my $max = ($masm && $masm>=$masmref) ? 256 : 4096;
+				    $self->{value} = "ALIGN\t".($line>$max?$max:$line);
+				    last;
+				  };
 		/\.(value|long|rva|quad)/
 			    && do { my $sz  = substr($1,0,1);
 				    my @arr = split(/,\s*/,$line);

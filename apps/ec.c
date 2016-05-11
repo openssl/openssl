@@ -99,8 +99,8 @@ OPTIONS ec_options[] = {
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
     {"text", OPT_TEXT, '-', "Print the key"},
     {"param_out", OPT_PARAM_OUT, '-', "Print the elliptic curve parameters"},
-    {"pubin", OPT_PUBIN, '-'},
-    {"pubout", OPT_PUBOUT, '-'},
+    {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
+    {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
     {"no_public", OPT_NO_PUBLIC, '-', "exclude public key from private key"},
     {"check", OPT_CHECK, '-', "check key consistency"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
@@ -205,7 +205,9 @@ int ec_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = param_out || pubin || pubout ? 0 : 1;
     if (text && !pubin)
         private = 1;

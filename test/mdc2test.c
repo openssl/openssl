@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     unsigned char md[MDC2_DIGEST_LENGTH];
     int i;
     EVP_MD_CTX *c;
-    static char *text = "Now is the time for all ";
+    static char text[] = "Now is the time for all ";
 
 # ifdef CHARSET_EBCDIC
     ebcdic2ascii(text, text, strlen(text));
@@ -135,10 +135,6 @@ int main(int argc, char *argv[])
         printf("pad2 - ok\n");
 
     EVP_MD_CTX_free(c);
-# ifdef OPENSSL_SYS_NETWARE
-    if (ret)
-        printf("ERROR: %d\n", ret);
-# endif
     EXIT(ret);
 }
 #endif

@@ -54,37 +54,15 @@
 #include "../async_locl.h"
 
 #ifdef ASYNC_NULL
+# include <openssl/ct.h>
+# include <openssl/x509v3.h>
 
-int async_pipe(OSSL_ASYNC_FD *pipefds)
-{
-    return -1;
-}
-
-int async_close_fd(OSSL_ASYNC_FD fd)
-{
-    return 0;
-}
-
-int async_write1(OSSL_ASYNC_FD fd, const void *buf)
-{
-    return -1;
-}
-
-int async_read1(OSSL_ASYNC_FD fd, void *buf)
-{
-    return -1;
-}
-
-int async_global_init(void)
+int ASYNC_is_capable(void)
 {
     return 0;
 }
 
 void async_local_cleanup(void)
-{
-}
-
-void async_global_cleanup(void)
 {
 }
 

@@ -64,9 +64,7 @@
 #include <string.h>
 #include "ec_lcl.h"
 #include <openssl/err.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 
 EC_KEY *EC_KEY_new(void)
 {
@@ -98,7 +96,7 @@ void EC_KEY_free(EC_KEY *r)
     if (r == NULL)
         return;
 
-    i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_EC);
+    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
     REF_PRINT_COUNT("EC_KEY", r);
     if (i > 0)
         return;
@@ -108,11 +106,14 @@ void EC_KEY_free(EC_KEY *r)
         r->meth->finish(r);
 
 #ifndef OPENSSL_NO_ENGINE
-    if (r->engine != NULL)
-        ENGINE_finish(r->engine);
+    ENGINE_finish(r->engine);
 #endif
 
+    if (r->group && r->group->meth->keyfinish)
+        r->group->meth->keyfinish(r);
+
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, r, &r->ex_data);
+    CRYPTO_THREAD_lock_free(r->lock);
     EC_GROUP_free(r->group);
     EC_POINT_free(r->pub_key);
     BN_clear_free(r->priv_key);
@@ -129,8 +130,10 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, EC_KEY *src)
     if (src->meth != dest->meth) {
         if (dest->meth->finish != NULL)
             dest->meth->finish(dest);
+        if (dest->group && dest->group->meth->keyfinish)
+            dest->group->meth->keyfinish(dest);
 #ifndef OPENSSL_NO_ENGINE
-        if (dest->engine != NULL && ENGINE_finish(dest->engine) == 0)
+        if (ENGINE_finish(dest->engine) == 0)
             return 0;
         dest->engine = NULL;
 #endif
@@ -145,26 +148,31 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, EC_KEY *src)
             return NULL;
         if (!EC_GROUP_copy(dest->group, src->group))
             return NULL;
-    }
-    /*  copy the public key */
-    if (src->pub_key != NULL && src->group != NULL) {
-        EC_POINT_free(dest->pub_key);
-        dest->pub_key = EC_POINT_new(src->group);
-        if (dest->pub_key == NULL)
-            return NULL;
-        if (!EC_POINT_copy(dest->pub_key, src->pub_key))
-            return NULL;
-    }
-    /* copy the private key */
-    if (src->priv_key != NULL) {
-        if (dest->priv_key == NULL) {
-            dest->priv_key = BN_new();
-            if (dest->priv_key == NULL)
+
+        /*  copy the public key */
+        if (src->pub_key != NULL) {
+            EC_POINT_free(dest->pub_key);
+            dest->pub_key = EC_POINT_new(src->group);
+            if (dest->pub_key == NULL)
+                return NULL;
+            if (!EC_POINT_copy(dest->pub_key, src->pub_key))
                 return NULL;
         }
-        if (!BN_copy(dest->priv_key, src->priv_key))
-            return NULL;
+        /* copy the private key */
+        if (src->priv_key != NULL) {
+            if (dest->priv_key == NULL) {
+                dest->priv_key = BN_new();
+                if (dest->priv_key == NULL)
+                    return NULL;
+            }
+            if (!BN_copy(dest->priv_key, src->priv_key))
+                return NULL;
+            if (src->group->meth->keycopy
+                && src->group->meth->keycopy(dest, src) == 0)
+                return NULL;
+        }
     }
+
 
     /* copy the rest */
     dest->enc_flag = src->enc_flag;
@@ -196,6 +204,7 @@ EC_KEY *EC_KEY_dup(EC_KEY *ec_key)
 
     if (ret == NULL)
         return NULL;
+
     if (EC_KEY_copy(ret, ec_key) == NULL) {
         EC_KEY_free(ret);
         return NULL;
@@ -205,7 +214,10 @@ EC_KEY *EC_KEY_dup(EC_KEY *ec_key)
 
 int EC_KEY_up_ref(EC_KEY *r)
 {
-    int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_EC);
+    int i;
+
+    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+        return 0;
 
     REF_PRINT_COUNT("EC_KEY", r);
     REF_ASSERT_ISNT(i < 2);
@@ -225,6 +237,12 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 }
 
 int ossl_ec_key_gen(EC_KEY *eckey)
+{
+    OPENSSL_assert(eckey->group->meth->keygen != NULL);
+    return eckey->group->meth->keygen(eckey);
+}
+
+int ec_key_simple_generate_key(EC_KEY *eckey)
 {
     int ok = 0;
     BN_CTX *ctx = NULL;
@@ -272,10 +290,31 @@ int ossl_ec_key_gen(EC_KEY *eckey)
     if (eckey->priv_key != priv_key)
         BN_free(priv_key);
     BN_CTX_free(ctx);
-    return (ok);
+    return ok;
+}
+
+int ec_key_simple_generate_public_key(EC_KEY *eckey)
+{
+    return EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
+                        NULL, NULL);
 }
 
 int EC_KEY_check_key(const EC_KEY *eckey)
+{
+    if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL) {
+        ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (eckey->group->meth->keycheck == NULL) {
+        ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    return eckey->group->meth->keycheck(eckey);
+}
+
+int ec_key_simple_check_key(const EC_KEY *eckey)
 {
     int ok = 0;
     BN_CTX *ctx = NULL;
@@ -283,12 +322,12 @@ int EC_KEY_check_key(const EC_KEY *eckey)
     EC_POINT *point = NULL;
 
     if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
     if (EC_POINT_is_at_infinity(eckey->group, eckey->pub_key)) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_POINT_AT_INFINITY);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_POINT_AT_INFINITY);
         goto err;
     }
 
@@ -299,21 +338,21 @@ int EC_KEY_check_key(const EC_KEY *eckey)
 
     /* testing whether the pub_key is on the elliptic curve */
     if (EC_POINT_is_on_curve(eckey->group, eckey->pub_key, ctx) <= 0) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_POINT_IS_NOT_ON_CURVE);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_POINT_IS_NOT_ON_CURVE);
         goto err;
     }
     /* testing whether pub_key * order is the point at infinity */
     order = eckey->group->order;
     if (BN_is_zero(order)) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
         goto err;
     }
     if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order, ctx)) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_EC_LIB);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_EC_LIB);
         goto err;
     }
     if (!EC_POINT_is_at_infinity(eckey->group, point)) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_WRONG_ORDER);
         goto err;
     }
     /*
@@ -322,16 +361,16 @@ int EC_KEY_check_key(const EC_KEY *eckey)
      */
     if (eckey->priv_key != NULL) {
         if (BN_cmp(eckey->priv_key, order) >= 0) {
-            ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
+            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_WRONG_ORDER);
             goto err;
         }
         if (!EC_POINT_mul(eckey->group, point, eckey->priv_key,
                           NULL, NULL, ctx)) {
-            ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_EC_LIB);
+            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_EC_LIB);
             goto err;
         }
         if (EC_POINT_cmp(eckey->group, point, eckey->pub_key, ctx) != 0) {
-            ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_INVALID_PRIVATE_KEY);
+            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_INVALID_PRIVATE_KEY);
             goto err;
         }
     }
@@ -339,7 +378,7 @@ int EC_KEY_check_key(const EC_KEY *eckey)
  err:
     BN_CTX_free(ctx);
     EC_POINT_free(point);
-    return (ok);
+    return ok;
 }
 
 int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
@@ -360,8 +399,9 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
     }
     ctx = BN_CTX_new();
     if (ctx == NULL)
-        goto err;
+        return 0;
 
+    BN_CTX_start(ctx);
     point = EC_POINT_new(key->group);
 
     if (point == NULL)
@@ -416,6 +456,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
     ok = 1;
 
  err:
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EC_POINT_free(point);
     return ok;
@@ -443,6 +484,11 @@ const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key)
 
 int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 {
+    if (key->group == NULL || key->group->meth == NULL)
+        return 0;
+    if (key->group->meth->set_private != NULL
+        && key->group->meth->set_private(key, priv_key) == 0)
+        return 0;
     if (key->meth->set_private != NULL
         && key->meth->set_private(key, priv_key) == 0)
         return 0;
@@ -533,16 +579,38 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
         key->pub_key = EC_POINT_new(key->group);
     if (key->pub_key == NULL)
         return 0;
-    return EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx);
+    if (EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx) == 0)
+        return 0;
+    /*
+     * Save the point conversion form.
+     * For non-custom curves the first octet of the buffer (excluding
+     * the last significant bit) contains the point conversion form.
+     * EC_POINT_oct2point() has already performed sanity checking of
+     * the buffer so we know it is valid.
+     */
+    if ((key->group->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0)
+        key->conv_form = (point_conversion_form_t)(buf[0] & ~0x01);
+    return 1;
 }
 
 size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
 {
-    size_t buf_len;
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
+    if (eckey->group->meth->priv2oct == NULL) {
+        ECerr(EC_F_EC_KEY_PRIV2OCT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
 
-    buf_len = (EC_GROUP_get_degree(eckey->group) + 7) / 8;
+    return eckey->group->meth->priv2oct(eckey, buf, len);
+}
+
+size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
+                              unsigned char *buf, size_t len)
+{
+    size_t buf_len;
+
+    buf_len = (EC_GROUP_order_bits(eckey->group) + 7) / 8;
     if (eckey->priv_key == NULL)
         return 0;
     if (buf == NULL)
@@ -553,7 +621,7 @@ size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
     /* Octetstring may need leading zeros if BN is to short */
 
     if (BN_bn2binpad(eckey->priv_key, buf, buf_len) == -1) {
-        ECerr(EC_F_EC_KEY_PRIV2OCT, EC_R_BUFFER_TOO_SMALL);
+        ECerr(EC_F_EC_KEY_SIMPLE_PRIV2OCT, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
 
@@ -564,16 +632,24 @@ int EC_KEY_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
 {
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
+    if (eckey->group->meth->oct2priv == NULL) {
+        ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+    return eckey->group->meth->oct2priv(eckey, buf, len);
+}
 
+int ec_key_simple_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
+{
     if (eckey->priv_key == NULL)
         eckey->priv_key = BN_secure_new();
     if (eckey->priv_key == NULL) {
-        ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_EC_KEY_SIMPLE_OCT2PRIV, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     eckey->priv_key = BN_bin2bn(buf, len, eckey->priv_key);
     if (eckey->priv_key == NULL) {
-        ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_BN_LIB);
+        ECerr(EC_F_EC_KEY_SIMPLE_OCT2PRIV, ERR_R_BN_LIB);
         return 0;
     }
     return 1;
@@ -596,4 +672,12 @@ size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf)
     }
     *pbuf = buf;
     return len;
+}
+
+int EC_KEY_can_sign(const EC_KEY *eckey)
+{
+    if (eckey->group == NULL || eckey->group->meth == NULL
+        || (eckey->group->meth->flags & EC_FLAGS_NO_SIGN))
+        return 0;
+    return 1;
 }

@@ -1,13 +1,11 @@
 
- INSTALLATION ON THE UNIX PLATFORM
- ---------------------------------
+ OPENSSL INSTALLATION
+ --------------------
 
- [Installation on DOS (with djgpp), Windows, OpenVMS, MacOS (before MacOS X)
-  and NetWare is described in INSTALL.DJGPP, INSTALL.WIN, INSTALL.VMS,
-  INSTALL.MacOS and INSTALL.NW.
-  
-  This document describes installation on operating systems in the Unix
-  family.]
+ [This document describes installation on the main supported operating
+  systems, currently the Linux/Unix family, OpenVMS and Windows.
+  Installation on DOS (with djgpp), MacOS (before MacOS X)
+  is described in INSTALL.DJGPP or INSTALL.MacOS, respectively.]
 
  To install OpenSSL, you will need:
 
@@ -15,107 +13,346 @@
   * Perl 5 with core modules (please read README.PERL)
   * The perl module Text::Template (please read README.PERL)
   * an ANSI C compiler
-  * a development environment in form of development libraries and C
+  * a development environment in the form of development libraries and C
     header files
-  * a supported Unix operating system
+  * a supported operating system
+
+ For additional platform specific requirements and other details,
+ please read one of these:
+
+  * NOTES.VMS (OpenVMS)
+  * NOTES.WIN (any Windows except for Windows CE)
 
  Quick Start
  -----------
 
  If you want to just get on with it, do:
 
-  $ ./config
-  $ make
-  $ make test
-  $ make install
+  on Unix:
+
+    $ ./config
+    $ make
+    $ make test
+    $ make install
+
+  on OpenVMS:
+
+    $ @config
+    $ mms
+    $ mms test
+    $ mms install
+
+  on Windows (only pick one of the targets for configuration):
+
+    $ perl Configure { VC-WIN32 | VC-WIN64A | VC-WIN64I | VC-CE }
+    $ nmake
+    $ nmake test
+    $ nmake install
 
  [If any of these steps fails, see section Installation in Detail below.]
 
- This will build and install OpenSSL in the default location, which is (for
- historical reasons) /usr/local/ssl. If you want to install it anywhere else,
- run config like this:
+ This will build and install OpenSSL in the default location, which is:
 
-  $ ./config --prefix=/usr/local --openssldir=/usr/local/openssl
+  Unix:    normal installation directories under /usr/local
+  OpenVMS: SYS$COMMON:[OPENSSL-'version'...], where 'version' is the
+           OpenSSL version number with underscores instead of periods.
+  Windows: C:\Program Files\OpenSSL or C:\Program Files (x86)\OpenSSL
+
+ If you want to install it anywhere else, run config like this:
+
+  On Unix:
+
+    $ ./config --prefix=/opt/openssl --openssldir=/usr/local/ssl
+
+  On OpenVMS:
+
+    $ @config --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
 
 
  Configuration Options
  ---------------------
 
  There are several options to ./config (or ./Configure) to customize
- the build:
+ the build (note that for Windows, the defaults for --prefix and
+ --openssldir depend in what configuration is used and what Windows
+ implementation OpenSSL is built on.  More notes on this in NOTES.WIN):
 
-  --prefix=DIR  Install in DIR/bin, DIR/lib, DIR/include/openssl.
-	        Configuration files used by OpenSSL will be in DIR/ssl
-                or the directory specified by --openssldir.
+  --prefix=DIR
+                   The top of the installation directory tree.  Defaults are:
 
-  --openssldir=DIR Directory for OpenSSL files. If no prefix is specified,
-                the library files and binaries are also installed there.
+                   Unix:           /usr/local
+                   Windows:        C:\Program Files\OpenSSL
+                                or C:\Program Files (x86)\OpenSSL
+                   OpenVMS:        SYS$COMMON:[OPENSSL-'version']
 
-  no-autoalginit Don't automatically load all supported ciphers and digests.
-                Typically OpenSSL will make available all of its supported
-                ciphers and digests. For a statically linked application this
-                may be undesirable if small executable size is an objective.
-                This only affects libcrypto. Ciphers and digests will have to be
-                loaded manually using EVP_add_cipher() and EVP_add_digest() if
-                this option is used.
+  --openssldir=DIR
+                   Directory for OpenSSL configuration files, and also the
+                   default certificate and key store.  Defaults are:
 
-  no-autoerrinit Don't automatically load all libcrypto/libssl error strings.
-                Typically OpenSSL will automatically load human readable error
-                strings. For a statically linked application this may be
-                undesirable if small executable size is an objective.
+                   Unix:           /usr/local/ssl
+                   Windows:        C:\Program Files\Common Files\SSL
+                                or C:\Program Files (x86)\Common Files\SSL
+                   OpenVMS:        SYS$COMMON:[OPENSSL-COMMON]
 
-  no-threads    Don't try to build with support for multi-threaded
-                applications.
+  --api=x.y.z
+                   Don't build with support for deprecated APIs below the
+                   specified version number. For example "--api=1.1.0" will
+                   remove support for all APIS that were deprecated in OpenSSL
+                   version 1.1.0 or below.
 
-  threads       Build with support for multi-threaded applications.
-                This will usually require additional system-dependent options!
-                See "Note on multi-threading" below.
+  no-afalgeng
+                   Don't build the AFALG engine. This option will be forced if
+                   on a platform that does not support AFALG.
 
-  no-zlib       Don't try to build with support for zlib compression and
-                decompression.
+  no-asm
+                   Do not use assembler code. On some platforms a small amount
+                   of assembler code may still be used.
 
-  zlib          Build with support for zlib compression/decompression.
+  no-async
+                   Do not build support for async operations.
 
-  zlib-dynamic  Like "zlib", but has OpenSSL load the zlib library dynamically
-                when needed.  This is only supported on systems where loading
-                of shared libraries is supported.  This is the default choice.
+  no-autoalginit
+                   Don't automatically load all supported ciphers and digests.
+                   Typically OpenSSL will make available all of its supported
+                   ciphers and digests. For a statically linked application this
+                   may be undesirable if small executable size is an objective.
+                   This only affects libcrypto. Ciphers and digests will have to
+                   be loaded manually using EVP_add_cipher() and
+                   EVP_add_digest() if this option is used. This option will
+                   force a non-shared build.
 
-  no-shared     Don't try to create shared libraries.
+  no-autoerrinit
+                   Don't automatically load all libcrypto/libssl error strings.
+                   Typically OpenSSL will automatically load human readable
+                   error strings. For a statically linked application this may
+                   be undesirable if small executable size is an objective.
 
-  shared        In addition to the usual static libraries, create shared
-                libraries on platforms where it's supported.  See "Note on
-                shared libraries" below.
 
-  no-asm        Do not use assembler code.
+  no-capieng
+                   Don't build the CAPI engine. This option will be forced if
+                   on a platform that does not support CAPI.
 
-  386           Use the 80386 instruction set only (the default x86 code is
-                more efficient, but requires at least a 486). Note: Use
-                compiler flags for any other CPU specific configuration,
-                e.g. "-m32" to build x86 code on an x64 system.
+  no-cms
+                   Don't build support for CMS features
 
-  no-sse2	Exclude SSE2 code pathes. Normally SSE2 extension is
-		detected at run-time, but the decision whether or not the
-		machine code will be executed is taken solely on CPU
-		capability vector. This means that if you happen to run OS
-		kernel which does not support SSE2 extension on Intel P4
-		processor, then your application might be exposed to
-		"illegal instruction" exception. There might be a way
-		to enable support in kernel, e.g. FreeBSD kernel can be
-		compiled with CPU_ENABLE_SSE, and there is a way to
-		disengage SSE2 code pathes upon application start-up,
-		but if you aim for wider "audience" running such kernel,
-		consider no-sse2. Both 386 and no-asm options above imply
-		no-sse2.
+  no-comp
+                   Don't build support for SSL/TLS compression. If this option
+                   is left enabled (the default), then compression will only
+                   work if the zlib or zlib-dynamic options are also chosen.
 
-  no-<cipher>   Build without the specified cipher (bf, cast, des, dh, dsa,
-                hmac, md2, md5, mdc2, rc2, rc4, rc5, rsa, sha).
-                The crypto/<cipher> directory can be removed after running
-                "make depend".
+  enable-crypto-mdebug
+                   Build support for debugging memory allocated via
+                   OPENSSL_malloc() or OPENSSL_zalloc().
 
-  -Dxxx, -lxxx, -Lxxx, -fxxx, -mXXX, -Kxxx These system specific options will
-                be passed through to the compiler to allow you to
-                define preprocessor symbols, specify additional libraries,
-                library directories or other compiler options.
+  enable-crypto-mdebug-backtrace
+                   As for crypto-mdebug, but additionally provide backtrace
+                   information for allocated memory.
+
+  no-ct
+                   Don't build support for Certificate Transparency.
+
+  no-deprecated
+                   Don't build with support for any deprecated APIs. This is the
+                   same as using "--api" and supplying the latest version
+                   number.
+
+  no-dgram
+                   Don't build support for datagram based BIOs. Selecting this
+                   option will also force the disabling of DTLS.
+
+  no-dso
+                   Don't build support for loading Dynamic Shared Objects.
+
+  no-dynamic-engine
+                   Don't build the dynamically loaded engines. This only has an
+                   effect in a "shared" build
+
+  no-ec
+                   Don't build support for Elliptic Curves.
+
+  no-ec2m
+                   Don't build support for binary Elliptic Curves
+
+  enable-ec_nistp_64_gcc_128
+                   Enable support for optimised implementations of some commonly
+                   used NIST elliptic curves. This is only supported on some
+                   platforms.
+
+  enable-egd
+                   Build support for gathering entropy from EGD (Entropy
+                   Gathering Daemon).
+
+  no-engine
+                   Don't build support for loading engines.
+
+  no-err
+                   Don't compile in any error strings.
+
+  no-filenames
+                   Don't compile in filename and line number information (e.g.
+                   for errors and memory allocation).
+
+  no-gost
+                   Don't build support for GOST based ciphersuites. Note that
+                   if this feature is enabled then GOST ciphersuites are only
+                   available if the GOST algorithms are also available through
+                   loading an externally supplied engine.
+
+  enable-heartbeats
+                   Build support for DTLS heartbeats.
+
+  no-hw-padlock
+                   Don't build the padlock engine.
+
+  no-makedepend
+                   Don't generate dependencies.
+
+  no-multiblock
+                   Don't build support for writing multiple records in one
+                   go in libssl (Note: this is a different capability to the
+                   pipelining functionality).
+
+  no-nextprotoneg
+                   Don't build support for the NPN TLS extension.
+
+  no-ocsp
+                   Don't build support for OCSP.
+
+  no-pic
+                   Don't build with support for Position Independent Code.
+
+  no-posix-io
+                   Don't use POSIX IO capabilities.
+
+  no-psk
+                   Don't build support for Pre-Shared Key based ciphersuites.
+
+  no-rdrand
+                   Don't use hardware RDRAND capabilities.
+
+  no-rfc3779
+                   Don't build support for RFC3779 ("X.509 Extensions for IP
+                   Addresses and AS Identifiers")
+
+  sctp
+                   Build support for SCTP
+
+  no-shared
+                   Do not create shared libraries, only static ones.  See "Note
+                   on shared libraries" below.
+
+  no-sock
+                   Don't build support for socket BIOs
+
+  no-srp
+                   Don't build support for SRP or SRP based ciphersuites.
+
+  no-srtp
+                   Don't build SRTP support
+
+  no-sse2
+                   Exclude SSE2 code paths. Normally SSE2 extension is
+                   detected at run-time, but the decision whether or not the
+                   machine code will be executed is taken solely on CPU
+                   capability vector. This means that if you happen to run OS
+                   kernel which does not support SSE2 extension on Intel P4
+                   processor, then your application might be exposed to
+                   "illegal instruction" exception. There might be a way
+                   to enable support in kernel, e.g. FreeBSD kernel can be
+                   compiled with CPU_ENABLE_SSE, and there is a way to
+                   disengage SSE2 code pathes upon application start-up,
+                   but if you aim for wider "audience" running such kernel,
+                   consider no-sse2. Both the 386 and no-asm options imply
+                   no-sse2.
+
+  enable-ssl-trace
+                   Build with the SSL Trace capabilities (adds the "-trace"
+                   option to s_client and s_server).
+
+  no-static-engine
+                   Don't build the statically linked engines. This only
+                   has an impact when not built "shared".
+
+  no-stdio
+                   Don't use any C "stdio" features. Only libcrypto and libssl
+                   can be built in this way. Using this option will suppress
+                   building the command line applications. Additionally since
+                   the OpenSSL tests also use the command line applications the
+                   tests will also be skipped.
+
+  no-threads
+                   Don't try to build with support for multi-threaded
+                   applications.
+
+  threads
+                   Build with support for multi-threaded applications. Most
+                   platforms will enable this by default. However if on a
+                   platform where this is not the case then this will usually
+                   require additional system-dependent options! See "Note on
+                   multi-threading" below.
+
+  no-ts
+                   Don't build Time Stamping Authority support.
+
+  no-ui
+                   Don't build with the "UI" capability (i.e. the set of
+                   features enabling text based prompts).
+
+  enable-unit-test
+                   Enable additional unit test APIs. This should not typically
+                   be used in production deployments.
+
+  enable-weak-ssl-ciphers
+                   Build support for SSL/TLS ciphers that are considered "weak"
+                   (e.g. RC4 based ciphersuites).
+
+  zlib
+                   Build with support for zlib compression/decompression.
+
+  zlib-dynamic
+                   Like "zlib", but has OpenSSL load the zlib library
+                   dynamically when needed.  This is only supported on systems
+                   where loading of shared libraries is supported.
+
+  386
+                   On Intel hardware, use the 80386 instruction set only
+                   (the default x86 code is more efficient, but requires at
+                   least a 486). Note: Use compiler flags for any other CPU
+                   specific configuration, e.g. "-m32" to build x86 code on
+                   an x64 system.
+
+  no-<prot>
+                   Don't build support for negotiating the specified SSL/TLS
+                   protocol (one of ssl, ssl3, tls, tls1, tls1_1, tls1_2, dtls,
+                   dtls1 or dtls1_2). If "no-tls" is selected then all of tls1,
+                   tls1_1 and tls1_2 are disabled. Similarly "no-dtls" will
+                   disable dtls1 and dtls1_2. The "no-ssl" option is synonymous
+                   with "no-ssl3". Note this only affects version negotiation.
+                   OpenSSL will still provide the methods for applications to
+                   explicitly select the individual protocol versions.
+
+  no-<prot>-method
+                   As for no-<prot> but in addition do not build the methods for
+                   applications to explicitly select individual protocol
+                   versions.
+
+  enable-<alg>
+                   Build with support for the specified algorithm, where <alg>
+                   is one of: md2 or rc5.
+
+  no-<alg>
+                   Build without support for the specified algorithm, where
+                   <alg> is one of: bf, blake2, camellia, cast, chacha, cmac,
+                   des, dh, dsa, ecdh, ecdsa, idea, md4, md5, mdc2, ocb,
+                   ploy1305, rc2, rc4, rmd160, scrypt, seed or whirlpool. The
+                   "ripemd" algorithm is deprecated and if used is synonymous
+                   with rmd160.
+
+  -Dxxx, -lxxx, -Lxxx, -fxxx, -mXXX, -Kxxx
+                   These system specific options will be passed through to the
+                   compiler to allow you to define preprocessor symbols, specify
+                   additional libraries, library directories or other compiler
+                   options.
 
 
  Installation in Detail
@@ -123,7 +360,16 @@
 
  1a. Configure OpenSSL for your operation system automatically:
 
-       $ ./config [options]
+     NOTE: This is not available on Windows.
+
+       $ ./config [options]                             # Unix
+
+       or
+
+       $ @config [options]                              ! OpenVMS
+
+     For the remainder of this text, the Unix form will be used in all
+     examples, please use the appropriate form for your platform.
 
      This guesses at your operating system (and compiler, if necessary) and
      configures OpenSSL based on this guess. Run ./config -t to see
@@ -140,42 +386,95 @@
      OpenSSL knows about a range of different operating system, hardware and
      compiler combinations. To see the ones it knows about, run
 
-       $ ./Configure
+       $ ./Configure                                    # Unix
+
+       or
+
+       $ perl Configure                                 # All other platforms
+
+     For the remainder of this text, the Unix form will be used in all
+     examples, please use the appropriate form for your platform.
 
      Pick a suitable name from the list that matches your system. For most
      operating systems there is a choice between using "cc" or "gcc".  When
      you have identified your system (and if necessary compiler) use this name
-     as the argument to ./Configure. For example, a "linux-elf" user would
+     as the argument to Configure. For example, a "linux-elf" user would
      run:
 
        $ ./Configure linux-elf [options]
 
-     If your system is not available, you will have to edit the Configure
-     program and add the correct configuration for your system. The
-     generic configurations "cc" or "gcc" should usually work on 32 bit
-     systems.
+     If your system isn't listed, you will have to create a configuration
+     file named Configurations/{something}.conf and add the correct
+     configuration for your system. See the available configs as examples
+     and read Configurations/README and Configurations/README.design for
+     more information.
 
-     Configure creates the file Makefile.ssl from Makefile.in and
+     The generic configurations "cc" or "gcc" should usually work on 32 bit
+     Unix-like systems.
+
+     Configure creates a build file ("Makefile" on Unix and "descrip.mms"
+     on OpenVMS) from a suitable template in Configurations, and
      defines various macros in crypto/opensslconf.h (generated from
      crypto/opensslconf.h.in).
 
+ 1c. Configure OpenSSL for building outside of the source tree.
+
+     OpenSSL can be configured to build in a build directory separate from
+     the directory with the source code.  It's done by placing yourself in
+     some other directory and invoking the configuration commands from
+     there.
+
+     Unix example:
+
+       $ mkdir /var/tmp/openssl-build
+       $ cd /var/tmp/openssl-build
+       $ /PATH/TO/OPENSSL/SOURCE/config [options]
+
+       or
+
+       $ /PATH/TO/OPENSSL/SOURCE/Configure [target] [options]
+
+     OpenVMS example:
+
+       $ set default sys$login:
+       $ create/dir [.tmp.openssl-build]
+       $ set default [.tmp.openssl-build]
+       $ @[PATH.TO.OPENSSL.SOURCE]config {options}
+
+       or
+
+       $ @[PATH.TO.OPENSSL.SOURCE]Configure {target} {options}
+
+     Windows example:
+
+       $ C:
+       $ mkdir \temp-openssl
+       $ cd \temp-openssl
+       $ perl d:\PATH\TO\OPENSSL\SOURCE\Configure {target} {options}
+
+     Paths can be relative just as well as absolute.  Configure will
+     do its best to translate them to relative paths whenever possible.
+
   2. Build OpenSSL by running:
 
-       $ make
+       $ make                                           # Unix
+       $ mms                                            ! (or mmk) OpenVMS
+       $ nmake                                          # Windows
 
-     This will build the OpenSSL libraries (libcrypto.a and libssl.a) and the
-     OpenSSL binary ("openssl"). The libraries will be built in the top-level
-     directory, and the binary will be in the "apps" directory.
+     This will build the OpenSSL libraries (libcrypto.a and libssl.a on
+     Unix, corresponding on other platforms) and the OpenSSL binary
+     ("openssl"). The libraries will be built in the top-level directory,
+     and the binary will be in the "apps" subdirectory.
 
-     If "make" fails, look at the output.  There may be reasons for
+     If the build fails, look at the output.  There may be reasons for
      the failure that aren't problems in OpenSSL itself (like missing
      standard headers).  If it is a problem with OpenSSL itself, please
-     report the problem to <openssl-bugs@openssl.org> (note that your
-     message will be recorded in the request tracker publicly readable
-     at https://www.openssl.org/community/index.html#bugs and will be
-     forwarded to a public mailing list). Include the output of "make
-     report" in your message.  Please check out the request tracker. Maybe
-     the bug was already reported or has already been fixed.
+     report the problem to <rt@openssl.org> (note that your message
+     will be recorded in the request tracker publicly readable at
+     https://www.openssl.org/community/index.html#bugs and will be
+     forwarded to a public mailing list). Please check out the request
+     tracker. Maybe the bug was already reported or has already been
+     fixed.
 
      [If you encounter assembler error messages, try the "no-asm"
      configuration option as an immediate fix.]
@@ -185,142 +484,128 @@
 
   3. After a successful build, the libraries should be tested. Run:
 
-       $ make test
+       $ make test                                      # Unix
+       $ mms test                                       ! OpenVMS
+       $ nmake test                                     # Windows
 
      If some tests fail, look at the output.  There may be reasons for
      the failure that isn't a problem in OpenSSL itself (like a
      malfunction with Perl).  You may want increased verbosity, that
      can be accomplished like this:
 
-       $ HARNESS_VERBOSE=yes make test
+       $ make VERBOSE=1 test                            # Unix
+
+       $ mms /macro=(VERBOSE=1) test                    ! OpenVMS
+
+       $ nmake VERBOSE=1 test                           # Windows
 
      If you want to run just one or a few specific tests, you can use
      the make variable TESTS to specify them, like this:
 
-       $ make TESTS='test_rsa test_dsa' test
+       $ make TESTS='test_rsa test_dsa' test            # Unix
+       $ mms/macro="TESTS=test_rsa test_dsa" test       ! OpenVMS
+       $ nmake TESTS='test_rsa test_dsa' test           # Windows
 
-     And of course, you can combine:
+     And of course, you can combine (Unix example shown):
        
-       $ HARNESS_VERBOSE=yes make TESTS='test_rsa test_dsa' test
+       $ make VERBOSE=1 TESTS='test_rsa test_dsa' test
 
      You can find the list of available tests like this:
 
-       $ make list-tests
+       $ make list-tests                                # Unix
+       $ mms list-tests                                 ! OpenVMS
+       $ nmake list-tests                               # Windows
 
      Have a look at the manual for the perl module Test::Harness to
      see what other HARNESS_* variables there are.
 
      If you find a problem with OpenSSL itself, try removing any
-     compiler optimization flags from the CFLAG line in Makefile and
-     run "make clean; make".
+     compiler optimization flags from the CFLAGS line in Makefile and
+     run "make clean; make" or corresponding.
 
-     Please send a bug report to <openssl-bugs@openssl.org>, and when
-     you do, please run the following and include the output in your
-     report:
-
-       $ make report
+     Please send a bug reports to <rt@openssl.org>.
 
   4. If everything tests ok, install OpenSSL with
 
-       $ make install
+       $ make install                                   # Unix
+       $ mms install                                    ! OpenVMS
 
-     This will create the installation directory (if it does not exist) and
-     then the following subdirectories:
+     This will install all the software components in this directory
+     tree under PREFIX (the directory given with --prefix or its
+     default):
 
-       certs           Initially empty, this is the default location
-                       for certificate files.
-       man/man1        Manual pages for the 'openssl' command line tool
-       man/man3        Manual pages for the libraries (very incomplete)
-       misc            Various scripts.
-       private         Initially empty, this is the default location
-                       for private key files.
+       Unix:
 
-     If you didn't choose a different installation prefix, the
-     following additional subdirectories will be created:
+         bin/           Contains the openssl binary and a few other
+                        utility scripts.
+         include/openssl
+                        Contains the header files needed if you want
+                        to build your own programs that use libcrypto
+                        or libssl.
+         lib            Contains the OpenSSL library files.
+         lib/engines    Contains the OpenSSL dynamically loadable engines.
+         share/man/{man1,man3,man5,man7}
+                        Contains the OpenSSL man-pages.
+         share/doc/openssl/html/{man1,man3,man5,man7}
+                        Contains the HTML rendition of the man-pages.
 
-       bin             Contains the openssl binary and a few other 
-                       utility programs. 
-       include/openssl Contains the header files needed if you want to
-                       compile programs with libcrypto or libssl.
-       lib             Contains the OpenSSL library files themselves.
+       OpenVMS ('arch' is replaced with the architecture name, "Alpha"
+       or "ia64"):
 
-     Use "make install_sw" to install the software without documentation,
-     and "install_docs_html" to install HTML renditions of the manual
-     pages.
+         [.EXE.'arch']  Contains the openssl binary and a few other
+                        utility scripts.
+         [.include.openssl]
+                        Contains the header files needed if you want
+                        to build your own programs that use libcrypto
+                        or libssl.
+         [.LIB.'arch']  Contains the OpenSSL library files.
+         [.ENGINES.'arch']
+                        Contains the OpenSSL dynamically loadable engines.
+         [.SYS$STARTUP] Contains startup, login and shutdown scripts.
+                        These define appropriate logical names and
+                        command symbols.
+                        
+
+     Additionally, install will add the following directories under
+     OPENSSLDIR (the directory given with --openssldir or its default)
+     for you convenience:
+
+         certs          Initially empty, this is the default location
+                        for certificate files.
+         private        Initially empty, this is the default location
+                        for private key files.
+         misc           Various scripts.
 
      Package builders who want to configure the library for standard
      locations, but have the package installed somewhere else so that
      it can easily be packaged, can use
 
-       $ make DESTDIR=/tmp/package-root install
+       $ make DESTDIR=/tmp/package-root install         # Unix
+       $ mms/macro="DESTDIR=TMP:[PACKAGE-ROOT]" install ! OpenVMS
 
      The specified destination directory will be prepended to all
-     installation target filenames.
+     installation target paths.
 
-
-  NOTE: The header files used to reside directly in the include
-  directory, but have now been moved to include/openssl so that
-  OpenSSL can co-exist with other libraries which use some of the
-  same filenames.  This means that applications that use OpenSSL
-  should now use C preprocessor directives of the form
-
-       #include <openssl/ssl.h>
-
-  instead of "#include <ssl.h>", which was used with library versions
-  up to OpenSSL 0.9.2b.
-
-  If you install a new version of OpenSSL over an old library version,
-  you should delete the old header files in the include directory.
-
-  Compatibility issues:
+  Compatibility issues with previous OpenSSL versions:
 
   *  COMPILING existing applications
 
-     To compile an application that uses old filenames -- e.g.
-     "#include <ssl.h>" --, it will usually be enough to find
-     the CFLAGS definition in the application's Makefile and
-     add a C option such as
+     OpenSSL 1.1 hides a number of structures that were previously
+     open.  This includes all internal libssl structures and a number
+     of EVP types.  Accessor functions have been added to allow
+     controlled access to the structures' data.
 
-          -I/usr/local/ssl/include/openssl
+     This means that some software needs to be rewritten to adapt to
+     the new ways of doing things.  This often amounts to allocating
+     an instance of a structure explicitly where you could previously
+     allocate them on the stack as automatic variables, and using the
+     provided accessor functions where you would previously access a
+     structure's field directly.
 
-     to it.
+     <TBA>
 
-     But don't delete the existing -I option that points to
-     the ..../include directory!  Otherwise, OpenSSL header files
-     could not #include each other.
-
-  *  WRITING applications
-
-     To write an application that is able to handle both the new
-     and the old directory layout, so that it can still be compiled
-     with library versions up to OpenSSL 0.9.2b without bothering
-     the user, you can proceed as follows:
-
-     -  Always use the new filename of OpenSSL header files,
-        e.g. #include <openssl/ssl.h>.
-
-     -  Create a directory "incl" that contains only a symbolic
-        link named "openssl", which points to the "include" directory
-        of OpenSSL.
-        For example, your application's Makefile might contain the
-        following rule, if OPENSSLDIR is a pathname (absolute or
-        relative) of the directory where OpenSSL resides:
-
-        incl/openssl:
-        	-mkdir incl
-        	cd $(OPENSSLDIR) # Check whether the directory really exists
-        	-ln -s `cd $(OPENSSLDIR); pwd`/include incl/openssl
-
-        You will have to add "incl/openssl" to the dependencies
-        of those C files that include some OpenSSL header file.
-
-     -  Add "-Iincl" to your CFLAGS.
-
-     With these additions, the OpenSSL header files will be available
-     under both name variants if an old library version is used:
-     Your application can reach them under names like <openssl/foo.h>,
-     while the header files still are able to #include each other
-     with names of the form <foo.h>.
+     Some APIs have changed as well.  However, older APIs have been
+     preserved when possible.
 
 
  Note on multi-threading
@@ -347,18 +632,12 @@
  Note on shared libraries
  ------------------------
 
- Shared libraries have certain caveats.  Binary backward compatibility
- can't be guaranteed before OpenSSL version 1.0.  The only reason to
- use them would be to conserve memory on systems where several programs
- are using OpenSSL.
-
- For some systems, the OpenSSL Configure script knows what is needed to
- build shared libraries for libcrypto and libssl.  On these systems,
- the shared libraries are currently not created by default, but giving
- the option "shared" will get them created.  This method supports Makefile
- targets for shared library creation, like linux-shared.  Those targets
- can currently be used on their own just as well, but this is expected
- to change in future versions of OpenSSL.
+ For most systems the OpenSSL Configure script knows what is needed to
+ build shared libraries for libcrypto and libssl. On these systems
+ the shared libraries will be created by default. This can be suppressed and
+ only static libraries created by using the "no-shared" option. On systems
+ where OpenSSL does not know how to build shared libraries the "no-shared"
+ option will be forced and only static libraries will be created.
 
  Note on random number generation
  --------------------------------
@@ -372,24 +651,3 @@
  Please check out the manual pages for RAND_add(), RAND_bytes(), RAND_egd(),
  and the FAQ for more information.
 
- Note on support for multiple builds
- -----------------------------------
-
- OpenSSL is usually built in its source tree.  Unfortunately, this doesn't
- support building for multiple platforms from the same source tree very well.
- It is however possible to build in a separate tree through the use of lots
- of symbolic links, which should be prepared like this:
-
-	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
-	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
-	(cd $OPENSSL_SOURCE; find . -type f) | while read F; do
-		mkdir -p `dirname $F`
-		rm -f $F; ln -s $OPENSSL_SOURCE/$F $F
-		echo $F '->' $OPENSSL_SOURCE/$F
-	done
-	make -f Makefile.in clean
-
- OPENSSL_SOURCE is an environment variable that contains the absolute (this
- is important!) path to the OpenSSL source tree.
-
- Also, operations like 'make update' should still be made in the source tree.

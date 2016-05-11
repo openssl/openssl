@@ -387,12 +387,14 @@ OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void)
 }
 
 
+#ifndef OPENSSL_NO_STDIO
 void OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
                                       const char *config_file)
 {
     free(settings->config_name);
     settings->config_name = config_file == NULL ? NULL : strdup(config_file);
 }
+#endif
 
 void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings)
 {

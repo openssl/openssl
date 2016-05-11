@@ -47,7 +47,7 @@ B<X509_load_cert_file>.
 
 Constant B<FILETYPE_DEFAULT> with NULL filename causes these functions
 to load default certificate store file (see
-L<X509_STORE_set_default_paths>.
+L<X509_STORE_set_default_paths(3)>.
 
 
 Functions return number of objects loaded from file or 0 in case of

@@ -237,6 +237,7 @@ DEFINE_STACK_OF(PKCS7)
 # define PKCS7_NOCRL             0x2000
 # define PKCS7_PARTIAL           0x4000
 # define PKCS7_REUSE_DIGEST      0x8000
+# define PKCS7_NO_DUAL_CONTENT   0x10000
 
 /* Flags: for compatibility with older code */
 

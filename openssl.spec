@@ -8,11 +8,11 @@ Summary: Secure Sockets Layer and cryptography libraries and tools
 Name: openssl
 Version: 1.1.0
 #Version: %{libmaj}.%{libmin}.%{librel}%{librev}
-Source0: ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
+Source0: https://www.openssl.org/source/%{name}-%{version}.tar.gz
 License: OpenSSL
 Group: System Environment/Libraries
 Provides: SSL
-URL: http://www.openssl.org/
+URL: https://www.openssl.org/
 Packager: Damien Miller <djm@mindrot.org>
 BuildRoot:   /var/tmp/%{name}-%{version}-root
 

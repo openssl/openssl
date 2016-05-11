@@ -37,7 +37,9 @@ ahead has been set or not.
 =head1 NOTES
 
 These functions have no impact when used with DTLS. The return values for
-SSL_CTX_get_read_head() and SSL_get_read_ahead() are undefined for DTLS.
+SSL_CTX_get_read_head() and SSL_get_read_ahead() are undefined for DTLS. Setting
+B<read_ahead> can impact the behaviour of the SSL_pending() function
+(see L<SSL_pending(3)>).
 
 =head1 RETURN VALUES
 
@@ -46,6 +48,6 @@ and non zero otherwise.
 
 =head1 SEE ALSO
 
-L<ssl(3)>
+L<ssl(3)>, L<SSL_pending(3)>
 
 =cut

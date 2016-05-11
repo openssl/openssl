@@ -58,9 +58,7 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/bio.h>
-#ifndef OPENSSL_NO_COMP
-# include <openssl/comp.h>
-#endif
+#include <openssl/comp.h>
 #include "cms_lcl.h"
 
 #ifdef ZLIB

@@ -64,6 +64,7 @@
 #include <openssl/x509v3.h>
 #include "internal/x509_int.h"
 #include <openssl/bn.h>
+#include "ext_dat.h"
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
@@ -395,108 +396,6 @@ static char *strip_spaces(char *name)
     return p;
 }
 
-/* hex string utilities */
-
-/*
- * Given a buffer of length 'len' return a OPENSSL_malloc'ed string with its
- * hex representation @@@ (Contents of buffer are always kept in ASCII, also
- * on EBCDIC machines)
- */
-
-char *hex_to_string(const unsigned char *buffer, long len)
-{
-    char *tmp, *q;
-    const unsigned char *p;
-    int i;
-    const static char hexdig[] = "0123456789ABCDEF";
-    if (!buffer || !len)
-        return NULL;
-    if ((tmp = OPENSSL_malloc(len * 3 + 1)) == NULL) {
-        X509V3err(X509V3_F_HEX_TO_STRING, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-    q = tmp;
-    for (i = 0, p = buffer; i < len; i++, p++) {
-        *q++ = hexdig[(*p >> 4) & 0xf];
-        *q++ = hexdig[*p & 0xf];
-        *q++ = ':';
-    }
-    q[-1] = 0;
-#ifdef CHARSET_EBCDIC
-    ebcdic2ascii(tmp, tmp, q - tmp - 1);
-#endif
-
-    return tmp;
-}
-
-/*
- * Give a string of hex digits convert to a buffer
- */
-
-unsigned char *string_to_hex(const char *str, long *len)
-{
-    unsigned char *hexbuf, *q;
-    unsigned char ch, cl, *p;
-    if (!str) {
-        X509V3err(X509V3_F_STRING_TO_HEX, X509V3_R_INVALID_NULL_ARGUMENT);
-        return NULL;
-    }
-    if ((hexbuf = OPENSSL_malloc(strlen(str) >> 1)) == NULL)
-        goto err;
-    for (p = (unsigned char *)str, q = hexbuf; *p;) {
-        ch = *p++;
-#ifdef CHARSET_EBCDIC
-        ch = os_toebcdic[ch];
-#endif
-        if (ch == ':')
-            continue;
-        cl = *p++;
-#ifdef CHARSET_EBCDIC
-        cl = os_toebcdic[cl];
-#endif
-        if (!cl) {
-            X509V3err(X509V3_F_STRING_TO_HEX, X509V3_R_ODD_NUMBER_OF_DIGITS);
-            OPENSSL_free(hexbuf);
-            return NULL;
-        }
-        if (isupper(ch))
-            ch = tolower(ch);
-        if (isupper(cl))
-            cl = tolower(cl);
-
-        if ((ch >= '0') && (ch <= '9'))
-            ch -= '0';
-        else if ((ch >= 'a') && (ch <= 'f'))
-            ch -= 'a' - 10;
-        else
-            goto badhex;
-
-        if ((cl >= '0') && (cl <= '9'))
-            cl -= '0';
-        else if ((cl >= 'a') && (cl <= 'f'))
-            cl -= 'a' - 10;
-        else
-            goto badhex;
-
-        *q++ = (ch << 4) | cl;
-    }
-
-    if (len)
-        *len = q - hexbuf;
-
-    return hexbuf;
-
- err:
-    OPENSSL_free(hexbuf);
-    X509V3err(X509V3_F_STRING_TO_HEX, ERR_R_MALLOC_FAILURE);
-    return NULL;
-
- badhex:
-    OPENSSL_free(hexbuf);
-    X509V3err(X509V3_F_STRING_TO_HEX, X509V3_R_ILLEGAL_HEX_DIGIT);
-    return NULL;
-
-}
 
 /*
  * V2I name comparison function: returns zero if 'name' matches cmp or cmp.*
@@ -636,7 +535,7 @@ typedef int (*equal_fn) (const unsigned char *pattern, size_t pattern_len,
 
 /* Skip pattern prefix to match "wildcard" subject */
 static void skip_prefix(const unsigned char **p, size_t *plen,
-                        const unsigned char *subject, size_t subject_len,
+                        size_t subject_len,
                         unsigned int flags)
 {
     const unsigned char *pattern = *p;
@@ -671,7 +570,7 @@ static int equal_nocase(const unsigned char *pattern, size_t pattern_len,
                         const unsigned char *subject, size_t subject_len,
                         unsigned int flags)
 {
-    skip_prefix(&pattern, &pattern_len, subject, subject_len, flags);
+    skip_prefix(&pattern, &pattern_len, subject_len, flags);
     if (pattern_len != subject_len)
         return 0;
     while (pattern_len) {
@@ -700,7 +599,7 @@ static int equal_case(const unsigned char *pattern, size_t pattern_len,
                       const unsigned char *subject, size_t subject_len,
                       unsigned int flags)
 {
-    skip_prefix(&pattern, &pattern_len, subject, subject_len, flags);
+    skip_prefix(&pattern, &pattern_len, subject_len, flags);
     if (pattern_len != subject_len)
         return 0;
     return !memcmp(pattern, subject, pattern_len);
@@ -978,14 +877,12 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
         GENERAL_NAMES_free(gens);
         if (rv != 0)
             return rv;
-        if (cnid == NID_undef
-            || (san_present
-                && !(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT)))
+        if (san_present && !(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT))
             return 0;
     }
 
     /* We're done if CN-ID is not pertinent */
-    if (cnid == NID_undef)
+    if (cnid == NID_undef || (flags & X509_CHECK_FLAG_NEVER_CHECK_SUBJECT))
         return 0;
 
     i = -1;
@@ -1303,7 +1200,7 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
                              unsigned long chtype)
 {
     CONF_VALUE *v;
-    int i, mval;
+    int i, mval, spec_char, plus_char;
     char *p, *type;
     if (!nm)
         return 0;
@@ -1314,25 +1211,26 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
         /*
          * Skip past any leading X. X: X, etc to allow for multiple instances
          */
-        for (p = type; *p; p++)
+        for (p = type; *p; p++) {
 #ifndef CHARSET_EBCDIC
-            if ((*p == ':') || (*p == ',') || (*p == '.'))
+            spec_char = ((*p == ':') || (*p == ',') || (*p == '.'));
 #else
-            if ((*p == os_toascii[':']) || (*p == os_toascii[','])
-                || (*p == os_toascii['.']))
+            spec_char = ((*p == os_toascii[':']) || (*p == os_toascii[','])
+                    || (*p == os_toascii['.']));
 #endif
-            {
+            if (spec_char) {
                 p++;
                 if (*p)
                     type = p;
                 break;
             }
+        }
 #ifndef CHARSET_EBCDIC
-        if (*type == '+')
+        plus_char = (*type == '+');
 #else
-        if (*type == os_toascii['+'])
+        plus_char = (*type == os_toascii['+']);
 #endif
-        {
+        if (plus_char) {
             mval = -1;
             type++;
         } else

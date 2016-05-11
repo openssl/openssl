@@ -151,7 +151,7 @@ this option prevents output of the encoded version of the request.
 
 =item B<-pubkey>
 
-outputs the the certificate's SubjectPublicKeyInfo block in PEM format.
+outputs the certificate's SubjectPublicKeyInfo block in PEM format.
 
 =item B<-modulus>
 
@@ -242,8 +242,6 @@ this outputs the certificate in the form of a C source file.
 =back
 
 =head2 TRUST SETTINGS
-
-Please note these options are currently experimental and may well change.
 
 A B<trusted certificate> is an ordinary certificate which has several
 additional pieces of information attached to it such as the permitted

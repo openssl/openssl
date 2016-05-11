@@ -162,7 +162,7 @@ implementation specific data block has been copied.
 The destination B<EVP_CIPHER_CTX> is passed to the control with the
 B<ptr> parameter.
 The implementation specific data block is reached with
-EVP_CIPHER_CTX_cipher_data().
+EVP_CIPHER_CTX_get_cipher_data().
 
 =item EVP_CIPH_FLAG_DEFAULT_ASN1
 
@@ -193,7 +193,7 @@ The EVP routines will simply give them control and do nothing more.
 
 =item EVP_CIPH_FLAG_AEAD_CIPHER
 
-This indicates that this is a AEAD cipher implementation.
+This indicates that this is an AEAD cipher implementation.
 
 =item EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
 
@@ -206,6 +206,9 @@ I could use some help explaining this one!
 =back
 
 =back
+
+EVP_CIPHER_meth_set_impl_ctx_size() sets the size of the EVP_CIPHER's
+implementation context so that it can be automatically allocated.
 
 EVP_CIPHER_meth_set_init() sets the cipher init function for
 B<cipher>.
@@ -225,7 +228,7 @@ extra cleanup before the method's privata data structure is cleaned
 out and freed.
 Note that the cleanup function is passed a B<EVP_CIPHER_CTX *>, the
 private data structure is then available with
-EVP_CIPHER_CTX_cipher_data().
+EVP_CIPHER_CTX_get_cipher_data().
 This cleanup function is called by EVP_CIPHER_CTX_reset() and
 EVP_CIPHER_CTX_free().
 

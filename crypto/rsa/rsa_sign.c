@@ -61,6 +61,7 @@
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 #include "rsa_locl.h"
 
 /* Size of an SSL signature: MD5+SHA1 */
@@ -235,11 +236,6 @@ int int_rsa_verify(int dtype, const unsigned char *m,
 
         sigtype = OBJ_obj2nid(sig->algor->algorithm);
 
-#ifdef RSA_DEBUG
-        /* put a backward compatibility flag in EAY */
-        fprintf(stderr, "in(%s) expect(%s)\n", OBJ_nid2ln(sigtype),
-                OBJ_nid2ln(dtype));
-#endif
         if (sigtype != dtype) {
             RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_ALGORITHM_MISMATCH);
             goto err;

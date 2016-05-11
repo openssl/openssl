@@ -62,7 +62,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 
-void openssl_add_all_digests_internal(void)
+void openssl_add_all_digests_int(void)
 {
 #ifndef OPENSSL_NO_MD4
     EVP_add_digest(EVP_md4());
@@ -89,5 +89,9 @@ void openssl_add_all_digests_internal(void)
     EVP_add_digest(EVP_sha512());
 #ifndef OPENSSL_NO_WHIRLPOOL
     EVP_add_digest(EVP_whirlpool());
+#endif
+#ifndef OPENSSL_NO_BLAKE2
+    EVP_add_digest(EVP_blake2b512());
+    EVP_add_digest(EVP_blake2s256());
 #endif
 }

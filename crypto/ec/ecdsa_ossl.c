@@ -95,6 +95,11 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         return 0;
     }
 
+    if (!EC_KEY_can_sign(eckey)) {
+        ECerr(EC_F_ECDSA_SIGN_SETUP, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        return 0;
+    }
+
     if (ctx_in == NULL) {
         if ((ctx = BN_CTX_new()) == NULL) {
             ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_MALLOC_FAILURE);
@@ -254,6 +259,11 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
         return NULL;
     }
 
+    if (!EC_KEY_can_sign(eckey)) {
+        ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        return NULL;
+    }
+
     ret = ECDSA_SIG_new();
     if (ret == NULL) {
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_MALLOC_FAILURE);
@@ -388,6 +398,11 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
     if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL ||
         (pub_key = EC_KEY_get0_public_key(eckey)) == NULL || sig == NULL) {
         ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, EC_R_MISSING_PARAMETERS);
+        return -1;
+    }
+
+    if (!EC_KEY_can_sign(eckey)) {
+        ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
         return -1;
     }
 

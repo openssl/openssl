@@ -32,7 +32,7 @@
 # Itanium performance should remain the same as the "256B" version,
 # i.e. ~8.5 cycles.
 
-$output=shift and (open STDOUT,">$output" or die "can't open $output: $!");
+$output=pop and (open STDOUT,">$output" or die "can't open $output: $!");
 
 if ($^O eq "hpux") {
     $ADDP="addp4";

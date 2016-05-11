@@ -64,7 +64,7 @@
 /*
  * The usage is quite simple, initialize an ASN1 structure, get a BIO from it
  * then any data written through the BIO will end up translated to
- * approptiate format on the fly. The data is streamed out and does *not*
+ * appropriate format on the fly. The data is streamed out and does *not*
  * need to be all held in memory at once. When the BIO is flushed the output
  * is finalized and any signatures etc written out. The BIO is a 'proper'
  * BIO and can handle non blocking I/O correctly. The usage is simple. The
@@ -119,7 +119,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
     BIO_asn1_set_suffix(asn_bio, ndef_suffix, ndef_suffix_free);
 
     /*
-     * Now let callback prepend any digest, cipher etc BIOs ASN1 structure
+     * Now let callback prepends any digest, cipher etc BIOs ASN1 structure
      * needs.
      */
 

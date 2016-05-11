@@ -64,8 +64,6 @@
 
 #if defined(OPENSSL_SYS_VMS)
 # include <sys/timeb.h>
-#elif defined(OPENSSL_SYS_NETWARE) && !defined(_WINSOCK2API_)
-# include <sys/timeval.h>
 #elif defined(OPENSSL_SYS_VXWORKS)
 # include <sys/times.h>
 #elif !defined(OPENSSL_SYS_WIN32)
@@ -274,25 +272,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
     return (ret);
 }
 
-/*
- * As it's impossible to use stream ciphers in "datagram" mode, this
- * simple filter is designed to disengage them in DTLS. Unfortunately
- * there is no universal way to identify stream SSL_CIPHER, so we have
- * to explicitly list their SSL_* codes. Currently RC4 is the only one
- * available, but if new ones emerge, they will have to be added...
- */
-const SSL_CIPHER *dtls1_get_cipher(unsigned int u)
-{
-    const SSL_CIPHER *ciph = ssl3_get_cipher(u);
-
-    if (ciph != NULL) {
-        if (ciph->algorithm_enc == SSL_RC4)
-            return NULL;
-    }
-
-    return ciph;
-}
-
 void dtls1_start_timer(SSL *s)
 {
 #ifndef OPENSSL_NO_SCTP
@@ -479,7 +458,7 @@ static void get_current_time(struct timeval *t)
 #define LISTEN_SUCCESS              2
 #define LISTEN_SEND_VERIFY_REQUEST  1
 
-
+#ifndef OPENSSL_NO_SOCK
 int DTLSv1_listen(SSL *s, BIO_ADDR *client)
 {
     int next, n, ret = 0, clearpkt = 0;
@@ -818,7 +797,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             }
 
             /*
-             * This is unneccessary if rbio and wbio are one and the same - but
+             * This is unnecessary if rbio and wbio are one and the same - but
              * maybe they're not. We ignore errors here - some BIOs do not
              * support this.
              */
@@ -887,11 +866,11 @@ end:
     }
     return ret;
 }
+#endif
 
 static int dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)
 {
-    unsigned char *p = (unsigned char *)s->init_buf->data;
-    dtls1_set_message_header(s, p, htype, len, 0, len);
+    dtls1_set_message_header(s, htype, len, 0, len);
     s->init_num = (int)len + DTLS1_HM_HEADER_LENGTH;
     s->init_off = 0;
     /* Buffer the message to handle re-xmits */
@@ -908,6 +887,14 @@ static int dtls1_handshake_write(SSL *s)
 }
 
 #ifndef OPENSSL_NO_HEARTBEATS
+
+#define HEARTBEAT_SIZE(payload, padding) ( \
+    1 /* heartbeat type */ + \
+    2 /* heartbeat length */ + \
+    (payload) + (padding))
+
+#define HEARTBEAT_SIZE_STD(payload) HEARTBEAT_SIZE(payload, 16)
+
 int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
 {
     unsigned char *pl;
@@ -919,32 +906,27 @@ int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
         s->msg_callback(0, s->version, DTLS1_RT_HEARTBEAT,
                         p, length, s, s->msg_callback_arg);
 
-    /* Read type and payload length first */
-    if (1 + 2 + 16 > length)
+    /* Read type and payload length */
+    if (HEARTBEAT_SIZE_STD(0) > length)
         return 0;               /* silently discard */
     if (length > SSL3_RT_MAX_PLAIN_LENGTH)
         return 0;               /* silently discard per RFC 6520 sec. 4 */
 
     hbtype = *p++;
     n2s(p, payload);
-    if (1 + 2 + payload + 16 > length)
+    if (HEARTBEAT_SIZE_STD(payload) > length)
         return 0;               /* silently discard per RFC 6520 sec. 4 */
     pl = p;
 
     if (hbtype == TLS1_HB_REQUEST) {
         unsigned char *buffer, *bp;
-        unsigned int write_length = 1 /* heartbeat type */  +
-            2 /* heartbeat length */  +
-            payload + padding;
+        unsigned int write_length = HEARTBEAT_SIZE(payload, padding);
         int r;
 
         if (write_length > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
 
-        /*
-         * Allocate memory for the response, size is 1 byte message type,
-         * plus 2 bytes payload length, plus payload, plus padding
-         */
+        /* Allocate memory for the response. */
         buffer = OPENSSL_malloc(write_length);
         if (buffer == NULL)
             return -1;
@@ -996,6 +978,7 @@ int dtls1_heartbeat(SSL *s)
     int ret = -1;
     unsigned int payload = 18;  /* Sequence number + random bytes */
     unsigned int padding = 16;  /* Use minimum padding */
+    unsigned int size;
 
     /* Only send if peer supports and accepts HB requests... */
     if (!(s->tlsext_heartbeat & SSL_DTLSEXT_HB_ENABLED) ||
@@ -1020,13 +1003,9 @@ int dtls1_heartbeat(SSL *s)
      * Create HeartBeat message, we just use a sequence number
      * as payload to distuingish different messages and add
      * some random stuff.
-     *  - Message Type, 1 byte
-     *  - Payload Length, 2 bytes (unsigned int)
-     *  - Payload, the sequence number (2 bytes uint)
-     *  - Payload, random bytes (16 bytes uint)
-     *  - Padding
      */
-    buf = OPENSSL_malloc(1 + 2 + payload + padding);
+    size = HEARTBEAT_SIZE(payload, padding);
+    buf = OPENSSL_malloc(size);
     if (buf == NULL) {
         SSLerr(SSL_F_DTLS1_HEARTBEAT, ERR_R_MALLOC_FAILURE);
         return -1;
@@ -1050,11 +1029,11 @@ int dtls1_heartbeat(SSL *s)
         goto err;
     }
 
-    ret = dtls1_write_bytes(s, DTLS1_RT_HEARTBEAT, buf, 3 + payload + padding);
+    ret = dtls1_write_bytes(s, DTLS1_RT_HEARTBEAT, buf, size);
     if (ret >= 0) {
         if (s->msg_callback)
             s->msg_callback(1, s->version, DTLS1_RT_HEARTBEAT,
-                            buf, 3 + payload + padding,
+                            buf, size,
                             s, s->msg_callback_arg);
 
         dtls1_start_timer(s);

@@ -167,7 +167,10 @@ int rsa_main(int argc, char **argv)
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     int i, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, check = 0;
-    int noout = 0, modulus = 0, pubin = 0, pubout = 0, pvk_encr = 2, ret = 1;
+    int noout = 0, modulus = 0, pubin = 0, pubout = 0, ret = 1;
+# if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
+    int pvk_encr = 2;
+#endif
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, rsa_options);
@@ -217,7 +220,7 @@ int rsa_main(int argc, char **argv)
         case OPT_RSAPUBKEY_OUT:
             pubout = 2;
             break;
-#ifndef OPENSSL_NO_RC4
+# if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
         case OPT_PVK_STRONG:
             pvk_encr = 2;
             break;
@@ -252,7 +255,9 @@ int rsa_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = (text && !pubin) || (!pubout && !noout) ? 1 : 0;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
@@ -305,8 +310,10 @@ int rsa_main(int argc, char **argv)
     }
 
     if (modulus) {
+        BIGNUM *n;
+        RSA_get0_key(rsa, &n, NULL, NULL);
         BIO_printf(out, "Modulus=");
-        BN_print(out, rsa->n);
+        BN_print(out, n);
         BIO_printf(out, "\n");
     }
 

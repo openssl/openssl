@@ -63,7 +63,10 @@
 PKCS8_PRIV_KEY_INFO *PKCS8_decrypt(X509_SIG *p8, const char *pass,
                                    int passlen)
 {
-    return PKCS12_item_decrypt_d2i(p8->algor,
+    X509_ALGOR *dalg;
+    ASN1_OCTET_STRING *doct;
+    X509_SIG_get0(&dalg, &doct, p8);
+    return PKCS12_item_decrypt_d2i(dalg,
                                    ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), pass,
-                                   passlen, p8->digest, 1);
+                                   passlen, doct, 1);
 }

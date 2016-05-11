@@ -68,24 +68,16 @@ X509_INFO *X509_INFO_new(void)
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_X509_INFO_NEW, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
-    ret->references = 1;
-    return (ret);
+
+    return ret;
 }
 
 void X509_INFO_free(X509_INFO *x)
 {
-    int i;
-
     if (x == NULL)
         return;
-
-    i = CRYPTO_add(&x->references, -1, CRYPTO_LOCK_X509_INFO);
-    REF_PRINT_COUNT("X509_INFO", x);
-    if (i > 0)
-        return;
-    REF_ASSERT_ISNT(i < 0);
 
     X509_free(x->x509);
     X509_CRL_free(x->crl);

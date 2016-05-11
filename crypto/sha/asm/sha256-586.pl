@@ -63,6 +63,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"sha512-586.pl",$ARGV[$#ARGV] eq "386");
 
 $xmm=$avx=0;
@@ -1279,3 +1282,5 @@ sub bodyx_00_15 () {			# +10%
 &function_end_B("sha256_block_data_order");
 
 &asm_finish();
+
+close STDOUT;

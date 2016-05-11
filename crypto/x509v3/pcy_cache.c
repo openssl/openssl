@@ -224,9 +224,9 @@ const X509_POLICY_CACHE *policy_cache_set(X509 *x)
 {
 
     if (x->policy_cache == NULL) {
-        CRYPTO_w_lock(CRYPTO_LOCK_X509);
+        CRYPTO_THREAD_write_lock(x->lock);
         policy_cache_new(x);
-        CRYPTO_w_unlock(CRYPTO_LOCK_X509);
+        CRYPTO_THREAD_unlock(x->lock);
     }
 
     return x->policy_cache;

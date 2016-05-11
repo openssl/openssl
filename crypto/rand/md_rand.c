@@ -108,13 +108,6 @@
  *
  */
 
-#ifdef MD_RAND_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -132,6 +125,7 @@
 #include <openssl/rand.h>
 #include <openssl/async.h>
 #include "rand_lcl.h"
+#include "internal/threads.h"
 
 #include <openssl/err.h>
 
@@ -154,12 +148,15 @@ static long md_count[2] = { 0, 0 };
 static double entropy = 0;
 static int initialized = 0;
 
-static unsigned int crypto_lock_rand = 0; /* may be set only when a thread
-                                           * holds CRYPTO_LOCK_RAND (to
-                                           * prevent double locking) */
-/* access to lockin_thread is synchronized by CRYPTO_LOCK_RAND2 */
+static CRYPTO_RWLOCK *rand_lock = NULL;
+static CRYPTO_RWLOCK *rand_tmp_lock = NULL;
+static CRYPTO_ONCE rand_lock_init = CRYPTO_ONCE_STATIC_INIT;
+
+/* May be set only when a thread holds rand_lock (to prevent double locking) */
+static unsigned int crypto_lock_rand = 0;
+/* access to locking_threadid is synchronized by rand_tmp_lock */
 /* valid iff crypto_lock_rand is set */
-static CRYPTO_THREADID locking_threadid;
+static CRYPTO_THREAD_ID locking_threadid;
 
 #ifdef PREDICT
 int rand_predictable = 0;
@@ -190,6 +187,12 @@ static RAND_METHOD rand_meth = {
     rand_status
 };
 
+static void do_rand_lock_init(void)
+{
+    rand_lock = CRYPTO_THREAD_lock_new();
+    rand_tmp_lock = CRYPTO_THREAD_lock_new();
+}
+
 RAND_METHOD *RAND_OpenSSL(void)
 {
     return (&rand_meth);
@@ -205,6 +208,8 @@ static void rand_cleanup(void)
     md_count[1] = 0;
     entropy = 0;
     initialized = 0;
+    CRYPTO_THREAD_lock_free(rand_lock);
+    CRYPTO_THREAD_lock_free(rand_tmp_lock);
 }
 
 static int rand_add(const void *buf, int num, double add)
@@ -238,18 +243,19 @@ static int rand_add(const void *buf, int num, double add)
     if (m == NULL)
         goto err;
 
+    CRYPTO_THREAD_run_once(&rand_lock_init, do_rand_lock_init);
+
     /* check if we already have the lock */
     if (crypto_lock_rand) {
-        CRYPTO_THREADID cur;
-        CRYPTO_THREADID_current(&cur);
-        CRYPTO_r_lock(CRYPTO_LOCK_RAND2);
-        do_not_lock = !CRYPTO_THREADID_cmp(&locking_threadid, &cur);
-        CRYPTO_r_unlock(CRYPTO_LOCK_RAND2);
+        CRYPTO_THREAD_ID cur = CRYPTO_THREAD_get_current_id();
+        CRYPTO_THREAD_read_lock(rand_tmp_lock);
+        do_not_lock = CRYPTO_THREAD_compare_id(locking_threadid, cur);
+        CRYPTO_THREAD_unlock(rand_tmp_lock);
     } else
         do_not_lock = 0;
 
     if (!do_not_lock)
-        CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+        CRYPTO_THREAD_write_lock(rand_lock);
     st_idx = state_index;
 
     /*
@@ -281,7 +287,7 @@ static int rand_add(const void *buf, int num, double add)
     md_count[1] += (num / MD_DIGEST_LENGTH) + (num % MD_DIGEST_LENGTH > 0);
 
     if (!do_not_lock)
-        CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+        CRYPTO_THREAD_unlock(rand_lock);
 
     for (i = 0; i < num; i += MD_DIGEST_LENGTH) {
         j = (num - i);
@@ -335,7 +341,7 @@ static int rand_add(const void *buf, int num, double add)
     }
 
     if (!do_not_lock)
-        CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+        CRYPTO_THREAD_write_lock(rand_lock);
     /*
      * Don't just copy back local_md into md -- this could mean that other
      * thread's seeding remains without effect (except for the incremented
@@ -348,11 +354,8 @@ static int rand_add(const void *buf, int num, double add)
     if (entropy < ENTROPY_NEEDED) /* stop counting when we have enough */
         entropy += add;
     if (!do_not_lock)
-        CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+        CRYPTO_THREAD_unlock(rand_lock);
 
-#if !defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32)
-    assert(md_c[1] == md_count[1]);
-#endif
     rv = 1;
  err:
     EVP_MD_CTX_free(m);
@@ -438,7 +441,8 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
      * global 'md'.
      */
 
-    CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+    CRYPTO_THREAD_run_once(&rand_lock_init, do_rand_lock_init);
+    CRYPTO_THREAD_write_lock(rand_lock);
     /*
      * We could end up in an async engine while holding this lock so ensure
      * we don't pause and cause a deadlock
@@ -446,9 +450,9 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     ASYNC_block_pause();
 
     /* prevent rand_bytes() from trying to obtain the lock again */
-    CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
-    CRYPTO_THREADID_current(&locking_threadid);
-    CRYPTO_w_unlock(CRYPTO_LOCK_RAND2);
+    CRYPTO_THREAD_write_lock(rand_tmp_lock);
+    locking_threadid = CRYPTO_THREAD_get_current_id();
+    CRYPTO_THREAD_unlock(rand_tmp_lock);
     crypto_lock_rand = 1;
 
     if (!initialized) {
@@ -523,7 +527,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     /* before unlocking, we must clear 'crypto_lock_rand' */
     crypto_lock_rand = 0;
     ASYNC_unblock_pause();
-    CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+    CRYPTO_THREAD_unlock(rand_lock);
 
     while (num > 0) {
         /* num_ceil -= MD_DIGEST_LENGTH/2 */
@@ -576,17 +580,17 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
         || !MD_Update(m, (unsigned char *)&(md_c[0]), sizeof(md_c))
         || !MD_Update(m, local_md, MD_DIGEST_LENGTH))
         goto err;
-    CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+    CRYPTO_THREAD_write_lock(rand_lock);
     /*
      * Prevent deadlocks if we end up in an async engine
      */
     ASYNC_block_pause();
     if (!MD_Update(m, md, MD_DIGEST_LENGTH) || !MD_Final(m, md)) {
-        CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+        CRYPTO_THREAD_unlock(rand_lock);
         goto err;
     }
     ASYNC_unblock_pause();
-    CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+    CRYPTO_THREAD_unlock(rand_lock);
 
     EVP_MD_CTX_free(m);
     if (ok)
@@ -596,7 +600,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     else {
         RANDerr(RAND_F_RAND_BYTES, RAND_R_PRNG_NOT_SEEDED);
         ERR_add_error_data(1, "You need to read the OpenSSL FAQ, "
-                           "http://www.openssl.org/support/faq.html");
+                           "https://www.openssl.org/docs/faq.html");
         return (0);
     }
  err:
@@ -627,24 +631,25 @@ static int rand_pseudo_bytes(unsigned char *buf, int num)
 
 static int rand_status(void)
 {
-    CRYPTO_THREADID cur;
+    CRYPTO_THREAD_ID cur;
     int ret;
     int do_not_lock;
 
-    CRYPTO_THREADID_current(&cur);
+    CRYPTO_THREAD_run_once(&rand_lock_init, do_rand_lock_init);
+    cur = CRYPTO_THREAD_get_current_id();
     /*
      * check if we already have the lock (could happen if a RAND_poll()
      * implementation calls RAND_status())
      */
     if (crypto_lock_rand) {
-        CRYPTO_r_lock(CRYPTO_LOCK_RAND2);
-        do_not_lock = !CRYPTO_THREADID_cmp(&locking_threadid, &cur);
-        CRYPTO_r_unlock(CRYPTO_LOCK_RAND2);
+        CRYPTO_THREAD_read_lock(rand_tmp_lock);
+        do_not_lock = CRYPTO_THREAD_compare_id(locking_threadid, cur);
+        CRYPTO_THREAD_unlock(rand_tmp_lock);
     } else
         do_not_lock = 0;
 
     if (!do_not_lock) {
-        CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+        CRYPTO_THREAD_write_lock(rand_lock);
         /*
          * Prevent deadlocks in case we end up in an async engine
          */
@@ -653,9 +658,9 @@ static int rand_status(void)
         /*
          * prevent rand_bytes() from trying to obtain the lock again
          */
-        CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
-        CRYPTO_THREADID_cpy(&locking_threadid, &cur);
-        CRYPTO_w_unlock(CRYPTO_LOCK_RAND2);
+        CRYPTO_THREAD_write_lock(rand_tmp_lock);
+        locking_threadid = cur;
+        CRYPTO_THREAD_unlock(rand_tmp_lock);
         crypto_lock_rand = 1;
     }
 
@@ -671,7 +676,7 @@ static int rand_status(void)
         crypto_lock_rand = 0;
 
         ASYNC_unblock_pause();
-        CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+        CRYPTO_THREAD_unlock(rand_lock);
     }
 
     return ret;

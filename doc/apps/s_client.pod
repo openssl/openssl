@@ -34,6 +34,7 @@ B<openssl> B<s_client>
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
+[B<-no_check_time>]
 [B<-partial_chain>]
 [B<-policy arg>]
 [B<-policy_check>]
@@ -45,6 +46,7 @@ B<openssl> B<s_client>
 [B<-trusted_first>]
 [B<-no_alt_chains>]
 [B<-use_deltas>]
+[B<-auth_level num>]
 [B<-verify_depth num>]
 [B<-verify_email email>]
 [B<-verify_hostname hostname>]
@@ -64,12 +66,20 @@ B<openssl> B<s_client>
 [B<-quiet>]
 [B<-ssl3>]
 [B<-tls1>]
+[B<-tls1_1>]
+[B<-tls1_2>]
 [B<-no_ssl3>]
 [B<-no_tls1>]
 [B<-no_tls1_1>]
 [B<-no_tls1_2>]
+[B<-dtls>]
+[B<-dtls1>]
+[B<-dtls1_2>]
 [B<-fallback_scsv>]
 [B<-async>]
+[B<-split_send_frag>]
+[B<-max_pipelines>]
+[B<-read_buf>]
 [B<-bugs>]
 [B<-comp>]
 [B<-no_comp>]
@@ -86,6 +96,8 @@ B<openssl> B<s_client>
 [B<-serverinfo types>]
 [B<-status>]
 [B<-nextprotoneg protocols>]
+[B<-ct|noct>]
+[B<-ctlogfile>]
 
 =head1 DESCRIPTION
 
@@ -216,11 +228,11 @@ whitespace is ignored in the associated data field.  For example:
 
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
 B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
-B<-inhibit_map>, B<-no_alt_chains>, B<-partial_chain>, B<-policy>,
+B<-inhibit_map>, B<-no_alt_chains>, B<-no_check_time>, B<-partial_chain>, B<-policy>,
 B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
 B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
-B<-verify_name>, B<-x509_strict>
+B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
+B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various certificate chain validation options. See the
 L<verify(1)> manual page for details.
@@ -305,15 +317,20 @@ Use the PSK key B<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 
-=item B<-ssl3>, B<-tls1>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
+=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
-these options disable the use of certain SSL or TLS protocols. By default
-the initial handshake uses a method which should be compatible with all
-servers and permit them to use SSL v3 or TLS as appropriate.
+These options require or disable the use of the specified SSL or TLS protocols.
+By default B<s_client> will negotiate the highest mutually supported protocol
+version.
+When a specific TLS version is required, only that version will be offered to
+and accepted from the server.
 
-Unfortunately there are still ancient and broken servers in use which
-cannot handle this technique and will fail to connect. Some servers only
-work if TLS is turned off.
+=item B<-dtls>, B<-dtls1>, B<-dtls1_2>
+
+These options make B<s_client> use DTLS protocols instead of TLS.
+With B<-dtls>, B<s_client> will negotiate any supported DTLS protcol version,
+whilst B<-dtls1> and B<-dtls1_2> will only support DTLS1.0 and DTLS1.2
+respectively.
 
 =item B<-fallback_scsv>
 
@@ -325,6 +342,29 @@ switch on asynchronous mode. Cryptographic operations will be performed
 asynchronously. This will only have an effect if an asynchronous capable engine
 is also used via the B<-engine> option. For test purposes the dummy async engine
 (dasync) can be used (if available).
+
+=item B<-split_send_frag int>
+
+The size used to split data for encrypt pipelines. If more data is written in
+one go than this value then it will be split into multiple pipelines, up to the
+maximum number of pipelines defined by max_pipelines. This only has an effect if
+a suitable ciphersuite has been negotiated, an engine that supports pipelining
+has been loaded, and max_pipelines is greater than 1. See
+L<SSL_CTX_set_split_send_fragment(3)> for further information.
+
+=item B<-max_pipelines int>
+
+The maximum number of encrypt/decrypt pipelines to be used. This will only have
+an effect if an engine has been loaded that supports pipelining (e.g. the dasync
+engine) and a suiteable ciphersuite has been negotiated. The default value is 1.
+See L<SSL_CTX_set_max_pipelines(3)> for further information.
+
+=item B<-read_buf int>
+
+The default read buffer size to be used for connections. This will only have an
+effect if the buffer size is larger than the size that would otherwise be used
+and pipelining is in use (see L<SSL_CTX_set_default_read_buffer_len(3)> for
+further information).
 
 =item B<-bugs>
 
@@ -398,7 +438,7 @@ for all available algorithms.
 
 a file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
-Multiple files can be specified separated by a OS-dependent character.
+Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
@@ -424,6 +464,21 @@ Protocol names are printable ASCII strings, for example "http/1.1" or
 Empty list of protocols is treated specially and will cause the client to
 advertise support for the TLS extension but disconnect just after
 receiving ServerHello with a list of server supported protocols.
+
+=item B<-ct|noct>
+
+Use one of these two options to control whether Certificate Transparency (CT)
+is enabled (B<-ct>) or disabled (B<-noct>).
+If CT is enabled, signed certificate timestamps (SCTs) will be requested from
+the server and reported at handshake completion.
+
+Enabling CT also enables OCSP stapling, as this is one possible delivery method
+for SCTs.
+
+=item B<-ctlogfile>
+
+A file containing a list of known Certificate Transparency logs. See
+L<SSL_CTX_set_ctlog_list_file(3)> for the expected file format.
 
 =back
 
@@ -479,10 +534,10 @@ option: any verify errors are then returned aborting the handshake.
 
 =head1 BUGS
 
-Because this program has a lot of options and also because some of
-the techniques used are rather old, the C source of s_client is rather
-hard to read and not a model of how things should be done. A typical
-SSL client program would be much simpler.
+Because this program has a lot of options and also because some of the
+techniques used are rather old, the C source of B<s_client> is rather hard to
+read and not a model of how things should be done.
+A typical SSL client program would be much simpler.
 
 The B<-prexit> option is a bit of a hack. We should really report
 information whenever a session is renegotiated.

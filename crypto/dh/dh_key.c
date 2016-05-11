@@ -58,7 +58,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
-#include <openssl/dh.h>
+#include "dh_locl.h"
 #include "internal/bn_int.h"
 
 static int generate_key(DH *dh);
@@ -140,7 +140,7 @@ static int generate_key(DH *dh)
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
         mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      CRYPTO_LOCK_DH, dh->p, ctx);
+                                      dh->lock, dh->p, ctx);
         if (!mont)
             goto err;
     }
@@ -222,7 +222,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
         mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      CRYPTO_LOCK_DH, dh->p, ctx);
+                                      dh->lock, dh->p, ctx);
         if ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) == 0) {
             /* XXX */
             BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);

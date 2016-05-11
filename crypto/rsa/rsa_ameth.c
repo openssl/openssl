@@ -60,13 +60,11 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include <openssl/rsa.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_CMS
-# include <openssl/cms.h>
-#endif
+#include <openssl/cms.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "rsa_locl.h"
 
 #ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);
@@ -181,40 +179,11 @@ static void int_rsa_free(EVP_PKEY *pkey)
     RSA_free(pkey->pkey.rsa);
 }
 
-static void update_buflen(const BIGNUM *b, size_t *pbuflen)
-{
-    size_t i;
-    if (!b)
-        return;
-    if (*pbuflen < (i = (size_t)BN_num_bytes(b)))
-        *pbuflen = i;
-}
-
 static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
 {
     char *str;
     const char *s;
-    unsigned char *m = NULL;
     int ret = 0, mod_len = 0;
-    size_t buf_len = 0;
-
-    update_buflen(x->n, &buf_len);
-    update_buflen(x->e, &buf_len);
-
-    if (priv) {
-        update_buflen(x->d, &buf_len);
-        update_buflen(x->p, &buf_len);
-        update_buflen(x->q, &buf_len);
-        update_buflen(x->dmp1, &buf_len);
-        update_buflen(x->dmq1, &buf_len);
-        update_buflen(x->iqmp, &buf_len);
-    }
-
-    m = OPENSSL_malloc(buf_len + 10);
-    if (m == NULL) {
-        RSAerr(RSA_F_DO_RSA_PRINT, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
 
     if (x->n != NULL)
         mod_len = BN_num_bits(x->n);
@@ -223,39 +192,36 @@ static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
         goto err;
 
     if (priv && x->d) {
-        if (BIO_printf(bp, "Private-Key: (%d bit)\n", mod_len)
-            <= 0)
+        if (BIO_printf(bp, "Private-Key: (%d bit)\n", mod_len) <= 0)
             goto err;
         str = "modulus:";
         s = "publicExponent:";
     } else {
-        if (BIO_printf(bp, "Public-Key: (%d bit)\n", mod_len)
-            <= 0)
+        if (BIO_printf(bp, "Public-Key: (%d bit)\n", mod_len) <= 0)
             goto err;
         str = "Modulus:";
         s = "Exponent:";
     }
-    if (!ASN1_bn_print(bp, str, x->n, m, off))
+    if (!ASN1_bn_print(bp, str, x->n, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, s, x->e, m, off))
+    if (!ASN1_bn_print(bp, s, x->e, NULL, off))
         goto err;
     if (priv) {
-        if (!ASN1_bn_print(bp, "privateExponent:", x->d, m, off))
+        if (!ASN1_bn_print(bp, "privateExponent:", x->d, NULL, off))
             goto err;
-        if (!ASN1_bn_print(bp, "prime1:", x->p, m, off))
+        if (!ASN1_bn_print(bp, "prime1:", x->p, NULL, off))
             goto err;
-        if (!ASN1_bn_print(bp, "prime2:", x->q, m, off))
+        if (!ASN1_bn_print(bp, "prime2:", x->q, NULL, off))
             goto err;
-        if (!ASN1_bn_print(bp, "exponent1:", x->dmp1, m, off))
+        if (!ASN1_bn_print(bp, "exponent1:", x->dmp1, NULL, off))
             goto err;
-        if (!ASN1_bn_print(bp, "exponent2:", x->dmq1, m, off))
+        if (!ASN1_bn_print(bp, "exponent2:", x->dmq1, NULL, off))
             goto err;
-        if (!ASN1_bn_print(bp, "coefficient:", x->iqmp, m, off))
+        if (!ASN1_bn_print(bp, "coefficient:", x->iqmp, NULL, off))
             goto err;
     }
     ret = 1;
  err:
-    OPENSSL_free(m);
     return (ret);
 }
 
@@ -883,10 +849,11 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     if (!rsa_md_to_mgf1(&oaep->maskGenFunc, mgf1md))
         goto err;
     if (labellen > 0) {
-        ASN1_OCTET_STRING *los = ASN1_OCTET_STRING_new();
+        ASN1_OCTET_STRING *los;
         oaep->pSourceFunc = X509_ALGOR_new();
         if (oaep->pSourceFunc == NULL)
             goto err;
+        los = ASN1_OCTET_STRING_new();
         if (los == NULL)
             goto err;
         if (!ASN1_OCTET_STRING_set(los, label, labellen)) {

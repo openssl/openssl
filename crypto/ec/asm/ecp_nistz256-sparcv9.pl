@@ -24,6 +24,9 @@
 # on benchmark. Lower coefficients are for ECDSA sign, server-side
 # operation. Keep in mind that +200% means 3x improvement.
 
+$output = pop;
+open STDOUT,">$output";
+
 $code.=<<___;
 #include "sparc_arch.h"
 
@@ -688,7 +691,7 @@ __ecp_nistz256_div_by_2:
 ___
 
 ########################################################################
-# following subroutines are "literal" implemetation of those found in
+# following subroutines are "literal" implementation of those found in
 # ecp_nistz256.c
 #
 ########################################################################
@@ -719,6 +722,7 @@ ecp_nistz256_point_double:
 	mov	$rp,$rp_real
 	mov	$ap,$ap_real
 
+.Lpoint_double_shortcut:
 	ld	[$ap+32],@acc[0]
 	ld	[$ap+32+4],@acc[1]
 	ld	[$ap+32+8],@acc[2]
@@ -991,7 +995,7 @@ ecp_nistz256_point_add:
 	be,pt	%icc,.Ladd_proceed	! (in1infty || in2infty)?
 	nop
 	andcc	$t2,$t2,%g0
-	be,pt	%icc,.Ladd_proceed	! is_equal(S1,S2)?
+	be,pt	%icc,.Ladd_double	! is_equal(S1,S2)?
 	nop
 
 	ldx	[%fp+STACK_BIAS-8],$rp
@@ -1021,6 +1025,13 @@ ecp_nistz256_point_add:
 	st	%g0,[$rp+64+28]
 	b	.Ladd_done
 	nop
+
+.align	16
+.Ladd_double:
+	ldx	[%fp+STACK_BIAS-8],$rp_real
+	mov	$ap_real,$ap
+	b	.Lpoint_double_shortcut
+	add	%sp,32*(12-4)+32,%sp	! difference in frame sizes
 
 .align	16
 .Ladd_proceed:
@@ -2013,6 +2024,7 @@ ecp_nistz256_point_double_vis3:
 	save	%sp,-STACK64_FRAME-32*10,%sp
 
 	mov	$rp,$rp_real
+.Ldouble_shortcut_vis3:
 	mov	-1,$minus1
 	mov	-2,$poly3
 	sllx	$minus1,32,$poly1		! 0xFFFFFFFF00000000
@@ -2533,8 +2545,8 @@ ecp_nistz256_point_add_vis3:
 	be,pt	%xcc,.Ladd_proceed_vis3		! (in1infty || in2infty)?
 	nop
 	andcc	$t2,$t2,%g0
-	be,pt	%xcc,.Ladd_proceed_vis3		! is_equal(S1,S2)?
-	nop
+	be,a,pt	%xcc,.Ldouble_shortcut_vis3	! is_equal(S1,S2)?
+	add	%sp,32*(12-10)+32,%sp		! difference in frame sizes
 
 	st	%g0,[$rp_real]
 	st	%g0,[$rp_real+4]

@@ -109,6 +109,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <openssl/opensslconf.h>
 
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
@@ -167,9 +168,9 @@ int init_client(int *sock, const char *host, const char *port,
 
     ret = 0;
     for (ai = res; ai != NULL; ai = BIO_ADDRINFO_next(ai)) {
-        /* Admitedly, these checks are quite paranoid, we should
-           not get anything in the BIO_ADDRINFO chain that we haven't
-           asked for */
+        /* Admittedly, these checks are quite paranoid, we should not get
+         * anything in the BIO_ADDRINFO chain that we haven't
+         * asked for. */
         OPENSSL_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
                        && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
 
@@ -194,6 +195,8 @@ int init_client(int *sock, const char *host, const char *port,
     if (*sock == INVALID_SOCKET) {
         ERR_print_errors(bio_err);
     } else {
+        /* Remove any stale errors from previous connection attempts */
+        ERR_clear_error();
         ret = 1;
     }
     BIO_ADDRINFO_free(res);
@@ -221,10 +224,8 @@ int init_client(int *sock, const char *host, const char *port,
  * 0 on failure, something other on success.
  */
 int do_server(int *accept_sock, const char *host, const char *port,
-              int family, int type,
-              int (*cb) (const char *hostname, int s, int stype,
-                         unsigned char *context), unsigned char *context,
-              int naccept)
+              int family, int type, do_server_cb cb,
+              unsigned char *context, int naccept)
 {
     int asock = 0;
     int sock;
@@ -240,9 +241,8 @@ int do_server(int *accept_sock, const char *host, const char *port,
         return 0;
     }
 
-    /* Admitedly, these checks are quite paranoid, we should
-       not get anything in the BIO_ADDRINFO chain that we haven't
-       asked for */
+    /* Admittedly, these checks are quite paranoid, we should not get
+     * anything in the BIO_ADDRINFO chain that we haven't asked for */
     OPENSSL_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
                    && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
 
@@ -258,54 +258,30 @@ int do_server(int *accept_sock, const char *host, const char *port,
     }
 
     BIO_ADDRINFO_free(res);
+    res = NULL;
 
-    if (accept_sock != NULL) {
+    if (accept_sock != NULL)
         *accept_sock = asock;
-    }
     for (;;) {
-        BIO_ADDR *accepted_addr = NULL;
-        char *name = NULL;
         if (type == SOCK_STREAM) {
-            if ((accepted_addr = BIO_ADDR_new()) == NULL) {
-                BIO_closesocket(asock);
-                return 0;
-            }
-         redoit:
-            sock = BIO_accept_ex(asock, accepted_addr, 0);
+            do {
+                sock = BIO_accept_ex(asock, NULL, 0);
+            } while (sock < 0 && BIO_sock_should_retry(ret));
             if (sock < 0) {
-                if (BIO_sock_should_retry(ret)) {
-                    goto redoit;
-                } else {
-                    ERR_print_errors(bio_err);
-                    BIO_ADDR_free(accepted_addr);
-                    SHUTDOWN(asock);
-                    break;
-                }
+                ERR_print_errors(bio_err);
+                BIO_closesocket(asock);
+                break;
             }
+            i = (*cb)(sock, type, context);
+            BIO_closesocket(sock);
         } else {
-            sock = asock;
+            i = (*cb)(asock, type, context);
         }
 
-        /* accepted_addr is NULL if we're dealing with SOCK_DGRAM
-         * this means that for SOCK_DGRAM, name will be NULL
-         */
-        if (accepted_addr != NULL) {
-#ifdef AF_UNIX
-            if (family == AF_UNIX)
-                name = BIO_ADDR_path_string(accepted_addr);
-            else
-#endif
-                name = BIO_ADDR_hostname_string(accepted_addr, 0);
-        }
-        i = (*cb) (name, sock, type, context);
-        OPENSSL_free(name);
-        BIO_ADDR_free(accepted_addr);
-        if (type == SOCK_STREAM)
-            SHUTDOWN2(sock);
         if (naccept != -1)
             naccept--;
         if (i < 0 || naccept == 0) {
-            SHUTDOWN2(asock);
+            BIO_closesocket(asock);
             ret = i;
             break;
         }

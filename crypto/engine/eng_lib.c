@@ -59,11 +59,22 @@
 #include "eng_int.h"
 #include <openssl/rand.h>
 
+CRYPTO_RWLOCK *global_engine_lock;
+
+CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
+
 /* The "new"/"free" stuff first */
+
+void do_engine_lock_init(void)
+{
+    global_engine_lock = CRYPTO_THREAD_lock_new();
+}
 
 ENGINE *ENGINE_new(void)
 {
     ENGINE *ret;
+
+    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
@@ -72,7 +83,10 @@ ENGINE *ENGINE_new(void)
     }
     ret->struct_ref = 1;
     engine_ref_debug(ret, 0, 1);
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data);
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
     return ret;
 }
 
@@ -108,7 +122,7 @@ int engine_free_util(ENGINE *e, int locked)
     if (e == NULL)
         return 1;
     if (locked)
-        i = CRYPTO_add(&e->struct_ref, -1, CRYPTO_LOCK_ENGINE);
+        CRYPTO_atomic_add(&e->struct_ref, -1, &i, global_engine_lock);
     else
         i = --e->struct_ref;
     engine_ref_debug(e, 0, -1)
@@ -137,8 +151,8 @@ int ENGINE_free(ENGINE *e)
 /* Cleanup stuff */
 
 /*
- * ENGINE_cleanup() is coded such that anything that does work that will need
- * cleanup can register a "cleanup" callback here. That way we don't get
+ * engine_cleanup_int() is coded such that anything that does work that will
+ * need cleanup can register a "cleanup" callback here. That way we don't get
  * linker bloat by referring to all *possible* cleanups, but any linker bloat
  * into code "X" will cause X's cleanup function to end up here.
  */
@@ -189,7 +203,7 @@ static void engine_cleanup_cb_free(ENGINE_CLEANUP_ITEM *item)
     OPENSSL_free(item);
 }
 
-void ENGINE_cleanup(void)
+void engine_cleanup_int(void)
 {
     if (int_cleanup_check(0)) {
         sk_ENGINE_CLEANUP_ITEM_pop_free(cleanup_stack,
@@ -201,6 +215,7 @@ void ENGINE_cleanup(void)
      * registering a cleanup callback.
      */
     RAND_set_rand_method(NULL);
+    CRYPTO_THREAD_lock_free(global_engine_lock);
 }
 
 /* Now the "ex_data" support */

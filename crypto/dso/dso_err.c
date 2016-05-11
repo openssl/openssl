@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,7 +60,7 @@
 
 #include <stdio.h>
 #include <openssl/err.h>
-#include <openssl/dso.h>
+#include "internal/dso.h"
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
@@ -69,53 +69,37 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_DSO,0,reason)
 
 static ERR_STRING_DATA DSO_str_functs[] = {
-    {ERR_FUNC(DSO_F_BEOS_BIND_FUNC), "BEOS_BIND_FUNC"},
-    {ERR_FUNC(DSO_F_BEOS_BIND_VAR), "BEOS_BIND_VAR"},
-    {ERR_FUNC(DSO_F_BEOS_LOAD), "BEOS_LOAD"},
-    {ERR_FUNC(DSO_F_BEOS_NAME_CONVERTER), "BEOS_NAME_CONVERTER"},
-    {ERR_FUNC(DSO_F_BEOS_UNLOAD), "BEOS_UNLOAD"},
     {ERR_FUNC(DSO_F_DLFCN_BIND_FUNC), "dlfcn_bind_func"},
-    {ERR_FUNC(DSO_F_DLFCN_BIND_VAR), "dlfcn_bind_var"},
     {ERR_FUNC(DSO_F_DLFCN_LOAD), "dlfcn_load"},
     {ERR_FUNC(DSO_F_DLFCN_MERGER), "dlfcn_merger"},
     {ERR_FUNC(DSO_F_DLFCN_NAME_CONVERTER), "dlfcn_name_converter"},
     {ERR_FUNC(DSO_F_DLFCN_UNLOAD), "dlfcn_unload"},
     {ERR_FUNC(DSO_F_DL_BIND_FUNC), "dl_bind_func"},
-    {ERR_FUNC(DSO_F_DL_BIND_VAR), "dl_bind_var"},
     {ERR_FUNC(DSO_F_DL_LOAD), "dl_load"},
     {ERR_FUNC(DSO_F_DL_MERGER), "dl_merger"},
     {ERR_FUNC(DSO_F_DL_NAME_CONVERTER), "dl_name_converter"},
     {ERR_FUNC(DSO_F_DL_UNLOAD), "dl_unload"},
     {ERR_FUNC(DSO_F_DSO_BIND_FUNC), "DSO_bind_func"},
-    {ERR_FUNC(DSO_F_DSO_BIND_VAR), "DSO_bind_var"},
     {ERR_FUNC(DSO_F_DSO_CONVERT_FILENAME), "DSO_convert_filename"},
     {ERR_FUNC(DSO_F_DSO_CTRL), "DSO_ctrl"},
     {ERR_FUNC(DSO_F_DSO_FREE), "DSO_free"},
     {ERR_FUNC(DSO_F_DSO_GET_FILENAME), "DSO_get_filename"},
-    {ERR_FUNC(DSO_F_DSO_GET_LOADED_FILENAME), "DSO_get_loaded_filename"},
     {ERR_FUNC(DSO_F_DSO_GLOBAL_LOOKUP), "DSO_global_lookup"},
     {ERR_FUNC(DSO_F_DSO_LOAD), "DSO_load"},
     {ERR_FUNC(DSO_F_DSO_MERGE), "DSO_merge"},
     {ERR_FUNC(DSO_F_DSO_NEW_METHOD), "DSO_new_method"},
-    {ERR_FUNC(DSO_F_DSO_PATHBYADDR), "DSO_pathbyaddr"},
     {ERR_FUNC(DSO_F_DSO_SET_FILENAME), "DSO_set_filename"},
-    {ERR_FUNC(DSO_F_DSO_SET_NAME_CONVERTER), "DSO_set_name_converter"},
     {ERR_FUNC(DSO_F_DSO_UP_REF), "DSO_up_ref"},
-    {ERR_FUNC(DSO_F_GLOBAL_LOOKUP_FUNC), "GLOBAL_LOOKUP_FUNC"},
-    {ERR_FUNC(DSO_F_PATHBYADDR), "PATHBYADDR"},
     {ERR_FUNC(DSO_F_VMS_BIND_SYM), "vms_bind_sym"},
     {ERR_FUNC(DSO_F_VMS_LOAD), "vms_load"},
     {ERR_FUNC(DSO_F_VMS_MERGER), "vms_merger"},
     {ERR_FUNC(DSO_F_VMS_UNLOAD), "vms_unload"},
     {ERR_FUNC(DSO_F_WIN32_BIND_FUNC), "win32_bind_func"},
-    {ERR_FUNC(DSO_F_WIN32_BIND_VAR), "win32_bind_var"},
     {ERR_FUNC(DSO_F_WIN32_GLOBALLOOKUP), "win32_globallookup"},
-    {ERR_FUNC(DSO_F_WIN32_GLOBALLOOKUP_FUNC), "WIN32_GLOBALLOOKUP_FUNC"},
     {ERR_FUNC(DSO_F_WIN32_JOINER), "win32_joiner"},
     {ERR_FUNC(DSO_F_WIN32_LOAD), "win32_load"},
     {ERR_FUNC(DSO_F_WIN32_MERGER), "win32_merger"},
     {ERR_FUNC(DSO_F_WIN32_NAME_CONVERTER), "win32_name_converter"},
-    {ERR_FUNC(DSO_F_WIN32_PATHBYADDR), "win32_pathbyaddr"},
     {ERR_FUNC(DSO_F_WIN32_SPLITTER), "win32_splitter"},
     {ERR_FUNC(DSO_F_WIN32_UNLOAD), "win32_unload"},
     {0, NULL}
@@ -132,7 +116,6 @@ static ERR_STRING_DATA DSO_str_reasons[] = {
     {ERR_REASON(DSO_R_LOAD_FAILED), "could not load the shared library"},
     {ERR_REASON(DSO_R_NAME_TRANSLATION_FAILED), "name translation failed"},
     {ERR_REASON(DSO_R_NO_FILENAME), "no filename"},
-    {ERR_REASON(DSO_R_NO_FILE_SPECIFICATION), "no file specification"},
     {ERR_REASON(DSO_R_NULL_HANDLE), "a null shared library handle was used"},
     {ERR_REASON(DSO_R_SET_FILENAME_FAILED), "set filename failed"},
     {ERR_REASON(DSO_R_STACK_ERROR), "the meth_data stack is corrupt"},

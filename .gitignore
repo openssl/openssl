@@ -37,14 +37,15 @@ Makefile
 
 # Links under apps
 /apps/CA.pl
+/apps/tsget
 /apps/md4.c
 
 
 # Auto generated headers
 /crypto/buildinf.h
-/openssl/include/opensslconf.h
 /crypto/include/internal/*_conf.h
-util/domd
+/openssl/include/opensslconf.h
+/util/domd
 
 # Auto generated assembly language source files
 *.s
@@ -56,9 +57,18 @@ util/domd
 
 # Executables
 /apps/openssl
+/fuzz/asn1
+/fuzz/asn1parse
+/fuzz/bignum
+/fuzz/bndiv
+/fuzz/conf
+/fuzz/cms
+/fuzz/server
+/fuzz/x509
 /test/sha256t
 /test/sha512t
 /test/gost2814789t
+/test/ssltest_old
 /test/*test
 /test/fips_aesavs
 /test/fips_desmovs
@@ -69,6 +79,7 @@ util/domd
 /test/fips_ecdsavs
 /test/fips_rngvs
 /test/fips_test_suite
+/test/ssltest_old
 *.so*
 *.dylib*
 *.dll*
@@ -87,7 +98,7 @@ Makefile.save
 *.bak
 /tags
 /TAGS
-cscope.out
+cscope.*
 *.d
 /crypto.map
 /ssl.map
@@ -103,6 +114,7 @@ cscope.out
 /out32dll.dbg
 /inc32
 /MINFO
+/ms/.rnd
 /ms/bcb.mak
 /ms/libeay32.def
 /ms/nt.mak

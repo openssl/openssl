@@ -1,4 +1,11 @@
-#! /usr/bin/perl
+#! /usr/bin/env perl
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 use strict;
 use warnings;
@@ -39,7 +46,7 @@ indir "rehash.$$" => sub {
     chmod 0500, curdir();
   SKIP: {
       if (!ok(!open(FOO, ">unwritable.txt"),
-              "Testing that we aren't running as a priviledged user, such as root")) {
+              "Testing that we aren't running as a privileged user, such as root")) {
           close FOO;
           skip "It's pointless to run the next test as root", 1;
       }

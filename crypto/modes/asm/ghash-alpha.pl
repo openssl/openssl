@@ -454,7 +454,7 @@ rem_4bit:
 .align	4
 
 ___
-$output=shift and open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 print $code;
 close STDOUT;
 

@@ -187,9 +187,10 @@ int X509_cmp(const X509 *a, const X509 *b)
         return rv;
     /* Check for match against stored encoding too */
     if (!a->cert_info.enc.modified && !b->cert_info.enc.modified) {
-        rv = (int)(a->cert_info.enc.len - b->cert_info.enc.len);
-        if (rv)
-            return rv;
+        if (a->cert_info.enc.len < b->cert_info.enc.len)
+            return -1;
+        if (a->cert_info.enc.len > b->cert_info.enc.len)
+            return 1;
         return memcmp(a->cert_info.enc.enc, b->cert_info.enc.enc,
                       a->cert_info.enc.len);
     }
@@ -316,13 +317,6 @@ EVP_PKEY *X509_get_pubkey(X509 *x)
     if (x == NULL)
         return NULL;
     return X509_PUBKEY_get(x->cert_info.key);
-}
-
-ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
-{
-    if (!x)
-        return NULL;
-    return x->cert_info.key->public_key;
 }
 
 int X509_check_private_key(X509 *x, EVP_PKEY *k)

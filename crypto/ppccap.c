@@ -79,6 +79,7 @@ void sha512_block_data_order(void *ctx, const void *inp, size_t len)
         sha512_block_ppc(ctx, inp, len);
 }
 
+#ifndef OPENSSL_NO_CHACHA
 void ChaCha20_ctr32_int(unsigned char *out, const unsigned char *inp,
                         size_t len, const unsigned int key[8],
                         const unsigned int counter[4]);
@@ -93,7 +94,9 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
         ? ChaCha20_ctr32_vmx(out, inp, len, key, counter)
         : ChaCha20_ctr32_int(out, inp, len, key, counter);
 }
+#endif
 
+#ifndef OPENSSL_NO_POLY1305
 void poly1305_init_int(void *ctx, const unsigned char key[16]);
 void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
                          unsigned int padbit);
@@ -117,6 +120,7 @@ int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
     }
     return 1;
 }
+#endif
 
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)
@@ -128,6 +132,7 @@ void OPENSSL_fpu_probe(void);
 void OPENSSL_ppc64_probe(void);
 void OPENSSL_altivec_probe(void);
 void OPENSSL_crypto207_probe(void);
+void OPENSSL_madd300_probe(void);
 
 /*
  * Use a weak reference to getauxval() so we can use it if it is available
@@ -151,6 +156,7 @@ static unsigned long (*getauxval) (unsigned long) = NULL;
 
 #define HWCAP2                  26      /* AT_HWCAP2 */
 #define HWCAP_VEC_CRYPTO        (1U << 25)
+#define HWCAP_ARCH_3_00         (1U << 23)
 
 # if defined(__GNUC__) && __GNUC__>=2
 __attribute__ ((constructor))
@@ -208,6 +214,9 @@ void OPENSSL_cpuid_setup(void)
     if (__power_set(0xffffffffU<<16))           /* POWER8 and later */
         OPENSSL_ppccap_P |= PPC_CRYPTO207;
 
+    if (__power_set(0xffffffffU<<17))           /* POWER9 and later */
+        OPENSSL_ppccap_P |= PPC_MADD300;
+
     return;
 # endif
 #endif
@@ -216,7 +225,7 @@ void OPENSSL_cpuid_setup(void)
         unsigned long hwcap = getauxval(HWCAP);
 
         if (hwcap & HWCAP_FPU) {
-	    OPENSSL_ppccap_P |= PPC_FPU;
+            OPENSSL_ppccap_P |= PPC_FPU;
 
             if (sizeof(size_t) == 4) {
                 /* In 32-bit case PPC_FPU64 is always fastest [if option] */
@@ -234,6 +243,10 @@ void OPENSSL_cpuid_setup(void)
 
             if ((hwcap & HWCAP_VSX) && (getauxval(HWCAP2) & HWCAP_VEC_CRYPTO))
                 OPENSSL_ppccap_P |= PPC_CRYPTO207;
+        }
+
+        if (hwcap & HWCAP_ARCH_3_00) {
+            OPENSSL_ppccap_P |= PPC_MADD300;
         }
 
         return;
@@ -283,6 +296,11 @@ void OPENSSL_cpuid_setup(void)
             OPENSSL_crypto207_probe();
             OPENSSL_ppccap_P |= PPC_CRYPTO207;
         }
+    }
+
+    if (sigsetjmp(ill_jmp, 1) == 0) {
+        OPENSSL_madd300_probe();
+        OPENSSL_ppccap_P |= PPC_MADD300;
     }
 
     sigaction(SIGILL, &ill_oact, NULL);

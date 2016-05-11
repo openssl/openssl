@@ -1,6 +1,7 @@
 {- # -*- Mode: perl -*-
 
-     my $a;
+     # A cache of objects for which a recipe has already been generated
+     my %cache;
 
  # resolvedepends and reducedepends work in tandem to make sure
  # there are no duplicate dependencies and that they are in the
@@ -31,24 +32,53 @@
      @newlist;
  }
 
+ # dogenerate is responsible for producing all the recipes that build
+ # generated source files.  It recurses in case a dependency is also a
+ # generated source file.
+ sub dogenerate {
+     my $src = shift;
+     return "" if $cache{$src};
+     my $obj = shift;
+     my $bin = shift;
+     my %opts = @_;
+     if ($unified_info{generate}->{$src}) {
+         my $script = $unified_info{generate}->{$src}->[0];
+         $OUT .= generatesrc(src => $src,
+                             generator => $unified_info{generate}->{$src},
+                             generator_incs => $unified_info{includes}->{$script},
+                             generator_deps => $unified_info{depends}->{$script},
+                             deps => $unified_info{depends}->{$src},
+                             incs => [ @{$unified_info{includes}->{$bin}},
+                                       @{$unified_info{includes}->{$obj}} ],
+                             %opts);
+         foreach (@{$unified_info{depends}->{$src}}) {
+             dogenerate($_, $obj, $bin, %opts);
+         }
+     }
+     $cache{$src} = 1;
+ }
+
  # doobj is responsible for producing all the recipes that build
  # object files as well as dependency files.
  sub doobj {
      my $obj = shift;
+     return "" if $cache{$obj};
      (my $obj_no_o = $obj) =~ s|\.o$||;
      my $bin = shift;
+     my %opts = @_;
      if (@{$unified_info{sources}->{$obj}}) {
          $OUT .= src2obj(obj => $obj_no_o,
                          srcs => $unified_info{sources}->{$obj},
-                         deps => [ reducedepends(resolvedepends($obj)) ],
+                         deps => $unified_info{depends}->{$obj},
                          incs => [ @{$unified_info{includes}->{$bin}},
-                                   @{$unified_info{includes}->{$obj}} ]);
-         $OUT .= src2dep(obj => $obj_no_o,
-                         srcs => $unified_info{sources}->{$obj},
-                         deps => [ reducedepends(resolvedepends($obj)) ],
-                         incs => [ @{$unified_info{includes}->{$bin}},
-                                   @{$unified_info{includes}->{$obj}} ]);
+                                   @{$unified_info{includes}->{$obj}} ],
+                         %opts);
+         foreach ((@{$unified_info{sources}->{$obj}},
+                   @{$unified_info{depends}->{$obj}})) {
+             dogenerate($_, $obj, $bin, %opts);
+         }
      }
+     $cache{$obj} = 1;
  }
 
  # dolib is responsible for building libraries.  It will call
@@ -57,63 +87,86 @@
  # built.
  sub dolib {
      my $lib = shift;
-     if (!$config{no_shared}) {
+     return "" if $cache{$lib};
+     unless ($disabled{shared}) {
          my %ordinals =
              $unified_info{ordinals}->{$lib}
              ? (ordinals => $unified_info{ordinals}->{$lib}) : ();
          $OUT .= libobj2shlib(shlib => $unified_info{sharednames}->{$lib},
                               lib => $lib,
                               objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                                        @{$unified_info{sources}->{$lib}} ],
+                                        (@{$unified_info{sources}->{$lib}},
+                                         @{$unified_info{shared_sources}->{$lib}}) ],
                               deps => [ reducedepends(resolvedepends($lib)) ],
                               %ordinals);
+         foreach (@{$unified_info{shared_sources}->{$lib}}) {
+             doobj($_, $lib, intent => "lib");
+         }
      }
      $OUT .= obj2lib(lib => $lib,
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
                                @{$unified_info{sources}->{$lib}} ]);
-     map { doobj($_, $lib, intent => "lib") } @{$unified_info{sources}->{$lib}};
+     foreach (@{$unified_info{sources}->{$lib}}) {
+         doobj($_, $lib, intent => "lib");
+     }
+     $cache{$lib} = 1;
  }
 
  # doengine is responsible for building engines.  It will call
- # obj2dynlib, and also makes sure all object files for the library
+ # obj2dso, and also makes sure all object files for the library
  # are built.
  sub doengine {
      my $lib = shift;
-     $OUT .= obj2dynlib(lib => $lib,
-                        objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                                  @{$unified_info{sources}->{$lib}} ],
-                        deps => [ resolvedepends($lib) ]);
-     map { doobj($_, $lib, intent => "lib") } @{$unified_info{sources}->{$lib}};
+     return "" if $cache{$lib};
+     $OUT .= obj2dso(lib => $lib,
+                     objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
+                               (@{$unified_info{sources}->{$lib}},
+                                @{$unified_info{shared_sources}->{$lib}}) ],
+                     deps => [ resolvedepends($lib) ]);
+     foreach ((@{$unified_info{sources}->{$lib}},
+               @{$unified_info{shared_sources}->{$lib}})) {
+         doobj($_, $lib, intent => "dso");
+     }
+     $cache{$lib} = 1;
  }
 
  # dobin is responsible for building programs.  It will call obj2bin,
  # and also makes sure all object files for the library are built.
  sub dobin {
      my $bin = shift;
+     return "" if $cache{$bin};
      my $deps = [ reducedepends(resolvedepends($bin)) ];
      $OUT .= obj2bin(bin => $bin,
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
                                @{$unified_info{sources}->{$bin}} ],
                      deps => $deps);
-     map { doobj($_, $bin, intent => "bin") } @{$unified_info{sources}->{$bin}};
+     foreach (@{$unified_info{sources}->{$bin}}) {
+         doobj($_, $bin, intent => "bin");
+     }
+     $cache{$bin} = 1;
  }
 
  # dobin is responsible for building scripts from templates.  It will
  # call in2script.
  sub doscript {
      my $script = shift;
+     return "" if $cache{$script};
      $OUT .= in2script(script => $script,
                        sources => $unified_info{sources}->{$script});
+     $cache{$script} = 1;
  }
+
+ # Start with populating the cache with all the overrides
+ %cache = map { $_ => 1 } @{$unified_info{overrides}};
 
  # Build all known libraries, engines, programs and scripts.
  # Everything else will be handled as a consequence.
- map { dolib($_) } @{$unified_info{libraries}};
- map { doengine($_) } @{$unified_info{engines}};
- map { dobin($_) } @{$unified_info{programs}};
- map { doscript($_) } @{$unified_info{scripts}};
+ foreach (@{$unified_info{libraries}}) { dolib($_);    }
+ foreach (@{$unified_info{engines}})   { doengine($_); }
+ foreach (@{$unified_info{programs}})  { dobin($_);    }
+ foreach (@{$unified_info{scripts}})   { doscript($_); }
 
  # Finally, should there be any applicable BEGINRAW/ENDRAW sections,
  # they are added here.
- $OUT .= $_."\n" foreach(@{$unified_info{rawlines}});
+ $OUT .= $_."\n" foreach @{$unified_info{rawlines}};
 -}

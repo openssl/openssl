@@ -39,9 +39,7 @@ $	DEAS OSSL$LIB'v'
 $	DEAS OSSL$SHARE'v'
 $	DEAS OSSL$ENGINES'v'
 $	DEAS OSSL$EXE'v'
-$       {- output_off() if $config{no_shared} -}
-$       {- join("\n\$       ", map { "DEAS $_'v'" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
-$       {- output_on() -}
+$       {- join("\n\$       ", map { my $x = uc $_; "DEAS ${x}'v'" } @{$config{shared_libs}}) -}
 $	IF P2 .NES. "NOALIASES"
 $	THEN
 $	    DEAS OSSL$ROOT
@@ -51,9 +49,7 @@ $	    DEAS OSSL$SHARE
 $	    DEAS OSSL$ENGINES
 $	    DEAS OSSL$EXE
 $	    DEAS OPENSSL
-$           {- output_off() if $config{no_shared} -}
-$           {- join("\n\$           ", map { "DEAS $_" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
-$           {- output_on() -}
+$           {- join("\n\$           ", map { my $x = uc $_; "DEAS ${x}" } @{$config{shared_libs}}) -}
 $	ENDIF
 $
 $	EXIT 'status'

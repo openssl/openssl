@@ -76,9 +76,9 @@ static int ocsp_certid_print(BIO *bp, OCSP_CERTID *a, int indent)
     BIO_printf(bp, "%*sHash Algorithm: ", indent, "");
     i2a_ASN1_OBJECT(bp, a->hashAlgorithm.algorithm);
     BIO_printf(bp, "\n%*sIssuer Name Hash: ", indent, "");
-    i2a_ASN1_STRING(bp, &a->issuerNameHash, V_ASN1_OCTET_STRING);
+    i2a_ASN1_STRING(bp, &a->issuerNameHash, 0);
     BIO_printf(bp, "\n%*sIssuer Key Hash: ", indent, "");
-    i2a_ASN1_STRING(bp, &a->issuerKeyHash, V_ASN1_OCTET_STRING);
+    i2a_ASN1_STRING(bp, &a->issuerKeyHash, 0);
     BIO_printf(bp, "\n%*sSerial Number: ", indent, "");
     i2a_ASN1_INTEGER(bp, &a->serialNumber);
     BIO_printf(bp, "\n");
@@ -227,7 +227,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE *o, unsigned long flags)
         X509_NAME_print_ex(bp, rid->value.byName, 0, XN_FLAG_ONELINE);
         break;
     case V_OCSP_RESPID_KEY:
-        i2a_ASN1_STRING(bp, rid->value.byKey, V_ASN1_OCTET_STRING);
+        i2a_ASN1_STRING(bp, rid->value.byKey, 0);
         break;
     }
 

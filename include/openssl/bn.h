@@ -126,7 +126,7 @@
 
 # include <openssl/e_os2.h>
 # ifndef OPENSSL_NO_STDIO
-#  include <stdio.h>            /* FILE */
+#  include <stdio.h>
 # endif
 # include <openssl/opensslconf.h>
 # include <openssl/ossl_typ.h>
@@ -416,7 +416,7 @@ int BN_from_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
 void BN_MONT_CTX_free(BN_MONT_CTX *mont);
 int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx);
 BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from);
-BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
+BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,
                                     const BIGNUM *mod, BN_CTX *ctx);
 
 /* BN_BLINDING flags */
@@ -431,11 +431,12 @@ int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *);
 int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
                           BN_CTX *);
-DEPRECATEDIN_1_0_0(unsigned long
-                   BN_BLINDING_get_thread_id(const BN_BLINDING *))
-DEPRECATEDIN_1_0_0(void
-                   BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long))
-CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
+
+int BN_BLINDING_is_current_thread(BN_BLINDING *b);
+void BN_BLINDING_set_current_thread(BN_BLINDING *b);
+int BN_BLINDING_lock(BN_BLINDING *b);
+int BN_BLINDING_unlock(BN_BLINDING *b);
+
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
 void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
 BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
@@ -557,16 +558,27 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
                           size_t message_len, BN_CTX *ctx);
 
 /* Primes from RFC 2409 */
-BIGNUM *get_rfc2409_prime_768(BIGNUM *bn);
-BIGNUM *get_rfc2409_prime_1024(BIGNUM *bn);
+BIGNUM *BN_get_rfc2409_prime_768(BIGNUM *bn);
+BIGNUM *BN_get_rfc2409_prime_1024(BIGNUM *bn);
 
 /* Primes from RFC 3526 */
-BIGNUM *get_rfc3526_prime_1536(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_2048(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_3072(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_4096(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_6144(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_8192(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_1536(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_2048(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_3072(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
+
+# if OPENSSL_API_COMPAT < 0x00101000L
+#  define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
+#  define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
+#  define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536
+#  define get_rfc3526_prime_2048 BN_get_rfc3526_prime_2048
+#  define get_rfc3526_prime_3072 BN_get_rfc3526_prime_3072
+#  define get_rfc3526_prime_4096 BN_get_rfc3526_prime_4096
+#  define get_rfc3526_prime_6144 BN_get_rfc3526_prime_6144
+#  define get_rfc3526_prime_8192 BN_get_rfc3526_prime_8192
+# endif
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
 

@@ -1,29 +1,32 @@
 {- use File::Spec::Functions qw/:DEFAULT rel2abs/; -}
-IF[{- $config{no_shared} -}]
- LIBS=../libcrypto
- SOURCE[../libcrypto]=\
-        e_padlock.c {- $target{padlock_asm_src} -} \
-        e_capi.c \
-        e_dasync.c
-ELSE
- ENGINES=libpadlock libcapi libdasync libossltest
- SOURCE[libpadlock]=e_padlock.c {- $target{padlock_asm_src} -}
- DEPEND[libpadlock]=../libcrypto
- INCLUDE[libpadlock]={- rel2abs(catdir($builddir,"../include")) -} ../include
- SOURCE[libcapi]=e_capi.c
- DEPEND[libcapi]=../libcrypto
- INCLUDE[libcapi]={- rel2abs(catdir($builddir,"../include")) -} ../include
- SOURCE[libdasync]=e_dasync.c
- DEPEND[libdasync]=../libcrypto
- INCLUDE[libdasync]={- rel2abs(catdir($builddir,"../include")) -} ../include
- SOURCE[libossltest]=e_ossltest.c
- DEPEND[libossltest]=../libcrypto
- INCLUDE[libossltest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-ENDIF
+IF[{- !$disabled{"engine"} -}]
+  IF[{- $disabled{"dynamic-engine"} -}]
+    LIBS=../libcrypto
+    SOURCE[../libcrypto]=\
+            e_padlock.c {- $target{padlock_asm_src} -} \
+            e_dasync.c
+    IF[{- !$disabled{capieng} -}]
+      SOURCE[../libcrypto]=e_capi.c
+    ENDIF
+  ELSE
+    ENGINES=padlock dasync ossltest
+    SOURCE[padlock]=e_padlock.c {- $target{padlock_asm_src} -}
+    DEPEND[padlock]=../libcrypto
+    INCLUDE[padlock]={- rel2abs(catdir($builddir,"../include")) -} ../include
+    IF[{- !$disabled{capieng} -}]
+      ENGINES=capi
+      SOURCE[capi]=e_capi.c
+      DEPEND[capi]=../libcrypto
+      INCLUDE[capi]={- rel2abs(catdir($builddir,"../include")) -} ../include
+    ENDIF
+    SOURCE[dasync]=e_dasync.c
+    DEPEND[dasync]=../libcrypto
+    INCLUDE[dasync]={- rel2abs(catdir($builddir,"../include")) -} ../include
+    SOURCE[ossltest]=e_ossltest.c
+    DEPEND[ossltest]=../libcrypto
+    INCLUDE[ossltest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  ENDIF
 
-BEGINRAW[Makefile]
-{- $builddir -}/e_padlock-x86.s:	{- $sourcedir -}/asm/e_padlock-x86.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-{- $builddir -}/e_padlock-x86_64.s:	{- $sourcedir -}/asm/e_padlock-x86_64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
-ENDRAW[Makefile]
+  GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+  GENERATE[e_padlock-x86_64.s]=asm/e_padlock-x86_64.pl $(PERLASM_SCHEME)
+ENDIF

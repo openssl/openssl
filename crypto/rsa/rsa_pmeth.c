@@ -64,9 +64,7 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>
-#ifndef OPENSSL_NO_CMS
-# include <openssl/cms.h>
-#endif
+#include <openssl/cms.h>
 #include "internal/evp_int.h"
 #include "rsa_locl.h"
 
@@ -174,7 +172,7 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
             unsigned int sltmp;
             if (rctx->pad_mode != RSA_PKCS1_PADDING)
                 return -1;
-            ret = RSA_sign_ASN1_OCTET_STRING(NID_mdc2,
+            ret = RSA_sign_ASN1_OCTET_STRING(0,
                                              tbs, tbslen, sig, &sltmp, rsa);
 
             if (ret <= 0)
@@ -638,7 +636,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
         unsigned char *lab;
         long lablen;
         int ret;
-        lab = string_to_hex(value, &lablen);
+        lab = OPENSSL_hexstr2buf(value, &lablen);
         if (!lab)
             return 0;
         ret = EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, lab, lablen);

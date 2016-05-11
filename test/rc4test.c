@@ -120,12 +120,6 @@ int main(int argc, char *argv[])
     RC4_KEY key;
     unsigned char obuf[512];
 
-# if !defined(OPENSSL_PIC)
-    void OPENSSL_cpuid_setup(void);
-
-    OPENSSL_cpuid_setup();
-# endif
-
     for (i = 0; i < 6; i++) {
         RC4_set_key(&key, keys[i][0], &(keys[i][1]));
         memset(obuf, 0, sizeof(obuf));
@@ -224,10 +218,6 @@ int main(int argc, char *argv[])
         } else
             printf("ok\n");
     }
-# ifdef OPENSSL_SYS_NETWARE
-    if (err)
-        printf("ERROR: %d\n", err);
-# endif
     EXIT(err);
 }
 #endif

@@ -1,5 +1,12 @@
 /*
  * {- join("\n * ", @autowarntext) -}
+ *
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifdef  __cplusplus
@@ -21,39 +28,17 @@ extern "C" {
 	$OUT .= "#endif\n";
       }
     }
-    if (@{$config{openssl_experimental_defines}}) {
-      foreach (@{$config{openssl_experimental_defines}}) {
-	(my $ex = $_) =~ s/_NO_/_EXPERIMENTAL_/;
-	$OUT .= "# ifndef $ex\n";
-	$OUT .= "#  ifndef $_\n";
-	$OUT .= "#   define $_\n";
-	$OUT .= "#  endif\n";
-	$OUT .= "# endif\n";
-      }
-    }
     foreach (@{$config{openssl_api_defines}}) {
         (my $macro, my $value) = $_ =~ /^(.*?)=(.*?)$/;
-        $OUT .= "# define OPENSSL_MIN_API $value\n";
+        $OUT .= "#define OPENSSL_MIN_API $value\n";
     }
     if (@{$config{openssl_algorithm_defines}}) {
       foreach (@{$config{openssl_algorithm_defines}}) {
-	$OUT .= "# ifndef $_\n";
-	$OUT .= "#  define $_\n";
-	$OUT .= "# endif\n";
+	$OUT .= "#ifndef $_\n";
+	$OUT .= "# define $_\n";
+	$OUT .= "#endif\n";
       }
     }
-    if ($OUT) {
-        $OUT = <<"EOF";
-#ifndef OPENSSL_DOING_MAKEDEPEND
-
-$OUT
-#endif /* OPENSSL_DOING_MAKEDEPEND */
-EOF
-    }
-    "";
--}
-
-{-
     if (@{$config{openssl_thread_defines}}) {
       foreach (@{$config{openssl_thread_defines}}) {
 	$OUT .= "#ifndef $_\n";
@@ -89,6 +74,16 @@ EOF
 # define DECLARE_DEPRECATED(f)    f __attribute__ ((deprecated));
 #else
 # define DECLARE_DEPRECATED(f)   f;
+#endif
+
+#ifndef OPENSSL_FILE
+# ifdef OPENSSL_NO_FILENAMES
+#  define OPENSSL_FILE ""
+#  define OPENSSL_LINE 0
+# else
+#  define OPENSSL_FILE __FILE__
+#  define OPENSSL_LINE __LINE__
+# endif
 #endif
 
 #ifndef OPENSSL_MIN_API

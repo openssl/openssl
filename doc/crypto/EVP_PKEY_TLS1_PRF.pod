@@ -33,6 +33,17 @@ and any seed is reset.
 EVP_PKEY_CTX_add1_tls1_prf_seed() sets the seed to B<seedlen> bytes of B<seed>.
 If a seed is already set it is appended to the existing value.
 
+=head1 STRING CTRLS
+
+The TLS PRF also supports string based control operations using
+L<EVP_PKEY_CTX_ctrl_str(3)>.
+The B<type> parameter "md" uses the supplied B<value> as the name of the digest
+algorithm to use.
+The B<type> parameters "secret" and "seed" use the supplied B<value> parameter
+as a secret or seed value.
+The names "hexsecret" and "hexseed" are similar except they take a hex string
+which is converted to binary.
+
 =head1 NOTES
 
 All these functions are implemented as macros.
@@ -82,6 +93,7 @@ and seed value "seed":
 =head1 SEE ALSO
 
 L<EVP_PKEY_CTX_new(3)>,
-L<EVP_PKEY_derive(3)>,
+L<EVP_PKEY_CTX_ctrl_str(3)>,
+L<EVP_PKEY_derive(3)>
 
 =cut

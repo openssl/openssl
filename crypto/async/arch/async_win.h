@@ -73,13 +73,7 @@ typedef struct async_fibre_st {
         ((c)->fibre = CreateFiber(0, async_start_func_win, 0))
 # define async_fibre_free(f)             (DeleteFiber((f)->fibre))
 
-async_ctx *async_arch_get_ctx(void);
-int async_set_ctx(async_ctx *ctx);
-
 int async_fibre_init_dispatcher(async_fibre *fibre);
 VOID CALLBACK async_start_func_win(PVOID unused);
-
-async_pool *async_get_pool(void);
-int async_set_pool(async_pool *pool);
 
 #endif

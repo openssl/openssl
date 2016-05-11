@@ -89,8 +89,7 @@ B<Client mode:> ignored
 
 =back
 
-Exactly one of the B<mode> flags SSL_VERIFY_NONE and SSL_VERIFY_PEER must be
-set at any time.
+If the B<mode> is SSL_VERIFY_NONE none of the other flags may be set.
 
 The actual verification procedure is performed either using the built-in
 verification procedure or using another application provided verification
@@ -145,18 +144,6 @@ If no B<verify_callback> is specified, the default callback will be used.
 Its return value is identical to B<preverify_ok>, so that any verification
 failure will lead to a termination of the TLS/SSL handshake with an
 alert message, if SSL_VERIFY_PEER is set.
-
-=head1 BUGS
-
-In client mode, it is not checked whether the SSL_VERIFY_PEER flag
-is set, but whether SSL_VERIFY_NONE is not set. This can lead to
-unexpected behaviour, if the SSL_VERIFY_PEER and SSL_VERIFY_NONE are not
-used as required (exactly one must be set at any time).
-
-The certificate verification depth set with SSL[_CTX]_verify_depth()
-stops the verification at a certain depth. The error message produced
-will be that of an incomplete certificate chain and not
-X509_V_ERR_CERT_CHAIN_TOO_LONG as may be expected.
 
 =head1 RETURN VALUES
 
@@ -269,7 +256,7 @@ L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
   */
  mydata.verify_depth = verify_depth; ...
  SSL_set_ex_data(ssl, mydata_index, &mydata);
-					     
+
  ...
  SSL_accept(ssl);	/* check of success left out for clarity */
  if (peer = SSL_get_peer_certificate(ssl))

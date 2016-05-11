@@ -131,8 +131,10 @@ int verify_depth = 0;
 int verify_quiet = 0;
 int verify_error = X509_V_OK;
 int verify_return_error = 0;
+#ifndef OPENSSL_NO_SOCK
 static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 static int cookie_initialized = 0;
+#endif
 
 static const char *lookup(int val, const STRINT_PAIR* list, const char* def)
 {
@@ -404,8 +406,6 @@ int ssl_print_point_formats(BIO *out, SSL *s)
 
         }
     }
-    if (nformats <= 0)
-        BIO_puts(out, "NONE");
     BIO_puts(out, "\n");
     return 1;
 }
@@ -437,8 +437,6 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
             BIO_printf(out, "%s", cname);
         }
     }
-    if (ncurves == 0)
-        BIO_puts(out, "NONE");
     OPENSSL_free(curves);
     if (noshared) {
         BIO_puts(out, "\n");
@@ -505,12 +503,12 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp,
 
     if (cmd == (BIO_CB_READ | BIO_CB_RETURN)) {
         BIO_printf(out, "read from %p [%p] (%lu bytes => %ld (0x%lX))\n",
-                   (void *)bio, argp, (unsigned long)argi, ret, ret);
+                   (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
         return (ret);
     } else if (cmd == (BIO_CB_WRITE | BIO_CB_RETURN)) {
         BIO_printf(out, "write to %p [%p] (%lu bytes => %ld (0x%lX))\n",
-                   (void *)bio, argp, (unsigned long)argi, ret, ret);
+                   (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
     }
     return (ret);
@@ -711,6 +709,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"heartbeat", TLSEXT_TYPE_heartbeat},
     {"session ticket", TLSEXT_TYPE_session_ticket},
     {"renegotiation info", TLSEXT_TYPE_renegotiate},
+    {"signed certificate timestamps", TLSEXT_TYPE_signed_certificate_timestamp},
     {"TLS padding", TLSEXT_TYPE_padding},
 #ifdef TLSEXT_TYPE_next_proto_neg
     {"next protocol", TLSEXT_TYPE_next_proto_neg},
@@ -740,6 +739,7 @@ void tlsext_cb(SSL *s, int client_server, int type,
     (void)BIO_flush(bio);
 }
 
+#ifndef OPENSSL_NO_SOCK
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
@@ -802,6 +802,7 @@ int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
 
     return 0;
 }
+#endif
 
 /*
  * Example of extended certificate handling. Where the standard support of
@@ -972,7 +973,7 @@ int load_excert(SSL_EXCERT **pexc)
             return 0;
         }
         exc->cert = load_cert(exc->certfile, exc->certform,
-                              NULL, NULL, "Server Certificate");
+                              "Server Certificate");
         if (!exc->cert)
             return 0;
         if (exc->keyfile) {
@@ -986,7 +987,7 @@ int load_excert(SSL_EXCERT **pexc)
             return 0;
         if (exc->chainfile) {
             if (!load_certs(exc->chainfile, &exc->chain, FORMAT_PEM, NULL,
-                            NULL, "Server Chain"))
+                            "Server Chain"))
                 return 0;
         }
     }
@@ -1061,11 +1062,12 @@ int args_excert(int opt, SSL_EXCERT **pexc)
 static void print_raw_cipherlist(SSL *s)
 {
     const unsigned char *rlist;
-    static const unsigned char scsv_id[] = { 0, 0, 0xFF };
+    static const unsigned char scsv_id[] = { 0, 0xFF };
     size_t i, rlistlen, num;
     if (!SSL_is_server(s))
         return;
     num = SSL_get0_raw_cipherlist(s, NULL);
+    OPENSSL_assert(num == 2);
     rlistlen = SSL_get0_raw_cipherlist(s, &rlist);
     BIO_puts(bio_err, "Client cipher list: ");
     for (i = 0; i < rlistlen; i += num, rlist += num) {
@@ -1074,7 +1076,7 @@ static void print_raw_cipherlist(SSL *s)
             BIO_puts(bio_err, ":");
         if (c)
             BIO_puts(bio_err, SSL_CIPHER_get_name(c));
-        else if (!memcmp(rlist, scsv_id - num + 3, num))
+        else if (!memcmp(rlist, scsv_id, num))
             BIO_puts(bio_err, "SCSV");
         else {
             size_t j;
@@ -1104,7 +1106,7 @@ static char *hexencode(const unsigned char *data, size_t len)
     }
     cp = out = app_malloc(ilen, "TLSA hex data buffer");
 
-    while (ilen-- > 0) {
+    while (len-- > 0) {
         *cp++ = hex[(*data >> 4) & 0x0f];
         *cp++ = hex[*data++ & 0x0f];
     }
@@ -1198,7 +1200,7 @@ void print_ssl_summary(SSL *s)
 }
 
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
-               SSL_CTX *ctx, int no_jpake)
+               SSL_CTX *ctx)
 {
     int i;
 
@@ -1206,12 +1208,6 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
     for (i = 0; i < sk_OPENSSL_STRING_num(str); i += 2) {
         const char *flag = sk_OPENSSL_STRING_value(str, i);
         const char *arg = sk_OPENSSL_STRING_value(str, i + 1);
-#ifndef OPENSSL_NO_JPAKE
-        if (!no_jpake && (strcmp(flag, "-cipher") == 0)) {
-            BIO_puts(bio_err, "JPAKE sets cipher to PSK\n");
-            return 0;
-        }
-#endif
         if (SSL_CONF_cmd(cctx, flag, arg) <= 0) {
             if (arg)
                 BIO_printf(bio_err, "Error with command: \"%s %s\"\n",
@@ -1222,15 +1218,6 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
             return 0;
         }
     }
-#ifndef OPENSSL_NO_JPAKE
-    if (!no_jpake) {
-        if (SSL_CONF_cmd(cctx, "-cipher", "PSK") <= 0) {
-            BIO_puts(bio_err, "Error setting cipher to PSK\n");
-            ERR_print_errors(bio_err);
-            return 0;
-        }
-    }
-#endif
     if (!SSL_CONF_CTX_finish(cctx)) {
         BIO_puts(bio_err, "Error finishing context\n");
         ERR_print_errors(bio_err);
@@ -1298,7 +1285,7 @@ int ssl_load_stores(SSL_CTX *ctx,
 typedef struct {
     BIO *out;
     int verbose;
-    int (*old_cb) (SSL *s, SSL_CTX *ctx, int op, int bits, int nid,
+    int (*old_cb) (const SSL *s, const SSL_CTX *ctx, int op, int bits, int nid,
                    void *other, void *ex);
 } security_debug_ex;
 
@@ -1327,7 +1314,7 @@ static STRINT_PAIR callback_types[] = {
     {NULL}
 };
 
-static int security_callback_debug(SSL *s, SSL_CTX *ctx,
+static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
                                    int op, int bits, int nid,
                                    void *other, void *ex)
 {
@@ -1380,7 +1367,7 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
     case SSL_SECOP_OTHER_DH:
         {
             DH *dh = other;
-            BIO_printf(sdb->out, "%d", BN_num_bits(dh->p));
+            BIO_printf(sdb->out, "%d", DH_bits(dh));
             break;
         }
 #endif

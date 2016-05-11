@@ -5,5 +5,4 @@ SOURCE[../../libcrypto]=\
         bss_file.c bss_sock.c bss_conn.c \
         bf_null.c bf_buff.c b_print.c b_dump.c b_addr.c \
         b_sock.c b_sock2.c bss_acpt.c bf_nbio.c bss_log.c bss_bio.c \
-        bss_dgram.c \
-        {- $config{target} =~ /^VMS/i ? "bf_lbuf.c" : "" -}
+        bss_dgram.c bio_meth.c bf_lbuf.c

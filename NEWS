@@ -5,14 +5,18 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.2f and OpenSSL 1.1.0 [in pre-release]
+  Major changes between OpenSSL 1.0.2h and OpenSSL 1.1.0 [in pre-release]
 
+      o "shared" builds are now the default when possible
+      o Added support for "pipelining"
+      o Added the AFALG engine
+      o New threading API implemented
       o Support for ChaCha20 and Poly1305 added to libcrypto and libssl
       o Support for extended master secret
       o CCM ciphersuites
       o Reworked test suite, now based on perl, Test::Harness and Test::More
-      o Various libcrypto structures made opaque including: BIGNUM, EVP_MD,
-        EVP_MD_CTX, HMAC_CTX, EVP_CIPHER and EVP_CIPHER_CTX.
+      o *Most* libcrypto and libssl structures were made opaque including:
+        <TBA>
       o libssl internal structures made opaque
       o SSLv2 support removed
       o Kerberos ciphersuite support removed
@@ -34,6 +38,39 @@
         the directory for certs, private key and openssl.cnf exclusively.
       o Reworked BIO networking library, with full support for IPv6.
       o New "unified" build system
+      o New security levels
+      o Support for scrypt algorithm
+      o Support for X25519
+      o Extended SSL_CONF support using configuration files
+      o KDF algorithm support. Implement TLS PRF as a KDF.
+      o Support for Certificate Transparency
+      o HKDF support.
+
+  Major changes between OpenSSL 1.0.2g and OpenSSL 1.0.2h [3 May 2016]
+
+      o Prevent padding oracle in AES-NI CBC MAC check (CVE-2016-2107)
+      o Fix EVP_EncodeUpdate overflow (CVE-2016-2105)
+      o Fix EVP_EncryptUpdate overflow (CVE-2016-2106)
+      o Prevent ASN.1 BIO excessive memory allocation (CVE-2016-2109)
+      o EBCDIC overread (CVE-2016-2176)
+      o Modify behavior of ALPN to invoke callback after SNI/servername
+        callback, such that updates to the SSL_CTX affect ALPN.
+      o Remove LOW from the DEFAULT cipher list.  This removes singles DES from
+        the default.
+      o Only remove the SSLv2 methods with the no-ssl2-method option.
+
+  Major changes between OpenSSL 1.0.2f and OpenSSL 1.0.2g [1 Mar 2016]
+
+      o Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
+      o Disable SSLv2 default build, default negotiation and weak ciphers
+        (CVE-2016-0800)
+      o Fix a double-free in DSA code (CVE-2016-0705)
+      o Disable SRP fake user seed to address a server memory leak
+        (CVE-2016-0798)
+      o Fix BN_hex2bn/BN_dec2bn NULL pointer deref/heap corruption
+        (CVE-2016-0797)
+      o Fix memory issues in BIO_*printf functions (CVE-2016-0799)
+      o Fix side channel attack on modular exponentiation (CVE-2016-0702)
 
   Major changes between OpenSSL 1.0.2e and OpenSSL 1.0.2f [28 Jan 2016]
 

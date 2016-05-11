@@ -76,7 +76,7 @@ links to mostly all other structures.
 =head1 HEADER FILES
 
 Currently the OpenSSL B<ssl> library provides the following C header files
-containing the prototypes for the data structures and and functions:
+containing the prototypes for the data structures and functions:
 
 =over 4
 
@@ -118,29 +118,67 @@ protocol methods defined in B<SSL_METHOD> structures.
 
 =over 4
 
-=item const SSL_METHOD *B<SSLv3_client_method>(void);
+=item const SSL_METHOD *B<TLS_method>(void);
 
-Constructor for the SSLv3 SSL_METHOD structure for a dedicated client.
+Constructor for the I<version-flexible> SSL_METHOD structure for clients,
+servers or both.
+See L<SSL_CTX_new(3)> for details.
 
-=item const SSL_METHOD *B<SSLv3_server_method>(void);
+=item const SSL_METHOD *B<TLS_client_method>(void);
 
-Constructor for the SSLv3 SSL_METHOD structure for a dedicated server.
+Constructor for the I<version-flexible> SSL_METHOD structure for clients.
 
-=item const SSL_METHOD *B<SSLv3_method>(void);
+=item const SSL_METHOD *B<TLS_server_method>(void);
 
-Constructor for the SSLv3 SSL_METHOD structure for combined client and server.
+Constructor for the I<version-flexible> SSL_METHOD structure for servers.
 
-=item const SSL_METHOD *B<TLSv1_client_method>(void);
+=item const SSL_METHOD *B<TLSv1_2_method>(void);
 
-Constructor for the TLSv1 SSL_METHOD structure for a dedicated client.
+Constructor for the TLSv1.2 SSL_METHOD structure for clients, servers or both.
 
-=item const SSL_METHOD *B<TLSv1_server_method>(void);
+=item const SSL_METHOD *B<TLSv1_2_client_method>(void);
 
-Constructor for the TLSv1 SSL_METHOD structure for a dedicated server.
+Constructor for the TLSv1.2 SSL_METHOD structure for clients.
+
+=item const SSL_METHOD *B<TLSv1_2_server_method>(void);
+
+Constructor for the TLSv1.2 SSL_METHOD structure for servers.
+
+=item const SSL_METHOD *B<TLSv1_1_method>(void);
+
+Constructor for the TLSv1.1 SSL_METHOD structure for clients, servers or both.
+
+=item const SSL_METHOD *B<TLSv1_1_client_method>(void);
+
+Constructor for the TLSv1.1 SSL_METHOD structure for clients.
+
+=item const SSL_METHOD *B<TLSv1_1_server_method>(void);
+
+Constructor for the TLSv1.1 SSL_METHOD structure for servers.
 
 =item const SSL_METHOD *B<TLSv1_method>(void);
 
-Constructor for the TLSv1 SSL_METHOD structure for combined client and server.
+Constructor for the TLSv1 SSL_METHOD structure for clients, servers or both.
+
+=item const SSL_METHOD *B<TLSv1_client_method>(void);
+
+Constructor for the TLSv1 SSL_METHOD structure for clients.
+
+=item const SSL_METHOD *B<TLSv1_server_method>(void);
+
+Constructor for the TLSv1 SSL_METHOD structure for servers.
+
+=item const SSL_METHOD *B<SSLv3_method>(void);
+
+Constructor for the SSLv3 SSL_METHOD structure for clients, servers or both.
+
+=item const SSL_METHOD *B<SSLv3_client_method>(void);
+
+Constructor for the SSLv3 SSL_METHOD structure for clients.
+
+=item const SSL_METHOD *B<SSLv3_server_method>(void);
+
+Constructor for the SSLv3 SSL_METHOD structure for servers.
 
 =back
 
@@ -168,7 +206,7 @@ Return the internal name of I<cipher> as a string. These are the various
 strings defined by the I<SSL3_TXT_xxx> and I<TLS1_TXT_xxx>
 definitions in the header files.
 
-=item char *B<SSL_CIPHER_get_version>(SSL_CIPHER *cipher);
+=item const char *B<SSL_CIPHER_get_version>(SSL_CIPHER *cipher);
 
 Returns a string like "C<SSLv3>" or "C<TLSv1.2>" which indicates the
 SSL/TLS protocol version to which I<cipher> belongs (i.e. where it was defined
@@ -200,6 +238,8 @@ protocol context defined in the B<SSL_CTX> structure.
 =item char *B<SSL_CTX_get_app_data>(SSL_CTX *ctx);
 
 =item X509_STORE *B<SSL_CTX_get_cert_store>(SSL_CTX *ctx);
+
+=item STACK *B<SSL_CTX_get_ciphers>(const SSL_CTX *ctx);
 
 =item STACK *B<SSL_CTX_get_client_CA_list>(const SSL_CTX *ctx);
 
@@ -300,11 +340,11 @@ directory path and one default file path. Both are set via this call.
 
 =item int B<SSL_CTX_set_default_verify_dir>(SSL_CTX *ctx)
 
-Use the default directory path to locate trusted CA certficates.
+Use the default directory path to locate trusted CA certificates.
 
 =item int B<SSL_CTX_set_default_verify_file>(SSL_CTX *ctx)
 
-Use the file path to locate trusted CA certficates.
+Use the file path to locate trusted CA certificates.
 
 =item int B<SSL_CTX_set_ex_data>(SSL_CTX *s, int idx, char *arg);
 

@@ -15,8 +15,8 @@
 # and improvement coefficients relative to gcc-generated code.
 #
 # Freescale e300	9.78/+30%
-# PPC74x0		7.08/+50%
-# PPC970		6.24/+80%
+# PPC74x0		6.92/+50%
+# PPC970		6.03/+80%
 # POWER7		3.50/+30%
 # POWER8		3.75/+10%
 

@@ -98,13 +98,14 @@ OPTIONS rsautl_options[] = {
     {"oaep", OPT_OAEP, '-', "Use PKCS#1 OAEP"},
     {"sign", OPT_SIGN, '-', "Sign with private key"},
     {"verify", OPT_VERIFY, '-', "Verify with public key"},
-    {"asn1parse", OPT_ASN1PARSE, '-'},
+    {"asn1parse", OPT_ASN1PARSE, '-',
+     "Run output through asn1parse; useful with -verify"},
     {"hexdump", OPT_HEXDUMP, '-', "Hex dump output"},
     {"x931", OPT_X931, '-', "Use ANSI X9.31 padding"},
-    {"rev", OPT_REV, '-'},
+    {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
-    {"passin", OPT_PASSIN, 's', "Pass phrase source"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
@@ -204,7 +205,8 @@ int rsautl_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (need_priv && (key_type != KEY_PRIVKEY)) {
         BIO_printf(bio_err, "A private key is needed for this operation\n");
@@ -229,7 +231,7 @@ int rsautl_main(int argc, char **argv)
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, keyformat, NULL, e, "Certificate");
+        x = load_cert(keyfile, keyformat, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);

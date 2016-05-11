@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/dh.h>
+#include "dh_locl.h"
 #include <openssl/objects.h>
 #include <openssl/asn1t.h>
 
@@ -84,7 +84,7 @@ ASN1_SEQUENCE_cb(DHparams, dh_cb) = {
         ASN1_SIMPLE(DH, p, BIGNUM),
         ASN1_SIMPLE(DH, g, BIGNUM),
         ASN1_OPT(DH, length, ZLONG),
-} static_ASN1_SEQUENCE_END_cb(DH, DHparams)
+} ASN1_SEQUENCE_END_cb(DH, DHparams)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DH, DHparams, DHparams)
 

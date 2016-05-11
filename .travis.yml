@@ -1,8 +1,10 @@
 language: c
+cache: ccache
 
 addons:
     apt:
         packages:
+            - ccache
             - clang-3.6
             - gcc-5
             - binutils-mingw-w64
@@ -18,97 +20,78 @@ os:
 
 compiler:
     - clang
-    - clang-3.6
     - gcc
-    - gcc-5
-    - i686-w64-mingw32-gcc
-    - x86_64-w64-mingw32-gcc
 
 env:
-    - CONFIG_OPTS=""
-    - CONFIG_OPTS="shared"
-    - CONFIG_OPTS="no-asm"
-    - CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="--unified"
-    - CONFIG_OPTS="--unified shared"
-    - CONFIG_OPTS="--unified no-asm"
-    - CONFIG_OPTS="--unified --debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
+    - CONFIG_OPTS="" DESTDIR="_install"
+    - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
+    - CONFIG_OPTS="--strict-warnings no-shared" BUILDONLY="yes"
+    - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
+    - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
 
 matrix:
     include:
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="-fsanitize=address"
+          env: CONFIG_OPTS="-fsanitize=address no-shared"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm --debug --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-crypto-mdebug enable-rc5 enable-md2"
+          env: CONFIG_OPTS="no-shared no-asm -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2 -fno-sanitize=alignment"
         - os: linux
           compiler: gcc-5
-          env: CONFIG_OPTS="-fsanitize=address"
+          env: CONFIG_OPTS="no-shared -fsanitize=address"
         - os: linux
           compiler: gcc-5
-          env: CONFIG_OPTS="no-asm --debug --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-crypto-mdebug enable-rc5 enable-md2"
+          env: CONFIG_OPTS="no-shared no-asm -fno-sanitize-recover -DPEDANTIC -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
+        - os: linux
+          compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-pic"
+        - os: linux
+          compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-pic"
     exclude:
-        - os: osx
-          compiler: clang-3.6
+        - os: linux
+          compiler: clang
         - os: osx
           compiler: gcc
-        - os: osx
-          compiler: gcc-5
-        - os: osx
-          compiler: i686-w64-mingw32-gcc
-        - os: osx
-          compiler: x86_64-w64-mingw32-gcc
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="shared"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="shared"
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-asm"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-asm"
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified shared"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified shared"
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified no-asm"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified no-asm"
-    allow_failures:
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified --debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified --debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
 
 before_script:
     - sh .travis-create-release.sh $TRAVIS_OS_NAME
     - tar -xvzf _srcdist.tar.gz
-    - cd _srcdist
+    - mkdir _build;
+    - cd _build;
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
-          ./Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
+          ../_srcdist/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
       elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
-          ./Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
+          ../_srcdist/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
-          ./config $CONFIG_OPTS;
+          if which ccache >/dev/null && [ "$CC" != clang-3.6 ]; then
+              CC="ccache $CC";
+          fi;
+          ../_srcdist/config $CONFIG_OPTS;
       fi
     - cd ..
 
 script:
-    - cd _srcdist
+    - cd _build;
     - make
-    - if [ -n "$CROSS_COMPILE" ]; then
-          export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+    - if [ -z "$BUILDONLY" ]; then
+          if [ -n "$CROSS_COMPILE" ]; then
+              export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+          fi;
+          HARNESS_VERBOSE=yes make test;
+      else
+          make build_tests;
       fi
-    - HARNESS_VERBOSE=yes make test
+    - if [ -n "$DESTDIR" ]; then
+          mkdir "../$DESTDIR";
+          make install DESTDIR="../$DESTDIR";
+      fi
     - cd ..
 
 notifications:
     email:
         - openssl-commits@openssl.org
+

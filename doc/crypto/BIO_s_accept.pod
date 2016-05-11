@@ -10,7 +10,7 @@ BIO_get_bind_mode, BIO_do_accept - accept BIO
 
  #include <openssl/bio.h>
 
- BIO_METHOD *BIO_s_accept(void);
+ const BIO_METHOD *BIO_s_accept(void);
 
  long BIO_set_accept_port(BIO *b, char *name);
  char *BIO_get_accept_port(BIO *b);
@@ -49,7 +49,7 @@ If the close flag is set on an accept BIO then any active
 connection on that chain is shutdown and the socket closed when
 the BIO is freed.
 
-Calling BIO_reset() on a accept BIO will close any active
+Calling BIO_reset() on an accept BIO will close any active
 connection and reset the BIO into a state where it awaits another
 incoming connection.
 
@@ -60,7 +60,7 @@ BIO_set_accept_port() uses the string B<name> to set the accept
 port. The port is represented as a string of the form "host:port",
 where "host" is the interface to use and "port" is the port.
 The host can be "*" or empty which is interpreted as meaning
-any interface.  If the host is a IPv6 address, it has to be
+any interface.  If the host is an IPv6 address, it has to be
 enclosed in brackets, for example "[::1]:https".  "port" has the
 same syntax as the port specified in BIO_set_conn_port() for
 connect BIOs, that is it can be a numerical port string or a

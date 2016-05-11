@@ -9,8 +9,8 @@ DSA_SIG_new, DSA_SIG_free - allocate and free DSA signature objects
  #include <openssl/dsa.h>
 
  DSA_SIG *DSA_SIG_new(void);
-
- void	DSA_SIG_free(DSA_SIG *a);
+ void DSA_SIG_free(DSA_SIG *a);
+ void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig);
 
 =head1 DESCRIPTION
 
@@ -18,6 +18,9 @@ DSA_SIG_new() allocates and initializes a B<DSA_SIG> structure.
 
 DSA_SIG_free() frees the B<DSA_SIG> structure and its components. The
 values are erased before the memory is returned to the system.
+
+DSA_SIG_get0() returns internal pointers the B<r> and B<s> values contained
+in B<sig>. The values can then be examined or initialised.
 
 =head1 RETURN VALUES
 

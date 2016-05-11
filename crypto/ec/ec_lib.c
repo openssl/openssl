@@ -89,12 +89,14 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
     }
 
     ret->meth = meth;
-    ret->order = BN_new();
-    if (ret->order == NULL)
-        goto err;
-    ret->cofactor = BN_new();
-    if (ret->cofactor == NULL)
-        goto err;
+    if ((ret->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0) {
+        ret->order = BN_new();
+        if (ret->order == NULL)
+            goto err;
+        ret->cofactor = BN_new();
+        if (ret->cofactor == NULL)
+            goto err;
+    }
     ret->asn1_flag = OPENSSL_EC_NAMED_CURVE;
     ret->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
     if (!meth->group_init(ret))
@@ -240,10 +242,12 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
         dest->generator = NULL;
     }
 
-    if (!BN_copy(dest->order, src->order))
-        return 0;
-    if (!BN_copy(dest->cofactor, src->cofactor))
-        return 0;
+    if ((src->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0) {
+        if (!BN_copy(dest->order, src->order))
+            return 0;
+        if (!BN_copy(dest->cofactor, src->cofactor))
+            return 0;
+    }
 
     dest->curve_name = src->curve_name;
     dest->asn1_flag = src->asn1_flag;
@@ -369,9 +373,8 @@ const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group)
 
 int EC_GROUP_order_bits(const EC_GROUP *group)
 {
-    if (group->order)
-        return BN_num_bits(group->order);
-    return 0;
+    OPENSSL_assert(group->meth->group_order_bits != NULL);
+    return group->meth->group_order_bits(group);
 }
 
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
@@ -527,6 +530,8 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     if (EC_GROUP_get_curve_name(a) && EC_GROUP_get_curve_name(b) &&
         EC_GROUP_get_curve_name(a) != EC_GROUP_get_curve_name(b))
         return 1;
+    if (a->meth->flags & EC_FLAGS_CUSTOM_CURVE)
+        return 0;
 
     if (ctx == NULL)
         ctx_new = ctx = BN_CTX_new();
@@ -1021,4 +1026,11 @@ int EC_KEY_set_ex_data(EC_KEY *key, int idx, void *arg)
 void *EC_KEY_get_ex_data(const EC_KEY *key, int idx)
 {
     return CRYPTO_get_ex_data(&key->ex_data, idx);
+}
+
+int ec_group_simple_order_bits(const EC_GROUP *group)
+{
+    if (group->order == NULL)
+        return 0;
+    return BN_num_bits(group->order);
 }

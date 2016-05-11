@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md4, md5 - message digests
+dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md4, md5, blake2b, blake2s - message digests
 
 =head1 SYNOPSIS
 
@@ -106,12 +106,12 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-verify filename>
 
-verify the signature using the the public key in "filename".
+verify the signature using the public key in "filename".
 The output is either "Verification OK" or "Verification Failure".
 
 =item B<-prverify filename>
 
-verify the signature using the  the private key in "filename".
+verify the signature using the private key in "filename".
 
 =item B<-signature filename>
 
@@ -154,7 +154,7 @@ for example exactly 32 chars for gost-mac.
 
 a file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
-Multiple files can be specified separated by a OS-dependent character.
+Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others. 
 

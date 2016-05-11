@@ -10,8 +10,11 @@ IF[{- $config{target} =~ /^Cygwin/ -}]
  SHARED_NAME[libcrypto]=cygcrypto-{- $config{shlib_major}.".".$config{shlib_minor} -}
  SHARED_NAME[libssl]=cygssl-{- $config{shlib_major}.".".$config{shlib_minor} -}
 ELSIF[{- $config{target} =~ /^mingw/ -}]
- SHARED_NAME[libcrypto]=libeay32
- SHARED_NAME[libssl]=ssleay32
+ SHARED_NAME[libcrypto]=libcrypto-{- $config{shlib_major}."_".$config{shlib_minor} -}{- $config{target} eq "mingw64" ? "-x64" : "" -}
+ SHARED_NAME[libssl]=libssl-{- $config{shlib_major}."_".$config{shlib_minor} -}{- $config{target} eq "mingw64" ? "-x64" : "" -}
+ELSIF[{- $config{target} =~ /^VC-/ -}]
+ SHARED_NAME[libcrypto]=libcrypto-{- $config{shlib_major}."_".$config{shlib_minor} -}{- $target{multilib} -}
+ SHARED_NAME[libssl]=libssl-{- $config{shlib_major}."_".$config{shlib_minor} -}{- $target{multilib} -}
 ENDIF
 
 # VMS has a cultural standard where all libraries are prefixed.

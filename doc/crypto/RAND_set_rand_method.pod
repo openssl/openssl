@@ -45,8 +45,8 @@ API is being used, so this function is no longer recommended.
 	int (*status)(void);
  } RAND_METHOD;
 
-The components point to the implementation of RAND_seed(),
-RAND_bytes(), RAND_cleanup(), RAND_add(), RAND_pseudo_rand()
+The components point to method implementations used by (or called by), in order,
+RAND_seed(), RAND_bytes(), internal RAND cleanup, RAND_add(), RAND_pseudo_rand()
 and RAND_status().
 Each component may be NULL if the function is not implemented.
 

@@ -11,7 +11,7 @@
 #
 # June 2015
 #
-# ~6.4/2.2 cpb on z10/z196+, >2x improvement over compiler-generated
+# ~6.6/2.3 cpb on z10/z196+, >2x improvement over compiler-generated
 # code. For older compiler improvement coefficient is >3x, because
 # then base 2^64 and base 2^32 implementations are compared.
 #
@@ -27,7 +27,7 @@ if ($flavour =~ /3[12]/) {
 	$g="g";
 }
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 $sp="%r15";
@@ -78,13 +78,15 @@ $code.=<<___;
 .type	poly1305_blocks,\@function
 .align	16
 poly1305_blocks:
-	srl${g}	$len,$len,4
+	srl${g}	$len,4			# fixed-up in 64-bit build
 	lghi	%r0,0
 	cl${g}r	$len,%r0
 	je	.Lno_data
 
 	stm${g}	%r6,%r14,`6*$SIZE_T`($sp)
 
+	llgfr   $padbit,$padbit		# clear upper half, much needed with
+					# non-64-bit ABI
 	lg	$r0,32($ctx)		# load key
 	lg	$r1,40($ctx)
 
@@ -136,11 +138,12 @@ poly1305_blocks:
 	ngr	$h0,$h2
 	srlg	$t0,$h2,2
 	algr	$h0,$t0
+	lghi	$t1,3
+	ngr	$h2,$t1
 
 	algr	$h0,$d0lo
-	lghi	$t1,3
 	alcgr	$h1,$d1hi		# $d1hi is still zero
-	ngr	$h2,$t1
+	alcgr	$h2,$d1hi		# $d1hi is still zero
 
 	brct$g	$len,.Loop
 
@@ -211,6 +214,7 @@ ___
 }
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
+$code =~ s/\b(srlg\s+)(%r[0-9]+\s*,)\s*([0-9]+)/$1$2$2$3/gm;
 
 print $code;
 close STDOUT;

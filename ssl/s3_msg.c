@@ -192,10 +192,12 @@ int ssl3_send_alert(SSL *s, int level, int desc)
 int ssl3_dispatch_alert(SSL *s)
 {
     int i, j;
+    unsigned int alertlen;
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
     s->s3->alert_dispatch = 0;
-    i = do_ssl3_write(s, SSL3_RT_ALERT, &s->s3->send_alert[0], 2, 0);
+    alertlen = 2;
+    i = do_ssl3_write(s, SSL3_RT_ALERT, &s->s3->send_alert[0], &alertlen, 1, 0);
     if (i <= 0) {
         s->s3->alert_dispatch = 1;
     } else {

@@ -87,10 +87,6 @@
 # include "bio_lcl.h"
 # include <openssl/err.h>
 
-# if defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_CLIB)
-#  include <nwfileio.h>
-# endif
-
 # if !defined(OPENSSL_NO_STDIO)
 
 static int file_write(BIO *h, const char *buf, int num);
@@ -100,7 +96,7 @@ static int file_gets(BIO *h, char *str, int size);
 static long file_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int file_new(BIO *h);
 static int file_free(BIO *data);
-static BIO_METHOD methods_filep = {
+static const BIO_METHOD methods_filep = {
     BIO_TYPE_FILE,
     "FILE pointer",
     file_write,
@@ -168,6 +164,10 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 {
     BIO  *ret;
     FILE *file = file_fopen(filename, mode);
+    int fp_flags = BIO_CLOSE;
+
+    if (strchr(mode, 'b') == NULL)
+        fp_flags |= BIO_FP_TEXT;
 
     if (file == NULL) {
         SYSerr(SYS_F_FOPEN, get_last_sys_error());
@@ -185,7 +185,7 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 
     BIO_clear_flags(ret, BIO_FLAGS_UPLINK); /* we did fopen -> we disengage
                                              * UPLINK */
-    BIO_set_fp(ret, file, BIO_CLOSE);
+    BIO_set_fp(ret, file, fp_flags);
     return (ret);
 }
 
@@ -202,7 +202,7 @@ BIO *BIO_new_fp(FILE *stream, int close_flag)
     return (ret);
 }
 
-BIO_METHOD *BIO_s_file(void)
+const BIO_METHOD *BIO_s_file(void)
 {
     return (&methods_filep);
 }
@@ -245,7 +245,7 @@ static int file_read(BIO *b, char *out, int outl)
             ret = fread(out, 1, (int)outl, (FILE *)b->ptr);
         if (ret == 0
             && (b->flags & BIO_FLAGS_UPLINK) ? UP_ferror((FILE *)b->ptr) :
-            ferror((FILE *)b->ptr)) {
+                                               ferror((FILE *)b->ptr)) {
             SYSerr(SYS_F_FREAD, get_last_sys_error());
             BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);
             ret = -1;
@@ -312,8 +312,11 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
 #   if defined(__MINGW32__) && defined(__MSVCRT__) && !defined(_IOB_ENTRIES)
 #    define _IOB_ENTRIES 20
 #   endif
-#   if defined(_IOB_ENTRIES)
         /* Safety net to catch purely internal BIO_set_fp calls */
+#   if defined(_MSC_VER) && _MSC_VER>=1900
+        if (ptr == stdin || ptr == stdout || ptr == stderr)
+            BIO_clear_flags(b, BIO_FLAGS_UPLINK);
+#   elif defined(_IOB_ENTRIES)
         if ((size_t)ptr >= (size_t)stdin &&
             (size_t)ptr < (size_t)(stdin + _IOB_ENTRIES))
             BIO_clear_flags(b, BIO_FLAGS_UPLINK);
@@ -331,13 +334,6 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
                 _setmode(fd, _O_TEXT);
             else
                 _setmode(fd, _O_BINARY);
-#  elif defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_CLIB)
-            int fd = fileno((FILE *)ptr);
-            /* Under CLib there are differences in file modes */
-            if (num & BIO_FP_TEXT)
-                setmode(fd, O_TEXT);
-            else
-                setmode(fd, O_BINARY);
 #  elif defined(OPENSSL_SYS_MSDOS)
             int fd = fileno((FILE *)ptr);
             /* Set correct text/binary mode */
@@ -351,7 +347,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
                 } else
                     _setmode(fd, _O_BINARY);
             }
-#  elif defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_WIN32_CYGWIN)
+#  elif defined(OPENSSL_SYS_WIN32_CYGWIN)
             int fd = fileno((FILE *)ptr);
             if (num & BIO_FP_TEXT)
                 setmode(fd, O_TEXT);
@@ -379,13 +375,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = 0;
             break;
         }
-#  if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_WIN32_CYGWIN)
-        if (!(num & BIO_FP_TEXT))
-            strcat(p, "b");
-        else
-            strcat(p, "t");
-#  endif
-#  if defined(OPENSSL_SYS_NETWARE)
+#  if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32_CYGWIN)
         if (!(num & BIO_FP_TEXT))
             strcat(p, "b");
         else
@@ -496,7 +486,7 @@ static int file_free(BIO *a)
     return 0;
 }
 
-static BIO_METHOD methods_filep = {
+static const BIO_METHOD methods_filep = {
     BIO_TYPE_FILE,
     "FILE pointer",
     file_write,
@@ -509,7 +499,7 @@ static BIO_METHOD methods_filep = {
     NULL,
 };
 
-BIO_METHOD *BIO_s_file(void)
+const BIO_METHOD *BIO_s_file(void)
 {
     return (&methods_filep);
 }

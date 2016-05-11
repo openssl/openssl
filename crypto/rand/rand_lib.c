@@ -59,11 +59,9 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include <openssl/opensslconf.h>
-#include <openssl/rand.h>
+#include "internal/rand.h"
 
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 
 #ifdef OPENSSL_FIPS
 # include <openssl/fips.h>
@@ -79,10 +77,8 @@ static const RAND_METHOD *default_RAND_meth = NULL;
 int RAND_set_rand_method(const RAND_METHOD *meth)
 {
 #ifndef OPENSSL_NO_ENGINE
-    if (funct_ref) {
-        ENGINE_finish(funct_ref);
-        funct_ref = NULL;
-    }
+    ENGINE_finish(funct_ref);
+    funct_ref = NULL;
 #endif
     default_RAND_meth = meth;
     return 1;
@@ -95,7 +91,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
         ENGINE *e = ENGINE_get_default_RAND();
         if (e) {
             default_RAND_meth = ENGINE_get_RAND(e);
-            if (!default_RAND_meth) {
+            if (default_RAND_meth == NULL) {
                 ENGINE_finish(e);
                 e = NULL;
             }
@@ -117,7 +113,7 @@ int RAND_set_rand_engine(ENGINE *engine)
         if (!ENGINE_init(engine))
             return 0;
         tmp_meth = ENGINE_get_RAND(engine);
-        if (!tmp_meth) {
+        if (tmp_meth == NULL) {
             ENGINE_finish(engine);
             return 0;
         }
@@ -129,7 +125,7 @@ int RAND_set_rand_engine(ENGINE *engine)
 }
 #endif
 
-void RAND_cleanup(void)
+void rand_cleanup_int(void)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
     if (meth && meth->cleanup)

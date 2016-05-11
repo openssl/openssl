@@ -68,7 +68,7 @@
 # To generate code, pass the file name with either 256 or 512 in its
 # name and compiler flags.
 
-$output=shift;
+$output=pop;
 
 if ($output =~ /512.*\.[s|asm]/) {
 	$SZ=8;

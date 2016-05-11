@@ -58,7 +58,7 @@
 # include <openssl/e_os2.h>
 
 /* Case insensitive linking causes problems.... */
-# if defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_VMS)
+# if defined(OPENSSL_SYS_VMS)
 #  undef ERR_load_CRYPTO_strings
 #  define ERR_load_CRYPTO_strings                 ERR_load_CRYPTOlib_strings
 #  undef OCSP_crlID_new

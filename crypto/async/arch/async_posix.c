@@ -58,25 +58,20 @@
 # include <stddef.h>
 # include <unistd.h>
 
-pthread_key_t posixctx;
-pthread_key_t posixpool;
-
 #define STACKSIZE       32768
 
-int async_global_init(void)
+int ASYNC_is_capable(void)
 {
-    if (pthread_key_create(&posixctx, NULL) != 0
-            || pthread_key_create(&posixpool, NULL) != 0)
-        return 0;
+    ucontext_t ctx;
 
-    return 1;
+    /*
+     * Some platforms provide getcontext() but it does not work (notably
+     * MacOSX PPC64). Check for a working getcontext();
+     */
+    return getcontext(&ctx) == 0;
 }
 
 void async_local_cleanup(void)
-{
-}
-
-void async_global_cleanup(void)
 {
 }
 
@@ -101,38 +96,6 @@ void async_fibre_free(async_fibre *fibre)
 {
     OPENSSL_free(fibre->fibre.uc_stack.ss_sp);
     fibre->fibre.uc_stack.ss_sp = NULL;
-}
-
-int async_pipe(OSSL_ASYNC_FD *pipefds)
-{
-    if (pipe(pipefds) == 0)
-        return 1;
-
-    return 0;
-}
-
-int async_close_fd(OSSL_ASYNC_FD fd)
-{
-    if (close(fd) != 0)
-        return 0;
-
-    return 1;
-}
-
-int async_write1(OSSL_ASYNC_FD fd, const void *buf)
-{
-    if (write(fd, buf, 1) > 0)
-        return 1;
-
-    return 0;
-}
-
-int async_read1(OSSL_ASYNC_FD fd, void *buf)
-{
-    if (read(fd, buf, 1) > 0)
-        return 1;
-
-    return 0;
 }
 
 #endif

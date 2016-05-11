@@ -156,7 +156,7 @@
 extern "C" {
 #endif
 
-/* Default security level if not overriden at config time */
+/* Default security level if not overridden at config time */
 # ifndef OPENSSL_TLS_SECURITY_LEVEL
 #  define OPENSSL_TLS_SECURITY_LEVEL 1
 # endif
@@ -204,6 +204,7 @@ extern "C" {
 # define TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE 113
 # define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 114
 # define TLS1_AD_UNKNOWN_PSK_IDENTITY    115/* fatal */
+# define TLS1_AD_NO_APPLICATION_PROTOCOL 120 /* fatal */
 
 /* ExtensionType values from RFC3546 / RFC4366 / RFC6066 */
 # define TLSEXT_TYPE_server_name                 0
@@ -238,6 +239,12 @@ extern "C" {
 
 /* ExtensionType value from RFC7301 */
 # define TLSEXT_TYPE_application_layer_protocol_negotiation 16
+
+/*
+ * Extension type for Certificate Transparency
+ * https://tools.ietf.org/html/rfc6962#section-3.3.1
+ */
+# define TLSEXT_TYPE_signed_certificate_timestamp    18
 
 /*
  * ExtensionType value for TLS padding extension.

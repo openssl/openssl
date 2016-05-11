@@ -176,14 +176,18 @@ static int apps_startup()
                              | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 
+#ifndef OPENSSL_NO_UI
     setup_ui_method();
+#endif
 
     return 1;
 }
 
 static void apps_shutdown()
 {
+#ifndef OPENSSL_NO_UI
     destroy_ui_method();
+#endif
 }
 
 static char *make_config_name()
@@ -207,59 +211,6 @@ static char *make_config_name()
     return p;
 }
 
-static void lock_dbg_cb(int mode, int type, const char *file, int line)
-{
-    static int modes[CRYPTO_NUM_LOCKS];
-    const char *errstr = NULL;
-    int rw = mode & (CRYPTO_READ | CRYPTO_WRITE);
-
-    if (rw != CRYPTO_READ && rw != CRYPTO_WRITE) {
-        errstr = "invalid mode";
-        goto err;
-    }
-
-    if (type < 0 || type >= CRYPTO_NUM_LOCKS) {
-        errstr = "type out of bounds";
-        goto err;
-    }
-
-    if (mode & CRYPTO_LOCK) {
-        if (modes[type]) {
-            errstr = "already locked";
-            /* must not happen in a single-threaded program --> deadlock! */
-            goto err;
-        }
-        modes[type] = rw;
-    } else if (mode & CRYPTO_UNLOCK) {
-        if (!modes[type]) {
-            errstr = "not locked";
-            goto err;
-        }
-
-        if (modes[type] != rw) {
-            errstr = (rw == CRYPTO_READ) ?
-                "CRYPTO_r_unlock on write lock" :
-                "CRYPTO_w_unlock on read lock";
-        }
-
-        modes[type] = 0;
-    } else {
-        errstr = "invalid mode";
-        goto err;
-    }
-
- err:
-    if (errstr) {
-        BIO_printf(bio_err,
-                   "openssl (lock_dbg_cb): %s (mode=%d, type=%d) at %s:%d\n",
-                   errstr, mode, type, file, line);
-    }
-}
-
-#if defined( OPENSSL_SYS_VMS)
-extern char **copy_argv(int *argc, char **argv);
-#endif
-
 int main(int argc, char *argv[])
 {
     FUNCTION f, *fp;
@@ -278,9 +229,9 @@ int main(int argc, char *argv[])
     default_config_file = make_config_name();
     bio_in = dup_bio_in(FORMAT_TEXT);
     bio_out = dup_bio_out(FORMAT_TEXT);
-    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+    bio_err = dup_bio_err(FORMAT_TEXT);
 
-#if defined( OPENSSL_SYS_VMS)
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     copied_argv = argv = copy_argv(&argc, argv);
 #endif
 
@@ -288,7 +239,6 @@ int main(int argc, char *argv[])
     if (p != NULL && strcmp(p, "on") == 0)
         CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    CRYPTO_set_locking_callback(lock_dbg_cb);
 
     if (getenv("OPENSSL_FIPS")) {
 #ifdef OPENSSL_FIPS
@@ -541,10 +491,8 @@ int help_main(int argc, char **argv)
             return 0;
         }
     }
-    argc = opt_num_rest();
-    argv = opt_rest();
 
-    if (argc != 0) {
+    if (opt_num_rest() != 0) {
         BIO_printf(bio_err, "Usage: %s\n", prog);
         return 1;
     }
@@ -694,11 +642,11 @@ static int SortFnByName(const void *_f1, const void *_f2)
 static void list_disabled(void)
 {
     BIO_puts(bio_out, "Disabled algorithms:\n");
-#ifdef OPENSSL_NO_AES
-    BIO_puts(bio_out, "AES\n");
-#endif
 #ifdef OPENSSL_NO_BF
     BIO_puts(bio_out, "BF\n");
+#endif
+#ifndef OPENSSL_NO_BLAKE2
+    BIO_puts(bio_out, "BLAKE2\n");
 #endif
 #ifdef OPENSSL_NO_CAMELLIA
     BIO_puts(bio_out, "CAMELLIA\n");
@@ -751,14 +699,8 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_HEARTBEATS
     BIO_puts(bio_out, "HEARTBEATS\n");
 #endif
-#ifdef OPENSSL_NO_HMAC
-    BIO_puts(bio_out, "HMAC\n");
-#endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
-#endif
-#ifdef OPENSSL_NO_JPAKE
-    BIO_puts(bio_out, "JPAKE\n");
 #endif
 #ifdef OPENSSL_NO_MD2
     BIO_puts(bio_out, "MD2\n");
@@ -799,17 +741,11 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SCRYPT
     BIO_puts(bio_out, "SCRYPT\n");
 #endif
-#ifdef OPENSSL_NO_SCT
-    BIO_puts(bio_out, "SCT\n");
-#endif
 #ifdef OPENSSL_NO_SCTP
     BIO_puts(bio_out, "SCTP\n");
 #endif
 #ifdef OPENSSL_NO_SEED
     BIO_puts(bio_out, "SEED\n");
-#endif
-#ifdef OPENSSL_NO_SHA
-    BIO_puts(bio_out, "SHA\n");
 #endif
 #ifdef OPENSSL_NO_SOCK
     BIO_puts(bio_out, "SOCK\n");
@@ -820,14 +756,8 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SRTP
     BIO_puts(bio_out, "SRTP\n");
 #endif
-#ifdef OPENSSL_NO_SSL
-    BIO_puts(bio_out, "SSL\n");
-#endif
 #ifdef OPENSSL_NO_SSL3
     BIO_puts(bio_out, "SSL3\n");
-#endif
-#if defined(OPENSSL_NO_TLS)
-    BIO_puts(bio_out, "TLS\n");
 #endif
 #ifdef OPENSSL_NO_TLS1
     BIO_puts(bio_out, "TLS1\n");

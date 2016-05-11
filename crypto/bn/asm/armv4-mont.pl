@@ -48,8 +48,8 @@
 # Snapdragon S4.
 
 $flavour = shift;
-if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
-else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -121,7 +121,7 @@ bn_mul_mont:
 #ifdef	__APPLE__
 	ldr	r0,[r0]
 #endif
-	tst	r0,#1			@ NEON available?
+	tst	r0,#ARMV7_NEON		@ NEON available?
 	ldmia	sp, {r0,r2}
 	beq	.Lialu
 	add	sp,sp,#8

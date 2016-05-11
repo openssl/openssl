@@ -111,7 +111,17 @@
 #ifndef HEADER_BN_LCL_H
 # define HEADER_BN_LCL_H
 
-# include "internal/bn_conf.h"
+/*
+ * The EDK2 build doesn't use bn_conf.h; it sets THIRTY_TWO_BIT or
+ * SIXTY_FOUR_BIT in its own environment since it doesn't re-run our
+ * Configure script and needs to support both 32-bit and 64-bit.
+ */
+# include <openssl/opensslconf.h>
+
+# if !defined(OPENSSL_SYS_UEFI)
+#  include "internal/bn_conf.h"
+# endif
+
 # include "internal/bn_int.h"
 
 #ifdef  __cplusplus
@@ -763,6 +773,17 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
                          const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx);
 int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx);
+
+static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
+{
+    if (bits > (INT_MAX - BN_BITS2 + 1))
+        return NULL;
+
+    if(((bits+BN_BITS2-1)/BN_BITS2) <= (a)->dmax)
+        return a;
+
+    return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);
+}
 
 #ifdef  __cplusplus
 }

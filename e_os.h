@@ -72,17 +72,14 @@ extern "C" {
 
 /* Used to checking reference counts, most while doing perl5 stuff :-) */
 # if defined(OPENSSL_NO_STDIO)
-#  if defined(REF_DEBUG)
-#   error "REF_DEBUG requires stdio"
-#  endif
 #  if defined(REF_PRINT)
 #   error "REF_PRINT requires stdio"
 #  endif
 # endif
 
-# if defined(REF_DEBUG)
+# if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
 #  define REF_ASSERT_ISNT(test) \
-    (void)((test) ? (OpenSSLDie(__FILE__, __LINE__, "refcount error"), 1) : 0)
+    (void)((test) ? (OPENSSL_die("refcount error", __FILE__, __LINE__), 1) : 0)
 # else
 #  define REF_ASSERT_ISNT(i)
 # endif
@@ -92,6 +89,9 @@ extern "C" {
 # else
 #  define REF_PRINT_COUNT(a, b)
 # endif
+
+# define osslargused(x)      (void)x
+# define OPENSSL_CONF        "openssl.cnf"
 
 # ifndef DEVRANDOM
 /*
@@ -170,25 +170,6 @@ extern "C" {
 #  define closesocket(s)              close(s)
 #  define readsocket(s,b,n)           read((s),(b),(n))
 #  define writesocket(s,b,n)          write((s),(char *)(b),(n))
-# elif defined(OPENSSL_SYS_NETWARE)
-#  if defined(NETWARE_BSDSOCK)
-#   define get_last_socket_error() errno
-#   define clear_socket_error()    errno=0
-#   define closesocket(s)          close(s)
-#   define ioctlsocket(a,b,c)      ioctl(a,b,c)
-#   if defined(NETWARE_LIBC)
-#    define readsocket(s,b,n)       recv((s),(b),(n),0)
-#    define writesocket(s,b,n)      send((s),(b),(n),0)
-#   else
-#    define readsocket(s,b,n)       recv((s),(char*)(b),(n),0)
-#    define writesocket(s,b,n)      send((s),(char*)(b),(n),0)
-#   endif
-#  else
-#   define get_last_socket_error() WSAGetLastError()
-#   define clear_socket_error()    WSASetLastError(0)
-#   define readsocket(s,b,n)               recv((s),(b),(n),0)
-#   define writesocket(s,b,n)              send((s),(b),(n),0)
-#  endif
 # else
 #  define get_last_socket_error() errno
 #  define clear_socket_error()    errno=0
@@ -242,7 +223,7 @@ extern "C" {
         */
 #    define _WIN32_WINNT 0x0501
 #   endif
-#   if !defined(OPENSSL_NO_SOCK) && (defined(_WIN32_WINNT) || defined(_WIN32_WCE))
+#   if defined(_WIN32_WINNT) || defined(_WIN32_WCE)
        /*
         * Just like defining _WIN32_WINNT including winsock2.h implies
         * certain "discipline" for maintaining [broad] binary compatibility.
@@ -316,14 +297,6 @@ extern FILE *_imp___iob;
 #   define OPENSSL_NO_POSIX_IO
 #  endif
 
-#  if defined (__BORLANDC__)
-#   define _setmode setmode
-#   define _O_TEXT O_TEXT
-#   define _O_BINARY O_BINARY
-#   define _int64 __int64
-#   define _kbhit kbhit
-#  endif
-
 #  define EXIT(n) exit(n)
 #  define LIST_SEPARATOR_CHAR ';'
 #  ifndef X_OK
@@ -335,9 +308,6 @@ extern FILE *_imp___iob;
 #  ifndef R_OK
 #   define R_OK        4
 #  endif
-#  define OPENSSL_CONF  "openssl.cnf"
-#  define NUL_DEV       "nul"
-#  define RFILE         ".rnd"
 #  ifdef OPENSSL_SYS_WINCE
 #   define DEFAULT_HOME  ""
 #  else
@@ -367,10 +337,7 @@ extern FILE *_imp___iob;
 #   else
 #    include <unixlib.h>
 #   endif
-#   define OPENSSL_CONF        "openssl.cnf"
-#   define RFILE               ".rnd"
 #   define LIST_SEPARATOR_CHAR ','
-#   define NUL_DEV             "NLA0:"
   /* We don't have any well-defined random devices on VMS, yet... */
 #   undef DEVRANDOM
   /*-
@@ -402,29 +369,6 @@ extern FILE *_imp___iob;
 #   define NO_SYS_PARAM_H
 #   define NO_SYS_UN_H
 
-#  elif defined(OPENSSL_SYS_NETWARE)
-#   include <fcntl.h>
-#   include <unistd.h>
-#   define NO_SYS_TYPES_H
-#   undef  DEVRANDOM
-#   ifdef NETWARE_CLIB
-#    define getpid GetThreadID
-extern int GetThreadID(void);
-/* #      include <conio.h> */
-extern int kbhit(void);
-#   else
-#    include <screen.h>
-#   endif
-#   define NO_SYSLOG
-#   define _setmode setmode
-#   define _kbhit kbhit
-#   define _O_TEXT O_TEXT
-#   define _O_BINARY O_BINARY
-#   define OPENSSL_CONF   "openssl.cnf"
-#   define RFILE    ".rnd"
-#   define LIST_SEPARATOR_CHAR ';'
-#   define EXIT(n)  { if (n) printf("ERROR: %d\n", (int)n); exit(n); }
-
 #  else
      /* !defined VMS */
 #   ifdef OPENSSL_UNISTD
@@ -440,33 +384,19 @@ extern int kbhit(void);
 #    include <fcntl.h>
 #   endif
 
-#   define OPENSSL_CONF        "openssl.cnf"
-#   define RFILE               ".rnd"
 #   define LIST_SEPARATOR_CHAR ':'
-#   define NUL_DEV             "/dev/null"
 #   define EXIT(n)             exit(n)
 #  endif
-
-#  define OpenSSL_getpid()       getpid()
 
 # endif
 
 /*************/
 
-# if defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_DGRAM)
-#  define OPENSSL_NO_DGRAM
-# endif
-
 # ifdef USE_SOCKETS
-#  if defined(WINDOWS) || defined(MSDOS)
+#  ifdef OPENSSL_NO_SOCK
+#  elif defined(WINDOWS) || defined(MSDOS)
       /* windows world */
-
-#   ifdef OPENSSL_NO_SOCK
-#    define OpenSSL_Write(a,b,c)       (-1)
-#    define OpenSSL_Read(a,b,c)        (-1)
-#    define SHUTDOWN(fd)              close(fd)
-#    define SHUTDOWN2(fd)             close(fd)
-#   elif !defined(__DJGPP__)
+#   if !defined(__DJGPP__)
 #    if defined(_WIN32_WCE) && _WIN32_WCE<410
 #     define getservbyname _masked_declaration_getservbyname
 #    endif
@@ -491,40 +421,8 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #     define socket(d,t,p)   ((int)socket(d,t,p))
 #     define accept(s,f,l)   ((int)accept(s,f,l))
 #    endif
-#    define OpenSSL_Write(a,b,c)       send((a),(b),(c),0)
-#    define OpenSSL_Read(a,b,c)        recv((a),(b),(c),0)
-#    define SHUTDOWN(fd)              { shutdown((fd),0); closesocket(fd); }
-#    define SHUTDOWN2(fd)             { shutdown((fd),2); closesocket(fd); }
 #   else
-#    define OpenSSL_Write(a,b,c)       write_s(a,b,c,0)
-#    define OpenSSL_Read(a,b,c)        read_s(a,b,c)
-#    define SHUTDOWN(fd)              close_s(fd)
-#    define SHUTDOWN2(fd)             close_s(fd)
 #   endif
-
-#  elif defined(OPENSSL_SYS_NETWARE)
-         /*
-          * NetWare uses the WinSock2 interfaces by default, but can be
-          * configured for BSD
-          */
-#   if defined(NETWARE_BSDSOCK)
-#    include <netdb.h>
-#    include <sys/socket.h>
-#    include <netinet/in.h>
-#    include <sys/time.h>
-#    if defined(NETWARE_CLIB)
-#     include <sys/bsdskt.h>
-#    else
-#     include <sys/select.h>
-#    endif
-#    define INVALID_SOCKET (int)(~0)
-#   else
-#    include <novsock2.h>
-#   endif
-#   define OpenSSL_Write(a,b,c)   send((a),(b),(c),0)
-#   define OpenSSL_Read(a,b,c) recv((a),(b),(c),0)
-#   define SHUTDOWN(fd)    { shutdown((fd),0); closesocket(fd); }
-#   define SHUTDOWN2(fd)      { shutdown((fd),2); closesocket(fd); }
 
 #  else
 
@@ -584,10 +482,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    endif
 #   endif
 
-#   define OpenSSL_Read(a,b,c)     read((a),(b),(c))
-#   define OpenSSL_Write(a,b,c)    write((a),(b),(c))
-#   define SHUTDOWN(fd)    { shutdown((fd),0); closesocket((fd)); }
-#   define SHUTDOWN2(fd)   { shutdown((fd),2); closesocket((fd)); }
 #   ifndef INVALID_SOCKET
 #    define INVALID_SOCKET      (-1)
 #   endif                       /* INVALID_SOCKET */
@@ -625,21 +519,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  define strcasecmp OPENSSL_strcasecmp
 #  define strncasecmp OPENSSL_strncasecmp
 #  define OPENSSL_IMPLEMENTS_strncasecmp
-# elif defined(OPENSSL_SYS_OS2) && defined(__EMX__)
-#  define strcasecmp stricmp
-#  define strncasecmp strnicmp
-# elif defined(OPENSSL_SYS_NETWARE)
-#  include <string.h>
-#  if defined(NETWARE_CLIB)
-#   define strcasecmp stricmp
-#   define strncasecmp strnicmp
-#  endif                        /* NETWARE_CLIB */
-# endif
-
-# if defined(OPENSSL_SYS_OS2) && defined(__EMX__)
-#  include <io.h>
-#  include <fcntl.h>
-#  define NO_SYSLOG
 # endif
 
 /* vxworks */
@@ -668,6 +547,13 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 # endif
 /* end vxworks */
+
+/* haiku */
+# if defined(OPENSSL_SYS_HAIKU)
+#  include <sys/select.h>
+#  include <sys/time.h>
+# endif
+/* end haiku */
 
 #define OSSL_NELEM(x)    (sizeof(x)/sizeof(x[0]))
 

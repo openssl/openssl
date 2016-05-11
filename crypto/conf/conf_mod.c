@@ -60,8 +60,8 @@
 #include <ctype.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/dso.h>
+#include "internal/conf.h"
+#include "internal/dso.h"
 #include <openssl/x509.h>
 
 #define DSO_mod_init_name "OPENSSL_init"
@@ -113,8 +113,7 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
 static CONF_MODULE *module_find(char *name);
 static int module_init(CONF_MODULE *pmod, char *name, char *value,
                        const CONF *cnf);
-static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
-                                    unsigned long flags);
+static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value);
 
 /* Main function: load modules from a CONF structure */
 
@@ -204,7 +203,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 
     /* Module not found: try to load DSO */
     if (!md && !(flags & CONF_MFLAGS_NO_DSO))
-        md = module_load_dso(cnf, name, value, flags);
+        md = module_load_dso(cnf, name, value);
 
     if (!md) {
         if (!(flags & CONF_MFLAGS_SILENT)) {
@@ -230,8 +229,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 }
 
 /* Load a module from a DSO */
-static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
-                                    unsigned long flags)
+static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value)
 {
     DSO *dso = NULL;
     conf_init_func *ifunc;
@@ -288,8 +286,13 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
     tmod->name = OPENSSL_strdup(name);
     tmod->init = ifunc;
     tmod->finish = ffunc;
+    if (tmod->name == NULL) {
+        OPENSSL_free(tmod);
+        return NULL;
+    }
 
     if (!sk_CONF_MODULE_push(supported_modules, tmod)) {
+        OPENSSL_free(tmod->name);
         OPENSSL_free(tmod);
         return NULL;
     }
@@ -462,7 +465,7 @@ int CONF_module_add(const char *name, conf_init_func *ifunc,
         return 0;
 }
 
-void CONF_modules_free(void)
+void conf_modules_free_int(void)
 {
     CONF_modules_finish();
     CONF_modules_unload(1);

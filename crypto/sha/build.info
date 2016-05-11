@@ -2,73 +2,62 @@ LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         sha1dgst.c sha1_one.c sha256.c sha512.c {- $target{sha1_asm_src} -}
 
-BEGINRAW[Makefile]
+GENERATE[sha1-586.s]=asm/sha1-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+DEPEND[sha1-586.s]=../perlasm/x86asm.pl
+GENERATE[sha256-586.s]=asm/sha256-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+DEPEND[sha256-586.s]=../perlasm/x86asm.pl
+GENERATE[sha512-586.s]=asm/sha512-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+DEPEND[sha512-586.s]=../perlasm/x86asm.pl
+
+GENERATE[sha1-ia64.s]=asm/sha1-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
+GENERATE[sha256-ia64.s]=asm/sha512-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
+GENERATE[sha512-ia64.s]=asm/sha512-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
+
+GENERATE[sha1-alpha.S]=asm/sha1-alpha.pl $(PERLASM_SCHEME)
+
+GENERATE[sha1-x86_64.s]=asm/sha1-x86_64.pl $(PERLASM_SCHEME)
+GENERATE[sha1-mb-x86_64.s]=asm/sha1-mb-x86_64.pl $(PERLASM_SCHEME)
+GENERATE[sha256-x86_64.s]=asm/sha512-x86_64.pl $(PERLASM_SCHEME)
+GENERATE[sha256-mb-x86_64.s]=asm/sha256-mb-x86_64.pl $(PERLASM_SCHEME)
+GENERATE[sha512-x86_64.s]=asm/sha512-x86_64.pl $(PERLASM_SCHEME)
+
+GENERATE[sha1-sparcv9.S]=asm/sha1-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[sha1-sparcv9.o]=..
+GENERATE[sha256-sparcv9.S]=asm/sha512-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[sha256-sparcv9.o]=..
+GENERATE[sha512-sparcv9.S]=asm/sha512-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[sha512-sparcv9.o]=..
+
+GENERATE[sha1-ppc.s]=asm/sha1-ppc.pl $(PERLASM_SCHEME)
+GENERATE[sha256-ppc.s]=asm/sha512-ppc.pl $(PERLASM_SCHEME)
+GENERATE[sha512-ppc.s]=asm/sha512-ppc.pl $(PERLASM_SCHEME)
+GENERATE[sha256p8-ppc.s]=asm/sha512p8-ppc.pl $(PERLASM_SCHEME)
+GENERATE[sha512p8-ppc.s]=asm/sha512p8-ppc.pl $(PERLASM_SCHEME)
+
+GENERATE[sha1-parisc.s]=asm/sha1-parisc.pl $(PERLASM_SCHEME)
+GENERATE[sha256-parisc.s]=asm/sha512-parisc.pl $(PERLASM_SCHEME)
+GENERATE[sha512-parisc.s]=asm/sha512-parisc.pl $(PERLASM_SCHEME)
+
+GENERATE[sha1-mips.S]=asm/sha1-mips.pl $(PERLASM_SCHEME)
+GENERATE[sha256-mips.S]=asm/sha512-mips.pl $(PERLASM_SCHEME)
+GENERATE[sha512-mips.S]=asm/sha512-mips.pl $(PERLASM_SCHEME)
+
+GENERATE[sha1-armv4-large.S]=asm/sha1-armv4-large.pl $(PERLASM_SCHEME)
+INCLUDE[sha1-armv4-large.o]=..
+GENERATE[sha256-armv4.S]=asm/sha256-armv4.pl $(PERLASM_SCHEME)
+INCLUDE[sha256-armv4.o]=..
+GENERATE[sha512-armv4.S]=asm/sha512-armv4.pl $(PERLASM_SCHEME)
+INCLUDE[sha512-armv4.o]=..
+
+GENERATE[sha1-armv8.S]=asm/sha1-armv8.pl $(PERLASM_SCHEME)
+INCLUDE[sha1-armv8.o]=..
+GENERATE[sha256-armv8.S]=asm/sha512-armv8.pl $(PERLASM_SCHEME)
+INCLUDE[sha256-armv8.o]=..
+GENERATE[sha512-armv8.S]=asm/sha512-armv8.pl $(PERLASM_SCHEME)
+INCLUDE[sha512-armv8.o]=..
+
+BEGINRAW[Makefile(unix)]
 ##### SHA assembler implementations
-
-{- $builddir -}/sha1-586.s:	{- $sourcedir -}/asm/sha1-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha1-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-{- $builddir -}/sha256-586.s:	{- $sourcedir -}/asm/sha256-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha256-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-{- $builddir -}/sha512-586.s:	{- $sourcedir -}/asm/sha512-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-
-{- $builddir -}/sha1-ia64.s:   {- $sourcedir -}/asm/sha1-ia64.pl
-	(cd asm; CC="$(CC)" $(PERL) sha1-ia64.pl ../$@ $(CFLAGS))
-{- $builddir -}/sha256-ia64.s: {- $sourcedir -}/asm/sha512-ia64.pl
-	(cd asm; CC="$(CC)" $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
-{- $builddir -}/sha512-ia64.s: {- $sourcedir -}/asm/sha512-ia64.pl
-	(cd asm; CC="$(CC)" $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
-
-{- $builddir -}/sha256-armv4.S: {- $sourcedir -}/asm/sha256-armv4.pl
-	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
-
-{- $builddir -}/sha1-alpha.s:	{- $sourcedir -}/asm/sha1-alpha.pl
-	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha1-alpha.pl > $$preproc && \
-	$(CC) -E -P $$preproc > $@ && rm $$preproc)
-
-# Solaris make has to be explicitly told
-{- $builddir -}/sha1-x86_64.s:	{- $sourcedir -}/asm/sha1-x86_64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha1-x86_64.pl $(PERLASM_SCHEME) > $@
-{- $builddir -}/sha1-mb-x86_64.s:	{- $sourcedir -}/asm/sha1-mb-x86_64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha1-mb-x86_64.pl $(PERLASM_SCHEME) > $@
-{- $builddir -}/sha256-x86_64.s:{- $sourcedir -}/asm/sha512-x86_64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-x86_64.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/sha256-mb-x86_64.s:	{- $sourcedir -}/asm/sha256-mb-x86_64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha256-mb-x86_64.pl $(PERLASM_SCHEME) > $@
-{- $builddir -}/sha512-x86_64.s:{- $sourcedir -}/asm/sha512-x86_64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-x86_64.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/sha1-sparcv9.S:	{- $sourcedir -}/asm/sha1-sparcv9.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha1-sparcv9.pl $@ $(CFLAGS)
-{- $builddir -}/sha256-sparcv9.S:{- $sourcedir -}/asm/sha512-sparcv9.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-sparcv9.pl $@ $(CFLAGS)
-{- $builddir -}/sha512-sparcv9.S:{- $sourcedir -}/asm/sha512-sparcv9.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-sparcv9.pl $@ $(CFLAGS)
-
-{- $builddir -}/sha1-ppc.s:	{- $sourcedir -}/asm/sha1-ppc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha1-ppc.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/sha256-ppc.s:	{- $sourcedir -}/asm/sha512-ppc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-ppc.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/sha512-ppc.s:	{- $sourcedir -}/asm/sha512-ppc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-ppc.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/sha256p8-ppc.s:	{- $sourcedir -}/asm/sha512p8-ppc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512p8-ppc.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/sha512p8-ppc.s:	{- $sourcedir -}/asm/sha512p8-ppc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512p8-ppc.pl $(PERLASM_SCHEME) $@
-
-{- $builddir -}/sha1-parisc.s:	{- $sourcedir -}/asm/sha1-parisc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha1-parisc.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/sha256-parisc.s:{- $sourcedir -}/asm/sha512-parisc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-parisc.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/sha512-parisc.s:{- $sourcedir -}/asm/sha512-parisc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-parisc.pl $(PERLASM_SCHEME) $@
-
-{- $builddir -}/sha1-mips.S:	{- $sourcedir -}/asm/sha1-mips.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha1-mips.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/sha256-mips.S:	{- $sourcedir -}/asm/sha512-mips.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-mips.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/sha512-mips.S:	{- $sourcedir -}/asm/sha512-mips.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sha512-mips.pl $(PERLASM_SCHEME) $@
 
 # GNU make "catch all"
 {- $builddir -}/sha1-%.S:	{- $sourcedir -}/asm/sha1-%.pl
@@ -77,4 +66,4 @@ BEGINRAW[Makefile]
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 {- $builddir -}/sha512-%.S:	{- $sourcedir -}/asm/sha512-%.pl
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
-ENDRAW[Makefile]
+ENDRAW[Makefile(unix)]

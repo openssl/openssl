@@ -63,34 +63,8 @@ void ENGINE_load_builtin_engines(void)
 {
     /* Some ENGINEs need this */
     OPENSSL_cpuid_setup();
-#if !defined(OPENSSL_NO_HW) && (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
-# ifdef ENGINE_load_cryptodev
-    ENGINE_load_cryptodev();
-# endif
-#endif
-#ifndef OPENSSL_NO_RDRAND
-# ifdef ENGINE_load_rdrand
-    ENGINE_load_rdrand();
-# endif
-#endif
-# ifdef ENGINE_load_dynamic
-    ENGINE_load_dynamic();
-# endif
-#ifndef OPENSSL_NO_STATIC_ENGINE
-# ifndef OPENSSL_NO_HW
-#  ifndef OPENSSL_NO_HW_PADLOCK
-#   ifdef ENGINE_load_padlock
-    ENGINE_load_padlock();
-#   endif
-#  endif
-# endif
-# if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
-#  ifdef ENGINE_load_capi
-    ENGINE_load_capi();
-#  endif
-# endif
-#endif
-    ENGINE_register_all_complete();
+
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL);
 }
 
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
@@ -98,7 +72,7 @@ void ENGINE_setup_bsd_cryptodev(void)
 {
     static int bsd_cryptodev_default_loaded = 0;
     if (!bsd_cryptodev_default_loaded) {
-        ENGINE_load_cryptodev();
+        OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CRYPTODEV, NULL);
         ENGINE_register_all_complete();
     }
     bsd_cryptodev_default_loaded = 1;

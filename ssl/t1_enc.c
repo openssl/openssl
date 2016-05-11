@@ -136,9 +136,7 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
-#ifndef OPENSSL_NO_COMP
-# include <openssl/comp.h>
-#endif
+#include <openssl/comp.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/rand.h>
@@ -260,8 +258,6 @@ int tls1_change_cipher_state(SSL *s, int which)
                        SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err2;
             }
-            if (!RECORD_LAYER_setup_comp_buffer(&s->rlayer))
-                goto err;
         }
 #endif
         /*
@@ -364,7 +360,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         }
         EVP_PKEY_free(mac_key);
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("which = %04X\nmac key=", which);
     {
         int z;
@@ -426,7 +422,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     }
 #endif
 
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("which = %04X\nkey=", which);
     {
         int z;
@@ -495,7 +491,7 @@ int tls1_setup_key_block(SSL *s)
     s->s3->tmp.key_block_length = num;
     s->s3->tmp.key_block = p;
 
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("client random\n");
     {
         int z;
@@ -520,12 +516,12 @@ int tls1_setup_key_block(SSL *s)
 #endif
     if (!tls1_generate_key_block(s, p, num))
         goto err;
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("\nkey block\n");
     {
         int z;
         for (z = 0; z < num; z++)
-            printf("%02X%c", p1[z], ((z + 1) % 16) ? ' ' : '\n');
+            printf("%02X%c", p[z], ((z + 1) % 16) ? ' ' : '\n');
     }
 #endif
 
@@ -648,14 +644,9 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                 const unsigned char *context,
                                 size_t contextlen, int use_context)
 {
-    unsigned char *buff;
     unsigned char *val = NULL;
     size_t vallen = 0, currentvalpos;
     int rv;
-
-    buff = OPENSSL_malloc(olen);
-    if (buff == NULL)
-        goto err2;
 
     /*
      * construct PRF arguments we construct the PRF argument ourself rather
@@ -728,8 +719,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL, ERR_R_MALLOC_FAILURE);
     rv = 0;
  ret:
-    CRYPTO_clear_free(val, vallen);
-    CRYPTO_clear_free(buff, olen);
+    OPENSSL_clear_free(val, vallen);
     return (rv);
 }
 
@@ -798,6 +788,8 @@ int tls1_alert_code(int code)
         return (TLS1_AD_UNKNOWN_PSK_IDENTITY);
     case SSL_AD_INAPPROPRIATE_FALLBACK:
         return (TLS1_AD_INAPPROPRIATE_FALLBACK);
+    case SSL_AD_NO_APPLICATION_PROTOCOL:
+        return (TLS1_AD_NO_APPLICATION_PROTOCOL);
     default:
         return (-1);
     }

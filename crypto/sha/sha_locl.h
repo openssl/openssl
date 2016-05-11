@@ -430,7 +430,7 @@ static void HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
 
     for (;;) {
         for (i = 0; i < 16; i++) {
-            HOST_c2l(data, l);
+            (void)HOST_c2l(data, l);
             X[i] = l;
             BODY_00_15(X[i]);
         }

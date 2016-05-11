@@ -47,6 +47,7 @@ B<openssl> B<cms>
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
+[B<-no_check_time>]
 [B<-partial_chain>]
 [B<-policy arg>]
 [B<-policy_check>]
@@ -58,6 +59,7 @@ B<openssl> B<cms>
 [B<-trusted_first>]
 [B<-no_alt_chains>]
 [B<-use_deltas>]
+[B<-auth_level num>]
 [B<-verify_depth num>]
 [B<-verify_email email>]
 [B<-verify_hostname hostname>]
@@ -454,7 +456,7 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 a file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
-Multiple files can be specified separated by a OS-dependent character.
+Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
@@ -472,11 +474,11 @@ address matches that specified in the From: address.
 
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
 B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
-B<-inhibit_map>, B<-no_alt_chains>, B<-partial_chain>, B<-policy>,
+B<-inhibit_map>, B<-no_alt_chains>, B<-no_check_time>, B<-partial_chain>, B<-policy>,
 B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
 B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
-B<-verify_name>, B<-x509_strict>
+B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
+B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various certificate chain validation options. See the
 L<verify(1)> manual page for details.
@@ -512,7 +514,7 @@ The B<-resign> option uses an existing message digest when adding a new
 signer. This means that attributes must be present in at least one existing
 signer using the same message digest or this operation will fail.
 
-The B<-stream> and B<-indef> options enable experimental streaming I/O support.
+The B<-stream> and B<-indef> options enable streaming I/O support.
 As a result the encoding is BER using indefinite length constructed encoding
 and no longer DER. Streaming is supported for the B<-encrypt> operation and the
 B<-sign> operation if the content is not detached.

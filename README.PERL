@@ -30,12 +30,12 @@
  Notes on Perl on Windows
  ------------------------
 
- If you will build on Cygwin (and possibly some other POSIX layers),
- Perl is already part of your distribution.  Simply use the Cygwin
- package manager to make sure Perl gets installed.
-
- Otherwise, you will need to install Perl separately.  The Perl
- package that we know of is ActiveState Perl, available from
+ There are a number of build targets that can be viewed as "Windows".
+ Indeed, there are VC-* configs targeting VisualStudio C, as well as
+ MinGW and Cygwin. The key recommendation is to use "matching" Perl,
+ one that matches build environment. For example, if you will build
+ on Cygwin be sure to use the Cygwin package manager to install Perl.
+ For VC-* builds we recommend ActiveState Perl, available from
  http://www.activestate.com/ActivePerl.
 
  Notes on Perl on VMS

@@ -158,9 +158,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/x509.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/dh.h>
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 
@@ -214,7 +212,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
             if (mt == SSL3_MT_CERTIFICATE) {
                 st->hand_state = TLS_ST_SR_CERT;
                 return 1;
-            } 
+            }
         }
         break;
 
@@ -948,7 +946,7 @@ int dtls_construct_hello_verify_request(SSL *s)
     len = dtls_raw_hello_verify_request(&buf[DTLS1_HM_HEADER_LENGTH],
                                          s->d1->cookie, s->d1->cookie_len);
 
-    dtls1_set_message_header(s, buf, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
+    dtls1_set_message_header(s, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
                              len);
     len += DTLS1_HM_HEADER_LENGTH;
 
@@ -973,6 +971,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     /* |cookie| will only be initialized for DTLS. */
     PACKET session_id, cipher_suites, compression, extensions, cookie;
     int is_v2_record;
+    static const unsigned char null_compression = 0;
 
     is_v2_record = RECORD_LAYER_is_sslv2_record(&s->rlayer);
 
@@ -1098,19 +1097,20 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             goto f_err;
         }
 
-        /* Load the client random */
+        /* Load the client random and compression list. */
         challenge_len = challenge_len > SSL3_RANDOM_SIZE ? SSL3_RANDOM_SIZE :
             challenge_len;
         memset(s->s3->client_random, 0, SSL3_RANDOM_SIZE);
         if (!PACKET_copy_bytes(&challenge,
                                s->s3->client_random + SSL3_RANDOM_SIZE -
-                               challenge_len, challenge_len)) {
+                               challenge_len, challenge_len)
+            /* Advertise only null compression. */
+            || !PACKET_buf_init(&compression, &null_compression, 1)) {
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
         }
 
-        PACKET_null_init(&compression);
         PACKET_null_init(&extensions);
     } else {
         /* Regular ClientHello. */
@@ -1152,6 +1152,38 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         }
         /* Could be empty. */
         extensions = *pkt;
+    }
+
+    if (SSL_IS_DTLS(s)) {
+        /* Empty cookie was already handled above by returning early. */
+        if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
+            if (s->ctx->app_verify_cookie_cb != NULL) {
+                if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookie),
+                                                 PACKET_remaining(&cookie)) == 0) {
+                    al = SSL_AD_HANDSHAKE_FAILURE;
+                    SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
+                           SSL_R_COOKIE_MISMATCH);
+                    goto f_err;
+                    /* else cookie verification succeeded */
+                }
+            /* default verification */
+            } else if (!PACKET_equal(&cookie, s->d1->cookie,
+                                     s->d1->cookie_len)) {
+                al = SSL_AD_HANDSHAKE_FAILURE;
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
+                goto f_err;
+            }
+            s->d1->cookie_verified = 1;
+        }
+        if (s->method->version == DTLS_ANY_VERSION) {
+            protverr = ssl_choose_server_version(s);
+            if (protverr != 0) {
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, protverr);
+                s->version = s->client_version;
+                al = SSL_AD_PROTOCOL_VERSION;
+                goto f_err;
+            }
+        }
     }
 
     s->hit = 0;
@@ -1197,39 +1229,6 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             /* i == 0 */
             if (!ssl_get_new_session(s, 1))
                 goto err;
-        }
-    }
-
-    if (SSL_IS_DTLS(s)) {
-        /* Empty cookie was already handled above by returning early. */
-        if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
-            if (s->ctx->app_verify_cookie_cb != NULL) {
-                if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookie),
-                                                 PACKET_remaining(&cookie)) == 0) {
-                    al = SSL_AD_HANDSHAKE_FAILURE;
-                    SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
-                           SSL_R_COOKIE_MISMATCH);
-                    goto f_err;
-                    /* else cookie verification succeeded */
-                }
-            /* default verification */
-            } else if (!PACKET_equal(&cookie, s->d1->cookie,
-                                     s->d1->cookie_len)) {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
-                goto f_err;
-            }
-            s->d1->cookie_verified = 1;
-        }
-        if (s->method->version == DTLS_ANY_VERSION) {
-            protverr = ssl_choose_server_version(s);
-            if (protverr != 0) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, protverr);
-                s->version = s->client_version;
-                al = SSL_AD_PROTOCOL_VERSION;
-                goto f_err;
-            }
-            s->session->ssl_version = s->version;
         }
     }
 
@@ -1282,7 +1281,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_NO_COMPRESSION_SPECIFIED);
         goto f_err;
     }
-    
+
     /* TLS extensions */
     if (s->version >= SSL3_VERSION) {
         if (!ssl_parse_clienthello_tlsext(s, &extensions)) {
@@ -1379,7 +1378,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         if (k >= complen) {
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
-                   SSL_R_REQUIRED_COMPRESSSION_ALGORITHM_MISSING);
+                   SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING);
             goto f_err;
         }
     } else if (s->hit)
@@ -1775,9 +1774,8 @@ int tls_construct_server_key_exchange(SSL *s)
         EVP_PKEY_free(pkdh);
         pkdh = NULL;
 
-        r[0] = dh->p;
-        r[1] = dh->g;
-        r[2] = dh->pub_key;
+        DH_get0_pqg(dh, &r[0], NULL, &r[1]);
+        DH_get0_key(dh, &r[2], NULL);
     } else
 #endif
 #ifndef OPENSSL_NO_EC
@@ -2075,7 +2073,6 @@ int tls_construct_certificate_request(SSL *s)
 MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 {
     int al;
-    unsigned int i;
     unsigned long alg_k;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa = NULL;
@@ -2084,7 +2081,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     EVP_PKEY *ckey = NULL;
 #endif
     PACKET enc_premaster;
-    const unsigned char *data;
     unsigned char *rsa_decrypt = NULL;
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
@@ -2304,6 +2300,9 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         EVP_PKEY *skey = NULL;
         DH *cdh;
+        unsigned int i;
+        BIGNUM *pub_key;
+        const unsigned char *data;
 
         if (!PACKET_get_net_2(pkt, &i)) {
             if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
@@ -2346,9 +2345,12 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
         cdh = EVP_PKEY_get0_DH(ckey);
-        cdh->pub_key = BN_bin2bn(data, i, NULL);
-        if (cdh->pub_key == NULL) {
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_BN_LIB);
+        pub_key = BN_bin2bn(data, i, NULL);
+
+        if (pub_key == NULL || !DH_set0_key(cdh, pub_key, NULL)) {
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            if (pub_key != NULL)
+                BN_free(pub_key);
             goto err;
         }
 
@@ -2377,6 +2379,9 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
                    SSL_R_MISSING_TMP_ECDH_KEY);
             goto f_err;
         } else {
+            unsigned int i;
+            const unsigned char *data;
+
             /*
              * Get client's public key from encoded point in the
              * ClientKeyExchange message.
@@ -2422,6 +2427,9 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_SRP
     if (alg_k & SSL_kSRP) {
+        unsigned int i;
+        const unsigned char *data;
+
         if (!PACKET_get_net_2(pkt, &i)
                 || !PACKET_get_bytes(pkt, &data, i)) {
             al = SSL_AD_DECODE_ERROR;
@@ -2463,6 +2471,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         int Ttag, Tclass;
         long Tlen;
         long sess_key_len;
+        const unsigned char *data;
 
         /* Get our certificate private key */
         alg_a = s->s3->tmp.new_cipher->algorithm_auth;
@@ -2651,7 +2660,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 {
     EVP_PKEY *pkey = NULL;
     const unsigned char *sig, *data;
+#ifndef OPENSSL_NO_GOST
     unsigned char *gost_data = NULL;
+#endif
     int al, ret = MSG_PROCESS_ERROR;
     int type = 0, j;
     unsigned int len;
@@ -2796,7 +2807,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
     EVP_MD_CTX_free(mctx);
+#ifndef OPENSSL_NO_GOST
     OPENSSL_free(gost_data);
+#endif
     return ret;
 }
 
@@ -3222,9 +3235,6 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
                 goto err;
             }
             s->s3->send_connection_binding = 1;
-#ifdef OPENSSL_RI_DEBUG
-            fprintf(stderr, "SCSV received by server\n");
-#endif
             continue;
         }
 

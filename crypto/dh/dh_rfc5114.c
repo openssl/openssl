@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/dh.h>
+#include "dh_locl.h"
 #include <openssl/bn.h>
 #include "internal/bn_dh.h"
 

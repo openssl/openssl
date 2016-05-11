@@ -23,7 +23,7 @@ if ($flavour =~ /3[12]/) {
 	$g="g";
 }
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 sub AUTOLOAD()		# thunk [simplified] x86-style perlasm
@@ -140,6 +140,7 @@ $code.=<<___;
 .type	ChaCha20_ctr32,\@function
 .align	32
 ChaCha20_ctr32:
+	cl${g}ije	$len,0,.Lno_data	# $len==0?
 	a${g}hi	$len,-64
 	l${g}hi	%r1,-$frame
 	stm${g}	%r6,%r15,`6*$SIZE_T`($sp)
@@ -256,11 +257,11 @@ $code.=<<___;
 	 st	@x[1],4*9(@t[0])
 	 x	@x[3],4*11(%r14)
 	 st	@x[2],4*10(@t[0])
-	la	%r14,64(%r14)
 	 st	@x[3],4*11(@t[0])
 
 	cl${g}r	%r14,@t[1]			# done yet?
-	jle	.Loop_outer
+	la	%r14,64(%r14)
+	jl	.Loop_outer
 
 .Ldone:
 	xgr	%r0,%r0
@@ -271,6 +272,7 @@ $code.=<<___;
 	stmg	%r0,%r3,$stdframe+4*12($sp)
 
 	lm${g}	%r6,%r15,`$frame+6*$SIZE_T`($sp)
+.Lno_data:
 	br	%r14
 
 .align	16
@@ -289,7 +291,7 @@ $code.=<<___;
 	lrvr	@x[1],@x[1]
 	lrvr	@x[2],@x[2]
 	lrvr	@x[3],@x[3]
-	stm	@x[0],@x[3],$stdframe+4*8+4*8($sp)
+	stm	@x[0],@x[3],$stdframe+4*8($sp)
 
 .Loop_tail:
 	llgc	@x[4],0(@x[6],%r14)

@@ -41,7 +41,7 @@ for <= 0 return value on error.
 =head1 BUGS
 
 This function uses the header B<x509.h> as opposed to most chain verification
-functiosn which use B<x509_vfy.h>.
+functions which use B<x509_vfy.h>.
 
 =head1 SEE ALSO
 

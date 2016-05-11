@@ -128,9 +128,9 @@ int X509_check_purpose(X509 *x, int id, int ca)
     int idx;
     const X509_PURPOSE *pt;
     if (!(x->ex_flags & EXFLAG_SET)) {
-        CRYPTO_w_lock(CRYPTO_LOCK_X509);
+        CRYPTO_THREAD_write_lock(x->lock);
         x509v3_cache_extensions(x);
-        CRYPTO_w_unlock(CRYPTO_LOCK_X509);
+        CRYPTO_THREAD_unlock(x->lock);
     }
     /* Return if side-effect only call */
     if (id == -1)
@@ -576,9 +576,9 @@ static int check_ca(const X509 *x)
 int X509_check_ca(X509 *x)
 {
     if (!(x->ex_flags & EXFLAG_SET)) {
-        CRYPTO_w_lock(CRYPTO_LOCK_X509);
+        CRYPTO_THREAD_write_lock(x->lock);
         x509v3_cache_extensions(x);
-        CRYPTO_w_unlock(CRYPTO_LOCK_X509);
+        CRYPTO_THREAD_unlock(x->lock);
     }
 
     return check_ca(x);

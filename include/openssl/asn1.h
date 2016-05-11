@@ -473,6 +473,8 @@ DEFINE_STACK_OF(ASN1_INTEGER)
 
 DEFINE_STACK_OF(ASN1_GENERALSTRING)
 
+DEFINE_STACK_OF(ASN1_UTF8STRING)
+
 typedef struct asn1_type_st {
     int type;
     union {
@@ -887,7 +889,7 @@ unsigned long ASN1_SCTX_get_flags(ASN1_SCTX *p);
 void ASN1_SCTX_set_app_data(ASN1_SCTX *p, void *data);
 void *ASN1_SCTX_get_app_data(ASN1_SCTX *p);
 
-BIO_METHOD *BIO_f_asn1(void);
+const BIO_METHOD *BIO_f_asn1(void);
 
 BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it);
 

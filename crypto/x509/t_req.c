@@ -62,12 +62,8 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 
 #ifndef OPENSSL_NO_STDIO
 int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
@@ -185,6 +181,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                     goto err;
                 if ((type == V_ASN1_PRINTABLESTRING) ||
                     (type == V_ASN1_T61STRING) ||
+                    (type == V_ASN1_UTF8STRING) ||
                     (type == V_ASN1_IA5STRING)) {
                     if (BIO_write(bp, (char *)bs->data, bs->length)
                         != bs->length)
@@ -205,14 +202,14 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
             for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
                 ASN1_OBJECT *obj;
                 X509_EXTENSION *ex;
-                int j;
+                int critical;
                 ex = sk_X509_EXTENSION_value(exts, i);
                 if (BIO_printf(bp, "%12s", "") <= 0)
                     goto err;
                 obj = X509_EXTENSION_get_object(ex);
                 i2a_ASN1_OBJECT(bp, obj);
-                j = X509_EXTENSION_get_critical(ex);
-                if (BIO_printf(bp, ": %s\n", j ? "critical" : "") <= 0)
+                critical = X509_EXTENSION_get_critical(ex);
+                if (BIO_printf(bp, ": %s\n", critical ? "critical" : "") <= 0)
                     goto err;
                 if (!X509V3_EXT_print(bp, ex, cflag, 16)) {
                     BIO_printf(bp, "%16s", "");

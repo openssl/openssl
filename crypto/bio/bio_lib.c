@@ -58,11 +58,11 @@
 #include <stdio.h>
 #include <errno.h>
 #include <openssl/crypto.h>
+#include "bio_lcl.h"
 #include "internal/cryptlib.h"
-#include <openssl/bio.h>
 #include <openssl/stack.h>
 
-BIO *BIO_new(BIO_METHOD *method)
+BIO *BIO_new(const BIO_METHOD *method)
 {
     BIO *ret = OPENSSL_malloc(sizeof(*ret));
 
@@ -77,7 +77,7 @@ BIO *BIO_new(BIO_METHOD *method)
     return (ret);
 }
 
-int BIO_set(BIO *bio, BIO_METHOD *method)
+int BIO_set(BIO *bio, const BIO_METHOD *method)
 {
     bio->method = method;
     bio->callback = NULL;
@@ -93,13 +93,25 @@ int BIO_set(BIO *bio, BIO_METHOD *method)
     bio->references = 1;
     bio->num_read = 0L;
     bio->num_write = 0L;
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
-    if (method->create != NULL)
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data))
+        return 0;
+
+    bio->lock = CRYPTO_THREAD_lock_new();
+    if (bio->lock == NULL) {
+        BIOerr(BIO_F_BIO_SET, ERR_R_MALLOC_FAILURE);
+        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
+        return 0;
+    }
+
+    if (method->create != NULL) {
         if (!method->create(bio)) {
             CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
-            return (0);
+            CRYPTO_THREAD_lock_free(bio->lock);
+            return 0;
         }
-    return (1);
+    }
+
+    return 1;
 }
 
 int BIO_free(BIO *a)
@@ -107,28 +119,76 @@ int BIO_free(BIO *a)
     int i;
 
     if (a == NULL)
-        return (0);
+        return 0;
 
-    i = CRYPTO_add(&a->references, -1, CRYPTO_LOCK_BIO);
+    if (CRYPTO_atomic_add(&a->references, -1, &i, a->lock) <= 0)
+        return 0;
+
     REF_PRINT_COUNT("BIO", a);
     if (i > 0)
-        return (1);
+        return 1;
     REF_ASSERT_ISNT(i < 0);
     if ((a->callback != NULL) &&
         ((i = (int)a->callback(a, BIO_CB_FREE, NULL, 0, 0L, 1L)) <= 0))
-        return (i);
-
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, a, &a->ex_data);
+        return i;
 
     if ((a->method != NULL) && (a->method->destroy != NULL))
         a->method->destroy(a);
+
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, a, &a->ex_data);
+
+    CRYPTO_THREAD_lock_free(a->lock);
+
     OPENSSL_free(a);
-    return (1);
+
+    return 1;
+}
+
+void BIO_set_data(BIO *a, void *ptr)
+{
+    a->ptr = ptr;
+}
+
+void *BIO_get_data(BIO *a)
+{
+    return a->ptr;
+}
+
+void BIO_set_init(BIO *a, int init)
+{
+    a->init = init;
+}
+
+int BIO_get_init(BIO *a)
+{
+    return a->init;
+}
+
+void BIO_set_shutdown(BIO *a, int shut)
+{
+    a->shutdown = shut;
+}
+
+int BIO_get_shutdown(BIO *a)
+{
+    return a->shutdown;
 }
 
 void BIO_vfree(BIO *a)
 {
     BIO_free(a);
+}
+
+int BIO_up_ref(BIO *a)
+{
+    int i;
+
+    if (CRYPTO_atomic_add(&a->references, 1, &i, a->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("BIO", a);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
 }
 
 void BIO_clear_flags(BIO *b, int flags)
@@ -459,6 +519,11 @@ int BIO_get_retry_reason(BIO *bio)
     return (bio->retry_reason);
 }
 
+void BIO_set_retry_reason(BIO *bio, int reason)
+{
+    bio->retry_reason = reason;
+}
+
 BIO *BIO_find_type(BIO *bio, int type)
 {
     int mt, mask;
@@ -486,6 +551,11 @@ BIO *BIO_next(BIO *b)
     if (b == NULL)
         return NULL;
     return b->next_bio;
+}
+
+void BIO_set_next(BIO *b, BIO *next)
+{
+    b->next_bio = next;
 }
 
 void BIO_free_all(BIO *bio)
@@ -575,4 +645,18 @@ uint64_t BIO_number_written(BIO *bio)
     if (bio)
         return bio->num_write;
     return 0;
+}
+
+void bio_free_ex_data(BIO *bio)
+{
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
+}
+
+void bio_cleanup(void)
+{
+#ifndef OPENSSL_NO_SOCK
+    bio_sock_cleanup_int();
+    CRYPTO_THREAD_lock_free(bio_lookup_lock);
+    bio_lookup_lock = NULL;
+#endif
 }

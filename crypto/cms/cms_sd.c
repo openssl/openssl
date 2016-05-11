@@ -283,8 +283,8 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(signer, -1, -1);
 
-    CRYPTO_add(&pk->references, 1, CRYPTO_LOCK_EVP_PKEY);
     X509_up_ref(signer);
+    EVP_PKEY_up_ref(pk);
 
     si->pkey = pk;
     si->signer = signer;
@@ -588,7 +588,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 
     if (!si->pkey) {
         CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, CMS_R_NO_PRIVATE_KEY);
-        return 0;
+        goto err;
     }
 
     if (!cms_DigestAlgorithm_find_ctx(mctx, chain, si->digestAlgorithm))

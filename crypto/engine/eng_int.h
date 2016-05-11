@@ -65,11 +65,14 @@
 # define HEADER_ENGINE_INT_H
 
 # include "internal/cryptlib.h"
+# include "internal/threads.h"
 # include <internal/engine.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+extern CRYPTO_RWLOCK *global_engine_lock;
 
 /*
  * If we compile with this symbol defined, then both reference counts in the
@@ -86,7 +89,7 @@ extern "C" {
                 (unsigned int)(e), (isfunct ? "funct" : "struct"), \
                 ((isfunct) ? ((e)->funct_ref - (diff)) : ((e)->struct_ref - (diff))), \
                 ((isfunct) ? (e)->funct_ref : (e)->struct_ref), \
-                (__FILE__), (__LINE__))
+                (OPENSSL_FILE), (OPENSSL_LINE))
 
 # else
 
@@ -96,9 +99,9 @@ extern "C" {
 
 /*
  * Any code that will need cleanup operations should use these functions to
- * register callbacks. ENGINE_cleanup() will call all registered callbacks in
- * order. NB: both the "add" functions assume CRYPTO_LOCK_ENGINE to already be
- * held (in "write" mode).
+ * register callbacks. engine_cleanup_int() will call all registered
+ * callbacks in order. NB: both the "add" functions assume the engine lock to
+ * already be held (in "write" mode).
  */
 typedef void (ENGINE_CLEANUP_CB) (void);
 typedef struct st_engine_cleanup_item {
@@ -134,7 +137,7 @@ ENGINE *engine_table_select(ENGINE_TABLE **table, int nid);
 # else
 ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f,
                                 int l);
-#  define engine_table_select(t,n) engine_table_select_tmp(t,n,__FILE__,__LINE__)
+#  define engine_table_select(t,n) engine_table_select_tmp(t,n,OPENSSL_FILE,OPENSSL_LINE)
 # endif
 typedef void (engine_table_doall_cb) (int nid, STACK_OF(ENGINE) *sk,
                                       ENGINE *def, void *arg);
@@ -144,7 +147,7 @@ void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
 /*
  * Internal versions of API functions that have control over locking. These
  * are used between C files when functionality needs to be shared but the
- * caller may already be controlling of the CRYPTO_LOCK_ENGINE lock.
+ * caller may already be controlling of the engine lock.
  */
 int engine_unlocked_init(ENGINE *e);
 int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers);
@@ -166,6 +169,10 @@ void engine_set_all_null(ENGINE *e);
 
 void engine_pkey_meths_free(ENGINE *e);
 void engine_pkey_asn1_meths_free(ENGINE *e);
+
+/* Once initialisation function */
+extern CRYPTO_ONCE engine_lock_init;
+void do_engine_lock_init(void);
 
 /*
  * This is a structure for storing implementations of various crypto
@@ -200,7 +207,7 @@ struct engine_st {
     int struct_ref;
     /*
      * reference count on usability of the engine type. NB: This controls the
-     * loading and initialisation of any functionlity required by this
+     * loading and initialisation of any functionality required by this
      * engine, whereas the previous count is simply to cope with
      * (de)allocation of this structure. Hence, running_ref <= struct_ref at
      * all times.

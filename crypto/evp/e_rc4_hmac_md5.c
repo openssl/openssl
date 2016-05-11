@@ -81,7 +81,7 @@ typedef struct {
 void rc4_md5_enc(RC4_KEY *key, const void *in0, void *out,
                  MD5_CTX *ctx, const void *inp, size_t blocks);
 
-# define data(ctx) ((EVP_RC4_HMAC_MD5 *)EVP_CIPHER_CTX_cipher_data(ctx))
+# define data(ctx) ((EVP_RC4_HMAC_MD5 *)EVP_CIPHER_CTX_get_cipher_data(ctx))
 
 static int rc4_hmac_md5_init_key(EVP_CIPHER_CTX *ctx,
                                  const unsigned char *inkey,
@@ -102,8 +102,7 @@ static int rc4_hmac_md5_init_key(EVP_CIPHER_CTX *ctx,
 
 # if     !defined(OPENSSL_NO_ASM) &&     ( \
         defined(__x86_64)       || defined(__x86_64__)  || \
-        defined(_M_AMD64)       || defined(_M_X64)      || \
-        defined(__INTEL__)              )
+        defined(_M_AMD64)       || defined(_M_X64)      )
 #  define STITCHED_CALL
 # endif
 

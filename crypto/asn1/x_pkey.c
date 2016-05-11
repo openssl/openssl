@@ -69,7 +69,6 @@ X509_PKEY *X509_PKEY_new(void)
     if (ret == NULL)
         goto err;
 
-    ret->references = 1;
     ret->enc_algor = X509_ALGOR_new();
     ret->enc_pkey = ASN1_OCTET_STRING_new();
     if (ret->enc_algor == NULL || ret->enc_pkey == NULL)
@@ -84,16 +83,8 @@ err:
 
 void X509_PKEY_free(X509_PKEY *x)
 {
-    int i;
-
     if (x == NULL)
         return;
-
-    i = CRYPTO_add(&x->references, -1, CRYPTO_LOCK_X509_PKEY);
-    REF_PRINT_COUNT("X509_PKEY", x);
-    if (i > 0)
-        return;
-    REF_ASSERT_ISNT(i < 0);
 
     X509_ALGOR_free(x->enc_algor);
     ASN1_OCTET_STRING_free(x->enc_pkey);

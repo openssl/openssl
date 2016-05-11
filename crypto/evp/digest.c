@@ -112,9 +112,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/evp.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include "internal/evp_int.h"
 #include "evp_locl.h"
 
@@ -137,12 +135,7 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
     }
     EVP_PKEY_CTX_free(ctx->pctx);
 #ifndef OPENSSL_NO_ENGINE
-    if (ctx->engine)
-        /*
-         * The EVP_MD we used belongs to an ENGINE, release the functional
-         * reference we held for this reason.
-         */
-        ENGINE_finish(ctx->engine);
+    ENGINE_finish(ctx->engine);
 #endif
     memset(ctx, 0, sizeof(*ctx));
 
@@ -187,21 +180,21 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
          * previous check attempted to avoid this if the same ENGINE and
          * EVP_MD could be used).
          */
-        if (ctx->engine)
-            ENGINE_finish(ctx->engine);
-        if (impl) {
+        ENGINE_finish(ctx->engine);
+        if (impl != NULL) {
             if (!ENGINE_init(impl)) {
                 EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
                 return 0;
             }
-        } else
+        } else {
             /* Ask if an ENGINE is reserved for this job */
             impl = ENGINE_get_digest_engine(type->type);
-        if (impl) {
+        }
+        if (impl != NULL) {
             /* There's an ENGINE for this job ... (apparently) */
             const EVP_MD *d = ENGINE_get_digest(impl, type->type);
-            if (!d) {
-                /* Same comment from evp_enc.c */
+
+            if (d == NULL) {
                 EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
                 ENGINE_finish(impl);
                 return 0;
@@ -224,8 +217,10 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     }
 #endif
     if (ctx->digest != type) {
-        if (ctx->digest && ctx->digest->ctx_size)
+        if (ctx->digest && ctx->digest->ctx_size) {
             OPENSSL_free(ctx->md_data);
+            ctx->md_data = NULL;
+        }
         ctx->digest = type;
         if (!(ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) && type->ctx_size) {
             ctx->update = type->update;

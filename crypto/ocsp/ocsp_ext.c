@@ -509,12 +509,16 @@ X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME *issuer, char **urls)
             goto err;
         ad->location->type = GEN_URI;
         ad->location->d.ia5 = ia5;
+        ia5 = NULL;
         if (!sk_ACCESS_DESCRIPTION_push(sloc->locator, ad))
             goto err;
+        ad = NULL;
         urls++;
     }
     x = X509V3_EXT_i2d(NID_id_pkix_OCSP_serviceLocator, 0, sloc);
  err:
+    ASN1_IA5STRING_free(ia5);
+    ACCESS_DESCRIPTION_free(ad);
     OCSP_SERVICELOC_free(sloc);
     return x;
 }

@@ -116,9 +116,7 @@
 #ifndef HEADER_SSL3_H
 # define HEADER_SSL3_H
 
-# ifndef OPENSSL_NO_COMP
-#  include <openssl/comp.h>
-# endif
+# include <openssl/comp.h>
 # include <openssl/buffer.h>
 # include <openssl/evp.h>
 # include <openssl/ssl.h>

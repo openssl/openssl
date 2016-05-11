@@ -18,9 +18,6 @@ B<openssl> B<pkcs8>
 [B<-iter count>]
 [B<-noiter>]
 [B<-nocrypt>]
-[B<-nooct>]
-[B<-embed>]
-[B<-nsdb>]
 [B<-v2 alg>]
 [B<-v2prf alg>]
 [B<-v1 alg>]
@@ -60,7 +57,7 @@ private key is used.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in filename>
@@ -101,50 +98,28 @@ This option does not encrypt private keys at all and should only be used
 when absolutely necessary. Certain software such as some versions of Java
 code signing software used unencrypted private keys.
 
-=item B<-nooct>
-
-This option generates RSA private keys in a broken format that some software
-uses. Specifically the private key should be enclosed in a OCTET STRING
-but some software just includes the structure itself without the
-surrounding OCTET STRING.
-
-=item B<-embed>
-
-This option generates DSA keys in a broken format. The DSA parameters are
-embedded inside the PrivateKey structure. In this form the OCTET STRING
-contains an ASN1 SEQUENCE consisting of two structures: a SEQUENCE containing
-the parameters and an ASN1 INTEGER containing the private key.
-
-=item B<-nsdb>
-
-This option generates DSA keys in a broken format compatible with Netscape
-private key databases. The PrivateKey contains a SEQUENCE consisting of
-the public and private keys respectively.
-
 =item B<-v2 alg>
 
-This option enables the use of PKCS#5 v2.0 algorithms. Normally PKCS#8
-private keys are encrypted with the password based encryption algorithm
-called B<pbeWithMD5AndDES-CBC> this uses 56 bit DES encryption but it
-was the strongest encryption algorithm supported in PKCS#5 v1.5. Using 
-the B<-v2> option PKCS#5 v2.0 algorithms are used which can use any
-encryption algorithm such as 168 bit triple DES or 128 bit RC2 however
-not many implementations support PKCS#5 v2.0 yet. If you are just using
-private keys with OpenSSL then this doesn't matter.
+This option sets the PKCS#5 v2.0 algorithm.
 
 The B<alg> argument is the encryption algorithm to use, valid values include
-B<des>, B<des3> and B<rc2>. It is recommended that B<des3> is used.
+B<aes128>, B<aes256> and B<des3>. If this option isn't specified then B<aes256>
+is used.
 
 =item B<-v2prf alg>
 
 This option sets the PRF algorithm to use with PKCS#5 v2.0. A typical value
-values would be B<hmacWithSHA256>. If this option isn't set then the default
-for the cipher is used or B<hmacWithSHA1> if there is no default.
+value would be B<hmacWithSHA256>. If this option isn't set then the default
+for the cipher is used or B<hmacWithSHA256> if there is no default.
+
+Some implementations may not support custom PRF algorithms and may require
+the B<hmacWithSHA1> option to work.
 
 =item B<-v1 alg>
 
-This option specifies a PKCS#5 v1.5 or PKCS#12 algorithm to use. A complete
-list of possible algorithms is included below.
+This option indicates a PKCS#5 v1.5 or PKCS#12 algorithm should be used.  Some
+older implementations may not support PKCS#5 v2.0 and may require this option.
+If not specified PKCS#5 v2.0 for is used.
 
 =item B<-engine id>
 
@@ -156,7 +131,7 @@ for all available algorithms.
 =item B<-scrypt>
 
 uses the B<scrypt> algorithm for private key encryption using default
-parameters: currently N=1024, r=8 and p=16 and AES in CBC mode with a 256 bit
+parameters: currently N=16384, r=8 and p=1 and AES in CBC mode with a 256 bit
 key. These parameters can be modified using the B<-scrypt_N>, B<-scrypt_r>,
 B<-scrypt_p> and B<-v2> options.
 
@@ -167,6 +142,13 @@ sets the scrypt B<N>, B<r> or B<p> parameters.
 =back
 
 =head1 NOTES
+
+By default, when converting a key to PKCS#8 format, PKCS#5 v2.0 using 256 bit
+AES with HMAC and SHA256 is used.
+
+Some older implementations do not support PKCS#5 v2.0 format and require
+the older PKCS#5 v1.5 form instead, possibly also requiring insecure weak
+encryption algorithms such as 56 bit DES.
 
 The encrypted form of a PEM encode PKCS#8 files uses the following
 headers and footers:
@@ -183,13 +165,6 @@ Private keys encrypted using PKCS#5 v2.0 algorithms and high iteration
 counts are more secure that those encrypted using the traditional
 SSLeay compatible formats. So if additional security is considered
 important the keys should be converted.
-
-The default encryption is only 56 bits because this is the encryption
-that most current implementations of PKCS#8 will support.
-
-Some software may use PKCS#12 password based encryption algorithms
-with PKCS#8 format private keys: these are handled automatically
-but there is no option to produce them.
 
 It is possible to write out DER encoded encrypted private keys in
 PKCS#8 format because the encryption details are included at an ASN1
@@ -251,8 +226,8 @@ Read a DER unencrypted PKCS#8 format private key:
 Convert a private key from any PKCS#8 format to traditional format:
 
  openssl pkcs8 -in pk8.pem -out key.pem
- 
-Convert a private key to PKCS#8 format, encrypting with AES-256 and with 
+
+Convert a private key to PKCS#8 format, encrypting with AES-256 and with
 one million iterations of the password:
 
  openssl pkcs8 -in raw.pem -topk8 -v2 aes-256-cbc -iter 1000000 -out pk8.pem
@@ -282,7 +257,7 @@ the old format at present.
 =head1 SEE ALSO
 
 L<dsa(1)>, L<rsa(1)>, L<genrsa(1)>,
-L<gendsa(1)> 
+L<gendsa(1)>
 
 =head1 HISTORY
 

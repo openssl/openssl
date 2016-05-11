@@ -159,7 +159,9 @@ int pkey_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = !noout && !pubout ? 1 : 0;
     if (text && !pubtext)
         private = 1;

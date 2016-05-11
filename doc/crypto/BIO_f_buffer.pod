@@ -8,7 +8,7 @@ BIO_f_buffer - buffering BIO
 
  #include <openssl/bio.h>
 
- BIO_METHOD * BIO_f_buffer(void);
+ const BIO_METHOD * BIO_f_buffer(void);
 
  #define BIO_get_buffer_num_lines(b)
  #define BIO_set_read_buffer_size(b,size)

@@ -73,7 +73,7 @@
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
           const char *sig_name, const char *md_name,
-          const char *file, BIO *bmd);
+          const char *file);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -403,7 +403,7 @@ int dgst_main(int argc, char **argv)
     if (argc == 0) {
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
         ret = do_fp(out, buf, inp, separator, out_bin, sigkey, sigbuf,
-                    siglen, NULL, NULL, "stdin", bmd);
+                    siglen, NULL, NULL, "stdin");
     } else {
         const char *md_name = NULL, *sig_name = NULL;
         if (!out_bin) {
@@ -426,7 +426,7 @@ int dgst_main(int argc, char **argv)
                 continue;
             } else
                 r = do_fp(out, buf, inp, separator, out_bin, sigkey, sigbuf,
-                          siglen, sig_name, md_name, argv[i], bmd);
+                          siglen, sig_name, md_name, argv[i]);
             if (r)
                 ret = r;
             (void)BIO_reset(bmd);
@@ -448,7 +448,7 @@ int dgst_main(int argc, char **argv)
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
           const char *sig_name, const char *md_name,
-          const char *file, BIO *bmd)
+          const char *file)
 {
     size_t len;
     int i;

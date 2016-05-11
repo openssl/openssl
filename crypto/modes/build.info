@@ -4,28 +4,23 @@ SOURCE[../../libcrypto]=\
         ccm128.c xts128.c wrap128.c ocb128.c \
         {- $target{modes_asm_src} -}
 
-BEGINRAW[Makefile]
-{- $builddir -}/ghash-ia64.s:	{- $sourcedir -}/asm/ghash-ia64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-ia64.pl $@ $(CFLAGS)
-{- $builddir -}/ghash-x86.s:	{- $sourcedir -}/asm/ghash-x86.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-{- $builddir -}/ghash-x86_64.s:	{- $sourcedir -}/asm/ghash-x86_64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
-{- $builddir -}/aesni-gcm-x86_64.s:	{- $sourcedir -}/asm/aesni-gcm-x86_64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesni-gcm-x86_64.pl $(PERLASM_SCHEME) > $@
-{- $builddir -}/ghash-sparcv9.s:	{- $sourcedir -}/asm/ghash-sparcv9.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-sparcv9.pl $@ $(CFLAGS)
-{- $builddir -}/ghash-alpha.s:	{- $sourcedir -}/asm/ghash-alpha.pl
-	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-alpha.pl > $$preproc && \
-	$(CC) -E -P $$preproc > $@ && rm $$preproc)
-{- $builddir -}/ghash-parisc.s:	{- $sourcedir -}/asm/ghash-parisc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/ghashv8-armx.S:	{- $sourcedir -}/asm/ghashv8-armx.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghashv8-armx.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/ghashp8-ppc.s:	{- $sourcedir -}/asm/ghashp8-ppc.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghashp8-ppc.pl $(PERLASM_SCHEME) $@
+INCLUDE[gcm128.o]=..
 
+GENERATE[ghash-ia64.s]=asm/ghash-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
+GENERATE[ghash-x86.s]=asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+GENERATE[ghash-x86_64.s]=asm/ghash-x86_64.pl $(PERLASM_SCHEME)
+GENERATE[aesni-gcm-x86_64.s]=asm/aesni-gcm-x86_64.pl $(PERLASM_SCHEME)
+GENERATE[ghash-sparcv9.S]=asm/ghash-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[ghash-sparcv9.o]=..
+GENERATE[ghash-alpha.S]=asm/ghash-alpha.pl $(PERLASM_SCHEME)
+GENERATE[ghash-parisc.s]=asm/ghash-parisc.pl $(PERLASM_SCHEME)
+GENERATE[ghashp8-ppc.s]=asm/ghashp8-ppc.pl $(PERLASM_SCHEME)
+GENERATE[ghash-armv4.S]=asm/ghash-armv4.pl $(PERLASM_SCHEME)
+INCLUDE[ghash-armv4.o]=..
+GENERATE[ghashv8-armx.S]=asm/ghashv8-armx.pl $(PERLASM_SCHEME)
+INCLUDE[ghashv8-armx.o]=..
+
+BEGINRAW[Makefile]
 # GNU make "catch all"
 {- $builddir -}/ghash-%.S:	{- $sourcedir -}/asm/ghash-%.pl
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@

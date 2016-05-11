@@ -1,5 +1,11 @@
-#! /usr/bin/perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
 #
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 # Reads one or more template files and runs it through Text::Template
 #
 # It is assumed that this scripts is called with -Mconfigdata, a module
@@ -35,7 +41,9 @@ use File::Spec::Functions;
 use lib catdir(dirname(__FILE__));
 use with_fallback qw(Text::Template);
 
-use parent qw/Text::Template/;
+#use parent qw/Text::Template/;
+use vars qw/@ISA/;
+push @ISA, qw/Text::Template/;
 
 # Override constructor
 sub new {
@@ -181,6 +189,7 @@ sub output_off {
 $template->fill_in(OUTPUT => \*STDOUT,
                    HASH => { config => \%config,
                              target => \%target,
+                             disabled => \%disabled,
                              withargs => \%withargs,
                              unified_info => \%unified_info,
                              autowarntext => \@autowarntext,

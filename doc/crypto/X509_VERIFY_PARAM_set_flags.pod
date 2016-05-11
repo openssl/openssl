@@ -2,15 +2,16 @@
 
 =head1 NAME
 
-X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags, X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose, X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth, X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_time, X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies, X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host, X509_VERIFY_PARAM_set_hostflags, X509_VERIFY_PARAM_get0_peername, X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_set1_ip_asc - X509 verification parameters
+X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags, X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose, X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth, X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_auth_level, X509_VERIFY_PARAM_get_auth_level, X509_VERIFY_PARAM_set_time, X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies, X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host, X509_VERIFY_PARAM_set_hostflags, X509_VERIFY_PARAM_get0_peername, X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_set1_ip_asc - X509 verification parameters
 
 =head1 SYNOPSIS
 
  #include <openssl/x509_vfy.h>
 
- int X509_VERIFY_PARAM_set_flags(X509_VERIFY_PARAM *param, unsigned long flags);
+ int X509_VERIFY_PARAM_set_flags(X509_VERIFY_PARAM *param,
+                                        unsigned long flags);
  int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param,
-							unsigned long flags);
+					unsigned long flags);
  unsigned long X509_VERIFY_PARAM_get_flags(X509_VERIFY_PARAM *param);
 
  int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose);
@@ -19,12 +20,16 @@ X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags, X509_VERIFY_PARAM_ge
  void X509_VERIFY_PARAM_set_time(X509_VERIFY_PARAM *param, time_t t);
 
  int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
-						ASN1_OBJECT *policy);
+					ASN1_OBJECT *policy);
  int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param, 
 					STACK_OF(ASN1_OBJECT) *policies);
 
  void X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth);
  int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param);
+
+ void X509_VERIFY_PARAM_set_auth_level(X509_VERIFY_PARAM *param,
+                                        int auth_level);
+ int X509_VERIFY_PARAM_get_auth_level(const X509_VERIFY_PARAM *param);
 
  int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
 				 const char *name, size_t namelen);
@@ -71,8 +76,32 @@ policy set is cleared. The B<policies> parameter can be B<NULL> to clear
 an existing policy set.
 
 X509_VERIFY_PARAM_set_depth() sets the maximum verification depth to B<depth>.
-That is the maximum number of untrusted CA certificates that can appear in a
+That is the maximum number of intermediate CA certificates that can appear in a
 chain.
+A maximal depth chain contains 2 more certificates than the limit, since
+neither the end-entity ceritificate nor the trust-anchor count against this
+limit.
+Thus a B<depth> limit of 0 only allows the end-entity certificate to be signed
+directly by the trust-anchor, while with a B<depth> limit of 1 there can be one
+intermediate CA certificate between the trust-anchor and the end-entity
+certificate.
+
+X509_VERIFY_PARAM_set_auth_level() sets the authentication security level to
+B<auth_level>.
+The authentication security level determines the acceptable signature and public
+key strength when verifying certificate chains.
+For a certificate chain to validate, the public keys of all the certificates
+must meet the specified security level.
+The signature algorithm security level is not enforced for the chain's I<trust
+anchor> certificate, which is either directly trusted or validated by means other
+than its signature.
+See L<SSL_CTX_set_security_level(3)> for the definitions of the available
+levels.
+The default security level is -1, or "not set".
+At security level 0 or lower all algorithms are acceptable.
+Security level 1 requires at least 80-bit-equivalent security and is broadly
+interoperable, though it will, for example, reject MD5 signatures or RSA keys
+shorter than 1024 bits.
 
 X509_VERIFY_PARAM_set1_host() sets the expected DNS hostname to
 B<name> clearing any previously specified host name or names.  If
@@ -138,6 +167,9 @@ X509_VERIFY_PARAM_set_time() and X509_VERIFY_PARAM_set_depth() do not return
 values.
 
 X509_VERIFY_PARAM_get_depth() returns the current verification depth.
+
+X509_VERIFY_PARAM_get_auth_level() returns the current authentication security
+level.
 
 =head1 VERIFICATION FLAGS
 

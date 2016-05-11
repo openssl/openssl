@@ -297,6 +297,9 @@ int main(int argc, char *argv[])
     BN_free(m);
     BN_CTX_free(ctx);
 
+    if (test_exp_mod_zero() != 0)
+        goto err;
+
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks(out) <= 0)
         goto err;
@@ -304,16 +307,10 @@ int main(int argc, char *argv[])
     BIO_free(out);
     printf("\n");
 
-    if (test_exp_mod_zero() != 0)
-        goto err;
-
     printf("done\n");
 
     EXIT(0);
  err:
     ERR_print_errors(out);
-#ifdef OPENSSL_SYS_NETWARE
-    printf("ERROR\n");
-#endif
     EXIT(1);
 }

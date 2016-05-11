@@ -118,7 +118,10 @@ int passwd_main(int argc, char **argv)
     char *infile = NULL, *salt = NULL, *passwd = NULL, **passwds = NULL;
     char *salt_malloc = NULL, *passwd_malloc = NULL, *prog;
     OPTION_CHOICE o;
-    int in_stdin = 0, in_noverify = 0, pw_source_defined = 0;
+    int in_stdin = 0, pw_source_defined = 0;
+#ifndef OPENSSL_NO_UI
+    int in_noverify = 0;
+#endif
     int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
     int ret = 1, usecrypt = 0, use1 = 0, useapr1 = 0;
     size_t passwd_malloc_size = 0, pw_maxlen = 256;
@@ -142,7 +145,9 @@ int passwd_main(int argc, char **argv)
             pw_source_defined = 1;
             break;
         case OPT_NOVERIFY:
+#ifndef OPENSSL_NO_UI
             in_noverify = 1;
+#endif
             break;
         case OPT_QUIET:
             quiet = 1;
@@ -170,6 +175,7 @@ int passwd_main(int argc, char **argv)
             if (pw_source_defined)
                 goto opthelp;
             in_stdin = 1;
+            pw_source_defined = 1;
             break;
         }
     }
@@ -201,14 +207,20 @@ int passwd_main(int argc, char **argv)
         goto opthelp;
 # endif
 
-    if (infile && in_stdin) {
+    if (infile != NULL && in_stdin) {
         BIO_printf(bio_err, "%s: Can't combine -in and -stdin\n", prog);
         goto end;
     }
 
-    in = bio_open_default(infile, 'r', FORMAT_TEXT);
-    if (in == NULL)
-        goto end;
+    if (infile != NULL || in_stdin) {
+        /*
+         * If in_stdin is true, we know that infile is NULL, and that
+         * bio_open_default() will give us back an alias for stdin.
+         */
+        in = bio_open_default(infile, 'r', FORMAT_TEXT);
+        if (in == NULL)
+            goto end;
+    }
 
     if (usecrypt)
         pw_maxlen = 8;
@@ -226,17 +238,25 @@ int passwd_main(int argc, char **argv)
     }
 
     if ((in == NULL) && (passwds == NULL)) {
-        /* build a null-terminated list */
-        static char *passwds_static[2] = { NULL, NULL };
+        if (1) {
+#ifndef OPENSSL_NO_UI
+            /* build a null-terminated list */
+            static char *passwds_static[2] = { NULL, NULL };
 
-        passwds = passwds_static;
-        if (in == NULL)
-            if (EVP_read_pw_string
-                (passwd_malloc, passwd_malloc_size, "Password: ",
-                 !(passed_salt || in_noverify)) != 0)
-                goto end;
-        passwds[0] = passwd_malloc;
+            passwds = passwds_static;
+            if (in == NULL)
+                if (EVP_read_pw_string
+                    (passwd_malloc, passwd_malloc_size, "Password: ",
+                     !(passed_salt || in_noverify)) != 0)
+                    goto end;
+            passwds[0] = passwd_malloc;
+        } else {
+#endif
+            BIO_printf(bio_err, "password required\n");
+            goto end;
+        }
     }
+
 
     if (in == NULL) {
         assert(passwds != NULL);

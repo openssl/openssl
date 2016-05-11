@@ -54,13 +54,6 @@
 
 #include "eng_int.h"
 
-/*
- * If this symbol is defined then ENGINE_get_cipher_engine(), the function
- * that is used by EVP to hook in cipher code and cache defaults (etc), will
- * display brief debugging summaries to stderr with the 'nid'.
- */
-/* #define ENGINE_CIPHER_DEBUG */
-
 static ENGINE_TABLE *cipher_table = NULL;
 
 void ENGINE_unregister_ciphers(ENGINE *e)

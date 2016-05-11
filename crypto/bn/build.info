@@ -9,92 +9,77 @@ SOURCE[../../libcrypto]=\
         bn_depr.c bn_const.c bn_x931p.c bn_intern.c bn_dh.c bn_srp.c
 INCLUDE[../../libcrypto]={- rel2abs(catdir($builddir,"..","..","crypto","include")) -}
 
+INCLUDE[bn_exp.o]=..
+
+GENERATE[bn-586.s]=asm/bn-586.pl \
+	$(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+DEPEND[bn-586.s]=../perlasm/x86asm.pl
+GENERATE[co-586.s]=asm/co-586.pl \
+	$(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+DEPEND[co-586.s]=../perlasm/x86asm.pl
+GENERATE[x86-mont.s]=asm/x86-mont.pl \
+	$(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+DEPEND[x86-mont.s]=../perlasm/x86asm.pl
+GENERATE[x86-gf2m.s]=asm/x86-gf2m.pl \
+	$(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+DEPEND[x86-gf2m.s]=../perlasm/x86asm.pl
+
+GENERATE[sparcv9a-mont.S]=asm/sparcv9a-mont.pl $(PERLASM_SCHEME)
+INCLUDE[sparcv9a-mont.o]=..
+GENERATE[sparcv9-mont.S]=asm/sparcv9-mont.pl $(PERLASM_SCHEME)
+INCLUDE[sparcv9-mont.o]=..
+GENERATE[vis3-mont.S]=asm/vis3-mont.pl $(PERLASM_SCHEME)
+INCLUDE[vis3-mont.o]=..
+GENERATE[sparct4-mont.S]=asm/sparct4-mont.pl $(PERLASM_SCHEME)
+INCLUDE[sparct4-mont.o]=..
+GENERATE[sparcv9-gf2m.S]=asm/sparcv9-gf2m.pl $(PERLASM_SCHEME)
+INCLUDE[sparcv9-gf2m.o]=..
+
+GENERATE[bn-mips.s]=asm/mips.pl $(PERLASM_SCHEME)
+GENERATE[mips-mont.s]=asm/mips-mont.pl $(PERLASM_SCHEME)
+
+GENERATE[s390x-mont.S]=asm/s390x-mont.pl $(PERLASM_SCHEME)
+GENERATE[s390x-gf2m.s]=asm/s390x-gf2m.pl $(PERLASM_SCHEME)
+
+GENERATE[x86_64-mont.s]=asm/x86_64-mont.pl $(PERLASM_SCHEME)
+GENERATE[x86_64-mont5.s]=asm/x86_64-mont5.pl $(PERLASM_SCHEME)
+GENERATE[x86_64-gf2m.s]=asm/x86_64-gf2m.pl $(PERLASM_SCHEME)
+GENERATE[rsaz-x86_64.s]=asm/rsaz-x86_64.pl $(PERLASM_SCHEME)
+GENERATE[rsaz-avx2.s]=asm/rsaz-avx2.pl $(PERLASM_SCHEME)
+
+GENERATE[bn-ia64.s]=asm/ia64.S
+GENERATE[ia64-mont.s]=asm/ia64-mont.pl $(CFLAGS) $(LIB_CFLAGS)
+
+GENERATE[parisc-mont.s]=asm/parisc-mont.pl $(PERLASM_SCHEME)
+
+# ppc - AIX, Linux, MacOS X...
+GENERATE[bn-ppc.s]=asm/ppc.pl $(PERLASM_SCHEME)
+GENERATE[ppc-mont.s]=asm/ppc-mont.pl $(PERLASM_SCHEME)
+GENERATE[ppc64-mont.s]=asm/ppc64-mont.pl $(PERLASM_SCHEME)
+
+GENERATE[alpha-mont.S]=asm/alpha-mont.pl $(PERLASM_SCHEME)
+
+GENERATE[armv4-mont.S]=asm/armv4-mont.pl $(PERLASM_SCHEME)
+INCLUDE[armv4-mont.o]=..
+GENERATE[armv4-gf2m.S]=asm/armv4-gf2m.pl $(PERLASM_SCHEME)
+INCLUDE[armv4-gf2m.o]=..
+GENERATE[armv8-mont.S]=asm/armv8-mont.pl $(PERLASM_SCHEME)
+
+OVERRIDES=bn-mips3.o pa-risc2W.o pa-risc2.c
 BEGINRAW[Makefile]
 ##### BN assembler implementations
-
-{- $builddir -}/bn-586.s:	{- $sourcedir -}/asm/bn-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/bn-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-{- $builddir -}/co-586.s:	{- $sourcedir -}/asm/co-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/co-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-{- $builddir -}/x86-mont.s:	{- $sourcedir -}/asm/x86-mont.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-{- $builddir -}/x86-gf2m.s:	{- $sourcedir -}/asm/x86-gf2m.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/x86-gf2m.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-
-{- $builddir -}/sparcv8.o:	{- $sourcedir -}/asm/sparcv8.S
-	$(CC) $(CFLAGS) -c {- $sourcedir -}/asm/sparcv8.S
-{- $builddir -}/bn-sparcv9.o:	{- $sourcedir -}/asm/sparcv8plus.S
-	$(CC) $(CFLAGS) -c -o $@ {- $sourcedir -}/asm/sparcv8plus.S
-{- $builddir -}/sparcv9a-mont.s:	{- $sourcedir -}/asm/sparcv9a-mont.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sparcv9a-mont.pl $(CFLAGS) > $@
-{- $builddir -}/sparcv9-mont.s:		{- $sourcedir -}/asm/sparcv9-mont.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sparcv9-mont.pl $(CFLAGS) > $@
-{- $builddir -}/vis3-mont.s:		{- $sourcedir -}/asm/vis3-mont.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/vis3-mont.pl $(CFLAGS) > $@
-{- $builddir -}/sparct4-mont.S:	{- $sourcedir -}/asm/sparct4-mont.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sparct4-mont.pl $(CFLAGS) > $@
-{- $builddir -}/sparcv9-gf2m.S:	{- $sourcedir -}/asm/sparcv9-gf2m.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/sparcv9-gf2m.pl $(CFLAGS) > $@
 
 {- $builddir -}/bn-mips3.o:	{- $sourcedir -}/asm/mips3.s
 	@if [ "$(CC)" = "gcc" ]; then \
 		ABI=`expr "$(CFLAGS)" : ".*-mabi=\([n3264]*\)"` && \
 		as -$$ABI -O -o $@ {- $sourcedir -}/asm/mips3.s; \
-	else	$(CC) -c $(CFLAGS) -o $@ {- $sourcedir -}/asm/mips3.s; fi
-
-{- $builddir -}/bn-mips.s:	{- $sourcedir -}/asm/mips.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/mips.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/mips-mont.s:	{- $sourcedir -}/asm/mips-mont.pl
-	CC="$(CC)" $(PERL)	{- $sourcedir -}/asm/mips-mont.pl $(PERLASM_SCHEME) $@
-
-{- $builddir -}/bn-s390x.o:	{- $sourcedir -}/asm/s390x.S
-	$(CC) $(CFLAGS) -c -o $@ {- $sourcedir -}/asm/s390x.S
-{- $builddir -}/s390x-gf2m.s:	{- $sourcedir -}/asm/s390x-gf2m.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/s390x-gf2m.pl $(PERLASM_SCHEME) $@
-
-{- $builddir -}/x86_64-mont.s:	{- $sourcedir -}/asm/x86_64-mont.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/x86_64-mont.pl $(PERLASM_SCHEME) > $@
-{- $builddir -}/x86_64-mont5.s:	{- $sourcedir -}/asm/x86_64-mont5.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/x86_64-mont5.pl $(PERLASM_SCHEME) > $@
-{- $builddir -}/x86_64-gf2m.s:	{- $sourcedir -}/asm/x86_64-gf2m.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/x86_64-gf2m.pl $(PERLASM_SCHEME) > $@
-{- $builddir -}/rsaz-x86_64.s:	{- $sourcedir -}/asm/rsaz-x86_64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/rsaz-x86_64.pl $(PERLASM_SCHEME) > $@
-{- $builddir -}/rsaz-avx2.s:	{- $sourcedir -}/asm/rsaz-avx2.pl 
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/rsaz-avx2.pl $(PERLASM_SCHEME) > $@
-
-{- $builddir -}/bn-ia64.s:	{- $sourcedir -}/asm/ia64.S
-	$(CC) $(CFLAGS) -E {- $sourcedir -}/asm/ia64.S > $@
-{- $builddir -}/ia64-mont.s:	{- $sourcedir -}/asm/ia64-mont.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ia64-mont.pl $@ $(CFLAGS)
+	else	$(CC) -c $(CFLAGS) $(LIB_CFLAGS) -o $@ {- $sourcedir -}/asm/mips3.s; fi
 
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
 {- $builddir -}/pa-risc2W.o: {- $sourcedir -}/asm/pa-risc2W.s
-	CC="$(CC)" $(PERL) $(TOP)/util/fipsas.pl $(TOP) $< /usr/ccs/bin/as -o pa-risc2W.o {- $sourcedir -}/asm/pa-risc2W.s
+	CC="$(CC)" $(PERL) $(SRCDIR)/util/fipsas.pl $(SRCDIR) $< /usr/ccs/bin/as -o pa-risc2W.o {- $sourcedir -}/asm/pa-risc2W.s
 {- $builddir -}/pa-risc2.o: {- $sourcedir -}/asm/pa-risc2.s
-	CC="$(CC)" $(PERL) $(TOP)/util/fipsas.pl $(TOP) $< /usr/ccs/bin/as -o pa-risc2.o {- $sourcedir -}/asm/pa-risc2.s
+	CC="$(CC)" $(PERL) $(SRCDIR)/util/fipsas.pl $(SRCDIR) $< /usr/ccs/bin/as -o pa-risc2.o {- $sourcedir -}/asm/pa-risc2.s
 
-{- $builddir -}/parisc-mont.s:	{- $sourcedir -}/asm/parisc-mont.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/parisc-mont.pl $(PERLASM_SCHEME) $@
-
-# ppc - AIX, Linux, MacOS X...
-{- $builddir -}/bn-ppc.s:	{- $sourcedir -}/asm/ppc.pl;	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ppc.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/ppc-mont.s:	{- $sourcedir -}/asm/ppc-mont.pl;CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ppc-mont.pl $(PERLASM_SCHEME) $@
-{- $builddir -}/ppc64-mont.s:	{- $sourcedir -}/asm/ppc64-mont.pl;CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ppc64-mont.pl $(PERLASM_SCHEME) $@
-
-{- $builddir -}/alpha-mont.s:	{- $sourcedir -}/asm/alpha-mont.pl
-	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/alpha-mont.pl > $$preproc && \
-	$(CC) -E -P $$preproc > $@ && rm $$preproc)
-
-# GNU make "catch all"
-{- $builddir -}/%-mont.S:	{- $sourcedir -}/asm/%-mont.pl
-	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
-{- $builddir -}/%-gf2m.S:	{- $sourcedir -}/asm/%-gf2m.pl
-	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
-
-{- $builddir -}/armv4-mont.o:	{- $builddir -}/armv4-mont.S
-{- $builddir -}/armv4-gf2m.o:	{- $builddir -}/armv4-gf2m.S
-{- $builddir -}/armv8-mont.o:	{- $builddir -}/armv8-mont.S
 ENDRAW[Makefile]

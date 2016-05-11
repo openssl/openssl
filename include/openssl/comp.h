@@ -56,11 +56,14 @@
 #ifndef HEADER_COMP_H
 # define HEADER_COMP_H
 
-# include <openssl/crypto.h>
+# include <openssl/opensslconf.h>
 
-#ifdef  __cplusplus
+# ifndef OPENSSL_NO_COMP
+# include <openssl/crypto.h>
+# ifdef  __cplusplus
 extern "C" {
-#endif
+# endif
+
 
 
 COMP_CTX *COMP_CTX_new(COMP_METHOD *meth);
@@ -76,11 +79,14 @@ int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
                       unsigned char *in, int ilen);
 
 COMP_METHOD *COMP_zlib(void);
-void COMP_zlib_cleanup(void);
+
+#if OPENSSL_API_COMPAT < 0x10100000L
+#define COMP_zlib_cleanup() while(0) continue
+#endif
 
 # ifdef HEADER_BIO_H
 #  ifdef ZLIB
-BIO_METHOD *BIO_f_zlib(void);
+const BIO_METHOD *BIO_f_zlib(void);
 #  endif
 # endif
 
@@ -106,5 +112,7 @@ void ERR_load_COMP_strings(void);
 
 #ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

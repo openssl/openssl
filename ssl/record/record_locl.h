@@ -119,18 +119,19 @@
 /* Functions/macros provided by the RECORD_LAYER component */
 
 #define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
-#define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
-#define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
-#define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
+#define RECORD_LAYER_get_wbuf(rl)               ((rl)->wbuf)
+#define RECORD_LAYER_get_rrec(rl)               ((rl)->rrec)
 #define RECORD_LAYER_set_packet(rl, p)          ((rl)->packet = (p))
 #define RECORD_LAYER_reset_packet_length(rl)    ((rl)->packet_length = 0)
 #define RECORD_LAYER_get_rstate(rl)             ((rl)->rstate)
 #define RECORD_LAYER_set_rstate(rl, st)         ((rl)->rstate = (st))
 #define RECORD_LAYER_get_read_sequence(rl)      ((rl)->read_sequence)
 #define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
+#define RECORD_LAYER_get_numrpipes(rl)          ((rl)->numrpipes)
+#define RECORD_LAYER_set_numrpipes(rl, n)       ((rl)->numrpipes = (n))
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
-__owur int ssl3_read_n(SSL *s, int n, int max, int extend);
+__owur int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold);
 
 void RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, const unsigned char *ws);
 DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
@@ -160,12 +161,13 @@ void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 #define SSL3_BUFFER_set_offset(b, o)        ((b)->offset = (o))
 #define SSL3_BUFFER_add_offset(b, o)        ((b)->offset += (o))
 #define SSL3_BUFFER_is_initialised(b)       ((b)->buf != NULL)
+#define SSL3_BUFFER_set_default_len(b, l)   ((b)->default_len = (l))
 
 void SSL3_BUFFER_clear(SSL3_BUFFER *b);
 void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n);
 void SSL3_BUFFER_release(SSL3_BUFFER *b);
 __owur int ssl3_setup_read_buffer(SSL *s);
-__owur int ssl3_setup_write_buffer(SSL *s);
+__owur int ssl3_setup_write_buffer(SSL *s, unsigned int numwpipes);
 int ssl3_release_read_buffer(SSL *s);
 int ssl3_release_write_buffer(SSL *s);
 
@@ -189,17 +191,15 @@ int ssl3_release_write_buffer(SSL *s);
 #define SSL3_RECORD_is_sslv2_record(r) \
             ((r)->rec_version == SSL2_VERSION)
 
-void SSL3_RECORD_clear(SSL3_RECORD *r);
-void SSL3_RECORD_release(SSL3_RECORD *r);
-int SSL3_RECORD_setup(SSL3_RECORD *r);
+void SSL3_RECORD_clear(SSL3_RECORD *r, unsigned int num_recs);
+void SSL3_RECORD_release(SSL3_RECORD *r, unsigned int num_recs);
 void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
 int ssl3_get_record(SSL *s);
-__owur int ssl3_do_compress(SSL *ssl);
-__owur int ssl3_do_uncompress(SSL *ssl);
+__owur int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr);
+__owur int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr);
 void ssl3_cbc_copy_mac(unsigned char *out,
                        const SSL3_RECORD *rec, unsigned md_size);
-__owur int ssl3_cbc_remove_padding(const SSL *s,
-                            SSL3_RECORD *rec,
+__owur int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
                             unsigned block_size, unsigned mac_size);
 __owur int tls1_cbc_remove_padding(const SSL *s,
                             SSL3_RECORD *rec,

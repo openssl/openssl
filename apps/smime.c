@@ -148,7 +148,7 @@ OPTIONS smime_options[] = {
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"md", OPT_MD, 's'},
+    {"md", OPT_MD, 's', "Digest algorithm to use when signing or resigning"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
     OPT_V_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
@@ -458,7 +458,7 @@ int smime_main(int argc, char **argv)
             goto end;
         while (*argv) {
             cert = load_cert(*argv, FORMAT_PEM,
-                             NULL, e, "recipient certificate file");
+                             "recipient certificate file");
             if (cert == NULL)
                 goto end;
             sk_X509_push(encerts, cert);
@@ -468,7 +468,7 @@ int smime_main(int argc, char **argv)
     }
 
     if (certfile) {
-        if (!load_certs(certfile, &other, FORMAT_PEM, NULL, e,
+        if (!load_certs(certfile, &other, FORMAT_PEM, NULL,
                         "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
@@ -476,8 +476,8 @@ int smime_main(int argc, char **argv)
     }
 
     if (recipfile && (operation == SMIME_DECRYPT)) {
-        if ((recip = load_cert(recipfile, FORMAT_PEM, NULL,
-                                e, "recipient certificate file")) == NULL) {
+        if ((recip = load_cert(recipfile, FORMAT_PEM,
+                               "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -572,8 +572,8 @@ int smime_main(int argc, char **argv)
         for (i = 0; i < sk_OPENSSL_STRING_num(sksigners); i++) {
             signerfile = sk_OPENSSL_STRING_value(sksigners, i);
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
-            signer = load_cert(signerfile, FORMAT_PEM, NULL,
-                               e, "signer certificate");
+            signer = load_cert(signerfile, FORMAT_PEM,
+                               "signer certificate");
             if (!signer)
                 goto end;
             key = load_key(keyfile, keyform, 0, passin, e, "signing key file");

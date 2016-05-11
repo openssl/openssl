@@ -117,7 +117,6 @@
 #include <openssl/safestack.h>
 
 #if     defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
-        defined(__INTEL__) || \
         defined(__x86_64) || defined(__x86_64__) || \
         defined(_M_AMD64) || defined(_M_X64)
 
@@ -192,54 +191,6 @@ int OPENSSL_NONPIC_relocated = 0;
 #if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
 void OPENSSL_cpuid_setup(void)
 {
-}
-#endif
-
-#if (defined(_WIN32) || defined(__CYGWIN__)) && defined(_WINDLL)
-# ifdef __CYGWIN__
-/* pick DLL_[PROCESS|THREAD]_[ATTACH|DETACH] definitions */
-#  include <windows.h>
-/*
- * this has side-effect of _WIN32 getting defined, which otherwise is
- * mutually exclusive with __CYGWIN__...
- */
-# endif
-
-/*
- * All we really need to do is remove the 'error' state when a thread
- * detaches
- */
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    switch (fdwReason) {
-    case DLL_PROCESS_ATTACH:
-        OPENSSL_cpuid_setup();
-# if defined(_WIN32_WINNT)
-        {
-            IMAGE_DOS_HEADER *dos_header = (IMAGE_DOS_HEADER *) hinstDLL;
-            IMAGE_NT_HEADERS *nt_headers;
-
-            if (dos_header->e_magic == IMAGE_DOS_SIGNATURE) {
-                nt_headers = (IMAGE_NT_HEADERS *) ((char *)dos_header
-                                                   + dos_header->e_lfanew);
-                if (nt_headers->Signature == IMAGE_NT_SIGNATURE &&
-                    hinstDLL !=
-                    (HINSTANCE) (nt_headers->OptionalHeader.ImageBase))
-                    OPENSSL_NONPIC_relocated = 1;
-            }
-        }
-# endif
-        break;
-    case DLL_THREAD_ATTACH:
-        break;
-    case DLL_THREAD_DETACH:
-        OPENSSL_thread_stop();
-        break;
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return (TRUE);
 }
 #endif
 
@@ -448,11 +399,10 @@ int OPENSSL_isservice(void)
 }
 #endif
 
-void OpenSSLDie(const char *file, int line, const char *assertion)
+void OPENSSL_die(const char *message, const char *file, int line)
 {
-    OPENSSL_showfatal
-        ("%s(%d): OpenSSL internal error, assertion failed: %s\n", file, line,
-         assertion);
+    OPENSSL_showfatal("%s:%d: OpenSSL internal error: %s\n",
+                      file, line, message);
 #if !defined(_WIN32) || defined(__CYGWIN__)
     abort();
 #else

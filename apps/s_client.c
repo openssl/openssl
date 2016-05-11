@@ -141,6 +141,8 @@
 #include <errno.h>
 #include <openssl/e_os2.h>
 
+#ifndef OPENSSL_NO_SOCK
+
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
  * recursive header file inclusion, resulting in the compiler complaining
@@ -165,12 +167,16 @@ typedef unsigned int u_int;
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>
 #endif
+#ifndef OPENSSL_NO_CT
+# include <openssl/ct.h>
+#endif
 #include "s_apps.h"
 #include "timeouts.h"
 
-#if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
-/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
-# undef FIONBIO
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+#  include <sanitizer/msan_interface.h>
+# endif
 #endif
 
 #undef BUFSIZZ
@@ -184,6 +190,8 @@ extern int verify_quiet;
 
 static char *prog;
 static int async = 0;
+static unsigned int split_send_fragment = 0;
+static unsigned int max_pipelines = 0;
 static int c_nbio = 0;
 static int c_tlsextdebug = 0;
 static int c_status_req = 0;
@@ -199,7 +207,9 @@ static int c_ign_eof = 0;
 static int c_brief = 0;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
+#ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg);
+#endif
 
 static int saved_errno;
 
@@ -228,6 +238,7 @@ static void do_ssl_shutdown(SSL *ssl)
             case SSL_ERROR_WANT_READ:
             case SSL_ERROR_WANT_WRITE:
             case SSL_ERROR_WANT_ASYNC:
+            case SSL_ERROR_WANT_ASYNC_JOB:
                 /* We just do busy waiting. Nothing clever */
                 continue;
             }
@@ -439,7 +450,7 @@ static char *srtp_profiles = NULL;
 /* This the context that we pass to next_proto_cb */
 typedef struct tlsextnextprotoctx_st {
     unsigned char *data;
-    unsigned short len;
+    size_t len;
     int status;
 } tlsextnextprotoctx;
 
@@ -509,9 +520,9 @@ static ossl_ssize_t hexdecode(const char **inptr, void *result)
     for (byte = 0; *in; ++in) {
         char c;
 
-        if (isspace(*in))
+        if (isspace(_UC(*in)))
             continue;
-        c = tolower(*in);
+        c = tolower(_UC(*in));
         if ('0' <= c && c <= '9') {
             byte |= c - '0';
         } else if ('a' <= c && c <= 'f') {
@@ -553,11 +564,11 @@ static ossl_ssize_t checked_uint8(const char **inptr, void *out)
     e = restore_errno();
 
     if (((v == LONG_MIN || v == LONG_MAX) && e == ERANGE) ||
-        endp == in || !isspace(*endp) ||
+        endp == in || !isspace(_UC(*endp)) ||
         v != (*result = (uint8_t) v)) {
         return -1;
     }
-    for (in = endp; isspace(*in); ++in)
+    for (in = endp; isspace(_UC(*in)); ++in)
         continue;
 
     *inptr = in;
@@ -648,13 +659,16 @@ typedef enum OPTION_choice {
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
     OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
-    OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_JPAKE,
+    OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
-    OPT_ASYNC,
+    OPT_ASYNC, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
     OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_DANE_TLSA_DOMAIN,
+#ifndef OPENSSL_NO_CT
+    OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
+#endif
     OPT_DANE_TLSA_RRDATA
 } OPTION_CHOICE;
 
@@ -692,7 +706,8 @@ OPTIONS s_client_options[] = {
     {"showcerts", OPT_SHOWCERTS, '-', "Show all certificates in the chain"},
     {"debug", OPT_DEBUG, '-', "Extra output"},
     {"msg", OPT_MSG, '-', "Show protocol messages"},
-    {"msgfile", OPT_MSGFILE, '>'},
+    {"msgfile", OPT_MSGFILE, '>',
+     "File to send output of -msg or -trace, instead of stdout"},
     {"nbio_test", OPT_NBIO_TEST, '-', "More ssl protocol testing"},
     {"state", OPT_STATE, '-', "Print the ssl states"},
     {"crlf", OPT_CRLF, '-', "Convert LF from terminal into CRLF"},
@@ -715,33 +730,51 @@ OPTIONS s_client_options[] = {
      "Export len bytes of keying material (default 20)"},
     {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
     {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
-    {"CRL", OPT_CRL, '<'},
-    {"crl_download", OPT_CRL_DOWNLOAD, '-'},
-    {"CRLform", OPT_CRLFORM, 'F'},
-    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-'},
-    {"verify_quiet", OPT_VERIFY_QUIET, '-'},
-    {"brief", OPT_BRIEF, '-'},
-    {"prexit", OPT_PREXIT, '-'},
-    {"security_debug", OPT_SECURITY_DEBUG, '-'},
-    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-'},
-    {"cert_chain", OPT_CERT_CHAIN, '<'},
-    {"chainCApath", OPT_CHAINCAPATH, '/'},
-    {"verifyCApath", OPT_VERIFYCAPATH, '/'},
-    {"build_chain", OPT_BUILD_CHAIN, '-'},
-    {"chainCAfile", OPT_CHAINCAFILE, '<'},
-    {"verifyCAfile", OPT_VERIFYCAFILE, '<'},
+    {"CRL", OPT_CRL, '<', "CRL file to use"},
+    {"crl_download", OPT_CRL_DOWNLOAD, '-', "Download CRL from distribution points"},
+    {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default"},
+    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-',
+     "Close connection on verification error"},
+    {"verify_quiet", OPT_VERIFY_QUIET, '-', "Restrict verify output to errors"},
+    {"brief", OPT_BRIEF, '-',
+     "Restrict output to brief summary of connection parameters"},
+    {"prexit", OPT_PREXIT, '-',
+     "Print session information when the program exits"},
+    {"security_debug", OPT_SECURITY_DEBUG, '-',
+     "Enable security debug messages"},
+    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-',
+     "Output more security debug output"},
+    {"cert_chain", OPT_CERT_CHAIN, '<',
+     "Certificate chain file (in PEM format)"},
+    {"chainCApath", OPT_CHAINCAPATH, '/',
+     "Use dir as certificate store path to build CA certificate chain"},
+    {"verifyCApath", OPT_VERIFYCAPATH, '/',
+     "Use dir as certificate store path to verify CA certificate"},
+    {"build_chain", OPT_BUILD_CHAIN, '-', "Build certificate chain"},
+    {"chainCAfile", OPT_CHAINCAFILE, '<',
+     "CA file for certificate chain (PEM format)"},
+    {"verifyCAfile", OPT_VERIFYCAFILE, '<',
+     "CA file for certificate verification (PEM format)"},
     {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
     {"servername", OPT_SERVERNAME, 's',
      "Set TLS extension servername in ClientHello"},
     {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
      "Hex dump of all TLS extensions received"},
+#ifndef OPENSSL_NO_OCSP
     {"status", OPT_STATUS, '-', "Request certificate status from server"},
+#endif
     {"serverinfo", OPT_SERVERINFO, 's',
      "types  Send empty ClientHello extensions (comma-separated numbers)"},
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
-    {"ssl_config", OPT_SSL_CONFIG, 's'},
+    {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified configuration file"},
+    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'n',
+     "Size used to split data for encrypt pipelines"},
+    {"max_pipelines", OPT_MAX_PIPELINES, 'n',
+     "Maximum number of encrypt/decrypt pipelines to be used"},
+    {"read_buf", OPT_READ_BUF, 'n',
+     "Default read buffer size to be used for connections"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -758,31 +791,27 @@ OPTIONS s_client_options[] = {
     {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
 #endif
 #ifndef OPENSSL_NO_DTLS
-    {"dtls", OPT_DTLS, '-'},
-    {"timeout", OPT_TIMEOUT, '-'},
+    {"dtls", OPT_DTLS, '-', "Use any version of DTLS"},
+    {"timeout", OPT_TIMEOUT, '-',
+     "Enable send/receive timeout on DTLS connections"},
     {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
 #endif
 #ifndef OPENSSL_NO_DTLS1
     {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
-    {"dtls1_2", OPT_DTLS1_2, '-'},
+    {"dtls1_2", OPT_DTLS1_2, '-', "Just use DTLSv1.2"},
 #endif
 #ifndef OPENSSL_NO_SSL_TRACE
-    {"trace", OPT_TRACE, '-'},
+    {"trace", OPT_TRACE, '-', "Show trace output of protocol messages"},
 #endif
 #ifdef WATT32
     {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
 #endif
-#ifdef FIONBIO
     {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
-#endif
 #ifndef OPENSSL_NO_PSK
     {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
-# ifndef OPENSSL_NO_JPAKE
-    {"jpake", OPT_JPAKE, 's', "JPAKE secret to use"},
-# endif
 #endif
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "SRP authentification for 'user'"},
@@ -799,7 +828,13 @@ OPTIONS s_client_options[] = {
 #endif
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's'},
+    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's',
+     "Specify engine to be used for client certificate operations"},
+#endif
+#ifndef OPENSSL_NO_CT
+    {"ct", OPT_CT, '-', "Request and parse SCTs (also enables OCSP stapling)"},
+    {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
+    {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
 #endif
     {NULL}
 };
@@ -853,30 +888,34 @@ int s_client_main(int argc, char **argv)
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
-    char *jpake_secret = NULL, *xmpphost = NULL;
+    char *xmpphost = NULL;
     const char *ehlo = "mail.example.com";
-    struct sockaddr peer;
     struct timeval timeout, *timeoutp;
     fd_set readfds, writefds;
     int noCApath = 0, noCAfile = 0;
     int build_chain = 0, cbuf_len, cbuf_off, cert_format = FORMAT_PEM;
     int key_format = FORMAT_PEM, crlf = 0, full_log = 1, mbuf_len = 0;
     int prexit = 0;
-    int enable_timeouts = 0, sdebug = 0, peerlen = sizeof peer;
+    int sdebug = 0;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, s = -1, k, width, state = 0;
     int sbuf_len, sbuf_off, cmdletters = 1;
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
+    int read_buf_len = 0;
     int fallback_scsv = 0;
-    long socket_mtu = 0, randamt = 0;
+    long randamt = 0;
     OPTION_CHOICE o;
+#ifndef OPENSSL_NO_DTLS
+    int enable_timeouts = 0;
+    long socket_mtu = 0;
+#endif
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *ssl_client_engine = NULL;
 #endif
     ENGINE *e = NULL;
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
     struct timeval tv;
 #endif
     char *servername = NULL;
@@ -893,6 +932,21 @@ int s_client_main(int argc, char **argv)
     char *srppass = NULL;
     int srp_lateuser = 0;
     SRP_ARG srp_arg = { NULL, NULL, 0, 0, 0, 1024 };
+#endif
+#ifndef OPENSSL_NO_CT
+    char *ctlog_file = NULL;
+    int ct_validation = 0;
+#endif
+    int min_version = 0, max_version = 0;
+
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+/* Known false-positive of MemorySanitizer. */
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+    __msan_unpoison(&readfds, sizeof(readfds));
+    __msan_unpoison(&writefds, sizeof(writefds));
+# endif
 #endif
 
     prog = opt_progname(argv[0]);
@@ -1141,7 +1195,7 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_PSK:
             for (p = psk_key = opt_arg(); *p; p++) {
-                if (isxdigit(*p))
+                if (isxdigit(_UC(*p)))
                     continue;
                 BIO_printf(bio_err, "Not a hex number '%s'\n", psk_key);
                 goto end;
@@ -1155,25 +1209,30 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SRP
         case OPT_SRPUSER:
             srp_arg.srplogin = opt_arg();
-            meth = TLSv1_client_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
             break;
         case OPT_SRPPASS:
             srppass = opt_arg();
-            meth = TLSv1_client_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
             break;
         case OPT_SRP_STRENGTH:
             srp_arg.strength = atoi(opt_arg());
             BIO_printf(bio_err, "SRP minimal length for N is %d\n",
                        srp_arg.strength);
-            meth = TLSv1_client_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
             break;
         case OPT_SRP_LATEUSER:
             srp_lateuser = 1;
-            meth = TLSv1_client_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
             break;
         case OPT_SRP_MOREGROUPS:
             srp_arg.amp = 1;
-            meth = TLSv1_client_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
             break;
 #else
         case OPT_SRPUSER:
@@ -1187,24 +1246,20 @@ int s_client_main(int argc, char **argv)
             ssl_config = opt_arg();
             break;
         case OPT_SSL3:
-#ifndef OPENSSL_NO_SSL3
-            meth = SSLv3_client_method();
-#endif
+            min_version = SSL3_VERSION;
+            max_version = SSL3_VERSION;
             break;
         case OPT_TLS1_2:
-#ifndef OPENSSL_NO_TLS1_2
-            meth = TLSv1_2_client_method();
-#endif
+            min_version = TLS1_2_VERSION;
+            max_version = TLS1_2_VERSION;
             break;
         case OPT_TLS1_1:
-#ifndef OPENSSL_NO_TLS1_1
-            meth = TLSv1_1_client_method();
-#endif
+            min_version = TLS1_1_VERSION;
+            max_version = TLS1_1_VERSION;
             break;
         case OPT_TLS1:
-#ifndef OPENSSL_NO_TLS1
-            meth = TLSv1_client_method();
-#endif
+            min_version = TLS1_VERSION;
+            max_version = TLS1_VERSION;
             break;
         case OPT_DTLS:
 #ifndef OPENSSL_NO_DTLS
@@ -1214,13 +1269,17 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_DTLS1:
 #ifndef OPENSSL_NO_DTLS1
-            meth = DTLSv1_client_method();
+            meth = DTLS_client_method();
+            min_version = DTLS1_VERSION;
+            max_version = DTLS1_VERSION;
             socket_type = SOCK_DGRAM;
 #endif
             break;
         case OPT_DTLS1_2:
 #ifndef OPENSSL_NO_DTLS1_2
-            meth = DTLSv1_2_client_method();
+            meth = DTLS_client_method();
+            min_version = DTLS1_2_VERSION;
+            max_version = DTLS1_2_VERSION;
             socket_type = SOCK_DGRAM;
 #endif
             break;
@@ -1274,6 +1333,17 @@ int s_client_main(int argc, char **argv)
         case OPT_NOCAFILE:
             noCAfile = 1;
             break;
+#ifndef OPENSSL_NO_CT
+        case OPT_NOCT:
+            ct_validation = 0;
+            break;
+        case OPT_CT:
+            ct_validation = 1;
+            break;
+        case OPT_CTLOG_FILE:
+            ctlog_file = opt_arg();
+            break;
+#endif
         case OPT_CHAINCAFILE:
             chCAfile = opt_arg();
             break;
@@ -1293,7 +1363,9 @@ int s_client_main(int argc, char **argv)
             }
             break;
         case OPT_NEXTPROTONEG:
+#ifndef OPENSSL_NO_NEXTPROTONEG
             next_proto_neg_in = opt_arg();
+#endif
             break;
         case OPT_ALPN:
             alpn_in = opt_arg();
@@ -1313,13 +1385,9 @@ int s_client_main(int argc, char **argv)
         case OPT_STARTTLS:
             if (!opt_pair(opt_arg(), services, &starttls_proto))
                 goto end;
+            break;
         case OPT_SERVERNAME:
             servername = opt_arg();
-            break;
-        case OPT_JPAKE:
-#ifndef OPENSSL_NO_JPAKE
-            jpake_secret = opt_arg();
-#endif
             break;
         case OPT_USE_SRTP:
             srtp_profiles = opt_arg();
@@ -1333,10 +1401,27 @@ int s_client_main(int argc, char **argv)
         case OPT_ASYNC:
             async = 1;
             break;
+        case OPT_SPLIT_SEND_FRAG:
+            split_send_fragment = atoi(opt_arg());
+            if (split_send_fragment == 0) {
+                /*
+                 * Not allowed - set to a deliberately bad value so we get an
+                 * error message below
+                 */
+                split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH + 1;
+            }
+            break;
+        case OPT_MAX_PIPELINES:
+            max_pipelines = atoi(opt_arg());
+            break;
+        case OPT_READ_BUF:
+            read_buf_len = atoi(opt_arg());
+            break;
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (proxystr) {
         int res;
@@ -1378,15 +1463,16 @@ int s_client_main(int argc, char **argv)
                    "Can't use unix sockets and datagrams together\n");
         goto end;
     }
-#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
-    if (jpake_secret) {
-        if (psk_key) {
-            BIO_printf(bio_err, "Can't use JPAKE and PSK together\n");
-            goto end;
-        }
-        psk_identity = "JPAKE";
+
+    if (split_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
+        BIO_printf(bio_err, "Bad split send fragment size\n");
+        goto end;
     }
-#endif
+
+    if (max_pipelines > SSL_MAX_PIPELINES) {
+        BIO_printf(bio_err, "Bad max pipelines value\n");
+        goto end;
+    }
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     next_proto.status = -1;
@@ -1419,8 +1505,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (cert_file) {
-        cert = load_cert(cert_file, cert_format,
-                         NULL, e, "client certificate file");
+        cert = load_cert(cert_file, cert_format, "client certificate file");
         if (cert == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -1428,7 +1513,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file) {
-        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL, e,
+        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL,
                         "client certificate chain"))
             goto end;
     }
@@ -1496,6 +1581,11 @@ int s_client_main(int argc, char **argv)
         }
     }
 
+    if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
+        goto end;
+    if (SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
+        goto end;
+
     if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
         BIO_printf(bio_err, "Error setting verify params\n");
         ERR_print_errors(bio_err);
@@ -1505,8 +1595,18 @@ int s_client_main(int argc, char **argv)
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
     }
+    if (split_send_fragment > 0) {
+        SSL_CTX_set_split_send_fragment(ctx, split_send_fragment);
+    }
+    if (max_pipelines > 0) {
+        SSL_CTX_set_max_pipelines(ctx, max_pipelines);
+    }
 
-    if (!config_ctx(cctx, ssl_args, ctx, jpake_secret == NULL))
+    if (read_buf_len > 0) {
+        SSL_CTX_set_default_read_buffer_len(ctx, read_buf_len);
+    }
+
+    if (!config_ctx(cctx, ssl_args, ctx))
         goto end;
 
     if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
@@ -1528,10 +1628,10 @@ int s_client_main(int argc, char **argv)
 #endif
 
 #ifndef OPENSSL_NO_PSK
-    if (psk_key != NULL || jpake_secret) {
+    if (psk_key != NULL) {
         if (c_debug)
             BIO_printf(bio_c_out,
-                       "PSK key given or JPAKE in use, setting client callback\n");
+                       "PSK key given, setting client callback\n");
         SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
     }
 #endif
@@ -1554,7 +1654,7 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
 #endif
     if (alpn_in) {
-        unsigned short alpn_len;
+        size_t alpn_len;
         unsigned char *alpn = next_protos_parse(&alpn_len, alpn_in);
 
         if (alpn == NULL) {
@@ -1582,6 +1682,30 @@ int s_client_main(int argc, char **argv)
 
     if (state)
         SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
+
+#ifndef OPENSSL_NO_CT
+    /* Enable SCT processing, without early connection termination */
+    if (ct_validation &&
+        !SSL_CTX_enable_ct(ctx, SSL_CT_VALIDATION_PERMISSIVE)) {
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+
+    if (!ctx_set_ctlog_list_file(ctx, ctlog_file)) {
+        if (ct_validation) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+
+        /*
+         * If CT validation is not enabled, the log list isn't needed so don't
+         * show errors or abort. We try to load it regardless because then we
+         * can show the names of the logs any SCTs came from (SCTs may be seen
+         * even with validation disabled).
+         */
+        ERR_clear_error();
+    }
+#endif
 
     SSL_CTX_set_verify(ctx, verify, verify_callback);
 
@@ -1688,28 +1812,28 @@ int s_client_main(int argc, char **argv)
     if (init_client(&s, host, port, socket_family, socket_type) == 0)
     {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
-        SHUTDOWN(s);
+        BIO_closesocket(s);
         goto end;
     }
     BIO_printf(bio_c_out, "CONNECTED(%08X)\n", s);
 
-#ifdef FIONBIO
     if (c_nbio) {
-        unsigned long l = 1;
-        BIO_printf(bio_c_out, "turning on non blocking io\n");
-        if (BIO_socket_ioctl(s, FIONBIO, &l) < 0) {
+        if (!BIO_socket_nbio(s, 1)) {
             ERR_print_errors(bio_err);
             goto end;
         }
+        BIO_printf(bio_c_out, "Turned on non blocking io\n");
     }
-#endif
+#ifndef OPENSSL_NO_DTLS
     if (socket_type == SOCK_DGRAM) {
+        struct sockaddr peer;
+        int peerlen = sizeof peer;
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);
         if (getsockname(s, &peer, (void *)&peerlen) < 0) {
             BIO_printf(bio_err, "getsockname:errno=%d\n",
                        get_last_socket_error());
-            SHUTDOWN(s);
+            BIO_closesocket(s);
             goto end;
         }
 
@@ -1742,6 +1866,7 @@ int s_client_main(int argc, char **argv)
             /* want to do MTU discovery */
             BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
     } else
+#endif /* OPENSSL_NO_DTLS */
         sbio = BIO_new_socket(s, BIO_NOCLOSE);
 
     if (nbio_test) {
@@ -1769,14 +1894,12 @@ int s_client_main(int argc, char **argv)
         SSL_set_tlsext_debug_callback(con, tlsext_cb);
         SSL_set_tlsext_debug_arg(con, bio_c_out);
     }
+#ifndef OPENSSL_NO_OCSP
     if (c_status_req) {
         SSL_set_tlsext_status_type(con, TLSEXT_STATUSTYPE_ocsp);
         SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
         SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
     }
-#ifndef OPENSSL_NO_JPAKE
-    if (jpake_secret)
-        jpake_client_auth(bio_c_out, sbio, jpake_secret);
 #endif
 
     SSL_set_bio(con, sbio, sbio);
@@ -1959,7 +2082,7 @@ int s_client_main(int argc, char **argv)
             BIO *fbio = BIO_new(BIO_f_buffer());
 
             BIO_push(fbio, sbio);
-            BIO_printf(fbio, "CONNECT %s\r\n\r\n", connectstr);
+            BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n\r\n", connectstr);
             (void)BIO_flush(fbio);
             /* wait for multi-line response to end CONNECT response */
             do {
@@ -2095,16 +2218,16 @@ int s_client_main(int argc, char **argv)
                                "drop connection and then reconnect\n");
                     do_ssl_shutdown(con);
                     SSL_set_connect_state(con);
-                    SHUTDOWN(SSL_get_fd(con));
+                    BIO_closesocket(SSL_get_fd(con));
                     goto re_start;
                 }
             }
         }
 
-        ssl_pending = read_ssl && SSL_pending(con);
+        ssl_pending = read_ssl && SSL_has_pending(con);
 
         if (!ssl_pending) {
-#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE)
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
             if (tty_on) {
                 if (read_tty)
                     openssl_fdset(fileno(stdin), &readfds);
@@ -2158,17 +2281,6 @@ int s_client_main(int argc, char **argv)
                                || !read_tty))
                         continue;
 # endif
-                } else
-                    i = select(width, (void *)&readfds, (void *)&writefds,
-                               NULL, timeoutp);
-            }
-#elif defined(OPENSSL_SYS_NETWARE)
-            if (!write_tty) {
-                if (read_tty) {
-                    tv.tv_sec = 1;
-                    tv.tv_usec = 0;
-                    i = select(width, (void *)&readfds, (void *)&writefds,
-                               NULL, &tv);
                 } else
                     i = select(width, (void *)&readfds, (void *)&writefds,
                                NULL, timeoutp);
@@ -2249,12 +2361,14 @@ int s_client_main(int argc, char **argv)
                     write_ssl = 0;
                 }
                 break;
+            case SSL_ERROR_WANT_ASYNC_JOB:
+                /* This shouldn't ever happen in s_client - treat as an error */
             case SSL_ERROR_SSL:
                 ERR_print_errors(bio_err);
                 goto shut;
             }
         }
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
         /* Assume Windows/DOS/BeOS can always write */
         else if (!ssl_pending && write_tty)
 #else
@@ -2335,6 +2449,8 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_c_out, "closed\n");
                 ret = 0;
                 goto shut;
+            case SSL_ERROR_WANT_ASYNC_JOB:
+                /* This shouldn't ever happen in s_client. Treat as an error */
             case SSL_ERROR_SSL:
                 ERR_print_errors(bio_err);
                 goto shut;
@@ -2349,8 +2465,6 @@ int s_client_main(int argc, char **argv)
                  || (WAIT_OBJECT_0 ==
                      WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 # endif
-#elif defined (OPENSSL_SYS_NETWARE)
-        else if (_kbhit())
 #else
         else if (FD_ISSET(fileno(stdin), &readfds))
 #endif
@@ -2412,7 +2526,7 @@ int s_client_main(int argc, char **argv)
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
     do_ssl_shutdown(con);
-    SHUTDOWN(SSL_get_fd(con));
+    BIO_closesocket(SSL_get_fd(con));
  end:
     if (con != NULL) {
         if (prexit != 0)
@@ -2461,6 +2575,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     const COMP_METHOD *comp, *expansion;
 #endif
     unsigned char *exportedkeymat;
+#ifndef OPENSSL_NO_CT
+    const SSL_CTX *ctx = SSL_get_SSL_CTX(s);
+#endif
 
     if (full) {
         int got_a_chain = 0;
@@ -2512,6 +2629,39 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
         ssl_print_sigalgs(bio, s);
         ssl_print_tmp_key(bio, s);
+
+#ifndef OPENSSL_NO_CT
+        /*
+         * When the SSL session is anonymous, or resumed via an abbreviated
+         * handshake, no SCTs are provided as part of the handshake.  While in
+         * a resumed session SCTs may be present in the session's certificate,
+         * no callbacks are invoked to revalidate these, and in any case that
+         * set of SCTs may be incomplete.  Thus it makes little sense to
+         * attempt to display SCTs from a resumed session's certificate, and of
+         * course none are associated with an anonymous peer.
+         */
+        if (peer != NULL && !SSL_session_reused(s) && SSL_ct_is_enabled(s)) {
+            const STACK_OF(SCT) *scts = SSL_get0_peer_scts(s);
+            int sct_count = scts != NULL ? sk_SCT_num(scts) : 0;
+
+            BIO_printf(bio, "---\nSCTs present (%i)\n", sct_count);
+            if (sct_count > 0) {
+                const CTLOG_STORE *log_store = SSL_CTX_get0_ctlog_store(ctx);
+
+                BIO_printf(bio, "---\n");
+                for (i = 0; i < sct_count; ++i) {
+                    SCT *sct = sk_SCT_value(scts, i);
+
+                    BIO_printf(bio, "SCT validation status: %s\n",
+                               SCT_validation_status_string(sct));
+                    SCT_print(sct, bio, 0, log_store);
+                    if (i < sct_count - 1)
+                        BIO_printf(bio, "\n---\n");
+                }
+                BIO_printf(bio, "\n");
+            }
+        }
+#endif
 
         BIO_printf(bio,
                    "---\nSSL handshake has read %"PRIu64" bytes and written %"PRIu64" bytes\n",
@@ -2611,6 +2761,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     (void)BIO_flush(bio);
 }
 
+# ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg)
 {
     const unsigned char *p;
@@ -2634,3 +2785,6 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     OCSP_RESPONSE_free(rsp);
     return 1;
 }
+# endif
+
+#endif

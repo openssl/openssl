@@ -72,7 +72,7 @@ NETDB_DEFINE_CONTEXT
 # else
 #  define MAX_LISTEN  32
 # endif
-# if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
+# if defined(OPENSSL_SYS_WINDOWS)
 static int wsa_init_done = 0;
 # endif
 
@@ -141,7 +141,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 int BIO_sock_error(int sock)
 {
     int j = 0, i;
-    socklen_t size = 0;
+    socklen_t size = sizeof(j);
 
     /*
      * Note: under Windows the third parameter is of type (char *) whereas
@@ -151,7 +151,7 @@ int BIO_sock_error(int sock)
      */
     i = getsockopt(sock, SOL_SOCKET, SO_ERROR, (void *)&j, &size);
     if (i < 0)
-        return (1);
+        return (get_last_socket_error());
     else
         return (j);
 }
@@ -202,34 +202,12 @@ int BIO_sock_init(void)
         return (-1);
 # endif
 
-# if defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
-    WORD wVerReq;
-    WSADATA wsaData;
-    int err;
-
-    if (!wsa_init_done) {
-        wsa_init_done = 1;
-        wVerReq = MAKEWORD(2, 0);
-        err = WSAStartup(wVerReq, &wsaData);
-        if (err != 0) {
-            SYSerr(SYS_F_WSASTARTUP, err);
-            BIOerr(BIO_F_BIO_SOCK_INIT, BIO_R_WSASTARTUP);
-            return (-1);
-        }
-    }
-# endif
-
     return (1);
 }
 
-void BIO_sock_cleanup(void)
+void bio_sock_cleanup_int(void)
 {
 # ifdef OPENSSL_SYS_WINDOWS
-    if (wsa_init_done) {
-        wsa_init_done = 0;
-        WSACleanup();
-    }
-# elif defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK)
     if (wsa_init_done) {
         wsa_init_done = 0;
         WSACleanup();
@@ -316,16 +294,10 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 
 int BIO_accept(int sock, char **ip_port)
 {
-    BIO_ADDR *res = BIO_ADDR_new();
+    BIO_ADDR res;
     int ret = -1;
 
-    if (res == NULL) {
-        BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
-        return ret;
-    }
-
-    ret = BIO_accept_ex(sock, res, 0);
-
+    ret = BIO_accept_ex(sock, &res, 0);
     if (ret == (int)INVALID_SOCKET) {
         if (BIO_sock_should_retry(ret)) {
             ret = -2;
@@ -337,18 +309,27 @@ int BIO_accept(int sock, char **ip_port)
     }
 
     if (ip_port != NULL) {
-        char *host = BIO_ADDR_hostname_string(res, 1);
-        char *port = BIO_ADDR_service_string(res, 1);
-        *ip_port = OPENSSL_zalloc(strlen(host) + strlen(port) + 2);
-        strcpy(*ip_port, host);
-        strcat(*ip_port, ":");
-        strcat(*ip_port, port);
+        char *host = BIO_ADDR_hostname_string(&res, 1);
+        char *port = BIO_ADDR_service_string(&res, 1);
+        if (host != NULL && port != NULL)
+            *ip_port = OPENSSL_zalloc(strlen(host) + strlen(port) + 2);
+        else
+            *ip_port = NULL;
+
+        if (*ip_port == NULL) {
+            BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
+            BIO_closesocket(ret);
+            ret = (int)INVALID_SOCKET;
+        } else {
+            strcpy(*ip_port, host);
+            strcat(*ip_port, ":");
+            strcat(*ip_port, port);
+        }
         OPENSSL_free(host);
         OPENSSL_free(port);
     }
 
  end:
-    BIO_ADDR_free(res);
     return ret;
 }
 # endif
@@ -432,7 +413,7 @@ int BIO_sock_info(int sock,
                 BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_ERROR);
                 return 0;
             }
-            if (addr_len > sizeof(*info->addr)) {
+            if ((size_t)addr_len > sizeof(*info->addr)) {
                 BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS);
                 return 0;
             }

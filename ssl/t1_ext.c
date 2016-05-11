@@ -54,11 +54,12 @@
 
 /* Custom extension utility functions */
 
+#include <openssl/ct.h>
 #include "ssl_locl.h"
 
 
 /* Find a custom extension from the list. */
-static custom_ext_method *custom_ext_find(custom_ext_methods *exts,
+static custom_ext_method *custom_ext_find(const custom_ext_methods *exts,
                                           unsigned int ext_type)
 {
     size_t i;
@@ -211,8 +212,12 @@ static int custom_ext_meth_add(custom_ext_methods *exts,
      */
     if (!add_cb && free_cb)
         return 0;
-    /* Don't add if extension supported internally. */
-    if (SSL_extension_supported(ext_type))
+    /*
+     * Don't add if extension supported internally, but make exception
+     * for extension types that previously were not supported, but now are.
+     */
+    if (SSL_extension_supported(ext_type) &&
+        ext_type != TLSEXT_TYPE_signed_certificate_timestamp)
         return 0;
     /* Extension type must fit in 16 bits */
     if (ext_type > 0xffff)
@@ -241,6 +246,12 @@ static int custom_ext_meth_add(custom_ext_methods *exts,
     return 1;
 }
 
+/* Return true if a client custom extension exists, false otherwise */
+int SSL_CTX_has_client_custom_ext(const SSL_CTX *ctx, unsigned int ext_type)
+{
+    return custom_ext_find(&ctx->cert->cli_ext, ext_type) != NULL;
+}
+
 /* Application level functions to add custom extension callbacks */
 int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                                   custom_ext_add_cb add_cb,
@@ -249,8 +260,18 @@ int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                                   custom_ext_parse_cb parse_cb,
                                   void *parse_arg)
 {
-    return custom_ext_meth_add(&ctx->cert->cli_ext, ext_type,
-                               add_cb, free_cb, add_arg, parse_cb, parse_arg);
+#ifndef OPENSSL_NO_CT
+    /*
+     * We don't want applications registering callbacks for SCT extensions
+     * whilst simultaneously using the built-in SCT validation features, as
+     * these two things may not play well together.
+     */
+    if (ext_type == TLSEXT_TYPE_signed_certificate_timestamp &&
+        SSL_CTX_ct_is_enabled(ctx))
+        return 0;
+#endif
+    return custom_ext_meth_add(&ctx->cert->cli_ext, ext_type, add_cb,
+                               free_cb, add_arg, parse_cb, parse_arg);
 }
 
 int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
@@ -272,7 +293,9 @@ int SSL_extension_supported(unsigned int ext_type)
     case TLSEXT_TYPE_ec_point_formats:
     case TLSEXT_TYPE_elliptic_curves:
     case TLSEXT_TYPE_heartbeat:
+#ifndef OPENSSL_NO_NEXTPROTONEG
     case TLSEXT_TYPE_next_proto_neg:
+#endif
     case TLSEXT_TYPE_padding:
     case TLSEXT_TYPE_renegotiate:
     case TLSEXT_TYPE_server_name:
@@ -280,6 +303,7 @@ int SSL_extension_supported(unsigned int ext_type)
     case TLSEXT_TYPE_signature_algorithms:
     case TLSEXT_TYPE_srp:
     case TLSEXT_TYPE_status_request:
+    case TLSEXT_TYPE_signed_certificate_timestamp:
     case TLSEXT_TYPE_use_srtp:
 #ifdef TLSEXT_TYPE_encrypt_then_mac
     case TLSEXT_TYPE_encrypt_then_mac:

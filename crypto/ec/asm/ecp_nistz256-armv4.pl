@@ -27,8 +27,8 @@
 # operation. Keep in mind that +200% means 3x improvement.
 
 $flavour = shift;
-if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
-else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -1231,7 +1231,7 @@ __ecp_nistz256_add_self:
 ___
 
 ########################################################################
-# following subroutines are "literal" implemetation of those found in
+# following subroutines are "literal" implementation of those found in
 # ecp_nistz256.c
 #
 ########################################################################
@@ -1252,6 +1252,7 @@ ecp_nistz256_point_double:
 	stmdb	sp!,{r0-r12,lr}		@ push from r0, unusual, but intentional
 	sub	sp,sp,#32*5
 
+.Lpoint_double_shortcut:
 	add	r3,sp,#$in_x
 	ldmia	$a_ptr!,{r4-r11}	@ copy in_x
 	stmia	r3,{r4-r11}
@@ -1371,7 +1372,7 @@ $code.=<<___;
 .align	5
 ecp_nistz256_point_add:
 	stmdb	sp!,{r0-r12,lr}		@ push from r0, unusual, but intentional
-	sub	sp,sp,#32*18
+	sub	sp,sp,#32*18+16
 
 	ldmia	$b_ptr!,{r4-r11}	@ copy in2
 	add	r3,sp,#$in2_x
@@ -1504,9 +1505,9 @@ ecp_nistz256_point_add:
 	tst	$t0,$t1
 	beq	.Ladd_proceed		@ (in1infty || in2infty)?
 	tst	$t2,$t2
-	beq	.Ladd_proceed		@ is_equal(S1,S2)?
+	beq	.Ladd_double		@ is_equal(S1,S2)?
 
-	ldr	$r_ptr,[sp,#32*18]
+	ldr	$r_ptr,[sp,#32*18+16]
 	eor	r4,r4,r4
 	eor	r5,r5,r5
 	eor	r6,r6,r6
@@ -1519,6 +1520,12 @@ ecp_nistz256_point_add:
 	stmia	$r_ptr!,{r4-r11}
 	stmia	$r_ptr!,{r4-r11}
 	b	.Ladd_done
+
+.align	4
+.Ladd_double:
+	ldr	$a_ptr,[sp,#32*18+20]
+	add	sp,sp,#32*(18-5)+16	@ difference in frame sizes
+	b	.Lpoint_double_shortcut
 
 .align	4
 .Ladd_proceed:
@@ -1588,7 +1595,7 @@ ecp_nistz256_point_add:
 	add	r3,sp,#$in1_x
 	and	r11,r11,r12
 	mvn	r12,r12
-	ldr	$r_ptr,[sp,#32*18]
+	ldr	$r_ptr,[sp,#32*18+16]
 ___
 for($i=0;$i<96;$i+=8) {			# conditional moves
 $code.=<<___;
@@ -1610,7 +1617,7 @@ ___
 }
 $code.=<<___;
 .Ladd_done:
-	add	sp,sp,#32*18+16		@ +16 means "skip even over saved r0-r3"
+	add	sp,sp,#32*18+16+16	@ +16 means "skip even over saved r0-r3"
 #if __ARM_ARCH__>=5 || defined(__thumb__)
 	ldmia	sp!,{r4-r12,pc}
 #else

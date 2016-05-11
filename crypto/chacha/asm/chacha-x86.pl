@@ -31,6 +31,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"chacha-x86.pl",$ARGV[$#ARGV] eq "386");
 
 $xmm=$ymm=0;
@@ -123,6 +126,9 @@ my ($ap,$bp,$cp,$dp)=map(($_&~3)+(($_-1)&3),($ai,$bi,$ci,$di));	# previous
 &static_label("pic_point");
 
 &function_begin("ChaCha20_ctr32");
+	&xor	("eax","eax");
+	&cmp	("eax",&wparam(2));		# len==0?
+	&je	(&label("no_data"));
 if ($xmm) {
 	&call	(&label("pic_point"));
 &set_label("pic_point");
@@ -219,7 +225,7 @@ if ($xmm) {
 	&dec	($b);
 	&jnz	(&label("loop"));
 
-	&mov	($b,&wparam(3));		# load len
+	&mov	($b,&wparam(2));		# load len
 
 	&add	($a,0x61707865);		# accumulate key material
 	&add	($b_,&DWP(64+4*4,"esp"));
@@ -356,6 +362,7 @@ if ($xmm) {
 
 &set_label("done");
 	&stack_pop(33);
+&set_label("no_data");
 &function_end("ChaCha20_ctr32");
 
 if ($xmm) {
@@ -430,8 +437,10 @@ my ($ap,$bp,$cp,$dp)=map(($_&~3)+(($_-1)&3),($ai,$bi,$ci,$di));	# previous
 
 &function_begin("ChaCha20_ssse3");
 &set_label("ssse3_shortcut");
+if ($ymm) {
 	&test		(&DWP(4,"ebp"),1<<11);		# test XOP bit
 	&jnz		(&label("xop_shortcut"));
+}
 
 	&mov		($out,&wparam(0));
 	&mov		($inp,&wparam(1));
@@ -763,7 +772,7 @@ sub SSSE3ROUND {	# critical path is 20 "SIMD ticks" per round
 }
 &asciz	("ChaCha20 for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
-if ($xmm) {
+if ($ymm) {
 my ($xa,$xa_,$xb,$xb_,$xc,$xc_,$xd,$xd_)=map("xmm$_",(0..7));
 my ($out,$inp,$len)=("edi","esi","ecx");
 
@@ -1126,3 +1135,5 @@ sub XOPROUND {
 }
 
 &asm_finish();
+
+close STDOUT;

@@ -224,8 +224,9 @@ int dtls1_do_write(SSL *s, int type)
     if (!dtls1_query_mtu(s))
         return -1;
 
-    OPENSSL_assert(s->d1->mtu >= dtls1_min_mtu(s)); /* should have something
-                                                     * reasonable now */
+    if (s->d1->mtu < dtls1_min_mtu(s))
+        /* should have something reasonable now */
+        return -1;
 
     if (s->init_off == 0 && type == SSL3_RT_HANDSHAKE)
         OPENSSL_assert(s->init_num ==
@@ -1022,7 +1023,7 @@ WORK_STATE dtls_wait_for_dry(SSL *s)
 int dtls1_read_failed(SSL *s, int code)
 {
     if (code > 0) {
-        fprintf(stderr, "invalid state reached %s:%d", __FILE__, __LINE__);
+        fprintf(stderr, "dtls1_read_failed(); invalid state reached\n");
         return 1;
     }
 
@@ -1078,7 +1079,7 @@ int dtls1_retransmit_buffered_messages(SSL *s)
         if (dtls1_retransmit_message(s, (unsigned short)
                                      dtls1_get_queue_priority
                                      (frag->msg_header.seq,
-                                      frag->msg_header.is_ccs), 0,
+                                      frag->msg_header.is_ccs),
                                      &found) <= 0 && found) {
             fprintf(stderr, "dtls1_retransmit_message() failed\n");
             return -1;
@@ -1152,8 +1153,7 @@ int dtls1_buffer_message(SSL *s, int is_ccs)
 }
 
 int
-dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
-                         int *found)
+dtls1_retransmit_message(SSL *s, unsigned short seq, int *found)
 {
     int ret;
     /* XDTLS: for now assuming that read/writes are blocking */
@@ -1242,10 +1242,10 @@ void dtls1_clear_record_buffer(SSL *s)
     }
 }
 
-void dtls1_set_message_header(SSL *s, unsigned char *p,
-                                        unsigned char mt, unsigned long len,
-                                        unsigned long frag_off,
-                                        unsigned long frag_len)
+void dtls1_set_message_header(SSL *s,
+                              unsigned char mt, unsigned long len,
+                              unsigned long frag_off,
+                              unsigned long frag_len)
 {
     if (frag_off == 0) {
         s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;

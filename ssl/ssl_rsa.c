@@ -377,7 +377,12 @@ static int ssl_set_cert(CERT *c, X509 *x)
         SSLerr(SSL_F_SSL_SET_CERT, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
-
+#ifndef OPENSSL_NO_EC
+    if (i == SSL_PKEY_ECC && !EC_KEY_can_sign(EVP_PKEY_get0_EC_KEY(pkey))) {
+        SSLerr(SSL_F_SSL_SET_CERT, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
+        return 0;
+    }
+#endif
     if (c->pkeys[i].privatekey != NULL) {
         /*
          * The return code from EVP_PKEY_copy_parameters is deliberately
@@ -826,7 +831,7 @@ static int serverinfo_srv_add_cb(SSL *s, unsigned int ext_type,
             return 0;           /* No extension found, don't send extension */
         return 1;               /* Send extension */
     }
-    return -1;                  /* No serverinfo data found, don't send
+    return 0;                   /* No serverinfo data found, don't send
                                  * extension */
 }
 
@@ -855,12 +860,26 @@ static int serverinfo_process_buffer(const unsigned char *serverinfo,
 
         /* Register callbacks for extensions */
         ext_type = (serverinfo[0] << 8) + serverinfo[1];
-        if (ctx && !SSL_CTX_add_server_custom_ext(ctx, ext_type,
-                                                  serverinfo_srv_add_cb,
-                                                  NULL, NULL,
-                                                  serverinfo_srv_parse_cb,
-                                                  NULL))
-            return 0;
+        if (ctx) {
+            int have_ext_cbs = 0;
+            size_t i;
+            custom_ext_methods *exts = &ctx->cert->srv_ext;
+            custom_ext_method *meth = exts->meths;
+
+            for (i = 0; i < exts->meths_count; i++, meth++) {
+                if (ext_type == meth->ext_type) {
+                    have_ext_cbs = 1;
+                    break;
+                }
+            }
+
+            if (!have_ext_cbs && !SSL_CTX_add_server_custom_ext(ctx, ext_type,
+                                                                serverinfo_srv_add_cb,
+                                                                NULL, NULL,
+                                                                serverinfo_srv_parse_cb,
+                                                                NULL))
+                return 0;
+        }
 
         serverinfo += 2;
         serverinfo_length -= 2;

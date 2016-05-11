@@ -122,16 +122,34 @@ int prime_main(int argc, char **argv)
             goto end;
         }
         bn = BN_new();
-        BN_generate_prime_ex(bn, bits, safe, NULL, NULL, NULL);
+        if (bn == NULL) {
+            BIO_printf(bio_err, "Out of memory.\n");
+            goto end;
+        }
+        if (!BN_generate_prime_ex(bn, bits, safe, NULL, NULL, NULL)) {
+            BIO_printf(bio_err, "Failed to generate prime.\n");
+            goto end;
+        }
         s = hex ? BN_bn2hex(bn) : BN_bn2dec(bn);
+        if (s == NULL) {
+            BIO_printf(bio_err, "Out of memory.\n");
+            goto end;
+        }
         BIO_printf(bio_out, "%s\n", s);
         OPENSSL_free(s);
     } else {
         for ( ; *argv; argv++) {
+            int r;
+
             if (hex)
-                BN_hex2bn(&bn, argv[0]);
+                r = BN_hex2bn(&bn, argv[0]);
             else
-                BN_dec2bn(&bn, argv[0]);
+                r = BN_dec2bn(&bn, argv[0]);
+
+            if(!r) {
+                BIO_printf(bio_err, "Failed to process value (%s)\n", argv[0]);
+                goto end;
+            }
 
             BN_print(bio_out, bn);
             BIO_printf(bio_out, " (%s) %s prime\n",
@@ -143,6 +161,7 @@ int prime_main(int argc, char **argv)
 
     BN_free(bn);
 
+    ret = 0;
  end:
     return ret;
 }

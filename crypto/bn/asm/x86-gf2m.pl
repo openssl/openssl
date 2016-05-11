@@ -36,6 +36,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output = pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],$0,$x86only = $ARGV[$#ARGV] eq "386");
 
 $sse2=0;
@@ -311,3 +314,5 @@ if ($sse2) {
 &asciz	("GF(2^m) Multiplication for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();
+
+close STDOUT;

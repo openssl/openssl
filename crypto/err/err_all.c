@@ -56,26 +56,16 @@
  */
 
 #include <stdio.h>
-#include <internal/err.h>
+#include "internal/err_int.h"
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
-#endif
+#include <openssl/ec.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
-#ifndef OPENSSL_NO_COMP
-# include <openssl/comp.h>
-#endif
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
+#include <openssl/comp.h>
+#include <openssl/rsa.h>
+#include <openssl/dh.h>
+#include <openssl/dsa.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem2.h>
@@ -84,10 +74,8 @@
 #include <openssl/conf.h>
 #include <openssl/pkcs12.h>
 #include <openssl/rand.h>
-#include <openssl/dso.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include "internal/dso.h"
+#include <openssl/engine.h>
 #include <openssl/ui.h>
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
@@ -95,16 +83,12 @@
 # include <openssl/fips.h>
 #endif
 #include <openssl/ts.h>
-#ifndef OPENSSL_NO_CMS
-# include <openssl/cms.h>
-#endif
-#ifndef OPENSSL_NO_JPAKE
-# include <openssl/jpake.h>
-#endif
-#include <internal/ct_int.h>
+#include <openssl/cms.h>
+#include <openssl/ct.h>
 #include <openssl/async.h>
+#include <openssl/kdf.h>
 
-void err_load_crypto_strings_intern(void)
+void err_load_crypto_strings_int(void)
 {
 #ifdef OPENSSL_FIPS
     FIPS_set_error_callbacks(ERR_put_error, ERR_add_error_vdata);
@@ -142,24 +126,28 @@ void err_load_crypto_strings_intern(void)
     ERR_load_PKCS12_strings();
     ERR_load_RAND_strings();
     ERR_load_DSO_strings();
+# ifndef OPENSSL_NO_TS
     ERR_load_TS_strings();
+# endif
 # ifndef OPENSSL_NO_ENGINE
     ERR_load_ENGINE_strings();
 # endif
+# ifndef OPENSSL_NO_OCSP
     ERR_load_OCSP_strings();
+# endif
+#ifndef OPENSSL_NO_UI
     ERR_load_UI_strings();
+#endif
 # ifdef OPENSSL_FIPS
     ERR_load_FIPS_strings();
 # endif
 # ifndef OPENSSL_NO_CMS
     ERR_load_CMS_strings();
 # endif
-# ifndef OPENSSL_NO_JPAKE
-    ERR_load_JPAKE_strings();
-# endif
 # ifndef OPENSSL_NO_CT
     ERR_load_CT_strings();
 # endif
     ERR_load_ASYNC_strings();
 #endif
+    ERR_load_KDF_strings();
 }

@@ -1,0 +1,41 @@
+=pod
+
+=head1 NAME
+
+X509_STORE_new, X509_STORE_up_ref, X509_STORE_free - X509_STORE allocation and freeing functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509_vfy.h>
+
+ X509_STORE *X509_STORE_new(void);
+ void X509_STORE_free(X509_STORE *v);
+ int X509_STORE_up_ref(X509_STORE *v);
+
+=head1 DESCRIPTION
+
+The X509_STORE_new() function returns a new X509_STORE.
+
+X509_STORE_up_ref() increments the reference count associated with the
+X509_STORE object.
+
+X509_STORE_free() frees up a single X509_STORE object.
+
+=head1 RETURN VALUES
+
+X509_STORE_new() returns a newly created X509_STORE or NULL if the call fails.
+
+X509_STORE_up_ref() returns 1 for success and 0 for failure.
+
+X509_STORE_free() does not return values.
+
+=head1 SEE ALSO
+
+L<X509_STORE_set_verify_cb_func(3)>
+L<X509_STORE_get0_param(3)>
+
+=head1 HISTORY
+
+The B<X509_STORE_up_ref> function was added in OpenSSL 1.1.0
+
+=cut

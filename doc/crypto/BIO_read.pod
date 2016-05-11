@@ -20,20 +20,22 @@ the data in B<buf>.
 
 BIO_gets() performs the BIOs "gets" operation and places the data
 in B<buf>. Usually this operation will attempt to read a line of data
-from the BIO of maximum length B<len>. There are exceptions to this
-however, for example BIO_gets() on a digest BIO will calculate and
+from the BIO of maximum length B<len-1>. There are exceptions to this,
+however; for example, BIO_gets() on a digest BIO will calculate and
 return the digest and other BIOs may not support BIO_gets() at all.
+The returned string is always NUL-terminated.
 
 BIO_write() attempts to write B<len> bytes from B<buf> to BIO B<b>.
 
-BIO_puts() attempts to write a null terminated string B<buf> to BIO B<b>.
+BIO_puts() attempts to write a NUL-terminated string B<buf> to BIO B<b>.
 
 =head1 RETURN VALUES
 
 All these functions return either the amount of data successfully read or
 written (if the return value is positive) or that no data was successfully
 read or written if the result is 0 or -1. If the return value is -2 then
-the operation is not implemented in the specific BIO type.
+the operation is not implemented in the specific BIO type.  The trailing
+NUL is not included in the length returned by BIO_gets().
 
 =head1 NOTES
 

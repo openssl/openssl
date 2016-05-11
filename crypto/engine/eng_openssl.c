@@ -65,19 +65,12 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include <internal/engine.h>
-#include <openssl/dso.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/dh.h>
 
 #include <openssl/hmac.h>
 #include <openssl/x509v3.h>
@@ -196,7 +189,7 @@ static ENGINE *engine_openssl(void)
     return ret;
 }
 
-void engine_load_openssl_internal(void)
+void engine_load_openssl_int(void)
 {
     ENGINE *toadd = engine_openssl();
     if (!toadd)
@@ -245,7 +238,7 @@ typedef struct {
     unsigned char key[TEST_RC4_KEY_SIZE];
     RC4_KEY ks;
 } TEST_RC4_KEY;
-# define test(ctx) ((TEST_RC4_KEY *)EVP_CIPHER_CTX_cipher_data(ctx))
+# define test(ctx) ((TEST_RC4_KEY *)EVP_CIPHER_CTX_get_cipher_data(ctx))
 static int test_rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
@@ -625,7 +618,7 @@ static int ossl_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
         unsigned char *key;
         int r;
         long keylen;
-        key = string_to_hex(value, &keylen);
+        key = OPENSSL_hexstr2buf(value, &keylen);
         if (!key)
             return 0;
         r = ossl_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, keylen, key);

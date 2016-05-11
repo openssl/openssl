@@ -199,7 +199,7 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
         return 1;
     }
 
-    *buf = string_to_hex(value, &len);
+    *buf = OPENSSL_hexstr2buf(value, &len);
     if (!*buf) {
         fprintf(stderr, "Value=%s\n", value);
         ERR_print_errors_fp(stderr);
@@ -209,6 +209,8 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
     *buflen = len;
     return 1;
 }
+#ifndef OPENSSL_NO_SCRYPT
+/* Currently only used by scrypt tests */
 /* Parse unsigned decimal 64 bit integer value */
 static int test_uint64(const char *value, uint64_t *pr)
 {
@@ -233,11 +235,12 @@ static int test_uint64(const char *value, uint64_t *pr)
     }
     return 1;
 }
+#endif
 
 /* Structure holding test information */
 struct evp_test {
     /* file being read */
-    FILE *in;
+    BIO *in;
     /* List of public and private keys */
     struct key_list *private;
     struct key_list *public;
@@ -248,7 +251,7 @@ struct evp_test {
     /* start line of current test */
     unsigned int start_line;
     /* Error string for test */
-    const char *err;
+    const char *err, *aux_err;
     /* Expected error value of test */
     char *expected_err;
     /* Number of tests */
@@ -361,8 +364,13 @@ static int check_test_error(struct evp_test *t)
     if (!t->err && !t->expected_err)
         return 1;
     if (t->err && !t->expected_err) {
-        fprintf(stderr, "Test line %d: unexpected error %s\n",
-                t->start_line, t->err);
+        if (t->aux_err != NULL) {
+            fprintf(stderr, "Test line %d(%s): unexpected error %s\n",
+                    t->start_line, t->aux_err, t->err);
+        } else {
+            fprintf(stderr, "Test line %d: unexpected error %s\n",
+                    t->start_line, t->err);
+        }
         print_expected(t);
         return 0;
     }
@@ -462,8 +470,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
     if (!parse_line(&keyword, &value, buf))
         return 1;
     if (strcmp(keyword, "PrivateKey") == 0) {
-        save_pos = ftell(t->in);
-        pk = PEM_read_PrivateKey(t->in, NULL, 0, NULL);
+        save_pos = BIO_tell(t->in);
+        pk = PEM_read_bio_PrivateKey(t->in, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading private key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -473,8 +481,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         add_key = 1;
     }
     if (strcmp(keyword, "PublicKey") == 0) {
-        save_pos = ftell(t->in);
-        pk = PEM_read_PUBKEY(t->in, NULL, 0, NULL);
+        save_pos = BIO_tell(t->in);
+        pk = PEM_read_bio_PUBKEY(t->in, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading public key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -498,8 +506,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         key->next = *lst;
         *lst = key;
         /* Rewind input, read to end and update line numbers */
-        fseek(t->in, save_pos, SEEK_SET);
-        while (fgets(tmpbuf, sizeof(tmpbuf), t->in)) {
+        (void)BIO_seek(t->in, save_pos);
+        while (BIO_gets(t->in,tmpbuf, sizeof(tmpbuf))) {
             t->line++;
             if (strncmp(tmpbuf, "-----END", 8) == 0)
                 return 1;
@@ -581,7 +589,7 @@ static int check_output(struct evp_test *t,
 
 int main(int argc, char **argv)
 {
-    FILE *in = NULL;
+    BIO *in = NULL;
     char buf[10240];
     struct evp_test t;
 
@@ -594,9 +602,9 @@ int main(int argc, char **argv)
 
     memset(&t, 0, sizeof(t));
     t.start_line = -1;
-    in = fopen(argv[1], "r");
+    in = BIO_new_file(argv[1], "r");
     t.in = in;
-    while (fgets(buf, sizeof(buf), in)) {
+    while (BIO_gets(in, buf, sizeof(buf))) {
         t.line++;
         if (!process_test(&t, buf, 0))
             exit(1);
@@ -608,7 +616,7 @@ int main(int argc, char **argv)
             t.ntests, t.errors, t.nskip);
     free_key_list(t.public);
     free_key_list(t.private);
-    fclose(in);
+    BIO_free(in);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
@@ -827,7 +835,8 @@ static int cipher_test_parse(struct evp_test *t, const char *keyword,
     return 0;
 }
 
-static int cipher_test_enc(struct evp_test *t, int enc)
+static int cipher_test_enc(struct evp_test *t, int enc,
+                           size_t out_misalign, size_t inp_misalign)
 {
     struct cipher_data *cdat = t->data;
     unsigned char *in, *out, *tmp = NULL;
@@ -851,9 +860,21 @@ static int cipher_test_enc(struct evp_test *t, int enc)
         out = cdat->plaintext;
         out_len = cdat->plaintext_len;
     }
-    tmp = OPENSSL_malloc(in_len + 2 * EVP_MAX_BLOCK_LENGTH);
+    inp_misalign += 16 - ((out_misalign + in_len) & 15);
+    /*
+     * 'tmp' will store both output and copy of input. We make the copy
+     * of input to specifically aligned part of 'tmp'. So we just
+     * figured out how much padding would ensure the required alignment,
+     * now we allocate extended buffer and finally copy the input just
+     * past inp_misalign in expression below. Output will be written
+     * past out_misalign...
+     */
+    tmp = OPENSSL_malloc(out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH +
+                         inp_misalign + in_len);
     if (!tmp)
         goto err;
+    in = memcpy(tmp + out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH +
+                inp_misalign, in, in_len);
     err = "CIPHERINIT_ERROR";
     if (!EVP_CipherInit_ex(ctx, cdat->cipher, NULL, NULL, NULL, enc))
         goto err;
@@ -915,20 +936,20 @@ static int cipher_test_enc(struct evp_test *t, int enc)
     }
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     err = "CIPHERUPDATE_ERROR";
-    if (!EVP_CipherUpdate(ctx, tmp, &tmplen, in, in_len))
+    if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &tmplen, in, in_len))
         goto err;
     if (cdat->aead == EVP_CIPH_CCM_MODE)
         tmpflen = 0;
     else {
         err = "CIPHERFINAL_ERROR";
-        if (!EVP_CipherFinal_ex(ctx, tmp + tmplen, &tmpflen))
+        if (!EVP_CipherFinal_ex(ctx, tmp + out_misalign + tmplen, &tmpflen))
             goto err;
     }
     err = "LENGTH_MISMATCH";
     if (out_len != (size_t)(tmplen + tmpflen))
         goto err;
     err = "VALUE_MISMATCH";
-    if (check_output(t, out, tmp, out_len))
+    if (check_output(t, out, tmp + out_misalign, out_len))
         goto err;
     if (enc && cdat->aead) {
         unsigned char rtag[16];
@@ -958,6 +979,8 @@ static int cipher_test_run(struct evp_test *t)
 {
     struct cipher_data *cdat = t->data;
     int rv;
+    size_t out_misalign, inp_misalign;
+
     if (!cdat->key) {
         t->err = "NO_KEY";
         return 0;
@@ -973,24 +996,35 @@ static int cipher_test_run(struct evp_test *t)
         t->err = "NO_TAG";
         return 0;
     }
-    if (cdat->enc) {
-        rv = cipher_test_enc(t, 1);
-        /* Not fatal errors: return */
-        if (rv != 1) {
-            if (rv < 0)
-                return 0;
-            return 1;
+    for (out_misalign = 0; out_misalign <= 1; out_misalign++) {
+        static char aux_err[64];
+        t->aux_err = aux_err;
+        for (inp_misalign = 0; inp_misalign <= 1; inp_misalign++) {
+            BIO_snprintf(aux_err, sizeof(aux_err), "%s output and %s input",
+                         out_misalign ? "misaligned" : "aligned",
+                         inp_misalign ? "misaligned" : "aligned");
+            if (cdat->enc) {
+                rv = cipher_test_enc(t, 1, out_misalign, inp_misalign);
+                /* Not fatal errors: return */
+                if (rv != 1) {
+                    if (rv < 0)
+                        return 0;
+                    return 1;
+                }
+            }
+            if (cdat->enc != 1) {
+                rv = cipher_test_enc(t, 0, out_misalign, inp_misalign);
+                /* Not fatal errors: return */
+                if (rv != 1) {
+                    if (rv < 0)
+                        return 0;
+                    return 1;
+                }
+            }
         }
     }
-    if (cdat->enc != 1) {
-        rv = cipher_test_enc(t, 0);
-        /* Not fatal errors: return */
-        if (rv != 1) {
-            if (rv < 0)
-                return 0;
-            return 1;
-        }
-    }
+    t->aux_err = NULL;
+
     return 1;
 }
 
@@ -1022,11 +1056,16 @@ static int mac_test_init(struct evp_test *t, const char *alg)
 {
     int type;
     struct mac_data *mdat;
-    if (strcmp(alg, "HMAC") == 0)
+    if (strcmp(alg, "HMAC") == 0) {
         type = EVP_PKEY_HMAC;
-    else if (strcmp(alg, "CMAC") == 0)
+    } else if (strcmp(alg, "CMAC") == 0) {
+#ifndef OPENSSL_NO_CMAC
         type = EVP_PKEY_CMAC;
-    else
+#else
+        t->skip = 1;
+        return 1;
+#endif
+    } else
         return 0;
 
     mdat = OPENSSL_malloc(sizeof(*mdat));
@@ -1077,6 +1116,14 @@ static int mac_test_run(struct evp_test *t)
     const EVP_MD *md = NULL;
     unsigned char *mac = NULL;
     size_t mac_len;
+
+#ifdef OPENSSL_NO_DES
+    if (strstr(mdata->alg, "DES") != NULL) {
+        /* Skip DES */
+        err = NULL;
+        goto err;
+    }
+#endif
 
     err = "MAC_PKEY_CTX_ERROR";
     genctx = EVP_PKEY_CTX_new_id(mdata->type, NULL);
@@ -1496,16 +1543,20 @@ static int pbe_test_init(struct evp_test *t, const char *alg)
     struct pbe_data *pdat;
     int pbe_type = 0;
 
+    if (strcmp(alg, "scrypt") == 0) {
 #ifndef OPENSSL_NO_SCRYPT
-    if (strcmp(alg, "scrypt") == 0)
         pbe_type = PBE_TYPE_SCRYPT;
+#else
+        t->skip = 1;
+        return 1;
 #endif
-    else if (strcmp(alg, "pbkdf2") == 0)
+    } else if (strcmp(alg, "pbkdf2") == 0) {
         pbe_type = PBE_TYPE_PBKDF2;
-    else if (strcmp(alg, "pkcs12") == 0)
+    } else if (strcmp(alg, "pkcs12") == 0) {
         pbe_type = PBE_TYPE_PKCS12;
-    else
+    } else {
         fprintf(stderr, "Unknown pbe algorithm %s\n", alg);
+    }
     pdat = OPENSSL_malloc(sizeof(*pdat));
     pdat->pbe_type = pbe_type;
     pdat->pass = NULL;
@@ -1739,9 +1790,7 @@ static const struct evp_test_method encode_test_method = {
     encode_test_run,
 };
 
-/*
- * KDF operations: initially just TLS1 PRF but can be adapted.
- */
+/* KDF operations */
 
 struct kdf_data {
     /* Context for this operation */
@@ -1780,39 +1829,14 @@ static void kdf_test_cleanup(struct evp_test *t)
     EVP_PKEY_CTX_free(kdata->ctx);
 }
 
-static int kdf_ctrl(EVP_PKEY_CTX *ctx, int op, const char *value)
-{
-    unsigned char *buf = NULL;
-    size_t buf_len;
-    int rv = 0;
-    if (test_bin(value, &buf, &buf_len) == 0)
-        return 0;
-    if (EVP_PKEY_CTX_ctrl(ctx, -1, -1, op, buf_len, buf) <= 0)
-        goto err;
-    rv = 1;
-    err:
-    OPENSSL_free(buf);
-    return rv;
-}
-
 static int kdf_test_parse(struct evp_test *t,
                           const char *keyword, const char *value)
 {
     struct kdf_data *kdata = t->data;
     if (strcmp(keyword, "Output") == 0)
         return test_bin(value, &kdata->output, &kdata->output_len);
-    else if (strcmp(keyword, "MD") == 0) {
-        const EVP_MD *md = EVP_get_digestbyname(value);
-        if (md == NULL)
-            return 0;
-        if (EVP_PKEY_CTX_set_tls1_prf_md(kdata->ctx, md) <= 0)
-            return 0;
-        return 1;
-    } else if (strcmp(keyword, "Secret") == 0) {
-        return kdf_ctrl(kdata->ctx, EVP_PKEY_CTRL_TLS_SECRET, value);
-    } else if (strncmp("Seed", keyword, 4) == 0) {
-        return kdf_ctrl(kdata->ctx, EVP_PKEY_CTRL_TLS_SEED, value);
-    }
+    if (strncmp(keyword, "Ctrl", 4) == 0)
+        return pkey_test_ctrl(kdata->ctx, value);
     return 0;
 }
 

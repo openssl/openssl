@@ -60,12 +60,9 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include <internal/conf.h>
-#include <openssl/dso.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 
 /*
  * This is the automatic configuration loader: it is called automatically by
@@ -75,16 +72,19 @@
 
 static int openssl_configured = 0;
 
+#if OPENSSL_API_COMPAT < 0x10100000L
 void OPENSSL_config(const char *config_name)
 {
     OPENSSL_INIT_SETTINGS settings;
 
     memset(&settings, 0, sizeof(settings));
-    settings.config_name = strdup(config_name);
+    if (config_name != NULL)
+        settings.config_name = strdup(config_name);
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, &settings);
 }
+#endif
 
-void openssl_config_internal(const char *config_name)
+void openssl_config_int(const char *config_name)
 {
     if (openssl_configured)
         return;
@@ -103,7 +103,7 @@ void openssl_config_internal(const char *config_name)
     openssl_configured = 1;
 }
 
-void openssl_no_config_internal(void)
+void openssl_no_config_int(void)
 {
     openssl_configured = 1;
 }

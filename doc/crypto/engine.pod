@@ -23,8 +23,6 @@ engine - ENGINE cryptographic module support
 
  void ENGINE_load_builtin_engines(void);
 
- void ENGINE_cleanup(void);
-
  ENGINE *ENGINE_get_default_RSA(void);
  ENGINE *ENGINE_get_default_DSA(void);
  ENGINE *ENGINE_get_default_ECDH(void);
@@ -133,6 +131,12 @@ engine - ENGINE cryptographic module support
      UI_METHOD *ui_method, void *callback_data);
 
  void ENGINE_add_conf_module(void);
+
+Deprecated:
+
+ #if OPENSSL_API_COMPAT < 0x10100000L
+ void ENGINE_cleanup(void)
+ #endif
 
 =head1 DESCRIPTION
 
@@ -300,21 +304,23 @@ dynamically allocated and populated with these implementations and linked
 into OpenSSL's internal linked list. At this point it is important to
 mention an important API function;
 
- void ENGINE_cleanup(void);
+ void ENGINE_cleanup(void)
 
 If no ENGINE API functions are called at all in an application, then there
-are no inherent memory leaks to worry about from the ENGINE functionality,
-however if any ENGINEs are loaded, even if they are never registered or
-used, it is necessary to use the ENGINE_cleanup() function to
-correspondingly cleanup before program exit, if the caller wishes to avoid
-memory leaks. This mechanism uses an internal callback registration table
+are no inherent memory leaks to worry about from the ENGINE functionality.
+However, prior to OpenSSL 1.1.0 if any ENGINEs are loaded, even if they are
+never registered or used, it was necessary to use the ENGINE_cleanup() function
+to correspondingly cleanup before program exit, if the caller wishes to avoid
+memory leaks. This mechanism used an internal callback registration table
 so that any ENGINE API functionality that knows it requires cleanup can
 register its cleanup details to be called during ENGINE_cleanup(). This
-approach allows ENGINE_cleanup() to clean up after any ENGINE functionality
+approach allowed ENGINE_cleanup() to clean up after any ENGINE functionality
 at all that your program uses, yet doesn't automatically create linker
 dependencies to all possible ENGINE functionality - only the cleanup
 callbacks required by the functionality you do use will be required by the
-linker.
+linker. From OpenSSL 1.1.0 it is no longer necessary to explicitly call
+ENGINE_cleanup and this function is deprecated. Cleanup automatically takes
+place at program exit.
 
 The fact that ENGINEs are made visible to OpenSSL (and thus are linked into
 the program and loaded into memory at run-time) does not mean they are
@@ -438,7 +444,7 @@ boolean success or failure.
              ENGINE_free(e);
              return 0;
          }
-	 pre_cmds += 2;
+         pre_cmds += 2;
      }
      if(!ENGINE_init(e)) {
          fprintf(stderr, "Failed initialisation\n");
@@ -455,7 +461,7 @@ boolean success or failure.
              ENGINE_finish(e);
              return 0;
          }
-	 post_cmds += 2;
+         post_cmds += 2;
      }
      ENGINE_set_default(e, ENGINE_METHOD_ALL & ~ENGINE_METHOD_RAND);
      /* Success */
@@ -482,7 +488,7 @@ implemented by ENGINEs should be numbered from. Any command value lower than
 this symbol is considered a "generic" command is handled directly by the
 OpenSSL core routines.
 
-It is using these "core" control commands that one can discover the the control
+It is using these "core" control commands that one can discover the control
 commands implemented by a given ENGINE, specifically the commands;
 
  #define ENGINE_HAS_CTRL_FUNCTION		10
@@ -553,7 +559,8 @@ L<OPENSSL_init_crypto(3)>, L<rsa(3)>, L<dsa(3)>, L<dh(3)>, L<rand(3)>
 
 =head1 HISTORY
 
-ENGINE_load_openssl(), ENGINE_load_dynamic(), and ENGINE_load_cryptodev()
-were deprecated in OpenSSL 1.1.0 by OPENSSL_init_crypto().
+ENGINE_cleanup(), ENGINE_load_openssl(), ENGINE_load_dynamic(), and
+ENGINE_load_cryptodev() were deprecated in OpenSSL 1.1.0 by
+OPENSSL_init_crypto().
 
 =cut

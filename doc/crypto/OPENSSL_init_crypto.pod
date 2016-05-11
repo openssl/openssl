@@ -199,7 +199,7 @@ object can be released with OPENSSL_INIT_free() when done.
 Resources local to a thread are deallocated automatically when the thread exits
 (e.g. in a pthreads environment, when pthread_exit() is called). On Windows
 platforms this is done in response to a DLL_THREAD_DETACH message being sent to
-the libeay32.dll entry point. Some windows functions may cause threads to exit
+the libcrypto32.dll entry point. Some windows functions may cause threads to exit
 without sending this message (for example ExitProcess()). If the application
 uses such functions, then the application must free up OpenSSL resources
 directly via a call to OPENSSL_thread_stop(). Similarly this message will

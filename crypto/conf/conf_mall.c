@@ -60,12 +60,9 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
-#include <openssl/dso.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 
 /* Load all OpenSSL builtin modules */
 

@@ -63,22 +63,20 @@
 #ifndef HEADER_DSA_H
 # define HEADER_DSA_H
 
-# include <openssl/e_os2.h>
+# include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_DSA
-#  error DSA is disabled.
+# ifndef OPENSSL_NO_DSA
+# ifdef  __cplusplus
+extern "C" {
 # endif
-
+# include <openssl/e_os2.h>
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/opensslconf.h>
-
+# include <openssl/bn.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
-#  include <openssl/bn.h>
-#  ifndef OPENSSL_NO_DH
-#   include <openssl/dh.h>
-#  endif
+#  include <openssl/dh.h>
 # endif
 
 # ifndef OPENSSL_DSA_MAX_MODULUS_BITS
@@ -98,7 +96,7 @@
 /*
  * If this flag is set the DSA method is FIPS compliant and can be used in
  * FIPS mode. This is set in the validated module method. If an application
- * sets this flag in its own methods it is its reposibility to ensure the
+ * sets this flag in its own methods it is its responsibility to ensure the
  * result is compliant.
  */
 
@@ -113,68 +111,11 @@
 # define DSA_FLAG_NON_FIPS_ALLOW                 0x0400
 # define DSA_FLAG_FIPS_CHECKED                   0x0800
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 /* Already defined in ossl_typ.h */
 /* typedef struct dsa_st DSA; */
 /* typedef struct dsa_method DSA_METHOD; */
 
-typedef struct DSA_SIG_st {
-    BIGNUM *r;
-    BIGNUM *s;
-} DSA_SIG;
-
-struct dsa_method {
-    const char *name;
-    DSA_SIG *(*dsa_do_sign) (const unsigned char *dgst, int dlen, DSA *dsa);
-    int (*dsa_sign_setup) (DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
-                           BIGNUM **rp);
-    int (*dsa_do_verify) (const unsigned char *dgst, int dgst_len,
-                          DSA_SIG *sig, DSA *dsa);
-    int (*dsa_mod_exp) (DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
-                        BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
-                        BN_MONT_CTX *in_mont);
-    /* Can be null */
-    int (*bn_mod_exp) (DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-                       const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-    int (*init) (DSA *dsa);
-    int (*finish) (DSA *dsa);
-    int flags;
-    char *app_data;
-    /* If this is non-NULL, it is used to generate DSA parameters */
-    int (*dsa_paramgen) (DSA *dsa, int bits,
-                         const unsigned char *seed, int seed_len,
-                         int *counter_ret, unsigned long *h_ret,
-                         BN_GENCB *cb);
-    /* If this is non-NULL, it is used to generate DSA keys */
-    int (*dsa_keygen) (DSA *dsa);
-};
-
-struct dsa_st {
-    /*
-     * This first variable is used to pick up errors where a DSA is passed
-     * instead of of a EVP_PKEY
-     */
-    int pad;
-    long version;
-    BIGNUM *p;
-    BIGNUM *q;                  /* == 20 */
-    BIGNUM *g;
-    BIGNUM *pub_key;            /* y public key */
-    BIGNUM *priv_key;           /* x private key */
-    BIGNUM *kinv;               /* Signing pre-calc */
-    BIGNUM *r;                  /* Signing pre-calc */
-    int flags;
-    /* Normally used to cache montgomery values */
-    BN_MONT_CTX *method_mont_p;
-    int references;
-    CRYPTO_EX_DATA ex_data;
-    const DSA_METHOD *meth;
-    /* functional reference if 'meth' is ENGINE-provided */
-    ENGINE *engine;
-};
+typedef struct DSA_SIG_st DSA_SIG;
 
 # define d2i_DSAparams_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
                 (char *(*)())d2i_DSAparams,(fp),(unsigned char **)(x))
@@ -188,6 +129,7 @@ DSA_SIG *DSA_SIG_new(void);
 void DSA_SIG_free(DSA_SIG *a);
 int i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
 DSA_SIG *d2i_DSA_SIG(DSA_SIG **v, const unsigned char **pp, long length);
+void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig);
 
 DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 int DSA_do_verify(const unsigned char *dgst, int dgst_len,
@@ -198,6 +140,7 @@ const DSA_METHOD *DSA_OpenSSL(void);
 void DSA_set_default_method(const DSA_METHOD *);
 const DSA_METHOD *DSA_get_default_method(void);
 int DSA_set_method(DSA *dsa, const DSA_METHOD *);
+const DSA_METHOD *DSA_get_method(DSA *d);
 
 DSA *DSA_new(void);
 DSA *DSA_new_method(ENGINE *engine);
@@ -273,6 +216,61 @@ DH *DSA_dup_DH(const DSA *r);
 # define EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS       (EVP_PKEY_ALG_CTRL + 2)
 # define EVP_PKEY_CTRL_DSA_PARAMGEN_MD           (EVP_PKEY_ALG_CTRL + 3)
 
+void DSA_get0_pqg(const DSA *d, BIGNUM **p, BIGNUM **q, BIGNUM **g);
+int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g);
+void DSA_get0_key(const DSA *d, BIGNUM **pub_key, BIGNUM **priv_key);
+int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key);
+void DSA_clear_flags(DSA *d, int flags);
+int DSA_test_flags(const DSA *d, int flags);
+void DSA_set_flags(DSA *d, int flags);
+ENGINE *DSA_get0_engine(DSA *d);
+
+DSA_METHOD *DSA_meth_new(const char *name, int flags);
+void DSA_meth_free(DSA_METHOD *dsam);
+DSA_METHOD *DSA_meth_dup(const DSA_METHOD *dsam);
+const char *DSA_meth_get0_name(const DSA_METHOD *dsam);
+int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name);
+int DSA_meth_get_flags(DSA_METHOD *dsam);
+int DSA_meth_set_flags(DSA_METHOD *dsam, int flags);
+void *DSA_meth_get0_app_data(const DSA_METHOD *dsam);
+int DSA_meth_set0_app_data(DSA_METHOD *dsam, void *app_data);
+DSA_SIG *(*DSA_meth_get_sign(const DSA_METHOD *dsam))
+        (const unsigned char *, int, DSA *);
+int DSA_meth_set_sign(DSA_METHOD *dsam,
+                       DSA_SIG *(*sign) (const unsigned char *, int, DSA *));
+int (*DSA_meth_get_sign_setup(const DSA_METHOD *dsam))
+        (DSA *, BN_CTX *, BIGNUM **, BIGNUM **);
+int DSA_meth_set_sign_setup(DSA_METHOD *dsam,
+        int (*sign_setup) (DSA *, BN_CTX *, BIGNUM **, BIGNUM **));
+int (*DSA_meth_get_verify(const DSA_METHOD *dsam))
+        (const unsigned char *, int , DSA_SIG *, DSA *);
+int DSA_meth_set_verify(DSA_METHOD *dsam,
+    int (*verify) (const unsigned char *, int, DSA_SIG *, DSA *));
+int (*DSA_meth_get_mod_exp(const DSA_METHOD *dsam))
+        (DSA *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *,
+         BN_CTX *, BN_MONT_CTX *);
+int DSA_meth_set_mod_exp(DSA_METHOD *dsam,
+    int (*mod_exp) (DSA *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *,
+                    BIGNUM *, BN_CTX *, BN_MONT_CTX *));
+int (*DSA_meth_get_bn_mod_exp(const DSA_METHOD *dsam))
+    (DSA *, BIGNUM *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *,
+     BN_MONT_CTX *);
+int DSA_meth_set_bn_mod_exp(DSA_METHOD *dsam,
+    int (*bn_mod_exp) (DSA *, BIGNUM *, BIGNUM *, const BIGNUM *,
+                       const BIGNUM *, BN_CTX *, BN_MONT_CTX *));
+int (*DSA_meth_get_init(const DSA_METHOD *dsam))(DSA *);
+int DSA_meth_set_init(DSA_METHOD *dsam, int (*init)(DSA *));
+int (*DSA_meth_get_finish(const DSA_METHOD *dsam)) (DSA *);
+int DSA_meth_set_finish(DSA_METHOD *dsam, int (*finish) (DSA *));
+int (*DSA_meth_get_paramgen(const DSA_METHOD *dsam))
+        (DSA *, int, const unsigned char *, int, int *, unsigned long *,
+         BN_GENCB *);
+int DSA_meth_set_paramgen(DSA_METHOD *dsam,
+        int (*paramgen) (DSA *, int, const unsigned char *, int, int *,
+                         unsigned long *, BN_GENCB *));
+int (*DSA_meth_get_keygen(const DSA_METHOD *dsam)) (DSA *);
+int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *));
+
 /* BEGIN ERROR CODES */
 /*
  * The following lines are auto generated by the script mkerr.pl. Any changes
@@ -326,7 +324,9 @@ void ERR_load_DSA_strings(void);
 # define DSA_R_PARAMETER_ENCODING_ERROR                   105
 # define DSA_R_Q_NOT_PRIME                                113
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

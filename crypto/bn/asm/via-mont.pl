@@ -81,6 +81,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output = pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"via-mont.pl");
 
 # int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num);
@@ -240,3 +243,5 @@ $sp=&DWP(28,"esp");
 &asciz("Padlock Montgomery Multiplication, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();
+
+close STDOUT;

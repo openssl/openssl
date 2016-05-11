@@ -131,6 +131,7 @@ extern const EVP_PKEY_METHOD ec_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
 extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
+extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 
 struct evp_md_st {
     int type;
@@ -180,7 +181,8 @@ struct evp_cipher_st {
 
 /* Wrapper functions for each cipher mode */
 
-#define EVP_C_DATA(kstruct, ctx)   ((kstruct *)EVP_CIPHER_CTX_cipher_data(ctx))
+#define EVP_C_DATA(kstruct, ctx) \
+        ((kstruct *)EVP_CIPHER_CTX_get_cipher_data(ctx))
 
 #define BLOCK_CIPHER_ecb_loop() \
         size_t i, bl; \
@@ -414,8 +416,10 @@ struct evp_pkey_st {
     } pkey;
     int save_parameters;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
+    CRYPTO_RWLOCK *lock;
 } /* EVP_PKEY */ ;
 
 
-void openssl_add_all_ciphers_internal(void);
-void openssl_add_all_digests_internal(void);
+void openssl_add_all_ciphers_int(void);
+void openssl_add_all_digests_int(void);
+void evp_cleanup_int(void);

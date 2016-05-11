@@ -65,7 +65,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/bio.h>
+#include "bio_lcl.h"
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
@@ -81,7 +81,7 @@ static int bio_puts(BIO *bio, const char *str);
 static int bio_make_pair(BIO *bio1, BIO *bio2);
 static void bio_destroy_pair(BIO *bio);
 
-static BIO_METHOD methods_biop = {
+static const BIO_METHOD methods_biop = {
     BIO_TYPE_BIO,
     "BIO pair",
     bio_write,
@@ -94,7 +94,7 @@ static BIO_METHOD methods_biop = {
     NULL                        /* no bio_callback_ctrl */
 };
 
-BIO_METHOD *BIO_s_bio(void)
+const BIO_METHOD *BIO_s_bio(void)
 {
     return &methods_biop;
 }
@@ -627,16 +627,15 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_EOF:
-        {
-            BIO *other_bio = ptr;
+        if (b->peer != NULL) {
+            struct bio_bio_st *peer_b = b->peer->ptr;
 
-            if (other_bio) {
-                struct bio_bio_st *other_b = other_bio->ptr;
-
-                assert(other_b != NULL);
-                ret = other_b->len == 0 && other_b->closed;
-            } else
+            if (peer_b->len == 0 && peer_b->closed)
                 ret = 1;
+            else
+                ret = 0;
+        } else {
+            ret = 1;
         }
         break;
 

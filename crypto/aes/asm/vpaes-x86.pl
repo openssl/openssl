@@ -51,6 +51,10 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output = pop;
+open OUT,">$output";
+*STDOUT=*OUT;
+
 &asm_init($ARGV[0],"vpaes-x86.pl",$x86only = $ARGV[$#ARGV] eq "386");
 
 $PREFIX="vpaes";
@@ -901,3 +905,5 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 &function_end("${PREFIX}_cbc_encrypt");
 
 &asm_finish();
+
+close STDOUT;

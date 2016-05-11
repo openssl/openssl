@@ -144,8 +144,6 @@ struct TS_status_info_st {
     ASN1_BIT_STRING *failure_info;
 };
 
-DEFINE_STACK_OF(ASN1_UTF8STRING)
-
 /*-
  * IssuerSerial ::= SEQUENCE {
  *         issuer                   GeneralNames,

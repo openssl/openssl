@@ -149,8 +149,10 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
 
     if (connect(sock, BIO_ADDR_sockaddr(addr),
                 BIO_ADDR_sockaddr_size(addr)) == -1) {
-        SYSerr(SYS_F_CONNECT, get_last_socket_error());
-        BIOerr(BIO_F_BIO_CONNECT, BIO_R_CONNECT_ERROR);
+        if (!BIO_sock_should_retry(-1)) {
+            SYSerr(SYS_F_CONNECT, get_last_socket_error());
+            BIOerr(BIO_F_BIO_CONNECT, BIO_R_CONNECT_ERROR);
+        }
         return 0;
     }
     return 1;
@@ -274,22 +276,28 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
  * @options: BIO socket options, applied on the accepted socket.
  *
  */
-int BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options)
+int BIO_accept_ex(int accept_sock, BIO_ADDR *addr_, int options)
 {
     socklen_t len;
     int accepted_sock;
+    BIO_ADDR locaddr;
+    BIO_ADDR *addr = addr_ == NULL ? &locaddr : addr_;
 
     len = sizeof(*addr);
     accepted_sock = accept(accept_sock,
                            BIO_ADDR_sockaddr_noconst(addr), &len);
     if (accepted_sock == -1) {
-        SYSerr(SYS_F_ACCEPT, get_last_socket_error());
-        BIOerr(BIO_F_BIO_ACCEPT_EX, BIO_R_ACCEPT_ERROR);
+        if (!BIO_sock_should_retry(accepted_sock)) {
+            SYSerr(SYS_F_ACCEPT, get_last_socket_error());
+            BIOerr(BIO_F_BIO_ACCEPT_EX, BIO_R_ACCEPT_ERROR);
+        }
         return INVALID_SOCKET;
     }
 
-    if (!BIO_socket_nbio(accepted_sock, (options & BIO_SOCK_NONBLOCK) != 0))
+    if (!BIO_socket_nbio(accepted_sock, (options & BIO_SOCK_NONBLOCK) != 0)) {
+        closesocket(accepted_sock);
         return INVALID_SOCKET;
+    }
 
     return accepted_sock;
 }

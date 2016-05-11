@@ -58,6 +58,7 @@
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
+#include "bio_lcl.h"
 #include "internal/cryptlib.h"
 
 #ifndef OPENSSL_NO_SOCK
@@ -78,7 +79,7 @@ static int sock_new(BIO *h);
 static int sock_free(BIO *data);
 int BIO_sock_should_retry(int s);
 
-static BIO_METHOD methods_sockp = {
+static const BIO_METHOD methods_sockp = {
     BIO_TYPE_SOCKET,
     "socket",
     sock_write,
@@ -91,7 +92,7 @@ static BIO_METHOD methods_sockp = {
     NULL,
 };
 
-BIO_METHOD *BIO_s_socket(void)
+const BIO_METHOD *BIO_s_socket(void)
 {
     return (&methods_sockp);
 }
@@ -122,7 +123,7 @@ static int sock_free(BIO *a)
         return (0);
     if (a->shutdown) {
         if (a->init) {
-            SHUTDOWN2(a->num);
+            BIO_closesocket(a->num);
         }
         a->init = 0;
         a->flags = 0;
@@ -214,12 +215,6 @@ int BIO_sock_should_retry(int i)
     if ((i == 0) || (i == -1)) {
         err = get_last_socket_error();
 
-# if defined(OPENSSL_SYS_WINDOWS) && 0/* more microsoft stupidity? perhaps
-                                       * not? Ben 4/1/99 */
-        if ((i == -1) && (err == 0))
-            return (1);
-# endif
-
         return (BIO_sock_non_fatal_error(err));
     }
     return (0);
@@ -228,7 +223,7 @@ int BIO_sock_should_retry(int i)
 int BIO_sock_non_fatal_error(int err)
 {
     switch (err) {
-# if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_NETWARE)
+# if defined(OPENSSL_SYS_WINDOWS)
 #  if defined(WSAEWOULDBLOCK)
     case WSAEWOULDBLOCK:
 #  endif

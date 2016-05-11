@@ -16,10 +16,10 @@
 #
 #			IALU(*)		FMA
 #
-# UltraSPARC III	11.9(**)
-# SPARC T3		7.85
-# SPARC T4		1.67(***)	6.55
-# SPARC64 X		5.54		3.64
+# UltraSPARC III	12.3(**)
+# SPARC T3		7.92
+# SPARC T4		1.70(***)	6.55
+# SPARC64 X		5.60		3.64
 #
 # (*)	Comparison to compiler-generated code is really problematic,
 #	because latter's performance varies too much depending on too
@@ -34,10 +34,16 @@
 # (***)	Multi-process benchmark saturates at ~12.5x single-process
 #	result on 8-core processor, or ~21GBps per 2.85GHz socket.
 
+my $output = pop;
+open STDOUT,">$output";
+
 my ($ctx,$inp,$len,$padbit,$shl,$shr)	= map("%i$_",(0..5));
 my ($r0,$r1,$r2,$r3,$s1,$s2,$s3,$h4)	= map("%l$_",(0..7));
 my ($h0,$h1,$h2,$h3, $t0,$t1,$t2)	= map("%o$_",(0..5,7));
 my ($d0,$d1,$d2,$d3)			= map("%g$_",(1..4));
+
+my $output = pop;
+open STDOUT,">$stdout";
 
 $code.=<<___;
 #include "sparc_arch.h"
@@ -68,8 +74,8 @@ poly1305_init:
 	SPARC_LOAD_ADDRESS(OPENSSL_sparcv9cap_P,%g1)
 	ld	[%g1],%g1
 
-	and	%g1,SPARCV9_FMADD|SPARCV9_PREFER_FPU|SPARCV9_VIS3,%g1
-	cmp	%g1,SPARCV9_FMADD|SPARCV9_PREFER_FPU
+	and	%g1,SPARCV9_FMADD|SPARCV9_VIS3,%g1
+	cmp	%g1,SPARCV9_FMADD
 	be	.Lpoly1305_init_fma
 	nop
 
@@ -245,8 +251,9 @@ poly1305_blocks:
 	addcc	$t0,$d0,$h0
 	addccc	%g0,$h1,$h1
 	addccc	%g0,$h2,$h2
+	addccc	%g0,$h3,$h3
 	brnz,pt	$len,.Loop
-	addc	%g0,$h3,$h3
+	addc	%g0,$h4,$h4
 
 	st	$h1,[$ctx+0]		! store hash value
 	st	$h0,[$ctx+4]
@@ -289,6 +296,7 @@ poly1305_blocks_vis3:
 	neg	$shr,$shl
 
 	srlx	$R1,2,$S1
+	b	.Loop_vis3
 	add	$R1,$S1,$S1
 
 .Loop_vis3:
@@ -336,8 +344,9 @@ poly1305_blocks_vis3:
 	add	$T1,$T0,$T0
 
 	addcc	$T0,$D0,$H0
+	addxccc	%g0,$D1,$H1
 	brnz,pt	$len,.Loop_vis3
-	addxc	%g0,$D1,$H1
+	addxc	%g0,$H2,$H2
 
 	stx	$H0,[$ctx+0]		! store hash value
 	stx	$H1,[$ctx+8]

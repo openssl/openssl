@@ -80,6 +80,20 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
+/*
+ * In bn_lcl.h, bn_expand() is defined as a static ossl_inline function.
+ * This is fine in itself, it will end up as an unused static function in
+ * the worst case.  However, it referenses bn_expand2(), which is a private
+ * function in libcrypto and therefore unavailable on some systems.  This
+ * may result in a linker error because of unresolved symbols.
+ *
+ * To avoid this, we define a dummy variant of bn_expand2() here, and to
+ * avoid possible clashes with libcrypto, we rename it first, using a macro.
+ */
+#define bn_expand2 dummy_bn_expand2
+BIGNUM *bn_expand2(BIGNUM *b, int words);
+BIGNUM *bn_expand2(BIGNUM *b, int words) { return NULL; }
+
 #include "../crypto/bn/bn_lcl.h"
 
 static const int num0 = 100;           /* number of tests */
@@ -139,6 +153,9 @@ int main(int argc, char *argv[])
     BN_CTX *ctx;
     BIO *out;
     char *outfile = NULL;
+
+    CRYPTO_set_mem_debug(1);
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     results = 0;
 
@@ -339,12 +356,20 @@ int main(int argc, char *argv[])
     BN_CTX_free(ctx);
     BIO_free(out);
 
+    ERR_print_errors_fp(stderr);
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        EXIT(1);
+#endif
     EXIT(0);
  err:
     BIO_puts(out, "1\n");       /* make sure the Perl script fed by bc
                                  * notices the failure, see test_bn in
                                  * test/Makefile.ssl */
     (void)BIO_flush(out);
+    BN_CTX_free(ctx);
+    BIO_free(out);
 
     ERR_print_errors_fp(stderr);
     EXIT(1);

@@ -89,10 +89,6 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
                         char *section, ASN1_INTEGER *sno, int reqfile);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-static int force_version = 2;
-#endif
-
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_KEYFORM, OPT_REQ, OPT_CAFORM,
@@ -108,7 +104,6 @@ typedef enum OPTION_choice {
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
     OPT_SUBJECT_HASH_OLD,
     OPT_ISSUER_HASH_OLD,
-    OPT_FORCE_VERSION,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT
 } OPTION_CHOICE;
 
@@ -121,7 +116,7 @@ OPTIONS x509_options[] = {
      "Output format - default PEM (one of DER, NET or PEM)"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
     {"keyform", OPT_KEYFORM, 'F', "Private key format - default PEM"},
-    {"passin", OPT_PASSIN, 's', "Private key password source"},
+    {"passin", OPT_PASSIN, 's', "Private key password/pass-phrase source"},
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"subject_hash", OPT_HASH, '-', "Print subject hash value"},
     {"issuer_hash", OPT_ISSUER_HASH, '-', "Print issuer hash value"},
@@ -177,20 +172,17 @@ OPTIONS x509_options[] = {
     {"checkip", OPT_CHECKIP, 's', "Check certificate matches ipaddr"},
     {"CAform", OPT_CAFORM, 'F', "CA format - default PEM"},
     {"CAkeyform", OPT_CAKEYFORM, 'F', "CA key format - default PEM"},
-    {"sigopt", OPT_SIGOPT, 's'},
+    {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"force_pubkey", OPT_FORCE_PUBKEY, '<'},
     {"next_serial", OPT_NEXT_SERIAL, '-'},
     {"clrreject", OPT_CLRREJECT, '-'},
-    {"badsig", OPT_BADSIG, '-'},
+    {"badsig", OPT_BADSIG, '-', "Corrupt last byte of certificate signature (for test)"},
     {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_MD5
     {"subject_hash_old", OPT_SUBJECT_HASH_OLD, '-',
      "Print old-style (MD5) issuer hash value"},
     {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
      "Print old-style (MD5) subject hash value"},
-#endif
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    {"force_version", OPT_FORCE_VERSION, 'p'},
 #endif
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -287,11 +279,6 @@ int x509_main(int argc, char **argv)
                 sigopts = sk_OPENSSL_STRING_new_null();
             if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
                 goto opthelp;
-            break;
-        case OPT_FORCE_VERSION:
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-            force_version = atoi(opt_arg()) - 1;
-#endif
             break;
         case OPT_DAYS:
             days = atoi(opt_arg());
@@ -575,12 +562,11 @@ int x509_main(int argc, char **argv)
             goto end;
         }
 
-        if ((pkey = X509_REQ_get_pubkey(req)) == NULL) {
+        if ((pkey = X509_REQ_get0_pubkey(req)) == NULL) {
             BIO_printf(bio_err, "error unpacking public key\n");
             goto end;
         }
         i = X509_REQ_verify(req, pkey);
-        EVP_PKEY_free(pkey);
         if (i < 0) {
             BIO_printf(bio_err, "Signature verification error\n");
             ERR_print_errors(bio_err);
@@ -620,17 +606,16 @@ int x509_main(int argc, char **argv)
         if (fkey)
             X509_set_pubkey(x, fkey);
         else {
-            pkey = X509_REQ_get_pubkey(req);
+            pkey = X509_REQ_get0_pubkey(req);
             X509_set_pubkey(x, pkey);
-            EVP_PKEY_free(pkey);
         }
     } else
-        x = load_cert(infile, informat, NULL, e, "Certificate");
+        x = load_cert(infile, informat, "Certificate");
 
     if (x == NULL)
         goto end;
     if (CA_flag) {
-        xca = load_cert(CAfile, CAformat, NULL, e, "CA Certificate");
+        xca = load_cert(CAfile, CAformat, "CA Certificate");
         if (xca == NULL)
             goto end;
     }
@@ -742,16 +727,22 @@ int x509_main(int argc, char **argv)
                 }
                 BIO_printf(out, "Modulus=");
 #ifndef OPENSSL_NO_RSA
-                if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA)
-                    BN_print(out, EVP_PKEY_get0_RSA(pkey)->n);
-                else
+                if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
+                    BIGNUM *n;
+                    RSA_get0_key(EVP_PKEY_get0_RSA(pkey), &n, NULL, NULL);
+                    BN_print(out, n);
+                } else
 #endif
 #ifndef OPENSSL_NO_DSA
-                if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA)
-                    BN_print(out, EVP_PKEY_get0_DSA(pkey)->pub_key);
-                else
+                if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA) {
+                    BIGNUM *dsapub = NULL;
+                    DSA_get0_key(EVP_PKEY_get0_DSA(pkey), &dsapub, NULL);
+                    BN_print(out, dsapub);
+                } else
 #endif
+                {
                     BIO_printf(out, "Wrong Algorithm type");
+                }
                 BIO_printf(out, "\n");
             } else if (pubkey == i) {
                 EVP_PKEY *pkey;
@@ -772,7 +763,7 @@ int x509_main(int argc, char **argv)
                 BIO_printf(out, "/*\n"
                                 " * Subject: %s\n", buf);
 
-                m = X509_NAME_oneline(X509_get_issuer_name(x), buf, sizeof buf);
+                X509_NAME_oneline(X509_get_issuer_name(x), buf, sizeof buf);
                 BIO_printf(out, " * Issuer:  %s\n"
                                 " */\n", buf);
 
@@ -928,7 +919,6 @@ int x509_main(int argc, char **argv)
  end:
     if (need_rand)
         app_RAND_write_file(NULL);
-    OBJ_cleanup();
     NCONF_free(extconf);
     BIO_free_all(out);
     X509_STORE_free(ctx);
@@ -997,13 +987,14 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 {
     int ret = 0;
     ASN1_INTEGER *bs = NULL;
-    X509_STORE_CTX xsc;
+    X509_STORE_CTX *xsc = NULL;
     EVP_PKEY *upkey;
 
     upkey = X509_get0_pubkey(xca);
     EVP_PKEY_copy_parameters(upkey, pkey);
 
-    if (!X509_STORE_CTX_init(&xsc, ctx, x, NULL)) {
+    xsc = X509_STORE_CTX_new();
+    if (xsc == NULL || !X509_STORE_CTX_init(xsc, ctx, x, NULL)) {
         BIO_printf(bio_err, "Error initialising X509 store\n");
         goto end;
     }
@@ -1016,9 +1007,9 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
      * NOTE: this certificate can/should be self signed, unless it was a
      * certificate request in which case it is not.
      */
-    X509_STORE_CTX_set_cert(&xsc, x);
-    X509_STORE_CTX_set_flags(&xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
-    if (!reqfile && X509_verify_cert(&xsc) <= 0)
+    X509_STORE_CTX_set_cert(xsc, x);
+    X509_STORE_CTX_set_flags(xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
+    if (!reqfile && X509_verify_cert(xsc) <= 0)
         goto end;
 
     if (!X509_check_private_key(xca, pkey)) {
@@ -1046,11 +1037,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 
     if (conf) {
         X509V3_CTX ctx2;
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-        X509_set_version(x, force_version);
-#else
         X509_set_version(x, 2); /* version 3 certificate */
-#endif
         X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
         X509V3_set_nconf(&ctx2, conf);
         if (!X509V3_EXT_add_nconf(conf, &ctx2, section, x))
@@ -1061,7 +1048,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
         goto end;
     ret = 1;
  end:
-    X509_STORE_CTX_cleanup(&xsc);
+    X509_STORE_CTX_free(xsc);
     if (!ret)
         ERR_print_errors(bio_err);
     if (!sno)
@@ -1123,11 +1110,7 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
     }
     if (conf) {
         X509V3_CTX ctx;
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-        X509_set_version(x, force_version);
-#else
         X509_set_version(x, 2); /* version 3 certificate */
-#endif
         X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
         X509V3_set_nconf(&ctx, conf);
         if (!X509V3_EXT_add_nconf(conf, &ctx, section, x))
