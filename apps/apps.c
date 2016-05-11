@@ -176,8 +176,6 @@ int chopup_args(ARGS *arg, char *buf)
     if (arg->size == 0) {
         arg->size = 20;
         arg->argv = app_malloc(sizeof(*arg->argv) * arg->size, "argv space");
-        if (arg->argv == NULL)
-            return 0;
     }
 
     for (p = buf;;) {
@@ -189,11 +187,12 @@ int chopup_args(ARGS *arg, char *buf)
 
         /* The start of something good :-) */
         if (arg->argc >= arg->size) {
+            char **tmp;
             arg->size += 20;
-            arg->argv = OPENSSL_realloc(arg->argv,
-                                        sizeof(*arg->argv) * arg->size);
-            if (arg->argv == NULL)
+            tmp = OPENSSL_realloc(arg->argv, sizeof(*arg->argv) * arg->size);
+            if (tmp == NULL)
                 return 0;
+            arg->argv = tmp;
         }
         quoted = *p == '\'' || *p == '"';
         if (quoted)
