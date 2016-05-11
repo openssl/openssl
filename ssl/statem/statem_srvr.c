@@ -971,7 +971,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     /* |cookie| will only be initialized for DTLS. */
     PACKET session_id, cipher_suites, compression, extensions, cookie;
     int is_v2_record;
-    static unsigned char null_compression = 0;
+    static const unsigned char null_compression = 0;
 
     is_v2_record = RECORD_LAYER_is_sslv2_record(&s->rlayer);
 
