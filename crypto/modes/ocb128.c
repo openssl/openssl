@@ -147,6 +147,7 @@ static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
 
     /* We don't have it - so calculate it */
     if (idx >= ctx->max_l_index) {
+        void *tmp_ptr;
         /*
          * Each additional entry allows to process almost double as
          * much data, so that in linear world the table will need to
@@ -157,10 +158,11 @@ static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
          * the index.
          */
         ctx->max_l_index += (idx - ctx->max_l_index + 4) & ~3;
-        ctx->l =
+        tmp_ptr =
             OPENSSL_realloc(ctx->l, ctx->max_l_index * sizeof(OCB_BLOCK));
-        if (ctx->l == NULL)
+        if (tmp_ptr == NULL) /* prevent ctx->l from being clobbered */
             return NULL;
+        ctx->l = tmp_ptr;
     }
     while (l_index < idx) {
         ocb_double(ctx->l + l_index, ctx->l + l_index + 1);

@@ -107,12 +107,16 @@ static int append_buf(char **buf, int *size, const char *s)
     }
 
     if (strlen(*buf) + strlen(s) >= (unsigned int)*size) {
+        char *tmp;
         *size += 256;
-        *buf = OPENSSL_realloc(*buf, *size);
+        tmp = OPENSSL_realloc(*buf, *size);
+        if (tmp == NULL) {
+            OPENSSL_free(*buf);
+            *buf = NULL;
+            return 0;
+        }
+        *buf = tmp;
     }
-
-    if (*buf == NULL)
-        return 0;
 
     if (**buf != '\0')
         OPENSSL_strlcat(*buf, ", ", *size);

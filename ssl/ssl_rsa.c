@@ -940,6 +940,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
 int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 {
     unsigned char *serverinfo = NULL;
+    unsigned char *tmp;
     size_t serverinfo_length = 0;
     unsigned char *extension = 0;
     long extension_length = 0;
@@ -999,12 +1000,13 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
             goto end;
         }
         /* Append the decoded extension to the serverinfo buffer */
-        serverinfo =
+        tmp =
             OPENSSL_realloc(serverinfo, serverinfo_length + extension_length);
-        if (serverinfo == NULL) {
+        if (tmp == NULL) {
             SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_MALLOC_FAILURE);
             goto end;
         }
+        serverinfo = tmp;
         memcpy(serverinfo + serverinfo_length, extension, extension_length);
         serverinfo_length += extension_length;
 

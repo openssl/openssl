@@ -205,7 +205,7 @@ static int custom_ext_meth_add(custom_ext_methods *exts,
                                void *add_arg,
                                custom_ext_parse_cb parse_cb, void *parse_arg)
 {
-    custom_ext_method *meth;
+    custom_ext_method *meth, *tmp;
     /*
      * Check application error: if add_cb is not set free_cb will never be
      * called.
@@ -225,15 +225,17 @@ static int custom_ext_meth_add(custom_ext_methods *exts,
     /* Search for duplicate */
     if (custom_ext_find(exts, ext_type))
         return 0;
-    exts->meths = OPENSSL_realloc(exts->meths,
-                                  (exts->meths_count +
-                                   1) * sizeof(custom_ext_method));
+    tmp = OPENSSL_realloc(exts->meths,
+                          (exts->meths_count + 1) * sizeof(custom_ext_method));
 
-    if (!exts->meths) {
+    if (tmp == NULL) {
+        OPENSSL_free(exts->meths);
+        exts->meths = NULL;
         exts->meths_count = 0;
         return 0;
     }
 
+    exts->meths = tmp;
     meth = exts->meths + exts->meths_count;
     memset(meth, 0, sizeof(*meth));
     meth->parse_cb = parse_cb;
