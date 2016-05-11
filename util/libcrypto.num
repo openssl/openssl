@@ -3446,7 +3446,7 @@ RSA_setup_blinding                      3336	1_1_0	EXIST::FUNCTION:RSA
 ERR_peek_error_line                     3337	1_1_0	EXIST::FUNCTION:
 d2i_PKCS7                               3338	1_1_0	EXIST::FUNCTION:
 ERR_reason_error_string                 3339	1_1_0	EXIST::FUNCTION:
-ERR_remove_thread_state                 3340	1_1_0	EXIST::FUNCTION:
+ERR_remove_thread_state                 3340	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 PEM_write_PrivateKey                    3341	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_str2ctrl                   3342	1_1_0	EXIST::FUNCTION:
 CMS_SignerInfo_verify_content           3343	1_1_0	EXIST::FUNCTION:CMS
