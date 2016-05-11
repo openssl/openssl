@@ -1541,7 +1541,8 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
         goto err;
     }
     len = strlen(contname);
-    key->id = OPENSSL_malloc((len + 1) * sizeof(TCHAR));
+    if ((key->id = OPENSSL_malloc((len + 1) * sizeof(TCHAR))) == NULL)
+        goto err;
     memcpy(key->id, contname, len * sizeof(TCHAR));
     key->id[len] = '\0';
     key->keyspec = keyspec;
@@ -1550,8 +1551,6 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
 
  err:
     OPENSSL_free(key);
-    if (key->id)
-        OPENSSL_free(key->id);
     return NULL;
 }
 
