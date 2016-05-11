@@ -941,7 +941,7 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 
  err:
     if  (hash)
-    CryptDestroyHash(hash);
+        CryptDestroyHash(hash);
     if (capi_key->hprov != hprov)
         CryptReleaseContext(hprov, 0);
 
@@ -1502,11 +1502,13 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
                               TCHAR *provname, DWORD ptype, DWORD keyspec)
 {
     DWORD dwFlags = 0;
-    CAPI_KEY *key = OPENSSL_malloc(sizeof(*key));
     int len;
+    CAPI_KEY *key = OPENSSL_malloc(sizeof(*key));
 
     if (key == NULL)
         return NULL;
+
+    key->id = NULL;
     /* If PROV_RSA_AES supported use it instead */
     if (ptype == PROV_RSA_FULL && use_aes_csp) {
         provname = NULL;
@@ -1539,7 +1541,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
         goto err;
     }
     len = strlen(contname);
-    key->id = OPENSSL_malloc(len+1);
+    key->id = OPENSSL_malloc((len + 1) * sizeof(TCHAR));
     memcpy(key->id, contname, len * sizeof(TCHAR));
     key->id[len] = '\0';
     key->keyspec = keyspec;
@@ -1548,6 +1550,8 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
 
  err:
     OPENSSL_free(key);
+    if (key->id)
+        OPENSSL_free(key->id);
     return NULL;
 }
 
