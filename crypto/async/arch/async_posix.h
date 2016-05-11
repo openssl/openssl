@@ -11,7 +11,9 @@
 #define OPENSSL_ASYNC_ARCH_ASYNC_POSIX_H
 #include <openssl/e_os2.h>
 
-#if (defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_CYGWIN)) && defined(OPENSSL_THREADS) && !defined(OPENSSL_NO_ASYNC) && !defined(__ANDROID__)
+#if (defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_CYGWIN)) \
+    && defined(OPENSSL_THREADS) && !defined(OPENSSL_NO_ASYNC) \
+    && !defined(__ANDROID__) && !defined(__OpenBSD__)
 
 # include <unistd.h>
 
