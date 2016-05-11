@@ -4,6 +4,10 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Change default algorithms in pkcs8 utility to use PKCS#5 v2.0,
+     256 bit AES and HMAC with SHA256.
+     [Steve Henson]
+
   *) Remove support for MIPS o32 ABI on IRIX (and IRIX only).
      [Andy Polyakov]
 
