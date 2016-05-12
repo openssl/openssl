@@ -64,6 +64,16 @@ The test section supports the following options:
   - AcceptAll - accepts all certificates.
   - RejectAll - rejects all certificates.
 
+* ServerName - the server the client is expected to successfully connect to
+  - server1 - the initial context (default)
+  - server2 - the secondary context
+
+* SessionTicketExpected - whether or not a session ticket is expected
+  - Ignore - do not check for a session ticket (default)
+  - Yes - a session ticket is expected
+  - No - a session ticket is not expected
+  - Broken - a special test case where the session ticket callback does not initialize crypto
+
 ## Configuring the client and server
 
 The client and server configurations can be any valid `SSL_CTX`
@@ -77,6 +87,10 @@ server => {
     "MinProtocol" => "TLSv1",
 }
 ```
+
+A server2 section may optionally be defined to configure a secondary
+context that is selected via the ServerName test option. If the server2
+section is not configured, then the configuration matches server.
 
 ### Default server and client configurations
 

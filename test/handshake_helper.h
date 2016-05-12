@@ -26,10 +26,19 @@ typedef struct handshake_result {
     /* Negotiated protocol. On success, these should always match. */
     int server_protocol;
     int client_protocol;
+    /* Server connection */
+    int servername;
+    /* Session ticket status */
+    int session_ticket;
+    /* Was this called on the second context? */
+    int session_ticket_do_not_call;
 } HANDSHAKE_RESULT;
 
 /* Do a handshake and report some information about the result. */
 HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *client_ctx,
                               const SSL_TEST_CTX *test_ctx);
+
+int do_not_call_session_ticket_callback(SSL* s, unsigned char* key_name, unsigned char *iv,
+                                        EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc);
 
 #endif  /* HEADER_HANDSHAKE_HELPER_H */

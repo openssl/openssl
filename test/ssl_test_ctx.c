@@ -154,6 +154,62 @@ const char *ssl_verify_callback_name(ssl_verify_callback_t callback)
                      callback);
 }
 
+/**************/
+/* ServerName */
+/**************/
+
+static const test_enum ssl_servername[] = {
+    {"server1", SSL_TEST_SERVERNAME_SERVER1},
+    {"server2", SSL_TEST_SERVERNAME_SERVER2},
+};
+
+__owur static int parse_servername(SSL_TEST_CTX *test_ctx,
+                                   const char *value)
+{
+    int ret_value;
+    if (!parse_enum(ssl_servername, OSSL_NELEM(ssl_servername),
+                    &ret_value, value)) {
+        return 0;
+    }
+    test_ctx->servername = ret_value;
+    return 1;
+}
+
+const char *ssl_servername_name(ssl_servername_t server)
+{
+    return enum_name(ssl_servername, OSSL_NELEM(ssl_servername),
+                     server);
+}
+
+/*************************/
+/* SessionTicketExpected */
+/*************************/
+
+static const test_enum ssl_session_ticket_expected[] = {
+    {"Ignore", SSL_TEST_SESSION_TICKET_IGNORE},
+    {"Yes", SSL_TEST_SESSION_TICKET_YES},
+    {"No", SSL_TEST_SESSION_TICKET_NO},
+    {"Broken", SSL_TEST_SESSION_TICKET_BROKEN},
+};
+
+__owur static int parse_session_ticket_expected(SSL_TEST_CTX *test_ctx,
+                                                const char *value)
+{
+    int ret_value;
+    if (!parse_enum(ssl_session_ticket_expected, OSSL_NELEM(ssl_session_ticket_expected),
+                    &ret_value, value)) {
+        return 0;
+    }
+    test_ctx->session_ticket_expected = ret_value;
+    return 1;
+}
+
+const char *ssl_session_ticket_expected_name(ssl_session_ticket_expected_t server)
+{
+    return enum_name(ssl_session_ticket_expected,
+                     OSSL_NELEM(ssl_session_ticket_expected),
+                     server);
+}
 
 /*************************************************************/
 /* Known test options and their corresponding parse methods. */
@@ -170,6 +226,8 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ServerAlert", &parse_server_alert },
     { "Protocol", &parse_protocol },
     { "ClientVerifyCallback", &parse_client_verify_callback },
+    { "ServerName", &parse_servername },
+    { "SessionTicketExpected", &parse_session_ticket_expected },
 };
 
 

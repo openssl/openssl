@@ -64,6 +64,18 @@ static int SSL_TEST_CTX_equal(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
                 ssl_verify_callback_name(ctx2->client_verify_callback));
         return 0;
     }
+    if (ctx->servername != ctx2->servername) {
+        fprintf(stderr, "ServerName mismatch: %s vs %s.\n",
+                ssl_servername_name(ctx->servername),
+                ssl_servername_name(ctx2->servername));
+        return 0;
+    }
+    if (ctx->session_ticket_expected != ctx2->session_ticket_expected) {
+        fprintf(stderr, "SessionTicketExpected mismatch: %s vs %s.\n",
+                ssl_session_ticket_expected_name(ctx->session_ticket_expected),
+                ssl_session_ticket_expected_name(ctx2->session_ticket_expected));
+        return 0;
+    }
 
     return 1;
 }
@@ -141,7 +153,9 @@ static int test_good_configuration()
     fixture.expected_ctx->client_alert = SSL_AD_UNKNOWN_CA;
     fixture.expected_ctx->server_alert = 0;  /* No alert. */
     fixture.expected_ctx->protocol = TLS1_1_VERSION;
-    fixture.expected_ctx->client_verify_callback = SSL_TEST_VERIFY_REJECT_ALL,
+    fixture.expected_ctx->client_verify_callback = SSL_TEST_VERIFY_REJECT_ALL;
+    fixture.expected_ctx->servername = SSL_TEST_SERVERNAME_SERVER2;
+    fixture.expected_ctx->session_ticket_expected = SSL_TEST_SESSION_TICKET_YES;
     EXECUTE_SSL_TEST_CTX_TEST();
 }
 
@@ -151,6 +165,8 @@ static const char *bad_configurations[] = {
     "ssltest_unknown_alert",
     "ssltest_unknown_protocol",
     "ssltest_unknown_verify_callback",
+    "ssltest_unknown_servername",
+    "ssltest_unknown_session_ticket_expected",
 };
 
 static int test_bad_configuration(int idx)
