@@ -228,6 +228,7 @@ int ocsp_main(int argc, char **argv)
 {
     BIO *acbio = NULL, *cbio = NULL, *derbio = NULL, *out = NULL;
     const EVP_MD *cert_id_md = NULL, *rsign_md = NULL;
+    int trailing_md = 0;
     CA_DB *rdb = NULL;
     EVP_PKEY *key = NULL, *rkey = NULL;
     OCSP_BASICRESP *bs = NULL;
@@ -439,6 +440,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
                 goto end;
+            trailing_md = 0;
             break;
         case OPT_SERIAL:
             if (cert_id_md == NULL)
@@ -447,6 +449,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
                 goto end;
+            trailing_md = 0;
             break;
         case OPT_INDEX:
             ridx_filename = opt_arg();
@@ -490,7 +493,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_MD:
-            if (cert_id_md != NULL) {
+            if (trailing_md) {
                 BIO_printf(bio_err,
                            "%s: Digest must be before -cert or -serial\n",
                            prog);
@@ -498,8 +501,15 @@ int ocsp_main(int argc, char **argv)
             }
             if (!opt_md(opt_unknown(), &cert_id_md))
                 goto opthelp;
+            trailing_md = 1;
             break;
         }
+    }
+
+    if (trailing_md) {
+        BIO_printf(bio_err, "%s: Digest must be before -cert or -serial\n",
+                   prog);
+        goto opthelp;
     }
     argc = opt_num_rest();
     if (argc != 0)
