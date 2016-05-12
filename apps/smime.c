@@ -115,15 +115,15 @@ OPTIONS smime_options[] = {
     {"noattr", OPT_NOATTR, '-', "Don't include any signed attributes"},
     {"binary", OPT_BINARY, '-', "Don't translate message to text"},
     {"certfile", OPT_CERTFILE, '<', "Other certificates file"},
-    {"signer", OPT_SIGNER, '<', "Signer certificate file"},
+    {"signer", OPT_SIGNER, 's', "Signer certificate file"},
     {"recip", OPT_RECIP, '<', "Recipient certificate file for decryption"},
     {"in", OPT_IN, '<', "Input file"},
-    {"inform", OPT_INFORM, 'F', "Input format SMIME (default), PEM or DER"},
+    {"inform", OPT_INFORM, 'c', "Input format SMIME (default), PEM or DER"},
     {"inkey", OPT_INKEY, '<',
      "Input private key (if not signer or recipient)"},
     {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
     {"out", OPT_OUT, '>', "Output file"},
-    {"outform", OPT_OUTFORM, 'F',
+    {"outform", OPT_OUTFORM, 'c',
      "Output format SMIME (default), PEM or DER"},
     {"content", OPT_CONTENT, '<',
      "Supply or override content for detached signature"},
@@ -200,14 +200,14 @@ int smime_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDS, &informat))
                 goto opthelp;
             break;
         case OPT_IN:
             infile = opt_arg();
             break;
         case OPT_OUTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDS, &outformat))
                 goto opthelp;
             break;
         case OPT_OUT:

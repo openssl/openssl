@@ -180,7 +180,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         switch (i) {
         case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
         case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
-        case 'u':
+        case 'u': case 'c':
             break;
         default:
             assert(0);
@@ -756,10 +756,12 @@ int opt_next(void)
                 return -1;
             }
             break;
+        case 'c':
         case 'E':
         case 'F':
         case 'f':
             if (opt_format(arg,
+                           o->valtype == 'c' ? OPT_FMT_PDS :
                            o->valtype == 'E' ? OPT_FMT_PDE :
                            o->valtype == 'F' ? OPT_FMT_PEMDER
                            : OPT_FMT_ANY, &ival))
