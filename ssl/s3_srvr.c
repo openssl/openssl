@@ -3463,8 +3463,22 @@ int ssl3_send_newsession_ticket(SSL *s)
          * all the work otherwise use generated values from parent ctx.
          */
         if (tctx->tlsext_ticket_key_cb) {
-            if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
-                                           &hctx, 1) < 0)
+            /* if 0 is returned, write en empty ticket */
+            int ret = tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
+                                                 &hctx, 1);
+
+            if (ret == 0) {
+                l2n(0, p); /* timeout */
+                s2n(0, p); /* length */
+                ssl_set_handshake_header(s, SSL3_MT_NEWSESSION_TICKET,
+                                         p - ssl_handshake_start(s));
+                s->state = SSL3_ST_SW_SESSION_TICKET_B;
+                OPENSSL_free(senc);
+                EVP_CIPHER_CTX_cleanup(&ctx);
+                HMAC_CTX_cleanup(&hctx);
+                return ssl_do_write(s);
+            }
+            if (ret < 0)
                 goto err;
         } else {
             if (RAND_bytes(iv, 16) <= 0)
