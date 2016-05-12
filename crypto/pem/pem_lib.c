@@ -558,13 +558,8 @@ static int load_iv(char **fromp, unsigned char *to, int num)
         to[i] = 0;
     num *= 2;
     for (i = 0; i < num; i++) {
-        if ((*from >= '0') && (*from <= '9'))
-            v = *from - '0';
-        else if ((*from >= 'A') && (*from <= 'F'))
-            v = *from - 'A' + 10;
-        else if ((*from >= 'a') && (*from <= 'f'))
-            v = *from - 'a' + 10;
-        else {
+        v = OPENSSL_hexchar2int(*from);
+        if (v < 0) {
             PEMerr(PEM_F_LOAD_IV, PEM_R_BAD_IV_CHARS);
             return (0);
         }

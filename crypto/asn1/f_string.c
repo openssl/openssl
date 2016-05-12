@@ -167,14 +167,8 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
         }
         for (j = 0; j < i; j++, k += 2) {
             for (n = 0; n < 2; n++) {
-                m = bufp[k + n];
-                if ((m >= '0') && (m <= '9'))
-                    m -= '0';
-                else if ((m >= 'a') && (m <= 'f'))
-                    m = m - 'a' + 10;
-                else if ((m >= 'A') && (m <= 'F'))
-                    m = m - 'A' + 10;
-                else {
+                m = OPENSSL_hexchar2int(bufp[k + n]);
+                if (m < 0) {
                     ASN1err(ASN1_F_A2I_ASN1_STRING,
                             ASN1_R_NON_HEX_CHARACTERS);
                     return 0;
