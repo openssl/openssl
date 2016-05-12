@@ -134,8 +134,8 @@ OPTIONS cms_options[] = {
         "  cert.pem... recipient certs for encryption\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format SMIME (default), PEM or DER"},
-    {"outform", OPT_OUTFORM, 'F',
+    {"inform", OPT_INFORM, 'c', "Input format SMIME (default), PEM or DER"},
+    {"outform", OPT_OUTFORM, 'c',
      "Output format SMIME (default), PEM or DER"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
@@ -278,11 +278,11 @@ int cms_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDS, &informat))
                 goto opthelp;
             break;
         case OPT_OUTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDS, &outformat))
                 goto opthelp;
             break;
         case OPT_OUT:
