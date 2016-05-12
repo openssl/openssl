@@ -1,6 +1,6 @@
 # I Can Haz Fuzz?
 
-Or, how to fuzz OpenSSL with libfuzzer.
+Or, how to fuzz OpenSSL with [libfuzzer](llvm.org/docs/LibFuzzer.html).
 
 Starting from a vanilla+OpenSSH server Ubuntu install.
 
