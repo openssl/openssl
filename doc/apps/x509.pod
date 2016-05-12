@@ -112,9 +112,8 @@ the digest to use.
 This affects any signing or display option that uses a message
 digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options.
 Any digest supported by the OpenSSL B<dgst> command can be used.
-If not specified then SHA1 is used.
-Note that if a DSA key is used for signing, then this flag is ignored
-and SHA1 is used.
+If not specified then SHA1 is used with B<-fingerprint> or
+the default digest for the signing algorithm is used, typically SHA256.
 
 =item B<-engine id>
 
