@@ -4,6 +4,12 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) With Windows Visual Studio builds, the .pdb files are installed
+     alongside the installed libraries and executables.  For a static
+     library installation, ossl_static.pdb is the associate compiler
+     generated .pdb file to be used when linking programs.
+     [Richard Levitte]
+
   *) Remove openssl.spec.  Packaging files belong with the packagers.
      [Richard Levitte]
 

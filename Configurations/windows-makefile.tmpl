@@ -60,8 +60,11 @@ SHLIB_VERSION_NUMBER={- $config{shlib_version_number} -}
 
 LIBS={- join(" ", map { $_.$libext } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
+SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; shlib($_) } @{$unified_info{libraries}}) -}
 ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
+ENGINEPDBS={- join(" ", map { local $dsoext = ".pdb"; dso($_) } @{$unified_info{engines}}) -}
 PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test\\| } @{$unified_info{programs}}) -}
+PROGRAMPDBS={- join(" ", map { $_.".pdb" } grep { !m|^test\\| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(" ", map { $_.$exeext } grep { m|^test\\| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
 
@@ -165,7 +168,7 @@ uninstall: uninstall_docs uninstall_sw
 libclean:
 	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*"""; } @ARGV" $(SHLIBS)
 	-del /Q /F $(LIBS)
-	-del lib.pdb
+	-del ossl_static.pdb
 
 clean: libclean
 	-del /Q /F $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
@@ -204,6 +207,9 @@ install_dev:
 	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)\$(LIBDIR)"
 	@$(PERL) $(SRCDIR)\util\copy.pl $(LIBS) \
 				       "$(DESTDIR)$(INSTALLTOP)\$(LIBDIR)"
+	@if "$(SHLIBS)"=="" \
+	 $(PERL) $(SRCDIR)\util\copy.pl ossl_static.pdb \
+                                       "$(DESTDIR)$(INSTALLTOP)\$(LIBDIR)"
 
 uninstall_dev:
 
@@ -213,6 +219,8 @@ install_engines:
 	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(ENGINESDIR)"
 	@if not "$(ENGINES)"=="" \
 	 $(PERL) $(SRCDIR)\util\copy.pl $(ENGINES) "$(DESTDIR)$(ENGINESDIR)"
+	@if not "$(ENGINES)"=="" \
+	 $(PERL) $(SRCDIR)\util\copy.pl $(ENGINEPDBS) "$(DESTDIR)$(ENGINESDIR)"
 
 uninstall_engines:
 
@@ -222,7 +230,13 @@ install_runtime:
 	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)\bin"
 	@if not "$(SHLIBS)"=="" \
 	 $(PERL) $(SRCDIR)\util\copy.pl $(SHLIBS) "$(DESTDIR)$(INSTALLTOP)\bin"
-	@$(PERL) $(SRCDIR)\util\copy.pl $(PROGRAMS) "$(DESTDIR)$(INSTALLTOP)\bin"
+	@if not "$(SHLIBS)"=="" \
+	 $(PERL) $(SRCDIR)\util\copy.pl $(SHLIBPDBS) \
+                                        "$(DESTDIR)$(INSTALLTOP)\bin"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(PROGRAMS) \
+                                        "$(DESTDIR)$(INSTALLTOP)\bin"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(PROGRAMPDBS) \
+                                        "$(DESTDIR)$(INSTALLTOP)\bin"
 
 uninstall_runtime:
 
