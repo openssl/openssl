@@ -500,7 +500,6 @@ static SUB_STATE_RETURN read_state_machine(SSL *s) {
     while(1) {
         switch(st->read_state) {
         case READ_STATE_HEADER:
-            s->init_num = 0;
             /* Get the state the peer wants to move to */
             if (SSL_IS_DTLS(s)) {
                 /*
@@ -559,6 +558,10 @@ static SUB_STATE_RETURN read_state_machine(SSL *s) {
                 return SUB_STATE_ERROR;
             }
             ret = process_message(s, &pkt);
+
+            /* Discard the packet data */
+            s->init_num = 0;
+
             if (ret == MSG_PROCESS_ERROR) {
                 return SUB_STATE_ERROR;
             }
