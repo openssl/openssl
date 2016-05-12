@@ -118,7 +118,7 @@ OPTIONS ec_options[] = {
 int ec_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    ENGINE *e;
+    ENGINE *e = NULL;
     EC_KEY *eckey = NULL;
     const EC_GROUP *group;
     const EVP_CIPHER *enc = NULL;
