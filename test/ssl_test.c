@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/conf.h>
 #include <openssl/err.h>
@@ -122,6 +123,33 @@ static int check_protocol(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
     return 1;
 }
 
+static int check_servername(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
+{
+    if (result.servername != test_ctx->servername) {
+        fprintf(stderr, "Client ServerName mismatch, expected %s, got %s\n.",
+                ssl_servername_name(test_ctx->servername),
+                ssl_servername_name(result.servername));
+        return 0;
+    }
+    return 1;
+}
+
+static int check_session_ticket_expected(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
+{
+    if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_IGNORE)
+        return 1;
+    if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_BROKEN &&
+        result.session_ticket == SSL_TEST_SESSION_TICKET_NO)
+        return 1;
+    if (result.session_ticket != test_ctx->session_ticket_expected) {
+        fprintf(stderr, "Client SessionTicketExpected mismatch, expected %s, got %s\n.",
+                ssl_session_ticket_expected_name(test_ctx->session_ticket_expected),
+                ssl_session_ticket_expected_name(result.session_ticket));
+        return 0;
+    }
+    return 1;
+}
+
 /*
  * This could be further simplified by constructing an expected
  * HANDSHAKE_RESULT, and implementing comparison methods for
@@ -132,28 +160,61 @@ static int check_test(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
     int ret = 1;
     ret &= check_result(result, test_ctx);
     ret &= check_alerts(result, test_ctx);
-    if (result.result == SSL_TEST_SUCCESS)
+    if (result.result == SSL_TEST_SUCCESS) {
         ret &= check_protocol(result, test_ctx);
+        ret &= check_servername(result, test_ctx);
+        ret &= check_session_ticket_expected(result, test_ctx);
+        ret &= (result.session_ticket_do_not_call == 0);
+    }
     return ret;
+}
+
+static int servername_callback(SSL *s, int *ad, void *arg)
+{
+    const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+    if (servername != NULL && !strcmp(servername, "server2")) {
+        SSL_CTX *new_ctx = (SSL_CTX*)arg;
+        SSL_set_SSL_CTX(s, new_ctx);
+        /*
+         * Copy over all the SSL_CTX options - reasonable behavior
+         * allows testing of cases where the options between two
+         * contexts differ/conflict
+         */
+        SSL_clear_options(s, 0xFFFFFFFFL);
+        SSL_set_options(s, SSL_CTX_get_options(new_ctx));
+    }
+    return SSL_TLSEXT_ERR_OK;
 }
 
 static int execute_test(SSL_TEST_FIXTURE fixture)
 {
     int ret = 0;
-    SSL_CTX *server_ctx = NULL, *client_ctx = NULL;
+    SSL_CTX *server_ctx = NULL, *server2_ctx = NULL, *client_ctx = NULL;
     SSL_TEST_CTX *test_ctx = NULL;
     HANDSHAKE_RESULT result;
 
     server_ctx = SSL_CTX_new(TLS_server_method());
+    server2_ctx = SSL_CTX_new(TLS_server_method());
     client_ctx = SSL_CTX_new(TLS_client_method());
-    OPENSSL_assert(server_ctx != NULL && client_ctx != NULL);
+    OPENSSL_assert(server_ctx != NULL && server2_ctx != NULL && client_ctx != NULL);
 
     OPENSSL_assert(CONF_modules_load(conf, fixture.test_app, 0) > 0);
 
     if (!SSL_CTX_config(server_ctx, "server")
-       || !SSL_CTX_config(client_ctx, "client")) {
+        || !SSL_CTX_config(server2_ctx, "server2")
+        || !SSL_CTX_config(client_ctx, "client")) {
         goto err;
     }
+
+    /* link the two contexts for SNI purposes */
+    SSL_CTX_set_tlsext_servername_callback(server_ctx, servername_callback);
+    SSL_CTX_set_tlsext_servername_arg(server_ctx, server2_ctx);
+    /*
+     * The initial_ctx/session_ctx always handles the encrypt/decrypt of the
+     * session ticket. This ticket_key callback is assigned to the second
+     * session (assigned via SNI), and should never be invoked
+     */
+    SSL_CTX_set_tlsext_ticket_key_cb(server2_ctx, do_not_call_session_ticket_callback);
 
     test_ctx = SSL_TEST_CTX_create(conf, fixture.test_app);
     if (test_ctx == NULL)
@@ -166,6 +227,7 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
 err:
     CONF_modules_unload(0);
     SSL_CTX_free(server_ctx);
+    SSL_CTX_free(server2_ctx);
     SSL_CTX_free(client_ctx);
     SSL_TEST_CTX_free(test_ctx);
     if (ret != 1)

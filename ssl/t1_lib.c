@@ -1502,6 +1502,9 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
             return NULL;
         s2n(TLSEXT_TYPE_session_ticket, ret);
         s2n(0, ret);
+    } else {
+        /* if we don't add the above TLSEXT, we can't add a session ticket later */
+        s->tlsext_ticket_expected = 0;
     }
 
     if (s->tlsext_status_expected) {
