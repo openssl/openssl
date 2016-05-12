@@ -871,14 +871,11 @@ static const struct poly1305_test poly1305_tests[] = {
 
 static unsigned char hex_digit(char h)
 {
-    if (h >= '0' && h <= '9')
-        return h - '0';
-    else if (h >= 'a' && h <= 'f')
-        return h - 'a' + 10;
-    else if (h >= 'A' && h <= 'F')
-        return h - 'A' + 10;
-    else
+    int i = OPENSSL_hexchar2int(h);
+
+    if (i < 0)
         abort();
+    return i;
 }
 
 static void hex_decode(unsigned char *out, const char *hex)

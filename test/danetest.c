@@ -198,7 +198,7 @@ static STACK_OF(X509) *load_chain(BIO *fp, int nelem)
         fprintf(stderr, "error reading: malformed %s\n", errtype);
         goto err;
     }
-    
+
     if (count == nelem) {
         ERR_clear_error();
         return chain;
@@ -252,19 +252,16 @@ static ossl_ssize_t hexdecode(const char *in, void *result)
         return -1;
 
     for (byte = 0; *in; ++in) {
-        char c;
+        int x;
 
         if (isspace(_UC(*in)))
             continue;
-        c = tolower(_UC(*in));
-        if ('0' <= c && c <= '9') {
-            byte |= c - '0';
-        } else if ('a' <= c && c <= 'f') {
-            byte |= c - 'a' + 10;
-        } else {
+        x = OPENSSL_hexchar2int(*in);
+        if (x < 0) {
             OPENSSL_free(ret);
             return 0;
         }
+        byte |= (char)x;
         if ((nibble ^= 1) == 0) {
             *cp++ = byte;
             byte = 0;

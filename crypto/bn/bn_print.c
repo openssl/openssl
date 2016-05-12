@@ -215,13 +215,8 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
         l = 0;
         for (;;) {
             c = a[j - m];
-            if ((c >= '0') && (c <= '9'))
-                k = c - '0';
-            else if ((c >= 'a') && (c <= 'f'))
-                k = c - 'a' + 10;
-            else if ((c >= 'A') && (c <= 'F'))
-                k = c - 'A' + 10;
-            else
+            k = OPENSSL_hexchar2int(c);
+            if (k < 0)
                 k = 0;          /* paranoia */
             l = (l << 4) | k;
 
