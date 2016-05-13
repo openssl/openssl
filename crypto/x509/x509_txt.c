@@ -165,6 +165,8 @@ const char *X509_verify_cert_error_string(long n)
         return ("Invalid certificate verification context");
     case X509_V_ERR_STORE_LOOKUP:
         return ("Issuer certificate lookup error");
+    case X509_V_ERR_NO_VALID_SCTS:
+        return ("Certificate Transparency required, but no valid SCTs found");
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */

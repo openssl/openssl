@@ -4134,6 +4134,23 @@ int ssl_validate_ct(SSL *s)
 
 end:
     CT_POLICY_EVAL_CTX_free(ctx);
+    /*
+     * With SSL_VERIFY_NONE the session may be cached and re-used despite a
+     * failure return code here.  Also the application may wish the complete
+     * the handshake, and then disconnect cleanly at a higher layer, after
+     * checking the verification status of the completed connection.
+     *
+     * We therefore force a certificate verification failure which will be
+     * visible via SSL_get_verify_result() and cached as part of any resumed
+     * session.
+     *
+     * Note: the permissive callback is for information gathering only, always
+     * returns success, and does not affect verification status.  Only the
+     * strict callback or a custom application-specified callback can trigger
+     * connection failure or record a verification error.
+     */
+    if (ret <= 0)
+        s->verify_result = X509_V_ERR_NO_VALID_SCTS;
     return ret;
 }
 
