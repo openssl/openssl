@@ -158,11 +158,12 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_EE_KEY_TOO_SMALL                     66
 # define         X509_V_ERR_CA_KEY_TOO_SMALL                     67
 # define         X509_V_ERR_CA_MD_TOO_WEAK                       68
-
 /* Caller error */
 # define         X509_V_ERR_INVALID_CALL                         69
 /* Issuer lookup error */
 # define         X509_V_ERR_STORE_LOOKUP                         70
+/* Certificate transparency */
+# define         X509_V_ERR_NO_VALID_SCTS                        71
 
 /* Certificate verify flags */
 
