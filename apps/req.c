@@ -549,7 +549,7 @@ int req_main(int argc, char **argv)
 #ifndef OPENSSL_NO_EC
             if (pkey_type == EVP_PKEY_EC
                     && EVP_PKEY_CTX_get_ec_keygen_bits(genctx, &newkey) <= 0) {
-                BIO_printf(bio_err, "Error setting EC keysize\n");
+                BIO_printf(bio_err, "Error getting EC key generator key size\n");
                 ERR_print_errors(bio_err);
                 goto end;
 			}
