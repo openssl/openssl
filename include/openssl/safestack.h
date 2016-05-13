@@ -92,11 +92,11 @@ extern "C" {
     STACK_OF(t1); \
     static ossl_inline int sk_##t1##_num(const STACK_OF(t1) *sk) \
     { \
-        return sk_num((_STACK *)sk); \
+        return sk_num((const _STACK *)sk); \
     } \
     static ossl_inline t2 *sk_##t1##_value(const STACK_OF(t1) *sk, int idx) \
     { \
-        return (t2 *)sk_value((_STACK *)sk, idx); \
+        return (t2 *)sk_value((const _STACK *)sk, idx); \
     } \
     static ossl_inline STACK_OF(t1) *sk_##t1##_new(int (*cmpf)(const t3 * const *a, const t3 * const *b)) \
     { \
@@ -106,11 +106,11 @@ extern "C" {
     { \
         return (STACK_OF(t1) *)sk_new_null(); \
     } \
-    static ossl_inline void sk_##t1##_free(const STACK_OF(t1) *sk) \
+    static ossl_inline void sk_##t1##_free(STACK_OF(t1) *sk) \
     { \
         sk_free((_STACK *)sk); \
     } \
-    static ossl_inline void sk_##t1##_zero(const STACK_OF(t1) *sk) \
+    static ossl_inline void sk_##t1##_zero(STACK_OF(t1) *sk) \
     { \
         sk_zero((_STACK *)sk); \
     } \
@@ -158,13 +158,13 @@ extern "C" {
     { \
         return sk_find_ex((_STACK *)sk, (void *)ptr); \
     } \
-    static ossl_inline void sk_##t1##_sort(const STACK_OF(t1) *sk) \
+    static ossl_inline void sk_##t1##_sort(STACK_OF(t1) *sk) \
     { \
         sk_sort((_STACK *)sk); \
     } \
     static ossl_inline int sk_##t1##_is_sorted(const STACK_OF(t1) *sk) \
     { \
-        return sk_is_sorted((_STACK *)sk); \
+        return sk_is_sorted((const _STACK *)sk); \
     } \
     static ossl_inline STACK_OF(t1) * sk_##t1##_dup(STACK_OF(t1) *sk) \
     { \
