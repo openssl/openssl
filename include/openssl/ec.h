@@ -1385,6 +1385,11 @@ void EC_KEY_METHOD_get_verify(EC_KEY_METHOD *meth,
                                 EVP_PKEY_OP_DERIVE, \
                                 EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0, (void *)p)
 
+# define EVP_PKEY_CTX_get_ec_keygen_bits(ctx, bits) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
+                                EVP_PKEY_OP_KEYGEN, \
+                                EVP_PKEY_CTRL_GET_EC_KEYGEN_BITS, 0, bits)
+
 # define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID             (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_EC_PARAM_ENC                      (EVP_PKEY_ALG_CTRL + 2)
 # define EVP_PKEY_CTRL_EC_ECDH_COFACTOR                  (EVP_PKEY_ALG_CTRL + 3)
@@ -1395,6 +1400,7 @@ void EC_KEY_METHOD_get_verify(EC_KEY_METHOD *meth,
 # define EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN                 (EVP_PKEY_ALG_CTRL + 8)
 # define EVP_PKEY_CTRL_EC_KDF_UKM                        (EVP_PKEY_ALG_CTRL + 9)
 # define EVP_PKEY_CTRL_GET_EC_KDF_UKM                    (EVP_PKEY_ALG_CTRL + 10)
+# define EVP_PKEY_CTRL_GET_EC_KEYGEN_BITS                (EVP_PKEY_ALG_CTRL + 11)
 /* KDF types */
 # define EVP_PKEY_ECDH_KDF_NONE                          1
 # define EVP_PKEY_ECDH_KDF_X9_62                         2

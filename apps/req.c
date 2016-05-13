@@ -545,7 +545,16 @@ int req_main(int argc, char **argv)
                     goto end;
                 }
             }
+
+#ifndef OPENSSL_NO_EC
+            if (pkey_type == EVP_PKEY_EC
+                    && EVP_PKEY_CTX_get_ec_keygen_bits(genctx, &newkey) <= 0) {
+                BIO_printf(bio_err, "Error setting EC keysize\n");
+                ERR_print_errors(bio_err);
+                goto end;
+			}
         }
+#endif
 
         BIO_printf(bio_err, "Generating a %ld bit %s private key\n",
                    newkey, keyalgstr);

@@ -320,6 +320,15 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             dctx->co_key = NULL;
         }
         return 1;
+
+    case EVP_PKEY_CTRL_GET_EC_KEYGEN_BITS:
+        if (!dctx->gen_group) {
+            ECerr(EC_F_PKEY_EC_CTRL, EC_R_NO_PARAMETERS_SET);
+            return 0;
+        }
+        *((int*)p2) = EC_GROUP_order_bits(dctx->gen_group);
+        return 1;
+
 #endif
 
     case EVP_PKEY_CTRL_EC_KDF_TYPE:
