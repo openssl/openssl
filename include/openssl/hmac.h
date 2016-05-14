@@ -67,7 +67,7 @@
 extern "C" {
 #endif
 
-size_t HMAC_size(HMAC_CTX *e);
+size_t HMAC_size(const HMAC_CTX *e);
 HMAC_CTX *HMAC_CTX_new(void);
 int HMAC_CTX_reset(HMAC_CTX *ctx);
 void HMAC_CTX_free(HMAC_CTX *ctx);
