@@ -370,7 +370,7 @@ int X509_OBJECT_up_ref_count(X509_OBJECT *a)
     return 1;
 }
 
-X509 *X509_OBJECT_get0_X509(X509_OBJECT *a)
+X509 *X509_OBJECT_get0_X509(const X509_OBJECT *a)
 {
     if (a == NULL || a->type != X509_LU_X509)
         return NULL;
@@ -384,7 +384,7 @@ X509_CRL *X509_OBJECT_get0_X509_CRL(X509_OBJECT *a)
     return a->data.crl;
 }
 
-int X509_OBJECT_get_type(X509_OBJECT *a)
+int X509_OBJECT_get_type(const X509_OBJECT *a)
 {
     return a->type;
 }
