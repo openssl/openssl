@@ -164,7 +164,7 @@ int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len)
     return 0;
 }
 
-size_t HMAC_size(HMAC_CTX *ctx)
+size_t HMAC_size(const HMAC_CTX *ctx)
 {
     return EVP_MD_size((ctx)->md);
 }
