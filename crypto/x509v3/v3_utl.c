@@ -122,7 +122,7 @@ char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
     return strtmp;
 }
 
-ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
+ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 {
     BIGNUM *bn = NULL;
     ASN1_INTEGER *aint;
