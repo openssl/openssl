@@ -799,7 +799,7 @@ void ASN1_add_oid_module(void);
 void ASN1_add_stable_module(void);
 
 ASN1_TYPE *ASN1_generate_nconf(char *str, CONF *nconf);
-ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf);
+ASN1_TYPE *ASN1_generate_v3(const char *str, X509V3_CTX *cnf);
 int ASN1_str2mask(const char *str, unsigned long *pmask);
 
 /* ASN1 Print flags */
