@@ -621,7 +621,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             goto bad_form;
         }
         if ((atmp->value.integer
-                    = s2i_ASN1_INTEGER(NULL, (char *)str)) == NULL) {
+                    = s2i_ASN1_INTEGER(NULL, str)) == NULL) {
             ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_INTEGER);
             goto bad_str;
         }
@@ -694,7 +694,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
         }
 
         if (format == ASN1_GEN_FORMAT_HEX) {
-            if ((rdata = OPENSSL_hexstr2buf((char *)str, &rdlen)) == NULL) {
+            if ((rdata = OPENSSL_hexstr2buf(str, &rdlen)) == NULL) {
                 ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_HEX);
                 goto bad_str;
             }
