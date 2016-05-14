@@ -378,13 +378,13 @@ install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                 {- sourcefile("VMS", "openssl_utils.com") -} -
                 ossl_installroot:[SYS$STARTUP]
 
-[.VMS]openssl_startup.com : vmsconfig.pm [.VMS]openssl_startup.com.in
+[.VMS]openssl_startup.com : vmsconfig.pm {- sourcefile("VMS", "openssl_startup.com.in") -}
         - CREATE/DIR [.VMS]
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
                 {- sourcefile("VMS", "openssl_startup.com.in") -} -
                 > [.VMS]openssl_startup.com
 
-[.VMS]openssl_shutdown.com : vmsconfig.pm [.VMS]openssl_shutdown.com.in
+[.VMS]openssl_shutdown.com : vmsconfig.pm {- sourcefile("VMS", "openssl_shutdown.com.in") -}
         - CREATE/DIR [.VMS]
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
                 {- sourcefile("VMS", "openssl_shutdown.com.in") -} -
