@@ -69,6 +69,37 @@ _armv8_pmull_probe:
 	pmull	v0.1q, v0.1d, v0.1d
 	ret
 .size	_armv8_pmull_probe,.-_armv8_pmull_probe
+
+.globl	OPENSSL_cleanse
+.type	OPENSSL_cleanse,%function
+.align	5
+OPENSSL_cleanse:
+	cbz	x1,.Lret	// len==0?
+	cmp	x1,#15
+	b.hi	.Lot		// len>15
+	nop
+.Little:
+	strb	wzr,[x0],#1	// store byte-by-byte
+	subs	x1,x1,#1
+	b.ne	.Little
+.Lret:	ret
+
+.align	4
+.Lot:	tst	x0,#7
+	b.eq	.Laligned	// inp is aligned
+	strb	wzr,[x0],#1	// store byte-by-byte
+	sub	x1,x1,#1
+	b	.Lot
+
+.align	4
+.Laligned:
+	str	xzr,[x0],#8	// store word-by-word
+	sub	x1,x1,#8
+	tst	x1,#-8
+	b.ne	.Laligned	// len>=8
+	cbnz	x1,.Little	// len!=0?
+	ret
+.size	OPENSSL_cleanse,.-OPENSSL_cleanse
 ___
 
 print $code;
