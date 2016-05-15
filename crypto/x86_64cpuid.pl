@@ -230,15 +230,15 @@ OPENSSL_cleanse:
 .align  16
 CRYPTO_memcmp:
 	xor	%rax,%rax
-	xor	%r8,%r8
+	xor	%r10,%r10
 	cmp	\$0,$arg3
 	je	.Lno_data
 .Loop_cmp:
-	mov	($arg1),%r8b
+	mov	($arg1),%r10b
 	lea	1($arg1),$arg1
-	xor	($arg2),%r8b
+	xor	($arg2),%r10b
 	lea	1($arg2),$arg2
-	or	%r8b,%al
+	or	%r10b,%al
 	dec	$arg3
 	jnz	.Loop_cmp
 	neg	%rax
