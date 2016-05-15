@@ -479,7 +479,7 @@ end_of_options:
 
     if ((conf = app_load_config(configfile)) == NULL)
         goto end;
-    if (!app_load_modules(conf))
+    if (configfile != default_config_file && !app_load_modules(conf))
         goto end;
 
     /* Lets get the config section we are using */

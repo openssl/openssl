@@ -339,7 +339,7 @@ int ts_main(int argc, char **argv)
     }
 
     conf = load_config_file(configfile);
-    if (!app_load_modules(conf))
+    if (configfile != default_config_file && !app_load_modules(conf))
         goto end;
 
     /* Check parameter consistency and execute the appropriate function. */

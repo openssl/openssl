@@ -386,7 +386,7 @@ int req_main(int argc, char **argv)
     if (verbose)
         BIO_printf(bio_err, "Using configuration from %s\n", template);
     req_conf = app_load_config(template);
-    if (!app_load_modules(req_conf))
+    if (template != default_config_file && !app_load_modules(req_conf))
         goto end;
 
     if (req_conf != NULL) {
