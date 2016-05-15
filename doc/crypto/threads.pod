@@ -2,12 +2,16 @@
 
 =head1 NAME
 
+CRYPTO_THREAD_run_once,
 CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free, CRYPTO_atomic_add - OpenSSL thread support
 
 =head1 SYNOPSIS
 
  #include <openssl/crypto.h>
+
+ CRYPTO_ONCE CRYPTO_ONCE_STATIC_INIT;
+ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void));
 
  CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void);
  int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock);
@@ -29,6 +33,16 @@ supported by OpenSSL.
 The following multi-threading function are provided:
 
 =over 4
+
+=item *
+CRYPTO_THREAD_run_once() can be used to perform one-time initialization.
+The B<once> argument must be a pointer to a static object of type
+B<CRYPTO_ONCE> that was statically initialized to the value
+B<CRYPTO_ONCE_STATIC_INIT>.
+The B<init> argument is a pointer to a function that performs the desired
+exactly once initialization.
+In particular, this can be used to allocate locks in a thread-safe manner,
+which can then be used with the locking functions below.
 
 =item *
 CRYPTO_THREAD_lock_new() allocates, initializes and returns a new read/write
@@ -57,17 +71,62 @@ be the only way that the variable is modified.
 
 =head1 RETURN VALUES
 
+CRYPTO_THREAD_run_once() returns 1 on success, or 0 on error.
+
 CRYPTO_THREAD_lock_new() returns the allocated lock, or NULL on error.
 
 CRYPTO_THREAD_lock_frees() returns no value.
 
 The other functions return 1 on success or 0 on error.
 
+=head1 EXAMPLE
+
+This example safely initializes and uses a lock.
+
+  #include <openssl/crypto.h>
+  
+  static CRYPTO_ONCE once = CRYPTO_ONCE_STATIC_INIT;
+  static CRYPTO_RWLOCK *lock;
+  
+  static void myinit(void)
+  {
+      lock = CRYPTO_THREAD_lock_new();
+  }
+  
+  static int mylock(void)
+  {
+      if (!CRYPTO_THREAD_run_once(&once, void init) || lock == NULL)
+          return 0;
+      return CRYPTO_THREAD_write_lock(lock);
+  }
+  
+  static int myunlock(void)
+  {
+      return CRYPTO_THREAD_unlock(lock);
+  }
+  
+  int serialized(void)
+  {
+      int ret = 0;
+  
+      if (mylock()) {
+          /* Your code here, do not return without releasing the lock! */
+          ret = ... ;
+      }
+      myunlock();
+      return ret;
+  }
+
+Finalization of locks is an advanced topic, not covered in this example.
+This can only be done at process exit or when a dynamically loaded library is
+no longer in use and is unloaded.
+The simplest solution is to just "leak" the lock in applications and not
+repeatedly load/unload shared libraries that allocate locks.
+
 =head1 NOTES
 
 You can find out if OpenSSL was configured with thread support:
 
- #define OPENSSL_THREAD_DEFINES
  #include <openssl/opensslconf.h>
  #if defined(OPENSSL_THREADS)
    // thread support enabled

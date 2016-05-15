@@ -191,7 +191,6 @@
 # include <openssl/ct.h>
 #endif
 
-#include "internal/threads.h"
 #include "../ssl/ssl_locl.h"
 
 /*

@@ -57,7 +57,6 @@
 
 #include "e_os.h"
 
-#include "internal/threads.h"
 #include "internal/err.h"
 #include <openssl/crypto.h>
 #include <openssl/evp.h>

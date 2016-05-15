@@ -55,7 +55,7 @@
 #include <string.h>
 
 #include "bio_lcl.h"
-#include "internal/threads.h"
+#include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_SOCK
 #include <openssl/err.h>

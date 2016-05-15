@@ -112,7 +112,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include "internal/cryptlib.h"
-#include "internal/threads.h"
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include "internal/bio.h"

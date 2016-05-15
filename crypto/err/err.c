@@ -112,7 +112,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <internal/cryptlib_int.h>
-#include <internal/threads.h>
 #include <internal/err.h>
 #include <internal/err_int.h>
 #include <openssl/lhash.h>

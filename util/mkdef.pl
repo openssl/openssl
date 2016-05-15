@@ -247,7 +247,6 @@ $ssl.=" include/openssl/srtp.h";
 my $crypto ="include/openssl/crypto.h";
 $crypto.=" include/internal/o_dir.h";
 $crypto.=" include/internal/o_str.h";
-$crypto.=" include/internal/threads.h";
 $crypto.=" include/internal/err.h";
 $crypto.=" include/openssl/des.h" ; # unless $no_des;
 $crypto.=" include/openssl/idea.h" ; # unless $no_idea;

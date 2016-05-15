@@ -55,7 +55,6 @@
  *
  */
 
-#include <internal/threads.h>
 #include <internal/cryptlib_int.h>
 #include <openssl/err.h>
 #include <internal/rand.h>

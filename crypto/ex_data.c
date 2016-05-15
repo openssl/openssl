@@ -109,7 +109,6 @@
  */
 
 #include "internal/cryptlib_int.h"
-#include "internal/threads.h"
 #include <openssl/lhash.h>
 
 /*

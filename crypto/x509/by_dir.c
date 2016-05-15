@@ -71,7 +71,6 @@
 
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
-#include "internal/threads.h"
 #include "internal/x509_int.h"
 #include "x509_lcl.h"
 
