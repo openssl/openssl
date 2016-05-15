@@ -125,6 +125,33 @@ OPENSSL_cleanse:
 	br	%r14
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
+.globl	CRYPTO_memcmp
+.type	CRYPTO_memcmp,@function
+.align	16
+CRYPTO_memcmp:
+#if !defined(__s390x__) && !defined(__s390x)
+	llgfr	%r4,%r4
+#endif
+	lghi	%r5,0
+	clgr	%r4,%r5
+	je	.Lno_data
+
+.Loop_cmp:
+	llc	%r0,0(%r2)
+	la	%r2,1(%r2)
+	llc	%r1,0(%r3)
+	la	%r3,1(%r3)
+	xr	%r1,%r0
+	or	%r5,%r1
+	brctg	%r4,.Loop_cmp
+
+	lnr	%r5,%r5
+	srl	%r5,31
+.Lno_data:
+	lgr	%r2,%r5
+	br	%r14
+.size	CRYPTO_memcmp,.-CRYPTO_memcmp
+
 .globl	OPENSSL_instrument_bus
 .type	OPENSSL_instrument_bus,@function
 .align	16

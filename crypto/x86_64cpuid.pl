@@ -224,6 +224,28 @@ OPENSSL_cleanse:
 	jne	.Little
 	ret
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
+
+.globl  CRYPTO_memcmp
+.type   CRYPTO_memcmp,\@abi-omnipotent
+.align  16
+CRYPTO_memcmp:
+	xor	%rax,%rax
+	xor	%r8,%r8
+	cmp	\$0,$arg3
+	je	.Lno_data
+.Loop_cmp:
+	mov	($arg1),%r8b
+	lea	1($arg1),$arg1
+	xor	($arg2),%r8b
+	lea	1($arg2),$arg2
+	or	%r8b,%al
+	dec	$arg3
+	jnz	.Loop_cmp
+	neg	%rax
+	shr	\$63,%rax
+.Lno_data:
+	ret
+.size	CRYPTO_memcmp,.-CRYPTO_memcmp
 ___
 
 print<<___ if (!$win64);

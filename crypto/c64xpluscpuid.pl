@@ -18,6 +18,7 @@ $code.=<<___;
 	.if	__TI_EABI__
 	.asg	OPENSSL_rdtsc,_OPENSSL_rdtsc
 	.asg	OPENSSL_cleanse,_OPENSSL_cleanse
+	.asg	CRYPTO_memcmp,_CRYPTO_memcmp
 	.asg	OPENSSL_atomic_add,_OPENSSL_atomic_add
 	.asg	OPENSSL_wipe_cpu,_OPENSSL_wipe_cpu
 	.asg	OPENSSL_instrument_bus,_OPENSSL_instrument_bus
@@ -85,6 +86,29 @@ _OPENSSL_cleanse:
 || [B1] STB	B2,*B6++[2]
 || [B0]	CMPLT	6,B0,A1
    [A1]	STB	A2,*A4++[2]
+	.endasmfunc
+
+	.global	_CRYPTO_memcmp
+_CRYPTO_memcmp:
+	.asmfunc
+	MV	A6,B0
+  [!B0]	BNOP	RA
+||[!B0]	ZERO	A4
+   [B0]	MVC	B0,ILC
+|| [B0]	ZERO	A0
+	NOP	4
+
+	SPLOOP	1
+	LDBU	*A4++,A1
+||	LDBU	*B4++,B1
+	NOP	4
+	XOR.L	B1,A1,A2
+	SPKERNEL 1,0
+||	OR.S	A2,A0,A0
+
+	BNOP	RA,3
+	ZERO.L	A4
+  [A0]	MVK	1,A4
 	.endasmfunc
 
 	.global	_OPENSSL_atomic_add

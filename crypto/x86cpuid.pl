@@ -365,6 +365,31 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&ret	();
 &function_end_B("OPENSSL_cleanse");
 
+&function_begin_B("CRYPTO_memcmp");
+	&push	("esi");
+	&push	("edi");
+	&mov	("esi",&wparam(0));
+	&mov	("edi",&wparam(1));
+	&mov	("ecx",&wparam(2));
+	&xor	("eax","eax");
+	&xor	("edx","edx");
+	&cmp	("ecx",0);
+	&je	(&label("no_data"));
+&set_label("loop");
+	&mov	("dl",&BP(0,"esi"));
+	&lea	("esi",&DWP(1,"esi"));
+	&xor	("dl",&BP(0,"edi"));
+	&lea	("edi",&DWP(1,"edi"));
+	&or	("al","dl");
+	&dec	("ecx");
+	&jnz	(&label("loop"));
+	&neg	("eax");
+	&shr	("eax",31);
+&set_label("no_data");
+	&pop	("edi");
+	&pop	("esi");
+	&ret	();
+&function_end_B("CRYPTO_memcmp");
 {
 my $lasttick = "esi";
 my $lastdiff = "ebx";
