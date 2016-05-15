@@ -50,7 +50,6 @@
 #include <stdio.h>
 
 #include <openssl/crypto.h>
-#include "internal/threads.h"
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
 

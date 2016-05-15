@@ -61,7 +61,6 @@
 /* This must be the first #include file */
 #include "async_locl.h"
 
-#include <internal/threads.h>
 #include <openssl/err.h>
 #include <internal/cryptlib_int.h>
 #include <string.h>

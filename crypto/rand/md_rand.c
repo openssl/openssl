@@ -125,7 +125,6 @@
 #include <openssl/rand.h>
 #include <openssl/async.h>
 #include "rand_lcl.h"
-#include "internal/threads.h"
 
 #include <openssl/err.h>
 

@@ -25,7 +25,6 @@
 # include <sys/param.h>
 # include <sys/stat.h>
 # include <fcntl.h>
-# include "internal/threads.h"
 #endif
 
 #define CLEAR(p, s) OPENSSL_cleanse(p, s)

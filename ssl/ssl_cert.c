@@ -127,7 +127,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
-#include "internal/threads.h"
+#include <openssl/crypto.h>
 #include "ssl_locl.h"
 
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx, int op,

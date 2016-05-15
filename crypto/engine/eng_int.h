@@ -65,7 +65,6 @@
 # define HEADER_ENGINE_INT_H
 
 # include "internal/cryptlib.h"
-# include "internal/threads.h"
 # include <internal/engine.h>
 
 #ifdef  __cplusplus
