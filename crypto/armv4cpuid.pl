@@ -105,6 +105,36 @@ OPENSSL_cleanse:
 #endif
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
+.global	CRYPTO_memcmp
+.type	CRYPTO_memcmp,%function
+.align	4
+CRYPTO_memcmp:
+	eor	ip,ip,ip
+	cmp	r2,#0
+	beq	.Lno_data
+	stmdb	sp!,{r4,r5}
+
+.Loop_cmp:
+	ldrb	r4,[r0],#1
+	ldrb	r5,[r1],#1
+	eor	r4,r4,r5
+	orr	ip,ip,r4
+	subs	r2,r2,#1
+	bne	.Loop_cmp
+
+	ldmia	sp!,{r4,r5}
+.Lno_data:
+	neg	r0,ip
+	mov	r0,r0,lsr#31
+#if __ARM_ARCH__>=5
+	bx	lr
+#else
+	tst	lr,#1
+	moveq	pc,lr
+	.word	0xe12fff1e	@ bx	lr
+#endif
+.size	CRYPTO_memcmp,.-CRYPTO_memcmp
+
 #if __ARM_MAX_ARCH__>=7
 .arch	armv7-a
 .fpu	neon

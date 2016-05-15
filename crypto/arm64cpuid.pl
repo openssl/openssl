@@ -100,6 +100,26 @@ OPENSSL_cleanse:
 	cbnz	x1,.Little	// len!=0?
 	ret
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
+
+.globl	CRYPTO_memcmp
+.type	CRYPTO_memcmp,%function
+.align	4
+CRYPTO_memcmp:
+	eor	w3,w3,w3
+	cbz	x2,.Lno_data	// len==0?
+.Loop_cmp:
+	ldrb	w4,[x0],#1
+	ldrb	w5,[x1],#1
+	eor	w4,w4,w5
+	orr	w3,w3,w4
+	subs	x2,x2,#1
+	b.ne	.Loop_cmp
+
+.Lno_data:
+	neg	w0,w3
+	lsr	w0,w0,#31
+	ret
+.size	CRYPTO_memcmp,.-CRYPTO_memcmp
 ___
 
 print $code;

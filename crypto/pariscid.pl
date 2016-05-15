@@ -138,6 +138,37 @@ L\$done
 ___
 }
 {
+my ($in1,$in2,$len)=("%r26","%r25","%r24");
+
+$code.=<<___;
+	.EXPORT	CRYPTO_memcmp,ENTRY,ARGW0=GR,ARGW1=GR,ARGW1=GR
+	.ALIGN	8
+CRYPTO_memcmp
+	.PROC
+	.CALLINFO	NO_CALLS
+	.ENTRY
+	cmpib,*=	0,$len,L\$no_data
+	xor		$rv,$rv,$rv
+
+L\$oop_cmp
+	ldb		0($in1),%r19
+	ldb		0($in2),%r20
+	ldo		1($in1),$in1
+	ldo		1($in2),$in2
+	xor		%r19,%r20,%r29
+	addib,*<>	-1,$len,L\$oop_cmp
+	or		%r29,$rv,$rv
+
+	sub		%r0,$rv,%r29
+	extru		%r29,31,1,$rv
+L\$no_data
+	bv		($rp)
+	.EXIT
+	nop
+	.PROCEND
+___
+}
+{
 my ($out,$cnt,$max)=("%r26","%r25","%r24");
 my ($tick,$lasttick)=("%r23","%r22");
 my ($diff,$lastdiff)=("%r21","%r20");
