@@ -9,11 +9,6 @@
 
 #include "e_os.h"
 
-/* We need to define this to get macros like S_IFBLK and S_IFCHR */
-#if !defined(OPENSSL_SYS_VXWORKS)
-# define _XOPEN_SOURCE 500
-#endif
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +27,29 @@
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 # include <fcntl.h>
+/*
+ * Following should not be needed, and we could have been stricter
+ * and demand S_IS*. But some systems just don't comply... Formally
+ * below macros are "anatomically incorrect", because normally they
+ * would look like ((m) & MASK == TYPE), but since MASK availability
+ * is as questionable, we settle for this poor-man fallback...
+ */
+# if !defined(S_ISBLK)
+#  if defined(_S_IFBLK)
+#   define S_ISBLK(m) ((m) & _S_IFBLK)
+#  elif defined(S_IFBLK)
+#   define S_ISBLK(m) ((m) & S_IFBLK)
+#  elif defined(_WIN32)
+#   define S_ISBLK(m) 0 /* no concept of block devices on Windows */
+#  endif
+# endif
+# if !defined(S_ISCHR)
+#  if defined(_S_IFCHR)
+#   define S_ISCHR(m) ((m) & _S_IFCHR)
+#  elif defined(S_IFCHR)
+#   define S_ISCHR(m) ((m) & S_IFCHR)
+#  endif
+# endif
 #endif
 
 #ifdef _WIN32
@@ -101,15 +119,15 @@ int RAND_load_file(const char *file, long bytes)
 #endif
     if (in == NULL)
         goto err;
-#if defined(S_IFBLK) && defined(S_IFCHR) && !defined(OPENSSL_NO_POSIX_IO)
-    if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
+#if defined(S_ISBLK) && defined(S_ISCHR) && !defined(OPENSSL_NO_POSIX_IO)
+    if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
         /*
          * this file is a device. we don't want read an infinite number of
          * bytes from a random device, nor do we want to use buffered I/O
          * because we will waste system entropy.
          */
         bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
-        setbuf(stdin, NULL); /* don't do buffered reads */
+        setbuf(in, NULL); /* don't do buffered reads */
     }
 #endif
     for (;;) {
