@@ -849,7 +849,8 @@ typedef enum PROTOCOL_choice {
     PROTO_XMPP,
     PROTO_XMPP_SERVER,
     PROTO_CONNECT,
-    PROTO_IRC
+    PROTO_IRC,
+    PROTO_POSTGRES
 } PROTOCOL_CHOICE;
 
 static OPT_PAIR services[] = {
@@ -861,6 +862,7 @@ static OPT_PAIR services[] = {
     {"xmpp-server", PROTO_XMPP_SERVER},
     {"telnet", PROTO_TELNET},
     {"irc", PROTO_IRC},
+    {"postgres", PROTO_POSTGRES},
     {NULL}
 };
 
@@ -2161,6 +2163,25 @@ int s_client_main(int argc, char **argv)
                 goto shut;
             }
         }
+        break;
+    case PROTO_POSTGRES:
+        {
+            static const unsigned char ssl_request[] = {
+                /* Length        SSLRequest */
+                   0, 0, 0, 8,   4, 210, 22, 47
+            };
+            int bytes;
+
+            /* Send SSLRequest packet */
+            BIO_write(sbio, ssl_request, 8);
+            (void)BIO_flush(sbio);
+
+            /* Reply will be a single S if SSL is enabled */
+            bytes = BIO_read(sbio, sbuf, BUFSIZZ);
+            if (bytes != 1 || sbuf[0] != 'S')
+                goto shut;
+        }
+        break;
     }
 
     for (;;) {
