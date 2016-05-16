@@ -259,7 +259,7 @@ clean: libclean
 	rm -f core
 	rm -f tags TAGS
 	rm -f openssl.pc libcrypto.pc libssl.pc
-	-rm -f `find . -type l`
+	-rm -f `find . -type l -a \! -path "./.git/*"`
 	rm -f $(TARFILE)
 
 # This exists solely for those who still type 'make depend'
