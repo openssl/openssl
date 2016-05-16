@@ -2633,7 +2633,7 @@ void wait_for_async(SSL *s)
         return;
     if (numfds == 0)
         return;
-    fds = OPENSSL_malloc(sizeof(OSSL_ASYNC_FD) * numfds);
+    fds = app_malloc(sizeof(OSSL_ASYNC_FD) * numfds, "allocate async fds");
     if (!SSL_get_all_async_fds(s, fds, &numfds)) {
         OPENSSL_free(fds);
     }

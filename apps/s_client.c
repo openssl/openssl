@@ -509,7 +509,7 @@ static ossl_ssize_t hexdecode(const char **inptr, void *result)
 {
     unsigned char **out = (unsigned char **)result;
     const char *in = *inptr;
-    unsigned char *ret = OPENSSL_malloc(strlen(in)/2);
+    unsigned char *ret = app_malloc(strlen(in)/2, "hexdecode");
     unsigned char *cp = ret;
     uint8_t byte;
     int nibble = 0;
