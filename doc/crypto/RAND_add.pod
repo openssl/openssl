@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RAND_add, RAND_seed, RAND_status - add
+RAND_add, RAND_seed, RAND_status, RAND_event, RAND_screen - add
 entropy to the PRNG
 
 =head1 SYNOPSIS
@@ -14,6 +14,9 @@ entropy to the PRNG
  void RAND_add(const void *buf, int num, double entropy);
 
  int  RAND_status(void);
+
+ int  RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam);
+ void RAND_screen(void);
 
 =head1 DESCRIPTION
 
@@ -43,6 +46,10 @@ RAND_seed() is equivalent to RAND_add() when B<num == entropy>.
 
 RAND_status() returns 1 if the PRNG has been seeded
 with enough data, 0 otherwise.
+
+RAND_event() calls RAND_poll() and returns RAND_seed().
+
+RAND_screen calls RAND_poll().
 
 The other functions do not return values.
 

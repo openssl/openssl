@@ -65,6 +65,19 @@ int RAND_poll(void)
     return (1);
 }
 
+#if OPENSSL_API_COMPAT < 0x00101000L
+int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
+{
+    RAND_poll();
+    return RAND_status();
+}
+
+void RAND_screen(void)
+{
+    RAND_poll();
+}
+#endif
+
 /* feed timing information to the PRNG */
 static void readtimer(void)
 {
