@@ -33,6 +33,14 @@ Deprecated:
  void RAND_cleanup(void)
  #endif
 
+/* For Win32 only */
+
+ #if OPENSSL_API_COMPAT < 0x10100000L
+ void RAND_screen(void);
+ int RAND_event(UINT, WPARAM, LPARAM);
+ #endif
+
+
 =head1 DESCRIPTION
 
 Since the introduction of the ENGINE API, the recommended way of controlling
