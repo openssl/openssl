@@ -84,7 +84,12 @@ DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
 {- output_on() if $disabled{makedepend}; "" -}
-GENERATED={- join(" ", map { (my $x = $_) =~ s|\.S$|\.s|; $x } keys %{$unified_info{generate}}) -}
+GENERATED={- join(" ",
+                  ( map { (my $x = $_) =~ s|\.S$|\.s|; $x }
+                    grep { defined $unified_info{generate}->{$_} }
+                    map { @{$unified_info{sources}->{$_}} }
+                    grep { /\.o$/ } keys %{$unified_info{sources}} ),
+                  ( grep { /\.h$/ } keys %{$unified_info{generate}} )) -}
 
 {- output_off() if $disabled{apps}; "" -}
 BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
