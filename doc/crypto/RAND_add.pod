@@ -60,7 +60,7 @@ The other functions do not return values.
 =head1 HISTORY
 
 RAND_event() and RAND_screen() are deprecated since OpenSSL
-1.1.  Use the functions described above instead.
+1.1.0.  Use the functions described above instead.
 
 =head1 SEE ALSO
 
