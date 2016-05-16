@@ -10,7 +10,7 @@ X509_new, X509_free, X509_up_ref - X509 certificate ASN1 allocation functions
 
  X509 *X509_new(void);
  void X509_free(X509 *a);
- void X509_up_ref(X509 *a);
+ int X509_up_ref(X509 *a);
  STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *x);
 
 =head1 DESCRIPTION
@@ -46,7 +46,7 @@ If the allocation fails, X509_new() returns B<NULL> and sets an error
 code that can be obtained by L<ERR_get_error(3)>.
 Otherwise it returns a pointer to the newly allocated structure.
 
-X509_free() and X509_up_ref() do not return a value.
+X509_up_ref() returns 1 for success and 0 for failure.
 
 X509_chain_up_ref() returns a copy of the stack or B<NULL> if an error
 occurred.

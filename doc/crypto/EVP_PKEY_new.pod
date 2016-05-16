@@ -9,7 +9,7 @@ EVP_PKEY_new, EVP_PKEY_up_ref, EVP_PKEY_free - private key allocation functions.
  #include <openssl/evp.h>
 
  EVP_PKEY *EVP_PKEY_new(void);
- void EVP_PKEY_up_ref(EVP_PKEY *key);
+ int EVP_PKEY_up_ref(EVP_PKEY *key);
  void EVP_PKEY_free(EVP_PKEY *key);
 
 
@@ -37,7 +37,7 @@ used.
 EVP_PKEY_new() returns either the newly allocated B<EVP_PKEY> structure or
 B<NULL> if an error occurred.
 
-EVP_PKEY_up_ref() and EVP_PKEY_free() do not return a value.
+EVP_PKEY_up_ref() returns 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 

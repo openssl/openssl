@@ -196,10 +196,16 @@ EVP_PKEY *EVP_PKEY_new(void)
     return ret;
 }
 
-void EVP_PKEY_up_ref(EVP_PKEY *pkey)
+int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 {
     int i;
-    CRYPTO_atomic_add(&pkey->references, 1, &i, pkey->lock);
+
+    if (CRYPTO_atomic_add(&pkey->references, 1, &i, pkey->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("EVP_PKEY", pkey);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
 }
 
 /*

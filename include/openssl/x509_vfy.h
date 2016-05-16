@@ -277,7 +277,7 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,
                                              int type, X509_NAME *name);
 X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
                                         X509_OBJECT *x);
-void X509_OBJECT_up_ref_count(X509_OBJECT *a);
+int X509_OBJECT_up_ref_count(X509_OBJECT *a);
 void X509_OBJECT_free(X509_OBJECT *a);
 int X509_OBJECT_get_type(X509_OBJECT *a);
 X509 *X509_OBJECT_get0_X509(X509_OBJECT *a);
