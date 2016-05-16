@@ -47,7 +47,7 @@ RAND_seed() is equivalent to RAND_add() when B<num == entropy>.
 RAND_status() returns 1 if the PRNG has been seeded
 with enough data, 0 otherwise.
 
-RAND_event() calls RAND_poll() and returns RAND_seed().
+RAND_event() calls RAND_poll() and returns RAND_status().
 
 RAND_screen calls RAND_poll().
 
