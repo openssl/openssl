@@ -177,6 +177,8 @@ uninstall: uninstall_docs uninstall_sw
 
 libclean:
 	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*"""; } @ARGV" $(SHLIBS)
+	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """apps/$$1.*"""; } @ARGV" $(SHLIBS)
+	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """test/$$1.*"""; } @ARGV" $(SHLIBS)
 	-del /Q /F $(LIBS)
 	-del /Q ossl_static.pdb
 
@@ -189,6 +191,9 @@ clean: libclean
 	-del /Q /S /F *.exp
 	-del /Q /S /F engines\*.ilk
 	-del /Q /S /F engines\*.lib
+	-del /Q /S /F apps\*.lib
+	-del /Q /S /F engines\*.manifest
+	-del /Q /S /F apps\*.manifest
 
 depend:
 
