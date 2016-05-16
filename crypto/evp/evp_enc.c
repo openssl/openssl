@@ -120,7 +120,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
      * reinitialisation, when it may all be unnecessary.
      */
     if (ctx->engine && ctx->cipher
-        && (!cipher || (cipher && (cipher->nid == ctx->cipher->nid))))
+        && (!cipher || (cipher->nid == ctx->cipher->nid)))
         goto skip_to_init;
 #endif
     if (cipher) {
