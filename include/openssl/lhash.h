@@ -78,9 +78,6 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data);
 void OPENSSL_LH_doall(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNC func);
 void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNCARG func, void *arg);
 unsigned long OPENSSL_LH_strhash(const char *c);
-# if OPENSSL_API_COMPAT < 0x10100000L
-#  define lh_strhash(c) OPENSSL_LH_strhash(c)
-# endif
 unsigned long OPENSSL_LH_num_items(const OPENSSL_LHASH *lh);
 unsigned long OPENSSL_LH_get_down_load(const OPENSSL_LHASH *lh);
 void OPENSSL_LH_set_down_load(OPENSSL_LHASH *lh, unsigned long down_load);
@@ -93,6 +90,27 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp);
 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define lh_error OPENSSL_LH_error
+#  define lh_new OPENSSL_lh_new
+#  define lh_free OPENSSL_LH_free
+#  define lh_insert OPENSSL_LH_insert
+#  define lh_delete OPENSSL_LH_delete
+#  define lh_retrieve OPENSSL_LH_retrieve
+#  define lh_doall OPENSSL_LH_doall
+#  define lh_doall_arg OPENSSL_LH_doall_arg
+#  define lh_strhash OPENSSL_LH_strhash
+#  define lh_num_items OPENSSL_LH_num_items
+#  ifndef OPENSSL_NO_STDIO
+#   define lh_stats OPENSSL_LH_stats
+#   define lh_node_stats OPENSSL_LH_node_stats
+#   define lh_node_usage_stats OPENSSL_LH_node_usage_stats
+#  endif
+#  define lh_stats_bio OPENSSL_LH_stats_bio
+#  define lh_node_stats_bio OPENSSL_LH_node_stats_bio
+#  define lh_node_usage_stats_bio OPENSSL_LH_node_usage_stats_bio
+# endif
 
 /* Type checking... */
 
