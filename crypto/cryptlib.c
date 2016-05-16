@@ -416,6 +416,7 @@ void OPENSSL_die(const char *message, const char *file, int line)
 #endif
 }
 
+#if !defined(OPENSSL_CPUID_OBJ)
 /* volatile unsigned char* pointers are there because
  * 1. Accessing a variable declared volatile via a pointer
  *    that lacks a volatile qualifier causes undefined behavior.
@@ -447,3 +448,4 @@ int CRYPTO_memcmp(const volatile void * volatile in_a,
 
     return x;
 }
+#endif

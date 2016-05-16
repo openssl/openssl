@@ -440,6 +440,36 @@ OPENSSL_cleanse:
 .type	OPENSSL_cleanse,#function
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
+.global	CRYPTO_memcmp
+.align	16
+CRYPTO_memcmp:
+	cmp	%o2,0
+	beq	.Lno_data
+	xor	%g1,%g1,%g1
+	nop
+
+.Loop_cmp:
+	ldub	[%o0],%o3
+	add	%o0,1,%o0
+	ldub	[%o1],%o4
+	add	%o1,1,%o1
+	subcc	%o2,1,%o2
+	xor	%o3,%o4,%o4
+#ifdef ABI64
+	bnz	%xcc,.Loop_cmp
+#else
+	bnz	.Loop_cmp
+#endif
+	or	%o4,%g1,%g1
+
+	sub	%g0,%g1,%g1
+	srl	%g1,31,%g1
+.Lno_data:
+	retl
+	mov	%g1,%o0
+.type	CRYPTO_memcmp,#function
+.size	CRYPTO_memcmp,.-CRYPTO_memcmp
+
 .global	_sparcv9_vis1_instrument_bus
 .align	8
 _sparcv9_vis1_instrument_bus:
