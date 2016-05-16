@@ -15,8 +15,10 @@ entropy to the PRNG
 
  int  RAND_status(void);
 
+ #if OPENSSL_API_COMPAT < 0x10100000L
  int  RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam);
  void RAND_screen(void);
+ #endif
 
 =head1 DESCRIPTION
 
@@ -42,6 +44,8 @@ or L<RAND_load_file(3)>.
 
 RAND_seed() is equivalent to RAND_add() when B<num == entropy>.
 
+RAND_event() and RAND_screen() are deprecated and should not be called.
+
 =head1 RETURN VALUES
 
 RAND_status() returns 1 if the PRNG has been seeded
@@ -52,6 +56,11 @@ RAND_event() calls RAND_poll() and returns RAND_status().
 RAND_screen calls RAND_poll().
 
 The other functions do not return values.
+
+=head1 HISTORY
+
+RAND_event() and RAND_screen() are deprecated since OpenSSL
+1.1.  Use the functions described above instead.
 
 =head1 SEE ALSO
 
