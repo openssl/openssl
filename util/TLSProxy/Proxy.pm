@@ -236,7 +236,9 @@ sub clientstart
         };
 
         $retry--;
-        if ($@ || !defined($server_sock)) {
+        #Some buggy IP factories can return a defined server_sock that hasn't
+        #actually connected, so we check peerport too
+        if ($@ || !defined($server_sock) || !defined($server_sock->peerport)) {
             $server_sock->close() if defined($server_sock);
             undef $server_sock;
             if ($retry) {
