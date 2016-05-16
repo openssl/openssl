@@ -8,6 +8,7 @@
 
 $output=pop;
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+$dir =~ s/\\/\//g;
 open OUT,"| \"$^X\" ${dir}../crypto/perlasm/x86_64-xlate.pl $output";
 *STDOUT=*OUT;
 push(@INC,"${dir}.");
