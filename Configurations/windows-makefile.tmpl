@@ -168,7 +168,7 @@ uninstall: uninstall_docs uninstall_sw
 libclean:
 	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*"""; } @ARGV" $(SHLIBS)
 	-del /Q /F $(LIBS)
-	-del ossl_static.pdb
+	-del /Q ossl_static.pdb
 
 clean: libclean
 	-del /Q /F $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
@@ -195,6 +195,8 @@ uninstall_docs:
 install_ssldirs:
 	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)\certs"
 	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)\private"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(SRCDIR)\apps\openssl.cnf \
+                                       "$(DESTDIR)$(OPENSSLDIR)"
 
 install_dev:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
@@ -390,8 +392,8 @@ $target: $deps $ordinalsfile $mkdef_pl
 		/implib:\$@ \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<< || (DEL /Q \$(\@B).* $shlib.* && EXIT 1)
 $objs $shlib.res$linklibs \$(EX_LIBS)
 <<
-	DEL /F apps\\$shlib$shlibext
-	DEL /F test\\$shlib$shlibext
+	DEL /Q /F apps\\$shlib$shlibext
+	DEL /Q /F test\\$shlib$shlibext
 	COPY $shlib$shlibext apps
 	COPY $shlib$shlibext test
 EOF
