@@ -915,6 +915,8 @@ $target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  ||
                           "\$(CROSS_COMPILE)ranlib" : "true");
 $target{ar} =      $ENV{'AR'}      || $target{ar}      || "ar";
 $target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
+$target{rc} =
+    $ENV{'RC'}  || $ENV{'WINDRES'} || $target{rc}      || "windres";
 
 # For cflags, lflags, plib_lflags, ex_libs and defines, add the debug_
 # or release_ attributes.
