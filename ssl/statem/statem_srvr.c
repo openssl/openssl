@@ -1902,10 +1902,10 @@ int tls_construct_server_key_exchange(SSL *s)
     if (type & SSL_PSK) {
         /* copy PSK identity hint */
         if (s->cert->psk_identity_hint) {
-            s2n(strlen(s->cert->psk_identity_hint), p);
-            strncpy((char *)p, s->cert->psk_identity_hint,
-                    strlen(s->cert->psk_identity_hint));
-            p += strlen(s->cert->psk_identity_hint);
+            size_t hintlen = strlen(s->cert->psk_identity_hint);
+            s2n(hintlen, p);
+            memcpy(p, s->cert->psk_identity_hint, hintlen);
+            p += hintlen;
         } else {
             s2n(0, p);
         }
