@@ -858,8 +858,8 @@ struct ssl_ctx_st {
     void *tlsext_servername_arg;
     /* RFC 4507 session ticket keys */
     unsigned char tlsext_tick_key_name[16];
-    unsigned char tlsext_tick_hmac_key[16];
-    unsigned char tlsext_tick_aes_key[16];
+    unsigned char tlsext_tick_hmac_key[32];
+    unsigned char tlsext_tick_aes_key[32];
     /* Callback to support customisation of ticket key setting */
     int (*tlsext_ticket_key_cb) (SSL *ssl,
                                  unsigned char *name, unsigned char *iv,

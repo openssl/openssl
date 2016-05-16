@@ -3129,15 +3129,17 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             renew_ticket = 1;
     } else {
         /* Check key name matches */
-        if (memcmp(etick, tctx->tlsext_tick_key_name, 16)) {
+        if (memcmp(etick, tctx->tlsext_tick_key_name,
+                   sizeof(tctx->tlsext_tick_key_name)) != 0) {
             ret = 2;
             goto err;
         }
-        if (HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 16,
+        if (HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key,
+                         sizeof(tctx->tlsext_tick_hmac_key),
                          EVP_sha256(), NULL) <= 0
-                || EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL,
+                || EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
                                       tctx->tlsext_tick_aes_key,
-                                      etick + 16) <= 0) {
+                                      etick + sizeof(tctx->tlsext_tick_key_name)) <= 0) {
             goto err;
        }
     }
