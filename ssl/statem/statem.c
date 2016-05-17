@@ -320,20 +320,20 @@ static int state_machine(SSL *s, int server)
          */
         s->s3->change_cipher_spec = 0;
 
-        if (!server || st->state != MSG_FLOW_RENEGOTIATE) {
-                /*
-                 * Ok, we now need to push on a buffering BIO ...but not with
-                 * SCTP
-                 */
-#ifndef OPENSSL_NO_SCTP
-                if (!SSL_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(s)))
-#endif
-                    if (!ssl_init_wbio_buffer(s, server ? 1 : 0)) {
-                        goto end;
-                    }
 
+        /*
+         * Ok, we now need to push on a buffering BIO ...but not with
+         * SCTP
+         */
+#ifndef OPENSSL_NO_SCTP
+        if (!SSL_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(s)))
+#endif
+            if (!ssl_init_wbio_buffer(s)) {
+                goto end;
+            }
+
+        if (!server || st->state != MSG_FLOW_RENEGOTIATE)
             ssl3_init_finished_mac(s);
-        }
 
         if (server) {
             if (st->state != MSG_FLOW_RENEGOTIATE) {

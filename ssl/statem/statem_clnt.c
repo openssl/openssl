@@ -437,20 +437,9 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
 
     switch(st->hand_state) {
     case TLS_ST_CW_CLNT_HELLO:
-        if (SSL_IS_DTLS(s) && s->d1->cookie_len > 0 && statem_flush(s) != 1)
+        if (wst == WORK_MORE_A && statem_flush(s) != 1)
             return WORK_MORE_A;
-#ifndef OPENSSL_NO_SCTP
-        /* Disable buffering for SCTP */
-        if (!SSL_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(s))) {
-#endif
-            /*
-             * turn on buffering for the next lot of output
-             */
-            if (s->bbio != s->wbio)
-                s->wbio = BIO_push(s->bbio, s->wbio);
-#ifndef OPENSSL_NO_SCTP
-            }
-#endif
+
         if (SSL_IS_DTLS(s)) {
             /* Treat the next message as the first packet */
             s->first_packet = 1;
