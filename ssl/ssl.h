@@ -2532,7 +2532,6 @@ void SSL_set_tmp_ecdh_callback(SSL *ssl,
                                                 int keylength));
 # endif
 
-# ifndef OPENSSL_NO_COMP
 const COMP_METHOD *SSL_get_current_compression(SSL *s);
 const COMP_METHOD *SSL_get_current_expansion(SSL *s);
 const char *SSL_COMP_get_name(const COMP_METHOD *comp);
@@ -2541,13 +2540,6 @@ STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths);
 void SSL_COMP_free_compression_methods(void);
 int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
-# else
-const void *SSL_get_current_compression(SSL *s);
-const void *SSL_get_current_expansion(SSL *s);
-const char *SSL_COMP_get_name(const void *comp);
-void *SSL_COMP_get_compression_methods(void);
-int SSL_COMP_add_compression_method(int id, void *cm);
-# endif
 
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
 

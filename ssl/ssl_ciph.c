@@ -1932,17 +1932,27 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 }
 
 #ifdef OPENSSL_NO_COMP
-void *SSL_COMP_get_compression_methods(void)
+STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
     return NULL;
 }
 
-int SSL_COMP_add_compression_method(int id, void *cm)
+STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
+                                                      *meths)
+{
+    return NULL;
+}
+
+void SSL_COMP_free_compression_methods(void)
+{
+}
+
+int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 {
     return 1;
 }
 
-const char *SSL_COMP_get_name(const void *comp)
+const char *SSL_COMP_get_name(const COMP_METHOD *comp)
 {
     return NULL;
 }

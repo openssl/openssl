@@ -3050,12 +3050,12 @@ const SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
 }
 
 #ifdef OPENSSL_NO_COMP
-const void *SSL_get_current_compression(SSL *s)
+const COMP_METHOD *SSL_get_current_compression(SSL *s)
 {
     return NULL;
 }
 
-const void *SSL_get_current_expansion(SSL *s)
+const COMP_METHOD *SSL_get_current_expansion(SSL *s)
 {
     return NULL;
 }
