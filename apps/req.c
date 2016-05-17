@@ -553,8 +553,8 @@ int req_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 goto end;
 			}
-        }
 #endif
+        }
 
         BIO_printf(bio_err, "Generating a %ld bit %s private key\n",
                    newkey, keyalgstr);
