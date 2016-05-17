@@ -1192,6 +1192,7 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
 int speed_main(int argc, char **argv)
 {
     loopargs_t *loopargs = NULL;
+    int async_init = 0;
     int loopargs_len = 0;
     char *prog;
     const EVP_CIPHER *evp_cipher = NULL;
@@ -1518,7 +1519,8 @@ int speed_main(int argc, char **argv)
 
     /* Initialize the job pool if async mode is enabled */
     if (async_jobs > 0) {
-        if (!ASYNC_init_thread(async_jobs, async_jobs)) {
+        async_init = ASYNC_init_thread(async_jobs, async_jobs);
+        if (!async_init) {
             BIO_printf(bio_err, "Error creating the ASYNC job pool\n");
             goto end;
         }
@@ -2799,7 +2801,9 @@ int speed_main(int argc, char **argv)
     if (async_jobs > 0) {
         for (i = 0; i < loopargs_len; i++)
             ASYNC_WAIT_CTX_free(loopargs[i].wait_ctx);
+    }
 
+    if (async_init) {
         ASYNC_cleanup_thread();
     }
     OPENSSL_free(loopargs);
