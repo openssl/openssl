@@ -298,6 +298,9 @@ void ERR_load_DH_strings(void);
 # define DH_F_DH_CMS_DECRYPT                              114
 # define DH_F_DH_CMS_SET_PEERKEY                          115
 # define DH_F_DH_CMS_SET_SHARED_INFO                      116
+# define DH_F_DH_METH_DUP                                 117
+# define DH_F_DH_METH_NEW                                 118
+# define DH_F_DH_METH_SET1_NAME                           119
 # define DH_F_DH_NEW_METHOD                               105
 # define DH_F_DH_PARAM_DECODE                             107
 # define DH_F_DH_PRIV_DECODE                              110
