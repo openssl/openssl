@@ -2172,12 +2172,12 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     if (store && store->lookup_certs)
         ctx->lookup_certs = store->lookup_certs;
     else
-        ctx->lookup_certs = X509_STORE_get1_certs;
+        ctx->lookup_certs = X509_STORE_CTX_get1_certs;
 
     if (store && store->lookup_crls)
         ctx->lookup_crls = store->lookup_crls;
     else
-        ctx->lookup_crls = X509_STORE_get1_crls;
+        ctx->lookup_crls = X509_STORE_CTX_get1_crls;
 
     ctx->check_policy = check_policy;
 
