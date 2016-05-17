@@ -552,7 +552,7 @@ int req_main(int argc, char **argv)
                 BIO_printf(bio_err, "Error getting EC key generator key size\n");
                 ERR_print_errors(bio_err);
                 goto end;
-			}
+            }
 #endif
         }
 
