@@ -101,7 +101,7 @@ static HEARTBEAT_TEST_FIXTURE set_up(const char *const test_case_name,
         goto fail;
     }
 
-    if (!ssl_init_wbio_buffer(fixture.s, 1)) {
+    if (!ssl_init_wbio_buffer(fixture.s)) {
         fprintf(stderr, "Failed to set up wbio buffer for test: %s\n",
                 test_case_name);
         setup_ok = 0;
