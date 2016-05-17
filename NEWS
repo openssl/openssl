@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.0.2h and OpenSSL 1.1.0 [in pre-release]
 
+      o Copyright text was shrunk to a boilerplate that points to the license
       o "shared" builds are now the default when possible
       o Added support for "pipelining"
       o Added the AFALG engine
