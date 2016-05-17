@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include "rsa_locl.h"
+#include <openssl/err.h>
 
 RSA_METHOD *RSA_meth_new(const char *name, int flags)
 {
@@ -18,6 +19,7 @@ RSA_METHOD *RSA_meth_new(const char *name, int flags)
         meth->name = OPENSSL_strdup(name);
         if (meth->name == NULL) {
             OPENSSL_free(meth);
+            RSAerr(RSA_F_RSA_METH_NEW, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
         meth->flags = flags;
@@ -46,6 +48,7 @@ RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth)
         ret->name = OPENSSL_strdup(meth->name);
         if (ret->name == NULL) {
             OPENSSL_free(ret);
+            RSAerr(RSA_F_RSA_METH_DUP, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
     }
@@ -63,8 +66,10 @@ int RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
     char *tmpname;
 
     tmpname = OPENSSL_strdup(name);
-    if (tmpname == NULL)
+    if (tmpname == NULL) {
+        RSAerr(RSA_F_RSA_METH_SET1_NAME, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     OPENSSL_free(meth->name);
     meth->name = tmpname;

@@ -341,6 +341,7 @@ void ERR_load_UI_strings(void);
 # define UI_F_GENERAL_ALLOCATE_BOOLEAN                    108
 # define UI_F_GENERAL_ALLOCATE_PROMPT                     109
 # define UI_F_GENERAL_ALLOCATE_STRING                     100
+# define UI_F_UI_CREATE_METHOD                            112
 # define UI_F_UI_CTRL                                     111
 # define UI_F_UI_DUP_ERROR_STRING                         101
 # define UI_F_UI_DUP_INFO_STRING                          102

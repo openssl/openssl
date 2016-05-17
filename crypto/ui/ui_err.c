@@ -21,6 +21,7 @@ static ERR_STRING_DATA UI_str_functs[] = {
     {ERR_FUNC(UI_F_GENERAL_ALLOCATE_BOOLEAN), "general_allocate_boolean"},
     {ERR_FUNC(UI_F_GENERAL_ALLOCATE_PROMPT), "general_allocate_prompt"},
     {ERR_FUNC(UI_F_GENERAL_ALLOCATE_STRING), "GENERAL_ALLOCATE_STRING"},
+    {ERR_FUNC(UI_F_UI_CREATE_METHOD), "UI_create_method"},
     {ERR_FUNC(UI_F_UI_CTRL), "UI_ctrl"},
     {ERR_FUNC(UI_F_UI_DUP_ERROR_STRING), "UI_dup_error_string"},
     {ERR_FUNC(UI_F_UI_DUP_INFO_STRING), "UI_dup_info_string"},

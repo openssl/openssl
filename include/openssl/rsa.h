@@ -484,13 +484,12 @@ void ERR_load_RSA_strings(void);
 # define RSA_F_RSA_CHECK_KEY                              123
 # define RSA_F_RSA_CHECK_KEY_EX                           160
 # define RSA_F_RSA_CMS_DECRYPT                            159
-# define RSA_F_RSA_OSSL_PRIVATE_DECRYPT                   101
-# define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT                   102
-# define RSA_F_RSA_OSSL_PUBLIC_DECRYPT                    103
-# define RSA_F_RSA_OSSL_PUBLIC_ENCRYPT                    104
 # define RSA_F_RSA_GENERATE_KEY                           105
 # define RSA_F_RSA_ITEM_VERIFY                            148
 # define RSA_F_RSA_MEMORY_LOCK                            130
+# define RSA_F_RSA_METH_DUP                               161
+# define RSA_F_RSA_METH_NEW                               162
+# define RSA_F_RSA_METH_SET1_NAME                         163
 # define RSA_F_RSA_MGF1_TO_MD                             157
 # define RSA_F_RSA_NEW_METHOD                             106
 # define RSA_F_RSA_NULL                                   124
@@ -500,6 +499,10 @@ void ERR_load_RSA_strings(void);
 # define RSA_F_RSA_NULL_PUBLIC_DECRYPT                    134
 # define RSA_F_RSA_NULL_PUBLIC_ENCRYPT                    135
 # define RSA_F_RSA_OAEP_TO_CTX                            158
+# define RSA_F_RSA_OSSL_PRIVATE_DECRYPT                   101
+# define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT                   102
+# define RSA_F_RSA_OSSL_PUBLIC_DECRYPT                    103
+# define RSA_F_RSA_OSSL_PUBLIC_ENCRYPT                    104
 # define RSA_F_RSA_PADDING_ADD_NONE                       107
 # define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP                 121
 # define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1            154

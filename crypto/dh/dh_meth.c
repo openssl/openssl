@@ -9,6 +9,7 @@
 
 #include "dh_locl.h"
 #include <string.h>
+#include <openssl/err.h>
 
 DH_METHOD *DH_meth_new(const char *name, int flags)
 {
@@ -18,6 +19,7 @@ DH_METHOD *DH_meth_new(const char *name, int flags)
         dhm->name = OPENSSL_strdup(name);
         if (dhm->name == NULL) {
             OPENSSL_free(dhm);
+            DHerr(DH_F_DH_METH_NEW, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
         dhm->flags = flags;
@@ -46,6 +48,7 @@ DH_METHOD *DH_meth_dup(const DH_METHOD *dhm)
         ret->name = OPENSSL_strdup(dhm->name);
         if (ret->name == NULL) {
             OPENSSL_free(ret);
+            DHerr(DH_F_DH_METH_DUP, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
     }
@@ -63,8 +66,10 @@ int DH_meth_set1_name(DH_METHOD *dhm, const char *name)
     char *tmpname;
 
     tmpname = OPENSSL_strdup(name);
-    if (tmpname == NULL)
+    if (tmpname == NULL) {
+        DHerr(DH_F_DH_METH_SET1_NAME, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     OPENSSL_free(dhm->name);
     dhm->name = tmpname;

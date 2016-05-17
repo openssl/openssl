@@ -17,6 +17,7 @@
 
 #include "dsa_locl.h"
 #include <string.h>
+#include <openssl/err.h>
 
 DSA_METHOD *DSA_meth_new(const char *name, int flags)
 {
@@ -26,6 +27,7 @@ DSA_METHOD *DSA_meth_new(const char *name, int flags)
         dsam->name = OPENSSL_strdup(name);
         if (dsam->name == NULL) {
             OPENSSL_free(dsam);
+            DSAerr(DSA_F_DSA_METH_NEW, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
         dsam->flags = flags;
@@ -54,6 +56,7 @@ DSA_METHOD *DSA_meth_dup(const DSA_METHOD *dsam)
         ret->name = OPENSSL_strdup(dsam->name);
         if (ret->name == NULL) {
             OPENSSL_free(ret);
+            DSAerr(DSA_F_DSA_METH_DUP, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
     }
@@ -71,8 +74,10 @@ int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name)
     char *tmpname;
 
     tmpname = OPENSSL_strdup(name);
-    if (tmpname == NULL)
+    if (tmpname == NULL) {
+        DSAerr(DSA_F_DSA_METH_SET1_NAME, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     OPENSSL_free(dsam->name);
     dsam->name = tmpname;

@@ -540,6 +540,7 @@ UI_METHOD *UI_create_method(char *name)
         ui_method->name = OPENSSL_strdup(name);
         if (ui_method->name == NULL) {
             OPENSSL_free(ui_method);
+            UIerr(UI_F_UI_CREATE_METHOD, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
     }
