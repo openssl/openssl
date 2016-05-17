@@ -1,8 +1,10 @@
-/* ====================================================================
- * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use is governed by OpenSSL license.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/modes.h>
