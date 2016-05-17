@@ -419,7 +419,7 @@ EVP_CipherFinal_ex                      411	1_1_0	EXIST::FUNCTION:
 d2i_DSA_PUBKEY                          412	1_1_0	EXIST::FUNCTION:DSA
 BN_CTX_get                              413	1_1_0	EXIST::FUNCTION:
 BN_to_montgomery                        414	1_1_0	EXIST::FUNCTION:
-X509_OBJECT_free_contents               415	1_1_0	EXIST::FUNCTION:
+X509_OBJECT_get0_X509_CRL               415	1_1_0	EXIST::FUNCTION:
 EVP_camellia_128_cfb8                   416	1_1_0	EXIST::FUNCTION:CAMELLIA
 EC_KEY_METHOD_free                      417	1_1_0	EXIST::FUNCTION:EC
 TS_TST_INFO_set_policy_id               418	1_1_0	EXIST::FUNCTION:TS
@@ -1187,7 +1187,7 @@ X509_STORE_CTX_set0_param               1152	1_1_0	EXIST::FUNCTION:
 DES_check_key_parity                    1153	1_1_0	EXIST::FUNCTION:DES
 EVP_aes_256_ocb                         1154	1_1_0	EXIST::FUNCTION:OCB
 X509_VAL_free                           1155	1_1_0	EXIST::FUNCTION:
-X509_STORE_get1_certs                   1156	1_1_0	EXIST::FUNCTION:
+X509_STORE_CTX_get1_certs               1156	1_1_0	EXIST::FUNCTION:
 PEM_write_RSA_PUBKEY                    1157	1_1_0	EXIST::FUNCTION:RSA
 PKCS12_SAFEBAG_get0_p8inf               1158	1_1_0	EXIST::FUNCTION:
 X509_CRL_set_issuer_name                1159	1_1_0	EXIST::FUNCTION:
@@ -2323,7 +2323,7 @@ OCSP_request_add1_cert                  2250	1_1_0	EXIST::FUNCTION:OCSP
 ERR_load_X509_strings                   2251	1_1_0	EXIST::FUNCTION:
 SHA1_Transform                          2252	1_1_0	EXIST::FUNCTION:
 CMS_signed_get_attr_by_NID              2253	1_1_0	EXIST::FUNCTION:CMS
-X509_STORE_get_by_subject               2254	1_1_0	EXIST::FUNCTION:
+X509_STORE_CTX_get_by_subject           2254	1_1_0	EXIST::FUNCTION:
 ASN1_OCTET_STRING_it                    2255	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ASN1_OCTET_STRING_it                    2255	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 sk_set_cmp_func                         2256	1_1_0	EXIST::FUNCTION:
@@ -2645,7 +2645,7 @@ i2d_X509_EXTENSION                      2563	1_1_0	EXIST::FUNCTION:
 PEM_read_bio_X509                       2564	1_1_0	EXIST::FUNCTION:
 DES_key_sched                           2565	1_1_0	EXIST::FUNCTION:DES
 GENERAL_NAME_dup                        2566	1_1_0	EXIST::FUNCTION:
-X509_STORE_get1_crls                    2567	1_1_0	EXIST::FUNCTION:
+X509_STORE_CTX_get1_crls                2567	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_meth_set_verify                2568	1_1_0	EXIST::FUNCTION:
 EVP_sha256                              2569	1_1_0	EXIST::FUNCTION:
 CMS_unsigned_delete_attr                2570	1_1_0	EXIST::FUNCTION:CMS
@@ -4193,7 +4193,7 @@ DH_meth_set_generate_key                4067	1_1_0	EXIST::FUNCTION:DH
 DH_meth_free                            4068	1_1_0	EXIST::FUNCTION:DH
 DH_meth_get_generate_key                4069	1_1_0	EXIST::FUNCTION:DH
 DH_set_flags                            4070	1_1_0	EXIST::FUNCTION:DH
-X509_STORE_get_X509_by_subject          4071	1_1_0	EXIST::FUNCTION:
+X509_STORE_CTX_get_obj_by_subject       4071	1_1_0	EXIST::FUNCTION:
 X509_OBJECT_free                        4072	1_1_0	EXIST::FUNCTION:
 X509_OBJECT_get0_X509                   4073	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_untrusted           4074	1_1_0	EXIST::FUNCTION:
@@ -4209,6 +4209,7 @@ OPENSSL_hexchar2int                     4083	1_1_0	EXIST::FUNCTION:
 X509_STORE_set_ex_data                  4084	1_1_0	EXIST::FUNCTION:
 X509_STORE_get_ex_data                  4085	1_1_0	EXIST::FUNCTION:
 X509_STORE_get0_objects                 4086	1_1_0	EXIST::FUNCTION:
-X509_STORE_get0_param                   4087	1_1_0	EXIST::FUNCTION:
-X509_OBJECT_get_type                    4088	1_1_0	EXIST::FUNCTION:
-X509_STORE_set_verify                   4089	1_1_0	EXIST::FUNCTION:
+X509_OBJECT_get_type                    4087	1_1_0	EXIST::FUNCTION:
+X509_STORE_set_verify                   4088	1_1_0	EXIST::FUNCTION:
+X509_OBJECT_new                         4089	1_1_0	EXIST::FUNCTION:
+X509_STORE_get0_param                   4090	1_1_0	EXIST::FUNCTION:

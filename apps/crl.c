@@ -201,8 +201,8 @@ int crl_main(int argc, char **argv)
             goto end;
         }
 
-        xobj = X509_STORE_get_X509_by_subject(ctx, X509_LU_X509,
-                                              X509_CRL_get_issuer(x));
+        xobj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509,
+                                                 X509_CRL_get_issuer(x));
         if (xobj == NULL) {
             BIO_printf(bio_err, "Error getting CRL issuer certificate\n");
             goto end;
