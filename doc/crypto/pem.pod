@@ -3,7 +3,8 @@
 =head1 NAME
 
 PEM, PEM_read_bio_PrivateKey, PEM_read_PrivateKey, PEM_write_bio_PrivateKey,
-PEM_write_PrivateKey, PEM_write_bio_PKCS8PrivateKey, PEM_write_PKCS8PrivateKey,
+PEM_write_bio_PrivateKey_traditional, PEM_write_PrivateKey,
+PEM_write_bio_PKCS8PrivateKey, PEM_write_PKCS8PrivateKey,
 PEM_write_bio_PKCS8PrivateKey_nid, PEM_write_PKCS8PrivateKey_nid,
 PEM_read_bio_PUBKEY, PEM_read_PUBKEY, PEM_write_bio_PUBKEY, PEM_write_PUBKEY,
 PEM_read_bio_RSAPrivateKey, PEM_read_RSAPrivateKey,
@@ -35,6 +36,10 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
  int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
                               unsigned char *kstr, int klen,
                               pem_password_cb *cb, void *u);
+ int PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
+                                          const EVP_CIPHER *enc,
+                                          unsigned char *kstr, int klen,
+                                          pem_password_cb *cb, void *u);
  int PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                           unsigned char *kstr, int klen,
                           pem_password_cb *cb, void *u);
@@ -157,19 +162,21 @@ clarity the term "B<foobar> functions" will be used to collectively
 refer to the PEM_read_bio_foobar(), PEM_read_foobar(),
 PEM_write_bio_foobar() and PEM_write_foobar() functions.
 
-The B<PrivateKey> functions read or write a private key in
-PEM format using an EVP_PKEY structure. The write routines use
-"traditional" private key format and can handle both RSA and DSA
-private keys. The read functions can additionally transparently
-handle PKCS#8 format encrypted and unencrypted keys too.
+The B<PrivateKey> functions read or write a private key in PEM format using an
+EVP_PKEY structure. The write routines use PKCS#8 private key format and are
+equivalent to PEM_write_bio_PKCS8PrivateKey().The read functions transparently
+handle traditional and PKCS#8 format encrypted and unencrypted keys.
 
-PEM_write_bio_PKCS8PrivateKey() and PEM_write_PKCS8PrivateKey()
-write a private key in an EVP_PKEY structure in PKCS#8
-EncryptedPrivateKeyInfo format using PKCS#5 v2.0 password based encryption
-algorithms. The B<cipher> argument specifies the encryption algorithm to
-use: unlike all other PEM routines the encryption is applied at the
-PKCS#8 level and not in the PEM headers. If B<cipher> is NULL then no
-encryption is used and a PKCS#8 PrivateKeyInfo structure is used instead.
+PEM_write_bio_PrivateKey_traditional() writes out a private key in legacy
+"traditional" format.
+
+PEM_write_bio_PKCS8PrivateKey() and PEM_write_PKCS8PrivateKey() write a private
+key in an EVP_PKEY structure in PKCS#8 EncryptedPrivateKeyInfo format using
+PKCS#5 v2.0 password based encryption algorithms. The B<cipher> argument
+specifies the encryption algorithm to use: unlike some other PEM routines the
+encryption is applied at the PKCS#8 level and not in the PEM headers. If
+B<cipher> is NULL then no encryption is used and a PKCS#8 PrivateKeyInfo
+structure is used instead.
 
 PEM_write_bio_PKCS8PrivateKey_nid() and PEM_write_PKCS8PrivateKey_nid()
 also write out a private key as a PKCS#8 EncryptedPrivateKeyInfo however
@@ -182,7 +189,8 @@ structure. The public key is encoded as a SubjectPublicKeyInfo
 structure.
 
 The B<RSAPrivateKey> functions process an RSA private key using an
-RSA structure. It handles the same formats as the B<PrivateKey>
+RSA structure. The write routines uses traditional format. The read
+routines handles the same formats as the B<PrivateKey>
 functions but an error occurs if the private key is not RSA.
 
 The B<RSAPublicKey> functions process an RSA public key using an
@@ -195,7 +203,8 @@ SubjectPublicKeyInfo structure and an error occurs if the public
 key is not RSA.
 
 The B<DSAPrivateKey> functions process a DSA private key using a
-DSA structure. It handles the same formats as the B<PrivateKey>
+DSA structure. The write routines uses traditional format. The read
+routines handles the same formats as the B<PrivateKey>
 functions but an error occurs if the private key is not DSA.
 
 The B<DSA_PUBKEY> functions process a DSA public key using
@@ -403,7 +412,7 @@ password is passed to EVP_BytesToKey() using the B<data> and B<datal>
 parameters. Finally, the library uses an iteration count of 1 for
 EVP_BytesToKey().
 
-he B<key> derived by EVP_BytesToKey() along with the original initialization
+The B<key> derived by EVP_BytesToKey() along with the original initialization
 vector is then used to decrypt the encrypted data. The B<iv> produced by
 EVP_BytesToKey() is not utilized or needed, and NULL should be passed to
 the function.

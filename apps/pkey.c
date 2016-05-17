@@ -18,7 +18,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE,
     OPT_IN, OPT_OUT, OPT_PUBIN, OPT_PUBOUT, OPT_TEXT_PUB,
-    OPT_TEXT, OPT_NOOUT, OPT_MD
+    OPT_TEXT, OPT_NOOUT, OPT_MD, OPT_TRADITIONAL
 } OPTION_CHOICE;
 
 OPTIONS pkey_options[] = {
@@ -36,6 +36,8 @@ OPTIONS pkey_options[] = {
     {"text", OPT_TEXT, '-', "Output in plaintext as well"},
     {"noout", OPT_NOOUT, '-', "Don't output the key"},
     {"", OPT_MD, '-', "Any supported cipher"},
+    {"traditional", OPT_TRADITIONAL, '-',
+     "Use traditional format for private keys"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -53,7 +55,7 @@ int pkey_main(int argc, char **argv)
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
     int pubin = 0, pubout = 0, pubtext = 0, text = 0, noout = 0, ret = 1;
-    int private = 0;
+    int private = 0, traditional = 0;
 
     prog = opt_init(argc, argv, pkey_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -105,6 +107,9 @@ int pkey_main(int argc, char **argv)
         case OPT_NOOUT:
             noout = 1;
             break;
+        case OPT_TRADITIONAL:
+            traditional = 1;
+            break;
         case OPT_MD:
             if (!opt_cipher(opt_unknown(), &cipher))
                 goto opthelp;
@@ -140,8 +145,13 @@ int pkey_main(int argc, char **argv)
                 PEM_write_bio_PUBKEY(out, pkey);
             else {
                 assert(private);
-                PEM_write_bio_PrivateKey(out, pkey, cipher,
-                                         NULL, 0, NULL, passout);
+                if (traditional)
+                    PEM_write_bio_PrivateKey_traditional(out, pkey, cipher,
+                                                         NULL, 0, NULL,
+                                                         passout);
+                else
+                    PEM_write_bio_PrivateKey(out, pkey, cipher,
+                                             NULL, 0, NULL, passout);
             }
         } else if (outformat == FORMAT_ASN1) {
             if (pubout)

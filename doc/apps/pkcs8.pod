@@ -18,6 +18,7 @@ B<openssl> B<pkcs8>
 [B<-iter count>]
 [B<-noiter>]
 [B<-nocrypt>]
+[B<-traditional>]
 [B<-v2 alg>]
 [B<-v2prf alg>]
 [B<-v1 alg>]
@@ -43,22 +44,22 @@ Print out a usage message.
 
 =item B<-topk8>
 
-Normally a PKCS#8 private key is expected on input and a traditional format
-private key will be written. With the B<-topk8> option the situation is
-reversed: it reads a traditional format private key and writes a PKCS#8
-format key.
+Normally a PKCS#8 private key is expected on input and a private key will be
+written to the output file. With the B<-topk8> option the situation is
+reversed: it reads a private key and writes a PKCS#8 format key.
 
 =item B<-inform DER|PEM>
 
-This specifies the input format. If a PKCS#8 format key is expected on input
-then either a B<DER> or B<PEM> encoded version of a PKCS#8 key will be
-expected. Otherwise the B<DER> or B<PEM> format of the traditional format
-private key is used.
+This specifies the input format: see L<KEY FORMATS> for more details.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the
-B<-inform> option.
+This specifies the output format: see L<KEY FORMATS> for more details.
+
+=item B<-traditional>
+
+When this option is present and B<-topk8> is not a traditional format private
+key is written.
 
 =item B<-in filename>
 
@@ -119,7 +120,7 @@ the B<hmacWithSHA1> option to work.
 
 This option indicates a PKCS#5 v1.5 or PKCS#12 algorithm should be used.  Some
 older implementations may not support PKCS#5 v2.0 and may require this option.
-If not specified PKCS#5 v2.0 for is used.
+If not specified PKCS#5 v2.0 form is used.
 
 =item B<-engine id>
 
@@ -140,6 +141,27 @@ B<-scrypt_N N> B<-scrypt_r r> B<-scrypt_p p>
 sets the scrypt B<N>, B<r> or B<p> parameters.
 
 =back
+
+=head1 KEY FORMATS
+
+Various different formats are used by the pkcs8 utility. These are detailed
+below.
+
+If a key is being converted from PKCS#8 form (i.e. the B<-topk8> option is
+not used) then the input file must be in PKCS#8 format. An encrypted
+key is expected unless B<-nocrypt> is included.
+
+If B<-topk8> is not used and B<PEM> mode is set the output file will be an
+unencrypted private key in PKCS#8 format. If the B<-traditional> option is
+used then a traditional format private key is written instead.
+
+If B<-topk8> is not used and B<DER> mode is set the output file will be an
+unencrypted private key in traditional DER format.
+
+If B<-topk8> is used then any supported private key can be used for the input
+file in a format specified by B<-inform>. The output file will be encrypted
+PKCS#8 format using the specified encryption parameters unless B<-nocrypt>
+is included.
 
 =head1 NOTES
 
@@ -199,20 +221,28 @@ allow strong encryption algorithms like triple DES or 128 bit RC2 to be used.
 
 =head1 EXAMPLES
 
-Convert a private from traditional to PKCS#5 v2.0 format using triple
-DES:
+Convert a private key to PKCS#8 format using default parameters (AES with
+256 bit key and B<hmacWithSHA256>):
+
+ openssl pkcs8 -in key.pem -topk8 -out enckey.pem
+
+Convert a private key to PKCS#8 unencrypted format:
+
+ openssl pkcs8 -in key.pem -topk8 -nocrypt -out enckey.pem
+
+Convert a private key to PKCS#5 v2.0 format using triple DES:
 
  openssl pkcs8 -in key.pem -topk8 -v2 des3 -out enckey.pem
 
-Convert a private from traditional to PKCS#5 v2.0 format using AES with
-256 bits in CBC mode and B<hmacWithSHA256> PRF:
+Convert a private key to PKCS#5 v2.0 format using AES with 256 bits in CBC
+mode and B<hmacWithSHA512> PRF:
 
- openssl pkcs8 -in key.pem -topk8 -v2 aes-256-cbc -v2prf hmacWithSHA256 -out enckey.pem
+ openssl pkcs8 -in key.pem -topk8 -v2 aes-256-cbc -v2prf hmacWithSHA512 -out enckey.pem
 
 Convert a private key to PKCS#8 using a PKCS#5 1.5 compatible algorithm
 (DES):
 
- openssl pkcs8 -in key.pem -topk8 -out enckey.pem
+ openssl pkcs8 -in key.pem -topk8 -v1 PBE-MD5-DES -out enckey.pem
 
 Convert a private key to PKCS#8 using a PKCS#12 compatible algorithm
 (3DES):
@@ -223,14 +253,14 @@ Read a DER unencrypted PKCS#8 format private key:
 
  openssl pkcs8 -inform DER -nocrypt -in key.der -out key.pem
 
-Convert a private key from any PKCS#8 format to traditional format:
+Convert a private key from any PKCS#8 encrypted format to traditional format:
 
- openssl pkcs8 -in pk8.pem -out key.pem
+ openssl pkcs8 -in pk8.pem -traditional -out key.pem
 
 Convert a private key to PKCS#8 format, encrypting with AES-256 and with
 one million iterations of the password:
 
- openssl pkcs8 -in raw.pem -topk8 -v2 aes-256-cbc -iter 1000000 -out pk8.pem
+ openssl pkcs8 -in key.pem -topk8 -v2 aes-256-cbc -iter 1000000 -out pk8.pem
 
 =head1 STANDARDS
 
@@ -249,10 +279,6 @@ PKCS#8 private key format complies with this standard.
 
 There should be an option that prints out the encryption algorithm
 in use and other details such as the iteration count.
-
-PKCS#8 using triple DES and PKCS#5 v2.0 should be the default private
-key format for OpenSSL: for compatibility several of the utilities use
-the old format at present.
 
 =head1 SEE ALSO
 
