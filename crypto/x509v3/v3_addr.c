@@ -1166,6 +1166,11 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
 
 /*
  * Core code for RFC 3779 2.3 path validation.
+ *
+ * Returns 1 for success, 0 on error.
+ *
+ * When returning 0, ctx->error MUST be set to an appropriate value other than
+ * X509_V_OK.
  */
 static int addr_validate_path_internal(X509_STORE_CTX *ctx,
                                        STACK_OF(X509) *chain,
@@ -1200,6 +1205,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     if ((child = sk_IPAddressFamily_dup(ext)) == NULL) {
         X509V3err(X509V3_F_ADDR_VALIDATE_PATH_INTERNAL,
                   ERR_R_MALLOC_FAILURE);
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
         ret = 0;
         goto done;
     }

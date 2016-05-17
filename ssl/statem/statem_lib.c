@@ -548,6 +548,13 @@ int ssl_verify_alarm_type(long type)
     case X509_V_ERR_CRL_NOT_YET_VALID:
     case X509_V_ERR_CERT_UNTRUSTED:
     case X509_V_ERR_CERT_REJECTED:
+    case X509_V_ERR_HOSTNAME_MISMATCH:
+    case X509_V_ERR_EMAIL_MISMATCH:
+    case X509_V_ERR_IP_ADDRESS_MISMATCH:
+    case X509_V_ERR_DANE_NO_MATCH:
+    case X509_V_ERR_EE_KEY_TOO_SMALL:
+    case X509_V_ERR_CA_KEY_TOO_SMALL:
+    case X509_V_ERR_CA_MD_TOO_WEAK:
         al = SSL_AD_BAD_CERTIFICATE;
         break;
     case X509_V_ERR_CERT_SIGNATURE_FAILURE:
@@ -561,7 +568,10 @@ int ssl_verify_alarm_type(long type)
     case X509_V_ERR_CERT_REVOKED:
         al = SSL_AD_CERTIFICATE_REVOKED;
         break;
+    case X509_V_ERR_UNSPECIFIED:
     case X509_V_ERR_OUT_OF_MEM:
+    case X509_V_ERR_INVALID_CALL:
+    case X509_V_ERR_STORE_LOOKUP:
         al = SSL_AD_INTERNAL_ERROR;
         break;
     case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
