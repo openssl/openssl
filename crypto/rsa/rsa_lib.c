@@ -70,21 +70,28 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
 
 RSA *RSA_new_method(ENGINE *engine)
 {
-    RSA *ret;
+    RSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
+    ret->references = 1;
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
     ret->meth = RSA_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
+    ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
     if (engine) {
         if (!ENGINE_init(engine)) {
             RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_ENGINE_LIB);
-            OPENSSL_free(ret);
-            return NULL;
+            goto err;
         }
         ret->engine = engine;
     } else
@@ -93,39 +100,26 @@ RSA *RSA_new_method(ENGINE *engine)
         ret->meth = ENGINE_get_RSA(ret->engine);
         if (ret->meth == NULL) {
             RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_ENGINE_LIB);
-            ENGINE_finish(ret->engine);
-            OPENSSL_free(ret);
-            return NULL;
+            goto err;
         }
     }
 #endif
 
-    ret->references = 1;
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data)) {
-#ifndef OPENSSL_NO_ENGINE
-        ENGINE_finish(ret->engine);
-#endif
-        OPENSSL_free(ret);
-        return NULL;
-    }
-
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-#ifndef OPENSSL_NO_ENGINE
-        ENGINE_finish(ret->engine);
-#endif
-        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data);
-        OPENSSL_free(ret);
-        return NULL;
+        goto err;
     }
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
-        RSA_free(ret);
-        ret = NULL;
+        RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_INIT_FAIL);
+        goto err;
     }
 
     return ret;
+
+err:
+    RSA_free(ret);
+    return NULL;
 }
 
 void RSA_free(RSA *r)
