@@ -384,6 +384,8 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
     if (x == NULL)
         return 0;
     obj = X509_OBJECT_new();
+    if (obj == NULL)
+        return 0;
     obj->type = X509_LU_CRL;
     obj->data.crl = x;
 
@@ -540,7 +542,12 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
          * cache
          */
         X509_OBJECT *xobj = X509_OBJECT_new();
+
         CRYPTO_THREAD_unlock(ctx->ctx->lock);
+        if (xobj == NULL) {
+            sk_X509_free(sk);
+            return NULL;
+        }
         if (!X509_STORE_CTX_get_by_subject(ctx, X509_LU_X509, nm, xobj)) {
             X509_OBJECT_free(xobj);
             sk_X509_free(sk);
@@ -568,7 +575,6 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
     }
     CRYPTO_THREAD_unlock(ctx->ctx->lock);
     return sk;
-
 }
 
 STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
@@ -578,10 +584,9 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
     X509_CRL *x;
     X509_OBJECT *obj, *xobj = X509_OBJECT_new();
 
-    /*
-     * Always do lookup to possibly add new CRLs to cache
-     */
-    if (!X509_STORE_CTX_get_by_subject(ctx, X509_LU_CRL, nm, xobj)) {
+    /* Always do lookup to possibly add new CRLs to cache */
+    if (sk == NULL || xobj == NULL ||
+            !X509_STORE_CTX_get_by_subject(ctx, X509_LU_CRL, nm, xobj)) {
         X509_OBJECT_free(xobj);
         sk_X509_CRL_free(sk);
         return NULL;
