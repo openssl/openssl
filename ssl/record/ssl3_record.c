@@ -270,7 +270,15 @@ int ssl3_get_record(SSL *s)
             if (s->first_packet && s->server && !s->read_hash
                     && !s->enc_read_ctx
                     && (p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
-                /* SSLv2 style record */
+                /*
+                 *  SSLv2 style record
+                 *
+                 * |num_recs| here will actually always be 0 because
+                 * |num_recs > 0| only ever occurs when we are processing
+                 * multiple app data records - which we know isn't the case here
+                 * because it is an SSLv2ClientHello. We keep it using
+                 * |num_recs| for the sake of consistency
+                 */
                 rr[num_recs].type = SSL3_RT_HANDSHAKE;
                 rr[num_recs].rec_version = SSL2_VERSION;
 
