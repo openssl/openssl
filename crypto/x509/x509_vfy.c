@@ -199,6 +199,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 
     if (ctx->cert == NULL) {
         X509err(X509_F_X509_VERIFY_CERT, X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
+        ctx->error = X509_V_ERR_INVALID_CALL;
         return -1;
     }
     if (ctx->chain != NULL) {
@@ -207,6 +208,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
          * cannot do another one.
          */
         X509err(X509_F_X509_VERIFY_CERT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ctx->error = X509_V_ERR_INVALID_CALL;
         return -1;
     }
 
@@ -219,6 +221,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     if (((ctx->chain = sk_X509_new_null()) == NULL) ||
         (!sk_X509_push(ctx->chain, ctx->cert))) {
         X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
         ok = -1;
         goto err;
     }
@@ -229,6 +232,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     if (ctx->untrusted != NULL
         && (sktmp = sk_X509_dup(ctx->untrusted)) == NULL) {
         X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
         ok = -1;
         goto err;
     }
@@ -253,8 +257,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
          */
         if (ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST) {
             ok = ctx->get_issuer(&xtmp, ctx, x);
-            if (ok < 0)
+            if (ok < 0) {
+                ctx->error = X509_V_ERR_STORE_LOOKUP;
                 goto err;
+            }
             /*
              * If successful for now free up cert so it will be picked up
              * again later.
@@ -271,6 +277,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
             if (xtmp != NULL) {
                 if (!sk_X509_push(ctx->chain, xtmp)) {
                     X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+                    ctx->error = X509_V_ERR_OUT_OF_MEM;
                     ok = -1;
                     goto err;
                 }
@@ -352,14 +359,17 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
                 break;
             ok = ctx->get_issuer(&xtmp, ctx, x);
 
-            if (ok < 0)
+            if (ok < 0) {
+                ctx->error = X509_V_ERR_STORE_LOOKUP;
                 goto err;
+            }
             if (ok == 0)
                 break;
             x = xtmp;
             if (!sk_X509_push(ctx->chain, x)) {
                 X509_free(xtmp);
                 X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+                ctx->error = X509_V_ERR_OUT_OF_MEM;
                 ok = -1;
                 goto err;
             }
@@ -386,8 +396,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
             while (j-- > 1) {
                 xtmp2 = sk_X509_value(ctx->chain, j - 1);
                 ok = ctx->get_issuer(&xtmp, ctx, xtmp2);
-                if (ok < 0)
+                if (ok < 0) {
+                    ctx->error = X509_V_ERR_STORE_LOOKUP;
                     goto err;
+                }
                 /* Check if we found an alternate chain */
                 if (ok > 0) {
                     /*
@@ -515,6 +527,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
         sk_X509_free(sktmp);
     if (chain_ss != NULL)
         X509_free(chain_ss);
+
+    /* Safety net, error returns must set ctx->error */
+    if (ok <= 0 && ctx->error == X509_V_OK)
+        ctx->error = X509_V_ERR_UNSPECIFIED;
     return ok;
 }
 
@@ -736,12 +752,19 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
             NAME_CONSTRAINTS *nc = sk_X509_value(ctx->chain, j)->nc;
             if (nc) {
                 rv = NAME_CONSTRAINTS_check(x, nc);
-                if (rv != X509_V_OK) {
+                switch (rv) {
+                case X509_V_OK:
+                    continue;
+                case X509_V_ERR_OUT_OF_MEM:
+                    ctx->error = rv;
+                    return 0;
+                default:
                     ctx->error = rv;
                     ctx->error_depth = i;
                     ctx->current_cert = x;
                     if (!ctx->verify_cb(0, ctx))
                         return 0;
+                    break;
                 }
             }
         }
@@ -1630,6 +1653,7 @@ static int check_policy(X509_STORE_CTX *ctx)
                             ctx->param->policies, ctx->param->flags);
     if (ret == 0) {
         X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
         return 0;
     }
     /* Invalid or inconsistent extensions */
@@ -1658,7 +1682,12 @@ static int check_policy(X509_STORE_CTX *ctx)
 
     if (ctx->param->flags & X509_V_FLAG_NOTIFY_POLICY) {
         ctx->current_cert = NULL;
-        ctx->error = X509_V_OK;
+        /*
+         * Verification errors need to be "sticky", a callback may have allowed
+         * an SSL handshake to continue despite an error, and we must then
+         * remain in an error state.  Therefore, we MUST NOT clear earlier
+         * verification errors by setting the error to X509_V_OK.
+         */
         if (!ctx->verify_cb(2, ctx))
             return 0;
     }
