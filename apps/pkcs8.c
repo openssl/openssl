@@ -23,7 +23,8 @@ typedef enum OPTION_choice {
 #ifndef OPENSSL_NO_SCRYPT
     OPT_SCRYPT, OPT_SCRYPT_N, OPT_SCRYPT_R, OPT_SCRYPT_P,
 #endif
-    OPT_V2, OPT_V1, OPT_V2PRF, OPT_ITER, OPT_PASSIN, OPT_PASSOUT
+    OPT_V2, OPT_V1, OPT_V2PRF, OPT_ITER, OPT_PASSIN, OPT_PASSOUT,
+    OPT_TRADITIONAL
 } OPTION_CHOICE;
 
 OPTIONS pkcs8_options[] = {
@@ -41,6 +42,7 @@ OPTIONS pkcs8_options[] = {
     {"iter", OPT_ITER, 'p', "Specify the iteration count"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    {"traditional", OPT_TRADITIONAL, '-', "use traditional format private key"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -70,7 +72,7 @@ int pkcs8_main(int argc, char **argv)
     OPTION_CHOICE o;
     int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
-    int private = 0;
+    int private = 0, traditional = 0;
 #ifndef OPENSSL_NO_SCRYPT
     long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
 #endif
@@ -109,6 +111,9 @@ int pkcs8_main(int argc, char **argv)
             break;
         case OPT_NOCRYPT:
             nocrypt = 1;
+            break;
+        case OPT_TRADITIONAL:
+            traditional = 1;
             break;
         case OPT_V2:
             if (!opt_cipher(opt_arg(), &cipher))
@@ -320,11 +325,15 @@ int pkcs8_main(int argc, char **argv)
     }
 
     assert(private);
-    if (outformat == FORMAT_PEM)
-        PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL, passout);
-    else if (outformat == FORMAT_ASN1)
+    if (outformat == FORMAT_PEM) {
+        if (traditional)
+            PEM_write_bio_PrivateKey_traditional(out, pkey, NULL, NULL, 0,
+                                                 NULL, passout);
+        else
+            PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL, passout);
+    } else if (outformat == FORMAT_ASN1) {
         i2d_PrivateKey_bio(out, pkey);
-    else {
+    } else {
         BIO_printf(bio_err, "Bad format specified for key\n");
         goto end;
     }
