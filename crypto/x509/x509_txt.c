@@ -161,6 +161,10 @@ const char *X509_verify_cert_error_string(long n)
         return ("CA certificate key too weak");
     case X509_V_ERR_CA_MD_TOO_WEAK:
         return ("CA signature digest algorithm too weak");
+    case X509_V_ERR_INVALID_CALL:
+        return ("Invalid certificate verification context");
+    case X509_V_ERR_STORE_LOOKUP:
+        return ("Issuer certificate lookup error");
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */

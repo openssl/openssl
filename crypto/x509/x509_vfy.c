@@ -251,9 +251,11 @@ static int verify_chain(X509_STORE_CTX *ctx)
 int X509_verify_cert(X509_STORE_CTX *ctx)
 {
     SSL_DANE *dane = ctx->dane;
+    int ret;
 
     if (ctx->cert == NULL) {
         X509err(X509_F_X509_VERIFY_CERT, X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
+        ctx->error = X509_V_ERR_INVALID_CALL;
         return -1;
     }
 
@@ -263,6 +265,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
          * cannot do another one.
          */
         X509err(X509_F_X509_VERIFY_CERT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ctx->error = X509_V_ERR_INVALID_CALL;
         return -1;
     }
 
@@ -273,6 +276,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     if (((ctx->chain = sk_X509_new_null()) == NULL) ||
         (!sk_X509_push(ctx->chain, ctx->cert))) {
         X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
         return -1;
     }
     X509_up_ref(ctx->cert);
@@ -283,15 +287,19 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
         !verify_cb_cert(ctx, ctx->cert, 0, X509_V_ERR_EE_KEY_TOO_SMALL))
         return 0;
 
-    /*
-     * If dane->trecs is an empty stack, we'll fail, since the user enabled
-     * DANE.  If none of the TLSA records were usable, and it makes sense to
-     * keep going with an unauthenticated handshake, they can handle that in
-     * the verify callback, or not set SSL_VERIFY_PEER.
-     */
     if (DANETLS_ENABLED(dane))
-        return dane_verify(ctx);
-    return verify_chain(ctx);
+        ret = dane_verify(ctx);
+    else
+        ret = verify_chain(ctx);
+
+    /*
+     * Safety-net.  If we are returning an error, we must also set ctx->error,
+     * so that the chain is not considered verified should the error be ignored
+     * (e.g. TLS with SSL_VERIFY_NONE).
+     */
+    if (ret <= 0 && ctx->error == X509_V_OK)
+        ctx->error = X509_V_ERR_UNSPECIFIED;
+    return ret;
 }
 
 /*
@@ -562,8 +570,16 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
             if (nc) {
                 int rv = NAME_CONSTRAINTS_check(x, nc);
 
-                if (rv != X509_V_OK && !verify_cb_cert(ctx, x, i, rv))
+                switch (rv) {
+                case X509_V_OK:
+                    break;
+                case X509_V_ERR_OUT_OF_MEM:
                     return 0;
+                default:
+                    if (!verify_cb_cert(ctx, x, i, rv))
+                        return 0;
+                    break;
+                }
             }
         }
     }
@@ -1457,6 +1473,7 @@ static int check_policy(X509_STORE_CTX *ctx)
      */
     if (ctx->bare_ta_signed && !sk_X509_push(ctx->chain, NULL)) {
         X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
         return 0;
     }
     ret = X509_policy_check(&ctx->tree, &ctx->explicit_policy, ctx->chain,
@@ -1466,6 +1483,7 @@ static int check_policy(X509_STORE_CTX *ctx)
 
     if (ret == X509_PCY_TREE_INTERNAL) {
         X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
         return 0;
     }
     /* Invalid or inconsistent extensions */
@@ -1496,7 +1514,12 @@ static int check_policy(X509_STORE_CTX *ctx)
 
     if (ctx->param->flags & X509_V_FLAG_NOTIFY_POLICY) {
         ctx->current_cert = NULL;
-        ctx->error = X509_V_OK;
+        /*
+         * Verification errors need to be "sticky", a callback may have allowed
+         * an SSL handshake to continue despite an error, and we must then
+         * remain in an error state.  Therefore, we MUST NOT clear earlier
+         * verification errors by setting the error to X509_V_OK.
+         */
         if (!ctx->verify_cb(2, ctx))
             return 0;
     }
@@ -2742,6 +2765,7 @@ static int build_chain(X509_STORE_CTX *ctx)
      */
     if (ctx->untrusted && (sktmp = sk_X509_dup(ctx->untrusted)) == NULL) {
         X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
         return 0;
     }
 
@@ -2758,12 +2782,14 @@ static int build_chain(X509_STORE_CTX *ctx)
     if (DANETLS_ENABLED(dane) && dane->certs != NULL) {
         if (sktmp == NULL && (sktmp = sk_X509_new_null()) == NULL) {
             X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
+            ctx->error = X509_V_ERR_OUT_OF_MEM;
             return 0;
         }
         for (i = 0; i < sk_X509_num(dane->certs); ++i) {
             if (!sk_X509_push(sktmp, sk_X509_value(dane->certs, i))) {
                 sk_X509_free(sktmp);
                 X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
+                ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return 0;
             }
         }
@@ -2827,6 +2853,7 @@ static int build_chain(X509_STORE_CTX *ctx)
 
             if (ok < 0) {
                 trust = X509_TRUST_REJECTED;
+                ctx->error = X509_V_ERR_STORE_LOOKUP;
                 search = 0;
                 continue;
             }
@@ -2873,6 +2900,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         X509_free(xtmp);
                         X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
                         trust = X509_TRUST_REJECTED;
+                        ctx->error = X509_V_ERR_OUT_OF_MEM;
                         search = 0;
                         continue;
                     }
@@ -2969,6 +2997,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (!sk_X509_push(ctx->chain, xtmp)) {
                 X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
                 trust = X509_TRUST_REJECTED;
+                ctx->error = X509_V_ERR_OUT_OF_MEM;
                 search = 0;
                 continue;
             }

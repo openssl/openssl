@@ -32,7 +32,7 @@ OpenSSL internally for certificate validation, in both the S/MIME and
 SSL/TLS code.
 
 A negative return value from X509_verify_cert() can occur if it is invoked
-incurrectly, such as with no certificate set in B<ctx>, or when it is called
+incorrectly, such as with no certificate set in B<ctx>, or when it is called
 twice in succession without reinitialising B<ctx> for the second call.
 A negative return value can also happen due to internal resource problems or if
 a retry operation is requested during internal lookups (which never happens
