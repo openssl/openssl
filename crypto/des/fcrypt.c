@@ -18,19 +18,6 @@
 # include <openssl/ebcdic.h>
 #endif
 
-/*
- * This version of crypt has been developed from my MIT compatible DES
- * library. Eric Young (eay@cryptsoft.com)
- */
-
-/*
- * Modification by Jens Kupferschmidt (Cu) I have included directive PARA for
- * shared memory computers. I have included a directive LONGCRYPT to using
- * this routine to cipher passwords with more then 8 bytes like HP-UX 10.x it
- * used. The MAXPLEN definition is the maximum of length of password and can
- * changed. I have defined 24.
- */
-
 #include <openssl/crypto.h>
 #include "des_locl.h"
 
