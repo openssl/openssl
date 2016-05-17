@@ -434,13 +434,13 @@ int ssl_get_new_session(SSL *s, int session)
          * Note that:
          * (a) ssl_get_prev_session() does lookahead into the
          *     ClientHello extensions to find the session ticket.
-         *     When ssl_get_prev_session() fails, s3_srvr.c calls
-         *     ssl_get_new_session() in ssl3_get_client_hello().
+         *     When ssl_get_prev_session() fails, statem_srvr.c calls
+         *     ssl_get_new_session() in tls_process_client_hello().
          *     At that point, it has not yet parsed the extensions,
          *     however, because of the lookahead, it already knows
          *     whether a ticket is expected or not.
          *
-         * (b) s3_clnt.c calls ssl_get_new_session() before parsing
+         * (b) statem_clnt.c calls ssl_get_new_session() before parsing
          *     ServerHello extensions, and before recording the session
          *     ID received from the server, so this block is a noop.
          */
