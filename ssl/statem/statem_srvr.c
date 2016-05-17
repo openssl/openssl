@@ -368,7 +368,7 @@ static int send_certificate_request(SSL *s)
            && (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
            /*
             * ... except when the application insists on
-            * verification (against the specs, but s3_clnt.c accepts
+            * verification (against the specs, but statem_clnt.c accepts
             * this for SSL 3)
             */
                || (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT))
@@ -2931,7 +2931,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     s->session->peer_chain = sk;
     /*
      * Inconsistency alert: cert_chain does *not* include the peer's own
-     * certificate, while we do include it in s3_clnt.c
+     * certificate, while we do include it in statem_clnt.c
      */
     sk = NULL;
     ret = MSG_PROCESS_CONTINUE_READING;

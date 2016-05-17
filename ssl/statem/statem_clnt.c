@@ -1352,7 +1352,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     s->session->peer_chain = sk;
     /*
      * Inconsistency alert: cert_chain does include the peer's certificate,
-     * which we don't include in s3_srvr.c
+     * which we don't include in statem_srvr.c
      */
     x = sk_X509_value(sk, 0);
     sk = NULL;
