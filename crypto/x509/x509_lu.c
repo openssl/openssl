@@ -530,7 +530,7 @@ STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(X509_STORE *v)
 STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
 {
     int i, idx, cnt;
-    STACK_OF(X509) *sk = sk_X509_new_null();
+    STACK_OF(X509) *sk = NULL;
     X509 *x;
     X509_OBJECT *obj;
 
@@ -544,13 +544,10 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
         X509_OBJECT *xobj = X509_OBJECT_new();
 
         CRYPTO_THREAD_unlock(ctx->ctx->lock);
-        if (xobj == NULL) {
-            sk_X509_free(sk);
+        if (xobj == NULL)
             return NULL;
-        }
         if (!X509_STORE_CTX_get_by_subject(ctx, X509_LU_X509, nm, xobj)) {
             X509_OBJECT_free(xobj);
-            sk_X509_free(sk);
             return NULL;
         }
         X509_OBJECT_free(xobj);
@@ -558,10 +555,11 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
         idx = x509_object_idx_cnt(ctx->ctx->objs, X509_LU_X509, nm, &cnt);
         if (idx < 0) {
             CRYPTO_THREAD_unlock(ctx->ctx->lock);
-            sk_X509_free(sk);
             return NULL;
         }
     }
+
+    sk = sk_X509_new_null();
     for (i = 0; i < cnt; i++, idx++) {
         obj = sk_X509_OBJECT_value(ctx->ctx->objs, idx);
         x = obj->data.x509;
