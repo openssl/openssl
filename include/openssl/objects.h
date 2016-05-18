@@ -1088,6 +1088,7 @@ void ERR_load_OBJ_strings(void);
 
 /* Reason codes. */
 # define OBJ_R_MALLOC_FAILURE                             100
+# define OBJ_R_OID_EXISTS                                 102
 # define OBJ_R_UNKNOWN_NID                                101
 
 #ifdef  __cplusplus

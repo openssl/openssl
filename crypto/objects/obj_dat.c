@@ -679,30 +679,36 @@ int OBJ_create_objects(BIO *in)
 
 int OBJ_create(const char *oid, const char *sn, const char *ln)
 {
-    int ok = 0;
-    ASN1_OBJECT *op = NULL;
-    unsigned char *buf;
-    int i;
+    ASN1_OBJECT *tmpoid = NULL;
+    int ok;
 
-    i = a2d_ASN1_OBJECT(NULL, 0, oid, -1);
-    if (i <= 0)
-        return (0);
-
-    if ((buf = OPENSSL_malloc(i)) == NULL) {
-        OBJerr(OBJ_F_OBJ_CREATE, ERR_R_MALLOC_FAILURE);
-        return (0);
+    /* Check to see if short or long name already present */
+    if (OBJ_sn2nid(sn) != NID_undef || OBJ_ln2nid(ln) != NID_undef) {
+        OBJerr(OBJ_F_OBJ_CREATE, OBJ_R_OID_EXISTS);
+        return 0;
     }
-    i = a2d_ASN1_OBJECT(buf, i, oid, -1);
-    if (i == 0)
+
+    /* Convert numerical OID string to an ASN1_OBJECT structure */
+    tmpoid = OBJ_txt2obj(oid, 1);
+
+    /* If NID is not NID_undef then object already exists */
+    if (OBJ_obj2nid(tmpoid) != NID_undef) {
+        OBJerr(OBJ_F_OBJ_CREATE, OBJ_R_OID_EXISTS);
         goto err;
-    op = (ASN1_OBJECT *)ASN1_OBJECT_create(OBJ_new_nid(1), buf, i, sn, ln);
-    if (op == NULL)
-        goto err;
-    ok = OBJ_add_object(op);
+    }
+
+    tmpoid->nid = OBJ_new_nid(1);
+    tmpoid->sn = (char *)sn;
+    tmpoid->ln = (char *)ln;
+
+    ok = OBJ_add_object(tmpoid);
+
+    tmpoid->sn = NULL;
+    tmpoid->ln = NULL;
+
  err:
-    ASN1_OBJECT_free(op);
-    OPENSSL_free(buf);
-    return (ok);
+    ASN1_OBJECT_free(tmpoid);
+    return ok;
 }
 
 size_t OBJ_length(const ASN1_OBJECT *obj)

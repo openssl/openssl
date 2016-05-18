@@ -17,59 +17,42 @@
 ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 {
     ASN1_OBJECT *r;
-    int i;
-    char *ln = NULL, *sn = NULL;
-    unsigned char *data = NULL;
 
     if (o == NULL)
-        return (NULL);
+        return NULL;
+    /* If object isn't dynamic it's an internal OID which is never freed */
     if (!(o->flags & ASN1_OBJECT_FLAG_DYNAMIC))
-        return ((ASN1_OBJECT *)o); /* XXX: ugh! Why? What kind of duplication
-                                    * is this??? */
+        return ((ASN1_OBJECT *)o);
 
     r = ASN1_OBJECT_new();
     if (r == NULL) {
         OBJerr(OBJ_F_OBJ_DUP, ERR_R_ASN1_LIB);
         return (NULL);
     }
-    data = OPENSSL_malloc(o->length);
-    if (data == NULL)
-        goto err;
-    if (o->data != NULL)
-        memcpy(data, o->data, o->length);
-    /* once data attached to object it remains const */
-    r->data = data;
-    r->length = o->length;
-    r->nid = o->nid;
-    r->ln = r->sn = NULL;
-    if (o->ln != NULL) {
-        i = strlen(o->ln) + 1;
-        ln = OPENSSL_malloc(i);
-        if (ln == NULL)
-            goto err;
-        memcpy(ln, o->ln, i);
-        r->ln = ln;
-    }
 
-    if (o->sn != NULL) {
-        i = strlen(o->sn) + 1;
-        sn = OPENSSL_malloc(i);
-        if (sn == NULL)
-            goto err;
-        memcpy(sn, o->sn, i);
-        r->sn = sn;
-    }
+    /* Set dynamic flags so everything gets freed up on error */
+
     r->flags = o->flags | (ASN1_OBJECT_FLAG_DYNAMIC |
                            ASN1_OBJECT_FLAG_DYNAMIC_STRINGS |
                            ASN1_OBJECT_FLAG_DYNAMIC_DATA);
-    return (r);
+
+    if (o->length > 0 && (r->data = OPENSSL_memdup(o->data, o->length)) == NULL)
+        goto err;
+
+    r->length = o->length;
+    r->nid = o->nid;
+
+    if (o->ln != NULL && (r->ln = OPENSSL_strdup(o->ln)) == NULL)
+        goto err;
+
+    if (o->sn != NULL && (r->sn = OPENSSL_strdup(o->sn)) == NULL)
+        goto err;
+
+    return r;
  err:
+    ASN1_OBJECT_free(r);
     OBJerr(OBJ_F_OBJ_DUP, ERR_R_MALLOC_FAILURE);
-    OPENSSL_free(ln);
-    OPENSSL_free(sn);
-    OPENSSL_free(data);
-    OPENSSL_free(r);
-    return (NULL);
+    return NULL;
 }
 
 int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
