@@ -310,10 +310,10 @@ int CRYPTO_mem_leaks(BIO *bio);
 # endif
 
 /* die if we have to */
+ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line);
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  define OpenSSLDie(f,l,a) OPENSSL_die((a),(f),(l))
 # endif
-void OPENSSL_die(const char *assertion, const char *file, int line);
 # define OPENSSL_assert(e) \
     (void)((e) ? 0 : (OPENSSL_die("assertion failed: " #e, OPENSSL_FILE, OPENSSL_LINE), 1))
 
