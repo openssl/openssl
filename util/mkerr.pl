@@ -517,7 +517,7 @@ EOF
 EOF
 	do {
 	    if ($cplusplus == $cpp) {
-		print OUT "#", " "x$cpp, "ifdef	 __cplusplus\n";
+		print OUT "#", " "x$cpp, "ifdef  __cplusplus\n";
 		print OUT "}\n";
 		print OUT "#", " "x$cpp, "endif\n";
 	    }
