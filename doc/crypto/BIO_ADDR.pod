@@ -112,3 +112,5 @@ information they should return isn't available.
 =head1 SEE ALSO
 
 L<BIO_connect(3)>, L<BIO_s_connect(3)>
+
+=cut

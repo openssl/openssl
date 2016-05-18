@@ -80,3 +80,5 @@ to reliably determine EOF (for example a MIME boundary).
 =head1 SEE ALSO
 
 TBA
+
+=cut

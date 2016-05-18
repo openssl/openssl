@@ -185,3 +185,5 @@ to retrieve a page and copy the result to standard output.
 =head1 SEE ALSO
 
 L<BIO_ADDR(3)>
+
+=cut

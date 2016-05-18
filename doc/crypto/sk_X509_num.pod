@@ -198,3 +198,5 @@ stack.
 
 Use of inline functions and application defined stacks first appeared in
 OpenSSL 1.1.0. Previous versions of OpenSSL implemented stacks as macros.
+
+=cut

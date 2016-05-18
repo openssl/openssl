@@ -94,3 +94,5 @@ and RORX;
 =item bit #64+19 denoting availability of ADCX and ADOX instructions;
 
 =back
+
+=cut
