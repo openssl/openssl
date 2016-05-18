@@ -809,4 +809,3 @@ The return type of B<SSL_copy_session_id> was changed from void to int in
 OpenSSL 1.1.0.
 
 =cut
-

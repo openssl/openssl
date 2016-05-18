@@ -40,3 +40,5 @@ not available on current platform. For reference, on x86 'flush cache
 line' was introduced with the SSE2 extensions.
 
 Otherwise number of recorded values is returned.
+
+=cut

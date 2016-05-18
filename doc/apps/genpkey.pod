@@ -259,4 +259,3 @@ The ability to use NIST curve names, and to generate an EC key directly,
 were added in OpenSSL 1.0.2.
 
 =cut
-

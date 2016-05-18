@@ -80,3 +80,5 @@ information they should return isn't available.
 =head1 SEE ALSO
 
 L<BIO_lookup(3)>
+
+=cut
