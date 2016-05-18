@@ -28,9 +28,8 @@ L ENGINE	include/openssl/engine.h	crypto/engine/eng_err.c
 L OCSP		include/openssl/ocsp.h		crypto/ocsp/ocsp_err.c
 L UI		include/openssl/ui.h		crypto/ui/ui_err.c
 L COMP		include/openssl/comp.h		crypto/comp/comp_err.c
-L STORE		include/openssl/store.h		crypto/store/str_err.c
 L TS		include/openssl/ts.h		crypto/ts/ts_err.c
-L HMAC		include/openssl/hmac.h		crypto/hmac/hmac_err.c
+#L HMAC		include/openssl/hmac.h		crypto/hmac/hmac_err.c
 L CMS		include/openssl/cms.h		crypto/cms/cms_err.c
 L FIPS		include/openssl/fips.h		crypto/fips_err.h
 L CT		include/openssl/ct.h		crypto/ct/ct_err.c
