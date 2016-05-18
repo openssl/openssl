@@ -75,6 +75,7 @@
 #define CHARTYPE_BS_ESC         (ASN1_STRFLGS_ESC_2253 | CHARTYPE_FIRST_ESC_2253 | CHARTYPE_LAST_ESC_2253)
 
 #define ESC_FLAGS (ASN1_STRFLGS_ESC_2253 | \
+                  ASN1_STRFLGS_ESC_2254 | \
                   ASN1_STRFLGS_ESC_QUOTE | \
                   ASN1_STRFLGS_ESC_CTRL | \
                   ASN1_STRFLGS_ESC_MSB)
@@ -124,7 +125,8 @@ typedef int char_io (void *arg, const void *buf, int len);
 static int do_esc_char(unsigned long c, unsigned char flags, char *do_quotes,
                        char_io *io_ch, void *arg)
 {
-    unsigned char chflgs, chtmp;
+    unsigned short chflgs;
+    unsigned char chtmp;
     char tmphex[HEX_SIZE(long) + 3];
 
     if (c > 0xffffffffL)
@@ -161,7 +163,9 @@ static int do_esc_char(unsigned long c, unsigned char flags, char *do_quotes,
             return -1;
         return 2;
     }
-    if (chflgs & (ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_ESC_MSB)) {
+    if (chflgs & (ASN1_STRFLGS_ESC_CTRL
+                  | ASN1_STRFLGS_ESC_MSB
+                  | ASN1_STRFLGS_ESC_2254)) {
         BIO_snprintf(tmphex, 11, "\\%02X", chtmp);
         if (!io_ch(arg, tmphex, 3))
             return -1;
@@ -191,11 +195,12 @@ static int do_esc_char(unsigned long c, unsigned char flags, char *do_quotes,
  */
 
 static int do_buf(unsigned char *buf, int buflen,
-                  int type, unsigned char flags, char *quotes, char_io *io_ch,
+                  int type, unsigned short flags, char *quotes, char_io *io_ch,
                   void *arg)
 {
     int i, outlen, len;
-    unsigned char orflags, *p, *q;
+    unsigned short orflags;
+    unsigned char *p, *q;
     unsigned long c;
     p = buf;
     q = buf + buflen;
@@ -245,7 +250,7 @@ static int do_buf(unsigned char *buf, int buflen,
                  * character will never be escaped on first and last.
                  */
                 len =
-                    do_esc_char(utfbuf[i], (unsigned char)(flags | orflags),
+                    do_esc_char(utfbuf[i], (unsigned short)(flags | orflags),
                                 quotes, io_ch, arg);
                 if (len < 0)
                     return -1;
@@ -253,7 +258,7 @@ static int do_buf(unsigned char *buf, int buflen,
             }
         } else {
             len =
-                do_esc_char(c, (unsigned char)(flags | orflags), quotes,
+                do_esc_char(c, (unsigned short)(flags | orflags), quotes,
                             io_ch, arg);
             if (len < 0)
                 return -1;
@@ -355,10 +360,10 @@ static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
     int outlen, len;
     int type;
     char quotes;
-    unsigned char flags;
+    unsigned short flags;
     quotes = 0;
     /* Keep a copy of escape flags */
-    flags = (unsigned char)(lflags & ESC_FLAGS);
+    flags = (unsigned short)(lflags & ESC_FLAGS);
 
     type = str->type;
 
