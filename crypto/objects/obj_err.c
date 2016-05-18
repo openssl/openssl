@@ -36,6 +36,7 @@ static ERR_STRING_DATA OBJ_str_functs[] = {
 
 static ERR_STRING_DATA OBJ_str_reasons[] = {
     {ERR_REASON(OBJ_R_MALLOC_FAILURE), "malloc failure"},
+    {ERR_REASON(OBJ_R_OID_EXISTS), "oid exists"},
     {ERR_REASON(OBJ_R_UNKNOWN_NID), "unknown nid"},
     {0, NULL}
 };
