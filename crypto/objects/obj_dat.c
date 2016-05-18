@@ -680,7 +680,7 @@ int OBJ_create_objects(BIO *in)
 int OBJ_create(const char *oid, const char *sn, const char *ln)
 {
     ASN1_OBJECT *tmpoid = NULL;
-    int ok;
+    int ok = 0;
 
     /* Check to see if short or long name already present */
     if (OBJ_sn2nid(sn) != NID_undef || OBJ_ln2nid(ln) != NID_undef) {
