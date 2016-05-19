@@ -464,14 +464,9 @@ B<space_eq>, B<lname> and B<align>.
 
 =item B<esc_2253>
 
-escape the "special" characters required by RFC2253 in a field. That is
+escape the "special" characters required by RFC2253 in a field That is
 B<,+"E<lt>E<gt>;>. Additionally B<#> is escaped at the beginning of a string
 and a space character at the beginning or end of a string.
-
-=item B<esc_2254>
-
-escape the "special" characters required by RFC2254 in a field. That is
-the B<NUL> character as well as and B<()*>.
 
 =item B<esc_ctrl>
 
