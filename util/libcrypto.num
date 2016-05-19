@@ -4213,3 +4213,4 @@ X509_OBJECT_get_type                    4087	1_1_0	EXIST::FUNCTION:
 X509_STORE_set_verify                   4088	1_1_0	EXIST::FUNCTION:
 X509_OBJECT_new                         4089	1_1_0	EXIST::FUNCTION:
 X509_STORE_get0_param                   4090	1_1_0	EXIST::FUNCTION:
+PEM_write_bio_PrivateKey_traditional    4091	1_1_0	EXIST::FUNCTION:
