@@ -1321,7 +1321,6 @@ int set_name_ex(unsigned long *flags, const char *arg)
 {
     static const NAME_EX_TBL ex_tbl[] = {
         {"esc_2253", ASN1_STRFLGS_ESC_2253, 0},
-        {"esc_2254", ASN1_STRFLGS_ESC_2254, 0},
         {"esc_ctrl", ASN1_STRFLGS_ESC_CTRL, 0},
         {"esc_msb", ASN1_STRFLGS_ESC_MSB, 0},
         {"use_quote", ASN1_STRFLGS_ESC_QUOTE, 0},

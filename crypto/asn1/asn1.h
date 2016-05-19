@@ -505,11 +505,6 @@ typedef const ASN1_ITEM *ASN1_ITEM_EXP (void);
 # define ASN1_STRFLGS_DUMP_DER           0x200
 
 /*
- * This flag specifies that RC2254 escaping shall be performed.
- */
-#define ASN1_STRFLGS_ESC_2254           0x400
-
-/*
  * All the string flags consistent with RFC2253, escaping control characters
  * isn't essential in RFC2253 but it is advisable anyway.
  */
