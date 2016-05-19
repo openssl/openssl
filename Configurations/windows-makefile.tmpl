@@ -189,6 +189,8 @@ install_sw: all install_dev install_engines install_runtime
 uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
 
 install_docs:
+        $(PERL) $(SRCDIR)\util\process_docs.pl \
+                "--destdir=$(DESTDIR)$(INSTALLTOP)\html" --type=html
 
 uninstall_docs:
 
