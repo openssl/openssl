@@ -396,13 +396,8 @@ typedef unsigned int CRYPTO_THREAD_ID;
 typedef DWORD CRYPTO_THREAD_LOCAL;
 typedef DWORD CRYPTO_THREAD_ID;
 
-#  if _WIN32_WINNT < 0x0600
 typedef LONG CRYPTO_ONCE;
-#   define CRYPTO_ONCE_STATIC_INIT 0
-#  else
-typedef INIT_ONCE CRYPTO_ONCE;
-#   define CRYPTO_ONCE_STATIC_INIT INIT_ONCE_STATIC_INIT
-#  endif
+#  define CRYPTO_ONCE_STATIC_INIT 0
 
 # else
 #  include <pthread.h>

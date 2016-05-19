@@ -55,12 +55,14 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock)
     return;
 }
 
-# if _WIN32_WINNT < 0x0600
-
 #  define ONCE_UNINITED     0
 #  define ONCE_ININIT       1
 #  define ONCE_DONE         2
 
+/*
+ * We don't use InitOnceExecuteOnce because that isn't available in WinXP which
+ * we still have to support.
+ */
 int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
 {
     LONG volatile *lock = (LONG *)once;
@@ -80,27 +82,6 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
 
     return (*lock == ONCE_DONE);
 }
-
-# else
-
-BOOL CALLBACK once_cb(PINIT_ONCE once, PVOID p, PVOID *pp)
-{
-    void (*init)(void) = p;
-
-    init();
-
-    return TRUE;
-}
-
-int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
-{
-    if (InitOnceExecuteOnce(once, once_cb, init, NULL))
-        return 1;
-
-    return 0;
-}
-
-# endif
 
 int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
 {
