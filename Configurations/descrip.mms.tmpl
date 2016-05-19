@@ -418,6 +418,10 @@ vmsconfig.pm : configdata.pm
         WRITE CONFIG "1;"
         CLOSE CONFIG
 
+install_html_docs : check_INSTALLTOP
+        @ $(PERL) {- sourcefile("util", "process_docs.pl") -} -
+                --destdir=ossl_installroot:[HTML] --type=html
+
 check_INSTALLTOP :
         @ IF "$(INSTALLTOP)" .EQS. "" THEN -
                 WRITE SYS$ERROR "INSTALLTOP should not be empty"
