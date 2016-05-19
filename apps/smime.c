@@ -134,6 +134,7 @@ int smime_main(int argc, char **argv)
         FORMAT_PEM;
     int vpmtouched = 0, rv = 0;
     ENGINE *e = NULL;
+    const char *mime_eol = "\n";
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         return 1;
@@ -224,6 +225,7 @@ int smime_main(int argc, char **argv)
             break;
         case OPT_CRLFEOL:
             flags |= PKCS7_CRLFEOL;
+            mime_eol = "\r\n";
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -574,11 +576,11 @@ int smime_main(int argc, char **argv)
         PEM_write_bio_PKCS7(out, p7);
     else {
         if (to)
-            BIO_printf(out, "To: %s\n", to);
+            BIO_printf(out, "To: %s%s", to, mime_eol);
         if (from)
-            BIO_printf(out, "From: %s\n", from);
+            BIO_printf(out, "From: %s%s", from, mime_eol);
         if (subject)
-            BIO_printf(out, "Subject: %s\n", subject);
+            BIO_printf(out, "Subject: %s%s", subject, mime_eol);
         if (outformat == FORMAT_SMIME) {
             if (operation == SMIME_RESIGN)
                 rv = SMIME_write_PKCS7(out, p7, indata, flags);
