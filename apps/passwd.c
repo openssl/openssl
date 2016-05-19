@@ -302,7 +302,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     OPENSSL_strlcat(out_buf, "$", sizeof out_buf);
     OPENSSL_strlcat(out_buf, salt, sizeof out_buf);
 
-    if (strlen(out_buf) > 6 + 8); /* assert "$apr1$..salt.." */
+    if (strlen(out_buf) > 6 + 8) /* assert "$apr1$..salt.." */
         return NULL;
 
     salt_out = out_buf + 2 + magic_len;
