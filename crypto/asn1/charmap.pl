@@ -18,7 +18,6 @@ my $NOESC_QUOTE	= 8;	# Not escaped if quoted
 my $PSTRING_CHAR = 0x10;	# Valid PrintableString character
 my $RFC2253_FIRST_ESC = 0x20; # Escaped with \ if first character
 my $RFC2253_LAST_ESC = 0x40;  # Escaped with \ if last character
-my $RFC2254_ESC = 0x400;	# Character escaped \XX
 
 for($i = 0; $i < 128; $i++) {
 	# Set the RFC2253 escape characters (control)
@@ -50,14 +49,6 @@ $arr[ord("<")] |= $NOESC_QUOTE | $RFC2253_ESC;
 $arr[ord(">")] |= $NOESC_QUOTE | $RFC2253_ESC;
 $arr[ord(";")] |= $NOESC_QUOTE | $RFC2253_ESC;
 
-# Remaining RFC2254 characters
-
-$arr[0] |= $RFC2254_ESC;
-$arr[ord("(")] |= $RFC2254_ESC;
-$arr[ord(")")] |= $RFC2254_ESC;
-$arr[ord("*")] |= $RFC2254_ESC;
-$arr[ord("\\")] |= $RFC2254_ESC;
-
 # Remaining PrintableString characters
 
 $arr[ord(" ")] |= $PSTRING_CHAR;
@@ -81,7 +72,7 @@ print <<EOF;
  * properties
  */
 
-static const unsigned short char_type[] = {
+static const unsigned char char_type[] = {
 EOF
 
 print "   ";
