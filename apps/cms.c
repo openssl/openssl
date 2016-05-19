@@ -216,6 +216,7 @@ int cms_main(int argc, char **argv)
     unsigned char *pwri_pass = NULL, *pwri_tmp = NULL;
     unsigned char *secret_key = NULL, *secret_keyid = NULL;
     long ltmp;
+    const char *mime_eol = "\n";
     OPTION_CHOICE o;
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
@@ -348,6 +349,7 @@ int cms_main(int argc, char **argv)
             flags |= CMS_NOOLDMIMETYPE;
             break;
         case OPT_CRLFEOL:
+            mime_eol = "\r\n";
             flags |= CMS_CRLFEOL;
             break;
         case OPT_NOOUT:
@@ -1040,11 +1042,11 @@ int cms_main(int argc, char **argv)
                 CMS_ContentInfo_print_ctx(out, cms, 0, NULL);
         } else if (outformat == FORMAT_SMIME) {
             if (to)
-                BIO_printf(out, "To: %s\n", to);
+                BIO_printf(out, "To: %s%s", to, mime_eol);
             if (from)
-                BIO_printf(out, "From: %s\n", from);
+                BIO_printf(out, "From: %s%s", from, mime_eol);
             if (subject)
-                BIO_printf(out, "Subject: %s\n", subject);
+                BIO_printf(out, "Subject: %s%s", subject, mime_eol);
             if (operation == SMIME_RESIGN)
                 ret = SMIME_write_CMS(out, cms, indata, flags);
             else
