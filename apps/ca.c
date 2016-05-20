@@ -240,7 +240,7 @@ int ca_main(int argc, char **argv)
     char *outdir = NULL, *outfile = NULL, *rev_arg = NULL, *ser_status = NULL;
     char *serialfile = NULL, *startdate = NULL, *subj = NULL;
     char *prog, *enddate = NULL, *tmp_email_dn = NULL;
-    char *dbfile = NULL, *f, *randfile = NULL, *tofree = NULL;
+    char *dbfile = NULL, *f, *randfile = NULL;
     char buf[3][BSIZE];
     char *const *pp;
     const char *p;
@@ -258,38 +258,38 @@ int ca_main(int argc, char **argv)
     prog = opt_init(argc, argv, ca_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
-            case OPT_EOF:
-            case OPT_ERR:
+        case OPT_EOF:
+        case OPT_ERR:
 opthelp:
-                BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
-                goto end;
-            case OPT_HELP:
-                opt_help(ca_options);
-                ret = 0;
-                goto end;
-            case OPT_IN:
-                req = 1;
-                infile = opt_arg();
-                break;
-            case OPT_OUT:
-                outfile = opt_arg();
-                break;
-            case OPT_VERBOSE:
-                verbose = 1;
-                break;
-            case OPT_CONFIG:
-                configfile = opt_arg();
-                break;
-            case OPT_NAME:
-                section = opt_arg();
-                break;
-            case OPT_SUBJ:
-                subj = opt_arg();
-                /* preserve=1; */
-                break;
-            case OPT_UTF8:
-                chtype = MBSTRING_UTF8;
-                break;
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(ca_options);
+            ret = 0;
+            goto end;
+        case OPT_IN:
+            req = 1;
+            infile = opt_arg();
+            break;
+        case OPT_OUT:
+            outfile = opt_arg();
+            break;
+        case OPT_VERBOSE:
+            verbose = 1;
+            break;
+        case OPT_CONFIG:
+            configfile = opt_arg();
+            break;
+        case OPT_NAME:
+            section = opt_arg();
+            break;
+        case OPT_SUBJ:
+            subj = opt_arg();
+            /* preserve=1; */
+            break;
+        case OPT_UTF8:
+            chtype = MBSTRING_UTF8;
+            break;
         case OPT_CREATE_SERIAL:
             create_ser = 1;
             break;
@@ -496,7 +496,7 @@ end_of_options:
     } else
         ERR_clear_error();
 
-        /*****************************************************************/
+    /*****************************************************************/
     /* report status of cert with serial number given on command line */
     if (ser_status) {
         if ((dbfile = NCONF_get_string(conf, section, ENV_DATABASE)) == NULL) {
@@ -515,7 +515,7 @@ end_of_options:
         goto end;
     }
 
-        /*****************************************************************/
+    /*****************************************************************/
     /* we definitely need a private key, so let's get it */
 
     if ((keyfile == NULL) && ((keyfile = NCONF_get_string(conf,
@@ -540,7 +540,7 @@ end_of_options:
         goto end;
     }
 
-        /*****************************************************************/
+    /*****************************************************************/
     /* we need a certificate */
     if (!selfsign || spkac_file || ss_cert_file || gencrl) {
         if ((certfile == NULL)
@@ -608,7 +608,7 @@ end_of_options:
     } else
         ERR_clear_error();
 
-        /*****************************************************************/
+    /*****************************************************************/
     /* lookup where to write new certificates */
     if ((outdir == NULL) && (req)) {
 
@@ -634,7 +634,7 @@ end_of_options:
 #endif
     }
 
-        /*****************************************************************/
+    /*****************************************************************/
     /* we need to load the database file */
     if ((dbfile = NCONF_get_string(conf, section, ENV_DATABASE)) == NULL) {
         lookup_fail(section, ENV_DATABASE);
@@ -692,7 +692,7 @@ end_of_options:
     if (!index_index(db))
         goto end;
 
-        /*****************************************************************/
+    /*****************************************************************/
     /* Update the db file for expired certificates */
     if (doupdatedb) {
         if (verbose)
@@ -1060,7 +1060,7 @@ end_of_options:
         }
     }
 
-        /*****************************************************************/
+    /*****************************************************************/
     if (gencrl) {
         int crl_v2 = 0;
         if (!crl_ext) {
@@ -1201,7 +1201,7 @@ end_of_options:
                 goto end;
 
     }
-        /*****************************************************************/
+    /*****************************************************************/
     if (dorevoke) {
         if (infile == NULL) {
             BIO_printf(bio_err, "no input files\n");
@@ -1227,10 +1227,9 @@ end_of_options:
             BIO_printf(bio_err, "Data Base Updated\n");
         }
     }
-        /*****************************************************************/
+    /*****************************************************************/
     ret = 0;
  end:
-    OPENSSL_free(tofree);
     BIO_free_all(Cout);
     BIO_free_all(Sout);
     BIO_free_all(out);
