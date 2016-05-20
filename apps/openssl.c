@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
                 extern void add_history(const char *cp);
                 char *text;
 
-                char *text = readline(prompt);
+                text = readline(prompt);
                 if (text == NULL)
                     goto end;
                 i = strlen(text);
