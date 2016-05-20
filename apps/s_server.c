@@ -2309,12 +2309,14 @@ static int sv_body(int s, int stype, unsigned char *context)
                     break;
                 case SSL_ERROR_WANT_ASYNC:
                     BIO_printf(bio_s_out, "Write BLOCK (Async)\n");
+                    (void)BIO_flush(bio_s_out);
                     wait_for_async(con);
                     break;
                 case SSL_ERROR_WANT_WRITE:
                 case SSL_ERROR_WANT_READ:
                 case SSL_ERROR_WANT_X509_LOOKUP:
                     BIO_printf(bio_s_out, "Write BLOCK\n");
+                    (void)BIO_flush(bio_s_out);
                     break;
                 case SSL_ERROR_WANT_ASYNC_JOB:
                     /*
@@ -2383,16 +2385,19 @@ static int sv_body(int s, int stype, unsigned char *context)
                     ascii2ebcdic(buf, buf, i);
 #endif
                     raw_write_stdout(buf, (unsigned int)i);
+                    (void)BIO_flush(bio_s_out);
                     if (SSL_has_pending(con))
                         goto again;
                     break;
                 case SSL_ERROR_WANT_ASYNC:
                     BIO_printf(bio_s_out, "Read BLOCK (Async)\n");
+                    (void)BIO_flush(bio_s_out);
                     wait_for_async(con);
                     break;
                 case SSL_ERROR_WANT_WRITE:
                 case SSL_ERROR_WANT_READ:
                     BIO_printf(bio_s_out, "Read BLOCK\n");
+                    (void)BIO_flush(bio_s_out);
                     break;
                 case SSL_ERROR_WANT_ASYNC_JOB:
                     /*
@@ -2448,6 +2453,7 @@ static int init_ssl_connection(SSL *con)
     unsigned next_proto_neg_len;
 #endif
     unsigned char *exportedkeymat;
+    int retry = 0;
 
 #ifndef OPENSSL_NO_DTLS
     if(dtlslisten) {
@@ -2482,6 +2488,8 @@ static int init_ssl_connection(SSL *con)
     do {
         i = SSL_accept(con);
 
+        if (i <= 0)
+            retry = BIO_sock_should_retry(i);
 #ifdef CERT_CB_TEST_RETRY
         {
             while (i <= 0 && SSL_get_error(con, i) == SSL_ERROR_WANT_X509_LOOKUP
@@ -2489,6 +2497,8 @@ static int init_ssl_connection(SSL *con)
                 BIO_printf(bio_err,
                        "LOOKUP from certificate callback during accept\n");
                 i = SSL_accept(con);
+                if (i <= 0)
+                    retry = BIO_sock_should_retry(i);
             }
         }
 #endif
@@ -2507,13 +2517,15 @@ static int init_ssl_connection(SSL *con)
             else
                 BIO_printf(bio_s_out, "LOOKUP not successful\n");
             i = SSL_accept(con);
+            if (i <= 0)
+                retry = BIO_sock_should_retry(i);
         }
 #endif
     } while (i < 0 && SSL_waiting_for_async(con));
 
     if (i <= 0) {
         if ((dtlslisten && i == 0)
-                || (!dtlslisten && BIO_sock_should_retry(i))) {
+                || (!dtlslisten && retry)) {
             BIO_printf(bio_s_out, "DELAY\n");
             return (1);
         }
@@ -2599,6 +2611,7 @@ static int init_ssl_connection(SSL *con)
         OPENSSL_free(exportedkeymat);
     }
 
+	(void)BIO_flush(bio_s_out);
     return (1);
 }
 
