@@ -2402,6 +2402,16 @@ int s_client_main(int argc, char **argv)
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
     do_ssl_shutdown(con);
+#if defined(OPENSSL_SYS_WINDOWS)
+    /*
+     * Give the socket time to send its last data before we close it.
+     * No amount of setting SO_LINGER etc on the socket seems to persuade
+     * Windows to send the data before closing the socket...but sleeping
+     * for a short time seems to do it (units in ms)
+     * TODO: Find a better way to do this
+     */
+    Sleep(50);
+#endif
     BIO_closesocket(SSL_get_fd(con));
  end:
     if (con != NULL) {
