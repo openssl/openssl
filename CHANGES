@@ -4,6 +4,11 @@
 
  Changes between 1.0.2h and 1.1.0  [xx XXX 2016]
 
+  *) The stack and lhash API's were renamed to start with OPENSSL_SK_
+     and OPENSSL_LH_, respectively.  The old names are available
+     with API compatibility.  They new names are now completely documented.
+     [Rich Salz]
+
   *) Unify TYPE_up_ref(obj) methods signature.
      SSL_CTX_up_ref(), SSL_up_ref(), X509_up_ref(), EVP_PKEY_up_ref(),
      X509_CRL_up_ref(), X509_OBJECT_up_ref_count() methods are now returning an

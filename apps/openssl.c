@@ -525,7 +525,7 @@ static int function_cmp(const FUNCTION * a, const FUNCTION * b)
 
 static unsigned long function_hash(const FUNCTION * a)
 {
-    return lh_strhash(a->name);
+    return OPENSSL_LH_strhash(a->name);
 }
 
 static int SortFnByName(const void *_f1, const void *_f2)

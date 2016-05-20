@@ -14,33 +14,62 @@
 extern "C" {
 #endif
 
-typedef struct stack_st _STACK; /* Use STACK_OF(...) instead */
+typedef struct stack_st OPENSSL_STACK; /* Use STACK_OF(...) instead */
 
-int sk_num(const _STACK *);
-void *sk_value(const _STACK *, int);
+typedef int (*OPENSSL_sk_compfunc)(const void *, const void *);
+typedef void (*OPENSSL_sk_freefunc)(void *);
+typedef void *(*OPENSSL_sk_copyfunc)(const void *);
 
-void *sk_set(_STACK *, int, void *);
+int OPENSSL_sk_num(const OPENSSL_STACK *);
+void *OPENSSL_sk_value(const OPENSSL_STACK *, int);
 
-_STACK *sk_new(int (*cmp) (const void *, const void *));
-_STACK *sk_new_null(void);
-void sk_free(_STACK *);
-void sk_pop_free(_STACK *st, void (*func) (void *));
-_STACK *sk_deep_copy(_STACK *, void *(*)(void *), void (*)(void *));
-int sk_insert(_STACK *sk, void *data, int where);
-void *sk_delete(_STACK *st, int loc);
-void *sk_delete_ptr(_STACK *st, void *p);
-int sk_find(_STACK *st, void *data);
-int sk_find_ex(_STACK *st, void *data);
-int sk_push(_STACK *st, void *data);
-int sk_unshift(_STACK *st, void *data);
-void *sk_shift(_STACK *st);
-void *sk_pop(_STACK *st);
-void sk_zero(_STACK *st);
-int (*sk_set_cmp_func(_STACK *sk, int (*c) (const void *, const void *)))
- (const void *, const void *);
-_STACK *sk_dup(_STACK *st);
-void sk_sort(_STACK *st);
-int sk_is_sorted(const _STACK *st);
+void *OPENSSL_sk_set(OPENSSL_STACK *, int, void *);
+
+OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc cmp);
+OPENSSL_STACK *OPENSSL_sk_new_null(void);
+void OPENSSL_sk_free(OPENSSL_STACK *);
+void OPENSSL_sk_pop_free(OPENSSL_STACK *st, void (*func) (void *));
+OPENSSL_STACK *OPENSSL_sk_deep_copy(OPENSSL_STACK *, OPENSSL_sk_copyfunc c, OPENSSL_sk_freefunc f);
+int OPENSSL_sk_insert(OPENSSL_STACK *sk, void *data, int where);
+void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc);
+void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, void *p);
+int OPENSSL_sk_find(OPENSSL_STACK *st, void *data);
+int OPENSSL_sk_find_ex(OPENSSL_STACK *st, void *data);
+int OPENSSL_sk_push(OPENSSL_STACK *st, void *data);
+int OPENSSL_sk_unshift(OPENSSL_STACK *st, void *data);
+void *OPENSSL_sk_shift(OPENSSL_STACK *st);
+void *OPENSSL_sk_pop(OPENSSL_STACK *st);
+void OPENSSL_sk_zero(OPENSSL_STACK *st);
+OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk, OPENSSL_sk_compfunc cmp);
+OPENSSL_STACK *OPENSSL_sk_dup(OPENSSL_STACK *st);
+void OPENSSL_sk_sort(OPENSSL_STACK *st);
+int OPENSSL_sk_is_sorted(const OPENSSL_STACK *st);
+
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define _STACK OPENSSL_STACK
+#  define sk_num OPENSSL_sk_num
+#  define sk_value OPENSSL_sk_value
+#  define sk_set OPENSSL_sk_set
+#  define sk_new OPENSSL_sk_new
+#  define sk_new_null OPENSSL_sk_new_null
+#  define sk_free OPENSSL_sk_free
+#  define sk_pop_free OPENSSL_sk_pop_free
+#  define sk_deep_copy OPENSSL_sk_deep_copy
+#  define sk_insert OPENSSL_sk_insert
+#  define sk_delete OPENSSL_sk_delete
+#  define sk_delete_ptr OPENSSL_sk_delete_ptr
+#  define sk_find OPENSSL_sk_find
+#  define sk_find_ex OPENSSL_sk_find_ex
+#  define sk_push OPENSSL_sk_push
+#  define sk_unshift OPENSSL_sk_unshift
+#  define sk_shift OPENSSL_sk_shift
+#  define sk_pop OPENSSL_sk_pop
+#  define sk_zero OPENSSL_sk_zero
+#  define sk_set_cmp_func OPENSSL_sk_set_cmp_func
+#  define sk_dup OPENSSL_sk_dup
+#  define sk_sort OPENSSL_sk_sort
+#  define sk_is_sorted OPENSSL_sk_is_sorted
+# endif
 
 #ifdef  __cplusplus
 }

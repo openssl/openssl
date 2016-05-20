@@ -100,7 +100,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
 
 static unsigned long conf_value_hash(const CONF_VALUE *v)
 {
-    return (lh_strhash(v->section) << 2) ^ lh_strhash(v->name);
+    return (OPENSSL_LH_strhash(v->section) << 2) ^ OPENSSL_LH_strhash(v->name);
 }
 
 static int conf_value_cmp(const CONF_VALUE *a, const CONF_VALUE *b)

@@ -145,7 +145,7 @@ OPENSSL_STRING *TXT_DB_get_by_index(TXT_DB *db, int idx,
 }
 
 int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENSSL_STRING *),
-                        LHASH_HASH_FN_TYPE hash, LHASH_COMP_FN_TYPE cmp)
+                        OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC cmp)
 {
     LHASH_OF(OPENSSL_STRING) *idx;
     OPENSSL_STRING *r;
@@ -156,7 +156,7 @@ int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENSSL_STRING *),
         return (0);
     }
     /* FIXME: we lose type checking at this point */
-    if ((idx = (LHASH_OF(OPENSSL_STRING) *)lh_new(hash, cmp)) == NULL) {
+    if ((idx = (LHASH_OF(OPENSSL_STRING) *)OPENSSL_LH_new(hash, cmp)) == NULL) {
         db->error = DB_ERROR_MALLOC;
         return (0);
     }

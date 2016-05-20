@@ -17,7 +17,7 @@ struct stack_st {
     char **data;
     int sorted;
     int num_alloc;
-    int (*comp) (const void *, const void *);
+    OPENSSL_sk_compfunc comp;
 };
 
 #undef MIN_NODES
@@ -25,9 +25,9 @@ struct stack_st {
 
 #include <errno.h>
 
-int (*sk_set_cmp_func(_STACK *sk, int (*c) (const void *, const void *)))
- (const void *, const void *) {
-    int (*old) (const void *, const void *) = sk->comp;
+OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk, OPENSSL_sk_compfunc c)
+{
+    OPENSSL_sk_compfunc old = sk->comp;
 
     if (sk->comp != c)
         sk->sorted = 0;
@@ -36,12 +36,12 @@ int (*sk_set_cmp_func(_STACK *sk, int (*c) (const void *, const void *)))
     return old;
 }
 
-_STACK *sk_dup(_STACK *sk)
+OPENSSL_STACK *OPENSSL_sk_dup(OPENSSL_STACK *sk)
 {
-    _STACK *ret;
+    OPENSSL_STACK *ret;
     char **s;
 
-    if ((ret = sk_new(sk->comp)) == NULL)
+    if ((ret = OPENSSL_sk_new(sk->comp)) == NULL)
         goto err;
     s = OPENSSL_realloc((char *)ret->data,
                         (unsigned int)sizeof(char *) * sk->num_alloc);
@@ -56,17 +56,17 @@ _STACK *sk_dup(_STACK *sk)
     ret->comp = sk->comp;
     return (ret);
  err:
-    sk_free(ret);
+    OPENSSL_sk_free(ret);
     return (NULL);
 }
 
-_STACK *sk_deep_copy(_STACK *sk, void *(*copy_func) (void *),
-                     void (*free_func) (void *))
+OPENSSL_STACK *OPENSSL_sk_deep_copy(OPENSSL_STACK *sk, OPENSSL_sk_copyfunc copy_func,
+                             OPENSSL_sk_freefunc free_func)
 {
-    _STACK *ret;
+    OPENSSL_STACK *ret;
     int i;
 
-    if ((ret = OPENSSL_malloc(sizeof(_STACK))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return ret;
     ret->comp = sk->comp;
     ret->sorted = sk->sorted;
@@ -87,23 +87,23 @@ _STACK *sk_deep_copy(_STACK *sk, void *(*copy_func) (void *),
             while (--i >= 0)
                 if (ret->data[i] != NULL)
                     free_func(ret->data[i]);
-            sk_free(ret);
+            OPENSSL_sk_free(ret);
             return NULL;
         }
     }
     return ret;
 }
 
-_STACK *sk_new_null(void)
+OPENSSL_STACK *OPENSSL_sk_new_null(void)
 {
-    return sk_new((int (*)(const void *, const void *))0);
+    return OPENSSL_sk_new((OPENSSL_sk_compfunc)NULL);
 }
 
-_STACK *sk_new(int (*c) (const void *, const void *))
+OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc c)
 {
-    _STACK *ret;
+    OPENSSL_STACK *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(_STACK))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         goto err;
     if ((ret->data = OPENSSL_zalloc(sizeof(*ret->data) * MIN_NODES)) == NULL)
         goto err;
@@ -116,7 +116,7 @@ _STACK *sk_new(int (*c) (const void *, const void *))
     return (NULL);
 }
 
-int sk_insert(_STACK *st, void *data, int loc)
+int OPENSSL_sk_insert(OPENSSL_STACK *st, void *data, int loc)
 {
     char **s;
 
@@ -142,22 +142,22 @@ int sk_insert(_STACK *st, void *data, int loc)
     return (st->num);
 }
 
-void *sk_delete_ptr(_STACK *st, void *p)
+void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, void *p)
 {
     int i;
 
     for (i = 0; i < st->num; i++)
         if (st->data[i] == p)
-            return (sk_delete(st, i));
+            return (OPENSSL_sk_delete(st, i));
     return (NULL);
 }
 
-void *sk_delete(_STACK *st, int loc)
+void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc)
 {
     char *ret;
     int i, j;
 
-    if (!st || (loc < 0) || (loc >= st->num))
+    if (st == NULL || loc < 0 || loc >= st->num)
         return NULL;
 
     ret = st->data[loc];
@@ -174,7 +174,7 @@ void *sk_delete(_STACK *st, int loc)
     return (ret);
 }
 
-static int internal_find(_STACK *st, void *data, int ret_val_options)
+static int internal_find(OPENSSL_STACK *st, void *data, int ret_val_options)
 {
     const void *const *r;
     int i;
@@ -188,7 +188,7 @@ static int internal_find(_STACK *st, void *data, int ret_val_options)
                 return (i);
         return (-1);
     }
-    sk_sort(st);
+    OPENSSL_sk_sort(st);
     if (data == NULL)
         return (-1);
     r = OBJ_bsearch_ex_(&data, st->data, st->num, sizeof(void *), st->comp,
@@ -198,45 +198,45 @@ static int internal_find(_STACK *st, void *data, int ret_val_options)
     return (int)((char **)r - st->data);
 }
 
-int sk_find(_STACK *st, void *data)
+int OPENSSL_sk_find(OPENSSL_STACK *st, void *data)
 {
     return internal_find(st, data, OBJ_BSEARCH_FIRST_VALUE_ON_MATCH);
 }
 
-int sk_find_ex(_STACK *st, void *data)
+int OPENSSL_sk_find_ex(OPENSSL_STACK *st, void *data)
 {
     return internal_find(st, data, OBJ_BSEARCH_VALUE_ON_NOMATCH);
 }
 
-int sk_push(_STACK *st, void *data)
+int OPENSSL_sk_push(OPENSSL_STACK *st, void *data)
 {
-    return (sk_insert(st, data, st->num));
+    return (OPENSSL_sk_insert(st, data, st->num));
 }
 
-int sk_unshift(_STACK *st, void *data)
+int OPENSSL_sk_unshift(OPENSSL_STACK *st, void *data)
 {
-    return (sk_insert(st, data, 0));
+    return (OPENSSL_sk_insert(st, data, 0));
 }
 
-void *sk_shift(_STACK *st)
-{
-    if (st == NULL)
-        return (NULL);
-    if (st->num <= 0)
-        return (NULL);
-    return (sk_delete(st, 0));
-}
-
-void *sk_pop(_STACK *st)
+void *OPENSSL_sk_shift(OPENSSL_STACK *st)
 {
     if (st == NULL)
         return (NULL);
     if (st->num <= 0)
         return (NULL);
-    return (sk_delete(st, st->num - 1));
+    return (OPENSSL_sk_delete(st, 0));
 }
 
-void sk_zero(_STACK *st)
+void *OPENSSL_sk_pop(OPENSSL_STACK *st)
+{
+    if (st == NULL)
+        return (NULL);
+    if (st->num <= 0)
+        return (NULL);
+    return (OPENSSL_sk_delete(st, st->num - 1));
+}
+
+void OPENSSL_sk_zero(OPENSSL_STACK *st)
 {
     if (st == NULL)
         return;
@@ -246,7 +246,7 @@ void sk_zero(_STACK *st)
     st->num = 0;
 }
 
-void sk_pop_free(_STACK *st, void (*func) (void *))
+void OPENSSL_sk_pop_free(OPENSSL_STACK *st, OPENSSL_sk_freefunc func)
 {
     int i;
 
@@ -255,10 +255,10 @@ void sk_pop_free(_STACK *st, void (*func) (void *))
     for (i = 0; i < st->num; i++)
         if (st->data[i] != NULL)
             func(st->data[i]);
-    sk_free(st);
+    OPENSSL_sk_free(st);
 }
 
-void sk_free(_STACK *st)
+void OPENSSL_sk_free(OPENSSL_STACK *st)
 {
     if (st == NULL)
         return;
@@ -266,48 +266,38 @@ void sk_free(_STACK *st)
     OPENSSL_free(st);
 }
 
-int sk_num(const _STACK *st)
+int OPENSSL_sk_num(const OPENSSL_STACK *st)
 {
     if (st == NULL)
         return -1;
     return st->num;
 }
 
-void *sk_value(const _STACK *st, int i)
+void *OPENSSL_sk_value(const OPENSSL_STACK *st, int i)
 {
-    if (!st || (i < 0) || (i >= st->num))
+    if (st == NULL || i < 0 || i >= st->num)
         return NULL;
     return st->data[i];
 }
 
-void *sk_set(_STACK *st, int i, void *value)
+void *OPENSSL_sk_set(OPENSSL_STACK *st, int i, void *value)
 {
-    if (!st || (i < 0) || (i >= st->num))
+    if (st == NULL || i < 0 || i >= st->num)
         return NULL;
     return (st->data[i] = value);
 }
 
-void sk_sort(_STACK *st)
+void OPENSSL_sk_sort(OPENSSL_STACK *st)
 {
     if (st && !st->sorted && st->comp != NULL) {
-        int (*comp_func) (const void *, const void *);
-
-        /*
-         * same comment as in sk_find ... previously st->comp was declared as
-         * a (void*,void*) callback type, but this made the population of the
-         * callback pointer illogical - our callbacks compare type** with
-         * type**, so we leave the casting until absolutely necessary (ie.
-         * "now").
-         */
-        comp_func = (int (*)(const void *, const void *))(st->comp);
-        qsort(st->data, st->num, sizeof(char *), comp_func);
+        qsort(st->data, st->num, sizeof(char *), st->comp);
         st->sorted = 1;
     }
 }
 
-int sk_is_sorted(const _STACK *st)
+int OPENSSL_sk_is_sorted(const OPENSSL_STACK *st)
 {
-    if (!st)
+    if (st == NULL)
         return 1;
     return st->sorted;
 }
