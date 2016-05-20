@@ -14,7 +14,6 @@ use strict;
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 use File::Path qw/mkpath/;
-use IPC::Cmd qw/can_run/;
 
 # see INSTALL for instructions.
 
@@ -913,7 +912,7 @@ $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
 $config{perl} =    $ENV{'PERL'}    || ($^O ne "VMS" ? $^X : "perl");
 $target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
 $target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  ||
-                   (scalar can_run("$config{cross_compile_prefix}ranlib") ?
+                   (which("$config{cross_compile_prefix}ranlib") ?
                           "\$(CROSS_COMPILE)ranlib" : "true");
 $target{ar} =      $ENV{'AR'}      || $target{ar}      || "ar";
 $target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
@@ -1158,7 +1157,7 @@ if ($^O ne "VMS" && !$disabled{makedepend}) {
     }
     close(PIPE);
 
-    $config{makedepprog} = scalar can_run('makedepend') unless $config{makedepprog};
+    $config{makedepprog} = which('makedepend') unless $config{makedepprog};
     $disabled{makedepend} = "unavailable" unless $config{makedepprog};
 }
 
@@ -2338,6 +2337,27 @@ sub run_dofile
     system($cmd);
     exit 1 if $? != 0;
     rename("$out.new", $out) || die "Can't rename $out.new, $!";
+}
+
+sub which
+{
+    my ($name)=@_;
+
+    if (eval { require IPC::Cmd; 1; }) {
+        IPC::Cmd->import();
+        return scalar IPC::Cmd::can_run($name);
+    } else {
+        # if there is $directories component in splitpath,
+        # then it's not something to test with $PATH...
+        return $name if (File::Spec->splitpath($name))[1];
+
+        foreach (File::Spec->path()) {
+            my $fullpath = catfile($_, "$name$target{exe_extension}");
+            if (-f $fullpath and -x $fullpath) {
+                return $fullpath;
+            }
+        }
+    }
 }
 
 # Configuration printer ##############################################
