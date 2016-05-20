@@ -44,7 +44,7 @@ hash functions directly.
 
 =head1 RETURN VALUES
 
-MDC2() returns a pointer to the hash value. 
+MDC2() returns a pointer to the hash value.
 
 MDC2_Init(), MDC2_Update() and MDC2_Final() return 1 for success, 0 otherwise.
 

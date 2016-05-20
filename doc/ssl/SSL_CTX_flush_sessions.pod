@@ -26,7 +26,7 @@ As sessions will not be reused ones they are expired, they should be
 removed from the cache to save resources. This can either be done
  automatically whenever 255 new sessions were established (see
 L<SSL_CTX_set_session_cache_mode(3)>)
-or manually by calling SSL_CTX_flush_sessions(). 
+or manually by calling SSL_CTX_flush_sessions().
 
 The parameter B<tm> specifies the time which should be used for the
 expiration test, in most cases the actual time given by time(0)
@@ -36,8 +36,6 @@ SSL_CTX_flush_sessions() will only check sessions stored in the internal
 cache. When a session is found and removed, the remove_session_cb is however
 called to synchronize with the external cache (see
 L<SSL_CTX_sess_set_get_cb(3)>).
-
-=head1 RETURN VALUES
 
 =head1 SEE ALSO
 

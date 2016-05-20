@@ -27,7 +27,7 @@ i2d_X509_fp - X509 encode and decode functions
 The X509 encode and decode routines encode and parse an
 B<X509> structure, which represents an X509 certificate.
 
-d2i_X509() attempts to decode B<len> bytes at B<*in>. If 
+d2i_X509() attempts to decode B<len> bytes at B<*in>. If
 successful a pointer to the B<X509> structure is returned. If an error
 occurred then B<NULL> is returned. If B<px> is not B<NULL> then the
 returned structure is written to B<*px>. If B<*px> is not B<NULL>
@@ -48,7 +48,7 @@ i2d_X509() encodes the structure pointed to by B<x> into DER format.
 If B<out> is not B<NULL> is writes the DER encoded data to the buffer
 at B<*out>, and increments it to point after the data just written.
 If the return value is negative an error occurred, otherwise it
-returns the length of the encoded data. 
+returns the length of the encoded data.
 
 If B<*out> is B<NULL> memory will be
 allocated for a buffer and the encoded data written to it. In this
@@ -115,7 +115,7 @@ Allocate and encode the DER encoding of an X509 structure:
  buf = NULL;
  len = i2d_X509(x, &buf);
  if (len < 0)
-	/* error */
+        /* error */
 
 Attempt to decode a buffer:
 
@@ -155,7 +155,7 @@ mistake is to attempt to use a buffer directly as follows:
  len = i2d_X509(x, NULL);
  buf = OPENSSL_malloc(len);
  if (buf == NULL)
-	/* error */
+        /* error */
 
  i2d_X509(x, &buf);
  /* Other stuff ... */
@@ -171,7 +171,7 @@ Another trap to avoid is misuse of the B<xp> argument to d2i_X509():
  X509 *x;
 
  if (!d2i_X509(&x, &p, len))
-	/* Some error */
+        /* Some error */
 
 This will probably crash somewhere in d2i_X509(). The reason for this
 is that the variable B<x> is uninitialized and an attempt will be made to
@@ -181,7 +181,7 @@ happen.
 
 =head1 BUGS
 
-In some versions of OpenSSL the "reuse" behaviour of d2i_X509() when 
+In some versions of OpenSSL the "reuse" behaviour of d2i_X509() when
 B<*px> is valid is broken and some parts of the reused structure may
 persist if they are not present in the new one. As a result the use
 of this "reuse" behaviour is strongly discouraged.
@@ -219,10 +219,10 @@ state.
 
 i2d_X509() returns the number of bytes successfully encoded or a negative
 value if an error occurs. The error code can be obtained by
-L<ERR_get_error(3)>. 
+L<ERR_get_error(3)>.
 
-i2d_X509_bio() and i2d_X509_fp() return 1 for success and 0 if an error 
-occurs The error code can be obtained by L<ERR_get_error(3)>. 
+i2d_X509_bio() and i2d_X509_fp() return 1 for success and 0 if an error
+occurs The error code can be obtained by L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 

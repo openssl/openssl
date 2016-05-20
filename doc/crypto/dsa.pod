@@ -9,25 +9,25 @@ dsa - Digital Signature Algorithm
  #include <openssl/dsa.h>
  #include <openssl/engine.h>
 
- DSA *	DSA_new(void);
- void	DSA_free(DSA *dsa);
+ DSA *  DSA_new(void);
+ void   DSA_free(DSA *dsa);
 
- int	DSA_size(const DSA *dsa);
+ int    DSA_size(const DSA *dsa);
 
- DSA *	DSA_generate_parameters(int bits, unsigned char *seed,
+ DSA *  DSA_generate_parameters(int bits, unsigned char *seed,
                 int seed_len, int *counter_ret, unsigned long *h_ret,
-		void (*callback)(int, int, void *), void *cb_arg);
+                void (*callback)(int, int, void *), void *cb_arg);
 
- DH *	DSA_dup_DH(const DSA *r);
+ DH *   DSA_dup_DH(const DSA *r);
 
- int	DSA_generate_key(DSA *dsa);
+ int    DSA_generate_key(DSA *dsa);
 
- int	DSA_sign(int dummy, const unsigned char *dgst, int len,
-		unsigned char *sigret, unsigned int *siglen, DSA *dsa);
- int	DSA_sign_setup(DSA *dsa, BN_CTX *ctx, BIGNUM **kinvp,
+ int    DSA_sign(int dummy, const unsigned char *dgst, int len,
+                unsigned char *sigret, unsigned int *siglen, DSA *dsa);
+ int    DSA_sign_setup(DSA *dsa, BN_CTX *ctx, BIGNUM **kinvp,
                 BIGNUM **rp);
- int	DSA_verify(int dummy, const unsigned char *dgst, int len,
-		const unsigned char *sigbuf, int siglen, DSA *dsa);
+ int    DSA_verify(int dummy, const unsigned char *dgst, int len,
+                const unsigned char *sigbuf, int siglen, DSA *dsa);
 
  void DSA_set_default_method(const DSA_METHOD *meth);
  const DSA_METHOD *DSA_get_default_method(void);
@@ -36,25 +36,25 @@ dsa - Digital Signature Algorithm
  const DSA_METHOD *DSA_OpenSSL(void);
 
  DSA_SIG *DSA_SIG_new(void);
- void	DSA_SIG_free(DSA_SIG *a);
- int	i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
+ void   DSA_SIG_free(DSA_SIG *a);
+ int    i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
  DSA_SIG *d2i_DSA_SIG(DSA_SIG **v, unsigned char **pp, long length);
 
  DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
- int	DSA_do_verify(const unsigned char *dgst, int dgst_len,
-	     DSA_SIG *sig, DSA *dsa);
+ int    DSA_do_verify(const unsigned char *dgst, int dgst_len,
+             DSA_SIG *sig, DSA *dsa);
 
- DSA *	d2i_DSAPublicKey(DSA **a, unsigned char **pp, long length);
- DSA *	d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length);
- DSA * 	d2i_DSAparams(DSA **a, unsigned char **pp, long length);
- int	i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
- int 	i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);
- int	i2d_DSAparams(const DSA *a,unsigned char **pp);
+ DSA *  d2i_DSAPublicKey(DSA **a, unsigned char **pp, long length);
+ DSA *  d2i_DSAPrivateKey(DSA **a, unsigned char **pp, long length);
+ DSA *  d2i_DSAparams(DSA **a, unsigned char **pp, long length);
+ int    i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
+ int    i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);
+ int    i2d_DSAparams(const DSA *a,unsigned char **pp);
 
- int	DSAparams_print(BIO *bp, const DSA *x);
- int	DSAparams_print_fp(FILE *fp, const DSA *x);
- int	DSA_print(BIO *bp, const DSA *x, int off);
- int	DSA_print_fp(FILE *bp, const DSA *x, int off);
+ int    DSAparams_print(BIO *bp, const DSA *x);
+ int    DSAparams_print_fp(FILE *fp, const DSA *x);
+ int    DSA_print(BIO *bp, const DSA *x, int off);
+ int    DSA_print_fp(FILE *bp, const DSA *x, int off);
 
 =head1 DESCRIPTION
 
@@ -69,11 +69,11 @@ The B<DSA> structure consists of several BIGNUM components.
 
  struct
         {
-        BIGNUM *p;		// prime number (public)
-        BIGNUM *q;		// 160-bit subprime, q | p-1 (public)
-        BIGNUM *g;		// generator of subgroup (public)
-        BIGNUM *priv_key;	// private key x
-        BIGNUM *pub_key;	// public key y = g^x
+        BIGNUM *p;              // prime number (public)
+        BIGNUM *q;              // 160-bit subprime, q | p-1 (public)
+        BIGNUM *g;              // generator of subgroup (public)
+        BIGNUM *priv_key;       // private key x
+        BIGNUM *pub_key;        // public key y = g^x
         // ...
         }
  DSA;

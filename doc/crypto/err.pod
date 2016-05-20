@@ -119,7 +119,7 @@ name to B<ERR_str_libraries[]> (in B<crypto/err/err.c>), and add
 C<ERR_load_XXX_strings()> to the ERR_load_crypto_strings() function
 (in B<crypto/err/err_all.c>). Finally, add an entry
 
- L	XXX	xxx.h	xxx_err.c
+ L      XXX     xxx.h   xxx_err.c
 
 to B<crypto/err/openssl.ec>, and add B<xxx_err.c> to the Makefile.
 Running B<make errors> will then generate a file B<xxx_err.c>, and

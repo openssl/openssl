@@ -14,15 +14,15 @@ BIO_ssl_shutdown - SSL BIO
 
  const BIO_METHOD *BIO_f_ssl(void);
 
- #define BIO_set_ssl(b,ssl,c)	BIO_ctrl(b,BIO_C_SET_SSL,c,(char *)ssl)
- #define BIO_get_ssl(b,sslp)	BIO_ctrl(b,BIO_C_GET_SSL,0,(char *)sslp)
- #define BIO_set_ssl_mode(b,client)	BIO_ctrl(b,BIO_C_SSL_MODE,client,NULL)
+ #define BIO_set_ssl(b,ssl,c)   BIO_ctrl(b,BIO_C_SET_SSL,c,(char *)ssl)
+ #define BIO_get_ssl(b,sslp)    BIO_ctrl(b,BIO_C_GET_SSL,0,(char *)sslp)
+ #define BIO_set_ssl_mode(b,client)     BIO_ctrl(b,BIO_C_SSL_MODE,client,NULL)
  #define BIO_set_ssl_renegotiate_bytes(b,num) \
-	BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_BYTES,num,NULL);
+        BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_BYTES,num,NULL);
  #define BIO_set_ssl_renegotiate_timeout(b,seconds) \
-	BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT,seconds,NULL);
+        BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT,seconds,NULL);
  #define BIO_get_num_renegotiates(b) \
-	BIO_ctrl(b,BIO_C_SET_SSL_NUM_RENEGOTIATES,0,NULL);
+        BIO_ctrl(b,BIO_C_SET_SSL_NUM_RENEGOTIATES,0,NULL);
 
  BIO *BIO_new_ssl(SSL_CTX *ctx,int client);
  BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
@@ -30,13 +30,13 @@ BIO_ssl_shutdown - SSL BIO
  int BIO_ssl_copy_session_id(BIO *to,BIO *from);
  void BIO_ssl_shutdown(BIO *bio);
 
- #define BIO_do_handshake(b)	BIO_ctrl(b,BIO_C_DO_STATE_MACHINE,0,NULL)
+ #define BIO_do_handshake(b)    BIO_ctrl(b,BIO_C_DO_STATE_MACHINE,0,NULL)
 
 =head1 DESCRIPTION
 
 BIO_f_ssl() returns the SSL BIO method. This is a filter BIO which
 is a wrapper round the OpenSSL SSL routines adding a BIO "flavour" to
-SSL I/O. 
+SSL I/O.
 
 I/O performed on an SSL BIO communicates using the SSL protocol with
 the SSLs read and write BIOs. If an SSL connection is not established
@@ -63,7 +63,7 @@ BIO_set_ssl_mode() sets the SSL BIO mode to B<client>. If B<client>
 is 1 client mode is set. If B<client> is 0 server mode is set.
 
 BIO_set_ssl_renegotiate_bytes() sets the renegotiate byte count
-to B<num>. When set after every B<num> bytes of I/O (read and write) 
+to B<num>. When set after every B<num> bytes of I/O (read and write)
 the SSL session is automatically renegotiated. B<num> must be at
 least 512 bytes.
 
@@ -84,7 +84,7 @@ BIO_new_buffer_ssl_connect() creates a new BIO chain consisting
 of a buffering BIO, an SSL BIO (using B<ctx>) and a connect
 BIO.
 
-BIO_ssl_copy_session_id() copies an SSL session id between 
+BIO_ssl_copy_session_id() copies an SSL session id between
 BIO chains B<from> and B<to>. It does this by locating the
 SSL BIOs in each chain and calling SSL_copy_session_id() on
 the internal SSL pointer.
@@ -170,24 +170,24 @@ unencrypted example in L<BIO_s_connect(3)>.
 
  out = BIO_new_fp(stdout, BIO_NOCLOSE);
  if(BIO_do_connect(sbio) <= 0) {
-	fprintf(stderr, "Error connecting to server\n");
-	ERR_print_errors_fp(stderr);
-	/* whatever ... */
+        fprintf(stderr, "Error connecting to server\n");
+        ERR_print_errors_fp(stderr);
+        /* whatever ... */
  }
 
  if(BIO_do_handshake(sbio) <= 0) {
-	fprintf(stderr, "Error establishing SSL connection\n");
-	ERR_print_errors_fp(stderr);
-	/* whatever ... */
+        fprintf(stderr, "Error establishing SSL connection\n");
+        ERR_print_errors_fp(stderr);
+        /* whatever ... */
  }
 
  /* Could examine ssl here to get connection info */
 
  BIO_puts(sbio, "GET / HTTP/1.0\n\n");
- for(;;) {	
-	len = BIO_read(sbio, tmpbuf, 1024);
-	if(len <= 0) break;
-	BIO_write(out, tmpbuf, len);
+ for(;;) {      
+        len = BIO_read(sbio, tmpbuf, 1024);
+        if(len <= 0) break;
+        BIO_write(out, tmpbuf, len);
  }
  BIO_free_all(sbio);
  BIO_free(out);
@@ -208,12 +208,12 @@ a client and also echoes the request to standard output.
  ctx = SSL_CTX_new(TLS_server_method());
 
  if (!SSL_CTX_use_certificate_file(ctx,"server.pem",SSL_FILETYPE_PEM)
-	|| !SSL_CTX_use_PrivateKey_file(ctx,"server.pem",SSL_FILETYPE_PEM)
-	|| !SSL_CTX_check_private_key(ctx)) {
+        || !SSL_CTX_use_PrivateKey_file(ctx,"server.pem",SSL_FILETYPE_PEM)
+        || !SSL_CTX_check_private_key(ctx)) {
 
-	fprintf(stderr, "Error setting up SSL_CTX\n");
-	ERR_print_errors_fp(stderr);
-	return 0;
+        fprintf(stderr, "Error setting up SSL_CTX\n");
+        ERR_print_errors_fp(stderr);
+        return 0;
  }
 
  /* Might do other things here like setting verify locations and
@@ -245,25 +245,25 @@ a client and also echoes the request to standard output.
  /* By doing this when a new connection is established
   * we automatically have sbio inserted into it. The
   * BIO chain is now 'swallowed' by the accept BIO and
-  * will be freed when the accept BIO is freed. 
+  * will be freed when the accept BIO is freed.
   */
- 
+
  BIO_set_accept_bios(acpt,sbio);
 
  out = BIO_new_fp(stdout, BIO_NOCLOSE);
 
  /* Setup accept BIO */
  if(BIO_do_accept(acpt) <= 0) {
-	fprintf(stderr, "Error setting up accept BIO\n");
-	ERR_print_errors_fp(stderr);
-	return 0;
+        fprintf(stderr, "Error setting up accept BIO\n");
+        ERR_print_errors_fp(stderr);
+        return 0;
  }
 
  /* Now wait for incoming connection */
  if(BIO_do_accept(acpt) <= 0) {
-	fprintf(stderr, "Error in connection\n");
-	ERR_print_errors_fp(stderr);
-	return 0;
+        fprintf(stderr, "Error in connection\n");
+        ERR_print_errors_fp(stderr);
+        return 0;
  }
 
  /* We only want one connection so remove and free
@@ -275,9 +275,9 @@ a client and also echoes the request to standard output.
  BIO_free_all(acpt);
 
  if(BIO_do_handshake(sbio) <= 0) {
-	fprintf(stderr, "Error in SSL handshake\n");
-	ERR_print_errors_fp(stderr);
-	return 0;
+        fprintf(stderr, "Error in SSL handshake\n");
+        ERR_print_errors_fp(stderr);
+        return 0;
  }
 
  BIO_puts(sbio, "HTTP/1.0 200 OK\r\nContent-type: text/plain\r\n\r\n");
@@ -285,12 +285,12 @@ a client and also echoes the request to standard output.
  BIO_puts(sbio, "--------------------------------------------------\r\n");
 
  for(;;) {
- 	len = BIO_gets(sbio, tmpbuf, 1024);
+        len = BIO_gets(sbio, tmpbuf, 1024);
         if(len <= 0) break;
-	BIO_write(sbio, tmpbuf, len);
-	BIO_write(out, tmpbuf, len);
-	/* Look for blank line signifying end of headers*/
-	if((tmpbuf[0] == '\r') || (tmpbuf[0] == '\n')) break;
+        BIO_write(sbio, tmpbuf, len);
+        BIO_write(out, tmpbuf, len);
+        /* Look for blank line signifying end of headers*/
+        if((tmpbuf[0] == '\r') || (tmpbuf[0] == '\n')) break;
  }
 
  BIO_puts(sbio, "--------------------------------------------------\r\n");

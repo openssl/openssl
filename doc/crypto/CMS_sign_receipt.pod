@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- CMS_sign_receipt - create a CMS signed receipt
+CMS_sign_receipt - create a CMS signed receipt
 
 =head1 SYNOPSIS
 

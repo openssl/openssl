@@ -22,30 +22,30 @@ UI_set_method, UI_OpenSSL, ERR_load_UI_strings - New User Interface
  void UI_free(UI *ui);
 
  int UI_add_input_string(UI *ui, const char *prompt, int flags,
-	char *result_buf, int minsize, int maxsize);
+        char *result_buf, int minsize, int maxsize);
  int UI_dup_input_string(UI *ui, const char *prompt, int flags,
-	char *result_buf, int minsize, int maxsize);
+        char *result_buf, int minsize, int maxsize);
  int UI_add_verify_string(UI *ui, const char *prompt, int flags,
-	char *result_buf, int minsize, int maxsize, const char *test_buf);
+        char *result_buf, int minsize, int maxsize, const char *test_buf);
  int UI_dup_verify_string(UI *ui, const char *prompt, int flags,
-	char *result_buf, int minsize, int maxsize, const char *test_buf);
+        char *result_buf, int minsize, int maxsize, const char *test_buf);
  int UI_add_input_boolean(UI *ui, const char *prompt, const char *action_desc,
-	const char *ok_chars, const char *cancel_chars,
-	int flags, char *result_buf);
+        const char *ok_chars, const char *cancel_chars,
+        int flags, char *result_buf);
  int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
-	const char *ok_chars, const char *cancel_chars,
-	int flags, char *result_buf);
+        const char *ok_chars, const char *cancel_chars,
+        int flags, char *result_buf);
  int UI_add_info_string(UI *ui, const char *text);
  int UI_dup_info_string(UI *ui, const char *text);
  int UI_add_error_string(UI *ui, const char *text);
  int UI_dup_error_string(UI *ui, const char *text);
 
  /* These are the possible flags.  They can be or'ed together. */
- #define UI_INPUT_FLAG_ECHO		0x01
- #define UI_INPUT_FLAG_DEFAULT_PWD	0x02
+ #define UI_INPUT_FLAG_ECHO             0x01
+ #define UI_INPUT_FLAG_DEFAULT_PWD      0x02
 
  char *UI_construct_prompt(UI *ui_method,
-	const char *object_desc, const char *object_name);
+        const char *object_desc, const char *object_name);
 
  void *UI_add_user_data(UI *ui, void *user_data);
  void *UI_get0_user_data(UI *ui);
@@ -55,8 +55,8 @@ UI_set_method, UI_OpenSSL, ERR_load_UI_strings - New User Interface
  int UI_process(UI *ui);
 
  int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f)());
- #define UI_CTRL_PRINT_ERRORS		1
- #define UI_CTRL_IS_REDOABLE		2
+ #define UI_CTRL_PRINT_ERRORS           1
+ #define UI_CTRL_IS_REDOABLE            2
 
  void UI_set_default_method(const UI_METHOD *meth);
  const UI_METHOD *UI_get_default_method(void);

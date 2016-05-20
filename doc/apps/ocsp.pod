@@ -337,13 +337,13 @@ option.
 
 =item B<-nrequest number>
 
-The OCSP server will exit after receiving B<number> requests, default unlimited. 
+The OCSP server will exit after receiving B<number> requests, default unlimited.
 
 =item B<-nmin minutes>, B<-ndays days>
 
 Number of minutes or days when fresh revocation information is available: used in the
-B<nextUpdate> field. If neither option is present then the B<nextUpdate> field is 
-omitted meaning fresh revocation information is immediately available.
+B<nextUpdate> field. If neither option is present then the B<nextUpdate> field
+is omitted meaning fresh revocation information is immediately available.
 
 =back
 
@@ -413,7 +413,7 @@ Create an OCSP request and write it to a file:
 
  openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem -reqout req.der
 
-Send a query to an OCSP responder with URL http://ocsp.myhost.com/ save the 
+Send a query to an OCSP responder with URL http://ocsp.myhost.com/ save the
 response to a file, print it out in text form, and verify the response:
 
  openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \
@@ -427,7 +427,7 @@ OCSP server on port 8888 using a standard B<ca> configuration, and a separate
 responder certificate. All requests and responses are printed to a file.
 
  openssl ocsp -index demoCA/index.txt -port 8888 -rsigner rcert.pem -CA demoCA/cacert.pem
-	-text -out log.txt
+        -text -out log.txt
 
 As above but exit after processing one request:
 

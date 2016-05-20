@@ -21,7 +21,7 @@ OpenSSL_add_ssl_algorithms() is a synonym for SSL_library_init().
 =head1 NOTES
 
 SSL_library_init() must be called before any other action takes place.
-SSL_library_init() is not reentrant. 
+SSL_library_init() is not reentrant.
 
 =head1 WARNING
 

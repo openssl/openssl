@@ -8,10 +8,10 @@ BIO_s_fd, BIO_set_fd, BIO_get_fd, BIO_new_fd - file descriptor BIO
 
  #include <openssl/bio.h>
 
- const BIO_METHOD *	BIO_s_fd(void);
+ const BIO_METHOD *     BIO_s_fd(void);
 
- #define BIO_set_fd(b,fd,c)	BIO_int_ctrl(b,BIO_C_SET_FD,c,fd)
- #define BIO_get_fd(b,c)	BIO_ctrl(b,BIO_C_GET_FD,0,(char *)c)
+ #define BIO_set_fd(b,fd,c)     BIO_int_ctrl(b,BIO_C_SET_FD,c,fd)
+ #define BIO_get_fd(b,c)        BIO_ctrl(b,BIO_C_GET_FD,0,(char *)c)
 
  BIO *BIO_new_fd(int fd, int close_flag);
 
@@ -46,7 +46,7 @@ BIO_new_fd() returns a file descriptor BIO using B<fd> and B<close_flag>.
 =head1 NOTES
 
 The behaviour of BIO_read() and BIO_write() depends on the behavior of the
-platforms read() and write() calls on the descriptor. If the underlying 
+platforms read() and write() calls on the descriptor. If the underlying
 file descriptor is in a non blocking mode then the BIO will behave in the
 manner described in the L<BIO_read(3)> and L<BIO_should_retry(3)>
 manual pages.

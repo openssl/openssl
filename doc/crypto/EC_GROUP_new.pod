@@ -78,10 +78,10 @@ provided. The return value is the total number of curves available (whether that
 not). Passing a NULL B<r>, or setting B<nitems> to 0 will do nothing other than return the total number of curves available.
 The EC_builtin_curve structure is defined as follows:
 
- typedef struct { 
-	int nid;
-	const char *comment;
-	} EC_builtin_curve;
+ typedef struct {
+        int nid;
+        const char *comment;
+        } EC_builtin_curve;
 
 Each EC_builtin_curve item has a unique integer id (B<nid>), and a human readable comment string describing the curve.
 

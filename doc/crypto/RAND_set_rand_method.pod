@@ -42,7 +42,7 @@ API is being used, so this function is no longer recommended.
         void (*cleanup)(void);
         void (*add)(const void *buf, int num, int entropy);
         int (*pseudorand)(unsigned char *buf, int num);
-	int (*status)(void);
+        int (*status)(void);
  } RAND_METHOD;
 
 The components point to method implementations used by (or called by), in order,

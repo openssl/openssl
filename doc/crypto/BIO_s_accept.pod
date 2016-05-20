@@ -23,9 +23,9 @@ BIO_get_bind_mode, BIO_do_accept - accept BIO
  long BIO_set_bind_mode(BIO *b, long mode);
  long BIO_get_bind_mode(BIO *b);
 
- #define BIO_BIND_NORMAL		0
- #define BIO_BIND_REUSEADDR_IF_UNUSED	1
- #define BIO_BIND_REUSEADDR		2
+ #define BIO_BIND_NORMAL                0
+ #define BIO_BIND_REUSEADDR_IF_UNUSED   1
+ #define BIO_BIND_REUSEADDR             2
 
  int BIO_do_accept(BIO *b);
 
@@ -75,7 +75,7 @@ BIO_set_nbio_accept() sets the accept socket to blocking mode
 
 BIO_set_accept_bios() can be used to set a chain of BIOs which
 will be duplicated and prepended to the chain when an incoming
-connection is received. This is useful if, for example, a 
+connection is received. This is useful if, for example, a
 buffering or SSL BIO is required for each connection. The
 chain of BIOs must not be freed after this call, they will
 be automatically freed when the accept BIO is freed.
@@ -165,16 +165,16 @@ down each and finally closes both down.
 
  /* First call to BIO_accept() sets up accept BIO */
  if(BIO_do_accept(abio) <= 0) {
-	fprintf(stderr, "Error setting up accept\n");
-	ERR_print_errors_fp(stderr);
-	exit(0);		
+        fprintf(stderr, "Error setting up accept\n");
+        ERR_print_errors_fp(stderr);
+        exit(0);                
  }
 
  /* Wait for incoming connection */
  if(BIO_do_accept(abio) <= 0) {
-	fprintf(stderr, "Error accepting connection\n");
-	ERR_print_errors_fp(stderr);
-	exit(0);		
+        fprintf(stderr, "Error accepting connection\n");
+        ERR_print_errors_fp(stderr);
+        exit(0);                
  }
  fprintf(stderr, "Connection 1 established\n");
  /* Retrieve BIO for connection */
@@ -183,9 +183,9 @@ down each and finally closes both down.
  fprintf(stderr, "Sent out data on connection 1\n");
  /* Wait for another connection */
  if(BIO_do_accept(abio) <= 0) {
-	fprintf(stderr, "Error accepting connection\n");
-	ERR_print_errors_fp(stderr);
-	exit(0);		
+        fprintf(stderr, "Error accepting connection\n");
+        ERR_print_errors_fp(stderr);
+        exit(0);                
  }
  fprintf(stderr, "Connection 2 established\n");
  /* Close accept BIO to refuse further connections */

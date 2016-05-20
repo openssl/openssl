@@ -2,16 +2,16 @@
 
 =head1 NAME
 
- CONF_modules_load_file, CONF_modules_load - OpenSSL configuration functions
+CONF_modules_load_file, CONF_modules_load - OpenSSL configuration functions
 
 =head1 SYNOPSIS
 
  #include <openssl/conf.h>
 
  int CONF_modules_load_file(const char *filename, const char *appname,
-			                unsigned long flags);
+                                        unsigned long flags);
  int CONF_modules_load(const CONF *cnf, const char *appname,
-		               unsigned long flags);
+                               unsigned long flags);
 
 =head1 DESCRIPTION
 

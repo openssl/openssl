@@ -81,7 +81,7 @@ This return value is an internal pointer which should not be modified.
 BIO_set_nbio() sets the non blocking I/O flag to B<n>. If B<n> is
 zero then blocking I/O is set. If B<n> is 1 then non blocking I/O
 is set. Blocking I/O is the default. The call to BIO_set_nbio()
-should be made before the connection is established because 
+should be made before the connection is established because
 non blocking I/O is set during the connect process.
 
 BIO_new_connect() combines BIO_new() and BIO_set_conn_hostname() into
@@ -168,15 +168,15 @@ to retrieve a page and copy the result to standard output.
  cbio = BIO_new_connect("localhost:http");
  out = BIO_new_fp(stdout, BIO_NOCLOSE);
  if(BIO_do_connect(cbio) <= 0) {
-	fprintf(stderr, "Error connecting to server\n");
-	ERR_print_errors_fp(stderr);
-	/* whatever ... */
-	}
+        fprintf(stderr, "Error connecting to server\n");
+        ERR_print_errors_fp(stderr);
+        /* whatever ... */
+        }
  BIO_puts(cbio, "GET / HTTP/1.0\n\n");
- for(;;) {	
-	len = BIO_read(cbio, tmpbuf, 1024);
-	if(len <= 0) break;
-	BIO_write(out, tmpbuf, len);
+ for(;;) {      
+        len = BIO_read(cbio, tmpbuf, 1024);
+        if(len <= 0) break;
+        BIO_write(out, tmpbuf, len);
  }
  BIO_free(cbio);
  BIO_free(out);

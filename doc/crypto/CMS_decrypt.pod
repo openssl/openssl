@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- CMS_decrypt - decrypt content from a CMS envelopedData structure
+CMS_decrypt - decrypt content from a CMS envelopedData structure
 
 =head1 SYNOPSIS
 

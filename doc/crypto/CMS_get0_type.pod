@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- CMS_get0_type, CMS_set1_eContentType, CMS_get0_eContentType, CMS_get0_content - get and set CMS content types and content
+CMS_get0_type, CMS_set1_eContentType, CMS_get0_eContentType, CMS_get0_content - get and set CMS content types and content
 
 =head1 SYNOPSIS
 

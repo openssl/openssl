@@ -21,7 +21,7 @@ B<OCSP_RESPONSE_STATUS_INTERNALERROR>, B<OCSP_RESPONSE_STATUS_TRYLATER>
 B<OCSP_RESPONSE_STATUS_SIGREQUIRED>, or B<OCSP_RESPONSE_STATUS_UNAUTHORIZED>.
 
 OCSP_response_get1_basic() decodes and returns the B<OCSP_BASICRESP> structure
-contained in B<resp>. 
+contained in B<resp>.
 
 OCSP_response_create() creates and returns an B<OCSP_RESPONSE> structure for
 B<status> and optionally including basic response B<bs>.

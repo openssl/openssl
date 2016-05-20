@@ -100,7 +100,7 @@ Determine if one time is later or sooner than the current time:
  int day, sec;
 
  if (!ASN1_TIME_diff(&day, &sec, NULL, to))
-	/* Invalid time format */
+        /* Invalid time format */
 
  if (day > 0 || sec > 0)
    printf("Later\n");

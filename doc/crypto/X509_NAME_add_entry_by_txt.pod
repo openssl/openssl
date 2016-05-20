@@ -61,7 +61,7 @@ to 0. This adds a new entry to the end of B<name> as a single valued
 RelativeDistinguishedName (RDN).
 
 B<loc> actually determines the index where the new entry is inserted:
-if it is -1 it is appended. 
+if it is -1 it is appended.
 
 B<set> determines how the new type is added. If it is zero a
 new RDN is created.
@@ -80,16 +80,16 @@ Create an B<X509_NAME> structure:
  X509_NAME *nm;
  nm = X509_NAME_new();
  if (nm == NULL)
-	/* Some error */
- if (!X509_NAME_add_entry_by_txt(nm, "C", MBSTRING_ASC, 
-			"UK", -1, -1, 0))
-	/* Error */
+        /* Some error */
+ if (!X509_NAME_add_entry_by_txt(nm, "C", MBSTRING_ASC,
+                        "UK", -1, -1, 0))
+        /* Error */
  if (!X509_NAME_add_entry_by_txt(nm, "O", MBSTRING_ASC,
-			"Disorganized Organization", -1, -1, 0))
-	/* Error */
+                        "Disorganized Organization", -1, -1, 0))
+        /* Error */
  if (!X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
-			"Joe Bloggs", -1, -1, 0))
-	/* Error */
+                        "Joe Bloggs", -1, -1, 0))
+        /* Error */
 
 =head1 RETURN VALUES
 

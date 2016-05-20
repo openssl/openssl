@@ -53,37 +53,37 @@ macros, as well as those used for the "doall" callbacks, are defined
 as;
 
  #define DECLARE_LHASH_HASH_FN(name, o_type) \
-	 unsigned long name##_LHASH_HASH(const void *);
+         unsigned long name##_LHASH_HASH(const void *);
  #define IMPLEMENT_LHASH_HASH_FN(name, o_type) \
-	 unsigned long name##_LHASH_HASH(const void *arg) { \
-		 const o_type *a = arg; \
-		 return name##_hash(a); }
+         unsigned long name##_LHASH_HASH(const void *arg) { \
+                 const o_type *a = arg; \
+                 return name##_hash(a); }
  #define LHASH_HASH_FN(name) name##_LHASH_HASH
 
  #define DECLARE_LHASH_COMP_FN(name, o_type) \
-	 int name##_LHASH_COMP(const void *, const void *);
+         int name##_LHASH_COMP(const void *, const void *);
  #define IMPLEMENT_LHASH_COMP_FN(name, o_type) \
-	 int name##_LHASH_COMP(const void *arg1, const void *arg2) { \
-		 const o_type *a = arg1;		    \
-		 const o_type *b = arg2; \
-		 return name##_cmp(a,b); }
+         int name##_LHASH_COMP(const void *arg1, const void *arg2) { \
+                 const o_type *a = arg1;                    \
+                 const o_type *b = arg2; \
+                 return name##_cmp(a,b); }
  #define LHASH_COMP_FN(name) name##_LHASH_COMP
 
  #define DECLARE_LHASH_DOALL_FN(name, o_type) \
-	 void name##_LHASH_DOALL(void *);
+         void name##_LHASH_DOALL(void *);
  #define IMPLEMENT_LHASH_DOALL_FN(name, o_type) \
-	 void name##_LHASH_DOALL(void *arg) { \
-		 o_type *a = arg; \
-		 name##_doall(a); }
+         void name##_LHASH_DOALL(void *arg) { \
+                 o_type *a = arg; \
+                 name##_doall(a); }
  #define LHASH_DOALL_FN(name) name##_LHASH_DOALL
 
  #define DECLARE_LHASH_DOALL_ARG_FN(name, o_type, a_type) \
-	 void name##_LHASH_DOALL_ARG(void *, void *);
+         void name##_LHASH_DOALL_ARG(void *, void *);
  #define IMPLEMENT_LHASH_DOALL_ARG_FN(name, o_type, a_type) \
-	 void name##_LHASH_DOALL_ARG(void *arg1, void *arg2) { \
-		 o_type *a = arg1; \
-		 a_type *b = arg2; \
-		 name##_doall_arg(a, b); }
+         void name##_LHASH_DOALL_ARG(void *arg1, void *arg2) { \
+                 o_type *a = arg1; \
+                 a_type *b = arg2; \
+                 name##_doall_arg(a, b); }
  #define LHASH_DOALL_ARG_FN(name) name##_LHASH_DOALL_ARG
 
  An example of a hash table storing (pointers to) structures of type 'STUFF'
@@ -101,7 +101,7 @@ as;
          /* Create the new hash table using the hash/compare wrappers */
          LHASH_OF(STUFF) *hashtable = lh_STUFF_new(LHASH_HASH_FN(STUFF_hash),
                                    LHASH_COMP_FN(STUFF_cmp));
-	 /* ... */
+         /* ... */
  }
 
 lh_<type>_free() frees the B<LHASH_OF(<type>> structure
@@ -168,7 +168,7 @@ that is provided by the caller):
  /* Print out the entire hashtable to a particular BIO */
  lh_STUFF_doall_arg(hashtable, LHASH_DOALL_ARG_FN(STUFF_print), BIO,
                     logging_bio);
- 
+
 lh_<type>_error() can be used to determine if an error occurred in the last
 operation. lh_<type>_error() is a macro.
 

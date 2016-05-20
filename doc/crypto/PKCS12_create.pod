@@ -9,7 +9,7 @@ PKCS12_create - create a PKCS#12 structure
  #include <openssl/pkcs12.h>
 
  PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert, STACK_OF(X509) *ca,
-				int nid_key, int nid_cert, int iter, int mac_iter, int keytype);
+                                int nid_key, int nid_cert, int iter, int mac_iter, int keytype);
 
 =head1 DESCRIPTION
 
@@ -55,7 +55,7 @@ certificate is required. In previous versions both had to be present or
 a fatal error is returned.
 
 B<nid_key> or B<nid_cert> can be set to -1 indicating that no encryption
-should be used. 
+should be used.
 
 B<mac_iter> can be set to -1 and the MAC will then be omitted entirely.
 

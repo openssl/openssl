@@ -44,7 +44,7 @@ defined in PKCS#5v2.1 and provided by PKCS5_PBKDF2_HMAC.
 The key and IV is derived by concatenating D_1, D_2, etc until
 enough data is available for the key and IV. D_i is defined as:
 
-	D_i = HASH^count(D_(i-1) || data || salt)
+        D_i = HASH^count(D_(i-1) || data || salt)
 
 where || denotes concatenation, D_0 is empty, HASH is the digest
 algorithm in use, HASH^1(data) is simply HASH(data), HASH^2(data)

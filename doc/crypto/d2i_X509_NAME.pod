@@ -32,13 +32,13 @@ the encoding of an B<X509_NAME> structure without copying it.
 
 =head1 RETURN VALUES
 
-=head1 SEE ALSO
-
 The meanings of the return values of d2i_X509_NAME() and i2d_X509_NAME()
 are similar to those for d2i_X509() and i2d_X509().
 
 The function X509_NAME_get0_der() returns 1 for success and 0 if an error
 occurred.
+
+=head1 SEE ALSO
 
 L<d2i_X509(3)>
 

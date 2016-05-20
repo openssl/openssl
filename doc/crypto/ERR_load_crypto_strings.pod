@@ -21,7 +21,7 @@ Deprecated:
  #if OPENSSL_API_COMPAT < 0x10100000L
  void SSL_load_error_strings(void);
  #endif
- 
+
 =head1 DESCRIPTION
 
 All of the following functions are deprecated from OpenSSL 1.1.0. No explicit

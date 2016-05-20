@@ -2,8 +2,8 @@
 
 =head1 NAME
 
- SSL_set1_host, SSL_add1_host, SSL_set_hostflags, SSL_get0_peername -
- SSL server verification parameters
+SSL_set1_host, SSL_add1_host, SSL_set_hostflags, SSL_get0_peername -
+SSL server verification parameters
 
 =head1 SYNOPSIS
 
@@ -71,8 +71,6 @@ SSL_get0_peername() returns NULL if peername verification is not
 applicable (as with RFC7671 DANE-EE(3)), or no trusted peername was
 matched.  Otherwise, it returns the matched peername.  To determine
 whether verification succeeded call L<SSL_get_verify_result(3)>.
-
-=head1 NOTES
 
 =head1 EXAMPLE
 

@@ -9,15 +9,15 @@ dh - Diffie-Hellman key agreement
  #include <openssl/dh.h>
  #include <openssl/engine.h>
 
- DH *	DH_new(void);
- void	DH_free(DH *dh);
+ DH *   DH_new(void);
+ void   DH_free(DH *dh);
 
- DH *	DH_generate_parameters(int prime_len, int generator,
-		void (*callback)(int, int, void *), void *cb_arg);
- int	DH_check(const DH *dh, int *codes);
+ DH *   DH_generate_parameters(int prime_len, int generator,
+                void (*callback)(int, int, void *), void *cb_arg);
+ int    DH_check(const DH *dh, int *codes);
 
- int	DH_generate_key(DH *dh);
- int	DH_compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh);
+ int    DH_generate_key(DH *dh);
+ int    DH_compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh);
 
  void DH_set_default_method(const DH_METHOD *meth);
  const DH_METHOD *DH_get_default_method(void);
@@ -25,11 +25,11 @@ dh - Diffie-Hellman key agreement
  DH *DH_new_method(ENGINE *engine);
  const DH_METHOD *DH_OpenSSL(void);
 
- DH *	d2i_DHparams(DH **a, unsigned char **pp, long length);
- int	i2d_DHparams(const DH *a, unsigned char **pp);
+ DH *   d2i_DHparams(DH **a, unsigned char **pp, long length);
+ int    i2d_DHparams(const DH *a, unsigned char **pp);
 
- int	DHparams_print_fp(FILE *fp, const DH *x);
- int	DHparams_print(BIO *bp, const DH *x);
+ int    DHparams_print_fp(FILE *fp, const DH *x);
+ int    DHparams_print(BIO *bp, const DH *x);
 
 =head1 DESCRIPTION
 
@@ -56,7 +56,7 @@ L<DH_set_method(3)>, L<DH_new(3)>,
 L<DH_get_ex_new_index(3)>,
 L<DH_generate_parameters(3)>,
 L<DH_compute_key(3)>, L<DH_get0_pqg(3)>, L<DH_meth_new(3)>, L<d2i_DHparams(3)>,
-L<RSA_print(3)> 
+L<RSA_print(3)>
 
 =cut
 

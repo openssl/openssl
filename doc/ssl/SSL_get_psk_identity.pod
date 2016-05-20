@@ -4,7 +4,6 @@
 
 SSL_get_psk_identity, SSL_get_psk_identity_hint - get PSK client identity and hint
 
-
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>

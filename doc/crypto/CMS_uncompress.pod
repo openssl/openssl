@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- CMS_uncompress - uncompress a CMS CompressedData structure
+CMS_uncompress - uncompress a CMS CompressedData structure
 
 =head1 SYNOPSIS
 

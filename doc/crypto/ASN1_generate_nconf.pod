@@ -52,7 +52,7 @@ only the B<ASCII> format is permissible.
 This encodes a boolean type. The B<value> string is mandatory and
 should be B<TRUE> or B<FALSE>. Additionally B<TRUE>, B<true>, B<Y>,
 B<y>, B<YES>, B<yes>, B<FALSE>, B<false>, B<N>, B<n>, B<NO> and B<no>
-are acceptable. 
+are acceptable.
 
 =item B<NULL>
 
@@ -78,12 +78,12 @@ a short name, a long name or numerical format.
 =item B<UTCTIME>, B<UTC>
 
 Encodes an ASN1 B<UTCTime> structure, the value should be in
-the format B<YYMMDDHHMMSSZ>. 
+the format B<YYMMDDHHMMSSZ>.
 
 =item B<GENERALIZEDTIME>, B<GENTIME>
 
 Encodes an ASN1 B<GeneralizedTime> structure, the value should be in
-the format B<YYYYMMDDHHMMSSZ>. 
+the format B<YYYYMMDDHHMMSSZ>.
 
 =item B<OCTETSTRING>, B<OCT>
 

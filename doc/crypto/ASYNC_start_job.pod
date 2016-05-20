@@ -267,7 +267,7 @@ The following example demonstrates how to use most of the core async APIs:
 
          /* Wait for the job to be woken */
          printf("Waiting for the job to be woken up\n");
-        
+
          if (!ASYNC_WAIT_CTX_get_all_fds(ctx, NULL, &numfds)
                  || numfds > 1) {
              printf("Unexpected number of fds\n");

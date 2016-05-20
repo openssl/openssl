@@ -522,13 +522,13 @@ To create a time stamp request for design1.txt with SHA-1
 without nonce and policy and no certificate is required in the response:
 
   openssl ts -query -data design1.txt -no_nonce \
-	-out design1.tsq
+        -out design1.tsq
 
 To create a similar time stamp request with specifying the message imprint
 explicitly:
 
   openssl ts -query -digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \
-	 -no_nonce -out design1.tsq
+         -no_nonce -out design1.tsq
 
 To print the content of the previous request in human readable format:
 
@@ -540,7 +540,7 @@ specifies a policy id (assuming the tsa_policy1 name is defined in the
 OID section of the config file):
 
   openssl ts -query -data design2.txt -md5 \
-	-tspolicy tsa_policy1 -cert -out design2.tsq
+        -tspolicy tsa_policy1 -cert -out design2.tsq
 
 =head2 Time Stamp Response
 
@@ -557,7 +557,7 @@ tsakey.pem is the private key of the TSA.
 To create a time stamp response for a request:
 
   openssl ts -reply -queryfile design1.tsq -inkey tsakey.pem \
-	-signer tsacert.pem -out design1.tsr
+        -signer tsacert.pem -out design1.tsr
 
 If you want to use the settings in the config file you could just write:
 
@@ -589,20 +589,20 @@ valid response:
 To verify a time stamp reply against a request:
 
   openssl ts -verify -queryfile design1.tsq -in design1.tsr \
-	-CAfile cacert.pem -untrusted tsacert.pem
+        -CAfile cacert.pem -untrusted tsacert.pem
 
 To verify a time stamp reply that includes the certificate chain:
 
   openssl ts -verify -queryfile design2.tsq -in design2.tsr \
-	-CAfile cacert.pem
+        -CAfile cacert.pem
 
 To verify a time stamp token against the original data file:
   openssl ts -verify -data design2.txt -in design2.tsr \
-	-CAfile cacert.pem
+        -CAfile cacert.pem
 
 To verify a time stamp token against a message imprint:
   openssl ts -verify -digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \
-	 -in design2.tsr -CAfile cacert.pem
+         -in design2.tsr -CAfile cacert.pem
 
 You could also look at the 'test' directory for more examples.
 
