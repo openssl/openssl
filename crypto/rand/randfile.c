@@ -101,6 +101,9 @@ static void vms_setbuf(FILE *fp, char *buf)
 static __FILE_ptr32 (*const vms_fopen)(const char *, const char *, ...) =
     (__FILE_ptr32 (*)(const char *, const char *, ...))fopen;
 # define VMS_OPEN_ATTRS "shr=get,put,upd,del","ctx=bin,stm","rfm=stm","rat=none","mrs=0"
+
+# define fopen(fname,mode) vms_fopen((fname), (mode), VMS_OPEN_ATTRS)
+# define setbuf(fp,buf) vms_setbuf((fp), (buf))
 #endif
 
 #define RFILE ".rnd"
@@ -142,11 +145,7 @@ int RAND_load_file(const char *file, long bytes)
     if (bytes == 0)
         return (ret);
 
-#ifdef OPENSSL_SYS_VMS
-    in = vms_fopen(file, "rb", VMS_OPEN_ATTRS);
-#else
     in = fopen(file, "rb");
-#endif
     if (in == NULL)
         goto err;
 #if defined(S_ISBLK) && defined(S_ISCHR) && !defined(OPENSSL_NO_POSIX_IO)
@@ -157,13 +156,7 @@ int RAND_load_file(const char *file, long bytes)
          * because we will waste system entropy.
          */
         bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
-
-        /* don't do buffered reads */
-# ifdef OPENSSL_SYS_VMS
-        vms_setbuf(in, NULL);
-# else
-        setbuf(in, NULL);
-# endif
+        setbuf(in, NULL); /* don't do buffered reads */
     }
 #endif
     for (;;) {
@@ -248,13 +241,10 @@ int RAND_write_file(const char *file)
      * rand file in a concurrent use situation.
      */
 
-    out = vms_fopen(file, "rb+", VMS_OPEN_ATTRS);
-    if (out == NULL)
-        out = vms_fopen(file, "wb", VMS_OPEN_ATTRS);
-#else
+    out = fopen(file, "rb+");
+#endif
     if (out == NULL)
         out = fopen(file, "wb");
-#endif
     if (out == NULL)
         goto err;
 
