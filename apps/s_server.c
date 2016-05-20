@@ -2167,10 +2167,10 @@ static int sv_body(int s, int stype, unsigned char *context)
             tv.tv_sec = 1;
             tv.tv_usec = 0;
             i = select(width, (void *)&readfds, NULL, NULL, &tv);
-            if ((i < 0) || (!i && !_kbhit()))
-                continue;
-            if (_kbhit())
+            if (has_stdin_waiting())
                 read_from_terminal = 1;
+            if ((i < 0) || (!i && !read_from_terminal))
+                continue;
 #else
             if ((SSL_version(con) == DTLS1_VERSION) &&
                 DTLSv1_get_timeout(con, &timeout))
