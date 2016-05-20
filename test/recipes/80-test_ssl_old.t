@@ -36,6 +36,7 @@ my $digest = "-sha1";
 my @reqcmd = ("openssl", "req");
 my @x509cmd = ("openssl", "x509", $digest);
 my @verifycmd = ("openssl", "verify");
+my @gendsacmd = ("openssl", "gendsa");
 my $dummycnf = srctop_file("apps", "openssl.cnf");
 
 my $CAkey = "keyCA.ss";
@@ -105,6 +106,7 @@ sub testss {
 
     my @req_dsa = ("-newkey",
                    "dsa:".srctop_file("apps", "dsa1024.pem"));
+    my $dsaparams = srctop_file("apps", "dsa1024.pem");
     my @req_new;
     if ($no_rsa) {
 	@req_new = @req_dsa;
@@ -175,14 +177,18 @@ sub testss {
               plan skip_all => "skipping DSA certificate creation"
                   if $no_dsa;
 
-              plan tests => 4;
+              plan tests => 5;
 
             SKIP: {
                 $ENV{CN2} = "DSA Certificate";
+                skip 'failure', 4 unless
+                    ok(run(app([@gendsacmd, "-out", $Dkey,
+                                $dsaparams],
+                               stdout => "err.ss")),
+                       "make a DSA key");
                 skip 'failure', 3 unless
-                    ok(run(app([@reqcmd, "-config", $Uconf,
-                                "-out", $Dreq, "-keyout", $Dkey,
-                                @req_dsa],
+                    ok(run(app([@reqcmd, "-new", "-config", $Uconf,
+                                "-out", $Dreq, "-key", $Dkey],
                                stdout => "err.ss")),
                        "make a DSA user cert request");
                 skip 'failure', 2 unless
