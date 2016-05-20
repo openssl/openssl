@@ -14,6 +14,7 @@
  */
 # define _POSIX_C_SOURCE 2
 #endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +42,7 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
-
+#include "s_apps.h"
 #include "apps.h"
 
 #ifdef _WIN32
@@ -2550,3 +2551,31 @@ void wait_for_async(SSL *s)
     select(width, (void *)&asyncfds, NULL, NULL, NULL);
 #endif
 }
+
+/* if OPENSSL_SYS_WINDOWS is defined then so is OPENSSL_SYS_MSDOS */
+#if defined(OPENSSL_SYS_MSDOS)
+int has_stdin_waiting(void)
+{
+# if defined(OPENSSL_SYS_WINDOWS)
+    HANDLE inhand = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD events = 0;
+    INPUT_RECORD inputrec;
+    DWORD insize = 1;
+    BOOL peeked;
+
+    if (inhand == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+
+    peeked = PeekConsoleInput(inhand, &inputrec, insize, &events);
+    if (!peeked) {
+        /* Probably redirected input? _kbhit() does not work in this case */
+        if (!feof(stdin)) {
+            return 1;
+        }
+        return 0;
+    }
+# endif
+    return _kbhit();
+}
+#endif

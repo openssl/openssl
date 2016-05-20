@@ -2160,18 +2160,8 @@ int s_client_main(int argc, char **argv)
                     tv.tv_usec = 0;
                     i = select(width, (void *)&readfds, (void *)&writefds,
                                NULL, &tv);
-# if defined(OPENSSL_SYS_WINCE) || defined(OPENSSL_SYS_MSDOS)
-                    if (!i && (!_kbhit() || !read_tty))
+                    if (!i && (!has_stdin_waiting() || !read_tty))
                         continue;
-# else
-                    if (!i && (!((_kbhit())
-                                 || (WAIT_OBJECT_0 ==
-                                     WaitForSingleObject(GetStdHandle
-                                                         (STD_INPUT_HANDLE),
-                                                         0)))
-                               || !read_tty))
-                        continue;
-# endif
                 } else
                     i = select(width, (void *)&readfds, (void *)&writefds,
                                NULL, timeoutp);
@@ -2348,14 +2338,9 @@ int s_client_main(int argc, char **argv)
                 /* break; */
             }
         }
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
-# if defined(OPENSSL_SYS_WINCE) || defined(OPENSSL_SYS_MSDOS)
-        else if (_kbhit())
-# else
-        else if ((_kbhit())
-                 || (WAIT_OBJECT_0 ==
-                     WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
-# endif
+/* OPENSSL_SYS_MSDOS includes OPENSSL_SYS_WINDOWS */
+#if defined(OPENSSL_SYS_MSDOS)
+        else if (has_stdin_waiting())
 #else
         else if (FD_ISSET(fileno(stdin), &readfds))
 #endif
