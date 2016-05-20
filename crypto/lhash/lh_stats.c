@@ -18,50 +18,48 @@
 
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
+#include "lhash_lcl.h"
 
 # ifndef OPENSSL_NO_STDIO
-void lh_stats(const _LHASH *lh, FILE *fp)
+void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp)
 {
     BIO *bp;
 
     bp = BIO_new(BIO_s_file());
     if (bp == NULL)
-        goto end;
+        return;
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
-    lh_stats_bio(lh, bp);
+    OPENSSL_LH_stats_bio(lh, bp);
     BIO_free(bp);
- end:;
 }
 
-void lh_node_stats(const _LHASH *lh, FILE *fp)
+void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp)
 {
     BIO *bp;
 
     bp = BIO_new(BIO_s_file());
     if (bp == NULL)
-        goto end;
+        return;
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
-    lh_node_stats_bio(lh, bp);
+    OPENSSL_LH_node_stats_bio(lh, bp);
     BIO_free(bp);
- end:;
 }
 
-void lh_node_usage_stats(const _LHASH *lh, FILE *fp)
+void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
 {
     BIO *bp;
 
     bp = BIO_new(BIO_s_file());
     if (bp == NULL)
-        goto end;
+        return;
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
-    lh_node_usage_stats_bio(lh, bp);
+    OPENSSL_LH_node_usage_stats_bio(lh, bp);
     BIO_free(bp);
- end:;
 }
 
 # endif
 
-void lh_stats_bio(const _LHASH *lh, BIO *out)
+void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
     BIO_printf(out, "num_items             = %lu\n", lh->num_items);
     BIO_printf(out, "num_nodes             = %u\n", lh->num_nodes);
@@ -82,9 +80,9 @@ void lh_stats_bio(const _LHASH *lh, BIO *out)
     BIO_printf(out, "num_hash_comps        = %lu\n", lh->num_hash_comps);
 }
 
-void lh_node_stats_bio(const _LHASH *lh, BIO *out)
+void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
-    LHASH_NODE *n;
+    OPENSSL_LH_NODE *n;
     unsigned int i, num;
 
     for (i = 0; i < lh->num_nodes; i++) {
@@ -94,9 +92,9 @@ void lh_node_stats_bio(const _LHASH *lh, BIO *out)
     }
 }
 
-void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out)
+void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
-    LHASH_NODE *n;
+    OPENSSL_LH_NODE *n;
     unsigned long num;
     unsigned int i;
     unsigned long total = 0, n_used = 0;

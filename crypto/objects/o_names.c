@@ -99,7 +99,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
             OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
             return (0);
         }
-        name_funcs->hash_func = lh_strhash;
+        name_funcs->hash_func = OPENSSL_LH_strhash;
         name_funcs->cmp_func = obj_strcmp;
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
         sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
@@ -141,7 +141,7 @@ static unsigned long obj_name_hash(const OBJ_NAME *a)
             sk_NAME_FUNCS_value(name_funcs_stack,
                                 a->type)->hash_func(a->name);
     } else {
-        ret = lh_strhash(a->name);
+        ret = OPENSSL_LH_strhash(a->name);
     }
     ret ^= a->type;
     return (ret);

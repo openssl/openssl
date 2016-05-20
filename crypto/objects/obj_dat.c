@@ -68,10 +68,10 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
             ret ^= p[i] << ((i * 3) % 24);
         break;
     case ADDED_SNAME:
-        ret = lh_strhash(a->sn);
+        ret = OPENSSL_LH_strhash(a->sn);
         break;
     case ADDED_LNAME:
-        ret = lh_strhash(a->ln);
+        ret = OPENSSL_LH_strhash(a->ln);
         break;
     case ADDED_NID:
         ret = a->nid;
