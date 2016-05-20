@@ -72,8 +72,6 @@ character in big endian format, UTF8String will be in UTF8 format.
 Similar care should be take to ensure the data is in the correct format
 when calling ASN1_STRING_set().
 
-=head1 RETURN VALUES
-
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>

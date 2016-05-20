@@ -1,4 +1,3 @@
-
 =pod
 
 =head1 NAME
@@ -40,7 +39,7 @@ this option is not specified.
 
 =item B<-text>
 
-prints out the parameters in plain text in addition to the encoded version. 
+prints out the parameters in plain text in addition to the encoded version.
 
 =item B<-noout>
 
@@ -69,7 +68,7 @@ PEM format is supported because the key type is determined by the PEM headers.
 =head1 SEE ALSO
 
 L<genpkey(1)>, L<rsa(1)>, L<pkcs8(1)>,
-L<dsa(1)>, L<genrsa(1)>, L<gendsa(1)> 
+L<dsa(1)>, L<genrsa(1)>, L<gendsa(1)>
 
 =cut
 

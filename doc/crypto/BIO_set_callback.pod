@@ -9,16 +9,16 @@ BIO_debug_callback - BIO callback functions
 
  #include <openssl/bio.h>
 
- #define BIO_set_callback(b,cb)		((b)->callback=(cb))
- #define BIO_get_callback(b)		((b)->callback)
- #define BIO_set_callback_arg(b,arg)	((b)->cb_arg=(char *)(arg))
- #define BIO_get_callback_arg(b)		((b)->cb_arg)
+ #define BIO_set_callback(b,cb)         ((b)->callback=(cb))
+ #define BIO_get_callback(b)            ((b)->callback)
+ #define BIO_set_callback_arg(b,arg)    ((b)->cb_arg=(char *)(arg))
+ #define BIO_get_callback_arg(b)                ((b)->cb_arg)
 
  long BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
-	long argl,long ret);
+        long argl,long ret);
 
  typedef long (*callback)(BIO *b, int oper, const char *argp,
-			int argi, long argl, long retvalue);
+                        int argi, long argl, long retvalue);
 
 =head1 DESCRIPTION
 

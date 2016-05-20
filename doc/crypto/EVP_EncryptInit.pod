@@ -40,14 +40,14 @@ EVP_aes_128_ccm, EVP_aes_192_ccm, EVP_aes_256_ccm - EVP cipher routines
  void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
 
  int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-	 ENGINE *impl, unsigned char *key, unsigned char *iv);
+         ENGINE *impl, unsigned char *key, unsigned char *iv);
  int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl, unsigned char *in, int inl);
  int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl);
 
  int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-	 ENGINE *impl, unsigned char *key, unsigned char *iv);
+         ENGINE *impl, unsigned char *key, unsigned char *iv);
  int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl, unsigned char *in, int inl);
  int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
@@ -83,12 +83,12 @@ EVP_aes_128_ccm, EVP_aes_192_ccm, EVP_aes_256_ccm - EVP cipher routines
  #define EVP_get_cipherbynid(a) EVP_get_cipherbyname(OBJ_nid2sn(a))
  #define EVP_get_cipherbyobj(a) EVP_get_cipherbynid(OBJ_obj2nid(a))
 
- #define EVP_CIPHER_nid(e)		((e)->nid)
- #define EVP_CIPHER_block_size(e)	((e)->block_size)
- #define EVP_CIPHER_key_length(e)	((e)->key_len)
- #define EVP_CIPHER_iv_length(e)		((e)->iv_len)
- #define EVP_CIPHER_flags(e)		((e)->flags)
- #define EVP_CIPHER_mode(e)		((e)->flags) & EVP_CIPH_MODE)
+ #define EVP_CIPHER_nid(e)              ((e)->nid)
+ #define EVP_CIPHER_block_size(e)       ((e)->block_size)
+ #define EVP_CIPHER_key_length(e)       ((e)->key_len)
+ #define EVP_CIPHER_iv_length(e)                ((e)->iv_len)
+ #define EVP_CIPHER_flags(e)            ((e)->flags)
+ #define EVP_CIPHER_mode(e)             ((e)->flags) & EVP_CIPH_MODE)
  int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 
  const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
@@ -384,13 +384,13 @@ bits and 12 rounds.
 
 AES Galois Counter Mode (GCM) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
-the L</GCM and OCB modes> section below for details.
+the L</GCM and OCB Modes> section below for details.
 
 =item EVP_aes_128_ocb(void), EVP_aes_192_ocb(void), EVP_aes_256_ocb(void)
 
 Offset Codebook Mode (OCB) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
-the L</GCM and OCB modes> section below for details.
+the L</GCM and OCB Modes> section below for details.
 
 =item EVP_aes_128_ccm(), EVP_aes_192_ccm(), EVP_aes_256_ccm()
 
@@ -526,46 +526,46 @@ for certain common S/MIME ciphers (RC2, DES, triple DES) in CBC mode.
 Encrypt a string using IDEA:
 
  int do_crypt(char *outfile)
-	{
-	unsigned char outbuf[1024];
-	int outlen, tmplen;
-	/* Bogus key and IV: we'd normally set these from
-	 * another source.
-	 */
-	unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-	unsigned char iv[] = {1,2,3,4,5,6,7,8};
-	char intext[] = "Some Crypto Text";
-	EVP_CIPHER_CTX ctx;
-	FILE *out;
+        {
+        unsigned char outbuf[1024];
+        int outlen, tmplen;
+        /* Bogus key and IV: we'd normally set these from
+         * another source.
+         */
+        unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+        unsigned char iv[] = {1,2,3,4,5,6,7,8};
+        char intext[] = "Some Crypto Text";
+        EVP_CIPHER_CTX ctx;
+        FILE *out;
 
-	ctx = EVP_CIPHER_CTX_new();
-	EVP_EncryptInit_ex(ctx, EVP_idea_cbc(), NULL, key, iv);
+        ctx = EVP_CIPHER_CTX_new();
+        EVP_EncryptInit_ex(ctx, EVP_idea_cbc(), NULL, key, iv);
 
-	if(!EVP_EncryptUpdate(ctx, outbuf, &outlen, intext, strlen(intext)))
-		{
-		/* Error */
-		return 0;
-		}
-	/* Buffer passed to EVP_EncryptFinal() must be after data just
-	 * encrypted to avoid overwriting it.
-	 */
-	if(!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen))
-		{
-		/* Error */
-		return 0;
-		}
-	outlen += tmplen;
-	EVP_CIPHER_CTX_free(ctx);
-	/* Need binary mode for fopen because encrypted data is
-	 * binary data. Also cannot use strlen() on it because
+        if(!EVP_EncryptUpdate(ctx, outbuf, &outlen, intext, strlen(intext)))
+                {
+                /* Error */
+                return 0;
+                }
+        /* Buffer passed to EVP_EncryptFinal() must be after data just
+         * encrypted to avoid overwriting it.
+         */
+        if(!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen))
+                {
+                /* Error */
+                return 0;
+                }
+        outlen += tmplen;
+        EVP_CIPHER_CTX_free(ctx);
+        /* Need binary mode for fopen because encrypted data is
+         * binary data. Also cannot use strlen() on it because
          * it wont be null terminated and may contain embedded
-	 * nulls.
-	 */
-	out = fopen(outfile, "wb");
-	fwrite(outbuf, 1, outlen, out);
-	fclose(out);
-	return 1;
-	}
+         * nulls.
+         */
+        out = fopen(outfile, "wb");
+        fwrite(outbuf, 1, outlen, out);
+        fclose(out);
+        return 1;
+        }
 
 The ciphertext from the above example can be decrypted using the B<openssl>
 utility with the command line (shown on two lines for clarity):
@@ -577,50 +577,50 @@ General encryption and decryption function example using FILE I/O and AES128
 with a 128-bit key:
 
  int do_crypt(FILE *in, FILE *out, int do_encrypt)
- 	{
-	/* Allow enough space in output buffer for additional block */
-	unsigned char inbuf[1024], outbuf[1024 + EVP_MAX_BLOCK_LENGTH];
-	int inlen, outlen;
-	EVP_CIPHER_CTX *ctx;
-	/* Bogus key and IV: we'd normally set these from
-	 * another source.
-	 */
-	unsigned char key[] = "0123456789abcdeF";
-	unsigned char iv[] = "1234567887654321";
+        {
+        /* Allow enough space in output buffer for additional block */
+        unsigned char inbuf[1024], outbuf[1024 + EVP_MAX_BLOCK_LENGTH];
+        int inlen, outlen;
+        EVP_CIPHER_CTX *ctx;
+        /* Bogus key and IV: we'd normally set these from
+         * another source.
+         */
+        unsigned char key[] = "0123456789abcdeF";
+        unsigned char iv[] = "1234567887654321";
 
-	/* Don't set key or IV right away; we want to check lengths */
-	ctx = EVP_CIPHER_CTX_new();
-	EVP_CipherInit_ex(&ctx, EVP_aes_128_cbc(), NULL, NULL, NULL,
-		do_encrypt);
-	OPENSSL_assert(EVP_CIPHER_CTX_key_length(ctx) == 16);
-	OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) == 16);
+        /* Don't set key or IV right away; we want to check lengths */
+        ctx = EVP_CIPHER_CTX_new();
+        EVP_CipherInit_ex(&ctx, EVP_aes_128_cbc(), NULL, NULL, NULL,
+                do_encrypt);
+        OPENSSL_assert(EVP_CIPHER_CTX_key_length(ctx) == 16);
+        OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) == 16);
 
-	/* Now we can set key and IV */
-	EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, do_encrypt);
+        /* Now we can set key and IV */
+        EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, do_encrypt);
 
-	for(;;)
-		{
-		inlen = fread(inbuf, 1, 1024, in);
-		if(inlen <= 0) break;
-		if(!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf, inlen))
-			{
-			/* Error */
-			EVP_CIPHER_CTX_free(ctx);
-			return 0;
-			}
-		fwrite(outbuf, 1, outlen, out);
-		}
-	if(!EVP_CipherFinal_ex(ctx, outbuf, &outlen))
-		{
-		/* Error */
-		EVP_CIPHER_CTX_free(ctx);
-		return 0;
-		}
-	fwrite(outbuf, 1, outlen, out);
+        for(;;)
+                {
+                inlen = fread(inbuf, 1, 1024, in);
+                if(inlen <= 0) break;
+                if(!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf, inlen))
+                        {
+                        /* Error */
+                        EVP_CIPHER_CTX_free(ctx);
+                        return 0;
+                        }
+                fwrite(outbuf, 1, outlen, out);
+                }
+        if(!EVP_CipherFinal_ex(ctx, outbuf, &outlen))
+                {
+                /* Error */
+                EVP_CIPHER_CTX_free(ctx);
+                return 0;
+                }
+        fwrite(outbuf, 1, outlen, out);
 
-	EVP_CIPHER_CTX_free(ctx);
-	return 1;
-	}
+        EVP_CIPHER_CTX_free(ctx);
+        return 1;
+        }
 
 
 =head1 SEE ALSO

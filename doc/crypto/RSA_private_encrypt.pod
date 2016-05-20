@@ -11,7 +11,7 @@ RSA_private_encrypt, RSA_public_decrypt - low level signature operations
  int RSA_private_encrypt(int flen, unsigned char *from,
     unsigned char *to, RSA *rsa, int padding);
 
- int RSA_public_decrypt(int flen, unsigned char *from, 
+ int RSA_public_decrypt(int flen, unsigned char *from,
     unsigned char *to, RSA *rsa, int padding);
 
 =head1 DESCRIPTION

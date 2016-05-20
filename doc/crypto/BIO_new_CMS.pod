@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- BIO_new_CMS - CMS streaming filter BIO
+BIO_new_CMS - CMS streaming filter BIO
 
 =head1 SYNOPSIS
 

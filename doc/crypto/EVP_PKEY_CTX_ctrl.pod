@@ -16,9 +16,9 @@ EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations
  #include <openssl/evp.h>
 
  int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
-				int cmd, int p1, void *p2);
+                                int cmd, int p1, void *p2);
  int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
-						const char *value);
+                                                const char *value);
 
  #include <openssl/rsa.h>
 

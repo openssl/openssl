@@ -217,7 +217,7 @@ point. This message is always a warning.
 =item "UP"/"unknown PSK identity"
 
 Sent by the server to indicate that it does not recognize a PSK
-identity or an SRP identity. 
+identity or an SRP identity.
 
 =item "UK"/"unknown"
 

@@ -2,8 +2,8 @@
 
 =head1 NAME
 
- CONF_modules_free, CONF_modules_finish, CONF_modules_unload -
- OpenSSL configuration cleanup functions
+CONF_modules_free, CONF_modules_finish, CONF_modules_unload -
+OpenSSL configuration cleanup functions
 
 =head1 SYNOPSIS
 

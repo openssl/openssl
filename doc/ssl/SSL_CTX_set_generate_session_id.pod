@@ -14,7 +14,7 @@ SSL_CTX_set_generate_session_id, SSL_set_generate_session_id, SSL_has_matching_s
  int SSL_CTX_set_generate_session_id(SSL_CTX *ctx, GEN_SESSION_CB cb);
  int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB, cb);
  int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
-				 unsigned int id_len);
+                                 unsigned int id_len);
 
 =head1 DESCRIPTION
 

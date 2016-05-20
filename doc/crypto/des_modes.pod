@@ -240,11 +240,11 @@ This text was been written in large parts by Eric Young in his original
 documentation for SSLeay, the predecessor of OpenSSL.  In turn, he attributed
 it to:
 
-	AS 2805.5.2
-	Australian Standard
-	Electronic funds transfer - Requirements for interfaces,
-	Part 5.2: Modes of operation for an n-bit block cipher algorithm
-	Appendix A
+        AS 2805.5.2
+        Australian Standard
+        Electronic funds transfer - Requirements for interfaces,
+        Part 5.2: Modes of operation for an n-bit block cipher algorithm
+        Appendix A
 
 =head1 SEE ALSO
 

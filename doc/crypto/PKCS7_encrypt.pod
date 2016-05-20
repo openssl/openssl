@@ -30,7 +30,7 @@ bit RC2. These can be used by passing EVP_rc2_40_cbc() and EVP_rc2_64_cbc()
 respectively.
 
 The algorithm passed in the B<cipher> parameter must support ASN1 encoding of
-its parameters. 
+its parameters.
 
 Many browsers implement a "sign and encrypt" option which is simply an S/MIME
 envelopedData containing an S/MIME signed message. This can be readily produced
@@ -55,7 +55,7 @@ suitable for streaming I/O: no data is read from the BIO B<in>.
 
 If the flag B<PKCS7_STREAM> is set the returned B<PKCS7> structure is B<not>
 complete and outputting its contents via a function that does not
-properly finalize the B<PKCS7> structure will give unpredictable 
+properly finalize the B<PKCS7> structure will give unpredictable
 results.
 
 Several functions including SMIME_write_PKCS7(), i2d_PKCS7_bio_stream(),

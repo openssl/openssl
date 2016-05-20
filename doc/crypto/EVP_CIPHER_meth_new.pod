@@ -19,7 +19,7 @@ EVP_CIPHER_meth_get_ctrl  - Routines to build up EVP_CIPHER methods
  EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
  EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
  void EVP_CIPHER_meth_free(EVP_CIPHER *cipher);
- 
+
  int EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len);
  int EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher, unsigned long flags);
  int EVP_CIPHER_meth_set_impl_ctx_size(EVP_CIPHER *cipher, int ctx_size);
@@ -44,7 +44,7 @@ EVP_CIPHER_meth_get_ctrl  - Routines to build up EVP_CIPHER methods
  int EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
                               int (*ctrl) (EVP_CIPHER_CTX *, int type,
                                            int arg, void *ptr));
- 
+
  int (*EVP_CIPHER_meth_get_init(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
                                                            const unsigned char *key,
                                                            const unsigned char *iv,
@@ -82,37 +82,14 @@ With the exception of cipher modes, of which only one may be present,
 several flags can be or'd together.
 The available flags are:
 
-=over 4
+=over
 
-=over 4
+=item EVP_CIPH_STREAM_CIPHER, EVP_CIPH_ECB_MODE EVP_CIPH_CBC_MODE,
+EVP_CIPH_CFB_MODE, EVP_CIPH_OFB_MODE, EVP_CIPH_CTR_MODE, EVP_CIPH_GCM_MODE,
+EVP_CIPH_CCM_MODE, EVP_CIPH_XTS_MODE, EVP_CIPH_WRAP_MODE,
+EVP_CIPH_OCB_MODE
 
-=item The cipher modes:
-
-=over 4
-
-=item EVP_CIPH_STREAM_CIPHER
-
-=item EVP_CIPH_ECB_MODE
-
-=item EVP_CIPH_CBC_MODE
-
-=item EVP_CIPH_CFB_MODE
-
-=item EVP_CIPH_OFB_MODE
-
-=item EVP_CIPH_CTR_MODE
-
-=item EVP_CIPH_GCM_MODE
-
-=item EVP_CIPH_CCM_MODE
-
-=item EVP_CIPH_XTS_MODE
-
-=item EVP_CIPH_WRAP_MODE
-
-=item EVP_CIPH_OCB_MODE
-
-=back
+The cipher mode.
 
 =item EVP_CIPH_VARIABLE_LENGTH
 
@@ -197,13 +174,8 @@ This indicates that this is an AEAD cipher implementation.
 
 =item EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
 
-=begin comment
-
-I could use some help explaining this one!
-
-=end comment
-
-=back
+Allow interleaving of crypto blocks, a particular optimization only applicable
+to certain TLS ciphers.
 
 =back
 
@@ -234,6 +206,7 @@ EVP_CIPHER_CTX_free().
 
 EVP_CIPHER_meth_set_ctrl() sets the control function for B<cipher>.
 
+=head1 RETURN VALUES
 
 EVP_CIPHER_meth_get_input_blocksize(), EVP_CIPHER_meth_get_result_size(),
 EVP_CIPHER_meth_get_app_datasize(), EVP_CIPHER_meth_get_flags(),

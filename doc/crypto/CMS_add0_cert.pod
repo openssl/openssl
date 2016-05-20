@@ -20,7 +20,7 @@ CMS_add0_cert, CMS_add1_cert, CMS_get1_certs, CMS_add0_crl, CMS_add1_crl, CMS_ge
 =head1 DESCRIPTION
 
 CMS_add0_cert() and CMS_add1_cert() add certificate B<cert> to B<cms>.
-must be of type signed data or enveloped data. 
+must be of type signed data or enveloped data.
 
 CMS_get1_certs() returns all certificates in B<cms>.
 
@@ -46,7 +46,7 @@ than once.
 =head1 RETURN VALUES
 
 CMS_add0_cert(), CMS_add1_cert() and CMS_add0_crl() and CMS_add1_crl() return
-1 for success and 0 for failure. 
+1 for success and 0 for failure.
 
 CMS_get1_certs() and CMS_get1_crls() return the STACK of certificates or CRLs
 or NULL if there are none or an error occurs. The only error which will occur

@@ -23,9 +23,9 @@ crypto structures:
  #include <openssl/x509.h>
 
  int X509_get_ex_new_index(long argl, void *argp,
-		CRYPTO_EX_new *new_func,
-		CRYPTO_EX_dup *dup_func,
-		CRYPTO_EX_free *free_func);
+                CRYPTO_EX_new *new_func,
+                CRYPTO_EX_dup *dup_func,
+                CRYPTO_EX_free *free_func);
 
  int X509_set_ex_data(X509 *d, int idx, void *arg);
 

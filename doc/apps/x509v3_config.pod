@@ -108,19 +108,19 @@ These can either be object short names or the dotted numerical form of OIDs.
 While any OID can be used only certain values make sense. In particular the
 following PKIX, NS and MS values are meaningful:
 
- Value			Meaning
- -----			-------
- serverAuth		SSL/TLS Web Server Authentication.
- clientAuth		SSL/TLS Web Client Authentication.
- codeSigning		Code signing.
- emailProtection	E-mail Protection (S/MIME).
- timeStamping		Trusted Timestamping
- OCSPSigning		OCSP Signing
- ipsecIKE		ipsec Internet Key Exchnage
- msCodeInd		Microsoft Individual Code Signing (authenticode)
- msCodeCom		Microsoft Commercial Code Signing (authenticode)
- msCTLSign		Microsoft Trust List Signing
- msEFS			Microsoft Encrypted File System
+ Value                  Meaning
+ -----                  -------
+ serverAuth             SSL/TLS Web Server Authentication.
+ clientAuth             SSL/TLS Web Client Authentication.
+ codeSigning            Code signing.
+ emailProtection        E-mail Protection (S/MIME).
+ timeStamping           Trusted Timestamping
+ OCSPSigning            OCSP Signing
+ ipsecIKE               ipsec Internet Key Exchnage
+ msCodeInd              Microsoft Individual Code Signing (authenticode)
+ msCodeCom              Microsoft Commercial Code Signing (authenticode)
+ msCTLSign              Microsoft Trust List Signing
+ msEFS                  Microsoft Encrypted File System
 
 Examples:
 

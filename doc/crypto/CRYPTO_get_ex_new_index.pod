@@ -12,9 +12,9 @@ CRYPTO_get_ex_data, CRYPTO_free_ex_data
 
  int CRYPTO_get_ex_new_index(int class_index,
                 long argl, void *argp,
-		CRYPTO_EX_new *new_func,
-		CRYPTO_EX_dup *dup_func,
-		CRYPTO_EX_free *free_func);
+                CRYPTO_EX_new *new_func,
+                CRYPTO_EX_dup *dup_func,
+                CRYPTO_EX_free *free_func);
 
  typedef int CRYPTO_EX_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                            int idx, long argl, void *argp);

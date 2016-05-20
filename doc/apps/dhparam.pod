@@ -44,7 +44,7 @@ additional header and footer lines.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in> I<filename>
@@ -123,7 +123,7 @@ for all available algorithms.
 
 The program B<dhparam> combines the functionality of the programs B<dh> and
 B<gendh> in previous versions of OpenSSL. The B<dh> and B<gendh>
-programs are retained for now but may have different purposes in future 
+programs are retained for now but may have different purposes in future
 versions of OpenSSL.
 
 =head1 NOTES

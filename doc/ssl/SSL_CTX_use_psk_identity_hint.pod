@@ -6,7 +6,6 @@ SSL_CTX_use_psk_identity_hint, SSL_use_psk_identity_hint,
 SSL_CTX_set_psk_server_callback, SSL_set_psk_server_callback - set PSK
 identity hint to use
 
-
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
@@ -15,11 +14,11 @@ identity hint to use
  int SSL_use_psk_identity_hint(SSL *ssl, const char *hint);
 
  void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx,
-	unsigned int (*callback)(SSL *ssl, const char *identity,
-	unsigned char *psk, int max_psk_len));
+        unsigned int (*callback)(SSL *ssl, const char *identity,
+        unsigned char *psk, int max_psk_len));
  void SSL_set_psk_server_callback(SSL *ssl,
-	unsigned int (*callback)(SSL *ssl, const char *identity,
-	unsigned char *psk, int max_psk_len));
+        unsigned int (*callback)(SSL *ssl, const char *identity,
+        unsigned char *psk, int max_psk_len));
 
 
 =head1 DESCRIPTION

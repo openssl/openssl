@@ -3,8 +3,8 @@
 =head1 NAME
 
 X509_get_pubkey, X509_get0_pubkey, X509_set_pubkey, X509_get_X509_PUBKEY,
-X509_REQ_get_pubkey, X509_REQ_get0_pubkey, X509_REQ_set_pubkey, 
-X509_REQ_get_X509_PUBKEY - get or set certificate or certificate request 
+X509_REQ_get_pubkey, X509_REQ_get0_pubkey, X509_REQ_set_pubkey,
+X509_REQ_get_X509_PUBKEY - get or set certificate or certificate request
 public key.
 
 =head1 SYNOPSIS
@@ -37,7 +37,7 @@ must not be freed up after use.
 X509_set_pubkey() attempts to set the public key for certificate B<x> to
 B<pkey>. The key B<pkey> should be freed up after use.
 
-X509_REQ_get_pubkey(), X509_REQ_get0_pubkey(), X509_REQ_set_pubkey() and 
+X509_REQ_get_pubkey(), X509_REQ_get0_pubkey(), X509_REQ_set_pubkey() and
 X509_REQ_get_X509_PUBKEY() are similar but operate on certificate request B<req>.
 
 =head1 NOTES

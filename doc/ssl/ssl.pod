@@ -1,11 +1,8 @@
-
 =pod
 
 =head1 NAME
 
 SSL - OpenSSL SSL/TLS library
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 

@@ -148,8 +148,8 @@ Set policy variable inhibit-policy-mapping (see RFC5280).
 
 =item B<-no_check_time>
 
-This option suppresses checking the validity period of certificates and CRLs 
-against the current time. If option B<-attime timestamp> is used to specify 
+This option suppresses checking the validity period of certificates and CRLs
+against the current time. If option B<-attime timestamp> is used to specify
 a verification time, the check is not suppressed.
 
 =item B<-partial_chain>

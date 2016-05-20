@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- CMS_add1_recipient_cert, CMS_add0_recipient_key - add recipients to a CMS enveloped data structure
+CMS_add1_recipient_cert, CMS_add0_recipient_key - add recipients to a CMS enveloped data structure
 
 =head1 SYNOPSIS
 

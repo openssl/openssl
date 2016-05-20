@@ -11,7 +11,7 @@ B<openssl errstr error_code>
 =head1 DESCRIPTION
 
 Sometimes an application will not load error message and only
-numerical forms will be available. The B<errstr> utility can be used to 
+numerical forms will be available. The B<errstr> utility can be used to
 display the meaning of the hex code. The hex code is the hex digits after the
 second colon.
 
@@ -22,7 +22,7 @@ The error code:
  27594:error:2006D080:lib(32):func(109):reason(128):bss_file.c:107:
 
 can be displayed with:
- 
+
  openssl errstr 2006D080
 
 to produce the error message:

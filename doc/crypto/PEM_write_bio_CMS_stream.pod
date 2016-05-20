@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- PEM_write_bio_CMS_stream - output CMS_ContentInfo structure in PEM format.
+PEM_write_bio_CMS_stream - output CMS_ContentInfo structure in PEM format.
 
 =head1 SYNOPSIS
 

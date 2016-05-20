@@ -44,7 +44,7 @@ B<obj>, if no such entry exists -1 is returned. At most B<len> bytes
 will be written and the text written to B<buf> will be null
 terminated. The length of the output string written is returned
 excluding the terminating null. If B<buf> is <NULL> then the amount
-of space needed in B<buf> (excluding the final null) is returned. 
+of space needed in B<buf> (excluding the final null) is returned.
 
 =head1 NOTES
 
@@ -76,10 +76,10 @@ Process all entries:
  X509_NAME_ENTRY *e;
 
  for (i = 0; i < X509_NAME_entry_count(nm); i++)
-	{
-	e = X509_NAME_get_entry(nm, i);
-	/* Do something with e */
-	}
+        {
+        e = X509_NAME_get_entry(nm, i);
+        /* Do something with e */
+        }
 
 Process all commonName entries:
 
@@ -88,13 +88,13 @@ Process all commonName entries:
 
  loc = -1;
  for (;;)
-	{
-	lastpos = X509_NAME_get_index_by_NID(nm, NID_commonName, lastpos);
-	if (lastpos == -1)
-		break;
-	e = X509_NAME_get_entry(nm, lastpos);
-	/* Do something with e */
-	}
+        {
+        lastpos = X509_NAME_get_index_by_NID(nm, NID_commonName, lastpos);
+        if (lastpos == -1)
+                break;
+        e = X509_NAME_get_entry(nm, lastpos);
+        /* Do something with e */
+        }
 
 =head1 RETURN VALUES
 

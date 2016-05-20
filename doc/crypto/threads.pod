@@ -84,31 +84,31 @@ The other functions return 1 on success or 0 on error.
 This example safely initializes and uses a lock.
 
   #include <openssl/crypto.h>
-  
+
   static CRYPTO_ONCE once = CRYPTO_ONCE_STATIC_INIT;
   static CRYPTO_RWLOCK *lock;
-  
+
   static void myinit(void)
   {
       lock = CRYPTO_THREAD_lock_new();
   }
-  
+
   static int mylock(void)
   {
       if (!CRYPTO_THREAD_run_once(&once, void init) || lock == NULL)
           return 0;
       return CRYPTO_THREAD_write_lock(lock);
   }
-  
+
   static int myunlock(void)
   {
       return CRYPTO_THREAD_unlock(lock);
   }
-  
+
   int serialized(void)
   {
       int ret = 0;
-  
+
       if (mylock()) {
           /* Your code here, do not return without releasing the lock! */
           ret = ... ;

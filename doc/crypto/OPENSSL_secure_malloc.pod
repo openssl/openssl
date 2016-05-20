@@ -56,7 +56,7 @@ heap as been initialized and is available.
 
 CRYPTO_secure_malloc_done() releases the heap and makes the memory unavailable
 to the process if all secure memory has been freed.
-It can take noticeably long to complete. 
+It can take noticeably long to complete.
 
 OPENSSL_secure_malloc() allocates C<num> bytes from the heap.
 If CRYPTO_secure_malloc_init() is not called, this is equivalent to
