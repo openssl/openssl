@@ -212,7 +212,7 @@ int srp_main(int argc, char **argv)
     int doupdatedb = 0, mode = OPT_ERR;
     char *user = NULL, *passinarg = NULL, *passoutarg = NULL;
     char *passin = NULL, *passout = NULL, *gN = NULL, *userinfo = NULL;
-    char *randfile = NULL, *tofree = NULL, *section = NULL;
+    char *randfile = NULL, *section = NULL;
     char **gNrow = NULL, *configfile = NULL;
     char *srpvfile = NULL, **pp, *prog;
     OPTION_CHOICE o;
@@ -596,7 +596,7 @@ int srp_main(int argc, char **argv)
 
     if (verbose)
         BIO_printf(bio_err, "SRP terminating with code %d.\n", ret);
-    OPENSSL_free(tofree);
+
     if (ret)
         ERR_print_errors(bio_err);
     if (randfile)
