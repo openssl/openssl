@@ -65,11 +65,41 @@
 
 #ifdef OPENSSL_SYS_VMS
 /*
- * This declaration is a nasty hack to get around vms' extension to fopen for
- * passing in sharing options being disabled by our /STANDARD=ANSI89
+ * Misc hacks needed for specific cases.
+ *
+ * __FILE_ptr32 is a type provided by DEC C headers (types.h specifically)
+ * to make sure the FILE* is a 32-bit pointer no matter what.  We know that
+ * stdio function return this type (a study of stdio.h proves it).
+ * Additionally, we create a similar char pointer type for the sake of
+ * vms_setbuf below.
  */
-static FILE *(*const vms_fopen)(const char *, const char *, ...) =
-    (FILE *(*)(const char *, const char *, ...))fopen;
+# if __INITIAL_POINTER_SIZE == 64
+#  pragma pointer_size save
+#  pragma pointer_size 32
+# endif
+typedef char *char_ptr32;
+# if __INITIAL_POINTER_SIZE == 64
+#  pragma pointer_size restore
+# endif
+
+/*
+ * On VMS, setbuf() will only take 32-bit pointers, and a compilation
+ * with /POINTER_SIZE=64 will give off a MAYLOSEDATA2 warning here.
+ * Since we know that the FILE* really is a 32-bit pointer expanded to
+ * 64 bits, we also know it's safe to convert it back to a 32-bit pointer.
+ * As for the buffer parameter, we only use NULL here, so that passes as
+ * well...
+ */
+static void vms_setbuf(FILE *fp, char *buf)
+{
+    setbuf((__FILE_ptr32)fp, (char_ptr32)buf);
+}
+/*
+ * This declaration is a nasty hack to get around vms' extension to fopen for
+ * passing in sharing options being disabled by /STANDARD=ANSI89
+ */
+static __FILE_ptr32 (*const vms_fopen)(const char *, const char *, ...) =
+    (__FILE_ptr32 (*)(const char *, const char *, ...))fopen;
 # define VMS_OPEN_ATTRS "shr=get,put,upd,del","ctx=bin,stm","rfm=stm","rat=none","mrs=0"
 #endif
 
@@ -127,7 +157,13 @@ int RAND_load_file(const char *file, long bytes)
          * because we will waste system entropy.
          */
         bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
-        setbuf(in, NULL); /* don't do buffered reads */
+
+        /* don't do buffered reads */
+# ifdef OPENSSL_SYS_VMS
+        vms_setbuf(in, NULL);
+# else
+        setbuf(in, NULL);
+# endif
     }
 #endif
     for (;;) {
