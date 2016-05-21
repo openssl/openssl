@@ -12,33 +12,57 @@ use warnings;
 use strict;
 use Pod::Checker;
 use File::Find;
+use File::Basename;
 
 my $temp = '/tmp/docnits.txt';
 my $OUT;
 
+my %mandatory_sections =
+    ( '*'    => [ 'NAME', 'DESCRIPTION', 'COPYRIGHT' ],
+      1      => [ 'SYNOPSIS', '(COMMAND\s+)?OPTIONS' ],
+      3      => [ 'SYNOPSIS', 'RETURN\s+VALUES' ],
+      5      => [ ],
+      7      => [ ] );
+my %default_sections =
+    ( apps   => 1,
+      crypto => 3,
+      ssl    => 3 );
+
 sub check()
 {
+    my $filename = shift;
+    my $dirname = basename(dirname($filename));
     my $contents = '';
     {
         local $/ = undef;
-        open POD, $_ or die "Couldn't open $_, $!";
+        open POD, $filename or die "Couldn't open $filename, $!";
         $contents = <POD>;
         close POD;
     }
-    print $OUT "$_ doesn't start with =pod\n"
+    print $OUT "$filename doesn't start with =pod\n"
         if $contents !~ /^=pod/;
-    print $OUT "$_ doesn't end with =cut\n"
+    print $OUT "$filename doesn't end with =cut\n"
         if $contents !~ /=cut\n$/;
-    print $OUT "$_ more than one cut line.\n"
+    print $OUT "$filename more than one cut line.\n"
         if $contents =~ /=cut.*=cut/ms;
-    print $OUT "$_ missing copyright\n"
+    print $OUT "$filename missing copyright\n"
         if $contents !~ /Copyright .* The OpenSSL Project Authors/;
-    print $OUT "$_ copyright not last\n"
+    print $OUT "$filename copyright not last\n"
         if $contents =~ /head1 COPYRIGHT.*=head/ms;
-    print $OUT "$_ head2 in All uppercase\n"
+    print $OUT "$filename head2 in All uppercase\n"
         if $contents =~ /head2.*[A-Z ]+\n/;
 
-    podchecker($_, $OUT);
+    my $section = $default_sections{$dirname};
+    if ($contents =~ /^=for\s+comment\s+openssl_manual_section:\s*(\d+)\s*$/m) {
+        $section = $1;
+    }
+
+    foreach ((@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}})) {
+        print $OUT "$filename doesn't have a head1 section matching $_\n"
+            if $contents !~ /^=head1\s+${_}\s*$/m;
+    }
+
+    podchecker($filename, $OUT);
 }
 
 open $OUT, '>', $temp
