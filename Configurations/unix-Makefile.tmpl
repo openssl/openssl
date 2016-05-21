@@ -528,6 +528,7 @@ PROCESS_PODS=\
 		SEC=`sed -ne 's/^=for  *comment  *openssl_manual_section: *\([0-9]\) *$$/\1/p' $$p`; \
 		[ -z "$$SEC" ] && SEC=$$defsec; \
 		fn=`basename $$p .pod`; \
+		Name=$$fn; \
 		NAME=`echo $$fn | tr [a-z] [A-Z]`; \
 		suf=`eval "echo $$OUTSUFFIX"`; \
 		top=`eval "echo $$OUTTOP"`; \
@@ -607,7 +608,7 @@ install_html_docs:
 	OUTSUFFIX='.$(HTMLSUFFIX)'; \
 	OUTTOP="$(DESTDIR)$(HTMLDIR)"; \
 	GENERATE="pod2html --podroot=$(SRCDIR)/doc --htmldir=.. \
-			   --podpath=apps:crypto:ssl \
+			   --podpath=apps:crypto:ssl --title=\$$Name \
 		  | sed -e 's|href=\"http://man.he.net/man|href=\"../man|g'"; \
 	$(PROCESS_PODS)
 
