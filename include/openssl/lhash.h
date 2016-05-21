@@ -153,15 +153,15 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
     } \
     static ossl_inline void lh_##type##_node_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
-        OPENSSL_LH_node_stats_bio((OPENSSL_LHASH *)lh, out); \
+        OPENSSL_LH_node_stats_bio((const OPENSSL_LHASH *)lh, out); \
     } \
     static ossl_inline void lh_##type##_node_usage_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
-        OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)lh, out); \
+        OPENSSL_LH_node_usage_stats_bio((const OPENSSL_LHASH *)lh, out); \
     } \
     static ossl_inline void lh_##type##_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
-        OPENSSL_LH_stats_bio((OPENSSL_LHASH *)lh, out); \
+        OPENSSL_LH_stats_bio((const OPENSSL_LHASH *)lh, out); \
     } \
     static ossl_inline unsigned long lh_##type##_get_down_load(LHASH_OF(type) *lh) \
     { \

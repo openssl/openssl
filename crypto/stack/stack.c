@@ -142,14 +142,14 @@ int OPENSSL_sk_insert(OPENSSL_STACK *st, void *data, int loc)
     return (st->num);
 }
 
-void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, void *p)
+void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, const void *p)
 {
     int i;
 
     for (i = 0; i < st->num; i++)
         if (st->data[i] == p)
-            return (OPENSSL_sk_delete(st, i));
-    return (NULL);
+            return OPENSSL_sk_delete(st, i);
+    return NULL;
 }
 
 void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc)
@@ -174,7 +174,8 @@ void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc)
     return (ret);
 }
 
-static int internal_find(OPENSSL_STACK *st, void *data, int ret_val_options)
+static int internal_find(OPENSSL_STACK *st, const void *data,
+                         int ret_val_options)
 {
     const void *const *r;
     int i;
@@ -198,12 +199,12 @@ static int internal_find(OPENSSL_STACK *st, void *data, int ret_val_options)
     return (int)((char **)r - st->data);
 }
 
-int OPENSSL_sk_find(OPENSSL_STACK *st, void *data)
+int OPENSSL_sk_find(OPENSSL_STACK *st, const void *data)
 {
     return internal_find(st, data, OBJ_BSEARCH_FIRST_VALUE_ON_MATCH);
 }
 
-int OPENSSL_sk_find_ex(OPENSSL_STACK *st, void *data)
+int OPENSSL_sk_find_ex(OPENSSL_STACK *st, const void *data)
 {
     return internal_find(st, data, OBJ_BSEARCH_VALUE_ON_NOMATCH);
 }
