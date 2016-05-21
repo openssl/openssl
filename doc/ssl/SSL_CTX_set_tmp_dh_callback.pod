@@ -126,8 +126,6 @@ L<SSL_CTX_set_tmp_rsa_callback(3)>,
 L<SSL_CTX_set_options(3)>,
 L<ciphers(1)>, L<dhparam(1)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

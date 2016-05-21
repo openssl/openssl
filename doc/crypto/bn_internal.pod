@@ -235,8 +235,6 @@ and bn_set_max() are defined as empty macros.
 
 L<bn(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

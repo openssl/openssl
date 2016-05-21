@@ -81,8 +81,6 @@ L<CONF_modules_load_file(3)>
 
 SSL_CTX_config() and SSL_config() were first added to OpenSSL 1.1.0
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -42,8 +42,6 @@ For details, see L<CRYPTO_get_ex_new_index(3)>.
 
 L<CRYPTO_get_ex_new_index(3)>.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

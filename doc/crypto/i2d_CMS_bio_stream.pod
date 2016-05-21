@@ -41,8 +41,6 @@ L<PEM_write_bio_CMS_stream(3)>
 
 i2d_CMS_bio_stream() was added to OpenSSL 1.0.0
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.

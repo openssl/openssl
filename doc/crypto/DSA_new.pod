@@ -36,8 +36,6 @@ L<dsa(3)>, L<ERR_get_error(3)>,
 L<DSA_generate_parameters(3)>,
 L<DSA_generate_key(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

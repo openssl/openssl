@@ -126,8 +126,6 @@ L<SSL_set_verify(3)>,
 L<SSL_CTX_set_verify(3)>,
 L<ssl_ct_validation_cb(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

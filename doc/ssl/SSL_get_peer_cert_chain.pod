@@ -65,8 +65,6 @@ The return value points to the certificate chain presented by the peer.
 L<ssl(3)>, L<SSL_get_peer_certificate(3)>, L<X509_up_ref(3)>,
 L<X509_chain_up_ref(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

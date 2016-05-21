@@ -280,8 +280,6 @@ L<dhparam(1)>
 The attempt to always try to use secure renegotiation was added in
 Openssl 0.9.8m.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -100,8 +100,6 @@ BIO_get_accept_socket() and BIO_accept() are deprecated since OpenSSL
 
 L<BIO_ADDR(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

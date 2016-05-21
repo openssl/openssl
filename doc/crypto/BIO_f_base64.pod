@@ -77,12 +77,6 @@ data following the base64 encoded block to be misinterpreted.
 There should be some way of specifying a test that the BIO can perform
 to reliably determine EOF (for example a MIME boundary).
 
-=head1 SEE ALSO
-
-TBA
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

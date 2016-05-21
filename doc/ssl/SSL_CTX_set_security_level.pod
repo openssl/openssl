@@ -105,7 +105,7 @@ shorter than 15360 bits and ECC keys shorter than 512 bits are prohibited.
 
 =head1 APPLICATION DEFINED SECURITY CALLBACKS
 
-TBA
+I<Documentation to be provided.>
 
 =head1 NOTES
 
@@ -153,15 +153,9 @@ key using SSL_CTX_use_certificate() at level 1. Applications which do not
 check the return values for errors will misbehave: for example it might
 appear that a certificate is not set at all because it had been rejected.
 
-=head1 SEE ALSO
-
-TBA
-
 =head1 HISTORY
 
 These functions were first added to OpenSSL 1.1.0
-
-=cut
 
 =head1 COPYRIGHT
 

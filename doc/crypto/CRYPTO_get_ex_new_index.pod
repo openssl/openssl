@@ -142,8 +142,6 @@ note that NULL may be a valid value.
 
 dup_func() should return 0 for failure and 1 for success.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

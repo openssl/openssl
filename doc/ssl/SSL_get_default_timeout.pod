@@ -38,8 +38,6 @@ L<SSL_SESSION_get_time(3)>,
 L<SSL_CTX_flush_sessions(3)>,
 L<SSL_get_default_timeout(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

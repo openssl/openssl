@@ -48,8 +48,6 @@ functions which use B<x509_vfy.h>.
 
 L<X509_STORE_CTX_get_error(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.

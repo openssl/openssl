@@ -112,8 +112,6 @@ and B<pkey> parameters to be B<NULL> to be was added in OpenSSL 1.0.0
 
 The B<PKCS7_STREAM> flag was added in OpenSSL 1.0.0
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

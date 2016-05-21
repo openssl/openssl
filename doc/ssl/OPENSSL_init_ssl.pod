@@ -72,8 +72,6 @@ L<OPENSSL_init_crypto(3)>
 
 The OPENSSL_init_ssl() function was added in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

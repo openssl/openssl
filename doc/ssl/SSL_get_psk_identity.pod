@@ -30,8 +30,6 @@ no PSK identity hint was used during the connection setup.
 Note that the return value is valid only during the lifetime of the
 SSL object B<ssl>.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.

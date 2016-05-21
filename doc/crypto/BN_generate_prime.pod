@@ -182,8 +182,6 @@ L<bn(3)>, L<ERR_get_error(3)>, L<rand(3)>
 BN_GENCB_new(), BN_GENCB_free(),
 and BN_GENCB_get_arg() were added in OpenSSL 1.1.0
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

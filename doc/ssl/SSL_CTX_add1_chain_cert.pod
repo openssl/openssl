@@ -146,8 +146,6 @@ L<SSL_CTX_add_extra_chain_cert(3)>
 
 These functions were first added to OpenSSL 1.0.2.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.

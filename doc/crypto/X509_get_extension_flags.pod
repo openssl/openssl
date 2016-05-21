@@ -127,8 +127,6 @@ is absent or an error occurred during parsing.
 
 L<X509_check_purpose(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

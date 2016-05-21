@@ -49,8 +49,6 @@ to memory BIOs, see L<BIO_s_mem(3)> for details.
 
 L<pem(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

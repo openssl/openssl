@@ -89,12 +89,6 @@ equivalent to:
 L<X509_NAME_print_ex(3)>,
 L<ASN1_tag2str(3)>
 
-=head1 HISTORY
-
-TBA
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

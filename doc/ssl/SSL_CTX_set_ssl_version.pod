@@ -58,8 +58,6 @@ L<SSL_CTX_new(3)>, L<SSL_new(3)>,
 L<SSL_clear(3)>, L<ssl(3)>,
 L<SSL_set_connect_state(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

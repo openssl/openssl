@@ -74,8 +74,6 @@ L<X509_sign(3)>,
 L<X509V3_get_d2i(3)>,
 L<X509_verify_cert(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

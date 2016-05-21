@@ -77,8 +77,6 @@ the above are tested.
 
 =back
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

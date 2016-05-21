@@ -164,8 +164,6 @@ the header file and generate the C error code file. This will normally
 be done if the external library needs to generate new ASN1 structures
 but it can also be used to add more general purpose error code handling.
 
-TBA more details
-
 =head1 INTERNALS
 
 The error queues are stored in a thread-local storage with one B<ERR_STATE>
@@ -194,8 +192,6 @@ L<SSL_get_error(3)>
 
 The ERR_load_crypto_strings() function was deprecated in OpenSSL 1.1.0 by
 OPENSSL_init_crypto().
-
-=cut
 
 =head1 COPYRIGHT
 

@@ -35,7 +35,7 @@ EVP_get_digestbynid, EVP_get_digestbyobj - EVP digest routines
  #define EVP_MAX_MD_SIZE 64     /* SHA512 */
 
  int EVP_MD_type(const EVP_MD *md);
- int EVP_MD_pkey_type(const EVP_MD *md);        
+ int EVP_MD_pkey_type(const EVP_MD *md);
  int EVP_MD_size(const EVP_MD *md);
  int EVP_MD_block_size(const EVP_MD *md);
 
@@ -255,8 +255,6 @@ EVP_MD_CTX_new() and EVP_MD_CTX_free() in OpenSSL 1.1.
 The link between digests and signing algorithms was fixed in OpenSSL 1.0 and
 later, so now EVP_sha1() can be used with RSA and DSA. The legacy EVP_dss1()
 was removed in OpenSSL 1.1.0
-
-=cut
 
 =head1 COPYRIGHT
 

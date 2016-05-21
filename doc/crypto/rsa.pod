@@ -100,8 +100,6 @@ L<RSA_private_encrypt(3)>,
 L<RSA_sign_ASN1_OCTET_STRING(3)>,
 L<RSA_padding_add_PKCS1_type_1(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

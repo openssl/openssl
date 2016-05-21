@@ -70,8 +70,6 @@ L<SSL_set_connect_state(3)>,
 L<SSL_do_handshake(3)>,
 L<SSL_CTX_new(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

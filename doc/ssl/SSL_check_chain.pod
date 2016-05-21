@@ -82,8 +82,6 @@ for earlier versions of TLS or DTLS.
 L<SSL_CTX_set_cert_cb(3)>,
 L<ssl(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

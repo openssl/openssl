@@ -18,8 +18,6 @@ expected to implement it, but to compile provided module with
 compiler of their choice and link it into the target application.
 The referred module is available as <openssl>/ms/applink.c.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.

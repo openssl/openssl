@@ -90,7 +90,7 @@ section containing configuration module specific information. E.g.
 
 The features of each configuration module are described below.
 
-=head2 ASN1 OBJECT CONFIGURATION MODULE
+=head2 ASN1 Object Configuration Module
 
 This module has the name B<oid_section>. The value of this variable points
 to a section containing name value pairs of OIDs: the name is the OID short
@@ -110,7 +110,7 @@ by a comma and the numerical OID form. For example:
 
  shortName = some object long name, 1.2.3.4
 
-=head2 ENGINE CONFIGURATION MODULE
+=head2 Engine Configuration Module
 
 This ENGINE configuration module has the name B<engines>. The value of this
 variable points to a section containing further ENGINE configuration
@@ -189,7 +189,7 @@ For example:
  # Supply all default algorithms
  default_algorithms = ALL
 
-=head2 EVP CONFIGURATION MODULE
+=head2 EVP Configuration Module
 
 This modules has the name B<alg_section> which points to a section containing
 algorithm commands.
@@ -207,7 +207,7 @@ For example:
 
  fips_mode = on
 
-=head2 SSL CONFIGURATION MODULE
+=head2 SSL Configuration Module
 
 This module has the name B<ssl_conf> which points to a section containing
 SSL configurations.
@@ -373,8 +373,6 @@ file.
 =head1 SEE ALSO
 
 L<x509(1)>, L<req(1)>, L<ca(1)>
-
-=cut
 
 =head1 COPYRIGHT
 

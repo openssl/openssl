@@ -57,8 +57,6 @@ L<EC_POINT_new(3)>, L<EC_POINT_add(3)>, L<EC_KEY_new(3)>,
 L<d2i_ECPKParameters(3)>,
 L<BN_mod_mul_montgomery(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.

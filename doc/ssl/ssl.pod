@@ -108,7 +108,7 @@ it's already included by ssl.h>.
 Currently the OpenSSL B<ssl> library exports 214 API functions.
 They are documented in the following:
 
-=head2 DEALING WITH PROTOCOL METHODS
+=head2 Dealing with Protocol Methods
 
 Here we document the various API functions which deal with the SSL/TLS
 protocol methods defined in B<SSL_METHOD> structures.
@@ -179,7 +179,7 @@ Constructor for the SSLv3 SSL_METHOD structure for servers.
 
 =back
 
-=head2 DEALING WITH CIPHERS
+=head2 Dealing with Ciphers
 
 Here we document the various API functions which deal with the SSL/TLS
 ciphers defined in B<SSL_CIPHER> structures.
@@ -211,7 +211,7 @@ in the specification the first time).
 
 =back
 
-=head2 DEALING WITH PROTOCOL CONTEXTS
+=head2 Dealing with Protocol Contexts
 
 Here we document the various API functions which deal with the SSL/TLS
 protocol context defined in the B<SSL_CTX> structure.
@@ -402,11 +402,9 @@ Use the file path to locate trusted CA certificates.
 =item void B<SSL_CTX_set_psk_server_callback>(SSL_CTX *ctx, unsigned int (*callback)(SSL *ssl, const char *identity, unsigned char *psk, int max_psk_len));
 
 
-
-
 =back
 
-=head2 DEALING WITH SESSIONS
+=head2 Dealing with Sessions
 
 Here we document the various API functions which deal with the SSL/TLS
 sessions defined in the B<SSL_SESSION> structures.
@@ -445,7 +443,7 @@ sessions defined in the B<SSL_SESSION> structures.
 
 =back
 
-=head2 DEALING WITH CONNECTIONS
+=head2 Dealing with Connections
 
 Here we document the various API functions which deal with the SSL/TLS
 connection defined in the B<SSL> structure.
@@ -804,8 +802,6 @@ in OpenSSL 1.1.0.
 
 The return type of B<SSL_copy_session_id> was changed from void to int in
 OpenSSL 1.1.0.
-
-=cut
 
 =head1 COPYRIGHT
 

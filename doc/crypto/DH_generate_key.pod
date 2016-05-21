@@ -42,8 +42,6 @@ The error codes can be obtained by L<ERR_get_error(3)>.
 
 L<dh(3)>, L<ERR_get_error(3)>, L<rand(3)>, L<DH_size(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

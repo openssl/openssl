@@ -40,7 +40,7 @@ That is zero or more comma separated modifiers followed by a type
 followed by an optional colon and a value. The formats of B<type>,
 B<value> and B<modifier> are explained below.
 
-=head2 SUPPORTED TYPES
+=head2 Supported Types
 
 The supported types are listed below. Unless otherwise specified
 only the B<ASCII> format is permissible.
@@ -119,7 +119,7 @@ will be encoded.
 
 =back
 
-=head2 MODIFIERS
+=head2 Modifiers
 
 Modifiers affect the following structure, they can be used to
 add EXPLICIT or IMPLICIT tagging, add wrappers or to change
@@ -257,8 +257,6 @@ The error codes that can be obtained by L<ERR_get_error(3)>.
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>
-
-=cut
 
 =head1 COPYRIGHT
 

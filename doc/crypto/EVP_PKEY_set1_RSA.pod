@@ -105,8 +105,6 @@ type or B<NID_undef> (equivalently B<EVP_PKEY_NONE>) on error.
 
 L<EVP_PKEY_new(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

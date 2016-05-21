@@ -102,8 +102,6 @@ L<EVP_PKEY_derive(3)>,
 L<EVP_BytesToKey(3)>,
 L<engine(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

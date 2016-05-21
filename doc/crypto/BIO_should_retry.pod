@@ -123,8 +123,6 @@ L<bio>
 The BIO_get_retry_reason() and BIO_set_retry_reason() functions were added in
 OpenSSL version 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

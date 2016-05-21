@@ -104,7 +104,7 @@ END marker in a PEM file.
 
 =back
 
-=head2 OUTPUT
+=head2 Output
 
 The output will typically contain lines like this:
 
@@ -195,8 +195,6 @@ ASN.1 types is not well handled (if at all).
 =head1 SEE ALSO
 
 L<ASN1_generate_nconf(3)>
-
-=cut
 
 =head1 COPYRIGHT
 

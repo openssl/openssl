@@ -110,8 +110,6 @@ L<SSL_dane_enable(3)>.
 
 These functions were first added to OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

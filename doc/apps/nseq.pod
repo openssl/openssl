@@ -72,8 +72,6 @@ It is used by Netscape certificate server for example.
 This program needs a few more options: like allowing DER or PEM input and
 output files and allowing multiple certificate files to be used.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

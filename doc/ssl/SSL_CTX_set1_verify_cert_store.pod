@@ -88,8 +88,6 @@ L<SSL_build_cert_chain(3)>
 
 These functions were first added to OpenSSL 1.0.2.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.

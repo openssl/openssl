@@ -25,8 +25,6 @@ Returns 1 if a handler has been set, 0 otherwise.
 L<ssl(3)>,
 L<SSL_CTX_add_client_custom_ext(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -114,8 +114,6 @@ L<bn(3)>
 BN_BLINDING_thread_id() was first introduced in OpenSSL 1.0.0, and it
 deprecates BN_BLINDING_set_thread_id() and BN_BLINDING_get_thread_id().
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.

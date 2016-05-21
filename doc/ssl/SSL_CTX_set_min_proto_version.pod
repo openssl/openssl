@@ -48,8 +48,6 @@ The functions were added in OpenSSL 1.1.0
 
 L<SSL_CTX_set_options(3)>, L<SSL_CONF_cmd(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -142,12 +142,6 @@ separate BIO_ctrl() call.
 Before OpenSSL 1.0.0., the call to BIO_get_md_ctx() would only work if the
 BIO was initialized first.
 
-=head1 SEE ALSO
-
-TBA
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

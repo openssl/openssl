@@ -85,8 +85,6 @@ L<evp(3)>, L<hmac(3)>, L<md2(3)>,
 L<md5(3)>, L<mdc2(3)>, L<ripemd(3)>,
 L<sha(3)>, L<dgst(1)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

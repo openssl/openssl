@@ -230,8 +230,6 @@ Probably B<value> does not contain a correct alert message.
 
 L<ssl(3)>, L<SSL_CTX_set_info_callback(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

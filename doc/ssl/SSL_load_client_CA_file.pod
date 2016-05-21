@@ -59,8 +59,6 @@ Pointer to the subject names of the successfully read certificates.
 L<ssl(3)>,
 L<SSL_CTX_set_client_CA_list(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

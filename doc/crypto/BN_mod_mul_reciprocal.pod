@@ -85,8 +85,6 @@ L<BN_CTX_new(3)>
 
 BN_RECP_CTX_init was removed in OpenSSL 1.1.0
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

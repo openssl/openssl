@@ -65,8 +65,6 @@ set first so the relevant field information can be looked up internally.
 L<ERR_get_error(3)>, L<d2i_X509_NAME(3)>,
 L<OBJ_nid2obj(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

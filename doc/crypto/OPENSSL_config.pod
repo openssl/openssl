@@ -61,8 +61,6 @@ L<CONF_modules_load_file(3)>
 The OPENSSL_no_config() and OPENSSL_config() functions were
 deprecated in OpenSSL 1.1.0 by OPENSSL_init_crypto().
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.

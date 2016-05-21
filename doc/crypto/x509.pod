@@ -61,8 +61,6 @@ L<d2i_X509_SIG(3)>,
 L<crypto(3)>,
 L<x509v3(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2003-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -41,8 +41,6 @@ The file descriptor linked to B<ssl>.
 
 L<SSL_set_fd(3)>, L<ssl(3)> , L<bio(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -41,8 +41,6 @@ ERR_remove_thread_state() was introduced.
 ERR_remove_thread_state() was deprecated in OpenSSL 1.1.0 when the
 thread handling functionality was entirely rewritten.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

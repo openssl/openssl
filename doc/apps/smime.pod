@@ -500,8 +500,6 @@ added in OpenSSL 1.0.0
 
 The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -48,8 +48,6 @@ L<err(3)>, L<ERR_get_error(3)>
 ERR_GET_LIB(), ERR_GET_FUNC() and ERR_GET_REASON() are available in
 all versions of OpenSSL.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

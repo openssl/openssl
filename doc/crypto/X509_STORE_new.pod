@@ -38,8 +38,6 @@ L<X509_STORE_get0_param(3)>
 
 The B<X509_STORE_up_ref> function was added in OpenSSL 1.1.0
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

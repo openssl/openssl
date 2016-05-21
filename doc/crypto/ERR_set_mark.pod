@@ -31,8 +31,6 @@ implies that the stack became empty, otherwise 1.
 
 L<err(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2003-2016 The OpenSSL Project Authors. All Rights Reserved.

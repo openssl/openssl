@@ -52,8 +52,6 @@ L<SSL_write(3)>, L<SSL_read(3)>,
 L<SSL_do_handshake(3)>,
 L<SSL_CTX_set_ssl_version(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

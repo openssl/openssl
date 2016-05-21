@@ -106,8 +106,6 @@ L<DSA_sign(3)>, L<DSA_set_method(3)>,
 L<DSA_get_ex_new_index(3)>,
 L<RSA_print(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

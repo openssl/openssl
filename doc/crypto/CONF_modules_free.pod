@@ -50,8 +50,6 @@ L<CONF_modules_load_file(3)>
 
 CONF_modules_free() was deprecated in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.

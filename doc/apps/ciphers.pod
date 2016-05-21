@@ -394,7 +394,7 @@ relevant specification and their OpenSSL equivalents. It should be noted,
 that several cipher suite names do not include the authentication used,
 e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
 
-=head2 SSL v3.0 cipher suites.
+=head2 SSL v3.0 cipher suites
 
  SSL_RSA_WITH_NULL_MD5                   NULL-MD5
  SSL_RSA_WITH_NULL_SHA                   NULL-SHA
@@ -415,7 +415,7 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
  SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA  Not implemented.
  SSL_FORTEZZA_KEA_WITH_RC4_128_SHA       Not implemented.
 
-=head2 TLS v1.0 cipher suites.
+=head2 TLS v1.0 cipher suites
 
  TLS_RSA_WITH_NULL_MD5                   NULL-MD5
  TLS_RSA_WITH_NULL_SHA                   NULL-SHA
@@ -580,7 +580,7 @@ Note: these ciphers can also be used in SSL v3.
  TLS_ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256   ECDHE-RSA-CAMELLIA128-SHA256
  TLS_ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384   ECDHE-RSA-CAMELLIA256-SHA384
 
-=head2 Pre shared keying (PSK) ciphersuites
+=head2 Pre-shared keying (PSK) ciphersuites
 
  PSK_WITH_NULL_SHA                         PSK-NULL-SHA
  DHE_PSK_WITH_NULL_SHA                     DHE-PSK-NULL-SHA
@@ -654,7 +654,7 @@ Note: these ciphers can also be used in SSL v3.
  DHE_PSK_WITH_AES_128_CCM_8                DHE-PSK-AES128-CCM8
  DHE_PSK_WITH_AES_256_CCM_8                DHE-PSK-AES256-CCM8
 
-=head2 ChaCha20-Poly1305 cipher suites from draft-ietf-tls-chacha20-poly1305-04, extending TLS v1.2
+=head2 ChaCha20-Poly1305 cipher suites, extending TLS v1.2
 
  TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256      ECDHE-RSA-CHACHA20-POLY1305
  TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256    ECDHE-ECDSA-CHACHA20-POLY1305
@@ -709,8 +709,6 @@ L<s_client(1)>, L<s_server(1)>, L<ssl(3)>
 =head1 HISTORY
 
 The B<-V> option for the B<ciphers> command was added in OpenSSL 1.0.0.
-
-=cut
 
 =head1 COPYRIGHT
 

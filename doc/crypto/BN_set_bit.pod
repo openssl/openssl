@@ -57,8 +57,6 @@ can be obtained by L<ERR_get_error(3)>.
 
 L<bn(3)>, L<BN_num_bytes(3)>, L<BN_add(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

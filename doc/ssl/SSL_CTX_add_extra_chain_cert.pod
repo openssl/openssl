@@ -68,8 +68,6 @@ L<SSL_add1_chain_cert(3)>
 L<SSL_CTX_build_cert_chain(3)>
 L<SSL_build_cert_chain(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

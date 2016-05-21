@@ -150,8 +150,6 @@ about alerts being handled and error messages to the B<bio_err> BIO.
 L<ssl(3)>, L<SSL_state_string(3)>,
 L<SSL_alert_type_string(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

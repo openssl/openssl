@@ -92,8 +92,6 @@ To list the capabilities of the I<rsax> engine:
   [RSA]
  (dynamic) Dynamic engine loading support
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

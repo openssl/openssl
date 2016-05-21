@@ -226,8 +226,6 @@ The B<EVP_CIPHER> structure was openly available in OpenSSL before version
 1.1.
 The functions described here were added in OpenSSL version 1.1.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

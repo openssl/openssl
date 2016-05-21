@@ -100,8 +100,6 @@ L<bn(3)>, L<ERR_get_error(3)>, L<BN_zero(3)>,
 L<ASN1_INTEGER_to_BN(3)>,
 L<BN_num_bytes(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

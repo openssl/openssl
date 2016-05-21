@@ -457,8 +457,6 @@ as they will be formally deprecated in a future releases.
 
 L<EVP_EncryptInit(3)>, L<EVP_BytesToKey(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -173,8 +173,6 @@ To print out the EC parameters to standard output:
 
 L<ec(1)>, L<dsaparam(1)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2003-2016 The OpenSSL Project Authors. All Rights Reserved.

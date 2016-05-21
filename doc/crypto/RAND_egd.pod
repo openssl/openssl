@@ -75,8 +75,6 @@ success, and -1 if the connection failed. The PRNG state is not considered.
 L<rand(3)>, L<RAND_add(3)>,
 L<RAND_cleanup(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

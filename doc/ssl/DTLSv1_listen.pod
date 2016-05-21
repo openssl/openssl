@@ -90,8 +90,6 @@ L<ssl(3)>, L<bio(3)>
 DTLSv1_listen() return codes were clarified in OpenSSL 1.1.0. The type of "peer"
 also changed in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

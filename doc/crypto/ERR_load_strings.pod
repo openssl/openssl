@@ -45,8 +45,6 @@ ERR_get_next_error_library() returns a new library number.
 
 L<err(3)>, L<ERR_load_strings(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

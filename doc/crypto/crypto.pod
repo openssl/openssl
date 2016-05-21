@@ -44,8 +44,6 @@ so both (B<x> and B<obj> above) should be freed up.
 
 L<openssl(1)>, L<ssl(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

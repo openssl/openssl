@@ -72,8 +72,6 @@ L<SSL_shutdown(3)>, L<SSL_set_shutdown(3)>,
 L<SSL_CTX_set_options(3)>, L<ssl(3)>,
 L<SSL_CTX_set_client_cert_cb(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

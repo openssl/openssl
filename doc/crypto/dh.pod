@@ -58,8 +58,6 @@ L<DH_generate_parameters(3)>,
 L<DH_compute_key(3)>, L<DH_get0_pqg(3)>, L<DH_meth_new(3)>, L<d2i_DHparams(3)>,
 L<RSA_print(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

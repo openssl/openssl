@@ -66,10 +66,6 @@ L<evp(3)>, L<rand(3)>,
 L<PKCS5_PBKDF2_HMAC(3)>,
 L<EVP_EncryptInit(3)>
 
-=head1 HISTORY
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -87,8 +87,6 @@ versions of OpenSSL.
 X509_sign_ctx(), X509_REQ_sign_ctx() and X509_CRL_sign_ctx() were first added
 to OpenSSL 1.0.1.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -168,8 +168,6 @@ not currently exist).
 
 L<rsa(3)>, L<RSA_new(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

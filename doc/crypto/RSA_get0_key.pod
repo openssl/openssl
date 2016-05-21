@@ -94,8 +94,6 @@ L<rsa(3)>, L<RSA_new(3)>, L<RSA_size(3)>
 
 The functions described here were added in OpenSSL version 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

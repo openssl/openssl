@@ -187,8 +187,6 @@ example:
 L<openssl(1)>, L<ts(1)>, L<curl(1)>,
 B<RFC 3161>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.

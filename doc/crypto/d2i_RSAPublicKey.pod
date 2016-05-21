@@ -71,12 +71,6 @@ avoided if possible.
 
 L<d2i_X509(3)>
 
-=head1 HISTORY
-
-TBA
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

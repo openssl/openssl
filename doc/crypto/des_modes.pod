@@ -251,8 +251,6 @@ it to:
 L<blowfish(3)>, L<des(3)>, L<idea(3)>,
 L<rc2(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

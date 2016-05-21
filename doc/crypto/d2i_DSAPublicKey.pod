@@ -84,12 +84,6 @@ B<priv_key> fields respectively.
 
 L<d2i_X509(3)>
 
-=head1 HISTORY
-
-TBA
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

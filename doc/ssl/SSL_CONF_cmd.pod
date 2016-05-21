@@ -550,8 +550,6 @@ B<SSL_CONF_TYPE_UNKNOWN>.
 
 B<MinProtocol> and B<MaxProtocol> where added in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.

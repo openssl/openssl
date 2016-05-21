@@ -91,8 +91,6 @@ I<version> will be B<SSL3_VERSION>.
 
 L<ssl(3)>, L<SSL_new(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

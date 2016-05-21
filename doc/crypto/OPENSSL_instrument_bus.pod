@@ -41,8 +41,6 @@ line' was introduced with the SSE2 extensions.
 
 Otherwise number of recorded values is returned.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.

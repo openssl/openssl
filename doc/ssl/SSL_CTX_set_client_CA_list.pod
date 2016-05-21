@@ -91,8 +91,6 @@ L<SSL_get_client_CA_list(3)>,
 L<SSL_load_client_CA_file(3)>,
 L<SSL_CTX_load_verify_locations(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

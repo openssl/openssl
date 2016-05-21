@@ -64,7 +64,7 @@ availability of ciphers in the B<openssl> program.  (B<no->I<XXX> is
 not able to detect pseudo-commands such as B<quit>,
 B<list>, or B<no->I<XXX> itself.)
 
-=head2 STANDARD COMMANDS
+=head2 Standard Commands
 
 =over 10
 
@@ -258,7 +258,7 @@ X.509 Certificate Data Management.
 
 =back
 
-=head2 MESSAGE DIGEST COMMANDS
+=head2 Message Digest Commands
 
 =over 10
 
@@ -304,7 +304,7 @@ SHA-512 Digest
 
 =back
 
-=head2 ENCODING AND CIPHER COMMANDS
+=head2 Encoding and Cipher Commands
 
 =over 10
 
@@ -414,8 +414,6 @@ L<crypto(3)>, L<ssl(3)>, L<x509v3_config(5)>
 The B<list->I<XXX>B<-algorithms> pseudo-commands were added in OpenSSL 1.0.0;
 For notes on the availability of other commands, see their individual
 manual pages.
-
-=cut
 
 =head1 COPYRIGHT
 
