@@ -91,9 +91,10 @@ foreach my $subdir (keys %{$options{subdir}}) {
             if (m|^head1=\s*(.*)|) {
                 $podinfo{lastsect} = $1;
                 $podinfo{lastsect} =~ s/\s+$//;
+                $podinfo{lastsecttext} = "";
             }
             next if (m|^=| || m|^\s*$|);
-            $podinfo{lastsecttext} .= " ";
+            $podinfo{lastsecttext} .= " " if $podinfo{lastsecttext};
             $podinfo{lastsecttext} .= $_;
         }
         close $pod_fh;
