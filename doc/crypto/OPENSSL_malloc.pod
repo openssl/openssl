@@ -4,7 +4,7 @@
 
 OPENSSL_malloc_init,
 OPENSSL_malloc, OPENSSL_zalloc, OPENSSL_realloc, OPENSSL_free,
-OPENSSL_clear_realloc, OPENSSL_clear_free, OPENSSL_cleanse
+OPENSSL_clear_realloc, OPENSSL_clear_free, OPENSSL_cleanse,
 CRYPTO_malloc, CRYPTO_zalloc, CRYPTO_realloc, CRYPTO_free,
 OPENSSL_strdup, OPENSSL_strndup,
 OPENSSL_memdup, OPENSSL_strlcpy, OPENSSL_strlcat,
