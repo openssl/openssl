@@ -1022,9 +1022,11 @@ void bn_correct_top(BIGNUM *a)
     int tmp_top = a->top;
 
     if (tmp_top > 0) {
-        for (ftl = &(a->d[tmp_top - 1]); tmp_top > 0; tmp_top--)
-            if (*(ftl--))
+        for (ftl = &(a->d[tmp_top]); tmp_top > 0; tmp_top--) {
+            ftl--;
+            if (*ftl != 0)
                 break;
+        }
         a->top = tmp_top;
     }
     bn_pollute(a);
