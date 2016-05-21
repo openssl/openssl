@@ -54,7 +54,8 @@ extern "C" {
     } \
     static ossl_inline t2 *sk_##t1##_delete_ptr(STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return (t2 *)OPENSSL_sk_delete_ptr((OPENSSL_STACK *)sk, (void *)ptr); \
+        return (t2 *)OPENSSL_sk_delete_ptr((OPENSSL_STACK *)sk, \
+                                           (const void *)ptr); \
     } \
     static ossl_inline int sk_##t1##_push(STACK_OF(t1) *sk, t2 *ptr) \
     { \
@@ -86,11 +87,11 @@ extern "C" {
     } \
     static ossl_inline int sk_##t1##_find(STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return OPENSSL_sk_find((OPENSSL_STACK *)sk, (void *)ptr); \
+        return OPENSSL_sk_find((OPENSSL_STACK *)sk, (const void *)ptr); \
     } \
     static ossl_inline int sk_##t1##_find_ex(STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return OPENSSL_sk_find_ex((OPENSSL_STACK *)sk, (void *)ptr); \
+        return OPENSSL_sk_find_ex((OPENSSL_STACK *)sk, (const void *)ptr); \
     } \
     static ossl_inline void sk_##t1##_sort(STACK_OF(t1) *sk) \
     { \
