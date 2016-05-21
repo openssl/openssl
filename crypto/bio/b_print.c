@@ -388,25 +388,29 @@ fmtstr(char **sbuffer,
     strln = strlen(value);
     if (strln > INT_MAX)
         strln = INT_MAX;
+    if (max >= 0 && strln > max)
+        strln = max;
 
     padlen = min - strln;
     if (min < 0 || padlen < 0)
         padlen = 0;
+    if (max >= 0)
+        max += padlen;      /* The maximum output including padding */
     if (flags & DP_F_MINUS)
         padlen = -padlen;
 
-    while ((padlen > 0) && (cnt < max)) {
+    while ((padlen > 0) && (max < 0 || cnt < max)) {
         if(!doapr_outch(sbuffer, buffer, currlen, maxlen, ' '))
             return 0;
         --padlen;
         ++cnt;
     }
-    while (*value && (cnt < max)) {
+    while (*value && (max < 0 || cnt < max)) {
         if(!doapr_outch(sbuffer, buffer, currlen, maxlen, *value++))
             return 0;
         ++cnt;
     }
-    while ((padlen < 0) && (cnt < max)) {
+    while ((padlen < 0) && (max < 0 || cnt < max)) {
         if(!doapr_outch(sbuffer, buffer, currlen, maxlen, ' '))
             return 0;
         ++padlen;
