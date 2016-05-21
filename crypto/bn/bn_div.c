@@ -278,6 +278,9 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
             res->top--;
     }
 
+    /* Increase the resp pointer so that we never create an invalid pointer. */
+    resp++;
+
     /*
      * if res->top == 0 then clear the neg value otherwise decrease the resp
      * pointer
@@ -287,7 +290,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     else
         resp--;
 
-    for (i = 0; i < loop - 1; i++, wnump--, resp--) {
+    for (i = 0; i < loop - 1; i++, wnump--) {
         BN_ULONG q, l0;
         /*
          * the first part of the loop uses the top two words of snum and sdiv
@@ -393,6 +396,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
                 (*wnump)++;
         }
         /* store part of the result */
+        resp--;
         *resp = q;
     }
     bn_correct_top(snum);
