@@ -35,8 +35,6 @@ L<BN_num_bits(3)>
 
 DH_bits() was added in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

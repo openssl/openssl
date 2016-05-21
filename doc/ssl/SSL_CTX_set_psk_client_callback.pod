@@ -49,8 +49,6 @@ the length (> 0) of B<psk> in bytes is returned.
 Otherwise or on errors callback should return 0. In this case
 the connection setup fails.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.

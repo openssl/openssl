@@ -653,8 +653,6 @@ L<x509(1)>, L<ca(1)>, L<genrsa(1)>,
 L<gendsa(1)>, L<config(5)>,
 L<x509v3_config(5)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

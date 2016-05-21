@@ -32,12 +32,6 @@ by adding a null sink BIO to the end of the chain
 
 BIO_s_null() returns the null sink BIO method.
 
-=head1 SEE ALSO
-
-TBA
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

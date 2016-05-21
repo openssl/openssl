@@ -126,8 +126,6 @@ an error occurred (I/O error or invalid time format).
 ASN1_TIME_diff() returns 1 for success and 0 for failure. It can fail if the
 pass ASN1_TIME structure has invalid syntax for example.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -336,8 +336,6 @@ certain parameters. So if, for example, you want to use RC2 with a
 
 The default digest was changed from MD5 to SHA256 in Openssl 1.1.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

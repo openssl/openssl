@@ -204,8 +204,6 @@ without having to manually edit them.
 L<pkcs8(1)>, L<dsa(1)>, L<genrsa(1)>,
 L<gendsa(1)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

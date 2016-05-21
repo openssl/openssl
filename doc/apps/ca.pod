@@ -705,8 +705,6 @@ then even if a certificate is issued with CA:TRUE it will not be valid.
 L<req(1)>, L<spkac(1)>, L<x509(1)>, L<CA.pl(1)>,
 L<config(5)>, L<x509v3_config(5)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -70,8 +70,6 @@ L<ssl(3)>, L<SSL_free(3)>,
 L<SSL_clear(3)>,
 L<SSL_SESSION_free(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -54,8 +54,6 @@ L<SSL_get_session(3)>,
 L<SSL_session_reused(3)>,
 L<SSL_CTX_set_session_cache_mode(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

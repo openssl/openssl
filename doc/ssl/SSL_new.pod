@@ -49,8 +49,6 @@ L<SSL_CTX_set_options(3)>,
 L<SSL_get_SSL_CTX(3)>,
 L<ssl(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

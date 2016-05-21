@@ -76,10 +76,6 @@ when calling ASN1_STRING_set().
 
 L<ERR_get_error(3)>
 
-=head1 HISTORY
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

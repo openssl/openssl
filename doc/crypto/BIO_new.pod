@@ -66,12 +66,6 @@ Create a memory BIO:
 
  BIO *mem = BIO_new(BIO_s_mem());
 
-=head1 SEE ALSO
-
-TBA
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

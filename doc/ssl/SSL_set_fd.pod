@@ -51,8 +51,6 @@ L<SSL_get_fd(3)>, L<SSL_set_bio(3)>,
 L<SSL_connect(3)>, L<SSL_accept(3)>,
 L<SSL_shutdown(3)>, L<ssl(3)> , L<bio(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -70,8 +70,6 @@ PEM format is supported because the key type is determined by the PEM headers.
 L<genpkey(1)>, L<rsa(1)>, L<pkcs8(1)>,
 L<dsa(1)>, L<genrsa(1)>, L<gendsa(1)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.

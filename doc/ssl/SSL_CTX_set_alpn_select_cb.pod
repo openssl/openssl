@@ -123,8 +123,6 @@ ALPN protocol not selected.
 L<ssl(3)>, L<SSL_CTX_set_tlsext_servername_callback(3)>,
 L<SSL_CTX_set_tlsext_servername_arg(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

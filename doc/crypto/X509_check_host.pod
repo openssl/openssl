@@ -145,8 +145,6 @@ L<X509_VERIFY_PARAM_set1_ipasc(3)>
 
 These functions were added in OpenSSL 1.0.2.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.

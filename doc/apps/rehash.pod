@@ -126,8 +126,6 @@ L<openssl(1)>,
 L<crl(1)>.
 L<x509(1)>.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

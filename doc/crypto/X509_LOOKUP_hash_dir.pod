@@ -59,7 +59,7 @@ B<X509_STORE>.
 This page documents certificate store formats used by these methods and
 caching policy.
 
-=head2  FILE METHOD
+=head2 File Method
 
 The B<X509_LOOKUP_file> method loads all the certificates or CRLs
 present in a file into memory at the time the file is added as a
@@ -71,7 +71,7 @@ and CRLs.
 This method should be used by applications which work with a small
 set of CAs.
 
-=head2 HASHED DIR METHOD
+=head2 Hashed Directory Method
 
 B<X509_LOOKUP_hash_dir> is a more advanced method, which loads
 certificates and CRLs on demand, and caches them in memory once
@@ -117,8 +117,6 @@ L<pem(3)>, L<d2i_X509_bio(3)>,
 L<X509_STORE_load_locations(3)>,
 L<X609_store_add_lookup(3)>,
 L<SSL_CTX_load_verify_locations(3)>,
-
-=cut
 
 =head1 COPYRIGHT
 

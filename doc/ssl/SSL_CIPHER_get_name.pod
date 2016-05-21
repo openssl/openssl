@@ -112,8 +112,6 @@ rather than a fixed string, in OpenSSL 1.1
 L<ssl(3)>, L<SSL_get_current_cipher(3)>,
 L<SSL_get_ciphers(3)>, L<ciphers(1)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

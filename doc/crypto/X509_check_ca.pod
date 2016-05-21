@@ -33,8 +33,6 @@ L<X509_verify_cert(3)>,
 L<X509_check_issued(3)>,
 L<X509_check_purpose(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

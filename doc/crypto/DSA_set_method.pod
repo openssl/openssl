@@ -74,8 +74,6 @@ fails. Otherwise it returns a pointer to the newly allocated structure.
 
 L<dsa(3)>, L<DSA_new(3)>, L<DSA_meth_new(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

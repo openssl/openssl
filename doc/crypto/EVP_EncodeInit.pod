@@ -143,8 +143,6 @@ EVP_DecodeBlock() returns the length of the data decoded or -1 on error.
 
 L<evp(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

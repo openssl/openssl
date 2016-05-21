@@ -98,12 +98,6 @@ B<XN_FLAG_COMPAT> uses a format identical to X509_NAME_print(): in fact it calls
 
 L<ASN1_STRING_print_ex(3)>
 
-=head1 HISTORY
-
-TBA
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

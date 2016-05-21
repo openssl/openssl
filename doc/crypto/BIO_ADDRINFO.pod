@@ -81,8 +81,6 @@ information they should return isn't available.
 
 L<BIO_lookup(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

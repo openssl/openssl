@@ -149,8 +149,6 @@ The cipher and start time should be printed out in human readable form.
 
 L<ciphers(1)>, L<s_server(1)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

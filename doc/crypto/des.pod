@@ -293,8 +293,6 @@ not suitable for most applications; see L<des_modes(7)>.
 L<des_modes(7)>,
 L<EVP_EncryptInit(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

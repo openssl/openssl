@@ -33,8 +33,6 @@ SSL_get0_peer_scts() returns a list of SCTs found, or NULL if an error occurs.
 L<ssl(3)>,
 L<SSL_CTX_set_ct_validation_callback(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

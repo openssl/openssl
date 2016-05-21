@@ -76,8 +76,6 @@ L<ERR_get_error(3)>, L<PKCS7_decrypt(3)>
 
 The B<PKCS7_STREAM> flag was added in OpenSSL 1.0.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

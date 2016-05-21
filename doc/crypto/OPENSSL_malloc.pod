@@ -195,8 +195,6 @@ at once.  I<This applies specially if OpenSSL was built with the
 configuration option> C<crypto-mdebug> I<enabled.  In case, swapping out
 only, say, the malloc() implementation is outright dangerous.>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

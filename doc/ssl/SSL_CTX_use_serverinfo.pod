@@ -44,8 +44,6 @@ On success, the functions return 1.
 On failure, the functions return 0.  Check out the error stack to find out
 the reason.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.

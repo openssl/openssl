@@ -70,8 +70,6 @@ See DESCRIPTION
 L<ssl(3)>, L<SSL_CTX_set_cipher_list(3)>,
 L<SSL_CIPHER_get_name(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

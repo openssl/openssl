@@ -62,8 +62,6 @@ none is registered for the error code.
 L<err(3)>, L<ERR_get_error(3)>,
 L<ERR_print_errors(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

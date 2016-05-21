@@ -52,8 +52,6 @@ L<X509_verify_cert(3)>
 X509_get_serialNumber() and X509_set_serialNumber() are available in
 all versions of OpenSSL.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

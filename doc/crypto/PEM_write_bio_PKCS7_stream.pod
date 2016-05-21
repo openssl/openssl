@@ -38,8 +38,6 @@ L<i2d_PKCS7_bio_stream(3)>
 
 PEM_write_bio_PKCS7_stream() was added to OpenSSL 1.0.0
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.

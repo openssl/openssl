@@ -112,7 +112,7 @@ determine the precise reason by checking the value of B<*crit>.
 The following sections contain a list of all supported extensions
 including their name and NID.
 
-=head2 PKIX CERTIFICATE EXTENSIONS
+=head2 PKIX Certificate Extensions
 
 The following certificate extensions are defined in PKIX standards such as
 RFC5280.
@@ -141,7 +141,7 @@ RFC5280.
 
  TLS Feature                        NID_tlsfeature
 
-=head2 NETSCAPE CERTIFICATE EXTENSIONS
+=head2 Netscape Certificate Extensions
 
 The following are (largely obsolete) Netscape certificate extensions.
 
@@ -154,12 +154,12 @@ The following are (largely obsolete) Netscape certificate extensions.
  Netscape SSL Server Name           NID_netscape_ssl_server_name
  Netscape Comment                   NID_netscape_comment
 
-=head2 MISCELLANEOUS CERTIFICATE EXTENSIONS
+=head2 Miscellaneous Certificate Extensions
 
  Strong Extranet ID                 NID_sxnet
  Proxy Certificate Information      NID_proxyCertInfo
 
-=head2 PKIX CRL EXTENSIONS
+=head2 PKIX CRL Extensions
 
 The following are CRL extensions from PKIX standards such as RFC5280.
 
@@ -175,7 +175,7 @@ The following are CRL entry extensions from PKIX standards such as RFC5280.
  CRL Reason Code                    NID_crl_reason
  Certificate Issuer                 NID_certificate_issuer
 
-=head2 OCSP EXTENSIONS
+=head2 OCSP Extensions
 
  OCSP Nonce                         NID_id_pkix_OCSP_Nonce
  OCSP CRL ID                        NID_id_pkix_OCSP_CrlID
@@ -185,7 +185,7 @@ The following are CRL entry extensions from PKIX standards such as RFC5280.
  OCSP Service Locator               NID_id_pkix_OCSP_serviceLocator
  Hold Instruction Code              NID_hold_instruction_code
 
-=head2 CERTIFICATE TRANSPARENCY EXTENSIONS
+=head2 Certificate Transparency Extensions
 
 The following extensions are used by certificate transparency, RFC6962
 
@@ -227,8 +227,6 @@ L<X509_NAME_print_ex(3)>,
 L<X509_new(3)>,
 L<X509_sign(3)>,
 L<X509_verify_cert(3)>
-
-=cut
 
 =head1 COPYRIGHT
 

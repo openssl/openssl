@@ -82,8 +82,6 @@ X509_REQ_get0_signature(), X509_REQ_get_signature_nid(),
 X509_CRL_get0_signature() and X509_CRL_get_signature_nid() were first added
 to OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

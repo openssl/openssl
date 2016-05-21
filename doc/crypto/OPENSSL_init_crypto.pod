@@ -220,8 +220,6 @@ L<OPENSSL_init_ssl(3)>
 The OPENSSL_init_crypto(), OPENSSL_cleanup(), OPENSSL_atexit(),
 and OPENSSL_thread_stop() functions were added in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -76,8 +76,6 @@ L<RAND_bytes(3)>,
 L<SSL_export_keying_material(3)>
 
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -181,8 +181,6 @@ X509_STORE_set_verify() wsa first added to OpenSSL 1.1.0. It was previously
 available as a macro X509_STORE_set_verify_func(). This macro still exists but
 simply calls this function.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -58,8 +58,6 @@ L<ERR_get_error(3)>,
 L<CMS_sign(3)>,
 L<CMS_encrypt(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.

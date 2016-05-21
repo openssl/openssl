@@ -61,8 +61,6 @@ and B<hostserv_prio>, as follows:
 
 L<BIO_ADDRINFO(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

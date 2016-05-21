@@ -68,8 +68,6 @@ ENGINESDIR setting.
 The output of B<openssl version -a> would typically be used when sending
 in a bug report.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

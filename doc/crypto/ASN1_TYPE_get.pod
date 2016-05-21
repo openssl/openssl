@@ -88,8 +88,6 @@ NULL on failure.
 ASN1_TYPE_pack_sequence() return an ASN1_TYPE structure if it succeeds or
 NULL on failure.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -89,8 +89,6 @@ RFC 1319, RFC 1320, RFC 1321
 
 L<EVP_DigestInit(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

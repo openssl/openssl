@@ -186,8 +186,6 @@ L<SSL_CTX_sess_number(3)>,
 L<SSL_CTX_sess_set_get_cb(3)>,
 L<SSL_CTX_set_session_id_context(3)>,
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.

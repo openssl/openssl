@@ -634,15 +634,11 @@ test/testtsa).
 
 =back
 
-=cut
-
 =head1 SEE ALSO
 
 L<tsget(1)>, L<openssl(1)>, L<req(1)>,
 L<x509(1)>, L<ca(1)>, L<genrsa(1)>,
 L<config(5)>
-
-=cut
 
 =head1 COPYRIGHT
 

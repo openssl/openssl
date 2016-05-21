@@ -186,8 +186,6 @@ configuration file, not just its directory.
 L<x509(1)>, L<ca(1)>, L<req(1)>, L<pkcs12(1)>,
 L<config(5)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

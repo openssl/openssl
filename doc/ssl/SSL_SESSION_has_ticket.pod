@@ -39,8 +39,6 @@ L<SSL_SESSION_free(3)>
 SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint and
 SSL_SESSION_get0_ticket were added in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -182,8 +182,6 @@ fails.
 
 L<s_client(1)>, L<s_server(1)>, L<ciphers(1)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.

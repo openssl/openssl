@@ -308,8 +308,6 @@ ASYNC_start_job, ASYNC_pause_job, ASYNC_get_current_job, ASYNC_get_wait_ctx(),
 ASYNC_block_pause(), ASYNC_unblock_pause() and ASYNC_is_capable() were first
 added to OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -224,7 +224,7 @@ Example:
  authorityInfoAccess = caIssuers;URI:http://my.ca/ca.html
 
 
-=head2 CRL distribution points.
+=head2 CRL distribution points
 
 This is a multi-valued extension whose options can be either in name:value pair
 using the same form as subject alternative name or a single value representing
@@ -528,9 +528,6 @@ will only recognize the last value. This can be worked around by using the form:
 
 L<req(1)>, L<ca(1)>, L<x509(1)>,
 L<ASN1_generate_nconf(3)>
-
-
-=cut
 
 =head1 COPYRIGHT
 

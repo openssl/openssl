@@ -258,8 +258,6 @@ Generate EC key directly:
 The ability to use NIST curve names, and to generate an EC key directly,
 were added in OpenSSL 1.0.2.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.

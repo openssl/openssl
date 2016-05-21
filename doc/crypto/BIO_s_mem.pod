@@ -111,13 +111,6 @@ Extract the BUF_MEM structure from a memory BIO and then free up the BIO:
  BIO_set_close(mem, BIO_NOCLOSE); /* So BIO_free() leaves BUF_MEM alone */
  BIO_free(mem);
 
-
-=head1 SEE ALSO
-
-TBA
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

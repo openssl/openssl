@@ -49,8 +49,6 @@ EVP_PKEY_new() and EVP_PKEY_free() exist in all versions of OpenSSL.
 
 EVP_PKEY_up_ref() was first added to OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

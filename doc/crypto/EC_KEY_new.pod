@@ -171,8 +171,6 @@ L<EC_POINT_add(3)>,
 L<EC_GFp_simple_method(3)>,
 L<d2i_ECPKParameters(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.

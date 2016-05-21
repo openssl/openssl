@@ -60,8 +60,6 @@ ISO/IEC 10118-3 (draft) (??)
 
 L<EVP_DigestInit(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -114,8 +114,6 @@ L<bio>, L<BIO_find_type>, L<BIO_ctrl>, L<BIO_read>, L<BIO_new>
 
 The functions described here were added in OpenSSL version 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -31,8 +31,6 @@ supplied via the B<cmd> parameter.
 
 L<ssl(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

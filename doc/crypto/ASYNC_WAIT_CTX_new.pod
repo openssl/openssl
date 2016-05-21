@@ -123,8 +123,6 @@ ASYNC_WAIT_CTX_get_fd, ASYNC_WAIT_CTX_get_all_fds,
 ASYNC_WAIT_CTX_get_changed_fds, ASYNC_WAIT_CTX_clear_fd were first added to
 OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -39,8 +39,6 @@ cipher data for the EVP_CIPHER_CTX.
 The EVP_CIPHER_CTX_get_cipher_data() and EVP_CIPHER_CTX_set_cipher_data()
 functions were added in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -73,8 +73,6 @@ When the session is not valid, B<0> is returned and no operation is performed.
 L<ssl(3)>, L<SSL_SESSION_free(3)>,
 L<SSL_CTX_sess_set_get_cb(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.

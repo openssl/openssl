@@ -101,8 +101,6 @@ first added to OpenSSL 1.1.0
 L<ssl(3)>,
 L<SSL_CTX_use_certificate(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -282,8 +282,6 @@ The B<X509_V_FLAG_NO_ALT_CHAINS> flag was added in OpenSSL 1.1.0
 The legacy B<X509_V_FLAG_CB_ISSUER_CHECK> flag is deprecated as of
 OpenSSL 1.1.0, and has no effect.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.

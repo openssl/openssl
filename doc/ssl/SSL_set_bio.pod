@@ -40,8 +40,6 @@ L<SSL_shutdown(3)>, L<ssl(3)>, L<bio(3)>
 
 SSL_set_rbio() and SSL_set_wbio() were added in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

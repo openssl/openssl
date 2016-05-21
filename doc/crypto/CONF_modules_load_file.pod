@@ -124,8 +124,6 @@ return value of the failing module (this will always be zero or negative).
 L<conf(5)>, L<OPENSSL_config(3)>,
 L<CONF_free(3)>, L<err(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.

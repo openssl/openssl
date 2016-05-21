@@ -56,8 +56,6 @@ L<CRYPTO_secure_malloc(3)>.
 
 BUF_MEM_new_ex() was added in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

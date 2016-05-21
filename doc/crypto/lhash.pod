@@ -245,7 +245,10 @@ lh_TYPE_insert() returns B<NULL> both for success and error.
 
 L<lh_stats(3)>
 
-=cut
+=head1 HISTORY
+
+In OpenSSL 1.0.0, the lhash interface was revamped for better
+type checking.
 
 =head1 COPYRIGHT
 

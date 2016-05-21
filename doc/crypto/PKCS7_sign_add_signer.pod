@@ -84,8 +84,6 @@ L<PKCS7_final(3)>,
 
 PPKCS7_sign_add_signer() was added to OpenSSL 1.0.0
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.

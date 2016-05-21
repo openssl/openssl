@@ -563,8 +563,6 @@ ENGINE_cleanup(), ENGINE_load_openssl(), ENGINE_load_dynamic(), and
 ENGINE_load_cryptodev() were deprecated in OpenSSL 1.1.0 by
 OPENSSL_init_crypto().
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -63,8 +63,6 @@ L<SMIME_read_CMS(3)>, L<CMS_sign(3)>,
 L<CMS_verify(3)>, L<CMS_encrypt(3)>
 L<CMS_decrypt(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.

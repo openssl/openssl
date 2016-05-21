@@ -194,8 +194,6 @@ To change the point conversion form to B<compressed>:
 
 L<ecparam(1)>, L<dsa(1)>, L<rsa(1)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2003-2016 The OpenSSL Project Authors. All Rights Reserved.

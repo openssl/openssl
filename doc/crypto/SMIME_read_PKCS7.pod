@@ -66,8 +66,6 @@ L<SMIME_read_PKCS7(3)>, L<PKCS7_sign(3)>,
 L<PKCS7_verify(3)>, L<PKCS7_encrypt(3)>
 L<PKCS7_decrypt(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

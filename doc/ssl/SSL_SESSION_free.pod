@@ -53,8 +53,6 @@ L<SSL_CTX_set_session_cache_mode(3)>,
 L<SSL_CTX_flush_sessions(3)>,
 L<d2i_SSL_SESSION(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

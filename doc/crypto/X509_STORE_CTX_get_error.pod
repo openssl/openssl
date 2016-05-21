@@ -326,12 +326,6 @@ L<X509_verify_cert(3)>,
 L<X509_up_ref(3)>,
 L<X509_free(3)>.
 
-=head1 HISTORY
-
-TBA
-
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.

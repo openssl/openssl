@@ -80,8 +80,6 @@ or -1 if there is no OCSP response data.
 
 SSL_CTX_set_tlsext_status_type() was added in OpenSSL 1.1.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

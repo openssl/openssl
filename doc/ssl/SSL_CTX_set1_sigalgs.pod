@@ -101,8 +101,6 @@ All these functions return 1 for success and 0 for failure.
 L<ssl(3)>, L<SSL_get_shared_sigalgs(3)>,
 L<SSL_CONF_CTX_new(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

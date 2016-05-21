@@ -186,8 +186,6 @@ the peer might be waiting for the data before being able to continue.
 L<SSL_set_bio(3)>, L<ssl(3)>, L<bio(3)>,
 L<BIO_should_retry(3)>, L<BIO_read(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

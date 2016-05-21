@@ -63,8 +63,6 @@ B<mac_iter> can be set to -1 and the MAC will then be omitted entirely.
 
 L<d2i_PKCS12(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

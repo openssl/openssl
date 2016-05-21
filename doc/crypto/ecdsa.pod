@@ -186,8 +186,6 @@ L<rsa(3)>,
 L<EVP_DigestSignInit(3)>,
 L<EVP_DigestVerifyInit(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.

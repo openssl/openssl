@@ -50,8 +50,6 @@ Attributes currently cannot be stored in the private key B<EVP_PKEY> structure.
 
 L<d2i_PKCS12(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -636,8 +636,6 @@ EVP_CIPHER_CTX_reset() appeared and EVP_CIPHER_CTX_cleanup()
 disappeared.  EVP_CIPHER_CTX_init() remains as an alias for
 EVP_CIPHER_CTX_reset().
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

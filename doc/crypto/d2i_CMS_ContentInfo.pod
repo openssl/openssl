@@ -22,8 +22,6 @@ described in the L<d2i_X509(3)> manual page.
 
 L<d2i_X509(3)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.

@@ -8,9 +8,6 @@ bio - I/O abstraction
 
  #include <openssl/bio.h>
 
-TBA
-
-
 =head1 DESCRIPTION
 
 A BIO is an I/O abstraction, it hides many of the underlying I/O
@@ -53,8 +50,6 @@ L<BIO_s_mem(3)>,
 L<BIO_s_null(3)>, L<BIO_s_socket(3)>,
 L<BIO_set_callback(3)>,
 L<BIO_should_retry(3)>
-
-=cut
 
 =head1 COPYRIGHT
 

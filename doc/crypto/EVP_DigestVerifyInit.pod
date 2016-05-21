@@ -79,8 +79,6 @@ L<sha(3)>, L<dgst(1)>
 EVP_DigestVerifyInit(), EVP_DigestVerifyUpdate() and EVP_DigestVerifyFinal()
 were first added to OpenSSL 1.0.0.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.

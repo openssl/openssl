@@ -130,8 +130,6 @@ extension type handled internally by OpenSSL or if an internal error occurs
 SSL_extension_supported() returns 1 if the extension B<ext_type> is handled
 internally by OpenSSL and 0 otherwise.
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.

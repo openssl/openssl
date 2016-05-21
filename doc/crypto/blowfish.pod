@@ -105,8 +105,6 @@ functions directly.
 L<EVP_EncryptInit(3)>,
 L<des_modes(7)>
 
-=cut
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
