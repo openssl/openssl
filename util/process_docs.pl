@@ -84,7 +84,8 @@ foreach my $subdir (keys %{$options{subdir}}) {
         while (<$pod_fh>) {
             s|\R$||;
             if (m|^=for\s+comment\s+openssl_manual_section:\s*([0-9])\s*$|) {
-                print STDERR "Found section number $1\n" if $options{debug};
+                print STDERR "DEBUG: Found man section number $1\n"
+                    if $options{debug};
                 $podinfo{section} = $1;
             }
             last if (m|^=head1|
@@ -93,13 +94,20 @@ foreach my $subdir (keys %{$options{subdir}}) {
             if (m|^=head1\s*(.*)|) {
                 $podinfo{lastsect} = $1;
                 $podinfo{lastsect} =~ s/\s+$//;
+                print STDERR "DEBUG: Found new pod section $1\n"
+                    if $options{debug};
+                print STDERR "DEBUG: Clearing pod section text\n"
+                    if $options{debug};
                 $podinfo{lastsecttext} = "";
             }
             next if (m|^=| || m|^\s*$|);
+            print STDERR "DEBUG: accumulating pod section text \"$_\"\n"
+                if $options{debug};
             $podinfo{lastsecttext} .= " " if $podinfo{lastsecttext};
             $podinfo{lastsecttext} .= $_;
         }
         close $pod_fh;
+        print STDERR "DEBUG: Done reading $podpath\n" if $options{debug};
         $podinfo{lastsecttext} =~ s| - .*$||;
         print STDERR "DEBUG: Done reading $podpath\n" if $options{debug};
 
