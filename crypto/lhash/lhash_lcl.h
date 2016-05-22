@@ -15,7 +15,7 @@ struct lhash_node_st {
 };
 
 struct lhash_st {
-    LHASH_NODE **b;
+    OPENSSL_LH_NODE **b;
     OPENSSL_LH_COMPFUNC comp;
     OPENSSL_LH_HASHFUNC hash;
     unsigned int num_nodes;
