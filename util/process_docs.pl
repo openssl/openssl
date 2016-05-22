@@ -87,8 +87,10 @@ foreach my $subdir (keys %{$options{subdir}}) {
                 print STDERR "Found section number $1\n" if $options{debug};
                 $podinfo{section} = $1;
             }
-            last if m|^=head1| && defined $podinfo{lastsect} eq "NAME";
-            if (m|^head1=\s*(.*)|) {
+            last if (m|^=head1|
+                     && defined $podinfo{lastsect}
+                     && $podinfo{lastsect} eq "NAME");
+            if (m|^=head1\s*(.*)|) {
                 $podinfo{lastsect} = $1;
                 $podinfo{lastsect} =~ s/\s+$//;
                 $podinfo{lastsecttext} = "";
