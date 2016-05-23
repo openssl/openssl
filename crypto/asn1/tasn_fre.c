@@ -102,9 +102,11 @@ static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
          * field and we wont be able to determine the type of the field it
          * defines. So free up in reverse order.
          */
-        tt = it->templates + it->tcount - 1;
-        for (i = 0; i < it->tcount; tt--, i++) {
+        tt = it->templates + it->tcount;
+        for (i = 0; i < it->tcount; i++) {
             ASN1_VALUE **pseqval;
+
+            tt--;
             seqtt = asn1_do_adb(pval, tt, 0);
             if (!seqtt)
                 continue;
