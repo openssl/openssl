@@ -16,8 +16,9 @@ initialisation and deinitialisation functions
  void OPENSSL_thread_stop(void);
 
  OPENSSL_INIT_SETTINGS *OPENSSL_init_new(void);
- OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *init, const char* name);
- OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *init);
+ int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *init,
+                                      const char* name);
+ void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *init);
 
 =head1 DESCRIPTION
 
@@ -208,8 +209,8 @@ using static linking should also call OPENSSL_thread_stop().
 
 =head1 RETURN VALUES
 
-The functions OPENSSL_init_crypto and  OPENSSL_atexit() returns 1 on success or
-0 on error.
+The functions OPENSSL_init_crypto, OPENSSL_atexit() and
+OPENSSL_INIT_set_config_filename() return 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
@@ -218,7 +219,8 @@ L<OPENSSL_init_ssl(3)>
 =head1 HISTORY
 
 The OPENSSL_init_crypto(), OPENSSL_cleanup(), OPENSSL_atexit(),
-and OPENSSL_thread_stop() functions were added in OpenSSL 1.1.0.
+OPENSSL_thread_stop(), OPENSSL_init_new(), OPENSSL_INIT_set_config_filename()
+and OPENSSL_INIT_free() functions were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
