@@ -439,9 +439,7 @@ check_INSTALLTOP :
 # Developer targets ##################################################
 
 debug_logicals :
-        SH LOGICAL/PROC openssl,internal,ossl_installroot
-        IF "$(DESTDIR)" .EQS. "" THEN -
-                SH LOGICAL/PROC ossl_dataroot
+        SH LOGICAL/PROC openssl,internal,ossl_installroot,ossl_dataroot
 
 # Building targets ###################################################
 
