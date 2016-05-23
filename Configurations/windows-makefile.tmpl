@@ -241,6 +241,10 @@ install_runtime:
                                         "$(DESTDIR)$(INSTALLTOP)\bin"
 	@$(PERL) $(SRCDIR)\util\copy.pl $(PROGRAMPDBS) \
                                         "$(DESTDIR)$(INSTALLTOP)\bin"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(SCRIPTS) \
+                                        "$(DESTDIR)$(INSTALLTOP)\bin"
+	@$(PERL) $(SRCDIR)\util\copy.pl tools\c_rehash.pl \
+                                        "$(DESTDIR)$(INSTALLTOP)\bin"
 
 uninstall_runtime:
 
