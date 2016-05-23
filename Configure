@@ -356,6 +356,7 @@ foreach my $proto ((@tls, @dtls))
 
 my @deprecated_disablables = (
     "ssl2",
+    "buf-freelists",
     );
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
