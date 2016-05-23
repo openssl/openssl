@@ -50,7 +50,6 @@
  See the appropriate file:
         INSTALL         Linux, Unix, Windows, OpenVMS
         INSTALL.DJGPP   DOS platform with DJGPP
-        INSTALL.WCE     Windows CE
 
  SUPPORT
  -------
