@@ -113,6 +113,10 @@ DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
                     keys %{$unified_info{sources}};
         join(", ", map { "-\n\t".$_ } @deps); -}
 {- output_on() if $disabled{makedepend}; "" -}
+{- output_off() if $disabled{apps}; "" -}
+BIN_SCRIPTS=[.tools]c_rehash.pl
+MISC_SCRIPTS=[.apps]CA.pl, [.apps]tsget.pl
+{- output_on() if $disabled{apps}; "" -}
 
 # DESTDIR is for package builders so that they can configure for, say,
 # SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].
@@ -347,9 +351,7 @@ install_runtime : check_INSTALLTOP
         COPY/PROT=W:RE [.APPS]openssl.EXE ossl_installroot:[EXE.'arch']
         @ ! Install scripts
         - CREATE/DIR ossl_installroot:[EXE]
-        COPY/PROT=W:RE [.APPS]CA.pl ossl_installroot:[EXE]
-        COPY/PROT=W:RE [.APPS]tsget.pl ossl_installroot:[EXE]
-        COPY/PROT=W:RE [.TOOLS]c_rehash.pl ossl_installroot:[EXE]
+        COPY/PROT=W:RE $(BIN_SCRIPTS) ossl_installroot:[EXE]
         @ ! {- output_on() if $disabled{apps}; "" -}
         @ ! Install configuration file
         - CREATE/DIR ossl_dataroot:[000000]
@@ -371,6 +373,8 @@ install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                 CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[CERTS]
         IF F$SEARCH("OSSL_DATAROOT:[000000]PRIVATE.DIR;1") .EQS. "" THEN -
                 CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[PRIVATE]
+        IF F$SEARCH("OSSL_DATAROOT:[000000]MISC.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[MISC]
         - CREATE/DIR ossl_installroot:[SYS$STARTUP]
         COPY/PROT=W:RE -
                 [.VMS]openssl_startup.com,openssl_shutdown.com -
@@ -378,6 +382,7 @@ install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
         COPY/PROT=W:RE -
                 {- sourcefile("VMS", "openssl_utils.com") -} -
                 ossl_installroot:[SYS$STARTUP]
+        COPY/PROT=W:RE $(MISC_SCRIPTS) OSSL_DATAROOT:[MISC]
 
 [.VMS]openssl_startup.com : vmsconfig.pm {- sourcefile("VMS", "openssl_startup.com.in") -}
         - CREATE/DIR [.VMS]
