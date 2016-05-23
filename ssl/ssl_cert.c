@@ -409,7 +409,9 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(ctx, tls1_suiteb(s));
-    X509_STORE_CTX_set_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s);
+    if (!X509_STORE_CTX_set_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s)) {
+        goto end;
+    }
 
     /* Verify via DANE if enabled */
     if (DANETLS_ENABLED(&s->dane))
