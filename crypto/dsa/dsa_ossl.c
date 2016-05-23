@@ -248,9 +248,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
         if (!BN_rand_range(&k, dsa->q))
             goto err;
     while (BN_is_zero(&k)) ;
-    if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
-        BN_set_flags(&k, BN_FLG_CONSTTIME);
-    }
 
     if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
         if (!BN_MONT_CTX_set_locked(&dsa->method_mont_p,
@@ -279,9 +276,12 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
         }
 
         K = &kq;
+
+        BN_set_flags(K, BN_FLG_CONSTTIME);
     } else {
         K = &k;
     }
+
     DSA_BN_MOD_EXP(goto err, dsa, r, dsa->g, K, dsa->p, ctx,
                    dsa->method_mont_p);
     if (!BN_mod(r, r, dsa->q, ctx))
