@@ -220,12 +220,8 @@ static void build_SYS_str_reasons(void)
         str->error = (unsigned long)i;
         if (str->string == NULL) {
             char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
-            char *src = strerror(i);
-            if (src != NULL) {
-                strncpy(*dest, src, sizeof(*dest));
-                (*dest)[sizeof(*dest) - 1] = '\0';
+            if (openssl_strerror_r(i, *dest, sizeof(*dest)))
                 str->string = *dest;
-            }
         }
         if (str->string == NULL)
             str->string = "unknown";

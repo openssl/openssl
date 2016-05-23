@@ -258,3 +258,31 @@ char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len)
 
     return tmp;
 }
+
+int openssl_strerror_r(int errnum, char *buf, size_t buflen)
+{
+#if defined(OPENSSL_SYS_WINDOWS)
+    if (strerror_s(buf, buflen, errnum) == EINVAL)
+        return 0;
+    return 1;
+#elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !_GNU_SOURCE
+    /*
+     * We can use "real" strerror_r. The OpenSSL version differs in that it
+     * gives 1 on success and 0 on failure for consistency with other OpenSSL
+     * functions. Real strerror_r does it the other way around
+     */
+    return !strerror_r(errnum, buf, buflen);
+#else
+    char *err;
+    /* Fall back to non-thread safe strerror()...its all we can do */
+    if (buflen < 2)
+        return 0;
+    err = strerror(errnum);
+    /* Can this ever happen? */
+    if (err == NULL)
+        return 0;
+    strncpy(buf, err, buflen - 1);
+    buf[buflen - 1] = '\0';
+    return 1;
+#endif
+}

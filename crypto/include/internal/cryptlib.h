@@ -67,6 +67,8 @@ void OPENSSL_showfatal(const char *fmta, ...);
 extern int OPENSSL_NONPIC_relocated;
 void crypto_cleanup_all_ex_data_int(void);
 
+int openssl_strerror_r(int errnum, char *buf, size_t buflen);
+
 #ifdef  __cplusplus
 }
 #endif
