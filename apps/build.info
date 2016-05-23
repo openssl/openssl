@@ -1,4 +1,6 @@
-{- use File::Spec::Functions qw/catdir rel2abs/; -}
+{- use File::Spec::Functions qw/catdir rel2abs/;
+   our $tsget_name = $config{target} =~ /^(VC|vms)-/ ? "tsget.pl" : "tsget";
+   "" -}
 IF[{- !$disabled{apps} -}]
   PROGRAMS=openssl
   SOURCE[openssl]=\
@@ -15,7 +17,7 @@ IF[{- !$disabled{apps} -}]
   INCLUDE[openssl]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
   DEPEND[openssl]=../libssl
 
-  SCRIPTS=CA.pl tsget
+  SCRIPTS=CA.pl {- $tsget_name -}
   SOURCE[CA.pl]=CA.pl.in
-  SOURCE[tsget]=tsget.in
+  SOURCE[{- $tsget_name -}]=tsget.in
 ENDIF
