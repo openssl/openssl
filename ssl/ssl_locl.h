@@ -363,11 +363,7 @@
 # define SSL_CLIENT_USE_SIGALGS(s)        \
     SSL_CLIENT_USE_TLS1_2_CIPHERS(s)
 
-# ifdef TLSEXT_TYPE_encrypt_then_mac
 #  define SSL_USE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC)
-# else
-#  define SSL_USE_ETM(s) (0)
-# endif
 
 /* Mostly for SSLv3 */
 # define SSL_PKEY_RSA_ENC        0
