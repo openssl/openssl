@@ -441,6 +441,10 @@ static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
         return 0;
     hctx->ktmp.type = V_ASN1_OCTET_STRING;
     hctx->ctx = HMAC_CTX_new();
+    if (hctx->ctx == NULL) {
+        OPENSSL_free(hctx);
+        return 0;
+    }
     EVP_PKEY_CTX_set_data(ctx, hctx);
     EVP_PKEY_CTX_set0_keygen_info(ctx, NULL, 0);
 # ifdef TEST_ENG_OPENSSL_HMAC_INIT
@@ -449,31 +453,42 @@ static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
     return 1;
 }
 
+static void ossl_hmac_cleanup(EVP_PKEY_CTX *ctx);
+
 static int ossl_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 {
     OSSL_HMAC_PKEY_CTX *sctx, *dctx;
+
+    /* allocate memory for dst->data and a new HMAC_CTX in dst->data->ctx */
     if (!ossl_hmac_init(dst))
         return 0;
     sctx = EVP_PKEY_CTX_get_data(src);
     dctx = EVP_PKEY_CTX_get_data(dst);
     dctx->md = sctx->md;
     if (!HMAC_CTX_copy(dctx->ctx, sctx->ctx))
-        return 0;
+        goto err;
     if (sctx->ktmp.data) {
         if (!ASN1_OCTET_STRING_set(&dctx->ktmp,
                                    sctx->ktmp.data, sctx->ktmp.length))
-            return 0;
+            goto err;
     }
     return 1;
+err:
+    /* release HMAC_CTX in dst->data->ctx and memory allocated for dst->data */
+    ossl_hmac_cleanup(dst);
+    return 0;
 }
 
 static void ossl_hmac_cleanup(EVP_PKEY_CTX *ctx)
 {
     OSSL_HMAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx);
 
-    HMAC_CTX_free(hctx->ctx);
-    OPENSSL_clear_free(hctx->ktmp.data, hctx->ktmp.length);
-    OPENSSL_free(hctx);
+    if (hctx) {
+        HMAC_CTX_free(hctx->ctx);
+        OPENSSL_clear_free(hctx->ktmp.data, hctx->ktmp.length);
+        OPENSSL_free(hctx);
+        EVP_PKEY_CTX_set_data(ctx, NULL);
+    }
 }
 
 static int ossl_hmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
