@@ -67,12 +67,17 @@ PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test\\| } @{$unified_info{pr
 PROGRAMPDBS={- join(" ", map { $_.".pdb" } grep { !m|^test\\| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(" ", map { $_.$exeext } grep { m|^test\\| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
-
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
 {- output_on() if $disabled{makedepend}; "" -}
+GENERATED={- join(" ",
+                  ( map { (my $x = $_) =~ s|\.[sS]$|\.asm|; $x }
+                    grep { defined $unified_info{generate}->{$_} }
+                    map { @{$unified_info{sources}->{$_}} }
+                    grep { /\.o$/ } keys %{$unified_info{sources}} ),
+                  ( grep { /\.h$/ } keys %{$unified_info{generate}} )) -}
 
 # Do not edit these manually. Use Configure with --prefix or --openssldir
 # to change this!  Short explanation in the top comment in Configure
@@ -167,18 +172,23 @@ uninstall: uninstall_docs uninstall_sw
 
 libclean:
 	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*"""; } @ARGV" $(SHLIBS)
+	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """apps/$$1.*"""; } @ARGV" $(SHLIBS)
+	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """test/$$1.*"""; } @ARGV" $(SHLIBS)
 	-del /Q /F $(LIBS)
 	-del /Q ossl_static.pdb
 
 clean: libclean
 	-del /Q /F $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
-	-del /Q /S /F *.asm
+	-del /Q /S /F $(GENERATED)
 	-del /Q /S /F *.d
 	-del /Q /S /F *.obj
 	-del /Q /S /F *.pdb
 	-del /Q /S /F *.exp
 	-del /Q /S /F engines\*.ilk
 	-del /Q /S /F engines\*.lib
+	-del /Q /S /F apps\*.lib
+	-del /Q /S /F engines\*.manifest
+	-del /Q /S /F apps\*.manifest
 
 depend:
 
