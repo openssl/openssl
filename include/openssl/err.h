@@ -138,7 +138,6 @@ typedef struct err_state_st {
 # define ERR_GET_LIB(l)          (int)((((unsigned long)l)>>24L)&0xffL)
 # define ERR_GET_FUNC(l)         (int)((((unsigned long)l)>>12L)&0xfffL)
 # define ERR_GET_REASON(l)       (int)((l)&0xfffL)
-# define ERR_FATAL_ERROR(l)      (int)((l)&ERR_R_FATAL)
 
 /* OS functions */
 # define SYS_F_FOPEN             1
@@ -171,30 +170,14 @@ typedef struct err_state_st {
 # define ERR_R_DSA_LIB   ERR_LIB_DSA/* 10 */
 # define ERR_R_X509_LIB  ERR_LIB_X509/* 11 */
 # define ERR_R_ASN1_LIB  ERR_LIB_ASN1/* 13 */
-# define ERR_R_CONF_LIB  ERR_LIB_CONF/* 14 */
-# define ERR_R_CRYPTO_LIB ERR_LIB_CRYPTO/* 15 */
 # define ERR_R_EC_LIB    ERR_LIB_EC/* 16 */
-# define ERR_R_SSL_LIB   ERR_LIB_SSL/* 20 */
 # define ERR_R_BIO_LIB   ERR_LIB_BIO/* 32 */
 # define ERR_R_PKCS7_LIB ERR_LIB_PKCS7/* 33 */
 # define ERR_R_X509V3_LIB ERR_LIB_X509V3/* 34 */
-# define ERR_R_PKCS12_LIB ERR_LIB_PKCS12/* 35 */
-# define ERR_R_RAND_LIB  ERR_LIB_RAND/* 36 */
-# define ERR_R_DSO_LIB   ERR_LIB_DSO/* 37 */
 # define ERR_R_ENGINE_LIB ERR_LIB_ENGINE/* 38 */
-# define ERR_R_OCSP_LIB  ERR_LIB_OCSP/* 39 */
-# define ERR_R_UI_LIB    ERR_LIB_UI/* 40 */
-# define ERR_R_COMP_LIB  ERR_LIB_COMP/* 41 */
 # define ERR_R_ECDSA_LIB ERR_LIB_ECDSA/* 42 */
-# define ERR_R_ECDH_LIB  ERR_LIB_ECDH/* 43 */
-# define ERR_R_STORE_LIB ERR_LIB_STORE/* 44 */
-# define ERR_R_TS_LIB    ERR_LIB_TS/* 45 */
 
 # define ERR_R_NESTED_ASN1_ERROR                 58
-# define ERR_R_BAD_ASN1_OBJECT_HEADER            59
-# define ERR_R_BAD_GET_ASN1_OBJECT_CALL          60
-# define ERR_R_EXPECTING_AN_ASN1_SEQUENCE        61
-# define ERR_R_ASN1_LENGTH_MISMATCH              62
 # define ERR_R_MISSING_ASN1_EOS                  63
 
 /* fatal error */
