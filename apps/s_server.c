@@ -1760,9 +1760,10 @@ int s_server_main(int argc, char *argv[])
         if (async)
             SSL_CTX_set_mode(ctx2, SSL_MODE_ASYNC);
 
-        if ((!SSL_CTX_load_verify_locations(ctx2, CAfile, CApath)) ||
-            (!SSL_CTX_set_default_verify_paths(ctx2))) {
+        if (!ctx_set_verify_locations(ctx2, CAfile, CApath, noCAfile,
+                                      noCApath)) {
             ERR_print_errors(bio_err);
+            goto end;
         }
         if (vpmtouched && !SSL_CTX_set1_param(ctx2, vpm)) {
             BIO_printf(bio_err, "Error setting verify params\n");
