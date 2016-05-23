@@ -4,8 +4,7 @@
 
  [This document describes installation on the main supported operating
   systems, currently the Linux/Unix family, OpenVMS and Windows.
-  Installation on DOS (with djgpp), MacOS (before MacOS X)
-  is described in INSTALL.DJGPP or INSTALL.MacOS, respectively.]
+  Installation on DOS (with djgpp) is described in INSTALL.DJGPP.]
 
  To install OpenSSL, you will need:
 
@@ -21,7 +20,7 @@
  please read one of these:
 
   * NOTES.VMS (OpenVMS)
-  * NOTES.WIN (any Windows except for Windows CE)
+  * NOTES.WIN (any supported Windows)
 
  Quick Start
  -----------
