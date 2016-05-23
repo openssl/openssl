@@ -47,6 +47,12 @@
      PREFIX:      %ProgramFiles%\OpenSSL
      OPENSSLDIR:  %CommonProgramFiles%\SSL
 
+ ALSO NOTE that those directories are usually write protected, even if
+ your account is in the Administrators group.  To work around that,
+ start the command prompt by right-clicking on it and choosing "Run as
+ Administrator" before running 'nmake install'.  The other solution
+ is, of course, to choose a different set of directories by using
+ --prefix and --openssldir when configuring.
 
  GNU C (Cygwin)
  --------------
