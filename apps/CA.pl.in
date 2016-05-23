@@ -23,7 +23,7 @@ if(defined $ENV{'OPENSSL'}) {
 
 my $verbose = 1;
 
-my $OPENSSL_CONFIG = $ENV{"OPENSSL_CONFIG"};
+my $OPENSSL_CONFIG = $ENV{"OPENSSL_CONFIG"} || "";
 my $DAYS = "-days 365";
 my $CADAYS = "-days 1095";	# 3 years
 my $REQ = "$openssl req $OPENSSL_CONFIG";
@@ -45,7 +45,7 @@ my $NEWREQ = "newreq.pem";
 my $NEWCERT = "newcert.pem";
 my $NEWP12 = "newcert.p12";
 my $RET = 0;
-my $WHAT = shift @ARGV;
+my $WHAT = shift @ARGV || "";
 my $FILE;
 
 # See if reason for a CRL entry is valid; exit if not.
