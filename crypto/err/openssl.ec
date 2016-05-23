@@ -31,7 +31,7 @@ L COMP		include/openssl/comp.h		crypto/comp/comp_err.c
 L TS		include/openssl/ts.h		crypto/ts/ts_err.c
 #L HMAC		include/openssl/hmac.h		crypto/hmac/hmac_err.c
 L CMS		include/openssl/cms.h		crypto/cms/cms_err.c
-L FIPS		include/openssl/fips.h		crypto/fips_err.h
+#L FIPS		include/openssl/fips.h		crypto/fips_err.h
 L CT		include/openssl/ct.h		crypto/ct/ct_err.c
 L ASYNC		include/openssl/async.h		crypto/async/async_err.c
 L KDF		include/openssl/kdf.h		crypto/kdf/kdf_err.c

@@ -94,7 +94,6 @@ static ERR_STRING_DATA X509_str_reasons[] = {
      "cert already in hash table"},
     {ERR_REASON(X509_R_CRL_ALREADY_DELTA), "crl already delta"},
     {ERR_REASON(X509_R_CRL_VERIFY_FAILURE), "crl verify failure"},
-    {ERR_REASON(X509_R_ERR_ASN1_LIB), "err asn1 lib"},
     {ERR_REASON(X509_R_IDP_MISMATCH), "idp mismatch"},
     {ERR_REASON(X509_R_INVALID_DIRECTORY), "invalid directory"},
     {ERR_REASON(X509_R_INVALID_FIELD_NAME), "invalid field name"},
