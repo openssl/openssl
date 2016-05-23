@@ -394,8 +394,8 @@ $target: $deps $ordinalsfile $mkdef_pl
 		/implib:\$@ \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<< || (DEL /Q \$(\@B).* $shlib.* && EXIT 1)
 $objs $shlib.res$linklibs \$(EX_LIBS)
 <<
-	DEL /Q /F apps\\$shlib$shlibext
-	DEL /Q /F test\\$shlib$shlibext
+	IF EXIST apps\\$shlib$shlibext DEL /Q /F apps\\$shlib$shlibext
+	IF EXIST test\\$shlib$shlibext DEL /Q /F test\\$shlib$shlibext
 	COPY $shlib$shlibext apps
 	COPY $shlib$shlibext test
 EOF
