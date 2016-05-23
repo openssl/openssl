@@ -67,6 +67,10 @@ PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test\\| } @{$unified_info{pr
 PROGRAMPDBS={- join(" ", map { $_.".pdb" } grep { !m|^test\\| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(" ", map { $_.$exeext } grep { m|^test\\| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
+{- output_off() if $disabled{apps}; "" -}
+BIN_SCRIPTS=$(BLDDIR)\tools\c_rehash.pl
+MISC_SCRIPTS=$(BLDDIR)\apps\CA.pl $(BLDDIR)\apps\tsget.pl
+{- output_on() if $disabled{apps}; "" -}
 
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
@@ -197,8 +201,11 @@ uninstall_docs:
 install_ssldirs:
 	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)\certs"
 	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)\private"
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)\misc"
 	@$(PERL) $(SRCDIR)\util\copy.pl $(SRCDIR)\apps\openssl.cnf \
                                        "$(DESTDIR)$(OPENSSLDIR)"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(MISC_SCRIPTS) \
+                                        "$(DESTDIR)$(OPENSSLDIR)\misc"
 
 install_dev:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
@@ -241,9 +248,7 @@ install_runtime:
                                         "$(DESTDIR)$(INSTALLTOP)\bin"
 	@$(PERL) $(SRCDIR)\util\copy.pl $(PROGRAMPDBS) \
                                         "$(DESTDIR)$(INSTALLTOP)\bin"
-	@$(PERL) $(SRCDIR)\util\copy.pl $(SCRIPTS) \
-                                        "$(DESTDIR)$(INSTALLTOP)\bin"
-	@$(PERL) $(SRCDIR)\util\copy.pl tools\c_rehash.pl \
+	@$(PERL) $(SRCDIR)\util\copy.pl $(BIN_SCRIPTS) \
                                         "$(DESTDIR)$(INSTALLTOP)\bin"
 
 uninstall_runtime:
