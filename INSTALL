@@ -2,15 +2,15 @@
  OPENSSL INSTALLATION
  --------------------
 
- [This document describes installation on the main supported operating
-  systems, currently the Linux/Unix family, OpenVMS and Windows.
-  Installation on DOS (with djgpp) is described in INSTALL.DJGPP.]
+ [This document describes installation on all supported operating
+  systems (currently mainly the Linux/Unix family, OpenVMS and
+  Windows)]
 
  To install OpenSSL, you will need:
 
-  * make
-  * Perl 5 with core modules (please read README.PERL)
-  * The perl module Text::Template (please read README.PERL)
+  * A make implementation
+  * Perl 5 with core modules (please read NOTES.PERL)
+  * The perl module Text::Template (please read NOTES.PERL)
   * an ANSI C compiler
   * a development environment in the form of development libraries and C
     header files
@@ -21,6 +21,7 @@
 
   * NOTES.VMS (OpenVMS)
   * NOTES.WIN (any supported Windows)
+  * NOTES.DJGPP (DOS platform with DJGPP)
 
  Quick Start
  -----------

@@ -48,8 +48,8 @@
  ------------
 
  See the appropriate file:
-        INSTALL         Linux, Unix, Windows, OpenVMS
-        INSTALL.DJGPP   DOS platform with DJGPP
+        INSTALL         Linux, Unix, Windows, OpenVMS, ...
+        NOTES.*         INSTALL addendums for different platforms
 
  SUPPORT
  -------
