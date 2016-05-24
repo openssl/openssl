@@ -1418,47 +1418,47 @@ if ($builder eq "unified") {
             => sub { die "ENDIF out of scope" if ! @skip;
                      pop @skip; },
             qr/^\s*PROGRAMS\s*=\s*(.*)\s*$/
-            => sub { push @programs, split(/\s+/, $1)
+            => sub { push @programs, tokenize($1)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*LIBS\s*=\s*(.*)\s*$/
-            => sub { push @libraries, split(/\s+/, $1)
+            => sub { push @libraries, tokenize($1)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*ENGINES\s*=\s*(.*)\s*$/
-            => sub { push @engines, split(/\s+/, $1)
+            => sub { push @engines, tokenize($1)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*SCRIPTS\s*=\s*(.*)\s*$/
-            => sub { push @scripts, split(/\s+/, $1)
+            => sub { push @scripts, tokenize($1)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*EXTRA\s*=\s*(.*)\s*$/
-            => sub { push @extra, split(/\s+/, $1)
+            => sub { push @extra, tokenize($1)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*OVERRIDES\s*=\s*(.*)\s*$/
-            => sub { push @overrides, split(/\s+/, $1)
+            => sub { push @overrides, tokenize($1)
                          if !@skip || $skip[$#skip] > 0 },
 
             qr/^\s*ORDINALS\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/,
-            => sub { push @{$ordinals{$1}}, split(/\s+/, $2)
+            => sub { push @{$ordinals{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$sources{$1}}, split(/\s+/, $2)
+            => sub { push @{$sources{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*SHARED_SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$shared_sources{$1}}, split(/\s+/, $2)
+            => sub { push @{$shared_sources{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*INCLUDE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$includes{$1}}, split(/\s+/, $2)
+            => sub { push @{$includes{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*DEPEND\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$depends{$1}}, split(/\s+/, $2)
+            => sub { push @{$depends{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*GENERATE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
             => sub { push @{$generate{$1}}, $2
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*RENAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$renames{$1}}, split(/\s+/, $2)
+            => sub { push @{$renames{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*SHARED_NAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$sharednames{$1}}, split(/\s+/, $2)
+            => sub { push @{$sharednames{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*BEGINRAW\[((?:\\.|[^\\\]])+)\]\s*$/
             => sub {
@@ -2575,4 +2575,42 @@ sub collect_information {
             $collectors{"AFTER"}->($_);
         }
     }
+}
+
+# tokenize($line)
+# $line is a line of text to split up into tokens
+# returns a list of tokens
+#
+# Tokens are divided by spaces.  If the tokens include spaces, they
+# have to be quoted with single or double quotes.  Double quotes
+# inside a double quoted token must be escaped.  Escaping is done
+# with backslash.
+# Basically, the same quoting rules apply for " and ' as in any
+# Unix shell.
+sub tokenize {
+    my $line = my $debug_line = shift;
+    my @result = ();
+
+    while ($line =~ s|^\s+||, $line ne "") {
+        my $token = "";
+        while ($line ne "" && $line !~ m|^\s|) {
+            if ($line =~ m/^"((?:[^"\\]+|\\.)*)"/) {
+                $token .= $1;
+                $line = $';
+            } elsif ($line =~ m/^'([^']*)'/) {
+                $token .= $1;
+                $line = $';
+            } elsif ($line =~ m/^(\S+)/) {
+                $token .= $1;
+                $line = $';
+            }
+        }
+        push @result, $token;
+    }
+
+    if ($ENV{CONFIGURE_DEBUG_TOKENIZE}) {
+	print STDERR "DEBUG[tokenize]: Parsed '$debug_line' into:\n";
+	print STDERR "DEBUG[tokenize]: ('", join("', '", @result), "')\n";
+    }
+    return @result;
 }
