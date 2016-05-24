@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef _E_AFALG_H_
-# define _E_AFALG_H_
+#ifndef HEADER_AFALG_H
+# define HEADER_AFALG_H
 
 # ifdef ALG_DEBUG
 #  define ALG_DGB(x, ...) fprintf(stderr, "ALG_DBG: " x, __VA_ARGS__)
