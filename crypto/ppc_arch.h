@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef __PPC_ARCH_H__
-# define __PPC_ARCH_H__
+#ifndef HEADER_PPC_ARCH_H
+# define HEADER_PPC_ARCH_H
 
 extern unsigned int OPENSSL_ppccap_P;
 
