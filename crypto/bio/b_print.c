@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <limits.h>
+#include "internal/numbers.h"
 #include "internal/cryptlib.h"
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>
@@ -385,7 +385,7 @@ fmtstr(char **sbuffer,
     if (value == 0)
         value = "<NULL>";
 
-    strln = strlen(value);
+    strln = OPENSSL_strnlen(value, max < 0 ? SIZE_MAX : max);
     if (strln > INT_MAX)
         strln = INT_MAX;
     if (max >= 0 && strln > max)
