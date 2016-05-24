@@ -14,7 +14,7 @@ IF[{- !$disabled{apps} -}]
           apps.c opt.c s_cb.c s_socket.c \
           app_rand.c \
           {- $target{apps_aux_src} -}
-  INCLUDE[openssl]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  INCLUDE[openssl]="{- rel2abs(catdir($builddir,"../include")) -}" .. ../include
   DEPEND[openssl]=../libssl
 
   SCRIPTS=CA.pl {- $tsget_name -}
