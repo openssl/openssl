@@ -201,18 +201,18 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
     /* Must be negative: calculate twos complement */
     if (b) {
         const unsigned char *from = p + plen - 1 + pad;
-        unsigned char *to = b + plen - 1;
+        unsigned char *to = b + plen;
         i = plen;
         while (*from == 0 && i) {
-            *to-- = 0;
+            *--to = 0;
             i--;
             from--;
         }
-        *to-- = (*from-- ^ 0xff) + 1;
+        *--to = (*from-- ^ 0xff) + 1;
         OPENSSL_assert(i != 0);
         i--;
         for (; i > 0; i--)
-            *to-- = *from-- ^ 0xff;
+            *--to = *from-- ^ 0xff;
     }
     return plen;
 }
