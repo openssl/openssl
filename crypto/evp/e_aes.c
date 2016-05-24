@@ -1027,7 +1027,7 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
     mode = EVP_CIPHER_CTX_mode(ctx);
     if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)
-        && !enc)
+        && !enc) {
 #ifdef HWAES_CAPABLE
         if (HWAES_CAPABLE) {
             ret = HWAES_set_decrypt_key(key,
@@ -1066,6 +1066,7 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             dat->block = (block128_f) AES_decrypt;
             dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
                 (cbc128_f) AES_cbc_encrypt : NULL;
+        }
     } else
 #ifdef HWAES_CAPABLE
     if (HWAES_CAPABLE) {
