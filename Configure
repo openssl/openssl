@@ -378,6 +378,7 @@ our %disabled = ( # "what"         => "comment"
 		  "zlib"                => "default",
 		  "zlib-dynamic"        => "default",
 		  "crypto-mdebug"       => "default",
+		  "crypto-mdebug-backtrace" => "default",
 		  "heartbeats"          => "default",
 		);
 
