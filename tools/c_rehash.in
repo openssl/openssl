@@ -103,7 +103,7 @@ sub hash_dir {
 	print "Doing $_[0]\n";
 	chdir $_[0];
 	opendir(DIR, ".");
-	my @flist = readdir(DIR);
+	my @flist = sort readdir(DIR);
 	closedir DIR;
 	if ( $removelinks ) {
 		# Delete any existing symbolic links
