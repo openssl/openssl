@@ -118,6 +118,10 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
 #define ub_email_address                128
 #define ub_serial_number                64
 
+/* From RFC4524 */
+
+#define ub_rfc822_mailbox               256
+
 /* This table must be kept in NID order */
 
 static const ASN1_STRING_TABLE tbl_standard[] = {
@@ -143,6 +147,8 @@ static const ASN1_STRING_TABLE tbl_standard[] = {
     {NID_dnQualifier, -1, -1, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK},
     {NID_domainComponent, 1, -1, B_ASN1_IA5STRING, STABLE_NO_MASK},
     {NID_ms_csp_name, -1, -1, B_ASN1_BMPSTRING, STABLE_NO_MASK},
+    {NID_rfc822Mailbox, 1, ub_rfc822_mailbox, B_ASN1_IA5STRING,
+     STABLE_NO_MASK},
     {NID_INN, 1, 12, B_ASN1_NUMERICSTRING, STABLE_NO_MASK},
     {NID_OGRN, 1, 13, B_ASN1_NUMERICSTRING, STABLE_NO_MASK},
     {NID_SNILS, 1, 11, B_ASN1_NUMERICSTRING, STABLE_NO_MASK}
