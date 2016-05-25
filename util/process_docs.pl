@@ -72,9 +72,9 @@ my $symlink_exists = eval { symlink("",""); 1 };
 foreach my $subdir (keys %{$options{subdir}}) {
     my $section = $options{subdir}->{$subdir};
     my $podsourcedir = catfile($options{sourcedir}, $subdir);
-    my $podglob = catfile($podsourcedir, "*.pod");
+    my $podglob = '"'.catfile($podsourcedir, "*.pod").'"';
 
-    foreach my $podfile (glob "$podglob") {
+    foreach my $podfile (glob $podglob) {
         my $podname = basename($podfile, ".pod");
         my $podpath = catfile($podfile);
         my %podinfo = ( section => $section );
