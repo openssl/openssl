@@ -405,9 +405,10 @@ fmtstr(char **sbuffer,
         --padlen;
         ++cnt;
     }
-    while (*value && (max < 0 || cnt < max)) {
+    while (strln > 0 && (max < 0 || cnt < max)) {
         if(!doapr_outch(sbuffer, buffer, currlen, maxlen, *value++))
             return 0;
+        --strln;
         ++cnt;
     }
     while ((padlen < 0) && (max < 0 || cnt < max)) {
