@@ -210,7 +210,7 @@ die "erroneous version information in opensslv.h: ",
 # Collect target configurations
 
 my $pattern = catfile(dirname($0), "Configurations", "*.conf");
-foreach (sort glob($pattern) ) {
+foreach (sort glob("\"$pattern\"") ) {
     &read_config($_);
 }
 
@@ -2332,7 +2332,7 @@ sub run_dofile
     foreach (@templates) {
         die "Can't open $_, $!" unless -f $_;
     }
-    my $cmd = "$config{perl} \"-I.\" \"-Mconfigdata\" $dofile -o\"Configure\" \"".join("\" \"",@templates)."\" > \"$out.new\"";
+    my $cmd = "$config{perl} \"-I.\" \"-Mconfigdata\" \"$dofile\" -o\"Configure\" \"".join("\" \"",@templates)."\" > \"$out.new\"";
     #print STDERR "DEBUG[run_dofile]: \$cmd = $cmd\n";
     system($cmd);
     exit 1 if $? != 0;
