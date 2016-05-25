@@ -385,11 +385,9 @@ fmtstr(char **sbuffer,
     if (value == 0)
         value = "<NULL>";
 
-    strln = OPENSSL_strnlen(value, max < 0 ? SIZE_MAX : max);
-    if (strln > INT_MAX)
-        strln = INT_MAX;
-    if (max >= 0 && strln > max)
-        strln = max;
+    strln = OPENSSL_strnlen(value, max < 0 ? SIZE_MAX : (size_t)max);
+    if (max >= 0 && strln > (size_t)max)
+        strln = (size_t)max;
 
     padlen = min - strln;
     if (min < 0 || padlen < 0)
