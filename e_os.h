@@ -469,6 +469,13 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 # if defined(OPENSSL_SYS_WINDOWS)
 #  define strcasecmp _stricmp
 #  define strncasecmp _strnicmp
+#  if (_MSC_VER >= 1310)
+#   define open _open
+#   define fdopen _fdopen
+#   define close _close
+#   define strdup _strdup
+#   define unlink _unlink
+#  endif
 # elif defined(OPENSSL_SYS_VMS)
 /* VMS below version 7.0 doesn't have strcasecmp() */
 #  include "internal/o_str.h"
