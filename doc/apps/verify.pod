@@ -395,147 +395,147 @@ as "unused".
 
 =over 4
 
-=item B<0 X509_V_OK: ok>
+=item B<X509_V_OK>
 
-the operation was successful.
+The operation was successful.
 
-=item B<1 X509_V_ERR_UNSPECIFIED: unspecified certificate verification error>
+=item B<X509_V_ERR_UNSPECIFIED>
 
-unspecified error, should not happen.
+Unspecified error; should not happen.
 
-=item B<2 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: unable to get issuer certificate>
+=item B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT>
 
-the issuer certificate of a looked up certificate could not be found. This
+The issuer certificate of a looked up certificate could not be found. This
 normally means the list of trusted certificates is not complete.
 
-=item B<3 X509_V_ERR_UNABLE_TO_GET_CRL: unable to get certificate CRL>
+=item B<X509_V_ERR_UNABLE_TO_GET_CRL>
 
-the CRL of a certificate could not be found.
+The CRL of a certificate could not be found.
 
-=item B<4 X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE: unable to decrypt certificate's signature>
+=item B<X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE>
 
-the certificate signature could not be decrypted. This means that the actual signature value
+The certificate signature could not be decrypted. This means that the actual signature value
 could not be determined rather than it not matching the expected value, this is only
 meaningful for RSA keys.
 
-=item B<5 X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE: unable to decrypt CRL's signature>
+=item B<X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE>
 
-the CRL signature could not be decrypted: this means that the actual signature value
+The CRL signature could not be decrypted: this means that the actual signature value
 could not be determined rather than it not matching the expected value. Unused.
 
-=item B<6 X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY: unable to decode issuer public key>
+=item B<X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY>
 
-the public key in the certificate SubjectPublicKeyInfo could not be read.
+The public key in the certificate SubjectPublicKeyInfo could not be read.
 
-=item B<7 X509_V_ERR_CERT_SIGNATURE_FAILURE: certificate signature failure>
+=item B<X509_V_ERR_CERT_SIGNATURE_FAILURE>
 
-the signature of the certificate is invalid.
+The signature of the certificate is invalid.
 
-=item B<8 X509_V_ERR_CRL_SIGNATURE_FAILURE: CRL signature failure>
+=item B<X509_V_ERR_CRL_SIGNATURE_FAILURE>
 
-the signature of the certificate is invalid.
+The signature of the certificate is invalid.
 
-=item B<9 X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid>
+=item B<X509_V_ERR_CERT_NOT_YET_VALID>
 
-the certificate is not yet valid: the notBefore date is after the current time.
+The certificate is not yet valid: the notBefore date is after the current time.
 
-=item B<10 X509_V_ERR_CERT_HAS_EXPIRED: certificate has expired>
+=item B<X509_V_ERR_CERT_HAS_EXPIRED>
 
-the certificate has expired: that is the notAfter date is before the current time.
+The certificate has expired: that is the notAfter date is before the current time.
 
-=item B<11 X509_V_ERR_CRL_NOT_YET_VALID: CRL is not yet valid>
+=item B<X509_V_ERR_CRL_NOT_YET_VALID>
 
-the CRL is not yet valid.
+The CRL is not yet valid.
 
-=item B<12 X509_V_ERR_CRL_HAS_EXPIRED: CRL has expired>
+=item B<X509_V_ERR_CRL_HAS_EXPIRED>
 
-the CRL has expired.
+The CRL has expired.
 
-=item B<13 X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD: format error in certificate's notBefore field>
+=item B<X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD>
 
-the certificate notBefore field contains an invalid time.
+The certificate notBefore field contains an invalid time.
 
-=item B<14 X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD: format error in certificate's notAfter field>
+=item B<X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD>
 
-the certificate notAfter field contains an invalid time.
+The certificate notAfter field contains an invalid time.
 
-=item B<15 X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD: format error in CRL's lastUpdate field>
+=item B<X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD>
 
-the CRL lastUpdate field contains an invalid time.
+The CRL lastUpdate field contains an invalid time.
 
-=item B<16 X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD: format error in CRL's nextUpdate field>
+=item B<X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD>
 
-the CRL nextUpdate field contains an invalid time.
+The CRL nextUpdate field contains an invalid time.
 
-=item B<17 X509_V_ERR_OUT_OF_MEM: out of memory>
+=item B<X509_V_ERR_OUT_OF_MEM>
 
-an error occurred trying to allocate memory. This should never happen.
+An error occurred trying to allocate memory. This should never happen.
 
-=item B<18 X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: self signed certificate>
+=item B<X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT>
 
-the passed certificate is self signed and the same certificate cannot be found in the list of
+The passed certificate is self signed and the same certificate cannot be found in the list of
 trusted certificates.
 
-=item B<19 X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN: self signed certificate in certificate chain>
+=item B<X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN>
 
-the certificate chain could be built up using the untrusted certificates but the root could not
+The certificate chain could be built up using the untrusted certificates but the root could not
 be found locally.
 
-=item B<20 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY: unable to get local issuer certificate>
+=item B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY>
 
-the issuer certificate could not be found: this occurs if the issuer
+The issuer certificate could not be found: this occurs if the issuer
 certificate of an untrusted certificate cannot be found.
 
-=item B<21 X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE: unable to verify the first certificate>
+=item B<X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE>
 
-no signatures could be verified because the chain contains only one certificate and it is not
+No signatures could be verified because the chain contains only one certificate and it is not
 self signed.
 
-=item B<22 X509_V_ERR_CERT_CHAIN_TOO_LONG: certificate chain too long>
+=item B<X509_V_ERR_CERT_CHAIN_TOO_LONG>
 
-the certificate chain length is greater than the supplied maximum depth. Unused.
+The certificate chain length is greater than the supplied maximum depth. Unused.
 
-=item B<23 X509_V_ERR_CERT_REVOKED: certificate revoked>
+=item B<X509_V_ERR_CERT_REVOKED>
 
-the certificate has been revoked.
+The certificate has been revoked.
 
-=item B<24 X509_V_ERR_INVALID_CA: invalid CA certificate>
+=item B<X509_V_ERR_INVALID_CA>
 
-a CA certificate is invalid. Either it is not a CA or its extensions are not consistent
+A CA certificate is invalid. Either it is not a CA or its extensions are not consistent
 with the supplied purpose.
 
-=item B<25 X509_V_ERR_PATH_LENGTH_EXCEEDED: path length constraint exceeded>
+=item B<X509_V_ERR_PATH_LENGTH_EXCEEDED>
 
-the basicConstraints pathlength parameter has been exceeded.
+The basicConstraints pathlength parameter has been exceeded.
 
-=item B<26 X509_V_ERR_INVALID_PURPOSE: unsupported certificate purpose>
+=item B<X509_V_ERR_INVALID_PURPOSE>
 
-the supplied certificate cannot be used for the specified purpose.
+The supplied certificate cannot be used for the specified purpose.
 
-=item B<27 X509_V_ERR_CERT_UNTRUSTED: certificate not trusted>
+=item B<X509_V_ERR_CERT_UNTRUSTED>
 
 the root CA is not marked as trusted for the specified purpose.
 
-=item B<28 X509_V_ERR_CERT_REJECTED: certificate rejected>
+=item B<X509_V_ERR_CERT_REJECTED>
 
-the root CA is marked to reject the specified purpose.
+The root CA is marked to reject the specified purpose.
 
-=item B<29 X509_V_ERR_SUBJECT_ISSUER_MISMATCH: subject issuer mismatch>
+=item B<X509_V_ERR_SUBJECT_ISSUER_MISMATCH>
+
+not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+B<-issuer_checks> option.
+
+=item B<X509_V_ERR_AKID_SKID_MISMATCH>
 
 Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
 B<-issuer_checks> option.
 
-=item B<30 X509_V_ERR_AKID_SKID_MISMATCH: authority and subject key identifier mismatch>
+=item B<X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH>
 
 Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
 B<-issuer_checks> option.
 
-=item B<31 X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH: authority and issuer serial number mismatch>
-
-Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
-B<-issuer_checks> option.
-
-=item B<32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN: key usage does not include certificate signing>
+=item B<X509_V_ERR_KEYUSAGE_NO_CERTSIGN>
 
 Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
 B<-issuer_checks> option.
@@ -689,7 +689,7 @@ mishandled them.
 
 Previous versions of this documentation swapped the meaning of the
 B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT> and
-B<20 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY> error codes.
+B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY> error codes.
 
 =head1 SEE ALSO
 

@@ -350,7 +350,22 @@ RC5 Cipher
 
 =back
 
-=head1 PASS PHRASE ARGUMENTS
+=head1 COMMAND OPTIONS
+
+Details of which options are available depend on the specific command.
+This section desribes some common options with common behavior.
+
+=head2 Common Options
+
+=over 10
+
+=item B<-help>
+
+Provides a terse summary of all options.
+
+=back
+
+=head2 Pass Phrase Options
 
 Several commands accept password arguments, typically using B<-passin>
 and B<-passout> for input and output passwords respectively. These allow
