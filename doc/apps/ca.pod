@@ -61,7 +61,7 @@ and their status.
 
 The options descriptions will be divided into each purpose.
 
-=head1 CA OPTIONS
+=head1 COMMAND OPTIONS
 
 =over 4
 

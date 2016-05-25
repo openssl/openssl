@@ -24,6 +24,8 @@ master key) in human readable format. Since this is a diagnostic tool that
 needs some knowledge of the SSL protocol to use properly, most users will
 not need to use it.
 
+=head1 COMMAND OPTIONS
+
 =over 4
 
 =item B<-help>
