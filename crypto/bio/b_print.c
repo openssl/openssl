@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <assert.h>
 #include <limits.h>
 #include "internal/cryptlib.h"
 #ifndef NO_SYS_TYPES_H
@@ -70,12 +69,19 @@ static int _dopr(char **sbuffer, char **buffer,
 #define DP_S_DONE       7
 
 /* format flags - Bits */
+/* left-aligned padding */
 #define DP_F_MINUS      (1 << 0)
+/* print an explicit '+' for a value with positive sign */
 #define DP_F_PLUS       (1 << 1)
+/* print an explicit ' ' for a value with positive sign */
 #define DP_F_SPACE      (1 << 2)
+/* print 0/0x prefix for octal/hex and decimal point for floating point */
 #define DP_F_NUM        (1 << 3)
+/* print leading zeroes */
 #define DP_F_ZERO       (1 << 4)
+/* print HEX in UPPPERcase */
 #define DP_F_UP         (1 << 5)
+/* treat value as unsigned */
 #define DP_F_UNSIGNED   (1 << 6)
 
 /* conversion flags */
@@ -272,6 +278,9 @@ _dopr(char **sbuffer,
                     fvalue = va_arg(args, LDOUBLE);
                 else
                     fvalue = va_arg(args, double);
+                if (!fmtfp(sbuffer, buffer, &currlen, maxlen, fvalue, min, max,
+                           flags))
+                    return 0;
                 break;
             case 'G':
                 flags |= DP_F_UP;
@@ -280,6 +289,9 @@ _dopr(char **sbuffer,
                     fvalue = va_arg(args, LDOUBLE);
                 else
                     fvalue = va_arg(args, double);
+                if (!fmtfp(sbuffer, buffer, &currlen, maxlen, fvalue, min, max,
+                           flags))
+                    return 0;
                 break;
             case 'c':
                 if(!doapr_outch(sbuffer, buffer, &currlen, maxlen,
@@ -664,10 +676,10 @@ doapr_outch(char **sbuffer,
             char **buffer, size_t *currlen, size_t *maxlen, int c)
 {
     /* If we haven't at least one buffer, someone has doe a big booboo */
-    assert(*sbuffer != NULL || buffer != NULL);
+    OPENSSL_assert(*sbuffer != NULL || buffer != NULL);
 
     /* |currlen| must always be <= |*maxlen| */
-    assert(*currlen <= *maxlen);
+    OPENSSL_assert(*currlen <= *maxlen);
 
     if (buffer && *currlen == *maxlen) {
         if (*maxlen > INT_MAX - BUFFER_INC)
@@ -679,7 +691,7 @@ doapr_outch(char **sbuffer,
             if (*buffer == NULL)
                 return 0;
             if (*currlen > 0) {
-                assert(*sbuffer != NULL);
+                OPENSSL_assert(*sbuffer != NULL);
                 memcpy(*buffer, *sbuffer, *currlen);
             }
             *sbuffer = NULL;
