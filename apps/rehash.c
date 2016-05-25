@@ -260,6 +260,11 @@ end:
     return errs;
 }
 
+static void str_free(char *s)
+{
+    OPENSSL_free(s);
+}
+
 /*
  * Process a directory; return number of errors found.
  */
@@ -270,11 +275,12 @@ static int do_dir(const char *dirname, enum Hash h)
     OPENSSL_DIR_CTX *d = NULL;
     struct stat st;
     unsigned char idmask[MAX_COLLISIONS / 8];
-    int n, nextid, buflen, errs = 0;
+    int n, numfiles, nextid, buflen, errs = 0;
     size_t i;
     const char *pathsep;
     const char *filename;
-    char *buf;
+    char *buf, *copy;
+    STACK_OF(OPENSSL_STRING) *files = NULL;
 
     if (app_access(dirname, W_OK) < 0) {
         BIO_printf(bio_err, "Skipping %s, can't write\n", dirname);
@@ -288,7 +294,23 @@ static int do_dir(const char *dirname, enum Hash h)
     if (verbose)
         BIO_printf(bio_out, "Doing %s\n", dirname);
 
+    if ((files = sk_OPENSSL_STRING_new_null()) == NULL) {
+        BIO_printf(bio_err, "Skipping %s, out of memory\n", dirname);
+        exit(1);
+    }
     while ((filename = OPENSSL_DIR_read(&d, dirname)) != NULL) {
+        if ((copy = strdup(filename)) == NULL
+                || sk_OPENSSL_STRING_push(files, copy) == 0) {
+            BIO_puts(bio_err, "out of memory\n");
+            exit(1);
+        }
+    }
+    OPENSSL_DIR_end(&d);
+    sk_OPENSSL_STRING_sort(files);
+
+    numfiles = sk_OPENSSL_STRING_num(files);
+    for (n = 0; n < numfiles; ++n) {
+        filename = sk_OPENSSL_STRING_value(files, n);
         if (snprintf(buf, buflen, "%s%s%s",
                     dirname, pathsep, filename) >= buflen)
             continue;
@@ -298,7 +320,7 @@ static int do_dir(const char *dirname, enum Hash h)
             continue;
         errs += do_file(filename, buf, h);
     }
-    OPENSSL_DIR_end(&d);
+    sk_OPENSSL_STRING_pop_free(files, str_free);
 
     for (i = 0; i < OSSL_NELEM(hash_table); i++) {
         for (bp = hash_table[i]; bp; bp = nextbp) {
