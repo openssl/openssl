@@ -561,9 +561,9 @@ fmtfp(char **sbuffer,
     int padlen = 0;
     int zpadlen = 0;
     long exp = 0;
-    long intpart;
-    long fracpart;
-    long max10;
+    unsigned long intpart;
+    unsigned long fracpart;
+    unsigned long max10;
     int realstyle;
 
     if (max < 0)
@@ -638,7 +638,11 @@ fmtfp(char **sbuffer,
             fvalue = tmpvalue;
     }
     ufvalue = abs_val(fvalue);
-    intpart = (long)ufvalue;
+    if (ufvalue > ULONG_MAX) {
+        /* Number too big */
+        return 0;
+    }
+    intpart = (unsigned long)ufvalue;
 
     /*
      * sorry, we only support 9 digits past the decimal because of our
