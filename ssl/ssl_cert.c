@@ -267,7 +267,6 @@ int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
     CERT_PKEY *cpk = s ? s->cert->key : ctx->cert->key;
     if (!cpk)
         return 0;
-    sk_X509_pop_free(cpk->chain, X509_free);
     for (i = 0; i < sk_X509_num(chain); i++) {
         r = ssl_security_cert(s, ctx, sk_X509_value(chain, i), 0, 0);
         if (r != 1) {
@@ -275,6 +274,7 @@ int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
             return 0;
         }
     }
+    sk_X509_pop_free(cpk->chain, X509_free);
     cpk->chain = chain;
     return 1;
 }
