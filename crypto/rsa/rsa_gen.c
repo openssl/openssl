@@ -137,64 +137,51 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
     if (!BN_mul(r0, r1, r2, ctx))
         goto err;               /* (p-1)(q-1) */
     {
-        BIGNUM *local_r0 = NULL, *pr0;
-        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-            pr0 = local_r0 = BN_new();
-            if (local_r0 == NULL)
-                goto err;
-            BN_with_flags(pr0, r0, BN_FLG_CONSTTIME);
-        } else {
-            pr0 = r0;
-        }
+        BIGNUM *pr0 = BN_new();
+
+        if (pr0 == NULL)
+            goto err;
+        BN_with_flags(pr0, r0, BN_FLG_CONSTTIME);
         if (!BN_mod_inverse(rsa->d, rsa->e, pr0, ctx)) {
-            BN_free(local_r0);
+            BN_free(pr0);
             goto err;               /* d */
         }
-        /* We MUST free local_r0 before any further use of r0 */
-        BN_free(local_r0);
+        /* We MUST free pr0 before any further use of r0 */
+        BN_free(pr0);
     }
 
     {
-        BIGNUM *local_d = NULL, *d;
-        /* set up d for correct BN_FLG_CONSTTIME flag */
-        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-            d = local_d = BN_new();
-            if (local_d == NULL)
-                goto err;
-            BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-        } else {
-            d = rsa->d;
-        }
+        BIGNUM *d = BN_new();
+
+        if (d == NULL)
+            goto err;
+        BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
 
         if (   /* calculate d mod (p-1) */
                !BN_mod(rsa->dmp1, d, r1, ctx)
                /* calculate d mod (q-1) */
             || !BN_mod(rsa->dmq1, d, r2, ctx)) {
-            BN_free(local_d);
+            BN_free(d);
             goto err;
         }
-        /* We MUST free local_d before any further use of rsa->d */
-        BN_free(local_d);
+        /* We MUST free d before any further use of rsa->d */
+        BN_free(d);
     }
 
     {
-        BIGNUM *local_p = NULL, *p;
+        BIGNUM *p = BN_new();
+
+        if (p == NULL)
+            goto err;
+        BN_with_flags(p, rsa->p, BN_FLG_CONSTTIME);
 
         /* calculate inverse of q mod p */
-        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-            p = local_p = BN_new();
-            if (local_p == NULL)
-                goto err;
-            BN_with_flags(p, rsa->p, BN_FLG_CONSTTIME);
-        } else {
-            p = rsa->p;
-        }
         if (!BN_mod_inverse(rsa->iqmp, rsa->q, p, ctx)) {
-            BN_free(local_p);
+            BN_free(p);
             goto err;
         }
-        /* We MUST free local_p before any further use of rsa->p */
-        BN_free(local_p);
+        /* We MUST free p before any further use of rsa->p */
+        BN_free(p);
     }
 
     ok = 1;

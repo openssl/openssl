@@ -95,10 +95,6 @@ int main(int argc, char *argv[])
         goto err;
     bp = bg = NULL;
 
-    /* Set a to run with normal modexp and b to use constant time */
-    DH_clear_flags(a, DH_FLAG_NO_EXP_CONSTTIME);
-    DH_set_flags(b, DH_FLAG_NO_EXP_CONSTTIME);
-
     if (!DH_generate_key(a))
         goto err;
     DH_get0_key(a, &apub_key, &priv_key);
