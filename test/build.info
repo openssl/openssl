@@ -16,7 +16,8 @@ IF[{- !$disabled{tests} -}]
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
-          ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest
+          ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
+          bioprinttest
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
@@ -249,4 +250,8 @@ IF[{- !$disabled{tests} -}]
   SOURCE[asynciotest]=asynciotest.c
   INCLUDE[asynciotest]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
   DEPEND[asynciotest]=../libcrypto ../libssl
+
+  SOURCE[bioprinttest]=bioprinttest.c
+  INCLUDE[bioprinttest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[bioprinttest]=../libcrypto
 ENDIF
