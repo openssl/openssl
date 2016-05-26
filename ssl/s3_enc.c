@@ -624,8 +624,12 @@ int ssl3_digest_cached_records(SSL *s)
                                      EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
             }
 #endif
-            EVP_DigestInit_ex(s->s3->handshake_dgst[i], md, NULL);
-            EVP_DigestUpdate(s->s3->handshake_dgst[i], hdata, hdatalen);
+            if (!EVP_DigestInit_ex(s->s3->handshake_dgst[i], md, NULL)
+                || !EVP_DigestUpdate(s->s3->handshake_dgst[i], hdata,
+                                     hdatalen)) {
+                SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
         } else {
             s->s3->handshake_dgst[i] = NULL;
         }
