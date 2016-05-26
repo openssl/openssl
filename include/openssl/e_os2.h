@@ -293,10 +293,10 @@ typedef unsigned __int64 uint64_t;
 #  define ossl_inline inline
 # endif
 
-# if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7))
-#  define ossl_noreturn __attribute__((noreturn))
-# elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #  define ossl_noreturn _Noreturn
+# elif defined(__GNUC__) && __GNUC__ >= 2
+#  define ossl_noreturn __attribute__((noreturn))
 # else
 #  define ossl_noreturn
 # endif
