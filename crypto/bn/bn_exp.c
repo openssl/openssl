@@ -527,6 +527,14 @@ static int MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top,
 {
     int i, j;
     int width = 1 << window;
+    /*
+     * We declare table 'volatile' in order to discourage compiler
+     * from reordering loads from the table. Concern is that if
+     * reordered in specific manner loads might give away the
+     * information we are trying to conceal. Some would argue that
+     * compiler can reorder them anyway, but it can as well be
+     * argued that doing so would be violation of standard...
+     */
     volatile BN_ULONG *table = (volatile BN_ULONG *)buf;
 
     if (bn_wexpand(b, top) == NULL)
