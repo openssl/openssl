@@ -261,10 +261,8 @@ char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len)
 
 int openssl_strerror_r(int errnum, char *buf, size_t buflen)
 {
-#if defined(OPENSSL_SYS_WINDOWS)
-    if (strerror_s(buf, buflen, errnum) == EINVAL)
-        return 0;
-    return 1;
+#if defined(_MSC_VER) && _MSC_VER>=1400
+    return !strerror_s(buf, buflen, errnum);
 #elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !_GNU_SOURCE
     /*
      * We can use "real" strerror_r. The OpenSSL version differs in that it
