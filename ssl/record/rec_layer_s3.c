@@ -201,7 +201,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold)
     left = rb->left;
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
     align = (size_t)rb->buf + SSL3_RT_HEADER_LENGTH;
-    align = (0-align) & (SSL3_ALIGN_PAYLOAD - 1);
+    align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
 
     if (!extend) {
@@ -711,7 +711,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * payload, then we can just pretend we simply have two headers.
          */
         align = (size_t)SSL3_BUFFER_get_buf(wb) + 2 * SSL3_RT_HEADER_LENGTH;
-        align = (0-align) & (SSL3_ALIGN_PAYLOAD - 1);
+        align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
         outbuf[0] = SSL3_BUFFER_get_buf(wb) + align;
         SSL3_BUFFER_set_offset(wb, align);
@@ -724,7 +724,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             wb = &s->rlayer.wbuf[j];
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
             align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
-            align = (-align) & (SSL3_ALIGN_PAYLOAD - 1);
+            align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
             outbuf[j] = SSL3_BUFFER_get_buf(wb) + align;
             SSL3_BUFFER_set_offset(wb, align);
@@ -1131,7 +1131,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             memcpy(buf, &(rr->data[rr->off]), n);
             buf += n;
             if (!peek) {
-                SSL3_RECORD_add_length(rr, -n);
+                SSL3_RECORD_sub_length(rr, n);
                 SSL3_RECORD_add_off(rr, n);
                 if (SSL3_RECORD_get_length(rr) == 0) {
                     s->rlayer.rstate = SSL_ST_READ_HEADER;

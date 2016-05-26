@@ -76,6 +76,7 @@ int ssl3_release_write_buffer(SSL *s);
 #define SSL3_RECORD_get_length(r)               ((r)->length)
 #define SSL3_RECORD_set_length(r, l)            ((r)->length = (l))
 #define SSL3_RECORD_add_length(r, l)            ((r)->length += (l))
+#define SSL3_RECORD_sub_length(r, l)            ((r)->length -= (l))
 #define SSL3_RECORD_get_data(r)                 ((r)->data)
 #define SSL3_RECORD_set_data(r, d)              ((r)->data = (d))
 #define SSL3_RECORD_get_input(r)                ((r)->input)
