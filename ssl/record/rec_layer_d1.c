@@ -464,7 +464,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
         memcpy(buf, &(SSL3_RECORD_get_data(rr)[SSL3_RECORD_get_off(rr)]), n);
         if (!peek) {
-            SSL3_RECORD_add_length(rr, -n);
+            SSL3_RECORD_sub_length(rr, n);
             SSL3_RECORD_add_off(rr, n);
             if (SSL3_RECORD_get_length(rr) == 0) {
                 s->rlayer.rstate = SSL_ST_READ_HEADER;
