@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include "ocsp_lcl.h"
+#include "internal/cryptlib.h"
 #include <openssl/pem.h>
 
 static int ocsp_certid_print(BIO *bp, OCSP_CERTID *a, int indent)
@@ -34,14 +35,16 @@ typedef struct {
     const char *m;
 } OCSP_TBLSTR;
 
-static const char *table2string(long s, const OCSP_TBLSTR *ts, int len)
+static const char *do_table2string(long s, const OCSP_TBLSTR *ts, size_t len)
 {
-    const OCSP_TBLSTR *p;
-    for (p = ts; p < ts + len; p++)
-        if (p->t == s)
-            return p->m;
+    size_t i;
+    for (i = 0; i < len; i++, ts++)
+        if (ts->t == s)
+            return ts->m;
     return "(UNKNOWN)";
 }
+
+#define table2string(s, tbl) do_table2string(s, tbl, OSSL_NELEM(tbl))
 
 const char *OCSP_response_status_str(long s)
 {
@@ -53,7 +56,7 @@ const char *OCSP_response_status_str(long s)
         {OCSP_RESPONSE_STATUS_SIGREQUIRED, "sigrequired"},
         {OCSP_RESPONSE_STATUS_UNAUTHORIZED, "unauthorized"}
     };
-    return table2string(s, rstat_tbl, 6);
+    return table2string(s, rstat_tbl);
 }
 
 const char *OCSP_cert_status_str(long s)
@@ -63,7 +66,7 @@ const char *OCSP_cert_status_str(long s)
         {V_OCSP_CERTSTATUS_REVOKED, "revoked"},
         {V_OCSP_CERTSTATUS_UNKNOWN, "unknown"}
     };
-    return table2string(s, cstat_tbl, 3);
+    return table2string(s, cstat_tbl);
 }
 
 const char *OCSP_crl_reason_str(long s)
@@ -78,7 +81,7 @@ const char *OCSP_crl_reason_str(long s)
         {OCSP_REVOKED_STATUS_CERTIFICATEHOLD, "certificateHold"},
         {OCSP_REVOKED_STATUS_REMOVEFROMCRL, "removeFromCRL"}
     };
-    return table2string(s, reason_tbl, 8);
+    return table2string(s, reason_tbl);
 }
 
 int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST *o, unsigned long flags)
