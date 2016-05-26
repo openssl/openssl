@@ -72,7 +72,7 @@ int ssl3_send_alert(SSL *s, int level, int desc)
         return -1;
     /* If a fatal one, remove from cache */
     if ((level == SSL3_AL_FATAL) && (s->session != NULL))
-        SSL_CTX_remove_session(s->ctx, s->session);
+        SSL_CTX_remove_session(s->session_ctx, s->session);
 
     s->s3->alert_dispatch = 1;
     s->s3->send_alert[0] = level;
