@@ -374,14 +374,13 @@ int ssl3_digest_cached_records(SSL *s, int keep)
         }
 
         md = ssl_handshake_md(s);
-        if (md == NULL) {
+        if (   md == NULL
+            || !EVP_DigestInit_ex(s->s3->handshake_dgst, md, NULL)
+            || !EVP_DigestUpdate(s->s3->handshake_dgst, hdata, hdatalen))
+        {
             SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_INTERNAL_ERROR);
             return 0;
         }
-
-        EVP_DigestInit_ex(s->s3->handshake_dgst, md, NULL);
-        EVP_DigestUpdate(s->s3->handshake_dgst, hdata, hdatalen);
-
     }
     if (keep == 0) {
         BIO_free(s->s3->handshake_buffer);
