@@ -1473,7 +1473,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             BIO_snprintf(tmp, sizeof tmp, "%d", alert_descr);
             ERR_add_error_data(2, "SSL alert number ", tmp);
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
-            SSL_CTX_remove_session(s->ctx, s->session);
+            SSL_CTX_remove_session(s->session_ctx, s->session);
             return (0);
         } else {
             al = SSL_AD_ILLEGAL_PARAMETER;
@@ -1698,7 +1698,7 @@ int ssl3_send_alert(SSL *s, int level, int desc)
         return -1;
     /* If a fatal one, remove from cache */
     if ((level == 2) && (s->session != NULL))
-        SSL_CTX_remove_session(s->ctx, s->session);
+        SSL_CTX_remove_session(s->session_ctx, s->session);
 
     s->s3->alert_dispatch = 1;
     s->s3->send_alert[0] = level;
