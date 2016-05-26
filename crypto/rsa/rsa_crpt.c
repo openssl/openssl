@@ -147,23 +147,18 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
     }
 
     {
-        BIGNUM *local_n = NULL, *n;
-        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-            /* Set BN_FLG_CONSTTIME flag */
-            local_n = n = BN_new();
-            if (local_n == NULL) {
-                RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-            BN_with_flags(n, rsa->n, BN_FLG_CONSTTIME);
-        } else {
-            n = rsa->n;
+        BIGNUM *n = BN_new();
+
+        if (n == NULL) {
+            RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_MALLOC_FAILURE);
+            goto err;
         }
+        BN_with_flags(n, rsa->n, BN_FLG_CONSTTIME);
 
         ret = BN_BLINDING_create_param(NULL, e, n, ctx, rsa->meth->bn_mod_exp,
                                        rsa->_method_mod_n);
-        /* We MUST free local_n before any further use of rsa->n */
-        BN_free(local_n);
+        /* We MUST free n before any further use of rsa->n */
+        BN_free(n);
     }
     if (ret == NULL) {
         RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_BN_LIB);

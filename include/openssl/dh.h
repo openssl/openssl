@@ -32,7 +32,13 @@ extern "C" {
 # define OPENSSL_DH_FIPS_MIN_MODULUS_BITS 1024
 
 # define DH_FLAG_CACHE_MONT_P     0x01
-# define DH_FLAG_NO_EXP_CONSTTIME 0x02
+
+# if OPENSSL_API_COMPAT < 0x10100000L
+/*
+ * Does nothing. Previously this switched off constant time behaviour.
+ */
+#  define DH_FLAG_NO_EXP_CONSTTIME 0x00
+# endif
 
 /*
  * If this flag is set the DH method is FIPS compliant and can be used in

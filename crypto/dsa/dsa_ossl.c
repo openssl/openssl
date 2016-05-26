@@ -135,7 +135,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
                           const unsigned char *dgst, int dlen)
 {
     BN_CTX *ctx = NULL;
-    BIGNUM *k, *kq, *K, *kinv = NULL, *r = *rp;
+    BIGNUM *k, *kq, *kinv = NULL, *r = *rp;
     int ret = 0;
 
     if (!dsa->p || !dsa->q || !dsa->g) {
@@ -176,39 +176,31 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     /* Compute r = (g^k mod p) mod q */
 
-    if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
-        if (!BN_copy(kq, k))
-            goto err;
+    if (!BN_copy(kq, k))
+        goto err;
 
-        /*
-         * We do not want timing information to leak the length of k, so we
-         * compute g^k using an equivalent exponent of fixed length. (This
-         * is a kludge that we need because the BN_mod_exp_mont() does not
-         * let us specify the desired timing behaviour.)
-         */
+    /*
+     * We do not want timing information to leak the length of k, so we
+     * compute g^k using an equivalent exponent of fixed length. (This
+     * is a kludge that we need because the BN_mod_exp_mont() does not
+     * let us specify the desired timing behaviour.)
+     */
 
+    if (!BN_add(kq, kq, dsa->q))
+        goto err;
+    if (BN_num_bits(kq) <= BN_num_bits(dsa->q)) {
         if (!BN_add(kq, kq, dsa->q))
             goto err;
-        if (BN_num_bits(kq) <= BN_num_bits(dsa->q)) {
-            if (!BN_add(kq, kq, dsa->q))
-                goto err;
-        }
-
-        K = kq;
-    } else {
-        K = k;
     }
 
-    if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
-        BN_set_flags(K, BN_FLG_CONSTTIME);
-    }
+    BN_set_flags(kq, BN_FLG_CONSTTIME);
 
     if ((dsa)->meth->bn_mod_exp != NULL) {
-            if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, K, dsa->p, ctx,
+            if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, kq, dsa->p, ctx,
                                        dsa->method_mont_p))
                 goto err;
     } else {
-            if (!BN_mod_exp_mont(r, dsa->g, K, dsa->p, ctx, dsa->method_mont_p))
+            if (!BN_mod_exp_mont(r, dsa->g, kq, dsa->p, ctx, dsa->method_mont_p))
                 goto err;
     }
 

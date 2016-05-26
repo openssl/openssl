@@ -38,12 +38,12 @@ extern "C" {
 # define OPENSSL_DSA_FIPS_MIN_MODULUS_BITS 1024
 
 # define DSA_FLAG_CACHE_MONT_P   0x01
+# if OPENSSL_API_COMPAT < 0x10100000L
 /*
- * new with 0.9.7h; the built-in DSA implementation now uses constant time
- * modular exponentiation for secret exponents by default. This flag causes
- * the faster variable sliding window method to be used for all exponents.
+ * Does nothing. Previously this switched off constant time behaviour.
  */
-# define DSA_FLAG_NO_EXP_CONSTTIME       0x02
+#  define DSA_FLAG_NO_EXP_CONSTTIME       0x00
+# endif
 
 /*
  * If this flag is set the DSA method is FIPS compliant and can be used in

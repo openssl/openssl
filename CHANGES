@@ -4,6 +4,12 @@
 
  Changes between 1.0.2h and 1.1.0  [xx XXX 2016]
 
+  *) The flags RSA_FLAG_NO_CONSTTIME, DSA_FLAG_NO_EXP_CONSTTIME and
+     DH_FLAG_NO_EXP_CONSTTIME which previously provided the ability to switch
+     off the constant time implementation for RSA, DSA and DH have been made
+     no-ops and deprecated.
+     [Matt Caswell]
+
   *) Windows RAND implementation was simplified to only get entropy by
      calling CryptGenRandom(). Various other RAND-related tickets
      were also closed.

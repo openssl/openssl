@@ -66,18 +66,12 @@ extern "C" {
  * but other engines might not need it
  */
 # define RSA_FLAG_NO_BLINDING            0x0080
+# if OPENSSL_API_COMPAT < 0x10100000L
 /*
- * new with 0.9.8f; the built-in RSA
- * implementation now uses constant time
- * operations by default in private key operations,
- * e.g., constant time modular exponentiation,
- * modular inverse without leaking branches,
- * division without leaking branches. This
- * flag disables these constant time
- * operations and results in faster RSA
- * private key operations.
+ * Does nothing. Previously this switched off constant time behaviour.
  */
-# define RSA_FLAG_NO_CONSTTIME           0x0100
+#  define RSA_FLAG_NO_CONSTTIME           0x0000
+# endif
 # if OPENSSL_API_COMPAT < 0x00908000L
 /* deprecated name for the flag*/
 /*
