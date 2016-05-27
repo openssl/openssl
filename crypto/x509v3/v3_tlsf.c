@@ -107,7 +107,7 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
             extval = val->name;
 
         for (j = 0; j < OSSL_NELEM(tls_feature_tbl); j++)
-            if (OPENSSL_strcasecmp(extval, tls_feature_tbl[j].name) == 0)
+            if (strcasecmp(extval, tls_feature_tbl[j].name) == 0)
                 break;
         if (j < OSSL_NELEM(tls_feature_tbl))
             tlsextid = tls_feature_tbl[j].num;
