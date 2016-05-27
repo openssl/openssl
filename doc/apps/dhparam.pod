@@ -72,7 +72,8 @@ avoid small-subgroup attacks that may be possible otherwise.
 
 =item B<-check>
 
-check if the parameters are valid primes and generator.
+Performs numerous checks to see if the supplied parameters are valid and
+displays a warning if not.
 
 =item B<-2>, B<-5>
 
