@@ -280,7 +280,8 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
     else
         pub_key = NULL;
 
-    if (priv_key == NULL && pub_key == NULL) {
+    if (x->p == NULL || (ptype == 2 && priv_key == NULL)
+            || (ptype > 0 && pub_key == NULL)) {
         reason = ERR_R_PASSED_NULL_PARAMETER;
         goto err;
     }
