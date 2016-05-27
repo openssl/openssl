@@ -170,20 +170,27 @@ $code.=<<___;
 poly1305_blocks:
 	.set	noreorder
 	dsrl	$len,4			# number of complete blocks
-	beqz	$len,.Lno_data
+	bnez	$len,poly1305_blocks_internal
 	nop
+	jr	$ra
+	nop
+.end	poly1305_blocks
 
-	.frame	$sp,8*8,$ra
+.align	5
+.ent	poly1305_blocks_internal
+poly1305_blocks_internal:
+	.frame	$sp,6*8,$ra
 	.mask	$SAVED_REGS_MASK,-8
-	dsub	$sp,8*8
-	sd	$s5,0($sp)
-	sd	$s4,8($sp)
+	.set	noreorder
+	dsub	$sp,6*8
+	sd	$s5,40($sp)
+	sd	$s4,32($sp)
 ___
 $code.=<<___ if ($flavour =~ /nubi/i);	# optimize non-nubi prologue
-	sd	$s3,16($sp)
-	sd	$s2,24($sp)
-	sd	$s1,32($sp)
-	sd	$s0,40($sp)
+	sd	$s3,24($sp)
+	sd	$s2,16($sp)
+	sd	$s1,8($sp)
+	sd	$s0,0($sp)
 ___
 $code.=<<___;
 	.set	reorder
@@ -311,22 +318,19 @@ $code.=<<___;
 	sd	$h2,16($ctx)
 
 	.set	noreorder
-	ld	$s5,0($sp)		# epilogue
-	ld	$s4,8($sp)
+	ld	$s5,40($sp)		# epilogue
+	ld	$s4,32($sp)
 ___
 $code.=<<___ if ($flavour =~ /nubi/i);	# optimize non-nubi epilogue
-	ld	$s3,16($sp)
-	ld	$s2,24($sp)
-	ld	$s1,32($sp)
-	ld	$s0,40($sp)
+	ld	$s3,24($sp)
+	ld	$s2,16($sp)
+	ld	$s1,8($sp)
+	ld	$s0,0($sp)
 ___
 $code.=<<___;
-	dadd	$sp,8*8
-
-.Lno_data:
 	jr	$ra
-	nop
-.end	poly1305_blocks
+	dadd	$sp,6*8
+.end	poly1305_blocks_internal
 ___
 }
 {
