@@ -139,6 +139,7 @@ poly1305_init:
 .Lno_key:
 	ret
 	restore	%g0,%g0,%o0		! return 0
+.type	poly1305_init,#function
 .size	poly1305_init,.-poly1305_init
 
 .globl	poly1305_blocks
@@ -271,6 +272,7 @@ poly1305_blocks:
 .Lno_data:
 	ret
 	restore
+.type	poly1305_blocks,#function
 .size	poly1305_blocks,.-poly1305_blocks
 ___
 ########################################################################
@@ -361,6 +363,7 @@ poly1305_blocks_vis3:
 
 	ret
 	restore
+.type	poly1305_blocks_vis3,#function
 .size	poly1305_blocks_vis3,.-poly1305_blocks_vis3
 ___
 }
@@ -433,6 +436,7 @@ poly1305_emit:
 
 	ret
 	restore
+.type	poly1305_emit,#function
 .size	poly1305_emit,.-poly1305_emit
 ___
 
@@ -598,6 +602,7 @@ poly1305_init_fma:
 .Lno_key_fma:
 	ret
 	restore	%g0,%g0,%o0			! return 0
+.type	poly1305_init_fma,#function
 .size	poly1305_init_fma,.-poly1305_init_fma
 
 .align	32
@@ -905,6 +910,7 @@ poly1305_blocks_fma:
 .Labort:
 	ret
 	restore
+.type	poly1305_blocks_fma,#function
 .size	poly1305_blocks_fma,.-poly1305_blocks_fma
 ___
 {
@@ -1011,6 +1017,7 @@ poly1305_emit_fma:
 
 	ret
 	restore
+.type	poly1305_emit_fma,#function
 .size	poly1305_emit_fma,.-poly1305_emit_fma
 ___
 }
