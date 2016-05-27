@@ -378,7 +378,7 @@ static int ec_bits(const EVP_PKEY *pkey)
 
 static int ec_missing_parameters(const EVP_PKEY *pkey)
 {
-    if (EC_KEY_get0_group(pkey->pkey.ec) == NULL)
+    if (pkey->pkey.ec == NULL || EC_KEY_get0_group(pkey->pkey.ec) == NULL)
         return 1;
     return 0;
 }
