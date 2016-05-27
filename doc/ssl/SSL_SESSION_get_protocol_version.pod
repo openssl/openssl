@@ -12,21 +12,8 @@ SSL_SESSION_get_protocol_version - retrieve session protocol version
 
 =head1 DESCRIPTION
 
-SSL_SESSION_get_protocol_version() returns the time at which the session B<s> was
-established. The time is given in seconds since the Epoch and therefore
-compatible to the time delivered by the time() call.
-
-SSL_SESSION_set_time() replaces the creation time of the session B<s> with
-the chosen value B<tm>.
-
-SSL_SESSION_get_timeout() returns the timeout value set for session B<s>
-in seconds.
-
-SSL_SESSION_set_timeout() sets the timeout value for session B<s> in seconds
-to B<tm>.
-
-The SSL_get_time(), SSL_set_time(), SSL_get_timeout(), and SSL_set_timeout()
-functions are synonyms for the SSL_SESSION_*() counterparts.
+SSL_SESSION_get_protocol_version() returns the protocol version number used
+by session B<s>.
 
 =head1 RETURN VALUES
 
@@ -38,9 +25,11 @@ If the function is passed the NULL pointer for the session B<s>, 0 is returned.
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
-L<SSL_CTX_set_timeout(3)>,
-L<SSL_get_default_timeout(3)>
+L<ssl(3)>
+
+=head1 HISTORY
+
+SSL_SESSION_get_protocol_version() was first added to OpenSSL 1.1.0
 
 =head1 COPYRIGHT
 
