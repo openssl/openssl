@@ -476,12 +476,8 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   define strdup _strdup
 #   define unlink _unlink
 #  endif
-# elif defined(OPENSSL_SYS_VMS)
-/* VMS below version 7.0 doesn't have strcasecmp() */
-#  include "internal/o_str.h"
-#  define strcasecmp OPENSSL_strcasecmp
-#  define strncasecmp OPENSSL_strncasecmp
-#  define OPENSSL_IMPLEMENTS_strncasecmp
+# else
+#  include <strings.h>
 # endif
 
 /* vxworks */
