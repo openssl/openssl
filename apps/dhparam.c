@@ -270,15 +270,30 @@ int dhparam_main(int argc, char **argv)
             goto end;
         }
         if (i & DH_CHECK_P_NOT_PRIME)
-            printf("p value is not prime\n");
+            BIO_printf(bio_err, "WARNING: p value is not prime\n");
         if (i & DH_CHECK_P_NOT_SAFE_PRIME)
-            printf("p value is not a safe prime\n");
+            BIO_printf(bio_err, "WARNING: p value is not a safe prime\n");
+        if (i & DH_CHECK_Q_NOT_PRIME)
+            BIO_printf(bio_err, "WARNING: q value is not a prime\n");
+        if (i & DH_CHECK_INVALID_Q_VALUE)
+            BIO_printf(bio_err, "WARNING: q value is invalid\n");
+        if (i & DH_CHECK_INVALID_J_VALUE)
+            BIO_printf(bio_err, "WARNING: j value is invalid\n");
         if (i & DH_UNABLE_TO_CHECK_GENERATOR)
-            printf("unable to check the generator value\n");
+            BIO_printf(bio_err,
+                       "WARNING: unable to check the generator value\n");
         if (i & DH_NOT_SUITABLE_GENERATOR)
-            printf("the g value is not a generator\n");
+            BIO_printf(bio_err, "WARNING: the g value is not a generator\n");
         if (i == 0)
-            printf("DH parameters appear to be ok.\n");
+            BIO_printf(bio_err, "DH parameters appear to be ok.\n");
+        if (num != 0 && i != 0) {
+            /*
+             * We have generated parameters but DH_check() indicates they are
+             * invalid! This should never happen!
+             */
+            BIO_printf(bio_err, "ERROR: Invalid parameters generated\n");
+            goto end;
+        }
     }
     if (C) {
         unsigned char *data;
