@@ -59,10 +59,10 @@ DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)
 extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dhx_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5];
 extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2];
 
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the
