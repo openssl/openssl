@@ -103,6 +103,7 @@ aes_fx_encrypt:
 	orn		%g0, $mask, $mask
 	retl
 	stda		%f8, [$out + $mask]0xc0	! partial store
+.type	aes_fx_encrypt,#function
 .size	aes_fx_encrypt,.-aes_fx_encrypt
 
 .globl	aes_fx_decrypt
@@ -180,6 +181,7 @@ aes_fx_decrypt:
 	orn		%g0, $mask, $mask
 	retl
 	stda		%f8, [$out + $mask]0xc0	! partial store
+.type	aes_fx_decrypt,#function
 .size	aes_fx_decrypt,.-aes_fx_decrypt
 ___
 }
@@ -193,6 +195,7 @@ aes_fx_set_decrypt_key:
 	mov		-1, $inc
 	retl
 	nop
+.type	aes_fx_set_decrypt_key,#function
 .size	aes_fx_set_decrypt_key,.-aes_fx_set_decrypt_key
 
 .globl	aes_fx_set_encrypt_key
@@ -329,6 +332,7 @@ $code.=<<___;
 	std		%f2, [$out + 8]
 	retl
 	xor		%o0, %o0, %o0		! return 0
+.type	aes_fx_set_encrypt_key,#function
 .size	aes_fx_set_encrypt_key,.-aes_fx_set_encrypt_key
 ___
 }
