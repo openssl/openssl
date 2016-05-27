@@ -237,11 +237,17 @@ int RAND_poll(void)
      */
     {
         /* load functions dynamically - not available on all systems */
-        HMODULE advapi = LoadLibrary(TEXT("ADVAPI32.DLL"));
-        HMODULE kernel = LoadLibrary(TEXT("KERNEL32.DLL"));
-        HMODULE user = NULL;
-        HMODULE netapi = LoadLibrary(TEXT("NETAPI32.DLL"));
-        CRYPTACQUIRECONTEXTW acquire = NULL;
+#if defined(OPENSSL_SYSNAME_WIN_CORE)
+        HMODULE advapi = LoadLibraryEx(TEXT("ADVAPI32.DLL"), NULL, 0);
+        HMODULE kernel = LoadLibraryEx(TEXT("KERNEL32.DLL"), NULL, 0);
+        HMODULE netapi = LoadLibraryEx(TEXT("NETAPI32.DLL"), NULL, 0);
+#else
+		HMODULE advapi = LoadLibrary(TEXT("ADVAPI32.DLL"));
+		HMODULE kernel = LoadLibrary(TEXT("KERNEL32.DLL"));
+		HMODULE netapi = LoadLibrary(TEXT("NETAPI32.DLL"));
+#endif
+		HMODULE user = NULL;
+		CRYPTACQUIRECONTEXTW acquire = NULL;
         CRYPTGENRANDOM gen = NULL;
         CRYPTRELEASECONTEXT release = NULL;
         NETSTATGET netstatget = NULL;
@@ -328,7 +334,11 @@ int RAND_poll(void)
 
         if ((!check_winnt() ||
              !OPENSSL_isservice()) &&
+#if defined(OPENSSL_SYSNAME_WIN_CORE)
+            (user = LoadLibraryEx(TEXT("USER32.DLL"), NULL, 0))) {
+#else
             (user = LoadLibrary(TEXT("USER32.DLL")))) {
+#endif
             GETCURSORINFO cursor;
             GETFOREGROUNDWINDOW win;
             GETQUEUESTATUS queue;
@@ -682,6 +692,7 @@ static void readtimer(void)
 
 static void readscreen(void)
 {
+#if !defined(OPENSSL_SYSNAME_WIN_CORE)
 # if !defined(OPENSSL_SYS_WINCE) && !defined(OPENSSL_SYS_WIN32_CYGWIN)
     HDC hScrDC;                 /* screen DC */
     HBITMAP hBitmap;            /* handle for our bitmap */
@@ -747,6 +758,7 @@ static void readscreen(void)
     DeleteObject(hBitmap);
     ReleaseDC(NULL, hScrDC);
 # endif                         /* !OPENSSL_SYS_WINCE */
+#endif /* !OPENSSL_SYSNAME_WIN_CORE */
 }
 
 #endif

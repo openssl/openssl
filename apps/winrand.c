@@ -137,8 +137,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
     if (RAND_event(iMsg, wParam, lParam) == 1 && seeded == 0) {
         seeded = 1;
         if (RAND_write_file(filename) <= 0)
+	{
+#if !defined(OPENSSL_SYSNAME_WIN_CORE)
             MessageBox(hwnd, "Couldn't write random file!",
                        "OpenSSL", MB_OK | MB_ICONERROR);
+#endif
+	}
         PostQuitMessage(0);
     }
 

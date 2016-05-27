@@ -108,7 +108,11 @@ static HINSTANCE LoadLibraryA(LPCSTR lpLibFileName)
         for (i = 0; i < len_0; i++)
             fnamw[i] = (WCHAR)lpLibFileName[i];
 
-    return LoadLibraryW(fnamw);
+#if defined(OPENSSL_SYSNAME_WIN_CORE)
+    return LoadLibraryExW(fnamw, NULL, 0);
+#else
+	return LoadLibraryW(fnamw);
+#endif
 }
 # endif
 
@@ -644,7 +648,11 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
         addr = t.p;
     }
 
-    dll = LoadLibrary(TEXT(DLLNAME));
+#if defined(OPENSSL_SYSNAME_WIN_CORE)
+    dll = LoadLibraryEx(TEXT(DLLNAME), NULL, 0);
+#else
+	dll = LoadLibrary(TEXT(DLLNAME));
+#endif
     if (dll == NULL) {
         DSOerr(DSO_F_WIN32_PATHBYADDR, DSO_R_UNSUPPORTED);
         return -1;
@@ -735,7 +743,11 @@ static void *win32_globallookup(const char *name)
     MODULE32 module_first, module_next;
     FARPROC ret = NULL;
 
-    dll = LoadLibrary(TEXT(DLLNAME));
+#if defined(OPENSSL_SYSNAME_WIN_CORE)
+    dll = LoadLibraryEx(TEXT(DLLNAME), NULL, 0);
+#else
+	dll = LoadLibrary(TEXT(DLLNAME));
+#endif
     if (dll == NULL) {
         DSOerr(DSO_F_WIN32_GLOBALLOOKUP, DSO_R_UNSUPPORTED);
         return NULL;

@@ -74,6 +74,7 @@ $infile="MINFO";
 
 %ops=(
 	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
+    "VC-CORE",    "Microsoft Visual C++ [4-6] - Windows 10 IoT core",
 	"VC-WIN64I",  "Microsoft C/C++ - Win64/IA-64",
 	"VC-WIN64A",  "Microsoft C/C++ - Win64/x64",
 	"VC-CE",   "Microsoft eMbedded Visual C++ 3.0 - Windows CE ONLY",

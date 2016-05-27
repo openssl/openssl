@@ -490,7 +490,11 @@ static int capi_init(ENGINE *e)
 
 # ifdef OPENSSL_CAPIENG_DIALOG
     {
-        HMODULE cryptui = LoadLibrary(TEXT("CRYPTUI.DLL"));
+#if defined(OPENSSL_SYSNAME_WIN_CORE)
+        HMODULE cryptui = LoadLibraryEx(TEXT("CRYPTUI.DLL"), NULL, 0);
+#else
+		HMODULE cryptui = LoadLibrary(TEXT("CRYPTUI.DLL"));
+#endif
         HMODULE kernel = GetModuleHandle(TEXT("KERNEL32.DLL"));
         if (cryptui)
             ctx->certselectdlg =
