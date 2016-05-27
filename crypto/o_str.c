@@ -263,7 +263,9 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
 {
 #if defined(_MSC_VER) && _MSC_VER>=1400
     return !strerror_s(buf, buflen, errnum);
-#elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && !_GNU_SOURCE
+#elif defined(_GNU_SOURCE)
+    return strerror_r(errnum, buf, buflen) != NULL;
+#elif (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600)
     /*
      * We can use "real" strerror_r. The OpenSSL version differs in that it
      * gives 1 on success and 0 on failure for consistency with other OpenSSL
