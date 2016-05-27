@@ -3853,7 +3853,7 @@ static int ct_move_scts(STACK_OF(SCT) **dst, STACK_OF(SCT) *src, sct_source_t or
 err:
     if (sct != NULL)
         sk_SCT_push(src, sct); /* Put the SCT back */
-    return scts_moved;
+    return -1;
 }
 
 /*
