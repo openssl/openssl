@@ -135,6 +135,22 @@ else	# Win32
     $opt_cflags=$f.' /Ox /O2 /Ob2';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
+    if ($FLAVOR =~ /CORE/)
+        {
+        $lflags="/NODEFAULTLIB:kernel32.lib /NODEFAULTLIB:ws2_32.lib /NODEFAULTLIB:gdi32.lib /NODEFAULTLIB:advapi32.lib /NODEFAULTLIB:crypt32.lib /NODEFAULTLIB:user32.lib /nologo /subsystem:console /opt:ref /SAFESEH /NXCOMPAT /DYNAMICBASE";
+		if($FLAVOR =~ /CORE32/)
+			{
+				$base_cflags.=" -Dx86 -D_X86_ -D_i386_ -Di_386_";
+				$base_cflags.=" /arch:IA32";
+				$lflags.=" /machine:X86";
+			}
+		else	#core64
+			{
+				$base_cflags.=" /arch:AVX";
+				$lflags.=" /machine:X64";
+			}
+		$base
+        }
     }
 $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
 $mlflags='';
@@ -189,6 +205,10 @@ if ($FLAVOR =~ /CE/)
 		}
 	$ex_libs.=' $(PORTSDK_LIBPATH)/portlib.lib'	if (defined($ENV{'PORTSDK_LIBPATH'}));
 	$ex_libs.=' /nodefaultlib coredll.lib corelibc.lib' if ($ENV{'TARGETCPU'} eq "X86");
+	} 
+elsif ($FLAVOR =~ /CORE/)
+	{
+	$ex_libs='mincore.lib';
 	}
 else
 	{

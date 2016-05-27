@@ -2924,11 +2924,19 @@ static int WIN32_rename(const char *from, const char *to)
                 tto[i] = (TCHAR)to[i];
     }
 
+#if defined(OPENSSL_SYSNAME_WIN_CORE)
+    if (MoveFileExW(tfrom, tto, 0))
+#else
     if (MoveFile(tfrom, tto))
+#endif
         goto ok;
     err = GetLastError();
     if (err == ERROR_ALREADY_EXISTS || err == ERROR_FILE_EXISTS) {
+#if defined(OPENSSL_SYSNAME_WIN_CORE)
+        if (DeleteFile(tto) && MoveFileExW(tfrom, tto, 0))
+#else
         if (DeleteFile(tto) && MoveFile(tfrom, tto))
+#endif
             goto ok;
         err = GetLastError();
     }
