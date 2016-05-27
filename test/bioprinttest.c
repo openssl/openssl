@@ -92,7 +92,7 @@ static void dofptest(int test, double val, char *width, int prec, int *fail)
     int i;
 
     for (i = 0; i < 5; i++) {
-        char *fspec;
+        char *fspec = NULL;
         switch (i) {
         case 0:
             fspec = "e";
@@ -143,8 +143,8 @@ int main(int argc, char **argv)
     int test = 0;
     int i;
     int fail = 0;
-    int prec;
-    char *width;
+    int prec = -1;
+    char *width = "";
     const double frac = 2.0/3.0;
     char buf[80];
 
