@@ -473,7 +473,9 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   define open _open
 #   define fdopen _fdopen
 #   define close _close
-#   define strdup _strdup
+#   ifndef strdup
+#    define strdup _strdup
+#   endif
 #   define unlink _unlink
 #  endif
 # else
