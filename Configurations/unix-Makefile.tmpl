@@ -230,6 +230,7 @@ tests: build_tests_nodep build_apps_nodep build_engines_nodep \
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
+	  PERL="$(PERL)" \
 	  EXE_EXT={- $exeext -} \
 	  OPENSSL_ENGINES=../$(BLDDIR)/engines \
 	    $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
@@ -238,7 +239,7 @@ tests: build_tests_nodep build_apps_nodep build_engines_nodep \
 	@ : {- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
-	@TOP=$(SRCDIR) PERL=$(PERL) $(PERL) $(SRCDIR)/test/run_tests.pl list
+	@TOP="$(SRCDIR)" PERL="$(PERL)" $(PERL) $(SRCDIR)/test/run_tests.pl list
 
 libclean:
 	@set -e; for s in $(SHLIB_INFO); do \
@@ -960,7 +961,7 @@ EOF
 $target: $lib$libext $deps $ordinalsfile
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
-		PERL=\$(PERL) SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
+		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
 		INSTALLTOP='\$(INSTALLTOP)' LIBDIR='\$(LIBDIR)' \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
 		LIBNAME=$libname LIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
@@ -996,7 +997,7 @@ EOF
 $target: $objs $deps
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
-		PERL=\$(PERL) SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
+		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$shlibdeps"' \$(EX_LIBS)' \\
 		LIBNAME=$libname LDFLAGS='\$(LDFLAGS)' \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(DSO_CFLAGS)' \\
@@ -1033,7 +1034,7 @@ EOF
 $bin$exeext: $objs $deps
 	\$(RM) $bin$exeext
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
-		PERL=\$(PERL) SRCDIR=\$(SRCDIR) \\
+		PERL="\$(PERL)" SRCDIR=\$(SRCDIR) \\
 		APPNAME=$bin$exeext OBJECTS="$objs" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(BIN_CFLAGS)' \\
