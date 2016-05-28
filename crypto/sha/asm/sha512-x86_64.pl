@@ -139,7 +139,7 @@ if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([
 $shaext=1;	### set to zero if compiling for 1.0.1
 $avx=1		if (!$shaext && $avx);
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
+open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
 *STDOUT=*OUT;
 
 if ($output =~ /512/) {
