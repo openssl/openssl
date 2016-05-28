@@ -109,7 +109,7 @@ $shaext=1;	### set to zero if compiling for 1.0.1
 
 $stitched_decrypt=0;
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
+open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
 *STDOUT=*OUT;
 
 # void aesni_cbc_sha1_enc(const void *inp,
