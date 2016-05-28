@@ -81,10 +81,9 @@ static int aesni_cbc_hmac_sha256_init_key(EVP_CIPHER_CTX *ctx,
     int ret;
 
     if (enc)
-        memset(&key->ks, 0, sizeof(key->ks.rd_key)),
-            ret = aesni_set_encrypt_key(inkey,
-                                        EVP_CIPHER_CTX_key_length(ctx) * 8,
-                                        &key->ks);
+        ret = aesni_set_encrypt_key(inkey,
+                                    EVP_CIPHER_CTX_key_length(ctx) * 8,
+                                    &key->ks);
     else
         ret = aesni_set_decrypt_key(inkey,
                                     EVP_CIPHER_CTX_key_length(ctx) * 8,
