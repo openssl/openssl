@@ -16,6 +16,9 @@ BEGIN {
 
 use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
 use File::Basename;
+if ($^O ne "VMS") {
+    use File::Glob qw/glob/;
+}
 use Test::Harness qw/runtests $switches/;
 
 my $srctop = $ENV{SRCTOP} || $ENV{TOP};
@@ -42,13 +45,13 @@ my $list_mode = scalar(grep /^list$/, @tests) != 0;
 if (grep /^(alltests|list)$/, @tests) {
     @tests = grep {
 	basename($_) =~ /^[0-9][0-9]-[^\.]*\.t$/
-    } glob('"'.catfile($recipesdir,"*.t").'"');
+    } glob(catfile($recipesdir,"*.t"));
 } else {
     my @t = ();
     foreach (@tests) {
 	push @t, grep {
 	    basename($_) =~ /^[0-9][0-9]-[^\.]*\.t$/
-	} glob('"'.catfile($recipesdir,"*-$_.t").'"');
+	} glob(catfile($recipesdir,"*-$_.t"));
     }
     @tests = @t;
 }

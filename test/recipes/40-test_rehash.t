@@ -13,6 +13,9 @@ use warnings;
 use File::Spec::Functions;
 use File::Copy;
 use File::Basename;
+if ($^O ne "VMS") {
+    use File::Glob qw/glob/;
+}
 use OpenSSL::Test qw/:DEFAULT bldtop_file/;
 
 setup("test_rehash");
@@ -59,9 +62,9 @@ indir "rehash.$$" => sub {
 sub prepare {
     my @sourcefiles =
         sort map { glob(bldtop_file('certs', 'demo', "*.$_")) } ('pem',
-                                                              'crt',
-                                                              'cer',
-                                                              'crl');
+                                                                 'crt',
+                                                                 'cer',
+                                                                 'crl');
     my @destfiles = ();
     foreach (@sourcefiles) {
         copy($_, curdir());

@@ -12,6 +12,9 @@ use warnings;
 
 use File::Basename;
 use File::Compare qw/compare_text/;
+if ($^O ne "VMS") {
+    use File::Glob qw/glob/;
+}
 
 use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file/;
 use OpenSSL::Test::Utils qw/disabled alldisabled available_protocols/;
@@ -20,7 +23,7 @@ setup("test_ssl_new");
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
 
-my @conf_srcs =  glob('"'.srctop_file("test", "ssl-tests", "*.conf.in").'"');
+my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.conf.in"));
 map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_) } @conf_srcs;
 map { s/\.in// } @conf_files;
