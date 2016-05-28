@@ -13,6 +13,9 @@ use File::Spec::Functions;
 use File::Basename;
 use File::Copy;
 use File::Path;
+if ($^O ne "VMS") {
+    use File::Glob qw/glob/;
+}
 use Getopt::Long;
 use Pod::Usage;
 
@@ -72,7 +75,7 @@ my $symlink_exists = eval { symlink("",""); 1 };
 foreach my $subdir (keys %{$options{subdir}}) {
     my $section = $options{subdir}->{$subdir};
     my $podsourcedir = catfile($options{sourcedir}, $subdir);
-    my $podglob = '"'.catfile($podsourcedir, "*.pod").'"';
+    my $podglob = catfile($podsourcedir, "*.pod");
 
     foreach my $podfile (glob $podglob) {
         my $podname = basename($podfile, ".pod");

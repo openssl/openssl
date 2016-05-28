@@ -14,6 +14,9 @@ use strict;
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 use File::Path qw/mkpath/;
+if ($^O ne "VMS") {
+    use File::Glob qw/glob/;
+}
 
 # see INSTALL for instructions.
 
@@ -210,7 +213,7 @@ die "erroneous version information in opensslv.h: ",
 # Collect target configurations
 
 my $pattern = catfile(dirname($0), "Configurations", "*.conf");
-foreach (sort glob("\"$pattern\"") ) {
+foreach (sort glob($pattern)) {
     &read_config($_);
 }
 
@@ -223,7 +226,7 @@ if (defined $ENV{$local_config_envname}) {
         $pattern = catfile($ENV{$local_config_envname}, '*.conf');
     }
 
-    foreach (sort glob($pattern) ) {
+    foreach (sort glob($pattern)) {
         &read_config($_);
     }
 }
