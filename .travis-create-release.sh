@@ -1,4 +1,6 @@
-#! /bin/sh -x
+#! /bin/sh
+
+set -x
 
 # $1 is expected to be $TRAVIS_OS_NAME
 
