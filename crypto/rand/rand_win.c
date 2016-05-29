@@ -13,27 +13,38 @@
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 # include <windows.h>
-# ifndef _WIN32_WINNT
-#  define _WIN32_WINNT 0x0400
-# endif
-# include <wincrypt.h>
-
+# if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0601
+#  include <bcrypt.h>
+#  pragma comment(lib, "bcrypt.lib")
+# else
+#  ifndef _WIN32_WINNT
+#   define _WIN32_WINNT 0x0400
+#  endif
+#  include <wincrypt.h>
 /*
  * Intel hardware RNG CSP -- available from
  * http://developer.intel.com/design/security/rng/redist_license.htm
  */
-# define PROV_INTEL_SEC 22
-# define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
+#  define PROV_INTEL_SEC 22
+#  define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
+# endif
 
 static void readtimer(void);
 
 int RAND_poll(void)
 {
     MEMORYSTATUS mst;
+# if !(defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0601)
     HCRYPTPROV hProvider = 0;
+# endif
     DWORD w;
     BYTE buf[64];
 
+# if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0601
+    if (BCryptGenRandom(NULL, buf, (ULONG)sizeof(buf), BCRYPT_USE_SYSTEM_PREFERRED_RNG) == 0) {
+        RAND_add(buf, sizeof(buf), sizeof(buf));
+    }
+# else
     /* poll the CryptoAPI PRNG */
     /* The CryptoAPI returns sizeof(buf) bytes of randomness */
     if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
@@ -50,6 +61,7 @@ int RAND_poll(void)
         }
         CryptReleaseContext(hProvider, 0);
     }
+# endif
 
     /* timer data */
     readtimer();
