@@ -835,8 +835,10 @@ static void cms_env_set_version(CMS_EnvelopedData *env)
     }
     if (env->version == 2)
         return;
-    if (env->originatorInfo || env->unprotectedAttrs)
+    if (env->originatorInfo || env->unprotectedAttrs) {
         env->version = 2;
+        return;
+    }
     env->version = 0;
 }
 
