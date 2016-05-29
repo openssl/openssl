@@ -210,7 +210,16 @@ die "erroneous version information in opensslv.h: ",
 # Collect target configurations
 
 my $pattern = catfile(dirname($0), "Configurations", "*.conf");
-foreach (sort glob("\"$pattern\"") ) {
+print STDERR "DEBUG: config files pattern: $pattern\n"
+    if defined $ENV{CONFIGURE_DEBUG};
+print STDERR "DEBUG: glob without quotes: ",join(", ", glob($pattern)),"\n"
+    if defined $ENV{CONFIGURE_DEBUG};
+print STDERR "DEBUG: glob with quotes: ",join(", ", glob('"'.$pattern.'"')),"\n"
+    if defined $ENV{CONFIGURE_DEBUG};
+my @config_collection = sort glob("\"$pattern\"");
+print STDERR "DEBUG: files with configs are: ",join(", ", @config_collection),"\n"
+    if defined $ENV{CONFIGURE_DEBUG};
+foreach (@config_collection) {
     &read_config($_);
 }
 
