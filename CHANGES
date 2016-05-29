@@ -4,6 +4,11 @@
 
  Changes between 1.0.2h and 1.1.0  [xx XXX 2016]
 
+  *) Windows RAND implementation was simplified to only get entropy by
+     calling CryptGenRandom(). Various other RAND-related tickets
+     were also closed.
+     [Joseph Wylie Yandle, Rich Salz]
+
   *) The stack and lhash API's were renamed to start with OPENSSL_SK_
      and OPENSSL_LH_, respectively.  The old names are available
      with API compatibility.  They new names are now completely documented.
