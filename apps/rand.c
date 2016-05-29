@@ -105,22 +105,26 @@ int rand_main(int argc, char **argv)
         r = RAND_bytes(buf, chunk);
         if (r <= 0)
             goto end;
-        if (format != FORMAT_TEXT) /* hex */
-            BIO_write(out, buf, chunk);
-        else {
+        if (format != FORMAT_TEXT) {
+            if (BIO_write(out, buf, chunk) != chunk)
+                goto end;
+        } else {
             for (i = 0; i < chunk; i++)
-                BIO_printf(out, "%02x", buf[i]);
+                if (BIO_printf(out, "%02x", buf[i]) != 2)
+                    goto end;
         }
         num -= chunk;
     }
     if (format == FORMAT_TEXT)
         BIO_puts(out, "\n");
-    (void)BIO_flush(out);
+    if (BIO_flush(out) <= 0 || !app_RAND_write_file(NULL))
+        goto end;
 
-    app_RAND_write_file(NULL);
     ret = 0;
 
  end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
     BIO_free_all(out);
     return (ret);
 }

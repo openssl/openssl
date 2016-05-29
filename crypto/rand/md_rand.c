@@ -38,7 +38,7 @@
 /* #define PREDICT      1 */
 
 #define STATE_SIZE      1023
-static int state_num = 0, state_index = 0;
+static size_t state_num = 0, state_index = 0;
 static unsigned char state[STATE_SIZE + MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2] = { 0, 0 };
@@ -268,8 +268,8 @@ static int rand_seed(const void *buf, int num)
 static int rand_bytes(unsigned char *buf, int num, int pseudo)
 {
     static volatile int stirred_pool = 0;
-    int i, j, k, st_num, st_idx;
-    int num_ceil;
+    int i, j, k;
+    size_t num_ceil, st_idx, st_num;
     int ok;
     long md_c[2];
     unsigned char local_md[MD_DIGEST_LENGTH];
