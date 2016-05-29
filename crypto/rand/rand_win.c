@@ -13,13 +13,15 @@
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 # include <windows.h>
+/* On Windows 7 or higher use BCrypt instead of the legacy CryptoAPI */
 # if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0601
+#  define USE_BCRYPT 1
+# endif
+
+# ifdef USE_BCRYPT
 #  include <bcrypt.h>
 #  pragma comment(lib, "bcrypt.lib")
 # else
-#  ifndef _WIN32_WINNT
-#   define _WIN32_WINNT 0x0400
-#  endif
 #  include <wincrypt.h>
 /*
  * Intel hardware RNG CSP -- available from
@@ -34,13 +36,13 @@ static void readtimer(void);
 int RAND_poll(void)
 {
     MEMORYSTATUS mst;
-# if !(defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0601)
+# ifndef USE_BCRYPT
     HCRYPTPROV hProvider = 0;
 # endif
     DWORD w;
     BYTE buf[64];
 
-# if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0601
+# ifdef USE_BCRYPT
     if (BCryptGenRandom(NULL, buf, (ULONG)sizeof(buf), BCRYPT_USE_SYSTEM_PREFERRED_RNG) == 0) {
         RAND_add(buf, sizeof(buf), sizeof(buf));
     }
