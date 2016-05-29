@@ -37,7 +37,7 @@ int RAND_poll(void)
 {
     MEMORYSTATUS mst;
 # ifndef USE_BCRYPT
-    HCRYPTPROV hProvider = 0;
+    HCRYPTPROV hProvider;
 # endif
     DWORD w;
     BYTE buf[64];
@@ -50,7 +50,7 @@ int RAND_poll(void)
     /* poll the CryptoAPI PRNG */
     /* The CryptoAPI returns sizeof(buf) bytes of randomness */
     if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
-        if (CryptGenRandom(hProvider, sizeof(buf), buf) != 0) {
+        if (CryptGenRandom(hProvider, (DWORD)sizeof(buf), buf) != 0) {
             RAND_add(buf, sizeof(buf), sizeof(buf));
         }
         CryptReleaseContext(hProvider, 0);
@@ -58,7 +58,7 @@ int RAND_poll(void)
 
     /* poll the Pentium PRG with CryptoAPI */
     if (CryptAcquireContextW(&hProvider, NULL, INTEL_DEF_PROV, PROV_INTEL_SEC, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
-        if (CryptGenRandom(hProvider, sizeof(buf), buf) != 0) {
+        if (CryptGenRandom(hProvider, (DWORD)sizeof(buf), buf) != 0) {
             RAND_add(buf, sizeof(buf), sizeof(buf));
         }
         CryptReleaseContext(hProvider, 0);
