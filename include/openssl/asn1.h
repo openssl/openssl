@@ -885,6 +885,7 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_ASN1_D2I_READ_BIO                         107
 # define ASN1_F_ASN1_DIGEST                               184
 # define ASN1_F_ASN1_DO_ADB                               110
+# define ASN1_F_ASN1_DO_LOCK                              233
 # define ASN1_F_ASN1_DUP                                  111
 # define ASN1_F_ASN1_EX_C2I                               204
 # define ASN1_F_ASN1_FIND_END                             190
