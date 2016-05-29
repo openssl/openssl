@@ -64,15 +64,15 @@ struct X509_crl_info_st {
     X509_NAME *issuer;          /* CRL issuer name */
     ASN1_TIME *lastUpdate;      /* lastUpdate field */
     ASN1_TIME *nextUpdate;      /* nextUpdate field: optional */
-    STACK_OF(X509_REVOKED) *revoked; /* revoked entries: optional */
+    STACK_OF(X509_REVOKED) *revoked;        /* revoked entries: optional */
     STACK_OF(X509_EXTENSION) *extensions;   /* extensions: optional */
-    ASN1_ENCODING enc;          /* encoding of signed portion of CRL */
+    ASN1_ENCODING enc;                      /* encoding of signed portion of CRL */
 };
 
 struct X509_crl_st {
     X509_CRL_INFO crl;          /* signed CRL data */
     X509_ALGOR sig_alg;         /* CRL signature algorithm */
-    ASN1_BIT_STRING signature; /* CRL signature */
+    ASN1_BIT_STRING signature;  /* CRL signature */
     int references;
     int flags;
     /*

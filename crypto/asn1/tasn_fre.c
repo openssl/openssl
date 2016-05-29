@@ -89,7 +89,7 @@ static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_ITYPE_NDEF_SEQUENCE:
     case ASN1_ITYPE_SEQUENCE:
-        if (asn1_do_lock(pval, -1, it) > 0)
+        if (asn1_do_lock(pval, -1, it) != 0) /* if error or ref-counter > 0 */
             return;
         if (asn1_cb) {
             i = asn1_cb(ASN1_OP_FREE_PRE, pval, it, NULL);
