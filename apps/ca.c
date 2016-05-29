@@ -239,7 +239,7 @@ int ca_main(int argc, char **argv)
     char *extensions = NULL, *extfile = NULL, *key = NULL, *passinarg = NULL;
     char *outdir = NULL, *outfile = NULL, *rev_arg = NULL, *ser_status = NULL;
     char *serialfile = NULL, *startdate = NULL, *subj = NULL;
-    char *prog, *enddate = NULL, *tmp_email_dn = NULL;
+    char *prog, *enddate = NULL;
     char *dbfile = NULL, *f, *randfile = NULL;
     char buf[3][BSIZE];
     char *const *pp;
@@ -766,11 +766,11 @@ end_of_options:
     }
 
     if (req) {
-        if ((email_dn == 1) && ((tmp_email_dn = NCONF_get_string(conf,
-                                                                 section,
-                                                                 ENV_DEFAULT_EMAIL_DN))
-                                != NULL)) {
-            if (strcmp(tmp_email_dn, "no") == 0)
+        if (email_dn == 1) {
+            char *tmp_email_dn = NULL;
+
+            tmp_email_dn = NCONF_get_string(conf, section, ENV_DEFAULT_EMAIL_DN);
+            if (tmp_email_dn != NULL && strcmp(tmp_email_dn, "no") == 0)
                 email_dn = 0;
         }
         if (verbose)
