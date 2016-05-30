@@ -13,9 +13,7 @@ use warnings;
 use File::Spec::Functions;
 use File::Copy;
 use File::Basename;
-if ($^O ne "VMS") {
-    use File::Glob qw/glob/;
-}
+use if $^O ne "VMS", 'File::Glob' => qw/glob/;
 use OpenSSL::Test qw/:DEFAULT bldtop_file/;
 
 setup("test_rehash");
