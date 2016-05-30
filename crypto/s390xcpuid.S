@@ -143,9 +143,9 @@ CRYPTO_memcmp:
 	je	.Lno_data
 
 .Loop_cmp:
-	llc	%r0,0(%r2)
+	llgc	%r0,0(%r2)
 	la	%r2,1(%r2)
-	llc	%r1,0(%r3)
+	llgc	%r1,0(%r3)
 	la	%r3,1(%r3)
 	xr	%r1,%r0
 	or	%r5,%r1
