@@ -155,6 +155,8 @@ void AES_xts_decrypt(const char *inp, char *out, size_t len,
 # define HWAES_decrypt aes_p8_decrypt
 # define HWAES_cbc_encrypt aes_p8_cbc_encrypt
 # define HWAES_ctr32_encrypt_blocks aes_p8_ctr32_encrypt_blocks
+# define HWAES_xts_encrypt aes_p8_xts_encrypt
+# define HWAES_xts_decrypt aes_p8_xts_decrypt
 #endif
 
 #if     defined(AES_ASM) && !defined(I386_ONLY) &&      (  \
@@ -1008,6 +1010,12 @@ void HWAES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 void HWAES_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
                                 size_t len, const AES_KEY *key,
                                 const unsigned char ivec[16]);
+void HWAES_xts_encrypt(const unsigned char *inp, unsigned char *out,
+                       size_t len, const AES_KEY *key1,
+                       const AES_KEY *key2, const unsigned char iv[16]);
+void HWAES_xts_decrypt(const unsigned char *inp, unsigned char *out,
+                       size_t len, const AES_KEY *key1,
+                       const AES_KEY *key2, const unsigned char iv[16]);
 #endif
 
 #define BLOCK_CIPHER_generic_pack(nid,keylen,flags)             \
@@ -1804,11 +1812,17 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                           EVP_CIPHER_CTX_key_length(ctx) * 4,
                                           &xctx->ks1.ks);
                     xctx->xts.block1 = (block128_f) HWAES_encrypt;
+# ifdef HWAES_xts_encrypt
+                    xctx->stream = HWAES_xts_encrypt;
+# endif
                 } else {
                     HWAES_set_decrypt_key(key,
                                           EVP_CIPHER_CTX_key_length(ctx) * 4,
                                           &xctx->ks1.ks);
                     xctx->xts.block1 = (block128_f) HWAES_decrypt;
+# ifdef HWAES_xts_decrypt
+                    xctx->stream = HWAES_xts_decrypt;
+#endif
                 }
 
                 HWAES_set_encrypt_key(key + EVP_CIPHER_CTX_key_length(ctx) / 2,
