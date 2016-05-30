@@ -137,8 +137,19 @@ else	# Win32
     $lflags="/nologo /subsystem:console /opt:ref";
     if ($FLAVOR =~ /CORE/)
         {
-        $lflags="/NODEFAULTLIB:kernel32.lib /NODEFAULTLIB:ws2_32.lib /NODEFAULTLIB:gdi32.lib /NODEFAULTLIB:advapi32.lib /NODEFAULTLIB:crypt32.lib /NODEFAULTLIB:user32.lib /nologo /subsystem:console /opt:ref /SAFESEH /NXCOMPAT /DYNAMICBASE /machine:X86";
-        $base_cflags.=" -Dx86 -D_X86_ -D_i386_ -Di_386_";
+        $lflags="/NODEFAULTLIB:kernel32.lib /NODEFAULTLIB:ws2_32.lib /NODEFAULTLIB:gdi32.lib /NODEFAULTLIB:advapi32.lib /NODEFAULTLIB:crypt32.lib /NODEFAULTLIB:user32.lib /nologo /subsystem:console /opt:ref /SAFESEH /NXCOMPAT /DYNAMICBASE";
+		if($FLAVOR =~ /CORE32/)
+			{
+				$base_cflags.=" -Dx86 -D_X86_ -D_i386_ -Di_386_";
+				$base_cflags.=" /arch:IA32";
+				$lflags.=" /machine:X86";
+			}
+		else	#core64
+			{
+				$base_cflags.=" /arch:AVX";
+				$lflags.=" /machine:X64";
+			}
+		$base
         }
     }
 $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib

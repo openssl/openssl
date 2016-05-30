@@ -2925,7 +2925,7 @@ static int WIN32_rename(const char *from, const char *to)
     }
 
 #if defined(OPENSSL_SYSNAME_WIN_CORE)
-    if (MoveFileEx(tfrom, tto, 0))
+    if (MoveFileExW(tfrom, tto, 0))
 #else
     if (MoveFile(tfrom, tto))
 #endif
@@ -2933,7 +2933,7 @@ static int WIN32_rename(const char *from, const char *to)
     err = GetLastError();
     if (err == ERROR_ALREADY_EXISTS || err == ERROR_FILE_EXISTS) {
 #if defined(OPENSSL_SYSNAME_WIN_CORE)
-        if (DeleteFile(tto) && MoveFileEx(tfrom, tto, 0))
+        if (DeleteFile(tto) && MoveFileExW(tfrom, tto, 0))
 #else
         if (DeleteFile(tto) && MoveFile(tfrom, tto))
 #endif

@@ -576,7 +576,11 @@ int RAND_poll(void)
     readtimer();
 
     /* memory usage statistics */
+# if defined(OPENSSL_SYSNAME_WIN_CORE)
+    GlobalMemoryStatusEx(&m);
+#else
     GlobalMemoryStatus(&m);
+#endif
     RAND_add(&m, sizeof(m), 1);
 
     /* process ID */

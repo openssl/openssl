@@ -69,7 +69,7 @@ DSO_METHOD *DSO_METHOD_win32(void)
 }
 #else
 
-# ifdef _WIN32_WCE
+# if defined(_WIN32_WCE)
 #  if _WIN32_WCE < 300
 static FARPROC GetProcAddressA(HMODULE hModule, LPCSTR lpProcName)
 {
@@ -108,14 +108,9 @@ static HINSTANCE LoadLibraryA(LPCSTR lpLibFileName)
         for (i = 0; i < len_0; i++)
             fnamw[i] = (WCHAR)lpLibFileName[i];
 
-#if defined(OPENSSL_SYSNAME_WIN_CORE)
-    return LoadLibraryExW(fnamw, NULL, 0);
-#else
 	return LoadLibraryW(fnamw);
-#endif
 }
 # endif
-
 /* Part of the hack in "win32_load" ... */
 # define DSO_MAX_TRANSLATED_SIZE 256
 
@@ -178,7 +173,12 @@ static int win32_load(DSO *dso)
         DSOerr(DSO_F_WIN32_LOAD, DSO_R_NO_FILENAME);
         goto err;
     }
+#if defined(OPENSSL_SYSNAME_WIN_CORE)
+    h = LoadLibraryEx(filename, NULL, 0);
+#else
     h = LoadLibraryA(filename);
+#endif
+
     if (h == NULL) {
         DSOerr(DSO_F_WIN32_LOAD, DSO_R_LOAD_FAILED);
         ERR_add_error_data(3, "filename(", filename, ")");
