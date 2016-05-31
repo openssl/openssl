@@ -395,3 +395,4 @@ SSL_CTX_enable_ct                       394	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_get_ciphers                     395	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_get0_hostname               396	1_1_0	EXIST::FUNCTION:
 SSL_client_version                      397	1_1_0	EXIST::FUNCTION:
+SSL_SESSION_get_protocol_version        398	1_1_0	EXIST::FUNCTION:
