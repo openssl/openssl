@@ -63,7 +63,8 @@
 
 #if !defined(OPENSSL_IMPLEMENTS_strncasecmp) && \
     !defined(OPENSSL_SYSNAME_WIN32) && !defined(OPENSSL_SYSNAME_WINCE) && \
-    !defined(NETWARE_CLIB)
+    !defined(NETWARE_CLIB) && \
+    !defined(OPENSSL_SYSNAME_WIN_CORE)
 # include <strings.h>
 #endif
 

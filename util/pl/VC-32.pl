@@ -137,13 +137,14 @@ else	# Win32
     $lflags="/nologo /subsystem:console /opt:ref";
     if ($FLAVOR =~ /CORE/)
         {
-        $lflags="/NODEFAULTLIB:kernel32.lib /NODEFAULTLIB:ws2_32.lib /NODEFAULTLIB:gdi32.lib /NODEFAULTLIB:advapi32.lib /NODEFAULTLIB:crypt32.lib /NODEFAULTLIB:user32.lib /nologo /subsystem:console /opt:ref /SAFESEH /NXCOMPAT /DYNAMICBASE";
+        $lflags="/NODEFAULTLIB:kernel32.lib /NODEFAULTLIB:ws2_32.lib /NODEFAULTLIB:gdi32.lib /NODEFAULTLIB:advapi32.lib /NODEFAULTLIB:crypt32.lib /NODEFAULTLIB:user32.lib /nologo /subsystem:console /opt:ref /NXCOMPAT /DYNAMICBASE";
 		$base_cflags.=" -DOPENSSL_NO_CAPIENG";
 		if($FLAVOR =~ /CORE32/)
 			{
 				$base_cflags.=" -Dx86 -D_X86_ -D_i386_ -Di_386_";
 				$base_cflags.=" /arch:IA32";
 				$lflags.=" /machine:X86";
+				$lflags.=" /SAFESEH";
 			}
 		else	#core64
 			{
@@ -248,7 +249,18 @@ if ($FLAVOR =~ /WIN64A/) {
 	$asm=($ver ge $vew?"nasm":"nasmw")." -f win32";
 	$asmtype="win32n";
 	$afile='-o ';
-} else {
+}
+elsif ($FLAVOR =~/CORE64A/) {
+	if (`nasm -v 2>NUL` =~ /NASM version ([0-9]+\.[0-9]+)/ && $1 >= 2.0) {
+		$asm='nasm -f win64 -DNEAR -Ox -g';
+		$asmtype="nasm";
+		$afile='-o ';
+	} else {
+		$asm='ml64 /c /Cp /Cx /Zi';
+		$afile='/Fo';
+	}
+}
+else {
 	$asm='ml /nologo /Cp /coff /c /Cx /Zi';
 	$afile='/Fo';
 	$asmtype="win32";
