@@ -21,7 +21,8 @@ SSL_SESSION_get_protocol_version() returns a number indicating the protocol
 version used for the session; this number matches the constants I<e.g.>
 B<TLS1_VERSION> or B<TLS1_2_VERSION>.
 
-If the function is passed the NULL pointer for the session B<s>, 0 is returned.
+Note that the SSL_SESSION_get_protocol_version() function
+does B<not> perform a null check on the provided session B<s> pointer.
 
 =head1 SEE ALSO
 
