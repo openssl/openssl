@@ -138,7 +138,7 @@ else	# Win32
     if ($FLAVOR =~ /CORE/)
         {
         $lflags="/NODEFAULTLIB:kernel32.lib /NODEFAULTLIB:ws2_32.lib /NODEFAULTLIB:gdi32.lib /NODEFAULTLIB:advapi32.lib /NODEFAULTLIB:crypt32.lib /NODEFAULTLIB:user32.lib /nologo /subsystem:console /opt:ref /SAFESEH /NXCOMPAT /DYNAMICBASE";
-		$base_cflags.="-DOPENSSL_NO_CAPIENG";
+		$base_cflags.=" -DOPENSSL_NO_CAPIENG";
 		if($FLAVOR =~ /CORE32/)
 			{
 				$base_cflags.=" -Dx86 -D_X86_ -D_i386_ -Di_386_";
