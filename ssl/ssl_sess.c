@@ -830,8 +830,6 @@ long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 
 int SSL_SESSION_get_protocol_version(const SSL_SESSION *s)
 {
-    if (s == NULL)
-        return (0);
     return s->ssl_version;
 }
 
