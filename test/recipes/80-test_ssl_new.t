@@ -42,7 +42,7 @@ foreach my $conf (@conf_files) {
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 3;  # = scalar @conf_srcs
+plan tests => 4;  # = scalar @conf_srcs
 
 sub test_conf {
     plan tests => 3;
