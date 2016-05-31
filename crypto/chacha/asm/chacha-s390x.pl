@@ -147,7 +147,8 @@ $code.=<<___;
 .type	ChaCha20_ctr32,\@function
 .align	32
 ChaCha20_ctr32:
-	cl${g}ije	$len,0,.Lno_data	# $len==0?
+	ltgr	$len,$len	# $len==0?
+	bzr	%r14
 	a${g}hi	$len,-64
 	l${g}hi	%r1,-$frame
 	stm${g}	%r6,%r15,`6*$SIZE_T`($sp)
@@ -279,7 +280,6 @@ $code.=<<___;
 	stmg	%r0,%r3,$stdframe+4*12($sp)
 
 	lm${g}	%r6,%r15,`$frame+6*$SIZE_T`($sp)
-.Lno_data:
 	br	%r14
 
 .align	16
