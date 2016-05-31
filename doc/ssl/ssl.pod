@@ -4,6 +4,10 @@
 
 SSL - OpenSSL SSL/TLS library
 
+=head1 SYNOPSIS
+
+See the individual manual pages for details.
+
 =head1 DESCRIPTION
 
 The OpenSSL B<ssl> library implements the Secure Sockets Layer (SSL v2/v3) and
@@ -717,6 +721,10 @@ Returns the current handshake state.
 =item const char *B<SSL_get_psk_identity>(SSL *ssl);
 
 =back
+
+=head1 RETURN VALUES
+
+See the individual manual pages for details.
 
 =head1 SEE ALSO
 
