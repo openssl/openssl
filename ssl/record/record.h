@@ -65,6 +65,10 @@ typedef struct ssl3_record_st {
     /* r */
     unsigned char *comp;
 
+    /* Whether the data from this record has already been read or not */
+    /* r */
+    unsigned int read;
+
     /* epoch number, needed by DTLS1 */
     /* r */
     unsigned long epoch;
@@ -180,6 +184,9 @@ typedef struct record_layer_st {
     unsigned int alert_fragment_len;
     unsigned char handshake_fragment[4];
     unsigned int handshake_fragment_len;
+
+    /* The number of consecutive empty records we have received */
+    unsigned int empty_record_count;
 
     /* partial write - check the numbers match */
     /* number bytes written */

@@ -1057,9 +1057,9 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 goto f_err;
             }
         }
-        /* Skip over any records we have already used or are zero in length */
+        /* Skip over any records we have already read */
         for (curr_rec = 0;
-             curr_rec < num_recs && SSL3_RECORD_get_length(&rr[curr_rec]) == 0;
+             curr_rec < num_recs && SSL3_RECORD_is_read(&rr[curr_rec]);
              curr_rec++);
         if (curr_rec == num_recs) {
             RECORD_LAYER_set_numrpipes(&s->rlayer, 0);
@@ -1137,6 +1137,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 if (SSL3_RECORD_get_length(rr) == 0) {
                     s->rlayer.rstate = SSL_ST_READ_HEADER;
                     SSL3_RECORD_set_off(rr, 0);
+                    SSL3_RECORD_set_read(rr);
                 }
             }
             if (SSL3_RECORD_get_length(rr) == 0
@@ -1147,6 +1148,10 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             read_bytes += n;
         } while (type == SSL3_RT_APPLICATION_DATA && curr_rec < num_recs
                  && read_bytes < (unsigned int)len);
+        if (read_bytes == 0) {
+            /* We must have read empty records. Get more data */
+            goto start;
+        }
         if (!peek && curr_rec == num_recs
                 && (s->mode & SSL_MODE_RELEASE_BUFFERS)
                 && SSL3_BUFFER_get_left(rbuf) == 0)
