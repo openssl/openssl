@@ -39,25 +39,20 @@ OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk, OPENSSL_sk_compfu
 OPENSSL_STACK *OPENSSL_sk_dup(OPENSSL_STACK *sk)
 {
     OPENSSL_STACK *ret;
-    char **s;
 
-    if ((ret = OPENSSL_sk_new(sk->comp)) == NULL)
-        goto err;
-    s = OPENSSL_realloc((char *)ret->data,
-                        (unsigned int)sizeof(char *) * sk->num_alloc);
-    if (s == NULL)
-        goto err;
-    ret->data = s;
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+        return NULL;
 
-    ret->num = sk->num;
+    /* direct structure assignment */
+    *ret = *sk;
+
+    if ((ret->data = OPENSSL_malloc(sizeof(*ret->data) * sk->num_alloc)) == NULL)
+        goto err;
     memcpy(ret->data, sk->data, sizeof(char *) * sk->num);
-    ret->sorted = sk->sorted;
-    ret->num_alloc = sk->num_alloc;
-    ret->comp = sk->comp;
-    return (ret);
+    return ret;
  err:
     OPENSSL_sk_free(ret);
-    return (NULL);
+    return NULL;
 }
 
 OPENSSL_STACK *OPENSSL_sk_deep_copy(OPENSSL_STACK *sk, OPENSSL_sk_copyfunc copy_func,
@@ -67,18 +62,17 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(OPENSSL_STACK *sk, OPENSSL_sk_copyfunc copy_
     int i;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
-        return ret;
-    ret->comp = sk->comp;
-    ret->sorted = sk->sorted;
-    ret->num = sk->num;
+        return NULL;
+
+    /* direct structure assignment */
+    *ret = *sk;
+
     ret->num_alloc = sk->num > MIN_NODES ? sk->num : MIN_NODES;
-    ret->data = OPENSSL_malloc(sizeof(*ret->data) * ret->num_alloc);
+    ret->data = OPENSSL_zalloc(sizeof(*ret->data) * ret->num_alloc);
     if (ret->data == NULL) {
         OPENSSL_free(ret);
         return NULL;
     }
-    for (i = 0; i < ret->num_alloc; i++)
-        ret->data[i] = NULL;
 
     for (i = 0; i < ret->num; ++i) {
         if (sk->data[i] == NULL)
