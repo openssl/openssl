@@ -13,6 +13,9 @@ use strict;
 use Pod::Checker;
 use File::Find;
 use File::Basename;
+use Getopt::Std;
+
+our($opt_s);
 
 my $temp = '/tmp/docnits.txt';
 my $OUT;
@@ -28,6 +31,46 @@ my %default_sections =
       crypto => 3,
       ssl    => 3 );
 
+# Cross-check functions in the NAME and SYNOPSIS section.
+sub name_synopsis()
+{
+    my $id = shift;
+    my $filename = shift;
+    my $contents = shift;
+
+    # If it's a generic page (all lowercase), or apps, skip it.
+    return if $filename =~ /[a-z]+\.pod/;
+    return if $filename =~ m@/apps/@;
+
+    # Get NAME section and all words in it.
+    return unless $contents =~ /=head1 NAME(.*)=head1 SYNOPSIS/ms;
+    my $tmp = $1;
+    $tmp =~ tr/\n/ /;
+    $tmp =~ s/-.*//g;
+    $tmp =~ s/,//g;
+    my %names;
+    foreach my $n ( split ' ', $tmp ) {
+        $names{$n} = 1;
+    }
+
+    # Find all functions in SYNOPSIS
+    return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
+    my $syn = $1;
+    foreach my $line ( split /\n+/, $syn ) {
+        next if $line =~ /typedef/;
+        next if $line =~ /STACK_OF/;
+        next unless $line =~ /([A-Za-z0-9_]+)\(/;
+        print "$id $1 missing from NAME section\n"
+            unless defined $names{$1};
+        $names{$1} = 2;
+    }
+
+    foreach my $n ( keys %names ) {
+        next if $names{$n} == 2;
+        print "$id $n missing from SYNOPSIS\n";
+    }
+}
+
 sub check()
 {
     my $filename = shift;
@@ -42,22 +85,27 @@ sub check()
     }
 
     my $id = "${filename}:1:";
-    print $OUT "$id doesn't start with =pod\n"
+
+    &name_synopsis($id, $filename, $contents);
+
+    print "$id doesn't start with =pod\n"
         if $contents !~ /^=pod/;
-    print $OUT "$id doesn't end with =cut\n"
+    print "$id doesn't end with =cut\n"
         if $contents !~ /=cut\n$/;
-    print $OUT "$id more than one cut line.\n"
+    print "$id more than one cut line.\n"
         if $contents =~ /=cut.*=cut/ms;
-    print $OUT "$id missing copyright\n"
+    print "$id missing copyright\n"
         if $contents !~ /Copyright .* The OpenSSL Project Authors/;
-    print $OUT "$id copyright not last\n"
+    print "$id copyright not last\n"
         if $contents =~ /head1 COPYRIGHT.*=head/ms;
-    print $OUT "$id head2 in All uppercase\n"
+    print "$id head2 in All uppercase\n"
         if $contents =~ /head2\s+[A-Z ]+\n/;
-    print $OUT "$id period in NAME section\n"
-        if $contents =~ /NAME.*\.\n.*SYNOPSIS/ms;
-    print $OUT "$id POD markup in NAME section\n"
-        if $contents =~ /NAME.*[<>].*SYNOPSIS/ms;
+    print "$id extra space after head\n"
+        if $contents =~ /=head\d\s\s+/;
+    print "$id period in NAME section\n"
+        if $contents =~ /=head1 NAME.*\.\n.*=head1 SYNOPSIS/ms;
+    print "$id POD markup in NAME section\n"
+        if $contents =~ /=head1 NAME.*[<>].*=head1 SYNOPSIS/ms;
 
     # Look for multiple consecutive openssl #include lines.
     # Consecutive because of files like md5.pod. Sometimes it's okay
@@ -68,7 +116,7 @@ sub check()
             foreach my $line ( split /\n+/, $1 ) {
                 if ( $line =~ m@include <openssl/@ ) {
                     if ( ++$count == 2 ) {
-                        print $OUT "$id has multiple includes\n";
+                        print "$id has multiple includes\n";
                     }
                 } else {
                     $count = 0;
@@ -76,6 +124,8 @@ sub check()
             }
         }
     }
+
+    return unless $opt_s;
 
     # Find what section this page is in.  If run from "." assume
     # section 3.
@@ -85,29 +135,28 @@ sub check()
     }
 
     foreach ((@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}})) {
-        print $OUT "$id doesn't have a head1 section matching $_\n"
+        print "$id doesn't have a head1 section matching $_\n"
             if $contents !~ /^=head1\s+${_}\s*$/m;
     }
 
+    open my $OUT, '>', $temp
+        or die "Can't open $temp, $!";
     podchecker($filename, $OUT);
+    close $OUT;
+    open $OUT, '<', $temp
+        or die "Can't read $temp, $!";
+    while ( <$OUT> ) {
+        next if /\(section\) in.*deprecated/;
+        print;
+    }
+    close $OUT;
+    unlink $temp || warn "Can't remove $temp, $!";
 }
 
-open $OUT, '>', $temp
-    or die "Can't open $temp, $!";
-foreach (@ARGV ? @ARGV : glob('*/*.pod')) {
+getopts('s');
+
+foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
     &check($_);
 }
-close $OUT;
 
-my $count = 0;
-open $OUT, '<', $temp
-    or die "Can't read $temp, $!";
-while ( <$OUT> ) {
-    next if /\(section\) in.*deprecated/;
-    $count++;
-    print;
-}
-close $OUT;
-unlink $temp || warn "Can't remove $temp, $!";
-
-exit $count;
+exit;
