@@ -290,9 +290,14 @@ if (!$no_asm)
 	$perl_asm = 1;
 	}
 
-if ($shlib && $FLAVOR !~ /CE/ && $FLAVOR !~ /CORE/)
+if ($shlib && $FLAVOR !~ /CE/)
 	{
 	$mlflags.=" $lflags /dll";
+
+	if($FLAVOR !~ /CORE/)
+	{
+		$mlflags="/nologo /subsystem:console /opt:ref /debug /dll ";
+	}
 	$lib_cflag.=" -D_WINDLL";
 	#
 	# Engage Applink...

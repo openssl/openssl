@@ -689,7 +689,7 @@ my %table=(
 
 );
 
-my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A VC-CORE64A
+my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A VC-CORE64A VC-CORE32
 		    debug-VC-WIN64I debug-VC-WIN64A
 		    VC-NT VC-CE VC-WIN32 debug-VC-WIN32
 		    BC-32 
