@@ -1,25 +1,15 @@
 #!/bin/sh
+# Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 # OpenSSL config: determine the operating system and run ./Configure
+# Derived from minarch and GuessOS from Apache.
 #
-# "config -h" for usage information.
-#
-#          this is a merge of minarch and GuessOS from the Apache Group.
-#          Originally written by Tim Hudson <tjh@cryptsoft.com>.
-
-# Original Apache Group comments on GuessOS
-
-# Simple OS/Platform guesser. Similar to config.guess but
-# much, much smaller. Since it was developed for use with
-# Apache, it follows under Apache's regular licensing
-# with one specific addition: Any changes or additions
-# to this script should be Emailed to the Apache
-# group (apache@apache.org) in general and to
-# Jim Jagielski (jim@jaguNET.com) in specific.
-#
-# Be as similar to the output of config.guess/config.sub
-# as possible.
-
+# Do "config -h" for usage information.
 SUFFIX=""
 TEST="false"
 EXE=""
