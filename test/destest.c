@@ -35,8 +35,6 @@ int main(int argc, char *argv[])
 #else
 # include <openssl/des.h>
 
-# define crypt(c,s) (DES_crypt((c),(s)))
-
 /* tisk tisk - the test keys don't all have odd parity :-( */
 /* test data */
 # define NUM_TESTS 34
@@ -660,14 +658,29 @@ int main(int argc, char *argv[])
     }
     printf("\n");
     printf("fast crypt test ");
-    str = crypt("testing", "ef");
+    str = DES_crypt("testing", "ef");
     if (strcmp("efGnQx2725bI2", str) != 0) {
         printf("fast crypt error, %s should be efGnQx2725bI2\n", str);
         err = 1;
     }
-    str = crypt("bca76;23", "yA");
+    str = DES_crypt("bca76;23", "yA");
     if (strcmp("yA1Rp/1hZXIJk", str) != 0) {
         printf("fast crypt error, %s should be yA1Rp/1hZXIJk\n", str);
+        err = 1;
+    }
+    str = DES_crypt("testing", "y\202");
+    if (str != NULL) {
+        printf("salt error only usascii are accepted\n");
+        err = 1;
+    }
+    str = DES_crypt("testing", "\0A");
+    if (str != NULL) {
+        printf("salt error cannot contain null terminator\n");
+        err = 1;
+    }
+    str = DES_crypt("testing", "A");
+    if (str != NULL) {
+        printf("salt error must be at least 2\n");
         err = 1;
     }
     printf("\n");
