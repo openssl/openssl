@@ -134,7 +134,6 @@ int ssl3_get_record(SSL *s)
     unsigned char md[EVP_MAX_MD_SIZE];
     short version;
     unsigned mac_size;
-    unsigned empty_record_count = 0, curr_empty = 0;
     unsigned int num_recs = 0;
     unsigned int max_recs;
     unsigned int j;
@@ -146,7 +145,6 @@ int ssl3_get_record(SSL *s)
         max_recs = 1;
     sess = s->session;
 
- again:
     do {
         /* check if we have the header */
         if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
@@ -323,6 +321,10 @@ int ssl3_get_record(SSL *s)
         /* decrypt in place in 'rr->input' */
         rr[num_recs].data = rr[num_recs].input;
         rr[num_recs].orig_len = rr[num_recs].length;
+
+        /* Mark this record as not read by upper layers yet */
+        rr[num_recs].read = 0;
+
         num_recs++;
 
         /* we have pulled in a full packet so zero things */
@@ -486,20 +488,16 @@ int ssl3_get_record(SSL *s)
 
         /* just read a 0 length packet */
         if (rr[j].length == 0) {
-            curr_empty++;
-            empty_record_count++;
-            if (empty_record_count > MAX_EMPTY_RECORDS) {
+            RECORD_LAYER_inc_empty_record_count(&s->rlayer);
+            if (RECORD_LAYER_get_empty_record_count(&s->rlayer)
+                    > MAX_EMPTY_RECORDS) {
                 al = SSL_AD_UNEXPECTED_MESSAGE;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_RECORD_TOO_SMALL);
                 goto f_err;
             }
+        } else {
+            RECORD_LAYER_reset_empty_record_count(&s->rlayer);
         }
-    }
-    if (curr_empty == num_recs) {
-        /* We have no data - do it all again */
-        num_recs = 0;
-        curr_empty = 0;
-        goto again;
     }
 
     RECORD_LAYER_set_numrpipes(&s->rlayer, num_recs);

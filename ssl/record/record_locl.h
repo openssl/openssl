@@ -27,6 +27,10 @@
 #define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
 #define RECORD_LAYER_get_numrpipes(rl)          ((rl)->numrpipes)
 #define RECORD_LAYER_set_numrpipes(rl, n)       ((rl)->numrpipes = (n))
+#define RECORD_LAYER_inc_empty_record_count(rl) ((rl)->empty_record_count++)
+#define RECORD_LAYER_reset_empty_record_count(rl) \
+                                                ((rl)->empty_record_count = 0)
+#define RECORD_LAYER_get_empty_record_count(rl) ((rl)->empty_record_count)
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
 __owur int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold);
@@ -89,6 +93,8 @@ int ssl3_release_write_buffer(SSL *s);
 #define SSL3_RECORD_get_epoch(r)                ((r)->epoch)
 #define SSL3_RECORD_is_sslv2_record(r) \
             ((r)->rec_version == SSL2_VERSION)
+#define SSL3_RECORD_is_read(r)                  ((r)->read)
+#define SSL3_RECORD_set_read(r)                 ((r)->read = 1)
 
 void SSL3_RECORD_clear(SSL3_RECORD *r, unsigned int num_recs);
 void SSL3_RECORD_release(SSL3_RECORD *r, unsigned int num_recs);
