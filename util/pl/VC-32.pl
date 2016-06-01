@@ -290,7 +290,7 @@ if (!$no_asm)
 	$perl_asm = 1;
 	}
 
-if ($shlib && $FLAVOR !~ /CE/)
+if ($shlib && $FLAVOR !~ /CE/ && $FLAVOR !~ /CORE/)
 	{
 	$mlflags.=" $lflags /dll";
 	$lib_cflag.=" -D_WINDLL";
