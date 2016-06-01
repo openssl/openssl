@@ -499,8 +499,12 @@ int req_main(int argc, char **argv)
             }
         }
 
-        BIO_printf(bio_err, "Generating a %ld bit %s private key\n",
-                   newkey, keyalgstr);
+        if (pkey_type == EVP_PKEY_EC) {
+            BIO_printf(bio_err, "Generating an EC private key\n");
+        } else {
+            BIO_printf(bio_err, "Generating a %ld bit %s private key\n",
+                       newkey, keyalgstr);
+        }
 
         EVP_PKEY_CTX_set_cb(genctx, genpkey_cb);
         EVP_PKEY_CTX_set_app_data(genctx, bio_err);
