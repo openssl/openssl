@@ -1107,11 +1107,18 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
                 error = 1;
                 break;
             }
+
+            if (!num_job_fds)
+                continue;
+
             ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, &job_fd, &num_job_fds);
             FD_SET(job_fd, &waitfdset);
             if (job_fd > max_fd)
                 max_fd = job_fd;
         }
+
+        if (!max_fd)
+            goto poll_mode;
 
         if (max_fd >= (OSSL_ASYNC_FD)FD_SETSIZE) {
             BIO_printf(bio_err,
@@ -1138,27 +1145,33 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
             continue;
 #endif
 
+poll_mode:
         for (i = 0; i < async_jobs; i++) {
             if (loopargs[i].inprogress_job == NULL)
                 continue;
 
-            if (!ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, NULL, &num_job_fds)
-                    || num_job_fds > 1) {
-                BIO_printf(bio_err, "Too many fds in ASYNC_WAIT_CTX\n");
-                ERR_print_errors(bio_err);
-                error = 1;
-                break;
-            }
-            ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, &job_fd, &num_job_fds);
+#if defined(OPENSSL_SYS_UNIX)
+            if(max_fd)
+#endif
+            {
+                if (!ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, NULL, &num_job_fds)
+                        || num_job_fds > 1) {
+                    BIO_printf(bio_err, "Too many fds in ASYNC_WAIT_CTX\n");
+                    ERR_print_errors(bio_err);
+                    error = 1;
+                    break;
+                }
+                ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, &job_fd, &num_job_fds);
 
 #if defined(OPENSSL_SYS_UNIX)
-            if (num_job_fds == 1 && !FD_ISSET(job_fd, &waitfdset))
-                continue;
+                if (num_job_fds == 1 && !FD_ISSET(job_fd, &waitfdset))
+                    continue;
 #elif defined(OPENSSL_SYS_WINDOWS)
-            if (num_job_fds == 1 &&
-                    !PeekNamedPipe(job_fd, NULL, 0, NULL, &avail, NULL) && avail > 0)
-                continue;
+                if (num_job_fds == 1 &&
+                        !PeekNamedPipe(job_fd, NULL, 0, NULL, &avail, NULL) && avail > 0)
+                    continue;
 #endif
+            }
 
             switch (ASYNC_start_job(&(loopargs[i].inprogress_job), loopargs[i].wait_ctx,
                         &job_op_count, loop_function, (void *)(loopargs + i),
