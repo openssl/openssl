@@ -240,8 +240,9 @@ is thread safe, unlike the normal crypt.
 
 DES_crypt() is a faster replacement for the normal system crypt().
 This function calls DES_fcrypt() with a static array passed as the
-third parameter.  This emulates the normal non-thread safe semantics
+third parameter.  This mostly emulates the normal non-thread-safe semantics
 of crypt(3).
+The B<salt> must be two ASCII characters.
 
 DES_enc_write() writes I<len> bytes to file descriptor I<fd> from
 buffer I<buf>. The data is encrypted via I<pcbc_encrypt> (default)
@@ -272,14 +273,10 @@ DES_string_to_key() is available for backward compatibility with the
 MIT library.  New applications should use a cryptographic hash function.
 The same applies for DES_string_to_2key().
 
-=head1 CONFORMING TO
-
-ANSI X3.106
+=head1 NOTES
 
 The B<des> library was written to be source code compatible with
 the MIT Kerberos library.
-
-=head1 NOTES
 
 Applications should use the higher level functions
 L<EVP_EncryptInit(3)> etc. instead of calling these
@@ -287,6 +284,13 @@ functions directly.
 
 Single-key DES is insecure due to its short key size.  ECB mode is
 not suitable for most applications; see L<des_modes(7)>.
+
+=head1 HISTORY
+
+The requirement that the salt be two ASCII characters was enforced in
+OpenSSL 1.1.0.  Previous versions tried to use the letter uppercase B<A>
+if both character were not present, and could crash when given non-ASCII
+on some platforms.
 
 =head1 SEE ALSO
 
