@@ -731,6 +731,7 @@ static int afalg_chk_platform(void)
     int ret;
     int i;
     int kver[3] = { -1, -1, -1 };
+    int sock;
     char *str;
     struct utsname ut;
 
@@ -757,6 +758,14 @@ static int afalg_chk_platform(void)
                  AFALG_R_KERNEL_DOES_NOT_SUPPORT_ASYNC_AFALG);
         return 0;
     }
+
+    /* Test if we can actually create an AF_ALG socket */
+    sock = socket(AF_ALG, SOCK_SEQPACKET, 0);
+    if (sock == -1) {
+        AFALGerr(AFALG_F_AFALG_CHK_PLATFORM, AFALG_R_SOCKET_CREATE_FAILED);
+        return 0;
+    }
+    close(sock);
 
     return 1;
 }
