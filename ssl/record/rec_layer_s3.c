@@ -63,6 +63,7 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     for(pipes = 0; pipes < rl->numwpipes; pipes++)
         SSL3_BUFFER_clear(&rl->wbuf[pipes]);
     rl->numwpipes = 0;
+    rl->numrpipes = 0;
     SSL3_RECORD_clear(rl->rrec, SSL_MAX_PIPELINES);
 
     RECORD_LAYER_reset_read_sequence(rl);
