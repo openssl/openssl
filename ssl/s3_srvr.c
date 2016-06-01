@@ -980,7 +980,7 @@ int ssl3_get_client_hello(SSL *s)
 
         session_length = *(p + SSL3_RANDOM_SIZE);
 
-        if (SSL3_RANDOM_SIZE + session_length + 1 >= (d + n) - p) {
+        if ((int)(SSL3_RANDOM_SIZE + session_length + 1) >= (d + n) - p) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
             goto f_err;
@@ -1061,7 +1061,7 @@ int ssl3_get_client_hello(SSL *s)
         }
         cookie_len = *(p++);
 
-        if ((d + n ) - p < cookie_len) {
+        if ((d + n ) - p < (int)(cookie_len)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
             goto f_err;
