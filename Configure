@@ -1970,8 +1970,6 @@ my %builders = (
     unixmake => sub {
         build_Makefile();
 
-        run_dofile("util/domd", "util/domd.in");
-        chmod 0755, "util/domd";
     },
     );
 

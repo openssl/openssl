@@ -1,26 +1,9 @@
-!  des_enc.m4
-!  des_enc.S  (generated from des_enc.m4)
+! Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
 !
-!  UltraSPARC assembler version of the LibDES/SSLeay/OpenSSL des_enc.c file.
-!
-!  Version 1.0. 32-bit version.
-!
-!  June 8, 2000.
-!
-!  Version 2.0. 32/64-bit, PIC-ification, blended CPU adaptation
-!		by Andy Polyakov.
-!
-!  January 1, 2003.
-!
-!  Assembler version: Copyright Svend Olaf Mikkelsen.
-!
-!  Original C code: Copyright Eric A. Young.
-!
-!  This code can be freely used by LibDES/SSLeay/OpenSSL users.
-!
-!  The LibDES/SSLeay/OpenSSL copyright notices must be respected.
-!
-!  This version can be redistributed.
+! Licensed under the OpenSSL license (the "License").  You may not use
+! this file except in compliance with the License.  You can obtain a copy
+! in the file LICENSE in the source distribution or at
+! https://www.openssl.org/source/license.html
 !
 !  To expand the m4 macros: m4 -B 8192 des_enc.m4 > des_enc.S
 !
