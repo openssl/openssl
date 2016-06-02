@@ -253,7 +253,7 @@ void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
 
         rsaz_1024_sqr_avx2(result, result, m, k0, 5);
 
-        wvalue = *((unsigned short *)&p_str[index / 8]);
+        wvalue = (p_str[(index / 8) + 1] << 8) | p_str[index / 8];
         wvalue = (wvalue >> (index % 8)) & 31;
         index -= 5;
 
