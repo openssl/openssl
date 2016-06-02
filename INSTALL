@@ -495,6 +495,9 @@
        $ mms test                                       ! OpenVMS
        $ nmake test                                     # Windows
 
+     NOTE: you MUST run the tests from an unprivileged account (or
+     disable your privileges temporarly if your platform allows it).
+
      If some tests fail, look at the output.  There may be reasons for
      the failure that isn't a problem in OpenSSL itself (like a
      malfunction with Perl).  You may want increased verbosity, that
