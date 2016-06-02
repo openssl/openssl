@@ -95,7 +95,7 @@
    required. Run the installers and do whatever magic they say it takes
    to start MSYS bash shell with GNU tools and matching Perl on its PATH.
    "Matching Perl" refers to chosen "shell environment", i.e. if built
-   under MSYS, then Perl compiled for MSYS is highly recommended.
+   under MSYS, then Perl compiled for MSYS must be used.
 
    Alternativelly, one can use MSYS2 from http://msys2.github.io/,
    which includes MingW (32-bit and 64-bit).
