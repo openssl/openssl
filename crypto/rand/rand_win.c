@@ -15,12 +15,15 @@
 # include <windows.h>
 /* On Windows 7 or higher use BCrypt instead of the legacy CryptoAPI */
 # if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0601
-#  define USE_BCRYPT 1
+#  define RAND_WINDOWS_USE_BCRYPT
 # endif
 
-# ifdef USE_BCRYPT
+# ifdef RAND_WINDOWS_USE_BCRYPT
 #  include <bcrypt.h>
 #  pragma comment(lib, "bcrypt.lib")
+#  ifndef STATUS_SUCCESS
+#   define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
+#  endif
 # else
 #  include <wincrypt.h>
 /*
@@ -36,14 +39,14 @@ static void readtimer(void);
 int RAND_poll(void)
 {
     MEMORYSTATUS mst;
-# ifndef USE_BCRYPT
+# ifndef RAND_WINDOWS_USE_BCRYPT
     HCRYPTPROV hProvider;
 # endif
     DWORD w;
     BYTE buf[64];
 
-# ifdef USE_BCRYPT
-    if (BCryptGenRandom(NULL, buf, (ULONG)sizeof(buf), BCRYPT_USE_SYSTEM_PREFERRED_RNG) == 0) {
+# ifdef RAND_WINDOWS_USE_BCRYPT
+    if (BCryptGenRandom(NULL, buf, (ULONG)sizeof(buf), BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS) {
         RAND_add(buf, sizeof(buf), sizeof(buf));
     }
 # else
