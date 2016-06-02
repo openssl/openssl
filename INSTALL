@@ -77,13 +77,28 @@
  --openssldir depend in what configuration is used and what Windows
  implementation OpenSSL is built on.  More notes on this in NOTES.WIN):
 
-  --prefix=DIR
-                   The top of the installation directory tree.  Defaults are:
+  --api=x.y.z
+                   Don't build with support for deprecated APIs below the
+                   specified version number. For example "--api=1.1.0" will
+                   remove support for all APIS that were deprecated in OpenSSL
+                   version 1.1.0 or below.
 
-                   Unix:           /usr/local
-                   Windows:        C:\Program Files\OpenSSL
-                                or C:\Program Files (x86)\OpenSSL
-                   OpenVMS:        SYS$COMMON:[OPENSSL-'version']
+  --cross-compile-prefix=PREFIX
+                   The PREFIX to include in front of commands for your
+                   toolchain. For example to build the mingw64 target on Linux
+                   you might use "--cross-compile-prefix=x86_64-w64-mingw32-".
+                   If the compiler is gcc, then this will attempt to run
+                   x86_64-w64-mingw32-gcc when compiling.
+
+  --debug
+                   Build OpenSSL with debugging symbols.
+
+  --libdir=DIR
+                   The name of the directory under the top of the installation
+                   directory tree (see the --prefix option) where libraries will
+                   be installed. By default this is "lib". Note that on Windows
+                   only ".lib" files will be stored in this location. dll files
+                   will always be installed to the "bin" directory.
 
   --openssldir=DIR
                    Directory for OpenSSL configuration files, and also the
@@ -94,15 +109,53 @@
                                 or C:\Program Files (x86)\Common Files\SSL
                    OpenVMS:        SYS$COMMON:[OPENSSL-COMMON]
 
-  --api=x.y.z
-                   Don't build with support for deprecated APIs below the
-                   specified version number. For example "--api=1.1.0" will
-                   remove support for all APIS that were deprecated in OpenSSL
-                   version 1.1.0 or below.
+  --prefix=DIR
+                   The top of the installation directory tree.  Defaults are:
+
+                   Unix:           /usr/local
+                   Windows:        C:\Program Files\OpenSSL
+                                or C:\Program Files (x86)\OpenSSL
+                   OpenVMS:        SYS$COMMON:[OPENSSL-'version']
+
+  --release
+                   Build OpenSSL without debugging symbols. This is the default.
+
+  --strict-warnings
+                   This is a developer flag that switches on various compiler
+                   options recommended for OpenSSL development. It only works
+                   when using gcc or clang as the compiler. If you are
+                   developing a patch for OpenSSL then it is recommended that
+                   you use this option where possible.
+
+  --with-zlib-include=DIR
+                   The directory for the location of the zlib include file. This
+                   option is only necessary if enable-zlib (see below) is used
+                   and the include file is not already on the system include
+                   path.
+
+  --with-zlib-lib=LIB
+                   On Unix: this is the directory containing the zlib library.
+                   If not provided the system library path will be used.
+                   On Windows: this is the filename of the zlib library (with or
+                   without a path). This flag must be provided if the
+                   zlib-dynamic option is not also used. If zlib-dynamic is used
+                   then this flag is optional and a default value ("ZLIB1") is
+                   used if not provided. 
+                   On VMS: this is the filename of the zlib library (with or
+                   without a path). This flag is optional and if not provided
+                   then "GNV$LIBZSHR", "GNV$LIBZSHR32" or "GNV$LIBZSHR64" is
+                   used by default depending on the pointer size chosen.
 
   no-afalgeng
                    Don't build the AFALG engine. This option will be forced if
                    on a platform that does not support AFALG.
+
+  enable-asan
+                   Build with the Address sanitser. This is a developer option
+                   only. It may not work on all platforms and should never be
+                   used in production environments. It will only work when used
+                   with gcc or clang and should be used in conjunction with the
+                   no-shared option.
 
   no-asm
                    Do not use assembler code. On some platforms a small amount
@@ -198,6 +251,12 @@
   no-filenames
                    Don't compile in filename and line number information (e.g.
                    for errors and memory allocation).
+
+  enable-fuzz
+                   Build with support for fuzzing. This is a developer option
+                   only. It may not work on all platforms and should never be
+                   used in production environments. See the file fuzz/README.md
+                   for further details.
 
   no-gost
                    Don't build support for GOST based ciphersuites. Note that
@@ -300,6 +359,14 @@
 
   no-ts
                    Don't build Time Stamping Authority support.
+
+  enable-ubsan
+                   Build with the Undefined Behaviour sanitser. This is a
+                   developer option only. It may not work on all platforms and
+                   should never be used in production environments. It will only
+                   work when used with gcc or clang and should be used in
+                   conjunction with the "-DPEDANTIC" option (or the
+                   --strict-warnings option).
 
   no-ui
                    Don't build with the "UI" capability (i.e. the set of
@@ -419,10 +486,10 @@
      The generic configurations "cc" or "gcc" should usually work on 32 bit
      Unix-like systems.
 
-     Configure creates a build file ("Makefile" on Unix and "descrip.mms"
-     on OpenVMS) from a suitable template in Configurations, and
-     defines various macros in crypto/opensslconf.h (generated from
-     crypto/opensslconf.h.in).
+     Configure creates a build file ("Makefile" on Unix, "makefile" on Windows
+     and "descrip.mms" on OpenVMS) from a suitable template in Configurations,
+     and defines various macros in include/openssl/opensslconf.h (generated from
+     include/openssl/opensslconf.h.in).
 
  1c. Configure OpenSSL for building outside of the source tree.
 
@@ -475,9 +542,12 @@
 
      If the build fails, look at the output.  There may be reasons for
      the failure that aren't problems in OpenSSL itself (like missing
-     standard headers).  If it is a problem with OpenSSL itself, please
-     report the problem to <rt@openssl.org> (note that your message
-     will be recorded in the request tracker publicly readable at
+     standard headers).  If you are having problems you can get help by
+     sending an email to the openssl-users email list (see
+     https://www.openssl.org/community/mailinglists.html for details). If it
+     is a bug with OpenSSL itself, please report the problem to
+     <rt@openssl.org> (note that your message will be recorded in the request
+     tracker publicly readable at
      https://www.openssl.org/community/index.html#bugs and will be
      forwarded to a public mailing list). Please check out the request
      tracker. Maybe the bug was already reported or has already been
@@ -533,12 +603,13 @@
      compiler optimization flags from the CFLAGS line in Makefile and
      run "make clean; make" or corresponding.
 
-     Please send a bug reports to <rt@openssl.org>.
+     Please send bug reports to <rt@openssl.org>.
 
   4. If everything tests ok, install OpenSSL with
 
        $ make install                                   # Unix
        $ mms install                                    ! OpenVMS
+       $ nmake install                                  # Windows
 
      This will install all the software components in this directory
      tree under PREFIX (the directory given with --prefix or its
@@ -600,7 +671,7 @@
 
   *  COMPILING existing applications
 
-     OpenSSL 1.1 hides a number of structures that were previously
+     OpenSSL 1.1.0 hides a number of structures that were previously
      open.  This includes all internal libssl structures and a number
      of EVP types.  Accessor functions have been added to allow
      controlled access to the structures' data.
@@ -612,11 +683,108 @@
      provided accessor functions where you would previously access a
      structure's field directly.
 
-     <TBA>
-
      Some APIs have changed as well.  However, older APIs have been
      preserved when possible.
 
+ Environment Variables
+ ---------------------
+
+ A number of environment variables can be used to provide additional control
+ over the build process. Typically these should be defined prior to running
+ config or Configure. Not all environment variables are relevant to all
+ platforms.
+
+ AR
+                The name of the ar executable to use.
+
+ CC
+                The compiler to use. Configure will attempt to pick a default
+                compiler for your platform but this choice can be overridden
+                using this variable. Set it to the compiler executable you wish
+                to use, e.g. "gcc" or "clang".
+
+ CROSS_COMPILE
+                This environment variable has the same meaning as for the
+                "--cross-compile-prefix" Configure flag described above. If both
+                are set then the Configure flag takes precedence.
+
+ NM
+                The name of the nm executable to use.
+
+ OPENSSL_LOCAL_CONFIG_DIR
+                OpenSSL comes with a database of information about how it
+                should be built on different platforms. This information is
+                held in ".conf" files in the Configurations directory. See the
+                file Configurations/README for further information about the
+                format of ".conf" files. As well as the standard ".conf" files
+                it is possible to create your own ".conf" files and store them
+                locally, outside the OpenSSL source tree. This environment
+                variable can be set to the directory where these files are held.
+
+ PERL
+                The name of the Perl executable to use.
+
+ RC
+                The name of the rc executable to use. The default will be as
+                defined for the target platform in the ".conf" file. If not
+                defined then "windres" will be used. The WINDRES environment
+                variable is synonymous to this. If both are defined then RC
+                takes precedence.
+
+ RANLIB
+                The name of the ranlib executable to use.
+
+ WINDRES
+                See RC.
+
+ Makefile targets
+ ----------------
+
+ The Configure script generates a Makefile in a format relevant to the specific
+ platform. The Makefiles provide a number of targets that can be used. Not all
+ targets may be available on all platforms. Only the most common targets are
+ described here. Examine the Makefiles themselves for the full list.
+
+ all
+                The default target to build all the software components.
+
+ clean
+                Remove all build artefacts and return the directory to a "clean"
+                state.
+
+ depend
+                Rebuild the dependencies in the Makefiles. This is a legacy
+                option that no longer needs to be used in OpenSSL 1.1.0.
+
+ install
+                Install all OpenSSL components.
+
+ install_sw
+                Only install the OpenSSL software components.
+
+ install_docs
+                Only install the OpenSSL documentation components.
+
+ install_man_docs
+                Only install the OpenSSL man pages (Unix only).
+
+ install_html_docs
+                Only install the OpenSSL html documentation.
+
+ list-tests
+                Prints a list of all the self test names.
+
+ test
+                Build and run the OpenSSL self tests.
+
+ uninstall
+                Uninstall all OpenSSL components.
+
+ update
+                This is a developer option. If you are developing a patch for
+                OpenSSL you may need to use this if you want to update
+                automatically generated files; add new error codes or add new
+                (or change the visibility of) public API functions. (Unix only).
 
  Note on multi-threading
  -----------------------
@@ -657,7 +825,7 @@
  internal PRNG. If not properly seeded, the internal PRNG will refuse
  to deliver random bytes and a "PRNG not seeded error" will occur.
  On systems without /dev/urandom (or similar) device, it may be necessary
- to install additional support software to obtain random seed.
+ to install additional support software to obtain a random seed.
  Please check out the manual pages for RAND_add(), RAND_bytes(), RAND_egd(),
  and the FAQ for more information.
 
