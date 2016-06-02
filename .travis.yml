@@ -91,7 +91,7 @@ script:
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "../$DESTDIR";
-          make install DESTDIR="../$DESTDIR";
+          make install install_docs DESTDIR="../$DESTDIR";
       fi
     - cd ..
 
