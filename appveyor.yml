@@ -27,13 +27,27 @@ before_build:
         }
     - ps: $env:VSCOMNTOOLS=(Get-Content ("env:VS" + "$env:VSVER" + "0COMNTOOLS"))
     - call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat" %VCVARS_PLATFORM%
-    - perl Configure %TARGET% no-asm %SHARED%
+    - mkdir _build
+    - cd _build
+    - perl ..\Configure %TARGET% no-asm %SHARED%
+    - cd ..
 
 build_script:
+    - cd _build
     - nmake
+    - cd ..
 
 test_script:
+    - cd _build
     - nmake test
+    - cd ..
+
+# Fake deploy script to test installation
+deploy_script:
+    - mkdir _install
+    - cd _build
+    - nmake install install_docs DESTDIR=..\_install
+    - cd ..
 
 notifications:
     - provider: Email
