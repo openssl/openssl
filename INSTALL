@@ -147,6 +147,10 @@
   enable-crypto-mdebug-backtrace
                    As for crypto-mdebug, but additionally provide backtrace
                    information for allocated memory.
+                   TO BE USED WITH CARE: this uses GNU C functionality, and
+                   is therefore not usable for non-GNU config targets.  If
+                   your build complains about the use of '-rdynamic' or the
+                   lack of header file execinfo.h, this option is not for you.
 
   no-ct
                    Don't build support for Certificate Transparency.
