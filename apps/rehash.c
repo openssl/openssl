@@ -15,7 +15,8 @@
 
 #include "apps.h"
 
-#if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__)
+#if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) || \
+    (defined(__VMS) && defined(__DECC) && __CTRL_VER >= 80300000)
 # include <unistd.h>
 # include <stdio.h>
 # include <limits.h>
@@ -30,6 +31,9 @@
 # include <openssl/x509.h>
 
 
+# ifndef PATH_MAX
+#  define PATH_MAX 4096
+# endif
 # ifndef NAME_MAX
 #  define NAME_MAX 255
 # endif
@@ -159,7 +163,7 @@ static int handle_symlink(const char *filename, const char *fullpath)
     int i, type, id;
     unsigned char ch;
     char linktarget[PATH_MAX], *endptr;
-    ssize_t n;
+    ossl_ssize_t n;
 
     for (i = 0; i < 8; i++) {
         ch = filename[i];
