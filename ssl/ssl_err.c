@@ -60,6 +60,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_SSL3_GENERATE_MASTER_SECRET),
      "ssl3_generate_master_secret"},
     {ERR_FUNC(SSL_F_SSL3_GET_RECORD), "ssl3_get_record"},
+    {ERR_FUNC(SSL_F_SSL3_INIT_FINISHED_MAC), "ssl3_init_finished_mac"},
     {ERR_FUNC(SSL_F_SSL3_OUTPUT_CERT_CHAIN), "ssl3_output_cert_chain"},
     {ERR_FUNC(SSL_F_SSL3_READ_BYTES), "ssl3_read_bytes"},
     {ERR_FUNC(SSL_F_SSL3_READ_N), "ssl3_read_n"},
