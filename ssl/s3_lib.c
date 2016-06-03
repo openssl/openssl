@@ -3410,10 +3410,15 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         /* A Thawte special :-) */
     case SSL_CTRL_EXTRA_CHAIN_CERT:
         if (ctx->extra_certs == NULL) {
-            if ((ctx->extra_certs = sk_X509_new_null()) == NULL)
-                return (0);
+            if ((ctx->extra_certs = sk_X509_new_null()) == NULL) {
+                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
         }
-        sk_X509_push(ctx->extra_certs, (X509 *)parg);
+        if (!sk_X509_push(ctx->extra_certs, (X509 *)parg)) {
+            SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
         break;
 
     case SSL_CTRL_GET_EXTRA_CHAIN_CERTS:
