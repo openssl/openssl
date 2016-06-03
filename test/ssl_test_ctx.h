@@ -39,6 +39,11 @@ typedef enum {
     SSL_TEST_SESSION_TICKET_BROKEN, /* Special test */
 } ssl_session_ticket_t;
 
+typedef enum {
+    SSL_TEST_METHOD_TLS = 0, /* Default */
+    SSL_TEST_METHOD_DTLS,
+} ssl_test_method_t;
+
 typedef struct ssl_test_ctx {
     /* Test expectations. */
     /* Defaults to SUCCESS. */
@@ -57,6 +62,8 @@ typedef struct ssl_test_ctx {
     /* One of a number of predefined server names use by the client */
     ssl_servername_t servername;
     ssl_session_ticket_t session_ticket_expected;
+    /* Whether the server/client CTX should use DTLS or TLS. */
+    ssl_test_method_t method;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);
@@ -65,6 +72,7 @@ const char *ssl_protocol_name(int protocol);
 const char *ssl_verify_callback_name(ssl_verify_callback_t verify_callback);
 const char *ssl_servername_name(ssl_servername_t server);
 const char *ssl_session_ticket_name(ssl_session_ticket_t server);
+const char *ssl_test_method_name(ssl_test_method_t method);
 
 /*
  * Load the test case context from |conf|.

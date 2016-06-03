@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 
-## Test TLS version negotiation
+## Test DTLS version negotiation
 
 package ssltests;
 
@@ -16,4 +16,4 @@ use warnings;
 
 use protocol_version;
 
-our @tests = generate_tests("TLS");
+our @tests = generate_tests("DTLS");
