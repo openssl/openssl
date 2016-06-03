@@ -12,7 +12,6 @@ information
 =head1 SYNOPSIS
 
  #include <openssl/x509.h>
- #include <openssl/x509_vfy.h>
 
  int   X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
  void  X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int s);

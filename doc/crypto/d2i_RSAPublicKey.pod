@@ -10,7 +10,6 @@ d2i_Netscape_RSA - RSA public and private key encoding functions.
 =head1 SYNOPSIS
 
  #include <openssl/rsa.h>
- #include <openssl/x509.h>
 
  RSA * d2i_RSAPublicKey(RSA **a, const unsigned char **pp, long length);
 

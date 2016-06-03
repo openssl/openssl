@@ -15,7 +15,6 @@ manipulating B<EC_POINT> objects.
 =head1 SYNOPSIS
 
  #include <openssl/ec.h>
- #include <openssl/bn.h>
 
  EC_POINT *EC_POINT_new(const EC_GROUP *group);
  void EC_POINT_free(EC_POINT *point);

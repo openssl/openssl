@@ -7,6 +7,8 @@ BIO_get_num_renegotiates, BIO_set_ssl_renegotiate_timeout, BIO_new_ssl,
 BIO_new_ssl_connect, BIO_new_buffer_ssl_connect, BIO_ssl_copy_session_id,
 BIO_ssl_shutdown - SSL BIO
 
+=for comment multiple includes
+
 =head1 SYNOPSIS
 
  #include <openssl/bio.h>
