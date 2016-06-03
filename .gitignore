@@ -63,6 +63,7 @@ Makefile
 /fuzz/bndiv
 /fuzz/conf
 /fuzz/cms
+/fuzz/ct
 /fuzz/server
 /fuzz/x509
 /test/sha256t
@@ -85,6 +86,7 @@ Makefile
 *.dylib*
 *.dll*
 *.exe
+*.pyc
 # Exceptions
 !/test/bctest
 !/crypto/des/times/486-50.sol
