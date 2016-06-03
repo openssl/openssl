@@ -18,7 +18,7 @@
 #include <openssl/x509v3.h>
 #include "fuzzer.h"
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     static BIO *bio_out;
 
     if (bio_out == NULL)
