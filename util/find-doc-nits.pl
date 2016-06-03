@@ -32,6 +32,7 @@ sub check()
 {
     my $filename = shift;
     my $dirname = basename(dirname($filename));
+
     my $contents = '';
     {
         local $/ = undef;
@@ -39,26 +40,48 @@ sub check()
         $contents = <POD>;
         close POD;
     }
-    print $OUT "$filename doesn't start with =pod\n"
-        if $contents !~ /^=pod/;
-    print $OUT "$filename doesn't end with =cut\n"
-        if $contents !~ /=cut\n$/;
-    print $OUT "$filename more than one cut line.\n"
-        if $contents =~ /=cut.*=cut/ms;
-    print $OUT "$filename missing copyright\n"
-        if $contents !~ /Copyright .* The OpenSSL Project Authors/;
-    print $OUT "$filename copyright not last\n"
-        if $contents =~ /head1 COPYRIGHT.*=head/ms;
-    print $OUT "$filename head2 in All uppercase\n"
-        if $contents =~ /head2.*[A-Z ]+\n/;
 
-    my $section = $default_sections{$dirname};
+    my $id = "${filename}:1:";
+    print $OUT "$id doesn't start with =pod\n"
+        if $contents !~ /^=pod/;
+    print $OUT "$id doesn't end with =cut\n"
+        if $contents !~ /=cut\n$/;
+    print $OUT "$id more than one cut line.\n"
+        if $contents =~ /=cut.*=cut/ms;
+    print $OUT "$id missing copyright\n"
+        if $contents !~ /Copyright .* The OpenSSL Project Authors/;
+    print $OUT "$id copyright not last\n"
+        if $contents =~ /head1 COPYRIGHT.*=head/ms;
+    print $OUT "$id head2 in All uppercase\n"
+        if $contents =~ /head2\s+[A-Z ]+\n/;
+
+    # Look for multiple consecutive openssl #include lines.
+    # Consecutive because of files like md5.pod. Sometimes it's okay
+    # or necessary, as in ssl/SSL_set1_host.pod
+    if ( $contents !~ /=for comment multiple includes/ ) {
+        if ( $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms ) {
+            my $count = 0;
+            foreach my $line ( split /\n+/, $1 ) {
+                if ( $line =~ m@include <openssl/@ ) {
+                    if ( ++$count == 2 ) {
+                        print $OUT "$id has multiple includes\n";
+                    }
+                } else {
+                    $count = 0;
+                }
+            }
+        }
+    }
+
+    # Find what section this page is in.  If run from "." assume
+    # section 3.
+    my $section = $default_sections{$dirname} || 3;
     if ($contents =~ /^=for\s+comment\s+openssl_manual_section:\s*(\d+)\s*$/m) {
         $section = $1;
     }
 
     foreach ((@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}})) {
-        print $OUT "$filename doesn't have a head1 section matching $_\n"
+        print $OUT "$id doesn't have a head1 section matching $_\n"
             if $contents !~ /^=head1\s+${_}\s*$/m;
     }
 
