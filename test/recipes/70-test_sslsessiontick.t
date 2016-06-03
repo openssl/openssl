@@ -75,7 +75,7 @@ checkmessages(3, "No client support session ticket test", 0, 0, 0, 1);
 #Expected result: ClientHello extension seen; ServerHello extension not seen
 #                 NewSessionTicket message not seen; Abbreviated handshake
 clearall();
-(my $fh, my $session) = tempfile();
+(undef, my $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
@@ -83,12 +83,13 @@ $proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(4, "Session resumption session ticket test", 1, 0, 0, 0);
+unlink $session;
 
 #Test 5: Test session resumption with ticket capable client without a ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 NewSessionTicket message seen; Abbreviated handshake
 clearall();
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session." -no_ticket");
 $proxy->start();
@@ -97,6 +98,7 @@ $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(5, "Session resumption with ticket capable client without a "
                  ."ticket", 1, 1, 1, 0);
+unlink $session;
 
 #Test 6: Client accepts empty ticket.
 #Expected result: ClientHello extension seen; ServerHello extension seen;
@@ -108,7 +110,7 @@ checkmessages(6, "Empty ticket test",  1, 1, 1, 1);
 
 #Test 7-8: Client keeps existing ticket on empty ticket.
 clearall();
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(3);
 $proxy->filter(undef);
 $proxy->clientflags("-sess_out ".$session);
@@ -127,6 +129,7 @@ $proxy->clientstart();
 #Expected result: ClientHello extension seen; ServerHello extension not seen;
 #                 NewSessionTicket message not seen; Abbreviated handshake.
 checkmessages(8, "Empty ticket resumption test",  1, 0, 0, 0);
+unlink $session;
 
 #Test 9: Bad server sends the ServerHello extension but does not send a
 #NewSessionTicket
