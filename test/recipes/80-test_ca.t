@@ -45,7 +45,7 @@ plan tests => 4;
 
 
 rmtree("demoCA", { safe => 0 });
-unlink "newcert.pem", "newreq.pem";
+unlink "newcert.pem", "newreq.pem", "newkey.pem";
 
 
 sub yes {

@@ -11,7 +11,7 @@ use strict;
 use warnings;
 
 use POSIX;
-use File::Spec;
+use File::Basename;
 use File::Copy;
 use OpenSSL::Test qw/:DEFAULT with bldtop_file srctop_file cmdstr/;
 use OpenSSL::Test::Utils;
@@ -798,3 +798,41 @@ sub testssl {
         }
     };
 }
+
+unlink $CAkey;
+unlink $CAcert;
+unlink $CAserial;
+unlink $CAreq;
+unlink $CAreq2;
+
+unlink $Ukey;
+unlink $Ureq;
+unlink $Ucert;
+unlink basename($Ucert, '.ss').'.srl';
+
+unlink $Dkey;
+unlink $Dreq;
+unlink $Dcert;
+
+unlink $Ekey;
+unlink $Ereq;
+unlink $Ecert;
+
+unlink $P1key;
+unlink $P1req;
+unlink $P1cert;
+unlink basename($P1cert, '.ss').'.srl';
+unlink $P1intermediate;
+unlink "intP1.ss";
+
+unlink $P2key;
+unlink $P2req;
+unlink $P2cert;
+unlink $P2intermediate;
+unlink "intP2.ss";
+
+unlink "ecp.ss";
+unlink "err.ss";
+
+unlink $server_sess;
+unlink $client_sess;

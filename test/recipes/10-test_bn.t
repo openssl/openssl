@@ -64,7 +64,9 @@ my $init = ok(run(test(["bntest"], stdout => $testresults)), 'initialize');
 	     last unless $l;
 	 }
      };
-}
+ }
+
+unlink $testresults;
 
 sub check_operations {
     my $failcount = 0;
