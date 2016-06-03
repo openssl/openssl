@@ -55,7 +55,7 @@ static int fmtfp(char **, char **, size_t *, size_t *,
                  LDOUBLE, int, int, int, int);
 static int doapr_outch(char **, char **, size_t *, size_t *, int);
 static int _dopr(char **sbuffer, char **buffer,
-                 size_t *maxlen, size_t *retlen, int *truncated,
+                 size_t *maxlen, size_t *retlen,
                  const char *format, va_list args);
 
 /* format read states */
@@ -103,7 +103,7 @@ static int
 _dopr(char **sbuffer,
       char **buffer,
       size_t *maxlen,
-      size_t *retlen, int *truncated, const char *format, va_list args)
+      size_t *retlen, const char *format, va_list args)
 {
     char ch;
     LLONG value;
@@ -363,9 +363,6 @@ _dopr(char **sbuffer,
             break;
         }
     }
-    *truncated = (currlen > *maxlen - 1);
-    if (*truncated)
-        currlen = *maxlen - 1;
     if(!doapr_outch(sbuffer, buffer, &currlen, maxlen, '\0'))
         return 0;
     *retlen = currlen - 1;
@@ -881,10 +878,9 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
     char *hugebufp = hugebuf;
     size_t hugebufsize = sizeof(hugebuf);
     char *dynbuf = NULL;
-    int ignored;
 
     dynbuf = NULL;
-    if (!_dopr(&hugebufp, &dynbuf, &hugebufsize, &retlen, &ignored, format,
+    if (!_dopr(&hugebufp, &dynbuf, &hugebufsize, &retlen, format,
                 args)) {
         OPENSSL_free(dynbuf);
         return -1;
@@ -920,19 +916,15 @@ int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
 {
     size_t retlen;
-    int truncated;
 
-    if(!_dopr(&buf, NULL, &n, &retlen, &truncated, format, args))
+    /*
+     * In case of truncation, return -1 like traditional snprintf.
+     * (Current drafts for ISO/IEC 9899 say snprintf should return the
+     * number of characters that would have been written, had the buffer
+     * been large enough.)
+     */
+    if(!_dopr(&buf, NULL, &n, &retlen, format, args))
         return -1;
 
-    if (truncated)
-        /*
-         * In case of truncation, return -1 like traditional snprintf.
-         * (Current drafts for ISO/IEC 9899 say snprintf should return the
-         * number of characters that would have been written, had the buffer
-         * been large enough.)
-         */
-        return -1;
-    else
-        return (retlen <= INT_MAX) ? (int)retlen : -1;
+    return (retlen <= INT_MAX) ? (int)retlen : -1;
 }

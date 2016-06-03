@@ -330,7 +330,8 @@ void ssl3_init_finished_mac(SSL *s)
 {
     ssl3_free_digest_list(s);
     s->s3->handshake_buffer = BIO_new(BIO_s_mem());
-    (void)BIO_set_close(s->s3->handshake_buffer, BIO_CLOSE);
+    if (s->s3->handshake_buffer != NULL)
+        (void)BIO_set_close(s->s3->handshake_buffer, BIO_CLOSE);
 }
 
 /*
