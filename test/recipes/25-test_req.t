@@ -10,21 +10,47 @@
 use strict;
 use warnings;
 
-use File::Spec;
+use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 3;
+plan tests => 4;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
+
+open RND, ">>", ".rnd";
+print RND "string to make the random number generator think it has entropy";
+close RND;
+subtest "generating certificate requests" => sub {
+    my @req_new;
+    if (disabled("rsa")) {
+	@req_new = ("-newkey", "dsa:".srctop_file("apps", "dsa512.pem"));
+    } else {
+	@req_new = ("-new");
+	note("There should be a 2 sequences of .'s and some +'s.");
+	note("There should not be more that at most 80 per line");
+    }
+
+    plan tests => 2;
+
+    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+		@req_new, "-out", "testreq.pem"])),
+       "Generating request");
+
+    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+		"-verify", "-in", "testreq.pem", "-noout"])),
+       "Verifying signature on request");
+};
 
 my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
 
 run_conversion('req conversions',
 	       "testreq.pem");
 run_conversion('req conversions -- testreq2',
-	       "testreq2.pem");
+	       srctop_file("test", "testreq2.pem"));
+
+unlink "testkey.pem", "testreq.pem";
 
 sub run_conversion {
     my $title = shift;
@@ -40,7 +66,7 @@ sub run_conversion {
 	  plan skip_all => "skipping req conversion test for $reqfile"
 	      if grep /Unknown Public Key/, map { s/\R//; } <DATA>;
 
-	  tconversion("req", "testreq.pem", @openssl_args);
+	  tconversion("req", $reqfile, @openssl_args);
 	}
 	close DATA;
 	unlink "req-check.err";
