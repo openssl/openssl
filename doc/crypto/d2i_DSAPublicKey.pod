@@ -9,7 +9,6 @@ d2i_DSA_SIG, i2d_DSA_SIG - DSA key encoding and parsing functions.
 =head1 SYNOPSIS
 
  #include <openssl/dsa.h>
- #include <openssl/x509.h>
 
  DSA * d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
 

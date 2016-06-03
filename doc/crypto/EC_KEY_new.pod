@@ -16,7 +16,6 @@ EC_KEY objects.
 =head1 SYNOPSIS
 
  #include <openssl/ec.h>
- #include <openssl/bn.h>
 
  EC_KEY *EC_KEY_new(void);
  int EC_KEY_get_flags(const EC_KEY *key);

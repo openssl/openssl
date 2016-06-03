@@ -4,12 +4,14 @@
 
 BIO_f_base64 - base64 BIO filter
 
+=for comment multiple includes
+
 =head1 SYNOPSIS
 
  #include <openssl/bio.h>
  #include <openssl/evp.h>
 
- const BIO_METHOD *     BIO_f_base64(void);
+ const BIO_METHOD *BIO_f_base64(void);
 
 =head1 DESCRIPTION
 

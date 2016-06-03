@@ -7,7 +7,6 @@ ec - Elliptic Curve functions
 =head1 SYNOPSIS
 
  #include <openssl/ec.h>
- #include <openssl/bn.h>
 
  const EC_METHOD *EC_GFp_simple_method(void);
  const EC_METHOD *EC_GFp_mont_method(void);

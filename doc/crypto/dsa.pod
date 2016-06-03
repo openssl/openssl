@@ -7,7 +7,6 @@ dsa - Digital Signature Algorithm
 =head1 SYNOPSIS
 
  #include <openssl/dsa.h>
- #include <openssl/engine.h>
 
  DSA *  DSA_new(void);
  void   DSA_free(DSA *dsa);

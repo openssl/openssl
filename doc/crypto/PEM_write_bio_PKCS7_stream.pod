@@ -7,7 +7,6 @@ PEM_write_bio_PKCS7_stream - output PKCS7 structure in PEM format.
 =head1 SYNOPSIS
 
  #include <openssl/pkcs7.h>
- #include <openssl/pem.h>
 
  int PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *data, int flags);
 

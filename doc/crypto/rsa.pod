@@ -7,7 +7,6 @@ rsa - RSA public key cryptosystem
 =head1 SYNOPSIS
 
  #include <openssl/rsa.h>
- #include <openssl/engine.h>
 
  RSA * RSA_new(void);
  void RSA_free(RSA *rsa);
