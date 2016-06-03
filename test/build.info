@@ -1,4 +1,4 @@
-{- use File::Spec::Functions qw/catdir rel2abs/; -}
+{- use File::Spec::Functions qw/catdir catfile rel2abs abs2rel updir/; -}
 IF[{- !$disabled{tests} -}]
   PROGRAMS=\
           aborttest \
@@ -254,4 +254,30 @@ IF[{- !$disabled{tests} -}]
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]={- rel2abs(catdir($builddir,"../include")) -} ../include
   DEPEND[bioprinttest]=../libcrypto
+  {-
+   use File::Basename;
+   use if $^O ne "VMS", 'File::Glob' => qw/glob/;
+
+   my $includes = join(" ",
+                       rel2abs(catdir($builddir,"../include")), "../include");
+   my @nogo_headers = ( "asn1_mac.h",
+                        "__decc_include_prologue.h",
+                        "__decc_include_epilogue.h" );
+   my @headerfiles = glob catfile($sourcedir,
+                                  updir(), "include", "openssl", "*.h");
+
+   foreach my $headerfile (@headerfiles) {
+       my $name = basename($headerfile, ".h");
+       next if $disabled{$name};
+       next if grep { $_ eq lc("$name.h") } @nogo_headers;
+       $OUT .= <<"_____";
+
+  PROGRAMS=buildtest_$name
+  GENERATE[buildtest_$name.c]=generate_buildtest.pl $name
+  SOURCE[buildtest_$name]=buildtest_$name.c
+  INCLUDE[buildtest_$name]=$includes
+  DEPEND[buildtest_$name]=../libssl ../libcrypto
+_____
+   }
+  -}
 ENDIF
