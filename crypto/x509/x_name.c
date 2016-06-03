@@ -322,6 +322,8 @@ static int x509_name_canon(X509_NAME *a)
         if (tmpentry == NULL)
             goto err;
         tmpentry->object = OBJ_dup(entry->object);
+        if (tmpentry->object == NULL)
+            goto err;
         if (!asn1_string_canon(tmpentry->value, entry->value))
             goto err;
         if (!sk_X509_NAME_ENTRY_push(entries, tmpentry))
