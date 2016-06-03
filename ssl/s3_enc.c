@@ -326,11 +326,18 @@ void ssl3_cleanup_key_block(SSL *s)
     s->s3->tmp.key_block_length = 0;
 }
 
-void ssl3_init_finished_mac(SSL *s)
+int ssl3_init_finished_mac(SSL *s)
 {
+    BIO *buf = BIO_new(BIO_s_mem());
+
+    if (buf == NULL) {
+        SSLerr(SSL_F_SSL3_INIT_FINISHED_MAC, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
     ssl3_free_digest_list(s);
-    s->s3->handshake_buffer = BIO_new(BIO_s_mem());
+    s->s3->handshake_buffer = buf;
     (void)BIO_set_close(s->s3->handshake_buffer, BIO_CLOSE);
+    return 1;
 }
 
 /*
