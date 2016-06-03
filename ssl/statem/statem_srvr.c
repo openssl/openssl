@@ -496,15 +496,20 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
     case TLS_ST_SW_HELLO_REQ:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
-        ssl3_init_finished_mac(s);
+        if (!ssl3_init_finished_mac(s)) {
+            ossl_statem_set_error(s);
+            return WORK_ERROR;
+        }
         break;
 
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
         /* HelloVerifyRequest resets Finished MAC */
-        if (s->version != DTLS1_BAD_VER)
-            ssl3_init_finished_mac(s);
+        if (s->version != DTLS1_BAD_VER && !ssl3_init_finished_mac(s)) {
+            ossl_statem_set_error(s);
+            return WORK_ERROR;
+        }
         /*
          * The next message should be another ClientHello which we need to
          * treat like it was the first packet

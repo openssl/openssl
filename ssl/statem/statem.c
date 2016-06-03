@@ -332,8 +332,12 @@ static int state_machine(SSL *s, int server)
                 goto end;
             }
 
-        if (!server || st->state != MSG_FLOW_RENEGOTIATE)
-            ssl3_init_finished_mac(s);
+        if (!server || st->state != MSG_FLOW_RENEGOTIATE) {
+            if (!ssl3_init_finished_mac(s)) {
+                ossl_statem_set_error(s);
+                goto end;
+            }
+        }
 
         if (server) {
             if (st->state != MSG_FLOW_RENEGOTIATE) {

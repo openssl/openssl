@@ -391,7 +391,10 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
         s->shutdown = 0;
         if (SSL_IS_DTLS(s)) {
             /* every DTLS ClientHello resets Finished MAC */
-            ssl3_init_finished_mac(s);
+            if (!ssl3_init_finished_mac(s)) {
+                ossl_statem_set_error(s);
+                return WORK_ERROR;
+            }
         }
         break;
 
