@@ -79,7 +79,7 @@ my $client_sess="client.ss";
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
-    + 14			# For the first testssl
+    + 13			# For the first testssl
     ;
 
 subtest 'test_ss' => sub {
@@ -331,7 +331,7 @@ sub testssl {
 
     subtest 'standard SSL tests' => sub {
 	######################################################################
-        plan tests => 21;
+      plan tests => 21;
 
       SKIP: {
 	  skip "SSLv3 is not supported by this OpenSSL build", 4
@@ -681,53 +681,6 @@ sub testssl {
 
 	  ok(run(test([@ssltest, "-cipher", "AES128-SHA256", "-bytes", "8m"])));
 	}
-    };
-
-    subtest 'DTLS Version min/max tests' => sub {
-        my @protos;
-        push(@protos, "dtls1") unless ($no_dtls1 || $no_dtls);
-        push(@protos, "dtls1.2") unless ($no_dtls1_2 || $no_dtls);
-        my @minprotos = (undef, @protos);
-        my @maxprotos = (@protos, undef);
-        my @shdprotos = (@protos, $protos[$#protos]);
-        my $n = ((@protos+2) * (@protos+3))/2 - 2;
-        my $ntests = $n * $n;
-	plan tests => $ntests;
-      SKIP: {
-        skip "DTLS disabled", 1 if $ntests == 1;
-
-        my $should;
-        for (my $smin = 0; $smin < @minprotos; ++$smin) {
-        for (my $smax = $smin ? $smin - 1 : 0; $smax < @maxprotos; ++$smax) {
-        for (my $cmin = 0; $cmin < @minprotos; ++$cmin) {
-        for (my $cmax = $cmin ? $cmin - 1 : 0; $cmax < @maxprotos; ++$cmax) {
-            if ($cmax < $smin-1) {
-                $should = "fail-server";
-            } elsif ($smax < $cmin-1) {
-                $should = "fail-client";
-            } elsif ($cmax > $smax) {
-                $should = $shdprotos[$smax];
-            } else {
-                $should = $shdprotos[$cmax];
-            }
-
-            my @args = (@ssltest, "-dtls");
-            push(@args, "-should_negotiate", $should);
-            push(@args, "-server_min_proto", $minprotos[$smin])
-                if (defined($minprotos[$smin]));
-            push(@args, "-server_max_proto", $maxprotos[$smax])
-                if (defined($maxprotos[$smax]));
-            push(@args, "-client_min_proto", $minprotos[$cmin])
-                if (defined($minprotos[$cmin]));
-            push(@args, "-client_max_proto", $maxprotos[$cmax])
-                if (defined($maxprotos[$cmax]));
-            my $ok = run(test[@args]);
-            if (! $ok) {
-                print STDERR "\nsmin=$smin, smax=$smax, cmin=$cmin, cmax=$cmax\n";
-                print STDERR "\nFailed: @args\n";
-            }
-            ok($ok);
-        }}}}}
     };
 
     subtest 'TLS session reuse' => sub {

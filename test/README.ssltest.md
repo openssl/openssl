@@ -64,6 +64,8 @@ The test section supports the following options:
   - AcceptAll - accepts all certificates.
   - RejectAll - rejects all certificates.
 
+* Method - the method to test. One of DTLS or TLS.
+
 * ServerName - the server the client should attempt to connect to. One of
   - None - do not use SNI (default)
   - server1 - the initial context
