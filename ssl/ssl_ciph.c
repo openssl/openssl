@@ -1855,8 +1855,8 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
                SSL_R_DUPLICATE_COMPRESSION_ID);
         return (1);
     }
-    if ((ssl_comp_methods == NULL)
-               || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
+    if (ssl_comp_methods == NULL
+        || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
         OPENSSL_free(comp);
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
