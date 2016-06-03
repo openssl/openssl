@@ -63,6 +63,8 @@ The test section supports the following options:
   Used to test callback behaviour. One of
   - AcceptAll - accepts all certificates.
   - RejectAll - rejects all certificates.
+  
+* Method - the method to test. One of DTLS or TLS.
 
 * ServerName - the server the client is expected to successfully connect to
   - server1 - the initial context (default)

@@ -113,6 +113,8 @@ static const test_enum ssl_protocols[] = {
      {"TLSv1.1", TLS1_1_VERSION},
      {"TLSv1", TLS1_VERSION},
      {"SSLv3", SSL3_VERSION},
+     {"DTLSv1", DTLS1_VERSION},
+     {"DTLSv1.2", DTLS1_2_VERSION},
 };
 
 __owur static int parse_protocol(SSL_TEST_CTX *test_ctx, const char *value)
@@ -211,6 +213,31 @@ const char *ssl_session_ticket_expected_name(ssl_session_ticket_expected_t serve
                      server);
 }
 
+/***********************/
+/* Method.             */
+/***********************/
+
+static const test_enum ssl_test_methods[] = {
+    {"TLS", SSL_TEST_METHOD_TLS},
+    {"DTLS", SSL_TEST_METHOD_DTLS},
+};
+
+__owur static int parse_test_method(SSL_TEST_CTX *test_ctx, const char *value)
+{
+    int ret_value;
+    if (!parse_enum(ssl_test_methods, OSSL_NELEM(ssl_test_methods),
+                    &ret_value, value)) {
+        return 0;
+    }
+    test_ctx->method = ret_value;
+    return 1;
+}
+
+const char *ssl_test_method_name(ssl_test_method_t method)
+{
+    return enum_name(ssl_test_methods, OSSL_NELEM(ssl_test_methods), method);
+}
+
 /*************************************************************/
 /* Known test options and their corresponding parse methods. */
 /*************************************************************/
@@ -228,6 +255,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ClientVerifyCallback", &parse_client_verify_callback },
     { "ServerName", &parse_servername },
     { "SessionTicketExpected", &parse_session_ticket_expected },
+    { "Method", &parse_test_method },
 };
 
 
