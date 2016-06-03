@@ -470,11 +470,16 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
     X509_NAME *name;
 
     ret = sk_X509_NAME_new_null();
+    if (ret == NULL) {
+        SSLerr(SSL_F_SSL_DUP_CA_LIST, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
     for (i = 0; i < sk_X509_NAME_num(sk); i++) {
         name = X509_NAME_dup(sk_X509_NAME_value(sk, i));
-        if ((name == NULL) || !sk_X509_NAME_push(ret, name)) {
+        if (name == NULL || !sk_X509_NAME_push(ret, name)) {
             sk_X509_NAME_pop_free(ret, X509_NAME_free);
-            return (NULL);
+            X509_NAME_free(name);
+            return NULL;
         }
     }
     return (ret);
@@ -598,14 +603,18 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
         if (lh_X509_NAME_retrieve(name_hash, xn) != NULL) {
             /* Duplicate. */
             X509_NAME_free(xn);
+            xn = NULL;
         } else {
-            lh_X509_NAME_insert(name_hash, xn);
-            sk_X509_NAME_push(ret, xn);
+            if (!lh_X509_NAME_insert(name_hash, xn))
+                goto err;
+            if (!sk_X509_NAME_push(ret, xn))
+                goto err;
         }
     }
     goto done;
 
  err:
+    X509_NAME_free(xn);
     sk_X509_NAME_pop_free(ret, X509_NAME_free);
     ret = NULL;
  done:
@@ -656,17 +665,20 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         xn = X509_NAME_dup(xn);
         if (xn == NULL)
             goto err;
-        if (sk_X509_NAME_find(stack, xn) >= 0)
+        if (sk_X509_NAME_find(stack, xn) >= 0) {
+            /* Duplicate. */
             X509_NAME_free(xn);
-        else
-            sk_X509_NAME_push(stack, xn);
+        } else if (!sk_X509_NAME_push(stack, xn)) {
+            X509_NAME_free(xn);
+            goto err;
+        }
     }
 
     ERR_clear_error();
     goto done;
 
  err:
-        ret = 0;
+    ret = 0;
  done:
     BIO_free(in);
     X509_free(x);

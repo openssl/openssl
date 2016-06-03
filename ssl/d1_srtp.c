@@ -81,16 +81,18 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
             if (sk_SRTP_PROTECTION_PROFILE_find(profiles, p) >= 0) {
                 SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,
                        SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
-                sk_SRTP_PROTECTION_PROFILE_free(profiles);
-                return 1;
+                goto err;
             }
 
-            sk_SRTP_PROTECTION_PROFILE_push(profiles, p);
+            if (!sk_SRTP_PROTECTION_PROFILE_push(profiles, p)) {
+                SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,
+                       SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
+                goto err;
+            }
         } else {
             SSLerr(SSL_F_SSL_CTX_MAKE_PROFILES,
                    SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE);
-            sk_SRTP_PROTECTION_PROFILE_free(profiles);
-            return 1;
+            goto err;
         }
 
         if (col)
@@ -102,6 +104,9 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
     *out = profiles;
 
     return 0;
+err:
+    sk_SRTP_PROTECTION_PROFILE_free(profiles);
+    return 1;
 }
 
 int SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles)
