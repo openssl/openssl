@@ -2029,6 +2029,8 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS1_PREPROCESS_FRAGMENT                  288
 # define SSL_F_DTLS1_PROCESS_RECORD                       257
 # define SSL_F_DTLS1_READ_BYTES                           258
+# define SSL_F_DTLS1_READ_FAILED                          339
+# define SSL_F_DTLS1_RETRANSMIT_MESSAGE                   390
 # define SSL_F_DTLS1_WRITE_APP_DATA_BYTES                 268
 # define SSL_F_DTLSV1_LISTEN                              350
 # define SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC          371

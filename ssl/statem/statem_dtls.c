@@ -918,7 +918,7 @@ WORK_STATE dtls_wait_for_dry(SSL *s)
 int dtls1_read_failed(SSL *s, int code)
 {
     if (code > 0) {
-        fprintf(stderr, "dtls1_read_failed(); invalid state reached\n");
+        SSLerr(SSL_F_DTLS1_READ_FAILED, ERR_R_INTERNAL_ERROR);
         return 1;
     }
 
@@ -975,10 +975,8 @@ int dtls1_retransmit_buffered_messages(SSL *s)
                                      dtls1_get_queue_priority
                                      (frag->msg_header.seq,
                                       frag->msg_header.is_ccs),
-                                     &found) <= 0 && found) {
-            fprintf(stderr, "dtls1_retransmit_message() failed\n");
+                                     &found) <= 0)
             return -1;
-        }
     }
 
     return 1;
@@ -1070,7 +1068,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, int *found)
 
     item = pqueue_find(s->d1->sent_messages, seq64be);
     if (item == NULL) {
-        fprintf(stderr, "retransmit:  message %d non-existant\n", seq);
+        SSLerr(SSL_F_DTLS1_RETRANSMIT_MESSAGE, ERR_R_INTERNAL_ERROR);
         *found = 0;
         return 0;
     }

@@ -34,6 +34,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_DTLS1_PREPROCESS_FRAGMENT), "dtls1_preprocess_fragment"},
     {ERR_FUNC(SSL_F_DTLS1_PROCESS_RECORD), "dtls1_process_record"},
     {ERR_FUNC(SSL_F_DTLS1_READ_BYTES), "dtls1_read_bytes"},
+    {ERR_FUNC(SSL_F_DTLS1_READ_FAILED), "dtls1_read_failed"},
+    {ERR_FUNC(SSL_F_DTLS1_RETRANSMIT_MESSAGE), "dtls1_retransmit_message"},
     {ERR_FUNC(SSL_F_DTLS1_WRITE_APP_DATA_BYTES),
      "dtls1_write_app_data_bytes"},
     {ERR_FUNC(SSL_F_DTLSV1_LISTEN), "DTLSv1_listen"},
