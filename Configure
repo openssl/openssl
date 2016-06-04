@@ -1941,50 +1941,11 @@ for (@generated_headers) {
                catfile($srcdir, $_.".in"));
 }
 
-###
-### When the old "unixmake" scheme goes away, so does this function
-###
-sub build_Makefile {
-    run_dofile("Makefile","Makefile.in");
-
-    # Copy all Makefile.in to Makefile (except top-level)
-    use File::Find;
-    use IO::File;
-    find(
-        {
-            preprocess => sub {
-                grep(!/^\./, @_);
-            },
-            wanted => sub {
-                return if ($_ ne "Makefile.in" || $File::Find::dir eq ".");
-                my $in = IO::File->new($_, "r") or
-                    die sprintf "Error reading Makefile.in in %s: !$\n",
-                    $File::Find::dir;
-                my $out = IO::File->new("Makefile", "w") or
-                    die sprintf "Error writing Makefile in %s: !$\n",
-                    $File::Find::dir;
-                print $out "# Generated from $_, do not edit\n";
-                while (my $line = <$in>) { print $out $line }
-                $in->close() or
-                    die sprintf "Error reading Makefile.in in %s: !$\n",
-                    $File::Find::dir;
-                $out->close() or
-                    die sprintf "Error writing Makefile in %s: !$\n",
-                    $File::Find::dir;
-            },
-        },
-        ".");
-}
-
 my %builders = (
     unified => sub {
         run_dofile(catfile($blddir, $target{build_file}),
                    $config{build_file_template},
                    catfile($srcdir, "Configurations", "common.tmpl"));
-    },
-    unixmake => sub {
-        build_Makefile();
-
     },
     );
 
