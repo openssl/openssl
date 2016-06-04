@@ -396,10 +396,10 @@ static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in)
         len--;
     }
 
-    to = from + len - 1;
+    to = from + len;
 
     /* Ignore trailing spaces */
-    while ((len > 0) && !(*to & 0x80) && isspace(*to)) {
+    while ((len > 0) && !(to[-1] & 0x80) && isspace(to[-1])) {
         to--;
         len--;
     }
