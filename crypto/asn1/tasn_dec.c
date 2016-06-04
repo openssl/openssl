@@ -14,6 +14,7 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+#include "internal/numbers.h"
 #include "asn1_locl.h"
 
 static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
@@ -895,7 +896,7 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 
 static int asn1_find_end(const unsigned char **in, long len, char inf)
 {
-    int expected_eoc;
+    uint32_t expected_eoc;
     long plen;
     const unsigned char *p = *in, *q;
     /* If not indefinite length constructed just add length */
@@ -925,10 +926,15 @@ static int asn1_find_end(const unsigned char **in, long len, char inf)
             ASN1err(ASN1_F_ASN1_FIND_END, ERR_R_NESTED_ASN1_ERROR);
             return 0;
         }
-        if (inf)
+        if (inf) {
+            if (expected_eoc == UINT32_MAX) {
+                ASN1err(ASN1_F_ASN1_FIND_END, ERR_R_NESTED_ASN1_ERROR);
+                return 0;
+            }
             expected_eoc++;
-        else
+        } else {
             p += plen;
+        }
         len -= p - q;
     }
     if (expected_eoc) {
