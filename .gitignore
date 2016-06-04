@@ -31,6 +31,7 @@ Makefile
 /test/test*.pem
 /test/newkey.pem
 /test/*.log
+/test/buildtest_*
 
 # Certificate symbolic links
 *.0
