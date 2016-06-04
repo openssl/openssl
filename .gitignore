@@ -60,14 +60,21 @@ Makefile
 # Executables
 /apps/openssl
 /fuzz/asn1
+/fuzz/asn1-test
 /fuzz/asn1parse
+/fuzz/asn1parse-test
 /fuzz/bignum
+/fuzz/bignum-test
 /fuzz/bndiv
+/fuzz/bndiv-test
 /fuzz/conf
+/fuzz/conf-test
 /fuzz/cms
+/fuzz/cms-test
 /fuzz/ct
+/fuzz/ct-test
 /fuzz/server
-/fuzz/x509
+/fuzz/server-test
 /test/sha256t
 /test/sha512t
 /test/gost2814789t

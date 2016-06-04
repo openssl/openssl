@@ -16,10 +16,16 @@
 #include <openssl/cms.h>
 #include "fuzzer.h"
 
+int FuzzerInitialize(int *argc, char ***argv) {
+    return 1;
+}
+
 int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
+    CMS_ContentInfo *i;
     BIO *in = BIO_new(BIO_s_mem());
+
     OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
-    CMS_ContentInfo *i = d2i_CMS_bio(in, NULL);
+    i = d2i_CMS_bio(in, NULL);
     CMS_ContentInfo_free(i);
     BIO_free(in);
     return 0;

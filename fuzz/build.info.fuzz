@@ -1,0 +1,43 @@
+{- use File::Spec::Functions;
+   our $ex_inc = $withargs{fuzzer_include} &&
+       (file_name_is_absolute($withargs{fuzzer_include}) ?
+        $withargs{fuzzer_include} : catdir(updir(), $withargs{fuzzer_include}));
+   our $ex_lib = $withargs{fuzzer_lib} &&
+       (file_name_is_absolute($withargs{fuzzer_lib}) ?
+        $withargs{fuzzer_lib} : catfile(updir(), $withargs{fuzzer_lib}));
+   ""
+-}
+
+PROGRAMS=asn1 asn1parse bignum bndiv cms conf ct server
+
+SOURCE[asn1]=asn1.c driver.c
+INCLUDE[asn1]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+DEPEND[asn1]=../libcrypto {- $ex_lib -}
+
+SOURCE[asn1parse]=asn1parse.c driver.c
+INCLUDE[asn1parse]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+DEPEND[asn1parse]=../libcrypto {- $ex_lib -}
+
+SOURCE[bignum]=bignum.c driver.c
+INCLUDE[bignum]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+DEPEND[bignum]=../libcrypto {- $ex_lib -}
+
+SOURCE[bndiv]=bndiv.c driver.c
+INCLUDE[bndiv]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+DEPEND[bndiv]=../libcrypto {- $ex_lib -}
+
+SOURCE[cms]=cms.c driver.c
+INCLUDE[cms]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+DEPEND[cms]=../libcrypto {- $ex_lib -}
+
+SOURCE[conf]=conf.c driver.c
+INCLUDE[conf]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+DEPEND[conf]=../libcrypto {- $ex_lib -}
+
+SOURCE[ct]=ct.c driver.c
+INCLUDE[ct]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+DEPEND[ct]=../libcrypto {- $ex_lib -}
+
+SOURCE[server]=server.c driver.c
+INCLUDE[server]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+DEPEND[server]=../libcrypto ../libssl {- $ex_lib -}

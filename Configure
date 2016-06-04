@@ -245,7 +245,7 @@ my $default_ranlib;
 $config{fips}=0;
 
 # Top level directories to build
-$config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "tools" ];
+$config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "tools", "fuzz" ];
 # crypto/ subdirectories to build
 $config{sdirs} = [
     "objects",
@@ -1046,12 +1046,7 @@ if ($disabled{"dynamic-engine"}) {
 }
 
 unless ($disabled{"fuzz-libfuzzer"}) {
-    push @{$config{dirs}}, "fuzz";
     $config{cflags} .= "-fsanitize-coverage=edge,indirect-calls ";
-}
-
-unless ($disabled{"fuzz-afl"}) {
-    push @{$config{dirs}}, "fuzz";
 }
 
 unless ($disabled{asan}) {
@@ -1337,6 +1332,9 @@ if ($builder eq "unified") {
     }
 
     my @build_infos = ( [ ".", "build.info" ] );
+    push @build_infos, [ "fuzz", "build.info.fuzz" ]
+        unless $disabled{"fuzz-afl"} && $disabled{"fuzz-libfuzzer"};
+
     foreach (@{$config{dirs}}) {
         push @build_infos, [ $_, "build.info" ]
             if (-f catfile($srcdir, $_, "build.info"));

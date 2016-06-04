@@ -9,4 +9,4 @@
  */
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len);
-__attribute__((weak)) int FuzzerInitialize(int *argc, char ***argv);
+int FuzzerInitialize(int *argc, char ***argv);
