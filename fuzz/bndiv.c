@@ -17,14 +17,21 @@
 #include <openssl/bn.h>
 #include "fuzzer.h"
 
+int FuzzerInitialize(int *argc, char ***argv) {
+    return 1;
+}
+
 int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
-    int success = 0;
     static BN_CTX *ctx;
     static BIGNUM *b1;
     static BIGNUM *b2;
     static BIGNUM *b3;
     static BIGNUM *b4;
     static BIGNUM *b5;
+    int success = 0;
+    size_t l1 = 0, l2 = 0;
+    /* s1 and s2 will be the signs for b1 and b2. */
+    int s1 = 0, s2 = 0;
 
     if (ctx == NULL) {
         b1 = BN_new();
@@ -34,16 +41,15 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
         b5 = BN_new();
         ctx = BN_CTX_new();
     }
-    // We are going to split the buffer in two, sizes l1 and l2, giving b1 and
-    // b2.
-    size_t l1 = 0, l2 = 0;
-    // s1 and s2 will be the signs for b1 and b2.
-    int s1 = 0, s2 = 0;
+    /* We are going to split the buffer in two, sizes l1 and l2, giving b1 and
+     * b2.
+     */
     if (len > 0) {
         --len;
-        // Use first byte to divide the remaining buffer into 3Fths. I admit
-        // this disallows some number sizes. If it matters, better ideas are
-        // welcome (Ben).
+        /* Use first byte to divide the remaining buffer into 3Fths. I admit
+         * this disallows some number sizes. If it matters, better ideas are
+         * welcome (Ben).
+         */
         l1 = ((buf[0] & 0x3f) * len) / 0x3f;
         s1 = buf[0] & 0x40;
         s2 = buf[0] & 0x80;
@@ -55,7 +61,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     OPENSSL_assert(BN_bin2bn(buf + l1, l2, b2) == b2);
     BN_set_negative(b2, s2);
 
-    // divide by 0 is an error
+    /* divide by 0 is an error */
     if (BN_is_zero(b2)) {
         success = 1;
         goto done;

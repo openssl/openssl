@@ -26,45 +26,52 @@
 #include <openssl/x509v3.h>
 #include "fuzzer.h"
 
-static const ASN1_ITEM *item_type[] = {
-    ASN1_ITEM_rptr(ASN1_SEQUENCE),
-    ASN1_ITEM_rptr(AUTHORITY_INFO_ACCESS),
-    ASN1_ITEM_rptr(BIGNUM),
-    ASN1_ITEM_rptr(ECPARAMETERS),
-    ASN1_ITEM_rptr(ECPKPARAMETERS),
-    ASN1_ITEM_rptr(GENERAL_NAME),
-    ASN1_ITEM_rptr(GENERAL_SUBTREE),
-    ASN1_ITEM_rptr(NAME_CONSTRAINTS),
-    ASN1_ITEM_rptr(OCSP_BASICRESP),
-    ASN1_ITEM_rptr(OCSP_RESPONSE),
-    ASN1_ITEM_rptr(PKCS12),
-    ASN1_ITEM_rptr(PKCS12_AUTHSAFES),
-    ASN1_ITEM_rptr(PKCS12_SAFEBAGS),
-    ASN1_ITEM_rptr(PKCS7),
-    ASN1_ITEM_rptr(PKCS7_ATTR_SIGN),
-    ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY),
-    ASN1_ITEM_rptr(PKCS7_DIGEST),
-    ASN1_ITEM_rptr(PKCS7_ENC_CONTENT),
-    ASN1_ITEM_rptr(PKCS7_ENCRYPT),
-    ASN1_ITEM_rptr(PKCS7_ENVELOPE),
-    ASN1_ITEM_rptr(PKCS7_RECIP_INFO),
-    ASN1_ITEM_rptr(PKCS7_SIGN_ENVELOPE),
-    ASN1_ITEM_rptr(PKCS7_SIGNED),
-    ASN1_ITEM_rptr(PKCS7_SIGNER_INFO),
-    ASN1_ITEM_rptr(POLICY_CONSTRAINTS),
-    ASN1_ITEM_rptr(POLICY_MAPPINGS),
-    ASN1_ITEM_rptr(SXNET),
-    //ASN1_ITEM_rptr(TS_RESP),  want to do this, but type is hidden, however d2i exists...
-    ASN1_ITEM_rptr(X509),
-    ASN1_ITEM_rptr(X509_CRL),
+static ASN1_ITEM_EXP *item_type[] = {
+    ASN1_ITEM_ref(ASN1_SEQUENCE),
+    ASN1_ITEM_ref(AUTHORITY_INFO_ACCESS),
+    ASN1_ITEM_ref(BIGNUM),
+    ASN1_ITEM_ref(ECPARAMETERS),
+    ASN1_ITEM_ref(ECPKPARAMETERS),
+    ASN1_ITEM_ref(GENERAL_NAME),
+    ASN1_ITEM_ref(GENERAL_SUBTREE),
+    ASN1_ITEM_ref(NAME_CONSTRAINTS),
+    ASN1_ITEM_ref(OCSP_BASICRESP),
+    ASN1_ITEM_ref(OCSP_RESPONSE),
+    ASN1_ITEM_ref(PKCS12),
+    ASN1_ITEM_ref(PKCS12_AUTHSAFES),
+    ASN1_ITEM_ref(PKCS12_SAFEBAGS),
+    ASN1_ITEM_ref(PKCS7),
+    ASN1_ITEM_ref(PKCS7_ATTR_SIGN),
+    ASN1_ITEM_ref(PKCS7_ATTR_VERIFY),
+    ASN1_ITEM_ref(PKCS7_DIGEST),
+    ASN1_ITEM_ref(PKCS7_ENC_CONTENT),
+    ASN1_ITEM_ref(PKCS7_ENCRYPT),
+    ASN1_ITEM_ref(PKCS7_ENVELOPE),
+    ASN1_ITEM_ref(PKCS7_RECIP_INFO),
+    ASN1_ITEM_ref(PKCS7_SIGN_ENVELOPE),
+    ASN1_ITEM_ref(PKCS7_SIGNED),
+    ASN1_ITEM_ref(PKCS7_SIGNER_INFO),
+    ASN1_ITEM_ref(POLICY_CONSTRAINTS),
+    ASN1_ITEM_ref(POLICY_MAPPINGS),
+    ASN1_ITEM_ref(SXNET),
+    /*ASN1_ITEM_ref(TS_RESP),  want to do this, but type is hidden, however d2i exists... */
+    ASN1_ITEM_ref(X509),
+    ASN1_ITEM_ref(X509_CRL),
     NULL
 };
 
+int FuzzerInitialize(int *argc, char ***argv) {
+    return 1;
+}
+
 int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
-    for (int n = 0; item_type[n] != NULL; ++n) {
+    int n;
+
+    for (n = 0; item_type[n] != NULL; ++n) {
         const uint8_t *b = buf;
-        ASN1_VALUE *o = ASN1_item_d2i(NULL, &b, len, item_type[n]);
-        ASN1_item_free(o, item_type[n]);
+        const ASN1_ITEM *i = ASN1_ITEM_ptr(item_type[n]);
+        ASN1_VALUE *o = ASN1_item_d2i(NULL, &b, len, i);
+        ASN1_item_free(o, i);
     }
     return 0;
 }

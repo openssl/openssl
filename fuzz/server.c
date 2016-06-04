@@ -8,9 +8,9 @@
  * or in the file LICENSE in the source distribution.
  */
 
-// Shamelessly copied from BoringSSL and converted to C.
+/* Shamelessly copied from BoringSSL and converted to C. */
 
-// Test first part of SSL server handshake.
+/* Test first part of SSL server handshake. */
 
 
 #include <openssl/rand.h>
@@ -190,33 +190,39 @@ static const uint8_t kRSAPrivateKeyDER[] = {
 
 static SSL_CTX *ctx;
 
-static void Init() {
-    ctx = SSL_CTX_new(SSLv23_method());
+int FuzzerInitialize(int *argc, char ***argv) {
     const uint8_t *bufp = kRSAPrivateKeyDER;
-    RSA *privkey = d2i_RSAPrivateKey(NULL, &bufp, sizeof(kRSAPrivateKeyDER));
+    RSA *privkey;
+    EVP_PKEY *pkey;
+    int ret;
+    X509 *cert;
+
+    ctx = SSL_CTX_new(SSLv23_method());
+    privkey = d2i_RSAPrivateKey(NULL, &bufp, sizeof(kRSAPrivateKeyDER));
     OPENSSL_assert(privkey != NULL);
-    EVP_PKEY *pkey = EVP_PKEY_new();
+    pkey = EVP_PKEY_new();
     EVP_PKEY_assign_RSA(pkey, privkey);
-    int ret = SSL_CTX_use_PrivateKey(ctx, pkey);
+    ret = SSL_CTX_use_PrivateKey(ctx, pkey);
     OPENSSL_assert(ret == 1);
     EVP_PKEY_free(pkey);
     bufp = kCertificateDER;
-    X509 *cert = d2i_X509(NULL, &bufp, sizeof(kCertificateDER));
+    cert = d2i_X509(NULL, &bufp, sizeof(kCertificateDER));
     OPENSSL_assert(cert != NULL);
     ret = SSL_CTX_use_certificate(ctx, cert);
     OPENSSL_assert(ret == 1);
     X509_free(cert);
-  }
+
+    return 1;
+}
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
-    if (ctx == NULL)
-        Init();
-    // TODO: make this work for OpenSSL. There's a PREDICT define that may do
-    // the job.
-    // TODO: use the ossltest engine (optionally?) to disable crypto checks.
-    //RAND_reset_for_fuzzing();
+    /* TODO: make this work for OpenSSL. There's a PREDICT define that may do
+     * the job.
+     * TODO: use the ossltest engine (optionally?) to disable crypto checks.
+     * RAND_reset_for_fuzzing();
+     */
 
-    // This only fuzzes the initial flow from the client so far.
+    /* This only fuzzes the initial flow from the client so far. */
     SSL *server = SSL_new(ctx);
     BIO *in = BIO_new(BIO_s_mem());
     BIO *out = BIO_new(BIO_s_mem());
@@ -224,7 +230,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     SSL_set_accept_state(server);
     OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
     if (SSL_do_handshake(server) == 1) {
-        // Keep reading application data until error or EOF.
+        /* Keep reading application data until error or EOF. */
         uint8_t tmp[1024];
         for (;;) {
             if (SSL_read(server, tmp, sizeof(tmp)) <= 0) {

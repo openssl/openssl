@@ -16,7 +16,8 @@ use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.8";
 @ISA = qw(Exporter);
-@EXPORT = (@Test::More::EXPORT, qw(setup indir app perlapp test perltest run));
+@EXPORT = (@Test::More::EXPORT, qw(setup indir app fuzz  perlapp test perltest
+                                   run));
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
                                          pipe with cmdstr quotify));
@@ -283,6 +284,13 @@ sub app {
     my %opts = @_;
     return sub { my $num = shift;
 		 return __build_cmd($num, \&__apps_file, $cmd, %opts); }
+}
+
+sub fuzz {
+    my $cmd = shift;
+    my %opts = @_;
+    return sub { my $num = shift;
+		 return __build_cmd($num, \&__fuzz_file, $cmd, %opts); }
 }
 
 sub test {
@@ -701,6 +709,8 @@ sub __env {
     $directories{BLDTOP}  = $ENV{BLDTOP} || $ENV{TOP};
     $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
     $directories{SRCAPPS} =                 __srctop_dir("apps");
+    $directories{BLDFUZZ} =                 __bldtop_dir("fuzz");
+    $directories{SRCFUZZ} =                 __srctop_dir("fuzz");
     $directories{BLDTEST} = $ENV{TEST_D} || __bldtop_dir("test");
     $directories{SRCTEST} =                 __srctop_dir("test");
     $directories{RESULTS} = $ENV{RESULT_D} || $directories{BLDTEST};
@@ -775,6 +785,15 @@ sub __apps_file {
     my $f = pop;
     $f = catfile($directories{BLDAPPS},@_,$f . __exeext());
     $f = catfile($directories{SRCAPPS},@_,$f) unless -x $f;
+    return $f;
+}
+
+sub __fuzz_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    $f = catfile($directories{BLDFUZZ},@_,$f . __exeext());
+    $f = catfile($directories{SRCFUZZ},@_,$f) unless -x $f;
     return $f;
 }
 

@@ -1,50 +1,34 @@
-{- use File::Spec::Functions;
-   our $ex_inc = $withargs{fuzzer_include} &&
-       (file_name_is_absolute($withargs{fuzzer_include}) ?
-        $withargs{fuzzer_include} : catdir(updir(), $withargs{fuzzer_include}));
-   our $ex_lib = $withargs{fuzzer_lib} &&
-       (file_name_is_absolute($withargs{fuzzer_lib}) ?
-        $withargs{fuzzer_lib} : catfile(updir(), $withargs{fuzzer_lib}));
-   ""
--}
-PROGRAMS=asn1 asn1parse bignum bndiv cms conf crl ct server x509
+{- use File::Spec::Functions qw/catdir rel2abs/; -}
+PROGRAMS=asn1-test asn1parse-test bignum-test bndiv-test cms-test conf-test ct-test server-test
 
-SOURCE[asn1]=asn1.c driver.c
-INCLUDE[asn1]=../include {- $ex_inc -}
-DEPEND[asn1]=../libcrypto {- $ex_lib -}
+SOURCE[asn1-test]=asn1.c test-corpus.c
+INCLUDE[asn1-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+DEPEND[asn1-test]=../libcrypto
 
-SOURCE[asn1parse]=asn1parse.c driver.c
-INCLUDE[asn1parse]=../include {- $ex_inc -}
-DEPEND[asn1parse]=../libcrypto {- $ex_lib -}
+SOURCE[asn1parse-test]=asn1parse.c test-corpus.c
+INCLUDE[asn1parse-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+DEPEND[asn1parse-test]=../libcrypto
 
-SOURCE[bignum]=bignum.c driver.c
-INCLUDE[bignum]=../include {- $ex_inc -}
-DEPEND[bignum]=../libcrypto {- $ex_lib -}
+SOURCE[bignum-test]=bignum.c test-corpus.c
+INCLUDE[bignum-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+DEPEND[bignum-test]=../libcrypto
 
-SOURCE[bndiv]=bndiv.c driver.c
-INCLUDE[bndiv]=../include {- $ex_inc -}
-DEPEND[bndiv]=../libcrypto {- $ex_lib -}
+SOURCE[bndiv-test]=bndiv.c test-corpus.c
+INCLUDE[bndiv-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+DEPEND[bndiv-test]=../libcrypto
 
-SOURCE[cms]=cms.c driver.c
-INCLUDE[cms]=../include {- $ex_inc -}
-DEPEND[cms]=../libcrypto {- $ex_lib -}
+SOURCE[cms-test]=cms.c test-corpus.c
+INCLUDE[cms-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+DEPEND[cms-test]=../libcrypto
 
-SOURCE[conf]=conf.c driver.c
-INCLUDE[conf]=../include {- $ex_inc -}
-DEPEND[conf]=../libcrypto {- $ex_lib -}
+SOURCE[conf-test]=conf.c test-corpus.c
+INCLUDE[conf-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+DEPEND[conf-test]=../libcrypto
 
-SOURCE[crl]=crl.c driver.c
-INCLUDE[crl]=../include {- $ex_inc -}
-DEPEND[crl]=../libcrypto {- $ex_lib -}
+SOURCE[ct-test]=ct.c test-corpus.c
+INCLUDE[ct-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+DEPEND[ct-test]=../libcrypto
 
-SOURCE[ct]=ct.c driver.c
-INCLUDE[ct]=../include {- $ex_inc -}
-DEPEND[ct]=../libcrypto {- $ex_lib -}
-
-SOURCE[server]=server.c driver.c
-INCLUDE[server]=../include {- $ex_inc -}
-DEPEND[server]=../libcrypto ../libssl {- $ex_lib -}
-
-SOURCE[x509]=x509.c driver.c
-INCLUDE[x509]=../include {- $ex_inc -}
-DEPEND[x509]=../libcrypto ../libssl {- $ex_lib -}
+SOURCE[server-test]=server.c test-corpus.c
+INCLUDE[server-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+DEPEND[server-test]=../libcrypto ../libssl
