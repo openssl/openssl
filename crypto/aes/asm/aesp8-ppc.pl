@@ -1909,6 +1909,15 @@ ___
 
 #########################################################################
 {{{	# XTS procedures						#
+# int aes_p8_xts_[en|de]crypt(const char *inp, char *out, size_t len,	#
+#                             const AES_KEY *key1, const AES_KEY *key2,	#
+#                             [const] unsigned char iv[16]);		#
+# If $key2 is NULL, then a "tweak chaining" mode is engaged, in which	#
+# input tweak value is assumed to be encrypted already, and last tweak	#
+# value, one suitable for consecutive call on same chunk of data, is	#
+# written back to original buffer. In addition, in "tweak chaining"	#
+# mode only complete input blocks are processed.			#
+
 my ($inp,$out,$len,$key1,$key2,$ivp,$rounds,$idx) =	map("r$_",(3..10));
 my ($rndkey0,$rndkey1,$inout) =				map("v$_",(0..2));
 my ($output,$inptail,$inpperm,$leperm,$keyperm) =	map("v$_",(3..7));
@@ -1943,17 +1952,20 @@ $code.=<<___;
 	le?vxor		$inpperm,$inpperm,$tmp
 	vperm		$tweak,$tweak,$inptail,$inpperm
 
-	?lvsl		$keyperm,0,$key2		# prepare for unaligned key
-	lwz		$rounds,240($key2)
-	srwi		$rounds,$rounds,1
-	subi		$rounds,$rounds,1
-	li		$idx,16
-
 	neg		r11,$inp
 	lvsr		$inpperm,0,r11			# prepare for unaligned load
 	lvx		$inout,0,$inp
 	addi		$inp,$inp,15			# 15 is not typo
 	le?vxor		$inpperm,$inpperm,$tmp
+
+	${UCMP}i	$key2,0				# key2==NULL?
+	beq		Lxts_enc_no_key2
+
+	?lvsl		$keyperm,0,$key2		# prepare for unaligned key
+	lwz		$rounds,240($key2)
+	srwi		$rounds,$rounds,1
+	subi		$rounds,$rounds,1
+	li		$idx,16
 
 	lvx		$rndkey0,0,$key2
 	lvx		$rndkey1,$idx,$key2
@@ -1978,10 +1990,18 @@ Ltweak_xts_enc:
 	?vperm		$rndkey1,$rndkey1,$rndkey0,$keyperm
 	vcipher		$tweak,$tweak,$rndkey1
 	lvx		$rndkey1,$idx,$key2
-	li		$idx,16
 	?vperm		$rndkey0,$rndkey0,$rndkey1,$keyperm
 	vcipherlast	$tweak,$tweak,$rndkey0
 
+	li		$ivp,0				# don't chain the tweak
+	b		Lxts_enc
+
+Lxts_enc_no_key2:
+	li		$idx,-16
+	and		$len,$len,$idx			# in "tweak chaining"
+							# mode only complete
+							# blocks are processed
+Lxts_enc:
 	lvx		$inptail,0,$inp
 	addi		$inp,$inp,16
 
@@ -2097,6 +2117,19 @@ Loop_xts_enc_steal:
 	b		Loop_xts_enc			# one more time...
 
 Lxts_enc_done:
+	${UCMP}i	$ivp,0
+	beq		Lxts_enc_ret
+
+	vsrab		$tmp,$tweak,$seven		# next tweak value
+	vaddubm		$tweak,$tweak,$tweak
+	vsldoi		$tmp,$tmp,$tmp,15
+	vand		$tmp,$tmp,$eighty7
+	vxor		$tweak,$tweak,$tmp
+
+	le?vperm	$tweak,$tweak,$tweak,$leperm
+	stvx_u		$tweak,0,$ivp
+
+Lxts_enc_ret:
 	mtspr		256,r12				# restore vrsave
 	li		r3,0
 	blr
@@ -2135,17 +2168,20 @@ Lxts_enc_done:
 	le?vxor		$inpperm,$inpperm,$tmp
 	vperm		$tweak,$tweak,$inptail,$inpperm
 
-	?lvsl		$keyperm,0,$key2		# prepare for unaligned key
-	lwz		$rounds,240($key2)
-	srwi		$rounds,$rounds,1
-	subi		$rounds,$rounds,1
-	li		$idx,16
-
 	neg		r11,$inp
 	lvsr		$inpperm,0,r11			# prepare for unaligned load
 	lvx		$inout,0,$inp
 	addi		$inp,$inp,15			# 15 is not typo
 	le?vxor		$inpperm,$inpperm,$tmp
+
+	${UCMP}i	$key2,0				# key2==NULL?
+	beq		Lxts_dec_no_key2
+
+	?lvsl		$keyperm,0,$key2		# prepare for unaligned key
+	lwz		$rounds,240($key2)
+	srwi		$rounds,$rounds,1
+	subi		$rounds,$rounds,1
+	li		$idx,16
 
 	lvx		$rndkey0,0,$key2
 	lvx		$rndkey1,$idx,$key2
@@ -2170,10 +2206,19 @@ Ltweak_xts_dec:
 	?vperm		$rndkey1,$rndkey1,$rndkey0,$keyperm
 	vcipher		$tweak,$tweak,$rndkey1
 	lvx		$rndkey1,$idx,$key2
-	li		$idx,16
 	?vperm		$rndkey0,$rndkey0,$rndkey1,$keyperm
 	vcipherlast	$tweak,$tweak,$rndkey0
 
+	li		$ivp,0				# don't chain the tweak
+	b		Lxts_dec
+
+Lxts_dec_no_key2:
+	neg		$idx,$len
+	andi.		$idx,$idx,15
+	add		$len,$len,$idx			# in "tweak chaining"
+							# mode only complete
+							# blocks are processed
+Lxts_dec:
 	lvx		$inptail,0,$inp
 	addi		$inp,$inp,16
 
@@ -2328,6 +2373,19 @@ Loop_xts_dec_steal:
 	b		Loop_xts_dec			# one more time...
 
 Lxts_dec_done:
+	${UCMP}i	$ivp,0
+	beq		Lxts_dec_ret
+
+	vsrab		$tmp,$tweak,$seven		# next tweak value
+	vaddubm		$tweak,$tweak,$tweak
+	vsldoi		$tmp,$tmp,$tmp,15
+	vand		$tmp,$tmp,$eighty7
+	vxor		$tweak,$tweak,$tmp
+
+	le?vperm	$tweak,$tweak,$tweak,$leperm
+	stvx_u		$tweak,0,$ivp
+
+Lxts_dec_ret:
 	mtspr		256,r12				# restore vrsave
 	li		r3,0
 	blr
@@ -2338,8 +2396,8 @@ Lxts_dec_done:
 ___
 #########################################################################
 {{	# Optimized XTS procedures					#
-my $key_="r11";
-my ($x00,$x10,$x20,$x30,$x40,$x50,$x60,$x70)=map("r$_",(0,8,26..31));
+my $key_=$key2;
+my ($x00,$x10,$x20,$x30,$x40,$x50,$x60,$x70)=map("r$_",(0,3,26..31));
     $x00=0 if ($flavour =~ /osx/);
 my ($in0,  $in1,  $in2,  $in3,  $in4,  $in5 )=map("v$_",(0..5));
 my ($out0, $out1, $out2, $out3, $out4, $out5)=map("v$_",(7,12..16));
@@ -2353,33 +2411,32 @@ $code.=<<___;
 .align	5
 _aesp8_xts_encrypt6x:
 	$STU		$sp,-`($FRAME+21*16+6*$SIZE_T)`($sp)
-	mflr		r0
+	mflr		r11
 	li		r7,`$FRAME+8*16+15`
-	li		r8,`$FRAME+8*16+31`
-	$PUSH		r0,`$FRAME+21*16+6*$SIZE_T+$LRSAVE`($sp)
+	li		r3,`$FRAME+8*16+31`
+	$PUSH		r11,`$FRAME+21*16+6*$SIZE_T+$LRSAVE`($sp)
 	stvx		v20,r7,$sp		# ABI says so
 	addi		r7,r7,32
-	stvx		v21,r8,$sp
-	addi		r8,r8,32
+	stvx		v21,r3,$sp
+	addi		r3,r3,32
 	stvx		v22,r7,$sp
 	addi		r7,r7,32
-	stvx		v23,r8,$sp
-	addi		r8,r8,32
+	stvx		v23,r3,$sp
+	addi		r3,r3,32
 	stvx		v24,r7,$sp
 	addi		r7,r7,32
-	stvx		v25,r8,$sp
-	addi		r8,r8,32
+	stvx		v25,r3,$sp
+	addi		r3,r3,32
 	stvx		v26,r7,$sp
 	addi		r7,r7,32
-	stvx		v27,r8,$sp
-	addi		r8,r8,32
+	stvx		v27,r3,$sp
+	addi		r3,r3,32
 	stvx		v28,r7,$sp
 	addi		r7,r7,32
-	stvx		v29,r8,$sp
-	addi		r8,r8,32
+	stvx		v29,r3,$sp
+	addi		r3,r3,32
 	stvx		v30,r7,$sp
-	stvx		v31,r8,$sp
-	mr		r7,r0
+	stvx		v31,r3,$sp
 	li		r0,-1
 	stw		$vrsave,`$FRAME+21*16-4`($sp)	# save vrsave
 	li		$x10,0x10
@@ -2842,12 +2899,12 @@ Lxts_enc6x_steal:
 	vperm		$out0,$out0,$out1,$inpperm
 	vsel		$out0,$in0,$tmp,$out0	# $tmp is last block, remember?
 
-	subi		r3,$out,17
+	subi		r30,$out,17
 	subi		$out,$out,16
 	mtctr		$taillen
 Loop_xts_enc6x_steal:
-	lbzu		r0,1(r3)
-	stb		r0,16(r3)
+	lbzu		r0,1(r30)
+	stb		r0,16(r30)
 	bdnz		Loop_xts_enc6x_steal
 
 	li		$taillen,0
@@ -2856,7 +2913,15 @@ Loop_xts_enc6x_steal:
 
 .align	4
 Lxts_enc6x_done:
-	mtlr		r7
+	${UCMP}i	$ivp,0
+	beq		Lxts_enc6x_ret
+
+	vxor		$tweak,$twk0,$rndkey0
+	le?vperm	$tweak,$tweak,$tweak,$leperm
+	stvx_u		$tweak,0,$ivp
+
+Lxts_enc6x_ret:
+	mtlr		r11
 	li		r10,`$FRAME+15`
 	li		r11,`$FRAME+31`
 	stvx		$seven,r10,$sp		# wipe copies of round keys
@@ -2998,33 +3063,32 @@ _aesp8_xts_enc5x:
 .align	5
 _aesp8_xts_decrypt6x:
 	$STU		$sp,-`($FRAME+21*16+6*$SIZE_T)`($sp)
-	mflr		r0
+	mflr		r11
 	li		r7,`$FRAME+8*16+15`
-	li		r8,`$FRAME+8*16+31`
-	$PUSH		r0,`$FRAME+21*16+6*$SIZE_T+$LRSAVE`($sp)
+	li		r3,`$FRAME+8*16+31`
+	$PUSH		r11,`$FRAME+21*16+6*$SIZE_T+$LRSAVE`($sp)
 	stvx		v20,r7,$sp		# ABI says so
 	addi		r7,r7,32
-	stvx		v21,r8,$sp
-	addi		r8,r8,32
+	stvx		v21,r3,$sp
+	addi		r3,r3,32
 	stvx		v22,r7,$sp
 	addi		r7,r7,32
-	stvx		v23,r8,$sp
-	addi		r8,r8,32
+	stvx		v23,r3,$sp
+	addi		r3,r3,32
 	stvx		v24,r7,$sp
 	addi		r7,r7,32
-	stvx		v25,r8,$sp
-	addi		r8,r8,32
+	stvx		v25,r3,$sp
+	addi		r3,r3,32
 	stvx		v26,r7,$sp
 	addi		r7,r7,32
-	stvx		v27,r8,$sp
-	addi		r8,r8,32
+	stvx		v27,r3,$sp
+	addi		r3,r3,32
 	stvx		v28,r7,$sp
 	addi		r7,r7,32
-	stvx		v29,r8,$sp
-	addi		r8,r8,32
+	stvx		v29,r3,$sp
+	addi		r3,r3,32
 	stvx		v30,r7,$sp
-	stvx		v31,r8,$sp
-	mr		r7,r0
+	stvx		v31,r3,$sp
 	li		r0,-1
 	stw		$vrsave,`$FRAME+21*16-4`($sp)	# save vrsave
 	li		$x10,0x10
@@ -3524,11 +3588,11 @@ Lxts_dec6x_steal:
 	vsel		$out0,$in0,$tmp,$out0
 	vxor		$out0,$out0,$twk0
 
-	subi		r3,$out,1
+	subi		r30,$out,1
 	mtctr		$taillen
 Loop_xts_dec6x_steal:
-	lbzu		r0,1(r3)
-	stb		r0,16(r3)
+	lbzu		r0,1(r30)
+	stb		r0,16(r30)
 	bdnz		Loop_xts_dec6x_steal
 
 	li		$taillen,0
@@ -3537,7 +3601,15 @@ Loop_xts_dec6x_steal:
 
 .align	4
 Lxts_dec6x_done:
-	mtlr		r7
+	${UCMP}i	$ivp,0
+	beq		Lxts_dec6x_ret
+
+	vxor		$tweak,$twk0,$rndkey0
+	le?vperm	$tweak,$tweak,$tweak,$leperm
+	stvx_u		$tweak,0,$ivp
+
+Lxts_dec6x_ret:
+	mtlr		r11
 	li		r10,`$FRAME+15`
 	li		r11,`$FRAME+31`
 	stvx		$seven,r10,$sp		# wipe copies of round keys
