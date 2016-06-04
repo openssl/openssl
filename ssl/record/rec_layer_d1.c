@@ -13,7 +13,6 @@
 #include "../ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include "record_locl.h"
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)

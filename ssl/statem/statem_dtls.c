@@ -13,7 +13,6 @@
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
