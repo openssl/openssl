@@ -2049,7 +2049,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_GENERATE_KEY_BLOCK                    238
 # define SSL_F_SSL3_GENERATE_MASTER_SECRET                388
 # define SSL_F_SSL3_GET_RECORD                            143
-# define SSL_F_SSL3_INIT_FINISHED_MAC                     339
+# define SSL_F_SSL3_INIT_FINISHED_MAC                     397
 # define SSL_F_SSL3_OUTPUT_CERT_CHAIN                     147
 # define SSL_F_SSL3_READ_BYTES                            148
 # define SSL_F_SSL3_READ_N                                149
