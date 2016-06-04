@@ -11,7 +11,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 
 int RSA_padding_add_X931(unsigned char *to, int tlen,

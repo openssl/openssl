@@ -15,7 +15,6 @@
 #include <openssl/ocsp.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
-#include <openssl/rand.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include "ssl_locl.h"
