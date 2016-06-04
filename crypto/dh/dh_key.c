@@ -9,7 +9,6 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/rand.h>
 #include "dh_locl.h"
 #include "internal/bn_int.h"
 

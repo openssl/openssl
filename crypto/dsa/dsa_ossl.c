@@ -14,7 +14,6 @@
 #include <openssl/bn.h>
 #include <openssl/sha.h>
 #include "dsa_locl.h"
-#include <openssl/rand.h>
 #include <openssl/asn1.h>
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
