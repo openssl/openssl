@@ -135,27 +135,51 @@ OPENSSL_cleanse:
 .type	CRYPTO_memcmp,@function
 .align	16
 CRYPTO_memcmp:
-#if !defined(__s390x__) && !defined(__s390x)
-	llgfr	%r4,%r4
-#endif
-	lghi	%r5,0
-	clgr	%r4,%r5
-	je	.Lno_data
-
+#if defined(__s390x__) || defined(__s390x)
+	stg     %r12,96(%r15)
+	ltgr    %r4,%r4
+	je      .Lno_data
+	lhi     %r5,0
+	lghi    %r1,0
 .Loop_cmp:
-	llc	%r0,0(%r2)
-	la	%r2,1(%r2)
-	llc	%r1,0(%r3)
-	la	%r3,1(%r3)
-	xr	%r1,%r0
-	or	%r5,%r1
-	brctg	%r4,.Loop_cmp
-
-	lnr	%r5,%r5
-	srl	%r5,31
+	llgc    %r0,0(%r1,%r3)
+	llgc    %r12,0(%r1,%r2)
+	xr      %r0,%r12
+	or      %r5,%r0
+	aghi    %r1,1
+	brctg   %r4,.Loop_cmp
+	lhi     %r2,255
+	nr      %r2,%r5
+.Lexit:
+	lgfr    %r2,%r2
+	lg      %r12,96(%r15)
+	br      %r14
 .Lno_data:
-	lgr	%r2,%r5
-	br	%r14
+	lhi     %r2,0
+	j       .Lexit
+
+#else
+        st      %r12,48(%r15)
+        ltr     %r4,%r4
+        je      .Lno_data
+        lhi     %r5,0
+        lhi     %r1,0
+.Loop_cmp:
+        ic      %r0,0(%r1,%r3)
+        ic      %r12,0(%r1,%r2)
+        xr      %r0,%r12
+        or      %r5,%r0
+        ahi     %r1,1
+        brct    %r4,.Loop_cmp
+        lhi     %r2,255
+        nr      %r2,%r5
+.Lexit:
+        l       %r12,48(%r15)
+        br      %r14
+.Lno_data:
+        lhi     %r2,0
+        j       .Lexit
+#endif
 .size	CRYPTO_memcmp,.-CRYPTO_memcmp
 
 .globl	OPENSSL_instrument_bus
