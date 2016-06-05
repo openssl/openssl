@@ -13,5 +13,4 @@ setup("test_abort");
 
 plan tests => 1;
 
-open STDERR, ">", "/dev/null";
 is(run(test(["aborttest"])), 0, "Testing that abort is caught correctly");
