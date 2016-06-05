@@ -9,6 +9,7 @@
  */
 #include <stdint.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <openssl/opensslconf.h>
 #include "fuzzer.h"
 
