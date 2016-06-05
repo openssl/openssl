@@ -1421,8 +1421,22 @@ int s_client_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    if (argc != 0)
+    if (argc == 1) {
+        /* If there's a positional argument, it's the equivalent of
+         * OPT_CONNECT.
+         * Don't allow -connect and a separate argument.
+         */
+        if (connectstr != NULL) {
+            BIO_printf(bio_err,
+                       "%s: must not provide both -connect option and target parameter\n",
+                       prog);
+            goto opthelp;
+        }
+        connect_type = use_inet;
+        connectstr = *opt_rest();
+    } else if (argc != 0) {
         goto opthelp;
+    }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
@@ -1434,7 +1448,7 @@ int s_client_main(int argc, char **argv)
         int res;
         char *tmp_host = host, *tmp_port = port;
         if (connectstr == NULL) {
-            BIO_printf(bio_err, "%s: -proxy requires use of -connect\n", prog);
+            BIO_printf(bio_err, "%s: -proxy requires use of -connect or target parameter\n", prog);
             goto opthelp;
         }
         res = BIO_parse_hostserv(proxystr, &host, &port, BIO_PARSE_PRIO_HOST);
@@ -1459,7 +1473,7 @@ int s_client_main(int argc, char **argv)
             OPENSSL_free(tmp_port);
         if (!res) {
             BIO_printf(bio_err,
-                       "%s: -connect argument malformed or ambiguous\n",
+                       "%s: -connect argument or target parameter malformed or ambiguous\n",
                        prog);
             goto end;
         }
