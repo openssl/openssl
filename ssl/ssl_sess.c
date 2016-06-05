@@ -359,6 +359,7 @@ int ssl_get_new_session(SSL *s, int session)
         CRYPTO_THREAD_unlock(s->session_ctx->lock);
         CRYPTO_THREAD_unlock(s->lock);
         /* Choose a session ID */
+        memset(ss->session_id, 0, ss->session_id_length);
         tmp = ss->session_id_length;
         if (!cb(s, ss->session_id, &tmp)) {
             /* The callback failed */
@@ -471,6 +472,7 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
         SSL_SESSION data;
         size_t local_len;
         data.ssl_version = s->version;
+        memset(data.session_id, 0, sizeof(data.session_id));
         if (!PACKET_copy_all(session_id, data.session_id,
                              sizeof(data.session_id),
                              &local_len)) {
