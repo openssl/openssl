@@ -113,6 +113,7 @@ B<openssl> B<s_client>
 [B<-ctlogfile>]
 [B<-keylogfile file>]
 [B<-early_data file>]
+[B<target>]
 
 =head1 DESCRIPTION
 
@@ -135,8 +136,10 @@ Print out a usage message.
 
 =item B<-connect host:port>
 
-This specifies the host and optional port to connect to. If not specified
-then an attempt is made to connect to the local host on port 4433.
+This specifies the host and optional port to connect to. It is possible to
+select the host and port using the optional target positional argument instead.
+If neither this nor the target positonal argument are specified then an attempt
+is made to connect to the local host on port 4433.
 
 =item B<-proxy host:port>
 
@@ -592,6 +595,13 @@ Reads the contents of the specified file and attempts to send it as early data
 to the server. This will only work with resumed sessions that support early
 data and when the server accepts the early data.
 
+=item B<[target]>
+
+Rather than providing B<-connect>, the target hostname and optional port may
+be provided as a single positional argument after all options. If neither this
+nor B<-connect> are provided, falls back to attempting to connect to localhost
+on port 4433.
+
 =back
 
 =head1 CONNECTED COMMANDS
@@ -658,7 +668,7 @@ information whenever a session is renegotiated.
 
 L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_server(1)>, L<ciphers(1)>,
 L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>
-L<SSL_CTX_set_max_pipelines(3)> 
+L<SSL_CTX_set_max_pipelines(3)>
 
 =head1 HISTORY
 
