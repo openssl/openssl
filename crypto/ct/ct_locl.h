@@ -168,4 +168,4 @@ __owur int SCT_signature_is_complete(const SCT *sct);
 /*
  * Handlers for Certificate Transparency X509v3/OCSP extensions
  */
-extern const X509V3_EXT_METHOD v3_ct_scts[];
+extern const X509V3_EXT_METHOD v3_ct_scts[3];
