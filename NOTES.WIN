@@ -9,7 +9,7 @@
  this are required as well:
 
  - You need Perl.  We recommend ActiveState Perl, available from
-   http://www.activestate.com/ActivePerl.
+   https://www.activestate.com/ActivePerl.
    You also need the perl module Text::Template, available on CPAN.
    Please read NOTES.PERL for more information.
 
@@ -64,7 +64,7 @@
 
  To build OpenSSL using Cygwin, you need to:
 
- * Install Cygwin (see http://cygwin.com/)
+ * Install Cygwin (see https://cygwin.com/)
 
  * Install Cygwin Perl and ensure it is in the path. Recall that
    as least 5.10.0 is required.
@@ -97,7 +97,7 @@
    "Matching Perl" refers to chosen "shell environment", i.e. if built
    under MSYS, then Perl compiled for MSYS must be used.
 
-   Alternativelly, one can use MSYS2 from http://msys2.github.io/,
+   Alternativelly, one can use MSYS2 from https://msys2.github.io/,
    which includes MingW (32-bit and 64-bit).
 
  * It is also possible to cross-compile it on Linux by configuring
