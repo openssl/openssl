@@ -2575,7 +2575,6 @@ X509_PURPOSE_add                        2537	1_1_0	EXIST::FUNCTION:
 PKCS7_ENVELOPE_free                     2538	1_1_0	EXIST::FUNCTION:
 PKCS12_key_gen_uni                      2539	1_1_0	EXIST::FUNCTION:
 WHIRLPOOL                               2540	1_1_0	EXIST::FUNCTION:WHIRLPOOL
-a2i_ipadd                               2541	1_1_0	EXIST::FUNCTION:
 UI_set_default_method                   2542	1_1_0	EXIST::FUNCTION:UI
 EC_POINT_is_at_infinity                 2543	1_1_0	EXIST::FUNCTION:EC
 i2d_NOTICEREF                           2544	1_1_0	EXIST::FUNCTION:

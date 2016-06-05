@@ -263,3 +263,5 @@ struct x509_object_st {
         EVP_PKEY *pkey;
     } data;
 };
+
+int a2i_ipadd(unsigned char *ipout, const char *ipasc);
