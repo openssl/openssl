@@ -943,9 +943,9 @@ void SSL_free(SSL *s)
         BIO_free(s->bbio);
         s->bbio = NULL;
     }
-    BIO_free_all(s->rbio);
     if (s->wbio != s->rbio)
         BIO_free_all(s->wbio);
+    BIO_free_all(s->rbio);
 
     BUF_MEM_free(s->init_buf);
 
