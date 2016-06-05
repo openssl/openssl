@@ -353,6 +353,16 @@ sub run {
     my $r = 0;
     my $e = 0;
 
+    # In non-verbose, we want to shut up the command interpreter, in case
+    # it has something to complain about.  On VMS, it might complain both
+    # on stdout and stderr
+    *save_STDOUT = *STDOUT;
+    *save_STDERR = *STDERR;
+    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+        open STDOUT, ">", devnull();
+        open STDERR, ">", devnull();
+    }
+
     # The dance we do with $? is the same dance the Unix shells appear to
     # do.  For example, a program that gets aborted (and therefore signals
     # SIGABRT = 6) will appear to exit with the code 134.  We mimic this
@@ -365,6 +375,13 @@ sub run {
 	$e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
 	$r = $hooks{exit_checker}->($e);
     }
+
+    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+        close STDOUT;
+        close STDERR;
+    }
+    *STDOUT = *save_STDOUT;
+    *STDERR = *save_STDERR;
 
     print STDERR "$prefix$display_cmd => $e\n"
         if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
