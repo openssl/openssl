@@ -15,6 +15,7 @@
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "internal/x509_int.h"
 
 #include "x509_lcl.h"
 
