@@ -1071,7 +1071,8 @@ unless ($disabled{ubsan}) {
     $config{cflags} .= "-fsanitize=undefined -fno-sanitize-recover=all ";
 }
 
-unless ($disabled{fuzz} && $disabled{asan} && $disabled{ubsan}) {
+unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
+        && $disabled{asan} && $disabled{ubsan}) {
     $config{cflags} .= "-fno-omit-frame-pointer -g ";
 }
 #
