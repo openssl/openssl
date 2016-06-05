@@ -185,10 +185,22 @@
          foreach my $product (@{$loopinfo{$type}}) {
              my %dirs = ();
              my $pd = dirname($product);
+
+             # We already have a "test" target, and the current directory
+             # is just silly to make a target for
+             $dirs{$pd} = 1 unless $pd eq "test" || $pd eq ".";
+
              foreach (@{$unified_info{sources}->{$product}}) {
                  my $d = dirname($_);
-                 next if $d eq "test";    # we already have a test target
-                 next if $d eq ".";       # current directory is just silly
+
+                 # We don't want to create targets for source directories
+                 # when building out of source
+                 next if ($config{sourcedir} ne $config{builddir}
+                          && $d =~ m|^\Q$config{sourcedir}\E|);
+                 # We already have a "test" target, and the current directory
+                 # is just silly to make a target for
+                 next if $d eq "test" || $d eq ".";
+
                  $dirs{$d} = 1;
                  push @{$unified_info{dirinfo}->{$d}->{deps}}, $_
                      if $d ne $pd;
