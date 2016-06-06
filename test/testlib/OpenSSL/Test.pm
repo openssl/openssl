@@ -356,9 +356,11 @@ sub run {
     # In non-verbose, we want to shut up the command interpreter, in case
     # it has something to complain about.  On VMS, it might complain both
     # on stdout and stderr
-    *save_STDOUT = *STDOUT;
-    *save_STDERR = *STDERR;
+    my $save_STDOUT;
+    my $save_STDERR;
     if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+        open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
+        open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
         open STDOUT, ">", devnull();
         open STDERR, ">", devnull();
     }
@@ -379,9 +381,9 @@ sub run {
     if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
         close STDOUT;
         close STDERR;
+        open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
+        open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
     }
-    *STDOUT = *save_STDOUT;
-    *STDERR = *save_STDERR;
 
     print STDERR "$prefix$display_cmd => $e\n"
         if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
