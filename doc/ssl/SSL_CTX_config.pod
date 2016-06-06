@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_config, SSL_config - configure SSL_CTX or SSL structure.
+SSL_CTX_config, SSL_config - configure SSL_CTX or SSL structure
 
 =head1 SYNOPSIS
 

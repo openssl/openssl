@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY_new, EVP_PKEY_up_ref, EVP_PKEY_free - private key allocation functions.
+EVP_PKEY_new, EVP_PKEY_up_ref, EVP_PKEY_free - private key allocation functions
 
 =head1 SYNOPSIS
 

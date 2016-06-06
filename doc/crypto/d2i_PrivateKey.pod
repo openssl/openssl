@@ -3,7 +3,7 @@
 =head1 NAME
 
 d2i_Private_key, d2i_AutoPrivateKey, i2d_PrivateKey - decode and encode
-functions for reading and saving EVP_PKEY structures.
+functions for reading and saving EVP_PKEY structures
 
 =head1 SYNOPSIS
 

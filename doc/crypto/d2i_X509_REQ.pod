@@ -4,7 +4,7 @@
 
 d2i_X509_REQ, i2d_X509_REQ, d2i_X509_REQ_bio, d2i_X509_REQ_fp,
 i2d_X509_REQ_bio, i2d_X509_REQ_fp, i2d_re_X509_REQ_tbs - PKCS#10 certificate
-request functions.
+request functions
 
 =head1 SYNOPSIS
 

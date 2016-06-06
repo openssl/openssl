@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_read - read bytes from a TLS/SSL connection.
+SSL_read - read bytes from a TLS/SSL connection
 
 =head1 SYNOPSIS
 

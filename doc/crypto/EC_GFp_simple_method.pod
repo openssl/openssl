@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EC_GFp_simple_method, EC_GFp_mont_method, EC_GFp_nist_method, EC_GFp_nistp224_method, EC_GFp_nistp256_method, EC_GFp_nistp521_method, EC_GF2m_simple_method, EC_METHOD_get_field_type - Functions for obtaining B<EC_METHOD> objects.
+EC_GFp_simple_method, EC_GFp_mont_method, EC_GFp_nist_method, EC_GFp_nistp224_method, EC_GFp_nistp256_method, EC_GFp_nistp521_method, EC_GF2m_simple_method, EC_METHOD_get_field_type - Functions for obtaining EC_METHOD objects
 
 =head1 SYNOPSIS
 

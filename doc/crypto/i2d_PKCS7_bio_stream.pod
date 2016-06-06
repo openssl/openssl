@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-i2d_PKCS7_bio_stream - output PKCS7 structure in BER format.
+i2d_PKCS7_bio_stream - output PKCS7 structure in BER format
 
 =head1 SYNOPSIS
 

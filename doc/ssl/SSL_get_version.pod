@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_get_version - get the protocol version of a connection.
+SSL_get_version - get the protocol version of a connection
 
 =head1 SYNOPSIS
 

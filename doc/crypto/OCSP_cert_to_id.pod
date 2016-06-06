@@ -3,7 +3,7 @@
 =head1 NAME
 
 OCSP_cert_to_id, OCSP_cert_id_new, OCSP_CERTID_free, OCSP_id_issuer_cmp,
-OCSP_id_cmp, OCSP_id_get0_info - OCSP certificate ID utility functions.
+OCSP_id_cmp, OCSP_id_get0_info - OCSP certificate ID utility functions
 
 =head1 SYNOPSIS
 

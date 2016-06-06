@@ -3,7 +3,7 @@
 =head1 NAME
 
 d2i_X509_CRL, i2d_X509_CRL, d2i_X509_CRL_bio, d2i_X509_CRL_fp,
-i2d_X509_CRL_bio, i2d_X509_CRL_fp, i2d_re_X509_CRL_tbs - CRL functions.
+i2d_X509_CRL_bio, i2d_X509_CRL_fp, i2d_re_X509_CRL_tbs - CRL functions
 
 =head1 SYNOPSIS
 

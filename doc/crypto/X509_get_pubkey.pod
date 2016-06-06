@@ -5,7 +5,7 @@
 X509_get_pubkey, X509_get0_pubkey, X509_set_pubkey, X509_get_X509_PUBKEY,
 X509_REQ_get_pubkey, X509_REQ_get0_pubkey, X509_REQ_set_pubkey,
 X509_REQ_get_X509_PUBKEY - get or set certificate or certificate request
-public key.
+public key
 
 =head1 SYNOPSIS
 

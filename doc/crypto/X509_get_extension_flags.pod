@@ -3,7 +3,7 @@
 =head1 NAME
 
 X509_get_extension_flags, X509_get_key_usage, X509_get_extended_key_usage -
-retrieve certificate extension flags.
+retrieve certificate extension flags
 
 =head1 SYNOPSIS
 

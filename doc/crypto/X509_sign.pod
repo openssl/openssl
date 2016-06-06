@@ -4,7 +4,7 @@
 
 X509_sign, X509_sign_ctx, X509_verify, X509_REQ_sign, X509_REQ_sign_ctx,
 X509_REQ_verify, X509_CRL_sign, X509_CRL_sign_ctx, X509_CRL_verify -
-sign or verify certificate, certificate request or CRL signature.
+sign or verify certificate, certificate request or CRL signature
 
 =head1 SYNOPSIS
 

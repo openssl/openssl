@@ -3,7 +3,7 @@
 =head1 NAME
 
 OCSP_response_status, OCSP_response_get1_basic, OCSP_response_create,
-OCSP_RESPONSE_free - OCSP response functions.
+OCSP_RESPONSE_free - OCSP response functions
 
 =head1 SYNOPSIS
 

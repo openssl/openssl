@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_derive - derive public key algorithm shared secret.
+EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_derive - derive public key algorithm shared secret
 
 =head1 SYNOPSIS
 

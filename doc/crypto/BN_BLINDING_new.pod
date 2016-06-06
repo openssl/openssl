@@ -6,7 +6,7 @@ BN_BLINDING_new, BN_BLINDING_free, BN_BLINDING_update, BN_BLINDING_convert,
 BN_BLINDING_invert, BN_BLINDING_convert_ex, BN_BLINDING_invert_ex,
 BN_BLINDING_is_current_thread, BN_BLINDING_set_current_thread,
 BN_BLINDING_lock, BN_BLINDING_unlock, BN_BLINDING_get_flags,
-BN_BLINDING_set_flags, BN_BLINDING_create_param - blinding related BIGNUM functions.
+BN_BLINDING_set_flags, BN_BLINDING_create_param - blinding related BIGNUM functions
 
 =head1 SYNOPSIS
 

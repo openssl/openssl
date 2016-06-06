@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-d2i_X509_SIG, i2d_X509_SIG - DigestInfo functions.
+d2i_X509_SIG, i2d_X509_SIG - DigestInfo functions
 
 =head1 SYNOPSIS
 

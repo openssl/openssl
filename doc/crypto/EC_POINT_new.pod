@@ -10,7 +10,7 @@ EC_POINT_set_compressed_coordinates_GFp, EC_POINT_set_affine_coordinates_GF2m,
 EC_POINT_get_affine_coordinates_GF2m, EC_POINT_set_compressed_coordinates_GF2m,
 EC_POINT_point2oct, EC_POINT_oct2point, EC_POINT_point2bn, EC_POINT_bn2point,
 EC_POINT_point2hex, EC_POINT_hex2point - Functions for creating, destroying and
-manipulating B<EC_POINT> objects.
+manipulating EC_POINT objects
 
 =head1 SYNOPSIS
 

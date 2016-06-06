@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_write - write bytes to a TLS/SSL connection.
+SSL_write - write bytes to a TLS/SSL connection
 
 =head1 SYNOPSIS
 

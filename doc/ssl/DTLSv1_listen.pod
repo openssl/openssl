@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DTLSv1_listen - listen for incoming DTLS connections.
+DTLSv1_listen - listen for incoming DTLS connections
 
 =head1 SYNOPSIS
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY_print_public, EVP_PKEY_print_private, EVP_PKEY_print_params - public key algorithm printing routines.
+EVP_PKEY_print_public, EVP_PKEY_print_private, EVP_PKEY_print_params - public key algorithm printing routines
 
 =head1 SYNOPSIS
 

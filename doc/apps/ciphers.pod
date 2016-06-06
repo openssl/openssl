@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ciphers - SSL cipher display and cipher list tool.
+ciphers - SSL cipher display and cipher list tool
 
 =head1 SYNOPSIS
 

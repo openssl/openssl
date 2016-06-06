@@ -4,7 +4,7 @@
 
 X509_get_version, X509_set_version, X509_REQ_get_version, X509_REQ_set_version,
 X509_CRL_get_version, X509_CRL_set_version - get or set certificate,
-certificate request or CRL version.
+certificate request or CRL version
 
 =head1 SYNOPSIS
 

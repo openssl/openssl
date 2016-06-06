@@ -11,7 +11,7 @@ EC_KEY_set_conv_form, EC_KEY_set_asn1_flag, EC_KEY_precompute_mult,
 EC_KEY_generate_key, EC_KEY_check_key, EC_KEY_set_public_key_affine_coordinates,
 EC_KEY_oct2key, EC_KEY_key2buf, EC_KEY_oct2priv, EC_KEY_priv2oct,
 EC_KEY_priv2buf - Functions for creating, destroying and manipulating
-EC_KEY objects.
+EC_KEY objects
 
 =head1 SYNOPSIS
 

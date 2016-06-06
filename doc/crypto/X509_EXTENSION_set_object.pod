@@ -6,7 +6,7 @@ X509_EXTENSION_set_object, X509_EXTENSION_set_critical,
 X509_EXTENSION_set_data, X509_EXTENSION_create_by_NID,
 X509_EXTENSION_create_by_OBJ, X509_EXTENSION_get_object,
 X509_EXTENSION_get_critical, X509_EXTENSION_get_data - extension utility
-functions.
+functions
 
 =head1 SYNOPSIS
 

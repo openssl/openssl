@@ -5,7 +5,7 @@
 X509_get_subject_name, X509_set_subject_name, X509_get_issuer_name,
 X509_set_issuer_name, X509_REQ_get_subject_name, X509_REQ_set_subject_name,
 X509_CRL_get_issuer, X509_CRL_set_issuer_name - get and set issuer or
-subject names.
+subject names
 
 =head1 SYNOPSIS
 
