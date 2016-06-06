@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PEM_write_bio_PKCS7_stream - output PKCS7 structure in PEM format.
+PEM_write_bio_PKCS7_stream - output PKCS7 structure in PEM format
 
 =head1 SYNOPSIS
 

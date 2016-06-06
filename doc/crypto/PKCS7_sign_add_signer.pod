@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS7_sign_add_signer - add a signer PKCS7 signed data structure.
+PKCS7_sign_add_signer - add a signer PKCS7 signed data structure
 
 =head1 SYNOPSIS
 

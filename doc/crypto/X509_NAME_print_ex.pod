@@ -3,7 +3,7 @@
 =head1 NAME
 
 X509_NAME_print_ex, X509_NAME_print_ex_fp, X509_NAME_print,
-X509_NAME_oneline - X509_NAME printing routines.
+X509_NAME_oneline - X509_NAME printing routines
 
 =head1 SYNOPSIS
 

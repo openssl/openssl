@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-d2i_DHparams, i2d_DHparams - PKCS#3 DH parameter functions.
+d2i_DHparams, i2d_DHparams - PKCS#3 DH parameter functions
 
 =head1 SYNOPSIS
 

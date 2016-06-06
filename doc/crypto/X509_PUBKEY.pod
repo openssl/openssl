@@ -5,7 +5,7 @@
 X509_PUBKEY_new, X509_PUBKEY_free, X509_PUBKEY_set, X509_PUBKEY_get0,
 X509_PUBKEY_get, d2i_PUBKEY, i2d_PUBKEY, d2i_PUBKEY_bio, d2i_PUBKEY_fp,
 i2d_PUBKEY_fp, i2d_PUBKEY_bio, X509_PUBKEY_set0_param,
-X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions.
+X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions
 
 =head1 SYNOPSIS
 

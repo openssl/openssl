@@ -3,7 +3,7 @@
 =head1 NAME
 
 ASN1_TIME_set, ASN1_TIME_adj, ASN1_TIME_check, ASN1_TIME_set_string,
-ASN1_TIME_print, ASN1_TIME_diff - ASN.1 Time functions.
+ASN1_TIME_print, ASN1_TIME_diff - ASN.1 Time functions
 
 =head1 SYNOPSIS
 

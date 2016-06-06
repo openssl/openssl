@@ -4,7 +4,7 @@
 
 OCSP_REQUEST_new, OCSP_REQUEST_free, OCSP_request_add0_id, OCSP_request_sign,
 OCSP_request_add1_cert, OCSP_request_onereq_count,
-OCSP_request_onereq_get0 - OCSP request functions.
+OCSP_request_onereq_get0 - OCSP request functions
 
 =head1 SYNOPSIS
 

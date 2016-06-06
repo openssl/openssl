@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CONF_cmd_argv - SSL configuration command line processing.
+SSL_CONF_cmd_argv - SSL configuration command line processing
 
 =head1 SYNOPSIS
 

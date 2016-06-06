@@ -5,7 +5,7 @@
 d2i_RSAPublicKey, i2d_RSAPublicKey, d2i_RSAPrivateKey, i2d_RSAPrivateKey,
 d2i_RSA_PUBKEY, i2d_RSA_PUBKEY, d2i_RSA_PUBKEY_bio, d2i_RSA_PUBKEY_fp,
 i2d_RSA_PUBKEY_bio, i2d_RSA_PUBKEY_fp, i2d_Netscape_RSA,
-d2i_Netscape_RSA - RSA public and private key encoding functions.
+d2i_Netscape_RSA - RSA public and private key encoding functions
 
 =head1 SYNOPSIS
 

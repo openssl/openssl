@@ -54,6 +54,10 @@ sub check()
         if $contents =~ /head1 COPYRIGHT.*=head/ms;
     print $OUT "$id head2 in All uppercase\n"
         if $contents =~ /head2\s+[A-Z ]+\n/;
+    print $OUT "$id period in NAME section\n"
+        if $contents =~ /NAME.*\.\n.*SYNOPSIS/ms;
+    print $OUT "$id POD markup in NAME section\n"
+        if $contents =~ /NAME.*[<>].*SYNOPSIS/ms;
 
     # Look for multiple consecutive openssl #include lines.
     # Consecutive because of files like md5.pod. Sometimes it's okay

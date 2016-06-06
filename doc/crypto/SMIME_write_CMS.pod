@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SMIME_write_CMS - convert CMS structure to S/MIME format.
+SMIME_write_CMS - convert CMS structure to S/MIME format
 
 =head1 SYNOPSIS
 

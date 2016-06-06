@@ -3,7 +3,7 @@
 =head1 NAME
 
 X509_get_serialNumber, X509_set_serialNumber - get or set certificate serial
-number.
+number
 
 =head1 SYNOPSIS
 
