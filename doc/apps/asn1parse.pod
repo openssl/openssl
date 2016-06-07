@@ -125,7 +125,7 @@ The output will typically contain lines like this:
 
 .....
 
-This example is part of a self signed certificate. Each line starts with the
+This example is part of a self-signed certificate. Each line starts with the
 offset in decimal. B<d=XX> specifies the current depth. The depth is increased
 within the scope of any SET or SEQUENCE. B<hl=XX> gives the header length
 (tag and length octets) of the current type. B<l=XX> gives the length of

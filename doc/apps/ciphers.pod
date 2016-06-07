@@ -246,7 +246,7 @@ Cipher suites using authenticated ephemeral ECDH key agreement.
 
 =item B<AECDH>
 
-Anonymous Elliptic Curve Diffie Hellman cipher suites.
+Anonymous Elliptic Curve Diffie-Hellman cipher suites.
 
 =item B<aDSS>, B<DSS>
 

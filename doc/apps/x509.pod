@@ -834,7 +834,7 @@ Otherwise it is the same as a normal SSL server.
 
 The extended key usage extension must be absent or include the "email
 protection" OID. Netscape certificate type must be absent or should have the
-S/MIME bit set. If the S/MIME bit is not set in netscape certificate type
+S/MIME bit set. If the S/MIME bit is not set in Netscape certificate type
 then the SSL client bit is tolerated as an alternative but a warning is shown:
 this is because some Verisign certificates don't set the S/MIME bit.
 
