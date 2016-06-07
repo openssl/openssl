@@ -365,9 +365,9 @@ int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp)
     if (pp != NULL) {
         p = *pp;
         s2n(len2 - 2, p);
+        if (!is_pp_new)
+            *pp += len2;
     }
-    if (!is_pp_new)
-        *pp += len2;
     return len2;
 
  err:
