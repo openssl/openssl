@@ -203,9 +203,19 @@ platforms this is done in response to a DLL_THREAD_DETACH message being sent to
 the libcrypto32.dll entry point. Some windows functions may cause threads to exit
 without sending this message (for example ExitProcess()). If the application
 uses such functions, then the application must free up OpenSSL resources
-directly via a call to OPENSSL_thread_stop(). Similarly this message will
-also not be sent if OpenSSL is linked statically, and therefore applications
-using static linking should also call OPENSSL_thread_stop().
+directly via a call to OPENSSL_thread_stop() on each thread. Similarly this
+message will also not be sent if OpenSSL is linked statically, and therefore
+applications using static linking should also call OPENSSL_thread_stop() on each
+thread. Additionally if OpenSSL is loaded dynamically via LoadLibrary() and the
+threads are not destroyed until after FreeLibrary() is called then each thread
+should call OPENSSL_thread_stop() prior to the FreeLibrary() call.
+
+On Linux/Unix where OpenSSL has been loaded via dlopen() and the application is
+multi-threaded and if dlclose() is subsequently called prior to the threads
+being destroyed then OpenSSL will not be able to deallocate resources associated
+with those threads. The application should either call OPENSSL_thread_stop() on
+each thread prior to the dlclose() call, or alternatively the original dlopen()
+call should use the RTLD_NODELETE flag (where available on the platform).
 
 =head1 RETURN VALUES
 
