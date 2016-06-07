@@ -48,10 +48,24 @@ sub name_synopsis()
     $tmp =~ tr/\n/ /;
     $tmp =~ s/-.*//g;
     $tmp =~ s/,//g;
+
+    my $dirname = dirname($filename);
+    my $simplename = basename($filename);
+    $simplename =~ s/.pod$//;
+    my $foundfilename = 0;
+    my %foundfilenames = ();
     my %names;
     foreach my $n ( split ' ', $tmp ) {
         $names{$n} = 1;
+        $foundfilename++ if $n eq $simplename;
+        $foundfilenames{$n} = 1
+            if -f "$dirname/$n.pod" && $n ne $simplename;
     }
+    print "$id the following exist as other .pod files:\n",
+        join(" ", sort keys %foundfilenames), "\n"
+        if %foundfilenames;
+    print "$id $simplename (filename) missing from NAME section\n",
+        unless $foundfilename;
 
     # Find all functions in SYNOPSIS
     return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
