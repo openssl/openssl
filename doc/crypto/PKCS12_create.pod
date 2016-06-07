@@ -8,8 +8,9 @@ PKCS12_create - create a PKCS#12 structure
 
  #include <openssl/pkcs12.h>
 
- PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert, STACK_OF(X509) *ca,
-                                int nid_key, int nid_cert, int iter, int mac_iter, int keytype);
+ PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey,
+                       X509 *cert, STACK_OF(X509) *ca,
+                       int nid_key, int nid_cert, int iter, int mac_iter, int keytype);
 
 =head1 DESCRIPTION
 
