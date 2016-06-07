@@ -14,11 +14,11 @@
 
 /* ENGINE config module */
 
-static char *skip_dot(char *name)
+static const char *skip_dot(const char *name)
 {
-    char *p;
-    p = strchr(name, '.');
-    if (p)
+    const char *p = strchr(name, '.');
+
+    if (p != NULL)
         return p + 1;
     return name;
 }
@@ -38,14 +38,14 @@ static int int_engine_init(ENGINE *e)
     return 1;
 }
 
-static int int_engine_configure(char *name, char *value, const CONF *cnf)
+static int int_engine_configure(const char *name, const char *value, const CONF *cnf)
 {
     int i;
     int ret = 0;
     long do_init = -1;
     STACK_OF(CONF_VALUE) *ecmds;
     CONF_VALUE *ecmd = NULL;
-    char *ctrlname, *ctrlvalue;
+    const char *ctrlname, *ctrlvalue;
     ENGINE *e = NULL;
     int soft = 0;
 
