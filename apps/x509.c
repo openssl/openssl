@@ -1088,7 +1088,7 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
 {
     int id, i, idret;
-    char *pname;
+    const char *pname;
     id = X509_PURPOSE_get_id(pt);
     pname = X509_PURPOSE_get0_name(pt);
     for (i = 0; i < 2; i++) {
