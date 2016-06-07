@@ -135,7 +135,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
                           const unsigned char *dgst, int dlen)
 {
     BN_CTX *ctx = NULL;
-    BIGNUM *k, *kq, *kinv = NULL, *r = *rp;
+    BIGNUM *k, *kinv = NULL, *r = *rp;
     int ret = 0;
 
     if (!dsa->p || !dsa->q || !dsa->g) {
@@ -144,8 +144,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     }
 
     k = BN_new();
-    kq = BN_new();
-    if (k == NULL || kq == NULL)
+    if (k == NULL)
         goto err;
 
     if (ctx_in == NULL) {
@@ -176,9 +175,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     /* Compute r = (g^k mod p) mod q */
 
-    if (!BN_copy(kq, k))
-        goto err;
-
     /*
      * We do not want timing information to leak the length of k, so we
      * compute g^k using an equivalent exponent of fixed length. (This
@@ -186,21 +182,21 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
      * let us specify the desired timing behaviour.)
      */
 
-    if (!BN_add(kq, kq, dsa->q))
+    if (!BN_add(k, k, dsa->q))
         goto err;
-    if (BN_num_bits(kq) <= BN_num_bits(dsa->q)) {
-        if (!BN_add(kq, kq, dsa->q))
+    if (BN_num_bits(k) <= BN_num_bits(dsa->q)) {
+        if (!BN_add(k, k, dsa->q))
             goto err;
     }
 
-    BN_set_flags(kq, BN_FLG_CONSTTIME);
+    BN_set_flags(k, BN_FLG_CONSTTIME);
 
     if ((dsa)->meth->bn_mod_exp != NULL) {
-            if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, kq, dsa->p, ctx,
+            if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, k, dsa->p, ctx,
                                        dsa->method_mont_p))
                 goto err;
     } else {
-            if (!BN_mod_exp_mont(r, dsa->g, kq, dsa->p, ctx, dsa->method_mont_p))
+            if (!BN_mod_exp_mont(r, dsa->g, k, dsa->p, ctx, dsa->method_mont_p))
                 goto err;
     }
 
@@ -222,7 +218,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     if (ctx != ctx_in)
         BN_CTX_free(ctx);
     BN_clear_free(k);
-    BN_clear_free(kq);
     return ret;
 }
 
