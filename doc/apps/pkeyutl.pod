@@ -125,7 +125,7 @@ derive a shared secret using the peer key.
 
 Use key derivation function B<algorithm>.  The supported algorithms are
 at present B<TLS1-PRF> and B<HKDF>.
-Note: additional paramers and the KDF output length will normally have to be
+Note: additional parameters and the KDF output length will normally have to be
 set for this to work.  See L<EVP_PKEY_HKDF(3)> and L<EVP_PKEY_TLS1_PRF(3)>
 for the supported string parameters of each algorithm.
 

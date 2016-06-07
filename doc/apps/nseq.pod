@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-nseq - create or examine a netscape certificate sequence
+nseq - create or examine a Netscape certificate sequence
 
 =head1 SYNOPSIS
 

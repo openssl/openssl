@@ -210,14 +210,14 @@ effect.
 A B<file> of additional untrusted certificates (intermediate issuer CAs) used
 to construct a certificate chain from the subject certificate to a trust-anchor.
 The B<file> should contain one or more certificates in PEM format.
-This option can be specified more than once to include untrusted certiificates
+This option can be specified more than once to include untrusted certificates
 from multiple B<files>.
 
 =item B<-trusted file>
 
 A B<file> of trusted certificates, which must be self-signed, unless the
 B<-partial_chain> option is specified.
-The B<file> contain one or more certificates in PEM format.
+The B<file> contains one or more certificates in PEM format.
 With this option, no additional (e.g., default) certificate lists are
 consulted.
 That is, the only trust-anchors are those listed in B<file>.
@@ -340,7 +340,7 @@ CA.
 
 The process of 'looking up the issuers certificate' itself involves a number of
 steps.
-Ater all certificates whose subject name matches the issuer name of the current
+After all certificates whose subject name matches the issuer name of the current
 certificate are subject to further tests.
 The relevant authority key identifier components of the current certificate (if
 present) must match the subject key identifier (if present) and issuer and
@@ -388,7 +388,7 @@ problem was detected starting with zero for the certificate being verified itsel
 then 1 for the CA that signed the certificate and so on. Finally a text version
 of the error number is presented.
 
-An partial list of the error codes and messages is shown below, this also
+A partial list of the error codes and messages is shown below, this also
 includes the name of the error code as defined in the header file x509_vfy.h
 Some of the error codes are defined but never returned: these are described
 as "unused".
@@ -473,7 +473,7 @@ An error occurred trying to allocate memory. This should never happen.
 
 =item B<X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT>
 
-The passed certificate is self signed and the same certificate cannot be found in the list of
+The passed certificate is self-signed and the same certificate cannot be found in the list of
 trusted certificates.
 
 =item B<X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN>

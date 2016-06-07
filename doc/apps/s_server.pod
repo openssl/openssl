@@ -305,7 +305,7 @@ from the client.
 =item B<-dtls>, B<-dtls1>, B<-dtls1_2>
 
 These options make B<s_server> use DTLS protocols instead of TLS.
-With B<-dtls>, B<s_server> will negotiate any supported DTLS protcol version,
+With B<-dtls>, B<s_server> will negotiate any supported DTLS protocol version,
 whilst B<-dtls1> and B<-dtls1_2> will only support DTLSv1.0 and DTLSv1.2
 respectively.
 
@@ -339,7 +339,7 @@ L<SSL_CTX_set_split_send_fragment(3)> for further information.
 
 The maximum number of encrypt/decrypt pipelines to be used. This will only have
 an effect if an engine has been loaded that supports pipelining (e.g. the dasync
-engine) and a suiteable ciphersuite has been negotiated. The default value is 1.
+engine) and a suitable ciphersuite has been negotiated. The default value is 1.
 See L<SSL_CTX_set_max_pipelines(3)> for further information.
 
 =item B<-read_buf int>
