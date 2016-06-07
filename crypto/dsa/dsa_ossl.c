@@ -247,7 +247,12 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
     do
         if (!BN_rand_range(&k, dsa->q))
             goto err;
-    while (BN_is_zero(&k)) ;
+    while (BN_is_zero(&k));
+
+    if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
+        BN_set_flags(&k, BN_FLG_CONSTTIME);
+    }
+
 
     if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
         if (!BN_MONT_CTX_set_locked(&dsa->method_mont_p,
@@ -260,6 +265,8 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
     if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
         if (!BN_copy(&kq, &k))
             goto err;
+
+        BN_set_flags(&kq, BN_FLG_CONSTTIME);
 
         /*
          * We do not want timing information to leak the length of k, so we
@@ -276,8 +283,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
         }
 
         K = &kq;
-
-        BN_set_flags(K, BN_FLG_CONSTTIME);
     } else {
         K = &k;
     }
