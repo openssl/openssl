@@ -37,9 +37,9 @@ typedef struct ct_test_fixture {
     char *issuer_file;
     int expected_sct_count;
     /* Set the following to test handling of SCTs in TLS format */
-    const unsigned char *tls_sct;
-    size_t tls_sct_len;
-    SCT *sct;
+    const unsigned char *tls_sct_list;
+    size_t tls_sct_list_len;
+    STACK_OF(SCT) *sct_list;
     /*
      * A file to load the expected SCT text from.
      * This text will be compared to the actual text output during the test.
@@ -87,7 +87,7 @@ end:
 static void tear_down(CT_TEST_FIXTURE fixture)
 {
     CTLOG_STORE_free(fixture.ctlog_store);
-    SCT_free(fixture.sct);
+    SCT_LIST_free(fixture.sct_list);
     ERR_print_errors_fp(stderr);
 }
 
@@ -147,7 +147,7 @@ static int read_text_file(const char *dir, const char *file,
     return result;
 }
 
-static int compare_sct_printout(SCT *sct,
+static int compare_sct_list_printout(STACK_OF(SCT) *sct,
     const char *expected_output)
 {
     BIO *text_buffer = NULL;
@@ -160,7 +160,7 @@ static int compare_sct_printout(SCT *sct,
         goto end;
     }
 
-    SCT_print(sct, text_buffer, 0, NULL);
+    SCT_LIST_print(sct, text_buffer, 0, "\n", NULL);
 
     /* Append null terminator because we're about to use the buffer contents
     * as a string. */
@@ -204,7 +204,8 @@ static int compare_extension_printout(X509_EXTENSION *extension,
     /* Append null terminator because we're about to use the buffer contents
      * as a string. */
     if (BIO_write(text_buffer, "\0", 1) != 1) {
-        fprintf(stderr, "Failed to append null terminator to extension text\n");
+        fprintf(stderr,
+                "Failed to append null terminator to extension text\n");
         goto end;
     }
 
@@ -230,8 +231,8 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
     SCT *sct = NULL;
     char expected_sct_text[CT_TEST_MAX_FILE_SIZE];
     int sct_text_len = 0;
-    unsigned char *tls_sct = NULL;
-    size_t tls_sct_len = 0;
+    unsigned char *tls_sct_list = NULL;
+    size_t tls_sct_list_len = 0;
     CT_POLICY_EVAL_CTX *ct_policy_ctx = CT_POLICY_EVAL_CTX_new();
 
     if (fixture.sct_text_file != NULL) {
@@ -353,10 +354,10 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
         }
     }
 
-    if (fixture.tls_sct != NULL) {
-        const unsigned char *p = fixture.tls_sct;
-        if (o2i_SCT(&sct, &p, fixture.tls_sct_len) == NULL) {
-            fprintf(stderr, "Failed to decode SCT from TLS format\n");
+    if (fixture.tls_sct_list != NULL) {
+        const unsigned char *p = fixture.tls_sct_list;
+        if (o2i_SCT_LIST(&scts, &p, fixture.tls_sct_list_len) == NULL) {
+            fprintf(stderr, "Failed to decode SCTs from TLS format\n");
             goto end;
         }
 
@@ -372,14 +373,15 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
         }
 
         if (fixture.sct_text_file
-            && compare_sct_printout(sct, expected_sct_text)) {
+            && compare_sct_list_printout(scts, expected_sct_text)) {
                 goto end;
         }
 
-        tls_sct_len = i2o_SCT(sct, &tls_sct);
-        if (tls_sct_len != fixture.tls_sct_len ||
-            memcmp(fixture.tls_sct, tls_sct, tls_sct_len) != 0) {
-            fprintf(stderr, "Failed to encode SCT into TLS format correctly\n");
+        tls_sct_list_len = i2o_SCT_LIST(scts, &tls_sct_list);
+        if (tls_sct_list_len != fixture.tls_sct_list_len ||
+            memcmp(fixture.tls_sct_list, tls_sct_list, tls_sct_list_len) != 0) {
+            fprintf(stderr,
+                    "Failed to encode SCTs into TLS format correctly\n");
             goto end;
         }
     }
@@ -391,7 +393,7 @@ end:
     SCT_LIST_free(scts);
     SCT_free(sct);
     CT_POLICY_EVAL_CTX_free(ct_policy_ctx);
-    OPENSSL_free(tls_sct);
+    OPENSSL_free(tls_sct_list);
     return success;
 }
 
@@ -456,7 +458,9 @@ static int test_verify_multiple_scts()
 
 static int test_decode_tls_sct()
 {
-    const unsigned char tls_sct[] = "\x00" /* version */
+    const unsigned char tls_sct_list[] = "\x00\x78" /* length of list */
+        "\x00\x76"
+        "\x00" /* version */
         /* log ID */
         "\xDF\x1C\x2E\xC1\x15\x00\x94\x52\x47\xA9\x61\x68\x32\x5D\xDC\x5C\x79"
         "\x59\xE8\xF7\xC6\xD3\x88\xFC\x00\x2E\x0B\xBD\x3F\x74\xD7\x64"
@@ -473,8 +477,8 @@ static int test_decode_tls_sct()
         "\xED\xBF\x08";
 
     SETUP_CT_TEST_FIXTURE();
-    fixture.tls_sct = tls_sct;
-    fixture.tls_sct_len = 118;
+    fixture.tls_sct_list = tls_sct_list;
+    fixture.tls_sct_list_len = 0x7a;
     fixture.sct_dir = ct_dir;
     fixture.sct_text_file = "tls1.sct";
     EXECUTE_CT_TEST();
@@ -494,6 +498,7 @@ static int test_encode_tls_sct()
 
     SETUP_CT_TEST_FIXTURE();
 
+    STACK_OF(SCT) *sct_list = sk_SCT_new_null();
     SCT *sct = SCT_new();
     if (!SCT_set_version(sct, SCT_VERSION_V1)) {
         fprintf(stderr, "Failed to set SCT version\n");
@@ -512,7 +517,9 @@ static int test_encode_tls_sct()
         fprintf(stderr, "Failed to set SCT signature\n");
         return 1;
     }
-    fixture.sct = sct;
+    sk_SCT_push(sct_list, sct);
+
+    fixture.sct_list = sct_list;
     fixture.sct_dir = ct_dir;
     fixture.sct_text_file = "tls1.sct";
     EXECUTE_CT_TEST();
