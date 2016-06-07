@@ -532,7 +532,7 @@ const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth)
     return ui->meth;
 }
 
-UI_METHOD *UI_create_method(char *name)
+UI_METHOD *UI_create_method(const char *name)
 {
     UI_METHOD *ui_method = OPENSSL_zalloc(sizeof(*ui_method));
 
