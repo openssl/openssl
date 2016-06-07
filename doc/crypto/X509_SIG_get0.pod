@@ -2,21 +2,19 @@
 
 =head1 NAME
 
-d2i_ASN1_OBJECT, i2d_ASN1_OBJECT - ASN1 OBJECT IDENTIFIER functions
+X509_SIG_get0 - Get DigestInfo functions
 
 =head1 SYNOPSIS
 
- #include <openssl/objects.h>
+ #include <openssl/x509.h>
 
- ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp, long length);
- int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp);
+ void X509_SIG_get0(X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest,
+                    X509_SIG *sig);
 
 =head1 DESCRIPTION
 
-These functions decode and encode an ASN1 OBJECT IDENTIFIER.
-
-Otherwise these behave in a similar way to d2i_X509() and i2d_X509()
-described in the L<d2i_X509(3)> manual page.
+X509_SIG_get0() returns pointers to the algorithm identifier and digest
+value in B<sig>. These values can then be examined or initialised.
 
 =head1 SEE ALSO
 
