@@ -112,9 +112,8 @@ my %globals;
 
 { package opcode;	# pick up opcodes
     sub re {
-	my	$class = shift;
+	my	($class, $line) = @_;
 	my	$self = {};
-	my	$line = shift;
 	my	$ret;
 
 	if ($$line =~ /^([a-z][a-z0-9]*)/i) {
@@ -143,8 +142,7 @@ my %globals;
 	$ret;
     }
     sub size {
-	my $self = shift;
-	my $sz   = shift;
+	my ($self, $sz) = @_;
 	$self->{sz} = $sz if (defined($sz) && !defined($self->{sz}));
 	$self->{sz};
     }
@@ -185,17 +183,15 @@ my %globals;
 	}
     }
     sub mnemonic {
-	my $self=shift;
-	my $op=shift;
+	my ($self, $op) = @_;
 	$self->{op}=$op if (defined($op));
 	$self->{op};
     }
 }
 { package const;	# pick up constants, which start with $
     sub re {
-	my	$class = shift;
+	my	($class, $line) = @_;
 	my	$self = {};
-	my	$line = shift;
 	my	$ret;
 
 	if ($$line =~ /^\$([^,]+)/) {
@@ -227,10 +223,8 @@ my %globals;
 }
 { package ea;		# pick up effective addresses: expr(%reg,%reg,scale)
     sub re {
-	my	$class = shift;
+	my	($class, $line, $opcode) = @_;
 	my	$self = {};
-	my	$line = shift;
-	my	$opcode = shift;
 	my	$ret;
 
 	# optional * ---vvv--- appears in indirect jmp/call
@@ -255,8 +249,7 @@ my %globals;
     }
     sub size {}
     sub out {
-    	my $self = shift;
-	my $sz = shift;
+	my ($self, $sz) = @_;
 
 	$self->{label} =~ s/([_a-z][_a-z0-9]*)/$globals{$1} or $1/gei;
 	$self->{label} =~ s/\.L/$decor/g;
@@ -300,11 +293,12 @@ my %globals;
 	    $self->{label} =~ s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
 
-	    ($self->{asterisk})						&& ($sz="q") ||
-	    ($self->{opcode}->mnemonic() =~ /^v?mov([qd])$/)		&& ($sz=$1)  ||
-	    ($self->{opcode}->mnemonic() =~ /^v?pinsr([qdwb])$/)	&& ($sz=$1)  ||
-	    ($self->{opcode}->mnemonic() =~ /^vpbroadcast([qdwb])$/)	&& ($sz=$1)  ||
-	    ($self->{opcode}->mnemonic() =~ /^v(?!perm)[a-z]+[fi]128$/)	&& ($sz="x");
+	    my $mnemonic = $self->{opcode}->mnemonic();
+	    ($self->{asterisk})				&& ($sz="q") ||
+	    ($mnemonic =~ /^v?mov([qd])$/)		&& ($sz=$1)  ||
+	    ($mnemonic =~ /^v?pinsr([qdwb])$/)		&& ($sz=$1)  ||
+	    ($mnemonic =~ /^vpbroadcast([qdwb])$/)	&& ($sz=$1)  ||
+	    ($mnemonic =~ /^v(?!perm)[a-z]+[fi]128$/)	&& ($sz="x");
 
 	    if (defined($self->{index})) {
 		sprintf "%s[%s%s*%d%s]",$szmap{$sz},
@@ -323,9 +317,8 @@ my %globals;
 }
 { package register;	# pick up registers, which start with %.
     sub re {
-	my	$class = shift;
+	my	($class, $line) = @_;
 	my	$self = {};
-	my	$line = shift;
 	my	$ret;
 
 	# optional * ---vvv--- appears in indirect jmp/call
@@ -361,9 +354,8 @@ my %globals;
 }
 { package label;	# pick up labels, which end with :
     sub re {
-	my	$class = shift;
+	my	($class, $line) = @_;
 	my	$self = {};
-	my	$line = shift;
 	my	$ret;
 
 	if ($$line =~ /(^[\.\w]+)\:/) {
@@ -430,10 +422,8 @@ my %globals;
 }
 { package expr;		# pick up expressioins
     sub re {
-	my	$class = shift;
+	my	($class, $line, $opcode) = @_;
 	my	$self = {};
-	my	$line = shift;
-	my	$opcode = shift;
 	my	$ret;
 
 	if ($$line =~ /(^[^,]+)/) {
@@ -460,9 +450,8 @@ my %globals;
 }
 { package directive;	# pick up directives, which start with .
     sub re {
-	my	$class = shift;
+	my	($class, $line) = @_;
 	my	$self = {};
-	my	$line = shift;
 	my	$ret;
 	my	$dir;
 	my	%opcode =	# lea 2f-1f(%rip),%dst; 1: nop; 2:
@@ -896,8 +885,7 @@ while(defined(my $line=<>)) {
     } elsif (my $opcode=opcode->re(\$line)) {
 	my $asm = eval("\$".$opcode->mnemonic());
 	
-	my @bytes;
-	if ((ref($asm) eq 'CODE') && scalar(@bytes=&$asm($line))) {
+	if ((ref($asm) eq 'CODE') && scalar(my @bytes=&$asm($line))) {
 	    print $gas?".byte\t":"DB\t",join(',',@bytes),"\n";
 	    next;
 	}
@@ -906,11 +894,11 @@ while(defined(my $line=<>)) {
 	ARGUMENT: while (1) {
 	my $arg;
 
-	if ($arg=register->re(\$line))	{ $opcode->size($arg->size()); }
-	elsif ($arg=const->re(\$line))	{ }
+	if ($arg=register->re(\$line))		{ $opcode->size($arg->size()); }
+	elsif ($arg=const->re(\$line))		{ }
 	elsif ($arg=ea->re(\$line, $opcode))	{ }
 	elsif ($arg=expr->re(\$line, $opcode))	{ }
-	else				{ last ARGUMENT; }
+	else					{ last ARGUMENT; }
 
 	push @args,$arg;
 
