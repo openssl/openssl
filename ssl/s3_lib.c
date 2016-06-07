@@ -3329,6 +3329,9 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             return 1;
         }
 
+    case SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE:
+        return ctx->tlsext_status_type;
+
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE:
         ctx->tlsext_status_type = larg;
         break;
