@@ -353,7 +353,7 @@ RC5 Cipher
 =head1 COMMAND OPTIONS
 
 Details of which options are available depend on the specific command.
-This section desribes some common options with common behavior.
+This section describes some common options with common behavior.
 
 =head2 Common Options
 

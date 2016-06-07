@@ -73,14 +73,14 @@ implementation. See B<KEY GENERATION OPTIONS> below for more details.
 =item B<-genparam>
 
 generate a set of parameters instead of a private key. If used this option must
-precede and B<-algorithm>, B<-paramfile> or B<-pkeyopt> options.
+precede any B<-algorithm>, B<-paramfile> or B<-pkeyopt> options.
 
 =item B<-paramfile filename>
 
 Some public key algorithms generate a private key based on a set of parameters.
 They can be supplied using this option. If this option is used the public key
 algorithm used is determined by the parameters. If used this option must
-precede and B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
+precede any B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
 are mutually exclusive.
 
 =item B<-text>

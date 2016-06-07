@@ -89,7 +89,7 @@ signed by the CA.
 
 =item B<-ss_cert filename>
 
-a single self signed certificate to be signed by the CA.
+a single self-signed certificate to be signed by the CA.
 
 =item B<-spkac filename>
 
@@ -643,11 +643,11 @@ CRL: however there is no option to do this.
 V2 CRL features like delta CRLs are not currently supported.
 
 Although several requests can be input and handled at once it is only
-possible to include one SPKAC or self signed certificate.
+possible to include one SPKAC or self-signed certificate.
 
 =head1 BUGS
 
-The use of an in memory text database can cause problems when large
+The use of an in-memory text database can cause problems when large
 numbers of certificates are present because, as the name implies
 the database has to be kept in memory.
 
