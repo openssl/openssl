@@ -2,10 +2,15 @@
 
 =head1 NAME
 
-SSL_CTX_set_tlsext_status_cb, SSL_CTX_set_tlsext_status_arg,
-SSL_CTX_set_tlsext_status_type, SSL_set_tlsext_status_type,
-SSL_get_tlsext_status_ocsp_resp, SSL_set_tlsext_status_ocsp_resp - OCSP
-Certificate Status Request functions
+SSL_CTX_set_tlsext_status_cb,
+SSL_CTX_set_tlsext_status_arg,
+SSL_CTX_set_tlsext_status_type,
+SSL_CTX_get_tlsext_status_type,
+SSL_set_tlsext_status_type,
+SSL_get_tlsext_status_type,
+SSL_get_tlsext_status_ocsp_resp,
+SSL_set_tlsext_status_ocsp_resp
+- OCSP Certificate Status Request functions
 
 =head1 SYNOPSIS
 
@@ -16,8 +21,10 @@ Certificate Status Request functions
  long SSL_CTX_set_tlsext_status_arg(SSL_CTX *ctx, void *arg);
 
  long SSL_CTX_set_tlsext_status_type(SSL_CTX *ctx, int type);
+ long SSL_CTX_get_tlsext_status_type(SSL_CTX *ctx);
 
  long SSL_set_tlsext_status_type(SSL *s, int type);
+ long SSL_get_tlsext_status_type(SSL *s);
 
  long SSL_get_tlsext_status_ocsp_resp(ssl, unsigned char **resp);
  long SSL_set_tlsext_status_ocsp_resp(ssl, unsigned char *resp, int len);
@@ -30,7 +37,9 @@ SSL_CTX_set_tlsext_status_type() function prior to the creation of any SSL
 objects. Alternatively an application can call the SSL_set_tlsext_status_type()
 function on an individual SSL object prior to the start of the handshake.
 Currently the only supported type is B<TLSEXT_STATUSTYPE_ocsp>. This value
-should be passed in the B<type> argument.
+should be passed in the B<type> argument. Calling
+SSL_CTX_get_tlsext_status_type() will return the type B<TLSEXT_STATUSTYPE_ocsp>
+previously set via SSL_CTX_set_tlsext_status_type() or -1 if not set.
 
 The client should additionally provide a callback function to decide what to do
 with the returned OCSP response by calling SSL_CTX_set_tlsext_status_cb(). The
@@ -39,6 +48,13 @@ acceptable or not. The callback will be passed as an argument the value
 previously set via a call to SSL_CTX_set_tlsext_status_arg(). Note that the
 callback will not be called in the event of a handshake where session resumption
 occurs (because there are no Certificates exchanged in such a handshake).
+
+On the client side SSL_get_tlsext_status_type() can be used to determine whether
+the client has previously called SSL_set_tlsext_status_type(). It will return
+B<TLSEXT_STATUSTYPE_ocsp> if it has been called or -1 otherwise. On the server
+side SSL_get_tlsext_status_type() can be used to determine whether the client
+requested OCSP stapling. If the client requested it then this function will
+return B<TLSEXT_STATUSTYPE_ocsp>, or -1 otherwise.
 
 The response returned by the server can be obtained via a call to
 SSL_get_tlsext_status_ocsp_resp(). The value B<*resp> will be updated to point
@@ -73,12 +89,20 @@ SSL_CTX_set_tlsext_status_cb(), SSL_CTX_set_tlsext_status_arg(),
 SSL_CTX_set_tlsext_status_type(), SSL_set_tlsext_status_type() and
 SSL_set_tlsext_status_ocsp_resp() return 0 on error or 1 on success.
 
+SSL_CTX_get_tlsext_status_type() returns the value previously set by
+SSL_CTX_set_tlsext_status_type(), or -1 if not set.
+
 SSL_get_tlsext_status_ocsp_resp() returns the length of the OCSP response data
 or -1 if there is no OCSP response data.
 
+SSL_get_tlsext_status_type() returns B<TLSEXT_STATUSTYPE_ocsp> on the client
+side if SSL_set_tlsext_status_type() was previously called, or on the server
+side if the client requested OCSP stapling. Otherwise -1 is returned.
+
 =head1 HISTORY
 
-SSL_CTX_set_tlsext_status_type() was added in OpenSSL 1.1.0.
+SSL_get_tlsext_status_type(), SSL_CTX_get_tlsext_status_type() and
+SSL_CTX_set_tlsext_status_type() were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
