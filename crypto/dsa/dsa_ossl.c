@@ -167,6 +167,8 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
             goto err;
     } while (BN_is_zero(k));
 
+    BN_set_flags(k, BN_FLG_CONSTTIME);
+
     if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
         if (!BN_MONT_CTX_set_locked(&dsa->method_mont_p,
                                     dsa->lock, dsa->p, ctx))
@@ -189,8 +191,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
             goto err;
     }
 
-    BN_set_flags(k, BN_FLG_CONSTTIME);
-
     if ((dsa)->meth->bn_mod_exp != NULL) {
             if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, k, dsa->p, ctx,
                                        dsa->method_mont_p))
@@ -199,7 +199,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
             if (!BN_mod_exp_mont(r, dsa->g, k, dsa->p, ctx, dsa->method_mont_p))
                 goto err;
     }
-
 
     if (!BN_mod(r, r, dsa->q, ctx))
         goto err;
