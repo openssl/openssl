@@ -100,7 +100,8 @@ sub check()
 
     my $id = "${filename}:1:";
 
-    &name_synopsis($id, $filename, $contents);
+    &name_synopsis($id, $filename, $contents)
+        unless $contents =~ /=for comment generic/;
 
     print "$id doesn't start with =pod\n"
         if $contents !~ /^=pod/;

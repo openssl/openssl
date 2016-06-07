@@ -2,8 +2,9 @@
 
 =head1 NAME
 
-d2i_Private_key, d2i_AutoPrivateKey, i2d_PrivateKey - decode and encode
-functions for reading and saving EVP_PKEY structures
+d2i_Private_key, d2i_AutoPrivateKey, i2d_PrivateKey,
+d2i_PrivateKey_bio, d2i_PrivateKey_fp
+- decode and encode functions for reading and saving EVP_PKEY structures
 
 =head1 SYNOPSIS
 
@@ -14,6 +15,9 @@ functions for reading and saving EVP_PKEY structures
  EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
                               long length);
  int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp);
+
+ EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a);
+ EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
 
 =head1 DESCRIPTION
 
@@ -28,8 +32,7 @@ automatically detect the private key format.
 i2d_PrivateKey() encodes B<key>. It uses a key specific format or, if none is
 defined for that key type, PKCS#8 unencrypted PrivateKeyInfo format.
 
-These functions are similar to the d2i_X509() functions, and you should refer to
-that page for a detailed description (see L<d2i_X509(3)>).
+These functions are similar to the d2i_X509() functions; see L<d2i_X509(3)>.
 
 =head1 NOTES
 

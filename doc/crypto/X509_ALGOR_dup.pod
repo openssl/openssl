@@ -2,14 +2,12 @@
 
 =head1 NAME
 
-d2i_X509_ALGOR, i2d_X509_ALGOR, X509_ALGOR_dup, X509_ALGOR_set0, X509_ALGOR_get0, X509_ALGOR_set_md, X509_ALGOR_cmp - AlgorithmIdentifier functions
+X509_ALGOR_dup, X509_ALGOR_set0, X509_ALGOR_get0, X509_ALGOR_set_md, X509_ALGOR_cmp - AlgorithmIdentifier functions
 
 =head1 SYNOPSIS
 
  #include <openssl/x509.h>
 
- X509_ALGOR *d2i_X509_ALGOR(X509_ALGOR **a, unsigned char **pp, long length);
- int i2d_X509_ALGOR(X509_ALGOR *a, unsigned char **pp);
  X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *alg);
  int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval);
  void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
@@ -18,12 +16,6 @@ d2i_X509_ALGOR, i2d_X509_ALGOR, X509_ALGOR_dup, X509_ALGOR_set0, X509_ALGOR_get0
  int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b);
 
 =head1 DESCRIPTION
-
-The functions d2i_X509() and i2d_X509() decode and encode an B<X509_ALGOR>
-structure which is equivalent to the B<AlgorithmIdentifier> structure.
-
-Otherwise they behave in a similar way to d2i_X509() and i2d_X509()
-described in the L<d2i_X509(3)> manual page.
 
 X509_ALGOR_dup() returns a copy of B<alg>.
 
@@ -43,10 +35,6 @@ values for the message digest B<md>.
 
 X509_ALGOR_cmp() compares B<a> and B<b> and returns 0 if they have identical
 encodings and non-zero otherwise.
-
-=head1 SEE ALSO
-
-L<d2i_X509(3)>
 
 =head1 COPYRIGHT
 
