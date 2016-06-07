@@ -14,7 +14,6 @@ void DES_string_to_key(const char *str, DES_cblock *key)
 {
     DES_key_schedule ks;
     int i, length;
-    register unsigned char j;
 
     memset(key, 0, 8);
     length = strlen(str);
@@ -23,7 +22,8 @@ void DES_string_to_key(const char *str, DES_cblock *key)
         (*key)[i % 8] ^= (str[i] << 1);
 #else                           /* MIT COMPATIBLE */
     for (i = 0; i < length; i++) {
-        j = str[i];
+        register unsigned char j = str[i];
+
         if ((i % 16) < 8)
             (*key)[i % 8] ^= (j << 1);
         else {
@@ -46,7 +46,6 @@ void DES_string_to_2keys(const char *str, DES_cblock *key1, DES_cblock *key2)
 {
     DES_key_schedule ks;
     int i, length;
-    register unsigned char j;
 
     memset(key1, 0, 8);
     memset(key2, 0, 8);
@@ -66,7 +65,8 @@ void DES_string_to_2keys(const char *str, DES_cblock *key1, DES_cblock *key2)
     }
 #else                           /* MIT COMPATIBLE */
     for (i = 0; i < length; i++) {
-        j = str[i];
+        register unsigned char j = str[i];
+
         if ((i % 32) < 16) {
             if ((i % 16) < 8)
                 (*key1)[i % 8] ^= (j << 1);
