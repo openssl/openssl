@@ -222,6 +222,51 @@ end:
     return result;
 }
 
+static int assert_validity(CT_TEST_FIXTURE fixture,
+                           STACK_OF(SCT) *scts,
+                           CT_POLICY_EVAL_CTX *policy_ctx) {
+    int invalid_sct_count = 0;
+    int valid_sct_count = 0;
+    int i;
+
+    if (SCT_LIST_validate(scts, policy_ctx) < 0) {
+        fprintf(stderr, "Error verifying SCTs\n");
+        return 0;
+    }
+
+    for (i = 0; i < sk_SCT_num(scts); ++i) {
+        SCT *sct_i = sk_SCT_value(scts, i);
+        switch (SCT_get_validation_status(sct_i)) {
+        case SCT_VALIDATION_STATUS_VALID:
+            ++valid_sct_count;
+            break;
+        case SCT_VALIDATION_STATUS_INVALID:
+            ++invalid_sct_count;
+            break;
+        default:
+            /* Ignore other validation statuses. */
+            break;
+        }
+    }
+
+    if (valid_sct_count != fixture.expected_sct_count) {
+        int unverified_sct_count = sk_SCT_num(scts) -
+                invalid_sct_count - valid_sct_count;
+
+        fprintf(stderr,
+                "%d SCTs failed verification\n"
+                "%d SCTs passed verification (%d expected)\n"
+                "%d SCTs were unverified\n",
+                invalid_sct_count,
+                valid_sct_count,
+                fixture.expected_sct_count,
+                unverified_sct_count);
+        return 0;
+    }
+
+    return 1;
+}
+
 static int execute_cert_test(CT_TEST_FIXTURE fixture)
 {
     int success = 0;
@@ -292,7 +337,6 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
             }
 
             if (fixture.test_validity) {
-                int are_scts_validated = 0;
                 int i;
 
                 scts = X509V3_EXT_d2i(sct_extension);
@@ -306,44 +350,8 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
                     }
                 }
 
-                are_scts_validated = SCT_LIST_validate(scts, ct_policy_ctx);
-                if (are_scts_validated < 0) {
-                    fprintf(stderr, "Error verifying SCTs\n");
+                if (!assert_validity(fixture, scts, ct_policy_ctx))
                     goto end;
-                } else if (!are_scts_validated) {
-                    int invalid_sct_count = 0;
-                    int valid_sct_count = 0;
-
-                    for (i = 0; i < sk_SCT_num(scts); ++i) {
-                        SCT *sct_i = sk_SCT_value(scts, i);
-                        switch (SCT_get_validation_status(sct_i)) {
-                        case SCT_VALIDATION_STATUS_VALID:
-                            ++valid_sct_count;
-                            break;
-                        case SCT_VALIDATION_STATUS_INVALID:
-                            ++invalid_sct_count;
-                            break;
-                        default:
-                            /* Ignore other validation statuses. */
-                            break;
-                        }
-                    }
-
-                    if (valid_sct_count != fixture.expected_sct_count) {
-                        int unverified_sct_count = sk_SCT_num(scts) -
-                                invalid_sct_count - valid_sct_count;
-
-                        fprintf(stderr,
-                                "%d SCTs failed verification\n"
-                                "%d SCTs passed verification (%d expected)\n"
-                                "%d SCTs were unverified\n",
-                                invalid_sct_count,
-                                valid_sct_count,
-                                fixture.expected_sct_count,
-                                unverified_sct_count);
-                    }
-                    goto end;
-                }
             }
         } else if (sct_extension != NULL) {
             fprintf(stderr,
@@ -361,14 +369,8 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
         }
 
         if (fixture.test_validity && cert != NULL) {
-            int is_sct_validated = SCT_validate(sct, ct_policy_ctx);
-            if (is_sct_validated < 0) {
-                fprintf(stderr, "Error validating SCT\n");
+            if (!assert_validity(fixture, scts, ct_policy_ctx))
                 goto end;
-            } else if (!is_sct_validated) {
-                fprintf(stderr, "SCT failed verification\n");
-                goto end;
-            }
         }
 
         if (fixture.sct_text_file
