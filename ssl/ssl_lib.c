@@ -671,6 +671,11 @@ SSL *SSL_new(SSL_CTX *ctx)
     return NULL;
 }
 
+int SSL_is_dtls(const SSL *s)
+{
+    return SSL_IS_DTLS(s) ? 1 : 0;
+}
+
 int SSL_up_ref(SSL *s)
 {
     int i;

@@ -84,6 +84,7 @@ Makefile
 /test/fips_test_suite
 /test/ssltest_old
 /test/x509aux
+/test/v3ext
 *.so*
 *.dylib*
 *.dll*

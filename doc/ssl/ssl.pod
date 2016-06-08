@@ -520,6 +520,8 @@ fresh handle for each connection.
 
 =item const char *B<SSL_get_cipher>(const SSL *ssl);
 
+=item int B<SSL_is_dtls>(const SSL *ssl);
+
 =item int B<SSL_get_cipher_bits>(const SSL *ssl, int *alg_bits);
 
 =item char *B<SSL_get_cipher_list>(const SSL *ssl, int n);

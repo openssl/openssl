@@ -504,6 +504,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
 EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key);
 EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key);
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain);
+long X509_get_pathlen(X509 *x);
 int i2d_PUBKEY(EVP_PKEY *a, unsigned char **pp);
 EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length);
 # ifndef OPENSSL_NO_RSA
