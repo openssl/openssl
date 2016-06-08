@@ -229,10 +229,7 @@ static void xptable_free(X509_PURPOSE *p)
 
 void X509_PURPOSE_cleanup(void)
 {
-    unsigned int i;
     sk_X509_PURPOSE_pop_free(xptable, xptable_free);
-    for (i = 0; i < X509_PURPOSE_COUNT; i++)
-        xptable_free(xstandard + i);
     xptable = NULL;
 }
 
