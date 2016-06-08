@@ -141,7 +141,7 @@ static void hmac_ctx_cleanup(HMAC_CTX *ctx)
     EVP_MD_CTX_reset(ctx->md_ctx);
     ctx->md = NULL;
     ctx->key_length = 0;
-    memset(ctx->key, 0, sizeof(HMAC_MAX_MD_CBLOCK));
+    OPENSSL_cleanse(ctx->key, sizeof(ctx->key));
 }
 
 void HMAC_CTX_free(HMAC_CTX *ctx)
