@@ -157,9 +157,9 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
 {
-    unsigned int psk_len = 0;
     int ret;
-    BIGNUM *bn = NULL;
+    long key_len;
+    unsigned char *key;
 
     if (c_debug)
         BIO_printf(bio_c_out, "psk_client_cb\n");
@@ -180,31 +180,29 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     if (c_debug)
         BIO_printf(bio_c_out, "created identity '%s' len=%d\n", identity,
                    ret);
-    ret = BN_hex2bn(&bn, psk_key);
-    if (!ret) {
-        BIO_printf(bio_err, "Could not convert PSK key '%s' to BIGNUM\n",
+
+    /* convert the PSK key to binary */
+    key = OPENSSL_hexstr2buf(psk_key, &key_len);
+    if (key == NULL) {
+        BIO_printf(bio_err, "Could not convert PSK key '%s' to buffer\n",
                    psk_key);
-        BN_free(bn);
         return 0;
     }
-
-    if ((unsigned int)BN_num_bytes(bn) > max_psk_len) {
+    if (key_len > max_psk_len) {
         BIO_printf(bio_err,
-                   "psk buffer of callback is too small (%d) for key (%d)\n",
-                   max_psk_len, BN_num_bytes(bn));
-        BN_free(bn);
+                   "psk buffer of callback is too small (%d) for key (%ld)\n",
+                   max_psk_len, key_len);
+        OPENSSL_free(key);
         return 0;
     }
 
-    psk_len = BN_bn2bin(bn, psk);
-    BN_free(bn);
-    if (psk_len == 0)
-        goto out_err;
+    memcpy(psk, key, key_len);
+    OPENSSL_free(key);
 
     if (c_debug)
-        BIO_printf(bio_c_out, "created PSK len=%d\n", psk_len);
+        BIO_printf(bio_c_out, "created PSK len=%ld\n", key_len);
 
-    return psk_len;
+    return key_len;
  out_err:
     if (c_debug)
         BIO_printf(bio_err, "Error in PSK client callback\n");
