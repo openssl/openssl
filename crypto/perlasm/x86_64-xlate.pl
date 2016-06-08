@@ -317,15 +317,16 @@ my %globals;
 }
 { package register;	# pick up registers, which start with %.
     sub re {
-	my	($class, $line) = @_;
+	my	($class, $line, $opcode) = @_;
 	my	$self = {};
 	my	$ret;
 
-	# optional * ---vvv--- appears in indirect jmp/call
+	# optional * ----vvv--- appears in indirect jmp/call
 	if ($$line =~ /^(\*?)%(\w+)/) {
 	    bless $self,$class;
 	    $self->{asterisk} = $1;
 	    $self->{value} = $2;
+	    $opcode->size($self->size());
 	    $ret = $self;
 	    $$line = substr($$line,@+[0]); $$line =~ s/^\s+//;
 	}
@@ -892,19 +893,19 @@ while(defined(my $line=<>)) {
 
 	my @args;
 	ARGUMENT: while (1) {
-	my $arg;
+	    my $arg;
 
-	if ($arg=register->re(\$line))		{ $opcode->size($arg->size()); }
-	elsif ($arg=const->re(\$line))		{ }
-	elsif ($arg=ea->re(\$line, $opcode))	{ }
-	elsif ($arg=expr->re(\$line, $opcode))	{ }
-	else					{ last ARGUMENT; }
+	    ($arg=register->re(\$line, $opcode))||
+	    ($arg=const->re(\$line))		||
+	    ($arg=ea->re(\$line, $opcode))	||
+	    ($arg=expr->re(\$line, $opcode))	||
+	    last ARGUMENT;
 
-	push @args,$arg;
+	    push @args,$arg;
 
-	last ARGUMENT if ($line !~ /^,/);
+	    last ARGUMENT if ($line !~ /^,/);
 
-	$line =~ s/^,\s*//;
+	    $line =~ s/^,\s*//;
 	} # ARGUMENT:
 
 	if ($#args>=0) {
