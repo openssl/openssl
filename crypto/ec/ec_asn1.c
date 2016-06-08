@@ -1180,6 +1180,15 @@ void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig)
         *ps = sig->s;
 }
 
+int ECDSA_SIG_set0(BIGNUM *r, BIGNUM *s, ECDSA_SIG *sig)
+{
+    BN_clear_free(sig->r);
+    BN_clear_free(sig->s);
+    sig->r = r;
+    sig->s = s;
+    return 1;
+}
+
 int ECDSA_size(const EC_KEY *r)
 {
     int ret, i;
