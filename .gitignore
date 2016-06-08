@@ -39,6 +39,7 @@ Makefile
 # Links under apps
 /apps/CA.pl
 /apps/tsget
+/apps/tsget.pl
 /apps/md4.c
 
 
@@ -88,6 +89,13 @@ Makefile
 *.dll*
 *.exe
 *.pyc
+*.exp
+*.lib
+*.pdb
+*.ilk
+*.def
+*.rc
+*.res
 # Exceptions
 !/test/bctest
 !/crypto/des/times/486-50.sol
@@ -95,6 +103,7 @@ Makefile
 # Misc auto generated files
 /include/openssl/opensslconf.h
 /tools/c_rehash
+/tools/c_rehash.pl
 /crypto/**/lib
 /engines/**/lib
 /ssl/**/lib
@@ -107,7 +116,7 @@ cscope.*
 /crypto.map
 /ssl.map
 
-# Windows
+# Windows (legacy)
 /tmp32
 /tmp32.dbg
 /tmp32dll
