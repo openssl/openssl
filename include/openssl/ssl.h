@@ -1457,6 +1457,7 @@ __owur int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid
 
 SSL *SSL_new(SSL_CTX *ctx);
 int SSL_up_ref(SSL *s);
+int SSL_is_dtls(const SSL *s);
 __owur int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
                                unsigned int sid_ctx_len);
 

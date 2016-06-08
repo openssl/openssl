@@ -2,13 +2,15 @@
 
 =head1 NAME
 
+X509_get_pathlen,
 X509_get_extension_flags, X509_get_key_usage, X509_get_extended_key_usage -
-retrieve certificate extension flags
+retrieve certificate extension data
 
 =head1 SYNOPSIS
 
    #include <openssl/x509v3.h>
 
+   long X509_get_pathlen(X509 *x);
    uint32_t X509_get_extension_flags(X509 *x);
    uint32_t X509_get_key_usage(X509 *x);
    uint32_t X509_get_extended_key_usage(X509 *x);
@@ -16,7 +18,11 @@ retrieve certificate extension flags
 
 =head1 DESCRIPTION
 
-These functions retrieve flags related to commonly used certificate extensions.
+These functions retrieve information related to commonly used certificate extensions.
+
+X509_get_pathlen() retrieves the path length extension from a certificate.
+This extension is used to limit the length of a cert chain that may be
+issued from that CA.
 
 X509_get_extension_flags() retrieves general information about a certificate,
 it will return one or more of the following flags ored together.
@@ -115,6 +121,9 @@ X509_get_ext_d2i().
 
 =head1 RETURN VALUE
 
+X509_get_pathlen() returns the path length value, or -1 if the extension
+is not present.
+
 X509_get_extension_flags(), X509_get_key_usage() and
 X509_get_extended_key_usage() return sets of flags corresponding to the
 certificate extension values.
@@ -126,6 +135,10 @@ is absent or an error occurred during parsing.
 =head1 SEE ALSO
 
 L<X509_check_purpose(3)>
+
+=head1 HISTORY
+
+X509_get_pathlen() was added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
