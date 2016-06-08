@@ -1080,6 +1080,13 @@ ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
  */
 void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig);
 
+/** Setter for r and s fields of ECDSA_SIG
+ *  \param  sig  pointer to ECDSA_SIG pointer
+ *  \param  r    pointer to BIGNUM for r (may be NULL)
+ *  \param  s    pointer to BIGNUM for s (may be NULL)
+ */
+int ECDSA_SIG_set0(BIGNUM *r, BIGNUM *s, ECDSA_SIG *sig);
+
 /** Computes the ECDSA signature of the given hash value using
  *  the supplied private key and returns the created signature.
  *  \param  dgst      pointer to the hash value
