@@ -692,7 +692,13 @@ sub rex {
    push @$opcode,($rex|0x40) if ($rex);
 }
 
-# older gas and ml64 don't handle SSE>2 instructions
+# Upon initial x86_64 introduction SSE>2 extensions were not introduced
+# yet. In order not to be bothered by tracing exact assembler versions,
+# but at the same time to provide a bare security minimum of AES-NI, we
+# hard-code some instructions. Extensions past AES-NI on the other hand
+# are traced by examining assembler version in individual perlasm
+# modules...
+
 my %regrm = (	"%eax"=>0, "%ecx"=>1, "%edx"=>2, "%ebx"=>3,
 		"%esp"=>4, "%ebp"=>5, "%esi"=>6, "%edi"=>7	);
 
