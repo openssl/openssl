@@ -584,7 +584,9 @@ OPTIONS s_client_options[] = {
     {"unix", OPT_UNIX, 's', "Connect over unix domain sockets"},
 #endif
     {"4", OPT_4, '-', "Use IPv4 only"},
+#ifdef AF_INET6
     {"6", OPT_6, '-', "Use IPv6 only"},
+#endif
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
     {"certform", OPT_CERTFORM, 'F',
@@ -764,6 +766,10 @@ static const OPT_PAIR services[] = {
     {NULL, 0}
 };
 
+#define IS_INET_FLAG(o) \
+ (o == OPT_4 || o == OPT_6 || o == OPT_HOST || o == OPT_PORT || o == OPT_CONNECT)
+#define IS_UNIX_FLAG(o) (o == OPT_UNIX)
+
 int s_client_main(int argc, char **argv)
 {
     BIO *sbio;
@@ -841,6 +847,8 @@ int s_client_main(int argc, char **argv)
     int async = 0;
     unsigned int split_send_fragment = 0;
     unsigned int max_pipelines = 0;
+    enum { use_inet, use_unix, use_unknown } connect_type = use_unknown;
+    int count4or6 = 0;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -876,6 +884,19 @@ int s_client_main(int argc, char **argv)
 
     prog = opt_init(argc, argv, s_client_options);
     while ((o = opt_next()) != OPT_EOF) {
+        /* Check for intermixing flags. */
+        if (connect_type == use_unix && IS_INET_FLAG(o)) {
+            BIO_printf(bio_err,
+                "%s: Intermixed protocol flags (unix and internet domains)\n",
+                prog);
+            goto end;
+        }
+        if (connect_type == use_inet && IS_UNIX_FLAG(o)) {
+            BIO_printf(bio_err,
+                "%s: Intermixed protocol flags (internet and unix domains)\n",
+                prog);
+            goto end;
+        }
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
@@ -887,58 +908,27 @@ int s_client_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_4:
-#ifdef AF_UNIX
-            if (socket_family == AF_UNIX) {
-                OPENSSL_free(host); host = NULL;
-                OPENSSL_free(port); port = NULL;
-            }
-#endif
+            connect_type = use_inet;
             socket_family = AF_INET;
+            count4or6++;
             break;
-        case OPT_6:
-            if (1) {
 #ifdef AF_INET6
-#ifdef AF_UNIX
-                if (socket_family == AF_UNIX) {
-                    OPENSSL_free(host); host = NULL;
-                    OPENSSL_free(port); port = NULL;
-                }
-#endif
-                socket_family = AF_INET6;
-            } else {
-#endif
-                BIO_printf(bio_err, "%s: IPv6 domain sockets unsupported\n", prog);
-                goto end;
-            }
+        case OPT_6:
+            connect_type = use_inet;
+            socket_family = AF_INET6;
+            count4or6++;
             break;
-        case OPT_HOST:
-#ifdef AF_UNIX
-            if (socket_family == AF_UNIX) {
-                OPENSSL_free(host); host = NULL;
-                OPENSSL_free(port); port = NULL;
-                socket_family = AF_UNSPEC;
-            }
 #endif
-            OPENSSL_free(host); host = BUF_strdup(opt_arg());
+        case OPT_HOST:
+            connect_type = use_inet;
+            host = OPENSSL_strdup(opt_arg());
             break;
         case OPT_PORT:
-#ifdef AF_UNIX
-            if (socket_family == AF_UNIX) {
-                OPENSSL_free(host); host = NULL;
-                OPENSSL_free(port); port = NULL;
-                socket_family = AF_UNSPEC;
-            }
-#endif
-            OPENSSL_free(port); port = BUF_strdup(opt_arg());
+            connect_type = use_inet;
+            port = OPENSSL_strdup(opt_arg());
             break;
         case OPT_CONNECT:
-#ifdef AF_UNIX
-            if (socket_family == AF_UNIX) {
-                socket_family = AF_UNSPEC;
-            }
-#endif
-            OPENSSL_free(host); host = NULL;
-            OPENSSL_free(port); port = NULL;
+            connect_type = use_inet;
             connectstr = opt_arg();
             break;
         case OPT_PROXY:
@@ -947,9 +937,9 @@ int s_client_main(int argc, char **argv)
             break;
 #ifdef AF_UNIX
         case OPT_UNIX:
+            connect_type = use_unix;
             socket_family = AF_UNIX;
-            OPENSSL_free(host); host = BUF_strdup(opt_arg());
-            OPENSSL_free(port); port = NULL;
+            host = OPENSSL_strdup(opt_arg());
             break;
 #endif
         case OPT_XMPPHOST:
@@ -1309,6 +1299,10 @@ int s_client_main(int argc, char **argv)
             read_buf_len = atoi(opt_arg());
             break;
         }
+    }
+    if (count4or6 >= 2) {
+        BIO_printf(bio_err, "%s: Can't use both -4 and -6\n", prog);
+        goto opthelp;
     }
     argc = opt_num_rest();
     if (argc != 0)
