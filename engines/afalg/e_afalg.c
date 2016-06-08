@@ -94,27 +94,27 @@ static int afalg_cipher_nids[] = {
 
 static EVP_CIPHER *_hidden_aes_128_cbc = NULL;
 
-static inline int io_setup(unsigned n, aio_context_t *ctx)
+static ossl_inline int io_setup(unsigned n, aio_context_t *ctx)
 {
     return syscall(__NR_io_setup, n, ctx);
 }
 
-static inline int eventfd(int n)
+static ossl_inline int eventfd(int n)
 {
     return syscall(__NR_eventfd, n);
 }
 
-static inline int io_destroy(aio_context_t ctx)
+static ossl_inline int io_destroy(aio_context_t ctx)
 {
     return syscall(__NR_io_destroy, ctx);
 }
 
-static inline int io_read(aio_context_t ctx, long n, struct iocb **iocb)
+static ossl_inline int io_read(aio_context_t ctx, long n, struct iocb **iocb)
 {
     return syscall(__NR_io_submit, ctx, n, iocb);
 }
 
-static inline int io_getevents(aio_context_t ctx, long min, long max,
+static ossl_inline int io_getevents(aio_context_t ctx, long min, long max,
                                struct io_event *events,
                                struct timespec *timeout)
 {
@@ -230,7 +230,7 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     memset(cb, '\0', sizeof(*cb));
     cb->aio_fildes = sfd;
     cb->aio_lio_opcode = IOCB_CMD_PREAD;
-    cb->aio_buf = (unsigned long)buf;
+    cb->aio_buf = (uint64_t)buf;
     cb->aio_offset = 0;
     cb->aio_data = 0;
     cb->aio_nbytes = len;
@@ -310,7 +310,7 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     return 1;
 }
 
-static inline void afalg_set_op_sk(struct cmsghdr *cmsg,
+static ossl_inline void afalg_set_op_sk(struct cmsghdr *cmsg,
                                    const unsigned int op)
 {
     cmsg->cmsg_level = SOL_ALG;
@@ -332,7 +332,7 @@ static void afalg_set_iv_sk(struct cmsghdr *cmsg, const unsigned char *iv,
     memcpy(aiv->iv, iv, len);
 }
 
-static inline int afalg_set_key(afalg_ctx *actx, const unsigned char *key,
+static ossl_inline int afalg_set_key(afalg_ctx *actx, const unsigned char *key,
                                 const int klen)
 {
     int ret;

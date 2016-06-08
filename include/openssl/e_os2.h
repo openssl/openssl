@@ -219,7 +219,11 @@ extern "C" {
 
 # ifndef ossl_ssize_t
 #  define ossl_ssize_t ssize_t
-#  define OSSL_SSIZE_MAX SSIZE_MAX
+#  if defined(SSIZE_MAX)
+#   define OSSL_SSIZE_MAX SSIZE_MAX
+#  elif defined(_POSIX_SSIZE_MAX)
+#   define OSSL_SSIZE_MAX _POSIX_SSIZE_MAX
+#  endif
 # endif
 
 # ifdef DEBUG_UNUSED
