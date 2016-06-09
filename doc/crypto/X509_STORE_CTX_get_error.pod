@@ -61,7 +61,8 @@ needs to increment its reference count via L<X509_up_ref(3)>.
 Once such a I<saved> certificate is no longer needed it can be freed with
 L<X509_free(3)>.
 
-X509_STORE_CTX_get0_cert() returns the leaf certificate being verified.
+X509_STORE_CTX_get0_cert() retrieves an internal pointer to the
+certificate being verified by the B<ctx>.
 
 X509_STORE_CTX_get1_chain() returns a complete validate chain if a previous
 call to X509_verify_cert() is successful. If the call to X509_verify_cert()

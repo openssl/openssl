@@ -21,7 +21,7 @@ SSL_is_dtls() returns one if the connection is using DTLS, zero if not.
 
 =head1 RETURN VALUES
 
-SSL_get_verison() returns one of the following strings:
+SSL_get_version() returns one of the following strings:
 
 =over 4
 

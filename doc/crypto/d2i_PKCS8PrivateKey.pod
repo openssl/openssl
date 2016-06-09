@@ -35,7 +35,7 @@ The PKCS#8 functions encode and decode private keys in PKCS#8 format using both
 PKCS#5 v1.5 and PKCS#5 v2.0 password based encryption algorithms.
 
 Other than the use of DER as opposed to PEM these functions are identical to the
-corresponding B<PEM> function as described in the L<pem(3)> manual page.
+corresponding B<PEM> function as described in L<PEM_read_PrivateKey(3)>.
 
 =head1 NOTES
 
@@ -47,7 +47,7 @@ to memory BIOs, see L<BIO_s_mem(3)> for details.
 
 =head1 SEE ALSO
 
-L<pem(3)>
+L<PEM_read_PrivateKey(3)>
 
 =head1 COPYRIGHT
 
