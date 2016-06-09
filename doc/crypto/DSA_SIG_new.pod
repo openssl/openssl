@@ -10,7 +10,7 @@ DSA_SIG_new, DSA_SIG_free - allocate and free DSA signature objects
 
  DSA_SIG *DSA_SIG_new(void);
  void DSA_SIG_free(DSA_SIG *a);
- void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig);
+ void DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
  int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 
 =head1 DESCRIPTION
@@ -20,8 +20,8 @@ DSA_SIG_new() allocates and initializes a B<DSA_SIG> structure.
 DSA_SIG_free() frees the B<DSA_SIG> structure and its components. The
 values are erased before the memory is returned to the system.
 
-DSA_SIG_get0() returns internal pointers the B<r> and B<s> values contained
-in B<sig>. The values can then be examined or initialised.
+DSA_SIG_get0() returns internal pointers to the B<r> and B<s> values contained
+in B<sig>.
 
 The B<r> and B<s> values can be set by calling DSA_SIG_set0() and passing the
 new values for B<r> and B<s> as parameters to the function. Calling this

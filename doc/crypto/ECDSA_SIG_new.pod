@@ -13,7 +13,7 @@ algorithm (ECDSA) functions
 
  ECDSA_SIG *ECDSA_SIG_new(void);
  void ECDSA_SIG_free(ECDSA_SIG *sig);
- void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig);
+ void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
  int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
  int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
  ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
@@ -52,7 +52,7 @@ function also allocates the BIGNUMs) and initializes it.
 ECDSA_SIG_free() frees the B<ECDSA_SIG> structure B<sig>.
 
 ECDSA_SIG_get0() returns internal pointers the B<r> and B<s> values contained
-in B<sig>. The values can then be examined or initialised.
+in B<sig>.
 
 The B<r> and B<s> values can be set by calling ECDSA_SIG_set0() and passing the
 new values for B<r> and B<s> as parameters to the function. Calling this

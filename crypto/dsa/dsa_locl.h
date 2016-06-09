@@ -32,6 +32,11 @@ struct dsa_st {
     CRYPTO_RWLOCK *lock;
 };
 
+struct DSA_SIG_st {
+    BIGNUM *r;
+    BIGNUM *s;
+};
+
 struct dsa_method {
     char *name;
     DSA_SIG *(*dsa_do_sign) (const unsigned char *dgst, int dlen, DSA *dsa);
