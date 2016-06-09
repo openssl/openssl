@@ -32,7 +32,7 @@ void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig)
     *ps = sig->s;
 }
 
-int DSA_SIG_set0(BIGNUM *r, BIGNUM *s, DSA_SIG *sig)
+int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 {
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
