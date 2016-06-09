@@ -17,7 +17,7 @@ IF[{- !$disabled{tests} -}]
           packettest asynctest secmemtest srptest memleaktest \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
-          bioprinttest getsettest
+          bioprinttest sslapitest
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
@@ -246,12 +246,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[testutil.o]=..
   INCLUDE[ssl_test_ctx.o]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
   INCLUDE[handshake_helper.o]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+  INCLUDE[ssltestlib.o]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
 
   SOURCE[x509aux]=x509aux.c
   INCLUDE[x509aux]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
   DEPEND[x509aux]=../libcrypto
 
-  SOURCE[asynciotest]=asynciotest.c
+  SOURCE[asynciotest]=asynciotest.c ssltestlib.c
   INCLUDE[asynciotest]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
   DEPEND[asynciotest]=../libcrypto ../libssl
 
@@ -285,7 +286,7 @@ _____
    }
   -}
 
-  SOURCE[getsettest]=getsettest.c
-  INCLUDE[getsettest]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
-  DEPEND[getsettest]=../libcrypto ../libssl
+  SOURCE[sslapitest]=sslapitest.c ssltestlib.c
+  INCLUDE[sslapitest]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+  DEPEND[sslapitest]=../libcrypto ../libssl
 ENDIF

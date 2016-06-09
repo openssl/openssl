@@ -9,12 +9,14 @@
 
 use OpenSSL::Test;
 use OpenSSL::Test::Utils;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
-setup("test_getset");
+setup("test_sslapi");
 
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
     if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
 
 plan tests => 1;
 
-ok(run(test(["getsettest"])), "running getsettest");
+ok(run(test(["sslapitest", srctop_file("apps", "server.pem"),
+             srctop_file("apps", "server.pem")])), "running sslapitest");
