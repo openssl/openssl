@@ -1085,7 +1085,7 @@ void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig);
  *  \param  r    pointer to BIGNUM for r (may be NULL)
  *  \param  s    pointer to BIGNUM for s (may be NULL)
  */
-int ECDSA_SIG_set0(BIGNUM *r, BIGNUM *s, ECDSA_SIG *sig);
+int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 
 /** Computes the ECDSA signature of the given hash value using
  *  the supplied private key and returns the created signature.
