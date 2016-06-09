@@ -774,28 +774,20 @@ int SSL_SESSION_up_ref(SSL_SESSION *ss)
 
 int SSL_set_session(SSL *s, SSL_SESSION *session)
 {
-    int ret = 0;
-    if (session != NULL) {
-        if (s->ctx->method != s->method) {
-            if (!SSL_set_ssl_method(s, s->ctx->method))
-                return (0);
-        }
-
-        SSL_SESSION_up_ref(session);
-        SSL_SESSION_free(s->session);
-        s->session = session;
-        s->verify_result = s->session->verify_result;
-        ret = 1;
-    } else {
-        SSL_SESSION_free(s->session);
-        s->session = NULL;
-        if (s->ctx->method != s->method) {
-            if (!SSL_set_ssl_method(s, s->ctx->method))
-                return (0);
-        }
-        ret = 1;
+    ssl_clear_bad_session(s);
+    if (s->ctx->method != s->method) {
+        if (!SSL_set_ssl_method(s, s->ctx->method))
+            return 0;
     }
-    return (ret);
+
+    if (session != NULL) {
+        SSL_SESSION_up_ref(session);
+        s->verify_result = session->verify_result;
+    }
+    SSL_SESSION_free(s->session);
+    s->session = session;
+
+    return 1;
 }
 
 long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
