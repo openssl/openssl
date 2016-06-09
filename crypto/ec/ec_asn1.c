@@ -1180,7 +1180,7 @@ void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig)
         *ps = sig->s;
 }
 
-int ECDSA_SIG_set0(BIGNUM *r, BIGNUM *s, ECDSA_SIG *sig)
+int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 {
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);

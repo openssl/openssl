@@ -14,7 +14,7 @@ algorithm (ECDSA) functions
  ECDSA_SIG *ECDSA_SIG_new(void);
  void ECDSA_SIG_free(ECDSA_SIG *sig);
  void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig);
- int ECDSA_SIG_set0(BIGNUM *r, BIGNUM *s, ECDSA_SIG *sig);
+ int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
  int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
  ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
  int ECDSA_size(const EC_KEY *eckey);
