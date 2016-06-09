@@ -32,6 +32,15 @@ void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig)
     *ps = sig->s;
 }
 
+int DSA_SIG_set0(BIGNUM *r, BIGNUM *s, DSA_SIG *sig)
+{
+    BN_clear_free(sig->r);
+    BN_clear_free(sig->s);
+    sig->r = r;
+    sig->s = s;
+    return 1;
+}
+
 /* Override the default free and new methods */
 static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)

@@ -14,6 +14,7 @@ algorithm (ECDSA) functions
  ECDSA_SIG *ECDSA_SIG_new(void);
  void ECDSA_SIG_free(ECDSA_SIG *sig);
  void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig);
+ int ECDSA_SIG_set0(BIGNUM *r, BIGNUM *s, ECDSA_SIG *sig);
  int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
  ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
  int ECDSA_size(const EC_KEY *eckey);
@@ -52,6 +53,12 @@ ECDSA_SIG_free() frees the B<ECDSA_SIG> structure B<sig>.
 
 ECDSA_SIG_get0() returns internal pointers the B<r> and B<s> values contained
 in B<sig>. The values can then be examined or initialised.
+
+The B<r> and B<s> values can be set by calling ECDSA_SIG_set0() and passing the
+new values for B<r> and B<s> as parameters to the function. Calling this
+function transfers the memory management of the values to the ECDSA_SIG object,
+and therefore the values that have been passed in should not be freed directly
+after this function has been called.
 
 i2d_ECDSA_SIG() creates the DER encoding of the ECDSA signature B<sig> and
 writes the encoded signature to B<*pp> (note: if B<pp> is NULL i2d_ECDSA_SIG()
@@ -105,6 +112,8 @@ ECDSA_do_sign_ex() is similar to ECDSA_sign_ex() except the signature is
 returned as a newly allocated B<ECDSA_SIG> structure (or NULL on error).
 
 =head1 RETURN VALUES
+
+ECDSA_SIG_set0() returns 1 on success or 0 on failure.
 
 ECDSA_size() returns the maximum length signature or 0 on error.
 

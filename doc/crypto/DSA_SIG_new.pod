@@ -11,6 +11,7 @@ DSA_SIG_new, DSA_SIG_free - allocate and free DSA signature objects
  DSA_SIG *DSA_SIG_new(void);
  void DSA_SIG_free(DSA_SIG *a);
  void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig);
+ int DSA_SIG_set0(BIGNUM *r, BIGNUM *s, DSA_SIG *sig);
 
 =head1 DESCRIPTION
 
@@ -22,6 +23,12 @@ values are erased before the memory is returned to the system.
 DSA_SIG_get0() returns internal pointers the B<r> and B<s> values contained
 in B<sig>. The values can then be examined or initialised.
 
+The B<r> and B<s> values can be set by calling DSA_SIG_set0() and passing the
+new values for B<r> and B<s> as parameters to the function. Calling this
+function transfers the memory management of the values to the DSA_SIG object,
+and therefore the values that have been passed in should not be freed directly
+after this function has been called.
+
 =head1 RETURN VALUES
 
 If the allocation fails, DSA_SIG_new() returns B<NULL> and sets an
@@ -30,6 +37,8 @@ L<ERR_get_error(3)>. Otherwise it returns a pointer
 to the newly allocated structure.
 
 DSA_SIG_free() returns no value.
+
+DSA_SIG_set0() returns 1 on success or 0 on failure.
 
 =head1 SEE ALSO
 
