@@ -32,10 +32,6 @@ RSA_blinding_on() returns 1 on success, and 0 if an error occurred.
 
 RSA_blinding_off() returns no value.
 
-=head1 SEE ALSO
-
-L<rsa(3)>, L<rand(3)>
-
 =head1 COPYRIGHT
 
 Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.

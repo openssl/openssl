@@ -66,7 +66,6 @@ provide their own verifiers.
 =head1 SEE ALSO
 
 L<BN_is_prime_ex(3)>,
-L<rsa(3)>,
 L<ERR_get_error(3)>
 
 =head1 HISTORY

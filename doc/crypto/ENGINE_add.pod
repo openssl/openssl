@@ -555,7 +555,7 @@ extension).
 
 =head1 SEE ALSO
 
-L<OPENSSL_init_crypto(3)>, L<rsa(3)>, L<dsa(3)>, L<dh(3)>, L<rand(3)>
+L<OPENSSL_init_crypto(3)>, L<RSA_new_method(3)>, L<dsa(3)>, L<dh(3)>, L<rand(3)>
 
 =head1 HISTORY
 

@@ -31,7 +31,7 @@ RSA_free() returns no value.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<rsa(3)>,
+L<ERR_get_error(3)>,
 L<RSA_generate_key(3)>,
 L<RSA_new_method(3)>
 

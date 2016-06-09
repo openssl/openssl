@@ -9,6 +9,8 @@ lh_TYPE_new, lh_TYPE_free,
 lh_TYPE_insert, lh_TYPE_delete, lh_TYPE_retrieve,
 lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
+=for comment generic
+
 =head1 SYNOPSIS
 
  #include <openssl/lhash.h>
