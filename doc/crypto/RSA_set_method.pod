@@ -166,7 +166,7 @@ not currently exist).
 
 =head1 SEE ALSO
 
-L<rsa(3)>, L<RSA_new(3)>
+L<RSA_new(3)>
 
 =head1 COPYRIGHT
 

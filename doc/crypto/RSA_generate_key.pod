@@ -72,8 +72,8 @@ RSA_generate_key() goes into an infinite loop for illegal input values.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<rand(3)>, L<rsa(3)>,
-L<RSA_free(3)>, L<BN_generate_prime(3)>
+L<ERR_get_error(3)>, L<rand(3)>,
+L<RSA_generate_key(3)>, L<BN_generate_prime(3)>
 
 =head1 COPYRIGHT
 

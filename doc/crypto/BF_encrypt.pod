@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-blowfish, BF_set_key, BF_encrypt, BF_decrypt, BF_ecb_encrypt, BF_cbc_encrypt,
+BF_set_key, BF_encrypt, BF_decrypt, BF_ecb_encrypt, BF_cbc_encrypt,
 BF_cfb64_encrypt, BF_ofb64_encrypt, BF_options - Blowfish encryption
 
 =head1 SYNOPSIS

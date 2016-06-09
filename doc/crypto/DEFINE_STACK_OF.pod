@@ -10,6 +10,8 @@ sk_TYPE_insert, sk_TYPE_set, sk_TYPE_find, sk_TYPE_find_ex, sk_TYPE_sort,
 sk_TYPE_is_sorted, sk_TYPE_dup, sk_TYPE_deep_copy, sk_TYPE_set_cmp_func -
 stack container
 
+=for comment generic
+
 =head1 SYNOPSIS
 
  #include <openssl/safestack.h>

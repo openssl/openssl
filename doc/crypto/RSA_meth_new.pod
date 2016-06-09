@@ -215,7 +215,7 @@ success or 0 on failure.
 
 =head1 SEE ALSO
 
-L<rsa(3)>, L<RSA_new(3)>, L<RSA_generate_key(3)>, L<RSA_sign(3)>,
+L<RSA_new(3)>, L<RSA_generate_key(3)>, L<RSA_sign(3)>,
 L<RSA_set_method(3)>, L<RSA_size(3)>, L<RSA_get0_key(3)>
 
 =head1 HISTORY
