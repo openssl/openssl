@@ -64,8 +64,9 @@ The test section supports the following options:
   - AcceptAll - accepts all certificates.
   - RejectAll - rejects all certificates.
 
-* ServerName - the server the client is expected to successfully connect to
-  - server1 - the initial context (default)
+* ServerName - the server the client should attempt to connect to. One of
+  - None - do not use SNI (default)
+  - server1 - the initial context
   - server2 - the secondary context
 
 * SessionTicketExpected - whether or not a session ticket is expected
