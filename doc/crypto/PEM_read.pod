@@ -2,28 +2,60 @@
 
 =head1 NAME
 
-PEM_read, PEM_read_bio, PEM_do_header - low-level PEM routines
+PEM_write, PEM_write_bio,
+PEM_read, PEM_read_bio, PEM_do_header, PEM_get_EVP_CIPHER_INFO,
+pem_password_cb
+- PEM encoding routines
 
 =head1 SYNOPSIS
 
  #include <openssl/pem.h>
 
+ int PEM_write(FILE *fp, const char *name, const char *header,
+               const unsigned char *data, long len)
+ int PEM_write_bio(BIO *bp, const char *name, const char *header,
+                   const unsigned char *data, long len)
+
  int PEM_read(FILE *fp, char **name, char **header,
               unsigned char **data, long *len);
  int PEM_read_bio(BIO *bp, char **name, char **header,
                   unsigned char **data, long *len);
+
  int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cinfo);
  int PEM_do_header(EVP_CIPHER_INFO *cinfo, unsigned char *data, long *len,
                    pem_password_cb *cb, void *u);
 
+ typedef int pem_password_cb (char *buf, int size, int rwflag, void *u);
+
 =head1 DESCRIPTION
 
-These functions read and decode PEM-encoded objects, returning the
-PEM type B<name>, any encapsulation B<header> and the decoded
+These functions read and write PEM-encoded objects, using the PEM
+type B<name>, any additional B<header> information, and the raw
 B<data> of length B<len>.
 
-PEM_read() reads from the stdio file handle B<fp>, while PEM_read_bio() reads
-from the BIO B<bio>.
+PEM is the term used for binary content encoding first defined in IETF
+RFC 1421.  The content is a series of base64-encoded lines, surrounded
+by begin/end markers each on their own line.  For example:
+
+ -----BEGIN PRIVATE KEY-----
+ MIICdg....
+ ... bhTQ==
+ -----END PRIVATE KEY-----
+
+Optional header line(s) may appear after the begin line, and their
+existence depends on the type of object being written or read.
+
+PEM_write() writes to the file B<fp>, while PEM_write_bio() writes to
+the BIO B<bp>.  The B<name> is the name to use in the marker, the
+B<header> is the header value or NULL, and B<data> and B<len> specify
+the data and its length.
+
+The final B<data> buffer is typically an ASN.1 object which can be decoded with
+the B<d2i> function appropriate to the type B<name>; see L<d2i_X509(3)>
+for examples.
+
+PEM_read() reads from the file B<fp>, while PEM_read_bio() reads
+from the BIO B<bp>.
 Both skip any non-PEM data that precedes the start of the next PEM object.
 When an object is successfuly retrieved, the type name from the "----BEGIN
 <type>-----" is returned via the B<name> argument, any encapsulation headers
@@ -50,16 +82,13 @@ call to PEM_get_EVP_CIPHER_INFO().
 The B<data> and B<len> arguments are those returned by the previous call to
 PEM_read() or PEM_read_bio().
 The B<cb> and B<u> arguments make it possible to override the default password
-prompt function as described in L<pem(3)>.
+prompt function as described in L<PEM_read_PrivateKey(3)>.
 On successful completion the B<data> is decrypted in place, and B<len> is
 updated to indicate the plaintext length.
 This function is deprecated, see B<NOTES> below.
 
 If the data is a priori known to not be encrypted, then neither PEM_do_header()
 nor PEM_get_EVP_CIPHER_INFO() need be called.
-
-The final B<data> buffer is typically an ASN.1 object which can be decoded with
-the B<d2i> function appropriate to the type B<name>.
 
 =head1 RETURN VALUES
 
@@ -82,11 +111,11 @@ It uses an encryption format with an OpenSSL-specific key-derivation function,
 which employs MD5 with an iteration count of 1!
 Instead, private keys should be stored in PKCS#8 form, with a strong PKCS#5
 v2.0 PBE.
-See L<pkcs8(1)> and L<pem(3)> and L<d2i_PKCS8PrivateKey_bio(3)>.
+See L<PEM_write_PrivateKey(3)> and L<d2i_PKCS8PrivateKey_bio(3)>.
 
 =head1 SEE ALSO
 
-L<pem(3)>, L<ERR_peek_last_error(3)>, L<ERR_GET_LIB(3)>, L<pkcs8(1)>,
+L<ERR_peek_last_error(3)>, L<ERR_GET_LIB(3)>,
 L<d2i_PKCS8PrivateKey_bio(3)>.
 
 =head1 COPYRIGHT
