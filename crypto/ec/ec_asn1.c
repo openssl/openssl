@@ -1172,7 +1172,7 @@ DECLARE_ASN1_FUNCTIONS_const(ECDSA_SIG)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSA_SIG, ECDSA_SIG)
 IMPLEMENT_ASN1_FUNCTIONS_const(ECDSA_SIG)
 
-void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig)
+void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
 {
     if (pr != NULL)
         *pr = sig->r;

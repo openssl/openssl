@@ -437,9 +437,9 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
     dsa_sig = d2i_DSA_SIG(NULL, &p, sig->length);
     if (dsa_sig) {
         int rv = 0;
-        BIGNUM *r, *s;
+        const BIGNUM *r, *s;
 
-        DSA_SIG_get0(&r, &s, dsa_sig);
+        DSA_SIG_get0(dsa_sig, &r, &s);
 
         if (BIO_write(bp, "\n", 1) != 1)
             goto err;

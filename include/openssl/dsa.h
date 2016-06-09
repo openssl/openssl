@@ -81,7 +81,7 @@ DSA_SIG *DSA_SIG_new(void);
 void DSA_SIG_free(DSA_SIG *a);
 int i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
 DSA_SIG *d2i_DSA_SIG(DSA_SIG **v, const unsigned char **pp, long length);
-void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig);
+void DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
 int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 
 DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
