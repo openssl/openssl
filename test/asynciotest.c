@@ -15,6 +15,8 @@
 
 #include "../ssl/packet_locl.h"
 
+#include "ssltestlib.h"
+
 /* Should we fragment records or not? 0 = no, !0 = yes*/
 static int fragment = 0;
 
@@ -232,16 +234,12 @@ static int async_puts(BIO *bio, const char *str)
     return async_write(bio, str, strlen(str));
 }
 
-#define MAXLOOPS    100000
-
 int main(int argc, char *argv[])
 {
     SSL_CTX *serverctx = NULL, *clientctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
-    BIO *s_to_c_bio = NULL, *c_to_s_bio = NULL;
     BIO *s_to_c_fbio = NULL, *c_to_s_fbio = NULL;
-    int retc = -1, rets = -1, err, abortctr;
-    int test;
+    int test, err = 1;
 
     CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
@@ -251,24 +249,9 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    serverctx = SSL_CTX_new(TLS_server_method());
-    clientctx = SSL_CTX_new(TLS_client_method());
-    if (serverctx == NULL || clientctx == NULL) {
-        printf("Failed to create SSL_CTX\n");
-        goto end;
-    }
-
-    if (SSL_CTX_use_certificate_file(serverctx, argv[1],
-                                     SSL_FILETYPE_PEM) <= 0) {
-        printf("Failed to load server certificate\n");
-        goto end;
-    }
-    if (SSL_CTX_use_PrivateKey_file(serverctx, argv[2],
-                                    SSL_FILETYPE_PEM) <= 0) {
-        printf("Failed to load server private key\n");
-    }
-    if (SSL_CTX_check_private_key(serverctx) <= 0) {
-        printf("Failed to check private key\n");
+    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                             &serverctx, &clientctx, argv[1], argv[2])) {
+        printf("Failed to create SSL_CTX pair\n");
         goto end;
     }
 
@@ -279,81 +262,25 @@ int main(int argc, char *argv[])
      * CCS)
      */
     for (test = 1; test < 3; test++) {
-        abortctr = 0;
-        retc = rets = -1;
         if (test == 2)
             fragment = 1;
 
-        serverssl = SSL_new(serverctx);
-        clientssl = SSL_new(clientctx);
-        if (serverssl == NULL || clientssl == NULL) {
-            printf("Failed to create SSL object\n");
-            goto end;
-        }
-
-        s_to_c_bio = BIO_new(BIO_s_mem());
-        c_to_s_bio = BIO_new(BIO_s_mem());
-        if (s_to_c_bio == NULL || c_to_s_bio == NULL) {
-            printf("Failed to create mem BIOs\n");
-            goto end;
-        }
 
         s_to_c_fbio = BIO_new(bio_f_async_filter());
         c_to_s_fbio = BIO_new(bio_f_async_filter());
         if (s_to_c_fbio == NULL || c_to_s_fbio == NULL) {
             printf("Failed to create filter BIOs\n");
+            BIO_free(s_to_c_fbio);
+            BIO_free(c_to_s_fbio);
             goto end;
         }
 
-        s_to_c_bio = BIO_push(s_to_c_fbio, s_to_c_bio);
-        c_to_s_bio = BIO_push(c_to_s_fbio, c_to_s_bio);
-        if (s_to_c_bio == NULL || c_to_s_bio == NULL) {
-            printf("Failed to create chained BIOs\n");
+        /* BIOs get freed on error */
+        if (!create_ssl_connection(serverctx, clientctx, &serverssl, &clientssl,
+                                   s_to_c_fbio, c_to_s_fbio)) {
+            printf("Test %d failed: Create SSL connection failed\n", test);
             goto end;
         }
-
-        /* Set Non-blocking IO behaviour */
-        BIO_set_mem_eof_return(s_to_c_bio, -1);
-        BIO_set_mem_eof_return(c_to_s_bio, -1);
-
-        /* Up ref these as we are passing them to two SSL objects */
-        BIO_up_ref(s_to_c_bio);
-        BIO_up_ref(c_to_s_bio);
-
-        SSL_set_bio(serverssl, c_to_s_bio, s_to_c_bio);
-        SSL_set_bio(clientssl, s_to_c_bio, c_to_s_bio);
-
-        do {
-            err = SSL_ERROR_WANT_WRITE;
-            while (retc <= 0 && err == SSL_ERROR_WANT_WRITE) {
-                retc = SSL_connect(clientssl);
-                if (retc <= 0)
-                    err = SSL_get_error(clientssl, retc);
-            }
-
-            if (retc <= 0 && err != SSL_ERROR_WANT_READ) {
-                printf("Test %d failed: SSL_connect() failed %d, %d\n",
-                       test, retc, err);
-                goto end;
-            }
-
-            err = SSL_ERROR_WANT_WRITE;
-            while (rets <= 0 && err == SSL_ERROR_WANT_WRITE) {
-                rets = SSL_accept(serverssl);
-                if (rets <= 0)
-                    err = SSL_get_error(serverssl, rets);
-            }
-
-            if (rets <= 0 && err != SSL_ERROR_WANT_READ) {
-                printf("Test %d failed: SSL_accept() failed %d, %d\n",
-                       test, retc, err);
-                goto end;
-            }
-            if (++abortctr == MAXLOOPS) {
-                printf("Test %d failed: No progress made\n", test);
-                goto end;
-            }
-        } while (retc <=0 || rets <= 0);
 
         /* Also frees the BIOs */
         SSL_free(clientssl);
@@ -363,8 +290,9 @@ int main(int argc, char *argv[])
 
     printf("Test success\n");
 
+    err = 0;
  end:
-    if (retc <= 0 || rets <= 0)
+    if (err)
         ERR_print_errors_fp(stderr);
 
     SSL_free(clientssl);
@@ -376,5 +304,5 @@ int main(int argc, char *argv[])
     CRYPTO_mem_leaks_fp(stderr);
 # endif
 
-    return (retc > 0 && rets > 0) ? 0 : 1;
+    return err;
 }
