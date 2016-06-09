@@ -41,6 +41,23 @@ static void info_callback(const SSL *s, int where, int ret)
     }
 }
 
+static int servername_callback(SSL *s, int *ad, void *arg)
+{
+    const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+    if (servername != NULL && !strcmp(servername, "server2")) {
+        SSL_CTX *new_ctx = (SSL_CTX*)arg;
+        SSL_set_SSL_CTX(s, new_ctx);
+        /*
+         * Copy over all the SSL_CTX options - reasonable behavior
+         * allows testing of cases where the options between two
+         * contexts differ/conflict
+         */
+        SSL_clear_options(s, 0xFFFFFFFFL);
+        SSL_set_options(s, SSL_CTX_get_options(new_ctx));
+    }
+    return SSL_TLSEXT_ERR_OK;
+}
+
 static int verify_reject_callback(X509_STORE_CTX *ctx, void *arg) {
     X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
     return 0;
@@ -56,8 +73,10 @@ static int broken_session_ticket_callback(SSL* s, unsigned char* key_name, unsig
     return 0;
 }
 
-int do_not_call_session_ticket_callback(SSL* s, unsigned char* key_name, unsigned char *iv,
-                                        EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
+static int do_not_call_session_ticket_callback(SSL* s, unsigned char* key_name,
+                                               unsigned char *iv,
+                                               EVP_CIPHER_CTX *ctx,
+                                               HMAC_CTX *hctx, int enc)
 {
     HANDSHAKE_EX_DATA *ex_data =
         (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
@@ -69,7 +88,8 @@ int do_not_call_session_ticket_callback(SSL* s, unsigned char* key_name, unsigne
  * Configure callbacks and other properties that can't be set directly
  * in the server/client CONF.
  */
-static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *client_ctx,
+static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
+                                    SSL_CTX *client_ctx,
                                     const SSL_TEST_CTX *test_ctx)
 {
     switch (test_ctx->client_verify_callback) {
@@ -84,6 +104,17 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *client_ctx,
     default:
         break;
     }
+
+    /* link the two contexts for SNI purposes */
+    SSL_CTX_set_tlsext_servername_callback(server_ctx, servername_callback);
+    SSL_CTX_set_tlsext_servername_arg(server_ctx, server2_ctx);
+    /*
+     * The initial_ctx/session_ctx always handles the encrypt/decrypt of the
+     * session ticket. This ticket_key callback is assigned to the second
+     * session (assigned via SNI), and should never be invoked
+     */
+    SSL_CTX_set_tlsext_ticket_key_cb(server2_ctx, do_not_call_session_ticket_callback);
+
     if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_BROKEN) {
         SSL_CTX_set_tlsext_ticket_key_cb(server_ctx, broken_session_ticket_callback);
     }
@@ -96,7 +127,9 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *client_ctx,
 static void configure_handshake_ssl(SSL *server, SSL *client,
                                     const SSL_TEST_CTX *test_ctx)
 {
-    SSL_set_tlsext_host_name(client, ssl_servername_name(test_ctx->servername));
+    if (test_ctx->servername != SSL_TEST_SERVERNAME_NONE)
+        SSL_set_tlsext_host_name(client,
+                                 ssl_servername_name(test_ctx->servername));
 }
 
 
@@ -199,8 +232,8 @@ static handshake_status_t handshake_status(peer_status_t last_status,
     return INTERNAL_ERROR;
 }
 
-HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *client_ctx,
-                              const SSL_TEST_CTX *test_ctx)
+HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
+                              SSL_CTX *client_ctx, const SSL_TEST_CTX *test_ctx)
 {
     SSL *server, *client;
     BIO *client_to_server, *server_to_client;
@@ -213,7 +246,7 @@ HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *client_ctx,
     size_t len = 0;
     SSL_SESSION* sess = NULL;
 
-    configure_handshake_ctx(server_ctx, client_ctx, test_ctx);
+    configure_handshake_ctx(server_ctx, server2_ctx, client_ctx, test_ctx);
 
     server = SSL_new(server_ctx);
     client = SSL_new(client_ctx);

@@ -72,8 +72,8 @@ static int SSL_TEST_CTX_equal(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
     }
     if (ctx->session_ticket_expected != ctx2->session_ticket_expected) {
         fprintf(stderr, "SessionTicketExpected mismatch: %s vs %s.\n",
-                ssl_session_ticket_expected_name(ctx->session_ticket_expected),
-                ssl_session_ticket_expected_name(ctx2->session_ticket_expected));
+                ssl_session_ticket_name(ctx->session_ticket_expected),
+                ssl_session_ticket_name(ctx2->session_ticket_expected));
         return 0;
     }
 
