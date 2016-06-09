@@ -147,7 +147,7 @@ struct x509_st {
     int references;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
-    long ex_pathlen;
+    int32_t ex_pathlen;
     long ex_pcpathlen;
     uint32_t ex_flags;
     uint32_t ex_kusage;

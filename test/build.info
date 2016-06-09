@@ -11,7 +11,7 @@ IF[{- !$disabled{tests} -}]
           mdc2test rmdtest \
           randtest dhtest enginetest casttest \
           bftest ssltest_old dsatest exptest rsa_test \
-          evp_test evp_extra_test igetest v3nametest v3ext \
+          evp_test evp_extra_test igetest v3nametest v3ext_test \
           danetest heartbeat_test p5_crpt2_test \
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest \
@@ -163,9 +163,9 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[v3nametest]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
   DEPEND[v3nametest]=../libcrypto
 
-  SOURCE[v3ext]=v3ext.c
-  INCLUDE[v3ext]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
-  DEPEND[v3ext]=../libcrypto
+  SOURCE[v3ext_test]=v3ext_test.c
+  INCLUDE[v3ext_test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+  DEPEND[v3ext_test]=../libcrypto
 
   SOURCE[danetest]=danetest.c
   INCLUDE[danetest]="{- rel2abs(catdir($builddir,"../include")) -}" ../include

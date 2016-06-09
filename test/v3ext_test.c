@@ -17,7 +17,7 @@ int main(int ac, char **av)
 {
     X509 *x = NULL;
     BIO *b = NULL;
-    long pathlen;
+    int32_t pathlen;
     int ret = 1;
 
     if (ac != 2) {

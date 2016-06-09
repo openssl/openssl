@@ -839,7 +839,7 @@ const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
     return x->skid;
 }
 
-long X509_get_pathlen(X509 *x)
+int32_t X509_get_pathlen(X509 *x)
 {
     /* Called for side effect of caching extensions */
     if (X509_check_purpose(x, -1, -1) != 1
