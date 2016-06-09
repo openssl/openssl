@@ -2,9 +2,10 @@
 
 =head1 NAME
 
-BIO_ADDRINFO, BIO_ADDRINFO_lookup, BIO_ADDRINFO_next, BIO_ADDRINFO_free,
+BIO_ADDRINFO, BIO_ADDRINFO_next, BIO_ADDRINFO_free,
 BIO_ADDRINFO_family, BIO_ADDRINFO_socktype, BIO_ADDRINFO_protocol,
-BIO_ADDRINFO_sockaddr, BIO_ADDRINFO_sockaddr_size, BIO_ADDRINFO_address
+BIO_ADDRINFO_address,
+BIO_lookup
 - BIO_ADDRINFO type and routines
 
 =head1 SYNOPSIS
@@ -76,10 +77,6 @@ will leave an error indication on the OpenSSL error stack in that case.
 
 All other functions described here return 0 or B<NULL> when the
 information they should return isn't available.
-
-=head1 SEE ALSO
-
-L<BIO_lookup(3)>
 
 =head1 COPYRIGHT
 

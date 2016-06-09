@@ -43,7 +43,7 @@ indicates the operation is not supported by the public key algorithm.
 
 =head1 EXAMPLE
 
-Encrypt data using OAEP (for RSA keys). See also L<pem(3)> or
+Encrypt data using OAEP (for RSA keys). See also L<PEM_read_PUBKEY(3)> or
 L<d2i_X509(3)> for means to load a public key. You may also simply
 set 'eng = NULL;' to start with the default OpenSSL RSA implementation:
 

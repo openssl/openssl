@@ -38,10 +38,6 @@ sub name_synopsis()
     my $filename = shift;
     my $contents = shift;
 
-    # If it's a generic page (all lowercase), or apps, skip it.
-    return if $filename =~ /[a-z]+\.pod/;
-    return if $filename =~ m@/apps/@;
-
     # Get NAME section and all words in it.
     return unless $contents =~ /=head1 NAME(.*)=head1 SYNOPSIS/ms;
     my $tmp = $1;
@@ -71,12 +67,21 @@ sub name_synopsis()
     return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
     my $syn = $1;
     foreach my $line ( split /\n+/, $syn ) {
-        next if $line =~ /typedef/;
-        next if $line =~ /STACK_OF/;
-        next unless $line =~ /([A-Za-z0-9_]+)\(/;
-        print "$id $1 missing from NAME section\n"
-            unless defined $names{$1};
-        $names{$1} = 2;
+        my $sym;
+        $line =~ s/STACK_OF\([^)]+\)//;
+        if ( $line =~ /typedef.* (\S+);/ ) {
+            $sym = $1;
+        } elsif ( $line =~ /#define (\S+)/ ) {
+            $sym = $1;
+        } elsif ( $line =~ /([A-Za-z0-9_]+)\(/ ) {
+            $sym = $1;
+        }
+        else {
+            next;
+        }
+        print "$id $sym missing from NAME section\n"
+            unless defined $names{$sym};
+        $names{$sym} = 2;
     }
 
     foreach my $n ( keys %names ) {
@@ -101,7 +106,9 @@ sub check()
     my $id = "${filename}:1:";
 
     &name_synopsis($id, $filename, $contents)
-        unless $contents =~ /=for comment generic/;
+        unless $contents =~ /=for comment generic/
+            or $contents =~ /=for comment openssl_manual_section:7/
+            or $filename =~ m@/apps/@;
 
     print "$id doesn't start with =pod\n"
         if $contents !~ /^=pod/;
