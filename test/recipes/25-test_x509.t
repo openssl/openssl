@@ -30,5 +30,5 @@ subtest 'x509 -- second x.509 v3 certificate' => sub {
 };
 
 subtest 'x509 -- pathlen' => sub {
-    ok(run(test(["v3ext", srctop_file("test/certs", "pathlen.pem")])));
+    ok(run(test(["v3ext_test", srctop_file("test/certs", "pathlen.pem")])));
 }

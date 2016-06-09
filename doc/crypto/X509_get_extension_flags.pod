@@ -10,7 +10,7 @@ retrieve certificate extension data
 
    #include <openssl/x509v3.h>
 
-   long X509_get_pathlen(X509 *x);
+   int32_t X509_get_pathlen(X509 *x);
    uint32_t X509_get_extension_flags(X509 *x);
    uint32_t X509_get_key_usage(X509 *x);
    uint32_t X509_get_extended_key_usage(X509 *x);
