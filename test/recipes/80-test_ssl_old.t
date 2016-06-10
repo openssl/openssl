@@ -756,7 +756,7 @@ sub testssl {
     subtest 'DTLS session reuse' => sub {
         plan tests => 12;
       SKIP: {
-        skip "DTLS disabled", 12 if $no_dtls;
+        skip "DTLS1.0 or DTLS1.2 disabled", 12 if $no_dtls1 || $no_dtls1_2;
 
         ok(run(test([@ssltest, "-dtls", "-server_sess_out", $server_sess, "-client_sess_out", $client_sess])));
         ok(run(test([@ssltest, "-dtls", "-server_sess_in", $server_sess, "-client_sess_in", $client_sess, "-should_reuse", "1", "-should_negotiate", "dtls1.2"])));
