@@ -88,7 +88,7 @@ BIO_ctrl().
 
 BIO_meth_get_create() and BIO_meth_set_create() get and set the function used
 for creating a new instance of the BIO respectively. This function will be
-called in response to the application calling BIO_new() or BIO_set() and passing
+called in response to the application calling BIO_new() and passing
 in a pointer to the current BIO_METHOD. The BIO_new() function will allocate the
 memory for the new BIO, and a pointer to this newly allocated structure will
 be passed as a parameter to the function.
