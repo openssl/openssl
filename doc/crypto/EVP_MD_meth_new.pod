@@ -18,9 +18,9 @@ EVP_MD methods
 
  #include <openssl/evp.h>
 
- EVP_MD *EVP_MD_create_method(int md_type, int pkey_type);
+ EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
  EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
- void EVP_MD_destroy_method(EVP_MD *md);
+ void EVP_MD_meth_free(EVP_MD *md);
 
  int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize);
  int EVP_MD_meth_set_result_size(EVP_MD *md, int resultsize);
