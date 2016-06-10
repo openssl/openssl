@@ -770,6 +770,15 @@ static const OPT_PAIR services[] = {
  (o == OPT_4 || o == OPT_6 || o == OPT_HOST || o == OPT_PORT || o == OPT_CONNECT)
 #define IS_UNIX_FLAG(o) (o == OPT_UNIX)
 
+/* Free |*dest| and optionally set it to a copy of |source|. */
+static void freeandcopy(char **dest, const char *source)
+{
+    OPENSSL_free(*dest);
+    *dest = NULL;
+    if (source != NULL)
+        *dest = OPENSSL_strdup(source);
+}
+
 int s_client_main(int argc, char **argv)
 {
     BIO *sbio;
@@ -790,7 +799,7 @@ int s_client_main(int argc, char **argv)
     char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
-    char *port = BUF_strdup(PORT);
+    char *port = OPENSSL_strdup(PORT);
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
@@ -921,15 +930,15 @@ int s_client_main(int argc, char **argv)
 #endif
         case OPT_HOST:
             connect_type = use_inet;
-            host = OPENSSL_strdup(opt_arg());
+            freeandcopy(&host, opt_arg());
             break;
         case OPT_PORT:
             connect_type = use_inet;
-            port = OPENSSL_strdup(opt_arg());
+            freeandcopy(&port, opt_arg());
             break;
         case OPT_CONNECT:
             connect_type = use_inet;
-            connectstr = opt_arg();
+            freeandcopy(&connectstr, opt_arg());
             break;
         case OPT_PROXY:
             proxystr = opt_arg();
@@ -939,7 +948,7 @@ int s_client_main(int argc, char **argv)
         case OPT_UNIX:
             connect_type = use_unix;
             socket_family = AF_UNIX;
-            host = OPENSSL_strdup(opt_arg());
+            freeandcopy(&host, opt_arg());
             break;
 #endif
         case OPT_XMPPHOST:
