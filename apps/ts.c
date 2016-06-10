@@ -978,4 +978,4 @@ static int verify_cb(int ok, X509_STORE_CTX *ctx)
 {
     return ok;
 }
-#endif
+#endif  /* ndef OPENSSL_NO_TS */
