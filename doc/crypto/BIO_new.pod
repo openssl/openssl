@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-BIO_new, BIO_set, BIO_up_ref, BIO_free, BIO_vfree, BIO_free_all - BIO allocation and freeing functions
+BIO_new, BIO_up_ref, BIO_free, BIO_vfree, BIO_free_all,
+BIO_set - BIO allocation and freeing functions
 
 =head1 SYNOPSIS
 
@@ -18,8 +19,6 @@ BIO_new, BIO_set, BIO_up_ref, BIO_free, BIO_vfree, BIO_free_all - BIO allocation
 =head1 DESCRIPTION
 
 The BIO_new() function returns a new BIO using method B<type>.
-
-BIO_set() sets the method of an already existing BIO.
 
 BIO_up_ref() increments the reference count associated with the BIO object.
 
@@ -50,6 +49,10 @@ in a memory leak.
 
 Calling BIO_free_all() on a single BIO has the same effect as calling BIO_free()
 on it other than the discarded return value.
+
+=head1 HISTORY
+
+BIO_set() was removed in OpenSSL 1.1.0 as BIO type is now opaque.
 
 =head1 EXAMPLE
 

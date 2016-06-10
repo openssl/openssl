@@ -12,58 +12,42 @@
 #include <openssl/crypto.h>
 #include "bio_lcl.h"
 #include "internal/cryptlib.h"
-#include <openssl/stack.h>
 
 BIO *BIO_new(const BIO_METHOD *method)
 {
-    BIO *ret = OPENSSL_malloc(sizeof(*ret));
+    BIO *bio = OPENSSL_zalloc(sizeof(*bio));
 
-    if (ret == NULL) {
+    if (bio == NULL) {
         BIOerr(BIO_F_BIO_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-    if (!BIO_set(ret, method)) {
-        OPENSSL_free(ret);
-        ret = NULL;
-    }
-    return (ret);
-}
 
-int BIO_set(BIO *bio, const BIO_METHOD *method)
-{
     bio->method = method;
-    bio->callback = NULL;
-    bio->cb_arg = NULL;
-    bio->init = 0;
     bio->shutdown = 1;
-    bio->flags = 0;
-    bio->retry_reason = 0;
-    bio->num = 0;
-    bio->ptr = NULL;
-    bio->prev_bio = NULL;
-    bio->next_bio = NULL;
     bio->references = 1;
-    bio->num_read = 0L;
-    bio->num_write = 0L;
+
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data))
-        return 0;
+        goto err;
 
     bio->lock = CRYPTO_THREAD_lock_new();
     if (bio->lock == NULL) {
-        BIOerr(BIO_F_BIO_SET, ERR_R_MALLOC_FAILURE);
+        BIOerr(BIO_F_BIO_NEW, ERR_R_MALLOC_FAILURE);
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
-        return 0;
+        goto err;
     }
 
-    if (method->create != NULL) {
-        if (!method->create(bio)) {
-            CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
-            CRYPTO_THREAD_lock_free(bio->lock);
-            return 0;
-        }
+    if (method->create != NULL && !method->create(bio)) {
+        BIOerr(BIO_F_BIO_NEW, ERR_R_INIT_FAIL);
+        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
+        CRYPTO_THREAD_lock_free(bio->lock);
+        goto err;
     }
 
-    return 1;
+    return bio;
+
+err:
+    OPENSSL_free(bio);
+    return NULL;
 }
 
 int BIO_free(BIO *a)

@@ -2805,7 +2805,7 @@ OPENSSL_init                            2761	1_1_0	EXIST::FUNCTION:
 TS_RESP_get_tst_info                    2762	1_1_0	EXIST::FUNCTION:TS
 X509_VERIFY_PARAM_get_depth             2763	1_1_0	EXIST::FUNCTION:
 EVP_SealFinal                           2764	1_1_0	EXIST::FUNCTION:RSA
-BIO_set                                 2765	1_1_0	EXIST::FUNCTION:
+BIO_set                                 2765	1_1_0	NOEXIST::FUNCTION:
 CONF_imodule_set_flags                  2766	1_1_0	EXIST::FUNCTION:
 i2d_ASN1_SET_ANY                        2767	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_decrypt                        2768	1_1_0	EXIST::FUNCTION:
