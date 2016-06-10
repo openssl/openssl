@@ -706,7 +706,7 @@ tags TAGS: FORCE
 
 # Release targets (note: only available on Unix) #####################
 
-TAR_COMMAND=$(TAR) $(TARFLAGS) --owner 0 --group 0 -cvf - 
+TAR_COMMAND=$(TAR) $(TARFLAGS) --owner 0 --group 0 -cvf -
 PREPARE_CMD=:
 tar:
 	TMPDIR=/var/tmp/openssl-copy.$$$$; \
@@ -714,6 +714,7 @@ tar:
 	mkdir -p $$TMPDIR/$$DISTDIR; \
 	(cd $(SRCDIR); \
 	 git ls-tree -r --name-only --full-tree HEAD \
+         | grep -v '^fuzz/corpora' \
 	 | while read F; do \
 	       mkdir -p $$TMPDIR/$$DISTDIR/`dirname $$F`; \
 	       cp $$F $$TMPDIR/$$DISTDIR/$$F; \
