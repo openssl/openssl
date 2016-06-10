@@ -34,6 +34,8 @@ void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig)
 
 int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 {
+    if (r == NULL || s == NULL)
+        return 0;
     BN_clear_free(sig->r);
     BN_clear_free(sig->s);
     sig->r = r;
