@@ -919,8 +919,17 @@ $target{dso_extension}=$target{shared_extension_simple};
 $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
     if $config{cross_compile_prefix} eq "";
 
+# This is textbook from the perlvar manual.  It makes sure we have
+# a perl path that can be used as a file name, or as the case may be,
+# as something that can be used with the hashbang script syntax.
+use Config;
+my $secure_perl_path = $Config{perlpath};
+if ($^O ne 'VMS') {
+    $secure_perl_path .= $Config{_exe}
+        unless $secure_perl_path =~ m/$Config{_exe}$/i;
+}
 # Allow overriding the names of some tools.  USE WITH CARE
-$config{perl} =    $ENV{'PERL'}    || ($^O ne "VMS" ? $^X : "perl");
+$config{perl} =    $ENV{'PERL'}    || ($^O ne "VMS" ? $secure_perl_path : "perl");
 $target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
 $target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  ||
                    (which("$config{cross_compile_prefix}ranlib") ?
