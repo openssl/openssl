@@ -2684,4 +2684,4 @@ static int ocsp_resp_cb(SSL *s, void *arg)
 }
 # endif
 
-#endif
+#endif  /* OPENSSL_NO_SOCK */
