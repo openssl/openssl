@@ -33,6 +33,12 @@ sub do_mkdir_p {
     do_mkdir_p($parent);
   }
 
-  mkdir($dir, 0777) || die "Cannot create directory $dir: $!\n";
+  unless (mkdir($dir, 0777)) {
+    if (-d $dir) {
+      # We raced against another instance doing the same thing.
+      return;
+    }
+    die "Cannot create directory $dir: $!\n";
+  }
   print "created directory `$dir'\n";
 }
