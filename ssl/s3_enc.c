@@ -415,7 +415,10 @@ int ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
         SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    EVP_MD_CTX_copy_ex(ctx, s->s3->handshake_dgst);
+    if (!EVP_MD_CTX_copy_ex(ctx, s->s3->handshake_dgst)) {
+        SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
     ret = EVP_MD_CTX_size(ctx);
     if (ret < 0) {

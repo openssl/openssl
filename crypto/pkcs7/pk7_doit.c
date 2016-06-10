@@ -775,7 +775,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
             goto err;
         if (!EVP_DigestFinal_ex(mdc, md_data, &md_len))
             goto err;
-        ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data, md_len);
+        if (!ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data, md_len))
+            goto err;
     }
 
     if (!PKCS7_is_detached(p7)) {

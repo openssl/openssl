@@ -340,7 +340,8 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx)
     if ((offset_count = BN_CTX_get(ctx)) == NULL)
         goto err;
 
-    BN_add_word(offset_count, prime_offset_count);
+    if (!BN_add_word(offset_count, prime_offset_count))
+        goto err;
 
  loop:
     if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, 1))
@@ -350,8 +351,9 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx)
     if (!BN_rand_range(offset_index, offset_count))
         goto err;
 
-    BN_mul_word(rnd, prime_multiplier);
-    BN_add_word(rnd, prime_offsets[BN_get_word(offset_index)]);
+    if (!BN_mul_word(rnd, prime_multiplier)
+        || !BN_add_word(rnd, prime_offsets[BN_get_word(offset_index)]))
+        goto err;
 
     /* we now have a random number 'rand' to test. */
 

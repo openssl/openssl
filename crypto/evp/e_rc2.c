@@ -130,16 +130,17 @@ static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
         OPENSSL_assert(l <= sizeof(iv));
         i = ASN1_TYPE_get_int_octetstring(type, &num, iv, l);
         if (i != (int)l)
-            return (-1);
+            return -1;
         key_bits = rc2_magic_to_meth((int)num);
         if (!key_bits)
-            return (-1);
+            return -1;
         if (i > 0 && !EVP_CipherInit_ex(c, NULL, NULL, NULL, iv, -1))
             return -1;
         EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_RC2_KEY_BITS, key_bits, NULL);
-        EVP_CIPHER_CTX_set_key_length(c, key_bits / 8);
+        if (EVP_CIPHER_CTX_set_key_length(c, key_bits / 8) <= 0)
+            return -1;
     }
-    return (i);
+    return i;
 }
 
 static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)

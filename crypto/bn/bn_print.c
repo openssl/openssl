@@ -241,8 +241,9 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
         l += *a - '0';
         a++;
         if (++j == BN_DEC_NUM) {
-            BN_mul_word(ret, BN_DEC_CONV);
-            BN_add_word(ret, l);
+            if (!BN_mul_word(ret, BN_DEC_CONV)
+                || !BN_add_word(ret, l))
+                goto err;
             l = 0;
             j = 0;
         }
