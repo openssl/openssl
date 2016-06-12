@@ -376,7 +376,7 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
         BIO_printf(bio_s_out, "PSK client identity found\n");
 
     /* convert the PSK key to binary */
-    key = OPENSSL_hexstr2buf(psk_key, &key_len);
+    key = string_to_hex(psk_key, &key_len);
     if (key == NULL) {
         BIO_printf(bio_err, "Could not convert PSK key '%s' to buffer\n",
                    psk_key);
