@@ -19,7 +19,7 @@
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ContentInfo)
 IMPLEMENT_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 
-const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms)
+const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms)
 {
     return cms->contentType;
 }
