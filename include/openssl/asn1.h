@@ -553,8 +553,8 @@ int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
 
 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
                                BIT_STRING_BITNAME *tbl, int indent);
-int ASN1_BIT_STRING_num_asc(char *name, BIT_STRING_BITNAME *tbl);
-int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, char *name, int value,
+int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
+int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
                             BIT_STRING_BITNAME *tbl);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_INTEGER)
