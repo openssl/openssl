@@ -21,8 +21,8 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
                                      STACK_OF(CONF_VALUE) *nval);
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
 static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
-static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
-static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
+static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
+static int do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
 
 const X509V3_EXT_METHOD v3_alt[3] = {
     {NID_subject_alt_name, 0, ASN1_ITEM_ref(GENERAL_NAMES),
@@ -382,7 +382,7 @@ GENERAL_NAME *v2i_GENERAL_NAME(const X509V3_EXT_METHOD *method,
 
 GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
                                const X509V3_EXT_METHOD *method,
-                               X509V3_CTX *ctx, int gen_type, char *value,
+                               X509V3_CTX *ctx, int gen_type, const char *value,
                                int is_nc)
 {
     char is_string = 0;
@@ -511,7 +511,7 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 
 }
 
-static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
+static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
 {
     char *objtmp = NULL, *p;
     int objlen;
@@ -538,7 +538,7 @@ static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
     return 1;
 }
 
-static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
+static int do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
 {
     int ret = 0;
     STACK_OF(CONF_VALUE) *sk = NULL;
