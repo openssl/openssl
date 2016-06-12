@@ -606,9 +606,9 @@ int x509_main(int argc, char **argv)
     if (num) {
         for (i = 1; i <= num; i++) {
             if (issuer == i) {
-                print_name(out, "issuer= ", X509_get_issuer_name(x), nmflag);
+                print_name(out, "issuer=", X509_get_issuer_name(x), nmflag);
             } else if (subject == i) {
-                print_name(out, "subject= ",
+                print_name(out, "subject=",
                            X509_get_subject_name(x), nmflag);
             } else if (serial == i) {
                 BIO_printf(out, "serial=");
