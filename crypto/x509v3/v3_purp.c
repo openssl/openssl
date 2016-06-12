@@ -119,7 +119,7 @@ X509_PURPOSE *X509_PURPOSE_get0(int idx)
     return sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
 }
 
-int X509_PURPOSE_get_by_sname(char *sname)
+int X509_PURPOSE_get_by_sname(const char *sname)
 {
     int i;
     X509_PURPOSE *xptmp;
@@ -148,7 +148,7 @@ int X509_PURPOSE_get_by_id(int purpose)
 
 int X509_PURPOSE_add(int id, int trust, int flags,
                      int (*ck) (const X509_PURPOSE *, const X509 *, int),
-                     char *name, char *sname, void *arg)
+                     const char *name, const char *sname, void *arg)
 {
     int idx;
     X509_PURPOSE *ptmp;
@@ -236,22 +236,22 @@ void X509_PURPOSE_cleanup(void)
     xptable = NULL;
 }
 
-int X509_PURPOSE_get_id(X509_PURPOSE *xp)
+int X509_PURPOSE_get_id(const X509_PURPOSE *xp)
 {
     return xp->purpose;
 }
 
-char *X509_PURPOSE_get0_name(X509_PURPOSE *xp)
+char *X509_PURPOSE_get0_name(const X509_PURPOSE *xp)
 {
     return xp->name;
 }
 
-char *X509_PURPOSE_get0_sname(X509_PURPOSE *xp)
+char *X509_PURPOSE_get0_sname(const X509_PURPOSE *xp)
 {
     return xp->sname;
 }
 
-int X509_PURPOSE_get_trust(X509_PURPOSE *xp)
+int X509_PURPOSE_get_trust(const X509_PURPOSE *xp)
 {
     return xp->trust;
 }
