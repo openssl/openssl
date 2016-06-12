@@ -864,6 +864,10 @@ my $vprotq = sub {
     }
 };
 
+my $endbranch = sub {
+    (0xf3,0x0f,0x1e,0xfa);
+};
+
 if ($nasm) {
     print <<___;
 default	rel
