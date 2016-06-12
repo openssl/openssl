@@ -16,7 +16,7 @@
 
 /* Multi string module: add table entries from a given section */
 
-static int do_tcreate(char *value, char *name);
+static int do_tcreate(const char *value, const char *name);
 
 static int stbl_module_init(CONF_IMODULE *md, const CONF *cnf)
 {
@@ -55,7 +55,7 @@ void ASN1_add_stable_module(void)
  * n1:v1, n2:v2,... where name is "min", "max", "mask" or "flags".
  */
 
-static int do_tcreate(char *value, char *name)
+static int do_tcreate(const char *value, const char *name)
 {
     char *eptr;
     int nid, i, rv = 0;
