@@ -73,7 +73,7 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 # define CMS_KEY_PARAM                   0x40000
 # define CMS_ASCIICRLF                   0x80000
 
-const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms);
+const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont);
 int CMS_dataFinal(CMS_ContentInfo *cms, BIO *bio);
