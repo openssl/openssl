@@ -8,7 +8,7 @@ CMS_get0_type, CMS_set1_eContentType, CMS_get0_eContentType, CMS_get0_content - 
 
  #include <openssl/cms.h>
 
- const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms);
+ const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
  int CMS_set1_eContentType(CMS_ContentInfo *cms, const ASN1_OBJECT *oid);
  const ASN1_OBJECT *CMS_get0_eContentType(CMS_ContentInfo *cms);
  ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms);
