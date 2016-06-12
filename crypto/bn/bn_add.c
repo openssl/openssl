@@ -13,7 +13,6 @@
 /* r can == a or b */
 int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 {
-    const BIGNUM *tmp;
     int a_neg = a->neg, ret;
 
     bn_check_top(a);
@@ -28,6 +27,8 @@ int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     if (a_neg ^ b->neg) {
         /* only one is negative */
         if (a_neg) {
+            const BIGNUM *tmp;
+
             tmp = a;
             a = b;
             b = tmp;
@@ -37,14 +38,14 @@ int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
         if (BN_ucmp(a, b) < 0) {
             if (!BN_usub(r, b, a))
-                return (0);
+                return 0;
             r->neg = 1;
         } else {
             if (!BN_usub(r, a, b))
-                return (0);
+                return 0;
             r->neg = 0;
         }
-        return (1);
+        return 1;
     }
 
     ret = BN_uadd(r, a, b);
@@ -59,12 +60,13 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     int max, min, dif;
     const BN_ULONG *ap, *bp;
     BN_ULONG *rp, carry, t1, t2;
-    const BIGNUM *tmp;
 
     bn_check_top(a);
     bn_check_top(b);
 
     if (a->top < b->top) {
+        const BIGNUM *tmp;
+
         tmp = a;
         a = b;
         b = tmp;
@@ -85,29 +87,17 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     carry = bn_add_words(rp, ap, bp, min);
     rp += min;
     ap += min;
-    bp += min;
 
-    if (carry) {
-        while (dif) {
-            dif--;
-            t1 = *(ap++);
-            t2 = (t1 + 1) & BN_MASK2;
-            *(rp++) = t2;
-            if (t2) {
-                carry = 0;
-                break;
-            }
-        }
-        if (carry) {
-            /* carry != 0 => dif == 0 */
-            *rp = 1;
-            r->top++;
-        }
+    while (dif) {
+        dif--;
+        t1 = *(ap++);
+        t2 = (t1 + carry) & BN_MASK2;
+        *(rp++) = t2;
+        carry &= (t2 == 0);
     }
-    if (dif && rp != ap)
-        while (dif--)
-            /* copy remaining words if ap != rp */
-            *(rp++) = *(ap++);
+    *rp = carry;
+    r->top += carry;
+
     r->neg = 0;
     bn_check_top(r);
     return 1;
@@ -117,9 +107,8 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 {
     int max, min, dif;
-    register BN_ULONG t1, t2, *rp;
-    register const BN_ULONG *ap, *bp;
-    int i, carry;
+    BN_ULONG t1, t2, borrow, *rp;
+    const BN_ULONG *ap, *bp;
 
     bn_check_top(a);
     bn_check_top(b);
@@ -130,63 +119,38 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
     if (dif < 0) {              /* hmm... should not be happening */
         BNerr(BN_F_BN_USUB, BN_R_ARG2_LT_ARG3);
-        return (0);
+        return 0;
     }
 
     if (bn_wexpand(r, max) == NULL)
-        return (0);
+        return 0;
 
     ap = a->d;
     bp = b->d;
     rp = r->d;
 
-#if 1
-    carry = 0;
-    for (i = min; i != 0; i--) {
-        t1 = *(ap++);
-        t2 = *(bp++);
-        if (carry) {
-            carry = (t1 <= t2);
-            t1 = (t1 - t2 - 1) & BN_MASK2;
-        } else {
-            carry = (t1 < t2);
-            t1 = (t1 - t2) & BN_MASK2;
-        }
-        *(rp++) = t1 & BN_MASK2;
-    }
-#else
-    carry = bn_sub_words(rp, ap, bp, min);
+    borrow = bn_sub_words(rp, ap, bp, min);
     ap += min;
-    bp += min;
     rp += min;
-#endif
-    if (carry) {                /* subtracted */
-        if (!dif)
-            /* error: a < b */
-            return 0;
-        while (dif) {
-            dif--;
-            t1 = *(ap++);
-            t2 = (t1 - 1) & BN_MASK2;
-            *(rp++) = t2;
-            if (t1)
-                break;
-        }
+
+    while (dif) {
+        dif--;
+        t1 = *(ap++);
+        t2 = (t1 - borrow) & BN_MASK2;
+        *(rp++) = t2;
+        borrow &= (t1 == 0);
     }
-    if (dif && ap != rp)
-        memcpy(rp, ap, sizeof(*rp) * dif);
 
     r->top = max;
     r->neg = 0;
     bn_correct_top(r);
-    return (1);
+    return 1;
 }
 
 int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 {
     int max;
     int add = 0, neg = 0;
-    const BIGNUM *tmp;
 
     bn_check_top(a);
     bn_check_top(b);
@@ -199,6 +163,8 @@ int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
      */
     if (a->neg) {
         if (b->neg) {
+            const BIGNUM *tmp;
+
             tmp = a;
             a = b;
             b = tmp;
@@ -215,25 +181,25 @@ int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
     if (add) {
         if (!BN_uadd(r, a, b))
-            return (0);
+            return 0;
         r->neg = neg;
-        return (1);
+        return 1;
     }
 
     /* We are actually doing a - b :-) */
 
     max = (a->top > b->top) ? a->top : b->top;
     if (bn_wexpand(r, max) == NULL)
-        return (0);
+        return 0;
     if (BN_ucmp(a, b) < 0) {
         if (!BN_usub(r, b, a))
-            return (0);
+            return 0;
         r->neg = 1;
     } else {
         if (!BN_usub(r, a, b))
-            return (0);
+            return 0;
         r->neg = 0;
     }
     bn_check_top(r);
-    return (1);
+    return 1;
 }
