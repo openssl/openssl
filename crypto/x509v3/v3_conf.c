@@ -363,7 +363,7 @@ int X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
 
 /* Config database functions */
 
-char *X509V3_get_string(X509V3_CTX *ctx, char *name, char *section)
+char *X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section)
 {
     if (!ctx->db || !ctx->db_meth || !ctx->db_meth->get_string) {
         X509V3err(X509V3_F_X509V3_GET_STRING, X509V3_R_OPERATION_NOT_DEFINED);
@@ -374,7 +374,7 @@ char *X509V3_get_string(X509V3_CTX *ctx, char *name, char *section)
     return NULL;
 }
 
-STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, char *section)
+STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section)
 {
     if (!ctx->db || !ctx->db_meth || !ctx->db_meth->get_section) {
         X509V3err(X509V3_F_X509V3_GET_SECTION,
