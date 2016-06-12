@@ -193,10 +193,25 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
     SSL_TEST_CTX *test_ctx = NULL;
     HANDSHAKE_RESULT result;
 
-    server_ctx = SSL_CTX_new(TLS_server_method());
-    server2_ctx = SSL_CTX_new(TLS_server_method());
-    client_ctx = SSL_CTX_new(TLS_client_method());
-    OPENSSL_assert(server_ctx != NULL && server2_ctx != NULL && client_ctx != NULL);
+    test_ctx = SSL_TEST_CTX_create(conf, fixture.test_app);
+    if (test_ctx == NULL)
+        goto err;
+
+#ifndef OPENSSL_NO_DTLS
+    if (test_ctx->method == SSL_TEST_METHOD_DTLS) {
+        server_ctx = SSL_CTX_new(DTLS_server_method());
+        server2_ctx = SSL_CTX_new(DTLS_server_method());
+        client_ctx = SSL_CTX_new(DTLS_client_method());
+    }
+#endif
+    if (test_ctx->method == SSL_TEST_METHOD_TLS) {
+        server_ctx = SSL_CTX_new(TLS_server_method());
+        server2_ctx = SSL_CTX_new(TLS_server_method());
+        client_ctx = SSL_CTX_new(TLS_client_method());
+    }
+
+    OPENSSL_assert(server_ctx != NULL && server2_ctx != NULL &&
+                   client_ctx != NULL);
 
     OPENSSL_assert(CONF_modules_load(conf, fixture.test_app, 0) > 0);
 

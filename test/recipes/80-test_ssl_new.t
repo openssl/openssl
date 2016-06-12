@@ -26,28 +26,44 @@ map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_) } @conf_srcs;
 map { s/\.in// } @conf_files;
 
-# 02-protocol-version.conf test results depend on the configuration of enabled
-# protocols. We only verify generated sources in the default configuration.
-my $is_default = (disabled("ssl3") && !disabled("tls1") &&
-                  !disabled("tls1_1") && !disabled("tls1_2"));
+# 02-protocol-version.conf test and 05-dtls-protocol-version.conf results
+# depend on the configuration of enabled protocols. We only verify generated
+# sources in the default configuration.
+my $is_default_tls = (disabled("ssl3") && !disabled("tls1") &&
+                      !disabled("tls1_1") && !disabled("tls1_2"));
 
-my %conf_dependent_tests = ("02-protocol-version.conf" => 1);
+my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
+
+my $no_tls = alldisabled(available_protocols("tls"));
+my $no_dtls = alldisabled(available_protocols("dtls"));
+
+my %conf_dependent_tests = (
+  "02-protocol-version.conf" => !$is_default_tls,
+  "05-dtls-protocol-version.conf" => !$is_default_dtls,
+);
+
+# Default is $no_tls but some tests have different skip conditions.
+my %skip = (
+  "05-dtls-protocol-version.conf" => $no_dtls,
+);
+                                  
 
 foreach my $conf (@conf_files) {
     subtest "Test configuration $conf" => sub {
         test_conf($conf,
-                  $conf_dependent_tests{$conf} || $^O eq "VMS" ?  0 : 1);
+                  $conf_dependent_tests{$conf} || $^O eq "VMS" ?  0 : 1,
+                  $skip{$conf} || $no_tls);
     }
 }
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 6;  # = scalar @conf_srcs
+plan tests => 7;  # = scalar @conf_srcs
 
 sub test_conf {
     plan tests => 3;
 
-    my ($conf, $check_source) = @_;
+    my ($conf, $check_source, $skip) = @_;
 
     my $conf_file = srctop_file("test", "ssl-tests", $conf);
     my $tmp_file = "${conf}.$$.tmp";
@@ -73,8 +89,7 @@ sub test_conf {
       }
 
       # Test 3. Run the test.
-      my $no_tls = alldisabled(available_protocols("tls"));
-      skip "No TLS tests available; skipping tests", 1 if $no_tls;
+      skip "No tests available; skipping tests", 1 if $skip;
       skip "Stale sources; skipping tests", 1 if !$run_test;
 
       ok(run(test(["ssl_test", $tmp_file])), "running ssl_test $conf");
