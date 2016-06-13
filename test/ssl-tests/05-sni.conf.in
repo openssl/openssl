@@ -18,6 +18,7 @@ our @tests = (
     {
         name => "SNI-default",
         server => { },
+        server2 => { },
         client => { },
         test   => { "ServerName" => "server2",
 		    "ExpectedResult" => "Success" },
