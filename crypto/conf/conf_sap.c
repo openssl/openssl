@@ -24,18 +24,18 @@
 static int openssl_configured = 0;
 
 #if OPENSSL_API_COMPAT < 0x10100000L
-void OPENSSL_config(const char *config_name)
+void OPENSSL_config(const char *appname)
 {
     OPENSSL_INIT_SETTINGS settings;
 
     memset(&settings, 0, sizeof(settings));
-    if (config_name != NULL)
-        settings.config_name = strdup(config_name);
+    if (appname != NULL)
+        settings.appname = strdup(appname);
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, &settings);
 }
 #endif
 
-void openssl_config_int(const char *config_name)
+void openssl_config_int(const char *appname)
 {
     if (openssl_configured)
         return;
@@ -47,7 +47,7 @@ void openssl_config_int(const char *config_name)
 #endif
     ERR_clear_error();
 #ifndef OPENSSL_SYS_UEFI
-    CONF_modules_load_file(NULL, config_name,
+    CONF_modules_load_file(NULL, appname,
                                CONF_MFLAGS_DEFAULT_SECTION |
                                CONF_MFLAGS_IGNORE_MISSING_FILE);
 #endif
