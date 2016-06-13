@@ -56,11 +56,18 @@ int create_ssl_connection(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                           SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio)
 {
     int retc = -1, rets = -1, err, abortctr = 0;
+    int clienterr = 0, servererr = 0;
     SSL *serverssl, *clientssl;
     BIO *s_to_c_bio = NULL, *c_to_s_bio = NULL;
 
-    serverssl = SSL_new(serverctx);
-    clientssl = SSL_new(clientctx);
+    if (*sssl == NULL)
+        serverssl = SSL_new(serverctx);
+    else
+        serverssl = *sssl;
+    if (*cssl == NULL)
+        clientssl = SSL_new(clientctx);
+    else
+        clientssl = *cssl;
 
     if (serverssl == NULL || clientssl == NULL) {
         printf("Failed to create SSL object\n");
@@ -100,28 +107,30 @@ int create_ssl_connection(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
 
     do {
         err = SSL_ERROR_WANT_WRITE;
-        while (retc <= 0 && err == SSL_ERROR_WANT_WRITE) {
+        while (!clienterr && retc <= 0 && err == SSL_ERROR_WANT_WRITE) {
             retc = SSL_connect(clientssl);
             if (retc <= 0)
                 err = SSL_get_error(clientssl, retc);
         }
 
-        if (retc <= 0 && err != SSL_ERROR_WANT_READ) {
+        if (!clienterr && retc <= 0 && err != SSL_ERROR_WANT_READ) {
             printf("SSL_connect() failed %d, %d\n", retc, err);
-            goto error;
+            clienterr = 1;
         }
 
         err = SSL_ERROR_WANT_WRITE;
-        while (rets <= 0 && err == SSL_ERROR_WANT_WRITE) {
+        while (!servererr && rets <= 0 && err == SSL_ERROR_WANT_WRITE) {
             rets = SSL_accept(serverssl);
             if (rets <= 0)
                 err = SSL_get_error(serverssl, rets);
         }
 
-        if (rets <= 0 && err != SSL_ERROR_WANT_READ) {
+        if (!servererr && rets <= 0 && err != SSL_ERROR_WANT_READ) {
             printf("SSL_accept() failed %d, %d\n", retc, err);
-            goto error;
+            servererr = 1;
         }
+        if (clienterr && servererr)
+            goto error;
         if (++abortctr == MAXLOOPS) {
             printf("No progress made\n");
             goto error;
@@ -134,12 +143,16 @@ int create_ssl_connection(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
     return 1;
 
  error:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    BIO_free(s_to_c_bio);
-    BIO_free(c_to_s_bio);
-    BIO_free(s_to_c_fbio);
-    BIO_free(c_to_s_fbio);
+    if (*sssl == NULL) {
+        SSL_free(serverssl);
+        BIO_free(s_to_c_bio);
+        BIO_free(s_to_c_fbio);
+    }
+    if (*cssl == NULL) {
+        SSL_free(clientssl);
+        BIO_free(c_to_s_bio);
+        BIO_free(c_to_s_fbio);
+    }
 
     return 0;
 }
