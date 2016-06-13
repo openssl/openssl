@@ -88,7 +88,7 @@ genroot() {
     local skid="subjectKeyIdentifier = hash"
     local akid="authorityKeyIdentifier = keyid"
 
-    exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = CA:true")
+    exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = critical,CA:true")
     for eku in "$@"
     do
         exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")
@@ -107,7 +107,7 @@ genca() {
     local skid="subjectKeyIdentifier = hash"
     local akid="authorityKeyIdentifier = keyid"
 
-    exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = CA:true")
+    exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = critical,CA:true")
     for eku in "$@"
     do
         exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")

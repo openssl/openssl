@@ -543,7 +543,7 @@ Sample configuration file prompting for field values:
 
  subjectKeyIdentifier=hash
  authorityKeyIdentifier=keyid:always,issuer:always
- basicConstraints = CA:true
+ basicConstraints = critical, CA:true
 
 Sample configuration containing all field values:
 
