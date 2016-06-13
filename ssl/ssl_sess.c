@@ -715,6 +715,9 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
             if (ctx->remove_session_cb != NULL)
                 ctx->remove_session_cb(ctx, r);
             SSL_SESSION_free(r);
+        } else {
+            if (ctx->remove_session_cb != NULL)
+                ctx->remove_session_cb(ctx, c);
         }
     } else
         ret = 0;
