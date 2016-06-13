@@ -176,10 +176,15 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
     SSL_CTX *server_ctx = NULL, *server2_ctx = NULL, *client_ctx = NULL;
     SSL_TEST_CTX *test_ctx = NULL;
     HANDSHAKE_RESULT result;
+    const char *server2;
 
     test_ctx = SSL_TEST_CTX_create(conf, fixture.test_app);
     if (test_ctx == NULL)
         goto err;
+
+    /* Use ServerName to detect if we're testing SNI. */
+    server2 = (test_ctx->servername != SSL_TEST_SERVERNAME_NONE) ? "server2"
+        : "server";
 
 #ifndef OPENSSL_NO_DTLS
     if (test_ctx->method == SSL_TEST_METHOD_DTLS) {
@@ -200,14 +205,10 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
     OPENSSL_assert(CONF_modules_load(conf, fixture.test_app, 0) > 0);
 
     if (!SSL_CTX_config(server_ctx, "server")
-        || !SSL_CTX_config(server2_ctx, "server2")
+        || !SSL_CTX_config(server2_ctx, server2)
         || !SSL_CTX_config(client_ctx, "client")) {
         goto err;
     }
-
-    test_ctx = SSL_TEST_CTX_create(conf, fixture.test_app);
-    if (test_ctx == NULL)
-        goto err;
 
     result = do_handshake(server_ctx, server2_ctx, client_ctx, test_ctx);
 
