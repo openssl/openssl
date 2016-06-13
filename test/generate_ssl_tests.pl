@@ -43,12 +43,12 @@ sub print_templates {
     # Add the implicit base configuration.
     foreach my $test (@ssltests::tests) {
         $test->{"server"} = { (%ssltests::base_server, %{$test->{"server"}}) };
-	# use server values if server2 is not defined
+	# Do not emit an empty "server2" section.
 	if (defined $test->{"server2"}) {
 	    $test->{"server2"} = { (%ssltests::base_server, %{$test->{"server2"}}) };
 	} else {
-	    $test->{"server2"} = { (%ssltests::base_server, %{$test->{"server"}}) };
-	}
+            $test->{"server2"} = { };
+        }
         $test->{"client"} = { (%ssltests::base_client, %{$test->{"client"}}) };
     }
 
