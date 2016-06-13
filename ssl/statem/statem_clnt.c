@@ -1839,16 +1839,9 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
          */
         if (i & SSL_SESS_CACHE_CLIENT) {
             /*
-             * Remove the old session from the cache
+             * Remove the old session from the cache. We carry on if this fails
              */
-            if (i & SSL_SESS_CACHE_NO_INTERNAL_STORE) {
-                if (s->session_ctx->remove_session_cb != NULL)
-                    s->session_ctx->remove_session_cb(s->session_ctx,
-                                                      s->session);
-            } else {
-                /* We carry on if this fails */
-                SSL_CTX_remove_session(s->session_ctx, s->session);
-            }
+            SSL_CTX_remove_session(s->session_ctx, s->session);
         }
 
         if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
