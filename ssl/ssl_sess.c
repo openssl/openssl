@@ -708,16 +708,16 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
             r = lh_SSL_SESSION_delete(ctx->sessions, c);
             SSL_SESSION_list_remove(ctx, c);
         }
+        c->not_resumable = 1;
 
         if (lck)
             CRYPTO_THREAD_unlock(ctx->lock);
 
-        if (ret) {
-            r->not_resumable = 1;
-            if (ctx->remove_session_cb != NULL)
-                ctx->remove_session_cb(ctx, r);
+        if (ret)
             SSL_SESSION_free(r);
-        }
+
+        if (ctx->remove_session_cb != NULL)
+            ctx->remove_session_cb(ctx, c);
     } else
         ret = 0;
     return (ret);
