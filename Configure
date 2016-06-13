@@ -1465,7 +1465,7 @@ if ($builder eq "unified") {
             qr/^\s*INCLUDE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
             => sub { push @{$includes{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*DEPEND\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            qr/^\s*DEPEND\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
             => sub { push @{$depends{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*GENERATE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
@@ -1689,11 +1689,11 @@ EOF
 
         foreach (keys %depends) {
             my $dest = $_;
-            my $ddest = cleanfile($sourced, $_, $blddir);
+            my $ddest = $dest eq "" ? "" : cleanfile($sourced, $_, $blddir);
 
             # If the destination doesn't exist in source, it can only be
             # a generated file in the build tree.
-            if (! -f $ddest) {
+            if ($ddest ne "" && ! -f $ddest) {
                 $ddest = cleanfile($buildd, $_, $blddir);
                 if ($unified_info{rename}->{$ddest}) {
                     $ddest = $unified_info{rename}->{$ddest};
@@ -1710,7 +1710,7 @@ EOF
                 if (! -f $d
                     || (grep { $d eq $_ }
                         map { cleanfile($srcdir, $_, $blddir) }
-                        (@generated_headers, @generated_by_make_headers))) {
+                        grep { /\.h$/ } keys %{$unified_info{generate}})) {
                     $d = cleanfile($buildd, $_, $blddir);
                 }
                 # Take note if the file to depend on is being renamed
@@ -1720,7 +1720,7 @@ EOF
                 $unified_info{depends}->{$ddest}->{$d} = 1;
                 # If we depend on a header file or a perl module, let's make
                 # sure it can get included
-                if ($d =~ /\.(h|pm)$/) {
+                if ($dest ne "" && $d =~ /\.(h|pm)$/) {
                     my $i = dirname($d);
                     push @{$unified_info{includes}->{$ddest}}, $i
                         unless grep { $_ eq $i } @{$unified_info{includes}->{$ddest}};

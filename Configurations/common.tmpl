@@ -213,6 +213,9 @@
      }
  }
 
+ # Build mandatory generated headers
+ foreach (@{$unified_info{depends}->{""}}) { dogenerate($_); }
+
  # Build all known libraries, engines, programs and scripts.
  # Everything else will be handled as a consequence.
  foreach (@{$unified_info{libraries}}) { dolib($_);    }
