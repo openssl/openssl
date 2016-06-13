@@ -3819,20 +3819,33 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
         {
             unsigned char *keys = parg;
+            long tlsext_tick_keylen = (sizeof(ctx->tlsext_tick_key_name) +
+                sizeof(ctx->tlsext_tick_hmac_key) +
+                sizeof(ctx->tlsext_tick_aes_key));
             if (!keys)
-                return 48;
-            if (larg != 48) {
+                return tlsext_tick_keylen;
+            if (larg != tlsext_tick_keylen) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
                 return 0;
             }
             if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
-                memcpy(ctx->tlsext_tick_key_name, keys, 16);
-                memcpy(ctx->tlsext_tick_hmac_key, keys + 16, 16);
-                memcpy(ctx->tlsext_tick_aes_key, keys + 32, 16);
+                memcpy(ctx->tlsext_tick_key_name, keys,
+                       sizeof(ctx->tlsext_tick_key_name));
+                memcpy(ctx->tlsext_tick_hmac_key,
+                       keys + sizeof(ctx->tlsext_tick_key_name),
+                       sizeof(ctx->tlsext_tick_hmac_key));
+                memcpy(ctx->tlsext_tick_aes_key,
+                       keys + sizeof(ctx->tlsext_tick_key_name) + sizeof(ctx->tlsext_tick_hmac_key),
+                       sizeof(ctx->tlsext_tick_aes_key));
             } else {
-                memcpy(keys, ctx->tlsext_tick_key_name, 16);
-                memcpy(keys + 16, ctx->tlsext_tick_hmac_key, 16);
-                memcpy(keys + 32, ctx->tlsext_tick_aes_key, 16);
+                memcpy(keys, ctx->tlsext_tick_key_name,
+                       sizeof(ctx->tlsext_tick_key_name));
+                memcpy(keys + sizeof(ctx->tlsext_tick_key_name),
+                       ctx->tlsext_tick_hmac_key,
+                       sizeof(ctx->tlsext_tick_hmac_key));
+                memcpy(keys + sizeof(ctx->tlsext_tick_key_name) + sizeof(ctx->tlsext_tick_hmac_key),
+                       ctx->tlsext_tick_aes_key,
+                       sizeof(ctx->tlsext_tick_aes_key));
             }
             return 1;
         }
