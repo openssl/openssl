@@ -6,6 +6,18 @@ INCLUDE[libcrypto]="{- rel2abs(catdir($builddir,"include")) -}" . crypto/include
 INCLUDE[libssl]="{- rel2abs(catdir($builddir,"include")) -}" . include
 DEPEND[libssl]=libcrypto
 
+# Empty DEPEND "indices" means the dependencies are expected to be built
+# unconditionally before anything else.
+DEPEND[]=include/openssl/opensslconf.h crypto/include/internal/bn_conf.h \
+         crypto/include/internal/dso_conf.h
+DEPEND[include/openssl/opensslconf.h]=configdata.pm
+GENERATE[include/openssl/opensslconf.h]=include/openssl/opensslconf.h.in
+DEPEND[crypto/include/internal/bn_conf.h]=configdata.pm
+GENERATE[crypto/include/internal/bn_conf.h]=crypto/include/internal/bn_conf.h.in
+DEPEND[crypto/include/internal/dso_conf.h]=configdata.pm
+GENERATE[crypto/include/internal/dso_conf.h]=crypto/include/internal/dso_conf.h.in
+
+
 IF[{- $config{target} =~ /^Cygwin/ -}]
  SHARED_NAME[libcrypto]=cygcrypto-{- $config{shlib_major}.".".$config{shlib_minor} -}
  SHARED_NAME[libssl]=cygssl-{- $config{shlib_major}.".".$config{shlib_minor} -}

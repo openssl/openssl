@@ -463,17 +463,6 @@ while ((my $first, my $second) = (shift @list, shift @list)) {
 # To remove something from %disabled, use "enable-foo".
 # For symmetry, "disable-foo" is a synonym for "no-foo".
 
-my @generated_headers = (
-    "include/openssl/opensslconf.h",
-    "crypto/include/internal/bn_conf.h",
-    "crypto/include/internal/dso_conf.h"
-    );
-
-my @generated_by_make_headers = (
-    "crypto/buildinf.h"
-    );
-
-
 my $no_sse2=0;
 
 &usage if ($#ARGV < 0);
@@ -1935,12 +1924,6 @@ print "SIXTY_FOUR_BIT mode\n" if $config{b64};
 print "THIRTY_TWO_BIT mode\n" if $config{b32};
 print "BN_LLONG mode\n" if $config{bn_ll};
 print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} ne $def_int;
-
-for (@generated_headers) {
-    mkpath(catdir($blddir, dirname($_)));
-    run_dofile(catfile($blddir, $_),
-               catfile($srcdir, $_.".in"));
-}
 
 my %builders = (
     unified => sub {
