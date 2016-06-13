@@ -15,17 +15,18 @@ routines
  void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
  int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx);
  void EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
- void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
-                       const unsigned char *in, int inl);
- void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl);
- int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int n);
+ void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *out_len,
+                       const unsigned char *in, size_t in_len);
+ void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *out_len);
+ size_t EVP_EncodeBlock(unsigned char *dst, const unsigned char *src,
+                        size_t src_len);
 
  void EVP_DecodeInit(EVP_ENCODE_CTX *ctx);
- int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
-                      const unsigned char *in, int inl);
- int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
-                     char *out, int *outl);
- int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
+ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *out_len,
+                      const unsigned char *in, size_t in_len);
+ int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *out_len);
+ int EVP_DecodeBlock(unsigned char *dst, const unsigned char *src,
+                     size_t src_len);
 
 =head1 DESCRIPTION
 
@@ -53,73 +54,75 @@ will also be output.
 
 EVP_EncodeInit() initialises B<ctx> for the start of a new encoding operation.
 
-EVP_EncodeUpdate() encode B<inl> bytes of data found in the buffer pointed to by
-B<in>. The output is stored in the buffer B<out> and the number of bytes output
-is stored in B<*outl>. It is the caller's responsibility to ensure that the
-buffer at B<out> is sufficiently large to accommodate the output data. Only full
-blocks of data (48 bytes) will be immediately processed and output by this
-function. Any remainder is held in the B<ctx> object and will be processed by a
-subsequent call to EVP_EncodeUpdate() or EVP_EncodeFinal(). To calculate the
-required size of the output buffer add together the value of B<inl> with the
-amount of unprocessed data held in B<ctx> and divide the result by 48 (ignore
-any remainder). This gives the number of blocks of data that will be processed.
-Ensure the output buffer contains 65 bytes of storage for each block, plus an
-additional byte for a NUL terminator. EVP_EncodeUpdate() may be called
-repeatedly to process large amounts of input data. In the event of an error
-EVP_EncodeUpdate() will set B<*outl> to 0.
+EVP_EncodeUpdate() encode B<in_len> bytes of data found in the buffer pointed
+to by B<in>. The output is stored in the buffer B<out> and the number of bytes
+output is stored in B<*out_len>. It is the caller's responsibility to ensure
+that the buffer at B<out> is sufficiently large to accommodate the output data.
+Only full blocks of data (48 bytes) will be immediately processed and output by
+this function. Any remainder is held in the B<ctx> object and will be processed
+by a subsequent call to EVP_EncodeUpdate() or EVP_EncodeFinal(). To calculate
+the required size of the output buffer add together the value of B<in_len> with
+the amount of unprocessed data held in B<ctx> and divide the result by 48
+(ignore any remainder). This gives the number of blocks of data that will be
+processed. Ensure the output buffer contains 65 bytes of storage for each
+block, plus an additional byte for a NUL terminator. EVP_EncodeUpdate() may be
+called repeatedly to process large amounts of input data. In the event of an
+error EVP_EncodeUpdate() will set B<*out_len> to 0.
 
 EVP_EncodeFinal() must be called at the end of an encoding operation. It will
 process any partial block of data remaining in the B<ctx> object. The output
 data will be stored in B<out> and the length of the data written will be stored
-in B<*outl>. It is the caller's responsibility to ensure that B<out> is
+in B<*out_len>. It is the caller's responsibility to ensure that B<out> is
 sufficiently large to accommodate the output data which will never be more than
 65 bytes plus an additional NUL terminator (i.e. 66 bytes in total).
 
 EVP_ENCODE_CTX_num() will return the number of as yet unprocessed bytes still to
 be encoded or decoded that are pending in the B<ctx> object.
 
-EVP_EncodeBlock() encodes a full block of input data in B<f> and of length
-B<dlen> and stores it in B<t>. For every 3 bytes of input provided 4 bytes of
-output data will be produced. If B<dlen> is not divisible by 3 then the block is
-encoded as a final block of data and the output is padded such that it is always
-divisible by 4. Additionally a NUL terminator character will be added. For
-example if 16 bytes of input data is provided then 24 bytes of encoded data is
-created plus 1 byte for a NUL terminator (i.e. 25 bytes in total). The length of
-the data generated I<without> the NUL terminator is returned from the function.
+EVP_EncodeBlock() encodes a full block of input data in B<src> and of length
+B<src_len> and stores it in B<t>. For every 3 bytes of input provided 4 bytes of
+output data will be produced. If B<src_len> is not divisible by 3 then the
+block is encoded as a final block of data and the output is padded such that it
+is always divisible by 4. Additionally a NUL terminator character will be
+added. For example if 16 bytes of input data is provided then 24 bytes of
+encoded data is created plus 1 byte for a NUL terminator (i.e. 25 bytes in
+total). The length of the data generated I<without> the NUL terminator is
+returned from the function.
 
 EVP_DecodeInit() initialises B<ctx> for the start of a new decoding operation.
 
-EVP_DecodeUpdate() decodes B<inl> characters of data found in the buffer pointed
-to by B<in>. The output is stored in the buffer B<out> and the number of bytes
-output is stored in B<*outl>. It is the caller's responsibility to ensure that
-the buffer at B<out> is sufficiently large to accommodate the output data. This
-function will attempt to decode as much data as possible in 4 byte chunks. Any
-whitespace, newline or carriage return characters are ignored. Any partial chunk
-of unprocessed data (1, 2 or 3 bytes) that remains at the end will be held in
-the B<ctx> object and processed by a subsequent call to EVP_DecodeUpdate(). If
-any illegal base 64 characters are encountered or if the base 64 padding
-character "=" is encountered in the middle of the data then the function returns
--1 to indicate an error. A return value of 0 or 1 indicates successful
-processing of the data. A return value of 0 additionally indicates that the last
-input data characters processed included the base 64 padding character "=" and
-therefore no more non-padding character data is expected to be processed. For
-every 4 valid base 64 bytes processed (ignoring whitespace, carriage returns and
-line feeds), 3 bytes of binary output data will be produced (or less at the end
-of the data where the padding character "=" has been used).
+EVP_DecodeUpdate() decodes B<in_len> characters of data found in the buffer
+pointed to by B<in>. The output is stored in the buffer B<out> and the number
+of bytes output is stored in B<*out_len>. It is the caller's responsibility to
+ensure that the buffer at B<out> is sufficiently large to accommodate the
+output data. This function will attempt to decode as much data as possible in 4
+byte chunks. Any whitespace, newline or carriage return characters are ignored.
+Any partial chunk of unprocessed data (1, 2 or 3 bytes) that remains at the end
+will be held in the B<ctx> object and processed by a subsequent call to
+EVP_DecodeUpdate(). If any illegal base 64 characters are encountered or if the
+base 64 padding character "=" is encountered in the middle of the data then the
+function returns -1 to indicate an error. A return value of 0 or 1 indicates
+successful processing of the data. A return value of 0 additionally indicates
+that the last input data characters processed included the base 64 padding
+character "=" and therefore no more non-padding character data is expected to
+be processed. For every 4 valid base 64 bytes processed (ignoring whitespace,
+carriage returns and line feeds), 3 bytes of binary output data will be
+produced (or less at the end of the data where the padding character "=" has
+been used).
 
 EVP_DecodeFinal() must be called at the end of a decoding operation. If there
 is any unprocessed data still in B<ctx> then the input data must not have been
 a multiple of 4 and therefore an error has occurred. The function will return -1
 in this case. Otherwise the function returns 1 on success.
 
-EVP_DecodeBlock() will decode the block of B<n> characters of base 64 data
-contained in B<f> and store the result in B<t>. Any leading whitespace will be
-trimmed as will any trailing whitespace, newlines, carriage returns or EOF
-characters. After such trimming the length of the data in B<f> must be divisbile
-by 4. For every 4 input bytes exactly 3 output bytes will be produced. The
-output will be padded with 0 bits if necessary to ensure that the output is
-always 3 bytes for every 4 input bytes. This function will return the length of
-the data decoded or -1 on error.
+EVP_DecodeBlock() will decode the block of B<src_len> characters of base 64
+data contained in B<src> and store the result in B<dst>. Any leading whitespace
+will be trimmed as will any trailing whitespace, newlines or carriage returns.
+After such trimming the length of the data in B<src> must be divisbile by 4.
+For every 4 input bytes exactly 3 output bytes will be produced. The output
+will be padded with 0 bits if necessary to ensure that the output is always 3
+bytes for every 4 input bytes. This function will return the length of the data
+decoded or -1 on error.
 
 =head1 RETURN VALUES
 

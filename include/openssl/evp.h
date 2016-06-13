@@ -606,21 +606,78 @@ __owur int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 __owur int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 # endif
 
-EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
-void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
-int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx);
-void EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
-void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
-                      const unsigned char *in, int inl);
-void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl);
-int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int n);
 
+/* Base64 context structures. */
+
+/* EVP_ENCODE_CTX_new allocates and returns a fresh |EVP_ENCODE_CTX|, or
+ * returns NULL on error. The returned structure must be passed to
+ * |EVP_EncodeInit| or |EVP_DecodeInit| before use. */
+EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
+
+/* EVP_ENCODE_CTX_free frees an |EVP_ENCODE_CTX| that was previously returned
+ * by |EVP_ENCODE_CTX_new|. */
+void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
+
+
+/* Base64 encoding/decoding */
+
+/* EVP_EncodeBlock encodes |src_len| bytes from |src| and writes the
+ * result to |dst| with a trailing NUL. It returns the number of bytes
+ * written, not including this trailing NUL. */
+size_t EVP_EncodeBlock(unsigned char *dst, const unsigned char *src,
+                       size_t src_len);
+
+/* EVP_DecodeBlock encodes |src_len| bytes from |src| and writes the result to
+ * |dst|. It returns the number of bytes written or -1 on error.
+ *
+ * WARNING: EVP_DecodeBlock's return value does not take padding into
+ * account. It also strips leading and trailing whitespace. */
+int EVP_DecodeBlock(unsigned char *dst, const unsigned char *src,
+                    size_t src_len);
+
+
+/* Base64 streaming functions */
+
+/* EVP_EncodeInit initialises |*ctx| for an encoding operation.
+ *
+ * NOTE: The encoding operation breaks its output with newlines every
+ * 64 characters of output (48 characters of input). Use
+ * EVP_EncodeBlock to encode raw base64. */
+void EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
+
+/* EVP_EncodeUpdate encodes |in_len| bytes from |in| and writes an encoded
+ * version of them to |out| and sets |*out_len| to the number of bytes written.
+ * Some state may be contained in |ctx| so |EVP_EncodeFinal| must be used to
+ * flush it before using the encoded data. */
+void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *out_len,
+                      const unsigned char *in, size_t in_len);
+
+/* EVP_EncodeFinal flushes any remaining output bytes from |ctx| to |out| and
+ * sets |*out_len| to the number of bytes written. */
+void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *out_len);
+
+/* EVP_DecodeInit initialises |*ctx| for a decoding operation. */
 void EVP_DecodeInit(EVP_ENCODE_CTX *ctx);
-int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
-                     const unsigned char *in, int inl);
-int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
-                    char *out, int *outl);
-int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
+
+/* EVP_DecodeUpdate decodes |in_len| bytes from |in| and writes the decoded
+ * data to |out| and sets |*out_len| to the number of bytes written. Some state
+ * may be contained in |ctx| so |EVP_DecodeFinal| must be used to flush it
+ * before using the encoded data.
+ *
+ * It returns -1 on error, one if a full line of input was processed and zero
+ * if the line was short (i.e. it was the last line). */
+int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *out_len,
+                     const unsigned char *in, size_t in_len);
+
+/* EVP_DecodeFinal flushes any remaining output bytes from |ctx| to |out| and
+ * sets |*out_len| to the number of bytes written. It returns one on success
+ * and minus one on error. */
+int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *out_len);
+
+/* EVP_ENCODE_CTX_num returns the number of bytes pending to be encoded or
+ * decoded in ctx. */
+int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx);
+
 
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  define EVP_CIPHER_CTX_init(c)      EVP_CIPHER_CTX_reset(c)

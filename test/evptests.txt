@@ -2934,13 +2934,11 @@ Output = "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA==\neHh4
 Encoding = invalid
 Output = "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4\neA==eHh4eHh4eHh4eHh4eHh4\n"
 
-# B64_EOF ('-') terminates input and trailing bytes are ignored
-Encoding = valid
-Input = "OpenSSLOpenSSL\n"
+# B64_EOF ('-') used to signal the end of input, but is now an error.
+Encoding = invalid
 Output = "T3BlblNTTE9wZW5TU0wK\n-abcd"
 
-Encoding = valid
-Input = "OpenSSLOpenSSL\n"
+Encoding = invalid
 Output = "T3BlblNTTE9wZW5TU0wK-abcd"
 
 Cipher = chacha20

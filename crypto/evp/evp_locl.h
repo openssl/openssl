@@ -47,19 +47,19 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int en_de);
 
 struct evp_Encode_Ctx_st {
-    /* number saved in a partial encode/decode */
-    int num;
-    /*
-     * The length is either the output line length (in input bytes) or the
-     * shortest input line length that is ok.  Once decoding begins, the
-     * length is adjusted up each time a longer line is decoded
-     */
-    int length;
-    /* data to encode */
-    unsigned char enc_data[80];
-    /* number read on current line */
-    int line_num;
-    int expect_nl;
+    /* data_used indicates the number of bytes of |data| that are valid. When
+     * encoding, |data| will be filled and encoded as a lump. When decoding,
+     * only the first four bytes of |data| will be used. */
+    unsigned data_used;
+    uint8_t data[48];
+
+    /* eof_seen indicates that the end of the base64 data has been seen when
+     * decoding. Only whitespace can follow. */
+    char eof_seen;
+
+    /* error_encountered indicates that invalid base64 data was found. This will
+     * cause all future calls to fail. */
+    char error_encountered;
 };
 
 typedef struct evp_pbe_st EVP_PBE_CTL;
