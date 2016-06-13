@@ -28,7 +28,7 @@ typedef struct handshake_ex_data {
 
 static int ex_data_idx;
 
-static void info_callback(const SSL *s, int where, int ret)
+static void info_cb(const SSL *s, int where, int ret)
 {
     if (where & SSL_CB_ALERT) {
         HANDSHAKE_EX_DATA *ex_data =
@@ -41,7 +41,7 @@ static void info_callback(const SSL *s, int where, int ret)
     }
 }
 
-static int servername_callback(SSL *s, int *ad, void *arg)
+static int servername_cb(SSL *s, int *ad, void *arg)
 {
     const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
     if (servername != NULL && !strcmp(servername, "server2")) {
@@ -58,25 +58,25 @@ static int servername_callback(SSL *s, int *ad, void *arg)
     return SSL_TLSEXT_ERR_OK;
 }
 
-static int verify_reject_callback(X509_STORE_CTX *ctx, void *arg) {
+static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) {
     X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
     return 0;
 }
 
-static int verify_accept_callback(X509_STORE_CTX *ctx, void *arg) {
+static int verify_accept_cb(X509_STORE_CTX *ctx, void *arg) {
     return 1;
 }
 
-static int broken_session_ticket_callback(SSL* s, unsigned char* key_name, unsigned char *iv,
-                                          EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
+static int broken_session_ticket_cb(SSL* s, unsigned char* key_name, unsigned char *iv,
+                                    EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
 {
     return 0;
 }
 
-static int do_not_call_session_ticket_callback(SSL* s, unsigned char* key_name,
-                                               unsigned char *iv,
-                                               EVP_CIPHER_CTX *ctx,
-                                               HMAC_CTX *hctx, int enc)
+static int do_not_call_session_ticket_cb(SSL* s, unsigned char* key_name,
+                                         unsigned char *iv,
+                                         EVP_CIPHER_CTX *ctx,
+                                         HMAC_CTX *hctx, int enc)
 {
     HANDSHAKE_EX_DATA *ex_data =
         (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
@@ -94,11 +94,11 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
 {
     switch (test_ctx->client_verify_callback) {
     case SSL_TEST_VERIFY_ACCEPT_ALL:
-        SSL_CTX_set_cert_verify_callback(client_ctx, &verify_accept_callback,
+        SSL_CTX_set_cert_verify_callback(client_ctx, &verify_accept_cb,
                                          NULL);
         break;
     case SSL_TEST_VERIFY_REJECT_ALL:
-        SSL_CTX_set_cert_verify_callback(client_ctx, &verify_reject_callback,
+        SSL_CTX_set_cert_verify_callback(client_ctx, &verify_reject_cb,
                                          NULL);
         break;
     default:
@@ -106,17 +106,17 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     }
 
     /* link the two contexts for SNI purposes */
-    SSL_CTX_set_tlsext_servername_callback(server_ctx, servername_callback);
+    SSL_CTX_set_tlsext_servername_callback(server_ctx, servername_cb);
     SSL_CTX_set_tlsext_servername_arg(server_ctx, server2_ctx);
     /*
      * The initial_ctx/session_ctx always handles the encrypt/decrypt of the
      * session ticket. This ticket_key callback is assigned to the second
      * session (assigned via SNI), and should never be invoked
      */
-    SSL_CTX_set_tlsext_ticket_key_cb(server2_ctx, do_not_call_session_ticket_callback);
+    SSL_CTX_set_tlsext_ticket_key_cb(server2_ctx, do_not_call_session_ticket_cb);
 
     if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_BROKEN) {
-        SSL_CTX_set_tlsext_ticket_key_cb(server_ctx, broken_session_ticket_callback);
+        SSL_CTX_set_tlsext_ticket_key_cb(server_ctx, broken_session_ticket_cb);
     }
 }
 
@@ -285,8 +285,8 @@ HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     OPENSSL_assert(SSL_set_ex_data(client, ex_data_idx,
                                    &client_ex_data) == 1);
 
-    SSL_set_info_callback(server, &info_callback);
-    SSL_set_info_callback(client, &info_callback);
+    SSL_set_info_callback(server, &info_cb);
+    SSL_set_info_callback(client, &info_cb);
 
     /*
      * Half-duplex handshake loop.
