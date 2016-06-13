@@ -13,6 +13,7 @@
 #include <openssl/ssl.h>
 
 #include "ssltestlib.h"
+#include "testutil.h"
 
 static char *cert = NULL;
 static char *privkey = NULL;
@@ -171,25 +172,14 @@ static int test_session(void)
     return testresult;
 }
 
-#define RUNTEST(testname)   \
-    do { \
-        printf("Testing " #testname "..."); \
-        if (test_##testname()) {\
-            printf("ok\n"); \
-        } else { \
-            printf("not ok\n"); \
-            goto end; \
-        } \
-    } while(0)
-
 int main(int argc, char *argv[])
 {
-    BIO *err;
-    int testresult = 0;
+    BIO *err = NULL;
+    int testresult = 1;
 
     if (argc != 3) {
         printf("Invalid argument count\n");
-        goto end;
+        return 1;
     }
 
     cert = argv[1];
@@ -200,21 +190,19 @@ int main(int argc, char *argv[])
     CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    RUNTEST(tlsext_status_type);
-    RUNTEST(session);
+    ADD_TEST(test_tlsext_status_type);
+    ADD_TEST(test_session);
 
-    testresult = 1;
-
- end:
+    testresult = run_tests(argv[0]);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks(err) <= 0)
-        testresult = 0;
+        testresult = 1;
 #endif
     BIO_free(err);
 
-    if (testresult)
+    if (!testresult)
         printf("PASS\n");
 
-    return testresult ? 0 : 1;
+    return testresult;
 }

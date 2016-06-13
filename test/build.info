@@ -286,7 +286,7 @@ _____
    }
   -}
 
-  SOURCE[sslapitest]=sslapitest.c ssltestlib.c
+  SOURCE[sslapitest]=sslapitest.c ssltestlib.c testutil.c
   INCLUDE[sslapitest]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
   DEPEND[sslapitest]=../libcrypto ../libssl
 ENDIF
