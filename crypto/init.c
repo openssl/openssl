@@ -153,15 +153,15 @@ static void ossl_init_no_add_algs(void)
 
 static CRYPTO_ONCE config = CRYPTO_ONCE_STATIC_INIT;
 static int config_inited = 0;
-static const char *config_filename;
+static const char *appname;
 static void ossl_init_config(void)
 {
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr,
             "OPENSSL_INIT: ossl_init_config: openssl_config(%s)\n",
-            config_filename==NULL?"NULL":config_filename);
+            appname == NULL ? "NULL" : appname);
 #endif
-    openssl_config_int(config_filename);
+    openssl_config_int(appname);
     config_inited = 1;
 }
 static void ossl_init_no_config(void)
@@ -512,7 +512,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
         int ret;
         CRYPTO_THREAD_write_lock(init_lock);
-        config_filename = (settings == NULL) ? NULL : settings->config_name;
+        appname = (settings == NULL) ? NULL : settings->appname;
         ret = CRYPTO_THREAD_run_once(&config, ossl_init_config);
         CRYPTO_THREAD_unlock(init_lock);
         if (!ret)

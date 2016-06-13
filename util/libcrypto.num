@@ -1126,7 +1126,7 @@ i2d_X509_EXTENSIONS                     1116	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_store               1117	1_1_0	EXIST::FUNCTION:
 PKCS12_pack_p7data                      1118	1_1_0	EXIST::FUNCTION:
 RSA_print_fp                            1119	1_1_0	EXIST::FUNCTION:RSA,STDIO
-OPENSSL_INIT_set_config_filename        1120	1_1_0	EXIST::FUNCTION:STDIO
+OPENSSL_INIT_set_config_appname         1120	1_1_0	EXIST::FUNCTION:STDIO
 EC_KEY_print_fp                         1121	1_1_0	EXIST::FUNCTION:EC,STDIO
 BIO_dup_chain                           1122	1_1_0	EXIST::FUNCTION:
 PKCS8_PRIV_KEY_INFO_it                  1123	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:

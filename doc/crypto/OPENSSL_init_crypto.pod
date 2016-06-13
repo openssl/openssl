@@ -16,8 +16,8 @@ initialisation and deinitialisation functions
  void OPENSSL_thread_stop(void);
 
  OPENSSL_INIT_SETTINGS *OPENSSL_init_new(void);
- int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *init,
-                                      const char* name);
+ int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *init,
+                                     const char* name);
  void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *init);
 
 =head1 DESCRIPTION
@@ -191,8 +191,8 @@ described in the NOTES section below.
 The B<OPENSSL_INIT_LOAD_CONFIG> flag will load a default configuration
 file.  To specify a different file, an B<OPENSSL_INIT_SETTINGS> must
 be created and used. The routines
-OPENSSL_init_new() and OPENSSL_INIT_set_config_filename() can be used to
-allocate the object and set the configuration filename, and then the
+OPENSSL_init_new() and OPENSSL_INIT_set_config_appname() can be used to
+allocate the object and set the application name, and then the
 object can be released with OPENSSL_INIT_free() when done.
 
 =head1 NOTES
@@ -220,7 +220,7 @@ call should use the RTLD_NODELETE flag (where available on the platform).
 =head1 RETURN VALUES
 
 The functions OPENSSL_init_crypto, OPENSSL_atexit() and
-OPENSSL_INIT_set_config_filename() return 1 on success or 0 on error.
+OPENSSL_INIT_set_config_appname() return 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
@@ -229,7 +229,7 @@ L<OPENSSL_init_ssl(3)>
 =head1 HISTORY
 
 The OPENSSL_init_crypto(), OPENSSL_cleanup(), OPENSSL_atexit(),
-OPENSSL_thread_stop(), OPENSSL_init_new(), OPENSSL_INIT_set_config_filename()
+OPENSSL_thread_stop(), OPENSSL_init_new(), OPENSSL_INIT_set_config_appname()
 and OPENSSL_INIT_free() functions were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
