@@ -80,7 +80,6 @@ const EC_METHOD *EC_GFp_mont_method(void);
 const EC_METHOD *EC_GFp_nist_method(void);
 
 # ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-#  ifndef OPENSSL_SYS_WIN32
 /** Returns 64-bit optimized methods for nistp224
  *  \return  EC_METHOD object
  */
@@ -95,7 +94,6 @@ const EC_METHOD *EC_GFp_nistp256_method(void);
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GFp_nistp521_method(void);
-#  endif
 # endif
 
 # ifndef OPENSSL_NO_EC2M
