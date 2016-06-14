@@ -80,7 +80,7 @@ PLATFORM={- $config{target} -}
 OPTIONS={- $config{options} -}
 CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
 SRCDIR={- $config{sourcedir} -}
-BUILDDIR={- $config{builddir} -}
+BLDDIR={- $config{builddir} -}
 
 # Allow both V and VERBOSE to indicate verbosity.  This only applies
 # to testing.
@@ -591,7 +591,7 @@ $shlib.EXE : $lib.OLB $deps $ordinalsfile
         IF "$mkdef_key" .EQS. "ssl" .OR. "$mkdef_key" .EQS. "crypto" THEN -
            \$(PERL) $mkdef_pl "$mkdef_key" "VMS" > $shlib.SYMVEC-tmp
         IF "$mkdef_key" .EQS. "ssl" .OR. "$mkdef_key" .EQS. "crypto" THEN -
-           \$(PERL) $translatesyms_pl \$(BUILDDIR)CXX\$DEMANGLER_DB. < $shlib.SYMVEC-tmp > $shlib.SYMVEC
+           \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $shlib.SYMVEC-tmp > $shlib.SYMVEC
         OPEN/WRITE/SHARE=READ OPT_FILE $shlib.OPT
         WRITE OPT_FILE "IDENTIFICATION=""V$config{version}"""
         IF "$mkdef_key" .NES. "ssl" .AND. "$mkdef_key" .NES. "crypto" THEN -
@@ -699,7 +699,7 @@ EOF
                            rel2abs($config{builddir}));
       return <<"EOF";
 $script : $sources
-        \$(PERL) "-I\$(BUILDDIR)" "-Mconfigdata" $dofile -
+        \$(PERL) "-I\$(BLDDIR)" "-Mconfigdata" $dofile -
 	    "-o$target{build_file}" $sources > $script
         SET FILE/PROT=(S:RWED,O:RWED,G:RE,W:RE) $script
         PURGE $script
