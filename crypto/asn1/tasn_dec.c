@@ -301,6 +301,8 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                 const ASN1_TEMPLATE *seqtt;
                 ASN1_VALUE **pseqval;
                 seqtt = asn1_do_adb(pval, tt, 1);
+                if (!seqtt)
+                    continue;
                 pseqval = asn1_get_field_ptr(pval, seqtt);
                 asn1_template_free(pseqval, seqtt);
             }
