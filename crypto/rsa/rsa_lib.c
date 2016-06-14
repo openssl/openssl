@@ -232,15 +232,12 @@ int RSA_security_bits(const RSA *rsa)
 
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
 {
-    /* If the fields in r are NULL, the corresponding input
+    /* If the fields n and e in r are NULL, the corresponding input
      * parameters MUST be non-NULL for n and e.  d may be
      * left NULL (in case only the public key is used).
-     *
-     * It is an error to give the results from get0 on r
-     * as input parameters.
      */
-    if (n == r->n || e == r->e
-        || (r->d != NULL && d == r->d))
+    if (r->n == NULL && n == NULL
+        || r->e == NULL && e == NULL)
         return 0;
 
     if (n != NULL) {
@@ -261,13 +258,11 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
 
 int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
 {
-    /* If the fields in r are NULL, the corresponding input
+    /* If the fields p and q in r are NULL, the corresponding input
      * parameters MUST be non-NULL.
-     *
-     * It is an error to give the results from get0 on r
-     * as input parameters.
      */
-    if (p == r->p || q == r->q)
+    if (r->p == NULL && p == NULL
+        || r->q == NULL && q == NULL)
         return 0;
 
     if (p != NULL) {
@@ -284,13 +279,12 @@ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
 
 int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
 {
-    /* If the fields in r are NULL, the corresponding input
+    /* If the fields dmp1, dmq1 and iqmp in r are NULL, the corresponding input
      * parameters MUST be non-NULL.
-     *
-     * It is an error to give the results from get0 on r
-     * as input parameters.
      */
-    if (dmp1 == r->dmp1 || dmq1 == r->dmq1 || iqmp == r->iqmp)
+    if (r->dmp1 == NULL && dmp1 == NULL
+        || r->dmq1 == NULL && dmq1 == NULL
+        || r->iqmp == NULL && iqmp == NULL)
         return 0;
 
     if (dmp1 != NULL) {
@@ -309,7 +303,8 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
     return 1;
 }
 
-void RSA_get0_key(const RSA *r, BIGNUM **n, BIGNUM **e, BIGNUM **d)
+void RSA_get0_key(const RSA *r,
+                  const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
 {
     if (n != NULL)
         *n = r->n;
@@ -319,7 +314,7 @@ void RSA_get0_key(const RSA *r, BIGNUM **n, BIGNUM **e, BIGNUM **d)
         *d = r->d;
 }
 
-void RSA_get0_factors(const RSA *r, BIGNUM **p, BIGNUM **q)
+void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q)
 {
     if (p != NULL)
         *p = r->p;
@@ -328,7 +323,8 @@ void RSA_get0_factors(const RSA *r, BIGNUM **p, BIGNUM **q)
 }
 
 void RSA_get0_crt_params(const RSA *r,
-                         BIGNUM **dmp1, BIGNUM **dmq1, BIGNUM **iqmp)
+                         const BIGNUM **dmp1, const BIGNUM **dmq1,
+                         const BIGNUM **iqmp)
 {
     if (dmp1 != NULL)
         *dmp1 = r->dmp1;
