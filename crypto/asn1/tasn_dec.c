@@ -301,7 +301,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                 const ASN1_TEMPLATE *seqtt;
                 ASN1_VALUE **pseqval;
                 seqtt = asn1_do_adb(pval, tt, 1);
-                if (!seqtt)
+                if (seqtt == NULL)
                     continue;
                 pseqval = asn1_get_field_ptr(pval, seqtt);
                 asn1_template_free(pseqval, seqtt);
@@ -313,7 +313,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             const ASN1_TEMPLATE *seqtt;
             ASN1_VALUE **pseqval;
             seqtt = asn1_do_adb(pval, tt, 1);
-            if (!seqtt)
+            if (seqtt == NULL)
                 goto err;
             pseqval = asn1_get_field_ptr(pval, seqtt);
             /* Have we ran out of data? */
@@ -378,7 +378,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
         for (; i < it->tcount; tt++, i++) {
             const ASN1_TEMPLATE *seqtt;
             seqtt = asn1_do_adb(pval, tt, 1);
-            if (!seqtt)
+            if (seqtt == NULL)
                 goto err;
             if (seqtt->flags & ASN1_TFLG_OPTIONAL) {
                 ASN1_VALUE **pseqval;
