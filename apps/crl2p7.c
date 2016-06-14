@@ -84,10 +84,8 @@ int crl2pkcs7_main(int argc, char **argv)
             if ((certflst == NULL)
                 && (certflst = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
-            if (!sk_OPENSSL_STRING_push(certflst, opt_arg())) {
-                sk_OPENSSL_STRING_free(certflst);
+            if (!sk_OPENSSL_STRING_push(certflst, opt_arg()))
                 goto end;
-            }
             break;
         }
     }
