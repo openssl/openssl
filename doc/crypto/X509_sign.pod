@@ -30,7 +30,7 @@ certificate B<x> but uses the parameters contained in digest context B<ctx>.
 
 X509_verify() verifies the signature of certificate B<x> using public key
 B<pkey>. Only the signature is checked: no other checks (such as certificate
-chain validity) are perfored.
+chain validity) are performed.
 
 X509_REQ_sign(), X509_REQ_sign_ctx(), X509_REQ_verify(),
 X509_CRL_sign(), X509_CRL_sign_ctx() and X509_CRL_verify() sign and verify

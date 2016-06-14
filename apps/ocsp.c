@@ -165,7 +165,7 @@ OPTIONS ocsp_options[] = {
      "Number of requests to accept (default unlimited)"},
     {"ndays", OPT_NDAYS, 'p', "Number of days before next update"},
     {"rsigner", OPT_RSIGNER, '<',
-     "Sesponder certificate to sign responses with"},
+     "Responder certificate to sign responses with"},
     {"rkey", OPT_RKEY, '<', "Responder key to sign responses with"},
     {"rother", OPT_ROTHER, '<', "Other certificates to include in response"},
     {"rmd", OPT_RMD, 's', "Digest Algorithm to use in signature of OCSP response"},
