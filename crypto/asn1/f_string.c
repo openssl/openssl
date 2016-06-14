@@ -104,6 +104,7 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
         i -= again;
         if (i % 2 != 0) {
             ASN1err(ASN1_F_A2I_ASN1_STRING, ASN1_R_ODD_NUMBER_OF_CHARS);
+            OPENSSL_free(s);
             return 0;
         }
         i /= 2;
@@ -123,6 +124,7 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
                 if (m < 0) {
                     ASN1err(ASN1_F_A2I_ASN1_STRING,
                             ASN1_R_NON_HEX_CHARACTERS);
+                    OPENSSL_free(s);
                     return 0;
                 }
                 s[num + j] <<= 4;
@@ -141,5 +143,6 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 
  err:
     ASN1err(ASN1_F_A2I_ASN1_STRING, ASN1_R_SHORT_LINE);
+    OPENSSL_free(s);
     return 0;
 }
