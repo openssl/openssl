@@ -36,12 +36,12 @@ typedef enum {
     SSL_TEST_SESSION_TICKET_IGNORE = 0, /* Default */
     SSL_TEST_SESSION_TICKET_YES,
     SSL_TEST_SESSION_TICKET_NO,
-    SSL_TEST_SESSION_TICKET_BROKEN, /* Special test */
+    SSL_TEST_SESSION_TICKET_BROKEN  /* Special test */
 } ssl_session_ticket_t;
 
 typedef enum {
     SSL_TEST_METHOD_TLS = 0, /* Default */
-    SSL_TEST_METHOD_DTLS,
+    SSL_TEST_METHOD_DTLS
 } ssl_test_method_t;
 
 typedef struct ssl_test_ctx {
