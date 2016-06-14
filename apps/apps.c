@@ -1148,7 +1148,7 @@ void print_name(BIO *out, const char *title, X509_NAME *nm,
     }
 }
 
-void print_bignum_var(BIO *out, BIGNUM *in, const char *var,
+void print_bignum_var(BIO *out, const BIGNUM *in, const char *var,
                       int len, unsigned char *buffer)
 {
     BIO_printf(out, "    static unsigned char %s_%d[] = {", var, len);

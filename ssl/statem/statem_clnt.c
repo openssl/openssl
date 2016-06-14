@@ -2178,7 +2178,7 @@ psk_err:
 #ifndef OPENSSL_NO_DH
     else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         DH *dh_clnt = NULL;
-        BIGNUM *pub_key;
+        const BIGNUM *pub_key;
         skey = s->s3->peer_tmp;
         if (skey == NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,

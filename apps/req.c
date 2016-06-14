@@ -768,7 +768,7 @@ int req_main(int argc, char **argv)
         fprintf(stdout, "Modulus=");
 #ifndef OPENSSL_NO_RSA
         if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA) {
-            BIGNUM *n;
+            const BIGNUM *n;
             RSA_get0_key(EVP_PKEY_get0_RSA(tpubkey), &n, NULL, NULL);
             BN_print(out, n);
         } else

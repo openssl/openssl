@@ -214,7 +214,7 @@ int rsa_main(int argc, char **argv)
     }
 
     if (modulus) {
-        BIGNUM *n;
+        const BIGNUM *n;
         RSA_get0_key(rsa, &n, NULL, NULL);
         BIO_printf(out, "Modulus=");
         BN_print(out, n);

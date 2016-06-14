@@ -1602,7 +1602,7 @@ int tls_construct_server_key_exchange(SSL *s)
     int al, i;
     unsigned long type;
     int n;
-    BIGNUM *r[4];
+    const BIGNUM *r[4];
     int nr[4], kn;
     BUF_MEM *buf;
     EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
