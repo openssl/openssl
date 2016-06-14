@@ -139,6 +139,7 @@ int ciphers_main(int argc, char **argv)
 #ifndef OPENSSL_NO_PSK
             psk = 1;
 #endif
+            break;
         case OPT_SRP:
 #ifndef OPENSSL_NO_SRP
             srp = 1;
