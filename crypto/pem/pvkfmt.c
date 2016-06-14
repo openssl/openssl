@@ -467,7 +467,8 @@ static int do_i2b_bio(BIO *out, EVP_PKEY *pk, int ispub)
 static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 {
     int bitlen;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+    const BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    const BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     DSA_get0_pqg(dsa, &p, &q, &g);
     DSA_get0_key(dsa, &pub_key, &priv_key);
@@ -494,7 +495,7 @@ static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 {
     int nbyte, hnbyte, bitlen;
-    BIGNUM *e;
+    const BIGNUM *e;
 
     RSA_get0_key(rsa, &e, NULL, NULL);
     if (BN_num_bits(e) > 32)
@@ -506,7 +507,7 @@ static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
         *pmagic = MS_RSA1MAGIC;
         return bitlen;
     } else {
-        BIGNUM *d, *p, *q, *iqmp, *dmp1, *dmq1;
+        const BIGNUM *d, *p, *q, *iqmp, *dmp1, *dmq1;
 
         *pmagic = MS_RSA2MAGIC;
 
@@ -534,7 +535,7 @@ static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 {
     int nbyte, hnbyte;
-    BIGNUM *n, *d, *e, *p, *q, *iqmp, *dmp1, *dmq1;
+    const BIGNUM *n, *d, *e, *p, *q, *iqmp, *dmp1, *dmq1;
 
     nbyte = RSA_size(rsa);
     hnbyte = (RSA_bits(rsa) + 15) >> 4;
@@ -556,7 +557,8 @@ static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 static void write_dsa(unsigned char **out, DSA *dsa, int ispub)
 {
     int nbyte;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+    const BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    const BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     DSA_get0_pqg(dsa, &p, &q, &g);
     DSA_get0_key(dsa, &pub_key, &priv_key);

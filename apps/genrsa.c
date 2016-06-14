@@ -59,7 +59,7 @@ int genrsa_main(int argc, char **argv)
     ENGINE *eng = NULL;
     BIGNUM *bn = BN_new();
     BIO *out = NULL;
-    BIGNUM *e;
+    const BIGNUM *e;
     RSA *rsa = NULL;
     const EVP_CIPHER *enc = NULL;
     int ret = 1, num = DEFBITS, private = 0;

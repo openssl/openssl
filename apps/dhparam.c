@@ -298,7 +298,7 @@ int dhparam_main(int argc, char **argv)
     if (C) {
         unsigned char *data;
         int len, bits;
-        BIGNUM *pbn, *gbn;
+        const BIGNUM *pbn, *gbn;
 
         len = DH_size(dh);
         bits = DH_bits(dh);
@@ -337,7 +337,7 @@ int dhparam_main(int argc, char **argv)
     }
 
     if (!noout) {
-        BIGNUM *q;
+        const BIGNUM *q;
         DH_get0_pqg(dh, NULL, &q, NULL);
         if (outformat == FORMAT_ASN1)
             i = i2d_DHparams_bio(out, dh);

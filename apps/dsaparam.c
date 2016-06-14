@@ -215,7 +215,7 @@ int dsaparam_main(int argc, char **argv)
     }
 
     if (C) {
-        BIGNUM *p = NULL, *q = NULL, *g = NULL;
+        const BIGNUM *p = NULL, *q = NULL, *g = NULL;
         unsigned char *data;
         int len, bits_p;
 

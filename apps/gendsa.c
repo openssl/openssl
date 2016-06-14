@@ -53,7 +53,7 @@ int gendsa_main(int argc, char **argv)
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
     OPTION_CHOICE o;
     int ret = 1, private = 0;
-    BIGNUM *p = NULL;
+    const BIGNUM *p = NULL;
 
     prog = opt_init(argc, argv, gendsa_options);
     while ((o = opt_next()) != OPT_EOF) {
