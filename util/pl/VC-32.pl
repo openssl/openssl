@@ -150,6 +150,21 @@ else	# Win32
 			{
 				$base_cflags.=" /arch:AVX";
 				$lflags.=" /machine:X64";
+				*::perlasm_compile_target = sub {
+					my ($target,$source,$bname)=@_;
+					my $ret;
+
+					$bname =~ s/(.*)\.[^\.]$/$1/;
+					$ret=<<___;
+\$(TMP_D)$o$bname.asm: $source
+	set ASM=\$(ASM)
+	\$(PERL) $source \$\@
+
+$target: \$(TMP_D)$o$bname.asm
+	\$(ASM) $afile\$\@ \$(TMP_D)$o$bname.asm
+
+___
+	}
 			}
 		$base
         }
@@ -320,7 +335,7 @@ EXHEADER= $(EXHEADER) $(INCO_D)\applink.c
 LIBS_DEP=$(LIBS_DEP) $(OBJ_D)\applink.obj
 CRYPTOOBJ=$(OBJ_D)\uplink.obj $(CRYPTOOBJ)
 ___
-	$banner.=<<'___' if ($FLAVOR =~ /WIN64/);
+	$banner.=<<'___' if ($FLAVOR =~ /WIN64/) || ($FLAVOR =~ /CORE64/);
 CRYPTOOBJ=ms\uptable.obj $(CRYPTOOBJ)
 ___
 	}
