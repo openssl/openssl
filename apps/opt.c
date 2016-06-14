@@ -74,7 +74,7 @@ char *opt_progname(const char *argv0)
 {
     const char *p, *q;
 
-    /* Find last special charcter sys:[foo.bar]openssl */
+    /* Find last special character sys:[foo.bar]openssl */
     for (p = argv0 + strlen(argv0); --p > argv0;)
         if (*p == ':' || *p == ']' || *p == '>') {
             p++;
@@ -857,7 +857,7 @@ void opt_help(const OPTIONS *list)
         start[sizeof start - 1] = '\0';
 
         if (o->name == OPT_MORE_STR) {
-            /* Continuation of previous line; padd and print. */
+            /* Continuation of previous line; pad and print. */
             start[width] = '\0';
             BIO_printf(bio_err, "%s  %s\n", start, help);
             continue;

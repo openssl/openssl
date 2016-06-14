@@ -56,7 +56,7 @@ count on the returned key is incremented so it B<MUST> be freed using
 EVP_PKEY_free() after use.
 
 d2i_PUBKEY() and i2d_PUBKEY() decode and encode an B<EVP_PKEY> structure
-using B<SubjectPublicKeyInfo> format. They otherise follow the conventions of
+using B<SubjectPublicKeyInfo> format. They otherwise follow the conventions of
 other ASN.1 functions such as d2i_X509().
 
 d2i_PUBKEY_bio(), d2i_PUBKEY_fp(), i2d_PUBKEY_bio() and i2d_PUBKEY_fp() are

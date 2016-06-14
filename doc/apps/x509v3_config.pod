@@ -116,7 +116,7 @@ following PKIX, NS and MS values are meaningful:
  emailProtection        E-mail Protection (S/MIME).
  timeStamping           Trusted Timestamping
  OCSPSigning            OCSP Signing
- ipsecIKE               ipsec Internet Key Exchnage
+ ipsecIKE               ipsec Internet Key Exchange
  msCodeInd              Microsoft Individual Code Signing (authenticode)
  msCodeCom              Microsoft Commercial Code Signing (authenticode)
  msCTLSign              Microsoft Trust List Signing

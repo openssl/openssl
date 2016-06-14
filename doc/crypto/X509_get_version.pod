@@ -23,7 +23,7 @@ certificate request or CRL version
 
 X509_get_version() returns the numerical value of the version field of
 certificate B<x>. Note: this is defined by standards (X.509 et al) to be one
-less than the certificate version. So a verson 3 certificate will return 2 and
+less than the certificate version. So a version 3 certificate will return 2 and
 a version 1 certificate will return 0.
 
 X509_set_version() sets the numerical value of the version field of certificate
