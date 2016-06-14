@@ -113,9 +113,9 @@ int has_stdin_waiting(void);
         { "explicit_policy", OPT_V_EXPLICIT_POLICY, '-', \
             "set policy variable require-explicit-policy"}, \
         { "inhibit_any", OPT_V_INHIBIT_ANY, '-', \
-            "set policy variable inihibit-any-policy"}, \
+            "set policy variable inhibit-any-policy"}, \
         { "inhibit_map", OPT_V_INHIBIT_MAP, '-', \
-            "set policy variable inihibit-policy-mapping"}, \
+            "set policy variable inhibit-policy-mapping"}, \
         { "x509_strict", OPT_V_X509_STRICT, '-', \
             "disable certificate compatibility work-arounds"}, \
         { "extended_crl", OPT_V_EXTENDED_CRL, '-', \
@@ -187,7 +187,7 @@ int has_stdin_waiting(void);
         { "xcertform", OPT_X_CERTFORM, 'F', \
             "format of Extended certificate (PEM or DER) PEM default " }, \
         { "xkeyform", OPT_X_KEYFORM, 'F', \
-            "format of Exnteded certificate's key (PEM or DER) PEM default"}
+            "format of Extended certificate's key (PEM or DER) PEM default"}
 
 # define OPT_X_CASES \
         OPT_X__FIRST: case OPT_X__LAST: break; \

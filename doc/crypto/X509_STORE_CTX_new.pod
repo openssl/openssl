@@ -95,10 +95,10 @@ X509_STORE_CTX_get0_param() retrieves an internal pointer
 to the verification parameters associated with B<ctx>.
 
 X509_STORE_CTX_get0_untrusted() retrieves an internal pointer to the
-stack of untrusted certifieds associated with B<ctx>.
+stack of untrusted certificates associated with B<ctx>.
 
 X509_STORE_CTX_set0_untrusted() sets the internal point to the stack
-of unstrusted certificates associated with B<ctx> to B<sk>.
+of untrusted certificates associated with B<ctx> to B<sk>.
 
 X509_STORE_CTX_set0_param() sets the internal verification parameter pointer
 to B<param>. After this call B<param> should not be used.
@@ -171,7 +171,7 @@ L<X509_VERIFY_PARAM_set_flags(3)>
 
 X509_STORE_CTX_set0_crls() was first added to OpenSSL 1.0.0
 X509_STORE_CTX_get_num_untrusted() was first added to OpenSSL 1.1.0
-X509_STORE_set_verify() wsa first added to OpenSSL 1.1.0. It was previously
+X509_STORE_set_verify() was first added to OpenSSL 1.1.0. It was previously
 available as a macro X509_STORE_set_verify_func(). This macro still exists but
 simply calls this function.
 
