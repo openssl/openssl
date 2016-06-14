@@ -210,21 +210,23 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-all: $(GENERATED_MANDATORY) \
+all: build_generated \
      build_libs_nodep build_engines_nodep build_apps_nodep \
      depend link-utils
 
-build_libs: $(GENERATED_MANDATORY) build_libs_nodep depend
+build_libs: build_generated build_libs_nodep depend
 build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
-build_engines: $(GENERATED_MANDATORY) build_engines_nodep depend
+build_engines: build_generated build_engines_nodep depend
 build_engines_nodep: $(ENGINES)
-build_apps: $(GENERATED_MANDATORY) build_apps_nodep depend
+build_apps: build_generated build_apps_nodep depend
 build_apps_nodep: $(PROGRAMS) $(SCRIPTS)
-build_tests: $(GENERATED_MANDATORY) build_tests_nodep depend
+build_tests: build_generated build_tests_nodep depend
 build_tests_nodep: $(TESTPROGS)
 
+build_generated: $(GENERATED_MANDATORY)
+
 test: tests
-tests: $(GENERATED_MANDATORY) \
+tests: build_generated \
        build_tests_nodep build_apps_nodep build_engines_nodep \
        depend link-utils
 	@ : {- output_off() if $disabled{tests}; "" -}
