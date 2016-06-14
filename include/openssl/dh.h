@@ -151,9 +151,11 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                  const unsigned char *ukm, size_t ukmlen, const EVP_MD *md);
 # endif
 
-void DH_get0_pqg(const DH *dh, BIGNUM **p, BIGNUM **q, BIGNUM **g);
+void DH_get0_pqg(const DH *dh,
+                 const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
-void DH_get0_key(const DH *dh, BIGNUM **pub_key, BIGNUM **priv_key);
+void DH_get0_key(const DH *dh,
+                 const BIGNUM **pub_key, const BIGNUM **priv_key);
 int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
 void DH_clear_flags(DH *dh, int flags);
 int DH_test_flags(const DH *dh, int flags);
