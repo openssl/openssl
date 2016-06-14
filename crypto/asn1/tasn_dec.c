@@ -401,6 +401,8 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                 const ASN1_TEMPLATE *seqtt;
                 ASN1_VALUE **pseqval;
                 seqtt = asn1_do_adb(pval, tt, 1);
+                if (!seqtt)
+                    continue;
                 pseqval = asn1_get_field_ptr(pval, seqtt);
                 ASN1_template_free(pseqval, seqtt);
             }
