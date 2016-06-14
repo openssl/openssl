@@ -46,15 +46,14 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 9;
-
 #Test 1: By default server and client should send extended master secret
 # extension.
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 Full handshake
 
 setrmextms(0, 0);
-$proxy->start();
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 9;
 checkmessages(1, "Default extended master secret test", 1, 1, 1);
 
 #Test 2: If client omits extended master secret extension, server should too.
