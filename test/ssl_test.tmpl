@@ -1,0 +1,37 @@
+[{-$testname-}]
+ssl_conf = {-$testname-}-ssl
+
+[{-$testname-}-ssl]
+server = {-$testname-}-server{-
+    # The server2 section is optional.
+    $OUT = "";
+    if (%server2) {
+        $OUT .= "\nserver2 = $testname-server2";
+    }
+-}
+client = {-$testname-}-client
+
+[{-$testname-}-server]
+{-
+    foreach my $key (sort keys %server) {
+        $OUT .= qq{$key} . " = " . qq{$server{$key}\n} if defined $server{$key};
+    }
+    if (%server2) {
+        $OUT .= "\n[$testname-server2]\n";
+        foreach my $key (sort keys %server2) {
+            $OUT .= qq{$key} . " = " . qq{$server2{$key}\n} if defined $server2{$key};
+        }
+    }
+-}
+[{-$testname-}-client]
+{-
+    foreach my $key (sort keys %client) {
+        $OUT .= qq{$key} . " = " . qq{$client{$key}\n} if defined $client{$key};
+    }
+-}
+[test-{-$idx-}]
+{-
+    foreach my $key (sort keys %test) {
+        $OUT .= qq{$key} ." = " . qq{$test{$key}\n} if defined $test{$key};
+    }
+-}

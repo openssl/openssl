@@ -1,0 +1,55 @@
+$	! OpenSSL shutdown script
+$	!
+$	! This script deassigns the logical names used by the installation
+$	! of OpenSSL.  It can do so at any level, defined by P1.
+$	!
+$	! P1	Qualifier(s) for DEASSIGN.
+$	!	Default: /PROCESS
+$	!
+$	! P2	If the value is "NOALIASES", no alias logical names are
+$	!	deassigned.
+$
+$	status = %x10000001	! Generic success
+$
+$	! In case there's a problem
+$	ON CONTROL_Y THEN GOTO bailout
+$	ON ERROR THEN GOTO bailout
+$
+$	! Find the architecture
+$	IF F$GETSYI("CPU") .LT. 128
+$	THEN
+$	    arch := VAX
+$	ELSE
+$	    arch := F$EDIT(F$GETSYI("ARCH_NAME"),"UPCASE")
+$	    IF arch .EQS. "" THEN GOTO unknown_arch
+$	ENDIF
+$
+$	! Generated information
+$	VERSION := {- $config{version} -}
+$	INSTALLTOP := {- $config{INSTALLTOP} -}
+$	POINTER_SIZE = {- $config{pointersize} -}
+$
+$	! Abbrevs
+$	DEAS := DEASSIGN /NOLOG 'P1'
+$	v    =  VERSION - "." - "."
+$
+$	DEAS OSSL$ROOT'v'
+$	DEAS OSSL$INCLUDE'v'
+$	DEAS OSSL$LIB'v'
+$	DEAS OSSL$SHARE'v'
+$	DEAS OSSL$ENGINES'v'
+$	DEAS OSSL$EXE'v'
+$       {- join("\n\$       ", map { my $x = uc $_; "DEAS ${x}'v'" } @{$config{shared_libs}}) -}
+$	IF P2 .NES. "NOALIASES"
+$	THEN
+$	    DEAS OSSL$ROOT
+$	    DEAS OSSL$INCLUDE
+$	    DEAS OSSL$LIB
+$	    DEAS OSSL$SHARE
+$	    DEAS OSSL$ENGINES
+$	    DEAS OSSL$EXE
+$	    DEAS OPENSSL
+$           {- join("\n\$           ", map { my $x = uc $_; "DEAS ${x}" } @{$config{shared_libs}}) -}
+$	ENDIF
+$
+$	EXIT 'status'

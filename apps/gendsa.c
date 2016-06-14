@@ -1,220 +1,145 @@
-/* apps/gendsa.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include "apps.h"
-#include "bio.h"
-#include "rand.h"
-#include "err.h"
-#include "bn.h"
-#include "dsa.h"
-#include "x509.h"
-#include "pem.h"
-
-#define DEFBITS	512
-#undef PROG
-#define PROG gendsa_main
-
-#ifndef NOPROTO
-static long dsa_load_rand(char *names);
+#include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_DSA
+NON_EMPTY_TRANSLATION_UNIT
 #else
-static long dsa_load_rand();
+
+# include <stdio.h>
+# include <string.h>
+# include <sys/types.h>
+# include <sys/stat.h>
+# include "apps.h"
+# include <openssl/bio.h>
+# include <openssl/err.h>
+# include <openssl/bn.h>
+# include <openssl/dsa.h>
+# include <openssl/x509.h>
+# include <openssl/pem.h>
+
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_RAND, OPT_CIPHER
+} OPTION_CHOICE;
+
+OPTIONS gendsa_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [args] dsaparam-file\n"},
+    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"out", OPT_OUT, '>', "Output the key to the specified file"},
+    {"passout", OPT_PASSOUT, 's'},
+    {"rand", OPT_RAND, 's',
+     "Load the file(s) into the random number generator"},
+    {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+# endif
+    {NULL}
+};
+
+int gendsa_main(int argc, char **argv)
+{
+    BIO *out = NULL, *in = NULL;
+    DSA *dsa = NULL;
+    const EVP_CIPHER *enc = NULL;
+    char *inrand = NULL, *dsaparams = NULL;
+    char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
+    OPTION_CHOICE o;
+    int ret = 1, private = 0;
+    BIGNUM *p = NULL;
+
+    prog = opt_init(argc, argv, gendsa_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+ opthelp:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            ret = 0;
+            opt_help(gendsa_options);
+            goto end;
+        case OPT_OUT:
+            outfile = opt_arg();
+            break;
+        case OPT_PASSOUT:
+            passoutarg = opt_arg();
+            break;
+        case OPT_ENGINE:
+            (void)setup_engine(opt_arg(), 0);
+            break;
+        case OPT_RAND:
+            inrand = opt_arg();
+            break;
+        case OPT_CIPHER:
+            if (!opt_cipher(opt_unknown(), &enc))
+                goto end;
+            break;
+        }
+    }
+    argc = opt_num_rest();
+    argv = opt_rest();
+    private = 1;
+
+    if (argc != 1)
+        goto opthelp;
+    dsaparams = *argv;
+
+    if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
+        BIO_printf(bio_err, "Error getting password\n");
+        goto end;
+    }
+
+    in = bio_open_default(dsaparams, 'r', FORMAT_PEM);
+    if (in == NULL)
+        goto end2;
+
+    if ((dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL)) == NULL) {
+        BIO_printf(bio_err, "unable to load DSA parameter file\n");
+        goto end;
+    }
+    BIO_free(in);
+    in = NULL;
+
+    out = bio_open_owner(outfile, FORMAT_PEM, private);
+    if (out == NULL)
+        goto end2;
+
+    if (!app_RAND_load_file(NULL, 1) && inrand == NULL) {
+        BIO_printf(bio_err,
+                   "warning, not much extra random data, consider using the -rand option\n");
+    }
+    if (inrand != NULL)
+        BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
+                   app_RAND_load_files(inrand));
+
+    DSA_get0_pqg(dsa, &p, NULL, NULL);
+    BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(p));
+    if (!DSA_generate_key(dsa))
+        goto end;
+
+    app_RAND_write_file(NULL);
+
+    assert(private);
+    if (!PEM_write_bio_DSAPrivateKey(out, dsa, enc, NULL, 0, NULL, passout))
+        goto end;
+    ret = 0;
+ end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
+ end2:
+    BIO_free(in);
+    BIO_free_all(out);
+    DSA_free(dsa);
+    OPENSSL_free(passout);
+    return (ret);
+}
 #endif
-
-int MAIN(argc, argv)
-int argc;
-char **argv;
-	{
-	char buffer[200];
-	DSA *dsa=NULL;
-	int ret=1,num=DEFBITS;
-	char *outfile=NULL;
-	char *inrand=NULL,*randfile,*dsaparams=NULL;
-	BIO *out=NULL,*in=NULL;
-
-	apps_startup();
-
-	if (bio_err == NULL)
-		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
-
-	argv++;
-	argc--;
-	for (;;)
-		{
-		if (argc <= 0) break;
-		if (strcmp(*argv,"-out") == 0)
-			{
-			if (--argc < 1) goto bad;
-			outfile= *(++argv);
-			}
-		else if (strcmp(*argv,"-rand") == 0)
-			{
-			if (--argc < 1) goto bad;
-			inrand= *(++argv);
-			}
-		else if (strcmp(*argv,"-") == 0)
-			goto bad;
-		else if (dsaparams == NULL)
-			{
-			dsaparams= *argv;
-			}
-		else
-			goto bad;
-		argv++;
-		argc--;
-		}
-
-	if (dsaparams == NULL)
-		{
-bad:
-		BIO_printf(bio_err,"usage: gendsa [args] [numbits]\n");
-		BIO_printf(bio_err," -out file - output the key to 'file\n");
-		BIO_printf(bio_err," -rand file:file:...\n");
-		BIO_printf(bio_err,"           - load the file (or the files in the directory) into\n");
-		BIO_printf(bio_err,"             the random number generator\n");
-		goto end;
-		}
-
-	in=BIO_new(BIO_s_file());
-	if (!(BIO_read_filename(in,"dsaparams")))
-		{
-		perror(dsaparams);
-		goto end;
-		}
-
-	if ((dsa=PEM_read_bio_DSAparams(in,NULL,NULL)) == NULL)
-		{
-		BIO_printf(bio_err,"unable to load DSA parameter file\n");
-		goto end;
-		}
-	BIO_free(in);
-		
-	out=BIO_new(BIO_s_file());
-	if (out == NULL) goto end;
-
-	if (outfile == NULL)
-		BIO_set_fp(out,stdout,BIO_NOCLOSE);
-	else
-		{
-		if (BIO_write_filename(out,outfile) <= 0)
-			{
-			perror(outfile);
-			goto end;
-			}
-		}
-
-	randfile=RAND_file_name(buffer,200);
-	if ((randfile == NULL)|| !RAND_load_file(randfile,1024L*1024L))
-		BIO_printf(bio_err,"unable to load 'random state'\n");
-
-	if (inrand == NULL)
-		BIO_printf(bio_err,"warning, not much extra random data, consider using the -rand option\n");
-	else
-		{
-		BIO_printf(bio_err,"%ld semi-random bytes loaded\n",
-			dsa_load_rand(inrand));
-		}
-
-	BIO_printf(bio_err,"Generating DSA parameters, %d bit long prime\n",num);
-	BIO_printf(bio_err,"This could take some time\n");
-	if (!DSA_generate_key(dsa)) goto end;
-
-	if (randfile == NULL)
-		BIO_printf(bio_err,"unable to write 'random state'\n");
-	else
-		RAND_write_file(randfile);
-
-	if (!PEM_write_bio_DSAPrivateKey(out,dsa,EVP_des_ede3_cbc(),NULL,0,NULL))
-		goto end;
-	ret=0;
-end:
-	if (ret != 0)
-		ERR_print_errors(bio_err);
-	if (out != NULL) BIO_free(out);
-	if (dsa != NULL) DSA_free(dsa);
-	EXIT(ret);
-	}
-
-static long dsa_load_rand(name)
-char *name;
-	{
-	char *p,*n;
-	int last;
-	long tot=0;
-
-	for (;;)
-		{
-		last=0;
-		for (p=name; ((*p != '\0') && (*p != LIST_SEPARATOR_CHAR)); p++);
-		if (*p == '\0') last=1;
-		*p='\0';
-		n=name;
-		name=p+1;
-		if (*n == '\0') break;
-
-		tot+=RAND_load_file(n,1);
-		if (last) break;
-		}
-	return(tot);
-	}
-
-

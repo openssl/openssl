@@ -1,0 +1,97 @@
+language: c
+cache: ccache
+
+addons:
+    apt:
+        packages:
+            - ccache
+            - clang-3.6
+            - gcc-5
+            - binutils-mingw-w64
+            - gcc-mingw-w64
+            - wine
+        sources:
+            - llvm-toolchain-precise-3.6
+            - ubuntu-toolchain-r-test
+
+os:
+    - linux
+    - osx
+
+compiler:
+    - clang
+    - gcc
+
+env:
+    - CONFIG_OPTS="" DESTDIR="_install"
+    - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
+    - CONFIG_OPTS="--strict-warnings no-shared" BUILDONLY="yes"
+    - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
+    - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
+
+matrix:
+    include:
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-shared enable-asan"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -fno-sanitize=alignment"
+        - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="no-shared no-asm enable-asan enable-rc5 enable-md2"
+        - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
+        - os: linux
+          compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-pic"
+        - os: linux
+          compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-pic"
+    exclude:
+        - os: linux
+          compiler: clang
+        - os: osx
+          compiler: gcc
+
+before_script:
+    - sh .travis-create-release.sh $TRAVIS_OS_NAME
+    - tar -xvzf _srcdist.tar.gz
+    - mkdir _build;
+    - cd _build;
+    - if [ "$CC" == i686-w64-mingw32-gcc ]; then
+          export CROSS_COMPILE=${CC%%gcc}; unset CC;
+          ../_srcdist/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
+      elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
+          export CROSS_COMPILE=${CC%%gcc}; unset CC;
+          ../_srcdist/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
+      else
+          if which ccache >/dev/null && [ "$CC" != clang-3.6 ]; then
+              CC="ccache $CC";
+          fi;
+          ../_srcdist/config $CONFIG_OPTS;
+      fi
+    - cd ..
+
+script:
+    - cd _build;
+    - make
+    - if [ -z "$BUILDONLY" ]; then
+          if [ -n "$CROSS_COMPILE" ]; then
+              export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+          fi;
+          HARNESS_VERBOSE=yes make test;
+      else
+          make build_tests;
+      fi
+    - if [ -n "$DESTDIR" ]; then
+          mkdir "../$DESTDIR";
+          make install DESTDIR="../$DESTDIR";
+      fi
+    - cd ..
+
+notifications:
+    email:
+        - openssl-commits@openssl.org
+

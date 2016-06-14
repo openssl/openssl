@@ -1,0 +1,30 @@
+{- use File::Spec::Functions qw/catdir rel2abs/; -}
+LIBS=libcrypto libssl
+ORDINALS[libcrypto]=crypto
+ORDINALS[libssl]=ssl
+INCLUDE[libcrypto]="{- rel2abs(catdir($builddir,"include")) -}" . crypto/include include
+INCLUDE[libssl]="{- rel2abs(catdir($builddir,"include")) -}" . include
+DEPEND[libssl]=libcrypto
+
+IF[{- $config{target} =~ /^Cygwin/ -}]
+ SHARED_NAME[libcrypto]=cygcrypto-{- $config{shlib_major}.".".$config{shlib_minor} -}
+ SHARED_NAME[libssl]=cygssl-{- $config{shlib_major}.".".$config{shlib_minor} -}
+ELSIF[{- $config{target} =~ /^mingw/ -}]
+ SHARED_NAME[libcrypto]=libcrypto-{- $config{shlib_major}."_".$config{shlib_minor} -}{- $config{target} eq "mingw64" ? "-x64" : "" -}
+ SHARED_NAME[libssl]=libssl-{- $config{shlib_major}."_".$config{shlib_minor} -}{- $config{target} eq "mingw64" ? "-x64" : "" -}
+ELSIF[{- $config{target} =~ /^VC-/ -}]
+ SHARED_NAME[libcrypto]=libcrypto-{- $config{shlib_major}."_".$config{shlib_minor} -}{- $target{multilib} -}
+ SHARED_NAME[libssl]=libssl-{- $config{shlib_major}."_".$config{shlib_minor} -}{- $target{multilib} -}
+ENDIF
+
+# VMS has a cultural standard where all libraries are prefixed.
+# For OpenSSL, the choice is 'ossl$' (this prefix was claimed in a
+# conversation with VSI, Tuesday January 26 2016)
+# Also, it seems it's usual to have a suffix to the shared library name
+# for the different pointer sizes that were built for.
+IF[{- $config{target} =~ /^vms/ -}]
+ RENAME[libcrypto]=ossl$libcrypto
+ RENAME[libssl]=ossl$libssl
+ SHARED_NAME[libcrypto]=ossl$libcrypto_shr{- $target{pointer_size} -}
+ SHARED_NAME[libssl]=ossl$libssl_shr{- $target{pointer_size} -}
+ENDIF

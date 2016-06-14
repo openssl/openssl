@@ -1,3 +1,0 @@
-#!/bin/sh -x
-
-gcc -g -I../../include test.c -L../.. -lcrypto

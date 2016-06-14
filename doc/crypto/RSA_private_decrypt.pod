@@ -1,0 +1,79 @@
+=pod
+
+=head1 NAME
+
+RSA_private_decrypt,
+RSA_private_encrypt,
+RSA_public_decrypt,
+RSA_sign,
+RSA_verify,
+RSA_sign_ASN1_OCTET_STRING,
+RSA_verify_ASN1_OCTET_STRING
+- RSA public key cryptosystem
+
+=head1 SYNOPSIS
+
+ #include <openssl/rsa.h>
+
+ int RSA_private_decrypt(int flen, unsigned char *from,
+    unsigned char *to, RSA *rsa, int padding);
+ int RSA_private_encrypt(int flen, unsigned char *from,
+    unsigned char *to, RSA *rsa,int padding);
+ int RSA_public_decrypt(int flen, unsigned char *from,
+    unsigned char *to, RSA *rsa,int padding);
+
+ int RSA_sign(int type, unsigned char *m, unsigned int m_len,
+    unsigned char *sigret, unsigned int *siglen, RSA *rsa);
+ int RSA_verify(int type, unsigned char *m, unsigned int m_len,
+    unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
+
+ int RSA_sign_ASN1_OCTET_STRING(int dummy, unsigned char *m,
+    unsigned int m_len, unsigned char *sigret, unsigned int *siglen,
+    RSA *rsa);
+ int RSA_verify_ASN1_OCTET_STRING(int dummy, unsigned char *m,
+    unsigned int m_len, unsigned char *sigbuf, unsigned int siglen,
+    RSA *rsa);
+
+=head1 DESCRIPTION
+
+These functions implement RSA public key encryption and signatures
+as defined in PKCS #1 v2.0 [RFC 2437].
+
+The B<RSA> structure represents public and private RSA keys.
+
+Note that RSA keys may use non-standard B<RSA_METHOD> implementations,
+either directly or by the use of B<ENGINE> modules. In some cases (eg. an
+ENGINE providing support for hardware-embedded keys), these BIGNUM values
+will not be used by the implementation or may be used for alternative data
+storage. For this reason, applications should generally avoid using RSA
+structure elements directly and instead use API functions to query or
+modify keys.
+
+=head1 CONFORMING TO
+
+SSL, PKCS #1 v2.0
+
+=head1 SEE ALSO
+
+L<bn(3)>, L<dsa(3)>, L<dh(3)>,
+L<rand(3)>, L<engine(3)>, L<RSA_new(3)>, L<RSA_set0_key(3)>
+L<RSA_public_encrypt(3)>,
+L<RSA_size(3)>,
+L<RSA_generate_key(3)>,
+L<RSA_check_key(3)>,
+L<RSA_blinding_on(3)>,
+L<RSA_set_method(3)>, L<RSA_print(3)>,
+L<RSA_get_ex_new_index(3)>,
+L<RSA_sign_ASN1_OCTET_STRING(3)>,
+L<RSA_padding_add_PKCS1_type_1(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

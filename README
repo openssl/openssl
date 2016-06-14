@@ -1,173 +1,111 @@
-		SSLeay 0.9.1a 06-Jul-1998
-		Copyright (c) 1997, Eric Young
-		All rights reserved.
 
-This directory contains Eric Young's (eay@cryptsoft.com) implementation
-of SSL and supporting libraries.
+ OpenSSL 1.1.0-pre6-dev
 
-The current version of this library is available from
-    ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/SSLeay-x.x.x.tar.gz
+ Copyright (c) 1998-2016 The OpenSSL Project
+ Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
+ All rights reserved.
 
-There are patches to a number of internet applications which can be found in
-    ftp://ftp.psy.uq.oz.au/pub/Crypto/SSLapps/
+ DESCRIPTION
+ -----------
 
-A Web page containing the SSLeay FAQ written by Tim Hudson <tjh@cryptsoft.com> 
-can be found at 
-    http://www.psy.uq.oz.au/~ftp/Crypto
+ The OpenSSL Project is a collaborative effort to develop a robust,
+ commercial-grade, fully featured, and Open Source toolkit implementing the
+ Transport Layer Security (TLS) protocols (including SSLv3) as well as a
+ full-strength general purpose cryptographic library.
 
-Additional documentation is being slowly written by Eric Young, and is being
-added to http://www.cryptsoft.com/ssleay/doc.  It will normally also be
-available on http://www.psy.uq.oz.au/~ftp/Crypto/ssleay
+ OpenSSL is descended from the SSLeay library developed by Eric A. Young
+ and Tim J. Hudson.  The OpenSSL toolkit is licensed under a dual-license (the
+ OpenSSL license plus the SSLeay license), which means that you are free to
+ get and use it for commercial and non-commercial purposes as long as you
+ fulfill the conditions of both licenses.
 
-This Library and programs are FREE for commercial and non-commercial
-usage.  The only restriction is that I must be attributed with the
-development of this code.  See the COPYRIGHT file for more details.
-Donations would still be accepted :-).
+ OVERVIEW
+ --------
 
-THIS LIBRARY IS NOT %100 COMPATABLE WITH SSLeay 0.6.6
+ The OpenSSL toolkit includes:
 
-The package includes
+ libssl (with platform specific naming):
+     Provides the client and server-side implementations for SSLv3 and TLS.
 
-libssl.a:
-	My implementation of SSLv2, SSLv3 and the required code to support
-	both SSLv2 and SSLv3 in the one server.
+ libcrypto (with platform specific naming):
+     Provides general cryptographic and X.509 support needed by SSL/TLS but
+     not logically part of it.
 
-libcrypto.a:
-	General encryption and X509 stuff needed by SSL but not
-	actually logically part of it.  It includes routines for the following:
+ openssl:
+     A command line tool that can be used for:
+        Creation of key parameters
+        Creation of X.509 certificates, CSRs and CRLs
+        Calculation of message digests
+        Encryption and decryption
+        SSL/TLS client and server tests
+        Handling of S/MIME signed or encrypted mail
+        And more...
 
-  Ciphers
-	libdes - My libdes DES encryption package which has been floating
-		around the net for a few years.  It includes 15
-		'modes/variations' of DES (1, 2 and 3 key versions of ecb,
-		cbc, cfb and ofb; pcbc and a more general form of cfb and ofb)
-		including desx in cbc mode,
-		a fast crypt(3), and routines to read passwords from the
-		keyboard.
-	RC4 encryption,
-	RC2 encryption 		- 4 different modes, ecb, cbc, cfb and ofb.
-	Blowfish encryption	- 4 different modes, ecb, cbc, cfb and ofb.
-	IDEA encryption		- 4 different modes, ecb, cbc, cfb and ofb.
+ INSTALLATION
+ ------------
 
-  Digests
-	MD5 and MD2 message digest algorithms, fast implementations,
-	SHA (SHA-0) and SHA-1 message digest algorithms,
-	MDC2 message digest.  A DES based hash that is polular on smart cards.
+ See the appropriate file:
+        INSTALL         Linux, Unix, Windows, OpenVMS, ...
+        NOTES.*         INSTALL addendums for different platforms
 
-  Public Key
-	RSA encryption/decryption/generation.  There is no limit
-		on the number of bits.
-	DSA encryption/decryption/generation.   There is no limit on the
-		number of bits.
-	Diffie-Hellman key-exchange/key generation.  There is no limit
-		on the number of bits.
+ SUPPORT
+ -------
 
-  X509v3 certificates
-	X509 encoding/decoding into/from binary ASN1 and a PEM
-		based ascii-binary encoding which supports encryption with
-		a private key.
-	Program to generate RSA and DSA certificate requests and to
-		generate RSA and DSA certificates.
+ See the OpenSSL website www.openssl.org for details on how to obtain
+ commercial technical support. Free community support is available through the
+ openssl-users email list (see
+ https://www.openssl.org/community/mailinglists.html for further details).
 
-  Systems
-  	The normal digital envelope routines and base64 encoding.
-	Higher level access to ciphers and digests by name.  New ciphers can be
-		loaded at run time.
-	The BIO io system which is a simple non-blocking IO abstraction.
-		Current methods supported are file descriptors, sockets,
-		socket accept, socket connect, memory buffer, buffering,
-		SSL client/server, file pointer, encryption, digest,
-		non-blocking testing and null.
-  Data structures
-  	A dynamically growing hashing system
-	A simple stack.
-	A Configuration loader that uses a format similar to MS .ini files.
+ If you have any problems with OpenSSL then please take the following steps
+ first:
 
-Programs in this package include
-	enc	- a general encryption program that can encrypt/decrypt using
-		one of 17 different cipher/mode combinations.  The
-		input/output can also be converted to/from base64
-		ascii encoding.
-	dgst	- a generate message digesting program that will generate
-		message digests for any of md2, md5, sha (sha-0 or sha-1)
-		or mdc2.
-	asn1parse - parse and display the structure of an asn1 encoded
-		binary file.
-	rsa	- Manipulate RSA private keys.
-	dsa	- Manipulate DSA private keys.
-	dh	- Manipulate Diffie-Hellman parameter files.
-	dsaparam- Manipulate and generate DSA parameter files.
-	crl	- Manipulate certificate revocation lists.
-	crt2pkcs7- Generate a pkcs7 object containing a crl and a certificate.
-	x509	- Manipulate x509 certificates, self-sign certificates.
-	req	- Manipulate PKCS#10 certificate requests and also
-		  generate certificate requests.
-	genrsa  - Generates an arbitrary sized RSA private key.
-	gendh	- Generates a set of Diffie-Hellman parameters, the prime
-		  will be a strong prime.
-	ca	- Create certificates from PKCS#10 certificate requests.
-		  This program also maintains a database of certificates
-		  issued.
-	verify	- Check x509 certificate signatures.
-	speed	- Benchmark SSLeay's ciphers.
-	s_server- A test SSL server.
-	s_client- A test SSL client.
-	s_time	- Benchmark SSL performance of SSL server programs.
-	errstr	- Convert from SSLeay hex error codes to a readable form.
-	
-Documents avaliable are
-	A Postscript and html reference manual
-	(written by Tim Hudson tjh@cryptsoft.com).
+    - Download the current snapshot from ftp://ftp.openssl.org/snapshot/
+      to see if the problem has already been addressed
+    - Remove ASM versions of libraries
+    - Remove compiler optimisation flags
 
-	A list of text protocol references I used.
-	An initial version of the library manual.
+ If you wish to report a bug then please include the following information in
+ any bug report:
 
-To install this package, read the INSTALL file.
-For the Microsoft word, read MICROSOFT
-This library has been compiled and tested on Solaris 2.[34] (sparc and x86),
-SunOS 4.1.3, DGUX, OSF1 Alpha, HPUX 9, AIX 3.5(?), IRIX 5.[23],
-LINUX, NeXT (intel), linux, Windows NT, Windows 3.1, MSDOS 6.22.
+    - OpenSSL version: output of 'openssl version -a'
+    - Any "Configure" options that you selected during compilation of the
+      library if applicable (see INSTALL)
+    - OS Name, Version, Hardware platform
+    - Compiler Details (name, version)
+    - Application Details (name, version)
+    - Problem Description (steps that will reproduce the problem, if known)
+    - Stack Traceback (if the application dumps core)
 
-Multithreading has been tested under Windows NT and Solaris 2.5.1
+ Email the report to:
 
-Due to time constraints, the current release has only be rigorously tested
-on Solaris 2.[45], Linux and Windows NT.
+    rt@openssl.org
 
-For people in the USA, it is possible to compile SSLeay to use RSA
-Inc.'s public key library, RSAref.  From my understanding, it is
-claimed by RSA Inc. to be illegal to use my public key routines inside the USA.
-Read doc/rsaref.doc on how to build with RSAref.
+ In order to avoid spam, this is a moderated mailing list, and it might
+ take a couple of days for the ticket to show up.  (We also scan posts to make
+ sure that security disclosures aren't publically posted by mistake.) Mail
+ to this address is recorded in the public RT (request tracker) database
+ (see https://www.openssl.org/community/index.html#bugs for details) and
+ also forwarded the public openssl-dev mailing list.  Confidential mail
+ may be sent to openssl-security@openssl.org (PGP key available from the
+ key servers).
 
-Read the documentation in the doc directory.  It is quite rough,
-but it lists the functions, you will probably have to look at
-the code to work out how to used them.  I will be working on
-documentation.  Look at the example programs.
+ Please do NOT use this for general assistance or support queries.
+ Just because something doesn't work the way you expect does not mean it
+ is necessarily a bug in OpenSSL. Use the openssl-users email list for this type
+ of query.
 
-There should be a SSL reference manual which is being put together by
-Tim Hudson (tjh@cryptsoft.com) in the same location as this
-distribution.  This contains a lot more information that is very
-useful.  For a description of X509 Certificates, their use, and
-certification, read rfc1421, rfc1422, rfc1423 and rfc1424.  ssl/README
-also goes over the mechanism.
+ You can also make GitHub pull requests. See the CONTRIBUTING file for more
+ details.
 
-We have setup some mailing lists for use by people that are interested
-in helping develop this code and/or ask questions.
-    ssl-bugs@mincom.oz.au
-    ssl-users@mincom.oz.au
-    ssl-bugs-request@mincom.oz.au
-    ssl-users-request@mincom.oz.au
+ HOW TO CONTRIBUTE TO OpenSSL
+ ----------------------------
 
-I have recently read about a new form of software, that which is in
-a permanent state of beta release.  Linux and Netscape are 2 good 
-examples of this, and I would also add SSLeay to this category.
-The Current stable release is 0.6.6.  It has a few minor problems.
-0.8.0 is not call compatable so make sure you have the correct version
-of SSLeay to link with.  
+ See CONTRIBUTING
 
-eric (Jun 1997)
+ LEGALITIES
+ ----------
 
-Eric Young (eay@cryptsoft.com)
-86 Taunton St.
-Annerley 4103.
-Australia.
-
+ A number of nations, in particular the U.S., restrict the use or export
+ of cryptography. If you are potentially subject to such restrictions
+ you should seek competent professional legal advice before attempting to
+ develop or distribute cryptographic code.

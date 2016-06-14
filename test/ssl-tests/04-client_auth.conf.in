@@ -1,0 +1,109 @@
+# -*- mode: perl; -*-
+
+## SSL test configurations
+
+package ssltests;
+
+use strict;
+use warnings;
+
+use OpenSSL::Test;
+use OpenSSL::Test::Utils qw(anydisabled);
+setup("no_test_here");
+
+# We test version-flexible negotiation (undef) and each protocol version.
+my @protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2");
+
+my @is_disabled = (0);
+push @is_disabled, anydisabled("ssl3", "tls1", "tls1_1", "tls1_2");
+
+our @tests = ();
+
+my $dir_sep = $^O ne "VMS" ? "/" : "";
+
+sub generate_tests() {
+
+    foreach (0..$#protocols) {
+        my $protocol = $protocols[$_];
+        my $protocol_name = $protocol || "flex";
+        if (!$is_disabled[$_]) {
+            # Sanity-check simple handshake.
+            push @tests, {
+                name => "server-auth-${protocol_name}",
+                server => {
+                    "Protocol" => $protocol
+                },
+                client => {
+                    "Protocol" => $protocol
+                },
+                test   => { "ExpectedResult" => "Success" },
+            };
+
+            # Handshake with client cert requested but not required or received.
+            push @tests, {
+                name => "client-auth-${protocol_name}-request",
+                server => {
+                    "Protocol" => $protocol,
+                    "VerifyMode" => "Request",
+                },
+                client => {
+                    "Protocol" => $protocol
+                },
+                test   => { "ExpectedResult" => "Success" },
+            };
+
+            # Handshake with client cert required but not present.
+            push @tests, {
+                name => "client-auth-${protocol_name}-require-fail",
+                server => {
+                    "Protocol" => $protocol,
+                    "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
+                    "VerifyMode" => "Require",
+                },
+                client => {
+                    "Protocol" => $protocol,
+                },
+                test   => {
+                    "ExpectedResult" => "ServerFail",
+                    "ServerAlert" => "HandshakeFailure",
+                },
+            };
+
+            # Successful handshake with client authentication.
+            push @tests, {
+                name => "client-auth-${protocol_name}-require",
+                server => {
+                    "Protocol" => $protocol,
+                    "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
+                    "VerifyMode" => "Request",
+                },
+                client => {
+                    "Protocol" => $protocol,
+                    "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
+                    "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem",
+                },
+                test   => { "ExpectedResult" => "Success" },
+            };
+
+            # Handshake with client authentication but without the root certificate.
+            push @tests, {
+                name => "client-auth-${protocol_name}-noroot",
+                server => {
+                    "Protocol" => $protocol,
+                    "VerifyMode" => "Require",
+                },
+                client => {
+                    "Protocol" => $protocol,
+                    "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
+                    "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem",
+                },
+                test   => {
+                    "ExpectedResult" => "ServerFail",
+                    "ServerAlert" => "UnknownCA",
+                },
+            };
+        }
+    }
+}
+ 
+generate_tests();

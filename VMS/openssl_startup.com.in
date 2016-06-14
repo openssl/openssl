@@ -1,0 +1,113 @@
+$	! OpenSSL startup script
+$	!
+$	! This script defines the logical names used by the installation
+$	! of OpenSSL.  It can provide those logical names at any level,
+$	! defined by P1.
+$	!
+$	! The logical names created are:
+$	!
+$	!	OSSL$ROOTnnn	Installation root
+$	!	OSSL$EXEnnn	Where the executables are located
+$	!	OSSL$LIBnnn	Where the library files are located
+$	!	OSSL$SHAREnnn	Where the sahreable images are located
+$	!	OSSL$INCLUDEnnn	Include directory root
+$	!	OSSL$ENGINESnnn	Where the sahreable images are located
+$	!
+$	! In all these, nnn is the OpenSSL version number.  This allows
+$	! several OpenSSL versions to be installed simultaneously.
+$	!
+$	! In addition, unless P2 is "NOALIASES", these logical names are
+$	! created:
+$	!
+$	!	OSSL$ROOT	Alias for OSSL$ROOTnnn
+$	!	OSSL$EXE	Alias for OSSL$EXEnnn
+$	!	OSSL$LIB	Alias for OSSL$LIBnnn
+$	!	OSSL$SHARE	Alias for OSSL$SHAREnnn
+$	!	OSSL$INCLUDE	Alias for OSSL$INCLUDEnnn
+$	!	OPENSSL		is OSSL$INCLUDE:[OPENSSL]
+$	!	OSSL$ENGINES	Alias for OSSL$ENGINESnnn
+$	!
+$	! P1	Qualifier(s) for DEFINE.  "/SYSTEM" would be typical when
+$	!	calling this script from SYS$STARTUP:SYSTARTUP_VMS.COM,
+$	!	while "/PROCESS" would be typical for a personal install.
+$	!	Default: /PROCESS
+$	!
+$	! P2	If the value is "NOALIASES", no alias logical names are
+$	!	created.
+$
+$	status = %x10000001	! Generic success
+$
+$	! In case there's a problem
+$	ON CONTROL_Y THEN GOTO bailout
+$	ON ERROR THEN GOTO bailout
+$
+$	! Find the architecture
+$	IF F$GETSYI("CPU") .LT. 128
+$	THEN
+$	    arch := VAX
+$	ELSE
+$	    arch = F$EDIT(F$GETSYI("ARCH_NAME"),"UPCASE")
+$	    IF arch .EQS. "" THEN GOTO unknown_arch
+$	ENDIF
+$
+$	! Generated information
+$	VERSION := {- $config{version} -}
+$	INSTALLTOP := {- $config{INSTALLTOP} -}
+$	OPENSSLDIR := {- $config{OPENSSLDIR} -}
+$	POINTER_SIZE := {- $config{pointersize} -}
+$
+$	! Make sure that INSTALLTOP and OPENSSLDIR become something one
+$	! can build concealed logical names on
+$	INSTALLTOP_ = F$PARSE("A.;",INSTALLTOP,,,"NO_CONCEAL") -
+		     - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+$	OPENSSLDIR_ = F$PARSE("A.;",OPENSSLDIR,,,"NO_CONCEAL") -
+		     - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_INSTALLTOP 'INSTALLTOP_'
+$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_OPENSSLDIR 'OPENSSLDIR_'
+$
+$	! Check that things are in place, and specifically, the stuff
+$	! belonging to this architecture
+$	IF F$SEARCH("WRK_INSTALLTOP:[000000]INCLUDE.DIR;1") .EQS. "" -
+	   .OR. F$SEARCH("WRK_INSTALLTOP:[000000]LIB.DIR;1") .EQS. "" -
+	   .OR. F$SEARCH("WRK_INSTALLTOP:[000000]EXE.DIR;1") .EQS. "" -
+	   .OR. F$SEARCH("WRK_INSTALLTOP:[LIB]''arch'.DIR;1") .EQS. "" -
+	   .OR. F$SEARCH("WRK_INSTALLTOP:[EXE]''arch'.DIR;1") .EQS. "" -
+	   .OR. F$SEARCH("WRK_OPENSSLDIR:[000000]openssl.cnf") .EQS. ""
+$	THEN
+$	    WRITE SYS$ERROR "''INSTALLTOP' doesn't look like an OpenSSL installation for ''arch'"
+$	    status = %x00018292 ! RMS$_FNF, file not found
+$	    GOTO bailout
+$	ENDIF
+$
+$	! Abbrevs
+$	DEFT := DEFINE /TRANSLATION=CONCEALED /NOLOG 'P1'
+$	DEF  := DEFINE /NOLOG 'P1'
+$	v    =  VERSION - "." - "."
+$
+$	DEFT OSSL$INSTROOT'v'	'INSTALLTOP_'
+$	DEFT OSSL$INCLUDE'v'	OSSL$INSTROOT:[INCLUDE.]
+$	DEF  OSSL$LIB'v'	OSSL$INSTROOT:[LIB.'arch']
+$	DEF  OSSL$SHARE'v'	OSSL$INSTROOT:[LIB.'arch']
+$	DEF  OSSL$ENGINES'v'	OSSL$INSTROOT:[ENGINES.'arch']
+$	DEF  OSSL$EXE'v'	OSSL$INSTROOT:[EXE.'arch']
+$       {- join("\n\$       ", map { my $x = uc $_; "DEF  ${x}'v' OSSL\$SHARE:${x}" } @{$config{shared_libs}}) -}
+$	IF P2 .NES. "NOALIASES"
+$	THEN
+$	    DEF OSSL$INSTROOT	OSSL$INSTROOT'v'
+$	    DEF OSSL$INCLUDE	OSSL$INCLUDE'v'
+$	    DEF OSSL$LIB	OSSL$LIB'v'
+$	    DEF OSSL$SHARE	OSSL$SHARE'v'
+$	    DEF OSSL$ENGINES	OSSL$ENGINES'v'
+$	    DEF OSSL$EXE	OSSL$EXE'v'
+$	    DEF OPENSSL		OSSL$INCLUDE:[OPENSSL]
+$           {- join("\n\$           ", map { my $x = uc $_; "DEF ${x} ${x}'v'" } @{$config{shared_libs}}) -}
+$	ENDIF
+$
+$	DEFT OSSL$DATAROOT	'OPENSSLDIR_'
+$	DEF  OSSL$CERTS		OSSL$DATAROOT:[CERTS]
+$	DEF  OSSL$PRIVATE	OSSL$DATAROOT:[PRIVATE]
+$
+$ bailout:
+$	DEASSIGN WRK_INSTALLTOP
+$
+$	EXIT 'status'
