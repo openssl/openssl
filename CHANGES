@@ -4,6 +4,9 @@
 
  Changes between 1.0.2h and 1.1.0  [xx XXX 2016]
 
+  *) Windows RAND state is now stored in ${TEMP}/.rnd by default.
+     [Rich Salz]
+
   *) The EVP_EncryptUpdate() function has had its return type changed from void
      to int. A return of 0 indicates and error while a return of 1 indicates
      success.
