@@ -4,6 +4,12 @@
 
  Changes between 1.0.2h and 1.1.0  [xx XXX 2016]
 
+  *) The method for finding the storage location for the Windows RAND seed file
+     has changed. First we check %RANDFILE%. If that is not set then we check
+     the directories %TMP%, %TEMP%, %USERPROFILE%, %SYSTEMROOT% and %HOME% in
+     that order. If all else fails we fall back to "C:".
+     [Matt Caswell]
+
   *) The EVP_EncryptUpdate() function has had its return type changed from void
      to int. A return of 0 indicates and error while a return of 1 indicates
      success.
