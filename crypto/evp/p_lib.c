@@ -237,6 +237,18 @@ void *EVP_PKEY_get0(const EVP_PKEY *pkey)
     return pkey->pkey.ptr;
 }
 
+const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
+{
+    ASN1_OCTET_STRING *os = NULL;
+    if (pkey->type != EVP_PKEY_HMAC) {
+        EVPerr(EVP_F_EVP_PKEY_GET0_HMAC, EVP_R_EXPECTING_AN_HMAC_KEY);
+        return NULL;
+    }
+    os = EVP_PKEY_get0(pkey);
+    *len = os->length;
+    return os->data;
+}
+
 #ifndef OPENSSL_NO_RSA
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
