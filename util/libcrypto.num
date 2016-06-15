@@ -4149,3 +4149,4 @@ PEM_write_bio_PrivateKey_traditional    4091	1_1_0	EXIST::FUNCTION:
 X509_get_pathlen                        4092	1_1_0	EXIST::FUNCTION:
 ECDSA_SIG_set0                          4093	1_1_0	EXIST::FUNCTION:EC
 DSA_SIG_set0                            4094	1_1_0	EXIST::FUNCTION:DSA
+EVP_PKEY_get0_hmac                      4095	1_1_0	EXIST::FUNCTION:
