@@ -286,8 +286,22 @@ const char *RAND_file_name(char *buf, size_t size)
         if (OPENSSL_strlcpy(buf, s, size) >= size)
             return NULL;
     } else {
+#ifdef OPENSSL_SYS_WINDOWS
+        /*
+         * We use the same env variables as GetTempFile() - but that function
+         * uses TCHARs, but getenv() gives us chars so its easier to do it this
+         * way
+         */
+        if ((s = getenv("TMP")) == NULL
+            && (s = getenv("TEMP")) == NULL
+            && (s = getenv("USERPROFILE")) == NULL
+            && (s = getenv("SYSTEMROOT")) == NULL) {
+            s = getenv("HOME");
+        }
+#else
         if (OPENSSL_issetugid() == 0)
             s = getenv("HOME");
+#endif
 #ifdef DEFAULT_HOME
         if (s == NULL) {
             s = DEFAULT_HOME;
