@@ -306,7 +306,7 @@ typedef int (*TS_extension_cb) (struct TS_resp_ctx *, X509_EXTENSION *,
 
 typedef struct TS_resp_ctx TS_RESP_CTX;
 
-DEFINE_STACK_OF(EVP_MD)
+DEFINE_STACK_OF_CONST(EVP_MD)
 
 /* Creates a response context that can be used for generating responses. */
 TS_RESP_CTX *TS_RESP_CTX_new(void);
