@@ -269,9 +269,9 @@ int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
     /* If the fields p, q and g in d are NULL, the corresponding input
      * parameters MUST be non-NULL.
      */
-    if (d->p == NULL && p == NULL
-        || d->q == NULL && q == NULL
-        || d->g == NULL && g == NULL)
+    if ((d->p == NULL && p == NULL)
+        || (d->q == NULL && q == NULL)
+        || (d->g == NULL && g == NULL))
         return 0;
 
     if (p != NULL) {
