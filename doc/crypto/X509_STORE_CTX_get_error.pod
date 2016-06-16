@@ -203,7 +203,7 @@ consistent with the supplied purpose.
 
 =item B<X509_V_ERR_PATH_LENGTH_EXCEEDED: path length constraint exceeded>
 
-the basicConstraints pathlength parameter has been exceeded.
+the basicConstraints path-length parameter has been exceeded.
 
 =item B<X509_V_ERR_INVALID_PURPOSE: unsupported certificate purpose>
 
