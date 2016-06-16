@@ -332,7 +332,7 @@ static double Time_F(int s)
         if (thr == NULL) {
             DWORD ret = GetLastError();
             BIO_printf(bio_err, "unable to CreateThread (%d)", ret);
-            TerminateProcess(GetCurrentProcess(), err);
+            TerminateProcess(GetCurrentProcess(), ret);
         }
         CloseHandle(thr);       /* detach the thread */
         while (!schlock)
