@@ -2085,7 +2085,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_RSA
     if (alg_k & (SSL_kRSA | SSL_kRSAPSK)) {
         unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
-        int decrypt_len;
+        int decrypt_len, padding_len;
         unsigned char decrypt_good, version_good;
         size_t j;
 
@@ -2144,17 +2144,35 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
+        /*
+         * Decrypt with no padding. PKCS#1 padding will be removed as part of
+         * the timing-sensitive code below.
+         */
         decrypt_len = RSA_private_decrypt(PACKET_remaining(&enc_premaster),
                                           PACKET_data(&enc_premaster),
-                                          rsa_decrypt, rsa, RSA_PKCS1_PADDING);
-        ERR_clear_error();
+                                          rsa_decrypt, rsa, RSA_NO_PADDING);
+        if (decrypt_len < 0) {
+            goto err;
+        }
 
         /*
-         * decrypt_len should be SSL_MAX_MASTER_KEY_LENGTH. decrypt_good will
-         * be 0xff if so and zero otherwise.
+         * The smallest padded premaster is 11 bytes of overhead. Small keys
+         * are publicly invalid.
          */
-        decrypt_good =
-            constant_time_eq_int_8(decrypt_len, SSL_MAX_MASTER_KEY_LENGTH);
+        if (decrypt_len < 11 + SSL_MAX_MASTER_KEY_LENGTH) {
+            al = SSL_AD_DECRYPT_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_DECRYPTION_FAILED);
+            goto f_err;
+        }
+
+        /* Check the padding. See RFC 3447, section 7.2.2. */
+        padding_len = decrypt_len - SSL_MAX_MASTER_KEY_LENGTH;
+        decrypt_good = constant_time_eq_int_8(rsa_decrypt[0], 0) &
+                       constant_time_eq_int_8(rsa_decrypt[1], 2);
+        for (j = 2; j < padding_len - 1; j++) {
+            decrypt_good &= ~constant_time_is_zero_8(rsa_decrypt[j]);
+        }
+        decrypt_good &= constant_time_is_zero_8(rsa_decrypt[padding_len - 1]);
 
         /*
          * If the version in the decrypted pre-master secret is correct then
@@ -2165,10 +2183,10 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
          * constant time and are treated like any other decryption error.
          */
         version_good =
-            constant_time_eq_8(rsa_decrypt[0],
+            constant_time_eq_8(rsa_decrypt[padding_len],
                                (unsigned)(s->client_version >> 8));
         version_good &=
-            constant_time_eq_8(rsa_decrypt[1],
+            constant_time_eq_8(rsa_decrypt[padding_len + 1],
                                (unsigned)(s->client_version & 0xff));
 
         /*
@@ -2182,10 +2200,10 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
          */
         if (s->options & SSL_OP_TLS_ROLLBACK_BUG) {
             unsigned char workaround_good;
-            workaround_good =
-                constant_time_eq_8(rsa_decrypt[0], (unsigned)(s->version >> 8));
+            workaround_good = constant_time_eq_8(rsa_decrypt[padding_len],
+                                                 (unsigned)(s->version >> 8));
             workaround_good &=
-                constant_time_eq_8(rsa_decrypt[1],
+                constant_time_eq_8(rsa_decrypt[padding_len + 1],
                                    (unsigned)(s->version & 0xff));
             version_good |= workaround_good;
         }
@@ -2203,12 +2221,13 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
          * it is still sufficiently large to read from.
          */
         for (j = 0; j < sizeof(rand_premaster_secret); j++) {
-            rsa_decrypt[j] =
-                constant_time_select_8(decrypt_good, rsa_decrypt[j],
+            rsa_decrypt[padding_len + j] =
+                constant_time_select_8(decrypt_good,
+                                       rsa_decrypt[padding_len + j],
                                        rand_premaster_secret[j]);
         }
 
-        if (!ssl_generate_master_secret(s, rsa_decrypt,
+        if (!ssl_generate_master_secret(s, rsa_decrypt + padding_len,
                                         sizeof(rand_premaster_secret), 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
