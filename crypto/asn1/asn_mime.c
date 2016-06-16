@@ -876,8 +876,12 @@ static int mime_param_cmp(const MIME_PARAM *const *a,
 
 static MIME_HEADER *mime_hdr_find(STACK_OF(MIME_HEADER) *hdrs, const char *name)
 {
-    MIME_HEADER htmp = { (char *)name, NULL }; /* ugly cast but harmless */
+    MIME_HEADER htmp;
     int idx;
+
+    htmp.name = (char *)name;
+    htmp.value = NULL;
+    htmp.params = NULL;
 
     idx = sk_MIME_HEADER_find(hdrs, &htmp);
     if (idx < 0)
@@ -887,9 +891,11 @@ static MIME_HEADER *mime_hdr_find(STACK_OF(MIME_HEADER) *hdrs, const char *name)
 
 static MIME_PARAM *mime_param_find(MIME_HEADER *hdr, const char *name)
 {
-    MIME_PARAM param = { (char *)name, NULL }; /* ugly cast but harmless */
+    MIME_PARAM param;
     int idx;
 
+    param.param_name = (char *)name;
+    param.param_value = NULL;
     idx = sk_MIME_PARAM_find(hdr->params, &param);
     if (idx < 0)
         return NULL;
