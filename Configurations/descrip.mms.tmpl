@@ -37,14 +37,25 @@
       "";
   }
 
+  # Because we need to make two computations of these data,
+  # we store them in arrays for reuse
+  our @shlibs = map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}};
+  our @programs = grep { !m|^\[\.test\]| } @{$unified_info{programs}};
+  our @testprogs = grep { m|^\[\.test\]| } @{$unified_info{programs}};
+  our @generated = ( ( map { (my $x = $_) =~ s|\.S$|\.s|; $x }
+                       grep { defined $unified_info{generate}->{$_} }
+                       map { @{$unified_info{sources}->{$_}} }
+                       grep { /\.o$/ } keys %{$unified_info{sources}} ),
+                     ( grep { /\.h$/ } keys %{$unified_info{generate}} ) );
+
   # This is a horrible hack, but is needed because recursive inclusion of files
   # in different directories does not work well with HP C.
   my $sd = sourcedir("crypto", "async", "arch");
   foreach (grep /\[\.crypto\.async\.arch\].*\.o$/, keys %{$unified_info{sources}}) {
       (my $x = $_) =~ s|\.o$|.OBJ|;
       $unified_info{before}->{$x}
-          = qq(arch = F\$PARSE("$sd","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define arch 'arch');
+          = qq(arch_include = F\$PARSE("$sd","A.;",,,"SYNTAX_ONLY") - "A.;"
+        define arch 'arch_include');
       $unified_info{after}->{$x}
           = qq(deassign arch);
   }
@@ -52,10 +63,10 @@
   my $sd2 = sourcedir("ssl","statem");
   $unified_info{before}->{"[.test]heartbeat_test.OBJ"}
       = $unified_info{before}->{"[.test]ssltest_old.OBJ"}
-      = qq(record = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define record 'record'
-        statem = F\$PARSE("$sd2","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define statem 'statem');
+      = qq(record_include = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
+        define record 'record_include'
+        statem_include = F\$PARSE("$sd2","A.;",,,"SYNTAX_ONLY") - "A.;"
+        define statem 'statem_include');
   $unified_info{after}->{"[.test]heartbeat_test.OBJ"}
       = $unified_info{after}->{"[.test]ssltest.OBJ"}
       = qq(deassign statem
@@ -63,10 +74,10 @@
   foreach (grep /^\[\.ssl\.(?:record|statem)\].*\.o$/, keys %{$unified_info{sources}}) {
       (my $x = $_) =~ s|\.o$|.OBJ|;
       $unified_info{before}->{$x}
-          = qq(record = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define record 'record'
-        statem = F\$PARSE("$sd2","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define statem 'statem');
+          = qq(record_include = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
+        define record 'record_include'
+        statem_include = F\$PARSE("$sd2","A.;",,,"SYNTAX_ONLY") - "A.;"
+        define statem 'statem_include');
       $unified_info{after}->{$x}
           = qq(deassign statem
         deassign record);
@@ -99,13 +110,13 @@ EXE_EXT=.EXE
 LIB_EXT=.OLB
 SHLIB_EXT=.EXE
 OBJ_EXT=.OBJ
-DEP_EXT=.MMS
+DEP_EXT=.D
 
 LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @{$unified_info{libraries}}) -}
-SHLIBS={- join(" ", map { $_."\$(SHLIB_EXT)" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
+SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @shlibs) -}
 ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{engines}}) -}
-PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } grep { !m|^\[\.test\]| } @{$unified_info{programs}}) -}
-TESTPROGS={- join(", ", map { "-\n\t".$_.".EXE" } grep { m|^\[\.test\]| } @{$unified_info{programs}}) -}
+PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @programs) -}
+TESTPROGS={- join(", ", map { "-\n\t".$_.".EXE" } @testprogs) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
@@ -113,7 +124,8 @@ DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
                     keys %{$unified_info{sources}};
         join(", ", map { "-\n\t".$_ } @deps); -}
 {- output_on() if $disabled{makedepend}; "" -}
-GENERATED_MANDATORY={- join(",", @{$unified_info{depends}->{""}} ) -}
+GENERATED_MANDATORY={- join(", ", map { "-\n\t".$_ } @{$unified_info{depends}->{""}} ) -}
+GENERATED={- join(", ", map { "-\n\t".$_ } @generated) -}
 
 {- output_off() if $disabled{apps}; "" -}
 BIN_SCRIPTS=[.tools]c_rehash.pl
@@ -257,18 +269,15 @@ test tests : build_generated, -
         @ ! {- output_on() if !$disabled{tests}; "" -}
 
 list-tests :
-        @ TOP=$(SRCDIR) PERL=$(PERL) $(PERL) {- catfile($config{sourcedir},"test", "run_tests.pl") -} list
+        @ ! {- output_off() if $disabled{tests}; "" -}
+        @ DEFINE SRCTOP {- sourcedir() -}
+        @ $(PERL) {- sourcefile("test", "run_tests.pl") -} list
+        @ DEASSIGN SRCTOP
+        @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+        @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
+        @ ! {- output_on() if !$disabled{tests}; "" -}
 
-# Because VMS wants the generation number (or *) to delete files, we can't
-# use $(LIBS), $(PROGRAMS) and $(TESTPROGS) directly.
-libclean :
-        - DELETE []OSSL$LIB*.OLB;*,OSSL$LIB*.LIS;*
-        - DELETE [.crypto...]*.OBJ;*,*.LIS;*
-        - DELETE [.ssl...]*.OBJ;*,*.LIS;*
-        - DELETE [.engines...]*.OBJ;*,*.LIS;*
-        - DELETE []CXX$DEMANGLER_DB.;*
-
-install : install_sw install_docs
+install : install_sw install_ssldirs install_docs
         @ WRITE SYS$OUTPUT ""
         @ WRITE SYS$OUTPUT "######################################################################"
         @ WRITE SYS$OUTPUT ""
@@ -295,16 +304,25 @@ install : install_sw install_docs
 
 uninstall : uninstall_docs uninstall_sw
 
+# Because VMS wants the generation number (or *) to delete files, we can't
+# use $(LIBS), $(PROGRAMS), $(GENERATED), $(ENGINES) and $(TESTPROGS) directly.
+libclean :
+        {- join("\n\t", map { "- DELETE $_.OLB;*" } @{$unified_info{libraries}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
+
 clean : libclean
-        - DELETE {- join(",", map { "$_;*" } @{$unified_info{depends}->{""}} ) -}
-        - DELETE []OSSL$LIB*.EXE;*,OSSL$LIB*.MAP;*,OSSL$LIB*.OPT;*
-        - DELETE [.engines...]LIB*.EXE;*,LIB*.MAP;*,LIB*.OPT;*
-        - DELETE [.apps]*.EXE;*,*.MAP;*,*.OPT;*
-        - DELETE [.apps]*.OBJ;*,*.LIS;*
-        - DELETE [.test]*.EXE;*,*.MAP;*,*.OPT;*
-        - DELETE [.test]*.OBJ;*,*.LIS;*
-        - DELETE [.test]*.LOG;*
-        - DELETE []*.MAP;*
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @programs) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @testprogs) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{engines}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{scripts}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_;*" } @generated) || "@ !" -}
+        - DELETE [...]*.MAP;*
+        - DELETE [...]*.D;*
+        - DELETE [...]*.OBJ;*,*.LIS;*
+        - DELETE []CXX$DEMANGLER_DB.;*
+        - DELETE [.VMS]openssl_startup.com;*
+        - DELETE [.VMS]openssl_shutdown.com;*
+        - DELETE []vmsconfig.pm;*
 
 distclean : clean
         - DELETE configdata.pm;*
@@ -327,13 +345,26 @@ descrip.mms : FORCE
 
 # Install helper targets #############################################
 
-install_sw : all install_dev install_engines install_runtime install_config
+install_sw : all install_dev install_engines install_runtime install_startup
 
-uninstall_sw : uninstall_dev uninstall_engines uninstall_runtime uninstall_config
+uninstall_sw : uninstall_dev uninstall_engines uninstall_runtime uninstall_startup
 
-install_docs : install_man_docs install_html_docs
+install_docs : install_html_docs
 
-uninstall_docs : uninstall_man_docs uninstall_html_docs
+uninstall_docs : uninstall_html_docs
+
+install_ssldirs : check_INSTALLTOP
+        - CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[000000]
+        IF F$SEARCH("OSSL_DATAROOT:[000000]CERTS.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[CERTS]
+        IF F$SEARCH("OSSL_DATAROOT:[000000]PRIVATE.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[PRIVATE]
+        IF F$SEARCH("OSSL_DATAROOT:[000000]MISC.DIR;1") .EQS. "" THEN -
+                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[MISC]
+        COPY/PROT=W:RE $(MISC_SCRIPTS) OSSL_DATAROOT:[MISC]
+        @ ! Install configuration file
+        COPY/PROT=W:RE {- sourcefile("apps", "openssl-vms.cnf") -} -
+                ossl_dataroot:[000000]openssl.cnf
 
 install_dev : check_INSTALLTOP
         @ WRITE SYS$OUTPUT "*** Installing development files"
@@ -362,10 +393,6 @@ install_runtime : check_INSTALLTOP
         - CREATE/DIR ossl_installroot:[EXE]
         COPY/PROT=W:RE $(BIN_SCRIPTS) ossl_installroot:[EXE]
         @ ! {- output_on() if $disabled{apps}; "" -}
-        @ ! Install configuration file
-        - CREATE/DIR ossl_dataroot:[000000]
-        COPY/PROT=W:RE {- sourcefile("apps", "openssl-vms.cnf") -} -
-                ossl_dataroot:[000000]openssl.cnf
 
 install_engines : check_INSTALLTOP
         @ {- output_off() unless scalar @{$unified_info{engines}}; "" -} !
@@ -376,22 +403,18 @@ install_engines : check_INSTALLTOP
                 grep(!m|ossltest$|i, @{$unified_info{engines}})) -}
         @ {- output_on() unless scalar @{$unified_info{engines}}; "" -} !
 
-install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
+install_startup : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                  check_INSTALLTOP
-        IF F$SEARCH("OSSL_DATAROOT:[000000]CERTS.DIR;1") .EQS. "" THEN -
-                CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[CERTS]
-        IF F$SEARCH("OSSL_DATAROOT:[000000]PRIVATE.DIR;1") .EQS. "" THEN -
-                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[PRIVATE]
-        IF F$SEARCH("OSSL_DATAROOT:[000000]MISC.DIR;1") .EQS. "" THEN -
-                CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[MISC]
         - CREATE/DIR ossl_installroot:[SYS$STARTUP]
+        COPY/PROT=W:RE -
+                [.VMS]openssl_startup.com,openssl_startup.com -
+                ossl_installroot:[SYS$STARTUP]
         COPY/PROT=W:RE -
                 [.VMS]openssl_startup.com,openssl_shutdown.com -
                 ossl_installroot:[SYS$STARTUP]
         COPY/PROT=W:RE -
                 {- sourcefile("VMS", "openssl_utils.com") -} -
                 ossl_installroot:[SYS$STARTUP]
-        COPY/PROT=W:RE $(MISC_SCRIPTS) OSSL_DATAROOT:[MISC]
 
 [.VMS]openssl_startup.com : vmsconfig.pm {- sourcefile("VMS", "openssl_startup.com.in") -}
         - CREATE/DIR [.VMS]
@@ -537,7 +560,7 @@ EOF
       my $before = $unified_info{before}->{$obj.".OBJ"} || "\@ !";
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
       my $depbuild = $disabled{makedepend} ? ""
-          : " /MMS=(FILE=${objd}${objn}.tmp-MMS,TARGET=$obj.OBJ)";
+          : " /MMS=(FILE=${objd}${objn}.tmp-D,TARGET=$obj.OBJ)";
 
       return <<"EOF";
 $obj.OBJ : $deps
@@ -548,9 +571,9 @@ $obj.OBJ : $deps
         $incs_off
         SET DEFAULT $backward
         ${after}
-        \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.MMS"",""$obj.tmp-MMS""); exit(0x10000000 + (\$x == 0));" || -
-                 RENAME $obj.tmp-MMS $obj.mms )
-        \@ IF F\$SEARCH("$obj.tmp-MMS") .NES. "" THEN DELETE $obj.tmp-MMS;*
+        \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.D"",""$obj.tmp-D""); exit(0x10000000 + (\$x == 0));" || -
+                 RENAME $obj.tmp-D $obj.d )
+        \@ IF F\$SEARCH("$obj.tmp-D") .NES. "" THEN DELETE $obj.tmp-D;*
         - PURGE $obj.OBJ
 EOF
   }
@@ -588,22 +611,18 @@ EOF
           || "\@ !";
       return <<"EOF";
 $shlib.EXE : $lib.OLB $deps $ordinalsfile
-        IF "$mkdef_key" .EQS. "ssl" .OR. "$mkdef_key" .EQS. "crypto" THEN -
-           \$(PERL) $mkdef_pl "$mkdef_key" "VMS" > $shlib.SYMVEC-tmp
-        IF "$mkdef_key" .EQS. "ssl" .OR. "$mkdef_key" .EQS. "crypto" THEN -
-           \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $shlib.SYMVEC-tmp > $shlib.SYMVEC
+        \$(PERL) $mkdef_pl "$mkdef_key" "VMS" > $shlib.SYMVEC-tmp
+        \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $shlib.SYMVEC-tmp > $shlib.SYMVEC
+        DELETE $shlib.SYMVEC-tmp;*
         OPEN/WRITE/SHARE=READ OPT_FILE $shlib.OPT
         WRITE OPT_FILE "IDENTIFICATION=""V$config{version}"""
-        IF "$mkdef_key" .NES. "ssl" .AND. "$mkdef_key" .NES. "crypto" THEN -
-           TYPE $engine_opt /OUTPUT=OPT_FILE:
-        IF "$mkdef_key" .EQS. "ssl" .OR. "$mkdef_key" .EQS. "crypto" THEN -
-           TYPE $shlib.SYMVEC /OUTPUT=OPT_FILE:
+        TYPE $shlib.SYMVEC /OUTPUT=OPT_FILE:
         WRITE OPT_FILE "$lib.OLB/LIBRARY"
-        $write_opt ! Comment to protect from empty line
+        $write_opt
         CLOSE OPT_FILE
         LINK /MAP=$shlib.MAP /FULL/SHARE=$shlib.EXE $shlib.OPT/OPT \$(EX_LIBS)
-        - DELETE $shlib.SYMVEC;*
-        - PURGE $shlib.EXE,$shlib.OPT,$shlib.MAP
+        DELETE $shlib.SYMVEC;*
+        PURGE $shlib.EXE,$shlib.OPT,$shlib.MAP
 EOF
   }
   sub obj2dso {
