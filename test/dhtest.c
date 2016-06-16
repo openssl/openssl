@@ -40,8 +40,9 @@ int main(int argc, char *argv[])
     BN_GENCB *_cb = NULL;
     DH *a = NULL;
     DH *b = NULL;
-    BIGNUM *ap = NULL, *ag = NULL, *bp = NULL, *bg = NULL, *apub_key = NULL;
-    BIGNUM *bpub_key = NULL, *priv_key = NULL;
+    const BIGNUM *ap = NULL, *ag = NULL, *apub_key = NULL, *priv_key = NULL;
+    const BIGNUM *bpub_key = NULL;
+    BIGNUM *bp = NULL, *bg = NULL;
     char buf[12] = {0};
     unsigned char *abuf = NULL;
     unsigned char *bbuf = NULL;
@@ -476,6 +477,7 @@ static int run_rfc5114_tests(void)
     unsigned char *Z2 = NULL;
     const rfc5114_td *td = NULL;
     BIGNUM *bady = NULL, *priv_key = NULL, *pub_key = NULL;
+    const BIGNUM *pub_key_tmp;
 
     for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
         td = rfctd + i;
@@ -511,17 +513,13 @@ static int run_rfc5114_tests(void)
          * Work out shared secrets using both sides and compare with expected
          * values.
          */
-        DH_get0_key(dhB, &pub_key, NULL);
-        if (DH_compute_key(Z1, pub_key, dhA) == -1) {
-            pub_key = NULL;
+        DH_get0_key(dhB, &pub_key_tmp, NULL);
+        if (DH_compute_key(Z1, pub_key_tmp, dhA) == -1)
             goto bad_err;
-        }
-        DH_get0_key(dhA, &pub_key, NULL);
-        if (DH_compute_key(Z2, pub_key, dhB) == -1) {
-            pub_key = NULL;
+
+        DH_get0_key(dhA, &pub_key_tmp, NULL);
+        if (DH_compute_key(Z2, pub_key_tmp, dhB) == -1)
             goto bad_err;
-        }
-        pub_key = NULL;
 
         if (memcmp(Z1, td->Z, td->Z_len))
             goto err;

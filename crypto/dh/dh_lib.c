@@ -199,8 +199,8 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
     /* If the fields p and g in d are NULL, the corresponding input
      * parameters MUST be non-NULL.  q may remain NULL.
      */
-    if (dh->p == NULL && p == NULL
-        || dh->g == NULL && g == NULL)
+    if ((dh->p == NULL && p == NULL)
+        || (dh->g == NULL && g == NULL))
         return 0;
 
     if (p != NULL) {
