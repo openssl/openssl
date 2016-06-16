@@ -2085,9 +2085,9 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_RSA
     if (alg_k & (SSL_kRSA | SSL_kRSAPSK)) {
         unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
-        int decrypt_len, padding_len;
+        int decrypt_len;
         unsigned char decrypt_good, version_good;
-        size_t j;
+        size_t j, padding_len;
 
         /* FIX THIS UP EAY EAY EAY EAY */
         rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey);
@@ -2155,9 +2155,12 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
+        /* Check the padding. See RFC 3447, section 7.2.2. */
+
         /*
          * The smallest padded premaster is 11 bytes of overhead. Small keys
-         * are publicly invalid.
+         * are publicly invalid, so this may return immediately. This ensures
+         * PS is at least 8 bytes.
          */
         if (decrypt_len < 11 + SSL_MAX_MASTER_KEY_LENGTH) {
             al = SSL_AD_DECRYPT_ERROR;
@@ -2165,7 +2168,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             goto f_err;
         }
 
-        /* Check the padding. See RFC 3447, section 7.2.2. */
         padding_len = decrypt_len - SSL_MAX_MASTER_KEY_LENGTH;
         decrypt_good = constant_time_eq_int_8(rsa_decrypt[0], 0) &
                        constant_time_eq_int_8(rsa_decrypt[1], 2);
