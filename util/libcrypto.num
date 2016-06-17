@@ -2841,7 +2841,6 @@ d2i_ASN1_T61STRING                      2793	1_1_0	EXIST::FUNCTION:
 DES_pcbc_encrypt                        2794	1_1_0	EXIST::FUNCTION:DES
 EVP_PKEY_print_params                   2795	1_1_0	EXIST::FUNCTION:
 BN_get0_nist_prime_192                  2796	1_1_0	EXIST::FUNCTION:
-OPENSSL_ia32cap_loc                     2797	1_1_0	EXIST::FUNCTION:
 EVP_SealInit                            2798	1_1_0	EXIST::FUNCTION:RSA
 X509_REQ_get0_signature                 2799	1_1_0	EXIST::FUNCTION:
 PKEY_USAGE_PERIOD_free                  2800	1_1_0	EXIST::FUNCTION:

@@ -128,19 +128,6 @@ int main(int argc, char *argv[])
     int i;
     WHIRLPOOL_CTX ctx;
 
-# ifdef OPENSSL_IA32_SSE2
-    /*
-     * Alternative to this is to call OpenSSL_add_all_algorithms... The below
-     * code is retained exclusively for debugging purposes.
-     */
-    {
-        char *env;
-
-        if ((env = getenv("OPENSSL_ia32cap")))
-            OPENSSL_ia32cap = strtoul(env, NULL, 0);
-    }
-# endif
-
     fprintf(stdout, "Testing Whirlpool ");
 
     WHIRLPOOL("", 0, md);

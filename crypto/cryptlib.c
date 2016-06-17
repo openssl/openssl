@@ -21,10 +21,6 @@
         defined(_M_AMD64) || defined(_M_X64)
 
 extern unsigned int OPENSSL_ia32cap_P[4];
-unsigned int *OPENSSL_ia32cap_loc(void)
-{
-    return OPENSSL_ia32cap_P;
-}
 
 # if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
 #include <stdio.h>
@@ -80,12 +76,6 @@ void OPENSSL_cpuid_setup(void)
 # else
 unsigned int OPENSSL_ia32cap_P[4];
 # endif
-
-#else
-unsigned int *OPENSSL_ia32cap_loc(void)
-{
-    return NULL;
-}
 #endif
 int OPENSSL_NONPIC_relocated = 0;
 #if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
