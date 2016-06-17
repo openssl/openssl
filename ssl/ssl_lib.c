@@ -977,14 +977,8 @@ void SSL_free(SSL *s)
     dane_final(&s->dane);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
-    if (s->bbio != NULL) {
-        /* If the buffering BIO is in place, pop it off */
-        if (s->bbio == s->wbio) {
-            s->wbio = BIO_pop(s->wbio);
-        }
-        BIO_free(s->bbio);
-        s->bbio = NULL;
-    }
+    ssl_free_wbio_buffer(s);
+
     if (s->wbio != s->rbio)
         BIO_free_all(s->wbio);
     BIO_free_all(s->rbio);
@@ -1061,15 +1055,16 @@ void SSL_set_wbio(SSL *s, BIO *wbio)
     /*
      * If the output buffering BIO is still in place, remove it
      */
-    if (s->bbio != NULL) {
-        if (s->wbio == s->bbio) {
-            s->wbio = BIO_next(s->wbio);
-            BIO_set_next(s->bbio, NULL);
-        }
-    }
+    if (s->bbio != NULL)
+        s->wbio = BIO_pop(s->wbio);
+
     if (s->wbio != wbio && s->rbio != s->wbio)
         BIO_free_all(s->wbio);
     s->wbio = wbio;
+
+    /* Re-attach |bbio| to the new |wbio|. */
+    if (s->bbio != NULL)
+        s->wbio = BIO_push(s->bbio, s->wbio);
 }
 
 void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
@@ -1080,17 +1075,24 @@ void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
 
 BIO *SSL_get_rbio(const SSL *s)
 {
-    return (s->rbio);
+    return s->rbio;
 }
 
 BIO *SSL_get_wbio(const SSL *s)
 {
-    return (s->wbio);
+    if (s->bbio != NULL) {
+        /*
+         * If |bbio| is active, the true caller-configured BIO is its
+         * |next_bio|.
+         */
+        return BIO_next(s->bbio);
+    }
+    return s->wbio;
 }
 
 int SSL_get_fd(const SSL *s)
 {
-    return (SSL_get_rfd(s));
+    return SSL_get_rfd(s);
 }
 
 int SSL_get_rfd(const SSL *s)
@@ -1138,46 +1140,43 @@ int SSL_set_fd(SSL *s, int fd)
 
 int SSL_set_wfd(SSL *s, int fd)
 {
-    int ret = 0;
-    BIO *bio = NULL;
+    BIO *rbio = SSL_get_rbio(s);
 
-    if ((s->rbio == NULL) || (BIO_method_type(s->rbio) != BIO_TYPE_SOCKET)
-        || ((int)BIO_get_fd(s->rbio, NULL) != fd)) {
-        bio = BIO_new(BIO_s_socket());
+    if (rbio == NULL || BIO_method_type(rbio) != BIO_TYPE_SOCKET
+        || (int)BIO_get_fd(rbio, NULL) != fd) {
+        BIO *bio = BIO_new(BIO_s_socket());
 
         if (bio == NULL) {
             SSLerr(SSL_F_SSL_SET_WFD, ERR_R_BUF_LIB);
-            goto err;
+            return 0;
         }
         BIO_set_fd(bio, fd, BIO_NOCLOSE);
-        SSL_set_bio(s, SSL_get_rbio(s), bio);
-    } else
-        SSL_set_bio(s, SSL_get_rbio(s), SSL_get_rbio(s));
-    ret = 1;
- err:
-    return (ret);
+        SSL_set_wbio(s, bio);
+    } else {
+        SSL_set_wbio(s, rbio);
+    }
+    return 1;
 }
 
 int SSL_set_rfd(SSL *s, int fd)
 {
-    int ret = 0;
-    BIO *bio = NULL;
+    BIO *wbio = SSL_get_wbio(s);
 
-    if ((s->wbio == NULL) || (BIO_method_type(s->wbio) != BIO_TYPE_SOCKET)
-        || ((int)BIO_get_fd(s->wbio, NULL) != fd)) {
-        bio = BIO_new(BIO_s_socket());
+    if (wbio == NULL || BIO_method_type(wbio) != BIO_TYPE_SOCKET
+        || ((int)BIO_get_fd(wbio, NULL) != fd)) {
+        BIO *bio = BIO_new(BIO_s_socket());
 
         if (bio == NULL) {
             SSLerr(SSL_F_SSL_SET_RFD, ERR_R_BUF_LIB);
-            goto err;
+            return 0;
         }
         BIO_set_fd(bio, fd, BIO_NOCLOSE);
-        SSL_set_bio(s, bio, SSL_get_wbio(s));
-    } else
-        SSL_set_bio(s, SSL_get_wbio(s), SSL_get_wbio(s));
-    ret = 1;
- err:
-    return (ret);
+        SSL_set_rbio(s, bio);
+    } else {
+        SSL_set_rbio(s, wbio);
+    }
+
+    return 1;
 }
 #endif
 
@@ -2923,7 +2922,11 @@ int SSL_get_error(const SSL *s, int i)
         }
 
         if (SSL_want_write(s)) {
-            bio = SSL_get_wbio(s);
+            /*
+             * Access wbio directly - in order to use the buffered bio if
+             * present
+             */
+            bio = s->wbio;
             if (BIO_should_write(bio))
                 return (SSL_ERROR_WANT_WRITE);
             else if (BIO_should_read(bio))
@@ -3266,21 +3269,19 @@ int ssl_init_wbio_buffer(SSL *s)
 {
     BIO *bbio;
 
-    if (s->bbio == NULL) {
-        bbio = BIO_new(BIO_f_buffer());
-        if (bbio == NULL)
-            return 0;
-        s->bbio = bbio;
-        s->wbio = BIO_push(bbio, s->wbio);
-    } else {
-        bbio = s->bbio;
-        (void)BIO_reset(bbio);
+    if (s->bbio != NULL) {
+        /* Already buffered. */
+        return 1;
     }
 
-    if (!BIO_set_read_buffer_size(bbio, 1)) {
+    bbio = BIO_new(BIO_f_buffer());
+    if (bbio == NULL || !BIO_set_read_buffer_size(bbio, 1)) {
+        BIO_free(bbio);
         SSLerr(SSL_F_SSL_INIT_WBIO_BUFFER, ERR_R_BUF_LIB);
         return 0;
     }
+    s->bbio = bbio;
+    s->wbio = BIO_push(bbio, s->wbio);
 
     return 1;
 }
@@ -3291,11 +3292,8 @@ void ssl_free_wbio_buffer(SSL *s)
     if (s->bbio == NULL)
         return;
 
-    if (s->bbio == s->wbio) {
-        /* remove buffering */
-        s->wbio = BIO_pop(s->wbio);
-        assert(s->wbio != NULL);
-    }
+    s->wbio = BIO_pop(s->wbio);
+    assert(s->wbio != NULL);
     BIO_free(s->bbio);
     s->bbio = NULL;
 }
