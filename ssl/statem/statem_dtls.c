@@ -182,7 +182,7 @@ int dtls1_do_write(SSL *s, int type)
             }
         }
 
-        used_len = BIO_wpending(SSL_get_wbio(s)) + DTLS1_RT_HEADER_LENGTH
+        used_len = BIO_wpending(s->wbio) + DTLS1_RT_HEADER_LENGTH
             + mac_size + blocksize;
         if (s->d1->mtu > used_len)
             curr_mtu = s->d1->mtu - used_len;
@@ -193,7 +193,7 @@ int dtls1_do_write(SSL *s, int type)
             /*
              * grr.. we could get an error if MTU picked was wrong
              */
-            ret = BIO_flush(SSL_get_wbio(s));
+            ret = BIO_flush(s->wbio);
             if (ret <= 0) {
                 s->rwstate = SSL_WRITING;
                 return ret;
@@ -1120,7 +1120,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, int *found)
 
     s->d1->retransmitting = 0;
 
-    (void)BIO_flush(SSL_get_wbio(s));
+    (void)BIO_flush(s->wbio);
     return ret;
 }
 
