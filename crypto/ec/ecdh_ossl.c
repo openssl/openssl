@@ -38,7 +38,7 @@ int ossl_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
 {
     if (ecdh->group->meth->ecdh_compute_key == NULL) {
         ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, EC_R_CURVE_DOES_NOT_SUPPORT_ECDH);
-        return -1;
+        return 0;
     }
 
     return ecdh->group->meth->ecdh_compute_key(psec, pseclen, pub_key, ecdh);
