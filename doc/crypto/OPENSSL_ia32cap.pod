@@ -2,23 +2,22 @@
 
 =head1 NAME
 
-OPENSSL_ia32cap, OPENSSL_ia32cap_loc - the IA-32 processor capabilities vector
+OPENSSL_ia32cap - the x86[_64] processor capabilities vector
 
 =head1 SYNOPSIS
 
- unsigned int *OPENSSL_ia32cap_loc(void);
- #define OPENSSL_ia32cap ((OPENSSL_ia32cap_loc())[0])
+ env OPENSSL_ia32cap=... <application>
 
 =head1 DESCRIPTION
 
-Value returned by OPENSSL_ia32cap_loc() is address of a variable
-containing IA-32 processor capabilities bit vector as it appears in
-EDX:ECX register pair after executing CPUID instruction with EAX=1
-input value (see Intel Application Note #241618). Naturally it's
-meaningful on x86 and x86_64 platforms only. The variable is normally
-set up automatically upon toolkit initialization, but can be
-manipulated afterwards to modify crypto library behaviour. For the
-moment of this writing following bits are significant:
+OpenSSL supports a range of x86[_64] instruction set extensions. These
+extensions are denoted by individual bits in capability vector returned
+by processor in EDX:ECX register pair after executing CPUID instruction
+with EAX=1 input value (see Intel Application Note #241618). This vector
+is copied to memory upon toolkit initialization and used to choose
+between different code paths to provide optimal performance across wide
+range of processors. For the moment of this writing following bits are
+significant:
 
 =over
 
@@ -67,21 +66,22 @@ disables high-performance SSE2 code present in the crypto library, while
 clearing bit #24 disables SSE2 code operating on 128-bit XMM register
 bank. You might have to do the latter if target OpenSSL application is
 executed on SSE2 capable CPU, but under control of OS that does not
-enable XMM registers. Even though you can manipulate the value
-programmatically, you most likely will find it more appropriate to set
-up an environment variable with the same name prior starting target
-application, e.g. on Intel P4 processor 'env OPENSSL_ia32cap=0x16980010
-apps/openssl', or better yet 'env OPENSSL_ia32cap=~0x1000000
-apps/openssl' to achieve same effect without modifying the application
-source code. Alternatively you can reconfigure the toolkit with no-sse2
+enable XMM registers. Historically address of the capability vector copy
+was exposed to application through OPENSSL_ia32cap_loc(), but not
+anymore. Now the only way to affect the capability detection is to set
+OPENSSL_ia32cap envrionment variable prior target application start. To
+give a specific example, on Intel P4 processor 'env
+OPENSSL_ia32cap=0x16980010 apps/openssl', or better yet 'env
+OPENSSL_ia32cap=~0x1000000 apps/openssl' would achieve the desired
+effect. Alternatively you can reconfigure the toolkit with no-sse2
 option and recompile.
 
-Less intuitive is clearing bit #28. The truth is that it's not copied
-from CPUID output verbatim, but is adjusted to reflect whether or not
-the data cache is actually shared between logical cores. This in turn
-affects the decision on whether or not expensive countermeasures
-against cache-timing attacks are applied, most notably in AES assembler
-module.
+Less intuitive is clearing bit #28, or ~0x10000000 in the "environment
+variable" terms. The truth is that it's not copied from CPUID output
+verbatim, but is adjusted to reflect whether or not the data cache is
+actually shared between logical cores. This in turn affects the decision
+on whether or not expensive countermeasures against cache-timing attacks
+are applied, most notably in AES assembler module.
 
 The capability vector is further extended with EBX value returned by
 CPUID with EAX=7 and ECX=0 as input. Following bits are significant:

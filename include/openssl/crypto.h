@@ -317,8 +317,6 @@ ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line
 # define OPENSSL_assert(e) \
     (void)((e) ? 0 : (OPENSSL_die("assertion failed: " #e, OPENSSL_FILE, OPENSSL_LINE), 1))
 
-unsigned int *OPENSSL_ia32cap_loc(void);
-# define OPENSSL_ia32cap ((OPENSSL_ia32cap_loc())[0])
 int OPENSSL_isservice(void);
 
 int FIPS_mode(void);
