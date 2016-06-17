@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -252,10 +253,47 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 0);
 }
 
+/*
+ * According to the letter of standard difference between pointers
+ * is specified to be valid only within same object. This makes
+ * it formally challenging to determine if input and output buffers
+ * are not partially overlapping with standard pointer arithmetic.
+ */
+#ifdef PTRDIFF_T
+# undef PTRDIFF_T
+#endif
+#if defined(OPENSSL_SYS_VMS) && __INITIAL_POINTER_SIZE==64
+/*
+ * Then we have VMS that distinguishes itself by adhering to
+ * sizeof(size_t)==4 even in 64-bit builds...
+ */
+# define PTRDIFF_T uint64_t
+#else
+# define PTRDIFF_T size_t
+#endif
+
+static int is_partially_overlapping(const void *ptr1, const void *ptr2,
+                                    int len)
+{
+    PTRDIFF_T diff = (PTRDIFF_T)ptr1-(PTRDIFF_T)ptr2;
+    /*
+     * Check for partially overlapping buffers. [Binary logical
+     * operations are used instead of boolean to minimize number
+     * of conditional branches.]
+     */
+    int condition = (len > 0) & (diff != 0) & ((diff < (PTRDIFF_T)len) |
+                                               (diff > (0 - (PTRDIFF_T)len)));
+    assert(!condition);
+    return condition;
+}
+
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                       const unsigned char *in, int inl)
 {
     int i, j, bl;
+
+    if (is_partially_overlapping(out, in, inl))
+        return 0;
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
         i = ctx->cipher->do_cipher(ctx, out, in, inl);
@@ -369,6 +407,9 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 {
     int fix_len;
     unsigned int b;
+
+    if (is_partially_overlapping(out, in, inl))
+        return 0;
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
         fix_len = ctx->cipher->do_cipher(ctx, out, in, inl);
