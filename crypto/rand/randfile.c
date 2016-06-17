@@ -280,8 +280,16 @@ const char *RAND_file_name(char *buf, size_t size)
     struct stat sb;
 #endif
 
+    /* Find the directory where the state file should go. */
+#ifdef OPENSSL_SYS_WINDOWS
+    if ((s = getenv("RANDFILE")) == NULL) {
+        s = getenv("TEMP");
+        if (s == NULL)
+            s = getenv("APPDATA");
+#else
     if (OPENSSL_issetugid() == 0)
         s = getenv("RANDFILE");
+#endif
     if (s != NULL && *s && strlen(s) + 1 < size) {
         if (OPENSSL_strlcpy(buf, s, size) >= size)
             return NULL;
