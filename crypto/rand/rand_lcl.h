@@ -23,7 +23,7 @@
 # define MD_Final(a,b)           EVP_DigestFinal_ex(a,b,NULL)
 # if defined(USE_SHA256_RAND)
 #  include <openssl/sha.h>
-#  define MD_DIGEST_LENGTH        SHA_DIGEST_LENGTH
+#  define MD_DIGEST_LENGTH        SHA256_DIGEST_LENGTH
 #  define MD_Init(a)              EVP_DigestInit_ex(a,EVP_sha256(), NULL)
 #  define MD(a,b,c)               EVP_Digest(a,b,c,NULL,EVP_sha256(), NULL)
 # elif defined(USE_SHA1_RAND)
