@@ -36,7 +36,7 @@ OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk, OPENSSL_sk_compfu
     return old;
 }
 
-OPENSSL_STACK *OPENSSL_sk_dup(OPENSSL_STACK *sk)
+OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
 {
     OPENSSL_STACK *ret;
 
@@ -56,7 +56,8 @@ OPENSSL_STACK *OPENSSL_sk_dup(OPENSSL_STACK *sk)
     return (NULL);
 }
 
-OPENSSL_STACK *OPENSSL_sk_deep_copy(OPENSSL_STACK *sk, OPENSSL_sk_copyfunc copy_func,
+OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk, 
+                             OPENSSL_sk_copyfunc copy_func,
                              OPENSSL_sk_freefunc free_func)
 {
     OPENSSL_STACK *ret;
