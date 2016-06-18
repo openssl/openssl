@@ -2405,9 +2405,9 @@ $code.=<<___;
 	veor		@XMM[0], @XMM[8]
 	mov		r1, sp
 	vst1.8		{@XMM[0]}, [sp,:128]
+	mov		r5, $magic			@ preserve magic
 	mov		r2, $key
 	mov		r4, $fp				@ preserve fp
-	mov		r5, $magic			@ preserve magic
 
 	bl		AES_decrypt
 
