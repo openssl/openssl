@@ -29,7 +29,7 @@ OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc cmp);
 OPENSSL_STACK *OPENSSL_sk_new_null(void);
 void OPENSSL_sk_free(OPENSSL_STACK *);
 void OPENSSL_sk_pop_free(OPENSSL_STACK *st, void (*func) (void *));
-OPENSSL_STACK *OPENSSL_sk_deep_copy(OPENSSL_STACK *, OPENSSL_sk_copyfunc c, OPENSSL_sk_freefunc f);
+OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *, OPENSSL_sk_copyfunc c, OPENSSL_sk_freefunc f);
 int OPENSSL_sk_insert(OPENSSL_STACK *sk, void *data, int where);
 void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc);
 void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, const void *p);
@@ -41,7 +41,7 @@ void *OPENSSL_sk_shift(OPENSSL_STACK *st);
 void *OPENSSL_sk_pop(OPENSSL_STACK *st);
 void OPENSSL_sk_zero(OPENSSL_STACK *st);
 OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk, OPENSSL_sk_compfunc cmp);
-OPENSSL_STACK *OPENSSL_sk_dup(OPENSSL_STACK *st);
+OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *st);
 void OPENSSL_sk_sort(OPENSSL_STACK *st);
 int OPENSSL_sk_is_sorted(const OPENSSL_STACK *st);
 
