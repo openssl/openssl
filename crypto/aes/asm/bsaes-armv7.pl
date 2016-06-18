@@ -1839,8 +1839,6 @@ $code.=<<___;
 	b		.Lxts_enc_done
 .align	4
 .Lxts_enc_6:
-	vst1.64		{@XMM[14]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[4], @XMM[4], @XMM[12]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -1876,8 +1874,6 @@ $code.=<<___;
 
 .align	5
 .Lxts_enc_5:
-	vst1.64		{@XMM[13]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[3], @XMM[3], @XMM[11]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -1906,8 +1902,6 @@ $code.=<<___;
 	b		.Lxts_enc_done
 .align	4
 .Lxts_enc_4:
-	vst1.64		{@XMM[12]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[2], @XMM[2], @XMM[10]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -1933,8 +1927,6 @@ $code.=<<___;
 	b		.Lxts_enc_done
 .align	4
 .Lxts_enc_3:
-	vst1.64		{@XMM[11]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[1], @XMM[1], @XMM[9]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -1959,8 +1951,6 @@ $code.=<<___;
 	b		.Lxts_enc_done
 .align	4
 .Lxts_enc_2:
-	vst1.64		{@XMM[10]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[0], @XMM[0], @XMM[8]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -1983,7 +1973,7 @@ $code.=<<___;
 .align	4
 .Lxts_enc_1:
 	mov		r0, sp
-	veor		@XMM[0], @XMM[8]
+	veor		@XMM[0], @XMM[0], @XMM[8]
 	mov		r1, sp
 	vst1.8		{@XMM[0]}, [sp,:128]
 	mov		r2, $key
@@ -2295,8 +2285,6 @@ $code.=<<___;
 	b		.Lxts_dec_done
 .align	4
 .Lxts_dec_5:
-	vst1.64		{@XMM[13]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[3], @XMM[3], @XMM[11]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -2325,8 +2313,6 @@ $code.=<<___;
 	b		.Lxts_dec_done
 .align	4
 .Lxts_dec_4:
-	vst1.64		{@XMM[12]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[2], @XMM[2], @XMM[10]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -2352,8 +2338,6 @@ $code.=<<___;
 	b		.Lxts_dec_done
 .align	4
 .Lxts_dec_3:
-	vst1.64		{@XMM[11]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[1], @XMM[1], @XMM[9]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -2378,8 +2362,6 @@ $code.=<<___;
 	b		.Lxts_dec_done
 .align	4
 .Lxts_dec_2:
-	vst1.64		{@XMM[10]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[0], @XMM[0], @XMM[8]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -2402,7 +2384,7 @@ $code.=<<___;
 .align	4
 .Lxts_dec_1:
 	mov		r0, sp
-	veor		@XMM[0], @XMM[8]
+	veor		@XMM[0], @XMM[0], @XMM[8]
 	mov		r1, sp
 	vst1.8		{@XMM[0]}, [sp,:128]
 	mov		r5, $magic			@ preserve magic
