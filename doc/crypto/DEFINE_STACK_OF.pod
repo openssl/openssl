@@ -50,8 +50,8 @@ stack container
  int sk_TYPE_find_ex(STACK_OF(TYPE) *sk, TYPE *ptr);
  void sk_TYPE_sort(const STACK_OF(TYPE) *sk);
  int sk_TYPE_is_sorted(const STACK_OF(TYPE) *sk);
- STACK_OF(TYPE) *sk_TYPE_dup(STACK_OF(TYPE) *sk);
- STACK_OF(TYPE) *sk_TYPE_deep_copy(STACK_OF(TYPE) *sk,
+ STACK_OF(TYPE) *sk_TYPE_dup(const STACK_OF(TYPE) *sk);
+ STACK_OF(TYPE) *sk_TYPE_deep_copy(const STACK_OF(TYPE) *sk,
                                    sk_TYPE_copyfunc copyfunc,
                                    sk_TYPE_freefunc freefunc);
  sk_TYPE_compfunc (*sk_TYPE_set_cmp_func(STACK_OF(TYPE) *sk, sk_TYPE_compfunc compare);
