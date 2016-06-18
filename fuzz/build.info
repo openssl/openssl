@@ -7,7 +7,7 @@
         $withargs{fuzzer_lib} : catfile(updir(), $withargs{fuzzer_lib}));
    ""
 -}
-PROGRAMS=asn1 asn1parse bignum bndiv cms conf ct server
+PROGRAMS=asn1 asn1parse bignum bndiv cms conf crl ct server x509
 
 SOURCE[asn1]=asn1.c driver.c
 INCLUDE[asn1]=../include {- $ex_inc -}
@@ -33,6 +33,10 @@ SOURCE[conf]=conf.c driver.c
 INCLUDE[conf]=../include {- $ex_inc -}
 DEPEND[conf]=../libcrypto {- $ex_lib -}
 
+SOURCE[crl]=crl.c driver.c
+INCLUDE[crl]=../include {- $ex_inc -}
+DEPEND[crl]=../libcrypto {- $ex_lib -}
+
 SOURCE[ct]=ct.c driver.c
 INCLUDE[ct]=../include {- $ex_inc -}
 DEPEND[ct]=../libcrypto {- $ex_lib -}
@@ -40,3 +44,7 @@ DEPEND[ct]=../libcrypto {- $ex_lib -}
 SOURCE[server]=server.c driver.c
 INCLUDE[server]=../include {- $ex_inc -}
 DEPEND[server]=../libcrypto ../libssl {- $ex_lib -}
+
+SOURCE[x509]=x509.c driver.c
+INCLUDE[x509]=../include {- $ex_inc -}
+DEPEND[x509]=../libcrypto ../libssl {- $ex_lib -}
