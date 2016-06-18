@@ -56,7 +56,11 @@ int main(int argc, char *argv[])
     R = ret;
     i = 1;
     while (*P != NULL) {
-        EVP_Digest(&(P[0][0]), strlen((char *)*P), md, NULL, EVP_md4(), NULL);
+        if (!EVP_Digest(&(P[0][0]), strlen((char *)*P), md, NULL, EVP_md4(),
+            NULL)) {
+            printf("EVP Digest error.\n");
+            EXIT(1);
+        }
         p = pt(md);
         if (strcmp(p, (char *)*R) != 0) {
             printf("error calculating MD4 on '%s'\n", *P);

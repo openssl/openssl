@@ -60,7 +60,7 @@ static CRYPTO_THREAD_ID locking_threadid;
 int rand_predictable = 0;
 #endif
 
-static void rand_hw_seed(EVP_MD_CTX *ctx);
+static int rand_hw_seed(EVP_MD_CTX *ctx);
 
 static void rand_cleanup(void);
 static int rand_seed(const void *buf, int num);
@@ -446,7 +446,8 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
             if (!MD_Update(m, (unsigned char *)&tv, sizeof tv))
                 goto err;
             curr_time = 0;
-            rand_hw_seed(m);
+            if (!rand_hw_seed(m))
+                goto err;
         }
         if (!MD_Update(m, local_md, MD_DIGEST_LENGTH))
             goto err;
@@ -597,18 +598,20 @@ static int rand_status(void)
 size_t OPENSSL_ia32_rdrand(void);
 extern unsigned int OPENSSL_ia32cap_P[];
 
-static void rand_hw_seed(EVP_MD_CTX *ctx)
+static int rand_hw_seed(EVP_MD_CTX *ctx)
 {
     int i;
     if (!(OPENSSL_ia32cap_P[1] & (1 << (62 - 32))))
-        return;
+        return 1;
     for (i = 0; i < RDRAND_CALLS; i++) {
         size_t rnd;
         rnd = OPENSSL_ia32_rdrand();
         if (rnd == 0)
-            return;
-        MD_Update(ctx, (unsigned char *)&rnd, sizeof(size_t));
+            return 1;
+        if (!MD_Update(ctx, (unsigned char *)&rnd, sizeof(size_t)))
+            return 0;
     }
+    return 1;
 }
 
 /* XOR an existing buffer with random data */

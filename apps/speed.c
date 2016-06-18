@@ -601,9 +601,11 @@ static int EVP_Digest_MD2_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char md2[MD2_DIGEST_LENGTH];
     int count;
-    for (count = 0; COND(c[D_MD2][testnum]); count++)
-        EVP_Digest(buf, (unsigned long)lengths[testnum], &(md2[0]), NULL,
-                EVP_md2(), NULL);
+    for (count = 0; COND(c[D_MD2][testnum]); count++) {
+        if (!EVP_Digest(buf, (unsigned long)lengths[testnum], &(md2[0]), NULL,
+                EVP_md2(), NULL))
+            return -1;
+    }
     return count;
 }
 #endif
@@ -615,9 +617,11 @@ static int EVP_Digest_MDC2_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char mdc2[MDC2_DIGEST_LENGTH];
     int count;
-    for (count = 0; COND(c[D_MDC2][testnum]); count++)
-        EVP_Digest(buf, (unsigned long)lengths[testnum], &(mdc2[0]), NULL,
-                EVP_mdc2(), NULL);
+    for (count = 0; COND(c[D_MDC2][testnum]); count++) {
+        if (!EVP_Digest(buf, (unsigned long)lengths[testnum], &(mdc2[0]), NULL,
+                EVP_mdc2(), NULL))
+            return -1;
+    }
     return count;
 }
 #endif
@@ -629,9 +633,11 @@ static int EVP_Digest_MD4_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char md4[MD4_DIGEST_LENGTH];
     int count;
-    for (count = 0; COND(c[D_MD4][testnum]); count++)
-        EVP_Digest(&(buf[0]), (unsigned long)lengths[testnum], &(md4[0]),
-                NULL, EVP_md4(), NULL);
+    for (count = 0; COND(c[D_MD4][testnum]); count++) {
+        if (!EVP_Digest(&(buf[0]), (unsigned long)lengths[testnum], &(md4[0]),
+                NULL, EVP_md4(), NULL))
+            return -1;
+    }
     return count;
 }
 #endif
@@ -717,9 +723,11 @@ static int EVP_Digest_RMD160_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
     int count;
-    for (count = 0; COND(c[D_RMD160][testnum]); count++)
-        EVP_Digest(buf, (unsigned long)lengths[testnum], &(rmd160[0]), NULL,
-                EVP_ripemd160(), NULL);
+    for (count = 0; COND(c[D_RMD160][testnum]); count++) {
+        if (!EVP_Digest(buf, (unsigned long)lengths[testnum], &(rmd160[0]),
+                NULL, EVP_ripemd160(), NULL))
+            return -1;
+    }
     return count;
 }
 #endif
@@ -888,9 +896,10 @@ static int EVP_Digest_loop(void *args)
     unsigned char md[EVP_MAX_MD_SIZE];
     int count;
     for (count = 0;
-            COND(save_count * 4 * lengths[0] / lengths[testnum]); count++)
-        EVP_Digest(buf, lengths[testnum], &(md[0]), NULL, evp_md, NULL);
-
+            COND(save_count * 4 * lengths[0] / lengths[testnum]); count++) {
+        if (!EVP_Digest(buf, lengths[testnum], &(md[0]), NULL, evp_md, NULL))
+            return -1;
+    }
     return count;
 }
 
@@ -2845,6 +2854,10 @@ static void pkey_print_message(const char *str, const char *str2, long num,
 
 static void print_result(int alg, int run_no, int count, double time_used)
 {
+    if (count == -1) {
+        BIO_puts(bio_err, "EVP error!\n");
+        exit(1);
+    }
     BIO_printf(bio_err,
                mr ? "+R:%d:%s:%f\n"
                : "%d %s's in %.2fs\n", count, names[alg], time_used);

@@ -500,22 +500,22 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
 # define EVP_MD_CTX_create()     EVP_MD_CTX_new()
 # define EVP_MD_CTX_init(ctx)    EVP_MD_CTX_reset((ctx))
 # define EVP_MD_CTX_destroy(ctx) EVP_MD_CTX_free((ctx))
-/*__owur*/ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
+__owur int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
 void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
 int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
-/*__owur*/ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type,
+__owur int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type,
                                  ENGINE *impl);
-/*__owur*/ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d,
+__owur int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d,
                                 size_t cnt);
-/*__owur*/ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md,
+__owur int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md,
                                   unsigned int *s);
-/*__owur*/ int EVP_Digest(const void *data, size_t count,
+__owur int EVP_Digest(const void *data, size_t count,
                           unsigned char *md, unsigned int *size,
                           const EVP_MD *type, ENGINE *impl);
 
-/*__owur*/ int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in);
-/*__owur*/ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
+__owur int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in);
+__owur int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 __owur int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
                            unsigned int *s);
 
