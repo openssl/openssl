@@ -1875,7 +1875,7 @@ int ssl3_renegotiate_check(SSL *ssl);
 __owur int ssl3_dispatch_alert(SSL *s);
 __owur int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
                           unsigned char *p);
-void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
+__owur int ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
 void ssl3_free_digest_list(SSL *s);
 __owur unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk);
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
@@ -2085,9 +2085,9 @@ __owur int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
                                   const unsigned char *mac_secret,
                                   unsigned mac_secret_length, char is_sslv3);
 
-void tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
-                           EVP_MD_CTX *mac_ctx, const unsigned char *data,
-                           size_t data_len, size_t orig_len);
+__owur int tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
+                                 EVP_MD_CTX *mac_ctx, const unsigned char *data,
+                                 size_t data_len, size_t orig_len);
 
 __owur int srp_generate_server_master_secret(SSL *s);
 __owur int srp_generate_client_master_secret(SSL *s);

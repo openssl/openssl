@@ -294,7 +294,8 @@ int dtls1_do_write(SSL *s, int type)
                     xlen = ret - DTLS1_HM_HEADER_LENGTH;
                 }
 
-                ssl3_finish_mac(s, p, xlen);
+                if (!ssl3_finish_mac(s, p, xlen))
+                    return -1;
             }
 
             if (ret == s->init_num) {
@@ -375,7 +376,8 @@ int dtls_get_message(SSL *s, int *mt, unsigned long *len)
         msg_len += DTLS1_HM_HEADER_LENGTH;
     }
 
-    ssl3_finish_mac(s, p, msg_len);
+    if (!ssl3_finish_mac(s, p, msg_len))
+        return 0;
     if (s->msg_callback)
         s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
                         p, msg_len, s, s->msg_callback_arg);

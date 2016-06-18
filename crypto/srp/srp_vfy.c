@@ -500,10 +500,12 @@ SRP_user_pwd *SRP_VBASE_get1_by_user(SRP_VBASE *vb, char *username)
     if (RAND_bytes(digv, SHA_DIGEST_LENGTH) <= 0)
         goto err;
     ctxt = EVP_MD_CTX_new();
-    EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL);
-    EVP_DigestUpdate(ctxt, vb->seed_key, strlen(vb->seed_key));
-    EVP_DigestUpdate(ctxt, username, strlen(username));
-    EVP_DigestFinal_ex(ctxt, digs, NULL);
+    if (ctxt == NULL
+        || !EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
+        || !EVP_DigestUpdate(ctxt, vb->seed_key, strlen(vb->seed_key))
+        || !EVP_DigestUpdate(ctxt, username, strlen(username))
+        || !EVP_DigestFinal_ex(ctxt, digs, NULL))
+        goto err;
     EVP_MD_CTX_free(ctxt);
     ctxt = NULL;
     if (SRP_user_pwd_set_sv_BN(user,

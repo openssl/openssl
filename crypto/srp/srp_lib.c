@@ -35,17 +35,20 @@ static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g)
         goto err;
     BN_bn2bin(N, tmp);
 
-    EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL);
-    EVP_DigestUpdate(ctxt, tmp, longN);
+    if (!EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
+        || !EVP_DigestUpdate(ctxt, tmp, longN))
+        goto err;
 
     memset(tmp, 0, longN);
     longg = BN_bn2bin(g, tmp);
     /* use the zeros behind to pad on left */
-    EVP_DigestUpdate(ctxt, tmp + longg, longN - longg);
-    EVP_DigestUpdate(ctxt, tmp, longg);
+    if (!EVP_DigestUpdate(ctxt, tmp + longg, longN - longg)
+        || !EVP_DigestUpdate(ctxt, tmp, longg))
+        goto err;
     OPENSSL_free(tmp);
 
-    EVP_DigestFinal_ex(ctxt, digest, NULL);
+    if (!EVP_DigestFinal_ex(ctxt, digest, NULL))
+        goto err;
     res = BN_bin2bn(digest, sizeof(digest), NULL);
  err:
     EVP_MD_CTX_free(ctxt);
@@ -77,11 +80,13 @@ BIGNUM *SRP_Calc_u(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N)
 
     memset(cAB, 0, longN);
 
-    EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL);
-    EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(A, cAB + longN), longN);
-    EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(B, cAB + longN), longN);
+    if (!EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
+        || !EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(A, cAB + longN), longN)
+        || !EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(B, cAB + longN), longN))
+        goto err;
     OPENSSL_free(cAB);
-    EVP_DigestFinal_ex(ctxt, cu, NULL);
+    if (!EVP_DigestFinal_ex(ctxt, cu, NULL))
+        goto err;
 
     if ((u = BN_bin2bn(cu, sizeof(cu), NULL)) == NULL)
         goto err;
@@ -173,18 +178,20 @@ BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass)
     if ((cs = OPENSSL_malloc(BN_num_bytes(s))) == NULL)
         goto err;
 
-    EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL);
-    EVP_DigestUpdate(ctxt, user, strlen(user));
-    EVP_DigestUpdate(ctxt, ":", 1);
-    EVP_DigestUpdate(ctxt, pass, strlen(pass));
-    EVP_DigestFinal_ex(ctxt, dig, NULL);
-
-    EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL);
+    if (!EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
+        || !EVP_DigestUpdate(ctxt, user, strlen(user))
+        || !EVP_DigestUpdate(ctxt, ":", 1)
+        || !EVP_DigestUpdate(ctxt, pass, strlen(pass))
+        || !EVP_DigestFinal_ex(ctxt, dig, NULL)
+        || !EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL))
+        goto err;
     BN_bn2bin(s, cs);
-    EVP_DigestUpdate(ctxt, cs, BN_num_bytes(s));
+    if (!EVP_DigestUpdate(ctxt, cs, BN_num_bytes(s)))
+        goto err;
     OPENSSL_free(cs);
-    EVP_DigestUpdate(ctxt, dig, sizeof(dig));
-    EVP_DigestFinal_ex(ctxt, dig, NULL);
+    if (!EVP_DigestUpdate(ctxt, dig, sizeof(dig))
+        || !EVP_DigestFinal_ex(ctxt, dig, NULL))
+        goto err;
 
     res = BN_bin2bn(dig, sizeof(dig), NULL);
  err:

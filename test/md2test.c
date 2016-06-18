@@ -60,8 +60,11 @@ int main(int argc, char *argv[])
     R = ret;
     i = 1;
     while (*P != NULL) {
-        EVP_Digest((unsigned char *)*P, strlen(*P), md, NULL, EVP_md2(),
-                   NULL);
+        if (!EVP_Digest((unsigned char *)*P, strlen(*P), md, NULL, EVP_md2(),
+                        NULL)) {
+            printf("EVP Digest error.\n");
+            EXIT(1);
+        }
         p = pt(md);
         if (strcmp(p, *R) != 0) {
             printf("error calculating MD2 on '%s'\n", *P);

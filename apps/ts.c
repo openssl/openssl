@@ -492,28 +492,30 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
                          unsigned char **md_value)
 {
     int md_value_len;
+    int rv = 0;
+    EVP_MD_CTX *md_ctx = NULL;
 
     md_value_len = EVP_MD_size(md);
     if (md_value_len < 0)
         return 0;
 
     if (input) {
-        EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
         unsigned char buffer[4096];
         int length;
 
+        md_ctx = EVP_MD_CTX_new();
         if (md_ctx == NULL)
             return 0;
         *md_value = app_malloc(md_value_len, "digest buffer");
-        EVP_DigestInit(md_ctx, md);
+        if (!EVP_DigestInit(md_ctx, md))
+            goto err;
         while ((length = BIO_read(input, buffer, sizeof(buffer))) > 0) {
-            EVP_DigestUpdate(md_ctx, buffer, length);
+            if (!EVP_DigestUpdate(md_ctx, buffer, length))
+                goto err;
         }
-        if (!EVP_DigestFinal(md_ctx, *md_value, NULL)) {
-            EVP_MD_CTX_free(md_ctx);
-            return 0;
-        }
-        EVP_MD_CTX_free(md_ctx);
+        if (!EVP_DigestFinal(md_ctx, *md_value, NULL))
+            goto err;
+        md_value_len = EVP_MD_size(md);
     } else {
         long digest_len;
         *md_value = OPENSSL_hexstr2buf(digest, &digest_len);
@@ -525,7 +527,10 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
             return 0;
         }
     }
-    return md_value_len;
+    rv = md_value_len;
+ err:
+    EVP_MD_CTX_free(md_ctx);
+    return rv;
 }
 
 static ASN1_INTEGER *create_nonce(int bits)

@@ -1890,9 +1890,12 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
      * elsewhere in OpenSSL. The session ID is set to the SHA256 (or SHA1 is
      * SHA256 is disabled) hash of the ticket.
      */
-    EVP_Digest(s->session->tlsext_tick, ticklen,
-               s->session->session_id, &s->session->session_id_length,
-               EVP_sha256(), NULL);
+    if (!EVP_Digest(s->session->tlsext_tick, ticklen,
+                    s->session->session_id, &s->session->session_id_length,
+                    EVP_sha256(), NULL)) {
+        SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, ERR_R_EVP_LIB);
+        goto err;
+    }
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);

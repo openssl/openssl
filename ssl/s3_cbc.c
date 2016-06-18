@@ -490,13 +490,13 @@ err:
  * digesting additional data.
  */
 
-void tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
+int tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
                            EVP_MD_CTX *mac_ctx, const unsigned char *data,
                            size_t data_len, size_t orig_len)
 {
     size_t block_size, digest_pad, blocks_data, blocks_orig;
     if (EVP_CIPHER_CTX_mode(cipher_ctx) != EVP_CIPH_CBC_MODE)
-        return;
+        return 1;
     block_size = EVP_MD_CTX_block_size(mac_ctx);
     /*-
      * We are in FIPS mode if we get this far so we know we have only SHA*
@@ -526,6 +526,6 @@ void tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
      * The "data" pointer should always have enough space to perform this
      * operation as it is large enough for a maximum length TLS buffer.
      */
-    EVP_DigestSignUpdate(mac_ctx, data,
-                         (blocks_orig - blocks_data + 1) * block_size);
+    return EVP_DigestSignUpdate(mac_ctx, data,
+                                (blocks_orig - blocks_data + 1) * block_size);
 }

@@ -70,23 +70,26 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
         for (j = 0; j < k; j++)
             buf[j] = c;
         c++;
-        EVP_DigestInit_ex(s1, EVP_sha1(), NULL);
-        EVP_DigestUpdate(s1, buf, k);
-        EVP_DigestUpdate(s1, s->session->master_key,
-                         s->session->master_key_length);
-        EVP_DigestUpdate(s1, s->s3->server_random, SSL3_RANDOM_SIZE);
-        EVP_DigestUpdate(s1, s->s3->client_random, SSL3_RANDOM_SIZE);
-        EVP_DigestFinal_ex(s1, smd, NULL);
-
-        EVP_DigestInit_ex(m5, EVP_md5(), NULL);
-        EVP_DigestUpdate(m5, s->session->master_key,
-                         s->session->master_key_length);
-        EVP_DigestUpdate(m5, smd, SHA_DIGEST_LENGTH);
+        if (!EVP_DigestInit_ex(s1, EVP_sha1(), NULL)
+            || !EVP_DigestUpdate(s1, buf, k)
+            || !EVP_DigestUpdate(s1, s->session->master_key,
+                                 s->session->master_key_length)
+            || !EVP_DigestUpdate(s1, s->s3->server_random, SSL3_RANDOM_SIZE)
+            || !EVP_DigestUpdate(s1, s->s3->client_random, SSL3_RANDOM_SIZE)
+            || !EVP_DigestFinal_ex(s1, smd, NULL)
+            || !EVP_DigestInit_ex(m5, EVP_md5(), NULL)
+            || !EVP_DigestUpdate(m5, s->session->master_key,
+                                 s->session->master_key_length)
+            || !EVP_DigestUpdate(m5, smd, SHA_DIGEST_LENGTH))
+            goto err;
         if ((int)(i + MD5_DIGEST_LENGTH) > num) {
-            EVP_DigestFinal_ex(m5, smd, NULL);
+            if (!EVP_DigestFinal_ex(m5, smd, NULL))
+                goto err;
             memcpy(km, smd, (num - i));
-        } else
-            EVP_DigestFinal_ex(m5, km, NULL);
+        } else {
+            if (!EVP_DigestFinal_ex(m5, km, NULL))
+                goto err;
+        }
 
         km += MD5_DIGEST_LENGTH;
     }
@@ -353,12 +356,13 @@ void ssl3_free_digest_list(SSL *s)
     s->s3->handshake_dgst = NULL;
 }
 
-void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
+int ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 {
     if (s->s3->handshake_dgst == NULL)
-        BIO_write(s->s3->handshake_buffer, (void *)buf, len);
+        /* Note: this writes to a memory BIO so a failure is a fatal error */
+        return BIO_write(s->s3->handshake_buffer, (void *)buf, len) == len;
     else
-        EVP_DigestUpdate(s->s3->handshake_dgst, buf, len);
+        return EVP_DigestUpdate(s->s3->handshake_dgst, buf, len);
 }
 
 int ssl3_digest_cached_records(SSL *s, int keep)
