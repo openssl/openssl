@@ -155,7 +155,7 @@ static int x25519_keycopy(EC_KEY *dest, const EC_KEY *src)
     return x25519_init_private(dest, src->custom_data);
 }
 
-static int x25519_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
+static int x25519_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
 {
     if (len != EC_X25519_KEYLEN)
         return 0;
