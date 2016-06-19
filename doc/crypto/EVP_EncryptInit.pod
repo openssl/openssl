@@ -221,7 +221,7 @@ B<EVP_MAX_IV_LENGTH> is the maximum IV length for all ciphers.
 
 EVP_CIPHER_block_size() and EVP_CIPHER_CTX_block_size() return the block
 size of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
-structure. The constant B<EVP_MAX_IV_LENGTH> is also the maximum block
+structure. The constant B<EVP_MAX_BLOCK_LENGTH> is also the maximum block
 length for all ciphers.
 
 EVP_CIPHER_type() and EVP_CIPHER_CTX_type() return the type of the passed
