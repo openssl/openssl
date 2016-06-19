@@ -182,3 +182,29 @@ OPENSSL_SIGALG=md5 \
 # 768-bit leaf key
 OPENSSL_KEYBITS=768 \
 ./mkcert.sh genee server.example ee-key-768 ee-cert-768 ca-key ca-cert
+
+# Proxy certificates, off of ee-client
+# Start with some good ones
+./mkcert.sh req pc1-key "0.CN = server.example" "1.CN = proxy 1" | \
+    ./mkcert.sh genpc pc1-key pc1-cert ee-key ee-client \
+                "language = id-ppl-anyLanguage" "pathlen = 1" "policy = text:AB"
+./mkcert.sh req pc2-key "0.CN = server.example" "1.CN = proxy 1" "2.CN = proxy 2" | \
+    ./mkcert.sh genpc pc2-key pc2-cert pc1-key pc1-cert \
+                "language = id-ppl-anyLanguage" "pathlen = 0" "policy = text:AB"
+# And now a couple of bad ones
+# pc3: incorrect CN
+./mkcert.sh req bad-pc3-key "0.CN = server.example" "1.CN = proxy 3" | \
+    ./mkcert.sh genpc bad-pc3-key bad-pc3-cert pc1-key pc1-cert \
+                "language = id-ppl-anyLanguage" "pathlen = 0" "policy = text:AB"
+# pc4: incorrect pathlen
+./mkcert.sh req bad-pc4-key "0.CN = server.example" "1.CN = proxy 1" "2.CN = proxy 4" | \
+    ./mkcert.sh genpc bad-pc4-key bad-pc4-cert pc1-key pc1-cert \
+                "language = id-ppl-anyLanguage" "pathlen = 1" "policy = text:AB"
+# pc5: no policy
+./mkcert.sh req pc5-key "0.CN = server.example" "1.CN = proxy 1" "2.CN = proxy 5" | \
+    ./mkcert.sh genpc pc5-key pc5-cert pc1-key pc1-cert \
+                "language = id-ppl-anyLanguage" "pathlen = 0"
+# pc6: incorrect CN (made into a component of a multivalue RDN)
+./mkcert.sh req bad-pc6-key "0.CN = server.example" "1.CN = proxy 1" "2.+CN = proxy 6" | \
+    ./mkcert.sh genpc bad-pc6-key bad-pc6-cert pc1-key pc1-cert \
+                "language = id-ppl-anyLanguage" "pathlen = 0" "policy = text:AB"
