@@ -22,6 +22,7 @@ static ERR_STRING_DATA X509_str_functs[] = {
     {ERR_FUNC(X509_F_ADD_CERT_DIR), "add_cert_dir"},
     {ERR_FUNC(X509_F_BUILD_CHAIN), "build_chain"},
     {ERR_FUNC(X509_F_BY_FILE_CTRL), "by_file_ctrl"},
+    {ERR_FUNC(X509_F_CHECK_NAME_CONSTRAINTS), "check_name_constraints"},
     {ERR_FUNC(X509_F_CHECK_POLICY), "check_policy"},
     {ERR_FUNC(X509_F_DANE_I2D), "dane_i2d"},
     {ERR_FUNC(X509_F_DIR_CTRL), "dir_ctrl"},
