@@ -105,7 +105,7 @@ this co-ordinate system provides more efficient point multiplication
 operations.  A mapping exists between Jacobian projective co-ordinates and
 affine co-ordinates. A Jacobian projective co-ordinate (x, y, z) can be written
 as an affine co-ordinate as (x/(z^2), y/(z^3)). Conversion to Jacobian
-projective to affine co-ordinates is simple. The co-ordinate (x, y) is mapped
+projective from affine co-ordinates is simple. The co-ordinate (x, y) is mapped
 to (x, y, 1). To set or get the projective co-ordinates use
 EC_POINT_set_Jprojective_coordinates_GFp() and
 EC_POINT_get_Jprojective_coordinates_GFp() respectively.

@@ -18,7 +18,7 @@ EC_GROUP_copy, EC_GROUP_dup, EC_GROUP_method_of, EC_GROUP_set_generator, EC_GROU
 
  int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
  const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
- const BIGNUM *EC_GROUP_order_bits(const EC_GROUP *group);
+ int EC_GROUP_order_bits(const EC_GROUP *group);
  int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx);
  const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group);
 
@@ -91,7 +91,7 @@ point_conversion_form_t is an enum defined as follows:
         /** the point is encoded as z||x, where the octet z specifies
          *   which solution of the quadratic equation y is  */
         POINT_CONVERSION_COMPRESSED = 2,
-        /** the point is encoded as z||x||y, where z is the octet 0x02  */
+        /** the point is encoded as z||x||y, where z is the octet 0x04  */
         POINT_CONVERSION_UNCOMPRESSED = 4,
         /** the point is encoded as z||x||y, where the octet z specifies
          *  which solution of the quadratic equation y is  */
