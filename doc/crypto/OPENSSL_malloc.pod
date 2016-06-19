@@ -124,7 +124,7 @@ An odd number of hex digits is an error.
 
 OPENSSL_buf2hexstr() takes the specified buffer and length, and returns
 a hex string for value, or NULL on error.
-B<Buffer> cannot be NULL; if B<len> is NULL an empty string is returned.
+B<Buffer> cannot be NULL; if B<len> is 0 an empty string is returned.
 
 OPENSSL_hexchar2int() converts a character to the hexadecimal equivalent,
 or returns -1 on error.
