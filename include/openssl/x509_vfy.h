@@ -165,6 +165,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 /* Certificate transparency */
 # define         X509_V_ERR_NO_VALID_SCTS                        71
 
+# define         X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION         72
+
 /* Certificate verify flags */
 
 # if OPENSSL_API_COMPAT < 0x10100000L
