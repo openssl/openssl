@@ -101,7 +101,7 @@ static SXNET *sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 
 /* Add an id given the zone as an ASCII number */
 
-int SXNET_add_id_asc(SXNET **psx, char *zone, char *user, int userlen)
+int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user, int userlen)
 {
     ASN1_INTEGER *izone;
 
@@ -114,7 +114,7 @@ int SXNET_add_id_asc(SXNET **psx, char *zone, char *user, int userlen)
 
 /* Add an id given the zone as an unsigned long */
 
-int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user,
+int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
                        int userlen)
 {
     ASN1_INTEGER *izone;
@@ -134,7 +134,7 @@ int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, char *user,
  * passed integer and doesn't make a copy so don't free it up afterwards.
  */
 
-int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, char *user,
+int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, const char *user,
                          int userlen)
 {
     SXNET *sx = NULL;
@@ -168,7 +168,7 @@ int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, char *user,
     if (userlen == -1)
         userlen = strlen(user);
 
-    if (!ASN1_OCTET_STRING_set(id->user, (unsigned char *)user, userlen))
+    if (!ASN1_OCTET_STRING_set(id->user, (const unsigned char *)user, userlen))
         goto err;
     if (!sk_SXNETID_push(sx->ids, id))
         goto err;
@@ -183,7 +183,7 @@ int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, char *user,
     return 0;
 }
 
-ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, char *zone)
+ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, const char *zone)
 {
     ASN1_INTEGER *izone;
     ASN1_OCTET_STRING *oct;
