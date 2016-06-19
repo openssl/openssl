@@ -85,7 +85,7 @@ int has_stdin_waiting(void);
         OPT_V_POLICY_PRINT, OPT_V_CHECK_SS_SIG, OPT_V_TRUSTED_FIRST, \
         OPT_V_SUITEB_128_ONLY, OPT_V_SUITEB_128, OPT_V_SUITEB_192, \
         OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME, \
-        OPT_V_VERIFY_AUTH_LEVEL, \
+        OPT_V_VERIFY_AUTH_LEVEL, OPT_V_ALLOW_PROXY_CERTS, \
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
@@ -135,7 +135,8 @@ int has_stdin_waiting(void);
         { "partial_chain", OPT_V_PARTIAL_CHAIN, '-', \
             "accept chains anchored by intermediate trust-store CAs"}, \
         { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "(deprecated)" }, \
-        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "ignore certificate validity time" }
+        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "ignore certificate validity time" }, \
+        { "allow_proxy_certs", OPT_V_ALLOW_PROXY_CERTS, '-', "allow the use of proxy certificates" }
 
 # define OPT_V_CASES \
         OPT_V__FIRST: case OPT_V__LAST: break; \
@@ -167,7 +168,8 @@ int has_stdin_waiting(void);
         case OPT_V_SUITEB_192: \
         case OPT_V_PARTIAL_CHAIN: \
         case OPT_V_NO_ALT_CHAINS: \
-        case OPT_V_NO_CHECK_TIME
+        case OPT_V_NO_CHECK_TIME: \
+        case OPT_V_ALLOW_PROXY_CERTS
 
 /*
  * Common "extended"? options.

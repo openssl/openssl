@@ -214,6 +214,7 @@ static int check(X509_STORE *ctx, char *file,
                (file == NULL) ? "stdin" : file);
         goto end;
     }
+
     X509_STORE_set_flags(ctx, vflags);
     if (!X509_STORE_CTX_init(csc, ctx, x, uchain)) {
         printf("error %s: X.509 store context initialization failed\n",
