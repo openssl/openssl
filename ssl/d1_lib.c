@@ -278,7 +278,7 @@ struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft)
 
     /*
      * If remaining time is less than 15 ms, set it to 0 to prevent issues
-     * because of small devergences with socket timeouts.
+     * because of small divergences with socket timeouts.
      */
     if (timeleft->tv_sec == 0 && timeleft->tv_usec < 15000) {
         memset(timeleft, 0, sizeof(*timeleft));
@@ -952,7 +952,7 @@ int dtls1_heartbeat(SSL *s)
 
     /*-
      * Create HeartBeat message, we just use a sequence number
-     * as payload to distuingish different messages and add
+     * as payload to distinguish different messages and add
      * some random stuff.
      */
     size = HEARTBEAT_SIZE(payload, padding);

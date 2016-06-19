@@ -66,7 +66,7 @@ any remainder). This gives the number of blocks of data that will be processed.
 Ensure the output buffer contains 65 bytes of storage for each block, plus an
 additional byte for a NUL terminator. EVP_EncodeUpdate() may be called
 repeatedly to process large amounts of input data. In the event of an error
-EVP_EncodeUpdate() will set B<*outl> to 0 and return 0. On success 1 wil be
+EVP_EncodeUpdate() will set B<*outl> to 0 and return 0. On success 1 will be
 returned.
 
 EVP_EncodeFinal() must be called at the end of an encoding operation. It will
@@ -116,7 +116,7 @@ in this case. Otherwise the function returns 1 on success.
 EVP_DecodeBlock() will decode the block of B<n> characters of base 64 data
 contained in B<f> and store the result in B<t>. Any leading whitespace will be
 trimmed as will any trailing whitespace, newlines, carriage returns or EOF
-characters. After such trimming the length of the data in B<f> must be divisbile
+characters. After such trimming the length of the data in B<f> must be divisible
 by 4. For every 4 input bytes exactly 3 output bytes will be produced. The
 output will be padded with 0 bits if necessary to ensure that the output is
 always 3 bytes for every 4 input bytes. This function will return the length of

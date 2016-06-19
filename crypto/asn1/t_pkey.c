@@ -31,7 +31,7 @@ int ASN1_buf_print(BIO *bp, unsigned char *buf, size_t buflen, int indent)
         }
         /*
          * Use colon separators for each octet for compatibility as
-         * this fuction is used to print out key components.
+         * this function is used to print out key components.
          */
         if (BIO_printf(bp, "%02x%s", buf[i],
                        (i == buflen - 1) ? "" : ":") <= 0)
