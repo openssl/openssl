@@ -187,6 +187,8 @@ const char *X509_verify_cert_error_string(long n)
         return ("Invalid certificate verification context");
     case X509_V_ERR_STORE_LOOKUP:
         return ("Issuer certificate lookup error");
+    case X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION:
+        return ("proxy subject name violation");
 
     default:
         BIO_snprintf(buf, sizeof buf, "error number %ld", n);
