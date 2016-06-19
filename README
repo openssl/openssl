@@ -82,7 +82,7 @@
 
  In order to avoid spam, this is a moderated mailing list, and it might
  take a couple of days for the ticket to show up.  (We also scan posts to make
- sure that security disclosures aren't publically posted by mistake.) Mail
+ sure that security disclosures aren't publicly posted by mistake.) Mail
  to this address is recorded in the public RT (request tracker) database
  (see https://www.openssl.org/community/index.html#bugs for details) and
  also forwarded the public openssl-dev mailing list.  Confidential mail

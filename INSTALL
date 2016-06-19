@@ -151,7 +151,7 @@
                    on a platform that does not support AFALG.
 
   enable-asan
-                   Build with the Address sanitser. This is a developer option
+                   Build with the Address sanitiser. This is a developer option
                    only. It may not work on all platforms and should never be
                    used in production environments. It will only work when used
                    with gcc or clang and should be used in conjunction with the
@@ -326,7 +326,7 @@
                    "illegal instruction" exception. There might be a way
                    to enable support in kernel, e.g. FreeBSD kernel can be
                    compiled with CPU_ENABLE_SSE, and there is a way to
-                   disengage SSE2 code pathes upon application start-up,
+                   disengage SSE2 code paths upon application start-up,
                    but if you aim for wider "audience" running such kernel,
                    consider no-sse2. Both the 386 and no-asm options imply
                    no-sse2.
@@ -361,7 +361,7 @@
                    Don't build Time Stamping Authority support.
 
   enable-ubsan
-                   Build with the Undefined Behaviour sanitser. This is a
+                   Build with the Undefined Behaviour sanitiser. This is a
                    developer option only. It may not work on all platforms and
                    should never be used in production environments. It will only
                    work when used with gcc or clang and should be used in
@@ -566,7 +566,7 @@
        $ nmake test                                     # Windows
 
      NOTE: you MUST run the tests from an unprivileged account (or
-     disable your privileges temporarly if your platform allows it).
+     disable your privileges temporarily if your platform allows it).
 
      If some tests fail, look at the output.  There may be reasons for
      the failure that isn't a problem in OpenSSL itself (like a

@@ -97,7 +97,7 @@
    "Matching Perl" refers to chosen "shell environment", i.e. if built
    under MSYS, then Perl compiled for MSYS must be used.
 
-   Alternativelly, one can use MSYS2 from https://msys2.github.io/,
+   Alternatively, one can use MSYS2 from https://msys2.github.io/,
    which includes MingW (32-bit and 64-bit).
 
  * It is also possible to cross-compile it on Linux by configuring
