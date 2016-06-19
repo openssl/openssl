@@ -159,7 +159,7 @@ struct ec_method_st {
     int (*field_set_to_one) (const EC_GROUP *, BIGNUM *r, BN_CTX *);
     /* private key operations */
     size_t (*priv2oct)(const EC_KEY *eckey, unsigned char *buf, size_t len);
-    int (*oct2priv)(EC_KEY *eckey, unsigned char *buf, size_t len);
+    int (*oct2priv)(EC_KEY *eckey, const unsigned char *buf, size_t len);
     int (*set_private)(EC_KEY *eckey, const BIGNUM *priv_key);
     int (*keygen)(EC_KEY *eckey);
     int (*keycheck)(const EC_KEY *eckey);
@@ -553,7 +553,7 @@ const EC_METHOD *EC_GFp_nistz256_method(void);
 
 size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
                               unsigned char *buf, size_t len);
-int ec_key_simple_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len);
+int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len);
 int ec_key_simple_generate_key(EC_KEY *eckey);
 int ec_key_simple_generate_public_key(EC_KEY *eckey);
 int ec_key_simple_check_key(const EC_KEY *eckey);
