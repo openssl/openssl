@@ -141,7 +141,7 @@ int tls1_change_cipher_state(SSL *s, int which)
             goto err;
         else
             /*
-             * make sure it's intialized in case we exit later with an error
+             * make sure it's initialised in case we exit later with an error
              */
             EVP_CIPHER_CTX_reset(s->enc_read_ctx);
         dd = s->enc_read_ctx;

@@ -752,7 +752,7 @@ int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent,
                     int dump);
 const char *ASN1_tag2str(int tag);
 
-/* Used to load and write netscape format cert */
+/* Used to load and write Netscape format cert */
 
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s);
 

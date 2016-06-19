@@ -14,7 +14,7 @@
 #include <openssl/dh.h>
 
 /*
- * structure holding name tables. This is used for pemitted elements in lists
+ * structure holding name tables. This is used for permitted elements in lists
  * such as TLSv1.
  */
 

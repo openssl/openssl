@@ -156,7 +156,7 @@ Generation of RSA Private Key. Superseded by L<B<genpkey>|genpkey(1)>.
 
 =item L<B<nseq>|nseq(1)>
 
-Create or examine a netscape certificate sequence
+Create or examine a Netscape certificate sequence
 
 =item L<B<ocsp>|ocsp(1)>
 

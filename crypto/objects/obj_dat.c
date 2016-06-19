@@ -199,7 +199,7 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
             ao[i]->type = i;
             ao[i]->obj = o;
             aop = lh_ADDED_OBJ_insert(added, ao[i]);
-            /* memory leak, buit should not normally matter */
+            /* memory leak, but should not normally matter */
             OPENSSL_free(aop);
         }
     }

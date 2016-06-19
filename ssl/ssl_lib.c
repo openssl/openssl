@@ -2041,7 +2041,7 @@ int SSL_get_servername_type(const SSL *s)
  * is indicated to the callback. In this case, the client application has to
  * abort the connection or have a default application level protocol. 2) If
  * the server supports NPN, but advertises an empty list then the client
- * selects the first protcol in its list, but indicates via the API that this
+ * selects the first protocol in its list, but indicates via the API that this
  * fallback case was enacted. 3) Otherwise, the client finds the first
  * protocol in the server's list that it supports and selects this protocol.
  * This is because it's assumed that the server has better information about
@@ -4116,7 +4116,7 @@ int ssl_validate_ct(SSL *s)
      * value is negative.
      *
      * XXX: One might well argue that the return value of this function is an
-     * unforunate design choice.  Its job is only to determine the validation
+     * unfortunate design choice.  Its job is only to determine the validation
      * status of each of the provided SCTs.  So long as it correctly separates
      * the wheat from the chaff it should return success.  Failure in this case
      * ought to correspond to an inability to carry out its duties.

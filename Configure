@@ -87,7 +87,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # DEBUG_UNUSED enables __owur (warn unused result) checks.
 my $gcc_devteam_warn = "-DDEBUG_UNUSED"
         # -DPEDANTIC complements -pedantic and is meant to mask code that
-        # is not strictly standard-compliant and/or implementation-specifc,
+        # is not strictly standard-compliant and/or implementation-specific,
         # e.g. inline assembly, disregards to alignment requirements, such
         # that -pedantic would complain about. Incidentally -DPEDANTIC has
         # to be used even in sanitized builds, because sanitizer too is
@@ -144,7 +144,7 @@ my $strict_warnings = 0;
 our $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 
 #
-# API compability name to version number mapping.
+# API compatibility name to version number mapping.
 #
 my $maxapi = "1.1.0";           # API for "no-deprecated" builds
 my $apitable = {
@@ -1059,7 +1059,7 @@ unless ($disabled{asan}) {
 }
 
 unless ($disabled{ubsan}) {
-    # -DPEDANTIC or -fnosanitize=aligmnent may also be required on some
+    # -DPEDANTIC or -fnosanitize=alignment may also be required on some
     # platforms.
     $config{cflags} .= "-fsanitize=undefined -fno-sanitize-recover=all ";
 }
