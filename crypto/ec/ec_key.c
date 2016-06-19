@@ -546,7 +546,8 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
     return 1;
 }
 
-size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
+size_t EC_KEY_priv2oct(const EC_KEY *eckey, 
+                       unsigned char *buf, size_t len)
 {
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
@@ -581,7 +582,7 @@ size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
     return buf_len;
 }
 
-int EC_KEY_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
+int EC_KEY_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
 {
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
@@ -592,7 +593,7 @@ int EC_KEY_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
     return eckey->group->meth->oct2priv(eckey, buf, len);
 }
 
-int ec_key_simple_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
+int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
 {
     if (eckey->priv_key == NULL)
         eckey->priv_key = BN_secure_new();
