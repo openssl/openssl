@@ -29,8 +29,16 @@ typedef enum {
 typedef enum {
     SSL_TEST_SERVERNAME_NONE = 0, /* Default */
     SSL_TEST_SERVERNAME_SERVER1,
-    SSL_TEST_SERVERNAME_SERVER2
+    SSL_TEST_SERVERNAME_SERVER2,
+    SSL_TEST_SERVERNAME_INVALID
 } ssl_servername_t;
+
+typedef enum {
+    SSL_TEST_SERVERNAME_CB_NONE = 0,  /* Default */
+    SSL_TEST_SERVERNAME_IGNORE_MISMATCH,
+    SSL_TEST_SERVERNAME_REJECT_MISMATCH
+} ssl_servername_callback_t;
+
 
 typedef enum {
     SSL_TEST_SESSION_TICKET_IGNORE = 0, /* Default */
@@ -61,6 +69,18 @@ typedef struct ssl_test_ctx {
     ssl_verify_callback_t client_verify_callback;
     /* One of a number of predefined server names use by the client */
     ssl_servername_t servername;
+    /*
+     * The expected SNI context to use.
+     * We test server-side that the server switched to the expected context.
+     * Set by the callback upon success, so if the callback wasn't called or
+     * terminated with an alert, the servername will match with
+     * SSL_TEST_SERVERNAME_NONE.
+     * Note: in the event that the servername was accepted, the client should
+     * also receive an empty SNI extension back but we have no way of probing
+     * client-side via the API that this was the case.
+     */
+    ssl_servername_t expected_servername;
+    ssl_servername_callback_t servername_callback;
     ssl_session_ticket_t session_ticket_expected;
     /* Whether the server/client CTX should use DTLS or TLS. */
     ssl_test_method_t method;
@@ -71,6 +91,8 @@ const char *ssl_alert_name(int alert);
 const char *ssl_protocol_name(int protocol);
 const char *ssl_verify_callback_name(ssl_verify_callback_t verify_callback);
 const char *ssl_servername_name(ssl_servername_t server);
+const char *ssl_servername_callback_name(ssl_servername_callback_t
+                                         servername_callback);
 const char *ssl_session_ticket_name(ssl_session_ticket_t server);
 const char *ssl_test_method_name(ssl_test_method_t method);
 

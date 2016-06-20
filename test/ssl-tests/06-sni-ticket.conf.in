@@ -36,6 +36,9 @@ sub generate_tests() {
 			},
                         "test" => {
                             "ServerName" => $n,
+                            "ExpectedServerName" => $n,
+                            # We don't test mismatch here.
+                            "ServerNameCallback" => "IgnoreMismatch",
                             "ExpectedResult" => "Success",
 			    "SessionTicketExpected" => $result,
                         }
