@@ -287,11 +287,6 @@ const char *RAND_file_name(char *buf, size_t size)
             return NULL;
     } else {
 #ifdef OPENSSL_SYS_WINDOWS
-        /*
-         * We use the same env variables as GetTempFile() - but that function
-         * uses TCHARs, but getenv() gives us chars so its easier to do it this
-         * way
-         */
         if ((s = getenv("HOME")) == NULL
             && (s = getenv("USERPROFILE")) == NULL) {
             s = getenv("SYSTEMROOT");
