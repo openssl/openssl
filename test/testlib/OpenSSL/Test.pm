@@ -821,12 +821,10 @@ sub __cwd {
 	mkpath($dir);
     }
 
-    # Should we just bail out here as well?  I'm unsure.
-    return undef unless chdir($dir);
-
-    if ($opts{cleanup}) {
-	rmtree(".", { safe => 0, keep_root => 1 });
-    }
+    # We are recalculating the directories we keep track of, but need to save
+    # away the result for after having moved into the new directory.
+    my %tmp_directories = ();
+    my %tmp_ENV = ();
 
     # For each of these directory variables, figure out where they are relative
     # to the directory we want to move to if they aren't absolute (if they are,
@@ -835,7 +833,7 @@ sub __cwd {
     foreach (@dirtags) {
 	if (!file_name_is_absolute($directories{$_})) {
 	    my $newpath = abs2rel(rel2abs($directories{$_}), rel2abs($dir));
-	    $directories{$_} = $newpath;
+	    $tmp_directories{$_} = $newpath;
 	}
     }
 
@@ -845,8 +843,20 @@ sub __cwd {
     foreach (@direnv) {
 	if (!file_name_is_absolute($ENV{$_})) {
 	    my $newpath = abs2rel(rel2abs($ENV{$_}), rel2abs($dir));
-	    $ENV{$_} = $newpath;
+	    $tmp_ENV{$_} = $newpath;
 	}
+    }
+
+    # Should we just bail out here as well?  I'm unsure.
+    return undef unless chdir($dir);
+
+    if ($opts{cleanup}) {
+	rmtree(".", { safe => 0, keep_root => 1 });
+    }
+
+    %directories = %tmp_directories;
+    foreach (keys %tmp_ENV) {
+        $ENV{$_} = $tmp_ENV{$_};
     }
 
     if ($debug) {
