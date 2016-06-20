@@ -292,11 +292,9 @@ const char *RAND_file_name(char *buf, size_t size)
          * uses TCHARs, but getenv() gives us chars so its easier to do it this
          * way
          */
-        if ((s = getenv("TMP")) == NULL
-            && (s = getenv("TEMP")) == NULL
-            && (s = getenv("USERPROFILE")) == NULL
-            && (s = getenv("SYSTEMROOT")) == NULL) {
-            s = getenv("HOME");
+        if ((s = getenv("HOME")) == NULL
+            && (s = getenv("USERPROFILE")) == NULL) {
+            s = getenv("SYSTEMROOT");
         }
 #else
         if (OPENSSL_issetugid() == 0)

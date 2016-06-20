@@ -6,8 +6,8 @@
 
   *) The method for finding the storage location for the Windows RAND seed file
      has changed. First we check %RANDFILE%. If that is not set then we check
-     the directories %TMP%, %TEMP%, %USERPROFILE%, %SYSTEMROOT% and %HOME% in
-     that order. If all else fails we fall back to "C:".
+     the directories %HOME%, %USERPROFILE% and %SYSTEMROOT% in that order. If
+     all else fails we fall back to C:\.
      [Matt Caswell]
 
   *) The EVP_EncryptUpdate() function has had its return type changed from void
