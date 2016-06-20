@@ -61,6 +61,7 @@ The test section supports the following options:
 
 * ClientVerifyCallback - the client's custom certificate verify callback.
   Used to test callback behaviour. One of
+  - None - no custom callback (default)
   - AcceptAll - accepts all certificates.
   - RejectAll - rejects all certificates.
 
@@ -70,6 +71,12 @@ The test section supports the following options:
   - None - do not use SNI (default)
   - server1 - the initial context
   - server2 - the secondary context
+  - invalid - an unknown context
+
+* ServerNameCallback - the SNI switching callback to use
+  - None - no callback (default)
+  - IgnoreMismatch - continue the handshake on SNI mismatch
+  - RejectMismatch - abort the handshake on SNI mismatch
 
 * SessionTicketExpected - whether or not a session ticket is expected
   - Ignore - do not check for a session ticket (default)

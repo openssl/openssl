@@ -24,6 +24,7 @@ typedef struct handshake_ex_data {
     int alert_sent;
     int alert_received;
     int session_ticket_do_not_call;
+    ssl_servername_t servername;
 } HANDSHAKE_EX_DATA;
 
 static int ex_data_idx;
@@ -41,10 +42,25 @@ static void info_cb(const SSL *s, int where, int ret)
     }
 }
 
-static int servername_cb(SSL *s, int *ad, void *arg)
+/*
+ * Select the appropriate server CTX.
+ * Returns SSL_TLSEXT_ERR_OK if a match was found.
+ * If |ignore| is 1, returns SSL_TLSEXT_ERR_NOACK on mismatch.
+ * Otherwise, returns SSL_TLSEXT_ERR_ALERT_FATAL on mismatch.
+ * An empty SNI extension also returns SSL_TSLEXT_ERR_NOACK.
+ */
+static int select_server_ctx(SSL *s, void *arg, int ignore)
 {
     const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-    if (servername != NULL && !strcmp(servername, "server2")) {
+    HANDSHAKE_EX_DATA *ex_data =
+        (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
+
+    if (servername == NULL) {
+        ex_data->servername = SSL_TEST_SERVERNAME_SERVER1;
+        return SSL_TLSEXT_ERR_NOACK;
+    }
+
+    if (strcmp(servername, "server2") == 0) {
         SSL_CTX *new_ctx = (SSL_CTX*)arg;
         SSL_set_SSL_CTX(s, new_ctx);
         /*
@@ -54,8 +70,40 @@ static int servername_cb(SSL *s, int *ad, void *arg)
          */
         SSL_clear_options(s, 0xFFFFFFFFL);
         SSL_set_options(s, SSL_CTX_get_options(new_ctx));
+
+        ex_data->servername = SSL_TEST_SERVERNAME_SERVER2;
+        return SSL_TLSEXT_ERR_OK;
+    } else if (strcmp(servername, "server1") == 0) {
+        ex_data->servername = SSL_TEST_SERVERNAME_SERVER1;
+        return SSL_TLSEXT_ERR_OK;
+    } else if (ignore) {
+        ex_data->servername = SSL_TEST_SERVERNAME_SERVER1;
+        return SSL_TLSEXT_ERR_NOACK;
+    } else {
+        /* Don't set an explicit alert, to test library defaults. */
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
-    return SSL_TLSEXT_ERR_OK;
+}
+
+/*
+ * (RFC 6066):
+ *  If the server understood the ClientHello extension but
+ *  does not recognize the server name, the server SHOULD take one of two
+ *  actions: either abort the handshake by sending a fatal-level
+ *  unrecognized_name(112) alert or continue the handshake.
+ *
+ * This behaviour is up to the application to configure; we test both
+ * configurations to ensure the state machine propagates the result
+ * correctly.
+ */
+static int servername_ignore_cb(SSL *s, int *ad, void *arg)
+{
+    return select_server_ctx(s, arg, 1);
+}
+
+static int servername_reject_cb(SSL *s, int *ad, void *arg)
+{
+    return select_server_ctx(s, arg, 0);
 }
 
 static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) {
@@ -106,14 +154,27 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     }
 
     /* link the two contexts for SNI purposes */
-    SSL_CTX_set_tlsext_servername_callback(server_ctx, servername_cb);
-    SSL_CTX_set_tlsext_servername_arg(server_ctx, server2_ctx);
+    switch (test_ctx->servername_callback) {
+    case SSL_TEST_SERVERNAME_IGNORE_MISMATCH:
+        SSL_CTX_set_tlsext_servername_callback(server_ctx, servername_ignore_cb);
+        SSL_CTX_set_tlsext_servername_arg(server_ctx, server2_ctx);
+        break;
+    case SSL_TEST_SERVERNAME_REJECT_MISMATCH:
+        SSL_CTX_set_tlsext_servername_callback(server_ctx, servername_reject_cb);
+        SSL_CTX_set_tlsext_servername_arg(server_ctx, server2_ctx);
+        break;
+    default:
+        break;
+    }
+
     /*
      * The initial_ctx/session_ctx always handles the encrypt/decrypt of the
      * session ticket. This ticket_key callback is assigned to the second
      * session (assigned via SNI), and should never be invoked
      */
-    SSL_CTX_set_tlsext_ticket_key_cb(server2_ctx, do_not_call_session_ticket_cb);
+    if (server2_ctx != NULL)
+        SSL_CTX_set_tlsext_ticket_key_cb(server2_ctx,
+                                         do_not_call_session_ticket_cb);
 
     if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_BROKEN) {
         SSL_CTX_set_tlsext_ticket_key_cb(server_ctx, broken_session_ticket_cb);
@@ -333,9 +394,7 @@ HANDSHAKE_RESULT do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     ret.client_alert_received = server_ex_data.alert_received;
     ret.server_protocol = SSL_version(server);
     ret.client_protocol = SSL_version(client);
-    ret.servername = ((SSL_get_SSL_CTX(server) == server_ctx)
-                      ? SSL_TEST_SERVERNAME_SERVER1
-                      : SSL_TEST_SERVERNAME_SERVER2);
+    ret.servername = server_ex_data.servername;
     if ((sess = SSL_get0_session(client)) != NULL)
         SSL_SESSION_get0_ticket(sess, &tick, &len);
     if (tick == NULL || len == 0)

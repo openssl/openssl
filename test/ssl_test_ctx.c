@@ -82,6 +82,7 @@ const char *ssl_test_result_name(ssl_test_result_t result)
 static const test_enum ssl_alerts[] = {
     {"UnknownCA", SSL_AD_UNKNOWN_CA},
     {"HandshakeFailure", SSL_AD_HANDSHAKE_FAILURE},
+    {"UnrecognizedName", SSL_AD_UNRECOGNIZED_NAME},
 };
 
 __owur static int parse_alert(int *alert, const char *value)
@@ -164,6 +165,7 @@ static const test_enum ssl_servername[] = {
     {"None", SSL_TEST_SERVERNAME_NONE},
     {"server1", SSL_TEST_SERVERNAME_SERVER1},
     {"server2", SSL_TEST_SERVERNAME_SERVER2},
+    {"invalid", SSL_TEST_SERVERNAME_INVALID},
 };
 
 __owur static int parse_servername(SSL_TEST_CTX *test_ctx,
@@ -178,10 +180,50 @@ __owur static int parse_servername(SSL_TEST_CTX *test_ctx,
     return 1;
 }
 
+__owur static int parse_expected_servername(SSL_TEST_CTX *test_ctx,
+                                            const char *value)
+{
+    int ret_value;
+    if (!parse_enum(ssl_servername, OSSL_NELEM(ssl_servername),
+                    &ret_value, value)) {
+        return 0;
+    }
+    test_ctx->expected_servername = ret_value;
+    return 1;
+}
+
 const char *ssl_servername_name(ssl_servername_t server)
 {
     return enum_name(ssl_servername, OSSL_NELEM(ssl_servername),
                      server);
+}
+
+/***********************/
+/* ServerNameCallback. */
+/***********************/
+
+static const test_enum ssl_servername_callbacks[] = {
+    {"None", SSL_TEST_SERVERNAME_CB_NONE},
+    {"IgnoreMismatch", SSL_TEST_SERVERNAME_IGNORE_MISMATCH},
+    {"RejectMismatch", SSL_TEST_SERVERNAME_REJECT_MISMATCH},
+};
+
+__owur static int parse_servername_callback(SSL_TEST_CTX *test_ctx,
+                                              const char *value)
+{
+    int ret_value;
+    if (!parse_enum(ssl_servername_callbacks,
+                    OSSL_NELEM(ssl_servername_callbacks), &ret_value, value)) {
+        return 0;
+    }
+    test_ctx->servername_callback = ret_value;
+    return 1;
+}
+
+const char *ssl_servername_callback_name(ssl_servername_callback_t callback)
+{
+    return enum_name(ssl_servername_callbacks,
+                     OSSL_NELEM(ssl_servername_callbacks), callback);
 }
 
 /*************************/
@@ -254,6 +296,8 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "Protocol", &parse_protocol },
     { "ClientVerifyCallback", &parse_client_verify_callback },
     { "ServerName", &parse_servername },
+    { "ExpectedServerName", &parse_expected_servername },
+    { "ServerNameCallback", &parse_servername_callback },
     { "SessionTicketExpected", &parse_session_ticket },
     { "Method", &parse_test_method },
 };
