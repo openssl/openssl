@@ -2,7 +2,18 @@
 
 =head1 NAME
 
-HMAC, HMAC_CTX_new, HMAC_CTX_reset, HMAC_CTX_free, HMAC_Init, HMAC_Init_ex, HMAC_Update, HMAC_Final - HMAC message authentication code
+HMAC,
+HMAC_CTX_new,
+HMAC_CTX_reset,
+HMAC_CTX_free,
+HMAC_Init,
+HMAC_Init_ex,
+HMAC_Update,
+HMAC_Final,
+HMAC_CTX_copy,
+HMAC_CTX_set_flags,
+HMAC_CTX_get_md
+- HMAC message authentication code
 
 =head1 SYNOPSIS
 
@@ -21,6 +32,10 @@ HMAC, HMAC_CTX_new, HMAC_CTX_reset, HMAC_CTX_free, HMAC_Init, HMAC_Init_ex, HMAC
  int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 
  void HMAC_CTX_free(HMAC_CTX *ctx);
+
+ int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx);
+ void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
+ const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx);
 
 Deprecated:
 
@@ -78,6 +93,14 @@ be authenticated (B<len> bytes at B<data>).
 HMAC_Final() places the message authentication code in B<md>, which
 must have space for the hash function output.
 
+HMAC_CTX_copy() copies all of the internal state from B<sctx> into B<dctx>.
+
+HMAC_CTX_set_flags() applies the specified flags to the internal EVP_MD_CTXs.
+These flags have the same meaning as for L<EVP_MD_CTX_set_flags(3)>.
+
+HMAC_CTX_get_md() returns the EVP_MD that has previously been set for the
+supplied HMAC_CTX.
+
 =head1 RETURN VALUES
 
 HMAC() returns a pointer to the message authentication code or NULL if
@@ -86,10 +109,11 @@ an error occurred.
 HMAC_CTX_new() returns a pointer to a new B<HMAC_CTX> on success or
 B<NULL> if an error occurred.
 
-HMAC_CTX_reset(), HMAC_Init_ex(), HMAC_Update() and HMAC_Final() return 1
-for success or 0 if an error occurred.
+HMAC_CTX_reset(), HMAC_Init_ex(), HMAC_Update(), HMAC_Final() and
+HMAC_CTX_copy() return 1 for success or 0 if an error occurred.
 
-HMAC_CTX_free() do not return values.
+HMAC_CTX_get_md() return the EVP_MD previously set for the supplied HMAC_CTX or
+NULL if no EVP_MD has been set.
 
 =head1 CONFORMING TO
 
@@ -101,11 +125,12 @@ L<sha(3)>, L<evp(3)>
 
 =head1 HISTORY
 
-HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL versions 1.1.
+HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL versions 1.1.0.
 
-HMAC_CTX_cleanup() existed in OpenSSL versions before 1.1.
+HMAC_CTX_cleanup() existed in OpenSSL versions before 1.1.0.
 
-HMAC_CTX_new() and HMAC_CTX_free() are new in OpenSSL version 1.1.
+HMAC_CTX_new(), HMAC_CTX_free() and HMAC_CTX_get_md() are new in OpenSSL version
+1.1.0.
 
 HMAC_Init_ex(), HMAC_Update() and HMAC_Final() did not return values in
 versions of OpenSSL before 1.0.0.
