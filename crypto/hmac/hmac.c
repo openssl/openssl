@@ -233,3 +233,8 @@ void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
     EVP_MD_CTX_set_flags(ctx->o_ctx, flags);
     EVP_MD_CTX_set_flags(ctx->md_ctx, flags);
 }
+
+const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx)
+{
+    return ctx->md;
+}
