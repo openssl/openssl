@@ -1331,12 +1331,11 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
                 break;
             }
 #ifndef CHARSET_EBCDIC
-        if (*p == '+')
+        if (*type == '+')
 #else
-        if (*p == os_toascii['+'])
+        if (*type == os_toascii['+'])
 #endif
-        {
-            p++;
+            type++;
             mval = -1;
         } else
             mval = 0;
