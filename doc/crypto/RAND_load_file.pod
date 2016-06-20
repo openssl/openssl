@@ -20,15 +20,29 @@ RAND_file_name() generates a default path for the random seed
 file. B<buf> points to a buffer of size B<num> in which to store the
 filename.
 
-On Windows the seed file is %RANDFILE% if that environment variable is set.
-Otherwise the file is called ".rnd" in one of the following locations (in order
-of preference): %TMP%, %TEMP%, %USERPROFILE%, %SYSTEMROOT%, %HOME%, "C:".
+On all systems, if the environment variable B<RANDFILE> is set, its
+value will be used as the seed file name.
 
-On all other systems the seed file is $RANDFILE if that environment variable is
-set, $HOME/.rnd otherwise.
+Otherwise, the file is called ".rnd", found in platform dependent locations:
 
-If $HOME (on non Windows systems) is not set either, or B<num> is
-too small for the path name, an error occurs.
+=over 4
+
+=item On Windows (in order of preference)
+
+%HOME%, %USERPROFILE%, %SYSTEMROOT%, C:\
+
+=item On VMS
+
+SYS$LOGIN:
+
+=item On all other systems
+
+$HOME
+
+=back
+
+If C<$HOME> (on non-Windows and non-VMS system) is not set either, or
+B<num> is too small for the path name, an error occurs.
 
 RAND_load_file() reads a number of bytes from file B<filename> and
 adds them to the PRNG. If B<max_bytes> is non-negative,
