@@ -265,7 +265,11 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 #if defined(OPENSSL_SYS_VMS) && __INITIAL_POINTER_SIZE==64
 /*
  * Then we have VMS that distinguishes itself by adhering to
- * sizeof(size_t)==4 even in 64-bit builds...
+ * sizeof(size_t)==4 even in 64-bit builds, which means that
+ * difference between two pointers might be truncated to 32 bits.
+ * In the context one can even wonder how comparison for
+ * equality is implemented. To be on the safe side we adhere to
+ * PTRDIFF_T even for comparison for equality.
  */
 # define PTRDIFF_T uint64_t
 #else
@@ -292,10 +296,10 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 {
     int i, j, bl;
 
-    if (is_partially_overlapping(out, in, inl))
-        return 0;
-
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
+        if (is_partially_overlapping(out, in, inl))
+            return 0;
+
         i = ctx->cipher->do_cipher(ctx, out, in, inl);
         if (i < 0)
             return 0;
@@ -308,6 +312,8 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         *outl = 0;
         return inl == 0;
     }
+    if (is_partially_overlapping(out, in, inl))
+        return 0;
 
     if (ctx->buf_len == 0 && (inl & (ctx->block_mask)) == 0) {
         if (ctx->cipher->do_cipher(ctx, out, in, inl)) {
@@ -330,10 +336,12 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         } else {
             j = bl - i;
             memcpy(&(ctx->buf[i]), in, j);
-            if (!ctx->cipher->do_cipher(ctx, out, ctx->buf, bl))
-                return 0;
             inl -= j;
             in += j;
+            if (is_partially_overlapping(out, in, bl))
+                return 0;
+            if (!ctx->cipher->do_cipher(ctx, out, ctx->buf, bl))
+                return 0;
             out += bl;
             *outl = bl;
         }
@@ -408,10 +416,10 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     int fix_len;
     unsigned int b;
 
-    if (is_partially_overlapping(out, in, inl))
-        return 0;
-
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
+        if (is_partially_overlapping(out, in, inl))
+            return 0;
+
         fix_len = ctx->cipher->do_cipher(ctx, out, in, inl);
         if (fix_len < 0) {
             *outl = 0;
@@ -433,6 +441,10 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     OPENSSL_assert(b <= sizeof ctx->final);
 
     if (ctx->final_used) {
+        /* see comment about PTRDIFF_T comparison above */
+        if (((PTRDIFF_T)out == (PTRDIFF_T)in)
+            || is_partially_overlapping(out, in, b))
+            return 0;
         memcpy(out, ctx->final, b);
         out += b;
         fix_len = 1;
