@@ -125,14 +125,13 @@ static int check_protocol(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
 
 static int check_servername(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
 {
-    if (test_ctx->servername != SSL_TEST_SERVERNAME_NONE
-        && result.servername != test_ctx->servername) {
-        fprintf(stderr, "Client ServerName mismatch, expected %s, got %s\n.",
-                ssl_servername_name(test_ctx->servername),
-                ssl_servername_name(result.servername));
-        return 0;
+    if (result.servername != test_ctx->expected_servername) {
+      fprintf(stderr, "Client ServerName mismatch, expected %s, got %s\n.",
+              ssl_servername_name(test_ctx->expected_servername),
+              ssl_servername_name(result.servername));
+      return 0;
     }
-    return 1;
+  return 1;
 }
 
 static int check_session_ticket(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
@@ -176,39 +175,41 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
     SSL_CTX *server_ctx = NULL, *server2_ctx = NULL, *client_ctx = NULL;
     SSL_TEST_CTX *test_ctx = NULL;
     HANDSHAKE_RESULT result;
-    const char *server2;
 
     test_ctx = SSL_TEST_CTX_create(conf, fixture.test_app);
     if (test_ctx == NULL)
         goto err;
 
-    /* Use ServerName to detect if we're testing SNI. */
-    server2 = (test_ctx->servername != SSL_TEST_SERVERNAME_NONE) ? "server2"
-        : "server";
-
 #ifndef OPENSSL_NO_DTLS
     if (test_ctx->method == SSL_TEST_METHOD_DTLS) {
         server_ctx = SSL_CTX_new(DTLS_server_method());
-        server2_ctx = SSL_CTX_new(DTLS_server_method());
+        if (test_ctx->servername_callback != SSL_TEST_SERVERNAME_CB_NONE) {
+            server2_ctx = SSL_CTX_new(DTLS_server_method());
+            OPENSSL_assert(server2_ctx != NULL);
+        }
         client_ctx = SSL_CTX_new(DTLS_client_method());
     }
 #endif
     if (test_ctx->method == SSL_TEST_METHOD_TLS) {
         server_ctx = SSL_CTX_new(TLS_server_method());
-        server2_ctx = SSL_CTX_new(TLS_server_method());
+        if (test_ctx->servername_callback != SSL_TEST_SERVERNAME_CB_NONE) {
+            server2_ctx = SSL_CTX_new(TLS_server_method());
+            OPENSSL_assert(server2_ctx != NULL);
+        }
         client_ctx = SSL_CTX_new(TLS_client_method());
     }
 
-    OPENSSL_assert(server_ctx != NULL && server2_ctx != NULL &&
-                   client_ctx != NULL);
+    OPENSSL_assert(server_ctx != NULL && client_ctx != NULL);
 
     OPENSSL_assert(CONF_modules_load(conf, fixture.test_app, 0) > 0);
 
     if (!SSL_CTX_config(server_ctx, "server")
-        || !SSL_CTX_config(server2_ctx, server2)
         || !SSL_CTX_config(client_ctx, "client")) {
         goto err;
     }
+
+    if (server2_ctx != NULL && !SSL_CTX_config(server2_ctx, "server2"))
+        goto err;
 
     result = do_handshake(server_ctx, server2_ctx, client_ctx, test_ctx);
 

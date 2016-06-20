@@ -79,7 +79,7 @@ my $client_sess="client.ss";
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
-    + 13			# For the first testssl
+    + 12			# For the first testssl
     ;
 
 subtest 'test_ss' => sub {
@@ -576,25 +576,6 @@ sub testssl {
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_tack"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
-	}
-    };
-
-    subtest 'SNI tests' => sub {
-
-	plan tests => 7;
-
-      SKIP: {
-	  skip "TLSv1.x is not supported by this OpenSSL build", 7
-	      if $no_tls1 && $no_tls1_1 && $no_tls1_2;
-
-	  ok(run(test([@ssltest, "-bio_pair", "-sn_client", "foo"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-sn_server1", "foo"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-sn_client", "foo", "-sn_server1", "foo", "-sn_expect1"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-sn_client", "foo", "-sn_server1", "bar", "-sn_expect1"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-sn_client", "foo", "-sn_server1", "foo", "-sn_server2", "bar", "-sn_expect1"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-sn_client", "bar", "-sn_server1", "foo", "-sn_server2", "bar", "-sn_expect2"])));
-	  # Negative test - make sure it doesn't crash, and doesn't switch contexts
-	  ok(run(test([@ssltest, "-bio_pair", "-sn_client", "foobar", "-sn_server1", "foo", "-sn_server2", "bar", "-sn_expect1"])));
 	}
     };
 

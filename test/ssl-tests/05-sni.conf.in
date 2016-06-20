@@ -16,11 +16,64 @@ package ssltests;
 
 our @tests = (
     {
-        name => "SNI-default",
+        name => "SNI-switch-context",
         server => { },
         server2 => { },
         client => { },
         test   => { "ServerName" => "server2",
-		    "ExpectedResult" => "Success" },
+                    "ExpectedServerName" => "server2",
+                    "ServerNameCallback" => "IgnoreMismatch",
+                    "ExpectedResult" => "Success" },
+    },
+    {
+        name => "SNI-keep-context",
+        server => { },
+        server2 => { },
+        client => { },
+        test   => { "ServerName" => "server1",
+                    "ExpectedServerName" => "server1",
+                    "ServerNameCallback" => "IgnoreMismatch",
+                    "ExpectedResult" => "Success" },
+    },
+    {
+        name => "SNI-no-server-support",
+        server => { },
+        client => { },
+        test   => { "ServerName" => "server1",
+                    "ExpectedResult" => "Success" },
+    },
+    {
+        name => "SNI-no-client-support",
+        server => { },
+        server2 => { },
+        client => { },
+        test   => {
+            # We expect that the callback is still called
+            # to let the application decide whether they tolerate
+            # missing SNI (as our test callback does).
+            "ExpectedServerName" => "server1",
+            "ServerNameCallback" => "IgnoreMismatch",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "SNI-bad-sni-ignore-mismatch",
+        server => { },
+        server2 => { },
+        client => { },
+        test   => { "ServerName" => "invalid",
+                    "ExpectedServerName" => "server1",
+                    "ServerNameCallback" => "IgnoreMismatch",
+                    "ExpectedResult" => "Success" },
+    },
+    {
+        name => "SNI-bad-sni-reject-mismatch",
+        server => { },
+        server2 => { },
+        client => { },
+        test   => { "ServerName" => "invalid",
+                    "ServerNameCallback" => "RejectMismatch",
+                    "ExpectedResult" => "ServerFail",
+                    "ServerAlert" => "UnrecognizedName"},
     },
 );
