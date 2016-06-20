@@ -6,6 +6,8 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+use strict;
+
 my $flavour = shift;
 my $output = shift;
 open STDOUT,">$output" || die "can't open $output: $!";
@@ -126,7 +128,7 @@ sub expand_line {
     return $line;
 }
 
-while($line=<>) {
+while(my $line=<>) {
 
     if ($line =~ m/^\s*(#|@|\/\/)/)	{ print $line; next; }
 
