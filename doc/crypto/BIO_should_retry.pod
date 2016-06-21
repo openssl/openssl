@@ -2,6 +2,8 @@
 
 =head1 NAME
 
+BIO_FLAGS_READ, BIO_FLAGS_WRITE, BIO_FLAGS_IO_SPECIAL, BIO_FLAGS_RWS,
+BIO_FLAGS_SHOULD_RETRY,
 BIO_should_read, BIO_should_write,
 BIO_should_io_special, BIO_retry_type, BIO_should_retry,
 BIO_get_retry_BIO, BIO_get_retry_reason, BIO_set_retry_reason - BIO retry

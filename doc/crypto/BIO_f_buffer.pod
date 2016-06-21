@@ -2,6 +2,11 @@
 
 =head1 NAME
 
+BIO_get_buffer_num_lines,
+BIO_set_read_buffer_size,
+BIO_set_write_buffer_size,
+BIO_set_buffer_size,
+BIO_set_buffer_read_data,
 BIO_f_buffer - buffering BIO
 
 =head1 SYNOPSIS

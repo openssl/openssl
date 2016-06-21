@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RSA_check_key - validate private RSA keys
+RSA_check_key_ex, RSA_check_key - validate private RSA keys
 
 =head1 SYNOPSIS
 

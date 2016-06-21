@@ -43,7 +43,7 @@ B<read_ahead> can impact the behaviour of the SSL_pending() function
 
 =head1 RETURN VALUES
 
-SSL_get_read_ahead and SSL_CTX_get_read_ahead return 0 if reading ahead is off,
+SSL_get_read_ahead() and SSL_CTX_get_read_ahead() return 0 if reading ahead is off,
 and non zero otherwise.
 
 =head1 SEE ALSO

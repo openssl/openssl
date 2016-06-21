@@ -2,8 +2,9 @@
 
 =head1 NAME
 
+CRYPTO_EX_new, CRYPTO_EX_free, CRYPTO_EX_dup,
 CRYPTO_free_ex_index, CRYPTO_get_ex_new_index, CRYPTO_set_ex_data,
-CRYPTO_get_ex_data, CRYPTO_free_ex_data
+CRYPTO_get_ex_data, CRYPTO_free_ex_data, CRYPTO_new_ex_data
 - functions supporting application-specific data
 
 =head1 SYNOPSIS
@@ -22,6 +23,8 @@ CRYPTO_get_ex_data, CRYPTO_free_ex_data
                              int idx, long argl, void *argp);
  typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
                            void *from_d, int idx, long argl, void *argp);
+
+ int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 
  int CRYPTO_set_ex_data(CRYPTO_EX_DATA *r, int idx, void *arg);
 
@@ -58,6 +61,10 @@ applications to use this facility for their own structures.
 The API described here is used by OpenSSL to manipulate exdata for specific
 structures.  Since the application data can be anything at all it is passed
 and retrieved as a B<void *> type.
+
+The B<CRYPTO_EX_DATA> type is opaque.  To initialize the exdata part of
+a structure, call CRYPTO_new_ex_data(). This is only necessary for
+B<CRYPTO_EX_INDEX_APP> objects.
 
 Exdata types are identified by an B<index>, an integer guaranteed to be
 unique within structures for the lifetime of the program.  Applications

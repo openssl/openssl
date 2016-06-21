@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+BIO_s_secmem,
 BIO_s_mem, BIO_set_mem_eof_return, BIO_get_mem_data, BIO_set_mem_buf,
 BIO_get_mem_ptr, BIO_new_mem_buf - memory BIO
 

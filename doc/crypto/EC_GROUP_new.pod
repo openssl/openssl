@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+EC_GROUP_get_ecparameters, EC_GROUP_get_ecpkparameters,
 EC_GROUP_new, EC_GROUP_new_from_ecparameters,
 EC_GROUP_new_from_ecpkparameters,
 EC_GROUP_free, EC_GROUP_clear_free, EC_GROUP_new_curve_GFp,

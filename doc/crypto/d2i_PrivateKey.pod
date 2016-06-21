@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-d2i_Private_key, d2i_AutoPrivateKey, i2d_PrivateKey,
+d2i_PrivateKey, d2i_AutoPrivateKey, i2d_PrivateKey,
 d2i_PrivateKey_bio, d2i_PrivateKey_fp
 - decode and encode functions for reading and saving EVP_PKEY structures
 

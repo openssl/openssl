@@ -2,7 +2,45 @@
 
 =head1 NAME
 
-engine - ENGINE cryptographic module support
+ENGINE_get_DH, ENGINE_get_DSA, ENGINE_get_ECDH, ENGINE_get_ECDSA,
+ENGINE_by_id, ENGINE_get_cipher_engine, ENGINE_get_default_DH,
+ENGINE_get_default_DSA, ENGINE_get_default_ECDH,
+ENGINE_get_default_ECDSA, ENGINE_get_default_RAND,
+ENGINE_get_default_RSA, ENGINE_get_digest_engine, ENGINE_get_first,
+ENGINE_get_last, ENGINE_get_next, ENGINE_get_prev, ENGINE_new,
+ENGINE_get_ciphers, ENGINE_get_ctrl_function, ENGINE_get_digests,
+ENGINE_get_destroy_function, ENGINE_get_finish_function,
+ENGINE_get_init_function, ENGINE_get_load_privkey_function,
+ENGINE_get_load_pubkey_function, ENGINE_load_private_key,
+ENGINE_load_public_key, ENGINE_get_RAND, ENGINE_get_RSA, ENGINE_get_id,
+ENGINE_get_name, ENGINE_get_cmd_defns, EVP_CIPHER ENGINE_get_cipher,
+ENGINE_get_digest, ENGINE_add, ENGINE_cmd_is_executable,
+ENGINE_ctrl, ENGINE_ctrl_cmd, ENGINE_ctrl_cmd_string,
+ENGINE_finish, ENGINE_free, ENGINE_get_flags, ENGINE_init,
+ENGINE_register_DH, ENGINE_register_DSA, ENGINE_register_ECDH,
+ENGINE_register_ECDSA, ENGINE_register_RAND, ENGINE_register_RSA,
+ENGINE_register_all_complete, ENGINE_register_ciphers,
+ENGINE_register_complete, ENGINE_register_digests, ENGINE_remove,
+ENGINE_set_DH, ENGINE_set_DSA, ENGINE_set_ECDH, ENGINE_set_ECDSA,
+ENGINE_set_RAND, ENGINE_set_RSA, ENGINE_set_ciphers,
+ENGINE_set_cmd_defns, ENGINE_set_ctrl_function, ENGINE_set_default,
+ENGINE_set_default_DH, ENGINE_set_default_DSA, ENGINE_set_default_ECDH,
+ENGINE_set_default_ECDSA, ENGINE_set_default_RAND, ENGINE_set_default_RSA,
+ENGINE_set_default_ciphers, ENGINE_set_default_digests,
+ENGINE_set_default_string, ENGINE_set_destroy_function,
+ENGINE_set_digests, ENGINE_set_finish_function, ENGINE_set_flags,
+ENGINE_set_id, ENGINE_set_init_function, ENGINE_set_load_privkey_function,
+ENGINE_set_load_pubkey_function, ENGINE_set_name, ENGINE_up_ref,
+ENGINE_get_table_flags, ENGINE_cleanup,
+ENGINE_load_builtin_engines, ENGINE_register_all_DH,
+ENGINE_register_all_DSA, ENGINE_register_all_ECDH,
+ENGINE_register_all_ECDSA, ENGINE_register_all_RAND,
+ENGINE_register_all_RSA, ENGINE_register_all_ciphers,
+ENGINE_register_all_digests, ENGINE_set_table_flags, ENGINE_unregister_DH,
+ENGINE_unregister_DSA, ENGINE_unregister_ECDH, ENGINE_unregister_ECDSA,
+ENGINE_unregister_RAND, ENGINE_unregister_RSA, ENGINE_unregister_ciphers,
+ENGINE_unregister_digests
+- ENGINE cryptographic module support
 
 =head1 SYNOPSIS
 
@@ -129,8 +167,6 @@ engine - ENGINE cryptographic module support
      UI_METHOD *ui_method, void *callback_data);
  EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
      UI_METHOD *ui_method, void *callback_data);
-
- void ENGINE_add_conf_module(void);
 
 Deprecated:
 
