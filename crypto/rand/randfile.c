@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/cryptlib.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -57,6 +57,8 @@
 # define chmod   _chmod
 # define open    _open
 # define fdopen  _fdopen
+# define fstat   _fstat
+# define fileno  _fileno
 #endif
 
 #undef BUFSIZE
@@ -76,12 +78,8 @@
 # if __INITIAL_POINTER_SIZE == 64
 #  pragma pointer_size save
 #  pragma pointer_size 32
-# endif
 typedef char *char_ptr32;
-# if __INITIAL_POINTER_SIZE == 64
 #  pragma pointer_size restore
-# endif
-
 /*
  * On VMS, setbuf() will only take 32-bit pointers, and a compilation
  * with /POINTER_SIZE=64 will give off a MAYLOSEDATA2 warning here.
@@ -90,20 +88,18 @@ typedef char *char_ptr32;
  * As for the buffer parameter, we only use NULL here, so that passes as
  * well...
  */
-static void vms_setbuf(FILE *fp, char *buf)
-{
-    setbuf((__FILE_ptr32)fp, (char_ptr32)buf);
-}
+#  define setbuf(fp,buf) (setbuf)((__FILE_ptr32)(fp), (char_ptr32)(buf))
+# endif
+
 /*
  * This declaration is a nasty hack to get around vms' extension to fopen for
  * passing in sharing options being disabled by /STANDARD=ANSI89
  */
 static __FILE_ptr32 (*const vms_fopen)(const char *, const char *, ...) =
-    (__FILE_ptr32 (*)(const char *, const char *, ...))fopen;
+      (__FILE_ptr32 (*)(const char *, const char *, ...))fopen;
 # define VMS_OPEN_ATTRS "shr=get,put,upd,del","ctx=bin,stm","rfm=stm","rat=none","mrs=0"
 
-# define fopen(fname,mode) vms_fopen((fname), (mode), VMS_OPEN_ATTRS)
-# define setbuf(fp,buf) vms_setbuf((fp), (buf))
+# define openssl_fopen(fname,mode) vms_fopen((fname), (mode), VMS_OPEN_ATTRS)
 #endif
 
 #define RFILE ".rnd"
@@ -125,10 +121,17 @@ int RAND_load_file(const char *file, long bytes)
     struct stat sb;
 #endif
     int i, ret = 0, n;
-    FILE *in;
+    FILE *in = NULL;
 
     if (file == NULL)
-        return (0);
+        return 0;
+
+    if (bytes == 0)
+        return ret;
+
+    in = openssl_fopen(file, "rb");
+    if (in == NULL)
+        goto err;
 
 #ifndef OPENSSL_NO_POSIX_IO
     /*
@@ -138,17 +141,11 @@ int RAND_load_file(const char *file, long bytes)
      * applications such as Valgrind.
      */
     memset(&sb, 0, sizeof(sb));
-    if (stat(file, &sb) < 0)
-        return (0);
-    RAND_add(&sb, sizeof(sb), 0.0);
-#endif
-    if (bytes == 0)
-        return (ret);
-
-    in = fopen(file, "rb");
-    if (in == NULL)
+    if (fstat(fileno(in), &sb) < 0)
         goto err;
-#if defined(S_ISBLK) && defined(S_ISCHR) && !defined(OPENSSL_NO_POSIX_IO)
+    RAND_add(&sb, sizeof(sb), 0.0);
+
+# if defined(S_ISBLK) && defined(S_ISCHR)
     if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
         /*
          * this file is a device. we don't want read an infinite number of
@@ -158,6 +155,7 @@ int RAND_load_file(const char *file, long bytes)
         bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
         setbuf(in, NULL); /* don't do buffered reads */
     }
+# endif
 #endif
     for (;;) {
         if (bytes > 0)
@@ -176,10 +174,11 @@ int RAND_load_file(const char *file, long bytes)
                 break;
         }
     }
-    fclose(in);
     OPENSSL_cleanse(buf, BUFSIZE);
  err:
-    return (ret);
+    if (in != NULL)
+        fclose(in);
+    return ret;
 }
 
 int RAND_write_file(const char *file)
@@ -191,9 +190,15 @@ int RAND_write_file(const char *file)
 #ifndef OPENSSL_NO_POSIX_IO
     struct stat sb;
 
+# if defined(S_ISBLK) && defined(S_ISCHR)
+# ifdef _WIN32
+    /*
+     * Check for |file| being a driver as "ASCII-safe" on Windows,
+     * because driver paths are always ASCII.
+     */
+# endif
     i = stat(file, &sb);
     if (i != -1) {
-# if defined(S_ISBLK) && defined(S_ISCHR)
         if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
             /*
              * this file is a device. we don't write back to it. we
@@ -201,13 +206,14 @@ int RAND_write_file(const char *file)
              * device. Otherwise attempting to write to and chmod the device
              * causes problems.
              */
-            return (1);
+            return 1;
         }
 # endif
     }
 #endif
 
-#if defined(O_CREAT) && !defined(OPENSSL_NO_POSIX_IO) && !defined(OPENSSL_SYS_VMS)
+#if defined(O_CREAT) && !defined(OPENSSL_NO_POSIX_IO) && \
+    !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WINDOWS)
     {
 # ifndef O_BINARY
 #  define O_BINARY 0
@@ -241,10 +247,10 @@ int RAND_write_file(const char *file)
      * rand file in a concurrent use situation.
      */
 
-    out = fopen(file, "rb+");
+    out = openssl_fopen(file, "rb+");
 #endif
     if (out == NULL)
-        out = fopen(file, "wb");
+        out = openssl_fopen(file, "wb");
     if (out == NULL)
         goto err;
 
@@ -276,38 +282,68 @@ int RAND_write_file(const char *file)
 const char *RAND_file_name(char *buf, size_t size)
 {
     char *s = NULL;
+    int use_randfile = 1;
 #ifdef __OpenBSD__
     struct stat sb;
 #endif
 
-    if (OPENSSL_issetugid() == 0)
-        s = getenv("RANDFILE");
-    if (s != NULL && *s && strlen(s) + 1 < size) {
-        if (OPENSSL_strlcpy(buf, s, size) >= size)
-            return NULL;
-    } else {
-#ifdef OPENSSL_SYS_WINDOWS
-        if ((s = getenv("HOME")) == NULL
-            && (s = getenv("USERPROFILE")) == NULL) {
-            s = getenv("SYSTEMROOT");
+#if defined(_WIN32) && defined(CP_UTF8)
+    DWORD len;
+    WCHAR *var, *val;
+
+    if ((var = L"RANDFILE",
+         len = GetEnvironmentVariableW(var, NULL, 0)) == 0
+        && (var = L"HOME", use_randfile = 0,
+            len = GetEnvironmentVariableW(var, NULL, 0)) == 0
+        && (var = L"USERPROFILE",
+            len = GetEnvironmentVariableW(var, NULL, 0)) == 0) {
+        var = L"SYSTEMROOT",
+        len = GetEnvironmentVariableW(var, NULL, 0);
+    }
+
+    if (len != 0) {
+        int sz;
+
+        val = _alloca(len * sizeof(WCHAR));
+
+        if (GetEnvironmentVariableW(var, val, len) < len
+            && (sz = WideCharToMultiByte(CP_UTF8, 0, val, -1, NULL, 0,
+                                         NULL, NULL)) != 0) {
+            s = _alloca(sz);
+            if (WideCharToMultiByte(CP_UTF8, 0, val, -1, s, sz,
+                                    NULL, NULL) == 0)
+                s = NULL;
         }
+    }
 #else
+    if (OPENSSL_issetugid() == 0) {
+        s = getenv("RANDFILE");
+    } else {
+        use_randfile = 0;
         if (OPENSSL_issetugid() == 0)
             s = getenv("HOME");
+    }
 #endif
 #ifdef DEFAULT_HOME
-        if (s == NULL) {
-            s = DEFAULT_HOME;
-        }
+    if (!use_randfile && s == NULL) {
+        s = DEFAULT_HOME;
+    }
 #endif
-        if (s && *s && strlen(s) + strlen(RFILE) + 2 < size) {
+    if (s != NULL && *s) {
+        size_t len = strlen(s);
+
+        if (use_randfile && len + 1 < size) {
+            if (OPENSSL_strlcpy(buf, s, size) >= size)
+                return NULL;
+        } else if (len + strlen(RFILE) + 2 < size) {
             OPENSSL_strlcpy(buf, s, size);
 #ifndef OPENSSL_SYS_VMS
             OPENSSL_strlcat(buf, "/", size);
 #endif
             OPENSSL_strlcat(buf, RFILE, size);
-        } else
-            buf[0] = '\0';      /* no file name */
+        }
+    } else {
+        buf[0] = '\0';      /* no file name */
     }
 
 #ifdef __OpenBSD__
@@ -321,12 +357,12 @@ const char *RAND_file_name(char *buf, size_t size)
 
     if (!buf[0])
         if (OPENSSL_strlcpy(buf, "/dev/arandom", size) >= size) {
-            return (NULL);
+            return NULL;
         }
     if (stat(buf, &sb) == -1)
         if (OPENSSL_strlcpy(buf, "/dev/arandom", size) >= size) {
-            return (NULL);
+            return NULL;
         }
 #endif
-    return (buf);
+    return buf;
 }
