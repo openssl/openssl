@@ -73,6 +73,8 @@ sha512-sparcv9.s:asm/sha512-sparcv9.pl;	$(PERL) asm/sha512-sparcv9.pl $@ $(CFLAG
 sha1-ppc.s:	asm/sha1-ppc.pl;	$(PERL) asm/sha1-ppc.pl $(PERLASM_SCHEME) $@
 sha256-ppc.s:	asm/sha512-ppc.pl;	$(PERL) asm/sha512-ppc.pl $(PERLASM_SCHEME) $@
 sha512-ppc.s:	asm/sha512-ppc.pl;	$(PERL) asm/sha512-ppc.pl $(PERLASM_SCHEME) $@
+sha256p8-ppc.s:	asm/sha512p8-ppc.pl;	$(PERL) asm/sha512p8-ppc.pl $(PERLASM_SCHEME) $@
+sha512p8-ppc.s:	asm/sha512p8-ppc.pl;	$(PERL) asm/sha512p8-ppc.pl $(PERLASM_SCHEME) $@
 
 sha1-parisc.s:	asm/sha1-parisc.pl;	$(PERL) asm/sha1-parisc.pl $(PERLASM_SCHEME) $@
 sha256-parisc.s:asm/sha512-parisc.pl;	$(PERL) asm/sha512-parisc.pl $(PERLASM_SCHEME) $@

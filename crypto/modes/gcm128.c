@@ -683,6 +683,14 @@ void gcm_init_v8(u128 Htable[16],const u64 Xi[2]);
 void gcm_gmult_v8(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_v8(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 #  endif
+# elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
+#  define GHASH_ASM_PPC
+#  define GCM_FUNCREF_4BIT
+extern int OPENSSL_ppccap_P;
+void gcm_init_p8(u128 Htable[16], const u64 Xi[2]);
+void gcm_gmult_p8(u64 Xi[2], const u128 Htable[16]);
+void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
+                  size_t len);
 # elif defined(_TMS320C6400_PLUS)
 #   define GHASH_ASM_C64Xplus
 # endif
@@ -764,6 +772,16 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #  endif
 	{
 		gcm_init_4bit(ctx->Htable,ctx->H.u);
+		ctx->gmult = gcm_gmult_4bit;
+		ctx->ghash = gcm_ghash_4bit;
+	}
+# elif defined(GHASH_ASM_PPC)
+	if (OPENSSL_ppccap_P & (1<<2)) {
+		gcm_init_p8(ctx->Htable, ctx->H.u);
+		ctx->gmult = gcm_gmult_p8;
+		ctx->ghash = gcm_ghash_p8;
+	} else {
+		gcm_init_4bit(ctx->Htable, ctx->H.u);
 		ctx->gmult = gcm_gmult_4bit;
 		ctx->ghash = gcm_ghash_4bit;
 	}

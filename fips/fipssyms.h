@@ -712,6 +712,23 @@
 #define _bn_GF2m_mul_2x2 _fips_bn_GF2m_mul_2x2
 #define _OPENSSL_cleanse _FIPS_openssl_cleanse
 #endif
+#define aes_p8_encrypt fips_aes_p8_encrypt
+#define aes_p8_decrypt fips_aes_p8_decrypt
+#define aes_p8_set_encrypt_key fips_aes_p8_set_encrypt_key
+#define aes_p8_set_decrypt_key fips_aes_p8_set_decrypt_key
+#define aes_p8_cbc_encrypt fips_aes_p8_cbc_encrypt
+#define aes_p8_ctr32_encrypt_blocks fips_aes_p8_ctr32_encrypt_blocks
+#define aes_p8_xts_encrypt fips_aes_p8_xts_encrypt
+#define aes_p8_xts_decrypt fips_aes_p8_xts_decrypt
+#define gcm_init_p8 fips_gcm_init_p8
+#define gcm_gmult_p8 fips_gcm_gmult_p8
+#define gcm_ghash_p8 fips_gcm_ghash_p8
+#define sha256_block_p8 fips_sha256_block_p8
+#define sha512_block_p8 fips_sha512_block_p8
+#define sha256_block_ppc fips_sha256_block_ppc
+#define sha512_block_ppc fips_sha512_block_ppc
+#define OPENSSL_ppccap_P fips_openssl_ppccap_p
+#define OPENSSL_crypto207_probe fips_openssl_crypto207_probe
 
 #if defined(_MSC_VER)
 # pragma const_seg("fipsro$b")
