@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+EVP_PKEY_size,
 EVP_SignInit, EVP_SignInit_ex, EVP_SignUpdate, EVP_SignFinal - EVP signing
 functions
 

@@ -34,10 +34,9 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 3;
-
 # Test 1: Sending a zero length extension block should pass
-$proxy->start();
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 3;
 ok(TLSProxy::Message->success, "Zero extension length test");
 
 sub extension_filter
@@ -111,4 +110,3 @@ $proxy->clear();
 $proxy->filter(\&inject_duplicate_extension_serverhello);
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Duplicate ServerHello extension");
-

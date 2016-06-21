@@ -3304,4 +3304,4 @@ static void free_sessions(void)
     first = NULL;
 }
 
-#endif
+#endif  /* OPENSSL_NO_SOCK */

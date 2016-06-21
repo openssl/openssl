@@ -79,7 +79,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # RMD160_ASM	use some extra ripemd160 assembler,
 # SHA256_ASM	sha256_block is implemented in assembler
 # SHA512_ASM	sha512_block is implemented in assembler
-# AES_ASM	ASE_[en|de]crypt is implemented in assembler
+# AES_ASM	AES_[en|de]crypt is implemented in assembler
 
 # Minimum warning options... any contributions to OpenSSL should at least get
 # past these.
@@ -324,7 +324,6 @@ my @disablables = (
     "rc5",
     "rdrand",
     "rfc3779",
-    "ripemd",
     "rmd160",
     "scrypt",
     "sctp",
@@ -355,9 +354,10 @@ foreach my $proto ((@tls, @dtls))
 	push(@disablables, "$proto-method");
 	}
 
-my @deprecated_disablables = (
-    "ssl2",
-    "buf-freelists",
+my %deprecated_disablables = (
+    "ssl2" => undef,
+    "buf-freelists" => undef,
+    "ripemd" => "rmd160"
     );
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
@@ -552,21 +552,17 @@ foreach (@argvcopy)
 	s /^zlib-dynamic$/enable-zlib-dynamic/;
 
         if (/^(no|disable|enable)-(.+)$/)
-		{
-		my $word = $2;
-		if (grep { $word =~ /^${_}$/ } @deprecated_disablables)
-			{
-			$deprecated_options{$_} = 1;
-			next;
-			}
-		elsif (!grep { $word =~ /^${_}$/ } @disablables)
-			{
-			$unsupported_options{$_} = 1;
-			next;
-			}
-		}
-	if (/^no-(.+)$/ || /^disable-(.+)$/)
-		{
+                {
+                my $word = $2;
+                if (!exists $deprecated_disablables{$word}
+                        && !grep { $word =~ /^${_}$/ } @disablables)
+                        {
+                        $unsupported_options{$_} = 1;
+                        next;
+                        }
+                }
+        if (/^no-(.+)$/ || /^disable-(.+)$/)
+                {
                 foreach my $proto ((@tls, @dtls))
                         {
                         if ($1 eq "$proto-method")
@@ -604,6 +600,14 @@ foreach (@argvcopy)
                 elsif ($1 eq "dynamic-engine")
                         {
                         $disabled{"dynamic-engine"} = "option";
+                        }
+                elsif (exists $deprecated_disablables{$1})
+                        {
+                        $deprecated_options{$_} = 1;
+                        if (defined $deprecated_disablables{$1})
+                                {
+                                $disabled{$deprecated_disablables{$1}} = "option";
+                                }
                         }
                 else
                         {

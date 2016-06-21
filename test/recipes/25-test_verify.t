@@ -26,7 +26,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 101;
+plan tests => 108;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -221,6 +221,28 @@ ok(verify("ee-client", "sslclient", [qw(ee+clientAuth)], [], "-partial_chain"),
    "accept direct match with client trust");
 ok(!verify("ee-client", "sslclient", [qw(ee-clientAuth)], [], "-partial_chain"),
    "reject direct match with client mistrust");
+
+# Proxy certificates
+ok(!verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)]),
+   "fail to accept proxy cert without -allow_proxy_certs");
+ok(verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)],
+          "-allow_proxy_certs"),
+   "accept proxy cert 1");
+ok(verify("pc2-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs"),
+   "accept proxy cert 2");
+ok(!verify("bad-pc3-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs"),
+   "fail proxy cert with incorrect subject");
+ok(!verify("bad-pc4-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs"),
+   "fail proxy cert with incorrect pathlen");
+ok(verify("pc5-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs"),
+   "accept proxy cert missing proxy policy");
+ok(!verify("pc6-cert", "sslclient", [qw(root-cert)], [qw(pc1-cert ee-client ca-cert)],
+          "-allow_proxy_certs"),
+   "failed proxy cert where last CN was added as a multivalue RDN component");
 
 # Security level tests
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),

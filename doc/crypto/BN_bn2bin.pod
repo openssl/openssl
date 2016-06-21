@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+BN_bn2binpad,
 BN_bn2bin, BN_bin2bn, BN_bn2lebinpad, BN_lebin2bn, BN_bn2hex, BN_bn2dec,
 BN_hex2bn, BN_dec2bn, BN_print, BN_print_fp, BN_bn2mpi,
 BN_mpi2bn - format conversions
@@ -51,7 +52,7 @@ hexadecimal and decimal encoding of B<a> respectively. For negative
 numbers, the string is prefaced with a leading '-'. The string must be
 freed later using OPENSSL_free().
 
-BN_hex2bn()takes as many characters as possible from the string B<str>,
+BN_hex2bn() takes as many characters as possible from the string B<str>,
 including the leading character '-' which means negative, to form a valid
 hexadecimal number representation and converts them to a B<BIGNUM> and
 stores it in **B<bn>. If *B<bn> is NULL, a new B<BIGNUM> is created. If

@@ -114,7 +114,7 @@ void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
     ctx->line_num = 0;
 }
 
-void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
+int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
                       const unsigned char *in, int inl)
 {
     int i, j;
@@ -122,12 +122,12 @@ void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 
     *outl = 0;
     if (inl <= 0)
-        return;
+        return 0;
     OPENSSL_assert(ctx->length <= (int)sizeof(ctx->enc_data));
     if (ctx->length - ctx->num > inl) {
         memcpy(&(ctx->enc_data[ctx->num]), in, inl);
         ctx->num += inl;
-        return;
+        return 1;
     }
     if (ctx->num != 0) {
         i = ctx->length - ctx->num;
@@ -153,12 +153,14 @@ void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     if (total > INT_MAX) {
         /* Too much output data! */
         *outl = 0;
-        return;
+        return 0;
     }
     if (inl != 0)
         memcpy(&(ctx->enc_data[0]), in, inl);
     ctx->num = inl;
     *outl = total;
+
+    return 1;
 }
 
 void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)

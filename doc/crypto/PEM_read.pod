@@ -25,7 +25,7 @@ pem_password_cb
  int PEM_do_header(EVP_CIPHER_INFO *cinfo, unsigned char *data, long *len,
                    pem_password_cb *cb, void *u);
 
- typedef int pem_password_cb (char *buf, int size, int rwflag, void *u);
+ typedef int (*pem_password_cb)(char *buf, int size, int rwflag, void *u);
 
 =head1 DESCRIPTION
 

@@ -161,7 +161,7 @@ sub start
     }
     $self->serverpid($pid);
 
-    $self->clientstart;
+    return $self->clientstart;
 }
 
 sub clientstart
@@ -188,7 +188,8 @@ sub clientstart
     if ($proxy_sock) {
         print "Proxy started on port ".$self->proxy_port."\n";
     } else {
-        die "Failed creating proxy socket (".$proxaddr.",".$self->proxy_port."): $!\n";
+        warn "Failed creating proxy socket (".$proxaddr.",".$self->proxy_port."): $!\n";
+        return 0;
     }
 
     if ($self->execute) {
@@ -213,8 +214,11 @@ sub clientstart
     }
 
     # Wait for incoming connection from client
-    my $client_sock = $proxy_sock->accept()
-        or die "Failed accepting incoming connection: $!\n";
+    my $client_sock;
+    if(!($client_sock = $proxy_sock->accept())) {
+        warn "Failed accepting incoming connection: $!\n";
+        return 0;
+    }
 
     print "Connection opened\n";
 
@@ -245,7 +249,8 @@ sub clientstart
                 #Sleep for a short while
                 select(undef, undef, undef, 0.1);
             } else {
-                die "Failed to start up server (".$servaddr.",".$self->server_port."): $!\n";
+                warn "Failed to start up server (".$servaddr.",".$self->server_port."): $!\n";
+                return 0;
             }
         }
     } while (!$server_sock);
@@ -295,6 +300,7 @@ sub clientstart
               .$self->serverpid."\n";
         waitpid( $self->serverpid, 0);
     }
+    return 1;
 }
 
 sub process_packet

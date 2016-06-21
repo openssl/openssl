@@ -12,6 +12,7 @@ B<openssl> B<verify>
 [B<-CApath directory>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
+[B<-allow_proxy_certs>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-CRLfile file>]
@@ -82,6 +83,10 @@ Do not load the trusted CA certificates from the default file location
 =item B<-no-CApath>
 
 Do not load the trusted CA certificates from the default directory location
+
+=item B<-allow_proxy_certs>
+
+Allow the verification of proxy certificates
 
 =item B<-attime timestamp>
 
@@ -564,13 +569,18 @@ Invalid non-CA certificate has CA markings.
 
 Proxy path length constraint exceeded.
 
+=item B<X509_V_ERR_PROXY_SUBJECT_INVALID>
+
+Proxy certificate subject is invalid.  It MUST be the same as the issuer
+with a single CN component added.
+
 =item B<X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE>
 
 Key usage does not include digital signature.
 
 =item B<X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED>
 
-Proxy certificates not allowed, please set the appropriate flag.
+Proxy certificates not allowed, please use B<-allow_proxy_certs>.
 
 =item B<X509_V_ERR_INVALID_EXTENSION>
 

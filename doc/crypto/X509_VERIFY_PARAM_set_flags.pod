@@ -79,7 +79,7 @@ X509_VERIFY_PARAM_set_depth() sets the maximum verification depth to B<depth>.
 That is the maximum number of intermediate CA certificates that can appear in a
 chain.
 A maximal depth chain contains 2 more certificates than the limit, since
-neither the end-entity ceritificate nor the trust-anchor count against this
+neither the end-entity certificate nor the trust-anchor count against this
 limit.
 Thus a B<depth> limit of 0 only allows the end-entity certificate to be signed
 directly by the trust-anchor, while with a B<depth> limit of 1 there can be one

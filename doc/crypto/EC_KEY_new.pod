@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+EC_KEY_get_method, EC_KEY_set_method,
 EC_KEY_new, EC_KEY_get_flags, EC_KEY_set_flags, EC_KEY_clear_flags,
 EC_KEY_new_by_curve_name, EC_KEY_free, EC_KEY_copy, EC_KEY_dup, EC_KEY_up_ref,
 EC_KEY_get0_group, EC_KEY_set_group, EC_KEY_get0_private_key,

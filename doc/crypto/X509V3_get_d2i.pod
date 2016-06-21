@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+X509_get0_extensions, X509_CRL_get0_extensions, X509_REVOKED_get0_extensions,
 X509V3_get_d2i, X509V3_add1_i2d, X509V3_EXT_d2i, X509V3_EXT_i2d,
 X509_get_ext_d2i, X509_add1_ext_i2d, X509_CRL_get_ext_d2i,
 X509_CRL_add1_ext_i2d, X509_REVOKED_get_ext_d2i,
@@ -206,7 +207,7 @@ cannot be encoded) or -1 due to a fatal error such as a memory allocation
 failure.
 
 X509_get0_extensions(), X509_CRL_get0_extensions() and
-X509_REVOKED_get0_extensions() return a stack of extensions. They can return
+X509_REVOKED_get0_extensions() return a stack of extensions. They return
 NULL if no extensions are present.
 
 =head1 SEE ALSO

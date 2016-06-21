@@ -14,7 +14,6 @@
 #include <openssl/bn.h>
 #include <openssl/sha.h>
 #include "dsa_locl.h"
-#include <openssl/rand.h>
 #include <openssl/asn1.h>
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
@@ -52,7 +51,6 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     BIGNUM *kinv = NULL;
     BIGNUM *m;
     BIGNUM *xr;
-    BIGNUM *r, *s;
     BN_CTX *ctx = NULL;
     int reason = ERR_R_BN_LIB;
     DSA_SIG *ret = NULL;
@@ -72,13 +70,11 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     if (ret == NULL)
         goto err;
 
-    DSA_SIG_get0(&r, &s, ret);
-
     ctx = BN_CTX_new();
     if (ctx == NULL)
         goto err;
  redo:
-    if (!dsa_sign_setup(dsa, ctx, &kinv, &r, dgst, dlen))
+    if (!dsa_sign_setup(dsa, ctx, &kinv, &ret->r, dgst, dlen))
         goto err;
 
     if (dlen > BN_num_bytes(dsa->q))
@@ -92,21 +88,21 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
         goto err;
 
     /* Compute  s = inv(k) (m + xr) mod q */
-    if (!BN_mod_mul(xr, dsa->priv_key, r, dsa->q, ctx))
+    if (!BN_mod_mul(xr, dsa->priv_key, ret->r, dsa->q, ctx))
         goto err;               /* s = xr */
-    if (!BN_add(s, xr, m))
+    if (!BN_add(ret->s, xr, m))
         goto err;               /* s = m + xr */
-    if (BN_cmp(s, dsa->q) > 0)
-        if (!BN_sub(s, s, dsa->q))
+    if (BN_cmp(ret->s, dsa->q) > 0)
+        if (!BN_sub(ret->s, ret->s, dsa->q))
             goto err;
-    if (!BN_mod_mul(s, s, kinv, dsa->q, ctx))
+    if (!BN_mod_mul(ret->s, ret->s, kinv, dsa->q, ctx))
         goto err;
 
     /*
      * Redo if r or s is zero as required by FIPS 186-3: this is very
      * unlikely.
      */
-    if (BN_is_zero(r) || BN_is_zero(s))
+    if (BN_is_zero(ret->r) || BN_is_zero(ret->s))
         goto redo;
 
     rv = 1;
@@ -226,7 +222,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     BN_CTX *ctx;
     BIGNUM *u1, *u2, *t1;
     BN_MONT_CTX *mont = NULL;
-    BIGNUM *r, *s;
+    const BIGNUM *r, *s;
     int ret = -1, i;
     if (!dsa->p || !dsa->q || !dsa->g) {
         DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MISSING_PARAMETERS);
@@ -251,7 +247,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     if (u1 == NULL || u2 == NULL || t1 == NULL || ctx == NULL)
         goto err;
 
-    DSA_SIG_get0(&r, &s, sig);
+    DSA_SIG_get0(sig, &r, &s);
 
     if (BN_is_zero(r) || BN_is_negative(r) ||
         BN_ucmp(r, dsa->q) >= 0) {

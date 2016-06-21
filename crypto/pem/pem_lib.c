@@ -618,7 +618,8 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     i = j = 0;
     while (len > 0) {
         n = (int)((len > (PEM_BUFSIZE * 5)) ? (PEM_BUFSIZE * 5) : len);
-        EVP_EncodeUpdate(ctx, buf, &outl, &(data[j]), n);
+        if (!EVP_EncodeUpdate(ctx, buf, &outl, &(data[j]), n))
+            goto err;
         if ((outl) && (BIO_write(bp, (char *)buf, outl) != outl))
             goto err;
         i += outl;

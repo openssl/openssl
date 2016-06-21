@@ -2,8 +2,8 @@
 
 =head1 NAME
 
+ASYNC_get_wait_ctx,
 ASYNC_init_thread, ASYNC_cleanup_thread, ASYNC_start_job, ASYNC_pause_job,
-ASYNC_in_job, ASYNC_get_wait_fd, ASYNC_set_wait_fd, ASYNC_clear_wait_fd,
 ASYNC_get_current_job, ASYNC_block_pause, ASYNC_unblock_pause, ASYNC_is_capable
 - asynchronous job management functions
 

@@ -45,10 +45,6 @@ OPTIONS engine_options[] = {
     {NULL}
 };
 
-static void identity(char *ptr)
-{
-}
-
 static int append_buf(char **buf, int *size, const char *s)
 {
     if (*buf == NULL) {
@@ -217,7 +213,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
         BIO_printf(out, "\n");
     ret = 1;
  err:
-    sk_OPENSSL_STRING_pop_free(cmds, identity);
+    sk_OPENSSL_STRING_free(cmds);
     OPENSSL_free(name);
     OPENSSL_free(desc);
     return ret;
@@ -267,7 +263,7 @@ int engine_main(int argc, char **argv)
     int ret = 1, i;
     int verbose = 0, list_cap = 0, test_avail = 0, test_avail_noise = 0;
     ENGINE *e;
-    STACK_OF(OPENSSL_STRING) *engines = sk_OPENSSL_STRING_new_null();
+    STACK_OF(OPENSSL_CSTRING) *engines = sk_OPENSSL_CSTRING_new_null();
     STACK_OF(OPENSSL_STRING) *pre_cmds = sk_OPENSSL_STRING_new_null();
     STACK_OF(OPENSSL_STRING) *post_cmds = sk_OPENSSL_STRING_new_null();
     BIO *out;
@@ -284,7 +280,7 @@ int engine_main(int argc, char **argv)
      * names, and then setup to parse the rest of the line as flags. */
     prog = argv[0];
     while ((argv1 = argv[1]) != NULL && *argv1 != '-') {
-        sk_OPENSSL_STRING_push(engines, argv1);
+        sk_OPENSSL_CSTRING_push(engines, argv1);
         argc--;
         argv++;
     }
@@ -337,17 +333,17 @@ int engine_main(int argc, char **argv)
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         }
-        sk_OPENSSL_STRING_push(engines, *argv);
+        sk_OPENSSL_CSTRING_push(engines, *argv);
     }
 
-    if (sk_OPENSSL_STRING_num(engines) == 0) {
+    if (sk_OPENSSL_CSTRING_num(engines) == 0) {
         for (e = ENGINE_get_first(); e != NULL; e = ENGINE_get_next(e)) {
-            sk_OPENSSL_STRING_push(engines, (char *)ENGINE_get_id(e));
+            sk_OPENSSL_CSTRING_push(engines, ENGINE_get_id(e));
         }
     }
 
-    for (i = 0; i < sk_OPENSSL_STRING_num(engines); i++) {
-        const char *id = sk_OPENSSL_STRING_value(engines, i);
+    for (i = 0; i < sk_OPENSSL_CSTRING_num(engines); i++) {
+        const char *id = sk_OPENSSL_CSTRING_value(engines, i);
         if ((e = ENGINE_by_id(id)) != NULL) {
             const char *name = ENGINE_get_name(e);
             /*
@@ -436,9 +432,9 @@ int engine_main(int argc, char **argv)
  end:
 
     ERR_print_errors(bio_err);
-    sk_OPENSSL_STRING_pop_free(engines, identity);
-    sk_OPENSSL_STRING_pop_free(pre_cmds, identity);
-    sk_OPENSSL_STRING_pop_free(post_cmds, identity);
+    sk_OPENSSL_CSTRING_free(engines);
+    sk_OPENSSL_STRING_free(pre_cmds);
+    sk_OPENSSL_STRING_free(post_cmds);
     BIO_free_all(out);
     return (ret);
 }

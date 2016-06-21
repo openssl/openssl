@@ -525,7 +525,8 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
 {
     int len;
     char *result = NULL, *vf = NULL;
-    BIGNUM *N_bn = NULL, *g_bn = NULL, *s = NULL, *v = NULL;
+    const BIGNUM *N_bn = NULL, *g_bn = NULL;
+    BIGNUM *N_bn_alloc = NULL, *g_bn_alloc = NULL, *s = NULL, *v = NULL;
     unsigned char tmp[MAX_LEN];
     unsigned char tmp2[MAX_LEN];
     char *defgNid = NULL;
@@ -538,10 +539,12 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
     if (N) {
         if ((len = t_fromb64(tmp, N)) == 0)
             goto err;
-        N_bn = BN_bin2bn(tmp, len, NULL);
+        N_bn_alloc = BN_bin2bn(tmp, len, NULL);
+        N_bn = N_bn_alloc;
         if ((len = t_fromb64(tmp, g)) == 0)
             goto err;
-        g_bn = BN_bin2bn(tmp, len, NULL);
+        g_bn_alloc = BN_bin2bn(tmp, len, NULL);
+        g_bn = g_bn_alloc;
         defgNid = "*";
     } else {
         SRP_gN *gN = SRP_get_gN_by_id(g, NULL);
@@ -587,10 +590,8 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
     result = defgNid;
 
  err:
-    if (N) {
-        BN_free(N_bn);
-        BN_free(g_bn);
-    }
+    BN_free(N_bn_alloc);
+    BN_free(g_bn_alloc);
     OPENSSL_clear_free(vf, vfsize);
     BN_clear_free(s);
     BN_clear_free(v);

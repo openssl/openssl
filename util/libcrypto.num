@@ -2704,7 +2704,7 @@ EVP_PKEY_assign                         2662	1_1_0	EXIST::FUNCTION:
 EVP_aes_128_ofb                         2663	1_1_0	EXIST::FUNCTION:
 CMS_data                                2664	1_1_0	EXIST::FUNCTION:CMS
 X509_load_cert_file                     2665	1_1_0	EXIST::FUNCTION:
-EC_GFp_nistp521_method                  2667	1_1_0	EXIST:!WIN32:FUNCTION:EC,EC_NISTP_64_GCC_128
+EC_GFp_nistp521_method                  2667	1_1_0	EXIST::FUNCTION:EC,EC_NISTP_64_GCC_128
 ECDSA_SIG_free                          2668	1_1_0	EXIST::FUNCTION:EC
 d2i_PKCS12_BAGS                         2669	1_1_0	EXIST::FUNCTION:
 RSA_public_encrypt                      2670	1_1_0	EXIST::FUNCTION:RSA
@@ -2910,7 +2910,7 @@ X509_EXTENSION_dup                      2861	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_asn1_new                       2862	1_1_0	EXIST::FUNCTION:
 BIO_socket_nbio                         2863	1_1_0	EXIST::FUNCTION:SOCK
 EVP_CIPHER_set_asn1_iv                  2864	1_1_0	EXIST::FUNCTION:
-EC_GFp_nistp224_method                  2865	1_1_0	EXIST:!WIN32:FUNCTION:EC,EC_NISTP_64_GCC_128
+EC_GFp_nistp224_method                  2865	1_1_0	EXIST::FUNCTION:EC,EC_NISTP_64_GCC_128
 BN_swap                                 2866	1_1_0	EXIST::FUNCTION:
 d2i_ECParameters                        2867	1_1_0	EXIST::FUNCTION:EC
 X509_NAME_add_entry_by_OBJ              2868	1_1_0	EXIST::FUNCTION:
@@ -3501,7 +3501,7 @@ ERR_get_next_error_library              3446	1_1_0	EXIST::FUNCTION:
 OCSP_RESPONSE_print                     3447	1_1_0	EXIST::FUNCTION:OCSP
 BN_get_rfc3526_prime_2048               3448	1_1_0	EXIST::FUNCTION:
 BIO_new_bio_pair                        3449	1_1_0	EXIST::FUNCTION:
-EC_GFp_nistp256_method                  3450	1_1_0	EXIST:!WIN32:FUNCTION:EC,EC_NISTP_64_GCC_128
+EC_GFp_nistp256_method                  3450	1_1_0	EXIST::FUNCTION:EC,EC_NISTP_64_GCC_128
 BIO_method_type                         3451	1_1_0	EXIST::FUNCTION:
 ECPKParameters_print                    3452	1_1_0	EXIST::FUNCTION:EC
 EVP_rc4                                 3453	1_1_0	EXIST::FUNCTION:RC4
@@ -4149,3 +4149,4 @@ PEM_write_bio_PrivateKey_traditional    4091	1_1_0	EXIST::FUNCTION:
 X509_get_pathlen                        4092	1_1_0	EXIST::FUNCTION:
 ECDSA_SIG_set0                          4093	1_1_0	EXIST::FUNCTION:EC
 DSA_SIG_set0                            4094	1_1_0	EXIST::FUNCTION:DSA
+EVP_PKEY_get0_hmac                      4095	1_1_0	EXIST::FUNCTION:

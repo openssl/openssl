@@ -37,13 +37,12 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 1;
-
 #We must use an anon DHE cipher for this test
 $proxy->cipherc('ADH-AES128-SHA:@SECLEVEL=0');
 $proxy->ciphers('ADH-AES128-SHA:@SECLEVEL=0');
 
-$proxy->start();
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 1;
 ok(TLSProxy::Message->fail, "ServerKeyExchange with 0 p");
 
 sub ske_0_p_filter

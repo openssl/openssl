@@ -115,21 +115,21 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
         memcpy(p, b, blen);
     else {
         /* Begin at the end of the encoding */
-        n = b + blen - 1;
-        p += blen - 1;
+        n = b + blen;
+        p += blen;
         i = blen;
         /* Copy zeros to destination as long as source is zero */
-        while (!*n && i > 1) {
-            *(p--) = 0;
+        while (!n[-1] && i > 1) {
+            *(--p) = 0;
             n--;
             i--;
         }
         /* Complement and increment next octet */
-        *(p--) = ((*(n--)) ^ 0xff) + 1;
+        *(--p) = ((*(--n)) ^ 0xff) + 1;
         i--;
         /* Complement any octets left */
         for (; i > 0; i--)
-            *(p--) = *(n--) ^ 0xff;
+            *(--p) = *(--n) ^ 0xff;
     }
 
     *pp += ret;

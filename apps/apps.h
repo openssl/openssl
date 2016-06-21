@@ -85,7 +85,7 @@ int has_stdin_waiting(void);
         OPT_V_POLICY_PRINT, OPT_V_CHECK_SS_SIG, OPT_V_TRUSTED_FIRST, \
         OPT_V_SUITEB_128_ONLY, OPT_V_SUITEB_128, OPT_V_SUITEB_192, \
         OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME, \
-        OPT_V_VERIFY_AUTH_LEVEL, \
+        OPT_V_VERIFY_AUTH_LEVEL, OPT_V_ALLOW_PROXY_CERTS, \
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
@@ -113,9 +113,9 @@ int has_stdin_waiting(void);
         { "explicit_policy", OPT_V_EXPLICIT_POLICY, '-', \
             "set policy variable require-explicit-policy"}, \
         { "inhibit_any", OPT_V_INHIBIT_ANY, '-', \
-            "set policy variable inihibit-any-policy"}, \
+            "set policy variable inhibit-any-policy"}, \
         { "inhibit_map", OPT_V_INHIBIT_MAP, '-', \
-            "set policy variable inihibit-policy-mapping"}, \
+            "set policy variable inhibit-policy-mapping"}, \
         { "x509_strict", OPT_V_X509_STRICT, '-', \
             "disable certificate compatibility work-arounds"}, \
         { "extended_crl", OPT_V_EXTENDED_CRL, '-', \
@@ -135,7 +135,8 @@ int has_stdin_waiting(void);
         { "partial_chain", OPT_V_PARTIAL_CHAIN, '-', \
             "accept chains anchored by intermediate trust-store CAs"}, \
         { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "(deprecated)" }, \
-        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "ignore certificate validity time" }
+        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "ignore certificate validity time" }, \
+        { "allow_proxy_certs", OPT_V_ALLOW_PROXY_CERTS, '-', "allow the use of proxy certificates" }
 
 # define OPT_V_CASES \
         OPT_V__FIRST: case OPT_V__LAST: break; \
@@ -167,7 +168,8 @@ int has_stdin_waiting(void);
         case OPT_V_SUITEB_192: \
         case OPT_V_PARTIAL_CHAIN: \
         case OPT_V_NO_ALT_CHAINS: \
-        case OPT_V_NO_CHECK_TIME
+        case OPT_V_NO_CHECK_TIME: \
+        case OPT_V_ALLOW_PROXY_CERTS
 
 /*
  * Common "extended"? options.
@@ -187,7 +189,7 @@ int has_stdin_waiting(void);
         { "xcertform", OPT_X_CERTFORM, 'F', \
             "format of Extended certificate (PEM or DER) PEM default " }, \
         { "xkeyform", OPT_X_KEYFORM, 'F', \
-            "format of Exnteded certificate's key (PEM or DER) PEM default"}
+            "format of Extended certificate's key (PEM or DER) PEM default"}
 
 # define OPT_X_CASES \
         OPT_X__FIRST: case OPT_X__LAST: break; \

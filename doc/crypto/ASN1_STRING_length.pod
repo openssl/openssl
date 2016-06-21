@@ -3,7 +3,7 @@
 =head1 NAME
 
 ASN1_STRING_dup, ASN1_STRING_cmp, ASN1_STRING_set, ASN1_STRING_length,
-ASN1_STRING_length_set, ASN1_STRING_type, ASN1_STRING_data, ASN1_STRING_to_UTF8 -
+ASN1_STRING_type, ASN1_STRING_data, ASN1_STRING_to_UTF8 -
 ASN1_STRING utility functions
 
 =head1 SYNOPSIS
@@ -53,7 +53,7 @@ should be freed using OPENSSL_free().
 =head1 NOTES
 
 Almost all ASN1 types in OpenSSL are represented as an B<ASN1_STRING>
-structure. Other types such as B<ASN1_OCTET_STRING> are simply typedefed
+structure. Other types such as B<ASN1_OCTET_STRING> are simply typedef'ed
 to B<ASN1_STRING> and the functions call the B<ASN1_STRING> equivalents.
 B<ASN1_STRING> is also used for some B<CHOICE> types which consist
 entirely of primitive string types such as B<DirectoryString> and

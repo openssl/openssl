@@ -9,7 +9,6 @@
 
 #include "internal/cryptlib.h"
 #include "internal/bn_int.h"
-#include <openssl/rand.h>
 #include "rsa_locl.h"
 
 #ifndef RSA_NULL

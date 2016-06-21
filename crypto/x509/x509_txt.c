@@ -167,6 +167,8 @@ const char *X509_verify_cert_error_string(long n)
         return ("Issuer certificate lookup error");
     case X509_V_ERR_NO_VALID_SCTS:
         return ("Certificate Transparency required, but no valid SCTs found");
+    case X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION:
+        return ("proxy subject name violation");
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */

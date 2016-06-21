@@ -45,12 +45,11 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 10;
-
 #Test 1: By default with no existing session we should get a session ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 NewSessionTicket message seen; Full handshake
-$proxy->start();
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 10;
 checkmessages(1, "Default session ticket test", 1, 1, 1, 1);
 
 #Test 2: If the server does not accept tickets we should get a normal handshake

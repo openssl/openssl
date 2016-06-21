@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+X509_get0_subject_key_id,
 X509_get_pathlen,
 X509_get_extension_flags, X509_get_key_usage, X509_get_extended_key_usage -
 retrieve certificate extension data

@@ -286,8 +286,15 @@ const char *RAND_file_name(char *buf, size_t size)
         if (OPENSSL_strlcpy(buf, s, size) >= size)
             return NULL;
     } else {
+#ifdef OPENSSL_SYS_WINDOWS
+        if ((s = getenv("HOME")) == NULL
+            && (s = getenv("USERPROFILE")) == NULL) {
+            s = getenv("SYSTEMROOT");
+        }
+#else
         if (OPENSSL_issetugid() == 0)
             s = getenv("HOME");
+#endif
 #ifdef DEFAULT_HOME
         if (s == NULL) {
             s = DEFAULT_HOME;

@@ -9,6 +9,8 @@ SSL_set_bio, SSL_set_rbio, SSL_set_wbio - connect the SSL object with a BIO
  #include <openssl/ssl.h>
 
  void SSL_set_bio(SSL *ssl, BIO *rbio, BIO *wbio);
+ void SSL_set_rbio(SSL *s, BIO *rbio);
+ void SSL_set_wbio(SSL *s, BIO *wbio);
 
 =head1 DESCRIPTION
 

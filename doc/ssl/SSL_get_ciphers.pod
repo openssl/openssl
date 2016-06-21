@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_get_ciphers, SSL_CTX_get_ciphers, SSL_get_cipher_list - get list of available SSL_CIPHERs
+SSL_get1_supported_ciphers, SSL_get_client_ciphers,
+SSL_get_ciphers, SSL_CTX_get_ciphers, SSL_get_cipher_list
+- get list of available SSL_CIPHERs
 
 =head1 SYNOPSIS
 

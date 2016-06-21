@@ -2,8 +2,10 @@
 
 =head1 NAME
 
-BUF_MEM_new, BUF_MEM_new_ex, BUF_MEM_free, BUF_MEM_grow - simple
-character array structure
+BUF_MEM_FLAG_SECURE,
+BUF_MEM_new, BUF_MEM_new_ex, BUF_MEM_free, BUF_MEM_grow
+BUF_MEM_grow_clean, BUF_reverse
+- simple character array structure
 
 standard C library equivalents
 
@@ -17,9 +19,12 @@ standard C library equivalents
 
  BUF_MEM *BUF_MEM_new_ex(unsigned long flags);
 
- void   BUF_MEM_free(BUF_MEM *a);
+ void BUF_MEM_free(BUF_MEM *a);
 
- int    BUF_MEM_grow(BUF_MEM *str, int len);
+ int BUF_MEM_grow(BUF_MEM *str, int len);
+ size_t BUF_MEM_grow_clean(BUF_MEM *str, size_t len);
+
+ void BUF_reverse(unsigned char *out, const unsigned char *in, size_t size);
 
 =head1 DESCRIPTION
 
@@ -39,13 +44,20 @@ BUF_MEM_grow() changes the size of an already existing buffer to
 B<len>. Any data already in the buffer is preserved if it increases in
 size.
 
+BUF_MEM_grow_clean() is similar to BUF_MEM_grow() but it sets any free'd
+or additionally-allocated memory to zero.
+
+BUF_reverse() reverses B<size> bytes at B<in> into B<out>.  If B<out>
+is NULL, the array is reversed in-place.
+
 =head1 RETURN VALUES
 
 BUF_MEM_new() returns the buffer or NULL on error.
 
 BUF_MEM_free() has no return value.
 
-BUF_MEM_grow() returns zero on error or the new size (i.e. B<len>).
+BUF_MEM_grow() and BUF_MEM_grow_clean() return
+zero on error or the new size (i.e., B<len>).
 
 =head1 SEE ALSO
 

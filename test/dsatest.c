@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     unsigned long h;
     unsigned char sig[256];
     unsigned int siglen;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    const BIGNUM *p = NULL, *q = NULL, *g = NULL;
 
     if (bio_err == NULL)
         bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);

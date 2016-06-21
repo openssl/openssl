@@ -2,17 +2,19 @@
 
 =head1 NAME
 
-OBJ_nid2obj, OBJ_nid2ln, OBJ_nid2sn, OBJ_obj2nid, OBJ_txt2nid, OBJ_ln2nid, OBJ_sn2nid,
-OBJ_cmp, OBJ_dup, OBJ_txt2obj, OBJ_obj2txt, OBJ_create, OBJ_cleanup - ASN1 object utility
-functions
+i2t_ASN1_OBJECT,
+OBJ_length, OBJ_get0_data, OBJ_nid2obj, OBJ_nid2ln,
+OBJ_nid2sn, OBJ_obj2nid, OBJ_txt2nid, OBJ_ln2nid, OBJ_sn2nid, OBJ_cmp,
+OBJ_dup, OBJ_txt2obj, OBJ_obj2txt, OBJ_create, OBJ_cleanup
+- ASN1 object utility functions
 
 =head1 SYNOPSIS
 
  #include <openssl/objects.h>
 
- ASN1_OBJECT * OBJ_nid2obj(int n);
- const char *  OBJ_nid2ln(int n);
- const char *  OBJ_nid2sn(int n);
+ ASN1_OBJECT *OBJ_nid2obj(int n);
+ const char *OBJ_nid2ln(int n);
+ const char *OBJ_nid2sn(int n);
 
  int OBJ_obj2nid(const ASN1_OBJECT *o);
  int OBJ_ln2nid(const char *ln);
@@ -20,13 +22,15 @@ functions
 
  int OBJ_txt2nid(const char *s);
 
- ASN1_OBJECT * OBJ_txt2obj(const char *s, int no_name);
+ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name);
  int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name);
 
- int OBJ_cmp(const ASN1_OBJECT *a,const ASN1_OBJECT *b);
- ASN1_OBJECT * OBJ_dup(const ASN1_OBJECT *o);
+ int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a);
 
- int OBJ_create(const char *oid,const char *sn,const char *ln);
+ int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b);
+ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o);
+
+ int OBJ_create(const char *oid, const char *sn, const char *ln);
 
  size_t OBJ_length(const ASN1_OBJECT *obj);
  const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj);
@@ -65,6 +69,8 @@ The total amount of space required is returned. If B<no_name> is 0 then
 if the object has a long or short name then that will be used, otherwise
 the numerical form will be used. If B<no_name> is 1 then the numerical
 form will always be used.
+
+i2t_ASN1_OBJECT() is the same as OBJ_obj2txt() with the B<no_name> set to zero.
 
 OBJ_cmp() compares B<a> to B<b>. If the two are identical 0 is returned.
 

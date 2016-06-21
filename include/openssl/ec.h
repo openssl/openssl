@@ -173,7 +173,7 @@ const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group);
 
 /** Returns the montgomery data for order(Generator)
  *  \param  group  EC_GROUP object
- *  \return the currently used generator (possibly NULL).
+ *  \return the currently used montgomery data (possibly NULL).
 */
 BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group);
 
@@ -189,14 +189,12 @@ int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
  *  \param  group  EC_GROUP object
  *  \return the group order
  */
-
 const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
 
 /** Gets the number of bits of the order of an EC_GROUP
  *  \param  group  EC_GROUP object
  *  \return number of bits of group order.
  */
-
 int EC_GROUP_order_bits(const EC_GROUP *group);
 
 /** Gets the cofactor of a EC_GROUP
@@ -212,7 +210,6 @@ int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
  *  \param  group  EC_GROUP object
  *  \return the group cofactor
  */
-
 const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group);
 
 /** Sets the name of a EC_GROUP object
@@ -307,7 +304,7 @@ int EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx);
  *  \param  a    first EC_GROUP object
  *  \param  b    second EC_GROUP object
  *  \param  ctx  BN_CTX object (optional)
- *  \return 0 if both groups are equal and 1 otherwise
+ *  \return 0 if the groups are equal, 1 if not, or -1 on error
  */
 int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx);
 
@@ -639,7 +636,7 @@ int EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *p);
  *  \param  group  underlying EC_GROUP object
  *  \param  point  EC_POINT object to check
  *  \param  ctx    BN_CTX object (optional)
- *  \return 1 if point if on the curve and 0 otherwise
+ *  \return 1 if the point is on the curve, 0 if not, or -1 on error
  */
 int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
                          BN_CTX *ctx);
@@ -649,7 +646,7 @@ int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
  *  \param  a      first EC_POINT object
  *  \param  b      second EC_POINT object
  *  \param  ctx    BN_CTX object (optional)
- *  \return 0 if both points are equal and a value != 0 otherwise
+ *  \return 1 if the points are not equal, 0 if they are, or -1 on error
  */
 int EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
                  BN_CTX *ctx);
@@ -658,7 +655,7 @@ int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx);
 int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
                           EC_POINT *points[], BN_CTX *ctx);
 
-/** Computes r = generator * n sum_{i=0}^{num-1} p[i] * m[i]
+/** Computes r = generator * n + sum_{i=0}^{num-1} p[i] * m[i]
  *  \param  group  underlying EC_GROUP object
  *  \param  r      EC_POINT object for the result
  *  \param  n      BIGNUM with the multiplier for the group generator (optional)
@@ -1076,7 +1073,7 @@ ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
  *  \param  pr   pointer to BIGNUM pointer for r (may be NULL)
  *  \param  ps   pointer to BIGNUM pointer for s (may be NULL)
  */
-void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig);
+void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
 
 /** Setter for r and s fields of ECDSA_SIG
  *  \param  sig  pointer to ECDSA_SIG pointer

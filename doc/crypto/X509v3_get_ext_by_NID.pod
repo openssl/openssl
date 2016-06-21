@@ -4,8 +4,7 @@
 
 X509v3_get_ext_count, X509v3_get_ext, X509v3_get_ext_by_NID,
 X509v3_get_ext_by_OBJ, X509v3_get_ext_by_critical, X509v3_delete_ext,
-X509v3_add_ext, X509_get0_extensions, X509_CRL_get0_extensions,
-X509_REVOKED_get0_extensions, X509_get_ext_count, X509_get_ext,
+X509v3_add_ext, X509_get_ext_count, X509_get_ext,
 X509_get_ext_by_NID, X509_get_ext_by_OBJ, X509_get_ext_by_critical,
 X509_delete_ext, X509_add_ext, X509_CRL_get_ext_count, X509_CRL_get_ext,
 X509_CRL_get_ext_by_NID, X509_CRL_get_ext_by_OBJ, X509_CRL_get_ext_by_critical,
@@ -30,10 +29,6 @@ X509_REVOKED_add_ext - extension stack utility functions
  X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc);
  STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
                                           X509_EXTENSION *ex, int loc);
-
- STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
- STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(X509_CRL *crl);
- STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(X509_REVOKED *r);
 
  int X509_get_ext_count(X509 *x);
  X509_EXTENSION *X509_get_ext(X509 *x, int loc);
@@ -88,10 +83,6 @@ B<loc> is B<-1> the new extension is added to the end. If B<*x> is B<NULL>
 a new stack will be allocated. The passed extension B<ex> is duplicated
 internally so it must be freed after use.
 
-X509_get0_extensions(), X509_CRL_get0_extensions() and
-X509_REVOKED_get0_extensions() retrieve the extensions from a certificate
-a CRL or a CRL entry respectively.
-
 X509_get_ext_count(), X509_get_ext(), X509_get_ext_by_NID(),
 X509_get_ext_by_OBJ(), X509_get_ext_by_critical(), X509_delete_ext()
 and X509_add_ext() operate on the extensions of certificate B<x> they are
@@ -132,10 +123,6 @@ X509v3_get_ext_by_critical() return the an extension index or B<-1> if an
 error occurs.
 
 X509v3_add_ext() returns a stack of extensions or B<NULL> on error.
-
-X509_get0_extensions(), X509_CRL_get0_extensions() and
-X509_REVOKED_get0_extensions() return a stack of extensions. If the extensions
-field is absent it will return B<NULL>: this is B<not> an error condition.
 
 =head1 SEE ALSO
 

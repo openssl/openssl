@@ -34,11 +34,10 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 2;
-
 #Test 1: Asking for TLS1.3 should pass
 my $client_version = TLSProxy::Record::VERS_TLS_1_3;
-$proxy->start();
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 2;
 ok(TLSProxy::Message->success(), "Version tolerance test, TLS 1.3");
 
 #Test 2: Testing something below SSLv3 should fail

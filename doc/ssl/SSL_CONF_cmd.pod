@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+SSL_CONF_cmd_value_type, SSL_CONF_finish,
 SSL_CONF_cmd - send configuration command
 
 =head1 SYNOPSIS

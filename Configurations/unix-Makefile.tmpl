@@ -242,7 +242,16 @@ tests: build_generated \
 	@ : {- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
-	@TOP="$(SRCDIR)" PERL="$(PERL)" $(PERL) $(SRCDIR)/test/run_tests.pl list
+	@ : {- output_off() if $disabled{tests}; "" -}
+	@SRCTOP="$(SRCDIR)" \
+	 $(PERL) $(SRCDIR)/test/run_tests.pl list
+	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+	@echo "Tests are not supported with your chosen Configure options"
+	@ : {- output_on() if !$disabled{tests}; "" -}
+
+install: install_sw install_ssldirs install_docs
+
+uninstall: uninstall_docs uninstall_sw
 
 libclean:
 	@set -e; for s in $(SHLIB_INFO); do \
@@ -256,25 +265,22 @@ libclean:
 		fi; \
 	done
 	$(RM) $(LIBS)
-
-install: install_sw install_ssldirs install_docs
-
-uninstall: uninstall_docs uninstall_sw
+	$(RM) *.map
 
 clean: libclean
-	rm -f $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
-	rm -f $(GENERATED)
-	-rm -f `find . -name '*{- $depext -}'`
-	-rm -f `find . -name '*{- $objext -}'`
-	rm -f core
-	rm -f tags TAGS
-	rm -f openssl.pc libcrypto.pc libssl.pc
-	-rm -f `find . -type l -a \! -path "./.git/*"`
-	rm -f $(TARFILE)
+	$(RM) $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
+	$(RM) $(GENERATED)
+	-$(RM) `find . -name '*{- $depext -}' -a \! -path "./.git/*"`
+	-$(RM) `find . -name '*{- $objext -}' -a \! -path "./.git/*"`
+	$(RM) core
+	$(RM) tags TAGS
+	$(RM) openssl.pc libcrypto.pc libssl.pc
+	-$(RM) `find . -type l -a \! -path "./.git/*"`
+	$(RM) $(TARFILE)
 
 distclean: clean
-	rm -f configdata.pm
-	rm -f Makefile
+	$(RM) configdata.pm
+	$(RM) Makefile
 
 # This exists solely for those who still type 'make depend'
 #
@@ -311,6 +317,19 @@ uninstall_docs: uninstall_man_docs uninstall_html_docs
 install_ssldirs:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/certs
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/private
+	@set -e; for x in dummy $(MISC_SCRIPTS); do \
+		if [ "$$x" = "dummy" ]; then continue; fi; \
+		fn=`basename $$x`; \
+		echo "install $$x -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
+		cp $$x $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
+		chmod 755 $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
+		mv -f $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new \
+		      $(DESTDIR)$(OPENSSLDIR)/misc/$$fn; \
+	done
+	@echo "install $(SRCDIR)/apps/openssl.cnf -> $(DESTDIR)$(OPENSSLDIR)/openssl.cnf"
+	@cp $(SRCDIR)/apps/openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
+	@chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
+	@mv -f  $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
 
 install_dev:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
@@ -473,19 +492,6 @@ install_runtime:
 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	@set -e; for x in dummy $(MISC_SCRIPTS); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		echo "install $$x -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
-		cp $$x $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
-		chmod 755 $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
-		mv -f $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new \
-		      $(DESTDIR)$(OPENSSLDIR)/misc/$$fn; \
-	done
-	@echo "install $(SRCDIR)/apps/openssl.cnf -> $(DESTDIR)$(OPENSSLDIR)/openssl.cnf"
-	@cp $(SRCDIR)/apps/openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
-	@chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
-	@mv -f  $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
 
 uninstall_runtime:
 	@echo "*** Uninstalling runtime files"
@@ -644,10 +650,6 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
 #	...
 
-# Currently disabled, util/selftest.pl needs a rewrite
-#report:
-#	SRCDIR=$(SRCDIR) @$(PERL) util/selftest.pl
-
 lint:
 	lint -DLINT $(INCLUDES) $(SRCS)
 
@@ -798,11 +800,7 @@ openssl.pc:
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
-# Note on the use of $(MFLAGS): this was an older variant of MAKEFLAGS which
-# wasn't passed down automatically.  It's quite safe to use it like we do
-# below; if it doesn't exist, the result will be empty and 'make' will pick
-# up $(MAKEFLAGS) which is passed down as an environment variable.
-configdata.pm: $(SRCDIR)/Configurations/unix-Makefile.tmpl $(SRCDIR)/Configurations/common.tmpl $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_infos}}) -}
+configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configurations/common.tmpl $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_infos}}) -}
 	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
 	$(SRCDIR)/Configure reconf

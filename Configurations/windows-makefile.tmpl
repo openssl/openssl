@@ -172,9 +172,12 @@ tests: build_generated \
 	@rem {- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
-	@set TOP=$(SRCDIR)
-	@set PERL=$(PERL)
+	@rem {- output_off() if $disabled{tests}; "" -}
+	@set SRCTOP=$(SRCDIR)
 	@"$(PERL)" "$(SRCDIR)\test\run_tests.pl" list
+	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+	@echo "Tests are not supported with your chosen Configure options"
+	@rem {- output_on() if !$disabled{tests}; "" -}
 
 install: install_sw install_ssldirs install_docs
 
@@ -189,7 +192,7 @@ libclean:
 
 clean: libclean
 	-del /Q /F $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
-	-del /Q /S /F $(GENERATED)
+	-del /Q /F $(GENERATED)
 	-del /Q /S /F *.d
 	-del /Q /S /F *.obj
 	-del /Q /S /F *.pdb
@@ -213,11 +216,9 @@ install_sw: all install_dev install_engines install_runtime
 
 uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
 
-install_docs:
-        "$(PERL)" "$(SRCDIR)\util\process_docs.pl" \
-                "--destdir=$(DESTDIR)$(INSTALLTOP)\html" --type=html
+install_docs: install_html_docs
 
-uninstall_docs:
+uninstall_docs: uninstall_html_docs
 
 install_ssldirs:
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(DESTDIR)$(OPENSSLDIR)\certs"
@@ -274,9 +275,15 @@ install_runtime:
 
 uninstall_runtime:
 
+install_html_docs:
+        "$(PERL)" "$(SRCDIR)\util\process_docs.pl" \
+                "--destdir=$(DESTDIR)$(INSTALLTOP)\html" --type=html
+
+uninstall_html_docs:
+
 # Building targets ###################################################
 
-configdata.pm: "{- $config{build_file_template} -}" "$(SRCDIR)\Configure"
+configdata.pm: "{- $config{build_file_template} -}" "$(SRCDIR)\Configurations\common.tmpl" "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{build_infos}}) -}
 	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
 	"$(PERL)" "$(SRCDIR)\Configure" reconf

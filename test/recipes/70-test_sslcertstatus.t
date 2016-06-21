@@ -37,12 +37,11 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 1;
-
-#Test 1: Sending a status_request extension in both ClientHello and ServerHello
-#but then omitting the CertificateStatus message is valid
+#Test 1: Sending a status_request extension in both ClientHello and
+#ServerHello but then omitting the CertificateStatus message is valid
 $proxy->clientflags("-status");
-$proxy->start();
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 1;
 ok(TLSProxy::Message->success, "Missing CertificateStatus message");
 
 sub certstatus_filter
