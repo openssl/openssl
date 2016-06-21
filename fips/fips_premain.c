@@ -140,6 +140,9 @@ void FINGERPRINT_premain(void)
 	}
 #endif
     } while(0);
+#if defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC)
+    fips_openssl_cpuid_setup();
+#endif
 }
 
 #else

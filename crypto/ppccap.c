@@ -3,13 +3,24 @@
 #include <string.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <unistd.h>
+#if defined(__linux) || defined(_AIX)
+# include <sys/utsname.h>
+#endif
+#if defined(_AIX53)     /* defined even on post-5.3 */
+# include <sys/systemcfg.h>
+# if !defined(__power_set)
+#  define __power_set(a) (_system_configuration.implementation & (a))
+# endif
+#endif
 #include <crypto.h>
 #include <openssl/bn.h>
 
 #define PPC_FPU64	(1<<0)
 #define PPC_ALTIVEC	(1<<1)
+#define PPC_CRYPTO207	(1<<2)
 
-static int OPENSSL_ppccap_P = 0;
+int OPENSSL_ppccap_P = 0;
 
 static sigset_t all_masked;
 
@@ -49,10 +60,28 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	}
 #endif
 
+void sha256_block_p8(void *ctx, const void *inp, size_t len);
+void sha256_block_ppc(void *ctx, const void *inp, size_t len);
+void sha256_block_data_order(void *ctx, const void *inp, size_t len)
+{
+    OPENSSL_ppccap_P & PPC_CRYPTO207 ? sha256_block_p8(ctx, inp, len) :
+        sha256_block_ppc(ctx, inp, len);
+}
+
+void sha512_block_p8(void *ctx, const void *inp, size_t len);
+void sha512_block_ppc(void *ctx, const void *inp, size_t len);
+void sha512_block_data_order(void *ctx, const void *inp, size_t len)
+{
+    OPENSSL_ppccap_P & PPC_CRYPTO207 ? sha512_block_p8(ctx, inp, len) :
+        sha512_block_ppc(ctx, inp, len);
+}
+
 static sigjmp_buf ill_jmp;
 static void ill_handler (int sig) { siglongjmp(ill_jmp,sig); }
 
 void OPENSSL_ppc64_probe(void);
+void OPENSSL_altivec_probe(void);
+void OPENSSL_crypto207_probe(void);
 
 void OPENSSL_cpuid_setup(void)
 	{
@@ -82,6 +111,45 @@ void OPENSSL_cpuid_setup(void)
 
 	OPENSSL_ppccap_P = 0;
 
+#if defined(_AIX)
+	if (sizeof(size_t) == 4) {
+		struct utsname uts;
+# if defined(_SC_AIX_KERNEL_BITMODE)
+		if (sysconf(_SC_AIX_KERNEL_BITMODE) != 64)
+			return;
+# endif
+		if (uname(&uts) != 0 || atoi(uts.version) < 6)
+			return;
+	}
+
+# if defined(__power_set)
+	/*
+	 * Value used in __power_set is a single-bit 1<<n one denoting
+	 * specific processor class. Incidentally 0xffffffff<<n can be
+	 * used to denote specific processor and its successors.
+	 */
+	if (sizeof(size_t) == 4) {
+		/* In 32-bit case PPC_FPU64 is always fastest [if option] */
+		if (__power_set(0xffffffffU<<13))       /* POWER5 and later */
+			OPENSSL_ppccap_P |= PPC_FPU64;
+	} else {
+		/* In 64-bit case PPC_FPU64 is fastest only on POWER6 */
+#  if 0		/* to keep compatibility with previous validations */
+		if (__power_set(0x1U<<14))              /* POWER6 */
+			OPENSSL_ppccap_P |= PPC_FPU64;
+#  endif
+	}
+
+	if (__power_set(0xffffffffU<<14))           /* POWER6 and later */
+		OPENSSL_ppccap_P |= PPC_ALTIVEC;
+
+	if (__power_set(0xffffffffU<<16))           /* POWER8 and later */
+		OPENSSL_ppccap_P |= PPC_CRYPTO207;
+
+	return;
+# endif
+#endif
+
 	memset(&ill_act,0,sizeof(ill_act));
 	ill_act.sa_handler = ill_handler;
 	ill_act.sa_mask    = all_masked;
@@ -108,6 +176,11 @@ void OPENSSL_cpuid_setup(void)
 		{
 		OPENSSL_altivec_probe();
 		OPENSSL_ppccap_P |= PPC_ALTIVEC;
+		if (sigsetjmp(ill_jmp, 1) == 0)
+			{
+			OPENSSL_crypto207_probe();
+			OPENSSL_ppccap_P |= PPC_CRYPTO207;
+			}
 		}
 
 	sigaction (SIGILL,&ill_oact,NULL);
