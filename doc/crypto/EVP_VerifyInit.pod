@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-EVP_VerifyInit, EVP_VerifyUpdate, EVP_VerifyFinal - EVP signature verification functions
+EVP_VerifyInit_ex,
+EVP_VerifyInit, EVP_VerifyUpdate, EVP_VerifyFinal
+- EVP signature verification functions
 
 =head1 SYNOPSIS
 

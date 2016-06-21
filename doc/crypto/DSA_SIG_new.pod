@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+DSA_SIG_get0, DSA_SIG_set0,
 DSA_SIG_new, DSA_SIG_free - allocate and free DSA signature objects
 
 =head1 SYNOPSIS

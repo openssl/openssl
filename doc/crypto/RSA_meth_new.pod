@@ -2,9 +2,10 @@
 
 =head1 NAME
 
+RSA_meth_get0_app_data, RSA_meth_set0_app_data,
 RSA_meth_new, RSA_meth_free, RSA_meth_dup, RSA_meth_get0_name,
 RSA_meth_set1_name, RSA_meth_get_flags, RSA_meth_set_flags,
-RSA_meth_get_app_data, RSA_meth_set_app_data, RSA_meth_get_pub_enc,
+RSA_meth_get_pub_enc,
 RSA_meth_set_pub_enc, RSA_meth_get_pub_dec, RSA_meth_set_pub_dec,
 RSA_meth_get_priv_enc, RSA_meth_set_priv_enc, RSA_meth_get_priv_dec,
 RSA_meth_set_priv_dec, RSA_meth_get_mod_exp, RSA_meth_set_mod_exp,

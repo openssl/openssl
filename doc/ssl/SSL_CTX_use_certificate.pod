@@ -2,7 +2,17 @@
 
 =head1 NAME
 
-SSL_CTX_use_certificate, SSL_CTX_use_certificate_ASN1, SSL_CTX_use_certificate_file, SSL_use_certificate, SSL_use_certificate_ASN1, SSL_use_certificate_file, SSL_CTX_use_certificate_chain_file, SSL_CTX_use_PrivateKey, SSL_CTX_use_PrivateKey_ASN1, SSL_CTX_use_PrivateKey_file, SSL_CTX_use_RSAPrivateKey, SSL_CTX_use_RSAPrivateKey_ASN1, SSL_CTX_use_RSAPrivateKey_file, SSL_use_PrivateKey_file, SSL_use_PrivateKey_ASN1, SSL_use_PrivateKey, SSL_use_RSAPrivateKey, SSL_use_RSAPrivateKey_ASN1, SSL_use_RSAPrivateKey_file, SSL_CTX_check_private_key, SSL_check_private_key - load certificate and key data
+SSL_CTX_use_certificate, SSL_CTX_use_certificate_ASN1,
+SSL_CTX_use_certificate_file, SSL_use_certificate, SSL_use_certificate_ASN1,
+SSL_use_certificate_file, SSL_CTX_use_certificate_chain_file,
+SSL_use_certificate_chain_file,
+SSL_CTX_use_PrivateKey, SSL_CTX_use_PrivateKey_ASN1,
+SSL_CTX_use_PrivateKey_file, SSL_CTX_use_RSAPrivateKey,
+SSL_CTX_use_RSAPrivateKey_ASN1, SSL_CTX_use_RSAPrivateKey_file,
+SSL_use_PrivateKey_file, SSL_use_PrivateKey_ASN1, SSL_use_PrivateKey,
+SSL_use_RSAPrivateKey, SSL_use_RSAPrivateKey_ASN1,
+SSL_use_RSAPrivateKey_file, SSL_CTX_check_private_key, SSL_check_private_key
+- load certificate and key data
 
 =head1 SYNOPSIS
 

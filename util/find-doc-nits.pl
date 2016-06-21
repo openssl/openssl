@@ -68,10 +68,11 @@ sub name_synopsis()
     my $syn = $1;
     foreach my $line ( split /\n+/, $syn ) {
         my $sym;
-        $line =~ s/STACK_OF\([^)]+\)//;
+        $line =~ s/STACK_OF\([^)]+\)/int/g;
+        $line =~ s/__declspec\([^)]+\)//;
         if ( $line =~ /typedef.* (\S+);/ ) {
             $sym = $1;
-        } elsif ( $line =~ /#define (\S+)/ ) {
+        } elsif ( $line =~ /#define ([A-Za-z0-9_]+)/ ) {
             $sym = $1;
         } elsif ( $line =~ /([A-Za-z0-9_]+)\(/ ) {
             $sym = $1;

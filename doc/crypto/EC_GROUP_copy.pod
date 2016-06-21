@@ -2,7 +2,17 @@
 
 =head1 NAME
 
-EC_GROUP_copy, EC_GROUP_dup, EC_GROUP_method_of, EC_GROUP_set_generator, EC_GROUP_get0_generator, EC_GROUP_get_order, EC_GROUP_get_cofactor, EC_GROUP_set_curve_name, EC_GROUP_get_curve_name, EC_GROUP_set_asn1_flag, EC_GROUP_get_asn1_flag, EC_GROUP_set_point_conversion_form, EC_GROUP_get_point_conversion_form, EC_GROUP_get0_seed, EC_GROUP_get_seed_len, EC_GROUP_set_seed, EC_GROUP_get_degree, EC_GROUP_check, EC_GROUP_check_discriminant, EC_GROUP_cmp, EC_GROUP_get_basis_type, EC_GROUP_get_trinomial_basis, EC_GROUP_get_pentanomial_basis - Functions for manipulating EC_GROUP objects
+EC_GROUP_get0_order, EC_GROUP_order_bits, EC_GROUP_get0_cofactor,
+EC_GROUP_copy, EC_GROUP_dup, EC_GROUP_method_of, EC_GROUP_set_generator,
+EC_GROUP_get0_generator, EC_GROUP_get_order, EC_GROUP_get_cofactor,
+EC_GROUP_set_curve_name, EC_GROUP_get_curve_name, EC_GROUP_set_asn1_flag,
+EC_GROUP_get_asn1_flag, EC_GROUP_set_point_conversion_form,
+EC_GROUP_get_point_conversion_form, EC_GROUP_get0_seed,
+EC_GROUP_get_seed_len, EC_GROUP_set_seed, EC_GROUP_get_degree,
+EC_GROUP_check, EC_GROUP_check_discriminant, EC_GROUP_cmp,
+EC_GROUP_get_basis_type, EC_GROUP_get_trinomial_basis,
+EC_GROUP_get_pentanomial_basis
+- Functions for manipulating EC_GROUP objects
 
 =head1 SYNOPSIS
 

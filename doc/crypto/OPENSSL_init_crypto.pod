@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+OPENSSL_init_new, OPENSSL_INIT_set_config_appname, OPENSSL_INIT_free,
 OPENSSL_init_crypto, OPENSSL_cleanup,
 OPENSSL_atexit, OPENSSL_thread_stop - OpenSSL
 initialisation and deinitialisation functions

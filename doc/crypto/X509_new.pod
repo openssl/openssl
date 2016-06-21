@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+X509_chain_up_ref,
 X509_new, X509_free, X509_up_ref - X509 certificate ASN1 allocation functions
 
 =head1 SYNOPSIS
