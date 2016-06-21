@@ -1232,8 +1232,10 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 SSL3_RECORD_add_length(rr, -1);
             }
 
-            if (*dest_len < dest_maxlen)
+            if (*dest_len < dest_maxlen) {
+                SSL3_RECORD_set_read(rr);
                 goto start;     /* fragment was too small */
+            }
         }
     }
 
@@ -1316,6 +1318,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         (s->session != NULL) && (s->session->cipher != NULL) &&
         !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
         SSL3_RECORD_set_length(rr, 0);
+        SSL3_RECORD_set_read(rr);
         ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
         goto start;
     }
@@ -1342,6 +1345,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
         if (alert_level == SSL3_AL_WARNING) {
             s->s3->warn_alert = alert_descr;
+            SSL3_RECORD_set_read(rr);
             if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
                 s->shutdown |= SSL_RECEIVED_SHUTDOWN;
                 return (0);
@@ -1372,6 +1376,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             BIO_snprintf(tmp, sizeof tmp, "%d", alert_descr);
             ERR_add_error_data(2, "SSL alert number ", tmp);
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
+            SSL3_RECORD_set_read(rr);
             SSL_CTX_remove_session(s->session_ctx, s->session);
             return (0);
         } else {
@@ -1387,6 +1392,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                                             * shutdown */
         s->rwstate = SSL_NOTHING;
         SSL3_RECORD_set_length(rr, 0);
+        SSL3_RECORD_set_read(rr);
         return (0);
     }
 
@@ -1443,6 +1449,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          */
         if (s->version >= TLS1_VERSION && s->version <= TLS1_1_VERSION) {
             SSL3_RECORD_set_length(rr, 0);
+            SSL3_RECORD_set_read(rr);
             goto start;
         }
         al = SSL_AD_UNEXPECTED_MESSAGE;
