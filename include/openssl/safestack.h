@@ -101,11 +101,11 @@ extern "C" {
     { \
         return OPENSSL_sk_is_sorted((const OPENSSL_STACK *)sk); \
     } \
-    static ossl_inline STACK_OF(t1) * sk_##t1##_dup(STACK_OF(t1) *sk) \
+    static ossl_inline STACK_OF(t1) * sk_##t1##_dup(const STACK_OF(t1) *sk) \
     { \
-        return (STACK_OF(t1) *)OPENSSL_sk_dup((OPENSSL_STACK *)sk); \
+        return (STACK_OF(t1) *)OPENSSL_sk_dup((const OPENSSL_STACK *)sk); \
     } \
-    static ossl_inline STACK_OF(t1) *sk_##t1##_deep_copy(STACK_OF(t1) *sk, \
+    static ossl_inline STACK_OF(t1) *sk_##t1##_deep_copy(const STACK_OF(t1) *sk, \
                                                     sk_##t1##_copyfunc copyfunc, \
                                                     sk_##t1##_freefunc freefunc) \
     { \

@@ -36,18 +36,14 @@ OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk, OPENSSL_sk_compfu
     return old;
 }
 
-OPENSSL_STACK *OPENSSL_sk_dup(OPENSSL_STACK *sk)
+OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
 {
     OPENSSL_STACK *ret;
-    char **s;
 
-    if ((ret = OPENSSL_sk_new(sk->comp)) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
+        return NULL;
+    if ((ret->data = OPENSSL_zalloc(sizeof(*ret->data) * sk->num_alloc)) == NULL)
         goto err;
-    s = OPENSSL_realloc((char *)ret->data,
-                        (unsigned int)sizeof(char *) * sk->num_alloc);
-    if (s == NULL)
-        goto err;
-    ret->data = s;
 
     ret->num = sk->num;
     memcpy(ret->data, sk->data, sizeof(char *) * sk->num);
@@ -60,25 +56,24 @@ OPENSSL_STACK *OPENSSL_sk_dup(OPENSSL_STACK *sk)
     return (NULL);
 }
 
-OPENSSL_STACK *OPENSSL_sk_deep_copy(OPENSSL_STACK *sk, OPENSSL_sk_copyfunc copy_func,
+OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk, 
+                             OPENSSL_sk_copyfunc copy_func,
                              OPENSSL_sk_freefunc free_func)
 {
     OPENSSL_STACK *ret;
     int i;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
-        return ret;
+        return NULL;
     ret->comp = sk->comp;
     ret->sorted = sk->sorted;
     ret->num = sk->num;
     ret->num_alloc = sk->num > MIN_NODES ? sk->num : MIN_NODES;
-    ret->data = OPENSSL_malloc(sizeof(*ret->data) * ret->num_alloc);
+    ret->data = OPENSSL_zalloc(sizeof(*ret->data) * ret->num_alloc);
     if (ret->data == NULL) {
         OPENSSL_free(ret);
         return NULL;
     }
-    for (i = 0; i < ret->num_alloc; i++)
-        ret->data[i] = NULL;
 
     for (i = 0; i < ret->num; ++i) {
         if (sk->data[i] == NULL)
