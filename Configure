@@ -79,7 +79,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # RMD160_ASM	use some extra ripemd160 assembler,
 # SHA256_ASM	sha256_block is implemented in assembler
 # SHA512_ASM	sha512_block is implemented in assembler
-# AES_ASM	ASE_[en|de]crypt is implemented in assembler
+# AES_ASM	AES_[en|de]crypt is implemented in assembler
 
 # Minimum warning options... any contributions to OpenSSL should at least get
 # past these.
