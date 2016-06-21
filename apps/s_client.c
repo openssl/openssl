@@ -2633,7 +2633,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #endif
 
     SSL_SESSION_print(bio, SSL_get_session(s));
-    if (keymatexportlabel != NULL) {
+    if ((SSL_get_session(s) != NULL) &&
+        (keymatexportlabel != NULL)) {
         BIO_printf(bio, "Keying material exporter:\n");
         BIO_printf(bio, "    Label: '%s'\n", keymatexportlabel);
         BIO_printf(bio, "    Length: %i bytes\n", keymatexportlen);
