@@ -36,7 +36,8 @@ use constant {
 
 #Alert descriptions
 use constant {
-    AL_DESC_CLOSE_NOTIFY => 0
+    AL_DESC_CLOSE_NOTIFY => 0,
+    AL_DESC_UNEXPECTED_MESSAGE => 10
 };
 
 my %message_type = (

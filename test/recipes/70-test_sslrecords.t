@@ -38,7 +38,7 @@ my $proxy = TLSProxy::Proxy->new(
 my $content_type = TLSProxy::Record::RT_APPLICATION_DATA;
 my $inject_recs_num = 1;
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 3;
+plan tests => 4;
 ok(TLSProxy::Message->fail(), "Out of context empty records test");
 
 #Test 2: Injecting in context empty records should succeed
@@ -53,6 +53,14 @@ $proxy->clear();
 $inject_recs_num = 33;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Too many in context empty records test");
+
+#Test 4: Injecting a fragmented fatal alert should fail. We actually expect no
+#        alerts to be sent from either side because *we* injected the fatal
+#        alert, i.e. this will look like a disorderly close
+$proxy->clear();
+$proxy->filter(\&add_frag_alert_filter);
+$proxy->start();
+ok(!TLSProxy::Message->end(), "Fragmented alert records test");
 
 sub add_empty_recs_filter
 {
@@ -77,4 +85,56 @@ sub add_empty_recs_filter
 
         push @{$proxy->record_list}, $record;
     }
+}
+
+sub add_frag_alert_filter
+{
+    my $proxy = shift;
+    my $byte;
+
+    # We're only interested in the initial ClientHello
+    if ($proxy->flight != 0) {
+        return;
+    }
+
+    # Add a zero length fragment first
+    #my $record = TLSProxy::Record->new(
+    #    0,
+    #    TLSProxy::Record::RT_ALERT,
+    #    TLSProxy::Record::VERS_TLS_1_2,
+    #    0,
+    #    0,
+    #    0,
+    #    "",
+    #    ""
+    #);
+    #push @{$proxy->record_list}, $record;
+
+    # Now add the alert level (Fatal) as a seperate record
+    $byte = pack('C', TLSProxy::Message::AL_LEVEL_FATAL);
+    my $record = TLSProxy::Record->new(
+        0,
+        TLSProxy::Record::RT_ALERT,
+        TLSProxy::Record::VERS_TLS_1_2,
+        1,
+        1,
+        1,
+        $byte,
+        $byte
+    );
+    push @{$proxy->record_list}, $record;
+
+    # And finally the description (Unexpected message) in a third record
+    $byte = pack('C', TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE);
+    $record = TLSProxy::Record->new(
+        0,
+        TLSProxy::Record::RT_ALERT,
+        TLSProxy::Record::VERS_TLS_1_2,
+        1,
+        1,
+        1,
+        $byte,
+        $byte
+    );
+    push @{$proxy->record_list}, $record;
 }
