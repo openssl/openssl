@@ -26,7 +26,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 108;
+plan tests => 121;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -287,3 +287,44 @@ ok(!verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"], "-verify_depth", 
    "accept chain with verify_depth 0");
 ok(verify("ee-cert", "sslserver", ["ca-cert-md5-any"], [], "-verify_depth", "0"),
    "accept md5 intermediate TA with verify_depth 0");
+
+# Name Constraints tests.
+
+ok(verify("alt1-cert", "sslserver", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints everything permitted");
+
+ok(verify("alt2-cert", "sslserver", ["root-cert"], ["ncca2-cert"], ),
+   "Name Constraints nothing excluded");
+
+ok(verify("alt3-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
+   "Name Constraints nested test all permitted");
+
+ok(!verify("badalt1-cert", "sslserver", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints hostname not permitted");
+
+ok(!verify("badalt2-cert", "sslserver", ["root-cert"], ["ncca2-cert"], ),
+   "Name Constraints hostname excluded");
+
+ok(!verify("badalt3-cert", "sslserver", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints email address not permitted");
+
+ok(!verify("badalt4-cert", "sslserver", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints subject email address not permitted");
+
+ok(!verify("badalt5-cert", "sslserver", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints IP address not permitted");
+
+ok(!verify("badalt6-cert", "sslserver", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints CN hostname not permitted");
+
+ok(!verify("badalt7-cert", "sslserver", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints CN BMPSTRING hostname not permitted");
+
+ok(!verify("badalt8-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
+   "Name constaints nested DNS name not permitted 1");
+
+ok(!verify("badalt9-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
+   "Name constaints nested DNS name not permitted 2");
+
+ok(!verify("badalt10-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
+   "Name constaints nested DNS name excluded");
