@@ -398,9 +398,6 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
         }
         break;
 
-    case TLS_ST_CW_CERT:
-        return tls_prepare_client_certificate(s, wst);
-
     case TLS_ST_CW_CHANGE:
         if (SSL_IS_DTLS(s)) {
             if (s->hit) {
@@ -665,6 +662,9 @@ WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
     OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
+    case TLS_ST_CR_CERT_REQ:
+        return tls_prepare_client_certificate(s, wst);
+
 #ifndef OPENSSL_NO_SCTP
     case TLS_ST_CR_SRVR_DONE:
         /* We only get here if we are using SCTP and we are renegotiating */
@@ -1799,7 +1799,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     s->s3->tmp.ca_names = ca_sk;
     ca_sk = NULL;
 
-    ret = MSG_PROCESS_CONTINUE_READING;
+    ret = MSG_PROCESS_CONTINUE_PROCESSING;
     goto done;
  err:
     ossl_statem_set_error(s);
