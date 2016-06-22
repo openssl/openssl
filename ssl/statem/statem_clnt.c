@@ -175,7 +175,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
             } else {
                 ske_expected = key_exchange_expected(s);
                 if (ske_expected < 0)
-                    return 0;
+                    goto err;
                 /* SKE is optional for some PSK ciphersuites */
                 if (ske_expected
                         || ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)
@@ -210,7 +210,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
     case TLS_ST_CR_CERT_STATUS:
         ske_expected = key_exchange_expected(s);
         if (ske_expected < 0)
-            return 0;
+            goto err;
         /* SKE is optional for some PSK ciphersuites */
         if (ske_expected
                 || ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)
@@ -219,7 +219,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
                 st->hand_state = TLS_ST_CR_KEY_EXCH;
                 return 1;
             }
-            return 0;
+            goto err;
         }
         /* Fall through */
 
@@ -229,7 +229,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
                 st->hand_state = TLS_ST_CR_CERT_REQ;
                 return 1;
             }
-            return 0;
+            goto err;
         }
         /* Fall through */
 
@@ -270,7 +270,10 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
         break;
     }
 
+ err:
     /* No valid transition found */
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_UNEXPECTED_MESSAGE);
+    SSLerr(SSL_F_READ_STATE_MACHINE, SSL_R_UNEXPECTED_MESSAGE);
     return 0;
 }
 
