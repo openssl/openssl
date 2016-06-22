@@ -39,6 +39,7 @@ my $no_dtls = alldisabled(available_protocols("dtls"));
 
 my %conf_dependent_tests = (
   "02-protocol-version.conf" => !$is_default_tls,
+  "04-client_auth.conf" => !$is_default_tls,
   "05-dtls-protocol-version.conf" => !$is_default_dtls,
 );
 
