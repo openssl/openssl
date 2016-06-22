@@ -26,7 +26,13 @@ sub generate_tests() {
     foreach (0..$#protocols) {
         my $protocol = $protocols[$_];
         my $protocol_name = $protocol || "flex";
+        my $caalert;
         if (!$is_disabled[$_]) {
+            if ($protocol_name eq "SSLv3") {
+                $caalert = "BadCertificate";
+            } else {
+                $caalert = "UnknownCA";
+            }
             # Sanity-check simple handshake.
             push @tests, {
                 name => "server-auth-${protocol_name}",
@@ -109,7 +115,7 @@ sub generate_tests() {
                 },
                 test   => {
                     "ExpectedResult" => "ServerFail",
-                    "ServerAlert" => "UnknownCA",
+                    "ServerAlert" => $caalert,
                 },
             };
         }
