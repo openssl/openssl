@@ -31,10 +31,12 @@ sub generate_tests() {
             push @tests, {
                 name => "server-auth-${protocol_name}",
                 server => {
-                    "Protocol" => $protocol
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol
                 },
                 client => {
-                    "Protocol" => $protocol
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol
                 },
                 test   => { "ExpectedResult" => "Success" },
             };
@@ -43,11 +45,13 @@ sub generate_tests() {
             push @tests, {
                 name => "client-auth-${protocol_name}-request",
                 server => {
-                    "Protocol" => $protocol,
-                    "VerifyMode" => "Request",
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
+                    "VerifyMode" => "Request"
                 },
                 client => {
-                    "Protocol" => $protocol
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol
                 },
                 test   => { "ExpectedResult" => "Success" },
             };
@@ -56,12 +60,14 @@ sub generate_tests() {
             push @tests, {
                 name => "client-auth-${protocol_name}-require-fail",
                 server => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
                     "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
                     "VerifyMode" => "Require",
                 },
                 client => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol
                 },
                 test   => {
                     "ExpectedResult" => "ServerFail",
@@ -73,12 +79,14 @@ sub generate_tests() {
             push @tests, {
                 name => "client-auth-${protocol_name}-require",
                 server => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
                     "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
                     "VerifyMode" => "Request",
                 },
                 client => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
                     "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
                     "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem",
                 },
@@ -89,11 +97,13 @@ sub generate_tests() {
             push @tests, {
                 name => "client-auth-${protocol_name}-noroot",
                 server => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
                     "VerifyMode" => "Require",
                 },
                 client => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
                     "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
                     "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem",
                 },
