@@ -854,7 +854,12 @@ sub __cwd {
 	rmtree(".", { safe => 0, keep_root => 1 });
     }
 
-    %directories = %tmp_directories;
+    # We put back new values carefully.  Doing the obvious
+    # %directories = ( %tmp_irectories )
+    # will clear out any value that happens to be an absolute path
+    foreach (keys %tmp_directories) {
+        $directories{$_} = $tmp_directories{$_};
+    }
     foreach (keys %tmp_ENV) {
         $ENV{$_} = $tmp_ENV{$_};
     }
