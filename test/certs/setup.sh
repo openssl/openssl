@@ -86,7 +86,7 @@ openssl x509 -in sroot-cert.pem -trustout \
 ./mkcert.sh genca "CA" ca-key2 ca-cert2 root-key root-cert
 ./mkcert.sh genca "CA2" ca-key ca-name2 root-key root-cert
 ./mkcert.sh genca "CA" ca-key ca-root2 root-key2 root-cert2
-./mkcert.sh genca "CA" ca-key ca-expired root-key root-cert -days -1
+DAYS=-1 ./mkcert.sh genca "CA" ca-key ca-expired root-key root-cert
 #
 openssl x509 -in ca-cert.pem -trustout \
     -addtrust serverAuth -out ca+serverAuth.pem

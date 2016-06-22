@@ -8,7 +8,9 @@
 
 # 100 years should be enough for now
 #
-DAYS=36525
+if [ -z "$DAYS" ]; then
+    DAYS=36525
+fi
 
 if [ -z "$OPENSSL_SIGALG" ]; then
     OPENSSL_SIGALG=sha256
