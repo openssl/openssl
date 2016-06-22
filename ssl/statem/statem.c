@@ -531,8 +531,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s) {
              * to that state if so
              */
             if(!transition(s, mt)) {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_UNEXPECTED_MESSAGE);
-                SSLerr(SSL_F_READ_STATE_MACHINE, SSL_R_UNEXPECTED_MESSAGE);
+                ossl_statem_set_error(s);
                 return SUB_STATE_ERROR;
             }
 
