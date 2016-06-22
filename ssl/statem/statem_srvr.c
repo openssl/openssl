@@ -2587,17 +2587,16 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
     }
 #endif
 
-    if (s->statem.no_cert_verify) {
-        /* No certificate verify so we no longer need the handshake_buffer */
-        BIO_free(s->s3->handshake_buffer);
-        s->s3->handshake_buffer = NULL;
+    if (s->statem.no_cert_verify || !s->session->peer) {
+        /* No certificate verify or no peer certificate so we no longer need the
+         * handshake_buffer
+         */
+        if (!ssl3_digest_cached_records(s, 0)) {
+            ossl_statem_set_error(s);
+            return WORK_ERROR;
+        }
         return WORK_FINISHED_CONTINUE;
     } else {
-        if (!s->session->peer) {
-            /* No peer certificate so we no longer need the handshake_buffer */
-            BIO_free(s->s3->handshake_buffer);
-            return WORK_FINISHED_CONTINUE;
-        }
         if (!s->s3->handshake_buffer) {
             SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE,
                    ERR_R_INTERNAL_ERROR);
