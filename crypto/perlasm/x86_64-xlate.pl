@@ -170,8 +170,8 @@ my %globals;
 	    if ($self->{op} eq "ret") {
 		$self->{op} = "";
 		if ($win64 && $current_function->{abi} eq "svr4") {
-		    $self->{op} = "mov	rdi,QWORD${PTR}[8+rsp]\t;WIN64 epilogue\n\t".
-				  "mov	rsi,QWORD${PTR}[16+rsp]\n\t";
+		    $self->{op} = "mov	rdi,QWORD$PTR\[8+rsp\]\t;WIN64 epilogue\n\t".
+				  "mov	rsi,QWORD$PTR\[16+rsp\]\n\t";
 	    	}
 		$self->{op} .= "DB\t0F3h,0C3h\t\t;repret";
 	    } elsif ($self->{op} =~ /^(pop|push)f/) {
@@ -210,6 +210,7 @@ my %globals;
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{value}
 	    my $value = $self->{value};
+	    no warnings;    # oct might complain about overflow, ignore here...
 	    $value =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/oct($1)/egi;
 	    if ($value =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg) {
 		$self->{value} = $value;
@@ -227,7 +228,7 @@ my %globals;
 	my	$self = {};
 	my	$ret;
 
-	# optional * ---vvv--- appears in indirect jmp/call
+	# optional * ----vvv--- appears in indirect jmp/call
 	if ($$line =~ /^(\*?)([^\(,]*)\(([%\w,]+)\)/) {
 	    bless $self, $class;
 	    $self->{asterisk} = $1;
@@ -400,8 +401,8 @@ my %globals;
 	    my $func =	"$current_function->{name}" .
 			($nasm ? ":" : "\tPROC $current_function->{scope}") .
 			"\n";
-	    $func .= "	mov	QWORD${PTR}[8+rsp],rdi\t;WIN64 prologue\n";
-	    $func .= "	mov	QWORD${PTR}[16+rsp],rsi\n";
+	    $func .= "	mov	QWORD$PTR\[8+rsp\],rdi\t;WIN64 prologue\n";
+	    $func .= "	mov	QWORD$PTR\[16+rsp\],rsi\n";
 	    $func .= "	mov	rax,rsp\n";
 	    $func .= "${decor}SEH_begin_$current_function->{name}:";
 	    $func .= ":" if ($masm);
@@ -412,8 +413,8 @@ my %globals;
 	    $func .= "	mov	rsi,rdx\n" if ($narg>1);
 	    $func .= "	mov	rdx,r8\n"  if ($narg>2);
 	    $func .= "	mov	rcx,r9\n"  if ($narg>3);
-	    $func .= "	mov	r8,QWORD${PTR}[40+rsp]\n" if ($narg>4);
-	    $func .= "	mov	r9,QWORD${PTR}[48+rsp]\n" if ($narg>5);
+	    $func .= "	mov	r8,QWORD$PTR\[40+rsp\]\n" if ($narg>4);
+	    $func .= "	mov	r9,QWORD$PTR\[48+rsp\]\n" if ($narg>5);
 	    $func .= "\n";
 	} else {
 	   "$current_function->{name}".
