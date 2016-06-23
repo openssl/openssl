@@ -416,19 +416,6 @@ if [ "$SYSTEM" = "SunOS" ]; then
   fi
 fi
 
-if [ "${SYSTEM}-${MACHINE}" = "Linux-alpha" ]; then
-  # check for Compaq C, expected output is "blah-blah C Vx.x"
-  CCCVER=`(ccc -V 2>&1) 2>/dev/null | \
-	egrep -e '.* C V[0-9]\.[0-9]' | \
-	sed 's/.* C V\([0-9]\)\.\([0-9]\).*/\1\2/'`
-  CCCVER=${CCCVER:-0}
-  if [ $CCCVER -gt 60 ]; then
-    CC=ccc	# overrides gcc!!! well, ccc outperforms inoticeably
-		# only on hash routines and des, otherwise gcc (2.95)
-		# keeps along rather tight...
-  fi
-fi
-
 if [ "${SYSTEM}" = "AIX" ]; then	# favor vendor cc over gcc
     (cc) 2>&1 | grep -iv "not found" > /dev/null && CC=cc
 fi
@@ -646,20 +633,9 @@ case "$GUESSOS" in
 	else
 	    OUT="linux-x86_64"
 	fi ;;
-  *86-*-linux2) OUT="linux-elf"
-	if [ "$GCCVER" -gt 28 ]; then
-          if grep '^model.*Pentium' /proc/cpuinfo >/dev/null ; then
-	    options="$options -march=pentium"
-          fi
-          if grep '^model.*Pentium Pro' /proc/cpuinfo >/dev/null ; then
-	    options="$options -march=pentiumpro"
-          fi
-          if grep '^model.*K6' /proc/cpuinfo >/dev/null ; then
-	    options="$options -march=k6"
-          fi
-        fi ;;
-  *-*-linux1) OUT="linux-aout" ;;
-  *-*-linux2) OUT="linux-generic32" ;;
+  *86-*-linux2) OUT="linux-elf" ;;
+  *86-*-linux1) OUT="linux-aout" ;;
+  *-*-linux?) OUT="linux-generic32" ;;
   sun4[uv]*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
 	ISA64=`(isainfo) 2>/dev/null | grep sparcv9`
@@ -730,9 +706,10 @@ case "$GUESSOS" in
 			*ELF*)	OUT="BSD-x86-elf" ;;
 			*)	OUT="BSD-x86"; options="$options no-sse2" ;;
 			esac ;;
+  *-*-*bsd*)		OUT="BSD-generic32" ;;
+
   x86_64-*-haiku)	OUT="haiku-x86_64" ;;
   *-*-haiku)		OUT="haiku-x86" ;;
-  *-*-*bsd*)		OUT="BSD-generic32" ;;
 
   *-*-osf)		OUT="osf1-alpha-cc" ;;
   *-*-tru64)		OUT="tru64-alpha-cc" ;;
