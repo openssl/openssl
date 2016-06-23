@@ -61,7 +61,7 @@ req() {
     stderr_onerror \
         openssl req -new -"${OPENSSL_SIGALG}" -key "${key}.pem" \
             -config <(printf "[req]\n%s\n%s\n[dn]\n" \
-		      "prompt = no" "distinguished_name = dn" "${dn}"
+		      "prompt = no" "distinguished_name = dn"
                       for dn in "$@"; do echo "$dn"; done)
 }
 
