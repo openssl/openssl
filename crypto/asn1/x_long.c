@@ -128,8 +128,8 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     }
     ltmp = (long)utmp;
     if (neg) {
-        ltmp++;
         ltmp = -ltmp;
+        ltmp--;
     }
     if (ltmp == it->size) {
         ASN1err(ASN1_F_LONG_C2I, ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
