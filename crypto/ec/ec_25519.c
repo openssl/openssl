@@ -253,9 +253,9 @@ static int x25519_compute_key(unsigned char **psec, size_t *pseclen,
                               const EC_POINT *pub_key, const EC_KEY *ecdh)
 {
     unsigned char *key;
-    int ret = -1;
+    int ret = 0;
     if (ecdh->custom_data == NULL)
-        return -1;
+        return 0;
     key = OPENSSL_malloc(EC_X25519_KEYLEN);
     if (key == NULL)
         return 0;
