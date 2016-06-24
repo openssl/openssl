@@ -133,13 +133,13 @@ static int cryptodev_rsa_nocrt_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa,
 static int cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa,
                                  BN_CTX *ctx);
 #ifndef OPENSSL_NO_DSA
-static int cryptodev_dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a,
+static int cryptodev_dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, const BIGNUM *a,
                                     const BIGNUM *p, const BIGNUM *m,
                                     BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-static int cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, BIGNUM *g,
-                                     BIGNUM *u1, BIGNUM *pub_key, BIGNUM *u2,
-                                     BIGNUM *p, BN_CTX *ctx,
-                                     BN_MONT_CTX *mont);
+static int cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, const BIGNUM *g,
+                                     const BIGNUM *u1, const BIGNUM *pub_key,
+                                     const BIGNUM *u2, const BIGNUM *p,
+                                     BN_CTX *ctx, BN_MONT_CTX *mont);
 static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen,
                                       DSA *dsa);
 static int cryptodev_dsa_verify(const unsigned char *dgst, int dgst_len,
@@ -1353,8 +1353,8 @@ cryptodev_rsa_nocrt_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa,
                             BN_CTX *ctx)
 {
     int r;
-    BIGNUM *n = NULL;
-    BIGNUM *d = NULL;
+    const BIGNUM *n = NULL;
+    const BIGNUM *d = NULL;
 
     ctx = BN_CTX_new();
     RSA_get0_key(rsa, &n, NULL, &d);
@@ -1368,12 +1368,12 @@ cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
     struct crypt_kop kop;
     int ret = 1;
-    BIGNUM *p = NULL;
-    BIGNUM *q = NULL;
-    BIGNUM *dmp1 = NULL;
-    BIGNUM *dmq1 = NULL;
-    BIGNUM *iqmp = NULL;
-    BIGNUM *n = NULL;
+    const BIGNUM *p = NULL;
+    const BIGNUM *q = NULL;
+    const BIGNUM *dmp1 = NULL;
+    const BIGNUM *dmq1 = NULL;
+    const BIGNUM *iqmp = NULL;
+    const BIGNUM *n = NULL;
 
     RSA_get0_factors(rsa, &p, &q);
     RSA_get0_crt_params(rsa, &dmp1, &dmq1, &iqmp);
@@ -1420,21 +1420,23 @@ cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 
 #ifndef OPENSSL_NO_DSA
 static int
-cryptodev_dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+cryptodev_dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
                          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {
-    return (cryptodev_bn_mod_exp(r, a, p, m, ctx, m_ctx));
+    return cryptodev_bn_mod_exp(r, a, p, m, ctx, m_ctx);
 }
 
 static int
-cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, BIGNUM *g,
-                          BIGNUM *u1, BIGNUM *pub_key, BIGNUM *u2, BIGNUM *p,
-                          BN_CTX *ctx, BN_MONT_CTX *mont)
+cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, const BIGNUM *g,
+                          const BIGNUM *u1, const BIGNUM *pub_key,
+                          const BIGNUM *u2, const BIGNUM *p, BN_CTX *ctx,
+                          BN_MONT_CTX *mont)
 {
-    BIGNUM *t2, *dsag, *dsap, *dsapub_key;
+    const BIGNUM *dsag, *dsap, *dsapub_key;
+    BIGNUM *t2;
     int ret = 0;
     const DSA_METHOD *meth;
-    int (*bn_mod_exp)(DSA *, BIGNUM *, BIGNUM *, const BIGNUM *, const BIGNUM *,
+    int (*bn_mod_exp)(DSA *, BIGNUM *, const BIGNUM *, const BIGNUM *, const BIGNUM *,
                       BN_CTX *, BN_MONT_CTX *);
 
     t2 = BN_new();
@@ -1461,11 +1463,9 @@ cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, BIGNUM *g,
     /* let t2 = y ^ u2 mod p */
     if (!bn_mod_exp(dsa, t2, dsapub_key, u2, dsap, ctx, mont))
         goto err;
-    /* let u1 = t1 * t2 mod p */
-    if (!BN_mod_mul(u1, t1, t2, dsap, ctx))
+    /* let t1 = t1 * t2 mod p */
+    if (!BN_mod_mul(t1, t1, t2, dsap, ctx))
         goto err;
-
-    BN_copy(t1, u1);
 
     ret = 1;
  err:
@@ -1477,14 +1477,14 @@ static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen,
                                       DSA *dsa)
 {
     struct crypt_kop kop;
-    BIGNUM *r = NULL, *s = NULL, *dsap = NULL, *dsaq = NULL, *dsag = NULL;
-    BIGNUM *priv_key = NULL;
+    BIGNUM *r, *s;
+    const BIGNUM *dsap = NULL, *dsaq = NULL, *dsag = NULL;
+    const BIGNUM *priv_key = NULL;
     DSA_SIG *dsasig, *dsaret = NULL;
 
     dsasig = DSA_SIG_new();
     if (dsasig == NULL)
         goto err;
-    DSA_SIG_get0(&r, &s, dsasig);
 
     memset(&kop, 0, sizeof(kop));
     kop.crk_op = CRK_DSA_SIGN;
@@ -1504,8 +1504,15 @@ static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen,
         goto err;
     kop.crk_iparams = 5;
 
+    r = BN_new();
+    if (r == NULL)
+        goto err;
+    s = BN_new();
+    if (s == NULL)
+        goto err;
     if (cryptodev_asym(&kop, BN_num_bytes(dsaq), r,
                        BN_num_bytes(dsaq), s) == 0) {
+        DSA_SIG_set0(dsasig, r, s);
         dsaret = dsasig;
     } else {
         dsaret = DSA_meth_get_sign(DSA_OpenSSL())(dgst, dlen, dsa);
@@ -1524,7 +1531,7 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
 {
     struct crypt_kop kop;
     int dsaret = 1;
-    BIGNUM *pr, *ps, *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL;
+    const BIGNUM *pr, *ps, *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL;
 
     memset(&kop, 0, sizeof(kop));
     kop.crk_op = CRK_DSA_VERIFY;
@@ -1542,7 +1549,7 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
     DSA_get0_key(dsa, &pub_key, NULL);
     if (bn2crparam(pub_key, &kop.crk_param[4]))
         goto err;
-    DSA_SIG_get0(&pr, &ps, sig);
+    DSA_SIG_get0(sig, &pr, &ps);
     if (bn2crparam(pr, &kop.crk_param[5]))
         goto err;
     if (bn2crparam(ps, &kop.crk_param[6]))
@@ -1580,8 +1587,8 @@ cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     struct crypt_kop kop;
     int dhret = 1;
     int fd, keylen;
-    BIGNUM *p = NULL;
-    BIGNUM *priv_key = NULL;
+    const BIGNUM *p = NULL;
+    const BIGNUM *priv_key = NULL;
 
     if ((fd = get_asym_dev_crypto()) < 0) {
         const DH_METHOD *meth = DH_OpenSSL();

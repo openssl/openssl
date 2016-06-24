@@ -146,29 +146,30 @@ int DSA_meth_set_verify(DSA_METHOD *dsam,
 }
 
 int (*DSA_meth_get_mod_exp(const DSA_METHOD *dsam))
-        (DSA *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *,
-         BN_CTX *, BN_MONT_CTX *)
+        (DSA *, BIGNUM *, const BIGNUM *, const BIGNUM *, const BIGNUM *,
+         const BIGNUM *, const BIGNUM *, BN_CTX *, BN_MONT_CTX *)
 {
     return dsam->dsa_mod_exp;
 }
 
 int DSA_meth_set_mod_exp(DSA_METHOD *dsam,
-    int (*mod_exp) (DSA *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *,
-                    BIGNUM *, BN_CTX *, BN_MONT_CTX *))
+    int (*mod_exp) (DSA *, BIGNUM *, const BIGNUM *, const BIGNUM *,
+                    const BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *,
+                    BN_MONT_CTX *))
 {
     dsam->dsa_mod_exp = mod_exp;
     return 1;
 }
 
 int (*DSA_meth_get_bn_mod_exp(const DSA_METHOD *dsam))
-    (DSA *, BIGNUM *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *,
+    (DSA *, BIGNUM *, const BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *,
      BN_MONT_CTX *)
 {
     return dsam->bn_mod_exp;
 }
 
 int DSA_meth_set_bn_mod_exp(DSA_METHOD *dsam,
-    int (*bn_mod_exp) (DSA *, BIGNUM *, BIGNUM *, const BIGNUM *,
+    int (*bn_mod_exp) (DSA *, BIGNUM *, const BIGNUM *, const BIGNUM *,
                        const BIGNUM *, BN_CTX *, BN_MONT_CTX *))
 {
     dsam->bn_mod_exp = bn_mod_exp;
