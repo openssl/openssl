@@ -213,6 +213,8 @@ static int rc4_hmac_md5_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             MD5_Init(&key->tail);
             MD5_Update(&key->tail, hmac_key, sizeof(hmac_key));
 
+            OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
+
             return 1;
         }
     case EVP_CTRL_AEAD_TLS1_AAD:
