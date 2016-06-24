@@ -8,6 +8,7 @@ enc - symmetric cipher routines
 
 B<openssl enc -ciphername>
 [B<-help>]
+[B<-ciphers>]
 [B<-in filename>]
 [B<-out filename>]
 [B<-pass arg>]
@@ -46,6 +47,10 @@ either by itself or in addition to the encryption or decryption.
 =item B<-help>
 
 Print out a usage message.
+
+=item B<-ciphers>
+
+List all supported ciphers.
 
 =item B<-in filename>
 
