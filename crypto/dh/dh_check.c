@@ -68,10 +68,14 @@ int DH_check(const DH *dh, int *ret)
 
     } else if (BN_is_word(dh->g, DH_GENERATOR_2)) {
         l = BN_mod_word(dh->p, 24);
+        if (l == (BN_ULONG)-1)
+            goto err;
         if (l != 11)
             *ret |= DH_NOT_SUITABLE_GENERATOR;
     } else if (BN_is_word(dh->g, DH_GENERATOR_5)) {
         l = BN_mod_word(dh->p, 10);
+        if (l == (BN_ULONG)-1)
+            goto err;
         if ((l != 3) && (l != 7))
             *ret |= DH_NOT_SUITABLE_GENERATOR;
     } else
