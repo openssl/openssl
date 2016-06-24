@@ -1396,7 +1396,6 @@ SCT_set_timestamp                       1380	1_1_0	EXIST::FUNCTION:CT
 UI_new                                  1381	1_1_0	EXIST::FUNCTION:UI
 TS_REQ_get_msg_imprint                  1382	1_1_0	EXIST::FUNCTION:TS
 i2d_PKCS12_BAGS                         1383	1_1_0	EXIST::FUNCTION:
-RSA_memory_lock                         1384	1_1_0	EXIST::FUNCTION:RSA
 CERTIFICATEPOLICIES_free                1385	1_1_0	EXIST::FUNCTION:
 X509V3_get_section                      1386	1_1_0	EXIST::FUNCTION:
 BIO_parse_hostserv                      1387	1_1_0	EXIST::FUNCTION:SOCK
