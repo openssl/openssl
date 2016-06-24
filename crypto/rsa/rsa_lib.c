@@ -180,50 +180,6 @@ void *RSA_get_ex_data(const RSA *r, int idx)
     return (CRYPTO_get_ex_data(&r->ex_data, idx));
 }
 
-int RSA_memory_lock(RSA *r)
-{
-    int i, j, k, off;
-    char *p;
-    BIGNUM *bn, **t[6], *b;
-    BN_ULONG *ul;
-
-    if (r->d == NULL)
-        return (1);
-    t[0] = &r->d;
-    t[1] = &r->p;
-    t[2] = &r->q;
-    t[3] = &r->dmp1;
-    t[4] = &r->dmq1;
-    t[5] = &r->iqmp;
-    k = bn_sizeof_BIGNUM() * 6;
-    off = k / sizeof(BN_ULONG) + 1;
-    j = 1;
-    for (i = 0; i < 6; i++)
-        j += bn_get_top(*t[i]);
-    if ((p = OPENSSL_malloc((off + j) * sizeof(*p))) == NULL) {
-        RSAerr(RSA_F_RSA_MEMORY_LOCK, ERR_R_MALLOC_FAILURE);
-        return (0);
-    }
-    memset(p, 0, sizeof(*p) * (off + j));
-    bn = (BIGNUM *)p;
-    ul = (BN_ULONG *)&(p[off]);
-    for (i = 0; i < 6; i++) {
-        b = *(t[i]);
-        *(t[i]) = bn_array_el(bn, i);
-        memcpy(bn_array_el(bn, i), b, bn_sizeof_BIGNUM());
-        memcpy(ul, bn_get_words(b), sizeof(*ul) * bn_get_top(b));
-        bn_set_static_words(bn_array_el(bn, i), ul, bn_get_top(b));
-        ul += bn_get_top(b);
-        BN_clear_free(b);
-    }
-
-    /* I should fix this so it can still be done */
-    r->flags &= ~(RSA_FLAG_CACHE_PRIVATE | RSA_FLAG_CACHE_PUBLIC);
-
-    r->bignum_data = p;
-    return (1);
-}
-
 int RSA_security_bits(const RSA *rsa)
 {
     return BN_security_bits(BN_num_bits(rsa->n), -1);
