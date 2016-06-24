@@ -45,7 +45,7 @@
 # ($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7)=map("\$$_",(16..23));
 # ($gp,$sp,$fp,$ra)=map("\$$_",(28..31));
 #
-$flavour = shift; # supported flavours are o32,n32,64,nubi32,nubi64
+$flavour = shift || "o32"; # supported flavours are o32,n32,64,nubi32,nubi64
 
 if ($flavour =~ /64|n32/i) {
 	$PTR_ADD="dadd";	# incidentally works even on n32
@@ -68,7 +68,7 @@ $pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 #
 ######################################################################
 
-$big_endian=(`echo MIPSEL | $ENV{CC} -E -P -`=~/MIPSEL/)?1:0;
+$big_endian=(`echo MIPSEL | $ENV{CC} -E -`=~/MIPSEL/)?1:0;
 
 for (@ARGV) {	$output=$_ if (/^\w[\w\-]*\.\w+$/);	}
 open STDOUT,">$output";
@@ -244,7 +244,7 @@ $code.=<<___;
 
 .text
 .set	noat
-#if !defined(__vxworks) || defined(__pic__)
+#if !defined(__mips_eabi) && (!defined(__vxworks) || defined(__pic__))
 .option	pic2
 #endif
 
@@ -351,7 +351,7 @@ $code.=<<___;
 	$ST	$G,6*$SZ($ctx)
 	$ST	$H,7*$SZ($ctx)
 
-	bnel	$inp,@X[15],.Loop
+	bne	$inp,@X[15],.Loop
 	$PTR_SUB $Ktbl,`($rounds-16)*$SZ`	# rewind $Ktbl
 
 	$REG_L	$ra,$FRAMESIZE-1*$SZREG($sp)
