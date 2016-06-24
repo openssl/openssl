@@ -226,9 +226,6 @@ const RSA_METHOD *RSA_get_default_method(void);
 const RSA_METHOD *RSA_get_method(const RSA *rsa);
 int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 
-/* This function needs the memory locking malloc callbacks to be installed */
-int RSA_memory_lock(RSA *r);
-
 /* these are the actual RSA functions */
 const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
 
@@ -477,7 +474,6 @@ void ERR_load_RSA_strings(void);
 # define RSA_F_RSA_CHECK_KEY_EX                           160
 # define RSA_F_RSA_CMS_DECRYPT                            159
 # define RSA_F_RSA_ITEM_VERIFY                            148
-# define RSA_F_RSA_MEMORY_LOCK                            130
 # define RSA_F_RSA_METH_DUP                               161
 # define RSA_F_RSA_METH_NEW                               162
 # define RSA_F_RSA_METH_SET1_NAME                         163
