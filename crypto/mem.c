@@ -148,7 +148,7 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
 
     /* Can't shrink the buffer since memcpy below copies |old_len| bytes. */
     if (num < old_len) {
-        memset((char*)str + num, 0, old_len - num);
+        OPENSSL_cleanse((char*)str + num, old_len - num);
         return str;
     }
 

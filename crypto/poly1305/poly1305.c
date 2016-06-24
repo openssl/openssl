@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <openssl/crypto.h>
 
 #include "internal/poly1305.h"
 
@@ -545,7 +546,7 @@ void Poly1305_Final(POLY1305 *ctx, unsigned char mac[16])
     poly1305_emit(ctx->opaque, mac, ctx->nonce);
 
     /* zero out the state */
-    memset(ctx, 0, sizeof(*ctx));
+    OPENSSL_cleanse(ctx, sizeof(*ctx));
 }
 
 #ifdef SELFTEST

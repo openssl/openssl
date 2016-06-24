@@ -36,7 +36,7 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(ctx->engine);
 #endif
-    memset(ctx, 0, sizeof(*ctx));
+    OPENSSL_cleanse(ctx, sizeof(*ctx));
 
     return 1;
 }
@@ -170,7 +170,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
         ctx->digest->cleanup(ctx);
         EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
     }
-    memset(ctx->md_data, 0, ctx->digest->ctx_size);
+    OPENSSL_cleanse(ctx->md_data, ctx->digest->ctx_size);
     return ret;
 }
 
