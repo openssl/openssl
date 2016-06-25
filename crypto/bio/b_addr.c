@@ -666,9 +666,6 @@ int BIO_lookup(const char *host, const char *service,
         struct addrinfo hints;
         memset(&hints, 0, sizeof hints);
 
-# ifdef AI_ADDRCONFIG
-        hints.ai_flags = AI_ADDRCONFIG;
-# endif
         hints.ai_family = family;
         hints.ai_socktype = socktype;
 
