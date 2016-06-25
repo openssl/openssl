@@ -45,7 +45,6 @@
 # (iv)	Bulldozer actually executes 4xXOP code path that delivers 2.20;
 
 use strict;
-use vars qw($AUTOLOAD);
 
 my $flavour = shift;
 my $output  = shift;
@@ -113,13 +112,6 @@ $code.=<<___;
 .asciz	"ChaCha20 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
-sub AUTOLOAD()          # thunk [simplified] 32-bit style perlasm
-{ my $opcode = $AUTOLOAD; $opcode =~ s/.*:://;
-  my $arg = pop;
-    $arg = "\$$arg" if ($arg*1 eq $arg);
-    $code .= "\t$opcode\t".join(',',$arg,reverse @_)."\n";
-}
-
 my @x=("%eax","%ebx","%ecx","%edx",map("%r${_}d",(8..11)),
        "%nox","%nox","%nox","%nox",map("%r${_}d",(12..15)));
 my @t=("%esi","%edi");
@@ -129,8 +121,7 @@ my ($a0,$b0,$c0,$d0)=@_;
 my ($a1,$b1,$c1,$d1)=map(($_&~3)+(($_+1)&3),($a0,$b0,$c0,$d0));
 my ($a2,$b2,$c2,$d2)=map(($_&~3)+(($_+1)&3),($a1,$b1,$c1,$d1));
 my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
-my ($xc,$xc_)=map("\"$_\"",@t);
-my @x=map("\"$_\"",@x);
+my ($xc,$xc_)=@t;
 
 	# Consider order in which variables are addressed by their
 	# index:
@@ -161,68 +152,68 @@ my @x=map("\"$_\"",@x);
 	# instructions are left uninterleaved. Besides, Atom is better
 	# off executing 1xSSSE3 code anyway...
 
-	(
-	"&add	(@x[$a0],@x[$b0])",	# Q1
-	"&xor	(@x[$d0],@x[$a0])",
-	"&rol	(@x[$d0],16)",
-	 "&add	(@x[$a1],@x[$b1])",	# Q2
-	 "&xor	(@x[$d1],@x[$a1])",
-	 "&rol	(@x[$d1],16)",
+<<___;
+	add	@x[$b0],@x[$a0]		# Q1
+	xor	@x[$a0],@x[$d0]
+	rol	\$16,@x[$d0]
+	 add	@x[$b1],@x[$a1]		# Q2
+	 xor	@x[$a1],@x[$d1]
+	 rol	\$16,@x[$d1]
 
-	"&add	($xc,@x[$d0])",
-	"&xor	(@x[$b0],$xc)",
-	"&rol	(@x[$b0],12)",
-	 "&add	($xc_,@x[$d1])",
-	 "&xor	(@x[$b1],$xc_)",
-	 "&rol	(@x[$b1],12)",
+	add	@x[$d0],$xc
+	xor	$xc,@x[$b0]
+	rol	\$12,@x[$b0]
+	 add	@x[$d1],$xc_
+	 xor	$xc_,@x[$b1]
+	 rol	\$12,@x[$b1]
 
-	"&add	(@x[$a0],@x[$b0])",
-	"&xor	(@x[$d0],@x[$a0])",
-	"&rol	(@x[$d0],8)",
-	 "&add	(@x[$a1],@x[$b1])",
-	 "&xor	(@x[$d1],@x[$a1])",
-	 "&rol	(@x[$d1],8)",
+	add	@x[$b0],@x[$a0]
+	xor	@x[$a0],@x[$d0]
+	rol	\$8,@x[$d0]
+	 add	@x[$b1],@x[$a1]
+	 xor	@x[$a1],@x[$d1]
+	 rol	\$8,@x[$d1]
 
-	"&add	($xc,@x[$d0])",
-	"&xor	(@x[$b0],$xc)",
-	"&rol	(@x[$b0],7)",
-	 "&add	($xc_,@x[$d1])",
-	 "&xor	(@x[$b1],$xc_)",
-	 "&rol	(@x[$b1],7)",
+	add	@x[$d0],$xc
+	xor	$xc,@x[$b0]
+	rol	\$7,@x[$b0]
+	 add	@x[$d1],$xc_
+	 xor	$xc_,@x[$b1]
+	 rol	\$7,@x[$b1]
 
-	"&mov	(\"4*$c0(%rsp)\",$xc)",	# reload pair of 'c's
-	 "&mov	(\"4*$c1(%rsp)\",$xc_)",
-	"&mov	($xc,\"4*$c2(%rsp)\")",
-	 "&mov	($xc_,\"4*$c3(%rsp)\")",
+	mov	$xc,4*$c0(%rsp)		# reload pair of 'c's
+	 mov	$xc_,4*$c1(%rsp)
+	mov	4*$c2(%rsp),$xc
+	 mov	4*$c3(%rsp),$xc_
 
-	"&add	(@x[$a2],@x[$b2])",	# Q3
-	"&xor	(@x[$d2],@x[$a2])",
-	"&rol	(@x[$d2],16)",
-	 "&add	(@x[$a3],@x[$b3])",	# Q4
-	 "&xor	(@x[$d3],@x[$a3])",
-	 "&rol	(@x[$d3],16)",
+	add	@x[$b2],@x[$a2]		# Q3
+	xor	@x[$a2],@x[$d2]
+	rol	\$16,@x[$d2]
+	 add	@x[$b3],@x[$a3]		# Q4
+	 xor	@x[$a3],@x[$d3]
+	 rol	\$16,@x[$d3]
 
-	"&add	($xc,@x[$d2])",
-	"&xor	(@x[$b2],$xc)",
-	"&rol	(@x[$b2],12)",
-	 "&add	($xc_,@x[$d3])",
-	 "&xor	(@x[$b3],$xc_)",
-	 "&rol	(@x[$b3],12)",
+	add	@x[$d2],$xc
+	xor	$xc,@x[$b2]
+	rol	\$12,@x[$b2]
+	 add	@x[$d3],$xc_
+	 xor	$xc_,@x[$b3]
+	 rol	\$12,@x[$b3]
 
-	"&add	(@x[$a2],@x[$b2])",
-	"&xor	(@x[$d2],@x[$a2])",
-	"&rol	(@x[$d2],8)",
-	 "&add	(@x[$a3],@x[$b3])",
-	 "&xor	(@x[$d3],@x[$a3])",
-	 "&rol	(@x[$d3],8)",
+	add	@x[$b2],@x[$a2]
+	xor	@x[$a2],@x[$d2]
+	rol	\$8,@x[$d2]
+	 add	@x[$b3],@x[$a3]
+	 xor	@x[$a3],@x[$d3]
+	 rol	\$8,@x[$d3]
 
-	"&add	($xc,@x[$d2])",
-	"&xor	(@x[$b2],$xc)",
-	"&rol	(@x[$b2],7)",
-	 "&add	($xc_,@x[$d3])",
-	 "&xor	(@x[$b3],$xc_)",
-	 "&rol	(@x[$b3],7)"
-	);
+	add	@x[$d2],$xc
+	xor	$xc,@x[$b2]
+	rol	\$7,@x[$b2]
+	 add	@x[$d3],$xc_
+	 xor	$xc_,@x[$b3]
+	 rol	\$7,@x[$b3]
+___
 }
 
 ########################################################################
@@ -285,13 +276,11 @@ ChaCha20_ctr32:
 
 .align	32
 .Loop:
-___
-	foreach (&ROUND (0, 4, 8,12)) { eval; }
-	foreach (&ROUND	(0, 5,10,15)) { eval; }
-	&dec	("%ebp");
-	&jnz	(".Loop");
+	${\ROUND(0, 4, 8,12)}
+	${\ROUND(0, 5,10,15)}
+	dec	%ebp
+	jnz	.Loop
 
-$code.=<<___;
 	mov	@t[1],4*9(%rsp)		# modulo-scheduled
 	mov	@t[0],4*8(%rsp)
 	mov	64(%rsp),%rbp		# load len
@@ -401,27 +390,29 @@ ___
 my ($a,$b,$c,$d,$t,$t1,$rot16,$rot24)=map("%xmm$_",(0..7));
 
 sub SSSE3ROUND {	# critical path is 20 "SIMD ticks" per round
-	&paddd	($a,$b);
-	&pxor	($d,$a);
-	&pshufb	($d,$rot16);
+<<___;
+	paddd	$b,$a
+	pxor	$a,$d
+	pshufb	$rot16,$d
 
-	&paddd	($c,$d);
-	&pxor	($b,$c);
-	&movdqa	($t,$b);
-	&psrld	($b,20);
-	&pslld	($t,12);
-	&por	($b,$t);
+	paddd	$d,$c
+	pxor	$c,$b
+	movdqa	$b,$t
+	psrld	\$20,$b
+	pslld	\$12,$t
+	por	$t,$b
 
-	&paddd	($a,$b);
-	&pxor	($d,$a);
-	&pshufb	($d,$rot24);
+	paddd	$b,$a
+	pxor	$a,$d
+	pshufb	$rot24,$d
 
-	&paddd	($c,$d);
-	&pxor	($b,$c);
-	&movdqa	($t,$b);
-	&psrld	($b,25);
-	&pslld	($t,7);
-	&por	($b,$t);
+	paddd	$d,$c
+	pxor	$c,$b
+	movdqa	$b,$t
+	psrld	\$25,$b
+	pslld	\$7,$t
+	por	$t,$b
+___
 }
 
 my $xframe = $win64 ? 32+32+8 : 24;
@@ -482,22 +473,20 @@ $code.=<<___;
 
 .align	32
 .Loop_ssse3:
-___
-	&SSSE3ROUND();
-	&pshufd	($c,$c,0b01001110);
-	&pshufd	($b,$b,0b00111001);
-	&pshufd	($d,$d,0b10010011);
-	&nop	();
+	${\SSSE3ROUND()}
+	pshufd	\$0b01001110,$c,$c
+	pshufd	\$0b00111001,$b,$b
+	pshufd	\$0b10010011,$d,$d
+	nop
 
-	&SSSE3ROUND();
-	&pshufd	($c,$c,0b01001110);
-	&pshufd	($b,$b,0b10010011);
-	&pshufd	($d,$d,0b00111001);
+	${\SSSE3ROUND()}
+	pshufd	\$0b01001110,$c,$c
+	pshufd	\$0b10010011,$b,$b
+	pshufd	\$0b00111001,$d,$d
 
-	&dec	("%ebp");
-	&jnz	(".Loop_ssse3");
+	dec	%ebp
+	jnz	.Loop_ssse3
 
-$code.=<<___;
 	paddd	0x00(%rsp),$a
 	paddd	0x10(%rsp),$b
 	paddd	0x20(%rsp),$c
@@ -577,8 +566,7 @@ my ($a0,$b0,$c0,$d0)=@_;
 my ($a1,$b1,$c1,$d1)=map(($_&~3)+(($_+1)&3),($a0,$b0,$c0,$d0));
 my ($a2,$b2,$c2,$d2)=map(($_&~3)+(($_+1)&3),($a1,$b1,$c1,$d1));
 my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
-my ($xc,$xc_,$t0,$t1)=map("\"$_\"",$xt0,$xt1,$xt2,$xt3);
-my @x=map("\"$_\"",@xx);
+my ($xc,$xc_,$t0,$t1)=($xt0,$xt1,$xt2,$xt3);
 
 	# Consider order in which variables are addressed by their
 	# index:
@@ -595,103 +583,103 @@ my @x=map("\"$_\"",@xx);
 	#	3   4   9  14
 	#
 	# 'a', 'b' and 'd's are permanently allocated in registers,
-	# @x[0..7,12..15], while 'c's are maintained in memory. If
+	# @xx[0..7,12..15], while 'c's are maintained in memory. If
 	# you observe 'c' column, you'll notice that pair of 'c's is
 	# invariant between rounds. This means that we have to reload
 	# them once per round, in the middle. This is why you'll see
 	# bunch of 'c' stores and loads in the middle, but none in
 	# the beginning or end.
 
-	(
-	"&paddd		(@x[$a0],@x[$b0])",	# Q1
-	 "&paddd	(@x[$a1],@x[$b1])",	# Q2
-	"&pxor		(@x[$d0],@x[$a0])",
-	 "&pxor		(@x[$d1],@x[$a1])",
-	"&pshufb	(@x[$d0],$t1)",
-	 "&pshufb	(@x[$d1],$t1)",
+<<___;
+	paddd		@xx[$b0],@xx[$a0]	# Q1
+	 paddd		@xx[$b1],@xx[$a1]	# Q2
+	pxor		@xx[$a0],@xx[$d0]
+	 pxor		@xx[$a1],@xx[$d1]
+	pshufb		$t1,@xx[$d0]
+	 pshufb		$t1,@xx[$d1]
 
-	"&paddd		($xc,@x[$d0])",
-	 "&paddd	($xc_,@x[$d1])",
-	"&pxor		(@x[$b0],$xc)",
-	 "&pxor		(@x[$b1],$xc_)",
-	"&movdqa	($t0,@x[$b0])",
-	"&pslld		(@x[$b0],12)",
-	"&psrld		($t0,20)",
-	 "&movdqa	($t1,@x[$b1])",
-	 "&pslld	(@x[$b1],12)",
-	"&por		(@x[$b0],$t0)",
-	 "&psrld	($t1,20)",
-	"&movdqa	($t0,'(%r11)')",	# .Lrot24(%rip)
-	 "&por		(@x[$b1],$t1)",
+	paddd		@xx[$d0],$xc
+	 paddd		@xx[$d1],$xc_
+	pxor		$xc,@xx[$b0]
+	 pxor		$xc_,@xx[$b1]
+	movdqa		@xx[$b0],$t0
+	pslld		\$12,@xx[$b0]
+	psrld		\$20,$t0
+	 movdqa		@xx[$b1],$t1
+	 pslld		\$12,@xx[$b1]
+	por		$t0,@xx[$b0]
+	 psrld		\$20,$t1
+	movdqa		(%r11),$t0		# .Lrot24(%rip)
+	 por		$t1,@xx[$b1]
 
-	"&paddd		(@x[$a0],@x[$b0])",
-	 "&paddd	(@x[$a1],@x[$b1])",
-	"&pxor		(@x[$d0],@x[$a0])",
-	 "&pxor		(@x[$d1],@x[$a1])",
-	"&pshufb	(@x[$d0],$t0)",
-	 "&pshufb	(@x[$d1],$t0)",
+	paddd		@xx[$b0],@xx[$a0]
+	 paddd		@xx[$b1],@xx[$a1]
+	pxor		@xx[$a0],@xx[$d0]
+	 pxor		@xx[$a1],@xx[$d1]
+	pshufb		$t0,@xx[$d0]
+	 pshufb		$t0,@xx[$d1]
 
-	"&paddd		($xc,@x[$d0])",
-	 "&paddd	($xc_,@x[$d1])",
-	"&pxor		(@x[$b0],$xc)",
-	 "&pxor		(@x[$b1],$xc_)",
-	"&movdqa	($t1,@x[$b0])",
-	"&pslld		(@x[$b0],7)",
-	"&psrld		($t1,25)",
-	 "&movdqa	($t0,@x[$b1])",
-	 "&pslld	(@x[$b1],7)",
-	"&por		(@x[$b0],$t1)",
-	 "&psrld	($t0,25)",
-	"&movdqa	($t1,'(%r10)')",	# .Lrot16(%rip)
-	 "&por		(@x[$b1],$t0)",
+	paddd		@xx[$d0],$xc
+	 paddd		@xx[$d1],$xc_
+	pxor		$xc,@xx[$b0]
+	 pxor		$xc_,@xx[$b1]
+	movdqa		@xx[$b0],$t1
+	pslld		\$7,@xx[$b0]
+	psrld		\$25,$t1
+	 movdqa		@xx[$b1],$t0
+	 pslld		\$7,@xx[$b1]
+	por		$t1,@xx[$b0]
+	 psrld		\$25,$t0
+	movdqa		(%r10),$t1		# .Lrot16(%rip)
+	 por		$t0,@xx[$b1]
 
-	"&movdqa	(\"`16*($c0-8)`(%rsp)\",$xc)",	# reload pair of 'c's
-	 "&movdqa	(\"`16*($c1-8)`(%rsp)\",$xc_)",
-	"&movdqa	($xc,\"`16*($c2-8)`(%rsp)\")",
-	 "&movdqa	($xc_,\"`16*($c3-8)`(%rsp)\")",
+	movdqa		$xc,`16*($c0-8)`(%rsp)	# reload pair of 'c's
+	 movdqa		$xc_,`16*($c1-8)`(%rsp)
+	movdqa		`16*($c2-8)`(%rsp),$xc
+	 movdqa		`16*($c3-8)`(%rsp),$xc_
 
-	"&paddd		(@x[$a2],@x[$b2])",	# Q3
-	 "&paddd	(@x[$a3],@x[$b3])",	# Q4
-	"&pxor		(@x[$d2],@x[$a2])",
-	 "&pxor		(@x[$d3],@x[$a3])",
-	"&pshufb	(@x[$d2],$t1)",
-	 "&pshufb	(@x[$d3],$t1)",
+	paddd		@xx[$b2],@xx[$a2]	# Q3
+	 paddd		@xx[$b3],@xx[$a3]	# Q4
+	pxor		@xx[$a2],@xx[$d2]
+	 pxor		@xx[$a3],@xx[$d3]
+	pshufb		$t1,@xx[$d2]
+	 pshufb		$t1,@xx[$d3]
 
-	"&paddd		($xc,@x[$d2])",
-	 "&paddd	($xc_,@x[$d3])",
-	"&pxor		(@x[$b2],$xc)",
-	 "&pxor		(@x[$b3],$xc_)",
-	"&movdqa	($t0,@x[$b2])",
-	"&pslld		(@x[$b2],12)",
-	"&psrld		($t0,20)",
-	 "&movdqa	($t1,@x[$b3])",
-	 "&pslld	(@x[$b3],12)",
-	"&por		(@x[$b2],$t0)",
-	 "&psrld	($t1,20)",
-	"&movdqa	($t0,'(%r11)')",	# .Lrot24(%rip)
-	 "&por		(@x[$b3],$t1)",
+	paddd		@xx[$d2],$xc
+	 paddd		@xx[$d3],$xc_
+	pxor		$xc,@xx[$b2]
+	 pxor		$xc_,@xx[$b3]
+	movdqa		@xx[$b2],$t0
+	pslld		\$12,@xx[$b2]
+	psrld		\$20,$t0
+	 movdqa		@xx[$b3],$t1
+	 pslld		\$12,@xx[$b3]
+	por		$t0,@xx[$b2]
+	 psrld		\$20,$t1
+	movdqa		(%r11),$t0		# .Lrot24(%rip)
+	 por		$t1,@xx[$b3]
 
-	"&paddd		(@x[$a2],@x[$b2])",
-	 "&paddd	(@x[$a3],@x[$b3])",
-	"&pxor		(@x[$d2],@x[$a2])",
-	 "&pxor		(@x[$d3],@x[$a3])",
-	"&pshufb	(@x[$d2],$t0)",
-	 "&pshufb	(@x[$d3],$t0)",
+	paddd		@xx[$b2],@xx[$a2]
+	 paddd		@xx[$b3],@xx[$a3]
+	pxor		@xx[$a2],@xx[$d2]
+	 pxor		@xx[$a3],@xx[$d3]
+	pshufb		$t0,@xx[$d2]
+	 pshufb		$t0,@xx[$d3]
 
-	"&paddd		($xc,@x[$d2])",
-	 "&paddd	($xc_,@x[$d3])",
-	"&pxor		(@x[$b2],$xc)",
-	 "&pxor		(@x[$b3],$xc_)",
-	"&movdqa	($t1,@x[$b2])",
-	"&pslld		(@x[$b2],7)",
-	"&psrld		($t1,25)",
-	 "&movdqa	($t0,@x[$b3])",
-	 "&pslld	(@x[$b3],7)",
-	"&por		(@x[$b2],$t1)",
-	 "&psrld	($t0,25)",
-	"&movdqa	($t1,'(%r10)')",	# .Lrot16(%rip)
-	 "&por		(@x[$b3],$t0)"
-	);
+	paddd		@xx[$d2],$xc
+	 paddd		@xx[$d3],$xc_
+	pxor		$xc,@xx[$b2]
+	 pxor		$xc_,@xx[$b3]
+	movdqa		@xx[$b2],$t1
+	pslld		\$7,@xx[$b2]
+	psrld		\$25,$t1
+	 movdqa		@xx[$b3],$t0
+	 pslld		\$7,@xx[$b3]
+	por		$t1,@xx[$b2]
+	 psrld		\$25,$t0
+	movdqa		(%r10),$t1		# .Lrot16(%rip)
+	 por		$t0,@xx[$b3]
+___
 }
 
 my $xframe = $win64 ? 0xa0 : 0;
@@ -817,10 +805,8 @@ $code.=<<___;
 
 .align	32
 .Loop4x:
-___
-	foreach (&SSSE3_lane_ROUND(0, 4, 8,12)) { eval; }
-	foreach (&SSSE3_lane_ROUND(0, 5,10,15)) { eval; }
-$code.=<<___;
+	${\SSSE3_lane_ROUND(0, 4, 8,12)}
+	${\SSSE3_lane_ROUND(0, 5,10,15)}
 	dec		%eax
 	jnz		.Loop4x
 
@@ -1165,61 +1151,60 @@ my ($a0,$b0,$c0,$d0)=@_;
 my ($a1,$b1,$c1,$d1)=map(($_&~3)+(($_+1)&3),($a0,$b0,$c0,$d0));
 my ($a2,$b2,$c2,$d2)=map(($_&~3)+(($_+1)&3),($a1,$b1,$c1,$d1));
 my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
-my @x=map("\"$_\"",@xx);
 
-	(
-	"&vpaddd	(@x[$a0],@x[$a0],@x[$b0])",	# Q1
-	 "&vpaddd	(@x[$a1],@x[$a1],@x[$b1])",	# Q2
-	  "&vpaddd	(@x[$a2],@x[$a2],@x[$b2])",	# Q3
-	   "&vpaddd	(@x[$a3],@x[$a3],@x[$b3])",	# Q4
-	"&vpxor		(@x[$d0],@x[$a0],@x[$d0])",
-	 "&vpxor	(@x[$d1],@x[$a1],@x[$d1])",
-	  "&vpxor	(@x[$d2],@x[$a2],@x[$d2])",
-	   "&vpxor	(@x[$d3],@x[$a3],@x[$d3])",
-	"&vprotd	(@x[$d0],@x[$d0],16)",
-	 "&vprotd	(@x[$d1],@x[$d1],16)",
-	  "&vprotd	(@x[$d2],@x[$d2],16)",
-	   "&vprotd	(@x[$d3],@x[$d3],16)",
+<<___;
+	vpaddd		@xx[$b0],@xx[$a0],@xx[$a0]	# Q1
+	 vpaddd		@xx[$b1],@xx[$a1],@xx[$a1]	# Q2
+	  vpaddd	@xx[$b2],@xx[$a2],@xx[$a2]	# Q3
+	   vpaddd	@xx[$b3],@xx[$a3],@xx[$a3]	# Q4
+	vpxor		@xx[$d0],@xx[$a0],@xx[$d0]
+	 vpxor		@xx[$d1],@xx[$a1],@xx[$d1]
+	  vpxor		@xx[$d2],@xx[$a2],@xx[$d2]
+	   vpxor	@xx[$d3],@xx[$a3],@xx[$d3]
+	vprotd		\$16,@xx[$d0],@xx[$d0]
+	 vprotd		\$16,@xx[$d1],@xx[$d1]
+	  vprotd	\$16,@xx[$d2],@xx[$d2]
+	   vprotd	\$16,@xx[$d3],@xx[$d3]
 
-	"&vpaddd	(@x[$c0],@x[$c0],@x[$d0])",
-	 "&vpaddd	(@x[$c1],@x[$c1],@x[$d1])",
-	  "&vpaddd	(@x[$c2],@x[$c2],@x[$d2])",
-	   "&vpaddd	(@x[$c3],@x[$c3],@x[$d3])",
-	"&vpxor		(@x[$b0],@x[$c0],@x[$b0])",
-	 "&vpxor	(@x[$b1],@x[$c1],@x[$b1])",
-	  "&vpxor	(@x[$b2],@x[$b2],@x[$c2])",	# flip
-	   "&vpxor	(@x[$b3],@x[$b3],@x[$c3])",	# flip
-	"&vprotd	(@x[$b0],@x[$b0],12)",
-	 "&vprotd	(@x[$b1],@x[$b1],12)",
-	  "&vprotd	(@x[$b2],@x[$b2],12)",
-	   "&vprotd	(@x[$b3],@x[$b3],12)",
+	vpaddd		@xx[$d0],@xx[$c0],@xx[$c0]
+	 vpaddd		@xx[$d1],@xx[$c1],@xx[$c1]
+	  vpaddd	@xx[$d2],@xx[$c2],@xx[$c2]
+	   vpaddd	@xx[$d3],@xx[$c3],@xx[$c3]
+	vpxor		@xx[$b0],@xx[$c0],@xx[$b0]
+	 vpxor		@xx[$b1],@xx[$c1],@xx[$b1]
+	  vpxor		@xx[$c2],@xx[$b2],@xx[$b2]	# flip
+	   vpxor	@xx[$c3],@xx[$b3],@xx[$b3]	# flip
+	vprotd		\$12,@xx[$b0],@xx[$b0]
+	 vprotd		\$12,@xx[$b1],@xx[$b1]
+	  vprotd	\$12,@xx[$b2],@xx[$b2]
+	   vprotd	\$12,@xx[$b3],@xx[$b3]
 
-	"&vpaddd	(@x[$a0],@x[$b0],@x[$a0])",	# flip
-	 "&vpaddd	(@x[$a1],@x[$b1],@x[$a1])",	# flip
-	  "&vpaddd	(@x[$a2],@x[$a2],@x[$b2])",
-	   "&vpaddd	(@x[$a3],@x[$a3],@x[$b3])",
-	"&vpxor		(@x[$d0],@x[$a0],@x[$d0])",
-	 "&vpxor	(@x[$d1],@x[$a1],@x[$d1])",
-	  "&vpxor	(@x[$d2],@x[$a2],@x[$d2])",
-	   "&vpxor	(@x[$d3],@x[$a3],@x[$d3])",
-	"&vprotd	(@x[$d0],@x[$d0],8)",
-	 "&vprotd	(@x[$d1],@x[$d1],8)",
-	  "&vprotd	(@x[$d2],@x[$d2],8)",
-	   "&vprotd	(@x[$d3],@x[$d3],8)",
+	vpaddd		@xx[$a0],@xx[$b0],@xx[$a0]	# flip
+	 vpaddd		@xx[$a1],@xx[$b1],@xx[$a1]	# flip
+	  vpaddd	@xx[$b2],@xx[$a2],@xx[$a2]
+	   vpaddd	@xx[$b3],@xx[$a3],@xx[$a3]
+	vpxor		@xx[$d0],@xx[$a0],@xx[$d0]
+	 vpxor		@xx[$d1],@xx[$a1],@xx[$d1]
+	  vpxor		@xx[$d2],@xx[$a2],@xx[$d2]
+	   vpxor	@xx[$d3],@xx[$a3],@xx[$d3]
+	vprotd		\$8,@xx[$d0],@xx[$d0]
+	 vprotd		\$8,@xx[$d1],@xx[$d1]
+	  vprotd	\$8,@xx[$d2],@xx[$d2]
+	   vprotd	\$8,@xx[$d3],@xx[$d3]
 
-	"&vpaddd	(@x[$c0],@x[$c0],@x[$d0])",
-	 "&vpaddd	(@x[$c1],@x[$c1],@x[$d1])",
-	  "&vpaddd	(@x[$c2],@x[$c2],@x[$d2])",
-	   "&vpaddd	(@x[$c3],@x[$c3],@x[$d3])",
-	"&vpxor		(@x[$b0],@x[$c0],@x[$b0])",
-	 "&vpxor	(@x[$b1],@x[$c1],@x[$b1])",
-	  "&vpxor	(@x[$b2],@x[$b2],@x[$c2])",	# flip
-	   "&vpxor	(@x[$b3],@x[$b3],@x[$c3])",	# flip
-	"&vprotd	(@x[$b0],@x[$b0],7)",
-	 "&vprotd	(@x[$b1],@x[$b1],7)",
-	  "&vprotd	(@x[$b2],@x[$b2],7)",
-	   "&vprotd	(@x[$b3],@x[$b3],7)"
-	);
+	vpaddd		@xx[$d0],@xx[$c0],@xx[$c0]
+	 vpaddd		@xx[$d1],@xx[$c1],@xx[$c1]
+	  vpaddd	@xx[$d2],@xx[$c2],@xx[$c2]
+	   vpaddd	@xx[$d3],@xx[$c3],@xx[$c3]
+	vpxor		@xx[$b0],@xx[$c0],@xx[$b0]
+	 vpxor		@xx[$b1],@xx[$c1],@xx[$b1]
+	  vpxor		@xx[$c2],@xx[$b2],@xx[$b2]	# flip
+	   vpxor	@xx[$c3],@xx[$b3],@xx[$b3]	# flip
+	vprotd		\$7,@xx[$b0],@xx[$b0]
+	 vprotd		\$7,@xx[$b1],@xx[$b1]
+	  vprotd	\$7,@xx[$b2],@xx[$b2]
+	   vprotd	\$7,@xx[$b3],@xx[$b3]
+___
 }
 
 my $xframe = $win64 ? 0xa0 : 0;
@@ -1326,10 +1311,8 @@ $code.=<<___;
 
 .align	32
 .Loop4xop:
-___
-	foreach (&XOP_lane_ROUND(0, 4, 8,12)) { eval; }
-	foreach (&XOP_lane_ROUND(0, 5,10,15)) { eval; }
-$code.=<<___;
+	${\XOP_lane_ROUND(0, 4, 8,12)}
+	${\XOP_lane_ROUND(0, 5,10,15)}
 	dec		%eax
 	jnz		.Loop4xop
 
@@ -1610,8 +1593,7 @@ my ($a0,$b0,$c0,$d0)=@_;
 my ($a1,$b1,$c1,$d1)=map(($_&~3)+(($_+1)&3),($a0,$b0,$c0,$d0));
 my ($a2,$b2,$c2,$d2)=map(($_&~3)+(($_+1)&3),($a1,$b1,$c1,$d1));
 my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
-my ($xc,$xc_,$t0,$t1)=map("\"$_\"",$xt0,$xt1,$xt2,$xt3);
-my @x=map("\"$_\"",@xx);
+my ($xc,$xc_,$t0,$t1)=($xt0,$xt1,$xt2,$xt3);
 
 	# Consider order in which variables are addressed by their
 	# index:
@@ -1628,95 +1610,95 @@ my @x=map("\"$_\"",@xx);
 	#	3   4   9  14
 	#
 	# 'a', 'b' and 'd's are permanently allocated in registers,
-	# @x[0..7,12..15], while 'c's are maintained in memory. If
+	# @xx[0..7,12..15], while 'c's are maintained in memory. If
 	# you observe 'c' column, you'll notice that pair of 'c's is
 	# invariant between rounds. This means that we have to reload
 	# them once per round, in the middle. This is why you'll see
 	# bunch of 'c' stores and loads in the middle, but none in
 	# the beginning or end.
 
-	(
-	"&vpaddd	(@x[$a0],@x[$a0],@x[$b0])",	# Q1
-	"&vpxor		(@x[$d0],@x[$a0],@x[$d0])",
-	"&vpshufb	(@x[$d0],@x[$d0],$t1)",
-	 "&vpaddd	(@x[$a1],@x[$a1],@x[$b1])",	# Q2
-	 "&vpxor	(@x[$d1],@x[$a1],@x[$d1])",
-	 "&vpshufb	(@x[$d1],@x[$d1],$t1)",
+<<___;
+	vpaddd		@xx[$b0],@xx[$a0],@xx[$a0]	# Q1
+	vpxor		@xx[$d0],@xx[$a0],@xx[$d0]
+	vpshufb		$t1,@xx[$d0],@xx[$d0]
+	 vpaddd		@xx[$b1],@xx[$a1],@xx[$a1]	# Q2
+	 vpxor		@xx[$d1],@xx[$a1],@xx[$d1]
+	 vpshufb	$t1,@xx[$d1],@xx[$d1]
 
-	"&vpaddd	($xc,$xc,@x[$d0])",
-	"&vpxor		(@x[$b0],$xc,@x[$b0])",
-	"&vpslld	($t0,@x[$b0],12)",
-	"&vpsrld	(@x[$b0],@x[$b0],20)",
-	"&vpor		(@x[$b0],$t0,@x[$b0])",
-	"&vbroadcasti128($t0,'(%r11)')",		# .Lrot24(%rip)
-	 "&vpaddd	($xc_,$xc_,@x[$d1])",
-	 "&vpxor	(@x[$b1],$xc_,@x[$b1])",
-	 "&vpslld	($t1,@x[$b1],12)",
-	 "&vpsrld	(@x[$b1],@x[$b1],20)",
-	 "&vpor		(@x[$b1],$t1,@x[$b1])",
+	vpaddd		@xx[$d0],$xc,$xc
+	vpxor		@xx[$b0],$xc,@xx[$b0]
+	vpslld		\$12,@xx[$b0],$t0
+	vpsrld		\$20,@xx[$b0],@xx[$b0]
+	vpor		@xx[$b0],$t0,@xx[$b0]
+	vbroadcasti128	(%r11),$t0			# .Lrot24(%rip)
+	 vpaddd		@xx[$d1],$xc_,$xc_
+	 vpxor		@xx[$b1],$xc_,@xx[$b1]
+	 vpslld		\$12,@xx[$b1],$t1
+	 vpsrld		\$20,@xx[$b1],@xx[$b1]
+	 vpor		@xx[$b1],$t1,@xx[$b1]
 
-	"&vpaddd	(@x[$a0],@x[$a0],@x[$b0])",
-	"&vpxor		(@x[$d0],@x[$a0],@x[$d0])",
-	"&vpshufb	(@x[$d0],@x[$d0],$t0)",
-	 "&vpaddd	(@x[$a1],@x[$a1],@x[$b1])",
-	 "&vpxor	(@x[$d1],@x[$a1],@x[$d1])",
-	 "&vpshufb	(@x[$d1],@x[$d1],$t0)",
+	vpaddd		@xx[$b0],@xx[$a0],@xx[$a0]
+	vpxor		@xx[$d0],@xx[$a0],@xx[$d0]
+	vpshufb		$t0,@xx[$d0],@xx[$d0]
+	 vpaddd		@xx[$b1],@xx[$a1],@xx[$a1]
+	 vpxor		@xx[$d1],@xx[$a1],@xx[$d1]
+	 vpshufb	$t0,@xx[$d1],@xx[$d1]
 
-	"&vpaddd	($xc,$xc,@x[$d0])",
-	"&vpxor		(@x[$b0],$xc,@x[$b0])",
-	"&vpslld	($t1,@x[$b0],7)",
-	"&vpsrld	(@x[$b0],@x[$b0],25)",
-	"&vpor		(@x[$b0],$t1,@x[$b0])",
-	"&vbroadcasti128($t1,'(%r10)')",		# .Lrot16(%rip)
-	 "&vpaddd	($xc_,$xc_,@x[$d1])",
-	 "&vpxor	(@x[$b1],$xc_,@x[$b1])",
-	 "&vpslld	($t0,@x[$b1],7)",
-	 "&vpsrld	(@x[$b1],@x[$b1],25)",
-	 "&vpor		(@x[$b1],$t0,@x[$b1])",
+	vpaddd		@xx[$d0],$xc,$xc
+	vpxor		@xx[$b0],$xc,@xx[$b0]
+	vpslld		\$7,@xx[$b0],$t1
+	vpsrld		\$25,@xx[$b0],@xx[$b0]
+	vpor		@xx[$b0],$t1,@xx[$b0]
+	vbroadcasti128	(%r10),$t1			# .Lrot16(%rip)
+	 vpaddd		@xx[$d1],$xc_,$xc_
+	 vpxor		@xx[$b1],$xc_,@xx[$b1]
+	 vpslld		\$7,@xx[$b1],$t0
+	 vpsrld		\$25,@xx[$b1],@xx[$b1]
+	 vpor		@xx[$b1],$t0,@xx[$b1]
 
-	"&vmovdqa	(\"`32*($c0-8)`(%rsp)\",$xc)",	# reload pair of 'c's
-	 "&vmovdqa	(\"`32*($c1-8)`(%rsp)\",$xc_)",
-	"&vmovdqa	($xc,\"`32*($c2-8)`(%rsp)\")",
-	 "&vmovdqa	($xc_,\"`32*($c3-8)`(%rsp)\")",
+	vmovdqa		$xc,`32*($c0-8)`(%rsp)		# reload pair of 'c's
+	 vmovdqa	$xc_,`32*($c1-8)`(%rsp)
+	vmovdqa		`32*($c2-8)`(%rsp),$xc
+	 vmovdqa	`32*($c3-8)`(%rsp),$xc_
 
-	"&vpaddd	(@x[$a2],@x[$a2],@x[$b2])",	# Q3
-	"&vpxor		(@x[$d2],@x[$a2],@x[$d2])",
-	"&vpshufb	(@x[$d2],@x[$d2],$t1)",
-	 "&vpaddd	(@x[$a3],@x[$a3],@x[$b3])",	# Q4
-	 "&vpxor	(@x[$d3],@x[$a3],@x[$d3])",
-	 "&vpshufb	(@x[$d3],@x[$d3],$t1)",
+	vpaddd		@xx[$b2],@xx[$a2],@xx[$a2]	# Q3
+	vpxor		@xx[$d2],@xx[$a2],@xx[$d2]
+	vpshufb		$t1,@xx[$d2],@xx[$d2]
+	 vpaddd		@xx[$b3],@xx[$a3],@xx[$a3]	# Q4
+	 vpxor		@xx[$d3],@xx[$a3],@xx[$d3]
+	 vpshufb	$t1,@xx[$d3],@xx[$d3]
 
-	"&vpaddd	($xc,$xc,@x[$d2])",
-	"&vpxor		(@x[$b2],$xc,@x[$b2])",
-	"&vpslld	($t0,@x[$b2],12)",
-	"&vpsrld	(@x[$b2],@x[$b2],20)",
-	"&vpor		(@x[$b2],$t0,@x[$b2])",
-	"&vbroadcasti128($t0,'(%r11)')",		# .Lrot24(%rip)
-	 "&vpaddd	($xc_,$xc_,@x[$d3])",
-	 "&vpxor	(@x[$b3],$xc_,@x[$b3])",
-	 "&vpslld	($t1,@x[$b3],12)",
-	 "&vpsrld	(@x[$b3],@x[$b3],20)",
-	 "&vpor		(@x[$b3],$t1,@x[$b3])",
+	vpaddd		@xx[$d2],$xc,$xc
+	vpxor		@xx[$b2],$xc,@xx[$b2]
+	vpslld		\$12,@xx[$b2],$t0
+	vpsrld		\$20,@xx[$b2],@xx[$b2]
+	vpor		@xx[$b2],$t0,@xx[$b2]
+	vbroadcasti128	(%r11),$t0			# .Lrot24(%rip)
+	 vpaddd		@xx[$d3],$xc_,$xc_
+	 vpxor		@xx[$b3],$xc_,@xx[$b3]
+	 vpslld		\$12,@xx[$b3],$t1
+	 vpsrld		\$20,@xx[$b3],@xx[$b3]
+	 vpor		@xx[$b3],$t1,@xx[$b3]
 
-	"&vpaddd	(@x[$a2],@x[$a2],@x[$b2])",
-	"&vpxor		(@x[$d2],@x[$a2],@x[$d2])",
-	"&vpshufb	(@x[$d2],@x[$d2],$t0)",
-	 "&vpaddd	(@x[$a3],@x[$a3],@x[$b3])",
-	 "&vpxor	(@x[$d3],@x[$a3],@x[$d3])",
-	 "&vpshufb	(@x[$d3],@x[$d3],$t0)",
+	vpaddd		@xx[$b2],@xx[$a2],@xx[$a2]
+	vpxor		@xx[$d2],@xx[$a2],@xx[$d2]
+	vpshufb		$t0,@xx[$d2],@xx[$d2]
+	 vpaddd		@xx[$b3],@xx[$a3],@xx[$a3]
+	 vpxor		@xx[$d3],@xx[$a3],@xx[$d3]
+	 vpshufb	$t0,@xx[$d3],@xx[$d3]
 
-	"&vpaddd	($xc,$xc,@x[$d2])",
-	"&vpxor		(@x[$b2],$xc,@x[$b2])",
-	"&vpslld	($t1,@x[$b2],7)",
-	"&vpsrld	(@x[$b2],@x[$b2],25)",
-	"&vpor		(@x[$b2],$t1,@x[$b2])",
-	"&vbroadcasti128($t1,'(%r10)')",		# .Lrot16(%rip)
-	 "&vpaddd	($xc_,$xc_,@x[$d3])",
-	 "&vpxor	(@x[$b3],$xc_,@x[$b3])",
-	 "&vpslld	($t0,@x[$b3],7)",
-	 "&vpsrld	(@x[$b3],@x[$b3],25)",
-	 "&vpor		(@x[$b3],$t0,@x[$b3])"
-	);
+	vpaddd		@xx[$d2],$xc,$xc
+	vpxor		@xx[$b2],$xc,@xx[$b2]
+	vpslld		\$7,@xx[$b2],$t1
+	vpsrld		\$25,@xx[$b2],@xx[$b2]
+	vpor		@xx[$b2],$t1,@xx[$b2]
+	vbroadcasti128	(%r10),$t1			# .Lrot16(%rip)
+	 vpaddd		@xx[$d3],$xc_,$xc_
+	 vpxor		@xx[$b3],$xc_,@xx[$b3]
+	 vpslld		\$7,@xx[$b3],$t0
+	 vpsrld		\$25,@xx[$b3],@xx[$b3]
+	 vpor		@xx[$b3],$t0,@xx[$b3]
+___
 }
 
 my $xframe = $win64 ? 0xb0 : 8;
@@ -1833,10 +1815,8 @@ $code.=<<___;
 
 .align	32
 .Loop8x:
-___
-	foreach (&AVX2_lane_ROUND(0, 4, 8,12)) { eval; }
-	foreach (&AVX2_lane_ROUND(0, 5,10,15)) { eval; }
-$code.=<<___;
+	${\AVX2_lane_ROUND(0, 4, 8,12)}
+	${\AVX2_lane_ROUND(0, 5,10,15)}
 	dec		%eax
 	jnz		.Loop8x
 
