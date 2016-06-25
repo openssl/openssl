@@ -44,17 +44,22 @@
 #	low to justify the [maintenance] effort;
 # (iv)	Bulldozer actually executes 4xXOP code path that delivers 2.20;
 
-$flavour = shift;
-$output  = shift;
+use strict;
+use vars qw($AUTOLOAD);
+
+my $flavour = shift;
+my $output  = shift;
 if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
 
-$win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
+my $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
-$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1;
+my $xlate;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
+my $avx = 0;
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
 	$avx = ($1>=2.19) + ($1>=2.22);
@@ -78,8 +83,9 @@ open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
 *STDOUT=*OUT;
 
 # input parameter block
-($out,$inp,$len,$key,$counter)=("%rdi","%rsi","%rdx","%rcx","%r8");
+my ($out,$inp,$len,$key,$counter)=("%rdi","%rsi","%rdx","%rcx","%r8");
 
+my $code="";
 $code.=<<___;
 .text
 
@@ -114,9 +120,9 @@ sub AUTOLOAD()          # thunk [simplified] 32-bit style perlasm
     $code .= "\t$opcode\t".join(',',$arg,reverse @_)."\n";
 }
 
-@x=("%eax","%ebx","%ecx","%edx",map("%r${_}d",(8..11)),
-    "%nox","%nox","%nox","%nox",map("%r${_}d",(12..15)));
-@t=("%esi","%edi");
+my @x=("%eax","%ebx","%ecx","%edx",map("%r${_}d",(8..11)),
+       "%nox","%nox","%nox","%nox",map("%r${_}d",(12..15)));
+my @t=("%esi","%edi");
 
 sub ROUND {			# critical path is 24 cycles per round
 my ($a0,$b0,$c0,$d0)=@_;
@@ -761,12 +767,12 @@ $code.=<<___;
 	movdqa		$xb2,0xa0-0x100(%rcx)
 	movdqa		$xb3,0xb0-0x100(%rcx)
 
-	pshufd		\$0x00,$xt3,$xt0	# "$xc0"
-	pshufd		\$0x55,$xt3,$xt1	# "$xc1"
+	pshufd		\$0x00,$xt3,$xt0	# "\$xc0"
+	pshufd		\$0x55,$xt3,$xt1	# "\$xc1"
 	movdqa		$xt0,0xc0-0x100(%rcx)
-	pshufd		\$0xaa,$xt3,$xt2	# "$xc2"
+	pshufd		\$0xaa,$xt3,$xt2	# "\$xc2"
 	movdqa		$xt1,0xd0-0x100(%rcx)
-	pshufd		\$0xff,$xt3,$xt3	# "$xc3"
+	pshufd		\$0xff,$xt3,$xt3	# "\$xc3"
 	movdqa		$xt2,0xe0-0x100(%rcx)
 	movdqa		$xt3,0xf0-0x100(%rcx)
 
@@ -791,10 +797,10 @@ $code.=<<___;
 	movdqa		0x90-0x100(%rcx),$xb1
 	movdqa		0xa0-0x100(%rcx),$xb2
 	movdqa		0xb0-0x100(%rcx),$xb3
-	movdqa		0xc0-0x100(%rcx),$xt0	# "$xc0"
-	movdqa		0xd0-0x100(%rcx),$xt1	# "$xc1"
-	movdqa		0xe0-0x100(%rcx),$xt2	# "$xc2"
-	movdqa		0xf0-0x100(%rcx),$xt3	# "$xc3"
+	movdqa		0xc0-0x100(%rcx),$xt0	# "\$xc0"
+	movdqa		0xd0-0x100(%rcx),$xt1	# "\$xc1"
+	movdqa		0xe0-0x100(%rcx),$xt2	# "\$xc2"
+	movdqa		0xf0-0x100(%rcx),$xt3	# "\$xc3"
 	movdqa		0x100-0x100(%rcx),$xd0
 	movdqa		0x110-0x100(%rcx),$xd1
 	movdqa		0x120-0x100(%rcx),$xd2
@@ -843,7 +849,7 @@ $code.=<<___;
 	paddd		0xa0-0x100(%rcx),$xb2
 	paddd		0xb0-0x100(%rcx),$xb3
 
-	movdqa		$xa0,0x00(%rsp)		# offload $xaN
+	movdqa		$xa0,0x00(%rsp)		# offload \$xaN
 	movdqa		$xa1,0x10(%rsp)
 	movdqa		0x20(%rsp),$xa0		# "xc2"
 	movdqa		0x30(%rsp),$xa1		# "xc3"
@@ -869,7 +875,7 @@ $code.=<<___;
 	paddd		0xe0-0x100(%rcx),$xc2
 	paddd		0xf0-0x100(%rcx),$xc3
 
-	movdqa		$xa2,0x20(%rsp)		# keep offloading $xaN
+	movdqa		$xa2,0x20(%rsp)		# keep offloading \$xaN
 	movdqa		$xa3,0x30(%rsp)
 
 	movdqa		$xc0,$xt2
@@ -915,7 +921,7 @@ $code.=<<___;
 	movdqu		0x10($inp),$xt1
 	movdqu		0x20($inp),$xt2
 	movdqu		0x30($inp),$xt3
-	pxor		0x00(%rsp),$xt0		# $xaN is offloaded, remember?
+	pxor		0x00(%rsp),$xt0		# \$xaN is offloaded, remember?
 	pxor		$xb0,$xt1
 	pxor		$xc0,$xt2
 	pxor		$xd0,$xt3
@@ -980,7 +986,7 @@ $code.=<<___;
 	cmp		\$64,$len
 	jae		.L64_or_more4x
 
-	#movdqa		0x00(%rsp),$xt0		# $xaN is offloaded, remember?
+	#movdqa		0x00(%rsp),$xt0		# \$xaN is offloaded, remember?
 	xor		%r10,%r10
 	#movdqa		$xt0,0x00(%rsp)
 	movdqa		$xb0,0x10(%rsp)
@@ -994,7 +1000,7 @@ $code.=<<___;
 	movdqu		0x10($inp),$xt1
 	movdqu		0x20($inp),$xt2
 	movdqu		0x30($inp),$xt3
-	pxor		0x00(%rsp),$xt0		# $xaxN is offloaded, remember?
+	pxor		0x00(%rsp),$xt0		# \$xaN is offloaded, remember?
 	pxor		$xb0,$xt1
 	pxor		$xc0,$xt2
 	pxor		$xd0,$xt3
@@ -1004,7 +1010,7 @@ $code.=<<___;
 	movdqu		$xt3,0x30($out)
 	je		.Ldone4x
 
-	movdqa		0x10(%rsp),$xt0		# $xaN is offloaded, remember?
+	movdqa		0x10(%rsp),$xt0		# \$xaN is offloaded, remember?
 	lea		0x40($inp),$inp		# inp+=64*1
 	xor		%r10,%r10
 	movdqa		$xt0,0x00(%rsp)
@@ -1021,7 +1027,7 @@ $code.=<<___;
 	movdqu		0x10($inp),$xt1
 	movdqu		0x20($inp),$xt2
 	movdqu		0x30($inp),$xt3
-	pxor		0x00(%rsp),$xt0		# $xaN is offloaded, remember?
+	pxor		0x00(%rsp),$xt0		# \$xaN is offloaded, remember?
 	pxor		$xb0,$xt1
 	pxor		$xc0,$xt2
 	pxor		$xd0,$xt3
@@ -1044,7 +1050,7 @@ $code.=<<___;
 	movdqu		$xt3,0x70($out)
 	je		.Ldone4x
 
-	movdqa		0x20(%rsp),$xt0		# $xaN is offloaded, remember?
+	movdqa		0x20(%rsp),$xt0		# \$xaN is offloaded, remember?
 	lea		0x80($inp),$inp		# inp+=64*2
 	xor		%r10,%r10
 	movdqa		$xt0,0x00(%rsp)
@@ -1061,7 +1067,7 @@ $code.=<<___;
 	movdqu		0x10($inp),$xt1
 	movdqu		0x20($inp),$xt2
 	movdqu		0x30($inp),$xt3
-	pxor		0x00(%rsp),$xt0		# $xaN is offloaded, remember?
+	pxor		0x00(%rsp),$xt0		# \$xaN is offloaded, remember?
 	pxor		$xb0,$xt1
 	pxor		$xc0,$xt2
 	pxor		$xd0,$xt3
@@ -1099,7 +1105,7 @@ $code.=<<___;
 	movdqu		$xt3,0x30($out)
 	je		.Ldone4x
 
-	movdqa		0x30(%rsp),$xt0		# $xaN is offloaded, remember?
+	movdqa		0x30(%rsp),$xt0		# \$xaN is offloaded, remember?
 	lea		0x40($inp),$inp		# inp+=64*3
 	xor		%r10,%r10
 	movdqa		$xt0,0x00(%rsp)
@@ -1273,12 +1279,12 @@ $code.=<<___;
 	vmovdqa		$xb2,0xa0-0x100(%rcx)
 	vmovdqa		$xb3,0xb0-0x100(%rcx)
 
-	vpshufd		\$0x00,$xt3,$xt0	# "$xc0"
-	vpshufd		\$0x55,$xt3,$xt1	# "$xc1"
+	vpshufd		\$0x00,$xt3,$xt0	# "\$xc0"
+	vpshufd		\$0x55,$xt3,$xt1	# "\$xc1"
 	vmovdqa		$xt0,0xc0-0x100(%rcx)
-	vpshufd		\$0xaa,$xt3,$xt2	# "$xc2"
+	vpshufd		\$0xaa,$xt3,$xt2	# "\$xc2"
 	vmovdqa		$xt1,0xd0-0x100(%rcx)
-	vpshufd		\$0xff,$xt3,$xt3	# "$xc3"
+	vpshufd		\$0xff,$xt3,$xt3	# "\$xc3"
 	vmovdqa		$xt2,0xe0-0x100(%rcx)
 	vmovdqa		$xt3,0xf0-0x100(%rcx)
 
@@ -1303,10 +1309,10 @@ $code.=<<___;
 	vmovdqa		0x90-0x100(%rcx),$xb1
 	vmovdqa		0xa0-0x100(%rcx),$xb2
 	vmovdqa		0xb0-0x100(%rcx),$xb3
-	vmovdqa		0xc0-0x100(%rcx),$xt0	# "$xc0"
-	vmovdqa		0xd0-0x100(%rcx),$xt1	# "$xc1"
-	vmovdqa		0xe0-0x100(%rcx),$xt2	# "$xc2"
-	vmovdqa		0xf0-0x100(%rcx),$xt3	# "$xc3"
+	vmovdqa		0xc0-0x100(%rcx),$xt0	# "\$xc0"
+	vmovdqa		0xd0-0x100(%rcx),$xt1	# "\$xc1"
+	vmovdqa		0xe0-0x100(%rcx),$xt2	# "\$xc2"
+	vmovdqa		0xf0-0x100(%rcx),$xt3	# "\$xc3"
 	vmovdqa		0x100-0x100(%rcx),$xd0
 	vmovdqa		0x110-0x100(%rcx),$xd1
 	vmovdqa		0x120-0x100(%rcx),$xd2
@@ -1332,7 +1338,7 @@ $code.=<<___;
 	vpaddd		0x60(%rsp),$xa2,$xa2
 	vpaddd		0x70(%rsp),$xa3,$xa3
 
-	vmovdqa		$xt2,0x20(%rsp)		# offload $xc2,3
+	vmovdqa		$xt2,0x20(%rsp)		# offload \$xc2,3
 	vmovdqa		$xt3,0x30(%rsp)
 
 	vpunpckldq	$xa1,$xa0,$xt2		# "de-interlace" data
@@ -1879,7 +1885,7 @@ ___
 	($xa0,$xa1,$xa2,$xa3,$xt3)=($xt3,$xa0,$xa1,$xa2,$xa3);
 	my ($xc0,$xc1,$xc2,$xc3)=($xt0,$xt1,$xa0,$xa1);
 $code.=<<___;
-	vmovdqa		$xa0,0x00(%rsp)		# offload $xaN
+	vmovdqa		$xa0,0x00(%rsp)		# offload \$xaN
 	vmovdqa		$xa1,0x20(%rsp)
 	vmovdqa		0x40(%rsp),$xc2		# $xa0
 	vmovdqa		0x60(%rsp),$xc3		# $xa1
@@ -1930,7 +1936,7 @@ ___
 	($xc0,$xc1,$xc2,$xc3,$xb0,$xb1,$xb2,$xb3);
 	($xa0,$xa1)=($xt2,$xt3);
 $code.=<<___;
-	vmovdqa		0x00(%rsp),$xa0		# $xaN was offloaded, remember?
+	vmovdqa		0x00(%rsp),$xa0		# \$xaN was offloaded, remember?
 	vmovdqa		0x20(%rsp),$xa1
 
 	cmp		\$64*8,$len
