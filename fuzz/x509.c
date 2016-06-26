@@ -18,6 +18,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
 
     X509 *x509 = d2i_X509(NULL, &p, len);
     if (x509 != NULL) {
+        EVP_PKEY_free(X509_get_pubkey(x509));
+
         BIO *bio = BIO_new(BIO_s_null());
         X509_print(bio, x509);
         BIO_free(bio);
