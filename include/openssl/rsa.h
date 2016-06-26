@@ -187,7 +187,7 @@ void RSA_get0_crt_params(const RSA *r,
 void RSA_clear_flags(RSA *r, int flags);
 int RSA_test_flags(const RSA *r, int flags);
 void RSA_set_flags(RSA *r, int flags);
-ENGINE *RSA_get0_engine(RSA *r);
+ENGINE *RSA_get0_engine(const RSA *r);
 
 /* Deprecated version */
 DEPRECATEDIN_0_9_8(RSA *RSA_generate_key(int bits, unsigned long e, void
