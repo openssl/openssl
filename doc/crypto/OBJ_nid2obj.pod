@@ -45,12 +45,6 @@ Deprecated:
 
 The ASN1 object utility functions process ASN1_OBJECT structures which are
 a representation of the ASN1 OBJECT IDENTIFIER (OID) type.
-For convenience, OID's are usually represented in source code as numeric
-identifiers, or B<NID>'s.  OpenSSL has an internal table of OID's that
-are generated when the library is built, and their corresponding NID's
-are available as define'd constants.  For the functions below, application
-code should treat all returned values -- OID's, NID's, or names -- as
-constants.
 
 OBJ_nid2obj(), OBJ_nid2ln() and OBJ_nid2sn() convert the NID B<n> to
 an ASN1_OBJECT structure, its long name and its short name respectively,
@@ -145,7 +139,6 @@ Create a new NID and initialize an object from it:
 
  int new_nid;
  ASN1_OBJECT *obj;
-
  new_nid = OBJ_create("1.2.3.4", "NewOID", "New Object Identifier");
 
  obj = OBJ_nid2obj(new_nid);
@@ -162,9 +155,6 @@ to B<NULL> to determine the amount of data that should be written.
 Instead B<buf> must point to a valid buffer and B<buf_len> should
 be set to a positive value. A buffer length of 80 should be more
 than enough to handle any OID encountered in practice.
-
-Many of the functions here should probably be changed to return B<const>
-pointers. But the lack of consistency makes that too awkward to do.
 
 =head1 RETURN VALUES
 
