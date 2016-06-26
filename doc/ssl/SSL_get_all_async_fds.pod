@@ -7,6 +7,7 @@ asynchronous operations
 
 =head1 SYNOPSIS
 
+ #include <openssl/async.h>
  #include <openssl/ssl.h>
 
  int SSL_waiting_for_async(SSL *s);
@@ -52,6 +53,15 @@ for an async operation to complete and 0 otherwise.
 
 SSL_get_all_async_fds() and SSL_get_changed_async_fds() return 1 on success or
 0 on error.
+
+=head1 NOTES
+
+On Windows platforms the openssl/async.h header is dependent on some
+of the types customarily made available by including windows.h. The
+application developer is likely to require control over when the latter
+is included, commonly as one of the first included headers. Therefore
+it is defined as an application developer's responsibility to include
+windows.h prior to async.h.
 
 =head1 SEE ALSO
 

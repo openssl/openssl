@@ -27,11 +27,6 @@
 extern "C" {
 # endif
 
-# ifdef WIN32
-/* Under Win32 this is defined in wincrypt.h */
-#  undef X509_NAME
-# endif
-
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 

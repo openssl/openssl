@@ -17,7 +17,7 @@
 # define HEADER_X509_H
 
 # include <openssl/e_os2.h>
-# include <openssl/opensslconf.h>
+# include <openssl/ossl_typ.h>
 # include <openssl/symhacks.h>
 # include <openssl/buffer.h>
 # include <openssl/evp.h>
@@ -39,12 +39,6 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-# ifdef OPENSSL_SYS_WIN32
-/* Under Win32 these are defined in wincrypt.h */
-#  undef X509_NAME
-#  undef X509_EXTENSIONS
-# endif
 
 # define X509_FILETYPE_PEM       1
 # define X509_FILETYPE_ASN1      2

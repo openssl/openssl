@@ -7,30 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#ifdef _WIN32
+# ifndef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0400
+# endif
+# include <windows.h>
+# include <wincrypt.h>
 
-#include <openssl/crypto.h>
+# include <stdio.h>
+# include <string.h>
+# include <stdlib.h>
+# include <malloc.h>
+# ifndef alloca
+#  define alloca _alloca
+# endif
 
-#ifdef OPENSSL_SYS_WIN32
+# include <openssl/crypto.h>
+
 # ifndef OPENSSL_NO_CAPIENG
 
 #  include <openssl/buffer.h>
 #  include <openssl/bn.h>
 #  include <openssl/rsa.h>
 #  include <openssl/dsa.h>
-
-#  ifndef _WIN32_WINNT
-#   define _WIN32_WINNT 0x0400
-#  endif
-
-#  include <windows.h>
-#  include <wincrypt.h>
-#  include <malloc.h>
-#  ifndef alloca
-#   define alloca _alloca
-#  endif
 
 /*
  * This module uses several "new" interfaces, among which is
@@ -50,7 +49,7 @@
 #   define __COMPILE_CAPIENG
 #  endif                        /* CERT_KEY_PROV_INFO_PROP_ID */
 # endif                         /* OPENSSL_NO_CAPIENG */
-#endif                          /* OPENSSL_SYS_WIN32 */
+#endif                          /* _WIN32 */
 
 #ifdef __COMPILE_CAPIENG
 
