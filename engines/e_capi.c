@@ -1029,17 +1029,17 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
         capi_addlasterror();
         goto err;
     } else {
-        BIGNUM *r = NULL, *s = NULL;
-        ret = DSA_SIG_new();
-        if (ret == NULL)
-            goto err;
-        DSA_SIG_get0(&r, &s, ret);
-        if (!lend_tobn(r, csigbuf, 20)
-            || !lend_tobn(s, csigbuf + 20, 20)) {
-            DSA_SIG_free(ret);
-            ret = NULL;
+        BIGNUM *r = BN_new(), *s = BN_new();
+
+        if (r == NULL || s == NULL
+            || !lend_tobn(r, csigbuf, 20)
+            || !lend_tobn(s, csigbuf + 20, 20)
+            || (ret = DSA_SIG_new()) == NULL) {
+            BN_free(r); /* BN_free checks for BIGNUM * being NULL */
+            BN_free(s);
             goto err;
         }
+        DSA_SIG_set0(ret, r, s);
     }
 
     /* Now cleanup */
