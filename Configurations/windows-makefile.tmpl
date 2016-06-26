@@ -484,7 +484,7 @@ EOF
      return <<"EOF";
 $lib$libext: $deps
 	\$(AR) \$(ARFLAGS) \$(AROUTFLAG)$lib$libext @<<
-\$\?
+\$**
 <<
 EOF
  }
@@ -530,11 +530,7 @@ EOF
           next unless defined($unified_info{dirinfo}->{$dir}->{products}->{$type});
           if ($type eq "lib") {
               foreach my $lib (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
-                  push @actions, <<"EOF";
-	\$(AR) \$(ARFLAGS) \$(AROUTFLAG)$lib$libext @<<
-\$\?
-<<
-EOF
+                  push @actions, "";
               }
           } else {
               foreach my $prod (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
