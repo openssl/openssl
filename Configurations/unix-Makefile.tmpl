@@ -1086,10 +1086,7 @@ EOF
           next unless defined($unified_info{dirinfo}->{$dir}->{products}->{$type});
           if ($type eq "lib") {
               foreach my $lib (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
-                  push @actions, <<"EOF";
-	\$(AR) $lib$libext \$\?
-	\$(RANLIB) $lib$libext || echo Never mind.
-EOF
+                  push @actions, "";
               }
           } else {
               foreach my $prod (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
