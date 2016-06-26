@@ -543,6 +543,19 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     old_ec_priv_encode
 };
 
+int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
+{
+    int private = EC_KEY_get0_private_key(x) != NULL;
+
+    return do_EC_KEY_print(bp, x, off,
+                private ? EC_KEY_PRINT_PUBLIC : EC_KEY_PRINT_PUBLIC);
+}
+
+int ECParameters_print(BIO *bp, const EC_KEY *x)
+{
+    return do_EC_KEY_print(bp, x, 4, EC_KEY_PRINT_PARAM);
+}
+
 #ifndef OPENSSL_NO_CMS
 
 static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
