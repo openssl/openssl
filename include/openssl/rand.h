@@ -14,10 +14,6 @@
 # include <openssl/ossl_typ.h>
 # include <openssl/e_os2.h>
 
-# if defined(OPENSSL_SYS_WINDOWS)
-#  include <windows.h>
-# endif
-
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -65,7 +61,8 @@ int RAND_egd_bytes(const char *path, int bytes);
 # endif
 int RAND_poll(void);
 
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+#if defined(_WIN32) && (defined(BASETYPES) || defined(_WINDEF_H))
+/* application has to include <windows.h> in order to use these */
 DEPRECATEDIN_1_1_0(void RAND_screen(void))
 DEPRECATEDIN_1_1_0(int RAND_event(UINT, WPARAM, LPARAM))
 #endif

@@ -112,6 +112,15 @@ ASYNC_WAIT_CTX_set_wait_fd, ASYNC_WAIT_CTX_get_fd, ASYNC_WAIT_CTX_get_all_fds,
 ASYNC_WAIT_CTX_get_changed_fds and ASYNC_WAIT_CTX_clear_fd all return 1 on
 success or 0 on error.
 
+=head1 NOTES
+
+On Windows platforms the openssl/async.h header is dependent on some
+of the types customarily made available by including windows.h. The
+application developer is likely to require control over when the latter
+is included, commonly as one of the first included headers. Therefore
+it is defined as an application developer's responsibility to include
+windows.h prior to async.h.
+
 =head1 SEE ALSO
 
 L<crypto(3)>, L<ASYNC_start_job(3)>

@@ -161,10 +161,22 @@ ASYNC_get_wait_ctx() returns a pointer to the ASYNC_WAIT_CTX for the job.
 ASYNC_is_capable() returns 1 if the current platform is async capable or 0
 otherwise.
 
+=head1 NOTES
+
+On Windows platforms the openssl/async.h header is dependent on some
+of the types customarily made available by including windows.h. The
+application developer is likely to require control over when the latter
+is included, commonly as one of the first included headers. Therefore
+it is defined as an application developer's responsibility to include
+windows.h prior to async.h.
+
 =head1 EXAMPLE
 
 The following example demonstrates how to use most of the core async APIs:
 
+ #ifdef _WIN32
+ # include <windows.h>
+ #endif
  #include <stdio.h>
  #include <unistd.h>
  #include <openssl/async.h>
