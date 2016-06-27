@@ -127,8 +127,10 @@ static int general_allocate_string(UI *ui, const char *prompt,
             s->_.string_data.test_buf = test_buf;
             ret = sk_UI_STRING_push(ui->strings, s);
             /* sk_push() returns 0 on error.  Let's adapt that */
-            if (ret <= 0)
+            if (ret <= 0) {
                 ret--;
+                free_string(s);
+            }
         } else
             free_string(s);
     }
@@ -172,8 +174,10 @@ static int general_allocate_boolean(UI *ui,
                 /*
                  * sk_push() returns 0 on error. Let's adapt that
                  */
-                if (ret <= 0)
+                if (ret <= 0) {
                     ret--;
+                    free_string(s);
+                }
             } else
                 free_string(s);
         }

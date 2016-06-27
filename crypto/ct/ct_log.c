@@ -182,7 +182,10 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len,
         return 1;
     }
 
-    sk_CTLOG_push(load_ctx->log_store->logs, ct_log);
+    if (!sk_CTLOG_push(load_ctx->log_store->logs, ct_log)) {
+        CTLOG_free(ct_log);
+        return -1;
+    }
     return 1;
 }
 
