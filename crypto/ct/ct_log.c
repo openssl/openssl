@@ -58,15 +58,10 @@ static CTLOG_STORE_LOAD_CTX *ctlog_store_load_ctx_new()
 {
     CTLOG_STORE_LOAD_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx == NULL) {
+    if (ctx == NULL)
         CTerr(CT_F_CTLOG_STORE_LOAD_CTX_NEW, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
 
     return ctx;
-err:
-    ctlog_store_load_ctx_free(ctx);
-    return NULL;
 }
 
 static void ctlog_store_load_ctx_free(CTLOG_STORE_LOAD_CTX* ctx)
@@ -98,8 +93,10 @@ CTLOG_STORE *CTLOG_STORE_new(void)
 {
     CTLOG_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret == NULL)
-        goto err;
+    if (ret == NULL) {
+        CTerr(CT_F_CTLOG_STORE_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
 
     ret->logs = sk_CTLOG_new_null();
     if (ret->logs == NULL)
@@ -107,7 +104,7 @@ CTLOG_STORE *CTLOG_STORE_new(void)
 
     return ret;
 err:
-    CTLOG_STORE_free(ret);
+    OPENSSL_free(ret);
     return NULL;
 }
 
@@ -122,7 +119,7 @@ void CTLOG_STORE_free(CTLOG_STORE *store)
 static CTLOG *ctlog_new_from_conf(const CONF *conf, const char *section)
 {
     CTLOG *ret = NULL;
-    char *description = NCONF_get_string(conf, section, "description");
+    const char *description = NCONF_get_string(conf, section, "description");
     char *pkey_base64;
 
     if (description == NULL) {
@@ -165,7 +162,7 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len,
                                 void *arg)
 {
     CTLOG_STORE_LOAD_CTX *load_ctx = arg;
-    CTLOG *ct_log;
+    CTLOG *ct_log = NULL;
     /* log_name may not be null-terminated, so fix that before using it */
     char *tmp;
 
@@ -174,19 +171,27 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len,
         return 1;
 
     tmp = OPENSSL_strndup(log_name, log_name_len);
+    if (tmp == NULL)
+        goto mem_err;
+
     ct_log = ctlog_new_from_conf(load_ctx->conf, tmp);
     OPENSSL_free(tmp);
     if (ct_log == NULL) {
+        /* TODO: split invalid input case from internal failure */
         /* If we can't load this log, record that fact and skip it */
         ++load_ctx->invalid_log_entries;
         return 1;
     }
 
     if (!sk_CTLOG_push(load_ctx->log_store->logs, ct_log)) {
-        CTLOG_free(ct_log);
-        return -1;
+        goto mem_err;
     }
     return 1;
+
+mem_err:
+    CTLOG_free(ct_log);
+    CTerr(CT_F_CTLOG_STORE_LOAD_LOG, ERR_R_MALLOC_FAILURE);
+    return -1;
 }
 
 int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
@@ -234,11 +239,13 @@ CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name)
     CTLOG *ret = CTLOG_new_null();
 
     if (ret == NULL)
-        goto err;
+        return NULL;
 
     ret->name = OPENSSL_strdup(name);
-    if (ret->name == NULL)
+    if (ret->name == NULL) {
+        CTerr(CT_F_CTLOG_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
 
     ret->public_key = public_key;
     if (ct_v1_log_id_from_pkey(public_key, ret->log_id) != 1)
