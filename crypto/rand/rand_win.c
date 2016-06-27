@@ -82,7 +82,7 @@ int RAND_poll(void)
     return (1);
 }
 
-#if OPENSSL_API_COMPAT < 0x00101000L
+#if OPENSSL_API_COMPAT < 0x10100000L
 int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     RAND_poll();
