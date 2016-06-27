@@ -33,6 +33,7 @@ before_install:
     - wget http://llvm.org/releases/3.7.1/clang+llvm-3.7.1-x86_64-linux-gnu-debian8.tar.xz
     - mkdir $HOME/clang
     - tar xf clang+llvm-3.7.1-x86_64-linux-gnu-debian8.tar.xz -C $HOME/clang --strip-components 1
+    - ls -l $HOME/clang $HOME/clang/bin
     - export PATH=$HOME/clang/bin:$PATH
 
 matrix:
