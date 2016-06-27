@@ -120,7 +120,7 @@ des_t4_cbc_encrypt:
 	and		$out, 7, %g4
 	alignaddrl	$out, %g0, $out
 	srl		$omask, %g4, $omask
-	srlx		$len, 3, $len
+	srln		$len, 3, $len
 	movrz		%g4, 0, $omask
 	prefetch	[$out], 22
 
@@ -221,7 +221,7 @@ des_t4_cbc_decrypt:
 	and		$out, 7, %g4
 	alignaddrl	$out, %g0, $out
 	srl		$omask, %g4, $omask
-	srlx		$len, 3, $len
+	srln		$len, 3, $len
 	movrz		%g4, 0, $omask
 	prefetch	[$out], 22
 
@@ -329,7 +329,7 @@ des_t4_ede3_cbc_encrypt:
 	and		$out, 7, %g4
 	alignaddrl	$out, %g0, $out
 	srl		$omask, %g4, $omask
-	srlx		$len, 3, $len
+	srln		$len, 3, $len
 	movrz		%g4, 0, $omask
 	prefetch	[$out], 22
 
@@ -481,7 +481,7 @@ des_t4_ede3_cbc_decrypt:
 	and		$out, 7, %g4
 	alignaddrl	$out, %g0, $out
 	srl		$omask, %g4, $omask
-	srlx		$len, 3, $len
+	srln		$len, 3, $len
 	movrz		%g4, 0, $omask
 	prefetch	[$out], 22
 
