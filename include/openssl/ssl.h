@@ -1270,6 +1270,19 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_set_max_proto_version(s, version) \
         SSL_ctrl(s, SSL_CTRL_SET_MAX_PROTO_VERSION, version, NULL)
 
+#if OPENSSL_API_COMPAT < 0x10100000L
+/* Provide some compatibility macros for removed functionality. */
+# define SSL_CTX_need_tmp_RSA(ctx)                0
+# define SSL_CTX_set_tmp_rsa(ctx,rsa)             1
+# define SSL_need_tmp_RSA(ssl)                    0
+# define SSL_set_tmp_rsa(ssl,rsa)                 1
+/*
+ * We "preted" to call the callback to avoid warnings about unused static
+ * functions.
+ */
+# define SSL_CTX_set_tmp_rsa_callback(ctx, cb)    while(0) (cb)(NULL, 0, 0)
+# define SSL_set_tmp_rsa_callback(ssl, cb)        while(0) (cb)(NULL, 0, 0)
+#endif
 
 __owur const BIO_METHOD *BIO_f_ssl(void);
 __owur BIO *BIO_new_ssl(SSL_CTX *ctx, int client);
