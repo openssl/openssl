@@ -625,7 +625,7 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
     char *p, *q, c;
     char *ntmp;
     char linebuf[MAX_SMLEN];
-    MIME_HEADER *mhdr = NULL;
+    MIME_HEADER *mhdr = NULL, *new_hdr = NULL;
     STACK_OF(MIME_HEADER) *headers;
     int len, state, save_state = 0;
 
@@ -662,8 +662,13 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
                 if (c == ';') {
                     mime_debug("Found End Value\n");
                     *p = 0;
-                    mhdr = mime_hdr_new(ntmp, strip_ends(q));
-                    sk_MIME_HEADER_push(headers, mhdr);
+                    new_hdr = mime_hdr_new(ntmp, strip_ends(q));
+                    if (new_hdr == NULL)
+                        goto err;
+                    if (!sk_MIME_HEADER_push(headers, new_hdr))
+                        goto err;
+                    mhdr = new_hdr;
+                    new_hdr = NULL;
                     ntmp = NULL;
                     q = p + 1;
                     state = MIME_NAME;
@@ -714,8 +719,13 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
         }
 
         if (state == MIME_TYPE) {
-            mhdr = mime_hdr_new(ntmp, strip_ends(q));
-            sk_MIME_HEADER_push(headers, mhdr);
+            new_hdr = mime_hdr_new(ntmp, strip_ends(q));
+            if (new_hdr == NULL)
+                goto err;
+            if (!sk_MIME_HEADER_push(headers, new_hdr))
+                goto err;
+            mhdr = new_hdr;
+            new_hdr = NULL;
         } else if (state == MIME_VALUE)
             mime_hdr_addparam(mhdr, ntmp, strip_ends(q));
         if (p == linebuf)
@@ -724,6 +734,10 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
 
     return headers;
 
+err:
+    mime_hdr_free(new_hdr);
+    sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
+    return NULL;
 }
 
 static char *strip_ends(char *name)

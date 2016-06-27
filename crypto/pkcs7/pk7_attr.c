@@ -74,7 +74,11 @@ int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
         alg->parameter->value.integer = nbit;
         alg->parameter->type = V_ASN1_INTEGER;
     }
-    sk_X509_ALGOR_push(sk, alg);
+    if (!sk_X509_ALGOR_push(sk, alg)) {
+        PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
+        X509_ALGOR_free(alg);
+        return 0;
+    }
     return 1;
 }
 

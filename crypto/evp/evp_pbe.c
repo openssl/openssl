@@ -173,7 +173,10 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
     pbe_tmp->md_nid = md_nid;
     pbe_tmp->keygen = keygen;
 
-    sk_EVP_PBE_CTL_push(pbe_algs, pbe_tmp);
+    if (!sk_EVP_PBE_CTL_push(pbe_algs, pbe_tmp)) {
+        OPENSSL_free(pbe_tmp);
+        goto err;
+    }
     return 1;
 
  err:
