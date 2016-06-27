@@ -33,8 +33,6 @@ before_install:
     - mkdir $HOME/clang
     - wget http://llvm.org/releases/3.7.0/clang+llvm-3.7.0-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O clang.xz
     - tar xf clang.xz -C $HOME/clang --strip-components 1
-    - file $HOME/clang/bin/clang
-    - export PATH=$HOME/clang/bin:$PATH
 
 matrix:
     include:
@@ -74,7 +72,9 @@ before_script:
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           ../_srcdist/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
-          if which ccache >/dev/null && [ "$CC" != clang-3.6 ]; then
+          if "$CC" = clang ; then
+              CC=$HOME/clang/bin;
+          elif which ccache >/dev/null && [ "$CC" != clang-3.6 ]; then
               CC="ccache $CC";
           fi;
           ../_srcdist/config $CONFIG_OPTS;
