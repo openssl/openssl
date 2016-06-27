@@ -122,7 +122,6 @@ on failure. Check the error queue to find out the reason of failure.
 =head1 SEE ALSO
 
 L<ssl(3)>, L<SSL_CTX_set_cipher_list(3)>,
-L<SSL_CTX_set_tmp_rsa_callback(3)>,
 L<SSL_CTX_set_options(3)>,
 L<ciphers(1)>, L<dhparam(1)>
 
