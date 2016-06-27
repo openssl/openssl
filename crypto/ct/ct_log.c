@@ -116,31 +116,23 @@ void CTLOG_STORE_free(CTLOG_STORE *store)
     }
 }
 
-static CTLOG *ctlog_new_from_conf(const CONF *conf, const char *section)
+static int ctlog_new_from_conf(CTLOG **ct_log, const CONF *conf, const char *section)
 {
-    CTLOG *ret = NULL;
     const char *description = NCONF_get_string(conf, section, "description");
     char *pkey_base64;
 
     if (description == NULL) {
         CTerr(CT_F_CTLOG_NEW_FROM_CONF, CT_R_LOG_CONF_MISSING_DESCRIPTION);
-        goto end;
+        return 0;
     }
 
     pkey_base64 = NCONF_get_string(conf, section, "key");
     if (pkey_base64 == NULL) {
         CTerr(CT_F_CTLOG_NEW_FROM_CONF, CT_R_LOG_CONF_MISSING_KEY);
-        goto end;
+        return 0;
     }
 
-    ret = CTLOG_new_from_base64(pkey_base64, description);
-    if (ret == NULL) {
-        CTerr(CT_F_CTLOG_NEW_FROM_CONF, CT_R_LOG_CONF_INVALID);
-        goto end;
-    }
-
-end:
-    return ret;
+    return CTLOG_new_from_base64(ct_log, pkey_base64, description);
 }
 
 int CTLOG_STORE_load_default_file(CTLOG_STORE *store)
@@ -154,9 +146,10 @@ int CTLOG_STORE_load_default_file(CTLOG_STORE *store)
 }
 
 /*
- * Called by CONF_parse_list, which stops if this returns <= 0, so don't unless
- * something very bad happens. Otherwise, one bad log entry would stop loading
- * of any of the following log entries.
+ * Called by CONF_parse_list, which stops if this returns <= 0,
+ * Otherwise, one bad log entry would stop loading of any of 
+ * the following log entries.
+ * It may stop parsing and returns -1 on any internal (malloc) error.
  */
 static int ctlog_store_load_log(const char *log_name, int log_name_len,
                                 void *arg)
@@ -165,6 +158,7 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len,
     CTLOG *ct_log = NULL;
     /* log_name may not be null-terminated, so fix that before using it */
     char *tmp;
+    int ret = 0;
 
     /* log_name will be NULL for empty list entries */
     if (log_name == NULL)
@@ -174,10 +168,14 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len,
     if (tmp == NULL)
         goto mem_err;
 
-    ct_log = ctlog_new_from_conf(load_ctx->conf, tmp);
+    ret = ctlog_new_from_conf(&ct_log, load_ctx->conf, tmp);
     OPENSSL_free(tmp);
-    if (ct_log == NULL) {
-        /* TODO: split invalid input case from internal failure */
+
+    if (ret < 0) {
+        /* Propagate any internal error */
+        return ret;
+    }
+    if (ret == 0) {
         /* If we can't load this log, record that fact and skip it */
         ++load_ctx->invalid_log_entries;
         return 1;

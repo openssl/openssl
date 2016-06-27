@@ -115,17 +115,26 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
     return NULL;
 }
 
-CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name)
+/*
+ * This methods returns: 1 on Success,
+ * 0 on decoding failure,
+ * -1 on internal (malloc) failure, or invalid parameter if any.
+ */
+int CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64, const char *name)
 {
     unsigned char *pkey_der = NULL;
     int pkey_der_len = ct_base64_decode(pkey_base64, &pkey_der);
     const unsigned char *p;
     EVP_PKEY *pkey = NULL;
-    CTLOG *log = NULL;
+
+    if (ct_log == NULL) {
+        CTerr(CT_F_CTLOG_NEW_FROM_BASE64, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
 
     if (pkey_der_len <= 0) {
         CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
-        return NULL;
+        return 0;
     }
 
     p = pkey_der;
@@ -133,14 +142,14 @@ CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name)
     OPENSSL_free(pkey_der);
     if (pkey == NULL) {
         CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
-        return NULL;
+        return 0;
     }
 
-    log = CTLOG_new(pkey, name);
-    if (log == NULL) {
+    *ct_log = CTLOG_new(pkey, name);
+    if (*ct_log == NULL) {
         EVP_PKEY_free(pkey);
-        return NULL;
+        return -1;
     }
 
-    return log;
+    return 1;
 }
