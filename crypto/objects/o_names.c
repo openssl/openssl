@@ -76,8 +76,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
                        int (*cmp_func) (const char *, const char *),
                        void (*free_func) (const char *, int, const char *))
 {
-    int ret;
-    int i;
+    int ret, i, push;
     NAME_FUNCS *name_funcs;
 
     if (name_funcs_stack == NULL) {
@@ -102,8 +101,15 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
         name_funcs->hash_func = OPENSSL_LH_strhash;
         name_funcs->cmp_func = obj_strcmp;
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
-        sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
+
+        push = sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+
+        if (!push) {
+            OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
+            OPENSSL_free(name_funcs);
+            return 0;
+        }
     }
     name_funcs = sk_NAME_FUNCS_value(name_funcs_stack, ret);
     if (hash_func != NULL)

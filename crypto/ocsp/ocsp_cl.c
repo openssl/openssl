@@ -32,7 +32,7 @@ OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid)
     OCSP_ONEREQ *one = NULL;
 
     if ((one = OCSP_ONEREQ_new()) == NULL)
-        goto err;
+        return NULL;
     OCSP_CERTID_free(one->reqCert);
     one->reqCert = cid;
     if (req && !sk_OCSP_ONEREQ_push(req->tbsRequest.requestList, one))
