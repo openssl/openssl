@@ -270,8 +270,6 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item int B<SSL_CTX_load_verify_locations>(SSL_CTX *ctx, const char *CAfile, const char *CApath);
 
-=item long B<SSL_CTX_need_tmp_RSA>(SSL_CTX *ctx);
-
 =item SSL_CTX *B<SSL_CTX_new>(const SSL_METHOD *meth);
 
 =item int SSL_CTX_up_ref(SSL_CTX *ctx);
