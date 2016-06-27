@@ -419,10 +419,11 @@ CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
 CTLOG *CTLOG_new_null(void);
 
 /*
- * Creates a new CT log instance with the given base64 public_key and |name|.
+ * Creates a new CT |ct_log| instance with the given base64 public_key and |name|.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
-CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name);
+int CTLOG_new_from_base64(CTLOG ** ct_log,
+                          const char *pkey_base64, const char *name);
 
 /*
  * Deletes a CT log instance and its fields.
