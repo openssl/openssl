@@ -30,10 +30,10 @@ env:
     - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
 
 before_install:
-    - wget http://llvm.org/releases/3.7.1/clang+llvm-3.7.1-x86_64-linux-gnu-debian8.tar.xz
     - mkdir $HOME/clang
-    - tar xf clang+llvm-3.7.1-x86_64-linux-gnu-debian8.tar.xz -C $HOME/clang --strip-components 1
-    - ls -l $HOME/clang $HOME/clang/bin
+    - wget http://llvm.org/releases/3.7.0/clang+llvm-3.7.0-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O clang.xz
+    - tar xf clang.xz -C $HOME/clang --strip-components 1
+    - file $HOME/clang/bin/clang
     - export PATH=$HOME/clang/bin:$PATH
 
 matrix:
