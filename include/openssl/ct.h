@@ -491,6 +491,8 @@ void ERR_load_CT_strings(void);
 # define CT_F_CTLOG_NEW_NULL                              120
 # define CT_F_CTLOG_STORE_LOAD_CTX_NEW                    122
 # define CT_F_CTLOG_STORE_LOAD_FILE                       123
+# define CT_F_CTLOG_STORE_LOAD_LOG                        130
+# define CT_F_CTLOG_STORE_NEW                             131
 # define CT_F_CT_BASE64_DECODE                            124
 # define CT_F_CT_POLICY_EVAL_CTX_NEW                      133
 # define CT_F_CT_V1_LOG_ID_FROM_PKEY                      125
