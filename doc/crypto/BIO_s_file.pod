@@ -92,15 +92,15 @@ Alternative technique:
 
  BIO *bio_out;
  bio_out = BIO_new(BIO_s_file());
- if(bio_out == NULL) /* Error ... */
- if(!BIO_set_fp(bio_out, stdout, BIO_NOCLOSE)) /* Error ... */
+ if (bio_out == NULL) /* Error ... */
+ if (!BIO_set_fp(bio_out, stdout, BIO_NOCLOSE)) /* Error ... */
  BIO_printf(bio_out, "Hello World\n");
 
 Write to a file:
 
  BIO *out;
  out = BIO_new_file("filename.txt", "w");
- if(!out) /* Error occurred */
+ if (!out) /* Error occurred */
  BIO_printf(out, "Hello World\n");
  BIO_free(out);
 
@@ -108,8 +108,8 @@ Alternative technique:
 
  BIO *out;
  out = BIO_new(BIO_s_file());
- if(out == NULL) /* Error ... */
- if(!BIO_write_filename(out, "filename.txt")) /* Error ... */
+ if (out == NULL) /* Error ... */
+ if (!BIO_write_filename(out, "filename.txt")) /* Error ... */
  BIO_printf(out, "Hello World\n");
  BIO_free(out);
 

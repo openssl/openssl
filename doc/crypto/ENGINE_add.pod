@@ -472,8 +472,8 @@ boolean success or failure.
                             const char **post_cmds, int post_num)
  {
      ENGINE *e = ENGINE_by_id(engine_id);
-     if(!e) return 0;
-     while(pre_num--) {
+     if (!e) return 0;
+     while (pre_num--) {
          if(!ENGINE_ctrl_cmd_string(e, pre_cmds[0], pre_cmds[1], 0)) {
              fprintf(stderr, "Failed command (%s - %s:%s)\n", engine_id,
                  pre_cmds[0], pre_cmds[1] ? pre_cmds[1] : "(NULL)");
@@ -482,7 +482,7 @@ boolean success or failure.
          }
          pre_cmds += 2;
      }
-     if(!ENGINE_init(e)) {
+     if (!ENGINE_init(e)) {
          fprintf(stderr, "Failed initialisation\n");
          ENGINE_free(e);
          return 0;

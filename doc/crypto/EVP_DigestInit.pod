@@ -223,7 +223,7 @@ digest name passed on the command line.
  EVP_MD_CTX_free(mdctx);
 
  printf("Digest is: ");
- for(i = 0; i < md_len; i++)
+ for (i = 0; i < md_len; i++)
         printf("%02x", md_value[i]);
  printf("\n");
 
