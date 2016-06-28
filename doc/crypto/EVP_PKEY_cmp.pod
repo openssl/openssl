@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_copy_parameters, EVP_PKEY_missing_parameters, EVP_PKEY_cmp_parameters, EVP_PKEY_cmp - public key parameter and comparison functions
+EVP_PKEY_copy_parameters, EVP_PKEY_missing_parameters, EVP_PKEY_cmp_parameters,
+EVP_PKEY_cmp - public key parameter and comparison functions
 
 =head1 SYNOPSIS
 

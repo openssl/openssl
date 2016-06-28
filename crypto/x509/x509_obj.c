@@ -17,7 +17,7 @@
 
 /*
  * Limit to ensure we don't overflow: much greater than
- * anything enountered in practice.
+ * anything encountered in practice.
  */
 
 #define NAME_ONELINE_MAX    (1024 * 1024)

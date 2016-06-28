@@ -89,7 +89,7 @@ exist.
 B<X509V3_ADD_APPEND> appends a new extension, ignoring whether the extension
 already exists.
 
-B<X509V3_ADD_REPLACE> replaces an extension if it exists otherwise apppends
+B<X509V3_ADD_REPLACE> replaces an extension if it exists otherwise appends
 a new extension.
 
 B<X509V3_ADD_REPLACE_EXISTING> replaces an existing extension if it exists
@@ -99,7 +99,7 @@ B<X509V3_ADD_KEEP_EXISTING> appends a new extension only if the extension does
 not already exist. An error B<is not> returned if the extension does already
 exist.
 
-B<X509V3_ADD_DELETE> extension B<nid> is deleted: no new extenion is added.
+B<X509V3_ADD_DELETE> extension B<nid> is deleted: no new extension is added.
 
 If B<X509V3_ADD_SILENT> is ored with B<flags>: any error returned will not
 be added to the error queue.

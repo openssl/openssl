@@ -78,7 +78,8 @@ to PKCS#1 when signing and this structure is expected (and stripped off) when
 verifying. If this control is not used with RSA and PKCS#1 padding then the
 supplied data is used directly and not encapsulated. In the case of X9.31
 padding for RSA the algorithm identifier byte is added or checked and removed
-if this control is called. If it is not called then the first byte of the plaintext buffer is expected to be the algorithm identifier byte.
+if this control is called. If it is not called then the first byte of the plaintext
+buffer is expected to be the algorithm identifier byte.
 
 The EVP_PKEY_CTX_set_rsa_pss_saltlen() macro sets the RSA PSS salt length to
 B<len> as its name implies it is only supported for PSS padding.  Two special
