@@ -103,7 +103,7 @@ OPENSSL_cleanse() fills B<ptr> of size B<len> with a string of 0's.
 Use OPENSSL_cleanse() with care if the memory is a mapping of a file.
 If the storage controller uses write compression, then its possible
 that sensitive tail bytes will survive zeroization because the block of
-zeros will be compressed. If the storage controller uses wear levelling,
+zeros will be compressed. If the storage controller uses wear leveling,
 then the old sensitive data will not be overwritten; rather, a block of
 0's will be written at a new physical location.
 
