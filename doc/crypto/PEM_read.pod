@@ -57,7 +57,7 @@ for examples.
 PEM_read() reads from the file B<fp>, while PEM_read_bio() reads
 from the BIO B<bp>.
 Both skip any non-PEM data that precedes the start of the next PEM object.
-When an object is successfuly retrieved, the type name from the "----BEGIN
+When an object is successfully retrieved, the type name from the "----BEGIN
 <type>-----" is returned via the B<name> argument, any encapsulation headers
 are returned in B<header> and the base64-decoded content and its length are
 returned via B<data> and B<len> respectively.
@@ -69,7 +69,7 @@ PEM_read() or PEM_read_bio() is encrypted and to retrieve the associated cipher
 and IV.
 The caller passes a pointer to structure of type B<EVP_CIPHER_INFO> via the
 B<cinfo> argument and the B<header> returned via PEM_read() or PEM_read_bio().
-If the call is succesful 1 is retured and the cipher and IV are stored at the
+If the call is successful 1 is returned and the cipher and IV are stored at the
 address pointed to by B<cinfo>.
 When the header is malformed, or not supported or when the cipher is unknown
 or some internal error happens 0 is returned.

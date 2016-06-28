@@ -103,13 +103,13 @@ OPENSSL_cleanse() fills B<ptr> of size B<len> with a string of 0's.
 Use OPENSSL_cleanse() with care if the memory is a mapping of a file.
 If the storage controller uses write compression, then its possible
 that sensitive tail bytes will survive zeroization because the block of
-zeros will be compressed. If the storage controller uses wear leveling,
+zeros will be compressed. If the storage controller uses wear levelling,
 then the old sensitive data will not be overwritten; rather, a block of
 0's will be written at a new physical location.
 
 OPENSSL_strdup(), OPENSSL_strndup() and OPENSSL_memdup() are like the
 equivalent C functions, except that memory is allocated by calling the
-OPENSSL_malloc() and should be releaed by calling OPENSSL_free().
+OPENSSL_malloc() and should be released by calling OPENSSL_free().
 
 OPENSSL_strlcpy(),
 OPENSSL_strlcat() and OPENSSL_strnlen() are equivalents of the common C
