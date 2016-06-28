@@ -87,32 +87,51 @@ GENERATED={- join(" ",
 
 # Do not edit these manually. Use Configure with --prefix or --openssldir
 # to change this!  Short explanation in the top comment in Configure
-INSTALLTOP={- # $prefix is used in the OPENSSLDIR perl snippet
-	      #
-	      our $prefix = $config{prefix} || "$win_installroot\\OpenSSL";
-              $prefix -}
-OPENSSLDIR={- #
-	      # The logic here is that if no --openssldir was given,
-	      # OPENSSLDIR will get the value from $prefix plus "/ssl".
-	      # If --openssldir was given and the value is an absolute
-	      # path, OPENSSLDIR will get its value without change.
-	      # If the value from --openssldir is a relative path,
-	      # OPENSSLDIR will get $prefix with the --openssldir
-	      # value appended as a subdirectory.
-	      #
-              use File::Spec::Functions;
-              our $openssldir =
-                  $config{openssldir} ?
-                      (file_name_is_absolute($config{openssldir}) ?
-                           $config{openssldir}
-                           : catdir($prefix, $config{openssldir}))
-                      : "$win_commonroot\\SSL";
-              $openssldir -}
+INSTALLTOP_dev={- # $prefix is used in the OPENSSLDIR perl snippet
+                  #
+                  use File::Spec::Functions qw(:DEFAULT splitpath);
+                  our ($prefix_dev, $prefix_dir, $prefix_file) =
+                      splitpath($config{prefix} || "$win_installroot\\OpenSSL",
+                                1);
+                  $prefix_dev -}
+INSTALLTOP_dir={- $prefix_dir -}
+OPENSSLDIR_dev={- #
+                  # The logic here is that if no --openssldir was given,
+                  # OPENSSLDIR will get the value from $prefix plus "/ssl".
+                  # If --openssldir was given and the value is an absolute
+                  # path, OPENSSLDIR will get its value without change.
+                  # If the value from --openssldir is a relative path,
+                  # OPENSSLDIR will get $prefix with the --openssldir
+                  # value appended as a subdirectory.
+                  #
+                  use File::Spec::Functions qw(:DEFAULT splitpath);
+                  my $openssldir =
+                      $config{openssldir} ?
+                          (file_name_is_absolute($config{openssldir}) ?
+                               $config{openssldir}
+                               : catdir($prefix, $config{openssldir}))
+                          : "$win_commonroot\\SSL";
+                  our ($openssldir_dev, $openssldir_dir, $openssldir_file) =
+                      splitpath($openssldir, 1);
+                  $openssldir_dev -}
+OPENSSLDIR_dir={- $openssldir_dir -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           $libdir -}
-ENGINESDIR={- use File::Spec::Functions;
-              our $enginesdir = catdir($prefix,$libdir,"engines");
-	      $enginesdir -}
+ENGINESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
+                  my $enginesdir = catdir($prefix,$libdir,"engines");
+                  our ($enginesdir_dev, $enginesdir_dir, $enginesdir_file) =
+                      splitpath($enginesdir, 1);
+                  $enginesdir_dev -}
+ENGINESDIR_dir={- $enginesdir_dir -}
+!IF "$(DESTDIR)" != ""
+INSTALLTOP=$(DESTDIR)$(INSTALLTOP_dir)
+OPENSSLDIR=$(DESTDIR)$(OPENSSLDIR_dir)
+ENGINESDIR=$(DESTDIR)$(ENGINESDIR_dir)
+!ELSE
+INSTALLTOP=$(INSTALLTOP_dev)$(INSTALLTOP_dir)
+OPENSSLDIR=$(OPENSSLDIR_dev)$(OPENSSLDIR_dir)
+ENGINESDIR=$(ENGINESDIR_dev)$(ENGINESDIR_dir)
+!ENDIF
 
 CC={- $target{cc} -}
 CFLAGS={- join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}})) -} {- join(" ", quotify_l("-DENGINESDIR=\"$enginesdir\"", "-DOPENSSLDIR=\"$openssldir\"")) -} {- $target{cflags} -} {- $config{cflags} -}
@@ -221,63 +240,63 @@ install_docs: install_html_docs
 uninstall_docs: uninstall_html_docs
 
 install_ssldirs:
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(DESTDIR)$(OPENSSLDIR)\certs"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(DESTDIR)$(OPENSSLDIR)\private"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(DESTDIR)$(OPENSSLDIR)\misc"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\certs"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\private"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\misc"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\openssl.cnf" \
-                                       "$(DESTDIR)$(OPENSSLDIR)"
+                                       "$(OPENSSLDIR)"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(MISC_SCRIPTS) \
-                                        "$(DESTDIR)$(OPENSSLDIR)\misc"
+                                        "$(OPENSSLDIR)\misc"
 
 install_dev:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
 	@echo *** Installing development files
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(DESTDIR)$(INSTALLTOP)\include\openssl"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\include\openssl\*.h" \
-				       "$(DESTDIR)$(INSTALLTOP)\include\openssl"
+				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\include\openssl\*.h \
-				       "$(DESTDIR)$(INSTALLTOP)\include\openssl"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(DESTDIR)$(INSTALLTOP)\$(LIBDIR)"
+				       "$(INSTALLTOP)\include\openssl"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\$(LIBDIR)"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(LIBS) \
-				       "$(DESTDIR)$(INSTALLTOP)\$(LIBDIR)"
+				       "$(INSTALLTOP)\$(LIBDIR)"
 	@if "$(SHLIBS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" ossl_static.pdb \
-                                       "$(DESTDIR)$(INSTALLTOP)\$(LIBDIR)"
+                                       "$(INSTALLTOP)\$(LIBDIR)"
 
 uninstall_dev:
 
 install_engines:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
 	@echo *** Installing engines
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(DESTDIR)$(ENGINESDIR)"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(ENGINESDIR)"
 	@if not "$(ENGINES)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(ENGINES) "$(DESTDIR)$(ENGINESDIR)"
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(ENGINES) "$(ENGINESDIR)"
 	@if not "$(ENGINES)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(ENGINEPDBS) "$(DESTDIR)$(ENGINESDIR)"
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(ENGINEPDBS) "$(ENGINESDIR)"
 
 uninstall_engines:
 
 install_runtime:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
 	@echo *** Installing runtime files
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(DESTDIR)$(INSTALLTOP)\bin"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\bin"
 	@if not "$(SHLIBS)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(SHLIBS) "$(DESTDIR)$(INSTALLTOP)\bin"
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(SHLIBS) "$(INSTALLTOP)\bin"
 	@if not "$(SHLIBS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(SHLIBPDBS) \
-                                        "$(DESTDIR)$(INSTALLTOP)\bin"
+                                        "$(INSTALLTOP)\bin"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(PROGRAMS) \
-                                        "$(DESTDIR)$(INSTALLTOP)\bin"
+                                        "$(INSTALLTOP)\bin"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(PROGRAMPDBS) \
-                                        "$(DESTDIR)$(INSTALLTOP)\bin"
+                                        "$(INSTALLTOP)\bin"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BIN_SCRIPTS) \
-                                        "$(DESTDIR)$(INSTALLTOP)\bin"
+                                        "$(INSTALLTOP)\bin"
 
 uninstall_runtime:
 
 install_html_docs:
         "$(PERL)" "$(SRCDIR)\util\process_docs.pl" \
-                "--destdir=$(DESTDIR)$(INSTALLTOP)\html" --type=html
+                "--destdir=$(INSTALLTOP)\html" --type=html
 
 uninstall_html_docs:
 
