@@ -2538,7 +2538,7 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
 
     /*
      * If we've previously matched a PKIX-?? record, no need to test any
-     * further PKIX-?? records,  it remains to just build the PKIX chain.
+     * further PKIX-?? records, it remains to just build the PKIX chain.
      * Had the match been a DANE-?? record, we'd be done already.
      */
     if (dane->mdpth >= 0)

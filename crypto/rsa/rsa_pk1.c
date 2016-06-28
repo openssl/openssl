@@ -183,7 +183,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     /*
      * Always do this zero-padding copy (even when num == flen) to avoid
      * leaking that information. The copy still leaks some side-channel
-     * information, but it's impossible to have a fixed  memory access
+     * information, but it's impossible to have a fixed memory access
      * pattern since we can't read out of the bounds of |from|.
      *
      * TODO(emilia): Consider porting BN_bn2bin_padded from BoringSSL.

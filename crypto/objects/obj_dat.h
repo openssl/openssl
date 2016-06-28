@@ -2314,11 +2314,11 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"id-GostR3410-2001-CryptoPro-XchA-ParamSet",
 	"id-GostR3410-2001-CryptoPro-XchA-ParamSet",
 	NID_id_GostR3410_2001_CryptoPro_XchA_ParamSet,7,&(lvalues[5609]),0},
-	
+
 {"id-GostR3410-2001-CryptoPro-XchB-ParamSet",
 	"id-GostR3410-2001-CryptoPro-XchB-ParamSet",
 	NID_id_GostR3410_2001_CryptoPro_XchB_ParamSet,7,&(lvalues[5616]),0},
-	
+
 {"id-GostR3410-94-a","id-GostR3410-94-a",NID_id_GostR3410_94_a,7,
 	&(lvalues[5623]),0},
 {"id-GostR3410-94-aBis","id-GostR3410-94-aBis",
