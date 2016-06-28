@@ -64,7 +64,7 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
 static CONF_MODULE *module_find(const char *name);
 static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
                        const CONF *cnf);
-static CONF_MODULE *module_load_dso(const CONF *cnf, const char *name, 
+static CONF_MODULE *module_load_dso(const CONF *cnf, const char *name,
                                     const char *value);
 
 /* Main function: load modules from a CONF structure */
@@ -181,7 +181,7 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
 }
 
 /* Load a module from a DSO */
-static CONF_MODULE *module_load_dso(const CONF *cnf, 
+static CONF_MODULE *module_load_dso(const CONF *cnf,
                                     const char *name, const char *value)
 {
     DSO *dso = NULL;

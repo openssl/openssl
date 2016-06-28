@@ -90,7 +90,7 @@ int BN_get_flags(const BIGNUM *b, int n);
  */
 void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags);
 
-/* Wrapper function to make using BN_GENCB easier,  */
+/* Wrapper function to make using BN_GENCB easier */
 int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 
 BN_GENCB *BN_GENCB_new(void);

@@ -402,7 +402,7 @@ static long ok_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 {
     long ret = 1;
     BIO *next;
-    
+
     next = BIO_next(b);
 
     if (next == NULL)

@@ -463,7 +463,7 @@ static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
         TSerr(TS_F_TS_GET_STATUS_TEXT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    
+
     for (i = 0, p = result; i < sk_ASN1_UTF8STRING_num(text); ++i) {
         ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
         length = ASN1_STRING_length(current);
