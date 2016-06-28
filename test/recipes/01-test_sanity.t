@@ -9,4 +9,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_np", "nptest");
+simple_test("test_sanity", "sanitytest");
