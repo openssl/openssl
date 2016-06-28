@@ -18,7 +18,7 @@
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
     DTLS_RECORD_LAYER *d;
-    
+
     if ((d = OPENSSL_malloc(sizeof(*d))) == NULL)
         return (0);
 
@@ -62,7 +62,7 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     pqueue *buffered_app_data;
 
     d = rl->d;
-    
+
     while ((item = pqueue_pop(d->unprocessed_rcds.q)) != NULL) {
         rdata = (DTLS1_RECORD_DATA *)item->data;
         OPENSSL_free(rdata->rbuf.buf);

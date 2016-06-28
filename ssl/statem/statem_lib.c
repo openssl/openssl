@@ -974,7 +974,7 @@ int ssl_choose_client_version(SSL *s, int version)
  * or FIPS_mode() constraints and any floor imposed by the security level here,
  * so we don't advertise the wrong protocol version to only reject the outcome later.
  *
- * Computing the right floor matters.  If, e.g.,  TLS 1.0 and 1.2 are enabled,
+ * Computing the right floor matters.  If, e.g., TLS 1.0 and 1.2 are enabled,
  * TLS 1.1 is disabled, but the security level, Suite-B  and/or MinProtocol
  * only allow TLS 1.2, we want to advertise TLS1.2, *not* TLS1.
  *

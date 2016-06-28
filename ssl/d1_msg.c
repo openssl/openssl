@@ -9,7 +9,7 @@
 
 #define USE_SOCKETS
 #include "ssl_locl.h"
-    
+
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
 {
     int i;
