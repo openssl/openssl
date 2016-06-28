@@ -204,7 +204,7 @@ All version-specific methods were deprecated in OpenSSL 1.1.0.
 =head1 SEE ALSO
 
 L<SSL_CTX_set_options(3)>, L<SSL_CTX_free(3)>, L<SSL_accept(3)>,
-L<SSL_CTX_set_min_proto_version(3)>, L<ssl(3)>,  L<SSL_set_connect_state(3)>
+L<SSL_CTX_set_min_proto_version(3)>, L<ssl(3)>, L<SSL_set_connect_state(3)>
 
 =head1 COPYRIGHT
 
