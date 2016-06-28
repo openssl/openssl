@@ -60,7 +60,7 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->wpend_buf = NULL;
 
     SSL3_BUFFER_clear(&rl->rbuf);
-    for(pipes = 0; pipes < rl->numwpipes; pipes++)
+    for (pipes = 0; pipes < rl->numwpipes; pipes++)
         SSL3_BUFFER_clear(&rl->wbuf[pipes]);
     rl->numwpipes = 0;
     rl->numrpipes = 0;
@@ -1186,7 +1186,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         goto f_err;
     }
 
-    if(s->method->version == TLS_ANY_VERSION
+    if (s->method->version == TLS_ANY_VERSION
             && (s->server || rr->type != SSL3_RT_ALERT)) {
         /*
          * If we've got this far and still haven't decided on what version

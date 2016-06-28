@@ -157,18 +157,18 @@ int RAND_pseudo_bytes(unsigned char *buf, int num);
 #   endif
 #   define bn_pollute(a) \
         do { \
-                const BIGNUM *_bnum1 = (a); \
-                if(_bnum1->top < _bnum1->dmax) { \
-                        unsigned char _tmp_char; \
-                        /* We cast away const without the compiler knowing, any \
-                         * *genuinely* constant variables that aren't mutable \
-                         * wouldn't be constructed with top!=dmax. */ \
-                        BN_ULONG *_not_const; \
-                        memcpy(&_not_const, &_bnum1->d, sizeof(_not_const)); \
-                        RAND_bytes(&_tmp_char, 1); /* Debug only - safe to ignore error return */\
-                        memset(_not_const + _bnum1->top, _tmp_char, \
-                                sizeof(*_not_const) * (_bnum1->dmax - _bnum1->top)); \
-                } \
+            const BIGNUM *_bnum1 = (a); \
+            if (_bnum1->top < _bnum1->dmax) { \
+                unsigned char _tmp_char; \
+                /* We cast away const without the compiler knowing, any \
+                 * *genuinely* constant variables that aren't mutable \
+                 * wouldn't be constructed with top!=dmax. */ \
+                BN_ULONG *_not_const; \
+                memcpy(&_not_const, &_bnum1->d, sizeof(_not_const)); \
+                RAND_bytes(&_tmp_char, 1); /* Debug only - safe to ignore error return */\
+                memset(_not_const + _bnum1->top, _tmp_char, \
+                       sizeof(*_not_const) * (_bnum1->dmax - _bnum1->top)); \
+            } \
         } while(0)
 #   ifdef BN_DEBUG_TRIX
 #    undef RAND_pseudo_bytes
@@ -257,9 +257,9 @@ struct bn_gencb_st {
     unsigned int ver;           /* To handle binary (in)compatibility */
     void *arg;                  /* callback-specific data */
     union {
-        /* if(ver==1) - handles old style callbacks */
+        /* if (ver==1) - handles old style callbacks */
         void (*cb_1) (int, int, void *);
-        /* if(ver==2) - new callback style */
+        /* if (ver==2) - new callback style */
         int (*cb_2) (int, int, BN_GENCB *);
     } cb;
 };
@@ -678,7 +678,7 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
     if (bits > (INT_MAX - BN_BITS2 + 1))
         return NULL;
 
-    if(((bits+BN_BITS2-1)/BN_BITS2) <= (a)->dmax)
+    if (((bits+BN_BITS2-1)/BN_BITS2) <= (a)->dmax)
         return a;
 
     return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);

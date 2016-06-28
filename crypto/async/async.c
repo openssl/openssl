@@ -396,7 +396,7 @@ ASYNC_JOB *ASYNC_get_current_job(void)
     async_ctx *ctx;
 
     ctx = async_get_ctx();
-    if(ctx == NULL)
+    if (ctx == NULL)
         return NULL;
 
     return ctx->currjob;
@@ -428,6 +428,6 @@ void ASYNC_unblock_pause(void)
          */
         return;
     }
-    if(ctx->blocked > 0)
+    if (ctx->blocked > 0)
         ctx->blocked--;
 }

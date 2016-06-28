@@ -380,8 +380,8 @@ static int state_machine(SSL *s, int server)
         st->read_state_first_init = 1;
     }
 
-    while(st->state != MSG_FLOW_FINISHED) {
-        if(st->state == MSG_FLOW_READING) {
+    while (st->state != MSG_FLOW_FINISHED) {
+        if (st->state == MSG_FLOW_READING) {
             ssret = read_state_machine(s);
             if (ssret == SUB_STATE_FINISHED) {
                 st->state = MSG_FLOW_WRITING;
@@ -484,7 +484,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s) {
 
     cb = get_callback(s);
 
-    if(s->server) {
+    if (s->server) {
         transition = ossl_statem_server_read_transition;
         process_message = ossl_statem_server_process_message;
         max_message_size = ossl_statem_server_max_message_size;
@@ -501,8 +501,8 @@ static SUB_STATE_RETURN read_state_machine(SSL *s) {
         st->read_state_first_init = 0;
     }
 
-    while(1) {
-        switch(st->read_state) {
+    while (1) {
+        switch (st->read_state) {
         case READ_STATE_HEADER:
             /* Get the state the peer wants to move to */
             if (SSL_IS_DTLS(s)) {
@@ -530,7 +530,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s) {
              * Validate that we are allowed to move to the new state and move
              * to that state if so
              */
-            if(!transition(s, mt)) {
+            if (!transition(s, mt)) {
                 ossl_statem_set_error(s);
                 return SUB_STATE_ERROR;
             }
@@ -586,7 +586,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s) {
 
         case READ_STATE_POST_PROCESS:
             st->read_state_work = post_process_message(s, st->read_state_work);
-            switch(st->read_state_work) {
+            switch (st->read_state_work) {
             default:
                 return SUB_STATE_ERROR;
 
@@ -683,7 +683,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
 
     cb = get_callback(s);
 
-    if(s->server) {
+    if (s->server) {
         transition = ossl_statem_server_write_transition;
         pre_work = ossl_statem_server_pre_work;
         post_work = ossl_statem_server_post_work;
@@ -695,8 +695,8 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
         construct_message = ossl_statem_client_construct_message;
     }
 
-    while(1) {
-        switch(st->write_state) {
+    while (1) {
+        switch (st->write_state) {
         case WRITE_STATE_TRANSITION:
             if (cb != NULL) {
                 /* Notify callback of an impending state change */
@@ -705,7 +705,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
                 else
                     cb(s, SSL_CB_CONNECT_LOOP, 1);
             }
-            switch(transition(s)) {
+            switch (transition(s)) {
             case WRITE_TRAN_CONTINUE:
                 st->write_state = WRITE_STATE_PRE_WORK;
                 st->write_state_work = WORK_MORE_A;
@@ -721,7 +721,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             break;
 
         case WRITE_STATE_PRE_WORK:
-            switch(st->write_state_work = pre_work(s, st->write_state_work)) {
+            switch (st->write_state_work = pre_work(s, st->write_state_work)) {
             default:
                 return SUB_STATE_ERROR;
 
@@ -732,7 +732,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
             }
-            if(construct_message(s) == 0)
+            if (construct_message(s) == 0)
                 return SUB_STATE_ERROR;
 
             /* Fall through */
@@ -750,7 +750,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             /* Fall through */
 
         case WRITE_STATE_POST_WORK:
-            switch(st->write_state_work = post_work(s, st->write_state_work)) {
+            switch (st->write_state_work = post_work(s, st->write_state_work)) {
             default:
                 return SUB_STATE_ERROR;
 
