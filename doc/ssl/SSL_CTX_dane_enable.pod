@@ -293,7 +293,7 @@ them among the TLSA records used to authenticate peer connections.
 In addition, some TLSA records with supported usages may be "unusable" as a
 result of invalid or unsupported parameters.
 
-When a peer has TLSA records, but none are "usable",  an opportunistic
+When a peer has TLSA records, but none are "usable", an opportunistic
 application must avoid cleartext, but cannot authenticate the peer,
 and so should generally proceed with an unauthenticated connection.
 Opportunistic applications need to note the return value of each
