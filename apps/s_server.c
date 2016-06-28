@@ -2465,7 +2465,7 @@ static int init_ssl_connection(SSL *con)
     int retry = 0;
 
 #ifndef OPENSSL_NO_DTLS
-    if(dtlslisten) {
+    if (dtlslisten) {
         BIO_ADDR *client = NULL;
 
         if ((client = BIO_ADDR_new()) == NULL) {
@@ -2478,11 +2478,11 @@ static int init_ssl_connection(SSL *con)
             int fd = -1;
 
             wbio = SSL_get_wbio(con);
-            if(wbio) {
+            if (wbio) {
                 BIO_get_fd(wbio, &fd);
             }
 
-            if(!wbio || BIO_connect(fd, client, 0) == 0) {
+            if (!wbio || BIO_connect(fd, client, 0) == 0) {
                 BIO_printf(bio_err, "ERROR - unable to connect\n");
                 BIO_ADDR_free(client);
                 return 0;

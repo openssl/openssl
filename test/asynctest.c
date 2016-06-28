@@ -56,7 +56,7 @@ static int waitfd(void *args)
     waitctx = ASYNC_get_wait_ctx(job);
     if (waitctx == NULL)
         return 0;
-    if(!ASYNC_WAIT_CTX_set_wait_fd(waitctx, waitctx, MAGIC_WAIT_FD, NULL, NULL))
+    if (!ASYNC_WAIT_CTX_set_wait_fd(waitctx, waitctx, MAGIC_WAIT_FD, NULL, NULL))
         return 0;
     ASYNC_pause_job();
 

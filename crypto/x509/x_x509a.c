@@ -76,7 +76,7 @@ int X509_keyid_set1(X509 *x, unsigned char *id, int len)
     }
     if ((aux = aux_get(x)) == NULL)
         return 0;
-    if (aux->keyid ==NULL
+    if (aux->keyid == NULL
         && (aux->keyid = ASN1_OCTET_STRING_new()) == NULL)
         return 0;
     return ASN1_STRING_set(aux->keyid, id, len);

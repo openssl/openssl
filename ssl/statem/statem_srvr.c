@@ -81,7 +81,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
 
-    switch(st->hand_state) {
+    switch (st->hand_state) {
     case TLS_ST_BEFORE:
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         if (mt == SSL3_MT_CLIENT_HELLO) {
@@ -311,113 +311,113 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
-    switch(st->hand_state) {
-        case TLS_ST_BEFORE:
-            /* Just go straight to trying to read from the client */;
-            return WRITE_TRAN_FINISHED;
+    switch (st->hand_state) {
+    case TLS_ST_BEFORE:
+        /* Just go straight to trying to read from the client */;
+        return WRITE_TRAN_FINISHED;
 
-        case TLS_ST_OK:
-            /* We must be trying to renegotiate */
-            st->hand_state = TLS_ST_SW_HELLO_REQ;
-            return WRITE_TRAN_CONTINUE;
+    case TLS_ST_OK:
+        /* We must be trying to renegotiate */
+        st->hand_state = TLS_ST_SW_HELLO_REQ;
+        return WRITE_TRAN_CONTINUE;
 
-        case TLS_ST_SW_HELLO_REQ:
-            st->hand_state = TLS_ST_OK;
-            ossl_statem_set_in_init(s, 0);
-            return WRITE_TRAN_CONTINUE;
+    case TLS_ST_SW_HELLO_REQ:
+        st->hand_state = TLS_ST_OK;
+        ossl_statem_set_in_init(s, 0);
+        return WRITE_TRAN_CONTINUE;
 
-        case TLS_ST_SR_CLNT_HELLO:
-            if (SSL_IS_DTLS(s) && !s->d1->cookie_verified
-                    && (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
-                st->hand_state = DTLS_ST_SW_HELLO_VERIFY_REQUEST;
-            else
-                st->hand_state = TLS_ST_SW_SRVR_HELLO;
-            return WRITE_TRAN_CONTINUE;
+    case TLS_ST_SR_CLNT_HELLO:
+        if (SSL_IS_DTLS(s) && !s->d1->cookie_verified
+                && (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
+            st->hand_state = DTLS_ST_SW_HELLO_VERIFY_REQUEST;
+        else
+            st->hand_state = TLS_ST_SW_SRVR_HELLO;
+        return WRITE_TRAN_CONTINUE;
 
-        case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
-            return WRITE_TRAN_FINISHED;
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        return WRITE_TRAN_FINISHED;
 
-        case TLS_ST_SW_SRVR_HELLO:
-            if (s->hit) {
-                if (s->tlsext_ticket_expected)
-                    st->hand_state = TLS_ST_SW_SESSION_TICKET;
-                else
-                    st->hand_state = TLS_ST_SW_CHANGE;
-            } else {
-                /* Check if it is anon DH or anon ECDH, */
-                /* normal PSK or SRP */
-                if (!(s->s3->tmp.new_cipher->algorithm_auth &
-                     (SSL_aNULL | SSL_aSRP | SSL_aPSK))) {
-                    st->hand_state = TLS_ST_SW_CERT;
-                } else if (send_server_key_exchange(s)) {
-                    st->hand_state = TLS_ST_SW_KEY_EXCH;
-                } else if (send_certificate_request(s)) {
-                    st->hand_state = TLS_ST_SW_CERT_REQ;
-                } else {
-                    st->hand_state = TLS_ST_SW_SRVR_DONE;
-                }
-            }
-            return WRITE_TRAN_CONTINUE;
-
-        case TLS_ST_SW_CERT:
-            if (s->tlsext_status_expected) {
-                st->hand_state = TLS_ST_SW_CERT_STATUS;
-                return WRITE_TRAN_CONTINUE;
-            }
-            /* Fall through */
-
-        case TLS_ST_SW_CERT_STATUS:
-            if (send_server_key_exchange(s)) {
-                st->hand_state = TLS_ST_SW_KEY_EXCH;
-                return WRITE_TRAN_CONTINUE;
-            }
-            /* Fall through */
-
-        case TLS_ST_SW_KEY_EXCH:
-            if (send_certificate_request(s)) {
-                st->hand_state = TLS_ST_SW_CERT_REQ;
-                return WRITE_TRAN_CONTINUE;
-            }
-            /* Fall through */
-
-        case TLS_ST_SW_CERT_REQ:
-            st->hand_state = TLS_ST_SW_SRVR_DONE;
-            return WRITE_TRAN_CONTINUE;
-
-        case TLS_ST_SW_SRVR_DONE:
-            return WRITE_TRAN_FINISHED;
-
-        case TLS_ST_SR_FINISHED:
-            if (s->hit) {
-                st->hand_state = TLS_ST_OK;
-                ossl_statem_set_in_init(s, 0);
-                return WRITE_TRAN_CONTINUE;
-            } else if (s->tlsext_ticket_expected) {
+    case TLS_ST_SW_SRVR_HELLO:
+        if (s->hit) {
+            if (s->tlsext_ticket_expected)
                 st->hand_state = TLS_ST_SW_SESSION_TICKET;
-            } else {
+            else
                 st->hand_state = TLS_ST_SW_CHANGE;
+        } else {
+            /* Check if it is anon DH or anon ECDH, */
+            /* normal PSK or SRP */
+            if (!(s->s3->tmp.new_cipher->algorithm_auth &
+                 (SSL_aNULL | SSL_aSRP | SSL_aPSK))) {
+                st->hand_state = TLS_ST_SW_CERT;
+            } else if (send_server_key_exchange(s)) {
+                st->hand_state = TLS_ST_SW_KEY_EXCH;
+            } else if (send_certificate_request(s)) {
+                st->hand_state = TLS_ST_SW_CERT_REQ;
+            } else {
+                st->hand_state = TLS_ST_SW_SRVR_DONE;
             }
-            return WRITE_TRAN_CONTINUE;
+        }
+        return WRITE_TRAN_CONTINUE;
 
-        case TLS_ST_SW_SESSION_TICKET:
-            st->hand_state = TLS_ST_SW_CHANGE;
+    case TLS_ST_SW_CERT:
+        if (s->tlsext_status_expected) {
+            st->hand_state = TLS_ST_SW_CERT_STATUS;
             return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
 
-        case TLS_ST_SW_CHANGE:
-            st->hand_state = TLS_ST_SW_FINISHED;
+    case TLS_ST_SW_CERT_STATUS:
+        if (send_server_key_exchange(s)) {
+            st->hand_state = TLS_ST_SW_KEY_EXCH;
             return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
 
-        case TLS_ST_SW_FINISHED:
-            if (s->hit) {
-                return WRITE_TRAN_FINISHED;
-            }
+    case TLS_ST_SW_KEY_EXCH:
+        if (send_certificate_request(s)) {
+            st->hand_state = TLS_ST_SW_CERT_REQ;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
+
+    case TLS_ST_SW_CERT_REQ:
+        st->hand_state = TLS_ST_SW_SRVR_DONE;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_SRVR_DONE:
+        return WRITE_TRAN_FINISHED;
+
+    case TLS_ST_SR_FINISHED:
+        if (s->hit) {
             st->hand_state = TLS_ST_OK;
             ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
+        } else if (s->tlsext_ticket_expected) {
+            st->hand_state = TLS_ST_SW_SESSION_TICKET;
+        } else {
+            st->hand_state = TLS_ST_SW_CHANGE;
+        }
+        return WRITE_TRAN_CONTINUE;
 
-        default:
-            /* Shouldn't happen */
-            return WRITE_TRAN_ERROR;
+    case TLS_ST_SW_SESSION_TICKET:
+        st->hand_state = TLS_ST_SW_CHANGE;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_CHANGE:
+        st->hand_state = TLS_ST_SW_FINISHED;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_FINISHED:
+        if (s->hit) {
+            return WRITE_TRAN_FINISHED;
+        }
+        st->hand_state = TLS_ST_OK;
+        ossl_statem_set_in_init(s, 0);
+        return WRITE_TRAN_CONTINUE;
+
+    default:
+        /* Shouldn't happen */
+        return WRITE_TRAN_ERROR;
     }
 }
 
@@ -429,7 +429,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
-    switch(st->hand_state) {
+    switch (st->hand_state) {
     case TLS_ST_SW_HELLO_REQ:
         s->shutdown = 0;
         if (SSL_IS_DTLS(s))
@@ -510,7 +510,7 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
 
     s->init_num = 0;
 
-    switch(st->hand_state) {
+    switch (st->hand_state) {
     case TLS_ST_SW_HELLO_REQ:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
@@ -621,7 +621,7 @@ int ossl_statem_server_construct_message(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
-    switch(st->hand_state) {
+    switch (st->hand_state) {
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         return dtls_construct_hello_verify_request(s);
 
@@ -698,7 +698,7 @@ unsigned long ossl_statem_server_max_message_size(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
-    switch(st->hand_state) {
+    switch (st->hand_state) {
     case TLS_ST_SR_CLNT_HELLO:
         return CLIENT_HELLO_MAX_LENGTH;
 
@@ -737,7 +737,7 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL *s, PACKET *pkt)
 {
     OSSL_STATEM *st = &s->statem;
 
-    switch(st->hand_state) {
+    switch (st->hand_state) {
     case TLS_ST_SR_CLNT_HELLO:
         return tls_process_client_hello(s, pkt);
 
@@ -777,7 +777,7 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
-    switch(st->hand_state) {
+    switch (st->hand_state) {
     case TLS_ST_SR_CLNT_HELLO:
         return tls_post_process_client_hello(s, wst);
 
@@ -968,7 +968,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
          * use version from inside client hello, not from record header (may
          * differ: see RFC 2246, Appendix E, second paragraph)
          */
-        if(!PACKET_get_net_2(pkt, (unsigned int *)&s->client_version)) {
+        if (!PACKET_get_net_2(pkt, (unsigned int *)&s->client_version)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
             goto f_err;
@@ -3239,7 +3239,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
 
     if ((skp == NULL) || (*skp == NULL)) {
         sk = sk_SSL_CIPHER_new_null(); /* change perhaps later */
-        if(sk == NULL) {
+        if (sk == NULL) {
             SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
             *al = SSL_AD_INTERNAL_ERROR;
             return NULL;

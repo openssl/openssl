@@ -1193,7 +1193,7 @@ X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
     if (store == NULL)
         goto end;
 
-    if(CAfile != NULL || !noCAfile) {
+    if (CAfile != NULL || !noCAfile) {
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
         if (lookup == NULL)
             goto end;
@@ -1206,7 +1206,7 @@ X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
             X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
     }
 
-    if(CApath != NULL || !noCApath) {
+    if (CApath != NULL || !noCApath) {
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
         if (lookup == NULL)
             goto end;

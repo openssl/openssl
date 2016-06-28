@@ -696,7 +696,7 @@ typedef unsigned long (*dynamic_v_check_fn) (unsigned long ossl_version);
 # define IMPLEMENT_DYNAMIC_CHECK_FN() \
         OPENSSL_EXPORT unsigned long v_check(unsigned long v); \
         OPENSSL_EXPORT unsigned long v_check(unsigned long v) { \
-                if(v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION; \
+                if (v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION; \
                 return 0; }
 
 /*
@@ -724,13 +724,13 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns); \
         OPENSSL_EXPORT \
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
-                if(ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
-                CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
-                                         fns->mem_fns.realloc_fn, \
-                                         fns->mem_fns.free_fn); \
+            if (ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
+            CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
+                                     fns->mem_fns.realloc_fn, \
+                                     fns->mem_fns.free_fn); \
         skip_cbs: \
-                if(!fn(e,id)) return 0; \
-                return 1; }
+            if (!fn(e, id)) return 0; \
+            return 1; }
 
 /*
  * If the loading application (or library) and the loaded ENGINE library
