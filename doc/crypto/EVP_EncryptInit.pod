@@ -603,7 +603,7 @@ with a 128-bit key:
         for(;;)
                 {
                 inlen = fread(inbuf, 1, 1024, in);
-                if(inlen <= 0) break;
+                if (inlen <= 0) break;
                 if(!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf, inlen))
                         {
                         /* Error */
