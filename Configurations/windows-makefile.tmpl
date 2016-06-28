@@ -528,16 +528,15 @@ EOF
 
       foreach my $type (("dso", "lib", "bin", "script")) {
           next unless defined($unified_info{dirinfo}->{$dir}->{products}->{$type});
-          if ($type eq "lib") {
-              foreach my $lib (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
-                  push @actions, "";
-              }
-          } else {
+          # For lib object files, we could update the library.  However,
+          # LIB on Windows doesn't work that way, so we won't create any
+          # actions for it, and the dependencies are already taken care of.
+          if ($type ne "lib") {
               foreach my $prod (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
                   if (dirname($prod) eq $dir) {
                       push @deps, $prod.$extinfo{$type};
                   } else {
-                      push @actions, "\t@ : No support to produce $type ".join(", ", @{$unified_info{dirinfo}->{$dir}->{products}->{$type}});
+                      push @actions, "\t@rem No support to produce $type ".join(", ", @{$unified_info{dirinfo}->{$dir}->{products}->{$type}});
                   }
               }
           }
