@@ -82,7 +82,7 @@ int dtls1_new(SSL *s)
     if (!DTLS_RECORD_LAYER_new(&s->rlayer)) {
         return 0;
     }
-    
+
     if (!ssl3_new(s))
         return (0);
     if ((d1 = OPENSSL_zalloc(sizeof(*d1))) == NULL) {

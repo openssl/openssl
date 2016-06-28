@@ -68,7 +68,7 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
 
     RECORD_LAYER_reset_read_sequence(rl);
     RECORD_LAYER_reset_write_sequence(rl);
-    
+
     if (rl->d)
         DTLS_RECORD_LAYER_clear(rl);
 }

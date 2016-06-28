@@ -39,7 +39,7 @@ int ssl3_setup_read_buffer(SSL *s)
     unsigned char *p;
     size_t len, align = 0, headerlen;
     SSL3_BUFFER *b;
-    
+
     b = RECORD_LAYER_get_rbuf(&s->rlayer);
 
     if (SSL_IS_DTLS(s))
