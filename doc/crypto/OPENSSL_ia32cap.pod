@@ -69,7 +69,7 @@ executed on SSE2 capable CPU, but under control of OS that does not
 enable XMM registers. Historically address of the capability vector copy
 was exposed to application through OPENSSL_ia32cap_loc(), but not
 anymore. Now the only way to affect the capability detection is to set
-OPENSSL_ia32cap envrionment variable prior target application start. To
+OPENSSL_ia32cap environment variable prior target application start. To
 give a specific example, on Intel P4 processor 'env
 OPENSSL_ia32cap=0x16980010 apps/openssl', or better yet 'env
 OPENSSL_ia32cap=~0x1000000 apps/openssl' would achieve the desired

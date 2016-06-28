@@ -131,7 +131,7 @@ This copy function is called by EVP_MD_CTX_copy() and
 EVP_MD_CTX_copy_ex().
 
 EVP_MD_meth_set_cleanup() sets the function for B<md> to do extra
-cleanup before the method's privata data structure is cleaned out and
+cleanup before the method's private data structure is cleaned out and
 freed.
 Note that the cleanup function is passed a B<EVP_MD_CTX *>, the
 private data structure is then available with EVP_MD_CTX_md_data().

@@ -3604,7 +3604,7 @@ static int sig_cb(const char *elem, int len, void *arg)
 }
 
 /*
- * Set suppored signature algorithms based on a colon separated list of the
+ * Set supported signature algorithms based on a colon separated list of the
  * form sig+hash e.g. RSA+SHA512:DSA+SHA512
  */
 int tls1_set_sigalgs_list(CERT *c, const char *str, int client)

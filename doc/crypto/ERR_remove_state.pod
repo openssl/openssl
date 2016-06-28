@@ -19,7 +19,7 @@ Deprecated:
 =head1 DESCRIPTION
 
 The functions described here were used to free the error queue
-associated with the current or specificed thread.
+associated with the current or specified thread.
 
 They are now deprecated and do nothing, as the OpenSSL libraries now
 normally do all thread initialisation and deinitialisation

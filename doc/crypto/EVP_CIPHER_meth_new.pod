@@ -196,7 +196,7 @@ EVP_EncryptFinal(), EVP_EncryptFinal_ex(), EVP_DecryptFinal() and
 EVP_DecryptFinal_ex().
 
 EVP_CIPHER_meth_set_cleanup() sets the function for B<cipher> to do
-extra cleanup before the method's privata data structure is cleaned
+extra cleanup before the method's private data structure is cleaned
 out and freed.
 Note that the cleanup function is passed a B<EVP_CIPHER_CTX *>, the
 private data structure is then available with
