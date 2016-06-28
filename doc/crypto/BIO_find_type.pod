@@ -49,12 +49,12 @@ Traverse a chain looking for digest BIOs:
 
  do {
         btmp = BIO_find_type(btmp, BIO_TYPE_MD);
-        if(btmp == NULL) break; /* Not found */
+        if (btmp == NULL) break; /* Not found */
         /* btmp is a digest BIO, do something with it ...*/
         ...
 
         btmp = BIO_next(btmp);
- } while(btmp);
+ } while (btmp);
 
 
 =head1 COPYRIGHT

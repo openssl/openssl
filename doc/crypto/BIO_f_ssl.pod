@@ -180,7 +180,7 @@ unencrypted example in L<BIO_s_connect(3)>.
  BIO_puts(sbio, "GET / HTTP/1.0\n\n");
  for ( ; ; ) {
      len = BIO_read(sbio, tmpbuf, 1024);
-     if(len <= 0)
+     if (len <= 0)
          break;
      BIO_write(out, tmpbuf, len);
  }
