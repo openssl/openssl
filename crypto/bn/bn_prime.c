@@ -430,7 +430,7 @@ static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods)
      */
     if (is_single_word) {
         BN_ULONG size_limit;
-        
+
         if (bits == BN_BITS2) {
             /*
              * Shifting by this much has undefined behaviour so we do it a

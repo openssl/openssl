@@ -582,7 +582,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     BIO_free_all(btmp);
     BIO_free_all(etmp);
     BIO_free_all(bio);
-    return  NULL;
+    return NULL;
 }
 
 static BIO *PKCS7_find_digest(EVP_MD_CTX **pmd, BIO *bio, int nid)

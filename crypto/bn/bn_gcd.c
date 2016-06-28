@@ -370,7 +370,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
              * i.e.
              *        sign*(Y + D*X)*a  ==  B  (mod |n|).
              *
-             * So if we set  (X, Y, sign) := (Y + D*X, X, -sign),  we arrive back at
+             * So if we set  (X, Y, sign) := (Y + D*X, X, -sign), we arrive back at
              *      -sign*X*a  ==  B   (mod |n|),
              *       sign*Y*a  ==  A   (mod |n|).
              * Note that  X  and  Y  stay non-negative all the time.
@@ -565,7 +565,7 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
          * i.e.
          *        sign*(Y + D*X)*a  ==  B  (mod |n|).
          *
-         * So if we set  (X, Y, sign) := (Y + D*X, X, -sign),  we arrive back at
+         * So if we set  (X, Y, sign) := (Y + D*X, X, -sign), we arrive back at
          *      -sign*X*a  ==  B   (mod |n|),
          *       sign*Y*a  ==  A   (mod |n|).
          * Note that  X  and  Y  stay non-negative all the time.

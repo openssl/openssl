@@ -549,7 +549,7 @@ DECLARE_ASN1_ITEM(POLICY_CONSTRAINTS)
 
 GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
                                const X509V3_EXT_METHOD *method,
-                               X509V3_CTX *ctx, int gen_type, 
+                               X509V3_CTX *ctx, int gen_type,
                                const char *value, int is_nc);
 
 # ifdef HEADER_CONF_H

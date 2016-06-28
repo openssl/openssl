@@ -57,7 +57,7 @@ typedef struct SRP_VBASE_st {
 } SRP_VBASE;
 
 /*
- * Internal structure storing N and g pair 
+ * Internal structure storing N and g pair
  */
 typedef struct SRP_gN_st {
     char *id;
