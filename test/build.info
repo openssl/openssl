@@ -1,7 +1,7 @@
 IF[{- !$disabled{tests} -}]
   PROGRAMS=\
           aborttest \
-          nptest bntest \
+          sanitytest bntest \
           ectest ecdsatest ecdhtest gmdifftest pbelutest ideatest \
           md2test md4test md5test \
           hmactest wp_test \
@@ -22,9 +22,9 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[aborttest]=../include
   DEPEND[aborttest]=../libcrypto
 
-  SOURCE[nptest]=nptest.c
-  INCLUDE[nptest]=../include
-  DEPEND[nptest]=../libcrypto
+  SOURCE[sanitytest]=sanitytest.c
+  INCLUDE[sanitytest]=../include
+  DEPEND[sanitytest]=../libcrypto
 
   SOURCE[bntest]=bntest.c
   INCLUDE[bntest]=.. ../crypto/include ../include
