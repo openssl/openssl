@@ -55,7 +55,7 @@ abcdefghijklmnopqrstuvwxyz0123456789+/";
 #define B64_WS                  0xE0
 #define B64_ERROR               0xFF
 #define B64_NOT_BASE64(a)       (((a)|0x13) == 0xF3)
-#define B64_BASE64(a)           !B64_NOT_BASE64(a)
+#define B64_BASE64(a)           (!B64_NOT_BASE64(a))
 
 static const unsigned char data_ascii2bin[128] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
