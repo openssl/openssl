@@ -327,7 +327,7 @@ int req_main(int argc, char **argv)
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
 
-    /* TODO: simplify this as pkey is still always NULL here */ 
+    /* TODO: simplify this as pkey is still always NULL here */
     private = newreq && (pkey == NULL) ? 1 : 0;
 
     if (!app_passwd(passargin, passargout, &passin, &passout)) {

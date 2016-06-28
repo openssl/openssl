@@ -323,7 +323,7 @@ int ts_main(int argc, char **argv)
         if ((in == NULL) || !EXACTLY_ONE(queryfile, data, digest))
             goto opthelp;
         ret = !verify_command(data, digest, queryfile, in, token_in,
-                              CApath, CAfile, untrusted, 
+                              CApath, CAfile, untrusted,
                               vpmtouched ? vpm : NULL);
     }
 
@@ -964,7 +964,7 @@ static X509_STORE *create_cert_store(char *CApath, char *CAfile, X509_VERIFY_PAR
         }
     }
 
-    if (vpm != NULL) 
+    if (vpm != NULL)
         X509_STORE_set1_param(cert_ctx, vpm);
 
     return cert_ctx;
