@@ -1061,7 +1061,8 @@ unless ($disabled{asan}) {
 unless ($disabled{ubsan}) {
     # -DPEDANTIC or -fnosanitize=alignment may also be required on some
     # platforms.
-    $config{cflags} .= "-fsanitize=undefined -fno-sanitize-recover=all ";
+#    $config{cflags} .= "-fsanitize=undefined -fno-sanitize-recover=all ";
+    $config{cflags} .= "-fsanitize=undefined ";
 }
 
 unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
