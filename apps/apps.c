@@ -926,7 +926,7 @@ void* app_malloc(int sz, const char *what)
 }
 
 /*
- * Initialize or extend, if *certs != NULL,  a certificate stack.
+ * Initialize or extend, if *certs != NULL, a certificate stack.
  */
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
                const char *pass, const char *desc)
@@ -935,7 +935,7 @@ int load_certs(const char *file, STACK_OF(X509) **certs, int format,
 }
 
 /*
- * Initialize or extend, if *crls != NULL,  a certificate stack.
+ * Initialize or extend, if *crls != NULL, a certificate stack.
  */
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
               const char *pass, const char *desc)

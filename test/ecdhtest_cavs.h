@@ -10,10 +10,10 @@
 #ifndef ECDHTEST_CAVS_H
 #define ECDHTEST_CAVS_H
 
-/* 
+/*
  * co-factor ECDH KATs for NIST SP800-56A
  * http://csrc.nist.gov/groups/STM/cavp/component-testing.html#ECCCDH
- * $ sha256sum KAS_ECC_CDH_PrimitiveTest.txt 
+ * $ sha256sum KAS_ECC_CDH_PrimitiveTest.txt
  * 456068d3f8aad8ac62a03d19ed3173f00ad51f42b51aeab4753c20f30c01cf23  KAS_ECC_CDH_PrimitiveTest.txt
  */
 
