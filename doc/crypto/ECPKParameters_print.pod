@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-ECPKParameters_print, ECPKParameters_print_fp - Functions for decoding and encoding ASN1 representations of elliptic curve entities
+ECPKParameters_print, ECPKParameters_print_fp - Functions for decoding and
+encoding ASN1 representations of elliptic curve entities
 
 =head1 SYNOPSIS
 

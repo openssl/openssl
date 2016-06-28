@@ -128,7 +128,7 @@ BIO_seek() returns the same value as the underlying fseek() function:
 
 BIO_tell() returns the current file position.
 
-BIO_read_filename(), BIO_write_filename(),  BIO_append_filename() and
+BIO_read_filename(), BIO_write_filename(), BIO_append_filename() and
 BIO_rw_filename() return 1 for success or 0 for failure.
 
 =head1 BUGS

@@ -16,7 +16,7 @@ EVP_CIPHER_CTX_nid, EVP_CIPHER_CTX_block_size, EVP_CIPHER_CTX_key_length,
 EVP_CIPHER_CTX_iv_length, EVP_CIPHER_CTX_get_app_data,
 EVP_CIPHER_CTX_set_app_data, EVP_CIPHER_CTX_type, EVP_CIPHER_CTX_flags,
 EVP_CIPHER_CTX_mode, EVP_CIPHER_param_to_asn1, EVP_CIPHER_asn1_to_param,
-EVP_CIPHER_CTX_set_padding,  EVP_enc_null, EVP_des_cbc, EVP_des_ecb,
+EVP_CIPHER_CTX_set_padding, EVP_enc_null, EVP_des_cbc, EVP_des_ecb,
 EVP_des_cfb, EVP_des_ofb, EVP_des_ede_cbc, EVP_des_ede, EVP_des_ede_ofb,
 EVP_des_ede_cfb, EVP_des_ede3_cbc, EVP_des_ede3, EVP_des_ede3_ofb,
 EVP_des_ede3_cfb, EVP_desx_cbc, EVP_rc4, EVP_rc4_40, EVP_idea_cbc,
@@ -327,11 +327,11 @@ AES with a 256-bit key in CBC, ECB, CFB and OFB modes respectively.
 
 DES in CBC, ECB, CFB and OFB modes respectively.
 
-=item EVP_des_ede_cbc(), EVP_des_ede(), EVP_des_ede_ofb(),  EVP_des_ede_cfb()
+=item EVP_des_ede_cbc(), EVP_des_ede(), EVP_des_ede_ofb(), EVP_des_ede_cfb()
 
 Two key triple DES in CBC, ECB, CFB and OFB modes respectively.
 
-=item EVP_des_ede3_cbc(), EVP_des_ede3(), EVP_des_ede3_ofb(),  EVP_des_ede3_cfb()
+=item EVP_des_ede3_cbc(), EVP_des_ede3(), EVP_des_ede3_ofb(), EVP_des_ede3_cfb()
 
 Three key triple DES in CBC, ECB, CFB and OFB modes respectively.
 

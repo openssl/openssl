@@ -104,7 +104,7 @@ partly left out.)
    /* Error. */
  }
  if (dh_2048 == NULL) {
-  /* Error. */
+   /* Error. */
  }
  if (SSL_CTX_set_tmp_dh(ctx, dh_2048) != 1) {
    /* Error. */
