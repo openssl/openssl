@@ -25,7 +25,7 @@ void async_local_cleanup(void)
     async_ctx *ctx = async_get_ctx();
     if (ctx != NULL) {
         async_fibre *fibre = &ctx->dispatcher;
-        if(fibre != NULL && fibre->fibre != NULL && fibre->converted) {
+        if (fibre != NULL && fibre->fibre != NULL && fibre->converted) {
             ConvertFiberToThread();
             fibre->fibre = NULL;
         }

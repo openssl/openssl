@@ -644,9 +644,9 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 
     rk = key->rd_key;
 
-    if (bits==128)
+    if (bits == 128)
         key->rounds = 10;
-    else if (bits==192)
+    else if (bits == 192)
         key->rounds = 12;
     else
         key->rounds = 14;
@@ -1222,9 +1222,9 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 
     rk = key->rd_key;
 
-    if (bits==128)
+    if (bits == 128)
         key->rounds = 10;
-    else if (bits==192)
+    else if (bits == 192)
         key->rounds = 12;
     else
         key->rounds = 14;

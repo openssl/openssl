@@ -174,7 +174,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     }
 #endif
 
-    if(src->ciphers != NULL) {
+    if (src->ciphers != NULL) {
         dest->ciphers = sk_SSL_CIPHER_dup(src->ciphers);
         if (dest->ciphers == NULL)
             goto err;
@@ -210,7 +210,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
 
     if (ticket != 0) {
         dest->tlsext_tick = OPENSSL_memdup(src->tlsext_tick, src->tlsext_ticklen);
-        if(dest->tlsext_tick == NULL)
+        if (dest->tlsext_tick == NULL)
             goto err;
     } else {
         dest->tlsext_tick_lifetime_hint = 0;
