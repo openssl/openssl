@@ -60,7 +60,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
     STACK_OF(CONF_VALUE) *cmd_lists;
     ssl_conf_section = CONF_imodule_get_value(md);
     cmd_lists = NCONF_get_section(cnf, ssl_conf_section);
-    if (sk_CONF_VALUE_num(cmd_lists) <= 0){
+    if (sk_CONF_VALUE_num(cmd_lists) <= 0) {
         if (cmd_lists == NULL)
             SSLerr(SSL_F_SSL_MODULE_INIT, SSL_R_SSL_SECTION_NOT_FOUND);
         else
@@ -174,7 +174,7 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name)
         if (rv <= 0) {
             if (rv == -2)
                 SSLerr(SSL_F_SSL_DO_CONFIG, SSL_R_UNKNOWN_COMMAND);
-            else 
+            else
                 SSLerr(SSL_F_SSL_DO_CONFIG, SSL_R_BAD_VALUE);
             ERR_add_error_data(6, "section=", name, ", cmd=", cmd->cmd,
                                     ", arg=", cmd->arg);

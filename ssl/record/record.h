@@ -198,7 +198,7 @@ typedef struct record_layer_st {
 
     unsigned char read_sequence[SEQ_NUM_SIZE];
     unsigned char write_sequence[SEQ_NUM_SIZE];
-    
+
     DTLS_RECORD_LAYER *d;
 } RECORD_LAYER;
 
