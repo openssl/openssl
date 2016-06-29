@@ -11,41 +11,41 @@
 PROGRAMS=asn1 asn1parse bignum bndiv cms conf crl ct server x509
 
 SOURCE[asn1]=asn1.c driver.c
-INCLUDE[asn1]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+INCLUDE[asn1]=../include {- $ex_inc -}
 DEPEND[asn1]=../libcrypto {- $ex_lib -}
 
 SOURCE[asn1parse]=asn1parse.c driver.c
-INCLUDE[asn1parse]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+INCLUDE[asn1parse]=../include {- $ex_inc -}
 DEPEND[asn1parse]=../libcrypto {- $ex_lib -}
 
 SOURCE[bignum]=bignum.c driver.c
-INCLUDE[bignum]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+INCLUDE[bignum]=../include {- $ex_inc -}
 DEPEND[bignum]=../libcrypto {- $ex_lib -}
 
 SOURCE[bndiv]=bndiv.c driver.c
-INCLUDE[bndiv]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+INCLUDE[bndiv]=../include {- $ex_inc -}
 DEPEND[bndiv]=../libcrypto {- $ex_lib -}
 
 SOURCE[cms]=cms.c driver.c
-INCLUDE[cms]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+INCLUDE[cms]=../include {- $ex_inc -}
 DEPEND[cms]=../libcrypto {- $ex_lib -}
 
 SOURCE[conf]=conf.c driver.c
-INCLUDE[conf]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+INCLUDE[conf]=../include {- $ex_inc -}
 DEPEND[conf]=../libcrypto {- $ex_lib -}
 
 SOURCE[crl]=crl.c driver.c
-INCLUDE[crl]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+INCLUDE[crl]=../include {- $ex_inc -}
 DEPEND[crl]=../libcrypto {- $ex_lib -}
 
 SOURCE[ct]=ct.c driver.c
-INCLUDE[ct]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+INCLUDE[ct]=../include {- $ex_inc -}
 DEPEND[ct]=../libcrypto {- $ex_lib -}
 
 SOURCE[server]=server.c driver.c
-INCLUDE[server]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+INCLUDE[server]=../include {- $ex_inc -}
 DEPEND[server]=../libcrypto ../libssl {- $ex_lib -}
 
 SOURCE[x509]=x509.c driver.c
-INCLUDE[x509]="{- rel2abs(catdir($builddir,"../include")) -}" ../include {- $ex_inc -}
+INCLUDE[x509]=../include {- $ex_inc -}
 DEPEND[x509]=../libcrypto {- $ex_lib -}

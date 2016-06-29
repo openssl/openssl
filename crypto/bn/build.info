@@ -1,4 +1,3 @@
-{- use File::Spec::Functions qw/catdir rel2abs/; -}
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c bn_mod.c \
@@ -7,7 +6,7 @@ SOURCE[../../libcrypto]=\
         {- $target{bn_asm_src} -} \
         bn_recp.c bn_mont.c bn_mpi.c bn_exp2.c bn_gf2m.c bn_nist.c \
         bn_depr.c bn_const.c bn_x931p.c bn_intern.c bn_dh.c bn_srp.c
-INCLUDE[../../libcrypto]="{- rel2abs(catdir($builddir,"..","..","crypto","include")) -}"
+INCLUDE[../../libcrypto]=../../crypto/include
 
 INCLUDE[bn_exp.o]=..
 
