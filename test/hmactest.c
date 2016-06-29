@@ -71,8 +71,8 @@ static struct test_st {
         (unsigned char *)"bab53058ae861a7f191abe2d0145cbb123776a6369ee3f9d79ce455667e411dd"
     },
     {
-        "12345", 5, "My test data again", 12,
-        (unsigned char *)"7dbe8c764c068e3bcd6e6b0fbcd5e6fc197b15bb"
+        "12345", 5, "My test data again", 18,
+        (unsigned char *)"a12396ceddd2a85f4c656bc1e0aa50c78cffde3e"
     }
 };
 # endif
