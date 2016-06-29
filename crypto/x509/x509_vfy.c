@@ -660,14 +660,14 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
             continue;
         if (check_crl_time(ctx, crl, 0)) {
             *pcrl = crl;
-            CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509);
+            CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
             return 1;
         }
         best_crl = crl;
     }
     if (best_crl) {
         *pcrl = best_crl;
-        CRYPTO_add(&best_crl->references, 1, CRYPTO_LOCK_X509);
+        CRYPTO_add(&best_crl->references, 1, CRYPTO_LOCK_X509_CRL);
     }
 
     return 0;
