@@ -38,7 +38,7 @@ matrix:
           compiler: clang-3.6
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -fno-sanitize=alignment"
         - os: linux
-        compiler: clang-3.6
+          compiler: clang-3.6
           env: CONFIG_OPTS="no-shared no-asm enable-asan enable-rc5 enable-md2"
         - os: linux
           compiler: gcc-5
