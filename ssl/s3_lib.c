@@ -4228,7 +4228,9 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 #ifndef OPENSSL_NO_ECDSA
     int have_ecdsa_sign = 0;
 #endif
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
     int nostrict = 1;
+#endif
     unsigned long alg_k;
 
     /* If we have custom certificate types set, use them */
@@ -4238,8 +4240,10 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
     }
     /* get configured sigalgs */
     siglen = tls12_get_psigalgs(s, 1, &sig);
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
     if (s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
         nostrict = 0;
+#endif
     for (i = 0; i < siglen; i += 2, sig += 2) {
         switch (sig[1]) {
         case TLSEXT_signature_rsa:
