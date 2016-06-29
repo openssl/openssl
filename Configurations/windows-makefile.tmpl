@@ -90,9 +90,9 @@ GENERATED={- join(" ",
 INSTALLTOP_dev={- # $prefix is used in the OPENSSLDIR perl snippet
                   #
                   use File::Spec::Functions qw(:DEFAULT splitpath);
+                  our $prefix = $config{prefix} || "$win_installroot\\OpenSSL";
                   our ($prefix_dev, $prefix_dir, $prefix_file) =
-                      splitpath($config{prefix} || "$win_installroot\\OpenSSL",
-                                1);
+                      splitpath($prefix, 1);
                   $prefix_dev -}
 INSTALLTOP_dir={- $prefix_dir -}
 OPENSSLDIR_dev={- #
