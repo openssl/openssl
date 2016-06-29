@@ -4231,7 +4231,10 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
     int nostrict = 1;
 #endif
+#if !defined(OPENSSL_NO_GOST) || !defined(OPENSSL_NO_DH) || \
+    !defined(OPENSSL_NO_ECDH)
     unsigned long alg_k;
+#endif
 
     /* If we have custom certificate types set, use them */
     if (s->cert->ctypes) {
@@ -4261,7 +4264,10 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
         }
     }
 
+#if !defined(OPENSSL_NO_GOST) || !defined(OPENSSL_NO_DH) || \
+    !defined(OPENSSL_NO_ECDH)
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+#endif
 
 #ifndef OPENSSL_NO_GOST
     if (s->version >= TLS1_VERSION) {
