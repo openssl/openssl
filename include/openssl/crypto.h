@@ -221,6 +221,16 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
 #  define CRYPTO_set_add_lock_callback(func)
 #  define CRYPTO_get_add_lock_callback()        (NULL)
 
+/*
+ * These defines where used in combination with the old locking callbacks,
+ * they are not called anymore, but old code that's not called might still
+ * use them.
+ */
+#  define CRYPTO_LOCK             1
+#  define CRYPTO_UNLOCK           2
+#  define CRYPTO_READ             4
+#  define CRYPTO_WRITE            8
+
 /* This structure is no longer used */
 typedef struct crypto_threadid_st {
     int dummy;
