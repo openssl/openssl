@@ -1189,6 +1189,12 @@ void dtls1_reset_seq_numbers(SSL *s, int rw)
         memcpy(&s->rlayer.d->bitmap, &s->rlayer.d->next_bitmap,
                sizeof(s->rlayer.d->bitmap));
         memset(&s->rlayer.d->next_bitmap, 0, sizeof(s->rlayer.d->next_bitmap));
+
+        /*
+         * We must not use any buffered messages received from the previous
+         * epoch
+         */
+        dtls1_clear_received_buffer(s);
     } else {
         seq = s->rlayer.write_sequence;
         memcpy(s->rlayer.d->last_write_sequence, seq,
