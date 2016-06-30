@@ -548,7 +548,7 @@ int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
     int private = EC_KEY_get0_private_key(x) != NULL;
 
     return do_EC_KEY_print(bp, x, off,
-                private ? EC_KEY_PRINT_PUBLIC : EC_KEY_PRINT_PUBLIC);
+                private ? EC_KEY_PRINT_PRIVATE : EC_KEY_PRINT_PUBLIC);
 }
 
 int ECParameters_print(BIO *bp, const EC_KEY *x)
