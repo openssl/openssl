@@ -146,7 +146,7 @@ poly1305_init:
 .align	32
 poly1305_blocks:
 	save	%sp,-STACK_FRAME,%sp
-	andn	$len,15,$len
+	srln	$len,4,$len
 
 	brz,pn	$len,.Lno_data
 	nop
@@ -202,7 +202,7 @@ poly1305_blocks:
 	umul	$r1,$h0,$d1
 	umul	$r2,$h0,$d2
 	umul	$r3,$h0,$d3
-	 sub	$len,16,$len
+	 sub	$len,1,$len
 	 add	$inp,16,$inp
 
 	umul	$s3,$h1,$t0
@@ -285,7 +285,7 @@ $code.=<<___;
 .align	32
 poly1305_blocks_vis3:
 	save	%sp,-STACK_FRAME,%sp
-	andn	$len,15,$len
+	srln	$len,4,$len
 
 	brz,pn	$len,.Lno_data
 	nop
@@ -323,7 +323,7 @@ poly1305_blocks_vis3:
 
 .Linp_aligned_vis3:
 	addcc	$D0,$H0,$H0		! accumulate input
-	 sub	$len,16,$len
+	 sub	$len,1,$len
 	addxccc	$D1,$H1,$H1
 	 add	$inp,16,$inp
 
@@ -608,7 +608,7 @@ poly1305_init_fma:
 .align	32
 poly1305_blocks_fma:
 	save	%sp,-STACK_FRAME-48,%sp
-	srlx	$len,4,$len
+	srln	$len,4,$len
 
 	brz,pn	$len,.Labort
 	sub	$len,1,$len
