@@ -115,6 +115,12 @@ int dtls1_new(SSL *s)
 
 static void dtls1_clear_queues(SSL *s)
 {
+    dtls1_clear_received_buffer(s);
+    dtls1_clear_sent_buffer(s);
+}
+
+void dtls1_clear_received_buffer(SSL *s)
+{
     pitem *item = NULL;
     hm_fragment *frag = NULL;
 
@@ -123,6 +129,12 @@ static void dtls1_clear_queues(SSL *s)
         dtls1_hm_fragment_free(frag);
         pitem_free(item);
     }
+}
+
+void dtls1_clear_sent_buffer(SSL *s)
+{
+    pitem *item = NULL;
+    hm_fragment *frag = NULL;
 
     while ((item = pqueue_pop(s->d1->sent_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
@@ -130,6 +142,7 @@ static void dtls1_clear_queues(SSL *s)
         pitem_free(item);
     }
 }
+
 
 void dtls1_free(SSL *s)
 {
@@ -325,7 +338,7 @@ void dtls1_stop_timer(SSL *s)
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
              &(s->d1->next_timeout));
     /* Clear retransmission buffer */
-    dtls1_clear_record_buffer(s);
+    dtls1_clear_sent_buffer(s);
 }
 
 int dtls1_check_timeout_num(SSL *s)

@@ -331,6 +331,7 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
             s->d1->handshake_read_seq = 0;
             s->d1->handshake_write_seq = 0;
             s->d1->next_handshake_write_seq = 0;
+            dtls1_clear_received_buffer(s);
         }
     }
 
