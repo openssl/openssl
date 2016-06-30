@@ -106,7 +106,7 @@ $code.=<<___;
 des_t4_cbc_encrypt:
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .Lcbc_abort
-	nop
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	ld		[$ivec + 0], %f0	! load ivec
 	ld		[$ivec + 4], %f1
 
@@ -207,7 +207,7 @@ des_t4_cbc_encrypt:
 des_t4_cbc_decrypt:
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .Lcbc_abort
-	nop
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	ld		[$ivec + 0], %f2	! load ivec
 	ld		[$ivec + 4], %f3
 
@@ -315,7 +315,7 @@ $code.=<<___;
 des_t4_ede3_cbc_encrypt:
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .Lcbc_abort
-	nop
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	ld		[$ivec + 0], %f0	! load ivec
 	ld		[$ivec + 4], %f1
 
@@ -467,7 +467,7 @@ des_t4_ede3_cbc_encrypt:
 des_t4_ede3_cbc_decrypt:
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .Lcbc_abort
-	nop
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	ld		[$ivec + 0], %f2	! load ivec
 	ld		[$ivec + 4], %f3
 

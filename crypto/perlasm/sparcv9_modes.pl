@@ -48,6 +48,7 @@ ${alg}${bits}_t4_cbc_encrypt:
 	save		%sp, -$::frame, %sp
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .L${bits}_cbc_enc_abort
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	sub		$inp, $out, $blk_init	! $inp!=$out
 ___
 $::code.=<<___ if (!$::evp);
@@ -265,6 +266,7 @@ ${alg}${bits}_t4_cbc_decrypt:
 	save		%sp, -$::frame, %sp
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .L${bits}_cbc_dec_abort
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	sub		$inp, $out, $blk_init	! $inp!=$out
 ___
 $::code.=<<___ if (!$::evp);
@@ -624,6 +626,7 @@ $::code.=<<___;
 .align	32
 ${alg}${bits}_t4_ctr32_encrypt:
 	save		%sp, -$::frame, %sp
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 
 	prefetch	[$inp], 20
 	prefetch	[$inp + 63], 20
@@ -927,6 +930,7 @@ $::code.=<<___;
 .align	32
 ${alg}${bits}_t4_xts_${dir}crypt:
 	save		%sp, -$::frame-16, %sp
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 
 	mov		$ivec, %o0
 	add		%fp, $::bias-16, %o1
