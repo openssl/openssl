@@ -367,8 +367,8 @@ $code.=<<___;
 .align	32
 aes_fx_cbc_encrypt:
 	save		%sp, -STACK_FRAME-16, %sp
-	andncc		$len, 15, $len
-	bz,pn		SIZE_T_CC, .Lcbc_no_data
+	srln		$len, 4, $len
+	brz,pn		$len, .Lcbc_no_data
 	and		$inp, 7, $ialign
 
 	andn		$inp, 7, $inp
@@ -385,7 +385,7 @@ aes_fx_cbc_encrypt:
 	ldd		[$key + 8], $r0lo
 
 	add		$inp, 16, $inp
-	sub		$len, 16, $len
+	sub		$len,  1, $len
 	ldd		[$end + 0], $rlhi	! round[last]
 	ldd		[$end + 8], $rllo
 
@@ -471,7 +471,7 @@ aes_fx_cbc_encrypt:
 	add		$out, 16, $out
 
 	brnz,a		$len, .Loop_cbc_enc
-	sub		$len, 16, $len
+	sub		$len, 1, $len
 
 	st		$out0,    [$ivp + 0]	! output ivec
 	st		$out0#lo, [$ivp + 4]
@@ -587,7 +587,7 @@ aes_fx_cbc_encrypt:
 	add		$out, 16, $out
 
 	brnz,a		$len, .Loop_cbc_enc_unaligned_out
-	sub		$len, 16, $len
+	sub		$len, 1, $len
 
 .Lcbc_enc_unaligned_out_done:
 	faligndata	$out1, $out1, %f8
@@ -675,7 +675,7 @@ aes_fx_cbc_encrypt:
 	add		$out, 16, $out
 
 	brnz,a		$len, .Loop_cbc_dec
-	sub		$len, 16, $len
+	sub		$len, 1, $len
 
 	st		$iv0,    [$ivp + 0]	! output ivec
 	st		$iv0#lo, [$ivp + 4]
@@ -791,7 +791,7 @@ aes_fx_cbc_encrypt:
 	add		$out, 16, $out
 
 	brnz,a		$len, .Loop_cbc_dec_unaligned_out
-	sub		$len, 16, $len
+	sub		$len, 1, $len
 
 .Lcbc_dec_unaligned_out_done:
 	faligndata	%f2, %f2, %f8
@@ -821,8 +821,11 @@ $code.=<<___;
 .align	32
 aes_fx_ctr32_encrypt_blocks:
 	save		%sp, -STACK_FRAME-16, %sp
-	and		$inp, 7, $ialign
+	srln		$len, 0, $len
 	brz,pn		$len, .Lctr32_no_data
+	nop
+
+	and		$inp, 7, $ialign
 	andn		$inp, 7, $inp
 
 .Lpic:	call		.+8
