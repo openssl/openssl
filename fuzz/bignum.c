@@ -23,7 +23,6 @@ int FuzzerInitialize(int *argc, char ***argv) {
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     static BN_CTX *ctx;
-    static BN_MONT_CTX *mont;
     static BIGNUM *b1;
     static BIGNUM *b2;
     static BIGNUM *b3;
@@ -40,7 +39,6 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
         b4 = BN_new();
         b5 = BN_new();
         ctx = BN_CTX_new();
-        mont = BN_MONT_CTX_new();
     }
     /* Divide the input into three parts, using the values of the first two
      * bytes to choose lengths, which generate b1, b2 and b3. Use three bits
