@@ -72,17 +72,11 @@ void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
     unsigned long hash;
     OPENSSL_LH_NODE *nn, **rn;
     void *ret;
-    int val = 0;
-    
+
     lh->error = 0;
-    if (lh->up_load <= (lh->num_items * LH_LOAD_MULT / lh->num_nodes))
-        val = expand(lh);
-    
-    if(val){
-        lh->error++;
-        return (NULL);
-    }
-        
+    if ((lh->up_load <= (lh->num_items * LH_LOAD_MULT / lh->num_nodes)) && !expand(lh))
+        return NULL;        /* 'lh->error++' already done in 'expand' */
+
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
@@ -222,7 +216,7 @@ static int expand(OPENSSL_LHASH *lh)
             /* fputs("realloc error in lhash",stderr); */
             lh->error++;
             lh->p = 0;
-            return -1;
+            return 0;
         }
         for (i = (int)lh->num_alloc_nodes; i < j; i++) /* 26/02/92 eay */
             n[i] = NULL;        /* 02/03/92 eay */
@@ -232,7 +226,7 @@ static int expand(OPENSSL_LHASH *lh)
         lh->p = 0;
         lh->b = n;
     }
-    return 0;
+    return 1;
 }
 
 static void contract(OPENSSL_LHASH *lh)
