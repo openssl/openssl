@@ -1277,7 +1277,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_need_tmp_RSA(ssl)                    0
 # define SSL_set_tmp_rsa(ssl,rsa)                 1
 /*
- * We "preted" to call the callback to avoid warnings about unused static
+ * We "pretend" to call the callback to avoid warnings about unused static
  * functions.
  */
 # define SSL_CTX_set_tmp_rsa_callback(ctx, cb)    while(0) (cb)(NULL, 0, 0)
