@@ -1,5 +1,5 @@
 {- use File::Spec::Functions qw/catdir rel2abs/; -}
-PROGRAMS=asn1-test asn1parse-test bignum-test bndiv-test cms-test conf-test ct-test server-test
+PROGRAMS=asn1-test asn1parse-test bignum-test bndiv-test cms-test conf-test crl-test ct-test server-test x509-test
 
 SOURCE[asn1-test]=asn1.c test-corpus.c
 INCLUDE[asn1-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
@@ -25,6 +25,10 @@ SOURCE[conf-test]=conf.c test-corpus.c
 INCLUDE[conf-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
 DEPEND[conf-test]=../libcrypto
 
+SOURCE[crl-test]=crl.c test-corpus.c
+INCLUDE[crl-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+DEPEND[crl-test]=../libcrypto
+
 SOURCE[ct-test]=ct.c test-corpus.c
 INCLUDE[ct-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
 DEPEND[ct-test]=../libcrypto
@@ -32,3 +36,7 @@ DEPEND[ct-test]=../libcrypto
 SOURCE[server-test]=server.c test-corpus.c
 INCLUDE[server-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
 DEPEND[server-test]=../libcrypto ../libssl
+
+SOURCE[x509-test]=x509.c test-corpus.c
+INCLUDE[x509-test]="{- rel2abs(catdir($builddir,"../include")) -}" ../include
+DEPEND[x509-test]=../libcrypto

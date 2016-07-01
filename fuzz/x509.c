@@ -12,6 +12,10 @@
 #include <openssl/bio.h>
 #include "fuzzer.h"
 
+int FuzzerInitialize(int *argc, char ***argv) {
+    return 1;
+}
+
 int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     const unsigned char *p = buf;
     unsigned char *der = NULL;
