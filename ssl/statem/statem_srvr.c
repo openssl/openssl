@@ -1792,6 +1792,11 @@ int tls_construct_server_key_exchange(SSL *s)
             goto f_err;
         }
         kn = EVP_PKEY_size(pkey);
+        /* Allow space for signature algorithm */
+        if (SSL_USE_SIGALGS(s))
+            kn += 2;
+        /* Allow space for signature length */
+        kn += 2;
     } else {
         pkey = NULL;
         kn = 0;
