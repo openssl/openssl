@@ -1273,7 +1273,7 @@ void ssl3_cbc_copy_mac(unsigned char *out,
 #endif
 }
 
-int dtls1_process_record(SSL *s)
+int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 {
     int i, al;
     int enc_err;
@@ -1429,6 +1429,10 @@ int dtls1_process_record(SSL *s)
 
     /* we have pulled in a full packet so zero things */
     RECORD_LAYER_reset_packet_length(&s->rlayer);
+
+    /* Mark receipt of record. */
+    dtls1_record_bitmap_update(s, bitmap);
+
     return (1);
 
  f_err:
@@ -1472,7 +1476,7 @@ int dtls1_get_record(SSL *s)
      * The epoch may have changed.  If so, process all the pending records.
      * This is a non-blocking operation.
      */
-    if (dtls1_process_buffered_records(s) < 0)
+    if (!dtls1_process_buffered_records(s))
         return -1;
 
     /* if we're renegotiating, then there may be buffered records */
@@ -1580,6 +1584,10 @@ int dtls1_get_record(SSL *s)
     if (!BIO_dgram_is_sctp(SSL_get_rbio(s))) {
 #endif
         /* Check whether this is a repeat, or aged record. */
+        /*
+         * TODO: Does it make sense to have replay protection in epoch 0 where
+         * we have no integrity negotiated yet?
+         */
         if (!dtls1_record_replay_check(s, bitmap)) {
             rr->length = 0;
             RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
@@ -1604,20 +1612,17 @@ int dtls1_get_record(SSL *s)
                 (s, &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
                  rr->seq_num) < 0)
                 return -1;
-            /* Mark receipt of record. */
-            dtls1_record_bitmap_update(s, bitmap);
         }
         rr->length = 0;
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         goto again;
     }
 
-    if (!dtls1_process_record(s)) {
+    if (!dtls1_process_record(s, bitmap)) {
         rr->length = 0;
         RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
         goto again;             /* get another record */
     }
-    dtls1_record_bitmap_update(s, bitmap); /* Mark receipt of record. */
 
     return (1);
 

@@ -2066,6 +2066,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_DTLS1_CHECK_TIMEOUT_NUM                    318
 # define SSL_F_DTLS1_HEARTBEAT                            305
 # define SSL_F_DTLS1_PREPROCESS_FRAGMENT                  288
+# define SSL_F_DTLS1_PROCESS_BUFFERED_RECORDS             423
 # define SSL_F_DTLS1_PROCESS_RECORD                       257
 # define SSL_F_DTLS1_READ_BYTES                           258
 # define SSL_F_DTLS1_READ_FAILED                          339
