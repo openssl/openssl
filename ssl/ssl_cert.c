@@ -605,8 +605,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
             X509_NAME_free(xn);
             xn = NULL;
         } else {
-            if (!lh_X509_NAME_insert(name_hash, xn))
-                goto err;
+            lh_X509_NAME_insert(name_hash, xn);
             if (!sk_X509_NAME_push(ret, xn))
                 goto err;
         }
