@@ -110,5 +110,5 @@ __owur int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
 __owur int tls1_cbc_remove_padding(const SSL *s,
                                    SSL3_RECORD *rec,
                                    unsigned block_size, unsigned mac_size);
-int dtls1_process_record(SSL *s);
+int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap);
 __owur int dtls1_get_record(SSL *s);

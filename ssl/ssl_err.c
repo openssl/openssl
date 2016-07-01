@@ -32,6 +32,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_DTLS1_CHECK_TIMEOUT_NUM), "dtls1_check_timeout_num"},
     {ERR_FUNC(SSL_F_DTLS1_HEARTBEAT), "dtls1_heartbeat"},
     {ERR_FUNC(SSL_F_DTLS1_PREPROCESS_FRAGMENT), "dtls1_preprocess_fragment"},
+    {ERR_FUNC(SSL_F_DTLS1_PROCESS_BUFFERED_RECORDS),
+     "dtls1_process_buffered_records"},
     {ERR_FUNC(SSL_F_DTLS1_PROCESS_RECORD), "dtls1_process_record"},
     {ERR_FUNC(SSL_F_DTLS1_READ_BYTES), "dtls1_read_bytes"},
     {ERR_FUNC(SSL_F_DTLS1_READ_FAILED), "dtls1_read_failed"},
