@@ -14,7 +14,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_fuzz");
 
-my @fuzzers = ('asn1', 'asn1parse', 'bignum', 'bndiv', 'cms', 'conf', 'ct', 'server');
+my @fuzzers = ('asn1', 'asn1parse', 'bignum', 'bndiv', 'cms', 'conf', 'crl', 'ct', 'server', 'x509');
 plan tests => scalar @fuzzers;
 
 foreach my $f (@fuzzers) {
