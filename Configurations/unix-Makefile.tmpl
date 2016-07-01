@@ -628,7 +628,7 @@ install_html_docs:
 	OUTTOP="$(DESTDIR)$(HTMLDIR)"; \
 	GENERATE="pod2html --podroot=$(SRCDIR)/doc --htmldir=.. \
 			   --podpath=apps:crypto:ssl --title=\$$Name \
-		  | sed -e 's|href=\"http://man.he.net/man|href=\"../man|g'"; \
+		  | perl -pe 's|href=\"http://man.he.net/man|href=\"../man|g; s|href=\"(.*/man.*)(?<!\.html)\">|href=\"\$$1.html\">|g;'"; \
 	$(PROCESS_PODS)
 
 uninstall_html_docs:
