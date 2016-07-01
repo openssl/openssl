@@ -16,8 +16,8 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
     SSL_CTX *serverctx = NULL;
     SSL_CTX *clientctx = NULL;
 
-    serverctx = SSL_CTX_new(TLS_server_method());
-    clientctx = SSL_CTX_new(TLS_client_method());
+    serverctx = SSL_CTX_new(sm);
+    clientctx = SSL_CTX_new(cm);
     if (serverctx == NULL || clientctx == NULL) {
         printf("Failed to create SSL_CTX\n");
         goto err;
