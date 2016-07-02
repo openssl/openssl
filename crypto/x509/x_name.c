@@ -173,12 +173,26 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
         for (j = 0; j < sk_X509_NAME_ENTRY_num(entries); j++) {
             entry = sk_X509_NAME_ENTRY_value(entries, j);
             entry->set = i;
-            if (!sk_X509_NAME_ENTRY_push(nm.x->entries, entry))
+            if (!sk_X509_NAME_ENTRY_push(nm.x->entries, entry)) {
+                /*
+                 * Free all in entries if sk_X509_NAME_ENTRY_push return failure.
+                 * X509_NAME_ENTRY_free will check the null entry.
+                 */
+                sk_X509_NAME_ENTRY_pop_free(entries, X509_NAME_ENTRY_free);
                 goto err;
+            }
+            /*
+             * If sk_X509_NAME_ENTRY_push return success, clean the entries[j].
+             * It's necessary when 'goto err;' happens.
+             */
+            sk_X509_NAME_ENTRY_set(entries, j, NULL);
         }
         sk_X509_NAME_ENTRY_free(entries);
+        sk_STACK_OF_X509_NAME_ENTRY_set(intname.s, i, NULL);
     }
+
     sk_STACK_OF_X509_NAME_ENTRY_free(intname.s);
+    intname.s = NULL;
     ret = x509_name_canon(nm.x);
     if (!ret)
         goto err;
@@ -186,8 +200,10 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     *val = nm.a;
     *in = p;
     return ret;
+
  err:
     X509_NAME_free(nm.x);
+    sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s, sk_X509_NAME_ENTRY_free);
     ASN1err(ASN1_F_X509_NAME_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
     return 0;
 }
