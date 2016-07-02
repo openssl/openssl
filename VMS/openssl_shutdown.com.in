@@ -36,7 +36,10 @@ $	DEAS OSSL$LIB'v'
 $	DEAS OSSL$SHARE'v'
 $	DEAS OSSL$ENGINES'v'
 $	DEAS OSSL$EXE'v'
-$       {- join("\n\$       ", map { my $x = uc $_; "DEAS ${x}'v'" } @{$config{shared_libs}}) -}
+$	DEAS OSSL$LIBCRYPTO'pz''v'
+$	DEAS OSSL$LIBSSL'pz''v'
+$	DEAS OSSL$LIBCRYPTO'sv'_SHR'pz'
+$	DEAS OSSL$LIBSSL'sv'_SHR'pz'
 $	IF P2 .NES. "NOALIASES"
 $	THEN
 $	    DEAS OSSL$ROOT
@@ -46,7 +49,10 @@ $	    DEAS OSSL$SHARE
 $	    DEAS OSSL$ENGINES
 $	    DEAS OSSL$EXE
 $	    DEAS OPENSSL
-$           {- join("\n\$           ", map { my $x = uc $_; "DEAS ${x}" } @{$config{shared_libs}}) -}
+$	    DEAS OSSL$LIBCRYPTO'pz'
+$	    DEAS OSSL$LIBSSL'pz'
+$	    DEAS OSSL$LIBCRYPTO_SHR'pz'
+$	    DEAS OSSL$LIBSSL_SHR'pz'
 $	ENDIF
 $
 $	EXIT 'status'

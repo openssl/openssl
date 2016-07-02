@@ -579,7 +579,7 @@ EOF
       my $shlib = $args{shlib};
       my $libd = dirname($lib);
       my $libn = basename($lib);
-      (my $mkdef_key = $libn) =~ s/^${osslprefix_q}lib//i;
+      (my $mkdef_key = $libn) =~ s/^${osslprefix_q}lib([^0-9]*)\d*/$1/i;
       my @deps = map {
           $disabled{shared} ? $_.".OLB"
               : $unified_info{sharednames}->{$_}.".EXE"; } @{$args{deps}};
