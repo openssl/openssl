@@ -24,14 +24,11 @@ $	    arch := F$EDIT(F$GETSYI("ARCH_NAME"),"UPCASE")
 $	    IF arch .EQS. "" THEN GOTO unknown_arch
 $	ENDIF
 $
-$	! Generated information
-$	VERSION := {- $config{version} -}
-$	INSTALLTOP := {- $config{INSTALLTOP} -}
-$	POINTER_SIZE = {- $config{pointersize} -}
-$
 $	! Abbrevs
 $	DEAS := DEASSIGN /NOLOG 'P1'
-$	v    =  VERSION - "." - "."
+$	v    := {- sprintf "%02d%02d", split(/\./, $config{version}) -}
+$	sv   := {- sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor} -}
+$	pz   := {- $config{pointer_size} -}
 $
 $	DEAS OSSL$ROOT'v'
 $	DEAS OSSL$INCLUDE'v'

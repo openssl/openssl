@@ -436,18 +436,14 @@ vmsconfig.pm : configdata.pm
         WRITE CONFIG "our @ISA = qw(Exporter);"
         WRITE CONFIG "our @EXPORT = qw(%config %target %withargs %unified_info %disabled);"
         WRITE CONFIG "our %config = ("
-        WRITE CONFIG "  target => '{- $config{target} -}',"
-        WRITE CONFIG "  version => '$(MAJOR).$(MINOR)',"
+        WRITE CONFIG "  target => '","{- $config{target} -}","',"
+        WRITE CONFIG "  version => '","{- $config{version} -}","',"
+        WRITE CONFIG "  shlib_major => '","{- $config{shlib_major} -}","',"
+        WRITE CONFIG "  shlib_minor => '","{- $config{shlib_minor} -}","',"
         WRITE CONFIG "  no_shared => '","{- $disabled{shared} -}","',"
         WRITE CONFIG "  INSTALLTOP => '$(INSTALLTOP)',"
         WRITE CONFIG "  OPENSSLDIR => '$(OPENSSLDIR)',"
-        WRITE CONFIG "  pointersize => '","{- $target{pointersize} -}","',"
-        WRITE CONFIG "  shared_libs => ["
-        {- $disabled{shared}
-           ? "\@ !"
-           : join("\n        ", map { "WRITE CONFIG \"    '$_'," } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}})
-        -}
-        WRITE CONFIG "  ],"
+        WRITE CONFIG "  pointer_size => '","{- $target{pointer_size} -}","',"
         WRITE CONFIG ");"
         WRITE CONFIG "our %target = ();"
         WRITE CONFIG "our %disabled = ();"
