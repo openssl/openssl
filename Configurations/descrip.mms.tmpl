@@ -302,6 +302,9 @@ install : install_sw install_ssldirs install_docs
                     WRITE SYS$OUTPUT "then run @$(SYSTARTUP)openssl_utils to define commands" ; -
                     WRITE SYS$OUTPUT "" )
 
+check_install :
+        spawn/nolog @ossl_installroot:[SYSTEST]openssl_ivp.com
+
 uninstall : uninstall_docs uninstall_sw
 
 # Because VMS wants the generation number (or *) to delete files, we can't
@@ -345,9 +348,9 @@ descrip.mms : FORCE
 
 # Install helper targets #############################################
 
-install_sw : all install_dev install_engines install_runtime install_startup
+install_sw : all install_dev install_engines install_runtime install_startup install_ivp
 
-uninstall_sw : uninstall_dev uninstall_engines uninstall_runtime uninstall_startup
+uninstall_sw : uninstall_dev uninstall_engines uninstall_runtime uninstall_startup uninstall_ivp
 
 install_docs : install_html_docs
 
@@ -411,6 +414,10 @@ install_startup : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
         COPY/PROT=W:RE [.VMS]openssl_shutdown.com ossl_installroot:[SYS$STARTUP]
         COPY/PROT=W:RE [.VMS]openssl_utils.com ossl_installroot:[SYS$STARTUP]
 
+install_ivp : [.VMS]openssl_ivp.com check_INSTALLTOP
+        - CREATE/DIR ossl_installroot:[SYSTEST]
+        COPY/PROT=W:RE [.VMS]openssl_ivp.com ossl_installroot:[SYSTEST]
+
 [.VMS]openssl_startup.com : vmsconfig.pm {- sourcefile("VMS", "openssl_startup.com.in") -}
         - CREATE/DIR [.VMS]
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
@@ -428,6 +435,12 @@ install_startup : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
                 {- sourcefile("VMS", "openssl_shutdown.com.in") -} -
                 > [.VMS]openssl_shutdown.com
+
+[.VMS]openssl_ivp.com : vmsconfig.pm {- sourcefile("VMS", "openssl_ivp.com.in") -}
+        - CREATE/DIR [.VMS]
+        $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
+                {- sourcefile("VMS", "openssl_ivp.com.in") -} -
+                > [.VMS]openssl_ivp.com
 
 vmsconfig.pm : configdata.pm
         OPEN/WRITE/SHARE=READ CONFIG []vmsconfig.pm
