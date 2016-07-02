@@ -722,7 +722,14 @@
                 variable can be set to the directory where these files are held.
 
  PERL
-                The name of the Perl executable to use.
+                The name of the Perl executable to use when building OpenSSL.
+
+ HASHBANGPERL
+                The command string for the Perl executable to insert in the
+                #! line of perl scripts that will be publically installed.
+                Default: /usr/bin/env perl
+                Note: the value of this variable is added to the same scripts
+                on all platforms, but it's only relevant on Unix-like platforms.
 
  RC
                 The name of the rc executable to use. The default will be as
