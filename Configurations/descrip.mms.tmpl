@@ -388,7 +388,8 @@ install_runtime : check_INSTALLTOP
         @ WRITE SYS$OUTPUT "*** Installing runtime files"
         @ ! Install the main program
         - CREATE/DIR ossl_installroot:[EXE.'arch']
-        COPY/PROT=W:RE [.APPS]openssl.EXE ossl_installroot:[EXE.'arch']
+        COPY/PROT=W:RE [.APPS]openssl.EXE -
+                ossl_installroot:[EXE.'arch']openssl{- sprintf "%02d%02d", split(/\./, $config{version}) -}.EXE
         @ ! Install scripts
         - CREATE/DIR ossl_installroot:[EXE]
         COPY/PROT=W:RE $(BIN_SCRIPTS) ossl_installroot:[EXE]
@@ -404,7 +405,7 @@ install_engines : check_INSTALLTOP
         @ {- output_on() unless scalar @{$unified_info{engines}}; "" -} !
 
 install_startup : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
-                 check_INSTALLTOP
+                 [.VMS]openssl_utils.com, check_INSTALLTOP
         - CREATE/DIR ossl_installroot:[SYS$STARTUP]
         COPY/PROT=W:RE -
                 [.VMS]openssl_startup.com,openssl_startup.com -
@@ -412,15 +413,19 @@ install_startup : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
         COPY/PROT=W:RE -
                 [.VMS]openssl_startup.com,openssl_shutdown.com -
                 ossl_installroot:[SYS$STARTUP]
-        COPY/PROT=W:RE -
-                {- sourcefile("VMS", "openssl_utils.com") -} -
-                ossl_installroot:[SYS$STARTUP]
+        COPY/PROT=W:RE [.VMS]openssl_utils.com ossl_installroot:[SYS$STARTUP]
 
 [.VMS]openssl_startup.com : vmsconfig.pm {- sourcefile("VMS", "openssl_startup.com.in") -}
         - CREATE/DIR [.VMS]
         $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
                 {- sourcefile("VMS", "openssl_startup.com.in") -} -
                 > [.VMS]openssl_startup.com
+
+[.VMS]openssl_utils.com : vmsconfig.pm {- sourcefile("VMS", "openssl_utils.com.in") -}
+        - CREATE/DIR [.VMS]
+        $(PERL) "-I." "-Mvmsconfig" {- sourcefile("util", "dofile.pl") -} -
+                {- sourcefile("VMS", "openssl_utils.com.in") -} -
+                > [.VMS]openssl_utils.com
 
 [.VMS]openssl_shutdown.com : vmsconfig.pm {- sourcefile("VMS", "openssl_shutdown.com.in") -}
         - CREATE/DIR [.VMS]
