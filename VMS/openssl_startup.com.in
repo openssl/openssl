@@ -51,10 +51,8 @@ $	    IF arch .EQS. "" THEN GOTO unknown_arch
 $	ENDIF
 $
 $	! Generated information
-$	VERSION := {- $config{version} -}
 $	INSTALLTOP := {- $config{INSTALLTOP} -}
 $	OPENSSLDIR := {- $config{OPENSSLDIR} -}
-$	POINTER_SIZE := {- $config{pointersize} -}
 $
 $	! Make sure that INSTALLTOP and OPENSSLDIR become something one
 $	! can build concealed logical names on
@@ -82,7 +80,9 @@ $
 $	! Abbrevs
 $	DEFT := DEFINE /TRANSLATION=CONCEALED /NOLOG 'P1'
 $	DEF  := DEFINE /NOLOG 'P1'
-$	v    =  VERSION - "." - "."
+$	v    := {- sprintf "%02d%02d", split(/\./, $config{version}) -}
+$	sv   := {- sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor} -}
+$	pz   := {- $config{pointer_size} -}
 $
 $	DEFT OSSL$INSTROOT'v'	'INSTALLTOP_'
 $	DEFT OSSL$INCLUDE'v'	OSSL$INSTROOT:[INCLUDE.]
