@@ -31,11 +31,11 @@ ENDIF
 # VMS has a cultural standard where all libraries are prefixed.
 # For OpenSSL, the choice is 'ossl$' (this prefix was claimed in a
 # conversation with VSI, Tuesday January 26 2016)
-# Also, it seems it's usual to have a suffix to the shared library name
-# for the different pointer sizes that were built for.
+# Also, it seems it's usual to have the pointer size the libraries
+# were built for as part of the name.
 IF[{- $config{target} =~ /^vms/ -}]
- RENAME[libcrypto]=ossl$libcrypto
- RENAME[libssl]=ossl$libssl
- SHARED_NAME[libcrypto]=ossl$libcrypto_shr{- $target{pointer_size} -}
- SHARED_NAME[libssl]=ossl$libssl_shr{- $target{pointer_size} -}
+ RENAME[libcrypto]=ossl$libcrypto{- $target{pointer_size} -}
+ RENAME[libssl]=ossl$libssl{- $target{pointer_size} -}
+ SHARED_NAME[libcrypto]=ossl$libcrypto{- sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor} -}_shr{- $target{pointer_size} -}
+ SHARED_NAME[libssl]=ossl$libssl{- sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor} -}_shr{- $target{pointer_size} -}
 ENDIF
