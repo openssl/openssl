@@ -141,9 +141,9 @@ MISC_SCRIPTS=[.apps]CA.pl, [.apps]tsget.pl
 DESTDIR=
 
 # Do not edit this manually. Use Configure --prefix=DIR to change this!
-INSTALLTOP={- (my $x = $config{version}) =~ s|\.|_|g;
+INSTALLTOP={- my $x = sprintf "%02d%02d", split(/\./, $config{version});
               our $installtop =
-                  catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL-$x]";
+                  catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL$x]";
               $installtop -}
 SYSTARTUP={- catdir($installtop, '[.SYS$STARTUP]'); -}
 # This is the standard central area to store certificates, private keys...
@@ -407,12 +407,8 @@ install_engines : check_INSTALLTOP
 install_startup : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                  [.VMS]openssl_utils.com, check_INSTALLTOP
         - CREATE/DIR ossl_installroot:[SYS$STARTUP]
-        COPY/PROT=W:RE -
-                [.VMS]openssl_startup.com,openssl_startup.com -
-                ossl_installroot:[SYS$STARTUP]
-        COPY/PROT=W:RE -
-                [.VMS]openssl_startup.com,openssl_shutdown.com -
-                ossl_installroot:[SYS$STARTUP]
+        COPY/PROT=W:RE [.VMS]openssl_startup.com ossl_installroot:[SYS$STARTUP]
+        COPY/PROT=W:RE [.VMS]openssl_shutdown.com ossl_installroot:[SYS$STARTUP]
         COPY/PROT=W:RE [.VMS]openssl_utils.com ossl_installroot:[SYS$STARTUP]
 
 [.VMS]openssl_startup.com : vmsconfig.pm {- sourcefile("VMS", "openssl_startup.com.in") -}

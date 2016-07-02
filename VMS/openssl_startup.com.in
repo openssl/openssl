@@ -57,11 +57,11 @@ $
 $	! Make sure that INSTALLTOP and OPENSSLDIR become something one
 $	! can build concealed logical names on
 $	INSTALLTOP_ = F$PARSE("A.;",INSTALLTOP,,,"NO_CONCEAL") -
-		     - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
 $	OPENSSLDIR_ = F$PARSE("A.;",OPENSSLDIR,,,"NO_CONCEAL") -
-		     - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
-$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_INSTALLTOP 'INSTALLTOP_'
-$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_OPENSSLDIR 'OPENSSLDIR_'
+		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
+$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_INSTALLTOP 'INSTALLTOP_']
+$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_OPENSSLDIR 'OPENSSLDIR_']
 $
 $	! Check that things are in place, and specifically, the stuff
 $	! belonging to this architecture
@@ -84,8 +84,8 @@ $	v    := {- sprintf "%02d%02d", split(/\./, $config{version}) -}
 $	sv   := {- sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor} -}
 $	pz   := {- $config{pointer_size} -}
 $
-$	DEFT OSSL$INSTROOT'v'		'INSTALLTOP_'
-$	DEFT OSSL$INCLUDE'v'		OSSL$INSTROOT'v':[INCLUDE.]
+$	DEFT OSSL$INSTROOT'v'		'INSTALLTOP_']
+$	DEFT OSSL$INCLUDE'v'		'INSTALLTOP_'INCLUDE.]
 $	DEF  OSSL$LIB'v'		OSSL$INSTROOT'v':[LIB.'arch']
 $	DEF  OSSL$SHARE'v'		OSSL$INSTROOT'v':[LIB.'arch']
 $	DEF  OSSL$ENGINES'v'		OSSL$INSTROOT'v':[ENGINES.'arch']
@@ -109,7 +109,7 @@ $	    DEF OSSL$LIBSSL_SHR'pz'	OSSL$LIBSSL'sv'_SHR'pz'
 $	    DEF OPENSSL			OSSL$INCLUDE:[OPENSSL]
 $	ENDIF
 $
-$	DEFT OSSL$DATAROOT	'OPENSSLDIR_'
+$	DEFT OSSL$DATAROOT	'OPENSSLDIR_']
 $	DEF  OSSL$CERTS		OSSL$DATAROOT:[CERTS]
 $	DEF  OSSL$PRIVATE	OSSL$DATAROOT:[PRIVATE]
 $
