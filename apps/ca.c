@@ -1374,7 +1374,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 {
     X509_NAME *name = NULL, *CAname = NULL, *subject = NULL, *dn_subject =
         NULL;
-    ASN1_UTCTIME *tm, *tmptm;
+    ASN1_UTCTIME *tm;
     ASN1_STRING *str, *str2;
     ASN1_OBJECT *obj;
     X509 *ret = NULL;
@@ -1388,12 +1388,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     OPENSSL_STRING *irow = NULL;
     OPENSSL_STRING *rrow = NULL;
     char buf[25];
-
-    tmptm = ASN1_UTCTIME_new();
-    if (tmptm == NULL) {
-        BIO_printf(bio_err, "malloc error\n");
-        return (0);
-    }
 
     for (i = 0; i < DB_NUMBER; i++)
         row[i] = NULL;
@@ -1530,7 +1524,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                 j = X509_NAME_get_index_by_OBJ(CAname, obj, last2);
                 if ((j < 0) && (last2 == -1)) {
                     BIO_printf(bio_err,
-                               "The %s field does not exist in the CA certificate,\nthe 'policy' is misconfigured\n",
+                               "The %s field does not exist in the CA certificate,\n"
+                               "the 'policy' is misconfigured\n",
                                cv->name);
                     goto end;
                 }
@@ -1544,7 +1539,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                 }
                 if (j < 0) {
                     BIO_printf(bio_err,
-                               "The %s field needed to be the same in the\nCA certificate (%s) and the request (%s)\n",
+                               "The %s field is different between\n"
+                               "CA certificate (%s) and the request (%s)\n",
                                cv->name,
                                ((str2 == NULL) ? "NULL" : (char *)str2->data),
                                ((str == NULL) ? "NULL" : (char *)str->data));
@@ -1863,7 +1859,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     X509_NAME_free(subject);
     if (dn_subject != subject)
         X509_NAME_free(dn_subject);
-    ASN1_UTCTIME_free(tmptm);
     if (ok <= 0)
         X509_free(ret);
     else
