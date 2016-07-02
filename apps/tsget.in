@@ -1,4 +1,4 @@
-#!{- $config{perl} -}
+#!{- $config{hashbangperl} -}
 # Copyright (c) 2002 The OpenTSA Project. All rights reserved.
 # Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
