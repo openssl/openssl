@@ -913,7 +913,11 @@ $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
     if $config{cross_compile_prefix} eq "";
 
 # Allow overriding the names of some tools.  USE WITH CARE
+# Note: only Unix cares about HASHBANGPERL...  that explains
+# the default string.
 $config{perl} =    $ENV{'PERL'}    || ($^O ne "VMS" ? $^X : "perl");
+$config{hashbangperl} =
+    $ENV{'HASHBANGPERL'}           || $ENV{'PERL'}     || "/usr/bin/env perl";
 $target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
 $target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  ||
                    (which("$config{cross_compile_prefix}ranlib") ?
