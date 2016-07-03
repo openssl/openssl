@@ -651,6 +651,10 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
             if (nc) {
                 int rv = NAME_CONSTRAINTS_check(x, nc);
 
+                /* If EE certificate check commonName too */
+                if (rv == X509_V_OK && i == 0)
+                    rv = NAME_CONSTRAINTS_check_CN(x, nc);
+
                 switch (rv) {
                 case X509_V_OK:
                     break;
