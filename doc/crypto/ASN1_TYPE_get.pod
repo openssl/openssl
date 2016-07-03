@@ -9,7 +9,7 @@ functions
 
  #include <openssl/asn1.h>
 
- int ASN1_TYPE_get(ASN1_TYPE *a);
+ int ASN1_TYPE_get(const ASN1_TYPE *a);
  void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value);
  int ASN1_TYPE_set1(ASN1_TYPE *a, int type, const void *value);
  int ASN1_TYPE_cmp(const ASN1_TYPE *a, const ASN1_TYPE *b);
