@@ -19,9 +19,9 @@ ASN1_STRING utility functions
 
  int ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
 
- int ASN1_STRING_type(ASN1_STRING *x);
+ int ASN1_STRING_type(const ASN1_STRING *x);
 
- int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
+ int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in);
 
 =head1 DESCRIPTION
 

@@ -27,7 +27,7 @@ int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
 }
 
 /* int max_len:  for returned value    */
-int ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data, int max_len)
+int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_len)
 {
     int ret, num;
     unsigned char *p;
@@ -80,7 +80,7 @@ int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
  * we return the actual length...
  */
 /* int max_len:  for returned value    */
-int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num,
+int ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *a, long *num,
                                   unsigned char *data, int max_len)
 {
     asn1_int_oct *atmp = NULL;

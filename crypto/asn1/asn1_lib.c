@@ -354,7 +354,7 @@ void ASN1_STRING_length_set(ASN1_STRING *x, int len)
     x->length = len;
 }
 
-int ASN1_STRING_type(ASN1_STRING *x)
+int ASN1_STRING_type(const ASN1_STRING *x)
 {
     return x->type;
 }

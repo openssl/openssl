@@ -516,7 +516,7 @@ typedef struct BIT_STRING_BITNAME_st {
 
 DECLARE_ASN1_FUNCTIONS_fname(ASN1_TYPE, ASN1_ANY, ASN1_TYPE)
 
-int ASN1_TYPE_get(ASN1_TYPE *a);
+int ASN1_TYPE_get(const ASN1_TYPE *a);
 void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value);
 int ASN1_TYPE_set1(ASN1_TYPE *a, int type, const void *value);
 int ASN1_TYPE_cmp(const ASN1_TYPE *a, const ASN1_TYPE *b);
@@ -549,7 +549,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
 int ASN1_STRING_length(const ASN1_STRING *x);
 void ASN1_STRING_length_set(ASN1_STRING *x, int n);
-int ASN1_STRING_type(ASN1_STRING *x);
+int ASN1_STRING_type(const ASN1_STRING *x);
 unsigned char *ASN1_STRING_data(ASN1_STRING *x);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_BIT_STRING)
@@ -723,7 +723,7 @@ int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x);
 int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
 # endif
 
-int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in);
+int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in);
 
 void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x);
 
@@ -765,10 +765,10 @@ const char *ASN1_tag2str(int tag);
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s);
 
 int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len);
-int ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data, int max_len);
+int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_len);
 int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num,
                                   unsigned char *data, int len);
-int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num,
+int ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *a, long *num,
                                   unsigned char *data, int max_len);
 
 void *ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it);

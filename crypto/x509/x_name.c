@@ -35,7 +35,7 @@ static void x509_name_ex_free(ASN1_VALUE **val, const ASN1_ITEM *it);
 
 static int x509_name_encode(X509_NAME *a);
 static int x509_name_canon(X509_NAME *a);
-static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in);
+static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in);
 static int i2d_name_canon(STACK_OF(STACK_OF_X509_NAME_ENTRY) * intname,
                           unsigned char **in);
 
@@ -380,7 +380,7 @@ static int x509_name_canon(X509_NAME *a)
         | B_ASN1_PRINTABLESTRING | B_ASN1_T61STRING | B_ASN1_IA5STRING \
         | B_ASN1_VISIBLESTRING)
 
-static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in)
+static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
 {
     unsigned char *to, *from;
     int len, i;
