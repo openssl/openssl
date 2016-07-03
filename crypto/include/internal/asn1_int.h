@@ -89,3 +89,5 @@ struct asn1_pctx_st {
     unsigned long oid_flags;
     unsigned long str_flags;
 } /* ASN1_PCTX */ ;
+
+int asn1_valid_host(const ASN1_STRING *host);

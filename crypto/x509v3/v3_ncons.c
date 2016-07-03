@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/asn1_int.h"
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
@@ -224,6 +225,51 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 
     return X509_V_OK;
 
+}
+
+int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
+{
+    int r, i;
+    X509_NAME *nm;
+
+    ASN1_STRING stmp;
+    GENERAL_NAME gntmp;
+    stmp.flags = 0;
+    stmp.type = V_ASN1_IA5STRING;
+    gntmp.type = GEN_DNS;
+    gntmp.d.dNSName = &stmp;
+
+    nm = X509_get_subject_name(x);
+
+    /* Process any commonName attributes in subject name */
+
+    for (i = -1;;) {
+        X509_NAME_ENTRY *ne;
+        ASN1_STRING *hn;
+        i = X509_NAME_get_index_by_NID(nm, NID_commonName, i);
+        if (i == -1)
+            break;
+        ne = X509_NAME_get_entry(nm, i);
+        hn = X509_NAME_ENTRY_get_data(ne);
+        /* Only process attributes that look like host names */
+        if (asn1_valid_host(hn)) {
+            unsigned char *h;
+            int hlen = ASN1_STRING_to_UTF8(&h, hn);
+            if (hlen <= 0)
+                return X509_V_ERR_OUT_OF_MEM;
+
+            stmp.length = hlen;
+            stmp.data = h;
+
+            r = nc_match(&gntmp, nc);
+
+            OPENSSL_free(h);
+
+            if (r != X509_V_OK)
+                    return r;
+        }
+    }
+    return X509_V_OK;
 }
 
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
