@@ -84,6 +84,11 @@ The test section supports the following options:
   - No - a session ticket is not expected
   - Broken - a special test case where the session ticket callback does not initialize crypto
 
+* ServerNPNProtocols, Server2NPNProtocols, ClientNPNProtocols, ExpectedNPNProtocol,
+  ServerALPNProtocols, Server2ALPNProtocols, ClientALPNProtocols, ExpectedALPNProtocol -
+  NPN and ALPN settings. Server and client protocols can be specified as a comma-separated list,
+  and a callback with the recommended behaviour will be installed automatically.
+
 ## Configuring the client and server
 
 The client and server configurations can be any valid `SSL_CTX`

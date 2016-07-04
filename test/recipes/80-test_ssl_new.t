@@ -36,6 +36,7 @@ my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
 
 my $no_tls = alldisabled(available_protocols("tls"));
 my $no_dtls = alldisabled(available_protocols("dtls"));
+my $no_npn = disabled("nextprotoneg");
 
 my %conf_dependent_tests = (
   "02-protocol-version.conf" => !$is_default_tls,
@@ -46,6 +47,7 @@ my %conf_dependent_tests = (
 # Default is $no_tls but some tests have different skip conditions.
 my %skip = (
   "05-dtls-protocol-version.conf" => $no_dtls,
+  "08-npn.conf" => $no_tls || $no_npn,
 );
 
 foreach my $conf (@conf_files) {
@@ -58,7 +60,7 @@ foreach my $conf (@conf_files) {
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 7;  # = scalar @conf_srcs
+plan tests => 9;  # = scalar @conf_srcs
 
 sub test_conf {
     plan tests => 3;

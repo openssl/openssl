@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "e_os.h"
 
 /*
@@ -88,4 +89,21 @@ int run_tests(const char *test_prog_name)
     }
     printf("  All tests passed.\n");
     return EXIT_SUCCESS;
+}
+
+static const char *print_string_maybe_null(const char *s)
+{
+    return s == NULL ? "(NULL)" : s;
+}
+
+int strings_equal(const char *desc, const char *s1, const char *s2)
+{
+    if (s1 == NULL && s2 == NULL)
+      return 1;
+    if (s1 == NULL || s2 == NULL || strcmp(s1, s2) != 0) {
+        fprintf(stderr, "%s mismatch: %s vs %s\n", desc, print_string_maybe_null(s1),
+                print_string_maybe_null(s2));
+        return 0;
+    }
+    return 1;
 }

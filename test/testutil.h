@@ -84,4 +84,13 @@ void add_test(const char *test_case_name, int (*test_fn) ());
 void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num);
 int run_tests(const char *test_prog_name);
 
+/*
+ *  Test assumption verification helpers.
+ */
+
+/*
+ * Returns 1 if |s1| and |s2| are both NULL or equal.
+ * Otherwise, returns 0 and pretty-prints diagnostics using |desc|.
+ */
+int strings_equal(const char *desc, const char *s1, const char *s2);
 #endif                          /* HEADER_TESTUTIL_H */
