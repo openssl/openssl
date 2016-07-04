@@ -79,7 +79,7 @@ my $client_sess="client.ss";
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
-    + 12			# For the first testssl
+    + 11			# For the first testssl
     ;
 
 subtest 'test_ss' => sub {
@@ -529,19 +529,14 @@ sub testssl {
     subtest 'Next Protocol Negotiation Tests' => sub {
 	######################################################################
 
-	plan tests => 7;
+	plan tests => 2;
 
       SKIP: {
-	  skip "TLSv1.0 is not supported by this OpenSSL build", 7
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 2
 	      if $no_tls1;
-	  skip "Next Protocol Negotiation is not supported by this OpenSSL build", 7
+	  skip "Next Protocol Negotiation is not supported by this OpenSSL build", 2
 	      if disabled("nextprotoneg");
 
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_server"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_server_reject"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server_reject"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server", "-num", "2"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server", "-num", "2", "-reuse"])));
 	}
@@ -576,47 +571,6 @@ sub testssl {
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_tack"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
-	}
-    };
-
-    subtest 'ALPN tests' => sub {
-	######################################################################
-
-	plan tests => 13;
-
-      SKIP: {
-	  skip "TLSv1.0 is not supported by this OpenSSL build", 13
-	      if $no_tls1;
-
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_server", "foo"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "foo", "-alpn_expected", "foo"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo,bar", "-alpn_server", "foo", "-alpn_expected", "foo"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "foo", "-alpn_expected", "foo"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "foo,bar", "-alpn_expected", "foo"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "bar,foo", "-alpn_expected", "bar"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo,bar", "-alpn_server", "bar,foo", "-alpn_expected", "bar"])));
-
-	  is(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "bar"])), 0,
-             "Testing ALPN with protocol mismatch, expecting failure");
-	  is(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "baz", "-alpn_server", "bar,foo"])), 0,
-             "Testing ALPN with protocol mismatch, expecting failure");
-
-	  # ALPN + SNI
-	  ok(run(test([@ssltest, "-bio_pair",
-		       "-alpn_client", "foo,bar", "-sn_client", "alice",
-		       "-alpn_server1", "foo,123", "-sn_server1", "alice",
-		       "-alpn_server2", "bar,456", "-sn_server2", "bob",
-		       "-alpn_expected", "foo"])));
-	  ok(run(test([@ssltest, "-bio_pair",
-		       "-alpn_client", "foo,bar", "-sn_client", "bob",
-		       "-alpn_server1", "foo,123", "-sn_server1", "alice",
-		       "-alpn_server2", "bar,456", "-sn_server2", "bob",
-		       "-alpn_expected", "bar"])));
-	  ok(run(test([@ssltest, "-bio_pair",
-		       "-alpn_client", "foo,bar", "-sn_client", "bob",
-		       "-alpn_server2", "bar,456", "-sn_server2", "bob",
-		       "-alpn_expected", "bar"])));
 	}
     };
 

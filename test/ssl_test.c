@@ -40,23 +40,23 @@ static const char *print_alert(int alert)
     return alert ? SSL_alert_desc_string_long(alert) : "no alert";
 }
 
-static int check_result(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
+static int check_result(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (result.result != test_ctx->expected_result) {
+    if (result->result != test_ctx->expected_result) {
         fprintf(stderr, "ExpectedResult mismatch: expected %s, got %s.\n",
                 ssl_test_result_name(test_ctx->expected_result),
-                ssl_test_result_name(result.result));
+                ssl_test_result_name(result->result));
         return 0;
     }
     return 1;
 }
 
-static int check_alerts(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
+static int check_alerts(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (result.client_alert_sent != result.client_alert_received) {
+    if (result->client_alert_sent != result->client_alert_received) {
         fprintf(stderr, "Client sent alert %s but server received %s\n.",
-                print_alert(result.client_alert_sent),
-                print_alert(result.client_alert_received));
+                print_alert(result->client_alert_sent),
+                print_alert(result->client_alert_received));
         /*
          * We can't bail here because the peer doesn't always get far enough
          * to process a received alert. Specifically, in protocol version
@@ -71,10 +71,10 @@ static int check_alerts(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
         /* return 0; */
     }
 
-    if (result.server_alert_sent != result.server_alert_received) {
+    if (result->server_alert_sent != result->server_alert_received) {
         fprintf(stderr, "Server sent alert %s but client received %s\n.",
-                print_alert(result.server_alert_sent),
-                print_alert(result.server_alert_received));
+                print_alert(result->server_alert_sent),
+                print_alert(result->server_alert_received));
         /* return 0; */
     }
 
@@ -85,69 +85,93 @@ static int check_alerts(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
          * (s->s3->send_alert[0] << 8) | s->s3->send_alert[1]
          * where the low byte is the alert code and the high byte is other stuff.
          */
-        && (result.client_alert_sent & 0xff) != test_ctx->client_alert) {
+        && (result->client_alert_sent & 0xff) != test_ctx->client_alert) {
         fprintf(stderr, "ClientAlert mismatch: expected %s, got %s.\n",
                 print_alert(test_ctx->client_alert),
-                print_alert(result.client_alert_sent));
+                print_alert(result->client_alert_sent));
         return 0;
     }
 
     if (test_ctx->server_alert
-        && (result.server_alert_sent & 0xff) != test_ctx->server_alert) {
+        && (result->server_alert_sent & 0xff) != test_ctx->server_alert) {
         fprintf(stderr, "ServerAlert mismatch: expected %s, got %s.\n",
                 print_alert(test_ctx->server_alert),
-                print_alert(result.server_alert_sent));
+                print_alert(result->server_alert_sent));
         return 0;
     }
 
     return 1;
 }
 
-static int check_protocol(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
+static int check_protocol(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (result.client_protocol != result.server_protocol) {
+    if (result->client_protocol != result->server_protocol) {
         fprintf(stderr, "Client has protocol %s but server has %s\n.",
-                ssl_protocol_name(result.client_protocol),
-                ssl_protocol_name(result.server_protocol));
+                ssl_protocol_name(result->client_protocol),
+                ssl_protocol_name(result->server_protocol));
         return 0;
     }
 
     if (test_ctx->protocol) {
-        if (result.client_protocol != test_ctx->protocol) {
+        if (result->client_protocol != test_ctx->protocol) {
             fprintf(stderr, "Protocol mismatch: expected %s, got %s.\n",
                     ssl_protocol_name(test_ctx->protocol),
-                    ssl_protocol_name(result.client_protocol));
+                    ssl_protocol_name(result->client_protocol));
             return 0;
         }
     }
     return 1;
 }
 
-static int check_servername(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
+static int check_servername(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (result.servername != test_ctx->expected_servername) {
+    if (result->servername != test_ctx->expected_servername) {
       fprintf(stderr, "Client ServerName mismatch, expected %s, got %s\n.",
               ssl_servername_name(test_ctx->expected_servername),
-              ssl_servername_name(result.servername));
+              ssl_servername_name(result->servername));
       return 0;
     }
   return 1;
 }
 
-static int check_session_ticket(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
+static int check_session_ticket(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
     if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_IGNORE)
         return 1;
     if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_BROKEN &&
-        result.session_ticket == SSL_TEST_SESSION_TICKET_NO)
+        result->session_ticket == SSL_TEST_SESSION_TICKET_NO)
         return 1;
-    if (result.session_ticket != test_ctx->session_ticket_expected) {
+    if (result->session_ticket != test_ctx->session_ticket_expected) {
         fprintf(stderr, "Client SessionTicketExpected mismatch, expected %s, got %s\n.",
                 ssl_session_ticket_name(test_ctx->session_ticket_expected),
-                ssl_session_ticket_name(result.session_ticket));
+                ssl_session_ticket_name(result->session_ticket));
         return 0;
     }
     return 1;
+}
+
+static int check_npn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+{
+    int ret = 1;
+    ret &= strings_equal("NPN Negotiated (client vs server)",
+                         result->client_npn_negotiated,
+                         result->server_npn_negotiated);
+    ret &= strings_equal("ExpectedNPNProtocol",
+                         test_ctx->expected_npn_protocol,
+                         result->client_npn_negotiated);
+    return ret;
+}
+
+static int check_alpn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+{
+    int ret = 1;
+    ret &= strings_equal("ALPN Negotiated (client vs server)",
+                         result->client_alpn_negotiated,
+                         result->server_alpn_negotiated);
+    ret &= strings_equal("ExpectedALPNProtocol",
+                         test_ctx->expected_alpn_protocol,
+                         result->client_alpn_negotiated);
+    return ret;
 }
 
 /*
@@ -155,16 +179,18 @@ static int check_session_ticket(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
  * HANDSHAKE_RESULT, and implementing comparison methods for
  * its fields.
  */
-static int check_test(HANDSHAKE_RESULT result, SSL_TEST_CTX *test_ctx)
+static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
     int ret = 1;
     ret &= check_result(result, test_ctx);
     ret &= check_alerts(result, test_ctx);
-    if (result.result == SSL_TEST_SUCCESS) {
+    if (result->result == SSL_TEST_SUCCESS) {
         ret &= check_protocol(result, test_ctx);
         ret &= check_servername(result, test_ctx);
         ret &= check_session_ticket(result, test_ctx);
-        ret &= (result.session_ticket_do_not_call == 0);
+        ret &= (result->session_ticket_do_not_call == 0);
+        ret &= check_npn(result, test_ctx);
+        ret &= check_alpn(result, test_ctx);
     }
     return ret;
 }
@@ -174,7 +200,7 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
     int ret = 0;
     SSL_CTX *server_ctx = NULL, *server2_ctx = NULL, *client_ctx = NULL;
     SSL_TEST_CTX *test_ctx = NULL;
-    HANDSHAKE_RESULT result;
+    HANDSHAKE_RESULT *result = NULL;
 
     test_ctx = SSL_TEST_CTX_create(conf, fixture.test_app);
     if (test_ctx == NULL)
@@ -223,6 +249,7 @@ err:
     SSL_TEST_CTX_free(test_ctx);
     if (ret != 1)
         ERR_print_errors_fp(stderr);
+    HANDSHAKE_RESULT_free(result);
     return ret;
 }
 
