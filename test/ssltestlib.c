@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
+
 #include "ssltestlib.h"
 
 static int tls_dump_new(BIO *bi);
@@ -226,6 +228,300 @@ static int tls_dump_gets(BIO *bio, char *buf, int size)
 static int tls_dump_puts(BIO *bio, const char *str)
 {
     return tls_dump_write(bio, str, strlen(str));
+}
+
+
+typedef struct mempacket_st {
+    unsigned char *data;
+    int len;
+    unsigned int num;
+    unsigned int type;
+} MEMPACKET;
+
+DEFINE_STACK_OF(MEMPACKET)
+
+static void mempacket_free(MEMPACKET *pkt)
+{
+    if (pkt->data != NULL)
+        OPENSSL_free(pkt->data);
+    OPENSSL_free(pkt);
+}
+
+typedef struct mempacket_test_ctx_st {
+    STACK_OF(MEMPACKET) *pkts;
+    unsigned int epoch;
+    unsigned int currrec;
+    unsigned int currpkt;
+    unsigned int lastpkt;
+    unsigned int noinject;
+} MEMPACKET_TEST_CTX;
+
+static int mempacket_test_new(BIO *bi);
+static int mempacket_test_free(BIO *a);
+static int mempacket_test_read(BIO *b, char *out, int outl);
+static int mempacket_test_write(BIO *b, const char *in, int inl);
+static long mempacket_test_ctrl(BIO *b, int cmd, long num, void *ptr);
+static int mempacket_test_gets(BIO *bp, char *buf, int size);
+static int mempacket_test_puts(BIO *bp, const char *str);
+
+const BIO_METHOD *bio_s_mempacket_test(void)
+{
+    if (method_mempacket_test == NULL) {
+        method_mempacket_test = BIO_meth_new(BIO_TYPE_MEMPACKET_TEST,
+                                             "Mem Packet Test");
+        if (   method_mempacket_test == NULL
+            || !BIO_meth_set_write(method_mempacket_test, mempacket_test_write)
+            || !BIO_meth_set_read(method_mempacket_test, mempacket_test_read)
+            || !BIO_meth_set_puts(method_mempacket_test, mempacket_test_puts)
+            || !BIO_meth_set_gets(method_mempacket_test, mempacket_test_gets)
+            || !BIO_meth_set_ctrl(method_mempacket_test, mempacket_test_ctrl)
+            || !BIO_meth_set_create(method_mempacket_test, mempacket_test_new)
+            || !BIO_meth_set_destroy(method_mempacket_test, mempacket_test_free))
+            return NULL;
+    }
+    return method_mempacket_test;
+}
+
+void bio_s_mempacket_test_free(void)
+{
+    BIO_meth_free(method_mempacket_test);
+}
+
+static int mempacket_test_new(BIO *bio)
+{
+    MEMPACKET_TEST_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    if (ctx == NULL)
+        return 0;
+    ctx->pkts = sk_MEMPACKET_new_null();
+    if (ctx->pkts == NULL) {
+        OPENSSL_free(ctx);
+        return 0;
+    }
+    BIO_set_init(bio, 1);
+    BIO_set_data(bio, ctx);
+    return 1;
+}
+
+static int mempacket_test_free(BIO *bio)
+{
+    MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
+
+    sk_MEMPACKET_pop_free(ctx->pkts, mempacket_free);
+    OPENSSL_free(ctx);
+    BIO_set_data(bio, NULL);
+    BIO_set_init(bio, 0);
+
+    return 1;
+}
+
+/* Record Header values */
+#define EPOCH_HI        4
+#define EPOCH_LO        5
+#define RECORD_SEQUENCE 10
+#define RECORD_LEN_HI   11
+#define RECORD_LEN_LO   12
+
+#define STANDARD_PACKET                 0
+
+static int mempacket_test_read(BIO *bio, char *out, int outl)
+{
+    MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
+    MEMPACKET *thispkt;
+    unsigned char *rec;
+    int rem;
+    unsigned int seq, offset, len, epoch;
+
+    BIO_clear_retry_flags(bio);
+
+    thispkt = sk_MEMPACKET_value(ctx->pkts, 0);
+    if (thispkt == NULL || thispkt->num != ctx->currpkt) {
+        /* Probably run out of data */
+        BIO_set_retry_read(bio);
+        return -1;
+    }
+    sk_MEMPACKET_shift(ctx->pkts);
+    ctx->currpkt++;
+
+    if (outl > thispkt->len)
+        outl = thispkt->len;
+
+    if (thispkt->type != INJECT_PACKET_IGNORE_REC_SEQ) {
+        /*
+         * Overwrite the record sequence number. We strictly number them in
+         * the order received. Since we are actually a reliable transport
+         * we know that there won't be any re-ordering. We overwrite to deal
+         * with any packets that have been injected
+         */
+        rem = thispkt->len;
+        rec = thispkt->data;
+        while (rem > 0) {
+            if (rem < DTLS1_RT_HEADER_LENGTH) {
+                return -1;
+            }
+            epoch = (rec[EPOCH_HI] << 8) | rec[EPOCH_LO];
+            if (epoch != ctx->epoch) {
+                ctx->epoch = epoch;
+                ctx->currrec = 0;
+            }
+            seq = ctx->currrec;
+            offset = 0;
+            do {
+                rec[RECORD_SEQUENCE - offset] = seq & 0xFF;
+                seq >>= 8;
+                offset++;
+            } while (seq > 0);
+            ctx->currrec++;
+
+            len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO])
+                  + DTLS1_RT_HEADER_LENGTH;
+
+            rec += len;
+            rem -= len;
+        }
+    }
+
+    memcpy(out, thispkt->data, outl);
+
+    mempacket_free(thispkt);
+
+    return outl;
+}
+
+int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
+                          int type)
+{
+    MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
+    MEMPACKET *thispkt, *looppkt, *nextpkt;
+    int i;
+
+    if (ctx == NULL)
+        return -1;
+
+    /* We only allow injection before we've started writing any data */
+    if (pktnum >= 0) {
+        if (ctx->noinject)
+            return -1;
+    } else {
+        ctx->noinject = 1;
+    }
+
+    thispkt = OPENSSL_malloc(sizeof(MEMPACKET));
+    if (thispkt == NULL)
+        return -1;
+
+    thispkt->data = OPENSSL_malloc(inl);
+    if (thispkt->data == NULL) {
+        mempacket_free(thispkt);
+        return -1;
+    }
+
+    memcpy(thispkt->data, in, inl);
+    thispkt->len = inl;
+    thispkt->num = (pktnum >= 0) ? (unsigned int)pktnum : ctx->lastpkt;
+    thispkt->type = type;
+
+    for(i = 0; (looppkt = sk_MEMPACKET_value(ctx->pkts, i)) != NULL; i++) {
+        /* Check if we found the right place to insert this packet */
+        if (looppkt->num > thispkt->num) {
+            if (sk_MEMPACKET_insert(ctx->pkts, thispkt, i) == 0) {
+                mempacket_free(thispkt);
+                return -1;
+            }
+            /* If we're doing up front injection then we're done */
+            if (pktnum >= 0)
+                return inl;
+            /*
+             * We need to do some accounting on lastpkt. We increment it first,
+             * but it might now equal the value of injected packets, so we need
+             * to skip over those
+             */
+            ctx->lastpkt++;
+            do {
+                i++;
+                nextpkt = sk_MEMPACKET_value(ctx->pkts, i);
+                if (nextpkt != NULL && nextpkt->num == ctx->lastpkt)
+                    ctx->lastpkt++;
+                else
+                    return inl;
+            } while(1);
+        } else if(looppkt->num == thispkt->num) {
+            if (!ctx->noinject) {
+                /* We injected two packets with the same packet number! */
+                return -1;
+            }
+            ctx->lastpkt++;
+            thispkt->num++;
+        }
+    }
+    /*
+     * We didn't find any packets with a packet number equal to or greater than
+     * this one, so we just add it onto the end
+     */
+    if (!sk_MEMPACKET_push(ctx->pkts, thispkt)) {
+        mempacket_free(thispkt);
+        return -1;
+    }
+
+    if (pktnum < 0)
+        ctx->lastpkt++;
+
+    return inl;
+}
+
+static int mempacket_test_write(BIO *bio, const char *in, int inl)
+{
+    return mempacket_test_inject(bio, in, inl, -1, STANDARD_PACKET);
+}
+
+static long mempacket_test_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    long ret = 1;
+    MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
+    MEMPACKET *thispkt;
+
+    switch (cmd) {
+    case BIO_CTRL_EOF:
+        ret = (long)(sk_MEMPACKET_num(ctx->pkts) == 0);
+        break;
+    case BIO_CTRL_GET_CLOSE:
+        ret = BIO_get_shutdown(bio);
+        break;
+    case BIO_CTRL_SET_CLOSE:
+        BIO_set_shutdown(bio, (int)num);
+        break;
+    case BIO_CTRL_WPENDING:
+        ret = 0L;
+        break;
+    case BIO_CTRL_PENDING:
+        thispkt = sk_MEMPACKET_value(ctx->pkts, 0);
+        if (thispkt == NULL)
+            ret = 0;
+        else
+            ret = thispkt->len;
+        break;
+    case BIO_CTRL_FLUSH:
+        ret = 1;
+        break;
+    case BIO_CTRL_RESET:
+    case BIO_CTRL_DUP:
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
+    default:
+        ret = 0;
+        break;
+    }
+    return ret;
+}
+
+static int mempacket_test_gets(BIO *bio, char *buf, int size)
+{
+    /* We don't support this - not needed anyway */
+    return -1;
+}
+
+static int mempacket_test_puts(BIO *bio, const char *str)
+{
+    return mempacket_test_write(bio, str, strlen(str));
 }
 
 int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,

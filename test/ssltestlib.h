@@ -22,4 +22,14 @@ int create_ssl_connection(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
 const BIO_METHOD *bio_f_tls_dump_filter(void);
 void bio_f_tls_dump_filter_free(void);
 
+const BIO_METHOD *bio_s_mempacket_test(void);
+void bio_s_mempacket_test_free(void);
+
+/* Packet types - value 0 is reserved */
+#define INJECT_PACKET                   1
+#define INJECT_PACKET_IGNORE_REC_SEQ    2
+
+int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
+                          int type);
+
 #endif /* HEADER_SSLTESTLIB_H */
