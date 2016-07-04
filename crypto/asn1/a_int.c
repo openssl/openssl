@@ -595,7 +595,7 @@ int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
     return ASN1_ENUMERATED_set_int64(a, v);
 }
 
-long ASN1_ENUMERATED_get(ASN1_ENUMERATED *a)
+long ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a)
 {
     int i;
     int64_t r;
