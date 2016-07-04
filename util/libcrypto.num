@@ -4149,3 +4149,4 @@ ECDSA_SIG_set0                          4093	1_1_0	EXIST::FUNCTION:EC
 DSA_SIG_set0                            4094	1_1_0	EXIST::FUNCTION:DSA
 EVP_PKEY_get0_hmac                      4095	1_1_0	EXIST::FUNCTION:
 HMAC_CTX_get_md                         4096	1_1_0	EXIST::FUNCTION:
+NAME_CONSTRAINTS_check_CN               4097	1_1_0	EXIST::FUNCTION:
