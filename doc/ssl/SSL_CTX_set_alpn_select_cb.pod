@@ -44,7 +44,8 @@ the application callback.
 B<cb> is the application defined callback. The B<in>, B<inlen> parameters are a
 vector in protocol-list format. The value of the B<out>, B<outlen> vector
 should be set to the value of a single protocol selected from the B<in>,
-B<inlen> vector. The B<arg> parameter is the pointer set via
+B<inlen> vector. The B<out> buffer may point directly into B<in>, or to a
+buffer that outlives the handshake. The B<arg> parameter is the pointer set via
 SSL_CTX_set_alpn_select_cb().
 
 SSL_select_next_proto() is a helper function used to select protocols. It
