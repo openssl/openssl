@@ -18,4 +18,8 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
 int create_ssl_connection(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                           SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio);
 
+/* Note: Not thread safe! */
+const BIO_METHOD *bio_f_tls_dump_filter(void);
+void bio_f_tls_dump_filter_free(void);
+
 #endif /* HEADER_SSLTESTLIB_H */
