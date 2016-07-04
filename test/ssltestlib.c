@@ -567,11 +567,9 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
 /*
  * NOTE: Transfers control of the BIOs - this function will free them on error
  */
-int create_ssl_connection(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
+int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                           SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio)
 {
-    int retc = -1, rets = -1, err, abortctr = 0;
-    int clienterr = 0, servererr = 0;
     SSL *serverssl, *clientssl;
     BIO *s_to_c_bio = NULL, *c_to_s_bio = NULL;
 
@@ -589,8 +587,13 @@ int create_ssl_connection(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
         goto error;
     }
 
-    s_to_c_bio = BIO_new(BIO_s_mem());
-    c_to_s_bio = BIO_new(BIO_s_mem());
+    if (SSL_is_dtls(clientssl)) {
+        s_to_c_bio = BIO_new(bio_s_mempacket_test());
+        c_to_s_bio = BIO_new(bio_s_mempacket_test());;
+    } else {
+        s_to_c_bio = BIO_new(BIO_s_mem());
+        c_to_s_bio = BIO_new(BIO_s_mem());
+    }
     if (s_to_c_bio == NULL || c_to_s_bio == NULL) {
         printf("Failed to create mem BIOs\n");
         goto error;
@@ -620,6 +623,27 @@ int create_ssl_connection(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
     s_to_c_bio = c_to_s_bio = NULL;
     s_to_c_fbio = c_to_s_fbio = NULL;
 
+    *sssl = serverssl;
+    *cssl = clientssl;
+
+    return 1;
+
+ error:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    BIO_free(s_to_c_bio);
+    BIO_free(c_to_s_bio);
+    BIO_free(s_to_c_fbio);
+    BIO_free(c_to_s_fbio);
+
+    return 0;
+}
+
+int create_ssl_connection(SSL *serverssl, SSL *clientssl)
+{
+    int retc = -1, rets = -1, err, abortctr = 0;
+    int clienterr = 0, servererr = 0;
+
     do {
         err = SSL_ERROR_WANT_WRITE;
         while (!clienterr && retc <= 0 && err == SSL_ERROR_WANT_WRITE) {
@@ -645,29 +669,12 @@ int create_ssl_connection(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
             servererr = 1;
         }
         if (clienterr && servererr)
-            goto error;
+            return 0;
         if (++abortctr == MAXLOOPS) {
             printf("No progress made\n");
-            goto error;
+            return 0;
         }
     } while (retc <=0 || rets <= 0);
 
-    *sssl = serverssl;
-    *cssl = clientssl;
-
     return 1;
-
- error:
-    if (*sssl == NULL) {
-        SSL_free(serverssl);
-        BIO_free(s_to_c_bio);
-        BIO_free(s_to_c_fbio);
-    }
-    if (*cssl == NULL) {
-        SSL_free(clientssl);
-        BIO_free(c_to_s_bio);
-        BIO_free(c_to_s_fbio);
-    }
-
-    return 0;
 }

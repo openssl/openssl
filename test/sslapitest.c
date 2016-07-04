@@ -122,7 +122,9 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl1 = NULL, *clientssl1 = NULL;
     SSL *serverssl2 = NULL, *clientssl2 = NULL;
+#ifndef OPENSSL_NO_TLS1_1
     SSL *serverssl3 = NULL, *clientssl3 = NULL;
+#endif
     SSL_SESSION *sess1 = NULL, *sess2 = NULL;
     int testresult = 0;
 
@@ -151,8 +153,13 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
                                        | SSL_SESS_CACHE_NO_INTERNAL_STORE);
     }
 
-    if (!create_ssl_connection(sctx, cctx, &serverssl1, &clientssl1, NULL,
+    if (!create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1, NULL,
                                NULL)) {
+        printf("Unable to create SSL objects\n");
+        goto end;
+    }
+
+    if (!create_ssl_connection(serverssl1, clientssl1)) {
         printf("Unable to create SSL connection\n");
         goto end;
     }
@@ -173,8 +180,12 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
         goto end;
     }
 
-    if (!create_ssl_connection(sctx, cctx, &serverssl2, &clientssl2, NULL,
-                               NULL)) {
+    if (!create_ssl_objects(sctx, cctx, &serverssl2, &clientssl2, NULL, NULL)) {
+        printf("Unable to create second SSL objects\n");
+        goto end;
+    }
+
+    if (!create_ssl_connection(serverssl2, clientssl2)) {
         printf("Unable to create second SSL connection\n");
         goto end;
     }
@@ -245,22 +256,23 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
 #if !defined(OPENSSL_NO_TLS1_1) && !defined(OPENSSL_NO_TLS1_2)
     /* Force a connection failure */
     SSL_CTX_set_max_proto_version(sctx, TLS1_1_VERSION);
-    clientssl3 = SSL_new(cctx);
-    if (clientssl3 == NULL) {
-        printf("Malloc failure\n");
+
+    if (!create_ssl_objects(sctx, cctx, &serverssl3, &clientssl3, NULL, NULL)) {
+        printf("Unable to create third SSL objects\n");
         goto end;
     }
+
     if (!SSL_set_session(clientssl3, sess1)) {
         printf("Unable to set session for third connection\n");
         goto end;
     }
 
     /* This should fail because of the mismatched protocol versions */
-    if (create_ssl_connection(sctx, cctx, &serverssl3, &clientssl3, NULL,
-                               NULL)) {
-        printf("Unexpected success creating SSL connection\n");
+    if (create_ssl_connection(serverssl3, clientssl3)) {
+        printf("Unable to create third SSL connection\n");
         goto end;
     }
+
 
     /* We should have automatically removed the session from the cache */
     if (fix.use_ext_cache && (new_called != 2 || remove_called != 3)) {
@@ -284,8 +296,10 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
     SSL_free(clientssl1);
     SSL_free(serverssl2);
     SSL_free(clientssl2);
+#ifndef OPENSSL_NO_TLS1_1
     SSL_free(serverssl3);
     SSL_free(clientssl3);
+#endif
     SSL_SESSION_free(sess1);
     SSL_SESSION_free(sess2);
     /*

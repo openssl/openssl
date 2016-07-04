@@ -276,8 +276,13 @@ int main(int argc, char *argv[])
         }
 
         /* BIOs get freed on error */
-        if (!create_ssl_connection(serverctx, clientctx, &serverssl, &clientssl,
-                                   s_to_c_fbio, c_to_s_fbio)) {
+        if (!create_ssl_objects(serverctx, clientctx, &serverssl, &clientssl,
+                                s_to_c_fbio, c_to_s_fbio)) {
+            printf("Test %d failed: Create SSL objects failed\n", test);
+            goto end;
+        }
+
+        if (!create_ssl_connection(serverssl, clientssl)) {
             printf("Test %d failed: Create SSL connection failed\n", test);
             goto end;
         }
