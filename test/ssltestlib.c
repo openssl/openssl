@@ -9,6 +9,225 @@
 
 #include "ssltestlib.h"
 
+static int tls_dump_new(BIO *bi);
+static int tls_dump_free(BIO *a);
+static int tls_dump_read(BIO *b, char *out, int outl);
+static int tls_dump_write(BIO *b, const char *in, int inl);
+static long tls_dump_ctrl(BIO *b, int cmd, long num, void *ptr);
+static int tls_dump_gets(BIO *bp, char *buf, int size);
+static int tls_dump_puts(BIO *bp, const char *str);
+
+/* Choose a sufficiently large type likely to be unused for this custom BIO */
+# define BIO_TYPE_TLS_DUMP_FILTER  (0x80 | BIO_TYPE_FILTER)
+
+# define BIO_TYPE_MEMPACKET_TEST      0x81
+
+static BIO_METHOD *method_tls_dump = NULL;
+static BIO_METHOD *method_mempacket_test = NULL;
+
+/* Note: Not thread safe! */
+const BIO_METHOD *bio_f_tls_dump_filter(void)
+{
+    if (method_tls_dump == NULL) {
+        method_tls_dump = BIO_meth_new(BIO_TYPE_TLS_DUMP_FILTER,
+                                        "TLS dump filter");
+        if (   method_tls_dump == NULL
+            || !BIO_meth_set_write(method_tls_dump, tls_dump_write)
+            || !BIO_meth_set_read(method_tls_dump, tls_dump_read)
+            || !BIO_meth_set_puts(method_tls_dump, tls_dump_puts)
+            || !BIO_meth_set_gets(method_tls_dump, tls_dump_gets)
+            || !BIO_meth_set_ctrl(method_tls_dump, tls_dump_ctrl)
+            || !BIO_meth_set_create(method_tls_dump, tls_dump_new)
+            || !BIO_meth_set_destroy(method_tls_dump, tls_dump_free))
+            return NULL;
+    }
+    return method_tls_dump;
+}
+
+void bio_f_tls_dump_filter_free(void)
+{
+    BIO_meth_free(method_tls_dump);
+}
+
+static int tls_dump_new(BIO *bio)
+{
+    BIO_set_init(bio, 1);
+    return 1;
+}
+
+static int tls_dump_free(BIO *bio)
+{
+    BIO_set_init(bio, 0);
+
+    return 1;
+}
+
+static void copy_flags(BIO *bio)
+{
+    int flags;
+    BIO *next = BIO_next(bio);
+
+    flags = BIO_test_flags(next, BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_RWS);
+    BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_RWS);
+    BIO_set_flags(bio, flags);
+}
+
+#define RECORD_CONTENT_TYPE     0
+#define RECORD_VERSION_HI       1
+#define RECORD_VERSION_LO       2
+#define RECORD_EPOCH_HI         3
+#define RECORD_EPOCH_LO         4
+#define RECORD_SEQUENCE_START   5
+#define RECORD_SEQUENCE_END     10
+#define RECORD_LEN_HI           11
+#define RECORD_LEN_LO           12
+
+#define MSG_TYPE                0
+#define MSG_LEN_HI              1
+#define MSG_LEN_MID             2
+#define MSG_LEN_LO              3
+#define MSG_SEQ_HI              4
+#define MSG_SEQ_LO              5
+#define MSG_FRAG_OFF_HI         6
+#define MSG_FRAG_OFF_MID        7
+#define MSG_FRAG_OFF_LO         8
+#define MSG_FRAG_LEN_HI         9
+#define MSG_FRAG_LEN_MID        10
+#define MSG_FRAG_LEN_LO         11
+
+
+static void dump_data(const char *data, int len)
+{
+    int rem, i, content, reclen, msglen, fragoff, fraglen, epoch;
+    unsigned char *rec;
+
+    printf("---- START OF PACKET ----\n");
+
+    rem = len;
+    rec = (unsigned char *)data;
+
+    while (rem > 0) {
+        if (rem != len)
+            printf("*\n");
+        printf("*---- START OF RECORD ----\n");
+        if (rem < DTLS1_RT_HEADER_LENGTH) {
+            printf("*---- RECORD TRUNCATED ----\n");
+            break;
+        }
+        content = rec[RECORD_CONTENT_TYPE];
+        printf("** Record Content-type: %d\n", content);
+        printf("** Record Version: %02x%02x\n",
+               rec[RECORD_VERSION_HI], rec[RECORD_VERSION_LO]);
+        epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
+        printf("** Record Epoch: %d\n", epoch);
+        printf("** Record Sequence: ");
+        for (i = RECORD_SEQUENCE_START; i <= RECORD_SEQUENCE_END; i++)
+            printf("%02x", rec[i]);
+        reclen = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
+        printf("\n** Record Length: %d\n", reclen);
+
+        /* Now look at message */
+        rec += DTLS1_RT_HEADER_LENGTH;
+        rem -= DTLS1_RT_HEADER_LENGTH;
+        if (content == SSL3_RT_HANDSHAKE) {
+            printf("**---- START OF HANDSHAKE MESSAGE FRAGMENT ----\n");
+            if (epoch > 0) {
+                printf("**---- HANDSHAKE MESSAGE FRAGMENT ENCRYPTED ----\n");
+            } else if (rem < DTLS1_HM_HEADER_LENGTH
+                    || reclen < DTLS1_HM_HEADER_LENGTH) {
+                printf("**---- HANDSHAKE MESSAGE FRAGMENT TRUNCATED ----\n");
+            } else {
+                printf("*** Message Type: %d\n", rec[MSG_TYPE]);
+                msglen = (rec[MSG_LEN_HI] << 16) | (rec[MSG_LEN_MID] << 8)
+                         | rec[MSG_LEN_LO];
+                printf("*** Message Length: %d\n", msglen);
+                printf("*** Message sequence: %d\n",
+                       (rec[MSG_SEQ_HI] << 8) | rec[MSG_SEQ_LO]);
+                fragoff = (rec[MSG_FRAG_OFF_HI] << 16)
+                          | (rec[MSG_FRAG_OFF_MID] << 8)
+                          | rec[MSG_FRAG_OFF_LO];
+                printf("*** Message Fragment offset: %d\n", fragoff);
+                fraglen = (rec[MSG_FRAG_LEN_HI] << 16)
+                          | (rec[MSG_FRAG_LEN_MID] << 8)
+                          | rec[MSG_FRAG_LEN_LO];
+                printf("*** Message Fragment len: %d\n", fraglen);
+                if (fragoff + fraglen > msglen)
+                    printf("***---- HANDSHAKE MESSAGE FRAGMENT INVALID ----\n");
+                else if(reclen < fraglen)
+                    printf("**---- HANDSHAKE MESSAGE FRAGMENT TRUNCATED ----\n");
+                else
+                    printf("**---- END OF HANDSHAKE MESSAGE FRAGMENT ----\n");
+            }
+        }
+        if (rem < reclen) {
+            printf("*---- RECORD TRUNCATED ----\n");
+            rem = 0;
+        } else {
+            rec += reclen;
+            rem -= reclen;
+            printf("*---- END OF RECORD ----\n");
+        }
+    }
+    printf("---- END OF PACKET ----\n\n");
+    fflush(stdout);
+}
+
+static int tls_dump_read(BIO *bio, char *out, int outl)
+{
+    int ret;
+    BIO *next = BIO_next(bio);
+
+    ret = BIO_read(next, out, outl);
+    copy_flags(bio);
+
+    if (ret > 0) {
+        dump_data(out, ret);
+    }
+
+    return ret;
+}
+
+static int tls_dump_write(BIO *bio, const char *in, int inl)
+{
+    int ret;
+    BIO *next = BIO_next(bio);
+
+    ret = BIO_write(next, in, inl);
+    copy_flags(bio);
+
+    return ret;
+}
+
+static long tls_dump_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    long ret;
+    BIO *next = BIO_next(bio);
+
+    if (next == NULL)
+        return 0;
+
+    switch (cmd) {
+    case BIO_CTRL_DUP:
+        ret = 0L;
+        break;
+    default:
+        ret = BIO_ctrl(next, cmd, num, ptr);
+        break;
+    }
+    return ret;
+}
+
+static int tls_dump_gets(BIO *bio, char *buf, int size)
+{
+    /* We don't support this - not needed anyway */
+    return -1;
+}
+
+static int tls_dump_puts(BIO *bio, const char *str)
+{
+    return tls_dump_write(bio, str, strlen(str));
+}
+
 int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
                         SSL_CTX **sctx, SSL_CTX **cctx, char *certfile,
                         char *privkeyfile)
