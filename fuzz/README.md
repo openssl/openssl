@@ -41,16 +41,14 @@ Configure for fuzzing:
             enable-asan enable-ubsan no-shared
     $ sudo apt-get install make
     $ LDCMD=clang++ make -j
-    $ fuzz/helper.py <fuzzer> <arguments>
+    $ fuzz/helper.py $FUZZER
 
-Where `<fuzzer>` is one of the executables in `fuzz/`. Most fuzzers do not
-need any command line arguments, but, for example, `asn1` needs the name of a
-data type.
+Where $FUZZER is one of the executables in `fuzz/`.
 
 If you get a crash, you should find a corresponding input file in
-`fuzz/corpora/<fuzzer>-crash/`. You can reproduce the crash with
+`fuzz/corpora/$FUZZER-crash/`. You can reproduce the crash with
 
-    $ fuzz/<fuzzer> <crashfile>
+    $ fuzz/$FUZZER <crashfile>
 
 AFL
 ===
@@ -63,8 +61,6 @@ Configure for fuzzing:
 
 Run one of the fuzzers:
 
-    $ afl-fuzz fuzz/<fuzzer> -i fuzz/corpora/<fuzzer> -o fuzz/corpora/<fuzzer>/out <fuzzer> <arguments>
+    $ afl-fuzz -i fuzz/corpora/$FUZZER -o fuzz/corpora/$FUZZER/out fuzz/$FUZZER
 
-Where `<fuzzer>` is one of the executables in `fuzz/`. Most fuzzers do not
-need any command line arguments, but, for example, `asn1` needs the name of a
-data type.
+Where $FUZZER is one of the executables in `fuzz/`.
