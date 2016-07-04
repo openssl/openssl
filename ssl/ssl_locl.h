@@ -2004,7 +2004,7 @@ __owur unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
 __owur int ssl_parse_clienthello_tlsext(SSL *s, PACKET *pkt);
 void ssl_set_default_md(SSL *s);
 __owur int tls1_set_server_sigalgs(SSL *s);
-__owur int ssl_check_clienthello_tlsext_late(SSL *s);
+__owur int ssl_check_clienthello_tlsext_late(SSL *s, int *al);
 __owur int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt);
 __owur int ssl_prepare_clienthello_tlsext(SSL *s);
 __owur int ssl_prepare_serverhello_tlsext(SSL *s);
