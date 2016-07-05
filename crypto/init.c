@@ -116,11 +116,6 @@ static void ossl_init_add_all_ciphers(void)
                     "openssl_add_all_ciphers_int()\n");
 # endif
     openssl_add_all_ciphers_int();
-# ifndef OPENSSL_NO_ENGINE
-#  if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
-    ENGINE_setup_bsd_cryptodev();
-#  endif
-# endif
 #endif
 }
 
@@ -137,11 +132,6 @@ static void ossl_init_add_all_digests(void)
                     "openssl_add_all_digests()\n");
 # endif
     openssl_add_all_digests_int();
-# ifndef OPENSSL_NO_ENGINE
-#  if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
-    ENGINE_setup_bsd_cryptodev();
-#  endif
-# endif
 #endif
 }
 
