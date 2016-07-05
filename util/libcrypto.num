@@ -3307,7 +3307,7 @@ EVP_read_pw_string_min                  3254	1_1_0	EXIST::FUNCTION:UI
 X509_set_notBefore                      3255	1_1_0	EXIST::FUNCTION:
 MD4                                     3256	1_1_0	EXIST::FUNCTION:MD4
 EVP_PKEY_CTX_dup                        3257	1_1_0	EXIST::FUNCTION:
-ENGINE_setup_bsd_cryptodev              3258	1_1_0	EXIST:__FreeBSD__:FUNCTION:ENGINE
+ENGINE_setup_bsd_cryptodev              3258	1_1_0	EXIST:__FreeBSD__:FUNCTION:DEPRECATEDIN_1_1_0,ENGINE
 PEM_read_bio_DHparams                   3259	1_1_0	EXIST::FUNCTION:DH
 CMS_SharedInfo_encode                   3260	1_1_0	EXIST::FUNCTION:CMS
 ASN1_OBJECT_create                      3261	1_1_0	EXIST::FUNCTION:
