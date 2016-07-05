@@ -174,6 +174,21 @@ static int check_alpn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return ret;
 }
 
+static int check_resumption(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+{
+    if (result->client_resumed != result->server_resumed) {
+        fprintf(stderr, "Resumption mismatch (client vs server): %d vs %d\n",
+                result->client_resumed, result->server_resumed);
+        return 0;
+    }
+    if (result->client_resumed != test_ctx->resumption_expected) {
+        fprintf(stderr, "ResumptionExpected mismatch: %d vs %d\n",
+                test_ctx->resumption_expected, result->client_resumed);
+        return 0;
+    }
+    return 1;
+}
+
 /*
  * This could be further simplified by constructing an expected
  * HANDSHAKE_RESULT, and implementing comparison methods for
@@ -191,6 +206,7 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret &= (result->session_ticket_do_not_call == 0);
         ret &= check_npn(result, test_ctx);
         ret &= check_alpn(result, test_ctx);
+        ret &= check_resumption(result, test_ctx);
     }
     return ret;
 }
@@ -198,7 +214,8 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 static int execute_test(SSL_TEST_FIXTURE fixture)
 {
     int ret = 0;
-    SSL_CTX *server_ctx = NULL, *server2_ctx = NULL, *client_ctx = NULL;
+    SSL_CTX *server_ctx = NULL, *server2_ctx = NULL, *client_ctx = NULL,
+        *resume_server_ctx = NULL;
     SSL_TEST_CTX *test_ctx = NULL;
     HANDSHAKE_RESULT *result = NULL;
 
@@ -214,6 +231,10 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
             OPENSSL_assert(server2_ctx != NULL);
         }
         client_ctx = SSL_CTX_new(DTLS_client_method());
+        if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
+            resume_server_ctx = SSL_CTX_new(DTLS_server_method());
+            OPENSSL_assert(resume_server_ctx != NULL);
+        }
     }
 #endif
     if (test_ctx->method == SSL_TEST_METHOD_TLS) {
@@ -223,6 +244,11 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
             OPENSSL_assert(server2_ctx != NULL);
         }
         client_ctx = SSL_CTX_new(TLS_client_method());
+
+        if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
+            resume_server_ctx = SSL_CTX_new(TLS_server_method());
+            OPENSSL_assert(resume_server_ctx != NULL);
+        }
     }
 
     OPENSSL_assert(server_ctx != NULL && client_ctx != NULL);
@@ -236,8 +262,12 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
 
     if (server2_ctx != NULL && !SSL_CTX_config(server2_ctx, "server2"))
         goto err;
+    if (resume_server_ctx != NULL
+        && !SSL_CTX_config(resume_server_ctx, "resume-server"))
+        goto err;
 
-    result = do_handshake(server_ctx, server2_ctx, client_ctx, test_ctx);
+    result = do_handshake(server_ctx, server2_ctx, client_ctx,
+                          resume_server_ctx, test_ctx);
 
     ret = check_test(result, test_ctx);
 
@@ -246,6 +276,7 @@ err:
     SSL_CTX_free(server_ctx);
     SSL_CTX_free(server2_ctx);
     SSL_CTX_free(client_ctx);
+    SSL_CTX_free(resume_server_ctx);
     SSL_TEST_CTX_free(test_ctx);
     if (ret != 1)
         ERR_print_errors_fp(stderr);

@@ -92,7 +92,12 @@ static int SSL_TEST_CTX_equal(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
     if (!strings_equal("ClientNPNProtocols", ctx->client_npn_protocols,
                        ctx2->client_npn_protocols))
         return 0;
-
+    if (ctx->method != ctx2->method) {
+        fprintf(stderr, "Method mismatch: %s vs %s.\n",
+                ssl_test_method_name(ctx->method),
+                ssl_test_method_name(ctx2->method));
+        return 0;
+    }
     if (!strings_equal("ServerNPNProtocols", ctx->server_npn_protocols,
                        ctx2->server_npn_protocols))
         return 0;
@@ -115,6 +120,17 @@ static int SSL_TEST_CTX_equal(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
     if (!strings_equal("ExpectedALPNProtocol", ctx->expected_alpn_protocol,
                        ctx2->expected_alpn_protocol))
         return 0;
+    if (ctx->handshake_mode != ctx2->handshake_mode) {
+        fprintf(stderr, "HandshakeMode mismatch: %s vs %s.\n",
+                ssl_handshake_mode_name(ctx->handshake_mode),
+                ssl_handshake_mode_name(ctx2->handshake_mode));
+        return 0;
+    }
+    if (ctx->resumption_expected != ctx2->resumption_expected) {
+        fprintf(stderr, "ResumptionExpected mismatch: %d vs %d.\n",
+                ctx->resumption_expected, ctx2->resumption_expected);
+        return 0;
+    }
     return 1;
 }
 
@@ -202,6 +218,8 @@ static int test_good_configuration()
     fixture.expected_ctx->server2_alpn_protocols = OPENSSL_strdup("baz");
     OPENSSL_assert(fixture.expected_ctx->client_npn_protocols != NULL);
     OPENSSL_assert(fixture.expected_ctx->server2_alpn_protocols != NULL);
+    fixture.expected_ctx->handshake_mode = SSL_TEST_HANDSHAKE_RESUME;
+    fixture.expected_ctx->resumption_expected = 1;
     EXECUTE_SSL_TEST_CTX_TEST();
 }
 
@@ -215,6 +233,8 @@ static const char *bad_configurations[] = {
     "ssltest_unknown_servername_callback",
     "ssltest_unknown_session_ticket_expected",
     "ssltest_unknown_method",
+    "ssltest_unknown_handshake_mode",
+    "ssltest_unknown_resumption_expected",
 };
 
 static int test_bad_configuration(int idx)
