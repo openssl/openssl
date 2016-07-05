@@ -319,7 +319,7 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_SINGLE_ECDH_USE                          0x0
 /* Does nothing: retained for compatibility */
 # define SSL_OP_SINGLE_DH_USE                            0x0
-/* Does nothing: retained for compatibiity */
+/* Does nothing: retained for compatibility */
 # define SSL_OP_EPHEMERAL_RSA                            0x0
 /*
  * Set on servers to choose the cipher according to the server's preferences
@@ -407,7 +407,7 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 /* Cert related flags */
 /*
  * Many implementations ignore some aspects of the TLS standards such as
- * enforcing certifcate chain algorithms. When this is set we enforce them.
+ * enforcing certificate chain algorithms. When this is set we enforce them.
  */
 # define SSL_CERT_FLAG_TLS_STRICT                0x00000001U
 
@@ -1541,7 +1541,7 @@ void SSL_certs_clear(SSL *s);
 void SSL_free(SSL *ssl);
 # ifdef OSSL_ASYNC_FD
 /*
- * Windows applcation developer has to include windows.h to use these.
+ * Windows application developer has to include windows.h to use these.
  */
 __owur int SSL_waiting_for_async(SSL *s);
 __owur int SSL_get_all_async_fds(SSL *s, OSSL_ASYNC_FD *fds, size_t *numfds);
@@ -1752,8 +1752,8 @@ __owur int SSL_get_ex_data_X509_STORE_CTX_idx(void);
 void SSL_CTX_set_default_read_buffer_len(SSL_CTX *ctx, size_t len);
 void SSL_set_default_read_buffer_len(SSL *s, size_t len);
 
-     /* NB: the keylength is only applicable when is_export is true */
 # ifndef OPENSSL_NO_DH
+/* NB: the |keylength| is only applicable when is_export is true */
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
                                  DH *(*dh) (SSL *ssl, int is_export,
                                             int keylength));

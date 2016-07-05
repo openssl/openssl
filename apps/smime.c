@@ -275,7 +275,7 @@ int smime_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_INKEY:
-            /* If previous -inkey arument add signer to list */
+            /* If previous -inkey argument add signer to list */
             if (keyfile) {
                 if (signerfile == NULL) {
                     BIO_printf(bio_err,

@@ -116,9 +116,10 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
 }
 
 /*
- * This methods returns: 1 on Success,
- * 0 on decoding failure,
- * -1 on internal (malloc) failure, or invalid parameter if any.
+ * Allocate, build and returns a new |ct_log| from input |pkey_base64|
+ * It returns 1 on success,
+ * 0 on decoding failure, or invalid parameter if any
+ * -1 on internal (malloc) failure
  */
 int CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64, const char *name)
 {
