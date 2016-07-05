@@ -1137,6 +1137,7 @@ int MAIN(int argc, char *argv[])
     int crl_format = FORMAT_PEM;
     int crl_download = 0;
     STACK_OF(X509_CRL) *crls = NULL;
+    int prot_opt = 0, no_prot_opt = 0;
 
     meth = SSLv23_server_method();
 
@@ -1300,7 +1301,8 @@ int MAIN(int argc, char *argv[])
             if (badarg)
                 goto bad;
             continue;
-        } else if (args_ssl(&argv, &argc, cctx, &badarg, bio_err, &ssl_args)) {
+        } else if (args_ssl(&argv, &argc, cctx, &badarg, bio_err, &ssl_args,
+                            &no_prot_opt)) {
             if (badarg)
                 goto bad;
             continue;
@@ -1444,32 +1446,40 @@ int MAIN(int argc, char *argv[])
         else if (strcmp(*argv, "-ssl2") == 0) {
             no_ecdhe = 1;
             meth = SSLv2_server_method();
+            prot_opt++;
         }
 #endif
 #ifndef OPENSSL_NO_SSL3_METHOD
         else if (strcmp(*argv, "-ssl3") == 0) {
             meth = SSLv3_server_method();
+            prot_opt++;
         }
 #endif
 #ifndef OPENSSL_NO_TLS1
         else if (strcmp(*argv, "-tls1") == 0) {
             meth = TLSv1_server_method();
+            prot_opt++;
         } else if (strcmp(*argv, "-tls1_1") == 0) {
             meth = TLSv1_1_server_method();
+            prot_opt++;
         } else if (strcmp(*argv, "-tls1_2") == 0) {
             meth = TLSv1_2_server_method();
+            prot_opt++;
         }
 #endif
 #ifndef OPENSSL_NO_DTLS1
         else if (strcmp(*argv, "-dtls") == 0) {
             meth = DTLS_server_method();
             socket_type = SOCK_DGRAM;
+            prot_opt++;
         } else if (strcmp(*argv, "-dtls1") == 0) {
             meth = DTLSv1_server_method();
             socket_type = SOCK_DGRAM;
+            prot_opt++;
         } else if (strcmp(*argv, "-dtls1_2") == 0) {
             meth = DTLSv1_2_server_method();
             socket_type = SOCK_DGRAM;
+            prot_opt++;
         } else if (strcmp(*argv, "-timeout") == 0)
             enable_timeouts = 1;
         else if (strcmp(*argv, "-mtu") == 0) {
@@ -1578,6 +1588,17 @@ int MAIN(int argc, char *argv[])
         psk_identity = "JPAKE";
     }
 #endif
+
+    if (prot_opt > 1) {
+        BIO_printf(bio_err, "Cannot supply multiple protocol flags\n");
+        goto end;
+    }
+
+    if (prot_opt == 1 && no_prot_opt) {
+        BIO_printf(bio_err, "Cannot supply both a protocol flag and "
+                            "\"-no_<prot>\"\n");
+        goto end;
+    }
 
     SSL_load_error_strings();
     OpenSSL_add_ssl_algorithms();
