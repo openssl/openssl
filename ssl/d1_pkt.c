@@ -194,7 +194,7 @@ static int dtls1_record_needs_buffering(SSL *s, SSL3_RECORD *rr,
 #endif
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
                                unsigned char *priority);
-static int dtls1_process_record(SSL *s);
+static int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap);
 
 /* copy buffered record into SSL structure */
 static int dtls1_copy_record(SSL *s, pitem *item)
@@ -320,13 +320,18 @@ static int dtls1_process_buffered_records(SSL *s)
 {
     pitem *item;
     SSL3_BUFFER *rb;
+    SSL3_RECORD *rr;
+    DTLS1_BITMAP *bitmap;
+    unsigned int is_next_epoch;
+    int replayok = 1;
 
     item = pqueue_peek(s->d1->unprocessed_rcds.q);
     if (item) {
         /* Check if epoch is current. */
         if (s->d1->unprocessed_rcds.epoch != s->d1->r_epoch)
-            return (1);         /* Nothing to do. */
+            return 1;         /* Nothing to do. */
 
+        rr = &s->s3->rrec;
         rb = &s->s3->rbuf;
 
         if (rb->left > 0) {
@@ -343,11 +348,41 @@ static int dtls1_process_buffered_records(SSL *s)
         /* Process all the records. */
         while (pqueue_peek(s->d1->unprocessed_rcds.q)) {
             dtls1_get_unprocessed_record(s);
-            if (!dtls1_process_record(s))
-                return (0);
+            bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
+            if (bitmap == NULL) {
+                /*
+                 * Should not happen. This will only ever be NULL when the
+                 * current record is from a different epoch. But that cannot
+                 * be the case because we already checked the epoch above
+                 */
+                 SSLerr(SSL_F_DTLS1_PROCESS_BUFFERED_RECORDS,
+                        ERR_R_INTERNAL_ERROR);
+                 return 0;
+            }
+#ifndef OPENSSL_NO_SCTP
+            /* Only do replay check if no SCTP bio */
+            if (!BIO_dgram_is_sctp(SSL_get_rbio(s)))
+#endif
+            {
+                /*
+                 * Check whether this is a repeat, or aged record. We did this
+                 * check once already when we first received the record - but
+                 * we might have updated the window since then due to
+                 * records we subsequently processed.
+                 */
+                replayok = dtls1_record_replay_check(s, bitmap);
+            }
+
+            if (!replayok || !dtls1_process_record(s, bitmap)) {
+                /* dump this record */
+                rr->length = 0;
+                s->packet_length = 0;
+                continue;
+            }
+
             if (dtls1_buffer_record(s, &(s->d1->processed_rcds),
                                     s->s3->rrec.seq_num) < 0)
-                return -1;
+                return 0;
         }
     }
 
@@ -358,7 +393,7 @@ static int dtls1_process_buffered_records(SSL *s)
     s->d1->processed_rcds.epoch = s->d1->r_epoch;
     s->d1->unprocessed_rcds.epoch = s->d1->r_epoch + 1;
 
-    return (1);
+    return 1;
 }
 
 #if 0
@@ -405,7 +440,7 @@ static int dtls1_get_buffered_record(SSL *s)
 
 #endif
 
-static int dtls1_process_record(SSL *s)
+static int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 {
     int i, al;
     int enc_err;
@@ -565,6 +600,10 @@ static int dtls1_process_record(SSL *s)
 
     /* we have pulled in a full packet so zero things */
     s->packet_length = 0;
+
+    /* Mark receipt of record. */
+    dtls1_record_bitmap_update(s, bitmap);
+
     return (1);
 
  f_err:
@@ -600,7 +639,7 @@ int dtls1_get_record(SSL *s)
      * The epoch may have changed.  If so, process all the pending records.
      * This is a non-blocking operation.
      */
-    if (dtls1_process_buffered_records(s) < 0)
+    if (!dtls1_process_buffered_records(s))
         return -1;
 
     /* if we're renegotiating, then there may be buffered records */
@@ -731,20 +770,17 @@ int dtls1_get_record(SSL *s)
             if (dtls1_buffer_record
                 (s, &(s->d1->unprocessed_rcds), rr->seq_num) < 0)
                 return -1;
-            /* Mark receipt of record. */
-            dtls1_record_bitmap_update(s, bitmap);
         }
         rr->length = 0;
         s->packet_length = 0;
         goto again;
     }
 
-    if (!dtls1_process_record(s)) {
+    if (!dtls1_process_record(s, bitmap)) {
         rr->length = 0;
         s->packet_length = 0;   /* dump this record */
         goto again;             /* get another record */
     }
-    dtls1_record_bitmap_update(s, bitmap); /* Mark receipt of record. */
 
     return (1);
 
