@@ -18,6 +18,8 @@
 static char *cert = NULL;
 static char *privkey = NULL;
 
+#define NUM_TESTS   2
+
 
 #define DUMMY_CERT_STATUS_LEN  12
 
@@ -36,12 +38,16 @@ unsigned char certstatus[] = {
     0x80, 0x80, 0x80, 0x80, 0x80 /* Dummy data */
 };
 
-static int test_dtls_unprocessed(void)
+#define RECORD_SEQUENCE 10
+
+static int test_dtls_unprocessed(int testidx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl1 = NULL, *clientssl1 = NULL;
     BIO *c_to_s_fbio, *c_to_s_mempacket;
     int testresult = 0;
+
+    printf("Starting Test %d\n", testidx);
 
     if (!create_ssl_ctx_pair(DTLS_server_method(), DTLS_client_method(), &sctx,
                              &cctx, cert, privkey)) {
@@ -71,9 +77,15 @@ static int test_dtls_unprocessed(void)
         goto end;
     }
 
+    if (testidx == 1)
+        certstatus[RECORD_SEQUENCE] = 0xff;
+
     /*
-     * Inject a dummy record from the next epoch. This should never get used
-     * because the message sequence number is too big
+     * Inject a dummy record from the next epoch. In test 0, this should never
+     * get used because the message sequence number is too big. In test 1 we set
+     * the record sequence number to be way off in the future. This should not
+     * have an impact on the record replay protection because the record should
+     * be dropped before it is marked as arrivedg
      */
     c_to_s_mempacket = SSL_get_wbio(clientssl1);
     c_to_s_mempacket = BIO_next(c_to_s_mempacket);
@@ -118,7 +130,7 @@ int main(int argc, char *argv[])
     CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    if (!test_dtls_unprocessed())
+    if (!test_dtls_unprocessed(0) || !test_dtls_unprocessed(1))
         testresult = 1;
 
     ERR_free_strings();
