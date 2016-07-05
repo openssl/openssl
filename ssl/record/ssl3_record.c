@@ -1467,6 +1467,7 @@ int dtls1_get_record(SSL *s)
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
 
+ again:
     /*
      * The epoch may have changed.  If so, process all the pending records.
      * This is a non-blocking operation.
@@ -1479,7 +1480,7 @@ int dtls1_get_record(SSL *s)
         return 1;
 
     /* get something from the wire */
- again:
+
     /* check if we have the header */
     if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
         (RECORD_LAYER_get_packet_length(&s->rlayer) < DTLS1_RT_HEADER_LENGTH)) {
