@@ -14,7 +14,7 @@ $	! -d		sets debugging
 $	! -h		prints a usage and exits
 $	! -t		test mode, doesn't run Configure
 $
-$	arch == f$edit( f$getsyi( "arch_name"), "lowercase")
+$	arch = f$edit( f$getsyi( "arch_name"), "lowercase")
 $	pointer_size = ""
 $	test = 0
 $	here = F$PARSE("A.;",F$ENVIRONMENT("PROCEDURE"),,,"SYNTAX_ONLY") - "A.;"
