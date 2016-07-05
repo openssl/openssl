@@ -7,13 +7,13 @@
 # https://www.openssl.org/source/license.html
 
 
-## Test TLS version negotiation
-
-package ssltests;
+## Test version negotiation upon resumption.
 
 use strict;
 use warnings;
 
+package ssltests;
+
 use protocol_version;
 
-our @tests = generate_version_tests("TLS");
+our @tests = generate_resumption_tests("TLS");

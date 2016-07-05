@@ -82,7 +82,20 @@ The test section supports the following options:
   - Ignore - do not check for a session ticket (default)
   - Yes - a session ticket is expected
   - No - a session ticket is not expected
-  - Broken - a special test case where the session ticket callback does not initialize crypto
+  - Broken - a special test case where the session ticket callback does not
+    initialize crypto
+
+* HandshakeMode - which handshake flavour to test:
+  - Simple - plain handshake (default)
+  - Resume - test resumption
+  - (Renegotiate - test renegotiation, not yet implemented)
+
+* ResumptionExpected - whether or not resumption is expected (Resume mode only)
+  - Yes - resumed handshake
+  - No - full handshake (default)
+
+When HandshakeMode is Resume or Renegotiate, the original handshake is expected
+to succeed. All configured test expectations are verified against the second handshake.
 
 * ServerNPNProtocols, Server2NPNProtocols, ClientNPNProtocols, ExpectedNPNProtocol,
   ServerALPNProtocols, Server2ALPNProtocols, ClientALPNProtocols, ExpectedALPNProtocol -
@@ -103,9 +116,16 @@ server => {
 }
 ```
 
-A server2 section may optionally be defined to configure a secondary
-context that is selected via the ServerName test option. If the server2
-section is not configured, then the configuration matches server.
+The following sections may optionally be defined:
+
+* server2 - this section configures a secondary context that is selected via the
+  ServerName test option. This context is used whenever a ServerNameCallback is
+  specified. If the server2 section is not present, then the configuration
+  matches server.
+* resume_server - this section configures the client to resume its session
+  against a different server. This context is used whenever HandshakeMode is
+  Resume. If the resume-server section is not present, then the configuration
+  matches server.
 
 ### Default server and client configurations
 
