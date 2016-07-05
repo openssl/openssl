@@ -301,7 +301,7 @@ int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
 int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 {
     X509_OBJECT *obj;
-    int ret = 1;
+    int ret = 1, added = 1;
 
     if (x == NULL)
         return 0;
@@ -310,20 +310,25 @@ int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
         return 0;
     obj->type = X509_LU_X509;
     obj->data.x509 = x;
+    X509_OBJECT_up_ref_count(obj);
 
     CRYPTO_THREAD_write_lock(ctx->lock);
 
-    X509_OBJECT_up_ref_count(obj);
-
     if (X509_OBJECT_retrieve_match(ctx->objs, obj)) {
-        X509_OBJECT_free(obj);
         X509err(X509_F_X509_STORE_ADD_CERT,
                 X509_R_CERT_ALREADY_IN_HASH_TABLE);
         ret = 0;
-    } else
-        sk_X509_OBJECT_push(ctx->objs, obj);
+    } else {
+        added = sk_X509_OBJECT_push(ctx->objs, obj);
+        ret = added != 0;
+    }
 
     CRYPTO_THREAD_unlock(ctx->lock);
+
+    if (!ret)                   /* obj not pushed */
+        X509_OBJECT_free(obj);
+    if (!added)                 /* on push failure */
+        X509err(X509_F_X509_STORE_ADD_CERT, ERR_R_MALLOC_FAILURE);
 
     return ret;
 }
@@ -331,7 +336,7 @@ int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 {
     X509_OBJECT *obj;
-    int ret = 1;
+    int ret = 1, added = 1;
 
     if (x == NULL)
         return 0;
@@ -340,20 +345,25 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
         return 0;
     obj->type = X509_LU_CRL;
     obj->data.crl = x;
+    X509_OBJECT_up_ref_count(obj);
 
     CRYPTO_THREAD_write_lock(ctx->lock);
 
-    X509_OBJECT_up_ref_count(obj);
-
     if (X509_OBJECT_retrieve_match(ctx->objs, obj)) {
-        X509_OBJECT_free(obj);
         X509err(X509_F_X509_STORE_ADD_CRL, X509_R_CERT_ALREADY_IN_HASH_TABLE);
         ret = 0;
-    } else
-        sk_X509_OBJECT_push(ctx->objs, obj);
+    } else {
+        added = sk_X509_OBJECT_push(ctx->objs, obj);
+        ret = added != 0;
+    }
 
     CRYPTO_THREAD_unlock(ctx->lock);
 
+    if (!ret)                   /* obj not pushed */
+        X509_OBJECT_free(obj);
+    if (!added)                 /* on push failure */
+        X509err(X509_F_X509_STORE_ADD_CRL, ERR_R_MALLOC_FAILURE);
+    
     return ret;
 }
 
