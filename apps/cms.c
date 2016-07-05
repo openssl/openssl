@@ -480,7 +480,7 @@ int cms_main(int argc, char **argv)
             signerfile = opt_arg();
             break;
         case OPT_INKEY:
-            /* If previous -inkey arument add signer to list */
+            /* If previous -inkey argument add signer to list */
             if (keyfile) {
                 if (signerfile == NULL) {
                     BIO_puts(bio_err, "Illegal -inkey without -signer\n");
