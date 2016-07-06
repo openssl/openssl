@@ -681,7 +681,7 @@ EOF
                                     @{$args{objs}}));
       return <<"EOF";
 $lib.OLB : $objs
-        LIBRARY/CREATE/OBJECT $lib
+        LIBRARY/CREATE/OBJECT $lib.OLB
         $fill_lib
         - PURGE $lib.OLB
 EOF
