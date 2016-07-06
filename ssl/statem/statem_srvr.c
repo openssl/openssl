@@ -2331,6 +2331,73 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt, int *al)
 #endif
 }
 
+static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt, int *al)
+{
+#ifndef OPENSSL_NO_EC
+    EVP_PKEY *skey = s->s3->tmp.pkey;
+    EVP_PKEY *ckey = NULL;
+    int ret = 0;
+
+    if (PACKET_remaining(pkt) == 0L) {
+        /* We don't support ECDH client auth */
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+               SSL_R_MISSING_TMP_ECDH_KEY);
+        goto err;
+    } else {
+        unsigned int i;
+        const unsigned char *data;
+
+        /*
+         * Get client's public key from encoded point in the
+         * ClientKeyExchange message.
+         */
+
+        /* Get encoded point length */
+        if (!PACKET_get_1(pkt, &i)) {
+            *al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+                   SSL_R_LENGTH_MISMATCH);
+            goto err;
+        }
+        if (!PACKET_get_bytes(pkt, &data, i)
+                || PACKET_remaining(pkt) != 0) {
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
+            goto err;
+        }
+        ckey = EVP_PKEY_new();
+        if (ckey == NULL || EVP_PKEY_copy_parameters(ckey, skey) <= 0) {
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EVP_LIB);
+            goto err;
+        }
+        if (EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(ckey), data, i,
+                           NULL) == 0) {
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
+            goto err;
+        }
+    }
+
+    if (ssl_derive(s, skey, ckey) == 0) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    ret = 1;
+    EVP_PKEY_free(s->s3->tmp.pkey);
+    s->s3->tmp.pkey = NULL;
+ err:
+    EVP_PKEY_free(ckey);
+
+    return ret;
+#else
+    /* Should never happen */
+    *al = SSL_AD_INTERNAL_ERROR;
+    SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    return 0;
+#endif
+}
+
 MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 {
     int al = -1;
@@ -2361,68 +2428,10 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     } else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         if (!tls_process_cke_dhe(s, pkt, &al))
             goto err;
+    } else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
+        if (!tls_process_cke_ecdhe(s, pkt, &al))
+            goto err;
     } else
-
-#ifndef OPENSSL_NO_EC
-    if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
-        EVP_PKEY *skey = s->s3->tmp.pkey;
-        EVP_PKEY *ckey = NULL;
-
-        if (PACKET_remaining(pkt) == 0L) {
-            /* We don't support ECDH client auth */
-            al = SSL_AD_HANDSHAKE_FAILURE;
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                   SSL_R_MISSING_TMP_ECDH_KEY);
-            goto f_err;
-        } else {
-            unsigned int i;
-            const unsigned char *data;
-
-            /*
-             * Get client's public key from encoded point in the
-             * ClientKeyExchange message.
-             */
-
-            /* Get encoded point length */
-            if (!PACKET_get_1(pkt, &i)) {
-                al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       SSL_R_LENGTH_MISMATCH);
-                goto f_err;
-            }
-            if (!PACKET_get_bytes(pkt, &data, i)
-                    || PACKET_remaining(pkt) != 0) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
-                goto err;
-            }
-            ckey = EVP_PKEY_new();
-            if (ckey == NULL || EVP_PKEY_copy_parameters(ckey, skey) <= 0) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EVP_LIB);
-                EVP_PKEY_free(ckey);
-                goto err;
-            }
-            if (EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(ckey), data, i,
-                               NULL) == 0) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
-                EVP_PKEY_free(ckey);
-                goto err;
-            }
-        }
-
-        if (ssl_derive(s, skey, ckey) == 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            EVP_PKEY_free(ckey);
-            goto f_err;
-        }
-
-        EVP_PKEY_free(ckey);
-        EVP_PKEY_free(s->s3->tmp.pkey);
-        s->s3->tmp.pkey = NULL;
-
-        return MSG_PROCESS_CONTINUE_PROCESSING;
-    } else
-#endif
 #ifndef OPENSSL_NO_SRP
     if (alg_k & SSL_kSRP) {
         unsigned int i;
