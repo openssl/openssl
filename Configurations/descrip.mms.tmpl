@@ -286,8 +286,8 @@ install : install_sw install_ssldirs install_docs
         @ IF "$(DESTDIR)" .EQS. "" THEN -
              PIPE ( WRITE SYS$OUTPUT "Installation complete" ; -
                     WRITE SYS$OUTPUT "" ; -
-                    WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup{- $osslver -} to set up logical names" ; -
-                    WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_utils{- $osslver -} to define commands" ; -
+                    WRITE SYS$OUTPUT "Run @$(SYSTARTUP)openssl_startup{- $osslver -} to set up logical names" ; -
+                    WRITE SYS$OUTPUT "then run @$(SYSTARTUP)openssl_utils{- $osslver -} to define commands" ; -
                     WRITE SYS$OUTPUT "" )
         @ IF "$(DESTDIR)" .NES. "" THEN -
              PIPE ( WRITE SYS$OUTPUT "Staging installation complete" ; -
