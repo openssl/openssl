@@ -2398,6 +2398,153 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt, int *al)
 #endif
 }
 
+static int tls_process_cke_srp(SSL *s, PACKET *pkt, int *al)
+{
+#ifndef OPENSSL_NO_SRP
+    unsigned int i;
+    const unsigned char *data;
+
+    if (!PACKET_get_net_2(pkt, &i)
+            || !PACKET_get_bytes(pkt, &data, i)) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_BAD_SRP_A_LENGTH);
+        return 0;
+    }
+    if ((s->srp_ctx.A = BN_bin2bn(data, i, NULL)) == NULL) {
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_BN_LIB);
+        return 0;
+    }
+    if (BN_ucmp(s->srp_ctx.A, s->srp_ctx.N) >= 0
+        || BN_is_zero(s->srp_ctx.A)) {
+        *al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+               SSL_R_BAD_SRP_PARAMETERS);
+        return 0;
+    }
+    OPENSSL_free(s->session->srp_username);
+    s->session->srp_username = OPENSSL_strdup(s->srp_ctx.login);
+    if (s->session->srp_username == NULL) {
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (!srp_generate_server_master_secret(s)) {
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+#else
+    /* Should never happen */
+    *al = SSL_AD_INTERNAL_ERROR;
+    SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    return 0;
+#endif
+}
+
+static int tls_process_cke_gost(SSL *s, PACKET *pkt, int *al)
+{
+#ifndef OPENSSL_NO_GOST
+    EVP_PKEY_CTX *pkey_ctx;
+    EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
+    unsigned char premaster_secret[32];
+    const unsigned char *start;
+    size_t outlen = 32, inlen;
+    unsigned long alg_a;
+    int Ttag, Tclass;
+    long Tlen;
+    long sess_key_len;
+    const unsigned char *data;
+    int ret = 0;
+
+    /* Get our certificate private key */
+    alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+    if (alg_a & SSL_aGOST12) {
+        /*
+         * New GOST ciphersuites have SSL_aGOST01 bit too
+         */
+        pk = s->cert->pkeys[SSL_PKEY_GOST12_512].privatekey;
+        if (pk == NULL) {
+            pk = s->cert->pkeys[SSL_PKEY_GOST12_256].privatekey;
+        }
+        if (pk == NULL) {
+            pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
+        }
+    } else if (alg_a & SSL_aGOST01) {
+        pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
+    }
+
+    pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
+    if (pkey_ctx == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    if (EVP_PKEY_decrypt_init(pkey_ctx) <= 0) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    /*
+     * If client certificate is present and is of the same type, maybe
+     * use it for key exchange.  Don't mind errors from
+     * EVP_PKEY_derive_set_peer, because it is completely valid to use a
+     * client certificate for authorization only.
+     */
+    client_pub_pkey = X509_get0_pubkey(s->session->peer);
+    if (client_pub_pkey) {
+        if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pub_pkey) <= 0)
+            ERR_clear_error();
+    }
+    /* Decrypt session key */
+    sess_key_len = PACKET_remaining(pkt);
+    if (!PACKET_get_bytes(pkt, &data, sess_key_len)) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if (ASN1_get_object ((const unsigned char **)&data, &Tlen, &Ttag,
+                         &Tclass, sess_key_len) != V_ASN1_CONSTRUCTED
+        || Ttag != V_ASN1_SEQUENCE
+        || Tclass != V_ASN1_UNIVERSAL) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+               SSL_R_DECRYPTION_FAILED);
+        goto err;
+    }
+    start = data;
+    inlen = Tlen;
+    if (EVP_PKEY_decrypt
+        (pkey_ctx, premaster_secret, &outlen, start, inlen) <= 0) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+               SSL_R_DECRYPTION_FAILED);
+        goto err;
+    }
+    /* Generate master secret */
+    if (!ssl_generate_master_secret(s, premaster_secret,
+                                    sizeof(premaster_secret), 0)) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    /* Check if pubkey from client certificate was used */
+    if (EVP_PKEY_CTX_ctrl
+        (pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)
+        s->statem.no_cert_verify = 1;
+
+    ret = 1;
+ err:
+    EVP_PKEY_CTX_free(pkey_ctx);
+    return ret;
+#else
+    /* Should never happen */
+    *al = SSL_AD_INTERNAL_ERROR;
+    SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    return 0;
+#endif
+}
+
 MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 {
     int al = -1;
@@ -2431,139 +2578,13 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     } else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
         if (!tls_process_cke_ecdhe(s, pkt, &al))
             goto err;
-    } else
-#ifndef OPENSSL_NO_SRP
-    if (alg_k & SSL_kSRP) {
-        unsigned int i;
-        const unsigned char *data;
-
-        if (!PACKET_get_net_2(pkt, &i)
-                || !PACKET_get_bytes(pkt, &data, i)) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_BAD_SRP_A_LENGTH);
-            goto f_err;
-        }
-        if ((s->srp_ctx.A = BN_bin2bn(data, i, NULL)) == NULL) {
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_BN_LIB);
+    } else if (alg_k & SSL_kSRP) {
+        if (!tls_process_cke_srp(s, pkt, &al))
             goto err;
-        }
-        if (BN_ucmp(s->srp_ctx.A, s->srp_ctx.N) >= 0
-            || BN_is_zero(s->srp_ctx.A)) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                   SSL_R_BAD_SRP_PARAMETERS);
-            goto f_err;
-        }
-        OPENSSL_free(s->session->srp_username);
-        s->session->srp_username = OPENSSL_strdup(s->srp_ctx.login);
-        if (s->session->srp_username == NULL) {
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+    } else if (alg_k & SSL_kGOST) {
+        if (!tls_process_cke_gost(s, pkt, &al))
             goto err;
-        }
-
-        if (!srp_generate_server_master_secret(s)) {
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-    } else
-#endif                          /* OPENSSL_NO_SRP */
-#ifndef OPENSSL_NO_GOST
-    if (alg_k & SSL_kGOST) {
-        EVP_PKEY_CTX *pkey_ctx;
-        EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
-        unsigned char premaster_secret[32];
-        const unsigned char *start;
-        size_t outlen = 32, inlen;
-        unsigned long alg_a;
-        int Ttag, Tclass;
-        long Tlen;
-        long sess_key_len;
-        const unsigned char *data;
-
-        /* Get our certificate private key */
-        alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-        if (alg_a & SSL_aGOST12) {
-            /*
-             * New GOST ciphersuites have SSL_aGOST01 bit too
-             */
-            pk = s->cert->pkeys[SSL_PKEY_GOST12_512].privatekey;
-            if (pk == NULL) {
-                pk = s->cert->pkeys[SSL_PKEY_GOST12_256].privatekey;
-            }
-            if (pk == NULL) {
-                pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
-            }
-        } else if (alg_a & SSL_aGOST01) {
-            pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
-        }
-
-        pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
-        if (pkey_ctx == NULL) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
-            goto f_err;
-        }
-        if (EVP_PKEY_decrypt_init(pkey_ctx) <= 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            goto f_err;
-        }
-        /*
-         * If client certificate is present and is of the same type, maybe
-         * use it for key exchange.  Don't mind errors from
-         * EVP_PKEY_derive_set_peer, because it is completely valid to use a
-         * client certificate for authorization only.
-         */
-        client_pub_pkey = X509_get0_pubkey(s->session->peer);
-        if (client_pub_pkey) {
-            if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pub_pkey) <= 0)
-                ERR_clear_error();
-        }
-        /* Decrypt session key */
-        sess_key_len = PACKET_remaining(pkt);
-        if (!PACKET_get_bytes(pkt, &data, sess_key_len)) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            goto gerr;
-        }
-        if (ASN1_get_object ((const unsigned char **)&data, &Tlen, &Ttag,
-                             &Tclass, sess_key_len) != V_ASN1_CONSTRUCTED
-            || Ttag != V_ASN1_SEQUENCE
-            || Tclass != V_ASN1_UNIVERSAL) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                   SSL_R_DECRYPTION_FAILED);
-            goto gerr;
-        }
-        start = data;
-        inlen = Tlen;
-        if (EVP_PKEY_decrypt
-            (pkey_ctx, premaster_secret, &outlen, start, inlen) <= 0) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                   SSL_R_DECRYPTION_FAILED);
-            goto gerr;
-        }
-        /* Generate master secret */
-        if (!ssl_generate_master_secret(s, premaster_secret,
-                                        sizeof(premaster_secret), 0)) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            goto gerr;
-        }
-        /* Check if pubkey from client certificate was used */
-        if (EVP_PKEY_CTX_ctrl
-            (pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)
-            s->statem.no_cert_verify = 1;
-
-        EVP_PKEY_CTX_free(pkey_ctx);
-        return MSG_PROCESS_CONTINUE_PROCESSING;
- gerr:
-        EVP_PKEY_CTX_free(pkey_ctx);
-        goto f_err;
-    } else
-#endif
-    {
+    } else {
         al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_UNKNOWN_CIPHER_TYPE);
         goto f_err;
