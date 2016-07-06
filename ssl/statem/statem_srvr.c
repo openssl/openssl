@@ -2561,13 +2561,13 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         if (PACKET_remaining(pkt) != 0) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
+            goto err;
         }
         /* PSK handled by ssl_generate_master_secret */
         if (!ssl_generate_master_secret(s, NULL, 0, 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            goto f_err;
+            goto err;
         }
     } else if (alg_k & (SSL_kRSA | SSL_kRSAPSK)) {
         if (!tls_process_cke_rsa(s, pkt, &al))
@@ -2587,12 +2587,11 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     } else {
         al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_UNKNOWN_CIPHER_TYPE);
-        goto f_err;
+        goto err;
     }
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
  err:
- f_err:
     if (al != -1)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
 #ifndef OPENSSL_NO_PSK
