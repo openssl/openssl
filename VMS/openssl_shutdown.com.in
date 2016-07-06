@@ -26,7 +26,6 @@ $	ENDIF
 $
 $	! Abbrevs
 $	DEAS := DEASSIGN /NOLOG 'P1'
-$	v    := {- sprintf "%02d%02d", split(/\./, $config{version}) -}
 $	sv   := {- sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor} -}
 $	pz   := {- $config{pointer_size} -}
 $
@@ -40,12 +39,13 @@ $	DEAS OSSL$LIBCRYPTO'pz'
 $	DEAS OSSL$LIBSSL'pz'
 $	DEAS OSSL$LIBCRYPTO'sv'_SHR'pz'
 $	DEAS OSSL$LIBSSL'sv'_SHR'pz'
+$	DEAS OPENSSL
+$
 $	IF P2 .NES. "NOALIASES"
 $	THEN
 $	    DEAS OSSL$ENGINES
 $	    DEAS OSSL$LIBCRYPTO_SHR'pz'
 $	    DEAS OSSL$LIBSSL_SHR'pz'
-$	    DEAS OPENSSL
 $	ENDIF
 $
 $	EXIT 'status'
