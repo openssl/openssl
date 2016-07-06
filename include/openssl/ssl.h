@@ -2222,6 +2222,12 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_CERT_STATUS                    362
 # define SSL_F_TLS_PROCESS_CERT_VERIFY                    379
 # define SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC             363
+# define SSL_F_TLS_PROCESS_CKE_DHE                        404
+# define SSL_F_TLS_PROCESS_CKE_ECDHE                      405
+# define SSL_F_TLS_PROCESS_CKE_GOST                       406
+# define SSL_F_TLS_PROCESS_CKE_PSK_PREAMBLE               407
+# define SSL_F_TLS_PROCESS_CKE_RSA                        409
+# define SSL_F_TLS_PROCESS_CKE_SRP                        410
 # define SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE             380
 # define SSL_F_TLS_PROCESS_CLIENT_HELLO                   381
 # define SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE            382
