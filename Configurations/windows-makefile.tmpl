@@ -168,7 +168,7 @@ all: build_generated \
      build_libs_nodep build_engines_nodep build_apps_nodep depend
 
 build_libs: build_generated build_libs_nodep depend
-build_libs_nodep: $(LIBS)
+build_libs_nodep: $(LIBS) {- join(" ",map { shlib_import($_) } @{$unified_info{libraries}}) -}
 build_engines: build_generated build_engines_nodep depend
 build_engines_nodep: $(ENGINES)
 build_apps: build_generated build_apps_nodep depend
