@@ -392,6 +392,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 /* Issuer lookup error */
 # define         X509_V_ERR_STORE_LOOKUP                         66
 
+# define         X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION         67
+
 /* Certificate verify flags */
 
 /* Send issuer+subject checks to verify_cb */

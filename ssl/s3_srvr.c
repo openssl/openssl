@@ -1872,6 +1872,11 @@ int ssl3_send_server_key_exchange(SSL *s)
                 goto f_err;
             }
             kn = EVP_PKEY_size(pkey);
+            /* Allow space for signature algorithm */
+            if (SSL_USE_SIGALGS(s))
+                kn += 2;
+            /* Allow space for signature length */
+            kn += 2;
         } else {
             pkey = NULL;
             kn = 0;
@@ -2229,11 +2234,8 @@ int ssl3_get_client_key_exchange(SSL *s)
          * fails. See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
          */
 
-        /*
-         * should be RAND_bytes, but we cannot work around a failure.
-         */
-        if (RAND_pseudo_bytes(rand_premaster_secret,
-                              sizeof(rand_premaster_secret)) <= 0)
+        if (RAND_bytes(rand_premaster_secret,
+                       sizeof(rand_premaster_secret)) <= 0)
             goto err;
         decrypt_len =
             RSA_private_decrypt((int)n, p, p, rsa, RSA_PKCS1_PADDING);
