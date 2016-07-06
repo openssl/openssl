@@ -80,7 +80,6 @@ $
 $	! Abbrevs
 $	DEFT := DEFINE /TRANSLATION=CONCEALED /NOLOG 'P1'
 $	DEF  := DEFINE /NOLOG 'P1'
-$	v    := {- sprintf "%02d%02d", split(/\./, $config{version}) -}
 $	sv   := {- sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor} -}
 $	pz   := {- $config{pointer_size} -}
 $
@@ -94,12 +93,13 @@ $	DEF  OSSL$LIBCRYPTO'pz'		OSSL$LIB:OSSL$LIBCRYPTO'pz'.OLB
 $	DEF  OSSL$LIBSSL'pz'		OSSL$LIB:OSSL$LIBSSL'pz'.OLB
 $	DEF  OSSL$LIBCRYPTO'sv'_SHR'pz'	OSSL$SHARE:OSSL$LIBCRYPTO'sv'_SHR'pz'.EXE
 $	DEF  OSSL$LIBSSL'sv'_SHR'pz'	OSSL$SHARE:OSSL$LIBSSL'sv'_SHR'pz'.EXE
+$	DEF  OPENSSL			OSSL$INCLUDE:[OPENSSL]
+$
 $	IF P2 .NES. "NOALIASES"
 $	THEN
 $	    DEF OSSL$ENGINES		OSSL$ENGINES'sv'
 $	    DEF OSSL$LIBCRYPTO_SHR'pz'	OSSL$LIBCRYPTO'sv'_SHR'pz'
 $	    DEF OSSL$LIBSSL_SHR'pz'	OSSL$LIBSSL'sv'_SHR'pz'
-$	    DEF OPENSSL			OSSL$INCLUDE:[OPENSSL]
 $	ENDIF
 $
 $	DEFT OSSL$DATAROOT	'OPENSSLDIR_']
