@@ -9,6 +9,9 @@
   our $osslprefix = 'OSSL$';
   (our $osslprefix_q = $osslprefix) =~ s/\$/\\\$/;
 
+  our $sover = sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor};
+  our $osslver = sprintf "%02d%02d", split(/\./, $config{version});
+
   our $sourcedir = $config{sourcedir};
   our $builddir = $config{builddir};
   sub sourcefile {
@@ -141,9 +144,8 @@ MISC_SCRIPTS=[.apps]CA.pl, [.apps]tsget.pl
 DESTDIR=
 
 # Do not edit this manually. Use Configure --prefix=DIR to change this!
-INSTALLTOP={- my $x = sprintf "%02d%02d", split(/\./, $config{version});
-              our $installtop =
-                  catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL$x]";
+INSTALLTOP={- our $installtop =
+                  catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL]";
               $installtop -}
 SYSTARTUP={- catdir($installtop, '[.SYS$STARTUP]'); -}
 # This is the standard central area to store certificates, private keys...
@@ -151,7 +153,7 @@ OPENSSLDIR={- catdir($config{openssldir}) ||
               $config{prefix} ? catdir($config{prefix},"COMMON")
                               : "SYS\$COMMON:[OPENSSL-COMMON]" -}
 # Where installed engines reside
-ENGINESDIR={- $osslprefix -}ENGINES:
+ENGINESDIR={- $osslprefix -}ENGINES{- $sover -}:
 
 CC= {- $target{cc} -}
 CFLAGS= /DEFINE=({- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR)\"\"\"") -}) {- $target{cflags} -} {- $config{cflags} -}
@@ -284,8 +286,8 @@ install : install_sw install_ssldirs install_docs
         @ IF "$(DESTDIR)" .EQS. "" THEN -
              PIPE ( WRITE SYS$OUTPUT "Installation complete" ; -
                     WRITE SYS$OUTPUT "" ; -
-                    WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names" ; -
-                    WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands" ; -
+                    WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup{- $osslver -} to set up logical names" ; -
+                    WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_utils{- $osslver -} to define commands" ; -
                     WRITE SYS$OUTPUT "" )
         @ IF "$(DESTDIR)" .NES. "" THEN -
              PIPE ( WRITE SYS$OUTPUT "Staging installation complete" ; -
@@ -298,12 +300,12 @@ install : install_sw install_ssldirs install_docs
                     WRITE SYS$OUTPUT "ends up in $(OPENSSLDIR)" ; -
                     WRITE SYS$OUTPUT "" ; -
                     WRITE SYS$OUTPUT "When in its final destination," ; -
-                    WRITE SYS$OUTPUT "Run @$(SYSTARTUP)openssl_startup to set up logical names" ; -
-                    WRITE SYS$OUTPUT "then run @$(SYSTARTUP)openssl_utils to define commands" ; -
+                    WRITE SYS$OUTPUT "Run @$(SYSTARTUP)openssl_startup{- $osslver -} to set up logical names" ; -
+                    WRITE SYS$OUTPUT "then run @$(SYSTARTUP)openssl_utils{- $osslver -} to define commands" ; -
                     WRITE SYS$OUTPUT "" )
 
 check_install :
-        spawn/nolog @ossl_installroot:[SYSTEST]openssl_ivp.com
+        spawn/nolog @ossl_installroot:[SYSTEST]openssl_ivp{- $osslver -}.com
 
 uninstall : uninstall_docs uninstall_sw
 
@@ -392,7 +394,7 @@ install_runtime : check_INSTALLTOP
         @ ! Install the main program
         - CREATE/DIR ossl_installroot:[EXE.'arch']
         COPY/PROT=W:RE [.APPS]openssl.EXE -
-                ossl_installroot:[EXE.'arch']openssl{- sprintf "%02d%02d", split(/\./, $config{version}) -}.EXE
+                ossl_installroot:[EXE.'arch']openssl{- $osslver -}.EXE
         @ ! Install scripts
         - CREATE/DIR ossl_installroot:[EXE]
         COPY/PROT=W:RE $(BIN_SCRIPTS) ossl_installroot:[EXE]
@@ -401,22 +403,26 @@ install_runtime : check_INSTALLTOP
 install_engines : check_INSTALLTOP
         @ {- output_off() unless scalar @{$unified_info{engines}}; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing engines"
-        - CREATE/DIR ossl_installroot:[ENGINES.'arch']
+        - CREATE/DIR ossl_installroot:[ENGINES{- $sover -}.'arch']
         {- join("\n        ",
-                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES.'arch']" }
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover.'arch']" }
                 grep(!m|ossltest$|i, @{$unified_info{engines}})) -}
         @ {- output_on() unless scalar @{$unified_info{engines}}; "" -} !
 
 install_startup : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                  [.VMS]openssl_utils.com, check_INSTALLTOP
         - CREATE/DIR ossl_installroot:[SYS$STARTUP]
-        COPY/PROT=W:RE [.VMS]openssl_startup.com ossl_installroot:[SYS$STARTUP]
-        COPY/PROT=W:RE [.VMS]openssl_shutdown.com ossl_installroot:[SYS$STARTUP]
-        COPY/PROT=W:RE [.VMS]openssl_utils.com ossl_installroot:[SYS$STARTUP]
+        COPY/PROT=W:RE [.VMS]openssl_startup.com -
+                ossl_installroot:[SYS$STARTUP]openssl_startup{- $osslver -}.com
+        COPY/PROT=W:RE [.VMS]openssl_shutdown.com -
+                ossl_installroot:[SYS$STARTUP]openssl_shutdown{- $osslver -}.com
+        COPY/PROT=W:RE [.VMS]openssl_utils.com -
+                ossl_installroot:[SYS$STARTUP]openssl_utils{- $osslver -}.com
 
 install_ivp : [.VMS]openssl_ivp.com check_INSTALLTOP
         - CREATE/DIR ossl_installroot:[SYSTEST]
-        COPY/PROT=W:RE [.VMS]openssl_ivp.com ossl_installroot:[SYSTEST]
+        COPY/PROT=W:RE [.VMS]openssl_ivp.com -
+                ossl_installroot:[SYSTEST]openssl_ivp{- $osslver -}.com
 
 [.VMS]openssl_startup.com : vmsconfig.pm {- sourcefile("VMS", "openssl_startup.com.in") -}
         - CREATE/DIR [.VMS]
