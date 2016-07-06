@@ -2019,14 +2019,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 {
     int al;
     unsigned long alg_k;
-#ifndef OPENSSL_NO_RSA
-    RSA *rsa = NULL;
-#endif
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-    EVP_PKEY *ckey = NULL;
-#endif
-    PACKET enc_premaster;
-    unsigned char *rsa_decrypt = NULL;
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
@@ -2111,8 +2103,10 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         int decrypt_len;
         unsigned char decrypt_good, version_good;
         size_t j, padding_len;
+        PACKET enc_premaster;
+        RSA *rsa = NULL;
+        unsigned char *rsa_decrypt = NULL;
 
-        /* FIX THIS UP EAY EAY EAY EAY */
         rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey);
         if (rsa == NULL) {
             al = SSL_AD_HANDSHAKE_FAILURE;
@@ -2151,6 +2145,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         if (rsa_decrypt == NULL) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            OPENSSL_free(rsa_decrypt);
             goto f_err;
         }
 
@@ -2164,6 +2159,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 
         if (RAND_bytes(rand_premaster_secret,
                        sizeof(rand_premaster_secret)) <= 0) {
+            OPENSSL_free(rsa_decrypt);
             goto err;
         }
 
@@ -2175,6 +2171,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
                                           PACKET_data(&enc_premaster),
                                           rsa_decrypt, rsa, RSA_NO_PADDING);
         if (decrypt_len < 0) {
+            OPENSSL_free(rsa_decrypt);
             goto err;
         }
 
@@ -2188,6 +2185,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         if (decrypt_len < 11 + SSL_MAX_MASTER_KEY_LENGTH) {
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_DECRYPTION_FAILED);
+            OPENSSL_free(rsa_decrypt);
             goto f_err;
         }
 
@@ -2256,10 +2254,10 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
                                         sizeof(rand_premaster_secret), 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            OPENSSL_free(rsa_decrypt);
             goto f_err;
         }
         OPENSSL_free(rsa_decrypt);
-        rsa_decrypt = NULL;
     } else
 #endif
 #ifndef OPENSSL_NO_DH
@@ -2269,6 +2267,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         unsigned int i;
         BIGNUM *pub_key;
         const unsigned char *data;
+        EVP_PKEY *ckey = NULL;
 
         if (!PACKET_get_net_2(pkt, &i)) {
             if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
@@ -2308,6 +2307,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         ckey = EVP_PKEY_new();
         if (ckey == NULL || EVP_PKEY_copy_parameters(ckey, skey) == 0) {
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_BN_LIB);
+            EVP_PKEY_free(ckey);
             goto err;
         }
         cdh = EVP_PKEY_get0_DH(ckey);
@@ -2317,17 +2317,18 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             if (pub_key != NULL)
                 BN_free(pub_key);
+            EVP_PKEY_free(ckey);
             goto err;
         }
 
         if (ssl_derive(s, skey, ckey) == 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            EVP_PKEY_free(ckey);
             goto f_err;
         }
 
         EVP_PKEY_free(ckey);
-        ckey = NULL;
         EVP_PKEY_free(s->s3->tmp.pkey);
         s->s3->tmp.pkey = NULL;
 
@@ -2337,6 +2338,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_EC
     if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
         EVP_PKEY *skey = s->s3->tmp.pkey;
+        EVP_PKEY *ckey = NULL;
 
         if (PACKET_remaining(pkt) == 0L) {
             /* We don't support ECDH client auth */
@@ -2368,11 +2370,13 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             ckey = EVP_PKEY_new();
             if (ckey == NULL || EVP_PKEY_copy_parameters(ckey, skey) <= 0) {
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EVP_LIB);
+                EVP_PKEY_free(ckey);
                 goto err;
             }
             if (EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(ckey), data, i,
                                NULL) == 0) {
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
+                EVP_PKEY_free(ckey);
                 goto err;
             }
         }
@@ -2380,11 +2384,11 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         if (ssl_derive(s, skey, ckey) == 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            EVP_PKEY_free(ckey);
             goto f_err;
         }
 
         EVP_PKEY_free(ckey);
-        ckey = NULL;
         EVP_PKEY_free(s->s3->tmp.pkey);
         s->s3->tmp.pkey = NULL;
 
@@ -2534,10 +2538,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_SRP)
  err:
 #endif
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-    EVP_PKEY_free(ckey);
-#endif
-    OPENSSL_free(rsa_decrypt);
 #ifndef OPENSSL_NO_PSK
     OPENSSL_clear_free(s->s3->tmp.psk, s->s3->tmp.psklen);
     s->s3->tmp.psk = NULL;
