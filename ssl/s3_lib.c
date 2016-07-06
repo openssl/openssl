@@ -3919,9 +3919,9 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
 int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                int free_pms)
 {
-#ifndef OPENSSL_NO_PSK
     unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
     if (alg_k & SSL_PSK) {
+#ifndef OPENSSL_NO_PSK
         unsigned char *pskpms, *t;
         size_t psklen = s->s3->tmp.psklen;
         size_t pskpmslen;
@@ -3955,15 +3955,19 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                                         s->session->master_key,
                                                         pskpms, pskpmslen);
         OPENSSL_clear_free(pskpms, pskpmslen);
-    } else
+#else
+        /* Should never happen */
+        s->session->master_key_length = 0;
+        goto err;
 #endif
+    } else {
         s->session->master_key_length =
             s->method->ssl3_enc->generate_master_secret(s,
                                                         s->session->master_key,
                                                         pms, pmslen);
-#ifndef OPENSSL_NO_PSK
-    err:
-#endif
+    }
+
+ err:
     if (pms) {
         if (free_pms)
             OPENSSL_clear_free(pms, pmslen);
