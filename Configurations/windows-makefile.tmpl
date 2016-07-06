@@ -11,6 +11,8 @@
  our $shlibextimport = $target{shared_import_extension} || ".lib";
  our $dsoext = $target{dso_extension} || ".dll";
 
+ our $sover = $config{shlib_major}."_".$config{shlib_minor};
+
  my $win_installenv =
      $target{build_scheme}->[2] eq "VC-W32" ?
      "ProgramFiles(x86)" : "ProgramW6432";
@@ -118,7 +120,7 @@ OPENSSLDIR_dir={- $openssldir_dir -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           $libdir -}
 ENGINESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
-                  my $enginesdir = catdir($prefix,$libdir,"engines");
+                  my $enginesdir = catdir($prefix,$libdir,"engines-$sover");
                   our ($enginesdir_dev, $enginesdir_dir, $enginesdir_file) =
                       splitpath($enginesdir, 1);
                   $enginesdir_dev -}
