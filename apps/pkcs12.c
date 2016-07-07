@@ -738,16 +738,70 @@ end:
 
 static int alg_print(X509_ALGOR *alg)
 {
-    PBEPARAM *pbe;
-    const unsigned char *p = alg->parameter->value.sequence->data;
+    int pbenid, aparamtype;
+    ASN1_OBJECT *aoid;
+    void *aparam;
+    PBEPARAM *pbe = NULL;
 
-    pbe = d2i_PBEPARAM(NULL, &p, alg->parameter->value.sequence->length);
-    if (!pbe)
-        return 1;
-    BIO_printf(bio_err, "%s, Iteration %ld\n",
-               OBJ_nid2ln(OBJ_obj2nid(alg->algorithm)),
-               ASN1_INTEGER_get(pbe->iter));
-    PBEPARAM_free(pbe);
+    X509_ALGOR_get0(&aoid, &aparamtype, &aparam, alg);
+
+    pbenid = OBJ_obj2nid(aoid);
+
+    BIO_printf(bio_err, "%s", OBJ_nid2ln(pbenid));
+
+    /*
+     * If PBE algorithm is PBES2 decode algorithm parameters
+     * for additional details.
+     */
+    if (pbenid == NID_pbes2) {
+        PBE2PARAM *pbe2 = NULL;
+        int encnid;
+        if (aparamtype == V_ASN1_SEQUENCE)
+            pbe2 = ASN1_item_unpack(aparam, ASN1_ITEM_rptr(PBE2PARAM));
+        if (pbe2 == NULL) {
+            BIO_puts(bio_err, "<unsupported parameters>");
+            goto done;
+        }
+        X509_ALGOR_get0(&aoid, &aparamtype, &aparam, pbe2->keyfunc);
+        pbenid = OBJ_obj2nid(aoid);
+        X509_ALGOR_get0(&aoid, NULL, NULL, pbe2->encryption);
+        encnid = OBJ_obj2nid(aoid);
+        BIO_printf(bio_err, ", %s, %s", OBJ_nid2ln(pbenid),
+                   OBJ_nid2sn(encnid));
+        /* If KDF is PBKDF2 decode parameters */
+        if (pbenid == NID_id_pbkdf2) {
+            PBKDF2PARAM *kdf = NULL;
+            int prfnid;
+            if (aparamtype == V_ASN1_SEQUENCE)
+                kdf = ASN1_item_unpack(aparam, ASN1_ITEM_rptr(PBKDF2PARAM));
+            if (kdf == NULL) {
+                BIO_puts(bio_err, "<unsupported parameters>");
+                goto done;
+            }
+
+            if (kdf->prf == NULL) {
+                prfnid = NID_hmacWithSHA1;
+            } else {
+                X509_ALGOR_get0(&aoid, NULL, NULL, kdf->prf);
+                prfnid = OBJ_obj2nid(aoid);
+            }
+            BIO_printf(bio_err, ", Iteration %ld, PRF %s",
+                       ASN1_INTEGER_get(kdf->iter), OBJ_nid2sn(prfnid));
+            PBKDF2PARAM_free(kdf);
+        }
+        PBE2PARAM_free(pbe2);
+    } else {
+        if (aparamtype == V_ASN1_SEQUENCE)
+            pbe = ASN1_item_unpack(aparam, ASN1_ITEM_rptr(PBEPARAM));
+        if (pbe == NULL) {
+            BIO_puts(bio_err, "<unsupported parameters>");
+            goto done;
+        }
+        BIO_printf(bio_err, ", Iteration %ld", ASN1_INTEGER_get(pbe->iter));
+        PBEPARAM_free(pbe);
+    }
+ done:
+    BIO_puts(bio_err, "\n");
     return 1;
 }
 
