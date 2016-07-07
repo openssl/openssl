@@ -40,6 +40,16 @@ void X509_LOOKUP_free(X509_LOOKUP *ctx)
     OPENSSL_free(ctx);
 }
 
+int X509_STORE_lock(X509_STORE *s)
+{
+    return CRYPTO_THREAD_write_lock(s->lock);
+}
+
+int X509_STORE_unlock(X509_STORE *s)
+{
+    return CRYPTO_THREAD_unlock(s->lock);
+}
+
 int X509_LOOKUP_init(X509_LOOKUP *ctx)
 {
     if (ctx->method == NULL)
