@@ -25,7 +25,7 @@ OBJ_dup, OBJ_txt2obj, OBJ_obj2txt, OBJ_create, OBJ_cleanup
  ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name);
  int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name);
 
- int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a);
+ int i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *a);
 
  int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b);
  ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o);
