@@ -4185,3 +4185,5 @@ X509_STORE_CTX_get_check_revocation     4129	1_1_0	EXIST::FUNCTION:
 X509_STORE_get_verify_cb                4130	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get_lookup_crls          4131	1_1_0	EXIST::FUNCTION:
 X509_STORE_get_verify                   4132	1_1_0	EXIST::FUNCTION:
+X509_STORE_unlock                       4133	1_1_0	EXIST::FUNCTION:
+X509_STORE_lock                         4134	1_1_0	EXIST::FUNCTION:
