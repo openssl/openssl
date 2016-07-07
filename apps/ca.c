@@ -1378,8 +1378,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     ASN1_STRING *str, *str2;
     ASN1_OBJECT *obj;
     X509 *ret = NULL;
-    X509_NAME_ENTRY *ne;
-    X509_NAME_ENTRY *tne, *push;
+    X509_NAME_ENTRY *ne, *tne;
+    X509_NAME_ENTRY *push;
     EVP_PKEY *pktmp;
     int ok = -1, i, j, last, nid;
     const char *p;
@@ -2414,7 +2414,8 @@ int make_revoked(X509_REVOKED *rev, const char *str)
 
 static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str)
 {
-    char buf[25], *pbuf, *p;
+    char buf[25], *pbuf;
+    const char *p;
     int j;
     j = i2a_ASN1_OBJECT(bio_err, obj);
     pbuf = buf;
@@ -2435,7 +2436,7 @@ static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str)
     else
         BIO_printf(bio_err, "ASN.1 %2d:'", str->type);
 
-    p = (char *)str->data;
+    p = (const char *)str->data;
     for (j = str->length; j > 0; j--) {
         if ((*p >= ' ') && (*p <= '~'))
             BIO_printf(bio_err, "%c", *p);

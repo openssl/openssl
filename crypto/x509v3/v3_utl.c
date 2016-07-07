@@ -423,8 +423,8 @@ static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
                                            GENERAL_NAMES *gens)
 {
     STACK_OF(OPENSSL_STRING) *ret = NULL;
-    X509_NAME_ENTRY *ne;
-    ASN1_IA5STRING *email;
+    const X509_NAME_ENTRY *ne;
+    const ASN1_IA5STRING *email;
     GENERAL_NAME *gen;
     int i;
     /* Now add any email address(es) to STACK */
@@ -734,7 +734,7 @@ static int equal_wildcard(const unsigned char *pattern, size_t pattern_len,
  * to UTF8.
  */
 
-static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
+static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
                            unsigned int flags, const char *b, size_t blen,
                            char **peername)
 {
@@ -840,8 +840,8 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
     i = -1;
     name = X509_get_subject_name(x);
     while ((i = X509_NAME_get_index_by_NID(name, cnid, i)) >= 0) {
-        X509_NAME_ENTRY *ne;
-        ASN1_STRING *str;
+        const X509_NAME_ENTRY *ne;
+        const ASN1_STRING *str;
         ne = X509_NAME_get_entry(name, i);
         str = X509_NAME_ENTRY_get_data(ne);
         /* Positive on success, negative on error! */

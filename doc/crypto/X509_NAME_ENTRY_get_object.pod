@@ -11,8 +11,8 @@ X509_NAME_ENTRY_create_by_OBJ - X509_NAME_ENTRY utility functions
 
  #include <openssl/x509.h>
 
- ASN1_OBJECT * X509_NAME_ENTRY_get_object(X509_NAME_ENTRY *ne);
- ASN1_STRING * X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne);
+ ASN1_OBJECT * X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne);
+ ASN1_STRING * X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne);
 
  int X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne, const ASN1_OBJECT *obj);
  int X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type, const unsigned char *bytes, int len);
