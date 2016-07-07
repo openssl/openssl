@@ -18,7 +18,7 @@
 /* Maximum indent */
 #define ASN1_PRINT_MAX_INDENT 128
 
-int ASN1_buf_print(BIO *bp, unsigned char *buf, size_t buflen, int indent)
+int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int indent)
 {
     size_t i;
 
