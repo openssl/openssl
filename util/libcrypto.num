@@ -3454,7 +3454,7 @@ OCSP_REQUEST_get_ext                    3401	1_1_0	EXIST::FUNCTION:OCSP
 NETSCAPE_SPKAC_new                      3402	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_verify                3403	1_1_0	EXIST::FUNCTION:
 CRYPTO_128_wrap                         3404	1_1_0	EXIST::FUNCTION:
-X509_STORE_set_lookup_crls_cb           3405	1_1_0	EXIST::FUNCTION:
+X509_STORE_set_lookup_crls              3405	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_meth_get_ctrl                3406	1_1_0	EXIST::FUNCTION:
 OCSP_REQ_CTX_set1_req                   3407	1_1_0	EXIST::FUNCTION:OCSP
 CONF_imodule_get_usr_data               3408	1_1_0	EXIST::FUNCTION:
