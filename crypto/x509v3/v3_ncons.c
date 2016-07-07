@@ -199,7 +199,8 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
         /* Process any email address attributes in subject name */
 
         for (i = -1;;) {
-            X509_NAME_ENTRY *ne;
+            const X509_NAME_ENTRY *ne;
+
             i = X509_NAME_get_index_by_NID(nm, NID_pkcs9_emailAddress, i);
             if (i == -1)
                 break;
