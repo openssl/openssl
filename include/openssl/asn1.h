@@ -526,7 +526,7 @@ void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t);
 
 ASN1_OBJECT *ASN1_OBJECT_new(void);
 void ASN1_OBJECT_free(ASN1_OBJECT *a);
-int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp);
+int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp);
 ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
                              long length);
 
@@ -632,10 +632,10 @@ int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size);
 int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a);
 int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size);
-int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a);
+int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a);
 int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size);
 int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type);
-int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a);
+int i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *a);
 
 int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num);
 ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
