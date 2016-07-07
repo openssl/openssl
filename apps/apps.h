@@ -274,6 +274,10 @@ int has_stdin_waiting(void);
         case OPT_S_DHPARAM: \
         case OPT_S_DEBUGBROKE
 
+#define IS_NO_PROT_FLAG(o) \
+ (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
+  || o == OPT_S_NOTLS1_2)
+
 /*
  * Option parsing.
  */

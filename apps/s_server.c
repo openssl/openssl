@@ -910,6 +910,10 @@ OPTIONS s_server_options[] = {
     {NULL, OPT_EOF, 0, NULL}
 };
 
+#define IS_PROT_FLAG(o) \
+ (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
+  || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
+
 int s_server_main(int argc, char *argv[])
 {
     ENGINE *engine = NULL;
@@ -970,7 +974,7 @@ int s_server_main(int argc, char *argv[])
     char *srpuserseed = NULL;
     char *srp_verifier_file = NULL;
 #endif
-    int min_version = 0, max_version = 0;
+    int min_version = 0, max_version = 0, prot_opt = 0, no_prot_opt = 0;
 
     local_argc = argc;
     local_argv = argv;
@@ -984,6 +988,17 @@ int s_server_main(int argc, char *argv[])
 
     prog = opt_init(argc, argv, s_server_options);
     while ((o = opt_next()) != OPT_EOF) {
+        if (IS_PROT_FLAG(o) && ++prot_opt > 1) {
+            BIO_printf(bio_err, "Cannot supply multiple protocol flags\n");
+            goto end;
+        }
+        if (IS_NO_PROT_FLAG(o))
+            no_prot_opt++;
+        if (prot_opt == 1 && no_prot_opt) {
+            BIO_printf(bio_err, "Cannot supply both a protocol flag and "
+                                "\"-no_<prot>\"\n");
+            goto end;
+        }
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
