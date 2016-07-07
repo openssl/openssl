@@ -294,7 +294,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
     return 0;
 }
 
-int X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr)
+int X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr)
 {
     if (attr == NULL)
         return 0;
