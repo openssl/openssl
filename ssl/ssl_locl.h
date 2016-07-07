@@ -141,18 +141,18 @@
                                 } \
                         }
 
-# define n2s(c,s)        ((s=(((unsigned int)(c[0]))<< 8)| \
-                            (((unsigned int)(c[1]))    )),c+=2)
-# define s2n(s,c)        ((c[0]=(unsigned char)(((s)>> 8)&0xff), \
-                          c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
+# define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
+                             (((unsigned int)((c)[1]))    )),(c)+=2)
+# define s2n(s,c)        (((c)[0]=(unsigned char)(((s)>> 8)&0xff), \
+                           (c)[1]=(unsigned char)(((s)    )&0xff)),(c)+=2)
 
-# define n2l3(c,l)       ((l =(((unsigned long)(c[0]))<<16)| \
-                             (((unsigned long)(c[1]))<< 8)| \
-                             (((unsigned long)(c[2]))    )),c+=3)
+# define n2l3(c,l)       ((l =(((unsigned long)((c)[0]))<<16)| \
+                              (((unsigned long)((c)[1]))<< 8)| \
+                              (((unsigned long)((c)[2]))    )),(c)+=3)
 
-# define l2n3(l,c)       ((c[0]=(unsigned char)(((l)>>16)&0xff), \
-                          c[1]=(unsigned char)(((l)>> 8)&0xff), \
-                          c[2]=(unsigned char)(((l)    )&0xff)),c+=3)
+# define l2n3(l,c)       (((c)[0]=(unsigned char)(((l)>>16)&0xff), \
+                           (c)[1]=(unsigned char)(((l)>> 8)&0xff), \
+                           (c)[2]=(unsigned char)(((l)    )&0xff)),(c)+=3)
 
 #define DTLS_VERSION_GT(v1, v2) ((v1) < (v2))
 #define DTLS_VERSION_GE(v1, v2) ((v1) <= (v2))
