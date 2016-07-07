@@ -389,7 +389,7 @@ static int asn1_print_boolean(BIO *out, int boolval)
 
 }
 
-static int asn1_print_integer(BIO *out, ASN1_INTEGER *str)
+static int asn1_print_integer(BIO *out, const ASN1_INTEGER *str)
 {
     char *s;
     int ret = 1;
@@ -415,7 +415,7 @@ static int asn1_print_oid(BIO *out, const ASN1_OBJECT *oid)
     return 1;
 }
 
-static int asn1_print_obstring(BIO *out, ASN1_STRING *str, int indent)
+static int asn1_print_obstring(BIO *out, const ASN1_STRING *str, int indent)
 {
     if (str->type == V_ASN1_BIT_STRING) {
         if (BIO_printf(out, " (%ld unused bits)\n", str->flags & 0x7) <= 0)
