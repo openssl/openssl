@@ -768,6 +768,10 @@ static const OPT_PAIR services[] = {
  (o == OPT_4 || o == OPT_6 || o == OPT_HOST || o == OPT_PORT || o == OPT_CONNECT)
 #define IS_UNIX_FLAG(o) (o == OPT_UNIX)
 
+#define IS_PROT_FLAG(o) \
+ (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
+  || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
+
 /* Free |*dest| and optionally set it to a copy of |source|. */
 static void freeandcopy(char **dest, const char *source)
 {
@@ -851,7 +855,7 @@ int s_client_main(int argc, char **argv)
     char *ctlog_file = NULL;
     int ct_validation = 0;
 #endif
-    int min_version = 0, max_version = 0;
+    int min_version = 0, max_version = 0, prot_opt = 0, no_prot_opt = 0;
     int async = 0;
     unsigned int split_send_fragment = 0;
     unsigned int max_pipelines = 0;
@@ -905,6 +909,19 @@ int s_client_main(int argc, char **argv)
                 prog);
             goto end;
         }
+
+        if (IS_PROT_FLAG(o) && ++prot_opt > 1) {
+            BIO_printf(bio_err, "Cannot supply multiple protocol flags\n");
+            goto end;
+        }
+        if (IS_NO_PROT_FLAG(o))
+            no_prot_opt++;
+        if (prot_opt == 1 && no_prot_opt) {
+            BIO_printf(bio_err, "Cannot supply both a protocol flag and "
+                                "\"-no_<prot>\"\n");
+            goto end;
+        }
+
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
