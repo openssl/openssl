@@ -2246,6 +2246,10 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_SERVER_CERTIFICATE             367
 # define SSL_F_TLS_PROCESS_SERVER_DONE                    368
 # define SSL_F_TLS_PROCESS_SERVER_HELLO                   369
+# define SSL_F_TLS_PROCESS_SKE_DHE                        419
+# define SSL_F_TLS_PROCESS_SKE_ECDHE                      420
+# define SSL_F_TLS_PROCESS_SKE_PSK_PREAMBLE               421
+# define SSL_F_TLS_PROCESS_SKE_SRP                        422
 # define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 
 /* Reason codes. */

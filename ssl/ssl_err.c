@@ -295,6 +295,11 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "tls_process_server_certificate"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_SERVER_DONE), "tls_process_server_done"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_SERVER_HELLO), "tls_process_server_hello"},
+    {ERR_FUNC(SSL_F_TLS_PROCESS_SKE_DHE), "tls_process_ske_dhe"},
+    {ERR_FUNC(SSL_F_TLS_PROCESS_SKE_ECDHE), "tls_process_ske_ecdhe"},
+    {ERR_FUNC(SSL_F_TLS_PROCESS_SKE_PSK_PREAMBLE),
+     "tls_process_ske_psk_preamble"},
+    {ERR_FUNC(SSL_F_TLS_PROCESS_SKE_SRP), "tls_process_ske_srp"},
     {ERR_FUNC(SSL_F_USE_CERTIFICATE_CHAIN_FILE),
      "use_certificate_chain_file"},
     {0, NULL}
