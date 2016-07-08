@@ -1344,6 +1344,55 @@ static int tls_process_ske_psk_preamble(SSL *s, PACKET *pkt, int *al)
 #endif
 }
 
+static int tls_process_ske_srp(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
+{
+#ifndef OPENSSL_NO_SRP
+    PACKET prime, generator, salt, server_pub;
+
+    if (!PACKET_get_length_prefixed_2(pkt, &prime)
+        || !PACKET_get_length_prefixed_2(pkt, &generator)
+        || !PACKET_get_length_prefixed_1(pkt, &salt)
+        || !PACKET_get_length_prefixed_2(pkt, &server_pub)) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    if ((s->srp_ctx.N =
+         BN_bin2bn(PACKET_data(&prime),
+                   PACKET_remaining(&prime), NULL)) == NULL
+        || (s->srp_ctx.g =
+            BN_bin2bn(PACKET_data(&generator),
+                      PACKET_remaining(&generator), NULL)) == NULL
+        || (s->srp_ctx.s =
+            BN_bin2bn(PACKET_data(&salt),
+                      PACKET_remaining(&salt), NULL)) == NULL
+        || (s->srp_ctx.B =
+            BN_bin2bn(PACKET_data(&server_pub),
+                      PACKET_remaining(&server_pub), NULL)) == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
+        return 0;
+    }
+
+    if (!srp_verify_server_param(s, al)) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SRP_PARAMETERS);
+        return 0;
+    }
+
+    /* We must check if there is a certificate */
+    if (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aRSA|SSL_aDSS))
+        *pkey = X509_get0_pubkey(s->session->peer);
+
+    return 1;
+#else
+    SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    *al = SSL_AD_INTERNAL_ERROR;
+    return 0;
+#endif
+}
+
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
     EVP_MD_CTX *md_ctx;
@@ -1377,44 +1426,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
     /* Nothing else to do for plain PSK or RSAPSK */
     if (alg_k & (SSL_kPSK | SSL_kRSAPSK)) {
-    }
-#ifndef OPENSSL_NO_SRP
-    else if (alg_k & SSL_kSRP) {
-        PACKET prime, generator, salt, server_pub;
-        if (!PACKET_get_length_prefixed_2(pkt, &prime)
-            || !PACKET_get_length_prefixed_2(pkt, &generator)
-            || !PACKET_get_length_prefixed_1(pkt, &salt)
-            || !PACKET_get_length_prefixed_2(pkt, &server_pub)) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
-        }
-
-        if ((s->srp_ctx.N =
-             BN_bin2bn(PACKET_data(&prime),
-                       PACKET_remaining(&prime), NULL)) == NULL
-            || (s->srp_ctx.g =
-                BN_bin2bn(PACKET_data(&generator),
-                          PACKET_remaining(&generator), NULL)) == NULL
-            || (s->srp_ctx.s =
-                BN_bin2bn(PACKET_data(&salt),
-                          PACKET_remaining(&salt), NULL)) == NULL
-            || (s->srp_ctx.B =
-                BN_bin2bn(PACKET_data(&server_pub),
-                          PACKET_remaining(&server_pub), NULL)) == NULL) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
+    } else if (alg_k & SSL_kSRP) {
+        if (!tls_process_ske_srp(s, pkt, &pkey, &al))
             goto err;
-        }
-
-        if (!srp_verify_server_param(s, &al)) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SRP_PARAMETERS);
-            goto f_err;
-        }
-
-/* We must check if there is a certificate */
-        if (alg_a & (SSL_aRSA|SSL_aDSS))
-            pkey = X509_get0_pubkey(s->session->peer);
     }
-#endif                          /* !OPENSSL_NO_SRP */
 #ifndef OPENSSL_NO_DH
     else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         PACKET prime, generator, pub_key;
