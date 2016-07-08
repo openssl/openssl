@@ -368,7 +368,7 @@ install_dev:
 		: {- output_off() if windowsdll(); "" -}; \
 		echo "install $$s1 -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1"; \
 		cp $$s1 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1.new; \
-		chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1.new; \
+		chmod 755 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1.new; \
 		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1.new \
 		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1; \
 		if [ "$$fn1" != "$$fn2" ]; then \
@@ -378,7 +378,7 @@ install_dev:
 		: {- output_on() if windowsdll(); "" -}{- output_off() unless windowsdll(); "" -}; \
 		echo "install $$s2 -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2"; \
 		cp $$s2 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2.new; \
-		chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2.new; \
+		chmod 755 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2.new; \
 		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2.new \
 		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
 		: {- output_on() unless windowsdll(); "" -}; \
