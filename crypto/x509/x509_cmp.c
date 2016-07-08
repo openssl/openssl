@@ -257,7 +257,7 @@ X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
     return (NULL);
 }
 
-EVP_PKEY *X509_get0_pubkey(X509 *x)
+EVP_PKEY *X509_get0_pubkey(const X509 *x)
 {
     if (x == NULL)
         return NULL;
@@ -271,9 +271,9 @@ EVP_PKEY *X509_get_pubkey(X509 *x)
     return X509_PUBKEY_get(x->cert_info.key);
 }
 
-int X509_check_private_key(X509 *x, EVP_PKEY *k)
+int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
 {
-    EVP_PKEY *xk;
+    const EVP_PKEY *xk;
     int ret;
 
     xk = X509_get0_pubkey(x);
