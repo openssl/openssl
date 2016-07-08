@@ -1,5 +1,5 @@
 IF[{- !$disabled{tests} -}]
-  PROGRAMS=\
+  PROGRAMS_NO_INST=\
           aborttest \
           sanitytest bntest \
           ectest ecdsatest ecdhtest gmdifftest pbelutest ideatest \
@@ -275,7 +275,7 @@ IF[{- !$disabled{tests} -}]
        next if grep { $_ eq lc("$name.h") } @nogo_headers;
        $OUT .= <<"_____";
 
-  PROGRAMS=buildtest_$name
+  PROGRAMS_NO_INST=buildtest_$name
   GENERATE[buildtest_$name.c]=generate_buildtest.pl $name
   SOURCE[buildtest_$name]=buildtest_$name.c
   INCLUDE[buildtest_$name]=../include

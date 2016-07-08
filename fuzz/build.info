@@ -9,7 +9,7 @@
 -}
 
 IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
-  PROGRAMS=asn1 asn1parse bignum bndiv cms conf crl ct server x509
+  PROGRAMS_NO_INST=asn1 asn1parse bignum bndiv cms conf crl ct server x509
 
   SOURCE[asn1]=asn1.c driver.c
   INCLUDE[asn1]=../include {- $ex_inc -}
@@ -53,7 +53,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 ENDIF
 
 IF[{- !$disabled{tests} -}]
-  PROGRAMS=asn1-test asn1parse-test bignum-test bndiv-test cms-test conf-test crl-test ct-test server-test x509-test
+  PROGRAMS_NO_INST=asn1-test asn1parse-test bignum-test bndiv-test cms-test conf-test crl-test ct-test server-test x509-test
 
   SOURCE[asn1-test]=asn1.c test-corpus.c
   INCLUDE[asn1-test]=../include
