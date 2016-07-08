@@ -152,11 +152,13 @@ SYSTARTUP={- catdir($installtop, '[.SYS$STARTUP]'); -}
 OPENSSLDIR={- catdir($config{openssldir}) ||
               $config{prefix} ? catdir($config{prefix},"COMMON")
                               : "SYS\$COMMON:[OPENSSL-COMMON]" -}
-# Where installed engines reside
-ENGINESDIR={- $osslprefix -}ENGINES{- $sover -}:
+# The same, but for C
+OPENSSLDIR_C={- $osslprefix -}DATAROOT:[000000]
+# Where installed engines reside, for C
+ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover -}:
 
 CC= {- $target{cc} -}
-CFLAGS= /DEFINE=({- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR)\"\"\"") -}) {- $target{cflags} -} {- $config{cflags} -}
+CFLAGS= /DEFINE=({- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR_C)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR_C)\"\"\"") -}) {- $target{cflags} -} {- $config{cflags} -}
 CFLAGS_Q=$(CFLAGS)
 DEPFLAG= /DEFINE=({- join(",", @{$config{depdefines}}) -})
 LDFLAGS= {- $target{lflags} -}
