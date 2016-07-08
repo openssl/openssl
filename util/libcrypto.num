@@ -1330,7 +1330,7 @@ BN_BLINDING_set_flags                   1314	1_1_0	EXIST::FUNCTION:
 ERR_peek_last_error                     1315	1_1_0	EXIST::FUNCTION:
 ENGINE_set_cmd_defns                    1316	1_1_0	EXIST::FUNCTION:ENGINE
 d2i_ASN1_NULL                           1317	1_1_0	EXIST::FUNCTION:
-RAND_event                              1318	1_1_0	EXIST:WIN32:FUNCTION:DEPRECATEDIN_1_1_0
+RAND_event                              1318	1_1_0	EXIST:_WIN32:FUNCTION:DEPRECATEDIN_1_1_0
 i2d_PKCS12_fp                           1319	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_init                  1320	1_1_0	EXIST::FUNCTION:
 X509_check_trust                        1321	1_1_0	EXIST::FUNCTION:
@@ -1816,7 +1816,7 @@ OCSP_SINGLERESP_get_ext_by_NID          1800	1_1_0	EXIST::FUNCTION:OCSP
 a2i_IPADDRESS_NC                        1801	1_1_0	EXIST::FUNCTION:
 CTLOG_STORE_load_default_file           1802	1_1_0	EXIST::FUNCTION:CT
 PKCS12_SAFEBAG_create_pkcs8_encrypt     1803	1_1_0	EXIST::FUNCTION:
-RAND_screen                             1804	1_1_0	EXIST:WIN32:FUNCTION:DEPRECATEDIN_1_1_0
+RAND_screen                             1804	1_1_0	EXIST:_WIN32:FUNCTION:DEPRECATEDIN_1_1_0
 CONF_get_string                         1805	1_1_0	EXIST::FUNCTION:
 X509_cmp_current_time                   1806	1_1_0	EXIST::FUNCTION:
 i2d_DSAPrivateKey                       1807	1_1_0	EXIST::FUNCTION:DSA
