@@ -2226,6 +2226,63 @@ static int tls_construct_cke_dhe(SSL *s, unsigned char **p, int *len, int *al)
 #endif
 }
 
+static int tls_construct_cke_ecdhe(SSL *s, unsigned char **p, int *len, int *al)
+{
+#ifndef OPENSSL_NO_EC
+    unsigned char *encodedPoint = NULL;
+    int encoded_pt_len = 0;
+    EVP_PKEY *ckey = NULL, *skey = NULL;
+
+    skey = s->s3->peer_tmp;
+    if ((skey == NULL) || EVP_PKEY_get0_EC_KEY(skey) == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+                   ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    ckey = ssl_generate_pkey(skey, NID_undef);
+
+    if (ssl_derive(s, ckey, skey) == 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_EVP_LIB);
+        goto err;
+    }
+
+    /* Generate encoding of client key */
+    encoded_pt_len = EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(ckey),
+                                    POINT_CONVERSION_UNCOMPRESSED,
+                                    &encodedPoint, NULL);
+
+    if (encoded_pt_len == 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
+        goto err;
+    }
+
+    EVP_PKEY_free(ckey);
+    ckey = NULL;
+
+    *len = encoded_pt_len;
+
+    /* length of encoded point */
+    **p = *len;
+    *p += 1;
+    /* copy the point */
+    memcpy(*p, encodedPoint, *len);
+    /* increment len to account for length field */
+    *len += 1;
+
+    OPENSSL_free(encodedPoint);
+
+    return 1;
+ err:
+    EVP_PKEY_free(ckey);
+    return 0;
+#else
+    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    *al = SSL_AD_INTERNAL_ERROR;
+    return 0;
+#endif
+}
+
 int tls_construct_client_key_exchange(SSL *s)
 {
     unsigned char *p;
@@ -2252,56 +2309,10 @@ int tls_construct_client_key_exchange(SSL *s)
     } else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         if (!tls_construct_cke_dhe(s, &p, &n, &al))
             goto err;
+    } else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
+        if (!tls_construct_cke_ecdhe(s, &p, &n, &al))
+            goto err;
     }
-#ifndef OPENSSL_NO_EC
-    else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
-        unsigned char *encodedPoint = NULL;
-        int encoded_pt_len = 0;
-        EVP_PKEY *ckey = NULL, *skey = NULL;
-
-        skey = s->s3->peer_tmp;
-        if ((skey == NULL) || EVP_PKEY_get0_EC_KEY(skey) == NULL) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                       ERR_R_INTERNAL_ERROR);
-            goto err;
-            }
-
-        ckey = ssl_generate_pkey(skey, NID_undef);
-
-        if (ssl_derive(s, ckey, skey) == 0) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_EVP_LIB);
-            EVP_PKEY_free(ckey);
-            goto err;
-        }
-
-        /* Generate encoding of client key */
-        encoded_pt_len = EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(ckey),
-                                        POINT_CONVERSION_UNCOMPRESSED,
-                                        &encodedPoint, NULL);
-
-        if (encoded_pt_len == 0) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
-            EVP_PKEY_free(ckey);
-            goto err;
-        }
-
-        EVP_PKEY_free(ckey);
-        ckey = NULL;
-
-        n = encoded_pt_len;
-
-        *p = n;         /* length of encoded point */
-        /* Encoded point will be copied here */
-        p += 1;
-        /* copy the point */
-        memcpy(p, encodedPoint, n);
-        /* increment n to account for length field */
-        n += 1;
-
-        /* Free allocated memory */
-        OPENSSL_free(encodedPoint);
-    }
-#endif                          /* !OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_GOST
     else if (alg_k & SSL_kGOST) {
         /* GOST key exchange message creation */
