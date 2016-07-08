@@ -178,7 +178,7 @@ int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial)
     return 1;
 }
 
-STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(X509_REVOKED *r)
+STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(const X509_REVOKED *r)
 {
     return r->extensions;
 }
