@@ -1574,29 +1574,17 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
-    EVP_MD_CTX *md_ctx;
     int al = -1;
-    long alg_k, alg_a;
+    long alg_k;
     EVP_PKEY *pkey = NULL;
     PACKET save_param_start, signature;
-
-    md_ctx = EVP_MD_CTX_new();
-    if (md_ctx == NULL) {
-        al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
-        goto f_err;
-    }
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
     save_param_start = *pkt;
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3->peer_tmp);
     s->s3->peer_tmp = NULL;
-#endif
-
-    alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 
     if (alg_k & SSL_PSK) {
         if (!tls_process_ske_psk_preamble(s, pkt, &al))
@@ -1617,7 +1605,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     } else if (alg_k) {
         al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_UNEXPECTED_MESSAGE);
-        goto f_err;
+        goto err;
     }
 
     /* if it was signed, check the signature */
@@ -1625,6 +1613,8 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         PACKET params;
         int maxsig;
         const EVP_MD *md = NULL;
+        EVP_MD_CTX *md_ctx;
+
         /*
          * |pkt| now points to the beginning of the signature, so the difference
          * equals the length of the parameters.
@@ -1634,21 +1624,24 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                                    PACKET_remaining(pkt))) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            goto f_err;
+            goto err;
         }
 
         if (SSL_USE_SIGALGS(s)) {
             const unsigned char *sigalgs;
             int rv;
             if (!PACKET_get_bytes(pkt, &sigalgs, 2)) {
+                al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
-                goto f_err;
+                goto err;
             }
             rv = tls12_check_peer_sigalg(&md, s, sigalgs, pkey);
-            if (rv == -1)
+            if (rv == -1) {
+                al = SSL_AD_INTERNAL_ERROR;
                 goto err;
-            else if (rv == 0) {
-                goto f_err;
+            } else if (rv == 0) {
+                al = SSL_AD_DECODE_ERROR;
+                goto err;
             }
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
@@ -1661,13 +1654,15 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
         if (!PACKET_get_length_prefixed_2(pkt, &signature)
             || PACKET_remaining(pkt) != 0) {
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
+            goto err;
         }
         maxsig = EVP_PKEY_size(pkey);
         if (maxsig < 0) {
+            al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            goto f_err;
+            goto err;
         }
 
         /*
@@ -1675,9 +1670,18 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
          */
         if (PACKET_remaining(&signature) > (size_t)maxsig) {
             /* wrong packet length */
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_WRONG_SIGNATURE_LENGTH);
-            goto f_err;
+            goto err;
         }
+
+        md_ctx = EVP_MD_CTX_new();
+        if (md_ctx == NULL) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
         if (EVP_VerifyInit_ex(md_ctx, md, NULL) <= 0
                 || EVP_VerifyUpdate(md_ctx, &(s->s3->client_random[0]),
                                     SSL3_RANDOM_SIZE) <= 0
@@ -1685,41 +1689,46 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                                     SSL3_RANDOM_SIZE) <= 0
                 || EVP_VerifyUpdate(md_ctx, PACKET_data(&params),
                                     PACKET_remaining(&params)) <= 0) {
+            EVP_MD_CTX_free(md_ctx);
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
-            goto f_err;
+            goto err;
         }
         if (EVP_VerifyFinal(md_ctx, PACKET_data(&signature),
                             PACKET_remaining(&signature), pkey) <= 0) {
             /* bad signature */
+            EVP_MD_CTX_free(md_ctx);
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SIGNATURE);
-            goto f_err;
+            goto err;
         }
+        EVP_MD_CTX_free(md_ctx);
     } else {
         /* aNULL, aSRP or PSK do not need public keys */
-        if (!(alg_a & (SSL_aNULL | SSL_aSRP)) && !(alg_k & SSL_PSK)) {
+        if (!(s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
+                && !(alg_k & SSL_PSK)) {
             /* Might be wrong key type, check it */
-            if (ssl3_check_cert_and_algorithm(s))
+            if (ssl3_check_cert_and_algorithm(s)) {
                 /* Otherwise this shouldn't happen */
+                al = SSL_AD_INTERNAL_ERROR;
                 SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            } else {
+                al = SSL_AD_DECODE_ERROR;
+            }
             goto err;
         }
         /* still data left over */
         if (PACKET_remaining(pkt) != 0) {
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_EXTRA_DATA_IN_MESSAGE);
-            goto f_err;
+            goto err;
         }
     }
-    EVP_MD_CTX_free(md_ctx);
+
     return MSG_PROCESS_CONTINUE_READING;
- f_err:
-    if (al == -1)
-        al = SSL_AD_DECODE_ERROR;
  err:
     if (al != -1)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    EVP_MD_CTX_free(md_ctx);
     ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }
