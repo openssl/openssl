@@ -12,18 +12,14 @@ fragment sizes and pipelining operations
 
  #include <openssl/ssl.h>
 
- # define SSL_CTX_set_max_send_fragment(ctx,m) \
-         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_MAX_SEND_FRAGMENT,m,NULL)
- # define SSL_set_max_send_fragment(ssl,m) \
-         SSL_ctrl(ssl,SSL_CTRL_SET_MAX_SEND_FRAGMENT,m,NULL)
- # define SSL_CTX_set_max_pipelines(ctx,m) \
-         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_MAX_PIPELINES,m,NULL)
- # define SSL_set_max_pipelines(ssl,m) \
-         SSL_ctrl(ssl,SSL_CTRL_SET_MAX_PIPELINES,m,NULL)
- # define SSL_CTX_set_split_send_fragment(ctx,m) \
-         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_SPLIT_SEND_FRAGMENT,m,NULL)
- # define SSL_set_split_send_fragment(ssl,m) \
-         SSL_ctrl(ssl,SSL_CTRL_SET_SPLIT_SEND_FRAGMENT,m,NULL)
+ long SSL_CTX_set_max_send_fragment(SSL_CTX *ctx, long);
+ long SSL_set_max_send_fragment(SSL *ssl, long m);
+
+ long SSL_CTX_set_max_pipelines(SSL_CTX *ctx, long m);
+ long SSL_set_max_pipelines(SSL_CTX *ssl, long m);
+
+ long SSL_CTX_set_split_send_fragment(SSL_CTX *ctx, long m);
+ long SSL_set_split_send_fragment(SSL *ssl, long m);
 
  void SSL_CTX_set_default_read_buffer_len(SSL_CTX *ctx, size_t len);
  void SSL_set_default_read_buffer_len(SSL *s, size_t len);

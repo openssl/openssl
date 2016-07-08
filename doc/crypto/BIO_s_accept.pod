@@ -2,7 +2,6 @@
 
 =head1 NAME
 
-BIO_BIND_NORMAL, BIO_BIND_REUSEADDR_IF_UNUSED, BIO_BIND_REUSEADDR,
 BIO_s_accept, BIO_set_accept_port, BIO_get_accept_port, BIO_new_accept,
 BIO_set_nbio_accept, BIO_set_accept_bios, BIO_set_bind_mode,
 BIO_get_bind_mode, BIO_do_accept - accept BIO
@@ -23,10 +22,6 @@ BIO_get_bind_mode, BIO_do_accept - accept BIO
 
  long BIO_set_bind_mode(BIO *b, long mode);
  long BIO_get_bind_mode(BIO *b);
-
- #define BIO_BIND_NORMAL                0
- #define BIO_BIND_REUSEADDR_IF_UNUSED   1
- #define BIO_BIND_REUSEADDR             2
 
  int BIO_do_accept(BIO *b);
 
@@ -82,13 +77,13 @@ chain of BIOs must not be freed after this call, they will
 be automatically freed when the accept BIO is freed.
 
 BIO_set_bind_mode() and BIO_get_bind_mode() set and retrieve
-the current bind mode. If BIO_BIND_NORMAL (the default) is set
+the current bind mode. If B<BIO_BIND_NORMAL> (the default) is set
 then another socket cannot be bound to the same port. If
-BIO_BIND_REUSEADDR is set then other sockets can bind to the
-same port. If BIO_BIND_REUSEADDR_IF_UNUSED is set then and
+B<BIO_BIND_REUSEADDR> is set then other sockets can bind to the
+same port. If B<BIO_BIND_REUSEADDR_IF_UNUSED> is set then and
 attempt is first made to use BIO_BIN_NORMAL, if this fails
 and the port is not in use then a second attempt is made
-using BIO_BIND_REUSEADDR.
+using B<BIO_BIND_REUSEADDR>.
 
 BIO_do_accept() serves two functions. When it is first
 called, after the accept BIO has been setup, it will attempt

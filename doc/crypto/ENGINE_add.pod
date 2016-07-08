@@ -13,7 +13,7 @@ ENGINE_get_destroy_function, ENGINE_get_finish_function,
 ENGINE_get_init_function, ENGINE_get_load_privkey_function,
 ENGINE_get_load_pubkey_function, ENGINE_load_private_key,
 ENGINE_load_public_key, ENGINE_get_RAND, ENGINE_get_RSA, ENGINE_get_id,
-ENGINE_get_name, ENGINE_get_cmd_defns, EVP_CIPHER ENGINE_get_cipher,
+ENGINE_get_name, ENGINE_get_cmd_defns, ENGINE_get_cipher,
 ENGINE_get_digest, ENGINE_add, ENGINE_cmd_is_executable,
 ENGINE_ctrl, ENGINE_ctrl_cmd, ENGINE_ctrl_cmd_string,
 ENGINE_finish, ENGINE_free, ENGINE_get_flags, ENGINE_init,
@@ -525,17 +525,17 @@ this symbol is considered a "generic" command is handled directly by the
 OpenSSL core routines.
 
 It is using these "core" control commands that one can discover the control
-commands implemented by a given ENGINE, specifically the commands;
+commands implemented by a given ENGINE, specifically the commands:
 
- #define ENGINE_HAS_CTRL_FUNCTION               10
- #define ENGINE_CTRL_GET_FIRST_CMD_TYPE         11
- #define ENGINE_CTRL_GET_NEXT_CMD_TYPE          12
- #define ENGINE_CTRL_GET_CMD_FROM_NAME          13
- #define ENGINE_CTRL_GET_NAME_LEN_FROM_CMD      14
- #define ENGINE_CTRL_GET_NAME_FROM_CMD          15
- #define ENGINE_CTRL_GET_DESC_LEN_FROM_CMD      16
- #define ENGINE_CTRL_GET_DESC_FROM_CMD          17
- #define ENGINE_CTRL_GET_CMD_FLAGS              18
+ ENGINE_HAS_CTRL_FUNCTION
+ ENGINE_CTRL_GET_FIRST_CMD_TYPE
+ ENGINE_CTRL_GET_NEXT_CMD_TYPE
+ ENGINE_CTRL_GET_CMD_FROM_NAME
+ ENGINE_CTRL_GET_NAME_LEN_FROM_CMD
+ ENGINE_CTRL_GET_NAME_FROM_CMD
+ ENGINE_CTRL_GET_DESC_LEN_FROM_CMD
+ ENGINE_CTRL_GET_DESC_FROM_CMD
+ ENGINE_CTRL_GET_CMD_FLAGS
 
 Whilst these commands are automatically processed by the OpenSSL framework code,
 they use various properties exposed by each ENGINE to process these
@@ -569,12 +569,12 @@ return properties of the corresponding commands. All except
 ENGINE_CTRL_GET_FLAGS return the string length of a command name or description,
 or populate a supplied character buffer with a copy of the command name or
 description. ENGINE_CTRL_GET_FLAGS returns a bitwise-OR'd mask of the following
-possible values;
+possible values:
 
- #define ENGINE_CMD_FLAG_NUMERIC                (unsigned int)0x0001
- #define ENGINE_CMD_FLAG_STRING                 (unsigned int)0x0002
- #define ENGINE_CMD_FLAG_NO_INPUT               (unsigned int)0x0004
- #define ENGINE_CMD_FLAG_INTERNAL               (unsigned int)0x0008
+ ENGINE_CMD_FLAG_NUMERIC
+ ENGINE_CMD_FLAG_STRING
+ ENGINE_CMD_FLAG_NO_INPUT
+ ENGINE_CMD_FLAG_INTERNAL
 
 If the ENGINE_CMD_FLAG_INTERNAL flag is set, then any other flags are purely
 informational to the caller - this flag will prevent the command being usable

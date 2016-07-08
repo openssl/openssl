@@ -239,8 +239,8 @@ X509_dup,
 
  #include <openssl/asn1t.h>
 
- #define DECLARE_ASN1_FUNCTIONS(type) ...
- #define IMPLEMENT_ASN1_FUNCTIONS(stname) ...
+ DECLARE_ASN1_FUNCTIONS(type)
+ IMPLEMENT_ASN1_FUNCTIONS(stname)
 
  typedef struct ASN1_ITEM_st ASN1_ITEM;
 
@@ -249,7 +249,6 @@ X509_dup,
  TYPE *TYPE_dup(TYPE *a);
  void TYPE_free(TYPE *a);
  int TYPE_print_ctx(BIO *out, TYPE *a, int indent, const ASN1_PCTX *pctx);
-
 
 =head1 DESCRIPTION
 

@@ -7,19 +7,20 @@ BIO_set_read_buffer_size,
 BIO_set_write_buffer_size,
 BIO_set_buffer_size,
 BIO_set_buffer_read_data,
-BIO_f_buffer - buffering BIO
+BIO_f_buffer
+- buffering BIO
 
 =head1 SYNOPSIS
 
  #include <openssl/bio.h>
 
- const BIO_METHOD * BIO_f_buffer(void);
+ const BIO_METHOD *BIO_f_buffer(void);
 
- #define BIO_get_buffer_num_lines(b)
- #define BIO_set_read_buffer_size(b,size)
- #define BIO_set_write_buffer_size(b,size)
- #define BIO_set_buffer_size(b,size)
- #define BIO_set_buffer_read_data(b,buf,num)
+ long BIO_get_buffer_num_lines(BIO *b);
+ long BIO_set_read_buffer_size(BIO *b, long size);
+ long BIO_set_write_buffer_size(BIO *b, long size);
+ long BIO_set_buffer_size(BIO *b, long size);
+ long BIO_set_buffer_read_data(BIO *b, void *buf, long num);
 
 =head1 DESCRIPTION
 
@@ -45,6 +46,8 @@ bytes of B<buf>. If B<num> is larger than the current buffer size the buffer
 is expanded.
 
 =head1 NOTES
+
+These functions, other than BIO_f_buffer(), are implemented as macros.
 
 Buffering BIOs implement BIO_gets() by using BIO_read() operations on the
 next BIO in the chain. By prepending a buffering BIO to a chain it is therefore

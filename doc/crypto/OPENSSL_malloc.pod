@@ -2,8 +2,6 @@
 
 =head1 NAME
 
-CRYPTO_MEM_CHECK_OFF, CRYPTO_MEM_CHECK_ON,
-CRYPTO_MEM_CHECK_DISABLE, CRYPTO_MEM_CHECK_ENABLE,
 OPENSSL_malloc_init,
 OPENSSL_malloc, OPENSSL_zalloc, OPENSSL_realloc, OPENSSL_free,
 OPENSSL_clear_realloc, OPENSSL_clear_free, OPENSSL_cleanse,
@@ -61,11 +59,6 @@ CRYPTO_mem_leaks, CRYPTO_mem_leaks_fp - Memory allocation functions
          void (*f)(void *, const char *, int))
 
  int CRYPTO_set_mem_debug(int onoff)
-
- #define CRYPTO_MEM_CHECK_OFF
- #define CRYPTO_MEM_CHECK_ON
- #define CRYPTO_MEM_CHECK_DISABLE
- #define CRYPTO_MEM_CHECK_ENABLE
 
  int CRYPTO_mem_ctrl(int mode);
 
@@ -150,9 +143,6 @@ To enable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
 the B<CRYPTO_MEM_CHECK_ON>.
 To disable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
 the B<CRYPTO_MEM_CHECK_OFF>.
-The B<CRYPTO_MEM_CHECK_DISABLE> and B<CRYPTO_MEM_CHECK_ENABLE> modes
-are used internally within OpenSSL to temporarily suspend and resume
-tracking.
 
 While checking memory, it can be useful to store additional context
 about what is being done.

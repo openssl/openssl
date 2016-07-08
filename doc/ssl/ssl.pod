@@ -318,7 +318,7 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item LHASH *B<SSL_CTX_sessions>(SSL_CTX *ctx);
 
-=item void B<SSL_CTX_set_app_data>(SSL_CTX *ctx, void *arg);
+=item int B<SSL_CTX_set_app_data>(SSL_CTX *ctx, void *arg);
 
 =item void B<SSL_CTX_set_cert_store>(SSL_CTX *ctx, X509_STORE *cs);
 
@@ -437,7 +437,7 @@ sessions defined in the B<SSL_SESSION> structures.
 
 =item int B<SSL_SESSION_print_fp>(FILE *fp, const SSL_SESSION *x);
 
-=item void B<SSL_SESSION_set_app_data>(SSL_SESSION *s, char *a);
+=item int B<SSL_SESSION_set_app_data>(SSL_SESSION *s, char *a);
 
 =item int B<SSL_SESSION_set_ex_data>(SSL_SESSION *s, int idx, char *arg);
 

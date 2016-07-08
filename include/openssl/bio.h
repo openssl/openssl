@@ -87,7 +87,6 @@ extern "C" {
 # define BIO_CTRL_FLUSH          11/* opt - 'flush' buffered output */
 # define BIO_CTRL_DUP            12/* man - extra stuff for 'duped' BIO */
 # define BIO_CTRL_WPENDING       13/* opt - number of bytes still to write */
-/* callback is int cb(BIO *bio,state,ret); */
 # define BIO_CTRL_SET_CALLBACK   14/* opt - set callback function */
 # define BIO_CTRL_GET_CALLBACK   15/* opt - set callback function */
 
@@ -236,11 +235,10 @@ void BIO_clear_flags(BIO *b, int flags);
 # define BIO_cb_pre(a)   (!((a)&BIO_CB_RETURN))
 # define BIO_cb_post(a)  ((a)&BIO_CB_RETURN)
 
-long (*BIO_get_callback(const BIO *b)) (BIO *, int, const char *,
-                                        int, long, long);
-void BIO_set_callback(BIO *b,
-                      long (*callback) (BIO *, int, const char *,
-                                        int, long, long));
+typedef long (*BIO_callback_fn)(BIO *b, int oper, const char *argp, int argi,
+                                long argl, long ret);
+BIO_callback_fn BIO_get_callback(const BIO *b);
+void BIO_set_callback(BIO *b, BIO_callback_fn callback);
 char *BIO_get_callback_arg(const BIO *b);
 void BIO_set_callback_arg(BIO *b, char *arg);
 
@@ -249,8 +247,7 @@ typedef struct bio_method_st BIO_METHOD;
 const char *BIO_method_name(const BIO *b);
 int BIO_method_type(const BIO *b);
 
-typedef void bio_info_cb (BIO *, int, const char *, int, long,
-                          long);
+typedef void bio_info_cb(BIO *, int, const char *, int, long, long);
 
 DEFINE_STACK_OF(BIO)
 

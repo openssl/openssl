@@ -18,23 +18,20 @@ BIO_ssl_shutdown - SSL BIO
 
  const BIO_METHOD *BIO_f_ssl(void);
 
- #define BIO_set_ssl(b,ssl,c)   BIO_ctrl(b,BIO_C_SET_SSL,c,(char *)ssl)
- #define BIO_get_ssl(b,sslp)    BIO_ctrl(b,BIO_C_GET_SSL,0,(char *)sslp)
- #define BIO_set_ssl_mode(b,client)     BIO_ctrl(b,BIO_C_SSL_MODE,client,NULL)
- #define BIO_set_ssl_renegotiate_bytes(b,num) \
-        BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_BYTES,num,NULL);
- #define BIO_set_ssl_renegotiate_timeout(b,seconds) \
-        BIO_ctrl(b,BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT,seconds,NULL);
- #define BIO_get_num_renegotiates(b) \
-        BIO_ctrl(b,BIO_C_SET_SSL_NUM_RENEGOTIATES,0,NULL);
+ long BIO_set_ssl(BIO *b,SSL *ssl, long c);
+ long BIO_get_ssl(BIO *b, SSL **sslp);
+ long BIO_set_ssl_mode(BIO *b, long client);
+ long BIO_set_ssl_renegotiate_bytes(BIO *b, long num);
+ long BIO_set_ssl_renegotiate_timeout(BIO *b, long seconds);
+ long BIO_get_num_renegotiates(BIO *b);
 
- BIO *BIO_new_ssl(SSL_CTX *ctx,int client);
+ BIO *BIO_new_ssl(SSL_CTX *ctx, int client);
  BIO *BIO_new_ssl_connect(SSL_CTX *ctx);
  BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);
- int BIO_ssl_copy_session_id(BIO *to,BIO *from);
+ int BIO_ssl_copy_session_id(BIO *to, BIO *from);
  void BIO_ssl_shutdown(BIO *bio);
 
- #define BIO_do_handshake(b)    BIO_ctrl(b,BIO_C_DO_STATE_MACHINE,0,NULL)
+ long BIO_do_handshake(BIO *b);
 
 =head1 DESCRIPTION
 
@@ -127,6 +124,10 @@ to locate the connect BIO first.
 Applications do not have to call BIO_do_handshake() but may wish
 to do so to separate the handshake process from other I/O
 processing.
+
+BIO_set_ssl(), BIO_get_ssl(), BIO_set_ssl_mode(),
+BIO_set_ssl_renegotiate_bytes(), BIO_set_ssl_renegotiate_timeout(),
+BIO_get_num_renegotiates(), and BIO_do_handshake() are implemented as macros.
 
 =head1 EXAMPLE
 

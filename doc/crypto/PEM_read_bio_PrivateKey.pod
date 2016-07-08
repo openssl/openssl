@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+pem_password_cb,
 PEM_read_bio_PrivateKey, PEM_read_PrivateKey, PEM_write_bio_PrivateKey,
 PEM_write_bio_PrivateKey_traditional, PEM_write_PrivateKey,
 PEM_write_bio_PKCS8PrivateKey, PEM_write_PKCS8PrivateKey,
@@ -28,6 +29,8 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
 =head1 SYNOPSIS
 
  #include <openssl/pem.h>
+
+ typedef int (*pem_password_cb)(char *buf, int size, int rwflag, void *u);
 
  EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x,
                                    pem_password_cb *cb, void *u);
