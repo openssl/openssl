@@ -1489,6 +1489,89 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 #endif
 }
 
+static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
+{
+#ifndef OPENSSL_NO_EC
+    PACKET encoded_pt;
+    const unsigned char *ecparams;
+    int curve_nid;
+    EVP_PKEY_CTX *pctx = NULL;
+
+    /*
+     * Extract elliptic curve parameters and the server's ephemeral ECDH
+     * public key. For now we only support named (not generic) curves and
+     * ECParameters in this case is just three bytes.
+     */
+    if (!PACKET_get_bytes(pkt, &ecparams, 3)) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
+        return 0;
+    }
+    /*
+     * Check curve is one of our preferences, if not server has sent an
+     * invalid curve. ECParameters is 3 bytes.
+     */
+    if (!tls1_check_curve(s, ecparams, 3)) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_WRONG_CURVE);
+        return 0;
+    }
+
+    curve_nid = tls1_ec_curve_id2nid(*(ecparams + 2));
+    if (curve_nid  == 0) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE,
+               SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
+        return 0;
+    }
+
+    /* Set up EVP_PKEY with named curve as parameters */
+    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    if (pctx == NULL
+        || EVP_PKEY_paramgen_init(pctx) <= 0
+        || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, curve_nid) <= 0
+        || EVP_PKEY_paramgen(pctx, &s->s3->peer_tmp) <= 0) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
+        EVP_PKEY_CTX_free(pctx);
+        return 0;
+    }
+    EVP_PKEY_CTX_free(pctx);
+    pctx = NULL;
+
+    if (!PACKET_get_length_prefixed_1(pkt, &encoded_pt)) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    if (EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(s->s3->peer_tmp),
+                       PACKET_data(&encoded_pt),
+                       PACKET_remaining(&encoded_pt), NULL) == 0) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_ECPOINT);
+        return 0;
+    }
+
+    /*
+     * The ECC/TLS specification does not mention the use of DSA to sign
+     * ECParameters in the server key exchange message. We do support RSA
+     * and ECDSA.
+     */
+    if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aECDSA)
+        *pkey = X509_get0_pubkey(s->session->peer);
+    else if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aRSA)
+        *pkey = X509_get0_pubkey(s->session->peer);
+    /* else anonymous ECDH, so no certificate or pkey. */
+
+    return 1;
+#else
+    SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    *al = SSL_AD_INTERNAL_ERROR;
+    return 0;
+#endif
+}
+
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
     EVP_MD_CTX *md_ctx;
@@ -1528,87 +1611,14 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     } else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         if (!tls_process_ske_dhe(s, pkt, &pkey, &al))
             goto err;
-    }
-#ifndef OPENSSL_NO_EC
-    else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
-        PACKET encoded_pt;
-        const unsigned char *ecparams;
-        int curve_nid;
-        EVP_PKEY_CTX *pctx = NULL;
-
-        /*
-         * Extract elliptic curve parameters and the server's ephemeral ECDH
-         * public key. For now we only support named (not generic) curves and
-         * ECParameters in this case is just three bytes.
-         */
-        if (!PACKET_get_bytes(pkt, &ecparams, 3)) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
-            goto f_err;
-        }
-        /*
-         * Check curve is one of our preferences, if not server has sent an
-         * invalid curve. ECParameters is 3 bytes.
-         */
-        if (!tls1_check_curve(s, ecparams, 3)) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_WRONG_CURVE);
-            goto f_err;
-        }
-
-        curve_nid = tls1_ec_curve_id2nid(*(ecparams + 2));
-        if (curve_nid  == 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE,
-                   SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
-            goto f_err;
-        }
-
-        /* Set up EVP_PKEY with named curve as parameters */
-        pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
-        if (pctx == NULL
-            || EVP_PKEY_paramgen_init(pctx) <= 0
-            || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, curve_nid) <= 0
-            || EVP_PKEY_paramgen(pctx, &s->s3->peer_tmp) <= 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
-            EVP_PKEY_CTX_free(pctx);
-            goto f_err;
-        }
-        EVP_PKEY_CTX_free(pctx);
-        pctx = NULL;
-
-        if (!PACKET_get_length_prefixed_1(pkt, &encoded_pt)) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
-        }
-
-        if (EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(s->s3->peer_tmp),
-                           PACKET_data(&encoded_pt),
-                           PACKET_remaining(&encoded_pt), NULL) == 0) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_ECPOINT);
-            goto f_err;
-        }
-
-        /*
-         * The ECC/TLS specification does not mention the use of DSA to sign
-         * ECParameters in the server key exchange message. We do support RSA
-         * and ECDSA.
-         */
-        if (0) ;
-# ifndef OPENSSL_NO_RSA
-        else if (alg_a & SSL_aRSA)
-            pkey = X509_get0_pubkey(s->session->peer);
-# endif
-# ifndef OPENSSL_NO_EC
-        else if (alg_a & SSL_aECDSA)
-            pkey = X509_get0_pubkey(s->session->peer);
-# endif
-        /* else anonymous ECDH, so no certificate or pkey. */
+    } else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
+        if (!tls_process_ske_ecdhe(s, pkt, &pkey, &al))
+            goto err;
     } else if (alg_k) {
         al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_UNEXPECTED_MESSAGE);
         goto f_err;
     }
-#endif                          /* !OPENSSL_NO_EC */
 
     /* if it was signed, check the signature */
     if (pkey != NULL) {
