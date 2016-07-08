@@ -2283,6 +2283,148 @@ static int tls_construct_cke_ecdhe(SSL *s, unsigned char **p, int *len, int *al)
 #endif
 }
 
+static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
+{
+#ifndef OPENSSL_NO_GOST
+    /* GOST key exchange message creation */
+    EVP_PKEY_CTX *pkey_ctx = NULL;
+    X509 *peer_cert;
+    size_t msglen;
+    unsigned int md_len;
+    unsigned char shared_ukm[32], tmp[256];
+    EVP_MD_CTX *ukm_hash = NULL;
+    int dgst_nid = NID_id_GostR3411_94;
+    unsigned char *pms = NULL;
+    size_t pmslen = 0;
+
+    if ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
+        dgst_nid = NID_id_GostR3411_2012_256;
+
+    /*
+     * Get server sertificate PKEY and create ctx from it
+     */
+    peer_cert = s->session->peer;
+    if (!peer_cert) {
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+               SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
+        return 0;
+    }
+
+    pkey_ctx = EVP_PKEY_CTX_new(X509_get0_pubkey(peer_cert), NULL);
+    if (pkey_ctx == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+               ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    /*
+     * If we have send a certificate, and certificate key
+     * parameters match those of server certificate, use
+     * certificate key for key exchange
+     */
+
+    /* Otherwise, generate ephemeral key pair */
+    pmslen = 32;
+    pms = OPENSSL_malloc(pmslen);
+    if (pms == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+               ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (EVP_PKEY_encrypt_init(pkey_ctx) <= 0
+            /* Generate session key */
+            || RAND_bytes(pms, pmslen) <= 0) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+               ERR_R_INTERNAL_ERROR);
+        goto err;
+    };
+    /*
+     * If we have client certificate, use its secret as peer key
+     */
+    if (s->s3->tmp.cert_req && s->cert->key->privatekey) {
+        if (EVP_PKEY_derive_set_peer
+            (pkey_ctx, s->cert->key->privatekey) <= 0) {
+            /*
+             * If there was an error - just ignore it. Ephemeral key
+             * * would be used
+             */
+            ERR_clear_error();
+        }
+    }
+    /*
+     * Compute shared IV and store it in algorithm-specific context
+     * data
+     */
+    ukm_hash = EVP_MD_CTX_new();
+    if (ukm_hash == NULL
+            || EVP_DigestInit(ukm_hash, EVP_get_digestbynid(dgst_nid)) <= 0
+            || EVP_DigestUpdate(ukm_hash, s->s3->client_random,
+                                SSL3_RANDOM_SIZE) <= 0
+            || EVP_DigestUpdate(ukm_hash, s->s3->server_random,
+                                SSL3_RANDOM_SIZE) <= 0
+            || EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len) <= 0) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+               ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    EVP_MD_CTX_free(ukm_hash);
+    ukm_hash = NULL;
+    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
+                          EVP_PKEY_CTRL_SET_IV, 8, shared_ukm) < 0) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+               SSL_R_LIBRARY_BUG);
+        goto err;
+    }
+    /* Make GOST keytransport blob message */
+    /*
+     * Encapsulate it into sequence
+     */
+    *((*p)++) = V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED;
+    msglen = 255;
+    if (EVP_PKEY_encrypt(pkey_ctx, tmp, &msglen, pms, pmslen) <= 0) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+               SSL_R_LIBRARY_BUG);
+        goto err;
+    }
+    if (msglen >= 0x80) {
+        *((*p)++) = 0x81;
+        *((*p)++) = msglen & 0xff;
+        *len = msglen + 3;
+    } else {
+        *((*p)++) = msglen & 0xff;
+        *len = msglen + 2;
+    }
+    memcpy(*p, tmp, msglen);
+    /* Check if pubkey from client certificate was used */
+    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2,
+                          NULL) > 0) {
+        /* Set flag "skip certificate verify" */
+        s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
+    }
+    EVP_PKEY_CTX_free(pkey_ctx);
+    s->s3->tmp.pms = pms;
+    s->s3->tmp.pmslen = pmslen;
+
+    return 1;
+ err:
+    EVP_PKEY_CTX_free(pkey_ctx);
+    OPENSSL_clear_free(pms, pmslen);
+    EVP_MD_CTX_free(ukm_hash);
+    return 0;
+#else
+    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    *al = SSL_AD_INTERNAL_ERROR;
+    return 0;
+#endif
+}
+
 int tls_construct_client_key_exchange(SSL *s)
 {
     unsigned char *p;
@@ -2312,134 +2454,10 @@ int tls_construct_client_key_exchange(SSL *s)
     } else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
         if (!tls_construct_cke_ecdhe(s, &p, &n, &al))
             goto err;
+    } else if (alg_k & SSL_kGOST) {
+        if (!tls_construct_cke_gost(s, &p, &n, &al))
+            goto err;
     }
-#ifndef OPENSSL_NO_GOST
-    else if (alg_k & SSL_kGOST) {
-        /* GOST key exchange message creation */
-        EVP_PKEY_CTX *pkey_ctx;
-        X509 *peer_cert;
-        size_t msglen;
-        unsigned int md_len;
-        unsigned char shared_ukm[32], tmp[256];
-        EVP_MD_CTX *ukm_hash;
-        int dgst_nid = NID_id_GostR3411_94;
-        unsigned char *pms = NULL;
-        size_t pmslen = 0;
-
-        if ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
-            dgst_nid = NID_id_GostR3411_2012_256;
-
-
-        /*
-         * Get server sertificate PKEY and create ctx from it
-         */
-        peer_cert = s->session->peer;
-        if (!peer_cert) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
-            goto err;
-        }
-
-        pkey_ctx = EVP_PKEY_CTX_new(X509_get0_pubkey(peer_cert), NULL);
-        if (pkey_ctx == NULL) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-        /*
-         * If we have send a certificate, and certificate key
-         * parameters match those of server certificate, use
-         * certificate key for key exchange
-         */
-
-        /* Otherwise, generate ephemeral key pair */
-        pmslen = 32;
-        pms = OPENSSL_malloc(pmslen);
-        if (pms == NULL)
-            goto memerr;
-
-        if (pkey_ctx == NULL
-                || EVP_PKEY_encrypt_init(pkey_ctx) <= 0
-                /* Generate session key */
-                || RAND_bytes(pms, pmslen) <= 0) {
-            EVP_PKEY_CTX_free(pkey_ctx);
-            OPENSSL_clear_free(pms, pmslen);
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   ERR_R_INTERNAL_ERROR);
-            goto err;
-        };
-        /*
-         * If we have client certificate, use its secret as peer key
-         */
-        if (s->s3->tmp.cert_req && s->cert->key->privatekey) {
-            if (EVP_PKEY_derive_set_peer
-                (pkey_ctx, s->cert->key->privatekey) <= 0) {
-                /*
-                 * If there was an error - just ignore it. Ephemeral key
-                 * * would be used
-                 */
-                ERR_clear_error();
-            }
-        }
-        /*
-         * Compute shared IV and store it in algorithm-specific context
-         * data
-         */
-        ukm_hash = EVP_MD_CTX_new();
-        if (EVP_DigestInit(ukm_hash,
-                           EVP_get_digestbynid(dgst_nid)) <= 0
-                || EVP_DigestUpdate(ukm_hash, s->s3->client_random,
-                                    SSL3_RANDOM_SIZE) <= 0
-                || EVP_DigestUpdate(ukm_hash, s->s3->server_random,
-                                    SSL3_RANDOM_SIZE) <= 0
-                || EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len) <= 0) {
-            EVP_MD_CTX_free(ukm_hash);
-            OPENSSL_clear_free(pms, pmslen);
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        EVP_MD_CTX_free(ukm_hash);
-        if (EVP_PKEY_CTX_ctrl
-            (pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT, EVP_PKEY_CTRL_SET_IV, 8,
-             shared_ukm) < 0) {
-            OPENSSL_clear_free(pms, pmslen);
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   SSL_R_LIBRARY_BUG);
-            goto err;
-        }
-        /* Make GOST keytransport blob message */
-        /*
-         * Encapsulate it into sequence
-         */
-        *(p++) = V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED;
-        msglen = 255;
-        if (EVP_PKEY_encrypt(pkey_ctx, tmp, &msglen, pms, pmslen) <= 0) {
-            OPENSSL_clear_free(pms, pmslen);
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   SSL_R_LIBRARY_BUG);
-            goto err;
-        }
-        if (msglen >= 0x80) {
-            *(p++) = 0x81;
-            *(p++) = msglen & 0xff;
-            n = msglen + 3;
-        } else {
-            *(p++) = msglen & 0xff;
-            n = msglen + 2;
-        }
-        memcpy(p, tmp, msglen);
-        /* Check if pubkey from client certificate was used */
-        if (EVP_PKEY_CTX_ctrl
-            (pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0) {
-            /* Set flag "skip certificate verify" */
-            s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
-        }
-        EVP_PKEY_CTX_free(pkey_ctx);
-        s->s3->tmp.pms = pms;
-        s->s3->tmp.pmslen = pmslen;
-    }
-#endif
 #ifndef OPENSSL_NO_SRP
     else if (alg_k & SSL_kSRP) {
         if (s->srp_ctx.A != NULL) {
@@ -2477,9 +2495,6 @@ int tls_construct_client_key_exchange(SSL *s)
     }
 
     return 1;
- memerr:
-    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
-    al = SSL_AD_INTERNAL_ERROR;
  err:
     if (al != -1)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
