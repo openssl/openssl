@@ -2030,8 +2030,7 @@ static int tls_construct_cke_psk_preamble(SSL *s, unsigned char **p,
     size_t psklen = 0;
 
     if (s->psk_client_callback == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               SSL_R_PSK_NO_CLIENT_CB);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE, SSL_R_PSK_NO_CLIENT_CB);
         *al = SSL_AD_INTERNAL_ERROR;
         goto err;
     }
@@ -2043,12 +2042,11 @@ static int tls_construct_cke_psk_preamble(SSL *s, unsigned char **p,
                                     psk, sizeof(psk));
 
     if (psklen > PSK_MAX_PSK_LEN) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE, ERR_R_INTERNAL_ERROR);
         *al = SSL_AD_HANDSHAKE_FAILURE;
         goto err;
     } else if (psklen == 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE,
                SSL_R_PSK_IDENTITY_NOT_FOUND);
         *al = SSL_AD_HANDSHAKE_FAILURE;
         goto err;
@@ -2056,8 +2054,7 @@ static int tls_construct_cke_psk_preamble(SSL *s, unsigned char **p,
 
     identitylen = strlen(identity);
     if (identitylen > PSK_MAX_IDENTITY_LEN) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE, ERR_R_INTERNAL_ERROR);
         *al = SSL_AD_HANDSHAKE_FAILURE;
         goto err;
     }
@@ -2065,7 +2062,7 @@ static int tls_construct_cke_psk_preamble(SSL *s, unsigned char **p,
     tmppsk = OPENSSL_memdup(psk, psklen);
     tmpidentity = OPENSSL_strdup(identity);
     if (tmppsk == NULL || tmpidentity == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE, ERR_R_MALLOC_FAILURE);
         *al = SSL_AD_INTERNAL_ERROR;
         goto err;
     }
@@ -2092,7 +2089,7 @@ static int tls_construct_cke_psk_preamble(SSL *s, unsigned char **p,
 
     return ret;
 #else
-    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    SSLerr(SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
 #endif
@@ -2112,23 +2109,20 @@ static int tls_construct_cke_rsa(SSL *s, unsigned char **p, int *len, int *al)
         /*
          * We should always have a server certificate with SSL_kRSA.
          */
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_RSA, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     pkey = X509_get0_pubkey(s->session->peer);
     if (EVP_PKEY_get0_RSA(pkey) == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_RSA, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     pmslen = SSL_MAX_MASTER_KEY_LENGTH;
     pms = OPENSSL_malloc(pmslen);
     if (pms == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_MALLOC_FAILURE);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_RSA, ERR_R_MALLOC_FAILURE);
         *al = SSL_AD_INTERNAL_ERROR;
         return 0;
     }
@@ -2146,13 +2140,11 @@ static int tls_construct_cke_rsa(SSL *s, unsigned char **p, int *len, int *al)
     pctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (pctx == NULL || EVP_PKEY_encrypt_init(pctx) <= 0
         || EVP_PKEY_encrypt(pctx, NULL, &enclen, pms, pmslen) <= 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_EVP_LIB);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_RSA, ERR_R_EVP_LIB);
         goto err;
     }
     if (EVP_PKEY_encrypt(pctx, *p, &enclen, pms, pmslen) <= 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               SSL_R_BAD_RSA_ENCRYPT);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_RSA, SSL_R_BAD_RSA_ENCRYPT);
         goto err;
     }
     *len = enclen;
@@ -2181,7 +2173,7 @@ static int tls_construct_cke_rsa(SSL *s, unsigned char **p, int *len, int *al)
 
     return 0;
 #else
-    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    SSLerr(SSL_F_TLS_CONSTRUCT_CKE_RSA, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
 #endif
@@ -2196,16 +2188,14 @@ static int tls_construct_cke_dhe(SSL *s, unsigned char **p, int *len, int *al)
 
     skey = s->s3->peer_tmp;
     if (skey == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_DHE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     ckey = ssl_generate_pkey(skey, NID_undef);
     dh_clnt = EVP_PKEY_get0_DH(ckey);
 
     if (dh_clnt == NULL || ssl_derive(s, ckey, skey) == 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_DHE, ERR_R_INTERNAL_ERROR);
         EVP_PKEY_free(ckey);
         return 0;
     }
@@ -2220,7 +2210,7 @@ static int tls_construct_cke_dhe(SSL *s, unsigned char **p, int *len, int *al)
 
     return 1;
 #else
-    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    SSLerr(SSL_F_TLS_CONSTRUCT_CKE_DHE, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
 #endif
@@ -2235,15 +2225,14 @@ static int tls_construct_cke_ecdhe(SSL *s, unsigned char **p, int *len, int *al)
 
     skey = s->s3->peer_tmp;
     if ((skey == NULL) || EVP_PKEY_get0_EC_KEY(skey) == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     ckey = ssl_generate_pkey(skey, NID_undef);
 
     if (ssl_derive(s, ckey, skey) == 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_EVP_LIB);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -2253,7 +2242,7 @@ static int tls_construct_cke_ecdhe(SSL *s, unsigned char **p, int *len, int *al)
                                     &encodedPoint, NULL);
 
     if (encoded_pt_len == 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_EC_LIB);
         goto err;
     }
 
@@ -2277,7 +2266,7 @@ static int tls_construct_cke_ecdhe(SSL *s, unsigned char **p, int *len, int *al)
     EVP_PKEY_free(ckey);
     return 0;
 #else
-    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
 #endif
@@ -2306,7 +2295,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
     peer_cert = s->session->peer;
     if (!peer_cert) {
         *al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST,
                SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
         return 0;
     }
@@ -2314,8 +2303,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
     pkey_ctx = EVP_PKEY_CTX_new(X509_get0_pubkey(peer_cert), NULL);
     if (pkey_ctx == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_MALLOC_FAILURE);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     /*
@@ -2329,8 +2317,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
     pms = OPENSSL_malloc(pmslen);
     if (pms == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_MALLOC_FAILURE);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -2338,8 +2325,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
             /* Generate session key */
             || RAND_bytes(pms, pmslen) <= 0) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_INTERNAL_ERROR);
         goto err;
     };
     /*
@@ -2368,8 +2354,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
                                 SSL3_RANDOM_SIZE) <= 0
             || EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len) <= 0) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     EVP_MD_CTX_free(ukm_hash);
@@ -2377,8 +2362,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
     if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
                           EVP_PKEY_CTRL_SET_IV, 8, shared_ukm) < 0) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               SSL_R_LIBRARY_BUG);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, SSL_R_LIBRARY_BUG);
         goto err;
     }
     /* Make GOST keytransport blob message */
@@ -2389,8 +2373,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
     msglen = 255;
     if (EVP_PKEY_encrypt(pkey_ctx, tmp, &msglen, pms, pmslen) <= 0) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               SSL_R_LIBRARY_BUG);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, SSL_R_LIBRARY_BUG);
         goto err;
     }
     if (msglen >= 0x80) {
@@ -2419,7 +2402,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
     EVP_MD_CTX_free(ukm_hash);
     return 0;
 #else
-    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
 #endif
@@ -2435,21 +2418,19 @@ static int tls_construct_cke_srp(SSL *s, unsigned char **p, int *len, int *al)
         BN_bn2bin(s->srp_ctx.A, *p);
         *len += 2;
     } else {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_SRP, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     OPENSSL_free(s->session->srp_username);
     s->session->srp_username = OPENSSL_strdup(s->srp_ctx.login);
     if (s->session->srp_username == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-               ERR_R_MALLOC_FAILURE);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_SRP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     return 1;
 #else
-    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    SSLerr(SSL_F_TLS_CONSTRUCT_CKE_SRP, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
 #endif

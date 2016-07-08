@@ -2203,6 +2203,12 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS1_SET_SERVER_SIGALGS                    335
 # define SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK          354
 # define SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST          372
+# define SSL_F_TLS_CONSTRUCT_CKE_DHE                      404
+# define SSL_F_TLS_CONSTRUCT_CKE_ECDHE                    405
+# define SSL_F_TLS_CONSTRUCT_CKE_GOST                     406
+# define SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE             407
+# define SSL_F_TLS_CONSTRUCT_CKE_RSA                      409
+# define SSL_F_TLS_CONSTRUCT_CKE_SRP                      410
 # define SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE           355
 # define SSL_F_TLS_CONSTRUCT_CLIENT_HELLO                 356
 # define SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE          357
