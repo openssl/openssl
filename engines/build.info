@@ -8,7 +8,8 @@ IF[{- !$disabled{"engine"} -}]
       SOURCE[../libcrypto]=e_capi.c
     ENDIF
   ELSE
-    ENGINES=padlock dasync ossltest
+    ENGINES=padlock dasync
+    ENGINES_NO_INST=ossltest
     SOURCE[padlock]=e_padlock.c {- $target{padlock_asm_src} -}
     DEPEND[padlock]=../libcrypto
     INCLUDE[padlock]=../include
