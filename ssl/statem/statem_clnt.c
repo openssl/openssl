@@ -2425,6 +2425,36 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
 #endif
 }
 
+static int tls_construct_cke_srp(SSL *s, unsigned char **p, int *len, int *al)
+{
+#ifndef OPENSSL_NO_SRT
+    if (s->srp_ctx.A != NULL) {
+        /* send off the data */
+        *len = BN_num_bytes(s->srp_ctx.A);
+        s2n(*len, *p);
+        BN_bn2bin(s->srp_ctx.A, *p);
+        *len += 2;
+    } else {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    OPENSSL_free(s->session->srp_username);
+    s->session->srp_username = OPENSSL_strdup(s->srp_ctx.login);
+    if (s->session->srp_username == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+               ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    return 1;
+#else
+    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    *al = SSL_AD_INTERNAL_ERROR;
+    return 0;
+#endif
+}
+
 int tls_construct_client_key_exchange(SSL *s)
 {
     unsigned char *p;
@@ -2457,30 +2487,10 @@ int tls_construct_client_key_exchange(SSL *s)
     } else if (alg_k & SSL_kGOST) {
         if (!tls_construct_cke_gost(s, &p, &n, &al))
             goto err;
-    }
-#ifndef OPENSSL_NO_SRP
-    else if (alg_k & SSL_kSRP) {
-        if (s->srp_ctx.A != NULL) {
-            /* send off the data */
-            n = BN_num_bytes(s->srp_ctx.A);
-            s2n(n, p);
-            BN_bn2bin(s->srp_ctx.A, p);
-            n += 2;
-        } else {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   ERR_R_INTERNAL_ERROR);
+    } else if (alg_k & SSL_kSRP) {
+        if (!tls_construct_cke_srp(s, &p, &n, &al))
             goto err;
-        }
-        OPENSSL_free(s->session->srp_username);
-        s->session->srp_username = OPENSSL_strdup(s->srp_ctx.login);
-        if (s->session->srp_username == NULL) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-    }
-#endif
-    else {
+    } else {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
         goto err;
