@@ -398,7 +398,6 @@ install_runtime : check_INSTALLTOP
         COPY/PROT=W:RE [.APPS]openssl.EXE -
                 ossl_installroot:[EXE.'arch']openssl{- $osslver -}.EXE
         @ ! Install scripts
-        - CREATE/DIR ossl_installroot:[EXE]
         COPY/PROT=W:RE $(BIN_SCRIPTS) ossl_installroot:[EXE]
         @ ! {- output_on() if $disabled{apps}; "" -}
 
