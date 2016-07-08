@@ -12,7 +12,7 @@ X509_REVOKED_add1_ext_i2d - X509 extension decode and encode functions
 
  #include <openssl/x509v3.h>
 
- void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
+ void *X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit,
                       int *idx);
  int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
                      int crit, unsigned long flags);
@@ -20,15 +20,15 @@ X509_REVOKED_add1_ext_i2d - X509 extension decode and encode functions
  void *X509V3_EXT_d2i(X509_EXTENSION *ext);
  X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext);
 
- void *X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx);
+ void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx);
  int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
                        unsigned long flags);
 
- void *X509_CRL_get_ext_d2i(X509_CRL *crl, int nid, int *crit, int *idx);
+ void *X509_CRL_get_ext_d2i(const X509_CRL *crl, int nid, int *crit, int *idx);
  int X509_CRL_add1_ext_i2d(X509_CRL *crl, int nid, void *value, int crit,
                            unsigned long flags);
 
- void *X509_REVOKED_get_ext_d2i(X509_REVOKED *r, int nid, int *crit, int *idx);
+ void *X509_REVOKED_get_ext_d2i(const X509_REVOKED *r, int nid, int *crit, int *idx);
  int X509_REVOKED_add1_ext_i2d(X509_REVOKED *r, int nid, void *value, int crit,
                                unsigned long flags);
 
