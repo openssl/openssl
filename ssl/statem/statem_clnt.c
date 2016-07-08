@@ -1305,16 +1305,9 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
     EVP_MD_CTX *md_ctx;
-    int al, j;
+    int al;
     long alg_k, alg_a;
     EVP_PKEY *pkey = NULL;
-    const EVP_MD *md = NULL;
-#ifndef OPENSSL_NO_RSA
-    RSA *rsa = NULL;
-#endif
-#ifndef OPENSSL_NO_EC
-    EVP_PKEY_CTX *pctx = NULL;
-#endif
     PACKET save_param_start, signature;
 
     md_ctx = EVP_MD_CTX_new();
@@ -1506,6 +1499,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         PACKET encoded_pt;
         const unsigned char *ecparams;
         int curve_nid;
+        EVP_PKEY_CTX *pctx = NULL;
 
         /*
          * Extract elliptic curve parameters and the server's ephemeral ECDH
@@ -1541,6 +1535,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             || EVP_PKEY_paramgen(pctx, &s->s3->peer_tmp) <= 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
+            EVP_PKEY_CTX_free(pctx);
             goto f_err;
         }
         EVP_PKEY_CTX_free(pctx);
@@ -1583,6 +1578,8 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     /* if it was signed, check the signature */
     if (pkey != NULL) {
         PACKET params;
+        int maxsig;
+        const EVP_MD *md = NULL;
         /*
          * |pkt| now points to the beginning of the signature, so the difference
          * equals the length of the parameters.
@@ -1622,8 +1619,8 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
-        j = EVP_PKEY_size(pkey);
-        if (j < 0) {
+        maxsig = EVP_PKEY_size(pkey);
+        if (maxsig < 0) {
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
         }
@@ -1631,7 +1628,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         /*
          * Check signature length
          */
-        if (PACKET_remaining(&signature) > (size_t)j) {
+        if (PACKET_remaining(&signature) > (size_t)maxsig) {
             /* wrong packet length */
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_WRONG_SIGNATURE_LENGTH);
             goto f_err;
@@ -1674,12 +1671,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-#ifndef OPENSSL_NO_RSA
-    RSA_free(rsa);
-#endif
-#ifndef OPENSSL_NO_EC
-    EVP_PKEY_CTX_free(pctx);
-#endif
     EVP_MD_CTX_free(md_ctx);
     ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
