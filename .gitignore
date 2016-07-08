@@ -1,12 +1,4 @@
-# Object files
-*.o
-*.obj
-
-# editor artefacts
-*.swp
-.#*
-\#*#
-*~
+# Ignore editor artefacts
 /.dir-locals.el
 
 # Top level excludes
@@ -25,23 +17,11 @@
 # *all* Makefiles
 Makefile
 
-/test/*.ss
-/test/*.srl
-/test/.rnd
-/test/test*.pem
-/test/newkey.pem
-/test/*.log
-/test/buildtest_*
-
-# Certificate symbolic links
-*.0
-
 # Links under apps
 /apps/CA.pl
 /apps/tsget
 /apps/tsget.pl
 /apps/md4.c
-
 
 # Auto generated headers
 /crypto/buildinf.h
@@ -49,32 +29,8 @@ Makefile
 /openssl/include/opensslconf.h
 /util/domd
 
-# Auto generated assembly language source files
-*.s
-!/crypto/*/asm/*.s
-/crypto/arm*.S
-/crypto/*/*.S
-*.asm
-!/crypto/*/asm/*.asm
-
 # Executables
 /apps/openssl
-/fuzz/asn1
-/fuzz/asn1-test
-/fuzz/asn1parse
-/fuzz/asn1parse-test
-/fuzz/bignum
-/fuzz/bignum-test
-/fuzz/bndiv
-/fuzz/bndiv-test
-/fuzz/conf
-/fuzz/conf-test
-/fuzz/cms
-/fuzz/cms-test
-/fuzz/ct
-/fuzz/ct-test
-/fuzz/server
-/fuzz/server-test
 /test/sha256t
 /test/sha512t
 /test/gost2814789t
@@ -92,35 +48,32 @@ Makefile
 /test/ssltest_old
 /test/x509aux
 /test/v3ext
-*.so*
-*.dylib*
-*.dll*
-*.exe
-*.pyc
-*.exp
-*.lib
-*.pdb
-*.ilk
-*.def
-*.rc
-*.res
-# Exceptions
-!/test/bctest
-!/crypto/des/times/486-50.sol
+
+# Certain files that get created by tests on the fly
+/test/*.ss
+/test/*.srl
+/test/.rnd
+/test/test*.pem
+/test/newkey.pem
+/test/*.log
+/test/buildtest_*
+
+# Fuzz stuff.
+# Anything without an extension is an executable on Unix, so we keep files
+# with extensions.  And we keep the corpora subddir versioned as well.
+# Anything more generic with extensions that should be ignored will be taken
+# care of by general ignores for those extensions (*.o, *.obj, *.exe, ...)
+/fuzz/*
+!/fuzz/README*
+!/fuzz/corpora
+!/fuzz/*.*
 
 # Misc auto generated files
 /include/openssl/opensslconf.h
 /tools/c_rehash
 /tools/c_rehash.pl
-/crypto/**/lib
-/engines/**/lib
-/ssl/**/lib
-Makefile.save
-*.bak
 /tags
 /TAGS
-cscope.*
-*.d
 /crypto.map
 /ssl.map
 
@@ -168,3 +121,51 @@ cscope.*
 /test/fips_shatest.c
 /test/fips_test_suite.c
 /test/shatest.c
+
+##### Generic patterns
+# Auto generated assembly language source files
+*.s
+!/crypto/*/asm/*.s
+/crypto/arm*.S
+/crypto/*/*.S
+*.asm
+!/crypto/*/asm/*.asm
+
+# Object files
+*.o
+*.obj
+
+# editor artefacts
+*.swp
+.#*
+\#*#
+*~
+
+# Certificate symbolic links
+*.0
+
+# All kinds of executables
+*.so
+*.so.*
+*.dylib
+*.dylib.*
+*.dll
+*.dll.*
+*.exe
+*.pyc
+*.exp
+*.lib
+*.pdb
+*.ilk
+*.def
+*.rc
+*.res
+
+# Misc generated stuff
+Makefile.save
+/crypto/**/lib
+/engines/**/lib
+/ssl/**/lib
+*.bak
+cscope.*
+*.d
