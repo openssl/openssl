@@ -6,26 +6,33 @@ $	! defined by P1.
 $	!
 $	! The logical names created are:
 $	!
-$	!	OSSL$ROOTnnn	Installation root
-$	!	OSSL$EXEnnn	Where the executables are located
-$	!	OSSL$LIBnnn	Where the library files are located
-$	!	OSSL$SHAREnnn	Where the sahreable images are located
-$	!	OSSL$INCLUDEnnn	Include directory root
-$	!	OSSL$ENGINESnnn	Where the sahreable images are located
+$	!	OSSL$INSTROOT		Installation root
+$	!	OSSL$DATAROOT		Data root (common directory
+$	!				for certs etc)
+$	!	OSSL$INCLUDE		Include directory root
+$	!	OSSL$LIB		Where the static library files
+$	!				are located
+$	!	OSSL$SHARE		Where the shareable image files
+$	!				are located
+$	!	OSSL$EXE		Where the executables are located
+$	!	OSSL$ENGINESnnn		Where the shareable images are located
+$	!	OSSL$LIBCRYPTO		The static crypto library
+$	!	OSSL$LIBSSL		The static ssl library
+$	!	OSSL$LIBCRYPTOnnn_SHR	The shareable crypto image
+$	!	OSSL$LIBSSLnnn_SHR	The shareable ssl image
+$	!	OPENSSL			is OSSL$INCLUDE:[OPENSSL]
 $	!
 $	! In all these, nnn is the OpenSSL version number.  This allows
-$	! several OpenSSL versions to be installed simultaneously.
+$	! several OpenSSL versions to be installed simultaneously, which
+$	! matters for applications that are linked to the shareable images
+$	! or that depend on engines.
 $	!
 $	! In addition, unless P2 is "NOALIASES", these logical names are
 $	! created:
 $	!
-$	!	OSSL$ROOT	Alias for OSSL$ROOTnnn
-$	!	OSSL$EXE	Alias for OSSL$EXEnnn
-$	!	OSSL$LIB	Alias for OSSL$LIBnnn
-$	!	OSSL$SHARE	Alias for OSSL$SHAREnnn
-$	!	OSSL$INCLUDE	Alias for OSSL$INCLUDEnnn
-$	!	OPENSSL		is OSSL$INCLUDE:[OPENSSL]
-$	!	OSSL$ENGINES	Alias for OSSL$ENGINESnnn
+$	!	OSSL$ENGINES		Alias for OSSL$ENGINESnnn
+$	!	OSSL$LIBCRYPTO_SHR	Alias for OSSL$LIBCRYPTOnnn_SHR
+$	!	OSSL$LIBSSL_SHR		Alias for OSSL$LIBSSLnnn_SHR
 $	!
 $	! P1	Qualifier(s) for DEFINE.  "/SYSTEM" would be typical when
 $	!	calling this script from SYS$STARTUP:SYSTARTUP_VMS.COM,
@@ -60,6 +67,7 @@ $	INSTALLTOP_ = F$PARSE("A.;",INSTALLTOP,,,"NO_CONCEAL") -
 		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
 $	OPENSSLDIR_ = F$PARSE("A.;",OPENSSLDIR,,,"NO_CONCEAL") -
 		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
+$
 $	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_INSTALLTOP 'INSTALLTOP_']
 $	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_OPENSSLDIR 'OPENSSLDIR_']
 $
