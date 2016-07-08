@@ -819,7 +819,7 @@ int X509_get_ext_by_critical(X509 *x, int crit, int lastpos);
 X509_EXTENSION *X509_get_ext(X509 *x, int loc);
 X509_EXTENSION *X509_delete_ext(X509 *x, int loc);
 int X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc);
-void *X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx);
+void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx);
 int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
                       unsigned long flags);
 
@@ -830,7 +830,7 @@ int X509_CRL_get_ext_by_critical(X509_CRL *x, int crit, int lastpos);
 X509_EXTENSION *X509_CRL_get_ext(X509_CRL *x, int loc);
 X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc);
 int X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc);
-void *X509_CRL_get_ext_d2i(X509_CRL *x, int nid, int *crit, int *idx);
+void *X509_CRL_get_ext_d2i(const X509_CRL *x, int nid, int *crit, int *idx);
 int X509_CRL_add1_ext_i2d(X509_CRL *x, int nid, void *value, int crit,
                           unsigned long flags);
 
@@ -842,7 +842,7 @@ int X509_REVOKED_get_ext_by_critical(X509_REVOKED *x, int crit, int lastpos);
 X509_EXTENSION *X509_REVOKED_get_ext(X509_REVOKED *x, int loc);
 X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
 int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
-void *X509_REVOKED_get_ext_d2i(X509_REVOKED *x, int nid, int *crit, int *idx);
+void *X509_REVOKED_get_ext_d2i(const X509_REVOKED *x, int nid, int *crit, int *idx);
 int X509_REVOKED_add1_ext_i2d(X509_REVOKED *x, int nid, void *value, int crit,
                               unsigned long flags);
 
