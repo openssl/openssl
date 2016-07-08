@@ -2,7 +2,6 @@
 
 =head1 NAME
 
-SSL_CTX_passwd_cb,
 SSL_CTX_set_default_passwd_cb, SSL_CTX_set_default_passwd_cb_userdata,
 SSL_CTX_get_default_passwd_cb, SSL_CTX_get_default_passwd_cb_userdata,
 SSL_set_default_passwd_cb, SSL_set_default_passwd_cb_userdata,
@@ -13,17 +12,15 @@ get passwd callback for encrypted PEM file handling
 
  #include <openssl/ssl.h>
 
- void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, SSL_CTX_passwd_cb *cb);
+ void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
  void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u);
- SSL_CTX_passwd_cb *SSL_CTX_get_default_passwd_cb(SSL_CTX *ctx);
+ pem_password_cb *SSL_CTX_get_default_passwd_cb(SSL_CTX *ctx);
  void *SSL_CTX_get_default_passwd_cb_userdata(SSL_CTX *ctx);
 
- void SSL_set_default_passwd_cb(SSL *s, SSL_CTX_passwd_cb *cb);
+ void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb);
  void SSL_set_default_passwd_cb_userdata(SSL *s, void *u);
- SSL_CTX_passwd_cb *SSL_get_default_passwd_cb(SSL *s);
+ pem_password_cb *SSL_get_default_passwd_cb(SSL *s);
  void *SSL_get_default_passwd_cb_userdata(SSL *s);
-
- typedef int (*SSL_CTX_passwd_cb)(char *buf, int size, int rwflag, void *u);
 
 =head1 DESCRIPTION
 
@@ -46,12 +43,14 @@ SSL_get_default_passwd_cb() and SSL_get_default_passwd_cb_userdata() perform
 the same function as their SSL_CTX counterparts, but using an SSL object.
 
 The password callback, which must be provided by the application, hands back the
-password to be used during decryption. On invocation a pointer to userdata
+password to be used during decryption.
+On invocation a pointer to userdata
 is provided. The function must store the password into the provided buffer
 B<buf> which is of size B<size>. The actual length of the password must
 be returned to the calling function. B<rwflag> indicates whether the
 callback is used for reading/decryption (rwflag=0) or writing/encryption
 (rwflag=1).
+For more details, see L<pem_password_cb(3)>.
 
 =head1 NOTES
 

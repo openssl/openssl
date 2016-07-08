@@ -6,6 +6,8 @@
 
 bio - Basic I/O abstraction
 
+=for comment generic
+
 =head1 SYNOPSIS
 
  #include <openssl/bio.h>

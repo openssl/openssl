@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY_TLS1_PRF, EVP_PKEY_CTX_set_tls1_prf_md,
+EVP_PKEY_CTX_set_tls1_prf_md,
 EVP_PKEY_CTX_set1_tls1_prf_secret, EVP_PKEY_CTX_add1_tls1_prf_seed -
 TLS PRF key derivation algorithm
 
@@ -18,7 +18,7 @@ TLS PRF key derivation algorithm
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_TLS1_PRF algorithm implements the PRF key derivation function for
+The B<EVP_PKEY_TLS1_PRF> algorithm implements the PRF key derivation function for
 TLS. It has no associated private key and only implements key derivation
 using EVP_PKEY_derive().
 

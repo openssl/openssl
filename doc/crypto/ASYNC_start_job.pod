@@ -182,8 +182,6 @@ The following example demonstrates how to use most of the core async APIs:
  #include <openssl/async.h>
  #include <openssl/crypto.h>
 
- #define WAIT_SIGNAL_CHAR   'X'
-
  int unique = 0;
 
  void cleanup(ASYNC_WAIT_CTX *ctx, const void *key, OSSL_ASYNC_FD r, void *vw)
@@ -200,7 +198,7 @@ The following example demonstrates how to use most of the core async APIs:
      unsigned char *msg;
      int pipefds[2] = {0, 0};
      OSSL_ASYNC_FD *wptr;
-     char buf = WAIT_SIGNAL_CHAR;
+     char buf = 'X';
 
      currjob = ASYNC_get_current_job();
      if (currjob != NULL) {

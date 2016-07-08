@@ -49,10 +49,6 @@ the capitalized form such as "SSL3_READ_BYTES" in the above example.
 The trailing section of a reason code (after the "_R_") is translated
 into lower case and underscores changed to spaces.
 
-When you are using new function or reason codes, run B<make errors>.
-The necessary B<#define>s will then automatically be added to the
-sub-library's header file.
-
 Although a library will normally report errors using its own specific
 XXXerr macro, another library's macro can be used. This is normally
 only done when a library wants to include ASN1 code which must use

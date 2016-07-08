@@ -3,6 +3,7 @@
 =head1 NAME
 
 DEFINE_STACK_OF, DEFINE_STACK_OF_CONST, DEFINE_SPECIAL_STACK_OF,
+DEFINE_SPECIAL_STACK_OF_CONST,
 OPENSSL_sk_deep_copy, OPENSSL_sk_delete, OPENSSL_sk_delete_ptr,
 OPENSSL_sk_dup, OPENSSL_sk_find, OPENSSL_sk_find_ex, OPENSSL_sk_free,
 OPENSSL_sk_insert, OPENSSL_sk_is_sorted, OPENSSL_sk_new, OPENSSL_sk_new_null,
@@ -22,10 +23,11 @@ stack container
 
  #include <openssl/safestack.h>
 
- #define STACK_OF(TYPE)
- #define DEFINE_STACK_OF
- #define DEFINE_STACK_OF_CONST
- #define DEFINE_SPECIAL_STACK_OF
+ STACK_OF(TYPE)
+ DEFINE_STACK_OF(TYPE)
+ DEFINE_STACK_OF_CONST(TYPE)
+ DEFINE_SPECIAL_STACK_OF(FUNCTYPE, TYPE)
+ DEFINE_SPECIAL_STACK_OF_CONST(FUNCTYPE, TYPE)
 
  typedef int (*sk_TYPE_compfunc)(const TYPE *const *a, const TYPE *const *b);
  typedef TYPE * (*sk_TYPE_copyfunc)(const TYPE *a);
@@ -64,21 +66,27 @@ functions that wrap around the utility B<OPENSSL_sk_> API.
 In the description here, I<TYPE> is used
 as a placeholder for any of the OpenSSL datatypes, such as I<X509>.
 
-DEFINE_STACK_OF(TYPE) creates set of functions for a stack of B<TYPE>. This
+STACK_OF() returns the name for a stack of the specified B<TYPE>.
+DEFINE_STACK_OF() creates set of functions for a stack of B<TYPE>. This
 will mean that type B<TYPE> is stored in each stack, the type is referenced by
 STACK_OF(TYPE) and each function name begins with I<sk_TYPE_>. For example:
 
  TYPE *sk_TYPE_value(STACK_OF(TYPE) *sk, int idx);
 
-DEFINE_STACK_OF_CONST(TYPE) is identical to DEFINE_STACK_OF(TYPE) except
+DEFINE_STACK_OF_CONST() is identical to DEFINE_STACK_OF() except
 each element is constant. For example:
 
  const TYPE *sk_TYPE_value(STACK_OF(TYPE) *sk, int idx);
 
-DEFINE_SPECIAL_STACK_OF(FUNCNAME, TYPE) defines a stack of B<TYPE> but
+DEFINE_SPECIAL_STACK_OF() defines a stack of B<TYPE> but
 each function uses B<FUNCNAME> in the function name. For example:
 
  TYPE *sk_FUNCNAME_value(STACK_OF(TYPE) *sk, int idx);
+
+DEFINE_SPECIAL_STACK_OF_CONST() is similar except that each element is
+constant:
+
+ const TYPE *sk_FUNCNAME_value(STACK_OF(TYPE) *sk, int idx);
 
 sk_TYPE_num() returns the number of elements in B<sk> or -1 if B<sk> is
 B<NULL>.
@@ -169,6 +177,9 @@ Care should be taken when checking the return values of the functions
 sk_TYPE_find() and sk_TYPE_find_ex(). They return an index to the
 matching element. In particular B<0> indicates a matching first element.
 A failed search is indicated by a B<-1> return value.
+
+STACK_OF(), DEFINE_STACK_OF(), DEFINE_STACK_OF_CONST(), and
+DEFINE_SPECIAL_STACK_OF() are implemented as macros.
 
 =head1 RETURN VALUES
 

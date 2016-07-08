@@ -82,15 +82,16 @@ EVP_aes_128_ccm, EVP_aes_192_ccm, EVP_aes_256_ccm - EVP cipher routines
  int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 
  const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
- #define EVP_get_cipherbynid(a) EVP_get_cipherbyname(OBJ_nid2sn(a))
- #define EVP_get_cipherbyobj(a) EVP_get_cipherbynid(OBJ_obj2nid(a))
+ const EVP_CIPHER *EVP_get_cipherbynid(int nid);
+ const EVP_CIPHER *EVP_get_cipherbyobj(const ASN1_OBJECT *a);
 
- #define EVP_CIPHER_nid(e)              ((e)->nid)
- #define EVP_CIPHER_block_size(e)       ((e)->block_size)
- #define EVP_CIPHER_key_length(e)       ((e)->key_len)
- #define EVP_CIPHER_iv_length(e)                ((e)->iv_len)
- #define EVP_CIPHER_flags(e)            ((e)->flags)
- #define EVP_CIPHER_mode(e)             ((e)->flags) & EVP_CIPH_MODE)
+ int EVP_CIPHER_nid(const EVP_CIPHER *e);
+ int EVP_CIPHER_block_size(const EVP_CIPHER *e);
+ int EVP_CIPHER_key_length(const EVP_CIPHER *e)
+ int EVP_CIPHER_key_length(const EVP_CIPHER *e);
+ int EVP_CIPHER_iv_length(const EVP_CIPHER *e);
+ unsigned long EVP_CIPHER_flags(const EVP_CIPHER *e);
+ unsigned long EVP_CIPHER_mode(const EVP_CIPHER *e);
  int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 
  const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
@@ -475,8 +476,6 @@ Sets the CCM nonce (IV) length: this call can only be made before specifying
 an nonce value. The nonce length is given by B<15 - L> so it is 7 by default
 for AES.
 
-
-
 =head1 NOTES
 
 Where possible the B<EVP> interface to symmetric ciphers should be used in
@@ -508,6 +507,8 @@ compatibility with existing code. New code should use EVP_EncryptInit_ex(),
 EVP_EncryptFinal_ex(), EVP_DecryptInit_ex(), EVP_DecryptFinal_ex(),
 EVP_CipherInit_ex() and EVP_CipherFinal_ex() because they can reuse an
 existing context without allocating and freeing it up on each call.
+
+EVP_get_cipherbynid(), and EVP_get_cipherbyobj() are implemented as macros.
 
 =head1 BUGS
 

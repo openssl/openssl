@@ -10,13 +10,15 @@ SSL_library_init, OpenSSL_add_ssl_algorithms,
  #include <openssl/ssl.h>
 
  int SSL_library_init(void);
- #define OpenSSL_add_ssl_algorithms()    SSL_library_init()
+
+ int OpenSSL_add_ssl_algorithms(void);
 
 =head1 DESCRIPTION
 
 SSL_library_init() registers the available SSL/TLS ciphers and digests.
 
-OpenSSL_add_ssl_algorithms() is a synonym for SSL_library_init().
+OpenSSL_add_ssl_algorithms() is a synonym for SSL_library_init() and is
+implemented as a macro.
 
 =head1 NOTES
 

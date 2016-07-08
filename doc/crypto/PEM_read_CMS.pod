@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+DECLARE_PEM_rw,
 PEM_read_CMS,
 PEM_read_bio_CMS,
 PEM_write_CMS,
@@ -43,7 +44,7 @@ PEM_write_bio_SSL_SESSION
 
  #include <openssl/pem.h>
 
- #define DECLARE_PEM_rw(name, TYPE) ...
+ DECLARE_PEM_rw(name, TYPE)
 
  TYPE *PEM_read_TYPE(FILE *fp, TYPE **a, pem_password_cb *cb, void *u);
  TYPE *PEM_read_bio_TYPE(BIO *bp, TYPE **a, pem_password_cb *cb, void *u);
@@ -54,6 +55,8 @@ PEM_write_bio_SSL_SESSION
 
 In the description below, I<TYPE> is used
 as a placeholder for any of the OpenSSL datatypes, such as I<X509>.
+The macro B<DECLARE_PEM_rw> expands to the set of declarations shown in
+the next four lines of the synopsis.
 
 These routines convert between local instances of ASN1 datatypes and
 the PEM encoding.  For more information on the templates, see
