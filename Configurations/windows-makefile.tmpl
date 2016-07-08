@@ -69,11 +69,6 @@ PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test\\| } @{$unified_info{pr
 PROGRAMPDBS={- join(" ", map { $_.".pdb" } grep { !m|^test\\| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(" ", map { $_.$exeext } grep { m|^test\\| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
-{- output_off() if $disabled{apps}; "" -}
-BIN_SCRIPTS=$(BLDDIR)\tools\c_rehash.pl
-MISC_SCRIPTS=$(BLDDIR)\apps\CA.pl $(BLDDIR)\apps\tsget.pl
-{- output_on() if $disabled{apps}; "" -}
-
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
@@ -86,6 +81,18 @@ GENERATED={- join(" ",
                     map { @{$unified_info{sources}->{$_}} }
                     grep { /\.o$/ } keys %{$unified_info{sources}} ),
                   ( grep { /\.h$/ } keys %{$unified_info{generate}} )) -}
+
+INSTALL_LIBS={- join(" ", map { $_.$libext } @{$unified_info{install}->{libraries}}) -}
+INSTALL_SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{install}->{libraries}}) -}
+INSTALL_SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; shlib($_) } @{$unified_info{install}->{libraries}}) -}
+INSTALL_ENGINES={- join(" ", map { dso($_) } @{$unified_info{install}->{engines}}) -}
+INSTALL_ENGINEPDBS={- join(" ", map { local $dsoext = ".pdb"; dso($_) } @{$unified_info{install}->{engines}}) -}
+INSTALL_PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test\\| } @{$unified_info{install}->{programs}}) -}
+INSTALL_PROGRAMPDBS={- join(" ", map { $_.".pdb" } grep { !m|^test\\| } @{$unified_info{install}->{programs}}) -}
+{- output_off() if $disabled{apps}; "" -}
+BIN_SCRIPTS=$(BLDDIR)\tools\c_rehash.pl
+MISC_SCRIPTS=$(BLDDIR)\apps\CA.pl $(BLDDIR)\apps\tsget.pl
+{- output_on() if $disabled{apps}; "" -}
 
 # Do not edit these manually. Use Configure with --prefix or --openssldir
 # to change this!  Short explanation in the top comment in Configure
@@ -268,7 +275,7 @@ install_dev:
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\include\openssl\*.h \
 				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\$(LIBDIR)"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(LIBS) \
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) \
 				       "$(INSTALLTOP)\$(LIBDIR)"
 	@if "$(SHLIBS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" ossl_static.pdb \
@@ -281,9 +288,9 @@ install_engines:
 	@echo *** Installing engines
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(ENGINESDIR)"
 	@if not "$(ENGINES)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(ENGINES) "$(ENGINESDIR)"
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINES) "$(ENGINESDIR)"
 	@if not "$(ENGINES)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(ENGINEPDBS) "$(ENGINESDIR)"
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINEPDBS) "$(ENGINESDIR)"
 
 uninstall_engines:
 
@@ -292,13 +299,13 @@ install_runtime:
 	@echo *** Installing runtime files
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\bin"
 	@if not "$(SHLIBS)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(SHLIBS) "$(INSTALLTOP)\bin"
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_SHLIBS) "$(INSTALLTOP)\bin"
 	@if not "$(SHLIBS)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(SHLIBPDBS) \
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_SHLIBPDBS) \
                                         "$(INSTALLTOP)\bin"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(PROGRAMS) \
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_PROGRAMS) \
                                         "$(INSTALLTOP)\bin"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(PROGRAMPDBS) \
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_PROGRAMPDBS) \
                                         "$(INSTALLTOP)\bin"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BIN_SCRIPTS) \
                                         "$(INSTALLTOP)\bin"
