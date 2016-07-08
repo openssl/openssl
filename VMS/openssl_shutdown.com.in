@@ -29,6 +29,7 @@ $	DEAS := DEASSIGN /NOLOG 'P1'
 $	sv   := {- sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor} -}
 $	pz   := {- $config{pointer_size} -}
 $
+$	DEAS OSSL$DATAROOT
 $	DEAS OSSL$INSTROOT
 $	DEAS OSSL$INCLUDE
 $	DEAS OSSL$LIB
