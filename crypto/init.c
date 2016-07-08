@@ -68,6 +68,9 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_base: Setting up stop handlers\n");
 #endif
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    ossl_malloc_setup_failures();
+#endif
     /*
      * We use a dummy thread local key here. We use the destructor to detect
      * when the thread is going to stop (where that feature is available)
