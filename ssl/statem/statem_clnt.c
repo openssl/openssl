@@ -1302,19 +1302,52 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     return ret;
 }
 
-static int tls_process_ske_psk_preamble(SSL *s, int *al)
+static int tls_process_ske_psk_preamble(SSL *s, PACKET *pkt, int *al)
 {
 #ifndef OPENSSL_NO_PSK
+    PACKET psk_identity_hint;
 
+    /* PSK ciphersuites are preceded by an identity hint */
+
+    if (!PACKET_get_length_prefixed_2(pkt, &psk_identity_hint)) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    /*
+     * Store PSK identity hint for later use, hint is used in
+     * tls_construct_client_key_exchange.  Assume that the maximum length of
+     * a PSK identity hint can be as long as the maximum length of a PSK
+     * identity.
+     */
+    if (PACKET_remaining(&psk_identity_hint) > PSK_MAX_IDENTITY_LEN) {
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_DATA_LENGTH_TOO_LONG);
+        return 0;
+    }
+
+    if (PACKET_remaining(&psk_identity_hint) == 0) {
+        OPENSSL_free(s->session->psk_identity_hint);
+        s->session->psk_identity_hint = NULL;
+    } else if (!PACKET_strndup(&psk_identity_hint,
+                        &s->session->psk_identity_hint)) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return 0;
+    }
+
+    return 1;
 #else
-
+    SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+    *al = SSL_AD_INTERNAL_ERROR;
+    return 0;
 #endif
 }
 
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
     EVP_MD_CTX *md_ctx;
-    int al;
+    int al = -1;
     long alg_k, alg_a;
     EVP_PKEY *pkey = NULL;
     PACKET save_param_start, signature;
@@ -1337,48 +1370,13 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
     alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 
-    al = SSL_AD_DECODE_ERROR;
-
-#ifndef OPENSSL_NO_PSK
-    /* PSK ciphersuites are preceded by an identity hint */
     if (alg_k & SSL_PSK) {
-        PACKET psk_identity_hint;
-        if (!PACKET_get_length_prefixed_2(pkt, &psk_identity_hint)) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
-        }
-
-        /*
-         * Store PSK identity hint for later use, hint is used in
-         * ssl3_send_client_key_exchange.  Assume that the maximum length of
-         * a PSK identity hint can be as long as the maximum length of a PSK
-         * identity.
-         */
-        if (PACKET_remaining(&psk_identity_hint) > PSK_MAX_IDENTITY_LEN) {
-            al = SSL_AD_HANDSHAKE_FAILURE;
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_DATA_LENGTH_TOO_LONG);
-            goto f_err;
-        }
-
-        if (PACKET_remaining(&psk_identity_hint) == 0) {
-            OPENSSL_free(s->session->psk_identity_hint);
-            s->session->psk_identity_hint = NULL;
-        } else if (!PACKET_strndup(&psk_identity_hint,
-                            &s->session->psk_identity_hint)) {
-            al = SSL_AD_INTERNAL_ERROR;
-            goto f_err;
-        }
+        if (!tls_process_ske_psk_preamble(s, pkt, &al))
+            goto err;
     }
 
     /* Nothing else to do for plain PSK or RSAPSK */
     if (alg_k & (SSL_kPSK | SSL_kRSAPSK)) {
-    } else
-#endif                          /* !OPENSSL_NO_PSK */
-    /*
-     * Dummy "if" to ensure sane C code in the event of various OPENSSL_NO_*
-     * options
-     */
-    if (0) {
     }
 #ifndef OPENSSL_NO_SRP
     else if (alg_k & SSL_kSRP) {
@@ -1678,8 +1676,11 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     EVP_MD_CTX_free(md_ctx);
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    if (al == -1)
+        al = SSL_AD_DECODE_ERROR;
  err:
+    if (al != -1)
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
     EVP_MD_CTX_free(md_ctx);
     ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
