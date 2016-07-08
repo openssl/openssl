@@ -37,7 +37,9 @@ build-file templates, adapted for the platform they are meant for (see
 sections on %unified_info and build-file templates further down).
 
 The variables PROGRAMS, LIBS, ENGINES and SCRIPTS are used to declare
-end products.
+end products.  There are variants for them with '_NO_INST' as suffix
+(PROGRAM_NO_INST etc) to specify end products that shouldn't get
+installed.
 
 The variables SOURCE, DEPEND, INCLUDE and ORDINALS are indexed by a
 produced file, and their values are the source used to produce that
@@ -124,17 +126,24 @@ This is the build.info file in 'ssl/', and it tells us that the
 library 'libssl' is built from the source file 'ssl/tls.c'.
 
     # engines/build.info
-    ENGINES=libossltest
-    SOURCE[libossltest]=e_ossltest.c
-    DEPEND[libossltest]=../libcrypto
-    INCLUDE[libossltest]=../include
+    ENGINES=dasync
+    SOURCE[dasync]=e_dasync.c
+    DEPEND[dasync]=../libcrypto
+    INCLUDE[dasync]=../include
 
-This is the build.info file in 'engines/', telling us that an engine
-called 'engines/libossltest' shall be built, that it's source is
+    ENGINES_NO_INST=ossltest
+    SOURCE[ossltest]=e_ossltest.c
+    DEPEND[ossltest]=../libcrypto
+    INCLUDE[ossltest]=../include
+
+This is the build.info file in 'engines/', telling us that two engines
+called 'engines/dasync' and 'engines/ossltest' shall be built, that
+dasync's source is 'engines/e_dasync.c' and ossltest's source is
 'engines/e_ossltest.c' and that the include directory 'include/' may
-be used when building anything that will be part of this engine.
-Finally, the engine 'engines/libossltest' depends on the library
-'libcrypto' to function properly.
+be used when building anything that will be part of these engines.
+Also, both engines depend on the library 'libcrypto' to function
+properly.  Finally, only dasync is being installed, as ossltest is
+only for internal testing.
 
 When Configure digests these build.info files, the accumulated
 information comes down to this:
@@ -154,7 +163,12 @@ information comes down to this:
     INCLUDE[apps/openssl]=. include
     DEPEND[apps/openssl]=libssl
 
-    ENGINES=engines/ossltest
+    ENGINES=engines/dasync
+    SOURCE[engines/dasync]=engines/e_dasync.c
+    DEPEND[engines/dasync]=libcrypto
+    INCLUDE[engines/dasync]=include
+
+    ENGINES_NO_INST=engines/ossltest
     SOURCE[engines/ossltest]=engines/e_ossltest.c
     DEPEND[engines/ossltest]=libcrypto
     INCLUDE[engines/ossltest]=include
@@ -212,6 +226,11 @@ indexes:
   includes  => a hash table containing 'file' => [ 'include' ... ]
                pairs.  These are directly inferred from the INCLUDE
                variables in build.info files.
+
+  install   => a hash table containing 'type' => [ 'file' ... ] pairs.
+               The types are 'programs', 'libraries', 'engines' and
+               'scripts', and the array of files list the files of
+               that type that should be installed.
 
   libraries => a list of libraries.  These are directly inferred from
                the LIBS variable in build.info files.
@@ -277,6 +296,7 @@ section above would be digested into a %unified_info table:
             },
         "engines" =>
             [
+                "engines/dasync",
                 "engines/ossltest",
             ],
         "generate" =>
@@ -313,6 +333,22 @@ section above would be digested into a %unified_info table:
                         "util",
                     ],
             }
+        "install" =>
+            {
+                "engines" =>
+                    [
+                        "engines/dasync",
+                    ],
+                "libraries" =>
+                    [
+                        "libcrypto",
+                        "libssl",
+                    ],
+                "programs" =>
+                    [
+                        "apps/openssl",
+                    ],
+           },
         "libraries" =>
             [
                 "libcrypto",
