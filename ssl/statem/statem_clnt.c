@@ -1302,6 +1302,15 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     return ret;
 }
 
+static int tls_process_ske_psk_preamble(SSL *s, int *al)
+{
+#ifndef OPENSSL_NO_PSK
+
+#else
+
+#endif
+}
+
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
     EVP_MD_CTX *md_ctx;
