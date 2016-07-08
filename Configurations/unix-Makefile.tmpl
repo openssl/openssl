@@ -88,8 +88,7 @@ LIBS={- join(" ", map { $_.$libext } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
 SHLIB_INFO={- join(" ", map { "\"".shlib($_).";".shlib_simple($_)."\"" } @{$unified_info{libraries}}) -}
 ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
-PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test/| } @{$unified_info{programs}}) -}
-TESTPROGS={- join(" ", map { $_.$exeext } grep { m|^test/| } @{$unified_info{programs}}) -}
+PROGRAMS={- join(" ", map { $_.$exeext } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
@@ -225,21 +224,21 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-{- dependmagic('all'); -}: build_libs_nodep build_engines_nodep build_apps_nodep link-utils
+{- dependmagic('all'); -}: build_libs_nodep build_engines_nodep build_programs_nodep link-utils
 {- dependmagic('build_libs'); -}: build_libs_nodep
 {- dependmagic('build_engines'); -}: build_engines_nodep
-{- dependmagic('build_apps'); -}: build_apps_nodep
-{- dependmagic('build_tests'); -}: build_tests_nodep
+{- dependmagic('build_programs'); -}: build_programs_nodep
 
 build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
 build_engines_nodep: $(ENGINES)
-build_apps_nodep: $(PROGRAMS) $(SCRIPTS)
-build_tests_nodep: $(TESTPROGS)
+build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
+
+# Kept around for backward compatibility
+build_apps build_tests: build_programs
 
 test: tests
-{- dependmagic('tests'); -}: build_tests_nodep build_apps_nodep \
-                             build_engines_nodep link-utils
+{- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep link-utils
 	@ : {- output_off() if $disabled{tests}; "" -}
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
