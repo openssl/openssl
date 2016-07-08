@@ -1336,9 +1336,6 @@ if ($builder eq "unified") {
     }
 
     my @build_infos = ( [ ".", "build.info" ] );
-    push @build_infos, [ "fuzz", "build.info.fuzz" ]
-        unless $disabled{"fuzz-afl"} && $disabled{"fuzz-libfuzzer"};
-
     foreach (@{$config{dirs}}) {
         push @build_infos, [ $_, "build.info" ]
             if (-f catfile($srcdir, $_, "build.info"));
