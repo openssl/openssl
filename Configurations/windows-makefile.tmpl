@@ -65,9 +65,8 @@ SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
 SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; shlib($_) } @{$unified_info{libraries}}) -}
 ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
 ENGINEPDBS={- join(" ", map { local $dsoext = ".pdb"; dso($_) } @{$unified_info{engines}}) -}
-PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test\\| } @{$unified_info{programs}}) -}
-PROGRAMPDBS={- join(" ", map { $_.".pdb" } grep { !m|^test\\| } @{$unified_info{programs}}) -}
-TESTPROGS={- join(" ", map { $_.$exeext } grep { m|^test\\| } @{$unified_info{programs}}) -}
+PROGRAMS={- join(" ", map { $_.$exeext } @{$unified_info{programs}}) -}
+PROGRAMPDBS={- join(" ", map { $_.".pdb" } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
@@ -179,22 +178,22 @@ PROCESSOR= {- $config{processor} -}
 # The main targets ###################################################
 
 all: build_generated \
-     build_libs_nodep build_engines_nodep build_apps_nodep depend
+     build_libs_nodep build_engines_nodep build_programs_nodep depend
 
 build_libs: build_generated build_libs_nodep depend
 build_libs_nodep: $(LIBS) {- join(" ",map { shlib_import($_) } @{$unified_info{libraries}}) -}
 build_engines: build_generated build_engines_nodep depend
 build_engines_nodep: $(ENGINES)
-build_apps: build_generated build_apps_nodep depend
-build_apps_nodep: $(PROGRAMS) $(SCRIPTS)
-build_tests: build_generated build_tests_nodep depend
-build_tests_nodep: $(TESTPROGS)
+build_programs: build_generated build_programs_nodep depend
+build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
 
 build_generated: $(GENERATED_MANDATORY)
 
+# Kept around for backward compatibility
+build_apps build_tests: build_programs
+
 test: tests
-tests: build_generated \
-       build_tests_nodep build_apps_nodep build_engines_nodep depend
+tests: build_generated build_programs_nodep build_engines_nodep depend
 	@rem {- output_off() if $disabled{tests}; "" -}
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
@@ -224,7 +223,7 @@ libclean:
 	-del /Q ossl_static.pdb
 
 clean: libclean
-	-del /Q /F $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
+	-del /Q /F $(PROGRAMS) $(ENGINES) $(SCRIPTS)
 	-del /Q /F $(GENERATED)
 	-del /Q /S /F *.d
 	-del /Q /S /F *.obj

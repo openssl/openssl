@@ -44,8 +44,6 @@
   # we store them in arrays for reuse
   our @shlibs = map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}};
   our @install_shlibs = map { $unified_info{sharednames}->{$_} || () } @{$unified_info{install}->{libraries}};
-  our @programs = grep { !m|^\[\.test\]| } @{$unified_info{programs}};
-  our @testprogs = grep { m|^\[\.test\]| } @{$unified_info{programs}};
   our @generated = ( ( map { (my $x = $_) =~ s|\.S$|\.s|; $x }
                        grep { defined $unified_info{generate}->{$_} }
                        map { @{$unified_info{sources}->{$_}} }
@@ -119,8 +117,7 @@ DEP_EXT=.D
 LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @{$unified_info{libraries}}) -}
 SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @shlibs) -}
 ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{engines}}) -}
-PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @programs) -}
-TESTPROGS={- join(", ", map { "-\n\t".$_.".EXE" } @testprogs) -}
+PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{programs}}) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
@@ -245,22 +242,22 @@ NODEBUG=@
 # The main targets ###################################################
 
 all : build_generated, -
-      build_libs_nodep, build_engines_nodep, build_apps_nodep, -
+      build_libs_nodep, build_engines_nodep, build_programs_nodep, -
       depend
 
 build_libs : build_generated, build_libs_nodep, depend
 build_libs_nodep : $(LIBS), $(SHLIBS)
 build_engines : build_generated, build_engines_nodep, depend
 build_engines_nodep : $(ENGINES)
-build_apps : build_generated, build_apps_nodep, depend
-build_apps_nodep : $(PROGRAMS), $(SCRIPTS)
-build_tests : build_generated, build_tests_nodep, depend
-build_tests_nodep : $(TESTPROGS)
+build_programs : build_generated, build_programs_nodep, depend
+build_programs_nodep : $(PROGRAMS), $(SCRIPTS)
 
 build_generated : $(GENERATED_MANDATORY)
 
-test tests : build_generated, -
-             build_apps_nodep, build_engines_nodep, build_tests_nodep, -
+# Kept around for backward compatibility
+build_apps build_tests : build_programs
+
+test tests : build_generated, build_programs_nodep, build_engines_nodep, -
              depend
         @ ! {- output_off() if $disabled{tests}; "" -}
         SET DEFAULT [.test]{- move("test") -}
@@ -317,14 +314,13 @@ check_install :
 uninstall : uninstall_docs uninstall_sw
 
 # Because VMS wants the generation number (or *) to delete files, we can't
-# use $(LIBS), $(PROGRAMS), $(GENERATED), $(ENGINES) and $(TESTPROGS) directly.
+# use $(LIBS), $(PROGRAMS), $(GENERATED) and $(ENGINES)directly.
 libclean :
         {- join("\n\t", map { "- DELETE $_.OLB;*" } @{$unified_info{libraries}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_.EXE;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
 
 clean : libclean
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @programs) || "@ !" -}
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @testprogs) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{engines}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{scripts}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @generated) || "@ !" -}
