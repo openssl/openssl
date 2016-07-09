@@ -155,7 +155,7 @@ OPENSSLDIR={- catdir($config{openssldir}) ||
 # The same, but for C
 OPENSSLDIR_C={- $osslprefix -}DATAROOT:[000000]
 # Where installed engines reside, for C
-ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover -}:
+ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover.$target{pointer_size} -}:
 
 CC= {- $target{cc} -}
 CFLAGS= /DEFINE=({- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR_C)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR_C)\"\"\"") -}) {- $target{cflags} -} {- $config{cflags} -}
@@ -404,9 +404,9 @@ install_runtime : check_INSTALLTOP
 install_engines : check_INSTALLTOP
         @ {- output_off() unless scalar @{$unified_info{engines}}; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing engines"
-        - CREATE/DIR ossl_installroot:[ENGINES{- $sover -}.'arch']
+        - CREATE/DIR ossl_installroot:[ENGINES{- $sover.$target{pointer_size} -}.'arch']
         {- join("\n        ",
-                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover.'arch']" }
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover$target{pointer_size}.'arch']" }
                 grep(!m|ossltest$|i, @{$unified_info{engines}})) -}
         @ {- output_on() unless scalar @{$unified_info{engines}}; "" -} !
 
