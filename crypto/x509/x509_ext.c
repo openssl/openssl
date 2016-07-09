@@ -37,7 +37,7 @@ int X509_CRL_get_ext_by_critical(const X509_CRL *x, int crit, int lastpos)
     return (X509v3_get_ext_by_critical(x->crl.extensions, crit, lastpos));
 }
 
-X509_EXTENSION *X509_CRL_get_ext(X509_CRL *x, int loc)
+X509_EXTENSION *X509_CRL_get_ext(const X509_CRL *x, int loc)
 {
     return (X509v3_get_ext(x->crl.extensions, loc));
 }
@@ -84,7 +84,7 @@ int X509_get_ext_by_critical(const X509 *x, int crit, int lastpos)
             (x->cert_info.extensions, crit, lastpos));
 }
 
-X509_EXTENSION *X509_get_ext(X509 *x, int loc)
+X509_EXTENSION *X509_get_ext(const X509 *x, int loc)
 {
     return (X509v3_get_ext(x->cert_info.extensions, loc));
 }
@@ -132,7 +132,7 @@ int X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x, int crit, int lastpo
     return (X509v3_get_ext_by_critical(x->extensions, crit, lastpos));
 }
 
-X509_EXTENSION *X509_REVOKED_get_ext(X509_REVOKED *x, int loc)
+X509_EXTENSION *X509_REVOKED_get_ext(const X509_REVOKED *x, int loc)
 {
     return (X509v3_get_ext(x->extensions, loc));
 }
