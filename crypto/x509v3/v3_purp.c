@@ -720,7 +720,7 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
         return 0;
 
     /* Extended Key Usage MUST be critical */
-    i_ext = X509_get_ext_by_NID((X509 *)x, NID_ext_key_usage, -1);
+    i_ext = X509_get_ext_by_NID(x, NID_ext_key_usage, -1);
     if (i_ext >= 0) {
         X509_EXTENSION *ext = X509_get_ext((X509 *)x, i_ext);
         if (!X509_EXTENSION_get_critical(ext))

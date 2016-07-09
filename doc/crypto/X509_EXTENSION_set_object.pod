@@ -22,7 +22,7 @@ functions
                                               ASN1_OCTET_STRING *data);
 
  ASN1_OBJECT *X509_EXTENSION_get_object(X509_EXTENSION *ex);
- int X509_EXTENSION_get_critical(X509_EXTENSION *ex);
+ int X509_EXTENSION_get_critical(const X509_EXTENSION *ex);
  ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ne);
 
 =head1 DESCRIPTION
