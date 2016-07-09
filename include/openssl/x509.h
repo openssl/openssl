@@ -760,7 +760,7 @@ int X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj,
                               char *buf, int len);
 
 /*
- * NOTE: you should be passsing -1, not 0 as lastpos.  The functions that use
+ * NOTE: you should be passing -1, not 0 as lastpos.  The functions that use
  * lastpos, search after that position on.
  */
 int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos);
@@ -812,10 +812,10 @@ X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc);
 STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
                                          X509_EXTENSION *ex, int loc);
 
-int X509_get_ext_count(X509 *x);
-int X509_get_ext_by_NID(X509 *x, int nid, int lastpos);
-int X509_get_ext_by_OBJ(X509 *x, ASN1_OBJECT *obj, int lastpos);
-int X509_get_ext_by_critical(X509 *x, int crit, int lastpos);
+int X509_get_ext_count(const X509 *x);
+int X509_get_ext_by_NID(const X509 *x, int nid, int lastpos);
+int X509_get_ext_by_OBJ(const X509 *x, ASN1_OBJECT *obj, int lastpos);
+int X509_get_ext_by_critical(const X509 *x, int crit, int lastpos);
 X509_EXTENSION *X509_get_ext(X509 *x, int loc);
 X509_EXTENSION *X509_delete_ext(X509 *x, int loc);
 int X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc);
@@ -823,10 +823,10 @@ void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx);
 int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
                       unsigned long flags);
 
-int X509_CRL_get_ext_count(X509_CRL *x);
-int X509_CRL_get_ext_by_NID(X509_CRL *x, int nid, int lastpos);
-int X509_CRL_get_ext_by_OBJ(X509_CRL *x, ASN1_OBJECT *obj, int lastpos);
-int X509_CRL_get_ext_by_critical(X509_CRL *x, int crit, int lastpos);
+int X509_CRL_get_ext_count(const X509_CRL *x);
+int X509_CRL_get_ext_by_NID(const X509_CRL *x, int nid, int lastpos);
+int X509_CRL_get_ext_by_OBJ(const X509_CRL *x, ASN1_OBJECT *obj, int lastpos);
+int X509_CRL_get_ext_by_critical(const X509_CRL *x, int crit, int lastpos);
 X509_EXTENSION *X509_CRL_get_ext(X509_CRL *x, int loc);
 X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc);
 int X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc);
@@ -834,11 +834,11 @@ void *X509_CRL_get_ext_d2i(const X509_CRL *x, int nid, int *crit, int *idx);
 int X509_CRL_add1_ext_i2d(X509_CRL *x, int nid, void *value, int crit,
                           unsigned long flags);
 
-int X509_REVOKED_get_ext_count(X509_REVOKED *x);
-int X509_REVOKED_get_ext_by_NID(X509_REVOKED *x, int nid, int lastpos);
-int X509_REVOKED_get_ext_by_OBJ(X509_REVOKED *x, ASN1_OBJECT *obj,
+int X509_REVOKED_get_ext_count(const X509_REVOKED *x);
+int X509_REVOKED_get_ext_by_NID(const X509_REVOKED *x, int nid, int lastpos);
+int X509_REVOKED_get_ext_by_OBJ(const X509_REVOKED *x, ASN1_OBJECT *obj,
                                 int lastpos);
-int X509_REVOKED_get_ext_by_critical(X509_REVOKED *x, int crit, int lastpos);
+int X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x, int crit, int lastpos);
 X509_EXTENSION *X509_REVOKED_get_ext(X509_REVOKED *x, int loc);
 X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
 int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
@@ -857,7 +857,7 @@ int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit);
 int X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data);
 ASN1_OBJECT *X509_EXTENSION_get_object(X509_EXTENSION *ex);
 ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ne);
-int X509_EXTENSION_get_critical(X509_EXTENSION *ex);
+int X509_EXTENSION_get_critical(const X509_EXTENSION *ex);
 
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x);
 int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,

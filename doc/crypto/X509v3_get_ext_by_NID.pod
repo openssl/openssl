@@ -30,28 +30,28 @@ X509_REVOKED_add_ext - extension stack utility functions
  STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
                                           X509_EXTENSION *ex, int loc);
 
- int X509_get_ext_count(X509 *x);
+ int X509_get_ext_count(const X509 *x);
  X509_EXTENSION *X509_get_ext(X509 *x, int loc);
- int X509_get_ext_by_NID(X509 *x, int nid, int lastpos);
- int X509_get_ext_by_OBJ(X509 *x, ASN1_OBJECT *obj, int lastpos);
- int X509_get_ext_by_critical(X509 *x, int crit, int lastpos);
+ int X509_get_ext_by_NID(const X509 *x, int nid, int lastpos);
+ int X509_get_ext_by_OBJ(const X509 *x, ASN1_OBJECT *obj, int lastpos);
+ int X509_get_ext_by_critical(const X509 *x, int crit, int lastpos);
  X509_EXTENSION *X509_delete_ext(X509 *x, int loc);
  int X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc);
 
- int X509_CRL_get_ext_count(X509_CRL *x);
+ int X509_CRL_get_ext_count(const X509_CRL *x);
  X509_EXTENSION *X509_CRL_get_ext(X509_CRL *x, int loc);
- int X509_CRL_get_ext_by_NID(X509_CRL *x, int nid, int lastpos);
- int X509_CRL_get_ext_by_OBJ(X509_CRL *x, ASN1_OBJECT *obj, int lastpos);
- int X509_CRL_get_ext_by_critical(X509_CRL *x, int crit, int lastpos);
+ int X509_CRL_get_ext_by_NID(const X509_CRL *x, int nid, int lastpos);
+ int X509_CRL_get_ext_by_OBJ(const X509_CRL *x, ASN1_OBJECT *obj, int lastpos);
+ int X509_CRL_get_ext_by_critical(const X509_CRL *x, int crit, int lastpos);
  X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc);
  int X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc);
 
- int X509_REVOKED_get_ext_count(X509_REVOKED *x);
+ int X509_REVOKED_get_ext_count(const X509_REVOKED *x);
  X509_EXTENSION *X509_REVOKED_get_ext(X509_REVOKED *x, int loc);
- int X509_REVOKED_get_ext_by_NID(X509_REVOKED *x, int nid, int lastpos);
- int X509_REVOKED_get_ext_by_OBJ(X509_REVOKED *x, ASN1_OBJECT *obj,
+ int X509_REVOKED_get_ext_by_NID(const X509_REVOKED *x, int nid, int lastpos);
+ int X509_REVOKED_get_ext_by_OBJ(const X509_REVOKED *x, ASN1_OBJECT *obj,
                                 int lastpos);
- int X509_REVOKED_get_ext_by_critical(X509_REVOKED *x, int crit, int lastpos);
+ int X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x, int crit, int lastpos);
  X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
  int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);
 
