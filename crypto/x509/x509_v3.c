@@ -224,7 +224,7 @@ ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ex)
     return &ex->value;
 }
 
-int X509_EXTENSION_get_critical(X509_EXTENSION *ex)
+int X509_EXTENSION_get_critical(const X509_EXTENSION *ex)
 {
     if (ex == NULL)
         return (0);
