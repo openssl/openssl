@@ -805,7 +805,7 @@ my $rdrand = sub {
       my @opcode=();
       my $dst=$1;
 	if ($dst !~ /[0-9]+/) { $dst = $regrm{"%e$dst"}; }
-	rex(\@opcode,0,$1,8);
+	rex(\@opcode,0,$dst,8);
 	push @opcode,0x0f,0xc7,0xf0|($dst&7);
 	@opcode;
     } else {
@@ -818,7 +818,7 @@ my $rdseed = sub {
       my @opcode=();
       my $dst=$1;
 	if ($dst !~ /[0-9]+/) { $dst = $regrm{"%e$dst"}; }
-	rex(\@opcode,0,$1,8);
+	rex(\@opcode,0,$dst,8);
 	push @opcode,0x0f,0xc7,0xf8|($dst&7);
 	@opcode;
     } else {

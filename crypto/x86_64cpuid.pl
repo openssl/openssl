@@ -393,36 +393,67 @@ OPENSSL_instrument_bus2:
 ___
 }
 
+sub gen_random {
+my $rdop = shift;
 print<<___;
-.globl	OPENSSL_ia32_rdrand
-.type	OPENSSL_ia32_rdrand,\@abi-omnipotent
+.globl	OPENSSL_ia32_${rdop}
+.type	OPENSSL_ia32_${rdop},\@abi-omnipotent
 .align	16
-OPENSSL_ia32_rdrand:
+OPENSSL_ia32_${rdop}:
 	mov	\$8,%ecx
-.Loop_rdrand:
-	rdrand	%rax
-	jc	.Lbreak_rdrand
-	loop	.Loop_rdrand
-.Lbreak_rdrand:
+.Loop_${rdop}:
+	${rdop}	%rax
+	jc	.Lbreak_${rdop}
+	loop	.Loop_${rdop}
+.Lbreak_${rdop}:
 	cmp	\$0,%rax
 	cmove	%rcx,%rax
 	ret
-.size	OPENSSL_ia32_rdrand,.-OPENSSL_ia32_rdrand
+.size	OPENSSL_ia32_${rdop},.-OPENSSL_ia32_${rdop}
 
-.globl	OPENSSL_ia32_rdseed
-.type	OPENSSL_ia32_rdseed,\@abi-omnipotent
+.globl	OPENSSL_ia32_${rdop}_bytes
+.type	OPENSSL_ia32_${rdop}_bytes,\@abi-omnipotent
 .align	16
-OPENSSL_ia32_rdseed:
-	mov	\$8,%ecx
-.Loop_rdseed:
-	rdseed	%rax
-	jc	.Lbreak_rdseed
-	loop	.Loop_rdseed
-.Lbreak_rdseed:
-	cmp	\$0,%rax
-	cmove	%rcx,%rax
+OPENSSL_ia32_${rdop}_bytes:
+	xor	%rax, %rax	# return value
+	cmp	\$0,$arg2
+	je	.Ldone_${rdop}_bytes
+
+	mov	\$8,%r11
+.Loop_${rdop}_bytes:
+	${rdop}	%r10
+	jc	.Lbreak_${rdop}_bytes
+	dec	%r11
+	jnz	.Loop_${rdop}_bytes
+	jmp	.Ldone_${rdop}_bytes
+
+.align	16
+.Lbreak_${rdop}_bytes:
+	cmp	\$8,$arg2
+	jb	.Ltail_${rdop}_bytes
+	mov	%r10,($arg1)
+	lea	8($arg1),$arg1
+	add	\$8,%rax
+	sub	\$8,$arg2
+	jz	.Ldone_${rdop}_bytes
+	mov	\$8,%r11
+	jmp	.Loop_${rdop}_bytes
+
+.align	16
+.Ltail_${rdop}_bytes:
+	mov	%r10b,($arg1)
+	lea	1($arg1),$arg1
+	inc	%rax
+	shr	\$8,%r8
+	dec	$arg2
+	jnz	.Ltail_${rdop}_bytes
+
+.Ldone_${rdop}_bytes:
 	ret
-.size	OPENSSL_ia32_rdseed,.-OPENSSL_ia32_rdseed
+.size	OPENSSL_ia32_${rdop}_bytes,.-OPENSSL_ia32_${rdop}_bytes
 ___
+}
+gen_random("rdrand");
+gen_random("rdseed");
 
 close STDOUT;	# flush
