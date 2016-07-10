@@ -492,29 +492,64 @@ my $max = "ebp";
 &function_end("OPENSSL_instrument_bus2");
 }
 
-&function_begin_B("OPENSSL_ia32_rdrand");
+sub gen_random {
+my $rdop = shift;
+&function_begin_B("OPENSSL_ia32_${rdop}");
 	&mov	("ecx",8);
 &set_label("loop");
-	&rdrand	("eax");
+	&${rdop}("eax");
 	&jc	(&label("break"));
 	&loop	(&label("loop"));
 &set_label("break");
 	&cmp	("eax",0);
 	&cmove	("eax","ecx");
 	&ret	();
-&function_end_B("OPENSSL_ia32_rdrand");
+&function_end_B("OPENSSL_ia32_${rdop}");
 
-&function_begin_B("OPENSSL_ia32_rdseed");
+&function_begin_B("OPENSSL_ia32_${rdop}_bytes");
+	&push	("edi");
+	&push	("ebx");
+	&xor	("eax","eax");		# return value
+	&mov	("edi",&wparam(0));
+	&mov	("ebx",&wparam(1));
+
+	&cmp	("ebx",0);
+	&je	(&label("done"));
+
 	&mov	("ecx",8);
 &set_label("loop");
-	&rdseed	("eax");
+	&${rdop}("edx");
 	&jc	(&label("break"));
 	&loop	(&label("loop"));
-&set_label("break");
-	&cmp	("eax",0);
-	&cmove	("eax","ecx");
+	&jmp	(&label("done"));
+
+&set_label("break",16);
+	&cmp	("ebx",4);
+	&jb	(&label("tail"));
+	&mov	(&DWP(0,"edi"),"edx");
+	&lea	("edi",&DWP(4,"edi"));
+	&add	("eax",4);
+	&sub	("ebx",4);
+	&jz	(&label("done"));
+	&mov	("ecx",8);
+	&jmp	(&label("loop"));
+
+&set_label("tail",16);
+	&mov	(&BP(0,"edi"),"dl");
+	&lea	("edi",&DWP(1,"edi"));
+	&inc	("eax");
+	&shr	("edx",8);
+	&dec	("ebx");
+	&jnz	(&label("tail"));
+
+&set_label("done");
+	&pop	("ebx");
+	&pop	("edi");
 	&ret	();
-&function_end_B("OPENSSL_ia32_rdseed");
+&function_end_B("OPENSSL_ia32_${rdop}_bytes");
+}
+&gen_random("rdrand");
+&gen_random("rdseed");
 
 &initseg("OPENSSL_cpuid_setup");
 
