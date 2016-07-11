@@ -2765,6 +2765,10 @@ static int dane_verify(X509_STORE_CTX *ctx)
         /* Callback invoked as needed */
         if (!check_leaf_suiteb(ctx, cert))
             return 0;
+        /* Callback invoked as needed */
+        if ((dane->flags & DANE_FLAG_NO_DANE_EE_NAMECHECKS) == 0 &&
+            !check_id(ctx))
+            return 0;
         /* Bypass internal_verify(), issue depth 0 success callback */
         ctx->error_depth = 0;
         ctx->current_cert = cert;

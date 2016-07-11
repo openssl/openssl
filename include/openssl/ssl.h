@@ -1499,6 +1499,13 @@ __owur int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
  * offline testing in test/danetest.c
  */
 SSL_DANE *SSL_get0_dane(SSL *ssl);
+/*
+ * DANE flags
+ */
+unsigned long SSL_CTX_dane_set_flags(SSL_CTX *ctx, unsigned long flags);
+unsigned long SSL_CTX_dane_clear_flags(SSL_CTX *ctx, unsigned long flags);
+unsigned long SSL_dane_set_flags(SSL *ssl, unsigned long flags);
+unsigned long SSL_dane_clear_flags(SSL *ssl, unsigned long flags);
 
 __owur int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm);
 __owur int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
