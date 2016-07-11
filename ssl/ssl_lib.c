@@ -108,6 +108,9 @@ static int dane_ctx_enable(struct dane_ctx_st *dctx)
     int n = ((int) mdmax) + 1;          /* int to handle PrivMatch(255) */
     size_t i;
 
+    if (dctx->mdevp != NULL)
+        return 1;
+
     mdevp = OPENSSL_zalloc(n * sizeof(*mdevp));
     mdord = OPENSSL_zalloc(n * sizeof(*mdord));
 
@@ -182,6 +185,7 @@ static int ssl_dane_dup(SSL *to, SSL *from)
         return 1;
 
     dane_final(&to->dane);
+    to->dane.flags = from->dane.flags;
     to->dane.dctx = &to->ctx->dane;
     to->dane.trecs = sk_danetls_record_new_null();
 
@@ -542,6 +546,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     RECORD_LAYER_init(&s->rlayer, s);
 
     s->options = ctx->options;
+    s->dane.flags = ctx->dane.flags;
     s->min_proto_version = ctx->min_proto_version;
     s->max_proto_version = ctx->max_proto_version;
     s->mode = ctx->mode;
@@ -802,6 +807,22 @@ int SSL_CTX_dane_enable(SSL_CTX *ctx)
     return dane_ctx_enable(&ctx->dane);
 }
 
+unsigned long SSL_CTX_dane_set_flags(SSL_CTX *ctx, unsigned long flags)
+{
+    unsigned long orig = ctx->dane.flags;
+
+    ctx->dane.flags |= flags;
+    return orig;
+}
+
+unsigned long SSL_CTX_dane_clear_flags(SSL_CTX *ctx, unsigned long flags)
+{
+    unsigned long orig = ctx->dane.flags;
+
+    ctx->dane.flags &= ~flags;
+    return orig;
+}
+
 int SSL_dane_enable(SSL *s, const char *basedomain)
 {
     SSL_DANE *dane = &s->dane;
@@ -843,6 +864,22 @@ int SSL_dane_enable(SSL *s, const char *basedomain)
         return -1;
     }
     return 1;
+}
+
+unsigned long SSL_dane_set_flags(SSL *ssl, unsigned long flags)
+{
+    unsigned long orig = ssl->dane.flags;
+
+    ssl->dane.flags |= flags;
+    return orig;
+}
+
+unsigned long SSL_dane_clear_flags(SSL *ssl, unsigned long flags)
+{
+    unsigned long orig = ssl->dane.flags;
+
+    ssl->dane.flags &= ~flags;
+    return orig;
 }
 
 int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)

@@ -3,7 +3,9 @@
 =head1 NAME
 
 SSL_CTX_dane_enable, SSL_CTX_dane_mtype_set, SSL_dane_enable,
-SSL_dane_tlsa_add, SSL_get0_dane_authority, SSL_get0_dane_tlsa -
+SSL_dane_tlsa_add, SSL_get0_dane_authority, SSL_get0_dane_tlsa
+SSL_CTX_dane_set_flags, SSL_CTX_dane_clear_flags,
+SSL_dane_set_flags, SSL_dane_clear_flags -
 enable DANE TLS authentication of the remote TLS server in the local
 TLS client
 
@@ -21,6 +23,10 @@ TLS client
  int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
                         uint8_t *mtype, unsigned const char **data,
                         size_t *dlen);
+ unsigned long SSL_CTX_dane_set_flags(SSL_CTX *ctx, unsigned long flags);
+ unsigned long SSL_CTX_dane_clear_flags(SSL_CTX *ctx, unsigned long flags);
+ unsigned long SSL_dane_set_flags(SSL *ssl, unsigned long flags);
+ unsigned long SSL_dane_clear_flags(SSL *ssl, unsigned long flags);
 
 =head1 DESCRIPTION
 
@@ -124,6 +130,33 @@ The B<data> parameter is set to a short-term internal-copy of the associated
 data field and must not be freed by the application.
 Applications that need long-term access to this field need to copy the content.
 
+SSL_CTX_dane_set_flags() and SSL_dane_set_flags() can be used to enable
+optional DANE verification features.
+SSL_CTX_dane_clear_flags() and SSL_dane_clear_flags() can be used to disable
+the same features.
+The B<flags> argument is a bitmask of the features to enable or disable.
+The B<flags> set for an B<SSL_CTX> context are copied to each B<SSL> handle
+associated with that context at the time the handle is created.
+Subsequent changes in the context's B<flags> have no effect on the B<flags> set
+for the handle.
+
+At present, the only available option is B<DANE_FLAG_NO_DANE_EE_NAMECHECKS>
+which can be used to disable server name checks when authenticating via
+DANE-EE(3) TLSA records.
+For some applications, primarily web browsers, it is not safe to disable name
+checks due to "unknown key share" attacks, in which a malicious server can
+convince a client that a connection to a victim server is instead a secure
+connection to the malicious server.
+The malicious server may then be able to violate cross-origin scripting
+restrictions.
+Thus, despite the text of RFC7671, name checks are by default enabled for
+DANE-EE(3) TLSA records, and can be disabled in applications where it is safe
+to do so.
+In particular, SMTP and XMPP clients should set this option as SRV and MX
+records already make it possible for a remote domain to redirect client
+connections to any server of its choice, and in any case SMTP and XMPP clients
+do not execute scripts downloaded from remote servers.
+
 =head1 RETURN VALUES
 
 The functions SSL_CTX_dane_enable(), SSL_CTX_dane_mtype_set(),
@@ -141,6 +174,10 @@ negative value when DANE authentication failed or was not enabled, a
 non-negative value indicates the chain depth at which the TLSA record matched a
 chain certificate, or the depth of the top-most certificate, when the TLSA
 record is a full public key that is its signer.
+
+The functions SSL_CTX_dane_set_flags(), SSL_CTX_dane_clear_flags(),
+SSL_dane_set_flags() and SSL_dane_clear_flags() return the B<flags> in effect
+before they were called.
 
 =head1 EXAMPLE
 
@@ -171,6 +208,14 @@ the lifetime of the SSL connection.
 
   if (SSL_dane_enable(ssl, dane_tlsa_domain) <= 0)
     /* handle error */
+
+  /*
+   * For many applications it is safe to skip DANE-EE(3) namechecks.  Do not
+   * disable the checks unless "unknown key share" attacks pose no risk for
+   * your application.
+   */
+  SSL_dane_set_flags(ssl, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
+
   if (!SSL_add1_host(ssl, nexthop_domain))
     /* handle error */
   SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
