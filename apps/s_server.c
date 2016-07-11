@@ -155,7 +155,6 @@ static long socket_mtu;
 #endif
 static int dtlslisten = 0;
 
-static BIO *serverinfo_in = NULL;
 static const char *s_serverinfo_file = NULL;
 
 #ifndef OPENSSL_NO_PSK
@@ -1977,7 +1976,6 @@ int s_server_main(int argc, char *argv[])
     SSL_CTX_free(ctx2);
     X509_free(s_cert2);
     EVP_PKEY_free(s_key2);
-    BIO_free(serverinfo_in);
 #ifndef OPENSSL_NO_NEXTPROTONEG
     OPENSSL_free(next_proto.data);
 #endif
