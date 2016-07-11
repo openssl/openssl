@@ -652,13 +652,6 @@ struct ASN1_TLC_st {
 };
 
 /* Typedefs for ASN1 function pointers */
-
-typedef ASN1_VALUE *ASN1_new_func(void);
-typedef void ASN1_free_func(ASN1_VALUE *a);
-typedef ASN1_VALUE *ASN1_d2i_func(ASN1_VALUE **a, const unsigned char **in,
-                                  long length);
-typedef int ASN1_i2d_func(ASN1_VALUE *a, unsigned char **in);
-
 typedef int ASN1_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                         const ASN1_ITEM *it, int tag, int aclass, char opt,
                         ASN1_TLC *ctx);
