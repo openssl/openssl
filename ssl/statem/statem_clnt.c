@@ -1461,12 +1461,14 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto dherr;
         }
+        p = g = NULL;
 
         if (!DH_set0_key(dh, bnpub_key, NULL)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto dherr;
         }
+        bnpub_key = NULL;
 
         if (!ssl_security(s, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0, dh)) {
             al = SSL_AD_HANDSHAKE_FAILURE;
