@@ -763,7 +763,7 @@ int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_BIO_strings(void);
+int ERR_load_BIO_strings(void);
 
 /* Error codes for the BIO functions. */
 

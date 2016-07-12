@@ -352,7 +352,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_OCSP_strings(void);
+int ERR_load_OCSP_strings(void);
 
 /* Error codes for the OCSP functions. */
 

@@ -1360,7 +1360,7 @@ void EC_KEY_METHOD_get_verify(EC_KEY_METHOD *meth,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_EC_strings(void);
+int ERR_load_EC_strings(void);
 
 /* Error codes for the EC functions. */
 

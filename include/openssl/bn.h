@@ -488,7 +488,7 @@ int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_BN_strings(void);
+int ERR_load_BN_strings(void);
 
 /* Error codes for the BN functions. */
 

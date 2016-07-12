@@ -1440,7 +1440,7 @@ void EVP_add_alg_module(void);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_EVP_strings(void);
+int ERR_load_EVP_strings(void);
 
 /* Error codes for the EVP functions. */
 

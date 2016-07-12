@@ -37,7 +37,7 @@ static ERR_STRING_DATA OBJ_str_reasons[] = {
 
 #endif
 
-void ERR_load_OBJ_strings(void)
+int ERR_load_OBJ_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -46,4 +46,5 @@ void ERR_load_OBJ_strings(void)
         ERR_load_strings(0, OBJ_str_reasons);
     }
 #endif
+    return 1;
 }

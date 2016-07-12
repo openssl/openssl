@@ -875,7 +875,7 @@ int SMIME_text(BIO *in, BIO *out);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_ASN1_strings(void);
+int ERR_load_ASN1_strings(void);
 
 /* Error codes for the ASN1 functions. */
 

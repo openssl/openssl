@@ -436,7 +436,7 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_CRYPTO_strings(void);
+int ERR_load_CRYPTO_strings(void);
 
 /* Error codes for the CRYPTO functions. */
 

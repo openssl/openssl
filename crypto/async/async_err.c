@@ -38,7 +38,7 @@ static ERR_STRING_DATA ASYNC_str_reasons[] = {
 
 #endif
 
-void ERR_load_ASYNC_strings(void)
+int ERR_load_ASYNC_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -47,4 +47,5 @@ void ERR_load_ASYNC_strings(void)
         ERR_load_strings(0, ASYNC_str_reasons);
     }
 #endif
+    return 1;
 }

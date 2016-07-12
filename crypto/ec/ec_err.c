@@ -271,7 +271,7 @@ static ERR_STRING_DATA EC_str_reasons[] = {
 
 #endif
 
-void ERR_load_EC_strings(void)
+int ERR_load_EC_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -280,4 +280,5 @@ void ERR_load_EC_strings(void)
         ERR_load_strings(0, EC_str_reasons);
     }
 #endif
+    return 1;
 }

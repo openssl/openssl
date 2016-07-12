@@ -863,7 +863,7 @@ int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_X509V3_strings(void);
+int ERR_load_X509V3_strings(void);
 
 /* Error codes for the X509V3 functions. */
 

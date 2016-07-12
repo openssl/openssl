@@ -59,7 +59,7 @@ void BUF_reverse(unsigned char *out, const unsigned char *in, size_t siz);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_BUF_strings(void);
+int ERR_load_BUF_strings(void);
 
 /* Error codes for the BUF functions. */
 

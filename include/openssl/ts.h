@@ -156,8 +156,6 @@ ESS_SIGNING_CERT *d2i_ESS_SIGNING_CERT(ESS_SIGNING_CERT **a,
                                        const unsigned char **pp, long length);
 ESS_SIGNING_CERT *ESS_SIGNING_CERT_dup(ESS_SIGNING_CERT *a);
 
-void ERR_load_TS_strings(void);
-
 int TS_REQ_set_version(TS_REQ *a, long version);
 long TS_REQ_get_version(const TS_REQ *a);
 
@@ -532,7 +530,7 @@ int TS_CONF_set_ess_cert_id_chain(CONF *conf, const char *section,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_TS_strings(void);
+int ERR_load_TS_strings(void);
 
 /* Error codes for the TS functions. */
 

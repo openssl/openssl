@@ -56,7 +56,7 @@ extern "C" {
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_KDF_strings(void);
+int ERR_load_KDF_strings(void);
 
 /* Error codes for the KDF functions. */
 

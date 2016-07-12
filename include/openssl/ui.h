@@ -334,7 +334,7 @@ int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_UI_strings(void);
+int ERR_load_UI_strings(void);
 
 /* Error codes for the UI functions. */
 

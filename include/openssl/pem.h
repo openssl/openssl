@@ -419,7 +419,7 @@ int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_PEM_strings(void);
+int ERR_load_PEM_strings(void);
 
 /* Error codes for the PEM functions. */
 

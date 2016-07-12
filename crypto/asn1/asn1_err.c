@@ -32,6 +32,7 @@ static ERR_STRING_DATA ASN1_str_functs[] = {
     {ERR_FUNC(ASN1_F_ASN1_D2I_READ_BIO), "asn1_d2i_read_bio"},
     {ERR_FUNC(ASN1_F_ASN1_DIGEST), "ASN1_digest"},
     {ERR_FUNC(ASN1_F_ASN1_DO_ADB), "asn1_do_adb"},
+    {ERR_FUNC(ASN1_F_ASN1_DO_LOCK), "asn1_do_lock"},
     {ERR_FUNC(ASN1_F_ASN1_DUP), "ASN1_dup"},
     {ERR_FUNC(ASN1_F_ASN1_EX_C2I), "asn1_ex_c2i"},
     {ERR_FUNC(ASN1_F_ASN1_FIND_END), "asn1_find_end"},
@@ -253,7 +254,7 @@ static ERR_STRING_DATA ASN1_str_reasons[] = {
 
 #endif
 
-void ERR_load_ASN1_strings(void)
+int ERR_load_ASN1_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -262,4 +263,5 @@ void ERR_load_ASN1_strings(void)
         ERR_load_strings(0, ASN1_str_reasons);
     }
 #endif
+    return 1;
 }
