@@ -129,7 +129,7 @@ static ERR_STRING_DATA X509_str_reasons[] = {
 
 #endif
 
-void ERR_load_X509_strings(void)
+int ERR_load_X509_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -138,4 +138,5 @@ void ERR_load_X509_strings(void)
         ERR_load_strings(0, X509_str_reasons);
     }
 #endif
+    return 1;
 }

@@ -112,7 +112,7 @@ static ERR_STRING_DATA BIO_str_reasons[] = {
 
 #endif
 
-void ERR_load_BIO_strings(void)
+int ERR_load_BIO_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -121,4 +121,5 @@ void ERR_load_BIO_strings(void)
         ERR_load_strings(0, BIO_str_reasons);
     }
 #endif
+    return 1;
 }

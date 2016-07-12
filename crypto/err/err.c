@@ -283,10 +283,11 @@ void err_cleanup(void)
     err_string_lock = NULL;
 }
 
-void ERR_load_ERR_strings(void)
+int ERR_load_ERR_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    RUN_ONCE(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+        return 0;
 
     err_load_strings(0, ERR_str_libraries);
     err_load_strings(0, ERR_str_reasons);
@@ -294,6 +295,7 @@ void ERR_load_ERR_strings(void)
     build_SYS_str_reasons();
     err_load_strings(ERR_LIB_SYS, SYS_str_reasons);
 #endif
+    return 1;
 }
 
 static void err_load_strings(int lib, ERR_STRING_DATA *str)
@@ -312,10 +314,12 @@ static void err_load_strings(int lib, ERR_STRING_DATA *str)
     CRYPTO_THREAD_unlock(err_string_lock);
 }
 
-void ERR_load_strings(int lib, ERR_STRING_DATA *str)
+int ERR_load_strings(int lib, ERR_STRING_DATA *str)
 {
-    ERR_load_ERR_strings();
+    if (ERR_load_ERR_strings() == 0)
+        return 0;
     err_load_strings(lib, str);
+    return 1;
 }
 
 int ERR_unload_strings(int lib, ERR_STRING_DATA *str)

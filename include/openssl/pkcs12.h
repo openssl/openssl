@@ -212,7 +212,7 @@ int PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_PKCS12_strings(void);
+int ERR_load_PKCS12_strings(void);
 
 /* Error codes for the PKCS12 functions. */
 

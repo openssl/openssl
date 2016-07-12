@@ -25,6 +25,8 @@ static ERR_STRING_DATA CT_str_functs[] = {
     {ERR_FUNC(CT_F_CTLOG_NEW_NULL), "CTLOG_new_null"},
     {ERR_FUNC(CT_F_CTLOG_STORE_LOAD_CTX_NEW), "ctlog_store_load_ctx_new"},
     {ERR_FUNC(CT_F_CTLOG_STORE_LOAD_FILE), "CTLOG_STORE_load_file"},
+    {ERR_FUNC(CT_F_CTLOG_STORE_LOAD_LOG), "ctlog_store_load_log"},
+    {ERR_FUNC(CT_F_CTLOG_STORE_NEW), "CTLOG_STORE_new"},
     {ERR_FUNC(CT_F_CT_BASE64_DECODE), "ct_base64_decode"},
     {ERR_FUNC(CT_F_CT_POLICY_EVAL_CTX_NEW), "CT_POLICY_EVAL_CTX_new"},
     {ERR_FUNC(CT_F_CT_V1_LOG_ID_FROM_PKEY), "ct_v1_log_id_from_pkey"},
@@ -73,7 +75,7 @@ static ERR_STRING_DATA CT_str_reasons[] = {
 
 #endif
 
-void ERR_load_CT_strings(void)
+int ERR_load_CT_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -82,4 +84,5 @@ void ERR_load_CT_strings(void)
         ERR_load_strings(0, CT_str_reasons);
     }
 #endif
+    return 1;
 }

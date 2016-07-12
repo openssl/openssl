@@ -995,7 +995,7 @@ int X509_TRUST_get_trust(const X509_TRUST *xp);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_X509_strings(void);
+int ERR_load_X509_strings(void);
 
 /* Error codes for the X509 functions. */
 

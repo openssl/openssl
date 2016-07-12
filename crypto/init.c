@@ -92,6 +92,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_no_load_crypto_strings)
 
 DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
 {
+    int ret = 1;
     /*
      * OPENSSL_NO_AUTOERRINIT is provided here to prevent at compile time
      * pulling in all the error strings during static linking
@@ -101,10 +102,10 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_load_crypto_strings: "
                     "err_load_crypto_strings_int()\n");
 # endif
-    err_load_crypto_strings_int();
+    ret = err_load_crypto_strings_int();
 #endif
     load_crypto_strings_inited = 1;
-    return 1;
+    return ret;
 }
 
 static CRYPTO_ONCE add_all_ciphers = CRYPTO_ONCE_STATIC_INIT;

@@ -1074,7 +1074,7 @@ void OBJ_sigid_free(void);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_OBJ_strings(void);
+int ERR_load_OBJ_strings(void);
 
 /* Error codes for the OBJ functions. */
 

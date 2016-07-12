@@ -233,7 +233,7 @@ int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *));
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_DSA_strings(void);
+int ERR_load_DSA_strings(void);
 
 /* Error codes for the DSA functions. */
 

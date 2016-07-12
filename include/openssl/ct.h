@@ -481,7 +481,7 @@ __owur int CTLOG_STORE_load_default_file(CTLOG_STORE *store);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_CT_strings(void);
+int ERR_load_CT_strings(void);
 
 /* Error codes for the CT functions. */
 
