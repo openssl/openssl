@@ -360,8 +360,6 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, unsigned long flags);
 void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
                              time_t t);
-void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
-                                  int (*verify_cb) (int, X509_STORE_CTX *));
 
 X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx);
