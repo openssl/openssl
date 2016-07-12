@@ -396,3 +396,7 @@ SSL_SESSION_get0_hostname               396	1_1_0	EXIST::FUNCTION:
 SSL_client_version                      397	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_get_protocol_version        398	1_1_0	EXIST::FUNCTION:
 SSL_is_dtls                             399	1_1_0	EXIST::FUNCTION:
+SSL_CTX_dane_set_flags                  400	1_1_0	EXIST::FUNCTION:
+SSL_dane_set_flags                      401	1_1_0	EXIST::FUNCTION:
+SSL_CTX_dane_clear_flags                402	1_1_0	EXIST::FUNCTION:
+SSL_dane_clear_flags                    403	1_1_0	EXIST::FUNCTION:
