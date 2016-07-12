@@ -42,7 +42,7 @@ static ERR_STRING_DATA CRYPTO_str_reasons[] = {
 
 #endif
 
-void ERR_load_CRYPTO_strings(void)
+int ERR_load_CRYPTO_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -51,4 +51,5 @@ void ERR_load_CRYPTO_strings(void)
         ERR_load_strings(0, CRYPTO_str_reasons);
     }
 #endif
+    return 1;
 }

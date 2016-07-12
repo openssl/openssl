@@ -73,7 +73,7 @@ DEPRECATEDIN_1_1_0(int RAND_event(UINT, WPARAM, LPARAM))
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_RAND_strings(void);
+int ERR_load_RAND_strings(void);
 
 /* Error codes for the RAND functions. */
 

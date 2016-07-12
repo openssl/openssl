@@ -2036,7 +2036,7 @@ extern const char SSL_version_str[];
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_SSL_strings(void);
+int ERR_load_SSL_strings(void);
 
 /* Error codes for the SSL functions. */
 

@@ -318,7 +318,7 @@ BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_PKCS7_strings(void);
+int ERR_load_PKCS7_strings(void);
 
 /* Error codes for the PKCS7 functions. */
 

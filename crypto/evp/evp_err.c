@@ -57,10 +57,10 @@ static ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_FUNC(EVP_F_EVP_PKEY_ENCRYPT), "EVP_PKEY_encrypt"},
     {ERR_FUNC(EVP_F_EVP_PKEY_ENCRYPT_INIT), "EVP_PKEY_encrypt_init"},
     {ERR_FUNC(EVP_F_EVP_PKEY_ENCRYPT_OLD), "EVP_PKEY_encrypt_old"},
-    {ERR_FUNC(EVP_F_EVP_PKEY_GET0_HMAC), "EVP_PKEY_get0_hmac"},
     {ERR_FUNC(EVP_F_EVP_PKEY_GET0_DH), "EVP_PKEY_get0_DH"},
     {ERR_FUNC(EVP_F_EVP_PKEY_GET0_DSA), "EVP_PKEY_get0_DSA"},
     {ERR_FUNC(EVP_F_EVP_PKEY_GET0_EC_KEY), "EVP_PKEY_get0_EC_KEY"},
+    {ERR_FUNC(EVP_F_EVP_PKEY_GET0_HMAC), "EVP_PKEY_get0_hmac"},
     {ERR_FUNC(EVP_F_EVP_PKEY_GET0_RSA), "EVP_PKEY_get0_RSA"},
     {ERR_FUNC(EVP_F_EVP_PKEY_KEYGEN), "EVP_PKEY_keygen"},
     {ERR_FUNC(EVP_F_EVP_PKEY_KEYGEN_INIT), "EVP_PKEY_keygen_init"},
@@ -159,7 +159,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
 
 #endif
 
-void ERR_load_EVP_strings(void)
+int ERR_load_EVP_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -168,4 +168,5 @@ void ERR_load_EVP_strings(void)
         ERR_load_strings(0, EVP_str_reasons);
     }
 #endif
+    return 1;
 }

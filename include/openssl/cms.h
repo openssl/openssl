@@ -335,7 +335,7 @@ int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_CMS_strings(void);
+int ERR_load_CMS_strings(void);
 
 /* Error codes for the CMS functions. */
 

@@ -170,7 +170,7 @@ static ERR_STRING_DATA RSA_str_reasons[] = {
 
 #endif
 
-void ERR_load_RSA_strings(void)
+int ERR_load_RSA_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -179,4 +179,5 @@ void ERR_load_RSA_strings(void)
         ERR_load_strings(0, RSA_str_reasons);
     }
 #endif
+    return 1;
 }

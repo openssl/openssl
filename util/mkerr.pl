@@ -457,12 +457,12 @@ foreach $lib (keys %csrc)
 EOF
 	if($static) {
 		print OUT <<"EOF";
-${staticloader}void ERR_load_${lib}_strings(void);
+${staticloader}int ERR_load_${lib}_strings(void);
 
 EOF
 	} else {
 		print OUT <<"EOF";
-${staticloader}void ERR_load_${lib}_strings(void);
+${staticloader}int ERR_load_${lib}_strings(void);
 ${staticloader}void ERR_unload_${lib}_strings(void);
 ${staticloader}void ERR_${lib}_error(int function, int reason, char *file, int line);
 # define ${lib}err(f,r) ERR_${lib}_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
@@ -652,7 +652,7 @@ if($static) {
 
 #endif
 
-${staticloader}void ERR_load_${lib}_strings(void)
+${staticloader}int ERR_load_${lib}_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -661,6 +661,7 @@ ${staticloader}void ERR_load_${lib}_strings(void)
         ERR_load_strings($load_errcode, ${lib}_str_reasons);
     }
 #endif
+    return 1;
 }
 EOF
 } else {
@@ -680,7 +681,7 @@ static ERR_STRING_DATA ${lib}_lib_name[] = {
 static int ${lib}_lib_error_code = 0;
 static int ${lib}_error_init = 1;
 
-${staticloader}void ERR_load_${lib}_strings(void)
+${staticloader}int ERR_load_${lib}_strings(void)
 {
     if (${lib}_lib_error_code == 0)
         ${lib}_lib_error_code = ERR_get_next_error_library();
@@ -697,6 +698,7 @@ ${staticloader}void ERR_load_${lib}_strings(void)
         ERR_load_strings(0, ${lib}_lib_name);
 #endif
     }
+    return 1;
 }
 
 ${staticloader}void ERR_unload_${lib}_strings(void)

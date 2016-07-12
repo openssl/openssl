@@ -755,7 +755,7 @@ DEPRECATEDIN_1_1_0(void ENGINE_setup_bsd_cryptodev(void))
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_ENGINE_strings(void);
+int ERR_load_ENGINE_strings(void);
 
 /* Error codes for the ENGINE functions. */
 

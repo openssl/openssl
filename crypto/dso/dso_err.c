@@ -78,7 +78,7 @@ static ERR_STRING_DATA DSO_str_reasons[] = {
 
 #endif
 
-void ERR_load_DSO_strings(void)
+int ERR_load_DSO_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -87,4 +87,5 @@ void ERR_load_DSO_strings(void)
         ERR_load_strings(0, DSO_str_reasons);
     }
 #endif
+    return 1;
 }
