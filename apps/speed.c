@@ -144,6 +144,9 @@ static volatile int run = 0;
 static int mr = 0;
 static int usertime = 1;
 
+typedef void *(*kdf_fn) (
+        const void *in, size_t inlen, void *out, size_t *xoutlen);
+
 typedef struct loopargs_st {
     ASYNC_JOB *inprogress_job;
     ASYNC_WAIT_CTX *wait_ctx;
@@ -164,6 +167,8 @@ typedef struct loopargs_st {
     EC_KEY *ecdh_b[EC_NUM];
     unsigned char *secret_a;
     unsigned char *secret_b;
+    int         outlen;
+    kdf_fn      kdf;
 #endif
     EVP_CIPHER_CTX *ctx;
     HMAC_CTX *hctx;
@@ -1037,10 +1042,6 @@ static int ECDSA_verify_loop(void *args)
     return count;
 }
 
-static int outlen;
-static void *(*kdf) (const void *in, size_t inlen, void *out,
-        size_t *xoutlen);
-
 /* ******************************************************************** */
 static long ecdh_c[EC_NUM][1];
 
@@ -1050,7 +1051,9 @@ static int ECDH_compute_key_loop(void *args)
     EC_KEY **ecdh_a = tempargs->ecdh_a;
     EC_KEY **ecdh_b = tempargs->ecdh_b;
     unsigned char *secret_a = tempargs->secret_a;
-    int count;
+    int count, outlen = tempargs->outlen;
+    kdf_fn kdf = tempargs->kdf;
+
     for (count = 0; COND(ecdh_c[testnum][0]); count++) {
         ECDH_compute_key(secret_a, outlen,
                 EC_KEY_get0_public_key(ecdh_b[testnum]),
@@ -2578,24 +2581,24 @@ int speed_main(int argc, char **argv)
                      * hash of result; otherwise, use result (see section 4.8 of
                      * draft-ietf-tls-ecc-03.txt).
                      */
-                    int field_size;
-                    field_size =
-                        EC_GROUP_get_degree(EC_KEY_get0_group(loopargs[i].ecdh_a[testnum]));
-                    if (field_size <= 24 * 8) {
-                        outlen = KDF1_SHA1_len;
-                        kdf = KDF1_SHA1;
+                    int field_size = EC_GROUP_get_degree(
+                            EC_KEY_get0_group(loopargs[i].ecdh_a[testnum]));
+
+                    if (field_size <= 24 * 8) {                 /* 192 bits */
+                        loopargs[i].outlen = KDF1_SHA1_len;
+                        loopargs[i].kdf = KDF1_SHA1;
                     } else {
-                        outlen = (field_size + 7) / 8;
-                        kdf = NULL;
+                        loopargs[i].outlen = (field_size + 7) / 8;
+                        loopargs[i].kdf = NULL;
                     }
                     secret_size_a =
-                        ECDH_compute_key(loopargs[i].secret_a, outlen,
+                        ECDH_compute_key(loopargs[i].secret_a, loopargs[i].outlen,
                                 EC_KEY_get0_public_key(loopargs[i].ecdh_b[testnum]),
-                                loopargs[i].ecdh_a[testnum], kdf);
+                                loopargs[i].ecdh_a[testnum], loopargs[i].kdf);
                     secret_size_b =
-                        ECDH_compute_key(loopargs[i].secret_b, outlen,
+                        ECDH_compute_key(loopargs[i].secret_b, loopargs[i].outlen,
                                 EC_KEY_get0_public_key(loopargs[i].ecdh_a[testnum]),
-                                loopargs[i].ecdh_b[testnum], kdf);
+                                loopargs[i].ecdh_b[testnum], loopargs[i].kdf);
                     if (secret_size_a != secret_size_b)
                         ecdh_checks = 0;
                     else
