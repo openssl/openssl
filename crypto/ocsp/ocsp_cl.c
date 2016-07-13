@@ -191,6 +191,29 @@ ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(OCSP_BASICRESP* bs)
     return bs->tbsResponseData.producedAt;
 }
 
+const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs)
+{
+    return bs->certs;
+}
+
+int OCSP_resp_get0_id(const OCSP_BASICRESP *bs,
+                      const ASN1_OCTET_STRING **pid,
+                      const X509_NAME **pname)
+
+{
+    const OCSP_RESPID *rid = &bs->tbsResponseData.responderId;
+    if (rid->type == V_OCSP_RESPID_NAME) {
+        *pname = rid->value.byName;
+        *pid = NULL;
+    } else if (rid->type == V_OCSP_RESPID_KEY) {
+        *pid = rid->value.byKey;
+        *pname = NULL;
+    } else {
+        return 0;
+    }
+    return 1;
+}
+
 /* Look single response matching a given certificate ID */
 
 int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last)
