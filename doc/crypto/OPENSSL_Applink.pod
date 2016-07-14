@@ -16,7 +16,8 @@ Even though it appears at application side, it's essentially OpenSSL
 private interface. For this reason application developers are not
 expected to implement it, but to compile provided module with
 compiler of their choice and link it into the target application.
-The referred module is available as <openssl>/ms/applink.c.
+The referred module is available as F<applink.c>, located alongside
+the public header files (only on the platforms where applicable).
 
 =head1 COPYRIGHT
 
