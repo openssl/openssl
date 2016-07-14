@@ -110,6 +110,7 @@ int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
     RSA_up_ref(rsa);
     if (EVP_PKEY_assign_RSA(pkey, rsa) <= 0) {
         RSA_free(rsa);
+        EVP_PKEY_free(pkey);
         return 0;
     }
 
@@ -452,6 +453,7 @@ int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
     RSA_up_ref(rsa);
     if (EVP_PKEY_assign_RSA(pkey, rsa) <= 0) {
         RSA_free(rsa);
+        EVP_PKEY_free(pkey);
         return 0;
     }
 
