@@ -479,7 +479,7 @@ install_runtime:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/bin
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/misc
 	@echo "*** Installing runtime files"
-	: {- output_off() unless windowsdll(); "" -};
+	@ : {- output_off() unless windowsdll(); "" -}
 	@set -e; for s in dummy $(SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
@@ -489,7 +489,7 @@ install_runtime:
 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	: {- output_on() unless windowsdll(); "" -};
+	@ : {- output_on() unless windowsdll(); "" -}
 	@set -e; for x in dummy $(PROGRAMS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
@@ -532,14 +532,14 @@ uninstall_runtime:
 		echo "$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
 		$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$fn; \
 	done
-	: {- output_off() unless windowsdll(); "" -};
+	@ : {- output_off() unless windowsdll(); "" -}
 	@set -e; for s in dummy $(SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	: {- output_on() unless windowsdll(); "" -};
+	@ : {- output_on() unless windowsdll(); "" -}
 	$(RM) $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
 	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
 	-$(RMDIR) $(DESTDIR)$(OPENSSLDIR)/misc
