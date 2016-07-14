@@ -157,6 +157,11 @@ AR={- $target{ar} -}
 ARFLAGS= {- $target{arflags} -}
 AROUTFLAG={- $target{aroutflag} || "/out:" -}
 
+MT={- $target{mt} -}
+MTFLAGS= {- $target{mtflags} -}
+MTINFLAG={- $target{mtinflag} || "-manifest " -}
+MTOUTFLAG={- $target{mtoutflag} || "-outputresource:" -}
+
 AS={- $target{as} -}
 ASFLAGS={- $target{asflags} -}
 ASOUTFLAG={- $target{asoutflag} -}
@@ -460,10 +465,13 @@ $target: $deps "$ordinalsfile" "$mkdef_pl"
 	DEL $shlib.def.tmp
 	"\$(PERL)" "$mkrc_pl" $shlib$shlibext > $shlib.rc
 	\$(RC) \$(RCOUTFLAG)$shlib.res $shlib.rc
+	IF EXIST $shlib$shlibext.manifest DEL /F /Q $shlib$shlibext.manifest
 	\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) \\
 		/implib:\$@ \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<< || (DEL /Q \$(\@B).* $shlib.* && EXIT 1)
 $objs $shlib.res$linklibs \$(EX_LIBS)
 <<
+	IF EXIST $shlib$shlibext.manifest \\
+	   \$(MT) \$(MTFLAGS) \$(MTINFLAG) $shlib$shlibext.manifest \$(MTOUTFLAG)$shlib$shlibext
 	IF EXIST apps\\$shlib$shlibext DEL /Q /F apps\\$shlib$shlibext
 	IF EXIST test\\$shlib$shlibext DEL /Q /F test\\$shlib$shlibext
 	COPY $shlib$shlibext apps
@@ -482,6 +490,7 @@ EOF
 		     compute_lib_depends(@{$args{deps}}));
      return <<"EOF";
 $dso$dsoext: $deps
+	IF EXIST $dso$dsoext.manifest DEL /F /Q $dso$dsoext.manifest
 	\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) \$(LDOUTFLAG)$dso$dsoext /def:<< @<<
 LIBRARY         $dso_n
 EXPORTS
@@ -490,6 +499,8 @@ EXPORTS
 <<
 $objs$linklibs \$(EX_LIBS)
 <<
+	IF EXIST $dso$dsoext.manifest \\
+	   \$(MT) \$(MTFLAGS) \$(MTINFLAG) $dso$dsoext.manifest \$(MTOUTFLAG)$dso$dsoext
 EOF
  }
  sub obj2lib {
@@ -520,9 +531,12 @@ EOF
 		     compute_lib_depends(@{$args{deps}}));
      return <<"EOF";
 $bin$exeext: $deps
+	IF EXIST $bin$exeext.manifest DEL /F /Q $bin$exeext.manifest
 	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) \$(LDOUTFLAG)$bin$exeext @<<
 $objs setargv.obj$linklibs \$(EX_LIBS)
 <<
+	IF EXIST $bin$exeext.manifest \\
+	   \$(MT) \$(MTFLAGS) \$(MTINFLAG) $bin$exeext.manifest \$(MTOUTFLAG)$bin$exeext
 EOF
   }
   sub in2script {
