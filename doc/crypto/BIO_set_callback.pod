@@ -40,14 +40,23 @@ BIO_callback_fn() is the type of the callback function. The meaning of each
 argument is described below:
 
 =over
+
+=item B<b>
+
 The BIO the callback is attached to is passed in B<b>.
+
+=item B<oper>
 
 B<oper> is set to the operation being performed. For some operations
 the callback is called twice, once before and once after the actual
 operation, the latter case has B<oper> or'ed with BIO_CB_RETURN.
 
+=item B<argp> B<argi> B<argl>
+
 The meaning of the arguments B<argp>, B<argi> and B<argl> depends on
 the value of B<oper>, that is the operation being performed.
+
+=item B<ret>
 
 B<ret> is the return value that would be returned to the
 application if no callback were present. The actual value returned
