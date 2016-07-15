@@ -66,6 +66,7 @@
 #endif
 #include <openssl/asn1t.h>
 #include "asn1_locl.h"
+#include "ec_lcl.h"
 
 #ifndef OPENSSL_NO_CMS
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);
@@ -301,15 +302,13 @@ static int eckey_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 
 static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
-    EC_KEY *ec_key;
+    EC_KEY ec_key = *(pkey->pkey.ec);
     unsigned char *ep, *p;
     int eplen, ptype;
     void *pval;
-    unsigned int tmp_flags, old_flags;
+    unsigned int old_flags;
 
-    ec_key = pkey->pkey.ec;
-
-    if (!eckey_param2type(&ptype, &pval, ec_key)) {
+    if (!eckey_param2type(&ptype, &pval, &ec_key)) {
         ECerr(EC_F_ECKEY_PRIV_ENCODE, EC_R_DECODE_ERROR);
         return 0;
     }
@@ -320,30 +319,25 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
      * do not include the parameters in the SEC1 private key see PKCS#11
      * 12.11
      */
-    old_flags = EC_KEY_get_enc_flags(ec_key);
-    tmp_flags = old_flags | EC_PKEY_NO_PARAMETERS;
-    EC_KEY_set_enc_flags(ec_key, tmp_flags);
-    eplen = i2d_ECPrivateKey(ec_key, NULL);
+    old_flags = EC_KEY_get_enc_flags(&ec_key);
+    EC_KEY_set_enc_flags(&ec_key, old_flags | EC_PKEY_NO_PARAMETERS);
+
+    eplen = i2d_ECPrivateKey(&ec_key, NULL);
     if (!eplen) {
-        EC_KEY_set_enc_flags(ec_key, old_flags);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
         return 0;
     }
     ep = (unsigned char *)OPENSSL_malloc(eplen);
     if (!ep) {
-        EC_KEY_set_enc_flags(ec_key, old_flags);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     p = ep;
-    if (!i2d_ECPrivateKey(ec_key, &p)) {
-        EC_KEY_set_enc_flags(ec_key, old_flags);
+    if (!i2d_ECPrivateKey(&ec_key, &p)) {
         OPENSSL_free(ep);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
         return 0;
     }
-    /* restore old encoding flags */
-    EC_KEY_set_enc_flags(ec_key, old_flags);
 
     if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_X9_62_id_ecPublicKey), 0,
                          ptype, pval, ep, eplen))
