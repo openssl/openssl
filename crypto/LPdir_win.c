@@ -55,6 +55,12 @@
 # define NAME_MAX 255
 #endif
 
+#ifdef CP_UTF8
+# define CP_DEFAULT CP_UTF8
+#else
+# define CP_DEFAULT CP_ACP
+#endif
+
 struct LP_dir_context_st {
     WIN32_FIND_DATA ctx;
     HANDLE handle;
@@ -104,27 +110,41 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
             TCHAR *wdir = NULL;
             /* len_0 denotes string length *with* trailing 0 */
             size_t index = 0, len_0 = strlen(extdir) + 1;
-
-            wdir = (TCHAR *)calloc(len_0, sizeof(TCHAR));
-            if (wdir == NULL) {
-                if (extdirbuf != NULL) {
-                    free(extdirbuf);
-                }
-                free(*ctx);
-                *ctx = NULL;
-                errno = ENOMEM;
-                return 0;
-            }
 #ifdef LP_MULTIBYTE_AVAILABLE
-            if (!MultiByteToWideChar
-                (CP_ACP, 0, extdir, len_0, (WCHAR *)wdir, len_0))
+            int sz = 0;
+            UINT cp;
+
+            do {
+# ifdef CP_UTF8
+                if ((sz = MultiByteToWideChar((cp = CP_UTF8), 0, extdir, len_0,
+                                              NULL, 0)) > 0 ||
+                    GetLastError() != ERROR_NO_UNICODE_TRANSLATION)
+                    break;
+# endif
+                sz = MultiByteToWideChar((cp = CP_ACP), 0, extdir, len_0,
+                                         NULL, 0);
+            } while (0);
+
+            if (sz > 0) {
+                wdir = _alloca(sz * sizeof(TCHAR));
+                if (!MultiByteToWideChar(cp, 0, extdir, len_0, wdir, sz)) {
+                    if (extdirbuf != NULL) {
+                        free(extdirbuf);
+                    }
+                    free(*ctx);
+                    *ctx = NULL;
+                    errno = EINVAL;
+                    return 0;
+                }
+            } else
 #endif
+            {
+                wdir = _alloca(len_0 * sizeof(TCHAR));
                 for (index = 0; index < len_0; index++)
                     wdir[index] = (TCHAR)extdir[index];
+            }
 
             (*ctx)->handle = FindFirstFile(wdir, &(*ctx)->ctx);
-
-            free(wdir);
         } else {
             (*ctx)->handle = FindFirstFile((TCHAR *)extdir, &(*ctx)->ctx);
         }
@@ -152,9 +172,9 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
         len_0++;
 
 #ifdef LP_MULTIBYTE_AVAILABLE
-        if (!WideCharToMultiByte
-            (CP_ACP, 0, (WCHAR *)wdir, len_0, (*ctx)->entry_name,
-             sizeof((*ctx)->entry_name), NULL, 0))
+        if (!WideCharToMultiByte(CP_DEFAULT, 0, (WCHAR *)wdir, len_0,
+                                 (*ctx)->entry_name,
+                                 sizeof((*ctx)->entry_name), NULL, 0))
 #endif
             for (index = 0; index < len_0; index++)
                 (*ctx)->entry_name[index] = (char)wdir[index];
