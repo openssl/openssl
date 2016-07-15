@@ -2873,7 +2873,9 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     ossl_statem_set_error(s);
  done:
     X509_free(x);
-    sk_X509_pop_free(sk, X509_free);
+    if (sk != NULL){
+      sk_X509_pop_free(sk, X509_free);
+    }
     return ret;
 }
 
