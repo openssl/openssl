@@ -101,29 +101,33 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
          *      b) We are running SSL3 (in TLS1.0+ the client must return a 0
          *         list if we requested a certificate)
          */
-        if (mt == SSL3_MT_CLIENT_KEY_EXCHANGE
-                && (!s->s3->tmp.cert_request
-                    || (!((s->verify_mode & SSL_VERIFY_PEER) &&
-                          (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT))
-                        && (s->version == SSL3_VERSION)))) {
-            st->hand_state = TLS_ST_SR_KEY_EXCH;
-            return 1;
+        if (mt == SSL3_MT_CLIENT_KEY_EXCHANGE) {
+            if (s->s3->tmp.cert_request) {
+                if (s->version == SSL3_VERSION) {
+                    if ((s->verify_mode & SSL_VERIFY_PEER) &&
+                          (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
+                        /*
+                         * This isn't an unexpected message as such - we're just
+                         * not going to accept it.
+                         */
+                        ssl3_send_alert(s, SSL3_AL_FATAL,
+                                        SSL3_AD_HANDSHAKE_FAILURE);
+                        SSLerr(SSL_F_READ_STATE_MACHINE,
+                               SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
+                        return 0;
+                    }
+                    st->hand_state = TLS_ST_SR_KEY_EXCH;
+                    return 1;
+                }
+            } else {
+                st->hand_state = TLS_ST_SR_KEY_EXCH;
+                return 1;
+            }
         } else if (s->s3->tmp.cert_request) {
             if (mt == SSL3_MT_CERTIFICATE) {
                 st->hand_state = TLS_ST_SR_CERT;
                 return 1;
             }
-        }
-        if (mt == SSL3_MT_CLIENT_KEY_EXCHANGE && s->s3->tmp.cert_request
-                && s->version == SSL3_VERSION) {
-            /*
-             * This isn't an unexpected message as such - we're just not going
-             * to accept it.
-             */
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_HANDSHAKE_FAILURE);
-            SSLerr(SSL_F_READ_STATE_MACHINE,
-                   SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            return 0;
         }
         break;
 
