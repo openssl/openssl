@@ -85,10 +85,25 @@
 
   --cross-compile-prefix=PREFIX
                    The PREFIX to include in front of commands for your
-                   toolchain. For example to build the mingw64 target on Linux
-                   you might use "--cross-compile-prefix=x86_64-w64-mingw32-".
-                   If the compiler is gcc, then this will attempt to run
-                   x86_64-w64-mingw32-gcc when compiling.
+                   toolchain. It's likely to have to end with dash, e.g.
+                   a-b-c- would invoke GNU compiler as a-b-c-gcc, etc.
+                   Unfortunately cross-compiling is too case-specific to
+                   put together one-size-fits-all instructions. You might
+                   have to pass more flags or set up environment variables
+                   to actually make it work. Android and iOS cases are
+                   discussed in corresponding Configurations/10-main.cf
+                   sections. But there are cases when this option alone is
+                   sufficient. For example to build the mingw64 target on
+                   Linux "--cross-compile-prefix=x86_64-w64-mingw32-"
+                   works. Naturally provided that mingw packages are
+                   installed. Today Debian and Ubuntu users have option to
+                   install a number of prepackaged cross-compilers along
+                   with corresponding run-time and development packages for
+                   "alien" hardware. To give another example
+                   "--cross-compile-prefix=mipsel-linux-gnu-" suffices
+                   in such case. Needless to mention that you have to
+                   invoke ./Configure, not ./config, and pass your target
+                   name explicitly.
 
   --debug
                    Build OpenSSL with debugging symbols.
