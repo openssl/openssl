@@ -644,9 +644,9 @@ void rand_hw_xor(unsigned char *buf, size_t num)
 
 #else
 
-static void rand_hw_seed(EVP_MD_CTX *ctx)
+static int rand_hw_seed(EVP_MD_CTX *ctx)
 {
-    return;
+    return 1;
 }
 
 void rand_hw_xor(unsigned char *buf, size_t num)
