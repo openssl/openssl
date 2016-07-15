@@ -137,12 +137,12 @@ ENGINESDIR=$(ENGINESDIR_dev)$(ENGINESDIR_dir)
 
 CC={- $target{cc} -}
 CFLAGS={- join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}})) -} {- join(" ", quotify_l("-DENGINESDIR=\"$enginesdir\"", "-DOPENSSLDIR=\"$openssldir\"")) -} {- $target{cflags} -} {- $config{cflags} -}
-COUTFLAG={- $target{coutflag} || "/Fo" -}
+COUTFLAG={- $target{coutflag} || "/Fo" -}$(OSSL_EMPTY)
 RC={- $target{rc} || "rc" -}
-RCOUTFLAG={- $target{rcoutflag} || "/fo" -}
+RCOUTFLAG={- $target{rcoutflag} || "/fo" -}$(OSSL_EMPTY)
 LD={- $target{ld} || "link" -}
 LDFLAGS={- $target{lflags} -}
-LDOUTFLAG={- $target{loutflag} || "/out:" -}
+LDOUTFLAG={- $target{loutflag} || "/out:" -}$(OSSL_EMPTY)
 EX_LIBS={- $target{ex_libs} -}
 LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag}) || "" -}
 LIB_LDFLAGS={- $target{shared_ldflag} || "" -}
@@ -155,16 +155,16 @@ PERL={- $config{perl} -}
 
 AR={- $target{ar} -}
 ARFLAGS= {- $target{arflags} -}
-AROUTFLAG={- $target{aroutflag} || "/out:" -}
+AROUTFLAG={- $target{aroutflag} || "/out:" -}$(OSSL_EMPTY)
 
 MT={- $target{mt} -}
 MTFLAGS= {- $target{mtflags} -}
-MTINFLAG={- $target{mtinflag} || "-manifest " -}
-MTOUTFLAG={- $target{mtoutflag} || "-outputresource:" -}
+MTINFLAG={- $target{mtinflag} || "-manifest " -}$(OSSL_EMPTY)
+MTOUTFLAG={- $target{mtoutflag} || "-outputresource:" -}$(OSSL_EMPTY)
 
 AS={- $target{as} -}
 ASFLAGS={- $target{asflags} -}
-ASOUTFLAG={- $target{asoutflag} -}
+ASOUTFLAG={- $target{asoutflag} -}$(OSSL_EMPTY)
 PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 
 PROCESSOR= {- $config{processor} -}
@@ -475,7 +475,7 @@ $target: $deps "$ordinalsfile" "$mkdef_pl"
 $objs $shlib.res$linklibs \$(EX_LIBS)
 <<
 	IF EXIST $shlib$shlibext.manifest \\
-	   \$(MT) \$(MTFLAGS) \$(MTINFLAG) $shlib$shlibext.manifest \$(MTOUTFLAG)$shlib$shlibext
+	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$shlib$shlibext.manifest \$(MTOUTFLAG)$shlib$shlibext
 	IF EXIST apps\\$shlib$shlibext DEL /Q /F apps\\$shlib$shlibext
 	IF EXIST test\\$shlib$shlibext DEL /Q /F test\\$shlib$shlibext
 	COPY $shlib$shlibext apps
@@ -504,7 +504,7 @@ EXPORTS
 $objs$linklibs \$(EX_LIBS)
 <<
 	IF EXIST $dso$dsoext.manifest \\
-	   \$(MT) \$(MTFLAGS) \$(MTINFLAG) $dso$dsoext.manifest \$(MTOUTFLAG)$dso$dsoext
+	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$dso$dsoext.manifest \$(MTOUTFLAG)$dso$dsoext
 EOF
  }
  sub obj2lib {
@@ -540,7 +540,7 @@ $bin$exeext: $deps
 $objs setargv.obj$linklibs \$(EX_LIBS)
 <<
 	IF EXIST $bin$exeext.manifest \\
-	   \$(MT) \$(MTFLAGS) \$(MTINFLAG) $bin$exeext.manifest \$(MTOUTFLAG)$bin$exeext
+	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$bin$exeext.manifest \$(MTOUTFLAG)$bin$exeext
 EOF
   }
   sub in2script {
