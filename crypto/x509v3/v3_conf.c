@@ -166,7 +166,6 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
 
  merr:
     X509V3err(X509V3_F_DO_EXT_I2D, ERR_R_MALLOC_FAILURE);
-    OPENSSL_free(ext_der);
     ASN1_OCTET_STRING_free(ext_oct);
     return NULL;
 
