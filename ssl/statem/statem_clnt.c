@@ -90,7 +90,6 @@ static ossl_inline int cert_req_allowed(SSL *s)
  *  Return values are:
  *  1: Yes
  *  0: No
- * -1: Error
  */
 static int key_exchange_expected(SSL *s)
 {
@@ -174,8 +173,6 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
                 }
             } else {
                 ske_expected = key_exchange_expected(s);
-                if (ske_expected < 0)
-                    goto err;
                 /* SKE is optional for some PSK ciphersuites */
                 if (ske_expected
                         || ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)
@@ -209,8 +206,6 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
 
     case TLS_ST_CR_CERT_STATUS:
         ske_expected = key_exchange_expected(s);
-        if (ske_expected < 0)
-            goto err;
         /* SKE is optional for some PSK ciphersuites */
         if (ske_expected
                 || ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)
