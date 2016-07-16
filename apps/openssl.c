@@ -131,6 +131,11 @@ int main(int argc, char *argv[])
 
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     copied_argv = argv = copy_argv(&argc, argv);
+#elif defined(_WIN32)
+    /*
+     * Replace argv[] with UTF-8 encoded strings.
+     */
+    win32_utf8argv(&argc, &argv);
 #endif
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
