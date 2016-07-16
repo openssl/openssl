@@ -33,6 +33,8 @@ int main(int argc, char **argv) {
 
         stat(argv[n], &st);
         f = fopen(argv[n], "rb");
+        if (f == NULL)
+            continue;
         buf = malloc(st.st_size);
         s = fread(buf, 1, st.st_size, f);
         OPENSSL_assert(s == (size_t)st.st_size);
