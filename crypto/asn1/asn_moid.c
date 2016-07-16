@@ -102,5 +102,6 @@ static int do_create(const char *value, const char *name)
     }
 
     OPENSSL_free(lntmp);
+    oid->ln = NULL;
     return 1;
 }
