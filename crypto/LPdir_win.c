@@ -76,11 +76,9 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 
     errno = 0;
     if (*ctx == NULL) {
-        const char *extdir = directory;
-        char *extdirbuf = NULL;
         size_t dirlen = strlen(directory);
 
-        if (dirlen == 0) {
+        if (dirlen == 0 || dirlen > INT_MAX - 3) {
             errno = ENOENT;
             return 0;
         }
@@ -92,45 +90,35 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
         }
         memset(*ctx, 0, sizeof(**ctx));
 
-        if (directory[dirlen - 1] != '*') {
-            extdirbuf = (char *)malloc(dirlen + 3);
-            if (extdirbuf == NULL) {
-                free(*ctx);
-                *ctx = NULL;
-                errno = ENOMEM;
-                return 0;
-            }
-            if (directory[dirlen - 1] != '/' && directory[dirlen - 1] != '\\')
-                extdir = strcat(strcpy(extdirbuf, directory), "/*");
-            else
-                extdir = strcat(strcpy(extdirbuf, directory), "*");
-        }
-
         if (sizeof(TCHAR) != sizeof(char)) {
             TCHAR *wdir = NULL;
             /* len_0 denotes string length *with* trailing 0 */
-            size_t index = 0, len_0 = strlen(extdir) + 1;
+            size_t index = 0, len_0 = dirlen + 1;
 #ifdef LP_MULTIBYTE_AVAILABLE
             int sz = 0;
             UINT cp;
 
             do {
 # ifdef CP_UTF8
-                if ((sz = MultiByteToWideChar((cp = CP_UTF8), 0, extdir, len_0,
+                if ((sz = MultiByteToWideChar((cp = CP_UTF8), 0,
+                                              directory, len_0,
                                               NULL, 0)) > 0 ||
                     GetLastError() != ERROR_NO_UNICODE_TRANSLATION)
                     break;
 # endif
-                sz = MultiByteToWideChar((cp = CP_ACP), 0, extdir, len_0,
+                sz = MultiByteToWideChar((cp = CP_ACP), 0,
+                                         directory, len_0,
                                          NULL, 0);
             } while (0);
 
             if (sz > 0) {
-                wdir = _alloca(sz * sizeof(TCHAR));
-                if (!MultiByteToWideChar(cp, 0, extdir, len_0, wdir, sz)) {
-                    if (extdirbuf != NULL) {
-                        free(extdirbuf);
-                    }
+                /*
+                 * allocate two additional characters in case we need to
+                 * concatenate asterisk, |sz| covers trailing '\0'!
+                 */
+                wdir = _alloca((sz + 2) * sizeof(TCHAR));
+                if (!MultiByteToWideChar(cp, 0, directory, len_0,
+                                         (WCHAR *)wdir, sz)) {
                     free(*ctx);
                     *ctx = NULL;
                     errno = EINVAL;
@@ -139,17 +127,39 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
             } else
 #endif
             {
-                wdir = _alloca(len_0 * sizeof(TCHAR));
+                sz = len_0;
+                /*
+                 * allocate two additional characters in case we need to
+                 * concatenate asterisk, |sz| covers trailing '\0'!
+                 */
+                wdir = _alloca((sz + 2) * sizeof(TCHAR));
                 for (index = 0; index < len_0; index++)
-                    wdir[index] = (TCHAR)extdir[index];
+                    wdir[index] = (TCHAR)directory[index];
+            }
+
+            sz--; /* wdir[sz] is trailing '\0' now */
+            if (wdir[sz - 1] != TEXT('*')) {
+                if (wdir[sz - 1] != TEXT('/') && wdir[sz - 1] != TEXT('\\'))
+                    _tcscpy(wdir + sz, TEXT("/*"));
+                else
+                    _tcscpy(wdir + sz, TEXT("*"));
             }
 
             (*ctx)->handle = FindFirstFile(wdir, &(*ctx)->ctx);
         } else {
-            (*ctx)->handle = FindFirstFile((TCHAR *)extdir, &(*ctx)->ctx);
-        }
-        if (extdirbuf != NULL) {
-            free(extdirbuf);
+            if (directory[dirlen - 1] != '*') {
+                char *buf = _alloca(dirlen + 3);
+
+                strcpy(buf, directory);
+                if (buf[dirlen - 1] != '/' && buf[dirlen - 1] != '\\')
+                    strcpy(buf + dirlen, "/*");
+                else
+                    strcpy(buf + dirlen, "*");
+
+                directory = buf;
+            }
+
+            (*ctx)->handle = FindFirstFile((TCHAR *)directory, &(*ctx)->ctx);
         }
 
         if ((*ctx)->handle == INVALID_HANDLE_VALUE) {
