@@ -99,8 +99,12 @@ static int do_create(const char *value, const char *name)
         lntmp[p - ln] = 0;
         oid = OBJ_nid2obj(nid);
         oid->ln = lntmp;
+        goto fin;
     }
-
+    
+    return 1;
+    
+fin:    
     OPENSSL_free(lntmp);
     oid->ln = NULL;
     return 1;
