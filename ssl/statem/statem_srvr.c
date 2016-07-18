@@ -1830,10 +1830,19 @@ int tls_construct_server_key_exchange(SSL *s)
     if (type & SSL_PSK) {
         /* copy PSK identity hint */
         if (s->cert->psk_identity_hint) {
-            s2n(strlen(s->cert->psk_identity_hint), p);
-            strncpy((char *)p, s->cert->psk_identity_hint,
-                    strlen(s->cert->psk_identity_hint));
-            p += strlen(s->cert->psk_identity_hint);
+            size_t len = strlen(s->cert->psk_identity_hint);
+            if (len > PSK_MAX_IDENTITY_LEN) {
+                /*
+                 * Should not happen - we already checked this when we set
+                 * the identity hint
+                 */
+                SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                       ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            s2n(len, p);
+            memcpy(p, s->cert->psk_identity_hint, len);
+            p += len;
         } else {
             s2n(0, p);
         }
