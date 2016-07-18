@@ -104,11 +104,12 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
         if (mt == SSL3_MT_CLIENT_KEY_EXCHANGE) {
             if (s->s3->tmp.cert_request) {
                 if (s->version == SSL3_VERSION) {
-                    if ((s->verify_mode & SSL_VERIFY_PEER) &&
-                          (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
+                    if ((s->verify_mode & SSL_VERIFY_PEER)
+                        && (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
                         /*
                          * This isn't an unexpected message as such - we're just
-                         * not going to accept it.
+                         * not going to accept it because we require a client
+                         * cert.
                          */
                         ssl3_send_alert(s, SSL3_AL_FATAL,
                                         SSL3_AD_HANDSHAKE_FAILURE);
