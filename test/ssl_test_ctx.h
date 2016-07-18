@@ -84,6 +84,18 @@ typedef struct ssl_test_ctx {
     ssl_session_ticket_t session_ticket_expected;
     /* Whether the server/client CTX should use DTLS or TLS. */
     ssl_test_method_t method;
+    /*
+     * NPN and ALPN protocols supported by the client, server, and second
+     * (SNI) server. A comma-separated list.
+     */
+    char *client_npn_protocols;
+    char *server_npn_protocols;
+    char *server2_npn_protocols;
+    char *expected_npn_protocol;
+    char *client_alpn_protocols;
+    char *server_alpn_protocols;
+    char *server2_alpn_protocols;
+    char *expected_alpn_protocol;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);

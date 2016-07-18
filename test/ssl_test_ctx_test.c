@@ -13,6 +13,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "e_os.h"
 #include "ssl_test_ctx.h"
@@ -88,7 +89,32 @@ static int SSL_TEST_CTX_equal(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
                 ssl_session_ticket_name(ctx2->session_ticket_expected));
         return 0;
     }
+    if (!strings_equal("ClientNPNProtocols", ctx->client_npn_protocols,
+                       ctx2->client_npn_protocols))
+        return 0;
 
+    if (!strings_equal("ServerNPNProtocols", ctx->server_npn_protocols,
+                       ctx2->server_npn_protocols))
+        return 0;
+    if (!strings_equal("Server2NPNProtocols", ctx->server_npn_protocols,
+                       ctx2->server_npn_protocols))
+        return 0;
+    if (!strings_equal("ExpectedNPNProtocol", ctx->expected_npn_protocol,
+                       ctx2->expected_npn_protocol))
+        return 0;
+    if (!strings_equal("ClientALPNProtocols", ctx->client_alpn_protocols,
+                       ctx2->client_alpn_protocols))
+        return 0;
+
+    if (!strings_equal("ServerALPNProtocols", ctx->server_alpn_protocols,
+                       ctx2->server_alpn_protocols))
+        return 0;
+    if (!strings_equal("Server2ALPNProtocols", ctx->server_alpn_protocols,
+                       ctx2->server_alpn_protocols))
+        return 0;
+    if (!strings_equal("ExpectedALPNProtocol", ctx->expected_alpn_protocol,
+                       ctx2->expected_alpn_protocol))
+        return 0;
     return 1;
 }
 
@@ -172,6 +198,10 @@ static int test_good_configuration()
         SSL_TEST_SERVERNAME_IGNORE_MISMATCH;
     fixture.expected_ctx->session_ticket_expected = SSL_TEST_SESSION_TICKET_YES;
     fixture.expected_ctx->method = SSL_TEST_METHOD_DTLS;
+    fixture.expected_ctx->client_npn_protocols = OPENSSL_strdup("foo,bar");
+    fixture.expected_ctx->server2_alpn_protocols = OPENSSL_strdup("baz");
+    OPENSSL_assert(fixture.expected_ctx->client_npn_protocols != NULL);
+    OPENSSL_assert(fixture.expected_ctx->server2_alpn_protocols != NULL);
     EXECUTE_SSL_TEST_CTX_TEST();
 }
 

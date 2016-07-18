@@ -1,0 +1,136 @@
+# -*- mode: perl; -*-
+# Copyright 2016-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+
+## Test version negotiation
+
+use strict;
+use warnings;
+
+package ssltests;
+
+
+our @tests = (
+    {
+        name => "alpn-simple",
+    	server => { },
+	client => { },
+    	test => {
+             "ClientALPNProtocols" => "foo",
+             "ServerALPNProtocols" => "foo",
+	     "ExpectedALPNProtocol" => "foo",
+    	},	
+    },
+    {
+        name => "alpn-client-finds-match",
+    	server => { },
+	client => { },
+    	test => {
+             "ClientALPNProtocols" => "foo,bar",
+             "ServerALPNProtocols" => "baz,bar",
+	     "ExpectedALPNProtocol" => "bar",
+    	},	
+    },
+    {
+        name => "alpn-client-honours-server-pref",
+    	server => { },
+	client => { },
+    	test => {
+             "ClientALPNProtocols" => "foo,bar",
+             "ServerALPNProtocols" => "bar,foo",
+	     "ExpectedALPNProtocol" => "bar",
+    	},	
+    },
+    {
+        name => "alpn-alert-on-mismatch",
+    	server => { },
+	client => { },
+    	test => {
+             "ClientALPNProtocols" => "foo,bar",
+             "ServerALPNProtocols" => "baz",
+	     "ExpectedResult" => "ServerFail",
+	     "ServerAlert" => "NoApplicationProtocol",
+    	},	
+    },
+    {
+        name => "alpn-no-server-support",
+    	server => { },
+	client => { },
+    	test => {
+             "ClientALPNProtocols" => "foo",
+	     "ExpectedALPNProtocol" => undef,
+    	},	
+    },
+    {
+        name => "alpn-no-client-support",
+    	server => { },
+	client => { },
+    	test => {
+             "ServerALPNProtocols" => "foo",
+	     "ExpectedALPNProtocol" => undef,
+    	},	
+    },
+    {
+        name => "alpn-with-sni-no-context-switch",
+    	server => { },
+	server2 => { },
+	client => { },
+    	test => {
+             "ClientALPNProtocols" => "foo,bar",
+             "ServerALPNProtocols" => "foo",
+	     "Server2ALPNProtocols" => "bar",
+	     "ServerName" => "server1",
+	     "ServerNameCallback" => "IgnoreMismatch",
+	     "ExpectedServerName" => "server1",
+	     "ExpectedALPNProtocol" => "foo",
+    	},	
+    },
+    {
+        name => "alpn-with-sni-context-switch",
+    	server => { },
+	server2 => { },
+	client => { },
+    	test => {
+             "ClientALPNProtocols" => "foo,bar",
+             "ServerALPNProtocols" => "foo",
+	     "Server2ALPNProtocols" => "bar",
+	     "ServerName" => "server2",
+	     "ServerNameCallback" => "IgnoreMismatch",
+	     "ExpectedServerName" => "server2",
+	     "ExpectedALPNProtocol" => "bar",
+    	},	
+    },
+    {
+        name => "alpn-selected-sni-server-supports-alpn",
+    	server => { },
+	server2 => { },
+	client => { },
+    	test => {
+             "ClientALPNProtocols" => "foo,bar",
+	     "Server2ALPNProtocols" => "bar",
+	     "ServerName" => "server2",
+	     "ServerNameCallback" => "IgnoreMismatch",
+	     "ExpectedServerName" => "server2",
+	     "ExpectedALPNProtocol" => "bar",
+    	},	
+    },
+    {
+        name => "alpn-selected-sni-server-does-not-support-alpn",
+    	server => { },
+	server2 => { },
+	client => { },
+    	test => {
+             "ClientALPNProtocols" => "foo,bar",
+	     "ServerALPNProtocols" => "foo",
+	     "ServerName" => "server2",
+	     "ServerNameCallback" => "IgnoreMismatch",
+	     "ExpectedServerName" => "server2",
+	     "ExpectedALPNProtocol" => undef,
+    	},	
+    },
+);
