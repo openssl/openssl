@@ -29,7 +29,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
         SCT_LIST_print(scts, bio, 4, "\n", NULL);
         BIO_free(bio);
 
-        i2d_SCT_LIST(scts, &der);
+        if (i2d_SCT_LIST(scts, &der)) {
+            /* Silence unused result warning */
+        }
         OPENSSL_free(der);
 
         SCT_LIST_free(scts);
