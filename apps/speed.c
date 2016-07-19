@@ -249,7 +249,8 @@ static const char *names[ALGOR_NUM] = {
 };
 
 static double results[ALGOR_NUM][SIZE_NUM];
-static int lengths[SIZE_NUM] = {
+
+static const int lengths[SIZE_NUM] = {
     16, 64, 256, 1024, 8 * 1024, 16 * 1024
 };
 
@@ -1223,11 +1224,12 @@ int speed_main(int argc, char **argv)
     const EVP_CIPHER *evp_cipher = NULL;
     double d = 0.0;
     OPTION_CHOICE o;
-    int multiblock = 0, doit[ALGOR_NUM], pr_header = 0;
+    int multiblock = 0, pr_header = 0;
+    int doit[ALGOR_NUM] = { 0 };
 #ifndef OPENSSL_NO_DSA
-    int dsa_doit[DSA_NUM];
+    int dsa_doit[DSA_NUM] = { 0 };
 #endif
-    int rsa_doit[RSA_NUM];
+    int rsa_doit[RSA_NUM] = { 0 };
     int ret = 1, i, k, misalign = 0;
     long count = 0;
 #ifndef NO_FORK
@@ -1297,13 +1299,13 @@ int speed_main(int argc, char **argv)
     };
 #endif
 #ifndef OPENSSL_NO_RSA
-    static unsigned int rsa_bits[RSA_NUM] = {
+    static const unsigned int rsa_bits[RSA_NUM] = {
         512, 1024, 2048, 3072, 4096, 7680, 15360
     };
-    static unsigned char *rsa_data[RSA_NUM] = {
+    static const unsigned char *rsa_data[RSA_NUM] = {
         test512, test1024, test2048, test3072, test4096, test7680, test15360
     };
-    static int rsa_data_length[RSA_NUM] = {
+    static const int rsa_data_length[RSA_NUM] = {
         sizeof(test512), sizeof(test1024),
         sizeof(test2048), sizeof(test3072),
         sizeof(test4096), sizeof(test7680),
@@ -1311,7 +1313,7 @@ int speed_main(int argc, char **argv)
     };
 #endif
 #ifndef OPENSSL_NO_DSA
-    static unsigned int dsa_bits[DSA_NUM] = { 512, 1024, 2048 };
+    static const unsigned int dsa_bits[DSA_NUM] = { 512, 1024, 2048 };
 #endif
 #ifndef OPENSSL_NO_EC
     /*
@@ -1319,7 +1321,7 @@ int speed_main(int argc, char **argv)
      * add tests over more curves, simply add the curve NID and curve name to
      * the following arrays and increase the EC_NUM value accordingly.
      */
-    static unsigned int test_curves[EC_NUM] = {
+    static const unsigned int test_curves[EC_NUM] = {
         /* Prime Curves */
         NID_secp160r1, NID_X9_62_prime192v1, NID_secp224r1,
         NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1,
@@ -1343,7 +1345,7 @@ int speed_main(int argc, char **argv)
         /* Other */
         "X25519"
     };
-    static int test_curves_bits[EC_NUM] = {
+    static const int test_curves_bits[EC_NUM] = {
         160, 192, 224,
         256, 384, 521,
         163, 233, 283,
@@ -1351,38 +1353,10 @@ int speed_main(int argc, char **argv)
         233, 283, 409,
         571, 253 /* X25519 */
     };
-#endif
-#ifndef OPENSSL_NO_EC
-    int ecdsa_doit[EC_NUM];
-    int secret_size_a, secret_size_b;
-    int ecdh_checks = 1;
-    int secret_idx = 0;
-    int ecdh_doit[EC_NUM];
-#endif
 
-    memset(results, 0, sizeof(results));
-
-#ifndef OPENSSL_NO_DES
-    memset(DES_iv, 0, sizeof(DES_iv));
-#endif
-    memset(iv, 0, sizeof(iv));
-
-    for (i = 0; i < ALGOR_NUM; i++)
-        doit[i] = 0;
-    for (i = 0; i < RSA_NUM; i++)
-        rsa_doit[i] = 0;
-#ifndef OPENSSL_NO_DSA
-    for (i = 0; i < DSA_NUM; i++)
-        dsa_doit[i] = 0;
-#endif
-#ifndef OPENSSL_NO_EC
-    for (i = 0; i < EC_NUM; i++)
-        ecdsa_doit[i] = 0;
-    for (i = 0; i < EC_NUM; i++)
-        ecdh_doit[i] = 0;
-#endif
-
-    misalign = 0;
+    int ecdsa_doit[EC_NUM] = { 0 };
+    int ecdh_doit[EC_NUM] = { 0 };
+#endif  /* ndef OPENSSL_NO_EC */
 
     prog = opt_init(argc, argv, speed_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -1666,9 +1640,6 @@ int speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_CAST
     CAST_set_key(&cast_ks, 16, key16);
-#endif
-#ifndef OPENSSL_NO_RSA
-    memset(rsa_c, 0, sizeof(rsa_c));
 #endif
 #ifndef SIGALRM
 # ifndef OPENSSL_NO_DES
@@ -2557,6 +2528,8 @@ int speed_main(int argc, char **argv)
         RAND_seed(rnd_seed, sizeof rnd_seed);
     }
     for (testnum = 0; testnum < EC_NUM; testnum++) {
+        int ecdh_checks = 1;
+
         if (!ecdh_doit[testnum])
             continue;
         for (i = 0; i < loopargs_len; i++) {
@@ -2582,6 +2555,7 @@ int speed_main(int argc, char **argv)
                     ecdh_checks = 0;
                     rsa_count = 1;
                 } else {
+                    int secret_size_a, secret_size_b;
                     /*
                      * If field size is not more than 24 octets, then use SHA-1
                      * hash of result; otherwise, use result (see section 4.8 of
@@ -2610,9 +2584,8 @@ int speed_main(int argc, char **argv)
                     else
                         ecdh_checks = 1;
 
-                    for (secret_idx = 0; (secret_idx < secret_size_a)
-                            && (ecdh_checks == 1); secret_idx++) {
-                        if (loopargs[i].secret_a[secret_idx] != loopargs[i].secret_b[secret_idx])
+                    for (k = 0; k < secret_size_a && ecdh_checks == 1; k++) {
+                        if (loopargs[i].secret_a[k] != loopargs[i].secret_b[k])
                             ecdh_checks = 0;
                     }
 
