@@ -606,9 +606,10 @@ static int EVP_Digest_MD2_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char md2[MD2_DIGEST_LENGTH];
     int count;
+
     for (count = 0; COND(c[D_MD2][testnum]); count++) {
-        if (!EVP_Digest(buf, (unsigned long)lengths[testnum], &(md2[0]), NULL,
-                EVP_md2(), NULL))
+        if (!EVP_Digest(buf, (size_t)lengths[testnum], md2, NULL, EVP_md2(),
+                NULL))
             return -1;
     }
     return count;
@@ -622,9 +623,10 @@ static int EVP_Digest_MDC2_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char mdc2[MDC2_DIGEST_LENGTH];
     int count;
+
     for (count = 0; COND(c[D_MDC2][testnum]); count++) {
-        if (!EVP_Digest(buf, (unsigned long)lengths[testnum], &(mdc2[0]), NULL,
-                EVP_mdc2(), NULL))
+        if (!EVP_Digest(buf, (size_t)lengths[testnum], mdc2, NULL, EVP_mdc2(),
+                NULL))
             return -1;
     }
     return count;
@@ -638,9 +640,10 @@ static int EVP_Digest_MD4_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char md4[MD4_DIGEST_LENGTH];
     int count;
+
     for (count = 0; COND(c[D_MD4][testnum]); count++) {
-        if (!EVP_Digest(&(buf[0]), (unsigned long)lengths[testnum], &(md4[0]),
-                NULL, EVP_md4(), NULL))
+        if (!EVP_Digest(buf, (size_t)lengths[testnum], md4, NULL, EVP_md4(),
+                NULL))
             return -1;
     }
     return count;
@@ -666,10 +669,11 @@ static int HMAC_loop(void *args)
     HMAC_CTX *hctx = tempargs->hctx;
     unsigned char hmac[MD5_DIGEST_LENGTH];
     int count;
+
     for (count = 0; COND(c[D_HMAC][testnum]); count++) {
         HMAC_Init_ex(hctx, NULL, 0, NULL, NULL);
         HMAC_Update(hctx, buf, lengths[testnum]);
-        HMAC_Final(hctx, &(hmac[0]), NULL);
+        HMAC_Final(hctx, hmac, NULL);
     }
     return count;
 }
@@ -729,7 +733,7 @@ static int EVP_Digest_RMD160_loop(void *args)
     unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
     int count;
     for (count = 0; COND(c[D_RMD160][testnum]); count++) {
-        if (!EVP_Digest(buf, (unsigned long)lengths[testnum], &(rmd160[0]),
+        if (!EVP_Digest(buf, (size_t)lengths[testnum], &(rmd160[0]),
                 NULL, EVP_ripemd160(), NULL))
             return -1;
     }
@@ -745,7 +749,7 @@ static int RC4_loop(void *args)
     unsigned char *buf = tempargs->buf;
     int count;
     for (count = 0; COND(c[D_RC4][testnum]); count++)
-        RC4(&rc4_ks, (unsigned int)lengths[testnum], buf, buf);
+        RC4(&rc4_ks, (size_t)lengths[testnum], buf, buf);
     return count;
 }
 #endif
@@ -790,7 +794,7 @@ static int AES_cbc_128_encrypt_loop(void *args)
     int count;
     for (count = 0; COND(c[D_CBC_128_AES][testnum]); count++)
         AES_cbc_encrypt(buf, buf,
-                (unsigned long)lengths[testnum], &aes_ks1,
+                (size_t)lengths[testnum], &aes_ks1,
                 iv, AES_ENCRYPT);
     return count;
 }
@@ -802,7 +806,7 @@ static int AES_cbc_192_encrypt_loop(void *args)
     int count;
     for (count = 0; COND(c[D_CBC_192_AES][testnum]); count++)
         AES_cbc_encrypt(buf, buf,
-                (unsigned long)lengths[testnum], &aes_ks2,
+                (size_t)lengths[testnum], &aes_ks2,
                 iv, AES_ENCRYPT);
     return count;
 }
@@ -814,7 +818,7 @@ static int AES_cbc_256_encrypt_loop(void *args)
     int count;
     for (count = 0; COND(c[D_CBC_256_AES][testnum]); count++)
         AES_cbc_encrypt(buf, buf,
-                (unsigned long)lengths[testnum], &aes_ks3,
+                (size_t)lengths[testnum], &aes_ks3,
                 iv, AES_ENCRYPT);
     return count;
 }
@@ -827,7 +831,7 @@ static int AES_ige_128_encrypt_loop(void *args)
     int count;
     for (count = 0; COND(c[D_IGE_128_AES][testnum]); count++)
         AES_ige_encrypt(buf, buf2,
-                (unsigned long)lengths[testnum], &aes_ks1,
+                (size_t)lengths[testnum], &aes_ks1,
                 iv, AES_ENCRYPT);
     return count;
 }
@@ -840,7 +844,7 @@ static int AES_ige_192_encrypt_loop(void *args)
     int count;
     for (count = 0; COND(c[D_IGE_192_AES][testnum]); count++)
         AES_ige_encrypt(buf, buf2,
-                (unsigned long)lengths[testnum], &aes_ks2,
+                (size_t)lengths[testnum], &aes_ks2,
                 iv, AES_ENCRYPT);
     return count;
 }
@@ -853,7 +857,7 @@ static int AES_ige_256_encrypt_loop(void *args)
     int count;
     for (count = 0; COND(c[D_IGE_256_AES][testnum]); count++)
         AES_ige_encrypt(buf, buf2,
-                (unsigned long)lengths[testnum], &aes_ks3,
+                (size_t)lengths[testnum], &aes_ks3,
                 iv, AES_ENCRYPT);
     return count;
 }
@@ -1922,6 +1926,9 @@ int speed_main(int argc, char **argv)
 
 #ifndef OPENSSL_NO_MD5
     if (doit[D_HMAC]) {
+        char hmac_key[] = "This is a key...";
+        int len = strlen(hmac_key);
+
         for (i = 0; i < loopargs_len; i++) {
             loopargs[i].hctx = HMAC_CTX_new();
             if (loopargs[i].hctx == NULL) {
@@ -1929,8 +1936,7 @@ int speed_main(int argc, char **argv)
                 exit(1);
             }
 
-            HMAC_Init_ex(loopargs[i].hctx, (unsigned char *)"This is a key...",
-                    16, EVP_md5(), NULL);
+            HMAC_Init_ex(loopargs[i].hctx, hmac_key, len, EVP_md5(), NULL);
         }
         for (testnum = 0; testnum < SIZE_NUM; testnum++) {
             print_message(names[D_HMAC], c[D_HMAC][testnum], lengths[testnum]);
@@ -2118,7 +2124,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_128_CML][testnum]); count++)
                 Camellia_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                     (unsigned long)lengths[testnum], &camellia_ks1,
+                                     (size_t)lengths[testnum], &camellia_ks1,
                                      iv, CAMELLIA_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_128_CML, testnum, count, d);
@@ -2135,7 +2141,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_192_CML][testnum]); count++)
                 Camellia_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                     (unsigned long)lengths[testnum], &camellia_ks2,
+                                     (size_t)lengths[testnum], &camellia_ks2,
                                      iv, CAMELLIA_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_192_CML, testnum, count, d);
@@ -2152,7 +2158,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_256_CML][testnum]); count++)
                 Camellia_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                     (unsigned long)lengths[testnum], &camellia_ks3,
+                                     (size_t)lengths[testnum], &camellia_ks3,
                                      iv, CAMELLIA_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_256_CML, testnum, count, d);
@@ -2170,7 +2176,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_IDEA][testnum]); count++)
                 IDEA_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                 (unsigned long)lengths[testnum], &idea_ks,
+                                 (size_t)lengths[testnum], &idea_ks,
                                  iv, IDEA_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_IDEA, testnum, count, d);
@@ -2188,7 +2194,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_SEED][testnum]); count++)
                 SEED_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                 (unsigned long)lengths[testnum], &seed_ks, iv, 1);
+                                 (size_t)lengths[testnum], &seed_ks, iv, 1);
             d = Time_F(STOP);
             print_result(D_CBC_SEED, testnum, count, d);
         }
@@ -2205,7 +2211,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_RC2][testnum]); count++)
                 RC2_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                (unsigned long)lengths[testnum], &rc2_ks,
+                                (size_t)lengths[testnum], &rc2_ks,
                                 iv, RC2_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_RC2, testnum, count, d);
@@ -2223,7 +2229,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_RC5][testnum]); count++)
                 RC5_32_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                   (unsigned long)lengths[testnum], &rc5_ks,
+                                   (size_t)lengths[testnum], &rc5_ks,
                                    iv, RC5_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_RC5, testnum, count, d);
@@ -2241,7 +2247,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_BF][testnum]); count++)
                 BF_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                               (unsigned long)lengths[testnum], &bf_ks,
+                               (size_t)lengths[testnum], &bf_ks,
                                iv, BF_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_BF, testnum, count, d);
@@ -2259,7 +2265,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_CAST][testnum]); count++)
                 CAST_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                 (unsigned long)lengths[testnum], &cast_ks,
+                                 (size_t)lengths[testnum], &cast_ks,
                                  iv, CAST_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_CAST, testnum, count, d);
