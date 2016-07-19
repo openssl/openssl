@@ -477,19 +477,28 @@ uninstall_engines:
 install_runtime:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/bin
+	@ : {- output_off() if windowsdll(); "" -}
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
+	@ : {- output_on() if windowsdll(); "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/misc
 	@echo "*** Installing runtime files"
-	@ : {- output_off() unless windowsdll(); "" -}
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
+		: {- output_off() unless windowsdll(); "" -}; \
 		echo "install $$s -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		cp $$s $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
 		chmod 644 $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
+		: {- output_on() unless windowsdll(); "" -}{- output_off() if windowsdll(); "" -}; \
+		echo "install $$s -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
+		cp $$s $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new; \
+		chmod 755 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new; \
+		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new \
+		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
+		: {- output_on() if windowsdll(); "" -}; \
 	done
-	@ : {- output_on() unless windowsdll(); "" -}
 	@set -e; for x in dummy $(INSTALL_PROGRAMS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
