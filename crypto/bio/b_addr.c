@@ -15,6 +15,7 @@
 #ifndef OPENSSL_NO_SOCK
 #include <openssl/err.h>
 #include <openssl/buffer.h>
+#include <internal/thread_once.h>
 #include <ctype.h>
 
 CRYPTO_RWLOCK *bio_lookup_lock;
@@ -601,9 +602,10 @@ static int addrinfo_wrap(int family, int socktype,
     return 1;
 }
 
-static void do_bio_lookup_init(void)
+DEFINE_RUN_ONCE_STATIC(do_bio_lookup_init)
 {
     bio_lookup_lock = CRYPTO_THREAD_lock_new();
+    return (bio_lookup_lock != NULL);
 }
 
 /*-
@@ -727,7 +729,11 @@ int BIO_lookup(const char *host, const char *service,
         struct servent se_fallback = { NULL, NULL, 0, NULL };
 #endif
 
-        CRYPTO_THREAD_run_once(&bio_lookup_init, do_bio_lookup_init);
+        if (!RUN_ONCE(&bio_lookup_init, do_bio_lookup_init)) {
+            BIOerr(BIO_F_BIO_LOOKUP, ERR_R_MALLOC_FAILURE);
+            ret = 0;
+            goto err;
+        }
 
         CRYPTO_THREAD_write_lock(bio_lookup_lock);
         he_fallback_address = INADDR_ANY;
