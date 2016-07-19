@@ -386,7 +386,7 @@ install_dev : check_INSTALLTOP
                 @{$unified_info{install}->{libraries}}) -}
         @ {- output_off() if $disabled{shared}; "" -} !
         {- join("\n        ",
-                map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
+                map { "COPY/PROT=W:R $_.EXE ossl_installroot:[LIB.'arch']" }
                 @install_shlibs) -}
         @ {- output_on() if $disabled{shared}; "" -} !
 
