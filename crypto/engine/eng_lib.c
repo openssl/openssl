@@ -16,7 +16,6 @@ CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 /* The "new"/"free" stuff first */
 
-int engine_lock_init_success = 0;
 DEFINE_RUN_ONCE(do_engine_lock_init)
 {
     global_engine_lock = CRYPTO_THREAD_lock_new();

@@ -318,11 +318,12 @@ void ERR_load_strings(int lib, ERR_STRING_DATA *str)
     err_load_strings(lib, str);
 }
 
-void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
+int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 {
     LHASH_OF(ERR_STRING_DATA) *hash;
 
-    RUN_ONCE(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+        return 0;
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     hash = get_hash(0, 0);
@@ -334,6 +335,8 @@ void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
         }
     }
     CRYPTO_THREAD_unlock(err_string_lock);
+
+    return 1;
 }
 
 void err_free_strings_int(void)
