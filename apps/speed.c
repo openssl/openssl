@@ -1042,7 +1042,8 @@ static void *(*kdf) (const void *in, size_t inlen, void *out,
         size_t *xoutlen);
 
 /* ******************************************************************** */
-static long ecdh_c[EC_NUM][2];
+static long ecdh_c[EC_NUM][1];
+
 static int ECDH_compute_key_loop(void *args)
 {
     loopargs_t *tempargs = (loopargs_t *)args;
@@ -1772,7 +1773,7 @@ int speed_main(int argc, char **argv)
         if ((dsa_doit[i] <= 1) && (dsa_c[i][0] == 0))
             dsa_doit[i] = 0;
         else {
-            if (dsa_c[i] == 0) {
+            if (dsa_c[i] == 0) {    /* Always false */
                 dsa_c[i][0] = 1;
                 dsa_c[i][1] = 1;
             }
@@ -1789,7 +1790,7 @@ int speed_main(int argc, char **argv)
         if ((ecdsa_doit[i] <= 1) && (ecdsa_c[i][0] == 0))
             ecdsa_doit[i] = 0;
         else {
-            if (ecdsa_c[i] == 0) {
+            if (ecdsa_c[i] == 0) {    /* Always false */
                 ecdsa_c[i][0] = 1;
                 ecdsa_c[i][1] = 1;
             }
@@ -1803,7 +1804,7 @@ int speed_main(int argc, char **argv)
         if ((ecdsa_doit[i] <= 1) && (ecdsa_c[i][0] == 0))
             ecdsa_doit[i] = 0;
         else {
-            if (ecdsa_c[i] == 0) {
+            if (ecdsa_c[i] == 0) {    /* Always false */
                 ecdsa_c[i][0] = 1;
                 ecdsa_c[i][1] = 1;
             }
@@ -1817,7 +1818,7 @@ int speed_main(int argc, char **argv)
         if ((ecdsa_doit[i] <= 1) && (ecdsa_c[i][0] == 0))
             ecdsa_doit[i] = 0;
         else {
-            if (ecdsa_c[i] == 0) {
+            if (ecdsa_c[i] == 0) {    /* Always false */
                 ecdsa_c[i][0] = 1;
                 ecdsa_c[i][1] = 1;
             }
@@ -1825,44 +1826,35 @@ int speed_main(int argc, char **argv)
     }
 
     ecdh_c[R_EC_P160][0] = count / 1000;
-    ecdh_c[R_EC_P160][1] = count / 1000;
     for (i = R_EC_P192; i <= R_EC_P521; i++) {
         ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-        ecdh_c[i][1] = ecdh_c[i - 1][1] / 2;
         if ((ecdh_doit[i] <= 1) && (ecdh_c[i][0] == 0))
             ecdh_doit[i] = 0;
         else {
-            if (ecdh_c[i] == 0) {
+            if (ecdh_c[i] == 0) {   /* always false */
                 ecdh_c[i][0] = 1;
-                ecdh_c[i][1] = 1;
             }
         }
     }
     ecdh_c[R_EC_K163][0] = count / 1000;
-    ecdh_c[R_EC_K163][1] = count / 1000;
     for (i = R_EC_K233; i <= R_EC_K571; i++) {
         ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-        ecdh_c[i][1] = ecdh_c[i - 1][1] / 2;
         if ((ecdh_doit[i] <= 1) && (ecdh_c[i][0] == 0))
             ecdh_doit[i] = 0;
         else {
-            if (ecdh_c[i] == 0) {
+            if (ecdh_c[i] == 0) {   /* always false */
                 ecdh_c[i][0] = 1;
-                ecdh_c[i][1] = 1;
             }
         }
     }
     ecdh_c[R_EC_B163][0] = count / 1000;
-    ecdh_c[R_EC_B163][1] = count / 1000;
     for (i = R_EC_B233; i <= R_EC_B571; i++) {
         ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-        ecdh_c[i][1] = ecdh_c[i - 1][1] / 2;
         if ((ecdh_doit[i] <= 1) && (ecdh_c[i][0] == 0))
             ecdh_doit[i] = 0;
         else {
-            if (ecdh_c[i] == 0) {
+            if (ecdh_c[i] == 0) { /* always false */
                 ecdh_c[i][0] = 1;
-                ecdh_c[i][1] = 1;
             }
         }
     }
