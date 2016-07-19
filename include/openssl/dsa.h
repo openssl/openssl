@@ -256,6 +256,7 @@ void ERR_load_DSA_strings(void);
 # define DSA_F_DSA_PUB_ENCODE                             118
 # define DSA_F_DSA_SIGN                                   106
 # define DSA_F_DSA_SIGN_SETUP                             107
+# define DSA_F_DSA_SIG_NEW                                102
 # define DSA_F_OLD_DSA_PRIV_DECODE                        122
 # define DSA_F_PKEY_DSA_CTRL                              120
 # define DSA_F_PKEY_DSA_KEYGEN                            121
