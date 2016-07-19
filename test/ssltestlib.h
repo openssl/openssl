@@ -33,4 +33,8 @@ void bio_s_mempacket_test_free(void);
 int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
                           int type);
 
+typedef struct mempacket_st MEMPACKET;
+
+DEFINE_STACK_OF(MEMPACKET)
+
 #endif /* HEADER_SSLTESTLIB_H */

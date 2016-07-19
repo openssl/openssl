@@ -238,8 +238,6 @@ typedef struct mempacket_st {
     unsigned int type;
 } MEMPACKET;
 
-DEFINE_STACK_OF(MEMPACKET)
-
 static void mempacket_free(MEMPACKET *pkt)
 {
     if (pkt->data != NULL)
