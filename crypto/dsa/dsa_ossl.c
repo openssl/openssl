@@ -69,6 +69,10 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     ret = DSA_SIG_new();
     if (ret == NULL)
         goto err;
+    ret->r = BN_new();
+    ret->s = BN_new();
+    if (ret->r == NULL || ret->s == NULL)
+        goto err;
 
     ctx = BN_CTX_new();
     if (ctx == NULL)

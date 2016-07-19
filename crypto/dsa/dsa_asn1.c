@@ -19,7 +19,24 @@ ASN1_SEQUENCE(DSA_SIG) = {
         ASN1_SIMPLE(DSA_SIG, s, CBIGNUM)
 } static_ASN1_SEQUENCE_END(DSA_SIG)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(DSA_SIG)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA_SIG, DSA_SIG, DSA_SIG)
+
+DSA_SIG *DSA_SIG_new(void)
+{
+    DSA_SIG *sig = OPENSSL_zalloc(sizeof(*sig));
+    if (sig == NULL)
+        DSAerr(DSA_F_DSA_SIG_NEW, ERR_R_MALLOC_FAILURE);
+    return sig;
+}
+
+void DSA_SIG_free(DSA_SIG *sig)
+{
+    if (sig == NULL)
+        return;
+    BN_clear_free(sig->r);
+    BN_clear_free(sig->s);
+    OPENSSL_free(sig);
+}
 
 void DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
 {

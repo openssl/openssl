@@ -37,6 +37,7 @@ static ERR_STRING_DATA DSA_str_functs[] = {
     {ERR_FUNC(DSA_F_DSA_PUB_ENCODE), "dsa_pub_encode"},
     {ERR_FUNC(DSA_F_DSA_SIGN), "DSA_sign"},
     {ERR_FUNC(DSA_F_DSA_SIGN_SETUP), "DSA_sign_setup"},
+    {ERR_FUNC(DSA_F_DSA_SIG_NEW), "DSA_SIG_new"},
     {ERR_FUNC(DSA_F_OLD_DSA_PRIV_DECODE), "old_dsa_priv_decode"},
     {ERR_FUNC(DSA_F_PKEY_DSA_CTRL), "pkey_dsa_ctrl"},
     {ERR_FUNC(DSA_F_PKEY_DSA_KEYGEN), "pkey_dsa_keygen"},

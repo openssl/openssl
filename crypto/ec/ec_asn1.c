@@ -1170,7 +1170,24 @@ ASN1_SEQUENCE(ECDSA_SIG) = {
 
 DECLARE_ASN1_FUNCTIONS_const(ECDSA_SIG)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSA_SIG, ECDSA_SIG)
-IMPLEMENT_ASN1_FUNCTIONS_const(ECDSA_SIG)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(ECDSA_SIG, ECDSA_SIG, ECDSA_SIG)
+
+ECDSA_SIG *ECDSA_SIG_new(void)
+{
+    ECDSA_SIG *sig = OPENSSL_zalloc(sizeof(*sig));
+    if (sig == NULL)
+        ECerr(EC_F_ECDSA_SIG_NEW, ERR_R_MALLOC_FAILURE);
+    return sig;
+}
+
+void ECDSA_SIG_free(ECDSA_SIG *sig)
+{
+    if (sig == NULL)
+        return;
+    BN_clear_free(sig->r);
+    BN_clear_free(sig->s);
+    OPENSSL_free(sig);
+}
 
 void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
 {
