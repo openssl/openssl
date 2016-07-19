@@ -76,6 +76,7 @@ before_script:
 
 script:
     - cd _build;
+    - make update
     - make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
