@@ -27,10 +27,8 @@ ENGINE *ENGINE_new(void)
 {
     ENGINE *ret;
 
-    RUN_ONCE(&engine_lock_init, do_engine_lock_init);
-
-    ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL) {
+    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)
+        || (ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

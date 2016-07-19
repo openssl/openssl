@@ -144,7 +144,8 @@ static int rand_add(const void *buf, int num, double add)
     if (m == NULL)
         goto err;
 
-    RUN_ONCE(&rand_lock_init, do_rand_lock_init);
+    if (!RUN_ONCE(&rand_lock_init, do_rand_lock_init))
+        goto err;
 
     /* check if we already have the lock */
     if (crypto_lock_rand) {
@@ -342,7 +343,9 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
      * global 'md'.
      */
 
-    RUN_ONCE(&rand_lock_init, do_rand_lock_init);
+    if (!RUN_ONCE(&rand_lock_init, do_rand_lock_init))
+        goto err_mem;
+
     CRYPTO_THREAD_write_lock(rand_lock);
     /*
      * We could end up in an async engine while holding this lock so ensure
@@ -537,7 +540,9 @@ static int rand_status(void)
     int ret;
     int do_not_lock;
 
-    RUN_ONCE(&rand_lock_init, do_rand_lock_init);
+    if (!RUN_ONCE(&rand_lock_init, do_rand_lock_init))
+        return 0;
+
     cur = CRYPTO_THREAD_get_current_id();
     /*
      * check if we already have the lock (could happen if a RAND_poll()

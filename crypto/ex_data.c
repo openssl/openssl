@@ -55,7 +55,10 @@ static EX_CALLBACKS *get_and_lock(int class_index)
         return NULL;
     }
 
-    RUN_ONCE(&ex_data_init, do_ex_data_init);
+    if (!RUN_ONCE(&ex_data_init, do_ex_data_init)) {
+        CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
 
     if (ex_data_lock == NULL) {
         /*

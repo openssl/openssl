@@ -584,7 +584,9 @@ const char *ERR_lib_error_string(unsigned long e)
     ERR_STRING_DATA d, *p;
     unsigned long l;
 
-    RUN_ONCE(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+        return NULL;
+    }
 
     l = ERR_GET_LIB(e);
     d.error = ERR_PACK(l, 0, 0);
@@ -597,7 +599,9 @@ const char *ERR_func_error_string(unsigned long e)
     ERR_STRING_DATA d, *p;
     unsigned long l, f;
 
-    RUN_ONCE(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+        return NULL;
+    }
 
     l = ERR_GET_LIB(e);
     f = ERR_GET_FUNC(e);
@@ -611,7 +615,9 @@ const char *ERR_reason_error_string(unsigned long e)
     ERR_STRING_DATA d, *p = NULL;
     unsigned long l, r;
 
-    RUN_ONCE(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+        return NULL;
+    }
 
     l = ERR_GET_LIB(e);
     r = ERR_GET_REASON(e);
@@ -682,7 +688,9 @@ int ERR_get_next_error_library(void)
 {
     int ret;
 
-    RUN_ONCE(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+        return 0;
+    }
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     ret = int_err_library_number++;

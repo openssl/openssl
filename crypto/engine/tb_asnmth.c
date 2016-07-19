@@ -189,7 +189,11 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_pkey_asn1_find_str(ENGINE **pe,
     fstr.str = str;
     fstr.len = len;
 
-    RUN_ONCE(&engine_lock_init, do_engine_lock_init);
+    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+        ENGINEerr(ENGINE_F_ENGINE_PKEY_ASN1_FIND_STR, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
     CRYPTO_THREAD_write_lock(global_engine_lock);
     engine_table_doall(pkey_asn1_meth_table, look_str_cb, &fstr);
     /* If found obtain a structural reference to engine */
