@@ -23,7 +23,7 @@ static char *privkey = NULL;
 
 #define DUMMY_CERT_STATUS_LEN  12
 
-unsigned char certstatus[] = {
+static unsigned char certstatus[] = {
     SSL3_RT_HANDSHAKE, /* Content type */
     0xfe, 0xfd, /* Record version */
     0, 1, /* Epoch */
