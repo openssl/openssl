@@ -3882,7 +3882,10 @@ int ssl3_renegotiate_check(SSL *s)
  */
 long ssl_get_algorithm2(SSL *s)
 {
-    long alg2 = s->s3->tmp.new_cipher->algorithm2;
+    long alg2;
+    if (s->s3 == NULL || s->s3->tmp.new_cipher == NULL)
+        return -1;
+    alg2 = s->s3->tmp.new_cipher->algorithm2;
     if (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SHA256_PRF) {
         if (alg2 == (SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF))
             return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
