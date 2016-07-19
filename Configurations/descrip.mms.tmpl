@@ -379,12 +379,13 @@ install_dev : check_INSTALLTOP
         @ ! Install header files
         - CREATE/DIR ossl_installroot:[include.openssl]
         COPY/PROT=W:R openssl:*.h ossl_installroot:[include.openssl]
-        @ ! Install libraries
+        @ ! Install static (development) libraries
         - CREATE/DIR ossl_installroot:[LIB.'arch']
         {- join("\n        ",
                 map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
                 @{$unified_info{install}->{libraries}}) -}
         @ {- output_off() if $disabled{shared}; "" -} !
+        @ ! Install shared (runtime) libraries
         {- join("\n        ",
                 map { "COPY/PROT=W:R $_.EXE ossl_installroot:[LIB.'arch']" }
                 @install_shlibs) -}
@@ -393,6 +394,12 @@ install_dev : check_INSTALLTOP
 install_runtime : check_INSTALLTOP
         @ ! {- output_off() if $disabled{apps}; "" -}
         @ WRITE SYS$OUTPUT "*** Installing runtime files"
+        @ {- output_off() if $disabled{shared}; "" -} !
+        @ ! Install shared (runtime) libraries
+        {- join("\n        ",
+                map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
+                @install_shlibs) -}
+        @ {- output_on() if $disabled{shared}; "" -} !
         @ ! Install the main program
         - CREATE/DIR ossl_installroot:[EXE.'arch']
         COPY/PROT=W:RE [.APPS]openssl.EXE -
