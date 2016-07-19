@@ -268,7 +268,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
  err:
     /* No valid transition found */
     ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_UNEXPECTED_MESSAGE);
-    SSLerr(SSL_F_READ_STATE_MACHINE, SSL_R_UNEXPECTED_MESSAGE);
+    SSLerr(SSL_F_OSSL_STATEM_CLIENT_READ_TRANSITION, SSL_R_UNEXPECTED_MESSAGE);
     return 0;
 }
 

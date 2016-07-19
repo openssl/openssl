@@ -113,7 +113,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
                          */
                         ssl3_send_alert(s, SSL3_AL_FATAL,
                                         SSL3_AD_HANDSHAKE_FAILURE);
-                        SSLerr(SSL_F_READ_STATE_MACHINE,
+                        SSLerr(SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION,
                                SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
                         return 0;
                     }
@@ -214,7 +214,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
 
     /* No valid transition found */
     ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_UNEXPECTED_MESSAGE);
-    SSLerr(SSL_F_READ_STATE_MACHINE, SSL_R_UNEXPECTED_MESSAGE);
+    SSLerr(SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION, SSL_R_UNEXPECTED_MESSAGE);
     return 0;
 }
 
