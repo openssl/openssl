@@ -342,6 +342,7 @@ int engine_main(int argc, char **argv)
         }
     }
 
+    ret = 0;
     for (i = 0; i < sk_OPENSSL_CSTRING_num(engines); i++) {
         const char *id = sk_OPENSSL_CSTRING_value(engines, i);
         if ((e = ENGINE_by_id(id)) != NULL) {
@@ -424,11 +425,14 @@ int engine_main(int argc, char **argv)
             if ((verbose > 0) && !util_verbose(e, verbose, out, indent))
                 goto end;
             ENGINE_free(e);
-        } else
+        } else {
             ERR_print_errors(bio_err);
+            /* because exit codes above 127 have special meaning on Unix */
+            if (++ret > 127)
+                ret = 127;
+        }
     }
 
-    ret = 0;
  end:
 
     ERR_print_errors(bio_err);
