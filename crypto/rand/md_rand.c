@@ -27,6 +27,8 @@
 
 #include <openssl/err.h>
 
+#include <internal/thread_once.h>
+
 #ifdef OPENSSL_FIPS
 # include <openssl/fips.h>
 #endif
@@ -85,10 +87,11 @@ static RAND_METHOD rand_meth = {
     rand_status
 };
 
-static void do_rand_lock_init(void)
+DEFINE_RUN_ONCE_STATIC(do_rand_lock_init)
 {
     rand_lock = CRYPTO_THREAD_lock_new();
     rand_tmp_lock = CRYPTO_THREAD_lock_new();
+    return rand_lock != NULL && rand_tmp_lock != NULL;
 }
 
 RAND_METHOD *RAND_OpenSSL(void)
@@ -141,7 +144,7 @@ static int rand_add(const void *buf, int num, double add)
     if (m == NULL)
         goto err;
 
-    CRYPTO_THREAD_run_once(&rand_lock_init, do_rand_lock_init);
+    RUN_ONCE(&rand_lock_init, do_rand_lock_init);
 
     /* check if we already have the lock */
     if (crypto_lock_rand) {
@@ -339,7 +342,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
      * global 'md'.
      */
 
-    CRYPTO_THREAD_run_once(&rand_lock_init, do_rand_lock_init);
+    RUN_ONCE(&rand_lock_init, do_rand_lock_init);
     CRYPTO_THREAD_write_lock(rand_lock);
     /*
      * We could end up in an async engine while holding this lock so ensure
@@ -534,7 +537,7 @@ static int rand_status(void)
     int ret;
     int do_not_lock;
 
-    CRYPTO_THREAD_run_once(&rand_lock_init, do_rand_lock_init);
+    RUN_ONCE(&rand_lock_init, do_rand_lock_init);
     cur = CRYPTO_THREAD_get_current_id();
     /*
      * check if we already have the lock (could happen if a RAND_poll()

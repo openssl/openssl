@@ -18,6 +18,7 @@
 
 # include "internal/cryptlib.h"
 # include <internal/engine.h>
+# include <internal/thread_once.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -123,7 +124,7 @@ void engine_pkey_asn1_meths_free(ENGINE *e);
 
 /* Once initialisation function */
 extern CRYPTO_ONCE engine_lock_init;
-void do_engine_lock_init(void);
+DECLARE_RUN_ONCE(do_engine_lock_init)
 
 /*
  * This is a structure for storing implementations of various crypto

@@ -29,6 +29,7 @@
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include "ssl_locl.h"
+#include "internal/thread_once.h"
 
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx, int op,
                                          int bits, int nid, void *other,
@@ -37,17 +38,18 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx, int o
 static CRYPTO_ONCE ssl_x509_store_ctx_once = CRYPTO_ONCE_STATIC_INIT;
 static volatile int ssl_x509_store_ctx_idx = -1;
 
-static void ssl_x509_store_ctx_init(void)
+DEFINE_RUN_ONCE_STATIC(ssl_x509_store_ctx_init)
 {
     ssl_x509_store_ctx_idx = X509_STORE_CTX_get_ex_new_index(0,
                                                 "SSL for verify callback",
                                                 NULL, NULL, NULL);
+    return ssl_x509_store_ctx_idx >= 0;
 }
 
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 {
 
-    CRYPTO_THREAD_run_once(&ssl_x509_store_ctx_once, ssl_x509_store_ctx_init);
+    RUN_ONCE(&ssl_x509_store_ctx_once, ssl_x509_store_ctx_init);
     return ssl_x509_store_ctx_idx;
 }
 

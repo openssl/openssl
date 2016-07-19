@@ -18,6 +18,7 @@
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
+#include <internal/thread_once.h>
 
 static void err_load_strings(int lib, ERR_STRING_DATA *str);
 
@@ -270,9 +271,10 @@ static void ERR_STATE_free(ERR_STATE *s)
     OPENSSL_free(s);
 }
 
-static void do_err_strings_init(void)
+DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
     err_string_lock = CRYPTO_THREAD_lock_new();
+    return err_string_lock != NULL;
 }
 
 void err_cleanup(void)
@@ -284,7 +286,7 @@ void err_cleanup(void)
 void ERR_load_ERR_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    RUN_ONCE(&err_string_init, do_err_strings_init);
 
     err_load_strings(0, ERR_str_libraries);
     err_load_strings(0, ERR_str_reasons);
@@ -320,7 +322,7 @@ void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 {
     LHASH_OF(ERR_STRING_DATA) *hash;
 
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    RUN_ONCE(&err_string_init, do_err_strings_init);
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     hash = get_hash(0, 0);
@@ -336,7 +338,7 @@ void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 
 void err_free_strings_int(void)
 {
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    RUN_ONCE(&err_string_init, do_err_strings_init);
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     lh_ERR_STRING_DATA_free(int_error_hash);
@@ -582,7 +584,7 @@ const char *ERR_lib_error_string(unsigned long e)
     ERR_STRING_DATA d, *p;
     unsigned long l;
 
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    RUN_ONCE(&err_string_init, do_err_strings_init);
 
     l = ERR_GET_LIB(e);
     d.error = ERR_PACK(l, 0, 0);
@@ -595,7 +597,7 @@ const char *ERR_func_error_string(unsigned long e)
     ERR_STRING_DATA d, *p;
     unsigned long l, f;
 
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    RUN_ONCE(&err_string_init, do_err_strings_init);
 
     l = ERR_GET_LIB(e);
     f = ERR_GET_FUNC(e);
@@ -609,7 +611,7 @@ const char *ERR_reason_error_string(unsigned long e)
     ERR_STRING_DATA d, *p = NULL;
     unsigned long l, r;
 
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    RUN_ONCE(&err_string_init, do_err_strings_init);
 
     l = ERR_GET_LIB(e);
     r = ERR_GET_REASON(e);
@@ -644,16 +646,17 @@ void ERR_remove_state(unsigned long pid)
 }
 #endif
 
-static void err_do_init(void)
+DEFINE_RUN_ONCE_STATIC(err_do_init)
 {
-    CRYPTO_THREAD_init_local(&err_thread_local, NULL);
+    return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
 }
 
 ERR_STATE *ERR_get_state(void)
 {
     ERR_STATE *state = NULL;
 
-    CRYPTO_THREAD_run_once(&err_init, err_do_init);
+    if (!RUN_ONCE(&err_init, err_do_init))
+        return NULL;
 
     state = CRYPTO_THREAD_get_local(&err_thread_local);
 
@@ -679,7 +682,7 @@ int ERR_get_next_error_library(void)
 {
     int ret;
 
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    RUN_ONCE(&err_string_init, do_err_strings_init);
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     ret = int_err_library_number++;

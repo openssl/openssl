@@ -136,7 +136,7 @@ ENGINE *ENGINE_get_first(void)
 {
     ENGINE *ret;
 
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    RUN_ONCE(&engine_lock_init, do_engine_lock_init);
     CRYPTO_THREAD_write_lock(global_engine_lock);
     ret = engine_list_head;
     if (ret) {
@@ -151,7 +151,7 @@ ENGINE *ENGINE_get_last(void)
 {
     ENGINE *ret;
 
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    RUN_ONCE(&engine_lock_init, do_engine_lock_init);
     CRYPTO_THREAD_write_lock(global_engine_lock);
     ret = engine_list_tail;
     if (ret) {
@@ -279,7 +279,7 @@ ENGINE *ENGINE_by_id(const char *id)
         ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    RUN_ONCE(&engine_lock_init, do_engine_lock_init);
     CRYPTO_THREAD_write_lock(global_engine_lock);
     iterator = engine_list_head;
     while (iterator && (strcmp(id, iterator->id) != 0))

@@ -80,7 +80,7 @@ int ENGINE_init(ENGINE *e)
         ENGINEerr(ENGINE_F_ENGINE_INIT, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    RUN_ONCE(&engine_lock_init, do_engine_lock_init);
     CRYPTO_THREAD_write_lock(global_engine_lock);
     ret = engine_unlocked_init(e);
     CRYPTO_THREAD_unlock(global_engine_lock);

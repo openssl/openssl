@@ -16,16 +16,18 @@ CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 /* The "new"/"free" stuff first */
 
-void do_engine_lock_init(void)
+int engine_lock_init_success = 0;
+DEFINE_RUN_ONCE(do_engine_lock_init)
 {
     global_engine_lock = CRYPTO_THREAD_lock_new();
+    return global_engine_lock != NULL;
 }
 
 ENGINE *ENGINE_new(void)
 {
     ENGINE *ret;
 
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    RUN_ONCE(&engine_lock_init, do_engine_lock_init);
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
