@@ -1736,18 +1736,24 @@ int s_client_main(int argc, char **argv)
     }
 #ifndef OPENSSL_NO_DTLS
     if (socket_type == SOCK_DGRAM) {
-        struct sockaddr peer;
-        int peerlen = sizeof peer;
+        union BIO_sock_info_u peer_info;
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);
-        if (getsockname(s, &peer, (void *)&peerlen) < 0) {
+        if ((peer_info.addr = BIO_ADDR_new()) == NULL) {
+            BIO_printf(bio_err, "memory allocation failure\n");
+            BIO_closesocket(s);
+        }
+        if (!BIO_sock_info(s, BIO_SOCK_INFO_ADDRESS, &peer_info)) {
             BIO_printf(bio_err, "getsockname:errno=%d\n",
                        get_last_socket_error());
+            BIO_ADDR_free(peer_info.addr);
             BIO_closesocket(s);
             goto end;
         }
 
-        (void)BIO_ctrl_set_connected(sbio, &peer);
+        (void)BIO_ctrl_set_connected(sbio, peer_info.addr);
+        BIO_ADDR_free(peer_info.addr);
+        peer_info.addr = NULL;
 
         if (enable_timeouts) {
             timeout.tv_sec = 0;
@@ -2608,11 +2614,15 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     {
         /* Print out local port of connection: useful for debugging */
         int sock;
-        struct sockaddr_in ladd;
-        socklen_t ladd_size = sizeof(ladd);
+        union BIO_sock_info_u info;
+
         sock = SSL_get_fd(s);
-        getsockname(sock, (struct sockaddr *)&ladd, &ladd_size);
-        BIO_printf(bio_c_out, "LOCAL PORT is %u\n", ntohs(ladd.sin_port));
+        if ((info.addr = BIO_ADDR_new()) != NULL
+            && BIO_sock_info(sock, BIO_SOCK_INFO_ADDRESS, &info)) {
+            BIO_printf(bio_c_out, "LOCAL PORT is %u\n",
+                       ntohs(BIO_ADDR_rawport(info.adr)));
+        }
+        BIO_ADDR_free(info.addr);
     }
 #endif
 
