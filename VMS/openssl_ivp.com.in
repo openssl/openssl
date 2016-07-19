@@ -32,9 +32,19 @@ $	    WRITE SYS$ERROR "Installation inconsistent"
 $	    EXIT %x00018292 ! RMS$_FNF, file not found
 $	ENDIF
 $
+$	ON ERROR THEN GOTO error
+$
 $	! If something else is wrong with the installation, we're likely
 $	! to get an image activation error here
 $	openssl version -a
 $
+$	! Verify that engines are where they should be.
+$	openssl engine -c -t dasync
+$
 $	WRITE SYS$ERROR "OpenSSL IVP passed"
 $	EXIT %x10000001
+$
+$ error:
+$	save_status = $STATUS
+$	WRITE SYS$ERROR "OpenSSL IVP failed"
+$	EXIT 'save_status'
