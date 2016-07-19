@@ -232,7 +232,7 @@ void ERR_print_errors(BIO *bp);
 void ERR_add_error_data(int num, ...);
 void ERR_add_error_vdata(int num, va_list args);
 void ERR_load_strings(int lib, ERR_STRING_DATA str[]);
-void ERR_unload_strings(int lib, ERR_STRING_DATA str[]);
+int ERR_unload_strings(int lib, ERR_STRING_DATA str[]);
 void ERR_load_ERR_strings(void);
 
 #if OPENSSL_API_COMPAT < 0x10100000L

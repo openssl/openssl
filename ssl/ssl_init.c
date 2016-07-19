@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 #include <assert.h>
 #include "ssl_locl.h"
+#include "internal/thread_once.h"
 
 static int stopped;
 
@@ -21,7 +22,7 @@ static void ssl_library_stop(void);
 
 static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
-static void ossl_init_ssl_base(void)
+DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
 {
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_ssl_base: "
@@ -108,11 +109,12 @@ static void ossl_init_ssl_base(void)
      */
     OPENSSL_atexit(ssl_library_stop);
     ssl_base_inited = 1;
+    return 1;
 }
 
 static CRYPTO_ONCE ssl_strings = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_strings_inited = 0;
-static void ossl_init_load_ssl_strings(void)
+DEFINE_RUN_ONCE_STATIC(ossl_init_load_ssl_strings)
 {
     /*
      * OPENSSL_NO_AUTOERRINIT is provided here to prevent at compile time
@@ -126,12 +128,13 @@ static void ossl_init_load_ssl_strings(void)
     ERR_load_SSL_strings();
 #endif
     ssl_strings_inited = 1;
+    return 1;
 }
 
-static void ossl_init_no_load_ssl_strings(void)
+DEFINE_RUN_ONCE_STATIC(ossl_init_no_load_ssl_strings)
 {
     /* Do nothing in this case */
-    return;
+    return 1;
 }
 
 static void ssl_library_stop(void)
@@ -193,17 +196,15 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
                              | OPENSSL_INIT_ADD_ALL_DIGESTS, settings))
         return 0;
 
-    if (!CRYPTO_THREAD_run_once(&ssl_base, ossl_init_ssl_base))
+    if (!RUN_ONCE(&ssl_base, ossl_init_ssl_base))
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS)
-            && !CRYPTO_THREAD_run_once(&ssl_strings,
-                                       ossl_init_no_load_ssl_strings))
+            && !RUN_ONCE(&ssl_strings, ossl_init_no_load_ssl_strings))
         return 0;
 
     if ((opts & OPENSSL_INIT_LOAD_SSL_STRINGS)
-            && !CRYPTO_THREAD_run_once(&ssl_strings,
-                                       ossl_init_load_ssl_strings))
+            && !RUN_ONCE(&ssl_strings, ossl_init_load_ssl_strings))
         return 0;
 
     return 1;

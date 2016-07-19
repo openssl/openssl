@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib_int.h"
+#include "internal/thread_once.h"
 #include <openssl/lhash.h>
 
 /*
@@ -35,9 +36,10 @@ static EX_CALLBACKS ex_data[CRYPTO_EX_INDEX__COUNT];
 static CRYPTO_RWLOCK *ex_data_lock = NULL;
 static CRYPTO_ONCE ex_data_init = CRYPTO_ONCE_STATIC_INIT;
 
-static void do_ex_data_init(void)
+DEFINE_RUN_ONCE_STATIC(do_ex_data_init)
 {
     ex_data_lock = CRYPTO_THREAD_lock_new();
+    return ex_data_lock != NULL;
 }
 
 /*
@@ -53,7 +55,10 @@ static EX_CALLBACKS *get_and_lock(int class_index)
         return NULL;
     }
 
-    CRYPTO_THREAD_run_once(&ex_data_init, do_ex_data_init);
+    if (!RUN_ONCE(&ex_data_init, do_ex_data_init)) {
+        CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
 
     if (ex_data_lock == NULL) {
         /*
