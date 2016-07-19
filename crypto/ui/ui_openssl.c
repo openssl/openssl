@@ -68,8 +68,8 @@
 #endif
 
 /*
- * There are 5 types of terminal interface supported, TERMIO, TERMIOS, VMS,
- * MSDOS and SGTTY.
+ * There are 6 types of terminal interface supported, TERMIO, TERMIOS, VMS,
+ * MSDOS, WIN32 Console and SGTTY.
  *
  * If someone defines one of the macros TERMIO, TERMIOS or SGTTY, it will
  * remain respected.  Otherwise, we default to TERMIOS except for a few
@@ -87,11 +87,9 @@
 #  undef  SGTTY
 /*
  * We know that VMS, MSDOS, VXWORKS, use entirely other mechanisms.
- * MAC_OS_GUSI_SOURCE should probably go away, but that needs to be confirmed.
  */
 # elif !defined(OPENSSL_SYS_VMS) \
 	&& !defined(OPENSSL_SYS_MSDOS) \
-	&& !defined(MAC_OS_GUSI_SOURCE) \
 	&& !defined(OPENSSL_SYS_VXWORKS)
 #  define TERMIOS
 #  undef  TERMIO
@@ -144,15 +142,6 @@ struct IOSB {
 };
 #endif
 
-#if defined(MAC_OS_GUSI_SOURCE)
-/*
- * This one needs work. As a matter of fact the code is unoperational
- * and this is only a trick to get it compiled.
- *                                      <appro@fy.chalmers.se>
- */
-# define TTY_STRUCT int
-#endif
-
 #ifndef NX509_SIG
 # define NX509_SIG 32
 #endif
@@ -172,6 +161,8 @@ static long tty_orig[3], tty_new[3]; /* XXX Is there any guarantee that this
                                       * structures? */
 static long status;
 static unsigned short channel = 0;
+#elif defined(_WIN32) && !defined(_WIN32_WCE)
+static DWORD tty_orig, tty_new;
 #else
 # if !defined(OPENSSL_SYS_MSDOS) || defined(__DJGPP__)
 static TTY_STRUCT tty_orig, tty_new;
@@ -187,7 +178,7 @@ static void recsig(int);
 static void pushsig(void);
 static void popsig(void);
 #endif
-#if defined(OPENSSL_SYS_MSDOS)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
 static int noecho_fgets(char *buf, int size, FILE *tty);
 #endif
 static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl);
@@ -295,7 +286,8 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
     char result[BUFSIZ];
     int maxsize = BUFSIZ - 1;
 #if !defined(OPENSSL_SYS_WINCE)
-    char *p;
+    char *p = NULL;
+    int echo_eol = !echo;
 
     intr_signal = 0;
     ok = 0;
@@ -309,15 +301,48 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
     ps = 2;
 
     result[0] = '\0';
-# ifdef OPENSSL_SYS_MSDOS
+# if defined(_WIN32)
+    if (is_a_tty) {
+        DWORD numread;
+#  if defined(CP_UTF8)
+        WCHAR wresult[BUFSIZ];
+
+        if (ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE),
+                         wresult, maxsize, &numread, NULL)) {
+            if (numread >= 2 &&
+                wresult[numread-2] == L'\r' && wresult[numread-1] == L'\n') {
+                wresult[numread-2] = L'\n';
+                numread--;
+                echo_eol = 0;
+            }
+            wresult[numread] = '\0';
+            if (WideCharToMultiByte(CP_UTF8, 0, wresult, -1,
+                                    result, sizeof(result), NULL, 0) > 0)
+                p = result;
+
+            OPENSSL_cleanse(wresult, sizeof(wresult));
+        }
+#  else
+        if (ReadConsoleA(GetStdHandle(STD_INPUT_HANDLE),
+                         result, maxsize, &numread, NULL)) {
+            if (numread >= 2 &&
+                result[numread-2] == '\r' && result[numread-1] == '\n') {
+                result[numread-2] = '\n';
+                numread--;
+                echo_eol = 0;
+            }
+            result[numread] = '\0';
+            p = result;
+        }
+#  endif
+    } else
+# elif defined(OPENSSL_SYS_MSDOS)
     if (!echo) {
         noecho_fgets(result, maxsize, tty_in);
         p = result;             /* FIXME: noecho_fgets doesn't return errors */
     } else
-        p = fgets(result, maxsize, tty_in);
-# else
-    p = fgets(result, maxsize, tty_in);
 # endif
+    p = fgets(result, maxsize, tty_in);
     if (!p)
         goto error;
     if (feof(tty_in))
@@ -335,7 +360,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
  error:
     if (intr_signal == SIGINT)
         ok = -1;
-    if (!echo)
+    if (echo_eol)
         fprintf(tty_out, "\n");
     if (ps >= 2 && !echo && !echo_console(ui))
         ok = 0;
@@ -359,6 +384,17 @@ static int open_console(UI *ui)
 #if defined(OPENSSL_SYS_VXWORKS)
     tty_in = stdin;
     tty_out = stderr;
+#elif defined(_WIN32) && !defined(_WIN32_WCE)
+    if ((tty_out = fopen("conout$", "w")) == NULL)
+        tty_out = stderr;
+
+    if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &tty_orig)) {
+        tty_in = stdin;
+    } else {
+        is_a_tty = 0;
+        if ((tty_in = fopen("conin$", "r")) == NULL)
+            tty_in = stdin;
+    }
 #else
 # ifdef OPENSSL_SYS_MSDOS
 #  define DEV_TTY "con"
@@ -424,6 +460,13 @@ static int noecho_console(UI *ui)
     if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
         return 0;
 #endif
+#if defined(_WIN32) && !defined(_WIN32_WCE)
+    if (is_a_tty) {
+        tty_new = tty_orig;
+        tty_new &= ~ENABLE_ECHO_INPUT;
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), tty_new);
+    }
+#endif
     return 1;
 }
 
@@ -447,6 +490,13 @@ static int echo_console(UI *ui)
                  0);
     if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
         return 0;
+#endif
+#if defined(_WIN32) && !defined(_WIN32_WCE)
+    if (is_a_tty) {
+        tty_new = tty_orig;
+        tty_new |= ENABLE_ECHO_INPUT;
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), tty_new);
+    }
 #endif
     return 1;
 }
@@ -549,7 +599,7 @@ static void recsig(int i)
 #endif
 
 /* Internal functions specific for Windows */
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WINCE)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
 static int noecho_fgets(char *buf, int size, FILE *tty)
 {
     int i;
