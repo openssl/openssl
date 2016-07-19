@@ -83,6 +83,10 @@ sub name_synopsis()
         print "$id $sym missing from NAME section\n"
             unless defined $names{$sym};
         $names{$sym} = 2;
+
+        # Do some sanity checks on the prototype.
+        print "$id prototype missing spaces around commas: $line\n"
+            if ( $line =~ /[a-z0-9],[^ ]/ );
     }
 
     foreach my $n ( keys %names ) {

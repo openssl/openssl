@@ -104,7 +104,7 @@ Possible value are: B<named_curve>, i.e. the ec parameters are
 specified by an OID, or B<explicit> where the ec parameters are
 explicitly given (see RFC 3279 for the definition of the
 EC parameters structures). The default value is B<named_curve>.
-B<Note> the B<implicitlyCA> alternative ,as specified in RFC 3279,
+B<Note> the B<implicitlyCA> alternative, as specified in RFC 3279,
 is currently not implemented in OpenSSL.
 
 =item B<-no_seed>

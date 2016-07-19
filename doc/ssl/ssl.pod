@@ -306,7 +306,7 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item int B<SSL_CTX_sess_number>(SSL_CTX *ctx);
 
-=item void B<SSL_CTX_sess_set_cache_size>(SSL_CTX *ctx,t);
+=item void B<SSL_CTX_sess_set_cache_size>(SSL_CTX *ctx, t);
 
 =item void B<SSL_CTX_sess_set_get_cb>(SSL_CTX *ctx, SSL_SESSION *(*cb)(SSL *ssl, unsigned char *data, int len, int *copy));
 
@@ -576,7 +576,7 @@ fresh handle for each connection.
 
 =item long B<SSL_get_timeout>(const SSL *ssl);
 
-=item int (*B<SSL_get_verify_callback>(const SSL *ssl))(int,X509_STORE_CTX *)
+=item int (*B<SSL_get_verify_callback>(const SSL *ssl))(int, X509_STORE_CTX *)
 
 =item int B<SSL_get_verify_mode>(const SSL *ssl);
 

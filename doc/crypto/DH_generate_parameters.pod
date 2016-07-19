@@ -9,7 +9,7 @@ DH_check - generate and check Diffie-Hellman parameters
 
  #include <openssl/dh.h>
 
- int DH_generate_parameters_ex(DH *dh, int prime_len,int generator, BN_GENCB *cb);
+ int DH_generate_parameters_ex(DH *dh, int prime_len, int generator, BN_GENCB *cb);
 
  int DH_check(DH *dh, int *codes);
 

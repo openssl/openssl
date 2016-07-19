@@ -59,7 +59,7 @@ set 'eng = NULL;' to start with the default OpenSSL RSA implementation:
  /* NB: assumes eng, key, in, inlen are already set up,
   * and that key is an RSA public key
   */
- ctx = EVP_PKEY_CTX_new(key,eng);
+ ctx = EVP_PKEY_CTX_new(key, eng);
  if (!ctx)
         /* Error occurred */
  if (EVP_PKEY_encrypt_init(ctx) <= 0)
