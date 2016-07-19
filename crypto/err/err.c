@@ -341,7 +341,8 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 
 void err_free_strings_int(void)
 {
-    RUN_ONCE(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+        return;
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     lh_ERR_STRING_DATA_free(int_error_hash);
