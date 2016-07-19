@@ -113,7 +113,7 @@ int CRYPTO_mem_ctrl(int mode)
     int ret = mh_mode;
 
     if (!RUN_ONCE(&memdbg_init, do_memdbg_init))
-        return 0;
+        return -1;
 
     CRYPTO_THREAD_write_lock(malloc_lock);
     switch (mode) {
@@ -546,7 +546,7 @@ int CRYPTO_mem_leaks(BIO *b)
     OPENSSL_cleanup();
 
     if (!RUN_ONCE(&memdbg_init, do_memdbg_init))
-        return 0;
+        return -1;
 
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
