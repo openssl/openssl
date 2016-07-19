@@ -2355,14 +2355,10 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt, int *al)
          */
 
         /* Get encoded point length */
-        if (!PACKET_get_1(pkt, &i)) {
+        if (!PACKET_get_1(pkt, &i) || !PACKET_get_bytes(pkt, &data, i)
+            || PACKET_remaining(pkt) != 0) {
             *al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CKE_ECDHE, SSL_R_LENGTH_MISMATCH);
-            goto err;
-        }
-        if (!PACKET_get_bytes(pkt, &data, i)
-                || PACKET_remaining(pkt) != 0) {
-            SSLerr(SSL_F_TLS_PROCESS_CKE_ECDHE, ERR_R_EC_LIB);
             goto err;
         }
         ckey = EVP_PKEY_new();
@@ -2372,6 +2368,7 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt, int *al)
         }
         if (EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(ckey), data, i,
                            NULL) == 0) {
+            *al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_CKE_ECDHE, ERR_R_EC_LIB);
             goto err;
         }
