@@ -27,7 +27,7 @@ X509_STORE_CTX_get_verify - X509_STORE_CTX initialisation
 
  void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 
- void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx,X509 *x);
+ void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x);
  STACK_OF(X509) *X509_STORE_CTX_get0_chain(X609_STORE_CTX *ctx);
  void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *chain);
  void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk);

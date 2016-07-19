@@ -100,8 +100,8 @@ after.
 
 =item B<BIO_ctrl(BIO *b, int cmd, long larg, void *parg)>
 
-callback(b,BIO_CB_CTRL,parg,cmd,larg,1L) is called before the call and
-callback(b,BIO_CB_CTRL|BIO_CB_RETURN,parg,cmd, larg,ret) after.
+callback(b, BIO_CB_CTRL, parg, cmd, larg, 1L) is called before the call and
+callback(b, BIO_CB_CTRL|BIO_CB_RETURN, parg, cmd, larg, ret) after.
 
 =back
 

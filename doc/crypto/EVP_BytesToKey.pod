@@ -8,10 +8,10 @@ EVP_BytesToKey - password based encryption routine
 
  #include <openssl/evp.h>
 
- int EVP_BytesToKey(const EVP_CIPHER *type,const EVP_MD *md,
-                       const unsigned char *salt,
-                       const unsigned char *data, int datal, int count,
-                       unsigned char *key,unsigned char *iv);
+ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
+                    const unsigned char *salt,
+                    const unsigned char *data, int datal, int count,
+                    unsigned char *key, unsigned char *iv);
 
 =head1 DESCRIPTION
 

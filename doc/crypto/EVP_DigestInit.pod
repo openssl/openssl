@@ -24,13 +24,13 @@ EVP_get_digestbynid, EVP_get_digestbyobj - EVP digest routines
  int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md,
         unsigned int *s);
 
- int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out,const EVP_MD_CTX *in);
+ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 
  int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
  int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
         unsigned int *s);
 
- int EVP_MD_CTX_copy(EVP_MD_CTX *out,EVP_MD_CTX *in);
+ int EVP_MD_CTX_copy(EVP_MD_CTX *out, EVP_MD_CTX *in);
 
  int EVP_MD_type(const EVP_MD *md);
  int EVP_MD_pkey_type(const EVP_MD *md);

@@ -12,7 +12,7 @@ SSL_CTX_set_verify, SSL_set_verify, SSL_CTX_set_verify_depth, SSL_set_verify_dep
                          int (*verify_callback)(int, X509_STORE_CTX *));
  void SSL_set_verify(SSL *s, int mode,
                      int (*verify_callback)(int, X509_STORE_CTX *));
- void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth);
+ void SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth);
  void SSL_set_verify_depth(SSL *s, int depth);
 
  int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx);

@@ -14,8 +14,8 @@ BIO_rw_filename - FILE bio
  BIO *BIO_new_file(const char *filename, const char *mode);
  BIO *BIO_new_fp(FILE *stream, int flags);
 
- BIO_set_fp(BIO *b,FILE *fp, int flags);
- BIO_get_fp(BIO *b,FILE **fpp);
+ BIO_set_fp(BIO *b, FILE *fp, int flags);
+ BIO_get_fp(BIO *b, FILE **fpp);
 
  int BIO_read_filename(BIO *b, char *name)
  int BIO_write_filename(BIO *b, char *name)

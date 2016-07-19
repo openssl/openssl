@@ -11,12 +11,12 @@ for primality
 
  #include <openssl/bn.h>
 
- int BN_generate_prime_ex(BIGNUM *ret,int bits,int safe, const BIGNUM *add,
+ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
      const BIGNUM *rem, BN_GENCB *cb);
 
- int BN_is_prime_ex(const BIGNUM *p,int nchecks, BN_CTX *ctx, BN_GENCB *cb);
+ int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb);
 
- int BN_is_prime_fasttest_ex(const BIGNUM *p,int nchecks, BN_CTX *ctx,
+ int BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
      int do_trial_division, BN_GENCB *cb);
 
  int BN_GENCB_call(BN_GENCB *cb, int a, int b);

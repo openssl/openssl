@@ -124,7 +124,7 @@ enable an attacker to obtain the session keys.
 =head1 EXAMPLES
 
 Reference Implementation:
-  SSL_CTX_set_tlsext_ticket_key_cb(SSL,ssl_tlsext_ticket_key_cb);
+  SSL_CTX_set_tlsext_ticket_key_cb(SSL, ssl_tlsext_ticket_key_cb);
   ....
 
   static int ssl_tlsext_ticket_key_cb(SSL *s, unsigned char key_name[16], unsigned char *iv, EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)

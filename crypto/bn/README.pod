@@ -36,9 +36,9 @@ library internal functions
    int nb);
  void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n);
  void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
-   int dna,int dnb,BN_ULONG *tmp);
+   int dna, int dnb, BN_ULONG *tmp);
  void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b,
-   int n, int tna,int tnb, BN_ULONG *tmp);
+   int n, int tna, int tnb, BN_ULONG *tmp);
  void bn_mul_low_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b,
    int n2, BN_ULONG *tmp);
  void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l,
@@ -96,8 +96,8 @@ bn.top=1.  B<neg> is 1 if the number is negative.  When a B<BIGNUM> is
 B<0>, the B<d> field can be B<NULL> and B<top> == B<0>.
 
 B<flags> is a bit field of flags which are defined in C<openssl/bn.h>. The
-flags begin with B<BN_FLG_>. The macros BN_set_flags(b,n) and
-BN_get_flags(b,n) exist to enable or fetch flag(s) B<n> from B<BIGNUM>
+flags begin with B<BN_FLG_>. The macros BN_set_flags(b, n) and
+BN_get_flags(b, n) exist to enable or fetch flag(s) B<n> from B<BIGNUM>
 structure B<b>.
 
 Various routines in this library require the use of temporary
@@ -124,7 +124,7 @@ bn_sqr_words(B<rp>, B<ap>, B<n>) operates on the B<num> word array
 B<ap> and the 2*B<num> word array B<ap>.  It computes B<ap> * B<ap>
 word-wise, and places the low and high bytes of the result in B<rp>.
 
-bn_div_words(B<h>, B<l>, B<d>) divides the two word number (B<h>,B<l>)
+bn_div_words(B<h>, B<l>, B<d>) divides the two word number (B<h>, B<l>)
 by B<d> and returns the result.
 
 bn_add_words(B<rp>, B<ap>, B<bp>, B<num>) operates on the B<num> word

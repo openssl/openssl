@@ -18,7 +18,7 @@ BIO_ssl_shutdown - SSL BIO
 
  const BIO_METHOD *BIO_f_ssl(void);
 
- long BIO_set_ssl(BIO *b,SSL *ssl, long c);
+ long BIO_set_ssl(BIO *b, SSL *ssl, long c);
  long BIO_get_ssl(BIO *b, SSL **sslp);
  long BIO_set_ssl_mode(BIO *b, long client);
  long BIO_set_ssl_renegotiate_bytes(BIO *b, long num);
@@ -212,7 +212,7 @@ a client and also echoes the request to standard output.
  /* XXX Other things like set verify locations, EDH temp callbacks. */
 
  /* New SSL BIO setup as server */
- sbio = BIO_new_ssl(ctx,0);
+ sbio = BIO_new_ssl(ctx, 0);
  BIO_get_ssl(sbio, &ssl);
  if (ssl == NULL) {
      fprintf(stderr, "Can't locate SSL pointer\n");
