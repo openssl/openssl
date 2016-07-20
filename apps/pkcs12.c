@@ -782,7 +782,7 @@ static int alg_print(const X509_ALGOR *alg)
         if (aparamtype == V_ASN1_SEQUENCE)
             pbe2 = ASN1_item_unpack(aparam, ASN1_ITEM_rptr(PBE2PARAM));
         if (pbe2 == NULL) {
-            BIO_puts(bio_err, "<unsupported parameters>");
+            BIO_puts(bio_err, ", <unsupported parameters>");
             goto done;
         }
         X509_ALGOR_get0(&aoid, &aparamtype, &aparam, pbe2->keyfunc);
@@ -798,7 +798,7 @@ static int alg_print(const X509_ALGOR *alg)
             if (aparamtype == V_ASN1_SEQUENCE)
                 kdf = ASN1_item_unpack(aparam, ASN1_ITEM_rptr(PBKDF2PARAM));
             if (kdf == NULL) {
-                BIO_puts(bio_err, "<unsupported parameters>");
+                BIO_puts(bio_err, ", <unsupported parameters>");
                 goto done;
             }
 
@@ -817,7 +817,7 @@ static int alg_print(const X509_ALGOR *alg)
         if (aparamtype == V_ASN1_SEQUENCE)
             pbe = ASN1_item_unpack(aparam, ASN1_ITEM_rptr(PBEPARAM));
         if (pbe == NULL) {
-            BIO_puts(bio_err, "<unsupported parameters>");
+            BIO_puts(bio_err, ", <unsupported parameters>");
             goto done;
         }
         BIO_printf(bio_err, ", Iteration %ld", ASN1_INTEGER_get(pbe->iter));
