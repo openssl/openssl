@@ -293,6 +293,9 @@ X509_STORE_CTX_check_crl_fn X509_STORE_get_check_crl(X509_STORE *ctx);
 void X509_STORE_set_cert_crl(X509_STORE *ctx,
                              X509_STORE_CTX_cert_crl_fn cert_crl);
 X509_STORE_CTX_cert_crl_fn X509_STORE_get_cert_crl(X509_STORE *ctx);
+void X509_STORE_set_check_policy(X509_STORE *ctx,
+                                 X509_STORE_CTX_check_policy_fn check_policy);
+X509_STORE_CTX_check_policy_fn X509_STORE_get_check_policy(X509_STORE *ctx);
 void X509_STORE_set_lookup_certs(X509_STORE *ctx,
                                  X509_STORE_CTX_lookup_certs_fn lookup_certs);
 X509_STORE_CTX_lookup_certs_fn X509_STORE_get_lookup_certs(X509_STORE *ctx);
