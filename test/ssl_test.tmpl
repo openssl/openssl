@@ -3,10 +3,13 @@ ssl_conf = {-$testname-}-ssl
 
 [{-$testname-}-ssl]
 server = {-$testname-}-server{-
-    # The server2 section is optional.
+    # The following sections are optional.
     $OUT = "";
     if (%server2) {
         $OUT .= "\nserver2 = $testname-server2";
+    }
+    if (%resume_server) {
+        $OUT .= "\nresume-server = $testname-resume-server";
     }
 -}
 client = {-$testname-}-client
@@ -20,6 +23,12 @@ client = {-$testname-}-client
         $OUT .= "\n[$testname-server2]\n";
         foreach my $key (sort keys %server2) {
             $OUT .= qq{$key} . " = " . qq{$server2{$key}\n} if defined $server2{$key};
+        }
+    }
+    if (%resume_server) {
+        $OUT .= "\n[$testname-resume-server]\n";
+        foreach my $key (sort keys %resume_server) {
+            $OUT .= qq{$key} . " = " . qq{$resume_server{$key}\n} if defined $resume_server{$key};
         }
     }
 -}

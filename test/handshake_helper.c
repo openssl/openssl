@@ -273,6 +273,9 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                     CTX_DATA *server2_ctx_data,
                                     CTX_DATA *client_ctx_data)
 {
+    unsigned char *ticket_keys;
+    size_t ticket_key_len;
+
     switch (test_ctx->client_verify_callback) {
     case SSL_TEST_VERIFY_ACCEPT_ALL:
         SSL_CTX_set_cert_verify_callback(client_ctx, &verify_accept_cb,
@@ -312,7 +315,6 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_BROKEN) {
         SSL_CTX_set_tlsext_ticket_key_cb(server_ctx, broken_session_ticket_cb);
     }
-
     if (test_ctx->server_npn_protocols != NULL) {
         parse_protos(test_ctx->server_npn_protocols,
                      &server_ctx_data->npn_protocols,
@@ -358,6 +360,16 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                                alpn_protos_len) == 0);
         OPENSSL_free(alpn_protos);
     }
+    /*
+     * Use fixed session ticket keys so that we can decrypt a ticket created with
+     * one CTX in another CTX. Don't address server2 for the moment.
+     */
+    ticket_key_len = SSL_CTX_set_tlsext_ticket_keys(server_ctx, NULL, 0);
+    ticket_keys = OPENSSL_zalloc(ticket_key_len);
+    OPENSSL_assert(ticket_keys != NULL);
+    OPENSSL_assert(SSL_CTX_set_tlsext_ticket_keys(server_ctx, ticket_keys,
+                                                  ticket_key_len) == 1);
+    OPENSSL_free(ticket_keys);
 }
 
 /* Configure per-SSL callbacks and other properties. */
@@ -376,16 +388,31 @@ typedef enum {
     PEER_ERROR
 } peer_status_t;
 
-static peer_status_t do_handshake_step(SSL *ssl)
+/*
+ * RFC 5246 says:
+ *
+ * Note that as of TLS 1.1,
+ *     failure to properly close a connection no longer requires that a
+ *     session not be resumed.  This is a change from TLS 1.0 to conform
+ *     with widespread implementation practice.
+ *
+ * However,
+ * (a) OpenSSL requires that a connection be shutdown for all protocol versions.
+ * (b) We test lower versions, too.
+ * So we just implement shutdown. We do a full bidirectional shutdown so that we
+ * can compare sent and received close_notify alerts and get some test coverage
+ * for SSL_shutdown as a bonus.
+ */
+static peer_status_t do_handshake_step(SSL *ssl, int shutdown)
 {
     int ret;
 
-    ret = SSL_do_handshake(ssl);
+    ret = shutdown ? SSL_shutdown(ssl) : SSL_do_handshake(ssl);
 
     if (ret == 1) {
         return PEER_SUCCESS;
     } else if (ret == 0) {
-        return PEER_ERROR;
+        return shutdown ? PEER_RETRY : PEER_ERROR;
     } else {
         int error = SSL_get_error(ssl, ret);
         /* Memory bios should never block with SSL_ERROR_WANT_WRITE. */
@@ -484,15 +511,17 @@ static char *dup_str(const unsigned char *in, size_t len)
     return ret;
 }
 
-HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
-                               SSL_CTX *client_ctx, const SSL_TEST_CTX *test_ctx)
+static HANDSHAKE_RESULT *do_handshake_internal(
+    SSL_CTX *server_ctx, SSL_CTX *server2_ctx, SSL_CTX *client_ctx,
+    const SSL_TEST_CTX *test_ctx, SSL_SESSION *session_in,
+    SSL_SESSION **session_out)
 {
     SSL *server, *client;
     BIO *client_to_server, *server_to_client;
     HANDSHAKE_EX_DATA server_ex_data, client_ex_data;
     CTX_DATA client_ctx_data, server_ctx_data, server2_ctx_data;
     HANDSHAKE_RESULT *ret = HANDSHAKE_RESULT_new();
-    int client_turn = 1;
+    int client_turn = 1, shutdown = 0;
     peer_status_t client_status = PEER_RETRY, server_status = PEER_RETRY;
     handshake_status_t status = HANDSHAKE_RETRY;
     unsigned char* tick = NULL;
@@ -514,6 +543,11 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     OPENSSL_assert(server != NULL && client != NULL);
 
     configure_handshake_ssl(server, client, test_ctx);
+    if (session_in != NULL) {
+        /* In case we're testing resumption without tickets. */
+        OPENSSL_assert(SSL_CTX_add_session(server_ctx, session_in));
+        OPENSSL_assert(SSL_set_session(client, session_in));
+    }
 
     memset(&server_ex_data, 0, sizeof(server_ex_data));
     memset(&client_ex_data, 0, sizeof(client_ex_data));
@@ -559,19 +593,26 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
      */
     for(;;) {
         if (client_turn) {
-            client_status = do_handshake_step(client);
+            client_status = do_handshake_step(client, shutdown);
             status = handshake_status(client_status, server_status,
                                       1 /* client went last */);
         } else {
-            server_status = do_handshake_step(server);
+            server_status = do_handshake_step(server, shutdown);
             status = handshake_status(server_status, client_status,
                                       0 /* server went last */);
         }
 
         switch (status) {
         case HANDSHAKE_SUCCESS:
-            ret->result = SSL_TEST_SUCCESS;
-            goto err;
+            if (shutdown) {
+                ret->result = SSL_TEST_SUCCESS;
+                goto err;
+            } else {
+                client_status = server_status = PEER_RETRY;
+                shutdown = 1;
+                client_turn = 1;
+                break;
+            }
         case CLIENT_ERROR:
             ret->result = SSL_TEST_CLIENT_FAIL;
             goto err;
@@ -615,10 +656,45 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     SSL_get0_alpn_selected(server, &proto, &proto_len);
     ret->server_alpn_negotiated = dup_str(proto, proto_len);
 
+    ret->client_resumed = SSL_session_reused(client);
+    ret->server_resumed = SSL_session_reused(server);
+
+    if (session_out != NULL)
+        *session_out = SSL_get1_session(client);
+
     ctx_data_free_data(&server_ctx_data);
     ctx_data_free_data(&server2_ctx_data);
     ctx_data_free_data(&client_ctx_data);
+
     SSL_free(server);
     SSL_free(client);
     return ret;
+}
+
+HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
+                               SSL_CTX *client_ctx, SSL_CTX *resume_server_ctx,
+                               const SSL_TEST_CTX *test_ctx)
+{
+    HANDSHAKE_RESULT *result;
+    SSL_SESSION *session = NULL;
+
+    result = do_handshake_internal(server_ctx, server2_ctx, client_ctx,
+                                   test_ctx, NULL, &session);
+    if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_SIMPLE)
+        goto err;
+
+    OPENSSL_assert(test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME);
+
+    if (result->result != SSL_TEST_SUCCESS) {
+        result->result = SSL_TEST_FIRST_HANDSHAKE_FAILED;
+        return result;
+    }
+
+    HANDSHAKE_RESULT_free(result);
+    /* We don't support SNI on second handshake yet, so server2_ctx is NULL. */
+    result = do_handshake_internal(resume_server_ctx, NULL, client_ctx, test_ctx,
+                                   session, NULL);
+ err:
+    SSL_SESSION_free(session);
+    return result;
 }

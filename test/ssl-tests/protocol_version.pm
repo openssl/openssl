@@ -71,12 +71,18 @@ foreach my $i (0..$#dtls_protocols) {
     }
 }
 
-sub generate_tests {
+sub no_tests {
+    my ($dtls) = @_;
+    return $dtls ? alldisabled("dtls1", "dtls1_2") :
+      alldisabled("ssl3", "tls1", "tls1_1", "tls1_2");
+}
+
+sub generate_version_tests {
     my ($method) = @_;
 
     my $dtls = $method eq "DTLS";
     # Don't write the redundant "Method = TLS" into the configuration.
-    undef $method if !$dtls; 
+    undef $method if !$dtls;
 
     my @protocols = $dtls ? @dtls_protocols : @tls_protocols;
     my @min_protocols = $dtls ? @min_dtls_protocols : @min_tls_protocols;
@@ -84,9 +90,7 @@ sub generate_tests {
     my $min_enabled  = $dtls ? $min_dtls_enabled : $min_tls_enabled;
     my $max_enabled  = $dtls ? $max_dtls_enabled : $max_tls_enabled;
 
-    my $no_tests = $dtls ? alldisabled("dtls1", "dtls1_2") :
-      alldisabled("ssl3", "tls1", "tls1_1", "tls1_2");
-    if ($no_tests) {
+    if (no_tests($dtls)) {
         return;
     }
 
@@ -121,6 +125,61 @@ sub generate_tests {
             }
         }
     }
+    return @tests;
+}
+
+sub generate_resumption_tests {
+    my ($method) = @_;
+
+    my $dtls = $method eq "DTLS";
+    # Don't write the redundant "Method = TLS" into the configuration.
+    undef $method if !$dtls;
+
+    my @protocols = $dtls ? @dtls_protocols : @tls_protocols;
+    my $min_enabled  = $dtls ? $min_dtls_enabled : $min_tls_enabled;
+
+    if (no_tests($dtls)) {
+        return;
+    }
+
+    my @tests = ();
+
+    # Obtain the first session against a fixed-version server.
+    foreach my $original_protocol($min_enabled..$#protocols) {
+        # Upgrade or downgrade the server max version support and test
+        # that it upgrades, downgrades or resumes the session as well.
+        foreach my $resume_protocol($min_enabled..$#protocols) {
+            my $resumption_expected;
+            # We should only resume on exact version match.
+            if ($original_protocol eq $resume_protocol) {
+                $resumption_expected = "Yes";
+            } else {
+                $resumption_expected = "No";
+            }
+
+            foreach my $ticket ("SessionTicket", "-SessionTicket") {
+                push @tests, {
+                    "name" => "resumption",
+                    "client" => { },
+                    "server" => {
+                        "MinProtocol" => $protocols[$original_protocol],
+                        "MaxProtocol" => $protocols[$original_protocol],
+                        "Options" => $ticket,
+                    },
+                    "resume_server" => {
+                        "MaxProtocol" => $protocols[$resume_protocol],
+                    },
+                    "test" => {
+                        "Protocol" => $protocols[$resume_protocol],
+                        "Method" => $method,
+                        "HandshakeMode" => "Resume",
+                        "ResumptionExpected" => $resumption_expected,
+                    }
+                };
+            }
+        }
+    }
+
     return @tests;
 }
 

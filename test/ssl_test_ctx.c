@@ -304,6 +304,54 @@ IMPLEMENT_SSL_TEST_CTX_STRING_OPTION(server_alpn_protocols)
 IMPLEMENT_SSL_TEST_CTX_STRING_OPTION(server2_alpn_protocols)
 IMPLEMENT_SSL_TEST_CTX_STRING_OPTION(expected_alpn_protocol)
 
+/***********************/
+/* Handshake mode      */
+/***********************/
+
+static const test_enum ssl_handshake_modes[] = {
+    {"Simple", SSL_TEST_HANDSHAKE_SIMPLE},
+    {"Resume", SSL_TEST_HANDSHAKE_RESUME},
+    {"Renegotiate", SSL_TEST_HANDSHAKE_RENEGOTIATE},
+};
+
+__owur static int parse_handshake_mode(SSL_TEST_CTX *test_ctx, const char *value)
+{
+    int ret_value;
+    if (!parse_enum(ssl_handshake_modes, OSSL_NELEM(ssl_handshake_modes),
+                    &ret_value, value)) {
+        return 0;
+    }
+    test_ctx->handshake_mode = ret_value;
+    return 1;
+}
+
+const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode)
+{
+    return enum_name(ssl_handshake_modes, OSSL_NELEM(ssl_handshake_modes),
+                     mode);
+}
+
+static int parse_boolean(const char *value, int *result)
+{
+    if (strcmp(value, "Yes") == 0) {
+        *result = 1;
+        return 1;
+    }
+    else if (strcmp(value, "No") == 0) {
+        *result = 0;
+        return 1;
+    }
+    return 0;
+}
+
+#define IMPLEMENT_SSL_TEST_CTX_BOOL_OPTION(field)                       \
+    static int parse_##field(SSL_TEST_CTX *test_ctx, const char *value) \
+    {                                                                   \
+        return parse_boolean(value, &test_ctx->field);                  \
+    }
+
+IMPLEMENT_SSL_TEST_CTX_BOOL_OPTION(resumption_expected)
+
 /*************************************************************/
 /* Known test options and their corresponding parse methods. */
 /*************************************************************/
@@ -332,6 +380,8 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ServerALPNProtocols", &parse_server_alpn_protocols },
     { "Server2ALPNProtocols", &parse_server2_alpn_protocols },
     { "ExpectedALPNProtocol", &parse_expected_alpn_protocol },
+    { "HandshakeMode", &parse_handshake_mode },
+    { "ResumptionExpected", &parse_resumption_expected },
 };
 
 /*
@@ -377,7 +427,7 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
         int found = 0;
         const CONF_VALUE *option = sk_CONF_VALUE_value(sk_conf, i);
         for (j = 0; j < OSSL_NELEM(ssl_test_ctx_options); j++) {
-            if (strcmp(option->name, ssl_test_ctx_options[j].name) == 0) {
+            if (strcasecmp(option->name, ssl_test_ctx_options[j].name) == 0) {
                 if (!ssl_test_ctx_options[j].parse(ctx, option->value)) {
                     fprintf(stderr, "Bad value %s for option %s\n",
                             option->value, option->name);
