@@ -433,7 +433,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     rbio = SSL_get_rbio(s);
     wbio = SSL_get_wbio(s);
 
-    if(!rbio || !wbio) {
+    if (!rbio || !wbio) {
         SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BIO_NOT_SET);
         return -1;
     }
@@ -487,7 +487,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
         n = BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH);
 
         if (n <= 0) {
-            if(BIO_should_retry(rbio)) {
+            if (BIO_should_retry(rbio)) {
                 /* Non-blocking IO */
                 goto end;
             }
@@ -581,7 +581,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
         }
 
         /* Message sequence number can only be 0 or 1 */
-        if(msgseq > 2) {
+        if (msgseq > 2) {
             SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_INVALID_SEQUENCE_NUMBER);
             goto end;
         }
@@ -752,14 +752,14 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
              * maybe they're not. We ignore errors here - some BIOs do not
              * support this.
              */
-            if(BIO_dgram_get_peer(rbio, tmpclient) > 0) {
+            if (BIO_dgram_get_peer(rbio, tmpclient) > 0) {
                 (void)BIO_dgram_set_peer(wbio, tmpclient);
             }
             BIO_ADDR_free(tmpclient);
             tmpclient = NULL;
 
             if (BIO_write(wbio, buf, reclen) < (int)reclen) {
-                if(BIO_should_retry(wbio)) {
+                if (BIO_should_retry(wbio)) {
                     /*
                      * Non-blocking IO...but we're stateless, so we're just
                      * going to drop this packet.
@@ -770,7 +770,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             }
 
             if (BIO_flush(wbio) <= 0) {
-                if(BIO_should_retry(wbio)) {
+                if (BIO_should_retry(wbio)) {
                     /*
                      * Non-blocking IO...but we're stateless, so we're just
                      * going to drop this packet.

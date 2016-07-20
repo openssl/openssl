@@ -401,15 +401,14 @@ int tls_get_message_header(SSL *s, int *mt)
     *mt = *p;
     s->s3->tmp.message_type = *(p++);
 
-    if(RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
         /*
          * Only happens with SSLv3+ in an SSLv2 backward compatible
          * ClientHello
+         *
+         * Total message size is the remaining record bytes to read
+         * plus the SSL3_HM_HEADER_LENGTH bytes that we already read
          */
-         /*
-          * Total message size is the remaining record bytes to read
-          * plus the SSL3_HM_HEADER_LENGTH bytes that we already read
-          */
         l = RECORD_LAYER_get_rrec_length(&s->rlayer)
             + SSL3_HM_HEADER_LENGTH;
         if (l && !BUF_MEM_grow_clean(s->init_buf, (int)l)) {
@@ -482,7 +481,7 @@ int tls_get_message_body(SSL *s, unsigned long *len)
 #endif
 
     /* Feed this message into MAC computation. */
-    if(RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
         if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
                              s->init_num)) {
             SSLerr(SSL_F_TLS_GET_MESSAGE_BODY, ERR_R_EVP_LIB);

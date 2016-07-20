@@ -291,7 +291,7 @@ int ssl3_get_record(SSL *s)
          * or s->packet_length == SSL2_RT_HEADER_LENGTH + rr->length
          * and we have that many bytes in s->packet
          */
-        if(rr[num_recs].rec_version == SSL2_VERSION) {
+        if (rr[num_recs].rec_version == SSL2_VERSION) {
             rr[num_recs].input =
                 &(RECORD_LAYER_get_packet(&s->rlayer)[SSL2_RT_HEADER_LENGTH]);
         } else {
@@ -703,8 +703,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
         bs = EVP_CIPHER_block_size(EVP_CIPHER_CTX_cipher(ds));
 
         if (n_recs > 1) {
-            if(!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                                  & EVP_CIPH_FLAG_PIPELINE)) {
+            if (!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
+                                    & EVP_CIPH_FLAG_PIPELINE)) {
                 /*
                  * We shouldn't have been called with pipeline data if the
                  * cipher doesn't support pipelining
@@ -777,7 +777,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
             unsigned char *data[SSL_MAX_PIPELINES];
 
             /* Set the output buffers */
-            for(ctr = 0; ctr < n_recs; ctr++) {
+            for (ctr = 0; ctr < n_recs; ctr++) {
                 data[ctr] = recs[ctr].data;
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS,
@@ -785,7 +785,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
                 SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
             }
             /* Set the input buffers */
-            for(ctr = 0; ctr < n_recs; ctr++) {
+            for (ctr = 0; ctr < n_recs; ctr++) {
                 data[ctr] = recs[ctr].input;
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_INPUT_BUFS,

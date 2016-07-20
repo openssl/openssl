@@ -1393,7 +1393,7 @@ int SSL_check_private_key(const SSL *ssl)
 
 int SSL_waiting_for_async(SSL *s)
 {
-    if(s->job)
+    if (s->job)
         return 1;
 
     return 0;
@@ -1452,7 +1452,7 @@ static int ssl_start_async_job(SSL *s, struct ssl_async_args *args,
         if (s->waitctx == NULL)
             return -1;
     }
-    switch(ASYNC_start_job(&s->job, s->waitctx, &ret, func, args,
+    switch (ASYNC_start_job(&s->job, s->waitctx, &ret, func, args,
         sizeof(struct ssl_async_args))) {
     case ASYNC_ERR:
         s->rwstate = SSL_NOTHING;
@@ -1509,7 +1509,7 @@ int SSL_read(SSL *s, void *buf, int num)
         return (0);
     }
 
-    if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+    if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
 
         args.s = s;
@@ -1534,7 +1534,7 @@ int SSL_peek(SSL *s, void *buf, int num)
     if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
         return (0);
     }
-    if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+    if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
 
         args.s = s;
@@ -1562,7 +1562,7 @@ int SSL_write(SSL *s, const void *buf, int num)
         return (-1);
     }
 
-    if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+    if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
 
         args.s = s;
@@ -1592,7 +1592,7 @@ int SSL_shutdown(SSL *s)
     }
 
     if (!SSL_in_init(s)) {
-        if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+        if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
             struct ssl_async_args args;
 
             args.s = s;
@@ -2983,7 +2983,7 @@ int SSL_do_handshake(SSL *s)
     s->method->ssl_renegotiate_check(s);
 
     if (SSL_in_init(s) || SSL_in_before(s)) {
-        if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+        if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
             struct ssl_async_args args;
 
             args.s = s;
