@@ -502,9 +502,9 @@ DEFINE_RUN_ONCE_STATIC(do_load_builtin_compressions)
     return 1;
 }
 
-static void load_builtin_compressions(void)
+static int load_builtin_compressions(void)
 {
-    RUN_ONCE(&ssl_load_builtin_comp_once, do_load_builtin_compressions);
+    return RUN_ONCE(&ssl_load_builtin_comp_once, do_load_builtin_compressions);
 }
 #endif
 
@@ -521,7 +521,12 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
     if (comp != NULL) {
         SSL_COMP ctmp;
 #ifndef OPENSSL_NO_COMP
-        load_builtin_compressions();
+        if (!load_builtin_compressions()) {
+            /*
+             * Currently don't care, since a failure only means that
+             * ssl_comp_methods is NULL, which is perfectly OK
+             */
+        }
 #endif
         *comp = NULL;
         ctmp.id = s->compress_meth;
