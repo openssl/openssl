@@ -2285,6 +2285,11 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     else
         ctx->cert_crl = cert_crl;
 
+    if (store && store->check_policy)
+        ctx->check_policy = store->check_policy;
+    else
+        ctx->check_policy = check_policy;
+
     if (store && store->lookup_certs)
         ctx->lookup_certs = store->lookup_certs;
     else
@@ -2294,8 +2299,6 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
         ctx->lookup_crls = store->lookup_crls;
     else
         ctx->lookup_crls = X509_STORE_CTX_get1_crls;
-
-    ctx->check_policy = check_policy;
 
     ctx->param = X509_VERIFY_PARAM_new();
     if (ctx->param == NULL) {
