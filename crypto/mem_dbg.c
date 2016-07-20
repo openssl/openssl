@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include "internal/bio.h"
@@ -87,11 +88,19 @@ static unsigned int num_disable = 0;
  */
 static CRYPTO_THREAD_ID disabling_threadid;
 
-static void do_memdbg_init(void)
+DEFINE_RUN_ONCE_STATIC(do_memdbg_init)
 {
     malloc_lock = CRYPTO_THREAD_lock_new();
     long_malloc_lock = CRYPTO_THREAD_lock_new();
-    CRYPTO_THREAD_init_local(&appinfokey, NULL);
+    if (malloc_lock == NULL || long_malloc_lock == NULL
+        || !CRYPTO_THREAD_init_local(&appinfokey, NULL)) {
+        CRYPTO_THREAD_lock_free(malloc_lock);
+        malloc_lock = NULL;
+        CRYPTO_THREAD_lock_free(long_malloc_lock);
+        long_malloc_lock = NULL;
+        return 0;
+    }
+    return 1;
 }
 
 static void app_info_free(APP_INFO *inf)
