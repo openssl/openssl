@@ -673,6 +673,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
 HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                SSL_CTX *client_ctx, SSL_CTX *resume_server_ctx,
+                               SSL_CTX *resume_client_ctx,
                                const SSL_TEST_CTX *test_ctx)
 {
     HANDSHAKE_RESULT *result;
@@ -692,8 +693,8 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
 
     HANDSHAKE_RESULT_free(result);
     /* We don't support SNI on second handshake yet, so server2_ctx is NULL. */
-    result = do_handshake_internal(resume_server_ctx, NULL, client_ctx, test_ctx,
-                                   session, NULL);
+    result = do_handshake_internal(resume_server_ctx, NULL, resume_client_ctx,
+                                   test_ctx, session, NULL);
  end:
     SSL_SESSION_free(session);
     return result;
