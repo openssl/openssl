@@ -142,11 +142,12 @@ sub generate_resumption_tests {
         return;
     }
 
-    my @tests = ();
+    my @server_tests = ();
+    my @client_tests = ();
 
-    # Obtain the first session against a fixed-version server.
+    # Obtain the first session against a fixed-version server/client.
     foreach my $original_protocol($min_enabled..$#protocols) {
-        # Upgrade or downgrade the server max version support and test
+        # Upgrade or downgrade the server/client max version support and test
         # that it upgrades, downgrades or resumes the session as well.
         foreach my $resume_protocol($min_enabled..$#protocols) {
             my $resumption_expected;
@@ -158,7 +159,8 @@ sub generate_resumption_tests {
             }
 
             foreach my $ticket ("SessionTicket", "-SessionTicket") {
-                push @tests, {
+                # Client is flexible, server upgrades/downgrades.
+                push @server_tests, {
                     "name" => "resumption",
                     "client" => { },
                     "server" => {
@@ -176,11 +178,31 @@ sub generate_resumption_tests {
                         "ResumptionExpected" => $resumption_expected,
                     }
                 };
+                # Server is flexible, client upgrades/downgrades.
+                push @client_tests, {
+                    "name" => "resumption",
+                    "client" => {
+                        "MinProtocol" => $protocols[$original_protocol],
+                        "MaxProtocol" => $protocols[$original_protocol],
+                    },
+                    "server" => {
+                        "Options" => $ticket,
+                    },
+                    "resume_client" => {
+                        "MaxProtocol" => $protocols[$resume_protocol],
+                    },
+                    "test" => {
+                        "Protocol" => $protocols[$resume_protocol],
+                        "Method" => $method,
+                        "HandshakeMode" => "Resume",
+                        "ResumptionExpected" => $resumption_expected,
+                    }
+                };
             }
         }
     }
 
-    return @tests;
+    return (@server_tests, @client_tests);
 }
 
 sub expected_result {
