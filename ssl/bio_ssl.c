@@ -338,16 +338,8 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_POP:
         /* Only detach if we are the BIO explicitly being popped */
         if (b == ptr) {
-            /*
-             * Shouldn't happen in practice because the rbio and wbio are the
-             * same when pushed.
-             */
-            if (ssl->rbio != ssl->wbio)
-                BIO_free_all(ssl->wbio);
-            if (next != NULL)
-                BIO_free(next);
-            ssl->wbio = NULL;
-            ssl->rbio = NULL;
+            /* This will clear the reference we obtained during push */
+            SSL_set_bio(ssl, NULL, NULL);
         }
         break;
     case BIO_C_DO_STATE_MACHINE:
