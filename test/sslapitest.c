@@ -441,6 +441,123 @@ static int test_ssl_set_bio(int idx)
     return testresult;
 }
 
+typedef struct ssl_bio_test_fixture {
+    const char *test_case_name;
+    int pop_ssl;
+    enum { NO_BIO_CHANGE, CHANGE_RBIO, CHANGE_WBIO } change_bio;
+} SSL_BIO_TEST_FIXTURE;
+
+static SSL_BIO_TEST_FIXTURE ssl_bio_set_up(const char *const test_case_name)
+{
+    SSL_BIO_TEST_FIXTURE fixture;
+
+    fixture.test_case_name = test_case_name;
+    fixture.pop_ssl = 0;
+
+    return fixture;
+}
+
+static void ssl_bio_tear_down(SSL_BIO_TEST_FIXTURE fixture)
+{
+}
+
+static int execute_test_ssl_bio(SSL_BIO_TEST_FIXTURE fix)
+{
+    BIO *sslbio = NULL, *membio1 = NULL, *membio2 = NULL;
+    SSL_CTX *ctx = SSL_CTX_new(TLS_method());
+    SSL *ssl = NULL;
+    int testresult = 0;
+
+    if (ctx == NULL) {
+        printf("Failed to allocate SSL_CTX\n");
+        return 0;
+    }
+
+    ssl = SSL_new(ctx);
+    if (ssl == NULL) {
+        printf("Failed to allocate SSL object\n");
+        goto end;
+    }
+
+    sslbio = BIO_new(BIO_f_ssl());
+    membio1 = BIO_new(BIO_s_mem());
+
+    if (sslbio == NULL || membio1 == NULL) {
+        printf("Malloc failure creating BIOs\n");
+        goto end;
+    }
+
+    BIO_set_ssl(sslbio, ssl, BIO_CLOSE);
+
+    /*
+     * If anything goes wrong here then we could leak memory, so this will
+     * be caught in a crypto-mdebug build
+     */
+    BIO_push(sslbio, membio1);
+
+    /* Verify chaning the rbio/wbio directly does not cause leaks */
+    if (fix.change_bio != NO_BIO_CHANGE) {
+        membio2 = BIO_new(BIO_s_mem());
+        if (membio2 == NULL) {
+            printf("Malloc failure creating membio2\n");
+            goto end;
+        }
+        if (fix.change_bio == CHANGE_RBIO)
+            SSL_set_rbio(ssl, membio2);
+        else
+            SSL_set_wbio(ssl, membio2);
+    }
+    ssl = NULL;
+
+    if (fix.pop_ssl)
+        BIO_pop(sslbio);
+    else
+        BIO_pop(membio1);
+
+    testresult = 1;
+ end:
+    BIO_free(membio1);
+    BIO_free(sslbio);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+
+    return testresult;
+}
+
+static int test_ssl_bio_pop_next_bio(void)
+{
+    SETUP_TEST_FIXTURE(SSL_BIO_TEST_FIXTURE, ssl_bio_set_up);
+
+    EXECUTE_TEST(execute_test_ssl_bio, ssl_bio_tear_down);
+}
+
+static int test_ssl_bio_pop_ssl_bio(void)
+{
+    SETUP_TEST_FIXTURE(SSL_BIO_TEST_FIXTURE, ssl_bio_set_up);
+
+    fixture.pop_ssl = 1;
+
+    EXECUTE_TEST(execute_test_ssl_bio, ssl_bio_tear_down);
+}
+
+static int test_ssl_bio_change_rbio(void)
+{
+    SETUP_TEST_FIXTURE(SSL_BIO_TEST_FIXTURE, ssl_bio_set_up);
+
+    fixture.change_bio = CHANGE_RBIO;
+
+    EXECUTE_TEST(execute_test_ssl_bio, ssl_bio_tear_down);
+}
+
+static int test_ssl_bio_change_wbio(void)
+{
+    SETUP_TEST_FIXTURE(SSL_BIO_TEST_FIXTURE, ssl_bio_set_up);
+
+    fixture.change_bio = CHANGE_WBIO;
+
+    EXECUTE_TEST(execute_test_ssl_bio, ssl_bio_tear_down);
+}
+
 int main(int argc, char *argv[])
 {
     BIO *err = NULL;
@@ -464,6 +581,10 @@ int main(int argc, char *argv[])
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
     ADD_ALL_TESTS(test_ssl_set_bio, TOTAL_SSL_SET_BIO_TESTS);
+    ADD_TEST(test_ssl_bio_pop_next_bio);
+    ADD_TEST(test_ssl_bio_pop_ssl_bio);
+    ADD_TEST(test_ssl_bio_change_rbio);
+    ADD_TEST(test_ssl_bio_change_wbio);
 
     testresult = run_tests(argv[0]);
 
