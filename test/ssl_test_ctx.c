@@ -333,11 +333,11 @@ const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode)
 
 static int parse_boolean(const char *value, int *result)
 {
-    if (strcmp(value, "Yes") == 0) {
+    if (strcasecmp(value, "Yes") == 0) {
         *result = 1;
         return 1;
     }
-    else if (strcmp(value, "No") == 0) {
+    else if (strcasecmp(value, "No") == 0) {
         *result = 0;
         return 1;
     }
@@ -427,7 +427,7 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
         int found = 0;
         const CONF_VALUE *option = sk_CONF_VALUE_value(sk_conf, i);
         for (j = 0; j < OSSL_NELEM(ssl_test_ctx_options); j++) {
-            if (strcasecmp(option->name, ssl_test_ctx_options[j].name) == 0) {
+            if (strcmp(option->name, ssl_test_ctx_options[j].name) == 0) {
                 if (!ssl_test_ctx_options[j].parse(ctx, option->value)) {
                     fprintf(stderr, "Bad value %s for option %s\n",
                             option->value, option->name);
