@@ -352,7 +352,7 @@ int main(void)
     outbio = BIO_new(BIO_s_mem());
     if (outbio == NULL)
         goto err;
-    SSL_set_wbio(ssl, outbio);
+    SSL_set0_wbio(ssl, outbio);
 
     success = 1;
     for (i = 0; i < (long)OSSL_NELEM(testpackets) && success; i++) {
@@ -365,7 +365,7 @@ int main(void)
         /* Set Non-blocking IO behaviour */
         BIO_set_mem_eof_return(inbio, -1);
 
-        SSL_set_rbio(ssl, inbio);
+        SSL_set0_rbio(ssl, inbio);
 
         /* Process the incoming packet */
         ret = DTLSv1_listen(ssl, peer);
@@ -404,7 +404,7 @@ int main(void)
         (void)BIO_reset(outbio);
         inbio = NULL;
         /* Frees up inbio */
-        SSL_set_rbio(ssl, NULL);
+        SSL_set0_rbio(ssl, NULL);
     }
 
  err:
