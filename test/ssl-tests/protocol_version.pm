@@ -117,7 +117,7 @@ sub generate_version_tests {
                         },
                         "test" => {
                             "ExpectedResult" => $result,
-                            "Protocol" => $protocol,
+                            "ExpectedProtocol" => $protocol,
                             "Method" => $method,
                         }
                     };
@@ -172,7 +172,7 @@ sub generate_resumption_tests {
                         "MaxProtocol" => $protocols[$resume_protocol],
                     },
                     "test" => {
-                        "Protocol" => $protocols[$resume_protocol],
+                        "ExpectedProtocol" => $protocols[$resume_protocol],
                         "Method" => $method,
                         "HandshakeMode" => "Resume",
                         "ResumptionExpected" => $resumption_expected,
@@ -192,7 +192,7 @@ sub generate_resumption_tests {
                         "MaxProtocol" => $protocols[$resume_protocol],
                     },
                     "test" => {
-                        "Protocol" => $protocols[$resume_protocol],
+                        "ExpectedProtocol" => $protocols[$resume_protocol],
                         "Method" => $method,
                         "HandshakeMode" => "Resume",
                         "ResumptionExpected" => $resumption_expected,
