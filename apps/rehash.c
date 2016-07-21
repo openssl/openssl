@@ -114,8 +114,8 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
     for (ep = bp->first_entry; ep; ep = ep->next) {
         if (digest && memcmp(digest, ep->digest, evpmdsize) == 0) {
             BIO_printf(bio_err,
-                       "%s: skipping duplicate certificate in %s\n",
-                       opt_getprog(), filename);
+                       "%s: skipping duplicate %s in %s\n", opt_getprog(),
+                       type == TYPE_CERT ? "certificate" : "CRL", filename);
             return 1;
         }
         if (strcmp(filename, ep->filename) == 0) {
