@@ -63,6 +63,16 @@ sub print_templates {
             $test->{"resume_server"} = { };
         }
         $test->{"client"} = { (%ssltests::base_client, %{$test->{"client"}}) };
+        if (defined $test->{"resume_client"}) {
+            $test->{"resume_client"} = { (%ssltests::base_client, %{$test->{"resume_client"}}) };
+        } elsif (defined $test->{"test"}->{"HandshakeMode"} &&
+                 $test->{"test"}->{"HandshakeMode"} eq "Resume") {
+            # Default is the same as client.
+            $test->{"resume_client"} = { (%ssltests::base_client, %{$test->{"client"}}) };
+        } else {
+            # Do not emit an empty "resume-client" section.
+            $test->{"resume_client"} = { };
+        }
     }
 
     # ssl_test expects to find a

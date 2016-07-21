@@ -124,8 +124,13 @@ The following sections may optionally be defined:
   matches server.
 * resume_server - this section configures the client to resume its session
   against a different server. This context is used whenever HandshakeMode is
-  Resume. If the resume-server section is not present, then the configuration
+  Resume. If the resume_server section is not present, then the configuration
   matches server.
+* resume_client - this section configures the client to resume its session with
+  a different configuration. In practice this may occur when, for example,
+  upgraded clients reuse sessions persisted on disk.  This context is used
+  whenever HandshakeMode is Resume. If the resume_client section is not present,
+  then the configuration matches client.
 
 ### Default server and client configurations
 

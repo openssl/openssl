@@ -215,7 +215,7 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
 {
     int ret = 0;
     SSL_CTX *server_ctx = NULL, *server2_ctx = NULL, *client_ctx = NULL,
-        *resume_server_ctx = NULL;
+        *resume_server_ctx = NULL, *resume_client_ctx = NULL;
     SSL_TEST_CTX *test_ctx = NULL;
     HANDSHAKE_RESULT *result = NULL;
 
@@ -233,7 +233,9 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
         client_ctx = SSL_CTX_new(DTLS_client_method());
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             resume_server_ctx = SSL_CTX_new(DTLS_server_method());
+            resume_client_ctx = SSL_CTX_new(DTLS_client_method());
             OPENSSL_assert(resume_server_ctx != NULL);
+            OPENSSL_assert(resume_client_ctx != NULL);
         }
     }
 #endif
@@ -247,11 +249,14 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
 
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             resume_server_ctx = SSL_CTX_new(TLS_server_method());
+            resume_client_ctx = SSL_CTX_new(TLS_client_method());
             OPENSSL_assert(resume_server_ctx != NULL);
+            OPENSSL_assert(resume_client_ctx != NULL);
         }
     }
 
-    OPENSSL_assert(server_ctx != NULL && client_ctx != NULL);
+    OPENSSL_assert(server_ctx != NULL);
+    OPENSSL_assert(client_ctx != NULL);
 
     OPENSSL_assert(CONF_modules_load(conf, fixture.test_app, 0) > 0);
 
@@ -265,9 +270,12 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
     if (resume_server_ctx != NULL
         && !SSL_CTX_config(resume_server_ctx, "resume-server"))
         goto err;
+    if (resume_client_ctx != NULL
+        && !SSL_CTX_config(resume_client_ctx, "resume-client"))
+        goto err;
 
     result = do_handshake(server_ctx, server2_ctx, client_ctx,
-                          resume_server_ctx, test_ctx);
+                          resume_server_ctx, resume_client_ctx, test_ctx);
 
     ret = check_test(result, test_ctx);
 
@@ -277,6 +285,7 @@ err:
     SSL_CTX_free(server2_ctx);
     SSL_CTX_free(client_ctx);
     SSL_CTX_free(resume_server_ctx);
+    SSL_CTX_free(resume_client_ctx);
     SSL_TEST_CTX_free(test_ctx);
     if (ret != 1)
         ERR_print_errors_fp(stderr);

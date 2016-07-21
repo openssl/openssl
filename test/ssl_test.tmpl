@@ -11,6 +11,9 @@ server = {-$testname-}-server{-
     if (%resume_server) {
         $OUT .= "\nresume-server = $testname-resume-server";
     }
+    if (%resume_client) {
+        $OUT .= "\nresume-client = $testname-resume-client";
+    }
 -}
 client = {-$testname-}-client
 
@@ -36,6 +39,12 @@ client = {-$testname-}-client
 {-
     foreach my $key (sort keys %client) {
         $OUT .= qq{$key} . " = " . qq{$client{$key}\n} if defined $client{$key};
+    }
+    if (%resume_client) {
+        $OUT .= "\n[$testname-resume-client]\n";
+        foreach my $key (sort keys %resume_client) {
+            $OUT .= qq{$key} . " = " . qq{$resume_client{$key}\n} if defined $resume_client{$key};
+        }
     }
 -}
 [test-{-$idx-}]
