@@ -79,23 +79,23 @@ static int check_alerts(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     }
 
     /* Tolerate an alert if one wasn't explicitly specified in the test. */
-    if (test_ctx->client_alert
+    if (test_ctx->expected_client_alert
         /*
          * The info callback alert value is computed as
          * (s->s3->send_alert[0] << 8) | s->s3->send_alert[1]
          * where the low byte is the alert code and the high byte is other stuff.
          */
-        && (result->client_alert_sent & 0xff) != test_ctx->client_alert) {
+        && (result->client_alert_sent & 0xff) != test_ctx->expected_client_alert) {
         fprintf(stderr, "ClientAlert mismatch: expected %s, got %s.\n",
-                print_alert(test_ctx->client_alert),
+                print_alert(test_ctx->expected_client_alert),
                 print_alert(result->client_alert_sent));
         return 0;
     }
 
-    if (test_ctx->server_alert
-        && (result->server_alert_sent & 0xff) != test_ctx->server_alert) {
+    if (test_ctx->expected_server_alert
+        && (result->server_alert_sent & 0xff) != test_ctx->expected_server_alert) {
         fprintf(stderr, "ServerAlert mismatch: expected %s, got %s.\n",
-                print_alert(test_ctx->server_alert),
+                print_alert(test_ctx->expected_server_alert),
                 print_alert(result->server_alert_sent));
         return 0;
     }
@@ -112,10 +112,10 @@ static int check_protocol(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         return 0;
     }
 
-    if (test_ctx->protocol) {
-        if (result->client_protocol != test_ctx->protocol) {
+    if (test_ctx->expected_protocol) {
+        if (result->client_protocol != test_ctx->expected_protocol) {
             fprintf(stderr, "Protocol mismatch: expected %s, got %s.\n",
-                    ssl_protocol_name(test_ctx->protocol),
+                    ssl_protocol_name(test_ctx->expected_protocol),
                     ssl_protocol_name(result->client_protocol));
             return 0;
         }
@@ -137,9 +137,6 @@ static int check_servername(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 static int check_session_ticket(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
     if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_IGNORE)
-        return 1;
-    if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_BROKEN &&
-        result->session_ticket == SSL_TEST_SESSION_TICKET_NO)
         return 1;
     if (result->session_ticket != test_ctx->session_ticket_expected) {
         fprintf(stderr, "Client SessionTicketExpected mismatch, expected %s, got %s\n.",
@@ -230,7 +227,8 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
 #ifndef OPENSSL_NO_DTLS
     if (test_ctx->method == SSL_TEST_METHOD_DTLS) {
         server_ctx = SSL_CTX_new(DTLS_server_method());
-        if (test_ctx->servername_callback != SSL_TEST_SERVERNAME_CB_NONE) {
+        if (test_ctx->extra.server.servername_callback !=
+            SSL_TEST_SERVERNAME_CB_NONE) {
             server2_ctx = SSL_CTX_new(DTLS_server_method());
             OPENSSL_assert(server2_ctx != NULL);
         }
@@ -245,7 +243,9 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
 #endif
     if (test_ctx->method == SSL_TEST_METHOD_TLS) {
         server_ctx = SSL_CTX_new(TLS_server_method());
-        if (test_ctx->servername_callback != SSL_TEST_SERVERNAME_CB_NONE) {
+        /* SNI on resumption isn't supported/tested yet. */
+        if (test_ctx->extra.server.servername_callback !=
+            SSL_TEST_SERVERNAME_CB_NONE) {
             server2_ctx = SSL_CTX_new(TLS_server_method());
             OPENSSL_assert(server2_ctx != NULL);
         }

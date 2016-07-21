@@ -18,148 +18,226 @@ package ssltests;
 our @tests = (
     {
         name => "npn-simple",
-        server => { },
-        client => { },
+        server => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
         test => {
-             "ClientNPNProtocols" => "foo",
-             "ServerNPNProtocols" => "foo",
              "ExpectedNPNProtocol" => "foo",
         },
     },
     {
         name => "npn-client-finds-match",
-        server => { },
-        client => { },
+        server => {
+            extra => {
+                "NPNProtocols" => "baz,bar",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo,bar",
+            },
+        },
         test => {
-             "ClientNPNProtocols" => "foo,bar",
-             "ServerNPNProtocols" => "baz,bar",
              "ExpectedNPNProtocol" => "bar",
         },
     },
     {
         name => "npn-client-honours-server-pref",
-        server => { },
-        client => { },
+        server => {
+            extra => {
+                "NPNProtocols" => "bar,foo",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo,bar",
+            },
+        },
         test => {
-             "ClientNPNProtocols" => "foo,bar",
-             "ServerNPNProtocols" => "bar,foo",
              "ExpectedNPNProtocol" => "bar",
         },
     },
     {
         name => "npn-client-first-pref-on-mismatch",
-        server => { },
-        client => { },
+        server => {
+            extra => {
+                "NPNProtocols" => "baz",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo,bar",
+            },
+        },
         test => {
-             "ClientNPNProtocols" => "foo,bar",
-             "ServerNPNProtocols" => "baz",
              "ExpectedNPNProtocol" => "foo",
         },
     },
     {
         name => "npn-no-server-support",
         server => { },
-        client => { },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
         test => {
-             "ClientNPNProtocols" => "foo",
              "ExpectedNPNProtocol" => undef,
         },
     },
     {
         name => "npn-no-client-support",
-        server => { },
+        server => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
         client => { },
         test => {
-             "ServerNPNProtocols" => "foo",
              "ExpectedNPNProtocol" => undef,
         },
     },
     {
         name => "npn-with-sni-no-context-switch",
-        server => { },
-        server2 => { },
-        client => { },
+        server => {
+            extra => {
+                "NPNProtocols" => "foo",
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
+        server2 => {
+            extra => {
+                "NPNProtocols" => "bar",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo,bar",
+                "ServerName" => "server1",
+            },
+        },
         test => {
-             "ClientNPNProtocols" => "foo,bar",
-             "ServerNPNProtocols" => "foo",
-             "Server2NPNProtocols" => "bar",
-             "ServerName" => "server1",
-             "ServerNameCallback" => "IgnoreMismatch",
              "ExpectedServerName" => "server1",
              "ExpectedNPNProtocol" => "foo",
         },
     },
     {
         name => "npn-with-sni-context-switch",
-        server => { },
-        server2 => { },
-        client => { },
+        server => {
+            extra => {
+                "NPNProtocols" => "foo",
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
+        server2 => {
+            extra => {
+                "NPNProtocols" => "bar",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo,bar",
+                "ServerName" => "server2",
+            },
+        },
         test => {
-             "ClientNPNProtocols" => "foo,bar",
-             "ServerNPNProtocols" => "foo",
-             "Server2NPNProtocols" => "bar",
-             "ServerName" => "server2",
-             "ServerNameCallback" => "IgnoreMismatch",
              "ExpectedServerName" => "server2",
              "ExpectedNPNProtocol" => "bar",
         },
     },
     {
         name => "npn-selected-sni-server-supports-npn",
-        server => { },
-        server2 => { },
-        client => { },
+        server => {
+            extra => {
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
+        server2 => {
+            extra => {
+                "NPNProtocols" => "bar",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo,bar",
+                "ServerName" => "server2",
+            },
+        },
         test => {
-             "ClientNPNProtocols" => "foo,bar",
-             "Server2NPNProtocols" => "bar",
-             "ServerName" => "server2",
-             "ServerNameCallback" => "IgnoreMismatch",
              "ExpectedServerName" => "server2",
              "ExpectedNPNProtocol" => "bar",
         },
     },
     {
         name => "npn-selected-sni-server-does-not-support-npn",
-        server => { },
+        server => {
+            extra => {
+                "NPNProtocols" => "bar",
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
         server2 => { },
-        client => { },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo,bar",
+                "ServerName" => "server2",
+            },
+        },
         test => {
-             "ClientNPNProtocols" => "foo,bar",
-             "ServerNPNProtocols" => "foo",
-             "ServerName" => "server2",
-             "ServerNameCallback" => "IgnoreMismatch",
              "ExpectedServerName" => "server2",
              "ExpectedNPNProtocol" => undef,
         },
     },
     {
         name => "alpn-preferred-over-npn",
-        server => { },
-        client => { },
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+                "NPNProtocols" => "bar",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo",
+                "NPNProtocols" => "bar",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo",
-             "ClientNPNProtocols" => "bar",
-             "ServerALPNProtocols" => "foo",
-             "ServerNPNProtocols" => "bar",
              "ExpectedALPNProtocol" => "foo",
              "ExpectedNPNProtocol" => undef,
         },
     },
     {
         name => "sni-npn-preferred-over-alpn",
-        server => { },
-        server2 => { },
-        client => { },
+        server => {
+            extra => {
+                "ServerNameCallback" => "IgnoreMismatch",
+                "ALPNProtocols" => "foo",
+            },
+        },
+        server2 => {
+            extra => {
+                "NPNProtocols" => "bar",
+            },
+        },
+        client => {
+            extra => {
+                "ServerName" => "server2",
+                "ALPNProtocols" => "foo",
+                "NPNProtocols" => "bar",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo",
-             "ClientNPNProtocols" => "bar",
-             "ServerALPNProtocols" => "foo",
-             "Server2NPNProtocols" => "bar",
-             "ServerName" => "server2",
-             "ServerNameCallback" => "IgnoreMismatch",
-             "ExpectedServerName" => "server2",
              "ExpectedALPNProtocol" => undef,
              "ExpectedNPNProtocol" => "bar",
+             "ExpectedServerName" => "server2",  
         },
     },
 );

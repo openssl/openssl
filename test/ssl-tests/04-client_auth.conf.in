@@ -77,7 +77,7 @@ sub generate_tests() {
                 },
                 test   => {
                     "ExpectedResult" => "ServerFail",
-                    "ServerAlert" => "HandshakeFailure",
+                    "ExpectedServerAlert" => "HandshakeFailure",
                 },
             };
 
@@ -115,7 +115,7 @@ sub generate_tests() {
                 },
                 test   => {
                     "ExpectedResult" => "ServerFail",
-                    "ServerAlert" => $caalert,
+                    "ExpectedServerAlert" => $caalert,
                 },
             };
         }
