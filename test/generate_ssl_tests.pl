@@ -46,7 +46,8 @@ sub print_templates {
         if (defined $test->{"server2"}) {
             $test->{"server2"} = { (%ssltests::base_server, %{$test->{"server2"}}) };
         } else {
-            if (defined $test->{"test"}->{"ServerNameCallback"}) {
+            if ($test->{"server"}->{"extra"} &&
+                defined $test->{"server"}->{"extra"}->{"ServerNameCallback"}) {
                 # Default is the same as server.
                 $test->{"reuse_server2"} = 1;
             }

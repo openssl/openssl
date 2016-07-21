@@ -17,58 +17,96 @@ package ssltests;
 our @tests = (
     {
         name => "SNI-switch-context",
-        server => { },
-        client => { },
-        test   => { "ServerName" => "server2",
-                    "ExpectedServerName" => "server2",
-                    "ServerNameCallback" => "IgnoreMismatch",
-                    "ExpectedResult" => "Success" },
+        server => {
+            extra => {
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
+        client => {
+            extra => {
+                "ServerName" => "server2",
+            },
+        },
+        test   => {
+            "ExpectedServerName" => "server2",
+            "ExpectedResult" => "Success"
+        },
     },
     {
         name => "SNI-keep-context",
-        server => { },
-        client => { },
-        test   => { "ServerName" => "server1",
-                    "ExpectedServerName" => "server1",
-                    "ServerNameCallback" => "IgnoreMismatch",
-                    "ExpectedResult" => "Success" },
+        server => {
+            extra => {
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
+        client => {
+            extra => {
+                "ServerName" => "server1",
+            },
+        },
+        test   => {
+            "ExpectedServerName" => "server1",
+            "ExpectedResult" => "Success"
+        },
     },
     {
         name => "SNI-no-server-support",
         server => { },
-        client => { },
-        test   => { "ServerName" => "server1",
-                    "ExpectedResult" => "Success" },
+        client => {
+            extra => {
+                "ServerName" => "server1",
+            },
+        },
+        test   => { "ExpectedResult" => "Success" },
     },
     {
         name => "SNI-no-client-support",
-        server => { },
+        server => {
+            extra => {
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
         client => { },
         test   => {
             # We expect that the callback is still called
             # to let the application decide whether they tolerate
             # missing SNI (as our test callback does).
             "ExpectedServerName" => "server1",
-            "ServerNameCallback" => "IgnoreMismatch",
             "ExpectedResult" => "Success"
         },
     },
     {
         name => "SNI-bad-sni-ignore-mismatch",
-        server => { },
-        client => { },
-        test   => { "ServerName" => "invalid",
-                    "ExpectedServerName" => "server1",
-                    "ServerNameCallback" => "IgnoreMismatch",
-                    "ExpectedResult" => "Success" },
+        server => {
+            extra => {
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
+        client => {
+            extra => {
+                "ServerName" => "invalid",
+            },
+        },
+        test   => {
+            "ExpectedServerName" => "server1",
+            "ExpectedResult" => "Success"
+        },
     },
     {
         name => "SNI-bad-sni-reject-mismatch",
-        server => { },
-        client => { },
-        test   => { "ServerName" => "invalid",
-                    "ServerNameCallback" => "RejectMismatch",
-                    "ExpectedResult" => "ServerFail",
-                    "ServerAlert" => "UnrecognizedName"},
+        server => {
+            extra => {
+                "ServerNameCallback" => "RejectMismatch",
+            },
+        },
+        client => {
+            extra => {
+                "ServerName" => "invalid",
+            },
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail",
+            "ExpectedServerAlert" => "UnrecognizedName"
+        },
     },
 );
