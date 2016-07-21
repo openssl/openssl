@@ -1045,7 +1045,7 @@ void SSL_free(SSL *s)
 
 void SSL_set_rbio(SSL *s, BIO *rbio)
 {
-    if (s->rbio != rbio)
+    if (s->rbio != rbio && s->rbio != s->wbio)
         BIO_free_all(s->rbio);
     s->rbio = rbio;
 }
