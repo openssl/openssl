@@ -503,9 +503,9 @@ static int execute_test_ssl_bio(SSL_BIO_TEST_FIXTURE fix)
             goto end;
         }
         if (fix.change_bio == CHANGE_RBIO)
-            SSL_set_rbio(ssl, membio2);
+            SSL_set0_rbio(ssl, membio2);
         else
-            SSL_set_wbio(ssl, membio2);
+            SSL_set0_wbio(ssl, membio2);
     }
     ssl = NULL;
 

@@ -979,8 +979,7 @@ void SSL_free(SSL *s)
 
     ssl_free_wbio_buffer(s);
 
-    if (s->wbio != s->rbio)
-        BIO_free_all(s->wbio);
+    BIO_free_all(s->wbio);
     BIO_free_all(s->rbio);
 
     BUF_MEM_free(s->init_buf);
@@ -1043,14 +1042,13 @@ void SSL_free(SSL *s)
     OPENSSL_free(s);
 }
 
-void SSL_set_rbio(SSL *s, BIO *rbio)
+void SSL_set0_rbio(SSL *s, BIO *rbio)
 {
-    if (s->rbio != rbio && s->rbio != s->wbio)
-        BIO_free_all(s->rbio);
+    BIO_free_all(s->rbio);
     s->rbio = rbio;
 }
 
-void SSL_set_wbio(SSL *s, BIO *wbio)
+void SSL_set0_wbio(SSL *s, BIO *wbio)
 {
     /*
      * If the output buffering BIO is still in place, remove it
@@ -1058,8 +1056,7 @@ void SSL_set_wbio(SSL *s, BIO *wbio)
     if (s->bbio != NULL)
         s->wbio = BIO_pop(s->wbio);
 
-    if (s->wbio != wbio && s->rbio != s->wbio)
-        BIO_free_all(s->wbio);
+    BIO_free_all(s->wbio);
     s->wbio = wbio;
 
     /* Re-attach |bbio| to the new |wbio|. */
@@ -1069,8 +1066,42 @@ void SSL_set_wbio(SSL *s, BIO *wbio)
 
 void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
 {
-    SSL_set_wbio(s, wbio);
-    SSL_set_rbio(s, rbio);
+    /*
+     * For historical reasons, this function has many different cases in
+     * ownership handling.
+     */
+
+    /* If nothing has changed, do nothing */
+    if (rbio == SSL_get_rbio(s) && wbio == SSL_get_wbio(s))
+        return;
+
+    /*
+     * If the two arguments are equal then one fewer reference is granted by the
+     * caller than we want to take
+     */
+    if (rbio != NULL && rbio == wbio)
+        BIO_up_ref(rbio);
+
+    /*
+     * If only the wbio is changed only adopt one reference.
+     */
+    if (rbio == SSL_get_rbio(s)) {
+        SSL_set0_wbio(s, wbio);
+        return;
+    }
+    /*
+     * There is an asymmetry here for historical reasons. If only the rbio is
+     * changed AND the rbio and wbio were originally different, then we only
+     * adopt one reference.
+     */
+    if (wbio == SSL_get_wbio(s) && SSL_get_rbio(s) != SSL_get_wbio(s)) {
+        SSL_set0_rbio(s, rbio);
+        return;
+    }
+
+    /* Otherwise, adopt both references. */
+    SSL_set0_rbio(s, rbio);
+    SSL_set0_wbio(s, wbio);
 }
 
 BIO *SSL_get_rbio(const SSL *s)
@@ -1151,9 +1182,10 @@ int SSL_set_wfd(SSL *s, int fd)
             return 0;
         }
         BIO_set_fd(bio, fd, BIO_NOCLOSE);
-        SSL_set_wbio(s, bio);
+        SSL_set0_wbio(s, bio);
     } else {
-        SSL_set_wbio(s, rbio);
+        BIO_up_ref(rbio);
+        SSL_set0_wbio(s, rbio);
     }
     return 1;
 }
@@ -1171,9 +1203,10 @@ int SSL_set_rfd(SSL *s, int fd)
             return 0;
         }
         BIO_set_fd(bio, fd, BIO_NOCLOSE);
-        SSL_set_rbio(s, bio);
+        SSL_set0_rbio(s, bio);
     } else {
-        SSL_set_rbio(s, wbio);
+        BIO_up_ref(wbio);
+        SSL_set0_rbio(s, wbio);
     }
 
     return 1;
@@ -3141,8 +3174,10 @@ SSL *SSL_dup(SSL *s)
         if (s->wbio != s->rbio) {
             if (!BIO_dup_state(s->wbio, (char *)&ret->wbio))
                 goto err;
-        } else
+        } else {
+            BIO_up_ref(ret->rbio);
             ret->wbio = ret->rbio;
+        }
     }
 
     ret->server = s->server;

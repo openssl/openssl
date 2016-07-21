@@ -156,7 +156,7 @@ SSL_CTX_set_tmp_dh_callback             156	1_1_0	EXIST::FUNCTION:DH
 SSL_CTX_get_default_passwd_cb           157	1_1_0	EXIST::FUNCTION:
 TLSv1_server_method                     158	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_METHOD
 DTLS_server_method                      159	1_1_0	EXIST::FUNCTION:
-SSL_set_rbio                            160	1_1_0	EXIST::FUNCTION:
+SSL_set0_rbio                           160	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set_options                     161	1_1_0	EXIST::FUNCTION:
 SSL_set_msg_callback                    162	1_1_0	EXIST::FUNCTION:
 SSL_CONF_CTX_free                       163	1_1_0	EXIST::FUNCTION:
@@ -236,7 +236,7 @@ DTLSv1_server_method                    236	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1
 SSL_set_fd                              237	1_1_0	EXIST::FUNCTION:SOCK
 SSL_use_certificate                     238	1_1_0	EXIST::FUNCTION:
 DTLSv1_method                           239	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DTLS1_METHOD
-SSL_set_wbio                            240	1_1_0	EXIST::FUNCTION:
+SSL_set0_wbio                           240	1_1_0	EXIST::FUNCTION:
 SSL_read                                241	1_1_0	EXIST::FUNCTION:
 SSL_CTX_get_options                     242	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set_ssl_version                 243	1_1_0	EXIST::FUNCTION:
