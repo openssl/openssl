@@ -2,20 +2,26 @@
 ssl_conf = {-$testname-}-ssl
 
 [{-$testname-}-ssl]
-server = {-$testname-}-server{-
+server = {-$testname-}-server
+client = {-$testname-}-client{-
     # The following sections are optional.
     $OUT = "";
     if (%server2) {
         $OUT .= "\nserver2 = $testname-server2";
+    } elsif ($reuse_server2) {
+        $OUT .= "\nserver2 = $testname-server";
     }
     if (%resume_server) {
         $OUT .= "\nresume-server = $testname-resume-server";
+    } elsif ($reuse_resume_server) {
+        $OUT .= "\nresume-server = $testname-server";
     }
     if (%resume_client) {
         $OUT .= "\nresume-client = $testname-resume-client";
+    } elsif ($reuse_resume_client) {
+        $OUT .= "\nresume-client = $testname-client";
     }
 -}
-client = {-$testname-}-client
 
 [{-$testname-}-server]
 {-
