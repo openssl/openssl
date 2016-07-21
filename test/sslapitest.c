@@ -301,7 +301,8 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
     return testresult;
 }
 
-static int test_session_with_only_int_cache(void) {
+static int test_session_with_only_int_cache(void)
+{
     SETUP_TEST_FIXTURE(SSL_SESSION_TEST_FIXTURE, ssl_session_set_up);
 
     fixture.use_ext_cache = 0;
@@ -309,7 +310,8 @@ static int test_session_with_only_int_cache(void) {
     EXECUTE_TEST(execute_test_session, ssl_session_tear_down);
 }
 
-static int test_session_with_only_ext_cache(void) {
+static int test_session_with_only_ext_cache(void)
+{
     SETUP_TEST_FIXTURE(SSL_SESSION_TEST_FIXTURE, ssl_session_set_up);
 
     fixture.use_int_cache = 0;
@@ -317,10 +319,126 @@ static int test_session_with_only_ext_cache(void) {
     EXECUTE_TEST(execute_test_session, ssl_session_tear_down);
 }
 
-static int test_session_with_both_cache(void) {
+static int test_session_with_both_cache(void)
+{
     SETUP_TEST_FIXTURE(SSL_SESSION_TEST_FIXTURE, ssl_session_set_up);
 
     EXECUTE_TEST(execute_test_session, ssl_session_tear_down);
+}
+
+#define USE_NULL    0
+#define USE_BIO_1   1
+#define USE_BIO_2   2
+
+#define TOTAL_SSL_SET_BIO_TESTS (3 * 3 * 3 * 3)
+
+static void setupbio(BIO **res, BIO *bio1, BIO *bio2, int type)
+{
+    switch (type) {
+    case USE_NULL:
+        *res = NULL;
+        break;
+    case USE_BIO_1:
+        *res = bio1;
+        break;
+    case USE_BIO_2:
+        *res = bio2;
+        break;
+    }
+}
+
+static int test_ssl_set_bio(int idx)
+{
+    SSL_CTX *ctx = SSL_CTX_new(TLS_method());
+    BIO *bio1 = NULL;
+    BIO *bio2 = NULL;
+    BIO *irbio, *iwbio, *nrbio, *nwbio;
+    SSL *ssl = NULL;
+    int initrbio, initwbio, newrbio, newwbio;
+    int testresult = 0;
+
+    if (ctx == NULL) {
+        printf("Failed to allocate SSL_CTX\n");
+        goto end;
+    }
+
+    ssl = SSL_new(ctx);
+    if (ssl == NULL) {
+        printf("Failed to allocate SSL object\n");
+        goto end;
+    }
+
+    initrbio = idx % 3;
+    idx /= 3;
+    initwbio = idx % 3;
+    idx /= 3;
+    newrbio = idx % 3;
+    idx /= 3;
+    newwbio = idx;
+    OPENSSL_assert(newwbio <= 2);
+
+    if (initrbio == USE_BIO_1 || initwbio == USE_BIO_1 || newrbio == USE_BIO_1
+            || newwbio == USE_BIO_1) {
+        bio1 = BIO_new(BIO_s_mem());
+        if (bio1 == NULL) {
+            printf("Failed to allocate bio1\n");
+            goto end;
+        }
+    }
+
+    if (initrbio == USE_BIO_2 || initwbio == USE_BIO_2 || newrbio == USE_BIO_2
+            || newwbio == USE_BIO_2) {
+        bio2 = BIO_new(BIO_s_mem());
+        if (bio2 == NULL) {
+            printf("Failed to allocate bio2\n");
+            goto end;
+        }
+    }
+
+    setupbio(&irbio, bio1, bio2, initrbio);
+    setupbio(&iwbio, bio1, bio2, initwbio);
+
+    /*
+     * We want to maintain our own refs to these BIO, so do an up ref for each
+     * BIO that will have ownersip transferred in the SSL_set_bio() call
+     */
+    if (irbio != NULL)
+        BIO_up_ref(irbio);
+    if (iwbio != NULL && iwbio != irbio)
+        BIO_up_ref(iwbio);
+
+    SSL_set_bio(ssl, irbio, iwbio);
+
+    setupbio(&nrbio, bio1, bio2, newrbio);
+    setupbio(&nwbio, bio1, bio2, newwbio);
+
+    /*
+     * We will (maybe) transfer ownership again so do more up refs.
+     * SSL_set_bio() has some really complicated ownership rules where BIOs have
+     * already been set!
+     */
+    if (nrbio != NULL && nrbio != irbio && (nwbio != iwbio || nrbio != nwbio))
+        BIO_up_ref(nrbio);
+    if (nwbio != NULL && nwbio != nrbio && (nwbio != iwbio || (nwbio == iwbio && irbio == iwbio)))
+        BIO_up_ref(nwbio);
+
+    SSL_set_bio(ssl, nrbio, nwbio);
+
+    testresult = 1;
+
+ end:
+    SSL_free(ssl);
+    BIO_free(bio1);
+    BIO_free(bio2);
+    /*
+     * This test is checking that the ref counting for SSL_set_bio is correct.
+     * If we get here and we did too many frees then we will fail in the above
+     * functions. If we haven't done enough then this will only be detected in
+     * a crypto-mdebug build
+     */
+    SSL_CTX_free(ctx);
+
+    return testresult;
 }
 
 int main(int argc, char *argv[])
@@ -345,6 +463,7 @@ int main(int argc, char *argv[])
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
+    ADD_ALL_TESTS(test_ssl_set_bio, TOTAL_SSL_SET_BIO_TESTS);
 
     testresult = run_tests(argv[0]);
 
