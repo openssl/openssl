@@ -522,9 +522,13 @@ int pkcs12_main(int argc, char **argv)
 
     if ((options & INFO) && PKCS12_mac_present(p12)) {
         ASN1_INTEGER *tmaciter;
-
-        PKCS12_get0_mac(NULL, NULL, NULL, &tmaciter, p12);
-        BIO_printf(bio_err, "MAC Iteration %ld\n",
+        X509_ALGOR *macalgid;
+        ASN1_OBJECT *macobj;
+        PKCS12_get0_mac(NULL, &macalgid, NULL, &tmaciter, p12);
+        X509_ALGOR_get0(&macobj, NULL, NULL, macalgid);
+        BIO_puts(bio_err, "MAC:");
+        i2a_ASN1_OBJECT(bio_err, macobj);
+        BIO_printf(bio_err, " Iteration %ld\n",
                    tmaciter  != NULL ? ASN1_INTEGER_get(tmaciter) : 1L);
     }
     if (macver) {
