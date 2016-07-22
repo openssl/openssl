@@ -1465,9 +1465,9 @@ int ssl3_get_client_hello(SSL *s)
 
     /* Handles TLS extensions that we couldn't check earlier */
     if (s->version >= SSL3_VERSION) {
-        if (ssl_check_clienthello_tlsext_late(s) <= 0) {
+        if (!ssl_check_clienthello_tlsext_late(s, &al)) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
-            goto err;
+            goto f_err;
         }
     }
 

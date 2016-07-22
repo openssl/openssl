@@ -2068,11 +2068,10 @@ static int tls1_alpn_handle_client_hello(SSL *s, const unsigned char *data,
 
 /*
  * Process the ALPN extension in a ClientHello.
- * ret: a pointer to the TLSEXT return value: SSL_TLSEXT_ERR_*
  * al: a pointer to the alert value to send in the event of a failure.
- * returns 1 on success, 0 on failure: al/ret set only on failure
+ * returns 1 on success, 0 on failure: al set only on failure
  */
-static int tls1_alpn_handle_client_hello_late(SSL *s, int *ret, int *al)
+static int tls1_alpn_handle_client_hello_late(SSL *s, int *al)
 {
     const unsigned char *selected = NULL;
     unsigned char selected_len = 0;
@@ -2088,7 +2087,6 @@ static int tls1_alpn_handle_client_hello_late(SSL *s, int *ret, int *al)
             s->s3->alpn_selected = OPENSSL_malloc(selected_len);
             if (s->s3->alpn_selected == NULL) {
                 *al = SSL_AD_INTERNAL_ERROR;
-                *ret = SSL_TLSEXT_ERR_ALERT_FATAL;
                 return 0;
             }
             memcpy(s->s3->alpn_selected, selected, selected_len);
@@ -3166,10 +3164,12 @@ int tls1_set_server_sigalgs(SSL *s)
     return 0;
 }
 
-int ssl_check_clienthello_tlsext_late(SSL *s)
+/*
+ * Upon success, returns 1.
+ * Upon failure, returns 0 and sets |al| to the appropriate fatal alert.
+ */
+int ssl_check_clienthello_tlsext_late(SSL *s, int *al)
 {
-    int ret = SSL_TLSEXT_ERR_OK;
-    int al;
 
     /*
      * If status request then ask callback what to do. Note: this must be
@@ -3178,58 +3178,41 @@ int ssl_check_clienthello_tlsext_late(SSL *s)
      * influence which certificate is sent
      */
     if ((s->tlsext_status_type != -1) && s->ctx && s->ctx->tlsext_status_cb) {
-        int r;
+        int ret;
         CERT_PKEY *certpkey;
         certpkey = ssl_get_server_send_pkey(s);
         /* If no certificate can't return certificate status */
-        if (certpkey == NULL) {
-            s->tlsext_status_expected = 0;
-            return 1;
-        }
-        /*
-         * Set current certificate to one we will use so SSL_get_certificate
-         * et al can pick it up.
-         */
-        s->cert->key = certpkey;
-        r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
-        switch (r) {
-            /* We don't want to send a status request response */
-        case SSL_TLSEXT_ERR_NOACK:
-            s->tlsext_status_expected = 0;
-            break;
-            /* status request response should be sent */
-        case SSL_TLSEXT_ERR_OK:
-            if (s->tlsext_ocsp_resp)
-                s->tlsext_status_expected = 1;
-            else
+        if (certpkey != NULL) {
+            /*
+             * Set current certificate to one we will use so SSL_get_certificate
+             * et al can pick it up.
+             */
+            s->cert->key = certpkey;
+            ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+            switch (ret) {
+                /* We don't want to send a status request response */
+            case SSL_TLSEXT_ERR_NOACK:
                 s->tlsext_status_expected = 0;
-            break;
-            /* something bad happened */
-        case SSL_TLSEXT_ERR_ALERT_FATAL:
-            ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-            al = SSL_AD_INTERNAL_ERROR;
-            goto err;
+                break;
+                /* status request response should be sent */
+            case SSL_TLSEXT_ERR_OK:
+                if (s->tlsext_ocsp_resp)
+                    s->tlsext_status_expected = 1;
+                break;
+                /* something bad happened */
+            case SSL_TLSEXT_ERR_ALERT_FATAL:
+            default:
+                *al = SSL_AD_INTERNAL_ERROR;
+                return 0;
+            }
         }
-    } else
-        s->tlsext_status_expected = 0;
-
-    if (!tls1_alpn_handle_client_hello_late(s, &ret, &al)) {
-        goto err;
     }
 
- err:
-    switch (ret) {
-    case SSL_TLSEXT_ERR_ALERT_FATAL:
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
-        return -1;
-
-    case SSL_TLSEXT_ERR_ALERT_WARNING:
-        ssl3_send_alert(s, SSL3_AL_WARNING, al);
-        return 1;
-
-    default:
-        return 1;
+    if (!tls1_alpn_handle_client_hello_late(s, al)) {
+        return 0;
     }
+
+    return 1;
 }
 
 int ssl_check_serverhello_tlsext(SSL *s)
