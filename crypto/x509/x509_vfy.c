@@ -1122,13 +1122,21 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
         crl = sk_X509_CRL_value(crls, i);
         reasons = *preasons;
         crl_score = get_crl_score(ctx, &crl_issuer, &reasons, crl, x);
-
-        if (crl_score > best_score) {
-            best_crl = crl;
-            best_crl_issuer = crl_issuer;
-            best_score = crl_score;
-            best_reasons = reasons;
+        if (crl_score < best_score)
+            continue;
+        /* If current CRL is equivalent use it if it is newer */
+        if (crl_score == best_score) {
+            int day, sec;
+            if (ASN1_TIME_diff(&day, &sec, X509_CRL_get_lastUpdate(best_crl),
+                               X509_CRL_get_lastUpdate(crl)) == 0)
+                continue;
+            if (day < 0 || sec <= 0)
+                continue;
         }
+        best_crl = crl;
+        best_crl_issuer = crl_issuer;
+        best_score = crl_score;
+        best_reasons = reasons;
     }
 
     if (best_crl) {
