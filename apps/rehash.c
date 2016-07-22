@@ -366,6 +366,7 @@ static int do_dir(const char *dirname, enum Hash h)
                                    strerror(errno));
                         errs++;
                     }
+                    bit_set(idmask, nextid);
                 } else if (remove_links) {
                     /* Link to be deleted */
                     snprintf(buf, buflen, "%s%s%n%08x.%s%d",
