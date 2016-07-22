@@ -160,12 +160,18 @@ int ssl3_get_record(SSL *s)
 
             /*
              * Check whether this is a regular record or an SSLv2 style record.
-             * The latter is only used in an initial ClientHello for old
-             * clients. We check s->read_hash and s->enc_read_ctx to ensure this
-             * does not apply during renegotiation
+             * The latter can only be used in the first record of an initial
+             * ClientHello for old clients. Initial ClientHello means
+             * s->first_packet is set and s->server is true. The first record
+             * means we've not received any data so far (s->init_num == 0) and
+             * have had no empty records. We check s->read_hash and
+             * s->enc_read_ctx to ensure this does not apply during
+             * renegotiation.
              */
-            if (s->first_packet && s->server && !s->read_hash
-                    && !s->enc_read_ctx
+            if (s->first_packet && s->server
+                    && s->init_num == 0
+                    && RECORD_LAYER_get_empty_record_count(&s->rlayer) == 0
+                    && s->read_hash == NULL && s->enc_read_ctx == NULL
                     && (p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
                 /*
                  *  SSLv2 style record
