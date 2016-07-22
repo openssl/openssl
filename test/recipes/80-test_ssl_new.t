@@ -26,9 +26,8 @@ map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_) } @conf_srcs;
 map { s/\.in// } @conf_files;
 
-# 02-protocol-version.conf test and 05-dtls-protocol-version.conf results
-# depend on the configuration of enabled protocols. We only verify generated
-# sources in the default configuration.
+# Some test results depend on the configuration of enabled protocols. We only
+# verify generated sources in the default configuration.
 my $is_default_tls = (disabled("ssl3") && !disabled("tls1") &&
                       !disabled("tls1_1") && !disabled("tls1_2"));
 
@@ -41,14 +40,14 @@ my $no_npn = disabled("nextprotoneg");
 my %conf_dependent_tests = (
   "02-protocol-version.conf" => !$is_default_tls,
   "04-client_auth.conf" => !$is_default_tls,
-  "05-dtls-protocol-version.conf" => !$is_default_dtls,
+  "07-dtls-protocol-version.conf" => !$is_default_dtls,
   "10-resumption.conf" => !$is_default_tls,
   "11-dtls_resumption.conf" => !$is_default_dtls,
 );
 
 # Default is $no_tls but some tests have different skip conditions.
 my %skip = (
-  "05-dtls-protocol-version.conf" => $no_dtls,
+  "07-dtls-protocol-version.conf" => $no_dtls,
   "08-npn.conf" => $no_tls || $no_npn,
   "11-dtls_resumption.conf" => $no_dtls,
 );
