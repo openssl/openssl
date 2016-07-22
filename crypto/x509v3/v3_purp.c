@@ -528,6 +528,11 @@ static int check_ca(const X509 *x)
     }
 }
 
+void X509_set_proxy_flag(X509 *x)
+{
+    x->ex_flags |= EXFLAG_PROXY;
+}
+
 int X509_check_ca(X509 *x)
 {
     if (!(x->ex_flags & EXFLAG_SET)) {
