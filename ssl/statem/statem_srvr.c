@@ -2269,13 +2269,8 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt, int *al)
     EVP_PKEY *ckey = NULL;
     int ret = 0;
 
-    if (!PACKET_get_net_2(pkt, &i)) {
+    if (!PACKET_get_net_2(pkt, &i) || PACKET_remaining(pkt) != i) {
         *al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_TLS_PROCESS_CKE_DHE,
-               SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
-        goto err;
-    }
-    if (PACKET_remaining(pkt) != i) {
         SSLerr(SSL_F_TLS_PROCESS_CKE_DHE,
                SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
         goto err;
