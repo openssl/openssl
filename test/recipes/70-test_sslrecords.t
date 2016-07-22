@@ -23,8 +23,8 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLS enabled"
-    if alldisabled(available_protocols("tls"));
+plan skip_all => "$test_name needs TLSv1.2 enabled"
+    if disabled("tls1_2");
 
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
