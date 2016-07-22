@@ -2451,7 +2451,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
 
 static int tls_construct_cke_srp(SSL *s, unsigned char **p, int *len, int *al)
 {
-#ifndef OPENSSL_NO_SRT
+#ifndef OPENSSL_NO_SRP
     if (s->srp_ctx.A != NULL) {
         /* send off the data */
         *len = BN_num_bytes(s->srp_ctx.A);
