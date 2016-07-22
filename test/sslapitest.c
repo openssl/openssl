@@ -242,7 +242,7 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
         goto end;
     }
 
-#ifndef OPENSSL_NO_TLS1_1
+#if !defined(OPENSSL_NO_TLS1_1) && !defined(OPENSSL_NO_TLS1_2)
     /* Force a connection failure */
     SSL_CTX_set_max_proto_version(sctx, TLS1_1_VERSION);
     clientssl3 = SSL_new(cctx);

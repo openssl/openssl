@@ -49,7 +49,8 @@ my %conf_dependent_tests = (
 my %skip = (
   "07-dtls-protocol-version.conf" => $no_dtls,
   "08-npn.conf" => $no_tls || $no_npn,
-  "11-dtls_resumption.conf" => $no_dtls,
+  "10-resumption.conf" => disabled("tls1_1") || disabled("tls1_2"),
+  "11-dtls_resumption.conf" => disabled("dtls1") || disabled("dtls1_2"),
 );
 
 foreach my $conf (@conf_files) {
