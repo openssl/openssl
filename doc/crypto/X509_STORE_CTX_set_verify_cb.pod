@@ -16,6 +16,18 @@ X509_STORE_CTX_set_verify_cb - get and set verification callback
  void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
                                    X509_STORE_CTX_verify_cb verify_cb);
 
+ X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx);
+ X509_STORE_CTX_get_issuer_fn X509_STORE_CTX_get_get_issuer(X509_STORE_CTX *ctx);
+ X509_STORE_CTX_check_issued_fn X509_STORE_CTX_get_check_issued(X509_STORE_CTX *ctx);
+ X509_STORE_CTX_check_revocation_fn X509_STORE_CTX_get_check_revocation(X509_STORE_CTX *ctx);
+ X509_STORE_CTX_get_crl_fn X509_STORE_CTX_get_get_crl(X509_STORE_CTX *ctx);
+ X509_STORE_CTX_check_crl_fn X509_STORE_CTX_get_check_crl(X509_STORE_CTX *ctx);
+ X509_STORE_CTX_cert_crl_fn X509_STORE_CTX_get_cert_crl(X509_STORE_CTX *ctx);
+ X509_STORE_CTX_check_policy_fn X509_STORE_CTX_get_check_policy(X509_STORE_CTX *ctx);
+ X509_STORE_CTX_lookup_certs_fn X509_STORE_CTX_get_lookup_certs(X509_STORE_CTX *ctx);
+ X509_STORE_CTX_lookup_crls_fn X509_STORE_CTX_get_lookup_crls(X509_STORE_CTX *ctx);
+ X509_STORE_CTX_cleanup_fn X509_STORE_CTX_get_cleanup(X509_STORE_CTX *ctx);
+
 =head1 DESCRIPTION
 
 X509_STORE_CTX_set_verify_cb() sets the verification callback of B<ctx> to
@@ -29,7 +41,7 @@ However a verification callback is B<not> essential and the default operation
 is often sufficient.
 
 The B<ok> parameter to the callback indicates the value the callback should
-return to retain the default behaviour. If it is zero then and error condition
+return to retain the default behaviour. If it is zero then an error condition
 is indicated. If it is 1 then no error occurred. If the flag
 B<X509_V_FLAG_NOTIFY_POLICY> is set then B<ok> is set to 2 to indicate the
 policy checking is complete.
@@ -42,6 +54,16 @@ be passed to the callback via the B<ex_data> mechanism.
 
 X509_STORE_CTX_get_verify_cb() returns the value of the current callback
 for the specific B<ctx>.
+
+X509_STORE_CTX_get_verify(), X509_STORE_CTX_get_get_issuer(),
+X509_STORE_CTX_get_check_issued(), X509_STORE_CTX_get_check_revocation(),
+X509_STORE_CTX_get_get_crl(), X509_STORE_CTX_get_check_crl(),
+X509_STORE_CTX_get_cert_crl(), X509_STORE_CTX_get_check_policy(),
+X509_STORE_CTX_get_lookup_certs(), X509_STORE_CTX_get_lookup_crls()
+and X509_STORE_CTX_get_cleanup() return the function pointers cached
+from the corresponding B<X509_STORE>, please see
+L<X509_STORE_set_verify(3)> for more information.
+
 
 =head1 WARNING
 
@@ -160,6 +182,15 @@ B<ex_data>.
 L<X509_STORE_CTX_get_error(3)>
 L<X509_STORE_set_verify_cb_func(3)>
 L<X509_STORE_CTX_get_ex_new_index(3)>
+
+=head1 HISTORY
+
+X509_STORE_CTX_get_verify(), X509_STORE_CTX_get_get_issuer(),
+X509_STORE_CTX_get_check_issued(), X509_STORE_CTX_get_check_revocation(),
+X509_STORE_CTX_get_get_crl(), X509_STORE_CTX_get_check_crl(),
+X509_STORE_CTX_get_cert_crl(), X509_STORE_CTX_get_check_policy(),
+X509_STORE_CTX_get_lookup_certs(), X509_STORE_CTX_get_lookup_crls()
+and X509_STORE_CTX_get_cleanup() were addded in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
