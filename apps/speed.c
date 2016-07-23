@@ -371,7 +371,8 @@ OPTIONS speed_options[] = {
     {"decrypt", OPT_DECRYPT, '-',
      "Time decryption instead of encryption (only EVP)"},
     {"mr", OPT_MR, '-', "Produce machine readable output"},
-    {"mb", OPT_MB, '-'},
+    {"mb", OPT_MB, '-', 
+        "Enable (tls1.1) multi-block mode on evp_cipher requested with -evp"},
     {"misalign", OPT_MISALIGN, 'n', "Amount to mis-align buffers"},
     {"elapsed", OPT_ELAPSED, '-',
      "Measure time in real time instead of CPU user time"},
@@ -1379,7 +1380,7 @@ int speed_main(int argc, char **argv)
                 evp_md = EVP_get_digestbyname(opt_arg());
             if (evp_cipher == NULL && evp_md == NULL) {
                 BIO_printf(bio_err,
-                           "%s: %s  an unknown cipher or digest\n",
+                           "%s: %s is an unknown cipher or digest\n",
                            prog, opt_arg());
                 goto end;
             }
