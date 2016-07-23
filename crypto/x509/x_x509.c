@@ -43,6 +43,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_NEW_POST:
         ret->ex_flags = 0;
         ret->ex_pathlen = -1;
+        ret->ex_pcpathlen = -1;
         ret->skid = NULL;
         ret->akid = NULL;
 #ifndef OPENSSL_NO_RFC3779
