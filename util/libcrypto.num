@@ -4152,3 +4152,5 @@ HMAC_CTX_get_md                         4096	1_1_0	EXIST::FUNCTION:
 NAME_CONSTRAINTS_check_CN               4097	1_1_0	EXIST::FUNCTION:
 OCSP_resp_get0_id                       4098	1_1_0	EXIST::FUNCTION:OCSP
 OCSP_resp_get0_certs                    4099	1_1_0	EXIST::FUNCTION:OCSP
+X509_STORE_unlock                       4100	1_1_0	EXIST::FUNCTION:
+X509_STORE_lock                         4101	1_1_0	EXIST::FUNCTION:
