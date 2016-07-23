@@ -586,13 +586,13 @@ static OPT_PAIR ecdh_choices[] = {
 # define COND(d) (count < (d))
 # define COUNT(d) (d)
 #else
-# define COND(c) (run && count<0x7fffffff)
+# define COND(unused_cond) (run && count<0x7fffffff)
 # define COUNT(d) (count)
 #endif                         /* SIGALRM */
 
 static int testnum;
-static char *engine_id = NULL;
 
+static long c[ALGOR_NUM][SIZE_NUM];
 
 #ifndef OPENSSL_NO_MD2
 static int EVP_Digest_MD2_loop(void *args)
@@ -864,6 +864,7 @@ static int CRYPTO_gcm128_aad_loop(void *args)
     return count;
 }
 
+static long save_count = 0;
 static int decrypt = 0;
 static int EVP_Update_loop(void *args)
 {
@@ -871,15 +872,14 @@ static int EVP_Update_loop(void *args)
     unsigned char *buf = tempargs->buf;
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
     int outl, count;
+#ifndef SIGALRM
+    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
+#endif
     if (decrypt)
-        for (count = 0;
-                COND(save_count * 4 * lengths[0] / lengths[testnum]);
-                count++)
+        for (count = 0; COND(nb_iter); count++)
             EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
     else
-        for (count = 0;
-                COND(save_count * 4 * lengths[0] / lengths[testnum]);
-                count++)
+        for (count = 0; COND(nb_iter); count++)
             EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
     if (decrypt)
         EVP_DecryptFinal_ex(ctx, buf, &outl);
@@ -895,9 +895,12 @@ static int EVP_Digest_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char md[EVP_MAX_MD_SIZE];
     int count;
-    for (count = 0;
-            COND(save_count * 4 * lengths[0] / lengths[testnum]); count++) {
-        if (!EVP_Digest(buf, lengths[testnum], &(md[0]), NULL, evp_md, NULL))
+#ifndef SIGALRM
+    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
+#endif
+
+    for (count = 0; COND(nb_iter); count++) {
+        if (!EVP_Digest(buf, lengths[testnum], md, NULL, evp_md, NULL))
             return -1;
     }
     return count;
@@ -1038,6 +1041,8 @@ static int outlen;
 static void *(*kdf) (const void *in, size_t inlen, void *out,
         size_t *xoutlen);
 
+/* ******************************************************************** */
+static long ecdh_c[EC_NUM][2];
 static int ECDH_compute_key_loop(void *args)
 {
     loopargs_t *tempargs = (loopargs_t *)args;
@@ -1052,7 +1057,7 @@ static int ECDH_compute_key_loop(void *args)
     }
     return count;
 }
-#endif
+#endif      /* ndef OPENSSL_NO_EC */
 
 
 static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_t *loopargs)
@@ -1204,6 +1209,9 @@ int speed_main(int argc, char **argv)
     int async_init = 0;
     int loopargs_len = 0;
     char *prog;
+#ifndef OPENSSL_NO_ENGINE
+    const char *engine_id = NULL;
+#endif
     const EVP_CIPHER *evp_cipher = NULL;
     double d = 0.0;
     OPTION_CHOICE o;
@@ -1213,7 +1221,7 @@ int speed_main(int argc, char **argv)
 #endif
     int rsa_doit[RSA_NUM];
     int ret = 1, i, k, misalign = 0;
-    long c[ALGOR_NUM][SIZE_NUM], count = 0, save_count = 0;
+    long count = 0;
 #ifndef NO_FORK
     int multi = 0;
 #endif
@@ -1341,13 +1349,11 @@ int speed_main(int argc, char **argv)
     int secret_size_a, secret_size_b;
     int ecdh_checks = 1;
     int secret_idx = 0;
-    long ecdh_c[EC_NUM][2];
     int ecdh_doit[EC_NUM];
 #endif
 
     memset(results, 0, sizeof(results));
 
-    memset(c, 0, sizeof(c));
 #ifndef OPENSSL_NO_DES
     memset(DES_iv, 0, sizeof(DES_iv));
 #endif
@@ -1406,7 +1412,9 @@ int speed_main(int argc, char **argv)
              * initialised by each child process, not by the parent.
              * So store the name here and run setup_engine() later on.
              */
+#ifndef OPENSSL_NO_ENGINE
             engine_id = opt_arg();
+#endif
             break;
         case OPT_MULTI:
 #ifndef NO_FORK
