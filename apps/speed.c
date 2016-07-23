@@ -586,6 +586,7 @@ static OPT_PAIR ecdh_choices[] = {
 
 static int testnum;
 
+/* Nb of iterations to do per algorithm and key-size */
 static long c[ALGOR_NUM][SIZE_NUM];
 
 #ifndef OPENSSL_NO_MD2
@@ -905,7 +906,7 @@ static int EVP_Digest_loop(void *args)
 }
 
 #ifndef OPENSSL_NO_RSA
-static long rsa_c[RSA_NUM][2];
+static long rsa_c[RSA_NUM][2];  /* # RSA iteration test */
 
 static int RSA_sign_loop(void *args)
 {
@@ -1730,11 +1731,11 @@ int speed_main(int argc, char **argv)
     for (i = 1; i < RSA_NUM; i++) {
         rsa_c[i][0] = rsa_c[i - 1][0] / 8;
         rsa_c[i][1] = rsa_c[i - 1][1] / 4;
-        if ((rsa_doit[i] <= 1) && (rsa_c[i][0] == 0))
+        if (rsa_doit[i] <= 1 && rsa_c[i][0] == 0)
             rsa_doit[i] = 0;
         else {
             if (rsa_c[i][0] == 0) {
-                rsa_c[i][0] = 1;
+                rsa_c[i][0] = 1;            /* Set minimum iteration Nb to 1. */
                 rsa_c[i][1] = 20;
             }
         }
@@ -1747,11 +1748,11 @@ int speed_main(int argc, char **argv)
     for (i = 1; i < DSA_NUM; i++) {
         dsa_c[i][0] = dsa_c[i - 1][0] / 4;
         dsa_c[i][1] = dsa_c[i - 1][1] / 4;
-        if ((dsa_doit[i] <= 1) && (dsa_c[i][0] == 0))
+        if (dsa_doit[i] <= 1 && dsa_c[i][0] == 0)
             dsa_doit[i] = 0;
         else {
-            if (dsa_c[i] == 0) {    /* Always false */
-                dsa_c[i][0] = 1;
+            if (dsa_c[i][0] == 0) {
+                dsa_c[i][0] = 1;            /* Set minimum iteration Nb to 1. */
                 dsa_c[i][1] = 1;
             }
         }
@@ -1764,10 +1765,10 @@ int speed_main(int argc, char **argv)
     for (i = R_EC_P192; i <= R_EC_P521; i++) {
         ecdsa_c[i][0] = ecdsa_c[i - 1][0] / 2;
         ecdsa_c[i][1] = ecdsa_c[i - 1][1] / 2;
-        if ((ecdsa_doit[i] <= 1) && (ecdsa_c[i][0] == 0))
+        if (ecdsa_doit[i] <= 1 && ecdsa_c[i][0] == 0)
             ecdsa_doit[i] = 0;
         else {
-            if (ecdsa_c[i] == 0) {    /* Always false */
+            if (ecdsa_c[i][0] == 0) {
                 ecdsa_c[i][0] = 1;
                 ecdsa_c[i][1] = 1;
             }
@@ -1778,10 +1779,10 @@ int speed_main(int argc, char **argv)
     for (i = R_EC_K233; i <= R_EC_K571; i++) {
         ecdsa_c[i][0] = ecdsa_c[i - 1][0] / 2;
         ecdsa_c[i][1] = ecdsa_c[i - 1][1] / 2;
-        if ((ecdsa_doit[i] <= 1) && (ecdsa_c[i][0] == 0))
+        if (ecdsa_doit[i] <= 1 && ecdsa_c[i][0] == 0)
             ecdsa_doit[i] = 0;
         else {
-            if (ecdsa_c[i] == 0) {    /* Always false */
+            if (ecdsa_c[i][0] == 0) {
                 ecdsa_c[i][0] = 1;
                 ecdsa_c[i][1] = 1;
             }
@@ -1792,10 +1793,10 @@ int speed_main(int argc, char **argv)
     for (i = R_EC_B233; i <= R_EC_B571; i++) {
         ecdsa_c[i][0] = ecdsa_c[i - 1][0] / 2;
         ecdsa_c[i][1] = ecdsa_c[i - 1][1] / 2;
-        if ((ecdsa_doit[i] <= 1) && (ecdsa_c[i][0] == 0))
+        if (ecdsa_doit[i] <= 1 && ecdsa_c[i][0] == 0)
             ecdsa_doit[i] = 0;
         else {
-            if (ecdsa_c[i] == 0) {    /* Always false */
+            if (ecdsa_c[i][0] == 0) {
                 ecdsa_c[i][0] = 1;
                 ecdsa_c[i][1] = 1;
             }
@@ -1805,10 +1806,10 @@ int speed_main(int argc, char **argv)
     ecdh_c[R_EC_P160][0] = count / 1000;
     for (i = R_EC_P192; i <= R_EC_P521; i++) {
         ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-        if ((ecdh_doit[i] <= 1) && (ecdh_c[i][0] == 0))
+        if (ecdh_doit[i] <= 1 && ecdh_c[i][0] == 0)
             ecdh_doit[i] = 0;
         else {
-            if (ecdh_c[i] == 0) {   /* always false */
+            if (ecdh_c[i][0] == 0) {
                 ecdh_c[i][0] = 1;
             }
         }
@@ -1816,10 +1817,10 @@ int speed_main(int argc, char **argv)
     ecdh_c[R_EC_K163][0] = count / 1000;
     for (i = R_EC_K233; i <= R_EC_K571; i++) {
         ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-        if ((ecdh_doit[i] <= 1) && (ecdh_c[i][0] == 0))
+        if (ecdh_doit[i] <= 1 && ecdh_c[i][0] == 0)
             ecdh_doit[i] = 0;
         else {
-            if (ecdh_c[i] == 0) {   /* always false */
+            if (ecdh_c[i][0] == 0) {
                 ecdh_c[i][0] = 1;
             }
         }
@@ -1827,10 +1828,10 @@ int speed_main(int argc, char **argv)
     ecdh_c[R_EC_B163][0] = count / 1000;
     for (i = R_EC_B233; i <= R_EC_B571; i++) {
         ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-        if ((ecdh_doit[i] <= 1) && (ecdh_c[i][0] == 0))
+        if (ecdh_doit[i] <= 1 && ecdh_c[i][0] == 0)
             ecdh_doit[i] = 0;
         else {
-            if (ecdh_c[i] == 0) { /* always false */
+            if (ecdh_c[i][0] == 0) {
                 ecdh_c[i][0] = 1;
             }
         }
