@@ -2,10 +2,10 @@
 
 =head1 NAME
 
-EVP_ENCODE_CTX_new, EVP_ENCODE_CTX_free, EVP_ENCODE_CTX_num, EVP_EncodeInit,
-EVP_EncodeUpdate, EVP_EncodeFinal, EVP_EncodeBlock, EVP_DecodeInit,
-EVP_DecodeUpdate, EVP_DecodeFinal, EVP_DecodeBlock - EVP base 64 encode/decode
-routines
+EVP_ENCODE_CTX_new, EVP_ENCODE_CTX_free, EVP_ENCODE_CTX_copy,
+EVP_ENCODE_CTX_num, EVP_EncodeInit, EVP_EncodeUpdate, EVP_EncodeFinal,
+EVP_EncodeBlock, EVP_DecodeInit, EVP_DecodeUpdate, EVP_DecodeFinal,
+EVP_DecodeBlock - EVP base 64 encode/decode routines
 
 =head1 SYNOPSIS
 
@@ -13,6 +13,7 @@ routines
 
  EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
  void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
+ int EVP_ENCODE_CTX_copy(EVP_ENCODE_CTX *dctx, EVP_ENCODE_CTX *sctx);
  int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx);
  void EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
  int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
@@ -75,6 +76,9 @@ data will be stored in B<out> and the length of the data written will be stored
 in B<*outl>. It is the caller's responsibility to ensure that B<out> is
 sufficiently large to accommodate the output data which will never be more than
 65 bytes plus an additional NUL terminator (i.e. 66 bytes in total).
+
+EVP_ENCODE_CTX_copy() can be used to copy a context B<sctx> to a context
+B<dctx>. B<dctx> must be initialized before calling this function.
 
 EVP_ENCODE_CTX_num() will return the number of as yet unprocessed bytes still to
 be encoded or decoded that are pending in the B<ctx> object.
