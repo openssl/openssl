@@ -285,10 +285,11 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     }
 
     for (i = 0; i < mx; i++) {
-        ptr = CRYPTO_get_ex_data(from, i);
-        if (storage[i] && storage[i]->dup_func)
+        if (storage[i] && storage[i]->dup_func) {
+            ptr = CRYPTO_get_ex_data(from, i);
             storage[i]->dup_func(to, from, &ptr, i,
                                  storage[i]->argl, storage[i]->argp);
+        }
         CRYPTO_set_ex_data(to, i, ptr);
     }
     if (storage != stack)
