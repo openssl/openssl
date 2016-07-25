@@ -423,23 +423,21 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
             else
                 packlen *= 4;
 
-            wb->buf = OPENSSL_malloc(packlen);
-            if (wb->buf == NULL) {
+            if (!ssl3_setup_write_buffer(s, 1, packlen)) {
                 SSLerr(SSL_F_SSL3_WRITE_BYTES, ERR_R_MALLOC_FAILURE);
                 return -1;
             }
-            wb->len = packlen;
         } else if (tot == len) { /* done? */
-            OPENSSL_free(wb->buf); /* free jumbo buffer */
-            wb->buf = NULL;
+            /* free jumbo buffer */
+            ssl3_release_write_buffer(s);
             return tot;
         }
 
         n = (len - tot);
         for (;;) {
             if (n < 4 * max_send_fragment) {
-                OPENSSL_free(wb->buf); /* free jumbo buffer */
-                wb->buf = NULL;
+                /* free jumbo buffer */
+                ssl3_release_write_buffer(s);
                 break;
             }
 
@@ -471,8 +469,8 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
                                           sizeof(mb_param), &mb_param);
 
             if (packlen <= 0 || packlen > (int)wb->len) { /* never happens */
-                OPENSSL_free(wb->buf); /* free jumbo buffer */
-                wb->buf = NULL;
+                /* free jumbo buffer */
+                ssl3_release_write_buffer(s);
                 break;
             }
 
@@ -502,15 +500,15 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
             i = ssl3_write_pending(s, type, &buf[tot], nw);
             if (i <= 0) {
                 if (i < 0 && (!s->wbio || !BIO_should_retry(s->wbio))) {
-                    OPENSSL_free(wb->buf);
-                    wb->buf = NULL;
+                    /* free jumbo buffer */
+                    ssl3_release_write_buffer(s);
                 }
                 s->rlayer.wnum = tot;
                 return i;
             }
             if (i == (int)n) {
-                OPENSSL_free(wb->buf); /* free jumbo buffer */
-                wb->buf = NULL;
+                /* free jumbo buffer */
+                ssl3_release_write_buffer(s);
                 return tot + i;
             }
             n -= i;
@@ -650,7 +648,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     }
 
     if (s->rlayer.numwpipes < numpipes)
-        if (!ssl3_setup_write_buffer(s, numpipes))
+        if (!ssl3_setup_write_buffer(s, numpipes, 0))
             return -1;
 
     if (totlen == 0 && !create_empty_fragment)
