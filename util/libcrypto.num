@@ -4187,3 +4187,5 @@ X509_STORE_CTX_get_lookup_crls          4131	1_1_0	EXIST::FUNCTION:
 X509_STORE_get_verify                   4132	1_1_0	EXIST::FUNCTION:
 X509_STORE_unlock                       4133	1_1_0	EXIST::FUNCTION:
 X509_STORE_lock                         4134	1_1_0	EXIST::FUNCTION:
+X509_set_proxy_pathlen                  4135	1_1_0	EXIST::FUNCTION:
+X509_get_proxy_pathlen                  4136	1_1_0	EXIST::FUNCTION:
