@@ -164,28 +164,34 @@ You need the following ingredients:
 
 Here is some skeleton code you can fill in:
 
+  #include <string.h>
+  #include <openssl/x509.h>
+  #include <openssl/x509v3.h>
+
+  #define total_rights 25
+
   /* In this example, I will use a view of granted rights as a bit
      array, one bit for each possible right.  */
   typedef struct your_rights {
-    unsigned char rights[total_rights / 8];
+    unsigned char rights[(total_rights + 7) / 8];
   } YOUR_RIGHTS;
 
   /* The following procedure will create an index for the ex_data
      store in the X509 validation context the first time it's called.
      Subsequent calls will return the same index.  */
-  static int get_proxy_auth_ex_data_idx(void)
+  static int get_proxy_auth_ex_data_idx(X509_STORE_CTX *ctx)
   {
     static volatile int idx = -1;
     if (idx < 0)
       {
-        CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
+        X509_STORE_lock(X509_STORE_CTX_get0_store(ctx));
         if (idx < 0)
           {
             idx = X509_STORE_CTX_get_ex_new_index(0,
                                                   "for verify callback",
                                                   NULL,NULL,NULL);
           }
-        CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+        X509_STORE_unlock(X509_STORE_CTX_get0_store(ctx));
       }
     return idx;
   }
@@ -201,13 +207,13 @@ Here is some skeleton code you can fill in:
                     CAs, followed by the EE certificate, followed by
                     the possible proxy certificates.  */
       {
-        X509 *xs = ctx->current_cert;
+        X509 *xs = X509_STORE_CTX_get_current_cert(ctx);
 
-        if (xs->ex_flags & EXFLAG_PROXY)
+        if (X509_get_extension_flags(xs) & EXFLAG_PROXY)
           {
             YOUR_RIGHTS *rights =
               (YOUR_RIGHTS *)X509_STORE_CTX_get_ex_data(ctx,
-                get_proxy_auth_ex_data_idx());
+                get_proxy_auth_ex_data_idx(ctx));
             PROXY_CERT_INFO_EXTENSION *pci =
               X509_get_ext_d2i(xs, NID_proxyCertInfo, NULL, NULL);
 
@@ -256,13 +262,13 @@ Here is some skeleton code you can fill in:
               }
             PROXY_CERT_INFO_EXTENSION_free(pci);
           }
-        else if (!(xs->ex_flags & EXFLAG_CA))
+        else if (!(X509_get_extension_flags(xs) & EXFLAG_CA))
           {
             /* We have an EE certificate, let's use it to set default!
             */
             YOUR_RIGHTS *rights =
               (YOUR_RIGHTS *)X509_STORE_CTX_get_ex_data(ctx,
-                get_proxy_auth_ex_data_idx());
+                get_proxy_auth_ex_data_idx(ctx));
 
             /* The following procedure finds out what rights the owner
                of the current certificate has, and sets them in the
@@ -277,12 +283,13 @@ Here is some skeleton code you can fill in:
   static int my_X509_verify_cert(X509_STORE_CTX *ctx,
                                  YOUR_RIGHTS *needed_rights)
   {
-    int i;
-    int (*save_verify_cb)(int ok,X509_STORE_CTX *ctx) = ctx->verify_cb;
+    int ok;
+    int (*save_verify_cb)(int ok,X509_STORE_CTX *ctx) =
+      X509_STORE_CTX_get_verify_cb(ctx);
     YOUR_RIGHTS rights;
 
     X509_STORE_CTX_set_verify_cb(ctx, verify_callback);
-    X509_STORE_CTX_set_ex_data(ctx, get_proxy_auth_ex_data_idx(), &rights);
+    X509_STORE_CTX_set_ex_data(ctx, get_proxy_auth_ex_data_idx(ctx), &rights);
     X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_ALLOW_PROXY_CERTS);
     ok = X509_verify_cert(ctx);
 
@@ -295,6 +302,7 @@ Here is some skeleton code you can fill in:
 
     return ok;
   }
+
 
 If you use SSL or TLS, you can easily set up a callback to have the
 certificates checked properly, using the code above:
