@@ -4154,3 +4154,5 @@ OCSP_resp_get0_id                       4098	1_1_0	EXIST::FUNCTION:OCSP
 OCSP_resp_get0_certs                    4099	1_1_0	EXIST::FUNCTION:OCSP
 X509_set_proxy_flag                     4100	1_1_0	EXIST::FUNCTION:
 EVP_ENCODE_CTX_copy                     4101	1_1_0	EXIST::FUNCTION:
+X509_set_proxy_pathlen                  4102	1_1_0	EXIST::FUNCTION:
+X509_get_proxy_pathlen                  4103	1_1_0	EXIST::FUNCTION:
