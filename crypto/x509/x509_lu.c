@@ -81,8 +81,8 @@ int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
         return 1;
 }
 
-int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, int type, X509_NAME *name,
-                           X509_OBJECT *ret)
+int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                           X509_NAME *name, X509_OBJECT *ret)
 {
     if ((ctx->method == NULL) || (ctx->method->get_by_subject == NULL))
         return X509_LU_FAIL;
@@ -91,15 +91,16 @@ int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, int type, X509_NAME *name,
     return ctx->method->get_by_subject(ctx, type, name, ret);
 }
 
-int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, int type, X509_NAME *name,
-                                 ASN1_INTEGER *serial, X509_OBJECT *ret)
+int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                                 X509_NAME *name, ASN1_INTEGER *serial,
+                                 X509_OBJECT *ret)
 {
     if ((ctx->method == NULL) || (ctx->method->get_by_issuer_serial == NULL))
         return X509_LU_FAIL;
     return ctx->method->get_by_issuer_serial(ctx, type, name, serial, ret);
 }
 
-int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type,
+int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                unsigned char *bytes, int len,
                                X509_OBJECT *ret)
 {
@@ -108,8 +109,8 @@ int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type,
     return ctx->method->get_by_fingerprint(ctx, type, bytes, len, ret);
 }
 
-int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type, char *str, int len,
-                         X509_OBJECT *ret)
+int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                         char *str, int len, X509_OBJECT *ret)
 {
     if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
         return X509_LU_FAIL;
@@ -256,7 +257,8 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
     }
 }
 
-X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs, int type,
+X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
+                                               X509_LOOKUP_TYPE type,
                                                X509_NAME *name)
 {
     X509_OBJECT *ret = X509_OBJECT_new();
@@ -399,7 +401,7 @@ X509_CRL *X509_OBJECT_get0_X509_CRL(X509_OBJECT *a)
     return a->data.crl;
 }
 
-int X509_OBJECT_get_type(const X509_OBJECT *a)
+X509_LOOKUP_TYPE X509_OBJECT_get_type(const X509_OBJECT *a)
 {
     return a->type;
 }
@@ -434,7 +436,7 @@ void X509_OBJECT_free(X509_OBJECT *a)
     OPENSSL_free(a);
 }
 
-static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, int type,
+static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
                                X509_NAME *name, int *pnmatch)
 {
     X509_OBJECT stmp;
@@ -473,14 +475,15 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, int type,
     return idx;
 }
 
-int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type,
+int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
                                X509_NAME *name)
 {
     return x509_object_idx_cnt(h, type, name, NULL);
 }
 
 X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,
-                                             int type, X509_NAME *name)
+                                             X509_LOOKUP_TYPE type,
+                                             X509_NAME *name)
 {
     int idx;
     idx = X509_OBJECT_idx_by_subject(h, type, name);
