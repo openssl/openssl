@@ -533,6 +533,11 @@ void X509_set_proxy_flag(X509 *x)
     x->ex_flags |= EXFLAG_PROXY;
 }
 
+void X509_set_proxy_pathlen(X509 *x, long l)
+{
+    x->ex_pcpathlen = l;
+}
+
 int X509_check_ca(X509 *x)
 {
     if (!(x->ex_flags & EXFLAG_SET)) {
@@ -848,4 +853,13 @@ long X509_get_pathlen(X509 *x)
             || (x->ex_flags & EXFLAG_BCONS) == 0)
         return -1;
     return x->ex_pathlen;
+}
+
+long X509_get_proxy_pathlen(X509 *x)
+{
+    /* Called for side effect of caching extensions */
+    if (X509_check_purpose(x, -1, -1) != 1
+            || (x->ex_flags & EXFLAG_PROXY) == 0)
+        return -1;
+    return x->ex_pcpathlen;
 }
