@@ -681,8 +681,10 @@ static const version_info dtls_version_table[] = {
 #endif
 #ifndef OPENSSL_NO_DTLS1
     { DTLS1_VERSION, dtlsv1_client_method, dtlsv1_server_method },
+    { DTLS1_BAD_VER, dtls_bad_ver_client_method, NULL },
 #else
     { DTLS1_VERSION, NULL, NULL },
+    { DTLS1_BAD_VER, NULL, NULL },
 #endif
     { 0, NULL, NULL },
 };
@@ -847,7 +849,7 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
 
     case DTLS_ANY_VERSION:
         if (DTLS_VERSION_GT(version, DTLS_MAX_VERSION) ||
-            DTLS_VERSION_LT(version, DTLS1_VERSION))
+            DTLS_VERSION_LT(version, DTLS1_BAD_VER))
             return 0;
         break;
     }
