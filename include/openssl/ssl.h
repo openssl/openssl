@@ -306,8 +306,11 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_COOKIE_EXCHANGE              0x00002000U
 /* Don't use RFC4507 ticket extension */
 # define SSL_OP_NO_TICKET                    0x00004000U
-/* Use Cisco's "speshul" version of DTLS_BAD_VER (as client)  */
-# define SSL_OP_CISCO_ANYCONNECT             0x00008000U
+# ifndef OPENSSL_NO_DTLS1_METHOD
+/* Use Cisco's "speshul" version of DTLS_BAD_VER
+ * (only with deprecated DTLSv1_client_method())  */
+#  define SSL_OP_CISCO_ANYCONNECT             0x00008000U
+# endif
 
 /* As server, disallow session resumption on renegotiation */
 # define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION   0x00010000U

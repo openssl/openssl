@@ -1655,6 +1655,7 @@ __owur const SSL_METHOD *tlsv1_2_client_method(void);
 __owur const SSL_METHOD *dtlsv1_method(void);
 __owur const SSL_METHOD *dtlsv1_server_method(void);
 __owur const SSL_METHOD *dtlsv1_client_method(void);
+__owur const SSL_METHOD *dtls_bad_ver_client_method(void);
 __owur const SSL_METHOD *dtlsv1_2_method(void);
 __owur const SSL_METHOD *dtlsv1_2_server_method(void);
 __owur const SSL_METHOD *dtlsv1_2_client_method(void);
