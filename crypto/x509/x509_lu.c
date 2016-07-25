@@ -85,7 +85,7 @@ int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                            X509_NAME *name, X509_OBJECT *ret)
 {
     if ((ctx->method == NULL) || (ctx->method->get_by_subject == NULL))
-        return X509_LU_FAIL;
+        return 0;
     if (ctx->skip)
         return 0;
     return ctx->method->get_by_subject(ctx, type, name, ret);
@@ -96,7 +96,7 @@ int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                  X509_OBJECT *ret)
 {
     if ((ctx->method == NULL) || (ctx->method->get_by_issuer_serial == NULL))
-        return X509_LU_FAIL;
+        return 0;
     return ctx->method->get_by_issuer_serial(ctx, type, name, serial, ret);
 }
 
@@ -105,7 +105,7 @@ int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                X509_OBJECT *ret)
 {
     if ((ctx->method == NULL) || (ctx->method->get_by_fingerprint == NULL))
-        return X509_LU_FAIL;
+        return 0;
     return ctx->method->get_by_fingerprint(ctx, type, bytes, len, ret);
 }
 
@@ -113,7 +113,7 @@ int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                          char *str, int len, X509_OBJECT *ret)
 {
     if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
-        return X509_LU_FAIL;
+        return 0;
     return ctx->method->get_by_alias(ctx, type, str, len, ret);
 }
 
@@ -414,7 +414,7 @@ X509_OBJECT *X509_OBJECT_new()
         X509err(X509_F_X509_OBJECT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    ret->type = X509_LU_FAIL;
+    ret->type = X509_LU_NONE;
     return ret;
 }
 
@@ -633,16 +633,8 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     *issuer = NULL;
     xn = X509_get_issuer_name(x);
     ok = X509_STORE_CTX_get_by_subject(ctx, X509_LU_X509, xn, obj);
-    if (ok != X509_LU_X509) {
+    if (ok != 1) {
         X509_OBJECT_free(obj);
-        if (ok == X509_LU_RETRY) {
-            X509err(X509_F_X509_STORE_CTX_GET1_ISSUER, X509_R_SHOULD_RETRY);
-            return -1;
-        }
-        if (ok != X509_LU_FAIL) {
-            /* not good :-(, break anyway */
-            return -1;
-        }
         return 0;
     }
     /* If certificate matches all OK */
