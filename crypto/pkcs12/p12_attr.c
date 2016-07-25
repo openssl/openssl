@@ -45,6 +45,16 @@ int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
         return 0;
 }
 
+int PKCS12_add_friendlyname_utf8(PKCS12_SAFEBAG *bag, const char *name,
+                                int namelen)
+{
+    if (X509at_add1_attr_by_NID(&bag->attrib, NID_friendlyName,
+                                MBSTRING_UTF8, (unsigned char *)name, namelen))
+        return 1;
+    else
+        return 0;
+}
+
 int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag,
                                 const unsigned char *name, int namelen)
 {
@@ -82,8 +92,8 @@ char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)
         return NULL;
     if (atype->type != V_ASN1_BMPSTRING)
         return NULL;
-    return OPENSSL_uni2asc(atype->value.bmpstring->data,
-                           atype->value.bmpstring->length);
+    return OPENSSL_uni2utf8(atype->value.bmpstring->data,
+                            atype->value.bmpstring->length);
 }
 
 const STACK_OF(X509_ATTRIBUTE) *

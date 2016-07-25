@@ -40,8 +40,8 @@ extern "C" {
 #  define PKCS12_key_gen PKCS12_key_gen_uni
 #  define PKCS12_add_friendlyname PKCS12_add_friendlyname_uni
 # else
-#  define PKCS12_key_gen PKCS12_key_gen_asc
-#  define PKCS12_add_friendlyname PKCS12_add_friendlyname_asc
+#  define PKCS12_key_gen PKCS12_key_gen_utf8
+#  define PKCS12_add_friendlyname PKCS12_add_friendlyname_utf8
 # endif
 
 /* MS key usage constants */
@@ -141,6 +141,8 @@ int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name,
                           int namelen);
 int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
                                 int namelen);
+int PKCS12_add_friendlyname_utf8(PKCS12_SAFEBAG *bag, const char *name,
+                                 int namelen);
 int PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name,
                            int namelen);
 int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag,
