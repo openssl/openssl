@@ -40,7 +40,7 @@ typedef struct enc_struct {
      * buf is larger than ENC_BLOCK_SIZE because EVP_DecryptUpdate can return
      * up to a block more data than is presented to it
      */
-    char buf[ENC_BLOCK_SIZE + BUF_OFFSET + 2];
+    unsigned char buf[ENC_BLOCK_SIZE + BUF_OFFSET + 2];
 } BIO_ENC_CTX;
 
 static const BIO_METHOD methods_enc = {
@@ -136,32 +136,50 @@ static int enc_read(BIO *b, char *out, int outl)
      */
 
     while (outl > 0) {
+        int buf_len;
+
         if (ctx->cont <= 0)
             break;
+
+        buf_len = outl + EVP_MAX_BLOCK_LENGTH - 1;
+        buf_len -= buf_len % EVP_MAX_BLOCK_LENGTH;
+        if (buf_len > ENC_BLOCK_SIZE) {
+            buf_len = ENC_BLOCK_SIZE;
+        }
 
         /*
          * read in at IV offset, read the EVP_Cipher documentation about why
          */
-        i = BIO_read(next, &(ctx->buf[BUF_OFFSET]), ENC_BLOCK_SIZE);
+        i = BIO_read(next, &(ctx->buf[BUF_OFFSET]), buf_len);
 
         if (i <= 0) {
             /* Should be continue next time we are called? */
             if (!BIO_should_retry(next)) {
                 ctx->cont = i;
                 i = EVP_CipherFinal_ex(ctx->cipher,
-                                       (unsigned char *)ctx->buf,
-                                       &(ctx->buf_len));
+                                       ctx->buf, &(ctx->buf_len));
                 ctx->ok = i;
                 ctx->buf_off = 0;
             } else {
                 ret = (ret == 0) ? i : ret;
                 break;
             }
+        } else if (outl >= EVP_MAX_BLOCK_LENGTH) {
+            if (!EVP_CipherUpdate(ctx->cipher,
+                                  (unsigned char *)out, &buf_len,
+                                  &(ctx->buf[BUF_OFFSET]), i)) {
+                BIO_clear_retry_flags(b);
+                return 0;
+            }
+            ret += buf_len;
+            outl -= buf_len;
+            out += buf_len;
+
+            continue;
         } else {
             if (!EVP_CipherUpdate(ctx->cipher,
-                                  (unsigned char *)ctx->buf, &ctx->buf_len,
-                                  (unsigned char *)&(ctx->buf[BUF_OFFSET]),
-                                  i)) {
+                                  ctx->buf, &ctx->buf_len,
+                                  &(ctx->buf[BUF_OFFSET]), i)) {
                 BIO_clear_retry_flags(b);
                 ctx->ok = 0;
                 return 0;
@@ -228,8 +246,8 @@ static int enc_write(BIO *b, const char *in, int inl)
     while (inl > 0) {
         n = (inl > ENC_BLOCK_SIZE) ? ENC_BLOCK_SIZE : inl;
         if (!EVP_CipherUpdate(ctx->cipher,
-                              (unsigned char *)ctx->buf, &ctx->buf_len,
-                              (unsigned char *)in, n)) {
+                              ctx->buf, &ctx->buf_len,
+                              (const unsigned char *)in, n)) {
             BIO_clear_retry_flags(b);
             ctx->ok = 0;
             return 0;
