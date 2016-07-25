@@ -45,10 +45,12 @@ certificate chain.
 */
 
 typedef enum {
-    X509_LU_RETRY = -1,
-    X509_LU_FAIL, X509_LU_X509, X509_LU_CRL
+    X509_LU_NONE = 0,
+    X509_LU_X509, X509_LU_CRL
 } X509_LOOKUP_TYPE;
 
+#define X509_LU_RETRY   -1
+#define X509_LU_FAIL    0
 
 DEFINE_STACK_OF(X509_LOOKUP)
 DEFINE_STACK_OF(X509_OBJECT)
