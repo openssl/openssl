@@ -191,6 +191,11 @@ IMPLEMENT_dtls1_meth_func(DTLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_DTLSv1,
                           ssl_undefined_function,
                           ossl_statem_connect,
                           DTLSv1_enc_data)
+IMPLEMENT_dtls1_meth_func(DTLS1_BAD_VER, SSL_METHOD_NO_SUITEB, SSL_OP_NO_DTLSv1,
+                          dtls_bad_ver_client_method,
+                          ssl_undefined_function,
+                          ossl_statem_connect,
+                          DTLSv1_enc_data)
 #endif
 
 #ifndef OPENSSL_NO_DTLS1_2_METHOD
