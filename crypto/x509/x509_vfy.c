@@ -2216,7 +2216,6 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     int ret = 1;
 
     ctx->ctx = store;
-    ctx->current_method = 0;
     ctx->cert = x509;
     ctx->untrusted = chain;
     ctx->crls = NULL;

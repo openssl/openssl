@@ -175,8 +175,6 @@ struct x509_st {
  */
 struct x509_store_ctx_st {      /* X509_STORE_CTX */
     X509_STORE *ctx;
-    /* used when looking up certs */
-    int current_method;
     /* The following are set by the caller */
     /* The cert to check */
     X509 *cert;
