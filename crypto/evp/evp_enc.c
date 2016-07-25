@@ -285,10 +285,10 @@ static int is_partially_overlapping(const void *ptr1, const void *ptr2,
      * operations are used instead of boolean to minimize number
      * of conditional branches.]
      */
-    int condition = (len > 0) & (diff != 0) & ((diff < (PTRDIFF_T)len) |
-                                               (diff > (0 - (PTRDIFF_T)len)));
-    assert(!condition);
-    return condition;
+    int overlapped = (len > 0) & (diff != 0) & ((diff < (PTRDIFF_T)len) |
+                                                (diff > (0 - (PTRDIFF_T)len)));
+    assert(!overlapped);
+    return overlapped;
 }
 
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
@@ -297,8 +297,10 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     int i, j, bl;
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
-        if (is_partially_overlapping(out, in, inl))
+        if (is_partially_overlapping(out, in, inl)) {
+            EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
             return 0;
+        }
 
         i = ctx->cipher->do_cipher(ctx, out, in, inl);
         if (i < 0)
@@ -312,8 +314,10 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         *outl = 0;
         return inl == 0;
     }
-    if (is_partially_overlapping(out, in, inl))
+    if (is_partially_overlapping(out, in, inl)) {
+        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
         return 0;
+    }
 
     if (ctx->buf_len == 0 && (inl & (ctx->block_mask)) == 0) {
         if (ctx->cipher->do_cipher(ctx, out, in, inl)) {
@@ -338,8 +342,10 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
             memcpy(&(ctx->buf[i]), in, j);
             inl -= j;
             in += j;
-            if (is_partially_overlapping(out, in, bl))
+            if (is_partially_overlapping(out, in, bl)) {
+	        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
                 return 0;
+            }
             if (!ctx->cipher->do_cipher(ctx, out, ctx->buf, bl))
                 return 0;
             out += bl;
@@ -417,8 +423,10 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     unsigned int b;
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
-        if (is_partially_overlapping(out, in, inl))
+        if (is_partially_overlapping(out, in, inl)) {
+            EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
             return 0;
+        }
 
         fix_len = ctx->cipher->do_cipher(ctx, out, in, inl);
         if (fix_len < 0) {
@@ -443,8 +451,10 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (ctx->final_used) {
         /* see comment about PTRDIFF_T comparison above */
         if (((PTRDIFF_T)out == (PTRDIFF_T)in)
-            || is_partially_overlapping(out, in, b))
+            || is_partially_overlapping(out, in, b)) {
+            EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
             return 0;
+        }
         memcpy(out, ctx->final, b);
         out += b;
         fix_len = 1;
