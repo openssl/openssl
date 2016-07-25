@@ -74,33 +74,34 @@ int ssl3_setup_read_buffer(SSL *s)
     return 0;
 }
 
-int ssl3_setup_write_buffer(SSL *s, unsigned int numwpipes)
+int ssl3_setup_write_buffer(SSL *s, unsigned int numwpipes, size_t len)
 {
     unsigned char *p;
-    size_t len, align = 0, headerlen;
+    size_t align = 0, headerlen;
     SSL3_BUFFER *wb;
     unsigned int currpipe;
 
     s->rlayer.numwpipes = numwpipes;
 
-
-    if (SSL_IS_DTLS(s))
-        headerlen = DTLS1_RT_HEADER_LENGTH + 1;
-    else
-        headerlen = SSL3_RT_HEADER_LENGTH;
+    if (len == 0) {
+        if (SSL_IS_DTLS(s))
+            headerlen = DTLS1_RT_HEADER_LENGTH + 1;
+        else
+            headerlen = SSL3_RT_HEADER_LENGTH;
 
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-    align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
+        align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 #endif
 
-    len = s->max_send_fragment
-        + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
+        len = s->max_send_fragment
+            + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 #ifndef OPENSSL_NO_COMP
-    if (ssl_allow_compression(s))
-        len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+        if (ssl_allow_compression(s))
+            len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
-    if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
-        len += headerlen + align + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
+        if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+            len += headerlen + align + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
+    }
 
     wb = RECORD_LAYER_get_wbuf(&s->rlayer);
     for (currpipe = 0; currpipe < numwpipes; currpipe++) {
@@ -125,7 +126,7 @@ int ssl3_setup_buffers(SSL *s)
 {
     if (!ssl3_setup_read_buffer(s))
         return 0;
-    if (!ssl3_setup_write_buffer(s, 1))
+    if (!ssl3_setup_write_buffer(s, 1, 0))
         return 0;
     return 1;
 }
