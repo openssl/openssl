@@ -1608,6 +1608,7 @@ int tls_construct_server_key_exchange(SSL *s)
 {
 #ifndef OPENSSL_NO_DH
     EVP_PKEY *pkdh = NULL;
+    int j;
 #endif
 #ifndef OPENSSL_NO_EC
     unsigned char *encodedPoint = NULL;
@@ -1799,6 +1800,16 @@ int tls_construct_server_key_exchange(SSL *s)
             n += 1 + nr[i];
         else
 #endif
+#ifndef OPENSSL_NO_DH
+        /*
+         * for interoperability with some versions of the Microsoft TLS
+         * stack, we need to zero pad the DHE pub key to the same length
+         * as the prime, so use the length of the prime here
+         */
+        if ((i == 2) && (type & (SSL_kDHE | SSL_kDHEPSK)))
+            n += 2 + nr[0];
+        else
+#endif
             n += 2 + nr[i];
     }
 
@@ -1854,6 +1865,20 @@ int tls_construct_server_key_exchange(SSL *s)
         if ((i == 2) && (type & SSL_kSRP)) {
             *p = nr[i];
             p++;
+        } else
+#endif
+#ifndef OPENSSL_NO_DH
+        /*
+         * for interoperability with some versions of the Microsoft TLS
+         * stack, we need to zero pad the DHE pub key to the same length
+         * as the prime
+         */
+        if ((i == 2) && (type & (SSL_kDHE | SSL_kDHEPSK))) {
+            s2n(nr[0], p);
+            for (j = 0; j < (nr[0] - nr[2]); ++j) {
+                *p = 0;
+                ++p;
+            }
         } else
 #endif
             s2n(nr[i], p);
