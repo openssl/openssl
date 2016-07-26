@@ -22,7 +22,7 @@ DSA_SIG_free() frees the B<DSA_SIG> structure and its components. The
 values are erased before the memory is returned to the system.
 
 DSA_SIG_get0() returns internal pointers to the B<r> and B<s> values contained
-in B<sig>.
+in B<sig>.  You can pass NULL for those parameters you are not interested in.
 
 The B<r> and B<s> values can be set by calling DSA_SIG_set0() and passing the
 new values for B<r> and B<s> as parameters to the function. Calling this

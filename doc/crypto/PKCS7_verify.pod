@@ -77,6 +77,9 @@ If B<PKCS7_NOSIGS> is set then the signatures on the data are not checked.
 
 =head1 NOTES
 
+Unless B<flags> includes B<PKCS7_NOVERIFY>, the caller must pass a valid
+B<store>. Failure todo so will result in crash.
+
 One application of B<PKCS7_NOINTERN> is to only accept messages signed by
 a small number of certificates. The acceptable certificates would be passed
 in the B<certs> parameter. In this case if the signer is not one of the

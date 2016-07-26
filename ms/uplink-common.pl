@@ -23,6 +23,6 @@ $N=$1;	# number of entries in OPENSSL_UplinkTable not including
 
 # Idea is to fill the OPENSSL_UplinkTable with pointers to stubs
 # which invoke 'void OPENSSL_Uplink (ULONG_PTR *table,int index)';
-# and then dereference themselves. Latter shall result in endless
+# and then dereference themselves. Later shall result in endless
 # loop *unless* OPENSSL_Uplink does not replace 'table[index]' with
 # something else, e.g. as 'table[index]=unimplemented;'...
