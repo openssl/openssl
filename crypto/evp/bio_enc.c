@@ -231,6 +231,7 @@ static int enc_write(BIO *b, const char *in, int inl)
                               (unsigned char *)ctx->buf, &ctx->buf_len,
                               (unsigned char *)in, n)) {
             BIO_clear_retry_flags(b);
+            ctx->ok = 0;
             return 0;
         }
         inl -= n;
