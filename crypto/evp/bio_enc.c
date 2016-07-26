@@ -265,9 +265,13 @@ static int enc_write(BIO *b, const char *in, int inl)
     ctx->buf_off = 0;
     while (inl > 0) {
         n = (inl > ENC_BLOCK_SIZE) ? ENC_BLOCK_SIZE : inl;
-        EVP_CipherUpdate(&(ctx->cipher),
-                         (unsigned char *)ctx->buf, &ctx->buf_len,
-                         (unsigned char *)in, n);
+        if (!EVP_CipherUpdate(&ctx->cipher,
+                              (unsigned char *)ctx->buf, &ctx->buf_len,
+                              (unsigned char *)in, n)) {
+            BIO_clear_retry_flags(b);
+            ctx->ok = 0;
+            return 0;
+        }
         inl -= n;
         in += n;
 
