@@ -30,19 +30,9 @@ extern "C" {
 
 # define PKCS12_SALT_LEN 8
 
-/* Uncomment out next line for unicode password and names, otherwise ASCII */
-
-/*
- * #define PBE_UNICODE
- */
-
-# ifdef PBE_UNICODE
-#  define PKCS12_key_gen PKCS12_key_gen_uni
-#  define PKCS12_add_friendlyname PKCS12_add_friendlyname_uni
-# else
-#  define PKCS12_key_gen PKCS12_key_gen_utf8
-#  define PKCS12_add_friendlyname PKCS12_add_friendlyname_utf8
-# endif
+/* It's not clear if these are actually needed... */
+# define PKCS12_key_gen PKCS12_key_gen_utf8
+# define PKCS12_add_friendlyname PKCS12_add_friendlyname_utf8
 
 /* MS key usage constants */
 
