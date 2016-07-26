@@ -201,9 +201,14 @@ static int enc_read(BIO *b, char *out, int outl)
                 break;
             }
         } else {
-            EVP_CipherUpdate(&(ctx->cipher),
-                             (unsigned char *)ctx->buf, &ctx->buf_len,
-                             (unsigned char *)&(ctx->buf[BUF_OFFSET]), i);
+            if (!EVP_CipherUpdate(&ctx->cipher,
+                                  (unsigned char *)ctx->buf, &ctx->buf_len,
+                                  (unsigned char *)&(ctx->buf[BUF_OFFSET]),
+                                  i)) {
+                BIO_clear_retry_flags(b);
+                ctx->ok = 0;
+                return 0;
+            }
             ctx->cont = 1;
             /*
              * Note: it is possible for EVP_CipherUpdate to decrypt zero
