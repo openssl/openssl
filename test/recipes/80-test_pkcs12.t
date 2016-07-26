@@ -20,6 +20,17 @@ if (eval { require Win32::Console; 1; }) {
     $savedcp = Win32::Console::OutputCP();
     Win32::Console::OutputCP(1253);
     $pass = Encode::encode("cp1253",Encode::decode("utf-8",$pass));
+} else {
+    # Running MinGW tests transparenly under Wine apparently requires
+    # UTF-8 locale...
+
+    foreach(`locale -a`) {
+        s/\R$//;
+        if ($_ =~ m/^C\.UTF\-?8/i) {
+            $ENV{LC_ALL} = $_;
+            last;
+        }
+    }
 }
 
 # just see that we can read shibboleth.pfx protected with $pass

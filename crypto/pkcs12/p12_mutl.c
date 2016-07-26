@@ -66,9 +66,40 @@ static int pkcs12_gen_gost_mac_key(const char *pass, int passlen,
     return 1;
 }
 
+#undef PKCS12_key_gen
+/*
+ * |PKCS12_key_gen| is used to convey information about old-style broken
+ * password being used to PKCS12_PBE_keyivgen in decrypt cases. Workflow
+ * is if PKCS12_verify_mac notes that password encoded with compliant
+ * PKCS12_key_gen_utf8 conversion subroutine isn't right, while encoded
+ * with legacy non-compliant one is, then it sets |PKCS12_key_gen| to
+ * legacy PKCS12_key_gen_asc conversion subroutine, which is then picked
+ * by PKCS12_PBE_keyivgen. This applies to reading data. Written data
+ * on the other hand is protected with standard-compliant encoding, i.e.
+ * in backward-incompatible manner. Note that formally the approach is
+ * not MT-safe. Rationale is that in order to access PKCS#12 files from
+ * MT or even production application, you would be required to convert
+ * data to correct interoperable format. In which case this variable
+ * won't have to change. Conversion would have to be done with pkcs12
+ * utility, which is not MT, and hence can tolerate it. In other words
+ * goal is not to make this heuristic approach work in general case,
+ * but in one specific one, apps/pkcs12.c.
+ */
+int (*PKCS12_key_gen)(const char *pass, int passlen,
+                      unsigned char *salt, int slen,
+                      int id, int iter, int n,
+                      unsigned char *out,
+                      const EVP_MD *md_type) = NULL;
+
+
 /* Generate a MAC */
-int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
-                   unsigned char *mac, unsigned int *maclen)
+static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
+                          unsigned char *mac, unsigned int *maclen,
+                          int (*pkcs12_key_gen)(const char *pass, int passlen,
+                                                unsigned char *salt, int slen,
+                                                int id, int iter, int n,
+                                                unsigned char *out,
+                                                const EVP_MD *md_type))
 {
     const EVP_MD *md_type;
     HMAC_CTX *hmac = NULL;
@@ -78,6 +109,11 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     int md_type_nid;
     const X509_ALGOR *macalg;
     const ASN1_OBJECT *macoid;
+
+    if (pkcs12_key_gen == NULL)
+        pkcs12_key_gen = PKCS12_key_gen;
+    if (pkcs12_key_gen == NULL)
+        pkcs12_key_gen = PKCS12_key_gen_utf8;
 
     if (!PKCS7_type_is_data(p12->authsafes)) {
         PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_CONTENT_TYPE_NOT_DATA);
@@ -111,8 +147,8 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
             return 0;
         }
     } else
-        if (!PKCS12_key_gen(pass, passlen, salt, saltlen, PKCS12_MAC_ID, iter,
-                            md_size, key, md_type)) {
+        if (!(*pkcs12_key_gen)(pass, passlen, salt, saltlen, PKCS12_MAC_ID,
+                               iter, md_size, key, md_type)) {
         PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
         return 0;
     }
@@ -128,6 +164,12 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     return 1;
 }
 
+int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
+                   unsigned char *mac, unsigned int *maclen)
+{
+    return pkcs12_gen_mac(p12, pass, passlen, mac, maclen, NULL);
+}
+
 /* Verify the mac */
 int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
 {
@@ -139,14 +181,36 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
         PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_ABSENT);
         return 0;
     }
-    if (!PKCS12_gen_mac(p12, pass, passlen, mac, &maclen)) {
+    if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen,
+                        PKCS12_key_gen_utf8)) {
         PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_GENERATION_ERROR);
         return 0;
     }
     X509_SIG_get0(p12->mac->dinfo, NULL, &macoct);
-    if ((maclen != (unsigned int)ASN1_STRING_length(macoct))
-        || CRYPTO_memcmp(mac, ASN1_STRING_get0_data(macoct), maclen))
+    if (maclen != (unsigned int)ASN1_STRING_length(macoct))
         return 0;
+
+    if (CRYPTO_memcmp(mac, ASN1_STRING_get0_data(macoct), maclen) != 0) {
+        if (pass == NULL)
+            return 0;
+        /*
+         * In order to facilitate accessing old data retry with
+         * old-style broken password ...
+         */
+        if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen,
+                            PKCS12_key_gen_asc)) {
+            PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_GENERATION_ERROR);
+            return 0;
+        }
+        if ((maclen != (unsigned int)ASN1_STRING_length(macoct))
+            || CRYPTO_memcmp(mac, ASN1_STRING_get0_data(macoct), maclen) != 0)
+            return 0;
+        else
+            PKCS12_key_gen = PKCS12_key_gen_asc;
+        /*
+         * ... and if suceeded, pass it on to PKCS12_PBE_keyivgen.
+         */
+    }
     return 1;
 }
 
@@ -166,7 +230,11 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
         PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_SETUP_ERROR);
         return 0;
     }
-    if (!PKCS12_gen_mac(p12, pass, passlen, mac, &maclen)) {
+    /*
+     * Note that output mac is forced to UTF-8...
+     */
+    if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen,
+                        PKCS12_key_gen_utf8)) {
         PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_GENERATION_ERROR);
         return 0;
     }

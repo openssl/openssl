@@ -325,6 +325,16 @@ encrypted private keys, then the option B<-keypbe PBE-SHA1-RC2-40> can
 be used to reduce the private key encryption to 40 bit RC2. A complete
 description of all algorithms is contained in the B<pkcs8> manual page.
 
+Prior 1.1 release passwords containing non-ASCII characters were encoded
+in non-compliant manner, which limited interoperability, in first hand
+with Windows. But switching to standard-compliant password encoding
+poses problem accessing old data protected with broken encoding. For
+this reason even legacy encodings is attempted when reading the
+data. If you use PKCS#12 files in production application you are advised
+to convert the data, because implemented heuristic approach is not
+MT-safe, its sole goal is to facilitate the data upgrade with this
+utility.
+
 =head1 EXAMPLES
 
 Parse a PKCS#12 file and output it to a file:

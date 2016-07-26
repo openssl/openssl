@@ -173,11 +173,16 @@ char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen)
     int asclen, i, j;
     char *asctmp;
 
+    /* string must contain an even number of bytes */
+    if (unilen & 1)
+        return NULL;
+
     for (asclen = 0, i = 0; i < unilen; ) {
         j = bmp_to_utf8(NULL, uni+i, unilen-i);
         /*
-         * falling back to OPENSSL_uni2asc makes lesser sense, it's
-         * done rather to maintain symmetry...
+         * falling back to OPENSSL_uni2asc makes lesser sense [than
+         * falling back to OPENSSL_asc2uni in OPENSSL_utf82uni above],
+         * it's done rather to maintain symmetry...
          */
         if (j < 0) return OPENSSL_uni2asc(uni, unilen);
         if (j == 4) i += 4;
