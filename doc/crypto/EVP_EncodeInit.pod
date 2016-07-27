@@ -14,6 +14,7 @@ EVP_DecodeBlock - EVP base 64 encode/decode routines
  EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
  void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
  int EVP_ENCODE_CTX_copy(EVP_ENCODE_CTX *dctx, EVP_ENCODE_CTX *sctx);
+ int EVP_ENCODE_CTX_length(EVP_ENCODE_CTX *ctx);
  int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx);
  void EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
  int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
@@ -80,6 +81,8 @@ sufficiently large to accommodate the output data which will never be more than
 EVP_ENCODE_CTX_copy() can be used to copy a context B<sctx> to a context
 B<dctx>. B<dctx> must be initialized before calling this function.
 
+EVP_ENCODE_CTX_length() will return the block length.
+
 EVP_ENCODE_CTX_num() will return the number of as yet unprocessed bytes still to
 be encoded or decoded that are pending in the B<ctx> object.
 
@@ -130,6 +133,8 @@ the data decoded or -1 on error.
 
 EVP_ENCODE_CTX_new() returns a pointer to the newly allocated EVP_ENCODE_CTX
 object or NULL on error.
+
+EVP_ENCODE_CTX_length() returns the block length.
 
 EVP_ENCODE_CTX_num() returns the number of bytes pending encoding or decoding in
 B<ctx>.

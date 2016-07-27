@@ -110,6 +110,11 @@ int EVP_ENCODE_CTX_copy(EVP_ENCODE_CTX *dctx, EVP_ENCODE_CTX *sctx)
     return 1;
 }
 
+int EVP_ENCODE_CTX_length(EVP_ENCODE_CTX *ctx)
+{
+    return ctx->length;
+}
+
 int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx)
 {
     return ctx->num;
