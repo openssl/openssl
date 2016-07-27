@@ -8,9 +8,11 @@ OPENSSL_Applink - glue between OpenSSL BIO and Win32 compiler run-time
 
  __declspec(dllexport) void **OPENSSL_Applink();
 
+ __declspec(dllexport) void OPENSSL_SetApplink(void **(*custom)());
+
 =head1 DESCRIPTION
 
-OPENSSL_Applink is application-side interface which provides a glue
+B<OPENSSL_Applink> is application-side interface which provides a glue
 between OpenSSL BIO layer and Win32 compiler run-time environment.
 Even though it appears at application side, it's essentially OpenSSL
 private interface. For this reason application developers are not
@@ -18,6 +20,80 @@ expected to implement it, but to compile provided module with
 compiler of their choice and link it into the target application.
 The referred module is available as F<applink.c>, located alongside
 the public header files (only on the platforms where applicable).
+
+B<OPENSSL_SetApplink> is allows developers to control the search for the
+B<OPENSSL_Applink> function. 
+
+=head1 NOTES
+
+The B<Applink> system is designed to solve Microsoft Visual C Runtime (MSVRT)
+interoperability issues when working with B<BIO_s_fd> and B<BIO_s_file>. If your
+application does not use any of these functions, you can disregard this system.
+
+The B<Applink> infrastructure was created to overcome the problems of mixing
+threading models. During compilation, the MSVCRT assumes the layout of B<FILE>
+objects. In multi-threaded builds, B<FILE> objects include an extra
+B<CRITICAL_SECTION> field to provide locking. The MSVCRT maintains a list of
+these objects in an array B<_iob>. If one part of an application is built with
+a different threading model it can lead to memory corruption of the B<_iob>
+array, lost data and application crash.
+
+B<Applink> solves this by moving all file i/o out of OpenSSL and into your
+application. But this introduces a problem for those developers working in
+scripting languages, where the application is the interpreter (ex: python). It
+may not be practical to request users to rebuild the interpreter.
+
+In the case where you are developing c extensions for your scripting language
+you can instead arrange to include F<applink.c> in your extension and from
+there invoke B<OPENSSL_SetApplink>. This requires that your extension be
+compiled using the same threading model as the application and as OpenSSL.
+
+=head3 Examples
+
+A simple way to build extensions is to use an interface generator such as SWIG.
+A single SWIG interface definition can easily be targeted to multiple scriting
+languages such as Lua, Perl, PHP, Python, R, Ruby, Tcl and others...
+
+Here is an example of how to use B<OPENSSL_SetApplink> in python2.6 with SWIG
+3.x.
+
+Create this file as pyos.i
+
+    %module pyos
+    %{
+    #include <openssl/applink.c>
+    %}
+    extern unsigned long OpenSSL_version_num();
+    %init %{
+        OPENSSL_SetApplink(OPENSSL_Applink);
+    %}
+
+Create this file as setup.py (assuming 32-bit windows)
+
+    from distutils.core import setup, Extension
+    mod = Extension('_pyos',
+            sources=['pyos.i'],
+            include_dirs=['C:/Program Files (x86)/OpenSSL/include'],
+            library_dirs=['C:/Program Files (x86)/OpenSSL/lib'],
+            libraries=['libcrypto'],
+            swig_opts=['-modern'],
+            )
+    setup(name='pyos',
+        version='1',
+        ext_modules=[mod],
+        py_modules=['pyos'],
+        )
+
+Build and install extension
+
+    $ python setup.py install
+
+An example use of the installed extension
+
+    $ python
+    >>> import pyos
+    >>> pyos.OpenSSL_version_num()
+    269484038
 
 =head1 COPYRIGHT
 

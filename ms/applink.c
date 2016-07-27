@@ -132,6 +132,15 @@ OPENSSL_Applink(void)
     return OPENSSL_ApplinkTable;
 }
 
+extern __declspec(dllexport)
+void 
+# if defined(__BORLANDC__)
+__stdcall
+# else
+__cdecl
+# endif
+OPENSSL_SetApplink(void** (*custom)());
+
 #ifdef __cplusplus
 }
 #endif

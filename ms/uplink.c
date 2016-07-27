@@ -21,6 +21,7 @@
 #include <tchar.h>
 #include <stdio.h>
 #include "uplink.h"
+
 void OPENSSL_showfatal(const char *, ...);
 
 static TCHAR msg[128];
@@ -29,6 +30,14 @@ static void unimplemented(void)
 {
     OPENSSL_showfatal(sizeof(TCHAR) == sizeof(char) ? "%s\n" : "%S\n", msg);
     ExitProcess(1);
+}
+
+static void** (*custom_applink)() = NULL;
+
+extern __declspec(dllexport)
+    void OPENSSL_SetApplink(void** (*custom)())
+{
+    custom_applink = custom;
 }
 
 void OPENSSL_Uplink(volatile void **table, int index)
@@ -73,7 +82,10 @@ void OPENSSL_Uplink(volatile void **table, int index)
         if (applinktable == NULL) {
             void **(*applink) ();
 
-            applink = (void **(*)())GetProcAddress(h, "OPENSSL_Applink");
+            if (custom_applink)
+                applink = custom_applink;
+            else
+                applink = (void **(*)())GetProcAddress(h, "OPENSSL_Applink");
             if (applink == NULL) {
                 apphandle = (HMODULE) - 1;
                 _tcscpy(msg + len, _T("no OPENSSL_Applink"));
