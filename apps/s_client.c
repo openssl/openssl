@@ -273,7 +273,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
                    psk_key);
         return 0;
     }
-    if (key_len > max_psk_len) {
+    if ((unsigned long)key_len > (unsigned long)max_psk_len) {
         BIO_printf(bio_err,
                    "psk buffer of callback is too small (%d) for key (%ld)\n",
                    max_psk_len, key_len);
