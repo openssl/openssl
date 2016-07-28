@@ -222,6 +222,15 @@ PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 # the 80386.
 PROCESSOR= {- $config{processor} -}
 
+# We want error [and other] messages in English. Trouble is that make(1)
+# doesn't pass macros down as environment variables unless there already
+# was corresponding variable originally set. In other words we can only
+# reassign environment variables, but not set new ones, not in portable
+# manner that is. That's why we reassign several, just to be sure...
+LC_ALL=C
+LC_MESSAGES=C
+LANG=C
+
 # The main targets ###################################################
 
 {- dependmagic('all'); -}: build_libs_nodep build_engines_nodep build_programs_nodep link-utils
