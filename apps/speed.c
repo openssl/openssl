@@ -154,7 +154,7 @@ typedef struct loopargs_st {
     unsigned char *buf2;
     unsigned char *buf_malloc;
     unsigned char *buf2_malloc;
-    unsigned int *siglen;
+    unsigned int siglen;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa_key[RSA_NUM];
 #endif
@@ -914,7 +914,7 @@ static int RSA_sign_loop(void *args)
     loopargs_t *tempargs = (loopargs_t *)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
-    unsigned int *rsa_num = tempargs->siglen;
+    unsigned int *rsa_num = &tempargs->siglen;
     RSA **rsa_key = tempargs->rsa_key;
     int ret, count;
     for (count = 0; COND(rsa_c[testnum][0]); count++) {
@@ -934,7 +934,7 @@ static int RSA_verify_loop(void *args)
     loopargs_t *tempargs = (loopargs_t *)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
-    unsigned int rsa_num = *(tempargs->siglen);
+    unsigned int rsa_num = tempargs->siglen;
     RSA **rsa_key = tempargs->rsa_key;
     int ret, count;
     for (count = 0; COND(rsa_c[testnum][1]); count++) {
@@ -958,7 +958,7 @@ static int DSA_sign_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
     DSA **dsa_key = tempargs->dsa_key;
-    unsigned int *siglen = tempargs->siglen;
+    unsigned int *siglen = &tempargs->siglen;
     int ret, count;
     for (count = 0; COND(dsa_c[testnum][0]); count++) {
         ret = DSA_sign(0, buf, 20, buf2, siglen, dsa_key[testnum]);
@@ -978,7 +978,7 @@ static int DSA_verify_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
     DSA **dsa_key = tempargs->dsa_key;
-    unsigned int siglen = *(tempargs->siglen);
+    unsigned int siglen = tempargs->siglen;
     int ret, count;
     for (count = 0; COND(dsa_c[testnum][1]); count++) {
         ret = DSA_verify(0, buf, 20, buf2, siglen, dsa_key[testnum]);
@@ -1001,7 +1001,7 @@ static int ECDSA_sign_loop(void *args)
     unsigned char *buf = tempargs->buf;
     EC_KEY **ecdsa = tempargs->ecdsa;
     unsigned char *ecdsasig = tempargs->buf2;
-    unsigned int *ecdsasiglen = tempargs->siglen;
+    unsigned int *ecdsasiglen = &tempargs->siglen;
     int ret, count;
     for (count = 0; COND(ecdsa_c[testnum][0]); count++) {
         ret = ECDSA_sign(0, buf, 20,
@@ -1022,7 +1022,7 @@ static int ECDSA_verify_loop(void *args)
     unsigned char *buf = tempargs->buf;
     EC_KEY **ecdsa = tempargs->ecdsa;
     unsigned char *ecdsasig = tempargs->buf2;
-    unsigned int ecdsasiglen = *(tempargs->siglen);
+    unsigned int ecdsasiglen = tempargs->siglen;
     int ret, count;
     for (count = 0; COND(ecdsa_c[testnum][1]); count++) {
         ret = ECDSA_verify(0, buf, 20, ecdsasig, ecdsasiglen,
@@ -1545,7 +1545,6 @@ int speed_main(int argc, char **argv)
         /* Align the start of buffers on a 64 byte boundary */
         loopargs[i].buf = loopargs[i].buf_malloc + misalign;
         loopargs[i].buf2 = loopargs[i].buf2_malloc + misalign;
-        loopargs[i].siglen = app_malloc(sizeof(unsigned int), "signature length");
 #ifndef OPENSSL_NO_EC
         loopargs[i].secret_a = app_malloc(MAX_ECDH_SIZE, "ECDH secret a");
         loopargs[i].secret_b = app_malloc(MAX_ECDH_SIZE, "ECDH secret b");
@@ -2312,7 +2311,7 @@ int speed_main(int argc, char **argv)
             continue;
         for (i = 0; i < loopargs_len; i++) {
             st = RSA_sign(NID_md5_sha1, loopargs[i].buf, 36, loopargs[i].buf2,
-                          loopargs[i].siglen, loopargs[i].rsa_key[testnum]);
+                          &loopargs[i].siglen, loopargs[i].rsa_key[testnum]);
             if (st == 0)
                 break;
         }
@@ -2338,7 +2337,7 @@ int speed_main(int argc, char **argv)
 
         for (i = 0; i < loopargs_len; i++) {
             st = RSA_verify(NID_md5_sha1, loopargs[i].buf, 36, loopargs[i].buf2,
-                            *(loopargs[i].siglen), loopargs[i].rsa_key[testnum]);
+                            loopargs[i].siglen, loopargs[i].rsa_key[testnum]);
             if (st <= 0)
                 break;
         }
@@ -2384,7 +2383,7 @@ int speed_main(int argc, char **argv)
         /* DSA_sign_setup(dsa_key[testnum],NULL); */
         for (i = 0; i < loopargs_len; i++) {
             st = DSA_sign(0, loopargs[i].buf, 20, loopargs[i].buf2,
-                          loopargs[i].siglen, loopargs[i].dsa_key[testnum]);
+                          &loopargs[i].siglen, loopargs[i].dsa_key[testnum]);
             if (st == 0)
                 break;
         }
@@ -2409,7 +2408,7 @@ int speed_main(int argc, char **argv)
 
         for (i = 0; i < loopargs_len; i++) {
             st = DSA_verify(0, loopargs[i].buf, 20, loopargs[i].buf2,
-                            *(loopargs[i].siglen), loopargs[i].dsa_key[testnum]);
+                            loopargs[i].siglen, loopargs[i].dsa_key[testnum]);
             if (st <= 0)
                 break;
         }
@@ -2465,7 +2464,7 @@ int speed_main(int argc, char **argv)
                 /* Perform ECDSA signature test */
                 EC_KEY_generate_key(loopargs[i].ecdsa[testnum]);
                 st = ECDSA_sign(0, loopargs[i].buf, 20, loopargs[i].buf2,
-                                loopargs[i].siglen, loopargs[i].ecdsa[testnum]);
+                                &loopargs[i].siglen, loopargs[i].ecdsa[testnum]);
                 if (st == 0)
                     break;
             }
@@ -2493,7 +2492,7 @@ int speed_main(int argc, char **argv)
             /* Perform ECDSA verification test */
             for (i = 0; i < loopargs_len; i++) {
                 st = ECDSA_verify(0, loopargs[i].buf, 20, loopargs[i].buf2,
-                                  *(loopargs[i].siglen), loopargs[i].ecdsa[testnum]);
+                                  loopargs[i].siglen, loopargs[i].ecdsa[testnum]);
                 if (st != 1)
                     break;
             }
@@ -2761,7 +2760,6 @@ int speed_main(int argc, char **argv)
     for (i = 0; i < loopargs_len; i++) {
         OPENSSL_free(loopargs[i].buf_malloc);
         OPENSSL_free(loopargs[i].buf2_malloc);
-        OPENSSL_free(loopargs[i].siglen);
 
 #ifndef OPENSSL_NO_RSA
         for (k = 0; k < RSA_NUM; k++)
