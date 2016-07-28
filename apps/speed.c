@@ -371,7 +371,7 @@ OPTIONS speed_options[] = {
     {"decrypt", OPT_DECRYPT, '-',
      "Time decryption instead of encryption (only EVP)"},
     {"mr", OPT_MR, '-', "Produce machine readable output"},
-    {"mb", OPT_MB, '-', 
+    {"mb", OPT_MB, '-',
         "Enable (tls1.1) multi-block mode on evp_cipher requested with -evp"},
     {"misalign", OPT_MISALIGN, 'n', "Amount to mis-align buffers"},
     {"elapsed", OPT_ELAPSED, '-',
@@ -1066,16 +1066,16 @@ static void *KDF1_SHA1(const void *in, size_t inlen, void *out,
     *outlen = SHA_DIGEST_LENGTH;
     return SHA1(in, inlen, out);
 }
-
 #endif      /* ndef OPENSSL_NO_EC */
 
 
-static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_t *loopargs)
+static int run_benchmark(int async_jobs,
+                         int (*loop_function)(void *), loopargs_t *loopargs)
 {
     int job_op_count = 0;
     int total_op_count = 0;
     int num_inprogress = 0;
-    int error = 0, i = 0, async = 0;
+    int error = 0, i = 0, ret = 0;
     OSSL_ASYNC_FD job_fd = 0;
     size_t num_job_fds = 0;
 
@@ -1086,10 +1086,10 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
     }
 
     for (i = 0; i < async_jobs && !error; i++) {
-        async = ASYNC_start_job(&(loopargs[i].inprogress_job), loopargs[i].wait_ctx,
-                                &job_op_count, loop_function,
-                                (void *)(loopargs + i), sizeof(loopargs_t));
-        switch (async) {
+        ret = ASYNC_start_job(&loopargs[i].inprogress_job, loopargs[i].wait_ctx,
+                              &job_op_count, loop_function,
+                              (void *)(loopargs + i), sizeof(loopargs_t));
+        switch (ret) {
         case ASYNC_PAUSE:
             ++num_inprogress;
             break;
@@ -1179,15 +1179,15 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
                 continue;
 #elif defined(OPENSSL_SYS_WINDOWS)
             if (num_job_fds == 1
-                && !PeekNamedPipe(job_fd, NULL, 0, NULL, &avail, NULL) 
+                && !PeekNamedPipe(job_fd, NULL, 0, NULL, &avail, NULL)
                 && avail > 0)
                 continue;
 #endif
 
-            async = ASYNC_start_job(&(loopargs[i].inprogress_job), loopargs[i].wait_ctx,
-                        &job_op_count, loop_function, (void *)(loopargs + i),
-                        sizeof(loopargs_t));
-            switch (async) {
+            ret = ASYNC_start_job(&loopargs[i].inprogress_job, 
+                    loopargs[i].wait_ctx, &job_op_count, loop_function, 
+                    (void *)(loopargs + i), sizeof(loopargs_t));
+            switch (ret) {
             case ASYNC_PAUSE:
                 break;
             case ASYNC_FINISH:

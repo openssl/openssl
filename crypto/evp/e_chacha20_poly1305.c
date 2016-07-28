@@ -345,9 +345,11 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
 
     case EVP_CTRL_COPY:
         if (actx) {
-            if ((((EVP_CIPHER_CTX *)ptr)->cipher_data =
-                   OPENSSL_memdup(actx,sizeof(*actx) + Poly1305_ctx_size()))
-                == NULL) {
+            EVP_CIPHER_CTX *dst = (EVP_CIPHER_CTX *)ptr;
+
+            dst->cipher_data =
+                   OPENSSL_memdup(actx, sizeof(*actx) + Poly1305_ctx_size());
+            if (dst->cipher_data == NULL) {
                 EVPerr(EVP_F_CHACHA20_POLY1305_CTRL, EVP_R_COPY_ERROR);
                 return 0;
             }

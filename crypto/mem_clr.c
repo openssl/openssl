@@ -15,7 +15,7 @@
  * the pointer and can't assume that it points to any function in
  * particular (such as memset, which it then might further "optimize")
  */
-typedef void *(*memset_t)(void *,int,size_t);
+typedef void *(*memset_t)(void *, int, size_t);
 
 static volatile memset_t memset_func = memset;
 

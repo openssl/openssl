@@ -170,7 +170,7 @@ int BN_num_bits(const BIGNUM *a)
 
 static void bn_free_d(BIGNUM *a)
 {
-    if (BN_get_flags(a,BN_FLG_SECURE))
+    if (BN_get_flags(a, BN_FLG_SECURE))
         OPENSSL_secure_free(a->d);
     else
         OPENSSL_free(a->d);
@@ -259,7 +259,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         BNerr(BN_F_BN_EXPAND_INTERNAL, BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
         return (NULL);
     }
-    if (BN_get_flags(b,BN_FLG_SECURE))
+    if (BN_get_flags(b, BN_FLG_SECURE))
         a = A = OPENSSL_secure_zalloc(words * sizeof(*a));
     else
         a = A = OPENSSL_zalloc(words * sizeof(*a));
