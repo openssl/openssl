@@ -311,6 +311,7 @@ my @disablables = (
     "md2",
     "md4",
     "mdc2",
+    "msan",
     "multiblock",
     "nextprotoneg",
     "ocb",
@@ -369,6 +370,7 @@ our %disabled = ( # "what"         => "comment"
 		  "fuzz-libfuzzer"	=> "default",
 		  "fuzz-afl"		=> "default",
 		  "md2"                 => "default",
+                  "msan"                => "default",
 		  "rc5"                 => "default",
 		  "sctp"                => "default",
 		  "ssl-trace"           => "default",
@@ -439,6 +441,8 @@ my @disable_cascades = (
     "apps"              => [ "tests" ],
     "comp"		=> [ "zlib" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
+
+    sub { !$disabled{"msan"} } => [ "asm" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -1063,8 +1067,12 @@ unless ($disabled{ubsan}) {
     $config{cflags} .= "-fsanitize=undefined -fno-sanitize-recover=all ";
 }
 
+unless ($disabled{msan}) {
+  $config{cflags} .= "-fsanitize=memory ";
+}
+
 unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
-        && $disabled{asan} && $disabled{ubsan}) {
+        && $disabled{asan} && $disabled{ubsan} && $disabled{msan}) {
     $config{cflags} .= "-fno-omit-frame-pointer -g ";
 }
 #
