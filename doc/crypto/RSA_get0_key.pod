@@ -13,7 +13,7 @@ and setting data in an RSA object
 
  int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);
  int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
- int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp);
+ int RSA_set0_crt_params(RSA *r,BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp);
  void RSA_get0_key(const RSA *r,
                    const BIGNUM **n, const BIGNUM **e, const BIGNUM **d);
  void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q);
@@ -41,7 +41,8 @@ RSA_get0_key().  If they have not been set yet, then B<*n>, B<*e> and
 B<*d> will be set to NULL.  Otherwise, they are set to pointers to
 their respective values. These point directly to the internal
 representations of the values and therefore should not be freed
-by the caller.
+by the caller. You can pass NULL for those parameters you are not 
+interested in.
 
 The B<n>, B<e> and B<d> parameter values can be set by calling
 RSA_set0_key() and passing the new values for B<n>, B<e> and B<d> as

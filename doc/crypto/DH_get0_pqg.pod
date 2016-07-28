@@ -33,7 +33,8 @@ The B<p>, B<q> and B<g> parameters can be obtained by calling DH_get0_pqg().
 If the parameters have not yet been set then B<*p>, B<*q> and B<*g> will be set
 to NULL. Otherwise they are set to pointers to their respective values. These
 point directly to the internal representations of the values and therefore
-should not be freed directly.
+should not be freed directly.  You can pass NULL for those parameters you are
+not interested in.
 
 The B<p>, B<q> and B<g> values can be set by calling DH_set0_pqg() and passing
 the new values for B<p>, B<q> and B<g> as parameters to the function. Calling
@@ -46,7 +47,8 @@ pointer to the public key will be stored in B<*pub_key>, and a pointer to the
 private key will be stored in B<*priv_key>. Either may be NULL if they have not
 been set yet, although if the private key has been set then the public key must
 be. The values point to the internal representation of the public key and
-private key values. This memory should not be freed directly.
+private key values. This memory should not be freed directly. You can pass NULL
+for those parameters you are not interested in.
 
 The public and private key values can be set using DH_set0_key(). The public
 key must be non-NULL the first time this function is called on a given DH
