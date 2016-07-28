@@ -148,7 +148,7 @@ It must return 0 on failure and 1 on success.
 I<If no function to get the issuer is provided, the internal default
 function will be used instead.>
 
-X509_STORE_set_get_crl() sets the function to get the crl for a given 
+X509_STORE_set_get_crl() sets the function to get the crl for a given
 certificate B<x>.
 When found, the crl must be assigned to B<*crl>.
 This function must return 0 on failure and 1 on success.
