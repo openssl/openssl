@@ -2,8 +2,12 @@
 
 =head1 NAME
 
-SSL_waiting_for_async, SSL_get_all_async_fds, SSL_get_changed_async_fds - manage
-asynchronous operations
+SSL_waiting_for_async,
+SSL_get_all_async_fds,
+SSL_get_changed_async_fds
+- manage asynchronous operations
+
+=for comment multiple includes
 
 =head1 SYNOPSIS
 

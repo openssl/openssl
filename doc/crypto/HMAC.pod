@@ -87,9 +87,9 @@ of an B<HMAC_CTX> in this function. B<N.B. HMAC_Init() had this undocumented
 behaviour in previous versions of OpenSSL - failure to switch to HMAC_Init_ex()
 in programs that expect it will cause them to stop working>.
 
-B<NB: if HMAC_Init_ex() is called with B<key> NULL and B<evp_md> is not the
+B<NOTE:> If HMAC_Init_ex() is called with B<key> NULL and B<evp_md> is not the
 same as the previous digest used by B<ctx> then an error is returned
-because reuse of an existing key with a different digest is not supported.>
+because reuse of an existing key with a different digest is not supported.
 
 HMAC_Update() can be called repeatedly with chunks of the message to
 be authenticated (B<len> bytes at B<data>).
