@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_get_current_cipher, SSL_get_cipher_name, *SSL_get_cipher,
+SSL_get_current_cipher, SSL_get_cipher_name, SSL_get_cipher,
 SSL_get_cipher_bits, SSL_get_cipher_version - get SSL_CIPHER of a connection
 
 =head1 SYNOPSIS

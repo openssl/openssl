@@ -2,7 +2,33 @@
 
 =head1 NAME
 
-X509_STORE_set_verify_cb_func, X509_STORE_set_verify_cb - set verification callback
+X509_STORE_set_lookup_crls_cb,
+X509_STORE_set_verify_func,
+X509_STORE_get_cleanup,
+X509_STORE_set_cleanup,
+X509_STORE_get_lookup_crls,
+X509_STORE_set_lookup_crls,
+X509_STORE_get_lookup_certs,
+X509_STORE_set_lookup_certs,
+X509_STORE_get_check_policy,
+X509_STORE_set_check_policy,
+X509_STORE_get_cert_crl,
+X509_STORE_set_cert_crl,
+X509_STORE_get_check_crl,
+X509_STORE_set_check_crl,
+X509_STORE_get_get_crl,
+X509_STORE_set_get_crl,
+X509_STORE_get_check_revocation,
+X509_STORE_set_check_revocation,
+X509_STORE_get_check_issued,
+X509_STORE_set_check_issued,
+X509_STORE_get_get_issuer,
+X509_STORE_set_get_issuer,
+X509_STORE_CTX_get_verify,
+X509_STORE_set_verify,
+X509_STORE_get_verify_cb,
+X509_STORE_set_verify_cb_func, X509_STORE_set_verify_cb
+- set verification callback
 
 =head1 SYNOPSIS
 
