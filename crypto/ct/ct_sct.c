@@ -117,7 +117,7 @@ void SCT_set_timestamp(SCT *sct, uint64_t timestamp)
 
 int SCT_set_signature_nid(SCT *sct, int nid)
 {
-  switch (nid) {
+    switch (nid) {
     case NID_sha256WithRSAEncryption:
         sct->hash_alg = TLSEXT_hash_sha256;
         sct->sig_alg = TLSEXT_signature_rsa;

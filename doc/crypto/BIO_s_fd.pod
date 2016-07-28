@@ -73,7 +73,7 @@ occurred.
 This is a file descriptor BIO version of "Hello World":
 
  BIO *out;
- 
+
  out = BIO_new_fd(fileno(stdout), BIO_NOCLOSE);
  BIO_printf(out, "Hello World\n");
  BIO_free(out);
