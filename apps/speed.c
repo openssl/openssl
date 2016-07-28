@@ -1075,8 +1075,7 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
     int job_op_count = 0;
     int total_op_count = 0;
     int num_inprogress = 0;
-    int error = 0;
-    int i = 0;
+    int error = 0, i = 0, async = 0;
     OSSL_ASYNC_FD job_fd = 0;
     size_t num_job_fds = 0;
 
@@ -1086,27 +1085,27 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
         return loop_function((void *)loopargs);
     }
 
-
     for (i = 0; i < async_jobs && !error; i++) {
-        switch (ASYNC_start_job(&(loopargs[i].inprogress_job), loopargs[i].wait_ctx,
+        async = ASYNC_start_job(&(loopargs[i].inprogress_job), loopargs[i].wait_ctx,
                                 &job_op_count, loop_function,
-                                (void *)(loopargs + i), sizeof(loopargs_t))) {
-            case ASYNC_PAUSE:
-                ++num_inprogress;
-                break;
-            case ASYNC_FINISH:
-                if (job_op_count == -1) {
-                    error = 1;
-                } else {
-                    total_op_count += job_op_count;
-                }
-                break;
-            case ASYNC_NO_JOBS:
-            case ASYNC_ERR:
-                BIO_printf(bio_err, "Failure in the job\n");
-                ERR_print_errors(bio_err);
+                                (void *)(loopargs + i), sizeof(loopargs_t));
+        switch (async) {
+        case ASYNC_PAUSE:
+            ++num_inprogress;
+            break;
+        case ASYNC_FINISH:
+            if (job_op_count == -1) {
                 error = 1;
-                break;
+            } else {
+                total_op_count += job_op_count;
+            }
+            break;
+        case ASYNC_NO_JOBS:
+        case ASYNC_ERR:
+            BIO_printf(bio_err, "Failure in the job\n");
+            ERR_print_errors(bio_err);
+            error = 1;
+            break;
         }
     }
 
@@ -1179,33 +1178,35 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
             if (num_job_fds == 1 && !FD_ISSET(job_fd, &waitfdset))
                 continue;
 #elif defined(OPENSSL_SYS_WINDOWS)
-            if (num_job_fds == 1 &&
-                    !PeekNamedPipe(job_fd, NULL, 0, NULL, &avail, NULL) && avail > 0)
+            if (num_job_fds == 1
+                && !PeekNamedPipe(job_fd, NULL, 0, NULL, &avail, NULL) 
+                && avail > 0)
                 continue;
 #endif
 
-            switch (ASYNC_start_job(&(loopargs[i].inprogress_job), loopargs[i].wait_ctx,
+            async = ASYNC_start_job(&(loopargs[i].inprogress_job), loopargs[i].wait_ctx,
                         &job_op_count, loop_function, (void *)(loopargs + i),
-                        sizeof(loopargs_t))) {
-                case ASYNC_PAUSE:
-                    break;
-                case ASYNC_FINISH:
-                    if (job_op_count == -1) {
-                        error = 1;
-                    } else {
-                        total_op_count += job_op_count;
-                    }
-                    --num_inprogress;
-                    loopargs[i].inprogress_job = NULL;
-                    break;
-                case ASYNC_NO_JOBS:
-                case ASYNC_ERR:
-                    --num_inprogress;
-                    loopargs[i].inprogress_job = NULL;
-                    BIO_printf(bio_err, "Failure in the job\n");
-                    ERR_print_errors(bio_err);
+                        sizeof(loopargs_t));
+            switch (async) {
+            case ASYNC_PAUSE:
+                break;
+            case ASYNC_FINISH:
+                if (job_op_count == -1) {
                     error = 1;
-                    break;
+                } else {
+                    total_op_count += job_op_count;
+                }
+                --num_inprogress;
+                loopargs[i].inprogress_job = NULL;
+                break;
+            case ASYNC_NO_JOBS:
+            case ASYNC_ERR:
+                --num_inprogress;
+                loopargs[i].inprogress_job = NULL;
+                BIO_printf(bio_err, "Failure in the job\n");
+                ERR_print_errors(bio_err);
+                error = 1;
+                break;
             }
         }
     }
