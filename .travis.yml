@@ -36,6 +36,9 @@ matrix:
           env: CONFIG_OPTS="no-shared enable-asan"
         - os: linux
           compiler: clang-3.6
+          env: CONFIG_OPTS="no-shared enable-msan"
+        - os: linux
+          compiler: clang-3.6
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method -fno-sanitize=alignment"
         - os: linux
           compiler: clang-3.6
