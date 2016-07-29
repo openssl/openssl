@@ -345,18 +345,6 @@ static double Time_F(int s)
 }
 #endif
 
-#ifndef OPENSSL_NO_EC
-static const int KDF1_SHA1_len = 20;
-static void *KDF1_SHA1(const void *in, size_t inlen, void *out,
-                       size_t *outlen)
-{
-    if (*outlen < SHA_DIGEST_LENGTH)
-        return NULL;
-    *outlen = SHA_DIGEST_LENGTH;
-    return SHA1(in, inlen, out);
-}
-#endif                         /* OPENSSL_NO_EC */
-
 static void multiblock_speed(const EVP_CIPHER *evp_cipher);
 
 static int found(const char *name, const OPT_PAIR * pairs, int *result)
@@ -1066,6 +1054,17 @@ static int ECDH_compute_key_loop(void *args)
     }
     return count;
 }
+
+static const int KDF1_SHA1_len = 20;
+static void *KDF1_SHA1(const void *in, size_t inlen, void *out,
+                       size_t *outlen)
+{
+    if (*outlen < SHA_DIGEST_LENGTH)
+        return NULL;
+    *outlen = SHA_DIGEST_LENGTH;
+    return SHA1(in, inlen, out);
+}
+
 #endif      /* ndef OPENSSL_NO_EC */
 
 
@@ -1226,20 +1225,18 @@ int speed_main(int argc, char **argv)
     OPTION_CHOICE o;
     int multiblock = 0, pr_header = 0;
     int doit[ALGOR_NUM] = { 0 };
-#ifndef OPENSSL_NO_DSA
-    int dsa_doit[DSA_NUM] = { 0 };
-#endif
-    int rsa_doit[RSA_NUM] = { 0 };
     int ret = 1, i, k, misalign = 0;
     long count = 0;
 #ifndef NO_FORK
     int multi = 0;
 #endif
     int async_jobs = 0;
-    /* What follows are the buffers and key material. */
-#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA)
+#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) \
+    || !defined(OPENSSL_NO_EC)
     long rsa_count = 1;
 #endif
+
+    /* What follows are the buffers and key material. */
 #ifndef OPENSSL_NO_RC5
     RC5_32_KEY rc5_ks;
 #endif
@@ -1311,9 +1308,11 @@ int speed_main(int argc, char **argv)
         sizeof(test4096), sizeof(test7680),
         sizeof(test15360)
     };
+    int rsa_doit[RSA_NUM] = { 0 };
 #endif
 #ifndef OPENSSL_NO_DSA
     static const unsigned int dsa_bits[DSA_NUM] = { 512, 1024, 2048 };
+    int dsa_doit[DSA_NUM] = { 0 };
 #endif
 #ifndef OPENSSL_NO_EC
     /*
@@ -2521,9 +2520,7 @@ int speed_main(int argc, char **argv)
             }
         }
     }
-#endif
 
-#ifndef OPENSSL_NO_EC
     if (RAND_status() != 1) {
         RAND_seed(rnd_seed, sizeof rnd_seed);
     }
@@ -2732,9 +2729,7 @@ int speed_main(int argc, char **argv)
                    ecdsa_results[k][0], ecdsa_results[k][1],
                    1.0 / ecdsa_results[k][0], 1.0 / ecdsa_results[k][1]);
     }
-#endif
 
-#ifndef OPENSSL_NO_EC
     testnum = 1;
     for (k = 0; k < EC_NUM; k++) {
         if (!ecdh_doit[k])
@@ -2764,22 +2759,16 @@ int speed_main(int argc, char **argv)
         OPENSSL_free(loopargs[i].buf_malloc);
         OPENSSL_free(loopargs[i].buf2_malloc);
         OPENSSL_free(loopargs[i].siglen);
-    }
+
 #ifndef OPENSSL_NO_RSA
-    for (i = 0; i < loopargs_len; i++) {
         for (k = 0; k < RSA_NUM; k++)
             RSA_free(loopargs[i].rsa_key[k]);
-    }
 #endif
 #ifndef OPENSSL_NO_DSA
-    for (i = 0; i < loopargs_len; i++) {
         for (k = 0; k < DSA_NUM; k++)
             DSA_free(loopargs[i].dsa_key[k]);
-    }
 #endif
-
 #ifndef OPENSSL_NO_EC
-    for (i = 0; i < loopargs_len; i++) {
         for (k = 0; k < EC_NUM; k++) {
             EC_KEY_free(loopargs[i].ecdsa[k]);
             EC_KEY_free(loopargs[i].ecdh_a[k]);
@@ -2787,8 +2776,9 @@ int speed_main(int argc, char **argv)
         }
         OPENSSL_free(loopargs[i].secret_a);
         OPENSSL_free(loopargs[i].secret_b);
-    }
 #endif
+    }
+
     if (async_jobs > 0) {
         for (i = 0; i < loopargs_len; i++)
             ASYNC_WAIT_CTX_free(loopargs[i].wait_ctx);
