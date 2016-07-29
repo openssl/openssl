@@ -979,7 +979,11 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
             if (ASN1_TIME_diff(&day, &sec, X509_CRL_get_lastUpdate(best_crl),
                                X509_CRL_get_lastUpdate(crl)) == 0)
                 continue;
-            if (day < 0 || sec <= 0)
+            /*
+             * ASN1_TIME_diff never returns inconsistent signs for |day|
+             * and |sec|.
+             */
+            if (day <= 0 && sec <= 0)
                 continue;
         }
         best_crl = crl;
