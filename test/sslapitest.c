@@ -352,7 +352,7 @@ static int test_ssl_set_bio(int idx)
     SSL_CTX *ctx = SSL_CTX_new(TLS_method());
     BIO *bio1 = NULL;
     BIO *bio2 = NULL;
-    BIO *irbio, *iwbio, *nrbio, *nwbio;
+    BIO *irbio = NULL, *iwbio = NULL, *nrbio = NULL, *nwbio = NULL;
     SSL *ssl = NULL;
     int initrbio, initwbio, newrbio, newwbio;
     int testresult = 0;
