@@ -110,17 +110,17 @@ int X509_up_ref(X509 *x)
     return ((i > 1) ? 1 : 0);
 }
 
-long X509_get_version(X509 *x)
+long X509_get_version(const X509 *x)
 {
     return ASN1_INTEGER_get(x->cert_info.version);
 }
 
-ASN1_TIME * X509_get_notBefore(X509 *x)
+ASN1_TIME * X509_get_notBefore(const X509 *x)
 {
     return x->cert_info.validity.notBefore;
 }
 
-ASN1_TIME *X509_get_notAfter(X509 *x)
+ASN1_TIME *X509_get_notAfter(const X509 *x)
 {
     return x->cert_info.validity.notAfter;
 }

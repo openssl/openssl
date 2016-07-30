@@ -80,7 +80,7 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
     return memcmp(a->sha1_hash, b->sha1_hash, 20);
 }
 
-X509_NAME *X509_get_issuer_name(X509 *a)
+X509_NAME *X509_get_issuer_name(const X509 *a)
 {
     return (a->cert_info.issuer);
 }
@@ -97,12 +97,12 @@ unsigned long X509_issuer_name_hash_old(X509 *x)
 }
 #endif
 
-X509_NAME *X509_get_subject_name(X509 *a)
+X509_NAME *X509_get_subject_name(const X509 *a)
 {
     return (a->cert_info.subject);
 }
 
-ASN1_INTEGER *X509_get_serialNumber(X509 *a)
+const ASN1_INTEGER *X509_get_serialNumber(const X509 *a)
 {
     return &a->cert_info.serialNumber;
 }
