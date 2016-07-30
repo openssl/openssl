@@ -50,7 +50,7 @@ OPTIONS rsa_options[] = {
     {"modulus", OPT_MODULUS, '-', "Print the RSA key modulus"},
     {"check", OPT_CHECK, '-', "Verify key consistency"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
-# ifdef OPENSSL_NO_RC4
+# if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
     {"pvk-strong", OPT_PVK_STRONG, '-'},
     {"pvk-weak", OPT_PVK_WEAK, '-'},
     {"pvk-none", OPT_PVK_NONE, '-'},
@@ -74,7 +74,7 @@ int rsa_main(int argc, char **argv)
     int noout = 0, modulus = 0, pubin = 0, pubout = 0, ret = 1;
 # if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
     int pvk_encr = 2;
-#endif
+# endif
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, rsa_options);
@@ -134,12 +134,12 @@ int rsa_main(int argc, char **argv)
         case OPT_PVK_NONE:
             pvk_encr = 0;
             break;
-#else
+# else
         case OPT_PVK_STRONG:
         case OPT_PVK_WEAK:
         case OPT_PVK_NONE:
             break;
-#endif
+# endif
         case OPT_NOOUT:
             noout = 1;
             break;
