@@ -609,17 +609,17 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
                        X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
                        void *asn, EVP_MD_CTX *ctx);
 
-long X509_get_version(X509 *x);
+long X509_get_version(const X509 *x);
 int X509_set_version(X509 *x, long version);
 int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
-ASN1_INTEGER *X509_get_serialNumber(X509 *x);
+const ASN1_INTEGER *X509_get_serialNumber(const X509 *x);
 int X509_set_issuer_name(X509 *x, X509_NAME *name);
-X509_NAME *X509_get_issuer_name(X509 *a);
+X509_NAME *X509_get_issuer_name(const X509 *a);
 int X509_set_subject_name(X509 *x, X509_NAME *name);
-X509_NAME *X509_get_subject_name(X509 *a);
-ASN1_TIME * X509_get_notBefore(X509 *x);
+X509_NAME *X509_get_subject_name(const X509 *a);
+ASN1_TIME * X509_get_notBefore(const X509 *x);
 int X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
-ASN1_TIME *X509_get_notAfter(X509 *x);
+ASN1_TIME *X509_get_notAfter(const X509 *x);
 int X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 int X509_up_ref(X509 *x);
