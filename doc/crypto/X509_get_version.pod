@@ -10,7 +10,7 @@ certificate request or CRL version
 
  #include <openssl/x509.h>
 
- long X509_get_version(X509 *x);
+ long X509_get_version(const X509 *x);
  int X509_set_version(X509 *x, long version);
 
  long X509_REQ_get_version(X509_REQ *req);
