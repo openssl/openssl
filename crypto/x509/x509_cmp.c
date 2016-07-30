@@ -102,7 +102,7 @@ X509_NAME *X509_get_subject_name(const X509 *a)
     return (a->cert_info.subject);
 }
 
-const ASN1_INTEGER *X509_get_serialNumber(const X509 *a)
+ASN1_INTEGER *X509_get_serialNumber(X509 *a)
 {
     return &a->cert_info.serialNumber;
 }

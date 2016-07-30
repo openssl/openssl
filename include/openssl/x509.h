@@ -612,7 +612,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
 long X509_get_version(const X509 *x);
 int X509_set_version(X509 *x, long version);
 int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
-const ASN1_INTEGER *X509_get_serialNumber(const X509 *x);
+ASN1_INTEGER *X509_get_serialNumber(X509 *x);
 int X509_set_issuer_name(X509 *x, X509_NAME *name);
 X509_NAME *X509_get_issuer_name(const X509 *a);
 int X509_set_subject_name(X509 *x, X509_NAME *name);
