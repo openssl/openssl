@@ -980,14 +980,14 @@ end_of_options:
         if (verbose)
             BIO_printf(bio_err, "writing new certificates\n");
         for (i = 0; i < sk_X509_num(cert_sk); i++) {
-            const ASN1_INTEGER *serialNumber = X509_get_serialNumber(x);
+            ASN1_INTEGER *serialNumber = X509_get_serialNumber(x);
             int k;
             char *n;
 
             x = sk_X509_value(cert_sk, i);
 
             j = ASN1_STRING_length(serialNumber);
-            p = (const char *)ASN1_STRING_data((ASN1_INTEGER *)serialNumber);
+            p = (const char *)ASN1_STRING_data(serialNumber);
 
             if (strlen(outdir) >= (size_t)(j ? BSIZE - j * 2 - 6 : BSIZE - 8)) {
                 BIO_printf(bio_err, "certificate file name too long\n");
@@ -1685,7 +1685,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         goto end;
 #endif
 
-    if (BN_to_ASN1_INTEGER(serial, (ASN1_INTEGER *)X509_get_serialNumber(ret)) == NULL)
+    if (BN_to_ASN1_INTEGER(serial, X509_get_serialNumber(ret)) == NULL)
         goto end;
     if (selfsign) {
         if (!X509_set_issuer_name(ret, subject))
