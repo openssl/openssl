@@ -4,6 +4,10 @@
 
  Changes between 1.0.2h and 1.1.0  [xx XXX xxxx]
 
+  *) Because of the SWEET32 attack, 3DES cipher suites have been disabled by
+     default like RC4.  See the RC4 item below to re-enable both.
+     [Rich Salz]
+
   *) The method for finding the storage location for the Windows RAND seed file
      has changed. First we check %RANDFILE%. If that is not set then we check
      the directories %HOME%, %USERPROFILE% and %SYSTEMROOT% in that order. If

@@ -104,16 +104,6 @@ static const uint32_t default_ciphers_in_order[] = {
     TLS1_CK_DHE_RSA_WITH_AES_128_SHA,
 #endif
 
-#ifndef OPENSSL_NO_DES
-# ifndef OPENSSL_NO_EC
-    TLS1_CK_ECDHE_ECDSA_WITH_DES_192_CBC3_SHA,
-    TLS1_CK_ECDHE_RSA_WITH_DES_192_CBC3_SHA,
-# endif
-# ifndef OPENSSL_NO_DH
-    SSL3_CK_DHE_RSA_DES_192_CBC3_SHA,
-# endif
-#endif  /* !OPENSSL_NO_DES */
-
 #ifndef OPENSSL_NO_TLS1_2
     TLS1_CK_RSA_WITH_AES_256_GCM_SHA384,
     TLS1_CK_RSA_WITH_AES_128_GCM_SHA256,
@@ -123,9 +113,6 @@ static const uint32_t default_ciphers_in_order[] = {
 
     TLS1_CK_RSA_WITH_AES_256_SHA,
     TLS1_CK_RSA_WITH_AES_128_SHA,
-#ifndef OPENSSL_NO_DES
-    SSL3_CK_RSA_DES_192_CBC3_SHA,
-#endif
 };
 
 static int test_default_cipherlist(SSL_CTX *ctx)
