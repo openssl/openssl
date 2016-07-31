@@ -295,6 +295,7 @@ const char *ssl_test_method_name(ssl_test_method_t method)
 /* NPN and ALPN options             */
 /************************************/
 
+#ifndef OPENSSL_NO_NEXTPROTONEG
 IMPLEMENT_SSL_TEST_CTX_STRING_OPTION(client_npn_protocols)
 IMPLEMENT_SSL_TEST_CTX_STRING_OPTION(server_npn_protocols)
 IMPLEMENT_SSL_TEST_CTX_STRING_OPTION(server2_npn_protocols)
@@ -303,6 +304,7 @@ IMPLEMENT_SSL_TEST_CTX_STRING_OPTION(client_alpn_protocols)
 IMPLEMENT_SSL_TEST_CTX_STRING_OPTION(server_alpn_protocols)
 IMPLEMENT_SSL_TEST_CTX_STRING_OPTION(server2_alpn_protocols)
 IMPLEMENT_SSL_TEST_CTX_STRING_OPTION(expected_alpn_protocol)
+#endif
 
 /***********************/
 /* Handshake mode      */
@@ -372,6 +374,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ServerNameCallback", &parse_servername_callback },
     { "SessionTicketExpected", &parse_session_ticket },
     { "Method", &parse_test_method },
+#ifndef OPENSSL_NO_NEXTPROTONEG
     { "ClientNPNProtocols", &parse_client_npn_protocols },
     { "ServerNPNProtocols", &parse_server_npn_protocols },
     { "Server2NPNProtocols", &parse_server2_npn_protocols },
@@ -380,6 +383,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ServerALPNProtocols", &parse_server_alpn_protocols },
     { "Server2ALPNProtocols", &parse_server2_alpn_protocols },
     { "ExpectedALPNProtocol", &parse_expected_alpn_protocol },
+#endif
     { "HandshakeMode", &parse_handshake_mode },
     { "ResumptionExpected", &parse_resumption_expected },
 };
@@ -399,6 +403,7 @@ SSL_TEST_CTX *SSL_TEST_CTX_new()
 void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx)
 {
 
+#ifndef OPENSSL_NO_NEXTPROTONEG
     OPENSSL_free(ctx->client_npn_protocols);
     OPENSSL_free(ctx->server_npn_protocols);
     OPENSSL_free(ctx->server2_npn_protocols);
@@ -407,6 +412,7 @@ void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx)
     OPENSSL_free(ctx->server2_alpn_protocols);
     OPENSSL_free(ctx->expected_npn_protocol);
     OPENSSL_free(ctx->expected_alpn_protocol);
+#endif
     OPENSSL_free(ctx);
 }
 
