@@ -38,7 +38,7 @@ OPTIONS pkcs8_options[] = {
     {"nocrypt", OPT_NOCRYPT, '-', "Use or expect unencrypted private key"},
     {"v2", OPT_V2, 's', "Use PKCS#5 v2.0 and cipher"},
     {"v1", OPT_V1, 's', "Use PKCS#5 v1.5 and cipher"},
-    {"v2prf", OPT_V2PRF, 's'},
+    {"v2prf", OPT_V2PRF, 's', "Set the PRF algorithm to use with PKCS#5 v2.0"},
     {"iter", OPT_ITER, 'p', "Specify the iteration count"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},

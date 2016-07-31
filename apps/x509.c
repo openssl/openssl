@@ -92,7 +92,7 @@ OPTIONS x509_options[] = {
     {"ocsp_uri", OPT_OCSP_URI, '-', "Print OCSP Responder URL(s)"},
     {"trustout", OPT_TRUSTOUT, '-', "Output a trusted certificate"},
     {"clrtrust", OPT_CLRTRUST, '-', "Clear all trusted purposes"},
-    {"clrext", OPT_CLREXT, '-', "Clear all rejected purposes"},
+    {"clrext", OPT_CLREXT, '-', "Clear all certificate extensions"},
     {"addtrust", OPT_ADDTRUST, 's', "Trust certificate for a given purpose"},
     {"addreject", OPT_ADDREJECT, 's',
      "Reject certificate for a given purpose"},
@@ -125,9 +125,10 @@ OPTIONS x509_options[] = {
     {"CAform", OPT_CAFORM, 'F', "CA format - default PEM"},
     {"CAkeyform", OPT_CAKEYFORM, 'F', "CA key format - default PEM"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
-    {"force_pubkey", OPT_FORCE_PUBKEY, '<'},
-    {"next_serial", OPT_NEXT_SERIAL, '-'},
-    {"clrreject", OPT_CLRREJECT, '-'},
+    {"force_pubkey", OPT_FORCE_PUBKEY, '<', "Force the Key to put inside certificate"},
+    {"next_serial", OPT_NEXT_SERIAL, '-', "Increment current certificate serial number"},
+    {"clrreject", OPT_CLRREJECT, '-',
+     "Clears all the prohibited or rejected uses of the certificate"},
     {"badsig", OPT_BADSIG, '-', "Corrupt last byte of certificate signature (for test)"},
     {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_MD5
@@ -626,10 +627,9 @@ int x509_main(int argc, char **argv)
                 i2a_ASN1_INTEGER(out, X509_get_serialNumber(x));
                 BIO_printf(out, "\n");
             } else if (next_serial == i) {
-                BIGNUM *bnser;
-                ASN1_INTEGER *ser;
-                ser = X509_get_serialNumber(x);
-                bnser = ASN1_INTEGER_to_BN(ser, NULL);
+                ASN1_INTEGER *ser = X509_get_serialNumber(x);
+                BIGNUM *bnser = ASN1_INTEGER_to_BN(ser, NULL);
+
                 if (!bnser)
                     goto end;
                 if (!BN_add_word(bnser, 1))
