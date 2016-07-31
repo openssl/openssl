@@ -80,10 +80,10 @@ struct x509_lookup_method_st {
                                  X509_NAME *name, ASN1_INTEGER *serial,
                                  X509_OBJECT *ret);
     int (*get_by_fingerprint) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                               unsigned char *bytes, int len,
+                               const unsigned char *bytes, int len,
                                X509_OBJECT *ret);
     int (*get_by_alias) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                         char *str, int len, X509_OBJECT *ret);
+                         const char *str, int len, X509_OBJECT *ret);
 };
 
 /* This is the functions plus an instance of the local variables. */
