@@ -57,7 +57,7 @@ foreach $file (@files) {
     if ($symlink_exists) {
 	unlink "$from/$file";
 	symlink("$to/$file", "$from/$file") or $err = " [$!]";
-    } else {
+    } elsif (-d "$from" && (!-f "$from/$file" || ((stat("$file"))[9] > (stat("$from/$file"))[9]))) {
 	unlink "$from/$file"; 
 	open (OLD, "<$file") or die "Can't open $file: $!";
 	open (NEW, ">$from/$file") or die "Can't open $from/$file: $!";
