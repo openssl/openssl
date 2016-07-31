@@ -38,7 +38,8 @@ OPTIONS spkac_options[] = {
     {"noout", OPT_NOOUT, '-', "Don't print SPKAC"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
     {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
-    {"spksect", OPT_SPKSECT, 's'},
+    {"spksect", OPT_SPKSECT, 's',
+     "Specify the name of an SPKAC-dedicated section of configuration"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
