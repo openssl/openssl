@@ -31,7 +31,7 @@ int OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos)
             (x->tbsRequest.requestExtensions, nid, lastpos));
 }
 
-int OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, ASN1_OBJECT *obj,
+int OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, const ASN1_OBJECT *obj,
                                 int lastpos)
 {
     return (X509v3_get_ext_by_OBJ
@@ -84,7 +84,8 @@ int OCSP_ONEREQ_get_ext_by_NID(OCSP_ONEREQ *x, int nid, int lastpos)
     return (X509v3_get_ext_by_NID(x->singleRequestExtensions, nid, lastpos));
 }
 
-int OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, ASN1_OBJECT *obj, int lastpos)
+int OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, const ASN1_OBJECT *obj,
+                               int lastpos)
 {
     return (X509v3_get_ext_by_OBJ(x->singleRequestExtensions, obj, lastpos));
 }
@@ -135,7 +136,7 @@ int OCSP_BASICRESP_get_ext_by_NID(OCSP_BASICRESP *x, int nid, int lastpos)
             (x->tbsResponseData.responseExtensions, nid, lastpos));
 }
 
-int OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, ASN1_OBJECT *obj,
+int OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, const ASN1_OBJECT *obj,
                                   int lastpos)
 {
     return (X509v3_get_ext_by_OBJ
@@ -191,7 +192,7 @@ int OCSP_SINGLERESP_get_ext_by_NID(OCSP_SINGLERESP *x, int nid, int lastpos)
     return (X509v3_get_ext_by_NID(x->singleExtensions, nid, lastpos));
 }
 
-int OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, ASN1_OBJECT *obj,
+int OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, const ASN1_OBJECT *obj,
                                    int lastpos)
 {
     return (X509v3_get_ext_by_OBJ(x->singleExtensions, obj, lastpos));

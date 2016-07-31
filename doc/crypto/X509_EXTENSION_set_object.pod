@@ -10,7 +10,7 @@ functions
 
 =head1 SYNOPSIS
 
- int X509_EXTENSION_set_object(X509_EXTENSION *ex, ASN1_OBJECT *obj);
+ int X509_EXTENSION_set_object(X509_EXTENSION *ex, const ASN1_OBJECT *obj);
  int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit);
  int X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data);
 
@@ -18,7 +18,7 @@ functions
                                               int nid, int crit,
                                               ASN1_OCTET_STRING *data);
  X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
-                                              ASN1_OBJECT *obj, int crit,
+                                              const ASN1_OBJECT *obj, int crit,
                                               ASN1_OCTET_STRING *data);
 
  ASN1_OBJECT *X509_EXTENSION_get_object(X509_EXTENSION *ex);

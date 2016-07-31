@@ -214,7 +214,7 @@ int X509_REQ_get_attr_by_NID(const X509_REQ *req, int nid, int lastpos)
     return X509at_get_attr_by_NID(req->req_info.attributes, nid, lastpos);
 }
 
-int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, ASN1_OBJECT *obj,
+int X509_REQ_get_attr_by_OBJ(const X509_REQ *req, const ASN1_OBJECT *obj,
                              int lastpos)
 {
     return X509at_get_attr_by_OBJ(req->req_info.attributes, obj, lastpos);

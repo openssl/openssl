@@ -32,7 +32,7 @@ Some of the newer functions follow a naming convention using the numbers
 B<0> and B<1>. For example the functions:
 
  int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev);
- int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj);
+ int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj);
 
 The B<0> version uses the supplied structure pointer directly
 in the parent and it will be freed up when the parent is freed.

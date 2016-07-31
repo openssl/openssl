@@ -36,7 +36,7 @@ int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid,
 }
 
 int X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
-                          ASN1_OBJECT *obj, int lastpos)
+                          const ASN1_OBJECT *obj, int lastpos)
 {
     int n;
     X509_EXTENSION *ex;
@@ -151,7 +151,7 @@ X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex, int nid,
 }
 
 X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
-                                             ASN1_OBJECT *obj, int crit,
+                                             const ASN1_OBJECT *obj, int crit,
                                              ASN1_OCTET_STRING *data)
 {
     X509_EXTENSION *ret;
@@ -181,7 +181,7 @@ X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
     return (NULL);
 }
 
-int X509_EXTENSION_set_object(X509_EXTENSION *ex, ASN1_OBJECT *obj)
+int X509_EXTENSION_set_object(X509_EXTENSION *ex, const ASN1_OBJECT *obj)
 {
     if ((ex == NULL) || (obj == NULL))
         return (0);
