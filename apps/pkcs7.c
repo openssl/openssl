@@ -33,7 +33,7 @@ OPTIONS pkcs7_options[] = {
     {"out", OPT_OUT, '>', "Output file"},
     {"noout", OPT_NOOUT, '-', "Don't output encoded data"},
     {"text", OPT_TEXT, '-', "Print full details of certificates"},
-    {"print", OPT_PRINT, '-'},
+    {"print", OPT_PRINT, '-', "Print out all fields of the PKCS7 structure"},
     {"print_certs", OPT_PRINT_CERTS, '-',
      "Print_certs  print any certs or crl in the input"},
 #ifndef OPENSSL_NO_ENGINE

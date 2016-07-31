@@ -41,7 +41,7 @@ OPTIONS crl_options[] = {
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the crl fingerprint"},
     {"crlnumber", OPT_CRLNUMBER, '-', "Print CRL number"},
     {"badsig", OPT_BADSIG, '-', "Corrupt last byte of loaded CRL signature (for test)" },
-    {"gendelta", OPT_GENDELTA, '<'},
+    {"gendelta", OPT_GENDELTA, '<', "Other CRL to compare/diff to the Input one"},
     {"CApath", OPT_CAPATH, '/', "Verify CRL using certificates in dir"},
     {"CAfile", OPT_CAFILE, '<', "Verify CRL using certificates in file name"},
     {"no-CAfile", OPT_NOCAFILE, '-',
