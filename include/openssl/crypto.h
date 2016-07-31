@@ -173,7 +173,7 @@ typedef void CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                            int idx, long argl, void *argp);
 typedef void CRYPTO_EX_free (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                              int idx, long argl, void *argp);
-typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
+typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                            void *srcp, int idx, long argl, void *argp);
 __owur int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
@@ -187,7 +187,7 @@ int CRYPTO_free_ex_index(int class_index, int idx);
  */
 int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
-                       CRYPTO_EX_DATA *from);
+                       const CRYPTO_EX_DATA *from);
 
 void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 

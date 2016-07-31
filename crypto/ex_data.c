@@ -114,7 +114,7 @@ static void dummy_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx,
 {
 }
 
-static int dummy_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
+static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                      void *from_d, int idx,
                      long argl, void *argp)
 {
@@ -245,7 +245,7 @@ int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
  * for each index in the class used by this variable
  */
 int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
-                       CRYPTO_EX_DATA *from)
+                       const CRYPTO_EX_DATA *from)
 {
     int mx, j, i;
     char *ptr;
