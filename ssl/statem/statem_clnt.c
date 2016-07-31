@@ -1583,8 +1583,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
     save_param_start = *pkt;
 
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3->peer_tmp);
     s->s3->peer_tmp = NULL;
+#endif
 
     if (alg_k & SSL_PSK) {
         if (!tls_process_ske_psk_preamble(s, pkt, &al))
