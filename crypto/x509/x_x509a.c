@@ -100,7 +100,7 @@ unsigned char *X509_keyid_get0(X509 *x, int *len)
     return x->aux->keyid->data;
 }
 
-int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj)
+int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj)
 {
     X509_CERT_AUX *aux;
     ASN1_OBJECT *objtmp = NULL;
@@ -121,7 +121,7 @@ int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj)
     return 0;
 }
 
-int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj)
+int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
 {
     X509_CERT_AUX *aux;
     ASN1_OBJECT *objtmp;

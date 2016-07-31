@@ -99,7 +99,7 @@ int EVP_PKEY_get_attr_by_NID(const EVP_PKEY *key, int nid, int lastpos)
     return X509at_get_attr_by_NID(key->attributes, nid, lastpos);
 }
 
-int EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, ASN1_OBJECT *obj,
+int EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, const ASN1_OBJECT *obj,
                              int lastpos)
 {
     return X509at_get_attr_by_OBJ(key->attributes, obj, lastpos);
