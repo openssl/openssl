@@ -76,7 +76,7 @@ ASN1_OCTET_STRING *TS_MSG_IMPRINT_get_msg(TS_MSG_IMPRINT *a)
     return a->hashed_msg;
 }
 
-int TS_REQ_set_policy_id(TS_REQ *a, ASN1_OBJECT *policy)
+int TS_REQ_set_policy_id(TS_REQ *a, const ASN1_OBJECT *policy)
 {
     ASN1_OBJECT *new_policy;
 
@@ -152,7 +152,7 @@ int TS_REQ_get_ext_by_NID(TS_REQ *a, int nid, int lastpos)
     return X509v3_get_ext_by_NID(a->extensions, nid, lastpos);
 }
 
-int TS_REQ_get_ext_by_OBJ(TS_REQ *a, ASN1_OBJECT *obj, int lastpos)
+int TS_REQ_get_ext_by_OBJ(TS_REQ *a, const ASN1_OBJECT *obj, int lastpos)
 {
     return X509v3_get_ext_by_OBJ(a->extensions, obj, lastpos);
 }

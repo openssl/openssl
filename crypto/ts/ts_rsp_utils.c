@@ -313,7 +313,7 @@ int TS_TST_INFO_get_ext_by_NID(TS_TST_INFO *a, int nid, int lastpos)
     return X509v3_get_ext_by_NID(a->extensions, nid, lastpos);
 }
 
-int TS_TST_INFO_get_ext_by_OBJ(TS_TST_INFO *a, ASN1_OBJECT *obj, int lastpos)
+int TS_TST_INFO_get_ext_by_OBJ(TS_TST_INFO *a, const ASN1_OBJECT *obj, int lastpos)
 {
     return X509v3_get_ext_by_OBJ(a->extensions, obj, lastpos);
 }

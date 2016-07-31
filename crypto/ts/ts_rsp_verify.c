@@ -25,12 +25,13 @@ static int int_ts_RESP_verify_token(TS_VERIFY_CTX *ctx,
                                     PKCS7 *token, TS_TST_INFO *tst_info);
 static int ts_check_status_info(TS_RESP *response);
 static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text);
-static int ts_check_policy(ASN1_OBJECT *req_oid, TS_TST_INFO *tst_info);
+static int ts_check_policy(const ASN1_OBJECT *req_oid,
+                           const TS_TST_INFO *tst_info);
 static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
                               X509_ALGOR **md_alg,
                               unsigned char **imprint, unsigned *imprint_len);
 static int ts_check_imprints(X509_ALGOR *algor_a,
-                             unsigned char *imprint_a, unsigned len_a,
+                             const unsigned char *imprint_a, unsigned len_a,
                              TS_TST_INFO *tst_info);
 static int ts_check_nonces(const ASN1_INTEGER *a, TS_TST_INFO *tst_info);
 static int ts_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer);
@@ -477,9 +478,10 @@ static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
     return result;
 }
 
-static int ts_check_policy(ASN1_OBJECT *req_oid, TS_TST_INFO *tst_info)
+static int ts_check_policy(const ASN1_OBJECT *req_oid, 
+                           const TS_TST_INFO *tst_info)
 {
-    ASN1_OBJECT *resp_oid = tst_info->policy_id;
+    const ASN1_OBJECT *resp_oid = tst_info->policy_id;
 
     if (OBJ_cmp(req_oid, resp_oid) != 0) {
         TSerr(TS_F_TS_CHECK_POLICY, TS_R_POLICY_MISMATCH);
@@ -544,7 +546,7 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 }
 
 static int ts_check_imprints(X509_ALGOR *algor_a,
-                             unsigned char *imprint_a, unsigned len_a,
+                             const unsigned char *imprint_a, unsigned len_a,
                              TS_TST_INFO *tst_info)
 {
     TS_MSG_IMPRINT *b = tst_info->msg_imprint;

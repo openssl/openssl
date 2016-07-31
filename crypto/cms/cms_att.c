@@ -26,7 +26,7 @@ int CMS_signed_get_attr_by_NID(const CMS_SignerInfo *si, int nid, int lastpos)
     return X509at_get_attr_by_NID(si->signedAttrs, nid, lastpos);
 }
 
-int CMS_signed_get_attr_by_OBJ(const CMS_SignerInfo *si, ASN1_OBJECT *obj,
+int CMS_signed_get_attr_by_OBJ(const CMS_SignerInfo *si, const ASN1_OBJECT *obj,
                                int lastpos)
 {
     return X509at_get_attr_by_OBJ(si->signedAttrs, obj, lastpos);
@@ -75,7 +75,7 @@ int CMS_signed_add1_attr_by_txt(CMS_SignerInfo *si,
     return 0;
 }
 
-void *CMS_signed_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
+void *CMS_signed_get0_data_by_OBJ(CMS_SignerInfo *si, const ASN1_OBJECT *oid,
                                   int lastpos, int type)
 {
     return X509at_get0_data_by_OBJ(si->signedAttrs, oid, lastpos, type);
@@ -92,8 +92,8 @@ int CMS_unsigned_get_attr_by_NID(const CMS_SignerInfo *si, int nid,
     return X509at_get_attr_by_NID(si->unsignedAttrs, nid, lastpos);
 }
 
-int CMS_unsigned_get_attr_by_OBJ(const CMS_SignerInfo *si, ASN1_OBJECT *obj,
-                                 int lastpos)
+int CMS_unsigned_get_attr_by_OBJ(const CMS_SignerInfo *si,
+                                 const ASN1_OBJECT *obj, int lastpos)
 {
     return X509at_get_attr_by_OBJ(si->unsignedAttrs, obj, lastpos);
 }
