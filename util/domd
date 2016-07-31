@@ -32,7 +32,11 @@ else
     ${PERL} $TOP/util/clean-depend.pl < Makefile > Makefile.new
     RC=$?
 fi
-mv Makefile.new Makefile
+if ! cmp -s Makefile Makefile.new; then
+    mv Makefile.new Makefile
+else
+    rm -f Makefile.new
+fi
 # unfake the presence of Kerberos
 rm $TOP/krb5.h
 
