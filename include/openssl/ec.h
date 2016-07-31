@@ -771,13 +771,13 @@ void EC_KEY_free(EC_KEY *key);
  *  \param  src  src EC_KEY object
  *  \return dst or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_copy(EC_KEY *dst, EC_KEY *src);
+EC_KEY *EC_KEY_copy(EC_KEY *dst, const EC_KEY *src);
 
 /** Creates a new EC_KEY object and copies the content from src to it.
  *  \param  src  the source EC_KEY object
  *  \return newly created EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_dup(EC_KEY *src);
+EC_KEY *EC_KEY_dup(const EC_KEY *src);
 
 /** Increases the internal reference count of a EC_KEY object.
  *  \param  key  EC_KEY object
