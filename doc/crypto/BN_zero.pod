@@ -42,7 +42,7 @@ be represented as an unsigned long.
 BN_one(), BN_set_word() and the deprecated version of BN_zero()
 return 1 on success, 0 otherwise.
 BN_value_one() returns the constant.
-The preferred version of BN_zer() never fails and returns no value.
+The preferred version of BN_zero() never fails and returns no value.
 
 =head1 BUGS
 
