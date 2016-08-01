@@ -3931,7 +3931,7 @@ static int ct_move_scts(STACK_OF(SCT) **dst, STACK_OF(SCT) *src,
 
 /*
  * Look for data collected during ServerHello and parse if found.
- * Return 1 on success, 0 on failure.
+ * Returns the number of SCTs extracted.
  */
 static int ct_extract_tls_extension_scts(SSL *s)
 {
