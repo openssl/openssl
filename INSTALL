@@ -267,11 +267,11 @@
                    Don't compile in filename and line number information (e.g.
                    for errors and memory allocation).
 
-  enable-fuzz
-                   Build with support for fuzzing. This is a developer option
-                   only. It may not work on all platforms and should never be
-                   used in production environments. See the file fuzz/README.md
-                   for further details.
+  enable-fuzz-libfuzzer, enable-fuzz-afl
+                   Build with support for fuzzing using either libfuzzer or AFL.
+                   These are developer options only. They may not work on all
+                   platforms and should never be used in production environments.
+                   See the file fuzz/README.md for further details.
 
   no-gost
                    Don't build support for GOST based ciphersuites. Note that
