@@ -313,7 +313,6 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
                 wresult[numread-2] == L'\r' && wresult[numread-1] == L'\n') {
                 wresult[numread-2] = L'\n';
                 numread--;
-                echo_eol = 0;
             }
             wresult[numread] = '\0';
             if (WideCharToMultiByte(CP_UTF8, 0, wresult, -1,
@@ -329,7 +328,6 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
                 result[numread-2] == '\r' && result[numread-1] == '\n') {
                 result[numread-2] = '\n';
                 numread--;
-                echo_eol = 0;
             }
             result[numread] = '\0';
             p = result;
