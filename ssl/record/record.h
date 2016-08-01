@@ -199,6 +199,9 @@ typedef struct record_layer_st {
     unsigned char read_sequence[SEQ_NUM_SIZE];
     unsigned char write_sequence[SEQ_NUM_SIZE];
 
+    /* Set to true if this is the first record in a connection */
+    unsigned int is_first_record;
+
     DTLS_RECORD_LAYER *d;
 } RECORD_LAYER;
 
