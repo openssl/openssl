@@ -257,7 +257,10 @@ install_ssldirs:
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\private"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\misc"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\openssl.cnf" \
-                                       "$(OPENSSLDIR)"
+                                        "$(OPENSSLDIR)\openssl.cnf.dist"
+	@IF NOT EXIST "$(OPENSSLDIR)\openssl.cnf" \
+         "$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\openssl.cnf" \
+                                        "$(OPENSSLDIR)\openssl.cnf"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(MISC_SCRIPTS) \
                                         "$(OPENSSLDIR)\misc"
 
