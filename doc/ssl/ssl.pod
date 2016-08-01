@@ -556,6 +556,8 @@ fresh handle for each connection.
 
 =item X509 *B<SSL_get_peer_certificate>(const SSL *ssl);
 
+=item const STACK_OF(SCT) *B<SSL_get0_peer_scts>(SSL *s);
+
 =item EVP_PKEY *B<SSL_get_privatekey>(const SSL *ssl);
 
 =item int B<SSL_get_quiet_shutdown>(const SSL *ssl);
