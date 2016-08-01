@@ -31,6 +31,8 @@
 #define RECORD_LAYER_reset_empty_record_count(rl) \
                                                 ((rl)->empty_record_count = 0)
 #define RECORD_LAYER_get_empty_record_count(rl) ((rl)->empty_record_count)
+#define RECORD_LAYER_is_first_record(rl)        ((rl)->is_first_record)
+#define RECORD_LAYER_set_first_record(rl, val)  ((rl)->is_first_record = (val))
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
 __owur int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold);
