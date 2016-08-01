@@ -339,3 +339,8 @@ ENGINE *DSA_get0_engine(DSA *d)
 {
     return d->engine;
 }
+
+int DSA_bits(const DSA *dsa)
+{
+    return BN_num_bits(dsa->p);
+}

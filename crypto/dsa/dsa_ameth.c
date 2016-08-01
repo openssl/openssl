@@ -254,7 +254,7 @@ static int int_dsa_size(const EVP_PKEY *pkey)
 
 static int dsa_bits(const EVP_PKEY *pkey)
 {
-    return BN_num_bits(pkey->pkey.dsa->p);
+    return DSA_bits(pkey->pkey.dsa);
 }
 
 static int dsa_security_bits(const EVP_PKEY *pkey)

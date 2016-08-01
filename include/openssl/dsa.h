@@ -101,6 +101,7 @@ void DSA_free(DSA *r);
 /* "up" the DSA object's reference count */
 int DSA_up_ref(DSA *r);
 int DSA_size(const DSA *);
+int DSA_bits(const DSA *d);
 int DSA_security_bits(const DSA *d);
         /* next 4 return -1 on error */
 int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
