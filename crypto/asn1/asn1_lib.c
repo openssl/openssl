@@ -256,26 +256,30 @@ static void asn1_put_length(unsigned char **pp, int length)
 
 int ASN1_object_size(int constructed, int length, int tag)
 {
-    int ret;
-
-    ret = length;
-    ret++;
+    int ret = 1;
+    if (length < 0)
+        return -1;
     if (tag >= 31) {
         while (tag > 0) {
             tag >>= 7;
             ret++;
         }
     }
-    if (constructed == 2)
-        return ret + 3;
-    ret++;
-    if (length > 127) {
-        while (length > 0) {
-            length >>= 8;
-            ret++;
+    if (constructed == 2) {
+        ret += 3;
+    } else {
+        ret++;
+        if (length > 127) {
+            int tmplen = length;
+            while (tmplen > 0) {
+                tmplen >>= 8;
+                ret++;
+            }
         }
     }
-    return (ret);
+    if (ret >= INT_MAX - length)
+        return -1;
+    return ret + length;
 }
 
 static int _asn1_Finish(ASN1_const_CTX *c)
