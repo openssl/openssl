@@ -300,7 +300,7 @@ __owur int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx);
 
 /*
  * Validates the given list of SCTs with the provided context.
- * Populates the "good_scts" and "bad_scts" of the evaluation context.
+ * Sets the "validation_status" field of each SCT.
  * Returns 1 if there are no invalid SCTs and all signatures verify.
  * Returns 0 if at least one SCT is invalid or could not be verified.
  * Returns a negative integer if an error occurs.
