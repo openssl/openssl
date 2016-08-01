@@ -375,8 +375,11 @@ install_ssldirs : check_INSTALLTOP
                 CREATE/DIR/PROT=(S:RWED,O:RWE,G,W) OSSL_DATAROOT:[MISC]
         COPY/PROT=W:RE $(MISC_SCRIPTS) OSSL_DATAROOT:[MISC]
         @ ! Install configuration file
-        COPY/PROT=W:RE {- sourcefile("apps", "openssl-vms.cnf") -} -
-                ossl_dataroot:[000000]openssl.cnf
+        COPY/PROT=W:R {- sourcefile("apps", "openssl-vms.cnf") -} -
+                ossl_dataroot:[000000]openssl.cnf-dist
+        IF F$SEARCH("OSSL_DATAROOT:[000000]openssl.cnf") .EQS. "" THEN -
+                COPY/PROT=W:R {- sourcefile("apps", "openssl-vms.cnf") -} -
+                        ossl_dataroot:[000000]openssl.cnf
 
 install_shared : check_INSTALLTOP
         @ {- output_off() if $disabled{shared}; "" -} !
