@@ -336,6 +336,7 @@ uninstall_docs: uninstall_man_docs uninstall_html_docs
 install_ssldirs:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/certs
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/private
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/misc
 	@set -e; for x in dummy $(MISC_SCRIPTS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
@@ -489,7 +490,6 @@ install_runtime:
 	@ : {- output_off() if windowsdll(); "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
 	@ : {- output_on() if windowsdll(); "" -}
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/misc
 	@echo "*** Installing runtime files"
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
@@ -543,13 +543,6 @@ uninstall_runtime:
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	@set -e; for x in dummy $(MISC_SCRIPTS); \
-	do  \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		echo "$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
-		$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$fn; \
-	done
 	@ : {- output_off() unless windowsdll(); "" -}
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
@@ -558,9 +551,7 @@ uninstall_runtime:
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
 	@ : {- output_on() unless windowsdll(); "" -}
-	$(RM) $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
 	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
-	-$(RMDIR) $(DESTDIR)$(OPENSSLDIR)/misc
 
 # A method to extract all names from a .pod file
 # The first sed extracts everything between "=head1 NAME" and the next =head1
