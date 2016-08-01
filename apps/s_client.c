@@ -83,11 +83,6 @@ typedef unsigned int u_int;
 #define BUFSIZZ 1024*8
 #define S_CLIENT_IRC_READ_TIMEOUT 8
 
-extern int verify_depth;
-extern int verify_error;
-extern int verify_return_error;
-extern int verify_quiet;
-
 static char *prog;
 static int c_nbio = 0;
 static int c_tlsextdebug = 0;
@@ -879,18 +874,17 @@ int s_client_main(int argc, char **argv)
     c_msg = 0;
     c_showcerts = 0;
     c_nbio = 0;
-    verify_depth = 0;
-    verify_error = X509_V_OK;
     vpm = X509_VERIFY_PARAM_new();
-    cbuf = app_malloc(BUFSIZZ, "cbuf");
-    sbuf = app_malloc(BUFSIZZ, "sbuf");
-    mbuf = app_malloc(BUFSIZZ, "mbuf");
     cctx = SSL_CONF_CTX_new();
 
     if (vpm == NULL || cctx == NULL) {
         BIO_printf(bio_err, "%s: out of memory\n", prog);
         goto end;
     }
+
+    cbuf = app_malloc(BUFSIZZ, "cbuf");
+    sbuf = app_malloc(BUFSIZZ, "sbuf");
+    mbuf = app_malloc(BUFSIZZ, "mbuf");
 
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CLIENT | SSL_CONF_FLAG_CMDLINE);
 
@@ -975,9 +969,9 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_VERIFY:
             verify = SSL_VERIFY_PEER;
-            verify_depth = atoi(opt_arg());
+            verify_args.depth = atoi(opt_arg());
             if (!c_quiet)
-                BIO_printf(bio_err, "verify depth is %d\n", verify_depth);
+                BIO_printf(bio_err, "verify depth is %d\n", verify_args.depth);
             break;
         case OPT_CERT:
             cert_file = opt_arg();
@@ -1003,13 +997,13 @@ int s_client_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_VERIFY_RET_ERROR:
-            verify_return_error = 1;
+            verify_args.return_error = 1;
             break;
         case OPT_VERIFY_QUIET:
-            verify_quiet = 1;
+            verify_args.quiet = 1;
             break;
         case OPT_BRIEF:
-            c_brief = verify_quiet = c_quiet = 1;
+            c_brief = verify_args.quiet = c_quiet = 1;
             break;
         case OPT_S_CASES:
             if (ssl_args == NULL)
