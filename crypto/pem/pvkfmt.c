@@ -497,7 +497,7 @@ static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
     int nbyte, hnbyte, bitlen;
     const BIGNUM *e;
 
-    RSA_get0_key(rsa, &e, NULL, NULL);
+    RSA_get0_key(rsa, NULL, &e, NULL);
     if (BN_num_bits(e) > 32)
         goto badkey;
     bitlen = RSA_bits(rsa);
@@ -539,7 +539,7 @@ static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 
     nbyte = RSA_size(rsa);
     hnbyte = (RSA_bits(rsa) + 15) >> 4;
-    RSA_get0_key(rsa, &e, &n, &d);
+    RSA_get0_key(rsa, &n, &e, &d);
     write_lebn(out, e, 4);
     write_lebn(out, n, -1);
     if (ispub)
