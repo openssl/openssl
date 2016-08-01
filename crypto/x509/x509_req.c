@@ -267,12 +267,12 @@ int X509_REQ_add1_attr_by_txt(X509_REQ *req,
     return 0;
 }
 
-long X509_REQ_get_version(X509_REQ *req)
+long X509_REQ_get_version(const X509_REQ *req)
 {
     return ASN1_INTEGER_get(req->req_info.version);
 }
 
-X509_NAME *X509_REQ_get_subject_name(X509_REQ *req)
+X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req)
 {
     return req->req_info.subject;
 }
