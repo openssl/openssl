@@ -496,10 +496,10 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         BIO_printf(out, "%s\t%s\n", hash, passwd);
     else
         BIO_printf(out, "%s\n", hash);
-    return 0;
+    return 1;
 
  end:
-    return 1;
+    return 0;
 }
 #else
 
