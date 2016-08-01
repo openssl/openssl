@@ -61,7 +61,11 @@ DEFINE_STACK_OF(CTLOG)
  * CT policy evaluation context functions *
  ******************************************/
 
-/* Creates a new, empty policy evaluation context */
+/*
+ * Creates a new, empty policy evaluation context.
+ * The caller is responsible for calling CT_POLICY_EVAL_CTX_free when finished
+ * with the CT_POLICY_EVAL_CTX.
+ */
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
 
 /* Deletes a policy evaluation context and anything it owns. */
