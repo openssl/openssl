@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/async.h>
+#include <openssl/ssl.h>
 
 #include <openssl/e_os2.h>
 
@@ -112,7 +113,6 @@ static int accept_socket = -1;
 #define TEST_CERT       "server.pem"
 #define TEST_CERT2      "server2.pem"
 
-extern int verify_depth, verify_return_error, verify_quiet;
 
 static int s_server_verify = SSL_VERIFY_NONE;
 static int s_server_session_id_context = 1; /* anything will do */
@@ -272,7 +272,6 @@ err:
 static void s_server_init(void)
 {
     accept_socket = -1;
-    verify_depth = 0;
     s_server_verify = SSL_VERIFY_NONE;
     s_dcert_file = NULL;
     s_dkey_file = NULL;
@@ -1078,19 +1077,19 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_VERIFY:
             s_server_verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
-            verify_depth = atoi(opt_arg());
+            verify_args.depth = atoi(opt_arg());
             if (!s_quiet)
-                BIO_printf(bio_err, "verify depth is %d\n", verify_depth);
+                BIO_printf(bio_err, "verify depth is %d\n", verify_args.depth);
             break;
         case OPT_UPPER_V_VERIFY:
             s_server_verify =
                 SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT |
                 SSL_VERIFY_CLIENT_ONCE;
-            verify_depth = atoi(opt_arg());
+            verify_args.depth = atoi(opt_arg());
             if (!s_quiet)
                 BIO_printf(bio_err,
                            "verify depth is %d, must return a certificate\n",
-                           verify_depth);
+                           verify_args.depth);
             break;
         case OPT_CONTEXT:
             context = (unsigned char *)opt_arg();
@@ -1194,10 +1193,10 @@ int s_server_main(int argc, char *argv[])
                 goto end;
             break;
         case OPT_VERIFY_RET_ERROR:
-            verify_return_error = 1;
+            verify_args.return_error = 1;
             break;
         case OPT_VERIFY_QUIET:
-            verify_quiet = 1;
+            verify_args.quiet = 1;
             break;
         case OPT_BUILD_CHAIN:
             build_chain = 1;
@@ -1281,7 +1280,7 @@ int s_server_main(int argc, char *argv[])
             s_quiet = 1;
             break;
         case OPT_BRIEF:
-            s_quiet = s_brief = verify_quiet = 1;
+            s_quiet = s_brief = verify_args.quiet = 1;
             break;
         case OPT_NO_DHE:
 #ifndef OPENSSL_NO_DH
@@ -3042,8 +3041,8 @@ static int rev_body(int s, int stype, unsigned char *context)
         SSL_set_tlsext_debug_callback(con, tlsext_cb);
         SSL_set_tlsext_debug_arg(con, bio_s_out);
     }
-    if (context && !SSL_set_session_id_context(con, context,
-                        strlen((char *)context))) {
+    if (context 
+        && !SSL_set_session_id_context(con, context, strlen((char *)context))) {
         ERR_print_errors(bio_err);
         goto err;
     }

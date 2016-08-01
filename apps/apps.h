@@ -551,11 +551,14 @@ int raw_write_stdout(const void *, int);
 # define TM_STOP         1
 double app_tminterval(int stop, int usertime);
 
-/* this is an accident waiting to happen (-Wshadow is your friend) */
-extern int verify_depth;
-extern int verify_quiet;
-extern int verify_error;
-extern int verify_return_error;
+typedef struct verify_options_st {
+    int depth;
+    int quiet;
+    int error;
+    int return_error;
+} VERIFY_CB_ARGS;
+
+extern VERIFY_CB_ARGS verify_args;
 
 # include "progs.h"
 
