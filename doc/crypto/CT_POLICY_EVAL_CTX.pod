@@ -37,16 +37,16 @@ determine this, an SCT's signature must be verified. This requires:
 
 The above requirements are met using the setters described below.
 
-B<CT_POLICY_EVAL_CTX_new>() creates an empty policy evaluation context. This
+CT_POLICY_EVAL_CTX_new() creates an empty policy evaluation context. This
 should then be populated using:
 
 =over
 
-=item * B<CT_POLICY_EVAL_CTX_set0_cert>() to provide the certificate the SCTs were issued for
+=item * CT_POLICY_EVAL_CTX_set0_cert() to provide the certificate the SCTs were issued for
 
-=item * B<CT_POLICY_EVAL_CTX_set0_issuer>() to provide the issuer certificate
+=item * CT_POLICY_EVAL_CTX_set0_issuer() to provide the issuer certificate
 
-=item * B<CT_POLICY_EVAL_CTX_set0_log_store>() to provide a list of logs that are trusted as sources of SCTs
+=item * CT_POLICY_EVAL_CTX_set0_log_store() to provide a list of logs that are trusted as sources of SCTs
 
 =back
 
@@ -55,7 +55,7 @@ Each setter has a matching getter for accessing the current value.
 The getters do not transfer ownership either.
 
 When no longer required, the B<CT_POLICY_EVAL_CTX> should be passed to
-B<CT_POLICY_EVAL_CTX_free>() to delete it.
+CT_POLICY_EVAL_CTX_free() to delete it.
 
 =head1 NOTES
 
@@ -66,7 +66,7 @@ found in the TLS SCT extension or OCSP response.
 
 =head1 RETURN VALUES
 
-B<CT_POLICY_EVAL_CTX_new>() will return NULL if malloc fails.
+CT_POLICY_EVAL_CTX_new() will return NULL if malloc fails.
 
 =head1 SEE ALSO
 

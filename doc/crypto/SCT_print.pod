@@ -16,8 +16,8 @@ Prints Signed Certificate Timestamps in a human-readable way
 
 =head1 DESCRIPTION
 
-B<SCT_print> prints a single Signed Certificate Timestamp (SCT) to a L<bio> in
-a human-readable format. B<SCT_LIST_print> prints an entire list of SCTs in a
+SCT_print() prints a single Signed Certificate Timestamp (SCT) to a L<bio> in
+a human-readable format. SCT_LIST_print() prints an entire list of SCTs in a
 similar way. A separator can be specified to delimit each SCT in the output.
 
 The output can be indented by a specified number of spaces. If a B<CTLOG_STORE>
@@ -26,8 +26,8 @@ each SCT (if that log is in the CTLOG_STORE). Alternatively, NULL can be passed
 as the CTLOG_STORE parameter to disable this feature.
 
 B<SCT_validation_status_string> will return the validation status of an SCT as
-a human-readable string. Call L<SCT_validate> or B<SCT_LIST_validate> beforehand
-in order to set the validation status of an SCT first.
+a human-readable string. Call L<SCT_validate>() or SCT_LIST_validate()
+beforehand in order to set the validation status of an SCT first.
 
 =head1 SEE ALSO
 

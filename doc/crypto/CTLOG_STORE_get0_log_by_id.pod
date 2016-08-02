@@ -20,7 +20,7 @@ A Signed Certificate Timestamp (SCT) identifies the Certificate Transparency
 Therefore, it is useful to be able to look up more information about a log
 (e.g. its public key) using this LogID.
 
-B<CTLOG_STORE_get0_log_by_id>() provides a way to do this. It will find a CTLOG
+CTLOG_STORE_get0_log_by_id() provides a way to do this. It will find a CTLOG
 in a CTLOG_STORE that has a given LogID.
 
 =head1 RETURN VALUES
