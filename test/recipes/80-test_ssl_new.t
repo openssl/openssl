@@ -62,7 +62,7 @@ foreach my $conf (@conf_files) {
     subtest "Test configuration $conf" => sub {
         test_conf($conf,
                   $conf_dependent_tests{$conf} || $^O eq "VMS" ?  0 : 1,
-                  $skip{$conf} || $no_tls);
+                  defined($skip{$conf}) ? $skip{$conf} : $no_tls);
     }
 }
 
