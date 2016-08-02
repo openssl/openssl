@@ -238,7 +238,7 @@ int ssl3_get_record(SSL *s)
                 }
 
                 if ((version >> 8) != SSL3_VERSION_MAJOR) {
-                    if (s->first_packet) {
+                    if (RECORD_LAYER_is_first_record(&s->rlayer)) {
                         /* Go back to start of packet, look at the five bytes
                          * that we have. */
                         p = RECORD_LAYER_get_packet(&s->rlayer);
@@ -253,9 +253,17 @@ int ssl3_get_record(SSL *s)
                                    SSL_R_HTTPS_PROXY_REQUEST);
                             goto err;
                         }
+
+                        /* Doesn't look like TLS - don't send an alert */
+                        SSLerr(SSL_F_SSL3_GET_RECORD,
+                               SSL_R_WRONG_VERSION_NUMBER);
+                        goto err;
+                    } else {
+                        SSLerr(SSL_F_SSL3_GET_RECORD,
+                               SSL_R_WRONG_VERSION_NUMBER);
+                        al = SSL_AD_PROTOCOL_VERSION;
+                        goto f_err;
                     }
-                    SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
-                    goto err;
                 }
 
                 if (rr[num_recs].length >
