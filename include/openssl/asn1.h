@@ -836,15 +836,15 @@ int ASN1_item_print(BIO *out, ASN1_VALUE *ifld, int indent,
                     const ASN1_ITEM *it, const ASN1_PCTX *pctx);
 ASN1_PCTX *ASN1_PCTX_new(void);
 void ASN1_PCTX_free(ASN1_PCTX *p);
-unsigned long ASN1_PCTX_get_flags(ASN1_PCTX *p);
+unsigned long ASN1_PCTX_get_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_nm_flags(ASN1_PCTX *p);
+unsigned long ASN1_PCTX_get_nm_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_nm_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_cert_flags(ASN1_PCTX *p);
+unsigned long ASN1_PCTX_get_cert_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_cert_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_oid_flags(ASN1_PCTX *p);
+unsigned long ASN1_PCTX_get_oid_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_oid_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_str_flags(ASN1_PCTX *p);
+unsigned long ASN1_PCTX_get_str_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_str_flags(ASN1_PCTX *p, unsigned long flags);
 
 ASN1_SCTX *ASN1_SCTX_new(int (*scan_cb) (ASN1_SCTX *ctx));
