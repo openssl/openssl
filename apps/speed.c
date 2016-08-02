@@ -2519,7 +2519,7 @@ int speed_main(int argc, char **argv)
                            mr ? "+R5:%ld:%d:%.2f\n" :
                            "%ld %d bit ECDSA signs in %.2fs \n",
                            count, test_curves_bits[testnum], d);
-                ecdsa_results[testnum][0] = d / (double)count;
+                ecdsa_results[testnum][0] = (double)count / d;
                 rsa_count = count;
             }
 
@@ -2547,7 +2547,7 @@ int speed_main(int argc, char **argv)
                            mr ? "+R6:%ld:%d:%.2f\n"
                            : "%ld %d bit ECDSA verify in %.2fs\n",
                            count, test_curves_bits[testnum], d);
-                ecdsa_results[testnum][1] = d / (double)count;
+                ecdsa_results[testnum][1] = (double)count / d;
             }
 
             if (rsa_count <= 1) {
@@ -2829,8 +2829,8 @@ int speed_main(int argc, char **argv)
             printf("%4u bit ecdsa (%s) %8.4fs %8.4fs %8.1f %8.1f\n",
                    test_curves_bits[k],
                    test_curves_names[k],
-                   ecdsa_results[k][0], ecdsa_results[k][1],
-                   1.0 / ecdsa_results[k][0], 1.0 / ecdsa_results[k][1]);
+                   1.0 / ecdsa_results[k][0], 1.0 / ecdsa_results[k][1],
+                   ecdsa_results[k][0], ecdsa_results[k][1]);
     }
 
     testnum = 1;
@@ -3068,16 +3068,10 @@ static int do_multi(int multi)
                 sstrsep(&p, sep);
 
                 d = atof(sstrsep(&p, sep));
-                if (n)
-                    ecdsa_results[k][0] = 1 / (1 / ecdsa_results[k][0] + 1 / d);
-                else
-                    ecdsa_results[k][0] = d;
+                ecdsa_results[k][0] += d;
 
                 d = atof(sstrsep(&p, sep));
-                if (n)
-                    ecdsa_results[k][1] = 1 / (1 / ecdsa_results[k][1] + 1 / d);
-                else
-                    ecdsa_results[k][1] = d;
+                ecdsa_results[k][1] += d;
             } else if (strncmp(buf, "+F5:", 4) == 0) {
                 int k;
                 double d;
