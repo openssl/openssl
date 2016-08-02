@@ -15,7 +15,7 @@ clients, as defined in RFC 6962. This verification can provide some confidence
 that a certificate has been publicly logged in a set of CT logs.
 
 By default, these checks are disabled. They can be enabled using
-B<SSL_CTX_ct_enable>() or B<SSL_ct_enable>().
+SSL_CTX_ct_enable() or SSL_ct_enable().
 
 This library can also be used to parse and examine CT data structures, such as
 Signed Certificate Timestamps (SCTs), or to read a list of CT logs. There are
