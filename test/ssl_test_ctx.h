@@ -92,7 +92,7 @@ typedef struct ssl_test_ctx {
     ssl_session_ticket_t session_ticket_expected;
     /* Whether the server/client CTX should use DTLS or TLS. */
     ssl_test_method_t method;
-#ifndef OPENSSL_NO_NEXTPROTONEG
+
     /*
      * NPN and ALPN protocols supported by the client, server, and second
      * (SNI) server. A comma-separated list.
@@ -105,7 +105,7 @@ typedef struct ssl_test_ctx {
     char *server_alpn_protocols;
     char *server2_alpn_protocols;
     char *expected_alpn_protocol;
-#endif
+
     /* Whether to test a resumed/renegotiated handshake. */
     ssl_handshake_mode_t handshake_mode;
     /* Whether the second handshake is resumed or a full handshake (boolean). */
