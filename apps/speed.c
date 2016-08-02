@@ -2360,7 +2360,7 @@ int speed_main(int argc, char **argv)
                        mr ? "+R1:%ld:%d:%.2f\n"
                        : "%ld %d bit private RSA's in %.2fs\n",
                        count, rsa_bits[testnum], d);
-            rsa_results[testnum][0] = d / (double)count;
+            rsa_results[testnum][0] = (double)count / d;
             rsa_count = count;
         }
 
@@ -2386,7 +2386,7 @@ int speed_main(int argc, char **argv)
                        mr ? "+R2:%ld:%d:%.2f\n"
                        : "%ld %d bit public RSA's in %.2fs\n",
                        count, rsa_bits[testnum], d);
-            rsa_results[testnum][1] = d / (double)count;
+            rsa_results[testnum][1] = (double)count / d;
         }
 
         if (rsa_count <= 1) {
@@ -2789,8 +2789,8 @@ int speed_main(int argc, char **argv)
                    k, rsa_bits[k], rsa_results[k][0], rsa_results[k][1]);
         else
             printf("rsa %4u bits %8.6fs %8.6fs %8.1f %8.1f\n",
-                   rsa_bits[k], rsa_results[k][0], rsa_results[k][1],
-                   1.0 / rsa_results[k][0], 1.0 / rsa_results[k][1]);
+                   rsa_bits[k], 1.0 / rsa_results[k][0], 1.0 / rsa_results[k][1],
+                   rsa_results[k][0], rsa_results[k][1]);
     }
 #endif
 #ifndef OPENSSL_NO_DSA
@@ -3037,16 +3037,10 @@ static int do_multi(int multi)
                 sstrsep(&p, sep);
 
                 d = atof(sstrsep(&p, sep));
-                if (n)
-                    rsa_results[k][0] = 1 / (1 / rsa_results[k][0] + 1 / d);
-                else
-                    rsa_results[k][0] = d;
+                rsa_results[k][0] += d;
 
                 d = atof(sstrsep(&p, sep));
-                if (n)
-                    rsa_results[k][1] = 1 / (1 / rsa_results[k][1] + 1 / d);
-                else
-                    rsa_results[k][1] = d;
+                rsa_results[k][1] += d;
             }
 # ifndef OPENSSL_NO_DSA
             else if (strncmp(buf, "+F3:", 4) == 0) {
