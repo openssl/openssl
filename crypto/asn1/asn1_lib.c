@@ -328,7 +328,7 @@ int asn1_GetSequence(ASN1_const_CTX *c, long *length)
         return (0);
     }
     if (c->inf == (1 | V_ASN1_CONSTRUCTED))
-        c->slen = *length + *(c->pp) - c->p;
+        c->slen = *length;
     c->eos = 0;
     return (1);
 }
