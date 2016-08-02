@@ -167,7 +167,7 @@ typedef struct loopargs_st {
     EC_KEY *ecdh_b[EC_NUM];
     unsigned char *secret_a;
     unsigned char *secret_b;
-    int         outlen;
+    size_t      outlen;
     kdf_fn      kdf;
 #endif
     EVP_CIPHER_CTX *ctx;
@@ -1046,7 +1046,8 @@ static int ECDH_compute_key_loop(void *args)
     EC_KEY **ecdh_a = tempargs->ecdh_a;
     EC_KEY **ecdh_b = tempargs->ecdh_b;
     unsigned char *secret_a = tempargs->secret_a;
-    int count, outlen = tempargs->outlen;
+    int count;
+    size_t outlen = tempargs->outlen;
     kdf_fn kdf = tempargs->kdf;
 
     for (count = 0; COND(ecdh_c[testnum][0]); count++) {
@@ -1057,7 +1058,7 @@ static int ECDH_compute_key_loop(void *args)
     return count;
 }
 
-static const int KDF1_SHA1_len = 20;
+static const size_t KDF1_SHA1_len = 20;
 static void *KDF1_SHA1(const void *in, size_t inlen, void *out,
                        size_t *outlen)
 {
