@@ -22,12 +22,12 @@ A CTLOG_STORE is a container for a list of CTLOGs (Certificate Transparency
 logs). The list can be loaded from one or more files and then searched by LogID
 (see RFC 6962, Section 3.2, for the definition of a LogID).
 
-B<CTLOG_STORE_new>() creates an empty list of CT logs. This is then populated
-by B<CTLOG_STORE_load_default_file>() or B<CTLOG_STORE_load_file>().
-B<CTLOG_STORE_load_default_file>() loads from the default file, which is named
+CTLOG_STORE_new() creates an empty list of CT logs. This is then populated
+by CTLOG_STORE_load_default_file() or CTLOG_STORE_load_file().
+CTLOG_STORE_load_default_file() loads from the default file, which is named
 "ct_log_list.cnf" in the OpenSSL install directory. This can be overridden using
 an environment variable named "CTLOG_FILE".
-B<CTLOG_STORE_load_file>() loads from a caller-specified file path instead.
+CTLOG_STORE_load_file() loads from a caller-specified file path instead.
 Both of these functions append any loaded CT logs to the CTLOG_STORE.
 
 The expected format of the file is:
@@ -43,7 +43,7 @@ The expected format of the file is:
  key = <base64-encoded public key here>
 
 Once a CTLOG_STORE is no longer required, it should be passed to
-B<CTLOG_STORE_free>(). This will delete all of the CTLOGs stored within, along
+CTLOG_STORE_free(). This will delete all of the CTLOGs stored within, along
 with the CTLOG_STORE itself.
 
 =head1 NOTES
