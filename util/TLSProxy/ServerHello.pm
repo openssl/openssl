@@ -56,13 +56,25 @@ sub parse
     my $comp_meth = unpack('C', substr($self->data, $ptr));
     $ptr++;
     my $extensions_len = unpack('n', substr($self->data, $ptr));
-    $ptr += 2;
+    if (!defined $extensions_len) {
+        $extensions_len = 0;
+    } else {
+        $ptr += 2;
+    }
     #For now we just deal with this as a block of data. In the future we will
     #want to parse this
-    my $extension_data = substr($self->data, $ptr);
+    my $extension_data;
+    if ($extensions_len != 0) {
+        $extension_data = substr($self->data, $ptr);
     
-    if (length($extension_data) != $extensions_len) {
-        die "Invalid extension length\n";
+        if (length($extension_data) != $extensions_len) {
+            die "Invalid extension length\n";
+        }
+    } else {
+        if (length($self->data) != $ptr) {
+            die "Invalid extension length\n";
+        }
+        $extension_data = "";
     }
     my %extensions = ();
     while (length($extension_data) >= 4) {
