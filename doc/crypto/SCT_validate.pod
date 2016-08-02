@@ -9,6 +9,15 @@ checks Signed Certificate Timestamps meet a Certificate Transparency policy
 
  #include <openssl/ct.h>
 
+ typedef enum {
+  SCT_VALIDATION_STATUS_NOT_SET,
+  SCT_VALIDATION_STATUS_UNKNOWN_LOG,
+  SCT_VALIDATION_STATUS_VALID,
+  SCT_VALIDATION_STATUS_INVALID,
+  SCT_VALIDATION_STATUS_UNVERIFIED,
+  SCT_VALIDATION_STATUS_UNKNOWN_VERSION
+ } sct_validation_status_t;
+
  sct_validation_status_t SCT_get_validation_status(const SCT *sct);
  int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx);
  int SCT_LIST_validate(const STACK_OF(SCT) *scts, CT_POLICY_EVAL_CTX *ctx);
