@@ -98,6 +98,7 @@ sub get_records
                 $content_type,
                 $version,
                 $len,
+                0,
                 $len_real,
                 $decrypt_len,
                 substr($packet, TLS_RECORD_HEADER_LENGTH, $len_real),
@@ -167,6 +168,7 @@ sub new
         $content_type,
         $version,
         $len,
+        $sslv2,
         $len_real,
         $decrypt_len,
         $data,
@@ -177,6 +179,7 @@ sub new
         content_type => $content_type,
         version => $version,
         len => $len,
+        sslv2 => $sslv2,
         len_real => $len_real,
         decrypt_len => $decrypt_len,
         data => $data,
@@ -247,7 +250,11 @@ sub reconstruct_record
     my $self = shift;
     my $data;
 
-    $data = pack('Cnn', $self->content_type, $self->version, $self->len);
+    if ($self->sslv2) {
+        $data = pack('n', $self->len | 0x8000);
+    } else {
+        $data = pack('Cnn', $self->content_type, $self->version, $self->len);
+    }
     $data .= $self->data;
 
     return $data;
@@ -268,6 +275,11 @@ sub version
 {
     my $self = shift;
     return $self->{version};
+}
+sub sslv2
+{
+    my $self = shift;
+    return $self->{sslv2};
 }
 sub len_real
 {
