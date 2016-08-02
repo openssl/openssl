@@ -555,13 +555,15 @@ static int TS_check_status_info(TS_RESP *response)
 static char *TS_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 {
     int i;
-    unsigned int length = 0;
+    int length = 0;
     char *result = NULL;
     char *p;
 
     /* Determine length first. */
     for (i = 0; i < sk_ASN1_UTF8STRING_num(text); ++i) {
         ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
+        if (ASN1_STRING_length(current) > TS_MAX_STATUS_LENGTH - length - 1)
+            return NULL;
         length += ASN1_STRING_length(current);
         length += 1;            /* separator character */
     }
