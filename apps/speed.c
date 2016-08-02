@@ -2709,7 +2709,7 @@ int speed_main(int argc, char **argv)
                        mr ? "+R7:%ld:%d:%.2f\n" :
                        "%ld %d-bit ECDH ops in %.2fs\n", count,
                        test_curves_bits[testnum], d);
-            ecdh_results[testnum][0] = d / (double)count;
+            ecdh_results[testnum][0] = (double)count / d;
             rsa_count = count;
         }
 
@@ -2850,7 +2850,7 @@ int speed_main(int argc, char **argv)
             printf("%4u bit ecdh (%s) %8.4fs %8.1f\n",
                    test_curves_bits[k],
                    test_curves_names[k],
-                   ecdh_results[k][0], 1.0 / ecdh_results[k][0]);
+                   1.0 / ecdh_results[k][0], ecdh_results[k][0]);
     }
 #endif
 
@@ -3081,11 +3081,7 @@ static int do_multi(int multi)
                 sstrsep(&p, sep);
 
                 d = atof(sstrsep(&p, sep));
-                if (n)
-                    ecdh_results[k][0] = 1 / (1 / ecdh_results[k][0] + 1 / d);
-                else
-                    ecdh_results[k][0] = d;
-
+                ecdh_results[k][0] += d;
             }
 # endif
 
