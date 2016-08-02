@@ -26,6 +26,10 @@ map { s/;.*// } @conf_srcs if $^O eq "VMS";
 my @conf_files = map { basename($_) } @conf_srcs;
 map { s/\.in// } @conf_files;
 
+# We hard-code the number of tests to double-check that the globbing above
+# finds all files as expected.
+plan tests => 11;  # = scalar @conf_srcs
+
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
 my $is_default_tls = (disabled("ssl3") && !disabled("tls1") &&
@@ -61,10 +65,6 @@ foreach my $conf (@conf_files) {
                   $skip{$conf} || $no_tls);
     }
 }
-
-# We hard-code the number of tests to double-check that the globbing above
-# finds all files as expected.
-plan tests => 11;  # = scalar @conf_srcs
 
 sub test_conf {
     plan tests => 3;
