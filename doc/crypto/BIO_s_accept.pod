@@ -2,15 +2,18 @@
 
 =head1 NAME
 
-BIO_s_accept, BIO_set_accept_port, BIO_get_accept_port, BIO_new_accept,
-BIO_set_nbio_accept, BIO_set_accept_bios, BIO_set_bind_mode,
-BIO_get_bind_mode, BIO_do_accept - accept BIO
+BIO_s_accept, BIO_set_accept_name, BIO_get_name, BIO_set_accept_port,
+BIO_get_accept_port, BIO_new_accept, BIO_set_nbio_accept, BIO_set_accept_bios,
+BIO_set_bind_mode, BIO_get_bind_mode, BIO_do_accept - accept BIO
 
 =head1 SYNOPSIS
 
  #include <openssl/bio.h>
 
  const BIO_METHOD *BIO_s_accept(void);
+
+ long BIO_set_accept_name(BIO *b, char *name);
+ char *BIO_get_accept_name(BIO *b);
 
  long BIO_set_accept_port(BIO *b, char *name);
  char *BIO_get_accept_port(BIO *b);
@@ -52,17 +55,17 @@ incoming connection.
 BIO_get_fd() and BIO_set_fd() can be called to retrieve or set
 the accept socket. See L<BIO_s_fd(3)>
 
-BIO_set_accept_port() uses the string B<name> to set the accept
-port. The port is represented as a string of the form "host:port",
+BIO_set_accept_name() uses the string B<name> to set the accept
+name. The name is represented as a string of the form "host:port",
 where "host" is the interface to use and "port" is the port.
 The host can be "*" or empty which is interpreted as meaning
 any interface.  If the host is an IPv6 address, it has to be
 enclosed in brackets, for example "[::1]:https".  "port" has the
-same syntax as the port specified in BIO_set_conn_port() for
+same syntax as the port specified in BIO_set_conn_name() for
 connect BIOs, that is it can be a numerical port string or a
 string to lookup using getservbyname() and a string table.
 
-BIO_new_accept() combines BIO_new() and BIO_set_accept_port() into
+BIO_new_accept() combines BIO_new() and BIO_set_accept_name() into
 a single call: that is it creates a new accept BIO with port
 B<host_port>.
 
@@ -134,17 +137,19 @@ then it is an indication that an accept attempt would block: the application
 should take appropriate action to wait until the underlying socket has
 accepted a connection and retry the call.
 
-BIO_set_accept_port(), BIO_get_accept_port(), BIO_set_nbio_accept(),
-BIO_set_accept_bios(), BIO_set_bind_mode(), BIO_get_bind_mode() and
-BIO_do_accept() are macros.
+BIO_set_accept_name(), BIO_get_accept_name(), BIO_set_accept_port(),
+BIO_get_accept_port(), BIO_set_nbio_accept(), BIO_set_accept_bios(),
+BIO_set_bind_mode(), BIO_get_bind_mode() and BIO_do_accept() are macros.
 
 =head1 RETURN VALUES
 
 BIO_do_accept(),
-BIO_set_accept_port(), BIO_set_nbio_accept(), BIO_set_accept_bios(),
-and BIO_set_bind_mode(), return 1 for success and 0 or -1 for failure.
+BIO_set_accept_name(), BIO_set_accept_port(), BIO_set_nbio_accept(),
+BIO_set_accept_bios(), and BIO_set_bind_mode(), return 1 for success and 0 or
+-1 for failure.
 
-BIO_get_accept_port() returns the port name or NULL on error.
+BIO_set_accept_name() and BIO_get_accept_port() returns the port name or NULL
+on error.
 
 BIO_get_bind_mode() returns the set of B<BIO_BIND> flags, or -1 on failure.
 
