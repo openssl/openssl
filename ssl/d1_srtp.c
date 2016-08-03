@@ -136,49 +136,6 @@ SRTP_PROTECTION_PROFILE *SSL_get_selected_srtp_profile(SSL *s)
     return s->srtp_profile;
 }
 
-/*
- * Note: this function returns 0 length if there are no profiles specified
- */
-int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
-                                     int maxlen)
-{
-    int ct = 0;
-    int i;
-    STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = 0;
-    SRTP_PROTECTION_PROFILE *prof;
-
-    clnt = SSL_get_srtp_profiles(s);
-    ct = sk_SRTP_PROTECTION_PROFILE_num(clnt); /* -1 if clnt == 0 */
-
-    if (p) {
-        if (ct == 0) {
-            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_USE_SRTP_EXT,
-                   SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST);
-            return 1;
-        }
-
-        if ((2 + ct * 2 + 1) > maxlen) {
-            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_USE_SRTP_EXT,
-                   SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG);
-            return 1;
-        }
-
-        /* Add the length */
-        s2n(ct * 2, p);
-        for (i = 0; i < ct; i++) {
-            prof = sk_SRTP_PROTECTION_PROFILE_value(clnt, i);
-            s2n(prof->id, p);
-        }
-
-        /* Add an empty use_mki value */
-        *p++ = 0;
-    }
-
-    *len = 2 + ct * 2 + 1;
-
-    return 0;
-}
-
 int ssl_parse_clienthello_use_srtp_ext(SSL *s, PACKET *pkt, int *al)
 {
     SRTP_PROTECTION_PROFILE *sprof;

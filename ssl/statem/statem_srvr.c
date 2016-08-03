@@ -1551,7 +1551,7 @@ int tls_construct_server_hello(SSL *s)
     p += sl;
 
     /* put the cipher */
-    i = ssl3_put_cipher_by_char(s->s3->tmp.new_cipher, p);
+    i = ssl3_put_cipher_by_char_old(s->s3->tmp.new_cipher, p);
     p += i;
 
     /* put the compression method */
@@ -2002,7 +2002,7 @@ int tls_construct_certificate_request(SSL *s)
         nl = tls12_get_psigalgs(s, &psigs);
         /* Skip over length for now */
         p += 2;
-        nl = tls12_copy_sigalgs(s, p, psigs, nl);
+        nl = tls12_copy_sigalgs_old(s, p, psigs, nl);
         /* Now fill in length */
         s2n(nl, etmp);
         p += nl;
