@@ -1,6 +1,9 @@
 language: c
 cache: ccache
 
+before_install:
+    - pip install --user cpp-coveralls
+
 addons:
     apt:
         packages:
@@ -25,12 +28,14 @@ compiler:
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
     - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="--strict-warnings no-shared" BUILDONLY="yes"
     - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
     - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
 
 matrix:
     include:
+        - os: linux
+          compiler: gcc
+          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers" COVERALLS="yes"
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="no-shared enable-asan"
@@ -106,6 +111,11 @@ script:
           make install install_docs DESTDIR="../$DESTDIR";
       fi
     - cd $top
+
+after_success:
+    - if [ -n "$COVERALLS" ]; then
+          coveralls -b .;
+      fi;
 
 notifications:
     email:
