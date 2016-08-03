@@ -2,9 +2,8 @@
  OPENSSL INSTALLATION
  --------------------
 
- [This document describes installation on all supported operating
-  systems (currently mainly the Linux/Unix family, OpenVMS and
-  Windows)]
+ This document describes installation on all supported operating
+ systems (the Linux/Unix family, OpenVMS and Windows)
 
  To install OpenSSL, you will need:
 
@@ -22,6 +21,54 @@
   * NOTES.VMS (OpenVMS)
   * NOTES.WIN (any supported Windows)
   * NOTES.DJGPP (DOS platform with DJGPP)
+
+ Notational conventions in this document
+ ---------------------------------------
+
+ Throughout this document, we use the following conventions in command
+ examples:
+
+ $ command                      Any line starting with a dollar sign
+                                ($) is a command line.
+
+ { word1 | word2 | word3 }      This denotes a mandatory choice, to be
+                                replaced with one of the given words.
+                                A simple example would be this:
+
+                                $ echo { FOO | BAR | COOKIE }
+
+                                which is to be understood as one of
+                                these:
+
+                                $ echo FOO
+                                - or -
+                                $ echo BAR
+                                - or -
+                                $ echo COOKIE
+
+ [ word1 | word2 | word3 ]      Similar to { word1 | word2 | word3 }
+                                except it's optional to give any of
+                                those.  In addition to the examples
+                                above, this would also be valid:
+
+                                $ echo
+
+ {{ target }}                   This denotes a mandatory word or
+                                sequence of words of some sort.  A
+                                simple example would be this:
+
+                                $ type {{ filename }}
+
+                                which is to be understood to use the
+                                command 'type' on some file name
+                                determined by the user.
+
+ [[ options ]]                  Similar to {{ target }}, but is
+                                optional.
+
+ Note that the notation assumes spaces around {, }, [, ], {{, }} and
+ [[, ]].  This is to differentiate from OpenVMS directory
+ specifications, which also use [ and ], but without spaces.
 
  Quick Start
  -----------
@@ -49,7 +96,7 @@
     $ nmake test
     $ nmake install
 
- [If any of these steps fails, see section Installation in Detail below.]
+ If any of these steps fails, see section Installation in Detail below.
 
  This will build and install OpenSSL in the default location, which is:
 
@@ -451,11 +498,11 @@
 
      NOTE: This is not available on Windows.
 
-       $ ./config [options]                             # Unix
+       $ ./config [[ options ]]                         # Unix
 
        or
 
-       $ @config [options]                              ! OpenVMS
+       $ @config [[ options ]]                          ! OpenVMS
 
      For the remainder of this text, the Unix form will be used in all
      examples, please use the appropriate form for your platform.
@@ -468,7 +515,7 @@
 
      On some systems, you can include debugging information as follows:
 
-       $ ./config -d [options]
+       $ ./config -d [[ options ]]
 
  1b. Configure OpenSSL for your operating system manually
 
@@ -490,10 +537,10 @@
      as the argument to Configure. For example, a "linux-elf" user would
      run:
 
-       $ ./Configure linux-elf [options]
+       $ ./Configure linux-elf [[ options ]]
 
      If your system isn't listed, you will have to create a configuration
-     file named Configurations/{something}.conf and add the correct
+     file named Configurations/{{ something }}.conf and add the correct
      configuration for your system. See the available configs as examples
      and read Configurations/README and Configurations/README.design for
      more information.
@@ -517,29 +564,29 @@
 
        $ mkdir /var/tmp/openssl-build
        $ cd /var/tmp/openssl-build
-       $ /PATH/TO/OPENSSL/SOURCE/config [options]
+       $ /PATH/TO/OPENSSL/SOURCE/config [[ options ]]
 
        or
 
-       $ /PATH/TO/OPENSSL/SOURCE/Configure [target] [options]
+       $ /PATH/TO/OPENSSL/SOURCE/Configure {{ target }} [[ options ]]
 
      OpenVMS example:
 
        $ set default sys$login:
        $ create/dir [.tmp.openssl-build]
        $ set default [.tmp.openssl-build]
-       $ @[PATH.TO.OPENSSL.SOURCE]config {options}
+       $ @[PATH.TO.OPENSSL.SOURCE]config [[ options ]]
 
        or
 
-       $ @[PATH.TO.OPENSSL.SOURCE]Configure {target} {options}
+       $ @[PATH.TO.OPENSSL.SOURCE]Configure {{ target }} [[ options ]]
 
      Windows example:
 
        $ C:
        $ mkdir \temp-openssl
        $ cd \temp-openssl
-       $ perl d:\PATH\TO\OPENSSL\SOURCE\Configure {target} {options}
+       $ perl d:\PATH\TO\OPENSSL\SOURCE\Configure {{ target }} [[ options ]]
 
      Paths can be relative just as well as absolute.  Configure will
      do its best to translate them to relative paths whenever possible.
@@ -568,8 +615,8 @@
      tracker. Maybe the bug was already reported or has already been
      fixed.
 
-     [If you encounter assembler error messages, try the "no-asm"
-     configuration option as an immediate fix.]
+     (If you encounter assembler error messages, try the "no-asm"
+     configuration option as an immediate fix.)
 
      Compiling parts of OpenSSL with gcc and others with the system
      compiler will result in unresolved symbols on some systems.
@@ -640,9 +687,16 @@
                         or libssl.
          lib            Contains the OpenSSL library files.
          lib/engines    Contains the OpenSSL dynamically loadable engines.
-         share/man/{man1,man3,man5,man7}
-                        Contains the OpenSSL man-pages.
-         share/doc/openssl/html/{man1,man3,man5,man7}
+
+         share/man/man1 Contains the OpenSSL command line man-pages.
+         share/man/man3 Contains the OpenSSL library calls man-pages.
+         share/man/man5 Contains the OpenSSL configuration format man-pages.
+         share/man/man7 Contains the OpenSSL other misc man-pages.
+
+         share/doc/openssl/html/man1
+         share/doc/openssl/html/man3
+         share/doc/openssl/html/man5
+         share/doc/openssl/html/man7
                         Contains the HTML rendition of the man-pages.
 
        OpenVMS ('arch' is replaced with the architecture name, "Alpha"
