@@ -169,3 +169,7 @@ Makefile.save
 *.bak
 cscope.*
 *.d
+pod2htmd.tmp
+
+# Windows manifest files
+*.manifest
