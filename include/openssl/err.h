@@ -245,8 +245,6 @@ DEPRECATEDIN_1_1_0(void ERR_remove_thread_state(void *))
 DEPRECATEDIN_1_0_0(void ERR_remove_state(unsigned long pid))
 ERR_STATE *ERR_get_state(void);
 
-LHASH_OF(ERR_STRING_DATA) *ERR_get_string_table(void);
-
 int ERR_get_next_error_library(void);
 
 int ERR_set_mark(void);
