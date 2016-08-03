@@ -145,6 +145,9 @@
 # define APPS_WIN16
 #endif
 
+#ifdef OPENSSL_SYS_VMS
+# include "vms_term_sock.h"
+#endif
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
  * recursive header file inclusion, resulting in the compiler complaining
@@ -745,6 +748,10 @@ int MAIN(int argc, char **argv)
     int crl_download = 0;
     STACK_OF(X509_CRL) *crls = NULL;
     int prot_opt = 0, no_prot_opt = 0;
+#if defined(OPENSSL_SYS_VMS)  
+    int stdin_sock;
+    TerminalSocket(TERM_SOCK_CREATE, &stdin_sock);
+#endif 
 
     meth = SSLv23_client_method();
 
@@ -1457,7 +1464,20 @@ int MAIN(int argc, char **argv)
 
 #ifdef FIONBIO
     if (c_nbio) {
+#if defined(OPENSSL_SYS_VMS) && defined(__VMS_VER) && (__VMS_VER >= 70000000)  
+        /* For 64-bit --> 32-bit restricted APIs (IOCTL) */
+#if __INITIAL_POINTER_SIZE == 64 
+#pragma __required_pointer_size __save 
+#pragma __required_pointer_size 32 
+#endif 
+        unsigned int l = 1;
+#if __INITIAL_POINTER_SIZE == 64 
+#pragma __required_pointer_size __restore 
+#endif 
+#else  
         unsigned long l = 1;
+#endif /* OPENSSL_SYS_VMS */
+
         BIO_printf(bio_c_out, "turning on non blocking io\n");
         if (BIO_socket_ioctl(s, FIONBIO, &l) < 0) {
             ERR_print_errors(bio_err);
@@ -1561,8 +1581,14 @@ int MAIN(int argc, char **argv)
     SSL_set_connect_state(con);
 
     /* ok, lets connect */
+#if defined(OPENSSL_SYS_VMS)  
+    if (stdin_sock > SSL_get_fd(con))
+        width = stdin_sock + 1;
+    else
+        width = SSL_get_fd(con) + 1;
+#else  
     width = SSL_get_fd(con) + 1;
-
+#endif
     read_tty = 1;
     write_tty = 0;
     tty_on = 0;
@@ -1743,10 +1769,16 @@ int MAIN(int argc, char **argv)
         if (!ssl_pending) {
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined (OPENSSL_SYS_BEOS_R5)
             if (tty_on) {
+
+#if defined(OPENSSL_SYS_VMS)
+                if (read_tty)
+                    openssl_fdset(stdin_sock, &readfds);
+#else
                 if (read_tty)
                     openssl_fdset(fileno(stdin), &readfds);
                 if (write_tty)
                     openssl_fdset(fileno(stdout), &writefds);
+#endif
             }
             if (read_ssl)
                 openssl_fdset(SSL_get_fd(con), &readfds);
@@ -1907,7 +1939,7 @@ int MAIN(int argc, char **argv)
                 goto shut;
             }
         }
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5) || defined(OPENSSL_SYS_VMS) 
         /* Assume Windows/DOS/BeOS can always write */
         else if (!ssl_pending && write_tty)
 #else
@@ -2009,13 +2041,25 @@ int MAIN(int argc, char **argv)
 #elif defined(OPENSSL_SYS_BEOS_R5)
         else if (stdin_set)
 #else
-        else if (FD_ISSET(fileno(stdin), &readfds))
+
+#if defined(OPENSSL_SYS_VMS)  
+	   else if (FD_ISSET(stdin_sock,&readfds))  
+#else  
+ 	   else if (FD_ISSET(fileno(stdin),&readfds))  
+#endif 
+
 #endif
         {
             if (crlf) {
                 int j, lf_num;
 
                 i = raw_read_stdin(cbuf, BUFSIZZ / 2);
+		#if defined(OPENSSL_SYS_VMS)
+                    i = recv(stdin_sock, cbuf, BUFSIZZ/2, 0);
+                #else
+                    i = raw_read_stdin(cbuf, BUFSIZZ/2);
+                #endif
+
                 lf_num = 0;
                 /* both loops are skipped when i <= 0 */
                 for (j = 0; j < i; j++)
@@ -2031,8 +2075,13 @@ int MAIN(int argc, char **argv)
                 }
                 assert(lf_num == 0);
             } else
-                i = raw_read_stdin(cbuf, BUFSIZZ);
-
+		{
+			#if defined(OPENSSL_SYS_VMS) 
+	                i = recv(stdin_sock, cbuf, BUFSIZZ, 0);
+			#else
+	                i = raw_read_stdin(cbuf, BUFSIZZ);
+			#endif
+		}
             if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q'))) {
                 BIO_printf(bio_err, "DONE\n");
                 ret = 0;
@@ -2126,6 +2175,9 @@ int MAIN(int argc, char **argv)
         BIO_free(bio_c_msg);
         bio_c_msg = NULL;
     }
+#if defined(OPENSSL_SYS_VMS) 
+    TerminalSocket(TERM_SOCK_DELETE, &stdin_sock);
+#endif
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }
