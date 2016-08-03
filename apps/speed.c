@@ -1431,6 +1431,12 @@ int speed_main(int argc, char **argv)
             break;
         case OPT_MB:
             multiblock = 1;
+#ifdef OPENSSL_NO_MULTIBLOCK
+            BIO_printf(bio_err,
+                       "%s: -mb specified but multi-block support is disabled\n",
+                       prog);
+            goto end;
+#endif
             break;
         }
     }
