@@ -72,10 +72,13 @@ int custom_ext_parse(SSL *s, int server,
 
 /*
  * Request custom extension data from the application and add to the return
- * buffer.
+ * buffer. This is the old style function signature prior to PACKETW. This is
+ * here temporarily until the conversion to PACKETW is completed, i.e. it is
+ * used by code that hasn't been converted yet.
+ * TODO - REMOVE THIS FUNCTION
  */
-int custom_ext_add(SSL *s, int server,
-                   unsigned char **pret, unsigned char *limit, int *al)
+int custom_ext_add_old(SSL *s, int server,
+                       unsigned char **pret, unsigned char *limit, int *al)
 {
     custom_ext_methods *exts = server ? &s->cert->srv_ext : &s->cert->cli_ext;
     custom_ext_method *meth;
@@ -128,6 +131,67 @@ int custom_ext_add(SSL *s, int server,
             meth->free_cb(s, meth->ext_type, out, meth->add_arg);
     }
     *pret = ret;
+    return 1;
+}
+
+
+/*
+ * Request custom extension data from the application and add to the return
+ * buffer.
+ */
+int custom_ext_add(SSL *s, int server, PACKETW *pkt, int *al)
+{
+    custom_ext_methods *exts = server ? &s->cert->srv_ext : &s->cert->cli_ext;
+    custom_ext_method *meth;
+    size_t i;
+
+    for (i = 0; i < exts->meths_count; i++) {
+        const unsigned char *out = NULL;
+        size_t outlen = 0;
+        PACKETW spkt;
+
+        meth = exts->meths + i;
+
+        if (server) {
+            /*
+             * For ServerHello only send extensions present in ClientHello.
+             */
+            if (!(meth->ext_flags & SSL_EXT_FLAG_RECEIVED))
+                continue;
+            /* If callback absent for server skip it */
+            if (!meth->add_cb)
+                continue;
+        }
+        if (meth->add_cb) {
+            int cb_retval = 0;
+            cb_retval = meth->add_cb(s, meth->ext_type,
+                                     &out, &outlen, al, meth->add_arg);
+            if (cb_retval < 0)
+                return 0;       /* error */
+            if (cb_retval == 0)
+                continue;       /* skip this extension */
+        }
+
+        if (!PACKETW_put_bytes(pkt, meth->ext_type, 2)
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                || (outlen > 0 && !PACKETW_memcpy(&spkt, out, outlen))
+                || !PACKETW_close(&spkt)) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            return 0;
+        }
+        /*
+         * We can't send duplicates: code logic should prevent this.
+         */
+        OPENSSL_assert(!(meth->ext_flags & SSL_EXT_FLAG_SENT));
+        /*
+         * Indicate extension has been sent: this is both a sanity check to
+         * ensure we don't send duplicate extensions and indicates that it is
+         * not an error if the extension is present in ServerHello.
+         */
+        meth->ext_flags |= SSL_EXT_FLAG_SENT;
+        if (meth->free_cb)
+            meth->free_cb(s, meth->ext_type, out, meth->add_arg);
+    }
     return 1;
 }
 

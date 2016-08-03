@@ -1190,3 +1190,46 @@ void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
     n2l3(data, msg_hdr->frag_off);
     n2l3(data, msg_hdr->frag_len);
 }
+
+/*
+ * Temporary name. To be renamed dtls1_set_handshake_header() once all PACKETW
+ * conversion is complete. The old dtls1_set_handshake_heder() can be deleted
+ * at that point.
+ * TODO - RENAME ME
+ */
+int dtls1_set_handshake_header2(SSL *s, PACKETW *pkt, PACKETW *body, int htype)
+{
+    unsigned char *header;
+    dtls1_set_message_header(s, htype, 0, 0, 0);
+
+    /*
+     * We allocate space at the start for the message header. This gets filled
+     * in later
+     */
+    if (!PACKETW_allocate_bytes(pkt, DTLS1_HM_HEADER_LENGTH, &header)
+            || !PACKETW_get_sub_packet(pkt, body))
+        return 0;
+
+    return 1;
+}
+
+int dtls1_close_construct_packet(SSL *s, PACKETW *pkt)
+{
+    size_t msglen;
+
+    if (!PACKETW_get_length(pkt, &msglen)
+            || msglen > INT_MAX
+            || !PACKETW_close(pkt))
+        return 0;
+    s->d1->w_msg_hdr.msg_len = msglen - DTLS1_HM_HEADER_LENGTH;
+    s->d1->w_msg_hdr.frag_len = msglen - DTLS1_HM_HEADER_LENGTH;
+    s->init_num = (int)msglen;
+    s->init_off = 0;
+
+    /* Buffer the message to handle re-xmits */
+
+    if (!dtls1_buffer_message(s, 0))
+        return 0;
+
+    return 1;
+}

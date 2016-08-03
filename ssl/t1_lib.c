@@ -41,6 +41,8 @@ SSL3_ENC_METHOD const TLSv1_enc_data = {
     0,
     SSL3_HM_HEADER_LENGTH,
     ssl3_set_handshake_header,
+    ssl3_set_handshake_header2,
+    tls_close_construct_packet,
     ssl3_handshake_write
 };
 
@@ -59,6 +61,8 @@ SSL3_ENC_METHOD const TLSv1_1_enc_data = {
     SSL_ENC_FLAG_EXPLICIT_IV,
     SSL3_HM_HEADER_LENGTH,
     ssl3_set_handshake_header,
+    ssl3_set_handshake_header2,
+    tls_close_construct_packet,
     ssl3_handshake_write
 };
 
@@ -78,6 +82,8 @@ SSL3_ENC_METHOD const TLSv1_2_enc_data = {
         | SSL_ENC_FLAG_TLS1_2_CIPHERS,
     SSL3_HM_HEADER_LENGTH,
     ssl3_set_handshake_header,
+    ssl3_set_handshake_header2,
+    tls_close_construct_packet,
     ssl3_handshake_write
 };
 
@@ -1007,12 +1013,9 @@ static int tls1_check_duplicate_extensions(const PACKET *packet)
     return ret;
 }
 
-unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
-                                          unsigned char *limit, int *al)
+int ssl_add_clienthello_tlsext(SSL *s, PACKETW *pkt, int *al)
 {
-    int extdatalen = 0;
-    unsigned char *orig = buf;
-    unsigned char *ret = buf;
+    PACKETW spkt;
 #ifndef OPENSSL_NO_EC
     /* See if we support any ECC ciphersuites */
     int using_ecc = 0;
@@ -1035,32 +1038,16 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     }
 #endif
 
-    ret += 2;
-
-    if (ret >= limit)
-        return NULL;            /* this really never occurs, but ... */
-
     /* Add RI if renegotiating */
     if (s->renegotiate) {
-        int el;
-
-        if (!ssl_add_clienthello_renegotiate_ext(s, 0, &el, 0)) {
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_renegotiate, 2)
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                || !PACKETW_memcpy(&spkt, s->s3->previous_client_finished,
+                                   s->s3->previous_client_finished_len)
+                || !PACKETW_close(&spkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return NULL;
+            return 0;
         }
-
-        if ((limit - ret - 4 - el) < 0)
-            return NULL;
-
-        s2n(TLSEXT_TYPE_renegotiate, ret);
-        s2n(el, ret);
-
-        if (!ssl_add_clienthello_renegotiate_ext(s, ret, &el, el)) {
-            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return NULL;
-        }
-
-        ret += el;
     }
     /* Only add RI for SSLv3 */
     if (s->client_version == SSL3_VERSION)
@@ -1068,124 +1055,102 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
 
     if (s->tlsext_hostname != NULL) {
         /* Add TLS extension servername to the Client Hello message */
-        unsigned long size_str;
-        long lenmax;
+        PACKETW slistpkt, hostpkt;
 
-        /*-
-         * check for enough space.
-         * 4 for the servername type and extension length
-         * 2 for servernamelist length
-         * 1 for the hostname type
-         * 2 for hostname length
-         * + hostname length
-         */
-
-        if ((lenmax = limit - ret - 9) < 0
-            || (size_str = strlen(s->tlsext_hostname)) > (unsigned long)lenmax)
-            return NULL;
-
-        /* extension type and length */
-        s2n(TLSEXT_TYPE_server_name, ret);
-        s2n(size_str + 5, ret);
-
-        /* length of servername list */
-        s2n(size_str + 3, ret);
-
-        /* hostname type, length and hostname */
-        *(ret++) = (unsigned char)TLSEXT_NAMETYPE_host_name;
-        s2n(size_str, ret);
-        memcpy(ret, s->tlsext_hostname, size_str);
-        ret += size_str;
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_server_name, 2)
+                   /* Sub-packet for server_name extension */
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                   /* Sub-packet for servername list (always 1 hostname)*/
+                || !PACKETW_get_sub_packet_len(&spkt, &slistpkt, 2)
+                || !PACKETW_put_bytes(&slistpkt, TLSEXT_NAMETYPE_host_name, 1)
+                   /* Sub-packet for a single hostname host name */
+                || !PACKETW_get_sub_packet_len(&slistpkt, &hostpkt, 2)
+                || !PACKETW_memcpy(&hostpkt, s->tlsext_hostname,
+                                   strlen(s->tlsext_hostname))
+                || !PACKETW_close(&hostpkt)
+                || !PACKETW_close(&slistpkt)
+                || !PACKETW_close(&spkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 #ifndef OPENSSL_NO_SRP
     /* Add SRP username if there is one */
-    if (s->srp_ctx.login != NULL) { /* Add TLS extension SRP username to the
-                                     * Client Hello message */
+    if (s->srp_ctx.login != NULL) {
+        PACKETW loginpkt;
 
-        int login_len = strlen(s->srp_ctx.login);
-        if (login_len > 255 || login_len == 0) {
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_srp, 2)
+                   /* Sub-packet for SRP extension */
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                || !PACKETW_get_sub_packet_len(&spkt, &loginpkt, 1)
+                   /* login must not be zero...internal error if so */
+                || !PACKETW_set_flags(&loginpkt,
+                                      OPENSSL_PACKETW_FLAGS_NON_ZERO_LENGTH)
+                || !PACKETW_memcpy(&loginpkt, s->srp_ctx.login,
+                                   strlen(s->srp_ctx.login))
+                || !PACKETW_close(&loginpkt)
+                || !PACKETW_close(&spkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return NULL;
+            return 0;
         }
-
-        /*-
-         * check for enough space.
-         * 4 for the srp type type and extension length
-         * 1 for the srp user identity
-         * + srp user identity length
-         */
-        if ((limit - ret - 5 - login_len) < 0)
-            return NULL;
-
-        /* fill in the extension */
-        s2n(TLSEXT_TYPE_srp, ret);
-        s2n(login_len + 1, ret);
-        (*ret++) = (unsigned char)login_len;
-        memcpy(ret, s->srp_ctx.login, login_len);
-        ret += login_len;
     }
 #endif
 
 #ifndef OPENSSL_NO_EC
     if (using_ecc) {
+        PACKETW formatspkt, curveslistpkt;
+
         /*
          * Add TLS extension ECPointFormats to the ClientHello message
          */
-        long lenmax;
         const unsigned char *pcurves, *pformats;
-        size_t num_curves, num_formats, curves_list_len;
+        size_t num_curves, num_formats;
         size_t i;
-        unsigned char *etmp;
 
         tls1_get_formatlist(s, &pformats, &num_formats);
 
-        if ((lenmax = limit - ret - 5) < 0)
-            return NULL;
-        if (num_formats > (size_t)lenmax)
-            return NULL;
-        if (num_formats > 255) {
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_ec_point_formats, 2)
+                   /* Sub-packet for formats extension */
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                || !PACKETW_get_sub_packet_len(&spkt, &formatspkt, 1)
+                || !PACKETW_memcpy(&formatspkt, pformats, num_formats)
+                || !PACKETW_close(&formatspkt)
+                || !PACKETW_close(&spkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return NULL;
+            return 0;
         }
-
-        s2n(TLSEXT_TYPE_ec_point_formats, ret);
-        /* The point format list has 1-byte length. */
-        s2n(num_formats + 1, ret);
-        *(ret++) = (unsigned char)num_formats;
-        memcpy(ret, pformats, num_formats);
-        ret += num_formats;
 
         /*
          * Add TLS extension EllipticCurves to the ClientHello message
          */
         pcurves = s->tlsext_ellipticcurvelist;
-        if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves))
-            return NULL;
-
-        if ((lenmax = limit - ret - 6) < 0)
-            return NULL;
-        if (num_curves > (size_t)lenmax / 2)
-            return NULL;
-        if (num_curves > 65532 / 2) {
+        if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return NULL;
+            return 0;
         }
 
-        s2n(TLSEXT_TYPE_elliptic_curves, ret);
-        etmp = ret + 4;
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_elliptic_curves, 2)
+                   /* Sub-packet for curves extension */
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                || !PACKETW_get_sub_packet_len(&spkt, &curveslistpkt, 2)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
         /* Copy curve ID if supported */
         for (i = 0; i < num_curves; i++, pcurves += 2) {
             if (tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
-                *etmp++ = pcurves[0];
-                *etmp++ = pcurves[1];
+                if (!PACKETW_put_bytes(&curveslistpkt, pcurves[0], 1)
+                    || !PACKETW_put_bytes(&curveslistpkt, pcurves[1], 1)) {
+                        SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
+                               ERR_R_INTERNAL_ERROR);
+                        return 0;
+                    }
             }
         }
-
-        curves_list_len = etmp - ret - 4;
-
-        s2n(curves_list_len + 2, ret);
-        s2n(curves_list_len, ret);
-        ret += curves_list_len;
+        if (!PACKETW_close(&curveslistpkt) || !PACKETW_close(&spkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 #endif                          /* OPENSSL_NO_EC */
 
@@ -1197,8 +1162,10 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
                  s->tlsext_session_ticket->data) {
             ticklen = s->tlsext_session_ticket->length;
             s->session->tlsext_tick = OPENSSL_malloc(ticklen);
-            if (s->session->tlsext_tick == NULL)
-                return NULL;
+            if (s->session->tlsext_tick == NULL) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
             memcpy(s->session->tlsext_tick,
                    s->tlsext_session_ticket->data, ticklen);
             s->session->tlsext_ticklen = ticklen;
@@ -1207,17 +1174,14 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         if (ticklen == 0 && s->tlsext_session_ticket &&
             s->tlsext_session_ticket->data == NULL)
             goto skip_ext;
-        /*
-         * Check for enough room 2 for extension type, 2 for len rest for
-         * ticket
-         */
-        if ((long)(limit - ret - 4 - ticklen) < 0)
-            return NULL;
-        s2n(TLSEXT_TYPE_session_ticket, ret);
-        s2n(ticklen, ret);
-        if (ticklen) {
-            memcpy(ret, s->session->tlsext_tick, ticklen);
-            ret += ticklen;
+
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_session_ticket, 2)
+                   /* Sub-packet for ticket extension */
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                || !PACKETW_memcpy(&spkt, s->session->tlsext_tick, ticklen)
+                || !PACKETW_close(&spkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
         }
     }
  skip_ext:
@@ -1225,81 +1189,102 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     if (SSL_CLIENT_USE_SIGALGS(s)) {
         size_t salglen;
         const unsigned char *salg;
-        unsigned char *etmp;
+        PACKETW salgslistpkt;
+
         salglen = tls12_get_psigalgs(s, &salg);
-        if ((size_t)(limit - ret) < salglen + 6)
-            return NULL;
-        s2n(TLSEXT_TYPE_signature_algorithms, ret);
-        etmp = ret;
-        /* Skip over lengths for now */
-        ret += 4;
-        salglen = tls12_copy_sigalgs(s, ret, salg, salglen);
-        /* Fill in lengths */
-        s2n(salglen + 2, etmp);
-        s2n(salglen, etmp);
-        ret += salglen;
+
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_signature_algorithms, 2)
+                   /* Sub-packet for sig-algs extension */
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                   /* Sub-packet for the actual list */
+                || !PACKETW_get_sub_packet_len(&spkt, &salgslistpkt, 2)
+                || !tls12_copy_sigalgs(s, &salgslistpkt, salg, salglen)
+                || !PACKETW_close(&salgslistpkt)
+                || !PACKETW_close(&spkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 #ifndef OPENSSL_NO_OCSP
     if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
+        PACKETW idspkt, extpkt;
         int i;
-        long extlen, idlen, itmp;
-        OCSP_RESPID *id;
 
-        idlen = 0;
-        for (i = 0; i < sk_OCSP_RESPID_num(s->tlsext_ocsp_ids); i++) {
-            id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
-            itmp = i2d_OCSP_RESPID(id, NULL);
-            if (itmp <= 0)
-                return NULL;
-            idlen += itmp + 2;
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_status_request, 2)
+                   /* Sub-packet for status request extension */
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                || !PACKETW_put_bytes(&spkt, TLSEXT_STATUSTYPE_ocsp, 1)
+                   /* Sub-packet for the ids */
+                || !PACKETW_get_sub_packet_len(&spkt, &idspkt, 2)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
         }
+        for (i = 0; i < sk_OCSP_RESPID_num(s->tlsext_ocsp_ids); i++) {
+            unsigned char *idbytes;
+            int idlen;
+            OCSP_RESPID *id;
+            PACKETW idpkt;
 
+            id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
+            idlen = i2d_OCSP_RESPID(id, NULL);
+            if (idlen <= 0
+                       /* Sub-packet for an individual id */
+                    || !PACKETW_get_sub_packet_len(&idspkt, &idpkt, 1)
+                    || !PACKETW_allocate_bytes(&idpkt, idlen, &idbytes)
+                    || i2d_OCSP_RESPID(id, &idbytes) != idlen
+                    || !PACKETW_close(&idpkt)) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+        if (!PACKETW_close(&idspkt)
+                || !PACKETW_get_sub_packet_len(&spkt, &extpkt, 2)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
         if (s->tlsext_ocsp_exts) {
-            extlen = i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, NULL);
-            if (extlen < 0)
-                return NULL;
-        } else
-            extlen = 0;
+            unsigned char *extbytes;
+            int extlen = i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, NULL);
 
-        if ((long)(limit - ret - 7 - extlen - idlen) < 0)
-            return NULL;
-        s2n(TLSEXT_TYPE_status_request, ret);
-        if (extlen + idlen > 0xFFF0)
-            return NULL;
-        s2n(extlen + idlen + 5, ret);
-        *(ret++) = TLSEXT_STATUSTYPE_ocsp;
-        s2n(idlen, ret);
-        for (i = 0; i < sk_OCSP_RESPID_num(s->tlsext_ocsp_ids); i++) {
-            /* save position of id len */
-            unsigned char *q = ret;
-            id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
-            /* skip over id len */
-            ret += 2;
-            itmp = i2d_OCSP_RESPID(id, &ret);
-            /* write id len */
-            s2n(itmp, q);
+            if (extlen < 0) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            if (!PACKETW_allocate_bytes(&extpkt, extlen, &extbytes)
+                    || i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &extbytes)
+                       != extlen) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+                return 0;
+           }
         }
-        s2n(extlen, ret);
-        if (extlen > 0)
-            i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &ret);
+        if (!PACKETW_close(&extpkt) || !PACKETW_close(&spkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 #endif
 #ifndef OPENSSL_NO_HEARTBEATS
     if (SSL_IS_DTLS(s)) {
-        /* Add Heartbeat extension */
-        if ((limit - ret - 4 - 1) < 0)
-            return NULL;
-        s2n(TLSEXT_TYPE_heartbeat, ret);
-        s2n(1, ret);
+        unsigned int mode;
+
         /*-
          * Set mode:
          * 1: peer may send requests
          * 2: peer not allowed to send requests
          */
         if (s->tlsext_heartbeat & SSL_DTLSEXT_HB_DONT_RECV_REQUESTS)
-            *(ret++) = SSL_DTLSEXT_HB_DONT_SEND_REQUESTS;
+            mode = SSL_DTLSEXT_HB_DONT_SEND_REQUESTS;
         else
-            *(ret++) = SSL_DTLSEXT_HB_ENABLED;
+            mode = SSL_DTLSEXT_HB_ENABLED;
+
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_heartbeat, 2)
+                   /* Sub-packet for Hearbeat extension */
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                || !PACKETW_put_bytes(&spkt, mode, 1)
+                || !PACKETW_close(&spkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 #endif
 
@@ -1309,10 +1294,11 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * The client advertises an empty extension to indicate its support
          * for Next Protocol Negotiation
          */
-        if (limit - ret - 4 < 0)
-            return NULL;
-        s2n(TLSEXT_TYPE_next_proto_neg, ret);
-        s2n(0, ret);
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_next_proto_neg, 2)
+                || !PACKETW_put_bytes(pkt, 0, 2)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 #endif
 
@@ -1322,52 +1308,80 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
      * (see longer comment below)
      */
     if (s->alpn_client_proto_list && !s->s3->tmp.finish_md_len) {
-        if ((size_t)(limit - ret) < 6 + s->alpn_client_proto_list_len)
-            return NULL;
-        s2n(TLSEXT_TYPE_application_layer_protocol_negotiation, ret);
-        s2n(2 + s->alpn_client_proto_list_len, ret);
-        s2n(s->alpn_client_proto_list_len, ret);
-        memcpy(ret, s->alpn_client_proto_list, s->alpn_client_proto_list_len);
-        ret += s->alpn_client_proto_list_len;
+        PACKETW plistpkt;
+
+        if (!PACKETW_put_bytes(pkt,
+                    TLSEXT_TYPE_application_layer_protocol_negotiation, 2)
+                   /* Sub-packet ALPN extension */
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                   /* Sub-packet for ALPN proto list */
+                || !PACKETW_get_sub_packet_len(&spkt, &plistpkt, 2)
+                || !PACKETW_memcpy(&plistpkt, s->alpn_client_proto_list,
+                                    s->alpn_client_proto_list_len)
+                || !PACKETW_close(&plistpkt)
+                || !PACKETW_close(&spkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
         s->s3->alpn_sent = 1;
     }
 #ifndef OPENSSL_NO_SRTP
     if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)) {
-        int el;
+        STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = 0;
+        SRTP_PROTECTION_PROFILE *prof;
+        int i, ct;
+        PACKETW plistpkt;
 
-        /* Returns 0 on success!! */
-        if (ssl_add_clienthello_use_srtp_ext(s, 0, &el, 0)) {
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_use_srtp, 2)
+                   /* Sub-packet for SRTP extension */
+                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                   /* Sub-packet for the protection profile list */
+                || !PACKETW_get_sub_packet_len(&spkt, &plistpkt, 2)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return NULL;
+            return 0;
         }
-
-        if ((limit - ret - 4 - el) < 0)
-            return NULL;
-
-        s2n(TLSEXT_TYPE_use_srtp, ret);
-        s2n(el, ret);
-
-        if (ssl_add_clienthello_use_srtp_ext(s, ret, &el, el)) {
+        ct = sk_SRTP_PROTECTION_PROFILE_num(clnt);
+        for (i = 0; i < ct; i++) {
+            prof = sk_SRTP_PROTECTION_PROFILE_value(clnt, i);
+            if (prof == NULL || !PACKETW_put_bytes(&plistpkt, prof->id, 2)) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+        if (!PACKETW_close(&plistpkt) || !PACKETW_close(&spkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return NULL;
+            return 0;
         }
-        ret += el;
     }
 #endif
     custom_ext_init(&s->cert->cli_ext);
     /* Add custom TLS Extensions to ClientHello */
-    if (!custom_ext_add(s, 0, &ret, limit, al))
-        return NULL;
-    s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
-    s2n(0, ret);
+    if (!custom_ext_add(s, 0, pkt, al)) {
+        SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_encrypt_then_mac, 2)
+            || !PACKETW_put_bytes(pkt, 0, 2)) {
+        SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
 #ifndef OPENSSL_NO_CT
     if (s->ct_validation_callback != NULL) {
-        s2n(TLSEXT_TYPE_signed_certificate_timestamp, ret);
-        s2n(0, ret);
+        if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_signed_certificate_timestamp, 2)
+                || !PACKETW_put_bytes(pkt, 0, 2)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 #endif
-    s2n(TLSEXT_TYPE_extended_master_secret, ret);
-    s2n(0, ret);
+
+    if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_extended_master_secret, 2)
+            || !PACKETW_put_bytes(pkt, 0, 2)) {
+        SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
     /*
      * Add padding to workaround bugs in F5 terminators. See
@@ -1376,7 +1390,13 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
      * appear last.
      */
     if (s->options & SSL_OP_TLSEXT_PADDING) {
-        int hlen = ret - (unsigned char *)s->init_buf->data;
+        unsigned char *padbytes;
+        size_t hlen;
+
+        if (!PACKETW_get_total_written(pkt, &hlen)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
 
         if (hlen > 0xff && hlen < 0x200) {
             hlen = 0x200 - hlen;
@@ -1385,20 +1405,22 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
             else
                 hlen = 0;
 
-            s2n(TLSEXT_TYPE_padding, ret);
-            s2n(hlen, ret);
-            memset(ret, 0, hlen);
-            ret += hlen;
+            if (!PACKETW_put_bytes(pkt, TLSEXT_TYPE_padding, 2)
+                    || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
+                    || !PACKETW_allocate_bytes(&spkt, hlen, &padbytes)) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            memset(padbytes, 0, hlen);
+            if (!PACKETW_close(&spkt)) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
         }
     }
 
  done:
-
-    if ((extdatalen = ret - orig - 2) == 0)
-        return orig;
-
-    s2n(extdatalen, orig);
-    return ret;
+    return 1;
 }
 
 unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
@@ -1589,7 +1611,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
         }
     }
 #endif
-    if (!custom_ext_add(s, 1, &ret, limit, al))
+    if (!custom_ext_add_old(s, 1, &ret, limit, al))
         return NULL;
     if (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC) {
         /*
@@ -3311,7 +3333,13 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
         *pmask_a |= SSL_aECDSA;
 }
 
-size_t tls12_copy_sigalgs(SSL *s, unsigned char *out,
+/*
+ * Old version of the tls12_copy_sigalgs function used by code that has not
+ * yet been converted to PACKETW yet. It will be deleted once PACKETW conversion
+ * is complete.
+ * TODO - DELETE ME
+ */
+size_t tls12_copy_sigalgs_old(SSL *s, unsigned char *out,
                           const unsigned char *psig, size_t psiglen)
 {
     unsigned char *tmpout = out;
@@ -3323,6 +3351,20 @@ size_t tls12_copy_sigalgs(SSL *s, unsigned char *out,
         }
     }
     return tmpout - out;
+}
+
+int tls12_copy_sigalgs(SSL *s, PACKETW *pkt,
+                       const unsigned char *psig, size_t psiglen)
+{
+    size_t i;
+    for (i = 0; i < psiglen; i += 2, psig += 2) {
+        if (tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, psig)) {
+            if (!PACKETW_put_bytes(pkt, psig[0], 1)
+                    || !PACKETW_put_bytes(pkt, psig[1], 1))
+                return 0;
+        }
+    }
+    return 1;
 }
 
 /* Given preference and allowed sigalgs set shared sigalgs */
