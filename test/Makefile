@@ -70,6 +70,7 @@ HEARTBEATTEST=  heartbeat_test
 CONSTTIMETEST=  constant_time_test
 VERIFYEXTRATEST=	verify_extra_test
 CLIENTHELLOTEST=	clienthellotest
+BADDTLSTEST=	bad_dtls_test
 SSLV2CONFTEST = 	sslv2conftest
 DTLSTEST =	dtlstest
 
@@ -85,7 +86,8 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(EVPTEST)$(EXE_EXT) $(EVPEXTRATEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT) \
 	$(ASN1TEST)$(EXE_EXT) $(V3NAMETEST)$(EXE_EXT) $(HEARTBEATTEST)$(EXE_EXT) \
 	$(CONSTTIMETEST)$(EXE_EXT) $(VERIFYEXTRATEST)$(EXE_EXT) \
-	$(CLIENTHELLOTEST)$(EXE_EXT) $(SSLV2CONFTEST)$(EXE_EXT) $(DTLSTEST)$(EXE_EXT)
+	$(CLIENTHELLOTEST)$(EXE_EXT) $(SSLV2CONFTEST)$(EXE_EXT) $(DTLSTEST)$(EXE_EXT) \
+	$(BADDTLSTEST)$(EXE_EXT)
 
 # $(METHTEST)$(EXE_EXT)
 
@@ -99,7 +101,8 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
 	$(EVPTEST).o $(EVPEXTRATEST).o $(IGETEST).o $(JPAKETEST).o $(ASN1TEST).o $(V3NAMETEST).o \
 	$(HEARTBEATTEST).o $(CONSTTIMETEST).o $(VERIFYEXTRATEST).o \
-	$(CLIENTHELLOTEST).o  $(SSLV2CONFTEST).o $(DTLSTEST).o ssltestlib.o
+	$(CLIENTHELLOTEST).o  $(SSLV2CONFTEST).o $(DTLSTEST).o ssltestlib.o \
+	$(BADDTLSTEST).o
 
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
@@ -110,7 +113,8 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c \
 	$(EVPTEST).c $(EVPEXTRATEST).c $(IGETEST).c $(JPAKETEST).c $(SRPTEST).c $(ASN1TEST).c \
 	$(V3NAMETEST).c $(HEARTBEATTEST).c $(CONSTTIMETEST).c $(VERIFYEXTRATEST).c \
-	$(CLIENTHELLOTEST).c  $(SSLV2CONFTEST).c $(DTLSTEST).c ssltestlib.c
+	$(CLIENTHELLOTEST).c  $(SSLV2CONFTEST).c $(DTLSTEST).c ssltestlib.c \
+	$(BADDTLSTEST).c
 
 EXHEADER= 
 HEADER=	testutil.h ssltestlib.h $(EXHEADER)
@@ -155,7 +159,7 @@ alltests: \
 	test_ss test_ca test_engine test_evp test_evp_extra test_ssl test_tsa test_ige \
 	test_jpake test_srp test_cms test_ocsp test_v3name test_heartbeat \
 	test_constant_time test_verify_extra test_clienthello test_sslv2conftest \
-	test_dtls
+	test_dtls test_bad_dtls
 
 test_evp: $(EVPTEST)$(EXE_EXT) evptests.txt
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -364,6 +368,10 @@ test_clienthello: $(CLIENTHELLOTEST)$(EXE_EXT)
 	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(CLIENTHELLOTEST)
 
+test_bad_dtls: $(BADDTLSTEST)$(EXE_EXT)
+	@echo $(START) $@
+	../util/shlib_wrap.sh ./$(BADDTLSTEST)
+
 test_sslv2conftest: $(SSLV2CONFTEST)$(EXE_EXT)
 	@echo $(START) $@
 	../util/shlib_wrap.sh ./$(SSLV2CONFTEST)
@@ -549,6 +557,9 @@ $(VERIFYEXTRATEST)$(EXE_EXT): $(VERIFYEXTRATEST).o
 $(CLIENTHELLOTEST)$(EXE_EXT): $(CLIENTHELLOTEST).o
 	@target=$(CLIENTHELLOTEST) $(BUILD_CMD)
 
+$(BADDTLSTEST)$(EXE_EXT): $(BADDTLSTEST).o
+	@target=$(BADDTLSTEST) $(BUILD_CMD)
+
 $(SSLV2CONFTEST)$(EXE_EXT): $(SSLV2CONFTEST).o
 	@target=$(SSLV2CONFTEST) $(BUILD_CMD)
 
@@ -582,6 +593,26 @@ asn1test.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
 asn1test.o: ../include/openssl/sha.h ../include/openssl/stack.h
 asn1test.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 asn1test.o: ../include/openssl/x509_vfy.h asn1test.c
+bad_dtls_test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+bad_dtls_test.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+bad_dtls_test.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+bad_dtls_test.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
+bad_dtls_test.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+bad_dtls_test.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
+bad_dtls_test.o: ../include/openssl/evp.h ../include/openssl/hmac.h
+bad_dtls_test.o: ../include/openssl/kssl.h ../include/openssl/lhash.h
+bad_dtls_test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+bad_dtls_test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+bad_dtls_test.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+bad_dtls_test.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+bad_dtls_test.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
+bad_dtls_test.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+bad_dtls_test.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
+bad_dtls_test.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
+bad_dtls_test.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+bad_dtls_test.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+bad_dtls_test.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+bad_dtls_test.o: bad_dtls_test.c
 bftest.o: ../e_os.h ../include/openssl/blowfish.h ../include/openssl/e_os2.h
 bftest.o: ../include/openssl/opensslconf.h bftest.c
 bntest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
