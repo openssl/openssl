@@ -111,7 +111,7 @@
 #define BUFSIZE 1024
 #define RAND_DATA 1024
 
-#ifdef OPENSSL_SYS_VMS
+#if (defined(OPENSSL_SYS_VMS) && (defined(__alpha) || defined(__ia64)))
 /*
  * This declaration is a nasty hack to get around vms' extension to fopen for
  * passing in sharing options being disabled by our /STANDARD=ANSI89
@@ -140,7 +140,24 @@ int RAND_load_file(const char *file, long bytes)
     struct stat sb;
 #endif
     int i, ret = 0, n;
+/*
+ * If setvbuf() is to be called, then the FILE pointer
+ * to it must be 32 bit.
+*/
+
+#if !defined OPENSSL_NO_SETVBUF_IONBF && defined(OPENSSL_SYS_VMS) && defined(__VMS_VER) && (__VMS_VER >= 70000000)
+    /* For 64-bit-->32 bit API Support*/
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __save
+#pragma __required_pointer_size 32
+#endif
+    FILE *in; /* setvbuf() requires 32-bit pointers */
+#if __INITIAL_POINTER_SIZE == 64
+#pragma __required_pointer_size __restore
+#endif
+#else
     FILE *in;
+#endif /* OPENSSL_SYS_VMS */
 
     if (file == NULL)
         return (0);
@@ -249,7 +266,7 @@ int RAND_write_file(const char *file)
     }
 #endif
 
-#ifdef OPENSSL_SYS_VMS
+#if (defined(OPENSSL_SYS_VMS) && (defined(__alpha) || defined(__ia64)))
     /*
      * VMS NOTE: Prior versions of this routine created a _new_ version of
      * the rand file for each call into this routine, then deleted all
