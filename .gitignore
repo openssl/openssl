@@ -1,4 +1,4 @@
-# Ignore editor artefacts
+# Ignore editor artifacts
 /.dir-locals.el
 
 # Top level excludes
@@ -169,3 +169,7 @@ Makefile.save
 *.bak
 cscope.*
 *.d
+pod2htmd.tmp
+
+# Windows manifest files
+*.manifest
