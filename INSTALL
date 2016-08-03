@@ -646,20 +646,24 @@
                         Contains the HTML rendition of the man-pages.
 
        OpenVMS ('arch' is replaced with the architecture name, "Alpha"
-       or "ia64"):
+       or "ia64", 'sover' is replaced with the shared library version
+       (0101 for 1.1), and 'pz' is replaced with the pointer size
+       OpenSSL was built with):
 
-         [.EXE.'arch']  Contains the openssl binary and a few other
-                        utility scripts.
+         [.EXE.'arch']  Contains the openssl binary.
+         [.EXE]         Contains a few utility scripts.
          [.include.openssl]
                         Contains the header files needed if you want
                         to build your own programs that use libcrypto
                         or libssl.
          [.LIB.'arch']  Contains the OpenSSL library files.
-         [.ENGINES.'arch']
+         [.ENGINES'sover''pz'.'arch']
                         Contains the OpenSSL dynamically loadable engines.
          [.SYS$STARTUP] Contains startup, login and shutdown scripts.
                         These define appropriate logical names and
                         command symbols.
+         [.SYSTEST]     Contains the installation verification procedure.
+         [.HTML]        Contains the HTML rendition of the manual pages.
                         
 
      Additionally, install will add the following directories under
