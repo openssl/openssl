@@ -43,10 +43,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/async.h>
-#include <openssl/ssl.h>
+#if defined(_WIN32)
+/* Included before async.h to avoid some warnings */
+# include <windows.h>
+#endif
 
 #include <openssl/e_os2.h>
+#include <openssl/async.h>
+#include <openssl/ssl.h>
 
 #ifndef OPENSSL_NO_SOCK
 
@@ -101,26 +105,14 @@ static void free_sessions(void);
 static DH *load_dh_param(const char *dhfile);
 #endif
 
-static void s_server_init(void);
-
 /* static int load_CA(SSL_CTX *ctx, char *file);*/
 
-#undef BUFSIZZ
-#define BUFSIZZ 16*1024
-static int bufsize = BUFSIZZ;
+static const int bufsize = 16*1024;
 static int accept_socket = -1;
 
 #define TEST_CERT       "server.pem"
 #define TEST_CERT2      "server2.pem"
 
-
-static int s_server_verify = SSL_VERIFY_NONE;
-static int s_server_session_id_context = 1; /* anything will do */
-static const char *s_cert_file = TEST_CERT, *s_key_file =
-    NULL, *s_chain_file = NULL;
-
-static const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
-static char *s_dcert_file = NULL, *s_dkey_file = NULL, *s_dchain_file = NULL;
 static int s_nbio = 0;
 static int s_nbio_test = 0;
 static int s_crlf = 0;
@@ -132,8 +124,6 @@ static BIO *bio_s_out = NULL;
 static BIO *bio_s_msg = NULL;
 static int s_debug = 0;
 static int s_tlsextdebug = 0;
-static int s_tlsextstatus = 0;
-static int no_resume_ephemeral = 0;
 static int s_msg = 0;
 static int s_quiet = 0;
 static int s_ign_eof = 0;
@@ -143,8 +133,6 @@ static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
 
 static int async = 0;
-static unsigned int split_send_fragment = 0;
-static unsigned int max_pipelines = 0;
 
 static const char *session_id_prefix = NULL;
 
@@ -154,8 +142,6 @@ static long socket_mtu;
 
 #endif
 static int dtlslisten = 0;
-
-static const char *s_serverinfo_file = NULL;
 
 #ifndef OPENSSL_NO_PSK
 static char *psk_identity = "Client_identity";
@@ -268,33 +254,6 @@ err:
 }
 
 #endif
-
-static void s_server_init(void)
-{
-    accept_socket = -1;
-    s_server_verify = SSL_VERIFY_NONE;
-    s_dcert_file = NULL;
-    s_dkey_file = NULL;
-    s_dchain_file = NULL;
-    s_cert_file = TEST_CERT;
-    s_key_file = NULL;
-    s_chain_file = NULL;
-    s_cert_file2 = TEST_CERT2;
-    s_key_file2 = NULL;
-    ctx2 = NULL;
-    s_nbio = 0;
-    s_nbio_test = 0;
-    ctx = NULL;
-    www = 0;
-    bio_s_out = NULL;
-    s_debug = 0;
-    s_msg = 0;
-    s_quiet = 0;
-    s_brief = 0;
-    async = 0;
-    split_send_fragment = 0;
-    max_pipelines = 0;
-}
 
 static int local_argc = 0;
 static char **local_argv;
@@ -924,21 +883,16 @@ int s_server_main(int argc, char *argv[])
     X509 *s_cert = NULL, *s_dcert = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     char *CApath = NULL, *CAfile = NULL, *chCApath = NULL, *chCAfile = NULL;
-#ifndef OPENSSL_NO_DH
-    char *dhfile = NULL;
-#endif
     char *dpassarg = NULL, *dpass = NULL, *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *crl_file = NULL, *prog;
-#ifndef OPENSSL_NO_PSK
-    char *p;
-#endif
 #ifdef AF_UNIX
     int unlink_unix_path = 0;
 #endif
     do_server_cb server_cb;
     int vpmtouched = 0, build_chain = 0, no_cache = 0, ext_cache = 0;
 #ifndef OPENSSL_NO_DH
+    char *dhfile = NULL;
     int no_dhe = 0;
 #endif
     int nocert = 0, ret = 1;
@@ -966,17 +920,36 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_PSK
     /* by default do not send a PSK identity hint */
     static char *psk_identity_hint = NULL;
+    char *p;
 #endif
 #ifndef OPENSSL_NO_SRP
     char *srpuserseed = NULL;
     char *srp_verifier_file = NULL;
 #endif
     int min_version = 0, max_version = 0, prot_opt = 0, no_prot_opt = 0;
+    int s_server_verify = SSL_VERIFY_NONE;
+    int s_server_session_id_context = 1; /* anything will do */
+    const char *s_cert_file = TEST_CERT, *s_key_file = NULL, *s_chain_file = NULL;
+    const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
+    char *s_dcert_file = NULL, *s_dkey_file = NULL, *s_dchain_file = NULL;
+    int s_tlsextstatus = 0, no_resume_ephemeral = 0;
+    unsigned int split_send_fragment = 0, max_pipelines = 0;
+    const char *s_serverinfo_file = NULL;
 
+    /* Init of few remaining global variables */
     local_argc = argc;
     local_argv = argv;
 
-    s_server_init();
+    ctx = ctx2 = NULL;
+    s_nbio = s_nbio_test = 0;
+    www = 0;
+    bio_s_out = NULL;
+    s_debug = 0;
+    s_msg = 0;
+    s_quiet = 0;
+    s_brief = 0;
+    async = 0;
+
     cctx = SSL_CONF_CTX_new();
     vpm = X509_VERIFY_PARAM_new();
     if (cctx == NULL || vpm == NULL)
@@ -2280,12 +2253,10 @@ static int sv_body(int s, int stype, unsigned char *context)
             for (;;) {
                 /* should do a select for the write */
 #ifdef RENEG
-                {
-                    static count = 0;
-                    if (++count == 100) {
-                        count = 0;
-                        SSL_renegotiate(con);
-                    }
+                static count = 0;
+                if (++count == 100) {
+                    count = 0;
+                    SSL_renegotiate(con);
                 }
 #endif
                 k = SSL_write(con, &(buf[l]), (unsigned int)i);
@@ -2971,11 +2942,9 @@ static int www_body(int s, int stype, unsigned char *context)
 
                 for (j = 0; j < i;) {
 #ifdef RENEG
-                    {
-                        static count = 0;
-                        if (++count == 13) {
-                            SSL_renegotiate(con);
-                        }
+                    static count = 0;
+                    if (++count == 13) {
+                        SSL_renegotiate(con);
                     }
 #endif
                     k = BIO_write(io, &(buf[j]), i - j);
