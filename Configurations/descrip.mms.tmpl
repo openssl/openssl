@@ -488,8 +488,10 @@ vmsconfig.pm : configdata.pm
         CLOSE CONFIG
 
 install_html_docs : check_INSTALLTOP
-        @ $(PERL) {- sourcefile("util", "process_docs.pl") -} -
-                --destdir=ossl_installroot:[HTML] --type=html
+        sourcedir = F$PARSE("{- $sourcedir -}A.;","[]") - "]A.;" + ".DOC]"
+        $(PERL) {- sourcefile("util", "process_docs.pl") -} -
+                --sourcedir='sourcedir' --destdir=ossl_installroot:[HTML] -
+                --type=html
 
 check_INSTALLTOP :
         @ IF "$(INSTALLTOP)" .EQS. "" THEN -
