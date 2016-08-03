@@ -133,10 +133,12 @@ typedef struct err_state_st {
 # define ASYNCerr(f,r) ERR_PUT_error(ERR_LIB_ASYNC,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define KDFerr(f,r) ERR_PUT_error(ERR_LIB_KDF,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
-# define ERR_PACK(l,f,r) \
-  ( ((unsigned int)((l) & 0x0FF) << 24L) | (((f) & 0xFFF) << 12L) | ((r) & 0xFFF) )
-# define ERR_GET_LIB(l)          (int)((((unsigned long)l)>>24L)&0xffL)
-# define ERR_GET_FUNC(l)         (int)((((unsigned long)l)>>12L)&0xfffL)
+# define ERR_PACK(l,f,r) ( \
+        (((unsigned int)(l) & 0x0FF) << 24L) | \
+        (((unsigned int)(f) & 0xFFF) << 12L) | \
+        (((unsigned int)(r) & 0xFFF)       ) )
+# define ERR_GET_LIB(l)          (int)((((unsigned long)l) >> 24L) & 0x0FFL)
+# define ERR_GET_FUNC(l)         (int)((((unsigned long)l) >> 12L) & 0xFFFL)
 # define ERR_GET_REASON(l)       (int)((l)&0xfffL)
 
 /* OS functions */
