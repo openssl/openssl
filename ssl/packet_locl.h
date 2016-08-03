@@ -548,6 +548,82 @@ __owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
 
     return 1;
 }
+
+/* Writeable packets */
+
+typedef struct packetw_buf {
+    /* The buffer where we store the output data */
+    BUF_MEM *buf;
+
+    /* Pointer to where we are currently writing */
+    unsigned char *curr;
+
+    /* Number of bytes written so far */
+    size_t written;
+
+    /*
+     * Maximum number of bytes we will allow to be written to this PACKETW. Zero
+     * if no maximum
+     */
+    size_t maxsize;
+} PACKETW_BUF;
+
+typedef struct packetw_st PACKETW;
+struct packetw_st {
+    /* The parent PACKETW if we have one or NULL otherwise */
+    PACKETW *parent;
+
+    /* The actual buffer - shared with sub-packets */
+    PACKETW_BUF *wbuf;
+
+    /* Flags for this PACKETW */
+    unsigned int flags;
+
+    /*
+     * Pointer to where the length of this PACKETW goes (or NULL if we don't
+     * write the length)
+     */
+    unsigned char *packet_len;
+
+    /* Number of bytes in the packet_len */
+    size_t lenbytes;
+
+    /* Number of bytes written to the buf prior to this packet starting */
+    size_t pwritten;
+
+    /* True if we have an active sub-packet or false otherwise */
+    int haschild;
+
+    /* True if PACKETW_close() has been called on this PACKETW */
+    int isclosed;
+};
+
+/* Flags */
+#define OPENSSL_PACKETW_FLAGS_NONE                      0
+/* Error on PACKETW_close() if no data written to the PACKETW */
+#define OPENSSL_PACKETW_FLAGS_NON_ZERO_LENGTH           1
+/*
+ * Abandon all changes on PACKETW_close() if no data written to the PACKETW,
+ * i.e. this does not write out a zero packet length
+ */
+#define OPENSSL_PACKETW_FLAGS_ABANDON_ON_ZERO_LENGTH    2
+
+int PACKETW_init_len(PACKETW *pkt, BUF_MEM *buf, size_t lenbytes);
+int PACKETW_init(PACKETW *pkt, BUF_MEM *buf);
+int PACKETW_set_flags(PACKETW *pkt, unsigned int flags);
+int PACKETW_set_packet_len(PACKETW *pkt, unsigned char *packet_len,
+                           size_t lenbytes);
+int PACKETW_close(PACKETW *pkt);
+int PACKETW_get_sub_packet_len(PACKETW *pkt, PACKETW *subpkt, size_t lenbytes);
+int PACKETW_get_sub_packet(PACKETW *pkt, PACKETW *subpkt);
+int PACKETW_allocate_bytes(PACKETW *pkt, size_t bytes,
+                           unsigned char **allocbytes);
+int PACKETW_put_bytes(PACKETW *pkt, unsigned int val, size_t bytes);
+int PACKETW_set_max_size(PACKETW *pkt, size_t maxsize);
+int PACKETW_memcpy(PACKETW *pkt, const void *src, size_t len);
+int PACKETW_get_total_written(PACKETW *pkt, size_t *written);
+int PACKETW_get_length(PACKETW *pkt, size_t *len);
+
 # ifdef __cplusplus
 }
 # endif

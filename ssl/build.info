@@ -1,6 +1,6 @@
 LIBS=../libssl
 SOURCE[../libssl]=\
-        pqueue.c \
+        pqueue.c packet.c \
         statem/statem_srvr.c statem/statem_clnt.c  s3_lib.c  s3_enc.c record/rec_layer_s3.c \
         statem/statem_lib.c s3_cbc.c s3_msg.c \
         methods.c   t1_lib.c  t1_enc.c t1_ext.c \
