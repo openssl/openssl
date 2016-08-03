@@ -1800,7 +1800,6 @@ EVP_PKEY_meth_get_verify_recover        1785	1_1_0	EXIST::FUNCTION:
 NAME_CONSTRAINTS_check                  1786	1_1_0	EXIST::FUNCTION:
 X509_CERT_AUX_it                        1787	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_CERT_AUX_it                        1787	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-ERR_get_string_table                    1788	1_1_0	EXIST::FUNCTION:
 X509_get_X509_PUBKEY                    1789	1_1_0	EXIST::FUNCTION:
 TXT_DB_create_index                     1790	1_1_0	EXIST::FUNCTION:
 RAND_set_rand_engine                    1791	1_1_0	EXIST::FUNCTION:ENGINE

@@ -126,7 +126,7 @@ static CRYPTO_ONCE err_string_init = CRYPTO_ONCE_STATIC_INIT;
 static CRYPTO_RWLOCK *err_string_lock;
 
 /* Predeclarations of the "err_defaults" functions */
-static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit);
+static LHASH_OF(ERR_STRING_DATA) *get_hash(int create);
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *);
 
 /*
@@ -155,22 +155,12 @@ static int err_string_data_cmp(const ERR_STRING_DATA *a,
     return (int)(a->error - b->error);
 }
 
-static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit)
+static LHASH_OF(ERR_STRING_DATA) *get_hash(int create)
 {
-    LHASH_OF(ERR_STRING_DATA) *ret = NULL;
-
-    if (lockit)
-        CRYPTO_THREAD_write_lock(err_string_lock);
-    if (!int_error_hash && create) {
+    if (int_error_hash == NULL && create)
         int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
                                                 err_string_data_cmp);
-    }
-    if (int_error_hash != NULL)
-        ret = int_error_hash;
-    if (lockit)
-        CRYPTO_THREAD_unlock(err_string_lock);
-
-    return ret;
+    return int_error_hash;
 }
 
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
@@ -179,7 +169,7 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
     LHASH_OF(ERR_STRING_DATA) *hash;
 
     CRYPTO_THREAD_read_lock(err_string_lock);
-    hash = get_hash(0, 0);
+    hash = get_hash(0);
     if (hash)
         p = lh_ERR_STRING_DATA_retrieve(hash, d);
     CRYPTO_THREAD_unlock(err_string_lock);
@@ -303,7 +293,7 @@ static void err_load_strings(int lib, ERR_STRING_DATA *str)
     LHASH_OF(ERR_STRING_DATA) *hash;
 
     CRYPTO_THREAD_write_lock(err_string_lock);
-    hash = get_hash(1, 0);
+    hash = get_hash(1);
     if (hash) {
         for (; str->error; str++) {
             if (lib)
@@ -330,7 +320,7 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
         return 0;
 
     CRYPTO_THREAD_write_lock(err_string_lock);
-    hash = get_hash(0, 0);
+    hash = get_hash(0);
     if (hash) {
         for (; str->error; str++) {
             if (lib)
@@ -580,11 +570,6 @@ char *ERR_error_string(unsigned long e, char *ret)
     ERR_error_string_n(e, ret, 256);
 
     return ret;
-}
-
-LHASH_OF(ERR_STRING_DATA) *ERR_get_string_table(void)
-{
-    return get_hash(0, 1);
 }
 
 const char *ERR_lib_error_string(unsigned long e)
