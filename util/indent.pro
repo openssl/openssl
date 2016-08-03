@@ -725,3 +725,5 @@
 -T ASYNC_FIBRE
 -T ASYNC_CTX
 -T ASYNC_JOB
+-T intmax_t
+-T uintmax_t
