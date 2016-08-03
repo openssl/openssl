@@ -84,19 +84,12 @@ typedef unsigned int u_int;
 #define S_CLIENT_IRC_READ_TIMEOUT 8
 
 static char *prog;
-static int c_nbio = 0;
-static int c_tlsextdebug = 0;
-static int c_status_req = 0;
 static int c_debug = 0;
-static int c_msg = 0;
 static int c_showcerts = 0;
 static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
 static BIO *bio_c_out = NULL;
-static BIO *bio_c_msg = NULL;
 static int c_quiet = 0;
-static int c_ign_eof = 0;
-static int c_brief = 0;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
 #ifndef OPENSSL_NO_OCSP
@@ -856,6 +849,9 @@ int s_client_main(int argc, char **argv)
     unsigned int max_pipelines = 0;
     enum { use_inet, use_unix, use_unknown } connect_type = use_unknown;
     int count4or6 = 0;
+    int c_nbio = 0, c_msg = 0, c_ign_eof = 0, c_brief = 0;
+    int c_tlsextdebug = 0, c_status_req = 0;
+    BIO *bio_c_msg = NULL;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -869,9 +865,7 @@ int s_client_main(int argc, char **argv)
 
     prog = opt_progname(argv[0]);
     c_quiet = 0;
-    c_ign_eof = 0;
     c_debug = 0;
-    c_msg = 0;
     c_showcerts = 0;
     c_nbio = 0;
     vpm = X509_VERIFY_PARAM_new();
