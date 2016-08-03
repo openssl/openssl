@@ -38,9 +38,6 @@
  * #define TEST_CERT "client.pem"
  */
 
-#undef BUFSIZZ
-#define BUFSIZZ 1024*10
-
 #undef min
 #undef max
 #define min(a,b) (((a) < (b)) ? (a) : (b))
