@@ -33,6 +33,10 @@ exists in the given CTLOG_STORE, otherwise it returns NULL.
 L<ct(3)>,
 L<CTLOG_STORE_new(3)>
 
+=head1 HISTORY
+
+This function was added in OpenSSL 1.1.0.
+
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
