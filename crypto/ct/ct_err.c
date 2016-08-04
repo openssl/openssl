@@ -22,7 +22,6 @@ static ERR_STRING_DATA CT_str_functs[] = {
     {ERR_FUNC(CT_F_CTLOG_NEW), "CTLOG_new"},
     {ERR_FUNC(CT_F_CTLOG_NEW_FROM_BASE64), "CTLOG_new_from_base64"},
     {ERR_FUNC(CT_F_CTLOG_NEW_FROM_CONF), "ctlog_new_from_conf"},
-    {ERR_FUNC(CT_F_CTLOG_NEW_NULL), "CTLOG_new_null"},
     {ERR_FUNC(CT_F_CTLOG_STORE_LOAD_CTX_NEW), "ctlog_store_load_ctx_new"},
     {ERR_FUNC(CT_F_CTLOG_STORE_LOAD_FILE), "CTLOG_STORE_load_file"},
     {ERR_FUNC(CT_F_CTLOG_STORE_LOAD_LOG), "ctlog_store_load_log"},

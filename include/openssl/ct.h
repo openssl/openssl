@@ -413,12 +413,6 @@ __owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
 
 /*
- * Creates a new, blank CT log instance.
- * Should be deleted by the caller using CTLOG_free when no longer needed.
- */
-CTLOG *CTLOG_new_null(void);
-
-/*
  * Creates a new CT |ct_log| instance with the given base64 public_key and |name|.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
