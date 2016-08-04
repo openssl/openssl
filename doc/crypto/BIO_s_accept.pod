@@ -154,7 +154,7 @@ BIO_set_accept_name(), BIO_set_accept_port(), BIO_set_nbio_accept(),
 BIO_set_accept_bios(), and BIO_set_bind_mode(), return 1 for success and 0 or
 -1 for failure.
 
-BIO_set_accept_name() returns the accept name or NULL on error.
+BIO_get_accept_name() returns the accept name or NULL on error.
 
 BIO_get_accept_port() returns the port as a string or NULL on error.
 
