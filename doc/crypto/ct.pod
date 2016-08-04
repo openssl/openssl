@@ -39,6 +39,10 @@ L<SCT_validate(3)>,
 L<CT_POLICY_EVAL_CTX(3)>,
 L<SSL_CTX_set_ct_validation_callback(3)>
 
+=head1 HISTORY
+
+This library was added in OpenSSL 1.1.0.
+
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.

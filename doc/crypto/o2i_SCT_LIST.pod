@@ -33,6 +33,10 @@ decode and encode Signed Certificate Timestamp lists in TLS wire format
 L<ct(3)>,
 L(d2i_SCT_LIST(3)>
 
+=head1 HISTORY
+
+These functions were added in OpenSSL 1.1.0.
+
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
