@@ -154,10 +154,13 @@
                            (c)[1]=(unsigned char)(((l)>> 8)&0xff), \
                            (c)[2]=(unsigned char)(((l)    )&0xff)),(c)+=3)
 
-#define DTLS_VERSION_GT(v1, v2) ((v1) < (v2))
-#define DTLS_VERSION_GE(v1, v2) ((v1) <= (v2))
-#define DTLS_VERSION_LT(v1, v2) ((v1) > (v2))
-#define DTLS_VERSION_LE(v1, v2) ((v1) >= (v2))
+/* DTLS version numbers are strange because they're inverted. Except
+ * for DTLS1_BAD_VER, which should be considered "lower" than the rest. */
+#define dtls_ver_ordinal(v1) (((v1) == DTLS1_BAD_VER) ? 0xff00 : (v1))
+#define DTLS_VERSION_GT(v1, v2) (dtls_ver_ordinal(v1) < dtls_ver_ordinal(v2))
+#define DTLS_VERSION_GE(v1, v2) (dtls_ver_ordinal(v1) <= dtls_ver_ordinal(v2))
+#define DTLS_VERSION_LT(v1, v2) (dtls_ver_ordinal(v1) > dtls_ver_ordinal(v2))
+#define DTLS_VERSION_LE(v1, v2) (dtls_ver_ordinal(v1) >= dtls_ver_ordinal(v2))
 
 /* LOCAL STUFF */
 
@@ -1652,6 +1655,7 @@ __owur const SSL_METHOD *tlsv1_2_client_method(void);
 __owur const SSL_METHOD *dtlsv1_method(void);
 __owur const SSL_METHOD *dtlsv1_server_method(void);
 __owur const SSL_METHOD *dtlsv1_client_method(void);
+__owur const SSL_METHOD *dtls_bad_ver_client_method(void);
 __owur const SSL_METHOD *dtlsv1_2_method(void);
 __owur const SSL_METHOD *dtlsv1_2_server_method(void);
 __owur const SSL_METHOD *dtlsv1_2_client_method(void);

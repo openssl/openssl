@@ -48,7 +48,7 @@ typedef enum FUNC_TYPE {
 typedef struct function_st {
     FUNC_TYPE type;
     const char *name;
-    int (*func)(int argc,char *argv[]);
+    int (*func)(int argc, char *argv[]);
     const OPTIONS *help;
 } FUNCTION;
 

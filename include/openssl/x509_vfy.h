@@ -387,10 +387,10 @@ int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                  X509_NAME *name, ASN1_INTEGER *serial,
                                  X509_OBJECT *ret);
 int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                               unsigned char *bytes, int len,
+                               const unsigned char *bytes, int len,
                                X509_OBJECT *ret);
 int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                         char *str, int len, X509_OBJECT *ret);
+                         const char *str, int len, X509_OBJECT *ret);
 int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
 
 int X509_STORE_load_locations(X509_STORE *ctx,

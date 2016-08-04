@@ -131,7 +131,7 @@ static int do_updatedb(CA_DB *db);
 static int check_time_format(const char *str);
 char *make_revocation_str(int rev_type, char *rev_arg);
 int make_revoked(X509_REVOKED *rev, const char *str);
-static int old_entry_print(ASN1_OBJECT *obj, ASN1_STRING *str);
+static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str);
 
 static CONF *extconf = NULL;
 static int preserve = 0;
@@ -2412,7 +2412,7 @@ int make_revoked(X509_REVOKED *rev, const char *str)
     return ret;
 }
 
-static int old_entry_print(ASN1_OBJECT *obj, ASN1_STRING *str)
+static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str)
 {
     char buf[25], *pbuf, *p;
     int j;

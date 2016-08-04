@@ -17,16 +17,13 @@
 #include <openssl/ssl.h>
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_STATS
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP
 } OPTION_CHOICE;
 
 OPTIONS errstr_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] errnum...\n"},
     {OPT_HELP_STR, 1, '-', "  errnum  Error number\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"stats", OPT_STATS, '-',
-     "Print internal hashtable statistics (long!)"},
     {NULL}
 };
 
@@ -46,14 +43,6 @@ int errstr_main(int argc, char **argv)
             goto end;
         case OPT_HELP:
             opt_help(errstr_options);
-            ret = 0;
-            goto end;
-        case OPT_STATS:
-            lh_ERR_STRING_DATA_node_stats_bio(ERR_get_string_table(),
-                                              bio_out);
-            lh_ERR_STRING_DATA_stats_bio(ERR_get_string_table(), bio_out);
-            lh_ERR_STRING_DATA_node_usage_stats_bio(ERR_get_string_table(),
-                                                    bio_out);
             ret = 0;
             goto end;
         }
