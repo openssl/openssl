@@ -28,7 +28,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
-                    unsigned char *in, size_t inlen);
+                    const unsigned char *in, size_t inlen);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -459,7 +459,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
-                    unsigned char *in, size_t inlen)
+                    const unsigned char *in, size_t inlen)
 {
     int rv = 0;
     switch (pkey_op) {

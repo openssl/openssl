@@ -72,7 +72,7 @@ int crl_main(int argc, char **argv)
     unsigned long nmflag = 0;
     char nmflag_set = 0;
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
-    char *CAfile = NULL, *CApath = NULL, *prog;
+    const char *CAfile = NULL, *CApath = NULL, *prog;
     OPTION_CHOICE o;
     int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyformat = FORMAT_PEM;

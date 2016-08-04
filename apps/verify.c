@@ -18,7 +18,7 @@
 #include <openssl/pem.h>
 
 static int cb(int ok, X509_STORE_CTX *ctx);
-static int check(X509_STORE *ctx, char *file,
+static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
                  STACK_OF(X509_CRL) *crls, int show_chain);
 static int v_verbose = 0, vflags = 0;
@@ -64,7 +64,7 @@ int verify_main(int argc, char **argv)
     STACK_OF(X509_CRL) *crls = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    char *prog, *CApath = NULL, *CAfile = NULL;
+    const char *prog, *CApath = NULL, *CAfile = NULL;
     int noCApath = 0, noCAfile = 0;
     int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
     OPTION_CHOICE o;
@@ -194,7 +194,7 @@ int verify_main(int argc, char **argv)
     return (ret < 0 ? 2 : ret);
 }
 
-static int check(X509_STORE *ctx, char *file,
+static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
                  STACK_OF(X509_CRL) *crls, int show_chain)
 {
