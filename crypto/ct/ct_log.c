@@ -234,10 +234,12 @@ end:
  */
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name)
 {
-    CTLOG *ret = CTLOG_new_null();
+    CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret == NULL)
+    if (ret == NULL) {
+        CTerr(CT_F_CTLOG_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     ret->name = OPENSSL_strdup(name);
     if (ret->name == NULL) {
@@ -253,16 +255,6 @@ CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name)
 err:
     CTLOG_free(ret);
     return NULL;
-}
-
-CTLOG *CTLOG_new_null(void)
-{
-    CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));
-
-    if (ret == NULL)
-        CTerr(CT_F_CTLOG_NEW_NULL, ERR_R_MALLOC_FAILURE);
-
-    return ret;
 }
 
 /* Frees CT log and associated structures */
