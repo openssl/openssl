@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SCT_print, SCL_LIST_print, SCT_validation_status_string -
+SCT_print, SCT_LIST_print, SCT_validation_status_string -
 Prints Signed Certificate Timestamps in a human-readable way
 
 =head1 SYNOPSIS

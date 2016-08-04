@@ -2,7 +2,10 @@
 
 =head1 NAME
 
-CT_POLICY_EVAL_CTX -
+CT_POLICY_EVAL_CTX_new, CT_POLICY_EVAL_CTX_free,
+CT_POLICY_EVAL_CTX_get0_cert, CT_POLICY_EVAL_CTX_set0_cert,
+CT_POLICY_EVAL_CTX_get0_issuer, CT_POLICY_EVAL_CTX_set0_issuer,
+CT_POLICY_EVAL_CTX_get0_log_store, CT_POLICY_EVAL_CTX_set0_log_store -
 Encapsulates the data required to evaluate whether SCTs meet a Certificate Transparency policy
 
 =head1 SYNOPSIS

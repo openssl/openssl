@@ -2,7 +2,16 @@
 
 =head1 NAME
 
-SCT - A Certificate Transparency Signed Certificate Timestamp
+SCT_new, SCT_new_from_base64, SCT_free, SCT_LIST_free,
+SCT_get_version, SCT_set_version,
+SCT_get_log_entry_type, SCT_set_log_entry_type,
+SCT_get0_log_id, SCT_set0_log_id, SCT_set1_log_id,
+SCT_get_timestamp, SCT_set_timestamp,
+SCT_get_signature_nid, SCT_set_signature_nid,
+SCT_get0_signature, SCT_set0_signature, SCT_set1_signature,
+SCT_get0_extensions, SCT_set0_extensions, SCT_set1_extensions,
+SCT_get_source, SCT_set_source
+ - A Certificate Transparency Signed Certificate Timestamp
 
 =head1 SYNOPSIS
 
@@ -53,13 +62,13 @@ SCT - A Certificate Transparency Signed Certificate Timestamp
  int SCT_get_signature_nid(const SCT *sct);
  int SCT_set_signature_nid(SCT *sct, int nid);
 
- size_t SCT_get0_extensions(const SCT *sct, unsigned char **ext);
- void SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len);
- int SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len);
-
  size_t SCT_get0_signature(const SCT *sct, unsigned char **sig);
  void SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len);
  int SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len);
+
+ size_t SCT_get0_extensions(const SCT *sct, unsigned char **ext);
+ void SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len);
+ int SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len);
 
  sct_source_t SCT_get_source(const SCT *sct);
  int SCT_set_source(SCT *sct, sct_source_t source);
