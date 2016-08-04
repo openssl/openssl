@@ -29,8 +29,10 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
     OPT_PUBIN, OPT_PUBOUT, OPT_PASSOUT, OPT_PASSIN,
-    OPT_RSAPUBKEY_IN, OPT_RSAPUBKEY_OUT, OPT_PVK_STRONG, OPT_PVK_WEAK,
-    OPT_PVK_NONE, OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_CHECK, OPT_CIPHER
+    OPT_RSAPUBKEY_IN, OPT_RSAPUBKEY_OUT,
+    /* Do not change the order here; see case statements below */
+    OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
+    OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_CHECK, OPT_CIPHER
 } OPTION_CHOICE;
 
 OPTIONS rsa_options[] = {
@@ -51,9 +53,9 @@ OPTIONS rsa_options[] = {
     {"check", OPT_CHECK, '-', "Verify key consistency"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
-    {"pvk-strong", OPT_PVK_STRONG, '-'},
-    {"pvk-weak", OPT_PVK_WEAK, '-'},
-    {"pvk-none", OPT_PVK_NONE, '-'},
+    {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
+    {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
+    {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
 # endif
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -124,22 +126,13 @@ int rsa_main(int argc, char **argv)
         case OPT_RSAPUBKEY_OUT:
             pubout = 2;
             break;
+        case OPT_PVK_STRONG:    /* pvk_encr:= 2 */
+        case OPT_PVK_WEAK:      /* pvk_encr:= 1 */
+        case OPT_PVK_NONE:      /* pvk_encr:= 0 */
 # if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
-        case OPT_PVK_STRONG:
-            pvk_encr = 2;
-            break;
-        case OPT_PVK_WEAK:
-            pvk_encr = 1;
-            break;
-        case OPT_PVK_NONE:
-            pvk_encr = 0;
-            break;
-# else
-        case OPT_PVK_STRONG:
-        case OPT_PVK_WEAK:
-        case OPT_PVK_NONE:
-            break;
+            pvk_encr = (o - OPT_PVK_NONE);
 # endif
+            break;
         case OPT_NOOUT:
             noout = 1;
             break;
