@@ -1,4 +1,4 @@
-# Ignore editor artifacts
+# Ignore editor artefacts
 /.dir-locals.el
 
 # Top level excludes
