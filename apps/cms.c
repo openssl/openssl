@@ -199,7 +199,8 @@ int cms_main(int argc, char **argv)
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
-    char *CAfile = NULL, *CApath = NULL, *certsoutfile = NULL;
+    const char *CAfile = NULL, *CApath = NULL;
+    char *certsoutfile = NULL;
     int noCAfile = 0, noCApath = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL, *inrand = NULL;
     char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *recipfile =

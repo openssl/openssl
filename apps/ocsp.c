@@ -194,7 +194,8 @@ int ocsp_main(int argc, char **argv)
     X509 *signer = NULL, *rsigner = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    char *CAfile = NULL, *CApath = NULL, *header, *value;
+    const char *CAfile = NULL, *CApath = NULL;
+    char *header, *value;
     char *host = NULL, *port = NULL, *path = "/", *outfile = NULL;
     char *rca_filename = NULL, *reqin = NULL, *respin = NULL;
     char *reqout = NULL, *respout = NULL, *ridx_filename = NULL;
@@ -809,7 +810,7 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
                               long maxage)
 {
     OCSP_CERTID *id;
-    char *name;
+    const char *name;
     int i, status, reason;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
 
