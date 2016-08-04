@@ -164,9 +164,9 @@ void OPENSSL_cpuid_setup(void)
 
 #if defined(__sun) && defined(__SVR4)
     if (getisax != NULL) {
-        unsigned int vec[1];
+        unsigned int vec[2] = { 0, 0 };
 
-        if (getisax (vec,1)) {
+        if (getisax (vec,2)) {
             if (vec[0]&0x00020) OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS1;
             if (vec[0]&0x00040) OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS2;
             if (vec[0]&0x00080) OPENSSL_sparcv9cap_P[0] |= SPARCV9_BLK;
