@@ -954,7 +954,7 @@ static int set_protocol_version(const char *version, SSL *ssl, int setting)
 
 int main(int argc, char *argv[])
 {
-    char *CApath = NULL, *CAfile = NULL;
+    const char *CApath = NULL, *CAfile = NULL;
     int badop = 0;
     enum { BIO_MEM, BIO_PAIR, BIO_IPV4, BIO_IPV6 } bio_type = BIO_MEM;
     int force = 0;

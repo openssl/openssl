@@ -785,7 +785,8 @@ int s_client_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *dane_tlsa_rrset = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
     const SSL_METHOD *meth = TLS_client_method();
-    char *CApath = NULL, *CAfile = NULL, *cbuf = NULL, *sbuf = NULL;
+    const char *CApath = NULL, *CAfile = NULL;
+    char *cbuf = NULL, *sbuf = NULL;
     char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *host = NULL;

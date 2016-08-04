@@ -33,12 +33,12 @@
 
 static int callb(int ok, X509_STORE_CTX *ctx);
 static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
-                const EVP_MD *digest, CONF *conf, char *section);
-static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
+                const EVP_MD *digest, CONF *conf, const char *section);
+static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
                         X509 *x, X509 *xca, EVP_PKEY *pkey,
-                        STACK_OF(OPENSSL_STRING) *sigopts, char *serial,
+                        STACK_OF(OPENSSL_STRING) *sigopts, const char *serialfile,
                         int create, int days, int clrext, CONF *conf,
-                        char *section, ASN1_INTEGER *sno, int reqfile);
+                        const char *section, ASN1_INTEGER *sno, int reqfile);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 
 typedef enum OPTION_choice {
@@ -893,7 +893,7 @@ int x509_main(int argc, char **argv)
     return (ret);
 }
 
-static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile,
+static ASN1_INTEGER *x509_load_serial(const char *CAfile, const char *serialfile,
                                       int create)
 {
     char *buf = NULL, *p;
@@ -934,11 +934,11 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile,
     return bs;
 }
 
-static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
+static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
                         X509 *x, X509 *xca, EVP_PKEY *pkey,
                         STACK_OF(OPENSSL_STRING) *sigopts,
-                        char *serialfile, int create,
-                        int days, int clrext, CONF *conf, char *section,
+                        const char *serialfile, int create,
+                        int days, int clrext, CONF *conf, const char *section,
                         ASN1_INTEGER *sno, int reqfile)
 {
     int ret = 0;
@@ -1051,7 +1051,7 @@ static int callb(int ok, X509_STORE_CTX *ctx)
 
 /* self sign */
 static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
-                const EVP_MD *digest, CONF *conf, char *section)
+                const EVP_MD *digest, CONF *conf, const char *section)
 {
 
     if (!X509_set_issuer_name(x, X509_get_subject_name(x)))

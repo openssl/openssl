@@ -52,7 +52,7 @@ OPTIONS asn1parse_options[] = {
     {NULL}
 };
 
-static int do_generate(char *genstr, char *genconf, BUF_MEM *buf);
+static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf);
 
 int asn1parse_main(int argc, char **argv)
 {
@@ -283,7 +283,7 @@ int asn1parse_main(int argc, char **argv)
     return (ret);
 }
 
-static int do_generate(char *genstr, char *genconf, BUF_MEM *buf)
+static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf)
 {
     CONF *cnf = NULL;
     int len;

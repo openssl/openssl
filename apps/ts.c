@@ -38,41 +38,41 @@ static ASN1_OBJECT *txt2obj(const char *oid);
 static CONF *load_config_file(const char *configfile);
 
 /* Query related functions. */
-static int query_command(const char *data, char *digest,
+static int query_command(const char *data, const char *digest,
                          const EVP_MD *md, const char *policy, int no_nonce,
                          int cert, const char *in, const char *out, int text);
-static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
+static TS_REQ *create_query(BIO *data_bio, const char *digest, const EVP_MD *md,
                             const char *policy, int no_nonce, int cert);
-static int create_digest(BIO *input, char *digest,
+static int create_digest(BIO *input, const char *digest,
                          const EVP_MD *md, unsigned char **md_value);
 static ASN1_INTEGER *create_nonce(int bits);
 
 /* Reply related functions. */
-static int reply_command(CONF *conf, char *section, char *engine,
-                         char *queryfile, char *passin, char *inkey,
-                         const EVP_MD *md, char *signer, char *chain,
-                         const char *policy, char *in, int token_in,
-                         char *out, int token_out, int text);
+static int reply_command(CONF *conf, const char *section, const char *engine,
+                         const char *queryfile, const char *passin, const char *inkey,
+                         const EVP_MD *md, const char *signer, const char *chain,
+                         const char *policy, const char *in, int token_in,
+                         const char *out, int token_out, int text);
 static TS_RESP *read_PKCS7(BIO *in_bio);
-static TS_RESP *create_response(CONF *conf, const char *section, char *engine,
-                                char *queryfile, char *passin,
-                                char *inkey, const EVP_MD *md, char *signer,
-                                char *chain, const char *policy);
+static TS_RESP *create_response(CONF *conf, const char *section, const char *engine,
+                                const char *queryfile, const char *passin,
+                                const char *inkey, const EVP_MD *md, const char *signer,
+                                const char *chain, const char *policy);
 static ASN1_INTEGER *serial_cb(TS_RESP_CTX *ctx, void *data);
 static ASN1_INTEGER *next_serial(const char *serialfile);
 static int save_ts_serial(const char *serialfile, ASN1_INTEGER *serial);
 
 /* Verify related functions. */
-static int verify_command(char *data, char *digest, char *queryfile,
-                          char *in, int token_in,
-                          char *CApath, char *CAfile, char *untrusted,
+static int verify_command(const char *data, const char *digest, const char *queryfile,
+                          const char *in, int token_in,
+                          const char *CApath, const char *CAfile, const char *untrusted,
                           X509_VERIFY_PARAM *vpm);
-static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
-                                        char *queryfile,
-                                        char *CApath, char *CAfile,
-                                        char *untrusted,
+static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
+                                        const char *queryfile,
+                                        const char *CApath, const char *CAfile,
+                                        const char *untrusted,
                                         X509_VERIFY_PARAM *vpm);
-static X509_STORE *create_cert_store(char *CApath, char *CAfile,
+static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
                                      X509_VERIFY_PARAM *vpm);
 static int verify_cb(int ok, X509_STORE_CTX *ctx);
 
@@ -153,9 +153,11 @@ static char* opt_helplist[] = {
 int ts_main(int argc, char **argv)
 {
     CONF *conf = NULL;
-    char *CAfile = NULL, *untrusted = NULL, *engine = NULL, *prog, **helpp;
-    char *configfile = default_config_file;
-    char *section = NULL, *password = NULL;
+    const char *CAfile = NULL, *untrusted = NULL, *prog;
+    const char *configfile = default_config_file, *engine = NULL;
+    const char *section = NULL;
+    char **helpp;
+    char *password = NULL;
     char *data = NULL, *digest = NULL, *rnd = NULL, *policy = NULL;
     char *in = NULL, *out = NULL, *queryfile = NULL, *passin = NULL;
     char *inkey = NULL, *signer = NULL, *chain = NULL, *CApath = NULL;
@@ -377,7 +379,7 @@ static CONF *load_config_file(const char *configfile)
 /*
  * Query-related method definitions.
  */
-static int query_command(const char *data, char *digest, const EVP_MD *md,
+static int query_command(const char *data, const char *digest, const EVP_MD *md,
                          const char *policy, int no_nonce,
                          int cert, const char *in, const char *out, int text)
 {
@@ -424,7 +426,7 @@ static int query_command(const char *data, char *digest, const EVP_MD *md,
     return ret;
 }
 
-static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
+static TS_REQ *create_query(BIO *data_bio, const char *digest, const EVP_MD *md,
                             const char *policy, int no_nonce, int cert)
 {
     int ret = 0;
@@ -488,7 +490,7 @@ static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
     return ts_req;
 }
 
-static int create_digest(BIO *input, char *digest, const EVP_MD *md,
+static int create_digest(BIO *input, const char *digest, const EVP_MD *md,
                          unsigned char **md_value)
 {
     int md_value_len;
@@ -566,11 +568,11 @@ static ASN1_INTEGER *create_nonce(int bits)
  * Reply-related method definitions.
  */
 
-static int reply_command(CONF *conf, char *section, char *engine,
-                         char *queryfile, char *passin, char *inkey,
-                         const EVP_MD *md, char *signer, char *chain,
-                         const char *policy, char *in, int token_in,
-                         char *out, int token_out, int text)
+static int reply_command(CONF *conf, const char *section, const char *engine,
+                         const char *queryfile, const char *passin, const char *inkey,
+                         const EVP_MD *md, const char *signer, const char *chain,
+                         const char *policy, const char *in, int token_in,
+                         const char *out, int token_out, int text)
 {
     int ret = 0;
     TS_RESP *response = NULL;
@@ -674,10 +676,10 @@ static TS_RESP *read_PKCS7(BIO *in_bio)
     return resp;
 }
 
-static TS_RESP *create_response(CONF *conf, const char *section, char *engine,
-                                char *queryfile, char *passin,
-                                char *inkey, const EVP_MD *md, char *signer,
-                                char *chain, const char *policy)
+static TS_RESP *create_response(CONF *conf, const char *section, const char *engine,
+                                const char *queryfile, const char *passin,
+                                const char *inkey, const EVP_MD *md, const char *signer,
+                                const char *chain, const char *policy)
 {
     int ret = 0;
     TS_RESP *response = NULL;
@@ -825,9 +827,9 @@ static int save_ts_serial(const char *serialfile, ASN1_INTEGER *serial)
  * Verify-related method definitions.
  */
 
-static int verify_command(char *data, char *digest, char *queryfile,
-                          char *in, int token_in,
-                          char *CApath, char *CAfile, char *untrusted,
+static int verify_command(const char *data, const char *digest, const char *queryfile,
+                          const char *in, int token_in,
+                          const char *CApath, const char *CAfile, const char *untrusted,
                           X509_VERIFY_PARAM *vpm)
 {
     BIO *in_bio = NULL;
@@ -871,10 +873,10 @@ static int verify_command(char *data, char *digest, char *queryfile,
     return ret;
 }
 
-static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
-                                        char *queryfile,
-                                        char *CApath, char *CAfile,
-                                        char *untrusted,
+static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
+                                        const char *queryfile,
+                                        const char *CApath, const char *CAfile,
+                                        const char *untrusted,
                                         X509_VERIFY_PARAM *vpm)
 {
     TS_VERIFY_CTX *ctx = NULL;
@@ -935,7 +937,8 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
     return ctx;
 }
 
-static X509_STORE *create_cert_store(char *CApath, char *CAfile, X509_VERIFY_PARAM *vpm)
+static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
+                                     X509_VERIFY_PARAM *vpm)
 {
     X509_STORE *cert_ctx = NULL;
     X509_LOOKUP *lookup = NULL;

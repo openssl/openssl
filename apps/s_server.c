@@ -882,7 +882,7 @@ int s_server_main(int argc, char *argv[])
     STACK_OF(X509_CRL) *crls = NULL;
     X509 *s_cert = NULL, *s_dcert = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    char *CApath = NULL, *CAfile = NULL, *chCApath = NULL, *chCAfile = NULL;
+    const char *CApath = NULL, *CAfile = NULL, *chCApath = NULL, *chCAfile = NULL;
     char *dpassarg = NULL, *dpass = NULL, *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *crl_file = NULL, *prog;

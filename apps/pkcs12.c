@@ -131,8 +131,8 @@ int pkcs12_main(int argc, char **argv)
     int noprompt = 0;
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL, *inrand = NULL, *macalg = NULL;
-    char *cpass = NULL, *mpass = NULL, *CApath = NULL, *CAfile = NULL;
-    char *prog;
+    char *cpass = NULL, *mpass = NULL;
+    const char *CApath = NULL, *CAfile = NULL, *prog;
     int noCApath = 0, noCAfile = 0;
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
