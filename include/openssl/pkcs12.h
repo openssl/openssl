@@ -201,9 +201,13 @@ int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
 PKCS12 *PKCS12_add_safes(STACK_OF(PKCS7) *safes, int p7_nid);
 
 int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12);
+# ifndef OPENSSL_NO_STDIO
 int i2d_PKCS12_fp(FILE *fp, PKCS12 *p12);
+# endif
 PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12);
+# ifndef OPENSSL_NO_STDIO
 PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12);
+# endif
 int PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass);
 
 /* BEGIN ERROR CODES */
