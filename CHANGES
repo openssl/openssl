@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2h and 1.1.0  [xx XXX 2016]
+ Changes between 1.0.2h and 1.1.0  [xx XXX xxxx]
 
   *) The method for finding the storage location for the Windows RAND seed file
      has changed. First we check %RANDFILE%. If that is not set then we check
