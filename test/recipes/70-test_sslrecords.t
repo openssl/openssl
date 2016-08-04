@@ -72,7 +72,6 @@ use constant {
     ALERT_BEFORE_SSLV2 => 4
 };
 #Test 5: Inject an SSLv2 style record format for a TLSv1.2 ClientHello
-#my $sslv2testtype = TLSV1_2_IN_SSLV2;
 my $sslv2testtype = TLSV1_2_IN_SSLV2;
 $proxy->clear();
 $proxy->filter(\&add_sslv2_filter);
