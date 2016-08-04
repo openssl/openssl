@@ -60,15 +60,15 @@ matrix:
 
 before_script:
     - if [ -n "$DESTDIR" ]; then
-          srcdir=../_srcdist;
-          top=..;
           sh .travis-create-release.sh $TRAVIS_OS_NAME;
           tar -xvzf _srcdist.tar.gz;
           mkdir _build;
           cd _build;
+          srcdir=../_srcdist;
+          top=..;
       else
-          srcdir=.
-          top=.
+          srcdir=.;
+          top=.;
       fi
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
@@ -86,12 +86,10 @@ before_script:
 
 script:
     - if [ -n "$DESTDIR" ]; then
-          srcdir=../_srcdist;
-          top=..;
           cd _build;
+          top=..;
       else
-          srcdir=.
-          top=.
+          top=.;
       fi
     - make update
     - make
