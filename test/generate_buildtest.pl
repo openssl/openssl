@@ -11,6 +11,7 @@ use warnings;
 
 # First argument is name;
 my $name = shift @ARGV;
+my $name_uc = uc $name;
 # All other arguments are ignored for now
 
 print <<"_____";
@@ -18,7 +19,13 @@ print <<"_____";
  * Generated with test/generate_buildtest.pl, to check that such a simple
  * program builds.
  */
-#include <openssl/$name.h>
+#include <openssl/opensslconf.h>
+#ifndef OPENSSL_NO_STDIO
+# include <stdio.h>
+#endif
+#ifndef OPENSSL_NO_${name_uc}
+# include <openssl/$name.h>
+#endif
 
 int main()
 {
