@@ -578,7 +578,7 @@ PROCESS_PODS=\
 		[ -z "$$SEC" ] && SEC=$$defsec; \
 		fn=`basename $$p .pod`; \
 		Name=$$fn; \
-		NAME=`echo $$fn | tr [a-z] [A-Z]`; \
+		NAME=`echo $$fn | tr '[a-z]' '[A-Z]'`; \
 		suf=`eval "echo $$OUTSUFFIX"`; \
 		top=`eval "echo $$OUTTOP"`; \
 		$(PERL) $(SRCDIR)/util/mkdir-p.pl $$top/man$$SEC; \
@@ -591,8 +591,8 @@ PROCESS_PODS=\
 		      comp_n="$$n"; \
 		      comp_fn="$$fn"; \
 		      case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
-			  comp_n=`echo "$$n" | tr [A-Z] [a-z]`; \
-			  comp_fn=`echo "$$fn" | tr [A-Z] [a-z]`; \
+			  comp_n=`echo "$$n" | tr '[A-Z]' '[a-z]'`; \
+			  comp_fn=`echo "$$fn" | tr '[A-Z]' '[a-z]'`; \
 			  ;; \
 		      esac; \
 		      if [ "$$comp_n" != "$$comp_fn" ]; then \
@@ -621,8 +621,8 @@ UNINSTALL_DOCS=\
 		    comp_n="$$n"; \
 		    comp_fn="$$fn"; \
 		    case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
-			comp_n=`echo "$$n" | tr [A-Z] [a-z]`; \
-			comp_fn=`echo "$$fn" | tr [A-Z] [a-z]`; \
+			comp_n=`echo "$$n" | tr '[A-Z]' '[a-z]'`; \
+			comp_fn=`echo "$$fn" | tr '[A-Z]' '[a-z]'`; \
 			;; \
 		    esac; \
 		    if [ "$$comp_n" != "$$comp_fn" ]; then \
