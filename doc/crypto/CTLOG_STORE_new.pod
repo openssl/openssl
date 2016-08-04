@@ -63,6 +63,10 @@ L<ct(3)>,
 L<CTLOG_STORE_get0_log_by_id(3)>,
 L<SSL_CTX_set_ctlog_list_file(3)>
 
+=head1 HISTORY
+
+These functions were added in OpenSSL 1.1.0.
+
 =head1 COPYRIGHT
 
 Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
