@@ -36,11 +36,11 @@ The expected format of the file is:
 
  [foo]
  description = Log 1
- key = <base64-encoded public key here>
+ key = <base64-encoded DER SubjectPublicKeyInfo here>
 
  [bar]
  description = Log 2
- key = <base64-encoded public key here>
+ key = <base64-encoded DER SubjectPublicKeyInfo here>
 
 Once a CTLOG_STORE is no longer required, it should be passed to
 CTLOG_STORE_free(). This will delete all of the CTLOGs stored within, along
