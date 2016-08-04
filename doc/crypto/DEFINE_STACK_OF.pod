@@ -41,13 +41,13 @@ stack container
  void sk_TYPE_zero(const STACK_OF(TYPE) *sk);
  TYPE *sk_TYPE_delete(STACK_OF(TYPE) *sk, int i);
  TYPE *sk_TYPE_delete_ptr(STACK_OF(TYPE) *sk, TYPE *ptr);
- int sk_TYPE_push(STACK_OF(TYPE) *sk, TYPE *ptr);
- int sk_TYPE_unshift(STACK_OF(TYPE) *sk, TYPE *ptr);
+ int sk_TYPE_push(STACK_OF(TYPE) *sk, const TYPE *ptr);
+ int sk_TYPE_unshift(STACK_OF(TYPE) *sk, const TYPE *ptr);
  TYPE *sk_TYPE_pop(STACK_OF(TYPE) *sk);
  TYPE *sk_TYPE_shift(STACK_OF(TYPE) *sk);
  void sk_TYPE_pop_free(STACK_OF(TYPE) *sk, sk_TYPE_freefunc freefunc);
  int sk_TYPE_insert(STACK_OF(TYPE) *sk, TYPE *ptr, int idx);
- TYPE *sk_TYPE_set(STACK_OF(TYPE) *sk, int idx, TYPE *ptr);
+ TYPE *sk_TYPE_set(STACK_OF(TYPE) *sk, int idx, const TYPE *ptr);
  int sk_TYPE_find(STACK_OF(TYPE) *sk, TYPE *ptr);
  int sk_TYPE_find_ex(STACK_OF(TYPE) *sk, TYPE *ptr);
  void sk_TYPE_sort(const STACK_OF(TYPE) *sk);
