@@ -2,8 +2,9 @@
 
 =head1 NAME
 
-Func -
-title
+CTLOG_new, CTLOG_new_null, CTLOG_new_from_base64, CTLOG_free,
+CTLOG_get0_name, CTLOG_get0_log_id, CTLOG_get0_public_key -
+encapsulates information about a Certificate Transparency log
 
 =head1 SYNOPSIS
 
