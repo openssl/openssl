@@ -28,6 +28,7 @@ env:
     - CONFIG_OPTS="--strict-warnings no-shared" BUILDONLY="yes"
     - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
     - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
+    - CONFIG_OPTS="no-stdio --strict-warnings" BUILDONLY="yes"
 
 matrix:
     include:
