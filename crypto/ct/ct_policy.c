@@ -30,21 +30,25 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void)
 
 void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx)
 {
+    X509_free(ctx->cert);
+    X509_free(ctx->issuer);
     OPENSSL_free(ctx);
 }
 
-void CT_POLICY_EVAL_CTX_set0_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert)
+void CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert)
 {
-    ctx->cert = cert;
+    if (X509_up_ref(cert))
+        ctx->cert = cert;
 }
 
-void CT_POLICY_EVAL_CTX_set0_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer)
+void CT_POLICY_EVAL_CTX_set1_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer)
 {
-    ctx->issuer = issuer;
+    if (X509_up_ref(issuer))
+        ctx->issuer = issuer;
 }
 
-void CT_POLICY_EVAL_CTX_set0_log_store(CT_POLICY_EVAL_CTX *ctx,
-                                       CTLOG_STORE *log_store)
+void CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(CT_POLICY_EVAL_CTX *ctx,
+                                               CTLOG_STORE *log_store)
 {
     ctx->log_store = log_store;
 }
