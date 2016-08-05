@@ -20,7 +20,7 @@
 # for undertaken effort are multiple. First of all, UltraSPARC is not
 # the whole SPARCv9 universe and other VIS-free implementations deserve
 # optimized code as much. Secondly, newly introduced UltraSPARC T1,
-# a.k.a. Niagara, has shared FPU and concurrent FPU-intensive pathes,
+# a.k.a. Niagara, has shared FPU and concurrent FPU-intensive paths,
 # such as sparcv9a-mont, will simply sink it. Yes, T1 is equipped with
 # several integrated RSA/DSA accelerator circuits accessible through
 # kernel driver [only(*)], but having decent user-land software

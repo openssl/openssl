@@ -1134,7 +1134,7 @@ $code.=<<___;
 	ldrb		@t[1],[r12],#1		@ read input
 	subs		@t[3],@t[3],#1
 	eor		@t[0],@t[0],@t[1]
-	strb		@t[0],[r14],#1		@ store ouput
+	strb		@t[0],[r14],#1		@ store output
 	bne		.Loop_tail_neon
 
 .Ldone_neon:

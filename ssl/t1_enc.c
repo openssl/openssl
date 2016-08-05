@@ -478,7 +478,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         unsigned char hash[EVP_MAX_MD_SIZE * 2];
         int hashlen;
         /* Digest cached records keeping record buffer (if present):
-         * this wont affect client auth because we're freezing the buffer
+         * this won't affect client auth because we're freezing the buffer
          * at the same point (after client key exchange and before certificate
          * verify)
          */

@@ -800,7 +800,7 @@ static int dtls_get_reassembled_message(SSL *s, long *len)
 
             s->init_num = 0;
             goto redo;
-        } else {                /* Incorrectly formated Hello request */
+        } else {                /* Incorrectly formatted Hello request */
 
             al = SSL_AD_UNEXPECTED_MESSAGE;
             SSLerr(SSL_F_DTLS_GET_REASSEMBLED_MESSAGE,

@@ -401,7 +401,7 @@ BEGINRAW and ENDRAW lines as follows:
         echo "/* haha */" > haha.h
     ENDRAW[Makefile(unix)]
 
-The word withing square brackets is the build_file configuration item
+The word within square brackets is the build_file configuration item
 or the build_file configuration item followed by the second word in the
 build_scheme configuration item for the configured target within
 parenthesis as shown above.  For example, with the following relevant

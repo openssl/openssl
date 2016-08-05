@@ -683,7 +683,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
         || (utype == V_ASN1_SET) || (utype == V_ASN1_OTHER)) {
         /*
          * Clear context cache for type OTHER because the auto clear when we
-         * have a exact match wont work
+         * have a exact match won't work
          */
         if (utype == V_ASN1_OTHER) {
             asn1_tlc_clear(ctx);

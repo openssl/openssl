@@ -246,7 +246,7 @@ X509_STORE_set_cert_crl(), X509_STORE_get_cert_crl(),
 X509_STORE_set_check_policy(), X509_STORE_get_check_policy(),
 X509_STORE_set_lookup_certs(), X509_STORE_get_lookup_certs(),
 X509_STORE_set_lookup_crls(), X509_STORE_get_lookup_crls(),
-X509_STORE_set_cleanup() and X509_STORE_get_cleanup() were addded in
+X509_STORE_set_cleanup() and X509_STORE_get_cleanup() were added in
 OpenSSL 1.1.0.
 
 =head1 COPYRIGHT

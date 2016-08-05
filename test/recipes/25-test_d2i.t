@@ -38,7 +38,7 @@ ok(run(test(["d2i_test", "ASN1_ANY", "OK",
              srctop_file('test','d2i-tests','high_tag.der')])),
    "Running d2i_test high_tag.der");
 
-# Above test data but interpeted as ASN.1 INTEGER: this will be rejected
+# Above test data but interpreted as ASN.1 INTEGER: this will be rejected
 # because the tag is invalid.
 ok(run(test(["d2i_test", "ASN1_INTEGER", "decode",
              srctop_file('test','d2i-tests','high_tag.der')])),
