@@ -2211,7 +2211,7 @@
   *) An attacker can force an error condition which causes openssl to crash
      whilst processing DTLS packets due to memory being freed twice. This
      can be exploited through a Denial of Service attack.
-     Thanks to Adam Langley and Wan-The Chang for discovering and researching
+     Thanks to Adam Langley and Wan-Teh Chang for discovering and researching
      this issue.
      (CVE-2014-3505)
      [Adam Langley]
