@@ -1343,23 +1343,23 @@ if ($builder eq "unified") {
         return $res;
     }
 
-    my @build_infos = ( [ ".", "build.info" ] );
+    my @build_info = ( [ ".", "build.info" ] );
     foreach (@{$config{dirs}}) {
-        push @build_infos, [ $_, "build.info" ]
+        push @build_info, [ $_, "build.info" ]
             if (-f catfile($srcdir, $_, "build.info"));
     }
     foreach (@{$config{sdirs}}) {
-        push @build_infos, [ catdir("crypto", $_), "build.info" ]
+        push @build_info, [ catdir("crypto", $_), "build.info" ]
             if (-f catfile($srcdir, "crypto", $_, "build.info"));
     }
     foreach (@{$config{engdirs}}) {
-        push @build_infos, [ catdir("engines", $_), "build.info" ]
+        push @build_info, [ catdir("engines", $_), "build.info" ]
             if (-f catfile($srcdir, "engines", $_, "build.info"));
     }
 
-    $config{build_infos} = [ ];
+    $config{build_info} = [ ];
 
-    foreach (@build_infos) {
+    foreach (@build_info) {
         my $sourced = catdir($srcdir, $_->[0]);
         my $buildd = catdir($blddir, $_->[0]);
 
@@ -1389,7 +1389,7 @@ if ($builder eq "unified") {
         my %sharednames = ();
         my %generate = ();
 
-        push @{$config{build_infos}}, catfile(abs2rel($sourced, $blddir), $f);
+        push @{$config{build_info}}, catfile(abs2rel($sourced, $blddir), $f);
         my $template = Text::Template->new(TYPE => 'FILE',
                                            SOURCE => catfile($sourced, $f));
         die "Something went wrong with $sourced/$f: $!\n" unless $template;
