@@ -13,83 +13,26 @@
 /* mod 128 saturating subtract of two 64-bit values in big-endian order */
 static int satsub64be(const unsigned char *v1, const unsigned char *v2)
 {
-    int ret, i;
+    int64_t ret;
+    uint64_t l1, l2;
 
-    if (sizeof(long) == 8)
-        do {
-            const union {
-                long one;
-                char little;
-            } is_endian = {
-                1
-            };
-            long l;
+    n2l8(v1, l1);
+    n2l8(v2, l2);
 
-            if (is_endian.little)
-                break;
-            /* not reached on little-endians */
-            /*
-             * following test is redundant, because input is always aligned,
-             * but I take no chances...
-             */
-            if (((size_t)v1 | (size_t)v2) & 0x7)
-                break;
+    ret = l1 - l2;
 
-            l = *((long *)v1);
-            l -= *((long *)v2);
-            if (l > 128)
-                return 128;
-            else if (l < -128)
-                return -128;
-            else
-                return (int)l;
-        } while (0);
-
-    ret = 0;
-    for (i=0; i<7; i++) {
-        if (v1[i] > v2[i]) {
-            /* v1 is larger... but by how much? */
-            if (v1[i] != v2[i] + 1)
-                return 128;
-            while (++i <= 6) {
-                if (v1[i] != 0x00 || v2[i] != 0xff)
-                    return 128; /* too much */
-            }
-            /* We checked all the way to the penultimate byte,
-             * so despite higher bytes changing we actually
-             * know that it only changed from (e.g.)
-             *       ... (xx)  ff ff ff ??
-             * to   ... (xx+1) 00 00 00 ??
-             * so we add a 'bias' of 256 for the carry that
-             * happened, and will eventually return
-             * 256 + v1[7] - v2[7]. */
-            ret = 256;
-            break;
-        } else if (v2[i] > v1[i]) {
-            /* v2 is larger... but by how much? */
-            if (v2[i] != v1[i] + 1)
-                return -128;
-            while (++i <= 6) {
-                if (v2[i] != 0x00 || v1[i] != 0xff)
-                    return -128; /* too much */
-            }
-            /* Similar to the case above, we know it changed
-             * from    ... (xx)  00 00 00 ??
-             * to     ... (xx-1) ff ff ff ??
-             * so we add a 'bias' of -256 for the borrow,
-             * to return -256 + v1[7] - v2[7]. */
-            ret = -256;
-        }
-    }
-
-    ret += (int)v1[7] - (int)v2[7];
+    /* We do not permit wrap-around */
+    if (l1 > l2 && ret < 0)
+        return 128;
+    else if (l2 > l1 && ret > 0)
+        return -128;
 
     if (ret > 128)
         return 128;
     else if (ret < -128)
         return -128;
     else
-        return ret;
+        return (int)ret;
 }
 
 int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap)
