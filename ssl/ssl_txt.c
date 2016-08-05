@@ -128,11 +128,11 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
     if (x->tlsext_tick) {
         if (BIO_puts(bp, "\n    TLS session ticket:\n") <= 0)
             goto err;
-        if (BIO_dump_indent(bp, (const char *)x->tlsext_tick, x->tlsext_ticklen, 4)
+        if (BIO_dump_indent
+            (bp, (const char *)x->tlsext_tick, x->tlsext_ticklen, 4)
             <= 0)
             goto err;
     }
-
 #ifndef OPENSSL_NO_COMP
     if (x->compress_meth != 0) {
         SSL_COMP *comp = NULL;
@@ -140,12 +140,11 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         if (!ssl_cipher_get_evp(x, NULL, NULL, NULL, NULL, &comp, 0))
             goto err;
         if (comp == NULL) {
-            if (BIO_printf(bp, "\n    Compression: %d", x->compress_meth) <=
-                0)
+            if (BIO_printf(bp, "\n    Compression: %d", x->compress_meth) <= 0)
                 goto err;
         } else {
             if (BIO_printf(bp, "\n    Compression: %d (%s)", comp->id,
-                 comp->name) <= 0)
+                           comp->name) <= 0)
                 goto err;
         }
     }

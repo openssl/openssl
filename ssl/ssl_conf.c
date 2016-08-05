@@ -116,7 +116,7 @@ static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
         break;
 
     case SSL_TFLAG_VFY:
-        pflags =  cctx->pvfy_flags;
+        pflags = cctx->pvfy_flags;
         break;
 
     case SSL_TFLAG_OPTION:
@@ -142,8 +142,7 @@ static int ssl_match_option(SSL_CONF_CTX *cctx, const ssl_flag_tbl *tbl,
     if (namelen == -1) {
         if (strcmp(tbl->name, name))
             return 0;
-    } else if (tbl->namelen != namelen
-               || strncasecmp(tbl->name, name, namelen))
+    } else if (tbl->namelen != namelen || strncasecmp(tbl->name, name, namelen))
         return 0;
     ssl_set_option(cctx, tbl->name_flags, tbl->option_value, onoff);
     return 1;
@@ -192,8 +191,7 @@ static int cmd_SignatureAlgorithms(SSL_CONF_CTX *cctx, const char *value)
 }
 
 /* Set supported client signature algorithms */
-static int cmd_ClientSignatureAlgorithms(SSL_CONF_CTX *cctx,
-                                         const char *value)
+static int cmd_ClientSignatureAlgorithms(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv;
     if (cctx->ssl)
@@ -285,7 +283,8 @@ static int protocol_from_string(const char *value)
         {"TLSv1.1", TLS1_1_VERSION},
         {"TLSv1.2", TLS1_2_VERSION},
         {"DTLSv1", DTLS1_VERSION},
-        {"DTLSv1.2", DTLS1_2_VERSION}};
+        {"DTLSv1.2", DTLS1_2_VERSION}
+    };
     size_t i;
     size_t n = OSSL_NELEM(versions);
 
@@ -625,8 +624,7 @@ static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
 }
 
 /* Determine if a command is allowed according to cctx flags */
-static int ssl_conf_cmd_allowed(SSL_CONF_CTX *cctx,
-                                const ssl_conf_cmd_tbl * t)
+static int ssl_conf_cmd_allowed(SSL_CONF_CTX *cctx, const ssl_conf_cmd_tbl * t)
 {
     unsigned int tfl = t->flags;
     unsigned int cfl = cctx->flags;
@@ -664,8 +662,7 @@ static const ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx,
     return NULL;
 }
 
-static int ctrl_switch_option(SSL_CONF_CTX *cctx,
-                              const ssl_conf_cmd_tbl * cmd)
+static int ctrl_switch_option(SSL_CONF_CTX *cctx, const ssl_conf_cmd_tbl * cmd)
 {
     /* Find index of command in table */
     size_t idx = cmd - ssl_conf_cmds;

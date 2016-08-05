@@ -110,7 +110,6 @@ const char *SSL_state_string_long(const SSL *s)
     }
 }
 
-
 const char *SSL_state_string(const SSL *s)
 {
     if (ossl_statem_in_error(s))
@@ -335,7 +334,7 @@ const char *SSL_alert_desc_string_long(int value)
         return "bad certificate hash value";
     case TLS1_AD_UNKNOWN_PSK_IDENTITY:
         return "unknown PSK identity";
-      case TLS1_AD_NO_APPLICATION_PROTOCOL:
+    case TLS1_AD_NO_APPLICATION_PROTOCOL:
         return "no application protocol";
     default:
         return "unknown";

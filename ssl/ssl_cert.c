@@ -31,8 +31,8 @@
 #include "ssl_locl.h"
 #include "internal/thread_once.h"
 
-static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx, int op,
-                                         int bits, int nid, void *other,
+static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
+                                         int op, int bits, int nid, void *other,
                                          void *ex);
 
 static CRYPTO_ONCE ssl_x509_store_ctx_once = CRYPTO_ONCE_STATIC_INIT;
@@ -41,8 +41,8 @@ static volatile int ssl_x509_store_ctx_idx = -1;
 DEFINE_RUN_ONCE_STATIC(ssl_x509_store_ctx_init)
 {
     ssl_x509_store_ctx_idx = X509_STORE_CTX_get_ex_new_index(0,
-                                                "SSL for verify callback",
-                                                NULL, NULL, NULL);
+                                                             "SSL for verify callback",
+                                                             NULL, NULL, NULL);
     return ssl_x509_store_ctx_idx >= 0;
 }
 
@@ -96,7 +96,6 @@ CERT *ssl_cert_dup(CERT *cert)
         OPENSSL_free(ret);
         return NULL;
     }
-
 #ifndef OPENSSL_NO_DH
     if (cert->dh_tmp != NULL) {
         ret->dh_tmp = cert->dh_tmp;
@@ -134,11 +133,9 @@ CERT *ssl_cert_dup(CERT *cert)
                 SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
-            ret->pkeys[i].serverinfo_length =
-                cert->pkeys[i].serverinfo_length;
+            ret->pkeys[i].serverinfo_length = cert->pkeys[i].serverinfo_length;
             memcpy(ret->pkeys[i].serverinfo,
-                   cert->pkeys[i].serverinfo,
-                   cert->pkeys[i].serverinfo_length);
+                   cert->pkeys[i].serverinfo, cert->pkeys[i].serverinfo_length);
         }
     }
 
@@ -412,7 +409,8 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(ctx, tls1_suiteb(s));
-    if (!X509_STORE_CTX_set_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s)) {
+    if (!X509_STORE_CTX_set_ex_data
+        (ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s)) {
         goto end;
     }
 
@@ -454,7 +452,7 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     /* Move peername from the store context params to the SSL handle's */
     X509_VERIFY_PARAM_move_peername(s->param, param);
 
-end:
+ end:
     X509_STORE_CTX_free(ctx);
     return i;
 }
@@ -505,7 +503,7 @@ STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
-    if (!s->server) { /* we are in the client */
+    if (!s->server) {           /* we are in the client */
         if (((s->version >> 8) == SSL3_VERSION_MAJOR) && (s->s3 != NULL))
             return (s->s3->tmp.ca_names);
         else
@@ -576,8 +574,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     X509 *x = NULL;
     X509_NAME *xn = NULL;
     STACK_OF(X509_NAME) *ret = NULL;
-    LHASH_OF(X509_NAME) *name_hash =
-        lh_X509_NAME_new(xname_hash, xname_cmp);
+    LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
 
     if ((name_hash == NULL) || (in == NULL)) {
         SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE, ERR_R_MALLOC_FAILURE);
@@ -651,8 +648,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     in = BIO_new(BIO_s_file());
 
     if (in == NULL) {
-        SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK,
-               ERR_R_MALLOC_FAILURE);
+        SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -806,7 +802,7 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
         chain_store = s->ctx->cert_store;
 
     if (chain_store) {
-        X509_STORE_CTX* xs_ctx = X509_STORE_CTX_new();
+        X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new();
 
         if (xs_ctx == NULL) {
             SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
@@ -823,10 +819,10 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
          * ignore the error return from this call. We're not actually verifying
          * the cert - we're just building as much of the chain as we can
          */
-        (void) X509_verify_cert(xs_ctx);
+        (void)X509_verify_cert(xs_ctx);
         /* Don't leave errors in the queue */
         ERR_clear_error();
-        chain =  X509_STORE_CTX_get0_chain(xs_ctx);
+        chain = X509_STORE_CTX_get0_chain(xs_ctx);
         i = ssl_security_cert_chain(s, chain, NULL, 0);
         if (i != 1) {
 #if 0
@@ -892,8 +888,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
             if (!X509_STORE_add_cert(chain_store, x)) {
                 error = ERR_peek_last_error();
                 if (ERR_GET_LIB(error) != ERR_LIB_X509 ||
-                    ERR_GET_REASON(error) !=
-                    X509_R_CERT_ALREADY_IN_HASH_TABLE)
+                    ERR_GET_REASON(error) != X509_R_CERT_ALREADY_IN_HASH_TABLE)
                     goto err;
                 ERR_clear_error();
             }
@@ -1001,8 +996,8 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
     return 1;
 }
 
-static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx, int op,
-                                         int bits, int nid, void *other,
+static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
+                                         int op, int bits, int nid, void *other,
                                          void *ex)
 {
     int level, minbits;

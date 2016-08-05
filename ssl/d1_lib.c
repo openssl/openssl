@@ -338,8 +338,7 @@ int dtls1_check_timeout_num(SSL *s)
     if (s->d1->timeout.num_alerts > 2
         && !(SSL_get_options(s) & SSL_OP_NO_QUERY_MTU)) {
         mtu =
-            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_GET_FALLBACK_MTU, 0,
-                     NULL);
+            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_GET_FALLBACK_MTU, 0, NULL);
         if (mtu < s->d1->mtu)
             s->d1->mtu = mtu;
     }
@@ -391,10 +390,13 @@ static void get_current_time(struct timeval *t)
 
     GetSystemTime(&st);
     SystemTimeToFileTime(&st, &now.ft);
+    /* re-bias to 1/1/1970 */
 # ifdef  __MINGW32__
     now.ul -= 116444736000000000ULL;
 # else
-    now.ul -= 116444736000000000UI64; /* re-bias to 1/1/1970 */
+    /* *INDENT-OFF* */
+    now.ul -= 116444736000000000UI64;
+    /* *INDENT-ON* */
 # endif
     t->tv_sec = (long)(now.ul / 10000000);
     t->tv_usec = ((int)(now.ul % 10000000)) / 10;
@@ -407,7 +409,6 @@ static void get_current_time(struct timeval *t)
     gettimeofday(t, NULL);
 #endif
 }
-
 
 #define LISTEN_SUCCESS              2
 #define LISTEN_SEND_VERIFY_REQUEST  1
@@ -531,7 +532,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             goto end;
         }
 
-        if (rectype != SSL3_RT_HANDSHAKE)  {
+        if (rectype != SSL3_RT_HANDSHAKE) {
             SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
@@ -744,7 +745,6 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
                 s->msg_callback(1, 0, SSL3_RT_HEADER, buf,
                                 DTLS1_RT_HEADER_LENGTH, s, s->msg_callback_arg);
 
-
             if ((tmpclient = BIO_ADDR_new()) == NULL) {
                 SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_MALLOC_FAILURE);
                 goto end;
@@ -805,13 +805,15 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
      */
     ossl_statem_set_hello_verify_done(s);
 
-    /* Some BIOs may not support this. If we fail we clear the client address */
+    /*
+     * Some BIOs may not support this. If we fail we clear the client address
+     */
     if (BIO_dgram_get_peer(rbio, client) <= 0)
         BIO_ADDR_clear(client);
 
     ret = 1;
     clearpkt = 0;
-end:
+ end:
     BIO_ADDR_free(tmpclient);
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
     if (clearpkt) {
@@ -842,12 +844,12 @@ static int dtls1_handshake_write(SSL *s)
 
 #ifndef OPENSSL_NO_HEARTBEATS
 
-#define HEARTBEAT_SIZE(payload, padding) ( \
+# define HEARTBEAT_SIZE(payload, padding) ( \
     1 /* heartbeat type */ + \
     2 /* heartbeat length */ + \
     (payload) + (padding))
 
-#define HEARTBEAT_SIZE_STD(payload) HEARTBEAT_SIZE(payload, 16)
+# define HEARTBEAT_SIZE_STD(payload) HEARTBEAT_SIZE(payload, 16)
 
 int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
 {
@@ -987,8 +989,7 @@ int dtls1_heartbeat(SSL *s)
     if (ret >= 0) {
         if (s->msg_callback)
             s->msg_callback(1, s->version, DTLS1_RT_HEARTBEAT,
-                            buf, size,
-                            s, s->msg_callback_arg);
+                            buf, size, s, s->msg_callback_arg);
 
         dtls1_start_timer(s);
         s->tlsext_hb_pending = 1;

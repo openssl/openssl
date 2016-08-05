@@ -13,7 +13,7 @@
 #include "ssl_locl.h"
 
 #ifndef OPENSSL_NO_SRP
-#include <openssl/srp.h>
+# include <openssl/srp.h>
 
 int SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx)
 {
@@ -325,8 +325,7 @@ int srp_generate_client_master_secret(SSL *s)
         goto err;
     if (!
         (passwd =
-         s->srp_ctx.SRP_give_srp_client_pwd_callback(s,
-                                                     s->srp_ctx.SRP_cb_arg)))
+         s->srp_ctx.SRP_give_srp_client_pwd_callback(s, s->srp_ctx.SRP_cb_arg)))
         goto err;
     if ((x = SRP_Calc_x(s->srp_ctx.s, s->srp_ctx.login, passwd)) == NULL)
         goto err;
@@ -388,8 +387,7 @@ int SRP_Calc_A_param(SSL *s)
     s->srp_ctx.a = BN_bin2bn(rnd, sizeof(rnd), s->srp_ctx.a);
     OPENSSL_cleanse(rnd, sizeof(rnd));
 
-    if (!
-        (s->srp_ctx.A = SRP_Calc_A(s->srp_ctx.a, s->srp_ctx.N, s->srp_ctx.g)))
+    if (!(s->srp_ctx.A = SRP_Calc_A(s->srp_ctx.a, s->srp_ctx.N, s->srp_ctx.g)))
         return 0;
 
     return 1;
