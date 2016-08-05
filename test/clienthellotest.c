@@ -16,14 +16,9 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "../ssl/packet_locl.h"
 
 #define CLIENT_VERSION_LEN      2
-#define SESSION_ID_LEN_LEN      1
-#define CIPHERS_LEN_LEN         2
-#define COMPRESSION_LEN_LEN     1
-#define EXTENSIONS_LEN_LEN      2
-#define EXTENSION_TYPE_LEN      2
-#define EXTENSION_SIZE_LEN      2
 
 
 #define TOTAL_NUM_TESTS                         1
@@ -43,11 +38,9 @@ int main(int argc, char *argv[])
     BIO *err;
     long len;
     unsigned char *data;
-    unsigned char *dataend;
+    PACKET pkt, pkt2, pkt3;
     char *dummytick = "Hello World!";
-    unsigned int tmplen;
     unsigned int type;
-    unsigned int size;
     int testresult = 0;
     int currtest = 0;
 
@@ -81,50 +74,47 @@ int main(int argc, char *argv[])
         }
 
         len = BIO_get_mem_data(wbio, (char **)&data);
-        dataend = data + len;
+        if (!PACKET_buf_init(&pkt, data, len))
+            goto end;
 
         /* Skip the record header */
-        data += SSL3_RT_HEADER_LENGTH;
+        if (!PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH))
+            goto end;
+
         /* Skip the handshake message header */
-        data += SSL3_HM_HEADER_LENGTH;
+        if (!PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
+            goto end;
+
         /* Skip client version and random */
-        data += CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE;
-        if (data + SESSION_ID_LEN_LEN > dataend)
+        if (!PACKET_forward(&pkt, CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE))
             goto end;
+
         /* Skip session id */
-        tmplen = *data;
-        data += SESSION_ID_LEN_LEN + tmplen;
-        if (data + CIPHERS_LEN_LEN > dataend)
+        if (!PACKET_get_length_prefixed_1(&pkt, &pkt2))
             goto end;
+
         /* Skip ciphers */
-        tmplen = ((*data) << 8) | *(data + 1);
-        data += CIPHERS_LEN_LEN + tmplen;
-        if (data + COMPRESSION_LEN_LEN > dataend)
+        if (!PACKET_get_length_prefixed_2(&pkt, &pkt2))
             goto end;
+
         /* Skip compression */
-        tmplen = *data;
-        data += COMPRESSION_LEN_LEN + tmplen;
-        if (data + EXTENSIONS_LEN_LEN > dataend)
+        if (!PACKET_get_length_prefixed_1(&pkt, &pkt2))
             goto end;
+
         /* Extensions len */
-        tmplen = ((*data) << 8) | *(data + 1);
-        data += EXTENSIONS_LEN_LEN;
-        if (data + tmplen > dataend)
+        if (!PACKET_as_length_prefixed_2(&pkt, &pkt2))
             goto end;
 
         /* Loop through all extensions */
-        while (tmplen > EXTENSION_TYPE_LEN + EXTENSION_SIZE_LEN) {
-            type = ((*data) << 8) | *(data + 1);
-            data += EXTENSION_TYPE_LEN;
-            size = ((*data) << 8) | *(data + 1);
-            data += EXTENSION_SIZE_LEN;
-            if (data + size > dataend)
+        while (PACKET_remaining(&pkt2)) {
+
+            if (!PACKET_get_net_2(&pkt2, &type) ||
+                !PACKET_get_length_prefixed_2(&pkt2, &pkt3))
                 goto end;
 
             if (type == TLSEXT_TYPE_session_ticket) {
                 if (currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
-                    if (size == strlen(dummytick)
-                            && memcmp(data, dummytick, size) == 0) {
+                    if (PACKET_equal(&pkt3, dummytick, strlen(dummytick))) {
                         /* Ticket data is as we expected */
                         testresult = 1;
                     } else {
@@ -134,8 +124,6 @@ int main(int argc, char *argv[])
                 }
             }
 
-            tmplen -= EXTENSION_TYPE_LEN + EXTENSION_SIZE_LEN + size;
-            data += size;
         }
 
  end:
