@@ -889,7 +889,7 @@ static int check_cert(X509_STORE_CTX *ctx)
         crl = NULL;
         dcrl = NULL;
         /*
-         * If reasons not updated we wont get anywhere by another iteration,
+         * If reasons not updated we won't get anywhere by another iteration,
          * so exit loop.
          */
         if (last_reasons == ctx->current_reasons) {

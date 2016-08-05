@@ -41,7 +41,7 @@ static const X509_CRL_METHOD *default_crl_method = &int_crl_meth;
 
 /*
  * The X509_CRL_INFO structure needs a bit of customisation. Since we cache
- * the original encoding the signature wont be affected by reordering of the
+ * the original encoding the signature won't be affected by reordering of the
  * revoked field.
  */
 static int crl_inf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,

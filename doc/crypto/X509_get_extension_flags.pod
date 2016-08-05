@@ -118,7 +118,7 @@ certificate B<x>.  This is for the users who need to mark non-RFC3820 proxy
 certificates as such, as OpenSSL only detects RFC3820 compliant ones.
 
 X509_get_proxy_pathlen() returns the proxy certificate path length for the
-given certificate B<x> if it is a proxy certicate.
+given certificate B<x> if it is a proxy certificate.
 
 =head1 NOTES
 

@@ -76,7 +76,7 @@ extern "C" {
 # if OPENSSL_API_COMPAT < 0x00908000L
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
-#  define BN_FLG_FREE            0x8000 /* used for debuging */
+#  define BN_FLG_FREE            0x8000 /* used for debugging */
 # endif
 
 void BN_set_flags(BIGNUM *b, int n);

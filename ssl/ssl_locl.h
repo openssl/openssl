@@ -1502,7 +1502,7 @@ typedef struct cert_st {
     unsigned char *ctypes;
     size_t ctype_num;
     /*
-     * suppported signature algorithms. When set on a client this is sent in
+     * supported signature algorithms. When set on a client this is sent in
      * the client hello as the supported signature algorithms extension. For
      * servers it represents the signature algorithms we are willing to use.
      */

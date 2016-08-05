@@ -270,7 +270,7 @@ int test_builtin(BIO *out)
     }
 
     /*
-     * create and verify a ecdsa signature with every availble curve (with )
+     * create and verify a ecdsa signature with every available curve (with )
      */
     BIO_printf(out, "\ntesting ECDSA_sign() and ECDSA_verify() "
                "with some internal curves:\n");

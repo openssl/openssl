@@ -298,7 +298,7 @@ _sparcv9_vis1_instrument:
 	sub	%o3,%o2,%o2
 	sub	%o4,%o3,%o3
 
-	! find minumum value
+	! find minimum value
 	cmp	%o0,%o1
 	.word	0x38680002	!bgu,a	%xcc,.+8
 	mov	%o1,%o0

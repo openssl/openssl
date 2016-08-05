@@ -425,7 +425,7 @@ $data=<<EOF;
 # r9,r10, r11 are the equivalents of c1,c2, c3.
 #
 # Possible optimization of loading all 8 longs of a into registers
-# doesnt provide any speedup
+# doesn't provide any speedup
 # 
 
 	xor		r0,r0,r0		#set r0 = 0.Used in addze
@@ -1015,7 +1015,7 @@ $data=<<EOF;
 	$UMULL	r8,r6,r7
 	$UMULH	r9,r6,r7
 	addc	r11,r11,r8
-	addze	r12,r9			# since we didnt set r12 to zero before.
+	addze	r12,r9			# since we didn't set r12 to zero before.
 	addze	r10,r0
 					#mul_add_c(a[1],b[0],c2,c3,c1);
 	$LD	r6,`1*$BNSZ`(r4)

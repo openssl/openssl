@@ -201,7 +201,7 @@ X509_STORE_CTX_get_check_issued(), X509_STORE_CTX_get_check_revocation(),
 X509_STORE_CTX_get_get_crl(), X509_STORE_CTX_get_check_crl(),
 X509_STORE_CTX_get_cert_crl(), X509_STORE_CTX_get_check_policy(),
 X509_STORE_CTX_get_lookup_certs(), X509_STORE_CTX_get_lookup_crls()
-and X509_STORE_CTX_get_cleanup() were addded in OpenSSL 1.1.0.
+and X509_STORE_CTX_get_cleanup() were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 

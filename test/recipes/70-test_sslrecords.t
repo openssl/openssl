@@ -110,7 +110,7 @@ sub add_frag_alert_filter
     #);
     #push @{$proxy->record_list}, $record;
 
-    # Now add the alert level (Fatal) as a seperate record
+    # Now add the alert level (Fatal) as a separate record
     $byte = pack('C', TLSProxy::Message::AL_LEVEL_FATAL);
     my $record = TLSProxy::Record->new(
         0,

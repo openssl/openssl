@@ -499,7 +499,7 @@ a blank line. Piping the mail directly to sendmail is one way to
 achieve the correct format.
 
 The supplied message to be signed or encrypted must include the
-necessary MIME headers or many S/MIME clients wont display it
+necessary MIME headers or many S/MIME clients won't display it
 properly (if at all). You can use the B<-text> option to automatically
 add plain text headers.
 

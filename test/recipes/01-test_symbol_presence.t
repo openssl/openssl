@@ -23,7 +23,7 @@ my $testcount = scalar @libnames;
 plan tests => $testcount * 2;
 
 note
-    "NOTE: developper test!  It's possible that it won't run on your\n",
+    "NOTE: developer test!  It's possible that it won't run on your\n",
     "platform, and that's perfectly fine.  This is mainly for developers\n",
     "on Unix to check that our shared libraries are consistent with the\n",
     "ordinals (util/*.num in the source tree), something that should be\n",

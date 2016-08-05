@@ -327,7 +327,7 @@ and accepted from the server.
 =item B<-dtls>, B<-dtls1>, B<-dtls1_2>
 
 These options make B<s_client> use DTLS protocols instead of TLS.
-With B<-dtls>, B<s_client> will negotiate any supported DTLS protcol version,
+With B<-dtls>, B<s_client> will negotiate any supported DTLS protocol version,
 whilst B<-dtls1> and B<-dtls1_2> will only support DTLS1.0 and DTLS1.2
 respectively.
 

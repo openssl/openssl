@@ -374,7 +374,7 @@ __ecp_nistz256_div_by_2:
 	mov	$ff,$a0,lsl#31		@ place least significant bit to most
 					@ significant position, now arithmetic
 					@ right shift by 31 will produce -1 or
-					@ 0, while logical rigth shift 1 or 0,
+					@ 0, while logical right shift 1 or 0,
 					@ this is how modulus is conditionally
 					@ synthesized in this case...
 	ldr	$a3,[$a_ptr,#12]
