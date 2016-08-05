@@ -138,13 +138,13 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
      */
     if (SSL_IS_DTLS(s)) {
         if ((s->version == DTLS1_BAD_VER
-                        && remain != DTLS1_CCS_HEADER_LENGTH + 1)
-                    || (s->version != DTLS1_BAD_VER
-                        && remain != DTLS1_CCS_HEADER_LENGTH - 1)) {
-                al = SSL_AD_ILLEGAL_PARAMETER;
-                SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
-                       SSL_R_BAD_CHANGE_CIPHER_SPEC);
-                goto f_err;
+             && remain != DTLS1_CCS_HEADER_LENGTH + 1)
+            || (s->version != DTLS1_BAD_VER
+                && remain != DTLS1_CCS_HEADER_LENGTH - 1)) {
+            al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
+                   SSL_R_BAD_CHANGE_CIPHER_SPEC);
+            goto f_err;
         }
     } else {
         if (remain != 0) {
@@ -349,16 +349,18 @@ int tls_get_message_header(SSL *s, int *mt)
     do {
         while (s->init_num < SSL3_HM_HEADER_LENGTH) {
             i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, &recvd_type,
-                &p[s->init_num], SSL3_HM_HEADER_LENGTH - s->init_num, 0);
+                                          &p[s->init_num],
+                                          SSL3_HM_HEADER_LENGTH - s->init_num,
+                                          0);
             if (i <= 0) {
                 s->rwstate = SSL_READING;
                 return 0;
             }
             if (recvd_type == SSL3_RT_CHANGE_CIPHER_SPEC) {
                 /*
-		 * A ChangeCipherSpec must be a single byte and may not occur
-		 * in the middle of a handshake message.
-		 */
+                 * A ChangeCipherSpec must be a single byte and may not occur
+                 * in the middle of a handshake message.
+                 */
                 if (s->init_num != 0 || i != 1 || p[0] != SSL3_MT_CCS) {
                     al = SSL_AD_UNEXPECTED_MESSAGE;
                     SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER,
@@ -428,7 +430,7 @@ int tls_get_message_header(SSL *s, int *mt)
             goto f_err;
         }
         if (l && !BUF_MEM_grow_clean(s->init_buf,
-                                    (int)l + SSL3_HM_HEADER_LENGTH)) {
+                                     (int)l + SSL3_HM_HEADER_LENGTH)) {
             SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER, ERR_R_BUF_LIB);
             goto err;
         }
@@ -490,11 +492,11 @@ int tls_get_message_body(SSL *s, unsigned long *len)
             return 0;
         }
         if (s->msg_callback)
-            s->msg_callback(0, SSL2_VERSION, 0,  s->init_buf->data,
+            s->msg_callback(0, SSL2_VERSION, 0, s->init_buf->data,
                             (size_t)s->init_num, s, s->msg_callback_arg);
     } else {
         if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-            s->init_num + SSL3_HM_HEADER_LENGTH)) {
+                             s->init_num + SSL3_HM_HEADER_LENGTH)) {
             SSLerr(SSL_F_TLS_GET_MESSAGE_BODY, ERR_R_EVP_LIB);
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
             *len = 0;
@@ -522,8 +524,7 @@ int tls_get_message_body(SSL *s, unsigned long *len)
 
 int ssl_cert_type(const X509 *x, const EVP_PKEY *pk)
 {
-    if (pk == NULL &&
-        (pk = X509_get0_pubkey(x)) == NULL)
+    if (pk == NULL && (pk = X509_get0_pubkey(x)) == NULL)
         return -1;
 
     switch (EVP_PKEY_id(pk)) {
@@ -637,8 +638,8 @@ static int version_cmp(const SSL *s, int a, int b)
 
 typedef struct {
     int version;
-    const SSL_METHOD *(*cmeth)(void);
-    const SSL_METHOD *(*smeth)(void);
+    const SSL_METHOD *(*cmeth) (void);
+    const SSL_METHOD *(*smeth) (void);
 } version_info;
 
 #if TLS_MAX_VERSION != TLS1_2_VERSION
@@ -647,26 +648,26 @@ typedef struct {
 
 static const version_info tls_version_table[] = {
 #ifndef OPENSSL_NO_TLS1_2
-    { TLS1_2_VERSION, tlsv1_2_client_method, tlsv1_2_server_method },
+    {TLS1_2_VERSION, tlsv1_2_client_method, tlsv1_2_server_method},
 #else
-    { TLS1_2_VERSION, NULL, NULL },
+    {TLS1_2_VERSION, NULL, NULL},
 #endif
 #ifndef OPENSSL_NO_TLS1_1
-    { TLS1_1_VERSION, tlsv1_1_client_method, tlsv1_1_server_method },
+    {TLS1_1_VERSION, tlsv1_1_client_method, tlsv1_1_server_method},
 #else
-    { TLS1_1_VERSION, NULL, NULL },
+    {TLS1_1_VERSION, NULL, NULL},
 #endif
 #ifndef OPENSSL_NO_TLS1
-    { TLS1_VERSION, tlsv1_client_method, tlsv1_server_method },
+    {TLS1_VERSION, tlsv1_client_method, tlsv1_server_method},
 #else
-    { TLS1_VERSION, NULL, NULL },
+    {TLS1_VERSION, NULL, NULL},
 #endif
 #ifndef OPENSSL_NO_SSL3
-    { SSL3_VERSION, sslv3_client_method, sslv3_server_method },
+    {SSL3_VERSION, sslv3_client_method, sslv3_server_method},
 #else
-    { SSL3_VERSION, NULL, NULL },
+    {SSL3_VERSION, NULL, NULL},
 #endif
-    { 0, NULL, NULL },
+    {0, NULL, NULL},
 };
 
 #if DTLS_MAX_VERSION != DTLS1_2_VERSION
@@ -675,18 +676,18 @@ static const version_info tls_version_table[] = {
 
 static const version_info dtls_version_table[] = {
 #ifndef OPENSSL_NO_DTLS1_2
-    { DTLS1_2_VERSION, dtlsv1_2_client_method, dtlsv1_2_server_method },
+    {DTLS1_2_VERSION, dtlsv1_2_client_method, dtlsv1_2_server_method},
 #else
-    { DTLS1_2_VERSION, NULL, NULL },
+    {DTLS1_2_VERSION, NULL, NULL},
 #endif
 #ifndef OPENSSL_NO_DTLS1
-    { DTLS1_VERSION, dtlsv1_client_method, dtlsv1_server_method },
-    { DTLS1_BAD_VER, dtls_bad_ver_client_method, NULL },
+    {DTLS1_VERSION, dtlsv1_client_method, dtlsv1_server_method},
+    {DTLS1_BAD_VER, dtls_bad_ver_client_method, NULL},
 #else
-    { DTLS1_VERSION, NULL, NULL },
-    { DTLS1_BAD_VER, NULL, NULL },
+    {DTLS1_VERSION, NULL, NULL},
+    {DTLS1_BAD_VER, NULL, NULL},
 #endif
-    { 0, NULL, NULL },
+    {0, NULL, NULL},
 };
 
 /*
@@ -707,7 +708,7 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
         return SSL_R_VERSION_TOO_LOW;
 
     if (s->max_proto_version != 0 &&
-             version_cmp(s, version, s->max_proto_version) > 0)
+        version_cmp(s, version, s->max_proto_version) > 0)
         return SSL_R_VERSION_TOO_HIGH;
 
     if ((s->options & method->mask) != 0)
@@ -794,8 +795,7 @@ int ssl_check_version_downgrade(SSL *s)
     }
 
     for (vent = table; vent->version != 0; ++vent) {
-        if (vent->smeth != NULL &&
-            ssl_method_error(s, vent->smeth()) == 0)
+        if (vent->smeth != NULL && ssl_method_error(s, vent->smeth()) == 0)
             return s->version == vent->version;
     }
     return 0;
@@ -995,7 +995,8 @@ int ssl_choose_client_version(SSL *s, int version)
  * Returns 0 on success or an SSL error reason number on failure.  On failure
  * min_version and max_version will also be set to 0.
  */
-int ssl_get_client_min_max_version(const SSL *s, int *min_version, int *max_version)
+int ssl_get_client_min_max_version(const SSL *s, int *min_version,
+                                   int *max_version)
 {
     int version;
     int hole;

@@ -77,7 +77,8 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
         STACK_OF(CONF_VALUE) *cmds = NCONF_get_section(cnf, sect->value);
         if (sk_CONF_VALUE_num(cmds) <= 0) {
             if (cmds == NULL)
-                SSLerr(SSL_F_SSL_MODULE_INIT, SSL_R_SSL_COMMAND_SECTION_NOT_FOUND);
+                SSLerr(SSL_F_SSL_MODULE_INIT,
+                       SSL_R_SSL_COMMAND_SECTION_NOT_FOUND);
             else
                 SSLerr(SSL_F_SSL_MODULE_INIT, SSL_R_SSL_COMMAND_SECTION_EMPTY);
             ERR_add_error_data(4, "name=", sect->name, ", value=", sect->value);
@@ -109,7 +110,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
 
     }
     rv = 1;
-    err:
+ err:
     if (rv == 0)
         ssl_module_free(md);
     return rv;
@@ -165,9 +166,9 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name)
         SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
     }
     if (meth->ssl_accept != ssl_undefined_function)
-            flags |= SSL_CONF_FLAG_SERVER;
+        flags |= SSL_CONF_FLAG_SERVER;
     if (meth->ssl_connect != ssl_undefined_function)
-            flags |= SSL_CONF_FLAG_CLIENT;
+        flags |= SSL_CONF_FLAG_CLIENT;
     SSL_CONF_CTX_set_flags(cctx, flags);
     for (i = 0, cmd = nm->cmds; i < nm->cmd_count; i++, cmd++) {
         rv = SSL_CONF_cmd(cctx, cmd->cmd, cmd->arg);
@@ -177,12 +178,12 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name)
             else
                 SSLerr(SSL_F_SSL_DO_CONFIG, SSL_R_BAD_VALUE);
             ERR_add_error_data(6, "section=", name, ", cmd=", cmd->cmd,
-                                    ", arg=", cmd->arg);
+                               ", arg=", cmd->arg);
             goto err;
         }
     }
     rv = SSL_CONF_CTX_finish(cctx);
-    err:
+ err:
     SSL_CONF_CTX_free(cctx);
     return rv <= 0 ? 0 : 1;
 }

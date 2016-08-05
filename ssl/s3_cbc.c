@@ -26,8 +26,6 @@
  */
 #define MAX_HASH_BLOCK_SIZE 128
 
-
-
 /*
  * u32toLE serialises an unsigned, 32-bit number (n) as four bytes at (p) in
  * little-endian order. The value of p is advanced by four.
@@ -129,14 +127,14 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  * Returns 1 on success or 0 on error
  */
 int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
-                            unsigned char *md_out,
-                            size_t *md_out_size,
-                            const unsigned char header[13],
-                            const unsigned char *data,
-                            size_t data_plus_mac_size,
-                            size_t data_plus_mac_plus_padding_size,
-                            const unsigned char *mac_secret,
-                            unsigned mac_secret_length, char is_sslv3)
+                           unsigned char *md_out,
+                           size_t *md_out_size,
+                           const unsigned char header[13],
+                           const unsigned char *data,
+                           size_t data_plus_mac_size,
+                           size_t data_plus_mac_plus_padding_size,
+                           const unsigned char *mac_secret,
+                           unsigned mac_secret_length, char is_sslv3)
 {
     union {
         double align;
@@ -461,8 +459,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
         memset(hmac_pad, 0x5c, sslv3_pad_length);
 
         if (EVP_DigestUpdate(md_ctx, mac_secret, mac_secret_length) <= 0
-                || EVP_DigestUpdate(md_ctx, hmac_pad, sslv3_pad_length) <= 0
-                || EVP_DigestUpdate(md_ctx, mac_out, md_size) <= 0)
+            || EVP_DigestUpdate(md_ctx, hmac_pad, sslv3_pad_length) <= 0
+            || EVP_DigestUpdate(md_ctx, mac_out, md_size) <= 0)
             goto err;
     } else {
         /* Complete the HMAC in the standard manner. */
@@ -470,7 +468,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
             hmac_pad[i] ^= 0x6a;
 
         if (EVP_DigestUpdate(md_ctx, hmac_pad, md_block_size) <= 0
-                || EVP_DigestUpdate(md_ctx, mac_out, md_size) <= 0)
+            || EVP_DigestUpdate(md_ctx, mac_out, md_size) <= 0)
             goto err;
     }
     ret = EVP_DigestFinal(md_ctx, md_out, &md_out_size_u);
@@ -479,7 +477,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     EVP_MD_CTX_free(md_ctx);
 
     return 1;
-err:
+ err:
     EVP_MD_CTX_free(md_ctx);
     return 0;
 }
@@ -491,8 +489,8 @@ err:
  */
 
 int tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
-                           EVP_MD_CTX *mac_ctx, const unsigned char *data,
-                           size_t data_len, size_t orig_len)
+                          EVP_MD_CTX *mac_ctx, const unsigned char *data,
+                          size_t data_len, size_t orig_len)
 {
     size_t block_size, digest_pad, blocks_data, blocks_orig;
     if (EVP_CIPHER_CTX_mode(cipher_ctx) != EVP_CIPH_CBC_MODE)
