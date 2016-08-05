@@ -158,7 +158,7 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         break;
 
     case GEN_DIRNAME:
-        BIO_printf(out, "DirName: ");
+        BIO_printf(out, "DirName:");
         X509_NAME_print_ex(out, gen->d.dirn, 0, XN_FLAG_ONELINE);
         break;
 
@@ -180,7 +180,7 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         break;
 
     case GEN_RID:
-        BIO_printf(out, "Registered ID");
+        BIO_printf(out, "Registered ID:");
         i2a_ASN1_OBJECT(out, gen->d.rid);
         break;
     }
