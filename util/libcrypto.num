@@ -1331,7 +1331,7 @@ ERR_peek_last_error                     1315	1_1_0	EXIST::FUNCTION:
 ENGINE_set_cmd_defns                    1316	1_1_0	EXIST::FUNCTION:ENGINE
 d2i_ASN1_NULL                           1317	1_1_0	EXIST::FUNCTION:
 RAND_event                              1318	1_1_0	EXIST:_WIN32:FUNCTION:DEPRECATEDIN_1_1_0
-i2d_PKCS12_fp                           1319	1_1_0	EXIST::FUNCTION:
+i2d_PKCS12_fp                           1319	1_1_0	EXIST::FUNCTION:STDIO
 EVP_PKEY_meth_get_init                  1320	1_1_0	EXIST::FUNCTION:
 X509_check_trust                        1321	1_1_0	EXIST::FUNCTION:
 b2i_PrivateKey                          1322	1_1_0	EXIST::FUNCTION:DSA
@@ -1966,7 +1966,7 @@ d2i_PKCS12                              1949	1_1_0	EXIST::FUNCTION:
 X509_policy_node_get0_policy            1950	1_1_0	EXIST::FUNCTION:
 PKCS12_unpack_p7data                    1951	1_1_0	EXIST::FUNCTION:
 ECDSA_sign                              1952	1_1_0	EXIST::FUNCTION:EC
-d2i_PKCS12_fp                           1953	1_1_0	EXIST::FUNCTION:
+d2i_PKCS12_fp                           1953	1_1_0	EXIST::FUNCTION:STDIO
 CMS_unsigned_get_attr_by_NID            1954	1_1_0	EXIST::FUNCTION:CMS
 UI_add_user_data                        1955	1_1_0	EXIST::FUNCTION:UI
 BN_bntest_rand                          1956	1_1_0	EXIST::FUNCTION:
