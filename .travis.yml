@@ -114,7 +114,7 @@ script:
 
 after_success:
     - if [ -n "$COVERALLS" ]; then
-          coveralls -b .;
+          coveralls -b . --gcov-options '\-lp';
       fi;
 
 notifications:
