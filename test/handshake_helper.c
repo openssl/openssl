@@ -164,7 +164,6 @@ static int do_not_call_session_ticket_cb(SSL *s, unsigned char *key_name,
     return 0;
 }
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 /* Parse the comma-separated list into TLS format. */
 static void parse_protos(const char *protos, unsigned char **out, size_t *outlen)
 {
@@ -200,6 +199,7 @@ static void parse_protos(const char *protos, unsigned char **out, size_t *outlen
     (*out)[prefix] = len - prefix;
 }
 
+#ifndef OPENSSL_NO_NEXTPROTONEG
 /*
  * The client SHOULD select the first protocol advertised by the server that it
  * also supports.  In the event that the client doesn't support any of server's
@@ -230,6 +230,7 @@ static int server_npn_cb(SSL *s, const unsigned char **data,
     *len = ctx_data->npn_protocols_len;
     return SSL_TLSEXT_ERR_OK;
 }
+#endif
 
 /*
  * The server SHOULD select the most highly preferred protocol that it supports
@@ -261,7 +262,6 @@ static int server_alpn_cb(SSL *s, const unsigned char **out,
     return ret == OPENSSL_NPN_NEGOTIATED ? SSL_TLSEXT_ERR_OK
         : SSL_TLSEXT_ERR_NOACK;
 }
-#endif
 
 /*
  * Configure callbacks and other properties that can't be set directly
@@ -339,6 +339,7 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         SSL_CTX_set_next_proto_select_cb(client_ctx, client_npn_cb,
                                          client_ctx_data);
     }
+#endif
     if (extra->server.alpn_protocols != NULL) {
         parse_protos(extra->server.alpn_protocols,
                      &server_ctx_data->alpn_protocols,
@@ -362,7 +363,7 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                                alpn_protos_len) == 0);
         OPENSSL_free(alpn_protos);
     }
-#endif
+
     /*
      * Use fixed session ticket keys so that we can decrypt a ticket created with
      * one CTX in another CTX. Don't address server2 for the moment.
@@ -499,7 +500,6 @@ static handshake_status_t handshake_status(peer_status_t last_status,
     return INTERNAL_ERROR;
 }
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 /* Convert unsigned char buf's that shouldn't contain any NUL-bytes to char. */
 static char *dup_str(const unsigned char *in, size_t len)
 {
@@ -514,7 +514,6 @@ static char *dup_str(const unsigned char *in, size_t len)
     OPENSSL_assert(ret != NULL);
     return ret;
 }
-#endif
 
 static HANDSHAKE_RESULT *do_handshake_internal(
     SSL_CTX *server_ctx, SSL_CTX *server2_ctx, SSL_CTX *client_ctx,
@@ -532,11 +531,9 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     unsigned char* tick = NULL;
     size_t tick_len = 0;
     SSL_SESSION* sess = NULL;
-#ifndef OPENSSL_NO_NEXTPROTONEG
     const unsigned char *proto = NULL;
     /* API dictates unsigned int rather than size_t. */
     unsigned int proto_len = 0;
-#endif
 
     memset(&server_ctx_data, 0, sizeof(server_ctx_data));
     memset(&server2_ctx_data, 0, sizeof(server2_ctx_data));
@@ -657,13 +654,13 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     SSL_get0_next_proto_negotiated(server, &proto, &proto_len);
     ret->server_npn_negotiated = dup_str(proto, proto_len);
+#endif
 
     SSL_get0_alpn_selected(client, &proto, &proto_len);
     ret->client_alpn_negotiated = dup_str(proto, proto_len);
 
     SSL_get0_alpn_selected(server, &proto, &proto_len);
     ret->server_alpn_negotiated = dup_str(proto, proto_len);
-#endif
 
     ret->client_resumed = SSL_session_reused(client);
     ret->server_resumed = SSL_session_reused(server);
