@@ -815,7 +815,7 @@ sub do_defs
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					$def .= "int PEM_read_$1(void);";
 					$def .= "int PEM_write_$1(void);";
 					$def .=
@@ -832,7 +832,7 @@ sub do_defs
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					$def .= "int PEM_write_$1(void);";
 					$def .=
 					    "#INFO:"
@@ -846,12 +846,12 @@ sub do_defs
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					$def .= "int PEM_read_$1(void);";
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					# Things that are everywhere
 					$def .= "int PEM_read_bio_$1(void);";
 					next;
