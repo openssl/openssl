@@ -827,7 +827,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
 }
 #endif
 
-const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
+const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[3] = {
     {
      EVP_PKEY_RSA,
      EVP_PKEY_RSA,
@@ -861,6 +861,11 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
 
     {
      EVP_PKEY_RSA2,
+     EVP_PKEY_RSA,
+     ASN1_PKEY_ALIAS},
+
+    {
+     EVP_PKEY_RSA3,
      EVP_PKEY_RSA,
      ASN1_PKEY_ALIAS}
 };

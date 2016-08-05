@@ -40,6 +40,7 @@
 # define EVP_PKEY_NONE   NID_undef
 # define EVP_PKEY_RSA    NID_rsaEncryption
 # define EVP_PKEY_RSA2   NID_rsa
+# define EVP_PKEY_RSA3   NID_rsaesOaep
 # define EVP_PKEY_DSA    NID_dsa
 # define EVP_PKEY_DSA1   NID_dsa_2
 # define EVP_PKEY_DSA2   NID_dsaWithSHA
