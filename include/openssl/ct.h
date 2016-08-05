@@ -64,27 +64,27 @@ DEFINE_STACK_OF(CTLOG)
 /* Creates a new, empty policy evaluation context */
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
 
-/* Deletes a policy evaluation context */
+/* Deletes a policy evaluation context and anything it owns. */
 void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);
 
 /* Gets the peer certificate that the SCTs are for */
 X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
 
 /* Sets the certificate associated with the received SCTs */
-void CT_POLICY_EVAL_CTX_set0_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
+void CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
 
 /* Gets the issuer of the aforementioned certificate */
 X509* CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx);
 
 /* Sets the issuer of the certificate associated with the received SCTs */
-void CT_POLICY_EVAL_CTX_set0_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
+void CT_POLICY_EVAL_CTX_set1_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
 
 /* Gets the CT logs that are trusted sources of SCTs */
 const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *ctx);
 
-/* Sets the log store that is in use */
-void CT_POLICY_EVAL_CTX_set0_log_store(CT_POLICY_EVAL_CTX *ctx,
-                                       CTLOG_STORE *log_store);
+/* Sets the log store that is in use. It must outlive the CT_POLICY_EVAL_CTX. */
+void CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(CT_POLICY_EVAL_CTX *ctx,
+                                               CTLOG_STORE *log_store);
 
 /*****************
  * SCT functions *
