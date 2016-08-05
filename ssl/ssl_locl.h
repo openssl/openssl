@@ -105,6 +105,16 @@
                          l|=((unsigned long)(*((c)++)))<< 8, \
                          l|=((unsigned long)(*((c)++))))
 
+# define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
+                         l|=((uint64_t)(*((c)++)))<<48, \
+                         l|=((uint64_t)(*((c)++)))<<40, \
+                         l|=((uint64_t)(*((c)++)))<<32, \
+                         l|=((uint64_t)(*((c)++)))<<24, \
+                         l|=((uint64_t)(*((c)++)))<<16, \
+                         l|=((uint64_t)(*((c)++)))<< 8, \
+                         l|=((uint64_t)(*((c)++))))
+
+
 # define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24)&0xff), \
                          *((c)++)=(unsigned char)(((l)>>16)&0xff), \
                          *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
