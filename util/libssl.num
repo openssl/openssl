@@ -29,7 +29,7 @@ SSL_CTX_use_RSAPrivateKey               29	1_1_0	EXIST::FUNCTION:RSA
 SSL_CTX_sess_get_new_cb                 30	1_1_0	EXIST::FUNCTION:
 d2i_SSL_SESSION                         31	1_1_0	EXIST::FUNCTION:
 SSL_use_PrivateKey_ASN1                 32	1_1_0	EXIST::FUNCTION:
-PEM_write_SSL_SESSION                   33	1_1_0	EXIST::FUNCTION:
+PEM_write_SSL_SESSION                   33	1_1_0	EXIST::FUNCTION:STDIO
 SSL_CTX_set_session_id_context          34	1_1_0	EXIST::FUNCTION:
 SSL_CIPHER_get_cipher_nid               35	1_1_0	EXIST::FUNCTION:
 SSL_get_srp_g                           36	1_1_0	EXIST::FUNCTION:SRP
@@ -70,7 +70,7 @@ SSL_CTX_set_srp_cb_arg                  70	1_1_0	EXIST::FUNCTION:SRP
 SSL_CTX_add_session                     71	1_1_0	EXIST::FUNCTION:
 SSL_get_srp_N                           72	1_1_0	EXIST::FUNCTION:SRP
 SSL_has_matching_session_id             73	1_1_0	EXIST::FUNCTION:
-PEM_read_SSL_SESSION                    74	1_1_0	EXIST::FUNCTION:
+PEM_read_SSL_SESSION                    74	1_1_0	EXIST::FUNCTION:STDIO
 SSL_get_shared_ciphers                  75	1_1_0	EXIST::FUNCTION:
 SSL_add1_host                           76	1_1_0	EXIST::FUNCTION:
 SSL_CONF_cmd_argv                       77	1_1_0	EXIST::FUNCTION:
