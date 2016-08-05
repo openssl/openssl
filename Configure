@@ -437,7 +437,7 @@ my @disable_cascades = (
     # no-autoalginit is only useful when building non-shared
     "autoalginit"       => [ "shared", "apps" ],
 
-    "stdio"             => [ "apps" ],
+    "stdio"             => [ "apps", "capieng" ],
     "apps"              => [ "tests" ],
     "comp"		=> [ "zlib" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
