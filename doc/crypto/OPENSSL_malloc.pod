@@ -179,7 +179,7 @@ CRYPTO_set_mem_functions() and CRYPTO_set_mem_debug()
 return 1 on success or 0 on failure (almost
 always because allocations have already happened).
 
-CRYPTO_mem_ctrl() returns -1 if an error occured, otherwise the
+CRYPTO_mem_ctrl() returns -1 if an error occurred, otherwise the
 previous value of the mode.
 
 OPENSSL_mem_debug_push() and OPENSSL_mem_debug_pop()

@@ -672,7 +672,7 @@ typedef struct st_dynamic_MEM_fns {
 } dynamic_MEM_fns;
 /*
  * FIXME: Perhaps the memory and locking code (crypto.h) should declare and
- * use these types so we (and any other dependant code) can simplify a bit??
+ * use these types so we (and any other dependent code) can simplify a bit??
  */
 /* The top-level structure */
 typedef struct st_dynamic_fns {

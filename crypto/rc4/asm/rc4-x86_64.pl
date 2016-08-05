@@ -57,7 +57,7 @@
 # As was shown by Zou Nanhai loop unrolling can improve Intel EM64T
 # performance by >30% [unlike P4 32-bit case that is]. But this is
 # provided that loads are reordered even more aggressively! Both code
-# pathes, AMD64 and EM64T, reorder loads in essentially same manner
+# paths, AMD64 and EM64T, reorder loads in essentially same manner
 # as my IA-64 implementation. On Opteron this resulted in modest 5%
 # improvement [I had to test it], while final Intel P4 performance
 # achieves respectful 432MBps on 2.8GHz processor now. For reference.

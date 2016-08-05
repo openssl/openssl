@@ -58,7 +58,7 @@
 #
 # Modulo-scheduled inner loops allow to interleave floating point and
 # integer instructions and minimize Read-After-Write penalties. This
-# results in *further* 20-50% perfromance improvement [depending on
+# results in *further* 20-50% performance improvement [depending on
 # key length, more for longer keys] on USI&II cores and 30-80% - on
 # USIII&IV.
 

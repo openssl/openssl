@@ -129,7 +129,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
      * decremented for every non-self-issued certificate in the path, but may
      * be further reduced by policy constraints in a non-leaf certificate.
      *
-     * The ultimate policy set is the interesection of all the policies along
+     * The ultimate policy set is the intersection of all the policies along
      * the path, if we hit a certificate with an empty policy set, and explicit
      * policy is required we're done.
      */
