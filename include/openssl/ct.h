@@ -408,6 +408,7 @@ __owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
 
 /*
  * Creates a new CT log instance with the given |public_key| and |name|.
+ * Returns NULL if malloc fails or if |public_key| cannot be converted to DER.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
@@ -419,7 +420,9 @@ CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
 CTLOG *CTLOG_new_null(void);
 
 /*
- * Creates a new CT |ct_log| instance with the given base64 public_key and |name|.
+ * Creates a new CTLOG instance with the base64-encoded SubjectPublicKeyInfo DER
+ * in |pkey_base64|. The |name| is a string to help users identify this log.
+ * Returns 1 on success, 0 on failure.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
 int CTLOG_new_from_base64(CTLOG ** ct_log,
