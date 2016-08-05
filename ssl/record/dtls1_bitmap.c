@@ -46,7 +46,7 @@ static int satsub64be(const unsigned char *v1, const unsigned char *v2)
         } while (0);
 
     ret = 0;
-    for (i=0; i<7; i++) {
+    for (i = 0; i < 7; i++) {
         if (v1[i] > v2[i]) {
             /* v1 is larger... but by how much? */
             if (v1[i] != v2[i] + 1)
@@ -55,14 +55,15 @@ static int satsub64be(const unsigned char *v1, const unsigned char *v2)
                 if (v1[i] != 0x00 || v2[i] != 0xff)
                     return 128; /* too much */
             }
-            /* We checked all the way to the penultimate byte,
-             * so despite higher bytes changing we actually
-             * know that it only changed from (e.g.)
-             *       ... (xx)  ff ff ff ??
-             * to   ... (xx+1) 00 00 00 ??
-             * so we add a 'bias' of 256 for the carry that
-             * happened, and will eventually return
-             * 256 + v1[7] - v2[7]. */
+            /*-
+             * We checked all the way to the penultimate byte, so despite
+             * higher bytes changing we actually know that it only changed from
+             * (e.g.)
+             *       ...   (xx) ff ff ff ??
+             * to    ... (xx+1) 00 00 00 ??
+             * so we add a 'bias' of 256 for the carry that happened, and will
+             * eventually return 256 + v1[7] - v2[7].
+             */
             ret = 256;
             break;
         } else if (v2[i] > v1[i]) {
@@ -73,11 +74,13 @@ static int satsub64be(const unsigned char *v1, const unsigned char *v2)
                 if (v2[i] != 0x00 || v1[i] != 0xff)
                     return -128; /* too much */
             }
-            /* Similar to the case above, we know it changed
-             * from    ... (xx)  00 00 00 ??
-             * to     ... (xx-1) ff ff ff ??
+            /*-
+             * Similar to the case above, we know it changed
+             * from ...   (xx) 00 00 00 ??
+             * to   ... (xx-1) ff ff ff ??
              * so we add a 'bias' of -256 for the borrow,
-             * to return -256 + v1[7] - v2[7]. */
+             * to return -256 + v1[7] - v2[7].
+             */
             ret = -256;
         }
     }

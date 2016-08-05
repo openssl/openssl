@@ -147,7 +147,7 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
          * cards.
          */
         if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA
-            && RSA_flags(EVP_PKEY_get0_RSA(pkey)) & RSA_METHOD_FLAG_NO_CHECK);
+            && RSA_flags(EVP_PKEY_get0_RSA(pkey)) & RSA_METHOD_FLAG_NO_CHECK) ;
         else
 #endif
         if (!X509_check_private_key(c->pkeys[i].x509, pkey)) {
@@ -345,7 +345,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
          */
         if (EVP_PKEY_id(c->pkeys[i].privatekey) == EVP_PKEY_RSA
             && RSA_flags(EVP_PKEY_get0_RSA(c->pkeys[i].privatekey)) &
-               RSA_METHOD_FLAG_NO_CHECK) ;
+            RSA_METHOD_FLAG_NO_CHECK) ;
         else
 #endif                          /* OPENSSL_NO_RSA */
         if (!X509_check_private_key(x, c->pkeys[i].privatekey)) {
@@ -410,8 +410,7 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
     return (ret);
 }
 
-int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len,
-                                 const unsigned char *d)
+int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
 {
     X509 *x;
     int ret;
@@ -649,7 +648,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
 
         while ((ca = PEM_read_bio_X509(in, NULL, passwd_callback,
                                        passwd_callback_userdata))
-                != NULL) {
+               != NULL) {
             if (ctx)
                 r = SSL_CTX_add0_chain_cert(ctx, ca);
             else
@@ -892,8 +891,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     size_t num_extensions = 0;
 
     if (ctx == NULL || file == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE,
-               ERR_R_PASSED_NULL_PARAMETER);
+        SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PASSED_NULL_PARAMETER);
         goto end;
     }
 
@@ -922,8 +920,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         }
         /* Check that PEM name starts with "BEGIN SERVERINFO FOR " */
         if (strlen(name) < strlen(namePrefix)) {
-            SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE,
-                   SSL_R_PEM_NAME_TOO_SHORT);
+            SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_PEM_NAME_TOO_SHORT);
             goto end;
         }
         if (strncmp(name, namePrefix, strlen(namePrefix)) != 0) {
@@ -940,8 +937,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
             goto end;
         }
         /* Append the decoded extension to the serverinfo buffer */
-        tmp =
-            OPENSSL_realloc(serverinfo, serverinfo_length + extension_length);
+        tmp = OPENSSL_realloc(serverinfo, serverinfo_length + extension_length);
         if (tmp == NULL) {
             SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_MALLOC_FAILURE);
             goto end;

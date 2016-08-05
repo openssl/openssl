@@ -12,7 +12,6 @@
 #include <openssl/ct.h>
 #include "ssl_locl.h"
 
-
 /* Find a custom extension from the list. */
 static custom_ext_method *custom_ext_find(const custom_ext_methods *exts,
                                           unsigned int ext_type)
@@ -68,8 +67,7 @@ int custom_ext_parse(SSL *s, int server,
     if (!meth->parse_cb)
         return 1;
 
-    return meth->parse_cb(s, ext_type, ext_data, ext_size, al,
-                          meth->parse_arg);
+    return meth->parse_cb(s, ext_type, ext_data, ext_size, al, meth->parse_arg);
 }
 
 /*
@@ -139,7 +137,7 @@ int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
     if (src->meths_count) {
         dst->meths =
             OPENSSL_memdup(src->meths,
-                       sizeof(custom_ext_method) * src->meths_count);
+                           sizeof(custom_ext_method) * src->meths_count);
         if (dst->meths == NULL)
             return 0;
         dst->meths_count = src->meths_count;
@@ -214,8 +212,7 @@ int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                                   custom_ext_add_cb add_cb,
                                   custom_ext_free_cb free_cb,
                                   void *add_arg,
-                                  custom_ext_parse_cb parse_cb,
-                                  void *parse_arg)
+                                  custom_ext_parse_cb parse_cb, void *parse_arg)
 {
 #ifndef OPENSSL_NO_CT
     /*
@@ -235,8 +232,7 @@ int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                                   custom_ext_add_cb add_cb,
                                   custom_ext_free_cb free_cb,
                                   void *add_arg,
-                                  custom_ext_parse_cb parse_cb,
-                                  void *parse_arg)
+                                  custom_ext_parse_cb parse_cb, void *parse_arg)
 {
     return custom_ext_meth_add(&ctx->cert->srv_ext, ext_type,
                                add_cb, free_cb, add_arg, parse_cb, parse_arg);

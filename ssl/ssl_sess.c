@@ -158,7 +158,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
         if (dest->peer_chain == NULL)
             goto err;
     }
-
 #ifndef OPENSSL_NO_PSK
     if (src->psk_identity_hint) {
         dest->psk_identity_hint = OPENSSL_strdup(src->psk_identity_hint);
@@ -181,7 +180,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     }
 
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL_SESSION,
-                                            &dest->ex_data, &src->ex_data)) {
+                            &dest->ex_data, &src->ex_data)) {
         goto err;
     }
 
@@ -195,21 +194,22 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     if (src->tlsext_ecpointformatlist) {
         dest->tlsext_ecpointformatlist =
             OPENSSL_memdup(src->tlsext_ecpointformatlist,
-                       src->tlsext_ecpointformatlist_length);
+                           src->tlsext_ecpointformatlist_length);
         if (dest->tlsext_ecpointformatlist == NULL)
             goto err;
     }
     if (src->tlsext_ellipticcurvelist) {
         dest->tlsext_ellipticcurvelist =
             OPENSSL_memdup(src->tlsext_ellipticcurvelist,
-                       src->tlsext_ellipticcurvelist_length);
+                           src->tlsext_ellipticcurvelist_length);
         if (dest->tlsext_ellipticcurvelist == NULL)
             goto err;
     }
 #endif
 
     if (ticket != 0) {
-        dest->tlsext_tick = OPENSSL_memdup(src->tlsext_tick, src->tlsext_ticklen);
+        dest->tlsext_tick =
+            OPENSSL_memdup(src->tlsext_tick, src->tlsext_ticklen);
         if (dest->tlsext_tick == NULL)
             goto err;
     } else {
@@ -227,14 +227,13 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
 #endif
 
     return dest;
-err:
+ err:
     SSLerr(SSL_F_SSL_SESSION_DUP, ERR_R_MALLOC_FAILURE);
     SSL_SESSION_free(dest);
     return NULL;
 }
 
-const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
-                                        unsigned int *len)
+const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
 {
     if (len)
         *len = s->session_id_length;
@@ -474,8 +473,7 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
         data.ssl_version = s->version;
         memset(data.session_id, 0, sizeof(data.session_id));
         if (!PACKET_copy_all(session_id, data.session_id,
-                             sizeof(data.session_id),
-                             &local_len)) {
+                             sizeof(data.session_id), &local_len)) {
             goto err;
         }
         data.session_id_length = local_len;
@@ -677,8 +675,7 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
         ret = 1;
 
         if (SSL_CTX_sess_get_cache_size(ctx) > 0) {
-            while (SSL_CTX_sess_number(ctx) >
-                   SSL_CTX_sess_get_cache_size(ctx)) {
+            while (SSL_CTX_sess_number(ctx) > SSL_CTX_sess_get_cache_size(ctx)) {
                 if (!remove_session_lock(ctx, ctx->session_cache_tail, 0))
                     break;
                 else
@@ -750,7 +747,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     OPENSSL_free(ss->tlsext_ecpointformatlist);
     ss->tlsext_ellipticcurvelist_length = 0;
     OPENSSL_free(ss->tlsext_ellipticcurvelist);
-#endif                         /* OPENSSL_NO_EC */
+#endif                          /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(ss->psk_identity_hint);
     OPENSSL_free(ss->psk_identity);
@@ -843,7 +840,7 @@ unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s)
 }
 
 void SSL_SESSION_get0_ticket(const SSL_SESSION *s, unsigned char **tick,
-                            size_t *len)
+                             size_t *len)
 {
     *len = s->tlsext_ticklen;
     if (tick != NULL)
@@ -1043,8 +1040,7 @@ static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s)
 }
 
 void SSL_CTX_sess_set_new_cb(SSL_CTX *ctx,
-                             int (*cb) (struct ssl_st *ssl,
-                                        SSL_SESSION *sess))
+                             int (*cb) (struct ssl_st *ssl, SSL_SESSION *sess))
 {
     ctx->new_session_cb = cb;
 }
@@ -1073,8 +1069,9 @@ void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
 }
 
 SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx)) (SSL *ssl,
-                                                       const unsigned char *data,
-                                                       int len, int *copy) {
+                                                       const unsigned char
+                                                       *data, int len,
+                                                       int *copy) {
     return ctx->get_session_cb;
 }
 
@@ -1128,11 +1125,11 @@ void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
 }
 
 void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
-                                  int (*cb) (SSL *ssl, const unsigned char *cookie,
+                                  int (*cb) (SSL *ssl,
+                                             const unsigned char *cookie,
                                              unsigned int cookie_len))
 {
     ctx->app_verify_cookie_cb = cb;
 }
 
-IMPLEMENT_PEM_rw(SSL_SESSION, SSL_SESSION, PEM_STRING_SSL_SESSION,
-                 SSL_SESSION)
+IMPLEMENT_PEM_rw(SSL_SESSION, SSL_SESSION, PEM_STRING_SSL_SESSION, SSL_SESSION)
