@@ -4171,9 +4171,9 @@ int ssl_validate_ct(SSL *s)
     }
 
     issuer = sk_X509_value(s->verified_chain, 1);
-    CT_POLICY_EVAL_CTX_set0_cert(ctx, cert);
-    CT_POLICY_EVAL_CTX_set0_issuer(ctx, issuer);
-    CT_POLICY_EVAL_CTX_set0_log_store(ctx, s->ctx->ctlog_store);
+    CT_POLICY_EVAL_CTX_set1_cert(ctx, cert);
+    CT_POLICY_EVAL_CTX_set1_issuer(ctx, issuer);
+    CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(ctx, s->ctx->ctlog_store);
 
     scts = SSL_get0_peer_scts(s);
 

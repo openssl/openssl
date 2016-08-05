@@ -294,7 +294,8 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
         expected_sct_text[sct_text_len] = '\0';
     }
 
-    CT_POLICY_EVAL_CTX_set0_log_store(ct_policy_ctx, fixture.ctlog_store);
+    CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(
+            ct_policy_ctx, fixture.ctlog_store);
 
     if (fixture.certificate_file != NULL) {
         int sct_extension_index;
@@ -307,7 +308,7 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
             goto end;
         }
 
-        CT_POLICY_EVAL_CTX_set0_cert(ct_policy_ctx, cert);
+        CT_POLICY_EVAL_CTX_set1_cert(ct_policy_ctx, cert);
 
         if (fixture.issuer_file != NULL) {
             issuer = load_pem_cert(fixture.certs_dir, fixture.issuer_file);
@@ -318,7 +319,7 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
                 goto end;
             }
 
-            CT_POLICY_EVAL_CTX_set0_issuer(ct_policy_ctx, issuer);
+            CT_POLICY_EVAL_CTX_set1_issuer(ct_policy_ctx, issuer);
         }
 
         sct_extension_index =
