@@ -124,7 +124,7 @@ OPTIONS ts_options[] = {
 };
 
 /*
- * This comand is so complex, special help is needed.
+ * This command is so complex, special help is needed.
  */
 static char* opt_helplist[] = {
     "Typical uses:",

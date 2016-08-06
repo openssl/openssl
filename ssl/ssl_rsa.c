@@ -33,7 +33,6 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
     return (ssl_set_cert(ssl->cert, x));
 }
 
-#ifndef OPENSSL_NO_STDIO
 int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
 {
     int j;
@@ -74,7 +73,6 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
     BIO_free(in);
     return (ret);
 }
-#endif
 
 int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
 {
@@ -167,7 +165,6 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 }
 
 #ifndef OPENSSL_NO_RSA
-# ifndef OPENSSL_NO_STDIO
 int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
 {
     int j, ret = 0;
@@ -207,7 +204,6 @@ int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
     BIO_free(in);
     return (ret);
 }
-# endif
 
 int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, const unsigned char *d, long len)
 {
@@ -239,7 +235,6 @@ int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
     return (ret);
 }
 
-#ifndef OPENSSL_NO_STDIO
 int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
 {
     int j, ret = 0;
@@ -279,7 +274,6 @@ int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
     BIO_free(in);
     return (ret);
 }
-#endif
 
 int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, const unsigned char *d,
                             long len)
@@ -375,7 +369,6 @@ static int ssl_set_cert(CERT *c, X509 *x)
     return 1;
 }
 
-#ifndef OPENSSL_NO_STDIO
 int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
 {
     int j;
@@ -416,7 +409,6 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
     BIO_free(in);
     return (ret);
 }
-#endif
 
 int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len,
                                  const unsigned char *d)
@@ -462,7 +454,6 @@ int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
     return (ret);
 }
 
-# ifndef OPENSSL_NO_STDIO
 int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 {
     int j, ret = 0;
@@ -501,7 +492,6 @@ int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type)
     BIO_free(in);
     return (ret);
 }
-# endif
 
 int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, const unsigned char *d,
                                    long len)
@@ -531,7 +521,6 @@ int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
     return (ssl_set_pkey(ctx->cert, pkey));
 }
 
-#ifndef OPENSSL_NO_STDIO
 int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 {
     int j, ret = 0;
@@ -570,7 +559,6 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
     BIO_free(in);
     return (ret);
 }
-#endif
 
 int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx,
                                 const unsigned char *d, long len)
@@ -590,7 +578,6 @@ int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx,
     return (ret);
 }
 
-#ifndef OPENSSL_NO_STDIO
 /*
  * Read a file that contains our certificate in "PEM" format, possibly
  * followed by a sequence of CA certificates that should be sent to the peer
@@ -702,7 +689,6 @@ int SSL_use_certificate_chain_file(SSL *ssl, const char *file)
 {
     return use_certificate_chain_file(NULL, ssl, file);
 }
-#endif
 
 static int serverinfo_find_extension(const unsigned char *serverinfo,
                                      size_t serverinfo_length,

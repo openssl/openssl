@@ -149,7 +149,7 @@ int CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64, const char *n
     *ct_log = CTLOG_new(pkey, name);
     if (*ct_log == NULL) {
         EVP_PKEY_free(pkey);
-        return -1;
+        return 0;
     }
 
     return 1;

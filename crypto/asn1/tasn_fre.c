@@ -99,7 +99,7 @@ static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
         asn1_enc_free(pval, it);
         /*
          * If we free up as normal we will invalidate any ANY DEFINED BY
-         * field and we wont be able to determine the type of the field it
+         * field and we won't be able to determine the type of the field it
          * defines. So free up in reverse order.
          */
         tt = it->templates + it->tcount;

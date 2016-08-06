@@ -92,7 +92,7 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
     b->max = sz;
     *bb->readp = *bb->buf;
     ret->flags |= BIO_FLAGS_MEM_RDONLY;
-    /* Since this is static data retrying wont help */
+    /* Since this is static data retrying won't help */
     ret->num = 0;
     return ret;
 }

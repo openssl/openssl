@@ -128,7 +128,7 @@ The ASYNC_block_pause() function will prevent the currently active job from
 pausing. The block will remain in place until a subsequent call to
 ASYNC_unblock_pause(). These functions can be nested, e.g. if you call
 ASYNC_block_pause() twice then you must call ASYNC_unblock_pause() twice in
-order to reenable pausing. If these functions are called while there is no
+order to re-enable pausing. If these functions are called while there is no
 currently active job then they have no effect. This functionality can be useful
 to avoid deadlock scenarios. For example during the execution of an ASYNC_JOB an
 application acquires a lock. It then calls some cryptographic function which

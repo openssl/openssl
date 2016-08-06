@@ -151,7 +151,7 @@ static int check_pem(const char *nm, const char *name)
         slen = pem_check_suffix(nm, "PRIVATE KEY");
         if (slen > 0) {
             /*
-             * NB: ENGINE implementations wont contain a deprecated old
+             * NB: ENGINE implementations won't contain a deprecated old
              * private key decode function so don't look for them.
              */
             ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);

@@ -214,7 +214,7 @@ static unsigned char cbc_ok[32] = {
 };
 
 # ifdef SCREW_THE_PARITY
-#  error "SCREW_THE_PARITY is not ment to be defined."
+#  error "SCREW_THE_PARITY is not meant to be defined."
 #  error "Original vectors are preserved for reference only."
 static unsigned char cbc2_key[8] =
     { 0xf0, 0xe1, 0xd2, 0xc3, 0xb4, 0xa5, 0x96, 0x87 };

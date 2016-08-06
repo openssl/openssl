@@ -191,7 +191,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[clienthellotest]=../libcrypto ../libssl
 
   SOURCE[bad_dtls_test]=bad_dtls_test.c
-  INCLUDE[bad_dtls_test]=.. ../include
+  INCLUDE[bad_dtls_test]=../include
   DEPEND[bad_dtls_test]=../libcrypto ../libssl
 
   SOURCE[packettest]=packettest.c
@@ -262,7 +262,13 @@ IF[{- !$disabled{tests} -}]
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]=../include
   DEPEND[bioprinttest]=../libcrypto
-  {-
+
+  SOURCE[sslapitest]=sslapitest.c ssltestlib.c testutil.c
+  INCLUDE[sslapitest]=../include
+  DEPEND[sslapitest]=../libcrypto ../libssl
+ENDIF
+
+{-
    use File::Spec::Functions;
    use File::Basename;
    use if $^O ne "VMS", 'File::Glob' => qw/glob/;
@@ -286,9 +292,4 @@ IF[{- !$disabled{tests} -}]
   DEPEND[buildtest_$name]=../libssl ../libcrypto
 _____
    }
-  -}
-
-  SOURCE[sslapitest]=sslapitest.c ssltestlib.c testutil.c
-  INCLUDE[sslapitest]=../include
-  DEPEND[sslapitest]=../libcrypto ../libssl
-ENDIF
+-}

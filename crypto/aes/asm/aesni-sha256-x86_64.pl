@@ -35,7 +35,7 @@
 # Skylake	    2.62/3.14/3.62+7.70		8.10	+27%/34%/40%
 # Bulldozer	    5.77/6.89/8.00+13.7		13.7	+42%/50%/58%
 #
-# (*)	there are XOP, AVX1 and AVX2 code pathes, meaning that
+# (*)	there are XOP, AVX1 and AVX2 code paths, meaning that
 #	Westmere is omitted from loop, this is because gain was not
 #	estimated high enough to justify the effort;
 # (**)	these are EVP-free results, results obtained with 'speed

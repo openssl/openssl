@@ -1443,8 +1443,8 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
         /*-
          * we now have the following setup.
          * client_random
-         * cipher_list          - our prefered list of ciphers
-         * ciphers              - the clients prefered list of ciphers
+         * cipher_list          - our preferred list of ciphers
+         * ciphers              - the clients preferred list of ciphers
          * compression          - basically ignored right now
          * ssl version is set   - sslv3
          * s->session           - The ssl session has been setup.

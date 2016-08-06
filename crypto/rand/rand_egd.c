@@ -48,7 +48,7 @@ NON_EMPTY_TRANSLATION_UNIT
  *         the number of bytes requested or smaller, if the EGD pool is
  *         drained and the daemon signals that the pool is empty.
  *
- * RAND_egd(path) will query 255 bytes and use the bytes retreived to seed
+ * RAND_egd(path) will query 255 bytes and use the bytes retrieved to seed
  *   the PRNG.
  *   RAND_egd() is a wrapper for RAND_egd_bytes() with numbytes=255.
  */

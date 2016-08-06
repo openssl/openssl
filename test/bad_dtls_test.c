@@ -38,8 +38,8 @@
 #include <openssl/rand.h>
 #include <openssl/kdf.h>
 
-#include "ssl/packet_locl.h"
-#include "e_os.h" /* for OSSL_NELEM() */
+#include "../ssl/packet_locl.h"
+#include "../e_os.h" /* for OSSL_NELEM() */
 
 /* For DTLS1_BAD_VER packets the MAC doesn't include the handshake header */
 #define MAC_OFFSET (DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH)

@@ -560,7 +560,7 @@ Encrypt a string using IDEA:
         EVP_CIPHER_CTX_free(ctx);
         /* Need binary mode for fopen because encrypted data is
          * binary data. Also cannot use strlen() on it because
-         * it wont be null terminated and may contain embedded
+         * it won't be null terminated and may contain embedded
          * nulls.
          */
         out = fopen(outfile, "wb");

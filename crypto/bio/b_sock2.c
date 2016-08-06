@@ -69,7 +69,7 @@ int BIO_socket(int domain, int socktype, int protocol, int options)
  *
  * options holds BIO socket options that can be used
  * You should call this for every address returned by BIO_lookup
- * until the connection is succesful.
+ * until the connection is successful.
  *
  * Returns 1 on success or 0 on failure.  On failure errno is set
  * and an error status is added to the OpenSSL error stack.
@@ -144,7 +144,7 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
  * fail.  We can't tell the difference between already listening ourself to
  * it and someone else listening to it when failing and errno is EADDRINUSE, so
  * it's recommended to not give an error in that case if the first call was
- * succesful.
+ * successful.
  *
  * When restarting the program it could be that the port is still in use.  If
  * you set to BIO_SOCK_REUSEADDR option it will try to reuse the port anyway.

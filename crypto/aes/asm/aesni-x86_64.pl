@@ -4239,7 +4239,7 @@ ___
 #	Vinodh Gopal <vinodh.gopal@intel.com>
 #	Kahraman Akdemir
 #
-# Agressively optimized in respect to aeskeygenassist's critical path
+# Aggressively optimized in respect to aeskeygenassist's critical path
 # and is contained in %xmm0-5 to meet Win64 ABI requirement.
 #
 # int ${PREFIX}_set_encrypt_key(const unsigned char *inp,
