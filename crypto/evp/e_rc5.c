@@ -54,7 +54,7 @@ static int rc5_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             return 1;
 
         default:
-            EVPerr(EVP_F_RC5_CTRL, EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS);
+            EVPerr(EVP_F_RC5_CTRL, EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS);
             return 0;
         }
 
