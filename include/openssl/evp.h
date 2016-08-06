@@ -1561,7 +1561,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_UNKNOWN_DIGEST                             161
 # define EVP_R_UNKNOWN_OPTION                             169
 # define EVP_R_UNKNOWN_PBE_ALGORITHM                      121
-# define EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS                135
+# define EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS               135
 # define EVP_R_UNSUPPORTED_ALGORITHM                      156
 # define EVP_R_UNSUPPORTED_CIPHER                         107
 # define EVP_R_UNSUPPORTED_KEYLENGTH                      123
