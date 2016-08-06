@@ -111,25 +111,10 @@ static SSL_SESSION *client_session(void)
     return d2i_SSL_SESSION(NULL, &p, sizeof(session_asn1));
 }
 
-/* PACKET_equal() doesn't quite do what we need. Provide a version that
- * does, in a form that can easily be moved to ssl_locl.h if anyone else
- * cares to come up with a better name and use it too... */
-__owur static ossl_inline int PACKET_starts(PACKET *pkt, const void *ptr,
-                                            size_t num)
-{
-    if (PACKET_remaining(pkt) < num)
-        return 0;
-    if (CRYPTO_memcmp(pkt->curr, ptr, num) != 0)
-        return 0;
-
-    packet_forward(pkt, num);
-    return 1;
-}
-
 /* Returns 1 for initial ClientHello, 2 for ClientHello with cookie */
 static int validate_client_hello(BIO *wbio)
 {
-    PACKET pkt;
+    PACKET pkt, pkt2;
     long len;
     unsigned char *data;
     int cookie_found = 0;
@@ -165,16 +150,15 @@ static int validate_client_hello(BIO *wbio)
         return 0;
 
     /* Check session id length and content */
-    if (!PACKET_get_1(&pkt, &u))
-        return 0;
-    if (u != sizeof(session_id) || !PACKET_starts(&pkt, session_id, u))
+    if (!PACKET_get_length_prefixed_1(&pkt, &pkt2) ||
+        !PACKET_equal(&pkt2, session_id, sizeof(session_id)))
         return 0;
 
     /* Check cookie */
-    if (!PACKET_get_1(&pkt, &u))
+    if (!PACKET_get_length_prefixed_1(&pkt, &pkt2))
         return 0;
-    if (u) {
-        if (u != sizeof(cookie) || !PACKET_starts(&pkt, cookie, u))
+    if (PACKET_remaining(&pkt2)) {
+        if (!PACKET_equal(&pkt2, cookie, sizeof(cookie)))
             return 0;
         cookie_found = 1;
     }
