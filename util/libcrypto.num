@@ -3484,7 +3484,6 @@ EVP_OpenFinal                           3432	1_1_0	EXIST::FUNCTION:RSA
 RAND_egd_bytes                          3433	1_1_0	EXIST::FUNCTION:EGD
 UI_method_get_writer                    3434	1_1_0	EXIST::FUNCTION:UI
 BN_secure_new                           3435	1_1_0	EXIST::FUNCTION:
-CTLOG_new_null                          3436	1_1_0	EXIST::FUNCTION:CT
 SHA1_Update                             3437	1_1_0	EXIST::FUNCTION:
 BIO_s_connect                           3438	1_1_0	EXIST::FUNCTION:SOCK
 EVP_MD_meth_get_init                    3439	1_1_0	EXIST::FUNCTION:
