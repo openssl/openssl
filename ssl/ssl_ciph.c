@@ -864,7 +864,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
             fprintf(stderr,
                     "\nName: %s:\nAlgo = %08x/%08x/%08x/%08x/%08x Algo_strength = %08x\n",
                     cp->name, cp->algorithm_mkey, cp->algorithm_auth,
-                    cp->algorithm_enc, cp->algorithm_mac, cp->algorithm_ssl,
+                    cp->algorithm_enc, cp->algorithm_mac, cp->min_tls,
                     cp->algo_strength);
 #endif
             if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
