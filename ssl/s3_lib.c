@@ -3340,6 +3340,14 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         ctx->tlsext_status_arg = parg;
         return 1;
 
+    case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG:
+        *(void**)parg = ctx->tlsext_status_arg;
+        break;
+
+    case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB:
+        *(int (**)(SSL*, void*))parg = ctx->tlsext_status_cb;
+        break;
+
 #ifndef OPENSSL_NO_SRP
     case SSL_CTRL_SET_TLS_EXT_SRP_USERNAME:
         ctx->srp_ctx.srp_Mask |= SSL_kSRP;
