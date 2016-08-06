@@ -60,23 +60,67 @@ typedef enum {
     SSL_TEST_HANDSHAKE_RENEGOTIATE
 } ssl_handshake_mode_t;
 
-typedef struct ssl_test_ctx {
-    /* Test expectations. */
+/*
+ * Server/client settings that aren't supported by the SSL CONF library,
+ * such as callbacks.
+ */
+typedef struct {
+    /* One of a number of predefined custom callbacks. */
+    ssl_verify_callback_t verify_callback;
+    /* One of a number of predefined server names use by the client */
+    ssl_servername_t servername;
+    /* Supported NPN and ALPN protocols. A comma-separated list. */
+    char *npn_protocols;
+    char *alpn_protocols;
+} SSL_TEST_CLIENT_CONF;
+
+typedef struct {
+    /* SNI callback (server-side). */
+    ssl_servername_callback_t servername_callback;
+    /* Supported NPN and ALPN protocols. A comma-separated list. */
+    char *npn_protocols;
+    char *alpn_protocols;
+    /* Whether to set a broken session ticket callback. */
+    int broken_session_ticket;
+} SSL_TEST_SERVER_CONF;
+
+typedef struct {
+    SSL_TEST_CLIENT_CONF client;
+    SSL_TEST_SERVER_CONF server;
+    SSL_TEST_SERVER_CONF server2;
+} SSL_TEST_EXTRA_CONF;
+
+typedef struct {
+    /*
+     * Global test configuration. Does not change between handshakes.
+     */
+    /* Whether the server/client CTX should use DTLS or TLS. */
+    ssl_test_method_t method;
+    /* Whether to test a resumed/renegotiated handshake. */
+    ssl_handshake_mode_t handshake_mode;
+
+    /*
+     * Extra server/client configurations. Per-handshake.
+     */
+    /* First handshake. */
+    SSL_TEST_EXTRA_CONF extra;
+    /* Resumed handshake. */
+    SSL_TEST_EXTRA_CONF resume_extra;
+
+    /*
+     * Test expectations. These apply to the LAST handshake.
+     */
     /* Defaults to SUCCESS. */
     ssl_test_result_t expected_result;
     /* Alerts. 0 if no expectation. */
     /* See ssl.h for alert codes. */
     /* Alert sent by the client / received by the server. */
-    int client_alert;
+    int expected_client_alert;
     /* Alert sent by the server / received by the client. */
-    int server_alert;
+    int expected_server_alert;
     /* Negotiated protocol version. 0 if no expectation. */
     /* See ssl.h for protocol versions. */
-    int protocol;
-    /* One of a number of predefined custom callbacks. */
-    ssl_verify_callback_t client_verify_callback;
-    /* One of a number of predefined server names use by the client */
-    ssl_servername_t servername;
+    int expected_protocol;
     /*
      * The expected SNI context to use.
      * We test server-side that the server switched to the expected context.
@@ -88,26 +132,10 @@ typedef struct ssl_test_ctx {
      * client-side via the API that this was the case.
      */
     ssl_servername_t expected_servername;
-    ssl_servername_callback_t servername_callback;
     ssl_session_ticket_t session_ticket_expected;
-    /* Whether the server/client CTX should use DTLS or TLS. */
-    ssl_test_method_t method;
-
-    /*
-     * NPN and ALPN protocols supported by the client, server, and second
-     * (SNI) server. A comma-separated list.
-     */
-    char *client_npn_protocols;
-    char *server_npn_protocols;
-    char *server2_npn_protocols;
+    /* The expected NPN/ALPN protocol to negotiate. */
     char *expected_npn_protocol;
-    char *client_alpn_protocols;
-    char *server_alpn_protocols;
-    char *server2_alpn_protocols;
     char *expected_alpn_protocol;
-
-    /* Whether to test a resumed/renegotiated handshake. */
-    ssl_handshake_mode_t handshake_mode;
     /* Whether the second handshake is resumed or a full handshake (boolean). */
     int resumption_expected;
 } SSL_TEST_CTX;
@@ -125,7 +153,7 @@ const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode);
 
 /*
  * Load the test case context from |conf|.
- * See test/README.ssl_test for details on the conf file format.
+ * See test/README.ssltest.md for details on the conf file format.
  */
 SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section);
 

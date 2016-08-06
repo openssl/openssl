@@ -18,117 +18,180 @@ package ssltests;
 our @tests = (
     {
         name => "alpn-simple",
-        server => { },
-        client => { },
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo",
-             "ServerALPNProtocols" => "foo",
              "ExpectedALPNProtocol" => "foo",
         },
     },
     {
-        name => "alpn-client-finds-match",
-        server => { },
-        client => { },
+        name => "alpn-server-finds-match",
+        server => {
+            extra => {
+                "ALPNProtocols" => "baz,bar",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo,bar",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo,bar",
-             "ServerALPNProtocols" => "baz,bar",
              "ExpectedALPNProtocol" => "bar",
         },
     },
     {
-        name => "alpn-client-honours-server-pref",
-        server => { },
-        client => { },
+        name => "alpn-server-honours-server-pref",
+        server => {
+            extra => {
+                "ALPNProtocols" => "bar,foo",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo,bar",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo,bar",
-             "ServerALPNProtocols" => "bar,foo",
              "ExpectedALPNProtocol" => "bar",
         },
     },
     {
         name => "alpn-alert-on-mismatch",
-        server => { },
-        client => { },
+        server => {
+            extra => {
+                "ALPNProtocols" => "baz",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo,bar",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo,bar",
-             "ServerALPNProtocols" => "baz",
              "ExpectedResult" => "ServerFail",
-             "ServerAlert" => "NoApplicationProtocol",
+             "ExpectedServerAlert" => "NoApplicationProtocol",
         },
     },
     {
         name => "alpn-no-server-support",
         server => { },
-        client => { },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo",
              "ExpectedALPNProtocol" => undef,
         },
     },
     {
         name => "alpn-no-client-support",
-        server => { },
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
         client => { },
         test => {
-             "ServerALPNProtocols" => "foo",
              "ExpectedALPNProtocol" => undef,
         },
     },
     {
         name => "alpn-with-sni-no-context-switch",
-        server => { },
-        server2 => { },
-        client => { },
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
+        server2 => {
+            extra => {
+                "ALPNProtocols" => "bar",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo,bar",
+                "ServerName" => "server1",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo,bar",
-             "ServerALPNProtocols" => "foo",
-             "Server2ALPNProtocols" => "bar",
-             "ServerName" => "server1",
-             "ServerNameCallback" => "IgnoreMismatch",
              "ExpectedServerName" => "server1",
              "ExpectedALPNProtocol" => "foo",
         },
     },
     {
         name => "alpn-with-sni-context-switch",
-        server => { },
-        server2 => { },
-        client => { },
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
+        server2 => {
+            extra => {
+                "ALPNProtocols" => "bar",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo,bar",
+                "ServerName" => "server2",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo,bar",
-             "ServerALPNProtocols" => "foo",
-             "Server2ALPNProtocols" => "bar",
-             "ServerName" => "server2",
-             "ServerNameCallback" => "IgnoreMismatch",
              "ExpectedServerName" => "server2",
              "ExpectedALPNProtocol" => "bar",
         },
     },
     {
         name => "alpn-selected-sni-server-supports-alpn",
-        server => { },
-        server2 => { },
-        client => { },
+        server => {
+            extra => {
+               "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
+        server2 => {
+            extra => {
+                "ALPNProtocols" => "bar",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo,bar",
+                "ServerName" => "server2",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo,bar",
-             "Server2ALPNProtocols" => "bar",
-             "ServerName" => "server2",
-             "ServerNameCallback" => "IgnoreMismatch",
              "ExpectedServerName" => "server2",
              "ExpectedALPNProtocol" => "bar",
         },
     },
     {
         name => "alpn-selected-sni-server-does-not-support-alpn",
-        server => { },
+        server => {
+            extra => {
+                "ALPNProtocols" => "bar", 
+                "ServerNameCallback" => "IgnoreMismatch",
+            },
+        },
         server2 => { },
-        client => { },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo,bar",
+                "ServerName" => "server2",
+            },
+        },
         test => {
-             "ClientALPNProtocols" => "foo,bar",
-             "ServerALPNProtocols" => "foo",
-             "ServerName" => "server2",
-             "ServerNameCallback" => "IgnoreMismatch",
              "ExpectedServerName" => "server2",
              "ExpectedALPNProtocol" => undef,
         },
