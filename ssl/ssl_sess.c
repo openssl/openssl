@@ -240,6 +240,13 @@ const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
         *len = s->session_id_length;
     return s->session_id;
 }
+const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *s,
+                                                unsigned int *len)
+{
+    if (len != NULL)
+        *len = s->sid_ctx_length;
+    return s->sid_ctx;
+}
 
 unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 {
@@ -789,6 +796,19 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
     SSL_SESSION_free(s->session);
     s->session = session;
 
+    return 1;
+}
+
+int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
+                        unsigned int sid_len)
+{
+    if (sid_len > SSL_MAX_SSL_SESSION_ID_LENGTH) {
+      SSLerr(SSL_F_SSL_SESSION_SET1_ID,
+             SSL_R_SSL_SESSION_ID_TOO_LONG);
+      return 0;
+    }
+    s->session_id_length = sid_len;
+    memcpy(s->session_id, sid, sid_len);
     return 1;
 }
 
