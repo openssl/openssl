@@ -1137,6 +1137,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SET_SPLIT_SEND_FRAGMENT        125
 # define SSL_CTRL_SET_MAX_PIPELINES              126
 # define SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE     127
+# define SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB       128
+# define SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG   129
 # define SSL_CERT_SET_FIRST                      1
 # define SSL_CERT_SET_NEXT                       2
 # define SSL_CERT_SET_SERVER                     3
@@ -1406,10 +1408,14 @@ __owur int SSL_copy_session_id(SSL *to, const SSL *from);
 __owur X509 *SSL_SESSION_get0_peer(SSL_SESSION *s);
 __owur int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
                                 unsigned int sid_ctx_len);
+__owur int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
+                               unsigned int sid_len);
 
 __owur SSL_SESSION *SSL_SESSION_new(void);
 const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
                                         unsigned int *len);
+const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *s,
+                                                unsigned int *len);
 __owur unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s);
 # ifndef OPENSSL_NO_STDIO
 int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *ses);
@@ -2169,6 +2175,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_SESSION_DUP                            348
 # define SSL_F_SSL_SESSION_NEW                            189
 # define SSL_F_SSL_SESSION_PRINT_FP                       190
+# define SSL_F_SSL_SESSION_SET1_ID                        423
 # define SSL_F_SSL_SESSION_SET1_ID_CONTEXT                312
 # define SSL_F_SSL_SET_ALPN_PROTOS                        344
 # define SSL_F_SSL_SET_CERT                               191
@@ -2448,6 +2455,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_SSL_SECTION_NOT_FOUND                      136
 # define SSL_R_SSL_SESSION_ID_CALLBACK_FAILED             301
 # define SSL_R_SSL_SESSION_ID_CONFLICT                    302
+# define SSL_R_SSL_SESSION_ID_TOO_LONG                    408
 # define SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG            273
 # define SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH              303
 # define SSL_R_SSL_SESSION_VERSION_MISMATCH               210
