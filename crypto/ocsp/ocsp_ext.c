@@ -357,7 +357,7 @@ int OCSP_copy_nonce(OCSP_BASICRESP *resp, OCSP_REQUEST *req)
     return OCSP_BASICRESP_add_ext(resp, req_ext, -1);
 }
 
-X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim)
+X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim)
 {
     X509_EXTENSION *x = NULL;
     OCSP_CRLID *cid = NULL;
@@ -430,7 +430,7 @@ X509_EXTENSION *OCSP_archive_cutoff_new(char *tim)
  * two--NID_ad_ocsp, NID_id_ad_caIssuers--and GeneralName value.  This method
  * forces NID_ad_ocsp and uniformResourceLocator [6] IA5String.
  */
-X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME *issuer, char **urls)
+X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME *issuer, const char **urls)
 {
     X509_EXTENSION *x = NULL;
     ASN1_IA5STRING *ia5 = NULL;
