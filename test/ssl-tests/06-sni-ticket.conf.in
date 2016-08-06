@@ -27,18 +27,22 @@ sub generate_tests() {
                         "name" => "sni-session-ticket",
                         "client" => {
                             "Options" => $c,
+                            "extra" => {
+                                "ServerName" => $n,
+                            },
                         },
                         "server" => {
                             "Options" => $s1,
+                            "extra" => {
+                                # We don't test mismatch here.
+                                "ServerNameCallback" => "IgnoreMismatch",
+                            },
                         },
 			"server2" => {
 			    "Options" => $s2,
 			},
                         "test" => {
-                            "ServerName" => $n,
                             "ExpectedServerName" => $n,
-                            # We don't test mismatch here.
-                            "ServerNameCallback" => "IgnoreMismatch",
                             "ExpectedResult" => "Success",
 			    "SessionTicketExpected" => $result,
                         }
@@ -69,17 +73,22 @@ push @tests, {
     "name" => "sni-session-ticket",
     "client" => {
 	"Options" => "SessionTicket",
+        "extra" => {
+            "ServerName" => "server1",
+        }
     },
     "server" => {
 	"Options" => "SessionTicket",
+        "extra" => {
+              "BrokenSessionTicket" => "Yes",
+        },
     },
     "server2" => {
 	"Options" => "SessionTicket",
     },
     "test" => {
-	"ServerName" => "server1",
 	"ExpectedResult" => "Success",
-	"SessionTicketExpected" => "Broken",
+	"SessionTicketExpected" => "No",
     }
 };
 
