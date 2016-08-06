@@ -1712,6 +1712,33 @@ static void nistp_tests()
 }
 # endif
 
+static void parameter_test(void)
+{
+    EC_GROUP *group, *group2;
+    ECPARAMETERS *ecparameters;
+
+    fprintf(stderr, "\ntesting ecparameters conversion ...");
+
+    group = EC_GROUP_new_by_curve_name(NID_secp112r1);
+    if (!group)
+        ABORT;
+
+    ecparameters = EC_GROUP_get_ecparameters(group, NULL);
+    if (!ecparameters)
+        ABORT;
+    group2 = EC_GROUP_new_from_ecparameters(ecparameters);
+    if (!group2)
+        ABORT;
+    if (EC_GROUP_cmp(group, group2, NULL))
+        ABORT;
+
+    fprintf(stderr, " ok\n");
+
+    EC_GROUP_free(group);
+    EC_GROUP_free(group2);
+    ECPARAMETERS_free(ecparameters);
+}
+
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 
@@ -1736,6 +1763,8 @@ int main(int argc, char *argv[])
 # endif
     /* test the internal curves */
     internal_curve_test();
+
+    parameter_test();
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
