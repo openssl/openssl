@@ -551,8 +551,8 @@ void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg, X509 *x);
 int X509_get_signature_nid(const X509 *x);
 
 int X509_trusted(const X509 *x);
-int X509_alias_set1(X509 *x, unsigned char *name, int len);
-int X509_keyid_set1(X509 *x, unsigned char *id, int len);
+int X509_alias_set1(X509 *x, const unsigned char *name, int len);
+int X509_keyid_set1(X509 *x, const unsigned char *id, int len);
 unsigned char *X509_alias_get0(X509 *x, int *len);
 unsigned char *X509_keyid_get0(X509 *x, int *len);
 int (*X509_TRUST_set_default(int (*trust) (int, X509 *, int))) (int, X509 *,
