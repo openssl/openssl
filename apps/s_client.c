@@ -132,7 +132,6 @@ static void do_ssl_shutdown(SSL *ssl)
     } while (ret < 0);
 }
 
-
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
 static char *psk_identity = "Client_identity";
@@ -392,7 +391,7 @@ static ossl_ssize_t hexdecode(const char **inptr, void *result)
 {
     unsigned char **out = (unsigned char **)result;
     const char *in = *inptr;
-    unsigned char *ret = app_malloc(strlen(in)/2, "hexdecode");
+    unsigned char *ret = app_malloc(strlen(in) / 2, "hexdecode");
     unsigned char *cp = ret;
     uint8_t byte;
     int nibble = 0;
@@ -542,7 +541,8 @@ typedef enum OPTION_choice {
     OPT_SSL3, OPT_SSL_CONFIG,
     OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
-    OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
+    OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH,
+        OPT_VERIFYCAPATH,
     OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
@@ -888,14 +888,14 @@ int s_client_main(int argc, char **argv)
         /* Check for intermixing flags. */
         if (connect_type == use_unix && IS_INET_FLAG(o)) {
             BIO_printf(bio_err,
-                "%s: Intermixed protocol flags (unix and internet domains)\n",
-                prog);
+                       "%s: Intermixed protocol flags (unix and internet domains)\n",
+                       prog);
             goto end;
         }
         if (connect_type == use_inet && IS_UNIX_FLAG(o)) {
             BIO_printf(bio_err,
-                "%s: Intermixed protocol flags (internet and unix domains)\n",
-                prog);
+                       "%s: Intermixed protocol flags (internet and unix domains)\n",
+                       prog);
             goto end;
         }
 
@@ -906,8 +906,8 @@ int s_client_main(int argc, char **argv)
         if (IS_NO_PROT_FLAG(o))
             no_prot_opt++;
         if (prot_opt == 1 && no_prot_opt) {
-            BIO_printf(bio_err, "Cannot supply both a protocol flag and "
-                                "\"-no_<prot>\"\n");
+            BIO_printf(bio_err,
+                       "Cannot supply both a protocol flag and '-no_<prot>'\n");
             goto end;
         }
 
@@ -1335,8 +1335,8 @@ int s_client_main(int argc, char **argv)
         if (tmp_port != port)
             OPENSSL_free(tmp_port);
         if (!res) {
-            BIO_printf(bio_err, "%s: -proxy argument malformed or ambiguous\n",
-                       prog);
+            BIO_printf(bio_err,
+                       "%s: -proxy argument malformed or ambiguous\n", prog);
             goto end;
         }
     } else {
@@ -1475,8 +1475,8 @@ int s_client_main(int argc, char **argv)
         if (SSL_CTX_config(ctx, ssl_config) == 0) {
             BIO_printf(bio_err, "Error using configuration \"%s\"\n",
                        ssl_config);
-        ERR_print_errors(bio_err);
-        goto end;
+            ERR_print_errors(bio_err);
+            goto end;
         }
     }
 
@@ -1529,8 +1529,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_PSK
     if (psk_key != NULL) {
         if (c_debug)
-            BIO_printf(bio_c_out,
-                       "PSK key given, setting client callback\n");
+            BIO_printf(bio_c_out, "PSK key given, setting client callback\n");
         SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
     }
 #endif
@@ -1562,7 +1561,7 @@ int s_client_main(int argc, char **argv)
         }
         /* Returns 0 on success! */
         if (SSL_CTX_set_alpn_protos(ctx, alpn, alpn_len) != 0) {
-           BIO_printf(bio_err, "Error setting ALPN\n");
+            BIO_printf(bio_err, "Error setting ALPN\n");
             goto end;
         }
         OPENSSL_free(alpn);
@@ -1574,8 +1573,8 @@ int s_client_main(int argc, char **argv)
                                            NULL, NULL, NULL,
                                            serverinfo_cli_parse_cb, NULL)) {
             BIO_printf(bio_err,
-                    "Warning: Unable to add custom extension %u, skipping\n",
-                    serverinfo_types[i]);
+                       "Warning: Unable to add custom extension %u, skipping\n",
+                       serverinfo_types[i]);
         }
     }
 
@@ -1643,7 +1642,8 @@ int s_client_main(int argc, char **argv)
     if (dane_tlsa_domain != NULL) {
         if (SSL_CTX_dane_enable(ctx) <= 0) {
             BIO_printf(bio_err,
-                       "%s: Error enabling DANE TLSA authentication.\n", prog);
+                       "%s: Error enabling DANE TLSA authentication.\n",
+                       prog);
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -1708,8 +1708,7 @@ int s_client_main(int argc, char **argv)
     }
 
  re_start:
-    if (init_client(&s, host, port, socket_family, socket_type) == 0)
-    {
+    if (init_client(&s, host, port, socket_family, socket_type) == 0) {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
         BIO_closesocket(s);
         goto end;
@@ -2573,7 +2572,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #endif
 
         BIO_printf(bio,
-                   "---\nSSL handshake has read %"PRIu64" bytes and written %"PRIu64" bytes\n",
+                   "---\nSSL handshake has read %" PRIu64
+                   " bytes and written %" PRIu64 " bytes\n",
                    BIO_number_read(SSL_get_rbio(s)),
                    BIO_number_written(SSL_get_wbio(s)));
     }
@@ -2650,8 +2650,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #endif
 
     SSL_SESSION_print(bio, SSL_get_session(s));
-    if ((SSL_get_session(s) != NULL) &&
-        (keymatexportlabel != NULL)) {
+    if (SSL_get_session(s) != NULL && keymatexportlabel != NULL) {
         BIO_printf(bio, "Keying material exporter:\n");
         BIO_printf(bio, "    Label: '%s'\n", keymatexportlabel);
         BIO_printf(bio, "    Length: %i bytes\n", keymatexportlen);
@@ -2702,4 +2701,4 @@ static int ocsp_resp_cb(SSL *s, void *arg)
 }
 # endif
 
-#endif  /* OPENSSL_NO_SOCK */
+#endif                          /* OPENSSL_NO_SOCK */
