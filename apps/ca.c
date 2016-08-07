@@ -160,7 +160,7 @@ OPTIONS ca_options[] = {
     {"subj", OPT_SUBJ, 's', "Use arg instead of request's subject"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
     {"create_serial", OPT_CREATE_SERIAL, '-',
-    "If reading serial fails, create a new random serial"},
+     "If reading serial fails, create a new random serial"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Enable support for multivalued RDNs"},
     {"startdate", OPT_STARTDATE, 's', "Cert notBefore, YYMMDDHHMMSSZ"},
@@ -498,7 +498,7 @@ end_of_options:
     /* report status of cert with serial number given on command line */
     if (ser_status) {
         dbfile = lookup_conf(conf, section, ENV_DATABASE);
-        if (dbfile  == NULL)
+        if (dbfile == NULL)
             goto end;
 
         db = load_index(dbfile, &db_attr);
