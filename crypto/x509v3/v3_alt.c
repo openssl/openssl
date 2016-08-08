@@ -301,7 +301,7 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 {
     X509_NAME *nm;
     ASN1_IA5STRING *email = NULL;
-    X509_NAME_ENTRY *ne;
+    const X509_NAME_ENTRY *ne;
     GENERAL_NAME *gen = NULL;
     int i;
     if (ctx != NULL && ctx->flags == CTX_TEST)
@@ -323,8 +323,8 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
         ne = X509_NAME_get_entry(nm, i);
         email = ASN1_STRING_dup(X509_NAME_ENTRY_get_data(ne));
         if (move_p) {
-            X509_NAME_delete_entry(nm, i);
-            X509_NAME_ENTRY_free(ne);
+            X509_NAME_ENTRY_free(
+                /* ne: */ X509_NAME_delete_entry(nm, i) );
             i--;
         }
         if (email == NULL || (gen = GENERAL_NAME_new()) == NULL) {

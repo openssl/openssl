@@ -290,7 +290,7 @@ static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
                               int indent,
                               const char *fname, const ASN1_PCTX *pctx)
 {
-    if (X509_NAME_print_ex(out, (X509_NAME *)*pval,
+    if (X509_NAME_print_ex(out, (const X509_NAME *)*pval,
                            indent, pctx->nm_flags) <= 0)
         return 0;
     return 2;
@@ -494,7 +494,7 @@ int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
     return (*xn != NULL);
 }
 
-int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
+int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 {
     char *s, *c, *b;
     int l, i;

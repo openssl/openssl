@@ -15,7 +15,7 @@ X509_NAME_add_entry, X509_NAME_delete_entry - X509_NAME modification functions
 
  int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type, const unsigned char *bytes, int len, int loc, int set);
 
- int X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc, int set);
+ int X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne, int loc, int set);
 
  X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
 

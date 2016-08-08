@@ -49,7 +49,7 @@ void ASN1_PCTX_free(ASN1_PCTX *p)
     OPENSSL_free(p);
 }
 
-unsigned long ASN1_PCTX_get_flags(ASN1_PCTX *p)
+unsigned long ASN1_PCTX_get_flags(const ASN1_PCTX *p)
 {
     return p->flags;
 }
@@ -59,7 +59,7 @@ void ASN1_PCTX_set_flags(ASN1_PCTX *p, unsigned long flags)
     p->flags = flags;
 }
 
-unsigned long ASN1_PCTX_get_nm_flags(ASN1_PCTX *p)
+unsigned long ASN1_PCTX_get_nm_flags(const ASN1_PCTX *p)
 {
     return p->nm_flags;
 }
@@ -69,7 +69,7 @@ void ASN1_PCTX_set_nm_flags(ASN1_PCTX *p, unsigned long flags)
     p->nm_flags = flags;
 }
 
-unsigned long ASN1_PCTX_get_cert_flags(ASN1_PCTX *p)
+unsigned long ASN1_PCTX_get_cert_flags(const ASN1_PCTX *p)
 {
     return p->cert_flags;
 }
@@ -79,7 +79,7 @@ void ASN1_PCTX_set_cert_flags(ASN1_PCTX *p, unsigned long flags)
     p->cert_flags = flags;
 }
 
-unsigned long ASN1_PCTX_get_oid_flags(ASN1_PCTX *p)
+unsigned long ASN1_PCTX_get_oid_flags(const ASN1_PCTX *p)
 {
     return p->oid_flags;
 }
@@ -89,7 +89,7 @@ void ASN1_PCTX_set_oid_flags(ASN1_PCTX *p, unsigned long flags)
     p->oid_flags = flags;
 }
 
-unsigned long ASN1_PCTX_get_str_flags(ASN1_PCTX *p)
+unsigned long ASN1_PCTX_get_str_flags(const ASN1_PCTX *p)
 {
     return p->str_flags;
 }
@@ -106,7 +106,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
                                const char *fname, const char *sname,
                                int nohdr, const ASN1_PCTX *pctx);
 
-int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
+static int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
                             const ASN1_TEMPLATE *tt, const ASN1_PCTX *pctx);
 
 static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
@@ -261,7 +261,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
     return 1;
 }
 
-int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
+static int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
                             const ASN1_TEMPLATE *tt, const ASN1_PCTX *pctx)
 {
     int i, flags;
@@ -389,7 +389,7 @@ static int asn1_print_boolean(BIO *out, int boolval)
 
 }
 
-static int asn1_print_integer(BIO *out, ASN1_INTEGER *str)
+static int asn1_print_integer(BIO *out, const ASN1_INTEGER *str)
 {
     char *s;
     int ret = 1;
@@ -415,7 +415,7 @@ static int asn1_print_oid(BIO *out, const ASN1_OBJECT *oid)
     return 1;
 }
 
-static int asn1_print_obstring(BIO *out, ASN1_STRING *str, int indent)
+static int asn1_print_obstring(BIO *out, const ASN1_STRING *str, int indent)
 {
     if (str->type == V_ASN1_BIT_STRING) {
         if (BIO_printf(out, " (%ld unused bits)\n", str->flags & 0x7) <= 0)
