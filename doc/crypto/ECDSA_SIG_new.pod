@@ -47,8 +47,8 @@ L<EVP_DigestSignInit(3)> or L<EVP_DigestVerifyInit(3)> instead.
 B<ECDSA_SIG> is an opaque structure consisting of two BIGNUMs for the
 B<r> and B<s> value of an ECDSA signature (see X9.62 or FIPS 186-2).
 
-ECDSA_SIG_new() allocates a new B<ECDSA_SIG> structure (note: this
-function also allocates the BIGNUMs) and initializes it.
+ECDSA_SIG_new() allocates an empty B<ECDSA_SIG> structure. Note: before
+OpenSSL 1.1.0 the: the B<r> and B<s> components were initialised.
 
 ECDSA_SIG_free() frees the B<ECDSA_SIG> structure B<sig>.
 
