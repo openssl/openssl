@@ -85,7 +85,7 @@ client = {-$testname-}-client{-
     if (%resume_client && $resume_client{"extra"}) {
        $OUT .= "resume-client = $testname-resume-client-extra\n";
     } elsif ($reuse_resume_client && $client{"extra"}) {
-       $OUT .= "client = $testname-client-extra\n";
+       $OUT .= "resume-client = $testname-client-extra\n";
     }
 
     if ($server{"extra"}) {

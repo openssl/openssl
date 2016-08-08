@@ -29,7 +29,7 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedNPNProtocol" => "foo",
+            "ExpectedNPNProtocol" => "foo",
         },
     },
     {
@@ -45,7 +45,7 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedNPNProtocol" => "bar",
+            "ExpectedNPNProtocol" => "bar",
         },
     },
     {
@@ -61,7 +61,7 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedNPNProtocol" => "bar",
+            "ExpectedNPNProtocol" => "bar",
         },
     },
     {
@@ -77,7 +77,7 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedNPNProtocol" => "foo",
+            "ExpectedNPNProtocol" => "foo",
         },
     },
     {
@@ -89,7 +89,7 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedNPNProtocol" => undef,
+            "ExpectedNPNProtocol" => undef,
         },
     },
     {
@@ -101,7 +101,7 @@ our @tests = (
         },
         client => { },
         test => {
-             "ExpectedNPNProtocol" => undef,
+            "ExpectedNPNProtocol" => undef,
         },
     },
     {
@@ -124,8 +124,8 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedServerName" => "server1",
-             "ExpectedNPNProtocol" => "foo",
+            "ExpectedServerName" => "server1",
+            "ExpectedNPNProtocol" => "foo",
         },
     },
     {
@@ -148,8 +148,8 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedServerName" => "server2",
-             "ExpectedNPNProtocol" => "bar",
+            "ExpectedServerName" => "server2",
+            "ExpectedNPNProtocol" => "bar",
         },
     },
     {
@@ -171,8 +171,8 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedServerName" => "server2",
-             "ExpectedNPNProtocol" => "bar",
+            "ExpectedServerName" => "server2",
+            "ExpectedNPNProtocol" => "bar",
         },
     },
     {
@@ -210,8 +210,8 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedALPNProtocol" => "foo",
-             "ExpectedNPNProtocol" => undef,
+            "ExpectedALPNProtocol" => "foo",
+            "ExpectedNPNProtocol" => undef,
         },
     },
     {
@@ -235,9 +235,186 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedALPNProtocol" => undef,
-             "ExpectedNPNProtocol" => "bar",
-             "ExpectedServerName" => "server2",  
+            "ExpectedALPNProtocol" => undef,
+            "ExpectedNPNProtocol" => "bar",
+            "ExpectedServerName" => "server2",  
+        },
+    },
+    {
+        name => "npn-simple-resumption",
+        server => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedNPNProtocol" => "foo",
+        },
+    },
+    {
+        name => "npn-server-switch-resumption",
+        server => {
+            extra => {
+                "NPNProtocols" => "bar,foo",
+            },
+        },
+        resume_server => {
+            extra => {
+                "NPNProtocols" => "baz,foo",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo,bar,baz",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedNPNProtocol" => "baz",
+        },
+    },
+    {
+        name => "npn-client-switch-resumption",
+        server => {
+            extra => {
+                "NPNProtocols" => "foo,bar,baz",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo,baz",
+            },
+        },
+        resume_client => {
+            extra => {
+                "NPNProtocols" => "bar,baz",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedNPNProtocol" => "bar",
+        },
+    },
+    {
+        name => "npn-client-first-pref-on-mismatch-resumption",
+        server => {
+            extra => {
+                "NPNProtocols" => "bar",
+            },
+        },
+        resume_server => {
+            extra => {
+                "NPNProtocols" => "baz",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo,bar",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedNPNProtocol" => "foo",
+        },
+    },
+    {
+        name => "npn-no-server-support-resumption",
+        server => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
+        resume_server => { },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedNPNProtocol" => undef,
+        },
+    },
+    {
+        name => "npn-no-client-support-resumption",
+        server => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
+        client => {
+            extra => {
+                "NPNProtocols" => "foo",
+            },
+        },
+        resume_client => { },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedNPNProtocol" => undef,
+        },
+    },
+    {
+        name => "alpn-preferred-over-npn-resumption",
+        server => {
+            extra => {
+                "NPNProtocols" => "bar",
+            },
+        },
+        resume_server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+                "NPNProtocols" => "baz",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo",
+                "NPNProtocols" => "bar,baz",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedALPNProtocol" => "foo",
+            "ExpectedNPNProtocol" => undef,
+        },
+    },
+    {
+        name => "npn-used-if-alpn-not-supported-resumption",
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+                "NPNProtocols" => "bar",
+            },
+        },
+        resume_server => {
+            extra => {
+                "NPNProtocols" => "baz",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo",
+                "NPNProtocols" => "bar,baz",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedALPNProtocol" => undef,
+            "ExpectedNPNProtocol" => "baz",
         },
     },
 );
