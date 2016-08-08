@@ -137,9 +137,9 @@ typedef struct err_state_st {
         (((unsigned int)(l) & 0x0FF) << 24L) | \
         (((unsigned int)(f) & 0xFFF) << 12L) | \
         (((unsigned int)(r) & 0xFFF)       ) )
-# define ERR_GET_LIB(l)          (int)((((unsigned long)l) >> 24L) & 0x0FFL)
-# define ERR_GET_FUNC(l)         (int)((((unsigned long)l) >> 12L) & 0xFFFL)
-# define ERR_GET_REASON(l)       (int)((l)&0xfffL)
+# define ERR_GET_LIB(l)          (int)(((l) >> 24L) & 0x0FFL)
+# define ERR_GET_FUNC(l)         (int)(((l) >> 12L) & 0xFFFL)
+# define ERR_GET_REASON(l)       (int)( (l)         & 0xFFFL)
 
 /* OS functions */
 # define SYS_F_FOPEN             1
