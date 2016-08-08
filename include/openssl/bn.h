@@ -82,6 +82,15 @@ extern "C" {
 void BN_set_flags(BIGNUM *b, int n);
 int BN_get_flags(const BIGNUM *b, int n);
 
+/* Values for |top| in BN_rand() */
+#define BN_RAND_TOP_ANY    -1
+#define BN_RAND_TOP_ONE     0
+#define BN_RAND_TOP_TWO     1
+
+/* Values for |bottom| in BN_rand() */
+#define BN_RAND_BOTTOM_ANY  0
+#define BN_RAND_BOTTOM_ODD  1
+
 /*
  * get a clone of a BIGNUM with changed flags, for *temporary* use only (the
  * two BIGNUMs cannot be used in parallel!). Also only for *read only* use. The
