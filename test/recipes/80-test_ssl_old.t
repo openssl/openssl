@@ -79,7 +79,7 @@ my $client_sess="client.ss";
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
-    +9  			# For the first testssl
+    +8  			# For the first testssl
     ;
 
 subtest 'test_ss' => sub {
@@ -524,22 +524,6 @@ sub testssl {
 	  }
 	}
 
-    };
-
-    subtest 'Next Protocol Negotiation Tests' => sub {
-	######################################################################
-
-	plan tests => 2;
-
-      SKIP: {
-	  skip "TLSv1.0 is not supported by this OpenSSL build", 2
-	      if $no_tls1;
-	  skip "Next Protocol Negotiation is not supported by this OpenSSL build", 2
-	      if disabled("nextprotoneg");
-
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server", "-num", "2"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server", "-num", "2", "-reuse"])));
-	}
     };
 
     subtest 'Custom Extension tests' => sub {

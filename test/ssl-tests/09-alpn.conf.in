@@ -29,7 +29,7 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedALPNProtocol" => "foo",
+            "ExpectedALPNProtocol" => "foo",
         },
     },
     {
@@ -45,7 +45,7 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedALPNProtocol" => "bar",
+            "ExpectedALPNProtocol" => "bar",
         },
     },
     {
@@ -61,7 +61,7 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedALPNProtocol" => "bar",
+            "ExpectedALPNProtocol" => "bar",
         },
     },
     {
@@ -77,8 +77,8 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedResult" => "ServerFail",
-             "ExpectedServerAlert" => "NoApplicationProtocol",
+            "ExpectedResult" => "ServerFail",
+            "ExpectedServerAlert" => "NoApplicationProtocol",
         },
     },
     {
@@ -90,7 +90,7 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedALPNProtocol" => undef,
+            "ExpectedALPNProtocol" => undef,
         },
     },
     {
@@ -102,7 +102,7 @@ our @tests = (
         },
         client => { },
         test => {
-             "ExpectedALPNProtocol" => undef,
+            "ExpectedALPNProtocol" => undef,
         },
     },
     {
@@ -125,8 +125,8 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedServerName" => "server1",
-             "ExpectedALPNProtocol" => "foo",
+            "ExpectedServerName" => "server1",
+            "ExpectedALPNProtocol" => "foo",
         },
     },
     {
@@ -149,8 +149,8 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedServerName" => "server2",
-             "ExpectedALPNProtocol" => "bar",
+            "ExpectedServerName" => "server2",
+            "ExpectedALPNProtocol" => "bar",
         },
     },
     {
@@ -172,8 +172,8 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedServerName" => "server2",
-             "ExpectedALPNProtocol" => "bar",
+            "ExpectedServerName" => "server2",
+            "ExpectedALPNProtocol" => "bar",
         },
     },
     {
@@ -192,8 +192,133 @@ our @tests = (
             },
         },
         test => {
-             "ExpectedServerName" => "server2",
-             "ExpectedALPNProtocol" => undef,
+            "ExpectedServerName" => "server2",
+            "ExpectedALPNProtocol" => undef,
+        },
+    },
+    {
+        name => "alpn-simple-resumption",
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedALPNProtocol" => "foo",
+        },
+    },
+    {
+        name => "alpn-server-switch-resumption",
+        server => {
+            extra => {
+                "ALPNProtocols" => "bar,foo",
+            },
+        },
+        resume_server => {
+            extra => {
+                "ALPNProtocols" => "baz,foo",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo,bar,baz",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedALPNProtocol" => "baz",
+        },
+    },
+    {
+        name => "alpn-client-switch-resumption",
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo,bar,baz",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo,baz",
+            },
+        },
+        resume_client => {
+            extra => {
+                "ALPNProtocols" => "bar,baz",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedALPNProtocol" => "bar",
+        },
+    },
+    {
+        name => "alpn-alert-on-mismatch-resumption",
+        server => {
+            extra => {
+                "ALPNProtocols" => "bar",
+            },
+        },
+        resume_server => {
+            extra => {
+                "ALPNProtocols" => "baz",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo,bar",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ExpectedResult" => "ServerFail",
+            "ExpectedServerAlert" => "NoApplicationProtocol",
+        },
+    },
+    {
+        name => "alpn-no-server-support-resumption",
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
+        resume_server => { },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedALPNProtocol" => undef,
+        },
+    },
+    {
+        name => "alpn-no-client-support-resumption",
+        server => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
+        client => {
+            extra => {
+                "ALPNProtocols" => "foo",
+            },
+        },
+        resume_client => { },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedALPNProtocol" => undef,
         },
     },
 );
