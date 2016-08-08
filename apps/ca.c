@@ -246,7 +246,8 @@ int ca_main(int argc, char **argv)
     const char *serialfile = NULL, *subj = NULL;
     char *prog, *startdate = NULL, *enddate = NULL;
     char *dbfile = NULL, *f, *randfile = NULL;
-    char buf[3][BSIZE];
+    char new_cert[BSIZE] = { 0 };
+    char tmp[10 + 1] = "\0";
     char *const *pp;
     const char *p;
     int create_ser = 0, free_key = 0, total = 0, total_done = 0;
@@ -950,14 +951,14 @@ end_of_options:
                            "\n%d out of %d certificate requests certified, commit? [y/n]",
                            total_done, total);
                 (void)BIO_flush(bio_err);
-                buf[0][0] = '\0';
-                if (!fgets(buf[0], 10, stdin)) {
+                tmp[0] = '\0';
+                if (fgets(tmp, sizeof(tmp), stdin) == NULL) {
                     BIO_printf(bio_err,
                                "CERTIFICATION CANCELED: I/O error\n");
                     ret = 0;
                     goto end;
                 }
-                if ((buf[0][0] != 'y') && (buf[0][0] != 'Y')) {
+                if (tmp[0] != 'y' && tmp[0] != 'Y') {
                     BIO_printf(bio_err, "CERTIFICATION CANCELED\n");
                     ret = 0;
                     goto end;
@@ -992,19 +993,18 @@ end_of_options:
                 goto end;
             }
 
-            strcpy(buf[2], outdir);
-
+            strcpy(new_cert, outdir);
 #ifndef OPENSSL_SYS_VMS
-            OPENSSL_strlcat(buf[2], "/", sizeof(buf[2]));
+            OPENSSL_strlcat(new_cert, "/", sizeof(new_cert));
 #endif
 
-            n = (char *)&(buf[2][strlen(buf[2])]);
+            n = (char *)&(new_cert[strlen(new_cert)]);
             if (j > 0) {
                 for (k = 0; k < j; k++) {
-                    if (n >= &(buf[2][sizeof(buf[2])]))
+                    if (n >= &(new_cert[sizeof(new_cert)]))
                         break;
                     BIO_snprintf(n,
-                                 &buf[2][0] + sizeof(buf[2]) - n,
+                                 &new_cert[0] + sizeof(new_cert) - n,
                                  "%02X", (unsigned char)*(p++));
                     n += 2;
                 }
@@ -1018,11 +1018,11 @@ end_of_options:
             *(n++) = 'm';
             *n = '\0';
             if (verbose)
-                BIO_printf(bio_err, "writing %s\n", buf[2]);
+                BIO_printf(bio_err, "writing %s\n", new_cert);
 
-            Cout = BIO_new_file(buf[2], "w");
+            Cout = BIO_new_file(new_cert, "w");
             if (Cout == NULL) {
-                perror(buf[2]);
+                perror(new_cert);
                 goto end;
             }
             write_new_certificate(Cout, x, 0, notext);
@@ -1796,13 +1796,13 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err, "Sign the certificate? [y/n]:");
         (void)BIO_flush(bio_err);
         buf[0] = '\0';
-        if (!fgets(buf, sizeof(buf) - 1, stdin)) {
+        if (fgets(buf, sizeof(buf), stdin) == NULL) {
             BIO_printf(bio_err,
                        "CERTIFICATE WILL NOT BE CERTIFIED: I/O error\n");
             ok = 0;
             goto end;
         }
-        if (!((buf[0] == 'y') || (buf[0] == 'Y'))) {
+        if (!(buf[0] == 'y' || buf[0] == 'Y')) {
             BIO_printf(bio_err, "CERTIFICATE WILL NOT BE CERTIFIED\n");
             ok = 0;
             goto end;
