@@ -42,6 +42,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &dhx_pkey_meth,
 #endif
     &tls1_prf_pkey_meth,
+#ifndef OPENSSL_NO_EC
+    &ecx25519_pkey_meth,
+#endif
     &hkdf_pkey_meth
 };
 
