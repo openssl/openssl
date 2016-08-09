@@ -20,6 +20,7 @@ use OpenSSL::Test::Utils qw/disabled alldisabled available_protocols/;
 setup("test_ssl_new");
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
+$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
 my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.conf.in"));
 map { s/;.*// } @conf_srcs if $^O eq "VMS";
@@ -28,7 +29,7 @@ map { s/\.in// } @conf_files;
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 11;  # = scalar @conf_srcs
+plan tests => 12;  # = scalar @conf_srcs
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
@@ -40,6 +41,7 @@ my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
 my $no_tls = alldisabled(available_protocols("tls"));
 my $no_dtls = alldisabled(available_protocols("dtls"));
 my $no_npn = disabled("nextprotoneg");
+my $no_ct = disabled("ct");
 
 my %conf_dependent_tests = (
   "02-protocol-version.conf" => !$is_default_tls,
@@ -55,6 +57,7 @@ my %skip = (
   "08-npn.conf" => $no_tls || $no_npn,
   "10-resumption.conf" => disabled("tls1_1") || disabled("tls1_2"),
   "11-dtls_resumption.conf" => disabled("dtls1") || disabled("dtls1_2"),
+  "12-ct.conf" => $no_tls || $no_ct,
 );
 
 foreach my $conf (@conf_files) {
