@@ -25,6 +25,8 @@ HANDSHAKE_RESULT *HANDSHAKE_RESULT_new()
 
 void HANDSHAKE_RESULT_free(HANDSHAKE_RESULT *result)
 {
+    if (result == NULL)
+        return;
     OPENSSL_free(result->client_npn_negotiated);
     OPENSSL_free(result->server_npn_negotiated);
     OPENSSL_free(result->client_alpn_negotiated);
