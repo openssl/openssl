@@ -142,7 +142,7 @@ static const test_enum ssl_verify_callbacks[] = {
 };
 
 __owur static int parse_client_verify_callback(SSL_TEST_CLIENT_CONF *client_conf,
-                                              const char *value)
+                                               const char *value)
 {
     int ret_value;
     if (!parse_enum(ssl_verify_callbacks, OSSL_NELEM(ssl_verify_callbacks),
@@ -328,6 +328,34 @@ const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode)
                      mode);
 }
 
+/***********************/
+/* CT Validation       */
+/***********************/
+
+static const test_enum ssl_ct_validation_modes[] = {
+    {"None", SSL_TEST_CT_VALIDATION_NONE},
+    {"Permissive", SSL_TEST_CT_VALIDATION_PERMISSIVE},
+    {"Strict", SSL_TEST_CT_VALIDATION_STRICT},
+};
+
+__owur static int parse_ct_validation(SSL_TEST_CLIENT_CONF *client_conf,
+                                      const char *value)
+{
+    int ret_value;
+    if (!parse_enum(ssl_ct_validation_modes, OSSL_NELEM(ssl_ct_validation_modes),
+                    &ret_value, value)) {
+        return 0;
+    }
+    client_conf->ct_validation = ret_value;
+    return 1;
+}
+
+const char *ssl_ct_validation_name(ssl_ct_validation_t mode)
+{
+    return enum_name(ssl_ct_validation_modes, OSSL_NELEM(ssl_ct_validation_modes),
+                     mode);
+}
+
 static int parse_boolean(const char *value, int *result)
 {
     if (strcasecmp(value, "Yes") == 0) {
@@ -385,6 +413,7 @@ static const ssl_test_client_option ssl_test_client_options[] = {
     { "ServerName", &parse_servername },
     { "NPNProtocols", &parse_client_npn_protocols },
     { "ALPNProtocols", &parse_client_alpn_protocols },
+    { "CTValidation", &parse_ct_validation },
 };
 
 /* Nested server options. */
