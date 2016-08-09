@@ -1458,10 +1458,9 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 id-pkinit 4                     : pkInitClientAuth      : PKINIT Client Auth
 id-pkinit 5                     : pkInitKDC             : Signing KDC Response
 
-# New curves from draft-josefsson-pkix-newcurves
-
-1 3 6 1 4 1 11591 15 1      : X25519
-1 3 6 1 4 1 11591 15 2      : X448
+# New curves from draft-ietf-curdle-pkix-00
+1 3 101 110 : X25519
+1 3 101 111 : X448
 
 # NIDs for cipher key exchange
                             : KxRSA        : kx-rsa

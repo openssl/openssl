@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[6777] = {
+static const unsigned char so[6765] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -954,13 +954,13 @@ static const unsigned char so[6777] = {
     0x2B,0x06,0x01,0x05,0x02,0x03,                 /* [ 6683] OBJ_id_pkinit */
     0x2B,0x06,0x01,0x05,0x02,0x03,0x04,            /* [ 6689] OBJ_pkInitClientAuth */
     0x2B,0x06,0x01,0x05,0x02,0x03,0x05,            /* [ 6696] OBJ_pkInitKDC */
-    0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x01,  /* [ 6703] OBJ_X25519 */
-    0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x02,  /* [ 6712] OBJ_X448 */
-    0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x01,0x10,  /* [ 6721] OBJ_blake2b512 */
-    0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x02,0x08,  /* [ 6732] OBJ_blake2s256 */
-    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x13,  /* [ 6743] OBJ_id_smime_ct_contentCollection */
-    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x17,  /* [ 6754] OBJ_id_smime_ct_authEnvelopedData */
-    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x1C,  /* [ 6765] OBJ_id_ct_xml */
+    0x2B,0x65,0x6E,                                /* [ 6703] OBJ_X25519 */
+    0x2B,0x65,0x6F,                                /* [ 6706] OBJ_X448 */
+    0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x01,0x10,  /* [ 6709] OBJ_blake2b512 */
+    0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x02,0x08,  /* [ 6720] OBJ_blake2s256 */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x13,  /* [ 6731] OBJ_id_smime_ct_contentCollection */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x17,  /* [ 6742] OBJ_id_smime_ct_authEnvelopedData */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x1C,  /* [ 6753] OBJ_id_ct_xml */
 };
 
 #define NUM_NID 1061
@@ -1999,8 +1999,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-pkinit", "id-pkinit", NID_id_pkinit, 6, &so[6683]},
     {"pkInitClientAuth", "PKINIT Client Auth", NID_pkInitClientAuth, 7, &so[6689]},
     {"pkInitKDC", "Signing KDC Response", NID_pkInitKDC, 7, &so[6696]},
-    {"X25519", "X25519", NID_X25519, 9, &so[6703]},
-    {"X448", "X448", NID_X448, 9, &so[6712]},
+    {"X25519", "X25519", NID_X25519, 3, &so[6703]},
+    {"X448", "X448", NID_X448, 3, &so[6706]},
     {"HKDF", "hkdf", NID_hkdf},
     {"KxRSA", "kx-rsa", NID_kx_rsa},
     {"KxECDHE", "kx-ecdhe", NID_kx_ecdhe},
@@ -2021,11 +2021,11 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"AuthNULL", "auth-null", NID_auth_null},
     { NULL, NULL, NID_undef },
     { NULL, NULL, NID_undef },
-    {"BLAKE2b512", "blake2b512", NID_blake2b512, 11, &so[6721]},
-    {"BLAKE2s256", "blake2s256", NID_blake2s256, 11, &so[6732]},
-    {"id-smime-ct-contentCollection", "id-smime-ct-contentCollection", NID_id_smime_ct_contentCollection, 11, &so[6743]},
-    {"id-smime-ct-authEnvelopedData", "id-smime-ct-authEnvelopedData", NID_id_smime_ct_authEnvelopedData, 11, &so[6754]},
-    {"id-ct-xml", "id-ct-xml", NID_id_ct_xml, 11, &so[6765]},
+    {"BLAKE2b512", "blake2b512", NID_blake2b512, 11, &so[6709]},
+    {"BLAKE2s256", "blake2s256", NID_blake2s256, 11, &so[6720]},
+    {"id-smime-ct-contentCollection", "id-smime-ct-contentCollection", NID_id_smime_ct_contentCollection, 11, &so[6731]},
+    {"id-smime-ct-authEnvelopedData", "id-smime-ct-authEnvelopedData", NID_id_smime_ct_authEnvelopedData, 11, &so[6742]},
+    {"id-ct-xml", "id-ct-xml", NID_id_ct_xml, 11, &so[6753]},
 };
 
 #define NUM_SN 1052
@@ -4163,6 +4163,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      435,    /* OBJ_pss                          0 9 2342 */
      183,    /* OBJ_ISO_US                       1 2 840 */
      381,    /* OBJ_iana                         1 3 6 1 */
+    1034,    /* OBJ_X25519                       1 3 101 110 */
+    1035,    /* OBJ_X448                         1 3 101 111 */
      677,    /* OBJ_certicom_arc                 1 3 132 */
      394,    /* OBJ_selected_attribute_types     2 5 1 5 */
       13,    /* OBJ_commonName                   2 5 4 3 */
@@ -4843,8 +4845,6 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      390,    /* OBJ_dcObject                     1 3 6 1 4 1 1466 344 */
       91,    /* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
      973,    /* OBJ_id_scrypt                    1 3 6 1 4 1 11591 4 11 */
-    1034,    /* OBJ_X25519                       1 3 6 1 4 1 11591 15 1 */
-    1035,    /* OBJ_X448                         1 3 6 1 4 1 11591 15 2 */
      315,    /* OBJ_id_regCtrl_regToken          1 3 6 1 5 5 7 5 1 1 */
      316,    /* OBJ_id_regCtrl_authenticator     1 3 6 1 5 5 7 5 1 2 */
      317,    /* OBJ_id_regCtrl_pkiPublicationInfo 1 3 6 1 5 5 7 5 1 3 */

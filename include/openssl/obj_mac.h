@@ -4502,11 +4502,11 @@
 
 #define SN_X25519               "X25519"
 #define NID_X25519              1034
-#define OBJ_X25519              1L,3L,6L,1L,4L,1L,11591L,15L,1L
+#define OBJ_X25519              1L,3L,101L,110L
 
 #define SN_X448         "X448"
 #define NID_X448                1035
-#define OBJ_X448                1L,3L,6L,1L,4L,1L,11591L,15L,2L
+#define OBJ_X448                1L,3L,101L,111L
 
 #define SN_kx_rsa               "KxRSA"
 #define LN_kx_rsa               "kx-rsa"
