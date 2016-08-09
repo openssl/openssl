@@ -1220,7 +1220,7 @@ int test_gf2m_add(BIO *bp)
     c = BN_new();
 
     for (i = 0; i < num0; i++) {
-        BN_rand(a, 512, 0, 0);
+        BN_rand(a, 512, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY);
         BN_copy(b, BN_value_one());
         a->neg = rand_neg();
         b->neg = rand_neg();
