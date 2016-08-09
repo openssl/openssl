@@ -60,6 +60,11 @@ typedef enum {
     SSL_TEST_HANDSHAKE_RENEGOTIATE
 } ssl_handshake_mode_t;
 
+typedef enum {
+    SSL_TEST_CT_VALIDATION_NONE = 0, /* Default */
+    SSL_TEST_CT_VALIDATION_PERMISSIVE,
+    SSL_TEST_CT_VALIDATION_STRICT
+} ssl_ct_validation_t;
 /*
  * Server/client settings that aren't supported by the SSL CONF library,
  * such as callbacks.
@@ -72,6 +77,7 @@ typedef struct {
     /* Supported NPN and ALPN protocols. A comma-separated list. */
     char *npn_protocols;
     char *alpn_protocols;
+    ssl_ct_validation_t ct_validation;
 } SSL_TEST_CLIENT_CONF;
 
 typedef struct {
@@ -150,6 +156,7 @@ const char *ssl_servername_callback_name(ssl_servername_callback_t
 const char *ssl_session_ticket_name(ssl_session_ticket_t server);
 const char *ssl_test_method_name(ssl_test_method_t method);
 const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode);
+const char *ssl_ct_validation_name(ssl_ct_validation_t mode);
 
 /*
  * Load the test case context from |conf|.

@@ -79,7 +79,7 @@ my $client_sess="client.ss";
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
-    +8  			# For the first testssl
+    +7  			# For the first testssl
     ;
 
 subtest 'test_ss' => sub {
@@ -600,28 +600,6 @@ sub testssl {
 
 	  ok(run(test([@ssltest, "-cipher", "AES128-SHA256", "-bytes", "8m"])));
 	}
-    };
-
-    subtest 'Certificate Transparency tests' => sub {
-	######################################################################
-
-	plan tests => 3;
-
-      SKIP: {
-        skip "Certificate Transparency is not supported by this OpenSSL build", 3
-            if $no_ct;
-        skip "TLSv1.0 is not supported by this OpenSSL build", 3
-            if $no_tls1;
-
-        $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
-        my @ca = qw(-CAfile certCA.ss);
-        ok(run(test([@ssltest, @ca, "-bio_pair", "-tls1", "-noct"])));
-        # No SCTs provided, so this should fail.
-        ok(run(test([@ssltest, @ca, "-bio_pair", "-tls1", "-ct",
-                     "-should_negotiate", "fail-client"])));
-        # No SCTs provided, unverified chains still succeed.
-        ok(run(test([@ssltest, "-bio_pair", "-tls1", "-ct"])));
-        }
     };
 }
 
