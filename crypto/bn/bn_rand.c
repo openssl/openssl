@@ -130,7 +130,7 @@ static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
          * than range
          */
         do {
-            if (!bn_rand(r, n + 1, -1, 0))
+            if (!bn_rand(r, n + 1, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
                 return 0;
             /*
              * If r < 3*range, use r := r MOD range (which is either r, r -
@@ -156,7 +156,7 @@ static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
     } else {
         do {
             /* range = 11..._2  or  range = 101..._2 */
-            if (!bn_rand(r, n, -1, 0))
+            if (!bn_rand(r, n, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
                 return 0;
 
             if (!--count) {
