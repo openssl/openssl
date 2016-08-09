@@ -264,6 +264,7 @@ static int test_good_configuration()
 
 static const char *bad_configurations[] = {
     "ssltest_unknown_option",
+    "ssltest_wrong_section",
     "ssltest_unknown_expected_result",
     "ssltest_unknown_alert",
     "ssltest_unknown_protocol",
