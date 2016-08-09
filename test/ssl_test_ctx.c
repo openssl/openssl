@@ -14,6 +14,7 @@
 
 #include "e_os.h"
 #include "ssl_test_ctx.h"
+#include "testutil.h"
 
 /* True enums and other test configuration values that map to an int. */
 typedef struct {
@@ -401,14 +402,14 @@ static const ssl_test_server_option ssl_test_server_options[] = {
 };
 
 /*
- * Since these methods are used to create tests, we use OPENSSL_assert liberally
+ * Since these methods are used to create tests, we use TEST_check liberally
  * for malloc failures and other internal errors.
  */
 SSL_TEST_CTX *SSL_TEST_CTX_new()
 {
     SSL_TEST_CTX *ret;
     ret = OPENSSL_zalloc(sizeof(*ret));
-    OPENSSL_assert(ret != NULL);
+    TEST_check(ret != NULL);
     return ret;
 }
 
@@ -444,7 +445,7 @@ static int parse_client_options(SSL_TEST_CLIENT_CONF *client, const CONF *conf,
     size_t j;
 
     sk_conf = NCONF_get_section(conf, client_section);
-    OPENSSL_assert(sk_conf != NULL);
+    TEST_check(sk_conf != NULL);
 
     for (i = 0; i < sk_CONF_VALUE_num(sk_conf); i++) {
         int found = 0;
@@ -477,7 +478,7 @@ static int parse_server_options(SSL_TEST_SERVER_CONF *server, const CONF *conf,
     size_t j;
 
     sk_conf = NCONF_get_section(conf, server_section);
-    OPENSSL_assert(sk_conf != NULL);
+    TEST_check(sk_conf != NULL);
 
     for (i = 0; i < sk_CONF_VALUE_num(sk_conf); i++) {
         int found = 0;
@@ -510,10 +511,10 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
     size_t j;
 
     sk_conf = NCONF_get_section(conf, test_section);
-    OPENSSL_assert(sk_conf != NULL);
+    TEST_check(sk_conf != NULL);
 
     ctx = SSL_TEST_CTX_new();
-    OPENSSL_assert(ctx != NULL);
+    TEST_check(ctx != NULL);
 
     for (i = 0; i < sk_CONF_VALUE_num(sk_conf); i++) {
         int found = 0;

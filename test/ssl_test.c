@@ -230,14 +230,14 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
         if (test_ctx->extra.server.servername_callback !=
             SSL_TEST_SERVERNAME_CB_NONE) {
             server2_ctx = SSL_CTX_new(DTLS_server_method());
-            OPENSSL_assert(server2_ctx != NULL);
+            TEST_check(server2_ctx != NULL);
         }
         client_ctx = SSL_CTX_new(DTLS_client_method());
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             resume_server_ctx = SSL_CTX_new(DTLS_server_method());
             resume_client_ctx = SSL_CTX_new(DTLS_client_method());
-            OPENSSL_assert(resume_server_ctx != NULL);
-            OPENSSL_assert(resume_client_ctx != NULL);
+            TEST_check(resume_server_ctx != NULL);
+            TEST_check(resume_client_ctx != NULL);
         }
     }
 #endif
@@ -247,22 +247,22 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
         if (test_ctx->extra.server.servername_callback !=
             SSL_TEST_SERVERNAME_CB_NONE) {
             server2_ctx = SSL_CTX_new(TLS_server_method());
-            OPENSSL_assert(server2_ctx != NULL);
+            TEST_check(server2_ctx != NULL);
         }
         client_ctx = SSL_CTX_new(TLS_client_method());
 
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             resume_server_ctx = SSL_CTX_new(TLS_server_method());
             resume_client_ctx = SSL_CTX_new(TLS_client_method());
-            OPENSSL_assert(resume_server_ctx != NULL);
-            OPENSSL_assert(resume_client_ctx != NULL);
+            TEST_check(resume_server_ctx != NULL);
+            TEST_check(resume_client_ctx != NULL);
         }
     }
 
-    OPENSSL_assert(server_ctx != NULL);
-    OPENSSL_assert(client_ctx != NULL);
+    TEST_check(server_ctx != NULL);
+    TEST_check(client_ctx != NULL);
 
-    OPENSSL_assert(CONF_modules_load(conf, fixture.test_app, 0) > 0);
+    TEST_check(CONF_modules_load(conf, fixture.test_app, 0) > 0);
 
     if (!SSL_CTX_config(server_ctx, "server")
         || !SSL_CTX_config(client_ctx, "client")) {
@@ -323,12 +323,12 @@ int main(int argc, char **argv)
         return 1;
 
     conf = NCONF_new(NULL);
-    OPENSSL_assert(conf != NULL);
+    TEST_check(conf != NULL);
 
     /* argv[1] should point to the test conf file */
-    OPENSSL_assert(NCONF_load(conf, argv[1], NULL) > 0);
+    TEST_check(NCONF_load(conf, argv[1], NULL) > 0);
 
-    OPENSSL_assert(NCONF_get_number_e(conf, NULL, "num_tests", &num_tests));
+    TEST_check(NCONF_get_number_e(conf, NULL, "num_tests", &num_tests));
 
     ADD_ALL_TESTS(test_handshake, (int)(num_tests));
     result = run_tests(argv[0]);

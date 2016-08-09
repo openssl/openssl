@@ -10,6 +10,8 @@
 #ifndef HEADER_TESTUTIL_H
 # define HEADER_TESTUTIL_H
 
+#include <openssl/err.h>
+
 /*-
  * SETUP_TEST_FIXTURE and EXECUTE_TEST macros for test case functions.
  *
@@ -94,3 +96,16 @@ int run_tests(const char *test_prog_name);
  */
 int strings_equal(const char *desc, const char *s1, const char *s2);
 #endif                          /* HEADER_TESTUTIL_H */
+
+/*
+ * For "impossible" conditions such as malloc failures or bugs in test code,
+ * where continuing the test would be meaningless. Note that OPENSSL_assert
+ * is fatal, and is never compiled out.
+ */
+#define TEST_check(condition)                   \
+    do {                                        \
+        if (!(condition)) {                     \
+            ERR_print_errors_fp(stderr);        \
+            OPENSSL_assert(!#condition);        \
+        }                                       \
+    } while (0);
