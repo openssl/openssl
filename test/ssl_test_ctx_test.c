@@ -174,7 +174,7 @@ static SSL_TEST_CTX_TEST_FIXTURE set_up(const char *const test_case_name)
     SSL_TEST_CTX_TEST_FIXTURE fixture;
     fixture.test_case_name = test_case_name;
     fixture.expected_ctx = SSL_TEST_CTX_new();
-    OPENSSL_assert(fixture.expected_ctx != NULL);
+    TEST_check(fixture.expected_ctx != NULL);
     return fixture;
 }
 
@@ -254,7 +254,7 @@ static int test_good_configuration()
     fixture.expected_ctx->extra.client.servername = SSL_TEST_SERVERNAME_SERVER2;
     fixture.expected_ctx->extra.client.npn_protocols =
         OPENSSL_strdup("foo,bar");
-    OPENSSL_assert(fixture.expected_ctx->extra.client.npn_protocols != NULL);
+    TEST_check(fixture.expected_ctx->extra.client.npn_protocols != NULL);
 
     fixture.expected_ctx->extra.server.servername_callback =
         SSL_TEST_SERVERNAME_IGNORE_MISMATCH;
@@ -262,7 +262,7 @@ static int test_good_configuration()
 
     fixture.expected_ctx->resume_extra.server2.alpn_protocols =
         OPENSSL_strdup("baz");
-    OPENSSL_assert(
+    TEST_check(
         fixture.expected_ctx->resume_extra.server2.alpn_protocols != NULL);
 
     fixture.expected_ctx->resume_extra.client.ct_validation =
@@ -302,11 +302,10 @@ int main(int argc, char **argv)
         return 1;
 
     conf = NCONF_new(NULL);
-    OPENSSL_assert(conf != NULL);
+    TEST_check(conf != NULL);
 
     /* argv[1] should point to test/ssl_test_ctx_test.conf */
-    OPENSSL_assert(NCONF_load(conf, argv[1], NULL) > 0);
-
+    TEST_check(NCONF_load(conf, argv[1], NULL) > 0);
 
     ADD_TEST(test_empty_configuration);
     ADD_TEST(test_good_configuration);
