@@ -14,12 +14,12 @@
 #include <openssl/ssl.h>
 
 #include "handshake_helper.h"
+#include "testutil.h"
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new()
 {
-    HANDSHAKE_RESULT *ret;
-    ret = OPENSSL_zalloc(sizeof(*ret));
-    OPENSSL_assert(ret != NULL);
+    HANDSHAKE_RESULT *ret = OPENSSL_zalloc(sizeof(*ret));
+    TEST_check(ret != NULL);
     return ret;
 }
 
@@ -172,11 +172,11 @@ static void parse_protos(const char *protos, unsigned char **out, size_t *outlen
     len = strlen(protos);
 
     /* Should never have reuse. */
-    OPENSSL_assert(*out == NULL);
+    TEST_check(*out == NULL);
 
     /* Test values are small, so we omit length limit checks. */
     *out = OPENSSL_malloc(len + 1);
-    OPENSSL_assert(*out != NULL);
+    TEST_check(*out != NULL);
     *outlen = len + 1;
 
     /*
@@ -189,13 +189,13 @@ static void parse_protos(const char *protos, unsigned char **out, size_t *outlen
     i = prefix + 1;
     while (i <= len) {
         if ((*out)[i] == ',') {
-            OPENSSL_assert(i - 1 - prefix > 0);
+            TEST_check(i - 1 - prefix > 0);
             (*out)[prefix] = i - 1 - prefix;
             prefix = i;
         }
         i++;
     }
-    OPENSSL_assert(len - prefix > 0);
+    TEST_check(len - prefix > 0);
     (*out)[prefix] = len - prefix;
 }
 
@@ -217,8 +217,7 @@ static int client_npn_cb(SSL *s, unsigned char **out, unsigned char *outlen,
                                 ctx_data->npn_protocols,
                                 ctx_data->npn_protocols_len);
     /* Accept both OPENSSL_NPN_NEGOTIATED and OPENSSL_NPN_NO_OVERLAP. */
-    OPENSSL_assert(ret == OPENSSL_NPN_NEGOTIATED
-                   || ret == OPENSSL_NPN_NO_OVERLAP);
+    TEST_check(ret == OPENSSL_NPN_NEGOTIATED || ret == OPENSSL_NPN_NO_OVERLAP);
     return SSL_TLSEXT_ERR_OK;
 }
 
@@ -328,7 +327,7 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         parse_protos(extra->server2.npn_protocols,
                      &server2_ctx_data->npn_protocols,
                      &server2_ctx_data->npn_protocols_len);
-        OPENSSL_assert(server2_ctx != NULL);
+        TEST_check(server2_ctx != NULL);
         SSL_CTX_set_next_protos_advertised_cb(server2_ctx, server_npn_cb,
                                               server2_ctx_data);
     }
@@ -347,7 +346,7 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         SSL_CTX_set_alpn_select_cb(server_ctx, server_alpn_cb, server_ctx_data);
     }
     if (extra->server2.alpn_protocols != NULL) {
-        OPENSSL_assert(server2_ctx != NULL);
+        TEST_check(server2_ctx != NULL);
         parse_protos(extra->server2.alpn_protocols,
                      &server2_ctx_data->alpn_protocols,
                      &server2_ctx_data->alpn_protocols_len);
@@ -359,8 +358,8 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         parse_protos(extra->client.alpn_protocols,
                      &alpn_protos, &alpn_protos_len);
         /* Reversed return value convention... */
-        OPENSSL_assert(SSL_CTX_set_alpn_protos(client_ctx, alpn_protos,
-                                               alpn_protos_len) == 0);
+        TEST_check(SSL_CTX_set_alpn_protos(client_ctx, alpn_protos,
+                                           alpn_protos_len) == 0);
         OPENSSL_free(alpn_protos);
     }
 
@@ -370,21 +369,19 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
      */
     ticket_key_len = SSL_CTX_set_tlsext_ticket_keys(server_ctx, NULL, 0);
     ticket_keys = OPENSSL_zalloc(ticket_key_len);
-    OPENSSL_assert(ticket_keys != NULL);
-    OPENSSL_assert(SSL_CTX_set_tlsext_ticket_keys(server_ctx, ticket_keys,
-                                                  ticket_key_len) == 1);
+    TEST_check(ticket_keys != NULL);
+    TEST_check(SSL_CTX_set_tlsext_ticket_keys(server_ctx, ticket_keys,
+                                              ticket_key_len) == 1);
     OPENSSL_free(ticket_keys);
 
 #ifndef OPENSSL_NO_CT
-    OPENSSL_assert(SSL_CTX_set_default_ctlog_list_file(client_ctx));
+    TEST_check(SSL_CTX_set_default_ctlog_list_file(client_ctx));
     switch (extra->client.ct_validation) {
     case SSL_TEST_CT_VALIDATION_PERMISSIVE:
-        OPENSSL_assert(SSL_CTX_enable_ct(client_ctx,
-                                         SSL_CT_VALIDATION_PERMISSIVE));
+        TEST_check(SSL_CTX_enable_ct(client_ctx, SSL_CT_VALIDATION_PERMISSIVE));
         break;
     case SSL_TEST_CT_VALIDATION_STRICT:
-        OPENSSL_assert(SSL_CTX_enable_ct(client_ctx,
-                                         SSL_CT_VALIDATION_STRICT));
+        TEST_check(SSL_CTX_enable_ct(client_ctx, SSL_CT_VALIDATION_STRICT));
         break;
     case SSL_TEST_CT_VALIDATION_NONE:
         break;
@@ -525,9 +522,9 @@ static char *dup_str(const unsigned char *in, size_t len)
         return NULL;
 
     /* Assert that the string does not contain NUL-bytes. */
-    OPENSSL_assert(OPENSSL_strnlen((const char*)(in), len) == len);
+    TEST_check(OPENSSL_strnlen((const char*)(in), len) == len);
     ret = OPENSSL_strndup((const char*)(in), len);
-    OPENSSL_assert(ret != NULL);
+    TEST_check(ret != NULL);
     return ret;
 }
 
@@ -560,13 +557,14 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     server = SSL_new(server_ctx);
     client = SSL_new(client_ctx);
-    OPENSSL_assert(server != NULL && client != NULL);
+    TEST_check(server != NULL);
+    TEST_check(client != NULL);
 
     configure_handshake_ssl(server, client, extra);
     if (session_in != NULL) {
         /* In case we're testing resumption without tickets. */
-        OPENSSL_assert(SSL_CTX_add_session(server_ctx, session_in));
-        OPENSSL_assert(SSL_set_session(client, session_in));
+        TEST_check(SSL_CTX_add_session(server_ctx, session_in));
+        TEST_check(SSL_set_session(client, session_in));
     }
 
     memset(&server_ex_data, 0, sizeof(server_ex_data));
@@ -577,7 +575,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     client_to_server = BIO_new(BIO_s_mem());
     server_to_client = BIO_new(BIO_s_mem());
 
-    OPENSSL_assert(client_to_server != NULL && server_to_client != NULL);
+    TEST_check(client_to_server != NULL && server_to_client != NULL);
 
     /* Non-blocking bio. */
     BIO_set_nbio(client_to_server, 1);
@@ -588,16 +586,16 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     /* The bios are now owned by the SSL object. */
     SSL_set_bio(client, server_to_client, client_to_server);
-    OPENSSL_assert(BIO_up_ref(server_to_client) > 0);
-    OPENSSL_assert(BIO_up_ref(client_to_server) > 0);
+    TEST_check(BIO_up_ref(server_to_client) > 0);
+    TEST_check(BIO_up_ref(client_to_server) > 0);
     SSL_set_bio(server, client_to_server, server_to_client);
 
     ex_data_idx = SSL_get_ex_new_index(0, "ex data", NULL, NULL, NULL);
-    OPENSSL_assert(ex_data_idx >= 0);
+    TEST_check(ex_data_idx >= 0);
 
-    OPENSSL_assert(SSL_set_ex_data(server, ex_data_idx,
+    TEST_check(SSL_set_ex_data(server, ex_data_idx,
                                    &server_ex_data) == 1);
-    OPENSSL_assert(SSL_set_ex_data(client, ex_data_idx,
+    TEST_check(SSL_set_ex_data(client, ex_data_idx,
                                    &client_ex_data) == 1);
 
     SSL_set_info_callback(server, &info_cb);
@@ -706,7 +704,7 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_SIMPLE)
         goto end;
 
-    OPENSSL_assert(test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME);
+    TEST_check(test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME);
 
     if (result->result != SSL_TEST_SUCCESS) {
         result->result = SSL_TEST_FIRST_HANDSHAKE_FAILED;
