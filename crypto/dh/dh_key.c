@@ -106,7 +106,7 @@ static int generate_key(DH *dh)
         } else {
             /* secret exponent length */
             l = dh->length ? dh->length : BN_num_bits(dh->p) - 1;
-            if (!BN_rand(priv_key, l, 0, 0))
+            if (!BN_rand(priv_key, l, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
                 goto err;
         }
     }

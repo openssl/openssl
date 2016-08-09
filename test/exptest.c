@@ -72,7 +72,7 @@ static int test_exp_mod_zero()
     if (!r)
         goto err;
 
-    if (!BN_rand(a, 1024, 0, 0))
+    if (!BN_rand(a, 1024, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
         goto err;
 
     if (!BN_mod_exp(r, a, p, m, ctx))
@@ -168,15 +168,15 @@ int main(int argc, char *argv[])
     for (i = 0; i < 200; i++) {
         RAND_bytes(&c, 1);
         c = (c % BN_BITS) - BN_BITS2;
-        BN_rand(a, NUM_BITS + c, 0, 0);
+        BN_rand(a, NUM_BITS + c, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY);
 
         RAND_bytes(&c, 1);
         c = (c % BN_BITS) - BN_BITS2;
-        BN_rand(b, NUM_BITS + c, 0, 0);
+        BN_rand(b, NUM_BITS + c, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY);
 
         RAND_bytes(&c, 1);
         c = (c % BN_BITS) - BN_BITS2;
-        BN_rand(m, NUM_BITS + c, 0, 1);
+        BN_rand(m, NUM_BITS + c, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD);
 
         BN_mod(a, a, m, ctx);
         BN_mod(b, b, m, ctx);

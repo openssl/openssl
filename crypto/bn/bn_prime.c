@@ -310,7 +310,7 @@ int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx)
     int ret = 0;
 
  loop:
-    if (!BN_rand(rnd, bits, 0, 1))
+    if (!BN_rand(rnd, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
         goto err;
 
     /* we now have a random number 'rand' to test. */
@@ -350,7 +350,8 @@ int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx)
         goto err;
 
  loop:
-    if (!BN_rand(rnd, bits - prime_multiplier_bits, 0, 1))
+    if (!BN_rand(rnd, bits - prime_multiplier_bits,
+                 BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
         goto err;
     if (BN_is_bit_set(rnd, bits))
         goto loop;
@@ -415,7 +416,7 @@ static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods)
     char is_single_word = bits <= BN_BITS2;
 
  again:
-    if (!BN_rand(rnd, bits, 1, 1))
+    if (!BN_rand(rnd, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ODD))
         return (0);
     /* we now have a random number 'rnd' to test. */
     for (i = 1; i < NUMPRIMES; i++) {
@@ -499,7 +500,7 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
     if ((t1 = BN_CTX_get(ctx)) == NULL)
         goto err;
 
-    if (!BN_rand(rnd, bits, 0, 1))
+    if (!BN_rand(rnd, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
         goto err;
 
     /* we need ((rnd-rem) % add) == 0 */
@@ -555,7 +556,7 @@ static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
     if (!BN_rshift1(qadd, padd))
         goto err;
 
-    if (!BN_rand(q, bits, 0, 1))
+    if (!BN_rand(q, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
         goto err;
 
     /* we need ((rnd-rem) % add) == 0 */
