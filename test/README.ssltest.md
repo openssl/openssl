@@ -143,6 +143,11 @@ client => {
   - server2 - the secondary context
   - invalid - an unknown context
 
+* CTValidation - Certificate Transparency validation strategy. One of
+  - None - no validation (default)
+  - Permissive - SSL_CT_VALIDATION_PERMISSIVE
+  - Strict - SSL_CT_VALIDATION_STRICT
+
 #### Supported server-side options
 
 * ServerNameCallback - the SNI switching callback to use
@@ -211,6 +216,10 @@ or for shared builds
 $ TEST_CERTS_DIR=test/certs util/shlib_wrap.sh test/ssl_test \
   test/ssl-tests/01-simple.conf
 ```
+
+Some tests also need additional environment variables; for example, Certificate
+Transparency tests need a `CTLOG_FILE`. See `test/recipes/80-test_ssl_new.t` for
+details.
 
 Note that the test expectations sometimes depend on the Configure settings. For
 example, the negotiated protocol depends on the set of available (enabled)

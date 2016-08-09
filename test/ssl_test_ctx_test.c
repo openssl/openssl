@@ -54,6 +54,12 @@ static int SSL_TEST_CLIENT_CONF_equal(SSL_TEST_CLIENT_CONF *client,
     if (!strings_equal("Client ALPNProtocols", client->alpn_protocols,
                        client2->alpn_protocols))
         return 0;
+    if (client->ct_validation != client2->ct_validation) {
+        fprintf(stderr, "CTValidation mismatch: %s vs %s.\n",
+                ssl_ct_validation_name(client->ct_validation),
+                ssl_ct_validation_name(client2->ct_validation));
+        return 0;
+    }
     return 1;
 }
 
@@ -259,6 +265,9 @@ static int test_good_configuration()
     OPENSSL_assert(
         fixture.expected_ctx->resume_extra.server2.alpn_protocols != NULL);
 
+    fixture.expected_ctx->resume_extra.client.ct_validation =
+        SSL_TEST_CT_VALIDATION_STRICT;
+
     EXECUTE_SSL_TEST_CTX_TEST();
 }
 
@@ -274,6 +283,7 @@ static const char *bad_configurations[] = {
     "ssltest_unknown_method",
     "ssltest_unknown_handshake_mode",
     "ssltest_unknown_resumption_expected",
+    "ssltest_unknown_ct_validation",
 };
 
 static int test_bad_configuration(int idx)

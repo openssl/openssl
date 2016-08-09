@@ -374,6 +374,22 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     OPENSSL_assert(SSL_CTX_set_tlsext_ticket_keys(server_ctx, ticket_keys,
                                                   ticket_key_len) == 1);
     OPENSSL_free(ticket_keys);
+
+#ifndef OPENSSL_NO_CT
+    OPENSSL_assert(SSL_CTX_set_default_ctlog_list_file(client_ctx));
+    switch (extra->client.ct_validation) {
+    case SSL_TEST_CT_VALIDATION_PERMISSIVE:
+        OPENSSL_assert(SSL_CTX_enable_ct(client_ctx,
+                                         SSL_CT_VALIDATION_PERMISSIVE));
+        break;
+    case SSL_TEST_CT_VALIDATION_STRICT:
+        OPENSSL_assert(SSL_CTX_enable_ct(client_ctx,
+                                         SSL_CT_VALIDATION_STRICT));
+        break;
+    case SSL_TEST_CT_VALIDATION_NONE:
+        break;
+    }
+#endif
 }
 
 /* Configure per-SSL callbacks and other properties. */
