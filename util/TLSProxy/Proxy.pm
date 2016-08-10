@@ -493,4 +493,15 @@ sub serverpid
     }
     return $self->{serverpid};
 }
+
+sub fill_known_data
+{
+    my $length = shift;
+    my $ret = "";
+    for (my $i = 0; $i < $length; $i++) {
+        $ret .= chr($i);
+    }
+    return $ret;
+}
+
 1;
