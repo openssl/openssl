@@ -376,7 +376,8 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                               ticket_key_len) == 1);
     OPENSSL_free(ticket_keys);
 
-#ifndef OPENSSL_NO_CT
+    /* The default log list includes EC keys, so CT can't work without EC. */
+#if !defined(OPENSSL_NO_CT) && !defined(OPENSSL_NO_EC)
     TEST_check(SSL_CTX_set_default_ctlog_list_file(client_ctx));
     switch (extra->client.ct_validation) {
     case SSL_TEST_CT_VALIDATION_PERMISSIVE:
