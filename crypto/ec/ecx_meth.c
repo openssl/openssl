@@ -35,15 +35,18 @@ typedef enum {
 static int ecx_key_op(EVP_PKEY *pkey, X509_ALGOR *palg,
                       const unsigned char *p, int plen, ecx_key_op_t op)
 {
-    int ptype;
-    X25519_KEY *xkey = NULL;
+    X25519_KEY *xkey;
 
     if (op != X25519_KEYGEN) {
-        /* Algorithm parameters must be absent */
-        X509_ALGOR_get0(NULL, &ptype, NULL, palg);
-        if (ptype != V_ASN1_UNDEF) {
-            ECerr(EC_F_ECX_KEY_OP, EC_R_INVALID_ENCODING);
-            return 0;
+        if (palg != NULL) {
+            int ptype;
+
+            /* Algorithm parameters must be absent */
+            X509_ALGOR_get0(NULL, &ptype, NULL, palg);
+            if (ptype != V_ASN1_UNDEF) {
+                ECerr(EC_F_ECX_KEY_OP, EC_R_INVALID_ENCODING);
+                return 0;
+            }
         }
 
         if (p == NULL || plen != X25519_KEYLEN) {
@@ -266,7 +269,29 @@ static int ecx_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 
 static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
-    return -2;
+    switch (op) {
+
+    case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
+        return ecx_key_op(pkey, NULL, arg2, arg1, X25519_PUBLIC);
+
+    case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
+        if (pkey->pkey.ptr != NULL) {
+            const X25519_KEY *xkey = pkey->pkey.ptr;
+            unsigned char **ppt = arg2;
+            *ppt = OPENSSL_memdup(xkey->pubkey, X25519_KEYLEN);
+            if (*ppt != NULL)
+                return X25519_KEYLEN;
+        }
+        return 0;
+
+    case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
+        *(int *)arg2 = NID_sha256;
+        return 2;
+
+    default:
+        return -2;
+
+    }
 }
 
 const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
