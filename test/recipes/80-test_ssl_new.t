@@ -42,6 +42,7 @@ my $no_tls = alldisabled(available_protocols("tls"));
 my $no_dtls = alldisabled(available_protocols("dtls"));
 my $no_npn = disabled("nextprotoneg");
 my $no_ct = disabled("ct");
+my $no_ec = disabled("ec");
 
 my %conf_dependent_tests = (
   "02-protocol-version.conf" => !$is_default_tls,
@@ -57,7 +58,7 @@ my %skip = (
   "08-npn.conf" => $no_tls || $no_npn,
   "10-resumption.conf" => disabled("tls1_1") || disabled("tls1_2"),
   "11-dtls_resumption.conf" => disabled("dtls1") || disabled("dtls1_2"),
-  "12-ct.conf" => $no_tls || $no_ct,
+  "12-ct.conf" => $no_tls || $no_ct || $no_ec,
 );
 
 foreach my $conf (@conf_files) {
