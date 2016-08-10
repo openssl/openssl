@@ -1396,6 +1396,9 @@ int ERR_load_EC_strings(void);
 # define EC_F_ECP_NISTZ256_POINTS_MUL                     241
 # define EC_F_ECP_NISTZ256_PRE_COMP_NEW                   244
 # define EC_F_ECP_NISTZ256_WINDOWED_MUL                   242
+# define EC_F_ECX_KEY_OP                                  266
+# define EC_F_ECX_PRIV_ENCODE                             267
+# define EC_F_ECX_PUB_ENCODE                              268
 # define EC_F_EC_ASN1_GROUP2CURVE                         153
 # define EC_F_EC_ASN1_GROUP2FIELDID                       154
 # define EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY           208
@@ -1500,6 +1503,7 @@ int ERR_load_EC_strings(void);
 # define EC_F_OSSL_ECDH_COMPUTE_KEY                       247
 # define EC_F_OSSL_ECDSA_SIGN_SIG                         249
 # define EC_F_OSSL_ECDSA_VERIFY_SIG                       250
+# define EC_F_PKEY_ECX_DERIVE                             269
 # define EC_F_PKEY_EC_CTRL                                197
 # define EC_F_PKEY_EC_CTRL_STR                            198
 # define EC_F_PKEY_EC_DERIVE                              217
@@ -1534,7 +1538,9 @@ int ERR_load_EC_strings(void);
 # define EC_R_INVALID_FIELD                               103
 # define EC_R_INVALID_FORM                                104
 # define EC_R_INVALID_GROUP_ORDER                         122
+# define EC_R_INVALID_KEY                                 116
 # define EC_R_INVALID_OUTPUT_LENGTH                       161
+# define EC_R_INVALID_PEER_KEY                            133
 # define EC_R_INVALID_PENTANOMIAL_BASIS                   132
 # define EC_R_INVALID_PRIVATE_KEY                         123
 # define EC_R_INVALID_TRINOMIAL_BASIS                     137
