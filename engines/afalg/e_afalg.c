@@ -230,6 +230,10 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     memset(cb, '\0', sizeof(*cb));
     cb->aio_fildes = sfd;
     cb->aio_lio_opcode = IOCB_CMD_PREAD;
+    /*
+     * The pointer has to be converted to unsigned value first to avoid
+     * sign extension on cast to 64 bit value
+     */
     cb->aio_buf = (uint64_t)(unsigned long)buf;
     cb->aio_offset = 0;
     cb->aio_data = 0;
