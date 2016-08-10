@@ -199,14 +199,14 @@ sub get_messages
         print "  [".$record->decrypt_data."]\n";
     } elsif ($record->content_type == TLSProxy::Record::RT_ALERT) {
         my ($alertlev, $alertdesc) = unpack('CC', $record->decrypt_data);
-        #All alerts end the test
-        $end = 1;
         #A CloseNotify from the client indicates we have finished successfully
         #(we assume)
-        if (!$server && $alertlev == AL_LEVEL_WARN
+        if (!$end && !$server && $alertlev == AL_LEVEL_WARN
             && $alertdesc == AL_DESC_CLOSE_NOTIFY) {
             $success = 1;
         }
+        #All alerts end the test
+        $end = 1;
     }
 
     return @messages;
