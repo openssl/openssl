@@ -34,18 +34,22 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 1 + 256;
-
 my $bad_padding_offset = -1;
 
-# Test 1: Maximally-padded records are accepted.
+# TODO: We could test all 256 values, but then the log file gets too large for
+# CI. See https://github.com/openssl/openssl/issues/1440.
+my @test_offsets = (0, 128, 254, 255);
+
+plan tests => 1 + scalar(@test_offsets);
+
+# Test that maximally-padded records are accepted.
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 ok(TLSProxy::Message->success(), "Maximally-padded record test");
 
-# Tests 2 through 257: Invalid padding.
-for ($bad_padding_offset = 0; $bad_padding_offset < 256;
-     $bad_padding_offset++) {
+# Test that invalid padding is rejected.
+foreach my $offset (@test_offsets) {
     $proxy->clear();
+    $bad_padding_offset = $offset;
     $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";;
     ok(TLSProxy::Message->fail(), "Invalid padding byte $bad_padding_offset");
 }
