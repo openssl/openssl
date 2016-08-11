@@ -121,12 +121,6 @@ typedef struct {
     unsigned int flags;         /* Flags: currently just field type */
 } tls_curve_info;
 
-/* Mask for curve type */
-# define TLS_CURVE_TYPE          0x3
-# define TLS_CURVE_PRIME         0x0
-# define TLS_CURVE_CHAR2         0x1
-# define TLS_CURVE_CUSTOM        0x2
-
 /*
  * Table of curve information.
  * Do not delete entries or reorder this array! It is used as a lookup
@@ -161,8 +155,7 @@ static const tls_curve_info nid_list[] = {
     {NID_brainpoolP256r1, 128, TLS_CURVE_PRIME}, /* brainpoolP256r1 (26) */
     {NID_brainpoolP384r1, 192, TLS_CURVE_PRIME}, /* brainpoolP384r1 (27) */
     {NID_brainpoolP512r1, 256, TLS_CURVE_PRIME}, /* brainpool512r1 (28) */
-    /* X25519 (29) */
-    {NID_X25519, 128, TLS_CURVE_CUSTOM},
+    {NID_X25519, 128, TLS_CURVE_CUSTOM}, /* X25519 (29) */
 };
 
 static const unsigned char ecformats_default[] = {
@@ -222,12 +215,16 @@ static const unsigned char suiteb_curves[] = {
     0, TLSEXT_curve_P_384
 };
 
-int tls1_ec_curve_id2nid(int curve_id)
+int tls1_ec_curve_id2nid(int curve_id, unsigned int *pflags)
 {
+    const tls_curve_info *cinfo;
     /* ECC curves from RFC 4492 and RFC 7027 */
     if ((curve_id < 1) || ((unsigned int)curve_id > OSSL_NELEM(nid_list)))
         return 0;
-    return nid_list[curve_id - 1].nid;
+    cinfo = nid_list + curve_id - 1;
+    if (pflags)
+        *pflags = cinfo->flags;
+    return cinfo->nid;
 }
 
 int tls1_ec_nid2curve_id(int nid)
@@ -413,7 +410,7 @@ int tls1_shared_curve(SSL *s, int nmatch)
                     continue;
                 if (nmatch == k) {
                     int id = (pref[0] << 8) | pref[1];
-                    return tls1_ec_curve_id2nid(id);
+                    return tls1_ec_curve_id2nid(id, NULL);
                 }
                 k++;
             }

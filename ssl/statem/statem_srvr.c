@@ -1737,7 +1737,7 @@ int tls_construct_server_key_exchange(SSL *s)
                    SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
             goto err;
         }
-        s->s3->tmp.pkey = ssl_generate_pkey(NULL, nid);
+        s->s3->tmp.pkey = ssl_generate_pkey(NULL, curve_id);
         /* Generate a new key for this curve */
         if (s->s3->tmp.pkey == NULL) {
             al = SSL_AD_INTERNAL_ERROR;
@@ -1746,10 +1746,8 @@ int tls_construct_server_key_exchange(SSL *s)
         }
 
         /* Encode the public key. */
-        encodedlen = EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(s->s3->tmp.pkey),
-                                    POINT_CONVERSION_UNCOMPRESSED,
-                                    &encodedPoint, NULL);
-
+        encodedlen = EVP_PKEY_get1_tls_encodedpoint(s->s3->tmp.pkey,
+                                                    &encodedPoint);
         if (encodedlen == 0) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_EC_LIB);
             goto err;
@@ -2386,8 +2384,7 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt, int *al)
             SSLerr(SSL_F_TLS_PROCESS_CKE_ECDHE, ERR_R_EVP_LIB);
             goto err;
         }
-        if (EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(ckey), data, i,
-                           NULL) == 0) {
+        if (EVP_PKEY_set1_tls_encodedpoint(ckey, data, i) == 0) {
             *al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_CKE_ECDHE, ERR_R_EC_LIB);
             goto err;
