@@ -83,7 +83,7 @@
 
 /* Additional revocation information types */
 
-#define REV_NONE                0 /* No addditional information */
+#define REV_NONE                0 /* No additional information */
 #define REV_CRL_REASON          1 /* Value is CRL reason code */
 #define REV_HOLD                2 /* Value is hold instruction */
 #define REV_KEY_COMPROMISE      3 /* Value is cert key compromise time */

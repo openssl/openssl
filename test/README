@@ -9,7 +9,7 @@ Please note that if a test involves a new testing executable, you will need to
 do some additions in test/Makefile.  More on this later.
 
 
-Naming convetions
+Naming conventions
 =================
 
 A test executable is named test/{name}test.c
