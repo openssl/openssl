@@ -16,6 +16,43 @@
 #include "ssl_test_ctx.h"
 #include "testutil.h"
 
+static const int default_app_data_size = 256;
+
+static int parse_boolean(const char *value, int *result)
+{
+    if (strcasecmp(value, "Yes") == 0) {
+        *result = 1;
+        return 1;
+    }
+    else if (strcasecmp(value, "No") == 0) {
+        *result = 0;
+        return 1;
+    }
+    return 0;
+}
+
+#define IMPLEMENT_SSL_TEST_BOOL_OPTION(struct_type, name, field)        \
+    static int parse_##name##_##field(struct_type *ctx, const char *value) \
+    {                                                                   \
+        return parse_boolean(value, &ctx->field);                       \
+    }
+
+#define IMPLEMENT_SSL_TEST_STRING_OPTION(struct_type, name, field)      \
+    static int parse_##name##_##field(struct_type *ctx, const char *value) \
+    {                                                                   \
+        OPENSSL_free(ctx->field);                                       \
+        ctx->field = OPENSSL_strdup(value);                             \
+        TEST_check(ctx->field != NULL);                                 \
+        return 1;                                                       \
+    }
+
+#define IMPLEMENT_SSL_TEST_INT_OPTION(struct_type, name, field)        \
+    static int parse_##name##_##field(struct_type *ctx, const char *value) \
+    {                                                                   \
+        ctx->field = atoi(value);                                       \
+        return 1;                                                       \
+    }
+
 /* True enums and other test configuration values that map to an int. */
 typedef struct {
     const char *name;
@@ -133,7 +170,7 @@ const char *ssl_protocol_name(int protocol)
 }
 
 /***********************/
-/* VerifyCallback. */
+/* VerifyCallback.     */
 /***********************/
 
 static const test_enum ssl_verify_callbacks[] = {
@@ -282,15 +319,6 @@ const char *ssl_test_method_name(ssl_test_method_t method)
     return enum_name(ssl_test_methods, OSSL_NELEM(ssl_test_methods), method);
 }
 
-#define IMPLEMENT_SSL_TEST_STRING_OPTION(struct_type, name, field)      \
-    static int parse_##name##_##field(struct_type *ctx, const char *value) \
-    {                                                                   \
-        OPENSSL_free(ctx->field);                                       \
-        ctx->field = OPENSSL_strdup(value);                             \
-        TEST_check(ctx->field != NULL);                                 \
-        return 1;                                                       \
-    }
-
 /************************************/
 /* NPN and ALPN options             */
 /************************************/
@@ -357,27 +385,14 @@ const char *ssl_ct_validation_name(ssl_ct_validation_t mode)
                      mode);
 }
 
-static int parse_boolean(const char *value, int *result)
-{
-    if (strcasecmp(value, "Yes") == 0) {
-        *result = 1;
-        return 1;
-    }
-    else if (strcasecmp(value, "No") == 0) {
-        *result = 0;
-        return 1;
-    }
-    return 0;
-}
-
-#define IMPLEMENT_SSL_TEST_BOOL_OPTION(struct_type, name, field)        \
-    static int parse_##name##_##field(struct_type *ctx, const char *value) \
-    {                                                                   \
-        return parse_boolean(value, &ctx->field);                       \
-    }
-
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, resumption_expected)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, broken_session_ticket)
+
+/***********************/
+/* Applicationdata     */
+/***********************/
+
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, app_data_size)
 
 /*************************************************************/
 /* Known test options and their corresponding parse methods. */
@@ -401,6 +416,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedALPNProtocol", &parse_test_expected_alpn_protocol },
     { "HandshakeMode", &parse_handshake_mode },
     { "ResumptionExpected", &parse_test_resumption_expected },
+    { "ApplicationData", &parse_test_app_data_size },
 };
 
 /* Nested client options. */
@@ -439,6 +455,7 @@ SSL_TEST_CTX *SSL_TEST_CTX_new()
     SSL_TEST_CTX *ret;
     ret = OPENSSL_zalloc(sizeof(*ret));
     TEST_check(ret != NULL);
+    ret->app_data_size = default_app_data_size;
     return ret;
 }
 
