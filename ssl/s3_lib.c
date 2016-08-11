@@ -3090,7 +3090,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 unsigned int cid, nid;
                 for (i = 0; i < clistlen; i++) {
                     n2s(clist, cid);
-                    nid = tls1_ec_curve_id2nid(cid);
+                    nid = tls1_ec_curve_id2nid(cid, NULL);
                     if (nid != 0)
                         cptr[i] = nid;
                     else
@@ -3982,27 +3982,38 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
     return s->session->master_key_length >= 0;
 }
 
-/* Generate a private key from parameters or a curve NID */
-EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm, int nid)
+/* Generate a private key from parameters or a curve ID */
+EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm, int id)
 {
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *pkey = NULL;
+    int nid;
     if (pm != NULL) {
         pctx = EVP_PKEY_CTX_new(pm, NULL);
+        nid = 0;
     } else {
+        unsigned int curve_flags;
+        nid = tls1_ec_curve_id2nid(id, &curve_flags);
+        if (nid == 0)
+            goto err;
         /*
          * Generate a new key for this curve.
          * Should not be called if EC is disabled: if it is it will
          * fail with an unknown algorithm error.
          */
-        pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+        if ((curve_flags & TLS_CURVE_TYPE) == TLS_CURVE_CUSTOM) {
+            pctx = EVP_PKEY_CTX_new_id(nid, NULL);
+            nid = 0;
+        } else {
+            pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+        }
     }
     if (pctx == NULL)
         goto err;
     if (EVP_PKEY_keygen_init(pctx) <= 0)
         goto err;
 #ifndef OPENSSL_NO_EC
-    if (pm == NULL && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, nid) <= 0)
+    if (nid != 0 && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, nid) <= 0)
         goto err;
 #endif
 

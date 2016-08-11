@@ -1987,7 +1987,13 @@ __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
 #  ifndef OPENSSL_NO_EC
-__owur int tls1_ec_curve_id2nid(int curve_id);
+/* Flags values from tls1_ec_curve_id2nid() */
+/* Mask for curve type */
+# define TLS_CURVE_TYPE          0x3
+# define TLS_CURVE_PRIME         0x0
+# define TLS_CURVE_CHAR2         0x1
+# define TLS_CURVE_CUSTOM        0x2
+__owur int tls1_ec_curve_id2nid(int curve_id, unsigned int *pflags);
 __owur int tls1_ec_nid2curve_id(int nid);
 __owur int tls1_check_curve(SSL *s, const unsigned char *p, size_t len);
 __owur int tls1_shared_curve(SSL *s, int nmatch);

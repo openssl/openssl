@@ -1497,6 +1497,7 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
     PACKET encoded_pt;
     const unsigned char *ecparams;
     int curve_nid;
+    unsigned int curve_flags;
     EVP_PKEY_CTX *pctx = NULL;
 
     /*
@@ -1519,7 +1520,8 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
         return 0;
     }
 
-    curve_nid = tls1_ec_curve_id2nid(*(ecparams + 2));
+    curve_nid = tls1_ec_curve_id2nid(*(ecparams + 2), &curve_flags);
+
     if (curve_nid  == 0) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE,
@@ -1527,19 +1529,31 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
         return 0;
     }
 
-    /* Set up EVP_PKEY with named curve as parameters */
-    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
-    if (pctx == NULL
-        || EVP_PKEY_paramgen_init(pctx) <= 0
-        || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, curve_nid) <= 0
-        || EVP_PKEY_paramgen(pctx, &s->s3->peer_tmp) <= 0) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, ERR_R_EVP_LIB);
+    if ((curve_flags & TLS_CURVE_TYPE) == TLS_CURVE_CUSTOM) {
+        EVP_PKEY *key = EVP_PKEY_new();
+
+        if (key == NULL || !EVP_PKEY_set_type(key, curve_nid)) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, ERR_R_EVP_LIB);
+            EVP_PKEY_free(key);
+            return 0;
+        }
+        s->s3->peer_tmp = key;
+    } else {
+        /* Set up EVP_PKEY with named curve as parameters */
+        pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+        if (pctx == NULL
+            || EVP_PKEY_paramgen_init(pctx) <= 0
+            || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, curve_nid) <= 0
+            || EVP_PKEY_paramgen(pctx, &s->s3->peer_tmp) <= 0) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, ERR_R_EVP_LIB);
+            EVP_PKEY_CTX_free(pctx);
+            return 0;
+        }
         EVP_PKEY_CTX_free(pctx);
-        return 0;
+        pctx = NULL;
     }
-    EVP_PKEY_CTX_free(pctx);
-    pctx = NULL;
 
     if (!PACKET_get_length_prefixed_1(pkt, &encoded_pt)) {
         *al = SSL_AD_DECODE_ERROR;
@@ -1547,9 +1561,9 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
         return 0;
     }
 
-    if (EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(s->s3->peer_tmp),
-                       PACKET_data(&encoded_pt),
-                       PACKET_remaining(&encoded_pt), NULL) == 0) {
+    if (!EVP_PKEY_set1_tls_encodedpoint(s->s3->peer_tmp,
+                                        PACKET_data(&encoded_pt),
+                                        PACKET_remaining(&encoded_pt))) {
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, SSL_R_BAD_ECPOINT);
         return 0;
@@ -2269,7 +2283,7 @@ static int tls_construct_cke_ecdhe(SSL *s, unsigned char **p, int *len, int *al)
     EVP_PKEY *ckey = NULL, *skey = NULL;
 
     skey = s->s3->peer_tmp;
-    if ((skey == NULL) || EVP_PKEY_get0_EC_KEY(skey) == NULL) {
+    if (skey == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -2282,9 +2296,7 @@ static int tls_construct_cke_ecdhe(SSL *s, unsigned char **p, int *len, int *al)
     }
 
     /* Generate encoding of client key */
-    encoded_pt_len = EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(ckey),
-                                    POINT_CONVERSION_UNCOMPRESSED,
-                                    &encodedPoint, NULL);
+    encoded_pt_len = EVP_PKEY_get1_tls_encodedpoint(ckey, &encodedPoint);
 
     if (encoded_pt_len == 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_EC_LIB);
