@@ -109,6 +109,11 @@ static int SSL_TEST_CTX_equal(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
                 ssl_handshake_mode_name(ctx2->handshake_mode));
         return 0;
     }
+    if (ctx->app_data_size != ctx2->app_data_size) {
+        fprintf(stderr, "ApplicationData mismatch: %d vs %d.\n",
+                ctx->app_data_size, ctx2->app_data_size);
+        return 0;
+    }
 
     if (!SSL_TEST_EXTRA_CONF_equal(&ctx->extra, &ctx2->extra)) {
         fprintf(stderr, "Extra conf mismatch.\n");
@@ -240,6 +245,7 @@ static int test_good_configuration()
     fixture.test_section = "ssltest_good";
     fixture.expected_ctx->method = SSL_TEST_METHOD_DTLS;
     fixture.expected_ctx->handshake_mode = SSL_TEST_HANDSHAKE_RESUME;
+    fixture.expected_ctx->app_data_size = 1024;
 
     fixture.expected_ctx->expected_result = SSL_TEST_SERVER_FAIL;
     fixture.expected_ctx->expected_client_alert = SSL_AD_UNKNOWN_CA;

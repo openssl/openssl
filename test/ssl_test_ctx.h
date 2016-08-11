@@ -104,6 +104,11 @@ typedef struct {
     ssl_test_method_t method;
     /* Whether to test a resumed/renegotiated handshake. */
     ssl_handshake_mode_t handshake_mode;
+    /*
+     * How much application data to exchange (default is 256 bytes).
+     * Both peers will send |app_data_size| bytes interleaved.
+     */
+    int app_data_size;
 
     /*
      * Extra server/client configurations. Per-handshake.

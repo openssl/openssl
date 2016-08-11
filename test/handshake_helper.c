@@ -39,14 +39,14 @@ void HANDSHAKE_RESULT_free(HANDSHAKE_RESULT *result)
  * from the SSL object directly, we use the info callback and stash
  * the result in ex_data.
  */
-typedef struct handshake_ex_data {
+typedef struct handshake_ex_data_st {
     int alert_sent;
     int alert_received;
     int session_ticket_do_not_call;
     ssl_servername_t servername;
 } HANDSHAKE_EX_DATA;
 
-typedef struct ctx_data {
+typedef struct ctx_data_st {
     unsigned char *npn_protocols;
     size_t npn_protocols_len;
     unsigned char *alpn_protocols;
@@ -401,12 +401,131 @@ static void configure_handshake_ssl(SSL *server, SSL *client,
                                  ssl_servername_name(extra->client.servername));
 }
 
-
+/* The status for each connection phase. */
 typedef enum {
     PEER_SUCCESS,
     PEER_RETRY,
     PEER_ERROR
 } peer_status_t;
+
+/* An SSL object and associated read-write buffers. */
+typedef struct peer_st {
+    SSL *ssl;
+    /* Buffer lengths are int to match the SSL read/write API. */
+    unsigned char *write_buf;
+    int write_buf_len;
+    unsigned char *read_buf;
+    int read_buf_len;
+    int bytes_to_write;
+    int bytes_to_read;
+    peer_status_t status;
+} PEER;
+
+static void create_peer(PEER *peer, SSL_CTX *ctx)
+{
+    static const int peer_buffer_size = 64 * 1024;
+
+    peer->ssl = SSL_new(ctx);
+    TEST_check(peer->ssl != NULL);
+    peer->write_buf = OPENSSL_zalloc(peer_buffer_size);
+    TEST_check(peer->write_buf != NULL);
+    peer->read_buf = OPENSSL_zalloc(peer_buffer_size);
+    TEST_check(peer->read_buf != NULL);
+    peer->write_buf_len = peer->read_buf_len = peer_buffer_size;
+}
+
+static void peer_free_data(PEER *peer)
+{
+    SSL_free(peer->ssl);
+    OPENSSL_free(peer->write_buf);
+    OPENSSL_free(peer->read_buf);
+}
+
+/*
+ * Note that we could do the handshake transparently under an SSL_write,
+ * but separating the steps is more helpful for debugging test failures.
+ */
+static void do_handshake_step(PEER *peer)
+{
+    int ret;
+
+    TEST_check(peer->status == PEER_RETRY);
+    ret = SSL_do_handshake(peer->ssl);
+
+    if (ret == 1) {
+        peer->status = PEER_SUCCESS;
+    } else if (ret == 0) {
+        peer->status = PEER_ERROR;
+    } else {
+        int error = SSL_get_error(peer->ssl, ret);
+        /* Memory bios should never block with SSL_ERROR_WANT_WRITE. */
+        if (error != SSL_ERROR_WANT_READ)
+            peer->status = PEER_ERROR;
+    }
+}
+
+/*-
+ * Send/receive some application data. The read-write sequence is
+ * Peer A: (R) W - first read will yield no data
+ * Peer B:  R  W
+ * ...
+ * Peer A:  R  W
+ * Peer B:  R  W
+ * Peer A:  R
+ */
+static void do_app_data_step(PEER *peer)
+{
+    int ret = 1, write_bytes;
+
+    TEST_check(peer->status == PEER_RETRY);
+
+    /* We read everything available... */
+    while (ret > 0 && peer->bytes_to_read) {
+        ret = SSL_read(peer->ssl, peer->read_buf, peer->read_buf_len);
+        if (ret > 0) {
+            TEST_check(ret <= peer->bytes_to_read);
+            peer->bytes_to_read -= ret;
+        } else if (ret == 0) {
+            peer->status = PEER_ERROR;
+            return;
+        } else {
+            int error = SSL_get_error(peer->ssl, ret);
+            if (error != SSL_ERROR_WANT_READ) {
+                peer->status = PEER_ERROR;
+                return;
+            } /* Else continue with write. */
+        }
+    }
+
+    /* ... but we only write one write-buffer-full of data. */
+    write_bytes = peer->bytes_to_write < peer->write_buf_len ? peer->bytes_to_write :
+        peer->write_buf_len;
+    if (write_bytes) {
+        ret = SSL_write(peer->ssl, peer->write_buf, write_bytes);
+        if (ret > 0) {
+            /* SSL_write will only succeed with a complete write. */
+            TEST_check(ret == write_bytes);
+            peer->bytes_to_write -= ret;
+        } else {
+            /*
+             * We should perhaps check for SSL_ERROR_WANT_READ/WRITE here
+             * but this doesn't yet occur with current app data sizes.
+             */
+            peer->status = PEER_ERROR;
+            return;
+        }
+    }
+
+    /*
+     * We could simply finish when there was nothing to read, and we have
+     * nothing left to write. But keeping track of the expected number of bytes
+     * to read gives us somewhat better guarantees that all data sent is in fact
+     * received.
+     */
+    if (!peer->bytes_to_write && !peer->bytes_to_read) {
+        peer->status = PEER_SUCCESS;
+    }
+}
 
 /*
  * RFC 5246 says:
@@ -423,23 +542,58 @@ typedef enum {
  * can compare sent and received close_notify alerts and get some test coverage
  * for SSL_shutdown as a bonus.
  */
-static peer_status_t do_handshake_step(SSL *ssl, int shutdown)
+static void do_shutdown_step(PEER *peer)
 {
     int ret;
 
-    ret = shutdown ? SSL_shutdown(ssl) : SSL_do_handshake(ssl);
+    TEST_check(peer->status == PEER_RETRY);
+    ret = SSL_shutdown(peer->ssl);
 
     if (ret == 1) {
-        return PEER_SUCCESS;
-    } else if (ret == 0) {
-        return shutdown ? PEER_RETRY : PEER_ERROR;
-    } else {
-        int error = SSL_get_error(ssl, ret);
+        peer->status = PEER_SUCCESS;
+    } else if (ret < 0) { /* On 0, we retry. */
+        int error = SSL_get_error(peer->ssl, ret);
         /* Memory bios should never block with SSL_ERROR_WANT_WRITE. */
-        if (error == SSL_ERROR_WANT_READ)
-            return PEER_RETRY;
-        else
-            return PEER_ERROR;
+        if (error != SSL_ERROR_WANT_READ)
+            peer->status = PEER_ERROR;
+    }
+}
+
+typedef enum {
+    HANDSHAKE,
+    APPLICATION_DATA,
+    SHUTDOWN,
+    CONNECTION_DONE
+} connect_phase_t;
+
+static connect_phase_t next_phase(connect_phase_t phase)
+{
+    switch (phase) {
+    case HANDSHAKE:
+        return APPLICATION_DATA;
+    case APPLICATION_DATA:
+        return SHUTDOWN;
+    case SHUTDOWN:
+        return CONNECTION_DONE;
+    default:
+        TEST_check(0); /* Should never call next_phase when done. */
+    }
+}
+
+static void do_connect_step(PEER *peer, connect_phase_t phase)
+{
+    switch (phase) {
+    case HANDSHAKE:
+        do_handshake_step(peer);
+        break;
+    case APPLICATION_DATA:
+        do_app_data_step(peer);
+        break;
+    case SHUTDOWN:
+        do_shutdown_step(peer);
+        break;
+    default:
+        TEST_check(0);
     }
 }
 
@@ -502,6 +656,7 @@ static handshake_status_t handshake_status(peer_status_t last_status,
              * TODO(emilia): we should be able to continue here (with some
              * application data?) to ensure the first peer receives the
              * alert / close_notify.
+             * (No tests currently exercise this branch.)
              */
             return client_spoke_last ? CLIENT_ERROR : SERVER_ERROR;
         case PEER_RETRY:
@@ -533,16 +688,16 @@ static char *dup_str(const unsigned char *in, size_t len)
 
 static HANDSHAKE_RESULT *do_handshake_internal(
     SSL_CTX *server_ctx, SSL_CTX *server2_ctx, SSL_CTX *client_ctx,
-    const SSL_TEST_EXTRA_CONF *extra, SSL_SESSION *session_in,
-    SSL_SESSION **session_out)
+    const SSL_TEST_EXTRA_CONF *extra, int app_data_size,
+    SSL_SESSION *session_in, SSL_SESSION **session_out)
 {
-    SSL *server, *client;
+    PEER server, client;
     BIO *client_to_server, *server_to_client;
     HANDSHAKE_EX_DATA server_ex_data, client_ex_data;
     CTX_DATA client_ctx_data, server_ctx_data, server2_ctx_data;
     HANDSHAKE_RESULT *ret = HANDSHAKE_RESULT_new();
-    int client_turn = 1, shutdown = 0;
-    peer_status_t client_status = PEER_RETRY, server_status = PEER_RETRY;
+    int client_turn = 1;
+    connect_phase_t phase = HANDSHAKE;
     handshake_status_t status = HANDSHAKE_RETRY;
     unsigned char* tick = NULL;
     size_t tick_len = 0;
@@ -554,20 +709,24 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     memset(&server_ctx_data, 0, sizeof(server_ctx_data));
     memset(&server2_ctx_data, 0, sizeof(server2_ctx_data));
     memset(&client_ctx_data, 0, sizeof(client_ctx_data));
+    memset(&server, 0, sizeof(server));
+    memset(&client, 0, sizeof(client));
 
     configure_handshake_ctx(server_ctx, server2_ctx, client_ctx, extra,
                             &server_ctx_data, &server2_ctx_data, &client_ctx_data);
 
-    server = SSL_new(server_ctx);
-    client = SSL_new(client_ctx);
-    TEST_check(server != NULL);
-    TEST_check(client != NULL);
+    /* Setup SSL and buffers; additional configuration happens below. */
+    create_peer(&server, server_ctx);
+    create_peer(&client, client_ctx);
 
-    configure_handshake_ssl(server, client, extra);
+    server.bytes_to_write = client.bytes_to_read = app_data_size;
+    client.bytes_to_write = server.bytes_to_read = app_data_size;
+
+    configure_handshake_ssl(server.ssl, client.ssl, extra);
     if (session_in != NULL) {
         /* In case we're testing resumption without tickets. */
         TEST_check(SSL_CTX_add_session(server_ctx, session_in));
-        TEST_check(SSL_set_session(client, session_in));
+        TEST_check(SSL_set_session(client.ssl, session_in));
     }
 
     memset(&server_ex_data, 0, sizeof(server_ex_data));
@@ -578,31 +737,32 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     client_to_server = BIO_new(BIO_s_mem());
     server_to_client = BIO_new(BIO_s_mem());
 
-    TEST_check(client_to_server != NULL && server_to_client != NULL);
+    TEST_check(client_to_server != NULL);
+    TEST_check(server_to_client != NULL);
 
     /* Non-blocking bio. */
     BIO_set_nbio(client_to_server, 1);
     BIO_set_nbio(server_to_client, 1);
 
-    SSL_set_connect_state(client);
-    SSL_set_accept_state(server);
+    SSL_set_connect_state(client.ssl);
+    SSL_set_accept_state(server.ssl);
 
     /* The bios are now owned by the SSL object. */
-    SSL_set_bio(client, server_to_client, client_to_server);
+    SSL_set_bio(client.ssl, server_to_client, client_to_server);
     TEST_check(BIO_up_ref(server_to_client) > 0);
     TEST_check(BIO_up_ref(client_to_server) > 0);
-    SSL_set_bio(server, client_to_server, server_to_client);
+    SSL_set_bio(server.ssl, client_to_server, server_to_client);
 
     ex_data_idx = SSL_get_ex_new_index(0, "ex data", NULL, NULL, NULL);
     TEST_check(ex_data_idx >= 0);
 
-    TEST_check(SSL_set_ex_data(server, ex_data_idx,
-                                   &server_ex_data) == 1);
-    TEST_check(SSL_set_ex_data(client, ex_data_idx,
-                                   &client_ex_data) == 1);
+    TEST_check(SSL_set_ex_data(server.ssl, ex_data_idx, &server_ex_data) == 1);
+    TEST_check(SSL_set_ex_data(client.ssl, ex_data_idx, &client_ex_data) == 1);
 
-    SSL_set_info_callback(server, &info_cb);
-    SSL_set_info_callback(client, &info_cb);
+    SSL_set_info_callback(server.ssl, &info_cb);
+    SSL_set_info_callback(client.ssl, &info_cb);
+
+    client.status = server.status = PEER_RETRY;
 
     /*
      * Half-duplex handshake loop.
@@ -614,23 +774,29 @@ static HANDSHAKE_RESULT *do_handshake_internal(
      */
     for(;;) {
         if (client_turn) {
-            client_status = do_handshake_step(client, shutdown);
-            status = handshake_status(client_status, server_status,
+            do_connect_step(&client, phase);
+            status = handshake_status(client.status, server.status,
                                       1 /* client went last */);
         } else {
-            server_status = do_handshake_step(server, shutdown);
-            status = handshake_status(server_status, client_status,
+            do_connect_step(&server, phase);
+            status = handshake_status(server.status, client.status,
                                       0 /* server went last */);
         }
 
         switch (status) {
         case HANDSHAKE_SUCCESS:
-            if (shutdown) {
+            phase = next_phase(phase);
+            if (phase == CONNECTION_DONE) {
                 ret->result = SSL_TEST_SUCCESS;
                 goto err;
             } else {
-                client_status = server_status = PEER_RETRY;
-                shutdown = 1;
+                client.status = server.status = PEER_RETRY;
+                /*
+                 * For now, client starts each phase. Since each phase is
+                 * started separately, we can later control this more
+                 * precisely, for example, to test client-initiated and
+                 * server-initiated shutdown.
+                 */
                 client_turn = 1;
                 break;
             }
@@ -654,10 +820,10 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     ret->server_alert_received = client_ex_data.alert_received;
     ret->client_alert_sent = client_ex_data.alert_sent;
     ret->client_alert_received = server_ex_data.alert_received;
-    ret->server_protocol = SSL_version(server);
-    ret->client_protocol = SSL_version(client);
+    ret->server_protocol = SSL_version(server.ssl);
+    ret->client_protocol = SSL_version(client.ssl);
     ret->servername = server_ex_data.servername;
-    if ((sess = SSL_get0_session(client)) != NULL)
+    if ((sess = SSL_get0_session(client.ssl)) != NULL)
         SSL_SESSION_get0_ticket(sess, &tick, &tick_len);
     if (tick == NULL || tick_len == 0)
         ret->session_ticket = SSL_TEST_SESSION_TICKET_NO;
@@ -666,31 +832,31 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     ret->session_ticket_do_not_call = server_ex_data.session_ticket_do_not_call;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-    SSL_get0_next_proto_negotiated(client, &proto, &proto_len);
+    SSL_get0_next_proto_negotiated(client.ssl, &proto, &proto_len);
     ret->client_npn_negotiated = dup_str(proto, proto_len);
 
-    SSL_get0_next_proto_negotiated(server, &proto, &proto_len);
+    SSL_get0_next_proto_negotiated(server.ssl, &proto, &proto_len);
     ret->server_npn_negotiated = dup_str(proto, proto_len);
 #endif
 
-    SSL_get0_alpn_selected(client, &proto, &proto_len);
+    SSL_get0_alpn_selected(client.ssl, &proto, &proto_len);
     ret->client_alpn_negotiated = dup_str(proto, proto_len);
 
-    SSL_get0_alpn_selected(server, &proto, &proto_len);
+    SSL_get0_alpn_selected(server.ssl, &proto, &proto_len);
     ret->server_alpn_negotiated = dup_str(proto, proto_len);
 
-    ret->client_resumed = SSL_session_reused(client);
-    ret->server_resumed = SSL_session_reused(server);
+    ret->client_resumed = SSL_session_reused(client.ssl);
+    ret->server_resumed = SSL_session_reused(server.ssl);
 
     if (session_out != NULL)
-        *session_out = SSL_get1_session(client);
+        *session_out = SSL_get1_session(client.ssl);
 
     ctx_data_free_data(&server_ctx_data);
     ctx_data_free_data(&server2_ctx_data);
     ctx_data_free_data(&client_ctx_data);
 
-    SSL_free(server);
-    SSL_free(client);
+    peer_free_data(&server);
+    peer_free_data(&client);
     return ret;
 }
 
@@ -703,7 +869,8 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     SSL_SESSION *session = NULL;
 
     result = do_handshake_internal(server_ctx, server2_ctx, client_ctx,
-                                   &test_ctx->extra, NULL, &session);
+                                   &test_ctx->extra, test_ctx->app_data_size,
+                                   NULL, &session);
     if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_SIMPLE)
         goto end;
 
@@ -711,13 +878,14 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
 
     if (result->result != SSL_TEST_SUCCESS) {
         result->result = SSL_TEST_FIRST_HANDSHAKE_FAILED;
-        return result;
+        goto end;
     }
 
     HANDSHAKE_RESULT_free(result);
     /* We don't support SNI on second handshake yet, so server2_ctx is NULL. */
     result = do_handshake_internal(resume_server_ctx, NULL, resume_client_ctx,
-                                   &test_ctx->resume_extra, session, NULL);
+                                   &test_ctx->resume_extra, test_ctx->app_data_size,
+                                   session, NULL);
  end:
     SSL_SESSION_free(session);
     return result;
