@@ -93,6 +93,7 @@ void _sparcv9_vis2_probe(void);
 void _sparcv9_fmadd_probe(void);
 unsigned long _sparcv9_rdcfr(void);
 void _sparcv9_vis3_probe(void);
+void _sparcv9_fjaesx_probe(void);
 unsigned long _sparcv9_random(void);
 size_t _sparcv9_vis1_instrument_bus(unsigned int *, size_t);
 size_t _sparcv9_vis1_instrument_bus2(unsigned int *, size_t, size_t);
