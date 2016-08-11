@@ -501,9 +501,9 @@ int GENERAL_NAME_get0_otherName(GENERAL_NAME *gen,
                                 ASN1_OBJECT **poid, ASN1_TYPE **pvalue);
 
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
-                            ASN1_OCTET_STRING *ia5);
+                            const ASN1_OCTET_STRING *ia5);
 ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
-                                         X509V3_CTX *ctx, char *str);
+                                         X509V3_CTX *ctx, const char *str);
 
 DECLARE_ASN1_FUNCTIONS(EXTENDED_KEY_USAGE)
 int i2a_ACCESS_DESCRIPTION(BIO *bp, const ACCESS_DESCRIPTION *a);
@@ -583,8 +583,8 @@ int X509V3_EXT_CRL_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
 
 int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
                              STACK_OF(CONF_VALUE) **extlist);
-int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool);
-int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint);
+int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool);
+int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint);
 void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf);
 void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH_OF(CONF_VALUE) *lhash);
 # endif
@@ -602,13 +602,13 @@ int X509V3_add_value_uchar(const char *name, const unsigned char *value,
                            STACK_OF(CONF_VALUE) **extlist);
 int X509V3_add_value_bool(const char *name, int asn1_bool,
                           STACK_OF(CONF_VALUE) **extlist);
-int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
+int X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
                          STACK_OF(CONF_VALUE) **extlist);
 char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *meth, const ASN1_INTEGER *aint);
 ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, const char *value);
-char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, ASN1_ENUMERATED *aint);
+char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, const ASN1_ENUMERATED *aint);
 char *i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *meth,
-                                ASN1_ENUMERATED *aint);
+                                const ASN1_ENUMERATED *aint);
 int X509V3_EXT_add(X509V3_EXT_METHOD *ext);
 int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist);
 int X509V3_EXT_add_alias(int nid_to, int nid_from);
