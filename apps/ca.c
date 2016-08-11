@@ -1082,11 +1082,9 @@ end_of_options:
                 crlhours = 0;
             ERR_clear_error();
         }
-        if ((crldays == 0) && (crlhours == 0) && (crlsec == 0)) {
+        if ((crldays == 0) && (crlhours == 0) && (crlsec == 0) && verbose)
             BIO_printf(bio_err,
-                       "cannot lookup how long until the next CRL is issued\n");
-            goto end;
-        }
+                       "creating a CRL without a nextUpdate\n");
 
         if (verbose)
             BIO_printf(bio_err, "making CRL\n");
@@ -1100,12 +1098,14 @@ end_of_options:
             goto end;
         X509_gmtime_adj(tmptm, 0);
         X509_CRL_set_lastUpdate(crl, tmptm);
-        if (!X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
-                              NULL)) {
-            BIO_puts(bio_err, "error setting CRL nextUpdate\n");
-            goto end;
+        if (crldays || crlhours || crlsec) {
+            if (!X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
+                                  NULL)) {
+                BIO_puts(bio_err, "error setting CRL nextUpdate\n");
+                goto end;
+            }
+            X509_CRL_set_nextUpdate(crl, tmptm);
         }
-        X509_CRL_set_nextUpdate(crl, tmptm);
 
         ASN1_TIME_free(tmptm);
 
