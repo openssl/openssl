@@ -383,7 +383,11 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
                 cname = OBJ_nid2sn(nid);
             BIO_printf(out, "ECDH, %s, %d bits\n", cname, EVP_PKEY_bits(key));
         }
+    break;
 #endif
+    default:
+        BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_id(key)),
+                   EVP_PKEY_bits(key));
     }
     EVP_PKEY_free(key);
     return 1;
