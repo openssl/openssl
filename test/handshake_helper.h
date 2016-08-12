@@ -15,13 +15,17 @@
 typedef struct handshake_result {
     ssl_test_result_t result;
     /* These alerts are in the 2-byte format returned by the info_callback. */
-    /* Alert sent by the client; 0 if no alert. */
+    /* (Latest) alert sent by the client; 0 if no alert. */
     int client_alert_sent;
-    /* Alert received by the server; 0 if no alert. */
+    /* Number of fatal or close_notify alerts sent. */
+    int client_num_fatal_alerts_sent;
+    /* (Latest) alert received by the server; 0 if no alert. */
     int client_alert_received;
-    /* Alert sent by the server; 0 if no alert. */
+    /* (Latest) alert sent by the server; 0 if no alert. */
     int server_alert_sent;
-    /* Alert received by the client; 0 if no alert. */
+    /* Number of fatal or close_notify alerts sent. */
+    int server_num_fatal_alerts_sent;
+    /* (Latest) alert received by the client; 0 if no alert. */
     int server_alert_received;
     /* Negotiated protocol. On success, these should always match. */
     int server_protocol;

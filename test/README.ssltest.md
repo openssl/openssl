@@ -82,7 +82,11 @@ handshake.
   - InternalError - some other error
 
 * ExpectedClientAlert, ExpectedServerAlert - expected alert. See
-  `ssl_test_ctx.c` for known values.
+  `ssl_test_ctx.c` for known values. Note: the expected alert is currently
+  matched against the _last_ received alert (i.e., a fatal alert or a
+  `close_notify`). Warning alert expectations are not yet supported. (A warning
+  alert will not be correctly matched, if followed by a `close_notify` or
+  another alert.)
 
 * ExpectedProtocol - expected negotiated protocol. One of
   SSLv3, TLSv1, TLSv1.1, TLSv1.2.
