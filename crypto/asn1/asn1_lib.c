@@ -363,7 +363,7 @@ int ASN1_STRING_type(const ASN1_STRING *x)
     return x->type;
 }
 
-unsigned char *ASN1_STRING_data(ASN1_STRING *x)
+unsigned char *ASN1_STRING_data(const ASN1_STRING *x)
 {
     return x->data;
 }

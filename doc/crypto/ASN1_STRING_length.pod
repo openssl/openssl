@@ -11,9 +11,9 @@ ASN1_STRING utility functions
  #include <openssl/asn1.h>
 
  int ASN1_STRING_length(ASN1_STRING *x);
- unsigned char * ASN1_STRING_data(ASN1_STRING *x);
+ unsigned char *ASN1_STRING_data(const ASN1_STRING *x);
 
- ASN1_STRING * ASN1_STRING_dup(ASN1_STRING *a);
+ ASN1_STRING *ASN1_STRING_dup(ASN1_STRING *a);
 
  int ASN1_STRING_cmp(ASN1_STRING *a, ASN1_STRING *b);
 

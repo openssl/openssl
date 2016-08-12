@@ -950,7 +950,7 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
     OCSP_basic_sign(bs, rcert, rkey, rmd, rother, flags);
 
     if (badsig) {
-        ASN1_OCTET_STRING *sig = OCSP_resp_get0_signature(bs);
+        const ASN1_OCTET_STRING *sig = OCSP_resp_get0_signature(bs);
         unsigned char *sigptr = ASN1_STRING_data(sig);
         sigptr[ASN1_STRING_length(sig) - 1] ^= 0x1;
     }
