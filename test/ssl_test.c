@@ -100,6 +100,19 @@ static int check_alerts(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         return 0;
     }
 
+    /*
+     * TODO: separate warning and fatal alerts if necessary. Current tests don't
+     * exercise multiple alerts but in theory, warning alerts could precede a
+     * fatal alert.
+     */
+    if (result->client_num_alerts_sent > 1) {
+        fprintf(stderr, "Client sent %d alerts.\n", result->client_num_alerts_sent);
+        return 0;
+    }
+    if (result->server_num_alerts_sent > 1) {
+        fprintf(stderr, "Server sent %d alerts.\n", result->server_num_alerts_sent);
+        return 0;
+    }
     return 1;
 }
 
