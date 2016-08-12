@@ -41,6 +41,7 @@ void HANDSHAKE_RESULT_free(HANDSHAKE_RESULT *result)
  */
 typedef struct handshake_ex_data_st {
     int alert_sent;
+    int num_fatal_alerts_sent;
     int alert_received;
     int session_ticket_do_not_call;
     ssl_servername_t servername;
@@ -71,6 +72,9 @@ static void info_cb(const SSL *s, int where, int ret)
             (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
         if (where & SSL_CB_WRITE) {
             ex_data->alert_sent = ret;
+            if (strcmp(SSL_alert_type_string(ret), "F") == 0
+                || strcmp(SSL_alert_desc_string(ret), "CN") == 0)
+                ex_data->num_fatal_alerts_sent++;
         } else {
             ex_data->alert_received = ret;
         }
@@ -840,8 +844,10 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     }
  err:
     ret->server_alert_sent = server_ex_data.alert_sent;
+    ret->server_num_fatal_alerts_sent = server_ex_data.num_fatal_alerts_sent;
     ret->server_alert_received = client_ex_data.alert_received;
     ret->client_alert_sent = client_ex_data.alert_sent;
+    ret->client_num_fatal_alerts_sent = client_ex_data.num_fatal_alerts_sent;
     ret->client_alert_received = server_ex_data.alert_received;
     ret->server_protocol = SSL_version(server.ssl);
     ret->client_protocol = SSL_version(client.ssl);
