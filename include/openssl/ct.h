@@ -68,13 +68,13 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
 void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);
 
 /* Gets the peer certificate that the SCTs are for */
-X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
+const X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
 
 /* Sets the certificate associated with the received SCTs */
 void CT_POLICY_EVAL_CTX_set0_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
 
 /* Gets the issuer of the aforementioned certificate */
-X509* CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx);
+const X509* CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx);
 
 /* Sets the issuer of the certificate associated with the received SCTs */
 void CT_POLICY_EVAL_CTX_set0_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
@@ -433,7 +433,8 @@ const char *CTLOG_get0_name(const CTLOG *log);
 void CTLOG_get0_log_id(const CTLOG *log, const uint8_t **log_id,
                        size_t *log_id_len);
 /* Gets the public key of the CT log */
-EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log);
+const EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log);
+EVP_PKEY *CTLOG_get1_public_key(const CTLOG *log);
 
 /**************************
  * CT log store functions *

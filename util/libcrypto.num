@@ -4188,3 +4188,4 @@ X509_STORE_lock                         4134	1_1_0	EXIST::FUNCTION:
 X509_set_proxy_pathlen                  4135	1_1_0	EXIST::FUNCTION:
 X509_get_proxy_pathlen                  4136	1_1_0	EXIST::FUNCTION:
 DSA_bits                                4137	1_1_0	EXIST::FUNCTION:DSA
+CTLOG_get1_public_key                   4138	1_1_0	EXIST::FUNCTION:CT

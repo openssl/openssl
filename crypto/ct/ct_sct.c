@@ -284,6 +284,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     SCT_CTX *sctx = NULL;
     X509_PUBKEY *pub = NULL, *log_pkey = NULL;
     const CTLOG *log;
+    EVP_PKEY *pubkey = NULL;
 
     /*
      * With an unrecognized SCT version we don't know what such an SCT means,
@@ -307,7 +308,10 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     if (sctx == NULL)
         goto err;
 
-    if (X509_PUBKEY_set(&log_pkey, CTLOG_get0_public_key(log)) != 1)
+    pubkey = CTLOG_get1_public_key(log);
+    if (pubkey == NULL)
+        goto err;
+    if (X509_PUBKEY_set(&log_pkey, pubkey) != 1)
         goto err;
     if (SCT_CTX_set1_pubkey(sctx, log_pkey) != 1)
         goto err;
@@ -355,6 +359,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
 end:
     is_sct_valid = sct->validation_status == SCT_VALIDATION_STATUS_VALID;
 err:
+    EVP_PKEY_free(pubkey);
     X509_PUBKEY_free(pub);
     X509_PUBKEY_free(log_pkey);
     SCT_CTX_free(sctx);

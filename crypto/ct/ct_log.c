@@ -279,8 +279,16 @@ void CTLOG_get0_log_id(const CTLOG *log, const uint8_t **log_id,
     *log_id_len = CT_V1_HASHLEN;
 }
 
-EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log)
+const EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log)
 {
+    return log->public_key;
+}
+
+EVP_PKEY *CTLOG_get1_public_key(const CTLOG *log)
+{
+    if (!EVP_PKEY_up_ref(log->public_key))
+        return NULL;
+
     return log->public_key;
 }
 
