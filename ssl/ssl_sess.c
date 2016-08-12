@@ -827,6 +827,11 @@ int SSL_SESSION_get_protocol_version(const SSL_SESSION *s)
     return s->ssl_version;
 }
 
+const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s)
+{
+    return s->cipher;
+}
+
 const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s)
 {
     return s->tlsext_hostname;
