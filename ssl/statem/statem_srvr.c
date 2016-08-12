@@ -1656,7 +1656,7 @@ int tls_construct_server_key_exchange(SSL *s)
         CERT *cert = s->cert;
 
         EVP_PKEY *pkdhp = NULL;
-        DH *dh;
+        const DH *dh;
 
         if (s->cert->dh_tmp_auto) {
             DH *dhp = ssl_get_auto_dh(s);
@@ -2130,7 +2130,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt, int *al)
     unsigned char *rsa_decrypt = NULL;
     int ret = 0;
 
-    rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey);
+    rsa = EVP_PKEY_get1_RSA(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey);
     if (rsa == NULL) {
         *al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_TLS_PROCESS_CKE_RSA, SSL_R_MISSING_RSA_CERTIFICATE);
@@ -2145,7 +2145,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt, int *al)
             || PACKET_remaining(pkt) != 0) {
             *al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CKE_RSA, SSL_R_LENGTH_MISMATCH);
-            return 0;
+            goto err;
         }
     }
 
@@ -2158,14 +2158,14 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt, int *al)
     if (RSA_size(rsa) < SSL_MAX_MASTER_KEY_LENGTH) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CKE_RSA, RSA_R_KEY_SIZE_TOO_SMALL);
-        return 0;
+        goto err;
     }
 
     rsa_decrypt = OPENSSL_malloc(RSA_size(rsa));
     if (rsa_decrypt == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CKE_RSA, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto err;
     }
 
     /*
@@ -2273,6 +2273,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt, int *al)
 
     ret = 1;
  err:
+    RSA_free(rsa);
     OPENSSL_free(rsa_decrypt);
     return ret;
 #else
@@ -2287,7 +2288,7 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt, int *al)
 {
 #ifndef OPENSSL_NO_DH
     EVP_PKEY *skey = NULL;
-    DH *cdh;
+    DH *cdh = NULL;
     unsigned int i;
     BIGNUM *pub_key;
     const unsigned char *data;
@@ -2323,7 +2324,12 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt, int *al)
         SSLerr(SSL_F_TLS_PROCESS_CKE_DHE, SSL_R_BN_LIB);
         goto err;
     }
-    cdh = EVP_PKEY_get0_DH(ckey);
+    cdh = EVP_PKEY_get1_DH(ckey);
+    if (cdh == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CKE_DHE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     pub_key = BN_bin2bn(data, i, NULL);
 
     if (pub_key == NULL || !DH_set0_key(cdh, pub_key, NULL)) {
@@ -2344,6 +2350,7 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt, int *al)
     s->s3->tmp.pkey = NULL;
  err:
     EVP_PKEY_free(ckey);
+    DH_free(cdh);
     return ret;
 #else
     /* Should never happen */
@@ -2358,6 +2365,7 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt, int *al)
 #ifndef OPENSSL_NO_EC
     EVP_PKEY *skey = s->s3->tmp.pkey;
     EVP_PKEY *ckey = NULL;
+    EC_KEY *key = NULL;
     int ret = 0;
 
     if (PACKET_remaining(pkt) == 0L) {
@@ -2386,12 +2394,17 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt, int *al)
             SSLerr(SSL_F_TLS_PROCESS_CKE_ECDHE, ERR_R_EVP_LIB);
             goto err;
         }
-        if (EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(ckey), data, i,
-                           NULL) == 0) {
+        key = EVP_PKEY_get1_EC_KEY(ckey);
+        if (key == NULL)
+            goto err;
+
+        if (EC_KEY_oct2key(key, data, i, NULL) == 0) {
+            EC_KEY_free(key);
             *al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_CKE_ECDHE, ERR_R_EC_LIB);
             goto err;
         }
+        EC_KEY_free(key);
     }
 
     if (ssl_derive(s, skey, ckey) == 0) {

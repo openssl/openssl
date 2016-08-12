@@ -14,6 +14,10 @@
 # include <openssl/ossl_typ.h>
 # include <openssl/symhacks.h>
 # include <openssl/bio.h>
+# include <openssl/rsa.h>
+# include <openssl/dsa.h>
+# include <openssl/dh.h>
+# include <openssl/ec.h>
 
 # define EVP_MAX_MD_SIZE                 64/* longest known is SHA512 */
 # define EVP_MAX_KEY_LENGTH              64
@@ -905,28 +909,24 @@ void *EVP_PKEY_get0(const EVP_PKEY *pkey);
 const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
 
 # ifndef OPENSSL_NO_RSA
-struct rsa_st;
-int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, struct rsa_st *key);
-struct rsa_st *EVP_PKEY_get0_RSA(EVP_PKEY *pkey);
-struct rsa_st *EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
+int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key);
+const RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey);
+RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
 # endif
 # ifndef OPENSSL_NO_DSA
-struct dsa_st;
-int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, struct dsa_st *key);
-struct dsa_st *EVP_PKEY_get0_DSA(EVP_PKEY *pkey);
-struct dsa_st *EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
+int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key);
+const DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey);
+DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
 # endif
 # ifndef OPENSSL_NO_DH
-struct dh_st;
-int EVP_PKEY_set1_DH(EVP_PKEY *pkey, struct dh_st *key);
-struct dh_st *EVP_PKEY_get0_DH(EVP_PKEY *pkey);
-struct dh_st *EVP_PKEY_get1_DH(EVP_PKEY *pkey);
+int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key);
+const DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey);
+DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey);
 # endif
 # ifndef OPENSSL_NO_EC
-struct ec_key_st;
-int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, struct ec_key_st *key);
-struct ec_key_st *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey);
-struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
+int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key);
+const EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey);
+EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
 # endif
 
 EVP_PKEY *EVP_PKEY_new(void);
@@ -1490,6 +1490,10 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_GET0_EC_KEY                       131
 # define EVP_F_EVP_PKEY_GET0_HMAC                         183
 # define EVP_F_EVP_PKEY_GET0_RSA                          121
+# define EVP_F_EVP_PKEY_GET1_DH                           168
+# define EVP_F_EVP_PKEY_GET1_DSA                          169
+# define EVP_F_EVP_PKEY_GET1_EC_KEY                       170
+# define EVP_F_EVP_PKEY_GET1_RSA                          171
 # define EVP_F_EVP_PKEY_KEYGEN                            146
 # define EVP_F_EVP_PKEY_KEYGEN_INIT                       147
 # define EVP_F_EVP_PKEY_NEW                               106
@@ -1561,12 +1565,12 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_UNKNOWN_DIGEST                             161
 # define EVP_R_UNKNOWN_OPTION                             169
 # define EVP_R_UNKNOWN_PBE_ALGORITHM                      121
-# define EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS               135
 # define EVP_R_UNSUPPORTED_ALGORITHM                      156
 # define EVP_R_UNSUPPORTED_CIPHER                         107
 # define EVP_R_UNSUPPORTED_KEYLENGTH                      123
 # define EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION        124
 # define EVP_R_UNSUPPORTED_KEY_SIZE                       108
+# define EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS               135
 # define EVP_R_UNSUPPORTED_PRF                            125
 # define EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM          118
 # define EVP_R_UNSUPPORTED_SALT_TYPE                      126

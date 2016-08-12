@@ -1125,7 +1125,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
     return ret;
 }
 
-int i2o_ECPublicKey(EC_KEY *a, unsigned char **out)
+int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
 {
     size_t buf_len = 0;
     int new_buffer = 0;

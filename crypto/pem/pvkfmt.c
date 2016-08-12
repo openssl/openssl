@@ -406,28 +406,40 @@ static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
 {
     unsigned char *p;
     unsigned int bitlen, magic = 0, keyalg;
-    int outlen, noinc = 0;
+    int outlen = -1, noinc = 0;
     int pktype = EVP_PKEY_id(pk);
+    RSA *rsa = NULL;
+    DSA *dsa = NULL;
+
     if (pktype == EVP_PKEY_DSA) {
-        bitlen = check_bitlen_dsa(EVP_PKEY_get0_DSA(pk), ispub, &magic);
+        dsa = EVP_PKEY_get1_DSA(pk);
+        if (dsa == NULL)
+            return -1;
+        bitlen = check_bitlen_dsa(dsa, ispub, &magic);
         keyalg = MS_KEYALG_DSS_SIGN;
     } else if (pktype == EVP_PKEY_RSA) {
-        bitlen = check_bitlen_rsa(EVP_PKEY_get0_RSA(pk), ispub, &magic);
+        rsa = EVP_PKEY_get1_RSA(pk);
+        if (rsa == NULL)
+            return -1;
+        bitlen = check_bitlen_rsa(rsa, ispub, &magic);
         keyalg = MS_KEYALG_RSA_KEYX;
-    } else
+    } else {
         return -1;
+    }
     if (bitlen == 0)
-        return -1;
+        goto end;
     outlen = 16 + blob_length(bitlen,
                               keyalg == MS_KEYALG_DSS_SIGN ? 1 : 0, ispub);
     if (out == NULL)
-        return outlen;
+        goto end;
     if (*out)
         p = *out;
     else {
         p = OPENSSL_malloc(outlen);
-        if (p == NULL)
-            return -1;
+        if (p == NULL) {
+            outlen = -1;
+            goto end;
+        }
         *out = p;
         noinc = 1;
     }
@@ -442,11 +454,15 @@ static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
     write_ledword(&p, magic);
     write_ledword(&p, bitlen);
     if (keyalg == MS_KEYALG_DSS_SIGN)
-        write_dsa(&p, EVP_PKEY_get0_DSA(pk), ispub);
+        write_dsa(&p, dsa, ispub);
     else
-        write_rsa(&p, EVP_PKEY_get0_RSA(pk), ispub);
+        write_rsa(&p, rsa, ispub);
     if (!noinc)
         *out += outlen;
+
+ end:
+    RSA_free(rsa);
+    DSA_free(dsa);
     return outlen;
 }
 

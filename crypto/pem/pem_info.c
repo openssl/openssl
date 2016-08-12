@@ -307,11 +307,17 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
         } else {
             /* Add DSA/DH */
 #ifndef OPENSSL_NO_RSA
-            /* normal optionally encrypted stuff */
-            if (PEM_write_bio_RSAPrivateKey(bp,
-                                            EVP_PKEY_get0_RSA(xi->x_pkey->dec_pkey),
-                                            enc, kstr, klen, cb, u) <= 0)
+            RSA *rsakey;
+            rsakey = EVP_PKEY_get1_RSA(xi->x_pkey->dec_pkey);
+            if (rsakey == NULL)
                 goto err;
+            /* normal optionally encrypted stuff */
+            if (PEM_write_bio_RSAPrivateKey(bp, rsakey, enc, kstr, klen, cb,
+                                            u) <= 0) {
+                RSA_free(rsakey);
+                goto err;
+            }
+            RSA_free(rsakey);
 #endif
         }
     }

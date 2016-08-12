@@ -258,7 +258,7 @@ int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
     return ret;
 }
 
-RSA *EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
+const RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
 {
     if (pkey->type != EVP_PKEY_RSA) {
         EVPerr(EVP_F_EVP_PKEY_GET0_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
@@ -269,10 +269,15 @@ RSA *EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
 
 RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 {
-    RSA *ret = EVP_PKEY_get0_RSA(pkey);
-    if (ret != NULL)
-        RSA_up_ref(ret);
-    return ret;
+    if (pkey->type != EVP_PKEY_RSA) {
+        EVPerr(EVP_F_EVP_PKEY_GET1_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
+        return NULL;
+    }
+    if (!RSA_up_ref(pkey->pkey.rsa)) {
+        EVPerr(EVP_F_EVP_PKEY_GET1_RSA, ERR_R_INTERNAL_ERROR);
+        return NULL;
+    }
+    return pkey->pkey.rsa;
 }
 #endif
 
@@ -285,7 +290,7 @@ int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
     return ret;
 }
 
-DSA *EVP_PKEY_get0_DSA(EVP_PKEY *pkey)
+const DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 {
     if (pkey->type != EVP_PKEY_DSA) {
         EVPerr(EVP_F_EVP_PKEY_GET0_DSA, EVP_R_EXPECTING_A_DSA_KEY);
@@ -296,10 +301,15 @@ DSA *EVP_PKEY_get0_DSA(EVP_PKEY *pkey)
 
 DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 {
-    DSA *ret = EVP_PKEY_get0_DSA(pkey);
-    if (ret != NULL)
-        DSA_up_ref(ret);
-    return ret;
+    if (pkey->type != EVP_PKEY_DSA) {
+        EVPerr(EVP_F_EVP_PKEY_GET1_DSA, EVP_R_EXPECTING_A_DSA_KEY);
+        return NULL;
+    }
+    if (!DSA_up_ref(pkey->pkey.dsa)) {
+        EVPerr(EVP_F_EVP_PKEY_GET1_DSA, ERR_R_INTERNAL_ERROR);
+        return NULL;
+    }
+    return pkey->pkey.dsa;
 }
 #endif
 
@@ -313,7 +323,7 @@ int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
     return ret;
 }
 
-EC_KEY *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey)
+const EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey)
 {
     if (pkey->type != EVP_PKEY_EC) {
         EVPerr(EVP_F_EVP_PKEY_GET0_EC_KEY, EVP_R_EXPECTING_A_EC_KEY);
@@ -324,10 +334,15 @@ EC_KEY *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey)
 
 EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 {
-    EC_KEY *ret = EVP_PKEY_get0_EC_KEY(pkey);
-    if (ret != NULL)
-        EC_KEY_up_ref(ret);
-    return ret;
+    if (pkey->type != EVP_PKEY_EC) {
+        EVPerr(EVP_F_EVP_PKEY_GET1_EC_KEY, EVP_R_EXPECTING_A_EC_KEY);
+        return NULL;
+    }
+    if (!EC_KEY_up_ref(pkey->pkey.ec)) {
+        EVPerr(EVP_F_EVP_PKEY_GET1_EC_KEY, ERR_R_INTERNAL_ERROR);
+        return NULL;
+    }
+    return pkey->pkey.ec;
 }
 #endif
 
@@ -341,7 +356,7 @@ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
     return ret;
 }
 
-DH *EVP_PKEY_get0_DH(EVP_PKEY *pkey)
+const DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey)
 {
     if (pkey->type != EVP_PKEY_DH && pkey->type != EVP_PKEY_DHX) {
         EVPerr(EVP_F_EVP_PKEY_GET0_DH, EVP_R_EXPECTING_A_DH_KEY);
@@ -352,10 +367,15 @@ DH *EVP_PKEY_get0_DH(EVP_PKEY *pkey)
 
 DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 {
-    DH *ret = EVP_PKEY_get0_DH(pkey);
-    if (ret != NULL)
-        DH_up_ref(ret);
-    return ret;
+    if (pkey->type != EVP_PKEY_DH && pkey->type != EVP_PKEY_DHX) {
+        EVPerr(EVP_F_EVP_PKEY_GET1_DH, EVP_R_EXPECTING_A_DH_KEY);
+        return NULL;
+    }
+    if (!DH_up_ref(pkey->pkey.dh)) {
+        EVPerr(EVP_F_EVP_PKEY_GET1_DH, ERR_R_INTERNAL_ERROR);
+        return NULL;
+    }
+    return pkey->pkey.dh;
 }
 #endif
 

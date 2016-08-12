@@ -506,7 +506,7 @@ int tls1_set_curves_list(unsigned char **pext, size_t *pextlen,
 
 /* For an EC key set TLS id and required compression based on parameters */
 static int tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id,
-                          EC_KEY *ec)
+                          const EC_KEY *ec)
 {
     int id;
     const EC_GROUP *grp;

@@ -987,7 +987,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **key, const unsigned char **in, long len);
  *               of bytes needed).
  *  \return 1 on success and 0 if an error occurred
  */
-int i2o_ECPublicKey(EC_KEY *key, unsigned char **out);
+int i2o_ECPublicKey(const EC_KEY *key, unsigned char **out);
 
 /** Prints out the ec parameters on human readable form.
  *  \param  bp   BIO object to which the information is printed

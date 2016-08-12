@@ -18,18 +18,26 @@ int EVP_PKEY_encrypt_old(unsigned char *ek, const unsigned char *key,
                          int key_len, EVP_PKEY *pubk)
 {
     int ret = 0;
-
 #ifndef OPENSSL_NO_RSA
+    RSA *rsa;
+
     if (EVP_PKEY_id(pubk) != EVP_PKEY_RSA) {
 #endif
         EVPerr(EVP_F_EVP_PKEY_ENCRYPT_OLD, EVP_R_PUBLIC_KEY_NOT_RSA);
 #ifndef OPENSSL_NO_RSA
         goto err;
     }
+
+    rsa = EVP_PKEY_get1_RSA(pubk);
+    if (rsa == NULL)
+        /* Error already raised by EVP_PKEY_get1_rsa() */
+        goto err;
+
     ret =
-        RSA_public_encrypt(key_len, key, ek, EVP_PKEY_get0_RSA(pubk),
-                           RSA_PKCS1_PADDING);
+        RSA_public_encrypt(key_len, key, ek, rsa, RSA_PKCS1_PADDING);
+
+    RSA_free(rsa);
  err:
 #endif
-    return (ret);
+    return ret;
 }

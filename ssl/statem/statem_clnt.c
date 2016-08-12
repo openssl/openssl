@@ -1498,6 +1498,7 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
     const unsigned char *ecparams;
     int curve_nid;
     EVP_PKEY_CTX *pctx = NULL;
+    EC_KEY *key;
 
     /*
      * Extract elliptic curve parameters and the server's ephemeral ECDH
@@ -1547,13 +1548,21 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
         return 0;
     }
 
-    if (EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(s->s3->peer_tmp),
+    key = EVP_PKEY_get1_EC_KEY(s->s3->peer_tmp);
+    if (key == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (EC_KEY_oct2key(key,
                        PACKET_data(&encoded_pt),
                        PACKET_remaining(&encoded_pt), NULL) == 0) {
+        EC_KEY_free(key);
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, SSL_R_BAD_ECPOINT);
         return 0;
     }
+    EC_KEY_free(key);
 
     /*
      * The ECC/TLS specification does not mention the use of DSA to sign
@@ -2227,7 +2236,7 @@ static int tls_construct_cke_rsa(SSL *s, unsigned char **p, int *len, int *al)
 static int tls_construct_cke_dhe(SSL *s, unsigned char **p, int *len, int *al)
 {
 #ifndef OPENSSL_NO_DH
-    DH *dh_clnt = NULL;
+    const DH *dh_clnt = NULL;
     const BIGNUM *pub_key;
     EVP_PKEY *ckey = NULL, *skey = NULL;
 
