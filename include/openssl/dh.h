@@ -160,7 +160,7 @@ int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
 void DH_clear_flags(DH *dh, int flags);
 int DH_test_flags(const DH *dh, int flags);
 void DH_set_flags(DH *dh, int flags);
-ENGINE *DH_get0_engine(DH *d);
+const ENGINE *DH_get0_engine(const DH *d);
 long DH_get_length(const DH *dh);
 int DH_set_length(DH *dh, long length);
 

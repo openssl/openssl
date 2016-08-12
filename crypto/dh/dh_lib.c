@@ -278,7 +278,7 @@ void DH_set_flags(DH *dh, int flags)
     dh->flags |= flags;
 }
 
-ENGINE *DH_get0_engine(DH *dh)
+const ENGINE *DH_get0_engine(const DH *dh)
 {
     return dh->engine;
 }
