@@ -559,6 +559,10 @@ int main(int argc, char **argv)
     memset(&t, 0, sizeof(t));
     t.start_line = -1;
     in = BIO_new_file(argv[1], "r");
+    if (in == NULL) {
+        fprintf(stderr, "Can't open %s for reading\n", argv[1]);
+        return 1;
+    }
     t.in = in;
     while (BIO_gets(in, buf, sizeof(buf))) {
         t.line++;
