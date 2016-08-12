@@ -192,6 +192,9 @@ numeric OID. Following parameter sets are supported:
 
 =back
 
+=head1 X25519 KEY GENERATION OPTIONS
+
+The X25519 algorithm does not currently support any key generation options.
 
 
 =head1 NOTES
@@ -252,6 +255,10 @@ Generate EC key directly:
  openssl genpkey -algorithm EC -out eckey.pem \
         -pkeyopt ec_paramgen_curve:P-384 \
         -pkeyopt ec_param_enc:named_curve
+
+Generate an X25519 private key:
+
+ openssl genpkey -algorithm X25519 -out xkey.pem
 
 =head1 HISTORY
 
