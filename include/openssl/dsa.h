@@ -179,7 +179,7 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key);
 void DSA_clear_flags(DSA *d, int flags);
 int DSA_test_flags(const DSA *d, int flags);
 void DSA_set_flags(DSA *d, int flags);
-ENGINE *DSA_get0_engine(DSA *d);
+const ENGINE *DSA_get0_engine(const DSA *d);
 
 DSA_METHOD *DSA_meth_new(const char *name, int flags);
 void DSA_meth_free(DSA_METHOD *dsam);

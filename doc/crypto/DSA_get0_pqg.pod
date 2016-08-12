@@ -19,7 +19,7 @@ setting data in a DSA object
  void DSA_clear_flags(DSA *d, int flags);
  int DSA_test_flags(const DSA *d, int flags);
  void DSA_set_flags(DSA *d, int flags);
- ENGINE *DSA_get0_engine(DSA *d);
+ const ENGINE *DSA_get0_engine(const DSA *d);
 
 =head1 DESCRIPTION
 

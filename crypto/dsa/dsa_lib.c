@@ -335,7 +335,7 @@ void DSA_set_flags(DSA *d, int flags)
     d->flags |= flags;
 }
 
-ENGINE *DSA_get0_engine(DSA *d)
+const ENGINE *DSA_get0_engine(const DSA *d)
 {
     return d->engine;
 }
