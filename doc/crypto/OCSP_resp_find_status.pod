@@ -27,7 +27,8 @@ OCSP_single_get0_status, OCSP_check_validity
                              ASN1_GENERALIZEDTIME **thisupd,
                              ASN1_GENERALIZEDTIME **nextupd);
 
- ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(OCSP_BASICRESP* single);
+ const ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(
+                             const OCSP_BASICRESP* single);
 
  const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs);
 
