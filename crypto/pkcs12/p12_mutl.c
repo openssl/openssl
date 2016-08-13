@@ -15,7 +15,7 @@
 # include <openssl/pkcs12.h>
 # include "p12_lcl.h"
 
-int PKCS12_mac_present(PKCS12 *p12)
+int PKCS12_mac_present(const PKCS12 *p12)
 {
     return p12->mac ? 1 : 0;
 }

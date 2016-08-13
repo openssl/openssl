@@ -16,7 +16,7 @@
 static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
                       EVP_PKEY **pkey, STACK_OF(X509) *ocerts);
 
-static int parse_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
+static int parse_bags(const STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
                       int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts);
 
 static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
@@ -157,7 +157,7 @@ static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
     return 1;
 }
 
-static int parse_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
+static int parse_bags(const STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
                       int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts)
 {
     int i;
@@ -174,7 +174,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 {
     PKCS8_PRIV_KEY_INFO *p8;
     X509 *x509;
-    ASN1_TYPE *attrib;
+    const ASN1_TYPE *attrib;
     ASN1_BMPSTRING *fname = NULL;
     ASN1_OCTET_STRING *lkid = NULL;
 

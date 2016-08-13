@@ -29,14 +29,15 @@ NON_EMPTY_TRANSLATION_UNIT
 
 static int get_cert_chain(X509 *cert, X509_STORE *store,
                           STACK_OF(X509) **chain);
-int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen,
-                        int options, char *pempass, const EVP_CIPHER *enc);
-int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
-                          char *pass, int passlen, int options, char *pempass,
-                          const EVP_CIPHER *enc);
-int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass,
-                         int passlen, int options, char *pempass,
-                         const EVP_CIPHER *enc);
+int dump_certs_keys_p12(BIO *out, const PKCS12 *p12,
+                        const char *pass, int passlen, int options,
+                        char *pempass, const EVP_CIPHER *enc);
+int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
+                          const char *pass, int passlen, int options,
+                          char *pempass, const EVP_CIPHER *enc);
+int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bags,
+                         const char *pass, int passlen,
+                         int options, char *pempass, const EVP_CIPHER *enc);
 int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
                   const char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
@@ -563,7 +564,7 @@ int pkcs12_main(int argc, char **argv)
     return (ret);
 }
 
-int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass,
+int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
                         int passlen, int options, char *pempass,
                         const EVP_CIPHER *enc)
 {
@@ -607,9 +608,9 @@ int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass,
     return ret;
 }
 
-int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
-                          char *pass, int passlen, int options, char *pempass,
-                          const EVP_CIPHER *enc)
+int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
+                          const char *pass, int passlen, int options,
+                          char *pempass, const EVP_CIPHER *enc)
 {
     int i;
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
@@ -621,14 +622,15 @@ int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
     return 1;
 }
 
-int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
-                         int passlen, int options, char *pempass,
-                         const EVP_CIPHER *enc)
+int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
+                         const char *pass, int passlen, int options,
+                         char *pempass, const EVP_CIPHER *enc)
 {
     EVP_PKEY *pkey;
     PKCS8_PRIV_KEY_INFO *p8;
+    const PKCS8_PRIV_KEY_INFO *p8c;
     X509 *x509;
-    STACK_OF(X509_ATTRIBUTE) *attrs;
+    const STACK_OF(X509_ATTRIBUTE) *attrs;
     int ret = 0;
 
     attrs = PKCS12_SAFEBAG_get0_attrs(bag);
@@ -640,10 +642,10 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         if (options & NOKEYS)
             return 1;
         print_attribs(out, attrs, "Bag Attributes");
-        p8 = PKCS12_SAFEBAG_get0_p8inf(bag);
-        if ((pkey = EVP_PKCS82PKEY(p8)) == NULL)
+        p8c = PKCS12_SAFEBAG_get0_p8inf(bag);
+        if ((pkey = EVP_PKCS82PKEY(p8c)) == NULL)
             return 0;
-        print_attribs(out, PKCS8_pkey_get0_attrs(p8), "Key Attributes");
+        print_attribs(out, PKCS8_pkey_get0_attrs(p8c), "Key Attributes");
         ret = PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, pempass);
         EVP_PKEY_free(pkey);
         break;
