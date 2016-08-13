@@ -83,7 +83,7 @@ static int tls1_PRF(SSL *s,
         goto err;
     ret = 1;
 
-    err:
+ err:
     EVP_PKEY_CTX_free(pctx);
     return ret;
 }
@@ -253,7 +253,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
                                        mac_secret, *mac_secret_size);
         if (mac_key == NULL
-                || EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key) <= 0) {
+            || EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key) <= 0) {
             EVP_PKEY_free(mac_key);
             SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
             goto err2;
@@ -277,7 +277,8 @@ int tls1_change_cipher_state(SSL *s, int which)
         }
     } else if (EVP_CIPHER_mode(c) == EVP_CIPH_CCM_MODE) {
         int taglen;
-        if (s->s3->tmp.new_cipher->algorithm_enc & (SSL_AES128CCM8|SSL_AES256CCM8))
+        if (s->s3->tmp.
+            new_cipher->algorithm_enc & (SSL_AES128CCM8 | SSL_AES256CCM8))
             taglen = 8;
         else
             taglen = 16;
@@ -377,8 +378,7 @@ int tls1_setup_key_block(SSL *s)
     s->s3->tmp.new_hash = hash;
     s->s3->tmp.new_mac_pkey_type = mac_type;
     s->s3->tmp.new_mac_secret_size = mac_secret_size;
-    num =
-        EVP_CIPHER_key_length(c) + mac_secret_size + EVP_CIPHER_iv_length(c);
+    num = EVP_CIPHER_key_length(c) + mac_secret_size + EVP_CIPHER_iv_length(c);
     num *= 2;
 
     ssl3_cleanup_key_block(s);
@@ -449,8 +449,7 @@ int tls1_setup_key_block(SSL *s)
     return (ret);
 }
 
-int tls1_final_finish_mac(SSL *s, const char *str, int slen,
-                          unsigned char *out)
+int tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 {
     int hashlen;
     unsigned char hash[EVP_MAX_MD_SIZE];
@@ -477,10 +476,10 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     if (s->session->flags & SSL_SESS_FLAG_EXTMS) {
         unsigned char hash[EVP_MAX_MD_SIZE * 2];
         int hashlen;
-        /* Digest cached records keeping record buffer (if present):
-         * this won't affect client auth because we're freezing the buffer
-         * at the same point (after client key exchange and before certificate
-         * verify)
+        /*
+         * Digest cached records keeping record buffer (if present): this wont
+         * affect client auth because we're freezing the buffer at the same
+         * point (after client key exchange and before certificate verify)
          */
         if (!ssl3_digest_cached_records(s, 1))
             return -1;
@@ -611,8 +610,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 
     goto ret;
  err1:
-    SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL,
-           SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
+    SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
     rv = 0;
     goto ret;
  err2:

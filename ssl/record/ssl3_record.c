@@ -61,7 +61,6 @@ void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
     memcpy(r->seq_num, seq_num, SEQ_NUM_SIZE);
 }
 
-
 /*
  * Peeks ahead into "read_ahead" data to see if we have a whole record waiting
  * for us in the buffer.
@@ -151,9 +150,10 @@ int ssl3_get_record(SSL *s)
             (RECORD_LAYER_get_packet_length(&s->rlayer)
              < SSL3_RT_HEADER_LENGTH)) {
             n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH,
-                SSL3_BUFFER_get_len(rbuf), 0, num_recs == 0 ? 1 : 0);
+                            SSL3_BUFFER_get_len(rbuf), 0,
+                            num_recs == 0 ? 1 : 0);
             if (n <= 0)
-                return (n);         /* error or non-blocking */
+                return (n);     /* error or non-blocking */
             RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_BODY);
 
             p = RECORD_LAYER_get_packet(&s->rlayer);
@@ -169,10 +169,10 @@ int ssl3_get_record(SSL *s)
              * renegotiation.
              */
             if (s->first_packet && s->server
-                    && s->init_num == 0
-                    && RECORD_LAYER_get_empty_record_count(&s->rlayer) == 0
-                    && s->read_hash == NULL && s->enc_read_ctx == NULL
-                    && (p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
+                && s->init_num == 0
+                && RECORD_LAYER_get_empty_record_count(&s->rlayer) == 0
+                && s->read_hash == NULL && s->enc_read_ctx == NULL
+                && (p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
                 /*
                  *  SSLv2 style record
                  *
@@ -188,7 +188,7 @@ int ssl3_get_record(SSL *s)
                 rr[num_recs].length = ((p[0] & 0x7f) << 8) | p[1];
 
                 if (rr[num_recs].length > SSL3_BUFFER_get_len(rbuf)
-                                 - SSL2_RT_HEADER_LENGTH) {
+                    - SSL2_RT_HEADER_LENGTH) {
                     al = SSL_AD_RECORD_OVERFLOW;
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
                     goto f_err;
@@ -227,7 +227,7 @@ int ssl3_get_record(SSL *s)
                              * shouldn't send a fatal alert back. We'll just
                              * end.
                              */
-                             goto err;
+                            goto err;
                         }
                         /*
                          * Send back error using their minor version number :-)
@@ -240,8 +240,10 @@ int ssl3_get_record(SSL *s)
 
                 if ((version >> 8) != SSL3_VERSION_MAJOR) {
                     if (s->first_packet) {
-                        /* Go back to start of packet, look at the five bytes
-                         * that we have. */
+                        /*
+                         * Go back to start of packet, look at the five bytes
+                         * that we have.
+                         */
                         p = RECORD_LAYER_get_packet(&s->rlayer);
                         if (strncmp((char *)p, "GET ", 4) == 0 ||
                             strncmp((char *)p, "POST ", 5) == 0 ||
@@ -260,7 +262,7 @@ int ssl3_get_record(SSL *s)
                 }
 
                 if (rr[num_recs].length >
-                        SSL3_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
+                    SSL3_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
                     al = SSL_AD_RECORD_OVERFLOW;
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
                     goto f_err;
@@ -286,7 +288,7 @@ int ssl3_get_record(SSL *s)
 
             n = ssl3_read_n(s, i, i, 1, 0);
             if (n <= 0)
-                return (n);         /* error or non-blocking io */
+                return (n);     /* error or non-blocking io */
         }
 
         /* set state for later operations */
@@ -336,13 +338,12 @@ int ssl3_get_record(SSL *s)
         /* we have pulled in a full packet so zero things */
         RECORD_LAYER_reset_packet_length(&s->rlayer);
     } while (num_recs < max_recs
-             && rr[num_recs-1].type == SSL3_RT_APPLICATION_DATA
+             && rr[num_recs - 1].type == SSL3_RT_APPLICATION_DATA
              && SSL_USE_EXPLICIT_IV(s)
              && s->enc_read_ctx != NULL
              && (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx))
-                & EVP_CIPH_FLAG_PIPELINE)
+                 & EVP_CIPH_FLAG_PIPELINE)
              && ssl3_record_app_data_waiting(s));
-
 
     /*
      * If in encrypt-then-mac mode calculate mac from encrypted record. All
@@ -403,7 +404,7 @@ int ssl3_get_record(SSL *s)
         mac_size = EVP_MD_CTX_size(s->read_hash);
         OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
 
-        for (j=0; j < num_recs; j++) {
+        for (j = 0; j < num_recs; j++) {
             /*
              * orig_len is the length of the record before any padding was
              * removed. This is public information, as is the MAC in use,
@@ -496,7 +497,7 @@ int ssl3_get_record(SSL *s)
         if (rr[j].length == 0) {
             RECORD_LAYER_inc_empty_record_count(&s->rlayer);
             if (RECORD_LAYER_get_empty_record_count(&s->rlayer)
-                    > MAX_EMPTY_RECORDS) {
+                > MAX_EMPTY_RECORDS) {
                 al = SSL_AD_UNEXPECTED_MESSAGE;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_RECORD_TOO_SMALL);
                 goto f_err;
@@ -528,8 +529,7 @@ int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr)
         return 0;
 
     i = COMP_expand_block(ssl->expand, rr->comp,
-                          SSL3_RT_MAX_PLAIN_LENGTH, rr->data,
-                          (int)rr->length);
+                          SSL3_RT_MAX_PLAIN_LENGTH, rr->data, (int)rr->length);
     if (i < 0)
         return 0;
     else
@@ -710,7 +710,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
 
         if (n_recs > 1) {
             if (!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                                    & EVP_CIPH_FLAG_PIPELINE)) {
+                  & EVP_CIPH_FLAG_PIPELINE)) {
                 /*
                  * We shouldn't have been called with pipeline data if the
                  * cipher doesn't support pipelining
@@ -723,7 +723,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
             reclen[ctr] = recs[ctr].length;
 
             if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                    & EVP_CIPH_FLAG_AEAD_CIPHER) {
+                & EVP_CIPH_FLAG_AEAD_CIPHER) {
                 unsigned char *seq;
 
                 seq = send ? RECORD_LAYER_get_write_sequence(&s->rlayer)
@@ -787,7 +787,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
                 data[ctr] = recs[ctr].data;
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS,
-                                      n_recs, data) <= 0) {
+                                    n_recs, data) <= 0) {
                 SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
             }
             /* Set the input buffers */
@@ -795,9 +795,9 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
                 data[ctr] = recs[ctr].input;
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_INPUT_BUFS,
-                                      n_recs, data) <= 0
+                                    n_recs, data) <= 0
                 || EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_INPUT_LENS,
-                                      n_recs, reclen) <= 0) {
+                                       n_recs, reclen) <= 0) {
                 SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
                 return -1;
             }
@@ -805,7 +805,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
 
         i = EVP_Cipher(ds, recs[0].data, recs[0].input, reclen[0]);
         if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                & EVP_CIPH_FLAG_CUSTOM_CIPHER)
+             & EVP_CIPH_FLAG_CUSTOM_CIPHER)
             ? (i < 0)
             : (i == 0))
             return -1;          /* AEAD can fail to verify MAC */
@@ -919,18 +919,18 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
         p = md;
         s2n(rec->length, p);
         if (EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-                || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-                || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
-                || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
-                || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
-                || EVP_DigestUpdate(md_ctx, md, 2) <= 0
-                || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
-                || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
-                || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-                || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-                || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
-                || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
-                || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
+            || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+            || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
+            || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
+            || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
+            || EVP_DigestUpdate(md_ctx, md, 2) <= 0
+            || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
+            || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
+            || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
+            || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+            || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
+            || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
+            || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
             EVP_MD_CTX_reset(md_ctx);
             return -1;
         }
@@ -972,8 +972,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
         mac_ctx = hash;
     } else {
         hmac = EVP_MD_CTX_new();
-        if (hmac == NULL
-                || !EVP_MD_CTX_copy(hmac, hash))
+        if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash))
             return -1;
         mac_ctx = hmac;
     }
@@ -1015,8 +1014,8 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
         }
     } else {
         if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
-                || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
-                || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
+            || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
+            || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
             EVP_MD_CTX_free(hmac);
             return -1;
         }
@@ -1026,7 +1025,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
                                        rec->length, rec->orig_len)) {
                 EVP_MD_CTX_free(hmac);
                 return -1;
-        }
+            }
     }
 
     EVP_MD_CTX_free(hmac);
@@ -1133,7 +1132,8 @@ int tls1_cbc_remove_padding(const SSL *s,
 
     padding_length = rec->data[rec->length - 1];
 
-    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx)) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx)) &
+        EVP_CIPH_FLAG_AEAD_CIPHER) {
         /* padding is already verified */
         rec->length -= padding_length + 1;
         return 1;
@@ -1434,7 +1434,6 @@ int dtls1_process_record(SSL *s)
     return (0);
 }
 
-
 /*
  * retrieve a buffered record that belongs to the current epoch, ie,
  * processed
@@ -1482,13 +1481,14 @@ int dtls1_get_record(SSL *s)
     if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
         (RECORD_LAYER_get_packet_length(&s->rlayer) < DTLS1_RT_HEADER_LENGTH)) {
         n = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH,
-            SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0, 1);
+                        SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0, 1);
         /* read timeout is handled by dtls1_read_bytes */
         if (n <= 0)
             return (n);         /* error or non-blocking */
 
         /* this packet contained a partial record, dump it */
-        if (RECORD_LAYER_get_packet_length(&s->rlayer) != DTLS1_RT_HEADER_LENGTH) {
+        if (RECORD_LAYER_get_packet_length(&s->rlayer) !=
+            DTLS1_RT_HEADER_LENGTH) {
             RECORD_LAYER_reset_packet_length(&s->rlayer);
             goto again;
         }
@@ -1568,7 +1568,7 @@ int dtls1_get_record(SSL *s)
     bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
     if (bitmap == NULL) {
         rr->length = 0;
-        RECORD_LAYER_reset_packet_length(&s->rlayer);   /* dump this record */
+        RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
         goto again;             /* get another record */
     }
 #ifndef OPENSSL_NO_SCTP
@@ -1598,7 +1598,7 @@ int dtls1_get_record(SSL *s)
         if ((SSL_in_init(s) || ossl_statem_get_in_handshake(s))) {
             if (dtls1_buffer_record
                 (s, &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
-                rr->seq_num) < 0)
+                 rr->seq_num) < 0)
                 return -1;
             /* Mark receipt of record. */
             dtls1_record_bitmap_update(s, bitmap);
@@ -1610,7 +1610,7 @@ int dtls1_get_record(SSL *s)
 
     if (!dtls1_process_record(s)) {
         rr->length = 0;
-        RECORD_LAYER_reset_packet_length(&s->rlayer);   /* dump this record */
+        RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
         goto again;             /* get another record */
     }
     dtls1_record_bitmap_update(s, bitmap); /* Mark receipt of record. */

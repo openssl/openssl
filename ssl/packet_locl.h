@@ -54,6 +54,7 @@ static ossl_inline const unsigned char *PACKET_end(const PACKET *pkt)
 {
     return pkt->curr + pkt->remaining;
 }
+
 /*
  * Returns a pointer to the PACKET's current position.
  * For use in non-PACKETized APIs.
@@ -107,8 +108,7 @@ __owur static ossl_inline int PACKET_equal(const PACKET *pkt, const void *ptr,
  * the original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
  */
 __owur static ossl_inline int PACKET_peek_sub_packet(const PACKET *pkt,
-                                                     PACKET *subpkt,
-                                                     size_t len)
+                                                     PACKET *subpkt, size_t len)
 {
     if (PACKET_remaining(pkt) < len)
         return 0;
@@ -122,8 +122,7 @@ __owur static ossl_inline int PACKET_peek_sub_packet(const PACKET *pkt,
  * original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
  */
 __owur static ossl_inline int PACKET_get_sub_packet(PACKET *pkt,
-                                                    PACKET *subpkt,
-                                                    size_t len)
+                                                    PACKET *subpkt, size_t len)
 {
     if (!PACKET_peek_sub_packet(pkt, subpkt, len))
         return 0;
@@ -151,8 +150,7 @@ __owur static ossl_inline int PACKET_peek_net_2(const PACKET *pkt,
 
 /* Equivalent of n2s */
 /* Get 2 bytes in network order from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_net_2(PACKET *pkt,
-                                               unsigned int *data)
+__owur static ossl_inline int PACKET_get_net_2(PACKET *pkt, unsigned int *data)
 {
     if (!PACKET_peek_net_2(pkt, data))
         return 0;
@@ -181,8 +179,7 @@ __owur static ossl_inline int PACKET_peek_net_3(const PACKET *pkt,
 
 /* Equivalent of n2l3 */
 /* Get 3 bytes in network order from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_net_3(PACKET *pkt,
-                                               unsigned long *data)
+__owur static ossl_inline int PACKET_get_net_3(PACKET *pkt, unsigned long *data)
 {
     if (!PACKET_peek_net_3(pkt, data))
         return 0;
@@ -212,8 +209,7 @@ __owur static ossl_inline int PACKET_peek_net_4(const PACKET *pkt,
 
 /* Equivalent of n2l */
 /* Get 4 bytes in network order from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_net_4(PACKET *pkt,
-                                               unsigned long *data)
+__owur static ossl_inline int PACKET_get_net_4(PACKET *pkt, unsigned long *data)
 {
     if (!PACKET_peek_net_4(pkt, data))
         return 0;
@@ -333,8 +329,7 @@ __owur static ossl_inline int PACKET_peek_copy_bytes(const PACKET *pkt,
  * The caller is responsible for ensuring that |data| can hold |len| bytes.
  */
 __owur static ossl_inline int PACKET_copy_bytes(PACKET *pkt,
-                                                unsigned char *data,
-                                                size_t len)
+                                                unsigned char *data, size_t len)
 {
     if (!PACKET_peek_copy_bytes(pkt, data, len))
         return 0;
@@ -417,7 +412,7 @@ __owur static ossl_inline int PACKET_strndup(const PACKET *pkt, char **data)
 /* Returns 1 if |pkt| contains at least one 0-byte, 0 otherwise. */
 static ossl_inline int PACKET_contains_zero_byte(const PACKET *pkt)
 {
-  return memchr(pkt->curr, 0, pkt->remaining) != NULL;
+    return memchr(pkt->curr, 0, pkt->remaining) != NULL;
 }
 
 /* Move the current reading position forward |len| bytes */
@@ -460,22 +455,23 @@ __owur static ossl_inline int PACKET_get_length_prefixed_1(PACKET *pkt,
  * Like PACKET_get_length_prefixed_1, but additionally, fails when there are
  * leftover bytes in |pkt|.
  */
-__owur static ossl_inline int PACKET_as_length_prefixed_1(PACKET *pkt, PACKET *subpkt)
+__owur static ossl_inline int PACKET_as_length_prefixed_1(PACKET *pkt,
+                                                          PACKET *subpkt)
 {
-  unsigned int length;
-  const unsigned char *data;
-  PACKET tmp = *pkt;
-  if (!PACKET_get_1(&tmp, &length) ||
-      !PACKET_get_bytes(&tmp, &data, (size_t)length) ||
-      PACKET_remaining(&tmp) != 0) {
-      return 0;
-  }
+    unsigned int length;
+    const unsigned char *data;
+    PACKET tmp = *pkt;
+    if (!PACKET_get_1(&tmp, &length) ||
+        !PACKET_get_bytes(&tmp, &data, (size_t)length) ||
+        PACKET_remaining(&tmp) != 0) {
+        return 0;
+    }
 
-  *pkt = tmp;
-  subpkt->curr = data;
-  subpkt->remaining = length;
+    *pkt = tmp;
+    subpkt->curr = data;
+    subpkt->remaining = length;
 
-  return 1;
+    return 1;
 }
 
 /*
@@ -511,21 +507,21 @@ __owur static ossl_inline int PACKET_get_length_prefixed_2(PACKET *pkt,
 __owur static ossl_inline int PACKET_as_length_prefixed_2(PACKET *pkt,
                                                           PACKET *subpkt)
 {
-  unsigned int length;
-  const unsigned char *data;
-  PACKET tmp = *pkt;
+    unsigned int length;
+    const unsigned char *data;
+    PACKET tmp = *pkt;
 
-  if (!PACKET_get_net_2(&tmp, &length) ||
-      !PACKET_get_bytes(&tmp, &data, (size_t)length) ||
-      PACKET_remaining(&tmp) != 0) {
-      return 0;
-  }
+    if (!PACKET_get_net_2(&tmp, &length) ||
+        !PACKET_get_bytes(&tmp, &data, (size_t)length) ||
+        PACKET_remaining(&tmp) != 0) {
+        return 0;
+    }
 
-  *pkt = tmp;
-  subpkt->curr = data;
-  subpkt->remaining = length;
+    *pkt = tmp;
+    subpkt->curr = data;
+    subpkt->remaining = length;
 
-  return 1;
+    return 1;
 }
 
 /*
