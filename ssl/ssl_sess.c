@@ -842,7 +842,7 @@ unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s)
     return s->tlsext_tick_lifetime_hint;
 }
 
-void SSL_SESSION_get0_ticket(const SSL_SESSION *s, unsigned char **tick,
+void SSL_SESSION_get0_ticket(const SSL_SESSION *s, const unsigned char **tick,
                             size_t *len)
 {
     *len = s->tlsext_ticklen;

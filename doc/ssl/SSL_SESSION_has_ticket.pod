@@ -12,7 +12,7 @@ SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint,
 
  int SSL_SESSION_has_ticket(const SSL_SESSION *s);
  unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s);
- void SSL_SESSION_get0_ticket(const SSL_SESSION *s, unsigned char **tick,
+ void SSL_SESSION_get0_ticket(const SSL_SESSION *s, const unsigned char **tick,
                               size_t *len);
 
 =head1 DESCRIPTION

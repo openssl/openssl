@@ -544,7 +544,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     int client_turn = 1, shutdown = 0;
     peer_status_t client_status = PEER_RETRY, server_status = PEER_RETRY;
     handshake_status_t status = HANDSHAKE_RETRY;
-    unsigned char* tick = NULL;
+    const unsigned char* tick = NULL;
     size_t tick_len = 0;
     SSL_SESSION* sess = NULL;
     const unsigned char *proto = NULL;
