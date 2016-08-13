@@ -351,7 +351,8 @@ int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey);
 int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki);
 
 int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent);
-int X509_signature_print(BIO *bp, X509_ALGOR *alg, ASN1_STRING *sig);
+int X509_signature_print(BIO *bp, const X509_ALGOR *alg,
+                         const ASN1_STRING *sig);
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
@@ -685,10 +686,10 @@ long X509_CRL_get_version(const X509_CRL *crl);
 ASN1_TIME *X509_CRL_get_lastUpdate(const X509_CRL *crl);
 ASN1_TIME *X509_CRL_get_nextUpdate(const X509_CRL *crl);
 X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl);
-STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(X509_CRL *crl);
+const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
 STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
-void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
-                             X509_CRL *crl);
+void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
+                             const X509_ALGOR **palg);
 int X509_CRL_get_signature_nid(const X509_CRL *crl);
 int i2d_re_X509_CRL_tbs(X509_CRL *req, unsigned char **pp);
 

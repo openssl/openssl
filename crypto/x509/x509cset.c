@@ -115,7 +115,7 @@ X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl)
     return crl->crl.issuer;
 }
 
-STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(X509_CRL *crl)
+const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl)
 {
     return crl->crl.extensions;
 }
@@ -125,8 +125,8 @@ STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl)
     return crl->crl.revoked;
 }
 
-void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
-                             X509_CRL *crl)
+void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
+                             const X509_ALGOR **palg)
 {
     if (psig != NULL)
         *psig = &crl->signature;

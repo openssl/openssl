@@ -250,9 +250,9 @@ int crl_main(int argc, char **argv)
     }
 
     if (badsig) {
-        ASN1_BIT_STRING *sig;
+        const ASN1_BIT_STRING *sig;
 
-        X509_CRL_get0_signature(&sig, NULL, x);
+        X509_CRL_get0_signature(x, &sig, NULL);
         corrupt_signature(sig);
     }
 
