@@ -320,9 +320,9 @@ int crl_main(int argc, char **argv)
     }
 
     if (badsig) {
-        ASN1_BIT_STRING *sig;
+        const ASN1_BIT_STRING *sig;
         unsigned char *psig;
-        X509_CRL_get0_signature(&sig, NULL, x);
+        X509_CRL_get0_signature(x, &sig, NULL);
         psig = ASN1_STRING_data(sig);
         psig[ASN1_STRING_length(sig) - 1] ^= 0x1;
     }
