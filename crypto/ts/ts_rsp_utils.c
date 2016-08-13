@@ -348,17 +348,18 @@ int TS_STATUS_INFO_set_status(TS_STATUS_INFO *a, int i)
     return ASN1_INTEGER_set(a->status, i);
 }
 
-ASN1_INTEGER *TS_STATUS_INFO_get0_status(TS_STATUS_INFO *a)
+const ASN1_INTEGER *TS_STATUS_INFO_get0_status(const TS_STATUS_INFO *a)
 {
     return a->status;
 }
 
-STACK_OF(ASN1_UTF8STRING) *TS_STATUS_INFO_get0_text(TS_STATUS_INFO *a)
+const STACK_OF(ASN1_UTF8STRING) *
+TS_STATUS_INFO_get0_text(const TS_STATUS_INFO *a)
 {
     return a->text;
 }
 
-ASN1_BIT_STRING *TS_STATUS_INFO_get0_failure_info(TS_STATUS_INFO *a)
+const ASN1_BIT_STRING *TS_STATUS_INFO_get0_failure_info(const TS_STATUS_INFO *a)
 {
     return a->failure_info;
 }
