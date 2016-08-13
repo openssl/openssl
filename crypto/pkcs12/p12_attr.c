@@ -64,7 +64,8 @@ int PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name, int namelen)
         return 0;
 }
 
-ASN1_TYPE *PKCS12_get_attr_gen(STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
+ASN1_TYPE *PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs,
+                               int attr_nid)
 {
     X509_ATTRIBUTE *attrib;
     int i;

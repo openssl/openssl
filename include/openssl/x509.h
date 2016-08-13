@@ -971,7 +971,8 @@ int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
                     const unsigned char **pk, int *ppklen,
                     X509_ALGOR **pa, PKCS8_PRIV_KEY_INFO *p8);
 
-STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(PKCS8_PRIV_KEY_INFO *p8);
+const STACK_OF(X509_ATTRIBUTE) *
+PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO *p8);
 int PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
                                 const unsigned char *bytes, int len);
 

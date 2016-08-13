@@ -37,7 +37,7 @@ int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
 int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass,
                          int passlen, int options, char *pempass,
                          const EVP_CIPHER *enc);
-int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst,
+int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
                   const char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
 static int alg_print(X509_ALGOR *alg);
@@ -827,7 +827,7 @@ int cert_load(BIO *in, STACK_OF(X509) *sk)
 
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
 
-int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst,
+int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
                   const char *name)
 {
     X509_ATTRIBUTE *attr;
