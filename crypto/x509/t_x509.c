@@ -287,7 +287,8 @@ int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
     return 1;
 }
 
-int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
+int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
+                         const ASN1_STRING *sig)
 {
     int sig_nid;
     if (BIO_puts(bp, "    Signature Algorithm: ") <= 0)
