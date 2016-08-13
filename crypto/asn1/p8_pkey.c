@@ -65,7 +65,8 @@ int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
     return 1;
 }
 
-STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO *p8)
+const STACK_OF(X509_ATTRIBUTE) *
+PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO *p8)
 {
     return p8->attributes;
 }
