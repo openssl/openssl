@@ -10,7 +10,7 @@ chain of the peer
  #include <openssl/ssl.h>
 
  STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *ssl);
- STACK_OF(X509) *SSL_get0_verified_chain(const SSL *ssl);
+ const STACK_OF(X509) *SSL_get0_verified_chain(const SSL *ssl);
 
 =head1 DESCRIPTION
 

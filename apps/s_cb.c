@@ -1014,7 +1014,7 @@ static char *hexencode(const unsigned char *data, size_t len)
 void print_verify_detail(SSL *s, BIO *bio)
 {
     int mdpth;
-    EVP_PKEY *mspki;
+    const EVP_PKEY *mspki;
     long verify_err = SSL_get_verify_result(s);
 
     if (verify_err == X509_V_OK) {

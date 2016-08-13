@@ -882,9 +882,10 @@ unsigned long SSL_dane_clear_flags(SSL *ssl, unsigned long flags)
     return orig;
 }
 
-int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
+int SSL_get0_dane_authority(const SSL *s, const X509 **mcert,
+                            const EVP_PKEY **mspki)
 {
-    SSL_DANE *dane = &s->dane;
+    const SSL_DANE *dane = &s->dane;
 
     if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
@@ -897,10 +898,10 @@ int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
     return dane->mdpth;
 }
 
-int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
+int SSL_get0_dane_tlsa(const SSL *s, uint8_t *usage, uint8_t *selector,
                        uint8_t *mtype, unsigned const char **data, size_t *dlen)
 {
-    SSL_DANE *dane = &s->dane;
+    const SSL_DANE *dane = &s->dane;
 
     if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
@@ -3886,7 +3887,7 @@ unsigned long SSL_clear_options(SSL *s, unsigned long op)
     return s->options &= ~op;
 }
 
-STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s)
+const STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s)
 {
     return s->verified_chain;
 }

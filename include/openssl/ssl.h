@@ -1493,8 +1493,9 @@ __owur int SSL_CTX_dane_mtype_set(SSL_CTX *ctx, const EVP_MD *md,
 __owur int SSL_dane_enable(SSL *s, const char *basedomain);
 __owur int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
                              uint8_t mtype, unsigned char *data, size_t dlen);
-__owur int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki);
-__owur int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
+__owur int SSL_get0_dane_authority(const SSL *s, const X509 **mcert,
+                                   const EVP_PKEY **mspki);
+__owur int SSL_get0_dane_tlsa(const SSL *s, uint8_t *usage, uint8_t *selector,
                               uint8_t *mtype, unsigned const char **data,
                               size_t *dlen);
 /*
@@ -1691,7 +1692,7 @@ __owur OSSL_HANDSHAKE_STATE SSL_get_state(const SSL *ssl);
 
 void SSL_set_verify_result(SSL *ssl, long v);
 __owur long SSL_get_verify_result(const SSL *ssl);
-__owur STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s);
+__owur const STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s);
 
 __owur size_t SSL_get_client_random(const SSL *ssl, unsigned char *out,
                                     size_t outlen);

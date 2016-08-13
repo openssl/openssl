@@ -19,8 +19,8 @@ TLS client
  int SSL_dane_enable(SSL *s, const char *basedomain);
  int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
                        uint8_t mtype, unsigned char *data, size_t dlen);
- int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki);
- int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
+ int SSL_get0_dane_authority(const SSL *s, X509 **mcert, EVP_PKEY **mspki);
+ int SSL_get0_dane_tlsa(const SSL *s, uint8_t *usage, uint8_t *selector,
                         uint8_t *mtype, unsigned const char **data,
                         size_t *dlen);
  unsigned long SSL_CTX_dane_set_flags(SSL_CTX *ctx, unsigned long flags);
