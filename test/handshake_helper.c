@@ -699,7 +699,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     int client_turn = 1;
     connect_phase_t phase = HANDSHAKE;
     handshake_status_t status = HANDSHAKE_RETRY;
-    unsigned char* tick = NULL;
+    const unsigned char* tick = NULL;
     size_t tick_len = 0;
     SSL_SESSION* sess = NULL;
     const unsigned char *proto = NULL;
