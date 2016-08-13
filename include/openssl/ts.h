@@ -160,11 +160,13 @@ int TS_REQ_set_version(TS_REQ *a, long version);
 long TS_REQ_get_version(const TS_REQ *a);
 
 int TS_STATUS_INFO_set_status(TS_STATUS_INFO *a, int i);
-ASN1_INTEGER *TS_STATUS_INFO_get0_status(TS_STATUS_INFO *a);
+const ASN1_INTEGER *TS_STATUS_INFO_get0_status(const TS_STATUS_INFO *a);
 
-STACK_OF(ASN1_UTF8STRING) *TS_STATUS_INFO_get0_text(TS_STATUS_INFO *a);
+const STACK_OF(ASN1_UTF8STRING) *
+TS_STATUS_INFO_get0_text(const TS_STATUS_INFO *a);
 
-ASN1_BIT_STRING *TS_STATUS_INFO_get0_failure_info(TS_STATUS_INFO *a);
+const ASN1_BIT_STRING *
+TS_STATUS_INFO_get0_failure_info(const TS_STATUS_INFO *a);
 
 int TS_REQ_set_msg_imprint(TS_REQ *a, TS_MSG_IMPRINT *msg_imprint);
 TS_MSG_IMPRINT *TS_REQ_get_msg_imprint(TS_REQ *a);
