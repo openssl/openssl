@@ -304,7 +304,7 @@ void RSA_set_flags(RSA *r, int flags)
     r->flags |= flags;
 }
 
-ENGINE *RSA_get0_engine(const RSA *r)
+const ENGINE *RSA_get0_engine(const RSA *r)
 {
     return r->engine;
 }

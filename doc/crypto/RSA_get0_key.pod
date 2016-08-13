@@ -23,7 +23,7 @@ and setting data in an RSA object
  void RSA_clear_flags(RSA *r, int flags);
  int RSA_test_flags(const RSA *r, int flags);
  void RSA_set_flags(RSA *r, int flags);
- ENGINE *RSA_get0_engine(RSA *r);
+ const ENGINE *RSA_get0_engine(const RSA *r);
 
 =head1 DESCRIPTION
 
