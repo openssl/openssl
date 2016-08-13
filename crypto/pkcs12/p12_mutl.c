@@ -15,17 +15,18 @@
 # include <openssl/pkcs12.h>
 # include "p12_lcl.h"
 
-int PKCS12_mac_present(PKCS12 *p12)
+int PKCS12_mac_present(const PKCS12 *p12)
 {
     return p12->mac ? 1 : 0;
 }
 
-void PKCS12_get0_mac(ASN1_OCTET_STRING **pmac, X509_ALGOR **pmacalg,
-                     ASN1_OCTET_STRING **psalt, ASN1_INTEGER **piter,
-                     PKCS12 *p12)
+void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac, const X509_ALGOR **pmacalg,
+                     const ASN1_OCTET_STRING **psalt,
+                     const ASN1_INTEGER **piter,
+                     const PKCS12 *p12)
 {
     if (p12->mac) {
-        X509_SIG_get0(pmacalg, pmac, p12->mac->dinfo);
+        X509_SIG_get0_const(pmacalg, pmac, p12->mac->dinfo);
         if (psalt)
             *psalt = p12->mac->salt;
         if (piter)
@@ -74,7 +75,7 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     int saltlen, iter;
     int md_size = 0;
     int md_type_nid;
-    X509_ALGOR *macalg;
+    const X509_ALGOR *macalg;
     ASN1_OBJECT *macoid;
 
     if (!PKCS7_type_is_data(p12->authsafes)) {
@@ -88,7 +89,7 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         iter = 1;
     else
         iter = ASN1_INTEGER_get(p12->mac->iter);
-    X509_SIG_get0(&macalg, NULL, p12->mac->dinfo);
+    X509_SIG_get0_const(&macalg, NULL, p12->mac->dinfo);
     X509_ALGOR_get0(&macoid, NULL, NULL, macalg);
     if ((md_type = EVP_get_digestbyobj(macoid)) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_UNKNOWN_DIGEST_ALGORITHM);
@@ -131,7 +132,7 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
 {
     unsigned char mac[EVP_MAX_MD_SIZE];
     unsigned int maclen;
-    ASN1_OCTET_STRING *macoct;
+    const ASN1_OCTET_STRING *macoct;
 
     if (p12->mac == NULL) {
         PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_ABSENT);
@@ -141,7 +142,7 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
         PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_GENERATION_ERROR);
         return 0;
     }
-    X509_SIG_get0(NULL, &macoct, p12->mac->dinfo);
+    X509_SIG_get0_const(NULL, &macoct, p12->mac->dinfo);
     if ((maclen != (unsigned int)ASN1_STRING_length(macoct))
         || CRYPTO_memcmp(mac, ASN1_STRING_data(macoct), maclen))
         return 0;

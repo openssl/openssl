@@ -464,7 +464,7 @@ X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype,
                     void *pval);
 void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
-                     X509_ALGOR *algor);
+                     const X509_ALGOR *algor);
 void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
 int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b);
 
@@ -517,6 +517,9 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length);
 DECLARE_ASN1_FUNCTIONS(X509_SIG)
 void X509_SIG_get0(X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest,
                    X509_SIG *sig);
+void X509_SIG_get0_const(const X509_ALGOR **palg,
+                         const ASN1_OCTET_STRING **pdigest,
+                         const X509_SIG *sig);
 
 DECLARE_ASN1_FUNCTIONS(X509_REQ_INFO)
 DECLARE_ASN1_FUNCTIONS(X509_REQ)
@@ -961,7 +964,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 
 DECLARE_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)
 
-EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8);
+EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8);
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey);
 
 int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
@@ -969,9 +972,9 @@ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
                     unsigned char *penc, int penclen);
 int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
                     const unsigned char **pk, int *ppklen,
-                    X509_ALGOR **pa, PKCS8_PRIV_KEY_INFO *p8);
+                    X509_ALGOR **pa, const PKCS8_PRIV_KEY_INFO *p8);
 
-STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(PKCS8_PRIV_KEY_INFO *p8);
+STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO *p8);
 int PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
                                 const unsigned char *bytes, int len);
 

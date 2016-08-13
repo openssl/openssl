@@ -51,7 +51,7 @@ int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
 }
 
 void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
-                     X509_ALGOR *algor)
+                     const X509_ALGOR *algor)
 {
     if (paobj)
         *paobj = algor->algorithm;

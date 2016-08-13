@@ -12,7 +12,15 @@
 #include <openssl/pkcs12.h>
 #include "p12_lcl.h"
 
-ASN1_TYPE *PKCS12_SAFEBAG_get0_attr(PKCS12_SAFEBAG *bag, int attr_nid)
+#if OPENSSL_API_COMPAT < 0x10100000L
+ASN1_TYPE *PKCS12_get_attr(const PKCS12_SAFEBAG *bag, int attr_nid)
+{
+    return PKCS12_get_attr_gen(bag->attrib, attr_nid);
+}
+#endif
+
+const ASN1_TYPE *PKCS12_SAFEBAG_get0_attr(const PKCS12_SAFEBAG *bag,
+                                          int attr_nid)
 {
     return PKCS12_get_attr_gen(bag->attrib, attr_nid);
 }
@@ -22,33 +30,34 @@ ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid)
     return PKCS12_get_attr_gen(PKCS8_pkey_get0_attrs(p8), attr_nid);
 }
 
-PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(PKCS12_SAFEBAG *bag)
+const PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(const PKCS12_SAFEBAG *bag)
 {
     if (PKCS12_SAFEBAG_get_nid(bag) != NID_keyBag)
         return NULL;
     return bag->value.keybag;
 }
 
-X509_SIG *PKCS12_SAFEBAG_get0_pkcs8(PKCS12_SAFEBAG *bag)
+const X509_SIG *PKCS12_SAFEBAG_get0_pkcs8(const PKCS12_SAFEBAG *bag)
 {
     if (OBJ_obj2nid(bag->type) != NID_pkcs8ShroudedKeyBag)
         return NULL;
     return bag->value.shkeybag;
 }
 
-STACK_OF(PKCS12_SAFEBAG) *PKCS12_SAFEBAG_get0_safes(PKCS12_SAFEBAG *bag)
+const STACK_OF(PKCS12_SAFEBAG) *
+PKCS12_SAFEBAG_get0_safes(const PKCS12_SAFEBAG *bag)
 {
     if (OBJ_obj2nid(bag->type) != NID_safeContentsBag)
         return NULL;
     return bag->value.safes;
 }
 
-ASN1_OBJECT *PKCS12_SAFEBAG_get0_type(PKCS12_SAFEBAG *bag)
+const ASN1_OBJECT *PKCS12_SAFEBAG_get0_type(const PKCS12_SAFEBAG *bag)
 {
     return bag->type;
 }
 
-int PKCS12_SAFEBAG_get_nid(PKCS12_SAFEBAG *bag)
+int PKCS12_SAFEBAG_get_nid(const PKCS12_SAFEBAG *bag)
 {
     return OBJ_obj2nid(bag->type);
 }

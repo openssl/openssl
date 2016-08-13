@@ -52,7 +52,7 @@ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
 
 int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
                     const unsigned char **pk, int *ppklen,
-                    X509_ALGOR **pa, PKCS8_PRIV_KEY_INFO *p8)
+                    X509_ALGOR **pa, const PKCS8_PRIV_KEY_INFO *p8)
 {
     if (ppkalg)
         *ppkalg = p8->pkeyalg->algorithm;
@@ -65,7 +65,7 @@ int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
     return 1;
 }
 
-STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(PKCS8_PRIV_KEY_INFO *p8)
+STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO *p8)
 {
     return p8->attributes;
 }

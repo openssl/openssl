@@ -72,7 +72,6 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 
 # define PKCS12_certbag2x509 PKCS12_SAFEBAG_get1_cert
 # define PKCS12_certbag2scrl PKCS12_SAFEBAG_get1_crl
-# define PKCS12_get_attr PKCS12_SAFEBAG_get0_attr
 # define PKCS12_bag_type PKCS12_SAFEBAG_get_nid
 # define PKCS12_cert_bag_type PKCS12_SAFEBAG_get_bag_nid
 # define PKCS12_x5092certbag PKCS12_SAFEBAG_create_cert
@@ -80,24 +79,29 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 # define PKCS12_MAKE_KEYBAG PKCS12_SAFEBAG_create0_p8inf
 # define PKCS12_MAKE_SHKEYBAG PKCS12_SAFEBAG_create_pkcs8_encrypt
 
+ASN1_TYPE *PKCS12_get_attr(const PKCS12_SAFEBAG *bag, int attr_nid);
+
 #endif
 
 ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
-int PKCS12_mac_present(PKCS12 *p12);
-void PKCS12_get0_mac(ASN1_OCTET_STRING **pmac, X509_ALGOR **pmacalg,
-                     ASN1_OCTET_STRING **psalt, ASN1_INTEGER **piter,
-                     PKCS12 *p12);
+int PKCS12_mac_present(const PKCS12 *p12);
+void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac, const X509_ALGOR **pmacalg,
+                     const ASN1_OCTET_STRING **psalt,
+                     const ASN1_INTEGER **piter,
+                     const PKCS12 *p12);
 
-ASN1_TYPE *PKCS12_SAFEBAG_get0_attr(PKCS12_SAFEBAG *bag, int attr_nid);
-ASN1_OBJECT *PKCS12_SAFEBAG_get0_type(PKCS12_SAFEBAG *bag);
-int PKCS12_SAFEBAG_get_nid(PKCS12_SAFEBAG *bag);
+const ASN1_TYPE *PKCS12_SAFEBAG_get0_attr(const PKCS12_SAFEBAG *bag,
+                                          int attr_nid);
+const ASN1_OBJECT *PKCS12_SAFEBAG_get0_type(const PKCS12_SAFEBAG *bag);
+int PKCS12_SAFEBAG_get_nid(const PKCS12_SAFEBAG *bag);
 int PKCS12_SAFEBAG_get_bag_nid(PKCS12_SAFEBAG *bag);
 
 X509 *PKCS12_SAFEBAG_get1_cert(PKCS12_SAFEBAG *bag);
 X509_CRL *PKCS12_SAFEBAG_get1_crl(PKCS12_SAFEBAG *bag);
-STACK_OF(PKCS12_SAFEBAG) *PKCS12_SAFEBAG_get0_safes(PKCS12_SAFEBAG *bag);
-PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(PKCS12_SAFEBAG *bag);
-X509_SIG *PKCS12_SAFEBAG_get0_pkcs8(PKCS12_SAFEBAG *bag);
+const STACK_OF(PKCS12_SAFEBAG) *
+PKCS12_SAFEBAG_get0_safes(const PKCS12_SAFEBAG *bag);
+const PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(const PKCS12_SAFEBAG *bag);
+const X509_SIG *PKCS12_SAFEBAG_get0_pkcs8(const PKCS12_SAFEBAG *bag);
 
 PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_cert(X509 *x509);
 PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_crl(X509_CRL *crl);
@@ -143,7 +147,8 @@ int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag,
 int PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage);
 ASN1_TYPE *PKCS12_get_attr_gen(STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid);
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag);
-STACK_OF(X509_ATTRIBUTE) *PKCS12_SAFEBAG_get0_attrs(PKCS12_SAFEBAG *bag);
+const STACK_OF(X509_ATTRIBUTE) *
+PKCS12_SAFEBAG_get0_attrs(const PKCS12_SAFEBAG *bag);
 unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
                                 int passlen, unsigned char *in, int inlen,
                                 unsigned char **data, int *datalen,

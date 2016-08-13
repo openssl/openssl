@@ -28,3 +28,13 @@ void X509_SIG_get0(X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest,
     if (pdigest)
         *pdigest = sig->digest;
 }
+
+void X509_SIG_get0_const(const X509_ALGOR **palg,
+                         const ASN1_OCTET_STRING **pdigest,
+                         const X509_SIG *sig)
+{
+    if (palg)
+        *palg = sig->algor;
+    if (pdigest)
+        *pdigest = sig->digest;
+}

@@ -10,15 +10,26 @@ X509_SIG_get0 - Get DigestInfo functions
 
  void X509_SIG_get0(X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest,
                     X509_SIG *sig);
+ void X509_SIG_get0_const(const X509_ALGOR **palg,
+                          const ASN1_OCTET_STRING **pdigest,
+                          const X509_SIG *sig);
 
 =head1 DESCRIPTION
 
 X509_SIG_get0() returns pointers to the algorithm identifier and digest
 value in B<sig>. These values can then be examined or initialised.
 
+X509_SIG_get0_const() is the same as X509_SIG_get0() except that it works with
+a const B<sig> value. The returned values are also const and therefore can be
+examined but not changed.
+
 =head1 SEE ALSO
 
 L<d2i_X509(3)>
+
+=head1 HISTORY
+
+B<X509_SIG_get0_const> was added in OpenSSL version 1.1.0.
 
 =head1 COPYRIGHT
 

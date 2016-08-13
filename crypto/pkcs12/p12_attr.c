@@ -75,7 +75,7 @@ ASN1_TYPE *PKCS12_get_attr_gen(STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
 
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)
 {
-    ASN1_TYPE *atype;
+    const ASN1_TYPE *atype;
 
     if ((atype = PKCS12_SAFEBAG_get0_attr(bag, NID_friendlyName)) == NULL)
         return NULL;
@@ -85,7 +85,8 @@ char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)
                            atype->value.bmpstring->length);
 }
 
-STACK_OF(X509_ATTRIBUTE) *PKCS12_SAFEBAG_get0_attrs(PKCS12_SAFEBAG *bag)
+const STACK_OF(X509_ATTRIBUTE) *
+PKCS12_SAFEBAG_get0_attrs(const PKCS12_SAFEBAG *bag)
 {
     return bag->attrib;
 }

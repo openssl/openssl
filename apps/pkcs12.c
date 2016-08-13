@@ -31,16 +31,16 @@ static int get_cert_chain(X509 *cert, X509_STORE *store,
                           STACK_OF(X509) **chain);
 int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen,
                         int options, char *pempass, const EVP_CIPHER *enc);
-int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
+int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
                           char *pass, int passlen, int options, char *pempass,
                           const EVP_CIPHER *enc);
 int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass,
                          int passlen, int options, char *pempass,
                          const EVP_CIPHER *enc);
-int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst,
+int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
                   const char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
-static int alg_print(X509_ALGOR *alg);
+static int alg_print(const X509_ALGOR *alg);
 int cert_load(BIO *in, STACK_OF(X509) *sk);
 static int set_pbe(int *ppbe, const char *str);
 
@@ -521,8 +521,8 @@ int pkcs12_main(int argc, char **argv)
         OPENSSL_strlcpy(macpass, pass, sizeof macpass);
 
     if ((options & INFO) && PKCS12_mac_present(p12)) {
-        ASN1_INTEGER *tmaciter;
-        X509_ALGOR *macalgid;
+        const ASN1_INTEGER *tmaciter;
+        const X509_ALGOR *macalgid;
         ASN1_OBJECT *macobj;
         PKCS12_get0_mac(NULL, &macalgid, NULL, &tmaciter, p12);
         X509_ALGOR_get0(&macobj, NULL, NULL, macalgid);
@@ -607,7 +607,7 @@ int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass,
     return ret;
 }
 
-int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
+int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
                           char *pass, int passlen, int options, char *pempass,
                           const EVP_CIPHER *enc)
 {
@@ -626,9 +626,10 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
                          const EVP_CIPHER *enc)
 {
     EVP_PKEY *pkey;
+    const PKCS8_PRIV_KEY_INFO *p8c;
     PKCS8_PRIV_KEY_INFO *p8;
     X509 *x509;
-    STACK_OF(X509_ATTRIBUTE) *attrs;
+    const STACK_OF(X509_ATTRIBUTE) *attrs;
     int ret = 0;
 
     attrs = PKCS12_SAFEBAG_get0_attrs(bag);
@@ -640,22 +641,22 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         if (options & NOKEYS)
             return 1;
         print_attribs(out, attrs, "Bag Attributes");
-        p8 = PKCS12_SAFEBAG_get0_p8inf(bag);
-        if ((pkey = EVP_PKCS82PKEY(p8)) == NULL)
+        p8c = PKCS12_SAFEBAG_get0_p8inf(bag);
+        if ((pkey = EVP_PKCS82PKEY(p8c)) == NULL)
             return 0;
-        print_attribs(out, PKCS8_pkey_get0_attrs(p8), "Key Attributes");
+        print_attribs(out, PKCS8_pkey_get0_attrs(p8c), "Key Attributes");
         ret = PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, pempass);
         EVP_PKEY_free(pkey);
         break;
 
     case NID_pkcs8ShroudedKeyBag:
         if (options & INFO) {
-            X509_SIG *tp8;
-            X509_ALGOR *tp8alg;
+            const X509_SIG *tp8;
+            const X509_ALGOR *tp8alg;
 
             BIO_printf(bio_err, "Shrouded Keybag: ");
             tp8 = PKCS12_SAFEBAG_get0_pkcs8(bag);
-            X509_SIG_get0(&tp8alg, NULL, tp8);
+            X509_SIG_get0_const(&tp8alg, NULL, tp8);
             alg_print(tp8alg);
         }
         if (options & NOKEYS)
@@ -740,7 +741,7 @@ end:
     return i;
 }
 
-static int alg_print(X509_ALGOR *alg)
+static int alg_print(const X509_ALGOR *alg)
 {
     int pbenid, aparamtype;
     ASN1_OBJECT *aoid;
@@ -827,7 +828,7 @@ int cert_load(BIO *in, STACK_OF(X509) *sk)
 
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
 
-int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst,
+int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
                   const char *name)
 {
     X509_ATTRIBUTE *attr;

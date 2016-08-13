@@ -1061,7 +1061,7 @@ void EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
                               int (*pkey_bits) (const EVP_PKEY *pk));
 void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
                                int (*priv_decode) (EVP_PKEY *pk,
-                                                   PKCS8_PRIV_KEY_INFO
+                                                   const PKCS8_PRIV_KEY_INFO
                                                    *p8inf),
                                int (*priv_encode) (PKCS8_PRIV_KEY_INFO *p8,
                                                    const EVP_PKEY *pk),
