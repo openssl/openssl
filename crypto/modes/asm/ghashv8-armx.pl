@@ -35,6 +35,7 @@
 # Cortex-A53	1.01		8.39
 # Cortex-A57	1.17		7.61
 # Denver	0.71		6.02
+# Mongoose	1.10		8.06
 #
 # (*)	presented for reference/comparison purposes;
 

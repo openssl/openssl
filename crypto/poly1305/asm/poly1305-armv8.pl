@@ -27,6 +27,7 @@
 # Cortex-A57	2.70/+7%	1.14
 # Denver	1.64/+50%	1.18(*)
 # X-Gene	2.13/+68%	2.27
+# Mongoose	1.77/+75%	1.12
 #
 # (*)	estimate based on resources availability is less than 1.0,
 #	i.e. measured result is worse than expected, presumably binary

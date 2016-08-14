@@ -25,6 +25,7 @@
 # Cortex-A57	2.35			7.88 (+74%)
 # Denver	2.13			3.97 (+0%)(**)
 # X-Gene				8.80 (+200%)
+# Mongoose	2.05			6.50 (+160%)
 #
 # (*)	Software results are presented mostly for reference purposes.
 # (**)	Keep in mind that Denver relies on binary translation, which
