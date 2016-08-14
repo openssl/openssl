@@ -725,6 +725,13 @@ foreach (@argvcopy)
 			{
 			$libs.=$_." ";
 			}
+		elsif (/^-static$/)
+			{
+			$libs.=$_." ";
+			$disabled{"pic"} = "forced";
+			$disabled{"shared"} = "forced";
+			$disabled{"threads"} = "forced";
+			}
 		elsif (/^-D(.*)$/)
 			{
 			push @user_defines, $1;
