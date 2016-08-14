@@ -25,6 +25,7 @@
 # Cortex-A57	2.31		11.6 (+86%)	7.51 (+260%(***))
 # Denver	2.01		10.5 (+26%)	6.70 (+8%)
 # X-Gene			20.0 (+100%)	12.8 (+300%(***))
+# Mongoose	2.36		13.0 (+50%)	8.36 (+33%)
 # 
 # (*)	Software SHA256 results are of lesser relevance, presented
 #	mostly for informational purposes.
