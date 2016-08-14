@@ -1880,7 +1880,7 @@ Lppcasm_mw_OVER:
 	.long	0
 	.byte	0,12,0x14,0,0,0,4,0
 	.long	0
-.size	bn_mul_words,.-bn_mul_words
+.size	.bn_mul_words,.-.bn_mul_words
 
 #
 #	NOTE:	The following label name should be changed to
