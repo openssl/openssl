@@ -21,6 +21,7 @@ GENERATE[ecp_nistz256-armv4.S]=asm/ecp_nistz256-armv4.pl $(PERLASM_SCHEME)
 INCLUDE[ecp_nistz256-armv4.o]=..
 GENERATE[ecp_nistz256-armv8.S]=asm/ecp_nistz256-armv8.pl $(PERLASM_SCHEME)
 INCLUDE[ecp_nistz256-armv8.o]=..
+GENERATE[ecp_nistz256-ppc64.s]=asm/ecp_nistz256-ppc64.pl $(PERLASM_SCHEME)
 
 BEGINRAW[Makefile]
 {- $builddir -}/ecp_nistz256-%.S:	{- $sourcedir -}/asm/ecp_nistz256-%.pl
