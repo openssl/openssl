@@ -387,16 +387,34 @@ int X509_OBJECT_up_ref_count(X509_OBJECT *a)
     return 1;
 }
 
-X509 *X509_OBJECT_get0_X509(const X509_OBJECT *a)
+const X509 *X509_OBJECT_get0_X509(const X509_OBJECT *a)
 {
     if (a == NULL || a->type != X509_LU_X509)
         return NULL;
     return a->data.x509;
 }
 
-X509_CRL *X509_OBJECT_get0_X509_CRL(X509_OBJECT *a)
+X509 *X509_OBJECT_get1_X509(const X509_OBJECT *a)
+{
+    if (a == NULL || a->type != X509_LU_X509)
+        return NULL;
+    if (!X509_up_ref(a->data.x509))
+        return NULL;
+    return a->data.x509;
+}
+
+const X509_CRL *X509_OBJECT_get0_X509_CRL(const X509_OBJECT *a)
 {
     if (a == NULL || a->type != X509_LU_CRL)
+        return NULL;
+    return a->data.crl;
+}
+
+X509_CRL *X509_OBJECT_get1_X509_CRL(const X509_OBJECT *a)
+{
+    if (a == NULL || a->type != X509_LU_CRL)
+        return NULL;
+    if (!X509_CRL_up_ref(a->data.crl))
         return NULL;
     return a->data.crl;
 }

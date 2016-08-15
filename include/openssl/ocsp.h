@@ -182,12 +182,13 @@ int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req);
 int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
                              const char *name, const char *value);
 
-OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer);
+OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
+                             const X509 *issuer);
 
 OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
-                              X509_NAME *issuerName,
-                              ASN1_BIT_STRING *issuerKey,
-                              ASN1_INTEGER *serialNumber);
+                              const X509_NAME *issuerName,
+                              const ASN1_BIT_STRING *issuerKey,
+                              const ASN1_INTEGER *serialNumber);
 
 OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid);
 

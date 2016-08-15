@@ -4191,3 +4191,6 @@ DSA_bits                                4137	1_1_0	EXIST::FUNCTION:DSA
 CTLOG_get1_public_key                   4138	1_1_0	EXIST::FUNCTION:CT
 X509_SIG_get0_const                     4139	1_1_0	EXIST::FUNCTION:
 PKCS12_get_attr                         4140	1_1_0	EXIST::FUNCTION:
+X509_OBJECT_get1_X509                   4141	1_1_0	EXIST::FUNCTION:
+X509_OBJECT_get1_X509_CRL               4142	1_1_0	EXIST::FUNCTION:
+X509_get0_serialNumber                  4143	1_1_0	EXIST::FUNCTION:

@@ -190,6 +190,8 @@ int crl_main(int argc, char **argv)
         goto end;
 
     if (do_ver) {
+        X509 *cert;
+
         if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
             goto end;
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
@@ -207,7 +209,9 @@ int crl_main(int argc, char **argv)
             BIO_printf(bio_err, "Error getting CRL issuer certificate\n");
             goto end;
         }
-        pkey = X509_get_pubkey(X509_OBJECT_get0_X509(xobj));
+        cert = X509_OBJECT_get1_X509(xobj);
+        pkey = X509_get_pubkey(cert);
+        X509_free(cert);
         X509_OBJECT_free(xobj);
         if (!pkey) {
             BIO_printf(bio_err, "Error getting CRL issuer public key\n");
