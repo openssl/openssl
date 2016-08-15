@@ -265,7 +265,7 @@ void X509_STORE_free(X509_STORE *v);
 int X509_STORE_lock(X509_STORE *ctx);
 int X509_STORE_unlock(X509_STORE *ctx);
 int X509_STORE_up_ref(X509_STORE *v);
-STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(X509_STORE *v);
+const STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *v);
 
 STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *st, X509_NAME *nm);
 STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *st, X509_NAME *nm);
@@ -273,7 +273,7 @@ int X509_STORE_set_flags(X509_STORE *ctx, unsigned long flags);
 int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
 int X509_STORE_set_trust(X509_STORE *ctx, int trust);
 int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *pm);
-X509_VERIFY_PARAM *X509_STORE_get0_param(X509_STORE *ctx);
+const X509_VERIFY_PARAM *X509_STORE_get0_param(const X509_STORE *ctx);
 
 void X509_STORE_set_verify(X509_STORE *ctx, X509_STORE_CTX_verify_fn verify);
 #define X509_STORE_set_verify_func(ctx, func) \

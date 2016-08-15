@@ -9,9 +9,9 @@ X509_STORE_get0_objects - X509_STORE setter and getter functions
 
  #include <openssl/x509_vfy.h>
 
- X509_VERIFY_PARAM *X509_STORE_get0_param(X509_STORE *ctx);
+ const X509_VERIFY_PARAM *X509_STORE_get0_param(const X509_STORE *ctx);
  int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *pm);
- STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(X509_STORE *ctx);
+ const STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *ctx);
 
 =head1 DESCRIPTION
 

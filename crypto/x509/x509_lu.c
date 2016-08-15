@@ -510,7 +510,7 @@ X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,
     return sk_X509_OBJECT_value(h, idx);
 }
 
-STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(X509_STORE *v)
+const STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *v)
 {
     return v->objs;
 }
@@ -727,7 +727,7 @@ int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *param)
     return X509_VERIFY_PARAM_set1(ctx->param, param);
 }
 
-X509_VERIFY_PARAM *X509_STORE_get0_param(X509_STORE *ctx)
+const X509_VERIFY_PARAM *X509_STORE_get0_param(const X509_STORE *ctx)
 {
     return ctx->param;
 }
