@@ -39,14 +39,14 @@ void HANDSHAKE_RESULT_free(HANDSHAKE_RESULT *result)
  * from the SSL object directly, we use the info callback and stash
  * the result in ex_data.
  */
-typedef struct handshake_ex_data {
+typedef struct handshake_ex_data_st {
     int alert_sent;
     int alert_received;
     int session_ticket_do_not_call;
     ssl_servername_t servername;
 } HANDSHAKE_EX_DATA;
 
-typedef struct ctx_data {
+typedef struct ctx_data_st {
     unsigned char *npn_protocols;
     size_t npn_protocols_len;
     unsigned char *alpn_protocols;
@@ -409,7 +409,7 @@ typedef enum {
 } peer_status_t;
 
 /* An SSL object and associated read-write buffers. */
-typedef struct {
+typedef struct peer_st {
     SSL *ssl;
     /* Buffer lengths are int to match the SSL read/write API. */
     unsigned char *write_buf;
@@ -424,6 +424,7 @@ typedef struct {
 static void create_peer(PEER *peer, SSL_CTX *ctx)
 {
     static const int peer_buffer_size = 64 * 1024;
+
     peer->ssl = SSL_new(ctx);
     TEST_check(peer->ssl != NULL);
     peer->write_buf = OPENSSL_zalloc(peer_buffer_size);
@@ -790,7 +791,12 @@ static HANDSHAKE_RESULT *do_handshake_internal(
                 goto err;
             } else {
                 client.status = server.status = PEER_RETRY;
-                /* For now, client starts each phase. */
+                /*
+                 * For now, client starts each phase. Since each phase is
+                 * started separately, we can later control this more
+                 * precisely, for example, to test client-initiated and
+                 * server-initiated shutdown.
+                 */
                 client_turn = 1;
                 break;
             }

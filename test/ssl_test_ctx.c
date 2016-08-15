@@ -16,6 +16,8 @@
 #include "ssl_test_ctx.h"
 #include "testutil.h"
 
+static const int default_app_data_size = 256;
+
 static int parse_boolean(const char *value, int *result)
 {
     if (strcasecmp(value, "Yes") == 0) {
@@ -453,7 +455,7 @@ SSL_TEST_CTX *SSL_TEST_CTX_new()
     SSL_TEST_CTX *ret;
     ret = OPENSSL_zalloc(sizeof(*ret));
     TEST_check(ret != NULL);
-    ret->app_data_size = 256;
+    ret->app_data_size = default_app_data_size;
     return ret;
 }
 
