@@ -550,8 +550,8 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
     return 0;
 }
 
-int X509_NAME_get0_der(const unsigned char **pder, size_t *pderlen,
-                       X509_NAME *nm)
+int X509_NAME_get0_der(X509_NAME *nm, const unsigned char **pder,
+                       size_t *pderlen)
 {
     /* Make sure encoding is valid */
     if (i2d_X509_NAME(nm, NULL) <= 0)
