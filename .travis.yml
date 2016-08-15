@@ -95,7 +95,7 @@ before_script:
           if which ccache >/dev/null && [ "$CC" != clang-3.6 ]; then
               CC="ccache $CC";
           fi;
-          $srcdir/config $CONFIG_OPTS;
+          $srcdir/config -v $CONFIG_OPTS;
       fi
     - cd $top
 
