@@ -291,7 +291,7 @@ CRYPTO_gcm128_setiv                     291	1_1_0	EXIST::FUNCTION:
 ASN1_PCTX_set_oid_flags                 292	1_1_0	EXIST::FUNCTION:
 d2i_ASN1_INTEGER                        293	1_1_0	EXIST::FUNCTION:
 i2d_PKCS7_ENCRYPT                       294	1_1_0	EXIST::FUNCTION:
-CT_POLICY_EVAL_CTX_set0_issuer          295	1_1_0	NOEXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_set1_issuer          295	1_1_0	EXIST::FUNCTION:CT
 X509_NAME_ENTRY_set                     296	1_1_0	EXIST::FUNCTION:
 PKCS8_set0_pbe                          297	1_1_0	EXIST::FUNCTION:
 PEM_write_bio_DSA_PUBKEY                298	1_1_0	EXIST::FUNCTION:DSA
@@ -457,7 +457,7 @@ DH_new_method                           457	1_1_0	EXIST::FUNCTION:DH
 BF_ecb_encrypt                          458	1_1_0	EXIST::FUNCTION:BF
 PEM_write_bio_DHparams                  459	1_1_0	EXIST::FUNCTION:DH
 EVP_DigestFinal                         460	1_1_0	EXIST::FUNCTION:
-CT_POLICY_EVAL_CTX_set0_log_store       461	1_1_0	NOEXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE 461	1_1_0	EXIST::FUNCTION:CT
 X509v3_asid_add_id_or_range             462	1_1_0	EXIST::FUNCTION:RFC3779
 X509_NAME_ENTRY_create_by_NID           463	1_1_0	EXIST::FUNCTION:
 EC_KEY_METHOD_get_init                  464	1_1_0	EXIST::FUNCTION:EC
@@ -1390,7 +1390,7 @@ EVP_PKEY_asn1_free                      1375	1_1_0	EXIST::FUNCTION:
 ENGINE_unregister_DH                    1376	1_1_0	EXIST::FUNCTION:ENGINE
 PROXY_CERT_INFO_EXTENSION_it            1377	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PROXY_CERT_INFO_EXTENSION_it            1377	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-CT_POLICY_EVAL_CTX_set0_cert            1378	1_1_0	NOEXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_set1_cert            1378	1_1_0	EXIST::FUNCTION:CT
 X509_NAME_hash                          1379	1_1_0	EXIST::FUNCTION:
 SCT_set_timestamp                       1380	1_1_0	EXIST::FUNCTION:CT
 UI_new                                  1381	1_1_0	EXIST::FUNCTION:UI
