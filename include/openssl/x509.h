@@ -697,11 +697,12 @@ void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
 int X509_CRL_get_signature_nid(const X509_CRL *crl);
 int i2d_re_X509_CRL_tbs(X509_CRL *req, unsigned char **pp);
 
-ASN1_INTEGER *X509_REVOKED_get0_serialNumber(X509_REVOKED *x);
+const ASN1_INTEGER *X509_REVOKED_get0_serialNumber(const X509_REVOKED *x);
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
-ASN1_TIME *X509_REVOKED_get0_revocationDate(X509_REVOKED *x);
+const ASN1_TIME *X509_REVOKED_get0_revocationDate(const X509_REVOKED *x);
 int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);
-STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(const X509_REVOKED *r);
+const STACK_OF(X509_EXTENSION) *
+X509_REVOKED_get0_extensions(const X509_REVOKED *r);
 
 X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
                         EVP_PKEY *skey, const EVP_MD *md, unsigned int flags);

@@ -18,8 +18,8 @@ functions
 
  STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
 
- ASN1_INTEGER *X509_REVOKED_get0_serialNumber(X509_REVOKED *r);
- ASN1_TIME *X509_REVOKED_get0_revocationDate(X509_REVOKED *r);
+ const ASN1_INTEGER *X509_REVOKED_get0_serialNumber(const X509_REVOKED *r);
+ const ASN1_TIME *X509_REVOKED_get0_revocationDate(const X509_REVOKED *r);
 
  int X509_REVOKED_set_serialNumber(X509_REVOKED *r, ASN1_INTEGER *serial);
  int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);
