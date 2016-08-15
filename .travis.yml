@@ -100,25 +100,30 @@ before_script:
     - cd $top
 
 script:
+    - if [ -z "$BUILDONLY" ]; then
+          make="make -s";
+      else
+          make="make";
+      fi
     - if [ -n "$DESTDIR" ]; then
           cd _build;
           top=..;
       else
           top=.;
       fi
-    - make update
-    - make
+    - $make update
+    - $make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
           HARNESS_VERBOSE=yes make test;
       else
-          make build_tests;
+          $make build_tests;
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "../$DESTDIR";
-          make install install_docs DESTDIR="../$DESTDIR";
+          $make install install_docs DESTDIR="../$DESTDIR";
       fi
     - cd $top
 
