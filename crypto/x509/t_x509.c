@@ -52,7 +52,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     char *m = NULL, mlch = ' ';
     int nmindent = 0;
     ASN1_INTEGER *bs;
-    EVP_PKEY *pkey = NULL;
     const char *neg;
 
     if ((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
@@ -110,7 +109,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_SIGNAME)) {
-        X509_ALGOR *tsig_alg = X509_get0_tbs_sigalg(x);
+        const X509_ALGOR *tsig_alg = X509_get0_tbs_sigalg(x);
         if (X509_signature_print(bp, tsig_alg, NULL) <= 0)
             goto err;
     }
@@ -150,6 +149,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     if (!(cflag & X509_FLAG_NO_PUBKEY)) {
         X509_PUBKEY *xpkey = X509_get_X509_PUBKEY(x);
         ASN1_OBJECT *xpoid;
+        EVP_PKEY *pkey;
         X509_PUBKEY_get0_param(&xpoid, NULL, NULL, NULL, xpkey);
         if (BIO_write(bp, "        Subject Public Key Info:\n", 33) <= 0)
             goto err;
@@ -160,18 +160,19 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
         if (BIO_puts(bp, "\n") <= 0)
             goto err;
 
-        pkey = X509_get0_pubkey(x);
+        pkey = X509_get_pubkey(x);
         if (pkey == NULL) {
             BIO_printf(bp, "%12sUnable to load Public Key\n", "");
             ERR_print_errors(bp);
         } else {
             EVP_PKEY_print_public(bp, pkey, 16, NULL);
+            EVP_PKEY_free(pkey);
         }
     }
 
     if (!(cflag & X509_FLAG_NO_IDS)) {
-        ASN1_BIT_STRING *iuid, *suid;
-        X509_get0_uids(&iuid, &suid, x);
+        const ASN1_BIT_STRING *iuid, *suid;
+        X509_get0_uids(x, &iuid, &suid);
         if (iuid != NULL) {
             if (BIO_printf(bp, "%8sIssuer Unique ID: ", "") <= 0)
                 goto err;
@@ -315,7 +316,7 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
 int X509_aux_print(BIO *out, X509 *x, int indent)
 {
     char oidstr[80], first;
-    STACK_OF(ASN1_OBJECT) *trust, *reject;
+    const STACK_OF(ASN1_OBJECT) *trust, *reject;
     const unsigned char *alias, *keyid;
     int keyidlen;
     int i;

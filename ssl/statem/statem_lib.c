@@ -520,7 +520,7 @@ int tls_get_message_body(SSL *s, unsigned long *len)
     return 1;
 }
 
-int ssl_cert_type(X509 *x, EVP_PKEY *pk)
+int ssl_cert_type(X509 *x, const EVP_PKEY *pk)
 {
     if (pk == NULL &&
         (pk = X509_get0_pubkey(x)) == NULL)

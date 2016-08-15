@@ -615,7 +615,7 @@ static void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
 static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
 {
     unsigned char comp_id, curve_id[2];
-    EVP_PKEY *pkey;
+    const EVP_PKEY *pkey;
     int rv;
     pkey = X509_get0_pubkey(x);
     if (!pkey)
@@ -3994,7 +3994,7 @@ DH *ssl_get_auto_dh(SSL *s)
 static int ssl_security_cert_key(SSL *s, SSL_CTX *ctx, X509 *x, int op)
 {
     int secbits = -1;
-    EVP_PKEY *pkey = X509_get0_pubkey(x);
+    const EVP_PKEY *pkey = X509_get0_pubkey(x);
     if (pkey) {
         /*
          * If no parameters this will return -1 and fail using the default

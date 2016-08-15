@@ -1274,7 +1274,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
                 int sig_nid = X509_get_signature_nid(other);
                 BIO_puts(sdb->out, OBJ_nid2sn(sig_nid));
             } else {
-                EVP_PKEY *pkey = X509_get0_pubkey(other);
+                const EVP_PKEY *pkey = X509_get0_pubkey(other);
                 const char *algname = "";
                 EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
                                         &algname, EVP_PKEY_get0_asn1(pkey));

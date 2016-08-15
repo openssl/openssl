@@ -1253,7 +1253,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
      * VRS 19990621: possible memory leak; sk=null ==> !sk_pop_free() @end
      */
 
-    pkey = X509_get0_pubkey(x);
+    pkey = X509_get_pubkey(x);
 
     if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
         x = NULL;
@@ -1299,6 +1299,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
  err:
     ossl_statem_set_error(s);
  done:
+    EVP_PKEY_free(pkey);
     X509_free(x);
     sk_X509_pop_free(sk, X509_free);
     return ret;
@@ -1385,7 +1386,7 @@ static int tls_process_ske_srp(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 
     /* We must check if there is a certificate */
     if (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aRSA|SSL_aDSS))
-        *pkey = X509_get0_pubkey(s->session->peer);
+        *pkey = X509_get_pubkey(s->session->peer);
 
     return 1;
 #else
@@ -1471,7 +1472,7 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
      * public keys. We should have a less ad-hoc way of doing this
      */
     if (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aRSA|SSL_aDSS))
-        *pkey = X509_get0_pubkey(s->session->peer);
+        *pkey = X509_get_pubkey(s->session->peer);
     /* else anonymous DH, so no certificate or pkey. */
 
     return 1;
@@ -1570,9 +1571,9 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
      * and ECDSA.
      */
     if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aECDSA)
-        *pkey = X509_get0_pubkey(s->session->peer);
+        *pkey = X509_get_pubkey(s->session->peer);
     else if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aRSA)
-        *pkey = X509_get0_pubkey(s->session->peer);
+        *pkey = X509_get_pubkey(s->session->peer);
     /* else anonymous ECDH, so no certificate or pkey. */
 
     return 1;
@@ -1738,11 +1739,13 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
     }
 
+    EVP_PKEY_free(pkey);
     return MSG_PROCESS_CONTINUE_READING;
  err:
     if (al != -1)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
     ossl_statem_set_error(s);
+    EVP_PKEY_free(pkey);
     return MSG_PROCESS_ERROR;
 }
 
@@ -2167,10 +2170,10 @@ static int tls_construct_cke_rsa(SSL *s, unsigned char **p, int *len, int *al)
         return 0;
     }
 
-    pkey = X509_get0_pubkey(s->session->peer);
+    pkey = X509_get_pubkey(s->session->peer);
     if (EVP_PKEY_get0_RSA(pkey) == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_RSA, ERR_R_INTERNAL_ERROR);
-        return 0;
+        goto err;
     }
 
     pmslen = SSL_MAX_MASTER_KEY_LENGTH;
@@ -2178,7 +2181,7 @@ static int tls_construct_cke_rsa(SSL *s, unsigned char **p, int *len, int *al)
     if (pms == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_RSA, ERR_R_MALLOC_FAILURE);
         *al = SSL_AD_INTERNAL_ERROR;
-        return 0;
+        goto err;
     }
 
     pms[0] = s->client_version >> 8;
@@ -2220,10 +2223,12 @@ static int tls_construct_cke_rsa(SSL *s, unsigned char **p, int *len, int *al)
     s->s3->tmp.pms = pms;
     s->s3->tmp.pmslen = pmslen;
 
+    EVP_PKEY_free(pkey);
     return 1;
  err:
     OPENSSL_clear_free(pms, pmslen);
     EVP_PKEY_CTX_free(pctx);
+    EVP_PKEY_free(pkey);
 
     return 0;
 #else
@@ -2339,6 +2344,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
     int dgst_nid = NID_id_GostR3411_94;
     unsigned char *pms = NULL;
     size_t pmslen = 0;
+    EVP_PKEY *pkey = NULL;
 
     if ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
         dgst_nid = NID_id_GostR3411_2012_256;
@@ -2354,7 +2360,9 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
         return 0;
     }
 
-    pkey_ctx = EVP_PKEY_CTX_new(X509_get0_pubkey(peer_cert), NULL);
+    pkey = X509_get_pubkey(peer_cert);
+    pkey_ctx = EVP_PKEY_CTX_new(pkey, NULL);
+    EVP_PKEY_free(pkey);
     if (pkey_ctx == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_MALLOC_FAILURE);
@@ -2809,7 +2817,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     int idx;
 #endif
     long alg_k, alg_a;
-    EVP_PKEY *pkey = NULL;
+    const EVP_PKEY *pkey = NULL;
     int al = SSL_AD_HANDSHAKE_FAILURE;
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;

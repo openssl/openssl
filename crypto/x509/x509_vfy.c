@@ -1506,21 +1506,26 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         return 0;
 
     /* Attempt to get issuer certificate public key */
-    ikey = X509_get0_pubkey(issuer);
+    ikey = X509_get_pubkey(issuer);
 
-    if (!ikey &&
+    if (ikey == NULL &&
         !verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY))
         return 0;
 
-    if (ikey) {
+    if (ikey != NULL) {
         int rv = X509_CRL_check_suiteb(crl, ikey, ctx->param->flags);
 
-        if (rv != X509_V_OK && !verify_cb_crl(ctx, rv))
+        if (rv != X509_V_OK && !verify_cb_crl(ctx, rv)) {
+            EVP_PKEY_free(ikey);
             return 0;
+        }
         /* Verify CRL signature */
         if (X509_CRL_verify(crl, ikey) <= 0 &&
-            !verify_cb_crl(ctx, X509_V_ERR_CRL_SIGNATURE_FAILURE))
+            !verify_cb_crl(ctx, X509_V_ERR_CRL_SIGNATURE_FAILURE)) {
+            EVP_PKEY_free(ikey);
             return 0;
+        }
+        EVP_PKEY_free(ikey);
     }
     return 1;
 }
@@ -1703,8 +1708,6 @@ static int internal_verify(X509_STORE_CTX *ctx)
      * is allowed to reset errors (at its own peril).
      */
     while (n >= 0) {
-        EVP_PKEY *pkey;
-
         /*
          * Skip signature check for self signed certificates unless explicitly
          * asked for.  It doesn't add any security and just wastes time.  If
@@ -1712,15 +1715,20 @@ static int internal_verify(X509_STORE_CTX *ctx)
          * and its depth (rather than the depth of the subject).
          */
         if (xs != xi || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)) {
-            if ((pkey = X509_get0_pubkey(xi)) == NULL) {
+            EVP_PKEY *pkey;
+
+            if ((pkey = X509_get_pubkey(xi)) == NULL) {
                 if (!verify_cb_cert(ctx, xi, xi != xs ? n+1 : n,
                         X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY))
                     return 0;
             } else if (X509_verify(xs, pkey) <= 0) {
                 if (!verify_cb_cert(ctx, xs, n,
-                                    X509_V_ERR_CERT_SIGNATURE_FAILURE))
+                                    X509_V_ERR_CERT_SIGNATURE_FAILURE)) {
+                    EVP_PKEY_free(pkey);
                     return 0;
+                }
             }
+            EVP_PKEY_free(pkey);
         }
 
  check_cert:
@@ -1899,7 +1907,8 @@ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
 
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 {
-    EVP_PKEY *ktmp = NULL, *ktmp2;
+    const EVP_PKEY *ktmp = NULL;
+    EVP_PKEY *ktmp2;
     int i, j;
 
     if ((pkey != NULL) && !EVP_PKEY_missing_parameters(pkey))
@@ -1923,8 +1932,9 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 
     /* first, populate the other certs */
     for (j = i - 1; j >= 0; j--) {
-        ktmp2 = X509_get0_pubkey(sk_X509_value(chain, j));
+        ktmp2 = X509_get_pubkey(sk_X509_value(chain, j));
         EVP_PKEY_copy_parameters(ktmp2, ktmp);
+        EVP_PKEY_free(ktmp2);
     }
 
     if (pkey != NULL)
@@ -3221,7 +3231,7 @@ static const int NUM_AUTH_LEVELS = OSSL_NELEM(minbits_table);
  */
 static int check_key_level(X509_STORE_CTX *ctx, X509 *cert)
 {
-    EVP_PKEY *pkey = X509_get0_pubkey(cert);
+    const EVP_PKEY *pkey = X509_get0_pubkey(cert);
     int level = ctx->param->auth_level;
 
     /* Unsupported or malformed keys are not secure */

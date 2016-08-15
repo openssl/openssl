@@ -754,7 +754,7 @@ int req_main(int argc, char **argv)
     }
 
     if (modulus) {
-        EVP_PKEY *tpubkey;
+        const EVP_PKEY *tpubkey;
 
         if (x509)
             tpubkey = X509_get0_pubkey(x509ss);

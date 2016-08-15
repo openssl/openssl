@@ -154,14 +154,14 @@ void X509_reject_clear(X509 *x)
     }
 }
 
-STACK_OF(ASN1_OBJECT) *X509_get0_trust_objects(X509 *x)
+const STACK_OF(ASN1_OBJECT) *X509_get0_trust_objects(const X509 *x)
 {
     if (x->aux != NULL)
         return x->aux->trust;
     return NULL;
 }
 
-STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(X509 *x)
+const STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(const X509 *x)
 {
     if (x->aux != NULL)
         return x->aux->reject;

@@ -257,7 +257,7 @@ X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
     return (NULL);
 }
 
-EVP_PKEY *X509_get0_pubkey(const X509 *x)
+const EVP_PKEY *X509_get0_pubkey(const X509 *x)
 {
     if (x == NULL)
         return NULL;
@@ -343,7 +343,7 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
                             unsigned long flags)
 {
     int rv, i, sign_nid;
-    EVP_PKEY *pk;
+    EVP_PKEY *pk = NULL;
     unsigned long tflags = flags;
 
     if (!(flags & X509_V_FLAG_SUITEB_128_LOS))
@@ -356,7 +356,7 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
     } else
         i = 0;
 
-    pk = X509_get0_pubkey(x);
+    pk = X509_get_pubkey(x);
 
     /*
      * With DANE-EE(3) success, or DANE-EE(3)/PKIX-EE(1) failure we don't build
@@ -364,8 +364,11 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
      * Suite-B errors if applicable.  This is indicated via a NULL chain
      * pointer.  All we need to do is check the leaf key algorithm.
      */
-    if (chain == NULL)
-        return check_suite_b(pk, -1, &tflags);
+    if (chain == NULL) {
+        rv = check_suite_b(pk, -1, &tflags);
+        EVP_PKEY_free(pk);
+        return rv;
+    }
 
     if (X509_get_version(x) != 2) {
         rv = X509_V_ERR_SUITE_B_INVALID_VERSION;
@@ -381,6 +384,7 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
         i = 0;
         goto end;
     }
+
     for (; i < sk_X509_num(chain); i++) {
         sign_nid = X509_get_signature_nid(x);
         x = sk_X509_value(chain, i);
@@ -388,7 +392,8 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
             rv = X509_V_ERR_SUITE_B_INVALID_VERSION;
             goto end;
         }
-        pk = X509_get0_pubkey(x);
+        EVP_PKEY_free(pk);
+        pk = X509_get_pubkey(x);
         rv = check_suite_b(pk, sign_nid, &tflags);
         if (rv != X509_V_OK)
             goto end;
@@ -411,6 +416,7 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
         if (perror_depth)
             *perror_depth = i;
     }
+    EVP_PKEY_free(pk);
     return rv;
 }
 

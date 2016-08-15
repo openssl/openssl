@@ -2588,7 +2588,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     BIO_printf(bio, "%s, Cipher is %s\n",
                SSL_CIPHER_get_version(c), SSL_CIPHER_get_name(c));
     if (peer != NULL) {
-        EVP_PKEY *pktmp;
+        const EVP_PKEY *pktmp;
 
         pktmp = X509_get0_pubkey(peer);
         BIO_printf(bio, "Server public key is %d bit\n",

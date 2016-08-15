@@ -852,11 +852,12 @@ static void print_details(SSL *c_ssl, const char *prefix)
                SSL_CIPHER_get_version(ciph), SSL_CIPHER_get_name(ciph));
     cert = SSL_get_peer_certificate(c_ssl);
     if (cert != NULL) {
-        EVP_PKEY* pubkey = X509_get0_pubkey(cert);
+        EVP_PKEY* pubkey = X509_get_pubkey(cert);
 
         if (pubkey != NULL) {
             BIO_puts(bio_stdout, ", ");
             print_key_details(bio_stdout, pubkey);
+            EVP_PKEY_free(pubkey);
         }
         X509_free(cert);
     }

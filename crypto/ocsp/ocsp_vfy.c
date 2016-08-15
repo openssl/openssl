@@ -50,12 +50,13 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
         flags |= OCSP_NOVERIFY;
     if (!(flags & OCSP_NOSIGS)) {
         EVP_PKEY *skey;
-        skey = X509_get0_pubkey(signer);
+        skey = X509_get_pubkey(signer);
         if (skey == NULL) {
             OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, OCSP_R_NO_SIGNER_KEY);
             goto err;
         }
         ret = OCSP_BASICRESP_verify(bs, skey, 0);
+        EVP_PKEY_free(skey);
         if (ret <= 0) {
             OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, OCSP_R_SIGNATURE_FAILURE);
             goto end;
@@ -360,8 +361,9 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
         flags |= OCSP_NOVERIFY;
     if (!(flags & OCSP_NOSIGS)) {
         EVP_PKEY *skey;
-        skey = X509_get0_pubkey(signer);
+        skey = X509_get_pubkey(signer);
         ret = OCSP_REQUEST_verify(req, skey);
+        EVP_PKEY_free(skey);
         if (ret <= 0) {
             OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, OCSP_R_SIGNATURE_FAILURE);
             goto err;

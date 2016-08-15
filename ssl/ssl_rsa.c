@@ -129,7 +129,7 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 
     if (c->pkeys[i].x509 != NULL) {
         EVP_PKEY *pktmp;
-        pktmp = X509_get0_pubkey(c->pkeys[i].x509);
+        pktmp = X509_get_pubkey(c->pkeys[i].x509);
         if (pktmp == NULL) {
             SSLerr(SSL_F_SSL_SET_PKEY, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -139,6 +139,7 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
          * ignored. Some EVP_PKEY types cannot do this.
          */
         EVP_PKEY_copy_parameters(pktmp, pkey);
+        EVP_PKEY_free(pktmp);
         ERR_clear_error();
 
 #ifndef OPENSSL_NO_RSA
@@ -313,21 +314,21 @@ static int ssl_set_cert(CERT *c, X509 *x)
     EVP_PKEY *pkey;
     int i;
 
-    pkey = X509_get0_pubkey(x);
+    pkey = X509_get_pubkey(x);
     if (pkey == NULL) {
         SSLerr(SSL_F_SSL_SET_CERT, SSL_R_X509_LIB);
-        return (0);
+        return 0;
     }
 
     i = ssl_cert_type(x, pkey);
     if (i < 0) {
         SSLerr(SSL_F_SSL_SET_CERT, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-        return 0;
+        goto err;
     }
 #ifndef OPENSSL_NO_EC
     if (i == SSL_PKEY_ECC && !EC_KEY_can_sign(EVP_PKEY_get0_EC_KEY(pkey))) {
         SSLerr(SSL_F_SSL_SET_CERT, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
-        return 0;
+        goto err;
     }
 #endif
     if (c->pkeys[i].privatekey != NULL) {
@@ -361,12 +362,17 @@ static int ssl_set_cert(CERT *c, X509 *x)
         }
     }
 
+    EVP_PKEY_free(pkey);
     X509_free(c->pkeys[i].x509);
     X509_up_ref(x);
     c->pkeys[i].x509 = x;
     c->key = &(c->pkeys[i]);
 
     return 1;
+
+ err:
+    EVP_PKEY_free(pkey);
+    return 0;
 }
 
 int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)

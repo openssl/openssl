@@ -673,7 +673,7 @@ int x509_main(int argc, char **argv)
                     purpose_print(out, x, ptmp);
                 }
             } else if (modulus == i) {
-                EVP_PKEY *pkey;
+                const EVP_PKEY *pkey;
 
                 pkey = X509_get0_pubkey(x);
                 if (pkey == NULL) {
@@ -703,13 +703,14 @@ int x509_main(int argc, char **argv)
             } else if (pubkey == i) {
                 EVP_PKEY *pkey;
 
-                pkey = X509_get0_pubkey(x);
+                pkey = X509_get_pubkey(x);
                 if (pkey == NULL) {
                     BIO_printf(bio_err, "Error getting public key\n");
                     ERR_print_errors(bio_err);
                     goto end;
                 }
                 PEM_write_bio_PUBKEY(out, pkey);
+                EVP_PKEY_free(pkey);
             } else if (C == i) {
                 unsigned char *d;
                 char *m;
@@ -945,9 +946,9 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
     int ret = 0;
     ASN1_INTEGER *bs = NULL;
     X509_STORE_CTX *xsc = NULL;
-    EVP_PKEY *upkey;
+    EVP_PKEY *upkey = NULL;
 
-    upkey = X509_get0_pubkey(xca);
+    upkey = X509_get_pubkey(xca);
     if (upkey == NULL) {
         BIO_printf(bio_err, "Error obtaining CA X509 public key\n");
         goto end;
@@ -1009,6 +1010,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
         goto end;
     ret = 1;
  end:
+    EVP_PKEY_free(upkey);
     X509_STORE_CTX_free(xsc);
     if (!ret)
         ERR_print_errors(bio_err);

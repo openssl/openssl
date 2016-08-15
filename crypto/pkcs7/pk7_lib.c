@@ -462,7 +462,7 @@ int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri)
 
 int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 {
-    int ret;
+    int ret = 0, ctrlret;
     EVP_PKEY *pkey = NULL;
     if (!ASN1_INTEGER_set(p7i->version, 0))
         return 0;
@@ -475,21 +475,21 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
           ASN1_INTEGER_dup(X509_get_serialNumber(x509))))
         return 0;
 
-    pkey = X509_get0_pubkey(x509);
+    pkey = X509_get_pubkey(x509);
 
-    if (!pkey || !pkey->ameth || !pkey->ameth->pkey_ctrl) {
+    if (pkey == NULL || pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL) {
         PKCS7err(PKCS7_F_PKCS7_RECIP_INFO_SET,
                  PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         goto err;
     }
 
-    ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_ENCRYPT, 0, p7i);
-    if (ret == -2) {
+    ctrlret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_ENCRYPT, 0, p7i);
+    if (ctrlret == -2) {
         PKCS7err(PKCS7_F_PKCS7_RECIP_INFO_SET,
                  PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         goto err;
     }
-    if (ret <= 0) {
+    if (ctrlret <= 0) {
         PKCS7err(PKCS7_F_PKCS7_RECIP_INFO_SET,
                  PKCS7_R_ENCRYPTION_CTRL_FAILURE);
         goto err;
@@ -498,10 +498,11 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
     X509_up_ref(x509);
     p7i->cert = x509;
 
-    return 1;
+    ret = 1;
 
  err:
-    return 0;
+    EVP_PKEY_free(pkey);
+    return ret;
 }
 
 X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si)

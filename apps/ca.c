@@ -1333,7 +1333,7 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
     BIO_printf(bio_err, "Check that the request matches the signature\n");
 
-    if ((pktmp = X509_get0_pubkey(req)) == NULL) {
+    if ((pktmp = X509_get_pubkey(req)) == NULL) {
         BIO_printf(bio_err, "error unpacking public key\n");
         goto end;
     }
@@ -1361,7 +1361,8 @@ static int certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
  end:
     X509_REQ_free(rreq);
     X509_free(req);
-    return (ok);
+    EVP_PKEY_free(pktmp);
+    return ok;
 }
 
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
@@ -1815,10 +1816,11 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         }
     }
 
-    pktmp = X509_get0_pubkey(ret);
+    pktmp = X509_get_pubkey(ret);
     if (EVP_PKEY_missing_parameters(pktmp) &&
         !EVP_PKEY_missing_parameters(pkey))
         EVP_PKEY_copy_parameters(pktmp, pkey);
+    EVP_PKEY_free(pktmp);
 
     if (!do_X509_sign(ret, pkey, dgst, sigopts))
         goto end;

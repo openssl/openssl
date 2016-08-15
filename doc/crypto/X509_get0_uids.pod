@@ -8,7 +8,8 @@ X509_get0_uids - get certificate unique identifiers
 
  #include <openssl/x509.h>
 
- void X509_get0_uids(ASN1_BIT_STRING **piuid, ASN1_BIT_STRING **psuid, X509 *x);
+ void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
+                     const ASN1_BIT_STRING **psuid);
 
 =head1 DESCRIPTION
 

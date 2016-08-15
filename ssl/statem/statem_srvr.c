@@ -2520,10 +2520,11 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt, int *al)
      * EVP_PKEY_derive_set_peer, because it is completely valid to use a
      * client certificate for authorization only.
      */
-    client_pub_pkey = X509_get0_pubkey(s->session->peer);
+    client_pub_pkey = X509_get_pubkey(s->session->peer);
     if (client_pub_pkey) {
         if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pub_pkey) <= 0)
             ERR_clear_error();
+        EVP_PKEY_free(client_pub_pkey);
     }
     /* Decrypt session key */
     sess_key_len = PACKET_remaining(pkt);
@@ -2728,7 +2729,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 
     peer = s->session->peer;
-    pkey = X509_get0_pubkey(peer);
+    pkey = X509_get_pubkey(peer);
     type = X509_certificate_type(peer, pkey);
 
     if (!(type & EVP_PKT_SIGN)) {
@@ -2858,6 +2859,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_GOST
     OPENSSL_free(gost_data);
 #endif
+    EVP_PKEY_free(pkey);
     return ret;
 }
 
@@ -2932,7 +2934,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
             goto f_err;
         }
     } else {
-        EVP_PKEY *pkey;
+        const EVP_PKEY *pkey;
         i = ssl_verify_cert_chain(s, sk);
         if (i <= 0) {
             al = ssl_verify_alarm_type(s->verify_result);
