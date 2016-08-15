@@ -70,14 +70,22 @@ void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);
 /* Gets the peer certificate that the SCTs are for */
 X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
 
-/* Sets the certificate associated with the received SCTs */
-void CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
+/*
+ * Sets the certificate associated with the received SCTs.
+ * Incremenets the reference count of cert.
+ * Returns 1 on success, 0 otherwise.
+ */
+int CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
 
 /* Gets the issuer of the aforementioned certificate */
 X509* CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx);
 
-/* Sets the issuer of the certificate associated with the received SCTs */
-void CT_POLICY_EVAL_CTX_set1_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
+/*
+ * Sets the issuer of the certificate associated with the received SCTs.
+ * Increments the reference count of issuer.
+ * Returns 1 on success, 0 otherwise.
+ */
+int CT_POLICY_EVAL_CTX_set1_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
 
 /* Gets the CT logs that are trusted sources of SCTs */
 const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *ctx);
