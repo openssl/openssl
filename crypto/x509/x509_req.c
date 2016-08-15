@@ -68,7 +68,7 @@ EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req)
     return (X509_PUBKEY_get(req->req_info.pubkey));
 }
 
-EVP_PKEY *X509_REQ_get0_pubkey(X509_REQ *req)
+const EVP_PKEY *X509_REQ_get0_pubkey(const X509_REQ *req)
 {
     if (req == NULL)
         return NULL;
@@ -278,8 +278,8 @@ X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req)
     return req->req_info.subject;
 }
 
-void X509_REQ_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
-                             X509_REQ *req)
+void X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
+                             const X509_ALGOR **palg)
 {
     if (psig != NULL)
         *psig = req->signature;

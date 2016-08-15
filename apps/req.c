@@ -623,9 +623,12 @@ int req_main(int argc, char **argv)
             if (!X509_set_subject_name
                 (x509ss, X509_REQ_get_subject_name(req)))
                 goto end;
-            tmppkey = X509_REQ_get0_pubkey(req);
-            if (!tmppkey || !X509_set_pubkey(x509ss, tmppkey))
+            tmppkey = X509_REQ_get_pubkey(req);
+            if (!tmppkey || !X509_set_pubkey(x509ss, tmppkey)) {
+                EVP_PKEY_free(tmppkey);
                 goto end;
+            }
+            EVP_PKEY_free(tmppkey);
 
             /* Set up V3 context struct */
 
@@ -698,12 +701,13 @@ int req_main(int argc, char **argv)
         EVP_PKEY *tpubkey = pkey;
 
         if (tpubkey == NULL) {
-            tpubkey = X509_REQ_get0_pubkey(req);
+            tpubkey = X509_REQ_get_pubkey(req);
             if (tpubkey == NULL)
                 goto end;
         }
 
         i = X509_REQ_verify(req, tpubkey);
+        EVP_PKEY_free(tpubkey);
 
         if (i < 0) {
             goto end;
@@ -727,7 +731,7 @@ int req_main(int argc, char **argv)
         goto end;
 
     if (pubkey) {
-        EVP_PKEY *tpubkey = X509_REQ_get0_pubkey(req);
+        EVP_PKEY *tpubkey = X509_REQ_get_pubkey(req);
 
         if (tpubkey == NULL) {
             BIO_printf(bio_err, "Error getting public key\n");
@@ -735,6 +739,7 @@ int req_main(int argc, char **argv)
             goto end;
         }
         PEM_write_bio_PUBKEY(out, tpubkey);
+        EVP_PKEY_free(tpubkey);
     }
 
     if (text) {

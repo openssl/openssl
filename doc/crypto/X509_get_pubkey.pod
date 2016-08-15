@@ -17,7 +17,7 @@ public key
  X509_PUBKEY *X509_get_X509_PUBKEY(X509 *x);
 
  EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req);
- EVP_PKEY *X509_REQ_get0_pubkey(X509_REQ *req);
+ const EVP_PKEY *X509_REQ_get0_pubkey(const X509_REQ *req);
  int X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
  X509_PUBKEY *X509_REQ_get_X509_PUBKEY(X509_REQ *x);
 

@@ -39,7 +39,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 {
     long l;
     int i;
-    EVP_PKEY *pkey;
+    const EVP_PKEY *pkey;
     STACK_OF(X509_EXTENSION) *exts;
     char mlch = ' ';
     int nmindent = 0;
@@ -174,9 +174,9 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_SIGDUMP)) {
-        X509_ALGOR *sig_alg;
-        ASN1_BIT_STRING *sig;
-        X509_REQ_get0_signature(&sig, &sig_alg, x);
+        const X509_ALGOR *sig_alg;
+        const ASN1_BIT_STRING *sig;
+        X509_REQ_get0_signature(x, &sig, &sig_alg);
         if (!X509_signature_print(bp, sig_alg, sig))
             goto err;
     }
