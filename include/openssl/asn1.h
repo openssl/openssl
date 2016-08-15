@@ -629,7 +629,7 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZE
                                                    **out);
 int ASN1_TIME_set_string(ASN1_TIME *s, const char *str);
 
-int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a);
+int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size);
 int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a);
 int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size);

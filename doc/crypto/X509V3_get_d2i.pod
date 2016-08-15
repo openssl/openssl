@@ -34,7 +34,7 @@ X509_REVOKED_add1_ext_i2d - X509 extension decode and encode functions
 
  const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
  const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
- STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(const X509_REVOKED *r);
+ const STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(const X509_REVOKED *r);
 
 =head1 DESCRIPTION
 
