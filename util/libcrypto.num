@@ -4194,3 +4194,4 @@ PKCS12_get_attr                         4140	1_1_0	EXIST::FUNCTION:
 X509_OBJECT_get1_X509                   4141	1_1_0	EXIST::FUNCTION:
 X509_OBJECT_get1_X509_CRL               4142	1_1_0	EXIST::FUNCTION:
 X509_get0_serialNumber                  4143	1_1_0	EXIST::FUNCTION:
+X509_STORE_CTX_get_chain                4144	1_1_0	EXIST::FUNCTION:

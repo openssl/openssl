@@ -333,8 +333,8 @@ void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
 
 X509_STORE *X509_STORE_CTX_get0_store(X509_STORE_CTX *ctx);
-X509 *X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx);
-STACK_OF(X509)* X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx);
+const X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx);
+const STACK_OF(X509)* X509_STORE_CTX_get0_untrusted(const X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
                                   X509_STORE_CTX_verify_cb verify);
@@ -352,7 +352,6 @@ X509_STORE_CTX_lookup_crls_fn X509_STORE_CTX_get_lookup_crls(X509_STORE_CTX *ctx
 X509_STORE_CTX_cleanup_fn X509_STORE_CTX_get_cleanup(X509_STORE_CTX *ctx);
 
 #if OPENSSL_API_COMPAT < 0x10100000L
-# define X509_STORE_CTX_get_chain X509_STORE_CTX_get0_chain
 # define X509_STORE_CTX_set_chain X509_STORE_CTX_set0_untrusted
 # define X509_STORE_CTX_trusted_stack X509_STORE_CTX_set0_trusted_stack
 # define X509_STORE_get_by_subject X509_STORE_CTX_get_by_subject
@@ -412,7 +411,10 @@ void X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x);
 X509 *X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx);
 X509_CRL *X509_STORE_CTX_get0_current_crl(X509_STORE_CTX *ctx);
 X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx);
-STACK_OF(X509) *X509_STORE_CTX_get0_chain(X509_STORE_CTX *ctx);
+#if OPENSSL_API_COMPAT < 0x10100000L
+STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx);
+#endif
+const STACK_OF(X509) *X509_STORE_CTX_get0_chain(const X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set_cert(X509_STORE_CTX *c, X509 *x);
 void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *c, STACK_OF(X509) *sk);

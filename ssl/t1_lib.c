@@ -4051,7 +4051,7 @@ int ssl_security_cert(SSL *s, SSL_CTX *ctx, X509 *x, int vfy, int is_ee)
  * one to the peer. Return values: 1 if ok otherwise error code to use
  */
 
-int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *x, int vfy)
+int ssl_security_cert_chain(SSL *s, const STACK_OF(X509) *sk, X509 *x, int vfy)
 {
     int rv, start_idx, i;
     if (x == NULL) {

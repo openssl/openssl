@@ -776,7 +776,7 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
     int i, chain_count;
     X509 *x;
     STACK_OF(X509) *extra_certs;
-    STACK_OF(X509) *chain = NULL;
+    const STACK_OF(X509) *chain = NULL;
     X509_STORE *chain_store;
 
     /* TLSv1 sends a chain with nothing in it, instead of an alert */

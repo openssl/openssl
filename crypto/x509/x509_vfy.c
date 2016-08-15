@@ -2089,7 +2089,14 @@ void X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x)
     ctx->current_cert = x;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get0_chain(X509_STORE_CTX *ctx)
+#if OPENSSL_API_COMPAT < 0x10100000L
+STACK_OF(X509) *X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
+{
+    return ctx->chain;
+}
+#endif
+
+const STACK_OF(X509) *X509_STORE_CTX_get0_chain(const X509_STORE_CTX *ctx)
 {
     return ctx->chain;
 }
@@ -2418,12 +2425,12 @@ void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
     X509_VERIFY_PARAM_set_time(ctx->param, t);
 }
 
-X509 *X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx)
+const X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx)
 {
     return ctx->cert;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx)
+const STACK_OF(X509) *X509_STORE_CTX_get0_untrusted(const X509_STORE_CTX *ctx)
 {
     return ctx->untrusted;
 }
