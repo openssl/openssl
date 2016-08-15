@@ -1857,7 +1857,7 @@ void ssl_load_ciphers(void);
 __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field, int len);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                       int free_pms);
-__owur EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm, int nid);
+__owur EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm);
 __owur int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
 
@@ -2002,6 +2002,7 @@ __owur int tls1_set_curves(unsigned char **pext, size_t *pextlen,
 __owur int tls1_set_curves_list(unsigned char **pext, size_t *pextlen,
                          const char *str);
 __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
+__owur EVP_PKEY *ssl_generate_pkey_curve(int id);
 #  endif                        /* OPENSSL_NO_EC */
 
 __owur int tls1_shared_list(SSL *s,
