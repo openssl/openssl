@@ -564,7 +564,7 @@ sub testssl {
 
       SKIP: {
 	  skip "skipping SRP tests", 4
-	      if $no_srp;
+	      if $no_srp || alldisabled(grep !/^ssl3/, available_protocols("tls"));
 
 	  ok(run(test([@ssltest, "-tls1", "-cipher", "SRP", "-srpuser", "test", "-srppass", "abc123"])),
 	     'test tls1 with SRP');
