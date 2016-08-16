@@ -50,9 +50,9 @@ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
     return 1;
 }
 
-int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
+int PKCS8_pkey_get0(const ASN1_OBJECT **ppkalg,
                     const unsigned char **pk, int *ppklen,
-                    X509_ALGOR **pa, PKCS8_PRIV_KEY_INFO *p8)
+                    const X509_ALGOR **pa, const PKCS8_PRIV_KEY_INFO *p8)
 {
     if (ppkalg)
         *ppkalg = p8->pkeyalg->algorithm;

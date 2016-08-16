@@ -32,7 +32,7 @@ typedef enum {
 } ecx_key_op_t;
 
 /* Setup EVP_PKEY using public, private or generation */
-static int ecx_key_op(EVP_PKEY *pkey, X509_ALGOR *palg,
+static int ecx_key_op(EVP_PKEY *pkey, const X509_ALGOR *palg,
                       const unsigned char *p, int plen, ecx_key_op_t op)
 {
     X25519_KEY *xkey;
@@ -135,12 +135,12 @@ static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     return !CRYPTO_memcmp(akey->pubkey, bkey->pubkey, X25519_KEYLEN);
 }
 
-static int ecx_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
     const unsigned char *p;
     int plen;
     ASN1_OCTET_STRING *oct = NULL;
-    X509_ALGOR *palg;
+    const X509_ALGOR *palg;
     int rv;
 
     if (!PKCS8_pkey_get0(NULL, &p, &plen, &palg, p8))
