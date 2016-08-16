@@ -50,7 +50,7 @@ ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 
 /* Extract an ASN1 object from an ASN1_STRING */
 
-void *ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it)
+void *ASN1_item_unpack(const ASN1_STRING *oct, const ASN1_ITEM *it)
 {
     const unsigned char *p;
     void *ret;
