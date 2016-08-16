@@ -71,6 +71,8 @@ void wait_for_async(SSL *s);
 int has_stdin_waiting(void);
 # endif
 
+int corrupt_signature(ASN1_STRING *signature);
+
 /*
  * Common verification options.
  */

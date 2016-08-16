@@ -988,7 +988,7 @@ end_of_options:
             x = sk_X509_value(cert_sk, i);
 
             j = ASN1_STRING_length(serialNumber);
-            p = (const char *)ASN1_STRING_data(serialNumber);
+            p = (const char *)ASN1_STRING_get0_data(serialNumber);
 
             if (strlen(outdir) >= (size_t)(j ? BSIZE - j * 2 - 6 : BSIZE - 8)) {
                 BIO_printf(bio_err, "certificate file name too long\n");

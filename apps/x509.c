@@ -849,10 +849,9 @@ int x509_main(int argc, char **argv)
 
     if (badsig) {
         ASN1_BIT_STRING *signature;
-        unsigned char *s;
         X509_get0_signature(&signature, NULL, x);
-        s = ASN1_STRING_data(signature);
-        s[ASN1_STRING_length(signature) - 1] ^= 0x1;
+        if (!corrupt_signature(signature))
+            goto end;
     }
 
     if (outformat == FORMAT_ASN1)

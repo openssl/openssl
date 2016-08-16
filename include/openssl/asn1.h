@@ -550,7 +550,8 @@ void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
 int ASN1_STRING_length(const ASN1_STRING *x);
 void ASN1_STRING_length_set(ASN1_STRING *x, int n);
 int ASN1_STRING_type(const ASN1_STRING *x);
-unsigned char *ASN1_STRING_data(ASN1_STRING *x);
+DEPRECATEDIN_1_1_0(unsigned char *ASN1_STRING_data(ASN1_STRING *x))
+const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_BIT_STRING)
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d, int length);

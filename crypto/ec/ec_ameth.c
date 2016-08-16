@@ -593,7 +593,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     }
     /* We have parameters now set public key */
     plen = ASN1_STRING_length(pubkey);
-    p = ASN1_STRING_data(pubkey);
+    p = ASN1_STRING_get0_data(pubkey);
     if (!p || !plen)
         goto err;
     if (!o2i_ECPublicKey(&ecpeer, &p, plen))

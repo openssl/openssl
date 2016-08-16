@@ -1938,7 +1938,7 @@ static const char *get_dp_url(DIST_POINT *dp)
         gen = sk_GENERAL_NAME_value(gens, i);
         uri = GENERAL_NAME_get0_value(gen, &gtype);
         if (gtype == GEN_URI && ASN1_STRING_length(uri) > 6) {
-            char *uptr = (char *)ASN1_STRING_data(uri);
+            const char *uptr = (const char *)ASN1_STRING_get0_data(uri);
             if (strncmp(uptr, "http://", 7) == 0)
                 return uptr;
         }
@@ -2581,3 +2581,17 @@ int has_stdin_waiting(void)
     return _kbhit();
 }
 #endif
+
+/* Corrupt a signature by modifying final byte */
+int corrupt_signature(ASN1_STRING *signature)
+{
+        unsigned char *s;
+        size_t slen = ASN1_STRING_length(signature);
+
+        s = OPENSSL_memdup(ASN1_STRING_get0_data(signature), slen);
+        if (s == NULL)
+            return 0;
+        s[slen - 1] ^= 0x1;
+        ASN1_STRING_set0(signature, s, slen);
+        return 1;
+}

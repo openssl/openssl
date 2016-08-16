@@ -30,13 +30,13 @@ int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
 int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_len)
 {
     int ret, num;
-    unsigned char *p;
+    const unsigned char *p;
 
     if ((a->type != V_ASN1_OCTET_STRING) || (a->value.octet_string == NULL)) {
         ASN1err(ASN1_F_ASN1_TYPE_GET_OCTETSTRING, ASN1_R_DATA_IS_WRONG);
         return (-1);
     }
-    p = ASN1_STRING_data(a->value.octet_string);
+    p = ASN1_STRING_get0_data(a->value.octet_string);
     ret = ASN1_STRING_length(a->value.octet_string);
     if (ret < max_len)
         num = ret;
@@ -105,7 +105,7 @@ int ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *a, long *num,
         n = max_len;
 
     if (data != NULL)
-        memcpy(data, ASN1_STRING_data(atmp->oct), n);
+        memcpy(data, ASN1_STRING_get0_data(atmp->oct), n);
     if (ret == -1) {
  err:
         ASN1err(ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING, ASN1_R_DATA_IS_WRONG);

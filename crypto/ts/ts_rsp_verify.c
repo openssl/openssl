@@ -472,7 +472,7 @@ static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
         length = ASN1_STRING_length(current);
         if (i > 0)
             *p++ = '/';
-        strncpy(p, (const char *)ASN1_STRING_data(current), length);
+        strncpy(p, (const char *)ASN1_STRING_get0_data(current), length);
         p += length;
     }
     *p = '\0';
@@ -568,7 +568,7 @@ static int ts_check_imprints(X509_ALGOR *algor_a,
     }
 
     ret = len_a == (unsigned)ASN1_STRING_length(b->hashed_msg) &&
-        memcmp(imprint_a, ASN1_STRING_data(b->hashed_msg), len_a) == 0;
+        memcmp(imprint_a, ASN1_STRING_get0_data(b->hashed_msg), len_a) == 0;
  err:
     if (!ret)
         TSerr(TS_F_TS_CHECK_IMPRINTS, TS_R_MESSAGE_IMPRINT_MISMATCH);
