@@ -831,9 +831,15 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
             int tmpret;
             for (ctr = 0; ctr < n_recs; ctr++) {
                 tmpret = tls1_cbc_remove_padding(s, &recs[ctr], bs, mac_size);
-                if (tmpret == -1)
-                    return -1;
-                ret &= tmpret;
+                /*
+                 * If tmpret == 0 then this means publicly invalid so we can
+                 * short circuit things here. Otherwise we must respect constant
+                 * time behaviour.
+                 */
+                if (tmpret == 0)
+                    return 0;
+                ret = constant_time_select_int(constant_time_eq_int(tmpret, 1),
+                                               ret, -1);
             }
         }
         if (pad && !send) {
