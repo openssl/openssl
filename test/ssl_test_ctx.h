@@ -109,6 +109,8 @@ typedef struct {
      * Both peers will send |app_data_size| bytes interleaved.
      */
     int app_data_size;
+    /* Maximum send fragment size. */
+    int max_fragment_size;
 
     /*
      * Extra server/client configurations. Per-handshake.
