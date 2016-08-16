@@ -179,13 +179,13 @@ static int eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     return -2;
 }
 
-static int eckey_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+static int eckey_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
     const unsigned char *p = NULL;
     const void *pval;
     int ptype, pklen;
     EC_KEY *eckey = NULL;
-    X509_ALGOR *palg;
+    const X509_ALGOR *palg;
 
     if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8))
         return 0;
