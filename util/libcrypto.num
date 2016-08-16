@@ -527,7 +527,7 @@ BN_set_negative                         527	1_1_0	EXIST::FUNCTION:
 i2d_TS_RESP_bio                         528	1_1_0	EXIST::FUNCTION:TS
 ASYNC_WAIT_CTX_set_wait_fd              529	1_1_0	EXIST::FUNCTION:
 ERR_func_error_string                   530	1_1_0	EXIST::FUNCTION:
-ASN1_STRING_data                        531	1_1_0	EXIST::FUNCTION:
+ASN1_STRING_data                        531	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 X509_CRL_add1_ext_i2d                   532	1_1_0	EXIST::FUNCTION:
 i2d_TS_TST_INFO                         533	1_1_0	EXIST::FUNCTION:TS
 OBJ_sigid_free                          534	1_1_0	EXIST::FUNCTION:
@@ -4190,3 +4190,4 @@ X509_get_proxy_pathlen                  4136	1_1_0	EXIST::FUNCTION:
 DSA_bits                                4137	1_1_0	EXIST::FUNCTION:DSA
 EVP_PKEY_set1_tls_encodedpoint          4138	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_get1_tls_encodedpoint          4139	1_1_0	EXIST::FUNCTION:
+ASN1_STRING_get0_data                   4140	1_1_0	EXIST::FUNCTION:
