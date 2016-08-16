@@ -523,7 +523,7 @@ int pkcs12_main(int argc, char **argv)
     if ((options & INFO) && PKCS12_mac_present(p12)) {
         ASN1_INTEGER *tmaciter;
         X509_ALGOR *macalgid;
-        ASN1_OBJECT *macobj;
+        const ASN1_OBJECT *macobj;
         PKCS12_get0_mac(NULL, &macalgid, NULL, &tmaciter, p12);
         X509_ALGOR_get0(&macobj, NULL, NULL, macalgid);
         BIO_puts(bio_err, "MAC:");
@@ -743,8 +743,8 @@ end:
 static int alg_print(X509_ALGOR *alg)
 {
     int pbenid, aparamtype;
-    ASN1_OBJECT *aoid;
-    void *aparam;
+    const ASN1_OBJECT *aoid;
+    const void *aparam;
     PBEPARAM *pbe = NULL;
 
     X509_ALGOR_get0(&aoid, &aparamtype, &aparam, alg);

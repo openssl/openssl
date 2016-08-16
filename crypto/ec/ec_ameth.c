@@ -89,11 +89,11 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     return 0;
 }
 
-static EC_KEY *eckey_type2param(int ptype, void *pval)
+static EC_KEY *eckey_type2param(int ptype, const void *pval)
 {
     EC_KEY *eckey = NULL;
     if (ptype == V_ASN1_SEQUENCE) {
-        ASN1_STRING *pstr = pval;
+        const ASN1_STRING *pstr = pval;
         const unsigned char *pm = NULL;
         int pmlen;
         pm = pstr->data;
@@ -103,7 +103,7 @@ static EC_KEY *eckey_type2param(int ptype, void *pval)
             goto ecerr;
         }
     } else if (ptype == V_ASN1_OBJECT) {
-        ASN1_OBJECT *poid = pval;
+        const ASN1_OBJECT *poid = pval;
         EC_GROUP *group;
 
         /*
@@ -135,7 +135,7 @@ static EC_KEY *eckey_type2param(int ptype, void *pval)
 static int eckey_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 {
     const unsigned char *p = NULL;
-    void *pval;
+    const void *pval;
     int ptype, pklen;
     EC_KEY *eckey = NULL;
     X509_ALGOR *palg;
@@ -182,7 +182,7 @@ static int eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 static int eckey_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 {
     const unsigned char *p = NULL;
-    void *pval;
+    const void *pval;
     int ptype, pklen;
     EC_KEY *eckey = NULL;
     X509_ALGOR *palg;
@@ -562,9 +562,9 @@ int ECParameters_print(BIO *bp, const EC_KEY *x)
 static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
                                 X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)
 {
-    ASN1_OBJECT *aoid;
+    const ASN1_OBJECT *aoid;
     int atype;
-    void *aval;
+    const void *aval;
     int rv = 0;
     EVP_PKEY *pkpeer = NULL;
     EC_KEY *ecpeer = NULL;
@@ -738,7 +738,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
     EVP_CIPHER_CTX *ctx;
     int keylen;
     X509_ALGOR *talg, *wrap_alg = NULL;
-    ASN1_OBJECT *aoid;
+    const ASN1_OBJECT *aoid;
     ASN1_BIT_STRING *pubkey;
     ASN1_STRING *wrap_str;
     ASN1_OCTET_STRING *ukm;

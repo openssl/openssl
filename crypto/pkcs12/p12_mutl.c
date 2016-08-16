@@ -75,7 +75,7 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     int md_size = 0;
     int md_type_nid;
     X509_ALGOR *macalg;
-    ASN1_OBJECT *macoid;
+    const ASN1_OBJECT *macoid;
 
     if (!PKCS7_type_is_data(p12->authsafes)) {
         PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_CONTENT_TYPE_NOT_DATA);
