@@ -17,6 +17,8 @@
 #include "testutil.h"
 
 static const int default_app_data_size = 256;
+/* Default set to be as small as possible to exercise fragmentation. */
+static const int default_max_fragment_size = 512;
 
 static int parse_boolean(const char *value, int *result)
 {
@@ -389,10 +391,16 @@ IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, resumption_expected)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, broken_session_ticket)
 
 /***********************/
-/* Applicationdata     */
+/* ApplicationData     */
 /***********************/
 
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, app_data_size)
+
+/***********************/
+/* MaxFragmentSize     */
+/***********************/
+
+IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, max_fragment_size)
 
 /*************************************************************/
 /* Known test options and their corresponding parse methods. */
@@ -417,6 +425,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "HandshakeMode", &parse_handshake_mode },
     { "ResumptionExpected", &parse_test_resumption_expected },
     { "ApplicationData", &parse_test_app_data_size },
+    { "MaxFragmentSize", &parse_test_max_fragment_size },
 };
 
 /* Nested client options. */
@@ -456,6 +465,7 @@ SSL_TEST_CTX *SSL_TEST_CTX_new()
     ret = OPENSSL_zalloc(sizeof(*ret));
     TEST_check(ret != NULL);
     ret->app_data_size = default_app_data_size;
+    ret->max_fragment_size = default_max_fragment_size;
     return ret;
 }
 

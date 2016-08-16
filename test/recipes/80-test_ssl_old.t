@@ -79,7 +79,7 @@ my $client_sess="client.ss";
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
-    +7  			# For the first testssl
+    +6  			# For the first testssl
     ;
 
 subtest 'test_ss' => sub {
@@ -577,28 +577,6 @@ sub testssl {
 
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "aSRP", "-srpuser", "test", "-srppass", "abc123"])),
 	     'test tls1 with SRP auth via BIO pair');
-	}
-    };
-
-    subtest 'Multi-buffer tests' => sub {
-	######################################################################
-
-	plan tests => 2;
-
-      SKIP: {
-	  skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 2
-	      if $no_anytls;
-
-	  skip "skipping multi-buffer tests", 2
-	      if (POSIX::uname())[4] ne "x86_64";
-
-	  ok(run(test([@ssltest, "-cipher", "AES128-SHA",    "-bytes", "8m"])));
-
-	  # We happen to know that AES128-SHA256 is TLSv1.2 only... for now.
-	  skip "TLSv1.2 is not supported by this OpenSSL configuration", 1
-	      if $no_tls1_2;
-
-	  ok(run(test([@ssltest, "-cipher", "AES128-SHA256", "-bytes", "8m"])));
 	}
     };
 }
