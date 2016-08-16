@@ -4190,6 +4190,3 @@ X509_get_proxy_pathlen                  4136	1_1_0	EXIST::FUNCTION:
 DSA_bits                                4137	1_1_0	EXIST::FUNCTION:DSA
 EVP_PKEY_set1_tls_encodedpoint          4138	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_get1_tls_encodedpoint          4139	1_1_0	EXIST::FUNCTION:
-CT_POLICY_EVAL_CTX_set1_cert            4140	1_1_0	EXIST::FUNCTION:CT
-CT_POLICY_EVAL_CTX_set1_issuer          4141	1_1_0	EXIST::FUNCTION:CT
-CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE 4142	1_1_0	EXIST::FUNCTION:CT
