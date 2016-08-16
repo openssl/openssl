@@ -1177,13 +1177,13 @@ static void receipt_request_print(CMS_ContentInfo *cms)
             BIO_puts(bio_err, "  Receipt Request Parse Error\n");
             ERR_print_errors(bio_err);
         } else {
-            char *id;
+            const char *id;
             int idlen;
             CMS_ReceiptRequest_get0_values(rr, &scid, &allorfirst,
                                            &rlist, &rto);
             BIO_puts(bio_err, "  Signed Content ID:\n");
             idlen = ASN1_STRING_length(scid);
-            id = (char *)ASN1_STRING_data(scid);
+            id = (const char *)ASN1_STRING_get0_data(scid);
             BIO_dump_indent(bio_err, id, idlen, 4);
             BIO_puts(bio_err, "  Receipts From");
             if (rlist) {

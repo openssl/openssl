@@ -151,7 +151,7 @@ static int ecx_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
         p = NULL;
         plen = 0;
     } else {
-        p = ASN1_STRING_data(oct);
+        p = ASN1_STRING_get0_data(oct);
         plen = ASN1_STRING_length(oct);
     }
 

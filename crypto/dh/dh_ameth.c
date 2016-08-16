@@ -600,7 +600,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     dhpeer = DHparams_dup(pk->pkey.dh);
     /* We have parameters now set public key */
     plen = ASN1_STRING_length(pubkey);
-    p = ASN1_STRING_data(pubkey);
+    p = ASN1_STRING_get0_data(pubkey);
     if (!p || !plen)
         goto err;
 
@@ -690,7 +690,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = OPENSSL_memdup(ASN1_STRING_data(ukm), dukmlen);
+        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }
@@ -834,7 +834,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = OPENSSL_memdup(ASN1_STRING_data(ukm), dukmlen);
+        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }

@@ -57,7 +57,7 @@ int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
     if (ppkalg)
         *ppkalg = p8->pkeyalg->algorithm;
     if (pk) {
-        *pk = ASN1_STRING_data(p8->pkey);
+        *pk = ASN1_STRING_get0_data(p8->pkey);
         *ppklen = ASN1_STRING_length(p8->pkey);
     }
     if (pa)
