@@ -60,6 +60,19 @@ When HandshakeMode is Resume or Renegotiate, the original handshake is expected
 to succeed. All configured test expectations are verified against the second
 handshake.
 
+* ApplicationData - amount of application data bytes to send (integer, defaults
+  to 256 bytes). Applies to both client and server. Application data is sent in
+  64kB chunks (but limited by MaxFragmentSize and available parallelization, see
+  below).
+
+* MaxFragmentSize - maximum send fragment size (integer, defaults to 512 in
+  tests - see `SSL_CTX_set_max_send_fragment` for documentation). Applies to
+  both client and server. Lowering the fragment size will split handshake and
+  application data up between more `SSL_write` calls, thus allowing to exercise
+  different code paths. In particular, if the buffer size (64kB) is at least
+  four times as large as the maximum fragment, interleaved multi-buffer crypto
+  implementations may be used on some platforms.
+
 ### Test expectations
 
 * ExpectedResult - expected handshake outcome. One of

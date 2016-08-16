@@ -270,6 +270,7 @@ static int server_alpn_cb(SSL *s, const unsigned char **out,
  */
 static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                     SSL_CTX *client_ctx,
+                                    const SSL_TEST_CTX *test,
                                     const SSL_TEST_EXTRA_CONF *extra,
                                     CTX_DATA *server_ctx_data,
                                     CTX_DATA *server2_ctx_data,
@@ -277,6 +278,15 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
 {
     unsigned char *ticket_keys;
     size_t ticket_key_len;
+
+    TEST_check(SSL_CTX_set_max_send_fragment(server_ctx,
+                                             test->max_fragment_size));
+    if (server2_ctx != NULL) {
+        TEST_check(SSL_CTX_set_max_send_fragment(server2_ctx,
+                                                 test->max_fragment_size));
+    }
+    TEST_check(SSL_CTX_set_max_send_fragment(client_ctx,
+                                             test->max_fragment_size));
 
     switch (extra->client.verify_callback) {
     case SSL_TEST_VERIFY_ACCEPT_ALL:
@@ -686,9 +696,22 @@ static char *dup_str(const unsigned char *in, size_t len)
     return ret;
 }
 
+/*
+ * Note that |extra| points to the correct client/server configuration
+ * within |test_ctx|. When configuring the handshake, general mode settings
+ * are taken from |test_ctx|, and client/server-specific settings should be
+ * taken from |extra|.
+ *
+ * The configuration code should never reach into |test_ctx->extra| or
+ * |test_ctx->resume_extra| directly.
+ *
+ * (We could refactor test mode settings into a substructure. This would result
+ * in cleaner argument passing but would complicate the test configuration
+ * parsing.)
+ */
 static HANDSHAKE_RESULT *do_handshake_internal(
     SSL_CTX *server_ctx, SSL_CTX *server2_ctx, SSL_CTX *client_ctx,
-    const SSL_TEST_EXTRA_CONF *extra, int app_data_size,
+    const SSL_TEST_CTX *test_ctx, const SSL_TEST_EXTRA_CONF *extra,
     SSL_SESSION *session_in, SSL_SESSION **session_out)
 {
     PEER server, client;
@@ -712,15 +735,15 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     memset(&server, 0, sizeof(server));
     memset(&client, 0, sizeof(client));
 
-    configure_handshake_ctx(server_ctx, server2_ctx, client_ctx, extra,
+    configure_handshake_ctx(server_ctx, server2_ctx, client_ctx, test_ctx, extra,
                             &server_ctx_data, &server2_ctx_data, &client_ctx_data);
 
     /* Setup SSL and buffers; additional configuration happens below. */
     create_peer(&server, server_ctx);
     create_peer(&client, client_ctx);
 
-    server.bytes_to_write = client.bytes_to_read = app_data_size;
-    client.bytes_to_write = server.bytes_to_read = app_data_size;
+    server.bytes_to_write = client.bytes_to_read = test_ctx->app_data_size;
+    client.bytes_to_write = server.bytes_to_read = test_ctx->app_data_size;
 
     configure_handshake_ssl(server.ssl, client.ssl, extra);
     if (session_in != NULL) {
@@ -869,7 +892,7 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     SSL_SESSION *session = NULL;
 
     result = do_handshake_internal(server_ctx, server2_ctx, client_ctx,
-                                   &test_ctx->extra, test_ctx->app_data_size,
+                                   test_ctx, &test_ctx->extra,
                                    NULL, &session);
     if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_SIMPLE)
         goto end;
@@ -884,7 +907,7 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     HANDSHAKE_RESULT_free(result);
     /* We don't support SNI on second handshake yet, so server2_ctx is NULL. */
     result = do_handshake_internal(resume_server_ctx, NULL, resume_client_ctx,
-                                   &test_ctx->resume_extra, test_ctx->app_data_size,
+                                   test_ctx, &test_ctx->resume_extra,
                                    session, NULL);
  end:
     SSL_SESSION_free(session);
