@@ -1279,6 +1279,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTX_set_tmp_rsa(ctx,rsa)             1
 # define SSL_need_tmp_RSA(ssl)                    0
 # define SSL_set_tmp_rsa(ssl,rsa)                 1
+# define SSL_CTX_set_ecdh_auto(dummy, onoff)      ((onoff) != 0)
+# define SSL_set_ecdh_auto(dummy, onoff)          ((onoff) != 0)
 /*
  * We "pretend" to call the callback to avoid warnings about unused static
  * functions.
