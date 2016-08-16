@@ -249,6 +249,14 @@ int crl_main(int argc, char **argv)
         }
     }
 
+    if (badsig) {
+        ASN1_BIT_STRING *sig;
+
+        X509_CRL_get0_signature(&sig, NULL, x);
+        if (!corrupt_signature(sig))
+            goto end;
+    }
+
     if (num) {
         for (i = 1; i <= num; i++) {
             if (issuer == i) {
@@ -317,13 +325,6 @@ int crl_main(int argc, char **argv)
     if (noout) {
         ret = 0;
         goto end;
-    }
-
-    if (badsig) {
-        ASN1_BIT_STRING *sig;
-        X509_CRL_get0_signature(&sig, NULL, x);
-        if (!corrupt_signature(sig))
-            goto end;
     }
 
     if (outformat == FORMAT_ASN1)

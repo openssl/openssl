@@ -603,6 +603,13 @@ int x509_main(int argc, char **argv)
         objtmp = NULL;
     }
 
+    if (badsig) {
+        ASN1_BIT_STRING *signature;
+        X509_get0_signature(&signature, NULL, x);
+        if (!corrupt_signature(signature))
+            goto end;
+    }
+
     if (num) {
         for (i = 1; i <= num; i++) {
             if (issuer == i) {
@@ -845,13 +852,6 @@ int x509_main(int argc, char **argv)
     if (noout || nocert) {
         ret = 0;
         goto end;
-    }
-
-    if (badsig) {
-        ASN1_BIT_STRING *signature;
-        X509_get0_signature(&signature, NULL, x);
-        if (!corrupt_signature(signature))
-            goto end;
     }
 
     if (outformat == FORMAT_ASN1)
