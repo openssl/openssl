@@ -22,8 +22,8 @@ static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     const unsigned char *p, *pm;
     int pklen, pmlen;
     int ptype;
-    void *pval;
-    ASN1_STRING *pstr;
+    const void *pval;
+    const ASN1_STRING *pstr;
     X509_ALGOR *palg;
     ASN1_INTEGER *public_key = NULL;
 
@@ -135,8 +135,8 @@ static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
     const unsigned char *p, *pm;
     int pklen, pmlen;
     int ptype;
-    void *pval;
-    ASN1_STRING *pstr;
+    const void *pval;
+    const ASN1_STRING *pstr;
     X509_ALGOR *palg;
     ASN1_INTEGER *privkey = NULL;
     BN_CTX *ctx = NULL;

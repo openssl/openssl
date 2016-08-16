@@ -285,7 +285,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 
     /* See if digest is present in digestAlgorithms */
     for (i = 0; i < sk_X509_ALGOR_num(sd->digestAlgorithms); i++) {
-        ASN1_OBJECT *aoid;
+        const ASN1_OBJECT *aoid;
         alg = sk_X509_ALGOR_value(sd->digestAlgorithms, i);
         X509_ALGOR_get0(&aoid, NULL, NULL, alg);
         if (OBJ_obj2nid(aoid) == EVP_MD_type(md))

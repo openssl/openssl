@@ -47,8 +47,8 @@ static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     const unsigned char *p, *pm;
     int pklen, pmlen;
     int ptype;
-    void *pval;
-    ASN1_STRING *pstr;
+    const void *pval;
+    const ASN1_STRING *pstr;
     X509_ALGOR *palg;
     ASN1_INTEGER *public_key = NULL;
 
@@ -152,8 +152,8 @@ static int dh_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
     const unsigned char *p, *pm;
     int pklen, pmlen;
     int ptype;
-    void *pval;
-    ASN1_STRING *pstr;
+    const void *pval;
+    const ASN1_STRING *pstr;
     X509_ALGOR *palg;
     ASN1_INTEGER *privkey = NULL;
 
@@ -574,9 +574,9 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
 static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
                               X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)
 {
-    ASN1_OBJECT *aoid;
+    const ASN1_OBJECT *aoid;
     int atype;
-    void *aval;
+    const void *aval;
     ASN1_INTEGER *public_key = NULL;
     int rv = 0;
     EVP_PKEY *pkpeer = NULL, *pk = NULL;
@@ -741,7 +741,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     EVP_CIPHER_CTX *ctx;
     int keylen;
     X509_ALGOR *talg, *wrap_alg = NULL;
-    ASN1_OBJECT *aoid;
+    const ASN1_OBJECT *aoid;
     ASN1_BIT_STRING *pubkey;
     ASN1_STRING *wrap_str;
     ASN1_OCTET_STRING *ukm;
