@@ -772,7 +772,7 @@ int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num,
 int ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *a, long *num,
                                   unsigned char *data, int max_len);
 
-void *ASN1_item_unpack(ASN1_STRING *oct, const ASN1_ITEM *it);
+void *ASN1_item_unpack(const ASN1_STRING *oct, const ASN1_ITEM *it);
 
 ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it,
                             ASN1_OCTET_STRING **oct);
