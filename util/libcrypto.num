@@ -4203,3 +4203,7 @@ OPENSSL_utf82uni                        4149	1_1_0	EXIST::FUNCTION:
 PKCS12_add_friendlyname_utf8            4150	1_1_0	EXIST::FUNCTION:
 OPENSSL_uni2utf8                        4151	1_1_0	EXIST::FUNCTION:
 PKCS12_key_gen_utf8                     4152	1_1_0	EXIST::FUNCTION:
+ECPKPARAMETERS_free                     4153	1_1_0	EXIST::FUNCTION:EC
+ECPARAMETERS_free                       4154	1_1_0	EXIST::FUNCTION:EC
+ECPKPARAMETERS_new                      4155	1_1_0	EXIST::FUNCTION:EC
+ECPARAMETERS_new                        4156	1_1_0	EXIST::FUNCTION:EC
