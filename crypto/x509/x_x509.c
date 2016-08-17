@@ -209,7 +209,8 @@ int i2d_re_X509_tbs(X509 *x, unsigned char **pp)
     return i2d_X509_CINF(&x->cert_info, pp);
 }
 
-void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg, X509 *x)
+void X509_get0_signature(const ASN1_BIT_STRING **psig,
+                         const X509_ALGOR **palg, const X509 *x)
 {
     if (psig)
         *psig = &x->signature;

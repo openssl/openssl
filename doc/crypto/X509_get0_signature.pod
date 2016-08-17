@@ -10,7 +10,8 @@ X509_CRL_get_signature_nid - signature information
 
  #include <openssl/x509.h>
 
- void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
+ void X509_get0_signature(const ASN1_BIT_STRING **psig,
+                          const X509_ALGOR **palg,
                           const X509 *x);
  int X509_get_signature_nid(const X509 *x);
  const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);

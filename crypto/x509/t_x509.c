@@ -191,8 +191,8 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
                                 X509_get0_extensions(x), cflag, 8);
 
     if (!(cflag & X509_FLAG_NO_SIGDUMP)) {
-        X509_ALGOR *sig_alg;
-        ASN1_BIT_STRING *sig;
+        const X509_ALGOR *sig_alg;
+        const ASN1_BIT_STRING *sig;
         X509_get0_signature(&sig, &sig_alg, x);
         if (X509_signature_print(bp, sig_alg, sig) <= 0)
             goto err;
