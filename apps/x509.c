@@ -606,8 +606,7 @@ int x509_main(int argc, char **argv)
     if (badsig) {
         ASN1_BIT_STRING *signature;
         X509_get0_signature(&signature, NULL, x);
-        if (!corrupt_signature(signature))
-            goto end;
+        corrupt_signature(signature);
     }
 
     if (num) {

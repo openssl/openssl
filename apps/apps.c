@@ -2583,15 +2583,8 @@ int has_stdin_waiting(void)
 #endif
 
 /* Corrupt a signature by modifying final byte */
-int corrupt_signature(ASN1_STRING *signature)
+void corrupt_signature(const ASN1_STRING *signature)
 {
-        unsigned char *s;
-        size_t slen = ASN1_STRING_length(signature);
-
-        s = OPENSSL_memdup(ASN1_STRING_get0_data(signature), slen);
-        if (s == NULL)
-            return 0;
-        s[slen - 1] ^= 0x1;
-        ASN1_STRING_set0(signature, s, slen);
-        return 1;
+        unsigned char *s = signature->data;
+        s[signature->length - 1] ^= 0x1;
 }

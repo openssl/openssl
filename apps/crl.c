@@ -253,8 +253,7 @@ int crl_main(int argc, char **argv)
         ASN1_BIT_STRING *sig;
 
         X509_CRL_get0_signature(&sig, NULL, x);
-        if (!corrupt_signature(sig))
-            goto end;
+        corrupt_signature(sig);
     }
 
     if (num) {
