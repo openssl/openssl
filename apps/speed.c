@@ -1547,6 +1547,7 @@ int speed_main(int argc, char **argv)
         loopargs[i].buf = loopargs[i].buf_malloc + misalign;
         loopargs[i].buf2 = loopargs[i].buf2_malloc + misalign;
         loopargs[i].siglen = app_malloc(sizeof(unsigned int), "signature length");
+        *(loopargs[i].siglen) = 0;
 #ifndef OPENSSL_NO_EC
         loopargs[i].secret_a = app_malloc(MAX_ECDH_SIZE, "ECDH secret a");
         loopargs[i].secret_b = app_malloc(MAX_ECDH_SIZE, "ECDH secret b");
