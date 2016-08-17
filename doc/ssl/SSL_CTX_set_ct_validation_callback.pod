@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_ct_enable, SSL_CTX_ct_enable, SSL_ct_disable, SSL_CTX_ct_disable,
+SSL_enable_ct, SSL_CTX_enable_ct, SSL_disable_ct, SSL_CTX_disable_ct,
 SSL_set_ct_validation_callback, SSL_CTX_set_ct_validation_callback,
 SSL_ct_is_enabled, SSL_CTX_ct_is_enabled -
 control Certificate Transparency policy
