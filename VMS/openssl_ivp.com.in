@@ -38,8 +38,8 @@ $	! If something else is wrong with the installation, we're likely
 $	! to get an image activation error here
 $	openssl version -a
 $
-$	! Verify that engines are where they should be.
-$	openssl engine -c -t dasync
+$	! FUTURE ENHANCEMENT: Verify that engines are where they should be.
+$	! openssl engine -c -t checker
 $
 $	WRITE SYS$ERROR "OpenSSL IVP passed"
 $	EXIT %x10000001
