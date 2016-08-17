@@ -639,7 +639,7 @@ const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 EVP_PKEY *X509_get0_pubkey(const X509 *x);
 EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
-int X509_certificate_type(X509 *x, const EVP_PKEY *pubkey /* optional */ );
+int X509_certificate_type(const X509 *x, const EVP_PKEY *pubkey);
 
 long X509_REQ_get_version(const X509_REQ *req);
 int X509_REQ_set_version(X509_REQ *x, long version);
