@@ -20,8 +20,17 @@ ASN1_SEQUENCE(X509_SIG) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_SIG)
 
-void X509_SIG_get0(X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest,
-                   X509_SIG *sig)
+void X509_SIG_get0(const X509_SIG *sig, const X509_ALGOR **palg,
+                   const ASN1_OCTET_STRING **pdigest)
+{
+    if (palg)
+        *palg = sig->algor;
+    if (pdigest)
+        *pdigest = sig->digest;
+}
+
+void X509_SIG_get0_mutable(X509_SIG *sig, X509_ALGOR **palg,
+                           ASN1_OCTET_STRING **pdigest)
 {
     if (palg)
         *palg = sig->algor;

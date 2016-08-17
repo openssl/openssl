@@ -84,9 +84,11 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 
 ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
 int PKCS12_mac_present(PKCS12 *p12);
-void PKCS12_get0_mac(ASN1_OCTET_STRING **pmac, X509_ALGOR **pmacalg,
-                     ASN1_OCTET_STRING **psalt, ASN1_INTEGER **piter,
-                     PKCS12 *p12);
+void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac,
+                     const X509_ALGOR **pmacalg,
+                     const ASN1_OCTET_STRING **psalt,
+                     const ASN1_INTEGER **piter,
+                     const PKCS12 *p12);
 
 ASN1_TYPE *PKCS12_SAFEBAG_get0_attr(PKCS12_SAFEBAG *bag, int attr_nid);
 ASN1_OBJECT *PKCS12_SAFEBAG_get0_type(PKCS12_SAFEBAG *bag);
@@ -112,7 +114,7 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid,
 
 PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
                                          int nid1, int nid2);
-PKCS8_PRIV_KEY_INFO *PKCS8_decrypt(X509_SIG *p8, const char *pass,
+PKCS8_PRIV_KEY_INFO *PKCS8_decrypt(const X509_SIG *p8, const char *pass,
                                    int passlen);
 PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(PKCS12_SAFEBAG *bag,
                                          const char *pass, int passlen);
@@ -145,13 +147,14 @@ ASN1_TYPE *PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs,
                                int attr_nid);
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag);
 STACK_OF(X509_ATTRIBUTE) *PKCS12_SAFEBAG_get0_attrs(PKCS12_SAFEBAG *bag);
-unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
-                                int passlen, unsigned char *in, int inlen,
+unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
+                                const char *pass, int passlen,
+                                const unsigned char *in, int inlen,
                                 unsigned char **data, int *datalen,
                                 int en_de);
-void *PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
+void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
                               const char *pass, int passlen,
-                              ASN1_OCTET_STRING *oct, int zbuf);
+                              const ASN1_OCTET_STRING *oct, int zbuf);
 ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
                                            const ASN1_ITEM *it,
                                            const char *pass, int passlen,

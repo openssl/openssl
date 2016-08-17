@@ -516,8 +516,10 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length);
 # endif
 
 DECLARE_ASN1_FUNCTIONS(X509_SIG)
-void X509_SIG_get0(X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest,
-                   X509_SIG *sig);
+void X509_SIG_get0(const X509_SIG *sig, const X509_ALGOR **palg,
+                   const ASN1_OCTET_STRING **pdigest);
+void X509_SIG_get0_mutable(X509_SIG *sig, X509_ALGOR **palg,
+                           ASN1_OCTET_STRING **pdigest);
 
 DECLARE_ASN1_FUNCTIONS(X509_REQ_INFO)
 DECLARE_ASN1_FUNCTIONS(X509_REQ)
