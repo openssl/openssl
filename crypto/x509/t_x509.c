@@ -110,7 +110,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_SIGNAME)) {
-        X509_ALGOR *tsig_alg = X509_get0_tbs_sigalg(x);
+        const X509_ALGOR *tsig_alg = X509_get0_tbs_sigalg(x);
         if (X509_signature_print(bp, tsig_alg, NULL) <= 0)
             goto err;
     }
@@ -170,8 +170,8 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_IDS)) {
-        ASN1_BIT_STRING *iuid, *suid;
-        X509_get0_uids(&iuid, &suid, x);
+        const ASN1_BIT_STRING *iuid, *suid;
+        X509_get0_uids(x, &iuid, &suid);
         if (iuid != NULL) {
             if (BIO_printf(bp, "%8sIssuer Unique ID: ", "") <= 0)
                 goto err;

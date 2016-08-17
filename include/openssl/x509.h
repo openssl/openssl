@@ -630,14 +630,15 @@ int X509_get_signature_type(const X509 *x);
  * i2d_X509_NAME(X509_get_X509_PUBKEY(x),&buf)
  */
 X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x);
-STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
-void X509_get0_uids(ASN1_BIT_STRING **piuid, ASN1_BIT_STRING **psuid, X509 *x);
-X509_ALGOR *X509_get0_tbs_sigalg(X509 *x);
+const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
+void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
+                    const ASN1_BIT_STRING **psuid);
+const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 
 EVP_PKEY *X509_get0_pubkey(const X509 *x);
 EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
-int X509_certificate_type(X509 *x, EVP_PKEY *pubkey /* optional */ );
+int X509_certificate_type(X509 *x, const EVP_PKEY *pubkey /* optional */ );
 
 long X509_REQ_get_version(const X509_REQ *req);
 int X509_REQ_set_version(X509_REQ *x, long version);
