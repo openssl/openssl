@@ -90,5 +90,4 @@ $       IF verbose THEN -
            WRITE SYS$OUTPUT "PERL ''here'Configure ""''target'""''collected_args'"
 $       IF .not. dryrun THEN -
            PERL 'here'Configure "''target'" 'debug' 'collected_args'
-$       ENDIF
 $       EXIT $STATUS
