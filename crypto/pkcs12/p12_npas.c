@@ -22,7 +22,8 @@ static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
                         const char *newpass);
 static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
                         const char *newpass);
-static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen);
+static int alg_get(const X509_ALGOR *alg, int *pnid, int *piter,
+                   int *psaltlen);
 
 /*
  * Change the password on a PKCS#12 structure.
@@ -109,7 +110,7 @@ static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
 
     if (!PKCS12_gen_mac(p12, newpass, -1, mac, &maclen))
         goto err;
-    X509_SIG_get0(NULL, &macoct, p12->mac->dinfo);
+    X509_SIG_get0_mutable(p12->mac->dinfo, NULL, &macoct);
     if (!ASN1_OCTET_STRING_set(macoct, mac, maclen))
         goto err;
 
@@ -148,14 +149,14 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
     PKCS8_PRIV_KEY_INFO *p8;
     X509_SIG *p8new;
     int p8_nid, p8_saltlen, p8_iter;
-    X509_ALGOR *shalg;
+    const X509_ALGOR *shalg;
 
     if (PKCS12_SAFEBAG_get_nid(bag) != NID_pkcs8ShroudedKeyBag)
         return 1;
 
     if ((p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1)) == NULL)
         return 0;
-    X509_SIG_get0(&shalg, NULL, bag->value.shkeybag);
+    X509_SIG_get0(bag->value.shkeybag, &shalg, NULL);
     if (!alg_get(shalg, &p8_nid, &p8_iter, &p8_saltlen))
         return 0;
     p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
@@ -168,7 +169,8 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
     return 1;
 }
 
-static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen)
+static int alg_get(const X509_ALGOR *alg, int *pnid, int *piter,
+                   int *psaltlen)
 {
     PBEPARAM *pbe;
     pbe = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), alg->parameter);

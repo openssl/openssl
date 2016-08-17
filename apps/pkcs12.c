@@ -40,7 +40,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass,
 int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
                   const char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
-static int alg_print(X509_ALGOR *alg);
+static int alg_print(const X509_ALGOR *alg);
 int cert_load(BIO *in, STACK_OF(X509) *sk);
 static int set_pbe(int *ppbe, const char *str);
 
@@ -521,8 +521,8 @@ int pkcs12_main(int argc, char **argv)
         OPENSSL_strlcpy(macpass, pass, sizeof macpass);
 
     if ((options & INFO) && PKCS12_mac_present(p12)) {
-        ASN1_INTEGER *tmaciter;
-        X509_ALGOR *macalgid;
+        const ASN1_INTEGER *tmaciter;
+        const X509_ALGOR *macalgid;
         const ASN1_OBJECT *macobj;
         PKCS12_get0_mac(NULL, &macalgid, NULL, &tmaciter, p12);
         X509_ALGOR_get0(&macobj, NULL, NULL, macalgid);
@@ -650,12 +650,12 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 
     case NID_pkcs8ShroudedKeyBag:
         if (options & INFO) {
-            X509_SIG *tp8;
-            X509_ALGOR *tp8alg;
+            const X509_SIG *tp8;
+            const X509_ALGOR *tp8alg;
 
             BIO_printf(bio_err, "Shrouded Keybag: ");
             tp8 = PKCS12_SAFEBAG_get0_pkcs8(bag);
-            X509_SIG_get0(&tp8alg, NULL, tp8);
+            X509_SIG_get0(tp8, &tp8alg, NULL);
             alg_print(tp8alg);
         }
         if (options & NOKEYS)
@@ -740,7 +740,7 @@ end:
     return i;
 }
 
-static int alg_print(X509_ALGOR *alg)
+static int alg_print(const X509_ALGOR *alg)
 {
     int pbenid, aparamtype;
     const ASN1_OBJECT *aoid;
