@@ -258,16 +258,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_engine_capi)
     return 1;
 }
 #  endif
-static CRYPTO_ONCE engine_dasync = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_engine_dasync)
-{
-# ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_dasync: "
-                    "engine_load_dasync_int()\n");
-# endif
-    engine_load_dasync_int();
-    return 1;
-}
 #  if !defined(OPENSSL_NO_AFALGENG)
 static CRYPTO_ONCE engine_afalg = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(ossl_init_engine_afalg)
@@ -559,9 +549,6 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
             && !RUN_ONCE(&engine_capi, ossl_init_engine_capi))
         return 0;
 #  endif
-    if ((opts & OPENSSL_INIT_ENGINE_DASYNC)
-            && !RUN_ONCE(&engine_dasync, ossl_init_engine_dasync))
-        return 0;
 #  if !defined(OPENSSL_NO_AFALGENG)
     if ((opts & OPENSSL_INIT_ENGINE_AFALG)
             && !RUN_ONCE(&engine_afalg, ossl_init_engine_afalg))
@@ -569,7 +556,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 #  endif
 # endif
     if (opts & (OPENSSL_INIT_ENGINE_ALL_BUILTIN
-                | OPENSSL_INIT_ENGINE_DASYNC | OPENSSL_INIT_ENGINE_OPENSSL
+                | OPENSSL_INIT_ENGINE_OPENSSL
                 | OPENSSL_INIT_ENGINE_AFALG)) {
         ENGINE_register_all_complete();
     }
