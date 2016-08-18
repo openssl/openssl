@@ -205,21 +205,29 @@ static BN_ULONG is_equal(const BN_ULONG a[P256_LIMBS],
     return is_zero(res);
 }
 
-static BN_ULONG is_one(const BN_ULONG a[P256_LIMBS])
+static BN_ULONG is_one(const BIGNUM *z)
 {
-    BN_ULONG res;
+    BN_ULONG res = 0;
+    BN_ULONG *a = z->d;
 
-    res = a[0] ^ ONE[0];
-    res |= a[1] ^ ONE[1];
-    res |= a[2] ^ ONE[2];
-    res |= a[3] ^ ONE[3];
-    if (P256_LIMBS == 8) {
-        res |= a[4] ^ ONE[4];
-        res |= a[5] ^ ONE[5];
-        res |= a[6] ^ ONE[6];
+    if (z->top == (P256_LIMBS - P256_LIMBS / 8)) {
+        res = a[0] ^ ONE[0];
+        res |= a[1] ^ ONE[1];
+        res |= a[2] ^ ONE[2];
+        res |= a[3] ^ ONE[3];
+        if (P256_LIMBS == 8) {
+            res |= a[4] ^ ONE[4];
+            res |= a[5] ^ ONE[5];
+            res |= a[6] ^ ONE[6];
+            /*
+             * no check for a[7] (being zero) on 32-bit platforms,
+             * because value of "one" takes only 7 limbs.
+             */
+        }
+        res = is_zero(res);
     }
 
-    return is_zero(res);
+    return res;
 }
 
 static int ecp_nistz256_set_words(BIGNUM *a, BN_ULONG words[P256_LIMBS])
@@ -741,9 +749,8 @@ static int ecp_nistz256_is_affine_G(const EC_POINT *generator)
 {
     return (generator->X.top == P256_LIMBS) &&
         (generator->Y.top == P256_LIMBS) &&
-        (generator->Z.top == (P256_LIMBS - P256_LIMBS / 8)) &&
         is_equal(generator->X.d, def_xG) &&
-        is_equal(generator->Y.d, def_yG) && is_one(generator->Z.d);
+        is_equal(generator->Y.d, def_yG) && is_one(&generator->Z);
 }
 
 static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
@@ -1331,7 +1338,7 @@ static int ecp_nistz256_points_mul(const EC_GROUP *group,
         !ecp_nistz256_set_words(&r->Z, p.p.Z)) {
         goto err;
     }
-    r->Z_is_one = is_one(p.p.Z) & 1;
+    r->Z_is_one = is_one(&r->Z) & 1;
 
     ret = 1;
 
