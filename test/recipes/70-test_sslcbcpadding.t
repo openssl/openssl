@@ -23,8 +23,8 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLSv1.2 enabled"
-    if disabled("tls1_2");
+plan skip_all => "$test_name needs TLSv1.1 enabled"
+    if disabled("tls1_1");
 
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
@@ -34,23 +34,21 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-my $bad_padding_offset = -1;
-
 # TODO: We could test all 256 values, but then the log file gets too large for
 # CI. See https://github.com/openssl/openssl/issues/1440.
 my @test_offsets = (0, 128, 254, 255);
 
-plan tests => 1 + scalar(@test_offsets);
-
 # Test that maximally-padded records are accepted.
+my $bad_padding_offset = -1;
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 1 + scalar(@test_offsets);
 ok(TLSProxy::Message->success(), "Maximally-padded record test");
 
 # Test that invalid padding is rejected.
 foreach my $offset (@test_offsets) {
     $proxy->clear();
     $bad_padding_offset = $offset;
-    $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";;
+    $proxy->start();
     ok(TLSProxy::Message->fail(), "Invalid padding byte $bad_padding_offset");
 }
 
