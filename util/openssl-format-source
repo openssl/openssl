@@ -124,7 +124,7 @@ do
 	    perl -np \
 	      -e 's/^([ \t]*)\/\*([ \t]+.*)\*\/[ \t]*$/my ($x1,$x2) = ($1, $2); if (length("$x1$x2")<75 && $x2 !~ m#^\s*\*INDENT-(ON|OFF)\*\s*$#) {$c="-"}else{$c=""}; "$x1\/*$c$x2*\/"/e;' \
 	      -e 's/^\/\* ((Copyright|=|----).*)$/\/*-$1/;' \
-	      -e 's/^((DECLARE|IMPLEMENT)_(EXTERN_ASN1|STATIC_ASN1|ASN1|ADB|STACK_OF|PKCS12_STACK_OF|PEM|OBJ|LHASH|DEPRECATED).*)$/\/**INDENT-OFF**\/\n$1\n\/**INDENT-ON**\//;' \
+	      -e 's/^((DECLARE|IMPLEMENT)_.*)$/\/**INDENT-OFF**\/\n$1\n\/**INDENT-ON**\//;' \
 	      -e 's/^([ \t]*(make_dh|make_dh_bn|make_rfc5114_td)\(.*\)[ \t,]*)$/\/**INDENT-OFF**\/\n$1\n\/**INDENT-ON**\//;' \
 	      -e 's/^(ASN1_ADB_TEMPLATE\(.*)$/\/**INDENT-OFF**\/\n$1\n\/**INDENT-ON**\//;' \
 	      -e 's/^((ASN1|ADB)_.*_(end|END)\(.*[\){=,;]+[ \t]*)$/$1\n\/**INDENT-ON**\//;' \
