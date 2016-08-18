@@ -4,7 +4,9 @@
 
  Changes between 1.0.1t and 1.0.1u [xx XXX xxxx]
 
-  *)
+  *) In order to mitigate the SWEET32 attack (CVE-2016-2183),
+     the DES ciphers were moved from HIGH to MEDIUM.
+     [Rich Salz]
 
  Changes between 1.0.1s and 1.0.1t [3 May 2016]
 
