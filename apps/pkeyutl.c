@@ -81,8 +81,7 @@ int pkeyutl_main(int argc, char **argv)
     char hexdump = 0, asn1parse = 0, rev = 0, *prog;
     unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL;
     OPTION_CHOICE o;
-    int buf_inlen = 0, siglen = -1, keyform = FORMAT_PEM, peerform =
-        FORMAT_PEM;
+    int buf_inlen = 0, siglen = -1, keyform = FORMAT_PEM, peerform = FORMAT_PEM;
     int keysize = -1, pkey_op = EVP_PKEY_OP_SIGN, key_type = KEY_PRIVKEY;
     int engine_impl = 0;
     int ret = 1, rv = -1;
@@ -196,7 +195,7 @@ int pkeyutl_main(int argc, char **argv)
         if (kdflen == 0)
             goto opthelp;
     } else if ((inkey == NULL)
-            || (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE)) {
+               || (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE)) {
         goto opthelp;
     }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
@@ -434,10 +433,10 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 }
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
-                      ENGINE* e)
+                      ENGINE *e)
 {
     EVP_PKEY *peer = NULL;
-    ENGINE* engine = NULL;
+    ENGINE *engine = NULL;
     int ret;
 
     if (peerform == FORMAT_ENGINE)

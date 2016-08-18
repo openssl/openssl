@@ -265,7 +265,6 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
         memcpy(buf, password, res);
         return res;
     }
-
 #ifndef OPENSSL_NO_UI
     ui = UI_new_method(ui_method);
     if (ui) {
@@ -355,7 +354,8 @@ static char *app_get_pass(const char *arg, int keepbio)
     if (strncmp(arg, "env:", 4) == 0) {
         tmp = getenv(arg + 4);
         if (!tmp) {
-            BIO_printf(bio_err, "Can't read environment variable %s\n", arg + 4);
+            BIO_printf(bio_err, "Can't read environment variable %s\n",
+                       arg + 4);
             return NULL;
         }
         return OPENSSL_strdup(tmp);
@@ -382,7 +382,8 @@ static char *app_get_pass(const char *arg, int keepbio)
             if (i >= 0)
                 pwdbio = BIO_new_fd(i, BIO_NOCLOSE);
             if ((i < 0) || !pwdbio) {
-                BIO_printf(bio_err, "Can't access file descriptor %s\n", arg + 3);
+                BIO_printf(bio_err, "Can't access file descriptor %s\n",
+                           arg + 3);
                 return NULL;
             }
             /*
@@ -437,6 +438,7 @@ static CONF *app_load_config_(BIO *in, const char *filename)
     NCONF_free(conf);
     return NULL;
 }
+
 CONF *app_load_config(const char *filename)
 {
     BIO *in;
@@ -450,6 +452,7 @@ CONF *app_load_config(const char *filename)
     BIO_free(in);
     return conf;
 }
+
 CONF *app_load_config_quiet(const char *filename)
 {
     BIO *in;
@@ -627,7 +630,8 @@ X509 *load_cert(const char *file, int format, const char *cert_descrip)
         if (!load_pkcs12(cert, cert_descrip, NULL, NULL, NULL, &x, NULL))
             goto end;
     } else {
-        BIO_printf(bio_err, "bad input format specified for %s\n", cert_descrip);
+        BIO_printf(bio_err, "bad input format specified for %s\n",
+                   cert_descrip);
         goto end;
     }
  end:
@@ -694,7 +698,8 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
 #ifndef OPENSSL_NO_ENGINE
             pkey = ENGINE_load_private_key(e, file, ui_method, &cb_data);
             if (pkey == NULL) {
-                BIO_printf(bio_err, "cannot load %s from engine\n", key_descrip);
+                BIO_printf(bio_err, "cannot load %s from engine\n",
+                           key_descrip);
                 ERR_print_errors(bio_err);
             }
 #else
@@ -716,8 +721,7 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
         pkey = PEM_read_bio_PrivateKey(key, NULL,
                                        (pem_password_cb *)password_callback,
                                        &cb_data);
-    }
-    else if (format == FORMAT_PKCS12) {
+    } else if (format == FORMAT_PKCS12) {
         if (!load_pkcs12(key, key_descrip,
                          (pem_password_cb *)password_callback, &cb_data,
                          &pkey, NULL, NULL))
@@ -727,8 +731,7 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
     else if (format == FORMAT_MSBLOB)
         pkey = b2i_PrivateKey_bio(key);
     else if (format == FORMAT_PVK)
-        pkey = b2i_PVK_bio(key, (pem_password_cb *)password_callback,
-                           &cb_data);
+        pkey = b2i_PVK_bio(key, (pem_password_cb *)password_callback, &cb_data);
 #endif
     else {
         BIO_printf(bio_err, "bad input format specified for key file\n");
@@ -764,7 +767,8 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
 #ifndef OPENSSL_NO_ENGINE
             pkey = ENGINE_load_public_key(e, file, ui_method, &cb_data);
             if (pkey == NULL) {
-                BIO_printf(bio_err, "cannot load %s from engine\n", key_descrip);
+                BIO_printf(bio_err, "cannot load %s from engine\n",
+                           key_descrip);
                 ERR_print_errors(bio_err);
             }
 #else
@@ -782,12 +786,11 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         goto end;
     if (format == FORMAT_ASN1) {
         pkey = d2i_PUBKEY_bio(key, NULL);
-    }
-    else if (format == FORMAT_ASN1RSA) {
+    } else if (format == FORMAT_ASN1RSA) {
 #ifndef OPENSSL_NO_RSA
-        RSA *rsa;
-        rsa = d2i_RSAPublicKey_bio(key, NULL);
-        if (rsa) {
+        RSA *rsa = d2i_RSAPublicKey_bio(key, NULL);
+
+        if (rsa != NULL) {
             pkey = EVP_PKEY_new();
             if (pkey != NULL)
                 EVP_PKEY_set1_RSA(pkey, rsa);
@@ -796,7 +799,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
 #else
         BIO_printf(bio_err, "RSA keys not supported\n");
 #endif
-            pkey = NULL;
+        pkey = NULL;
     } else if (format == FORMAT_PEMRSA) {
 #ifndef OPENSSL_NO_RSA
         RSA *rsa;
@@ -812,9 +815,8 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
 #else
         BIO_printf(bio_err, "RSA keys not supported\n");
 #endif
-            pkey = NULL;
-    }
-    else if (format == FORMAT_PEM) {
+        pkey = NULL;
+    } else if (format == FORMAT_PEM) {
         pkey = PEM_read_bio_PUBKEY(key, NULL,
                                    (pem_password_cb *)password_callback,
                                    &cb_data);
@@ -832,8 +834,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
 
 static int load_certs_crls(const char *file, int format,
                            const char *pass, const char *desc,
-                           STACK_OF(X509) **pcerts,
-                           STACK_OF(X509_CRL) **pcrls)
+                           STACK_OF(X509) **pcerts, STACK_OF(X509_CRL) **pcrls)
 {
     int i;
     BIO *bio;
@@ -912,13 +913,13 @@ static int load_certs_crls(const char *file, int format,
     return rv;
 }
 
-void* app_malloc(int sz, const char *what)
+void *app_malloc(int sz, const char *what)
 {
     void *vp = OPENSSL_malloc(sz);
 
     if (vp == NULL) {
         BIO_printf(bio_err, "%s: Could not allocate %d bytes for %s\n",
-                opt_getprog(), sz, what);
+                   opt_getprog(), sz, what);
         ERR_print_errors(bio_err);
         exit(1);
     }
@@ -1169,7 +1170,8 @@ void print_bignum_var(BIO *out, const BIGNUM *in, const char *var,
     }
     BIO_printf(out, "\n    };\n");
 }
-void print_array(BIO *out, const char* title, int len, const unsigned char* d)
+
+void print_array(BIO *out, const char *title, int len, const unsigned char *d)
 {
     int i;
 
@@ -1185,7 +1187,8 @@ void print_array(BIO *out, const char* title, int len, const unsigned char* d)
     BIO_printf(out, "\n};\n");
 }
 
-X509_STORE *setup_verify(const char *CAfile, const char *CApath, int noCAfile, int noCApath)
+X509_STORE *setup_verify(const char *CAfile, const char *CApath, int noCAfile,
+                         int noCApath)
 {
     X509_STORE *store = X509_STORE_new();
     X509_LOOKUP *lookup;
@@ -1287,8 +1290,7 @@ static unsigned long index_serial_hash(const OPENSSL_CSTRING *a)
     return OPENSSL_LH_strhash(n);
 }
 
-static int index_serial_cmp(const OPENSSL_CSTRING *a,
-                            const OPENSSL_CSTRING *b)
+static int index_serial_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b)
 {
     const char *aa, *bb;
 
@@ -1341,14 +1343,12 @@ BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai)
             BIO_printf(bio_err, "Out of memory\n");
     } else {
         if (!a2i_ASN1_INTEGER(in, ai, buf, 1024)) {
-            BIO_printf(bio_err, "unable to load number from %s\n",
-                       serialfile);
+            BIO_printf(bio_err, "unable to load number from %s\n", serialfile);
             goto err;
         }
         ret = ASN1_INTEGER_to_BN(ai, NULL);
         if (ret == NULL) {
-            BIO_printf(bio_err,
-                       "error converting number from bin to BIGNUM\n");
+            BIO_printf(bio_err, "error converting number from bin to BIGNUM\n");
             goto err;
         }
     }
@@ -1363,8 +1363,8 @@ BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai)
     return (ret);
 }
 
-int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,
-                ASN1_INTEGER **retai)
+int save_serial(const char *serialfile, const char *suffix,
+                const BIGNUM *serial, ASN1_INTEGER **retai)
 {
     char buf[1][BSIZE];
     BIO *out = NULL;
@@ -1439,14 +1439,12 @@ int rotate_serial(const char *serialfile, const char *new_suffix,
         && errno != ENOTDIR
 #endif
         ) {
-        BIO_printf(bio_err,
-                   "unable to rename %s to %s\n", serialfile, buf[1]);
+        BIO_printf(bio_err, "unable to rename %s to %s\n", serialfile, buf[1]);
         perror("reason");
         goto err;
     }
     if (rename(buf[0], serialfile) < 0) {
-        BIO_printf(bio_err,
-                   "unable to rename %s to %s\n", buf[0], serialfile);
+        BIO_printf(bio_err, "unable to rename %s to %s\n", buf[0], serialfile);
         perror("reason");
         rename(buf[1], serialfile);
         goto err;
@@ -1726,8 +1724,8 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
             *bp++ = *cp++;
         if (*cp == '\0') {
             BIO_printf(bio_err,
-                    "%s: Hit end of string before finding the equals.\n",
-                    opt_getprog());
+                       "%s: Hit end of string before finding the equals.\n",
+                       opt_getprog());
             goto err;
         }
         *bp++ = '\0';
@@ -1742,8 +1740,8 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
             }
             if (*cp == '\\' && *++cp == '\0') {
                 BIO_printf(bio_err,
-                        "%s: escape character at end of string\n",
-                        opt_getprog());
+                           "%s: escape character at end of string\n",
+                           opt_getprog());
                 goto err;
             }
         }
@@ -1757,7 +1755,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
         nid = OBJ_txt2nid(typestr);
         if (nid == NID_undef) {
             BIO_printf(bio_err, "%s: Skipping unknown attribute \"%s\"\n",
-                      opt_getprog(), typestr);
+                       opt_getprog(), typestr);
             continue;
         }
         if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
@@ -1909,7 +1907,7 @@ void print_cert_checks(BIO *bio, X509 *x,
         BIO_printf(bio, "Hostname %s does%s match certificate\n",
                    checkhost,
                    X509_check_host(x, checkhost, 0, 0, NULL) == 1
-                       ? "" : " NOT");
+                   ? "" : " NOT");
     }
 
     if (checkemail) {
@@ -2237,7 +2235,7 @@ double app_tminterval(int stop, int usertime)
 }
 #endif
 
-int app_access(const char* name, int flag)
+int app_access(const char *name, int flag)
 {
 #ifdef _WIN32
     return _access(name, flag);
@@ -2259,8 +2257,7 @@ int app_isdir(const char *name)
         return -1;
 
 #  if !defined(_WIN32_WCE) || _WIN32_WCE>=101
-    if (!MultiByteToWideChar
-        (CP_ACP, 0, name, len_0, FileData.cFileName, len_0))
+    if (!MultiByteToWideChar(CP_ACP, 0, name, len_0, FileData.cFileName, len_0))
 #  endif
         for (i = 0; i < len_0; i++)
             FileData.cFileName[i] = (WCHAR)name[i];
@@ -2346,8 +2343,7 @@ static int istext(int format)
 
 BIO *dup_bio_in(int format)
 {
-    return BIO_new_fp(stdin,
-                      BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
+    return BIO_new_fp(stdin, BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
 }
 
 BIO *dup_bio_out(int format)
@@ -2374,13 +2370,13 @@ BIO *dup_bio_err(int format)
 
 void unbuffer(FILE *fp)
 {
-/*
- * On VMS, setbuf() will only take 32-bit pointers, and a compilation
- * with /POINTER_SIZE=64 will give off a MAYLOSEDATA2 warning here.
- * However, we trust that the C RTL will never give us a FILE pointer
- * above the first 4 GB of memory, so we simply turn off the warning
- * temporarily.
- */
+    /*
+     * On VMS, setbuf() will only take 32-bit pointers, and a compilation
+     * with /POINTER_SIZE=64 will give off a MAYLOSEDATA2 warning here.
+     * However, we trust that the C RTL will never give us a FILE pointer
+     * above the first 4 GB of memory, so we simply turn off the warning
+     * temporarily.
+     */
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
 # pragma environment save
 # pragma message disable maylosedata2
@@ -2447,12 +2443,11 @@ BIO *bio_open_owner(const char *filename, int format, int private)
         mode |= _O_BINARY;
 #endif
     }
-
 #ifdef OPENSSL_SYS_VMS
-    /* VMS doesn't have O_BINARY, it just doesn't make sense.  But,
-     * it still needs to know that we're going binary, or fdopen()
-     * will fail with "invalid argument"...  so we tell VMS what the
-     * context is.
+    /*
+     * VMS doesn't have O_BINARY, it just doesn't make sense.  But, it still
+     * needs to know that we're going binary, or fdopen() will fail with
+     * "invalid argument"...  so we tell VMS what the context is.
      */
     if (!textmode)
         fd = open(filename, mode, 0600, "ctx=bin");
@@ -2586,8 +2581,8 @@ int has_stdin_waiting(void)
 /* Corrupt a signature by modifying final byte */
 void corrupt_signature(const ASN1_STRING *signature)
 {
-        unsigned char *s = signature->data;
-        s[signature->length - 1] ^= 0x1;
+    unsigned char *s = signature->data;
+    s[signature->length - 1] ^= 0x1;
 }
 
 int set_cert_times(X509 *x, const char *startdate, const char *enddate,

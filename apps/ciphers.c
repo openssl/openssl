@@ -58,8 +58,7 @@ OPTIONS ciphers_options[] = {
 #ifndef OPENSSL_NO_PSK
 static unsigned int dummy_psk(SSL *ssl, const char *hint, char *identity,
                               unsigned int max_identity_len,
-                              unsigned char *psk,
-                              unsigned int max_psk_len)
+                              unsigned char *psk, unsigned int max_psk_len)
 {
     return 0;
 }
@@ -211,11 +210,14 @@ int ciphers_main(int argc, char **argv)
                 int id2 = (int)((id >> 8) & 0xffL);
                 int id3 = (int)(id & 0xffL);
 
-                if ((id & 0xff000000L) == 0x03000000L)
-                    BIO_printf(bio_out, "          0x%02X,0x%02X - ", id2, id3); /* SSL3
-                                                                                  * cipher */
-                else
-                    BIO_printf(bio_out, "0x%02X,0x%02X,0x%02X,0x%02X - ", id0, id1, id2, id3); /* whatever */
+                if ((id & 0xff000000L) == 0x03000000L) {
+                    /* SSL3 cipher */
+                    BIO_printf(bio_out, "          0x%02X,0x%02X - ", id2, id3);
+                } else {
+                    /* whatever */
+                    BIO_printf(bio_out, "0x%02X,0x%02X,0x%02X,0x%02X - ",
+                               id0, id1, id2, id3);
+                }
             }
 #ifndef OPENSSL_NO_SSL_TRACE
             if (stdname) {

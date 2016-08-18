@@ -48,7 +48,7 @@ typedef enum OPTION_choice {
 OPTIONS smime_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
     {OPT_HELP_STR, 1, '-',
-        "  cert.pem... recipient certs for encryption\n"},
+     "  cert.pem... recipient certs for encryption\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt message"},
@@ -122,16 +122,14 @@ int smime_main(int argc, char **argv)
     const EVP_MD *sign_md = NULL;
     const char *CAfile = NULL, *CApath = NULL, *prog = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL, *inrand = NULL;
-    char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile =
-        NULL;
+    char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile = NULL;
     char *passinarg = NULL, *passin = NULL, *to = NULL, *from =
         NULL, *subject = NULL;
     OPTION_CHOICE o;
     int noCApath = 0, noCAfile = 0;
     int flags = PKCS7_DETACHED, operation = 0, ret = 0, need_rand = 0, indef =
         0;
-    int informat = FORMAT_SMIME, outformat = FORMAT_SMIME, keyform =
-        FORMAT_PEM;
+    int informat = FORMAT_SMIME, outformat = FORMAT_SMIME, keyform = FORMAT_PEM;
     int vpmtouched = 0, rv = 0;
     ENGINE *e = NULL;
     const char *mime_eol = "\n";
@@ -357,8 +355,7 @@ int smime_main(int argc, char **argv)
         need_rand = 1;
     } else if (operation == SMIME_DECRYPT) {
         if (!recipfile && !keyfile) {
-            BIO_printf(bio_err,
-                       "No recipient certificate or key specified\n");
+            BIO_printf(bio_err, "No recipient certificate or key specified\n");
             goto opthelp;
         }
     } else if (operation == SMIME_ENCRYPT) {
@@ -410,8 +407,7 @@ int smime_main(int argc, char **argv)
         if (!encerts)
             goto end;
         while (*argv) {
-            cert = load_cert(*argv, FORMAT_PEM,
-                             "recipient certificate file");
+            cert = load_cert(*argv, FORMAT_PEM, "recipient certificate file");
             if (cert == NULL)
                 goto end;
             sk_X509_push(encerts, cert);
@@ -421,8 +417,7 @@ int smime_main(int argc, char **argv)
     }
 
     if (certfile) {
-        if (!load_certs(certfile, &other, FORMAT_PEM, NULL,
-                        "certificate file")) {
+        if (!load_certs(certfile, &other, FORMAT_PEM, NULL, "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -525,8 +520,7 @@ int smime_main(int argc, char **argv)
         for (i = 0; i < sk_OPENSSL_STRING_num(sksigners); i++) {
             signerfile = sk_OPENSSL_STRING_value(sksigners, i);
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
-            signer = load_cert(signerfile, FORMAT_PEM,
-                               "signer certificate");
+            signer = load_cert(signerfile, FORMAT_PEM, "signer certificate");
             if (!signer)
                 goto end;
             key = load_key(keyfile, keyform, 0, passin, e, "signing key file");

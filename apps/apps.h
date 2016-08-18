@@ -12,7 +12,7 @@
 
 # include "e_os.h"
 # if defined(__unix) || defined(__unix__)
-#  include <sys/time.h> /* struct timeval for DTLS */
+#  include <sys/time.h>         /* struct timeval for DTLS */
 # endif
 # include <assert.h>
 
@@ -39,18 +39,19 @@
  * this is true for some implementations of the is*() functions, for
  * example.
  */
-#define _UC(c) ((unsigned char)(c))
+# define _UC(c) ((unsigned char)(c))
 
 int app_RAND_load_file(const char *file, int dont_warn);
 int app_RAND_write_file(const char *file);
 /*
- * When `file' is NULL, use defaults. `bio_e' is for error messages.
+ * When |file| is NULL, use defaults.
  */
 void app_RAND_allow_write_file(void);
-long app_RAND_load_files(char *file); /* `file' is a list of files to read,
-                                       * separated by LIST_SEPARATOR_CHAR
-                                       * (see e_os.h).  The string is
-                                       * destroyed! */
+/*
+ * |file| is a list of files to read, separated by LIST_SEPARATOR_CHAR (see
+ * e_os.h).  The string is destroyed!
+ */
+long app_RAND_load_files(char *file);
 
 extern char *default_config_file;
 extern BIO *bio_in;
@@ -278,7 +279,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_DHPARAM: \
         case OPT_S_DEBUGBROKE
 
-#define IS_NO_PROT_FLAG(o) \
+# define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
   || o == OPT_S_NOTLS1_2)
 
@@ -330,23 +331,23 @@ typedef struct string_int_pair_st {
 
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);
-char *opt_init(int ac, char **av, const OPTIONS * o);
+char *opt_init(int ac, char **av, const OPTIONS *o);
 int opt_next(void);
 int opt_format(const char *s, unsigned long flags, int *result);
 int opt_int(const char *arg, int *result);
 int opt_ulong(const char *arg, unsigned long *result);
 int opt_long(const char *arg, long *result);
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
 int opt_imax(const char *arg, intmax_t *result);
 int opt_umax(const char *arg, uintmax_t *result);
-#else
-# define opt_imax opt_long
-# define opt_umax opt_ulong
-# define intmax_t long
-# define uintmax_t unsigned long
-#endif
-int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
+# else
+#  define opt_imax opt_long
+#  define opt_umax opt_ulong
+#  define intmax_t long
+#  define uintmax_t unsigned long
+# endif
+int opt_pair(const char *arg, const OPT_PAIR *pairs, int *result);
 int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
 int opt_md(const char *name, const EVP_MD **mdp);
 char *opt_arg(void);
@@ -356,7 +357,7 @@ char *opt_reset(void);
 char **opt_rest(void);
 int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
-void opt_help(const OPTIONS * list);
+void opt_help(const OPTIONS *list);
 int opt_format_error(const char *s, unsigned long flags);
 
 typedef struct args_st {
@@ -377,7 +378,6 @@ char **copy_argv(int *argc, char *argv[]);
  */
 void win32_utf8argv(int *argc, char **argv[]);
 
-
 # define PW_MIN_LENGTH 4
 typedef struct pw_cb_data {
     const void *password;
@@ -395,7 +395,7 @@ int dump_cert_text(BIO *out, X509 *x);
 void print_name(BIO *out, const char *title, X509_NAME *nm,
                 unsigned long lflags);
 # endif
-void print_bignum_var(BIO *, const BIGNUM *, const char*,
+void print_bignum_var(BIO *, const BIGNUM *, const char *,
                       int, unsigned char *);
 void print_array(BIO *, const char *, int, const unsigned char *);
 int set_cert_ex(unsigned long *flags, const char *arg);
@@ -420,7 +420,7 @@ __owur int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                     const char *CApath, int noCAfile,
                                     int noCApath);
 
-#ifndef OPENSSL_NO_CT
+# ifndef OPENSSL_NO_CT
 
 /*
  * Sets the file to load the Certificate Transparency log list from.
@@ -429,7 +429,7 @@ __owur int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
  */
 __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 
-#endif
+# endif
 
 # ifdef OPENSSL_NO_ENGINE
 #  define setup_engine(engine, debug) NULL
@@ -453,8 +453,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 # define DB_rev_date     2
 # define DB_serial       3      /* index - unique */
 # define DB_file         4
-# define DB_name         5      /* index - unique when active and not
-                                 * disabled */
+# define DB_name         5      /* index - unique when active and not disabled */
 # define DB_NUMBER       6
 
 # define DB_TYPE_REV     'R'
@@ -469,10 +468,10 @@ typedef struct ca_db_st {
     TXT_DB *db;
 } CA_DB;
 
-void* app_malloc(int sz, const char *what);
+void *app_malloc(int sz, const char *what);
 BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai);
-int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,
-                ASN1_INTEGER **retai);
+int save_serial(const char *serialfile, const char *suffix,
+                const BIGNUM *serial, ASN1_INTEGER **retai);
 int rotate_serial(const char *serialfile, const char *new_suffix,
                   const char *old_suffix);
 int rand_serial(BIGNUM *b, ASN1_INTEGER *ai);
@@ -489,8 +488,7 @@ int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b);
 int parse_yesno(const char *str, int def);
 
 X509_NAME *parse_name(const char *str, long chtype, int multirdn);
-int args_verify(char ***pargs, int *pargc,
-                int *badarg, X509_VERIFY_PARAM **pm);
+int args_verify(char ***pargs, int *pargc, int *badarg, X509_VERIFY_PARAM **pm);
 void policies_print(X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
@@ -515,7 +513,8 @@ void print_cert_checks(BIO *bio, X509 *x,
 void store_setup_crl_download(X509_STORE *st);
 
 /* See OPT_FMT_xxx, above. */
-/* On some platforms, it's important to distinguish between text and binary
+/*
+ * On some platforms, it's important to distinguish between text and binary
  * files.  On some, there might even be specific file formats for different
  * contents.  The FORMAT_xxx macros are meant to express an intent with the
  * file being read or created.

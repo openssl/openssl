@@ -138,9 +138,22 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         assert(o->name[0] != '-');
         assert(o->retval > 0);
         switch (i) {
-        case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
-        case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
-        case 'u': case 'c':
+        case 0:
+        case '-':
+        case '/':
+        case '<':
+        case '>':
+        case 'E':
+        case 'F':
+        case 'M':
+        case 'U':
+        case 'f':
+        case 'l':
+        case 'n':
+        case 'p':
+        case 's':
+        case 'u':
+        case 'c':
             break;
         default:
             assert(0);
@@ -296,7 +309,7 @@ int opt_md(const char *name, const EVP_MD **mdp)
 }
 
 /* Look through a list of name/value pairs. */
-int opt_pair(const char *name, const OPT_PAIR* pairs, int *result)
+int opt_pair(const char *name, const OPT_PAIR *pairs, int *result)
 {
     const OPT_PAIR *pp;
 
@@ -337,9 +350,9 @@ int opt_long(const char *value, long *result)
     errno = 0;
     l = strtol(value, &endp, 0);
     if (*endp
-            || endp == value
-            || ((l == LONG_MAX || l == LONG_MIN) && errno == ERANGE)
-            || (l == 0 && errno != 0)) {
+        || endp == value
+        || ((l == LONG_MAX || l == LONG_MIN) && errno == ERANGE)
+        || (l == 0 && errno != 0)) {
         BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n",
                    prog, value);
         errno = oerrno;
@@ -363,9 +376,9 @@ int opt_imax(const char *value, intmax_t *result)
     errno = 0;
     m = strtoimax(value, &endp, 0);
     if (*endp
-            || endp == value
-            || ((m == INTMAX_MAX || m == INTMAX_MIN) && errno == ERANGE)
-            || (m == 0 && errno != 0)) {
+        || endp == value
+        || ((m == INTMAX_MAX || m == INTMAX_MIN) && errno == ERANGE)
+        || (m == 0 && errno != 0)) {
         BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n",
                    prog, value);
         errno = oerrno;
@@ -385,10 +398,8 @@ int opt_umax(const char *value, uintmax_t *result)
 
     errno = 0;
     m = strtoumax(value, &endp, 0);
-    if (*endp
-            || endp == value
-            || (m == UINTMAX_MAX && errno == ERANGE)
-            || (m == 0 && errno != 0)) {
+    if (*endp || endp == value || (m == UINTMAX_MAX && errno == ERANGE)
+        || (m == 0 && errno != 0)) {
         BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n",
                    prog, value);
         errno = oerrno;
@@ -411,10 +422,8 @@ int opt_ulong(const char *value, unsigned long *result)
 
     errno = 0;
     l = strtoul(value, &endptr, 0);
-    if (*endptr
-            || endptr == value
-            || ((l == ULONG_MAX) && errno == ERANGE)
-            || (l == 0 && errno != 0)) {
+    if (*endptr || endptr == value || ((l == ULONG_MAX) && errno == ERANGE)
+        || (l == 0 && errno != 0)) {
         BIO_printf(bio_err, "%s: Can't parse \"%s\" as an unsigned number\n",
                    prog, value);
         errno = oerrno;
@@ -671,7 +680,8 @@ int opt_next(void)
             return -1;
         case '>':
             /* Output file. */
-            if (strcmp(arg, "-") == 0 || app_access(arg, W_OK) >= 0 || errno == ENOENT)
+            if (strcmp(arg, "-") == 0 || app_access(arg, W_OK) >= 0
+                || errno == ENOENT)
                 break;
             BIO_printf(bio_err,
                        "%s: Cannot open output file %s, %s\n",
@@ -680,7 +690,7 @@ int opt_next(void)
         case 'p':
         case 'n':
             if (!opt_int(arg, &ival)
-                    || (o->valtype == 'p' && ival <= 0)) {
+                || (o->valtype == 'p' && ival <= 0)) {
                 BIO_printf(bio_err,
                            "%s: Non-positive number \"%s\" for -%s\n",
                            prog, arg, o->name);
@@ -844,8 +854,7 @@ void opt_help(const OPTIONS *list)
     }
 
     if (standard_prolog)
-        BIO_printf(bio_err, "Usage: %s [options]\nValid options are:\n",
-                   prog);
+        BIO_printf(bio_err, "Usage: %s [options]\nValid options are:\n", prog);
 
     /* Now let's print. */
     for (o = list; o->name; o++) {

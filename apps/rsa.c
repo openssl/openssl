@@ -53,7 +53,8 @@ OPTIONS rsa_options[] = {
     {"check", OPT_CHECK, '-', "Verify key consistency"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
-    {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
+    {"pvk-strong", OPT_PVK_STRONG, '-',
+     "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
     {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
 # endif
@@ -126,9 +127,9 @@ int rsa_main(int argc, char **argv)
         case OPT_RSAPUBKEY_OUT:
             pubout = 2;
             break;
-        case OPT_PVK_STRONG:    /* pvk_encr:= 2 */
-        case OPT_PVK_WEAK:      /* pvk_encr:= 1 */
-        case OPT_PVK_NONE:      /* pvk_encr:= 0 */
+        case OPT_PVK_STRONG:   /* pvk_encr:= 2 */
+        case OPT_PVK_WEAK:     /* pvk_encr:= 1 */
+        case OPT_PVK_NONE:     /* pvk_encr:= 0 */
 # if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
             pvk_encr = (o - OPT_PVK_NONE);
 # endif
@@ -254,8 +255,7 @@ int rsa_main(int argc, char **argv)
             assert(private);
             i = i2d_RSAPrivateKey_bio(out, rsa);
         }
-    }
-    else if (outformat == FORMAT_PEM) {
+    } else if (outformat == FORMAT_PEM) {
         if (pubout || pubin) {
             if (pubout == 2)
                 i = PEM_write_bio_RSAPublicKey(out, rsa);
@@ -273,7 +273,8 @@ int rsa_main(int argc, char **argv)
         EVP_PKEY_set1_RSA(pk, rsa);
         if (outformat == FORMAT_PVK) {
             if (pubin) {
-                BIO_printf(bio_err, "PVK form impossible with public key input\n");
+                BIO_printf(bio_err,
+                           "PVK form impossible with public key input\n");
                 EVP_PKEY_free(pk);
                 goto end;
             }

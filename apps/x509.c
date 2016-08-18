@@ -34,11 +34,12 @@
 static int callb(int ok, X509_STORE_CTX *ctx);
 static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section);
-static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
-                        X509 *x, X509 *xca, EVP_PKEY *pkey,
-                        STACK_OF(OPENSSL_STRING) *sigopts, const char *serialfile,
-                        int create, int days, int clrext, CONF *conf,
-                        const char *section, ASN1_INTEGER *sno, int reqfile);
+static int x509_certify(X509_STORE *ctx, const char *CAfile,
+                        const EVP_MD *digest, X509 *x, X509 *xca,
+                        EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *sigopts,
+                        const char *serialfile, int create, int days,
+                        int clrext, CONF *conf, const char *section,
+                        ASN1_INTEGER *sno, int reqfile);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 
 typedef enum OPTION_choice {
@@ -128,7 +129,8 @@ OPTIONS x509_options[] = {
     {"force_pubkey", OPT_FORCE_PUBKEY, '<'},
     {"next_serial", OPT_NEXT_SERIAL, '-'},
     {"clrreject", OPT_CLRREJECT, '-'},
-    {"badsig", OPT_BADSIG, '-', "Corrupt last byte of certificate signature (for test)"},
+    {"badsig", OPT_BADSIG, '-',
+     "Corrupt last byte of certificate signature (for test)"},
     {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_MD5
     {"subject_hash_old", OPT_SUBJECT_HASH_OLD, '-',
@@ -287,8 +289,7 @@ int x509_main(int argc, char **argv)
                            prog, opt_arg());
                 goto opthelp;
             }
-            if (reject == NULL
-                && (reject = sk_ASN1_OBJECT_new_null()) == NULL)
+            if (reject == NULL && (reject = sk_ASN1_OBJECT_new_null()) == NULL)
                 goto end;
             sk_ASN1_OBJECT_push(reject, objtmp);
             objtmp = NULL;
@@ -533,8 +534,7 @@ int x509_main(int argc, char **argv)
         } else
             BIO_printf(bio_err, "Signature ok\n");
 
-        print_name(bio_err, "subject=", X509_REQ_get_subject_name(req),
-                   nmflag);
+        print_name(bio_err, "subject=", X509_REQ_get_subject_name(req), nmflag);
 
         if ((x = X509_new()) == NULL)
             goto end;
@@ -615,8 +615,7 @@ int x509_main(int argc, char **argv)
             if (issuer == i) {
                 print_name(out, "issuer=", X509_get_issuer_name(x), nmflag);
             } else if (subject == i) {
-                print_name(out, "subject=",
-                           X509_get_subject_name(x), nmflag);
+                print_name(out, "subject=", X509_get_subject_name(x), nmflag);
             } else if (serial == i) {
                 BIO_printf(out, "serial=");
                 i2a_ASN1_INTEGER(out, X509_get_serialNumber(x));
@@ -645,8 +644,7 @@ int x509_main(int argc, char **argv)
                 else
                     emlst = X509_get1_ocsp(x);
                 for (j = 0; j < sk_OPENSSL_STRING_num(emlst); j++)
-                    BIO_printf(out, "%s\n",
-                               sk_OPENSSL_STRING_value(emlst, j));
+                    BIO_printf(out, "%s\n", sk_OPENSSL_STRING_value(emlst, j));
                 X509_email_free(emlst);
             } else if (aliasout == i) {
                 unsigned char *alstr;
@@ -893,8 +891,8 @@ int x509_main(int argc, char **argv)
     return (ret);
 }
 
-static ASN1_INTEGER *x509_load_serial(const char *CAfile, const char *serialfile,
-                                      int create)
+static ASN1_INTEGER *x509_load_serial(const char *CAfile,
+                                      const char *serialfile, int create)
 {
     char *buf = NULL, *p;
     ASN1_INTEGER *bs = NULL;
@@ -934,11 +932,11 @@ static ASN1_INTEGER *x509_load_serial(const char *CAfile, const char *serialfile
     return bs;
 }
 
-static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
-                        X509 *x, X509 *xca, EVP_PKEY *pkey,
-                        STACK_OF(OPENSSL_STRING) *sigopts,
-                        const char *serialfile, int create,
-                        int days, int clrext, CONF *conf, const char *section,
+static int x509_certify(X509_STORE *ctx, const char *CAfile,
+                        const EVP_MD *digest, X509 *x, X509 *xca,
+                        EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *sigopts,
+                        const char *serialfile, int create, int days,
+                        int clrext, CONF *conf, const char *section,
                         ASN1_INTEGER *sno, int reqfile)
 {
     int ret = 0;
@@ -973,8 +971,7 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
         goto end;
 
     if (!X509_check_private_key(xca, pkey)) {
-        BIO_printf(bio_err,
-                   "CA certificate and CA private key do not match\n");
+        BIO_printf(bio_err, "CA certificate and CA private key do not match\n");
         goto end;
     }
 

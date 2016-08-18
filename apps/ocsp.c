@@ -60,14 +60,14 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
                            const EVP_MD *cert_id_md, X509 *issuer,
                            STACK_OF(OCSP_CERTID) *ids);
 static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
-                              STACK_OF(OPENSSL_STRING) *names,
-                              STACK_OF(OCSP_CERTID) *ids, long nsec,
-                              long maxage);
+                               STACK_OF(OPENSSL_STRING) *names,
+                               STACK_OF(OCSP_CERTID) *ids, long nsec,
+                               long maxage);
 static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
-                              CA_DB *db, X509 *ca, X509 *rcert,
-                              EVP_PKEY *rkey, const EVP_MD *md,
-                              STACK_OF(X509) *rother, unsigned long flags,
-                              int nmin, int ndays, int badsig);
+                               CA_DB *db, X509 *ca, X509 *rcert,
+                               EVP_PKEY *rkey, const EVP_MD *md,
+                               STACK_OF(X509) *rother, unsigned long flags,
+                               int nmin, int ndays, int badsig);
 
 static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(const char *port);
@@ -130,7 +130,7 @@ OPTIONS ocsp_options[] = {
     {"no_intern", OPT_NO_INTERN, '-',
      "Don't search certificates contained in response for signer"},
     {"badsig", OPT_BADSIG, '-',
-        "Corrupt last byte of loaded OSCP response signature (for test)"},
+     "Corrupt last byte of loaded OSCP response signature (for test)"},
     {"text", OPT_TEXT, '-', "Print text form of request and response"},
     {"req_text", OPT_REQ_TEXT, '-', "Print text form of request"},
     {"resp_text", OPT_RESP_TEXT, '-', "Print text form of response"},
@@ -168,7 +168,8 @@ OPTIONS ocsp_options[] = {
      "Responder certificate to sign responses with"},
     {"rkey", OPT_RKEY, '<', "Responder key to sign responses with"},
     {"rother", OPT_ROTHER, '<', "Other certificates to include in response"},
-    {"rmd", OPT_RMD, 's', "Digest Algorithm to use in signature of OCSP response"},
+    {"rmd", OPT_RMD, 's',
+     "Digest Algorithm to use in signature of OCSP response"},
     {"header", OPT_HEADER, 's', "key=value header to add"},
     {"", OPT_MD, '-', "Any supported digest algorithm (sha1,sha256, ... )"},
     OPT_V_OPTIONS,
@@ -207,9 +208,9 @@ int ocsp_main(int argc, char **argv)
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
     int req_text = 0, resp_text = 0, ret = 1;
-#ifndef OPENSSL_NO_SOCK
+# ifndef OPENSSL_NO_SOCK
     int req_timeout = -1;
-#endif
+# endif
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
     unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
     OPTION_CHOICE o;
@@ -240,9 +241,9 @@ int ocsp_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_TIMEOUT:
-#ifndef OPENSSL_NO_SOCK
+# ifndef OPENSSL_NO_SOCK
             req_timeout = atoi(opt_arg());
-#endif
+# endif
             break;
         case OPT_URL:
             OPENSSL_free(thost);
@@ -429,7 +430,7 @@ int ocsp_main(int argc, char **argv)
         case OPT_ROTHER:
             rcertfile = opt_arg();
             break;
-        case OPT_RMD:   /* Response MessageDigest */
+        case OPT_RMD:          /* Response MessageDigest */
             if (!opt_md(opt_arg(), &rsign_md))
                 goto end;
             break;
@@ -558,8 +559,7 @@ int ocsp_main(int argc, char **argv)
         if (!key)
             goto end;
 
-        if (!OCSP_request_sign
-            (req, signer, key, NULL, sign_other, sign_flags)) {
+        if (!OCSP_request_sign(req, signer, key, NULL, sign_other, sign_flags)) {
             BIO_printf(bio_err, "Error signing OCSP request\n");
             goto end;
         }
@@ -592,7 +592,7 @@ int ocsp_main(int argc, char **argv)
 
     if (rdb) {
         make_ocsp_response(&resp, req, rdb, rca_cert, rsigner, rkey,
-                               rsign_md, rother, rflags, nmin, ndays, badsig);
+                           rsign_md, rother, rflags, nmin, ndays, badsig);
         if (cbio)
             send_ocsp_response(cbio, resp);
     } else if (host) {
@@ -805,9 +805,9 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
 }
 
 static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
-                              STACK_OF(OPENSSL_STRING) *names,
-                              STACK_OF(OCSP_CERTID) *ids, long nsec,
-                              long maxage)
+                               STACK_OF(OPENSSL_STRING) *names,
+                               STACK_OF(OCSP_CERTID) *ids, long nsec,
+                               long maxage)
 {
     OCSP_CERTID *id;
     const char *name;
@@ -862,10 +862,10 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 }
 
 static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
-                              CA_DB *db, X509 *ca, X509 *rcert,
-                              EVP_PKEY *rkey, const EVP_MD *rmd,
-                              STACK_OF(X509) *rother, unsigned long flags,
-                              int nmin, int ndays, int badsig)
+                               CA_DB *db, X509 *ca, X509 *rcert,
+                               EVP_PKEY *rkey, const EVP_MD *rmd,
+                               STACK_OF(X509) *rother, unsigned long flags,
+                               int nmin, int ndays, int badsig)
 {
     ASN1_TIME *thisupd = NULL, *nextupd = NULL;
     OCSP_CERTID *cid, *ca_id = NULL;
@@ -972,8 +972,8 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
     for (i = 0; i < DB_NUMBER; i++)
         row[i] = NULL;
     bn = ASN1_INTEGER_to_BN(ser, NULL);
-    OPENSSL_assert(bn);         /* FIXME: should report an error at this
-                                 * point and abort */
+    OPENSSL_assert(bn);         /* FIXME: should report an error at this point
+                                 * and abort */
     if (BN_is_zero(bn))
         itmp = OPENSSL_strdup("00");
     else
@@ -1040,10 +1040,9 @@ static int urldecode(char *p)
         else if (isxdigit(_UC(p[1])) && isxdigit(_UC(p[2]))) {
             /* Don't check, can't fail because of ixdigit() call. */
             *out++ = (OPENSSL_hexchar2int(p[1]) << 4)
-                   | OPENSSL_hexchar2int(p[2]);
+                | OPENSSL_hexchar2int(p[2]);
             p += 2;
-        }
-        else
+        } else
             return -1;
     }
     *out = '\0';
@@ -1249,8 +1248,7 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
                                  const char *host, const char *path,
                                  const char *port, int use_ssl,
-                                 STACK_OF(CONF_VALUE) *headers,
-                                 int req_timeout)
+                                 STACK_OF(CONF_VALUE) *headers, int req_timeout)
 {
     BIO *cbio = NULL;
     SSL_CTX *ctx = NULL;

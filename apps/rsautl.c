@@ -237,8 +237,7 @@ int rsautl_main(int argc, char **argv)
         break;
 
     case RSA_SIGN:
-        rsa_outlen =
-            RSA_private_encrypt(rsa_inlen, rsa_in, rsa_out, rsa, pad);
+        rsa_outlen = RSA_private_encrypt(rsa_inlen, rsa_in, rsa_out, rsa, pad);
         break;
 
     case RSA_ENCRYPT:
@@ -246,8 +245,7 @@ int rsautl_main(int argc, char **argv)
         break;
 
     case RSA_DECRYPT:
-        rsa_outlen =
-            RSA_private_decrypt(rsa_inlen, rsa_in, rsa_out, rsa, pad);
+        rsa_outlen = RSA_private_decrypt(rsa_inlen, rsa_in, rsa_out, rsa, pad);
         break;
     }
 

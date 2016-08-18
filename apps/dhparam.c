@@ -70,9 +70,9 @@ int dhparam_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     DH *dh = NULL;
     char *infile = NULL, *outfile = NULL, *prog, *inrand = NULL;
-#ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_DSA
     int dsaparam = 0;
-#endif
+# endif
     int i, text = 0, C = 0, ret = 1, num = 0, g = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, check = 0, noout = 0;
     OPTION_CHOICE o;
@@ -113,9 +113,9 @@ int dhparam_main(int argc, char **argv)
             text = 1;
             break;
         case OPT_DSAPARAM:
-#ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_DSA
             dsaparam = 1;
-#endif
+# endif
             break;
         case OPT_C:
             C = 1;
@@ -145,8 +145,7 @@ int dhparam_main(int argc, char **argv)
 
 # ifndef OPENSSL_NO_DSA
     if (dsaparam && g) {
-        BIO_printf(bio_err,
-                   "generator may not be chosen for DSA parameters\n");
+        BIO_printf(bio_err, "generator may not be chosen for DSA parameters\n");
         goto end;
     }
 # endif
@@ -304,35 +303,44 @@ int dhparam_main(int argc, char **argv)
         bits = DH_bits(dh);
         DH_get0_pqg(dh, &pbn, NULL, &gbn);
         data = app_malloc(len, "print a BN");
-        BIO_printf(out, "#ifndef HEADER_DH_H\n"
-                        "# include <openssl/dh.h>\n"
-                        "#endif\n"
-                        "\n");
-        BIO_printf(out, "DH *get_dh%d()\n{\n", bits);
+        BIO_printf(out,
+                   "#ifndef HEADER_DH_H\n"
+                   "# include <openssl/dh.h>\n"
+                   "#endif\n"
+                   "\n"
+                   "DH *get_dh%d()\n"
+                   "{\n",
+                   bits);
         print_bignum_var(out, pbn, "dhp", bits, data);
         print_bignum_var(out, gbn, "dhg", bits, data);
-        BIO_printf(out, "    DH *dh = DH_new();\n"
-                        "    BIGNUM *dhp_bn, *dhg_bn;\n"
-                        "\n"
-                        "    if (dh == NULL)\n"
-                        "        return NULL;\n");
-        BIO_printf(out, "    dhp_bn = BN_bin2bn(dhp_%d, sizeof (dhp_%d), NULL);\n",
+        BIO_printf(out,
+                   "    DH *dh = DH_new();\n"
+                   "    BIGNUM *dhp_bn, *dhg_bn;\n"
+                   "\n"
+                   "    if (dh == NULL)\n"
+                   "        return NULL;\n");
+        BIO_printf(out,
+                   "    dhp_bn = BN_bin2bn(dhp_%d, sizeof (dhp_%d), NULL);\n",
                    bits, bits);
-        BIO_printf(out, "    dhg_bn = BN_bin2bn(dhg_%d, sizeof (dhg_%d), NULL);\n",
+        BIO_printf(out,
+                   "    dhg_bn = BN_bin2bn(dhg_%d, sizeof (dhg_%d), NULL);\n",
                    bits, bits);
-        BIO_printf(out, "    if (dhp_bn == NULL || dhg_bn == NULL\n"
-                        "            || !DH_set0_pqg(dh, dhp_bn, NULL, dhg_bn)) {\n"
-                        "        DH_free(dh);\n"
-                        "        BN_free(dhp_bn);\n"
-                        "        BN_free(dhg_bn);\n"
-                        "        return NULL;\n"
-                        "    }\n");
+        BIO_printf(out,
+                   "    if (dhp_bn == NULL || dhg_bn == NULL\n"
+                   "            || !DH_set0_pqg(dh, dhp_bn, NULL, dhg_bn)) {\n"
+                   "        DH_free(dh);\n"
+                   "        BN_free(dhp_bn);\n"
+                   "        BN_free(dhg_bn);\n"
+                   "        return NULL;\n"
+                   "    }\n");
         if (DH_get_length(dh) > 0)
             BIO_printf(out,
-                        "    if (!DH_set_length(dh, %ld)) {\n"
-                        "        DH_free(dh);\n"
-                        "    }\n", DH_get_length(dh));
-        BIO_printf(out, "    return dh;\n}\n");
+                       "    if (!DH_set_length(dh, %ld))\n"
+                       "        DH_free(dh);\n",
+                       DH_get_length(dh));
+        BIO_printf(out,
+                   "    return dh;\n"
+                   "}\n");
         OPENSSL_free(data);
     }
 

@@ -17,35 +17,35 @@
 
 #ifndef OPENSSL_NO_SOCK
 
-#define USE_SOCKETS
-#include "apps.h"
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/pem.h>
-#include "s_apps.h"
-#include <openssl/err.h>
-#if !defined(OPENSSL_SYS_MSDOS)
-# include OPENSSL_UNISTD
-#endif
+# define USE_SOCKETS
+# include "apps.h"
+# include <openssl/x509.h>
+# include <openssl/ssl.h>
+# include <openssl/pem.h>
+# include "s_apps.h"
+# include <openssl/err.h>
+# if !defined(OPENSSL_SYS_MSDOS)
+#  include OPENSSL_UNISTD
+# endif
 
-#undef ioctl
-#define ioctl ioctlsocket
+# undef ioctl
+# define ioctl ioctlsocket
 
-#define SSL_CONNECT_NAME        "localhost:4433"
+# define SSL_CONNECT_NAME        "localhost:4433"
 
 /* no default cert. */
 /*
  * #define TEST_CERT "client.pem"
  */
 
-#undef min
-#undef max
-#define min(a,b) (((a) < (b)) ? (a) : (b))
-#define max(a,b) (((a) > (b)) ? (a) : (b))
+# undef min
+# undef max
+# define min(a,b) (((a) < (b)) ? (a) : (b))
+# define max(a,b) (((a) > (b)) ? (a) : (b))
 
-#undef SECONDS
-#define SECONDS 30
-#define SECONDSSTR "30"
+# undef SECONDS
+# define SECONDS 30
+# define SECONDSSTR "30"
 
 static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx);
 
@@ -79,14 +79,14 @@ OPTIONS s_time_options[] = {
      "Turn on peer certificate verification, set depth"},
     {"time", OPT_TIME, 'p', "Seconds to collect data, default " SECONDSSTR},
     {"www", OPT_WWW, 's', "Fetch specified page from the site"},
-#ifndef OPENSSL_NO_SSL3
+# ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
-#endif
+# endif
     {NULL}
 };
 
-#define START   0
-#define STOP    1
+# define START   0
+# define STOP    1
 
 static double tm_Time_F(int s)
 {
@@ -168,7 +168,8 @@ int s_time_main(int argc, char **argv)
             break;
         case OPT_WWW:
             www_path = opt_arg();
-            buf_size = strlen(www_path) + sizeof(fmt_http_get_cmd) - 2;  /* 2 is for %s */
+            /* 2 is for the %s */
+            buf_size = strlen(www_path) + sizeof(fmt_http_get_cmd) - 2;
             if (buf_size > sizeof(buf)) {
                 BIO_printf(bio_err, "%s: -www option is too long\n", prog);
                 goto end;
@@ -225,18 +226,17 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path != NULL) {
-            buf_len = BIO_snprintf(buf, sizeof buf,
-                                   fmt_http_get_cmd, www_path);
+            buf_len = BIO_snprintf(buf, sizeof buf, fmt_http_get_cmd, www_path);
             if (SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;
         }
-#ifdef NO_SHUTDOWN
+# ifdef NO_SHUTDOWN
         SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-#else
+# else
         SSL_shutdown(scon);
-#endif
+# endif
         BIO_closesocket(SSL_get_fd(scon));
 
         nConn += 1;
@@ -283,18 +283,17 @@ int s_time_main(int argc, char **argv)
     }
 
     if (www_path != NULL) {
-        buf_len = BIO_snprintf(buf, sizeof buf,
-                               fmt_http_get_cmd, www_path);
+        buf_len = BIO_snprintf(buf, sizeof buf, fmt_http_get_cmd, www_path);
         if (SSL_write(scon, buf, buf_len) <= 0)
             goto end;
         while (SSL_read(scon, buf, sizeof(buf)) > 0)
             continue;
     }
-#ifdef NO_SHUTDOWN
+# ifdef NO_SHUTDOWN
     SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-#else
+# else
     SSL_shutdown(scon);
-#endif
+# endif
     BIO_closesocket(SSL_get_fd(scon));
 
     nConn = 0;
@@ -314,18 +313,17 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path) {
-            BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n",
-                         www_path);
+            BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n", www_path);
             if (SSL_write(scon, buf, strlen(buf)) <= 0)
                 goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;
         }
-#ifdef NO_SHUTDOWN
+# ifdef NO_SHUTDOWN
         SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-#else
+# else
         SSL_shutdown(scon);
-#endif
+# endif
         BIO_closesocket(SSL_get_fd(scon));
 
         nConn += 1;
@@ -419,4 +417,4 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
 
     return serverCon;
 }
-#endif /* OPENSSL_NO_SOCK */
+#endif                          /* OPENSSL_NO_SOCK */

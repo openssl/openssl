@@ -49,7 +49,8 @@ OPTIONS dsa_options[] = {
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # ifndef OPENSSL_NO_RC4
-    {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
+    {"pvk-strong", OPT_PVK_STRONG, '-',
+     "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
     {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
 # endif
@@ -112,12 +113,12 @@ int dsa_main(int argc, char **argv)
         case OPT_PASSOUT:
             passoutarg = opt_arg();
             break;
-        case OPT_PVK_STRONG:    /* pvk_encr:= 2 */
-        case OPT_PVK_WEAK:      /* pvk_encr:= 1 */
-        case OPT_PVK_NONE:      /* pvk_encr:= 0 */
-#ifndef OPENSSL_NO_RC4
+        case OPT_PVK_STRONG:   /* pvk_encr:= 2 */
+        case OPT_PVK_WEAK:     /* pvk_encr:= 1 */
+        case OPT_PVK_NONE:     /* pvk_encr:= 0 */
+# ifndef OPENSSL_NO_RC4
             pvk_encr = (o - OPT_PVK_NONE);
-#endif
+# endif
             break;
         case OPT_NOOUT:
             noout = 1;
@@ -221,14 +222,14 @@ int dsa_main(int argc, char **argv)
         EVP_PKEY_set1_DSA(pk, dsa);
         if (outformat == FORMAT_PVK) {
             if (pubin) {
-                BIO_printf(bio_err, "PVK form impossible with public key input\n");
+                BIO_printf(bio_err,
+                           "PVK form impossible with public key input\n");
                 EVP_PKEY_free(pk);
                 goto end;
             }
             assert(private);
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
-        }
-        else if (pubin || pubout)
+        } else if (pubin || pubout)
             i = i2b_PublicKey_bio(out, pk);
         else {
             assert(private);

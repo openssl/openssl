@@ -72,16 +72,19 @@ int init_client(int *sock, const char *host, const char *port,
 
     ret = 0;
     for (ai = res; ai != NULL; ai = BIO_ADDRINFO_next(ai)) {
-        /* Admittedly, these checks are quite paranoid, we should not get
-         * anything in the BIO_ADDRINFO chain that we haven't
-         * asked for. */
-        OPENSSL_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
+        /*
+         * Admittedly, these checks are quite paranoid, we should not get
+         * anything in the BIO_ADDRINFO chain that we haven't asked for.
+         */
+        OPENSSL_assert((family == AF_UNSPEC
+                        || family == BIO_ADDRINFO_family(res))
                        && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
 
         *sock = BIO_socket(BIO_ADDRINFO_family(ai), BIO_ADDRINFO_socktype(ai),
                            BIO_ADDRINFO_protocol(res), 0);
         if (*sock == INVALID_SOCKET) {
-            /* Maybe the kernel doesn't support the socket family, even if
+            /*
+             * Maybe the kernel doesn't support the socket family, even if
              * BIO_lookup() added it in the returned result...
              */
             continue;
@@ -145,8 +148,10 @@ int do_server(int *accept_sock, const char *host, const char *port,
         return 0;
     }
 
-    /* Admittedly, these checks are quite paranoid, we should not get
-     * anything in the BIO_ADDRINFO chain that we haven't asked for */
+    /*
+     * Admittedly, these checks are quite paranoid, we should not get anything
+     * in the BIO_ADDRINFO chain that we haven't asked for
+     */
     OPENSSL_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
                    && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
 
@@ -176,10 +181,10 @@ int do_server(int *accept_sock, const char *host, const char *port,
                 BIO_closesocket(asock);
                 break;
             }
-            i = (*cb)(sock, type, context);
+            i = cb(sock, type, context);
             BIO_closesocket(sock);
         } else {
-            i = (*cb)(asock, type, context);
+            i = cb(asock, type, context);
         }
 
         if (naccept != -1)
@@ -198,4 +203,4 @@ int do_server(int *accept_sock, const char *host, const char *port,
     return ret;
 }
 
-#endif  /* OPENSSL_NO_SOCK */
+#endif                          /* OPENSSL_NO_SOCK */

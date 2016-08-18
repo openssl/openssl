@@ -111,7 +111,8 @@ static char *lookup_conf(const CONF *conf, const char *section, const char *tag)
 {
     char *entry = NCONF_get_string(conf, section, tag);
     if (entry == NULL)
-        BIO_printf(bio_err, "variable lookup failed for %s::%s\n", section, tag);
+        BIO_printf(bio_err, "variable lookup failed for %s::%s\n", section,
+                   tag);
     return entry;
 }
 
@@ -162,18 +163,18 @@ static char *srp_create_user(char *user, char **srp_verifier,
 
     if (password_callback(password, sizeof(password), 1, &cb_tmp) > 0) {
         if (verbose)
-            BIO_printf(bio_err, "Creating\n user=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
-                       user, g, N);
+            BIO_printf(bio_err,
+                       "Creating\n user=\"%s\"\n g=\"%s\"\n N=\"%s\"\n", user,
+                       g, N);
         if (!
             (gNid =
-             SRP_create_verifier(user, password, &salt, srp_verifier, N,
-                                 g))) {
+             SRP_create_verifier(user, password, &salt, srp_verifier, N, g))) {
             BIO_printf(bio_err, "Internal error creating SRP verifier\n");
         } else
             *srp_usersalt = salt;
         if (verbose > 1)
-            BIO_printf(bio_err, "gNid=%s salt =\"%s\"\n verifier =\"%s\"\n", gNid,
-                       salt, *srp_verifier);
+            BIO_printf(bio_err, "gNid=%s salt =\"%s\"\n verifier =\"%s\"\n",
+                       gNid, salt, *srp_verifier);
 
     }
     return gNid;
@@ -250,8 +251,7 @@ int srp_main(int argc, char **argv)
         case OPT_LIST:
             if (mode != OPT_ERR) {
                 BIO_printf(bio_err,
-                           "%s: Only one of -add/delete-modify/-list\n",
-                           prog);
+                           "%s: Only one of -add/delete-modify/-list\n", prog);
                 goto opthelp;
             }
             mode = o;
@@ -308,8 +308,7 @@ int srp_main(int argc, char **argv)
             configfile = default_config_file;
 
         if (verbose)
-            BIO_printf(bio_err, "Using configuration from %s\n",
-                       configfile);
+            BIO_printf(bio_err, "Using configuration from %s\n", configfile);
         conf = app_load_config(configfile);
         if (conf == NULL)
             goto end;
@@ -411,8 +410,7 @@ int srp_main(int argc, char **argv)
         } else if (mode == OPT_ADD) {
             if (userindex >= 0) {
                 /* reactivation of a new user */
-                char **row =
-                    sk_OPENSSL_PSTRING_value(db->db->data, userindex);
+                char **row = sk_OPENSSL_PSTRING_value(db->db->data, userindex);
                 BIO_printf(bio_err, "user \"%s\" reactivated.\n", user);
                 row[DB_srptype][0] = 'V';
 
@@ -446,7 +444,8 @@ int srp_main(int argc, char **argv)
                     || (row[DB_srpverifier] == NULL)
                     || (row[DB_srpsalt] == NULL)
                     || (userinfo
-                        && ((row[DB_srpinfo] = OPENSSL_strdup(userinfo)) == NULL))
+                        && ((row[DB_srpinfo] = OPENSSL_strdup(userinfo)) ==
+                            NULL))
                     || !update_index(db, row)) {
                     OPENSSL_free(row[DB_srpid]);
                     OPENSSL_free(row[DB_srpgN]);
@@ -466,8 +465,7 @@ int srp_main(int argc, char **argv)
                 errors++;
             } else {
 
-                char **row =
-                    sk_OPENSSL_PSTRING_value(db->db->data, userindex);
+                char **row = sk_OPENSSL_PSTRING_value(db->db->data, userindex);
                 char type = row[DB_srptype][0];
                 if (type == 'v') {
                     BIO_printf(bio_err,

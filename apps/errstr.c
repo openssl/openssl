@@ -53,7 +53,8 @@ int errstr_main(int argc, char **argv)
         if (sscanf(*argv, "%lx", &l) == 0)
             ret++;
         else {
-            /* We're not really an SSL application so this won't auto-init, but
+            /*
+             * We're not really an SSL application so this won't auto-init, but
              * we're still interested in SSL error strings
              */
             OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS

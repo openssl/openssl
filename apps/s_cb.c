@@ -10,7 +10,7 @@
 /* callback functions used by s_client, s_server, and s_time */
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> /* for memcpy() and strcmp() */
+#include <string.h>             /* for memcpy() and strcmp() */
 #define USE_SOCKETS
 #include "apps.h"
 #undef USE_SOCKETS
@@ -33,9 +33,9 @@ static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 static int cookie_initialized = 0;
 #endif
 
-static const char *lookup(int val, const STRINT_PAIR* list, const char* def)
+static const char *lookup(int val, const STRINT_PAIR *list, const char *def)
 {
-    for ( ; list->name; ++list)
+    for (; list->name; ++list)
         if (list->retval == val)
             return list->name;
     return def;
@@ -106,8 +106,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 {
     if (cert_file != NULL) {
-        if (SSL_CTX_use_certificate_file(ctx, cert_file,
-                                         SSL_FILETYPE_PEM) <= 0) {
+        if (SSL_CTX_use_certificate_file(ctx, cert_file, SSL_FILETYPE_PEM) <= 0) {
             BIO_printf(bio_err, "unable to get certificate from '%s'\n",
                        cert_file);
             ERR_print_errors(bio_err);
@@ -383,7 +382,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
                 cname = OBJ_nid2sn(nid);
             BIO_printf(out, "ECDH, %s, %d bits\n", cname, EVP_PKEY_bits(key));
         }
-    break;
+        break;
 #endif
     default:
         BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_id(key)),
@@ -457,6 +456,7 @@ static STRINT_PAIR ssl_versions[] = {
     {"DTLS 1.0 (bad)", DTLS1_BAD_VER},
     {NULL}
 };
+
 static STRINT_PAIR alert_types[] = {
     {" close_notify", 0},
     {" unexpected_message", 10},
@@ -516,7 +516,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     const char *str_write_p = write_p ? ">>>" : "<<<";
     const char *str_version = lookup(version, ssl_versions, "???");
     const char *str_content_type = "", *str_details1 = "", *str_details2 = "";
-    const unsigned char* bp = buf;
+    const unsigned char *bp = buf;
 
     if (version == SSL3_VERSION ||
         version == TLS1_VERSION ||
@@ -693,8 +693,10 @@ int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
     unsigned char result[EVP_MAX_MD_SIZE];
     unsigned int resultlength;
 
-    /* Note: we check cookie_initialized because if it's not,
-     * it cannot be valid */
+    /*
+     * Note: we check cookie_initialized because if it's not, it cannot be
+     * valid
+     */
     if (cookie_initialized
         && generate_cookie_callback(ssl, result, &resultlength)
         && cookie_len == resultlength
@@ -745,8 +747,7 @@ static void print_chain_flags(SSL *s, int flags)
 
     for (pp = chain_flags; pp->name; ++pp)
         BIO_printf(bio_err, "\t%s: %s\n",
-                   pp->name,
-                   (flags & pp->retval) ? "OK" : "NOT OK");
+                   pp->name, (flags & pp->retval) ? "OK" : "NOT OK");
     BIO_printf(bio_err, "\tSuite B: ");
     if (SSL_set_cert_flags(s, 0) & SSL_CERT_FLAG_SUITEB_128_LOS)
         BIO_puts(bio_err, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
@@ -767,8 +768,7 @@ static int set_cert_cb(SSL *ssl, void *arg)
     if (retry_cnt < 5) {
         retry_cnt++;
         BIO_printf(bio_err,
-                   "Certificate callback retry test: count %d\n",
-                   retry_cnt);
+                   "Certificate callback retry test: count %d\n", retry_cnt);
         return -1;
     }
 #endif
@@ -796,7 +796,7 @@ static int set_cert_cb(SSL *ssl, void *arg)
         print_chain_flags(ssl, rv);
         if (rv & CERT_PKEY_VALID) {
             if (!SSL_use_certificate(ssl, exc->cert)
-                    || !SSL_use_PrivateKey(ssl, exc->key)) {
+                || !SSL_use_PrivateKey(ssl, exc->key)) {
                 return 0;
             }
             /*
@@ -933,8 +933,7 @@ int args_excert(int opt, SSL_EXCERT **pexc)
         break;
     case OPT_X_CHAIN:
         if (exc->chainfile) {
-            BIO_printf(bio_err, "%s: Chain already specified\n",
-                       opt_getprog());
+            BIO_printf(bio_err, "%s: Chain already specified\n", opt_getprog());
             goto err;
         }
         exc->chainfile = opt_arg();
@@ -998,10 +997,11 @@ static char *hexencode(const unsigned char *data, size_t len)
     char *out;
     char *cp;
     size_t outlen = 2 * len + 1;
-    int ilen = (int) outlen;
+    int ilen = (int)outlen;
 
     if (outlen < len || ilen < 0 || outlen != (size_t)ilen) {
-        BIO_printf(bio_err, "%s: %" PRIu64 "-byte buffer too large to hexencode\n",
+        BIO_printf(bio_err,
+                   "%s: %" PRIu64 "-byte buffer too large to hexencode\n",
                    opt_getprog(), (uint64_t)len);
         exit(1);
     }
@@ -1100,8 +1100,7 @@ void print_ssl_summary(SSL *s)
 #endif
 }
 
-int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
-               SSL_CTX *ctx)
+int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str, SSL_CTX *ctx)
 {
     int i;
 

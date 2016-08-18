@@ -36,7 +36,7 @@ OPTIONS verify_options[] = {
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-',
-        "Print extra information about the operations being performed."},
+     "Print extra information about the operations being performed."},
     {"CApath", OPT_CAPATH, '/', "A directory of trusted certificates"},
     {"CAfile", OPT_CAFILE, '<', "A file of trusted certificates"},
     {"no-CAfile", OPT_NOCAFILE, '-',
@@ -46,11 +46,11 @@ OPTIONS verify_options[] = {
     {"untrusted", OPT_UNTRUSTED, '<', "A file of untrusted certificates"},
     {"trusted", OPT_TRUSTED, '<', "A file of trusted certificates"},
     {"CRLfile", OPT_CRLFILE, '<',
-        "File containing one or more CRL's (in PEM format) to load"},
+     "File containing one or more CRL's (in PEM format) to load"},
     {"crl_download", OPT_CRL_DOWNLOAD, '-',
-        "Attempt to download CRL information for this certificate"},
+     "Attempt to download CRL information for this certificate"},
     {"show_chain", OPT_SHOW_CHAIN, '-',
-        "Display information about the certificate chain"},
+     "Display information about the certificate chain"},
     OPT_V_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -86,8 +86,8 @@ int verify_main(int argc, char **argv)
                 X509_PURPOSE *ptmp;
                 ptmp = X509_PURPOSE_get0(i);
                 BIO_printf(bio_err, "\t%-10s\t%s\n",
-                        X509_PURPOSE_get0_sname(ptmp),
-                        X509_PURPOSE_get0_name(ptmp));
+                           X509_PURPOSE_get0_sname(ptmp),
+                           X509_PURPOSE_get0_name(ptmp));
             }
 
             BIO_printf(bio_err, "Recognized verify names:\n");
@@ -95,7 +95,7 @@ int verify_main(int argc, char **argv)
                 const X509_VERIFY_PARAM *vptmp;
                 vptmp = X509_VERIFY_PARAM_get0(i);
                 BIO_printf(bio_err, "\t%-10s\n",
-                        X509_VERIFY_PARAM_get0_name(vptmp));
+                           X509_VERIFY_PARAM_get0_name(vptmp));
             }
             ret = 0;
             goto end;
@@ -132,8 +132,7 @@ int verify_main(int argc, char **argv)
             break;
         case OPT_CRLFILE:
             /* Zero or more times */
-            if (!load_crls(opt_arg(), &crls, FORMAT_PEM, NULL,
-                           "other CRLs"))
+            if (!load_crls(opt_arg(), &crls, FORMAT_PEM, NULL, "other CRLs"))
                 goto end;
             break;
         case OPT_CRL_DOWNLOAD:
@@ -157,8 +156,7 @@ int verify_main(int argc, char **argv)
     argv = opt_rest();
     if (trusted != NULL && (CAfile || CApath)) {
         BIO_printf(bio_err,
-                   "%s: Cannot use -trusted with -CAfile or -CApath\n",
-                   prog);
+                   "%s: Cannot use -trusted with -CAfile or -CApath\n", prog);
         goto end;
     }
 
@@ -248,7 +246,8 @@ static int check(X509_STORE *ctx, const char *file,
             sk_X509_pop_free(chain, X509_free);
         }
     } else {
-        printf("error %s: verification failed\n", (file == NULL) ? "stdin" : file);
+        printf("error %s: verification failed\n",
+               (file == NULL) ? "stdin" : file);
     }
     X509_STORE_CTX_free(csc);
 
@@ -268,15 +267,15 @@ static int cb(int ok, X509_STORE_CTX *ctx)
     if (!ok) {
         if (current_cert) {
             X509_NAME_print_ex(bio_err,
-                            X509_get_subject_name(current_cert),
-                            0, XN_FLAG_ONELINE);
+                               X509_get_subject_name(current_cert),
+                               0, XN_FLAG_ONELINE);
             BIO_printf(bio_err, "\n");
         }
         BIO_printf(bio_err, "%serror %d at %d depth lookup: %s\n",
-               X509_STORE_CTX_get0_parent_ctx(ctx) ? "[CRL path] " : "",
-               cert_error,
-               X509_STORE_CTX_get_error_depth(ctx),
-               X509_verify_cert_error_string(cert_error));
+                   X509_STORE_CTX_get0_parent_ctx(ctx) ? "[CRL path] " : "",
+                   cert_error,
+                   X509_STORE_CTX_get_error_depth(ctx),
+                   X509_verify_cert_error_string(cert_error));
         switch (cert_error) {
         case X509_V_ERR_NO_EXPLICIT_POLICY:
             policies_print(ctx);

@@ -29,7 +29,7 @@ typedef enum OPTION_choice {
 OPTIONS engine_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] engine...\n"},
     {OPT_HELP_STR, 1, '-',
-        "  engine... Engines to load\n"},
+     "  engine... Engines to load\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
     {"v", OPT_V, '-', "List 'control commands' For each specified engine"},
     {"vv", OPT_VV, '-', "Also display each command's description"},
@@ -276,8 +276,10 @@ int engine_main(int argc, char **argv)
     if (engines == NULL || pre_cmds == NULL || post_cmds == NULL)
         goto end;
 
-    /* Remember the original command name, parse/skip any leading engine
-     * names, and then setup to parse the rest of the line as flags. */
+    /*
+     * Remember the original command name, parse/skip any leading engine names,
+     * and then setup to parse the rest of the line as flags.
+     */
     prog = argv[0];
     while ((argv1 = argv[1]) != NULL && *argv1 != '-') {
         sk_OPENSSL_CSTRING_push(engines, argv1);
@@ -326,7 +328,7 @@ int engine_main(int argc, char **argv)
     /* Allow any trailing parameters as engine names. */
     argc = opt_num_rest();
     argv = opt_rest();
-    for ( ; *argv; argv++) {
+    for (; *argv; argv++) {
         if (**argv == '-') {
             BIO_printf(bio_err, "%s: Cannot mix flags and engine names.\n",
                        prog);

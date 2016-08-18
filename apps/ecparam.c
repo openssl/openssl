@@ -292,11 +292,11 @@ int ecparam_main(int argc, char **argv)
         const EC_METHOD *meth = EC_GROUP_method_of(group);
 
         if ((ec_p = BN_new()) == NULL
-                || (ec_a = BN_new()) == NULL
-                || (ec_b = BN_new()) == NULL
-                || (ec_gen = BN_new()) == NULL
-                || (ec_order = BN_new()) == NULL
-                || (ec_cofactor = BN_new()) == NULL) {
+            || (ec_a = BN_new()) == NULL
+            || (ec_b = BN_new()) == NULL
+            || (ec_gen = BN_new()) == NULL
+            || (ec_order = BN_new()) == NULL
+            || (ec_cofactor = BN_new()) == NULL) {
             perror("Can't allocate BN");
             goto end;
         }
@@ -349,47 +349,56 @@ int ecparam_main(int argc, char **argv)
         print_bignum_var(out, ec_order, "ec_order", len, buffer);
         print_bignum_var(out, ec_cofactor, "ec_cofactor", len, buffer);
         BIO_printf(out, "    int ok = 0;\n"
-                        "    EC_GROUP *group = NULL;\n"
-                        "    EC_POINT *point = NULL;\n"
-                        "    BIGNUM *tmp_1 = NULL;\n"
-                        "    BIGNUM *tmp_2 = NULL;\n"
-                        "    BIGNUM *tmp_3 = NULL;\n"
-                        "\n");
+                   "    EC_GROUP *group = NULL;\n"
+                   "    EC_POINT *point = NULL;\n"
+                   "    BIGNUM *t1 = NULL;\n"
+                   "    BIGNUM *t2 = NULL;\n"
+                   "    BIGNUM *t3 = NULL;\n"
+                   "\n");
 
-        BIO_printf(out, "    if ((tmp_1 = BN_bin2bn(ec_p_%d, sizeof (ec_p_%d), NULL)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((tmp_2 = BN_bin2bn(ec_a_%d, sizeof (ec_a_%d), NULL)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((tmp_3 = BN_bin2bn(ec_b_%d, sizeof (ec_b_%d), NULL)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((group = EC_GROUP_new_curve_GFp(tmp_1, tmp_2, tmp_3, NULL)) == NULL)\n"
-                        "        goto err;\n"
-                        "\n");
+        BIO_printf(out,
+                   "    if ((t1 = BN_bin2bn(ec_p_%d, sizeof(ec_p_%d), NULL)) == NULL)\n"
+                   "        goto err;\n", len, len);
+        BIO_printf(out,
+                   "    if ((t2 = BN_bin2bn(ec_a_%d, sizeof(ec_a_%d), NULL)) == NULL)\n"
+                   "        goto err;\n", len, len);
+        BIO_printf(out,
+                   "    if ((t3 = BN_bin2bn(ec_b_%d, sizeof(ec_b_%d), NULL)) == NULL)\n"
+                   "        goto err;\n", len, len);
+        BIO_printf(out,
+                   "    if ((group = EC_GROUP_new_curve_GFp(t1, t2, t3, NULL)) == NULL)\n"
+                   "        goto err;\n"
+                   "\n");
         BIO_printf(out, "    /* build generator */\n");
-        BIO_printf(out, "    if ((tmp_1 = BN_bin2bn(ec_gen_%d, sizeof (ec_gen_%d), tmp_1)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    point = EC_POINT_bn2point(group, tmp_1, NULL, NULL);\n");
-        BIO_printf(out, "    if (point == NULL)\n"
-                        "        goto err;\n");
-        BIO_printf(out, "    if ((tmp_2 = BN_bin2bn(ec_order_%d, sizeof (ec_order_%d), tmp_2)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((tmp_3 = BN_bin2bn(ec_cofactor_%d, sizeof (ec_cofactor_%d), tmp_3)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    if (!EC_GROUP_set_generator(group, point, tmp_2, tmp_3))\n"
-                        "        goto err;\n"
-                        "ok = 1;"
-                        "\n");
-        BIO_printf(out, "err:\n"
-                        "    BN_free(tmp_1);\n"
-                        "    BN_free(tmp_2);\n"
-                        "    BN_free(tmp_3);\n"
-                        "    EC_POINT_free(point);\n"
-                        "    if (!ok) {\n"
-                        "        EC_GROUP_free(group);\n"
-                        "        return NULL;\n"
-                        "    }\n"
-                        "    return (group);\n"
-                        "}\n");
+        BIO_printf(out,
+                   "    if ((t1 = BN_bin2bn(ec_gen_%d, sizeof(ec_gen_%d), t1)) == NULL)\n"
+                   "        goto err;\n", len, len);
+        BIO_printf(out,
+                   "    point = EC_POINT_bn2point(group, t1, NULL, NULL);\n");
+        BIO_printf(out, "    if (point == NULL)\n" "        goto err;\n");
+        BIO_printf(out,
+                   "    if ((t2 = BN_bin2bn(ec_order_%d, sizeof(ec_order_%d), t2)) == NULL)\n"
+                   "        goto err;\n", len, len);
+        BIO_printf(out,
+                   "    if ((t3 = BN_bin2bn(ec_cofactor_%d, sizeof(ec_cofactor_%d), t3)) == NULL)\n"
+                   "        goto err;\n", len, len);
+        BIO_printf(out,
+                   "    if (!EC_GROUP_set_generator(group, point, t2, t3))\n"
+                   "        goto err;\n"
+                   "ok = 1;"
+                   "\n");
+        BIO_printf(out,
+                   "err:\n"
+                   "    BN_free(t1);\n"
+                   "    BN_free(t2);\n"
+                   "    BN_free(t3);\n"
+                   "    EC_POINT_free(point);\n"
+                   "    if (!ok) {\n"
+                   "        EC_GROUP_free(group);\n"
+                   "        return NULL;\n"
+                   "    }\n"
+                   "    return (group);\n"
+                   "}\n");
     }
 
     if (!noout) {

@@ -66,7 +66,8 @@ OPTIONS enc_options[] = {
     {"K", OPT_UPPER_K, 's', "Raw key, in hex"},
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
-    {"md", OPT_MD, 's', "Use specified digest to create a key from the passphrase"},
+    {"md", OPT_MD, 's',
+     "Use specified digest to create a key from the passphrase"},
     {"none", OPT_NONE, '-', "Don't encrypt"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 #ifdef ZLIB
@@ -195,7 +196,7 @@ int enc_main(int argc, char **argv)
             if (k)
                 p[i] = '\0';
             if (!opt_long(opt_arg(), &n)
-                    || n < 0 || (k && n >= LONG_MAX / 1024))
+                || n < 0 || (k && n >= LONG_MAX / 1024))
                 goto opthelp;
             if (k)
                 n *= 1024;
@@ -422,8 +423,7 @@ int enc_main(int argc, char **argv)
             }
 
             if (!EVP_BytesToKey(cipher, dgst, sptr,
-                                (unsigned char *)str,
-                                str_len, 1, key, iv)) {
+                                (unsigned char *)str, str_len, 1, key, iv)) {
                 BIO_printf(bio_err, "EVP_BytesToKey failed\n");
                 goto end;
             }
@@ -455,7 +455,8 @@ int enc_main(int argc, char **argv)
             BIO_printf(bio_err, "iv undefined\n");
             goto end;
         }
-        if ((hkey != NULL) && !set_hex(hkey, key, EVP_CIPHER_key_length(cipher))) {
+        if ((hkey != NULL)
+            && !set_hex(hkey, key, EVP_CIPHER_key_length(cipher))) {
             BIO_printf(bio_err, "invalid hex key value\n");
             goto end;
         }
@@ -538,8 +539,10 @@ int enc_main(int argc, char **argv)
 
     ret = 0;
     if (verbose) {
-        BIO_printf(bio_err, "bytes read   :%8"PRIu64"\n", BIO_number_read(in));
-        BIO_printf(bio_err, "bytes written:%8"PRIu64"\n", BIO_number_written(out));
+        BIO_printf(bio_err, "bytes read   :%8" PRIu64 "\n",
+                   BIO_number_read(in));
+        BIO_printf(bio_err, "bytes written:%8" PRIu64 "\n",
+                   BIO_number_written(out));
     }
  end:
     ERR_print_errors(bio_err);

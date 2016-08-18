@@ -124,8 +124,7 @@ int genrsa_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
-    if (!app_RAND_load_file(NULL, 1) && inrand == NULL
-        && !RAND_status()) {
+    if (!app_RAND_load_file(NULL, 1) && inrand == NULL && !RAND_status()) {
         BIO_printf(bio_err,
                    "warning, not much extra random data, consider using the -rand option\n");
     }

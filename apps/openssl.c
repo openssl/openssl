@@ -24,7 +24,8 @@
 #ifdef OPENSSL_FIPS
 # include <openssl/fips.h>
 #endif
-#define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
+/* needed for the _O_BINARY defs in the MS world */
+#define USE_SOCKETS
 #include "s_apps.h"
 /* Needed to get the other O_xxx flags. */
 #ifdef OPENSSL_SYS_VMS
@@ -32,7 +33,6 @@
 #endif
 #define INCLUDE_FUNCTION_TABLE
 #include "apps.h"
-
 
 #ifdef OPENSSL_NO_CAMELLIA
 # define FORMAT "%-15s"
@@ -330,7 +330,7 @@ int list_main(int argc, char **argv)
     prog = opt_init(argc, argv, list_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
-        case OPT_EOF:  /* Never hit, but suppresses warning */
+        case OPT_EOF:          /* Never hit, but suppresses warning */
         case OPT_ERR:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             return 1;
@@ -506,13 +506,11 @@ static void list_pkey(void)
                                 &pinfo, &pem_str, ameth);
         if (pkey_flags & ASN1_PKEY_ALIAS) {
             BIO_printf(bio_out, "Name: %s\n", OBJ_nid2ln(pkey_id));
-            BIO_printf(bio_out, "\tAlias for: %s\n",
-                       OBJ_nid2ln(pkey_base_id));
+            BIO_printf(bio_out, "\tAlias for: %s\n", OBJ_nid2ln(pkey_base_id));
         } else {
             BIO_printf(bio_out, "Name: %s\n", pinfo);
             BIO_printf(bio_out, "\tType: %s Algorithm\n",
-                       pkey_flags & ASN1_PKEY_DYNAMIC ?
-                       "External" : "Builtin");
+                       pkey_flags & ASN1_PKEY_DYNAMIC ? "External" : "Builtin");
             BIO_printf(bio_out, "\tOID: %s\n", OBJ_nid2ln(pkey_id));
             if (pem_str == NULL)
                 pem_str = "(none)";

@@ -20,7 +20,7 @@ typedef enum OPTION_choice {
 OPTIONS prime_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [number...]\n"},
     {OPT_HELP_STR, 1, '-',
-        "  number Number to check for primality\n"},
+     "  number Number to check for primality\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
     {"hex", OPT_HEX, '-', "Hex output"},
     {"generate", OPT_GENERATE, '-', "Generate a prime"},
@@ -98,7 +98,7 @@ int prime_main(int argc, char **argv)
         BIO_printf(bio_out, "%s\n", s);
         OPENSSL_free(s);
     } else {
-        for ( ; *argv; argv++) {
+        for (; *argv; argv++) {
             int r;
 
             if (hex)
@@ -106,16 +106,15 @@ int prime_main(int argc, char **argv)
             else
                 r = BN_dec2bn(&bn, argv[0]);
 
-            if(!r) {
+            if (!r) {
                 BIO_printf(bio_err, "Failed to process value (%s)\n", argv[0]);
                 goto end;
             }
 
             BN_print(bio_out, bn);
-            BIO_printf(bio_out, " (%s) %s prime\n",
-                       argv[0],
-                       BN_is_prime_ex(bn, checks, NULL, NULL)
-                           ? "is" : "is not");
+            BIO_printf(bio_out, "%s: %s prime\n",
+                       prog,
+                       BN_is_prime_ex(bn, checks, NULL, NULL) ? "is" : "is not");
         }
     }
 

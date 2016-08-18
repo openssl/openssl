@@ -81,14 +81,14 @@ static int process_glob(WCHAR *wstr, int wlen)
             break;
 
     if (i == wlen)
-        return 0;   /* definitely not a glob */
+        return 0;               /* definitely not a glob */
 
     saved_char = wstr[wlen];
     wstr[wlen] = L'\0';
     h = FindFirstFileW(wstr, &data);
     wstr[wlen] = saved_char;
     if (h == INVALID_HANDLE_VALUE)
-        return 0;   /* not a valid glob, just pass... */
+        return 0;               /* not a valid glob, just pass... */
 
     if (slash)
         udlen = WideCharToMultiByte(CP_UTF8, 0, wstr, slash,
@@ -151,7 +151,8 @@ void win32_utf8argv(int *argc, char **argv[])
         return;
 
     wcmdline = GetCommandLineW();
-    if (wcmdline == NULL) return;
+    if (wcmdline == NULL)
+        return;
 
     /*
      * make a copy of the command line, since we might have to modify it...
@@ -164,7 +165,7 @@ void win32_utf8argv(int *argc, char **argv[])
         int in_quote = 0;
 
         if (*p == L' ' || *p == L'\t') {
-            p++; /* skip over white spaces */
+            p++;                /* skip over white spaces */
             continue;
         }
 
@@ -174,8 +175,7 @@ void win32_utf8argv(int *argc, char **argv[])
          * the number of characters will never expand.
          */
         warg = wend = p;
-        while (*p != L'\0'
-               && (in_quote || (*p != L' ' && *p != L'\t'))) {
+        while (*p != L'\0' && (in_quote || (*p != L' ' && *p != L'\t'))) {
             switch (*p) {
             case L'\\':
                 /*
@@ -300,5 +300,7 @@ void win32_utf8argv(int *argc, char **argv[])
 }
 #else
 void win32_utf8argv(int &argc, char **argv[])
-{   return;   }
+{
+    return;
+}
 #endif

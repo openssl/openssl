@@ -24,8 +24,7 @@
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
-          const char *sig_name, const char *md_name,
-          const char *file);
+          const char *sig_name, const char *md_name, const char *file);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -39,7 +38,7 @@ typedef enum OPTION_choice {
 OPTIONS dgst_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [file...]\n"},
     {OPT_HELP_STR, 1, '-',
-        "  file... files to digest (default is stdin)\n"},
+     "  file... files to digest (default is stdin)\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
     {"c", OPT_C, '-', "Print the digest with separating colons"},
     {"r", OPT_R, '-', "Print the digest in coreutils format"},
@@ -254,8 +253,7 @@ int dgst_main(int argc, char **argv)
             for (i = 0; i < sk_OPENSSL_STRING_num(macopts); i++) {
                 macopt = sk_OPENSSL_STRING_value(macopts, i);
                 if (pkey_ctrl_string(mac_ctx, macopt) <= 0) {
-                    BIO_printf(bio_err,
-                               "MAC parameter error \"%s\"\n", macopt);
+                    BIO_printf(bio_err, "MAC parameter error \"%s\"\n", macopt);
                     ERR_print_errors(bio_err);
                     goto mac_end;
                 }
@@ -399,8 +397,7 @@ int dgst_main(int argc, char **argv)
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
-          const char *sig_name, const char *md_name,
-          const char *file)
+          const char *sig_name, const char *md_name, const char *file)
 {
     size_t len;
     int i;

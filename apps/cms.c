@@ -74,7 +74,7 @@ typedef enum OPTION_choice {
     OPT_NOSIGS, OPT_NO_CONTENT_VERIFY, OPT_NO_ATTR_VERIFY, OPT_INDEF,
     OPT_NOINDEF, OPT_NOOLDMIME, OPT_CRLFEOL, OPT_NOOUT, OPT_RR_PRINT,
     OPT_RR_ALL, OPT_RR_FIRST, OPT_RCTFORM, OPT_CERTFILE, OPT_CAFILE,
-    OPT_CAPATH, OPT_NOCAPATH, OPT_NOCAFILE,OPT_CONTENT, OPT_PRINT,
+    OPT_CAPATH, OPT_NOCAPATH, OPT_NOCAFILE, OPT_CONTENT, OPT_PRINT,
     OPT_SECRETKEY, OPT_SECRETKEYID, OPT_PWRI_PASSWORD, OPT_ECONTENT_TYPE,
     OPT_RAND, OPT_PASSIN, OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP,
     OPT_CERTSOUT, OPT_MD, OPT_INKEY, OPT_KEYFORM, OPT_KEYOPT, OPT_RR_FROM,
@@ -87,7 +87,7 @@ typedef enum OPTION_choice {
 OPTIONS cms_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
     {OPT_HELP_STR, 1, '-',
-        "  cert.pem... recipient certs for encryption\n"},
+     "  cert.pem... recipient certs for encryption\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'c', "Input format SMIME (default), PEM or DER"},
@@ -98,7 +98,8 @@ OPTIONS cms_options[] = {
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt message"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt encrypted message"},
     {"sign", OPT_SIGN, '-', "Sign message"},
-    {"sign_receipt", OPT_SIGN_RECEIPT, '-', "Generate a signed receipt for the message"},
+    {"sign_receipt", OPT_SIGN_RECEIPT, '-',
+     "Generate a signed receipt for the message"},
     {"resign", OPT_RESIGN, '-'},
     {"verify", OPT_VERIFY, '-', "Verify signed message"},
     {"verify_retcode", OPT_VERIFY_RETCODE, '-'},
@@ -133,7 +134,8 @@ OPTIONS cms_options[] = {
     {"noindef", OPT_NOINDEF, '-'},
     {"nooldmime", OPT_NOOLDMIME, '-'},
     {"crlfeol", OPT_CRLFEOL, '-'},
-    {"noout", OPT_NOOUT, '-', "For the -cmsout operation do not output the parsed CMS structure"},
+    {"noout", OPT_NOOUT, '-',
+     "For the -cmsout operation do not output the parsed CMS structure"},
     {"receipt_request_print", OPT_RR_PRINT, '-'},
     {"receipt_request_all", OPT_RR_ALL, '-'},
     {"receipt_request_first", OPT_RR_FIRST, '-'},
@@ -147,7 +149,8 @@ OPTIONS cms_options[] = {
      "Do not load certificates from the default certificates directory"},
     {"content", OPT_CONTENT, '<',
      "Supply or override content for detached signature"},
-    {"print", OPT_PRINT, '-', "For the -cmsout operation print out all fields of the CMS structure"},
+    {"print", OPT_PRINT, '-',
+     "For the -cmsout operation print out all fields of the CMS structure"},
     {"secretkey", OPT_SECRETKEY, 's'},
     {"secretkeyid", OPT_SECRETKEYID, 's'},
     {"pwri_password", OPT_PWRI_PASSWORD, 's'},
@@ -207,11 +210,9 @@ int cms_main(int argc, char **argv)
         NULL;
     char *to = NULL, *from = NULL, *subject = NULL, *prog;
     cms_key_param *key_first = NULL, *key_param = NULL;
-    int flags = CMS_DETACHED, noout = 0, print = 0, keyidx = -1, vpmtouched =
-        0;
+    int flags = CMS_DETACHED, noout = 0, print = 0, keyidx = -1, vpmtouched = 0;
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
-    int need_rand = 0, operation = 0, ret = 1, rr_print = 0, rr_allorfirst =
-        -1;
+    int need_rand = 0, operation = 0, ret = 1, rr_print = 0, rr_allorfirst = -1;
     int verify_retcode = 0, rctformat = FORMAT_SMIME, keyform = FORMAT_PEM;
     size_t secret_keylen = 0, secret_keyidlen = 0;
     unsigned char *pwri_pass = NULL, *pwri_tmp = NULL;
@@ -403,8 +404,7 @@ int cms_main(int argc, char **argv)
             sk_OPENSSL_STRING_push(rr_from, opt_arg());
             break;
         case OPT_RR_TO:
-            if (rr_to == NULL
-                && (rr_to = sk_OPENSSL_STRING_new_null()) == NULL)
+            if (rr_to == NULL && (rr_to = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
             sk_OPENSSL_STRING_push(rr_to, opt_arg());
             break;
@@ -616,8 +616,7 @@ int cms_main(int argc, char **argv)
 
     else if (operation == SMIME_DECRYPT) {
         if (!recipfile && !keyfile && !secret_key && !pwri_pass) {
-            BIO_printf(bio_err,
-                       "No recipient certificate or key specified\n");
+            BIO_printf(bio_err, "No recipient certificate or key specified\n");
             goto opthelp;
         }
     } else if (operation == SMIME_ENCRYPT) {
@@ -685,8 +684,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile) {
-        if (!load_certs(certfile, &other, FORMAT_PEM, NULL,
-                        "certificate file")) {
+        if (!load_certs(certfile, &other, FORMAT_PEM, NULL, "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -1252,8 +1250,7 @@ static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
             goto err;
     } else
         rct_from = NULL;
-    rr = CMS_ReceiptRequest_create0(NULL, -1, rr_allorfirst, rct_from,
-                                    rct_to);
+    rr = CMS_ReceiptRequest_create0(NULL, -1, rr_allorfirst, rct_from, rct_to);
     return rr;
  err:
     sk_GENERAL_NAMES_pop_free(rct_to, GENERAL_NAMES_free);

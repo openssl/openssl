@@ -100,32 +100,35 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
                    long days, int batch, const char *ext_sect, CONF *conf,
                    int verbose, unsigned long certopt, unsigned long nameopt,
                    int default_op, int ext_copy, int selfsign);
-static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
-                        const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
-                        STACK_OF(CONF_VALUE) *policy, CA_DB *db,
-                        BIGNUM *serial, const char *subj, unsigned long chtype,
-                        int multirdn, int email_dn, const char *startdate,
-                        const char *enddate, long days, int batch, const char *ext_sect,
-                        CONF *conf, int verbose, unsigned long certopt,
-                        unsigned long nameopt, int default_op, int ext_copy);
+static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey,
+                        X509 *x509, const EVP_MD *dgst,
+                        STACK_OF(OPENSSL_STRING) *sigopts,
+                        STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,
+                        const char *subj, unsigned long chtype, int multirdn,
+                        int email_dn, const char *startdate,
+                        const char *enddate, long days, int batch,
+                        const char *ext_sect, CONF *conf, int verbose,
+                        unsigned long certopt, unsigned long nameopt,
+                        int default_op, int ext_copy);
 static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
                          X509 *x509, const EVP_MD *dgst,
                          STACK_OF(OPENSSL_STRING) *sigopts,
                          STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                          BIGNUM *serial, const char *subj, unsigned long chtype,
                          int multirdn, int email_dn, const char *startdate,
-                         const char *enddate, long days, const char *ext_sect, CONF *conf,
-                         int verbose, unsigned long certopt,
+                         const char *enddate, long days, const char *ext_sect,
+                         CONF *conf, int verbose, unsigned long certopt,
                          unsigned long nameopt, int default_op, int ext_copy);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                    const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,
                    const char *subj, unsigned long chtype, int multirdn,
-                   int email_dn, const char *startdate, const char *enddate, long days,
-                   int batch, int verbose, X509_REQ *req, const char *ext_sect,
-                   CONF *conf, unsigned long certopt, unsigned long nameopt,
-                   int default_op, int ext_copy, int selfsign);
+                   int email_dn, const char *startdate, const char *enddate,
+                   long days, int batch, int verbose, X509_REQ *req,
+                   const char *ext_sect, CONF *conf, unsigned long certopt,
+                   unsigned long nameopt, int default_op, int ext_copy,
+                   int selfsign);
 static int do_revoke(X509 *x509, CA_DB *db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, CA_DB *db);
 static int do_updatedb(CA_DB *db);
@@ -262,7 +265,7 @@ int ca_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
-opthelp:
+ opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -338,8 +341,7 @@ opthelp:
         case OPT_SIGOPT:
             if (sigopts == NULL)
                 sigopts = sk_OPENSSL_STRING_new_null();
-            if (sigopts == NULL
-                || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
+            if (sigopts == NULL || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
                 goto end;
             break;
         case OPT_NOTEXT:
@@ -424,7 +426,7 @@ opthelp:
             break;
         }
     }
-end_of_options:
+ end_of_options:
     argc = opt_num_rest();
     argv = opt_rest();
 
@@ -665,7 +667,7 @@ end_of_options:
                        i + 1, j);
             goto end;
         }
-        for ( ; *p; p++) {
+        for (; *p; p++) {
             if (!isxdigit(_UC(*p))) {
                 BIO_printf(bio_err,
                            "entry %d: bad char 0%o '%c' in serial number\n",
@@ -705,8 +707,7 @@ end_of_options:
                 goto end;
 
             if (verbose)
-                BIO_printf(bio_err,
-                           "Done. %d entries marked as expired\n", i);
+                BIO_printf(bio_err, "Done. %d entries marked as expired\n", i);
         }
     }
 
@@ -738,8 +739,7 @@ end_of_options:
             goto end;
     }
 
-    if (md == NULL
-        && (md = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL)
+    if (md == NULL && (md = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL)
         goto end;
 
     if (strcmp(md, "default") == 0) {
@@ -759,7 +759,8 @@ end_of_options:
         if (email_dn == 1) {
             char *tmp_email_dn = NULL;
 
-            tmp_email_dn = NCONF_get_string(conf, section, ENV_DEFAULT_EMAIL_DN);
+            tmp_email_dn =
+                NCONF_get_string(conf, section, ENV_DEFAULT_EMAIL_DN);
             if (tmp_email_dn != NULL && strcmp(tmp_email_dn, "no") == 0)
                 email_dn = 0;
         }
@@ -803,8 +804,7 @@ end_of_options:
         }
 
         if (startdate == NULL) {
-            startdate = NCONF_get_string(conf, section,
-                                         ENV_DEFAULT_STARTDATE);
+            startdate = NCONF_get_string(conf, section, ENV_DEFAULT_STARTDATE);
             if (startdate == NULL)
                 ERR_clear_error();
         }
@@ -832,8 +832,7 @@ end_of_options:
                 days = 0;
         }
         if (!enddate && (days == 0)) {
-            BIO_printf(bio_err,
-                       "cannot lookup how many days to certify for\n");
+            BIO_printf(bio_err, "cannot lookup how many days to certify for\n");
             goto end;
         }
 
@@ -957,8 +956,7 @@ end_of_options:
                 (void)BIO_flush(bio_err);
                 buf[0][0] = '\0';
                 if (!fgets(buf[0], 10, stdin)) {
-                    BIO_printf(bio_err,
-                               "CERTIFICATION CANCELED: I/O error\n");
+                    BIO_printf(bio_err, "CERTIFICATION CANCELED: I/O error\n");
                     ret = 0;
                     goto end;
                 }
@@ -1060,8 +1058,7 @@ end_of_options:
             X509V3_set_nconf(&ctx, conf);
             if (!X509V3_EXT_add_nconf(conf, &ctx, crl_ext, NULL)) {
                 BIO_printf(bio_err,
-                           "Error Loading CRL extension section %s\n",
-                           crl_ext);
+                           "Error Loading CRL extension section %s\n", crl_ext);
                 ret = 1;
                 goto end;
             }
@@ -1242,7 +1239,8 @@ static char *lookup_conf(const CONF *conf, const char *section, const char *tag)
 {
     char *entry = NCONF_get_string(conf, section, tag);
     if (entry == NULL)
-        BIO_printf(bio_err, "variable lookup failed for %s::%s\n", section, tag);
+        BIO_printf(bio_err, "variable lookup failed for %s::%s\n", section,
+                   tag);
     return entry;
 }
 
@@ -1314,14 +1312,16 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
     return (ok);
 }
 
-static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
-                        const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
-                        STACK_OF(CONF_VALUE) *policy, CA_DB *db,
-                        BIGNUM *serial, const char *subj, unsigned long chtype,
-                        int multirdn, int email_dn, const char *startdate,
-                        const char *enddate, long days, int batch, const char *ext_sect,
-                        CONF *lconf, int verbose, unsigned long certopt,
-                        unsigned long nameopt, int default_op, int ext_copy)
+static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey,
+                        X509 *x509, const EVP_MD *dgst,
+                        STACK_OF(OPENSSL_STRING) *sigopts,
+                        STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,
+                        const char *subj, unsigned long chtype, int multirdn,
+                        int email_dn, const char *startdate,
+                        const char *enddate, long days, int batch,
+                        const char *ext_sect, CONF *lconf, int verbose,
+                        unsigned long certopt, unsigned long nameopt,
+                        int default_op, int ext_copy)
 {
     X509 *req = NULL;
     X509_REQ *rreq = NULL;
@@ -1370,13 +1370,13 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                    const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,
                    const char *subj, unsigned long chtype, int multirdn,
-                   int email_dn, const char *startdate, const char *enddate, long days,
-                   int batch, int verbose, X509_REQ *req, const char *ext_sect,
-                   CONF *lconf, unsigned long certopt, unsigned long nameopt,
-                   int default_op, int ext_copy, int selfsign)
+                   int email_dn, const char *startdate, const char *enddate,
+                   long days, int batch, int verbose, X509_REQ *req,
+                   const char *ext_sect, CONF *lconf, unsigned long certopt,
+                   unsigned long nameopt, int default_op, int ext_copy,
+                   int selfsign)
 {
-    X509_NAME *name = NULL, *CAname = NULL, *subject = NULL, *dn_subject =
-        NULL;
+    X509_NAME *name = NULL, *CAname = NULL, *subject = NULL, *dn_subject = NULL;
     ASN1_UTCTIME *tm;
     ASN1_STRING *str, *str2;
     ASN1_OBJECT *obj;
@@ -1407,8 +1407,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     }
 
     if (default_op)
-        BIO_printf(bio_err,
-                   "The Subject's Distinguished Name is as follows\n");
+        BIO_printf(bio_err, "The Subject's Distinguished Name is as follows\n");
 
     name = X509_REQ_get_subject_name(req);
     for (i = 0; i < X509_NAME_entry_count(name); i++) {
@@ -1528,8 +1527,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                 if ((j < 0) && (last2 == -1)) {
                     BIO_printf(bio_err,
                                "The %s field does not exist in the CA certificate,\n"
-                               "the 'policy' is misconfigured\n",
-                               cv->name);
+                               "the 'policy' is misconfigured\n", cv->name);
                     goto end;
                 }
                 if (j >= 0) {
@@ -1864,8 +1862,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     return (ok);
 }
 
-static void write_new_certificate(BIO *bp, X509 *x, int output_der,
-                                  int notext)
+static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 {
 
     if (output_der) {
@@ -1982,8 +1979,7 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
      * Now extract the key from the SPKI structure.
      */
 
-    BIO_printf(bio_err,
-               "Check that the SPKAC request matches the signature\n");
+    BIO_printf(bio_err, "Check that the SPKAC request matches the signature\n");
 
     if ((pktmp = NETSCAPE_SPKI_get_pubkey(spki)) == NULL) {
         BIO_printf(bio_err, "error unpacking SPKAC public key\n");
@@ -2518,8 +2514,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
             hold = OBJ_txt2obj(arg_str, 0);
 
             if (!hold) {
-                BIO_printf(bio_err, "invalid object identifier %s\n",
-                           arg_str);
+                BIO_printf(bio_err, "invalid object identifier %s\n", arg_str);
                 goto end;
             }
             if (phold)

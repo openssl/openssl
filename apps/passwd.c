@@ -79,9 +79,9 @@ int passwd_main(int argc, char **argv)
     char *salt_malloc = NULL, *passwd_malloc = NULL, *prog;
     OPTION_CHOICE o;
     int in_stdin = 0, pw_source_defined = 0;
-#ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI
     int in_noverify = 0;
-#endif
+# endif
     int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
     int ret = 1, usecrypt = 0, use1 = 0, useapr1 = 0;
     size_t passwd_malloc_size = 0, pw_maxlen = 256;
@@ -105,9 +105,9 @@ int passwd_main(int argc, char **argv)
             pw_source_defined = 1;
             break;
         case OPT_NOVERIFY:
-#ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI
             in_noverify = 1;
-#endif
+# endif
             break;
         case OPT_QUIET:
             quiet = 1;
@@ -157,7 +157,6 @@ int passwd_main(int argc, char **argv)
         /* conflict */
         goto opthelp;
     }
-
 # ifdef OPENSSL_NO_DES
     if (usecrypt)
         goto opthelp;
@@ -199,7 +198,7 @@ int passwd_main(int argc, char **argv)
 
     if ((in == NULL) && (passwds == NULL)) {
         if (1) {
-#ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI
             /* build a null-terminated list */
             static char *passwds_static[2] = { NULL, NULL };
 
@@ -211,12 +210,11 @@ int passwd_main(int argc, char **argv)
                     goto end;
             passwds[0] = passwd_malloc;
         } else {
-#endif
+# endif
             BIO_printf(bio_err, "password required\n");
             goto end;
         }
     }
-
 
     if (in == NULL) {
         assert(passwds != NULL);
@@ -295,7 +293,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     out_buf[1] = 0;
     magic_len = strlen(magic);
 
-    if (magic_len > 4)    /* assert it's  "1" or "apr1" */
+    if (magic_len > 4)          /* assert it's "1" or "apr1" */
         return NULL;
 
     OPENSSL_strlcat(out_buf, magic, sizeof out_buf);
@@ -320,7 +318,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
         || !EVP_DigestUpdate(md, "$", 1)
         || !EVP_DigestUpdate(md, salt_out, salt_len))
 
-    md2 = EVP_MD_CTX_new();
+        md2 = EVP_MD_CTX_new();
     if (md2 == NULL
         || !EVP_DigestInit_ex(md2, EVP_md5(), NULL)
         || !EVP_DigestUpdate(md2, passwd, passwd_len)
@@ -363,9 +361,9 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
         if (!EVP_DigestUpdate(md2,
                               (i & 1) ? buf : (unsigned const char *)passwd,
                               (i & 1) ? sizeof buf : passwd_len))
-                goto err;
+            goto err;
         if (!EVP_DigestFinal_ex(md2, buf, NULL))
-                goto err;
+            goto err;
     }
     EVP_MD_CTX_free(md2);
     EVP_MD_CTX_free(md);
@@ -384,9 +382,9 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
             buf_perm[dest] = buf[source];
         buf_perm[14] = buf[5];
         buf_perm[15] = buf[11];
-#  ifndef PEDANTIC              /* Unfortunately, this generates a "no
-                                 * effect" warning */
-        assert(16 == sizeof buf_perm);
+#  ifndef PEDANTIC
+        /* Unfortunately, this generates a "no effect" warning */
+        assert(16 == sizeof(buf_perm));
 #  endif
 
         output = salt_out + salt_len;

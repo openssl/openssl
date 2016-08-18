@@ -321,14 +321,14 @@ int pkcs12_main(int argc, char **argv)
 
     if (twopass) {
         if (1) {
-#ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI
             if (EVP_read_pw_string
                 (macpass, sizeof macpass, "Enter MAC Password:", export_cert)) {
                 BIO_printf(bio_err, "Can't read Password\n");
                 goto end;
             }
         } else {
-#endif
+# endif
             BIO_printf(bio_err, "Unsupported option -twopass\n");
             goto end;
         }
@@ -359,8 +359,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Load in all certs in input file */
         if (!(options & NOCERTS)) {
-            if (!load_certs(infile, &certs, FORMAT_PEM, NULL,
-                            "certificates"))
+            if (!load_certs(infile, &certs, FORMAT_PEM, NULL, "certificates"))
                 goto export_end;
 
             if (key) {
@@ -378,8 +377,7 @@ int pkcs12_main(int argc, char **argv)
                     }
                 }
                 if (!ucert) {
-                    BIO_printf(bio_err,
-                               "No certificate matches private key\n");
+                    BIO_printf(bio_err, "No certificate matches private key\n");
                     goto export_end;
                 }
             }
@@ -397,11 +395,10 @@ int pkcs12_main(int argc, char **argv)
         if (chain) {
             int vret;
             STACK_OF(X509) *chain2;
-            X509_STORE *store;
-            if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath))
-                    == NULL)
-                goto export_end;
+            X509_STORE *store = setup_verify(CAfile, CApath, noCAfile, noCApath);
 
+            if (store == NULL)
+                goto export_end;
             vret = get_cert_chain(ucert, store, &chain2);
             X509_STORE_free(store);
 
@@ -439,14 +436,14 @@ int pkcs12_main(int argc, char **argv)
 
         if (!noprompt) {
             if (1) {
-#ifndef OPENSSL_NO_UI
-                if (EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:",
-                                       1)) {
+# ifndef OPENSSL_NO_UI
+                if (EVP_read_pw_string
+                    (pass, sizeof pass, "Enter Export Password:", 1)) {
                     BIO_printf(bio_err, "Can't read Password\n");
                     goto export_end;
                 }
             } else {
-#endif
+# endif
                 BIO_printf(bio_err, "Password required\n");
                 goto export_end;
             }
@@ -505,14 +502,14 @@ int pkcs12_main(int argc, char **argv)
 
     if (!noprompt) {
         if (1) {
-#ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI
             if (EVP_read_pw_string(pass, sizeof pass, "Enter Import Password:",
                                    0)) {
                 BIO_printf(bio_err, "Can't read Password\n");
                 goto end;
             }
         } else {
-#endif
+# endif
             BIO_printf(bio_err, "Password required\n");
             goto end;
         }
@@ -530,7 +527,7 @@ int pkcs12_main(int argc, char **argv)
         BIO_puts(bio_err, "MAC:");
         i2a_ASN1_OBJECT(bio_err, macobj);
         BIO_printf(bio_err, " Iteration %ld\n",
-                   tmaciter  != NULL ? ASN1_INTEGER_get(tmaciter) : 1L);
+                   tmaciter != NULL ? ASN1_INTEGER_get(tmaciter) : 1L);
     }
     if (macver) {
         /* If we enter empty password try no password first */
@@ -713,8 +710,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
 
 /* Given a single certificate return a verified chain or NULL if error */
 
-static int get_cert_chain(X509 *cert, X509_STORE *store,
-                          STACK_OF(X509) **chain)
+static int get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
 {
     X509_STORE_CTX *store_ctx = NULL;
     STACK_OF(X509) *chn = NULL;
@@ -722,21 +718,20 @@ static int get_cert_chain(X509 *cert, X509_STORE *store,
 
     store_ctx = X509_STORE_CTX_new();
     if (store_ctx == NULL) {
-        i =  X509_V_ERR_UNSPECIFIED;
+        i = X509_V_ERR_UNSPECIFIED;
         goto end;
     }
     if (!X509_STORE_CTX_init(store_ctx, store, cert, NULL)) {
-        i =  X509_V_ERR_UNSPECIFIED;
+        i = X509_V_ERR_UNSPECIFIED;
         goto end;
     }
-
 
     if (X509_verify_cert(store_ctx) > 0)
         chn = X509_STORE_CTX_get1_chain(store_ctx);
     else if ((i = X509_STORE_CTX_get_error(store_ctx)) == 0)
         i = X509_V_ERR_UNSPECIFIED;
 
-end:
+ end:
     X509_STORE_CTX_free(store_ctx);
     *chain = chn;
     return i;
@@ -772,8 +767,7 @@ static int alg_print(const X509_ALGOR *alg)
         pbenid = OBJ_obj2nid(aoid);
         X509_ALGOR_get0(&aoid, NULL, NULL, pbe2->encryption);
         encnid = OBJ_obj2nid(aoid);
-        BIO_printf(bio_err, ", %s, %s", OBJ_nid2ln(pbenid),
-                   OBJ_nid2sn(encnid));
+        BIO_printf(bio_err, ", %s, %s", OBJ_nid2ln(pbenid), OBJ_nid2sn(encnid));
         /* If KDF is PBKDF2 decode parameters */
         if (pbenid == NID_id_pbkdf2) {
             PBKDF2PARAM *kdf = NULL;

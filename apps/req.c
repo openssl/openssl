@@ -618,8 +618,7 @@ int req_main(int argc, char **argv)
                 goto end;
             if (!set_cert_times(x509ss, NULL, NULL, days))
                 goto end;
-            if (!X509_set_subject_name
-                (x509ss, X509_REQ_get_subject_name(req)))
+            if (!X509_set_subject_name(x509ss, X509_REQ_get_subject_name(req)))
                 goto end;
             tmppkey = X509_REQ_get0_pubkey(req);
             if (!tmppkey || !X509_set_pubkey(x509ss, tmppkey))
@@ -719,8 +718,7 @@ int req_main(int argc, char **argv)
 
     out = bio_open_default(outfile,
                            keyout != NULL && outfile != NULL &&
-                           strcmp(keyout, outfile) == 0 ? 'a' : 'w',
-                           outformat);
+                           strcmp(keyout, outfile) == 0 ? 'a' : 'w', outformat);
     if (out == NULL)
         goto end;
 
@@ -744,11 +742,9 @@ int req_main(int argc, char **argv)
 
     if (subject) {
         if (x509)
-            print_name(out, "subject=", X509_get_subject_name(x509ss),
-                       nmflag);
+            print_name(out, "subject=", X509_get_subject_name(x509ss), nmflag);
         else
-            print_name(out, "subject=", X509_REQ_get_subject_name(req),
-                       nmflag);
+            print_name(out, "subject=", X509_REQ_get_subject_name(req), nmflag);
     }
 
     if (modulus) {
@@ -886,8 +882,8 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
  * subject is expected to be in the format /type0=value0/type1=value1/type2=...
  * where characters may be escaped by \
  */
-static int build_subject(X509_REQ *req, const char *subject, unsigned long chtype,
-                         int multirdn)
+static int build_subject(X509_REQ *req, const char *subject,
+                         unsigned long chtype, int multirdn)
 {
     X509_NAME *n;
 
@@ -926,8 +922,7 @@ static int prompt_info(X509_REQ *req,
                    "What you are about to enter is what is called a Distinguished Name or a DN.\n");
         BIO_printf(bio_err,
                    "There are quite a few fields but you can leave some blank\n");
-        BIO_printf(bio_err,
-                   "For some fields there will be a default value,\n");
+        BIO_printf(bio_err, "For some fields there will be a default value,\n");
         BIO_printf(bio_err,
                    "If you enter '.', the field will be left blank.\n");
         BIO_printf(bio_err, "-----\n");
@@ -951,7 +946,7 @@ static int prompt_info(X509_REQ *req,
              * instances
              */
             for (p = v->name; *p; p++)
-                if ((*p == ':') || (*p == ',') || (*p == '.')) {
+                if (*p == ':' || *p == ',' || *p == '.') {
                     p++;
                     if (*p)
                         type = p;
@@ -999,8 +994,7 @@ static int prompt_info(X509_REQ *req,
                 return 0;
         }
         if (X509_NAME_entry_count(subj) == 0) {
-            BIO_printf(bio_err,
-                       "error, no objects specified in config file\n");
+            BIO_printf(bio_err, "error, no objects specified in config file\n");
             return 0;
         }
 
@@ -1092,10 +1086,10 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
          */
         for (p = v->name; *p; p++) {
 #ifndef CHARSET_EBCDIC
-            spec_char = ((*p == ':') || (*p == ',') || (*p == '.'));
+            spec_char = *p == ':' || *p == ',' || *p == '.';
 #else
-            spec_char = ((*p == os_toascii[':']) || (*p == os_toascii[','])
-                    || (*p == os_toascii['.']));
+            spec_char = *p == os_toascii[':'] || *p == os_toascii[',']
+                         || *p == os_toascii['.'];
 #endif
             if (spec_char) {
                 p++;
@@ -1245,8 +1239,7 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
         goto start;
     }
 
-    if (!X509_REQ_add1_attr_by_NID(req, nid, chtype,
-                                   (unsigned char *)buf, -1)) {
+    if (!X509_REQ_add1_attr_by_NID(req, nid, chtype, (unsigned char *)buf, -1)) {
         BIO_printf(bio_err, "Error adding attribute\n");
         ERR_print_errors(bio_err);
         goto err;

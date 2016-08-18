@@ -40,7 +40,8 @@ OPTIONS crl_options[] = {
     {"noout", OPT_NOOUT, '-', "No CRL output"},
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the crl fingerprint"},
     {"crlnumber", OPT_CRLNUMBER, '-', "Print CRL number"},
-    {"badsig", OPT_BADSIG, '-', "Corrupt last byte of loaded CRL signature (for test)" },
+    {"badsig", OPT_BADSIG, '-',
+     "Corrupt last byte of loaded CRL signature (for test)"},
     {"gendelta", OPT_GENDELTA, '<'},
     {"CApath", OPT_CAPATH, '/', "Verify CRL using certificates in dir"},
     {"CAfile", OPT_CAFILE, '<', "Verify CRL using certificates in file name"},
@@ -128,10 +129,10 @@ int crl_main(int argc, char **argv)
             do_ver = 1;
             break;
         case OPT_NOCAPATH:
-            noCApath =  1;
+            noCApath = 1;
             break;
         case OPT_NOCAFILE:
-            noCAfile =  1;
+            noCAfile = 1;
             break;
         case OPT_HASH_OLD:
 #ifndef OPENSSL_NO_MD5
@@ -259,8 +260,7 @@ int crl_main(int argc, char **argv)
     if (num) {
         for (i = 1; i <= num; i++) {
             if (issuer == i) {
-                print_name(bio_out, "issuer=", X509_CRL_get_issuer(x),
-                           nmflag);
+                print_name(bio_out, "issuer=", X509_CRL_get_issuer(x), nmflag);
             }
             if (crlnumber == i) {
                 ASN1_INTEGER *crlnum;

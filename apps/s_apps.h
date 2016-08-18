@@ -48,8 +48,7 @@ typedef fd_mask fd_set;
 typedef int (*do_server_cb)(int s, int stype, unsigned char *context);
 int do_server(int *accept_sock, const char *host, const char *port,
               int family, int type,
-              do_server_cb cb,
-              unsigned char *context, int naccept);
+              do_server_cb cb, unsigned char *context, int naccept);
 #ifdef HEADER_X509_H
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 #endif
@@ -92,8 +91,7 @@ void print_verify_detail(SSL *s, BIO *bio);
 void print_ssl_summary(SSL *s);
 #ifdef HEADER_SSL_H
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str, SSL_CTX *ctx);
-int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls,
-                     int crl_download);
+int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls, int crl_download);
 int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,
                     const char *vfyCAfile, const char *chCApath,
                     const char *chCAfile, STACK_OF(X509_CRL) *crls,

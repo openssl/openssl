@@ -30,7 +30,6 @@
 # include <openssl/pem.h>
 # include <openssl/x509.h>
 
-
 # ifndef PATH_MAX
 #  define PATH_MAX 4096
 # endif
@@ -57,13 +56,12 @@ typedef struct bucket_st {
 
 enum Type {
     /* Keep in sync with |suffixes|, below. */
-    TYPE_CERT=0, TYPE_CRL=1
+    TYPE_CERT = 0, TYPE_CRL = 1
 };
 
 enum Hash {
     HASH_OLD, HASH_NEW, HASH_BOTH
 };
-
 
 static int evpmdsize;
 static const EVP_MD *evpmd;
@@ -73,7 +71,6 @@ static BUCKET *hash_table[257];
 
 static const char *suffixes[] = { "", "r" };
 static const char *extensions[] = { "pem", "crt", "cer", "crl" };
-
 
 static void bit_set(unsigned char *set, unsigned int bit)
 {
@@ -85,13 +82,12 @@ static int bit_isset(unsigned char *set, unsigned int bit)
     return set[bit >> 3] & (1 << (bit & 0x7));
 }
 
-
 /*
  * Process an entry; return number of errors.
  */
 static int add_entry(enum Type type, unsigned int hash, const char *filename,
-                      const unsigned char *digest, int need_symlink,
-                      unsigned short old_id)
+                     const unsigned char *digest, int need_symlink,
+                     unsigned short old_id)
 {
     static BUCKET nilbucket;
     static HENTRY nilhentry;
@@ -198,7 +194,7 @@ static int handle_symlink(const char *filename, const char *fullpath)
  */
 static int do_file(const char *filename, const char *fullpath, enum Hash h)
 {
-    STACK_OF (X509_INFO) *inf = NULL;
+    STACK_OF (X509_INFO) * inf = NULL;
     X509_INFO *x;
     X509_NAME *name = NULL;
     BIO *b;
@@ -252,12 +248,15 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
     }
     if (name) {
         if ((h == HASH_NEW) || (h == HASH_BOTH))
-            errs += add_entry(type, X509_NAME_hash(name), filename, digest, 1, ~0);
+            errs +=
+                add_entry(type, X509_NAME_hash(name), filename, digest, 1, ~0);
         if ((h == HASH_OLD) || (h == HASH_BOTH))
-            errs += add_entry(type, X509_NAME_hash_old(name), filename, digest, 1, ~0);
+            errs +=
+                add_entry(type, X509_NAME_hash_old(name), filename, digest, 1,
+                          ~0);
     }
 
-end:
+ end:
     sk_X509_INFO_pop_free(inf, X509_INFO_free);
     return errs;
 }
@@ -302,7 +301,7 @@ static int do_dir(const char *dirname, enum Hash h)
     }
     while ((filename = OPENSSL_DIR_read(&d, dirname)) != NULL) {
         if ((copy = strdup(filename)) == NULL
-                || sk_OPENSSL_STRING_push(files, copy) == 0) {
+            || sk_OPENSSL_STRING_push(files, copy) == 0) {
             BIO_puts(bio_err, "out of memory\n");
             exit(1);
         }
@@ -314,7 +313,7 @@ static int do_dir(const char *dirname, enum Hash h)
     for (n = 0; n < numfiles; ++n) {
         filename = sk_OPENSSL_STRING_value(files, n);
         if (snprintf(buf, buflen, "%s%s%s",
-                    dirname, pathsep, filename) >= buflen)
+                     dirname, pathsep, filename) >= buflen)
             continue;
         if (lstat(buf, &st) < 0)
             continue;
@@ -373,8 +372,7 @@ static int do_dir(const char *dirname, enum Hash h)
                              dirname, pathsep, &n, bp->hash,
                              suffixes[bp->type], ep->old_id);
                     if (verbose)
-                        BIO_printf(bio_out, "unlink %s\n",
-                                   &buf[n]);
+                        BIO_printf(bio_out, "unlink %s\n", &buf[n]);
                     if (unlink(buf) < 0 && errno != ENOENT) {
                         BIO_printf(bio_err,
                                    "%s: Can't unlink %s, %s\n",
@@ -409,7 +407,6 @@ OPTIONS rehash_options[] = {
     {"v", OPT_VERBOSE, '-', "Verbose output"},
     {NULL}
 };
-
 
 int rehash_main(int argc, char **argv)
 {
@@ -476,4 +473,4 @@ int rehash_main(int argc, char **argv)
     return (1);
 }
 
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) */
+#endif        /* defined(OPENSSL_SYS_UNIX) || * defined(__APPLE__) */

@@ -151,12 +151,12 @@ int asn1parse_main(int argc, char **argv)
     if ((in = bio_open_default(infile, 'r', informat)) == NULL)
         goto end;
 
-    if (derfile && (derout = bio_open_default(derfile, 'w', FORMAT_ASN1)) == NULL)
+    if (derfile
+        && (derout = bio_open_default(derfile, 'w', FORMAT_ASN1)) == NULL)
         goto end;
 
     if (strictpem) {
-        if (PEM_read_bio(in, &name, &header, &str, &num) !=
-            1) {
+        if (PEM_read_bio(in, &name, &header, &str, &num) != 1) {
             BIO_printf(bio_err, "Error reading PEM file\n");
             ERR_print_errors(bio_err);
             goto end;
@@ -261,8 +261,7 @@ int asn1parse_main(int argc, char **argv)
         }
     }
     if (!noout &&
-        !ASN1_parse_dump(bio_out, &(str[offset]), length,
-                         indent, dump)) {
+        !ASN1_parse_dump(bio_out, &(str[offset]), length, indent, dump)) {
         ERR_print_errors(bio_err);
         goto end;
     }
