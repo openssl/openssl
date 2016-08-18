@@ -37,9 +37,7 @@
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
+#include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
 #include "s_apps.h"
@@ -723,7 +721,7 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
                          &pkey, NULL, NULL))
             goto end;
     }
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA) && !defined (OPENSSL_NO_RC4)
+#if !defined(OPENSSL_NO_DSA) && !defined (OPENSSL_NO_RC4)
     else if (format == FORMAT_MSBLOB)
         pkey = b2i_PrivateKey_bio(key);
     else if (format == FORMAT_PVK)
@@ -784,7 +782,6 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         pkey = d2i_PUBKEY_bio(key, NULL);
     }
     else if (format == FORMAT_ASN1RSA) {
-#ifndef OPENSSL_NO_RSA
         RSA *rsa;
         rsa = d2i_RSAPublicKey_bio(key, NULL);
         if (rsa) {
@@ -793,12 +790,8 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                 EVP_PKEY_set1_RSA(pkey, rsa);
             RSA_free(rsa);
         } else
-#else
-        BIO_printf(bio_err, "RSA keys not supported\n");
-#endif
             pkey = NULL;
     } else if (format == FORMAT_PEMRSA) {
-#ifndef OPENSSL_NO_RSA
         RSA *rsa;
         rsa = PEM_read_bio_RSAPublicKey(key, NULL,
                                         (pem_password_cb *)password_callback,
@@ -809,9 +802,6 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                 EVP_PKEY_set1_RSA(pkey, rsa);
             RSA_free(rsa);
         } else
-#else
-        BIO_printf(bio_err, "RSA keys not supported\n");
-#endif
             pkey = NULL;
     }
     else if (format == FORMAT_PEM) {
@@ -819,7 +809,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                                    (pem_password_cb *)password_callback,
                                    &cb_data);
     }
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
+#if !defined(OPENSSL_NO_DSA)
     else if (format == FORMAT_MSBLOB)
         pkey = b2i_PublicKey_bio(key);
 #endif

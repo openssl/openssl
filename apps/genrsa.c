@@ -8,25 +8,22 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_RSA
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include <string.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include "apps.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/bn.h>
-# include <openssl/rsa.h>
-# include <openssl/evp.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
-# include <openssl/rand.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include "apps.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/rand.h>
 
-# define DEFBITS 2048
+#define DEFBITS 2048
 
 static int genrsa_cb(int p, int n, BN_GENCB *cb);
 
@@ -46,9 +43,9 @@ OPTIONS genrsa_options[] = {
      "Load the file(s) into the random number generator"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
     {NULL}
 };
 
@@ -188,4 +185,3 @@ static int genrsa_cb(int p, int n, BN_GENCB *cb)
     (void)BIO_flush(BN_GENCB_get_arg(cb));
     return 1;
 }
-#endif

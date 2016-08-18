@@ -214,7 +214,7 @@ int dsa_main(int argc, char **argv)
             i = PEM_write_bio_DSAPrivateKey(out, dsa, enc,
                                             NULL, 0, NULL, passout);
         }
-# if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_RC4)
+# if !defined(OPENSSL_NO_RC4)
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
         EVP_PKEY *pk;
         pk = EVP_PKEY_new();

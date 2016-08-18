@@ -97,10 +97,8 @@
 #ifndef OPENSSL_NO_CAST
 # include <openssl/cast.h>
 #endif
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-# include "./testrsa.h"
-#endif
+#include <openssl/rsa.h>
+#include "./testrsa.h"
 #include <openssl/x509.h>
 #ifndef OPENSSL_NO_DSA
 # include <openssl/dsa.h>
@@ -155,9 +153,7 @@ typedef struct loopargs_st {
     unsigned char *buf_malloc;
     unsigned char *buf2_malloc;
     unsigned int siglen;
-#ifndef OPENSSL_NO_RSA
     RSA *rsa_key[RSA_NUM];
-#endif
 #ifndef OPENSSL_NO_DSA
     DSA *dsa_key[DSA_NUM];
 #endif
@@ -214,10 +210,8 @@ static int AES_ige_256_encrypt_loop(void *args);
 static int CRYPTO_gcm128_aad_loop(void *args);
 static int EVP_Update_loop(void *args);
 static int EVP_Digest_loop(void *args);
-#ifndef OPENSSL_NO_RSA
 static int RSA_sign_loop(void *args);
 static int RSA_verify_loop(void *args);
-#endif
 #ifndef OPENSSL_NO_DSA
 static int DSA_sign_loop(void *args);
 static int DSA_verify_loop(void *args);
@@ -248,15 +242,13 @@ static const char *names[ALGOR_NUM] = {
     "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash"
 };
 
-static double results[ALGOR_NUM][SIZE_NUM];
-
 static const int lengths[SIZE_NUM] = {
     16, 64, 256, 1024, 8 * 1024, 16 * 1024
 };
 
-#ifndef OPENSSL_NO_RSA
+static double results[ALGOR_NUM][SIZE_NUM];
+
 static double rsa_results[RSA_NUM][2];
-#endif
 #ifndef OPENSSL_NO_DSA
 static double dsa_results[DSA_NUM][2];
 #endif
@@ -906,7 +898,7 @@ static int EVP_Digest_loop(void *args)
     return count;
 }
 
-#ifndef OPENSSL_NO_RSA
+
 static long rsa_c[RSA_NUM][2];  /* # RSA iteration test */
 
 static int RSA_sign_loop(void *args)
@@ -948,7 +940,6 @@ static int RSA_verify_loop(void *args)
     }
     return count;
 }
-#endif
 
 #ifndef OPENSSL_NO_DSA
 static long dsa_c[DSA_NUM][2];
@@ -1237,10 +1228,7 @@ int speed_main(int argc, char **argv)
     int multi = 0;
 #endif
     int async_jobs = 0;
-#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) \
-    || !defined(OPENSSL_NO_EC)
     long rsa_count = 1;
-#endif
 
     /* What follows are the buffers and key material. */
 #ifndef OPENSSL_NO_RC5
@@ -1301,7 +1289,6 @@ int speed_main(int argc, char **argv)
         0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34
     };
 #endif
-#ifndef OPENSSL_NO_RSA
     static const unsigned int rsa_bits[RSA_NUM] = {
         512, 1024, 2048, 3072, 4096, 7680, 15360
     };
@@ -1315,7 +1302,6 @@ int speed_main(int argc, char **argv)
         sizeof(test15360)
     };
     int rsa_doit[RSA_NUM] = { 0 };
-#endif
 #ifndef OPENSSL_NO_DSA
     static const unsigned int dsa_bits[DSA_NUM] = { 512, 1024, 2048 };
     int dsa_doit[DSA_NUM] = { 0 };
@@ -1461,13 +1447,13 @@ int speed_main(int argc, char **argv)
             doit[D_SHA1] = doit[D_SHA256] = doit[D_SHA512] = 1;
             continue;
         }
-#ifndef OPENSSL_NO_RSA
-# ifndef RSA_NULL
+
+#ifndef RSA_NULL
         if (strcmp(*argv, "openssl") == 0) {
             RSA_set_default_method(RSA_PKCS1_OpenSSL());
             continue;
         }
-# endif
+#endif
         if (strcmp(*argv, "rsa") == 0) {
             rsa_doit[R_RSA_512] = rsa_doit[R_RSA_1024] =
                 rsa_doit[R_RSA_2048] = rsa_doit[R_RSA_3072] =
@@ -1479,7 +1465,7 @@ int speed_main(int argc, char **argv)
             rsa_doit[i] = 1;
             continue;
         }
-#endif
+
 #ifndef OPENSSL_NO_DSA
         if (strcmp(*argv, "dsa") == 0) {
             dsa_doit[R_DSA_512] = dsa_doit[R_DSA_1024] =
@@ -1573,10 +1559,9 @@ int speed_main(int argc, char **argv)
         for (i = 0; i < ALGOR_NUM; i++)
             if (i != D_EVP)
                 doit[i] = 1;
-#ifndef OPENSSL_NO_RSA
+
         for (i = 0; i < RSA_NUM; i++)
             rsa_doit[i] = 1;
-#endif
 #ifndef OPENSSL_NO_DSA
         for (i = 0; i < DSA_NUM; i++)
             dsa_doit[i] = 1;
@@ -1597,7 +1582,6 @@ int speed_main(int argc, char **argv)
                    "You have chosen to measure elapsed time "
                    "instead of user CPU time.\n");
 
-#ifndef OPENSSL_NO_RSA
     for (i = 0; i < loopargs_len; i++) {
         for (k = 0; k < RSA_NUM; k++) {
             const unsigned char *p;
@@ -1611,7 +1595,6 @@ int speed_main(int argc, char **argv)
             }
         }
     }
-#endif
 #ifndef OPENSSL_NO_DSA
     for (i = 0; i < loopargs_len; i++) {
         loopargs[i].dsa_key[0] = get_dsa512();
@@ -1737,7 +1720,6 @@ int speed_main(int argc, char **argv)
         c[D_IGE_256_AES][i] = c[D_IGE_256_AES][i - 1] * l0 / l1;
     }
 
-#  ifndef OPENSSL_NO_RSA
     rsa_c[R_RSA_512][0] = count / 2000;
     rsa_c[R_RSA_512][1] = count / 400;
     for (i = 1; i < RSA_NUM; i++) {
@@ -1752,7 +1734,6 @@ int speed_main(int argc, char **argv)
             }
         }
     }
-#  endif
 
 #  ifndef OPENSSL_NO_DSA
     dsa_c[R_DSA_512][0] = count / 1000;
@@ -2334,7 +2315,6 @@ int speed_main(int argc, char **argv)
     for (i = 0; i < loopargs_len; i++)
         RAND_bytes(loopargs[i].buf, 36);
 
-#ifndef OPENSSL_NO_RSA
     for (testnum = 0; testnum < RSA_NUM; testnum++) {
         int st = 0;
         if (!rsa_doit[testnum])
@@ -2395,7 +2375,6 @@ int speed_main(int argc, char **argv)
                 rsa_doit[testnum] = 0;
         }
     }
-#endif                          /* OPENSSL_NO_RSA */
 
     for (i = 0; i < loopargs_len; i++)
         RAND_bytes(loopargs[i].buf, 36);
@@ -2704,7 +2683,7 @@ int speed_main(int argc, char **argv)
         }
         printf("\n");
     }
-#ifndef OPENSSL_NO_RSA
+
     testnum = 1;
     for (k = 0; k < RSA_NUM; k++) {
         if (!rsa_doit[k])
@@ -2721,7 +2700,7 @@ int speed_main(int argc, char **argv)
                    rsa_bits[k], rsa_results[k][0], rsa_results[k][1],
                    1.0 / rsa_results[k][0], 1.0 / rsa_results[k][1]);
     }
-#endif
+
 #ifndef OPENSSL_NO_DSA
     testnum = 1;
     for (k = 0; k < DSA_NUM; k++) {
@@ -2791,10 +2770,8 @@ int speed_main(int argc, char **argv)
         OPENSSL_free(loopargs[i].buf_malloc);
         OPENSSL_free(loopargs[i].buf2_malloc);
 
-#ifndef OPENSSL_NO_RSA
         for (k = 0; k < RSA_NUM; k++)
             RSA_free(loopargs[i].rsa_key[k]);
-#endif
 #ifndef OPENSSL_NO_DSA
         for (k = 0; k < DSA_NUM; k++)
             DSA_free(loopargs[i].dsa_key[k]);

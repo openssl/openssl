@@ -8,9 +8,6 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_RSA
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
 # include <stdio.h>
 # include <stdlib.h>
@@ -300,4 +297,3 @@ int rsa_main(int argc, char **argv)
     OPENSSL_free(passout);
     return (ret);
 }
-#endif
