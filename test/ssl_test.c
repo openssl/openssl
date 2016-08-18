@@ -100,6 +100,16 @@ static int check_alerts(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         return 0;
     }
 
+    if (result->client_num_fatal_alerts_sent > 1) {
+        fprintf(stderr, "Client sent %d fatal alerts.\n",
+                result->client_num_fatal_alerts_sent);
+        return 0;
+    }
+    if (result->server_num_fatal_alerts_sent > 1) {
+        fprintf(stderr, "Server sent %d alerts.\n",
+                result->server_num_fatal_alerts_sent);
+        return 0;
+    }
     return 1;
 }
 
