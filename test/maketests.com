@@ -147,9 +147,10 @@ $ TEST_FILES = "BNTEST,ECTEST,ECDSATEST,ECDHTEST,IDEATEST,"+ -
 	       "MDC2TEST,RMDTEST,"+ -
 	       "RANDTEST,DHTEST,ENGINETEST,"+ -
 	       "BFTEST,CASTTEST,SSLTEST,EXPTEST,DSATEST,RSA_TEST,"+ -
-	       "EVP_TEST,IGETEST,JPAKETEST,SRPTEST,"+ -
+	       "EVP_TEST,EVP_EXTRA_TEST,IGETEST,JPAKETEST,SRPTEST,"+ -
 	       "ASN1TEST,V3NAMETEST,HEARTBEAT_TEST,"+ -
-	       "CONSTANT_TIME_TEST"
+	       "CONSTANT_TIME_TEST,VERIFY_EXTRA_TEST,"+ -
+               "CLIENTHELLOTEST,SSLV2CONFTEST"
 $! Should we add MTTEST,PQ_TEST,LH_TEST,DIVTEST,TABTEST as well?
 $!
 $! Additional directory information.
@@ -183,6 +184,7 @@ $ T_D_EXPTEST    := [-.crypto.bn]
 $ T_D_DSATEST    := [-.crypto.dsa]
 $ T_D_RSA_TEST   := [-.crypto.rsa]
 $ T_D_EVP_TEST   := [-.crypto.evp]
+$ T_D_EVP_EXTRA_TEST := [-.crypto.evp]
 $ T_D_IGETEST    := [-.test]
 $ T_D_JPAKETEST  := [-.crypto.jpake]
 $ T_D_SRPTEST    := [-.crypto.srp]
@@ -190,6 +192,9 @@ $ T_D_V3NAMETEST := [-.crypto.x509v3]
 $ T_D_ASN1TEST   := [-.test]
 $ T_D_HEARTBEAT_TEST := [-.ssl]
 $ T_D_CONSTANT_TIME_TEST := [-.crypto]
+$ T_D_VERIFY_EXTRA_TEST := [-.crypto.x509]
+$ T_D_CLIENTHELLOTEST := [-.ssl]
+$ T_D_SSLV2CONFTEST := [-.ssl]
 $!
 $ TCPIP_PROGRAMS = ",,"
 $ IF COMPILER .EQS. "VAXC" THEN -
