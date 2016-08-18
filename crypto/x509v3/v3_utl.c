@@ -20,7 +20,7 @@
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
-static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
+static STACK_OF(OPENSSL_STRING) *get_email(const X509_NAME *name,
                                            GENERAL_NAMES *gens);
 static void str_free(OPENSSL_STRING str);
 static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email);
@@ -419,21 +419,21 @@ STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x)
     return ret;
 }
 
-static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
+static STACK_OF(OPENSSL_STRING) *get_email(const X509_NAME *name,
                                            GENERAL_NAMES *gens)
 {
     STACK_OF(OPENSSL_STRING) *ret = NULL;
-    X509_NAME_ENTRY *ne;
-    ASN1_IA5STRING *email;
-    GENERAL_NAME *gen;
-    int i;
+    const X509_NAME_ENTRY *ne;
+    const ASN1_IA5STRING *email;
+    const GENERAL_NAME *gen;
+    int i = -1;
+
     /* Now add any email address(es) to STACK */
-    i = -1;
     /* First supplied X509_NAME */
     while ((i = X509_NAME_get_index_by_NID(name,
                                            NID_pkcs9_emailAddress, i)) >= 0) {
-        ne = X509_NAME_get_entry(name, i);
-        email = X509_NAME_ENTRY_get_data(ne);
+        ne = X509_NAME_get0_entry(name, i);
+        email = X509_NAME_ENTRY_get0_data(ne);
         if (!append_ia5(&ret, email))
             return NULL;
     }
@@ -774,7 +774,7 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
                          unsigned int flags, int check_type, char **peername)
 {
     GENERAL_NAMES *gens = NULL;
-    X509_NAME *name = NULL;
+    const X509_NAME *name = NULL;
     int i;
     int cnid = NID_undef;
     int alt_type;
@@ -840,8 +840,8 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
     i = -1;
     name = X509_get_subject_name(x);
     while ((i = X509_NAME_get_index_by_NID(name, cnid, i)) >= 0) {
-        const X509_NAME_ENTRY *ne = X509_NAME_get_entry(name, i);
-        const ASN1_STRING *str = X509_NAME_ENTRY_get_data(ne);
+        const X509_NAME_ENTRY *ne = X509_NAME_get0_entry(name, i);
+        const ASN1_STRING *str = X509_NAME_ENTRY_get0_data(ne);
 
         /* Positive on success, negative on error! */
         if ((rv = do_check_string(str, -1, equal, flags,

@@ -1374,11 +1374,10 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     X509_NAME *name = NULL, *CAname = NULL, *subject = NULL, *dn_subject =
         NULL;
     const ASN1_TIME *tm;
-    ASN1_STRING *str, *str2;
-    ASN1_OBJECT *obj;
+    const ASN1_STRING *str, *str2;
+    const ASN1_OBJECT *obj;
     X509 *ret = NULL;
-    X509_NAME_ENTRY *ne;
-    X509_NAME_ENTRY *tne, *push;
+    const X509_NAME_ENTRY *ne, *tne;
     EVP_PKEY *pktmp;
     int ok = -1, i, j, last, nid;
     const char *p;
@@ -1408,44 +1407,44 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     name = X509_REQ_get_subject_name(req);
     for (i = 0; i < X509_NAME_entry_count(name); i++) {
-        ne = X509_NAME_get_entry(name, i);
-        str = X509_NAME_ENTRY_get_data(ne);
-        obj = X509_NAME_ENTRY_get_object(ne);
+        ne = X509_NAME_get0_entry(name, i);
+        str = X509_NAME_ENTRY_get0_data(ne);
+        obj = X509_NAME_ENTRY_get0_object(ne);
 
         if (msie_hack) {
+            /* Dirty ugly cast to make the msie_hack compile!! */
+            ASN1_STRING *tmp = (ASN1_STRING*) str;
+
             /* assume all type should be strings */
-            nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(ne));
+            nid = OBJ_obj2nid(obj);
 
             if (str->type == V_ASN1_UNIVERSALSTRING)
-                ASN1_UNIVERSALSTRING_to_string(str);
+                ASN1_UNIVERSALSTRING_to_string(tmp);
 
-            if ((str->type == V_ASN1_IA5STRING) &&
-                (nid != NID_pkcs9_emailAddress))
-                str->type = V_ASN1_T61STRING;
+            if (str->type == V_ASN1_IA5STRING &&
+                nid != NID_pkcs9_emailAddress)
+                tmp->type = V_ASN1_T61STRING;
 
-            if ((nid == NID_pkcs9_emailAddress) &&
-                (str->type == V_ASN1_PRINTABLESTRING))
-                str->type = V_ASN1_IA5STRING;
+            if (nid == NID_pkcs9_emailAddress &&
+                str->type == V_ASN1_PRINTABLESTRING)
+                tmp->type = V_ASN1_IA5STRING;
         }
 
         /* If no EMAIL is wanted in the subject */
-        if ((OBJ_obj2nid(obj) == NID_pkcs9_emailAddress) && (!email_dn))
+        if (OBJ_obj2nid(obj) == NID_pkcs9_emailAddress && !email_dn)
             continue;
 
         /* check some things */
-        if ((OBJ_obj2nid(obj) == NID_pkcs9_emailAddress) &&
-            (str->type != V_ASN1_IA5STRING)) {
+        if (OBJ_obj2nid(obj) == NID_pkcs9_emailAddress
+            && str->type != V_ASN1_IA5STRING) {
             BIO_printf(bio_err,
                        "\nemailAddress type needs to be of type IA5STRING\n");
             goto end;
         }
-        if ((str->type != V_ASN1_BMPSTRING)
-            && (str->type != V_ASN1_UTF8STRING)) {
+        if (str->type != V_ASN1_BMPSTRING && str->type != V_ASN1_UTF8STRING) {
             j = ASN1_PRINTABLE_type(str->data, str->length);
-            if (((j == V_ASN1_T61STRING) &&
-                 (str->type != V_ASN1_T61STRING)) ||
-                ((j == V_ASN1_IA5STRING) &&
-                 (str->type == V_ASN1_PRINTABLESTRING))) {
+            if ((j == V_ASN1_T61STRING && str->type != V_ASN1_T61STRING)
+                || (j == V_ASN1_IA5STRING && str->type == V_ASN1_PRINTABLESTRING)) {
                 BIO_printf(bio_err,
                            "\nThe string contains characters that are illegal for the ASN.1 type\n");
                 goto end;
@@ -1483,6 +1482,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
         last = -1;
         for (;;) {
+            const X509_NAME_ENTRY *push = NULL;
+
             /* lookup the object in the supplied name list */
             j = X509_NAME_get_index_by_OBJ(name, obj, last);
             if (j < 0) {
@@ -1490,12 +1491,11 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                     break;
                 tne = NULL;
             } else {
-                tne = X509_NAME_get_entry(name, j);
+                tne = X509_NAME_get0_entry(name, j);
             }
             last = j;
 
             /* depending on the 'policy', decide what to do. */
-            push = NULL;
             if (strcmp(cv->value, "optional") == 0) {
                 if (tne != NULL)
                     push = tne;
@@ -1508,7 +1508,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                 } else
                     push = tne;
             } else if (strcmp(cv->value, "match") == 0) {
-                int last2;
+                int last2 = -1;
 
                 if (tne == NULL) {
                     BIO_printf(bio_err,
@@ -1517,11 +1517,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                     goto end;
                 }
 
-                last2 = -1;
-
  again2:
                 j = X509_NAME_get_index_by_OBJ(CAname, obj, last2);
-                if ((j < 0) && (last2 == -1)) {
+                if (j < 0 && last2 == -1) {
                     BIO_printf(bio_err,
                                "The %s field does not exist in the CA certificate,\n"
                                "the 'policy' is misconfigured\n",
@@ -1529,9 +1527,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                     goto end;
                 }
                 if (j >= 0) {
-                    push = X509_NAME_get_entry(CAname, j);
-                    str = X509_NAME_ENTRY_get_data(tne);
-                    str2 = X509_NAME_ENTRY_get_data(push);
+                    push = X509_NAME_get0_entry(CAname, j);
+                    str = X509_NAME_ENTRY_get0_data(tne);
+                    str2 = X509_NAME_ENTRY_get0_data(push);
                     last2 = j;
                     if (ASN1_STRING_cmp(str, str2) != 0)
                         goto again2;
@@ -1554,7 +1552,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
             if (push != NULL) {
                 if (!X509_NAME_add_entry(subject, push, -1, 0)) {
-                    X509_NAME_ENTRY_free(push);
+                    /* useless X509_NAME_ENTRY_free(push); */
                     BIO_printf(bio_err, "Memory allocation failure\n");
                     goto end;
                 }
@@ -1597,8 +1595,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         while ((i = X509_NAME_get_index_by_NID(dn_subject,
                                                NID_pkcs9_emailAddress,
                                                -1)) >= 0) {
-            tmpne = X509_NAME_get_entry(dn_subject, i);
-            X509_NAME_delete_entry(dn_subject, i);
+            tmpne = X509_NAME_delete_entry(dn_subject, i);
             X509_NAME_ENTRY_free(tmpne);
         }
     }

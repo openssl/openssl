@@ -393,7 +393,7 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
 {
     int i, prev = -1, orflags, cnt;
     int fn_opt, fn_nid;
-    ASN1_OBJECT *fn;
+    const ASN1_OBJECT *fn;
     const ASN1_STRING *val;
     const X509_NAME_ENTRY *ent;
     char objtmp[80];
@@ -455,9 +455,9 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
     cnt = X509_NAME_entry_count(n);
     for (i = 0; i < cnt; i++) {
         if (flags & XN_FLAG_DN_REV)
-            ent = X509_NAME_get_entry(n, cnt - i - 1);
+            ent = X509_NAME_get0_entry(n, cnt - i - 1);
         else
-            ent = X509_NAME_get_entry(n, i);
+            ent = X509_NAME_get0_entry(n, i);
         if (prev != -1) {
             if (prev == X509_NAME_ENTRY_set(ent)) {
                 if (!io_ch(arg, sep_mv, sep_mv_len))
@@ -473,8 +473,8 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
             }
         }
         prev = X509_NAME_ENTRY_set(ent);
-        fn = X509_NAME_ENTRY_get_object(ent);
-        val = X509_NAME_ENTRY_get_data(ent);
+        fn = X509_NAME_ENTRY_get0_object(ent);
+        val = X509_NAME_ENTRY_get0_data(ent);
         fn_nid = OBJ_obj2nid(fn);
         if (fn_opt != XN_FLAG_FN_NONE) {
             int objlen, fld_len;

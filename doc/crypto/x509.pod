@@ -49,7 +49,7 @@ B<X509_EXTENSION_>I<...> handle certificate extensions.
 
 =head1 SEE ALSO
 
-L<X509_NAME_ENTRY_get_object(3)>,
+L<X509_NAME_ENTRY_get0_object(3)>,
 L<X509_NAME_add_entry_by_txt(3)>,
 L<X509_NAME_add_entry_by_NID(3)>,
 L<X509_NAME_print_ex(3)>,

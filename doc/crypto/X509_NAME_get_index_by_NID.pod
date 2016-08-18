@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_NAME_get_index_by_NID, X509_NAME_get_index_by_OBJ, X509_NAME_get_entry,
+X509_NAME_get_index_by_NID, X509_NAME_get_index_by_OBJ, X509_NAME_get0_entry,
 X509_NAME_entry_count, X509_NAME_get_text_by_NID, X509_NAME_get_text_by_OBJ -
 X509_NAME lookup and enumeration functions
 
@@ -10,14 +10,14 @@ X509_NAME lookup and enumeration functions
 
  #include <openssl/x509.h>
 
- int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos);
- int X509_NAME_get_index_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, int lastpos);
+ int X509_NAME_get_index_by_NID(const X509_NAME *name, int nid, int lastpos);
+ int X509_NAME_get_index_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj, int lastpos);
 
  int X509_NAME_entry_count(const X509_NAME *name);
- X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc);
+ const X509_NAME_ENTRY *X509_NAME_get0_entry(const X509_NAME *name, int loc);
 
- int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len);
- int X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, char *buf, int len);
+ int X509_NAME_get_text_by_NID(const X509_NAME *name, int nid, char *buf, int len);
+ int X509_NAME_get_text_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj, char *buf, int len);
 
 =head1 DESCRIPTION
 
@@ -33,7 +33,7 @@ If B<nid> is invalid (doesn't correspond to a valid OID) then -2 is returned.
 
 X509_NAME_entry_count() returns the total number of entries in B<name>.
 
-X509_NAME_get_entry() retrieves the B<X509_NAME_ENTRY> from B<name>
+X509_NAME_get0_entry() retrieves the B<X509_NAME_ENTRY> from B<name>
 corresponding to index B<loc>. Acceptable values for B<loc> run from
 0 to (X509_NAME_entry_count(name) - 1). The value returned is an
 internal pointer which must not be freed.
@@ -57,7 +57,7 @@ like a BMPString or a UTF8String.
 
 For a more general solution X509_NAME_get_index_by_NID() or
 X509_NAME_get_index_by_OBJ() should be used followed by
-X509_NAME_get_entry() on any matching indices and then the
+X509_NAME_get0_entry() on any matching indices and then the
 various B<X509_NAME_ENTRY> utility functions on the result.
 
 The list of all relevant B<NID_*> and B<OBJ_* codes> can be found in
@@ -73,18 +73,18 @@ can be determined first by checking OBJ_nid2obj(nid) is not NULL.
 Process all entries:
 
  int i;
- X509_NAME_ENTRY *e;
+ const X509_NAME_ENTRY *e;
 
  for (i = 0; i < X509_NAME_entry_count(nm); i++)
         {
-        e = X509_NAME_get_entry(nm, i);
+        e = X509_NAME_get0_entry(nm, i);
         /* Do something with e */
         }
 
 Process all commonName entries:
 
  int loc;
- X509_NAME_ENTRY *e;
+ const X509_NAME_ENTRY *e;
 
  loc = -1;
  for (;;)
@@ -92,7 +92,7 @@ Process all commonName entries:
         lastpos = X509_NAME_get_index_by_NID(nm, NID_commonName, lastpos);
         if (lastpos == -1)
                 break;
-        e = X509_NAME_get_entry(nm, lastpos);
+        e = X509_NAME_get0_entry(nm, lastpos);
         /* Do something with e */
         }
 
@@ -105,7 +105,7 @@ NID is invalid.
 
 X509_NAME_entry_count() returns the total number of entries.
 
-X509_NAME_get_entry() returns an B<X509_NAME> pointer to the
+X509_NAME_get0_entry() returns an B<X509_NAME> pointer to the
 requested entry or B<NULL> if the index is invalid.
 
 =head1 SEE ALSO
