@@ -19,16 +19,17 @@
 
 /* Convert a certificate and its issuer to an OCSP_CERTID */
 
-OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
+OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
+                             const X509 *issuer)
 {
     X509_NAME *iname;
-    ASN1_INTEGER *serial;
+    const ASN1_INTEGER *serial;
     ASN1_BIT_STRING *ikey;
     if (!dgst)
         dgst = EVP_sha1();
     if (subject) {
         iname = X509_get_issuer_name(subject);
-        serial = X509_get_serialNumber(subject);
+        serial = X509_get0_serialNumber(subject);
     } else {
         iname = X509_get_subject_name(issuer);
         serial = NULL;
@@ -38,9 +39,9 @@ OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
 }
 
 OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
-                              X509_NAME *issuerName,
-                              ASN1_BIT_STRING *issuerKey,
-                              ASN1_INTEGER *serialNumber)
+                              const X509_NAME *issuerName,
+                              const ASN1_BIT_STRING *issuerKey,
+                              const ASN1_INTEGER *serialNumber)
 {
     int nid;
     unsigned int i;
