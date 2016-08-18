@@ -4,8 +4,9 @@
 
  Changes between 1.0.2h and 1.1.0  [xx XXX xxxx]
 
-  *) Because of the SWEET32 attack, 3DES cipher suites have been disabled by
-     default like RC4.  See the RC4 item below to re-enable both.
+  *) To mitigate the SWEET32 attack (CVE-2016-2183), 3DES cipher suites
+     have been disabled by default and removed from DEFAULT, just like RC4.
+     See the RC4 item below to re-enable both.
      [Rich Salz]
 
   *) The method for finding the storage location for the Windows RAND seed file
