@@ -153,7 +153,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
     return 0;
 }
 
-int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a)
+int i2a_ASN1_ENUMERATED(BIO *bp, const ASN1_ENUMERATED *a)
 {
     return i2a_ASN1_INTEGER(bp, a);
 }
