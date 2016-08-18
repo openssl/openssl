@@ -48,7 +48,7 @@ typedef enum FUNC_TYPE {
 typedef struct function_st {
     FUNC_TYPE type;
     const char *name;
-    int (*func)(int argc, char *argv[]);
+    int (*func) (int argc, char *argv[]);
     const OPTIONS *help;
 } FUNCTION;
 
@@ -80,13 +80,13 @@ my %cmd_disabler = (
     pkcs12   => "des",
     );
 foreach my $cmd (@ARGV) {
-	my $str="    { FT_general, \"$cmd\", ${cmd}_main, ${cmd}_options },\n";
+	my $str="    {FT_general, \"$cmd\", ${cmd}_main, ${cmd}_options},\n";
 	if ($cmd =~ /^s_/) {
-		print "#ifndef OPENSSL_NO_SOCK\n${str}#endif\n";
+		print "# ifndef OPENSSL_NO_SOCK\n${str}# endif\n";
 	} elsif (grep { $cmd eq $_ } @disablables) {
-		print "#ifndef OPENSSL_NO_".uc($cmd)."\n${str}#endif\n";
+		print "# ifndef OPENSSL_NO_".uc($cmd)."\n${str}# endif\n";
 	} elsif (my $disabler = $cmd_disabler{$cmd}) {
-		print "#ifndef OPENSSL_NO_".uc($disabler)."\n${str}#endif\n";
+		print "# ifndef OPENSSL_NO_".uc($disabler)."\n${str}# endif\n";
 	} else {
 		print $str;
 	}
@@ -102,11 +102,11 @@ foreach my $cmd (
 	"sha1", "sha224", "sha256", "sha384", "sha512",
 	"mdc2", "rmd160", "blake2b512", "blake2s256"
 ) {
-        my $str = "    { FT_md, \"".$cmd."\", dgst_main},\n";
+        my $str = "    {FT_md, \"".$cmd."\", dgst_main},\n";
         if (grep { $cmd eq $_ } @disablables) {
-                print "#ifndef OPENSSL_NO_".uc($cmd)."\n${str}#endif\n";
+                print "# ifndef OPENSSL_NO_".uc($cmd)."\n${str}# endif\n";
         } elsif (my $disabler = $md_disabler{$cmd}) {
-                print "#ifndef OPENSSL_NO_".uc($disabler)."\n${str}#endif\n";
+                print "# ifndef OPENSSL_NO_".uc($disabler)."\n${str}# endif\n";
         } else {
                 print $str;
         }
@@ -138,18 +138,18 @@ foreach my $cmd (
 	"cast5-cbc","cast5-ecb", "cast5-cfb","cast5-ofb",
 	"cast-cbc", "rc5-cbc",   "rc5-ecb",  "rc5-cfb",  "rc5-ofb"
 ) {
-	my $str="    { FT_cipher, \"$cmd\", enc_main, enc_options },\n";
+	my $str="    {FT_cipher, \"$cmd\", enc_main, enc_options},\n";
 	(my $algo= $cmd) =~ s/-.*//g;
         if ($cmd eq "zlib") {
-                print "#ifdef ZLIB\n${str}#endif\n";
+                print "# ifdef ZLIB\n${str}# endif\n";
         } elsif (grep { $algo eq $_ } @disablables) {
-                print "#ifndef OPENSSL_NO_".uc($algo)."\n${str}#endif\n";
+                print "# ifndef OPENSSL_NO_".uc($algo)."\n${str}# endif\n";
         } elsif (my $disabler = $cipher_disabler{$algo}) {
-                print "#ifndef OPENSSL_NO_".uc($disabler)."\n${str}#endif\n";
+                print "# ifndef OPENSSL_NO_".uc($disabler)."\n${str}# endif\n";
 	} else {
 		print $str;
 	}
 }
 
-print "    { 0, NULL, NULL}\n};\n";
+print "    {0, NULL, NULL}\n};\n";
 print "#endif\n";
