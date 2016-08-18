@@ -1693,7 +1693,7 @@ int s_client_main(int argc, char **argv)
         }
         if (dane_tlsa_rrset == NULL) {
             BIO_printf(bio_err, "%s: DANE TLSA authentication requires at "
-                       "least one -dane_tlsa_rrset option.\n", prog);
+                       "least one -dane_tlsa_rrdata option.\n", prog);
             goto end;
         }
         if (tlsa_import_rrset(con, dane_tlsa_rrset) <= 0) {
