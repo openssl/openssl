@@ -107,6 +107,11 @@ ASN1_INTEGER *X509_get_serialNumber(X509 *a)
     return &a->cert_info.serialNumber;
 }
 
+const ASN1_INTEGER *X509_get0_serialNumber(const X509 *a)
+{
+    return &a->cert_info.serialNumber;
+}
+
 unsigned long X509_subject_name_hash(X509 *x)
 {
     return (X509_NAME_hash(x->cert_info.subject));
