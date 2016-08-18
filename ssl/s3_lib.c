@@ -57,7 +57,7 @@
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 
 /*
- * The list of available ciphers, organized into the following
+ * The list of available ciphers, mostly organized into the following
  * groups:
  *      Always there
  *      EC
@@ -108,7 +108,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -138,7 +138,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -862,7 +862,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -924,7 +924,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -1201,7 +1201,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -1248,7 +1248,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -1295,7 +1295,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -1613,7 +1613,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -1739,7 +1739,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -1754,7 +1754,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
