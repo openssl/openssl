@@ -365,10 +365,13 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
                   "asan"		=> "default",
+		  "crypto-mdebug"       => "default",
+		  "crypto-mdebug-backtrace" => "default",
 		  "ec_nistp_64_gcc_128" => "default",
 		  "egd"                 => "default",
 		  "fuzz-libfuzzer"	=> "default",
 		  "fuzz-afl"		=> "default",
+		  "heartbeats"          => "default",
 		  "md2"                 => "default",
                   "msan"                => "default",
 		  "rc5"                 => "default",
@@ -381,9 +384,6 @@ our %disabled = ( # "what"         => "comment"
 		  "weak-ssl-ciphers"    => "default",
 		  "zlib"                => "default",
 		  "zlib-dynamic"        => "default",
-		  "crypto-mdebug"       => "default",
-		  "crypto-mdebug-backtrace" => "default",
-		  "heartbeats"          => "default",
 		);
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
