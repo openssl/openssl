@@ -57,7 +57,7 @@ $	    tests := -
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
 	test_ss,test_ca,test_engine,test_evp,test_evp_extra,test_ssl,test_tsa,test_ige,-
 	test_jpake,test_srp,test_cms,test_ocsp,test_v3name,test_heartbeat,-
-	test_constant_time,test_verify_extra,test_clienthello,test_sslv2conftest
+	test_constant_time,test_verify_extra,test_clienthello,test_sslv2conftest,test_dtls
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
@@ -103,6 +103,7 @@ $	CONSTTIMETEST :=	constant_time_test
 $	VERIFYEXTRATEST :=	verify_extra_test
 $	CLIENTHELLOTEST :=	clienthellotest
 $	SSLV2CONFTEST := 	sslv2conftest
+$	DTLSTEST :=	dtlstest
 $!
 $	tests_i = 0
 $ loop_tests:
@@ -405,6 +406,10 @@ $ test_sslv2conftest:
 $	write sys$output "''START' test_sslv2conftest"
 $	mcr 'texe_dir''sslv2conftest'
 $       return
+$ test_dtls:
+$	write sys$output "''START' test_dtls"
+$	mcr 'texe_dir''dtlstest' 'ROOT'.APPS]server.pem 'ROOT'.APPS]server.pem
+$	return
 $
 $ exit:
 $	on error then goto exit2 ! In case openssl.exe didn't build.
