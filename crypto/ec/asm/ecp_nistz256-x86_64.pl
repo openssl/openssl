@@ -2244,16 +2244,14 @@ $code.=<<___;
 	mov	$b_org, $a_ptr			# reassign
 	movdqa	%xmm0, $in1_x(%rsp)
 	movdqa	%xmm1, $in1_x+0x10(%rsp)
-	por	%xmm0, %xmm1
 	movdqa	%xmm2, $in1_y(%rsp)
 	movdqa	%xmm3, $in1_y+0x10(%rsp)
-	por	%xmm2, %xmm3
 	movdqa	%xmm4, $in1_z(%rsp)
 	movdqa	%xmm5, $in1_z+0x10(%rsp)
-	por	%xmm1, %xmm3
+	por	%xmm4, %xmm5
 
 	movdqu	0x00($a_ptr), %xmm0		# copy	*(P256_POINT *)$b_ptr
-	 pshufd	\$0xb1, %xmm3, %xmm5
+	 pshufd	\$0xb1, %xmm5, %xmm3
 	movdqu	0x10($a_ptr), %xmm1
 	movdqu	0x20($a_ptr), %xmm2
 	 por	%xmm3, %xmm5
@@ -2265,14 +2263,14 @@ $code.=<<___;
 	movdqa	%xmm0, $in2_x(%rsp)
 	 pshufd	\$0x1e, %xmm5, %xmm4
 	movdqa	%xmm1, $in2_x+0x10(%rsp)
-	por	%xmm0, %xmm1
-	 movq	$r_ptr, %xmm0			# save $r_ptr
+	movdqu	0x40($a_ptr),%xmm0		# in2_z again
+	movdqu	0x50($a_ptr),%xmm1
 	movdqa	%xmm2, $in2_y(%rsp)
 	movdqa	%xmm3, $in2_y+0x10(%rsp)
-	por	%xmm2, %xmm3
 	 por	%xmm4, %xmm5
 	 pxor	%xmm4, %xmm4
-	por	%xmm1, %xmm3
+	por	%xmm0, %xmm1
+	 movq	$r_ptr, %xmm0			# save $r_ptr
 
 	lea	0x40-$bias($a_ptr), $a_ptr	# $a_ptr is still valid
 	 mov	$src0, $in2_z+8*0(%rsp)		# make in2_z copy
@@ -2283,8 +2281,8 @@ $code.=<<___;
 	call	__ecp_nistz256_sqr_mont$x	# p256_sqr_mont(Z2sqr, in2_z);
 
 	pcmpeqd	%xmm4, %xmm5
-	pshufd	\$0xb1, %xmm3, %xmm4
-	por	%xmm3, %xmm4
+	pshufd	\$0xb1, %xmm1, %xmm4
+	por	%xmm1, %xmm4
 	pshufd	\$0, %xmm5, %xmm5		# in1infty
 	pshufd	\$0x1e, %xmm4, %xmm3
 	por	%xmm3, %xmm4
@@ -2616,16 +2614,14 @@ $code.=<<___;
 	 mov	0x40+8*3($a_ptr), $acc0
 	movdqa	%xmm0, $in1_x(%rsp)
 	movdqa	%xmm1, $in1_x+0x10(%rsp)
-	por	%xmm0, %xmm1
 	movdqa	%xmm2, $in1_y(%rsp)
 	movdqa	%xmm3, $in1_y+0x10(%rsp)
-	por	%xmm2, %xmm3
 	movdqa	%xmm4, $in1_z(%rsp)
 	movdqa	%xmm5, $in1_z+0x10(%rsp)
-	por	%xmm1, %xmm3
+	por	%xmm4, %xmm5
 
 	movdqu	0x00($b_ptr), %xmm0	# copy	*(P256_POINT_AFFINE *)$b_ptr
-	 pshufd	\$0xb1, %xmm3, %xmm5
+	 pshufd	\$0xb1, %xmm5, %xmm3
 	movdqu	0x10($b_ptr), %xmm1
 	movdqu	0x20($b_ptr), %xmm2
 	 por	%xmm3, %xmm5
