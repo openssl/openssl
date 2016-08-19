@@ -4193,3 +4193,4 @@ EVP_PKEY_get1_tls_encodedpoint          4139	1_1_0	EXIST::FUNCTION:
 ASN1_STRING_get0_data                   4140	1_1_0	EXIST::FUNCTION:
 X509_SIG_get0_mutable                   4141	1_1_0	EXIST::FUNCTION:
 X509_get0_serialNumber                  4142	1_1_0	EXIST::FUNCTION:
+PKCS12_get_attr                         4143	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
