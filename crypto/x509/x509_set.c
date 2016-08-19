@@ -57,38 +57,32 @@ int X509_set_subject_name(X509 *x, X509_NAME *name)
     return (X509_NAME_set(&x->cert_info.subject, name));
 }
 
-int X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
+int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm)
 {
     ASN1_TIME *in;
-
-    if (x == NULL)
-        return (0);
-    in = x->cert_info.validity.notBefore;
+    in = *ptm;
     if (in != tm) {
         in = ASN1_STRING_dup(tm);
         if (in != NULL) {
-            ASN1_TIME_free(x->cert_info.validity.notBefore);
-            x->cert_info.validity.notBefore = in;
+            ASN1_TIME_free(*ptm);
+            *ptm = in;
         }
     }
     return (in != NULL);
 }
 
+int X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
+{
+    if (x == NULL)
+        return 0;
+    return x509_set1_time(&x->cert_info.validity.notBefore, tm);
+}
+
 int X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
 {
-    ASN1_TIME *in;
-
     if (x == NULL)
-        return (0);
-    in = x->cert_info.validity.notAfter;
-    if (in != tm) {
-        in = ASN1_STRING_dup(tm);
-        if (in != NULL) {
-            ASN1_TIME_free(x->cert_info.validity.notAfter);
-            x->cert_info.validity.notAfter = in;
-        }
-    }
-    return (in != NULL);
+        return 0;
+    return x509_set1_time(&x->cert_info.validity.notAfter, tm);
 }
 
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
