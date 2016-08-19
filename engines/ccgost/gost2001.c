@@ -434,6 +434,12 @@ int gost2001_compute_public(EC_KEY *ec)
 int gost2001_keygen(EC_KEY *ec)
 {
     BIGNUM *order = BN_new(), *d = BN_new();
+    if (order == NULL || d == NULL) {
+        GOSTerr(GOST_F_GOST2001_KEYGEN, ERR_R_MALLOC_FAILURE);
+        BN_free(d);
+        BN_free(order);
+        return 0;
+    }
     const EC_GROUP *group = EC_KEY_get0_group(ec);
 
     if(!group || !EC_GROUP_get_order(group, order, NULL)) {

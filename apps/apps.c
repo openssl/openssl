@@ -215,7 +215,8 @@ int args_from_file(char *file, int *argc, char **argv[])
     if (arg != NULL)
         OPENSSL_free(arg);
     arg = (char **)OPENSSL_malloc(sizeof(char *) * (i * 2));
-
+    if (arg == NULL)
+        return 0;
     *argv = arg;
     num = 0;
     p = buf;

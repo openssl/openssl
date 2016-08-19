@@ -935,11 +935,15 @@ static int cryptodev_digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
         return (0);
     }
 
+    dstate->mac_len = fstate->mac_len;
     if (fstate->mac_len != 0) {
         if (fstate->mac_data != NULL) {
             dstate->mac_data = OPENSSL_malloc(fstate->mac_len);
+            if (dstate->ac_data == NULL) {
+                printf("cryptodev_digest_init: malloc failed\n");
+                return 0;
+            }
             memcpy(dstate->mac_data, fstate->mac_data, fstate->mac_len);
-            dstate->mac_len = fstate->mac_len;
         }
     }
 

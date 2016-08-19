@@ -642,6 +642,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     } else {
 # if 0
         bio = BIO_new(BIO_s_mem());
+        if (bio == NULL)
+            goto err;
         /*
          * We need to set this so that when we have read all the data, the
          * encrypt BIO, if present, will read EOF and encode the last few

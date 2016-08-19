@@ -1546,6 +1546,8 @@ int dtls1_heartbeat(SSL *s)
      *  - Padding
      */
     buf = OPENSSL_malloc(1 + 2 + payload + padding);
+    if (buf == NULL)
+        goto err;
     p = buf;
     /* Message Type */
     *p++ = TLS1_HB_REQUEST;

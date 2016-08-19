@@ -623,6 +623,8 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
                 if (bpart)
                     sk_BIO_push(parts, bpart);
                 bpart = BIO_new(BIO_s_mem());
+                if (bpart == NULL)
+                    return 1;
                 BIO_set_mem_eof_return(bpart, 0);
             } else if (eol)
                 BIO_write(bpart, "\r\n", 2);

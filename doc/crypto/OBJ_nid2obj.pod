@@ -122,7 +122,7 @@ Create an object for B<commonName>:
 Check if an object is B<commonName>
 
  if (OBJ_obj2nid(obj) == NID_commonName)
-	/* Do something */
+        /* Do something */
 
 Create a new NID and initialize an object from it:
 
@@ -150,6 +150,8 @@ than enough to handle any OID encountered in practice.
 
 OBJ_nid2obj() returns an B<ASN1_OBJECT> structure or B<NULL> is an
 error occurred.
+It returns a pointer to an internal table and does not
+allocate memory; ASN1_OBJECT_free() will have no effect.
 
 OBJ_nid2ln() and OBJ_nid2sn() returns a valid string or B<NULL>
 on error.
