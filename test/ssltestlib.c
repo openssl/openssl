@@ -231,12 +231,12 @@ static int tls_dump_puts(BIO *bio, const char *str)
 }
 
 
-typedef struct mempacket_st {
+struct mempacket_st {
     unsigned char *data;
     int len;
     unsigned int num;
     unsigned int type;
-} MEMPACKET;
+};
 
 static void mempacket_free(MEMPACKET *pkt)
 {
