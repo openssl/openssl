@@ -72,6 +72,8 @@ int has_stdin_waiting(void);
 # endif
 
 void corrupt_signature(const ASN1_STRING *signature);
+int set_cert_times(X509 *x, const char *startdate, const char *enddate,
+                   int days);
 
 /*
  * Common verification options.

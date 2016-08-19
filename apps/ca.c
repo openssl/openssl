@@ -1698,16 +1698,11 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             goto end;
     }
 
-    if (strcmp(startdate, "today") == 0)
-        X509_gmtime_adj(X509_get_notBefore(ret), 0);
-    else
-        ASN1_TIME_set_string(X509_get_notBefore(ret), startdate);
+    if (!set_cert_times(ret, startdate, enddate, days))
+        goto end;
 
-    if (enddate == NULL)
-        X509_time_adj_ex(X509_get_notAfter(ret), days, 0, NULL);
-    else {
+    if (enddate != NULL) {
         int tdays;
-        ASN1_TIME_set_string(X509_get_notAfter(ret), enddate);
         ASN1_TIME_diff(&tdays, NULL, NULL, X509_get_notAfter(ret));
         days = tdays;
     }
