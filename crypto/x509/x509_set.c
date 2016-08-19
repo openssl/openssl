@@ -71,14 +71,14 @@ int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm)
     return (in != NULL);
 }
 
-int X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
+int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
 {
     if (x == NULL)
         return 0;
     return x509_set1_time(&x->cert_info.validity.notBefore, tm);
 }
 
-int X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
+int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
 {
     if (x == NULL)
         return 0;
@@ -109,7 +109,18 @@ long X509_get_version(const X509 *x)
     return ASN1_INTEGER_get(x->cert_info.version);
 }
 
-ASN1_TIME * X509_get_notBefore(const X509 *x)
+const ASN1_TIME *X509_get0_notBefore(const X509 *x)
+{
+    return x->cert_info.validity.notBefore;
+}
+
+const ASN1_TIME *X509_get0_notAfter(const X509 *x)
+{
+    return x->cert_info.validity.notAfter;
+}
+
+#if OPENSSL_API_COMPAT < 0x10100000L
+ASN1_TIME *X509_get_notBefore(const X509 *x)
 {
     return x->cert_info.validity.notBefore;
 }
@@ -118,6 +129,7 @@ ASN1_TIME *X509_get_notAfter(const X509 *x)
 {
     return x->cert_info.validity.notAfter;
 }
+#endif
 
 int X509_get_signature_type(const X509 *x)
 {

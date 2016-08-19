@@ -2604,7 +2604,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
             goto err;
     }
 
-    if (!X509_set_notBefore(x, tm))
+    if (!X509_set1_notBefore(x, tm))
         goto err;
 
     if (enddate == NULL) {
@@ -2614,7 +2614,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
             goto err;
     }
 
-    if (!X509_set_notAfter(x, tm))
+    if (!X509_set1_notAfter(x, tm))
         goto err;
 
     rv = 1;

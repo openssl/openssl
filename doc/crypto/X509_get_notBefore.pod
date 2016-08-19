@@ -2,60 +2,67 @@
 
 =head1 NAME
 
-X509_get_notBefore, X509_get_notAfter, X509_set_notBefore,
-X509_set_notAfter, X509_CRL_get_lastUpdate, X509_CRL_get_nextUpdate,
-X509_CRL_set_lastUpdate, X509_CRL_set_nextUpdate - get or set certificate
-or CRL dates
+X509_get0_notBefore, X509_get_notBefore, X509_get0_notAfter, X509_get_notAfter,
+X509_set1_notBefore, X509_set1_notAfter, X509_CRL_get0_lastUpdate,
+X509_CRL_get0_nextUpdate, X509_CRL_set1_lastUpdate,
+X509_CRL_set1_nextUpdate - get or set certificate or CRL dates
 
 =head1 SYNOPSIS
 
  #include <openssl/x509.h>
 
+ const ASN1_TIME *X509_get0_notBefore(const X509 *x);
+ const ASN1_TIME *X509_get0_notAfter(const X509 *x);
+
  ASN1_TIME *X509_get_notBefore(const X509 *x);
  ASN1_TIME *X509_get_notAfter(const X509 *x);
 
- int X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
- int X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
+ int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
+ int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm);
 
- ASN1_TIME *X509_CRL_get_lastUpdate(const X509_CRL *crl);
- ASN1_TIME *X509_CRL_get_nextUpdate(const X509_CRL *crl);
+ const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
+ const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl);
 
- int X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
- int X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
+ int X509_CRL_set1_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
+ int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 
 =head1 DESCRIPTION
 
-X509_get_notBefore() and X509_get_notAfter() return the B<notBefore>
+X509_get0_notBefore() and X509_get0_notAfter() return the B<notBefore>
 and B<notAfter> fields of certificate B<x> respectively. The value
 returned is an internal pointer which must not be freed up after
 the call.
 
-X509_set_notBefore() and X509_set_notAfter() set the B<notBefore>
+X509_get_notBefore() and X509_get_notAfter() are similar to
+X509_get0_notBefore() and X509_get0_notAfter() except they do not
+return constant values. They are deprecated in OpenSSL 1.1.0
+
+X509_set1_notBefore() and X509_set1_notAfter() set the B<notBefore>
 and B<notAfter> fields of B<x> to B<tm>. Ownership of the passed
 parameter B<tm> is not transferred by these functions so it must
 be freed up after the call.
 
-X509_CRL_get_lastUpdate() and X509_CRL_get_nextUpdate() return the
+X509_CRL_get0_lastUpdate() and X509_CRL_get0_nextUpdate() return the
 B<lastUpdate> and B<nextUpdate> fields of B<crl>. The value
 returned is an internal pointer which must not be freed up after
 the call. If the B<nextUpdate> field is absent from B<crl> then
 B<NULL> is returned.
 
-X509_CRL_set_lastUpdate() and X509_CRL_set_nextUpdate() set the B<lastUpdate>
+X509_CRL_set1_lastUpdate() and X509_CRL_set1_nextUpdate() set the B<lastUpdate>
 and B<nextUpdate> fields of B<crl> to B<tm>. Ownership of the passed parameter
 B<tm> is not transferred by these functions so it must be freed up after the
 call.
 
 =head1 RETURN VALUES
 
-X509_get_notBefore(), X509_get_notAfter() and X509_CRL_get_lastUpdate()
+X509_get0_notBefore(), X509_get0_notAfter() and X509_CRL_get0_lastUpdate()
 return a pointer to an B<ASN1_TIME> structure.
 
-X509_CRL_get_lastUpdate() return a pointer to an B<ASN1_TIME> structure
+X509_CRL_get0_lastUpdate() return a pointer to an B<ASN1_TIME> structure
 or NULL if the B<lastUpdate> field is absent.
 
-X509_set_notBefore(), X509_set_notAfter(), X509_CRL_set_lastUpdate() and
-X509_CRL_set_nextUpdate() return 1 for success or 0 for failure.
+X509_set1_notBefore(), X509_set1_notAfter(), X509_CRL_set1_lastUpdate() and
+X509_CRL_set1_nextUpdate() return 1 for success or 0 for failure.
 
 =head1 SEE ALSO
 
@@ -79,6 +86,9 @@ L<X509_verify_cert(3)>
 =head1 HISTORY
 
 These functions are available in all versions of OpenSSL.
+
+X509_get_notBefore() and X509_get_notAfter() were deprecated in OpenSSL
+1.1.0
 
 =head1 COPYRIGHT
 

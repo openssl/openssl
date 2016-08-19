@@ -622,13 +622,22 @@ int X509_set_issuer_name(X509 *x, X509_NAME *name);
 X509_NAME *X509_get_issuer_name(const X509 *a);
 int X509_set_subject_name(X509 *x, X509_NAME *name);
 X509_NAME *X509_get_subject_name(const X509 *a);
-ASN1_TIME * X509_get_notBefore(const X509 *x);
-int X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
-ASN1_TIME *X509_get_notAfter(const X509 *x);
-int X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
+const ASN1_TIME * X509_get0_notBefore(const X509 *x);
+DEPRECATEDIN_1_1_0(ASN1_TIME *X509_get_notBefore(const X509 *x))
+int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
+const ASN1_TIME *X509_get0_notAfter(const X509 *x);
+DEPRECATEDIN_1_1_0(ASN1_TIME *X509_get_notAfter(const X509 *x))
+int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm);
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 int X509_up_ref(X509 *x);
 int X509_get_signature_type(const X509 *x);
+
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define X509_set_notBefore X509_set1_notBefore
+#  define X509_set_notAfter X509_set1_notAfter
+#endif
+
+
 /*
  * This one is only used so that a binary form can output, as in
  * i2d_X509_NAME(X509_get_X509_PUBKEY(x),&buf)
@@ -682,14 +691,21 @@ int X509_REQ_add1_attr_by_txt(X509_REQ *req,
 
 int X509_CRL_set_version(X509_CRL *x, long version);
 int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name);
-int X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
-int X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
+int X509_CRL_set1_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
+int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
 int X509_CRL_up_ref(X509_CRL *crl);
 
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define X509_CRL_set_lastUpdate X509_CRL_set1_lastUpdate
+#  define X509_CRL_set_nextUpdate X509_CRL_set1_nextUpdate
+#endif
+
 long X509_CRL_get_version(const X509_CRL *crl);
-ASN1_TIME *X509_CRL_get_lastUpdate(const X509_CRL *crl);
-ASN1_TIME *X509_CRL_get_nextUpdate(const X509_CRL *crl);
+const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
+const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl);
+DEPRECATEDIN_1_1_0(ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl))
+DEPRECATEDIN_1_1_0(ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl))
 X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl);
 const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
 STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
