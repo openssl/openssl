@@ -264,3 +264,4 @@ struct x509_object_st {
 };
 
 int a2i_ipadd(unsigned char *ipout, const char *ipasc);
+int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);

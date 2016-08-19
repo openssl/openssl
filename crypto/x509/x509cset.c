@@ -35,36 +35,16 @@ int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name)
 
 int X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
 {
-    ASN1_TIME *in;
-
     if (x == NULL)
-        return (0);
-    in = x->crl.lastUpdate;
-    if (in != tm) {
-        in = ASN1_STRING_dup(tm);
-        if (in != NULL) {
-            ASN1_TIME_free(x->crl.lastUpdate);
-            x->crl.lastUpdate = in;
-        }
-    }
-    return (in != NULL);
+        return 0;
+    return x509_set1_time(&x->crl.lastUpdate, tm);
 }
 
 int X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
 {
-    ASN1_TIME *in;
-
     if (x == NULL)
-        return (0);
-    in = x->crl.nextUpdate;
-    if (in != tm) {
-        in = ASN1_STRING_dup(tm);
-        if (in != NULL) {
-            ASN1_TIME_free(x->crl.nextUpdate);
-            x->crl.nextUpdate = in;
-        }
-    }
-    return (in != NULL);
+        return 0;
+    return x509_set1_time(&x->crl.nextUpdate, tm);
 }
 
 int X509_CRL_sort(X509_CRL *c)
