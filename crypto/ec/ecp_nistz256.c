@@ -335,19 +335,16 @@ static void ecp_nistz256_point_add(P256_POINT *r,
     const BN_ULONG *in2_y = b->Y;
     const BN_ULONG *in2_z = b->Z;
 
-    /* We encode infinity as (0,0), which is not on the curve,
-     * so it is OK. */
-    in1infty = (in1_x[0] | in1_x[1] | in1_x[2] | in1_x[3] |
-                in1_y[0] | in1_y[1] | in1_y[2] | in1_y[3]);
+    /*
+     * Infinity in encoded as (,,0)
+     */
+    in1infty = (in1_z[0] | in1_z[1] | in1_z[2] | in1_z[3]);
     if (P256_LIMBS == 8)
-        in1infty |= (in1_x[4] | in1_x[5] | in1_x[6] | in1_x[7] |
-                     in1_y[4] | in1_y[5] | in1_y[6] | in1_y[7]);
+        in1infty |= (in1_z[4] | in1_z[5] | in1_z[6] | in1_z[7]);
 
-    in2infty = (in2_x[0] | in2_x[1] | in2_x[2] | in2_x[3] |
-                in2_y[0] | in2_y[1] | in2_y[2] | in2_y[3]);
+    in2infty = (in2_z[0] | in2_z[1] | in2_z[2] | in2_z[3]);
     if (P256_LIMBS == 8)
-        in2infty |= (in2_x[4] | in2_x[5] | in2_x[6] | in2_x[7] |
-                     in2_y[4] | in2_y[5] | in2_y[6] | in2_y[7]);
+        in2infty |= (in2_z[4] | in2_z[5] | in2_z[6] | in2_z[7]);
 
     in1infty = is_zero(in1infty);
     in2infty = is_zero(in2infty);
@@ -436,15 +433,16 @@ static void ecp_nistz256_point_add_affine(P256_POINT *r,
     const BN_ULONG *in2_y = b->Y;
 
     /*
-     * In affine representation we encode infty as (0,0), which is not on the
-     * curve, so it is OK
+     * Infinity in encoded as (,,0)
      */
-    in1infty = (in1_x[0] | in1_x[1] | in1_x[2] | in1_x[3] |
-                in1_y[0] | in1_y[1] | in1_y[2] | in1_y[3]);
+    in1infty = (in1_z[0] | in1_z[1] | in1_z[2] | in1_z[3]);
     if (P256_LIMBS == 8)
-        in1infty |= (in1_x[4] | in1_x[5] | in1_x[6] | in1_x[7] |
-                     in1_y[4] | in1_y[5] | in1_y[6] | in1_y[7]);
+        in1infty |= (in1_z[4] | in1_z[5] | in1_z[6] | in1_z[7]);
 
+    /*
+     * In affine representation we encode infinity as (0,0), which is
+     * not on the curve, so it is OK
+     */
     in2infty = (in2_x[0] | in2_x[1] | in2_x[2] | in2_x[3] |
                 in2_y[0] | in2_y[1] | in2_y[2] | in2_y[3]);
     if (P256_LIMBS == 8)
@@ -1273,6 +1271,8 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
             } else
 #endif
             {
+                BN_ULONG infty;
+
                 /* First window */
                 wvalue = (p_str[0] << 1) & mask;
                 idx += window_size;
@@ -1285,7 +1285,30 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
                 ecp_nistz256_neg(p.p.Z, p.p.Y);
                 copy_conditional(p.p.Y, p.p.Z, wvalue & 1);
 
-                memcpy(p.p.Z, ONE, sizeof(ONE));
+                /*
+                 * Since affine infinity is encoded as (0,0) and
+                 * Jacobian ias (,,0), we need to harmonize them
+                 * by assigning "one" or zero to Z.
+                 */
+                infty = (p.p.X[0] | p.p.X[1] | p.p.X[2] | p.p.X[3] |
+                         p.p.Y[0] | p.p.Y[1] | p.p.Y[2] | p.p.Y[3]);
+                if (P256_LIMBS == 8)
+                    infty |= (p.p.X[4] | p.p.X[5] | p.p.X[6] | p.p.X[7] |
+                              p.p.Y[4] | p.p.Y[5] | p.p.Y[6] | p.p.Y[7]);
+
+                infty = 0 - is_zero(infty);
+                infty = ~infty;
+
+                p.p.Z[0] = ONE[0] & infty;
+                p.p.Z[1] = ONE[1] & infty;
+                p.p.Z[2] = ONE[2] & infty;
+                p.p.Z[3] = ONE[3] & infty;
+                if (P256_LIMBS == 8) {
+                    p.p.Z[4] = ONE[4] & infty;
+                    p.p.Z[5] = ONE[5] & infty;
+                    p.p.Z[6] = ONE[6] & infty;
+                    p.p.Z[7] = ONE[7] & infty;
+                }
 
                 for (i = 1; i < 37; i++) {
                     unsigned int off = (idx - 1) / 8;
