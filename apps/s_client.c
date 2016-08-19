@@ -555,7 +555,7 @@ typedef enum OPTION_choice {
 #ifndef OPENSSL_NO_CT
     OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
-    OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME,
+    OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME
 } OPTION_CHOICE;
 
 OPTIONS s_client_options[] = {
