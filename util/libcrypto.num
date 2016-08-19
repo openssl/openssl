@@ -1106,7 +1106,7 @@ UI_method_get_prompt_constructor        1097	1_1_0	EXIST::FUNCTION:UI
 ASN1_NULL_it                            1098	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ASN1_NULL_it                            1098	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 X509_REQ_get_pubkey                     1099	1_1_0	EXIST::FUNCTION:
-X509_CRL_set_nextUpdate                 1100	1_1_0	EXIST::FUNCTION:
+X509_CRL_set1_nextUpdate                1100	1_1_0	EXIST::FUNCTION:
 EVP_des_ede3_cfb64                      1101	1_1_0	EXIST::FUNCTION:DES
 BN_to_ASN1_INTEGER                      1102	1_1_0	EXIST::FUNCTION:
 EXTENDED_KEY_USAGE_free                 1103	1_1_0	EXIST::FUNCTION:
@@ -2564,7 +2564,7 @@ DSA_sign                                2527	1_1_0	EXIST::FUNCTION:DSA
 RAND_egd                                2528	1_1_0	EXIST::FUNCTION:EGD
 ASN1_d2i_bio                            2529	1_1_0	EXIST::FUNCTION:
 X509_REQ_digest                         2531	1_1_0	EXIST::FUNCTION:
-X509_set_notAfter                       2532	1_1_0	EXIST::FUNCTION:
+X509_set1_notAfter                      2532	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_type                         2533	1_1_0	EXIST::FUNCTION:
 ASN1_TYPE_set_octetstring               2534	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_free                  2535	1_1_0	EXIST::FUNCTION:
@@ -3303,7 +3303,7 @@ EVP_des_ede3_wrap                       3252	1_1_0	EXIST::FUNCTION:DES
 GENERAL_SUBTREE_it                      3253	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 GENERAL_SUBTREE_it                      3253	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 EVP_read_pw_string_min                  3254	1_1_0	EXIST::FUNCTION:UI
-X509_set_notBefore                      3255	1_1_0	EXIST::FUNCTION:
+X509_set1_notBefore                     3255	1_1_0	EXIST::FUNCTION:
 MD4                                     3256	1_1_0	EXIST::FUNCTION:MD4
 EVP_PKEY_CTX_dup                        3257	1_1_0	EXIST::FUNCTION:
 ENGINE_setup_bsd_cryptodev              3258	1_1_0	EXIST:__FreeBSD__:FUNCTION:DEPRECATEDIN_1_1_0,ENGINE
@@ -3741,7 +3741,7 @@ OCSP_REVOKEDINFO_free                   3693	1_1_0	EXIST::FUNCTION:OCSP
 EVP_CIPHER_CTX_encrypting               3694	1_1_0	EXIST::FUNCTION:
 EC_KEY_can_sign                         3695	1_1_0	EXIST::FUNCTION:EC
 PEM_write_bio_RSAPublicKey              3696	1_1_0	EXIST::FUNCTION:RSA
-X509_CRL_set_lastUpdate                 3697	1_1_0	EXIST::FUNCTION:
+X509_CRL_set1_lastUpdate                3697	1_1_0	EXIST::FUNCTION:
 OCSP_sendreq_nbio                       3698	1_1_0	EXIST::FUNCTION:OCSP
 PKCS8_encrypt                           3699	1_1_0	EXIST::FUNCTION:
 i2d_PKCS7_fp                            3700	1_1_0	EXIST::FUNCTION:STDIO
