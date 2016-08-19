@@ -692,8 +692,8 @@ $rules.=&do_copy_rule("\$(INCL_D)",$header,"");
 $defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)","");
 $rules.=&do_copy_rule("\$(INCO_D)",$exheader,"");
 
-$defs.=&do_defs("T_OBJ",$test,"\$(OBJ_D)",$obj);
-$rules.=&do_compile_rule("\$(OBJ_D)",$test,"\$(APP_CFLAGS)");
+$defs.=&do_defs("T_OBJ","$test test${o}ssltestlib","\$(OBJ_D)",$obj);
+$rules.=&do_compile_rule("\$(OBJ_D)","$test test${o}ssltestlib","\$(APP_CFLAGS)");
 
 $defs.=&do_defs("E_OBJ",$e_exe,"\$(OBJ_D)",$obj);
 $rules.=&do_compile_rule("\$(OBJ_D)",$e_exe,'-DMONOLITH $(APP_CFLAGS)');
@@ -764,6 +764,7 @@ foreach (split(/\s+/,$test))
 	{
 	$t=&bname($_);
 	$tt="\$(OBJ_D)${o}$t${obj}";
+	$tt.=" \$(OBJ_D)${o}ssltestlib${obj}" if $t eq "dtlstest";
 	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
 	}
 
