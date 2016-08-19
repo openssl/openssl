@@ -129,11 +129,11 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
             goto err;
         if (BIO_write(bp, "            Not Before: ", 24) <= 0)
             goto err;
-        if (!ASN1_TIME_print(bp, X509_get_notBefore(x)))
+        if (!ASN1_TIME_print(bp, X509_get0_notBefore(x)))
             goto err;
         if (BIO_write(bp, "\n            Not After : ", 25) <= 0)
             goto err;
-        if (!ASN1_TIME_print(bp, X509_get_notAfter(x)))
+        if (!ASN1_TIME_print(bp, X509_get0_notAfter(x)))
             goto err;
         if (BIO_write(bp, "\n", 1) <= 0)
             goto err;

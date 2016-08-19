@@ -285,13 +285,13 @@ int crl_main(int argc, char **argv)
 #endif
             if (lastupdate == i) {
                 BIO_printf(bio_out, "lastUpdate=");
-                ASN1_TIME_print(bio_out, X509_CRL_get_lastUpdate(x));
+                ASN1_TIME_print(bio_out, X509_CRL_get0_lastUpdate(x));
                 BIO_printf(bio_out, "\n");
             }
             if (nextupdate == i) {
                 BIO_printf(bio_out, "nextUpdate=");
-                if (X509_CRL_get_nextUpdate(x))
-                    ASN1_TIME_print(bio_out, X509_CRL_get_nextUpdate(x));
+                if (X509_CRL_get0_nextUpdate(x))
+                    ASN1_TIME_print(bio_out, X509_CRL_get0_nextUpdate(x));
                 else
                     BIO_printf(bio_out, "NONE");
                 BIO_printf(bio_out, "\n");

@@ -1100,13 +1100,13 @@ end_of_options:
         if (tmptm == NULL)
             goto end;
         X509_gmtime_adj(tmptm, 0);
-        X509_CRL_set_lastUpdate(crl, tmptm);
+        X509_CRL_set1_lastUpdate(crl, tmptm);
         if (!X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
                               NULL)) {
             BIO_puts(bio_err, "error setting CRL nextUpdate\n");
             goto end;
         }
-        X509_CRL_set_nextUpdate(crl, tmptm);
+        X509_CRL_set1_nextUpdate(crl, tmptm);
 
         ASN1_TIME_free(tmptm);
 
@@ -1377,7 +1377,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 {
     X509_NAME *name = NULL, *CAname = NULL, *subject = NULL, *dn_subject =
         NULL;
-    ASN1_UTCTIME *tm;
+    const ASN1_TIME *tm;
     ASN1_STRING *str, *str2;
     ASN1_OBJECT *obj;
     X509 *ret = NULL;
@@ -1703,7 +1703,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     if (enddate != NULL) {
         int tdays;
-        ASN1_TIME_diff(&tdays, NULL, NULL, X509_get_notAfter(ret));
+        ASN1_TIME_diff(&tdays, NULL, NULL, X509_get0_notAfter(ret));
         days = tdays;
     }
 
@@ -1789,7 +1789,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     }
 
     BIO_printf(bio_err, "Certificate is to be certified until ");
-    ASN1_TIME_print(bio_err, X509_get_notAfter(ret));
+    ASN1_TIME_print(bio_err, X509_get0_notAfter(ret));
     if (days)
         BIO_printf(bio_err, " (%ld days)", days);
     BIO_printf(bio_err, "\n");
@@ -1822,7 +1822,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     /* We now just add it to the database */
     row[DB_type] = OPENSSL_strdup("V");
-    tm = X509_get_notAfter(ret);
+    tm = X509_get0_notAfter(ret);
     row[DB_exp_date] = app_malloc(tm->length + 1, "row expdate");
     memcpy(row[DB_exp_date], tm->data, tm->length);
     row[DB_exp_date][tm->length] = '\0';
@@ -2021,7 +2021,7 @@ static int check_time_format(const char *str)
 
 static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 {
-    ASN1_UTCTIME *tm = NULL;
+    const ASN1_TIME *tm = NULL;
     char *row[DB_NUMBER], **rrow, **irow;
     char *rev_str = NULL;
     BIGNUM *bn = NULL;
@@ -2054,7 +2054,7 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 
         /* We now just add it to the database */
         row[DB_type] = OPENSSL_strdup("V");
-        tm = X509_get_notAfter(x509);
+        tm = X509_get0_notAfter(x509);
         row[DB_exp_date] = app_malloc(tm->length + 1, "row exp_data");
         memcpy(row[DB_exp_date], tm->data, tm->length);
         row[DB_exp_date][tm->length] = '\0';

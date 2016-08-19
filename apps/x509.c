@@ -746,11 +746,11 @@ int x509_main(int argc, char **argv)
                 X509_print_ex(out, x, nmflag, certflag);
             } else if (startdate == i) {
                 BIO_puts(out, "notBefore=");
-                ASN1_TIME_print(out, X509_get_notBefore(x));
+                ASN1_TIME_print(out, X509_get0_notBefore(x));
                 BIO_puts(out, "\n");
             } else if (enddate == i) {
                 BIO_puts(out, "notAfter=");
-                ASN1_TIME_print(out, X509_get_notAfter(x));
+                ASN1_TIME_print(out, X509_get0_notAfter(x));
                 BIO_puts(out, "\n");
             } else if (fingerprint == i) {
                 int j;
@@ -837,7 +837,7 @@ int x509_main(int argc, char **argv)
     if (checkend) {
         time_t tcheck = time(NULL) + checkoffset;
 
-        if (X509_cmp_time(X509_get_notAfter(x), &tcheck) < 0) {
+        if (X509_cmp_time(X509_get0_notAfter(x), &tcheck) < 0) {
             BIO_printf(out, "Certificate will expire\n");
             ret = 1;
         } else {
