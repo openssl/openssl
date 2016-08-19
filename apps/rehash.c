@@ -194,7 +194,7 @@ static int handle_symlink(const char *filename, const char *fullpath)
  */
 static int do_file(const char *filename, const char *fullpath, enum Hash h)
 {
-    STACK_OF (X509_INFO) * inf = NULL;
+    STACK_OF(X509_INFO) *inf = NULL;
     X509_INFO *x;
     X509_NAME *name = NULL;
     BIO *b;
@@ -473,4 +473,4 @@ int rehash_main(int argc, char **argv)
     return (1);
 }
 
-#endif        /* defined(OPENSSL_SYS_UNIX) || * defined(__APPLE__) */
+#endif        /* defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) */

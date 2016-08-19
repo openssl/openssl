@@ -44,6 +44,17 @@
 #define DEFAULT_KEY_LENGTH      2048
 #define MIN_KEY_LENGTH          512
 
+/* Is this a separator? Always in ASCII */
+#define ASCSEPARATOR(c) ((c) == ':' || (c) == ',' || (c) == '.')
+
+/* Charset-dependant version of the separator test. */
+#ifndef CHARSET_EBCDIC
+#define SEPARATOR(c) ASCSEPARATOR(c)
+#else
+#define SEPARATOR(c) \
+    ((c) == os_toascii[':'] || (c) == os_toascii[','] || (c) == os_toascii['.'])
+#endif
+
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *dn, int mutlirdn,
                     int attribs, unsigned long chtype);
 static int build_subject(X509_REQ *req, const char *subj, unsigned long chtype,
@@ -946,7 +957,7 @@ static int prompt_info(X509_REQ *req,
              * instances
              */
             for (p = v->name; *p; p++)
-                if (*p == ':' || *p == ',' || *p == '.') {
+                if (ASCSEPARATOR(*p)) {
                     p++;
                     if (*p)
                         type = p;
@@ -1085,12 +1096,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
          * Skip past any leading X. X: X, etc to allow for multiple instances
          */
         for (p = v->name; *p; p++) {
-#ifndef CHARSET_EBCDIC
-            spec_char = *p == ':' || *p == ',' || *p == '.';
-#else
-            spec_char = *p == os_toascii[':'] || *p == os_toascii[',']
-                         || *p == os_toascii['.'];
-#endif
+            spec_char = SEPARATOR(*p);
             if (spec_char) {
                 p++;
                 if (*p)

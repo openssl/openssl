@@ -348,7 +348,8 @@ int ecparam_main(int argc, char **argv)
         print_bignum_var(out, ec_gen, "ec_gen", len, buffer);
         print_bignum_var(out, ec_order, "ec_order", len, buffer);
         print_bignum_var(out, ec_cofactor, "ec_cofactor", len, buffer);
-        BIO_printf(out, "    int ok = 0;\n"
+        BIO_printf(out,
+                   "    int ok = 0;\n"
                    "    EC_GROUP *group = NULL;\n"
                    "    EC_POINT *point = NULL;\n"
                    "    BIGNUM *t1 = NULL;\n"

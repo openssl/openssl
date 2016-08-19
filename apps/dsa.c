@@ -229,9 +229,9 @@ int dsa_main(int argc, char **argv)
             }
             assert(private);
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
-        } else if (pubin || pubout)
+        } else if (pubin || pubout) {
             i = i2b_PublicKey_bio(out, pk);
-        else {
+        } else {
             assert(private);
             i = i2b_PrivateKey_bio(out, pk);
         }

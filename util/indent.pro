@@ -587,6 +587,7 @@
 -T i2d_of_void
 -T int_dhx942_dh
 -T nid_triple
+-T ossl_ssize_t
 -T pem_password_cb
 -T pitem
 -T piterator

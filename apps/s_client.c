@@ -453,7 +453,7 @@ static ossl_ssize_t checked_uint8(const char **inptr, void *out)
 struct tlsa_field {
     void *var;
     const char *name;
-     ossl_ssize_t(*parser) (const char **, void *);
+     ossl_ssize_t (*parser)(const char **, void *);
 };
 
 static int tlsa_import_rr(SSL *con, const char *rrdata)
@@ -1951,16 +1951,16 @@ int s_client_main(int argc, char **argv)
     case PROTO_TELNET:
         {
             static const unsigned char tls_do[] = {
-                /* IAC    DO   START_TLS */
-                255, 253, 46
+                /* IAC  DO   START_TLS */
+                   255, 253, 46
             };
             static const unsigned char tls_will[] = {
                 /* IAC  WILL START_TLS */
-                255, 251, 46
+                   255, 251, 46
             };
             static const unsigned char tls_follows[] = {
                 /* IAC  SB   START_TLS FOLLOWS IAC  SE */
-                255, 250, 46, 1, 255, 240
+                   255, 250, 46,       1,      255, 240
             };
             int bytes;
 
