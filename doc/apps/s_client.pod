@@ -24,6 +24,7 @@ B<openssl> B<s_client>
 [B<-no-CApath>]
 [B<-dane_tlsa_domain domain>]
 [B<-dane_tlsa_rrdata rrdata>]
+[B<-dane_ee_no_namechecks>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -224,6 +225,24 @@ whitespace is ignored in the associated data field.  For example:
   Verified peername: smtp.example.com
   DANE TLSA 2 1 1 ...ee12d2cc90180517616e8a18 matched TA certificate at depth 1
   ...
+
+=item B<-dane_ee_no_namechecks>
+
+This disables server name checks when authenticating via DANE-EE(3) TLSA
+records.
+For some applications, primarily web browsers, it is not safe to disable name
+checks due to "unknown key share" attacks, in which a malicious server can
+convince a client that a connection to a victim server is instead a secure
+connection to the malicious server.
+The malicious server may then be able to violate cross-origin scripting
+restrictions.
+Thus, despite the text of RFC7671, name checks are by default enabled for
+DANE-EE(3) TLSA records, and can be disabled in applications where it is safe
+to do so.
+In particular, SMTP and XMPP clients should set this option as SRV and MX
+records already make it possible for a remote domain to redirect client
+connections to any server of its choice, and in any case SMTP and XMPP clients
+do not execute scripts downloaded from remote servers.
 
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
 B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
