@@ -2589,3 +2589,37 @@ void corrupt_signature(const ASN1_STRING *signature)
         unsigned char *s = signature->data;
         s[signature->length - 1] ^= 0x1;
 }
+
+int set_cert_times(X509 *x, const char *startdate, const char *enddate,
+                   int days)
+{
+    int rv = 0;
+    ASN1_TIME *tm = ASN1_TIME_new();
+    if (tm == NULL)
+        goto err;
+    if (startdate == NULL || strcmp(startdate, "today") == 0) {
+        if (!X509_gmtime_adj(tm, 0))
+            goto err;
+    } else if (!ASN1_TIME_set_string(tm, startdate)) {
+            goto err;
+    }
+
+    if (!X509_set_notBefore(x, tm))
+        goto err;
+
+    if (enddate == NULL) {
+        if (!X509_time_adj_ex(tm, days, 0, NULL))
+            goto err;
+    } else if (!ASN1_TIME_set_string(tm, enddate)) {
+            goto err;
+    }
+
+    if (!X509_set_notAfter(x, tm))
+        goto err;
+
+    rv = 1;
+
+    err:
+    ASN1_TIME_free(tm);
+    return rv;
+}

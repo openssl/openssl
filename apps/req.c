@@ -616,9 +616,7 @@ int req_main(int argc, char **argv)
 
             if (!X509_set_issuer_name(x509ss, X509_REQ_get_subject_name(req)))
                 goto end;
-            if (!X509_gmtime_adj(X509_get_notBefore(x509ss), 0))
-                goto end;
-            if (!X509_time_adj_ex(X509_get_notAfter(x509ss), days, 0, NULL))
+            if (!set_cert_times(x509ss, NULL, NULL, days))
                 goto end;
             if (!X509_set_subject_name
                 (x509ss, X509_REQ_get_subject_name(req)))
