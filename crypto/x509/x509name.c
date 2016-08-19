@@ -82,7 +82,7 @@ int X509_NAME_get_index_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, int last
     return (-1);
 }
 
-X509_NAME_ENTRY *X509_NAME_get_entry(X509_NAME *name, int loc)
+X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc)
 {
     if (name == NULL || sk_X509_NAME_ENTRY_num(name->entries) <= loc
         || loc < 0)
