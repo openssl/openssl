@@ -1405,14 +1405,14 @@ for ($i=0;$i<7;$i++) {
 	&mov	("edx",&DWP($i+12,"esi"));
 	&mov	(&DWP($i+0,"edi"),"eax");
 	&mov	(&DWP(32*18+12,"esp"),"ebp")	if ($i==0);
-	&mov	("ebp","eax")			if ($i==0);
-	&or	("ebp","eax")			if ($i!=0 && $i<64);
+	&mov	("ebp","eax")			if ($i==64);
+	&or	("ebp","eax")			if ($i>64);
 	&mov	(&DWP($i+4,"edi"),"ebx");
-	&or	("ebp","ebx")			if ($i<64);
+	&or	("ebp","ebx")			if ($i>=64);
 	&mov	(&DWP($i+8,"edi"),"ecx");
-	&or	("ebp","ecx")			if ($i<64);
+	&or	("ebp","ecx")			if ($i>=64);
 	&mov	(&DWP($i+12,"edi"),"edx");
-	&or	("ebp","edx")			if ($i<64);
+	&or	("ebp","edx")			if ($i>=64);
     }
 	&xor	("eax","eax");
 	&mov	("esi",&wparam(1));
@@ -1428,14 +1428,14 @@ for ($i=0;$i<7;$i++) {
 	&mov	("ecx",&DWP($i+8,"esi"));
 	&mov	("edx",&DWP($i+12,"esi"));
 	&mov	(&DWP($i+0,"edi"),"eax");
-	&mov	("ebp","eax")			if ($i==0);
-	&or	("ebp","eax")			if ($i!=0 && $i<64);
+	&mov	("ebp","eax")			if ($i==64);
+	&or	("ebp","eax")			if ($i>64);
 	&mov	(&DWP($i+4,"edi"),"ebx");
-	&or	("ebp","ebx")			if ($i<64);
+	&or	("ebp","ebx")			if ($i>=64);
 	&mov	(&DWP($i+8,"edi"),"ecx");
-	&or	("ebp","ecx")			if ($i<64);
+	&or	("ebp","ecx")			if ($i>=64);
 	&mov	(&DWP($i+12,"edi"),"edx");
-	&or	("ebp","edx")			if ($i<64);
+	&or	("ebp","edx")			if ($i>=64);
     }
 	&xor	("eax","eax");
 	&sub	("eax","ebp");
@@ -1684,14 +1684,14 @@ for ($i=0;$i<7;$i++) {
 	&mov	("edx",&DWP($i+12,"esi"));
 	&mov	(&DWP($i+0,"edi"),"eax");
 	&mov	(&DWP(32*15+8,"esp"),"ebp")	if ($i==0);
-	&mov	("ebp","eax")			if ($i==0);
-	&or	("ebp","eax")			if ($i!=0 && $i<64);
+	&mov	("ebp","eax")			if ($i==64);
+	&or	("ebp","eax")			if ($i>64);
 	&mov	(&DWP($i+4,"edi"),"ebx");
-	&or	("ebp","ebx")			if ($i<64);
+	&or	("ebp","ebx")			if ($i>=64);
 	&mov	(&DWP($i+8,"edi"),"ecx");
-	&or	("ebp","ecx")			if ($i<64);
+	&or	("ebp","ecx")			if ($i>=64);
 	&mov	(&DWP($i+12,"edi"),"edx");
-	&or	("ebp","edx")			if ($i<64);
+	&or	("ebp","edx")			if ($i>=64);
     }
 	&xor	("eax","eax");
 	&mov	("esi",&wparam(2));

@@ -1405,8 +1405,12 @@ ecp_nistz256_point_add:
 	stmdb	sp!,{r0-r12,lr}		@ push from r0, unusual, but intentional
 	sub	sp,sp,#32*18+16
 
-	ldmia	$b_ptr!,{r4-r11}	@ copy in2
+	ldmia	$b_ptr!,{r4-r11}	@ copy in2_x
 	add	r3,sp,#$in2_x
+	stmia	r3!,{r4-r11}
+	ldmia	$b_ptr!,{r4-r11}	@ copy in2_y
+	stmia	r3!,{r4-r11}
+	ldmia	$b_ptr,{r4-r11}		@ copy in2_z
 	orr	r12,r4,r5
 	orr	r12,r12,r6
 	orr	r12,r12,r7
@@ -1414,18 +1418,6 @@ ecp_nistz256_point_add:
 	orr	r12,r12,r9
 	orr	r12,r12,r10
 	orr	r12,r12,r11
-	stmia	r3!,{r4-r11}
-	ldmia	$b_ptr!,{r4-r11}
-	orr	r12,r12,r4
-	orr	r12,r12,r5
-	orr	r12,r12,r6
-	orr	r12,r12,r7
-	orr	r12,r12,r8
-	orr	r12,r12,r9
-	orr	r12,r12,r10
-	orr	r12,r12,r11
-	stmia	r3!,{r4-r11}
-	ldmia	$b_ptr,{r4-r11}
 	cmp	r12,#0
 #ifdef	__thumb2__
 	it	ne
@@ -1434,8 +1426,12 @@ ecp_nistz256_point_add:
 	stmia	r3,{r4-r11}
 	str	r12,[sp,#32*18+8]	@ !in2infty
 
-	ldmia	$a_ptr!,{r4-r11}	@ copy in1
+	ldmia	$a_ptr!,{r4-r11}	@ copy in1_x
 	add	r3,sp,#$in1_x
+	stmia	r3!,{r4-r11}
+	ldmia	$a_ptr!,{r4-r11}	@ copy in1_y
+	stmia	r3!,{r4-r11}
+	ldmia	$a_ptr,{r4-r11}		@ copy in1_z
 	orr	r12,r4,r5
 	orr	r12,r12,r6
 	orr	r12,r12,r7
@@ -1443,18 +1439,6 @@ ecp_nistz256_point_add:
 	orr	r12,r12,r9
 	orr	r12,r12,r10
 	orr	r12,r12,r11
-	stmia	r3!,{r4-r11}
-	ldmia	$a_ptr!,{r4-r11}
-	orr	r12,r12,r4
-	orr	r12,r12,r5
-	orr	r12,r12,r6
-	orr	r12,r12,r7
-	orr	r12,r12,r8
-	orr	r12,r12,r9
-	orr	r12,r12,r10
-	orr	r12,r12,r11
-	stmia	r3!,{r4-r11}
-	ldmia	$a_ptr,{r4-r11}
 	cmp	r12,#0
 #ifdef	__thumb2__
 	it	ne
@@ -1684,8 +1668,12 @@ ecp_nistz256_point_add_affine:
 	stmdb	sp!,{r0-r12,lr}		@ push from r0, unusual, but intentional
 	sub	sp,sp,#32*15
 
-	ldmia	$a_ptr!,{r4-r11}	@ copy in1
+	ldmia	$a_ptr!,{r4-r11}	@ copy in1_x
 	add	r3,sp,#$in1_x
+	stmia	r3!,{r4-r11}
+	ldmia	$a_ptr!,{r4-r11}	@ copy in1_y
+	stmia	r3!,{r4-r11}
+	ldmia	$a_ptr,{r4-r11}		@ copy in1_z
 	orr	r12,r4,r5
 	orr	r12,r12,r6
 	orr	r12,r12,r7
@@ -1693,18 +1681,6 @@ ecp_nistz256_point_add_affine:
 	orr	r12,r12,r9
 	orr	r12,r12,r10
 	orr	r12,r12,r11
-	stmia	r3!,{r4-r11}
-	ldmia	$a_ptr!,{r4-r11}
-	orr	r12,r12,r4
-	orr	r12,r12,r5
-	orr	r12,r12,r6
-	orr	r12,r12,r7
-	orr	r12,r12,r8
-	orr	r12,r12,r9
-	orr	r12,r12,r10
-	orr	r12,r12,r11
-	stmia	r3!,{r4-r11}
-	ldmia	$a_ptr,{r4-r11}
 	cmp	r12,#0
 #ifdef	__thumb2__
 	it	ne
@@ -1713,7 +1689,7 @@ ecp_nistz256_point_add_affine:
 	stmia	r3,{r4-r11}
 	str	r12,[sp,#32*15+4]	@ !in1infty
 
-	ldmia	$b_ptr!,{r4-r11}	@ copy in2
+	ldmia	$b_ptr!,{r4-r11}	@ copy in2_x
 	add	r3,sp,#$in2_x
 	orr	r12,r4,r5
 	orr	r12,r12,r6
@@ -1723,7 +1699,7 @@ ecp_nistz256_point_add_affine:
 	orr	r12,r12,r10
 	orr	r12,r12,r11
 	stmia	r3!,{r4-r11}
-	ldmia	$b_ptr!,{r4-r11}
+	ldmia	$b_ptr!,{r4-r11}	@ copy in2_y
 	orr	r12,r12,r4
 	orr	r12,r12,r5
 	orr	r12,r12,r6
