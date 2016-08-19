@@ -44,6 +44,8 @@ my $no_npn = disabled("nextprotoneg");
 my $no_ct = disabled("ct");
 my $no_ec = disabled("ec");
 
+# Add your test here if the test conf.in generates test cases and/or
+# expectations dynamically based on the OpenSSL compile-time config.
 my %conf_dependent_tests = (
   "02-protocol-version.conf" => !$is_default_tls,
   "04-client_auth.conf" => !$is_default_tls,
@@ -52,7 +54,9 @@ my %conf_dependent_tests = (
   "11-dtls_resumption.conf" => !$is_default_dtls,
 );
 
-# Default is $no_tls but some tests have different skip conditions.
+# Add your test here if it should be skipped for some compile-time
+# configurations. Default is $no_tls but some tests have different skip
+# conditions.
 my %skip = (
   "07-dtls-protocol-version.conf" => $no_dtls,
   "08-npn.conf" => $no_tls || $no_npn,

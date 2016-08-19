@@ -10,23 +10,7 @@ harness generates the output files on the fly.
 
 However, for verification, we also include checked-in configuration outputs
 corresponding to the default configuration. These testcases live in
-`test/ssl-tests/*.conf` files. Therefore, whenever you're adding or updating a
-generated test, you should run
-
-```
-$ ./config
-$ cd test
-$ TOP=.. perl -I testlib/ generate_ssl_tests.pl ssl-tests/my.conf.in \
-  > ssl-tests/my.conf
-```
-
-where `my.conf.in` is your test input file.
-
-For example, to generate the test cases in `ssl-tests/01-simple.conf.in`, do
-
-```
-$ TOP=.. perl generate_ssl_tests.pl ssl-tests/01-simple.conf.in > ssl-tests/01-simple.conf
-```
+`test/ssl-tests/*.conf` files.
 
 For more details, see `ssl-tests/01-simple.conf.in` for an example.
 
@@ -206,7 +190,44 @@ client => {
 
 ## Adding a test to the test harness
 
-Add your configuration file to `test/recipes/80-test_ssl_new.t`.
+1. Add a new test configuration to `test/ssl-tests`, following the examples of
+   existing `*.conf.in` files (for example, `01-simple.conf.in`).
+
+2. Generate the generated `*.conf` test input file. You can do so by running
+   `generate_ssl_tests.pl`:
+
+```
+$ ./config
+$ cd test
+$ TOP=.. perl -I testlib/ generate_ssl_tests.pl ssl-tests/my.conf.in \
+  > ssl-tests/my.conf
+```
+
+where `my.conf.in` is your test input file.
+
+For example, to generate the test cases in `ssl-tests/01-simple.conf.in`, do
+
+```
+$ TOP=.. perl -I testlib/ generate_ssl_tests.pl ssl-tests/01-simple.conf.in > ssl-tests/01-simple.conf
+```
+
+Alternatively (hackish but simple), you can comment out
+
+```
+unlink glob $tmp_file;
+```
+
+in `test/recipes/80-test_ssl_new.t` and run
+
+```
+$ make TESTS=test_ssl_new test
+```
+
+This will save the generated output in a `*.tmp` file in the build directory.
+
+3. Update the number of tests planned in `test/recipes/80-test_ssl_new.t`. If
+   the test suite has any skip conditions, update those too (see
+   `test/recipes/80-test_ssl_new.t` for details).
 
 ## Running the tests with the test harness
 
