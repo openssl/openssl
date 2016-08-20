@@ -154,11 +154,6 @@ int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     if (*ppkey == NULL)
         return -1;
 
-    if (*ppkey == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_KEYGEN, ERR_R_MALLOC_FAILURE);
-        return -1;
-    }
-
     ret = ctx->pmeth->keygen(ctx, *ppkey);
     if (ret <= 0) {
         EVP_PKEY_free(*ppkey);
