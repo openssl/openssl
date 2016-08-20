@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_SIG_get0, X509_SIG_get0_mutable - DigestInfo functions
+X509_SIG_get0, X509_SIG_getm - DigestInfo functions
 
 =head1 SYNOPSIS
 
@@ -10,13 +10,13 @@ X509_SIG_get0, X509_SIG_get0_mutable - DigestInfo functions
 
  void X509_SIG_get0(const X509_SIG *sig, const X509_ALGOR **palg,
                     const ASN1_OCTET_STRING **pdigest);
- void X509_SIG_get0_mutable(X509_SIG *sig, X509_ALGOR **palg,
-                            ASN1_OCTET_STRING **pdigest,
+ void X509_SIG_getm(X509_SIG *sig, X509_ALGOR **palg,
+                    ASN1_OCTET_STRING **pdigest,
 
 =head1 DESCRIPTION
 
 X509_SIG_get0() returns pointers to the algorithm identifier and digest
-value in B<sig>. X509_SIG_get0_mutable() is identical to X509_SIG_get0()
+value in B<sig>. X509_SIG_getm() is identical to X509_SIG_get0()
 except the pointers returned are not constant and can be modified:
 for example to initialise them.
 

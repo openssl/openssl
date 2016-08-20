@@ -517,8 +517,8 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length);
 DECLARE_ASN1_FUNCTIONS(X509_SIG)
 void X509_SIG_get0(const X509_SIG *sig, const X509_ALGOR **palg,
                    const ASN1_OCTET_STRING **pdigest);
-void X509_SIG_get0_mutable(X509_SIG *sig, X509_ALGOR **palg,
-                           ASN1_OCTET_STRING **pdigest);
+void X509_SIG_getm(X509_SIG *sig, X509_ALGOR **palg,
+                   ASN1_OCTET_STRING **pdigest);
 
 DECLARE_ASN1_FUNCTIONS(X509_REQ_INFO)
 DECLARE_ASN1_FUNCTIONS(X509_REQ)
@@ -622,16 +622,18 @@ X509_NAME *X509_get_issuer_name(const X509 *a);
 int X509_set_subject_name(X509 *x, X509_NAME *name);
 X509_NAME *X509_get_subject_name(const X509 *a);
 const ASN1_TIME * X509_get0_notBefore(const X509 *x);
-DEPRECATEDIN_1_1_0(ASN1_TIME *X509_get_notBefore(const X509 *x))
+ASN1_TIME *X509_getm_notBefore(const X509 *x);
 int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
 const ASN1_TIME *X509_get0_notAfter(const X509 *x);
-DEPRECATEDIN_1_1_0(ASN1_TIME *X509_get_notAfter(const X509 *x))
+ASN1_TIME *X509_getm_notAfter(const X509 *x);
 int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm);
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 int X509_up_ref(X509 *x);
 int X509_get_signature_type(const X509 *x);
 
 # if OPENSSL_API_COMPAT < 0x10100000L
+#  define X509_get_notBefore X509_getm_notBefore
+#  define X509_get_notAfter X509_getm_notAfter
 #  define X509_set_notBefore X509_set1_notBefore
 #  define X509_set_notAfter X509_set1_notAfter
 #endif

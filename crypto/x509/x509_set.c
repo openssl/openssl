@@ -119,17 +119,15 @@ const ASN1_TIME *X509_get0_notAfter(const X509 *x)
     return x->cert_info.validity.notAfter;
 }
 
-#if OPENSSL_API_COMPAT < 0x10100000L
-ASN1_TIME *X509_get_notBefore(const X509 *x)
+ASN1_TIME *X509_getm_notBefore(const X509 *x)
 {
     return x->cert_info.validity.notBefore;
 }
 
-ASN1_TIME *X509_get_notAfter(const X509 *x)
+ASN1_TIME *X509_getm_notAfter(const X509 *x)
 {
     return x->cert_info.validity.notAfter;
 }
-#endif
 
 int X509_get_signature_type(const X509 *x)
 {
