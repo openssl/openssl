@@ -2593,33 +2593,19 @@ void corrupt_signature(const ASN1_STRING *signature)
 int set_cert_times(X509 *x, const char *startdate, const char *enddate,
                    int days)
 {
-    int rv = 0;
-    ASN1_TIME *tm = ASN1_TIME_new();
-    if (tm == NULL)
-        goto err;
     if (startdate == NULL || strcmp(startdate, "today") == 0) {
-        if (!X509_gmtime_adj(tm, 0))
-            goto err;
-    } else if (!ASN1_TIME_set_string(tm, startdate)) {
-            goto err;
+        if (X509_gmtime_adj(X509_getm_notBefore(x), 0) == NULL)
+            return 0;
+    } else {
+        if (!ASN1_TIME_set_string(X509_getm_notBefore(x), startdate))
+            return 0;
     }
-
-    if (!X509_set1_notBefore(x, tm))
-        goto err;
-
     if (enddate == NULL) {
-        if (!X509_time_adj_ex(tm, days, 0, NULL))
-            goto err;
-    } else if (!ASN1_TIME_set_string(tm, enddate)) {
-            goto err;
+        if (X509_time_adj_ex(X509_getm_notAfter(x), days, 0, NULL)
+            == NULL)
+            return 0;
+    } else if (!ASN1_TIME_set_string(X509_getm_notAfter(x), enddate)) {
+        return 0;
     }
-
-    if (!X509_set1_notAfter(x, tm))
-        goto err;
-
-    rv = 1;
-
-    err:
-    ASN1_TIME_free(tm);
-    return rv;
+    return 1;
 }

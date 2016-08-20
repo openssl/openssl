@@ -170,7 +170,7 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
         PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_GENERATION_ERROR);
         return 0;
     }
-    X509_SIG_get0_mutable(p12->mac->dinfo, NULL, &macoct);
+    X509_SIG_getm(p12->mac->dinfo, NULL, &macoct);
     if (!ASN1_OCTET_STRING_set(macoct, mac, maclen)) {
         PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_STRING_SET_ERROR);
         return 0;
@@ -208,7 +208,7 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
             return 0;
     } else
         memcpy(p12->mac->salt->data, salt, saltlen);
-    X509_SIG_get0_mutable(p12->mac->dinfo, &macalg, NULL);
+    X509_SIG_getm(p12->mac->dinfo, &macalg, NULL);
     if (!X509_ALGOR_set0(macalg, OBJ_nid2obj(EVP_MD_type(md_type)),
                          V_ASN1_NULL, NULL)) {
         PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
