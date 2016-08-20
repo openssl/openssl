@@ -9,6 +9,18 @@
 
 #include "bio_lcl.h"
 
+CRYPTO_RWLOCK *bio_type_lock;
+static int bio_count = BIO_TYPE_START;
+
+int BIO_get_new_index()
+{
+    int newval;
+
+    if (!CRYPTO_atomic_add(&bio_count, 1, &newval, bio_type_lock))
+        return -1;
+    return newval;
+}
+
 BIO_METHOD *BIO_meth_new(int type, const char *name)
 {
     BIO_METHOD *biom = OPENSSL_zalloc(sizeof(BIO_METHOD));

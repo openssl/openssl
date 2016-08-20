@@ -137,6 +137,7 @@ typedef unsigned int socklen_t;
 # endif
 
 extern CRYPTO_RWLOCK *bio_lookup_lock;
+extern CRYPTO_RWLOCK *bio_type_lock;
 
 int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa);
 const struct sockaddr *BIO_ADDR_sockaddr(const BIO_ADDR *ap);

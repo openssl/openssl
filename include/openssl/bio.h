@@ -31,38 +31,39 @@
 extern "C" {
 #endif
 
-/* These are the 'types' of BIOs */
-# define BIO_TYPE_NONE           0
-# define BIO_TYPE_MEM            (1|0x0400)
-# define BIO_TYPE_FILE           (2|0x0400)
-
-# define BIO_TYPE_FD             (4|0x0400|0x0100)
-# define BIO_TYPE_SOCKET         (5|0x0400|0x0100)
-# define BIO_TYPE_NULL           (6|0x0400)
-# define BIO_TYPE_SSL            (7|0x0200)
-# define BIO_TYPE_MD             (8|0x0200)/* passive filter */
-# define BIO_TYPE_BUFFER         (9|0x0200)/* filter */
-# define BIO_TYPE_CIPHER         (10|0x0200)/* filter */
-# define BIO_TYPE_BASE64         (11|0x0200)/* filter */
-# define BIO_TYPE_CONNECT        (12|0x0400|0x0100)/* socket - connect */
-# define BIO_TYPE_ACCEPT         (13|0x0400|0x0100)/* socket for accept */
-/* # define BIO_TYPE_PROXY_CLIENT   (14|0x0200)*/ /* client proxy BIO */
-/* # define BIO_TYPE_PROXY_SERVER   (15|0x0200)*/ /* server proxy BIO */
-# define BIO_TYPE_NBIO_TEST      (16|0x0200)/* server proxy BIO */
-# define BIO_TYPE_NULL_FILTER    (17|0x0200)
-# define BIO_TYPE_BER            (18|0x0200)/* BER -> bin filter */
-# define BIO_TYPE_BIO            (19|0x0400)/* (half a) BIO pair */
-# define BIO_TYPE_LINEBUFFER     (20|0x0200)/* filter */
-# define BIO_TYPE_DGRAM          (21|0x0400|0x0100)
-# ifndef OPENSSL_NO_SCTP
-#  define BIO_TYPE_DGRAM_SCTP     (24|0x0400|0x0100)
-# endif
-# define BIO_TYPE_ASN1           (22|0x0200)/* filter */
-# define BIO_TYPE_COMP           (23|0x0200)/* filter */
-
-# define BIO_TYPE_DESCRIPTOR     0x0100/* socket, fd, connect or accept */
+/* There are the classes of BIOs */
+# define BIO_TYPE_DESCRIPTOR     0x0100 /* socket, fd, connect or accept */
 # define BIO_TYPE_FILTER         0x0200
 # define BIO_TYPE_SOURCE_SINK    0x0400
+
+/* These are the 'types' of BIOs */
+# define BIO_TYPE_NONE             0
+# define BIO_TYPE_MEM            ( 1|BIO_TYPE_SOURCE_SINK)
+# define BIO_TYPE_FILE           ( 2|BIO_TYPE_SOURCE_SINK)
+
+# define BIO_TYPE_FD             ( 4|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
+# define BIO_TYPE_SOCKET         ( 5|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
+# define BIO_TYPE_NULL           ( 6|BIO_TYPE_SOURCE_SINK)
+# define BIO_TYPE_SSL            ( 7|BIO_TYPE_FILTER)
+# define BIO_TYPE_MD             ( 8|BIO_TYPE_FILTER)
+# define BIO_TYPE_BUFFER         ( 9|BIO_TYPE_FILTER)
+# define BIO_TYPE_CIPHER         (10|BIO_TYPE_FILTER)
+# define BIO_TYPE_BASE64         (11|BIO_TYPE_FILTER)
+# define BIO_TYPE_CONNECT        (12|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
+# define BIO_TYPE_ACCEPT         (13|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
+
+# define BIO_TYPE_NBIO_TEST      (16|BIO_TYPE_FILTER)/* server proxy BIO */
+# define BIO_TYPE_NULL_FILTER    (17|BIO_TYPE_FILTER)
+# define BIO_TYPE_BIO            (19|BIO_TYPE_SOURCE_SINK)/* half a BIO pair */
+# define BIO_TYPE_LINEBUFFER     (20|BIO_TYPE_FILTER)
+# define BIO_TYPE_DGRAM          (21|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
+# define BIO_TYPE_ASN1           (22|BIO_TYPE_FILTER)
+# define BIO_TYPE_COMP           (23|BIO_TYPE_FILTER)
+# ifndef OPENSSL_NO_SCTP
+#  define BIO_TYPE_DGRAM_SCTP    (24|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
+# endif
+
+#define BIO_TYPE_START           128
 
 /*
  * BIO_FILENAME_READ|BIO_CLOSE to open or close on free.
@@ -177,6 +178,7 @@ extern "C" {
 typedef union bio_addr_st BIO_ADDR;
 typedef struct bio_addrinfo_st BIO_ADDRINFO;
 
+int BIO_get_new_index(void);
 void BIO_set_flags(BIO *b, int flags);
 int BIO_test_flags(const BIO *b, int flags);
 void BIO_clear_flags(BIO *b, int flags);

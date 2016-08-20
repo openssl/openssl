@@ -4198,3 +4198,4 @@ X509_CRL_get0_lastUpdate                4144	1_1_0	EXIST::FUNCTION:
 X509_get0_notBefore                     4145	1_1_0	EXIST::FUNCTION:
 X509_get0_notAfter                      4146	1_1_0	EXIST::FUNCTION:
 X509_CRL_get0_nextUpdate                4147	1_1_0	EXIST::FUNCTION:
+BIO_get_new_index                       4148	1_1_0	EXIST::FUNCTION:
