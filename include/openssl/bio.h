@@ -779,6 +779,7 @@ int ERR_load_BIO_strings(void);
 # define BIO_F_BIO_CTRL                                   103
 # define BIO_F_BIO_GETS                                   104
 # define BIO_F_BIO_GET_HOST_IP                            106
+# define BIO_F_BIO_GET_NEW_INDEX                          102
 # define BIO_F_BIO_GET_PORT                               107
 # define BIO_F_BIO_LISTEN                                 139
 # define BIO_F_BIO_LOOKUP                                 135

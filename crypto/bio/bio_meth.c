@@ -8,14 +8,26 @@
  */
 
 #include "bio_lcl.h"
+#include <internal/thread_once.h>
 
-CRYPTO_RWLOCK *bio_type_lock;
-static int bio_count = BIO_TYPE_START;
+CRYPTO_RWLOCK *bio_type_lock = NULL;
+static CRYPTO_ONCE bio_type_init = CRYPTO_ONCE_STATIC_INIT;
+
+DEFINE_RUN_ONCE_STATIC(do_bio_type_init)
+{
+    bio_type_lock = CRYPTO_THREAD_lock_new();
+    return bio_type_lock != NULL;
+}
 
 int BIO_get_new_index()
 {
+    static int bio_count = BIO_TYPE_START;
     int newval;
 
+    if (!RUN_ONCE(&bio_type_init, do_bio_type_init)) {
+        BIOerr(BIO_F_BIO_GET_NEW_INDEX, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
     if (!CRYPTO_atomic_add(&bio_count, 1, &newval, bio_type_lock))
         return -1;
     return newval;
