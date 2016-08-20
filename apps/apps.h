@@ -25,7 +25,6 @@
 # include <openssl/txt_db.h>
 # include <openssl/engine.h>
 # include <openssl/ocsp.h>
-# include <openssl/ossl_typ.h>
 # include <signal.h>
 
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
