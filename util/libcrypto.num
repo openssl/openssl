@@ -1053,7 +1053,7 @@ BN_get_word                             1044	1_1_0	EXIST::FUNCTION:
 EVP_CipherFinal                         1045	1_1_0	EXIST::FUNCTION:
 i2d_X509_bio                            1046	1_1_0	EXIST::FUNCTION:
 X509_EXTENSION_new                      1047	1_1_0	EXIST::FUNCTION:
-X509_get_notAfter                       1048	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
+X509_getm_notAfter                      1048	1_1_0	EXIST::FUNCTION:
 X509_ALGOR_dup                          1049	1_1_0	EXIST::FUNCTION:
 d2i_X509_REQ_INFO                       1050	1_1_0	EXIST::FUNCTION:
 d2i_EC_PUBKEY_bio                       1051	1_1_0	EXIST::FUNCTION:EC
@@ -2388,7 +2388,7 @@ ASN1_GENERALIZEDTIME_check              2356	1_1_0	EXIST::FUNCTION:
 BN_clear_bit                            2357	1_1_0	EXIST::FUNCTION:
 BN_bn2lebinpad                          2358	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_up_ref                         2359	1_1_0	EXIST::FUNCTION:
-X509_get_notBefore                      2360	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
+X509_getm_notBefore                     2360	1_1_0	EXIST::FUNCTION:
 BN_nist_mod_224                         2361	1_1_0	EXIST::FUNCTION:
 DES_decrypt3                            2362	1_1_0	EXIST::FUNCTION:DES
 OTHERNAME_it                            2363	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -4191,7 +4191,7 @@ DSA_bits                                4137	1_1_0	EXIST::FUNCTION:DSA
 EVP_PKEY_set1_tls_encodedpoint          4138	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_get1_tls_encodedpoint          4139	1_1_0	EXIST::FUNCTION:
 ASN1_STRING_get0_data                   4140	1_1_0	EXIST::FUNCTION:
-X509_SIG_get0_mutable                   4141	1_1_0	EXIST::FUNCTION:
+X509_SIG_getm                           4141	1_1_0	EXIST::FUNCTION:
 X509_get0_serialNumber                  4142	1_1_0	EXIST::FUNCTION:
 PKCS12_get_attr                         4143	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 X509_CRL_get0_lastUpdate                4144	1_1_0	EXIST::FUNCTION:
