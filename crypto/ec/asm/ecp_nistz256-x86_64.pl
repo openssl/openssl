@@ -135,6 +135,7 @@ ecp_nistz256_mul_by_2:
 	push	%r13
 
 	mov	8*0($a_ptr), $a0
+	xor	$t4,$t4
 	mov	8*1($a_ptr), $a1
 	add	$a0, $a0		# a0:a3+a0:a3
 	mov	8*2($a_ptr), $a2
@@ -145,7 +146,7 @@ ecp_nistz256_mul_by_2:
 	adc	$a2, $a2
 	adc	$a3, $a3
 	 mov	$a1, $t1
-	sbb	$t4, $t4
+	adc	\$0, $t4
 
 	sub	8*0($a_ptr), $a0
 	 mov	$a2, $t2
@@ -153,14 +154,14 @@ ecp_nistz256_mul_by_2:
 	sbb	8*2($a_ptr), $a2
 	 mov	$a3, $t3
 	sbb	8*3($a_ptr), $a3
-	test	$t4, $t4
+	sbb	\$0, $t4
 
-	cmovz	$t0, $a0
-	cmovz	$t1, $a1
+	cmovb	$t0, $a0
+	cmovb	$t1, $a1
 	mov	$a0, 8*0($r_ptr)
-	cmovz	$t2, $a2
+	cmovb	$t2, $a2
 	mov	$a1, 8*1($r_ptr)
-	cmovz	$t3, $a3
+	cmovb	$t3, $a3
 	mov	$a2, 8*2($r_ptr)
 	mov	$a3, 8*3($r_ptr)
 
@@ -257,12 +258,12 @@ ecp_nistz256_mul_by_3:
 	sbb	\$0, $a2
 	 mov	$a3, $t3
 	sbb	.Lpoly+8*3(%rip), $a3
-	test	$t4, $t4
+	sbb	\$0, $t4
 
-	cmovz	$t0, $a0
-	cmovz	$t1, $a1
-	cmovz	$t2, $a2
-	cmovz	$t3, $a3
+	cmovb	$t0, $a0
+	cmovb	$t1, $a1
+	cmovb	$t2, $a2
+	cmovb	$t3, $a3
 
 	xor	$t4, $t4
 	add	8*0($a_ptr), $a0	# a0:a3+=a_ptr[0:3]
@@ -279,14 +280,14 @@ ecp_nistz256_mul_by_3:
 	sbb	\$0, $a2
 	 mov	$a3, $t3
 	sbb	.Lpoly+8*3(%rip), $a3
-	test	$t4, $t4
+	sbb	\$0, $t4
 
-	cmovz	$t0, $a0
-	cmovz	$t1, $a1
+	cmovb	$t0, $a0
+	cmovb	$t1, $a1
 	mov	$a0, 8*0($r_ptr)
-	cmovz	$t2, $a2
+	cmovb	$t2, $a2
 	mov	$a1, 8*1($r_ptr)
-	cmovz	$t3, $a3
+	cmovb	$t3, $a3
 	mov	$a2, 8*2($r_ptr)
 	mov	$a3, 8*3($r_ptr)
 
@@ -325,14 +326,14 @@ ecp_nistz256_add:
 	sbb	8*2($a_ptr), $a2
 	 mov	$a3, $t3
 	sbb	8*3($a_ptr), $a3
-	test	$t4, $t4
+	sbb	\$0, $t4
 
-	cmovz	$t0, $a0
-	cmovz	$t1, $a1
+	cmovb	$t0, $a0
+	cmovb	$t1, $a1
 	mov	$a0, 8*0($r_ptr)
-	cmovz	$t2, $a2
+	cmovb	$t2, $a2
 	mov	$a1, 8*1($r_ptr)
-	cmovz	$t3, $a3
+	cmovb	$t3, $a3
 	mov	$a2, 8*2($r_ptr)
 	mov	$a3, 8*3($r_ptr)
 
@@ -1890,13 +1891,14 @@ $code.=<<___;
 .type	__ecp_nistz256_add_toq,\@abi-omnipotent
 .align	32
 __ecp_nistz256_add_toq:
+	xor	$t4,$t4
 	add	8*0($b_ptr), $a0
 	adc	8*1($b_ptr), $a1
 	 mov	$a0, $t0
 	adc	8*2($b_ptr), $a2
 	adc	8*3($b_ptr), $a3
 	 mov	$a1, $t1
-	sbb	$t4, $t4
+	adc	\$0, $t4
 
 	sub	\$-1, $a0
 	 mov	$a2, $t2
@@ -1904,14 +1906,14 @@ __ecp_nistz256_add_toq:
 	sbb	\$0, $a2
 	 mov	$a3, $t3
 	sbb	$poly3, $a3
-	test	$t4, $t4
+	sbb	\$0, $t4
 
-	cmovz	$t0, $a0
-	cmovz	$t1, $a1
+	cmovb	$t0, $a0
+	cmovb	$t1, $a1
 	mov	$a0, 8*0($r_ptr)
-	cmovz	$t2, $a2
+	cmovb	$t2, $a2
 	mov	$a1, 8*1($r_ptr)
-	cmovz	$t3, $a3
+	cmovb	$t3, $a3
 	mov	$a2, 8*2($r_ptr)
 	mov	$a3, 8*3($r_ptr)
 
@@ -1979,13 +1981,14 @@ __ecp_nistz256_subq:
 .type	__ecp_nistz256_mul_by_2q,\@abi-omnipotent
 .align	32
 __ecp_nistz256_mul_by_2q:
+	xor	$t4, $t4
 	add	$a0, $a0		# a0:a3+a0:a3
 	adc	$a1, $a1
 	 mov	$a0, $t0
 	adc	$a2, $a2
 	adc	$a3, $a3
 	 mov	$a1, $t1
-	sbb	$t4, $t4
+	adc	\$0, $t4
 
 	sub	\$-1, $a0
 	 mov	$a2, $t2
@@ -1993,14 +1996,14 @@ __ecp_nistz256_mul_by_2q:
 	sbb	\$0, $a2
 	 mov	$a3, $t3
 	sbb	$poly3, $a3
-	test	$t4, $t4
+	sbb	\$0, $t4
 
-	cmovz	$t0, $a0
-	cmovz	$t1, $a1
+	cmovb	$t0, $a0
+	cmovb	$t1, $a1
 	mov	$a0, 8*0($r_ptr)
-	cmovz	$t2, $a2
+	cmovb	$t2, $a2
 	mov	$a1, 8*1($r_ptr)
-	cmovz	$t3, $a3
+	cmovb	$t3, $a3
 	mov	$a2, 8*2($r_ptr)
 	mov	$a3, 8*3($r_ptr)
 
@@ -2455,6 +2458,7 @@ $code.=<<___;
 	#lea	$Hsqr(%rsp), $r_ptr	# 2*U1*H^2
 	#call	__ecp_nistz256_mul_by_2	# ecp_nistz256_mul_by_2(Hsqr, U2);
 
+	xor	$t4, $t4
 	add	$acc0, $acc0		# a0:a3+a0:a3
 	lea	$Rsqr(%rsp), $a_ptr
 	adc	$acc1, $acc1
@@ -2462,7 +2466,7 @@ $code.=<<___;
 	adc	$acc2, $acc2
 	adc	$acc3, $acc3
 	 mov	$acc1, $t1
-	sbb	$t4, $t4
+	adc	\$0, $t4
 
 	sub	\$-1, $acc0
 	 mov	$acc2, $t2
@@ -2470,15 +2474,15 @@ $code.=<<___;
 	sbb	\$0, $acc2
 	 mov	$acc3, $t3
 	sbb	$poly3, $acc3
-	test	$t4, $t4
+	sbb	\$0, $t4
 
-	cmovz	$t0, $acc0
+	cmovb	$t0, $acc0
 	mov	8*0($a_ptr), $t0
-	cmovz	$t1, $acc1
+	cmovb	$t1, $acc1
 	mov	8*1($a_ptr), $t1
-	cmovz	$t2, $acc2
+	cmovb	$t2, $acc2
 	mov	8*2($a_ptr), $t2
-	cmovz	$t3, $acc3
+	cmovb	$t3, $acc3
 	mov	8*3($a_ptr), $t3
 
 	call	__ecp_nistz256_sub$x		# p256_sub(res_x, Rsqr, Hsqr);
@@ -2760,6 +2764,7 @@ $code.=<<___;
 	#lea	$Hsqr(%rsp), $r_ptr	# 2*U1*H^2
 	#call	__ecp_nistz256_mul_by_2	# ecp_nistz256_mul_by_2(Hsqr, U2);
 
+	xor	$t4, $t4
 	add	$acc0, $acc0		# a0:a3+a0:a3
 	lea	$Rsqr(%rsp), $a_ptr
 	adc	$acc1, $acc1
@@ -2767,7 +2772,7 @@ $code.=<<___;
 	adc	$acc2, $acc2
 	adc	$acc3, $acc3
 	 mov	$acc1, $t1
-	sbb	$t4, $t4
+	adc	\$0, $t4
 
 	sub	\$-1, $acc0
 	 mov	$acc2, $t2
@@ -2775,15 +2780,15 @@ $code.=<<___;
 	sbb	\$0, $acc2
 	 mov	$acc3, $t3
 	sbb	$poly3, $acc3
-	test	$t4, $t4
+	sbb	\$0, $t4
 
-	cmovz	$t0, $acc0
+	cmovb	$t0, $acc0
 	mov	8*0($a_ptr), $t0
-	cmovz	$t1, $acc1
+	cmovb	$t1, $acc1
 	mov	8*1($a_ptr), $t1
-	cmovz	$t2, $acc2
+	cmovb	$t2, $acc2
 	mov	8*2($a_ptr), $t2
-	cmovz	$t3, $acc3
+	cmovb	$t3, $acc3
 	mov	8*3($a_ptr), $t3
 
 	call	__ecp_nistz256_sub$x		# p256_sub(res_x, Rsqr, Hsqr);
@@ -2935,14 +2940,14 @@ __ecp_nistz256_add_tox:
 	sbb	\$0, $a2
 	 mov	$a3, $t3
 	sbb	$poly3, $a3
+	sbb	\$0, $t4
 
-	bt	\$0, $t4
-	cmovnc	$t0, $a0
-	cmovnc	$t1, $a1
+	cmovb	$t0, $a0
+	cmovb	$t1, $a1
 	mov	$a0, 8*0($r_ptr)
-	cmovnc	$t2, $a2
+	cmovb	$t2, $a2
 	mov	$a1, 8*1($r_ptr)
-	cmovnc	$t3, $a3
+	cmovb	$t3, $a3
 	mov	$a2, 8*2($r_ptr)
 	mov	$a3, 8*3($r_ptr)
 
@@ -3030,14 +3035,14 @@ __ecp_nistz256_mul_by_2x:
 	sbb	\$0, $a2
 	 mov	$a3, $t3
 	sbb	$poly3, $a3
+	sbb	\$0, $t4
 
-	bt	\$0, $t4
-	cmovnc	$t0, $a0
-	cmovnc	$t1, $a1
+	cmovb	$t0, $a0
+	cmovb	$t1, $a1
 	mov	$a0, 8*0($r_ptr)
-	cmovnc	$t2, $a2
+	cmovb	$t2, $a2
 	mov	$a1, 8*1($r_ptr)
-	cmovnc	$t3, $a3
+	cmovb	$t3, $a3
 	mov	$a2, 8*2($r_ptr)
 	mov	$a3, 8*3($r_ptr)
 
