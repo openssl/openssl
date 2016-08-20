@@ -34,7 +34,6 @@
 # endif
 
 # include <openssl/sha.h>
-# include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
 extern "C" {
