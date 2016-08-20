@@ -20,6 +20,7 @@
 
 static ERR_STRING_DATA RSA_str_functs[] = {
     {ERR_FUNC(RSA_F_CHECK_PADDING_MD), "check_padding_md"},
+    {ERR_FUNC(RSA_F_ENCODE_PKCS1), "encode_pkcs1"},
     {ERR_FUNC(RSA_F_INT_RSA_VERIFY), "int_rsa_verify"},
     {ERR_FUNC(RSA_F_OLD_RSA_PRIV_DECODE), "old_rsa_priv_decode"},
     {ERR_FUNC(RSA_F_PKEY_RSA_CTRL), "pkey_rsa_ctrl"},
