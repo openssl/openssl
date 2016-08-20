@@ -224,7 +224,7 @@ int ca_main(int argc, char **argv)
     ENGINE *e = NULL;
     BIGNUM *crlnumber = NULL, *serial = NULL;
     EVP_PKEY *pkey = NULL;
-    BIO *in = NULL, *out = NULL, *Sout = NULL, *Cout = NULL;
+    BIO *in = NULL, *out = NULL, *Sout = NULL;
     ASN1_INTEGER *tmpser;
     ASN1_TIME *tmptm;
     CA_DB *db = NULL;
@@ -982,6 +982,7 @@ end_of_options:
         if (verbose)
             BIO_printf(bio_err, "writing new certificates\n");
         for (i = 0; i < sk_X509_num(cert_sk); i++) {
+            BIO *Cout = NULL;
             ASN1_INTEGER *serialNumber = X509_get_serialNumber(x);
             int k;
             char *n;
@@ -1031,6 +1032,7 @@ end_of_options:
             }
             write_new_certificate(Cout, x, 0, notext);
             write_new_certificate(Sout, x, output_der, notext);
+            BIO_free_all(Cout);
         }
 
         if (sk_X509_num(cert_sk)) {
@@ -1215,7 +1217,6 @@ end_of_options:
     /*****************************************************************/
     ret = 0;
  end:
-    BIO_free_all(Cout);
     BIO_free_all(Sout);
     BIO_free_all(out);
     BIO_free_all(in);
