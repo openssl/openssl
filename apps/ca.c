@@ -1006,19 +1006,18 @@ end_of_options:
             ASN1_INTEGER *serialNumber = X509_get_serialNumber(xi);
             const unsigned char *psn = ASN1_STRING_get0_data(serialNumber);
             const int snl = ASN1_STRING_length(serialNumber);
+            const int filen_len = 2 * (snl > 0 ? snl : 1) + sizeof(".pem");
             char *n = new_cert + outdirlen;
 
-            if (outdirlen >= (size_t)(snl ? PATH_MAX - snl * 2 - 6 : PATH_MAX - 8)) {
+            if (outdirlen + filen_len >= PATH_MAX - 1) {
                 BIO_printf(bio_err, "certificate file name too long\n");
                 goto end;
             }
 
-
             if (snl > 0) {
                 static const char HEX_DIGITS[] = "0123456789ABCDEF";
-                char *nmax = new_cert + (sizeof(new_cert) - sizeof(".pem"));
 
-                for (j = 0; j < snl && n < nmax; j++, psn++) {
+                for (j = 0; j < snl; j++, psn++) {
                     *n++ = HEX_DIGITS[*psn >> 4];
                     *n++ = HEX_DIGITS[*psn & 0x0F];
                 }
