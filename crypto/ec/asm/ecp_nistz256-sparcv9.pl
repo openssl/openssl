@@ -406,33 +406,44 @@ __ecp_nistz256_add:
 	addccc	@acc[5],$t5,@acc[5]
 	addccc	@acc[6],$t6,@acc[6]
 	addccc	@acc[7],$t7,@acc[7]
-	subc	%g0,%g0,$carry		! broadcast carry bit
+	addc	%g0,%g0,$carry
 
 .Lreduce_by_sub:
 
-	! if a+b carries, subtract modulus.
+	! if a+b >= modulus, subtract modulus.
 	!
+	! But since comparison implies subtraction, we subtract
+	! modulus and then add it back if subraction borrowed.
+
+	subcc	@acc[0],-1,@acc[0]
+	subccc	@acc[1],-1,@acc[1]
+	subccc	@acc[2],-1,@acc[2]
+	subccc	@acc[3], 0,@acc[3]
+	subccc	@acc[4], 0,@acc[4]
+	subccc	@acc[5], 0,@acc[5]
+	subccc	@acc[6], 1,@acc[6]
+	subccc	@acc[7],-1,@acc[7]
+	subc	$carry,0,$carry
+
 	! Note that because mod has special form, i.e. consists of
 	! 0xffffffff, 1 and 0s, we can conditionally synthesize it by
-	! using value of broadcasted borrow and the borrow bit itself.
-	! To minimize dependency chain we first broadcast and then
-	! extract the bit by negating (follow $bi).
+	! using value of borrow and its negative.
 
-	subcc	@acc[0],$carry,@acc[0]	! subtract synthesized modulus
-	subccc	@acc[1],$carry,@acc[1]
+	addcc	@acc[0],$carry,@acc[0]	! add synthesized modulus
+	addccc	@acc[1],$carry,@acc[1]
 	neg	$carry,$bi
 	st	@acc[0],[$rp]
-	subccc	@acc[2],$carry,@acc[2]
+	addccc	@acc[2],$carry,@acc[2]
 	st	@acc[1],[$rp+4]
-	subccc	@acc[3],0,@acc[3]
+	addccc	@acc[3],0,@acc[3]
 	st	@acc[2],[$rp+8]
-	subccc	@acc[4],0,@acc[4]
+	addccc	@acc[4],0,@acc[4]
 	st	@acc[3],[$rp+12]
-	subccc	@acc[5],0,@acc[5]
+	addccc	@acc[5],0,@acc[5]
 	st	@acc[4],[$rp+16]
-	subccc	@acc[6],$bi,@acc[6]
+	addccc	@acc[6],$bi,@acc[6]
 	st	@acc[5],[$rp+20]
-	subc	@acc[7],$carry,@acc[7]
+	addc	@acc[7],$carry,@acc[7]
 	st	@acc[6],[$rp+24]
 	retl
 	st	@acc[7],[$rp+28]
@@ -469,7 +480,7 @@ __ecp_nistz256_mul_by_2:
 	addccc	@acc[6],@acc[6],@acc[6]
 	addccc	@acc[7],@acc[7],@acc[7]
 	b	.Lreduce_by_sub
-	subc	%g0,%g0,$carry		! broadcast carry bit
+	addc	%g0,%g0,$carry
 .type	__ecp_nistz256_mul_by_2,#function
 .size	__ecp_nistz256_mul_by_2,.-__ecp_nistz256_mul_by_2
 
@@ -502,17 +513,27 @@ __ecp_nistz256_mul_by_3:
 	addccc	@acc[5],@acc[5],$t5
 	addccc	@acc[6],@acc[6],$t6
 	addccc	@acc[7],@acc[7],$t7
-	subc	%g0,%g0,$carry		! broadcast carry bit
+	addc	%g0,%g0,$carry
 
-	subcc	$t0,$carry,$t0		! .Lreduce_by_sub but without stores
+	subcc	$t0,-1,$t0		! .Lreduce_by_sub but without stores
+	subccc	$t1,-1,$t1
+	subccc	$t2,-1,$t2
+	subccc	$t3, 0,$t3
+	subccc	$t4, 0,$t4
+	subccc	$t5, 0,$t5
+	subccc	$t6, 1,$t6
+	subccc	$t7,-1,$t7
+	subc	$carry,0,$carry
+
+	addcc	$t0,$carry,$t0		! add synthesized modulus
+	addccc	$t1,$carry,$t1
 	neg	$carry,$bi
-	subccc	$t1,$carry,$t1
-	subccc	$t2,$carry,$t2
-	subccc	$t3,0,$t3
-	subccc	$t4,0,$t4
-	subccc	$t5,0,$t5
-	subccc	$t6,$bi,$t6
-	subc	$t7,$carry,$t7
+	addccc	$t2,$carry,$t2
+	addccc	$t3,0,$t3
+	addccc	$t4,0,$t4
+	addccc	$t5,0,$t5
+	addccc	$t6,$bi,$t6
+	addc	$t7,$carry,$t7
 
 	addcc	$t0,@acc[0],@acc[0]	! 2*a+a=3*a
 	addccc	$t1,@acc[1],@acc[1]
@@ -523,7 +544,7 @@ __ecp_nistz256_mul_by_3:
 	addccc	$t6,@acc[6],@acc[6]
 	addccc	$t7,@acc[7],@acc[7]
 	b	.Lreduce_by_sub
-	subc	%g0,%g0,$carry		! broadcast carry bit
+	addc	%g0,%g0,$carry
 .type	__ecp_nistz256_mul_by_3,#function
 .size	__ecp_nistz256_mul_by_3,.-__ecp_nistz256_mul_by_3
 
@@ -1662,14 +1683,15 @@ __ecp_nistz256_add_noload_vis3:
 	addcc	$acc0,1,$t0		! add -modulus, i.e. subtract
 	addxccc	$acc1,$poly1,$t1
 	addxccc	$acc2,$minus1,$t2
-	addxc	$acc3,$poly3,$t3
+	addxccc	$acc3,$poly3,$t3
+	addxc	$acc4,$minus1,$acc4
 
-	movrnz	$acc4,$t0,$acc0		! if a+b carried, ret = ret-mod
-	movrnz	$acc4,$t1,$acc1
+	movrz	$acc4,$t0,$acc0		! ret = borrow ? ret : ret-modulus
+	movrz	$acc4,$t1,$acc1
 	stx	$acc0,[$rp]
-	movrnz	$acc4,$t2,$acc2
+	movrz	$acc4,$t2,$acc2
 	stx	$acc1,[$rp+8]
-	movrnz	$acc4,$t3,$acc3
+	movrz	$acc4,$t3,$acc3
 	stx	$acc2,[$rp+16]
 	retl
 	stx	$acc3,[$rp+24]

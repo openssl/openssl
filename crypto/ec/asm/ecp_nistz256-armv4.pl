@@ -174,10 +174,7 @@ __ecp_nistz256_mul_by_2:
 	adcs	$a6,$a6,$a6
 	mov	$ff,#0
 	adcs	$a7,$a7,$a7
-#ifdef	__thumb2__
-	it	cs
-#endif
-	movcs	$ff,#-1			@ $ff = carry ? -1 : 0
+	adc	$ff,$ff,#0
 
 	b	.Lreduce_by_sub
 .size	__ecp_nistz256_mul_by_2,.-__ecp_nistz256_mul_by_2
@@ -228,35 +225,45 @@ __ecp_nistz256_add:
 	adcs	$a6,$a6,$t2
 	mov	$ff,#0
 	adcs	$a7,$a7,$t3
-#ifdef	__thumb2__
-	it	cs
-#endif
-	movcs	$ff,#-1			@ $ff = carry ? -1 : 0, "broadcast" carry
+	adc	$ff,$ff,#0
 	ldr	lr,[sp],#4		@ pop lr
 
 .Lreduce_by_sub:
 
-	@ if a+b carries, subtract modulus.
+	@ if a+b >= modulus, subtract modulus.
 	@
+	@ But since comparison implies subtraction, we subtract
+	@ modulus and then add it back if subraction borrowed.
+
+	subs	$a0,$a0,#-1
+	sbcs	$a1,$a1,#-1
+	sbcs	$a2,$a2,#-1
+	sbcs	$a3,$a3,#0
+	sbcs	$a4,$a4,#0
+	sbcs	$a5,$a5,#0
+	sbcs	$a6,$a6,#1
+	sbcs	$a7,$a7,#-1
+	sbc	$ff,$ff,#0
+
 	@ Note that because mod has special form, i.e. consists of
 	@ 0xffffffff, 1 and 0s, we can conditionally synthesize it by
-	@ using value of broadcasted carry as a whole or extracting
-	@ single bit. Follow $ff register...
+	@ using value of borrow as a whole or extracting single bit.
+	@ Follow $ff register...
 
-	subs	$a0,$a0,$ff		@ subtract synthesized modulus
-	sbcs	$a1,$a1,$ff
+	adds	$a0,$a0,$ff		@ add synthesized modulus
+	adcs	$a1,$a1,$ff
 	str	$a0,[$r_ptr,#0]
-	sbcs	$a2,$a2,$ff
+	adcs	$a2,$a2,$ff
 	str	$a1,[$r_ptr,#4]
-	sbcs	$a3,$a3,#0
+	adcs	$a3,$a3,#0
 	str	$a2,[$r_ptr,#8]
-	sbcs	$a4,$a4,#0
+	adcs	$a4,$a4,#0
 	str	$a3,[$r_ptr,#12]
-	sbcs	$a5,$a5,#0
+	adcs	$a5,$a5,#0
 	str	$a4,[$r_ptr,#16]
-	sbcs	$a6,$a6,$ff,lsr#31
+	adcs	$a6,$a6,$ff,lsr#31
 	str	$a5,[$r_ptr,#20]
-	sbcs	$a7,$a7,$ff
+	adcs	$a7,$a7,$ff
 	str	$a6,[$r_ptr,#24]
 	str	$a7,[$r_ptr,#28]
 
@@ -304,26 +311,29 @@ __ecp_nistz256_mul_by_3:
 	adcs	$a6,$a6,$a6
 	mov	$ff,#0
 	adcs	$a7,$a7,$a7
-#ifdef	__thumb2__
-	it	cs
-#endif
-	movcs	$ff,#-1			@ $ff = carry ? -1 : 0, "broadcast" carry
+	adc	$ff,$ff,#0
 
-	subs	$a0,$a0,$ff		@ subtract synthesized modulus, see
-					@ .Lreduce_by_sub for details, except
-					@ that we don't write anything to
-					@ memory, but keep intermediate
-					@ results in registers...
-	sbcs	$a1,$a1,$ff
-	sbcs	$a2,$a2,$ff
+	subs	$a0,$a0,#-1		@ .Lreduce_by_sub but without stores
+	sbcs	$a1,$a1,#-1
+	sbcs	$a2,$a2,#-1
 	sbcs	$a3,$a3,#0
 	sbcs	$a4,$a4,#0
-	 ldr	$b_ptr,[$a_ptr,#0]
 	sbcs	$a5,$a5,#0
+	sbcs	$a6,$a6,#1
+	sbcs	$a7,$a7,#-1
+	sbc	$ff,$ff,#0
+
+	adds	$a0,$a0,$ff		@ add synthesized modulus
+	adcs	$a1,$a1,$ff
+	adcs	$a2,$a2,$ff
+	adcs	$a3,$a3,#0
+	adcs	$a4,$a4,#0
+	 ldr	$b_ptr,[$a_ptr,#0]
+	adcs	$a5,$a5,#0
 	 ldr	$t1,[$a_ptr,#4]
-	sbcs	$a6,$a6,$ff,lsr#31
+	adcs	$a6,$a6,$ff,lsr#31
 	 ldr	$t2,[$a_ptr,#8]
-	sbcs	$a7,$a7,$ff
+	adc	$a7,$a7,$ff
 
 	ldr	$t0,[$a_ptr,#12]
 	adds	$a0,$a0,$b_ptr		@ 2*a[0:7]+=a[0:7]
@@ -339,10 +349,7 @@ __ecp_nistz256_mul_by_3:
 	adcs	$a6,$a6,$t2
 	mov	$ff,#0
 	adcs	$a7,$a7,$t3
-#ifdef	__thumb2__
-	it	cs
-#endif
-	movcs	$ff,#-1			@ $ff = carry ? -1 : 0, "broadcast" carry
+	adc	$ff,$ff,#0
 	ldr	lr,[sp],#4		@ pop lr
 
 	b	.Lreduce_by_sub
@@ -1210,25 +1217,42 @@ __ecp_nistz256_add_self:
 	adcs	$a6,$a6,$a6
 	mov	$ff,#0
 	adcs	$a7,$a7,$a7
-#ifdef	__thumb2__
-	it	cs
-#endif
-	movcs	$ff,#-1			@ $ff = carry ? -1 : 0
+	adc	$ff,$ff,#0
 
-	subs	$a0,$a0,$ff		@ subtract synthesized modulus
-	sbcs	$a1,$a1,$ff
-	str	$a0,[$r_ptr,#0]
-	sbcs	$a2,$a2,$ff
-	str	$a1,[$r_ptr,#4]
+	@ if a+b >= modulus, subtract modulus.
+	@
+	@ But since comparison implies subtraction, we subtract
+	@ modulus and then add it back if subraction borrowed.
+
+	subs	$a0,$a0,#-1
+	sbcs	$a1,$a1,#-1
+	sbcs	$a2,$a2,#-1
 	sbcs	$a3,$a3,#0
-	str	$a2,[$r_ptr,#8]
 	sbcs	$a4,$a4,#0
-	str	$a3,[$r_ptr,#12]
 	sbcs	$a5,$a5,#0
+	sbcs	$a6,$a6,#1
+	sbcs	$a7,$a7,#-1
+	sbc	$ff,$ff,#0
+
+	@ Note that because mod has special form, i.e. consists of
+	@ 0xffffffff, 1 and 0s, we can conditionally synthesize it by
+	@ using value of borrow as a whole or extracting single bit.
+	@ Follow $ff register...
+
+	adds	$a0,$a0,$ff		@ add synthesized modulus
+	adcs	$a1,$a1,$ff
+	str	$a0,[$r_ptr,#0]
+	adcs	$a2,$a2,$ff
+	str	$a1,[$r_ptr,#4]
+	adcs	$a3,$a3,#0
+	str	$a2,[$r_ptr,#8]
+	adcs	$a4,$a4,#0
+	str	$a3,[$r_ptr,#12]
+	adcs	$a5,$a5,#0
 	str	$a4,[$r_ptr,#16]
-	sbcs	$a6,$a6,$ff,lsr#31
+	adcs	$a6,$a6,$ff,lsr#31
 	str	$a5,[$r_ptr,#20]
-	sbcs	$a7,$a7,$ff
+	adcs	$a7,$a7,$ff
 	str	$a6,[$r_ptr,#24]
 	str	$a7,[$r_ptr,#28]
 
