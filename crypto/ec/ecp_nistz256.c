@@ -82,19 +82,36 @@ typedef struct ec_pre_comp_st {
 } EC_PRE_COMP;
 
 /* Functions implemented in assembly */
-/* Modular mul by 2: res = 2*a mod P */
-void ecp_nistz256_mul_by_2(BN_ULONG res[P256_LIMBS],
-                           const BN_ULONG a[P256_LIMBS]);
-/* Modular div by 2: res = a/2 mod P */
-void ecp_nistz256_div_by_2(BN_ULONG res[P256_LIMBS],
-                           const BN_ULONG a[P256_LIMBS]);
-/* Modular mul by 3: res = 3*a mod P */
-void ecp_nistz256_mul_by_3(BN_ULONG res[P256_LIMBS],
-                           const BN_ULONG a[P256_LIMBS]);
+/*
+ * Most of below mentioned functions *preserve* the property of inputs
+ * being fully reduced, i.e. being in [0, modulus) range. Simply put if
+ * inputs are fully reduced, then output is too. Note that reverse is
+ * not true, in sense that given partially reduced inputs output can be
+ * either, not unlikely reduced. And "most" in first sentence refers to
+ * the fact that given the calculations flow one can tolerate that
+ * addition, 1st function below, produces partially reduced result *if*
+ * multiplications by 2 and 3, which customarily use addition, fully
+ * reduce it. This effectively gives two options: a) addition produces
+ * fully reduced result [as long as inputs are, just like remaining
+ * functions]; b) addition is allowed to produce partially reduced
+ * result, but multiplications by 2 and 3 perform additional reduction
+ * step. Choice between the two can be platform-specific, but it was a)
+ * in all cases so far...
+ */
 /* Modular add: res = a+b mod P   */
 void ecp_nistz256_add(BN_ULONG res[P256_LIMBS],
                       const BN_ULONG a[P256_LIMBS],
                       const BN_ULONG b[P256_LIMBS]);
+/* Modular mul by 2: res = 2*a mod P */
+void ecp_nistz256_mul_by_2(BN_ULONG res[P256_LIMBS],
+                           const BN_ULONG a[P256_LIMBS]);
+/* Modular mul by 3: res = 3*a mod P */
+void ecp_nistz256_mul_by_3(BN_ULONG res[P256_LIMBS],
+                           const BN_ULONG a[P256_LIMBS]);
+
+/* Modular div by 2: res = a/2 mod P */
+void ecp_nistz256_div_by_2(BN_ULONG res[P256_LIMBS],
+                           const BN_ULONG a[P256_LIMBS]);
 /* Modular sub: res = a-b mod P   */
 void ecp_nistz256_sub(BN_ULONG res[P256_LIMBS],
                       const BN_ULONG a[P256_LIMBS],
