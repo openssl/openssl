@@ -583,14 +583,14 @@ __ecp_nistz256_add:
 	adds	$t0,$acc0,#1		// subs	$t0,$a0,#-1 // tmp = ret-modulus
 	sbcs	$t1,$acc1,$poly1
 	sbcs	$t2,$acc2,xzr
-	sbc	$t3,$acc3,$poly3
-	cmp	$ap,xzr			// did addition carry?
+	sbcs	$t3,$acc3,$poly3
+	sbcs	xzr,$ap,xzr		// did subtraction borrow?
 
-	csel	$acc0,$acc0,$t0,eq	// ret = carry ? ret-modulus : ret
-	csel	$acc1,$acc1,$t1,eq
-	csel	$acc2,$acc2,$t2,eq
+	csel	$acc0,$acc0,$t0,lo	// ret = borrow ? ret : ret-modulus
+	csel	$acc1,$acc1,$t1,lo
+	csel	$acc2,$acc2,$t2,lo
 	stp	$acc0,$acc1,[$rp]
-	csel	$acc3,$acc3,$t3,eq
+	csel	$acc3,$acc3,$t3,lo
 	stp	$acc2,$acc3,[$rp,#16]
 
 	ret
