@@ -160,9 +160,7 @@ static FUNCTION functions[] = {
     { FT_general, "gendsa", gendsa_main, gendsa_options },
 #endif
     { FT_general, "genpkey", genpkey_main, genpkey_options },
-#ifndef OPENSSL_NO_RSA
     { FT_general, "genrsa", genrsa_main, genrsa_options },
-#endif
     { FT_general, "help", help_main, help_options },
     { FT_general, "list", list_main, list_options },
     { FT_general, "nseq", nseq_main, nseq_options },
@@ -183,9 +181,7 @@ static FUNCTION functions[] = {
     { FT_general, "rehash", rehash_main, rehash_options },
     { FT_general, "req", req_main, req_options },
     { FT_general, "rsa", rsa_main, rsa_options },
-#ifndef OPENSSL_NO_RSA
     { FT_general, "rsautl", rsautl_main, rsautl_options },
-#endif
 #ifndef OPENSSL_NO_SOCK
     { FT_general, "s_client", s_client_main, s_client_options },
 #endif
