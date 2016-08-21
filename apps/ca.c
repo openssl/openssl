@@ -2106,9 +2106,11 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     tm = X509_get_notAfter(ret);
     row[DB_type] = OPENSSL_malloc(2);
     row[DB_exp_date] = OPENSSL_malloc(tm->length + 1);
+    row[DB_rev_date] = OPENSSL_malloc(1);
     row[DB_file] = OPENSSL_malloc(8);
     row[DB_name] = X509_NAME_oneline(X509_get_subject_name(ret), NULL, 0);
     if ((row[DB_type] == NULL) || (row[DB_exp_date] == NULL) ||
+        (row[DB_rev_date] == NULL) ||
         (row[DB_file] == NULL) || (row[DB_name] == NULL)) {
         BIO_printf(bio_err, "Memory allocation failure\n");
         goto err;
@@ -2116,7 +2118,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     memcpy(row[DB_exp_date], tm->data, tm->length);
     row[DB_exp_date][tm->length] = '\0';
-    row[DB_rev_date] = '\0';
+    row[DB_rev_date][0] = '\0';
     strcpy(row[DB_file], "unknown");
     row[DB_type][0] = 'V';
     row[DB_type][1] = '\0';
