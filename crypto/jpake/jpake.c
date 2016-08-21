@@ -154,7 +154,7 @@ static void hashbn(SHA_CTX *sha, const BIGNUM *bn)
     unsigned char *bin = OPENSSL_malloc(l);
 
     if (bin == NULL)
-        return NULL;
+        return;
     hashlength(sha, l);
     BN_bn2bin(bn, bin);
     SHA1_Update(sha, bin, l);
