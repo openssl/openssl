@@ -27,7 +27,8 @@ static int enc_new(BIO *h);
 static int enc_free(BIO *data);
 static long enc_callback_ctrl(BIO *h, int cmd, bio_info_cb *fps);
 #define ENC_BLOCK_SIZE  (1024*4)
-#define BUF_OFFSET      (EVP_MAX_BLOCK_LENGTH*2)
+#define ENC_MIN_CHUNK   (256)
+#define BUF_OFFSET      (ENC_MIN_CHUNK + EVP_MAX_BLOCK_LENGTH)
 
 typedef struct enc_struct {
     int buf_len;
@@ -36,11 +37,12 @@ typedef struct enc_struct {
     int finished;
     int ok;                     /* bad decrypt */
     EVP_CIPHER_CTX *cipher;
+    unsigned char *read_start, *read_end;
     /*
      * buf is larger than ENC_BLOCK_SIZE because EVP_DecryptUpdate can return
      * up to a block more data than is presented to it
      */
-    unsigned char buf[ENC_BLOCK_SIZE + BUF_OFFSET + 2];
+    unsigned char buf[BUF_OFFSET + ENC_BLOCK_SIZE];
 } BIO_ENC_CTX;
 
 static const BIO_METHOD methods_enc = {
@@ -75,6 +77,7 @@ static int enc_new(BIO *bi)
     }
     ctx->cont = 1;
     ctx->ok = 1;
+    ctx->read_end = ctx->read_start = &(ctx->buf[BUF_OFFSET]);
     BIO_set_data(bi, ctx);
     BIO_set_init(bi, 1);
 
@@ -102,7 +105,7 @@ static int enc_free(BIO *a)
 
 static int enc_read(BIO *b, char *out, int outl)
 {
-    int ret = 0, i;
+    int ret = 0, i, blocksize;
     BIO_ENC_CTX *ctx;
     BIO *next;
 
@@ -130,27 +133,24 @@ static int enc_read(BIO *b, char *out, int outl)
         }
     }
 
+    blocksize = EVP_CIPHER_CTX_block_size(ctx->cipher);
+    if (blocksize == 1)
+        blocksize = 0;
+
     /*
      * At this point, we have room of outl bytes and an empty buffer, so we
      * should read in some more.
      */
 
     while (outl > 0) {
-        int buf_len;
-
         if (ctx->cont <= 0)
             break;
 
-        buf_len = outl + EVP_MAX_BLOCK_LENGTH - 1;
-        buf_len -= buf_len % EVP_MAX_BLOCK_LENGTH;
-        if (buf_len > ENC_BLOCK_SIZE) {
-            buf_len = ENC_BLOCK_SIZE;
+        if (ctx->read_start == ctx->read_end) { /* time to read more data */
+            ctx->read_end = ctx->read_start = &(ctx->buf[BUF_OFFSET]);
+            ctx->read_end += BIO_read(next, ctx->read_start, ENC_BLOCK_SIZE);
         }
-
-        /*
-         * read in at IV offset, read the EVP_Cipher documentation about why
-         */
-        i = BIO_read(next, &(ctx->buf[BUF_OFFSET]), buf_len);
+        i = ctx->read_end - ctx->read_start;
 
         if (i <= 0) {
             /* Should be continue next time we are called? */
@@ -164,26 +164,41 @@ static int enc_read(BIO *b, char *out, int outl)
                 ret = (ret == 0) ? i : ret;
                 break;
             }
-        } else if (outl >= EVP_MAX_BLOCK_LENGTH) {
-            if (!EVP_CipherUpdate(ctx->cipher,
-                                  (unsigned char *)out, &buf_len,
-                                  &(ctx->buf[BUF_OFFSET]), i)) {
-                BIO_clear_retry_flags(b);
-                return 0;
-            }
-            ret += buf_len;
-            outl -= buf_len;
-            out += buf_len;
-
-            continue;
         } else {
+            if (outl > ENC_MIN_CHUNK) {
+                /*
+                 * Depending on flags block cipher decrypt can write
+                 * one extra block and then back off, i.e. output buffer
+                 * has to accommodate extra block...
+                 */
+                int j = outl - blocksize, buf_len;
+
+                if (!EVP_CipherUpdate(ctx->cipher,
+                                      (unsigned char *)out, &buf_len,
+                                      ctx->read_start, i > j ? j : i)) {
+                    BIO_clear_retry_flags(b);
+                    return 0;
+                }
+                ret += buf_len;
+                out += buf_len;
+                outl -= buf_len;
+
+                if ((i -= j) <= 0) {
+                    ctx->read_start = ctx->read_end;
+                    continue;
+                }
+                ctx->read_start += j;
+            }
+            if (i > ENC_MIN_CHUNK)
+                i = ENC_MIN_CHUNK;
             if (!EVP_CipherUpdate(ctx->cipher,
                                   ctx->buf, &ctx->buf_len,
-                                  &(ctx->buf[BUF_OFFSET]), i)) {
+                                  ctx->read_start, i)) {
                 BIO_clear_retry_flags(b);
                 ctx->ok = 0;
                 return 0;
             }
+            ctx->read_start += i;
             ctx->cont = 1;
             /*
              * Note: it is possible for EVP_CipherUpdate to decrypt zero
