@@ -373,6 +373,8 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
     }
     /* Work out total size */
     j = ASN1_object_size(0, i, V_ASN1_OBJECT);
+    if (j < 0)
+        return NULL;
 
     if ((buf = OPENSSL_malloc(j)) == NULL)
         return NULL;
