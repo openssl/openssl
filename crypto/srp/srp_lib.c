@@ -84,7 +84,7 @@ BIGNUM *SRP_Calc_u(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N)
         || !EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(A, cAB + longN), longN)
         || !EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(B, cAB + longN), longN))
         goto err;
-    OPENSSL_free(cAB);
+
     if (!EVP_DigestFinal_ex(ctxt, cu, NULL))
         goto err;
 
@@ -94,7 +94,9 @@ BIGNUM *SRP_Calc_u(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N)
         BN_free(u);
         u = NULL;
     }
+
  err:
+    OPENSSL_free(cAB);
     EVP_MD_CTX_free(ctxt);
 
     return u;
