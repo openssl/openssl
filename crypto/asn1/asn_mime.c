@@ -918,6 +918,8 @@ static MIME_PARAM *mime_param_find(MIME_HEADER *hdr, const char *name)
 
 static void mime_hdr_free(MIME_HEADER *hdr)
 {
+    if (hdr == NULL)
+        return;
     OPENSSL_free(hdr->name);
     OPENSSL_free(hdr->value);
     if (hdr->params)
