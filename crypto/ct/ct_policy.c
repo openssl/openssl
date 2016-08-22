@@ -30,6 +30,8 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void)
 
 void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx)
 {
+    if (ctx == NULL)
+        return;
     X509_free(ctx->cert);
     X509_free(ctx->issuer);
     OPENSSL_free(ctx);
