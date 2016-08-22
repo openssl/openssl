@@ -2368,7 +2368,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
     if (pms == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto err;
     }
 
     if (EVP_PKEY_encrypt_init(pkey_ctx) <= 0
