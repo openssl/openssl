@@ -433,13 +433,13 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
     case TLS_ST_SW_HELLO_REQ:
         s->shutdown = 0;
         if (SSL_IS_DTLS(s))
-            dtls1_clear_record_buffer(s);
+            dtls1_clear_sent_buffer(s);
         break;
 
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         s->shutdown = 0;
         if (SSL_IS_DTLS(s)) {
-            dtls1_clear_record_buffer(s);
+            dtls1_clear_sent_buffer(s);
             /* We don't buffer this message so don't use the timer */
             st->use_timer = 0;
         }

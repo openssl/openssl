@@ -29,6 +29,7 @@ static ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_FUNC(BIO_F_BIO_CTRL), "BIO_ctrl"},
     {ERR_FUNC(BIO_F_BIO_GETS), "BIO_gets"},
     {ERR_FUNC(BIO_F_BIO_GET_HOST_IP), "BIO_get_host_ip"},
+    {ERR_FUNC(BIO_F_BIO_GET_NEW_INDEX), "BIO_get_new_index"},
     {ERR_FUNC(BIO_F_BIO_GET_PORT), "BIO_get_port"},
     {ERR_FUNC(BIO_F_BIO_LISTEN), "BIO_listen"},
     {ERR_FUNC(BIO_F_BIO_LOOKUP), "BIO_lookup"},

@@ -51,10 +51,10 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
     BIO_printf(out, "%8sIssuer: %s\n", "", p);
     OPENSSL_free(p);
     BIO_printf(out, "%8sLast Update: ", "");
-    ASN1_TIME_print(out, X509_CRL_get_lastUpdate(x));
+    ASN1_TIME_print(out, X509_CRL_get0_lastUpdate(x));
     BIO_printf(out, "\n%8sNext Update: ", "");
-    if (X509_CRL_get_nextUpdate(x))
-        ASN1_TIME_print(out, X509_CRL_get_nextUpdate(x));
+    if (X509_CRL_get0_nextUpdate(x))
+        ASN1_TIME_print(out, X509_CRL_get0_nextUpdate(x));
     else
         BIO_printf(out, "NONE");
     BIO_printf(out, "\n");

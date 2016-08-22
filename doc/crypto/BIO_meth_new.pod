@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+BIO_get_new_index,
 BIO_meth_new, BIO_meth_free, BIO_meth_get_write, BIO_meth_set_write,
 BIO_meth_get_read, BIO_meth_set_read, BIO_meth_get_puts, BIO_meth_set_puts,
 BIO_meth_get_gets, BIO_meth_set_gets, BIO_meth_get_ctrl, BIO_meth_set_ctrl,
@@ -13,6 +14,7 @@ BIO_meth_set_callback_ctrl  - Routines to build up BIO methods
 
  #include <openssl/bio.h>
 
+ int BIO_get_new_index(void);
  BIO_METHOD *BIO_meth_new(int type, const char *name);
  void BIO_meth_free(BIO_METHOD *biom);
  int (*BIO_meth_get_write(BIO_METHOD *biom)) (BIO *, const char *, int);
@@ -47,7 +49,10 @@ types. It provides a set of of functions used by OpenSSL for the implementation
 of the various BIO capabilities. See the L<bio> page for more information.
 
 BIO_meth_new() creates a new B<BIO_METHOD> structure. It should be given a
-unique integer B<type> and a string that represents its B<name>. The set of
+unique integer B<type> and a string that represents its B<name>.
+Use BIO_get_new_index() to get the value for B<type>.
+
+The set of
 standard OpenSSL provided BIO types is provided in B<bio.h>. Some examples
 include B<BIO_TYPE_BUFFER> and B<BIO_TYPE_CIPHER>. Filter BIOs should have a
 type which have the "filter" bit set (B<BIO_TYPE_FILTER>). Source/sink BIOs

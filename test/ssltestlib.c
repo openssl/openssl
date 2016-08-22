@@ -231,12 +231,12 @@ static int tls_dump_puts(BIO *bio, const char *str)
 }
 
 
-typedef struct mempacket_st {
+struct mempacket_st {
     unsigned char *data;
     int len;
     unsigned int num;
     unsigned int type;
-} MEMPACKET;
+};
 
 static void mempacket_free(MEMPACKET *pkt)
 {
@@ -337,7 +337,7 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
         BIO_set_retry_read(bio);
         return -1;
     }
-    sk_MEMPACKET_shift(ctx->pkts);
+    (void)sk_MEMPACKET_shift(ctx->pkts);
     ctx->currpkt++;
 
     if (outl > thispkt->len)

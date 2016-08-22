@@ -1923,7 +1923,8 @@ __owur int dtls1_buffer_message(SSL *s, int ccs);
 __owur int dtls1_retransmit_message(SSL *s, unsigned short seq, int *found);
 __owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
 int dtls1_retransmit_buffered_messages(SSL *s);
-void dtls1_clear_record_buffer(SSL *s);
+void dtls1_clear_received_buffer(SSL *s);
+void dtls1_clear_sent_buffer(SSL *s);
 void dtls1_get_message_header(unsigned char *data,
                               struct hm_header_st *msg_hdr);
 __owur long dtls1_default_timeout(void);

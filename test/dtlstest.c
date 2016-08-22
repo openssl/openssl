@@ -55,7 +55,7 @@ static int test_dtls_unprocessed(int testidx)
         return 0;
     }
 
-    if (!SSL_CTX_set_cipher_list(cctx, "ECDHE-RSA-AES256-SHA384")) {
+    if (!SSL_CTX_set_cipher_list(cctx, "AES128-SHA")) {
         printf("Failed setting cipher list\n");
     }
 

@@ -25,7 +25,6 @@
 # include <openssl/txt_db.h>
 # include <openssl/engine.h>
 # include <openssl/ocsp.h>
-# include <openssl/ossl_typ.h>
 # include <signal.h>
 
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
@@ -72,6 +71,8 @@ int has_stdin_waiting(void);
 # endif
 
 void corrupt_signature(const ASN1_STRING *signature);
+int set_cert_times(X509 *x, const char *startdate, const char *enddate,
+                   int days);
 
 /*
  * Common verification options.

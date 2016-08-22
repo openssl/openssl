@@ -33,38 +33,18 @@ int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name)
     return (X509_NAME_set(&x->crl.issuer, name));
 }
 
-int X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
+int X509_CRL_set1_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
 {
-    ASN1_TIME *in;
-
     if (x == NULL)
-        return (0);
-    in = x->crl.lastUpdate;
-    if (in != tm) {
-        in = ASN1_STRING_dup(tm);
-        if (in != NULL) {
-            ASN1_TIME_free(x->crl.lastUpdate);
-            x->crl.lastUpdate = in;
-        }
-    }
-    return (in != NULL);
+        return 0;
+    return x509_set1_time(&x->crl.lastUpdate, tm);
 }
 
-int X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
+int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
 {
-    ASN1_TIME *in;
-
     if (x == NULL)
-        return (0);
-    in = x->crl.nextUpdate;
-    if (in != tm) {
-        in = ASN1_STRING_dup(tm);
-        if (in != NULL) {
-            ASN1_TIME_free(x->crl.nextUpdate);
-            x->crl.nextUpdate = in;
-        }
-    }
-    return (in != NULL);
+        return 0;
+    return x509_set1_time(&x->crl.nextUpdate, tm);
 }
 
 int X509_CRL_sort(X509_CRL *c)
@@ -100,15 +80,27 @@ long X509_CRL_get_version(const X509_CRL *crl)
     return ASN1_INTEGER_get(crl->crl.version);
 }
 
-ASN1_TIME *X509_CRL_get_lastUpdate(const X509_CRL *crl)
+const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl)
 {
     return crl->crl.lastUpdate;
 }
 
-ASN1_TIME *X509_CRL_get_nextUpdate(const X509_CRL *crl)
+const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl)
 {
     return crl->crl.nextUpdate;
 }
+
+#if OPENSSL_API_COMPAT < 0x10100000L
+ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl)
+{
+    return crl->crl.lastUpdate;
+}
+
+ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl)
+{
+    return crl->crl.nextUpdate;
+}
+#endif
 
 X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl)
 {

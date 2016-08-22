@@ -555,7 +555,7 @@ typedef enum OPTION_choice {
 #ifndef OPENSSL_NO_CT
     OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
-    OPT_DANE_TLSA_RRDATA
+    OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME
 } OPTION_CHOICE;
 
 OPTIONS s_client_options[] = {
@@ -589,6 +589,8 @@ OPTIONS s_client_options[] = {
     {"dane_tlsa_domain", OPT_DANE_TLSA_DOMAIN, 's', "DANE TLSA base domain"},
     {"dane_tlsa_rrdata", OPT_DANE_TLSA_RRDATA, 's',
      "DANE TLSA rrdata presentation form"},
+    {"dane_ee_no_namechecks", OPT_DANE_EE_NO_NAME, '-',
+     "Disable name checks when matching DANE-EE(3) TLSA records"},
     {"reconnect", OPT_RECONNECT, '-',
      "Drop and re-make the connection with the same Session-ID"},
     {"showcerts", OPT_SHOWCERTS, '-', "Show all certificates in the chain"},
@@ -783,6 +785,7 @@ int s_client_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
     char *dane_tlsa_domain = NULL;
     STACK_OF(OPENSSL_STRING) *dane_tlsa_rrset = NULL;
+    int dane_ee_no_name = 0;
     STACK_OF(X509_CRL) *crls = NULL;
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL;
@@ -1257,6 +1260,9 @@ int s_client_main(int argc, char **argv)
                 goto end;
             }
             break;
+        case OPT_DANE_EE_NO_NAME:
+            dane_ee_no_name = 1;
+            break;
         case OPT_NEXTPROTONEG:
 #ifndef OPENSSL_NO_NEXTPROTONEG
             next_proto_neg_in = opt_arg();
@@ -1701,6 +1707,8 @@ int s_client_main(int argc, char **argv)
                        "records.\n", prog);
             goto end;
         }
+        if (dane_ee_no_name)
+            SSL_dane_set_flags(con, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
     } else if (dane_tlsa_rrset != NULL) {
         BIO_printf(bio_err, "%s: DANE TLSA authentication requires the "
                    "-dane_tlsa_domain option.\n", prog);

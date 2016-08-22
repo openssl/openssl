@@ -595,4 +595,6 @@ void bio_cleanup(void)
     CRYPTO_THREAD_lock_free(bio_lookup_lock);
     bio_lookup_lock = NULL;
 #endif
+    CRYPTO_THREAD_lock_free(bio_type_lock);
+    bio_type_lock = NULL;
 }

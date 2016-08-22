@@ -271,7 +271,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
         else
             len = strlen(data);
     }
-    if ((str->length < len) || (str->data == NULL)) {
+    if ((str->length <= len) || (str->data == NULL)) {
         c = str->data;
         str->data = OPENSSL_realloc(c, len + 1);
         if (str->data == NULL) {

@@ -554,9 +554,9 @@ int x509_main(int argc, char **argv)
             goto end;
         if (!X509_set_subject_name(x, X509_REQ_get_subject_name(req)))
             goto end;
+        if (!set_cert_times(x, NULL, NULL, days))
+            goto end;
 
-        X509_gmtime_adj(X509_get_notBefore(x), 0);
-        X509_time_adj_ex(X509_get_notAfter(x), days, 0, NULL);
         if (fkey)
             X509_set_pubkey(x, fkey);
         else {
@@ -746,11 +746,11 @@ int x509_main(int argc, char **argv)
                 X509_print_ex(out, x, nmflag, certflag);
             } else if (startdate == i) {
                 BIO_puts(out, "notBefore=");
-                ASN1_TIME_print(out, X509_get_notBefore(x));
+                ASN1_TIME_print(out, X509_get0_notBefore(x));
                 BIO_puts(out, "\n");
             } else if (enddate == i) {
                 BIO_puts(out, "notAfter=");
-                ASN1_TIME_print(out, X509_get_notAfter(x));
+                ASN1_TIME_print(out, X509_get0_notAfter(x));
                 BIO_puts(out, "\n");
             } else if (fingerprint == i) {
                 int j;
@@ -837,7 +837,7 @@ int x509_main(int argc, char **argv)
     if (checkend) {
         time_t tcheck = time(NULL) + checkoffset;
 
-        if (X509_cmp_time(X509_get_notAfter(x), &tcheck) < 0) {
+        if (X509_cmp_time(X509_get0_notAfter(x), &tcheck) < 0) {
             BIO_printf(out, "Certificate will expire\n");
             ret = 1;
         } else {
@@ -983,11 +983,7 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
     if (!X509_set_serialNumber(x, bs))
         goto end;
 
-    if (X509_gmtime_adj(X509_get_notBefore(x), 0L) == NULL)
-        goto end;
-
-    /* hardwired expired */
-    if (X509_time_adj_ex(X509_get_notAfter(x), days, 0, NULL) == NULL)
+    if (!set_cert_times(x, NULL, NULL, days))
         goto end;
 
     if (clrext) {
@@ -1056,12 +1052,8 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
 
     if (!X509_set_issuer_name(x, X509_get_subject_name(x)))
         goto err;
-    if (X509_gmtime_adj(X509_get_notBefore(x), 0) == NULL)
+    if (!set_cert_times(x, NULL, NULL, days))
         goto err;
-
-    if (X509_time_adj_ex(X509_get_notAfter(x), days, 0, NULL) == NULL)
-        goto err;
-
     if (!X509_set_pubkey(x, pkey))
         goto err;
     if (clrext) {
