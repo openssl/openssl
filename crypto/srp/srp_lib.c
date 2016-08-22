@@ -19,7 +19,7 @@ static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g)
     /* k = SHA1(N | PAD(g)) -- tls-srp draft 8 */
 
     unsigned char digest[SHA_DIGEST_LENGTH];
-    unsigned char *tmp;
+    unsigned char *tmp = NULL;
     EVP_MD_CTX *ctxt = NULL;
     int longg;
     int longN = BN_num_bytes(N);
@@ -45,12 +45,12 @@ static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g)
     if (!EVP_DigestUpdate(ctxt, tmp + longg, longN - longg)
         || !EVP_DigestUpdate(ctxt, tmp, longg))
         goto err;
-    OPENSSL_free(tmp);
 
     if (!EVP_DigestFinal_ex(ctxt, digest, NULL))
         goto err;
     res = BN_bin2bn(digest, sizeof(digest), NULL);
  err:
+    OPENSSL_free(tmp);
     EVP_MD_CTX_free(ctxt);
     return res;
 }
