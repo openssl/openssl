@@ -337,7 +337,7 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
         BIO_set_retry_read(bio);
         return -1;
     }
-    sk_MEMPACKET_shift(ctx->pkts);
+    (void)sk_MEMPACKET_shift(ctx->pkts);
     ctx->currpkt++;
 
     if (outl > thispkt->len)
