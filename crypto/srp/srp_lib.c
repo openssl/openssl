@@ -168,7 +168,7 @@ BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass)
 {
     unsigned char dig[SHA_DIGEST_LENGTH];
     EVP_MD_CTX *ctxt;
-    unsigned char *cs;
+    unsigned char *cs = NULL;
     BIGNUM *res = NULL;
 
     if ((s == NULL) || (user == NULL) || (pass == NULL))
@@ -190,13 +190,15 @@ BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass)
     BN_bn2bin(s, cs);
     if (!EVP_DigestUpdate(ctxt, cs, BN_num_bytes(s)))
         goto err;
-    OPENSSL_free(cs);
+
     if (!EVP_DigestUpdate(ctxt, dig, sizeof(dig))
         || !EVP_DigestFinal_ex(ctxt, dig, NULL))
         goto err;
 
     res = BN_bin2bn(dig, sizeof(dig), NULL);
+
  err:
+    OPENSSL_free(cs);
     EVP_MD_CTX_free(ctxt);
     return res;
 }
