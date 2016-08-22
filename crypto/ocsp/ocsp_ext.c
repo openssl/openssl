@@ -256,6 +256,9 @@ static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts,
      * relies on library internals.
      */
     os.length = ASN1_object_size(0, len, V_ASN1_OCTET_STRING);
+    if (os.length < 0)
+        goto err;
+
     os.data = OPENSSL_malloc(os.length);
     if (os.data == NULL)
         goto err;
