@@ -74,6 +74,9 @@ int BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
 
     pm1 = BN_CTX_get(ctx);
 
+    if (pm1 == NULL)
+        goto err;
+
     if (!bn_x931_derive_pi(p1, Xp1, ctx, cb))
         goto err;
 
