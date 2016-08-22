@@ -1211,7 +1211,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
     unsigned long header_length;
     unsigned char seq64be[8];
     struct dtls1_retransmit_state saved_state;
-    unsigned char save_write_sequence[8];
+    unsigned char save_write_sequence[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
     /*-
       OPENSSL_assert(s->init_num == 0);
