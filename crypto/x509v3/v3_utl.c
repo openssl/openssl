@@ -789,7 +789,7 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
         alt_type = V_ASN1_IA5STRING;
         equal = equal_email;
     } else if (check_type == GEN_EMAILUTF8) {
-/* TODO beldmit        cnid = NID_pkcs9_emailAddress; */
+        cnid = NID_smtputf8Name;
         alt_type = V_ASN1_UTF8STRING;
         equal = equal_email;
     } else if (check_type == GEN_DNS) {
