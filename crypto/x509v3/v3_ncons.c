@@ -195,7 +195,7 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
         if (r != X509_V_OK)
             return r;
 
-        gntmp.type = GEN_EMAIL; /*FIXME beldmit*/
+        gntmp.type = GEN_EMAIL;
 
         /* Process any email address attributes in subject name */
 
@@ -207,6 +207,26 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
             ne = X509_NAME_get_entry(nm, i);
             gntmp.d.rfc822Name = X509_NAME_ENTRY_get_data(ne);
             if (gntmp.d.rfc822Name->type != V_ASN1_IA5STRING)
+                return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+
+            r = nc_match(&gntmp, nc);
+
+            if (r != X509_V_OK)
+                return r;
+        }
+
+        gntmp.type = GEN_EMAILUTF8;
+
+        /* Process any email address attributes in subject name */
+
+        for (i = -1;;) {
+            X509_NAME_ENTRY *ne;
+            i = X509_NAME_get_index_by_NID(nm, NID_smtputf8Name, i);
+            if (i == -1)
+                break;
+            ne = X509_NAME_get_entry(nm, i);
+            gntmp.d.smtputf8Name = X509_NAME_ENTRY_get_data(ne);
+            if (gntmp.d.smtputf8Name->type != V_ASN1_UTF8STRING)
                 return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 
             r = nc_match(&gntmp, nc);
