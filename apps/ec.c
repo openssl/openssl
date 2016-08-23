@@ -185,7 +185,7 @@ int ec_main(int argc, char **argv)
     } else if (informat == FORMAT_ENGINE) {
         EVP_PKEY *pkey;
         if (pubin)
-            pkey = load_pubkey(infile, informat , 1, passin, e, "Public Key");
+            pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
         else
             pkey = load_key(infile, informat, 1, passin, e, "Private Key");
         if (pkey != NULL) {

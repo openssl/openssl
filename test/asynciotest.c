@@ -205,7 +205,7 @@ static int async_write(BIO *bio, const char *in, int inl)
         /* Write any data we have left after fragmenting */
         ret = 0;
         if ((int)written < inl) {
-            ret = BIO_write(next, in + written , inl - written);
+            ret = BIO_write(next, in + written, inl - written);
         }
 
         if (ret <= 0 && BIO_should_write(next))
