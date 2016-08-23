@@ -570,7 +570,6 @@ CRYPTO_cts128_encrypt_block             569	1_1_0	EXIST::FUNCTION:
 ASN1_digest                             570	1_1_0	EXIST::FUNCTION:
 ERR_load_X509V3_strings                 571	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_cleanup               572	1_1_0	EXIST::FUNCTION:
-SCT_verify                              573	1_1_0	EXIST::FUNCTION:CT
 d2i_X509                                574	1_1_0	EXIST::FUNCTION:
 a2i_ASN1_STRING                         575	1_1_0	EXIST::FUNCTION:
 EC_GROUP_get_mont_data                  576	1_1_0	EXIST::FUNCTION:EC
@@ -596,7 +595,6 @@ RAND_query_egd_bytes                    596	1_1_0	EXIST::FUNCTION:EGD
 i2d_ASN1_PRINTABLE                      597	1_1_0	EXIST::FUNCTION:
 ENGINE_cmd_is_executable                598	1_1_0	EXIST::FUNCTION:ENGINE
 BIO_puts                                599	1_1_0	EXIST::FUNCTION:
-SCT_verify_v1                           600	1_1_0	EXIST::FUNCTION:CT
 RSAPublicKey_it                         601	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:RSA
 RSAPublicKey_it                         601	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:RSA
 ISSUING_DIST_POINT_new                  602	1_1_0	EXIST::FUNCTION:
