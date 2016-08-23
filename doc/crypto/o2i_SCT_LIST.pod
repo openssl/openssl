@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-o2i_SCT_LIST, i2o_SCT_LIST, o2i_SCT, i2o_SCT, o2i_SCT_signature, i2o_SCT_signature -
+o2i_SCT_LIST, i2o_SCT_LIST, o2i_SCT, i2o_SCT -
 decode and encode Signed Certificate Timestamp lists in TLS wire format
 
 =head1 SYNOPSIS
@@ -13,8 +13,6 @@ decode and encode Signed Certificate Timestamp lists in TLS wire format
  int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp);
  SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
  int i2o_SCT(const SCT *sct, unsigned char **out);
- int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
- int i2o_SCT_signature(const SCT *sct, unsigned char **out);
 
 =head1 DESCRIPTION
 
@@ -23,21 +21,10 @@ functions, except that they convert to and from TLS wire format, as described in
 RFC 6962. See L<d2i_SCT_LIST> for more information about how the parameters are
 treated and the return values.
 
-The SCT_signature functions are less similar. They still convert to and from
-TLS wire format, but they require that an SCT is provided that the signature is
-either taken from or inserted into.
-
-=head1 NOTES
-
-If an error occurs during a call to o2i_SCT_signature, the SCT may have its
-signature NID updated but not the signature value.
-
 =head1 RETURN VALUES
 
 All of the functions have return values consist with those stated for
-L<d2i_SCT_LIST>, except o2i_SCT_signature. The o2i_SCT_signature function
-returns the number of bytes that were parsed, or a negative integer if an error
-occurs.
+L<d2i_SCT_LIST> and L<i2d_SCT_LIST>.
 
 =head1 SEE ALSO
 
