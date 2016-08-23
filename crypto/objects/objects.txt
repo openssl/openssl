@@ -1483,3 +1483,6 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
                             : AuthSRP      : auth-srp
                             : AuthNULL     : auth-null
 
+
+#Temporary OID for https://tools.ietf.org/html/draft-ietf-lamps-eai-addresses-00
+1 2 643 2 9 7 123		:	smtputf8Name	: smtputf8Name 

@@ -4575,3 +4575,8 @@
 #define SN_auth_null            "AuthNULL"
 #define LN_auth_null            "auth-null"
 #define NID_auth_null           1053
+
+#define SN_smtputf8Name         "smtputf8Name"
+#define LN_smtputf8Name         "smtputf8Name"
+#define NID_smtputf8Name                1061
+#define OBJ_smtputf8Name                1L,2L,643L,2L,9L,7L,123L

@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[6765] = {
+static const unsigned char so[6772] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -961,9 +961,10 @@ static const unsigned char so[6765] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x13,  /* [ 6731] OBJ_id_smime_ct_contentCollection */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x17,  /* [ 6742] OBJ_id_smime_ct_authEnvelopedData */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x1C,  /* [ 6753] OBJ_id_ct_xml */
+    0x2A,0x85,0x03,0x02,0x09,0x07,0x7B,            /* [ 6764] OBJ_smtputf8Name */
 };
 
-#define NUM_NID 1061
+#define NUM_NID 1062
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2026,9 +2027,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-smime-ct-contentCollection", "id-smime-ct-contentCollection", NID_id_smime_ct_contentCollection, 11, &so[6731]},
     {"id-smime-ct-authEnvelopedData", "id-smime-ct-authEnvelopedData", NID_id_smime_ct_authEnvelopedData, 11, &so[6742]},
     {"id-ct-xml", "id-ct-xml", NID_id_ct_xml, 11, &so[6753]},
+    {"smtputf8Name", "smtputf8Name", NID_smtputf8Name, 7, &so[6764]},
 };
 
-#define NUM_SN 1052
+#define NUM_SN 1053
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3033,6 +3035,7 @@ static const unsigned int sn_objs[NUM_SN] = {
       52,    /* "signingTime" */
      454,    /* "simpleSecurityObject" */
      496,    /* "singleLevelQuality" */
+    1061,    /* "smtputf8Name" */
      387,    /* "snmpv2" */
      660,    /* "street" */
       85,    /* "subjectAltName" */
@@ -3084,7 +3087,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      160,    /* "x509Crl" */
 };
 
-#define NUM_LN 1052
+#define NUM_LN 1053
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4093,6 +4096,7 @@ static const unsigned int ln_objs[NUM_LN] = {
       52,    /* "signingTime" */
      454,    /* "simpleSecurityObject" */
      496,    /* "singleLevelQuality" */
+    1061,    /* "smtputf8Name" */
       16,    /* "stateOrProvinceName" */
      660,    /* "streetAddress" */
      498,    /* "subtreeMaximumQuality" */
@@ -4140,7 +4144,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 956
+#define NUM_OBJ 957
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -4521,6 +4525,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      842,    /* OBJ_id_GostR3410_2001_CryptoPro_C_ParamSet 1 2 643 2 2 35 3 */
      843,    /* OBJ_id_GostR3410_2001_CryptoPro_XchA_ParamSet 1 2 643 2 2 36 0 */
      844,    /* OBJ_id_GostR3410_2001_CryptoPro_XchB_ParamSet 1 2 643 2 2 36 1 */
+    1061,    /* OBJ_smtputf8Name                 1 2 643 2 9 7 123 */
      978,    /* OBJ_id_tc26_sign                 1 2 643 7 1 1 1 */
      981,    /* OBJ_id_tc26_digest               1 2 643 7 1 1 2 */
      984,    /* OBJ_id_tc26_signwithdigest       1 2 643 7 1 1 3 */
