@@ -210,14 +210,13 @@ digest name passed on the command line.
  unsigned char md_value[EVP_MAX_MD_SIZE];
  int md_len, i;
 
- if(!argv[1]) {
+ if (!argv[1]) {
         printf("Usage: mdtest digestname\n");
         exit(1);
  }
 
  md = EVP_get_digestbyname(argv[1]);
-
- if(!md) {
+ if (md == NULL) {
         printf("Unknown message digest %s\n", argv[1]);
         exit(1);
  }

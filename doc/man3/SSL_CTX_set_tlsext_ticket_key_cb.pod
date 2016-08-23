@@ -155,17 +155,17 @@ Reference Implementation:
       } else { /* retrieve session */
           key = findkey(name);
 
-          if  (!key || key->expire < now() ) {
+          if (!key || key->expire < now() ) {
               return 0;
           }
 
           HMAC_Init_ex(&hctx, key->hmac_key, 16, EVP_sha256(), NULL);
           EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL, key->aes_key, iv );
 
-          if (key->expire < ( now() - RENEW_TIME ) ) {
+          if (key->expire < ( now() - RENEW_TIME ) )
               /* return 2 - this session will get a new ticket even though the current is still valid */
               return 2;
-          }
+
           return 1;
 
       }

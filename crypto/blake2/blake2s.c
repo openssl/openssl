@@ -219,7 +219,7 @@ int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen)
             in += fill;
             datalen -= fill;
         }
-        if (datalen > BLAKE2S_BLOCKBYTES)  {
+        if (datalen > BLAKE2S_BLOCKBYTES) {
             size_t stashlen = datalen % BLAKE2S_BLOCKBYTES;
             /*
              * If |datalen| is a multiple of the blocksize, stash
