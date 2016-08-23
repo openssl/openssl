@@ -388,6 +388,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
 
 /*
  * Creates a new CT log instance with the given |public_key| and |name|.
+ * Takes ownership of |public_key| but copies |name|.
  * Returns NULL if malloc fails or if |public_key| cannot be converted to DER.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
