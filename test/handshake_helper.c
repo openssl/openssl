@@ -837,7 +837,7 @@ static char *dup_str(const unsigned char *in, size_t len)
 {
     char *ret;
 
-    if(len == 0)
+    if (len == 0)
         return NULL;
 
     /* Assert that the string does not contain NUL-bytes. */

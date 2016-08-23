@@ -106,7 +106,7 @@ int prime_main(int argc, char **argv)
             else
                 r = BN_dec2bn(&bn, argv[0]);
 
-            if(!r) {
+            if (!r) {
                 BIO_printf(bio_err, "Failed to process value (%s)\n", argv[0]);
                 goto end;
             }
