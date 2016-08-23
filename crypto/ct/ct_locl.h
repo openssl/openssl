@@ -192,6 +192,8 @@ __owur int i2o_SCT_signature(const SCT *sct, unsigned char **out);
 * |in| will be advanced to the end of the signature if parsing succeeds.
 * |len| should be the length of the signature in |in|.
 * Returns the number of bytes parsed, or a negative integer if an error occurs.
+* If an error occurs, the SCT's signature NID may be updated whilst the
+* signature field itself remains unset.
 */
 __owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
 
