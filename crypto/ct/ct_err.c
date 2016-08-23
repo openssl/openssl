@@ -45,8 +45,7 @@ static ERR_STRING_DATA CT_str_functs[] = {
     {ERR_FUNC(CT_F_SCT_SET_LOG_ENTRY_TYPE), "SCT_set_log_entry_type"},
     {ERR_FUNC(CT_F_SCT_SET_SIGNATURE_NID), "SCT_set_signature_nid"},
     {ERR_FUNC(CT_F_SCT_SET_VERSION), "SCT_set_version"},
-    {ERR_FUNC(CT_F_SCT_VERIFY), "SCT_verify"},
-    {ERR_FUNC(CT_F_SCT_VERIFY_V1), "SCT_verify_v1"},
+    {ERR_FUNC(CT_F_SCT_CTX_VERIFY), "SCT_CTX_verify"},
     {0, NULL}
 };
 

@@ -151,6 +151,13 @@ __owur int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 __owur int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 
 /*
+ * Verifies an SCT with the given context.
+ * Returns 1 if the SCT verifies successfully; any other value indicates
+ * failure. See EVP_DigestVerifyFinal() for the meaning of those values.
+ */
+__owur int SCT_CTX_verify(const SCT_CTX *sctx, const SCT *sct);
+
+/*
  * Does this SCT have the minimum fields populated to be usable?
  * Returns 1 if so, 0 otherwise.
  */
