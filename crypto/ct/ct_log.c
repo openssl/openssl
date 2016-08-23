@@ -247,10 +247,10 @@ CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name)
         goto err;
     }
 
-    ret->public_key = public_key;
     if (ct_v1_log_id_from_pkey(public_key, ret->log_id) != 1)
         goto err;
 
+    ret->public_key = public_key;
     return ret;
 err:
     CTLOG_free(ret);
