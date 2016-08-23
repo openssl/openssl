@@ -76,7 +76,7 @@ X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
 
 /*
  * Sets the certificate associated with the received SCTs.
- * Incremenets the reference count of cert.
+ * Increments the reference count of cert.
  * Returns 1 on success, 0 otherwise.
  */
 int CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);

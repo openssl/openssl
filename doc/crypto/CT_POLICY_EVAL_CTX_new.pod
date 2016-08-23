@@ -3,9 +3,9 @@
 =head1 NAME
 
 CT_POLICY_EVAL_CTX_new, CT_POLICY_EVAL_CTX_free,
-CT_POLICY_EVAL_CTX_get0_cert, CT_POLICY_EVAL_CTX_set0_cert,
-CT_POLICY_EVAL_CTX_get0_issuer, CT_POLICY_EVAL_CTX_set0_issuer,
-CT_POLICY_EVAL_CTX_get0_log_store, CT_POLICY_EVAL_CTX_set0_log_store -
+CT_POLICY_EVAL_CTX_get0_cert, CT_POLICY_EVAL_CTX_set1_cert,
+CT_POLICY_EVAL_CTX_get0_issuer, CT_POLICY_EVAL_CTX_set1_issuer,
+CT_POLICY_EVAL_CTX_get0_log_store, CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE -
 Encapsulates the data required to evaluate whether SCTs meet a Certificate Transparency policy
 
 =head1 SYNOPSIS
@@ -15,11 +15,11 @@ Encapsulates the data required to evaluate whether SCTs meet a Certificate Trans
  CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
  void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);
  X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
- void CT_POLICY_EVAL_CTX_set0_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
+ int CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
  X509* CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx);
- void CT_POLICY_EVAL_CTX_set0_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
+ int CT_POLICY_EVAL_CTX_set1_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
  const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *ctx);
- void CT_POLICY_EVAL_CTX_set0_log_store(CT_POLICY_EVAL_CTX *ctx, CTLOG_STORE *log_store);
+ void CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(CT_POLICY_EVAL_CTX *ctx, CTLOG_STORE *log_store);
 
 =head1 DESCRIPTION
 
@@ -45,17 +45,22 @@ should then be populated using:
 
 =over
 
-=item * CT_POLICY_EVAL_CTX_set0_cert() to provide the certificate the SCTs were issued for
+=item * CT_POLICY_EVAL_CTX_set1_cert() to provide the certificate the SCTs were issued for
 
-=item * CT_POLICY_EVAL_CTX_set0_issuer() to provide the issuer certificate
+Increments the reference count of the certificate.
 
-=item * CT_POLICY_EVAL_CTX_set0_log_store() to provide a list of logs that are trusted as sources of SCTs
+=item * CT_POLICY_EVAL_CTX_set1_issuer() to provide the issuer certificate
+
+Increments the reference count of the certificate.
+
+=item * CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE() to provide a list of logs that are trusted as sources of SCTs
+
+Holds a pointer to the CTLOG_STORE, so the CTLOG_STORE must outlive the
+CT_POLICY_EVAL_CTX.
 
 =back
 
-None of these setters take ownership of the pointers passed to them.
 Each setter has a matching getter for accessing the current value.
-The getters do not transfer ownership either.
 
 When no longer required, the B<CT_POLICY_EVAL_CTX> should be passed to
 CT_POLICY_EVAL_CTX_free() to delete it.
