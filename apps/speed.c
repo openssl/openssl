@@ -593,7 +593,7 @@ static long c[ALGOR_NUM][SIZE_NUM];
 #ifndef OPENSSL_NO_MD2
 static int EVP_Digest_MD2_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char md2[MD2_DIGEST_LENGTH];
     int count;
@@ -610,7 +610,7 @@ static int EVP_Digest_MD2_loop(void *args)
 #ifndef OPENSSL_NO_MDC2
 static int EVP_Digest_MDC2_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char mdc2[MDC2_DIGEST_LENGTH];
     int count;
@@ -627,7 +627,7 @@ static int EVP_Digest_MDC2_loop(void *args)
 #ifndef OPENSSL_NO_MD4
 static int EVP_Digest_MD4_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char md4[MD4_DIGEST_LENGTH];
     int count;
@@ -644,7 +644,7 @@ static int EVP_Digest_MD4_loop(void *args)
 #ifndef OPENSSL_NO_MD5
 static int MD5_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char md5[MD5_DIGEST_LENGTH];
     int count;
@@ -655,7 +655,7 @@ static int MD5_loop(void *args)
 
 static int HMAC_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     HMAC_CTX *hctx = tempargs->hctx;
     unsigned char hmac[MD5_DIGEST_LENGTH];
@@ -672,7 +672,7 @@ static int HMAC_loop(void *args)
 
 static int SHA1_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char sha[SHA_DIGEST_LENGTH];
     int count;
@@ -683,7 +683,7 @@ static int SHA1_loop(void *args)
 
 static int SHA256_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char sha256[SHA256_DIGEST_LENGTH];
     int count;
@@ -694,7 +694,7 @@ static int SHA256_loop(void *args)
 
 static int SHA512_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char sha512[SHA512_DIGEST_LENGTH];
     int count;
@@ -706,7 +706,7 @@ static int SHA512_loop(void *args)
 #ifndef OPENSSL_NO_WHIRLPOOL
 static int WHIRLPOOL_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char whirlpool[WHIRLPOOL_DIGEST_LENGTH];
     int count;
@@ -719,7 +719,7 @@ static int WHIRLPOOL_loop(void *args)
 #ifndef OPENSSL_NO_RMD160
 static int EVP_Digest_RMD160_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
     int count;
@@ -736,7 +736,7 @@ static int EVP_Digest_RMD160_loop(void *args)
 static RC4_KEY rc4_ks;
 static int RC4_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     int count;
     for (count = 0; COND(c[D_RC4][testnum]); count++)
@@ -752,7 +752,7 @@ static DES_key_schedule sch2;
 static DES_key_schedule sch3;
 static int DES_ncbc_encrypt_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     int count;
     for (count = 0; COND(c[D_CBC_DES][testnum]); count++)
@@ -763,7 +763,7 @@ static int DES_ncbc_encrypt_loop(void *args)
 
 static int DES_ede3_cbc_encrypt_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     int count;
     for (count = 0; COND(c[D_EDE3_DES][testnum]); count++)
@@ -780,7 +780,7 @@ static unsigned char iv[2 * MAX_BLOCK_SIZE / 8];
 static AES_KEY aes_ks1, aes_ks2, aes_ks3;
 static int AES_cbc_128_encrypt_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     int count;
     for (count = 0; COND(c[D_CBC_128_AES][testnum]); count++)
@@ -792,7 +792,7 @@ static int AES_cbc_128_encrypt_loop(void *args)
 
 static int AES_cbc_192_encrypt_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     int count;
     for (count = 0; COND(c[D_CBC_192_AES][testnum]); count++)
@@ -804,7 +804,7 @@ static int AES_cbc_192_encrypt_loop(void *args)
 
 static int AES_cbc_256_encrypt_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     int count;
     for (count = 0; COND(c[D_CBC_256_AES][testnum]); count++)
@@ -816,7 +816,7 @@ static int AES_cbc_256_encrypt_loop(void *args)
 
 static int AES_ige_128_encrypt_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
     int count;
@@ -829,7 +829,7 @@ static int AES_ige_128_encrypt_loop(void *args)
 
 static int AES_ige_192_encrypt_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
     int count;
@@ -842,7 +842,7 @@ static int AES_ige_192_encrypt_loop(void *args)
 
 static int AES_ige_256_encrypt_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
     int count;
@@ -855,7 +855,7 @@ static int AES_ige_256_encrypt_loop(void *args)
 
 static int CRYPTO_gcm128_aad_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     GCM128_CONTEXT *gcm_ctx = tempargs->gcm_ctx;
     int count;
@@ -868,7 +868,7 @@ static long save_count = 0;
 static int decrypt = 0;
 static int EVP_Update_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
     int outl, count;
@@ -891,7 +891,7 @@ static int EVP_Update_loop(void *args)
 static const EVP_MD *evp_md = NULL;
 static int EVP_Digest_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char md[EVP_MAX_MD_SIZE];
     int count;
@@ -911,7 +911,7 @@ static long rsa_c[RSA_NUM][2];  /* # RSA iteration test */
 
 static int RSA_sign_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
     unsigned int *rsa_num = &tempargs->siglen;
@@ -931,7 +931,7 @@ static int RSA_sign_loop(void *args)
 
 static int RSA_verify_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
     unsigned int rsa_num = tempargs->siglen;
@@ -954,7 +954,7 @@ static int RSA_verify_loop(void *args)
 static long dsa_c[DSA_NUM][2];
 static int DSA_sign_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
     DSA **dsa_key = tempargs->dsa_key;
@@ -974,7 +974,7 @@ static int DSA_sign_loop(void *args)
 
 static int DSA_verify_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
     DSA **dsa_key = tempargs->dsa_key;
@@ -997,7 +997,7 @@ static int DSA_verify_loop(void *args)
 static long ecdsa_c[EC_NUM][2];
 static int ECDSA_sign_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     EC_KEY **ecdsa = tempargs->ecdsa;
     unsigned char *ecdsasig = tempargs->buf2;
@@ -1018,7 +1018,7 @@ static int ECDSA_sign_loop(void *args)
 
 static int ECDSA_verify_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     unsigned char *buf = tempargs->buf;
     EC_KEY **ecdsa = tempargs->ecdsa;
     unsigned char *ecdsasig = tempargs->buf2;
@@ -1042,7 +1042,7 @@ static long ecdh_c[EC_NUM][1];
 
 static int ECDH_compute_key_loop(void *args)
 {
-    loopargs_t *tempargs = (loopargs_t *)args;
+    loopargs_t *tempargs = *(loopargs_t **)args;
     EC_KEY **ecdh_a = tempargs->ecdh_a;
     EC_KEY **ecdh_b = tempargs->ecdh_b;
     unsigned char *secret_a = tempargs->secret_a;
@@ -1082,13 +1082,16 @@ static int run_benchmark(int async_jobs,
     run = 1;
 
     if (async_jobs == 0) {
-        return loop_function((void *)loopargs);
+        return loop_function((void *)&loopargs);
     }
 
     for (i = 0; i < async_jobs && !error; i++) {
+        loopargs_t *looparg_item = loopargs + i;
+
+        /* Copy pointer content (looparg_t item address) into async context */
         ret = ASYNC_start_job(&loopargs[i].inprogress_job, loopargs[i].wait_ctx,
                               &job_op_count, loop_function,
-                              (void *)(loopargs + i), sizeof(loopargs_t));
+                              (void *)&looparg_item, sizeof(looparg_item));
         switch (ret) {
         case ASYNC_PAUSE:
             ++num_inprogress;

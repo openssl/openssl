@@ -289,7 +289,7 @@ int req_main(int argc, char **argv)
             break;
         case OPT_X509:
             x509 = 1;
-						newreq = 1;
+            newreq = 1;
             break;
         case OPT_DAYS:
             days = atoi(opt_arg());

@@ -365,7 +365,6 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             } else {
                 ctx->obuf_len = 0;
                 ctx->obuf_off = 0;
-                ret = 1;
                 break;
             }
         }

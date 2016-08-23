@@ -270,7 +270,6 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
                 ctx->obuf_len -= r;
             } else {
                 ctx->obuf_len = 0;
-                ret = 1;
                 break;
             }
         }

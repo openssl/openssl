@@ -512,13 +512,11 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
         goto err;
     }
     if (ret->base == NULL && (ret->base = ASN1_OCTET_STRING_new()) == NULL) {
+        OPENSSL_free(buffer);
         ECerr(EC_F_EC_GROUP_GET_ECPARAMETERS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    if (!ASN1_OCTET_STRING_set(ret->base, buffer, len)) {
-        ECerr(EC_F_EC_GROUP_GET_ECPARAMETERS, ERR_R_ASN1_LIB);
-        goto err;
-    }
+    ASN1_STRING_set0(ret->base, buffer, len);
 
     /* set the order */
     tmp = EC_GROUP_get0_order(group);
@@ -547,7 +545,6 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
  err:
     if (params == NULL)
         ECPARAMETERS_free(ret);
-    OPENSSL_free(buffer);
     return NULL;
 }
 

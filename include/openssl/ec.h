@@ -699,7 +699,9 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 /********************************************************************/
 
 DECLARE_ASN1_ITEM(ECPKPARAMETERS)
+DECLARE_ASN1_ALLOC_FUNCTIONS(ECPKPARAMETERS)
 DECLARE_ASN1_ITEM(ECPARAMETERS)
+DECLARE_ASN1_ALLOC_FUNCTIONS(ECPARAMETERS)
 
 /*
  * EC_GROUP_get_basis_type() returns the NID of the basis type used to

@@ -19,7 +19,7 @@ static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g)
     /* k = SHA1(N | PAD(g)) -- tls-srp draft 8 */
 
     unsigned char digest[SHA_DIGEST_LENGTH];
-    unsigned char *tmp;
+    unsigned char *tmp = NULL;
     EVP_MD_CTX *ctxt = NULL;
     int longg;
     int longN = BN_num_bytes(N);
@@ -45,12 +45,12 @@ static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g)
     if (!EVP_DigestUpdate(ctxt, tmp + longg, longN - longg)
         || !EVP_DigestUpdate(ctxt, tmp, longg))
         goto err;
-    OPENSSL_free(tmp);
 
     if (!EVP_DigestFinal_ex(ctxt, digest, NULL))
         goto err;
     res = BN_bin2bn(digest, sizeof(digest), NULL);
  err:
+    OPENSSL_free(tmp);
     EVP_MD_CTX_free(ctxt);
     return res;
 }
@@ -84,7 +84,7 @@ BIGNUM *SRP_Calc_u(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N)
         || !EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(A, cAB + longN), longN)
         || !EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(B, cAB + longN), longN))
         goto err;
-    OPENSSL_free(cAB);
+
     if (!EVP_DigestFinal_ex(ctxt, cu, NULL))
         goto err;
 
@@ -94,7 +94,9 @@ BIGNUM *SRP_Calc_u(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N)
         BN_free(u);
         u = NULL;
     }
+
  err:
+    OPENSSL_free(cAB);
     EVP_MD_CTX_free(ctxt);
 
     return u;
@@ -166,7 +168,7 @@ BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass)
 {
     unsigned char dig[SHA_DIGEST_LENGTH];
     EVP_MD_CTX *ctxt;
-    unsigned char *cs;
+    unsigned char *cs = NULL;
     BIGNUM *res = NULL;
 
     if ((s == NULL) || (user == NULL) || (pass == NULL))
@@ -188,13 +190,15 @@ BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass)
     BN_bn2bin(s, cs);
     if (!EVP_DigestUpdate(ctxt, cs, BN_num_bytes(s)))
         goto err;
-    OPENSSL_free(cs);
+
     if (!EVP_DigestUpdate(ctxt, dig, sizeof(dig))
         || !EVP_DigestFinal_ex(ctxt, dig, NULL))
         goto err;
 
     res = BN_bin2bn(dig, sizeof(dig), NULL);
+
  err:
+    OPENSSL_free(cs);
     EVP_MD_CTX_free(ctxt);
     return res;
 }

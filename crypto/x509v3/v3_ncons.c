@@ -32,6 +32,7 @@ static int nc_match_single(GENERAL_NAME *sub, GENERAL_NAME *gen);
 static int nc_dn(X509_NAME *sub, X509_NAME *nm);
 static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
+static int nc_emailutf8(ASN1_UTF8STRING *sub, ASN1_UTF8STRING *eml);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
 static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base);
 
@@ -194,7 +195,7 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
         if (r != X509_V_OK)
             return r;
 
-        gntmp.type = GEN_EMAIL;
+        gntmp.type = GEN_EMAIL; /*FIXME beldmit*/
 
         /* Process any email address attributes in subject name */
 
@@ -336,6 +337,9 @@ static int nc_match_single(GENERAL_NAME *gen, GENERAL_NAME *base)
     case GEN_EMAIL:
         return nc_email(gen->d.rfc822Name, base->d.rfc822Name);
 
+    case GEN_EMAILUTF8:
+        return nc_emailutf8(gen->d.smtputf8Name, base->d.smtputf8Name);
+
     case GEN_URI:
         return nc_uri(gen->d.uniformResourceIdentifier,
                       base->d.uniformResourceIdentifier);
@@ -394,6 +398,48 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
 }
 
 static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
+{
+    const char *baseptr = (char *)base->data;
+    const char *emlptr = (char *)eml->data;
+
+    const char *baseat = strchr(baseptr, '@');
+    const char *emlat = strchr(emlptr, '@');
+    if (!emlat)
+        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+    /* Special case: initial '.' is RHS match */
+    if (!baseat && (*baseptr == '.')) {
+        if (eml->length > base->length) {
+            emlptr += eml->length - base->length;
+            if (strcasecmp(baseptr, emlptr) == 0)
+                return X509_V_OK;
+        }
+        return X509_V_ERR_PERMITTED_VIOLATION;
+    }
+
+    /* If we have anything before '@' match local part */
+
+    if (baseat) {
+        if (baseat != baseptr) {
+            if ((baseat - baseptr) != (emlat - emlptr))
+                return X509_V_ERR_PERMITTED_VIOLATION;
+            /* Case sensitive match of local part */
+            if (strncmp(baseptr, emlptr, emlat - emlptr))
+                return X509_V_ERR_PERMITTED_VIOLATION;
+        }
+        /* Position base after '@' */
+        baseptr = baseat + 1;
+    }
+    emlptr = emlat + 1;
+    /* Just have hostname left to match: case insensitive */
+    if (strcasecmp(baseptr, emlptr))
+        return X509_V_ERR_PERMITTED_VIOLATION;
+
+    return X509_V_OK;
+
+}
+
+/*FIXME beldmit: to be merged with nc_email*/
+static int nc_emailutf8(ASN1_UTF8STRING *eml, ASN1_UTF8STRING *base)
 {
     const char *baseptr = (char *)base->data;
     const char *emlptr = (char *)eml->data;

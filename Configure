@@ -500,7 +500,7 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 	    if (grep(/^reconf/,@argvcopy));
 	$ENV{CROSS_COMPILE} = $configdata::config{cross_compile_prefix}
 	    if defined($configdata::config{cross_compile_prefix});
-	$ENV{CROSS_COMPILE} = $configdata::config{cc}
+	$ENV{CC} = $configdata::config{cc}
 	    if defined($configdata::config{cc});
 
 	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
@@ -937,6 +937,9 @@ $target{ar} =      $ENV{'AR'}      || $target{ar}      || "ar";
 $target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
 $target{rc} =
     $ENV{'RC'}  || $ENV{'WINDRES'} || $target{rc}      || "windres";
+
+# Cache the C compiler command for reconfiguration
+$config{cc} = $target{cc};
 
 # For cflags, lflags, plib_lflags, ex_libs and defines, add the debug_
 # or release_ attributes.

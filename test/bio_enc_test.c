@@ -10,6 +10,7 @@
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/bio.h>
+#include <openssl/rand.h>
 
 int main()
 {
@@ -19,12 +20,9 @@ int main()
     unsigned char out[1024], ref[1024];
     int i, lref, len;
 
-    b = BIO_new(BIO_f_cipher());
-    if (!BIO_set_cipher(b, EVP_camellia_128_ctr(), key, NULL, 0))
+    /* Fill buffer with non-zero data so that over steps can be detected */
+    if (RAND_bytes(inp, sizeof(inp)) <= 0)
         return -1;
-    BIO_push(b, BIO_new_mem_buf(inp, sizeof(inp)));
-    lref = BIO_read(b, inp, sizeof(inp));
-    BIO_free_all(b);
 
     /*
      * Exercise CBC cipher
@@ -87,7 +85,7 @@ int main()
 
     /* reference output for single-chunk operation */
     b = BIO_new(BIO_f_cipher());
-    if (!BIO_set_cipher(b, EVP_aes_128_cbc(), key, NULL, 0))
+    if (!BIO_set_cipher(b, EVP_aes_128_ctr(), key, NULL, 0))
          return -1;
     BIO_push(b, BIO_new_mem_buf(inp, sizeof(inp)));
     lref = BIO_read(b, ref, sizeof(ref));
@@ -96,7 +94,7 @@ int main()
     /* perform split operations and compare to reference */
     for (i = 1; i < lref; i++) {
         b = BIO_new(BIO_f_cipher());
-        if (!BIO_set_cipher(b, EVP_aes_128_cbc(), key, NULL, 0))
+        if (!BIO_set_cipher(b, EVP_aes_128_ctr(), key, NULL, 0))
              return -1;
         BIO_push(b, BIO_new_mem_buf(inp, sizeof(inp)));
         memset(out, 0, sizeof(out));
@@ -121,7 +119,7 @@ int main()
         int delta;
 
         b = BIO_new(BIO_f_cipher());
-        if (!BIO_set_cipher(b, EVP_aes_128_cbc(), key, NULL, 0))
+        if (!BIO_set_cipher(b, EVP_aes_128_ctr(), key, NULL, 0))
              return -1;
         BIO_push(b, BIO_new_mem_buf(inp, sizeof(inp)));
         memset(out, 0, sizeof(out));

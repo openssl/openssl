@@ -85,6 +85,10 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         X509V3_add_value_uchar("email", gen->d.ia5->data, &ret);
         break;
 
+    case GEN_EMAILUTF8:
+        X509V3_add_value_uchar("emailUTF8", gen->d.smtputf8Name->data, &ret);
+        break;
+
     case GEN_DNS:
         X509V3_add_value_uchar("DNS", gen->d.ia5->data, &ret);
         break;
@@ -147,6 +151,10 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
 
     case GEN_EMAIL:
         BIO_printf(out, "email:%s", gen->d.ia5->data);
+        break;
+
+    case GEN_EMAILUTF8:
+        BIO_printf(out, "emailUTF8:%s", gen->d.smtputf8Name->data);
         break;
 
     case GEN_DNS:
@@ -272,7 +280,7 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
     }
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
-        if (!name_cmp(cnf->name, "email")
+        if (!name_cmp(cnf->name, "email") /*FIXME beldmit*/
             && cnf->value && strcmp(cnf->value, "copy") == 0) {
             if (!copy_email(ctx, gens, 0))
                 goto err;
@@ -333,7 +341,7 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
         }
         gen->d.ia5 = email;
         email = NULL;
-        gen->type = GEN_EMAIL;
+        gen->type = GEN_EMAIL;/*FIXME beldmit*/
         if (!sk_GENERAL_NAME_push(gens, gen)) {
             X509V3err(X509V3_F_COPY_EMAIL, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -406,6 +414,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
     switch (gen_type) {
     case GEN_URI:
     case GEN_EMAIL:
+		case GEN_EMAILUTF8:
     case GEN_DNS:
         is_string = 1;
         break;
@@ -489,6 +498,8 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 
     if (!name_cmp(name, "email"))
         type = GEN_EMAIL;
+    else if (!name_cmp(name, "emailUTF8"))
+        type = GEN_EMAILUTF8;
     else if (!name_cmp(name, "URI"))
         type = GEN_URI;
     else if (!name_cmp(name, "DNS"))

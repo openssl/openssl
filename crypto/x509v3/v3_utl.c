@@ -788,6 +788,10 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
         cnid = NID_pkcs9_emailAddress;
         alt_type = V_ASN1_IA5STRING;
         equal = equal_email;
+    } else if (check_type == GEN_EMAILUTF8) {
+/* TODO beldmit        cnid = NID_pkcs9_emailAddress; */
+        alt_type = V_ASN1_UTF8STRING;
+        equal = equal_email;
     } else if (check_type == GEN_DNS) {
         cnid = NID_commonName;
         /* Implicit client-side DNS sub-domain pattern */
@@ -817,6 +821,8 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
             san_present = 1;
             if (check_type == GEN_EMAIL)
                 cstr = gen->d.rfc822Name;
+            else if (check_type == GEN_EMAILUTF8)
+                cstr = gen->d.smtputf8Name;
             else if (check_type == GEN_DNS)
                 cstr = gen->d.dNSName;
             else
