@@ -67,8 +67,8 @@ char *BN_bn2dec(const BIGNUM *a)
     /*-
      * get an upper bound for the length of the decimal integer
      * num <= (BN_num_bits(a) + 1) * log(2)
-     *     <= 3 * BN_num_bits(a) * 0.1001 + log(2) + 1     (rounding error)
-     *     <= BN_num_bits(a)/10 + BN_num_bits/1000 + 1 + 1
+     *     <= 3 * BN_num_bits(a) * 0.101 + log(2) + 1     (rounding error)
+     *     <= 3 * BN_num_bits(a) / 10 + 3 * BN_num_bits / 1000 + 1 + 1
      */
     i = BN_num_bits(a) * 3;
     num = (i / 10 + i / 1000 + 1) + 1;
