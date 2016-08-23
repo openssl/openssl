@@ -164,6 +164,29 @@ __owur int SCT_is_complete(const SCT *sct);
  */
 __owur int SCT_signature_is_complete(const SCT *sct);
 
+/*
+ * TODO(RJPercival): Create an SCT_signature struct and make i2o_SCT_signature
+ * and o2i_SCT_signature conform to the i2d/d2i conventions.
+ */
+
+/*
+* Serialize (to TLS format) an |sct| signature and write it to |out|.
+* If |out| is null, no signature will be output but the length will be returned.
+* If |out| points to a null pointer, a string will be allocated to hold the
+* TLS-format signature. It is the responsibility of the caller to free it.
+* If |out| points to an allocated string, the signature will be written to it.
+* The length of the signature in TLS format will be returned.
+*/
+__owur int i2o_SCT_signature(const SCT *sct, unsigned char **out);
+
+/*
+* Parses an SCT signature in TLS format and populates the |sct| with it.
+* |in| should be a pointer to a string containing the TLS-format signature.
+* |in| will be advanced to the end of the signature if parsing succeeds.
+* |len| should be the length of the signature in |in|.
+* Returns the number of bytes parsed, or a negative integer if an error occurs.
+*/
+__owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
 
 /*
  * Handlers for Certificate Transparency X509v3/OCSP extensions
