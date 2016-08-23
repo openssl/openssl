@@ -349,7 +349,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     if (SCT_CTX_set1_cert(sctx, ctx->cert, NULL) != 1)
         sct->validation_status = SCT_VALIDATION_STATUS_UNVERIFIED;
     else
-        sct->validation_status = SCT_verify(sctx, sct) == 1 ?
+        sct->validation_status = SCT_CTX_verify(sctx, sct) == 1 ?
             SCT_VALIDATION_STATUS_VALID : SCT_VALIDATION_STATUS_INVALID;
 
 end:
