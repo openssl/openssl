@@ -145,8 +145,8 @@ required for verifying the SCT.
 Some of the setters return int, instead of void. These will all return 1 on
 success, 0 on failure. They will not make changes on failure.
 
-Most of the setters will reset the validation status of the SCT to
-SCT_VALIDATION_STATUS_NOT_SET (see L<SCT_verify(3)>).
+All of the setters will reset the validation status of the SCT to
+SCT_VALIDATION_STATUS_NOT_SET (see L<SCT_validate(3)>).
 
 SCT_set_source() will call SCT_set_log_entry_type() if the type of
 certificate the SCT was issued for can be inferred from where the SCT was found.
