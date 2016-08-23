@@ -262,6 +262,7 @@ sct_source_t SCT_get_source(const SCT *sct)
 int SCT_set_source(SCT *sct, sct_source_t source)
 {
     sct->source = source;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
     switch (source) {
     case SCT_SOURCE_TLS_EXTENSION:
     case SCT_SOURCE_OCSP_STAPLED_RESPONSE:
