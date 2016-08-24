@@ -130,8 +130,10 @@ int spkac_main(int argc, char **argv)
         spkstr = NETSCAPE_SPKI_b64_encode(spki);
 
         out = bio_open_default(outfile, 'w', FORMAT_TEXT);
-        if (out == NULL)
+        if (out == NULL) {
+            OPENSSL_free(spkstr);
             goto end;
+        }
         BIO_printf(out, "SPKAC=%s\n", spkstr);
         OPENSSL_free(spkstr);
         ret = 0;
