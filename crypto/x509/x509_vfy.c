@@ -2440,6 +2440,12 @@ X509_STORE_CTX_verify_cb X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx)
     return ctx->verify_cb;
 }
 
+void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx,
+                               X509_STORE_CTX_verify_fn verify)
+{
+    ctx->verify = verify;
+}
+
 X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx)
 {
     return ctx->verify;

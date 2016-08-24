@@ -41,9 +41,9 @@ X509_STORE_CTX_get_verify - X509_STORE_CTX initialisation
 
  int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx);
 
- typedef int (*X509_STORE_CTX_verify)(X509_STORE_CTX *);
- X509_STORE_CTX_verify X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx);
- void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx, X509_STORE_CTX_verify verify);
+ typedef int (*X509_STORE_CTX_verify_fn)(X509_STORE_CTX *);
+ X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx);
+ void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx, X509_STORE_CTX_verify_fn verify);
 
  void X509_STORE_set_verify(X509_STORE *ctx, X509_STORE_CTX_verify verify);
 
