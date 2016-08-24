@@ -238,7 +238,7 @@ static int do_hex_dump(char_io *io_ch, void *arg, unsigned char *buf,
  */
 
 static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
-                   ASN1_STRING *str)
+                   const ASN1_STRING *str)
 {
     /*
      * Placing the ASN1_STRING in a temp ASN1_TYPE allows the DER encoding to
@@ -296,7 +296,7 @@ static const signed char tag2nbyte[] = {
  */
 
 static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
-                       ASN1_STRING *str)
+                       const ASN1_STRING *str)
 {
     int outlen, len;
     int type;
@@ -388,14 +388,14 @@ static int do_indent(char_io *io_ch, void *arg, int indent)
 #define FN_WIDTH_LN     25
 #define FN_WIDTH_SN     10
 
-static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
+static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
                       int indent, unsigned long flags)
 {
     int i, prev = -1, orflags, cnt;
     int fn_opt, fn_nid;
     ASN1_OBJECT *fn;
-    ASN1_STRING *val;
-    X509_NAME_ENTRY *ent;
+    const ASN1_STRING *val;
+    const X509_NAME_ENTRY *ent;
     char objtmp[80];
     const char *objbuf;
     int outlen, len;
@@ -526,7 +526,7 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
 
 /* Wrappers round the main functions */
 
-int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent,
+int X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent,
                        unsigned long flags)
 {
     if (flags == XN_FLAG_COMPAT)
@@ -535,7 +535,7 @@ int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent,
 }
 
 #ifndef OPENSSL_NO_STDIO
-int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent,
+int X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent,
                           unsigned long flags)
 {
     if (flags == XN_FLAG_COMPAT) {
@@ -552,13 +552,13 @@ int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent,
 }
 #endif
 
-int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags)
+int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags)
 {
     return do_print_ex(send_bio_chars, out, flags, str);
 }
 
 #ifndef OPENSSL_NO_STDIO
-int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags)
+int ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flags)
 {
     return do_print_ex(send_fp_chars, fp, flags, str);
 }

@@ -260,13 +260,13 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
                     X509 *signer, EVP_PKEY *key, const EVP_MD *dgst,
                     STACK_OF(X509) *certs, unsigned long flags);
 
-X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim);
+X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim);
 
 X509_EXTENSION *OCSP_accept_responses_new(char **oids);
 
 X509_EXTENSION *OCSP_archive_cutoff_new(char *tim);
 
-X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME *issuer, char **urls);
+X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME *issuer, const char **urls);
 
 int OCSP_REQUEST_get_ext_count(OCSP_REQUEST *x);
 int OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos);

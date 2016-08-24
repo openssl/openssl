@@ -271,19 +271,6 @@ void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
                     const char *separator, const CTLOG_STORE *logs);
 
 /*
- * Verifies an SCT with the given context.
- * Returns 1 if the SCT verifies successfully, 0 otherwise.
- */
-__owur int SCT_verify(const SCT_CTX *sctx, const SCT *sct);
-
-/*
- * Verifies an SCT against the provided data.
- * Returns 1 if the SCT verifies successfully, 0 otherwise.
- */
-__owur int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
-                  X509_PUBKEY *log_pubkey, X509 *issuer_cert);
-
-/*
  * Gets the last result of validating this SCT.
  * If it has not been validated yet, returns SCT_VALIDATION_STATUS_NOT_SET.
  */
@@ -390,25 +377,6 @@ __owur int i2o_SCT(const SCT *sct, unsigned char **out);
  * fields will be populated (with |in| and |len| respectively).
  */
 SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
-
-/*
-* Serialize (to TLS format) an |sct| signature and write it to |out|.
-* If |out| is null, no signature will be output but the length will be returned.
-* If |out| points to a null pointer, a string will be allocated to hold the
-* TLS-format signature. It is the responsibility of the caller to free it.
-* If |out| points to an allocated string, the signature will be written to it.
-* The length of the signature in TLS format will be returned.
-*/
-__owur int i2o_SCT_signature(const SCT *sct, unsigned char **out);
-
-/*
-* Parses an SCT signature in TLS format and populates the |sct| with it.
-* |in| should be a pointer to a string containing the TLS-format signature.
-* |in| will be advanced to the end of the signature if parsing succeeds.
-* |len| should be the length of the signature in |in|.
-* Returns the number of bytes parsed, or a negative integer if an error occurs.
-*/
-__owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
 
 /********************
  * CT log functions *
@@ -518,8 +486,7 @@ int ERR_load_CT_strings(void);
 # define CT_F_SCT_SET_LOG_ENTRY_TYPE                      102
 # define CT_F_SCT_SET_SIGNATURE_NID                       103
 # define CT_F_SCT_SET_VERSION                             104
-# define CT_F_SCT_VERIFY                                  128
-# define CT_F_SCT_VERIFY_V1                               129
+# define CT_F_SCT_CTX_VERIFY                              128
 
 /* Reason codes. */
 # define CT_R_BASE64_DECODE_ERROR                         108

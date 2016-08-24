@@ -570,7 +570,6 @@ CRYPTO_cts128_encrypt_block             569	1_1_0	EXIST::FUNCTION:
 ASN1_digest                             570	1_1_0	EXIST::FUNCTION:
 ERR_load_X509V3_strings                 571	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_cleanup               572	1_1_0	EXIST::FUNCTION:
-SCT_verify                              573	1_1_0	EXIST::FUNCTION:CT
 d2i_X509                                574	1_1_0	EXIST::FUNCTION:
 a2i_ASN1_STRING                         575	1_1_0	EXIST::FUNCTION:
 EC_GROUP_get_mont_data                  576	1_1_0	EXIST::FUNCTION:EC
@@ -596,7 +595,6 @@ RAND_query_egd_bytes                    596	1_1_0	EXIST::FUNCTION:EGD
 i2d_ASN1_PRINTABLE                      597	1_1_0	EXIST::FUNCTION:
 ENGINE_cmd_is_executable                598	1_1_0	EXIST::FUNCTION:ENGINE
 BIO_puts                                599	1_1_0	EXIST::FUNCTION:
-SCT_verify_v1                           600	1_1_0	EXIST::FUNCTION:CT
 RSAPublicKey_it                         601	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:RSA
 RSAPublicKey_it                         601	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:RSA
 ISSUING_DIST_POINT_new                  602	1_1_0	EXIST::FUNCTION:
@@ -2538,7 +2536,6 @@ d2i_ECPKParameters                      2501	1_1_0	EXIST::FUNCTION:EC
 IDEA_ofb64_encrypt                      2502	1_1_0	EXIST::FUNCTION:IDEA
 CAST_decrypt                            2503	1_1_0	EXIST::FUNCTION:CAST
 TS_STATUS_INFO_get0_failure_info        2504	1_1_0	EXIST::FUNCTION:TS
-o2i_SCT_signature                       2505	1_1_0	EXIST::FUNCTION:CT
 ENGINE_unregister_pkey_meths            2506	1_1_0	EXIST::FUNCTION:ENGINE
 DISPLAYTEXT_new                         2507	1_1_0	EXIST::FUNCTION:
 CMS_final                               2508	1_1_0	EXIST::FUNCTION:CMS
@@ -3590,7 +3587,6 @@ d2i_BASIC_CONSTRAINTS                   3539	1_1_0	EXIST::FUNCTION:
 X509_CERT_AUX_new                       3540	1_1_0	EXIST::FUNCTION:
 ENGINE_register_pkey_asn1_meths         3541	1_1_0	EXIST::FUNCTION:ENGINE
 CRYPTO_ocb128_tag                       3542	1_1_0	EXIST::FUNCTION:OCB
-i2o_SCT_signature                       3543	1_1_0	EXIST::FUNCTION:CT
 ERR_load_OBJ_strings                    3544	1_1_0	EXIST::FUNCTION:
 BIO_ctrl_get_read_request               3545	1_1_0	EXIST::FUNCTION:
 BN_from_montgomery                      3546	1_1_0	EXIST::FUNCTION:

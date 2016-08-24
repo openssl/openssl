@@ -94,7 +94,7 @@ int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
     return 1;
 }
 
-char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
+char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
@@ -175,7 +175,7 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
     return aint;
 }
 
-int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
+int X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
                          STACK_OF(CONF_VALUE) **extlist)
 {
     char *strtmp;
@@ -190,9 +190,9 @@ int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
     return ret;
 }
 
-int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool)
+int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
 {
-    char *btmp;
+    const char *btmp;
 
     if ((btmp = value->value) == NULL)
         goto err;
@@ -221,7 +221,7 @@ int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool)
     return 0;
 }
 
-int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint)
+int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
 {
     ASN1_INTEGER *itmp;
 
@@ -734,7 +734,7 @@ static int equal_wildcard(const unsigned char *pattern, size_t pattern_len,
  * to UTF8.
  */
 
-static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
+static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
                            unsigned int flags, const char *b, size_t blen,
                            char **peername)
 {
@@ -846,10 +846,9 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
     i = -1;
     name = X509_get_subject_name(x);
     while ((i = X509_NAME_get_index_by_NID(name, cnid, i)) >= 0) {
-        X509_NAME_ENTRY *ne;
-        ASN1_STRING *str;
-        ne = X509_NAME_get_entry(name, i);
-        str = X509_NAME_ENTRY_get_data(ne);
+        const X509_NAME_ENTRY *ne = X509_NAME_get_entry(name, i);
+        const ASN1_STRING *str = X509_NAME_ENTRY_get_data(ne);
+
         /* Positive on success, negative on error! */
         if ((rv = do_check_string(str, -1, equal, flags,
                                   chk, chklen, peername)) != 0)

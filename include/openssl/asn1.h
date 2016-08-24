@@ -721,7 +721,7 @@ int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, void *x);
                  CHECKED_PTR_OF(const type, x)))
 
 int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x);
-int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags);
+int ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flags);
 # endif
 
 int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in);
@@ -752,7 +752,7 @@ int ASN1_UTCTIME_print(BIO *fp, const ASN1_UTCTIME *a);
 int ASN1_GENERALIZEDTIME_print(BIO *fp, const ASN1_GENERALIZEDTIME *a);
 int ASN1_TIME_print(BIO *fp, const ASN1_TIME *a);
 int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v);
-int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags);
+int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags);
 int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int off);
 int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
                   unsigned char *buf, int off);
@@ -836,15 +836,15 @@ int ASN1_item_print(BIO *out, ASN1_VALUE *ifld, int indent,
                     const ASN1_ITEM *it, const ASN1_PCTX *pctx);
 ASN1_PCTX *ASN1_PCTX_new(void);
 void ASN1_PCTX_free(ASN1_PCTX *p);
-unsigned long ASN1_PCTX_get_flags(ASN1_PCTX *p);
+unsigned long ASN1_PCTX_get_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_nm_flags(ASN1_PCTX *p);
+unsigned long ASN1_PCTX_get_nm_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_nm_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_cert_flags(ASN1_PCTX *p);
+unsigned long ASN1_PCTX_get_cert_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_cert_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_oid_flags(ASN1_PCTX *p);
+unsigned long ASN1_PCTX_get_oid_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_oid_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_str_flags(ASN1_PCTX *p);
+unsigned long ASN1_PCTX_get_str_flags(const ASN1_PCTX *p);
 void ASN1_PCTX_set_str_flags(ASN1_PCTX *p, unsigned long flags);
 
 ASN1_SCTX *ASN1_SCTX_new(int (*scan_cb) (ASN1_SCTX *ctx));

@@ -2969,9 +2969,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     HMAC_CTX *hctx = NULL;
     EVP_CIPHER_CTX *ctx;
     SSL_CTX *tctx = s->initial_ctx;
-    /* Need at least keyname + iv + some encrypted data */
-    if (eticklen < 48)
-        return 2;
+
     /* Initialize session ticket encryption and HMAC contexts */
     hctx = HMAC_CTX_new();
     if (hctx == NULL)
@@ -3016,6 +3014,12 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      */
     mlen = HMAC_size(hctx);
     if (mlen < 0) {
+        goto err;
+    }
+    /* Sanity check ticket length: must exceed keyname + IV + HMAC */
+    if (eticklen <=
+        TLSEXT_KEYNAME_LENGTH + EVP_CIPHER_CTX_iv_length(ctx) + mlen) {
+        ret = 2;
         goto err;
     }
     eticklen -= mlen;

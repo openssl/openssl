@@ -19,20 +19,28 @@ setup("test_pkcs12");
 plan skip_all => "The PKCS12 command line utility is not supported by this OpenSSL build"
     if disabled("des");
 
-plan tests => 1;
-
 my $pass = "σύνθημα γνώρισμα";
 
 my $savedcp;
-if (eval { require Win32::Console; 1; }) {
+if (eval { require Win32::API; 1; }) {
     # Trouble is that Win32 perl uses CreateProcessA, which
-    # makes it problematic to pass non-ASCII arguments. The only
-    # feasible option is to pick one language, set corresponding
-    # code page and reencode the problematic string...
+    # makes it problematic to pass non-ASCII arguments, from perl[!]
+    # that is. This is because CreateProcessA is just a wrapper for
+    # CreateProcessW and will call MultiByteToWideChar and use
+    # system default locale. Since we attempt Greek pass-phrase
+    # conversion can be done only with Greek locale.
 
-    $savedcp = Win32::Console::OutputCP();
-    Win32::Console::OutputCP(1253);
-    $pass = Encode::encode("cp1253",Encode::decode("utf-8",$pass));
+    Win32::API->Import("kernel32","UINT GetSystemDefaultLCID()");
+    if (GetSystemDefaultLCID() != 0x408) {
+        plan skip_all => "Non-Greek system locale";
+    } else {
+        # Ensure correct code page so that VERBOSE output is right.
+        Win32::API->Import("kernel32","UINT GetConsoleOutputCP()");
+        Win32::API->Import("kernel32","BOOL SetConsoleOutputCP(UINT cp)");
+        $savedcp = GetConsoleOutputCP();
+        SetConsoleOutputCP(1253);
+        $pass = Encode::encode("cp1253",Encode::decode("utf-8",$pass));
+    }
 } else {
     # Running MinGW tests transparenly under Wine apparently requires
     # UTF-8 locale...
@@ -46,10 +54,12 @@ if (eval { require Win32::Console; 1; }) {
     }
 }
 
+plan tests => 1;
+
 # just see that we can read shibboleth.pfx protected with $pass
 ok(run(app(["openssl", "pkcs12", "-noout",
             "-password", "pass:$pass",
             "-in", srctop_file("test", "shibboleth.pfx")])),
    "test_pkcs12");
 
-Win32::Console::OutputCP($savedcp) if (defined($savedcp));
+SetConsoleOutputCP($savedcp) if (defined($savedcp));

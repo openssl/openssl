@@ -262,6 +262,7 @@ sct_source_t SCT_get_source(const SCT *sct)
 int SCT_set_source(SCT *sct, sct_source_t source)
 {
     sct->source = source;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
     switch (source) {
     case SCT_SOURCE_TLS_EXTENSION:
     case SCT_SOURCE_OCSP_STAPLED_RESPONSE:
@@ -349,7 +350,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     if (SCT_CTX_set1_cert(sctx, ctx->cert, NULL) != 1)
         sct->validation_status = SCT_VALIDATION_STATUS_UNVERIFIED;
     else
-        sct->validation_status = SCT_verify(sctx, sct) == 1 ?
+        sct->validation_status = SCT_CTX_verify(sctx, sct) == 1 ?
             SCT_VALIDATION_STATUS_VALID : SCT_VALIDATION_STATUS_INVALID;
 
 end:
