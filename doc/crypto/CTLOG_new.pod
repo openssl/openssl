@@ -45,7 +45,6 @@ the string remains with the CTLOG.
 
 CTLOG_get0_public_key() returns the public key of the CT log. Ownership of the
 EVP_PKEY remains with the CTLOG.
-with
 
 =head1 RETURN VALUES
 
