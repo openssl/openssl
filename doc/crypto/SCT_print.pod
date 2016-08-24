@@ -25,8 +25,8 @@ is provided, it will be used to print the description of the CT log that issued
 each SCT (if that log is in the CTLOG_STORE). Alternatively, NULL can be passed
 as the CTLOG_STORE parameter to disable this feature.
 
-B<SCT_validation_status_string> will return the validation status of an SCT as
-a human-readable string. Call L<SCT_validate>() or SCT_LIST_validate()
+SCT_validation_status_string() will return the validation status of an SCT as
+a human-readable string. Call SCT_validate() or SCT_LIST_validate()
 beforehand in order to set the validation status of an SCT first.
 
 =head1 SEE ALSO
