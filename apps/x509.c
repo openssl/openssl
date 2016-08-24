@@ -262,7 +262,7 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_SET_SERIAL:
             if (sno != NULL) {
-                /* Cannot be supplied twice */
+                BIO_printf(bio_err, "Serial number supplied twice\n");
                 goto opthelp;
             }
             if ((sno = s2i_ASN1_INTEGER(NULL, opt_arg())) == NULL)
