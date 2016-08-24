@@ -23,14 +23,14 @@ treated and the return values.
 
 =head1 RETURN VALUES
 
-All of the functions have return values consist with those stated for
+All of the functions have return values consistent with those stated for
 L<d2i_SCT_LIST> and L<i2d_SCT_LIST>.
 
 =head1 SEE ALSO
 
 L<ct(3)>,
-L(d2i_SCT_LIST(3)>,
-L(i2d_SCT_LIST(3)>
+L<d2i_SCT_LIST(3)>,
+L<i2d_SCT_LIST(3)>
 
 =head1 HISTORY
 

@@ -31,7 +31,7 @@ functions for:
 
 L<d2i_SCT_LIST(3)>,
 L<CTLOG_STORE_new(3)>,
-L<CTLOG_STORE_get0_log_by_id(3),
+L<CTLOG_STORE_get0_log_by_id(3)>,
 L<SCT_new(3)>,
 L<SCT_print(3)>,
 L<SCT_verify(3)>,
