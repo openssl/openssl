@@ -1159,12 +1159,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * were actually expecting a CCS).
      */
 
-    if (rr->type == SSL3_RT_HANDSHAKE && type == SSL3_RT_CHANGE_CIPHER_SPEC) {
-        al = SSL_AD_UNEXPECTED_MESSAGE;
-        SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_UNEXPECTED_MESSAGE);
-        goto f_err;
-    }
-
     /*
      * Lets just double check that we've not got an SSLv2 record
      */
