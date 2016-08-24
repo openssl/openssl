@@ -31,7 +31,6 @@ IMPLEMENT_ASN1_FUNCTIONS(EDIPARTYNAME)
 ASN1_CHOICE(GENERAL_NAME) = {
         ASN1_IMP(GENERAL_NAME, d.otherName, OTHERNAME, GEN_OTHERNAME),
         ASN1_IMP(GENERAL_NAME, d.rfc822Name, ASN1_IA5STRING, GEN_EMAIL),
-        ASN1_IMP(GENERAL_NAME, d.smtputf8Name, ASN1_UTF8STRING, GEN_EMAILUTF8),
         ASN1_IMP(GENERAL_NAME, d.dNSName, ASN1_IA5STRING, GEN_DNS),
         /* Don't decode this */
         ASN1_IMP(GENERAL_NAME, d.x400Address, ASN1_SEQUENCE, GEN_X400),
@@ -79,10 +78,6 @@ int GENERAL_NAME_cmp(GENERAL_NAME *a, GENERAL_NAME *b)
     case GEN_DNS:
     case GEN_URI:
         result = ASN1_STRING_cmp(a->d.ia5, b->d.ia5);
-        break;
-
-		case GEN_EMAILUTF8:
-        result = ASN1_STRING_cmp(a->d.smtputf8Name, b->d.smtputf8Name);
         break;
 
     case GEN_DIRNAME:
@@ -133,10 +128,6 @@ void GENERAL_NAME_set0_value(GENERAL_NAME *a, int type, void *value)
         a->d.ia5 = value;
         break;
 
-    case GEN_EMAILUTF8:
-        a->d.smtputf8Name = value;
-        break;
-
     case GEN_DIRNAME:
         a->d.dirn = value;
         break;
@@ -168,9 +159,6 @@ void *GENERAL_NAME_get0_value(GENERAL_NAME *a, int *ptype)
     case GEN_DNS:
     case GEN_URI:
         return a->d.ia5;
-
-    case GEN_EMAILUTF8:
-        return a->d.smtputf8Name;
 
     case GEN_DIRNAME:
         return a->d.dirn;
