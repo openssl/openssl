@@ -109,9 +109,9 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
-#ifdef __ATOMIC_RELAXED
+# if defined(__GNUC__) && defined(__ATOMIC_RELAXED)
     *ret = __atomic_add_fetch(val, amount, __ATOMIC_RELAXED);
-#else
+# else
     if (!CRYPTO_THREAD_write_lock(lock))
         return 0;
 
@@ -120,7 +120,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 
     if (!CRYPTO_THREAD_unlock(lock))
         return 0;
-#endif
+# endif
 
     return 1;
 }
