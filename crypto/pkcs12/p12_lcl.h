@@ -41,13 +41,3 @@ struct pkcs12_bag_st {
         ASN1_TYPE *other;       /* Secret or other bag */
     } value;
 };
-
-#undef PKCS12_key_gen
-/*
- * See p12_multi.c:PKCS12_verify_mac() for details...
- */
-extern int (*PKCS12_key_gen)(const char *pass, int passlen,
-                             unsigned char *salt, int slen,
-                             int id, int iter, int n,
-                             unsigned char *out,
-                             const EVP_MD *md_type);
