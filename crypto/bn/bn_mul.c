@@ -729,9 +729,8 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
      */
     if (l != NULL) {
         lp = &(t[n2 + n]);
-        c1 = (int)(bn_add_words(lp, &(r[0]), &(l[0]), n));
+        bn_add_words(lp, &(r[0]), &(l[0]), n);
     } else {
-        c1 = 0;
         lp = &(r[0]);
     }
 
