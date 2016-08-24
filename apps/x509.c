@@ -261,6 +261,10 @@ int x509_main(int argc, char **argv)
             CAserial = opt_arg();
             break;
         case OPT_SET_SERIAL:
+            if (sno != NULL) {
+                /* Cannot be supplied twice */
+                goto opthelp;
+            }
             if ((sno = s2i_ASN1_INTEGER(NULL, opt_arg())) == NULL)
                 goto opthelp;
             break;
