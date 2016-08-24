@@ -17,16 +17,6 @@ void PKCS12_PBE_add(void)
 {
 }
 
-#undef PKCS12_key_gen
-/*
- * See p12_multi.c:PKCS12_verify_mac() for details...
- */
-extern int (*PKCS12_key_gen)(const char *pass, int passlen,
-                             unsigned char *salt, int slen,
-                             int id, int iter, int n,
-                             unsigned char *out,
-                             const EVP_MD *md_type);
-
 int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
                         ASN1_TYPE *param, const EVP_CIPHER *cipher,
                         const EVP_MD *md, int en_de)
@@ -41,13 +31,7 @@ int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
                           unsigned char *out,
                           const EVP_MD *md_type);
 
-    if (PKCS12_key_gen == NULL || en_de)
-        /*
-         * Default to UTF-8, but force it in encrypt case.
-         */
-        pkcs12_key_gen = PKCS12_key_gen_utf8;
-    else
-        pkcs12_key_gen = PKCS12_key_gen;
+    pkcs12_key_gen = PKCS12_key_gen_utf8;
 
     if (cipher == NULL)
         return 0;
