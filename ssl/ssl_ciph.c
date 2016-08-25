@@ -262,6 +262,7 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_ECDH, 0, SSL_kECDHr | SSL_kECDHe | SSL_kEECDH, 0, 0, 0, 0, 0,
      0, 0, 0},
     {0, SSL_TXT_kOQSKEXGENERIC, 0, SSL_kOQSKEXGENERIC, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kOQSKEX_RLWE_BCNS15, 0, SSL_kOQSKEX_RLWE_BCNS15, 0, 0, 0, 0, 0, 0, 0, 0},
 
     {0, SSL_TXT_kPSK, 0, SSL_kPSK, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kSRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -298,6 +299,8 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_SRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_OQSKEXGENERIC, 0, SSL_kOQSKEXGENERIC, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_OQSKEXGENERICECDHE, 0, SSL_kEECDH|SSL_kOQSKEXGENERIC, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_RLWE_BCNS15, 0, SSL_kOQSKEX_RLWE_BCNS15, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_RLWE_BCNS15_ECDHE, 0, SSL_kEECDH|SSL_kOQSKEX_RLWE_BCNS15, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
 
     /* symmetric encryption aliases */
     {0, SSL_TXT_DES, 0, 0, 0, SSL_DES, 0, 0, 0, 0, 0, 0},
@@ -1747,6 +1750,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_kOQSKEXGENERIC:
         kx = "OQSKEXGENERIC";
+        break;
+    case SSL_kOQSKEX_RLWE_BCNS15:
+        kx = "OQSKEX-RLWE-BCNS15";
         break;
     case SSL_kPSK:
         kx = "PSK";

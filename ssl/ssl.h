@@ -254,6 +254,7 @@ extern "C" {
 # define SSL_TXT_kEECDH          "kEECDH"
 # define SSL_TXT_kECDHE          "kECDHE"/* alias for kEECDH */
 # define SSL_TXT_kOQSKEXGENERIC  "kOQSKEXGENERIC"
+# define SSL_TXT_kOQSKEX_RLWE_BCNS15  "kOQSKEX-RLWE-BCNS15"
 # define SSL_TXT_kPSK            "kPSK"
 # define SSL_TXT_kGOST           "kGOST"
 # define SSL_TXT_kSRP            "kSRP"
@@ -281,6 +282,8 @@ extern "C" {
 # define SSL_TXT_ECDHE           "ECDHE"/* alias for ECDHE" */
 # define SSL_TXT_OQSKEXGENERIC   "OQSKEXGENERIC"
 # define SSL_TXT_OQSKEXGENERICECDHE   "OQSKEXGENERIC-ECDHE"
+# define SSL_TXT_OQSKEX_RLWE_BCNS15         "OQSKEX-RLWE-BCNS15"
+# define SSL_TXT_OQSKEX_RLWE_BCNS15_ECDHE   "OQSKEX-RLWE-BCNS15-ECDHE"
 # define SSL_TXT_AECDH           "AECDH"
 # define SSL_TXT_ECDSA           "ECDSA"
 # define SSL_TXT_KRB5            "KRB5"
