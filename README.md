@@ -21,6 +21,8 @@ open-quantum-safe/openssl currently contains:
 - Integration of post-quantum key exchange primitives from liboqs into OpenSSL's `speed` command
 - Ciphersuites using post-quantum key exchange based on primitives from liboqs, including hybrid ciphersuites which also use ECDHE key exchange
 
+Our modifications are **only** for OpenSSL v1.0.2, and appear only on the [OpenSSL\_1\_0\_2-stable branch](https://github.com/open-quantum-safe/openssl/tree/OpenSSL_1_0_2-stable).
+
 ### Key exchange mechanisms
 
 liboqs currently supports the following key exchange mechanisms:
@@ -105,6 +107,19 @@ In another terminal window, you can run a TLS client for any or all of the suppo
 	apps/openssl s_client -cipher OQSKEX-GENERIC-ECDHE
 	apps/openssl s_client -cipher OQSKEX-RLWE-BCNS15
 	apps/openssl s_client -cipher OQSKEX-RLWE-BCNS15-ECDHE
+
+## Current status and plans
+
+Our initial launch of the liboqs integration into OpenSSL was on August 25, 2016.  
+
+At this point, there are no plans to add further functionality to the OpenSSL integration, beyond supporting additional algorithms added by liboqs.  See the [liboqs](https://github.com/open-quantum-safe/liboqs/#current-status-and-plans) page for more information about liboqs plans.  
+
+We will endeavour to regularly sync our branch with commits in the original openssl/openssl repository.
+
+For future reference, adding new algorithms/ciphersuites can easily be done by following these diffs:
+
+- apps/speed: [commit cb91c708b8bec35284054562295d6b9adff76d2a](https://github.com/open-quantum-safe/openssl/commit/cb91c708b8bec35284054562295d6b9adff76d2a)
+- ssl: [commit 3a04b822b317ac548933c10974bea638086cf29e](https://github.com/open-quantum-safe/openssl/commit/3a04b822b317ac548933c10974bea638086cf29e)
 
 ## Team
 
