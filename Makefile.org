@@ -275,7 +275,10 @@ sub_all: build_all
 
 build_all: build_libs build_apps build_tests build_tools
 
-build_libs: build_libcrypto build_libssl openssl.pc
+build_libs: build_liboqs build_libcrypto build_libssl openssl.pc
+
+build_liboqs:
+	cd vendor/liboqs && $(MAKE)
 
 build_libcrypto: build_crypto build_engines libcrypto.pc
 build_libssl: build_ssl libssl.pc
@@ -430,10 +433,19 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile > $(TOP)/MINFO
 	@set -e; target=files; $(RECURSIVE_BUILD_CMD)
 
+LIBOQS_HEADERS = kex.h kex_rlwe_bcns15.h rand.h rand_urandom_chacha20.h
+
 links:
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
 	@set -e; target=links; $(RECURSIVE_BUILD_CMD)
+	cd vendor/liboqs && $(MAKE) links
+	@$(PERL) $(TOP)/util/mkdir-p.pl include/oqs
+	rm -f include/oqs/*.h
+	for i in $(LIBOQS_HEADERS) ;\
+	do \
+	ln -s ../../vendor/liboqs/include/oqs/$$i include/oqs; \
+	done
 
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
@@ -538,6 +550,7 @@ install_sw:
 		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/include/oqs \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/private
@@ -546,6 +559,8 @@ install_sw:
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
+	cp include/oqs/*.h $(INSTALL_PREFIX)$(INSTALLTOP)/include/oqs
+	cp -p vendor/liboqs/liboqs.a $(INSTALL_PREFIX)$(INSTALLTOP)/lib
 	@set -e; target=install; $(RECURSIVE_BUILD_CMD)
 	@set -e; liblist="$(LIBS)"; for i in $$liblist ;\
 	do \
@@ -604,6 +619,13 @@ install_sw:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
 	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
+	mkdir -p tmp
+	cd tmp && ar x ../libcrypto.a
+	cd tmp && ar x ../vendor/liboqs/liboqs.a
+	cd tmp && ar rcs ../libcryptocombined.a *.o
+	$(RANLIB) libcryptocombined.a
+	rm -rf tmp
+	cp libcryptocombined.a $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/libcrypto.a
 
 install_html_docs:
 	here="`pwd`"; \
