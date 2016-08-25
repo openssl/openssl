@@ -261,7 +261,7 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_kECDHE, 0, SSL_kEECDH, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_ECDH, 0, SSL_kECDHr | SSL_kECDHe | SSL_kEECDH, 0, 0, 0, 0, 0,
      0, 0, 0},
-    {0, SSL_TXT_kOQSKEXGENERIC, 0, SSL_kOQSKEXGENERIC, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kOQSKEX_GENERIC, 0, SSL_kOQSKEX_GENERIC, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kOQSKEX_RLWE_BCNS15, 0, SSL_kOQSKEX_RLWE_BCNS15, 0, 0, 0, 0, 0, 0, 0, 0},
 
     {0, SSL_TXT_kPSK, 0, SSL_kPSK, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -297,8 +297,8 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_AECDH, 0, SSL_kEECDH, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_PSK, 0, SSL_kPSK, SSL_aPSK, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_SRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_OQSKEXGENERIC, 0, SSL_kOQSKEXGENERIC, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_OQSKEXGENERICECDHE, 0, SSL_kEECDH|SSL_kOQSKEXGENERIC, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_GENERIC, 0, SSL_kOQSKEX_GENERIC, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_GENERIC_ECDHE, 0, SSL_kEECDH|SSL_kOQSKEX_GENERIC, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_OQSKEX_RLWE_BCNS15, 0, SSL_kOQSKEX_RLWE_BCNS15, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_OQSKEX_RLWE_BCNS15_ECDHE, 0, SSL_kEECDH|SSL_kOQSKEX_RLWE_BCNS15, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
 
@@ -1748,8 +1748,8 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_kEECDH:
         kx = "ECDH";
         break;
-    case SSL_kOQSKEXGENERIC:
-        kx = "OQSKEXGENERIC";
+    case SSL_kOQSKEX_GENERIC:
+        kx = "OQSKEX-GENERIC";
         break;
     case SSL_kOQSKEX_RLWE_BCNS15:
         kx = "OQSKEX-RLWE-BCNS15";

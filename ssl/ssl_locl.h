@@ -315,7 +315,7 @@
 /* SRP */
 # define SSL_kSRP        0x00000400L
 /* OQS KEX */
-# define SSL_kOQSKEXGENERIC      0x00001000L
+# define SSL_kOQSKEX_GENERIC     0x00001000L
 # define SSL_kOQSKEX_RLWE_BCNS15 0x00002000L
 
 /* Bits for algorithm_auth (server authentication) */
