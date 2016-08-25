@@ -467,6 +467,7 @@ static SSL_BIO_TEST_FIXTURE ssl_bio_set_up(const char *const test_case_name)
 
     fixture.test_case_name = test_case_name;
     fixture.pop_ssl = 0;
+    fixture.change_bio = NO_BIO_CHANGE;
 
     return fixture;
 }
