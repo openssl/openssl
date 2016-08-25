@@ -83,6 +83,7 @@ int test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx);
 int test_kron(BIO *bp, BN_CTX *ctx);
 int test_sqrt(BIO *bp, BN_CTX *ctx);
 int test_small_prime(BIO *bp, BN_CTX *ctx);
+int test_bn2dec(BIO *bp);
 int rand_neg(void);
 static int results = 0;
 
@@ -257,6 +258,11 @@ int main(int argc, char *argv[])
 
     message(out, "Small prime generation");
     if (!test_small_prime(out, ctx))
+        goto err;
+    (void)BIO_flush(out);
+
+    message(out, "BN_bn2dec");
+    if (!test_bn2dec(out))
         goto err;
     (void)BIO_flush(out);
 
@@ -1836,6 +1842,52 @@ int test_small_prime(BIO *bp, BN_CTX *ctx)
 
  err:
     BN_clear_free(r);
+    return ret;
+}
+
+int test_bn2dec(BIO *bp)
+{
+    static const char *bn2dec_tests[] = {
+        "0",
+        "1",
+        "-1",
+        "100",
+        "-100",
+        "123456789012345678901234567890",
+        "-123456789012345678901234567890",
+        "123456789012345678901234567890123456789012345678901234567890",
+        "-123456789012345678901234567890123456789012345678901234567890",
+    };
+    int ret = 0;
+    size_t i;
+    BIGNUM *bn = NULL;
+    char *dec = NULL;
+
+    for (i = 0; i < OSSL_NELEM(bn2dec_tests); i++) {
+        if (!BN_dec2bn(&bn, bn2dec_tests[i]))
+            goto err;
+
+        dec = BN_bn2dec(bn);
+        if (dec == NULL) {
+            fprintf(stderr, "BN_bn2dec failed on %s.\n", bn2dec_tests[i]);
+            goto err;
+        }
+
+        if (strcmp(dec, bn2dec_tests[i]) != 0) {
+            fprintf(stderr, "BN_bn2dec gave %s, wanted %s.\n", dec,
+                    bn2dec_tests[i]);
+            goto err;
+        }
+
+        OPENSSL_free(dec);
+        dec = NULL;
+    }
+
+    ret = 1;
+
+err:
+    BN_free(bn);
+    OPENSSL_free(dec);
     return ret;
 }
 
