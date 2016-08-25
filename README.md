@@ -1,6 +1,6 @@
 # open-quantum-safe/openssl
 
-OpenSSL is an open-source TLS/SSL and crypto library [https://openssl.org/](https://openssl.org/).
+OpenSSL is an open-source TLS/SSL and crypto library [https://openssl.org/](https://openssl.org/).  ([View the original README file for OpenSSL](https://github.com/open-quantum-safe/openssl/blob/OpenSSL_1_0_2-stable/README).)
 
 This repository contains a fork of OpenSSL that adds quantum-safe cryptographic algorithms and ciphersuites.
 
