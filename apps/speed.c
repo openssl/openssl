@@ -79,6 +79,7 @@
 # define DSA_SECONDS     10
 # define ECDSA_SECONDS   10
 # define ECDH_SECONDS    10
+# define OQSKEX_SECONDS  10
 
 /* 11-Sep-92 Andrew Daviel   Support for Silicon Graphics IRIX added */
 /* 06-Apr-92 Luke Brennan    Support for VMS and add extra signal calls */
@@ -191,6 +192,10 @@
 # ifndef OPENSSL_NO_ECDH
 #  include <openssl/ecdh.h>
 # endif
+# ifndef OPENSSL_NO_OQSKEX
+#  include <oqs/rand.h>
+#  include <oqs/kex.h>
+# endif
 # include <openssl/modes.h>
 
 # ifdef OPENSSL_FIPS
@@ -245,6 +250,7 @@ static int do_multi(int multi);
 # define SIZE_NUM        5
 # define RSA_NUM         4
 # define DSA_NUM         3
+# define OQSKEX_NUM      1
 
 # define EC_NUM       16
 # define MAX_ECDH_SIZE 256
@@ -273,6 +279,9 @@ static double ecdsa_results[EC_NUM][2];
 # endif
 # ifndef OPENSSL_NO_ECDH
 static double ecdh_results[EC_NUM][1];
+# endif
+# ifndef OPENSSL_NO_OQSKEX
+static double oqskex_results[OQSKEX_NUM][3];
 # endif
 
 # if defined(OPENSSL_NO_DSA) && !(defined(OPENSSL_NO_ECDSA) && defined(OPENSSL_NO_ECDH))
@@ -543,6 +552,8 @@ int MAIN(int argc, char **argv)
 # define R_EC_B409    14
 # define R_EC_B571    15
 
+# define R_OQSKEX_GENERIC        0
+
 # ifndef OPENSSL_NO_RSA
     RSA *rsa_key[RSA_NUM];
     long rsa_c[RSA_NUM][2];
@@ -616,6 +627,12 @@ int MAIN(int argc, char **argv)
 
 # endif
 
+# ifndef OPENSSL_NO_OQSKEX
+    static const char *test_oqskex_names[OQSKEX_NUM] = {
+        "generic"
+    };
+# endif
+
 # ifndef OPENSSL_NO_ECDSA
     unsigned char ecdsasig[256];
     unsigned int ecdsasiglen;
@@ -632,6 +649,21 @@ int MAIN(int argc, char **argv)
     long ecdh_c[EC_NUM][2];
 # endif
 
+# ifndef OPENSSL_NO_OQSKEX
+    OQS_KEX *oqskex_kex[OQSKEX_NUM];
+    void *oqskex_alice_priv[OQSKEX_NUM];
+    unsigned char *oqskex_alice_msg[OQSKEX_NUM];
+    size_t oqskex_alice_msg_len[OQSKEX_NUM];
+    unsigned char *oqskex_bob_msg[OQSKEX_NUM];
+    size_t oqskex_bob_msg_len[OQSKEX_NUM];
+    unsigned char *oqskex_alice_session_key;
+    size_t oqskex_alice_session_key_len;
+    unsigned char *oqskex_bob_session_key;
+    size_t oqskex_bob_session_key_len;
+    OQS_RAND *oqskex_rand[OQSKEX_NUM];
+    long oqskex_c[OQSKEX_NUM][3];
+# endif
+
     int rsa_doit[RSA_NUM];
     int dsa_doit[DSA_NUM];
 # ifndef OPENSSL_NO_ECDSA
@@ -639,6 +671,9 @@ int MAIN(int argc, char **argv)
 # endif
 # ifndef OPENSSL_NO_ECDH
     int ecdh_doit[EC_NUM];
+# endif
+# ifndef OPENSSL_NO_OQSKEX
+    int oqskex_doit[OQSKEX_NUM];
 # endif
     int doit[ALGOR_NUM];
     int pr_header = 0;
@@ -668,6 +703,17 @@ int MAIN(int argc, char **argv)
         ecdh_a[i] = NULL;
         ecdh_b[i] = NULL;
     }
+# endif
+# ifndef OPENSSL_NO_OQSKEX
+    for (i=0; i<OQSKEX_NUM; i++) {
+        oqskex_rand[i] = NULL;
+        oqskex_kex[i] = NULL;
+        oqskex_alice_priv[i] = NULL;
+        oqskex_alice_msg[i] = NULL;
+        oqskex_bob_msg[i] = NULL;
+    }
+    oqskex_alice_session_key = NULL;
+    oqskex_bob_session_key = NULL;
 # endif
 
     if (bio_err == NULL)
@@ -709,6 +755,10 @@ int MAIN(int argc, char **argv)
 # ifndef OPENSSL_NO_ECDH
     for (i = 0; i < EC_NUM; i++)
         ecdh_doit[i] = 0;
+# endif
+# ifndef OPENSSL_NO_OQSKEX
+    for (i=0; i<OQSKEX_NUM; i++)
+        oqskex_doit[i]=0;
 # endif
 
     j = 0;
@@ -1063,6 +1113,14 @@ int MAIN(int argc, char **argv)
                 ecdh_doit[i] = 1;
         } else
 # endif
+# ifndef OPENSSL_NO_OQSKEX
+        if (strcmp(*argv, "oqskex_generic") == 0)
+            oqskex_doit[R_OQSKEX_GENERIC] = 2;
+        else if (strcmp(*argv, "oqskex") == 0) {
+            for (i = 0; i < OQSKEX_NUM; i++)
+                oqskex_doit[i] = 1;
+        } else
+# endif
         {
             BIO_printf(bio_err, "Error: bad option or value\n");
             BIO_printf(bio_err, "\n");
@@ -1165,6 +1223,10 @@ int MAIN(int argc, char **argv)
                        "ecdhb163  ecdhb233  ecdhb283  ecdhb409  ecdhb571\n");
             BIO_printf(bio_err, "ecdh\n");
 # endif
+# ifndef OPENSSL_NO_OQSKEX
+            BIO_printf(bio_err, "oqskex_generic\n");
+            BIO_printf(bio_err, "oqskex\n");
+# endif
 
 # ifndef OPENSSL_NO_IDEA
             BIO_printf(bio_err, "idea     ");
@@ -1247,6 +1309,10 @@ int MAIN(int argc, char **argv)
 # ifndef OPENSSL_NO_ECDH
         for (i = 0; i < EC_NUM; i++)
             ecdh_doit[i] = 1;
+# endif
+# ifndef OPENSSL_NO_OQSKEX
+        for (i = 0; i < OQSKEX_NUM; i++)
+            oqskex_doit[i] = 1;
 # endif
     }
     for (i = 0; i < ALGOR_NUM; i++)
@@ -1528,6 +1594,12 @@ int MAIN(int argc, char **argv)
                 ecdh_c[i][1] = 1;
             }
         }
+    }
+#   endif
+#   ifndef OPENSSL_NO_OQSKEX
+    for (i = 0; i <= OQSKEX_NUM; i++) {
+        oqskex_c[i][0] = count/1000;
+        oqskex_c[i][1] = count/1000;
     }
 #   endif
 
@@ -2354,6 +2426,96 @@ int MAIN(int argc, char **argv)
     if (rnd_fake)
         RAND_cleanup();
 # endif
+# ifndef OPENSSL_NO_OQSKEX
+    if (RAND_status() != 1) {
+        RAND_seed(rnd_seed, sizeof rnd_seed);
+        rnd_fake = 1;
+    }
+    for (j = 0; j < OQSKEX_NUM; j++) {
+        if (!oqskex_doit[j])
+            continue;
+
+        oqskex_rand[j] = OQS_RAND_new();
+        if (oqskex_rand[j] == NULL) {
+            BIO_printf(bio_err,"OQSKEX failure - OQS_RAND_new().\n");
+            ERR_print_errors(bio_err);
+            rsa_count = 1;
+        } else {
+            if (j == R_OQSKEX_GENERIC) {
+                oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], NULL, 0);
+            }
+            if (oqskex_kex[j] == NULL) {
+                BIO_printf(bio_err,"OQSKEX failure - OQS_KEX_new.\n");
+                ERR_print_errors(bio_err);
+                rsa_count=1;
+            } else {
+                /* time OQSKEX Alice 0 operation */
+                char lbl[1000];
+                sprintf(lbl, "OQS KEX %s", oqskex_kex[j]->method_name);
+                pkey_print_message(lbl, "Alice 0", oqskex_c[j][0], 0, OQSKEX_SECONDS);
+                Time_F(START);
+                for (count = 0, run = 1; COND(oqskex_c[j][0]); count++) {
+                    OQS_KEX_alice_0(oqskex_kex[j], &(oqskex_alice_priv[j]), &(oqskex_alice_msg[j]), &(oqskex_alice_msg_len[j]));
+                    OQS_KEX_alice_priv_free(oqskex_kex[j], oqskex_alice_priv[j]); 
+                    oqskex_alice_priv[j] = NULL;
+                    free(oqskex_alice_msg[j]); 
+                    oqskex_alice_msg[j] = NULL;
+                }
+                d = Time_F(STOP);
+                sprintf(lbl, "%%ld OQS KEX %s Alice 0 in %%.2fs\n", oqskex_kex[j]->method_name);
+                BIO_printf(bio_err, mr ? "+R9:%ld:%.2f\n" : lbl, count, d);
+                oqskex_results[j][0] = d / (double)count;
+                rsa_count = count;
+
+                /* generate one Alice for Bob */
+                OQS_KEX_alice_0(oqskex_kex[j], &(oqskex_alice_priv[j]), &(oqskex_alice_msg[j]), &(oqskex_alice_msg_len[j]));
+
+                /* time OQSKEX Bob operation */
+                sprintf(lbl, "OQS KEX %s", oqskex_kex[j]->method_name);
+                pkey_print_message(lbl, "Bob", oqskex_c[j][1], 0, OQSKEX_SECONDS);
+                Time_F(START);
+                for (count = 0, run = 1; COND(oqskex_c[j][1]); count++) {
+                    OQS_KEX_bob(oqskex_kex[j], oqskex_alice_msg[j], oqskex_alice_msg_len[j], &(oqskex_bob_msg[j]), &(oqskex_bob_msg_len[j]), &oqskex_bob_session_key, &oqskex_bob_session_key_len);
+                    free(oqskex_bob_msg[j]); 
+                    oqskex_bob_msg[j] = NULL;
+                    free(oqskex_bob_session_key); 
+                    oqskex_bob_session_key = NULL;
+                    }
+                d = Time_F(STOP);
+                sprintf(lbl, "%%ld OQS KEX %s Bob in %%.2fs\n", oqskex_kex[j]->method_name);
+                BIO_printf(bio_err, mr ? "+R10:%ld:%.2f\n" : lbl, count, d);
+                oqskex_results[j][1] = d / (double)count;
+                rsa_count = count;
+
+                /* generate one Bob for Alice */
+                OQS_KEX_bob(oqskex_kex[j], oqskex_alice_msg[j], oqskex_alice_msg_len[j], &(oqskex_bob_msg[j]), &(oqskex_bob_msg_len[j]), &oqskex_bob_session_key, &oqskex_bob_session_key_len);
+
+                /* time OQSKEX Alice 1 operation */
+                sprintf(lbl, "OQS KEX %s", oqskex_kex[j]->method_name);
+                pkey_print_message(lbl, "Alice 1", oqskex_c[j][2], 0, OQSKEX_SECONDS);
+                Time_F(START);
+                for (count = 0, run = 1; COND(oqskex_c[j][2]); count++) {
+                    OQS_KEX_alice_1(oqskex_kex[j], oqskex_alice_priv[j], oqskex_bob_msg[j], oqskex_bob_msg_len[j], &oqskex_alice_session_key, &oqskex_alice_session_key_len);
+                    free(oqskex_alice_session_key); 
+                    oqskex_alice_session_key = NULL;
+                }
+                d = Time_F(STOP);
+                sprintf(lbl, "%%ld OQS KEX %s Alice 1 in %%.2fs\n", oqskex_kex[j]->method_name);
+                BIO_printf(bio_err, mr ? "+R11:%ld:%.2f\n" : lbl, count, d);
+                oqskex_results[j][2] = d / (double)count;
+                rsa_count = count;
+            }
+
+            if (rsa_count <= 1) {
+                /* if longer than 10s, don't do any more */
+                for (j++; j < OQSKEX_NUM; j++)
+                    oqskex_doit[j] = 0;            
+            }
+        }
+    }
+    if (rnd_fake)
+        RAND_cleanup();
+# endif
 # ifndef NO_FORK
  show_res:
 # endif
@@ -2493,6 +2655,29 @@ int MAIN(int argc, char **argv)
     }
 # endif
 
+# ifndef OPENSSL_NO_OQSKEX
+    j = 1;
+    for (k = 0; k < OQSKEX_NUM; k++) {
+        if (!oqskex_doit[k]) 
+            continue;
+        if (j && !mr) {
+            printf("                            Alice0    Alice0/s          Bob      Bob/s          Alice1   Alice1/s\n");
+            j = 0;
+        }
+        if (mr)
+            fprintf(stdout,"+F6:%u:%s:%f:%f:%f\n",
+                    k, test_oqskex_names[k],
+                    oqskex_results[k][0], oqskex_results[k][1], oqskex_results[k][2]);
+
+        else
+            fprintf(stdout,"oqskex (%10s)     %8.6fms    %8.1f   %8.6fms   %8.1f      %8.6fms   %8.1f\n",
+                    test_oqskex_names[k],
+                    oqskex_results[k][0] * 1000, 1.0/oqskex_results[k][0],
+                    oqskex_results[k][1] * 1000, 1.0/oqskex_results[k][1],
+                    oqskex_results[k][2] * 1000, 1.0/oqskex_results[k][2]);
+    }
+# endif
+
     mret = 0;
 
  end:
@@ -2525,6 +2710,24 @@ int MAIN(int argc, char **argv)
             EC_KEY_free(ecdh_b[i]);
     }
 # endif
+# ifndef OPENSSL_NO_OQSKEX
+    for (i = 0; i < OQSKEX_NUM; i++) {
+        if (oqskex_alice_priv[i] != NULL)
+            OQS_KEX_alice_priv_free(oqskex_kex[i], oqskex_alice_priv[i]);
+        if (oqskex_kex[i] != NULL)
+            OQS_KEX_free(oqskex_kex[i]);
+        if (oqskex_alice_msg[i] != NULL)
+            free(oqskex_alice_msg[i]);
+        if (oqskex_bob_msg[i] != NULL)
+            free(oqskex_bob_msg[i]);
+        if (oqskex_rand[i] != NULL)
+            OQS_RAND_free(oqskex_rand[i]);
+    }
+    if (oqskex_alice_session_key != NULL)
+        free(oqskex_alice_session_key);
+    if (oqskex_bob_session_key != NULL)
+        free(oqskex_bob_session_key);
+# endif
 
     apps_shutdown();
     OPENSSL_EXIT(mret);
@@ -2553,15 +2756,27 @@ static void pkey_print_message(const char *str, const char *str2, long num,
                                int bits, int tm)
 {
 # ifdef SIGALRM
-    BIO_printf(bio_err,
-               mr ? "+DTP:%d:%s:%s:%d\n"
-               : "Doing %d bit %s %s's for %ds: ", bits, str, str2, tm);
+    if (bits == 0) {
+        BIO_printf(bio_err,
+                   mr ? "+DTP:0:%s:%s:%d\n"
+                   : "Doing %s %s's for %ds: ", str, str2, tm);
+    } else {
+        BIO_printf(bio_err,
+                   mr ? "+DTP:%d:%s:%s:%d\n"
+                   : "Doing %d bit %s %s's for %ds: ", bits, str, str2, tm);
+    }
     (void)BIO_flush(bio_err);
     alarm(tm);
 # else
-    BIO_printf(bio_err,
-               mr ? "+DNP:%ld:%d:%s:%s\n"
-               : "Doing %ld %d bit %s %s's: ", num, bits, str, str2);
+    if (bits == 0) {
+        BIO_printf(bio_err,
+                   mr ? "+DNP:%ld:0:%s:%s\n"
+                   : "Doing %ld %s %s's: ", num, str, str2);
+    } else {
+        BIO_printf(bio_err,
+                   mr ? "+DNP:%ld:%d:%s:%s\n"
+                   : "Doing %ld %d bit %s %s's: ", num, bits, str, str2);
+    }
     (void)BIO_flush(bio_err);
 # endif
 # ifdef LINT
@@ -2754,6 +2969,24 @@ static int do_multi(int multi)
 
             }
 #  endif
+
+# ifndef OPENSSL_NO_OQSKEX
+            else if (!strncmp(buf,"+F6:",4)) {
+                int k;
+                double d;
+                
+                p = buf + 4;
+                k = atoi(sstrsep(&p, sep));
+                sstrsep(&p, sep);
+
+                d = atof(sstrsep(&p, sep));
+                if(n)
+                    oqskex_results[k][0] = 1 / (1 / oqskex_results[k][0] + 1 / d);
+                else
+                    oqskex_results[k][0] = d;
+
+            }
+# endif
 
             else if (!strncmp(buf, "+H:", 3)) {
             } else
