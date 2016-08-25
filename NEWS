@@ -16,8 +16,14 @@
       o Support for extended master secret
       o CCM ciphersuites
       o Reworked test suite, now based on perl, Test::Harness and Test::More
-      o *Most* libcrypto and libssl structures were made opaque including:
-        <TBA>
+      o *Most* libcrypto and libssl public structures were made opaque,
+        including:
+        BIGNUM and associated types, EC_KEY and EC_KEY_METHOD,
+        DH and DH_METHOD, DSA and DSA_METHOD, RSA and RSA_METHOD,
+        BIO and BIO_METHOD, EVP_MD_CTX, EVP_MD, EVP_CIPHER_CTX,
+        EVP_CIPHER, EVP_PKEY and associated types, HMAC_CTX,
+        X509, X509_CRL, X509_OBJECT, X509_STORE_CTX, X509_STORE,
+        X509_LOOKUP, X509_LOOKUP_METHOD
       o libssl internal structures made opaque
       o SSLv2 support removed
       o Kerberos ciphersuite support removed
