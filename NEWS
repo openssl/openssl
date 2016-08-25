@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.2h and OpenSSL 1.1.0 [in pre-release]
+  Major changes between OpenSSL 1.0.2h and OpenSSL 1.1.0 [25 Aug 2016]
 
       o Copyright text was shrunk to a boilerplate that points to the license
       o "shared" builds are now the default when possible
