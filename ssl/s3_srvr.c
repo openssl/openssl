@@ -1833,10 +1833,33 @@ int ssl3_send_server_key_exchange(SSL *s)
             r[1] = NULL;
             r[2] = NULL;
             r[3] = NULL;
+
+#ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
+            if (type & SSL_kOQSKEXGENERIC) {
+                if ((s->s3->tmp.oqskex_rand = OQS_RAND_new()) == NULL) {
+                    SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+                    goto err;
+                }
+                if (type & SSL_kOQSKEXGENERIC) {
+                    if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, NULL, 0)) == NULL) {
+                        SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+                        goto err;
+                    }
+                }
+
+                if (OQS_KEX_alice_0(s->s3->tmp.oqskex_kex, &(s->s3->tmp.oqskex_priv), &oqskex_srvr_msg, &oqskex_srvr_msg_len) != 1) {
+                    SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+
+                n += 2 + oqskex_srvr_msg_len;
+            }
+#endif
+
         } else
 #endif                          /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_OQSKEX
-        if (type & SSL_kOQSKEXGENERIC) {
+        if ((type & SSL_kOQSKEXGENERIC) && !(type & SSL_kEECDH)) {
             if ((s->s3->tmp.oqskex_rand = OQS_RAND_new()) == NULL) {
                 SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                 goto err;
@@ -2740,7 +2763,7 @@ int ssl3_get_client_key_exchange(SSL *s)
             /* Get encoded point length */
             i = *p;
             p += 1;
-            if (n != 1 + i) {
+            if (n < 1 + i) {
                 SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
                 al = SSL_AD_DECODE_ERROR;
                 goto f_err;
@@ -2750,12 +2773,40 @@ int ssl3_get_client_key_exchange(SSL *s)
                 al = SSL_AD_HANDSHAKE_FAILURE;
                 goto f_err;
             }
-            /*
-             * p is pointing to somewhere in the buffer currently, so set it
-             * to the start
-             */
-            p = (unsigned char *)s->init_buf->data;
+#ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
+            p += i;
+            n -= 1 + i;
+#endif
         }
+
+#ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
+        if (alg_k & SSL_kOQSKEXGENERIC) {
+            /* Parse client message */
+            if (n < 2) {
+                SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_BAD_LENGTH);
+                goto err;
+            }
+            clnt_oqskex_msg_len = (p[0] << 8) | p[1];
+            p += 2;
+            if (n < 2 + clnt_oqskex_msg_len) {
+                SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_BAD_LENGTH);
+                goto err;
+            }
+            clnt_oqskex_msg = OPENSSL_malloc(clnt_oqskex_msg_len);
+            if (clnt_oqskex_msg == NULL) {
+                SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            memcpy(clnt_oqskex_msg, p, clnt_oqskex_msg_len);
+            p += clnt_oqskex_msg_len;
+        }
+#endif
+
+        /*
+         * p is pointing to somewhere in the buffer currently, so set it
+         * to the start
+         */
+        p = (unsigned char *)s->init_buf->data;
 
         /* Compute the shared pre-master secret */
         field_size = EC_GROUP_get_degree(group);
@@ -2777,6 +2828,27 @@ int ssl3_get_client_key_exchange(SSL *s)
         EC_KEY_free(s->s3->tmp.ecdh);
         s->s3->tmp.ecdh = NULL;
 
+#ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
+        if (alg_k & SSL_kOQSKEXGENERIC) {
+            if (OQS_KEX_alice_1(s->s3->tmp.oqskex_kex, s->s3->tmp.oqskex_priv, clnt_oqskex_msg, clnt_oqskex_msg_len, &pprime_oqskex, &nprime_oqskex) != 1) {
+                SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            OPENSSL_free(clnt_oqskex_msg);
+            OQS_KEX_alice_priv_free(s->s3->tmp.oqskex_kex, s->s3->tmp.oqskex_priv);
+            OQS_KEX_free(s->s3->tmp.oqskex_kex);
+            OQS_RAND_free(s->s3->tmp.oqskex_rand);
+            s->s3->tmp.oqskex_priv = NULL;
+            s->s3->tmp.oqskex_kex = NULL;
+            s->s3->tmp.oqskex_rand = NULL;
+
+            // FIXME: I have no idea if this is safe, as I don't know how big p is, but let's try it anyway for testing purposes.
+            memcpy(p + i, pprime_oqskex, nprime_oqskex);
+            i += nprime_oqskex;
+            OPENSSL_free(pprime_oqskex);
+        }
+#endif
+
         /* Compute the master secret */
         s->session->master_key_length =
             s->method->ssl3_enc->generate_master_secret(s,
@@ -2789,7 +2861,7 @@ int ssl3_get_client_key_exchange(SSL *s)
     } else
 #endif
 #ifndef OPENSSL_NO_OQSKEX
-    if (alg_k & SSL_kOQSKEXGENERIC) {
+    if ((alg_k & SSL_kOQSKEXGENERIC) && !(alg_k & SSL_kEECDH)) {
         int ret = 1;
 
         /* Parse client message */

@@ -297,6 +297,7 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_PSK, 0, SSL_kPSK, SSL_aPSK, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_SRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_OQSKEXGENERIC, 0, SSL_kOQSKEXGENERIC, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEXGENERICECDHE, 0, SSL_kEECDH|SSL_kOQSKEXGENERIC, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
 
     /* symmetric encryption aliases */
     {0, SSL_TXT_DES, 0, 0, 0, SSL_DES, 0, 0, 0, 0, 0, 0},
@@ -1033,6 +1034,20 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 #endif
             if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
                 continue;
+            if ((alg_mkey & SSL_kEECDH) && (alg_mkey ^ SSL_kEECDH)) {
+                if (!(cp->algorithm_mkey & SSL_kEECDH)) 
+                    continue;
+                unsigned long alg_mkey_sans_EECDH = alg_mkey ^ SSL_kEECDH;
+                if (!(cp->algorithm_mkey & alg_mkey_sans_EECDH)) 
+                    continue;
+            }
+            if ((cp->algorithm_mkey & SSL_kEECDH) && (cp->algorithm_mkey ^ SSL_kEECDH)) {
+                if (!(alg_mkey & SSL_kEECDH)) 
+                    continue;
+                unsigned long cp_alg_mkey_sans_EECDH = cp->algorithm_mkey ^ SSL_kEECDH;
+                if (!(alg_mkey & cp_alg_mkey_sans_EECDH)) 
+                    continue;
+            }
             if (alg_auth && !(alg_auth & cp->algorithm_auth))
                 continue;
             if (alg_enc && !(alg_enc & cp->algorithm_enc))

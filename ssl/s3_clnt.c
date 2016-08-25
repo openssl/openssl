@@ -1804,8 +1804,7 @@ int ssl3_get_key_exchange(SSL *s)
 #endif                          /* !OPENSSL_NO_DH */
 
 #ifndef OPENSSL_NO_OQSKEX
-    else if (alg_k & SSL_kOQSKEXGENERIC)
-        {
+    else if ((alg_k & SSL_kOQSKEXGENERIC) && !(alg_k & SSL_kEECDH)) {
         /* Get the OQSKEX message */
         srvr_oqskex_msg_len = (p[0] << 8) | p[1];
         p += 2;
@@ -1927,6 +1926,34 @@ int ssl3_get_key_exchange(SSL *s)
 
         n -= param_len;
         p += encoded_pt_len;
+
+#ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
+        if (alg_k & SSL_kOQSKEXGENERIC) {
+            /* Get the OQSKEX message */
+            srvr_oqskex_msg_len = (p[0] << 8) | p[1];
+            p += 2;
+            n -= 2;
+
+            if (srvr_oqskex_msg_len >= n) {
+                al=SSL_AD_DECODE_ERROR;
+                SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_LENGTH);
+                goto f_err;
+            }
+            if ((srvr_oqskex_msg = malloc(srvr_oqskex_msg_len)) == NULL) {
+                SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+
+            memcpy(srvr_oqskex_msg, p, srvr_oqskex_msg_len);
+
+            n -= srvr_oqskex_msg_len;
+            p += srvr_oqskex_msg_len;
+            param_len += 2 + srvr_oqskex_msg_len;
+
+            s->session->sess_cert->peer_oqskex_msg_tmp = srvr_oqskex_msg;
+            s->session->sess_cert->peer_oqskex_msg_len_tmp = srvr_oqskex_msg_len;
+        }
+#endif
 
         /*
          * The ECC/TLS specification does not mention the use of DSA to sign
@@ -2962,6 +2989,39 @@ int ssl3_send_client_key_exchange(SSL *s)
                 goto err;
             }
 
+#ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
+            if (alg_k & SSL_kOQSKEXGENERIC) {
+                srvr_oqskex_msg = s->session->sess_cert->peer_oqskex_msg_tmp;
+                srvr_oqskex_msg_len = s->session->sess_cert->peer_oqskex_msg_len_tmp;
+
+                if (srvr_oqskex_msg == NULL) {
+                    SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+
+                if ((oqskex_rand = OQS_RAND_new()) == NULL) {
+                    SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+                    goto err;
+                }
+                if (alg_k & SSL_kOQSKEXGENERIC) {
+                    if ((oqskex_kex = OQS_KEX_new(oqskex_rand, NULL, 0)) == NULL) {
+                        SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+                        goto err;
+                    }
+                }
+
+                if (OQS_KEX_bob(oqskex_kex, srvr_oqskex_msg, srvr_oqskex_msg_len, &clnt_oqskex_msg, &clnt_oqskex_msg_len, &pprime_oqskex, &nprime_oqskex) != 1) {
+                    SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+
+                // FIXME: I have no idea if this is safe, as I don't know how big p is, but let's try it anyway for testing purposes.
+                memcpy(p + n, pprime_oqskex, nprime_oqskex);
+                n += nprime_oqskex;
+                OPENSSL_free(pprime_oqskex);
+            }
+#endif
+
             /* generate master key from the result */
             s->session->master_key_length =
                 s->method->ssl3_enc->generate_master_secret(s,
@@ -3005,9 +3065,29 @@ int ssl3_send_client_key_exchange(SSL *s)
                 p += 1;
                 /* copy the point */
                 memcpy((unsigned char *)p, encodedPoint, n);
+#ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
+                p += n;
+#endif
                 /* increment n to account for length field */
                 n += 1;
             }
+
+#ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
+            if (alg_k & SSL_kOQSKEXGENERIC) {
+                p[0] = (clnt_oqskex_msg_len >> 8) & 0xFF;
+                p[1] =  clnt_oqskex_msg_len       & 0xFF;
+                p += 2;
+                memcpy((unsigned char *) p, clnt_oqskex_msg, clnt_oqskex_msg_len);
+                p += clnt_oqskex_msg_len;
+
+                n += 2 + clnt_oqskex_msg_len;
+
+                /* Free allocated memory */
+                OPENSSL_free(clnt_oqskex_msg);
+                OQS_KEX_free(oqskex_kex);
+                OQS_RAND_free(oqskex_rand);
+            }
+#endif
 
             /* Free allocated memory */
             BN_CTX_free(bn_ctx);
@@ -3019,7 +3099,7 @@ int ssl3_send_client_key_exchange(SSL *s)
         }
 #endif                          /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_OQSKEX
-        else if (alg_k & SSL_kOQSKEXGENERIC) {
+        else if ((alg_k & SSL_kOQSKEXGENERIC) && !(alg_k & SSL_kEECDH)) {
             srvr_oqskex_msg = s->session->sess_cert->peer_oqskex_msg_tmp;
             srvr_oqskex_msg_len = s->session->sess_cert->peer_oqskex_msg_len_tmp;
 

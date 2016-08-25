@@ -280,6 +280,7 @@ extern "C" {
 # define SSL_TXT_EECDH           "EECDH"/* same as "kEECDH:-AECDH" */
 # define SSL_TXT_ECDHE           "ECDHE"/* alias for ECDHE" */
 # define SSL_TXT_OQSKEXGENERIC   "OQSKEXGENERIC"
+# define SSL_TXT_OQSKEXGENERICECDHE   "OQSKEXGENERIC-ECDHE"
 # define SSL_TXT_AECDH           "AECDH"
 # define SSL_TXT_ECDSA           "ECDSA"
 # define SSL_TXT_KRB5            "KRB5"
