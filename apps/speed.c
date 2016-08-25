@@ -2458,7 +2458,7 @@ int MAIN(int argc, char **argv)
             } else {
                 /* time OQSKEX Alice 0 operation */
                 char lbl[1000];
-                sprintf(lbl, "OQS KEX %s", oqskex_kex[j]->method_name);
+                sprintf(lbl, (j == R_OQSKEX_GENERIC) ? "OQS KEX generic (%s)" : "OQS KEX %s", oqskex_kex[j]->method_name);
                 pkey_print_message(lbl, "Alice 0", oqskex_c[j][0], 0, OQSKEX_SECONDS);
                 Time_F(START);
                 for (count = 0, run = 1; COND(oqskex_c[j][0]); count++) {
@@ -2478,7 +2478,7 @@ int MAIN(int argc, char **argv)
                 OQS_KEX_alice_0(oqskex_kex[j], &(oqskex_alice_priv[j]), &(oqskex_alice_msg[j]), &(oqskex_alice_msg_len[j]));
 
                 /* time OQSKEX Bob operation */
-                sprintf(lbl, "OQS KEX %s", oqskex_kex[j]->method_name);
+                sprintf(lbl, (j == R_OQSKEX_GENERIC) ? "OQS KEX generic (%s)" : "OQS KEX %s", oqskex_kex[j]->method_name);
                 pkey_print_message(lbl, "Bob", oqskex_c[j][1], 0, OQSKEX_SECONDS);
                 Time_F(START);
                 for (count = 0, run = 1; COND(oqskex_c[j][1]); count++) {
@@ -2498,7 +2498,7 @@ int MAIN(int argc, char **argv)
                 OQS_KEX_bob(oqskex_kex[j], oqskex_alice_msg[j], oqskex_alice_msg_len[j], &(oqskex_bob_msg[j]), &(oqskex_bob_msg_len[j]), &oqskex_bob_session_key, &oqskex_bob_session_key_len);
 
                 /* time OQSKEX Alice 1 operation */
-                sprintf(lbl, "OQS KEX %s", oqskex_kex[j]->method_name);
+                sprintf(lbl, (j == R_OQSKEX_GENERIC) ? "OQS KEX generic (%s)" : "OQS KEX %s", oqskex_kex[j]->method_name);
                 pkey_print_message(lbl, "Alice 1", oqskex_c[j][2], 0, OQSKEX_SECONDS);
                 Time_F(START);
                 for (count = 0, run = 1; COND(oqskex_c[j][2]); count++) {
@@ -2668,7 +2668,7 @@ int MAIN(int argc, char **argv)
         if (!oqskex_doit[k]) 
             continue;
         if (j && !mr) {
-            printf("                            Alice0    Alice0/s          Bob      Bob/s          Alice1   Alice1/s\n");
+            printf("                                 Alice0    Alice0/s          Bob      Bob/s          Alice1   Alice1/s\n");
             j = 0;
         }
         if (mr)
@@ -2677,7 +2677,7 @@ int MAIN(int argc, char **argv)
                     oqskex_results[k][0], oqskex_results[k][1], oqskex_results[k][2]);
 
         else
-            fprintf(stdout,"oqskex (%10s)     %8.6fms    %8.1f   %8.6fms   %8.1f      %8.6fms   %8.1f\n",
+            fprintf(stdout,"oqskex (%-15s)     %8.6fms    %8.1f   %8.6fms   %8.1f      %8.6fms   %8.1f\n",
                     test_oqskex_names[k],
                     oqskex_results[k][0] * 1000, 1.0/oqskex_results[k][0],
                     oqskex_results[k][1] * 1000, 1.0/oqskex_results[k][1],
