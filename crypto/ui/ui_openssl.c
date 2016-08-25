@@ -305,23 +305,26 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
     if (is_a_tty) {
         DWORD numread;
 #  if defined(CP_UTF8)
-        WCHAR wresult[BUFSIZ];
+        if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) != 0) {
+            WCHAR wresult[BUFSIZ];
 
-        if (ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE),
+            if (ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE),
                          wresult, maxsize, &numread, NULL)) {
-            if (numread >= 2 &&
-                wresult[numread-2] == L'\r' && wresult[numread-1] == L'\n') {
-                wresult[numread-2] = L'\n';
-                numread--;
-            }
-            wresult[numread] = '\0';
-            if (WideCharToMultiByte(CP_UTF8, 0, wresult, -1,
-                                    result, sizeof(result), NULL, 0) > 0)
-                p = result;
+                if (numread >= 2 &&
+                    wresult[numread-2] == L'\r' &&
+                    wresult[numread-1] == L'\n') {
+                    wresult[numread-2] = L'\n';
+                    numread--;
+                }
+                wresult[numread] = '\0';
+                if (WideCharToMultiByte(CP_UTF8, 0, wresult, -1,
+                                        result, sizeof(result), NULL, 0) > 0)
+                    p = result;
 
-            OPENSSL_cleanse(wresult, sizeof(wresult));
-        }
-#  else
+                OPENSSL_cleanse(wresult, sizeof(wresult));
+            }
+        } else
+#  endif
         if (ReadConsoleA(GetStdHandle(STD_INPUT_HANDLE),
                          result, maxsize, &numread, NULL)) {
             if (numread >= 2 &&
@@ -332,7 +335,6 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
             result[numread] = '\0';
             p = result;
         }
-#  endif
     } else
 # elif defined(OPENSSL_SYS_MSDOS)
     if (!echo) {
