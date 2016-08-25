@@ -314,6 +314,8 @@
 # define SSL_kGOST       0x00000200L
 /* SRP */
 # define SSL_kSRP        0x00000400L
+/* OQS KEX */
+# define SSL_kOQSKEXGENERIC      0x00001000L
 
 /* Bits for algorithm_auth (server authentication) */
 /* RSA auth */
@@ -719,6 +721,10 @@ typedef struct sess_cert_st {
 # endif
 # ifndef OPENSSL_NO_ECDH
     EC_KEY *peer_ecdh_tmp;
+# endif
+# ifndef OPENSSL_NO_OQSKEX
+    unsigned char *peer_oqskex_msg_tmp;
+    size_t peer_oqskex_msg_len_tmp;
 # endif
     int references;             /* actually always 1 at the moment */
 } SESS_CERT;

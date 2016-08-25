@@ -166,6 +166,10 @@
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
+#ifndef OPENSSL_NO_OQSKEX
+#include <oqs/rand.h>
+#include <oqs/kex.h>
+#endif
 
 static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
 #ifndef OPENSSL_NO_TLSEXT
@@ -1385,6 +1389,10 @@ int ssl3_get_key_exchange(SSL *s)
     int curve_nid = 0;
     int encoded_pt_len = 0;
 #endif
+#ifndef OPENSSL_NO_OQSKEX
+    unsigned char *srvr_oqskex_msg = NULL;
+    int srvr_oqskex_msg_len = 0;
+#endif
 
     EVP_MD_CTX_init(&md_ctx);
 
@@ -1447,6 +1455,13 @@ int ssl3_get_key_exchange(SSL *s)
             EC_KEY_free(s->session->sess_cert->peer_ecdh_tmp);
             s->session->sess_cert->peer_ecdh_tmp = NULL;
         }
+#endif
+#ifndef OPENSSL_NO_OQSKEX
+        if (s->session->sess_cert->peer_oqskex_msg_tmp)
+            {
+            free(s->session->sess_cert->peer_oqskex_msg_tmp);
+            s->session->sess_cert->peer_oqskex_msg_tmp = NULL;
+            }
 #endif
     } else {
         s->session->sess_cert = ssl_sess_cert_new();
@@ -1788,6 +1803,45 @@ int ssl3_get_key_exchange(SSL *s)
     }
 #endif                          /* !OPENSSL_NO_DH */
 
+#ifndef OPENSSL_NO_OQSKEX
+    else if (alg_k & SSL_kOQSKEXGENERIC)
+        {
+        /* Get the OQSKEX message */
+        srvr_oqskex_msg_len = (p[0] << 8) | p[1];
+        p += 2;
+        n -= 2;
+
+        if (srvr_oqskex_msg_len >= n) {
+            al=SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_LENGTH);
+            goto f_err;
+        }
+        if ((srvr_oqskex_msg = malloc(srvr_oqskex_msg_len)) == NULL) {
+            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        memcpy(srvr_oqskex_msg, p, srvr_oqskex_msg_len);
+
+        n -= srvr_oqskex_msg_len;
+        p += srvr_oqskex_msg_len;
+        param_len = 2 + srvr_oqskex_msg_len;
+
+#ifndef OPENSSL_NO_RSA
+        if (alg_a & SSL_aRSA)
+            pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+#else
+        if (0) ;
+#endif
+#ifndef OPENSSL_NO_ECDSA
+        else if (alg_a & SSL_aECDSA)
+            pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
+#endif
+        s->session->sess_cert->peer_oqskex_msg_tmp = srvr_oqskex_msg;
+        s->session->sess_cert->peer_oqskex_msg_len_tmp = srvr_oqskex_msg_len;
+    }
+#endif                          /* !OPENSSL_NO_OQSKEX */
+
 #ifndef OPENSSL_NO_ECDH
     else if (alg_k & SSL_kEECDH) {
         EC_GROUP *ngroup;
@@ -2040,6 +2094,10 @@ int ssl3_get_key_exchange(SSL *s)
     EC_POINT_free(srvr_ecpoint);
     if (ecdh != NULL)
         EC_KEY_free(ecdh);
+#endif
+#ifndef OPENSSL_NO_OQSKEX
+    if (srvr_oqskex_msg != NULL)
+        free(srvr_oqskex_msg);
 #endif
     EVP_MD_CTX_cleanup(&md_ctx);
     s->state = SSL_ST_ERR;
@@ -2478,6 +2536,16 @@ int ssl3_send_client_key_exchange(SSL *s)
     unsigned char *encodedPoint = NULL;
     int encoded_pt_len = 0;
     BN_CTX *bn_ctx = NULL;
+#endif
+#ifndef OPENSSL_NO_OQSKEX
+    OQS_RAND *oqskex_rand = NULL;
+    OQS_KEX *oqskex_kex = NULL;
+    unsigned char *srvr_oqskex_msg = NULL;
+    size_t srvr_oqskex_msg_len = 0;
+    unsigned char *clnt_oqskex_msg = NULL;
+    size_t clnt_oqskex_msg_len = 0;
+    unsigned char *pprime_oqskex = NULL;
+    size_t nprime_oqskex = 0;
 #endif
 
     if (s->state == SSL3_ST_CW_KEY_EXCH_A) {
@@ -2950,6 +3018,55 @@ int ssl3_send_client_key_exchange(SSL *s)
             EVP_PKEY_free(srvr_pub_pkey);
         }
 #endif                          /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_OQSKEX
+        else if (alg_k & SSL_kOQSKEXGENERIC) {
+            srvr_oqskex_msg = s->session->sess_cert->peer_oqskex_msg_tmp;
+            srvr_oqskex_msg_len = s->session->sess_cert->peer_oqskex_msg_len_tmp;
+
+            if (srvr_oqskex_msg == NULL) {
+                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+
+            if ((oqskex_rand = OQS_RAND_new()) == NULL) {
+                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+            if (alg_k & SSL_kOQSKEXGENERIC) {
+                if ((oqskex_kex = OQS_KEX_new(oqskex_rand, NULL, 0)) == NULL) {
+                    SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+                    goto err;
+                }
+            }
+
+            if (OQS_KEX_bob(oqskex_kex, srvr_oqskex_msg, srvr_oqskex_msg_len, &clnt_oqskex_msg, &clnt_oqskex_msg_len, &pprime_oqskex, &nprime_oqskex) != 1) {
+                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+
+            /* generate master key from the result */
+            s->session->master_key_length = s->method->ssl3_enc \
+                -> generate_master_secret(s, 
+                s->session->master_key,
+                pprime_oqskex, nprime_oqskex);
+
+            memset(pprime_oqskex, 0, nprime_oqskex); /* clean up */
+
+            p[0] = (clnt_oqskex_msg_len >> 8) & 0xFF;
+            p[1] =  clnt_oqskex_msg_len       & 0xFF;
+            p += 2;
+            memcpy((unsigned char *)p, clnt_oqskex_msg, clnt_oqskex_msg_len);
+            p += clnt_oqskex_msg_len;
+
+            n = 2 + clnt_oqskex_msg_len;
+
+            /* Free allocated memory */
+            OPENSSL_free(pprime_oqskex);
+            OPENSSL_free(clnt_oqskex_msg);
+            OQS_KEX_free(oqskex_kex);
+            OQS_RAND_free(oqskex_rand);
+        }
+#endif /* !OPENSSL_NO_OQSKEX */
         else if (alg_k & SSL_kGOST) {
             /* GOST key exchange message creation */
             EVP_PKEY_CTX *pkey_ctx;
@@ -3219,6 +3336,12 @@ int ssl3_send_client_key_exchange(SSL *s)
     if (clnt_ecdh != NULL)
         EC_KEY_free(clnt_ecdh);
     EVP_PKEY_free(srvr_pub_pkey);
+#endif
+#ifndef OPENSSL_NO_OQSKEX
+    OPENSSL_free(pprime_oqskex);
+    OPENSSL_free(clnt_oqskex_msg);
+    OQS_KEX_free(oqskex_kex);
+    OQS_RAND_free(oqskex_rand);
 #endif
     s->state = SSL_ST_ERR;
     return (-1);

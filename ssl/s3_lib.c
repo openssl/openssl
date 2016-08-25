@@ -2888,6 +2888,73 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
 
 #endif                          /* OPENSSL_NO_ECDH */
 
+#ifndef OPENSSL_NO_OQSKEX
+    /* Cipher FF00 */
+    {
+    1,
+    TLS1_TXT_OQSKEXGENERIC_RSA_WITH_AES_128_GCM_SHA256,
+    TLS1_CK_OQSKEXGENERIC_RSA_WITH_AES_128_GCM_SHA256,
+    SSL_kOQSKEXGENERIC,
+    SSL_aRSA,
+    SSL_AES128GCM,
+    SSL_AEAD,
+    SSL_TLSV1_2,
+    SSL_NOT_EXP|SSL_HIGH,
+    SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+    128,
+    128,
+    },
+
+    /* Cipher FF01 */
+    {
+    1,
+    TLS1_TXT_OQSKEXGENERIC_ECDSA_WITH_AES_128_GCM_SHA256,
+    TLS1_CK_OQSKEXGENERIC_ECDSA_WITH_AES_128_GCM_SHA256,
+    SSL_kOQSKEXGENERIC,
+    SSL_aECDSA,
+    SSL_AES128GCM,
+    SSL_AEAD,
+    SSL_TLSV1_2,
+    SSL_NOT_EXP|SSL_HIGH,
+    SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
+    128,
+    128,
+    },
+
+    /* Cipher FF02 */
+    {
+    1,
+    TLS1_TXT_OQSKEXGENERIC_RSA_WITH_AES_256_GCM_SHA384,
+    TLS1_CK_OQSKEXGENERIC_RSA_WITH_AES_256_GCM_SHA384,
+    SSL_kOQSKEXGENERIC,
+    SSL_aRSA,
+    SSL_AES256GCM,
+    SSL_AEAD,
+    SSL_TLSV1_2,
+    SSL_NOT_EXP|SSL_HIGH,
+    SSL_HANDSHAKE_MAC_SHA384|TLS1_PRF_SHA384,
+    256,
+    256,
+    },
+
+    /* Cipher FF03 */
+    {
+    1,
+    TLS1_TXT_OQSKEXGENERIC_ECDSA_WITH_AES_256_GCM_SHA384,
+    TLS1_CK_OQSKEXGENERIC_ECDSA_WITH_AES_256_GCM_SHA384,
+    SSL_kOQSKEXGENERIC,
+    SSL_aECDSA,
+    SSL_AES256GCM,
+    SSL_AEAD,
+    SSL_TLSV1_2,
+    SSL_NOT_EXP|SSL_HIGH,
+    SSL_HANDSHAKE_MAC_SHA384|TLS1_PRF_SHA384,
+    256,
+    256,
+    },
+
+#endif                          /* OPENSSL_NO_OQSKEX */
+
 #ifdef TEMP_GOST_TLS
 /* Cipher FF00 */
     {
@@ -3062,6 +3129,14 @@ void ssl3_free(SSL *s)
     if (s->s3->tmp.ecdh != NULL)
         EC_KEY_free(s->s3->tmp.ecdh);
 #endif
+#ifndef OPENSSL_NO_OQSKEX
+    if (s->s3->tmp.oqskex_priv != NULL)
+        OQS_KEX_alice_priv_free(s->s3->tmp.oqskex_kex, s->s3->tmp.oqskex_priv);
+    if (s->s3->tmp.oqskex_kex != NULL)
+        OQS_KEX_free(s->s3->tmp.oqskex_kex);
+    if (s->s3->tmp.oqskex_rand != NULL)
+        OQS_RAND_free(s->s3->tmp.oqskex_rand);
+#endif
 
     if (s->s3->tmp.ca_names != NULL)
         sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
@@ -3116,6 +3191,20 @@ void ssl3_clear(SSL *s)
     if (s->s3->tmp.ecdh != NULL) {
         EC_KEY_free(s->s3->tmp.ecdh);
         s->s3->tmp.ecdh = NULL;
+    }
+#endif
+#ifndef OPENSSL_NO_OQSKEX
+    if (s->s3->tmp.oqskex_priv != NULL) {
+        OQS_KEX_alice_priv_free(s->s3->tmp.oqskex_kex, s->s3->tmp.oqskex_priv);
+        s->s3->tmp.oqskex_priv = NULL;
+    }
+    if (s->s3->tmp.oqskex_kex != NULL) {
+        OQS_KEX_free(s->s3->tmp.oqskex_kex);
+        s->s3->tmp.oqskex_kex = NULL;
+    }
+    if (s->s3->tmp.oqskex_rand != NULL) {
+        OQS_RAND_free(s->s3->tmp.oqskex_rand);
+        s->s3->tmp.oqskex_rand = NULL;
     }
 #endif
 #ifndef OPENSSL_NO_TLSEXT

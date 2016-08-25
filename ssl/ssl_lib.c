@@ -2434,6 +2434,11 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
     }
 #endif
 
+#ifndef OPENSSL_NO_OQSKEX
+    mask_k |= SSL_kOQSKEXGENERIC;
+    emask_k |= SSL_kOQSKEXGENERIC;
+#endif
+
 #ifndef OPENSSL_NO_PSK
     mask_k |= SSL_kPSK;
     mask_a |= SSL_aPSK;

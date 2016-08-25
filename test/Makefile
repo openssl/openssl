@@ -24,9 +24,9 @@ GENERAL=Makefile maketests.com \
 	tpkcs7.com tpkcs7d.com tverify.com testgen.com testss.com testssl.com \
 	testca.com VMSca-response.1 VMSca-response.2
 
-DLIBCRYPTO= ../libcrypto.a
+DLIBCRYPTO= ../libcrypto.a ../vendor/liboqs/liboqs.a
 DLIBSSL= ../libssl.a
-LIBCRYPTO= -L.. -lcrypto
+LIBCRYPTO= -L.. -lcrypto -L../vendor/liboqs -loqs
 LIBSSL= -L.. -lssl
 
 BNTEST=		bntest

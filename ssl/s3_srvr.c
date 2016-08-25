@@ -169,6 +169,10 @@
 # include <openssl/krb5_asn.h>
 #endif
 #include <openssl/md5.h>
+#ifndef OPENSSL_NO_OQSKEX
+#include <oqs/rand.h>
+#include <oqs/kex.h>
+#endif
 
 #ifndef OPENSSL_NO_SSL3_METHOD
 static const SSL_METHOD *ssl3_get_server_method(int ver);
@@ -478,6 +482,7 @@ int ssl3_accept(SSL *s)
 #endif
                 || (alg_k & SSL_kEDH)
                 || (alg_k & SSL_kEECDH)
+                || (alg_k & SSL_kOQSKEXGENERIC)
                 || ((alg_k & SSL_kRSA)
                     && (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
                         || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)
@@ -1610,6 +1615,10 @@ int ssl3_send_server_key_exchange(SSL *s)
     int curve_id = 0;
     BN_CTX *bn_ctx = NULL;
 #endif
+#ifndef OPENSSL_NO_OQSKEX
+    unsigned char *oqskex_srvr_msg = NULL;
+    size_t oqskex_srvr_msg_len = 0;
+#endif
     EVP_PKEY *pkey;
     const EVP_MD *md = NULL;
     unsigned char *p, *d;
@@ -1826,6 +1835,35 @@ int ssl3_send_server_key_exchange(SSL *s)
             r[3] = NULL;
         } else
 #endif                          /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_OQSKEX
+        if (type & SSL_kOQSKEXGENERIC) {
+            if ((s->s3->tmp.oqskex_rand = OQS_RAND_new()) == NULL) {
+                SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+            if (type & SSL_kOQSKEXGENERIC) {
+                if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, NULL, 0)) == NULL) {
+                    SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+                    goto err;
+                }
+            }
+
+            if (OQS_KEX_alice_0(s->s3->tmp.oqskex_kex, &(s->s3->tmp.oqskex_priv), &oqskex_srvr_msg, &oqskex_srvr_msg_len) != 1) {
+                SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+
+            n += 2 + oqskex_srvr_msg_len;
+
+            /* We'll generate the serverKeyExchange message
+             * explicitly so we can set these to NULLs
+             */
+            r[0] = NULL;
+            r[1] = NULL;
+            r[2] = NULL;
+            r[3] = NULL;
+        } else 
+#endif                          /* !OPENSSL_NO_OQSKEX */
 #ifndef OPENSSL_NO_PSK
         if (type & SSL_kPSK) {
             /*
@@ -1922,6 +1960,18 @@ int ssl3_send_server_key_exchange(SSL *s)
             OPENSSL_free(encodedPoint);
             encodedPoint = NULL;
             p += encodedlen;
+        }
+#endif
+
+#ifndef OPENSSL_NO_OQSKEX
+        if (type & SSL_kOQSKEXGENERIC) {
+            p[0] = (oqskex_srvr_msg_len >> 8) & 0xFF;
+            p[1] =  oqskex_srvr_msg_len       & 0xFF;
+            p += 2;
+            memcpy((unsigned char *) p, oqskex_srvr_msg, oqskex_srvr_msg_len);
+            OPENSSL_free(oqskex_srvr_msg);
+            oqskex_srvr_msg = NULL;
+            p += oqskex_srvr_msg_len;
         }
 #endif
 
@@ -2029,6 +2079,10 @@ int ssl3_send_server_key_exchange(SSL *s)
     if (encodedPoint != NULL)
         OPENSSL_free(encodedPoint);
     BN_CTX_free(bn_ctx);
+#endif
+#ifndef OPENSSL_NO_OQSKEX
+    if (oqskex_srvr_msg != NULL)
+        OPENSSL_free(oqskex_srvr_msg);
 #endif
     EVP_MD_CTX_cleanup(&md_ctx);
     s->state = SSL_ST_ERR;
@@ -2153,11 +2207,17 @@ int ssl3_get_client_key_exchange(SSL *s)
     EC_POINT *clnt_ecpoint = NULL;
     BN_CTX *bn_ctx = NULL;
 #endif
+#ifndef OPENSSL_NO_OQSKEX
+    unsigned char *clnt_oqskex_msg = NULL;
+    int clnt_oqskex_msg_len = 0;
+    unsigned char *pprime_oqskex = NULL;
+    size_t nprime_oqskex;
+#endif
 
     n = s->method->ssl_get_message(s,
                                    SSL3_ST_SR_KEY_EXCH_A,
                                    SSL3_ST_SR_KEY_EXCH_B,
-                                   SSL3_MT_CLIENT_KEY_EXCHANGE, 2048, &ok);
+                                   SSL3_MT_CLIENT_KEY_EXCHANGE, 20480, &ok);
 
     if (!ok)
         return ((int)n);
@@ -2728,6 +2788,51 @@ int ssl3_get_client_key_exchange(SSL *s)
         return (ret);
     } else
 #endif
+#ifndef OPENSSL_NO_OQSKEX
+    if (alg_k & SSL_kOQSKEXGENERIC) {
+        int ret = 1;
+
+        /* Parse client message */
+        if (n < 2) {
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_BAD_LENGTH);
+            goto err;
+        }
+        clnt_oqskex_msg_len = (p[0] << 8) | p[1];
+        p += 2;
+        if (n < 2 + clnt_oqskex_msg_len) {
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_BAD_LENGTH);
+            goto err;
+        }
+        clnt_oqskex_msg = OPENSSL_malloc(clnt_oqskex_msg_len);
+        if (clnt_oqskex_msg == NULL) {
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        memcpy(clnt_oqskex_msg, p, clnt_oqskex_msg_len);
+        p += clnt_oqskex_msg_len;
+
+        if (OQS_KEX_alice_1(s->s3->tmp.oqskex_kex, s->s3->tmp.oqskex_priv, clnt_oqskex_msg, clnt_oqskex_msg_len, &pprime_oqskex, &nprime_oqskex) != 1) {
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        OPENSSL_free(clnt_oqskex_msg);
+        OQS_KEX_alice_priv_free(s->s3->tmp.oqskex_kex, s->s3->tmp.oqskex_priv);
+        OQS_KEX_free(s->s3->tmp.oqskex_kex);
+        OQS_RAND_free(s->s3->tmp.oqskex_rand);
+        s->s3->tmp.oqskex_priv = NULL;
+        s->s3->tmp.oqskex_kex = NULL;
+        s->s3->tmp.oqskex_rand = NULL;
+
+        /* Compute the master secret */
+        s->session->master_key_length = s->method->ssl3_enc-> \
+            generate_master_secret(s, s->session->master_key, pprime_oqskex, nprime_oqskex);
+        
+        OPENSSL_cleanse(pprime_oqskex, nprime_oqskex);
+        OPENSSL_free(pprime_oqskex);
+
+        return (ret);
+    } else
+#endif
 #ifndef OPENSSL_NO_PSK
     if (alg_k & SSL_kPSK) {
         unsigned char *t = NULL;
@@ -2941,7 +3046,7 @@ int ssl3_get_client_key_exchange(SSL *s)
     return (1);
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_ECDH) || defined(OPENSSL_NO_SRP)
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_ECDH) || defined(OPENSSL_NO_SRP) || !defined(OPENSSL_NO_OQSKEX)
  err:
 #endif
 #ifndef OPENSSL_NO_ECDH
@@ -2950,6 +3055,9 @@ int ssl3_get_client_key_exchange(SSL *s)
     if (srvr_ecdh != NULL)
         EC_KEY_free(srvr_ecdh);
     BN_CTX_free(bn_ctx);
+#endif
+#ifndef OPENSSL_NO_OQSKEX
+    OPENSSL_free(clnt_oqskex_msg);
 #endif
     s->state = SSL_ST_ERR;
     return (-1);
