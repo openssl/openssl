@@ -4,6 +4,14 @@
 
  Changes between 1.0.2h and 1.1.0  [xx XXX xxxx]
 
+  *) Windows command-line tool supports UTF-8 opt-in option for arguments
+     and console input. Setting OPENSSL_WIN32_UTF8 environment variable
+     (to any value) allows Windows user to access PKCS#12 file generated
+     with Windows CryptoAPI and protected with non-ASCII password, as well
+     as files generated under UTF-8 locale on Linux also protected with
+     non-ASCII password.
+     [Andy Polyakov]
+
   *) To mitigate the SWEET32 attack (CVE-2016-2183), 3DES cipher suites
      have been disabled by default and removed from DEFAULT, just like RC4.
      See the RC4 item below to re-enable both.
