@@ -195,6 +195,7 @@
 # ifndef OPENSSL_NO_OQSKEX
 #  include <oqs/rand.h>
 #  include <oqs/kex.h>
+#  include <oqs/kex_rlwe_bcns15.h>
 # endif
 # include <openssl/modes.h>
 
@@ -250,7 +251,7 @@ static int do_multi(int multi);
 # define SIZE_NUM        5
 # define RSA_NUM         4
 # define DSA_NUM         3
-# define OQSKEX_NUM      1
+# define OQSKEX_NUM      2
 
 # define EC_NUM       16
 # define MAX_ECDH_SIZE 256
@@ -553,6 +554,7 @@ int MAIN(int argc, char **argv)
 # define R_EC_B571    15
 
 # define R_OQSKEX_GENERIC        0
+# define R_OQSKEX_RLWE_BCNS15    1
 
 # ifndef OPENSSL_NO_RSA
     RSA *rsa_key[RSA_NUM];
@@ -629,7 +631,8 @@ int MAIN(int argc, char **argv)
 
 # ifndef OPENSSL_NO_OQSKEX
     static const char *test_oqskex_names[OQSKEX_NUM] = {
-        "generic"
+        "generic",
+        "rlwe_bcns15"
     };
 # endif
 
@@ -1116,6 +1119,8 @@ int MAIN(int argc, char **argv)
 # ifndef OPENSSL_NO_OQSKEX
         if (strcmp(*argv, "oqskex_generic") == 0)
             oqskex_doit[R_OQSKEX_GENERIC] = 2;
+        else if (strcmp(*argv, "oqskex_rlwe_bcns15") == 0)
+            oqskex_doit[R_OQSKEX_RLWE_BCNS15] = 2;
         else if (strcmp(*argv, "oqskex") == 0) {
             for (i = 0; i < OQSKEX_NUM; i++)
                 oqskex_doit[i] = 1;
@@ -1224,7 +1229,7 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err, "ecdh\n");
 # endif
 # ifndef OPENSSL_NO_OQSKEX
-            BIO_printf(bio_err, "oqskex_generic\n");
+            BIO_printf(bio_err, "oqskex_generic  oqskex_rlwe_bcns15\n");
             BIO_printf(bio_err, "oqskex\n");
 # endif
 
@@ -2443,6 +2448,8 @@ int MAIN(int argc, char **argv)
         } else {
             if (j == R_OQSKEX_GENERIC) {
                 oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], NULL, 0);
+            } else if (j == R_OQSKEX_RLWE_BCNS15) {
+                oqskex_kex[j] = OQS_KEX_rlwe_bcns15_new(oqskex_rand[j], NULL, 0);
             }
             if (oqskex_kex[j] == NULL) {
                 BIO_printf(bio_err,"OQSKEX failure - OQS_KEX_new.\n");
