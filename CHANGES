@@ -878,10 +878,6 @@
      combination: call this in fips_test_suite.
      [Steve Henson]
 
-  *) Add support for Dual EC DRBG from SP800-90. Update DRBG algorithm test
-     and POST to handle Dual EC cases.
-     [Steve Henson]
-
   *) Add support for canonical generation of DSA parameter 'g'. See 
      FIPS 186-3 A.2.3.
 
