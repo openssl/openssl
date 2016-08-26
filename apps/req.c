@@ -295,6 +295,10 @@ int req_main(int argc, char **argv)
             days = atoi(opt_arg());
             break;
         case OPT_SET_SERIAL:
+            if (serial != NULL) {
+                BIO_printf(bio_err, "Serial number supplied twice\n");
+                goto opthelp;
+            }
             serial = s2i_ASN1_INTEGER(NULL, opt_arg());
             if (serial == NULL)
                 goto opthelp;

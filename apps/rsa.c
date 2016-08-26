@@ -230,10 +230,7 @@ int rsa_main(int argc, char **argv)
                            ERR_reason_error_string(err));
                 ERR_get_error(); /* remove e from error stack */
             }
-        }
-
-        /* should happen only if r == -1 */
-        if (r == -1 || ERR_peek_error() != 0) {
+        } else if (r == -1) {
             ERR_print_errors(bio_err);
             goto end;
         }

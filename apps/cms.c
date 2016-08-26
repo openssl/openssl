@@ -412,6 +412,11 @@ int cms_main(int argc, char **argv)
             noout = print = 1;
             break;
         case OPT_SECRETKEY:
+            if (secret_key != NULL) {
+                BIO_printf(bio_err, "Invalid key (supplied twice) %s\n",
+                           opt_arg());
+                goto opthelp;
+            }
             secret_key = OPENSSL_hexstr2buf(opt_arg(), &ltmp);
             if (secret_key == NULL) {
                 BIO_printf(bio_err, "Invalid key %s\n", opt_arg());
@@ -420,6 +425,11 @@ int cms_main(int argc, char **argv)
             secret_keylen = (size_t)ltmp;
             break;
         case OPT_SECRETKEYID:
+            if (secret_keyid != NULL) {
+                BIO_printf(bio_err, "Invalid id (supplied twice) %s\n",
+                           opt_arg());
+                goto opthelp;
+            }
             secret_keyid = OPENSSL_hexstr2buf(opt_arg(), &ltmp);
             if (secret_keyid == NULL) {
                 BIO_printf(bio_err, "Invalid id %s\n", opt_arg());
@@ -431,6 +441,11 @@ int cms_main(int argc, char **argv)
             pwri_pass = (unsigned char *)opt_arg();
             break;
         case OPT_ECONTENT_TYPE:
+            if (econtent_type != NULL) {
+                BIO_printf(bio_err, "Invalid OID (supplied twice) %s\n",
+                           opt_arg());
+                goto opthelp;
+            }
             econtent_type = OBJ_txt2obj(opt_arg(), 0);
             if (econtent_type == NULL) {
                 BIO_printf(bio_err, "Invalid OID %s\n", opt_arg());

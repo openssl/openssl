@@ -148,9 +148,12 @@ static int enc_read(BIO *b, char *out, int outl)
 
         if (ctx->read_start == ctx->read_end) { /* time to read more data */
             ctx->read_end = ctx->read_start = &(ctx->buf[BUF_OFFSET]);
-            ctx->read_end += BIO_read(next, ctx->read_start, ENC_BLOCK_SIZE);
+            i = BIO_read(next, ctx->read_start, ENC_BLOCK_SIZE);
+            if (i > 0)
+                ctx->read_end += i;
+        } else {
+            i = ctx->read_end - ctx->read_start;
         }
-        i = ctx->read_end - ctx->read_start;
 
         if (i <= 0) {
             /* Should be continue next time we are called? */

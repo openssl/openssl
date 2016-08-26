@@ -61,7 +61,11 @@ DEFINE_STACK_OF(CTLOG)
  * CT policy evaluation context functions *
  ******************************************/
 
-/* Creates a new, empty policy evaluation context */
+/*
+ * Creates a new, empty policy evaluation context.
+ * The caller is responsible for calling CT_POLICY_EVAL_CTX_free when finished
+ * with the CT_POLICY_EVAL_CTX.
+ */
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
 
 /* Deletes a policy evaluation context and anything it owns. */
@@ -72,7 +76,7 @@ X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
 
 /*
  * Sets the certificate associated with the received SCTs.
- * Incremenets the reference count of cert.
+ * Increments the reference count of cert.
  * Returns 1 on success, 0 otherwise.
  */
 int CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
@@ -287,7 +291,7 @@ __owur int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx);
 
 /*
  * Validates the given list of SCTs with the provided context.
- * Populates the "good_scts" and "bad_scts" of the evaluation context.
+ * Sets the "validation_status" field of each SCT.
  * Returns 1 if there are no invalid SCTs and all signatures verify.
  * Returns 0 if at least one SCT is invalid or could not be verified.
  * Returns a negative integer if an error occurs.
@@ -384,6 +388,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
 
 /*
  * Creates a new CT log instance with the given |public_key| and |name|.
+ * Takes ownership of |public_key| but copies |name|.
  * Returns NULL if malloc fails or if |public_key| cannot be converted to DER.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */

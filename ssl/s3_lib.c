@@ -57,7 +57,7 @@
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 
 /*
- * The list of available ciphers, organized into the following
+ * The list of available ciphers, mostly organized into the following
  * groups:
  *      Always there
  *      EC
@@ -97,6 +97,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+#ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      SSL3_TXT_RSA_DES_192_CBC3_SHA,
@@ -107,7 +108,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -137,7 +138,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -157,6 +158,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      112,
      168,
      },
+#endif
     {
      1,
      TLS1_TXT_RSA_WITH_AES_128_SHA,
@@ -849,6 +851,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+# ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_ECDHE_ECDSA_WITH_DES_192_CBC3_SHA,
@@ -859,11 +862,12 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
      },
+# endif
     {
      1,
      TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
@@ -909,6 +913,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+# ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_ECDHE_RSA_WITH_DES_192_CBC3_SHA,
@@ -919,11 +924,12 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
      },
+# endif
     {
      1,
      TLS1_TXT_ECDHE_RSA_WITH_AES_128_CBC_SHA,
@@ -969,6 +975,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+# ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_ECDH_anon_WITH_DES_192_CBC3_SHA,
@@ -984,6 +991,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      112,
      168,
      },
+# endif
     {
      1,
      TLS1_TXT_ECDH_anon_WITH_AES_128_CBC_SHA,
@@ -1182,6 +1190,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
+# ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_PSK_WITH_3DES_EDE_CBC_SHA,
@@ -1192,11 +1201,12 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
      },
+# endif
     {
      1,
      TLS1_TXT_PSK_WITH_AES_128_CBC_SHA,
@@ -1227,6 +1237,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+# ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_DHE_PSK_WITH_3DES_EDE_CBC_SHA,
@@ -1237,11 +1248,12 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
      },
+# endif
     {
      1,
      TLS1_TXT_DHE_PSK_WITH_AES_128_CBC_SHA,
@@ -1272,6 +1284,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+# ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_RSA_PSK_WITH_3DES_EDE_CBC_SHA,
@@ -1282,11 +1295,12 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
      },
+# endif
     {
      1,
      TLS1_TXT_RSA_PSK_WITH_AES_128_CBC_SHA,
@@ -1588,6 +1602,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      },
 # ifndef OPENSSL_NO_EC
+#  ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_ECDHE_PSK_WITH_3DES_EDE_CBC_SHA,
@@ -1598,11 +1613,12 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_MEDIUM | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
      },
+#  endif
     {
      1,
      TLS1_TXT_ECDHE_PSK_WITH_AES_128_CBC_SHA,
@@ -1712,6 +1728,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
 #endif                          /* OPENSSL_NO_PSK */
 
 #ifndef OPENSSL_NO_SRP
+# ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_SRP_SHA_WITH_3DES_EDE_CBC_SHA,
@@ -1722,7 +1739,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -1737,7 +1754,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_SHA1,
      SSL3_VERSION, TLS1_2_VERSION,
      DTLS1_BAD_VER, DTLS1_2_VERSION,
-     SSL_MEDIUM,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -1757,6 +1774,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      112,
      168,
      },
+# endif
     {
      1,
      TLS1_TXT_SRP_SHA_WITH_AES_128_CBC_SHA,
