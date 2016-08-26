@@ -151,7 +151,7 @@ INSTALLTOP={- our $installtop =
               $installtop -}
 SYSTARTUP={- catdir($installtop, '[.SYS$STARTUP]'); -}
 # This is the standard central area to store certificates, private keys...
-OPENSSLDIR={- catdir($config{openssldir}) ||
+OPENSSLDIR={- catdir($config{openssldir}) or
               $config{prefix} ? catdir($config{prefix},"COMMON")
                               : "SYS\$COMMON:[OPENSSL-COMMON]" -}
 # The same, but for C
