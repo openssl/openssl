@@ -1126,6 +1126,9 @@ unless ($disabled{asm}) {
 	push @{$config{defines}}, "SHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
 	push @{$config{defines}}, "SHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
     }
+    if ($target{rc4_asm_src} ne $table{DEFAULTS}->{rc4_asm_src}) {
+	push @{$config{defines}}, "RC4_ASM";
+    }
     if ($target{md5_asm_src}) {
 	push @{$config{defines}}, "MD5_ASM";
     }
