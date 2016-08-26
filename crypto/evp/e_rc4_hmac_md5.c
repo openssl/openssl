@@ -60,7 +60,7 @@ static int rc4_hmac_md5_init_key(EVP_CIPHER_CTX *ctx,
     return 1;
 }
 
-# if     !defined(OPENSSL_NO_ASM) &&     ( \
+# if     defined(RC4_ASM) && defined(MD5_ASM) &&     (	   \
         defined(__x86_64)       || defined(__x86_64__)  || \
         defined(_M_AMD64)       || defined(_M_X64)      )
 #  define STITCHED_CALL
