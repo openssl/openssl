@@ -219,7 +219,24 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_NAME_num(x->altname); i++) {
         GENERAL_NAME *gen = sk_GENERAL_NAME_value(x->altname, i);
-        r = nc_match(gen, nc);
+        if (gen->type == GEN_OTHERNAME) {
+            if (OBJ_obj2nid(gen->d.otherName->type_id) == NID_smtputf8Name) {
+                GENERAL_NAME gntmp;
+                gntmp.type = GEN_EMAILUTF8;
+                gntmp.d.smtputf8Name =
+                    gen->d.otherName->value->value.utf8string;
+
+                /* TODO beldmit
+                 *  local equal
+                 * */
+                r = nc_match(&gntmp, nc);
+                if (r != X509_V_OK)
+                    return r;
+            } else
+                continue;
+        } else
+            r = nc_match(gen, nc);
+
         if (r != X509_V_OK)
             return r;
     }
@@ -336,6 +353,9 @@ static int nc_match_single(GENERAL_NAME *gen, GENERAL_NAME *base)
 
     case GEN_EMAIL:
         return nc_email(gen->d.rfc822Name, base->d.rfc822Name);
+
+/* TODO beldmit    case GEN_EMAILUTF8:
+        return nc_email(gen->d.smtputf8Name, base->d.rfc822Name); */
 
     case GEN_URI:
         return nc_uri(gen->d.uniformResourceIdentifier,
