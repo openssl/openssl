@@ -197,9 +197,7 @@ static int ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
     EVP_PKEY_HMAC,
 };
 
-static int ssl_mac_secret_size[SSL_MD_NUM_IDX] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
+static int ssl_mac_secret_size[SSL_MD_NUM_IDX];
 
 #define CIPHER_ADD      1
 #define CIPHER_KILL     2
@@ -221,125 +219,113 @@ typedef struct cipher_order_st {
 
 static const SSL_CIPHER cipher_aliases[] = {
     /* "ALL" doesn't include eNULL (must be specifically enabled) */
-    {0, SSL_TXT_ALL, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_ALL, 0, 0, 0, ~SSL_eNULL},
     /* "COMPLEMENTOFALL" */
-    {0, SSL_TXT_CMPALL, 0, 0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_CMPALL, 0, 0, 0, SSL_eNULL},
 
     /*
      * "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in
      * ALL!)
      */
-    {0, SSL_TXT_CMPDEF, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_NOT_DEFAULT, 0, 0, 0},
+    {0, SSL_TXT_CMPDEF, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_NOT_DEFAULT},
 
     /*
      * key exchange aliases (some of those using only a single bit here
      * combine multiple key exchange algs according to the RFCs, e.g. kDHE
      * combines DHE_DSS and DHE_RSA)
      */
-    {0, SSL_TXT_kRSA, 0, SSL_kRSA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kRSA, 0, SSL_kRSA},
 
-    {0, SSL_TXT_kEDH, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kDHE, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_DH, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kEDH, 0, SSL_kDHE},
+    {0, SSL_TXT_kDHE, 0, SSL_kDHE},
+    {0, SSL_TXT_DH, 0, SSL_kDHE},
 
-    {0, SSL_TXT_kEECDH, 0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kECDHE, 0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_ECDH, 0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kEECDH, 0, SSL_kECDHE},
+    {0, SSL_TXT_kECDHE, 0, SSL_kECDHE},
+    {0, SSL_TXT_ECDH, 0, SSL_kECDHE},
 
-    {0, SSL_TXT_kPSK, 0, SSL_kPSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kRSAPSK, 0, SSL_kRSAPSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kECDHEPSK, 0, SSL_kECDHEPSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kDHEPSK, 0, SSL_kDHEPSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kSRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kGOST, 0, SSL_kGOST, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kPSK, 0, SSL_kPSK},
+    {0, SSL_TXT_kRSAPSK, 0, SSL_kRSAPSK},
+    {0, SSL_TXT_kECDHEPSK, 0, SSL_kECDHEPSK},
+    {0, SSL_TXT_kDHEPSK, 0, SSL_kDHEPSK},
+    {0, SSL_TXT_kSRP, 0, SSL_kSRP},
+    {0, SSL_TXT_kGOST, 0, SSL_kGOST},
 
     /* server authentication aliases */
-    {0, SSL_TXT_aRSA, 0, 0, SSL_aRSA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aDSS, 0, 0, SSL_aDSS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_DSS, 0, 0, SSL_aDSS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aNULL, 0, 0, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_ECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aPSK, 0, 0, SSL_aPSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aGOST01, 0, 0, SSL_aGOST01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aGOST12, 0, 0, SSL_aGOST12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aGOST, 0, 0, SSL_aGOST01 | SSL_aGOST12, 0, 0, 0, 0, 0, 0,
-     0, 0, 0, 0},
-    {0, SSL_TXT_aSRP, 0, 0, SSL_aSRP, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_aRSA, 0, 0, SSL_aRSA},
+    {0, SSL_TXT_aDSS, 0, 0, SSL_aDSS},
+    {0, SSL_TXT_DSS, 0, 0, SSL_aDSS},
+    {0, SSL_TXT_aNULL, 0, 0, SSL_aNULL},
+    {0, SSL_TXT_aECDSA, 0, 0, SSL_aECDSA},
+    {0, SSL_TXT_ECDSA, 0, 0, SSL_aECDSA},
+    {0, SSL_TXT_aPSK, 0, 0, SSL_aPSK},
+    {0, SSL_TXT_aGOST01, 0, 0, SSL_aGOST01},
+    {0, SSL_TXT_aGOST12, 0, 0, SSL_aGOST12},
+    {0, SSL_TXT_aGOST, 0, 0, SSL_aGOST01 | SSL_aGOST12},
+    {0, SSL_TXT_aSRP, 0, 0, SSL_aSRP},
 
     /* aliases combining key exchange and server authentication */
-    {0, SSL_TXT_EDH, 0, SSL_kDHE, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_DHE, 0, SSL_kDHE, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_EECDH, 0, SSL_kECDHE, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_ECDHE, 0, SSL_kECDHE, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_NULL, 0, 0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_RSA, 0, SSL_kRSA, SSL_aRSA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_ADH, 0, SSL_kDHE, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AECDH, 0, SSL_kECDHE, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_PSK, 0, SSL_PSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_EDH, 0, SSL_kDHE, ~SSL_aNULL},
+    {0, SSL_TXT_DHE, 0, SSL_kDHE, ~SSL_aNULL},
+    {0, SSL_TXT_EECDH, 0, SSL_kECDHE, ~SSL_aNULL},
+    {0, SSL_TXT_ECDHE, 0, SSL_kECDHE, ~SSL_aNULL},
+    {0, SSL_TXT_NULL, 0, 0, 0, SSL_eNULL},
+    {0, SSL_TXT_RSA, 0, SSL_kRSA, SSL_aRSA},
+    {0, SSL_TXT_ADH, 0, SSL_kDHE, SSL_aNULL},
+    {0, SSL_TXT_AECDH, 0, SSL_kECDHE, SSL_aNULL},
+    {0, SSL_TXT_PSK, 0, SSL_PSK},
+    {0, SSL_TXT_SRP, 0, SSL_kSRP},
 
     /* symmetric encryption aliases */
-    {0, SSL_TXT_3DES, 0, 0, 0, SSL_3DES, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_RC4, 0, 0, 0, SSL_RC4, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_RC2, 0, 0, 0, SSL_RC2, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_IDEA, 0, 0, 0, SSL_IDEA, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SEED, 0, 0, 0, SSL_SEED, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_eNULL, 0, 0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_GOST, 0, 0, 0, SSL_eGOST2814789CNT | SSL_eGOST2814789CNT12, 0,
-     0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_3DES, 0, 0, 0, SSL_3DES},
+    {0, SSL_TXT_RC4, 0, 0, 0, SSL_RC4},
+    {0, SSL_TXT_RC2, 0, 0, 0, SSL_RC2},
+    {0, SSL_TXT_IDEA, 0, 0, 0, SSL_IDEA},
+    {0, SSL_TXT_SEED, 0, 0, 0, SSL_SEED},
+    {0, SSL_TXT_eNULL, 0, 0, 0, SSL_eNULL},
+    {0, SSL_TXT_GOST, 0, 0, 0, SSL_eGOST2814789CNT | SSL_eGOST2814789CNT12},
     {0, SSL_TXT_AES128, 0, 0, 0,
-     SSL_AES128 | SSL_AES128GCM | SSL_AES128CCM | SSL_AES128CCM8, 0,
-     0, 0, 0, 0, 0, 0, 0, 0},
+     SSL_AES128 | SSL_AES128GCM | SSL_AES128CCM | SSL_AES128CCM8},
     {0, SSL_TXT_AES256, 0, 0, 0,
-     SSL_AES256 | SSL_AES256GCM | SSL_AES256CCM | SSL_AES256CCM8, 0,
-     0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AES, 0, 0, 0, SSL_AES, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AES_GCM, 0, 0, 0, SSL_AES128GCM | SSL_AES256GCM, 0, 0, 0, 0,
-     0, 0, 0, 0, 0},
+     SSL_AES256 | SSL_AES256GCM | SSL_AES256CCM | SSL_AES256CCM8},
+    {0, SSL_TXT_AES, 0, 0, 0, SSL_AES},
+    {0, SSL_TXT_AES_GCM, 0, 0, 0, SSL_AES128GCM | SSL_AES256GCM},
     {0, SSL_TXT_AES_CCM, 0, 0, 0,
-     SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8, 0, 0, 0,
-     0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AES_CCM_8, 0, 0, 0, SSL_AES128CCM8 | SSL_AES256CCM8, 0, 0, 0, 0,
-     0, 0},
-    {0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128, 0, 0, 0, 0, 0, 0, 0, 0,
-     0},
-    {0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256, 0, 0, 0, 0, 0, 0, 0, 0,
-     0},
-    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_CHACHA20, 0, 0, 0, SSL_CHACHA20, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+     SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8},
+    {0, SSL_TXT_AES_CCM_8, 0, 0, 0, SSL_AES128CCM8 | SSL_AES256CCM8},
+    {0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128},
+    {0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256},
+    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA},
+    {0, SSL_TXT_CHACHA20, 0, 0, 0, SSL_CHACHA20},
 
     /* MAC aliases */
-    {0, SSL_TXT_MD5, 0, 0, 0, 0, SSL_MD5, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SHA1, 0, 0, 0, 0, SSL_SHA1, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SHA, 0, 0, 0, 0, SSL_SHA1, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_GOST94, 0, 0, 0, 0, SSL_GOST94, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_GOST89MAC, 0, 0, 0, 0, SSL_GOST89MAC | SSL_GOST89MAC12, 0, 0,
-     0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SHA256, 0, 0, 0, 0, SSL_SHA256, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SHA384, 0, 0, 0, 0, SSL_SHA384, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_GOST12, 0, 0, 0, 0, SSL_GOST12_256, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_MD5, 0, 0, 0, 0, SSL_MD5},
+    {0, SSL_TXT_SHA1, 0, 0, 0, 0, SSL_SHA1},
+    {0, SSL_TXT_SHA, 0, 0, 0, 0, SSL_SHA1},
+    {0, SSL_TXT_GOST94, 0, 0, 0, 0, SSL_GOST94},
+    {0, SSL_TXT_GOST89MAC, 0, 0, 0, 0, SSL_GOST89MAC | SSL_GOST89MAC12},
+    {0, SSL_TXT_SHA256, 0, 0, 0, 0, SSL_SHA256},
+    {0, SSL_TXT_SHA384, 0, 0, 0, 0, SSL_SHA384},
+    {0, SSL_TXT_GOST12, 0, 0, 0, 0, SSL_GOST12_256},
 
     /* protocol version aliases */
-    {0, SSL_TXT_SSLV3, 0, 0, 0, 0, 0, SSL3_VERSION, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_TLSV1, 0, 0, 0, 0, 0, TLS1_VERSION, 0, 0, 0, 0, 0, 0, 0},
-    {0, "TLSv1.0", 0, 0, 0, 0, 0, TLS1_VERSION, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_TLSV1_2, 0, 0, 0, 0, 0, TLS1_2_VERSION, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_SSLV3, 0, 0, 0, 0, 0, SSL3_VERSION},
+    {0, SSL_TXT_TLSV1, 0, 0, 0, 0, 0, TLS1_VERSION},
+    {0, "TLSv1.0", 0, 0, 0, 0, 0, TLS1_VERSION},
+    {0, SSL_TXT_TLSV1_2, 0, 0, 0, 0, 0, TLS1_2_VERSION},
 
     /* strength classes */
-    {0, SSL_TXT_LOW, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_LOW, 0, 0, 0},
-    {0, SSL_TXT_MEDIUM, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_MEDIUM, 0, 0, 0},
-    {0, SSL_TXT_HIGH, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_HIGH, 0, 0, 0},
+    {0, SSL_TXT_LOW, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_LOW},
+    {0, SSL_TXT_MEDIUM, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_MEDIUM},
+    {0, SSL_TXT_HIGH, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_HIGH},
     /* FIPS 140-2 approved ciphersuite */
-    {0, SSL_TXT_FIPS, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, SSL_FIPS, 0, 0, 0},
+    {0, SSL_TXT_FIPS, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, SSL_FIPS},
 
     /* "EDH-" aliases to "DHE-" labels (for backward compatibility) */
     {0, SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA, 0,
-     SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0,
-     SSL_HIGH | SSL_FIPS, 0, 0, 0,},
+     SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS},
     {0, SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA, 0,
-     SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0,
-     SSL_HIGH | SSL_FIPS, 0, 0, 0,},
+     SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS},
 
 };
 
