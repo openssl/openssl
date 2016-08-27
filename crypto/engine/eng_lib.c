@@ -9,6 +9,7 @@
 
 #include "eng_int.h"
 #include <openssl/rand.h>
+#include "internal/refcount.h"
 
 CRYPTO_RWLOCK *global_engine_lock;
 
@@ -72,10 +73,14 @@ int engine_free_util(ENGINE *e, int locked)
 
     if (e == NULL)
         return 1;
+#ifdef HAVE_ATOMICS
+    CRYPTO_DOWN_REF(&e->struct_ref, &i, global_engine_lock);
+#else
     if (locked)
         CRYPTO_atomic_add(&e->struct_ref, -1, &i, global_engine_lock);
     else
         i = --e->struct_ref;
+#endif
     engine_ref_debug(e, 0, -1)
     if (i > 0)
         return 1;

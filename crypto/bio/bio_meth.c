@@ -21,14 +21,14 @@ DEFINE_RUN_ONCE_STATIC(do_bio_type_init)
 
 int BIO_get_new_index()
 {
-    static int bio_count = BIO_TYPE_START;
+    static CRYPTO_REF_COUNT bio_count = BIO_TYPE_START;
     int newval;
 
     if (!RUN_ONCE(&bio_type_init, do_bio_type_init)) {
         BIOerr(BIO_F_BIO_GET_NEW_INDEX, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    if (!CRYPTO_atomic_add(&bio_count, 1, &newval, bio_type_lock))
+    if (!CRYPTO_UP_REF(&bio_count, &newval, bio_type_lock))
         return -1;
     return newval;
 }

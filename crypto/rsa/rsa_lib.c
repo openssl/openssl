@@ -128,7 +128,7 @@ void RSA_free(RSA *r)
     if (r == NULL)
         return;
 
-    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
+    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
     REF_PRINT_COUNT("RSA", r);
     if (i > 0)
         return;
@@ -162,7 +162,7 @@ int RSA_up_ref(RSA *r)
 {
     int i;
 
-    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("RSA", r);

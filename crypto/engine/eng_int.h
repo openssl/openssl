@@ -19,6 +19,7 @@
 # include "internal/cryptlib.h"
 # include <internal/engine.h>
 # include <internal/thread_once.h>
+# include "internal/refcount.h"
 
 #ifdef  __cplusplus
 extern "C" {
@@ -156,7 +157,7 @@ struct engine_st {
     const ENGINE_CMD_DEFN *cmd_defns;
     int flags;
     /* reference count on the structure itself */
-    int struct_ref;
+    CRYPTO_REF_COUNT struct_ref;
     /*
      * reference count on usability of the engine type. NB: This controls the
      * loading and initialisation of any functionality required by this

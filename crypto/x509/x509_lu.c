@@ -196,7 +196,7 @@ void X509_STORE_free(X509_STORE *vfy)
     if (vfy == NULL)
         return;
 
-    CRYPTO_atomic_add(&vfy->references, -1, &i, vfy->lock);
+    CRYPTO_DOWN_REF(&vfy->references, &i, vfy->lock);
     REF_PRINT_COUNT("X509_STORE", vfy);
     if (i > 0)
         return;
@@ -221,7 +221,7 @@ int X509_STORE_up_ref(X509_STORE *vfy)
 {
     int i;
 
-    if (CRYPTO_atomic_add(&vfy->references, 1, &i, vfy->lock) <= 0)
+    if (CRYPTO_UP_REF(&vfy->references, &i, vfy->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("X509_STORE", a);

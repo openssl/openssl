@@ -38,7 +38,7 @@ struct ec_pre_comp_st {
                                  * generator: 'num' pointers to EC_POINT
                                  * objects followed by a NULL */
     size_t num;                 /* numblocks * 2^(w-1) */
-    int references;
+    CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
 };
 
@@ -73,7 +73,7 @@ EC_PRE_COMP *EC_ec_pre_comp_dup(EC_PRE_COMP *pre)
 {
     int i;
     if (pre != NULL)
-        CRYPTO_atomic_add(&pre->references, 1, &i, pre->lock);
+        CRYPTO_UP_REF(&pre->references, &i, pre->lock);
     return pre;
 }
 
@@ -84,7 +84,7 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
     if (pre == NULL)
         return;
 
-    CRYPTO_atomic_add(&pre->references, -1, &i, pre->lock);
+    CRYPTO_DOWN_REF(&pre->references, &i, pre->lock);
     REF_PRINT_COUNT("EC_ec", pre);
     if (i > 0)
         return;

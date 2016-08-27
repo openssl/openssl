@@ -65,7 +65,7 @@ int DSO_free(DSO *dso)
     if (dso == NULL)
         return (1);
 
-    if (CRYPTO_atomic_add(&dso->references, -1, &i, dso->lock) <= 0)
+    if (CRYPTO_DOWN_REF(&dso->references, &i, dso->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("DSO", dso);
@@ -107,7 +107,7 @@ int DSO_up_ref(DSO *dso)
         return 0;
     }
 
-    if (CRYPTO_atomic_add(&dso->references, 1, &i, dso->lock) <= 0)
+    if (CRYPTO_UP_REF(&dso->references, &i, dso->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("DSO", r);
