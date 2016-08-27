@@ -84,7 +84,7 @@ struct nistz256_pre_comp_st {
      */
     PRECOMP256_ROW *precomp;
     void *precomp_storage;
-    int references;
+    CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
 };
 
@@ -1477,7 +1477,7 @@ NISTZ256_PRE_COMP *EC_nistz256_pre_comp_dup(NISTZ256_PRE_COMP *p)
 {
     int i;
     if (p != NULL)
-        CRYPTO_atomic_add(&p->references, 1, &i, p->lock);
+        CRYPTO_UP_REF(&p->references, &i, p->lock);
     return p;
 }
 
@@ -1488,7 +1488,7 @@ void EC_nistz256_pre_comp_free(NISTZ256_PRE_COMP *pre)
     if (pre == NULL)
         return;
 
-    CRYPTO_atomic_add(&pre->references, -1, &i, pre->lock);
+    CRYPTO_DOWN_REF(&pre->references, &i, pre->lock);
     REF_PRINT_COUNT("EC_nistz256", x);
     if (i > 0)
         return;

@@ -9,6 +9,7 @@
 
 #define USE_SOCKETS
 #include "e_os.h"
+#include "internal/refcount.h"
 
 /* BEGIN BIO_ADDRINFO/BIO_ADDR stuff. */
 
@@ -125,7 +126,7 @@ struct bio_st {
     void *ptr;
     struct bio_st *next_bio;    /* used by filter BIOs */
     struct bio_st *prev_bio;    /* used by filter BIOs */
-    int references;
+    CRYPTO_REF_COUNT references;
     uint64_t num_read;
     uint64_t num_write;
     CRYPTO_EX_DATA ex_data;

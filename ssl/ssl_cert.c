@@ -235,7 +235,7 @@ void ssl_cert_free(CERT *c)
     if (c == NULL)
         return;
 
-    CRYPTO_atomic_add(&c->references, -1, &i, c->lock);
+    CRYPTO_DOWN_REF(&c->references, &i, c->lock);
     REF_PRINT_COUNT("CERT", c);
     if (i > 0)
         return;
