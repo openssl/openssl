@@ -797,6 +797,7 @@ libcrypto.pc:
 	    echo 'exec_prefix=$${prefix}'; \
 	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
+	    echo 'enginesdir=$${libdir}/engines-{- $sover -}'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL-libcrypto'; \
 	    echo 'Description: OpenSSL cryptography library'; \
