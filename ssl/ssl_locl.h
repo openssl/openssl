@@ -66,6 +66,7 @@
 # include "statem/statem.h"
 # include "packet_locl.h"
 # include "internal/dane.h"
+# include "internal/refcount.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -536,7 +537,7 @@ struct ssl_session_st {
      * certificate is not ok, we must remember the error for session reuse:
      */
     long verify_result;         /* only for servers */
-    int references;
+    CRYPTO_REF_COUNT references;
     long timeout;
     long time;
     unsigned int compress_meth; /* Need to lookup the method */
@@ -663,7 +664,7 @@ struct ssl_ctx_st {
                                  * :-) */
     } stats;
 
-    int references;
+    CRYPTO_REF_COUNT references;
 
     /* if defined, these override the X509_verify_cert() calls */
     int (*app_verify_callback) (X509_STORE_CTX *, void *);
@@ -1006,7 +1007,7 @@ struct ssl_st {
     CRYPTO_EX_DATA ex_data;
     /* for server side, keep the list of CA_dn we can use */
     STACK_OF(X509_NAME) *client_CA;
-    int references;
+    CRYPTO_REF_COUNT references;
     /* protocol behaviour */
     uint32_t options;
     /* API behaviour */
@@ -1543,7 +1544,7 @@ typedef struct cert_st {
     /* If not NULL psk identity hint to use for servers */
     char *psk_identity_hint;
 # endif
-    int references;             /* >1 only if SSL_copy_session_id is used */
+    CRYPTO_REF_COUNT references;             /* >1 only if SSL_copy_session_id is used */
     CRYPTO_RWLOCK *lock;
 } CERT;
 

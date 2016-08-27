@@ -160,7 +160,7 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 {
     int i;
 
-    if (CRYPTO_atomic_add(&pkey->references, 1, &i, pkey->lock) <= 0)
+    if (CRYPTO_UP_REF(&pkey->references, &i, pkey->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("EVP_PKEY", pkey);
@@ -392,7 +392,7 @@ void EVP_PKEY_free(EVP_PKEY *x)
     if (x == NULL)
         return;
 
-    CRYPTO_atomic_add(&x->references, -1, &i, x->lock);
+    CRYPTO_DOWN_REF(&x->references, &i, x->lock);
     REF_PRINT_COUNT("EVP_PKEY", x);
     if (i > 0)
         return;

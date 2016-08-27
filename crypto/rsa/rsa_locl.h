@@ -8,6 +8,7 @@
  */
 
 #include <openssl/rsa.h>
+#include "internal/refcount.h"
 
 struct rsa_st {
     /*
@@ -29,7 +30,7 @@ struct rsa_st {
     BIGNUM *iqmp;
     /* be careful using this if the RSA structure is shared */
     CRYPTO_EX_DATA ex_data;
-    int references;
+    CRYPTO_REF_COUNT references;
     int flags;
     /* Used to cache montgomery values */
     BN_MONT_CTX *_method_mod_n;

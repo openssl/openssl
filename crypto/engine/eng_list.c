@@ -349,6 +349,6 @@ int ENGINE_up_ref(ENGINE *e)
         ENGINEerr(ENGINE_F_ENGINE_UP_REF, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_atomic_add(&e->struct_ref, 1, &i, global_engine_lock);
+    CRYPTO_UP_REF(&e->struct_ref, &i, global_engine_lock);
     return 1;
 }
