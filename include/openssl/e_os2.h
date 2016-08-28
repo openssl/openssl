@@ -245,7 +245,8 @@ typedef UINT64 uint64_t;
 #  define PRIu64 "%Lu"
 # elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
      defined(__osf__) || defined(__sgi) || defined(__hpux) || \
-     defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__)
+     defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__) || \
+     (defined(__SUNPRO_C) && __SUNPRO_C < 0x590)
 #  include <inttypes.h>
 # elif defined(_MSC_VER) && _MSC_VER<=1500
 /*
