@@ -228,11 +228,16 @@ struct ec_group_st {
     /* data for ECDSA inverse */
     BN_MONT_CTX *mont_data;
 
-    /* precomputed values for speed. */
+    /*
+     * Precomputed values for speed. The PCT_xxx names match the
+     * pre_comp.xxx union names; see the SETPRECOMP and HAVEPRECOMP
+     * macros, below.
+     */
     enum {
-        pct_none,
-        pct_nistp224, pct_nistp256, pct_nistp521, pct_nistz256,
-        pct_ec } pre_comp_type;
+        PCT_none,
+        PCT_nistp224, PCT_nistp256, PCT_nistp521, PCT_nistz256,
+        PCT_ec
+    } pre_comp_type;
     union {
         NISTP224_PRE_COMP *nistp224;
         NISTP256_PRE_COMP *nistp256;
@@ -243,9 +248,9 @@ struct ec_group_st {
 } /* EC_GROUP */ ;
 
 #define SETPRECOMP(g, type, pre) \
-    g->pre_comp_type = pct_##type, g->pre_comp.type = pre
+    g->pre_comp_type = PCT_##type, g->pre_comp.type = pre
 #define HAVEPRECOMP(g, type) \
-    g->pre_comp_type == pct_##type && g->pre_comp.type != NULL
+    g->pre_comp_type == PCT_##type && g->pre_comp.type != NULL
 
 struct ec_key_st {
     const EC_KEY_METHOD *meth;
