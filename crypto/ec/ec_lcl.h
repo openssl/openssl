@@ -169,7 +169,7 @@ struct ec_method_st {
     /* custom ECDH operation */
     int (*ecdh_compute_key)(unsigned char **pout, size_t *poutlen,
                             const EC_POINT *pub_key, const EC_KEY *ecdh);
-} /* EC_METHOD */ ;
+};
 
 /*
  * Types and functions to manipulate pre-computed values.
@@ -245,7 +245,7 @@ struct ec_group_st {
         NISTZ256_PRE_COMP *nistz256;
         EC_PRE_COMP *ec;
     } pre_comp;
-} /* EC_GROUP */ ;
+};
 
 #define SETPRECOMP(g, type, pre) \
     g->pre_comp_type = PCT_##type, g->pre_comp.type = pre
@@ -265,7 +265,7 @@ struct ec_key_st {
     int flags;
     CRYPTO_EX_DATA ex_data;
     CRYPTO_RWLOCK *lock;
-} /* EC_KEY */ ;
+};
 
 struct ec_point_st {
     const EC_METHOD *meth;
@@ -279,7 +279,7 @@ struct ec_point_st {
                                  * Z) represents (X/Z^2, Y/Z^3) if Z != 0 */
     int Z_is_one;               /* enable optimized point arithmetics for
                                  * special case */
-} /* EC_POINT */ ;
+};
 
 NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *);
 NISTP256_PRE_COMP *EC_nistp256_pre_comp_dup(NISTP256_PRE_COMP *);
@@ -579,7 +579,7 @@ struct ec_key_method_st {
                   const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
     int (*verify_sig)(const unsigned char *dgst, int dgst_len,
                       const ECDSA_SIG *sig, EC_KEY *eckey);
-} /* EC_KEY_METHOD */ ;
+};
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
