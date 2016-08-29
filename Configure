@@ -1283,26 +1283,39 @@ my $buildinfo_debug = defined($ENV{CONFIGURE_DEBUG_BUILDINFO});
 if ($builder eq "unified") {
     # Store the name of the template file we will build the build file from
     # in %config.  This may be useful for the build file itself.
+    my @build_file_template_names =
+	( $builder_platform."-".$target{build_file}.".tmpl",
+	  $target{build_file}.".tmpl" );
+    my @build_file_templates = ();
+
+    # First, look in the user provided directory, if given
+    if (defined $ENV{$local_config_envname}) {
+	@build_file_templates =
+	    map {
+		if ($^O eq 'VMS') {
+		    # VMS environment variables are logical names,
+		    # which can be used as is
+		    $local_config_envname . ':' . $_;
+		} else {
+		    catfile($ENV{$local_config_envname}, $_);
+		}
+	    }
+	    @build_file_template_names;
+    }
+    # Then, look in our standard directory
+    push @build_file_templates,
+	( map { catfile($srcdir, "Configurations", $_) }
+	  @build_file_template_names );
+
     my $build_file_template;
-
-    for my $filename (( $builder_platform."-".$target{build_file}.".tmpl",
-                        $target{build_file}.".tmpl" )) {
-        if (defined $ENV{$local_config_envname}) {
-            if ($^O eq 'VMS') {
-                # VMS environment variables are logical names,
-                # which can be used as is
-                $build_file_template = $local_config_envname . ':' . $filename;
-            } else {
-                $build_file_template = catfile($ENV{$local_config_envname},
-                                               $filename);
-            }
-        }
-
+    for $_ (@build_file_templates) {
+	$build_file_template = $_;
         last if -f $build_file_template;
 
-        $build_file_template = catfile($srcdir, "Configurations", $filename);
-
-        last if -f $build_file_template;
+        $build_file_template = undef;
+    }
+    if (!defined $build_file_template) {
+	die "*** Couldn't find any of:\n", join("\n", @build_file_templates), "\n";
     }
     $config{build_file_template} = $build_file_template;
 
