@@ -184,6 +184,45 @@ my $local_config_envname = 'OPENSSL_LOCAL_CONFIG_DIR';
 $config{sourcedir} = abs2rel($srcdir);
 $config{builddir} = abs2rel($blddir);
 
+# Collect reconfiguration information if needed
+my @argvcopy=@ARGV;
+
+if (grep /^reconf(igure)?$/, @argvcopy) {
+    if (-f "./configdata.pm") {
+	my $file = "./configdata.pm";
+	unless (my $return = do $file) {
+	    die "couldn't parse $file: $@" if $@;
+            die "couldn't do $file: $!"    unless defined $return;
+            die "couldn't run $file"       unless $return;
+	}
+
+	@argvcopy = defined($configdata::config{perlargv}) ?
+	    @{$configdata::config{perlargv}} : ();
+	die "Incorrect data to reconfigure, please do a normal configuration\n"
+	    if (grep(/^reconf/,@argvcopy));
+	$ENV{CROSS_COMPILE} = $configdata::config{cross_compile_prefix}
+	    if defined($configdata::config{cross_compile_prefix});
+	$ENV{CC} = $configdata::config{cc}
+	    if defined($configdata::config{cc});
+	$ENV{BUILDFILE} = $configdata::config{build_file}
+	    if defined($configdata::config{build_file});
+	$ENV{$local_config_envname} = $configdata::config{local_config_dir}
+	    if defined($configdata::config{local_config_dir});
+
+	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
+	print "    CROSS_COMPILE = ",$ENV{CROSS_COMPILE},"\n"
+	    if $ENV{CROSS_COMPILE};
+	print "    CC = ",$ENV{CC},"\n" if $ENV{CC};
+	print "    BUILDFILE = ",$ENV{BUILDFILE},"\n" if $ENV{BUILDFILE};
+	print "    $local_config_envname = ",$ENV{$local_config_envname},"\n"
+	    if $ENV{$local_config_envname};
+    } else {
+	die "Insufficient data to reconfigure, please do a normal configuration\n";
+    }
+}
+
+$config{perlargv} = [ @argvcopy ];
+
 # Collect version numbers
 $config{version} = "unknown";
 $config{version_num} = "unknown";
@@ -482,40 +521,6 @@ my $libs="";
 my $target="";
 $config{options}="";
 $config{build_type} = "release";
-
-my @argvcopy=@ARGV;
-
-if (grep /^reconf(igure)?$/, @argvcopy) {
-    if (-f "./configdata.pm") {
-	my $file = "./configdata.pm";
-	unless (my $return = do $file) {
-	    die "couldn't parse $file: $@" if $@;
-            die "couldn't do $file: $!"    unless defined $return;
-            die "couldn't run $file"       unless $return;
-	}
-
-	@argvcopy = defined($configdata::config{perlargv}) ?
-	    @{$configdata::config{perlargv}} : ();
-	die "Incorrect data to reconfigure, please do a normal configuration\n"
-	    if (grep(/^reconf/,@argvcopy));
-	$ENV{CROSS_COMPILE} = $configdata::config{cross_compile_prefix}
-	    if defined($configdata::config{cross_compile_prefix});
-	$ENV{CC} = $configdata::config{cc}
-	    if defined($configdata::config{cc});
-	$ENV{BUILDFILE} = $configdata::config{build_file}
-	    if defined($configdata::config{build_file});
-
-	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
-	print "    CROSS_COMPILE = ",$ENV{CROSS_COMPILE},"\n"
-	    if $ENV{CROSS_COMPILE};
-	print "    CC = ",$ENV{CC},"\n" if $ENV{CC};
-	print "    BUILDFILE = ",$ENV{BUILDFILE},"\n" if $ENV{BUILDFILE};
-    } else {
-	die "Insufficient data to reconfigure, please do a normal configuration\n";
-    }
-}
-
-$config{perlargv} = [ @argvcopy ];
 
 my %unsupported_options = ();
 my %deprecated_options = ();
