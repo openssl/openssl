@@ -502,11 +502,14 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 	    if defined($configdata::config{cross_compile_prefix});
 	$ENV{CC} = $configdata::config{cc}
 	    if defined($configdata::config{cc});
+	$ENV{BUILDFILE} = $configdata::config{build_file}
+	    if defined($configdata::config{build_file});
 
 	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
 	print "    CROSS_COMPILE = ",$ENV{CROSS_COMPILE},"\n"
 	    if $ENV{CROSS_COMPILE};
 	print "    CC = ",$ENV{CC},"\n" if $ENV{CC};
+	print "    BUILDFILE = ",$ENV{BUILDFILE},"\n" if $ENV{BUILDFILE};
     } elsif (open IN, "<Makefile") {
         #
         # THIS SECTION IS TEMPORARY, it helps transitioning from Makefile
@@ -938,8 +941,12 @@ $target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
 $target{rc} =
     $ENV{'RC'}  || $ENV{'WINDRES'} || $target{rc}      || "windres";
 
-# Cache the C compiler command for reconfiguration
+# Allow overriding the build file name
+$target{build_file} = $ENV{BUILDFILE} || $target{build_file} || "Makefile";
+
+# Cache information necessary for reconfiguration
 $config{cc} = $target{cc};
+$config{build_file} = $target{build_file};
 
 # For cflags, lflags, plib_lflags, ex_libs and defines, add the debug_
 # or release_ attributes.
