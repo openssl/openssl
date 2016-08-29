@@ -38,7 +38,7 @@ while ( $ARGV[0] =~ /^-/ ) {
 	    $verbose++;
     }
     else {
-	    print STDERR "Usage error; try -help.\n";
+	    print STDERR "Usage error; try -h for help.\n";
 	    exit 1;
     }
 }
