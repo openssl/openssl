@@ -510,27 +510,6 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 	    if $ENV{CROSS_COMPILE};
 	print "    CC = ",$ENV{CC},"\n" if $ENV{CC};
 	print "    BUILDFILE = ",$ENV{BUILDFILE},"\n" if $ENV{BUILDFILE};
-    } elsif (open IN, "<Makefile") {
-        #
-        # THIS SECTION IS TEMPORARY, it helps transitioning from Makefile
-        # centered information gathering the reading configdata.pm
-        #
-        while (<IN>) {
-            s|\R$||;
-            if (/^CONFIGURE_ARGS=\s*(.*)\s*/) {
-                # Older form, we split the string and hope for the best
-                @argvcopy = split /\s+/, $_;
-                die "Incorrect data to reconfigure, please do a normal configuration\n"
-                    if (grep(/^reconf/,@argvcopy));
-            } elsif (/^CROSS_COMPILE=\s*(.*)/) {
-                $ENV{CROSS_COMPILE}=$1;
-            } elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)$/) {
-                $ENV{CC}=$1;
-            }
-        }
-        #
-        # END OF TEMPORARY SECTION
-        #
     } else {
 	die "Insufficient data to reconfigure, please do a normal configuration\n";
     }
