@@ -880,6 +880,8 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
             av = X509_ATTRIBUTE_get0_type(attr, 0);
             switch (av->type) {
             case V_ASN1_BMPSTRING:
+		/* FIXME: Why do we output ISO8859-1 to a terminal when
+		 * we have no idea if that's the expected charset? */
                 value = OPENSSL_bmp_to_latin1(av->value.bmpstring->data,
 					      av->value.bmpstring->length);
                 BIO_printf(out, "%s\n", value);
