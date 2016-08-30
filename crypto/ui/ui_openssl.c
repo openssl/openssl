@@ -219,7 +219,10 @@ static int write_string(UI *ui, UI_STRING *uis)
         fputs(UI_get0_output_string(uis), tty_out);
         fflush(tty_out);
         break;
-    default:
+    case UIT_NONE:
+    case UIT_PROMPT:
+    case UIT_VERIFY:
+    case UIT_BOOLEAN:
         break;
     }
     return 1;
@@ -256,7 +259,9 @@ static int read_string(UI *ui, UI_STRING *uis)
             return 0;
         }
         break;
-    default:
+    case UIT_NONE:
+    case UIT_INFO:
+    case UIT_ERROR:
         break;
     }
     return 1;

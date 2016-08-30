@@ -296,19 +296,14 @@ int ts_main(int argc, char **argv)
         goto end;
 
     /* Check parameter consistency and execute the appropriate function. */
-    switch (mode) {
-    default:
-    case OPT_ERR:
-        goto opthelp;
-    case OPT_QUERY:
+    if (mode == OPT_QUERY) {
         if (vpmtouched)
             goto opthelp;
         if ((data != NULL) && (digest != NULL))
             goto opthelp;
         ret = !query_command(data, digest, md, policy, no_nonce, cert,
                              in, out, text);
-        break;
-    case OPT_REPLY:
+    } else if (mode == OPT_REPLY) {
         if (vpmtouched)
             goto opthelp;
         if ((in != NULL) && (queryfile != NULL))
@@ -320,13 +315,15 @@ int ts_main(int argc, char **argv)
         ret = !reply_command(conf, section, engine, queryfile,
                              password, inkey, md, signer, chain, policy,
                              in, token_in, out, token_out, text);
-        break;
-    case OPT_VERIFY:
+
+    } else if (mode == OPT_VERIFY) {
         if ((in == NULL) || !EXACTLY_ONE(queryfile, data, digest))
             goto opthelp;
         ret = !verify_command(data, digest, queryfile, in, token_in,
                               CApath, CAfile, untrusted,
                               vpmtouched ? vpm : NULL);
+    } else {
+        goto opthelp;
     }
 
  end:
