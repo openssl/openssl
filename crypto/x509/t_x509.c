@@ -119,6 +119,9 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
 
     if (!(cflag & X509_FLAG_NO_SIGNAME)) {
         const X509_ALGOR *tsig_alg = X509_get0_tbs_sigalg(x);
+
+        if (BIO_puts(bp, "    ") <= 0)
+            goto err;
         if (X509_signature_print(bp, tsig_alg, NULL) <= 0)
             goto err;
     }
