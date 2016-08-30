@@ -3150,34 +3150,35 @@ int tls_construct_new_session_ticket(SSL *s)
 int tls_construct_cert_status(SSL *s)
 {
     unsigned char *p;
+    size_t msglen;
+
     /*-
      * Grow buffer if need be: the length calculation is as
-     * follows 1 (message type) + 3 (message length) +
+     * follows handshake_header_length +
      * 1 (ocsp response type) + 3 (ocsp response length)
      * + (ocsp response)
      */
-    if (!BUF_MEM_grow(s->init_buf, 8 + s->tlsext_ocsp_resplen)) {
-        ossl_statem_set_error(s);
-        return 0;
-    }
+    msglen = 4 + s->tlsext_ocsp_resplen;
+    if (!BUF_MEM_grow(s->init_buf, SSL_HM_HEADER_LENGTH(s) + msglen))
+        goto err;
 
-    p = (unsigned char *)s->init_buf->data;
+    p = ssl_handshake_start(s);
 
-    /* do the header */
-    *(p++) = SSL3_MT_CERTIFICATE_STATUS;
-    /* message length */
-    l2n3(s->tlsext_ocsp_resplen + 4, p);
     /* status type */
     *(p++) = s->tlsext_status_type;
     /* length of OCSP response */
     l2n3(s->tlsext_ocsp_resplen, p);
     /* actual response */
     memcpy(p, s->tlsext_ocsp_resp, s->tlsext_ocsp_resplen);
-    /* number of bytes to write */
-    s->init_num = 8 + s->tlsext_ocsp_resplen;
-    s->init_off = 0;
+
+    if (!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_STATUS, msglen))
+        goto err;
 
     return 1;
+
+ err:
+    ossl_statem_set_error(s);
+    return 0;
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
