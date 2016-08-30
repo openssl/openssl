@@ -2561,7 +2561,12 @@ sub quotify {
 			 return '"'.$x.'"'; },
 	maybeshell => sub { my $x = shift;
 			    (my $y = $x) =~ s/([\\\"])/\\$1/g;
-			    return $x ne $y ? '"'.$y.'"' : $x; },
+			    if ($x ne $y || $x =~ m|\s|) {
+				return '"'.$y.'"';
+			    } else {
+				return $x;
+			    }
+			},
 	);
     my $for = shift;
     my $processor =
