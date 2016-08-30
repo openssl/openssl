@@ -670,29 +670,21 @@ char *(*UI_method_get_prompt_constructor(UI_METHOD *method)) (UI *,
 
 enum UI_string_types UI_get_string_type(UI_STRING *uis)
 {
-    if (!uis)
-        return UIT_NONE;
     return uis->type;
 }
 
 int UI_get_input_flags(UI_STRING *uis)
 {
-    if (!uis)
-        return 0;
     return uis->input_flags;
 }
 
 const char *UI_get0_output_string(UI_STRING *uis)
 {
-    if (!uis)
-        return NULL;
     return uis->out_string;
 }
 
 const char *UI_get0_action_string(UI_STRING *uis)
 {
-    if (!uis)
-        return NULL;
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_BOOLEAN:
@@ -704,8 +696,6 @@ const char *UI_get0_action_string(UI_STRING *uis)
 
 const char *UI_get0_result_string(UI_STRING *uis)
 {
-    if (!uis)
-        return NULL;
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_VERIFY:
@@ -717,8 +707,6 @@ const char *UI_get0_result_string(UI_STRING *uis)
 
 const char *UI_get0_test_string(UI_STRING *uis)
 {
-    if (!uis)
-        return NULL;
     switch (uis->type) {
     case UIT_VERIFY:
         return uis->_.string_data.test_buf;
@@ -729,8 +717,6 @@ const char *UI_get0_test_string(UI_STRING *uis)
 
 int UI_get_result_minsize(UI_STRING *uis)
 {
-    if (!uis)
-        return -1;
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_VERIFY:
@@ -742,8 +728,6 @@ int UI_get_result_minsize(UI_STRING *uis)
 
 int UI_get_result_maxsize(UI_STRING *uis)
 {
-    if (!uis)
-        return -1;
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_VERIFY:
@@ -759,8 +743,6 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 
     ui->flags &= ~UI_FLAG_REDOABLE;
 
-    if (!uis)
-        return -1;
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_VERIFY:
@@ -789,7 +771,7 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
             }
         }
 
-        if (!uis->result_buf) {
+        if (uis->result_buf == NULL) {
             UIerr(UI_F_UI_SET_RESULT, UI_R_NO_RESULT_BUFFER);
             return -1;
         }
@@ -801,7 +783,7 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
         {
             const char *p;
 
-            if (!uis->result_buf) {
+            if (uis->result_buf == NULL) {
                 UIerr(UI_F_UI_SET_RESULT, UI_R_NO_RESULT_BUFFER);
                 return -1;
             }
