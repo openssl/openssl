@@ -83,6 +83,12 @@ static int SSL_TEST_SERVER_CONF_equal(SSL_TEST_SERVER_CONF *server,
                 server->broken_session_ticket, server2->broken_session_ticket);
         return 0;
     }
+    if (server->cert_status != server2->cert_status) {
+        fprintf(stderr, "CertStatus mismatch: %s vs %s.\n",
+                ssl_certstatus_name(server->cert_status),
+                ssl_certstatus_name(server2->cert_status));
+        return 0;
+    }
     return 1;
 }
 

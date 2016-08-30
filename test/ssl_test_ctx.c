@@ -390,6 +390,34 @@ const char *ssl_ct_validation_name(ssl_ct_validation_t mode)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, resumption_expected)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, broken_session_ticket)
 
+/**************/
+/* CertStatus */
+/**************/
+
+static const test_enum ssl_certstatus[] = {
+    {"None", SSL_TEST_CERT_STATUS_NONE},
+    {"GoodResponse", SSL_TEST_CERT_STATUS_GOOD_RESPONSE},
+    {"BadResponse", SSL_TEST_CERT_STATUS_BAD_RESPONSE}
+};
+
+__owur static int parse_certstatus(SSL_TEST_SERVER_CONF *server_conf,
+                                            const char *value)
+{
+    int ret_value;
+    if (!parse_enum(ssl_certstatus, OSSL_NELEM(ssl_certstatus), &ret_value,
+                    value)) {
+        return 0;
+    }
+    server_conf->cert_status = ret_value;
+    return 1;
+}
+
+const char *ssl_certstatus_name(ssl_cert_status_t cert_status)
+{
+    return enum_name(ssl_certstatus,
+                     OSSL_NELEM(ssl_certstatus), cert_status);
+}
+
 /***********************/
 /* ApplicationData     */
 /***********************/
@@ -453,6 +481,7 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "NPNProtocols", &parse_server_npn_protocols },
     { "ALPNProtocols", &parse_server_alpn_protocols },
     { "BrokenSessionTicket", &parse_server_broken_session_ticket },
+    { "CertStatus", &parse_certstatus },
 };
 
 /*
