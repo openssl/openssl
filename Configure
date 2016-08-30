@@ -114,6 +114,7 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
         # it grew impossible to resolve this without sizeable additional
         # code, so we just tell compiler to be pedantic about everything
         # but 'long long' type.
+        . " -Wswitch"
         . " -DPEDANTIC -pedantic -Wno-long-long"
         . " -Wall"
         . " -Wsign-compare"
@@ -127,7 +128,6 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
-#       -Wswitch-enum
 #       -Wcast-align
 #       -Wunreachable-code
 #       -Wlanguage-extension-token -- no, we use asm()
@@ -136,6 +136,7 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 my $clang_devteam_warn = ""
         . " -Qunused-arguments"
         . " -Wextra"
+        . " -Wswitch -Wswitch-default"
         . " -Wno-unused-parameter"
         . " -Wno-missing-field-initializers"
         . " -Wno-language-extension-token"

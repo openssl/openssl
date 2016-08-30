@@ -60,7 +60,11 @@ static void free_string(UI_STRING *uis)
             OPENSSL_free((char *)uis->_.boolean_data.ok_chars);
             OPENSSL_free((char *)uis->_.boolean_data.cancel_chars);
             break;
-        default:
+        case UIT_NONE:
+        case UIT_PROMPT:
+        case UIT_VERIFY:
+        case UIT_ERROR:
+        case UIT_INFO:
             break;
         }
     }
@@ -689,9 +693,13 @@ const char *UI_get0_action_string(UI_STRING *uis)
     case UIT_PROMPT:
     case UIT_BOOLEAN:
         return uis->_.boolean_data.action_desc;
-    default:
-        return NULL;
+    case UIT_NONE:
+    case UIT_VERIFY:
+    case UIT_INFO:
+    case UIT_ERROR:
+        break;
     }
+    return NULL;
 }
 
 const char *UI_get0_result_string(UI_STRING *uis)
@@ -700,9 +708,13 @@ const char *UI_get0_result_string(UI_STRING *uis)
     case UIT_PROMPT:
     case UIT_VERIFY:
         return uis->result_buf;
-    default:
-        return NULL;
+    case UIT_NONE:
+    case UIT_BOOLEAN:
+    case UIT_INFO:
+    case UIT_ERROR:
+        break;
     }
+    return NULL;
 }
 
 const char *UI_get0_test_string(UI_STRING *uis)
@@ -710,9 +722,14 @@ const char *UI_get0_test_string(UI_STRING *uis)
     switch (uis->type) {
     case UIT_VERIFY:
         return uis->_.string_data.test_buf;
-    default:
-        return NULL;
+    case UIT_NONE:
+    case UIT_BOOLEAN:
+    case UIT_INFO:
+    case UIT_ERROR:
+    case UIT_PROMPT:
+        break;
     }
+    return NULL;
 }
 
 int UI_get_result_minsize(UI_STRING *uis)
@@ -721,9 +738,13 @@ int UI_get_result_minsize(UI_STRING *uis)
     case UIT_PROMPT:
     case UIT_VERIFY:
         return uis->_.string_data.result_minsize;
-    default:
-        return -1;
+    case UIT_NONE:
+    case UIT_INFO:
+    case UIT_ERROR:
+    case UIT_BOOLEAN:
+        break;
     }
+    return -1;
 }
 
 int UI_get_result_maxsize(UI_STRING *uis)
@@ -732,9 +753,13 @@ int UI_get_result_maxsize(UI_STRING *uis)
     case UIT_PROMPT:
     case UIT_VERIFY:
         return uis->_.string_data.result_maxsize;
-    default:
-        return -1;
+    case UIT_NONE:
+    case UIT_INFO:
+    case UIT_ERROR:
+    case UIT_BOOLEAN:
+        break;
     }
+    return -1;
 }
 
 int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
@@ -800,7 +825,9 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
                 }
             }
         }
-    default:
+    case UIT_NONE:
+    case UIT_INFO:
+    case UIT_ERROR:
         break;
     }
     return 0;

@@ -188,7 +188,11 @@ static int ui_read(UI *ui, UI_STRING *uis)
                     return 1;
                 }
             }
-        default:
+            break;
+        case UIT_NONE:
+        case UIT_BOOLEAN:
+        case UIT_INFO:
+        case UIT_ERROR:
             break;
         }
     }
@@ -208,7 +212,11 @@ static int ui_write(UI *ui, UI_STRING *uis)
                 if (password && password[0] != '\0')
                     return 1;
             }
-        default:
+            break;
+        case UIT_NONE:
+        case UIT_BOOLEAN:
+        case UIT_INFO:
+        case UIT_ERROR:
             break;
         }
     }

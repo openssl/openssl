@@ -132,7 +132,7 @@ static int x509_object_cmp(const X509_OBJECT *const *a,
     case X509_LU_CRL:
         ret = X509_CRL_cmp((*a)->data.crl, (*b)->data.crl);
         break;
-    default:
+    case X509_LU_NONE:
         /* abort(); */
         return 0;
     }
@@ -377,7 +377,7 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 int X509_OBJECT_up_ref_count(X509_OBJECT *a)
 {
     switch (a->type) {
-    default:
+    case X509_LU_NONE:
         break;
     case X509_LU_X509:
         return X509_up_ref(a->data.x509);
@@ -424,7 +424,7 @@ void X509_OBJECT_free(X509_OBJECT *a)
     if (a == NULL)
         return;
     switch (a->type) {
-    default:
+    case X509_LU_NONE:
         break;
     case X509_LU_X509:
         X509_free(a->data.x509);
@@ -454,7 +454,7 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
         stmp.data.crl = &crl_s;
         crl_s.crl.issuer = name;
         break;
-    default:
+    case X509_LU_NONE:
         /* abort(); */
         return -1;
     }
