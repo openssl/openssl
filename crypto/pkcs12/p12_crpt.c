@@ -31,6 +31,11 @@ int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
                           unsigned char *out,
                           const EVP_MD *md_type);
 
+    /* FIXME: Our previous default of latin1 was wrong, but assuming
+     * UTF-8 is sometimes also wrong, giving other crypto libraries
+     * and applications a *different* wrong behaviour that they also
+     * need to try to work around. We should only use UTF-8 if the
+     * locale's LC_CTYPE actually *is* UTF-8. */
     pkcs12_key_gen = PKCS12_key_gen_utf8;
 
     if (cipher == NULL)

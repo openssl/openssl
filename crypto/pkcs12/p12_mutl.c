@@ -84,6 +84,11 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     const X509_ALGOR *macalg;
     const ASN1_OBJECT *macoid;
 
+    /* FIXME: Our previous default of latin1 was wrong, but assuming
+     * UTF-8 is sometimes also wrong, giving other crypto libraries
+     * and applications a *different* wrong behaviour that they also
+     * need to try to work around. We should only use UTF-8 if the
+     * locale's LC_CTYPE actually *is* UTF-8. */
     if (pkcs12_key_gen == NULL)
         pkcs12_key_gen = PKCS12_key_gen_utf8;
 
@@ -153,6 +158,11 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
         PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_ABSENT);
         return 0;
     }
+    /* FIXME: Our previous default of latin1 was wrong, but assuming
+     * UTF-8 is sometimes also wrong, giving other crypto libraries
+     * and applications a *different* wrong behaviour that they also
+     * need to try to work around. We should only use UTF-8 if the
+     * locale's LC_CTYPE actually *is* UTF-8. */
     if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen,
                         PKCS12_key_gen_utf8)) {
         PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_GENERATION_ERROR);
@@ -182,9 +192,11 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
         PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_SETUP_ERROR);
         return 0;
     }
-    /*
-     * Note that output mac is forced to UTF-8...
-     */
+    /* FIXME: Our previous default of latin1 was wrong, but assuming
+     * UTF-8 is sometimes also wrong, giving other crypto libraries
+     * and applications a *different* wrong behaviour that they also
+     * need to try to work around. We should only use UTF-8 if the
+     * locale's LC_CTYPE actually *is* UTF-8. */
     if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen,
                         PKCS12_key_gen_utf8)) {
         PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_GENERATION_ERROR);
