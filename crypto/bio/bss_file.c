@@ -92,8 +92,8 @@ BIO *BIO_new_file(const char *filename, const char *mode)
         return (NULL);
     }
 
-    BIO_clear_flags(ret, BIO_FLAGS_UPLINK); /* we did fopen -> we disengage
-                                             * UPLINK */
+    /* we did fopen -> we disengage UPLINK */
+    BIO_clear_flags(ret, BIO_FLAGS_UPLINK);
     BIO_set_fp(ret, file, fp_flags);
     return (ret);
 }
@@ -131,7 +131,7 @@ static int file_free(BIO *a)
         return (0);
     if (a->shutdown) {
         if ((a->init) && (a->ptr != NULL)) {
-            if (a->flags & BIO_FLAGS_UPLINK)
+            if (BIO_UPLINK_SET(a))
                 UP_fclose(a->ptr);
             else
                 fclose(a->ptr);
@@ -148,13 +148,12 @@ static int file_read(BIO *b, char *out, int outl)
     int ret = 0;
 
     if (b->init && (out != NULL)) {
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (BIO_UPLINK_SET(b))
             ret = UP_fread(out, 1, (int)outl, b->ptr);
         else
             ret = fread(out, 1, (int)outl, (FILE *)b->ptr);
-        if (ret == 0
-            && (b->flags & BIO_FLAGS_UPLINK) ? UP_ferror((FILE *)b->ptr) :
-                                               ferror((FILE *)b->ptr)) {
+        if (ret == 0 && (BIO_UPLINK_SET(b)) ? UP_ferror((FILE *)b->ptr) :
+                                              ferror((FILE *)b->ptr)) {
             SYSerr(SYS_F_FREAD, get_last_sys_error());
             BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);
             ret = -1;
@@ -168,7 +167,7 @@ static int file_write(BIO *b, const char *in, int inl)
     int ret = 0;
 
     if (b->init && (in != NULL)) {
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (BIO_UPLINK_SET(b))
             ret = UP_fwrite(in, (int)inl, 1, b->ptr);
         else
             ret = fwrite(in, (int)inl, 1, (FILE *)b->ptr);
@@ -194,20 +193,20 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
     switch (cmd) {
     case BIO_C_FILE_SEEK:
     case BIO_CTRL_RESET:
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (BIO_UPLINK_SET(b))
             ret = (long)UP_fseek(b->ptr, num, 0);
         else
             ret = (long)fseek(fp, num, 0);
         break;
     case BIO_CTRL_EOF:
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (BIO_UPLINK_SET(b))
             ret = (long)UP_feof(fp);
         else
             ret = (long)feof(fp);
         break;
     case BIO_C_FILE_TELL:
     case BIO_CTRL_INFO:
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (BIO_UPLINK_SET(b))
             ret = UP_ftell(b->ptr);
         else
             ret = ftell(fp);
@@ -232,7 +231,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
 #   endif
 #  endif
 #  ifdef UP_fsetmod
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (BIO_UPLINK_SET(b))
             UP_fsetmod(b->ptr, (char)((num & BIO_FP_TEXT) ? 't' : 'b'));
         else
 #  endif
@@ -300,8 +299,8 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         b->ptr = fp;
         b->init = 1;
-        BIO_clear_flags(b, BIO_FLAGS_UPLINK); /* we did fopen -> we disengage
-                                               * UPLINK */
+        /* we did fopen -> we disengage UPLINK */
+        BIO_clear_flags(b, BIO_FLAGS_UPLINK);
         break;
     case BIO_C_GET_FILE_PTR:
         /* the ptr parameter is actually a FILE ** in this case. */
@@ -317,7 +316,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num;
         break;
     case BIO_CTRL_FLUSH:
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (BIO_UPLINK_SET(b))
             UP_fflush(b->ptr);
         else
             fflush((FILE *)b->ptr);
@@ -342,7 +341,7 @@ static int file_gets(BIO *bp, char *buf, int size)
     int ret = 0;
 
     buf[0] = '\0';
-    if (bp->flags & BIO_FLAGS_UPLINK) {
+    if (BIO_UPLINK_SET(bp)) {
         if (!UP_fgets(buf, size, bp->ptr))
             goto err;
     } else {

@@ -233,7 +233,7 @@ int passwd_main(int argc, char **argv)
     }
 
     if ((in == NULL) && (passwds == NULL)) {
-        if (1) {
+        if (ALWAYS) {
 #ifndef OPENSSL_NO_UI
             /* build a null-terminated list */
             static char *passwds_static[2] = { NULL, NULL };

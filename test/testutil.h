@@ -153,7 +153,7 @@ int strings_equal(const char *desc, const char *s1, const char *s2);
  */
 #define TEST_check(condition)                   \
     do {                                        \
-        if (!(condition)) {                     \
+        if ((!(condition))) {                   \
             ERR_print_errors_fp(stderr);        \
             OPENSSL_assert(!#condition);        \
         }                                       \

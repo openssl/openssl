@@ -183,10 +183,9 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                 int family = AF_UNSPEC;
                 switch (c->accept_family) {
                 case BIO_FAMILY_IPV6:
-                    if (1) { /* This is a trick we use to avoid bit rot.
-                              * at least the "else" part will always be
-                              * compiled.
-                              */
+                    if (ALWAYS) {
+                        /* This is a trick we use to avoid bit rot; at
+                         * least the "else" part will always be compiled. */
 #ifdef AF_INET6
                         family = AF_INET6;
                     } else {

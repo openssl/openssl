@@ -31,7 +31,7 @@ extern "C" {
 
 # if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
 #  define REF_ASSERT_ISNT(test) \
-    (void)((test) ? (OPENSSL_die("refcount error", __FILE__, __LINE__), 1) : 0)
+    ((test) ? OPENSSL_die("refcount error", __FILE__, __LINE__) : (void)0)
 # else
 #  define REF_ASSERT_ISNT(i)
 # endif
@@ -44,6 +44,8 @@ extern "C" {
 
 # define osslargused(x)      (void)x
 # define OPENSSL_CONF        "openssl.cnf"
+
+# define ALWAYS         ((1))
 
 # ifndef DEVRANDOM
 /*

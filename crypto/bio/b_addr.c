@@ -216,7 +216,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
     if (BIO_sock_init() != 1)
         return 0;
 
-    if (1) {
+    if (ALWAYS) {
 #ifdef AI_PASSIVE
         int ret = 0;
         char host[NI_MAXHOST] = "", serv[NI_MAXSERV] = "";
@@ -687,7 +687,7 @@ int BIO_lookup(const char *host, const char *service,
     if (BIO_sock_init() != 1)
         return 0;
 
-    if (1) {
+    if (ALWAYS) {
         int gai_ret = 0;
 #ifdef AI_PASSIVE
         struct addrinfo hints;
@@ -772,7 +772,7 @@ int BIO_lookup(const char *host, const char *service,
                 he_fallback_address = INADDR_ANY;
                 break;
             default:
-                OPENSSL_assert(("We forgot to handle a lookup type!" == 0));
+                OPENSSL_die("assertion failed: We forgot to handle a lookup type!", OPENSSL_FILE, OPENSSL_LINE);
                 break;
             }
         } else {

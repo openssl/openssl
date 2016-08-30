@@ -320,7 +320,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (twopass) {
-        if (1) {
+        if (ALWAYS) {
 #ifndef OPENSSL_NO_UI
             if (EVP_read_pw_string
                 (macpass, sizeof macpass, "Enter MAC Password:", export_cert)) {
@@ -438,7 +438,7 @@ int pkcs12_main(int argc, char **argv)
             EVP_PKEY_add1_attr_by_NID(key, NID_LocalKeySet, 0, NULL, -1);
 
         if (!noprompt) {
-            if (1) {
+            if (ALWAYS) {
 #ifndef OPENSSL_NO_UI
                 if (EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:",
                                        1)) {
@@ -504,7 +504,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (!noprompt) {
-        if (1) {
+        if (ALWAYS) {
 #ifndef OPENSSL_NO_UI
             if (EVP_read_pw_string(pass, sizeof pass, "Enter Import Password:",
                                    0)) {

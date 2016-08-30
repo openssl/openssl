@@ -163,6 +163,7 @@ extern "C" {
  * defaults to 0, as most platforms don't require UPLINK interface.
  */
 #  define BIO_FLAGS_UPLINK        0
+#  define BIO_UPLINK_SET(b)     ((0))
 # endif
 
 # define BIO_FLAGS_BASE64_NO_NL  0x100
