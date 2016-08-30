@@ -3101,7 +3101,7 @@ d2i_IPAddressFamily                     3053	1_1_0	EXIST::FUNCTION:RFC3779
 X509_check_private_key                  3054	1_1_0	EXIST::FUNCTION:
 GENERAL_NAME_get0_value                 3055	1_1_0	EXIST::FUNCTION:
 X509_check_akid                         3056	1_1_0	EXIST::FUNCTION:
-PKCS12_key_gen_asc                      3057	1_1_0	EXIST::FUNCTION:
+PKCS12_key_gen_latin1                   3057	1_1_0	EXIST::FUNCTION:
 EVP_bf_ofb                              3058	1_1_0	EXIST::FUNCTION:BF
 AUTHORITY_KEYID_free                    3059	1_1_0	EXIST::FUNCTION:
 EVP_seed_ofb                            3060	1_1_0	EXIST::FUNCTION:SEED

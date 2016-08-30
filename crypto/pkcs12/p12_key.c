@@ -27,9 +27,9 @@ void h__dump(unsigned char *p, int len);
 # define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
-                       int saltlen, int id, int iter, int n,
-                       unsigned char *out, const EVP_MD *md_type)
+int PKCS12_key_gen_latin1(const char *pass, int passlen, unsigned char *salt,
+			  int saltlen, int id, int iter, int n,
+			  unsigned char *out, const EVP_MD *md_type)
 {
     int ret;
     unsigned char *unipass;
@@ -39,7 +39,7 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
         unipass = NULL;
         uniplen = 0;
     } else if (!OPENSSL_latin1_to_bmp(pass, passlen, &unipass, &uniplen)) {
-        PKCS12err(PKCS12_F_PKCS12_KEY_GEN_ASC, ERR_R_MALLOC_FAILURE);
+        PKCS12err(PKCS12_F_PKCS12_KEY_GEN_LATIN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     ret = PKCS12_key_gen_uni(unipass, uniplen, salt, saltlen,
