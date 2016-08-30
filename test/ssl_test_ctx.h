@@ -65,6 +65,12 @@ typedef enum {
     SSL_TEST_CT_VALIDATION_PERMISSIVE,
     SSL_TEST_CT_VALIDATION_STRICT
 } ssl_ct_validation_t;
+
+typedef enum {
+    SSL_TEST_CERT_STATUS_NONE = 0, /* Default */
+    SSL_TEST_CERT_STATUS_GOOD_RESPONSE,
+    SSL_TEST_CERT_STATUS_BAD_RESPONSE
+} ssl_cert_status_t;
 /*
  * Server/client settings that aren't supported by the SSL CONF library,
  * such as callbacks.
@@ -88,6 +94,8 @@ typedef struct {
     char *alpn_protocols;
     /* Whether to set a broken session ticket callback. */
     int broken_session_ticket;
+    /* Should we send a CertStatus message? */
+    ssl_cert_status_t cert_status;
 } SSL_TEST_SERVER_CONF;
 
 typedef struct {
@@ -164,6 +172,7 @@ const char *ssl_session_ticket_name(ssl_session_ticket_t server);
 const char *ssl_test_method_name(ssl_test_method_t method);
 const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode);
 const char *ssl_ct_validation_name(ssl_ct_validation_t mode);
+const char *ssl_certstatus_name(ssl_cert_status_t cert_status);
 
 /*
  * Load the test case context from |conf|.
