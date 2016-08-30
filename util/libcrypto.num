@@ -1212,7 +1212,7 @@ DES_ecb3_encrypt                        1201	1_1_0	EXIST::FUNCTION:DES
 OBJ_obj2nid                             1202	1_1_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_free                     1203	1_1_0	EXIST::FUNCTION:
 EVP_cast5_cfb64                         1204	1_1_0	EXIST::FUNCTION:CAST
-OPENSSL_uni2asc                         1205	1_1_0	EXIST::FUNCTION:
+OPENSSL_bmp_to_latin1                   1205	1_1_0	EXIST::FUNCTION:
 SCT_validation_status_string            1206	1_1_0	EXIST::FUNCTION:CT
 PKCS7_add_attribute                     1207	1_1_0	EXIST::FUNCTION:
 ENGINE_register_DSA                     1208	1_1_0	EXIST::FUNCTION:ENGINE
@@ -2846,7 +2846,7 @@ ASN1_TIME_it                            2803	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 ENGINE_get_static_state                 2804	1_1_0	EXIST::FUNCTION:ENGINE
 EC_KEY_set_asn1_flag                    2805	1_1_0	EXIST::FUNCTION:EC
 EC_GFp_mont_method                      2806	1_1_0	EXIST::FUNCTION:EC
-OPENSSL_asc2uni                         2807	1_1_0	EXIST::FUNCTION:
+OPENSSL_latin1_to_bmp                   2807	1_1_0	EXIST::FUNCTION:
 TS_REQ_new                              2808	1_1_0	EXIST::FUNCTION:TS
 ENGINE_register_all_DH                  2809	1_1_0	EXIST::FUNCTION:ENGINE
 ERR_clear_error                         2810	1_1_0	EXIST::FUNCTION:
@@ -4195,9 +4195,9 @@ X509_get0_notBefore                     4145	1_1_0	EXIST::FUNCTION:
 X509_get0_notAfter                      4146	1_1_0	EXIST::FUNCTION:
 X509_CRL_get0_nextUpdate                4147	1_1_0	EXIST::FUNCTION:
 BIO_get_new_index                       4148	1_1_0	EXIST::FUNCTION:
-OPENSSL_utf82uni                        4149	1_1_0	EXIST::FUNCTION:
+OPENSSL_utf8_to_bmp                     4149	1_1_0	EXIST::FUNCTION:
 PKCS12_add_friendlyname_utf8            4150	1_1_0	EXIST::FUNCTION:
-OPENSSL_uni2utf8                        4151	1_1_0	EXIST::FUNCTION:
+OPENSSL_bmp_to_utf8                     4151	1_1_0	EXIST::FUNCTION:
 PKCS12_key_gen_utf8                     4152	1_1_0	EXIST::FUNCTION:
 ECPKPARAMETERS_free                     4153	1_1_0	EXIST::FUNCTION:EC
 ECPARAMETERS_free                       4154	1_1_0	EXIST::FUNCTION:EC

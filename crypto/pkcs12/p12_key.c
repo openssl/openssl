@@ -38,7 +38,7 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
     if (!pass) {
         unipass = NULL;
         uniplen = 0;
-    } else if (!OPENSSL_asc2uni(pass, passlen, &unipass, &uniplen)) {
+    } else if (!OPENSSL_latin1_to_bmp(pass, passlen, &unipass, &uniplen)) {
         PKCS12err(PKCS12_F_PKCS12_KEY_GEN_ASC, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -61,7 +61,7 @@ int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
     if (!pass) {
         unipass = NULL;
         uniplen = 0;
-    } else if (!OPENSSL_utf82uni(pass, passlen, &unipass, &uniplen)) {
+    } else if (!OPENSSL_utf8_to_bmp(pass, passlen, &unipass, &uniplen)) {
         PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UTF8, ERR_R_MALLOC_FAILURE);
         return 0;
     }

@@ -92,8 +92,8 @@ char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)
         return NULL;
     if (atype->type != V_ASN1_BMPSTRING)
         return NULL;
-    return OPENSSL_uni2utf8(atype->value.bmpstring->data,
-                            atype->value.bmpstring->length);
+    return OPENSSL_bmp_to_utf8(atype->value.bmpstring->data,
+			       atype->value.bmpstring->length);
 }
 
 const STACK_OF(X509_ATTRIBUTE) *

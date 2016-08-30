@@ -176,12 +176,12 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
                    const EVP_MD *md_type);
 int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt,
                      int saltlen, const EVP_MD *md_type);
-unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
-                               unsigned char **uni, int *unilen);
-char *OPENSSL_uni2asc(const unsigned char *uni, int unilen);
-unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
-                                unsigned char **uni, int *unilen);
-char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen);
+unsigned char *OPENSSL_latin1_to_bmp(const char *asc, int asclen,
+				     unsigned char **uni, int *unilen);
+char *OPENSSL_bmp_to_latin1(const unsigned char *uni, int unilen);
+unsigned char *OPENSSL_utf8_to_bmp(const char *asc, int asclen,
+				   unsigned char **uni, int *unilen);
+char *OPENSSL_bmp_to_utf8(const unsigned char *uni, int unilen);
 
 DECLARE_ASN1_FUNCTIONS(PKCS12)
 DECLARE_ASN1_FUNCTIONS(PKCS12_MAC_DATA)

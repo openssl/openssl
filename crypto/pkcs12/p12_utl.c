@@ -13,8 +13,8 @@
 
 /* Cheap and nasty Unicode stuff */
 
-unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
-                               unsigned char **uni, int *unilen)
+unsigned char *OPENSSL_latin1_to_bmp(const char *asc, int asclen,
+				     unsigned char **uni, int *unilen)
 {
     int ulen, i;
     unsigned char *unitmp;
@@ -38,7 +38,7 @@ unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
     return unitmp;
 }
 
-char *OPENSSL_uni2asc(const unsigned char *uni, int unilen)
+char *OPENSSL_bmp_to_latin1(const unsigned char *uni, int unilen)
 {
     int asclen, i;
     char *asctmp;
@@ -59,16 +59,16 @@ char *OPENSSL_uni2asc(const unsigned char *uni, int unilen)
 }
 
 /*
- * OPENSSL_{utf82uni|uni2utf8} perform conversion between UTF-8 and
- * PKCS#12 BMPString format, which is specified as big-endian UTF-16.
+ * OPENSSL_{utf8_to_bmp|bmp_to_utf8} perform conversion between UTF-8
+ * and PKCS#12 BMPString format, which is specified as UTF-16-BE.
  * One should keep in mind that even though BMPString is passed as
  * unsigned char *, it's not the kind of string you can exercise e.g.
  * strlen on. Caller also has to keep in mind that its length is
  * expressed not in number of UTF-16 characters, but in number of
  * bytes the string occupies, and treat it, the length, accordingly.
  */
-unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
-                                unsigned char **uni, int *unilen)
+unsigned char *OPENSSL_utf8_to_bmp(const char *asc, int asclen,
+				   unsigned char **uni, int *unilen)
 {
     int ulen, i, j;
     unsigned char *unitmp, *ret;
@@ -86,18 +86,18 @@ unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
          * string might in fact be extended ASCII/ANSI/ISO-8859-X. The
          * fallback is taken in hope that it would allow to process
          * files created with previous OpenSSL version, which used the
-         * naive OPENSSL_asc2uni all along. It might be worth noting
-         * that probability of false positive depends on language. In
-         * cases covered by ISO Latin 1 probability is very low, because
-         * any printable non-ASCII alphabet letter followed by another
-         * or any ASCII character will trigger failure and fallback.
-         * In other cases situation can be intensified by the fact that
-         * English letters are not part of alternative keyboard layout,
-         * but even then there should be plenty of pairs that trigger
-         * decoding failure...
+         * naïve OPENSSL_latin1_to_bmp all along. It might be worth
+         * noting that probability of false positive depends on language.
+         * In cases covered by ISO Latin 1 probability is very low,
+         * because any printable non-ASCII alphabet letter followed by
+         * another or any ASCII character will trigger failure and
+         * fallback. In other cases situation can be intensified by the
+         * fact that English letters are not part of alternative keyboard
+         * layout, but even then there should be plenty of pairs that
+         * trigger decoding failure...
          */
         if (j < 0)
-	    return OPENSSL_asc2uni(asc, asclen, uni, unilen);
+	    return OPENSSL_latin1_to_bmp(asc, asclen, uni, unilen);
 
         if (utf32chr > 0x10FFFF)        /* UTF-16 cap */
 	    return NULL;
@@ -168,7 +168,7 @@ static int bmp_to_utf8(char *str, const unsigned char *utf16, int len)
     return UTF8_putc((unsigned char *)str, len > 4 ? 4 : len, utf32chr);
 }
 
-char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen)
+char *OPENSSL_bmp_to_utf8(const unsigned char *uni, int unilen)
 {
     int asclen, i, j;
     char *asctmp;
@@ -180,11 +180,11 @@ char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen)
     for (asclen = 0, i = 0; i < unilen; ) {
         j = bmp_to_utf8(NULL, uni+i, unilen-i);
         /*
-         * falling back to OPENSSL_uni2asc makes lesser sense [than
-         * falling back to OPENSSL_asc2uni in OPENSSL_utf82uni above],
+         * falling back to OPENSSL_bmp_to_latin1 makes lesser sense [than
+         * falling back to OPENSSL_latin1_to_bmp in OPENSSL_utf8_to_bmp above],
          * it's done rather to maintain symmetry...
          */
-        if (j < 0) return OPENSSL_uni2asc(uni, unilen);
+        if (j < 0) return OPENSSL_bmp_to_latin1(uni, unilen);
         if (j == 4) i += 4;
         else        i += 2;
         asclen += j;
