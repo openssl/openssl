@@ -144,6 +144,38 @@ static int servername_reject_cb(SSL *s, int *ad, void *arg)
     return select_server_ctx(s, arg, 0);
 }
 
+static unsigned char dummy_ocsp_resp_good_val = 0xff;
+static unsigned char dummy_ocsp_resp_bad_val = 0xfe;
+
+static int server_ocsp_cb(SSL *s, void *arg)
+{
+    unsigned char *resp;
+
+    resp = OPENSSL_malloc(1);
+    if (resp == NULL)
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    /*
+     * For the purposes of testing we just send back a dummy OCSP response
+     */
+    *resp = *(unsigned char *)arg;
+    if (!SSL_set_tlsext_status_ocsp_resp(s, resp, 1))
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+
+    return SSL_TLSEXT_ERR_OK;
+}
+
+static int client_ocsp_cb(SSL *s, void *arg)
+{
+    const unsigned char *resp;
+    int len;
+
+    len = SSL_get_tlsext_status_ocsp_resp(s, &resp);
+    if (len != 1 || *resp != dummy_ocsp_resp_good_val)
+        return 0;
+
+    return 1;
+}
+
 static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) {
     X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
     return 0;
@@ -317,6 +349,16 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     default:
         break;
+    }
+
+    if (extra->server.cert_status != SSL_TEST_CERT_STATUS_NONE) {
+        SSL_CTX_set_tlsext_status_type(client_ctx, TLSEXT_STATUSTYPE_ocsp);
+        SSL_CTX_set_tlsext_status_cb(client_ctx, client_ocsp_cb);
+        SSL_CTX_set_tlsext_status_arg(client_ctx, NULL);
+        SSL_CTX_set_tlsext_status_cb(server_ctx, server_ocsp_cb);
+        SSL_CTX_set_tlsext_status_arg(server_ctx,
+            ((extra->server.cert_status == SSL_TEST_CERT_STATUS_GOOD_RESPONSE)
+            ? &dummy_ocsp_resp_good_val : &dummy_ocsp_resp_bad_val));
     }
 
     /*
