@@ -333,7 +333,7 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         SSL_CTX_set_cert_verify_callback(client_ctx, &verify_reject_cb,
                                          NULL);
         break;
-    default:
+    case SSL_TEST_VERIFY_NONE:
         break;
     }
 
@@ -347,7 +347,7 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         SSL_CTX_set_tlsext_servername_callback(server_ctx, servername_reject_cb);
         SSL_CTX_set_tlsext_servername_arg(server_ctx, server2_ctx);
         break;
-    default:
+    case SSL_TEST_SERVERNAME_CB_NONE:
         break;
     }
 
@@ -631,9 +631,11 @@ static connect_phase_t next_phase(connect_phase_t phase)
         return SHUTDOWN;
     case SHUTDOWN:
         return CONNECTION_DONE;
-    default:
-        TEST_check(0); /* Should never call next_phase when done. */
+    case CONNECTION_DONE:
+        TEST_check(0);
+        break;
     }
+    return -1;
 }
 
 static void do_connect_step(PEER *peer, connect_phase_t phase)
@@ -648,8 +650,9 @@ static void do_connect_step(PEER *peer, connect_phase_t phase)
     case SHUTDOWN:
         do_shutdown_step(peer);
         break;
-    default:
+    case CONNECTION_DONE:
         TEST_check(0);
+        break;
     }
 }
 

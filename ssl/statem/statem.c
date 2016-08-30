@@ -601,7 +601,9 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
         case READ_STATE_POST_PROCESS:
             st->read_state_work = post_process_message(s, st->read_state_work);
             switch (st->read_state_work) {
-            default:
+            case WORK_ERROR:
+            case WORK_MORE_A:
+            case WORK_MORE_B:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:
@@ -729,14 +731,16 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
                 return SUB_STATE_FINISHED;
                 break;
 
-            default:
+            case WRITE_TRAN_ERROR:
                 return SUB_STATE_ERROR;
             }
             break;
 
         case WRITE_STATE_PRE_WORK:
             switch (st->write_state_work = pre_work(s, st->write_state_work)) {
-            default:
+            case WORK_ERROR:
+            case WORK_MORE_A:
+            case WORK_MORE_B:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:
@@ -765,7 +769,9 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
 
         case WRITE_STATE_POST_WORK:
             switch (st->write_state_work = post_work(s, st->write_state_work)) {
-            default:
+            case WORK_ERROR:
+            case WORK_MORE_A:
+            case WORK_MORE_B:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:

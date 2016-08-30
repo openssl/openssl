@@ -122,6 +122,9 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
     int ske_expected;
 
     switch (st->hand_state) {
+    default:
+        break;
+
     case TLS_ST_CW_CLNT_HELLO:
         if (mt == SSL3_MT_SERVER_HELLO) {
             st->hand_state = TLS_ST_CR_SRVR_HELLO;
@@ -258,9 +261,6 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
             return 1;
         }
         break;
-
-    default:
-        break;
     }
 
  err:
@@ -279,6 +279,10 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return WRITE_TRAN_ERROR;
+
     case TLS_ST_OK:
         /* Renegotiation - fall through */
     case TLS_ST_BEFORE:
@@ -367,10 +371,6 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
             ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
         }
-
-    default:
-        /* Shouldn't happen */
-        return WRITE_TRAN_ERROR;
     }
 }
 
@@ -383,6 +383,10 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* No pre work to be done */
+        break;
+
     case TLS_ST_CW_CLNT_HELLO:
         s->shutdown = 0;
         if (SSL_IS_DTLS(s)) {
@@ -408,14 +412,10 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
                 return dtls_wait_for_dry(s);
 #endif
         }
-        return WORK_FINISHED_CONTINUE;
+        break;
 
     case TLS_ST_OK:
         return tls_finish_handshake(s, wst);
-
-    default:
-        /* No pre work to be done */
-        break;
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -432,6 +432,10 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
     s->init_num = 0;
 
     switch (st->hand_state) {
+    default:
+        /* No post work to be done */
+        break;
+
     case TLS_ST_CW_CLNT_HELLO:
         if (wst == WORK_MORE_A && statem_flush(s) != 1)
             return WORK_MORE_A;
@@ -494,10 +498,6 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
         if (statem_flush(s) != 1)
             return WORK_MORE_B;
         break;
-
-    default:
-        /* No post work to be done */
-        break;
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -515,6 +515,10 @@ int ossl_statem_client_construct_message(SSL *s)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return 0;
+
     case TLS_ST_CW_CLNT_HELLO:
         return tls_construct_client_hello(s);
 
@@ -543,13 +547,7 @@ int ossl_statem_client_construct_message(SSL *s)
                                       ssl3_enc->client_finished_label,
                                       s->method->
                                       ssl3_enc->client_finished_label_len);
-
-    default:
-        /* Shouldn't happen */
-        break;
     }
-
-    return 0;
 }
 
 /*
@@ -561,6 +559,10 @@ unsigned long ossl_statem_client_max_message_size(SSL *s)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return 0;
+
     case TLS_ST_CR_SRVR_HELLO:
         return SERVER_HELLO_MAX_LENGTH;
 
@@ -597,13 +599,7 @@ unsigned long ossl_statem_client_max_message_size(SSL *s)
 
     case TLS_ST_CR_FINISHED:
         return FINISHED_MAX_LENGTH;
-
-    default:
-        /* Shouldn't happen */
-        break;
     }
-
-    return 0;
 }
 
 /*
@@ -614,6 +610,10 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return MSG_PROCESS_ERROR;
+
     case TLS_ST_CR_SRVR_HELLO:
         return tls_process_server_hello(s, pkt);
 
@@ -643,13 +643,7 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
 
     case TLS_ST_CR_FINISHED:
         return tls_process_finished(s, pkt);
-
-    default:
-        /* Shouldn't happen */
-        break;
     }
-
-    return MSG_PROCESS_ERROR;
 }
 
 /*
@@ -661,6 +655,10 @@ WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return WORK_ERROR;
+
     case TLS_ST_CR_CERT_REQ:
         return tls_prepare_client_certificate(s, wst);
 
@@ -678,13 +676,7 @@ WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
         ossl_statem_set_sctp_read_sock(s, 0);
         return WORK_FINISHED_STOP;
 #endif
-
-    default:
-        break;
     }
-
-    /* Shouldn't happen */
-    return WORK_ERROR;
 }
 
 int tls_construct_client_hello(SSL *s)

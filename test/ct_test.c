@@ -244,7 +244,10 @@ static int assert_validity(CT_TEST_FIXTURE fixture,
         case SCT_VALIDATION_STATUS_INVALID:
             ++invalid_sct_count;
             break;
-        default:
+        case SCT_VALIDATION_STATUS_NOT_SET:
+        case SCT_VALIDATION_STATUS_UNKNOWN_LOG:
+        case SCT_VALIDATION_STATUS_UNVERIFIED:
+        case SCT_VALIDATION_STATUS_UNKNOWN_VERSION:
             /* Ignore other validation statuses. */
             break;
         }

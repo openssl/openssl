@@ -393,10 +393,15 @@ int list_main(int argc, char **argv)
     return 0;
 }
 
+typedef enum HELP_CHOICE {
+    OPT_hERR = -1, OPT_hEOF = 0, OPT_hHELP
+} HELP_CHOICE;
+
 OPTIONS help_options[] = {
-    {"help", OPT_HELP, '-', "Display this summary"},
+    {"help", OPT_hHELP, '-', "Display this summary"},
     {NULL}
 };
+
 
 int help_main(int argc, char **argv)
 {
@@ -404,15 +409,16 @@ int help_main(int argc, char **argv)
     int i, nl;
     FUNC_TYPE tp;
     char *prog;
-    HELPLIST_CHOICE o;
+    HELP_CHOICE o;
 
     prog = opt_init(argc, argv, help_options);
-    while ((o = opt_next()) != OPT_EOF) {
+    while ((o = opt_next()) != OPT_hEOF) {
         switch (o) {
-        default:
+        case OPT_hERR:
+        case OPT_hEOF:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             return 1;
-        case OPT_HELP:
+        case OPT_hHELP:
             opt_help(help_options);
             return 0;
         }

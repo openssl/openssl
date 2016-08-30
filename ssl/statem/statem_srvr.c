@@ -82,6 +82,9 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        break;
+
     case TLS_ST_BEFORE:
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         if (mt == SSL3_MT_CLIENT_HELLO) {
@@ -207,9 +210,6 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
             return 1;
         }
         break;
-
-    default:
-        break;
     }
 
     /* No valid transition found */
@@ -312,6 +312,10 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return WRITE_TRAN_ERROR;
+
     case TLS_ST_BEFORE:
         /* Just go straight to trying to read from the client */
         return WRITE_TRAN_FINISHED;
@@ -414,10 +418,6 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
         st->hand_state = TLS_ST_OK;
         ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
-
-    default:
-        /* Shouldn't happen */
-        return WRITE_TRAN_ERROR;
     }
 }
 
@@ -430,6 +430,10 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* No pre work to be done */
+        break;
+
     case TLS_ST_SW_HELLO_REQ:
         s->shutdown = 0;
         if (SSL_IS_DTLS(s))
@@ -491,10 +495,6 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
 
     case TLS_ST_OK:
         return tls_finish_handshake(s, wst);
-
-    default:
-        /* No pre work to be done */
-        break;
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -511,6 +511,10 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
     s->init_num = 0;
 
     switch (st->hand_state) {
+    default:
+        /* No post work to be done */
+        break;
+
     case TLS_ST_SW_HELLO_REQ:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
@@ -603,10 +607,6 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
         }
 #endif
         break;
-
-    default:
-        /* No post work to be done */
-        break;
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -624,6 +624,10 @@ int ossl_statem_server_construct_message(SSL *s)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return 0;
+
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         return dtls_construct_hello_verify_request(s);
 
@@ -663,13 +667,7 @@ int ossl_statem_server_construct_message(SSL *s)
                                       ssl3_enc->server_finished_label,
                                       s->method->
                                       ssl3_enc->server_finished_label_len);
-
-    default:
-        /* Shouldn't happen */
-        break;
     }
-
-    return 0;
 }
 
 /*
@@ -701,6 +699,10 @@ unsigned long ossl_statem_server_max_message_size(SSL *s)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return 0;
+
     case TLS_ST_SR_CLNT_HELLO:
         return CLIENT_HELLO_MAX_LENGTH;
 
@@ -723,13 +725,7 @@ unsigned long ossl_statem_server_max_message_size(SSL *s)
 
     case TLS_ST_SR_FINISHED:
         return FINISHED_MAX_LENGTH;
-
-    default:
-        /* Shouldn't happen */
-        break;
     }
-
-    return 0;
 }
 
 /*
@@ -740,6 +736,10 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL *s, PACKET *pkt)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return MSG_PROCESS_ERROR;
+
     case TLS_ST_SR_CLNT_HELLO:
         return tls_process_client_hello(s, pkt);
 
@@ -762,13 +762,7 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL *s, PACKET *pkt)
 
     case TLS_ST_SR_FINISHED:
         return tls_process_finished(s, pkt);
-
-    default:
-        /* Shouldn't happen */
-        break;
     }
-
-    return MSG_PROCESS_ERROR;
 }
 
 /*
@@ -780,6 +774,10 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
     OSSL_STATEM *st = &s->statem;
 
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return WORK_ERROR;
+
     case TLS_ST_SR_CLNT_HELLO:
         return tls_post_process_client_hello(s, wst);
 
@@ -803,13 +801,8 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
         }
 #endif
         return WORK_FINISHED_CONTINUE;
-
-    default:
-        break;
     }
 
-    /* Shouldn't happen */
-    return WORK_ERROR;
 }
 
 #ifndef OPENSSL_NO_SRP

@@ -254,6 +254,16 @@ static BN_ULONG is_one(const BIGNUM *z)
     return res;
 }
 
+/*
+ * For reference, this macro is used only when new ecp_nistz256 assembly
+ * module is being developed.  For example, configure with
+ * -DECP_NISTZ256_REFERENCE_IMPLEMENTATION and implement only functions
+ * performing simplest arithmetic operations on 256-bit vectors. Then
+ * work on implementation of higher-level functions performing point
+ * operations. Then remove ECP_NISTZ256_REFERENCE_IMPLEMENTATION
+ * and never define it again. (The correct macro denoting presence of
+ * ecp_nistz256 module is ECP_NISTZ256_ASM.)
+ */
 #ifndef ECP_NISTZ256_REFERENCE_IMPLEMENTATION
 void ecp_nistz256_point_double(P256_POINT *r, const P256_POINT *a);
 void ecp_nistz256_point_add(P256_POINT *r,

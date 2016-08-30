@@ -157,7 +157,6 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
 
     for (;;) {
         switch (ctx->state) {
-
             /* Setup prefix data, call it */
         case ASN1_STATE_START:
             if (!asn1_bio_setup_ex(b, ctx, ctx->prefix,
@@ -223,7 +222,8 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
 
             break;
 
-        default:
+        case ASN1_STATE_POST_COPY:
+        case ASN1_STATE_DONE:
             BIO_clear_retry_flags(b);
             return 0;
 
