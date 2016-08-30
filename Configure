@@ -377,6 +377,7 @@ my @disablables = (
     "ssl-trace",
     "static-engine",
     "stdio",
+    "tests",
     "threads",
     "tls",
     "ts",

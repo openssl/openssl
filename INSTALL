@@ -408,6 +408,9 @@
                    the OpenSSL tests also use the command line applications the
                    tests will also be skipped.
 
+  no-tests
+                   Don't build test programs or run any test.
+
   no-threads
                    Don't try to build with support for multi-threaded
                    applications.
