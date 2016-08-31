@@ -320,6 +320,11 @@
                    platforms and should never be used in production environments.
                    See the file fuzz/README.md for further details.
 
+  no-fuzz-test
+                   Don't runt the fuzz test suite when testing. Use with
+                   caution, as those tests may be important.  However, that
+                   suite is particularly slow, and is therefore skippable.
+
   no-gost
                    Don't build support for GOST based ciphersuites. Note that
                    if this feature is enabled then GOST ciphersuites are only
