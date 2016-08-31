@@ -770,6 +770,13 @@
  AR
                 The name of the ar executable to use.
 
+ BUILDFILE
+                Use a different build file name than the platform default
+                ("Makefile" on Unixly platforms, "makefile" on native Windows,
+                "descrip.mms" on OpenVMS).  This requires that there is a
+                corresponding build file template.  See Configurations/README
+                for further information.
+
  CC
                 The compiler to use. Configure will attempt to pick a default
                 compiler for your platform but this choice can be overridden
