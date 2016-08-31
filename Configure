@@ -1777,6 +1777,8 @@ if ($builder eq "unified") {
         my %defines = ();
         my %depends = ();
         my %generate = ();
+        my %htmldocs = ();
+        my %mandocs = ();
 
         # Support for $variablename in build.info files.
         # Embedded perl code is the ultimate master, still.  If its output
@@ -1837,6 +1839,10 @@ if ($builder eq "unified") {
         # don't use it if the build tree is different.
         my $src_configdata = cleanfile($srcdir, "configdata.pm", $blddir);
 
+
+        if ($buildinfo_debug) {
+            print STDERR "DEBUG: Reading ",catfile($sourced, $f),"\n";
+        }
         push @{$config{build_infos}}, catfile(abs2rel($sourced, $blddir), $f);
         my $template =
             Text::Template->new(TYPE => 'FILE',
@@ -1948,7 +1954,14 @@ if ($builder eq "unified") {
                                          @s);
                 }
             },
-
+            qr/^\s* HTMLDOCS ${index_re} = ${value_re} $/x
+            => sub { push @{$htmldocs{$expand_variables->($+{INDEX})}},
+                         tokenize($expand_variables->($+{VALUE}))
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s* MANDOCS ${index_re} = ${value_re} $/x
+            => sub { push @{$mandocs{$expand_variables->($+{INDEX})}},
+                         tokenize($expand_variables->($+{VALUE}))
+                         if !@skip || $skip[$#skip] > 0 },
             qr/^\s* ORDINALS ${index_re} = ${value_re} $/x
             => sub { push @{$ordinals{$expand_variables->($+{INDEX})}},
                          tokenize($expand_variables->($+{VALUE}))
@@ -2206,6 +2219,20 @@ EOF
                 }
             }
         }
+
+        foreach my $section (keys %htmldocs) {
+            foreach (@{$htmldocs{$section}}) {
+                my $htmldocs = cleanfile($buildd, $_, $blddir);
+                $unified_info{htmldocs}->{$section}->{$htmldocs} = 1;
+            }
+        }
+
+        foreach my $section (keys %mandocs) {
+            foreach (@{$mandocs{$section}}) {
+                my $mandocs = cleanfile($buildd, $_, $blddir);
+                $unified_info{mandocs}->{$section}->{$mandocs} = 1;
+            }
+        }
     }
 
     my $ordinals_text = join(', ', sort keys %ordinals);
@@ -2366,7 +2393,8 @@ EOF
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
-    foreach my $l1 (("sources", "shared_sources", "ldadd", "depends")) {
+    foreach my $l1 (("sources", "shared_sources", "ldadd", "depends",
+                     "htmldocs", "mandocs")) {
         foreach my $l2 (sort keys %{$unified_info{$l1}}) {
             my @items =
                 sort
@@ -2412,7 +2440,11 @@ EOF
     my %loopinfo = ( "lib" => [ @{$unified_info{libraries}} ],
                      "dso" => [ @{$unified_info{modules}} ],
                      "bin" => [ @{$unified_info{programs}} ],
-                     "script" => [ @{$unified_info{scripts}} ] );
+                     "script" => [ @{$unified_info{scripts}} ],
+                     "docs" => [ (map { @{$unified_info{htmldocs}->{$_} // []} }
+                                  keys %{$unified_info{htmldocs} // {}}),
+                                 (map { @{$unified_info{mandocs}->{$_} // []} }
+                                  keys %{$unified_info{mandocs} // {}}) ] );
     foreach my $type (keys %loopinfo) {
         foreach my $product (@{$loopinfo{$type}}) {
             my %dirs = ();
