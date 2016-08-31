@@ -806,8 +806,8 @@
                 possible to create your own ".conf" and ".tmpl" files and store
                 them locally, outside the OpenSSL source tree. This environment
                 variable can be set to the directory where these files are held
-                and will have Configure to consider them in addition to the
-                standard ones.
+                and will be considered by Configure before it looks in the
+                standard directories.
 
  PERL
                 The name of the Perl executable to use when building OpenSSL.
