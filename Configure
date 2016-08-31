@@ -1770,6 +1770,8 @@ if ($builder eq "unified") {
         my %defines = ();
         my %depends = ();
         my %generate = ();
+        my %htmldocs = ();
+        my %mandocs = ();
 
         # Support for $variablename in build.info files.
         # Embedded perl code is the ultimate master, still.  If its output
@@ -1941,7 +1943,14 @@ if ($builder eq "unified") {
                                          @s);
                 }
             },
-
+            qr/^\s* HTMLDOCS ${index_re} = ${value_re} $/x
+            => sub { push @{$htmldocs{$expand_variables->($+{INDEX})}},
+                         tokenize($expand_variables->($+{VALUE}))
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s* MANDOCS ${index_re} = ${value_re} $/x
+            => sub { push @{$mandocs{$expand_variables->($+{INDEX})}},
+                         tokenize($expand_variables->($+{VALUE}))
+                         if !@skip || $skip[$#skip] > 0 },
             qr/^\s* ORDINALS ${index_re} = ${value_re} $/x
             => sub { push @{$ordinals{$expand_variables->($+{INDEX})}},
                          tokenize($expand_variables->($+{VALUE}))
@@ -2199,6 +2208,20 @@ EOF
                 }
             }
         }
+
+        foreach my $section (keys %htmldocs) {
+            foreach (@{$htmldocs{$section}}) {
+                my $htmldocs = cleanfile($buildd, $_, $blddir);
+                $unified_info{htmldocs}->{$section}->{$htmldocs} = 1;
+            }
+        }
+
+        foreach my $section (keys %mandocs) {
+            foreach (@{$mandocs{$section}}) {
+                my $mandocs = cleanfile($buildd, $_, $blddir);
+                $unified_info{mandocs}->{$section}->{$mandocs} = 1;
+            }
+        }
     }
 
     my $ordinals_text = join(', ', sort keys %ordinals);
@@ -2359,7 +2382,8 @@ EOF
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
-    foreach my $l1 (("sources", "shared_sources", "ldadd", "depends")) {
+    foreach my $l1 (("sources", "shared_sources", "ldadd", "depends",
+                     "htmldocs", "mandocs")) {
         foreach my $l2 (sort keys %{$unified_info{$l1}}) {
             my @items =
                 sort

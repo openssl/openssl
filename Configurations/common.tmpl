@@ -436,6 +436,28 @@
      $cache{$dir} = 1;
  }
 
+ # do{html,man}docs are responsible for building documentation from .pods.
+ # They will call generatesrc.
+ sub dohtmldocs {
+     my $section = shift;
+     foreach my $doc (@{$unified_info{htmldocs}->{$section}}) {
+         next if $cache{$doc};
+         $OUT .= generatesrc(src => $doc,
+                             generator => $unified_info{generate}->{$doc});
+         $cache{$doc} = 1;
+     }
+ }
+
+ sub domandocs {
+     my $section = shift;
+     foreach my $doc (@{$unified_info{mandocs}->{$section}}) {
+         next if $cache{$doc};
+         $OUT .= generatesrc(src => $doc,
+                             generator => $unified_info{generate}->{$doc});
+         $cache{$doc} = 1;
+     }
+ }
+
  # Start with populating the cache with all the overrides
  %cache = map { $_ => 1 } @{$unified_info{overrides}};
 
@@ -448,6 +470,7 @@
  foreach (@{$unified_info{modules}})   { domodule($_); }
  foreach (@{$unified_info{programs}})  { dobin($_);    }
  foreach (@{$unified_info{scripts}})   { doscript($_); }
-
+ foreach (sort keys %{$unified_info{htmldocs}}) { dohtmldocs($_); }
+ foreach (sort keys %{$unified_info{mandocs}})  { domandocs($_); }
  foreach (sort keys %{$unified_info{dirinfo}})  { dodir($_); }
 -}
