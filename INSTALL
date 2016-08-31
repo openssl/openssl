@@ -321,7 +321,7 @@
                    See the file fuzz/README.md for further details.
 
   no-fuzz-test
-                   Don't runt the fuzz test suite when testing. Use with
+                   Don't run the fuzz test suite when testing. Use with
                    caution, as those tests may be important.  However, that
                    suite is particularly slow, and is therefore skippable.
 
@@ -809,7 +809,7 @@
                 possible to create your own ".conf" and ".tmpl" files and store
                 them locally, outside the OpenSSL source tree. This environment
                 variable can be set to the directory where these files are held
-                and will have Configure to consider them in addition to the
+                and will have Configure to consider them in preference to the
                 standard ones.
 
  PERL
