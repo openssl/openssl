@@ -788,7 +788,9 @@ while (@tocheckfor) {
     @tocheckfor = (keys %new_tocheckfor);
 }
 
+our $die = sub { die @_; };
 if ($target eq "TABLE") {
+    local $die = sub { warn @_; };
     foreach (sort keys %table) {
 	print_table_entry($_, "TABLE");
     }
@@ -803,6 +805,7 @@ if ($target eq "LIST") {
 }
 
 if ($target eq "HASH") {
+    local $die = sub { warn @_; };
     print "%table = (\n";
     foreach (sort keys %table) {
 	print_table_entry($_, "HASH");
