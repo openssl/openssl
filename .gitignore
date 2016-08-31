@@ -157,6 +157,10 @@ doc/man1/openssl-x509.pod
 /test/fips_test_suite.c
 /test/shatest.c
 
+# Generated docs directories
+/doc/html
+/doc/man
+
 ##### Generic patterns
 # Auto generated assembly language source files
 *.s

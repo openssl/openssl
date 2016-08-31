@@ -1,0 +1,44 @@
+SUBDIRS = man1
+
+{-
+ use File::Spec::Functions qw(:DEFAULT abs2rel rel2abs);
+ use File::Basename;
+
+ foreach my $section ((1, 3, 5, 7)) {
+     my @htmlfiles = ();
+     my @manfiles = ();
+     my @podfiles = glob catfile($sourcedir, "man$section", "*.pod");
+
+     foreach (@podfiles) {
+         my $podfile = abs2rel($_, $sourcedir);
+         my $podname = basename($podfile, ".pod");
+         my $htmlfile = abs2rel(catfile($buildtop, "doc", "html", "man$section",
+                                        "$podname.html"),
+                                catdir($buildtop, "doc"));
+         my $manfile = abs2rel(catfile($buildtop, "doc", "man", "man$section",
+                                       "$podname.$section"),
+                               catdir($buildtop, "doc"));
+
+         # The build.info format requires file specs to be in Unix format.
+         # Especially, since VMS file specs use [ and ], the build.info parser
+         # will otherwise get terribly confused.
+         if ($^O eq 'VMS') {
+             $htmlfile = VMS::Filespec::unixify($htmlfile);
+             $manfile = VMS::Filespec::unixify($manfile);
+             $podfile = VMS::Filespec::unixify($podfile);
+         } elsif ($^O eq 'MSWin32') {
+             $htmlfile =~ s|\\|/|g;
+             $manfile =~ s|\\|/|g;
+             $podfile =~ s|\\|/|g;
+         }
+         push @htmlfiles, $htmlfile;
+         push @manfiles, $manfile;
+         $OUT .= << "_____";
+GENERATE[$htmlfile]=$podfile
+GENERATE[$manfile]=$podfile
+_____
+     }
+     $OUT .= "HTMLDOCS[man$section]=" . join(" \\\n", @htmlfiles) . "\n";
+     $OUT .= "MANDOCS[man$section]=" . join(" \\\n", @manfiles) . "\n";
+ }
+ -}
