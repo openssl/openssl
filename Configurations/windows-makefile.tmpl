@@ -111,6 +111,10 @@ MISC_SCRIPTS={-
                          && $unified_info{attributes}->{scripts}->{$_}->{misc} }
                   @{$unified_info{scripts}})
 -}
+HTMLDOCS1={- join(" ", @{$unified_info{htmldocs}->{man1}}) -}
+HTMLDOCS3={- join(" ", @{$unified_info{htmldocs}->{man3}}) -}
+HTMLDOCS5={- join(" ", @{$unified_info{htmldocs}->{man5}}) -}
+HTMLDOCS7={- join(" ", @{$unified_info{htmldocs}->{man7}}) -}
 
 APPS_OPENSSL={- use File::Spec::Functions;
                 "\"".catfile("apps","openssl")."\"" -}
@@ -338,10 +342,13 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-{- dependmagic('all'); -}: build_libs_nodep build_modules_nodep build_programs_nodep
+{- dependmagic('build_sw'); -}: build_libs_nodep build_engines_nodep build_programs_nodep
 {- dependmagic('build_libs'); -}: build_libs_nodep
 {- dependmagic('build_modules'); -}: build_modules_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
+
+build_docs: build_html_docs
+build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
 
 build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: $(LIBS) {- join(" ",map { platform->sharedlib_import($_) // () } @{$unified_info{libraries}}) -}
@@ -353,12 +360,14 @@ build_apps build_tests: build_programs
 
 # Convenience target to prebuild all generated files, not just the mandatory
 # ones
-build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
+build_all_generated: $(GENERATED_MANDATORY) $(GENERATED) build_docs
 	@{- output_off() if $disabled{makedepend}; "" -}
 	@$(ECHO) "Warning: consider configuring with no-makedepend, because if"
 	@$(ECHO) "         target system doesn't have $(PERL),"
 	@$(ECHO) "         then make will fail..."
 	@{- output_on() if $disabled{makedepend}; "" -}
+
+all: build_sw build_docs
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep
@@ -393,6 +402,10 @@ libclean:
 	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
 
 clean: libclean
+	-rmdir /Q /S $(HTMLDOCS1)
+	-rmdir /Q /S $(HTMLDOCS3)
+	-rmdir /Q /S $(HTMLDOCS5)
+	-rmdir /Q /S $(HTMLDOCS7)
 	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
 	-del /Q /F $(MODULES)
 	-del /Q /F $(SCRIPTS)
@@ -496,9 +509,21 @@ install_programs: install_runtime_libs build_programs
 
 uninstall_runtime:
 
-install_html_docs:
-        "$(PERL)" "$(SRCDIR)\util\process_docs.pl" \
-                "--destdir=$(INSTALLTOP)\html" --type=html
+install_html_docs: build_html_docs
+	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
+	@echo *** Installing HTML docs
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man1"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man3"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man5"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\html\man7"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\doc\html\man1\*.html \
+                                        "$(INSTALLTOP)\html\man1"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\doc\html\man3\*.html \
+                                        "$(INSTALLTOP)\html\man3"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\doc\html\man5\*.html \
+                                        "$(INSTALLTOP)\html\man5"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\doc\html\man7\*.html \
+                                        "$(INSTALLTOP)\html\man7"
 
 uninstall_html_docs:
 
@@ -540,7 +565,16 @@ reconfigure reconf:
       my $deps = @{$args{deps}} ?
           '"'.join('" "', @{$args{generator_deps}}, @{$args{deps}}).'"' : '';
 
-      if (platform->isdef($args{src})) {
+      if ($args{src} =~ /\.html$/) {
+	  my $title = basename($args{src}, ".html");
+	  return <<"EOF";
+$args{src}: $args{generator}->[0]
+	pod2html "--podroot=\$(SRCDIR)/doc" --htmldir=.. \\
+		 --podpath=man1:man3:man5:man7 "--infile=\$<" "--title=$title" \\
+	| \$(PERL) -pe "s|href=\\"http://man\\.he\\.net/(man\d/[^\\"]+)(?:\\.html)?\\"|href=\\"../\$1.html|g;" \\
+	> \$\@
+EOF
+      } elsif (platform->isdef($args{src})) {
           my $target = platform->def($args{src});
           my $mkdef = abs2rel(rel2abs(catfile($config{sourcedir},
                                               "util", "mkdef.pl")),

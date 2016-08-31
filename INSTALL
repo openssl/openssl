@@ -1149,7 +1149,15 @@
  described here. Examine the Makefiles themselves for the full list.
 
  all
-                The default target to build all the software components.
+                The target to build all the software components and
+                documentation.
+
+ build_sw
+                Build all the software components.
+                THIS IS THE DEFAULT TARGET.
+
+ build_docs
+                Build all documentation components.
 
  clean
                 Remove all build artefacts and return the directory to a "clean"
