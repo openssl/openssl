@@ -42,7 +42,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[exdatatest]=../include
   DEPEND[exdatatest]=../libcrypto
 
-  SOURCE[bntest]=bntest.c testutil.c test_main_custom.c
+  SOURCE[bntest]=bntest.c testutil.c test_main_custom.c testfile_helper.c
   INCLUDE[bntest]=.. ../crypto/include ../include
   DEPEND[bntest]=../libcrypto
 
