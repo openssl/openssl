@@ -786,13 +786,19 @@
 
  OPENSSL_LOCAL_CONFIG_DIR
                 OpenSSL comes with a database of information about how it
-                should be built on different platforms. This information is
-                held in ".conf" files in the Configurations directory. See the
+                should be built on different platforms as well as build file
+                templates for those platforms. The database is comprised of
+                ".conf" files in the Configurations directory.  The build
+                file templates reside there as well as ".tmpl" files. See the
                 file Configurations/README for further information about the
-                format of ".conf" files. As well as the standard ".conf" files
-                it is possible to create your own ".conf" files and store them
-                locally, outside the OpenSSL source tree. This environment
-                variable can be set to the directory where these files are held.
+                format of ".conf" files as well as information on the ".tmpl"
+                files.
+                In addition to the standard ".conf" and ".tmpl" files, it is
+                possible to create your own ".conf" and ".tmpl" files and store
+                them locally, outside the OpenSSL source tree. This environment
+                variable can be set to the directory where these files are held
+                and will have Configure to consider them in addition to the
+                standard ones.
 
  PERL
                 The name of the Perl executable to use when building OpenSSL.
