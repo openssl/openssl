@@ -15,6 +15,9 @@ use OpenSSL::Test::Utils;
 
 setup("test_fuzz");
 
+plan skip_all => "Fuzz testing is disabled by this OpenSSL build"
+    if disabled("fuzz-test");
+
 my @fuzzers = ('asn1', 'asn1parse', 'bignum', 'bndiv', 'conf', 'crl', 'server', 'x509');
 if (!disabled("cms")) {
     push @fuzzers, 'cms';
