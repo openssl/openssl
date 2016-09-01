@@ -66,6 +66,22 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # no-sse2	disables IA-32 SSE2 code, above option implies no-sse2
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
 # -<xxx> +<xxx> compiler options are passed through
+# -static       while -static is also a pass-through compiler option (and
+#               as such is limited to environments where it's actually
+#               meaningful), it triggers a number configuration options,
+#               namely no-dso, no-pic, no-shared and no-threads. It is
+#               argued that the only reason to produce statically linked
+#               binaries (and in context it means executables linked with
+#               -static flag, and not just executables linked with static
+#               libcrypto.a) is to eliminate dependency on specific run-time,
+#               a.k.a. libc version. The mentioned config options are meant
+#               to achieve just that. Unfortunately on Linux it's impossible
+#               to eliminate the dependency completely for openssl executable
+#               because of getaddrinfo and gethostbyname calls, which can
+#               invoke dynamically loadable library facility anyway to meet
+#               the lookup requests. For this reason on Linux statically
+#               linked openssl executable has rather debugging value than
+#               production quality.
 #
 # DEBUG_SAFESTACK use type-safe stacks to enforce type-safety on stack items
 #		provided to stack calls. Generates unique stack functions for
@@ -715,6 +731,7 @@ foreach (@argvcopy)
 		elsif (/^-static$/)
 			{
 			$libs.=$_." ";
+			$disabled{"dso"} = "forced";
 			$disabled{"pic"} = "forced";
 			$disabled{"shared"} = "forced";
 			$disabled{"threads"} = "forced";
