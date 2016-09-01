@@ -342,7 +342,6 @@ my @disablables = (
     "filenames",
     "fuzz-libfuzzer",
     "fuzz-afl",
-    "fuzz-test",
     "gost",
     "heartbeats",
     "hw(-.+)?",
