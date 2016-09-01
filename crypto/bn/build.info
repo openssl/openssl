@@ -34,8 +34,10 @@ INCLUDE[sparct4-mont.o]=..
 GENERATE[sparcv9-gf2m.S]=asm/sparcv9-gf2m.pl $(PERLASM_SCHEME)
 INCLUDE[sparcv9-gf2m.o]=..
 
-GENERATE[bn-mips.s]=asm/mips.pl $(PERLASM_SCHEME)
-GENERATE[mips-mont.s]=asm/mips-mont.pl $(PERLASM_SCHEME)
+GENERATE[bn-mips.S]=asm/mips.pl $(PERLASM_SCHEME)
+INCLUDE[bn-mips.o]=..
+GENERATE[mips-mont.S]=asm/mips-mont.pl $(PERLASM_SCHEME)
+INCLUDE[mips-mont.o]=..
 
 GENERATE[s390x-mont.S]=asm/s390x-mont.pl $(PERLASM_SCHEME)
 GENERATE[s390x-gf2m.s]=asm/s390x-gf2m.pl $(PERLASM_SCHEME)
@@ -64,16 +66,8 @@ GENERATE[armv4-gf2m.S]=asm/armv4-gf2m.pl $(PERLASM_SCHEME)
 INCLUDE[armv4-gf2m.o]=..
 GENERATE[armv8-mont.S]=asm/armv8-mont.pl $(PERLASM_SCHEME)
 
-OVERRIDES=bn-mips3.o pa-risc2W.o pa-risc2.c
+OVERRIDES=pa-risc2W.o pa-risc2.c
 BEGINRAW[Makefile]
-##### BN assembler implementations
-
-{- $builddir -}/bn-mips3.o:	{- $sourcedir -}/asm/mips3.s
-	@if [ "$(CC)" = "gcc" ]; then \
-		ABI=`expr "$(CFLAGS)" : ".*-mabi=\([n3264]*\)"` && \
-		as -$$ABI -O -o $@ {- $sourcedir -}/asm/mips3.s; \
-	else	$(CC) -c $(CFLAGS) $(LIB_CFLAGS) -o $@ {- $sourcedir -}/asm/mips3.s; fi
-
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
 {- $builddir -}/pa-risc2W.o: {- $sourcedir -}/asm/pa-risc2W.s
