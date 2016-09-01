@@ -208,6 +208,8 @@ static const ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_DO_HANDSHAKE, 0), "SSL_do_handshake"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_DUP_CA_LIST, 0), "SSL_dup_CA_list"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_ENABLE_CT, 0), "SSL_enable_ct"},
+    {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_GENERATE_SESSION_ID, 0),
+     "ssl_generate_session_id"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_GET_NEW_SESSION, 0),
      "ssl_get_new_session"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_GET_PREV_SESSION, 0),

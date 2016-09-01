@@ -57,6 +57,12 @@ typedef enum {
 } ssl_compression_t;
 
 typedef enum {
+    SSL_TEST_SESSION_ID_IGNORE = 0, /* Default */
+    SSL_TEST_SESSION_ID_YES,
+    SSL_TEST_SESSION_ID_NO
+} ssl_session_id_t;
+
+typedef enum {
     SSL_TEST_METHOD_TLS = 0, /* Default */
     SSL_TEST_METHOD_DTLS
 } ssl_test_method_t;
@@ -200,6 +206,8 @@ typedef struct {
     STACK_OF(X509_NAME) *expected_client_ca_names;
     /* Whether to use SCTP for the transport */
     int use_sctp;
+    /* Whether to expect a session id from the server */
+    ssl_session_id_t session_id_expected;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);
@@ -210,6 +218,7 @@ const char *ssl_servername_name(ssl_servername_t server);
 const char *ssl_servername_callback_name(ssl_servername_callback_t
                                          servername_callback);
 const char *ssl_session_ticket_name(ssl_session_ticket_t server);
+const char *ssl_session_id_name(ssl_session_id_t server);
 const char *ssl_test_method_name(ssl_test_method_t method);
 const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode);
 const char *ssl_ct_validation_name(ssl_ct_validation_t mode);

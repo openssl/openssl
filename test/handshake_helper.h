@@ -62,6 +62,8 @@ typedef struct handshake_result {
     int client_sign_type;
     /* Client CA names */
     STACK_OF(X509_NAME) *client_ca_names;
+    /* Session id status */
+    ssl_session_id_t session_id;
 } HANDSHAKE_RESULT;
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void);
