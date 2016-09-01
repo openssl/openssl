@@ -1721,15 +1721,24 @@ while (<IN>)
 		s/^NM=\s*/NM= \$\(CROSS_COMPILE\)/;
 		s/^RANLIB=\s*/RANLIB= \$\(CROSS_COMPILE\)/;
 		s/^RC=\s*/RC= \$\(CROSS_COMPILE\)/;
-		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= \$\(CROSS_COMPILE\)$cc/ if $cc eq "gcc";
+		if (index($cc, "gcc") != -1)
+			{
+			s/^MAKEDEPPROG=.*$/MAKEDEPPROG= \$\(CROSS_COMPILE\)$cc/;
+			}
 		}
 	else	{
 		s/^CC=.*$/CC= $cc/;
 		s/^AR=\s*ar/AR= $ar/;
 		s/^RANLIB=.*/RANLIB= $ranlib/;
 		s/^RC=.*/RC= $windres/;
-		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc";
-		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $ecc eq "gcc" || $ecc eq "clang";
+		if (index($cc, "gcc") != -1)
+			{
+			s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/;
+			}
+		if (index($ecc, "gcc") != -1 || index($ecc, "clang") != -1)
+			{
+			s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/;
+			}
 		}
 	s/^CFLAG=.*$/CFLAG= $cflags/;
 	s/^DEPFLAG=.*$/DEPFLAG=$depflags/;
