@@ -81,6 +81,11 @@ handshake.
   - Yes - a session ticket is expected
   - No - a session ticket is not expected
 
+* SessionIdExpected - whether or not a session id is expected
+  - Ignore - do not check for a session id (default)
+  - Yes - a session id is expected
+  - No - a session id is not expected
+
 * ResumptionExpected - whether or not resumption is expected (Resume mode only)
   - Yes - resumed handshake
   - No - full handshake (default)

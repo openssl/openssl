@@ -148,6 +148,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_DO_HANDSHAKE                           180
 # define SSL_F_SSL_DUP_CA_LIST                            408
 # define SSL_F_SSL_ENABLE_CT                              402
+# define SSL_F_SSL_GENERATE_SESSION_ID                    547
 # define SSL_F_SSL_GET_NEW_SESSION                        181
 # define SSL_F_SSL_GET_PREV_SESSION                       217
 # define SSL_F_SSL_GET_SERVER_CERT_INDEX                  322
