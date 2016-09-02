@@ -185,6 +185,10 @@ int dgst_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    if (keyfile != NULL && argc > 1) {
+        BIO_printf(bio_err, "%s: Can only sign or verify one file.\n", prog);
+        goto end;
+    }
 
     if (do_verify && !sigfile) {
         BIO_printf(bio_err,
