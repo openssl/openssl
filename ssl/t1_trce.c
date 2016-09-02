@@ -490,6 +490,7 @@ static ssl_trace_tbl ssl_curve_tbl[] = {
     {26, "brainpoolP256r1"},
     {27, "brainpoolP384r1"},
     {28, "brainpoolP512r1"},
+    {29, "ecdh_x25519"},
     {0xFF01, "arbitrary_explicit_prime_curves"},
     {0xFF02, "arbitrary_explicit_char2_curves"}
 };
