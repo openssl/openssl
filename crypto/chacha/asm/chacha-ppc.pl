@@ -133,6 +133,7 @@ my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
 
 $code.=<<___;
 .machine	"any"
+.text
 
 .globl	.ChaCha20_ctr32_int
 .align	5
