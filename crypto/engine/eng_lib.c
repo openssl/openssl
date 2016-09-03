@@ -67,7 +67,7 @@ void engine_set_all_null(ENGINE *e)
     e->flags = 0;
 }
 
-int engine_free_util(ENGINE *e, int locked)
+int engine_free_util(ENGINE *e, int not_locked)
 {
     int i;
 
@@ -76,7 +76,7 @@ int engine_free_util(ENGINE *e, int locked)
 #ifdef HAVE_ATOMICS
     CRYPTO_DOWN_REF(&e->struct_ref, &i, global_engine_lock);
 #else
-    if (locked)
+    if (not_locked)
         CRYPTO_atomic_add(&e->struct_ref, -1, &i, global_engine_lock);
     else
         i = --e->struct_ref;

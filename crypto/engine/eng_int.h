@@ -104,7 +104,7 @@ void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
  */
 int engine_unlocked_init(ENGINE *e);
 int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers);
-int engine_free_util(ENGINE *e, int locked);
+int engine_free_util(ENGINE *e, int not_locked);
 
 /*
  * This function will reset all "set"able values in an ENGINE to NULL. This
