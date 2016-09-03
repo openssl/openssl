@@ -150,8 +150,8 @@ LINK_SO_DSO=	INHIBIT_SYMLINKS=yes; SHOBJECTS="$(LIBEXTRAS)"; $(LINK_SO)
 LINK_SO_SHLIB_VIA_O=	\
   SHOBJECTS=$(DSTDIR)/lib$(LIBNAME).o; \
   ALL=$$ALLSYMSFLAGS; ALLSYMSFLAGS=; NOALLSYMSFLAGS=; \
-  ( echo ld $(LDFLAGS) -r -o $$SHOBJECTS.o $$ALL lib$(LIBNAME).a $(LIBEXTRAS); \
-    ld $(LDFLAGS) -r -o $$SHOBJECTS.o $$ALL $(DSTDIR)/lib$(LIBNAME).a $(LIBEXTRAS) ); \
+  ( echo ld $(LDFLAGS) -r -o $$SHOBJECTS $$ALL lib$(LIBNAME).a $(LIBEXTRAS); \
+    ld $(LDFLAGS) -r -o $$SHOBJECTS $$ALL $(DSTDIR)/lib$(LIBNAME).a $(LIBEXTRAS) ); \
   $(LINK_SO) && ( echo rm -f $$SHOBJECTS; rm -f $$SHOBJECTS )
 
 LINK_SO_SHLIB_UNPACKED=	\
@@ -526,6 +526,7 @@ link_dso.aix:
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
+	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SOVER 2>&1 > /dev/null ; \
 	$(LINK_SO_DSO);
 link_shlib.aix:
 	@ $(CALC_VERSIONS); \
@@ -536,6 +537,7 @@ link_shlib.aix:
 	ALLSYMSFLAGS='-bnogc'; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
+	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SOVER 2>&1 > /dev/null ; \
 	$(LINK_SO_SHLIB_VIA_O)
 link_app.aix:
 	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
