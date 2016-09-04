@@ -80,7 +80,9 @@ static OPT_PAIR pbe_kdfs[] = {
 };
 
 static int hex_parse(char *hexbuffer);
+#ifndef OPENSSL_NO_SCRYPT
 static int is_power_of_two(unsigned int value);
+#endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -89,6 +91,7 @@ typedef enum OPTION_choice {
     OPT_ITERCNT,
 #ifndef OPENSSL_NO_SCRYPT
     OPT_PARAM_N, OPT_PARAM_R, OPT_PARAM_P,
+    OPT_MEMSIZE,
 #endif
     OPT_DKLEN, OPT_DIGEST
 } OPTION_CHOICE;
@@ -104,6 +107,7 @@ OPTIONS pbe_options[] = {
     {"N", OPT_PARAM_N, 'p', "CPU/memory cost parameter for scrypt"},
     {"r", OPT_PARAM_R, 'p', "Block size parameter for scrypt"},
     {"p", OPT_PARAM_P, 'p', "Parallelization parameter for scrypt"},
+    {"memsize", OPT_MEMSIZE, 'p', "Maximum memory allocation in MiB (default is 128 MiB)"},
 #endif
     {"dklen", OPT_DKLEN, 'p', "Key derivation output key length"},
     {"", OPT_DIGEST, '-', "Any supported digest"},
@@ -125,6 +129,7 @@ int pbe_main(int argc, char **argv)
     unsigned int itercnt = 0, dklen = 0;
 #ifndef OPENSSL_NO_SCRYPT
     unsigned int par_n = 0, par_r = 0, par_p = 0;
+    unsigned int memsize_mib = 128;
 #endif
     unsigned char *dkey = NULL;
 
@@ -173,6 +178,11 @@ int pbe_main(int argc, char **argv)
                 goto opthelp;
             md = m;
             break;
+#ifndef OPENSSL_NO_SCRYPT
+        case OPT_MEMSIZE:
+            memsize_mib = atoi(opt_arg());
+            break;
+#endif
         }
     }
     argc = opt_num_rest();
@@ -212,11 +222,13 @@ int pbe_main(int argc, char **argv)
 
     /* perform KDF-specific sanity checks before reading in the password */
     if (kdf == PBE_KDF_PBKDF2) {
+#ifndef OPENSSL_NO_SCRYPT
         if (par_n || par_r || par_p) {
             BIO_puts(bio_err,
                      "For PBKDF2, the N, r and p parameters do not make sense. Omit them.\n");
             goto end;
         }
+#endif
         if (!itercnt) {
             BIO_puts(bio_err,
                      "No iteration count given: use the -itercnt option\n");
@@ -279,7 +291,7 @@ int pbe_main(int argc, char **argv)
         result = PKCS5_PBKDF2_HMAC(password, passlen, (unsigned char*)salt, saltlen, itercnt, md, dklen, dkey);
 #ifndef OPENSSL_NO_SCRYPT
     } else if (kdf == PBE_KDF_SCRYPT) {
-        result = EVP_PBE_scrypt(password, passlen, (unsigned char*)salt, saltlen, par_n, par_r, par_p, 128 * 1024 * 1024, dkey, dklen);
+        result = EVP_PBE_scrypt(password, passlen, (unsigned char*)salt, saltlen, par_n, par_r, par_p, memsize_mib * 1024 * 1024, dkey, dklen);
 #endif
     }
 
@@ -318,6 +330,7 @@ static int hex_parse(char *hexbuffer) {
     return l / 2;
 }
 
+#ifndef OPENSSL_NO_SCRYPT
 static int is_power_of_two(unsigned int value) {
     int bits_set = 0;
     while (value) {
@@ -326,4 +339,4 @@ static int is_power_of_two(unsigned int value) {
     }
     return bits_set == 1;
 }
-
+#endif
