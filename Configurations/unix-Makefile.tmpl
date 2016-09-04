@@ -944,30 +944,11 @@ EOF
                       dso => '$(DSO_CFLAGS)',
                       bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
       my $makedepprog = $config{makedepprog};
-      my $recipe = "";
-      if (!$disabled{makedepend} && $makedepprog =~ /\/makedepend/) {
-          $recipe .= <<"EOF";
-$obj$depext: $deps
-	-\$(MAKEDEPEND) -f- -o"|$obj$objext" -- $incs \$(CFLAGS) $ecflags -- $srcs \\
-	    >\$\@.tmp 2>/dev/null
-	-\$(PERL) -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//; \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' \$\@.tmp
-	\@if cmp \$\@.tmp \$\@ > /dev/null 2> /dev/null; then \\
-		rm -f \$\@.tmp; \\
-	else \\
-		mv \$\@.tmp \$\@; \\
-	fi
-EOF
-          $deps = $obj.$depext;
-      }
-      if ($disabled{makedepend} || $makedepprog =~ /\/makedepend/) {
-          $recipe .= <<"EOF";
+      my $recipe = <<"EOF";
 $obj$objext: $deps
-	\$(CC) $incs \$(CFLAGS) $ecflags -c -o \$\@ $srcs
 EOF
-      }
       if (!$disabled{makedepend} && $makedepprog !~ /\/makedepend/) {
           $recipe .= <<"EOF";
-$obj$objext: $deps
 	\$(CC) $incs \$(CFLAGS) $ecflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
 	\@touch $obj$depext.tmp
 	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
@@ -976,6 +957,22 @@ $obj$objext: $deps
 		mv $obj$depext.tmp $obj$depext; \\
 	fi
 EOF
+      } else {
+          $recipe .= <<"EOF";
+	\$(CC) $incs \$(CFLAGS) $ecflags -c -o \$\@ $srcs
+EOF
+          if (!$disabled{makedepend} && $makedepprog =~ /\/makedepend/) {
+              $recipe .= <<"EOF";
+	-\$(MAKEDEPEND) -f- -o"|\$\@" -- $incs \$(CFLAGS) $ecflags -- $srcs \\
+	    >$obj$depext.tmp 2>/dev/null
+	-\$(PERL) -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//; \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' $obj$depext.tmp
+	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
+		rm -f $obj$depext.tmp; \\
+	else \\
+		mv $obj$depext.tmp $obj$depext; \\
+	fi
+EOF
+          }
       }
       return $recipe;
   }
