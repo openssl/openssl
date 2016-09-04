@@ -128,9 +128,6 @@ int pbe_main(int argc, char **argv)
 #endif
     unsigned char *dkey = NULL;
 
-    prog = opt_progname(argv[0]);
-    md = EVP_get_digestbyname(prog);
-
     prog = opt_init(argc, argv, pbe_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -227,9 +224,9 @@ int pbe_main(int argc, char **argv)
         }
 #ifndef OPENSSL_NO_SCRYPT
     } else if (kdf == PBE_KDF_SCRYPT) {
-        if (itercnt) {
+        if (itercnt || md) {
             BIO_puts(bio_err,
-                     "For scrypt, the itercnt parameter does not make sense. Omit it.\n");
+                     "For scrypt, the itercnt and digest parameters do not make sense. Omit them.\n");
             goto end;
         }
         if (!par_n || !par_r || !par_p) {

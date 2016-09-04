@@ -1,0 +1,118 @@
+=pod
+
+=head1 NAME
+
+pbe - Handles key derivation using password-based encryption functions
+
+=head1 SYNOPSIS
+
+B<openssl> B<pbe>
+[B<-help>]
+[B<-kdf kdf_function>]
+[B<-salt string>]
+[B<-hexsalt>]
+[B<-itercnt iterations>]
+[B<-N cost_param>]
+[B<-r block_param>]
+[B<-p parallel_param>]
+[B<-dklen bytes>]
+[B<-* hash_fnc>]
+
+=head1 DESCRIPTION
+
+The B<pbe> command derives a secret key from a given password using a
+password-based encryption (PBE) key stretching function. These functions work
+similar to hash functions but offer customizable load parameterizations in
+order to deliberately slow down the derivation process. This is useful to
+increase the difficulty of dictionary attacks. Currently, two PBE functions are
+supported: PBKDF2 and scrypt.
+
+=head1 COMMAND OPTIONS
+
+=over 4
+
+=item B<-help>
+
+Print out a usage message.
+
+=item B<-kdf kdf_function>
+
+Specifies the key derivation function that B<pbe> uses. Permissible values are
+pbkdf2 or scrypt.
+
+=item B<-salt string>
+
+Gives the salt value used for key derivation. The passed string is by default
+interpreted as the literal salt.
+
+=item B<-hexsalt>
+
+Tells B<pbe> to interpret the passed salt string as a hex string (i.e., it is
+Base16 decoded first before it is used).
+
+=item B<-itercnt iterations>
+
+For PBKDF2, internally an HMAC function is iterated. This parameter defines how
+many iterations should be taken. A greater value increases the time for
+derivation in a linear manner.
+
+=item B<-N cost_param>
+
+For scrypt, N gives the cost and memory load factor. It needs to be a power of
+two.
+
+=item B<-r block_param>
+
+For scrypt, r is the block size parameter.
+
+=item B<-p parallel_param>
+
+For scrypt, p gives the parallelization parameter.
+
+=item B<-dklen bytes>
+
+Gives the length in bytes which the derived password shall have.
+
+=item B<-* hash_fnc>
+
+Internally the PBE derivation functions rely on cryptographic hash functions.
+In the case that this hash function is parametrizable, it can be specified on
+the command line. Note that scrypt will, by definition, always use
+PBKDF2-HMAC-SHA256 internally and thus B<pbe> will reject any other given hash
+when scrypt is requested. For PBKDF2, internally HMAC is used for the
+computation. If the message digest function is not given on the command line,
+B<pbe> will default to PBKDF2-HMAC-SHA1.
+
+=back
+
+=head1 CONSIDERATIONS
+
+The derivation time of PBKDF2 scales linearly with the given iteration count.
+It is not a memory-hard derivation function and thus the memory requirements
+will not scale up with increased derivation time.
+
+In contrast, scrypt will consume approximately 128 * r * N bytes of memory for
+the internal computation. The derivation time scales linearly with all of N, r,
+and p. Colin Percival, the author of scrypt, suggested in its initial
+publication the values N = 16384, r = 8, p = 1 for interactive logins and N =
+1048576, r = 8, p = 1 for generating keys to encrypt or decrypt sensitive
+files.
+
+=head1 SEE ALSO
+
+L<dgst(1)>
+
+=head1 HISTORY
+
+The B<pbe> command was first added to OpenSSL 1.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

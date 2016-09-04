@@ -48,6 +48,7 @@ extern int list_main(int argc, char *argv[]);
 extern int nseq_main(int argc, char *argv[]);
 extern int ocsp_main(int argc, char *argv[]);
 extern int passwd_main(int argc, char *argv[]);
+extern int pbe_main(int argc, char *argv[]);
 extern int pkcs12_main(int argc, char *argv[]);
 extern int pkcs7_main(int argc, char *argv[]);
 extern int pkcs8_main(int argc, char *argv[]);
@@ -72,7 +73,6 @@ extern int ts_main(int argc, char *argv[]);
 extern int verify_main(int argc, char *argv[]);
 extern int version_main(int argc, char *argv[]);
 extern int x509_main(int argc, char *argv[]);
-extern int pbe_main(int argc, char *argv[]);
 
 extern OPTIONS asn1parse_options[];
 extern OPTIONS ca_options[];
@@ -98,6 +98,7 @@ extern OPTIONS list_options[];
 extern OPTIONS nseq_options[];
 extern OPTIONS ocsp_options[];
 extern OPTIONS passwd_options[];
+extern OPTIONS pbe_options[];
 extern OPTIONS pkcs12_options[];
 extern OPTIONS pkcs7_options[];
 extern OPTIONS pkcs8_options[];
@@ -122,7 +123,6 @@ extern OPTIONS ts_options[];
 extern OPTIONS verify_options[];
 extern OPTIONS version_options[];
 extern OPTIONS x509_options[];
-extern OPTIONS pbe_options[];
 
 #ifdef INCLUDE_FUNCTION_TABLE
 static FUNCTION functions[] = {
@@ -172,6 +172,7 @@ static FUNCTION functions[] = {
     { FT_general, "ocsp", ocsp_main, ocsp_options },
 #endif
     { FT_general, "passwd", passwd_main, passwd_options },
+    { FT_general, "pbe", pbe_main, pbe_options },
 #ifndef OPENSSL_NO_DES
     { FT_general, "pkcs12", pkcs12_main, pkcs12_options },
 #endif
@@ -210,7 +211,6 @@ static FUNCTION functions[] = {
     { FT_general, "verify", verify_main, verify_options },
     { FT_general, "version", version_main, version_options },
     { FT_general, "x509", x509_main, x509_options },
-    { FT_general, "pbe", pbe_main, pbe_options },
 #ifndef OPENSSL_NO_MD2
     { FT_md, "md2", dgst_main},
 #endif
