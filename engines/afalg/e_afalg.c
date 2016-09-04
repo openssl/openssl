@@ -8,7 +8,9 @@
  */
 
 /* Required for vmsplice */
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -17,11 +19,13 @@
 #include <openssl/async.h>
 #include <openssl/err.h>
 
+#include <sys/socket.h>
 #include <linux/version.h>
 #define K_MAJ   4
 #define K_MIN1  1
 #define K_MIN2  0
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2) || \
+    !defined(AF_ALG)
 # warning "AFALG ENGINE requires Kernel Headers >= 4.1.0"
 # warning "Skipping Compilation of AFALG engine"
 void engine_load_afalg_int(void)
@@ -30,7 +34,6 @@ void engine_load_afalg_int(void)
 #else
 
 # include <linux/if_alg.h>
-# include <sys/socket.h>
 # include <fcntl.h>
 # include <sys/utsname.h>
 
