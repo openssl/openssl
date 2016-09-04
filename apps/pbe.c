@@ -118,7 +118,7 @@ int pbe_main(int argc, char **argv)
     char *salt = NULL, *password = NULL;
     int saltlen = 0, passlen = 0;
     OPTION_CHOICE o;
-    int i = 0;
+    unsigned int i = 0;
     int result = 0;
     const char *prog = NULL;
     int hexsalt = 0;
