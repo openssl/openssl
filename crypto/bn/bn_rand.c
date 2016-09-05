@@ -20,15 +20,14 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
     int ret = 0, bit, bytes, mask;
     time_t tim;
 
-    if (bits < 0 || (bits == 1 && top > 0)) {
-        BNerr(BN_F_BNRAND, BN_R_BITS_TOO_SMALL);
-        return 0;
-    }
-
     if (bits == 0) {
+        if (top != BN_RAND_TOP_ANY || bottom != BN_RAND_BOTTOM_ANY)
+            goto toosmall;
         BN_zero(rnd);
         return 1;
     }
+    if (bits < 0 || (bits == 1 && top > 0))
+        goto toosmall;
 
     bytes = (bits + 7) / 8;
     bit = (bits - 1) % 8;
@@ -88,6 +87,10 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
     OPENSSL_clear_free(buf, bytes);
     bn_check_top(rnd);
     return (ret);
+
+toosmall:
+    BNerr(BN_F_BNRAND, BN_R_BITS_TOO_SMALL);
+    return 0;
 }
 
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
