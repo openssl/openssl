@@ -586,6 +586,7 @@ static int custom_ext = 0;
 
 /* This set based on extension callbacks */
 static int custom_ext_error = 0;
+static int custom_ext_sent_on_resume = 0;
 
 static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
                                    const unsigned char *in, size_t inlen,
@@ -696,6 +697,10 @@ static int custom_ext_3_cli_parse_cb(SSL *s, unsigned int ext_type,
         custom_ext_error = 1;
     if (memcmp(custom_ext_srv_string, in, inlen) != 0)
         custom_ext_error = 1;   /* Check for "defg" */
+    if (SSL_cache_hit(s)) {
+        custom_ext_sent_on_resume = 1;
+    }
+
     return 1;
 }
 
@@ -2021,6 +2026,12 @@ int main(int argc, char *argv[])
             ret = 1;
             goto err;
         }
+    }
+
+    if (custom_ext && reuse && number > 1 && !custom_ext_sent_on_resume) {
+        fprintf(stderr, "Custom extension not sent on session resume");
+        ret = 1;
+        goto err;
     }
 
     if (server_sess_out != NULL) {
