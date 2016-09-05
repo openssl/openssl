@@ -10,10 +10,10 @@
 #include "packet_locl.h"
 
 /*
- * Allocate bytes in the PACKETW_BUF for the output. This reserves the bytes
+ * Allocate bytes in the WPACKET_BUF for the output. This reserves the bytes
  * and count them as "written", but doesn't actually do the writing.
  */
-static unsigned char *PACKETW_BUF_allocate(PACKETW_BUF *wbuf, size_t len)
+static unsigned char *WPACKET_BUF_allocate(WPACKET_BUF *wbuf, size_t len)
 {
     unsigned char *ret = wbuf->curr;
 
@@ -40,19 +40,19 @@ static unsigned char *PACKETW_BUF_allocate(PACKETW_BUF *wbuf, size_t len)
 }
 
 /*
- * Initialise a PACKETW with the buffer in |buf|. The buffer must exist
- * for the whole time that the PACKETW is being used. Additionally |lenbytes| of
+ * Initialise a WPACKET with the buffer in |buf|. The buffer must exist
+ * for the whole time that the WPACKET is being used. Additionally |lenbytes| of
  * data is preallocated at the start of the buffer to store the length of the
- * PACKETW once we know it.
+ * WPACKET once we know it.
  */
-int PACKETW_init_len(PACKETW *pkt, BUF_MEM *buf, size_t lenbytes)
+int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
 {
-    PACKETW_BUF *wbuf;
+    WPACKET_BUF *wbuf;
     /* Sanity check */
     if (buf == NULL)
         return 0;
 
-    wbuf = OPENSSL_zalloc(sizeof(PACKETW_BUF));
+    wbuf = OPENSSL_zalloc(sizeof(WPACKET_BUF));
     if (wbuf == NULL) {
         pkt->isclosed = 1;
         return 0;
@@ -75,7 +75,7 @@ int PACKETW_init_len(PACKETW *pkt, BUF_MEM *buf, size_t lenbytes)
         return 1;
     }
 
-    pkt->packet_len = PACKETW_BUF_allocate(wbuf, lenbytes);
+    pkt->packet_len = WPACKET_BUF_allocate(wbuf, lenbytes);
     if (pkt->packet_len == NULL) {
         OPENSSL_free(wbuf);
         pkt->wbuf = NULL;
@@ -87,23 +87,23 @@ int PACKETW_init_len(PACKETW *pkt, BUF_MEM *buf, size_t lenbytes)
 }
 
 /*
- * Same as PACKETW_init_len except there is no preallocation of the PACKETW
+ * Same as WPACKET_init_len except there is no preallocation of the WPACKET
  * length.
  */
-int PACKETW_init(PACKETW *pkt, BUF_MEM *buf)
+int WPACKET_init(WPACKET *pkt, BUF_MEM *buf)
 {
-    return PACKETW_init_len(pkt, buf, 0);
+    return WPACKET_init_len(pkt, buf, 0);
 }
 
 /*
- * Set the PACKETW length, and the location for where we should write that
- * length. Normally this will be at the start of the PACKETW, and therefore
- * the PACKETW would have been initialised via PACKETW_init_len(). However there
+ * Set the WPACKET length, and the location for where we should write that
+ * length. Normally this will be at the start of the WPACKET, and therefore
+ * the WPACKET would have been initialised via WPACKET_init_len(). However there
  * is the possibility that the length needs to be written to some other location
- * other than the start of the PACKETW. In that case init via PACKETW_init() and
+ * other than the start of the WPACKET. In that case init via WPACKET_init() and
  * then set the location for the length using this function.
  */
-int PACKETW_set_packet_len(PACKETW *pkt, unsigned char *packet_len,
+int WPACKET_set_packet_len(WPACKET *pkt, unsigned char *packet_len,
                            size_t lenbytes)
 {
     /* We only allow this to be set once */
@@ -116,7 +116,7 @@ int PACKETW_set_packet_len(PACKETW *pkt, unsigned char *packet_len,
     return 1;
 }
 
-int PACKETW_set_flags(PACKETW *pkt, unsigned int flags)
+int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
 {
     pkt->flags = flags;
 
@@ -124,12 +124,12 @@ int PACKETW_set_flags(PACKETW *pkt, unsigned int flags)
 }
 
 /*
- * Closes the PACKETW and marks it as invalid for future writes. It also writes
+ * Closes the WPACKET and marks it as invalid for future writes. It also writes
  * out the length of the packet to the required location (normally the start
- * of the PACKETW) if appropriate. A PACKETW cannot be closed if it has an
+ * of the WPACKET) if appropriate. A WPACKET cannot be closed if it has an
  * active sub-packet.
  */
-int PACKETW_close(PACKETW *pkt)
+int WPACKET_close(WPACKET *pkt)
 {
     size_t packlen;
 
@@ -137,12 +137,12 @@ int PACKETW_close(PACKETW *pkt)
         return 0;
 
     packlen = pkt->wbuf->written - pkt->pwritten;
-    if (packlen == 0 && pkt->flags & OPENSSL_PACKETW_FLAGS_NON_ZERO_LENGTH)
+    if (packlen == 0 && pkt->flags & OPENSSL_WPACKET_FLAGS_NON_ZERO_LENGTH)
         return 0;
 
     if (packlen == 0
-            && pkt->flags & OPENSSL_PACKETW_FLAGS_ABANDON_ON_ZERO_LENGTH) {
-        /* Deallocate any bytes allocated for the length of the PACKETW */
+            && pkt->flags & OPENSSL_WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH) {
+        /* Deallocate any bytes allocated for the length of the WPACKET */
         if ((pkt->wbuf->curr - pkt->lenbytes) == pkt->packet_len) {
             pkt->wbuf->written -= pkt->lenbytes;
             pkt->wbuf->curr -= pkt->lenbytes;
@@ -152,7 +152,7 @@ int PACKETW_close(PACKETW *pkt)
         pkt->packet_len = NULL;
     }
 
-    /* Write out the PACKETW length if needed */
+    /* Write out the WPACKET length if needed */
     if (pkt->packet_len != NULL) {
         size_t lenbytes;
 
@@ -189,7 +189,7 @@ int PACKETW_close(PACKETW *pkt)
  * Additionally |lenbytes| of data is preallocated at the start of the
  * sub-packet to store its length once we know it.
  */
-int PACKETW_get_sub_packet_len(PACKETW *pkt, PACKETW *subpkt, size_t lenbytes)
+int WPACKET_get_sub_packet_len(WPACKET *pkt, WPACKET *subpkt, size_t lenbytes)
 {
     if (pkt->isclosed || pkt->haschild || subpkt == NULL)
         return 0;
@@ -207,7 +207,7 @@ int PACKETW_get_sub_packet_len(PACKETW *pkt, PACKETW *subpkt, size_t lenbytes)
         return 1;
     }
 
-    subpkt->packet_len = PACKETW_BUF_allocate(pkt->wbuf, lenbytes);
+    subpkt->packet_len = WPACKET_BUF_allocate(pkt->wbuf, lenbytes);
     if (subpkt->packet_len == NULL) {
         subpkt->isclosed = 1;
         return 0;
@@ -219,20 +219,20 @@ int PACKETW_get_sub_packet_len(PACKETW *pkt, PACKETW *subpkt, size_t lenbytes)
 }
 
 /*
- * Same as PACKETW_get_sub_packet_len() except no bytes are pre-allocated for
+ * Same as WPACKET_get_sub_packet_len() except no bytes are pre-allocated for
  * the sub-packet length.
  */
-int PACKETW_get_sub_packet(PACKETW *pkt, PACKETW *subpkt)
+int WPACKET_get_sub_packet(WPACKET *pkt, WPACKET *subpkt)
 {
-    return PACKETW_get_sub_packet_len(pkt, subpkt, 0);
+    return WPACKET_get_sub_packet_len(pkt, subpkt, 0);
 }
 
 /*
- * Allocate some bytes in the PACKETW for writing. That number of bytes is
+ * Allocate some bytes in the WPACKET for writing. That number of bytes is
  * marked as having been written, and a pointer to their location is stored in
  * |*allocbytes|.
  */
-int PACKETW_allocate_bytes(PACKETW *pkt, size_t bytes,
+int WPACKET_allocate_bytes(WPACKET *pkt, size_t bytes,
                            unsigned char **allocbytes)
 {
     unsigned char *data;
@@ -240,7 +240,7 @@ int PACKETW_allocate_bytes(PACKETW *pkt, size_t bytes,
     if (pkt->isclosed || pkt->haschild || bytes == 0)
         return 0;
 
-    data = PACKETW_BUF_allocate(pkt->wbuf, bytes);
+    data = WPACKET_BUF_allocate(pkt->wbuf, bytes);
     if (data == NULL)
         return 0;
 
@@ -250,17 +250,17 @@ int PACKETW_allocate_bytes(PACKETW *pkt, size_t bytes,
 }
 
 /*
- * Write the value stored in |val| into the PACKETW. The value will consome
+ * Write the value stored in |val| into the WPACKET. The value will consome
  * |bytes| amount of storage. An error will occur if |val| cannot be accommdated
  * in |bytes| storage, e.g. attempting to write the value 256 into 1 byte will
  * fail.
  */
-int PACKETW_put_bytes(PACKETW *pkt, unsigned int val, size_t bytes)
+int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t bytes)
 {
     unsigned char *data;
 
     if (bytes > sizeof(unsigned int)
-            || !PACKETW_allocate_bytes(pkt, bytes, &data))
+            || !WPACKET_allocate_bytes(pkt, bytes, &data))
         return 0;
 
     data += bytes - 1;
@@ -278,10 +278,10 @@ int PACKETW_put_bytes(PACKETW *pkt, unsigned int val, size_t bytes)
 }
 
 /*
- * Set a maximum size that we will not allow the PACKETW to grow beyond. If not
+ * Set a maximum size that we will not allow the WPACKET to grow beyond. If not
  * set then there is no maximum.
  */
-int PACKETW_set_max_size(PACKETW *pkt, size_t maxsize)
+int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
 {
     pkt->wbuf->maxsize = maxsize;
 
@@ -289,16 +289,16 @@ int PACKETW_set_max_size(PACKETW *pkt, size_t maxsize)
 }
 
 /*
- * Copy |len| bytes of data from |*src| into the PACKETW.
+ * Copy |len| bytes of data from |*src| into the WPACKET.
  */
-int PACKETW_memcpy(PACKETW *pkt, const void *src, size_t len)
+int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
 {
     unsigned char *dest;
 
     if (len == 0)
         return 1;
 
-    if (!PACKETW_allocate_bytes(pkt, len, &dest))
+    if (!WPACKET_allocate_bytes(pkt, len, &dest))
         return 0;
 
     memcpy(dest, src, len);
@@ -308,9 +308,9 @@ int PACKETW_memcpy(PACKETW *pkt, const void *src, size_t len)
 
 /*
  * Return the total number of bytes written so far to the underlying buffer.
- * This might includes bytes written by a parent PACKETW.
+ * This might includes bytes written by a parent WPACKET.
  */
-int PACKETW_get_total_written(PACKETW *pkt, size_t *written)
+int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
 {
     if (pkt->isclosed || written == NULL)
         return 0;
@@ -321,10 +321,10 @@ int PACKETW_get_total_written(PACKETW *pkt, size_t *written)
 }
 
 /*
- * Returns the length of this PACKETW so far. This excludes any bytes allocated
+ * Returns the length of this WPACKET so far. This excludes any bytes allocated
  * for the length itself.
  */
-int PACKETW_get_length(PACKETW *pkt, size_t *len)
+int WPACKET_get_length(WPACKET *pkt, size_t *len)
 {
     if (pkt->isclosed || len == NULL)
         return 0;

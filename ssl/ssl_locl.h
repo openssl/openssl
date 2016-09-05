@@ -457,7 +457,7 @@ struct ssl_method_st {
     long (*ssl_ctrl) (SSL *s, int cmd, long larg, void *parg);
     long (*ssl_ctx_ctrl) (SSL_CTX *ctx, int cmd, long larg, void *parg);
     const SSL_CIPHER *(*get_cipher_by_char) (const unsigned char *ptr);
-    int (*put_cipher_by_char) (const SSL_CIPHER *cipher, PACKETW *pkt,
+    int (*put_cipher_by_char) (const SSL_CIPHER *cipher, WPACKET *pkt,
                                size_t *len);
     int (*ssl_pending) (const SSL *s);
     int (*num_ciphers) (void);
@@ -1586,10 +1586,10 @@ typedef struct ssl3_enc_method {
     /* Set the handshake header */
     int (*set_handshake_header) (SSL *s, int type, unsigned long len);
     /* Set the handshake header */
-    int (*set_handshake_header2) (SSL *s, PACKETW *pkt, PACKETW *body,
+    int (*set_handshake_header2) (SSL *s, WPACKET *pkt, WPACKET *body,
                                   int type);
     /* Close construction of the handshake message */
-    int (*close_construct_packet) (SSL *s, PACKETW *pkt);
+    int (*close_construct_packet) (SSL *s, WPACKET *pkt);
     /* Write out handshake message */
     int (*do_write) (SSL *s);
 } SSL3_ENC_METHOD;
@@ -1865,7 +1865,7 @@ __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char_old(const SSL_CIPHER *c, unsigned char *p);
-__owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, PACKETW *pkt,
+__owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt,
                                    size_t *len);
 int ssl3_init_finished_mac(SSL *s);
 __owur int ssl3_setup_key_block(SSL *s);
@@ -1906,12 +1906,12 @@ __owur int ssl3_do_change_cipher_spec(SSL *ssl);
 __owur long ssl3_default_timeout(void);
 
 __owur int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
-__owur int ssl3_set_handshake_header2(SSL *s, PACKETW *pkt, PACKETW *body,
+__owur int ssl3_set_handshake_header2(SSL *s, WPACKET *pkt, WPACKET *body,
                                       int htype);
-__owur int tls_close_construct_packet(SSL *s, PACKETW *pkt);
-__owur int dtls1_set_handshake_header2(SSL *s, PACKETW *pkt, PACKETW *body,
+__owur int tls_close_construct_packet(SSL *s, WPACKET *pkt);
+__owur int dtls1_set_handshake_header2(SSL *s, WPACKET *pkt, WPACKET *body,
                                        int htype);
-__owur int dtls1_close_construct_packet(SSL *s, PACKETW *pkt);
+__owur int dtls1_close_construct_packet(SSL *s, WPACKET *pkt);
 __owur int ssl3_handshake_write(SSL *s);
 
 __owur int ssl_allow_compression(SSL *s);
@@ -2020,7 +2020,7 @@ __owur EVP_PKEY *ssl_generate_pkey_curve(int id);
 __owur int tls1_shared_list(SSL *s,
                             const unsigned char *l1, size_t l1len,
                             const unsigned char *l2, size_t l2len, int nmatch);
-__owur int ssl_add_clienthello_tlsext(SSL *s, PACKETW *pkt, int *al);
+__owur int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al);
 __owur unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
                                                  unsigned char *limit, int *al);
 __owur int ssl_parse_clienthello_tlsext(SSL *s, PACKET *pkt);
@@ -2075,7 +2075,7 @@ __owur int ssl_parse_clienthello_renegotiate_ext(SSL *s, PACKET *pkt, int *al);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur size_t tls12_copy_sigalgs_old(SSL *s, unsigned char *out,
                                      const unsigned char *psig, size_t psiglen);
-__owur int tls12_copy_sigalgs(SSL *s, PACKETW *pkt,
+__owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
                               const unsigned char *psig, size_t psiglen);
 __owur int tls1_save_sigalgs(SSL *s, const unsigned char *data, int dsize);
 __owur int tls1_process_sigalgs(SSL *s);
@@ -2125,7 +2125,7 @@ __owur int custom_ext_parse(SSL *s, int server,
                             int *al);
 __owur int custom_ext_add_old(SSL *s, int server, unsigned char **pret,
                               unsigned char *limit, int *al);
-__owur int custom_ext_add(SSL *s, int server, PACKETW *pkt, int *al);
+__owur int custom_ext_add(SSL *s, int server, WPACKET *pkt, int *al);
 
 __owur int custom_exts_copy(custom_ext_methods *dst,
                             const custom_ext_methods *src);

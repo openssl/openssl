@@ -562,25 +562,25 @@ typedef struct packetw_buf {
     size_t written;
 
     /*
-     * Maximum number of bytes we will allow to be written to this PACKETW. Zero
+     * Maximum number of bytes we will allow to be written to this WPACKET. Zero
      * if no maximum
      */
     size_t maxsize;
-} PACKETW_BUF;
+} WPACKET_BUF;
 
-typedef struct packetw_st PACKETW;
+typedef struct packetw_st WPACKET;
 struct packetw_st {
-    /* The parent PACKETW if we have one or NULL otherwise */
-    PACKETW *parent;
+    /* The parent WPACKET if we have one or NULL otherwise */
+    WPACKET *parent;
 
     /* The actual buffer - shared with sub-packets */
-    PACKETW_BUF *wbuf;
+    WPACKET_BUF *wbuf;
 
-    /* Flags for this PACKETW */
+    /* Flags for this WPACKET */
     unsigned int flags;
 
     /*
-     * Pointer to where the length of this PACKETW goes (or NULL if we don't
+     * Pointer to where the length of this WPACKET goes (or NULL if we don't
      * write the length)
      */
     unsigned char *packet_len;
@@ -594,35 +594,35 @@ struct packetw_st {
     /* True if we have an active sub-packet or false otherwise */
     int haschild;
 
-    /* True if PACKETW_close() has been called on this PACKETW */
+    /* True if WPACKET_close() has been called on this WPACKET */
     int isclosed;
 };
 
 /* Flags */
-#define OPENSSL_PACKETW_FLAGS_NONE                      0
-/* Error on PACKETW_close() if no data written to the PACKETW */
-#define OPENSSL_PACKETW_FLAGS_NON_ZERO_LENGTH           1
+#define OPENSSL_WPACKET_FLAGS_NONE                      0
+/* Error on WPACKET_close() if no data written to the WPACKET */
+#define OPENSSL_WPACKET_FLAGS_NON_ZERO_LENGTH           1
 /*
- * Abandon all changes on PACKETW_close() if no data written to the PACKETW,
+ * Abandon all changes on WPACKET_close() if no data written to the WPACKET,
  * i.e. this does not write out a zero packet length
  */
-#define OPENSSL_PACKETW_FLAGS_ABANDON_ON_ZERO_LENGTH    2
+#define OPENSSL_WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH    2
 
-int PACKETW_init_len(PACKETW *pkt, BUF_MEM *buf, size_t lenbytes);
-int PACKETW_init(PACKETW *pkt, BUF_MEM *buf);
-int PACKETW_set_flags(PACKETW *pkt, unsigned int flags);
-int PACKETW_set_packet_len(PACKETW *pkt, unsigned char *packet_len,
+int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes);
+int WPACKET_init(WPACKET *pkt, BUF_MEM *buf);
+int WPACKET_set_flags(WPACKET *pkt, unsigned int flags);
+int WPACKET_set_packet_len(WPACKET *pkt, unsigned char *packet_len,
                            size_t lenbytes);
-int PACKETW_close(PACKETW *pkt);
-int PACKETW_get_sub_packet_len(PACKETW *pkt, PACKETW *subpkt, size_t lenbytes);
-int PACKETW_get_sub_packet(PACKETW *pkt, PACKETW *subpkt);
-int PACKETW_allocate_bytes(PACKETW *pkt, size_t bytes,
+int WPACKET_close(WPACKET *pkt);
+int WPACKET_get_sub_packet_len(WPACKET *pkt, WPACKET *subpkt, size_t lenbytes);
+int WPACKET_get_sub_packet(WPACKET *pkt, WPACKET *subpkt);
+int WPACKET_allocate_bytes(WPACKET *pkt, size_t bytes,
                            unsigned char **allocbytes);
-int PACKETW_put_bytes(PACKETW *pkt, unsigned int val, size_t bytes);
-int PACKETW_set_max_size(PACKETW *pkt, size_t maxsize);
-int PACKETW_memcpy(PACKETW *pkt, const void *src, size_t len);
-int PACKETW_get_total_written(PACKETW *pkt, size_t *written);
-int PACKETW_get_length(PACKETW *pkt, size_t *len);
+int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t bytes);
+int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize);
+int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len);
+int WPACKET_get_total_written(WPACKET *pkt, size_t *written);
+int WPACKET_get_length(WPACKET *pkt, size_t *len);
 
 # ifdef __cplusplus
 }
