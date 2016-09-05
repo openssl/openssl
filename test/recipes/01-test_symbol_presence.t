@@ -69,6 +69,7 @@ foreach my $libname (@libnames) {
             map { s|;||; s|\s+||g; $_ }
             grep { $in_global = 1 if m|global:|;
                    $in_global = 0 if m|local:|;
+                   $in_global = 0 if m|\}|;
                    $in_global && m|;|; } @def_lines;
 
         note "Number of lines in \@nm_lines after massaging: ", scalar @nm_lines;
