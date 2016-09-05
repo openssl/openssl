@@ -785,9 +785,8 @@ static void sv_usage(void)
     fprintf(stderr, " -client_max_proto <string> - Maximum version the client should support\n");
     fprintf(stderr, " -should_negotiate <string> - The version that should be negotiated, fail-client or fail-server\n");
 #ifndef OPENSSL_NO_CT
-    fprintf(stderr, " -noct         - no certificate transparency\n");
-    fprintf(stderr, " -requestct    - request certificate transparency\n");
-    fprintf(stderr, " -requirect    - require certificate transparency\n");
+    fprintf(stderr, " -noct - disable certificate transparency checks\n");
+    fprintf(stderr, " -ct   - require at least one valid signed certificate timestamp\n");
 #endif
     fprintf(stderr, " -sn_client <string>  - have client request this servername\n");
     fprintf(stderr, " -sn_server1 <string> - have server context 1 respond to this servername\n");
