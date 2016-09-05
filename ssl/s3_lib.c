@@ -2790,16 +2790,16 @@ int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len)
 }
 
 /*
- * Temporary name. To be renamed ssl3_set_handshake_header() once all PACKETW
+ * Temporary name. To be renamed ssl3_set_handshake_header() once all WPACKET
  * conversion is complete. The old ssl3_set_handshake_heder() can be deleted
  * at that point.
  * TODO - RENAME ME
  */
-int ssl3_set_handshake_header2(SSL *s, PACKETW *pkt, PACKETW *body, int htype)
+int ssl3_set_handshake_header2(SSL *s, WPACKET *pkt, WPACKET *body, int htype)
 {
     /* Set the content type and 3 bytes for the message len */
-    if (!PACKETW_put_bytes(pkt, htype, 1)
-            || !PACKETW_get_sub_packet_len(pkt, body, 3))
+    if (!WPACKET_put_bytes(pkt, htype, 1)
+            || !WPACKET_get_sub_packet_len(pkt, body, 3))
         return 0;
 
     return 1;
@@ -3573,7 +3573,7 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 
 /*
  * Old version of the ssl3_put_cipher_by_char function used by code that has not
- * yet been converted to PACKETW yet. It will be deleted once PACKETW conversion
+ * yet been converted to WPACKET yet. It will be deleted once WPACKET conversion
  * is complete.
  * TODO - DELETE ME
  */
@@ -3591,14 +3591,14 @@ int ssl3_put_cipher_by_char_old(const SSL_CIPHER *c, unsigned char *p)
     return (2);
 }
 
-int ssl3_put_cipher_by_char(const SSL_CIPHER *c, PACKETW *pkt, size_t *len)
+int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt, size_t *len)
 {
     if ((c->id & 0xff000000) != 0x03000000) {
         *len = 0;
         return 1;
     }
 
-    if (!PACKETW_put_bytes(pkt, c->id & 0xffff, 2))
+    if (!WPACKET_put_bytes(pkt, c->id & 0xffff, 2))
         return 0;
 
     *len = 2;

@@ -1192,12 +1192,12 @@ void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
 }
 
 /*
- * Temporary name. To be renamed dtls1_set_handshake_header() once all PACKETW
+ * Temporary name. To be renamed dtls1_set_handshake_header() once all WPACKET
  * conversion is complete. The old dtls1_set_handshake_heder() can be deleted
  * at that point.
  * TODO - RENAME ME
  */
-int dtls1_set_handshake_header2(SSL *s, PACKETW *pkt, PACKETW *body, int htype)
+int dtls1_set_handshake_header2(SSL *s, WPACKET *pkt, WPACKET *body, int htype)
 {
     unsigned char *header;
     dtls1_set_message_header(s, htype, 0, 0, 0);
@@ -1206,20 +1206,20 @@ int dtls1_set_handshake_header2(SSL *s, PACKETW *pkt, PACKETW *body, int htype)
      * We allocate space at the start for the message header. This gets filled
      * in later
      */
-    if (!PACKETW_allocate_bytes(pkt, DTLS1_HM_HEADER_LENGTH, &header)
-            || !PACKETW_get_sub_packet(pkt, body))
+    if (!WPACKET_allocate_bytes(pkt, DTLS1_HM_HEADER_LENGTH, &header)
+            || !WPACKET_get_sub_packet(pkt, body))
         return 0;
 
     return 1;
 }
 
-int dtls1_close_construct_packet(SSL *s, PACKETW *pkt)
+int dtls1_close_construct_packet(SSL *s, WPACKET *pkt)
 {
     size_t msglen;
 
-    if (!PACKETW_get_length(pkt, &msglen)
+    if (!WPACKET_get_length(pkt, &msglen)
             || msglen > INT_MAX
-            || !PACKETW_close(pkt))
+            || !WPACKET_close(pkt))
         return 0;
     s->d1->w_msg_hdr.msg_len = msglen - DTLS1_HM_HEADER_LENGTH;
     s->d1->w_msg_hdr.frag_len = msglen - DTLS1_HM_HEADER_LENGTH;

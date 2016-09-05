@@ -57,13 +57,13 @@ int ssl3_do_write(SSL *s, int type)
     return (0);
 }
 
-int tls_close_construct_packet(SSL *s, PACKETW *pkt)
+int tls_close_construct_packet(SSL *s, WPACKET *pkt)
 {
     size_t msglen;
 
-    if (!PACKETW_get_length(pkt, &msglen)
+    if (!WPACKET_get_length(pkt, &msglen)
             || msglen > INT_MAX
-            || !PACKETW_close(pkt))
+            || !WPACKET_close(pkt))
         return 0;
     s->init_num = (int)msglen;
     s->init_off = 0;

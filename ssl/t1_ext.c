@@ -72,8 +72,8 @@ int custom_ext_parse(SSL *s, int server,
 
 /*
  * Request custom extension data from the application and add to the return
- * buffer. This is the old style function signature prior to PACKETW. This is
- * here temporarily until the conversion to PACKETW is completed, i.e. it is
+ * buffer. This is the old style function signature prior to WPACKET. This is
+ * here temporarily until the conversion to WPACKET is completed, i.e. it is
  * used by code that hasn't been converted yet.
  * TODO - REMOVE THIS FUNCTION
  */
@@ -139,7 +139,7 @@ int custom_ext_add_old(SSL *s, int server,
  * Request custom extension data from the application and add to the return
  * buffer.
  */
-int custom_ext_add(SSL *s, int server, PACKETW *pkt, int *al)
+int custom_ext_add(SSL *s, int server, WPACKET *pkt, int *al)
 {
     custom_ext_methods *exts = server ? &s->cert->srv_ext : &s->cert->cli_ext;
     custom_ext_method *meth;
@@ -148,7 +148,7 @@ int custom_ext_add(SSL *s, int server, PACKETW *pkt, int *al)
     for (i = 0; i < exts->meths_count; i++) {
         const unsigned char *out = NULL;
         size_t outlen = 0;
-        PACKETW spkt;
+        WPACKET spkt;
 
         meth = exts->meths + i;
 
@@ -172,10 +172,10 @@ int custom_ext_add(SSL *s, int server, PACKETW *pkt, int *al)
                 continue;       /* skip this extension */
         }
 
-        if (!PACKETW_put_bytes(pkt, meth->ext_type, 2)
-                || !PACKETW_get_sub_packet_len(pkt, &spkt, 2)
-                || (outlen > 0 && !PACKETW_memcpy(&spkt, out, outlen))
-                || !PACKETW_close(&spkt)) {
+        if (!WPACKET_put_bytes(pkt, meth->ext_type, 2)
+                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
+                || (outlen > 0 && !WPACKET_memcpy(&spkt, out, outlen))
+                || !WPACKET_close(&spkt)) {
             *al = SSL_AD_INTERNAL_ERROR;
             return 0;
         }
