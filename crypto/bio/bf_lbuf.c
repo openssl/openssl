@@ -31,6 +31,8 @@ static const BIO_METHOD methods_linebuffer = {
     BIO_TYPE_LINEBUFFER,
     "linebuffer",
     linebuffer_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     linebuffer_read,
     linebuffer_puts,
     linebuffer_gets,

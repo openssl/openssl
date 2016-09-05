@@ -26,6 +26,8 @@ static const BIO_METHOD methods_buffer = {
     BIO_TYPE_BUFFER,
     "buffer",
     buffer_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     buffer_read,
     buffer_puts,
     buffer_gets,

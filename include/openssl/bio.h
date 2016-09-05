@@ -239,8 +239,16 @@ void BIO_clear_flags(BIO *b, int flags);
 
 typedef long (*BIO_callback_fn)(BIO *b, int oper, const char *argp, int argi,
                                 long argl, long ret);
+typedef long (*BIO_callback_fn_ex)(BIO *b, int oper, const char *argp,
+                                   size_t len, int argi,
+                                   long argl, int ret, size_t *processed,
+                                   long *lret);
 BIO_callback_fn BIO_get_callback(const BIO *b);
 void BIO_set_callback(BIO *b, BIO_callback_fn callback);
+
+BIO_callback_fn_ex BIO_get_callback_ex(const BIO *b);
+void BIO_set_callback_ex(BIO *b, BIO_callback_fn_ex callback);
+
 char *BIO_get_callback_arg(const BIO *b);
 void BIO_set_callback_arg(BIO *b, char *arg);
 
@@ -545,6 +553,7 @@ int BIO_get_shutdown(BIO *a);
 void BIO_vfree(BIO *a);
 int BIO_up_ref(BIO *a);
 int BIO_read(BIO *b, void *data, int len);
+int BIO_read_ex(BIO *b, void *out, size_t outl, size_t *read);
 int BIO_gets(BIO *bp, char *buf, int size);
 int BIO_write(BIO *b, const void *data, int len);
 int BIO_puts(BIO *bp, const char *buf);
@@ -737,8 +746,11 @@ int (*BIO_meth_get_write(BIO_METHOD *biom)) (BIO *, const char *, int);
 int BIO_meth_set_write(BIO_METHOD *biom,
                        int (*write) (BIO *, const char *, int));
 int (*BIO_meth_get_read(BIO_METHOD *biom)) (BIO *, char *, int);
+int (*BIO_meth_get_read_ex(BIO_METHOD *biom)) (BIO *, char *, size_t, size_t *);
 int BIO_meth_set_read(BIO_METHOD *biom,
                       int (*read) (BIO *, char *, int));
+int BIO_meth_set_read_ex(BIO_METHOD *biom,
+                         int (*bread) (BIO *, char *, size_t, size_t *));
 int (*BIO_meth_get_puts(BIO_METHOD *biom)) (BIO *, const char *);
 int BIO_meth_set_puts(BIO_METHOD *biom,
                       int (*puts) (BIO *, const char *));
@@ -794,6 +806,7 @@ int ERR_load_BIO_strings(void);
 # define BIO_F_BIO_PARSE_HOSTSERV                         136
 # define BIO_F_BIO_PUTS                                   110
 # define BIO_F_BIO_READ                                   111
+# define BIO_F_BIO_READ_EX                                105
 # define BIO_F_BIO_SOCKET                                 140
 # define BIO_F_BIO_SOCKET_NBIO                            142
 # define BIO_F_BIO_SOCK_INFO                              141

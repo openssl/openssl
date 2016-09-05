@@ -63,11 +63,44 @@ int BIO_meth_set_write(BIO_METHOD *biom,
 
 int (*BIO_meth_get_read(BIO_METHOD *biom)) (BIO *, char *, int)
 {
+    return biom->bread_old;
+}
+
+int (*BIO_meth_get_read_ex(BIO_METHOD *biom)) (BIO *, char *, size_t, size_t *)
+{
     return biom->bread;
+}
+
+/* Conversion for old style bread to new style */
+int bread_conv(BIO *bio, char *out, size_t outl, size_t *read)
+{
+    int ret;
+
+    if (outl > INT_MAX)
+        return 0;
+
+    ret = bio->method->bread_old(bio, out, (int)outl);
+
+    if (ret <= 0) {
+        *read = 0;
+        return ret;
+    }
+
+    *read = (size_t)ret;
+
+    return 1;
 }
 
 int BIO_meth_set_read(BIO_METHOD *biom,
                       int (*bread) (BIO *, char *, int))
+{
+    biom->bread_old = bread;
+    biom->bread = bread_conv;
+    return 1;
+}
+
+int BIO_meth_set_read_ex(BIO_METHOD *biom,
+                         int (*bread) (BIO *, char *, size_t, size_t *))
 {
     biom->bread = bread;
     return 1;

@@ -88,6 +88,7 @@ static const BIO_METHOD methods_slg = {
     BIO_TYPE_MEM, "syslog",
     slg_write,
     NULL,
+    NULL,
     slg_puts,
     NULL,
     slg_ctrl,

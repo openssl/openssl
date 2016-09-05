@@ -39,6 +39,8 @@ static const BIO_METHOD methods_sockp = {
     BIO_TYPE_SOCKET,
     "socket",
     sock_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     sock_read,
     sock_puts,
     NULL,                       /* sock_gets, */

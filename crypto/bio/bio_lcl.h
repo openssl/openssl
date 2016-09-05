@@ -114,7 +114,8 @@ typedef struct bio_f_buffer_ctx_struct {
 struct bio_st {
     const BIO_METHOD *method;
     /* bio, mode, argp, argi, argl, ret */
-    long (*callback) (struct bio_st *, int, const char *, int, long, long);
+    BIO_callback_fn callback;
+    BIO_callback_fn_ex callback_ex;
     char *cb_arg;               /* first argument for the callback */
     int init;
     int shutdown;
