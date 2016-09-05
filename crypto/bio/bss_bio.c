@@ -40,6 +40,8 @@ static const BIO_METHOD methods_biop = {
     BIO_TYPE_BIO,
     "BIO pair",
     bio_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     bio_read,
     bio_puts,
     NULL /* no bio_gets */ ,

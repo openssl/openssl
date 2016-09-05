@@ -23,6 +23,8 @@ static const BIO_METHOD null_method = {
     BIO_TYPE_NULL,
     "NULL",
     null_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     null_read,
     null_puts,
     null_gets,

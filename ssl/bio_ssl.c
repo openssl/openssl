@@ -17,7 +17,7 @@
 #include "ssl_locl.h"
 
 static int ssl_write(BIO *h, const char *buf, int num);
-static int ssl_read(BIO *h, char *buf, int size);
+static int ssl_read(BIO *b, char *out, size_t outl, size_t *read);
 static int ssl_puts(BIO *h, const char *str);
 static long ssl_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int ssl_new(BIO *h);
@@ -37,6 +37,7 @@ static const BIO_METHOD methods_sslp = {
     BIO_TYPE_SSL, "ssl",
     ssl_write,
     ssl_read,
+    NULL,
     ssl_puts,
     NULL,                       /* ssl_gets, */
     ssl_ctrl,
@@ -86,7 +87,7 @@ static int ssl_free(BIO *a)
     return 1;
 }
 
-static int ssl_read(BIO *b, char *out, int outl)
+static int ssl_read(BIO *b, char *out, size_t outl, size_t *read)
 {
     int ret = 1;
     BIO_SSL *sb;
@@ -100,6 +101,9 @@ static int ssl_read(BIO *b, char *out, int outl)
     ssl = sb->ssl;
 
     BIO_clear_retry_flags(b);
+
+    if (outl > INT_MAX)
+        return -1;
 
     ret = SSL_read(ssl, out, outl);
 
@@ -154,7 +158,13 @@ static int ssl_read(BIO *b, char *out, int outl)
     }
 
     BIO_set_retry_reason(b, retry_reason);
-    return (ret);
+
+    if (ret < 0)
+        return ret;
+
+    *read = (size_t)ret;
+
+    return 1;
 }
 
 static int ssl_write(BIO *b, const char *out, int outl)

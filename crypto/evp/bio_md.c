@@ -34,6 +34,8 @@ static long md_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 static const BIO_METHOD methods_md = {
     BIO_TYPE_MD, "message digest",
     md_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     md_read,
     NULL,                       /* md_puts, */
     md_gets,

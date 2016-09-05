@@ -35,6 +35,8 @@ static const BIO_METHOD methods_nbiof = {
     BIO_TYPE_NBIO_TEST,
     "non-blocking IO test filter",
     nbiof_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     nbiof_read,
     nbiof_puts,
     nbiof_gets,

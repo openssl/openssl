@@ -55,6 +55,8 @@ static const BIO_METHOD methods_acceptp = {
     BIO_TYPE_ACCEPT,
     "socket accept",
     acpt_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     acpt_read,
     acpt_puts,
     NULL,                       /* connect_gets, */

@@ -4208,3 +4208,8 @@ OCSP_RESPID_set_by_key                  4158	1_1_0a	EXIST::FUNCTION:OCSP
 OCSP_RESPID_match                       4159	1_1_0a	EXIST::FUNCTION:OCSP
 ASN1_ITEM_lookup                        4160	1_1_1	EXIST::FUNCTION:
 ASN1_ITEM_get                           4161	1_1_1	EXIST::FUNCTION:
+BIO_read_ex                             4162	1_1_1	EXIST::FUNCTION:
+BIO_set_callback_ex                     4163	1_1_1	EXIST::FUNCTION:
+BIO_get_callback_ex                     4164	1_1_1	EXIST::FUNCTION:
+BIO_meth_set_read_ex                    4165	1_1_1	EXIST::FUNCTION:
+BIO_meth_get_read_ex                    4166	1_1_1	EXIST::FUNCTION:

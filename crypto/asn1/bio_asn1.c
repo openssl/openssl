@@ -79,6 +79,8 @@ static const BIO_METHOD methods_asn1 = {
     BIO_TYPE_ASN1,
     "asn1",
     asn1_bio_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     asn1_bio_read,
     asn1_bio_puts,
     asn1_bio_gets,
