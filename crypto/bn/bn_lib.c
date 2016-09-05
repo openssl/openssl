@@ -1031,5 +1031,7 @@ void bn_correct_top(BIGNUM *a)
         }
         a->top = tmp_top;
     }
+    if (a->top == 0)
+        a->neg = 0;
     bn_pollute(a);
 }

@@ -57,6 +57,7 @@ including the leading character '-' which means negative, to form a valid
 hexadecimal number representation and converts them to a B<BIGNUM> and
 stores it in **B<bn>. If *B<bn> is NULL, a new B<BIGNUM> is created. If
 B<bn> is NULL, it only computes the length of valid representation.
+A "negative zero" is converted to zero.
 BN_dec2bn() is the same using the decimal system.
 
 BN_print() and BN_print_fp() write the hexadecimal encoding of B<a>,
