@@ -28,6 +28,8 @@ static const BIO_METHOD methods_nullf = {
     BIO_TYPE_NULL_FILTER,
     "NULL filter",
     nullf_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     nullf_read,
     nullf_puts,
     nullf_gets,

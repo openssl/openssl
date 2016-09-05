@@ -49,6 +49,8 @@ typedef struct b64_struct {
 static const BIO_METHOD methods_b64 = {
     BIO_TYPE_BASE64, "base64 encoding",
     b64_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     b64_read,
     b64_puts,
     NULL,                       /* b64_gets, */

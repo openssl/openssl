@@ -59,6 +59,8 @@ static const BIO_METHOD methods_connectp = {
     BIO_TYPE_CONNECT,
     "socket connect",
     conn_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     conn_read,
     conn_puts,
     NULL,                       /* connect_gets, */
