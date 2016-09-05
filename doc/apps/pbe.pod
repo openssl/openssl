@@ -15,7 +15,7 @@ B<openssl> B<pbe>
 [B<-N cost_param>]
 [B<-r block_param>]
 [B<-p parallel_param>]
-[B<-memsize size_mib>]
+[B<-maxalloc size_mib>]
 [B<-dklen bytes>]
 [B<-* hash_fnc>]
 
@@ -70,10 +70,10 @@ For scrypt, r is the block size parameter.
 
 For scrypt, p gives the parallelization parameter.
 
-=item B<-memsize size_mib>
+=item B<-maxalloc size_mib>
 
 For derivation functions which are memory hard, this parameter defines the
-maximum amount of memory in megabytes (MiB) which OpenSSL will allocate in the
+maximum amount of memory in Megabytes (MiB) which OpenSSL will allocate in the
 computation of the key. The default is 128 MiB.
 
 =item B<-dklen bytes>

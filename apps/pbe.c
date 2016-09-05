@@ -91,7 +91,7 @@ typedef enum OPTION_choice {
     OPT_ITERCNT,
 #ifndef OPENSSL_NO_SCRYPT
     OPT_PARAM_N, OPT_PARAM_R, OPT_PARAM_P,
-    OPT_MEMSIZE,
+    OPT_MAXALLOC,
 #endif
     OPT_DKLEN, OPT_DIGEST
 } OPTION_CHOICE;
@@ -107,7 +107,7 @@ OPTIONS pbe_options[] = {
     {"N", OPT_PARAM_N, 'p', "CPU/memory cost parameter for scrypt"},
     {"r", OPT_PARAM_R, 'p', "Block size parameter for scrypt"},
     {"p", OPT_PARAM_P, 'p', "Parallelization parameter for scrypt"},
-    {"memsize", OPT_MEMSIZE, 'p', "Maximum memory allocation in MiB (default is 128 MiB)"},
+    {"maxalloc", OPT_MAXALLOC, 'p', "Maximum memory allocation in MiB (default is 128 MiB)"},
 #endif
     {"dklen", OPT_DKLEN, 'p', "Key derivation output key length"},
     {"", OPT_DIGEST, '-', "Any supported digest"},
@@ -129,7 +129,7 @@ int pbe_main(int argc, char **argv)
     unsigned int itercnt = 0, dklen = 0;
 #ifndef OPENSSL_NO_SCRYPT
     unsigned int par_n = 0, par_r = 0, par_p = 0;
-    unsigned int memsize_mib = 128;
+    unsigned int maxalloc_mib = 128;
 #endif
     unsigned char *dkey = NULL;
 
@@ -179,8 +179,8 @@ int pbe_main(int argc, char **argv)
             md = m;
             break;
 #ifndef OPENSSL_NO_SCRYPT
-        case OPT_MEMSIZE:
-            memsize_mib = atoi(opt_arg());
+        case OPT_MAXALLOC:
+            maxalloc_mib = atoi(opt_arg());
             break;
 #endif
         }
@@ -291,7 +291,7 @@ int pbe_main(int argc, char **argv)
         result = PKCS5_PBKDF2_HMAC(password, passlen, (unsigned char*)salt, saltlen, itercnt, md, dklen, dkey);
 #ifndef OPENSSL_NO_SCRYPT
     } else if (kdf == PBE_KDF_SCRYPT) {
-        result = EVP_PBE_scrypt(password, passlen, (unsigned char*)salt, saltlen, par_n, par_r, par_p, memsize_mib * 1024 * 1024, dkey, dklen);
+        result = EVP_PBE_scrypt(password, passlen, (unsigned char*)salt, saltlen, par_n, par_r, par_p, maxalloc_mib * 1024 * 1024, dkey, dklen);
 #endif
     }
 
