@@ -251,6 +251,7 @@ static void ERR_STATE_free(ERR_STATE *s)
 
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
+    OPENSSL_init_crypto(0, NULL);
     err_string_lock = CRYPTO_THREAD_lock_new();
     return err_string_lock != NULL;
 }

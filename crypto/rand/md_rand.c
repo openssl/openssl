@@ -89,6 +89,7 @@ static RAND_METHOD rand_meth = {
 
 DEFINE_RUN_ONCE_STATIC(do_rand_lock_init)
 {
+    OPENSSL_init_crypto(0, NULL);
     rand_lock = CRYPTO_THREAD_lock_new();
     rand_tmp_lock = CRYPTO_THREAD_lock_new();
     return rand_lock != NULL && rand_tmp_lock != NULL;
