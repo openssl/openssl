@@ -529,7 +529,7 @@ sub testssl {
     subtest 'Custom Extension tests' => sub {
 	######################################################################
 
-	plan tests => 1;
+	plan tests => 2;
 
       SKIP: {
 	  skip "TLSv1.0 is not supported by this OpenSSL build", 1
@@ -537,6 +537,8 @@ sub testssl {
 
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext"])),
 	     'test tls1 with custom extensions');
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext", "-num", "2", "-reuse"])),
+	     'test tls1 with custom extensions and resume');
 	}
     };
 

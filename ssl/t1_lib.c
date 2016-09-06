@@ -2160,16 +2160,14 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
          */
 
         /*
-         * If this ClientHello extension was unhandled and this is a
-         * nonresumed connection, check whether the extension is a custom
-         * TLS Extension (has a custom_srv_ext_record), and if so call the
-         * callback and record the extension number so that an appropriate
-         * ServerHello may be later returned.
+         * If this ClientHello extension was unhandled, check whether the
+         * extension is a custom TLS Extension (has a custom_srv_ext_record),
+         * and if so call the callback and record the extension number so that
+         * an appropriate ServerHello may be later returned.
          */
-        else if (!s->hit) {
-            if (custom_ext_parse(s, 1, type, PACKET_data(&extension),
-                                 PACKET_remaining(&extension), al) <= 0)
-                return 0;
+        else if (custom_ext_parse(s, 1, type, PACKET_data(&extension),
+                                  PACKET_remaining(&extension), al) <= 0) {
+            return 0;
         }
     }
 
