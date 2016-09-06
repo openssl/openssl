@@ -551,7 +551,29 @@ __owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
 
 /* Writeable packets */
 
-typedef struct packetw_buf {
+typedef struct wpacket_sub WPACKET_SUB;
+struct wpacket_sub {
+    /* The parent WPACKET_SUB if we have one or NULL otherwise */
+    WPACKET_SUB *parent;
+
+    /*
+     * Pointer to where the length of this WPACKET goes (or NULL if we don't
+     * write the length)
+     */
+    unsigned char *packet_len;
+
+    /* Number of bytes in the packet_len */
+    size_t lenbytes;
+
+    /* Number of bytes written to the buf prior to this packet starting */
+    size_t pwritten;
+
+    /* Flags for this sub-packet */
+    unsigned int flags;
+};
+
+typedef struct wpacket_st WPACKET;
+struct wpacket_st {
     /* The buffer where we store the output data */
     BUF_MEM *buf;
 
@@ -566,36 +588,9 @@ typedef struct packetw_buf {
      * if no maximum
      */
     size_t maxsize;
-} WPACKET_BUF;
 
-typedef struct packetw_st WPACKET;
-struct packetw_st {
-    /* The parent WPACKET if we have one or NULL otherwise */
-    WPACKET *parent;
-
-    /* The actual buffer - shared with sub-packets */
-    WPACKET_BUF *wbuf;
-
-    /* Flags for this WPACKET */
-    unsigned int flags;
-
-    /*
-     * Pointer to where the length of this WPACKET goes (or NULL if we don't
-     * write the length)
-     */
-    unsigned char *packet_len;
-
-    /* Number of bytes in the packet_len */
-    size_t lenbytes;
-
-    /* Number of bytes written to the buf prior to this packet starting */
-    size_t pwritten;
-
-    /* True if we have an active sub-packet or false otherwise */
-    int haschild;
-
-    /* True if WPACKET_close() has been called on this WPACKET */
-    int isclosed;
+    /* Our sub-packets (always at least one if not closed) */
+    WPACKET_SUB *subs;
 };
 
 /* Flags */
@@ -614,8 +609,9 @@ int WPACKET_set_flags(WPACKET *pkt, unsigned int flags);
 int WPACKET_set_packet_len(WPACKET *pkt, unsigned char *packet_len,
                            size_t lenbytes);
 int WPACKET_close(WPACKET *pkt);
-int WPACKET_get_sub_packet_len(WPACKET *pkt, WPACKET *subpkt, size_t lenbytes);
-int WPACKET_get_sub_packet(WPACKET *pkt, WPACKET *subpkt);
+int WPACKET_finish(WPACKET *pkt);
+int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes);
+int WPACKET_start_sub_packet(WPACKET *pkt);
 int WPACKET_allocate_bytes(WPACKET *pkt, size_t bytes,
                            unsigned char **allocbytes);
 int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t bytes);

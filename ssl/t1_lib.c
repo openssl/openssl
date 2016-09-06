@@ -1015,7 +1015,6 @@ static int tls1_check_duplicate_extensions(const PACKET *packet)
 
 int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 {
-    WPACKET spkt;
 #ifndef OPENSSL_NO_EC
     /* See if we support any ECC ciphersuites */
     int using_ecc = 0;
@@ -1041,10 +1040,10 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
     /* Add RI if renegotiating */
     if (s->renegotiate) {
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_renegotiate, 2)
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
-                || !WPACKET_memcpy(&spkt, s->s3->previous_client_finished,
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_memcpy(pkt, s->s3->previous_client_finished,
                                    s->s3->previous_client_finished_len)
-                || !WPACKET_close(&spkt)) {
+                || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1055,21 +1054,19 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 
     if (s->tlsext_hostname != NULL) {
         /* Add TLS extension servername to the Client Hello message */
-        WPACKET slistpkt, hostpkt;
-
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_server_name, 2)
                    /* Sub-packet for server_name extension */
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
+                || !WPACKET_start_sub_packet_len(pkt, 2)
                    /* Sub-packet for servername list (always 1 hostname)*/
-                || !WPACKET_get_sub_packet_len(&spkt, &slistpkt, 2)
-                || !WPACKET_put_bytes(&slistpkt, TLSEXT_NAMETYPE_host_name, 1)
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_put_bytes(pkt, TLSEXT_NAMETYPE_host_name, 1)
                    /* Sub-packet for a single hostname host name */
-                || !WPACKET_get_sub_packet_len(&slistpkt, &hostpkt, 2)
-                || !WPACKET_memcpy(&hostpkt, s->tlsext_hostname,
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_memcpy(pkt, s->tlsext_hostname,
                                    strlen(s->tlsext_hostname))
-                || !WPACKET_close(&hostpkt)
-                || !WPACKET_close(&slistpkt)
-                || !WPACKET_close(&spkt)) {
+                || !WPACKET_close(pkt)
+                || !WPACKET_close(pkt)
+                || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1077,19 +1074,17 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 #ifndef OPENSSL_NO_SRP
     /* Add SRP username if there is one */
     if (s->srp_ctx.login != NULL) {
-        WPACKET loginpkt;
-
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_srp, 2)
                    /* Sub-packet for SRP extension */
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
-                || !WPACKET_get_sub_packet_len(&spkt, &loginpkt, 1)
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_start_sub_packet_len(pkt, 1)
                    /* login must not be zero...internal error if so */
-                || !WPACKET_set_flags(&loginpkt,
+                || !WPACKET_set_flags(pkt,
                                       OPENSSL_WPACKET_FLAGS_NON_ZERO_LENGTH)
-                || !WPACKET_memcpy(&loginpkt, s->srp_ctx.login,
+                || !WPACKET_memcpy(pkt, s->srp_ctx.login,
                                    strlen(s->srp_ctx.login))
-                || !WPACKET_close(&loginpkt)
-                || !WPACKET_close(&spkt)) {
+                || !WPACKET_close(pkt)
+                || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1098,8 +1093,6 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 
 #ifndef OPENSSL_NO_EC
     if (using_ecc) {
-        WPACKET formatspkt, curveslistpkt;
-
         /*
          * Add TLS extension ECPointFormats to the ClientHello message
          */
@@ -1111,11 +1104,11 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_ec_point_formats, 2)
                    /* Sub-packet for formats extension */
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
-                || !WPACKET_get_sub_packet_len(&spkt, &formatspkt, 1)
-                || !WPACKET_memcpy(&formatspkt, pformats, num_formats)
-                || !WPACKET_close(&formatspkt)
-                || !WPACKET_close(&spkt)) {
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_start_sub_packet_len(pkt, 1)
+                || !WPACKET_memcpy(pkt, pformats, num_formats)
+                || !WPACKET_close(pkt)
+                || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1131,23 +1124,23 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_elliptic_curves, 2)
                    /* Sub-packet for curves extension */
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
-                || !WPACKET_get_sub_packet_len(&spkt, &curveslistpkt, 2)) {
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_start_sub_packet_len(pkt, 2)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         /* Copy curve ID if supported */
         for (i = 0; i < num_curves; i++, pcurves += 2) {
             if (tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
-                if (!WPACKET_put_bytes(&curveslistpkt, pcurves[0], 1)
-                    || !WPACKET_put_bytes(&curveslistpkt, pcurves[1], 1)) {
+                if (!WPACKET_put_bytes(pkt, pcurves[0], 1)
+                    || !WPACKET_put_bytes(pkt, pcurves[1], 1)) {
                         SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
                                ERR_R_INTERNAL_ERROR);
                         return 0;
                     }
             }
         }
-        if (!WPACKET_close(&curveslistpkt) || !WPACKET_close(&spkt)) {
+        if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1177,9 +1170,9 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_session_ticket, 2)
                    /* Sub-packet for ticket extension */
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
-                || !WPACKET_memcpy(&spkt, s->session->tlsext_tick, ticklen)
-                || !WPACKET_close(&spkt)) {
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_memcpy(pkt, s->session->tlsext_tick, ticklen)
+                || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1189,33 +1182,31 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
     if (SSL_CLIENT_USE_SIGALGS(s)) {
         size_t salglen;
         const unsigned char *salg;
-        WPACKET salgslistpkt;
 
         salglen = tls12_get_psigalgs(s, &salg);
 
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_signature_algorithms, 2)
                    /* Sub-packet for sig-algs extension */
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
+                || !WPACKET_start_sub_packet_len(pkt, 2)
                    /* Sub-packet for the actual list */
-                || !WPACKET_get_sub_packet_len(&spkt, &salgslistpkt, 2)
-                || !tls12_copy_sigalgs(s, &salgslistpkt, salg, salglen)
-                || !WPACKET_close(&salgslistpkt)
-                || !WPACKET_close(&spkt)) {
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !tls12_copy_sigalgs(s, pkt, salg, salglen)
+                || !WPACKET_close(pkt)
+                || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
     }
 #ifndef OPENSSL_NO_OCSP
     if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
-        WPACKET idspkt, extpkt;
         int i;
 
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_status_request, 2)
                    /* Sub-packet for status request extension */
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
-                || !WPACKET_put_bytes(&spkt, TLSEXT_STATUSTYPE_ocsp, 1)
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_put_bytes(pkt, TLSEXT_STATUSTYPE_ocsp, 1)
                    /* Sub-packet for the ids */
-                || !WPACKET_get_sub_packet_len(&spkt, &idspkt, 2)) {
+                || !WPACKET_start_sub_packet_len(pkt, 2)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1223,22 +1214,21 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             unsigned char *idbytes;
             int idlen;
             OCSP_RESPID *id;
-            WPACKET idpkt;
 
             id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
             idlen = i2d_OCSP_RESPID(id, NULL);
             if (idlen <= 0
                        /* Sub-packet for an individual id */
-                    || !WPACKET_get_sub_packet_len(&idspkt, &idpkt, 1)
-                    || !WPACKET_allocate_bytes(&idpkt, idlen, &idbytes)
+                    || !WPACKET_start_sub_packet_len(pkt, 1)
+                    || !WPACKET_allocate_bytes(pkt, idlen, &idbytes)
                     || i2d_OCSP_RESPID(id, &idbytes) != idlen
-                    || !WPACKET_close(&idpkt)) {
+                    || !WPACKET_close(pkt)) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
         }
-        if (!WPACKET_close(&idspkt)
-                || !WPACKET_get_sub_packet_len(&spkt, &extpkt, 2)) {
+        if (!WPACKET_close(pkt)
+                || !WPACKET_start_sub_packet_len(pkt, 2)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1250,14 +1240,14 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
-            if (!WPACKET_allocate_bytes(&extpkt, extlen, &extbytes)
+            if (!WPACKET_allocate_bytes(pkt, extlen, &extbytes)
                     || i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &extbytes)
                        != extlen) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
            }
         }
-        if (!WPACKET_close(&extpkt) || !WPACKET_close(&spkt)) {
+        if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1279,9 +1269,9 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_heartbeat, 2)
                    /* Sub-packet for Hearbeat extension */
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
-                || !WPACKET_put_bytes(&spkt, mode, 1)
-                || !WPACKET_close(&spkt)) {
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_put_bytes(pkt, mode, 1)
+                || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1308,18 +1298,16 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
      * (see longer comment below)
      */
     if (s->alpn_client_proto_list && !s->s3->tmp.finish_md_len) {
-        WPACKET plistpkt;
-
         if (!WPACKET_put_bytes(pkt,
                     TLSEXT_TYPE_application_layer_protocol_negotiation, 2)
                    /* Sub-packet ALPN extension */
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
+                || !WPACKET_start_sub_packet_len(pkt, 2)
                    /* Sub-packet for ALPN proto list */
-                || !WPACKET_get_sub_packet_len(&spkt, &plistpkt, 2)
-                || !WPACKET_memcpy(&plistpkt, s->alpn_client_proto_list,
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_memcpy(pkt, s->alpn_client_proto_list,
                                     s->alpn_client_proto_list_len)
-                || !WPACKET_close(&plistpkt)
-                || !WPACKET_close(&spkt)) {
+                || !WPACKET_close(pkt)
+                || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1330,25 +1318,24 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = 0;
         SRTP_PROTECTION_PROFILE *prof;
         int i, ct;
-        WPACKET plistpkt;
 
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_use_srtp, 2)
                    /* Sub-packet for SRTP extension */
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
+                || !WPACKET_start_sub_packet_len(pkt, 2)
                    /* Sub-packet for the protection profile list */
-                || !WPACKET_get_sub_packet_len(&spkt, &plistpkt, 2)) {
+                || !WPACKET_start_sub_packet_len(pkt, 2)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         ct = sk_SRTP_PROTECTION_PROFILE_num(clnt);
         for (i = 0; i < ct; i++) {
             prof = sk_SRTP_PROTECTION_PROFILE_value(clnt, i);
-            if (prof == NULL || !WPACKET_put_bytes(&plistpkt, prof->id, 2)) {
+            if (prof == NULL || !WPACKET_put_bytes(pkt, prof->id, 2)) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
         }
-        if (!WPACKET_close(&plistpkt) || !WPACKET_close(&spkt)) {
+        if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1406,13 +1393,13 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
                 hlen = 0;
 
             if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_padding, 2)
-                    || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
-                    || !WPACKET_allocate_bytes(&spkt, hlen, &padbytes)) {
+                    || !WPACKET_start_sub_packet_len(pkt, 2)
+                    || !WPACKET_allocate_bytes(pkt, hlen, &padbytes)) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
             memset(padbytes, 0, hlen);
-            if (!WPACKET_close(&spkt)) {
+            if (!WPACKET_close(pkt)) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
             }

@@ -63,7 +63,7 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt)
 
     if (!WPACKET_get_length(pkt, &msglen)
             || msglen > INT_MAX
-            || !WPACKET_close(pkt))
+            || !WPACKET_finish(pkt))
         return 0;
     s->init_num = (int)msglen;
     s->init_off = 0;

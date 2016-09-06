@@ -10,33 +10,35 @@
 #include "packet_locl.h"
 
 /*
- * Allocate bytes in the WPACKET_BUF for the output. This reserves the bytes
+ * Allocate bytes in the WPACKET for the output. This reserves the bytes
  * and count them as "written", but doesn't actually do the writing.
  */
-static unsigned char *WPACKET_BUF_allocate(WPACKET_BUF *wbuf, size_t len)
+int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 {
-    unsigned char *ret = wbuf->curr;
-
-    if (SIZE_MAX - wbuf->written < len)
+    if (pkt->subs == NULL || len == 0)
         return 0;
 
-    if (wbuf->maxsize > 0 && wbuf->written + len > wbuf->maxsize)
+    if (SIZE_MAX - pkt->written < len)
         return 0;
 
-    if (wbuf->buf->length - wbuf->written < len) {
+    if (pkt->maxsize > 0 && pkt->written + len > pkt->maxsize)
+        return 0;
+
+    if (pkt->buf->length - pkt->written < len) {
         size_t newlen;
 
-        if (wbuf->buf->length > SIZE_MAX / 2)
+        if (pkt->buf->length > SIZE_MAX / 2)
             newlen = SIZE_MAX;
         else
-            newlen = wbuf->buf->length * 2;
-        if (BUF_MEM_grow(wbuf->buf, newlen) == 0)
-            return NULL;
+            newlen = pkt->buf->length * 2;
+        if (BUF_MEM_grow(pkt->buf, newlen) == 0)
+            return 0;
     }
-    wbuf->written += len;
-    wbuf->curr += len;
+    pkt->written += len;
+    *allocbytes = pkt->curr;
+    pkt->curr += len;
 
-    return ret;
+    return 1;
 }
 
 /*
@@ -47,39 +49,28 @@ static unsigned char *WPACKET_BUF_allocate(WPACKET_BUF *wbuf, size_t len)
  */
 int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
 {
-    WPACKET_BUF *wbuf;
     /* Sanity check */
     if (buf == NULL)
         return 0;
 
-    wbuf = OPENSSL_zalloc(sizeof(WPACKET_BUF));
-    if (wbuf == NULL) {
-        pkt->isclosed = 1;
+    pkt->buf = buf;
+    pkt->curr = (unsigned char *)buf->data;
+    pkt->written = 0;
+    pkt->maxsize = 0;
+
+    pkt->subs = OPENSSL_zalloc(sizeof(*pkt->subs));
+    if (pkt->subs == NULL)
         return 0;
-    }
 
-    wbuf->buf = buf;
-    wbuf->curr = (unsigned char *)buf->data;
-    wbuf->written = 0;
-    wbuf->maxsize = 0;
-
-    pkt->parent = NULL;
-    pkt->wbuf = wbuf;
-    pkt->pwritten = lenbytes;
-    pkt->lenbytes = lenbytes;
-    pkt->haschild = 0;
-    pkt->isclosed = 0;
-
-    if (lenbytes == 0) {
-        pkt->packet_len = NULL;
+    if (lenbytes == 0)
         return 1;
-    }
 
-    pkt->packet_len = WPACKET_BUF_allocate(wbuf, lenbytes);
-    if (pkt->packet_len == NULL) {
-        OPENSSL_free(wbuf);
-        pkt->wbuf = NULL;
-        pkt->isclosed = 1;
+    pkt->subs->pwritten = lenbytes;
+    pkt->subs->lenbytes = lenbytes;
+
+    if (!WPACKET_allocate_bytes(pkt, lenbytes, &(pkt->subs->packet_len))) {
+        OPENSSL_free(pkt->subs);
+        pkt->subs = NULL;
         return 0;
     }
 
@@ -107,59 +98,61 @@ int WPACKET_set_packet_len(WPACKET *pkt, unsigned char *packet_len,
                            size_t lenbytes)
 {
     /* We only allow this to be set once */
-    if (pkt->isclosed || pkt->packet_len != NULL)
+    if (pkt->subs == NULL)
         return 0;
 
-    pkt->lenbytes = lenbytes;
-    pkt->packet_len = packet_len;
+    pkt->subs->lenbytes = lenbytes;
+    pkt->subs->packet_len = packet_len;
 
     return 1;
 }
 
 int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
 {
-    pkt->flags = flags;
+    if (pkt->subs == NULL)
+        return 0;
+
+    pkt->subs->flags = flags;
 
     return 1;
 }
 
+
 /*
- * Closes the WPACKET and marks it as invalid for future writes. It also writes
- * out the length of the packet to the required location (normally the start
- * of the WPACKET) if appropriate. A WPACKET cannot be closed if it has an
- * active sub-packet.
+ * Internal helper function used by WPACKET_close() and WPACKET_finish() to
+ * close a sub-packet and write out its length if necessary.
  */
-int WPACKET_close(WPACKET *pkt)
+static int wpacket_intern_close(WPACKET *pkt)
 {
     size_t packlen;
+    WPACKET_SUB *sub = pkt->subs;
 
-    if (pkt->isclosed || pkt->haschild)
-        return 0;
-
-    packlen = pkt->wbuf->written - pkt->pwritten;
-    if (packlen == 0 && pkt->flags & OPENSSL_WPACKET_FLAGS_NON_ZERO_LENGTH)
+    packlen = pkt->written - sub->pwritten;
+    if (packlen == 0
+            && sub->flags & OPENSSL_WPACKET_FLAGS_NON_ZERO_LENGTH)
         return 0;
 
     if (packlen == 0
-            && pkt->flags & OPENSSL_WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH) {
+            && sub->flags & OPENSSL_WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH) {
         /* Deallocate any bytes allocated for the length of the WPACKET */
-        if ((pkt->wbuf->curr - pkt->lenbytes) == pkt->packet_len) {
-            pkt->wbuf->written -= pkt->lenbytes;
-            pkt->wbuf->curr -= pkt->lenbytes;
+        if ((pkt->curr - sub->lenbytes) == sub->packet_len) {
+            pkt->written -= sub->lenbytes;
+            pkt->curr -= sub->lenbytes;
         }
 
         /* Don't write out the packet length */
-        pkt->packet_len = NULL;
+        sub->packet_len = NULL;
     }
 
     /* Write out the WPACKET length if needed */
-    if (pkt->packet_len != NULL) {
+    if (sub->packet_len != NULL) {
         size_t lenbytes;
 
-        lenbytes = pkt->lenbytes;
+        lenbytes = sub->lenbytes;
 
         for (; lenbytes > 0; lenbytes--) {
-            pkt->packet_len[lenbytes - 1] = (unsigned char)(packlen & 0xff);
+            sub->packet_len[lenbytes - 1]
+                = (unsigned char)(packlen & 0xff);
             packlen >>= 8;
         }
         if (packlen > 0) {
@@ -170,50 +163,73 @@ int WPACKET_close(WPACKET *pkt)
         }
     }
 
-    if (pkt->parent != NULL) {
-        if (pkt->parent->haschild != 1) {
-            /* Should not happen! */
-            return 0;
-        }
-        pkt->parent->haschild = 0;
-        pkt->parent = NULL;
-    }
-
-    pkt->isclosed = 1;
+    pkt->subs = sub->parent;
+    OPENSSL_free(sub);
 
     return 1;
 }
 
 /*
- * Initialise a new sub-packet (|subpkt|), based on a parent (|pkt|).
- * Additionally |lenbytes| of data is preallocated at the start of the
- * sub-packet to store its length once we know it.
+ * Closes the most recent sub-packet. It also writes out the length of the
+ * packet to the required location (normally the start of the WPACKET) if
+ * appropriate. The top level WPACKET should be closed using WPACKET_finish()
+ * instead of this function.
  */
-int WPACKET_get_sub_packet_len(WPACKET *pkt, WPACKET *subpkt, size_t lenbytes)
+int WPACKET_close(WPACKET *pkt)
 {
-    if (pkt->isclosed || pkt->haschild || subpkt == NULL)
+    if (pkt->subs == NULL || pkt->subs->parent == NULL)
         return 0;
 
-    subpkt->parent = pkt;
-    subpkt->wbuf = pkt->wbuf;
-    subpkt->pwritten = pkt->wbuf->written + lenbytes;
-    subpkt->lenbytes = lenbytes;
-    subpkt->haschild = 0;
-    subpkt->isclosed = 0;
+    return wpacket_intern_close(pkt);
+}
+
+/*
+ * The same as WPACKET_close() but only for the top most WPACKET. Additionally
+ * frees memory resources for this WPACKET.
+ */
+int WPACKET_finish(WPACKET *pkt)
+{
+    int ret;
+
+    if (pkt->subs == NULL || pkt->subs->parent != NULL)
+        return 0;
+
+    ret = wpacket_intern_close(pkt);
+
+    /* We free up memory no matter whether |ret| is zero or not */
+    OPENSSL_free(pkt->subs);
+    pkt->subs = NULL;
+    return ret;
+}
+
+/*
+ * Initialise a new sub-packet. Additionally |lenbytes| of data is preallocated
+ * at the start of the sub-packet to store its length once we know it.
+ */
+int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes)
+{
+    WPACKET_SUB *sub;
+
+    if (pkt->subs == NULL)
+        return 0;
+
+    sub = OPENSSL_zalloc(sizeof(*sub));
+    if (sub == NULL)
+        return 0;
+
+    sub->parent = pkt->subs;
+    pkt->subs = sub;
+    sub->pwritten = pkt->written + lenbytes;
+    sub->lenbytes = lenbytes;
 
     if (lenbytes == 0) {
-        subpkt->packet_len = NULL;
-        pkt->haschild = 1;
+        sub->packet_len = NULL;
         return 1;
     }
 
-    subpkt->packet_len = WPACKET_BUF_allocate(pkt->wbuf, lenbytes);
-    if (subpkt->packet_len == NULL) {
-        subpkt->isclosed = 1;
+    if (!WPACKET_allocate_bytes(pkt, lenbytes, &sub->packet_len)) {
         return 0;
     }
-
-    pkt->haschild = 1;
 
     return 1;
 }
@@ -222,31 +238,9 @@ int WPACKET_get_sub_packet_len(WPACKET *pkt, WPACKET *subpkt, size_t lenbytes)
  * Same as WPACKET_get_sub_packet_len() except no bytes are pre-allocated for
  * the sub-packet length.
  */
-int WPACKET_get_sub_packet(WPACKET *pkt, WPACKET *subpkt)
+int WPACKET_start_sub_packet(WPACKET *pkt)
 {
-    return WPACKET_get_sub_packet_len(pkt, subpkt, 0);
-}
-
-/*
- * Allocate some bytes in the WPACKET for writing. That number of bytes is
- * marked as having been written, and a pointer to their location is stored in
- * |*allocbytes|.
- */
-int WPACKET_allocate_bytes(WPACKET *pkt, size_t bytes,
-                           unsigned char **allocbytes)
-{
-    unsigned char *data;
-
-    if (pkt->isclosed || pkt->haschild || bytes == 0)
-        return 0;
-
-    data = WPACKET_BUF_allocate(pkt->wbuf, bytes);
-    if (data == NULL)
-        return 0;
-
-    *allocbytes = data;
-
-    return 1;
+    return WPACKET_start_sub_packet_len(pkt, 0);
 }
 
 /*
@@ -283,7 +277,7 @@ int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t bytes)
  */
 int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
 {
-    pkt->wbuf->maxsize = maxsize;
+    pkt->maxsize = maxsize;
 
     return 1;
 }
@@ -312,24 +306,24 @@ int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
  */
 int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
 {
-    if (pkt->isclosed || written == NULL)
+    if (pkt->subs == NULL || written == NULL)
         return 0;
 
-    *written = pkt->wbuf->curr - (unsigned char *)pkt->wbuf->buf->data;
+    *written = pkt->written;
 
     return 1;
 }
 
 /*
- * Returns the length of this WPACKET so far. This excludes any bytes allocated
+ * Returns the length of the last sub-packet. This excludes any bytes allocated
  * for the length itself.
  */
 int WPACKET_get_length(WPACKET *pkt, size_t *len)
 {
-    if (pkt->isclosed || len == NULL)
+    if (pkt->subs == NULL || len == NULL)
         return 0;
 
-    *len = pkt->wbuf->written - pkt->pwritten;
+    *len = pkt->written - pkt->subs->pwritten;
 
     return 1;
 }

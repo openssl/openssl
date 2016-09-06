@@ -148,7 +148,6 @@ int custom_ext_add(SSL *s, int server, WPACKET *pkt, int *al)
     for (i = 0; i < exts->meths_count; i++) {
         const unsigned char *out = NULL;
         size_t outlen = 0;
-        WPACKET spkt;
 
         meth = exts->meths + i;
 
@@ -173,9 +172,9 @@ int custom_ext_add(SSL *s, int server, WPACKET *pkt, int *al)
         }
 
         if (!WPACKET_put_bytes(pkt, meth->ext_type, 2)
-                || !WPACKET_get_sub_packet_len(pkt, &spkt, 2)
-                || (outlen > 0 && !WPACKET_memcpy(&spkt, out, outlen))
-                || !WPACKET_close(&spkt)) {
+                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || (outlen > 0 && !WPACKET_memcpy(pkt, out, outlen))
+                || !WPACKET_close(pkt)) {
             *al = SSL_AD_INTERNAL_ERROR;
             return 0;
         }
