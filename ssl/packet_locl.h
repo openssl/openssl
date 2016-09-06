@@ -617,6 +617,8 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t bytes,
 int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t bytes);
 int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize);
 int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len);
+int WPACKET_sub_memcpy(WPACKET *pkt, const void *src, size_t len,
+                       size_t lenbytes);
 int WPACKET_get_total_written(WPACKET *pkt, size_t *written);
 int WPACKET_get_length(WPACKET *pkt, size_t *len);
 

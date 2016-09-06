@@ -1040,10 +1040,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
     /* Add RI if renegotiating */
     if (s->renegotiate) {
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_renegotiate, 2)
-                || !WPACKET_start_sub_packet_len(pkt, 2)
-                || !WPACKET_memcpy(pkt, s->s3->previous_client_finished,
-                                   s->s3->previous_client_finished_len)
-                || !WPACKET_close(pkt)) {
+                || !WPACKET_sub_memcpy(pkt, s->s3->previous_client_finished,
+                                   s->s3->previous_client_finished_len, 2)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1060,11 +1058,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
                    /* Sub-packet for servername list (always 1 hostname)*/
                 || !WPACKET_start_sub_packet_len(pkt, 2)
                 || !WPACKET_put_bytes(pkt, TLSEXT_NAMETYPE_host_name, 1)
-                   /* Sub-packet for a single hostname host name */
-                || !WPACKET_start_sub_packet_len(pkt, 2)
-                || !WPACKET_memcpy(pkt, s->tlsext_hostname,
-                                   strlen(s->tlsext_hostname))
-                || !WPACKET_close(pkt)
+                || !WPACKET_sub_memcpy(pkt, s->tlsext_hostname,
+                                       strlen(s->tlsext_hostname), 2)
                 || !WPACKET_close(pkt)
                 || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
@@ -1105,9 +1100,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_ec_point_formats, 2)
                    /* Sub-packet for formats extension */
                 || !WPACKET_start_sub_packet_len(pkt, 2)
-                || !WPACKET_start_sub_packet_len(pkt, 1)
-                || !WPACKET_memcpy(pkt, pformats, num_formats)
-                || !WPACKET_close(pkt)
+                || !WPACKET_sub_memcpy(pkt, pformats, num_formats, 1)
                 || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -1169,10 +1162,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             goto skip_ext;
 
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_session_ticket, 2)
-                   /* Sub-packet for ticket extension */
-                || !WPACKET_start_sub_packet_len(pkt, 2)
-                || !WPACKET_memcpy(pkt, s->session->tlsext_tick, ticklen)
-                || !WPACKET_close(pkt)) {
+                || !WPACKET_sub_memcpy(pkt, s->session->tlsext_tick, ticklen,
+                                       2)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1302,11 +1293,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
                     TLSEXT_TYPE_application_layer_protocol_negotiation, 2)
                    /* Sub-packet ALPN extension */
                 || !WPACKET_start_sub_packet_len(pkt, 2)
-                   /* Sub-packet for ALPN proto list */
-                || !WPACKET_start_sub_packet_len(pkt, 2)
-                || !WPACKET_memcpy(pkt, s->alpn_client_proto_list,
-                                    s->alpn_client_proto_list_len)
-                || !WPACKET_close(pkt)
+                || !WPACKET_sub_memcpy(pkt, s->alpn_client_proto_list,
+                                       s->alpn_client_proto_list_len, 2)
                 || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;

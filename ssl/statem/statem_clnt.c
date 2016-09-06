@@ -804,9 +804,8 @@ int tls_construct_client_hello(SSL *s)
     /* cookie stuff for DTLS */
     if (SSL_IS_DTLS(s)) {
         if (s->d1->cookie_len > sizeof(s->d1->cookie)
-                || !WPACKET_start_sub_packet_len(&pkt, 1)
-                || !WPACKET_memcpy(&pkt, s->d1->cookie, s->d1->cookie_len)
-                || !WPACKET_close(&pkt)) {
+                || !WPACKET_sub_memcpy(&pkt, s->d1->cookie, s->d1->cookie_len,
+                                       1)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
             goto err;
         }
