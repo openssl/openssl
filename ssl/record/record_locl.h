@@ -62,7 +62,7 @@ void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 #define SSL3_BUFFER_set_len(b, l)           ((b)->len = (l))
 #define SSL3_BUFFER_get_left(b)             ((b)->left)
 #define SSL3_BUFFER_set_left(b, l)          ((b)->left = (l))
-#define SSL3_BUFFER_add_left(b, l)          ((b)->left += (l))
+#define SSL3_BUFFER_sub_left(b, l)          ((b)->left -= (l))
 #define SSL3_BUFFER_get_offset(b)           ((b)->offset)
 #define SSL3_BUFFER_set_offset(b, o)        ((b)->offset = (o))
 #define SSL3_BUFFER_add_offset(b, o)        ((b)->offset += (o))
@@ -70,7 +70,7 @@ void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 #define SSL3_BUFFER_set_default_len(b, l)   ((b)->default_len = (l))
 
 void SSL3_BUFFER_clear(SSL3_BUFFER *b);
-void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n);
+void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, size_t n);
 void SSL3_BUFFER_release(SSL3_BUFFER *b);
 __owur int ssl3_setup_read_buffer(SSL *s);
 __owur int ssl3_setup_write_buffer(SSL *s, unsigned int numwpipes, size_t len);

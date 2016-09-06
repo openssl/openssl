@@ -54,7 +54,7 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst);
 WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst);
 int ossl_statem_client_construct_message(SSL *s, WPACKET *pkt,
                                          confunc_f *confunc, int *mt);
-unsigned long ossl_statem_client_max_message_size(SSL *s);
+size_t ossl_statem_client_max_message_size(SSL *s);
 MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt);
 WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst);
 
@@ -67,14 +67,14 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst);
 WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst);
 int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
                                          confunc_f *confunc,int *mt);
-unsigned long ossl_statem_server_max_message_size(SSL *s);
+size_t ossl_statem_server_max_message_size(SSL *s);
 MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL *s, PACKET *pkt);
 WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst);
 
 /* Functions for getting new message data */
 __owur int tls_get_message_header(SSL *s, int *mt);
-__owur int tls_get_message_body(SSL *s, unsigned long *len);
-__owur int dtls_get_message(SSL *s, int *mt, unsigned long *len);
+__owur int tls_get_message_body(SSL *s, size_t *len);
+__owur int dtls_get_message(SSL *s, int *mt, size_t *len);
 
 /* Message construction and processing functions */
 __owur MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt);

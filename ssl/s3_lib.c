@@ -3812,12 +3812,13 @@ int ssl3_shutdown(SSL *s)
             return (ret);
         }
     } else if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN)) {
+        size_t read;
         /*
          * If we are waiting for a close from our peer, we are closed
          */
-        s->method->ssl_read_bytes(s, 0, NULL, NULL, 0, 0);
+        s->method->ssl_read_bytes(s, 0, NULL, NULL, 0, 0, &read);
         if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN)) {
-            return (-1);        /* return WANT_READ */
+            return -1;        /* return WANT_READ */
         }
     }
 
@@ -3837,7 +3838,8 @@ int ssl3_write(SSL *s, const void *buf, int len)
     return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len);
 }
 
-static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
+static int ssl3_read_internal(SSL *s, void *buf, size_t len, int peek,
+                              size_t *read)
 {
     int ret;
 
@@ -3847,7 +3849,7 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
     s->s3->in_read_app_data = 1;
     ret =
         s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf, len,
-                                  peek);
+                                  peek, read);
     if ((ret == -1) && (s->s3->in_read_app_data == 2)) {
         /*
          * ssl3_read_bytes decided to call s->handshake_func, which called
@@ -3859,22 +3861,22 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
         ossl_statem_set_in_handshake(s, 1);
         ret =
             s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf,
-                                      len, peek);
+                                      len, peek, read);
         ossl_statem_set_in_handshake(s, 0);
     } else
         s->s3->in_read_app_data = 0;
 
-    return (ret);
+    return ret;
 }
 
-int ssl3_read(SSL *s, void *buf, int len)
+int ssl3_read(SSL *s, void *buf, size_t len, size_t *read)
 {
-    return ssl3_read_internal(s, buf, len, 0);
+    return ssl3_read_internal(s, buf, len, 0, read);
 }
 
-int ssl3_peek(SSL *s, void *buf, int len)
+int ssl3_peek(SSL *s, void *buf, size_t len, size_t *read)
 {
-    return ssl3_read_internal(s, buf, len, 1);
+    return ssl3_read_internal(s, buf, len, 1, read);
 }
 
 int ssl3_renegotiate(SSL *s)

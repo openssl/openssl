@@ -568,7 +568,7 @@ int ossl_statem_client_construct_message(SSL *s, WPACKET *pkt,
  * Returns the maximum allowed length for the current message that we are
  * reading. Excludes the message header.
  */
-unsigned long ossl_statem_client_max_message_size(SSL *s)
+size_t ossl_statem_client_max_message_size(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 

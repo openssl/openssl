@@ -444,14 +444,15 @@ struct ssl_method_st {
     void (*ssl_free) (SSL *s);
     int (*ssl_accept) (SSL *s);
     int (*ssl_connect) (SSL *s);
-    int (*ssl_read) (SSL *s, void *buf, int len);
-    int (*ssl_peek) (SSL *s, void *buf, int len);
+    int (*ssl_read) (SSL *s, void *buf, size_t len, size_t *read);
+    int (*ssl_peek) (SSL *s, void *buf, size_t len, size_t *read);
     int (*ssl_write) (SSL *s, const void *buf, int len);
     int (*ssl_shutdown) (SSL *s);
     int (*ssl_renegotiate) (SSL *s);
     int (*ssl_renegotiate_check) (SSL *s);
     int (*ssl_read_bytes) (SSL *s, int type, int *recvd_type,
-                           unsigned char *buf, int len, int peek);
+                           unsigned char *buf, size_t len, int peek,
+                           size_t *read);
     int (*ssl_write_bytes) (SSL *s, int type, const void *buf_, int len);
     int (*ssl_dispatch_alert) (SSL *s);
     long (*ssl_ctrl) (SSL *s, int cmd, long larg, void *parg);
@@ -922,8 +923,8 @@ struct ssl_st {
     BUF_MEM *init_buf;          /* buffer used during init */
     void *init_msg;             /* pointer to handshake message body, set by
                                  * ssl3_get_message() */
-    int init_num;               /* amount read/written */
-    int init_off;               /* amount read/written */
+    size_t init_num;               /* amount read/written */
+    size_t init_off;               /* amount read/written */
     struct ssl3_state_st *s3;   /* SSLv3 variables */
     struct dtls1_state_st *d1;  /* DTLSv1 variables */
     /* callback that allows applications to peek at protocol messages */
@@ -1135,6 +1136,8 @@ struct ssl_st {
     /* Async Job info */
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
+    size_t asyncread;
+
     CRYPTO_RWLOCK *lock;
 };
 
@@ -1184,7 +1187,7 @@ typedef struct ssl3_state_st {
         int finish_md_len;
         unsigned char peer_finish_md[EVP_MAX_MD_SIZE * 2];
         int peer_finish_md_len;
-        unsigned long message_size;
+        size_t message_size;
         int message_type;
         /* used to hold the new cipher we are going to use */
         const SSL_CIPHER *new_cipher;
@@ -1894,8 +1897,8 @@ __owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
 __owur int ssl3_digest_cached_records(SSL *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
-__owur int ssl3_read(SSL *s, void *buf, int len);
-__owur int ssl3_peek(SSL *s, void *buf, int len);
+__owur int ssl3_read(SSL *s, void *buf, size_t len, size_t *read);
+__owur int ssl3_peek(SSL *s, void *buf, size_t len, size_t *read);
 __owur int ssl3_write(SSL *s, const void *buf, int len);
 __owur int ssl3_shutdown(SSL *s);
 void ssl3_clear(SSL *s);
