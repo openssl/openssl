@@ -301,6 +301,20 @@ int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
 }
 
 /*
+ * Copy |len| bytes of data from |*src| into the WPACKET and prefix with its
+ * length (consuming |lenbytes| of data for the length)
+ */
+int WPACKET_sub_memcpy(WPACKET *pkt, const void *src, size_t len, size_t lenbytes)
+{
+    if (!WPACKET_start_sub_packet_len(pkt, lenbytes)
+            || !WPACKET_memcpy(pkt, src, len)
+            || !WPACKET_close(pkt))
+        return 0;
+
+    return 1;
+}
+
+/*
  * Return the total number of bytes written so far to the underlying buffer.
  * This might includes bytes written by a parent WPACKET.
  */
