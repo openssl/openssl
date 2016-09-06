@@ -1,55 +1,10 @@
 /*
- * Tests the Certificate Transparency public API.
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Author:      Rob Percival (robpercival@google.com)
- *
- * ====================================================================
- * Copyright (c) 2016 The OpenSSL Project.    All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *        notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *        notice, this list of conditions and the following disclaimer in
- *        the documentation and/or other materials provided with the
- *        distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *        software must display the following acknowledgment:
- *        "This product includes software developed by the OpenSSL Project
- *        for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *        endorse or promote products derived from this software without
- *        prior written permission. For written permission, please contact
- *        licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *        nor may "OpenSSL" appear in their names without prior written
- *        permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *        acknowledgment:
- *        "This product includes software developed by the OpenSSL Project
- *        for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.    IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <ctype.h>
@@ -82,9 +37,9 @@ typedef struct ct_test_fixture {
     char *issuer_file;
     int expected_sct_count;
     /* Set the following to test handling of SCTs in TLS format */
-    const unsigned char *tls_sct;
-    size_t tls_sct_len;
-    SCT *sct;
+    const unsigned char *tls_sct_list;
+    size_t tls_sct_list_len;
+    STACK_OF(SCT) *sct_list;
     /*
      * A file to load the expected SCT text from.
      * This text will be compared to the actual text output during the test.
@@ -101,7 +56,11 @@ static CT_TEST_FIXTURE set_up(const char *const test_case_name)
 {
     CT_TEST_FIXTURE fixture;
     int setup_ok = 1;
-    CTLOG_STORE *ctlog_store = CTLOG_STORE_new();
+    CTLOG_STORE *ctlog_store;
+
+    memset(&fixture, 0, sizeof(fixture));
+
+    ctlog_store = CTLOG_STORE_new();
 
     if (ctlog_store == NULL) {
         setup_ok = 0;
@@ -115,7 +74,6 @@ static CT_TEST_FIXTURE set_up(const char *const test_case_name)
         goto end;
     }
 
-    memset(&fixture, 0, sizeof(fixture));
     fixture.test_case_name = test_case_name;
     fixture.ctlog_store = ctlog_store;
 
@@ -129,7 +87,7 @@ end:
 static void tear_down(CT_TEST_FIXTURE fixture)
 {
     CTLOG_STORE_free(fixture.ctlog_store);
-    SCT_free(fixture.sct);
+    SCT_LIST_free(fixture.sct_list);
     ERR_print_errors_fp(stderr);
 }
 
@@ -189,7 +147,7 @@ static int read_text_file(const char *dir, const char *file,
     return result;
 }
 
-static int compare_sct_printout(SCT *sct,
+static int compare_sct_list_printout(STACK_OF(SCT) *sct,
     const char *expected_output)
 {
     BIO *text_buffer = NULL;
@@ -202,7 +160,7 @@ static int compare_sct_printout(SCT *sct,
         goto end;
     }
 
-    SCT_print(sct, text_buffer, 0, NULL);
+    SCT_LIST_print(sct, text_buffer, 0, "\n", NULL);
 
     /* Append null terminator because we're about to use the buffer contents
     * as a string. */
@@ -246,7 +204,8 @@ static int compare_extension_printout(X509_EXTENSION *extension,
     /* Append null terminator because we're about to use the buffer contents
      * as a string. */
     if (BIO_write(text_buffer, "\0", 1) != 1) {
-        fprintf(stderr, "Failed to append null terminator to extension text\n");
+        fprintf(stderr,
+                "Failed to append null terminator to extension text\n");
         goto end;
     }
 
@@ -264,16 +223,61 @@ end:
     return result;
 }
 
+static int assert_validity(CT_TEST_FIXTURE fixture,
+                           STACK_OF(SCT) *scts,
+                           CT_POLICY_EVAL_CTX *policy_ctx) {
+    int invalid_sct_count = 0;
+    int valid_sct_count = 0;
+    int i;
+
+    if (SCT_LIST_validate(scts, policy_ctx) < 0) {
+        fprintf(stderr, "Error verifying SCTs\n");
+        return 0;
+    }
+
+    for (i = 0; i < sk_SCT_num(scts); ++i) {
+        SCT *sct_i = sk_SCT_value(scts, i);
+        switch (SCT_get_validation_status(sct_i)) {
+        case SCT_VALIDATION_STATUS_VALID:
+            ++valid_sct_count;
+            break;
+        case SCT_VALIDATION_STATUS_INVALID:
+            ++invalid_sct_count;
+            break;
+        default:
+            /* Ignore other validation statuses. */
+            break;
+        }
+    }
+
+    if (valid_sct_count != fixture.expected_sct_count) {
+        int unverified_sct_count = sk_SCT_num(scts) -
+                invalid_sct_count - valid_sct_count;
+
+        fprintf(stderr,
+                "%d SCTs failed verification\n"
+                "%d SCTs passed verification (%d expected)\n"
+                "%d SCTs were unverified\n",
+                invalid_sct_count,
+                valid_sct_count,
+                fixture.expected_sct_count,
+                unverified_sct_count);
+        return 0;
+    }
+
+    return 1;
+}
+
 static int execute_cert_test(CT_TEST_FIXTURE fixture)
 {
-    int test_failed = 0;
+    int success = 0;
     X509 *cert = NULL, *issuer = NULL;
     STACK_OF(SCT) *scts = NULL;
     SCT *sct = NULL;
     char expected_sct_text[CT_TEST_MAX_FILE_SIZE];
     int sct_text_len = 0;
-    unsigned char *tls_sct = NULL;
-    size_t tls_sct_len = 0;
+    unsigned char *tls_sct_list = NULL;
+    size_t tls_sct_list_len = 0;
     CT_POLICY_EVAL_CTX *ct_policy_ctx = CT_POLICY_EVAL_CTX_new();
 
     if (fixture.sct_text_file != NULL) {
@@ -282,7 +286,6 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
                                       CT_TEST_MAX_FILE_SIZE - 1);
 
         if (sct_text_len < 0) {
-            test_failed = 1;
             fprintf(stderr, "Test data file not found: %s\n",
                 fixture.sct_text_file);
             goto end;
@@ -291,7 +294,8 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
         expected_sct_text[sct_text_len] = '\0';
     }
 
-    CT_POLICY_EVAL_CTX_set0_log_store(ct_policy_ctx, fixture.ctlog_store);
+    CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(
+            ct_policy_ctx, fixture.ctlog_store);
 
     if (fixture.certificate_file != NULL) {
         int sct_extension_index;
@@ -299,25 +303,23 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
         cert = load_pem_cert(fixture.certs_dir, fixture.certificate_file);
 
         if (cert == NULL) {
-            test_failed = 1;
             fprintf(stderr, "Unable to load certificate: %s\n",
                 fixture.certificate_file);
             goto end;
         }
 
-        CT_POLICY_EVAL_CTX_set0_cert(ct_policy_ctx, cert);
+        CT_POLICY_EVAL_CTX_set1_cert(ct_policy_ctx, cert);
 
         if (fixture.issuer_file != NULL) {
             issuer = load_pem_cert(fixture.certs_dir, fixture.issuer_file);
 
             if (issuer == NULL) {
-                test_failed = 1;
                 fprintf(stderr, "Unable to load issuer certificate: %s\n",
                         fixture.issuer_file);
                 goto end;
             }
 
-            CT_POLICY_EVAL_CTX_set0_issuer(ct_policy_ctx, issuer);
+            CT_POLICY_EVAL_CTX_set1_issuer(ct_policy_ctx, issuer);
         }
 
         sct_extension_index =
@@ -325,21 +327,18 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
         sct_extension = X509_get_ext(cert, sct_extension_index);
         if (fixture.expected_sct_count > 0) {
             if (sct_extension == NULL) {
-                test_failed = 1;
                 fprintf(stderr, "SCT extension not found in: %s\n",
                     fixture.certificate_file);
                 goto end;
             }
 
-            if (fixture.sct_text_file) {
-                test_failed = compare_extension_printout(sct_extension,
-                                                    expected_sct_text);
-                if (test_failed != 0)
+            if (fixture.sct_text_file
+                && compare_extension_printout(sct_extension,
+                                              expected_sct_text)) {
                     goto end;
             }
 
             if (fixture.test_validity) {
-                int are_scts_validated = 0;
                 int i;
 
                 scts = X509V3_EXT_d2i(sct_extension);
@@ -349,55 +348,14 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
                     if (!SCT_set_source(sct_i, SCT_SOURCE_X509V3_EXTENSION)) {
                         fprintf(stderr,
                                 "Error setting SCT source to X509v3 extension\n");
-                        test_failed = 1;
                         goto end;
                     }
                 }
 
-                are_scts_validated = SCT_LIST_validate(scts, ct_policy_ctx);
-                if (are_scts_validated < 0) {
-                    fprintf(stderr, "Error verifying SCTs\n");
-                    test_failed = 1;
-                } else if (!are_scts_validated) {
-                    int invalid_sct_count = 0;
-                    int valid_sct_count = 0;
-
-                    for (i = 0; i < sk_SCT_num(scts); ++i) {
-                        SCT *sct_i = sk_SCT_value(scts, i);
-                        switch (SCT_get_validation_status(sct_i)) {
-                        case SCT_VALIDATION_STATUS_VALID:
-                            ++valid_sct_count;
-                            break;
-                        case SCT_VALIDATION_STATUS_INVALID:
-                            ++invalid_sct_count;
-                            break;
-                        default:
-                            /* Ignore other validation statuses. */
-                            break;
-                        }
-                    }
-
-                    if (valid_sct_count != fixture.expected_sct_count) {
-                        int unverified_sct_count = sk_SCT_num(scts) -
-                                invalid_sct_count - valid_sct_count;
-
-                        fprintf(stderr,
-                                "%d SCTs failed verification\n"
-                                "%d SCTs passed verification (%d expected)\n"
-                                "%d SCTs were unverified\n",
-                                invalid_sct_count,
-                                valid_sct_count,
-                                fixture.expected_sct_count,
-                                unverified_sct_count);
-                    }
-                    test_failed = 1;
-                }
-
-                if (test_failed != 0)
+                if (!assert_validity(fixture, scts, ct_policy_ctx))
                     goto end;
             }
         } else if (sct_extension != NULL) {
-            test_failed = 1;
             fprintf(stderr,
                     "Expected no SCTs, but found SCT extension in: %s\n",
                     fixture.certificate_file);
@@ -405,41 +363,32 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
         }
     }
 
-    if (fixture.tls_sct != NULL) {
-        const unsigned char *p = fixture.tls_sct;
-        if (o2i_SCT(&sct, &p, fixture.tls_sct_len) == NULL) {
-            test_failed = 1;
-            fprintf(stderr, "Failed to decode SCT from TLS format\n");
-            goto end;
-        }
-
-        if (fixture.sct_text_file) {
-            test_failed = compare_sct_printout(sct, expected_sct_text);
-            if (test_failed != 0)
-                goto end;
-        }
-
-        tls_sct_len = i2o_SCT(sct, &tls_sct);
-        if (tls_sct_len != fixture.tls_sct_len ||
-            memcmp(fixture.tls_sct, tls_sct, tls_sct_len) != 0) {
-            test_failed = 1;
-            fprintf(stderr, "Failed to encode SCT into TLS format correctly\n");
+    if (fixture.tls_sct_list != NULL) {
+        const unsigned char *p = fixture.tls_sct_list;
+        if (o2i_SCT_LIST(&scts, &p, fixture.tls_sct_list_len) == NULL) {
+            fprintf(stderr, "Failed to decode SCTs from TLS format\n");
             goto end;
         }
 
         if (fixture.test_validity && cert != NULL) {
-            int is_sct_validated = SCT_validate(sct, ct_policy_ctx);
-            if (is_sct_validated < 0) {
-                test_failed = 1;
-                fprintf(stderr, "Error validating SCT\n");
+            if (!assert_validity(fixture, scts, ct_policy_ctx))
                 goto end;
-            } else if (!is_sct_validated) {
-                test_failed = 1;
-                fprintf(stderr, "SCT failed verification\n");
+        }
+
+        if (fixture.sct_text_file
+            && compare_sct_list_printout(scts, expected_sct_text)) {
                 goto end;
-            }
+        }
+
+        tls_sct_list_len = i2o_SCT_LIST(scts, &tls_sct_list);
+        if (tls_sct_list_len != fixture.tls_sct_list_len ||
+            memcmp(fixture.tls_sct_list, tls_sct_list, tls_sct_list_len) != 0) {
+            fprintf(stderr,
+                    "Failed to encode SCTs into TLS format correctly\n");
+            goto end;
         }
     }
+    success = 1;
 
 end:
     X509_free(cert);
@@ -447,8 +396,8 @@ end:
     SCT_LIST_free(scts);
     SCT_free(sct);
     CT_POLICY_EVAL_CTX_free(ct_policy_ctx);
-    OPENSSL_free(tls_sct);
-    return test_failed;
+    OPENSSL_free(tls_sct_list);
+    return success;
 }
 
 #define SETUP_CT_TEST_FIXTURE() SETUP_TEST_FIXTURE(CT_TEST_FIXTURE, set_up)
@@ -512,7 +461,9 @@ static int test_verify_multiple_scts()
 
 static int test_decode_tls_sct()
 {
-    const unsigned char tls_sct[] = "\x00" /* version */
+    const unsigned char tls_sct_list[] = "\x00\x78" /* length of list */
+        "\x00\x76"
+        "\x00" /* version */
         /* log ID */
         "\xDF\x1C\x2E\xC1\x15\x00\x94\x52\x47\xA9\x61\x68\x32\x5D\xDC\x5C\x79"
         "\x59\xE8\xF7\xC6\xD3\x88\xFC\x00\x2E\x0B\xBD\x3F\x74\xD7\x64"
@@ -529,8 +480,8 @@ static int test_decode_tls_sct()
         "\xED\xBF\x08";
 
     SETUP_CT_TEST_FIXTURE();
-    fixture.tls_sct = tls_sct;
-    fixture.tls_sct_len = 118;
+    fixture.tls_sct_list = tls_sct_list;
+    fixture.tls_sct_list_len = 0x7a;
     fixture.sct_dir = ct_dir;
     fixture.sct_text_file = "tls1.sct";
     EXECUTE_CT_TEST();
@@ -550,6 +501,7 @@ static int test_encode_tls_sct()
 
     SETUP_CT_TEST_FIXTURE();
 
+    STACK_OF(SCT) *sct_list = sk_SCT_new_null();
     SCT *sct = SCT_new();
     if (!SCT_set_version(sct, SCT_VERSION_V1)) {
         fprintf(stderr, "Failed to set SCT version\n");
@@ -568,7 +520,9 @@ static int test_encode_tls_sct()
         fprintf(stderr, "Failed to set SCT signature\n");
         return 1;
     }
-    fixture.sct = sct;
+    sk_SCT_push(sct_list, sct);
+
+    fixture.sct_list = sct_list;
     fixture.sct_dir = ct_dir;
     fixture.sct_text_file = "tls1.sct";
     EXECUTE_CT_TEST();
@@ -578,6 +532,11 @@ int main(int argc, char *argv[])
 {
     int result = 0;
     char *tmp_env = NULL;
+
+    tmp_env = getenv("OPENSSL_DEBUG_MEMORY");
+    if (tmp_env != NULL && strcmp(tmp_env, "on") == 0)
+        CRYPTO_set_mem_debug(1);
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     tmp_env = getenv("CT_DIR");
     ct_dir = OPENSSL_strdup(tmp_env != NULL ? tmp_env : "ct");
@@ -597,6 +556,11 @@ int main(int argc, char *argv[])
 
     OPENSSL_free(ct_dir);
     OPENSSL_free(certs_dir);
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        result = 1;
+#endif
 
     return result;
 }

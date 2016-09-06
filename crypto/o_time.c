@@ -1,63 +1,10 @@
 /*
- * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
- * 2001.
- */
-/*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2008.
- */
-/* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/e_os2.h>
@@ -77,7 +24,28 @@
 #  include <descrip.h>
 #  include <stdlib.h>
 # endif                         /* ndef VMS_GMTIME_OK */
-#endif
+
+
+/*
+ * Needed to pick up the correct definitions and declarations in some of the
+ * DEC C Header Files (*.H).
+ */
+# define __NEW_STARLET 1
+
+# if (defined(__alpha) || defined(__ia64))
+#  include <iledef.h>
+# else
+
+/* VAX */
+typedef struct _ile3 {          /* Copied from ILEDEF.H for Alpha   */
+#  pragma __nomember_alignment
+    unsigned short int ile3$w_length;        /* Length of buffer in bytes */
+    unsigned short int ile3$w_code;          /* Item code value */
+    void *ile3$ps_bufaddr;                   /* Buffer address */
+    unsigned short int *ile3$ps_retlen_addr; /* Address of word for returned length */
+} ILE3;
+# endif   /* alpha || ia64    */
+#endif    /* OPENSSL_SYS_VMS  */
 
 struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
 {
@@ -104,26 +72,42 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
         static $DESCRIPTOR(lognam, "SYS$TIMEZONE_DIFFERENTIAL");
         char logvalue[256];
         unsigned int reslen = 0;
-        struct {
-            short buflen;
-            short code;
-            void *bufaddr;
-            unsigned int *reslen;
-        } itemlist[] = {
-            {
-                0, LNM$_STRING, 0, 0
-            },
-            {
-                0, 0, 0, 0
-            },
-        };
+# if __INITIAL_POINTER_SIZE == 64
+        ILEB_64 itemlist[2], *pitem;
+# else
+        ILE3 itemlist[2], *pitem;
+# endif
         int status;
         time_t t;
 
+
+        /*
+         * Setup an itemlist for the call to $TRNLNM - Translate Logical Name.
+         */
+        pitem = itemlist;
+
+# if __INITIAL_POINTER_SIZE == 64
+        pitem->ileb_64$w_mbo = 1;
+        pitem->ileb_64$w_code = LNM$_STRING;
+        pitem->ileb_64$l_mbmo = -1;
+        pitem->ileb_64$q_length = sizeof (logvalue);
+        pitem->ileb_64$pq_bufaddr = logvalue;
+        pitem->ileb_64$pq_retlen_addr = (unsigned __int64 *) &reslen;
+        pitem++;
+        /* Last item of the item list is null terminated */
+        pitem->ileb_64$q_length = pitem->ileb_64$w_code = 0;
+# else
+        pitem->ile3$w_length = sizeof (logvalue);
+        pitem->ile3$w_code = LNM$_STRING;
+        pitem->ile3$ps_bufaddr = logvalue;
+        pitem->ile3$ps_retlen_addr = (unsigned short int *) &reslen;
+        pitem++;
+        /* Last item of the item list is null terminated */
+        pitem->ile3$w_length = pitem->ile3$w_code = 0;
+# endif
+
+
         /* Get the value for SYS$TIMEZONE_DIFFERENTIAL */
-        itemlist[0].buflen = sizeof(logvalue);
-        itemlist[0].bufaddr = logvalue;
-        itemlist[0].reslen = &reslen;
         status = sys$trnlnm(0, &tabnam, &lognam, 0, itemlist);
         if (!(status & 1))
             return NULL;
@@ -131,7 +115,7 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
 
         t = *timer;
 
-/* The following is extracted from the DEC C header time.h */
+        /* The following is extracted from the DEC C header time.h */
         /*
          **  Beginning in OpenVMS Version 7.0 mktime, time, ctime, strftime
          **  have two implementations.  One implementation is provided

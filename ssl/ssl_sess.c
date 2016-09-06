@@ -1,112 +1,12 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -198,8 +98,11 @@ SSL_SESSION *SSL_SESSION_new(void)
         return NULL;
     }
 
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
-
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data)) {
+        CRYPTO_THREAD_lock_free(ss->lock);
+        OPENSSL_free(ss);
+        return NULL;
+    }
     return ss;
 }
 
@@ -255,7 +158,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
         if (dest->peer_chain == NULL)
             goto err;
     }
-
 #ifndef OPENSSL_NO_PSK
     if (src->psk_identity_hint) {
         dest->psk_identity_hint = OPENSSL_strdup(src->psk_identity_hint);
@@ -271,14 +173,14 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     }
 #endif
 
-    if(src->ciphers != NULL) {
+    if (src->ciphers != NULL) {
         dest->ciphers = sk_SSL_CIPHER_dup(src->ciphers);
         if (dest->ciphers == NULL)
             goto err;
     }
 
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL_SESSION,
-                                            &dest->ex_data, &src->ex_data)) {
+                            &dest->ex_data, &src->ex_data)) {
         goto err;
     }
 
@@ -292,22 +194,23 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     if (src->tlsext_ecpointformatlist) {
         dest->tlsext_ecpointformatlist =
             OPENSSL_memdup(src->tlsext_ecpointformatlist,
-                       src->tlsext_ecpointformatlist_length);
+                           src->tlsext_ecpointformatlist_length);
         if (dest->tlsext_ecpointformatlist == NULL)
             goto err;
     }
     if (src->tlsext_ellipticcurvelist) {
         dest->tlsext_ellipticcurvelist =
             OPENSSL_memdup(src->tlsext_ellipticcurvelist,
-                       src->tlsext_ellipticcurvelist_length);
+                           src->tlsext_ellipticcurvelist_length);
         if (dest->tlsext_ellipticcurvelist == NULL)
             goto err;
     }
 #endif
 
     if (ticket != 0) {
-        dest->tlsext_tick = OPENSSL_memdup(src->tlsext_tick, src->tlsext_ticklen);
-        if(dest->tlsext_tick == NULL)
+        dest->tlsext_tick =
+            OPENSSL_memdup(src->tlsext_tick, src->tlsext_ticklen);
+        if (dest->tlsext_tick == NULL)
             goto err;
     } else {
         dest->tlsext_tick_lifetime_hint = 0;
@@ -324,18 +227,24 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
 #endif
 
     return dest;
-err:
+ err:
     SSLerr(SSL_F_SSL_SESSION_DUP, ERR_R_MALLOC_FAILURE);
     SSL_SESSION_free(dest);
     return NULL;
 }
 
-const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
-                                        unsigned int *len)
+const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
 {
     if (len)
         *len = s->session_id_length;
     return s->session_id;
+}
+const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *s,
+                                                unsigned int *len)
+{
+    if (len != NULL)
+        *len = s->sid_ctx_length;
+    return s->sid_ctx;
 }
 
 unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
@@ -431,13 +340,13 @@ int ssl_get_new_session(SSL *s, int session)
          * Note that:
          * (a) ssl_get_prev_session() does lookahead into the
          *     ClientHello extensions to find the session ticket.
-         *     When ssl_get_prev_session() fails, s3_srvr.c calls
-         *     ssl_get_new_session() in ssl3_get_client_hello().
+         *     When ssl_get_prev_session() fails, statem_srvr.c calls
+         *     ssl_get_new_session() in tls_process_client_hello().
          *     At that point, it has not yet parsed the extensions,
          *     however, because of the lookahead, it already knows
          *     whether a ticket is expected or not.
          *
-         * (b) s3_clnt.c calls ssl_get_new_session() before parsing
+         * (b) statem_clnt.c calls ssl_get_new_session() before parsing
          *     ServerHello extensions, and before recording the session
          *     ID received from the server, so this block is a noop.
          */
@@ -456,6 +365,7 @@ int ssl_get_new_session(SSL *s, int session)
         CRYPTO_THREAD_unlock(s->session_ctx->lock);
         CRYPTO_THREAD_unlock(s->lock);
         /* Choose a session ID */
+        memset(ss->session_id, 0, ss->session_id_length);
         tmp = ss->session_id_length;
         if (!cb(s, ss->session_id, &tmp)) {
             /* The callback failed */
@@ -568,9 +478,9 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
         SSL_SESSION data;
         size_t local_len;
         data.ssl_version = s->version;
+        memset(data.session_id, 0, sizeof(data.session_id));
         if (!PACKET_copy_all(session_id, data.session_id,
-                             sizeof(data.session_id),
-                             &local_len)) {
+                             sizeof(data.session_id), &local_len)) {
             goto err;
         }
         data.session_id_length = local_len;
@@ -772,8 +682,7 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
         ret = 1;
 
         if (SSL_CTX_sess_get_cache_size(ctx) > 0) {
-            while (SSL_CTX_sess_number(ctx) >
-                   SSL_CTX_sess_get_cache_size(ctx)) {
+            while (SSL_CTX_sess_number(ctx) > SSL_CTX_sess_get_cache_size(ctx)) {
                 if (!remove_session_lock(ctx, ctx->session_cache_tail, 0))
                     break;
                 else
@@ -803,16 +712,16 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
             r = lh_SSL_SESSION_delete(ctx->sessions, c);
             SSL_SESSION_list_remove(ctx, c);
         }
+        c->not_resumable = 1;
 
         if (lck)
             CRYPTO_THREAD_unlock(ctx->lock);
 
-        if (ret) {
-            r->not_resumable = 1;
-            if (ctx->remove_session_cb != NULL)
-                ctx->remove_session_cb(ctx, r);
+        if (ret)
             SSL_SESSION_free(r);
-        }
+
+        if (ctx->remove_session_cb != NULL)
+            ctx->remove_session_cb(ctx, c);
     } else
         ret = 0;
     return (ret);
@@ -845,7 +754,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     OPENSSL_free(ss->tlsext_ecpointformatlist);
     ss->tlsext_ellipticcurvelist_length = 0;
     OPENSSL_free(ss->tlsext_ellipticcurvelist);
-#endif                         /* OPENSSL_NO_EC */
+#endif                          /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(ss->psk_identity_hint);
     OPENSSL_free(ss->psk_identity);
@@ -871,28 +780,33 @@ int SSL_SESSION_up_ref(SSL_SESSION *ss)
 
 int SSL_set_session(SSL *s, SSL_SESSION *session)
 {
-    int ret = 0;
-    if (session != NULL) {
-        if (s->ctx->method != s->method) {
-            if (!SSL_set_ssl_method(s, s->ctx->method))
-                return (0);
-        }
-
-        SSL_SESSION_up_ref(session);
-        SSL_SESSION_free(s->session);
-        s->session = session;
-        s->verify_result = s->session->verify_result;
-        ret = 1;
-    } else {
-        SSL_SESSION_free(s->session);
-        s->session = NULL;
-        if (s->ctx->method != s->method) {
-            if (!SSL_set_ssl_method(s, s->ctx->method))
-                return (0);
-        }
-        ret = 1;
+    ssl_clear_bad_session(s);
+    if (s->ctx->method != s->method) {
+        if (!SSL_set_ssl_method(s, s->ctx->method))
+            return 0;
     }
-    return (ret);
+
+    if (session != NULL) {
+        SSL_SESSION_up_ref(session);
+        s->verify_result = session->verify_result;
+    }
+    SSL_SESSION_free(s->session);
+    s->session = session;
+
+    return 1;
+}
+
+int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
+                        unsigned int sid_len)
+{
+    if (sid_len > SSL_MAX_SSL_SESSION_ID_LENGTH) {
+      SSLerr(SSL_F_SSL_SESSION_SET1_ID,
+             SSL_R_SSL_SESSION_ID_TOO_LONG);
+      return 0;
+    }
+    s->session_id_length = sid_len;
+    memcpy(s->session_id, sid, sid_len);
+    return 1;
 }
 
 long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
@@ -925,6 +839,21 @@ long SSL_SESSION_set_time(SSL_SESSION *s, long t)
     return (t);
 }
 
+int SSL_SESSION_get_protocol_version(const SSL_SESSION *s)
+{
+    return s->ssl_version;
+}
+
+const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s)
+{
+    return s->cipher;
+}
+
+const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s)
+{
+    return s->tlsext_hostname;
+}
+
 int SSL_SESSION_has_ticket(const SSL_SESSION *s)
 {
     return (s->tlsext_ticklen > 0) ? 1 : 0;
@@ -935,8 +864,8 @@ unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s)
     return s->tlsext_tick_lifetime_hint;
 }
 
-void SSL_SESSION_get0_ticket(const SSL_SESSION *s, unsigned char **tick,
-                            size_t *len)
+void SSL_SESSION_get0_ticket(const SSL_SESSION *s, const unsigned char **tick,
+                             size_t *len)
 {
     *len = s->tlsext_ticklen;
     if (tick != NULL)
@@ -1069,10 +998,10 @@ void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
         return;
     tp.time = t;
     CRYPTO_THREAD_write_lock(s->lock);
-    i = CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load;
-    CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = 0;
+    i = lh_SSL_SESSION_get_down_load(s->sessions);
+    lh_SSL_SESSION_set_down_load(s->sessions, 0);
     lh_SSL_SESSION_doall_TIMEOUT_PARAM(tp.cache, timeout_cb, &tp);
-    CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = i;
+    lh_SSL_SESSION_set_down_load(s->sessions, i);
     CRYPTO_THREAD_unlock(s->lock);
 }
 
@@ -1081,7 +1010,7 @@ int ssl_clear_bad_session(SSL *s)
     if ((s->session != NULL) &&
         !(s->shutdown & SSL_SENT_SHUTDOWN) &&
         !(SSL_in_init(s) || SSL_in_before(s))) {
-        SSL_CTX_remove_session(s->ctx, s->session);
+        SSL_CTX_remove_session(s->session_ctx, s->session);
         return (1);
     } else
         return (0);
@@ -1136,8 +1065,7 @@ static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s)
 }
 
 void SSL_CTX_sess_set_new_cb(SSL_CTX *ctx,
-                             int (*cb) (struct ssl_st *ssl,
-                                        SSL_SESSION *sess))
+                             int (*cb) (struct ssl_st *ssl, SSL_SESSION *sess))
 {
     ctx->new_session_cb = cb;
 }
@@ -1166,8 +1094,9 @@ void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
 }
 
 SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx)) (SSL *ssl,
-                                                       const unsigned char *data,
-                                                       int len, int *copy) {
+                                                       const unsigned char
+                                                       *data, int len,
+                                                       int *copy) {
     return ctx->get_session_cb;
 }
 
@@ -1221,11 +1150,11 @@ void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
 }
 
 void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
-                                  int (*cb) (SSL *ssl, const unsigned char *cookie,
+                                  int (*cb) (SSL *ssl,
+                                             const unsigned char *cookie,
                                              unsigned int cookie_len))
 {
     ctx->app_verify_cookie_cb = cb;
 }
 
-IMPLEMENT_PEM_rw(SSL_SESSION, SSL_SESSION, PEM_STRING_SSL_SESSION,
-                 SSL_SESSION)
+IMPLEMENT_PEM_rw(SSL_SESSION, SSL_SESSION, PEM_STRING_SSL_SESSION, SSL_SESSION)

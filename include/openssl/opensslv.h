@@ -1,3 +1,12 @@
+/*
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #ifndef HEADER_OPENSSLV_H
 # define HEADER_OPENSSLV_H
 
@@ -30,11 +39,11 @@ extern "C" {
  * (Prior to 0.9.5a beta1, a different scheme was used: MMNNFFRBB for
  *  major minor fix final patch/beta)
  */
-# define OPENSSL_VERSION_NUMBER  0x10100005L
+# define OPENSSL_VERSION_NUMBER  0x10101000L
 # ifdef OPENSSL_FIPS
-#  define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.0-pre5-fips-dev  xx XXX xxxx"
+#  define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1-fips-dev  xx XXX xxxx"
 # else
-#  define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.0-pre5-dev  xx XXX xxxx"
+#  define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1-dev  xx XXX xxxx"
 # endif
 
 /*-

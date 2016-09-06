@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /*
@@ -69,16 +21,12 @@
 extern "C" {
 #endif
 
-typedef struct lhash_node_st {
-    void *data;
-    struct lhash_node_st *next;
-    unsigned long hash;
-} LHASH_NODE;
-
-typedef int (*LHASH_COMP_FN_TYPE) (const void *, const void *);
-typedef unsigned long (*LHASH_HASH_FN_TYPE) (const void *);
-typedef void (*LHASH_DOALL_FN_TYPE) (void *);
-typedef void (*LHASH_DOALL_ARG_FN_TYPE) (void *, void *);
+typedef struct lhash_node_st OPENSSL_LH_NODE;
+typedef int (*OPENSSL_LH_COMPFUNC) (const void *, const void *);
+typedef unsigned long (*OPENSSL_LH_HASHFUNC) (const void *);
+typedef void (*OPENSSL_LH_DOALL_FUNC) (void *);
+typedef void (*OPENSSL_LH_DOALL_FUNCARG) (void *, void *);
+typedef struct lhash_st OPENSSL_LHASH;
 
 /*
  * Macros for declaring and implementing type-safe wrappers for LHASH
@@ -118,62 +66,53 @@ typedef void (*LHASH_DOALL_ARG_FN_TYPE) (void *, void *);
                 name##_doall_arg(a, b); }
 # define LHASH_DOALL_ARG_FN(name) name##_LHASH_DOALL_ARG
 
-typedef struct lhash_st {
-    LHASH_NODE **b;
-    LHASH_COMP_FN_TYPE comp;
-    LHASH_HASH_FN_TYPE hash;
-    unsigned int num_nodes;
-    unsigned int num_alloc_nodes;
-    unsigned int p;
-    unsigned int pmax;
-    unsigned long up_load;      /* load times 256 */
-    unsigned long down_load;    /* load times 256 */
-    unsigned long num_items;
-    unsigned long num_expands;
-    unsigned long num_expand_reallocs;
-    unsigned long num_contracts;
-    unsigned long num_contract_reallocs;
-    unsigned long num_hash_calls;
-    unsigned long num_comp_calls;
-    unsigned long num_insert;
-    unsigned long num_replace;
-    unsigned long num_delete;
-    unsigned long num_no_delete;
-    unsigned long num_retrieve;
-    unsigned long num_retrieve_miss;
-    unsigned long num_hash_comps;
-    int error;
-} _LHASH;                       /* Do not use _LHASH directly, use LHASH_OF
-                                 * and friends */
 
 # define LH_LOAD_MULT    256
 
-/*
- * Indicates a malloc() error in the last call, this is only bad in
- * lh_insert().
- */
-int lh_error(_LHASH *lh);
-
-_LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c);
-void lh_free(_LHASH *lh);
-void *lh_insert(_LHASH *lh, void *data);
-void *lh_delete(_LHASH *lh, const void *data);
-void *lh_retrieve(_LHASH *lh, const void *data);
-void lh_doall(_LHASH *lh, LHASH_DOALL_FN_TYPE func);
-void lh_doall_arg(_LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg);
-unsigned long lh_strhash(const char *c);
-unsigned long lh_num_items(const _LHASH *lh);
-unsigned long lh_get_down_load(const _LHASH *lh);
-void lh_set_down_load(_LHASH *lh, unsigned long down_load);
+int OPENSSL_LH_error(OPENSSL_LHASH *lh);
+OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c);
+void OPENSSL_LH_free(OPENSSL_LHASH *lh);
+void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data);
+void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data);
+void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data);
+void OPENSSL_LH_doall(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNC func);
+void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNCARG func, void *arg);
+unsigned long OPENSSL_LH_strhash(const char *c);
+unsigned long OPENSSL_LH_num_items(const OPENSSL_LHASH *lh);
+unsigned long OPENSSL_LH_get_down_load(const OPENSSL_LHASH *lh);
+void OPENSSL_LH_set_down_load(OPENSSL_LHASH *lh, unsigned long down_load);
 
 # ifndef OPENSSL_NO_STDIO
-void lh_stats(const _LHASH *lh, FILE *fp);
-void lh_node_stats(const _LHASH *lh, FILE *fp);
-void lh_node_usage_stats(const _LHASH *lh, FILE *fp);
+void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp);
+void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp);
+void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp);
 # endif
-void lh_stats_bio(const _LHASH *lh, BIO *out);
-void lh_node_stats_bio(const _LHASH *lh, BIO *out);
-void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
+void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define _LHASH OPENSSL_LHASH
+#  define LHASH_NODE OPENSSL_LH_NODE
+#  define lh_error OPENSSL_LH_error
+#  define lh_new OPENSSL_lh_new
+#  define lh_free OPENSSL_LH_free
+#  define lh_insert OPENSSL_LH_insert
+#  define lh_delete OPENSSL_LH_delete
+#  define lh_retrieve OPENSSL_LH_retrieve
+#  define lh_doall OPENSSL_LH_doall
+#  define lh_doall_arg OPENSSL_LH_doall_arg
+#  define lh_strhash OPENSSL_LH_strhash
+#  define lh_num_items OPENSSL_LH_num_items
+#  ifndef OPENSSL_NO_STDIO
+#   define lh_stats OPENSSL_LH_stats
+#   define lh_node_stats OPENSSL_LH_node_stats
+#   define lh_node_usage_stats OPENSSL_LH_node_usage_stats
+#  endif
+#  define lh_stats_bio OPENSSL_LH_stats_bio
+#  define lh_node_stats_bio OPENSSL_LH_node_stats_bio
+#  define lh_node_usage_stats_bio OPENSSL_LH_node_usage_stats_bio
+# endif
 
 /* Type checking... */
 
@@ -186,56 +125,56 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
                         int (*cfn)(const type *, const type *)) \
     { \
         return (LHASH_OF(type) *) \
-            lh_new((LHASH_HASH_FN_TYPE) hfn, (LHASH_COMP_FN_TYPE)cfn); \
+            OPENSSL_LH_new((OPENSSL_LH_HASHFUNC)hfn, (OPENSSL_LH_COMPFUNC)cfn); \
     } \
     static ossl_inline void lh_##type##_free(LHASH_OF(type) *lh) \
     { \
-        lh_free((_LHASH *)lh); \
+        OPENSSL_LH_free((OPENSSL_LHASH *)lh); \
     } \
     static ossl_inline type *lh_##type##_insert(LHASH_OF(type) *lh, type *d) \
     { \
-        return (type *)lh_insert((_LHASH *)lh, d); \
+        return (type *)OPENSSL_LH_insert((OPENSSL_LHASH *)lh, d); \
     } \
     static ossl_inline type *lh_##type##_delete(LHASH_OF(type) *lh, const type *d) \
     { \
-        return (type *)lh_delete((_LHASH *)lh, d); \
+        return (type *)OPENSSL_LH_delete((OPENSSL_LHASH *)lh, d); \
     } \
     static ossl_inline type *lh_##type##_retrieve(LHASH_OF(type) *lh, const type *d) \
     { \
-        return (type *)lh_retrieve((_LHASH *)lh, d); \
+        return (type *)OPENSSL_LH_retrieve((OPENSSL_LHASH *)lh, d); \
     } \
     static ossl_inline int lh_##type##_error(LHASH_OF(type) *lh) \
     { \
-        return lh_error((_LHASH *)lh); \
+        return OPENSSL_LH_error((OPENSSL_LHASH *)lh); \
     } \
     static ossl_inline unsigned long lh_##type##_num_items(LHASH_OF(type) *lh) \
     { \
-        return lh_num_items((_LHASH *)lh); \
+        return OPENSSL_LH_num_items((OPENSSL_LHASH *)lh); \
     } \
     static ossl_inline void lh_##type##_node_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
-        lh_node_stats_bio((_LHASH *)lh, out); \
+        OPENSSL_LH_node_stats_bio((const OPENSSL_LHASH *)lh, out); \
     } \
     static ossl_inline void lh_##type##_node_usage_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
-        lh_node_usage_stats_bio((_LHASH *)lh, out); \
+        OPENSSL_LH_node_usage_stats_bio((const OPENSSL_LHASH *)lh, out); \
     } \
     static ossl_inline void lh_##type##_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
-        lh_stats_bio((_LHASH *)lh, out); \
+        OPENSSL_LH_stats_bio((const OPENSSL_LHASH *)lh, out); \
     } \
     static ossl_inline unsigned long lh_##type##_get_down_load(LHASH_OF(type) *lh) \
     { \
-        return lh_get_down_load((_LHASH *)lh); \
+        return OPENSSL_LH_get_down_load((OPENSSL_LHASH *)lh); \
     } \
     static ossl_inline void lh_##type##_set_down_load(LHASH_OF(type) *lh, unsigned long dl) \
     { \
-        lh_set_down_load((_LHASH *)lh, dl); \
+        OPENSSL_LH_set_down_load((OPENSSL_LHASH *)lh, dl); \
     } \
     static ossl_inline void lh_##type##_doall(LHASH_OF(type) *lh, \
                                          void (*doall)(type *)) \
     { \
-        lh_doall((_LHASH *)lh, (LHASH_DOALL_FN_TYPE)doall); \
+        OPENSSL_LH_doall((OPENSSL_LHASH *)lh, (OPENSSL_LH_DOALL_FUNC)doall); \
     } \
     LHASH_OF(type)
 
@@ -251,16 +190,9 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
                                    void (*fn)(cbargtype *, argtype *), \
                                    argtype *arg) \
     { \
-        lh_doall_arg((_LHASH *)lh, (LHASH_DOALL_ARG_FN_TYPE)fn, (void *)arg); \
+        OPENSSL_LH_doall_arg((OPENSSL_LHASH *)lh, (OPENSSL_LH_DOALL_FUNCARG)fn, (void *)arg); \
     } \
     LHASH_OF(type)
-
-# define CHECKED_LHASH_OF(type,lh) \
-  ((_LHASH *)CHECKED_PTR_OF(LHASH_OF(type),lh))
-
-/* Define wrapper functions. */
-# define LHM_lh_doall_arg(type, lh, fn, arg_type, arg) \
-  lh_doall_arg(CHECKED_LHASH_OF(type, lh), fn, CHECKED_PTR_OF(arg_type, arg))
 
 DEFINE_LHASH_OF(OPENSSL_STRING);
 DEFINE_LHASH_OF(OPENSSL_CSTRING);

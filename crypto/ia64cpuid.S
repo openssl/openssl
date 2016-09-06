@@ -1,6 +1,18 @@
+// Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+//
+// Licensed under the OpenSSL license (the "License").  You may not use
+// this file except in compliance with the License.  You can obtain a copy
+// in the file LICENSE in the source distribution or at
+// https://www.openssl.org/source/license.html
 // Works on all IA-64 platforms: Linux, HP-UX, Win64i...
 // On Win64i compile with ias.exe.
 .text
+
+#if defined(_HPUX_SOURCE) && !defined(_LP64)
+#define	ADDP	addp4
+#else
+#define	ADDP	add
+#endif
 
 .global	OPENSSL_cpuid_setup#
 .proc	OPENSSL_cpuid_setup#
@@ -131,9 +143,7 @@ OPENSSL_wipe_cpu:
 .proc	OPENSSL_cleanse#
 OPENSSL_cleanse:
 { .mib;	cmp.eq		p6,p0=0,r33	    // len==0
-#if defined(_HPUX_SOURCE) && !defined(_LP64)
-	addp4		r32=0,r32
-#endif
+	ADDP		r32=0,r32
 (p6)	br.ret.spnt	b0		};;
 { .mib;	and		r2=7,r32
 	cmp.leu		p6,p0=15,r33	    // len>=15
@@ -166,14 +176,51 @@ OPENSSL_cleanse:
 (p6)	br.ret.sptk.many	b0	};;
 .endp	OPENSSL_cleanse#
 
+.global	CRYPTO_memcmp#
+.proc	CRYPTO_memcmp#
+.align	32
+.skip	16
+CRYPTO_memcmp:
+	.prologue
+{ .mib;	mov		r8=0
+	cmp.eq		p6,p0=0,r34	    // len==0?
+(p6)	br.ret.spnt	b0		};;
+	.save		ar.pfs,r2
+{ .mib;	alloc		r2=ar.pfs,3,5,0,8
+	.save		ar.lc,r3
+	mov		r3=ar.lc
+	brp.loop.imp	.Loop_cmp_ctop,.Loop_cmp_cend-16
+					}
+{ .mib;	sub		r10=r34,r0,1
+	.save		pr,r9
+	mov		r9=pr		};;
+{ .mii;	ADDP		r16=0,r32
+	mov		ar.lc=r10
+	mov		ar.ec=4		}
+{ .mib;	ADDP		r17=0,r33
+	mov		pr.rot=1<<16	};;
+
+.Loop_cmp_ctop:
+{ .mib;	(p16)	ld1	r32=[r16],1
+	(p18)	xor	r34=r34,r38	}
+{ .mib;	(p16)	ld1	r36=[r17],1
+	(p19)	or	r8=r8,r35
+	br.ctop.sptk	.Loop_cmp_ctop	};;
+.Loop_cmp_cend:
+
+{ .mib;	cmp.ne		p6,p0=0,r8
+	mov		ar.lc=r3	};;
+{ .mib;
+(p6)	mov		r8=1
+	mov		pr=r9,0x1ffff
+	br.ret.sptk.many	b0	};;
+.endp	CRYPTO_memcmp#
+
 .global	OPENSSL_instrument_bus#
 .proc	OPENSSL_instrument_bus#
 OPENSSL_instrument_bus:
 { .mmi;	mov		r2=r33
-#if defined(_HPUX_SOURCE) && !defined(_LP64)
-	addp4		r32=0,r32
-#endif
-					}
+	ADDP		r32=0,r32	}
 { .mmi;	mov		r8=ar.itc;;
 	mov		r10=r0
 	mov		r9=r8		};;
@@ -208,10 +255,7 @@ OPENSSL_instrument_bus:
 .proc	OPENSSL_instrument_bus2#
 OPENSSL_instrument_bus2:
 { .mmi;	mov		r2=r33			// put aside cnt
-#if defined(_HPUX_SOURCE) && !defined(_LP64)
-	addp4		r32=0,r32
-#endif
-					}
+	ADDP		r32=0,r32	}
 { .mmi;	mov		r8=ar.itc;;
 	mov		r10=r0
 	mov		r9=r8		};;

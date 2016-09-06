@@ -3,12 +3,12 @@
 
 /*
  * ====================================================================
- * Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
- * project.
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Rights for redistribution and usage in source and binary forms are
- * granted according to the OpenSSL license. Warranty of any kind is
- * disclaimed.
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  * ====================================================================
  */
 
@@ -52,7 +52,7 @@
  *	# cd ../..
  *	# make; make test
  *
- * Q. V8plus achitecture? What kind of beast is that?
+ * Q. V8plus architecture? What kind of beast is that?
  * A. Well, it's rather a programming model than an architecture...
  *    It's actually v9-compliant, i.e. *any* UltraSPARC, CPU under
  *    special conditions, namely when kernel doesn't preserve upper

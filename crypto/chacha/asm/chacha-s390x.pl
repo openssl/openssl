@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -140,7 +147,8 @@ $code.=<<___;
 .type	ChaCha20_ctr32,\@function
 .align	32
 ChaCha20_ctr32:
-	cl${g}ije	$len,0,.Lno_data	# $len==0?
+	lt${g}r	$len,$len			# $len==0?
+	bzr	%r14
 	a${g}hi	$len,-64
 	l${g}hi	%r1,-$frame
 	stm${g}	%r6,%r15,`6*$SIZE_T`($sp)
@@ -272,7 +280,6 @@ $code.=<<___;
 	stmg	%r0,%r3,$stdframe+4*12($sp)
 
 	lm${g}	%r6,%r15,`$frame+6*$SIZE_T`($sp)
-.Lno_data:
 	br	%r14
 
 .align	16

@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 $flavour = shift;
 
@@ -59,6 +66,16 @@ $code=<<___;
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
 .size	.OPENSSL_crypto207_probe,.-.OPENSSL_crypto207_probe
+
+.globl	.OPENSSL_madd300_probe
+.align	4
+.OPENSSL_madd300_probe:
+	xor	r0,r0,r0
+	maddld	r3,r0,r0,r0
+	maddhdu	r3,r0,r0,r0
+	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
 
 .globl	.OPENSSL_wipe_cpu
 .align	4
@@ -160,6 +177,32 @@ Laligned:
 	.byte	0,12,0x14,0,0,0,2,0
 	.long	0
 .size	.OPENSSL_cleanse,.-.OPENSSL_cleanse
+
+globl	.CRYPTO_memcmp
+.align	4
+.CRYPTO_memcmp:
+	$CMPLI	r5,0
+	li	r0,0
+	beq	Lno_data
+	mtctr	r5
+Loop_cmp:
+	lbz	r6,0(r3)
+	addi	r3,r3,1
+	lbz	r7,0(r4)
+	addi	r4,r4,1
+	xor	r6,r6,r7
+	or	r0,r0,r6
+	bdnz	Loop_cmp
+
+Lno_data:
+	li	r3,0
+	sub	r3,r3,r0
+	extrwi	r3,r3,1,0
+	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,3,0
+	.long	0
+.size	.CRYPTO_memcmp,.-.CRYPTO_memcmp
 ___
 {
 my ($out,$cnt,$max)=("r3","r4","r5");

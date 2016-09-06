@@ -1,60 +1,12 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* X509 v3 extension utilities */
 
 #include <stdio.h>
@@ -64,13 +16,14 @@
 #include <openssl/x509v3.h>
 #include "internal/x509_int.h"
 #include <openssl/bn.h>
+#include "ext_dat.h"
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
 static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
                                            GENERAL_NAMES *gens);
 static void str_free(OPENSSL_STRING str);
-static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, ASN1_IA5STRING *email);
+static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email);
 
 static int ipv4_from_asc(unsigned char *v4, const char *in);
 static int ipv6_from_asc(unsigned char *v6, const char *in);
@@ -133,7 +86,7 @@ int X509V3_add_value_bool(const char *name, int asn1_bool,
     return X509V3_add_value(name, "FALSE", extlist);
 }
 
-int X509V3_add_value_bool_nf(char *name, int asn1_bool,
+int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
                              STACK_OF(CONF_VALUE) **extlist)
 {
     if (asn1_bool)
@@ -141,7 +94,7 @@ int X509V3_add_value_bool_nf(char *name, int asn1_bool,
     return 1;
 }
 
-char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
+char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
@@ -155,7 +108,7 @@ char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
     return strtmp;
 }
 
-char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
+char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
@@ -169,7 +122,7 @@ char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
     return strtmp;
 }
 
-ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
+ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 {
     BIGNUM *bn = NULL;
     ASN1_INTEGER *aint;
@@ -222,7 +175,7 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
     return aint;
 }
 
-int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
+int X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
                          STACK_OF(CONF_VALUE) **extlist)
 {
     char *strtmp;
@@ -237,9 +190,9 @@ int X509V3_add_value_int(const char *name, ASN1_INTEGER *aint,
     return ret;
 }
 
-int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool)
+int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
 {
-    char *btmp;
+    const char *btmp;
 
     if ((btmp = value->value) == NULL)
         goto err;
@@ -268,7 +221,7 @@ int X509V3_get_value_bool(CONF_VALUE *value, int *asn1_bool)
     return 0;
 }
 
-int X509V3_get_value_int(CONF_VALUE *value, ASN1_INTEGER **aint)
+int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
 {
     ASN1_INTEGER *itmp;
 
@@ -395,108 +348,6 @@ static char *strip_spaces(char *name)
     return p;
 }
 
-/* hex string utilities */
-
-/*
- * Given a buffer of length 'len' return a OPENSSL_malloc'ed string with its
- * hex representation @@@ (Contents of buffer are always kept in ASCII, also
- * on EBCDIC machines)
- */
-
-char *hex_to_string(const unsigned char *buffer, long len)
-{
-    char *tmp, *q;
-    const unsigned char *p;
-    int i;
-    const static char hexdig[] = "0123456789ABCDEF";
-    if (!buffer || !len)
-        return NULL;
-    if ((tmp = OPENSSL_malloc(len * 3 + 1)) == NULL) {
-        X509V3err(X509V3_F_HEX_TO_STRING, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-    q = tmp;
-    for (i = 0, p = buffer; i < len; i++, p++) {
-        *q++ = hexdig[(*p >> 4) & 0xf];
-        *q++ = hexdig[*p & 0xf];
-        *q++ = ':';
-    }
-    q[-1] = 0;
-#ifdef CHARSET_EBCDIC
-    ebcdic2ascii(tmp, tmp, q - tmp - 1);
-#endif
-
-    return tmp;
-}
-
-/*
- * Give a string of hex digits convert to a buffer
- */
-
-unsigned char *string_to_hex(const char *str, long *len)
-{
-    unsigned char *hexbuf, *q;
-    unsigned char ch, cl, *p;
-    if (!str) {
-        X509V3err(X509V3_F_STRING_TO_HEX, X509V3_R_INVALID_NULL_ARGUMENT);
-        return NULL;
-    }
-    if ((hexbuf = OPENSSL_malloc(strlen(str) >> 1)) == NULL)
-        goto err;
-    for (p = (unsigned char *)str, q = hexbuf; *p;) {
-        ch = *p++;
-#ifdef CHARSET_EBCDIC
-        ch = os_toebcdic[ch];
-#endif
-        if (ch == ':')
-            continue;
-        cl = *p++;
-#ifdef CHARSET_EBCDIC
-        cl = os_toebcdic[cl];
-#endif
-        if (!cl) {
-            X509V3err(X509V3_F_STRING_TO_HEX, X509V3_R_ODD_NUMBER_OF_DIGITS);
-            OPENSSL_free(hexbuf);
-            return NULL;
-        }
-        if (isupper(ch))
-            ch = tolower(ch);
-        if (isupper(cl))
-            cl = tolower(cl);
-
-        if ((ch >= '0') && (ch <= '9'))
-            ch -= '0';
-        else if ((ch >= 'a') && (ch <= 'f'))
-            ch -= 'a' - 10;
-        else
-            goto badhex;
-
-        if ((cl >= '0') && (cl <= '9'))
-            cl -= '0';
-        else if ((cl >= 'a') && (cl <= 'f'))
-            cl -= 'a' - 10;
-        else
-            goto badhex;
-
-        *q++ = (ch << 4) | cl;
-    }
-
-    if (len)
-        *len = q - hexbuf;
-
-    return hexbuf;
-
- err:
-    OPENSSL_free(hexbuf);
-    X509V3err(X509V3_F_STRING_TO_HEX, ERR_R_MALLOC_FAILURE);
-    return NULL;
-
- badhex:
-    OPENSSL_free(hexbuf);
-    X509V3err(X509V3_F_STRING_TO_HEX, X509V3_R_ILLEGAL_HEX_DIGIT);
-    return NULL;
-
-}
 
 /*
  * V2I name comparison function: returns zero if 'name' matches cmp or cmp.*
@@ -601,7 +452,7 @@ static void str_free(OPENSSL_STRING str)
     OPENSSL_free(str);
 }
 
-static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, ASN1_IA5STRING *email)
+static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email)
 {
     char *emtmp;
     /* First some sanity checks */
@@ -883,7 +734,7 @@ static int equal_wildcard(const unsigned char *pattern, size_t pattern_len,
  * to UTF8.
  */
 
-static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
+static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
                            unsigned int flags, const char *b, size_t blen,
                            char **peername)
 {
@@ -989,10 +840,9 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
     i = -1;
     name = X509_get_subject_name(x);
     while ((i = X509_NAME_get_index_by_NID(name, cnid, i)) >= 0) {
-        X509_NAME_ENTRY *ne;
-        ASN1_STRING *str;
-        ne = X509_NAME_get_entry(name, i);
-        str = X509_NAME_ENTRY_get_data(ne);
+        const X509_NAME_ENTRY *ne = X509_NAME_get_entry(name, i);
+        const ASN1_STRING *str = X509_NAME_ENTRY_get_data(ne);
+
         /* Positive on success, negative on error! */
         if ((rv = do_check_string(str, -1, equal, flags,
                                   chk, chklen, peername)) != 0)
@@ -1278,19 +1128,17 @@ static int ipv6_hex(unsigned char *out, const char *in, int inlen)
 {
     unsigned char c;
     unsigned int num = 0;
+    int x;
+
     if (inlen > 4)
         return 0;
     while (inlen--) {
         c = *in++;
         num <<= 4;
-        if ((c >= '0') && (c <= '9'))
-            num |= c - '0';
-        else if ((c >= 'A') && (c <= 'F'))
-            num |= c - 'A' + 10;
-        else if ((c >= 'a') && (c <= 'f'))
-            num |= c - 'a' + 10;
-        else
+        x = OPENSSL_hexchar2int(c);
+        if (x < 0)
             return 0;
+        num |= (char)x;
     }
     out[0] = num >> 8;
     out[1] = num & 0xff;

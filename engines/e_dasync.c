@@ -1,54 +1,15 @@
 /*
- * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- */
+
+#if defined(_WIN32)
+# include <windows.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -71,7 +32,6 @@
 #elif defined(_WIN32)
 # undef ASYNC_WIN
 # define ASYNC_WIN
-# include <windows.h>
 #endif
 
 #define DASYNC_LIB_NAME "DASYNC"
@@ -86,7 +46,7 @@ static const char *engine_dasync_name = "Dummy Async engine support";
 static int dasync_destroy(ENGINE *e);
 static int dasync_init(ENGINE *e);
 static int dasync_finish(ENGINE *e);
-void engine_load_dasync_internal(void);
+void engine_load_dasync_int(void);
 
 
 /* Set up digests. Just SHA1 for now */
@@ -149,23 +109,7 @@ static int dasync_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa,
 static int dasync_rsa_init(RSA *rsa);
 static int dasync_rsa_finish(RSA *rsa);
 
-static RSA_METHOD dasync_rsa_method = {
-    "Dummy Async RSA method",
-    dasync_pub_enc,             /* pub_enc */
-    dasync_pub_dec,             /* pub_dec */
-    dasync_rsa_priv_enc,        /* priv_enc */
-    dasync_rsa_priv_dec,        /* priv_dec */
-    dasync_rsa_mod_exp,         /* rsa_mod_exp */
-    BN_mod_exp_mont,            /* bn_mod_exp */
-    dasync_rsa_init,            /* init */
-    dasync_rsa_finish,          /* finish */
-    0,                          /* flags */
-    NULL,                       /* app_data */
-    0,                          /* rsa_sign */
-    0,                          /* rsa_verify */
-    NULL                        /* rsa_keygen */
-};
-
+static RSA_METHOD *dasync_rsa_method = NULL;
 
 /* AES */
 
@@ -239,12 +183,26 @@ static int dasync_cipher_nids[] = {
 
 static int bind_dasync(ENGINE *e)
 {
+    /* Setup RSA_METHOD */
+    if ((dasync_rsa_method = RSA_meth_new("Dummy Async RSA method", 0)) == NULL
+        || RSA_meth_set_pub_enc(dasync_rsa_method, dasync_pub_enc) == 0
+        || RSA_meth_set_pub_dec(dasync_rsa_method, dasync_pub_dec) == 0
+        || RSA_meth_set_priv_enc(dasync_rsa_method, dasync_rsa_priv_enc) == 0
+        || RSA_meth_set_priv_dec(dasync_rsa_method, dasync_rsa_priv_dec) == 0
+        || RSA_meth_set_mod_exp(dasync_rsa_method, dasync_rsa_mod_exp) == 0
+        || RSA_meth_set_bn_mod_exp(dasync_rsa_method, BN_mod_exp_mont) == 0
+        || RSA_meth_set_init(dasync_rsa_method, dasync_rsa_init) == 0
+        || RSA_meth_set_finish(dasync_rsa_method, dasync_rsa_finish) == 0) {
+        DASYNCerr(DASYNC_F_BIND_DASYNC, DASYNC_R_INIT_FAILED);
+        return 0;
+    }
+
     /* Ensure the dasync error handling is set up */
     ERR_load_DASYNC_strings();
 
     if (!ENGINE_set_id(e, engine_dasync_id)
         || !ENGINE_set_name(e, engine_dasync_name)
-        || !ENGINE_set_RSA(e, &dasync_rsa_method)
+        || !ENGINE_set_RSA(e, dasync_rsa_method)
         || !ENGINE_set_digests(e, dasync_digests)
         || !ENGINE_set_ciphers(e, dasync_ciphers)
         || !ENGINE_set_destroy_function(e, dasync_destroy)
@@ -349,7 +307,7 @@ static ENGINE *engine_dasync(void)
     return ret;
 }
 
-void engine_load_dasync_internal(void)
+void engine_load_dasync_int(void)
 {
     ENGINE *toadd = engine_dasync();
     if (!toadd)
@@ -375,6 +333,7 @@ static int dasync_destroy(ENGINE *e)
 {
     destroy_digests();
     destroy_ciphers();
+    RSA_meth_free(dasync_rsa_method);
     ERR_unload_DASYNC_strings();
     return 1;
 }
@@ -545,14 +504,16 @@ static int dasync_pub_enc(int flen, const unsigned char *from,
                     unsigned char *to, RSA *rsa, int padding) {
     /* Ignore errors - we carry on anyway */
     dummy_pause_job();
-    return RSA_PKCS1_OpenSSL()->rsa_pub_enc(flen, from, to, rsa, padding);
+    return RSA_meth_get_pub_enc(RSA_PKCS1_OpenSSL())
+        (flen, from, to, rsa, padding);
 }
 
 static int dasync_pub_dec(int flen, const unsigned char *from,
                     unsigned char *to, RSA *rsa, int padding) {
     /* Ignore errors - we carry on anyway */
     dummy_pause_job();
-    return RSA_PKCS1_OpenSSL()->rsa_pub_dec(flen, from, to, rsa, padding);
+    return RSA_meth_get_pub_dec(RSA_PKCS1_OpenSSL())
+        (flen, from, to, rsa, padding);
 }
 
 static int dasync_rsa_priv_enc(int flen, const unsigned char *from,
@@ -560,7 +521,8 @@ static int dasync_rsa_priv_enc(int flen, const unsigned char *from,
 {
     /* Ignore errors - we carry on anyway */
     dummy_pause_job();
-    return RSA_PKCS1_OpenSSL()->rsa_priv_enc(flen, from, to, rsa, padding);
+    return RSA_meth_get_priv_enc(RSA_PKCS1_OpenSSL())
+        (flen, from, to, rsa, padding);
 }
 
 static int dasync_rsa_priv_dec(int flen, const unsigned char *from,
@@ -568,23 +530,24 @@ static int dasync_rsa_priv_dec(int flen, const unsigned char *from,
 {
     /* Ignore errors - we carry on anyway */
     dummy_pause_job();
-    return RSA_PKCS1_OpenSSL()->rsa_priv_dec(flen, from, to, rsa, padding);
+    return RSA_meth_get_priv_dec(RSA_PKCS1_OpenSSL())
+        (flen, from, to, rsa, padding);
 }
 
 static int dasync_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
     /* Ignore errors - we carry on anyway */
     dummy_pause_job();
-    return RSA_PKCS1_OpenSSL()->rsa_mod_exp(r0, I, rsa, ctx);
+    return RSA_meth_get_mod_exp(RSA_PKCS1_OpenSSL())(r0, I, rsa, ctx);
 }
 
 static int dasync_rsa_init(RSA *rsa)
 {
-    return RSA_PKCS1_OpenSSL()->init(rsa);
+    return RSA_meth_get_init(RSA_PKCS1_OpenSSL())(rsa);
 }
 static int dasync_rsa_finish(RSA *rsa)
 {
-    return RSA_PKCS1_OpenSSL()->finish(rsa);
+    return RSA_meth_get_finish(RSA_PKCS1_OpenSSL())(rsa);
 }
 
 /* Cipher helper functions */

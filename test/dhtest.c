@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -88,6 +40,9 @@ int main(int argc, char *argv[])
     BN_GENCB *_cb = NULL;
     DH *a = NULL;
     DH *b = NULL;
+    const BIGNUM *ap = NULL, *ag = NULL, *apub_key = NULL, *priv_key = NULL;
+    const BIGNUM *bpub_key = NULL;
+    BIGNUM *bp = NULL, *bg = NULL;
     char buf[12] = {0};
     unsigned char *abuf = NULL;
     unsigned char *bbuf = NULL;
@@ -124,39 +79,39 @@ int main(int argc, char *argv[])
     if (i & DH_NOT_SUITABLE_GENERATOR)
         BIO_puts(out, "the g value is not a generator\n");
 
+    DH_get0_pqg(a, &ap, NULL, &ag);
     BIO_puts(out, "\np    =");
-    BN_print(out, a->p);
+    BN_print(out, ap);
     BIO_puts(out, "\ng    =");
-    BN_print(out, a->g);
+    BN_print(out, ag);
     BIO_puts(out, "\n");
 
     b = DH_new();
     if (b == NULL)
         goto err;
 
-    b->p = BN_dup(a->p);
-    b->g = BN_dup(a->g);
-    if ((b->p == NULL) || (b->g == NULL))
+    bp = BN_dup(ap);
+    bg = BN_dup(ag);
+    if ((bp == NULL) || (bg == NULL) || !DH_set0_pqg(b, bp, NULL, bg))
         goto err;
-
-    /* Set a to run with normal modexp and b to use constant time */
-    a->flags &= ~DH_FLAG_NO_EXP_CONSTTIME;
-    b->flags |= DH_FLAG_NO_EXP_CONSTTIME;
+    bp = bg = NULL;
 
     if (!DH_generate_key(a))
         goto err;
+    DH_get0_key(a, &apub_key, &priv_key);
     BIO_puts(out, "pri 1=");
-    BN_print(out, a->priv_key);
+    BN_print(out, priv_key);
     BIO_puts(out, "\npub 1=");
-    BN_print(out, a->pub_key);
+    BN_print(out, apub_key);
     BIO_puts(out, "\n");
 
     if (!DH_generate_key(b))
         goto err;
+    DH_get0_key(b, &bpub_key, &priv_key);
     BIO_puts(out, "pri 2=");
-    BN_print(out, b->priv_key);
+    BN_print(out, priv_key);
     BIO_puts(out, "\npub 2=");
-    BN_print(out, b->pub_key);
+    BN_print(out, bpub_key);
     BIO_puts(out, "\n");
 
     alen = DH_size(a);
@@ -164,7 +119,7 @@ int main(int argc, char *argv[])
     if (abuf == NULL)
         goto err;
 
-    aout = DH_compute_key(abuf, b->pub_key, a);
+    aout = DH_compute_key(abuf, bpub_key, a);
 
     BIO_puts(out, "key1 =");
     for (i = 0; i < aout; i++) {
@@ -178,7 +133,7 @@ int main(int argc, char *argv[])
     if (bbuf == NULL)
         goto err;
 
-    bout = DH_compute_key(bbuf, a->pub_key, b);
+    bout = DH_compute_key(bbuf, apub_key, b);
 
     BIO_puts(out, "key2 =");
     for (i = 0; i < bout; i++) {
@@ -194,14 +149,23 @@ int main(int argc, char *argv[])
     if (!run_rfc5114_tests())
         ret = 1;
  err:
+    (void)BIO_flush(out);
     ERR_print_errors_fp(stderr);
 
     OPENSSL_free(abuf);
     OPENSSL_free(bbuf);
     DH_free(b);
     DH_free(a);
+    BN_free(bp);
+    BN_free(bg);
     BN_GENCB_free(_cb);
     BIO_free(out);
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        ret = 1;
+#endif
+
     EXIT(ret);
 }
 
@@ -512,7 +476,8 @@ static int run_rfc5114_tests(void)
     unsigned char *Z1 = NULL;
     unsigned char *Z2 = NULL;
     const rfc5114_td *td = NULL;
-    BIGNUM *bady = NULL;
+    BIGNUM *bady = NULL, *priv_key = NULL, *pub_key = NULL;
+    const BIGNUM *pub_key_tmp;
 
     for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
         td = rfctd + i;
@@ -522,15 +487,19 @@ static int run_rfc5114_tests(void)
         if ((dhA == NULL) || (dhB == NULL))
             goto bad_err;
 
-        dhA->priv_key = BN_bin2bn(td->xA, td->xA_len, NULL);
-        dhA->pub_key = BN_bin2bn(td->yA, td->yA_len, NULL);
-
-        dhB->priv_key = BN_bin2bn(td->xB, td->xB_len, NULL);
-        dhB->pub_key = BN_bin2bn(td->yB, td->yB_len, NULL);
-
-        if ((dhA->priv_key == NULL) || (dhA->pub_key == NULL)
-            || (dhB->priv_key == NULL) || (dhB->pub_key == NULL))
+        priv_key = BN_bin2bn(td->xA, td->xA_len, NULL);
+        pub_key = BN_bin2bn(td->yA, td->yA_len, NULL);
+        if (priv_key == NULL || pub_key == NULL
+                || !DH_set0_key(dhA, pub_key, priv_key))
             goto bad_err;
+
+        priv_key = BN_bin2bn(td->xB, td->xB_len, NULL);
+        pub_key = BN_bin2bn(td->yB, td->yB_len, NULL);
+
+        if (priv_key == NULL || pub_key == NULL
+                || !DH_set0_key(dhB, pub_key, priv_key))
+            goto bad_err;
+        priv_key = pub_key = NULL;
 
         if ((td->Z_len != (size_t)DH_size(dhA))
             || (td->Z_len != (size_t)DH_size(dhB)))
@@ -544,9 +513,12 @@ static int run_rfc5114_tests(void)
          * Work out shared secrets using both sides and compare with expected
          * values.
          */
-        if (DH_compute_key(Z1, dhB->pub_key, dhA) == -1)
+        DH_get0_key(dhB, &pub_key_tmp, NULL);
+        if (DH_compute_key(Z1, pub_key_tmp, dhA) == -1)
             goto bad_err;
-        if (DH_compute_key(Z2, dhA->pub_key, dhB) == -1)
+
+        DH_get0_key(dhA, &pub_key_tmp, NULL);
+        if (DH_compute_key(Z2, pub_key_tmp, dhB) == -1)
             goto bad_err;
 
         if (memcmp(Z1, td->Z, td->Z_len))
@@ -604,10 +576,12 @@ static int run_rfc5114_tests(void)
     BN_free(bady);
     DH_free(dhA);
     DH_free(dhB);
+    BN_free(pub_key);
+    BN_free(priv_key);
     OPENSSL_free(Z1);
     OPENSSL_free(Z2);
 
-    fprintf(stderr, "Initalisation error RFC5114 set %d\n", i + 1);
+    fprintf(stderr, "Initialisation error RFC5114 set %d\n", i + 1);
     ERR_print_errors_fp(stderr);
     return 0;
  err:

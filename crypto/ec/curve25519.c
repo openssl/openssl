@@ -1,50 +1,10 @@
-/* ====================================================================
- * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /* This code is mostly taken from the ref10 version of Ed25519 in SUPERCOP
@@ -670,60 +630,91 @@ static void fe_invert(fe out, const fe z) {
   fe t3;
   int i;
 
+  /*
+   * Compute z ** -1 = z ** (2 ** 255 - 19 - 2) with the exponent as
+   * 2 ** 255 - 21 = (2 ** 5) * (2 ** 250 - 1) + 11.
+   */
+
+  /* t0 = z ** 2 */
   fe_sq(t0, z);
-  for (i = 1; i < 1; ++i) {
-    fe_sq(t0, t0);
-  }
+
+  /* t1 = t0 ** (2 ** 2) = z ** 8 */
   fe_sq(t1, t0);
-  for (i = 1; i < 2; ++i) {
-    fe_sq(t1, t1);
-  }
+  fe_sq(t1, t1);
+
+  /* t1 = z * t1 = z ** 9 */
   fe_mul(t1, z, t1);
+  /* t0 = t0 * t1 = z ** 11 -- stash t0 away for the end. */
   fe_mul(t0, t0, t1);
+
+  /* t2 = t0 ** 2 = z ** 22 */
   fe_sq(t2, t0);
-  for (i = 1; i < 1; ++i) {
-    fe_sq(t2, t2);
-  }
+
+  /* t1 = t1 * t2 = z ** (2 ** 5 - 1) */
   fe_mul(t1, t1, t2);
+
+  /* t2 = t1 ** (2 ** 5) = z ** ((2 ** 5) * (2 ** 5 - 1)) */
   fe_sq(t2, t1);
   for (i = 1; i < 5; ++i) {
     fe_sq(t2, t2);
   }
+
+  /* t1 = t1 * t2 = z ** ((2 ** 5 + 1) * (2 ** 5 - 1)) = z ** (2 ** 10 - 1) */
   fe_mul(t1, t2, t1);
+
+  /* Continuing similarly... */
+
+  /* t2 = z ** (2 ** 20 - 1) */
   fe_sq(t2, t1);
   for (i = 1; i < 10; ++i) {
     fe_sq(t2, t2);
   }
   fe_mul(t2, t2, t1);
+
+  /* t2 = z ** (2 ** 40 - 1) */
   fe_sq(t3, t2);
   for (i = 1; i < 20; ++i) {
     fe_sq(t3, t3);
   }
   fe_mul(t2, t3, t2);
-  fe_sq(t2, t2);
-  for (i = 1; i < 10; ++i) {
+
+  /* t2 = z ** (2 ** 10) * (2 ** 40 - 1) */
+  for (i = 0; i < 10; ++i) {
     fe_sq(t2, t2);
   }
+  /* t1 = z ** (2 ** 50 - 1) */
   fe_mul(t1, t2, t1);
+
+  /* t2 = z ** (2 ** 100 - 1) */
   fe_sq(t2, t1);
   for (i = 1; i < 50; ++i) {
     fe_sq(t2, t2);
   }
   fe_mul(t2, t2, t1);
+
+  /* t2 = z ** (2 ** 200 - 1) */
   fe_sq(t3, t2);
   for (i = 1; i < 100; ++i) {
     fe_sq(t3, t3);
   }
   fe_mul(t2, t3, t2);
+
+  /* t2 = z ** ((2 ** 50) * (2 ** 200 - 1) */
   fe_sq(t2, t2);
   for (i = 1; i < 50; ++i) {
     fe_sq(t2, t2);
   }
+
+  /* t1 = z ** (2 ** 250 - 1) */
   fe_mul(t1, t2, t1);
+
+  /* t1 = z ** ((2 ** 5) * (2 ** 250 - 1)) */
   fe_sq(t1, t1);
   for (i = 1; i < 5; ++i) {
     fe_sq(t1, t1);
   }
+
+  /* Recall t0 = z ** 11; out = z ** (2 ** 255 - 21) */
   fe_mul(out, t1, t0);
 }
 

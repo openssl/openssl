@@ -14,6 +14,7 @@ CFLAGS=$(CFLAG)
 LDFLAGS=$(LDFLAG)
 SHARED_LDFLAGS=$(SHARED_LDFLAG)
 
+RC=windres
 # SHARED_RCFLAGS are flags used with windres, i.e. when build for Cygwin
 # or Mingw.
 SHARED_RCFLAGS=$(SHARED_RCFLAG)
@@ -278,9 +279,9 @@ link_shlib.cygwin:
 	SHLIB=cyg$(LIBNAME); SHLIB_SOVER=-$(LIBVERSION); SHLIB_SUFFIX=.dll; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
 	echo "$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name |" \
-		     "$(CROSS_COMPILE)windres $(SHARED_RCFLAGS) -o rc.o"; \
+		     "$(RC) $(SHARED_RCFLAGS) -o rc.o"; \
 	$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name | \
-		$(CROSS_COMPILE)windres $(SHARED_RCFLAGS) -o rc.o; \
+		$(RC) $(SHARED_RCFLAGS) -o rc.o; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,--enable-auto-image-base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a rc.o"; \
@@ -306,9 +307,9 @@ link_shlib.mingw:
 		| sed -e 's|^\(LIBRARY  *\)$(LIBNAME)32|\1'"$$dll_name"'|' \
 		> $(LIBNAME).def; \
 	echo "$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name |" \
-		"$(CROSS_COMPILE)windres $(SHARED_RCFLAGS) -o rc.o"; \
+		"$(RC) $(SHARED_RCFLAGS) -o rc.o"; \
 	$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name | \
-		$(CROSS_COMPILE)windres $(SHARED_RCFLAGS) -o rc.o; \
+		$(RC) $(SHARED_RCFLAGS) -o rc.o; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $(LIBNAME).def rc.o"; \

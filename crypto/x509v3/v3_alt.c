@@ -1,59 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
- */
-/* ====================================================================
- * Copyright (c) 1999-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -70,10 +21,10 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
                                      STACK_OF(CONF_VALUE) *nval);
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
 static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
-static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
-static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
+static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
+static int do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
 
-const X509V3_EXT_METHOD v3_alt[] = {
+const X509V3_EXT_METHOD v3_alt[3] = {
     {NID_subject_alt_name, 0, ASN1_ITEM_ref(GENERAL_NAMES),
      0, 0, 0, 0,
      0, 0,
@@ -207,7 +158,7 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         break;
 
     case GEN_DIRNAME:
-        BIO_printf(out, "DirName: ");
+        BIO_printf(out, "DirName:");
         X509_NAME_print_ex(out, gen->d.dirn, 0, XN_FLAG_ONELINE);
         break;
 
@@ -229,7 +180,7 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         break;
 
     case GEN_RID:
-        BIO_printf(out, "Registered ID");
+        BIO_printf(out, "Registered ID:");
         i2a_ASN1_OBJECT(out, gen->d.rid);
         break;
     }
@@ -431,7 +382,7 @@ GENERAL_NAME *v2i_GENERAL_NAME(const X509V3_EXT_METHOD *method,
 
 GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
                                const X509V3_EXT_METHOD *method,
-                               X509V3_CTX *ctx, int gen_type, char *value,
+                               X509V3_CTX *ctx, int gen_type, const char *value,
                                int is_nc)
 {
     char is_string = 0;
@@ -560,7 +511,7 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 
 }
 
-static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
+static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
 {
     char *objtmp = NULL, *p;
     int objlen;
@@ -587,7 +538,7 @@ static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
     return 1;
 }
 
-static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
+static int do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
 {
     int ret = 0;
     STACK_OF(CONF_VALUE) *sk = NULL;

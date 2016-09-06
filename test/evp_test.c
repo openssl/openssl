@@ -1,54 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
- */
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -199,7 +155,7 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
         return 1;
     }
 
-    *buf = string_to_hex(value, &len);
+    *buf = OPENSSL_hexstr2buf(value, &len);
     if (!*buf) {
         fprintf(stderr, "Value=%s\n", value);
         ERR_print_errors_fp(stderr);
@@ -240,7 +196,7 @@ static int test_uint64(const char *value, uint64_t *pr)
 /* Structure holding test information */
 struct evp_test {
     /* file being read */
-    FILE *in;
+    BIO *in;
     /* List of public and private keys */
     struct key_list *private;
     struct key_list *public;
@@ -251,7 +207,7 @@ struct evp_test {
     /* start line of current test */
     unsigned int start_line;
     /* Error string for test */
-    const char *err;
+    const char *err, *aux_err;
     /* Expected error value of test */
     char *expected_err;
     /* Number of tests */
@@ -364,8 +320,13 @@ static int check_test_error(struct evp_test *t)
     if (!t->err && !t->expected_err)
         return 1;
     if (t->err && !t->expected_err) {
-        fprintf(stderr, "Test line %d: unexpected error %s\n",
-                t->start_line, t->err);
+        if (t->aux_err != NULL) {
+            fprintf(stderr, "Test line %d(%s): unexpected error %s\n",
+                    t->start_line, t->aux_err, t->err);
+        } else {
+            fprintf(stderr, "Test line %d: unexpected error %s\n",
+                    t->start_line, t->err);
+        }
         print_expected(t);
         return 0;
     }
@@ -465,8 +426,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
     if (!parse_line(&keyword, &value, buf))
         return 1;
     if (strcmp(keyword, "PrivateKey") == 0) {
-        save_pos = ftell(t->in);
-        pk = PEM_read_PrivateKey(t->in, NULL, 0, NULL);
+        save_pos = BIO_tell(t->in);
+        pk = PEM_read_bio_PrivateKey(t->in, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading private key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -476,8 +437,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         add_key = 1;
     }
     if (strcmp(keyword, "PublicKey") == 0) {
-        save_pos = ftell(t->in);
-        pk = PEM_read_PUBKEY(t->in, NULL, 0, NULL);
+        save_pos = BIO_tell(t->in);
+        pk = PEM_read_bio_PUBKEY(t->in, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading public key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -501,8 +462,8 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         key->next = *lst;
         *lst = key;
         /* Rewind input, read to end and update line numbers */
-        fseek(t->in, save_pos, SEEK_SET);
-        while (fgets(tmpbuf, sizeof(tmpbuf), t->in)) {
+        (void)BIO_seek(t->in, save_pos);
+        while (BIO_gets(t->in,tmpbuf, sizeof(tmpbuf))) {
             t->line++;
             if (strncmp(tmpbuf, "-----END", 8) == 0)
                 return 1;
@@ -584,7 +545,7 @@ static int check_output(struct evp_test *t,
 
 int main(int argc, char **argv)
 {
-    FILE *in = NULL;
+    BIO *in = NULL;
     char buf[10240];
     struct evp_test t;
 
@@ -597,9 +558,13 @@ int main(int argc, char **argv)
 
     memset(&t, 0, sizeof(t));
     t.start_line = -1;
-    in = fopen(argv[1], "r");
+    in = BIO_new_file(argv[1], "r");
+    if (in == NULL) {
+        fprintf(stderr, "Can't open %s for reading\n", argv[1]);
+        return 1;
+    }
     t.in = in;
-    while (fgets(buf, sizeof(buf), in)) {
+    while (BIO_gets(in, buf, sizeof(buf))) {
         t.line++;
         if (!process_test(&t, buf, 0))
             exit(1);
@@ -611,7 +576,7 @@ int main(int argc, char **argv)
             t.ntests, t.errors, t.nskip);
     free_key_list(t.public);
     free_key_list(t.private);
-    fclose(in);
+    BIO_free(in);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
@@ -830,7 +795,8 @@ static int cipher_test_parse(struct evp_test *t, const char *keyword,
     return 0;
 }
 
-static int cipher_test_enc(struct evp_test *t, int enc)
+static int cipher_test_enc(struct evp_test *t, int enc,
+                           size_t out_misalign, size_t inp_misalign)
 {
     struct cipher_data *cdat = t->data;
     unsigned char *in, *out, *tmp = NULL;
@@ -854,9 +820,31 @@ static int cipher_test_enc(struct evp_test *t, int enc)
         out = cdat->plaintext;
         out_len = cdat->plaintext_len;
     }
-    tmp = OPENSSL_malloc(in_len + 2 * EVP_MAX_BLOCK_LENGTH);
-    if (!tmp)
-        goto err;
+    if (inp_misalign == (size_t)-1) {
+        /*
+         * Exercise in-place encryption
+         */
+        tmp = OPENSSL_malloc(out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH);
+        if (!tmp)
+            goto err;
+        in = memcpy(tmp + out_misalign, in, in_len);
+    } else {
+        inp_misalign += 16 - ((out_misalign + in_len) & 15);
+        /*
+         * 'tmp' will store both output and copy of input. We make the copy
+         * of input to specifically aligned part of 'tmp'. So we just
+         * figured out how much padding would ensure the required alignment,
+         * now we allocate extended buffer and finally copy the input just
+         * past inp_misalign in expression below. Output will be written
+         * past out_misalign...
+         */
+        tmp = OPENSSL_malloc(out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH +
+                             inp_misalign + in_len);
+        if (!tmp)
+            goto err;
+        in = memcpy(tmp + out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH +
+                    inp_misalign, in, in_len);
+    }
     err = "CIPHERINIT_ERROR";
     if (!EVP_CipherInit_ex(ctx, cdat->cipher, NULL, NULL, NULL, enc))
         goto err;
@@ -918,20 +906,20 @@ static int cipher_test_enc(struct evp_test *t, int enc)
     }
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     err = "CIPHERUPDATE_ERROR";
-    if (!EVP_CipherUpdate(ctx, tmp, &tmplen, in, in_len))
+    if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &tmplen, in, in_len))
         goto err;
     if (cdat->aead == EVP_CIPH_CCM_MODE)
         tmpflen = 0;
     else {
         err = "CIPHERFINAL_ERROR";
-        if (!EVP_CipherFinal_ex(ctx, tmp + tmplen, &tmpflen))
+        if (!EVP_CipherFinal_ex(ctx, tmp + out_misalign + tmplen, &tmpflen))
             goto err;
     }
     err = "LENGTH_MISMATCH";
     if (out_len != (size_t)(tmplen + tmpflen))
         goto err;
     err = "VALUE_MISMATCH";
-    if (check_output(t, out, tmp, out_len))
+    if (check_output(t, out, tmp + out_misalign, out_len))
         goto err;
     if (enc && cdat->aead) {
         unsigned char rtag[16];
@@ -961,6 +949,8 @@ static int cipher_test_run(struct evp_test *t)
 {
     struct cipher_data *cdat = t->data;
     int rv;
+    size_t out_misalign, inp_misalign;
+
     if (!cdat->key) {
         t->err = "NO_KEY";
         return 0;
@@ -976,24 +966,41 @@ static int cipher_test_run(struct evp_test *t)
         t->err = "NO_TAG";
         return 0;
     }
-    if (cdat->enc) {
-        rv = cipher_test_enc(t, 1);
-        /* Not fatal errors: return */
-        if (rv != 1) {
-            if (rv < 0)
-                return 0;
-            return 1;
+    for (out_misalign = 0; out_misalign <= 1; out_misalign++) {
+        static char aux_err[64];
+        t->aux_err = aux_err;
+        for (inp_misalign = (size_t)-1; inp_misalign != 2; inp_misalign++) {
+            if (inp_misalign == (size_t)-1) {
+                /* kludge: inp_misalign == -1 means "exercise in-place" */
+                BIO_snprintf(aux_err, sizeof(aux_err), "%s in-place",
+                             out_misalign ? "misaligned" : "aligned");
+            } else {
+                BIO_snprintf(aux_err, sizeof(aux_err), "%s output and %s input",
+                             out_misalign ? "misaligned" : "aligned",
+                             inp_misalign ? "misaligned" : "aligned");
+            }
+            if (cdat->enc) {
+                rv = cipher_test_enc(t, 1, out_misalign, inp_misalign);
+                /* Not fatal errors: return */
+                if (rv != 1) {
+                    if (rv < 0)
+                        return 0;
+                    return 1;
+                }
+            }
+            if (cdat->enc != 1) {
+                rv = cipher_test_enc(t, 0, out_misalign, inp_misalign);
+                /* Not fatal errors: return */
+                if (rv != 1) {
+                    if (rv < 0)
+                        return 0;
+                    return 1;
+                }
+            }
         }
     }
-    if (cdat->enc != 1) {
-        rv = cipher_test_enc(t, 0);
-        /* Not fatal errors: return */
-        if (rv != 1) {
-            if (rv < 0)
-                return 0;
-            return 1;
-        }
-    }
+    t->aux_err = NULL;
+
     return 1;
 }
 

@@ -1,7 +1,12 @@
-/* ====================================================================
- * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
- * ====================================================================
+/*
+ * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -59,7 +64,8 @@ int main(int argc, char **argv)
 
     fprintf(stdout, "Testing SHA-256 ");
 
-    EVP_Digest("abc", 3, md, NULL, EVP_sha256(), NULL);
+    if (!EVP_Digest("abc", 3, md, NULL, EVP_sha256(), NULL))
+        goto err;
     if (memcmp(md, app_b1, sizeof(app_b1))) {
         fflush(stdout);
         fprintf(stderr, "\nTEST 1 of 3 failed.\n");
@@ -68,9 +74,10 @@ int main(int argc, char **argv)
         fprintf(stdout, ".");
     fflush(stdout);
 
-    EVP_Digest("abcdbcde" "cdefdefg" "efghfghi" "ghijhijk"
-               "ijkljklm" "klmnlmno" "mnopnopq", 56, md, NULL, EVP_sha256(),
-               NULL);
+    if (!EVP_Digest("abcdbcde" "cdefdefg" "efghfghi" "ghijhijk"
+                    "ijkljklm" "klmnlmno" "mnopnopq", 56, md,
+                     NULL, EVP_sha256(), NULL))
+        goto err;
     if (memcmp(md, app_b2, sizeof(app_b2))) {
         fflush(stdout);
         fprintf(stderr, "\nTEST 2 of 3 failed.\n");
@@ -85,19 +92,23 @@ int main(int argc, char **argv)
         fprintf(stderr, "\nTEST 3 of 3 failed. (malloc failure)\n");
         return 1;
     }
-    EVP_DigestInit_ex(evp, EVP_sha256(), NULL);
-    for (i = 0; i < 1000000; i += 288)
-        EVP_DigestUpdate(evp, "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
-                         (1000000 - i) < 288 ? 1000000 - i : 288);
-    EVP_DigestFinal_ex(evp, md, NULL);
+    if (!EVP_DigestInit_ex(evp, EVP_sha256(), NULL))
+        goto err;
+    for (i = 0; i < 1000000; i += 288) {
+        if (!EVP_DigestUpdate(evp, "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                              "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                              "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                              "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                              "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                              "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                              "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                              "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                              "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
+                              (1000000 - i) < 288 ? 1000000 - i : 288))
+            goto err;
+    }
+    if (!EVP_DigestFinal_ex(evp, md, NULL))
+            goto err;
 
     if (memcmp(md, app_b3, sizeof(app_b3))) {
         fflush(stdout);
@@ -112,7 +123,8 @@ int main(int argc, char **argv)
 
     fprintf(stdout, "Testing SHA-224 ");
 
-    EVP_Digest("abc", 3, md, NULL, EVP_sha224(), NULL);
+    if (!EVP_Digest("abc", 3, md, NULL, EVP_sha224(), NULL))
+        goto err;
     if (memcmp(md, addenum_1, sizeof(addenum_1))) {
         fflush(stdout);
         fprintf(stderr, "\nTEST 1 of 3 failed.\n");
@@ -121,9 +133,10 @@ int main(int argc, char **argv)
         fprintf(stdout, ".");
     fflush(stdout);
 
-    EVP_Digest("abcdbcde" "cdefdefg" "efghfghi" "ghijhijk"
-               "ijkljklm" "klmnlmno" "mnopnopq", 56, md, NULL, EVP_sha224(),
-               NULL);
+    if (!EVP_Digest("abcdbcde" "cdefdefg" "efghfghi" "ghijhijk"
+                    "ijkljklm" "klmnlmno" "mnopnopq", 56, md,
+                    NULL, EVP_sha224(), NULL))
+        goto err;
     if (memcmp(md, addenum_2, sizeof(addenum_2))) {
         fflush(stdout);
         fprintf(stderr, "\nTEST 2 of 3 failed.\n");
@@ -133,12 +146,16 @@ int main(int argc, char **argv)
     fflush(stdout);
 
     EVP_MD_CTX_reset(evp);
-    EVP_DigestInit_ex(evp, EVP_sha224(), NULL);
-    for (i = 0; i < 1000000; i += 64)
-        EVP_DigestUpdate(evp, "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
-                         (1000000 - i) < 64 ? 1000000 - i : 64);
-    EVP_DigestFinal_ex(evp, md, NULL);
+    if (!EVP_DigestInit_ex(evp, EVP_sha224(), NULL))
+        goto err;
+    for (i = 0; i < 1000000; i += 64) {
+        if (!EVP_DigestUpdate(evp, "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                              "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
+                              (1000000 - i) < 64 ? 1000000 - i : 64))
+            goto err;
+    }
+    if (!EVP_DigestFinal_ex(evp, md, NULL))
+            goto err;
     EVP_MD_CTX_free(evp);
 
     if (memcmp(md, addenum_3, sizeof(addenum_3))) {
@@ -153,4 +170,8 @@ int main(int argc, char **argv)
     fflush(stdout);
 
     return 0;
+
+ err:
+    fprintf(stderr, "Fatal EVP error!\n");
+    return 1;
 }

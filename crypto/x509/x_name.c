@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -63,6 +15,13 @@
 #include "internal/x509_int.h"
 #include "internal/asn1_int.h"
 #include "x509_lcl.h"
+
+/*
+ * Maximum length of X509_NAME: much larger than anything we should
+ * ever see in practice.
+ */
+
+#define X509_NAME_MAX (1024 * 1024)
 
 static int x509_name_ex_d2i(ASN1_VALUE **val,
                             const unsigned char **in, long len,
@@ -76,7 +35,7 @@ static void x509_name_ex_free(ASN1_VALUE **val, const ASN1_ITEM *it);
 
 static int x509_name_encode(X509_NAME *a);
 static int x509_name_canon(X509_NAME *a);
-static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in);
+static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in);
 static int i2d_name_canon(STACK_OF(STACK_OF_X509_NAME_ENTRY) * intname,
                           unsigned char **in);
 
@@ -187,6 +146,8 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     int i, j, ret;
     STACK_OF(X509_NAME_ENTRY) *entries;
     X509_NAME_ENTRY *entry;
+    if (len > X509_NAME_MAX)
+        len = X509_NAME_MAX;
     q = p;
 
     /* Get internal representation of Name */
@@ -212,12 +173,26 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
         for (j = 0; j < sk_X509_NAME_ENTRY_num(entries); j++) {
             entry = sk_X509_NAME_ENTRY_value(entries, j);
             entry->set = i;
-            if (!sk_X509_NAME_ENTRY_push(nm.x->entries, entry))
+            if (!sk_X509_NAME_ENTRY_push(nm.x->entries, entry)) {
+                /*
+                 * Free all in entries if sk_X509_NAME_ENTRY_push return failure.
+                 * X509_NAME_ENTRY_free will check the null entry.
+                 */
+                sk_X509_NAME_ENTRY_pop_free(entries, X509_NAME_ENTRY_free);
                 goto err;
+            }
+            /*
+             * If sk_X509_NAME_ENTRY_push return success, clean the entries[j].
+             * It's necessary when 'goto err;' happens.
+             */
+            sk_X509_NAME_ENTRY_set(entries, j, NULL);
         }
         sk_X509_NAME_ENTRY_free(entries);
+        sk_STACK_OF_X509_NAME_ENTRY_set(intname.s, i, NULL);
     }
+
     sk_STACK_OF_X509_NAME_ENTRY_free(intname.s);
+    intname.s = NULL;
     ret = x509_name_canon(nm.x);
     if (!ret)
         goto err;
@@ -225,8 +200,10 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     *val = nm.a;
     *in = p;
     return ret;
+
  err:
     X509_NAME_free(nm.x);
+    sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s, sk_X509_NAME_ENTRY_free);
     ASN1err(ASN1_F_X509_NAME_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
     return 0;
 }
@@ -313,7 +290,7 @@ static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
                               int indent,
                               const char *fname, const ASN1_PCTX *pctx)
 {
-    if (X509_NAME_print_ex(out, (X509_NAME *)*pval,
+    if (X509_NAME_print_ex(out, (const X509_NAME *)*pval,
                            indent, pctx->nm_flags) <= 0)
         return 0;
     return 2;
@@ -335,7 +312,7 @@ static int x509_name_canon(X509_NAME *a)
     STACK_OF(STACK_OF_X509_NAME_ENTRY) *intname = NULL;
     STACK_OF(X509_NAME_ENTRY) *entries = NULL;
     X509_NAME_ENTRY *entry, *tmpentry = NULL;
-    int i, set = -1, ret = 0;
+    int i, set = -1, ret = 0, len;
 
     OPENSSL_free(a->canon_enc);
     a->canon_enc = NULL;
@@ -361,6 +338,8 @@ static int x509_name_canon(X509_NAME *a)
         if (tmpentry == NULL)
             goto err;
         tmpentry->object = OBJ_dup(entry->object);
+        if (tmpentry->object == NULL)
+            goto err;
         if (!asn1_string_canon(tmpentry->value, entry->value))
             goto err;
         if (!sk_X509_NAME_ENTRY_push(entries, tmpentry))
@@ -370,7 +349,10 @@ static int x509_name_canon(X509_NAME *a)
 
     /* Finally generate encoding */
 
-    a->canon_enclen = i2d_name_canon(intname, NULL);
+    len = i2d_name_canon(intname, NULL);
+    if (len < 0)
+        goto err;
+    a->canon_enclen = len;
 
     p = OPENSSL_malloc(a->canon_enclen);
 
@@ -398,7 +380,7 @@ static int x509_name_canon(X509_NAME *a)
         | B_ASN1_PRINTABLESTRING | B_ASN1_T61STRING | B_ASN1_IA5STRING \
         | B_ASN1_VISIBLESTRING)
 
-static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in)
+static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
 {
     unsigned char *to, *from;
     int len, i;
@@ -432,10 +414,10 @@ static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in)
         len--;
     }
 
-    to = from + len - 1;
+    to = from + len;
 
     /* Ignore trailing spaces */
-    while ((len > 0) && !(*to & 0x80) && isspace(*to)) {
+    while ((len > 0) && !(to[-1] & 0x80) && isspace(to[-1])) {
         to--;
         len--;
     }
@@ -512,7 +494,7 @@ int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
     return (*xn != NULL);
 }
 
-int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
+int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 {
     char *s, *c, *b;
     int l, i;
@@ -568,8 +550,8 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
     return 0;
 }
 
-int X509_NAME_get0_der(const unsigned char **pder, size_t *pderlen,
-                       X509_NAME *nm)
+int X509_NAME_get0_der(X509_NAME *nm, const unsigned char **pder,
+                       size_t *pderlen)
 {
     /* Make sure encoding is valid */
     if (i2d_X509_NAME(nm, NULL) <= 0)

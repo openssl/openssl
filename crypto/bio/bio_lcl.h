@@ -1,3 +1,12 @@
+/*
+ * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #define USE_SOCKETS
 #include "e_os.h"
 
@@ -32,6 +41,18 @@
 # endif
 
 # ifdef AI_PASSIVE
+
+/*
+ * There's a bug in VMS C header file netdb.h, where struct addrinfo
+ * always is the P32 variant, but the functions that handle that structure,
+ * such as getaddrinfo() and freeaddrinfo() adapt to the initial pointer
+ * size.  The easiest workaround is to force struct addrinfo to be the
+ * 64-bit variant when compiling in P64 mode.
+ */
+#  if defined(OPENSSL_SYS_VMS) && __INITIAL_POINTER_SIZE == 64
+#   define addrinfo __addrinfo64
+#  endif
+
 #  define bio_addrinfo_st addrinfo
 #  define bai_family      ai_family
 #  define bai_socktype    ai_socktype
@@ -115,6 +136,8 @@ struct bio_st {
 typedef unsigned int socklen_t;
 # endif
 
+extern CRYPTO_RWLOCK *bio_lookup_lock;
+
 int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa);
 const struct sockaddr *BIO_ADDR_sockaddr(const BIO_ADDR *ap);
 struct sockaddr *BIO_ADDR_sockaddr_noconst(BIO_ADDR *ap);
@@ -122,6 +145,10 @@ socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap);
 socklen_t BIO_ADDRINFO_sockaddr_size(const BIO_ADDRINFO *bai);
 const struct sockaddr *BIO_ADDRINFO_sockaddr(const BIO_ADDRINFO *bai);
 #endif
+
+extern CRYPTO_RWLOCK *bio_type_lock;
+
+void bio_sock_cleanup_int(void);
 
 #if BIO_FLAGS_UPLINK==0
 /* Shortcut UPLINK calls on most platforms... */

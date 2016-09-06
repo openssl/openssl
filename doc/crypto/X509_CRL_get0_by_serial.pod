@@ -6,7 +6,7 @@ X509_CRL_get0_by_serial, X509_CRL_get0_by_cert, X509_CRL_get_REVOKED,
 X509_REVOKED_get0_serialNumber, X509_REVOKED_get0_revocationDate,
 X509_REVOKED_set_serialNumber, X509_REVOKED_set_revocationDate,
 X509_CRL_add0_revoked, X509_CRL_sort - CRL revoked entry utility
-functions.
+functions
 
 =head1 SYNOPSIS
 
@@ -18,8 +18,8 @@ functions.
 
  STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
 
- ASN1_INTEGER *X509_REVOKED_get0_serialNumber(X509_REVOKED *r);
- ASN1_TIME *X509_REVOKED_get0_revocationDate(X509_REVOKED *r);
+ const ASN1_INTEGER *X509_REVOKED_get0_serialNumber(const X509_REVOKED *r);
+ const ASN1_TIME *X509_REVOKED_get0_revocationDate(const X509_REVOKED *r);
 
  int X509_REVOKED_set_serialNumber(X509_REVOKED *r, ASN1_INTEGER *serial);
  int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);
@@ -99,5 +99,14 @@ L<X509_new(3)>,
 L<X509_sign(3)>,
 L<X509V3_get_d2i(3)>,
 L<X509_verify_cert(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

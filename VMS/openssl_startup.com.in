@@ -6,26 +6,33 @@ $	! defined by P1.
 $	!
 $	! The logical names created are:
 $	!
-$	!	OSSL$ROOTnnn	Installation root
-$	!	OSSL$EXEnnn	Where the executables are located
-$	!	OSSL$LIBnnn	Where the library files are located
-$	!	OSSL$SHAREnnn	Where the sahreable images are located
-$	!	OSSL$INCLUDEnnn	Include directory root
-$	!	OSSL$ENGINESnnn	Where the sahreable images are located
+$	!	OSSL$INSTROOT		Installation root
+$	!	OSSL$DATAROOT		Data root (common directory
+$	!				for certs etc)
+$	!	OSSL$INCLUDE		Include directory root
+$	!	OSSL$LIB		Where the static library files
+$	!				are located
+$	!	OSSL$SHARE		Where the shareable image files
+$	!				are located
+$	!	OSSL$EXE		Where the executables are located
+$	!	OSSL$ENGINESnnn		Where the shareable images are located
+$	!	OSSL$LIBCRYPTO		The static crypto library
+$	!	OSSL$LIBSSL		The static ssl library
+$	!	OSSL$LIBCRYPTOnnn_SHR	The shareable crypto image
+$	!	OSSL$LIBSSLnnn_SHR	The shareable ssl image
+$	!	OPENSSL			is OSSL$INCLUDE:[OPENSSL]
 $	!
 $	! In all these, nnn is the OpenSSL version number.  This allows
-$	! several OpenSSL versions to be installed simultaneously.
+$	! several OpenSSL versions to be installed simultaneously, which
+$	! matters for applications that are linked to the shareable images
+$	! or that depend on engines.
 $	!
 $	! In addition, unless P2 is "NOALIASES", these logical names are
 $	! created:
 $	!
-$	!	OSSL$ROOT	Alias for OSSL$ROOTnnn
-$	!	OSSL$EXE	Alias for OSSL$EXEnnn
-$	!	OSSL$LIB	Alias for OSSL$LIBnnn
-$	!	OSSL$SHARE	Alias for OSSL$SHAREnnn
-$	!	OSSL$INCLUDE	Alias for OSSL$INCLUDEnnn
-$	!	OPENSSL		is OSSL$INCLUDE:[OPENSSL]
-$	!	OSSL$ENGINES	Alias for OSSL$ENGINESnnn
+$	!	OSSL$ENGINES		Alias for OSSL$ENGINESnnn
+$	!	OSSL$LIBCRYPTO_SHR	Alias for OSSL$LIBCRYPTOnnn_SHR
+$	!	OSSL$LIBSSL_SHR		Alias for OSSL$LIBSSLnnn_SHR
 $	!
 $	! P1	Qualifier(s) for DEFINE.  "/SYSTEM" would be typical when
 $	!	calling this script from SYS$STARTUP:SYSTARTUP_VMS.COM,
@@ -51,19 +58,18 @@ $	    IF arch .EQS. "" THEN GOTO unknown_arch
 $	ENDIF
 $
 $	! Generated information
-$	VERSION := {- $config{version} -}
 $	INSTALLTOP := {- $config{INSTALLTOP} -}
 $	OPENSSLDIR := {- $config{OPENSSLDIR} -}
-$	POINTER_SIZE := {- $config{pointersize} -}
 $
 $	! Make sure that INSTALLTOP and OPENSSLDIR become something one
 $	! can build concealed logical names on
 $	INSTALLTOP_ = F$PARSE("A.;",INSTALLTOP,,,"NO_CONCEAL") -
-		     - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
 $	OPENSSLDIR_ = F$PARSE("A.;",OPENSSLDIR,,,"NO_CONCEAL") -
-		     - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
-$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_INSTALLTOP 'INSTALLTOP_'
-$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_OPENSSLDIR 'OPENSSLDIR_'
+		     - ".][000000" - "[000000." - "][" - "]A.;" + "."
+$
+$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_INSTALLTOP 'INSTALLTOP_']
+$	DEFINE /TRANSLATION=CONCEALED /NOLOG WRK_OPENSSLDIR 'OPENSSLDIR_']
 $
 $	! Check that things are in place, and specifically, the stuff
 $	! belonging to this architecture
@@ -82,36 +88,36 @@ $
 $	! Abbrevs
 $	DEFT := DEFINE /TRANSLATION=CONCEALED /NOLOG 'P1'
 $	DEF  := DEFINE /NOLOG 'P1'
-$	v    =  VERSION - "." - "."
+$	sv   := {- sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor} -}
+$	pz   := {- $config{pointer_size} -}
 $
-$	DEFT OSSL$INSTROOT'v'	'INSTALLTOP_'
-$	DEFT OSSL$INCLUDE'v'	OSSL$INSTROOT:[INCLUDE.]
-$	DEF  OSSL$LIB'v'	OSSL$INSTROOT:[LIB.'arch']
-$	DEF  OSSL$SHARE'v'	OSSL$INSTROOT:[LIB.'arch']
-$	DEF  OSSL$ENGINES'v'	OSSL$INSTROOT:[ENGINES.'arch']
-$	DEF  OSSL$EXE'v'	OSSL$INSTROOT:[EXE.'arch']
-$       {- output_off() if $disabled{shared} -}
-$       {- join("\n\$       ", map { "DEF  $_'v' OSSL\$SHARE:$_" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
-$       {- output_on() -}
+$	DEFT OSSL$DATAROOT		'OPENSSLDIR_']
+$	DEFT OSSL$INSTROOT		'INSTALLTOP_']
+$	DEFT OSSL$INCLUDE		'INSTALLTOP_'INCLUDE.]
+$	DEF  OSSL$LIB			OSSL$INSTROOT:[LIB.'arch']
+$	DEF  OSSL$SHARE			OSSL$INSTROOT:[LIB.'arch']
+$	DEF  OSSL$ENGINES'sv''pz'	OSSL$INSTROOT:[ENGINES'sv''pz'.'arch']
+$	DEF  OSSL$EXE			OSSL$INSTROOT:[EXE.'arch'],-
+					OSSL$INSTROOT:[EXE]
+$	DEF  OSSL$LIBCRYPTO'pz'		OSSL$LIB:OSSL$LIBCRYPTO'pz'.OLB
+$	DEF  OSSL$LIBSSL'pz'		OSSL$LIB:OSSL$LIBSSL'pz'.OLB
+${- output_off() if $config{no_shared}; "" -}
+$	DEF  OSSL$LIBCRYPTO'sv'_SHR'pz'	OSSL$SHARE:OSSL$LIBCRYPTO'sv'_SHR'pz'.EXE
+$	DEF  OSSL$LIBSSL'sv'_SHR'pz'	OSSL$SHARE:OSSL$LIBSSL'sv'_SHR'pz'.EXE
+${- output_on() if $config{no_shared}; "" -}
+$	DEF  OPENSSL			OSSL$INCLUDE:[OPENSSL]
+$
 $	IF P2 .NES. "NOALIASES"
 $	THEN
-$	    DEF OSSL$INSTROOT	OSSL$INSTROOT'v'
-$	    DEF OSSL$INCLUDE	OSSL$INCLUDE'v'
-$	    DEF OSSL$LIB	OSSL$LIB'v'
-$	    DEF OSSL$SHARE	OSSL$SHARE'v'
-$	    DEF OSSL$ENGINES	OSSL$ENGINES'v'
-$	    DEF OSSL$EXE	OSSL$EXE'v'
-$	    DEF OPENSSL		OSSL$INCLUDE:[OPENSSL]
-$       {- output_off() if $disabled{shared} -}
-$       {- join("\n\$           ", map { "DEF  $_ $_'v'" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
-$       {- output_on() -}
+$	    DEF OSSL$ENGINES'pz'	OSSL$ENGINES'sv''pz'
+${- output_off() if $config{no_shared}; "" -}
+$	    DEF OSSL$LIBCRYPTO_SHR'pz'	OSSL$LIBCRYPTO'sv'_SHR'pz'
+$	    DEF OSSL$LIBSSL_SHR'pz'	OSSL$LIBSSL'sv'_SHR'pz'
+${- output_on() if $config{no_shared}; "" -}
 $	ENDIF
-$
-$	DEFT OSSL$DATAROOT	'OPENSSLDIR_'
-$	DEF  OSSL$CERTS		OSSL$DATAROOT:[CERTS]
-$	DEF  OSSL$PRIVATE	OSSL$DATAROOT:[PRIVATE]
 $
 $ bailout:
 $	DEASSIGN WRK_INSTALLTOP
+$	DEASSIGN WRK_OPENSSLDIR
 $
 $	EXIT 'status'

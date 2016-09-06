@@ -1,59 +1,10 @@
 /*
- * Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL project
- * 2002, 2003, 2004.
- */
-/* ====================================================================
- * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
+ * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifndef HEADER_TS_H
@@ -74,11 +25,6 @@
 # include <openssl/dh.h>
 # ifdef  __cplusplus
 extern "C" {
-# endif
-
-# ifdef WIN32
-/* Under Win32 this is defined in wincrypt.h */
-#  undef X509_NAME
 # endif
 
 # include <openssl/x509.h>
@@ -210,17 +156,17 @@ ESS_SIGNING_CERT *d2i_ESS_SIGNING_CERT(ESS_SIGNING_CERT **a,
                                        const unsigned char **pp, long length);
 ESS_SIGNING_CERT *ESS_SIGNING_CERT_dup(ESS_SIGNING_CERT *a);
 
-void ERR_load_TS_strings(void);
-
 int TS_REQ_set_version(TS_REQ *a, long version);
 long TS_REQ_get_version(const TS_REQ *a);
 
 int TS_STATUS_INFO_set_status(TS_STATUS_INFO *a, int i);
-ASN1_INTEGER *TS_STATUS_INFO_get0_status(TS_STATUS_INFO *a);
+const ASN1_INTEGER *TS_STATUS_INFO_get0_status(const TS_STATUS_INFO *a);
 
-STACK_OF(ASN1_UTF8STRING) *TS_STATUS_INFO_get0_text(TS_STATUS_INFO *a);
+const STACK_OF(ASN1_UTF8STRING) *
+TS_STATUS_INFO_get0_text(const TS_STATUS_INFO *a);
 
-ASN1_BIT_STRING *TS_STATUS_INFO_get0_failure_info(TS_STATUS_INFO *a);
+const ASN1_BIT_STRING *
+TS_STATUS_INFO_get0_failure_info(const TS_STATUS_INFO *a);
 
 int TS_REQ_set_msg_imprint(TS_REQ *a, TS_MSG_IMPRINT *msg_imprint);
 TS_MSG_IMPRINT *TS_REQ_get_msg_imprint(TS_REQ *a);
@@ -231,7 +177,7 @@ X509_ALGOR *TS_MSG_IMPRINT_get_algo(TS_MSG_IMPRINT *a);
 int TS_MSG_IMPRINT_set_msg(TS_MSG_IMPRINT *a, unsigned char *d, int len);
 ASN1_OCTET_STRING *TS_MSG_IMPRINT_get_msg(TS_MSG_IMPRINT *a);
 
-int TS_REQ_set_policy_id(TS_REQ *a, ASN1_OBJECT *policy);
+int TS_REQ_set_policy_id(TS_REQ *a, const ASN1_OBJECT *policy);
 ASN1_OBJECT *TS_REQ_get_policy_id(TS_REQ *a);
 
 int TS_REQ_set_nonce(TS_REQ *a, const ASN1_INTEGER *nonce);
@@ -244,7 +190,7 @@ STACK_OF(X509_EXTENSION) *TS_REQ_get_exts(TS_REQ *a);
 void TS_REQ_ext_free(TS_REQ *a);
 int TS_REQ_get_ext_count(TS_REQ *a);
 int TS_REQ_get_ext_by_NID(TS_REQ *a, int nid, int lastpos);
-int TS_REQ_get_ext_by_OBJ(TS_REQ *a, ASN1_OBJECT *obj, int lastpos);
+int TS_REQ_get_ext_by_OBJ(TS_REQ *a, const ASN1_OBJECT *obj, int lastpos);
 int TS_REQ_get_ext_by_critical(TS_REQ *a, int crit, int lastpos);
 X509_EXTENSION *TS_REQ_get_ext(TS_REQ *a, int loc);
 X509_EXTENSION *TS_REQ_delete_ext(TS_REQ *a, int loc);
@@ -305,7 +251,8 @@ STACK_OF(X509_EXTENSION) *TS_TST_INFO_get_exts(TS_TST_INFO *a);
 void TS_TST_INFO_ext_free(TS_TST_INFO *a);
 int TS_TST_INFO_get_ext_count(TS_TST_INFO *a);
 int TS_TST_INFO_get_ext_by_NID(TS_TST_INFO *a, int nid, int lastpos);
-int TS_TST_INFO_get_ext_by_OBJ(TS_TST_INFO *a, ASN1_OBJECT *obj, int lastpos);
+int TS_TST_INFO_get_ext_by_OBJ(TS_TST_INFO *a, const ASN1_OBJECT *obj,
+                               int lastpos);
 int TS_TST_INFO_get_ext_by_critical(TS_TST_INFO *a, int crit, int lastpos);
 X509_EXTENSION *TS_TST_INFO_get_ext(TS_TST_INFO *a, int loc);
 X509_EXTENSION *TS_TST_INFO_delete_ext(TS_TST_INFO *a, int loc);
@@ -355,7 +302,7 @@ typedef int (*TS_extension_cb) (struct TS_resp_ctx *, X509_EXTENSION *,
 
 typedef struct TS_resp_ctx TS_RESP_CTX;
 
-DEFINE_STACK_OF(EVP_MD)
+DEFINE_STACK_OF_CONST(EVP_MD)
 
 /* Creates a response context that can be used for generating responses. */
 TS_RESP_CTX *TS_RESP_CTX_new(void);
@@ -371,7 +318,7 @@ int TS_RESP_CTX_set_signer_digest(TS_RESP_CTX *ctx,
                                   const EVP_MD *signer_digest);
 
 /* This parameter must be set. */
-int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *def_policy);
+int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *def_policy);
 
 /* No additional certs are included in the response by default. */
 int TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs);
@@ -380,7 +327,7 @@ int TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs);
  * Adds a new acceptable policy, only the default policy is accepted by
  * default.
  */
-int TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *policy);
+int TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *policy);
 
 /*
  * Adds a new acceptable message digest. Note that no message digests are
@@ -400,6 +347,9 @@ int TS_RESP_CTX_set_clock_precision_digits(TS_RESP_CTX *ctx,
                                            unsigned clock_precision_digits);
 /* At most we accept usec precision. */
 # define TS_MAX_CLOCK_PRECISION_DIGITS   6
+
+/* Maximum status message length */
+# define TS_MAX_STATUS_LENGTH   (1024 * 1024)
 
 /* No flags are set by default. */
 void TS_RESP_CTX_add_flags(TS_RESP_CTX *ctx, int flags);
@@ -585,12 +535,12 @@ int TS_CONF_set_ess_cert_id_chain(CONF *conf, const char *section,
  * The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
-void ERR_load_TS_strings(void);
+
+int ERR_load_TS_strings(void);
 
 /* Error codes for the TS functions. */
 
 /* Function codes. */
-# define TS_F_D2I_TS_RESP                                 147
 # define TS_F_DEF_SERIAL_CB                               110
 # define TS_F_DEF_TIME_CB                                 111
 # define TS_F_ESS_ADD_SIGNING_CERT                        112
@@ -635,7 +585,6 @@ void ERR_load_TS_strings(void);
 # define TS_F_TS_RESP_SET_TST_INFO                        150
 # define TS_F_TS_RESP_SIGN                                136
 # define TS_F_TS_RESP_VERIFY_SIGNATURE                    106
-# define TS_F_TS_RESP_VERIFY_TOKEN                        107
 # define TS_F_TS_TST_INFO_SET_ACCURACY                    137
 # define TS_F_TS_TST_INFO_SET_MSG_IMPRINT                 138
 # define TS_F_TS_TST_INFO_SET_NONCE                       139
@@ -655,7 +604,6 @@ void ERR_load_TS_strings(void);
 # define TS_R_CERTIFICATE_VERIFY_ERROR                    100
 # define TS_R_COULD_NOT_SET_ENGINE                        127
 # define TS_R_COULD_NOT_SET_TIME                          115
-# define TS_R_D2I_TS_RESP_INT_FAILED                      128
 # define TS_R_DETACHED_CONTENT                            134
 # define TS_R_ESS_ADD_SIGNING_CERT_ERROR                  116
 # define TS_R_ESS_SIGNING_CERTIFICATE_ERROR               101
@@ -688,9 +636,8 @@ void ERR_load_TS_strings(void);
 # define TS_R_VAR_LOOKUP_FAILURE                          136
 # define TS_R_WRONG_CONTENT_TYPE                          114
 
-# ifdef  __cplusplus
+#  ifdef  __cplusplus
 }
+#  endif
 # endif
-# endif
-
 #endif

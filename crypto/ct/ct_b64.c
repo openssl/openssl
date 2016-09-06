@@ -1,59 +1,10 @@
 /*
- * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
- * (steve@openssl.org) for the OpenSSL project 2014.
- */
-/* ====================================================================
- * Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <limits.h>
@@ -164,17 +115,27 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
     return NULL;
 }
 
-CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name)
+/*
+ * Allocate, build and returns a new |ct_log| from input |pkey_base64|
+ * It returns 1 on success,
+ * 0 on decoding failure, or invalid parameter if any
+ * -1 on internal (malloc) failure
+ */
+int CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64, const char *name)
 {
     unsigned char *pkey_der = NULL;
     int pkey_der_len = ct_base64_decode(pkey_base64, &pkey_der);
     const unsigned char *p;
     EVP_PKEY *pkey = NULL;
-    CTLOG *log = NULL;
+
+    if (ct_log == NULL) {
+        CTerr(CT_F_CTLOG_NEW_FROM_BASE64, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
 
     if (pkey_der_len <= 0) {
         CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
-        return NULL;
+        return 0;
     }
 
     p = pkey_der;
@@ -182,14 +143,14 @@ CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name)
     OPENSSL_free(pkey_der);
     if (pkey == NULL) {
         CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
-        return NULL;
+        return 0;
     }
 
-    log = CTLOG_new(pkey, name);
-    if (log == NULL) {
+    *ct_log = CTLOG_new(pkey, name);
+    if (*ct_log == NULL) {
         EVP_PKEY_free(pkey);
-        return NULL;
+        return 0;
     }
 
-    return log;
+    return 1;
 }

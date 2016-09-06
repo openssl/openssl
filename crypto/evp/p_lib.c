@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -72,7 +24,7 @@
 
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 
-int EVP_PKEY_bits(EVP_PKEY *pkey)
+int EVP_PKEY_bits(const EVP_PKEY *pkey)
 {
     if (pkey && pkey->ameth && pkey->ameth->pkey_bits)
         return pkey->ameth->pkey_bits(pkey);
@@ -132,6 +84,14 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
         EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_MISSING_PARAMETERS);
         goto err;
     }
+
+    if (!EVP_PKEY_missing_parameters(to)) {
+        if (EVP_PKEY_cmp_parameters(to, from) == 1)
+            return 1;
+        EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_PARAMETERS);
+        return 0;
+    }
+
     if (from->ameth && from->ameth->param_copy)
         return from->ameth->param_copy(to, from);
  err:
@@ -196,10 +156,16 @@ EVP_PKEY *EVP_PKEY_new(void)
     return ret;
 }
 
-void EVP_PKEY_up_ref(EVP_PKEY *pkey)
+int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 {
     int i;
-    CRYPTO_atomic_add(&pkey->references, 1, &i, pkey->lock);
+
+    if (CRYPTO_atomic_add(&pkey->references, 1, &i, pkey->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("EVP_PKEY", pkey);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
 }
 
 /*
@@ -269,6 +235,18 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 void *EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
     return pkey->pkey.ptr;
+}
+
+const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
+{
+    ASN1_OCTET_STRING *os = NULL;
+    if (pkey->type != EVP_PKEY_HMAC) {
+        EVPerr(EVP_F_EVP_PKEY_GET0_HMAC, EVP_R_EXPECTING_AN_HMAC_KEY);
+        return NULL;
+    }
+    os = EVP_PKEY_get0(pkey);
+    *len = os->length;
+    return os->data;
 }
 
 #ifndef OPENSSL_NO_RSA
@@ -473,10 +451,34 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
     return unsup_alg(out, pkey, indent, "Parameters");
 }
 
+static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2)
+{
+    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
+        return -2;
+    return pkey->ameth->pkey_ctrl(pkey, op, arg1, arg2);
+}
+
 int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid)
 {
-    if (!pkey->ameth || !pkey->ameth->pkey_ctrl)
-        return -2;
-    return pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_DEFAULT_MD_NID,
-                                  0, pnid);
+    return evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_DEFAULT_MD_NID, 0, pnid);
+}
+
+int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,
+                               const unsigned char *pt, size_t ptlen)
+{
+    if (ptlen > INT_MAX)
+        return 0;
+    if (evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SET1_TLS_ENCPT, ptlen,
+                           (void *)pt) <= 0)
+        return 0;
+    return 1;
+}
+
+size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt)
+{
+    int rv;
+    rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_GET1_TLS_ENCPT, 0, ppt);
+    if (rv <= 0)
+        return 0;
+    return rv;
 }

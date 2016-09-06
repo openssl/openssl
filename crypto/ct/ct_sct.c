@@ -1,59 +1,10 @@
 /*
- * Written by Rob Stradling (rob@comodo.com), Stephen Henson (steve@openssl.org)
- * and Adam Eijdenberg (adam.eijdenberg@gmail.com) for the OpenSSL project 2016.
- */
-/* ====================================================================
- * Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifdef OPENSSL_NO_CT
@@ -166,7 +117,7 @@ void SCT_set_timestamp(SCT *sct, uint64_t timestamp)
 
 int SCT_set_signature_nid(SCT *sct, int nid)
 {
-  switch (nid) {
+    switch (nid) {
     case NID_sha256WithRSAEncryption:
         sct->hash_alg = TLSEXT_hash_sha256;
         sct->sig_alg = TLSEXT_signature_rsa;
@@ -311,6 +262,7 @@ sct_source_t SCT_get_source(const SCT *sct)
 int SCT_set_source(SCT *sct, sct_source_t source)
 {
     sct->source = source;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
     switch (source) {
     case SCT_SOURCE_TLS_EXTENSION:
     case SCT_SOURCE_OCSP_STAPLED_RESPONSE:
@@ -334,17 +286,22 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     X509_PUBKEY *pub = NULL, *log_pkey = NULL;
     const CTLOG *log;
 
+    /*
+     * With an unrecognized SCT version we don't know what such an SCT means,
+     * let alone validate one.  So we return validation failure (0).
+     */
     if (sct->version != SCT_VERSION_V1) {
         sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_VERSION;
-        goto end;
+        return 0;
     }
 
     log = CTLOG_STORE_get0_log_by_id(ctx->log_store,
                                      sct->log_id, sct->log_id_len);
 
+    /* Similarly, an SCT from an unknown log also cannot be validated. */
     if (log == NULL) {
         sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_LOG;
-        goto end;
+        return 0;
     }
 
     sctx = SCT_CTX_new();
@@ -372,10 +329,28 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
             goto err;
     }
 
+    /*
+     * XXX: Potential for optimization.  This repeats some idempotent heavy
+     * lifting on the certificate for each candidate SCT, and appears to not
+     * use any information in the SCT itself, only the certificate is
+     * processed.  So it may make more sense to to do this just once, perhaps
+     * associated with the shared (by all SCTs) policy eval ctx.
+     *
+     * XXX: Failure here is global (SCT independent) and represents either an
+     * issue with the certificate (e.g. duplicate extensions) or an out of
+     * memory condition.  When the certificate is incompatible with CT, we just
+     * mark the SCTs invalid, rather than report a failure to determine the
+     * validation status.  That way, callbacks that want to do "soft" SCT
+     * processing will not abort handshakes with false positive internal
+     * errors.  Since the function does not distinguish between certificate
+     * issues (peer's fault) and internal problems (out fault) the safe thing
+     * to do is to report a validation failure and let the callback or
+     * application decide what to do.
+     */
     if (SCT_CTX_set1_cert(sctx, ctx->cert, NULL) != 1)
-        goto err;
-
-    sct->validation_status = SCT_verify(sctx, sct) == 1 ?
+        sct->validation_status = SCT_VALIDATION_STATUS_UNVERIFIED;
+    else
+        sct->validation_status = SCT_CTX_verify(sctx, sct) == 1 ?
             SCT_VALIDATION_STATUS_VALID : SCT_VALIDATION_STATUS_INVALID;
 
 end:

@@ -1,6 +1,10 @@
 /*
- * Written by Ulf Moeller. This software is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied.
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /* EME-OAEP as defined in RFC 2437 (PKCS #1 v2.0) */
@@ -21,10 +25,10 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include "rsa_locl.h"
 
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
                                const unsigned char *from, int flen,

@@ -1,7 +1,12 @@
-/* ====================================================================
- * Copyright (c) 2005 The OpenSSL Project.  All rights reserved.
- * ====================================================================
+/*
+ * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -122,19 +127,6 @@ int main(int argc, char *argv[])
     unsigned char md[WHIRLPOOL_DIGEST_LENGTH];
     int i;
     WHIRLPOOL_CTX ctx;
-
-# ifdef OPENSSL_IA32_SSE2
-    /*
-     * Alternative to this is to call OpenSSL_add_all_algorithms... The below
-     * code is retained exclusively for debugging purposes.
-     */
-    {
-        char *env;
-
-        if ((env = getenv("OPENSSL_ia32cap")))
-            OPENSSL_ia32cap = strtoul(env, NULL, 0);
-    }
-# endif
 
     fprintf(stdout, "Testing Whirlpool ");
 

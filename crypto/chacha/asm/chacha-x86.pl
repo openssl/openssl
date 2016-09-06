@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -437,8 +444,10 @@ my ($ap,$bp,$cp,$dp)=map(($_&~3)+(($_-1)&3),($ai,$bi,$ci,$di));	# previous
 
 &function_begin("ChaCha20_ssse3");
 &set_label("ssse3_shortcut");
+if ($ymm) {
 	&test		(&DWP(4,"ebp"),1<<11);		# test XOP bit
 	&jnz		(&label("xop_shortcut"));
+}
 
 	&mov		($out,&wparam(0));
 	&mov		($inp,&wparam(1));
@@ -770,7 +779,7 @@ sub SSSE3ROUND {	# critical path is 20 "SIMD ticks" per round
 }
 &asciz	("ChaCha20 for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
-if ($xmm) {
+if ($ymm) {
 my ($xa,$xa_,$xb,$xb_,$xc,$xc_,$xd,$xd_)=map("xmm$_",(0..7));
 my ($out,$inp,$len)=("edi","esi","ecx");
 

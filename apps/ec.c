@@ -1,58 +1,10 @@
 /*
- * Written by Nils Larsch for the OpenSSL project.
- */
-/* ====================================================================
- * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/opensslconf.h>
@@ -92,15 +44,15 @@ typedef enum OPTION_choice {
 
 OPTIONS ec_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"in", OPT_IN, '<', "Input file"},
-    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
+    {"in", OPT_IN, 's', "Input file"},
+    {"inform", OPT_INFORM, 'f', "Input format - DER or PEM"},
     {"out", OPT_OUT, '>', "Output file"},
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
     {"text", OPT_TEXT, '-', "Print the key"},
     {"param_out", OPT_PARAM_OUT, '-', "Print the elliptic curve parameters"},
-    {"pubin", OPT_PUBIN, '-'},
-    {"pubout", OPT_PUBOUT, '-'},
+    {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
+    {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
     {"no_public", OPT_NO_PUBLIC, '-', "exclude public key from private key"},
     {"check", OPT_CHECK, '-', "check key consistency"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
@@ -118,6 +70,7 @@ OPTIONS ec_options[] = {
 int ec_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
+    ENGINE *e = NULL;
     EC_KEY *eckey = NULL;
     const EC_GROUP *group;
     const EVP_CIPHER *enc = NULL;
@@ -143,7 +96,7 @@ int ec_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &informat))
                 goto opthelp;
             break;
         case OPT_IN:
@@ -178,7 +131,7 @@ int ec_main(int argc, char **argv)
             passoutarg = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_CIPHER:
             if (!opt_cipher(opt_unknown(), &enc))
@@ -217,9 +170,11 @@ int ec_main(int argc, char **argv)
         goto end;
     }
 
-    in = bio_open_default(infile, 'r', informat);
-    if (in == NULL)
-        goto end;
+    if (informat != FORMAT_ENGINE) {
+        in = bio_open_default(infile, 'r', informat);
+        if (in == NULL)
+            goto end;
+    }
 
     BIO_printf(bio_err, "read EC key\n");
     if (informat == FORMAT_ASN1) {
@@ -227,6 +182,16 @@ int ec_main(int argc, char **argv)
             eckey = d2i_EC_PUBKEY_bio(in, NULL);
         else
             eckey = d2i_ECPrivateKey_bio(in, NULL);
+    } else if (informat == FORMAT_ENGINE) {
+        EVP_PKEY *pkey;
+        if (pubin)
+            pkey = load_pubkey(infile, informat , 1, passin, e, "Public Key");
+        else
+            pkey = load_key(infile, informat, 1, passin, e, "Private Key");
+        if (pkey != NULL) {
+            eckey = EVP_PKEY_get1_EC_KEY(pkey);
+            EVP_PKEY_free(pkey);
+        }
     } else {
         if (pubin)
             eckey = PEM_read_bio_EC_PUBKEY(in, NULL, NULL, NULL);

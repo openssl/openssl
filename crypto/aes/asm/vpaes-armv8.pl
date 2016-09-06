@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 ######################################################################
 ## Constant-time SSSE3 AES core implementation.
@@ -22,6 +29,7 @@
 # X-Gene            45.9(**)    45.8/57.7(**)    [33.1/37.6(**)     ]
 # Denver(***)       16.6(**)    15.1/17.8(**)    [8.80/9.93         ]
 # Apple A7(***)     22.7(**)    10.9/14.3        [8.45/10.0         ]
+# Mongoose(***)     26.3(**)    21.0/25.0(**)    [13.3/16.8         ]
 #
 # (*)	ECB denotes approximate result for parallelizeable modes
 #	such as CBC decrypt, CTR, etc.;

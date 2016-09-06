@@ -1,59 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2015.
- */
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 struct evp_pkey_ctx_st {
@@ -128,6 +79,7 @@ extern const EVP_PKEY_METHOD dh_pkey_meth;
 extern const EVP_PKEY_METHOD dhx_pkey_meth;
 extern const EVP_PKEY_METHOD dsa_pkey_meth;
 extern const EVP_PKEY_METHOD ec_pkey_meth;
+extern const EVP_PKEY_METHOD ecx25519_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
 extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
@@ -187,9 +139,9 @@ struct evp_cipher_st {
 #define BLOCK_CIPHER_ecb_loop() \
         size_t i, bl; \
         bl = EVP_CIPHER_CTX_cipher(ctx)->block_size;    \
-        if(inl < bl) return 1;\
+        if (inl < bl) return 1;\
         inl -= bl; \
-        for(i=0; i <= inl; i+=bl)
+        for (i=0; i <= inl; i+=bl)
 
 #define BLOCK_CIPHER_func_ecb(cname, cprefix, kstruct, ksched) \
 static int cname##_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl) \
@@ -238,20 +190,25 @@ static int cname##_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const uns
 #define BLOCK_CIPHER_func_cfb(cname, cprefix, cbits, kstruct, ksched)  \
 static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl) \
 {\
-        size_t chunk=EVP_MAXCHUNK;\
-        if (cbits==1)  chunk>>=3;\
-        if (inl<chunk) chunk=inl;\
-        while(inl && inl>=chunk)\
-            {\
-            int num = EVP_CIPHER_CTX_num(ctx);\
-            cprefix##_cfb##cbits##_encrypt(in, out, (long)((cbits==1) && !EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS) ?inl*8:inl), &EVP_C_DATA(kstruct,ctx)->ksched, EVP_CIPHER_CTX_iv_noconst(ctx), &num, EVP_CIPHER_CTX_encrypting(ctx)); \
-            EVP_CIPHER_CTX_set_num(ctx, num);\
-            inl-=chunk;\
-            in +=chunk;\
-            out+=chunk;\
-            if(inl<chunk) chunk=inl;\
-            }\
-        return 1;\
+    size_t chunk = EVP_MAXCHUNK;\
+    if (cbits == 1)  chunk >>= 3;\
+    if (inl < chunk) chunk = inl;\
+    while (inl && inl >= chunk)\
+    {\
+        int num = EVP_CIPHER_CTX_num(ctx);\
+        cprefix##_cfb##cbits##_encrypt(in, out, (long) \
+            ((cbits == 1) \
+                && !EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS) \
+                ? inl*8 : inl), \
+            &EVP_C_DATA(kstruct, ctx)->ksched, EVP_CIPHER_CTX_iv_noconst(ctx),\
+            &num, EVP_CIPHER_CTX_encrypting(ctx));\
+        EVP_CIPHER_CTX_set_num(ctx, num);\
+        inl -= chunk;\
+        in += chunk;\
+        out += chunk;\
+        if (inl < chunk) chunk = inl;\
+    }\
+    return 1;\
 }
 
 #define BLOCK_CIPHER_all_funcs(cname, cprefix, cbits, kstruct, ksched) \
@@ -400,7 +357,7 @@ struct evp_pkey_st {
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
     union {
-        char *ptr;
+        void *ptr;
 # ifndef OPENSSL_NO_RSA
         struct rsa_st *rsa;     /* RSA */
 # endif
@@ -420,5 +377,6 @@ struct evp_pkey_st {
 } /* EVP_PKEY */ ;
 
 
-void openssl_add_all_ciphers_internal(void);
-void openssl_add_all_digests_internal(void);
+void openssl_add_all_ciphers_int(void);
+void openssl_add_all_digests_int(void);
+void evp_cleanup_int(void);

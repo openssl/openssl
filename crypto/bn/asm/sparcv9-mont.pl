@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
@@ -13,7 +20,7 @@
 # for undertaken effort are multiple. First of all, UltraSPARC is not
 # the whole SPARCv9 universe and other VIS-free implementations deserve
 # optimized code as much. Secondly, newly introduced UltraSPARC T1,
-# a.k.a. Niagara, has shared FPU and concurrent FPU-intensive pathes,
+# a.k.a. Niagara, has shared FPU and concurrent FPU-intensive paths,
 # such as sparcv9a-mont, will simply sink it. Yes, T1 is equipped with
 # several integrated RSA/DSA accelerator circuits accessible through
 # kernel driver [only(*)], but having decent user-land software

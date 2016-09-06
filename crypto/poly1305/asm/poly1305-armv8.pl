@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -16,10 +23,11 @@
 #		IALU/gcc-4.9	NEON
 #
 # Apple A7	1.86/+5%	0.72
-# Cortex-A53	2.63/+58%	1.47
+# Cortex-A53	2.69/+58%	1.47
 # Cortex-A57	2.70/+7%	1.14
-# Denver	1.39/+50%	1.18(*)
-# X-Gene	2.00/+68%	2.19
+# Denver	1.64/+50%	1.18(*)
+# X-Gene	2.13/+68%	2.27
+# Mongoose	1.77/+75%	1.12
 #
 # (*)	estimate based on resources availability is less than 1.0,
 #	i.e. measured result is worse than expected, presumably binary
@@ -151,7 +159,8 @@ poly1305_blocks:
 	and	$h2,$d2,#3
 	add	$t0,$t0,$d2,lsr#2
 	adds	$h0,$d0,$t0
-	adc	$h1,$d1,xzr
+	adcs	$h1,$d1,xzr
+	adc	$h2,$h2,xzr
 
 	cbnz	$len,.Loop
 
@@ -235,7 +244,8 @@ poly1305_mult:
 	and	$h2,$d2,#3
 	add	$t0,$t0,$d2,lsr#2
 	adds	$h0,$d0,$t0
-	adc	$h1,$d1,xzr
+	adcs	$h1,$d1,xzr
+	adc	$h2,$h2,xzr
 
 	ret
 .size	poly1305_mult,.-poly1305_mult
@@ -310,7 +320,8 @@ poly1305_blocks_neon:
 	and	$h2,$d2,#3
 	add	$t0,$t0,$d2,lsr#2
 	adds	$h0,$h0,$t0
-	adc	$h1,$h1,xzr
+	adcs	$h1,$h1,xzr
+	adc	$h2,$h2,xzr
 
 #ifdef	__ARMEB__
 	rev	$d0,$d0
@@ -504,9 +515,11 @@ poly1305_blocks_neon:
 	fmov	$IN01_1,x6
 	add	x10,x10,x11,lsl#32	// bfi	x10,x11,#32,#32
 	add	x12,x12,x13,lsl#32	// bfi	x12,x13,#32,#32
+	movi	$MASK.2d,#-1
 	fmov	$IN01_2,x8
 	fmov	$IN01_3,x10
 	fmov	$IN01_4,x12
+	ushr	$MASK.2d,$MASK.2d,#38
 
 	b.ls	.Lskip_loop
 
@@ -657,41 +670,43 @@ poly1305_blocks_neon:
 	 fmov	$IN01_2,x8
 	umlal	$ACC2,$IN01_4,${S3}[0]
 	 fmov	$IN01_3,x10
+	 fmov	$IN01_4,x12
 
 	/////////////////////////////////////////////////////////////////
 	// lazy reduction as discussed in "NEON crypto" by D.J. Bernstein
-        // and P. Schwabe
+	// and P. Schwabe
+	//
+	// [see discussion in poly1305-armv4 module]
 
 	ushr	$T0.2d,$ACC3,#26
-	 fmov	$IN01_4,x12
 	xtn	$H3,$ACC3
 	 ushr	$T1.2d,$ACC0,#26
-	 xtn	$H0,$ACC0
+	 and	$ACC0,$ACC0,$MASK.2d
 	add	$ACC4,$ACC4,$T0.2d	// h3 -> h4
 	bic	$H3,#0xfc,lsl#24	// &=0x03ffffff
 	 add	$ACC1,$ACC1,$T1.2d	// h0 -> h1
-	 bic	$H0,#0xfc,lsl#24
 
-	shrn	$T0.2s,$ACC4,#26
+	ushr	$T0.2d,$ACC4,#26
 	xtn	$H4,$ACC4
 	 ushr	$T1.2d,$ACC1,#26
 	 xtn	$H1,$ACC1
-	 add	$ACC2,$ACC2,$T1.2d	// h1 -> h2
 	bic	$H4,#0xfc,lsl#24
-	 bic	$H1,#0xfc,lsl#24
+	 add	$ACC2,$ACC2,$T1.2d	// h1 -> h2
 
-	add	$H0,$H0,$T0.2s
-	shl	$T0.2s,$T0.2s,#2
+	add	$ACC0,$ACC0,$T0.2d
+	shl	$T0.2d,$T0.2d,#2
 	 shrn	$T1.2s,$ACC2,#26
 	 xtn	$H2,$ACC2
-	add	$H0,$H0,$T0.2s		// h4 -> h0
+	add	$ACC0,$ACC0,$T0.2d	// h4 -> h0
+	 bic	$H1,#0xfc,lsl#24
 	 add	$H3,$H3,$T1.2s		// h2 -> h3
 	 bic	$H2,#0xfc,lsl#24
 
-	ushr	$T0.2s,$H0,#26
-	bic	$H0,#0xfc,lsl#24
+	shrn	$T0.2s,$ACC0,#26
+	xtn	$H0,$ACC0
 	 ushr	$T1.2s,$H3,#26
 	 bic	$H3,#0xfc,lsl#24
+	 bic	$H0,#0xfc,lsl#24
 	add	$H1,$H1,$T0.2s		// h0 -> h1
 	 add	$H4,$H4,$T1.2s		// h3 -> h4
 
@@ -699,9 +714,7 @@ poly1305_blocks_neon:
 
 .Lskip_loop:
 	dup	$IN23_2,${IN23_2}[0]
-	movi	$MASK.2d,#-1
 	add	$IN01_2,$IN01_2,$H2
-	ushr	$MASK.2d,$MASK.2d,#38
 
 	////////////////////////////////////////////////////////////////
 	// multiply (inp[0:1]+hash) or inp[2:3] by r^2:r^1
@@ -870,7 +883,8 @@ poly1305_emit_neon:
 	add	$d0,$d0,$h2,lsr#2
 	and	$h2,$h2,#3
 	adds	$h0,$h0,$d0
-	adc	$h1,$h1,xzr
+	adcs	$h1,$h1,xzr
+	adc	$h2,$h2,xzr
 
 	adds	$d0,$h0,#5		// compare to modulus
 	adcs	$d1,$h1,xzr

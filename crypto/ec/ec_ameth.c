@@ -1,59 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2006.
- */
-/* ====================================================================
- * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
+ * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -65,6 +16,7 @@
 #include <openssl/asn1t.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "ec_lcl.h"
 
 #ifndef OPENSSL_NO_CMS
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);
@@ -137,11 +89,11 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     return 0;
 }
 
-static EC_KEY *eckey_type2param(int ptype, void *pval)
+static EC_KEY *eckey_type2param(int ptype, const void *pval)
 {
     EC_KEY *eckey = NULL;
     if (ptype == V_ASN1_SEQUENCE) {
-        ASN1_STRING *pstr = pval;
+        const ASN1_STRING *pstr = pval;
         const unsigned char *pm = NULL;
         int pmlen;
         pm = pstr->data;
@@ -151,7 +103,7 @@ static EC_KEY *eckey_type2param(int ptype, void *pval)
             goto ecerr;
         }
     } else if (ptype == V_ASN1_OBJECT) {
-        ASN1_OBJECT *poid = pval;
+        const ASN1_OBJECT *poid = pval;
         EC_GROUP *group;
 
         /*
@@ -183,7 +135,7 @@ static EC_KEY *eckey_type2param(int ptype, void *pval)
 static int eckey_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 {
     const unsigned char *p = NULL;
-    void *pval;
+    const void *pval;
     int ptype, pklen;
     EC_KEY *eckey = NULL;
     X509_ALGOR *palg;
@@ -227,13 +179,13 @@ static int eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     return -2;
 }
 
-static int eckey_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+static int eckey_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
     const unsigned char *p = NULL;
-    void *pval;
+    const void *pval;
     int ptype, pklen;
     EC_KEY *eckey = NULL;
-    X509_ALGOR *palg;
+    const X509_ALGOR *palg;
 
     if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8))
         return 0;
@@ -262,15 +214,13 @@ static int eckey_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 
 static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
-    EC_KEY *ec_key;
+    EC_KEY ec_key = *(pkey->pkey.ec);
     unsigned char *ep, *p;
     int eplen, ptype;
     void *pval;
-    unsigned int tmp_flags, old_flags;
+    unsigned int old_flags;
 
-    ec_key = pkey->pkey.ec;
-
-    if (!eckey_param2type(&ptype, &pval, ec_key)) {
+    if (!eckey_param2type(&ptype, &pval, &ec_key)) {
         ECerr(EC_F_ECKEY_PRIV_ENCODE, EC_R_DECODE_ERROR);
         return 0;
     }
@@ -281,30 +231,25 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
      * do not include the parameters in the SEC1 private key see PKCS#11
      * 12.11
      */
-    old_flags = EC_KEY_get_enc_flags(ec_key);
-    tmp_flags = old_flags | EC_PKEY_NO_PARAMETERS;
-    EC_KEY_set_enc_flags(ec_key, tmp_flags);
-    eplen = i2d_ECPrivateKey(ec_key, NULL);
+    old_flags = EC_KEY_get_enc_flags(&ec_key);
+    EC_KEY_set_enc_flags(&ec_key, old_flags | EC_PKEY_NO_PARAMETERS);
+
+    eplen = i2d_ECPrivateKey(&ec_key, NULL);
     if (!eplen) {
-        EC_KEY_set_enc_flags(ec_key, old_flags);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
         return 0;
     }
     ep = OPENSSL_malloc(eplen);
     if (ep == NULL) {
-        EC_KEY_set_enc_flags(ec_key, old_flags);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     p = ep;
-    if (!i2d_ECPrivateKey(ec_key, &p)) {
-        EC_KEY_set_enc_flags(ec_key, old_flags);
+    if (!i2d_ECPrivateKey(&ec_key, &p)) {
         OPENSSL_free(ep);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
         return 0;
     }
-    /* restore old encoding flags */
-    EC_KEY_set_enc_flags(ec_key, old_flags);
 
     if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_X9_62_id_ecPublicKey), 0,
                          ptype, pval, ep, eplen))
@@ -341,7 +286,7 @@ static int ec_security_bits(const EVP_PKEY *pkey)
 
 static int ec_missing_parameters(const EVP_PKEY *pkey)
 {
-    if (EC_KEY_get0_group(pkey->pkey.ec) == NULL)
+    if (pkey->pkey.ec == NULL || EC_KEY_get0_group(pkey->pkey.ec) == NULL)
         return 1;
     return 0;
 }
@@ -551,6 +496,13 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         *(int *)arg2 = NID_sha256;
         return 2;
 
+    case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
+        return EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(pkey), arg2, arg1, NULL);
+
+    case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
+        return EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(pkey),
+                              POINT_CONVERSION_UNCOMPRESSED, arg2, NULL);
+
     default:
         return -2;
 
@@ -592,14 +544,27 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     old_ec_priv_encode
 };
 
+int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
+{
+    int private = EC_KEY_get0_private_key(x) != NULL;
+
+    return do_EC_KEY_print(bp, x, off,
+                private ? EC_KEY_PRINT_PRIVATE : EC_KEY_PRINT_PUBLIC);
+}
+
+int ECParameters_print(BIO *bp, const EC_KEY *x)
+{
+    return do_EC_KEY_print(bp, x, 4, EC_KEY_PRINT_PARAM);
+}
+
 #ifndef OPENSSL_NO_CMS
 
 static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
                                 X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)
 {
-    ASN1_OBJECT *aoid;
+    const ASN1_OBJECT *aoid;
     int atype;
-    void *aval;
+    const void *aval;
     int rv = 0;
     EVP_PKEY *pkpeer = NULL;
     EC_KEY *ecpeer = NULL;
@@ -628,7 +593,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     }
     /* We have parameters now set public key */
     plen = ASN1_STRING_length(pubkey);
-    p = ASN1_STRING_data(pubkey);
+    p = ASN1_STRING_get0_data(pubkey);
     if (!p || !plen)
         goto err;
     if (!o2i_ECPublicKey(&ecpeer, &p, plen))
@@ -773,7 +738,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
     EVP_CIPHER_CTX *ctx;
     int keylen;
     X509_ALGOR *talg, *wrap_alg = NULL;
-    ASN1_OBJECT *aoid;
+    const ASN1_OBJECT *aoid;
     ASN1_BIT_STRING *pubkey;
     ASN1_STRING *wrap_str;
     ASN1_OCTET_STRING *ukm;

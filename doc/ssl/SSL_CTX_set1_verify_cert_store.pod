@@ -54,7 +54,7 @@ any client certificate chain.
 The chain store is used to build the certificate chain.
 
 If the mode B<SSL_MODE_NO_AUTO_CHAIN> is set or a certificate chain is
-configured already (for example using the functions such as 
+configured already (for example using the functions such as
 L<SSL_CTX_add1_chain_cert(3)> or
 L<SSL_CTX_add_extra_chain_cert(3)>) then
 automatic chain building is disabled.
@@ -87,5 +87,14 @@ L<SSL_build_cert_chain(3)>
 =head1 HISTORY
 
 These functions were first added to OpenSSL 1.0.2.
+
+=head1 COPYRIGHT
+
+Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

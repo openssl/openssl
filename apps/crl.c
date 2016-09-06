@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -80,15 +32,15 @@ OPTIONS crl_options[] = {
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
     {"out", OPT_OUT, '>', "output file - default stdout"},
-    {"keyform", OPT_KEYFORM, 'F'},
-    {"key", OPT_KEY, '<'},
+    {"keyform", OPT_KEYFORM, 'F', "Private key file format (PEM or ENGINE)"},
+    {"key", OPT_KEY, '<', "CRL signing Private key to use"},
     {"issuer", OPT_ISSUER, '-', "Print issuer DN"},
     {"lastupdate", OPT_LASTUPDATE, '-', "Set lastUpdate field"},
     {"nextupdate", OPT_NEXTUPDATE, '-', "Set nextUpdate field"},
     {"noout", OPT_NOOUT, '-', "No CRL output"},
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the crl fingerprint"},
     {"crlnumber", OPT_CRLNUMBER, '-', "Print CRL number"},
-    {"badsig", OPT_BADSIG, '-'},
+    {"badsig", OPT_BADSIG, '-', "Corrupt last byte of loaded CRL signature (for test)" },
     {"gendelta", OPT_GENDELTA, '<'},
     {"CApath", OPT_CAPATH, '/', "Verify CRL using certificates in dir"},
     {"CAfile", OPT_CAFILE, '<', "Verify CRL using certificates in file name"},
@@ -96,7 +48,7 @@ OPTIONS crl_options[] = {
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
-    {"verify", OPT_VERIFY, '-'},
+    {"verify", OPT_VERIFY, '-', "Verify CRL signature"},
     {"text", OPT_TEXT, '-', "Print out a text format version"},
     {"hash", OPT_HASH, '-', "Print hash value"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
@@ -112,15 +64,15 @@ int crl_main(int argc, char **argv)
     X509_CRL *x = NULL;
     BIO *out = NULL;
     X509_STORE *store = NULL;
-    X509_STORE_CTX ctx;
+    X509_STORE_CTX *ctx = NULL;
     X509_LOOKUP *lookup = NULL;
-    X509_OBJECT xobj;
+    X509_OBJECT *xobj = NULL;
     EVP_PKEY *pkey;
     const EVP_MD *digest = EVP_sha1();
     unsigned long nmflag = 0;
     char nmflag_set = 0;
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
-    char *CAfile = NULL, *CApath = NULL, *prog;
+    const char *CAfile = NULL, *CApath = NULL, *prog;
     OPTION_CHOICE o;
     int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyformat = FORMAT_PEM;
@@ -243,24 +195,26 @@ int crl_main(int argc, char **argv)
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
         if (lookup == NULL)
             goto end;
-        if (!X509_STORE_CTX_init(&ctx, store, NULL, NULL)) {
+        ctx = X509_STORE_CTX_new();
+        if (ctx == NULL || !X509_STORE_CTX_init(ctx, store, NULL, NULL)) {
             BIO_printf(bio_err, "Error initialising X509 store\n");
             goto end;
         }
 
-        i = X509_STORE_get_by_subject(&ctx, X509_LU_X509,
-                                      X509_CRL_get_issuer(x), &xobj);
-        if (i <= 0) {
+        xobj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509,
+                                                 X509_CRL_get_issuer(x));
+        if (xobj == NULL) {
             BIO_printf(bio_err, "Error getting CRL issuer certificate\n");
             goto end;
         }
-        pkey = X509_get0_pubkey(xobj.data.x509);
-        X509_OBJECT_free_contents(&xobj);
+        pkey = X509_get_pubkey(X509_OBJECT_get0_X509(xobj));
+        X509_OBJECT_free(xobj);
         if (!pkey) {
             BIO_printf(bio_err, "Error getting CRL issuer public key\n");
             goto end;
         }
         i = X509_CRL_verify(x, pkey);
+        EVP_PKEY_free(pkey);
         if (i < 0)
             goto end;
         if (i == 0)
@@ -295,6 +249,13 @@ int crl_main(int argc, char **argv)
         }
     }
 
+    if (badsig) {
+        const ASN1_BIT_STRING *sig;
+
+        X509_CRL_get0_signature(x, &sig, NULL);
+        corrupt_signature(sig);
+    }
+
     if (num) {
         for (i = 1; i <= num; i++) {
             if (issuer == i) {
@@ -324,13 +285,13 @@ int crl_main(int argc, char **argv)
 #endif
             if (lastupdate == i) {
                 BIO_printf(bio_out, "lastUpdate=");
-                ASN1_TIME_print(bio_out, X509_CRL_get_lastUpdate(x));
+                ASN1_TIME_print(bio_out, X509_CRL_get0_lastUpdate(x));
                 BIO_printf(bio_out, "\n");
             }
             if (nextupdate == i) {
                 BIO_printf(bio_out, "nextUpdate=");
-                if (X509_CRL_get_nextUpdate(x))
-                    ASN1_TIME_print(bio_out, X509_CRL_get_nextUpdate(x));
+                if (X509_CRL_get0_nextUpdate(x))
+                    ASN1_TIME_print(bio_out, X509_CRL_get0_nextUpdate(x));
                 else
                     BIO_printf(bio_out, "NONE");
                 BIO_printf(bio_out, "\n");
@@ -365,14 +326,6 @@ int crl_main(int argc, char **argv)
         goto end;
     }
 
-    if (badsig) {
-        ASN1_BIT_STRING *sig;
-        unsigned char *psig;
-        X509_CRL_get0_signature(&sig, NULL, x);
-        psig = ASN1_STRING_data(sig);
-        psig[ASN1_STRING_length(sig) - 1] ^= 0x1;
-    }
-
     if (outformat == FORMAT_ASN1)
         i = (int)i2d_X509_CRL_bio(out, x);
     else
@@ -388,9 +341,7 @@ int crl_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     BIO_free_all(out);
     X509_CRL_free(x);
-    if (store) {
-        X509_STORE_CTX_cleanup(&ctx);
-        X509_STORE_free(store);
-    }
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
     return (ret);
 }

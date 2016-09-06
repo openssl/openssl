@@ -1,58 +1,30 @@
-/* ====================================================================
- * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
+
 #include <stdio.h>
 #include <openssl/opensslconf.h>
+
+#ifndef OPENSSL_NO_AFALGENG
+# include <linux/version.h>
+# define K_MAJ   4
+# define K_MIN1  1
+# define K_MIN2  0
+# if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)
+/*
+ * If we get here then it looks like there is a mismatch between the linux
+ * headers and the actual kernel version, so we have tried to compile with
+ * afalg support, but then skipped it in e_afalg.c. As far as this test is
+ * concerned we behave as if we had been configured without support
+ */
+#  define OPENSSL_NO_AFALGENG
+# endif
+#endif
 
 #ifndef OPENSSL_NO_AFALGENG
 #include <string.h>
@@ -130,8 +102,13 @@ int main(int argc, char **argv)
 
     e = ENGINE_by_id("afalg");
     if (e == NULL) {
-        fprintf(stderr, "AFALG Test: Failed to load AFALG Engine\n");
-        return 1;
+        /*
+         * A failure to load is probably a platform environment problem so we
+         * don't treat this as an OpenSSL test failure, i.e. we return 0
+         */
+        fprintf(stderr,
+                "AFALG Test: Failed to load AFALG Engine - skipping test\n");
+        return 0;
     }
 
     if (test_afalg_aes_128_cbc(e) == 0) {

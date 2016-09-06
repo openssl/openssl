@@ -1,61 +1,12 @@
 /*
- * Written by Christophe Renou (christophe.renou@edelweb.fr) with the
- * precious help of Peter Sylvester (peter.sylvester@edelweb.fr) for the
- * EdelKey project and contributed to the OpenSSL project 2004.
+ * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 #ifndef OPENSSL_NO_SRP
 # include "internal/cryptlib.h"
 # include <openssl/sha.h>
@@ -63,12 +14,12 @@
 # include <openssl/evp.h>
 # include "internal/bn_srp.h"
 
-static BIGNUM *srp_Calc_k(BIGNUM *N, BIGNUM *g)
+static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g)
 {
     /* k = SHA1(N | PAD(g)) -- tls-srp draft 8 */
 
     unsigned char digest[SHA_DIGEST_LENGTH];
-    unsigned char *tmp;
+    unsigned char *tmp = NULL;
     EVP_MD_CTX *ctxt = NULL;
     int longg;
     int longN = BN_num_bytes(N);
@@ -84,24 +35,27 @@ static BIGNUM *srp_Calc_k(BIGNUM *N, BIGNUM *g)
         goto err;
     BN_bn2bin(N, tmp);
 
-    EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL);
-    EVP_DigestUpdate(ctxt, tmp, longN);
+    if (!EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
+        || !EVP_DigestUpdate(ctxt, tmp, longN))
+        goto err;
 
     memset(tmp, 0, longN);
     longg = BN_bn2bin(g, tmp);
     /* use the zeros behind to pad on left */
-    EVP_DigestUpdate(ctxt, tmp + longg, longN - longg);
-    EVP_DigestUpdate(ctxt, tmp, longg);
-    OPENSSL_free(tmp);
+    if (!EVP_DigestUpdate(ctxt, tmp + longg, longN - longg)
+        || !EVP_DigestUpdate(ctxt, tmp, longg))
+        goto err;
 
-    EVP_DigestFinal_ex(ctxt, digest, NULL);
+    if (!EVP_DigestFinal_ex(ctxt, digest, NULL))
+        goto err;
     res = BN_bin2bn(digest, sizeof(digest), NULL);
  err:
+    OPENSSL_free(tmp);
     EVP_MD_CTX_free(ctxt);
     return res;
 }
 
-BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
+BIGNUM *SRP_Calc_u(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N)
 {
     /* k = SHA1(PAD(A) || PAD(B) ) -- tls-srp draft 8 */
 
@@ -126,11 +80,13 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
 
     memset(cAB, 0, longN);
 
-    EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL);
-    EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(A, cAB + longN), longN);
-    EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(B, cAB + longN), longN);
-    OPENSSL_free(cAB);
-    EVP_DigestFinal_ex(ctxt, cu, NULL);
+    if (!EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
+        || !EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(A, cAB + longN), longN)
+        || !EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(B, cAB + longN), longN))
+        goto err;
+
+    if (!EVP_DigestFinal_ex(ctxt, cu, NULL))
+        goto err;
 
     if ((u = BN_bin2bn(cu, sizeof(cu), NULL)) == NULL)
         goto err;
@@ -138,14 +94,16 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
         BN_free(u);
         u = NULL;
     }
+
  err:
+    OPENSSL_free(cAB);
     EVP_MD_CTX_free(ctxt);
 
     return u;
 }
 
-BIGNUM *SRP_Calc_server_key(BIGNUM *A, BIGNUM *v, BIGNUM *u, BIGNUM *b,
-                            BIGNUM *N)
+BIGNUM *SRP_Calc_server_key(const BIGNUM *A, const BIGNUM *v, const BIGNUM *u,
+                            const BIGNUM *b, const BIGNUM *N)
 {
     BIGNUM *tmp = NULL, *S = NULL;
     BN_CTX *bn_ctx;
@@ -153,8 +111,7 @@ BIGNUM *SRP_Calc_server_key(BIGNUM *A, BIGNUM *v, BIGNUM *u, BIGNUM *b,
     if (u == NULL || A == NULL || v == NULL || b == NULL || N == NULL)
         return NULL;
 
-    if ((bn_ctx = BN_CTX_new()) == NULL ||
-        (tmp = BN_new()) == NULL || (S = BN_new()) == NULL)
+    if ((bn_ctx = BN_CTX_new()) == NULL || (tmp = BN_new()) == NULL)
         goto err;
 
     /* S = (A*v**u) ** b */
@@ -163,15 +120,20 @@ BIGNUM *SRP_Calc_server_key(BIGNUM *A, BIGNUM *v, BIGNUM *u, BIGNUM *b,
         goto err;
     if (!BN_mod_mul(tmp, A, tmp, N, bn_ctx))
         goto err;
-    if (!BN_mod_exp(S, tmp, b, N, bn_ctx))
-        goto err;
+
+    S = BN_new();
+    if (S != NULL && !BN_mod_exp(S, tmp, b, N, bn_ctx)) {
+        BN_free(S);
+        S = NULL;
+    }
  err:
     BN_CTX_free(bn_ctx);
     BN_clear_free(tmp);
     return S;
 }
 
-BIGNUM *SRP_Calc_B(BIGNUM *b, BIGNUM *N, BIGNUM *g, BIGNUM *v)
+BIGNUM *SRP_Calc_B(const BIGNUM *b, const BIGNUM *N, const BIGNUM *g,
+                   const BIGNUM *v)
 {
     BIGNUM *kv = NULL, *gb = NULL;
     BIGNUM *B = NULL, *k = NULL;
@@ -202,11 +164,11 @@ BIGNUM *SRP_Calc_B(BIGNUM *b, BIGNUM *N, BIGNUM *g, BIGNUM *v)
     return B;
 }
 
-BIGNUM *SRP_Calc_x(BIGNUM *s, const char *user, const char *pass)
+BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass)
 {
     unsigned char dig[SHA_DIGEST_LENGTH];
     EVP_MD_CTX *ctxt;
-    unsigned char *cs;
+    unsigned char *cs = NULL;
     BIGNUM *res = NULL;
 
     if ((s == NULL) || (user == NULL) || (pass == NULL))
@@ -218,26 +180,30 @@ BIGNUM *SRP_Calc_x(BIGNUM *s, const char *user, const char *pass)
     if ((cs = OPENSSL_malloc(BN_num_bytes(s))) == NULL)
         goto err;
 
-    EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL);
-    EVP_DigestUpdate(ctxt, user, strlen(user));
-    EVP_DigestUpdate(ctxt, ":", 1);
-    EVP_DigestUpdate(ctxt, pass, strlen(pass));
-    EVP_DigestFinal_ex(ctxt, dig, NULL);
-
-    EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL);
+    if (!EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
+        || !EVP_DigestUpdate(ctxt, user, strlen(user))
+        || !EVP_DigestUpdate(ctxt, ":", 1)
+        || !EVP_DigestUpdate(ctxt, pass, strlen(pass))
+        || !EVP_DigestFinal_ex(ctxt, dig, NULL)
+        || !EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL))
+        goto err;
     BN_bn2bin(s, cs);
-    EVP_DigestUpdate(ctxt, cs, BN_num_bytes(s));
-    OPENSSL_free(cs);
-    EVP_DigestUpdate(ctxt, dig, sizeof(dig));
-    EVP_DigestFinal_ex(ctxt, dig, NULL);
+    if (!EVP_DigestUpdate(ctxt, cs, BN_num_bytes(s)))
+        goto err;
+
+    if (!EVP_DigestUpdate(ctxt, dig, sizeof(dig))
+        || !EVP_DigestFinal_ex(ctxt, dig, NULL))
+        goto err;
 
     res = BN_bin2bn(dig, sizeof(dig), NULL);
+
  err:
+    OPENSSL_free(cs);
     EVP_MD_CTX_free(ctxt);
     return res;
 }
 
-BIGNUM *SRP_Calc_A(BIGNUM *a, BIGNUM *N, BIGNUM *g)
+BIGNUM *SRP_Calc_A(const BIGNUM *a, const BIGNUM *N, const BIGNUM *g)
 {
     BN_CTX *bn_ctx;
     BIGNUM *A = NULL;
@@ -253,8 +219,8 @@ BIGNUM *SRP_Calc_A(BIGNUM *a, BIGNUM *N, BIGNUM *g)
     return A;
 }
 
-BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x,
-                            BIGNUM *a, BIGNUM *u)
+BIGNUM *SRP_Calc_client_key(const BIGNUM *N, const BIGNUM *B, const BIGNUM *g,
+                            const BIGNUM *x, const BIGNUM *a, const BIGNUM *u)
 {
     BIGNUM *tmp = NULL, *tmp2 = NULL, *tmp3 = NULL, *k = NULL, *K = NULL;
     BN_CTX *bn_ctx;
@@ -265,8 +231,7 @@ BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x,
 
     if ((tmp = BN_new()) == NULL ||
         (tmp2 = BN_new()) == NULL ||
-        (tmp3 = BN_new()) == NULL ||
-        (K = BN_new()) == NULL)
+        (tmp3 = BN_new()) == NULL)
         goto err;
 
     if (!BN_mod_exp(tmp, g, x, N, bn_ctx))
@@ -277,12 +242,15 @@ BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x,
         goto err;
     if (!BN_mod_sub(tmp, B, tmp2, N, bn_ctx))
         goto err;
-    if (!BN_mod_mul(tmp3, u, x, N, bn_ctx))
+    if (!BN_mul(tmp3, u, x, bn_ctx))
         goto err;
-    if (!BN_mod_add(tmp2, a, tmp3, N, bn_ctx))
+    if (!BN_add(tmp2, a, tmp3))
         goto err;
-    if (!BN_mod_exp(K, tmp, tmp2, N, bn_ctx))
-        goto err;
+    K = BN_new();
+    if (K != NULL && !BN_mod_exp(K, tmp, tmp2, N, bn_ctx)) {
+        BN_free(K);
+        K = NULL;
+    }
 
  err:
     BN_CTX_free(bn_ctx);
@@ -293,7 +261,7 @@ BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x,
     return K;
 }
 
-int SRP_Verify_B_mod_N(BIGNUM *B, BIGNUM *N)
+int SRP_Verify_B_mod_N(const BIGNUM *B, const BIGNUM *N)
 {
     BIGNUM *r;
     BN_CTX *bn_ctx;
@@ -314,20 +282,20 @@ int SRP_Verify_B_mod_N(BIGNUM *B, BIGNUM *N)
     return ret;
 }
 
-int SRP_Verify_A_mod_N(BIGNUM *A, BIGNUM *N)
+int SRP_Verify_A_mod_N(const BIGNUM *A, const BIGNUM *N)
 {
     /* Checks if A % N == 0 */
     return SRP_Verify_B_mod_N(A, N);
 }
 
 static SRP_gN knowngN[] = {
-    {"8192", (BIGNUM *)&bn_generator_19, (BIGNUM *)&bn_group_8192},
-    {"6144", (BIGNUM *)&bn_generator_5, (BIGNUM *)&bn_group_6144},
-    {"4096", (BIGNUM *)&bn_generator_5, (BIGNUM *)&bn_group_4096},
-    {"3072", (BIGNUM *)&bn_generator_5, (BIGNUM *)&bn_group_3072},
-    {"2048", (BIGNUM *)&bn_generator_2, (BIGNUM *)&bn_group_2048},
-    {"1536", (BIGNUM *)&bn_generator_2, (BIGNUM *)&bn_group_1536},
-    {"1024", (BIGNUM *)&bn_generator_2, (BIGNUM *)&bn_group_1024},
+    {"8192", &bn_generator_19, &bn_group_8192},
+    {"6144", &bn_generator_5, &bn_group_6144},
+    {"4096", &bn_generator_5, &bn_group_4096},
+    {"3072", &bn_generator_5, &bn_group_3072},
+    {"2048", &bn_generator_2, &bn_group_2048},
+    {"1536", &bn_generator_2, &bn_group_1536},
+    {"1024", &bn_generator_2, &bn_group_1024},
 };
 
 # define KNOWN_GN_NUMBER sizeof(knowngN) / sizeof(SRP_gN)
@@ -336,7 +304,7 @@ static SRP_gN knowngN[] = {
  * Check if G and N are known parameters. The values have been generated
  * from the ietf-tls-srp draft version 8
  */
-char *SRP_check_known_gN_param(BIGNUM *g, BIGNUM *N)
+char *SRP_check_known_gN_param(const BIGNUM *g, const BIGNUM *N)
 {
     size_t i;
     if ((g == NULL) || (N == NULL))

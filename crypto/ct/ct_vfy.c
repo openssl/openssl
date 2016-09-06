@@ -1,59 +1,10 @@
 /*
- * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
- * (steve@openssl.org) for the OpenSSL project 2014.
- */
-/* ====================================================================
- * Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <string.h>
@@ -70,65 +21,6 @@ typedef enum sct_signature_type_t {
     SIGNATURE_TYPE_CERT_TIMESTAMP,
     SIGNATURE_TYPE_TREE_HASH
 } SCT_SIGNATURE_TYPE;
-
-int CT_verify_no_bad_scts(const CT_POLICY_EVAL_CTX *ctx,
-                          const STACK_OF(SCT) *scts, void *arg)
-{
-    int sct_count = scts != NULL ? sk_SCT_num(scts) : 0;
-    int i;
-
-    for (i = 0; i < sct_count; ++i) {
-        SCT *sct = sk_SCT_value(scts, i);
-
-        switch (SCT_get_validation_status(sct)) {
-            case SCT_VALIDATION_STATUS_INVALID:
-                return 0;
-            case SCT_VALIDATION_STATUS_NOT_SET:
-                CTerr(CT_F_CT_VERIFY_NO_BAD_SCTS,
-                      CT_R_SCT_VALIDATION_STATUS_NOT_SET);
-                return -1;
-            default:
-                /* Ignore other validation statuses. */
-                break;
-        }
-    }
-
-    return 1;
-}
-
-int CT_verify_at_least_one_good_sct(const CT_POLICY_EVAL_CTX *ctx,
-                                    const STACK_OF(SCT) *scts, void *arg)
-{
-    int sct_count = scts != NULL ? sk_SCT_num(scts) : 0;
-    int valid_scts = 0;
-    int i;
-
-    for (i = 0; i < sct_count; ++i) {
-        SCT *sct = sk_SCT_value(scts, i);
-
-        switch (SCT_get_validation_status(sct)) {
-            case SCT_VALIDATION_STATUS_VALID:
-                ++valid_scts;
-                break;
-            case SCT_VALIDATION_STATUS_INVALID:
-                return 0;
-            case SCT_VALIDATION_STATUS_NOT_SET:
-                CTerr(CT_F_CT_VERIFY_AT_LEAST_ONE_GOOD_SCT,
-                      CT_R_SCT_VALIDATION_STATUS_NOT_SET);
-                return -1;
-            default:
-                /* Ignore other validation statuses. */
-                break;
-        }
-    }
-
-    if (valid_scts == 0) {
-        CTerr(CT_F_CT_VERIFY_AT_LEAST_ONE_GOOD_SCT, CT_R_NOT_ENOUGH_SCTS);
-        return 0;
-    }
-
-    return 1;
-}
 
 /*
  * Update encoding for SCT signature verification/generation to supplied
@@ -201,7 +93,7 @@ static int sct_ctx_update(EVP_MD_CTX *ctx, const SCT_CTX *sctx, const SCT *sct)
     return 1;
 }
 
-int SCT_verify(const SCT_CTX *sctx, const SCT *sct)
+int SCT_CTX_verify(const SCT_CTX *sctx, const SCT *sct)
 {
     EVP_MD_CTX *ctx = NULL;
     int ret = 0;
@@ -209,16 +101,16 @@ int SCT_verify(const SCT_CTX *sctx, const SCT *sct)
     if (!SCT_is_complete(sct) || sctx->pkey == NULL ||
         sct->entry_type == CT_LOG_ENTRY_TYPE_NOT_SET ||
         (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT && sctx->ihash == NULL)) {
-        CTerr(CT_F_SCT_VERIFY, CT_R_SCT_NOT_SET);
+        CTerr(CT_F_SCT_CTX_VERIFY, CT_R_SCT_NOT_SET);
         return 0;
     }
     if (sct->version != SCT_VERSION_V1) {
-        CTerr(CT_F_SCT_VERIFY, CT_R_SCT_UNSUPPORTED_VERSION);
+        CTerr(CT_F_SCT_CTX_VERIFY, CT_R_SCT_UNSUPPORTED_VERSION);
         return 0;
     }
     if (sct->log_id_len != sctx->pkeyhashlen ||
         memcmp(sct->log_id, sctx->pkeyhash, sctx->pkeyhashlen) != 0) {
-        CTerr(CT_F_SCT_VERIFY, CT_R_SCT_LOG_ID_MISMATCH);
+        CTerr(CT_F_SCT_CTX_VERIFY, CT_R_SCT_LOG_ID_MISMATCH);
         return 0;
     }
 
@@ -236,45 +128,9 @@ int SCT_verify(const SCT_CTX *sctx, const SCT *sct)
     ret = EVP_DigestVerifyFinal(ctx, sct->sig, sct->sig_len);
     /* If ret < 0 some other error: fall through without setting error */
     if (ret == 0)
-        CTerr(CT_F_SCT_VERIFY, CT_R_SCT_INVALID_SIGNATURE);
+        CTerr(CT_F_SCT_CTX_VERIFY, CT_R_SCT_INVALID_SIGNATURE);
 
 end:
     EVP_MD_CTX_free(ctx);
-    return ret;
-}
-
-int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
-                  X509_PUBKEY *log_pubkey, X509 *issuer_cert)
-{
-    int ret = 0;
-    SCT_CTX *sctx = NULL;
-
-    if (!SCT_is_complete(sct)) {
-        CTerr(CT_F_SCT_VERIFY_V1, CT_R_SCT_NOT_SET);
-        return 0;
-    }
-
-    if (sct->version != 0) {
-        CTerr(CT_F_SCT_VERIFY_V1, CT_R_SCT_UNSUPPORTED_VERSION);
-        return 0;
-    }
-
-    sctx = SCT_CTX_new();
-    if (sctx == NULL)
-        goto done;
-
-    if (!SCT_CTX_set1_pubkey(sctx, log_pubkey))
-        goto done;
-
-    if (!SCT_CTX_set1_cert(sctx, cert, preissuer))
-        goto done;
-
-    if (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT &&
-        !SCT_CTX_set1_issuer(sctx, issuer_cert))
-        goto done;
-
-    ret = SCT_verify(sctx, sct);
-done:
-    SCT_CTX_free(sctx);
     return ret;
 }

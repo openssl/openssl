@@ -1,9 +1,8 @@
-
 =pod
 
 =head1 NAME
 
-req - PKCS#10 certificate request and certificate generating utility.
+req - PKCS#10 certificate request and certificate generating utility
 
 =head1 SYNOPSIS
 
@@ -70,7 +69,7 @@ footer lines.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the 
+This specifies the output format, the options have the same meaning as the
 B<-inform> option.
 
 =item B<-in filename>
@@ -257,7 +256,7 @@ a variety of purposes.
 
 =item B<-utf8>
 
-this option causes field values to be interpreted as UTF8 strings, by 
+this option causes field values to be interpreted as UTF8 strings, by
 default they are interpreted as ASCII. This means that the field
 values, whether prompted from a terminal or obtained from a
 configuration file, must be valid UTF8 strings.
@@ -272,7 +271,7 @@ set multiple options. See the L<x509(1)> manual page for details.
 =item B<-reqopt>
 
 customise the output format used with B<-text>. The B<option> argument can be
-a single option or multiple options separated by commas. 
+a single option or multiple options separated by commas.
 
 See discussion of the  B<-certopt> parameter in the L<x509(1)>
 command.
@@ -342,7 +341,7 @@ overridden by the B<-keyout> option.
 This specifies a file containing additional B<OBJECT IDENTIFIERS>.
 Each line of the file should consist of the numerical form of the
 object identifier followed by white space then the short name followed
-by white space and finally the long name. 
+by white space and finally the long name.
 
 =item B<oid_section>
 
@@ -376,7 +375,7 @@ This option masks out the use of certain string types in certain
 fields. Most users will not need to change this option.
 
 It can be set to several values B<default> which is also the default
-option uses PrintableStrings, T61Strings and BMPStrings if the 
+option uses PrintableStrings, T61Strings and BMPStrings if the
 B<pkix> value is used then only PrintableStrings and BMPStrings will
 be used. This follows the PKIX recommendation in RFC2459. If the
 B<utf8only> option is used then only UTF8Strings will be used: this
@@ -388,7 +387,7 @@ problems with BMPStrings and UTF8Strings: in particular Netscape.
 
 this specifies the configuration file section containing a list of
 extensions to add to the certificate request. It can be overridden
-by the B<-reqexts> command line switch. See the 
+by the B<-reqexts> command line switch. See the
 L<x509v3_config(5)> manual page for details of the
 extension section format.
 
@@ -499,8 +498,8 @@ Generate a self signed root certificate:
 
 Example of a file pointed to by the B<oid_file> option:
 
- 1.2.3.4	shortName	A longer Name
- 1.2.3.6	otherName	Other longer Name
+ 1.2.3.4        shortName       A longer Name
+ 1.2.3.6        otherName       Other longer Name
 
 Example of a section pointed to by B<oid_section> making use of variable
 expansion:
@@ -511,65 +510,65 @@ expansion:
 Sample configuration file prompting for field values:
 
  [ req ]
- default_bits		= 2048
- default_keyfile 	= privkey.pem
- distinguished_name	= req_distinguished_name
- attributes		= req_attributes
- req_extensions		= v3_ca
+ default_bits           = 2048
+ default_keyfile        = privkey.pem
+ distinguished_name     = req_distinguished_name
+ attributes             = req_attributes
+ req_extensions         = v3_ca
 
  dirstring_type = nobmp
 
  [ req_distinguished_name ]
- countryName			= Country Name (2 letter code)
- countryName_default		= AU
- countryName_min		= 2
- countryName_max		= 2
+ countryName                    = Country Name (2 letter code)
+ countryName_default            = AU
+ countryName_min                = 2
+ countryName_max                = 2
 
- localityName			= Locality Name (eg, city)
+ localityName                   = Locality Name (eg, city)
 
- organizationalUnitName		= Organizational Unit Name (eg, section)
+ organizationalUnitName         = Organizational Unit Name (eg, section)
 
- commonName			= Common Name (eg, YOUR name)
- commonName_max			= 64
+ commonName                     = Common Name (eg, YOUR name)
+ commonName_max                 = 64
 
- emailAddress			= Email Address
- emailAddress_max		= 40
+ emailAddress                   = Email Address
+ emailAddress_max               = 40
 
  [ req_attributes ]
- challengePassword		= A challenge password
- challengePassword_min		= 4
- challengePassword_max		= 20
+ challengePassword              = A challenge password
+ challengePassword_min          = 4
+ challengePassword_max          = 20
 
  [ v3_ca ]
 
  subjectKeyIdentifier=hash
  authorityKeyIdentifier=keyid:always,issuer:always
- basicConstraints = CA:true
+ basicConstraints = critical, CA:true
 
 Sample configuration containing all field values:
 
 
- RANDFILE		= $ENV::HOME/.rnd
+ RANDFILE               = $ENV::HOME/.rnd
 
  [ req ]
- default_bits		= 2048
- default_keyfile 	= keyfile.pem
- distinguished_name	= req_distinguished_name
- attributes		= req_attributes
- prompt			= no
- output_password	= mypass
+ default_bits           = 2048
+ default_keyfile        = keyfile.pem
+ distinguished_name     = req_distinguished_name
+ attributes             = req_attributes
+ prompt                 = no
+ output_password        = mypass
 
  [ req_distinguished_name ]
- C			= GB
- ST			= Test State or Province
- L			= Test Locality
- O			= Organization Name
- OU			= Organizational Unit Name
- CN			= Common Name
- emailAddress		= test@email.address
+ C                      = GB
+ ST                     = Test State or Province
+ L                      = Test Locality
+ O                      = Organization Name
+ OU                     = Organizational Unit Name
+ CN                     = Common Name
+ emailAddress           = test@email.address
 
  [ req_attributes ]
- challengePassword		= A challenge password
+ challengePassword              = A challenge password
 
 
 =head1 NOTES
@@ -596,13 +595,13 @@ by the script in an extendedKeyUsage extension.
 
 The following messages are frequently asked about:
 
-	Using configuration from /some/path/openssl.cnf
-	Unable to load config info
+        Using configuration from /some/path/openssl.cnf
+        Unable to load config info
 
 This is followed some time later by...
 
-	unable to find 'distinguished_name' in config
-	problems making Certificate Request
+        unable to find 'distinguished_name' in config
+        problems making Certificate Request
 
 The first error message is the clue: it can't find the configuration
 file! Certain operations (like examining a certificate request) don't
@@ -652,6 +651,15 @@ address in subjectAltName should be input by the user.
 
 L<x509(1)>, L<ca(1)>, L<genrsa(1)>,
 L<gendsa(1)>, L<config(5)>,
-L<x509v3_config(5)> 
+L<x509v3_config(5)>
+
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

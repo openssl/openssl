@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifndef HEADER_PEM_H
@@ -407,6 +359,11 @@ DECLARE_PEM_write_const(DHxparams, DH)
 DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
 DECLARE_PEM_rw(PUBKEY, EVP_PKEY)
 
+int PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
+                                         const EVP_CIPHER *enc,
+                                         unsigned char *kstr, int klen,
+                                         pem_password_cb *cb, void *u);
+
 int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, EVP_PKEY *x, int nid,
                                       char *kstr, int klen,
                                       pem_password_cb *cb, void *u);
@@ -421,7 +378,7 @@ int i2d_PKCS8PrivateKey_nid_bio(BIO *bp, EVP_PKEY *x, int nid,
 EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
                                   void *u);
 
-#ifndef OPENSSL_NO_STDIO
+# ifndef OPENSSL_NO_STDIO
 int i2d_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                            char *kstr, int klen,
                            pem_password_cb *cb, void *u);
@@ -438,20 +395,22 @@ EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
 int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                               char *kstr, int klen, pem_password_cb *cd,
                               void *u);
-#endif
+# endif
 EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
 int PEM_write_bio_Parameters(BIO *bp, EVP_PKEY *x);
 
+# ifndef OPENSSL_NO_DSA
 EVP_PKEY *b2i_PrivateKey(const unsigned char **in, long length);
 EVP_PKEY *b2i_PublicKey(const unsigned char **in, long length);
 EVP_PKEY *b2i_PrivateKey_bio(BIO *in);
 EVP_PKEY *b2i_PublicKey_bio(BIO *in);
 int i2b_PrivateKey_bio(BIO *out, EVP_PKEY *pk);
 int i2b_PublicKey_bio(BIO *out, EVP_PKEY *pk);
-# ifndef OPENSSL_NO_RC4
+#  ifndef OPENSSL_NO_RC4
 EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u);
 int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
                 pem_password_cb *cb, void *u);
+#  endif
 # endif
 
 /* BEGIN ERROR CODES */
@@ -459,7 +418,8 @@ int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
  * The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
-void ERR_load_PEM_strings(void);
+
+int ERR_load_PEM_strings(void);
 
 /* Error codes for the PEM functions. */
 
@@ -487,9 +447,7 @@ void ERR_load_PEM_strings(void);
 # define PEM_F_PEM_ASN1_WRITE_BIO                         105
 # define PEM_F_PEM_DEF_CALLBACK                           100
 # define PEM_F_PEM_DO_HEADER                              106
-# define PEM_F_PEM_F_PEM_WRITE_PKCS8PRIVATEKEY            118
 # define PEM_F_PEM_GET_EVP_CIPHER_INFO                    107
-# define PEM_F_PEM_PK8PKEY                                119
 # define PEM_F_PEM_READ                                   108
 # define PEM_F_PEM_READ_BIO                               109
 # define PEM_F_PEM_READ_BIO_DHPARAMS                      141
@@ -518,24 +476,26 @@ void ERR_load_PEM_strings(void);
 # define PEM_R_ERROR_CONVERTING_PRIVATE_KEY               115
 # define PEM_R_EXPECTING_PRIVATE_KEY_BLOB                 119
 # define PEM_R_EXPECTING_PUBLIC_KEY_BLOB                  120
+# define PEM_R_HEADER_TOO_LONG                            128
 # define PEM_R_INCONSISTENT_HEADER                        121
 # define PEM_R_KEYBLOB_HEADER_PARSE_ERROR                 122
 # define PEM_R_KEYBLOB_TOO_SHORT                          123
+# define PEM_R_MISSING_DEK_IV                             129
 # define PEM_R_NOT_DEK_INFO                               105
 # define PEM_R_NOT_ENCRYPTED                              106
 # define PEM_R_NOT_PROC_TYPE                              107
 # define PEM_R_NO_START_LINE                              108
 # define PEM_R_PROBLEMS_GETTING_PASSWORD                  109
-# define PEM_R_PUBLIC_KEY_NO_RSA                          110
 # define PEM_R_PVK_DATA_TOO_SHORT                         124
 # define PEM_R_PVK_TOO_SHORT                              125
 # define PEM_R_READ_KEY                                   111
 # define PEM_R_SHORT_HEADER                               112
+# define PEM_R_UNEXPECTED_DEK_IV                          130
 # define PEM_R_UNSUPPORTED_CIPHER                         113
 # define PEM_R_UNSUPPORTED_ENCRYPTION                     114
 # define PEM_R_UNSUPPORTED_KEY_COMPONENTS                 126
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
 #endif

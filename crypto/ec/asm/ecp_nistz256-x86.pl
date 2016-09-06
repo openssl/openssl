@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -277,18 +284,41 @@ for(1..37) {
 	&mov	(&DWP(16,"edi"),"eax");
 	&adc	("ecx",&DWP(24,"ebp"));
 	&mov	(&DWP(20,"edi"),"ebx");
+	&mov	("esi",0);
 	&adc	("edx",&DWP(28,"ebp"));
 	&mov	(&DWP(24,"edi"),"ecx");
-	&sbb	("esi","esi");			# broadcast carry bit
+	&adc	("esi",0);
 	&mov	(&DWP(28,"edi"),"edx");
 
-	# if a+b carries, subtract modulus.
+	# if a+b >= modulus, subtract modulus.
 	#
+	# But since comparison implies subtraction, we subtract modulus
+	# to see if it borrows, and then subtract it for real if
+	# subtraction didn't borrow.
+
+	&mov	("eax",&DWP(0,"edi"));
+	&mov	("ebx",&DWP(4,"edi"));
+	&mov	("ecx",&DWP(8,"edi"));
+	&sub	("eax",-1);
+	&mov	("edx",&DWP(12,"edi"));
+	&sbb	("ebx",-1);
+	&mov	("eax",&DWP(16,"edi"));
+	&sbb	("ecx",-1);
+	&mov	("ebx",&DWP(20,"edi"));
+	&sbb	("edx",0);
+	&mov	("ecx",&DWP(24,"edi"));
+	&sbb	("eax",0);
+	&mov	("edx",&DWP(28,"edi"));
+	&sbb	("ebx",0);
+	&sbb	("ecx",1);
+	&sbb	("edx",-1);
+	&sbb	("esi",0);
+
 	# Note that because mod has special form, i.e. consists of
 	# 0xffffffff, 1 and 0s, we can conditionally synthesize it by
-	# assigning carry bit to one register, %ebp, and its negative
-	# to another, %esi. But we started by calculating %esi...
+	# by using borrow.
 
+	&not	("esi");
 	&mov	("eax",&DWP(0,"edi"));
 	&mov	("ebp","esi");
 	&mov	("ebx",&DWP(4,"edi"));
@@ -1375,14 +1405,14 @@ for ($i=0;$i<7;$i++) {
 	&mov	("edx",&DWP($i+12,"esi"));
 	&mov	(&DWP($i+0,"edi"),"eax");
 	&mov	(&DWP(32*18+12,"esp"),"ebp")	if ($i==0);
-	&mov	("ebp","eax")			if ($i==0);
-	&or	("ebp","eax")			if ($i!=0 && $i<64);
+	&mov	("ebp","eax")			if ($i==64);
+	&or	("ebp","eax")			if ($i>64);
 	&mov	(&DWP($i+4,"edi"),"ebx");
-	&or	("ebp","ebx")			if ($i<64);
+	&or	("ebp","ebx")			if ($i>=64);
 	&mov	(&DWP($i+8,"edi"),"ecx");
-	&or	("ebp","ecx")			if ($i<64);
+	&or	("ebp","ecx")			if ($i>=64);
 	&mov	(&DWP($i+12,"edi"),"edx");
-	&or	("ebp","edx")			if ($i<64);
+	&or	("ebp","edx")			if ($i>=64);
     }
 	&xor	("eax","eax");
 	&mov	("esi",&wparam(1));
@@ -1398,14 +1428,14 @@ for ($i=0;$i<7;$i++) {
 	&mov	("ecx",&DWP($i+8,"esi"));
 	&mov	("edx",&DWP($i+12,"esi"));
 	&mov	(&DWP($i+0,"edi"),"eax");
-	&mov	("ebp","eax")			if ($i==0);
-	&or	("ebp","eax")			if ($i!=0 && $i<64);
+	&mov	("ebp","eax")			if ($i==64);
+	&or	("ebp","eax")			if ($i>64);
 	&mov	(&DWP($i+4,"edi"),"ebx");
-	&or	("ebp","ebx")			if ($i<64);
+	&or	("ebp","ebx")			if ($i>=64);
 	&mov	(&DWP($i+8,"edi"),"ecx");
-	&or	("ebp","ecx")			if ($i<64);
+	&or	("ebp","ecx")			if ($i>=64);
 	&mov	(&DWP($i+12,"edi"),"edx");
-	&or	("ebp","edx")			if ($i<64);
+	&or	("ebp","edx")			if ($i>=64);
     }
 	&xor	("eax","eax");
 	&sub	("eax","ebp");
@@ -1654,14 +1684,14 @@ for ($i=0;$i<7;$i++) {
 	&mov	("edx",&DWP($i+12,"esi"));
 	&mov	(&DWP($i+0,"edi"),"eax");
 	&mov	(&DWP(32*15+8,"esp"),"ebp")	if ($i==0);
-	&mov	("ebp","eax")			if ($i==0);
-	&or	("ebp","eax")			if ($i!=0 && $i<64);
+	&mov	("ebp","eax")			if ($i==64);
+	&or	("ebp","eax")			if ($i>64);
 	&mov	(&DWP($i+4,"edi"),"ebx");
-	&or	("ebp","ebx")			if ($i<64);
+	&or	("ebp","ebx")			if ($i>=64);
 	&mov	(&DWP($i+8,"edi"),"ecx");
-	&or	("ebp","ecx")			if ($i<64);
+	&or	("ebp","ecx")			if ($i>=64);
 	&mov	(&DWP($i+12,"edi"),"edx");
-	&or	("ebp","edx")			if ($i<64);
+	&or	("ebp","edx")			if ($i>=64);
     }
 	&xor	("eax","eax");
 	&mov	("esi",&wparam(2));

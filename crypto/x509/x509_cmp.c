@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -128,7 +80,7 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
     return memcmp(a->sha1_hash, b->sha1_hash, 20);
 }
 
-X509_NAME *X509_get_issuer_name(X509 *a)
+X509_NAME *X509_get_issuer_name(const X509 *a)
 {
     return (a->cert_info.issuer);
 }
@@ -145,12 +97,17 @@ unsigned long X509_issuer_name_hash_old(X509 *x)
 }
 #endif
 
-X509_NAME *X509_get_subject_name(X509 *a)
+X509_NAME *X509_get_subject_name(const X509 *a)
 {
     return (a->cert_info.subject);
 }
 
 ASN1_INTEGER *X509_get_serialNumber(X509 *a)
+{
+    return &a->cert_info.serialNumber;
+}
+
+const ASN1_INTEGER *X509_get0_serialNumber(const X509 *a)
 {
     return &a->cert_info.serialNumber;
 }
@@ -187,9 +144,10 @@ int X509_cmp(const X509 *a, const X509 *b)
         return rv;
     /* Check for match against stored encoding too */
     if (!a->cert_info.enc.modified && !b->cert_info.enc.modified) {
-        rv = (int)(a->cert_info.enc.len - b->cert_info.enc.len);
-        if (rv)
-            return rv;
+        if (a->cert_info.enc.len < b->cert_info.enc.len)
+            return -1;
+        if (a->cert_info.enc.len > b->cert_info.enc.len)
+            return 1;
         return memcmp(a->cert_info.enc.enc, b->cert_info.enc.enc,
                       a->cert_info.enc.len);
     }
@@ -304,7 +262,7 @@ X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
     return (NULL);
 }
 
-EVP_PKEY *X509_get0_pubkey(X509 *x)
+EVP_PKEY *X509_get0_pubkey(const X509 *x)
 {
     if (x == NULL)
         return NULL;
@@ -318,9 +276,9 @@ EVP_PKEY *X509_get_pubkey(X509 *x)
     return X509_PUBKEY_get(x->cert_info.key);
 }
 
-int X509_check_private_key(X509 *x, EVP_PKEY *k)
+int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
 {
-    EVP_PKEY *xk;
+    const EVP_PKEY *xk;
     int ret;
 
     xk = X509_get0_pubkey(x);

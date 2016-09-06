@@ -1,59 +1,12 @@
 /*
- * Originally written by Bodo Moeller for the OpenSSL project.
+ * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1998-2010 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -206,7 +159,7 @@ struct ec_method_st {
     int (*field_set_to_one) (const EC_GROUP *, BIGNUM *r, BN_CTX *);
     /* private key operations */
     size_t (*priv2oct)(const EC_KEY *eckey, unsigned char *buf, size_t len);
-    int (*oct2priv)(EC_KEY *eckey, unsigned char *buf, size_t len);
+    int (*oct2priv)(EC_KEY *eckey, const unsigned char *buf, size_t len);
     int (*set_private)(EC_KEY *eckey, const BIGNUM *priv_key);
     int (*keygen)(EC_KEY *eckey);
     int (*keycheck)(const EC_KEY *eckey);
@@ -216,7 +169,7 @@ struct ec_method_st {
     /* custom ECDH operation */
     int (*ecdh_compute_key)(unsigned char **pout, size_t *poutlen,
                             const EC_POINT *pub_key, const EC_KEY *ecdh);
-} /* EC_METHOD */ ;
+};
 
 /*
  * Types and functions to manipulate pre-computed values.
@@ -275,11 +228,16 @@ struct ec_group_st {
     /* data for ECDSA inverse */
     BN_MONT_CTX *mont_data;
 
-    /* precomputed values for speed. */
+    /*
+     * Precomputed values for speed. The PCT_xxx names match the
+     * pre_comp.xxx union names; see the SETPRECOMP and HAVEPRECOMP
+     * macros, below.
+     */
     enum {
-        pct_none,
-        pct_nistp224, pct_nistp256, pct_nistp521, pct_nistz256,
-        pct_ec } pre_comp_type;
+        PCT_none,
+        PCT_nistp224, PCT_nistp256, PCT_nistp521, PCT_nistz256,
+        PCT_ec
+    } pre_comp_type;
     union {
         NISTP224_PRE_COMP *nistp224;
         NISTP256_PRE_COMP *nistp256;
@@ -287,12 +245,12 @@ struct ec_group_st {
         NISTZ256_PRE_COMP *nistz256;
         EC_PRE_COMP *ec;
     } pre_comp;
-} /* EC_GROUP */ ;
+};
 
 #define SETPRECOMP(g, type, pre) \
-    g->pre_comp_type = pct_##type, g->pre_comp.type = pre
+    g->pre_comp_type = PCT_##type, g->pre_comp.type = pre
 #define HAVEPRECOMP(g, type) \
-    g->pre_comp_type == pct_##type && g->pre_comp.type != NULL
+    g->pre_comp_type == PCT_##type && g->pre_comp.type != NULL
 
 struct ec_key_st {
     const EC_KEY_METHOD *meth;
@@ -301,19 +259,13 @@ struct ec_key_st {
     EC_GROUP *group;
     EC_POINT *pub_key;
     BIGNUM *priv_key;
-    /*
-     * Arbitrary extra data.
-     * For example in X25519 this contains the raw private key in a 32 byte
-     * buffer.
-     */
-    void *custom_data;
     unsigned int enc_flag;
     point_conversion_form_t conv_form;
     int references;
     int flags;
     CRYPTO_EX_DATA ex_data;
     CRYPTO_RWLOCK *lock;
-} /* EC_KEY */ ;
+};
 
 struct ec_point_st {
     const EC_METHOD *meth;
@@ -327,12 +279,7 @@ struct ec_point_st {
                                  * Z) represents (X/Z^2, Y/Z^3) if Z != 0 */
     int Z_is_one;               /* enable optimized point arithmetics for
                                  * special case */
-    /*
-     * Arbitrary extra data.
-     * For example in X25519 this contains the public key in a 32 byte buffer.
-     */
-    void *custom_data;
-} /* EC_POINT */ ;
+};
 
 NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *);
 NISTP256_PRE_COMP *EC_nistp256_pre_comp_dup(NISTP256_PRE_COMP *);
@@ -600,7 +547,7 @@ const EC_METHOD *EC_GFp_nistz256_method(void);
 
 size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
                               unsigned char *buf, size_t len);
-int ec_key_simple_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len);
+int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len);
 int ec_key_simple_generate_key(EC_KEY *eckey);
 int ec_key_simple_generate_public_key(EC_KEY *eckey);
 int ec_key_simple_check_key(const EC_KEY *eckey);
@@ -632,7 +579,7 @@ struct ec_key_method_st {
                   const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
     int (*verify_sig)(const unsigned char *dgst, int dgst_len,
                       const ECDSA_SIG *sig, EC_KEY *eckey);
-} /* EC_KEY_METHOD */ ;
+};
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
@@ -659,8 +606,6 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
                       const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
 int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
                           const ECDSA_SIG *sig, EC_KEY *eckey);
-
-const EC_METHOD *ec_x25519_meth(void);
 
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
            const uint8_t peer_public_value[32]);

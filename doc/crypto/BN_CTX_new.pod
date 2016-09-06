@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BN_CTX_new, BN_CTX_secure_new, BN_CTX_init, BN_CTX_free - allocate and free BN_CTX structures
+BN_CTX_new, BN_CTX_secure_new, BN_CTX_free - allocate and free BN_CTX structures
 
 =head1 SYNOPSIS
 
@@ -63,5 +63,14 @@ L<BN_CTX_start(3)>
 =head1 HISTORY
 
 BN_CTX_init() was removed in OpenSSL 1.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

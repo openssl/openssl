@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -10,10 +17,10 @@
 #			IALU(*)/gcc-4.4		NEON
 #
 # ARM11xx(ARMv6)	7.78/+100%		-
-# Cortex-A5		6.30/+130%		2.96
+# Cortex-A5		6.35/+130%		3.00
 # Cortex-A8		6.25/+115%		2.36
 # Cortex-A9		5.10/+95%		2.55
-# Cortex-A15		3.79/+85%		1.25(**)
+# Cortex-A15		3.85/+85%		1.25(**)
 # Snapdragon S4		5.70/+100%		1.48(**)
 #
 # (*)	this is for -march=armv6, i.e. with bunch of ldrb loading data;
@@ -313,7 +320,8 @@ poly1305_blocks:
 	adds	$h0,$h0,r1
 	adcs	$h1,$h1,#0
 	adcs	$h2,$h2,#0
-	adc	$h3,$h3,#0
+	adcs	$h3,$h3,#0
+	adc	$h4,$h4,#0
 
 	cmp	r0,lr			@ done yet?
 	bhi	.Loop
@@ -522,6 +530,51 @@ poly1305_init_neon:
 	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	@ lazy reduction as discussed in "NEON crypto" by D.J. Bernstein
 	@ and P. Schwabe
+	@
+	@ H0>>+H1>>+H2>>+H3>>+H4
+	@ H3>>+H4>>*5+H0>>+H1
+	@
+	@ Trivia.
+	@
+	@ Result of multiplication of n-bit number by m-bit number is
+	@ n+m bits wide. However! Even though 2^n is a n+1-bit number,
+	@ m-bit number multiplied by 2^n is still n+m bits wide.
+	@
+	@ Sum of two n-bit numbers is n+1 bits wide, sum of three - n+2,
+	@ and so is sum of four. Sum of 2^m n-m-bit numbers and n-bit
+	@ one is n+1 bits wide.
+	@
+	@ >>+ denotes Hnext += Hn>>26, Hn &= 0x3ffffff. This means that
+	@ H0, H2, H3 are guaranteed to be 26 bits wide, while H1 and H4
+	@ can be 27. However! In cases when their width exceeds 26 bits
+	@ they are limited by 2^26+2^6. This in turn means that *sum*
+	@ of the products with these values can still be viewed as sum
+	@ of 52-bit numbers as long as the amount of addends is not a
+	@ power of 2. For example,
+	@
+	@ H4 = H4*R0 + H3*R1 + H2*R2 + H1*R3 + H0 * R4,
+	@
+	@ which can't be larger than 5 * (2^26 + 2^6) * (2^26 + 2^6), or
+	@ 5 * (2^52 + 2*2^32 + 2^12), which in turn is smaller than
+	@ 8 * (2^52) or 2^55. However, the value is then multiplied by
+	@ by 5, so we should be looking at 5 * 5 * (2^52 + 2^33 + 2^12),
+	@ which is less than 32 * (2^52) or 2^57. And when processing
+	@ data we are looking at triple as many addends...
+	@
+	@ In key setup procedure pre-reduced H0 is limited by 5*4+1 and
+	@ 5*H4 - by 5*5 52-bit addends, or 57 bits. But when hashing the
+	@ input H0 is limited by (5*4+1)*3 addends, or 58 bits, while
+	@ 5*H4 by 5*5*3, or 59[!] bits. How is this relevant? vmlal.u32
+	@ instruction accepts 2x32-bit input and writes 2x64-bit result.
+	@ This means that result of reduction have to be compressed upon
+	@ loop wrap-around. This can be done in the process of reduction
+	@ to minimize amount of instructions [as well as amount of
+	@ 128-bit instructions, which benefits low-end processors], but
+	@ one has to watch for H2 (which is narrower than H0) and 5*H4
+	@ not being wider than 58 bits, so that result of right shift
+	@ by 26 bits fits in 32 bits. This is also useful on x86,
+	@ because it allows to use paddd in place for paddq, which
+	@ benefits Atom, where paddq is ridiculously slow.
 
 	vshr.u64	$T0,$D3,#26
 	vmovn.i64	$D3#lo,$D3
@@ -735,9 +788,7 @@ poly1305_blocks_neon:
 .align	4
 .Leven:
 	subs		$len,$len,#64
-# ifdef	__thumb2__
 	it		lo
-# endif
 	movlo		$in2,$zeros
 
 	vmov.i32	$H4,#1<<24		@ padbit, yes, always
@@ -745,9 +796,7 @@ poly1305_blocks_neon:
 	add		$inp,$inp,#64
 	vld4.32		{$H0#hi,$H1#hi,$H2#hi,$H3#hi},[$in2]	@ inp[2:3] (or 0)
 	add		$in2,$in2,#64
-# ifdef	__thumb2__
 	itt		hi
-# endif
 	addhi		$tbl1,$ctx,#(48+1*9*4)
 	addhi		$tbl0,$ctx,#(48+3*9*4)
 
@@ -817,9 +866,7 @@ poly1305_blocks_neon:
 	vmull.u32	$D4,$H4#hi,${R0}[1]
 	subs		$len,$len,#64
 	vmlal.u32	$D0,$H4#hi,${S1}[1]
-# ifdef	__thumb2__
 	it		lo
-# endif
 	movlo		$in2,$zeros
 	vmlal.u32	$D3,$H2#hi,${R1}[1]
 	vld1.32		${S4}[1],[$tbl1,:32]
@@ -892,7 +939,8 @@ poly1305_blocks_neon:
 # endif
 
 	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	@ lazy reduction interleaved with base 2^32 -> base 2^26
+	@ lazy reduction interleaved with base 2^32 -> base 2^26 of
+	@ inp[0:3] previously loaded to $H0-$H3 and smashed to $H0-$H4.
 
 	vshr.u64	$T0,$D3,#26
 	vmovn.i64	$D3#lo,$D3
@@ -920,19 +968,20 @@ poly1305_blocks_neon:
 	  vbic.i32	$H3,#0xfc000000
 	 vshrn.u64	$T1#lo,$D2,#26
 	 vmovn.i64	$D2#lo,$D2
-	vadd.i32	$D0#lo,$D0#lo,$T0#lo	@ h4 -> h0
+	vaddl.u32	$D0,$D0#lo,$T0#lo	@ h4 -> h0 [widen for a sec]
 	  vsri.u32	$H2,$H1,#20
 	 vadd.i32	$D3#lo,$D3#lo,$T1#lo	@ h2 -> h3
 	  vshl.u32	$H1,$H1,#6
 	 vbic.i32	$D2#lo,#0xfc000000
 	  vbic.i32	$H2,#0xfc000000
 
-	vshr.u32	$T0#lo,$D0#lo,#26
-	vbic.i32	$D0#lo,#0xfc000000
+	vshrn.u64	$T0#lo,$D0,#26		@ re-narrow
+	vmovn.i64	$D0#lo,$D0
 	  vsri.u32	$H1,$H0,#26
 	  vbic.i32	$H0,#0xfc000000
 	 vshr.u32	$T1#lo,$D3#lo,#26
 	 vbic.i32	$D3#lo,#0xfc000000
+	vbic.i32	$D0#lo,#0xfc000000
 	vadd.i32	$D1#lo,$D1#lo,$T0#lo	@ h0 -> h1
 	 vadd.i32	$D4#lo,$D4#lo,$T1#lo	@ h3 -> h4
 	  vbic.i32	$H1,#0xfc000000
@@ -946,9 +995,7 @@ poly1305_blocks_neon:
 	add		$tbl1,$ctx,#(48+0*9*4)
 	add		$tbl0,$ctx,#(48+1*9*4)
 	adds		$len,$len,#32
-# ifdef	__thumb2__
 	it		ne
-# endif
 	movne		$len,#0
 	bne		.Long_tail
 
@@ -990,14 +1037,10 @@ poly1305_blocks_neon:
 	vmlal.u32	$D2,$H0#hi,$R2
 
 	vmlal.u32	$D3,$H0#hi,$R3
-# ifdef	__thumb2__
-	it		ne
-# endif
+	 it		ne
 	 addne		$tbl1,$ctx,#(48+2*9*4)
 	vmlal.u32	$D0,$H2#hi,$S3
-# ifdef	__thumb2__
-	it		ne
-# endif
+	 it		ne
 	 addne		$tbl0,$ctx,#(48+3*9*4)
 	vmlal.u32	$D4,$H1#hi,$R3
 	vmlal.u32	$D1,$H3#hi,$S3
@@ -1138,7 +1181,8 @@ poly1305_emit_neon:
 	adds	$h0,$h0,$g0
 	adcs	$h1,$h1,#0
 	adcs	$h2,$h2,#0
-	adc	$h3,$h3,#0
+	adcs	$h3,$h3,#0
+	adc	$h4,$h4,#0
 
 	adds	$g0,$h0,#5		@ compare to modulus
 	adcs	$g1,$h1,#0
@@ -1147,24 +1191,16 @@ poly1305_emit_neon:
 	adc	$g4,$h4,#0
 	tst	$g4,#4			@ did it carry/borrow?
 
-# ifdef	__thumb2__
 	it	ne
-# endif
 	movne	$h0,$g0
 	ldr	$g0,[$nonce,#0]
-# ifdef	__thumb2__
 	it	ne
-# endif
 	movne	$h1,$g1
 	ldr	$g1,[$nonce,#4]
-# ifdef	__thumb2__
 	it	ne
-# endif
 	movne	$h2,$g2
 	ldr	$g2,[$nonce,#8]
-# ifdef	__thumb2__
 	it	ne
-# endif
 	movne	$h3,$g3
 	ldr	$g3,[$nonce,#12]
 

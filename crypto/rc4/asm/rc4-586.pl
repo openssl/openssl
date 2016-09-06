@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # ====================================================================
 # [Re]written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
@@ -150,7 +157,7 @@ if ($alt=0) {
 	&movd	($i>0?"mm1":"mm2",&DWP(0,$dat,$ty,4));
 
 	# (*)	This is the key to Core2 and Westmere performance.
-	#	Whithout movz out-of-order execution logic confuses
+	#	Without movz out-of-order execution logic confuses
 	#	itself and fails to reorder loads and stores. Problem
 	#	appears to be fixed in Sandy Bridge...
   }

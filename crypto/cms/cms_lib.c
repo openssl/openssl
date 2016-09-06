@@ -1,54 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
- */
-/* ====================================================================
- * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
+ * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/asn1t.h>
@@ -63,7 +19,7 @@
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ContentInfo)
 IMPLEMENT_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 
-const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms)
+const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms)
 {
     return cms->contentType;
 }
@@ -330,7 +286,7 @@ int CMS_set_detached(CMS_ContentInfo *cms, int detached)
 BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm)
 {
     BIO *mdbio = NULL;
-    ASN1_OBJECT *digestoid;
+    const ASN1_OBJECT *digestoid;
     const EVP_MD *digest;
     X509_ALGOR_get0(&digestoid, NULL, NULL, digestAlgorithm);
     digest = EVP_get_digestbyobj(digestoid);
@@ -356,7 +312,7 @@ int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
                                  X509_ALGOR *mdalg)
 {
     int nid;
-    ASN1_OBJECT *mdoid;
+    const ASN1_OBJECT *mdoid;
     X509_ALGOR_get0(&mdoid, NULL, NULL, mdalg);
     nid = OBJ_obj2nid(mdoid);
     /* Look for digest type to match signature */
@@ -389,6 +345,8 @@ static STACK_OF(CMS_CertificateChoices)
         return &cms->d.signedData->certificates;
 
     case NID_pkcs7_enveloped:
+        if (cms->d.envelopedData->originatorInfo == NULL)
+            return NULL;
         return &cms->d.envelopedData->originatorInfo->certificates;
 
     default:
@@ -464,6 +422,8 @@ static STACK_OF(CMS_RevocationInfoChoice)
         return &cms->d.signedData->crls;
 
     case NID_pkcs7_enveloped:
+        if (cms->d.envelopedData->originatorInfo == NULL)
+            return NULL;
         return &cms->d.envelopedData->originatorInfo->crls;
 
     default:

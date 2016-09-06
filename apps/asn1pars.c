@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /*
@@ -82,7 +34,7 @@ OPTIONS asn1parse_options[] = {
     {"in", OPT_IN, '<', "input file"},
     {"out", OPT_OUT, '>', "output file (output format is always DER)"},
     {"i", OPT_INDENT, 0, "indents the output"},
-    {"noout", OPT_NOOUT, 0, "don't produce any output"},
+    {"noout", OPT_NOOUT, 0, "do not produce any output"},
     {"offset", OPT_OFFSET, 'p', "offset into file"},
     {"length", OPT_LENGTH, 'p', "length of section in file"},
     {"oid", OPT_OID, '<', "file of extra oid definitions"},
@@ -100,7 +52,7 @@ OPTIONS asn1parse_options[] = {
     {NULL}
 };
 
-static int do_generate(char *genstr, char *genconf, BUF_MEM *buf);
+static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf);
 
 int asn1parse_main(int argc, char **argv)
 {
@@ -109,7 +61,8 @@ int asn1parse_main(int argc, char **argv)
     BUF_MEM *buf = NULL;
     STACK_OF(OPENSSL_STRING) *osk = NULL;
     char *genstr = NULL, *genconf = NULL;
-    char *infile = NULL, *str = NULL, *oidfile = NULL, *derfile = NULL;
+    char *infile = NULL, *oidfile = NULL, *derfile = NULL;
+    unsigned char *str = NULL;
     char *name = NULL, *header = NULL, *prog;
     const unsigned char *ctmpbuf;
     int indent = 0, noout = 0, dump = 0, strictpem = 0, informat = FORMAT_PEM;
@@ -202,7 +155,7 @@ int asn1parse_main(int argc, char **argv)
         goto end;
 
     if (strictpem) {
-        if (PEM_read_bio(in, &name, &header, (unsigned char **)&str, &num) !=
+        if (PEM_read_bio(in, &name, &header, &str, &num) !=
             1) {
             BIO_printf(bio_err, "Error reading PEM file\n");
             ERR_print_errors(bio_err);
@@ -246,14 +199,14 @@ int asn1parse_main(int argc, char **argv)
                 num += i;
             }
         }
-        str = buf->data;
+        str = (unsigned char *)buf->data;
 
     }
 
     /* If any structs to parse go through in sequence */
 
     if (sk_OPENSSL_STRING_num(osk)) {
-        tmpbuf = (unsigned char *)str;
+        tmpbuf = str;
         tmplen = num;
         for (i = 0; i < sk_OPENSSL_STRING_num(osk); i++) {
             ASN1_TYPE *atmp;
@@ -287,7 +240,7 @@ int asn1parse_main(int argc, char **argv)
             tmpbuf = at->value.asn1_string->data;
             tmplen = at->value.asn1_string->length;
         }
-        str = (char *)tmpbuf;
+        str = tmpbuf;
         num = tmplen;
     }
 
@@ -308,7 +261,7 @@ int asn1parse_main(int argc, char **argv)
         }
     }
     if (!noout &&
-        !ASN1_parse_dump(bio_out, (unsigned char *)&(str[offset]), length,
+        !ASN1_parse_dump(bio_out, &(str[offset]), length,
                          indent, dump)) {
         ERR_print_errors(bio_err);
         goto end;
@@ -327,11 +280,10 @@ int asn1parse_main(int argc, char **argv)
         OPENSSL_free(str);
     ASN1_TYPE_free(at);
     sk_OPENSSL_STRING_free(osk);
-    OBJ_cleanup();
     return (ret);
 }
 
-static int do_generate(char *genstr, char *genconf, BUF_MEM *buf)
+static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf)
 {
     CONF *cnf = NULL;
     int len;

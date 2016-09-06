@@ -1,4 +1,3 @@
-{- use File::Spec::Functions qw/catdir rel2abs/; -}
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c bn_mod.c \
@@ -7,7 +6,7 @@ SOURCE[../../libcrypto]=\
         {- $target{bn_asm_src} -} \
         bn_recp.c bn_mont.c bn_mpi.c bn_exp2.c bn_gf2m.c bn_nist.c \
         bn_depr.c bn_const.c bn_x931p.c bn_intern.c bn_dh.c bn_srp.c
-INCLUDE[../../libcrypto]={- rel2abs(catdir($builddir,"..","..","crypto","include")) -}
+INCLUDE[../../libcrypto]=../../crypto/include
 
 INCLUDE[bn_exp.o]=..
 
@@ -35,8 +34,10 @@ INCLUDE[sparct4-mont.o]=..
 GENERATE[sparcv9-gf2m.S]=asm/sparcv9-gf2m.pl $(PERLASM_SCHEME)
 INCLUDE[sparcv9-gf2m.o]=..
 
-GENERATE[bn-mips.s]=asm/mips.pl $(PERLASM_SCHEME)
-GENERATE[mips-mont.s]=asm/mips-mont.pl $(PERLASM_SCHEME)
+GENERATE[bn-mips.S]=asm/mips.pl $(PERLASM_SCHEME)
+INCLUDE[bn-mips.o]=..
+GENERATE[mips-mont.S]=asm/mips-mont.pl $(PERLASM_SCHEME)
+INCLUDE[mips-mont.o]=..
 
 GENERATE[s390x-mont.S]=asm/s390x-mont.pl $(PERLASM_SCHEME)
 GENERATE[s390x-gf2m.s]=asm/s390x-gf2m.pl $(PERLASM_SCHEME)
@@ -57,7 +58,7 @@ GENERATE[bn-ppc.s]=asm/ppc.pl $(PERLASM_SCHEME)
 GENERATE[ppc-mont.s]=asm/ppc-mont.pl $(PERLASM_SCHEME)
 GENERATE[ppc64-mont.s]=asm/ppc64-mont.pl $(PERLASM_SCHEME)
 
-GENERATE[alpha-mont.s]=asm/alpha-mont.pl
+GENERATE[alpha-mont.S]=asm/alpha-mont.pl $(PERLASM_SCHEME)
 
 GENERATE[armv4-mont.S]=asm/armv4-mont.pl $(PERLASM_SCHEME)
 INCLUDE[armv4-mont.o]=..
@@ -65,16 +66,8 @@ GENERATE[armv4-gf2m.S]=asm/armv4-gf2m.pl $(PERLASM_SCHEME)
 INCLUDE[armv4-gf2m.o]=..
 GENERATE[armv8-mont.S]=asm/armv8-mont.pl $(PERLASM_SCHEME)
 
-OVERRIDES=bn-mips3.o pa-risc2W.o pa-risc2.c
+OVERRIDES=pa-risc2W.o pa-risc2.c
 BEGINRAW[Makefile]
-##### BN assembler implementations
-
-{- $builddir -}/bn-mips3.o:	{- $sourcedir -}/asm/mips3.s
-	@if [ "$(CC)" = "gcc" ]; then \
-		ABI=`expr "$(CFLAGS)" : ".*-mabi=\([n3264]*\)"` && \
-		as -$$ABI -O -o $@ {- $sourcedir -}/asm/mips3.s; \
-	else	$(CC) -c $(CFLAGS) $(LIB_CFLAGS) -o $@ {- $sourcedir -}/asm/mips3.s; fi
-
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
 {- $builddir -}/pa-risc2W.o: {- $sourcedir -}/asm/pa-risc2W.s

@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifndef HEADER_DH_H
@@ -80,12 +32,18 @@ extern "C" {
 # define OPENSSL_DH_FIPS_MIN_MODULUS_BITS 1024
 
 # define DH_FLAG_CACHE_MONT_P     0x01
-# define DH_FLAG_NO_EXP_CONSTTIME 0x02
+
+# if OPENSSL_API_COMPAT < 0x10100000L
+/*
+ * Does nothing. Previously this switched off constant time behaviour.
+ */
+#  define DH_FLAG_NO_EXP_CONSTTIME 0x00
+# endif
 
 /*
  * If this flag is set the DH method is FIPS compliant and can be used in
  * FIPS mode. This is set in the validated module method. If an application
- * sets this flag in its own methods it is its reposibility to ensure the
+ * sets this flag in its own methods it is its responsibility to ensure the
  * result is compliant.
  */
 
@@ -102,51 +60,6 @@ extern "C" {
 /* Already defined in ossl_typ.h */
 /* typedef struct dh_st DH; */
 /* typedef struct dh_method DH_METHOD; */
-
-struct dh_method {
-    const char *name;
-    /* Methods here */
-    int (*generate_key) (DH *dh);
-    int (*compute_key) (unsigned char *key, const BIGNUM *pub_key, DH *dh);
-    /* Can be null */
-    int (*bn_mod_exp) (const DH *dh, BIGNUM *r, const BIGNUM *a,
-                       const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
-                       BN_MONT_CTX *m_ctx);
-    int (*init) (DH *dh);
-    int (*finish) (DH *dh);
-    int flags;
-    char *app_data;
-    /* If this is non-NULL, it will be used to generate parameters */
-    int (*generate_params) (DH *dh, int prime_len, int generator,
-                            BN_GENCB *cb);
-};
-
-struct dh_st {
-    /*
-     * This first argument is used to pick up errors when a DH is passed
-     * instead of a EVP_PKEY
-     */
-    int pad;
-    int version;
-    BIGNUM *p;
-    BIGNUM *g;
-    long length;                /* optional */
-    BIGNUM *pub_key;            /* g^x % p */
-    BIGNUM *priv_key;           /* x */
-    int flags;
-    BN_MONT_CTX *method_mont_p;
-    /* Place holders if we want to do X9.42 DH */
-    BIGNUM *q;
-    BIGNUM *j;
-    unsigned char *seed;
-    int seedlen;
-    BIGNUM *counter;
-    int references;
-    CRYPTO_EX_DATA ex_data;
-    const DH_METHOD *meth;
-    ENGINE *engine;
-    CRYPTO_RWLOCK *lock;
-};
 
 DECLARE_ASN1_ITEM(DHparams)
 
@@ -237,6 +150,50 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                  ASN1_OBJECT *key_oid,
                  const unsigned char *ukm, size_t ukmlen, const EVP_MD *md);
 # endif
+
+void DH_get0_pqg(const DH *dh,
+                 const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
+int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
+void DH_get0_key(const DH *dh,
+                 const BIGNUM **pub_key, const BIGNUM **priv_key);
+int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
+void DH_clear_flags(DH *dh, int flags);
+int DH_test_flags(const DH *dh, int flags);
+void DH_set_flags(DH *dh, int flags);
+ENGINE *DH_get0_engine(DH *d);
+long DH_get_length(const DH *dh);
+int DH_set_length(DH *dh, long length);
+
+DH_METHOD *DH_meth_new(const char *name, int flags);
+void DH_meth_free(DH_METHOD *dhm);
+DH_METHOD *DH_meth_dup(const DH_METHOD *dhm);
+const char *DH_meth_get0_name(const DH_METHOD *dhm);
+int DH_meth_set1_name(DH_METHOD *dhm, const char *name);
+int DH_meth_get_flags(DH_METHOD *dhm);
+int DH_meth_set_flags(DH_METHOD *dhm, int flags);
+void *DH_meth_get0_app_data(const DH_METHOD *dhm);
+int DH_meth_set0_app_data(DH_METHOD *dhm, void *app_data);
+int (*DH_meth_get_generate_key(const DH_METHOD *dhm)) (DH *);
+int DH_meth_set_generate_key(DH_METHOD *dhm, int (*generate_key) (DH *));
+int (*DH_meth_get_compute_key(const DH_METHOD *dhm))
+        (unsigned char *key, const BIGNUM *pub_key, DH *dh);
+int DH_meth_set_compute_key(DH_METHOD *dhm,
+        int (*compute_key) (unsigned char *key, const BIGNUM *pub_key, DH *dh));
+int (*DH_meth_get_bn_mod_exp(const DH_METHOD *dhm))
+    (const DH *, BIGNUM *, const BIGNUM *, const BIGNUM *, const BIGNUM *,
+     BN_CTX *, BN_MONT_CTX *);
+int DH_meth_set_bn_mod_exp(DH_METHOD *dhm,
+    int (*bn_mod_exp) (const DH *, BIGNUM *, const BIGNUM *, const BIGNUM *,
+                       const BIGNUM *, BN_CTX *, BN_MONT_CTX *));
+int (*DH_meth_get_init(const DH_METHOD *dhm))(DH *);
+int DH_meth_set_init(DH_METHOD *dhm, int (*init)(DH *));
+int (*DH_meth_get_finish(const DH_METHOD *dhm)) (DH *);
+int DH_meth_set_finish(DH_METHOD *dhm, int (*finish) (DH *));
+int (*DH_meth_get_generate_params(const DH_METHOD *dhm))
+        (DH *, int, int, BN_GENCB *);
+int DH_meth_set_generate_params(DH_METHOD *dhm,
+        int (*generate_params) (DH *, int, int, BN_GENCB *));
+
 
 # define EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, len) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN, \
@@ -338,7 +295,8 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
  * The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
-void ERR_load_DH_strings(void);
+
+int ERR_load_DH_strings(void);
 
 /* Error codes for the DH functions. */
 
@@ -349,6 +307,9 @@ void ERR_load_DH_strings(void);
 # define DH_F_DH_CMS_DECRYPT                              114
 # define DH_F_DH_CMS_SET_PEERKEY                          115
 # define DH_F_DH_CMS_SET_SHARED_INFO                      116
+# define DH_F_DH_METH_DUP                                 117
+# define DH_F_DH_METH_NEW                                 118
+# define DH_F_DH_METH_SET1_NAME                           119
 # define DH_F_DH_NEW_METHOD                               105
 # define DH_F_DH_PARAM_DECODE                             107
 # define DH_F_DH_PRIV_DECODE                              110
@@ -357,7 +318,6 @@ void ERR_load_DH_strings(void);
 # define DH_F_DH_PUB_ENCODE                               109
 # define DH_F_DO_DH_PRINT                                 100
 # define DH_F_GENERATE_KEY                                103
-# define DH_F_GENERATE_PARAMETERS                         104
 # define DH_F_PKEY_DH_DERIVE                              112
 # define DH_F_PKEY_DH_KEYGEN                              113
 
@@ -369,7 +329,6 @@ void ERR_load_DH_strings(void);
 # define DH_R_INVALID_PUBKEY                              102
 # define DH_R_KDF_PARAMETER_ERROR                         112
 # define DH_R_KEYS_NOT_SET                                108
-# define DH_R_KEY_SIZE_TOO_SMALL                          110
 # define DH_R_MODULUS_TOO_LARGE                           103
 # define DH_R_NO_PARAMETERS_SET                           107
 # define DH_R_NO_PRIVATE_VALUE                            100
@@ -377,9 +336,8 @@ void ERR_load_DH_strings(void);
 # define DH_R_PEER_KEY_ERROR                              111
 # define DH_R_SHARED_INFO_ERROR                           113
 
-# ifdef  __cplusplus
+#  ifdef  __cplusplus
 }
+#  endif
 # endif
-# endif
-
 #endif

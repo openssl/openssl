@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -158,7 +110,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_SIGNAME)) {
-        X509_ALGOR *tsig_alg = X509_get0_tbs_sigalg(x);
+        const X509_ALGOR *tsig_alg = X509_get0_tbs_sigalg(x);
         if (X509_signature_print(bp, tsig_alg, NULL) <= 0)
             goto err;
     }
@@ -177,11 +129,11 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
             goto err;
         if (BIO_write(bp, "            Not Before: ", 24) <= 0)
             goto err;
-        if (!ASN1_TIME_print(bp, X509_get_notBefore(x)))
+        if (!ASN1_TIME_print(bp, X509_get0_notBefore(x)))
             goto err;
         if (BIO_write(bp, "\n            Not After : ", 25) <= 0)
             goto err;
-        if (!ASN1_TIME_print(bp, X509_get_notAfter(x)))
+        if (!ASN1_TIME_print(bp, X509_get0_notAfter(x)))
             goto err;
         if (BIO_write(bp, "\n", 1) <= 0)
             goto err;
@@ -218,8 +170,8 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_IDS)) {
-        ASN1_BIT_STRING *iuid, *suid;
-        X509_get0_uids(&iuid, &suid, x);
+        const ASN1_BIT_STRING *iuid, *suid;
+        X509_get0_uids(x, &iuid, &suid);
         if (iuid != NULL) {
             if (BIO_printf(bp, "%8sIssuer Unique ID: ", "") <= 0)
                 goto err;
@@ -239,8 +191,8 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
                                 X509_get0_extensions(x), cflag, 8);
 
     if (!(cflag & X509_FLAG_NO_SIGDUMP)) {
-        X509_ALGOR *sig_alg;
-        ASN1_BIT_STRING *sig;
+        const X509_ALGOR *sig_alg;
+        const ASN1_BIT_STRING *sig;
         X509_get0_signature(&sig, &sig_alg, x);
         if (X509_signature_print(bp, sig_alg, sig) <= 0)
             goto err;
@@ -296,8 +248,9 @@ int X509_ocspid_print(BIO *bp, X509 *x)
     if (keybstr == NULL)
         goto err;
 
-    if (!EVP_Digest(ASN1_STRING_data(keybstr), ASN1_STRING_length(keybstr),
-                    SHA1md, NULL, EVP_sha1(), NULL))
+    if (!EVP_Digest(ASN1_STRING_get0_data(keybstr),
+                    ASN1_STRING_length(keybstr), SHA1md, NULL, EVP_sha1(),
+                    NULL))
         goto err;
     for (i = 0; i < SHA_DIGEST_LENGTH; i++) {
         if (BIO_printf(bp, "%02X", SHA1md[i]) <= 0)
@@ -334,7 +287,8 @@ int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
     return 1;
 }
 
-int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
+int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
+                         const ASN1_STRING *sig)
 {
     int sig_nid;
     if (BIO_puts(bp, "    Signature Algorithm: ") <= 0)

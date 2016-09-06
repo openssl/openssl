@@ -2,7 +2,139 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
+ Changes between 1.1.0 and 1.1.1 [xx XXX xxxx]
+
+  *)
+
+ Changes between 1.0.2h and 1.1.0  [25 Aug 2016]
+
+  *) Windows command-line tool supports UTF-8 opt-in option for arguments
+     and console input. Setting OPENSSL_WIN32_UTF8 environment variable
+     (to any value) allows Windows user to access PKCS#12 file generated
+     with Windows CryptoAPI and protected with non-ASCII password, as well
+     as files generated under UTF-8 locale on Linux also protected with
+     non-ASCII password.
+     [Andy Polyakov]
+
+  *) To mitigate the SWEET32 attack (CVE-2016-2183), 3DES cipher suites
+     have been disabled by default and removed from DEFAULT, just like RC4.
+     See the RC4 item below to re-enable both.
+     [Rich Salz]
+
+  *) The method for finding the storage location for the Windows RAND seed file
+     has changed. First we check %RANDFILE%. If that is not set then we check
+     the directories %HOME%, %USERPROFILE% and %SYSTEMROOT% in that order. If
+     all else fails we fall back to C:\.
+     [Matt Caswell]
+
+  *) The EVP_EncryptUpdate() function has had its return type changed from void
+     to int. A return of 0 indicates and error while a return of 1 indicates
+     success.
+     [Matt Caswell]
+
+  *) The flags RSA_FLAG_NO_CONSTTIME, DSA_FLAG_NO_EXP_CONSTTIME and
+     DH_FLAG_NO_EXP_CONSTTIME which previously provided the ability to switch
+     off the constant time implementation for RSA, DSA and DH have been made
+     no-ops and deprecated.
+     [Matt Caswell]
+
+  *) Windows RAND implementation was simplified to only get entropy by
+     calling CryptGenRandom(). Various other RAND-related tickets
+     were also closed.
+     [Joseph Wylie Yandle, Rich Salz]
+
+  *) The stack and lhash API's were renamed to start with OPENSSL_SK_
+     and OPENSSL_LH_, respectively.  The old names are available
+     with API compatibility.  They new names are now completely documented.
+     [Rich Salz]
+
+  *) Unify TYPE_up_ref(obj) methods signature.
+     SSL_CTX_up_ref(), SSL_up_ref(), X509_up_ref(), EVP_PKEY_up_ref(),
+     X509_CRL_up_ref(), X509_OBJECT_up_ref_count() methods are now returning an
+     int (instead of void) like all others TYPE_up_ref() methods.
+     So now these methods also check the return value of CRYPTO_atomic_add(),
+     and the validity of object reference counter.
+     [fdasilvayy@gmail.com]
+
+  *) With Windows Visual Studio builds, the .pdb files are installed
+     alongside the installed libraries and executables.  For a static
+     library installation, ossl_static.pdb is the associate compiler
+     generated .pdb file to be used when linking programs.
+     [Richard Levitte]
+
+  *) Remove openssl.spec.  Packaging files belong with the packagers.
+     [Richard Levitte]
+
+  *) Automatic Darwin/OSX configuration has had a refresh, it will now
+     recognise x86_64 architectures automatically.  You can still decide
+     to build for a different bitness with the environment variable
+     KERNEL_BITS (can be 32 or 64), for example:
+
+         KERNEL_BITS=32 ./config
+
+     [Richard Levitte]
+
+  *) Change default algorithms in pkcs8 utility to use PKCS#5 v2.0,
+     256 bit AES and HMAC with SHA256.
+     [Steve Henson]
+
+  *) Remove support for MIPS o32 ABI on IRIX (and IRIX only).
+     [Andy Polyakov]
+
+  *) Triple-DES ciphers have been moved from HIGH to MEDIUM.
+     [Rich Salz]
+
+  *) To enable users to have their own config files and build file templates,
+     Configure looks in the directory indicated by the environment variable
+     OPENSSL_LOCAL_CONFIG_DIR as well as the in-source Configurations/
+     directory.  On VMS, OPENSSL_LOCAL_CONFIG_DIR is expected to be a logical
+     name and is used as is.
+     [Richard Levitte]
+
+  *) The following datatypes were made opaque: X509_OBJECT, X509_STORE_CTX,
+     X509_STORE, X509_LOOKUP, and X509_LOOKUP_METHOD.  The unused type
+     X509_CERT_FILE_CTX was removed.
+     [Rich Salz]
+
+  *) "shared" builds are now the default. To create only static libraries use
+     the "no-shared" Configure option.
+     [Matt Caswell]
+
+  *) Remove the no-aes, no-hmac, no-rsa, no-sha and no-md5 Configure options.
+     All of these option have not worked for some while and are fundamental
+     algorithms.
+     [Matt Caswell]
+
+  *) Make various cleanup routines no-ops and mark them as deprecated. Most
+     global cleanup functions are no longer required because they are handled
+     via auto-deinit (see OPENSSL_init_crypto and OPENSSL_init_ssl man pages).
+     Explicitly de-initing can cause problems (e.g. where a library that uses
+     OpenSSL de-inits, but an application is still using it). The affected
+     functions are CONF_modules_free(), ENGINE_cleanup(), OBJ_cleanup(),
+     EVP_cleanup(), BIO_sock_cleanup(), CRYPTO_cleanup_all_ex_data(),
+     RAND_cleanup(), SSL_COMP_free_compression_methods(), ERR_free_strings() and
+     COMP_zlib_cleanup().
+     [Matt Caswell]
+
+  *) --strict-warnings no longer enables runtime debugging options
+     such as REF_DEBUG. Instead, debug options are automatically
+     enabled with '--debug' builds.
+     [Andy Polyakov, Emilia Käsper]
+
+  *) Made DH and DH_METHOD opaque. The structures for managing DH objects
+     have been moved out of the public header files. New functions for managing
+     these have been added.
+     [Matt Caswell]
+
+  *) Made RSA and RSA_METHOD opaque. The structures for managing RSA
+     objects have been moved out of the public header files. New
+     functions for managing these have been added.
+     [Richard Levitte]
+
+  *) Made DSA and DSA_METHOD opaque. The structures for managing DSA objects
+     have been moved out of the public header files. New functions for managing
+     these have been added.
+     [Matt Caswell]
 
   *) Made BIO and BIO_METHOD opaque. The structures for managing BIOs have been
      moved out of the public header files. New functions for managing these
@@ -85,19 +217,13 @@
      [Emilia Käsper]
 
   *) Add X25519 support.
-     Integrate support for X25519 into EC library. This includes support
+     Add ASN.1 and EVP_PKEY methods for X25519. This includes support
      for public and private key encoding using the format documented in
-     draft-josefsson-pkix-newcurves-01: specifically X25519 uses the
-     OID from that draft, encodes public keys using little endian
-     format in the ECPoint structure and private keys using
-     little endian form in the privateKey field of the ECPrivateKey
-     structure. TLS support complies with draft-ietf-tls-rfc4492bis-06
-     and uses X25519(29).
+     draft-ietf-curdle-pkix-02. The coresponding EVP_PKEY method supports
+     key generation and key derivation.
 
-     Note: the current version supports key generation, public and
-     private key encoding and ECDH key agreement using the EC API.
-     Low level point operations such as EC_POINT_add(), EC_POINT_mul()
-     are NOT supported.
+     TLS support complies with draft-ietf-tls-rfc4492bis-08 and uses
+     X25519(29).
      [Steve Henson]
 
   *) Deprecate SRP_VBASE_get_by_user.
@@ -752,10 +878,6 @@
      combination: call this in fips_test_suite.
      [Steve Henson]
 
-  *) Add support for Dual EC DRBG from SP800-90. Update DRBG algorithm test
-     and POST to handle Dual EC cases.
-     [Steve Henson]
-
   *) Add support for canonical generation of DSA parameter 'g'. See 
      FIPS 186-3 A.2.3.
 
@@ -942,6 +1064,103 @@
      These allow SCTs (signed certificate timestamps) to be requested and
      validated when establishing a connection.
      [Rob Percival <robpercival@google.com>]
+
+ Changes between 1.0.2g and 1.0.2h [3 May 2016]
+
+  *) Prevent padding oracle in AES-NI CBC MAC check
+
+     A MITM attacker can use a padding oracle attack to decrypt traffic
+     when the connection uses an AES CBC cipher and the server support
+     AES-NI.
+
+     This issue was introduced as part of the fix for Lucky 13 padding
+     attack (CVE-2013-0169). The padding check was rewritten to be in
+     constant time by making sure that always the same bytes are read and
+     compared against either the MAC or padding bytes. But it no longer
+     checked that there was enough data to have both the MAC and padding
+     bytes.
+
+     This issue was reported by Juraj Somorovsky using TLS-Attacker.
+     (CVE-2016-2107)
+     [Kurt Roeckx]
+
+  *) Fix EVP_EncodeUpdate overflow
+
+     An overflow can occur in the EVP_EncodeUpdate() function which is used for
+     Base64 encoding of binary data. If an attacker is able to supply very large
+     amounts of input data then a length check can overflow resulting in a heap
+     corruption.
+
+     Internally to OpenSSL the EVP_EncodeUpdate() function is primarily used by
+     the PEM_write_bio* family of functions. These are mainly used within the
+     OpenSSL command line applications, so any application which processes data
+     from an untrusted source and outputs it as a PEM file should be considered
+     vulnerable to this issue. User applications that call these APIs directly
+     with large amounts of untrusted data may also be vulnerable.
+
+     This issue was reported by Guido Vranken.
+     (CVE-2016-2105)
+     [Matt Caswell]
+
+  *) Fix EVP_EncryptUpdate overflow
+
+     An overflow can occur in the EVP_EncryptUpdate() function. If an attacker
+     is able to supply very large amounts of input data after a previous call to
+     EVP_EncryptUpdate() with a partial block then a length check can overflow
+     resulting in a heap corruption. Following an analysis of all OpenSSL
+     internal usage of the EVP_EncryptUpdate() function all usage is one of two
+     forms. The first form is where the EVP_EncryptUpdate() call is known to be
+     the first called function after an EVP_EncryptInit(), and therefore that
+     specific call must be safe. The second form is where the length passed to
+     EVP_EncryptUpdate() can be seen from the code to be some small value and
+     therefore there is no possibility of an overflow. Since all instances are
+     one of these two forms, it is believed that there can be no overflows in
+     internal code due to this problem. It should be noted that
+     EVP_DecryptUpdate() can call EVP_EncryptUpdate() in certain code paths.
+     Also EVP_CipherUpdate() is a synonym for EVP_EncryptUpdate(). All instances
+     of these calls have also been analysed too and it is believed there are no
+     instances in internal usage where an overflow could occur.
+
+     This issue was reported by Guido Vranken.
+     (CVE-2016-2106)
+     [Matt Caswell]
+
+  *) Prevent ASN.1 BIO excessive memory allocation
+
+     When ASN.1 data is read from a BIO using functions such as d2i_CMS_bio()
+     a short invalid encoding can cause allocation of large amounts of memory
+     potentially consuming excessive resources or exhausting memory.
+
+     Any application parsing untrusted data through d2i BIO functions is
+     affected. The memory based functions such as d2i_X509() are *not* affected.
+     Since the memory based functions are used by the TLS library, TLS
+     applications are not affected.
+
+     This issue was reported by Brian Carpenter.
+     (CVE-2016-2109)
+     [Stephen Henson]
+
+  *) EBCDIC overread
+
+     ASN1 Strings that are over 1024 bytes can cause an overread in applications
+     using the X509_NAME_oneline() function on EBCDIC systems. This could result
+     in arbitrary stack data being returned in the buffer.
+
+     This issue was reported by Guido Vranken.
+     (CVE-2016-2176)
+     [Matt Caswell]
+
+  *) Modify behavior of ALPN to invoke callback after SNI/servername
+     callback, such that updates to the SSL_CTX affect ALPN.
+     [Todd Short]
+
+  *) Remove LOW from the DEFAULT cipher list.  This removes singles DES from the
+     default.
+     [Kurt Roeckx]
+
+  *) Only remove the SSLv2 methods with the no-ssl2-method option. When the
+     methods are enabled and ssl2 is disabled the methods return NULL.
+     [Kurt Roeckx]
 
  Changes between 1.0.2f and 1.0.2g [1 Mar 2016]
 
@@ -1181,7 +1400,7 @@
 
   *) Alternate chains certificate forgery
 
-     During certificate verfification, OpenSSL will attempt to find an
+     During certificate verification, OpenSSL will attempt to find an
      alternative certificate chain if the first attempt to build such a chain
      fails. An error in the implementation of this logic can mean that an
      attacker could cause certain checks on untrusted certificates to be
@@ -1439,7 +1658,7 @@
 
   *) Facilitate "universal" ARM builds targeting range of ARM ISAs, e.g.
      ARMv5 through ARMv8, as opposite to "locking" it to single one.
-     So far those who have to target multiple plaforms would compromise
+     So far those who have to target multiple platforms would compromise
      and argue that binary targeting say ARMv5 would still execute on
      ARMv8. "Universal" build resolves this compromise by providing
      near-optimal performance even on newer platforms.
@@ -1499,7 +1718,7 @@
      [Steve Henson]
 
   *) Use algorithm specific chains in SSL_CTX_use_certificate_chain_file():
-     this fixes a limiation in previous versions of OpenSSL.
+     this fixes a limitation in previous versions of OpenSSL.
      [Steve Henson]
 
   *) Extended RSA OAEP support via EVP_PKEY API. Options to specify digest,
@@ -1608,9 +1827,9 @@
 
   *) Add support for certificate stores in CERT structure. This makes it
      possible to have different stores per SSL structure or one store in
-     the parent SSL_CTX. Include distint stores for certificate chain
+     the parent SSL_CTX. Include distinct stores for certificate chain
      verification and chain building. New ctrl SSL_CTRL_BUILD_CERT_CHAIN
-     to build and store a certificate chain in CERT structure: returing
+     to build and store a certificate chain in CERT structure: returning
      an error if the chain cannot be built: this will allow applications
      to test if a chain is correctly configured.
 
@@ -1671,7 +1890,7 @@
      [Steve Henson]
 
   *) Integrate hostname, email address and IP address checking with certificate
-     verification. New verify options supporting checking in opensl utility.
+     verification. New verify options supporting checking in openssl utility.
      [Steve Henson]
 
   *) Fixes and wildcard matching support to hostname and email checking
@@ -1853,7 +2072,7 @@
 
      3. Check DSA/ECDSA signatures use DER.
 
-     Reencode DSA/ECDSA signatures and compare with the original received
+     Re-encode DSA/ECDSA signatures and compare with the original received
      signature. Return an error if there is a mismatch.
 
      This will reject various cases including garbage after signature
@@ -1943,7 +2162,7 @@
 
   *) Add additional DigestInfo checks.
  
-     Reencode DigestInto in DER and check against the original when
+     Re-encode DigestInto in DER and check against the original when
      verifying RSA signature: this will reject any improperly encoded
      DigestInfo structures.
 
@@ -2540,7 +2759,7 @@
      in CMS and PKCS7 code. When RSA decryption fails use a random key for
      content decryption and always return the same error. Note: this attack
      needs on average 2^20 messages so it only affects automated senders. The
-     old behaviour can be reenabled in the CMS code by setting the
+     old behaviour can be re-enabled in the CMS code by setting the
      CMS_DEBUG_DECRYPT flag: this is useful for debugging and testing where
      an MMA defence is not necessary.
      Thanks to Ivan Nestlerode <inestlerode@us.ibm.com> for discovering
@@ -2836,7 +3055,7 @@
      as part of the CRL checking and indicate a new error "CRL path validation
      error" in this case. Applications wanting additional details can use
      the verify callback and check the new "parent" field. If this is not
-     NULL CRL path validation is taking place. Existing applications wont
+     NULL CRL path validation is taking place. Existing applications won't
      see this because it requires extended CRL support which is off by
      default.
 
@@ -3849,9 +4068,9 @@
      This work was sponsored by Logica.
      [Steve Henson]
 
-  *) Fix bug in X509_ATTRIBUTE creation: dont set attribute using
+  *) Fix bug in X509_ATTRIBUTE creation: don't set attribute using
      ASN1_TYPE_set1 if MBSTRING flag set. This bug would crash certain
-     attribute creation routines such as certifcate requests and PKCS#12
+     attribute creation routines such as certificate requests and PKCS#12
      files.
      [Steve Henson]
 
@@ -3926,7 +4145,7 @@
      [Ian Lister (tweaked by Geoff Thorpe)]
 
   *) Backport of CMS code to OpenSSL 0.9.8. This differs from the 0.9.9
-     implemention in the following ways:
+     implementation in the following ways:
 
      Lack of EVP_PKEY_ASN1_METHOD means algorithm parameters have to be
      hard coded.
@@ -4124,7 +4343,7 @@
      implementation in BN_mod_exp_mont_consttime().)  The old name
      remains as a deprecated alias.
 
-     Similary, RSA_FLAG_NO_EXP_CONSTTIME is replaced by a more general
+     Similarly, RSA_FLAG_NO_EXP_CONSTTIME is replaced by a more general
      RSA_FLAG_NO_CONSTTIME flag since the RSA implementation now uses
      constant-time implementations for more than just exponentiation.
      Here too the old name is kept as a deprecated alias.
@@ -4828,7 +5047,7 @@
   *) Key-generation can now be implemented in RSA_METHOD, DSA_METHOD
      and DH_METHOD (eg. by ENGINE implementations) to override the normal
      software implementations. For DSA and DH, parameter generation can
-     also be overriden by providing the appropriate method callbacks.
+     also be overridden by providing the appropriate method callbacks.
      [Geoff Thorpe]
 
   *) Change the "progress" mechanism used in key-generation and
@@ -4911,7 +5130,7 @@
      the "shared" options was given to ./Configure or ./config.
      Otherwise, they are inserted in libcrypto.a.
      /usr/local/ssl/engines is the default directory for dynamic
-     engines, but that can be overriden at configure time through
+     engines, but that can be overridden at configure time through
      the usual use of --prefix and/or --openssldir, and at run
      time with the environment variable OPENSSL_ENGINES.
      [Geoff Thorpe and Richard Levitte]
@@ -5446,8 +5665,8 @@
      [Steve Henson]
 
   *) Perform some character comparisons of different types in X509_NAME_cmp:
-     this is needed for some certificates that reencode DNs into UTF8Strings
-     (in violation of RFC3280) and can't or wont issue name rollover
+     this is needed for some certificates that re-encode DNs into UTF8Strings
+     (in violation of RFC3280) and can't or won't issue name rollover
      certificates.
      [Steve Henson]
 
@@ -6505,7 +6724,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
         const ASN1_ITEM *it = &ASN1_INTEGER_it;
 
-     wont compile. This is used by the any applications that need to
+     won't compile. This is used by the any applications that need to
      declare their own ASN1 modules. This was fixed by adding the option
      EXPORT_VAR_AS_FN to all Win32 platforms, although this isn't strictly
      needed for static libraries under Win32.
@@ -7106,7 +7325,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      entropy, EGD style sockets (served by EGD or PRNGD) will automatically
      be queried.
      The locations /var/run/egd-pool, /dev/egd-pool, /etc/egd-pool, and
-     /etc/entropy will be queried once each in this sequence, quering stops
+     /etc/entropy will be queried once each in this sequence, querying stops
      when enough entropy was collected without querying more sockets.
      [Lutz Jaenicke]
 
@@ -7134,7 +7353,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      information from an OCSP_CERTID structure (which will be created
      when the request structure is built). These are built from lower
      level functions which work on OCSP_SINGLERESP structures but
-     wont normally be used unless the application wishes to examine
+     won't normally be used unless the application wishes to examine
      extensions in the OCSP response for example.
 
      Replace nonce routines with a pair of functions.
@@ -7210,7 +7429,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) New function X509V3_add1_i2d(). This automatically encodes and
      adds an extension. Its behaviour can be customised with various
      flags to append, replace or delete. Various wrappers added for
-     certifcates and CRLs.
+     certificates and CRLs.
      [Steve Henson]
 
   *) Fix to avoid calling the underlying ASN1 print routine when
@@ -7755,7 +7974,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Nils Larsch <nla@trustcenter.de>]
 
   *) Fix BASE64 decode (EVP_DecodeUpdate) for data with CR/LF ended lines:
-     an end-of-file condition would erronously be flagged, when the CRLF
+     an end-of-file condition would erroneously be flagged, when the CRLF
      was just at the end of a processed block. The bug was discovered when
      processing data through a buffering memory BIO handing the data to a
      BASE64-decoding BIO. Bug fund and patch submitted by Pavel Tsekov
@@ -8685,7 +8904,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Steve Henson]
 
   *) When a certificate request is read in keep a copy of the
-     original encoding of the signed data and use it when outputing
+     original encoding of the signed data and use it when outputting
      again. Signatures then use the original encoding rather than
      a decoded, encoded version which may cause problems if the
      request is improperly encoded.

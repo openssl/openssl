@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -88,7 +95,7 @@
 # where Tproc is time required for Karatsuba pre- and post-processing,
 # is more realistic estimate. In this case it gives ... 1.91 cycles.
 # Or in other words, depending on how well we can interleave reduction
-# and one of the two multiplications the performance should be betwen
+# and one of the two multiplications the performance should be between
 # 1.91 and 2.16. As already mentioned, this implementation processes
 # one byte out of 8KB buffer in 2.10 cycles, while x86_64 counterpart
 # - in 2.02. x86_64 performance is better, because larger register
@@ -715,7 +722,7 @@ sub mmx_loop() {
     &pxor	($red[1],$red[1]);
     &pxor	($red[2],$red[2]);
 
-    # Just like in "May" verson modulo-schedule for critical path in
+    # Just like in "May" version modulo-schedule for critical path in
     # 'Z.hi ^= rem_8bit[Z.lo&0xff^((u8)H[nhi]<<4)]<<48'. Final 'pxor'
     # is scheduled so late that rem_8bit[] has to be shifted *right*
     # by 16, which is why last argument to pinsrw is 2, which
@@ -1141,7 +1148,7 @@ my ($Xhi,$Xi) = @_;
 	&movdqu		(&QWP(0,$Xip),$Xi);
 &function_end("gcm_ghash_clmul");
 
-} else {		# Algorith 5. Kept for reference purposes.
+} else {		# Algorithm 5. Kept for reference purposes.
 
 sub reduction_alg5 {	# 19/16 times faster than Intel version
 my ($Xhi,$Xi)=@_;

@@ -12,7 +12,7 @@ SSL_CTX_set_verify, SSL_set_verify, SSL_CTX_set_verify_depth, SSL_set_verify_dep
                          int (*verify_callback)(int, X509_STORE_CTX *));
  void SSL_set_verify(SSL *s, int mode,
                      int (*verify_callback)(int, X509_STORE_CTX *));
- void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth);
+ void SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth);
  void SSL_set_verify_depth(SSL *s, int depth);
 
  int verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx);
@@ -89,8 +89,7 @@ B<Client mode:> ignored
 
 =back
 
-Exactly one of the B<mode> flags SSL_VERIFY_NONE and SSL_VERIFY_PEER must be
-set at any time.
+If the B<mode> is SSL_VERIFY_NONE none of the other flags may be set.
 
 The actual verification procedure is performed either using the built-in
 verification procedure or using another application provided verification
@@ -145,18 +144,6 @@ If no B<verify_callback> is specified, the default callback will be used.
 Its return value is identical to B<preverify_ok>, so that any verification
 failure will lead to a termination of the TLS/SSL handshake with an
 alert message, if SSL_VERIFY_PEER is set.
-
-=head1 BUGS
-
-In client mode, it is not checked whether the SSL_VERIFY_PEER flag
-is set, but whether SSL_VERIFY_NONE is not set. This can lead to
-unexpected behaviour, if the SSL_VERIFY_PEER and SSL_VERIFY_NONE are not
-used as required (exactly one must be set at any time).
-
-The certificate verification depth set with SSL[_CTX]_verify_depth()
-stops the verification at a certain depth. The error message produced
-will be that of an incomplete certificate chain and not
-X509_V_ERR_CERT_CHAIN_TOO_LONG as may be expected.
 
 =head1 RETURN VALUES
 
@@ -221,7 +208,7 @@ L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
         preverify_ok = 0;
         err = X509_V_ERR_CERT_CHAIN_TOO_LONG;
         X509_STORE_CTX_set_error(ctx, err);
-    } 
+    }
     if (!preverify_ok) {
         printf("verify error:num=%d:%s:depth=%d:%s\n", err,
                  X509_verify_cert_error_string(err), depth, buf);
@@ -269,9 +256,9 @@ L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
   */
  mydata.verify_depth = verify_depth; ...
  SSL_set_ex_data(ssl, mydata_index, &mydata);
-					     
+
  ...
- SSL_accept(ssl);	/* check of success left out for clarity */
+ SSL_accept(ssl);       /* check of success left out for clarity */
  if (peer = SSL_get_peer_certificate(ssl))
  {
    if (SSL_get_verify_result(ssl) == X509_V_OK)
@@ -290,5 +277,14 @@ L<SSL_get_peer_certificate(3)>,
 L<SSL_CTX_set_cert_verify_callback(3)>,
 L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>,
 L<SSL_get_ex_new_index(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -527,9 +534,11 @@ $code.=<<___;
 	?lvsl	$outperm,0,$out			# prepare for unaligned store
 	?vperm	$outmask,$outmask,$T0,$outperm
 
+	be?lvsl	$T0,0,@x[0]			# 0x00..0f
 	be?vspltisb $T1,3			# 0x03..03
-	be?vxor	$inpperm,$inpperm,$T1		# swap bytes within words
+	be?vxor	$T0,$T0,$T1			# swap bytes within words
 	be?vxor	$outperm,$outperm,$T1
+	be?vperm $inpperm,$inpperm,$inpperm,$T0
 
 	b	Loop_outer_vmx
 

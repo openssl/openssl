@@ -104,23 +104,23 @@ Examples:
 This extensions consists of a list of usages indicating purposes for which
 the certificate public key can be used for,
 
-These can either be object short names of the dotted numerical form of OIDs.
+These can either be object short names or the dotted numerical form of OIDs.
 While any OID can be used only certain values make sense. In particular the
 following PKIX, NS and MS values are meaningful:
 
- Value			Meaning
- -----			-------
- serverAuth		SSL/TLS Web Server Authentication.
- clientAuth		SSL/TLS Web Client Authentication.
- codeSigning		Code signing.
- emailProtection	E-mail Protection (S/MIME).
- timeStamping		Trusted Timestamping
- OCSPSigning		OCSP Signing
- ipsecIKE		ipsec Internet Key Exchnage
- msCodeInd		Microsoft Individual Code Signing (authenticode)
- msCodeCom		Microsoft Commercial Code Signing (authenticode)
- msCTLSign		Microsoft Trust List Signing
- msEFS			Microsoft Encrypted File System
+ Value                  Meaning
+ -----                  -------
+ serverAuth             SSL/TLS Web Server Authentication.
+ clientAuth             SSL/TLS Web Client Authentication.
+ codeSigning            Code signing.
+ emailProtection        E-mail Protection (S/MIME).
+ timeStamping           Trusted Timestamping
+ OCSPSigning            OCSP Signing
+ ipsecIKE               ipsec Internet Key Exchange
+ msCodeInd              Microsoft Individual Code Signing (authenticode)
+ msCodeCom              Microsoft Commercial Code Signing (authenticode)
+ msCTLSign              Microsoft Trust List Signing
+ msEFS                  Microsoft Encrypted File System
 
 Examples:
 
@@ -224,7 +224,7 @@ Example:
  authorityInfoAccess = caIssuers;URI:http://my.ca/ca.html
 
 
-=head2 CRL distribution points.
+=head2 CRL distribution points
 
 This is a multi-valued extension whose options can be either in name:value pair
 using the same form as subject alternative name or a single value representing
@@ -529,5 +529,13 @@ will only recognize the last value. This can be worked around by using the form:
 L<req(1)>, L<ca(1)>, L<x509(1)>,
 L<ASN1_generate_nconf(3)>
 
+=head1 COPYRIGHT
+
+Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

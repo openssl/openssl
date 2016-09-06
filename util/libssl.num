@@ -7,7 +7,6 @@ SSL_copy_session_id                     6	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set_srp_password                7	1_1_0	EXIST::FUNCTION:SRP
 SSL_shutdown                            8	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set_msg_callback                9	1_1_0	EXIST::FUNCTION:
-SSL_COMP_free_compression_methods       10	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_get0_ticket                 11	1_1_0	EXIST::FUNCTION:
 SSL_get1_supported_ciphers              12	1_1_0	EXIST::FUNCTION:
 SSL_state_string_long                   13	1_1_0	EXIST::FUNCTION:
@@ -30,7 +29,7 @@ SSL_CTX_use_RSAPrivateKey               29	1_1_0	EXIST::FUNCTION:RSA
 SSL_CTX_sess_get_new_cb                 30	1_1_0	EXIST::FUNCTION:
 d2i_SSL_SESSION                         31	1_1_0	EXIST::FUNCTION:
 SSL_use_PrivateKey_ASN1                 32	1_1_0	EXIST::FUNCTION:
-PEM_write_SSL_SESSION                   33	1_1_0	EXIST::FUNCTION:
+PEM_write_SSL_SESSION                   33	1_1_0	EXIST::FUNCTION:STDIO
 SSL_CTX_set_session_id_context          34	1_1_0	EXIST::FUNCTION:
 SSL_CIPHER_get_cipher_nid               35	1_1_0	EXIST::FUNCTION:
 SSL_get_srp_g                           36	1_1_0	EXIST::FUNCTION:SRP
@@ -71,7 +70,7 @@ SSL_CTX_set_srp_cb_arg                  70	1_1_0	EXIST::FUNCTION:SRP
 SSL_CTX_add_session                     71	1_1_0	EXIST::FUNCTION:
 SSL_get_srp_N                           72	1_1_0	EXIST::FUNCTION:SRP
 SSL_has_matching_session_id             73	1_1_0	EXIST::FUNCTION:
-PEM_read_SSL_SESSION                    74	1_1_0	EXIST::FUNCTION:
+PEM_read_SSL_SESSION                    74	1_1_0	EXIST::FUNCTION:STDIO
 SSL_get_shared_ciphers                  75	1_1_0	EXIST::FUNCTION:
 SSL_add1_host                           76	1_1_0	EXIST::FUNCTION:
 SSL_CONF_cmd_argv                       77	1_1_0	EXIST::FUNCTION:
@@ -157,7 +156,7 @@ SSL_CTX_set_tmp_dh_callback             156	1_1_0	EXIST::FUNCTION:DH
 SSL_CTX_get_default_passwd_cb           157	1_1_0	EXIST::FUNCTION:
 TLSv1_server_method                     158	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_METHOD
 DTLS_server_method                      159	1_1_0	EXIST::FUNCTION:
-SSL_set_rbio                            160	1_1_0	EXIST::FUNCTION:
+SSL_set0_rbio                           160	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set_options                     161	1_1_0	EXIST::FUNCTION:
 SSL_set_msg_callback                    162	1_1_0	EXIST::FUNCTION:
 SSL_CONF_CTX_free                       163	1_1_0	EXIST::FUNCTION:
@@ -237,7 +236,7 @@ DTLSv1_server_method                    236	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1
 SSL_set_fd                              237	1_1_0	EXIST::FUNCTION:SOCK
 SSL_use_certificate                     238	1_1_0	EXIST::FUNCTION:
 DTLSv1_method                           239	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DTLS1_METHOD
-SSL_set_wbio                            240	1_1_0	EXIST::FUNCTION:
+SSL_set0_wbio                           240	1_1_0	EXIST::FUNCTION:
 SSL_read                                241	1_1_0	EXIST::FUNCTION:
 SSL_CTX_get_options                     242	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set_ssl_version                 243	1_1_0	EXIST::FUNCTION:
@@ -377,10 +376,10 @@ SSL_CTX_set_ctlog_list_file             376	1_1_0	EXIST::FUNCTION:CT
 SSL_set_ct_validation_callback          377	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_set_default_ctlog_list_file     378	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_has_client_custom_ext           379	1_1_0	EXIST::FUNCTION:
-SSL_get_ct_validation_callback          380	1_1_0	EXIST::FUNCTION:CT
+SSL_ct_is_enabled                       380	1_1_0	EXIST::FUNCTION:CT
 SSL_get0_peer_scts                      381	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_set_ct_validation_callback      382	1_1_0	EXIST::FUNCTION:CT
-SSL_CTX_get_ct_validation_callback      383	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_ct_is_enabled                   383	1_1_0	EXIST::FUNCTION:CT
 SSL_set_default_read_buffer_len         384	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set_default_read_buffer_len     385	1_1_0	EXIST::FUNCTION:
 SSL_has_pending                         386	1_1_0	EXIST::FUNCTION:
@@ -390,3 +389,17 @@ SSL_CIPHER_is_aead                      389	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_up_ref                      390	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set0_ctlog_store                391	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_get0_ctlog_store                392	1_1_0	EXIST::FUNCTION:CT
+SSL_enable_ct                           393	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_enable_ct                       394	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_get_ciphers                     395	1_1_0	EXIST::FUNCTION:
+SSL_SESSION_get0_hostname               396	1_1_0	EXIST::FUNCTION:
+SSL_client_version                      397	1_1_0	EXIST::FUNCTION:
+SSL_SESSION_get_protocol_version        398	1_1_0	EXIST::FUNCTION:
+SSL_is_dtls                             399	1_1_0	EXIST::FUNCTION:
+SSL_CTX_dane_set_flags                  400	1_1_0	EXIST::FUNCTION:
+SSL_dane_set_flags                      401	1_1_0	EXIST::FUNCTION:
+SSL_CTX_dane_clear_flags                402	1_1_0	EXIST::FUNCTION:
+SSL_dane_clear_flags                    403	1_1_0	EXIST::FUNCTION:
+SSL_SESSION_get0_cipher                 404	1_1_0	EXIST::FUNCTION:
+SSL_SESSION_get0_id_context             405	1_1_0	EXIST::FUNCTION:
+SSL_SESSION_set1_id                     406	1_1_0	EXIST::FUNCTION:

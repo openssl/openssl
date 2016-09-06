@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 $flavour = shift;
 $output  = shift;
@@ -97,6 +104,36 @@ OPENSSL_cleanse:
 	.word	0xe12fff1e	@ bx	lr
 #endif
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
+
+.global	CRYPTO_memcmp
+.type	CRYPTO_memcmp,%function
+.align	4
+CRYPTO_memcmp:
+	eor	ip,ip,ip
+	cmp	r2,#0
+	beq	.Lno_data
+	stmdb	sp!,{r4,r5}
+
+.Loop_cmp:
+	ldrb	r4,[r0],#1
+	ldrb	r5,[r1],#1
+	eor	r4,r4,r5
+	orr	ip,ip,r4
+	subs	r2,r2,#1
+	bne	.Loop_cmp
+
+	ldmia	sp!,{r4,r5}
+.Lno_data:
+	neg	r0,ip
+	mov	r0,r0,lsr#31
+#if __ARM_ARCH__>=5
+	bx	lr
+#else
+	tst	lr,#1
+	moveq	pc,lr
+	.word	0xe12fff1e	@ bx	lr
+#endif
+.size	CRYPTO_memcmp,.-CRYPTO_memcmp
 
 #if __ARM_MAX_ARCH__>=7
 .arch	armv7-a

@@ -2,8 +2,8 @@
 
 =head1 NAME
 
+ASYNC_get_wait_ctx,
 ASYNC_init_thread, ASYNC_cleanup_thread, ASYNC_start_job, ASYNC_pause_job,
-ASYNC_in_job, ASYNC_get_wait_fd, ASYNC_set_wait_fd, ASYNC_clear_wait_fd,
 ASYNC_get_current_job, ASYNC_block_pause, ASYNC_unblock_pause, ASYNC_is_capable
 - asynchronous job management functions
 
@@ -111,7 +111,7 @@ for the B<job>. ASYNC_WAIT_CTXs can have a "wait" file descriptor associated
 with them. Applications can wait for the file descriptor to be ready for "read"
 using a system function call such as select or poll (being ready for "read"
 indicates that the job should be resumed). If no file descriptor is made
-available then an application will have to priodically "poll" the job by
+available then an application will have to periodically "poll" the job by
 attempting to restart it to see if it is ready to continue.
 
 An example of typical usage might be an async capable engine. User code would
@@ -128,7 +128,7 @@ The ASYNC_block_pause() function will prevent the currently active job from
 pausing. The block will remain in place until a subsequent call to
 ASYNC_unblock_pause(). These functions can be nested, e.g. if you call
 ASYNC_block_pause() twice then you must call ASYNC_unblock_pause() twice in
-order to reenable pausing. If these functions are called while there is no
+order to re-enable pausing. If these functions are called while there is no
 currently active job then they have no effect. This functionality can be useful
 to avoid deadlock scenarios. For example during the execution of an ASYNC_JOB an
 application acquires a lock. It then calls some cryptographic function which
@@ -161,16 +161,26 @@ ASYNC_get_wait_ctx() returns a pointer to the ASYNC_WAIT_CTX for the job.
 ASYNC_is_capable() returns 1 if the current platform is async capable or 0
 otherwise.
 
+=head1 NOTES
+
+On Windows platforms the openssl/async.h header is dependent on some
+of the types customarily made available by including windows.h. The
+application developer is likely to require control over when the latter
+is included, commonly as one of the first included headers. Therefore
+it is defined as an application developer's responsibility to include
+windows.h prior to async.h.
+
 =head1 EXAMPLE
 
 The following example demonstrates how to use most of the core async APIs:
 
+ #ifdef _WIN32
+ # include <windows.h>
+ #endif
  #include <stdio.h>
  #include <unistd.h>
  #include <openssl/async.h>
  #include <openssl/crypto.h>
-
- #define WAIT_SIGNAL_CHAR   'X'
 
  int unique = 0;
 
@@ -188,7 +198,7 @@ The following example demonstrates how to use most of the core async APIs:
      unsigned char *msg;
      int pipefds[2] = {0, 0};
      OSSL_ASYNC_FD *wptr;
-     char buf = WAIT_SIGNAL_CHAR;
+     char buf = 'X';
 
      currjob = ASYNC_get_current_job();
      if (currjob != NULL) {
@@ -267,7 +277,7 @@ The following example demonstrates how to use most of the core async APIs:
 
          /* Wait for the job to be woken */
          printf("Waiting for the job to be woken up\n");
-        
+
          if (!ASYNC_WAIT_CTX_get_all_fds(ctx, NULL, &numfds)
                  || numfds > 1) {
              printf("Unexpected number of fds\n");
@@ -307,5 +317,14 @@ ASYNC_init_thread, ASYNC_cleanup_thread,
 ASYNC_start_job, ASYNC_pause_job, ASYNC_get_current_job, ASYNC_get_wait_ctx(),
 ASYNC_block_pause(), ASYNC_unblock_pause() and ASYNC_is_capable() were first
 added to OpenSSL 1.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

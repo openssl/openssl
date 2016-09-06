@@ -24,36 +24,33 @@ $	    arch := F$EDIT(F$GETSYI("ARCH_NAME"),"UPCASE")
 $	    IF arch .EQS. "" THEN GOTO unknown_arch
 $	ENDIF
 $
-$	! Generated information
-$	VERSION := {- $config{version} -}
-$	INSTALLTOP := {- $config{INSTALLTOP} -}
-$	POINTER_SIZE = {- $config{pointersize} -}
-$
 $	! Abbrevs
 $	DEAS := DEASSIGN /NOLOG 'P1'
-$	v    =  VERSION - "." - "."
+$	sv   := {- sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor} -}
+$	pz   := {- $config{pointer_size} -}
 $
-$	DEAS OSSL$ROOT'v'
-$	DEAS OSSL$INCLUDE'v'
-$	DEAS OSSL$LIB'v'
-$	DEAS OSSL$SHARE'v'
-$	DEAS OSSL$ENGINES'v'
-$	DEAS OSSL$EXE'v'
-$       {- output_off() if $disabled{shared} -}
-$       {- join("\n\$       ", map { "DEAS $_'v'" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
-$       {- output_on() -}
+$	DEAS OSSL$DATAROOT
+$	DEAS OSSL$INSTROOT
+$	DEAS OSSL$INCLUDE
+$	DEAS OSSL$LIB
+$	DEAS OSSL$SHARE
+$	DEAS OSSL$ENGINES'sv'
+$	DEAS OSSL$EXE
+$	DEAS OSSL$LIBCRYPTO'pz'
+$	DEAS OSSL$LIBSSL'pz'
+${- output_off() if $config{no_shared}; "" -}
+$	DEAS OSSL$LIBCRYPTO'sv'_SHR'pz'
+$	DEAS OSSL$LIBSSL'sv'_SHR'pz'
+${- output_on() if $config{no_shared}; "" -}
+$	DEAS OPENSSL
+$
 $	IF P2 .NES. "NOALIASES"
 $	THEN
-$	    DEAS OSSL$ROOT
-$	    DEAS OSSL$INCLUDE
-$	    DEAS OSSL$LIB
-$	    DEAS OSSL$SHARE
 $	    DEAS OSSL$ENGINES
-$	    DEAS OSSL$EXE
-$	    DEAS OPENSSL
-$           {- output_off() if $disabled{shared} -}
-$           {- join("\n\$           ", map { "DEAS $_" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
-$           {- output_on() -}
+${- output_off() if $config{no_shared}; "" -}
+$	    DEAS OSSL$LIBCRYPTO_SHR'pz'
+$	    DEAS OSSL$LIBSSL_SHR'pz'
+${- output_on() if $config{no_shared}; "" -}
 $	ENDIF
 $
 $	EXIT 'status'

@@ -1,68 +1,24 @@
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <string.h>
 
 #include "bio_lcl.h"
-#include "internal/threads.h"
+#include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_SOCK
 #include <openssl/err.h>
 #include <openssl/buffer.h>
+#include <internal/thread_once.h>
 #include <ctype.h>
 
-static CRYPTO_RWLOCK *bio_lookup_lock;
+CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /*
@@ -82,6 +38,11 @@ static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 BIO_ADDR *BIO_ADDR_new(void)
 {
     BIO_ADDR *ret = OPENSSL_zalloc(sizeof(*ret));
+
+    if (ret == NULL) {
+        BIOerr(BIO_F_BIO_ADDR_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
 
     ret->sa.sa_family = AF_UNSPEC;
     return ret;
@@ -268,19 +229,33 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
                          ntohs(BIO_ADDR_rawport(ap)));
         }
 
-        if (hostname)
+        if (hostname != NULL)
             *hostname = OPENSSL_strdup(host);
-        if (service)
+        if (service != NULL)
             *service = OPENSSL_strdup(serv);
     } else {
 #endif
-        if (hostname)
+        if (hostname != NULL)
             *hostname = OPENSSL_strdup(inet_ntoa(ap->s_in.sin_addr));
-        if (service) {
+        if (service != NULL) {
             char serv[6];        /* port is 16 bits => max 5 decimal digits */
             BIO_snprintf(serv, sizeof(serv), "%d", ntohs(ap->s_in.sin_port));
             *service = OPENSSL_strdup(serv);
         }
+    }
+
+    if ((hostname != NULL && *hostname == NULL)
+            || (service != NULL && *service == NULL)) {
+        if (hostname != NULL) {
+            OPENSSL_free(*hostname);
+            *hostname = NULL;
+        }
+        if (service != NULL) {
+            OPENSSL_free(*service);
+            *service = NULL;
+        }
+        BIOerr(BIO_F_ADDR_STRINGS, ERR_R_MALLOC_FAILURE);
+        return 0;
     }
 
     return 1;
@@ -583,7 +558,7 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
  * family, such as AF_UNIX
  *
  * the return value is 1 on success, or 0 on failure, which
- * only happens if a memory allocation error occured.
+ * only happens if a memory allocation error occurred.
  */
 static int addrinfo_wrap(int family, int socktype,
                          const void *where, size_t wherelen,
@@ -627,9 +602,10 @@ static int addrinfo_wrap(int family, int socktype,
     return 1;
 }
 
-static void do_bio_lookup_init(void)
+DEFINE_RUN_ONCE_STATIC(do_bio_lookup_init)
 {
     bio_lookup_lock = CRYPTO_THREAD_lock_new();
+    return bio_lookup_lock != NULL;
 }
 
 /*-
@@ -692,9 +668,6 @@ int BIO_lookup(const char *host, const char *service,
         struct addrinfo hints;
         memset(&hints, 0, sizeof hints);
 
-# ifdef AI_ADDRCONFIG
-        hints.ai_flags = AI_ADDRCONFIG;
-# endif
         hints.ai_family = family;
         hints.ai_socktype = socktype;
 
@@ -722,29 +695,45 @@ int BIO_lookup(const char *host, const char *service,
     } else {
 #endif
         const struct hostent *he;
+/*
+ * Because struct hostent is defined for 32-bit pointers only with
+ * VMS C, we need to make sure that '&he_fallback_address' and
+ * '&he_fallback_addresses' are 32-bit pointers
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
         /* Windows doesn't seem to have in_addr_t */
 #ifdef OPENSSL_SYS_WINDOWS
         static uint32_t he_fallback_address;
-        static const uint32_t *he_fallback_addresses[] =
-            { &he_fallback_address, NULL };
+        static const char *he_fallback_addresses[] =
+            { (char *)&he_fallback_address, NULL };
 #else
         static in_addr_t he_fallback_address;
-        static const in_addr_t *he_fallback_addresses[] =
-            { &he_fallback_address, NULL };
+        static const char *he_fallback_addresses[] =
+            { (char *)&he_fallback_address, NULL };
 #endif
         static const struct hostent he_fallback =
             { NULL, NULL, AF_INET, sizeof(he_fallback_address),
               (char **)&he_fallback_addresses };
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size restore
+#endif
+
         struct servent *se;
-        /* Apprently, on WIN64, s_proto and s_port have traded places... */
+        /* Apparently, on WIN64, s_proto and s_port have traded places... */
 #ifdef _WIN64
         struct servent se_fallback = { NULL, NULL, NULL, 0 };
 #else
         struct servent se_fallback = { NULL, NULL, 0, NULL };
 #endif
-        char *proto = NULL;
 
-        CRYPTO_THREAD_run_once(&bio_lookup_init, do_bio_lookup_init);
+        if (!RUN_ONCE(&bio_lookup_init, do_bio_lookup_init)) {
+            BIOerr(BIO_F_BIO_LOOKUP, ERR_R_MALLOC_FAILURE);
+            ret = 0;
+            goto err;
+        }
 
         CRYPTO_THREAD_write_lock(bio_lookup_lock);
         he_fallback_address = INADDR_ANY;
@@ -778,11 +767,33 @@ int BIO_lookup(const char *host, const char *service,
 
         if (service == NULL) {
             se_fallback.s_port = 0;
-            se_fallback.s_proto = proto;
+            se_fallback.s_proto = NULL;
             se = &se_fallback;
         } else {
             char *endp = NULL;
             long portnum = strtol(service, &endp, 10);
+
+/*
+ * Because struct servent is defined for 32-bit pointers only with
+ * VMS C, we need to make sure that 'proto' is a 32-bit pointer.
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
+            char *proto = NULL;
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size restore
+#endif
+
+            switch (socktype) {
+            case SOCK_STREAM:
+                proto = "tcp";
+                break;
+            case SOCK_DGRAM:
+                proto = "udp";
+                break;
+            }
 
             if (endp != service && *endp == '\0'
                     && portnum > 0 && portnum < 65536) {
@@ -790,14 +801,6 @@ int BIO_lookup(const char *host, const char *service,
                 se_fallback.s_proto = proto;
                 se = &se_fallback;
             } else if (endp == service) {
-                switch (socktype) {
-                case SOCK_STREAM:
-                    proto = "tcp";
-                    break;
-                case SOCK_DGRAM:
-                    proto = "udp";
-                    break;
-                }
                 se = getservbyname(service, proto);
 
                 if (se == NULL) {
@@ -818,7 +821,19 @@ int BIO_lookup(const char *host, const char *service,
         *res = NULL;
 
         {
+/*
+ * Because hostent::h_addr_list is an array of 32-bit pointers with VMS C,
+ * we must make sure our iterator designates the same element type, hence
+ * the pointer size dance.
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
             char **addrlistp;
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size restore
+#endif
             size_t addresses;
             BIO_ADDRINFO *tmp_bai = NULL;
 
@@ -853,4 +868,5 @@ int BIO_lookup(const char *host, const char *service,
 
     return ret;
 }
+
 #endif /* OPENSSL_NO_SOCK */

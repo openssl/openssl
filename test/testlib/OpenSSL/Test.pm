@@ -1,3 +1,10 @@
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 package OpenSSL::Test;
 
 use strict;
@@ -9,7 +16,8 @@ use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.8";
 @ISA = qw(Exporter);
-@EXPORT = (@Test::More::EXPORT, qw(setup indir app perlapp test perltest run));
+@EXPORT = (@Test::More::EXPORT, qw(setup indir app fuzz  perlapp test perltest
+                                   run));
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
                                          pipe with cmdstr quotify));
@@ -59,6 +67,11 @@ my $test_name = undef;
 # ones we're interested in, corresponding to the environment variables TOP
 # (mandatory), BIN_D, TEST_D, UTIL_D and RESULT_D.
 my %directories = ();
+
+# The environment variables that gave us the contents in %directories.  These
+# get modified whenever we change directories, so that subprocesses can use
+# the values of those environment variables as well
+my @direnv = ();
 
 # A bool saying if we shall stop all testing if the current recipe has failing
 # tests or not.  This is set by setup() if the environment variable STOPTEST
@@ -244,7 +257,23 @@ string PATH, I<or>, if the value is C<undef>, C</dev/null> or similar.
 =item B<perltest ARRAYREF, OPTS>
 
 Both these functions function the same way as B<app> and B<test>, except
-that they expect the command to be a perl script.
+that they expect the command to be a perl script.  Also, they support one
+more option:
+
+=over 4
+
+=item B<interpreter_args =E<gt> ARRAYref>
+
+The array reference is a set of arguments for perl rather than the script.
+Take care so that none of them can be seen as a script!  Flags and their
+eventual arguments only!
+
+=back
+
+An example:
+
+  ok(run(perlapp(["foo.pl", "arg1"],
+                 interpreter_args => [ "-I", srctop_dir("test") ])));
 
 =back
 
@@ -255,6 +284,13 @@ sub app {
     my %opts = @_;
     return sub { my $num = shift;
 		 return __build_cmd($num, \&__apps_file, $cmd, %opts); }
+}
+
+sub fuzz {
+    my $cmd = shift;
+    my %opts = @_;
+    return sub { my $num = shift;
+		 return __build_cmd($num, \&__fuzz_file, $cmd, %opts); }
 }
 
 sub test {
@@ -325,6 +361,18 @@ sub run {
     my $r = 0;
     my $e = 0;
 
+    # In non-verbose, we want to shut up the command interpreter, in case
+    # it has something to complain about.  On VMS, it might complain both
+    # on stdout and stderr
+    my $save_STDOUT;
+    my $save_STDERR;
+    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+        open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
+        open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
+        open STDOUT, ">", devnull();
+        open STDERR, ">", devnull();
+    }
+
     # The dance we do with $? is the same dance the Unix shells appear to
     # do.  For example, a program that gets aborted (and therefore signals
     # SIGABRT = 6) will appear to exit with the code 134.  We mimic this
@@ -337,6 +385,16 @@ sub run {
 	$e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
 	$r = $hooks{exit_checker}->($e);
     }
+
+    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+        close STDOUT;
+        close STDERR;
+        open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
+        open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
+    }
+
+    print STDERR "$prefix$display_cmd => $e\n"
+        if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
 
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
@@ -529,10 +587,28 @@ sub with {
 
 =over 4
 
-=item B<cmdstr CODEREF>
+=item B<cmdstr CODEREF, OPTS>
 
 C<cmdstr> takes a CODEREF from C<app> or C<test> and simply returns the
 command as a string.
+
+C<cmdstr> takes some additiona options OPTS that affect the string returned:
+
+=over 4
+
+=item B<display =E<gt> 0|1>
+
+When set to 0, the returned string will be with all decorations, such as a
+possible redirect of stderr to the null device.  This is suitable if the
+string is to be used directly in a recipe.
+
+When set to 1, the returned string will be without extra decorations.  This
+is suitable for display if that is desired (doesn't confuse people with all
+internal stuff), or if it's used to pass a command down to a subprocess.
+
+Default: 0
+
+=back
 
 =back
 
@@ -540,8 +616,13 @@ command as a string.
 
 sub cmdstr {
     my ($cmd, $display_cmd) = shift->(0);
+    my %opts = @_;
 
-    return $display_cmd;
+    if ($opts{display}) {
+        return $display_cmd;
+    } else {
+        return $cmd;
+    }
 }
 
 =over 4
@@ -626,9 +707,20 @@ failures will result in a C<BAIL_OUT> at the end of its run.
 sub __env {
     $directories{SRCTOP}  = $ENV{SRCTOP} || $ENV{TOP};
     $directories{BLDTOP}  = $ENV{BLDTOP} || $ENV{TOP};
-    $directories{APPS}    = $ENV{BIN_D}  || __bldtop_dir("apps");
-    $directories{TEST}    = $ENV{TEST_D} || __bldtop_dir("test");
-    $directories{RESULTS} = $ENV{RESULT_D} || $directories{TEST};
+    $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
+    $directories{SRCAPPS} =                 __srctop_dir("apps");
+    $directories{BLDFUZZ} =                 __bldtop_dir("fuzz");
+    $directories{SRCFUZZ} =                 __srctop_dir("fuzz");
+    $directories{BLDTEST} = $ENV{TEST_D} || __bldtop_dir("test");
+    $directories{SRCTEST} =                 __srctop_dir("test");
+    $directories{RESULTS} = $ENV{RESULT_D} || $directories{BLDTEST};
+
+    push @direnv, "TOP"       if $ENV{TOP};
+    push @direnv, "SRCTOP"    if $ENV{SRCTOP};
+    push @direnv, "BLDTOP"    if $ENV{BLDTOP};
+    push @direnv, "BIN_D"     if $ENV{BIN_D};
+    push @direnv, "TEST_D"    if $ENV{TEST_D};
+    push @direnv, "RESULT_D"  if $ENV{RESULT_D};
 
     $end_with_bailout	  = $ENV{STOPTEST} ? 1 : 0;
 };
@@ -659,32 +751,59 @@ sub __bldtop_dir {
     return catdir($directories{BLDTOP},@_);
 }
 
+sub __exeext {
+    my $ext = "";
+    if ($^O eq "VMS" ) {	# VMS
+	$ext = ".exe";
+    } elsif ($^O eq "MSWin32") { # Windows
+	$ext = ".exe";
+    }
+    return $ENV{"EXE_EXT"} || $ext;
+}
+
 sub __test_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{TEST},@_,$f);
+    $f = catfile($directories{BLDTEST},@_,$f . __exeext());
+    $f = catfile($directories{SRCTEST},@_,$f) unless -x $f;
+    return $f;
 }
 
 sub __perltest_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return ($^X, catfile($directories{TEST},@_,$f));
+    $f = catfile($directories{BLDTEST},@_,$f);
+    $f = catfile($directories{SRCTEST},@_,$f) unless -f $f;
+    return ($^X, $f);
 }
 
 sub __apps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{APPS},@_,$f);
+    $f = catfile($directories{BLDAPPS},@_,$f . __exeext());
+    $f = catfile($directories{SRCAPPS},@_,$f) unless -x $f;
+    return $f;
+}
+
+sub __fuzz_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    $f = catfile($directories{BLDFUZZ},@_,$f . __exeext());
+    $f = catfile($directories{SRCFUZZ},@_,$f) unless -x $f;
+    return $f;
 }
 
 sub __perlapps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return ($^X, catfile($directories{APPS},@_,$f));
+    $f = catfile($directories{BLDAPPS},@_,$f);
+    $f = catfile($directories{SRCAPPS},@_,$f) unless -f $f;
+    return ($^X, $f);
 }
 
 sub __results_file {
@@ -721,12 +840,10 @@ sub __cwd {
 	mkpath($dir);
     }
 
-    # Should we just bail out here as well?  I'm unsure.
-    return undef unless chdir($dir);
-
-    if ($opts{cleanup}) {
-	rmtree(".", { safe => 0, keep_root => 1 });
-    }
+    # We are recalculating the directories we keep track of, but need to save
+    # away the result for after having moved into the new directory.
+    my %tmp_directories = ();
+    my %tmp_ENV = ();
 
     # For each of these directory variables, figure out where they are relative
     # to the directory we want to move to if they aren't absolute (if they are,
@@ -735,15 +852,44 @@ sub __cwd {
     foreach (@dirtags) {
 	if (!file_name_is_absolute($directories{$_})) {
 	    my $newpath = abs2rel(rel2abs($directories{$_}), rel2abs($dir));
-	    $directories{$_} = $newpath;
+	    $tmp_directories{$_} = $newpath;
 	}
+    }
+
+    # Treat each environment variable that was used to get us the values in
+    # %directories the same was as the paths in %directories, so any sub
+    # process can use their values properly as well
+    foreach (@direnv) {
+	if (!file_name_is_absolute($ENV{$_})) {
+	    my $newpath = abs2rel(rel2abs($ENV{$_}), rel2abs($dir));
+	    $tmp_ENV{$_} = $newpath;
+	}
+    }
+
+    # Should we just bail out here as well?  I'm unsure.
+    return undef unless chdir($dir);
+
+    if ($opts{cleanup}) {
+	rmtree(".", { safe => 0, keep_root => 1 });
+    }
+
+    # We put back new values carefully.  Doing the obvious
+    # %directories = ( %tmp_irectories )
+    # will clear out any value that happens to be an absolute path
+    foreach (keys %tmp_directories) {
+        $directories{$_} = $tmp_directories{$_};
+    }
+    foreach (keys %tmp_ENV) {
+        $ENV{$_} = $tmp_ENV{$_};
     }
 
     if ($debug) {
 	print STDERR "DEBUG: __cwd(), directories and files:\n";
-	print STDERR "  \$directories{TEST}    = \"$directories{TEST}\"\n";
+	print STDERR "  \$directories{BLDTEST} = \"$directories{BLDTEST}\"\n";
+	print STDERR "  \$directories{SRCTEST} = \"$directories{SRCTEST}\"\n";
 	print STDERR "  \$directories{RESULTS} = \"$directories{RESULTS}\"\n";
-	print STDERR "  \$directories{APPS}    = \"$directories{APPS}\"\n";
+	print STDERR "  \$directories{BLDAPPS} = \"$directories{BLDAPPS}\"\n";
+	print STDERR "  \$directories{SRCAPPS} = \"$directories{SRCAPPS}\"\n";
 	print STDERR "  \$directories{SRCTOP}  = \"$directories{SRCTOP}\"\n";
 	print STDERR "  \$directories{BLDTOP}  = \"$directories{BLDTOP}\"\n";
 	print STDERR "\n";
@@ -759,23 +905,20 @@ sub __fixup_cmd {
     my $exe_shell = shift;
 
     my $prefix = __bldtop_file("util", "shlib_wrap.sh")." ";
-    my $ext = $ENV{"EXE_EXT"} || "";
 
     if (defined($exe_shell)) {
 	$prefix = "$exe_shell ";
     } elsif ($^O eq "VMS" ) {	# VMS
 	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
-	$ext = ".exe";
     } elsif ($^O eq "MSWin32") { # Windows
 	$prefix = "";
-	$ext = ".exe";
     }
 
     # We test both with and without extension.  The reason
     # is that we might be passed a complete file spec, with
     # extension.
     if ( ! -x $prog ) {
-	my $prog = "$prog$ext";
+	my $prog = "$prog";
 	if ( ! -x $prog ) {
 	    $prog = undef;
 	}
@@ -801,6 +944,7 @@ sub __build_cmd {
     my $path_builder = shift;
     # Make a copy to not destroy the caller's array
     my @cmdarray = ( @{$_[0]} ); shift;
+    my %opts = @_;
 
     # We do a little dance, as $path_builder might return a list of
     # more than one.  If so, only the first is to be considered a
@@ -820,8 +964,9 @@ sub __build_cmd {
 	}
     }
     my @args = (@prog, @cmdarray);
-
-    my %opts = @_;
+    if (defined($opts{interpreter_args})) {
+        unshift @args, @{$opts{interpreter_args}};
+    }
 
     return () if !$cmd;
 

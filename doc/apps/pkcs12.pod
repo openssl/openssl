@@ -1,4 +1,3 @@
-
 =pod
 
 =head1 NAME
@@ -326,6 +325,16 @@ encrypted private keys, then the option B<-keypbe PBE-SHA1-RC2-40> can
 be used to reduce the private key encryption to 40 bit RC2. A complete
 description of all algorithms is contained in the B<pkcs8> manual page.
 
+Prior 1.1 release passwords containing non-ASCII characters were encoded
+in non-compliant manner, which limited interoperability, in first hand
+with Windows. But switching to standard-compliant password encoding
+poses problem accessing old data protected with broken encoding. For
+this reason even legacy encodings is attempted when reading the
+data. If you use PKCS#12 files in production application you are advised
+to convert the data, because implemented heuristic approach is not
+MT-safe, its sole goal is to facilitate the data upgrade with this
+utility.
+
 =head1 EXAMPLES
 
 Parse a PKCS#12 file and output it to a file:
@@ -337,7 +346,7 @@ Output only client certificates to a file:
  openssl pkcs12 -in file.p12 -clcerts -out file.pem
 
 Don't encrypt the private key:
- 
+
  openssl pkcs12 -in file.p12 -out file.pem -nodes
 
 Print some info about a PKCS#12 file:
@@ -357,3 +366,13 @@ Include some extra certificates:
 
 L<pkcs8(1)>
 
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

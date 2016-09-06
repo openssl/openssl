@@ -1,66 +1,17 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2006.
- */
-/* ====================================================================
- * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
+ * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
-#include <openssl/dh.h>
+#include "dh_locl.h"
 #include <openssl/bn.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
@@ -96,8 +47,8 @@ static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     const unsigned char *p, *pm;
     int pklen, pmlen;
     int ptype;
-    void *pval;
-    ASN1_STRING *pstr;
+    const void *pval;
+    const ASN1_STRING *pstr;
     X509_ALGOR *palg;
     ASN1_INTEGER *public_key = NULL;
 
@@ -196,14 +147,14 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
  * explicitly included and the pubkey must be recalculated.
  */
 
-static int dh_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+static int dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
     const unsigned char *p, *pm;
     int pklen, pmlen;
     int ptype;
-    void *pval;
-    ASN1_STRING *pstr;
-    X509_ALGOR *palg;
+    const void *pval;
+    const ASN1_STRING *pstr;
+    const X509_ALGOR *palg;
     ASN1_INTEGER *privkey = NULL;
 
     DH *dh = NULL;
@@ -329,7 +280,8 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
     else
         pub_key = NULL;
 
-    if (priv_key == NULL && pub_key == NULL) {
+    if (x->p == NULL || (ptype == 2 && priv_key == NULL)
+            || (ptype > 0 && pub_key == NULL)) {
         reason = ERR_R_PASSED_NULL_PARAMETER;
         goto err;
     }
@@ -486,7 +438,7 @@ static int dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 static int dh_missing_parameters(const EVP_PKEY *a)
 {
-    if (!a->pkey.dh->p || !a->pkey.dh->g)
+    if (a->pkey.dh == NULL || a->pkey.dh->p == NULL || a->pkey.dh->g == NULL)
         return 1;
     return 0;
 }
@@ -622,9 +574,9 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
 static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
                               X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)
 {
-    ASN1_OBJECT *aoid;
+    const ASN1_OBJECT *aoid;
     int atype;
-    void *aval;
+    const void *aval;
     ASN1_INTEGER *public_key = NULL;
     int rv = 0;
     EVP_PKEY *pkpeer = NULL, *pk = NULL;
@@ -648,7 +600,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     dhpeer = DHparams_dup(pk->pkey.dh);
     /* We have parameters now set public key */
     plen = ASN1_STRING_length(pubkey);
-    p = ASN1_STRING_data(pubkey);
+    p = ASN1_STRING_get0_data(pubkey);
     if (!p || !plen)
         goto err;
 
@@ -738,7 +690,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = OPENSSL_memdup(ASN1_STRING_data(ukm), dukmlen);
+        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }
@@ -789,7 +741,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     EVP_CIPHER_CTX *ctx;
     int keylen;
     X509_ALGOR *talg, *wrap_alg = NULL;
-    ASN1_OBJECT *aoid;
+    const ASN1_OBJECT *aoid;
     ASN1_BIT_STRING *pubkey;
     ASN1_STRING *wrap_str;
     ASN1_OCTET_STRING *ukm;
@@ -882,7 +834,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = OPENSSL_memdup(ASN1_STRING_data(ukm), dukmlen);
+        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }

@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -94,11 +46,11 @@
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *dn, int mutlirdn,
                     int attribs, unsigned long chtype);
-static int build_subject(X509_REQ *req, char *subj, unsigned long chtype,
+static int build_subject(X509_REQ *req, const char *subj, unsigned long chtype,
                          int multirdn);
 static int prompt_info(X509_REQ *req,
-                       STACK_OF(CONF_VALUE) *dn_sk, char *dn_sect,
-                       STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect,
+                       STACK_OF(CONF_VALUE) *dn_sk, const char *dn_sect,
+                       STACK_OF(CONF_VALUE) *attr_sk, const char *attr_sect,
                        int attribs, unsigned long chtype);
 static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *sk,
                      STACK_OF(CONF_VALUE) *attr, int attribs,
@@ -337,11 +289,16 @@ int req_main(int argc, char **argv)
             break;
         case OPT_X509:
             x509 = 1;
+            newreq = 1;
             break;
         case OPT_DAYS:
             days = atoi(opt_arg());
             break;
         case OPT_SET_SERIAL:
+            if (serial != NULL) {
+                BIO_printf(bio_err, "Serial number supplied twice\n");
+                goto opthelp;
+            }
             serial = s2i_ASN1_INTEGER(NULL, opt_arg());
             if (serial == NULL)
                 goto opthelp;
@@ -375,6 +332,7 @@ int req_main(int argc, char **argv)
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
 
+    /* TODO: simplify this as pkey is still always NULL here */
     private = newreq && (pkey == NULL) ? 1 : 0;
 
     if (!app_passwd(passargin, passargout, &passin, &passout)) {
@@ -385,7 +343,7 @@ int req_main(int argc, char **argv)
     if (verbose)
         BIO_printf(bio_err, "Using configuration from %s\n", template);
     req_conf = app_load_config(template);
-    if (!app_load_modules(req_conf))
+    if (template != default_config_file && !app_load_modules(req_conf))
         goto end;
 
     if (req_conf != NULL) {
@@ -546,8 +504,12 @@ int req_main(int argc, char **argv)
             }
         }
 
-        BIO_printf(bio_err, "Generating a %ld bit %s private key\n",
-                   newkey, keyalgstr);
+        if (pkey_type == EVP_PKEY_EC) {
+            BIO_printf(bio_err, "Generating an EC private key\n");
+        } else {
+            BIO_printf(bio_err, "Generating a %ld bit %s private key\n",
+                       newkey, keyalgstr);
+        }
 
         EVP_PKEY_CTX_set_cb(genctx, genpkey_cb);
         EVP_PKEY_CTX_set_app_data(genctx, bio_err);
@@ -621,7 +583,7 @@ int req_main(int argc, char **argv)
         }
     }
 
-    if (newreq || x509) {
+    if (newreq) {
         if (pkey == NULL) {
             BIO_printf(bio_err, "you need to specify a private key\n");
             goto end;
@@ -659,17 +621,14 @@ int req_main(int argc, char **argv)
 
             if (!X509_set_issuer_name(x509ss, X509_REQ_get_subject_name(req)))
                 goto end;
-            if (!X509_gmtime_adj(X509_get_notBefore(x509ss), 0))
-                goto end;
-            if (!X509_time_adj_ex(X509_get_notAfter(x509ss), days, 0, NULL))
+            if (!set_cert_times(x509ss, NULL, NULL, days))
                 goto end;
             if (!X509_set_subject_name
                 (x509ss, X509_REQ_get_subject_name(req)))
                 goto end;
-            tmppkey = X509_REQ_get_pubkey(req);
+            tmppkey = X509_REQ_get0_pubkey(req);
             if (!tmppkey || !X509_set_pubkey(x509ss, tmppkey))
                 goto end;
-            EVP_PKEY_free(tmppkey);
 
             /* Set up V3 context struct */
 
@@ -739,20 +698,15 @@ int req_main(int argc, char **argv)
     }
 
     if (verify && !x509) {
-        int tmp = 0;
+        EVP_PKEY *tpubkey = pkey;
 
-        if (pkey == NULL) {
-            pkey = X509_REQ_get_pubkey(req);
-            tmp = 1;
-            if (pkey == NULL)
+        if (tpubkey == NULL) {
+            tpubkey = X509_REQ_get0_pubkey(req);
+            if (tpubkey == NULL)
                 goto end;
         }
 
-        i = X509_REQ_verify(req, pkey);
-        if (tmp) {
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
-        }
+        i = X509_REQ_verify(req, tpubkey);
 
         if (i < 0) {
             goto end;
@@ -776,15 +730,14 @@ int req_main(int argc, char **argv)
         goto end;
 
     if (pubkey) {
-        EVP_PKEY *tpubkey;
-        tpubkey = X509_REQ_get_pubkey(req);
+        EVP_PKEY *tpubkey = X509_REQ_get0_pubkey(req);
+
         if (tpubkey == NULL) {
             BIO_printf(bio_err, "Error getting public key\n");
             ERR_print_errors(bio_err);
             goto end;
         }
         PEM_write_bio_PUBKEY(out, tpubkey);
-        EVP_PKEY_free(tpubkey);
     }
 
     if (text) {
@@ -807,21 +760,22 @@ int req_main(int argc, char **argv)
         EVP_PKEY *tpubkey;
 
         if (x509)
-            tpubkey = X509_get_pubkey(x509ss);
+            tpubkey = X509_get0_pubkey(x509ss);
         else
-            tpubkey = X509_REQ_get_pubkey(req);
+            tpubkey = X509_REQ_get0_pubkey(req);
         if (tpubkey == NULL) {
             fprintf(stdout, "Modulus=unavailable\n");
             goto end;
         }
         fprintf(stdout, "Modulus=");
 #ifndef OPENSSL_NO_RSA
-        if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA)
-            BN_print(out, EVP_PKEY_get0_RSA(tpubkey)->n);
-        else
+        if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA) {
+            const BIGNUM *n;
+            RSA_get0_key(EVP_PKEY_get0_RSA(tpubkey), &n, NULL, NULL);
+            BN_print(out, n);
+        } else
 #endif
             fprintf(stdout, "Wrong Algorithm type");
-        EVP_PKEY_free(tpubkey);
         fprintf(stdout, "\n");
     }
 
@@ -870,7 +824,6 @@ int req_main(int argc, char **argv)
         OPENSSL_free(passin);
     if (passout != nofree_passout)
         OPENSSL_free(passout);
-    OBJ_cleanup();
     return (ret);
 }
 
@@ -938,7 +891,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
  * subject is expected to be in the format /type0=value0/type1=value1/type2=...
  * where characters may be escaped by \
  */
-static int build_subject(X509_REQ *req, char *subject, unsigned long chtype,
+static int build_subject(X509_REQ *req, const char *subject, unsigned long chtype,
                          int multirdn)
 {
     X509_NAME *n;
@@ -955,8 +908,8 @@ static int build_subject(X509_REQ *req, char *subject, unsigned long chtype,
 }
 
 static int prompt_info(X509_REQ *req,
-                       STACK_OF(CONF_VALUE) *dn_sk, char *dn_sect,
-                       STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect,
+                       STACK_OF(CONF_VALUE) *dn_sk, const char *dn_sect,
+                       STACK_OF(CONF_VALUE) *attr_sk, const char *attr_sect,
                        int attribs, unsigned long chtype)
 {
     int i;
@@ -1157,12 +1110,12 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
             }
         }
 #ifndef CHARSET_EBCDIC
-        plus_char = (*p == '+');
+        plus_char = (*type == '+');
 #else
-        plus_char = (*p == os_toascii['+']);
+        plus_char = (*type == os_toascii['+']);
 #endif
         if (plus_char) {
-            p++;
+            type++;
             mval = -1;
         } else
             mval = 0;

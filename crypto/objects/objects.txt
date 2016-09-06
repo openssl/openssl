@@ -257,7 +257,10 @@ id-smime-ct 6		: id-smime-ct-contentInfo
 id-smime-ct 7		: id-smime-ct-DVCSRequestData
 id-smime-ct 8		: id-smime-ct-DVCSResponseData
 id-smime-ct 9		: id-smime-ct-compressedData
+id-smime-ct 19		: id-smime-ct-contentCollection
+id-smime-ct 23		: id-smime-ct-authEnvelopedData
 id-smime-ct 27		: id-ct-asciiTextWithCRLF
+id-smime-ct 28		: id-ct-xml
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
@@ -1455,10 +1458,9 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 id-pkinit 4                     : pkInitClientAuth      : PKINIT Client Auth
 id-pkinit 5                     : pkInitKDC             : Signing KDC Response
 
-# New curves from draft-josefsson-pkix-newcurves
-
-1 3 6 1 4 1 11591 15 1      : X25519
-1 3 6 1 4 1 11591 15 2      : X448
+# New curves from draft-ietf-curdle-pkix-00
+1 3 101 110 : X25519
+1 3 101 111 : X448
 
 # NIDs for cipher key exchange
                             : KxRSA        : kx-rsa

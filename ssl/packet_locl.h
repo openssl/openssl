@@ -1,58 +1,10 @@
 /*
- * Written by Matt Caswell for the OpenSSL project.
- */
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifndef HEADER_PACKET_LOCL_H
@@ -102,6 +54,7 @@ static ossl_inline const unsigned char *PACKET_end(const PACKET *pkt)
 {
     return pkt->curr + pkt->remaining;
 }
+
 /*
  * Returns a pointer to the PACKET's current position.
  * For use in non-PACKETized APIs.
@@ -155,8 +108,7 @@ __owur static ossl_inline int PACKET_equal(const PACKET *pkt, const void *ptr,
  * the original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
  */
 __owur static ossl_inline int PACKET_peek_sub_packet(const PACKET *pkt,
-                                                     PACKET *subpkt,
-                                                     size_t len)
+                                                     PACKET *subpkt, size_t len)
 {
     if (PACKET_remaining(pkt) < len)
         return 0;
@@ -170,8 +122,7 @@ __owur static ossl_inline int PACKET_peek_sub_packet(const PACKET *pkt,
  * original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
  */
 __owur static ossl_inline int PACKET_get_sub_packet(PACKET *pkt,
-                                                    PACKET *subpkt,
-                                                    size_t len)
+                                                    PACKET *subpkt, size_t len)
 {
     if (!PACKET_peek_sub_packet(pkt, subpkt, len))
         return 0;
@@ -199,8 +150,7 @@ __owur static ossl_inline int PACKET_peek_net_2(const PACKET *pkt,
 
 /* Equivalent of n2s */
 /* Get 2 bytes in network order from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_net_2(PACKET *pkt,
-                                               unsigned int *data)
+__owur static ossl_inline int PACKET_get_net_2(PACKET *pkt, unsigned int *data)
 {
     if (!PACKET_peek_net_2(pkt, data))
         return 0;
@@ -229,8 +179,7 @@ __owur static ossl_inline int PACKET_peek_net_3(const PACKET *pkt,
 
 /* Equivalent of n2l3 */
 /* Get 3 bytes in network order from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_net_3(PACKET *pkt,
-                                               unsigned long *data)
+__owur static ossl_inline int PACKET_get_net_3(PACKET *pkt, unsigned long *data)
 {
     if (!PACKET_peek_net_3(pkt, data))
         return 0;
@@ -260,8 +209,7 @@ __owur static ossl_inline int PACKET_peek_net_4(const PACKET *pkt,
 
 /* Equivalent of n2l */
 /* Get 4 bytes in network order from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_net_4(PACKET *pkt,
-                                               unsigned long *data)
+__owur static ossl_inline int PACKET_get_net_4(PACKET *pkt, unsigned long *data)
 {
     if (!PACKET_peek_net_4(pkt, data))
         return 0;
@@ -381,8 +329,7 @@ __owur static ossl_inline int PACKET_peek_copy_bytes(const PACKET *pkt,
  * The caller is responsible for ensuring that |data| can hold |len| bytes.
  */
 __owur static ossl_inline int PACKET_copy_bytes(PACKET *pkt,
-                                                unsigned char *data,
-                                                size_t len)
+                                                unsigned char *data, size_t len)
 {
     if (!PACKET_peek_copy_bytes(pkt, data, len))
         return 0;
@@ -465,7 +412,7 @@ __owur static ossl_inline int PACKET_strndup(const PACKET *pkt, char **data)
 /* Returns 1 if |pkt| contains at least one 0-byte, 0 otherwise. */
 static ossl_inline int PACKET_contains_zero_byte(const PACKET *pkt)
 {
-  return memchr(pkt->curr, 0, pkt->remaining) != NULL;
+    return memchr(pkt->curr, 0, pkt->remaining) != NULL;
 }
 
 /* Move the current reading position forward |len| bytes */
@@ -508,22 +455,23 @@ __owur static ossl_inline int PACKET_get_length_prefixed_1(PACKET *pkt,
  * Like PACKET_get_length_prefixed_1, but additionally, fails when there are
  * leftover bytes in |pkt|.
  */
-__owur static ossl_inline int PACKET_as_length_prefixed_1(PACKET *pkt, PACKET *subpkt)
+__owur static ossl_inline int PACKET_as_length_prefixed_1(PACKET *pkt,
+                                                          PACKET *subpkt)
 {
-  unsigned int length;
-  const unsigned char *data;
-  PACKET tmp = *pkt;
-  if (!PACKET_get_1(&tmp, &length) ||
-      !PACKET_get_bytes(&tmp, &data, (size_t)length) ||
-      PACKET_remaining(&tmp) != 0) {
-      return 0;
-  }
+    unsigned int length;
+    const unsigned char *data;
+    PACKET tmp = *pkt;
+    if (!PACKET_get_1(&tmp, &length) ||
+        !PACKET_get_bytes(&tmp, &data, (size_t)length) ||
+        PACKET_remaining(&tmp) != 0) {
+        return 0;
+    }
 
-  *pkt = tmp;
-  subpkt->curr = data;
-  subpkt->remaining = length;
+    *pkt = tmp;
+    subpkt->curr = data;
+    subpkt->remaining = length;
 
-  return 1;
+    return 1;
 }
 
 /*
@@ -559,21 +507,21 @@ __owur static ossl_inline int PACKET_get_length_prefixed_2(PACKET *pkt,
 __owur static ossl_inline int PACKET_as_length_prefixed_2(PACKET *pkt,
                                                           PACKET *subpkt)
 {
-  unsigned int length;
-  const unsigned char *data;
-  PACKET tmp = *pkt;
+    unsigned int length;
+    const unsigned char *data;
+    PACKET tmp = *pkt;
 
-  if (!PACKET_get_net_2(&tmp, &length) ||
-      !PACKET_get_bytes(&tmp, &data, (size_t)length) ||
-      PACKET_remaining(&tmp) != 0) {
-      return 0;
-  }
+    if (!PACKET_get_net_2(&tmp, &length) ||
+        !PACKET_get_bytes(&tmp, &data, (size_t)length) ||
+        PACKET_remaining(&tmp) != 0) {
+        return 0;
+    }
 
-  *pkt = tmp;
-  subpkt->curr = data;
-  subpkt->remaining = length;
+    *pkt = tmp;
+    subpkt->curr = data;
+    subpkt->remaining = length;
 
-  return 1;
+    return 1;
 }
 
 /*

@@ -1,8 +1,10 @@
-/* ====================================================================
- * Copyright (c) 2008 The OpenSSL Project. All rights reserved.
+/*
+ * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Rights for redistribution and usage in source and binary
- * forms are granted according to the OpenSSL license.
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/crypto.h>

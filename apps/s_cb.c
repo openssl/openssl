@@ -1,111 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-/* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /* callback functions used by s_client, s_server, and s_time */
@@ -127,10 +26,8 @@
 
 #define COOKIE_SECRET_LENGTH    16
 
-int verify_depth = 0;
-int verify_quiet = 0;
-int verify_error = X509_V_OK;
-int verify_return_error = 0;
+VERIFY_CB_ARGS verify_args = { 0, 0, X509_V_OK, 0 };
+
 #ifndef OPENSSL_NO_SOCK
 static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 static int cookie_initialized = 0;
@@ -153,7 +50,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     err = X509_STORE_CTX_get_error(ctx);
     depth = X509_STORE_CTX_get_error_depth(ctx);
 
-    if (!verify_quiet || !ok) {
+    if (!verify_args.quiet || !ok) {
         BIO_printf(bio_err, "depth=%d ", depth);
         if (err_cert) {
             X509_NAME_print_ex(bio_err,
@@ -166,13 +63,13 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     if (!ok) {
         BIO_printf(bio_err, "verify error:num=%d:%s\n", err,
                    X509_verify_cert_error_string(err));
-        if (verify_depth >= depth) {
-            if (!verify_return_error)
+        if (verify_args.depth >= depth) {
+            if (!verify_args.return_error)
                 ok = 1;
-            verify_error = err;
+            verify_args.error = err;
         } else {
             ok = 0;
-            verify_error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
+            verify_args.error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
         }
     }
     switch (err) {
@@ -185,23 +82,23 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     case X509_V_ERR_CERT_NOT_YET_VALID:
     case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
         BIO_printf(bio_err, "notBefore=");
-        ASN1_TIME_print(bio_err, X509_get_notBefore(err_cert));
+        ASN1_TIME_print(bio_err, X509_get0_notBefore(err_cert));
         BIO_printf(bio_err, "\n");
         break;
     case X509_V_ERR_CERT_HAS_EXPIRED:
     case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
         BIO_printf(bio_err, "notAfter=");
-        ASN1_TIME_print(bio_err, X509_get_notAfter(err_cert));
+        ASN1_TIME_print(bio_err, X509_get0_notAfter(err_cert));
         BIO_printf(bio_err, "\n");
         break;
     case X509_V_ERR_NO_EXPLICIT_POLICY:
-        if (!verify_quiet)
+        if (!verify_args.quiet)
             policies_print(ctx);
         break;
     }
-    if (err == X509_V_OK && ok == 2 && !verify_quiet)
+    if (err == X509_V_OK && ok == 2 && !verify_args.quiet)
         policies_print(ctx);
-    if (ok && !verify_quiet)
+    if (ok && !verify_args.quiet)
         BIO_printf(bio_err, "verify return:%d\n", ok);
     return (ok);
 }
@@ -406,8 +303,6 @@ int ssl_print_point_formats(BIO *out, SSL *s)
 
         }
     }
-    if (nformats <= 0)
-        BIO_puts(out, "NONE");
     BIO_puts(out, "\n");
     return 1;
 }
@@ -439,8 +334,6 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
             BIO_printf(out, "%s", cname);
         }
     }
-    if (ncurves == 0)
-        BIO_puts(out, "NONE");
     OPENSSL_free(curves);
     if (noshared) {
         BIO_puts(out, "\n");
@@ -490,7 +383,11 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
                 cname = OBJ_nid2sn(nid);
             BIO_printf(out, "ECDH, %s, %d bits\n", cname, EVP_PKEY_bits(key));
         }
+    break;
 #endif
+    default:
+        BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_id(key)),
+                   EVP_PKEY_bits(key));
     }
     EVP_PKEY_free(key);
     return 1;
@@ -507,12 +404,12 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp,
 
     if (cmd == (BIO_CB_READ | BIO_CB_RETURN)) {
         BIO_printf(out, "read from %p [%p] (%lu bytes => %ld (0x%lX))\n",
-                   (void *)bio, argp, (unsigned long)argi, ret, ret);
+                   (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
         return (ret);
     } else if (cmd == (BIO_CB_WRITE | BIO_CB_RETURN)) {
         BIO_printf(out, "write to %p [%p] (%lu bytes => %ld (0x%lX))\n",
-                   (void *)bio, argp, (unsigned long)argi, ret, ret);
+                   (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
     }
     return (ret);
@@ -1371,7 +1268,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     case SSL_SECOP_OTHER_DH:
         {
             DH *dh = other;
-            BIO_printf(sdb->out, "%d", BN_num_bits(dh->p));
+            BIO_printf(sdb->out, "%d", DH_bits(dh));
             break;
         }
 #endif

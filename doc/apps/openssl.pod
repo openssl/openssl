@@ -1,4 +1,3 @@
-
 =pod
 
 =head1 NAME
@@ -65,7 +64,7 @@ availability of ciphers in the B<openssl> program.  (B<no->I<XXX> is
 not able to detect pseudo-commands such as B<quit>,
 B<list>, or B<no->I<XXX> itself.)
 
-=head2 STANDARD COMMANDS
+=head2 Standard Commands
 
 =over 10
 
@@ -157,7 +156,7 @@ Generation of RSA Private Key. Superseded by L<B<genpkey>|genpkey(1)>.
 
 =item L<B<nseq>|nseq(1)>
 
-Create or examine a netscape certificate sequence
+Create or examine a Netscape certificate sequence
 
 =item L<B<ocsp>|ocsp(1)>
 
@@ -259,7 +258,7 @@ X.509 Certificate Data Management.
 
 =back
 
-=head2 MESSAGE DIGEST COMMANDS
+=head2 Message Digest Commands
 
 =over 10
 
@@ -305,7 +304,7 @@ SHA-512 Digest
 
 =back
 
-=head2 ENCODING AND CIPHER COMMANDS
+=head2 Encoding and Cipher Commands
 
 =over 10
 
@@ -351,7 +350,22 @@ RC5 Cipher
 
 =back
 
-=head1 PASS PHRASE ARGUMENTS
+=head1 COMMAND OPTIONS
+
+Details of which options are available depend on the specific command.
+This section describes some common options with common behavior.
+
+=head2 Common Options
+
+=over 10
+
+=item B<-help>
+
+Provides a terse summary of all options.
+
+=back
+
+=head2 Pass Phrase Options
 
 Several commands accept password arguments, typically using B<-passin>
 and B<-passout> for input and output passwords respectively. These allow
@@ -415,5 +429,14 @@ L<crypto(3)>, L<ssl(3)>, L<x509v3_config(5)>
 The B<list->I<XXX>B<-algorithms> pseudo-commands were added in OpenSSL 1.0.0;
 For notes on the availability of other commands, see their individual
 manual pages.
+
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

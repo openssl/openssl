@@ -1,55 +1,11 @@
 /*
-* Public API for Certificate Transparency (CT).
-* Written by Rob Percival (robpercival@google.com) for the OpenSSL project.
-*/
-/* ====================================================================
-* Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions
-* are met:
-*
-* 1. Redistributions of source code must retain the above copyright
-*    notice, this list of conditions and the following disclaimer.
-*
-* 2. Redistributions in binary form must reproduce the above copyright
-*    notice, this list of conditions and the following disclaimer in
-*    the documentation and/or other materials provided with the
-*    distribution.
-*
-* 3. All advertising materials mentioning features or use of this
-*    software must display the following acknowledgment:
-*    "This product includes software developed by the OpenSSL Project
-*    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
-*
-* 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-*    endorse or promote products derived from this software without
-*    prior written permission. For written permission, please contact
-*    licensing@OpenSSL.org.
-*
-* 5. Products derived from this software may not be called "OpenSSL"
-*    nor may "OpenSSL" appear in their names without prior written
-*    permission of the OpenSSL Project.
-*
-* 6. Redistributions of any form whatsoever must retain the following
-*    acknowledgment:
-*    "This product includes software developed by the OpenSSL Project
-*    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
-*
-* THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-* EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-* PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-* ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-* SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-* OF THE POSSIBILITY OF SUCH DAMAGE.
-* ====================================================================
-*/
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
 
 #ifndef HEADER_CT_H
 # define HEADER_CT_H
@@ -105,45 +61,42 @@ DEFINE_STACK_OF(CTLOG)
  * CT policy evaluation context functions *
  ******************************************/
 
-/* Creates a new, empty policy evaluation context */
+/*
+ * Creates a new, empty policy evaluation context.
+ * The caller is responsible for calling CT_POLICY_EVAL_CTX_free when finished
+ * with the CT_POLICY_EVAL_CTX.
+ */
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
 
-/* Deletes a policy evaluation context */
+/* Deletes a policy evaluation context and anything it owns. */
 void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);
 
 /* Gets the peer certificate that the SCTs are for */
 X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
 
-/* Sets the certificate associated with the received SCTs */
-void CT_POLICY_EVAL_CTX_set0_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
+/*
+ * Sets the certificate associated with the received SCTs.
+ * Increments the reference count of cert.
+ * Returns 1 on success, 0 otherwise.
+ */
+int CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
 
 /* Gets the issuer of the aforementioned certificate */
 X509* CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx);
 
-/* Sets the issuer of the certificate associated with the received SCTs */
-void CT_POLICY_EVAL_CTX_set0_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
+/*
+ * Sets the issuer of the certificate associated with the received SCTs.
+ * Increments the reference count of issuer.
+ * Returns 1 on success, 0 otherwise.
+ */
+int CT_POLICY_EVAL_CTX_set1_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
 
 /* Gets the CT logs that are trusted sources of SCTs */
 const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *ctx);
 
-/* Sets the log store that is in use */
-void CT_POLICY_EVAL_CTX_set0_log_store(CT_POLICY_EVAL_CTX *ctx,
-                                       CTLOG_STORE *log_store);
-
-/*
- * A callback for verifying that the received SCTs are sufficient.
- * Expected to return 1 if they are sufficient, otherwise 0.
- * May return a negative integer if an error occurs.
- * A connection should be aborted if the SCTs are deemed insufficient.
- */
-typedef int(*ct_validation_cb)(const CT_POLICY_EVAL_CTX *ctx,
-                               const STACK_OF(SCT) *scts, void *arg);
-/* Returns 0 if there are invalid SCTs */
-int CT_verify_no_bad_scts(const CT_POLICY_EVAL_CTX *ctx,
-                          const STACK_OF(SCT) *scts, void *arg);
-/* Returns 0 if there are invalid SCTS or fewer than one valid SCT */
-int CT_verify_at_least_one_good_sct(const CT_POLICY_EVAL_CTX *ctx,
-                                    const STACK_OF(SCT) *scts, void *arg);
+/* Sets the log store that is in use. It must outlive the CT_POLICY_EVAL_CTX. */
+void CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(CT_POLICY_EVAL_CTX *ctx,
+                                               CTLOG_STORE *log_store);
 
 /*****************
  * SCT functions *
@@ -299,6 +252,11 @@ sct_source_t SCT_get_source(const SCT *sct);
 __owur int SCT_set_source(SCT *sct, sct_source_t source);
 
 /*
+ * Returns a text string describing the validation status of |sct|.
+ */
+const char *SCT_validation_status_string(const SCT *sct);
+
+/*
  * Pretty-prints an |sct| to |out|.
  * It will be indented by the number of spaces specified by |indent|.
  * If |logs| is not NULL, it will be used to lookup the CT log that the SCT came
@@ -317,19 +275,6 @@ void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
                     const char *separator, const CTLOG_STORE *logs);
 
 /*
- * Verifies an SCT with the given context.
- * Returns 1 if the SCT verifies successfully, 0 otherwise.
- */
-__owur int SCT_verify(const SCT_CTX *sctx, const SCT *sct);
-
-/*
- * Verifies an SCT against the provided data.
- * Returns 1 if the SCT verifies successfully, 0 otherwise.
- */
-__owur int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
-                  X509_PUBKEY *log_pubkey, X509 *issuer_cert);
-
-/*
  * Gets the last result of validating this SCT.
  * If it has not been validated yet, returns SCT_VALIDATION_STATUS_NOT_SET.
  */
@@ -346,7 +291,7 @@ __owur int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx);
 
 /*
  * Validates the given list of SCTs with the provided context.
- * Populates the "good_scts" and "bad_scts" of the evaluation context.
+ * Sets the "validation_status" field of each SCT.
  * Returns 1 if there are no invalid SCTs and all signatures verify.
  * Returns 0 if at least one SCT is invalid or could not be verified.
  * Returns a negative integer if an error occurs.
@@ -367,7 +312,7 @@ __owur int SCT_LIST_validate(const STACK_OF(SCT) *scts,
  * for data that caller is responsible for freeing (only if function returns
  * successfully).
  * If "pp" is NULL and "*pp" is not NULL, caller is responsible for ensuring
- * that "*pp" is large enough to accept all of the serializied data.
+ * that "*pp" is large enough to accept all of the serialized data.
  * Returns < 0 on error, >= 0 indicating bytes written (or would have been)
  * on success.
  */
@@ -394,7 +339,7 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
  * for data that caller is responsible for freeing (only if function returns
  * successfully).
  * If "pp" is NULL and "*pp" is not NULL, caller is responsible for ensuring
- * that "*pp" is large enough to accept all of the serializied data.
+ * that "*pp" is large enough to accept all of the serialized data.
  * Returns < 0 on error, >= 0 indicating bytes written (or would have been)
  * on success.
  */
@@ -428,7 +373,7 @@ __owur int i2o_SCT(const SCT *sct, unsigned char **out);
  * Parses an SCT in TLS format and returns it.
  * If |psct| is not null, it will end up pointing to the parsed SCT. If it
  * already points to a non-null pointer, the pointer will be free'd.
- * |in| should be a pointer to a string contianing the TLS-format SCT.
+ * |in| should be a pointer to a string containing the TLS-format SCT.
  * |in| will be advanced to the end of the SCT if parsing succeeds.
  * |len| should be the length of the SCT in |in|.
  * Returns NULL if an error occurs.
@@ -437,46 +382,26 @@ __owur int i2o_SCT(const SCT *sct, unsigned char **out);
  */
 SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
 
-/*
-* Serialize (to TLS format) an |sct| signature and write it to |out|.
-* If |out| is null, no signature will be output but the length will be returned.
-* If |out| points to a null pointer, a string will be allocated to hold the
-* TLS-format signature. It is the responsibility of the caller to free it.
-* If |out| points to an allocated string, the signature will be written to it.
-* The length of the signature in TLS format will be returned.
-*/
-__owur int i2o_SCT_signature(const SCT *sct, unsigned char **out);
-
-/*
-* Parses an SCT signature in TLS format and populates the |sct| with it.
-* |in| should be a pointer to a string contianing the TLS-format signature.
-* |in| will be advanced to the end of the signature if parsing succeeds.
-* |len| should be the length of the signature in |in|.
-* Returns the number of bytes parsed, or a negative integer if an error occurs.
-*/
-__owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
-
 /********************
  * CT log functions *
  ********************/
 
 /*
  * Creates a new CT log instance with the given |public_key| and |name|.
+ * Takes ownership of |public_key| but copies |name|.
+ * Returns NULL if malloc fails or if |public_key| cannot be converted to DER.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
 
 /*
- * Creates a new, blank CT log instance.
+ * Creates a new CTLOG instance with the base64-encoded SubjectPublicKeyInfo DER
+ * in |pkey_base64|. The |name| is a string to help users identify this log.
+ * Returns 1 on success, 0 on failure.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
-CTLOG *CTLOG_new_null(void);
-
-/*
- * Creates a new CT log instance with the given base64 public_key and |name|.
- * Should be deleted by the caller using CTLOG_free when no longer needed.
- */
-CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name);
+int CTLOG_new_from_base64(CTLOG ** ct_log,
+                          const char *pkey_base64, const char *name);
 
 /*
  * Deletes a CT log instance and its fields.
@@ -533,7 +458,8 @@ __owur int CTLOG_STORE_load_default_file(CTLOG_STORE *store);
  * The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
-void ERR_load_CT_strings(void);
+
+int ERR_load_CT_strings(void);
 
 /* Error codes for the CT functions. */
 
@@ -542,22 +468,13 @@ void ERR_load_CT_strings(void);
 # define CT_F_CTLOG_NEW_FROM_BASE64                       118
 # define CT_F_CTLOG_NEW_FROM_CONF                         119
 # define CT_F_CTLOG_NEW_NULL                              120
-# define CT_F_CTLOG_STORE_GET0_LOG_BY_ID                  121
 # define CT_F_CTLOG_STORE_LOAD_CTX_NEW                    122
 # define CT_F_CTLOG_STORE_LOAD_FILE                       123
+# define CT_F_CTLOG_STORE_LOAD_LOG                        130
+# define CT_F_CTLOG_STORE_NEW                             131
 # define CT_F_CT_BASE64_DECODE                            124
-# define CT_F_CT_POLICY_EVAL_CTX_GET0_CERT                130
-# define CT_F_CT_POLICY_EVAL_CTX_GET0_ISSUER              131
-# define CT_F_CT_POLICY_EVAL_CTX_GET0_LOG_STORE           132
 # define CT_F_CT_POLICY_EVAL_CTX_NEW                      133
-# define CT_F_CT_POLICY_EVAL_CTX_SET0_CERT                134
-# define CT_F_CT_POLICY_EVAL_CTX_SET0_ISSUER              135
-# define CT_F_CT_POLICY_EVAL_CTX_SET0_LOG_STORE           136
 # define CT_F_CT_V1_LOG_ID_FROM_PKEY                      125
-# define CT_F_CT_VERIFY_AT_LEAST_ONE_GOOD_SCT             137
-# define CT_F_CT_VERIFY_NO_BAD_SCTS                       138
-# define CT_F_D2I_SCT_LIST                                105
-# define CT_F_I2D_SCT_LIST                                106
 # define CT_F_I2O_SCT                                     107
 # define CT_F_I2O_SCT_LIST                                108
 # define CT_F_I2O_SCT_SIGNATURE                           109
@@ -565,7 +482,6 @@ void ERR_load_CT_strings(void);
 # define CT_F_O2I_SCT_LIST                                111
 # define CT_F_O2I_SCT_SIGNATURE                           112
 # define CT_F_SCT_CTX_NEW                                 126
-# define CT_F_SCT_LIST_VALIDATE                           139
 # define CT_F_SCT_NEW                                     100
 # define CT_F_SCT_NEW_FROM_BASE64                         127
 # define CT_F_SCT_SET0_LOG_ID                             101
@@ -575,10 +491,7 @@ void ERR_load_CT_strings(void);
 # define CT_F_SCT_SET_LOG_ENTRY_TYPE                      102
 # define CT_F_SCT_SET_SIGNATURE_NID                       103
 # define CT_F_SCT_SET_VERSION                             104
-# define CT_F_SCT_SIGNATURE_IS_VALID                      113
-# define CT_F_SCT_VALIDATE                                140
-# define CT_F_SCT_VERIFY                                  128
-# define CT_F_SCT_VERIFY_V1                               129
+# define CT_F_SCT_CTX_VERIFY                              128
 
 /* Reason codes. */
 # define CT_R_BASE64_DECODE_ERROR                         108
@@ -588,21 +501,18 @@ void ERR_load_CT_strings(void);
 # define CT_R_LOG_CONF_MISSING_DESCRIPTION                111
 # define CT_R_LOG_CONF_MISSING_KEY                        112
 # define CT_R_LOG_KEY_INVALID                             113
-# define CT_R_NOT_ENOUGH_SCTS                             116
 # define CT_R_SCT_INVALID                                 104
 # define CT_R_SCT_INVALID_SIGNATURE                       107
 # define CT_R_SCT_LIST_INVALID                            105
 # define CT_R_SCT_LOG_ID_MISMATCH                         114
 # define CT_R_SCT_NOT_SET                                 106
 # define CT_R_SCT_UNSUPPORTED_VERSION                     115
-# define CT_R_SCT_VALIDATION_STATUS_NOT_SET               117
 # define CT_R_UNRECOGNIZED_SIGNATURE_NID                  101
 # define CT_R_UNSUPPORTED_ENTRY_TYPE                      102
 # define CT_R_UNSUPPORTED_VERSION                         103
 
-# ifdef  __cplusplus
+#  ifdef  __cplusplus
 }
+#  endif
 # endif
-# endif
-
 #endif

@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -75,7 +27,8 @@ static int enc_new(BIO *h);
 static int enc_free(BIO *data);
 static long enc_callback_ctrl(BIO *h, int cmd, bio_info_cb *fps);
 #define ENC_BLOCK_SIZE  (1024*4)
-#define BUF_OFFSET      (EVP_MAX_BLOCK_LENGTH*2)
+#define ENC_MIN_CHUNK   (256)
+#define BUF_OFFSET      (ENC_MIN_CHUNK + EVP_MAX_BLOCK_LENGTH)
 
 typedef struct enc_struct {
     int buf_len;
@@ -84,11 +37,12 @@ typedef struct enc_struct {
     int finished;
     int ok;                     /* bad decrypt */
     EVP_CIPHER_CTX *cipher;
+    unsigned char *read_start, *read_end;
     /*
      * buf is larger than ENC_BLOCK_SIZE because EVP_DecryptUpdate can return
      * up to a block more data than is presented to it
      */
-    char buf[ENC_BLOCK_SIZE + BUF_OFFSET + 2];
+    unsigned char buf[BUF_OFFSET + ENC_BLOCK_SIZE];
 } BIO_ENC_CTX;
 
 static const BIO_METHOD methods_enc = {
@@ -123,6 +77,7 @@ static int enc_new(BIO *bi)
     }
     ctx->cont = 1;
     ctx->ok = 1;
+    ctx->read_end = ctx->read_start = &(ctx->buf[BUF_OFFSET]);
     BIO_set_data(bi, ctx);
     BIO_set_init(bi, 1);
 
@@ -150,7 +105,7 @@ static int enc_free(BIO *a)
 
 static int enc_read(BIO *b, char *out, int outl)
 {
-    int ret = 0, i;
+    int ret = 0, i, blocksize;
     BIO_ENC_CTX *ctx;
     BIO *next;
 
@@ -178,6 +133,10 @@ static int enc_read(BIO *b, char *out, int outl)
         }
     }
 
+    blocksize = EVP_CIPHER_CTX_block_size(ctx->cipher);
+    if (blocksize == 1)
+        blocksize = 0;
+
     /*
      * At this point, we have room of outl bytes and an empty buffer, so we
      * should read in some more.
@@ -187,18 +146,21 @@ static int enc_read(BIO *b, char *out, int outl)
         if (ctx->cont <= 0)
             break;
 
-        /*
-         * read in at IV offset, read the EVP_Cipher documentation about why
-         */
-        i = BIO_read(next, &(ctx->buf[BUF_OFFSET]), ENC_BLOCK_SIZE);
+        if (ctx->read_start == ctx->read_end) { /* time to read more data */
+            ctx->read_end = ctx->read_start = &(ctx->buf[BUF_OFFSET]);
+            i = BIO_read(next, ctx->read_start, ENC_BLOCK_SIZE);
+            if (i > 0)
+                ctx->read_end += i;
+        } else {
+            i = ctx->read_end - ctx->read_start;
+        }
 
         if (i <= 0) {
             /* Should be continue next time we are called? */
             if (!BIO_should_retry(next)) {
                 ctx->cont = i;
                 i = EVP_CipherFinal_ex(ctx->cipher,
-                                       (unsigned char *)ctx->buf,
-                                       &(ctx->buf_len));
+                                       ctx->buf, &(ctx->buf_len));
                 ctx->ok = i;
                 ctx->buf_off = 0;
             } else {
@@ -206,13 +168,40 @@ static int enc_read(BIO *b, char *out, int outl)
                 break;
             }
         } else {
+            if (outl > ENC_MIN_CHUNK) {
+                /*
+                 * Depending on flags block cipher decrypt can write
+                 * one extra block and then back off, i.e. output buffer
+                 * has to accommodate extra block...
+                 */
+                int j = outl - blocksize, buf_len;
+
+                if (!EVP_CipherUpdate(ctx->cipher,
+                                      (unsigned char *)out, &buf_len,
+                                      ctx->read_start, i > j ? j : i)) {
+                    BIO_clear_retry_flags(b);
+                    return 0;
+                }
+                ret += buf_len;
+                out += buf_len;
+                outl -= buf_len;
+
+                if ((i -= j) <= 0) {
+                    ctx->read_start = ctx->read_end;
+                    continue;
+                }
+                ctx->read_start += j;
+            }
+            if (i > ENC_MIN_CHUNK)
+                i = ENC_MIN_CHUNK;
             if (!EVP_CipherUpdate(ctx->cipher,
-                                  (unsigned char *)ctx->buf, &ctx->buf_len,
-                                  (unsigned char *)&(ctx->buf[BUF_OFFSET]),
-                                  i)) {
+                                  ctx->buf, &ctx->buf_len,
+                                  ctx->read_start, i)) {
                 BIO_clear_retry_flags(b);
+                ctx->ok = 0;
                 return 0;
             }
+            ctx->read_start += i;
             ctx->cont = 1;
             /*
              * Note: it is possible for EVP_CipherUpdate to decrypt zero
@@ -275,9 +264,10 @@ static int enc_write(BIO *b, const char *in, int inl)
     while (inl > 0) {
         n = (inl > ENC_BLOCK_SIZE) ? ENC_BLOCK_SIZE : inl;
         if (!EVP_CipherUpdate(ctx->cipher,
-                              (unsigned char *)ctx->buf, &ctx->buf_len,
-                              (unsigned char *)in, n)) {
+                              ctx->buf, &ctx->buf_len,
+                              (const unsigned char *)in, n)) {
             BIO_clear_retry_flags(b);
+            ctx->ok = 0;
             return 0;
         }
         inl -= n;

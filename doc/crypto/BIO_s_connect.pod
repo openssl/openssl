@@ -2,9 +2,10 @@
 
 =head1 NAME
 
+BIO_set_conn_address, BIO_get_conn_address,
 BIO_s_connect, BIO_new_connect, BIO_set_conn_hostname, BIO_set_conn_port,
-BIO_set_conn_ip, BIO_set_conn_int_port, BIO_get_conn_hostname,
-BIO_get_conn_port, BIO_get_conn_ip, BIO_get_conn_int_port,
+BIO_get_conn_hostname,
+BIO_get_conn_port,
 BIO_set_nbio, BIO_do_connect - connect BIO
 
 =head1 SYNOPSIS
@@ -81,7 +82,7 @@ This return value is an internal pointer which should not be modified.
 BIO_set_nbio() sets the non blocking I/O flag to B<n>. If B<n> is
 zero then blocking I/O is set. If B<n> is 1 then non blocking I/O
 is set. Blocking I/O is the default. The call to BIO_set_nbio()
-should be made before the connection is established because 
+should be made before the connection is established because
 non blocking I/O is set during the connect process.
 
 BIO_new_connect() combines BIO_new() and BIO_set_conn_hostname() into
@@ -167,16 +168,17 @@ to retrieve a page and copy the result to standard output.
 
  cbio = BIO_new_connect("localhost:http");
  out = BIO_new_fp(stdout, BIO_NOCLOSE);
- if(BIO_do_connect(cbio) <= 0) {
-	fprintf(stderr, "Error connecting to server\n");
-	ERR_print_errors_fp(stderr);
-	/* whatever ... */
-	}
+ if (BIO_do_connect(cbio) <= 0) {
+     fprintf(stderr, "Error connecting to server\n");
+     ERR_print_errors_fp(stderr);
+     exit(1);
+ }
  BIO_puts(cbio, "GET / HTTP/1.0\n\n");
- for(;;) {	
-	len = BIO_read(cbio, tmpbuf, 1024);
-	if(len <= 0) break;
-	BIO_write(out, tmpbuf, len);
+ for ( ; ; ) {
+     len = BIO_read(cbio, tmpbuf, 1024);
+     if (len <= 0)
+         break;
+     BIO_write(out, tmpbuf, len);
  }
  BIO_free(cbio);
  BIO_free(out);
@@ -185,3 +187,14 @@ to retrieve a page and copy the result to standard output.
 =head1 SEE ALSO
 
 L<BIO_ADDR(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

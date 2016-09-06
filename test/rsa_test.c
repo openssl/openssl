@@ -1,3 +1,12 @@
+/*
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 /* test vectors from p1ovect1.txt */
 
 #include <stdio.h>
@@ -19,16 +28,19 @@ int main(int argc, char *argv[])
 # include <openssl/rsa.h>
 
 # define SetKey \
-  key->n = BN_bin2bn(n, sizeof(n)-1, key->n); \
-  key->e = BN_bin2bn(e, sizeof(e)-1, key->e); \
-  key->d = BN_bin2bn(d, sizeof(d)-1, key->d); \
-  key->p = BN_bin2bn(p, sizeof(p)-1, key->p); \
-  key->q = BN_bin2bn(q, sizeof(q)-1, key->q); \
-  key->dmp1 = BN_bin2bn(dmp1, sizeof(dmp1)-1, key->dmp1); \
-  key->dmq1 = BN_bin2bn(dmq1, sizeof(dmq1)-1, key->dmq1); \
-  key->iqmp = BN_bin2bn(iqmp, sizeof(iqmp)-1, key->iqmp); \
-  memcpy(c, ctext_ex, sizeof(ctext_ex) - 1); \
-  return (sizeof(ctext_ex) - 1);
+    RSA_set0_key(key,                                           \
+                 BN_bin2bn(n, sizeof(n)-1, NULL),               \
+                 BN_bin2bn(e, sizeof(e)-1, NULL),               \
+                 BN_bin2bn(d, sizeof(d)-1, NULL));              \
+    RSA_set0_factors(key,                                       \
+                     BN_bin2bn(p, sizeof(p)-1, NULL),           \
+                     BN_bin2bn(q, sizeof(q)-1, NULL));          \
+    RSA_set0_crt_params(key,                                    \
+                        BN_bin2bn(dmp1, sizeof(dmp1)-1, NULL),  \
+                        BN_bin2bn(dmq1, sizeof(dmq1)-1, NULL),  \
+                        BN_bin2bn(iqmp, sizeof(iqmp)-1, NULL)); \
+    memcpy(c, ctext_ex, sizeof(ctext_ex) - 1);                  \
+    return (sizeof(ctext_ex) - 1);
 
 static int key1(RSA *key, unsigned char *c)
 {
@@ -229,9 +241,9 @@ int main(int argc, char *argv[])
 
     plen = sizeof(ptext_ex) - 1;
 
-    for (v = 0; v < 6; v++) {
+    for (v = 0; v < 3; v++) {
         key = RSA_new();
-        switch (v % 3) {
+        switch (v) {
         case 0:
             clen = key1(key, ctext_ex);
             break;
@@ -242,8 +254,6 @@ int main(int argc, char *argv[])
             clen = key3(key, ctext_ex);
             break;
         }
-        if (v / 3 >= 1)
-            key->flags |= RSA_FLAG_NO_CONSTTIME;
 
         num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
                                  RSA_PKCS1_PADDING);

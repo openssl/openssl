@@ -1,62 +1,15 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
@@ -78,41 +31,49 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 int PEM_def_callback(char *buf, int num, int w, void *key)
 {
 #if defined(OPENSSL_NO_STDIO) || defined(OPENSSL_NO_UI)
-    /*
-     * We should not ever call the default callback routine from windows.
-     */
-    PEMerr(PEM_F_PEM_DEF_CALLBACK, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-    return (-1);
+    int i;
 #else
     int i, j;
     const char *prompt;
+#endif
+
     if (key) {
         i = strlen(key);
         i = (i > num) ? num : i;
         memcpy(buf, key, i);
-        return (i);
+        return i;
     }
 
+#if defined(OPENSSL_NO_STDIO) || defined(OPENSSL_NO_UI)
+    PEMerr(PEM_F_PEM_DEF_CALLBACK, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+    return -1;
+#else
     prompt = EVP_get_pw_prompt();
     if (prompt == NULL)
         prompt = "Enter PEM pass phrase:";
 
     for (;;) {
-        i = EVP_read_pw_string_min(buf, MIN_LENGTH, num, prompt, w);
+        /*
+         * We assume that w == 0 means decryption,
+         * while w == 1 means encryption
+         */
+        int min_len = w ? MIN_LENGTH : 0;
+
+        i = EVP_read_pw_string_min(buf, min_len, num, prompt, w);
         if (i != 0) {
             PEMerr(PEM_F_PEM_DEF_CALLBACK, PEM_R_PROBLEMS_GETTING_PASSWORD);
             memset(buf, 0, (unsigned int)num);
-            return (-1);
+            return -1;
         }
         j = strlen(buf);
-        if (j < MIN_LENGTH) {
+        if (min_len && j < min_len) {
             fprintf(stderr,
                     "phrase is too short, needs to be at least %d chars\n",
-                    MIN_LENGTH);
+                    min_len);
         } else
             break;
     }
-    return (j);
+    return j;
 #endif
 }
 
@@ -190,7 +151,7 @@ static int check_pem(const char *nm, const char *name)
         slen = pem_check_suffix(nm, "PRIVATE KEY");
         if (slen > 0) {
             /*
-             * NB: ENGINE implementations wont contain a deprecated old
+             * NB: ENGINE implementations won't contain a deprecated old
              * private key decode function so don't look for them.
              */
             ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
@@ -344,7 +305,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 
     if (enc != NULL) {
         objstr = OBJ_nid2sn(EVP_CIPHER_nid(enc));
-        if (objstr == NULL) {
+        if (objstr == NULL || EVP_CIPHER_iv_length(enc) == 0) {
             PEMerr(PEM_F_PEM_ASN1_WRITE_BIO, PEM_R_UNSUPPORTED_CIPHER);
             goto err;
         }
@@ -431,115 +392,153 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
                   pem_password_cb *callback, void *u)
 {
-    int i = 0, j, o, klen;
-    long len;
+    int ok;
+    int keylen;
+    long len = *plen;
+    int ilen = (int) len;       /* EVP_DecryptUpdate etc. take int lengths */
     EVP_CIPHER_CTX *ctx;
     unsigned char key[EVP_MAX_KEY_LENGTH];
     char buf[PEM_BUFSIZE];
 
-    len = *plen;
+#if LONG_MAX > INT_MAX
+    /* Check that we did not truncate the length */
+    if (len > INT_MAX) {
+        PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_HEADER_TOO_LONG);
+        return 0;
+    }
+#endif
 
     if (cipher->cipher == NULL)
-        return (1);
+        return 1;
     if (callback == NULL)
-        klen = PEM_def_callback(buf, PEM_BUFSIZE, 0, u);
+        keylen = PEM_def_callback(buf, PEM_BUFSIZE, 0, u);
     else
-        klen = callback(buf, PEM_BUFSIZE, 0, u);
-    if (klen <= 0) {
+        keylen = callback(buf, PEM_BUFSIZE, 0, u);
+    if (keylen <= 0) {
         PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_BAD_PASSWORD_READ);
-        return (0);
+        return 0;
     }
 #ifdef CHARSET_EBCDIC
     /* Convert the pass phrase from EBCDIC */
-    ebcdic2ascii(buf, buf, klen);
+    ebcdic2ascii(buf, buf, keylen);
 #endif
 
     if (!EVP_BytesToKey(cipher->cipher, EVP_md5(), &(cipher->iv[0]),
-                        (unsigned char *)buf, klen, 1, key, NULL))
+                        (unsigned char *)buf, keylen, 1, key, NULL))
         return 0;
 
-    j = (int)len;
     ctx = EVP_CIPHER_CTX_new();
     if (ctx == NULL)
         return 0;
-    o = EVP_DecryptInit_ex(ctx, cipher->cipher, NULL, key, &(cipher->iv[0]));
-    if (o)
-        o = EVP_DecryptUpdate(ctx, data, &i, data, j);
-    if (o)
-        o = EVP_DecryptFinal_ex(ctx, &(data[i]), &j);
+
+    ok = EVP_DecryptInit_ex(ctx, cipher->cipher, NULL, key, &(cipher->iv[0]));
+    if (ok)
+        ok = EVP_DecryptUpdate(ctx, data, &ilen, data, ilen);
+    if (ok) {
+        /* Squirrel away the length of data decrypted so far. */
+        *plen = ilen;
+        ok = EVP_DecryptFinal_ex(ctx, &(data[ilen]), &ilen);
+    }
+    if (ok)
+        *plen += ilen;
+    else
+        PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_BAD_DECRYPT);
+
     EVP_CIPHER_CTX_free(ctx);
     OPENSSL_cleanse((char *)buf, sizeof(buf));
     OPENSSL_cleanse((char *)key, sizeof(key));
-    if (o)
-        j += i;
-    else {
-        PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_BAD_DECRYPT);
-        return (0);
-    }
-    *plen = j;
-    return (1);
+    return ok;
 }
 
+/*
+ * This implements a very limited PEM header parser that does not support the
+ * full grammar of rfc1421.  In particular, folded headers are not supported,
+ * nor is additional whitespace.
+ *
+ * A robust implementation would make use of a library that turns the headers
+ * into a BIO from which one folded line is read at a time, and is then split
+ * into a header label and content.  We would then parse the content of the
+ * headers we care about.  This is overkill for just this limited use-case, but
+ * presumably we also parse rfc822-style headers for S/MIME, so a common
+ * abstraction might well be more generally useful.
+ */
 int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
 {
+    static const char ProcType[] = "Proc-Type:";
+    static const char ENCRYPTED[] = "ENCRYPTED";
+    static const char DEKInfo[] = "DEK-Info:";
     const EVP_CIPHER *enc = NULL;
+    int ivlen;
     char *dekinfostart, c;
 
     cipher->cipher = NULL;
     if ((header == NULL) || (*header == '\0') || (*header == '\n'))
-        return (1);
-    if (strncmp(header, "Proc-Type: ", 11) != 0) {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_PROC_TYPE);
-        return (0);
-    }
-    header += 11;
-    if (*header != '4')
-        return (0);
-    header++;
-    if (*header != ',')
-        return (0);
-    header++;
-    if (strncmp(header, "ENCRYPTED", 9) != 0) {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_ENCRYPTED);
-        return (0);
-    }
-    for (; (*header != '\n') && (*header != '\0'); header++) ;
-    if (*header == '\0') {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_SHORT_HEADER);
-        return (0);
-    }
-    header++;
-    if (strncmp(header, "DEK-Info: ", 10) != 0) {
-        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_DEK_INFO);
-        return (0);
-    }
-    header += 10;
+        return 1;
 
-    dekinfostart = header;
-    for (;;) {
-        c = *header;
-#ifndef CHARSET_EBCDIC
-        if (!(((c >= 'A') && (c <= 'Z')) || (c == '-') ||
-              ((c >= '0') && (c <= '9'))))
-            break;
-#else
-        if (!(isupper(c) || (c == '-') || isdigit(c)))
-            break;
-#endif
-        header++;
+    if (strncmp(header, ProcType, sizeof(ProcType)-1) != 0) {
+        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_PROC_TYPE);
+        return 0;
     }
+    header += sizeof(ProcType)-1;
+    header += strspn(header, " \t");
+
+    if (*header++ != '4' || *header++ != ',')
+        return 0;
+    header += strspn(header, " \t");
+
+    /* We expect "ENCRYPTED" followed by optional white-space + line break */
+    if (strncmp(header, ENCRYPTED, sizeof(ENCRYPTED)-1) != 0 ||
+        strspn(header+sizeof(ENCRYPTED)-1, " \t\r\n") == 0) {
+        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_ENCRYPTED);
+        return 0;
+    }
+    header += sizeof(ENCRYPTED)-1;
+    header += strspn(header, " \t\r");
+    if (*header++ != '\n') {
+        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_SHORT_HEADER);
+        return 0;
+    }
+
+    /*-
+     * https://tools.ietf.org/html/rfc1421#section-4.6.1.3
+     * We expect "DEK-Info: algo[,hex-parameters]"
+     */
+    if (strncmp(header, DEKInfo, sizeof(DEKInfo)-1) != 0) {
+        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_DEK_INFO);
+        return 0;
+    }
+    header += sizeof(DEKInfo)-1;
+    header += strspn(header, " \t");
+
+    /*
+     * DEK-INFO is a comma-separated combination of algorithm name and optional
+     * parameters.
+     */
+    dekinfostart = header;
+    header += strcspn(header, " \t,");
+    c = *header;
     *header = '\0';
     cipher->cipher = enc = EVP_get_cipherbyname(dekinfostart);
-    *header++ = c;
+    *header = c;
+    header += strspn(header, " \t");
 
     if (enc == NULL) {
         PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_UNSUPPORTED_ENCRYPTION);
-        return (0);
+        return 0;
     }
-    if (!load_iv(&header, cipher->iv, EVP_CIPHER_iv_length(enc)))
-        return (0);
+    ivlen = EVP_CIPHER_iv_length(enc);
+    if (ivlen > 0 && *header++ != ',') {
+        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_MISSING_DEK_IV);
+        return 0;
+    } else if (ivlen == 0 && *header == ',') {
+        PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_UNEXPECTED_DEK_IV);
+        return 0;
+    }
 
-    return (1);
+    if (!load_iv(&header, cipher->iv, EVP_CIPHER_iv_length(enc)))
+        return 0;
+
+    return 1;
 }
 
 static int load_iv(char **fromp, unsigned char *to, int num)
@@ -552,13 +551,8 @@ static int load_iv(char **fromp, unsigned char *to, int num)
         to[i] = 0;
     num *= 2;
     for (i = 0; i < num; i++) {
-        if ((*from >= '0') && (*from <= '9'))
-            v = *from - '0';
-        else if ((*from >= 'A') && (*from <= 'F'))
-            v = *from - 'A' + 10;
-        else if ((*from >= 'a') && (*from <= 'f'))
-            v = *from - 'a' + 10;
-        else {
+        v = OPENSSL_hexchar2int(*from);
+        if (v < 0) {
             PEMerr(PEM_F_LOAD_IV, PEM_R_BAD_IV_CHARS);
             return (0);
         }
@@ -624,7 +618,8 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     i = j = 0;
     while (len > 0) {
         n = (int)((len > (PEM_BUFSIZE * 5)) ? (PEM_BUFSIZE * 5) : len);
-        EVP_EncodeUpdate(ctx, buf, &outl, &(data[j]), n);
+        if (!EVP_EncodeUpdate(ctx, buf, &outl, &(data[j]), n))
+            goto err;
         if ((outl) && (BIO_write(bp, (char *)buf, outl) != outl))
             goto err;
         i += outl;

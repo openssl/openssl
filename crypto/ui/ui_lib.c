@@ -1,59 +1,10 @@
 /*
- * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
- * 2001.
- */
-/* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <string.h>
@@ -92,7 +43,10 @@ UI *UI_new_method(const UI_METHOD *method)
     else
         ret->meth = method;
 
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI, ret, &ret->ex_data);
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI, ret, &ret->ex_data)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
     return ret;
 }
 
@@ -173,8 +127,10 @@ static int general_allocate_string(UI *ui, const char *prompt,
             s->_.string_data.test_buf = test_buf;
             ret = sk_UI_STRING_push(ui->strings, s);
             /* sk_push() returns 0 on error.  Let's adapt that */
-            if (ret <= 0)
+            if (ret <= 0) {
                 ret--;
+                free_string(s);
+            }
         } else
             free_string(s);
     }
@@ -218,8 +174,10 @@ static int general_allocate_boolean(UI *ui,
                 /*
                  * sk_push() returns 0 on error. Let's adapt that
                  */
-                if (ret <= 0)
+                if (ret <= 0) {
                     ret--;
+                    free_string(s);
+                }
             } else
                 free_string(s);
         }
@@ -578,12 +536,18 @@ const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth)
     return ui->meth;
 }
 
-UI_METHOD *UI_create_method(char *name)
+UI_METHOD *UI_create_method(const char *name)
 {
     UI_METHOD *ui_method = OPENSSL_zalloc(sizeof(*ui_method));
 
-    if (ui_method != NULL)
+    if (ui_method != NULL) {
         ui_method->name = OPENSSL_strdup(name);
+        if (ui_method->name == NULL) {
+            OPENSSL_free(ui_method);
+            UIerr(UI_F_UI_CREATE_METHOD, ERR_R_MALLOC_FAILURE);
+            return NULL;
+        }
+    }
     return ui_method;
 }
 
@@ -706,29 +670,21 @@ char *(*UI_method_get_prompt_constructor(UI_METHOD *method)) (UI *,
 
 enum UI_string_types UI_get_string_type(UI_STRING *uis)
 {
-    if (!uis)
-        return UIT_NONE;
     return uis->type;
 }
 
 int UI_get_input_flags(UI_STRING *uis)
 {
-    if (!uis)
-        return 0;
     return uis->input_flags;
 }
 
 const char *UI_get0_output_string(UI_STRING *uis)
 {
-    if (!uis)
-        return NULL;
     return uis->out_string;
 }
 
 const char *UI_get0_action_string(UI_STRING *uis)
 {
-    if (!uis)
-        return NULL;
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_BOOLEAN:
@@ -740,8 +696,6 @@ const char *UI_get0_action_string(UI_STRING *uis)
 
 const char *UI_get0_result_string(UI_STRING *uis)
 {
-    if (!uis)
-        return NULL;
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_VERIFY:
@@ -753,8 +707,6 @@ const char *UI_get0_result_string(UI_STRING *uis)
 
 const char *UI_get0_test_string(UI_STRING *uis)
 {
-    if (!uis)
-        return NULL;
     switch (uis->type) {
     case UIT_VERIFY:
         return uis->_.string_data.test_buf;
@@ -765,8 +717,6 @@ const char *UI_get0_test_string(UI_STRING *uis)
 
 int UI_get_result_minsize(UI_STRING *uis)
 {
-    if (!uis)
-        return -1;
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_VERIFY:
@@ -778,8 +728,6 @@ int UI_get_result_minsize(UI_STRING *uis)
 
 int UI_get_result_maxsize(UI_STRING *uis)
 {
-    if (!uis)
-        return -1;
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_VERIFY:
@@ -795,8 +743,6 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 
     ui->flags &= ~UI_FLAG_REDOABLE;
 
-    if (!uis)
-        return -1;
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_VERIFY:
@@ -825,7 +771,7 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
             }
         }
 
-        if (!uis->result_buf) {
+        if (uis->result_buf == NULL) {
             UIerr(UI_F_UI_SET_RESULT, UI_R_NO_RESULT_BUFFER);
             return -1;
         }
@@ -837,7 +783,7 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
         {
             const char *p;
 
-            if (!uis->result_buf) {
+            if (uis->result_buf == NULL) {
                 UIerr(UI_F_UI_SET_RESULT, UI_R_NO_RESULT_BUFFER);
                 return -1;
             }

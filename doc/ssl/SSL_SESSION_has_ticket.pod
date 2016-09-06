@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint, SSL_SESSION_get_ticket - get details about the ticket associated with a session
+SSL_SESSION_get0_ticket,
+SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint,
+- get details about the ticket associated with a session
 
 =head1 SYNOPSIS
 
@@ -10,8 +12,8 @@ SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint, SSL_SESSION_get_ti
 
  int SSL_SESSION_has_ticket(const SSL_SESSION *s);
  unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s);
- void SSL_SESSION_get0_ticket(const SSL_SESSION *s, unsigned char **tick,
-                            size_t *len);
+ void SSL_SESSION_get0_ticket(const SSL_SESSION *s, const unsigned char **tick,
+                              size_t *len);
 
 =head1 DESCRIPTION
 
@@ -38,5 +40,14 @@ L<SSL_SESSION_free(3)>
 
 SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint and
 SSL_SESSION_get0_ticket were added in OpenSSL 1.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

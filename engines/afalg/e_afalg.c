@@ -1,55 +1,10 @@
-/* ====================================================================
- * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /* Required for vmsplice */
@@ -69,6 +24,9 @@
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)
 # warning "AFALG ENGINE requires Kernel Headers >= 4.1.0"
 # warning "Skipping Compilation of AFALG engine"
+void engine_load_afalg_int(void)
+{
+}
 #else
 
 # include <linux/if_alg.h>
@@ -104,7 +62,7 @@
 #define ALG_MAX_SALG_TYPE       14
 
 # ifdef OPENSSL_NO_DYNAMIC_ENGINE
-void engine_load_afalg_internal(void);
+void engine_load_afalg_int(void);
 # endif
 
 /* Local Linkage Functions */
@@ -128,7 +86,7 @@ static int afalg_chk_platform(void);
 
 /* Engine Id and Name */
 static const char *engine_afalg_id = "afalg";
-static const char *engine_afalg_name = "AFLAG engine support";
+static const char *engine_afalg_name = "AFALG engine support";
 
 static int afalg_cipher_nids[] = {
     NID_aes_128_cbc
@@ -136,27 +94,27 @@ static int afalg_cipher_nids[] = {
 
 static EVP_CIPHER *_hidden_aes_128_cbc = NULL;
 
-static inline int io_setup(unsigned n, aio_context_t *ctx)
+static ossl_inline int io_setup(unsigned n, aio_context_t *ctx)
 {
     return syscall(__NR_io_setup, n, ctx);
 }
 
-static inline int eventfd(int n)
+static ossl_inline int eventfd(int n)
 {
     return syscall(__NR_eventfd, n);
 }
 
-static inline int io_destroy(aio_context_t ctx)
+static ossl_inline int io_destroy(aio_context_t ctx)
 {
     return syscall(__NR_io_destroy, ctx);
 }
 
-static inline int io_read(aio_context_t ctx, long n, struct iocb **iocb)
+static ossl_inline int io_read(aio_context_t ctx, long n, struct iocb **iocb)
 {
     return syscall(__NR_io_submit, ctx, n, iocb);
 }
 
-static inline int io_getevents(aio_context_t ctx, long min, long max,
+static ossl_inline int io_getevents(aio_context_t ctx, long min, long max,
                                struct io_event *events,
                                struct timespec *timeout)
 {
@@ -272,7 +230,15 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     memset(cb, '\0', sizeof(*cb));
     cb->aio_fildes = sfd;
     cb->aio_lio_opcode = IOCB_CMD_PREAD;
-    cb->aio_buf = (unsigned long)buf;
+    if (sizeof(buf) != sizeof(cb->aio_buf)) {
+        /*
+         * The pointer has to be converted to 32 bit unsigned value first
+         * to avoid sign extension on cast to 64 bit value
+         */
+        cb->aio_buf = (uint64_t)(unsigned long)buf;
+    } else {
+        cb->aio_buf = (uint64_t)buf;
+    }
     cb->aio_offset = 0;
     cb->aio_data = 0;
     cb->aio_nbytes = len;
@@ -352,7 +318,7 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     return 1;
 }
 
-static inline void afalg_set_op_sk(struct cmsghdr *cmsg,
+static ossl_inline void afalg_set_op_sk(struct cmsghdr *cmsg,
                                    const unsigned int op)
 {
     cmsg->cmsg_level = SOL_ALG;
@@ -374,7 +340,7 @@ static void afalg_set_iv_sk(struct cmsghdr *cmsg, const unsigned char *iv,
     memcpy(aiv->iv, iv, len);
 }
 
-static inline int afalg_set_key(afalg_ctx *actx, const unsigned char *key,
+static ossl_inline int afalg_set_key(afalg_ctx *actx, const unsigned char *key,
                                 const int klen)
 {
     int ret;
@@ -773,6 +739,7 @@ static int afalg_chk_platform(void)
     int ret;
     int i;
     int kver[3] = { -1, -1, -1 };
+    int sock;
     char *str;
     struct utsname ut;
 
@@ -800,6 +767,14 @@ static int afalg_chk_platform(void)
         return 0;
     }
 
+    /* Test if we can actually create an AF_ALG socket */
+    sock = socket(AF_ALG, SOCK_SEQPACKET, 0);
+    if (sock == -1) {
+        AFALGerr(AFALG_F_AFALG_CHK_PLATFORM, AFALG_R_SOCKET_CREATE_FAILED);
+        return 0;
+    }
+    close(sock);
+
     return 1;
 }
 
@@ -816,7 +791,7 @@ static ENGINE *engine_afalg(void)
     return ret;
 }
 
-void engine_load_afalg_internal(void)
+void engine_load_afalg_int(void)
 {
     ENGINE *toadd;
 

@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # ====================================================================
 # Written by David S. Miller <davem@devemloft.net> and Andy Polyakov
@@ -99,7 +106,7 @@ $code.=<<___;
 des_t4_cbc_encrypt:
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .Lcbc_abort
-	nop
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	ld		[$ivec + 0], %f0	! load ivec
 	ld		[$ivec + 4], %f1
 
@@ -200,7 +207,7 @@ des_t4_cbc_encrypt:
 des_t4_cbc_decrypt:
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .Lcbc_abort
-	nop
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	ld		[$ivec + 0], %f2	! load ivec
 	ld		[$ivec + 4], %f3
 
@@ -308,7 +315,7 @@ $code.=<<___;
 des_t4_ede3_cbc_encrypt:
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .Lcbc_abort
-	nop
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	ld		[$ivec + 0], %f0	! load ivec
 	ld		[$ivec + 4], %f1
 
@@ -460,7 +467,7 @@ des_t4_ede3_cbc_encrypt:
 des_t4_ede3_cbc_decrypt:
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .Lcbc_abort
-	nop
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	ld		[$ivec + 0], %f2	! load ivec
 	ld		[$ivec + 4], %f3
 

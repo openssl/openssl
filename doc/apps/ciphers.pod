@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ciphers - SSL cipher display and cipher list tool.
+ciphers - SSL cipher display and cipher list tool
 
 =head1 SYNOPSIS
 
@@ -17,6 +17,7 @@ B<openssl> B<ciphers>
 [B<-tls1_2>]
 [B<-s>]
 [B<-psk>]
+[B<-srp>]
 [B<-stdname>]
 [B<cipherlist>]
 
@@ -37,13 +38,12 @@ Print a usage message.
 =item B<-s>
 
 Only list supported ciphers: those consistent with the security level, and
-minimum and maximum protocol version.
-This is closer to the actual cipher list an application will support.
+minimum and maximum protocol version.  This is closer to the actual cipher list
+an application will support.
 
-This program does not set up support for SRP and so SRP based ciphers will
-always be excluded when using this option.
-PSK ciphers are not enabled by default and it requires the B<-psk> to enable
-them.
+PSK and SRP ciphers are not enabled by default: they require B<-psk> or B<-srp>
+to enable them.
+
 It also does not change the default list of supported signature algorithms.
 
 On a server the list of supported ciphers might also exclude other ciphers
@@ -55,6 +55,10 @@ listed.
 =item B<-psk>
 
 When combined with B<-s> includes cipher suites which require PSK.
+
+=item B<-srp>
+
+When combined with B<-s> includes cipher suites which require SRP.
 
 =item B<-v>
 
@@ -242,7 +246,7 @@ Cipher suites using authenticated ephemeral ECDH key agreement.
 
 =item B<AECDH>
 
-Anonymous Elliptic Curve Diffie Hellman cipher suites.
+Anonymous Elliptic Curve Diffie-Hellman cipher suites.
 
 =item B<aDSS>, B<DSS>
 
@@ -390,7 +394,7 @@ relevant specification and their OpenSSL equivalents. It should be noted,
 that several cipher suite names do not include the authentication used,
 e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
 
-=head2 SSL v3.0 cipher suites.
+=head2 SSL v3.0 cipher suites
 
  SSL_RSA_WITH_NULL_MD5                   NULL-MD5
  SSL_RSA_WITH_NULL_SHA                   NULL-SHA
@@ -411,7 +415,7 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
  SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA  Not implemented.
  SSL_FORTEZZA_KEA_WITH_RC4_128_SHA       Not implemented.
 
-=head2 TLS v1.0 cipher suites.
+=head2 TLS v1.0 cipher suites
 
  TLS_RSA_WITH_NULL_MD5                   NULL-MD5
  TLS_RSA_WITH_NULL_SHA                   NULL-SHA
@@ -576,7 +580,7 @@ Note: these ciphers can also be used in SSL v3.
  TLS_ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256   ECDHE-RSA-CAMELLIA128-SHA256
  TLS_ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384   ECDHE-RSA-CAMELLIA256-SHA384
 
-=head2 Pre shared keying (PSK) ciphersuites
+=head2 Pre-shared keying (PSK) ciphersuites
 
  PSK_WITH_NULL_SHA                         PSK-NULL-SHA
  DHE_PSK_WITH_NULL_SHA                     DHE-PSK-NULL-SHA
@@ -650,7 +654,7 @@ Note: these ciphers can also be used in SSL v3.
  DHE_PSK_WITH_AES_128_CCM_8                DHE-PSK-AES128-CCM8
  DHE_PSK_WITH_AES_256_CCM_8                DHE-PSK-AES256-CCM8
 
-=head2 ChaCha20-Poly1305 cipher suites from draft-ietf-tls-chacha20-poly1305-04, extending TLS v1.2
+=head2 ChaCha20-Poly1305 cipher suites, extending TLS v1.2
 
  TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256      ECDHE-RSA-CHACHA20-POLY1305
  TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256    ECDHE-ECDSA-CHACHA20-POLY1305
@@ -659,6 +663,13 @@ Note: these ciphers can also be used in SSL v3.
  TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256      ECDHE-PSK-CHACHA20-POLY1305
  TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256        DHE-PSK-CHACHA20-POLY1305
  TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256        RSA-PSK-CHACHA20-POLY1305
+
+=head2 Older names used by OpenSSL
+
+The following names are accepted by older releases:
+
+ SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA    EDH-RSA-DES-CBC3-SHA (DHE-RSA-DES-CBC3-SHA)
+ SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA    EDH-DSS-DES-CBC3-SHA (DHE-DSS-DES-CBC3-SHA)
 
 =head1 NOTES
 
@@ -705,5 +716,14 @@ L<s_client(1)>, L<s_server(1)>, L<ssl(3)>
 =head1 HISTORY
 
 The B<-V> option for the B<ciphers> command was added in OpenSSL 1.0.0.
+
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

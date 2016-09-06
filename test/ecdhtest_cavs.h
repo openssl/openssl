@@ -1,10 +1,19 @@
+/*
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #ifndef ECDHTEST_CAVS_H
 #define ECDHTEST_CAVS_H
 
-/* 
+/*
  * co-factor ECDH KATs for NIST SP800-56A
  * http://csrc.nist.gov/groups/STM/cavp/component-testing.html#ECCCDH
- * $ sha256sum KAS_ECC_CDH_PrimitiveTest.txt 
+ * $ sha256sum KAS_ECC_CDH_PrimitiveTest.txt
  * 456068d3f8aad8ac62a03d19ed3173f00ad51f42b51aeab4753c20f30c01cf23  KAS_ECC_CDH_PrimitiveTest.txt
  */
 

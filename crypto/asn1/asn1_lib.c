@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -61,7 +13,7 @@
 #include <openssl/asn1.h>
 
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
-                           int max);
+                           long max);
 static void asn1_put_length(unsigned char **pp, int length);
 
 static int _asn1_check_infinite_end(const unsigned char **p, long len)
@@ -128,7 +80,7 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     }
     *ptag = tag;
     *pclass = xclass;
-    if (!asn1_get_length(&p, &inf, plength, (int)max))
+    if (!asn1_get_length(&p, &inf, plength, max))
         goto err;
 
     if (inf && !(ret & V_ASN1_CONSTRUCTED))
@@ -150,14 +102,14 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 }
 
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
-                           int max)
+                           long max)
 {
     const unsigned char *p = *pp;
     unsigned long ret = 0;
-    unsigned int i;
+    unsigned long i;
 
     if (max-- < 1)
-        return (0);
+        return 0;
     if (*p == 0x80) {
         *inf = 1;
         ret = 0;
@@ -166,7 +118,7 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
         *inf = 0;
         i = *p & 0x7f;
         if (*(p++) & 0x80) {
-            if (max < (int)i)
+            if (max < (long)i + 1)
                 return 0;
             /* Skip leading zeroes */
             while (i && *p == 0) {
@@ -186,7 +138,7 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
         return 0;
     *pp = p;
     *rl = (long)ret;
-    return (1);
+    return 1;
 }
 
 /*
@@ -254,26 +206,30 @@ static void asn1_put_length(unsigned char **pp, int length)
 
 int ASN1_object_size(int constructed, int length, int tag)
 {
-    int ret;
-
-    ret = length;
-    ret++;
+    int ret = 1;
+    if (length < 0)
+        return -1;
     if (tag >= 31) {
         while (tag > 0) {
             tag >>= 7;
             ret++;
         }
     }
-    if (constructed == 2)
-        return ret + 3;
-    ret++;
-    if (length > 127) {
-        while (length > 0) {
-            length >>= 8;
-            ret++;
+    if (constructed == 2) {
+        ret += 3;
+    } else {
+        ret++;
+        if (length > 127) {
+            int tmplen = length;
+            while (tmplen > 0) {
+                tmplen >>= 8;
+                ret++;
+            }
         }
     }
-    return (ret);
+    if (ret >= INT_MAX - length)
+        return -1;
+    return ret + length;
 }
 
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
@@ -315,7 +271,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
         else
             len = strlen(data);
     }
-    if ((str->length < len) || (str->data == NULL)) {
+    if ((str->length <= len) || (str->data == NULL)) {
         c = str->data;
         str->data = OPENSSL_realloc(c, len + 1);
         if (str->data == NULL) {
@@ -402,12 +358,19 @@ void ASN1_STRING_length_set(ASN1_STRING *x, int len)
     x->length = len;
 }
 
-int ASN1_STRING_type(ASN1_STRING *x)
+int ASN1_STRING_type(const ASN1_STRING *x)
 {
     return x->type;
 }
 
+const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x)
+{
+    return x->data;
+}
+
+# if OPENSSL_API_COMPAT < 0x10100000L
 unsigned char *ASN1_STRING_data(ASN1_STRING *x)
 {
     return x->data;
 }
+#endif

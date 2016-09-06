@@ -1,63 +1,15 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
- */
-/* ====================================================================
- * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
+ * Copyright 2003-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/asn1_int.h"
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
@@ -72,7 +24,7 @@ static int i2r_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, void *a,
                                 BIO *bp, int ind);
 static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
                                    STACK_OF(GENERAL_SUBTREE) *trees, BIO *bp,
-                                   int ind, char *name);
+                                   int ind, const char *name);
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip);
 
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc);
@@ -171,7 +123,7 @@ static int i2r_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, void *a,
 
 static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
                                    STACK_OF(GENERAL_SUBTREE) *trees,
-                                   BIO *bp, int ind, char *name)
+                                   BIO *bp, int ind, const char *name)
 {
     GENERAL_SUBTREE *tree;
     int i;
@@ -247,7 +199,8 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
         /* Process any email address attributes in subject name */
 
         for (i = -1;;) {
-            X509_NAME_ENTRY *ne;
+            const X509_NAME_ENTRY *ne;
+
             i = X509_NAME_get_index_by_NID(nm, NID_pkcs9_emailAddress, i);
             if (i == -1)
                 break;
@@ -273,6 +226,51 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 
     return X509_V_OK;
 
+}
+
+int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
+{
+    int r, i;
+    X509_NAME *nm;
+
+    ASN1_STRING stmp;
+    GENERAL_NAME gntmp;
+    stmp.flags = 0;
+    stmp.type = V_ASN1_IA5STRING;
+    gntmp.type = GEN_DNS;
+    gntmp.d.dNSName = &stmp;
+
+    nm = X509_get_subject_name(x);
+
+    /* Process any commonName attributes in subject name */
+
+    for (i = -1;;) {
+        X509_NAME_ENTRY *ne;
+        ASN1_STRING *hn;
+        i = X509_NAME_get_index_by_NID(nm, NID_commonName, i);
+        if (i == -1)
+            break;
+        ne = X509_NAME_get_entry(nm, i);
+        hn = X509_NAME_ENTRY_get_data(ne);
+        /* Only process attributes that look like host names */
+        if (asn1_valid_host(hn)) {
+            unsigned char *h;
+            int hlen = ASN1_STRING_to_UTF8(&h, hn);
+            if (hlen <= 0)
+                return X509_V_ERR_OUT_OF_MEM;
+
+            stmp.length = hlen;
+            stmp.data = h;
+
+            r = nc_match(&gntmp, nc);
+
+            OPENSSL_free(h);
+
+            if (r != X509_V_OK)
+                    return r;
+        }
+    }
+    return X509_V_OK;
 }
 
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)

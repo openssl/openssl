@@ -1,65 +1,22 @@
 /*
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/*
  * C implementation based on the original Perl and shell versions
  *
  * Copyright (c) 2013-2014 Timo Teräs <timo.teras@iki.fi>
  */
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
 
 #include "apps.h"
 
-#if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__)
+#if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) || \
+    (defined(__VMS) && defined(__DECC) && __CTRL_VER >= 80300000)
 # include <unistd.h>
 # include <stdio.h>
 # include <limits.h>
@@ -74,6 +31,9 @@
 # include <openssl/x509.h>
 
 
+# ifndef PATH_MAX
+#  define PATH_MAX 4096
+# endif
 # ifndef NAME_MAX
 #  define NAME_MAX 255
 # endif
@@ -154,8 +114,8 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
     for (ep = bp->first_entry; ep; ep = ep->next) {
         if (digest && memcmp(digest, ep->digest, evpmdsize) == 0) {
             BIO_printf(bio_err,
-                       "%s: skipping duplicate certificate in %s\n",
-                       opt_getprog(), filename);
+                       "%s: skipping duplicate %s in %s\n", opt_getprog(),
+                       type == TYPE_CERT ? "certificate" : "CRL", filename);
             return 1;
         }
         if (strcmp(filename, ep->filename) == 0) {
@@ -203,20 +163,22 @@ static int handle_symlink(const char *filename, const char *fullpath)
     int i, type, id;
     unsigned char ch;
     char linktarget[PATH_MAX], *endptr;
-    ssize_t n;
+    ossl_ssize_t n;
 
     for (i = 0; i < 8; i++) {
         ch = filename[i];
         if (!isxdigit(ch))
             return -1;
         hash <<= 4;
-        hash += app_hex(ch);
+        hash += OPENSSL_hexchar2int(ch);
     }
     if (filename[i++] != '.')
         return -1;
-    for (type = OSSL_NELEM(suffixes) - 1; type > 0; type--)
-        if (strcasecmp(suffixes[type], &filename[i]) == 0)
+    for (type = OSSL_NELEM(suffixes) - 1; type > 0; type--) {
+        const char *suffix = suffixes[type];
+        if (strncasecmp(suffix, &filename[i], strlen(suffix)) == 0)
             break;
+    }
     i += strlen(suffixes[type]);
 
     id = strtoul(&filename[i], &endptr, 10);
@@ -300,6 +262,11 @@ end:
     return errs;
 }
 
+static void str_free(char *s)
+{
+    OPENSSL_free(s);
+}
+
 /*
  * Process a directory; return number of errors found.
  */
@@ -310,11 +277,12 @@ static int do_dir(const char *dirname, enum Hash h)
     OPENSSL_DIR_CTX *d = NULL;
     struct stat st;
     unsigned char idmask[MAX_COLLISIONS / 8];
-    int n, nextid, buflen, errs = 0;
+    int n, numfiles, nextid, buflen, errs = 0;
     size_t i;
     const char *pathsep;
     const char *filename;
-    char *buf;
+    char *buf, *copy;
+    STACK_OF(OPENSSL_STRING) *files = NULL;
 
     if (app_access(dirname, W_OK) < 0) {
         BIO_printf(bio_err, "Skipping %s, can't write\n", dirname);
@@ -328,7 +296,23 @@ static int do_dir(const char *dirname, enum Hash h)
     if (verbose)
         BIO_printf(bio_out, "Doing %s\n", dirname);
 
+    if ((files = sk_OPENSSL_STRING_new_null()) == NULL) {
+        BIO_printf(bio_err, "Skipping %s, out of memory\n", dirname);
+        exit(1);
+    }
     while ((filename = OPENSSL_DIR_read(&d, dirname)) != NULL) {
+        if ((copy = strdup(filename)) == NULL
+                || sk_OPENSSL_STRING_push(files, copy) == 0) {
+            BIO_puts(bio_err, "out of memory\n");
+            exit(1);
+        }
+    }
+    OPENSSL_DIR_end(&d);
+    sk_OPENSSL_STRING_sort(files);
+
+    numfiles = sk_OPENSSL_STRING_num(files);
+    for (n = 0; n < numfiles; ++n) {
+        filename = sk_OPENSSL_STRING_value(files, n);
         if (snprintf(buf, buflen, "%s%s%s",
                     dirname, pathsep, filename) >= buflen)
             continue;
@@ -338,7 +322,7 @@ static int do_dir(const char *dirname, enum Hash h)
             continue;
         errs += do_file(filename, buf, h);
     }
-    OPENSSL_DIR_end(&d);
+    sk_OPENSSL_STRING_pop_free(files, str_free);
 
     for (i = 0; i < OSSL_NELEM(hash_table); i++) {
         for (bp = hash_table[i]; bp; bp = nextbp) {
@@ -382,6 +366,7 @@ static int do_dir(const char *dirname, enum Hash h)
                                    strerror(errno));
                         errs++;
                     }
+                    bit_set(idmask, nextid);
                 } else if (remove_links) {
                     /* Link to be deleted */
                     snprintf(buf, buflen, "%s%s%n%08x.%s%d",

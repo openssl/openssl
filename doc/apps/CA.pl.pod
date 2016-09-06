@@ -1,4 +1,3 @@
-
 =pod
 
 =head1 NAME
@@ -103,7 +102,7 @@ B<cessationOfOperation>, B<certificateHold>, or B<removeFromCRL>.
 =item B<-verify>
 
 verifies certificates against the CA certificate for "demoCA". If no certificates
-are specified on the command line it tries to verify the file "newcert.pem". 
+are specified on the command line it tries to verify the file "newcert.pem".
 
 =item B<files>
 
@@ -148,7 +147,7 @@ enter cacert.pem when prompted for the CA file name.
 Create a DSA certificate request and private key (a different set of parameters
 can optionally be created first):
 
- openssl req -out newreq.pem -newkey dsa:dsap.pem 
+ openssl req -out newreq.pem -newkey dsa:dsap.pem
 
 Sign the request:
 
@@ -169,7 +168,7 @@ be wrong. In this case the command:
 
  perl -S CA.pl
 
-can be used and the B<OPENSSL_CONF> environment variable changed to point to 
+can be used and the B<OPENSSL_CONF> environment variable changed to point to
 the correct path of the configuration file "openssl.cnf".
 
 The script is intended as a simple front end for the B<openssl> program for use
@@ -186,5 +185,14 @@ configuration file, not just its directory.
 
 L<x509(1)>, L<ca(1)>, L<req(1)>, L<pkcs12(1)>,
 L<config(5)>
+
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

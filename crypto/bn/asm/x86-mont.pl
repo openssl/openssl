@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
@@ -66,27 +73,26 @@ $frame=32;				# size of above frame rounded up to 16n
 
 	&lea	("esi",&wparam(0));	# put aside pointer to argument block
 	&lea	("edx",&wparam(1));	# load ap
-	&mov	("ebp","esp");		# saved stack pointer!
 	&add	("edi",2);		# extra two words on top of tp
 	&neg	("edi");
-	&lea	("esp",&DWP(-$frame,"esp","edi",4));	# alloca($frame+4*(num+2))
+	&lea	("ebp",&DWP(-$frame,"esp","edi",4));	# future alloca($frame+4*(num+2))
 	&neg	("edi");
 
 	# minimize cache contention by arraning 2K window between stack
 	# pointer and ap argument [np is also position sensitive vector,
 	# but it's assumed to be near ap, as it's allocated at ~same
 	# time].
-	&mov	("eax","esp");
+	&mov	("eax","ebp");
 	&sub	("eax","edx");
 	&and	("eax",2047);
-	&sub	("esp","eax");		# this aligns sp and ap modulo 2048
+	&sub	("ebp","eax");		# this aligns sp and ap modulo 2048
 
-	&xor	("edx","esp");
+	&xor	("edx","ebp");
 	&and	("edx",2048);
 	&xor	("edx",2048);
-	&sub	("esp","edx");		# this splits them apart modulo 4096
+	&sub	("ebp","edx");		# this splits them apart modulo 4096
 
-	&and	("esp",-64);		# align to cache line
+	&and	("ebp",-64);		# align to cache line
 
 	# An OS-agnostic version of __chkstk.
 	#
@@ -96,20 +102,28 @@ $frame=32;				# size of above frame rounded up to 16n
 	# be punishable by SEGV. But page walking can do good even on
 	# other OSes, because it guarantees that villain thread hits
 	# the guard page before it can make damage to innocent one...
-	&mov	("eax","ebp");
-	&sub	("eax","esp");
+	&mov	("eax","esp");
+	&sub	("eax","ebp");
 	&and	("eax",-4096);
-&set_label("page_walk");
-	&mov	("edx",&DWP(0,"esp","eax"));
-	&sub	("eax",4096);
-	&data_byte(0x2e);
-	&jnc	(&label("page_walk"));
+	&mov	("edx","esp");		# saved stack pointer!
+	&lea	("esp",&DWP(0,"ebp","eax"));
+	&mov	("eax",&DWP(0,"esp"));
+	&cmp	("esp","ebp");
+	&ja	(&label("page_walk"));
+	&jmp	(&label("page_walk_done"));
+
+&set_label("page_walk",16);
+	&lea	("esp",&DWP(-4096,"esp"));
+	&mov	("eax",&DWP(0,"esp"));
+	&cmp	("esp","ebp");
+	&ja	(&label("page_walk"));
+&set_label("page_walk_done");
 
 	################################# load argument block...
 	&mov	("eax",&DWP(0*4,"esi"));# BN_ULONG *rp
 	&mov	("ebx",&DWP(1*4,"esi"));# const BN_ULONG *ap
 	&mov	("ecx",&DWP(2*4,"esi"));# const BN_ULONG *bp
-	&mov	("edx",&DWP(3*4,"esi"));# const BN_ULONG *np
+	&mov	("ebp",&DWP(3*4,"esi"));# const BN_ULONG *np
 	&mov	("esi",&DWP(4*4,"esi"));# const BN_ULONG *n0
 	#&mov	("edi",&DWP(5*4,"esi"));# int num
 
@@ -117,11 +131,11 @@ $frame=32;				# size of above frame rounded up to 16n
 	&mov	($_rp,"eax");		# ... save a copy of argument block
 	&mov	($_ap,"ebx");
 	&mov	($_bp,"ecx");
-	&mov	($_np,"edx");
+	&mov	($_np,"ebp");
 	&mov	($_n0,"esi");
 	&lea	($num,&DWP(-3,"edi"));	# num=num-1 to assist modulo-scheduling
 	#&mov	($_num,$num);		# redundant as $num is not reused
-	&mov	($_sp,"ebp");		# saved stack pointer!
+	&mov	($_sp,"edx");		# saved stack pointer!
 
 if($sse2) {
 $acc0="mm0";	# mmx register bank layout
@@ -287,7 +301,7 @@ if (0) {
 	&xor	("eax","eax");	# signal "not fast enough [yet]"
 	&jmp	(&label("just_leave"));
 	# While the below code provides competitive performance for
-	# all key lengthes on modern Intel cores, it's still more
+	# all key lengths on modern Intel cores, it's still more
 	# than 10% slower for 4096-bit key elsewhere:-( "Competitive"
 	# means compared to the original integer-only assembler.
 	# 512-bit RSA sign is better by ~40%, but that's about all

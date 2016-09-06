@@ -1,64 +1,16 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2000.
- */
-/* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
 #include <string.h>
 #include "internal/cryptlib.h"
+#include "internal/asn1_int.h"
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
@@ -74,6 +26,7 @@
 #define CHARTYPE_BS_ESC         (ASN1_STRFLGS_ESC_2253 | CHARTYPE_FIRST_ESC_2253 | CHARTYPE_LAST_ESC_2253)
 
 #define ESC_FLAGS (ASN1_STRFLGS_ESC_2253 | \
+                  ASN1_STRFLGS_ESC_2254 | \
                   ASN1_STRFLGS_ESC_QUOTE | \
                   ASN1_STRFLGS_ESC_CTRL | \
                   ASN1_STRFLGS_ESC_MSB)
@@ -113,7 +66,8 @@ typedef int char_io (void *arg, const void *buf, int len);
 static int do_esc_char(unsigned long c, unsigned char flags, char *do_quotes,
                        char_io *io_ch, void *arg)
 {
-    unsigned char chflgs, chtmp;
+    unsigned short chflgs;
+    unsigned char chtmp;
     char tmphex[HEX_SIZE(long) + 3];
 
     if (c > 0xffffffffL)
@@ -150,7 +104,9 @@ static int do_esc_char(unsigned long c, unsigned char flags, char *do_quotes,
             return -1;
         return 2;
     }
-    if (chflgs & (ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_ESC_MSB)) {
+    if (chflgs & (ASN1_STRFLGS_ESC_CTRL
+                  | ASN1_STRFLGS_ESC_MSB
+                  | ASN1_STRFLGS_ESC_2254)) {
         BIO_snprintf(tmphex, 11, "\\%02X", chtmp);
         if (!io_ch(arg, tmphex, 3))
             return -1;
@@ -180,11 +136,12 @@ static int do_esc_char(unsigned long c, unsigned char flags, char *do_quotes,
  */
 
 static int do_buf(unsigned char *buf, int buflen,
-                  int type, unsigned char flags, char *quotes, char_io *io_ch,
+                  int type, unsigned short flags, char *quotes, char_io *io_ch,
                   void *arg)
 {
     int i, outlen, len;
-    unsigned char orflags, *p, *q;
+    unsigned short orflags;
+    unsigned char *p, *q;
     unsigned long c;
     p = buf;
     q = buf + buflen;
@@ -234,7 +191,7 @@ static int do_buf(unsigned char *buf, int buflen,
                  * character will never be escaped on first and last.
                  */
                 len =
-                    do_esc_char(utfbuf[i], (unsigned char)(flags | orflags),
+                    do_esc_char(utfbuf[i], (unsigned short)(flags | orflags),
                                 quotes, io_ch, arg);
                 if (len < 0)
                     return -1;
@@ -242,7 +199,7 @@ static int do_buf(unsigned char *buf, int buflen,
             }
         } else {
             len =
-                do_esc_char(c, (unsigned char)(flags | orflags), quotes,
+                do_esc_char(c, (unsigned short)(flags | orflags), quotes,
                             io_ch, arg);
             if (len < 0)
                 return -1;
@@ -281,7 +238,7 @@ static int do_hex_dump(char_io *io_ch, void *arg, unsigned char *buf,
  */
 
 static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
-                   ASN1_STRING *str)
+                   const ASN1_STRING *str)
 {
     /*
      * Placing the ASN1_STRING in a temp ASN1_TYPE allows the DER encoding to
@@ -326,7 +283,7 @@ static const signed char tag2nbyte[] = {
     -1, -1, -1, -1, -1,         /* 5-9 */
     -1, -1, 0, -1,              /* 10-13 */
     -1, -1, -1, -1,             /* 15-17 */
-    -1, 1, 1,                   /* 18-20 */
+    1, 1, 1,                    /* 18-20 */
     -1, 1, 1, 1,                /* 21-24 */
     -1, 1, -1,                  /* 25-27 */
     4, -1, 2                    /* 28-30 */
@@ -339,15 +296,15 @@ static const signed char tag2nbyte[] = {
  */
 
 static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
-                       ASN1_STRING *str)
+                       const ASN1_STRING *str)
 {
     int outlen, len;
     int type;
     char quotes;
-    unsigned char flags;
+    unsigned short flags;
     quotes = 0;
     /* Keep a copy of escape flags */
-    flags = (unsigned char)(lflags & ESC_FLAGS);
+    flags = (unsigned short)(lflags & ESC_FLAGS);
 
     type = str->type;
 
@@ -431,14 +388,14 @@ static int do_indent(char_io *io_ch, void *arg, int indent)
 #define FN_WIDTH_LN     25
 #define FN_WIDTH_SN     10
 
-static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
+static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
                       int indent, unsigned long flags)
 {
     int i, prev = -1, orflags, cnt;
     int fn_opt, fn_nid;
     ASN1_OBJECT *fn;
-    ASN1_STRING *val;
-    X509_NAME_ENTRY *ent;
+    const ASN1_STRING *val;
+    const X509_NAME_ENTRY *ent;
     char objtmp[80];
     const char *objbuf;
     int outlen, len;
@@ -569,7 +526,7 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
 
 /* Wrappers round the main functions */
 
-int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent,
+int X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent,
                        unsigned long flags)
 {
     if (flags == XN_FLAG_COMPAT)
@@ -578,7 +535,7 @@ int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent,
 }
 
 #ifndef OPENSSL_NO_STDIO
-int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent,
+int X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent,
                           unsigned long flags)
 {
     if (flags == XN_FLAG_COMPAT) {
@@ -595,13 +552,13 @@ int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent,
 }
 #endif
 
-int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags)
+int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags)
 {
     return do_print_ex(send_bio_chars, out, flags, str);
 }
 
 #ifndef OPENSSL_NO_STDIO
-int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags)
+int ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flags)
 {
     return do_print_ex(send_fp_chars, fp, flags, str);
 }
@@ -612,7 +569,7 @@ int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags)
  * in output string or a negative error code
  */
 
-int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in)
+int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
 {
     ASN1_STRING stmp, *str = &stmp;
     int mbflag, type, ret;
@@ -635,4 +592,54 @@ int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in)
         return ret;
     *out = stmp.data;
     return stmp.length;
+}
+
+/* Return 1 if host is a valid hostname and 0 otherwise */
+int asn1_valid_host(const ASN1_STRING *host)
+{
+    int hostlen = host->length;
+    const unsigned char *hostptr = host->data;
+    int type = host->type;
+    int i;
+    char width = -1;
+    unsigned short chflags = 0, prevchflags;
+
+    if (type > 0 && type < 31)
+        width = tag2nbyte[type];
+    if (width == -1 || hostlen == 0)
+        return 0;
+    /* Treat UTF8String as width 1 as any MSB set is invalid */
+    if (width == 0)
+        width = 1;
+    for (i = 0 ; i < hostlen; i+= width) {
+        prevchflags = chflags;
+        /* Value must be <= 0x7F: check upper bytes are all zeroes */
+        if (width == 4) {
+            if (*hostptr++ != 0 || *hostptr++ != 0 || *hostptr++ != 0)
+                return 0;
+        } else if (width == 2) {
+            if (*hostptr++ != 0)
+                return 0;
+        }
+        if (*hostptr > 0x7f)
+            return 0;
+        chflags = char_type[*hostptr++];
+        if (!(chflags & (CHARTYPE_HOST_ANY | CHARTYPE_HOST_WILD))) {
+            /* Nothing else allowed at start or end of string */
+            if (i == 0 || i == hostlen - 1)
+                return 0;
+            /* Otherwise invalid if not dot or hyphen */
+            if (!(chflags & (CHARTYPE_HOST_DOT | CHARTYPE_HOST_HYPHEN)))
+                return 0;
+            /*
+             * If previous is dot or hyphen then illegal unless both
+             * are hyphens: as .- -. .. are all illegal
+             */
+            if (prevchflags & (CHARTYPE_HOST_DOT | CHARTYPE_HOST_HYPHEN)
+                && ((prevchflags & CHARTYPE_HOST_DOT)
+                    || (chflags & CHARTYPE_HOST_DOT)))
+                return 0;
+        }
+    }
+    return 1;
 }

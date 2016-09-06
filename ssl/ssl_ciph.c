@@ -1,112 +1,12 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  * ECC cipher suite support in OpenSSL originally developed by
@@ -140,11 +40,13 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
 #include <openssl/engine.h>
-#include "internal/threads.h"
+#include <openssl/crypto.h>
 #include "ssl_locl.h"
+#include "internal/thread_once.h"
 
 #define SSL_ENC_DES_IDX         0
 #define SSL_ENC_3DES_IDX        1
@@ -229,9 +131,9 @@ static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
     {SSL_GOST89MAC, NID_id_Gost28147_89_MAC}, /* SSL_MD_GOST89MAC_IDX 3 */
     {SSL_SHA256, NID_sha256},   /* SSL_MD_SHA256_IDX 4 */
     {SSL_SHA384, NID_sha384},   /* SSL_MD_SHA384_IDX 5 */
-    {SSL_GOST12_256, NID_id_GostR3411_2012_256},  /* SSL_MD_GOST12_256_IDX 6 */
-    {SSL_GOST89MAC12, NID_gost_mac_12},           /* SSL_MD_GOST89MAC12_IDX 7 */
-    {SSL_GOST12_512, NID_id_GostR3411_2012_512},  /* SSL_MD_GOST12_512_IDX 8 */
+    {SSL_GOST12_256, NID_id_GostR3411_2012_256}, /* SSL_MD_GOST12_256_IDX 6 */
+    {SSL_GOST89MAC12, NID_gost_mac_12}, /* SSL_MD_GOST89MAC12_IDX 7 */
+    {SSL_GOST12_512, NID_id_GostR3411_2012_512}, /* SSL_MD_GOST12_512_IDX 8 */
     {0, NID_md5_sha1},          /* SSL_MD_MD5_SHA1_IDX 9 */
     {0, NID_sha224},            /* SSL_MD_SHA224_IDX 10 */
     {0, NID_sha512}             /* SSL_MD_SHA512_IDX 11 */
@@ -241,28 +143,30 @@ static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX] = {
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
+/* *INDENT-OFF* */
 static const ssl_cipher_table ssl_cipher_table_kx[] = {
-    { SSL_kRSA,      NID_kx_rsa },
-    { SSL_kECDHE,    NID_kx_ecdhe },
-    { SSL_kDHE,      NID_kx_dhe },
-    { SSL_kECDHEPSK, NID_kx_ecdhe_psk },
-    { SSL_kDHEPSK,   NID_kx_dhe_psk },
-    { SSL_kRSAPSK,   NID_kx_rsa_psk },
-    { SSL_kPSK,      NID_kx_psk },
-    { SSL_kSRP,      NID_kx_srp },
-    { SSL_kGOST,     NID_kx_gost }
+    {SSL_kRSA,      NID_kx_rsa},
+    {SSL_kECDHE,    NID_kx_ecdhe},
+    {SSL_kDHE,      NID_kx_dhe},
+    {SSL_kECDHEPSK, NID_kx_ecdhe_psk},
+    {SSL_kDHEPSK,   NID_kx_dhe_psk},
+    {SSL_kRSAPSK,   NID_kx_rsa_psk},
+    {SSL_kPSK,      NID_kx_psk},
+    {SSL_kSRP,      NID_kx_srp},
+    {SSL_kGOST,     NID_kx_gost}
 };
 
 static const ssl_cipher_table ssl_cipher_table_auth[] = {
-    { SSL_aRSA,    NID_auth_rsa },
-    { SSL_aECDSA,  NID_auth_ecdsa },
-    { SSL_aPSK,    NID_auth_psk },
-    { SSL_aDSS,    NID_auth_dss },
-    { SSL_aGOST01, NID_auth_gost01 },
-    { SSL_aGOST12, NID_auth_gost12 },
-    { SSL_aSRP,    NID_auth_srp },
-    { SSL_aNULL,   NID_auth_null }
+    {SSL_aRSA,    NID_auth_rsa},
+    {SSL_aECDSA,  NID_auth_ecdsa},
+    {SSL_aPSK,    NID_auth_psk},
+    {SSL_aDSS,    NID_auth_dss},
+    {SSL_aGOST01, NID_auth_gost01},
+    {SSL_aGOST12, NID_auth_gost12},
+    {SSL_aSRP,    NID_auth_srp},
+    {SSL_aNULL,   NID_auth_null}
 };
+/* *INDENT-ON* */
 
 /* Utility function for table lookup */
 static int ssl_cipher_info_find(const ssl_cipher_table * table,
@@ -293,9 +197,7 @@ static int ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
     EVP_PKEY_HMAC,
 };
 
-static int ssl_mac_secret_size[SSL_MD_NUM_IDX] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
+static int ssl_mac_secret_size[SSL_MD_NUM_IDX];
 
 #define CIPHER_ADD      1
 #define CIPHER_KILL     2
@@ -317,123 +219,113 @@ typedef struct cipher_order_st {
 
 static const SSL_CIPHER cipher_aliases[] = {
     /* "ALL" doesn't include eNULL (must be specifically enabled) */
-    {0, SSL_TXT_ALL, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_ALL, 0, 0, 0, ~SSL_eNULL},
     /* "COMPLEMENTOFALL" */
-    {0, SSL_TXT_CMPALL, 0, 0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_CMPALL, 0, 0, 0, SSL_eNULL},
 
     /*
      * "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in
      * ALL!)
      */
-    {0, SSL_TXT_CMPDEF, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_NOT_DEFAULT, 0, 0, 0},
+    {0, SSL_TXT_CMPDEF, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_NOT_DEFAULT},
 
     /*
      * key exchange aliases (some of those using only a single bit here
      * combine multiple key exchange algs according to the RFCs, e.g. kDHE
      * combines DHE_DSS and DHE_RSA)
      */
-    {0, SSL_TXT_kRSA, 0, SSL_kRSA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kRSA, 0, SSL_kRSA},
 
-    {0, SSL_TXT_kEDH, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kDHE, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_DH, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kEDH, 0, SSL_kDHE},
+    {0, SSL_TXT_kDHE, 0, SSL_kDHE},
+    {0, SSL_TXT_DH, 0, SSL_kDHE},
 
-    {0, SSL_TXT_kEECDH, 0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kECDHE, 0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_ECDH, 0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kEECDH, 0, SSL_kECDHE},
+    {0, SSL_TXT_kECDHE, 0, SSL_kECDHE},
+    {0, SSL_TXT_ECDH, 0, SSL_kECDHE},
 
-    {0, SSL_TXT_kPSK, 0, SSL_kPSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kRSAPSK, 0, SSL_kRSAPSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kECDHEPSK, 0, SSL_kECDHEPSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kDHEPSK, 0, SSL_kDHEPSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kSRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kGOST, 0, SSL_kGOST, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kPSK, 0, SSL_kPSK},
+    {0, SSL_TXT_kRSAPSK, 0, SSL_kRSAPSK},
+    {0, SSL_TXT_kECDHEPSK, 0, SSL_kECDHEPSK},
+    {0, SSL_TXT_kDHEPSK, 0, SSL_kDHEPSK},
+    {0, SSL_TXT_kSRP, 0, SSL_kSRP},
+    {0, SSL_TXT_kGOST, 0, SSL_kGOST},
 
     /* server authentication aliases */
-    {0, SSL_TXT_aRSA, 0, 0, SSL_aRSA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aDSS, 0, 0, SSL_aDSS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_DSS, 0, 0, SSL_aDSS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aNULL, 0, 0, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_ECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aPSK, 0, 0, SSL_aPSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aGOST01, 0, 0, SSL_aGOST01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aGOST12, 0, 0, SSL_aGOST12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aGOST, 0, 0, SSL_aGOST01 | SSL_aGOST12, 0, 0, 0, 0, 0, 0,
-     0, 0, 0, 0},
-    {0, SSL_TXT_aSRP, 0, 0, SSL_aSRP, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_aRSA, 0, 0, SSL_aRSA},
+    {0, SSL_TXT_aDSS, 0, 0, SSL_aDSS},
+    {0, SSL_TXT_DSS, 0, 0, SSL_aDSS},
+    {0, SSL_TXT_aNULL, 0, 0, SSL_aNULL},
+    {0, SSL_TXT_aECDSA, 0, 0, SSL_aECDSA},
+    {0, SSL_TXT_ECDSA, 0, 0, SSL_aECDSA},
+    {0, SSL_TXT_aPSK, 0, 0, SSL_aPSK},
+    {0, SSL_TXT_aGOST01, 0, 0, SSL_aGOST01},
+    {0, SSL_TXT_aGOST12, 0, 0, SSL_aGOST12},
+    {0, SSL_TXT_aGOST, 0, 0, SSL_aGOST01 | SSL_aGOST12},
+    {0, SSL_TXT_aSRP, 0, 0, SSL_aSRP},
 
     /* aliases combining key exchange and server authentication */
-    {0, SSL_TXT_EDH, 0, SSL_kDHE, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_DHE, 0, SSL_kDHE, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_EECDH, 0, SSL_kECDHE, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_ECDHE, 0, SSL_kECDHE, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_NULL, 0, 0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_RSA, 0, SSL_kRSA, SSL_aRSA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_ADH, 0, SSL_kDHE, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AECDH, 0, SSL_kECDHE, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_PSK, 0, SSL_PSK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_EDH, 0, SSL_kDHE, ~SSL_aNULL},
+    {0, SSL_TXT_DHE, 0, SSL_kDHE, ~SSL_aNULL},
+    {0, SSL_TXT_EECDH, 0, SSL_kECDHE, ~SSL_aNULL},
+    {0, SSL_TXT_ECDHE, 0, SSL_kECDHE, ~SSL_aNULL},
+    {0, SSL_TXT_NULL, 0, 0, 0, SSL_eNULL},
+    {0, SSL_TXT_RSA, 0, SSL_kRSA, SSL_aRSA},
+    {0, SSL_TXT_ADH, 0, SSL_kDHE, SSL_aNULL},
+    {0, SSL_TXT_AECDH, 0, SSL_kECDHE, SSL_aNULL},
+    {0, SSL_TXT_PSK, 0, SSL_PSK},
+    {0, SSL_TXT_SRP, 0, SSL_kSRP},
 
     /* symmetric encryption aliases */
-    {0, SSL_TXT_3DES, 0, 0, 0, SSL_3DES, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_RC4, 0, 0, 0, SSL_RC4, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_RC2, 0, 0, 0, SSL_RC2, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_IDEA, 0, 0, 0, SSL_IDEA, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SEED, 0, 0, 0, SSL_SEED, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_eNULL, 0, 0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_GOST, 0, 0, 0, SSL_eGOST2814789CNT | SSL_eGOST2814789CNT12, 0,
-     0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AES128, 0, 0, 0, SSL_AES128 | SSL_AES128GCM | SSL_AES128CCM | SSL_AES128CCM8, 0,
-     0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AES256, 0, 0, 0, SSL_AES256 | SSL_AES256GCM | SSL_AES256CCM | SSL_AES256CCM8, 0,
-     0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AES, 0, 0, 0, SSL_AES, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AES_GCM, 0, 0, 0, SSL_AES128GCM | SSL_AES256GCM, 0, 0, 0, 0,
-     0, 0, 0, 0, 0},
+    {0, SSL_TXT_3DES, 0, 0, 0, SSL_3DES},
+    {0, SSL_TXT_RC4, 0, 0, 0, SSL_RC4},
+    {0, SSL_TXT_RC2, 0, 0, 0, SSL_RC2},
+    {0, SSL_TXT_IDEA, 0, 0, 0, SSL_IDEA},
+    {0, SSL_TXT_SEED, 0, 0, 0, SSL_SEED},
+    {0, SSL_TXT_eNULL, 0, 0, 0, SSL_eNULL},
+    {0, SSL_TXT_GOST, 0, 0, 0, SSL_eGOST2814789CNT | SSL_eGOST2814789CNT12},
+    {0, SSL_TXT_AES128, 0, 0, 0,
+     SSL_AES128 | SSL_AES128GCM | SSL_AES128CCM | SSL_AES128CCM8},
+    {0, SSL_TXT_AES256, 0, 0, 0,
+     SSL_AES256 | SSL_AES256GCM | SSL_AES256CCM | SSL_AES256CCM8},
+    {0, SSL_TXT_AES, 0, 0, 0, SSL_AES},
+    {0, SSL_TXT_AES_GCM, 0, 0, 0, SSL_AES128GCM | SSL_AES256GCM},
     {0, SSL_TXT_AES_CCM, 0, 0, 0,
-     SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8, 0, 0, 0,
-     0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AES_CCM_8, 0, 0, 0, SSL_AES128CCM8 | SSL_AES256CCM8, 0, 0, 0, 0,
-     0, 0},
-    {0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128, 0, 0, 0, 0, 0, 0, 0, 0,
-     0},
-    {0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256, 0, 0, 0, 0, 0, 0, 0, 0,
-     0},
-    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_CHACHA20, 0, 0, 0, SSL_CHACHA20, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+     SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8},
+    {0, SSL_TXT_AES_CCM_8, 0, 0, 0, SSL_AES128CCM8 | SSL_AES256CCM8},
+    {0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128},
+    {0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256},
+    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA},
+    {0, SSL_TXT_CHACHA20, 0, 0, 0, SSL_CHACHA20},
 
     /* MAC aliases */
-    {0, SSL_TXT_MD5, 0, 0, 0, 0, SSL_MD5, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SHA1, 0, 0, 0, 0, SSL_SHA1, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SHA, 0, 0, 0, 0, SSL_SHA1, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_GOST94, 0, 0, 0, 0, SSL_GOST94, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_GOST89MAC, 0, 0, 0, 0, SSL_GOST89MAC | SSL_GOST89MAC12, 0, 0,
-     0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SHA256, 0, 0, 0, 0, SSL_SHA256, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_SHA384, 0, 0, 0, 0, SSL_SHA384, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_GOST12, 0, 0, 0, 0, SSL_GOST12_256, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_MD5, 0, 0, 0, 0, SSL_MD5},
+    {0, SSL_TXT_SHA1, 0, 0, 0, 0, SSL_SHA1},
+    {0, SSL_TXT_SHA, 0, 0, 0, 0, SSL_SHA1},
+    {0, SSL_TXT_GOST94, 0, 0, 0, 0, SSL_GOST94},
+    {0, SSL_TXT_GOST89MAC, 0, 0, 0, 0, SSL_GOST89MAC | SSL_GOST89MAC12},
+    {0, SSL_TXT_SHA256, 0, 0, 0, 0, SSL_SHA256},
+    {0, SSL_TXT_SHA384, 0, 0, 0, 0, SSL_SHA384},
+    {0, SSL_TXT_GOST12, 0, 0, 0, 0, SSL_GOST12_256},
 
     /* protocol version aliases */
-    {0, SSL_TXT_SSLV3, 0, 0, 0, 0, 0, SSL3_VERSION, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_TLSV1, 0, 0, 0, 0, 0, TLS1_VERSION, 0, 0, 0, 0, 0, 0, 0},
-    {0, "TLSv1.0", 0, 0, 0, 0, 0, TLS1_VERSION, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_TLSV1_2, 0, 0, 0, 0, 0, TLS1_2_VERSION, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_SSLV3, 0, 0, 0, 0, 0, SSL3_VERSION},
+    {0, SSL_TXT_TLSV1, 0, 0, 0, 0, 0, TLS1_VERSION},
+    {0, "TLSv1.0", 0, 0, 0, 0, 0, TLS1_VERSION},
+    {0, SSL_TXT_TLSV1_2, 0, 0, 0, 0, 0, TLS1_2_VERSION},
 
     /* strength classes */
-    {0, SSL_TXT_LOW, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_LOW, 0, 0, 0},
-    {0, SSL_TXT_MEDIUM, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_MEDIUM, 0, 0, 0},
-    {0, SSL_TXT_HIGH, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_HIGH, 0, 0, 0},
+    {0, SSL_TXT_LOW, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_LOW},
+    {0, SSL_TXT_MEDIUM, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_MEDIUM},
+    {0, SSL_TXT_HIGH, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_HIGH},
     /* FIPS 140-2 approved ciphersuite */
-    {0, SSL_TXT_FIPS, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, SSL_FIPS, 0, 0, 0},
+    {0, SSL_TXT_FIPS, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, SSL_FIPS},
 
     /* "EDH-" aliases to "DHE-" labels (for backward compatibility) */
     {0, SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA, 0,
-     SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0,
-     SSL_HIGH | SSL_FIPS, 0, 0, 0,},
+     SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS},
     {0, SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA, 0,
-     SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0,
-     SSL_HIGH | SSL_FIPS, 0, 0, 0,},
+     SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS},
 
 };
 
@@ -551,7 +443,8 @@ void ssl_load_ciphers(void)
         disabled_mac_mask |= SSL_GOST89MAC;
     }
 
-    ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] = get_optional_pkey_id("gost-mac-12");
+    ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] =
+        get_optional_pkey_id("gost-mac-12");
     if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX]) {
         ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
     } else {
@@ -567,7 +460,8 @@ void ssl_load_ciphers(void)
     /*
      * Disable GOST key exchange if no GOST signature algs are available *
      */
-    if ((disabled_auth_mask & (SSL_aGOST01 | SSL_aGOST12)) == (SSL_aGOST01 | SSL_aGOST12))
+    if ((disabled_auth_mask & (SSL_aGOST01 | SSL_aGOST12)) ==
+        (SSL_aGOST01 | SSL_aGOST12))
         disabled_mkey_mask |= SSL_kGOST;
 }
 
@@ -578,7 +472,7 @@ static int sk_comp_cmp(const SSL_COMP *const *a, const SSL_COMP *const *b)
     return ((*a)->id - (*b)->id);
 }
 
-static void do_load_builtin_compressions(void)
+DEFINE_RUN_ONCE_STATIC(do_load_builtin_compressions)
 {
     SSL_COMP *comp = NULL;
     COMP_METHOD *method = COMP_zlib();
@@ -597,12 +491,12 @@ static void do_load_builtin_compressions(void)
         }
     }
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+    return 1;
 }
 
-static void load_builtin_compressions(void)
+static int load_builtin_compressions(void)
 {
-    CRYPTO_THREAD_run_once(&ssl_load_builtin_comp_once,
-                           do_load_builtin_compressions);
+    return RUN_ONCE(&ssl_load_builtin_comp_once, do_load_builtin_compressions);
 }
 #endif
 
@@ -619,7 +513,12 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
     if (comp != NULL) {
         SSL_COMP ctmp;
 #ifndef OPENSSL_NO_COMP
-        load_builtin_compressions();
+        if (!load_builtin_compressions()) {
+            /*
+             * Currently don't care, since a failure only means that
+             * ssl_comp_methods is NULL, which is perfectly OK
+             */
+        }
 #endif
         *comp = NULL;
         ctmp.id = s->compress_meth;
@@ -917,8 +816,8 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
 #endif
 
     if (rule == CIPHER_DEL || rule == CIPHER_BUMP)
-        reverse = 1;            /* needed to maintain sorting between
-                                 * currently deleted ciphers */
+        reverse = 1;            /* needed to maintain sorting between currently
+                                 * deleted ciphers */
 
     head = *head_p;
     tail = *tail_p;
@@ -957,7 +856,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
             fprintf(stderr,
                     "\nName: %s:\nAlgo = %08x/%08x/%08x/%08x/%08x Algo_strength = %08x\n",
                     cp->name, cp->algorithm_mkey, cp->algorithm_auth,
-                    cp->algorithm_enc, cp->algorithm_mac, cp->algorithm_ssl,
+                    cp->algorithm_enc, cp->algorithm_mac, cp->min_tls,
                     cp->algo_strength);
 #endif
             if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
@@ -1150,8 +1049,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                  * it is no command or separator nor
                  * alphanumeric, so we call this an error.
                  */
-                SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
-                       SSL_R_INVALID_COMMAND);
+                SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR, SSL_R_INVALID_COMMAND);
                 retval = found = 0;
                 l++;
                 break;
@@ -1309,8 +1207,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                     ok = 1;
                 }
             } else
-                SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
-                       SSL_R_INVALID_COMMAND);
+                SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR, SSL_R_INVALID_COMMAND);
             if (ok == 0)
                 retval = 0;
             /*
@@ -1386,8 +1283,7 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     }
     return 1;
 # else
-    SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
-           SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE);
+    SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST, SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE);
     return 0;
 # endif
 }
@@ -1440,8 +1336,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
 
     ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
                                disabled_mkey, disabled_auth, disabled_enc,
-                               disabled_mac, co_list, &head,
-                               &tail);
+                               disabled_mac, co_list, &head, &tail);
 
     /* Now arrange all ciphers by preference. */
 
@@ -1459,18 +1354,17 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head,
                           &tail);
 
-
     /* Within each strength group, we prefer GCM over CHACHA... */
     ssl_cipher_apply_rule(0, 0, 0, SSL_AESGCM, 0, 0, 0, CIPHER_ADD, -1,
                           &head, &tail);
     ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20, 0, 0, 0, CIPHER_ADD, -1,
                           &head, &tail);
 
-     /*
-      * ...and generally, our preferred cipher is AES.
-      * Note that AEADs will be bumped to take preference after sorting by
-      * strength.
-      */
+    /*
+     * ...and generally, our preferred cipher is AES.
+     * Note that AEADs will be bumped to take preference after sorting by
+     * strength.
+     */
     ssl_cipher_apply_rule(0, 0, 0, SSL_AES ^ SSL_AESGCM, 0, 0, 0, CIPHER_ADD,
                           -1, &head, &tail);
 
@@ -1534,9 +1428,9 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     ssl_cipher_apply_rule(0, 0, 0, 0, SSL_AEAD, 0, 0, CIPHER_BUMP, -1,
                           &head, &tail);
     ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, 0, 0, 0,
-                          CIPHER_BUMP, -1,  &head, &tail);
+                          CIPHER_BUMP, -1, &head, &tail);
     ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, SSL_AEAD, 0, 0,
-                          CIPHER_BUMP, -1,  &head, &tail);
+                          CIPHER_BUMP, -1, &head, &tail);
 
     /* Now disable everything (maintaining the ordering!) */
     ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
@@ -1578,7 +1472,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     if (ok && (strlen(rule_p) > 0))
         ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list, c);
 
-    OPENSSL_free(ca_list); /* Not needed anymore */
+    OPENSSL_free(ca_list);      /* Not needed anymore */
 
     if (!ok) {                  /* Rule processing failure */
         OPENSSL_free(co_list);
@@ -1623,8 +1517,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     if (*cipher_list_by_id != NULL)
         sk_SSL_CIPHER_free(*cipher_list_by_id);
     *cipher_list_by_id = tmp_cipher_list;
-    (void)sk_SSL_CIPHER_set_cmp_func(*cipher_list_by_id,
-                                     ssl_cipher_ptr_id_cmp);
+    (void)sk_SSL_CIPHER_set_cmp_func(*cipher_list_by_id, ssl_cipher_ptr_id_cmp);
 
     sk_SSL_CIPHER_sort(*cipher_list_by_id);
     return (cipherstack);
@@ -1635,8 +1528,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     const char *ver;
     const char *kx, *au, *enc, *mac;
     uint32_t alg_mkey, alg_auth, alg_enc, alg_mac;
-    static const char *format =
-        "%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n";
+    static const char *format = "%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n";
 
     if (buf == NULL) {
         len = 128;
@@ -1846,8 +1738,8 @@ int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits)
 
     if (c != NULL) {
         if (alg_bits != NULL)
-            *alg_bits = (int) c->alg_bits;
-        ret = (int) c->strength_bits;
+            *alg_bits = (int)c->alg_bits;
+        ret = (int)c->strength_bits;
     }
     return ret;
 }
@@ -1878,14 +1770,13 @@ STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
     return NULL;
 }
+
 STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths)
 {
     return meths;
 }
-void SSL_COMP_free_compression_methods(void)
-{
-}
+
 int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 {
     return 1;
@@ -1911,7 +1802,7 @@ static void cmeth_free(SSL_COMP *cm)
     OPENSSL_free(cm);
 }
 
-void SSL_COMP_free_compression_methods(void)
+void ssl_comp_free_compression_methods_int(void)
 {
     STACK_OF(SSL_COMP) *old_meths = ssl_comp_methods;
     ssl_comp_methods = NULL;
@@ -1957,8 +1848,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
                SSL_R_DUPLICATE_COMPRESSION_ID);
         return (1);
     }
-    if ((ssl_comp_methods == NULL)
-               || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
+    if (ssl_comp_methods == NULL || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
         OPENSSL_free(comp);
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);

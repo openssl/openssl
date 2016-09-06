@@ -1,58 +1,10 @@
 /*
- * Written by Nils Larsch for the OpenSSL project.
- */
-/* ====================================================================
- * Copyright (c) 2000-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <string.h>
@@ -560,13 +512,11 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
         goto err;
     }
     if (ret->base == NULL && (ret->base = ASN1_OCTET_STRING_new()) == NULL) {
+        OPENSSL_free(buffer);
         ECerr(EC_F_EC_GROUP_GET_ECPARAMETERS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    if (!ASN1_OCTET_STRING_set(ret->base, buffer, len)) {
-        ECerr(EC_F_EC_GROUP_GET_ECPARAMETERS, ERR_R_ASN1_LIB);
-        goto err;
-    }
+    ASN1_STRING_set0(ret->base, buffer, len);
 
     /* set the order */
     tmp = EC_GROUP_get0_order(group);
@@ -595,7 +545,6 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
  err:
     if (params == NULL)
         ECPARAMETERS_free(ret);
-    OPENSSL_free(buffer);
     return NULL;
 }
 
@@ -996,7 +945,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 
     if (priv_key->privateKey) {
         ASN1_OCTET_STRING *pkey = priv_key->privateKey;
-        if (EC_KEY_oct2priv(ret, ASN1_STRING_data(pkey),
+        if (EC_KEY_oct2priv(ret, ASN1_STRING_get0_data(pkey),
                             ASN1_STRING_length(pkey)) == 0)
             goto err;
     } else {
@@ -1015,7 +964,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
         const unsigned char *pub_oct;
         int pub_oct_len;
 
-        pub_oct = ASN1_STRING_data(priv_key->publicKey);
+        pub_oct = ASN1_STRING_get0_data(priv_key->publicKey);
         pub_oct_len = ASN1_STRING_length(priv_key->publicKey);
         if (!EC_KEY_oct2key(ret, pub_oct, pub_oct_len, NULL)) {
             ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
@@ -1173,7 +1122,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
     return ret;
 }
 
-int i2o_ECPublicKey(EC_KEY *a, unsigned char **out)
+int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
 {
     size_t buf_len = 0;
     int new_buffer = 0;
@@ -1218,14 +1167,42 @@ ASN1_SEQUENCE(ECDSA_SIG) = {
 
 DECLARE_ASN1_FUNCTIONS_const(ECDSA_SIG)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSA_SIG, ECDSA_SIG)
-IMPLEMENT_ASN1_FUNCTIONS_const(ECDSA_SIG)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(ECDSA_SIG, ECDSA_SIG, ECDSA_SIG)
 
-void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig)
+ECDSA_SIG *ECDSA_SIG_new(void)
+{
+    ECDSA_SIG *sig = OPENSSL_zalloc(sizeof(*sig));
+    if (sig == NULL)
+        ECerr(EC_F_ECDSA_SIG_NEW, ERR_R_MALLOC_FAILURE);
+    return sig;
+}
+
+void ECDSA_SIG_free(ECDSA_SIG *sig)
+{
+    if (sig == NULL)
+        return;
+    BN_clear_free(sig->r);
+    BN_clear_free(sig->s);
+    OPENSSL_free(sig);
+}
+
+void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
 {
     if (pr != NULL)
         *pr = sig->r;
     if (ps != NULL)
         *ps = sig->s;
+}
+
+int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+{
+    if (r == NULL || s == NULL)
+        return 0;
+    BN_clear_free(sig->r);
+    BN_clear_free(sig->s);
+    sig->r = r;
+    sig->s = s;
+    return 1;
 }
 
 int ECDSA_size(const EC_KEY *r)

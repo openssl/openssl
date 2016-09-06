@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -91,6 +43,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_NEW_POST:
         ret->ex_flags = 0;
         ret->ex_pathlen = -1;
+        ret->ex_pcpathlen = -1;
         ret->skid = NULL;
         ret->akid = NULL;
 #ifndef OPENSSL_NO_RFC3779
@@ -99,7 +52,8 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 #endif
         ret->aux = NULL;
         ret->crldp = NULL;
-        CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
+        if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
+            return 0;
         break;
 
     case ASN1_OP_FREE_POST:
@@ -180,12 +134,72 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
     return NULL;
 }
 
+/*
+ * Serialize trusted certificate to *pp or just return the required buffer
+ * length if pp == NULL.  We ultimately want to avoid modifying *pp in the
+ * error path, but that depends on similar hygiene in lower-level functions.
+ * Here we avoid compounding the problem.
+ */
+static int i2d_x509_aux_internal(X509 *a, unsigned char **pp)
+{
+    int length, tmplen;
+    unsigned char *start = pp != NULL ? *pp : NULL;
+
+    OPENSSL_assert(pp == NULL || *pp != NULL);
+
+    /*
+     * This might perturb *pp on error, but fixing that belongs in i2d_X509()
+     * not here.  It should be that if a == NULL length is zero, but we check
+     * both just in case.
+     */
+    length = i2d_X509(a, pp);
+    if (length <= 0 || a == NULL)
+        return length;
+
+    tmplen = i2d_X509_CERT_AUX(a->aux, pp);
+    if (tmplen < 0) {
+        if (start != NULL)
+            *pp = start;
+        return tmplen;
+    }
+    length += tmplen;
+
+    return length;
+}
+
+/*
+ * Serialize trusted certificate to *pp, or just return the required buffer
+ * length if pp == NULL.
+ *
+ * When pp is not NULL, but *pp == NULL, we allocate the buffer, but since
+ * we're writing two ASN.1 objects back to back, we can't have i2d_X509() do
+ * the allocation, nor can we allow i2d_X509_CERT_AUX() to increment the
+ * allocated buffer.
+ */
 int i2d_X509_AUX(X509 *a, unsigned char **pp)
 {
     int length;
-    length = i2d_X509(a, pp);
-    if (a)
-        length += i2d_X509_CERT_AUX(a->aux, pp);
+    unsigned char *tmp;
+
+    /* Buffer provided by caller */
+    if (pp == NULL || *pp != NULL)
+        return i2d_x509_aux_internal(a, pp);
+
+    /* Obtain the combined length */
+    if ((length = i2d_x509_aux_internal(a, NULL)) <= 0)
+        return length;
+
+    /* Allocate requisite combined storage */
+    *pp = tmp = OPENSSL_malloc(length);
+    if (tmp == NULL)
+        return -1; /* Push error onto error stack? */
+
+    /* Encode, but keep *pp at the originally malloced pointer */
+    length = i2d_x509_aux_internal(a, &tmp);
+    if (length <= 0) {
+        OPENSSL_free(*pp);
+        *pp = NULL;
+    }
     return length;
 }
 
@@ -195,7 +209,8 @@ int i2d_re_X509_tbs(X509 *x, unsigned char **pp)
     return i2d_X509_CINF(&x->cert_info, pp);
 }
 
-void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg, X509 *x)
+void X509_get0_signature(const ASN1_BIT_STRING **psig,
+                         const X509_ALGOR **palg, const X509 *x)
 {
     if (psig)
         *psig = &x->signature;

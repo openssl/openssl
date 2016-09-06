@@ -1,50 +1,10 @@
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -114,7 +74,7 @@ static void print_errors(void)
 
 static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
 {
-    int ret;
+    int ret = -1;
     X509_STORE_CTX *store_ctx;
     SSL_CTX *ssl_ctx = SSL_get_SSL_CTX(ssl);
     X509_STORE *store = SSL_CTX_get_cert_store(ssl_ctx);
@@ -125,8 +85,9 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
         return -1;
 
     if (!X509_STORE_CTX_init(store_ctx, store, cert, chain))
-	return 0;
-    X509_STORE_CTX_set_ex_data(store_ctx, store_ctx_idx, ssl);
+        goto end;
+    if (!X509_STORE_CTX_set_ex_data(store_ctx, store_ctx_idx, ssl))
+        goto end;
 
     X509_STORE_CTX_set_default(store_ctx,
             SSL_is_server(ssl) ? "ssl_client" : "ssl_server");
@@ -135,70 +96,71 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
     store_ctx_dane_init(store_ctx, ssl);
 
     if (SSL_get_verify_callback(ssl))
-	X509_STORE_CTX_set_verify_cb(store_ctx, SSL_get_verify_callback(ssl));
+        X509_STORE_CTX_set_verify_cb(store_ctx, SSL_get_verify_callback(ssl));
 
     ret = X509_verify_cert(store_ctx);
 
     SSL_set_verify_result(ssl, X509_STORE_CTX_get_error(store_ctx));
     X509_STORE_CTX_cleanup(store_ctx);
+end:
     X509_STORE_CTX_free(store_ctx);
 
     return (ret);
 }
 
-static STACK_OF(X509) *load_chain(FILE *fp, int nelem)
+static STACK_OF(X509) *load_chain(BIO *fp, int nelem)
 {
     int count;
     char *name = 0;
     char *header = 0;
     unsigned char *data = 0;
     long len;
-    char *errtype = 0;		/* if error: cert or pkey? */
+    char *errtype = 0;                /* if error: cert or pkey? */
     STACK_OF(X509) *chain;
     typedef X509 *(*d2i_X509_t)(X509 **, const unsigned char **, long);
 
     if ((chain = sk_X509_new_null()) == 0) {
-	perror("malloc");
-	exit(1);
+        perror("malloc");
+        exit(1);
     }
 
     for (count = 0;
-	 count < nelem && errtype == 0
-         && PEM_read(fp, &name, &header, &data, &len);
-	 ++count) {
-	const unsigned char *p = data;
+         count < nelem && errtype == 0
+         && PEM_read_bio(fp, &name, &header, &data, &len);
+         ++count) {
+        const unsigned char *p = data;
 
-	if (strcmp(name, PEM_STRING_X509) == 0
-	    || strcmp(name, PEM_STRING_X509_TRUSTED) == 0
-	    || strcmp(name, PEM_STRING_X509_OLD) == 0) {
-	    d2i_X509_t d = strcmp(name, PEM_STRING_X509_TRUSTED) ?
-		d2i_X509_AUX : d2i_X509;
-	    X509 *cert = d(0, &p, len);
+        if (strcmp(name, PEM_STRING_X509) == 0
+            || strcmp(name, PEM_STRING_X509_TRUSTED) == 0
+            || strcmp(name, PEM_STRING_X509_OLD) == 0) {
+            d2i_X509_t d = strcmp(name, PEM_STRING_X509_TRUSTED) ?
+                d2i_X509_AUX : d2i_X509;
+            X509 *cert = d(0, &p, len);
 
-	    if (cert == 0 || (p - data) != len)
-		errtype = "certificate";
-	    else if (sk_X509_push(chain, cert) == 0) {
-		perror("malloc");
-		goto err;
-	    }
-	} else {
-	    fprintf(stderr, "unexpected chain file object: %s\n", name);
-	    goto err;
-	}
+            if (cert == 0 || (p - data) != len)
+                errtype = "certificate";
+            else if (sk_X509_push(chain, cert) == 0) {
+                perror("malloc");
+                goto err;
+            }
+        } else {
+            fprintf(stderr, "unexpected chain file object: %s\n", name);
+            goto err;
+        }
 
-	/*
-	 * If any of these were null, PEM_read() would have failed.
-	 */
-	OPENSSL_free(name);
-	OPENSSL_free(header);
-	OPENSSL_free(data);
+        /*
+         * If any of these were null, PEM_read() would have failed.
+         */
+        OPENSSL_free(name);
+        OPENSSL_free(header);
+        OPENSSL_free(data);
     }
 
     if (errtype) {
-	fprintf(stderr, "error reading: malformed %s\n", errtype);
+        fprintf(stderr, "error reading: malformed %s\n", errtype);
         goto err;
     }
-    
+
     if (count == nelem) {
         ERR_clear_error();
         return chain;
@@ -211,12 +173,12 @@ err:
     return NULL;
 }
 
-static char *read_to_eol(FILE *f)
+static char *read_to_eol(BIO *f)
 {
     static char buf[1024];
     int n;
 
-    if (fgets(buf, sizeof(buf), f)== NULL)
+    if (!BIO_gets(f, buf, sizeof(buf)))
         return NULL;
 
     n = strlen(buf);
@@ -252,19 +214,16 @@ static ossl_ssize_t hexdecode(const char *in, void *result)
         return -1;
 
     for (byte = 0; *in; ++in) {
-        char c;
+        int x;
 
         if (isspace(_UC(*in)))
             continue;
-        c = tolower(_UC(*in));
-        if ('0' <= c && c <= '9') {
-            byte |= c - '0';
-        } else if ('a' <= c && c <= 'f') {
-            byte |= c - 'a' + 10;
-        } else {
+        x = OPENSSL_hexchar2int(*in);
+        if (x < 0) {
             OPENSSL_free(ret);
             return 0;
         }
+        byte |= (char)x;
         if ((nibble ^= 1) == 0) {
             *cp++ = byte;
             byte = 0;
@@ -359,7 +318,7 @@ static int allws(const char *cp)
 }
 
 static int test_tlsafile(SSL_CTX *ctx, const char *basename,
-                         FILE *f, const char *path)
+                         BIO *f, const char *path)
 {
     char *line;
     int testno = 0;
@@ -370,6 +329,7 @@ static int test_tlsafile(SSL_CTX *ctx, const char *basename,
         STACK_OF(X509) *chain;
         int ntlsa;
         int ncert;
+        int noncheck;
         int want;
         int want_depth;
         int off;
@@ -382,7 +342,8 @@ static int test_tlsafile(SSL_CTX *ctx, const char *basename,
             continue;
 
         ++testno;
-        if (sscanf(line, "%d %d %d %d%n", &ntlsa, &ncert, &want, &want_depth, &off) != 4
+        if (sscanf(line, "%d %d %d %d %d%n",
+                   &ntlsa, &ncert, &noncheck, &want, &want_depth, &off) != 5
             || !allws(line + off)) {
             fprintf(stderr, "Expected tlsa count, cert count and result"
                     " at test %d of %s\n", testno, path);
@@ -396,6 +357,8 @@ static int test_tlsafile(SSL_CTX *ctx, const char *basename,
             SSL_free(ssl);
             return -1;
         }
+        if (noncheck)
+            SSL_dane_set_flags(ssl, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
 
         for (i = 0; i < ntlsa; ++i) {
             if ((line = read_to_eol(f)) == NULL || !tlsa_import_rr(ssl, line)) {
@@ -463,7 +426,7 @@ static int test_tlsafile(SSL_CTX *ctx, const char *basename,
 
 int main(int argc, char *argv[])
 {
-    FILE *f;
+    BIO *f;
     BIO *bio_err;
     SSL_CTX *ctx = NULL;
     const char *basedomain;
@@ -475,7 +438,7 @@ int main(int argc, char *argv[])
     progname = argv[0];
     if (argc != 4) {
         test_usage();
-        EXIT(1);
+        EXIT(ret);
     }
     basedomain = argv[1];
     CAfile = argv[2];
@@ -488,13 +451,12 @@ int main(int argc, char *argv[])
         CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    f = fopen(tlsafile, "r");
+    f = BIO_new_file(tlsafile, "r");
     if (f == NULL) {
         fprintf(stderr, "%s: Error opening tlsa record file: '%s': %s\n",
                 progname, tlsafile, strerror(errno));
-        return 0;
+        EXIT(ret);
     }
-
 
     ctx = SSL_CTX_new(TLS_client_method());
     if (SSL_CTX_dane_enable(ctx) <= 0) {
@@ -523,7 +485,7 @@ int main(int argc, char *argv[])
 
 end:
 
-    (void) fclose(f);
+    BIO_free(f);
     SSL_CTX_free(ctx);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG

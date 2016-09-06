@@ -1,46 +1,75 @@
-#!/usr/bin/env perl
-
-# PowerPC assembler distiller by <appro>.
+#! /usr/bin/env perl
+# Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
 
 my $flavour = shift;
 my $output = shift;
 open STDOUT,">$output" || die "can't open $output: $!";
 
 my %GLOBALS;
+my %TYPES;
 my $dotinlocallabels=($flavour=~/linux/)?1:0;
 
 ################################################################
 # directives which need special treatment on different platforms
 ################################################################
+my $type = sub {
+    my ($dir,$name,$type) = @_;
+
+    $TYPES{$name} = $type;
+    if ($flavour =~ /linux/) {
+	$name =~ s|^\.||;
+	".type	$name,$type";
+    } else {
+	"";
+    }
+};
 my $globl = sub {
     my $junk = shift;
     my $name = shift;
     my $global = \$GLOBALS{$name};
+    my $type = \$TYPES{$name};
     my $ret;
 
-    $name =~ s|^[\.\_]||;
+    $name =~ s|^\.||;
  
     SWITCH: for ($flavour) {
-	/aix/		&& do { $name = ".$name";
+	/aix/		&& do { if (!$$type) {
+				    $$type = "\@function";
+				}
+				if ($$type =~ /function/) {
+				    $name = ".$name";
+				}
 				last;
 			      };
 	/osx/		&& do { $name = "_$name";
 				last;
 			      };
 	/linux.*(32|64le)/
-			&& do {	$ret .= ".globl	$name\n";
-				$ret .= ".type	$name,\@function";
+			&& do {	$ret .= ".globl	$name";
+				if (!$$type) {
+				    $ret .= "\n.type	$name,\@function";
+				    $$type = "\@function";
+				}
 				last;
 			      };
-	/linux.*64/	&& do {	$ret .= ".globl	$name\n";
-				$ret .= ".type	$name,\@function\n";
-				$ret .= ".section	\".opd\",\"aw\"\n";
-				$ret .= ".align	3\n";
-				$ret .= "$name:\n";
-				$ret .= ".quad	.$name,.TOC.\@tocbase,0\n";
-				$ret .= ".previous\n";
-
-				$name = ".$name";
+	/linux.*64/	&& do {	$ret .= ".globl	$name";
+				if (!$$type) {
+				    $ret .= "\n.type	$name,\@function";
+				    $$type = "\@function";
+				}
+				if ($$type =~ /function/) {
+				    $ret .= "\n.section	\".opd\",\"aw\"";
+				    $ret .= "\n.align	3";
+				    $ret .= "\n$name:";
+				    $ret .= "\n.quad	.$name,.TOC.\@tocbase,0";
+				    $ret .= "\n.previous";
+				    $name = ".$name";
+				}
 				last;
 			      };
     }
@@ -66,9 +95,13 @@ my $machine = sub {
 my $size = sub {
     if ($flavour =~ /linux/)
     {	shift;
-	my $name = shift; $name =~ s|^[\.\_]||;
-	my $ret  = ".size	$name,.-".($flavour=~/64$/?".":"").$name;
-	$ret .= "\n.size	.$name,.-.$name" if ($flavour=~/64$/);
+	my $name = shift;
+	my $real = $GLOBALS{$name} ? \$GLOBALS{$name} : \$name;
+	my $ret  = ".size	$$real,.-$$real";
+	$name =~ s|^\.||;
+	if ($$real ne $name) {
+	    $ret .= "\n.size	$name,.-$$real";
+	}
 	$ret;
     }
     else
@@ -207,6 +240,21 @@ my $mtsle	= sub {
     "	.long	".sprintf "0x%X",(31<<26)|($arg<<21)|(147*2);
 };
 
+# PowerISA 3.0 stuff
+my $maddhdu = sub {
+    my ($f, $rt, $ra, $rb, $rc) = @_;
+    "	.long	".sprintf "0x%X",(4<<26)|($rt<<21)|($ra<<16)|($rb<<11)|($rc<<6)|49;
+};
+my $maddld = sub {
+    my ($f, $rt, $ra, $rb, $rc) = @_;
+    "	.long	".sprintf "0x%X",(4<<26)|($rt<<21)|($ra<<16)|($rb<<11)|($rc<<6)|51;
+};
+
+my $darn = sub {
+    my ($f, $rt, $l) = @_;
+    "	.long	".sprintf "0x%X",(31<<26)|($rt<<21)|($l<<16)|(755<<1);
+};
+
 while($line=<>) {
 
     $line =~ s|[#!;].*$||;	# get rid of asm-style comments...
@@ -215,7 +263,7 @@ while($line=<>) {
     $line =~ s|\s+$||;		# ... and at the end
 
     {
-	$line =~ s|\b\.L(\w+)|L$1|g;	# common denominator for Locallabel
+	$line =~ s|\.L(\w+)|L$1|g;	# common denominator for Locallabel
 	$line =~ s|\bL(\w+)|\.L$1|g	if ($dotinlocallabels);
     }
 
@@ -223,8 +271,13 @@ while($line=<>) {
 	$line =~ s|(^[\.\w]+)\:\s*||;
 	my $label = $1;
 	if ($label) {
-	    printf "%s:",($GLOBALS{$label} or $label);
-	    printf "\n.localentry\t$GLOBALS{$label},0"	if ($GLOBALS{$label} && $flavour =~ /linux.*64le/);
+	    my $xlated = ($GLOBALS{$label} or $label);
+	    print "$xlated:";
+	    if ($flavour =~ /linux.*64le/) {
+		if ($TYPES{$label} =~ /function/) {
+		    printf "\n.localentry	%s,0\n",$xlated;
+		}
+	    }
 	}
     }
 

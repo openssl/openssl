@@ -1,60 +1,12 @@
 /*
- * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
- * 2000.
+ * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  * ECDH support in OpenSSL originally developed by
@@ -79,7 +31,7 @@ static ENGINE *engine_list_tail = NULL;
 
 /*
  * This cleanup function is only needed internally. If it should be called,
- * we register it with the "ENGINE_cleanup()" stack to be called during
+ * we register it with the "engine_cleanup_int()" stack to be called during
  * cleanup.
  */
 
@@ -184,7 +136,11 @@ ENGINE *ENGINE_get_first(void)
 {
     ENGINE *ret;
 
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+        ENGINEerr(ENGINE_F_ENGINE_GET_FIRST, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
     CRYPTO_THREAD_write_lock(global_engine_lock);
     ret = engine_list_head;
     if (ret) {
@@ -199,7 +155,11 @@ ENGINE *ENGINE_get_last(void)
 {
     ENGINE *ret;
 
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+        ENGINEerr(ENGINE_F_ENGINE_GET_LAST, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
     CRYPTO_THREAD_write_lock(global_engine_lock);
     ret = engine_list_tail;
     if (ret) {
@@ -327,7 +287,11 @@ ENGINE *ENGINE_by_id(const char *id)
         ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+        ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
     CRYPTO_THREAD_write_lock(global_engine_lock);
     iterator = engine_list_head;
     while (iterator && (strcmp(id, iterator->id) != 0))

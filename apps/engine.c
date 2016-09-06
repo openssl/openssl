@@ -1,59 +1,10 @@
 /*
- * Written by Richard Levitte <richard@levitte.org> for the OpenSSL project
- * 2000.
- */
-/* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/opensslconf.h>
@@ -94,10 +45,6 @@ OPTIONS engine_options[] = {
     {NULL}
 };
 
-static void identity(char *ptr)
-{
-}
-
 static int append_buf(char **buf, int *size, const char *s)
 {
     if (*buf == NULL) {
@@ -107,12 +54,16 @@ static int append_buf(char **buf, int *size, const char *s)
     }
 
     if (strlen(*buf) + strlen(s) >= (unsigned int)*size) {
+        char *tmp;
         *size += 256;
-        *buf = OPENSSL_realloc(*buf, *size);
+        tmp = OPENSSL_realloc(*buf, *size);
+        if (tmp == NULL) {
+            OPENSSL_free(*buf);
+            *buf = NULL;
+            return 0;
+        }
+        *buf = tmp;
     }
-
-    if (*buf == NULL)
-        return 0;
 
     if (**buf != '\0')
         OPENSSL_strlcat(*buf, ", ", *size);
@@ -262,7 +213,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
         BIO_printf(out, "\n");
     ret = 1;
  err:
-    sk_OPENSSL_STRING_pop_free(cmds, identity);
+    sk_OPENSSL_STRING_free(cmds);
     OPENSSL_free(name);
     OPENSSL_free(desc);
     return ret;
@@ -312,7 +263,7 @@ int engine_main(int argc, char **argv)
     int ret = 1, i;
     int verbose = 0, list_cap = 0, test_avail = 0, test_avail_noise = 0;
     ENGINE *e;
-    STACK_OF(OPENSSL_STRING) *engines = sk_OPENSSL_STRING_new_null();
+    STACK_OF(OPENSSL_CSTRING) *engines = sk_OPENSSL_CSTRING_new_null();
     STACK_OF(OPENSSL_STRING) *pre_cmds = sk_OPENSSL_STRING_new_null();
     STACK_OF(OPENSSL_STRING) *post_cmds = sk_OPENSSL_STRING_new_null();
     BIO *out;
@@ -329,7 +280,7 @@ int engine_main(int argc, char **argv)
      * names, and then setup to parse the rest of the line as flags. */
     prog = argv[0];
     while ((argv1 = argv[1]) != NULL && *argv1 != '-') {
-        sk_OPENSSL_STRING_push(engines, argv1);
+        sk_OPENSSL_CSTRING_push(engines, argv1);
         argc--;
         argv++;
     }
@@ -382,17 +333,18 @@ int engine_main(int argc, char **argv)
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         }
-        sk_OPENSSL_STRING_push(engines, *argv);
+        sk_OPENSSL_CSTRING_push(engines, *argv);
     }
 
-    if (sk_OPENSSL_STRING_num(engines) == 0) {
+    if (sk_OPENSSL_CSTRING_num(engines) == 0) {
         for (e = ENGINE_get_first(); e != NULL; e = ENGINE_get_next(e)) {
-            sk_OPENSSL_STRING_push(engines, (char *)ENGINE_get_id(e));
+            sk_OPENSSL_CSTRING_push(engines, ENGINE_get_id(e));
         }
     }
 
-    for (i = 0; i < sk_OPENSSL_STRING_num(engines); i++) {
-        const char *id = sk_OPENSSL_STRING_value(engines, i);
+    ret = 0;
+    for (i = 0; i < sk_OPENSSL_CSTRING_num(engines); i++) {
+        const char *id = sk_OPENSSL_CSTRING_value(engines, i);
         if ((e = ENGINE_by_id(id)) != NULL) {
             const char *name = ENGINE_get_name(e);
             /*
@@ -473,17 +425,20 @@ int engine_main(int argc, char **argv)
             if ((verbose > 0) && !util_verbose(e, verbose, out, indent))
                 goto end;
             ENGINE_free(e);
-        } else
+        } else {
             ERR_print_errors(bio_err);
+            /* because exit codes above 127 have special meaning on Unix */
+            if (++ret > 127)
+                ret = 127;
+        }
     }
 
-    ret = 0;
  end:
 
     ERR_print_errors(bio_err);
-    sk_OPENSSL_STRING_pop_free(engines, identity);
-    sk_OPENSSL_STRING_pop_free(pre_cmds, identity);
-    sk_OPENSSL_STRING_pop_free(post_cmds, identity);
+    sk_OPENSSL_CSTRING_free(engines);
+    sk_OPENSSL_STRING_free(pre_cmds);
+    sk_OPENSSL_STRING_free(post_cmds);
     BIO_free_all(out);
     return (ret);
 }

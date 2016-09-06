@@ -1,111 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-/* ====================================================================
- * Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include "../ssl_locl.h"
@@ -161,7 +60,6 @@ void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
 {
     memcpy(r->seq_num, seq_num, SEQ_NUM_SIZE);
 }
-
 
 /*
  * Peeks ahead into "read_ahead" data to see if we have a whole record waiting
@@ -235,7 +133,6 @@ int ssl3_get_record(SSL *s)
     unsigned char md[EVP_MAX_MD_SIZE];
     short version;
     unsigned mac_size;
-    unsigned empty_record_count = 0, curr_empty = 0;
     unsigned int num_recs = 0;
     unsigned int max_recs;
     unsigned int j;
@@ -247,37 +144,41 @@ int ssl3_get_record(SSL *s)
         max_recs = 1;
     sess = s->session;
 
- again:
     do {
         /* check if we have the header */
         if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
             (RECORD_LAYER_get_packet_length(&s->rlayer)
              < SSL3_RT_HEADER_LENGTH)) {
             n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH,
-                SSL3_BUFFER_get_len(rbuf), 0, num_recs == 0 ? 1 : 0);
+                            SSL3_BUFFER_get_len(rbuf), 0,
+                            num_recs == 0 ? 1 : 0);
             if (n <= 0)
-                return (n);         /* error or non-blocking */
+                return (n);     /* error or non-blocking */
             RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_BODY);
 
             p = RECORD_LAYER_get_packet(&s->rlayer);
 
             /*
-             * Check whether this is a regular record or an SSLv2 style record.
-             * The latter is only used in an initial ClientHello for old
-             * clients. We check s->read_hash and s->enc_read_ctx to ensure this
-             * does not apply during renegotiation
+             * The first record received by the server may be a V2ClientHello.
              */
-            if (s->first_packet && s->server && !s->read_hash
-                    && !s->enc_read_ctx
-                    && (p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
-                /* SSLv2 style record */
+            if (s->server && RECORD_LAYER_is_first_record(&s->rlayer)
+                && (p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
+                /*
+                 *  SSLv2 style record
+                 *
+                 * |num_recs| here will actually always be 0 because
+                 * |num_recs > 0| only ever occurs when we are processing
+                 * multiple app data records - which we know isn't the case here
+                 * because it is an SSLv2ClientHello. We keep it using
+                 * |num_recs| for the sake of consistency
+                 */
                 rr[num_recs].type = SSL3_RT_HANDSHAKE;
                 rr[num_recs].rec_version = SSL2_VERSION;
 
                 rr[num_recs].length = ((p[0] & 0x7f) << 8) | p[1];
 
-                if (rr[num_recs].length > SSL3_BUFFER_get_len(&rbuf[num_recs])
-                                 - SSL2_RT_HEADER_LENGTH) {
+                if (rr[num_recs].length > SSL3_BUFFER_get_len(rbuf)
+                    - SSL2_RT_HEADER_LENGTH) {
                     al = SSL_AD_RECORD_OVERFLOW;
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
                     goto f_err;
@@ -316,7 +217,7 @@ int ssl3_get_record(SSL *s)
                              * shouldn't send a fatal alert back. We'll just
                              * end.
                              */
-                             goto err;
+                            goto err;
                         }
                         /*
                          * Send back error using their minor version number :-)
@@ -328,7 +229,7 @@ int ssl3_get_record(SSL *s)
                 }
 
                 if ((version >> 8) != SSL3_VERSION_MAJOR) {
-                    if (s->first_packet) {
+                    if (RECORD_LAYER_is_first_record(&s->rlayer)) {
                         /* Go back to start of packet, look at the five bytes
                          * that we have. */
                         p = RECORD_LAYER_get_packet(&s->rlayer);
@@ -343,13 +244,21 @@ int ssl3_get_record(SSL *s)
                                    SSL_R_HTTPS_PROXY_REQUEST);
                             goto err;
                         }
+
+                        /* Doesn't look like TLS - don't send an alert */
+                        SSLerr(SSL_F_SSL3_GET_RECORD,
+                               SSL_R_WRONG_VERSION_NUMBER);
+                        goto err;
+                    } else {
+                        SSLerr(SSL_F_SSL3_GET_RECORD,
+                               SSL_R_WRONG_VERSION_NUMBER);
+                        al = SSL_AD_PROTOCOL_VERSION;
+                        goto f_err;
                     }
-                    SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
-                    goto err;
                 }
 
                 if (rr[num_recs].length >
-                        SSL3_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
+                    SSL3_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
                     al = SSL_AD_RECORD_OVERFLOW;
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
                     goto f_err;
@@ -375,7 +284,7 @@ int ssl3_get_record(SSL *s)
 
             n = ssl3_read_n(s, i, i, 1, 0);
             if (n <= 0)
-                return (n);         /* error or non-blocking io */
+                return (n);     /* error or non-blocking io */
         }
 
         /* set state for later operations */
@@ -386,7 +295,7 @@ int ssl3_get_record(SSL *s)
          * or s->packet_length == SSL2_RT_HEADER_LENGTH + rr->length
          * and we have that many bytes in s->packet
          */
-        if(rr[num_recs].rec_version == SSL2_VERSION) {
+        if (rr[num_recs].rec_version == SSL2_VERSION) {
             rr[num_recs].input =
                 &(RECORD_LAYER_get_packet(&s->rlayer)[SSL2_RT_HEADER_LENGTH]);
         } else {
@@ -416,17 +325,22 @@ int ssl3_get_record(SSL *s)
         /* decrypt in place in 'rr->input' */
         rr[num_recs].data = rr[num_recs].input;
         rr[num_recs].orig_len = rr[num_recs].length;
+
+        /* Mark this record as not read by upper layers yet */
+        rr[num_recs].read = 0;
+
         num_recs++;
 
         /* we have pulled in a full packet so zero things */
         RECORD_LAYER_reset_packet_length(&s->rlayer);
-    } while (num_recs < max_recs && rr->type == SSL3_RT_APPLICATION_DATA
+        RECORD_LAYER_clear_first_record(&s->rlayer);
+    } while (num_recs < max_recs
+             && rr[num_recs - 1].type == SSL3_RT_APPLICATION_DATA
              && SSL_USE_EXPLICIT_IV(s)
              && s->enc_read_ctx != NULL
              && (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx))
-                & EVP_CIPH_FLAG_PIPELINE)
+                 & EVP_CIPH_FLAG_PIPELINE)
              && ssl3_record_app_data_waiting(s));
-
 
     /*
      * If in encrypt-then-mac mode calculate mac from encrypted record. All
@@ -487,7 +401,7 @@ int ssl3_get_record(SSL *s)
         mac_size = EVP_MD_CTX_size(s->read_hash);
         OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
 
-        for (j=0; j < num_recs; j++) {
+        for (j = 0; j < num_recs; j++) {
             /*
              * orig_len is the length of the record before any padding was
              * removed. This is public information, as is the MAC in use,
@@ -578,20 +492,16 @@ int ssl3_get_record(SSL *s)
 
         /* just read a 0 length packet */
         if (rr[j].length == 0) {
-            curr_empty++;
-            empty_record_count++;
-            if (empty_record_count > MAX_EMPTY_RECORDS) {
+            RECORD_LAYER_inc_empty_record_count(&s->rlayer);
+            if (RECORD_LAYER_get_empty_record_count(&s->rlayer)
+                > MAX_EMPTY_RECORDS) {
                 al = SSL_AD_UNEXPECTED_MESSAGE;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_RECORD_TOO_SMALL);
                 goto f_err;
             }
+        } else {
+            RECORD_LAYER_reset_empty_record_count(&s->rlayer);
         }
-    }
-    if (curr_empty == num_recs) {
-        /* We have no data - do it all again */
-        num_recs = 0;
-        curr_empty = 0;
-        goto again;
     }
 
     RECORD_LAYER_set_numrpipes(&s->rlayer, num_recs);
@@ -616,8 +526,7 @@ int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr)
         return 0;
 
     i = COMP_expand_block(ssl->expand, rr->comp,
-                          SSL3_RT_MAX_PLAIN_LENGTH, rr->data,
-                          (int)rr->length);
+                          SSL3_RT_MAX_PLAIN_LENGTH, rr->data, (int)rr->length);
     if (i < 0)
         return 0;
     else
@@ -797,8 +706,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
         bs = EVP_CIPHER_block_size(EVP_CIPHER_CTX_cipher(ds));
 
         if (n_recs > 1) {
-            if(!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                                  & EVP_CIPH_FLAG_PIPELINE)) {
+            if (!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
+                  & EVP_CIPH_FLAG_PIPELINE)) {
                 /*
                  * We shouldn't have been called with pipeline data if the
                  * cipher doesn't support pipelining
@@ -811,7 +720,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
             reclen[ctr] = recs[ctr].length;
 
             if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                    & EVP_CIPH_FLAG_AEAD_CIPHER) {
+                & EVP_CIPH_FLAG_AEAD_CIPHER) {
                 unsigned char *seq;
 
                 seq = send ? RECORD_LAYER_get_write_sequence(&s->rlayer)
@@ -871,21 +780,21 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
             unsigned char *data[SSL_MAX_PIPELINES];
 
             /* Set the output buffers */
-            for(ctr = 0; ctr < n_recs; ctr++) {
+            for (ctr = 0; ctr < n_recs; ctr++) {
                 data[ctr] = recs[ctr].data;
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS,
-                                      n_recs, data) <= 0) {
+                                    n_recs, data) <= 0) {
                 SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
             }
             /* Set the input buffers */
-            for(ctr = 0; ctr < n_recs; ctr++) {
+            for (ctr = 0; ctr < n_recs; ctr++) {
                 data[ctr] = recs[ctr].input;
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_INPUT_BUFS,
-                                      n_recs, data) <= 0
+                                    n_recs, data) <= 0
                 || EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_INPUT_LENS,
-                                      n_recs, reclen) <= 0) {
+                                       n_recs, reclen) <= 0) {
                 SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
                 return -1;
             }
@@ -893,7 +802,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
 
         i = EVP_Cipher(ds, recs[0].data, recs[0].input, reclen[0]);
         if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                & EVP_CIPH_FLAG_CUSTOM_CIPHER)
+             & EVP_CIPH_FLAG_CUSTOM_CIPHER)
             ? (i < 0)
             : (i == 0))
             return -1;          /* AEAD can fail to verify MAC */
@@ -920,9 +829,15 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
             int tmpret;
             for (ctr = 0; ctr < n_recs; ctr++) {
                 tmpret = tls1_cbc_remove_padding(s, &recs[ctr], bs, mac_size);
-                if (tmpret == -1)
-                    return -1;
-                ret &= tmpret;
+                /*
+                 * If tmpret == 0 then this means publicly invalid so we can
+                 * short circuit things here. Otherwise we must respect constant
+                 * time behaviour.
+                 */
+                if (tmpret == 0)
+                    return 0;
+                ret = constant_time_select_int(constant_time_eq_int(tmpret, 1),
+                                               ret, -1);
             }
         }
         if (pad && !send) {
@@ -1007,18 +922,18 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
         p = md;
         s2n(rec->length, p);
         if (EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-                || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-                || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
-                || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
-                || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
-                || EVP_DigestUpdate(md_ctx, md, 2) <= 0
-                || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
-                || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
-                || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-                || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-                || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
-                || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
-                || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
+            || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+            || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
+            || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
+            || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
+            || EVP_DigestUpdate(md_ctx, md, 2) <= 0
+            || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
+            || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
+            || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
+            || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+            || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
+            || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
+            || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
             EVP_MD_CTX_reset(md_ctx);
             return -1;
         }
@@ -1060,8 +975,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
         mac_ctx = hash;
     } else {
         hmac = EVP_MD_CTX_new();
-        if (hmac == NULL
-                || !EVP_MD_CTX_copy(hmac, hash))
+        if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash))
             return -1;
         mac_ctx = hmac;
     }
@@ -1103,15 +1017,18 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
         }
     } else {
         if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
-                || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
-                || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
+            || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
+            || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
             EVP_MD_CTX_free(hmac);
             return -1;
         }
         if (!send && !SSL_USE_ETM(ssl) && FIPS_mode())
-            tls_fips_digest_extra(ssl->enc_read_ctx,
-                                  mac_ctx, rec->input,
-                                  rec->length, rec->orig_len);
+            if (!tls_fips_digest_extra(ssl->enc_read_ctx,
+                                       mac_ctx, rec->input,
+                                       rec->length, rec->orig_len)) {
+                EVP_MD_CTX_free(hmac);
+                return -1;
+            }
     }
 
     EVP_MD_CTX_free(hmac);
@@ -1218,7 +1135,8 @@ int tls1_cbc_remove_padding(const SSL *s,
 
     padding_length = rec->data[rec->length - 1];
 
-    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx)) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx)) &
+        EVP_CIPH_FLAG_AEAD_CIPHER) {
         /* padding is already verified */
         rec->length -= padding_length + 1;
         return 1;
@@ -1234,9 +1152,9 @@ int tls1_cbc_remove_padding(const SSL *s,
      * maximum amount of padding possible. (Again, the length of the record
      * is public information so we can use it.)
      */
-    to_check = 255;             /* maximum amount of padding. */
-    if (to_check > rec->length - 1)
-        to_check = rec->length - 1;
+    to_check = 256;            /* maximum amount of padding, inc length byte. */
+    if (to_check > rec->length)
+        to_check = rec->length;
 
     for (i = 0; i < to_check; i++) {
         unsigned char mask = constant_time_ge_8(padding_length, i);
@@ -1355,7 +1273,7 @@ void ssl3_cbc_copy_mac(unsigned char *out,
 #endif
 }
 
-int dtls1_process_record(SSL *s)
+int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 {
     int i, al;
     int enc_err;
@@ -1511,6 +1429,10 @@ int dtls1_process_record(SSL *s)
 
     /* we have pulled in a full packet so zero things */
     RECORD_LAYER_reset_packet_length(&s->rlayer);
+
+    /* Mark receipt of record. */
+    dtls1_record_bitmap_update(s, bitmap);
+
     return (1);
 
  f_err:
@@ -1518,7 +1440,6 @@ int dtls1_process_record(SSL *s)
  err:
     return (0);
 }
-
 
 /*
  * retrieve a buffered record that belongs to the current epoch, ie,
@@ -1550,11 +1471,12 @@ int dtls1_get_record(SSL *s)
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
 
+ again:
     /*
      * The epoch may have changed.  If so, process all the pending records.
      * This is a non-blocking operation.
      */
-    if (dtls1_process_buffered_records(s) < 0)
+    if (!dtls1_process_buffered_records(s))
         return -1;
 
     /* if we're renegotiating, then there may be buffered records */
@@ -1562,18 +1484,19 @@ int dtls1_get_record(SSL *s)
         return 1;
 
     /* get something from the wire */
- again:
+
     /* check if we have the header */
     if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
         (RECORD_LAYER_get_packet_length(&s->rlayer) < DTLS1_RT_HEADER_LENGTH)) {
         n = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH,
-            SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0, 1);
+                        SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0, 1);
         /* read timeout is handled by dtls1_read_bytes */
         if (n <= 0)
             return (n);         /* error or non-blocking */
 
         /* this packet contained a partial record, dump it */
-        if (RECORD_LAYER_get_packet_length(&s->rlayer) != DTLS1_RT_HEADER_LENGTH) {
+        if (RECORD_LAYER_get_packet_length(&s->rlayer) !=
+            DTLS1_RT_HEADER_LENGTH) {
             RECORD_LAYER_reset_packet_length(&s->rlayer);
             goto again;
         }
@@ -1653,7 +1576,7 @@ int dtls1_get_record(SSL *s)
     bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
     if (bitmap == NULL) {
         rr->length = 0;
-        RECORD_LAYER_reset_packet_length(&s->rlayer);   /* dump this record */
+        RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
         goto again;             /* get another record */
     }
 #ifndef OPENSSL_NO_SCTP
@@ -1661,6 +1584,10 @@ int dtls1_get_record(SSL *s)
     if (!BIO_dgram_is_sctp(SSL_get_rbio(s))) {
 #endif
         /* Check whether this is a repeat, or aged record. */
+        /*
+         * TODO: Does it make sense to have replay protection in epoch 0 where
+         * we have no integrity negotiated yet?
+         */
         if (!dtls1_record_replay_check(s, bitmap)) {
             rr->length = 0;
             RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
@@ -1683,22 +1610,19 @@ int dtls1_get_record(SSL *s)
         if ((SSL_in_init(s) || ossl_statem_get_in_handshake(s))) {
             if (dtls1_buffer_record
                 (s, &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
-                rr->seq_num) < 0)
+                 rr->seq_num) < 0)
                 return -1;
-            /* Mark receipt of record. */
-            dtls1_record_bitmap_update(s, bitmap);
         }
         rr->length = 0;
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         goto again;
     }
 
-    if (!dtls1_process_record(s)) {
+    if (!dtls1_process_record(s, bitmap)) {
         rr->length = 0;
-        RECORD_LAYER_reset_packet_length(&s->rlayer);   /* dump this record */
+        RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
         goto again;             /* get another record */
     }
-    dtls1_record_bitmap_update(s, bitmap); /* Mark receipt of record. */
 
     return (1);
 

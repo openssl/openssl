@@ -2,13 +2,16 @@
 
 =head1 NAME
 
-SSL_get_ciphers, SSL_get_cipher_list - get list of available SSL_CIPHERs
+SSL_get1_supported_ciphers, SSL_get_client_ciphers,
+SSL_get_ciphers, SSL_CTX_get_ciphers, SSL_get_cipher_list
+- get list of available SSL_CIPHERs
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *ssl);
+ STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx);
  STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
  STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *ssl);
  const char *SSL_get_cipher_list(const SSL *ssl, int priority);
@@ -18,6 +21,8 @@ SSL_get_ciphers, SSL_get_cipher_list - get list of available SSL_CIPHERs
 SSL_get_ciphers() returns the stack of available SSL_CIPHERs for B<ssl>,
 sorted by preference. If B<ssl> is NULL or no ciphers are available, NULL
 is returned.
+
+SSL_CTX_get_ciphers() returns the stack of available SSL_CIPHERs for B<ctx>.
 
 SSL_get1_supported_ciphers() returns the stack of enabled SSL_CIPHERs for
 B<ssl>, sorted by preference.
@@ -43,17 +48,17 @@ is returned.
 
 =head1 NOTES
 
-The details of the ciphers obtained by SSL_get_ciphers(),
+The details of the ciphers obtained by SSL_get_ciphers(), SSL_CTX_get_ciphers()
 SSL_get1_supported_ciphers() and SSL_get_client_ciphers() can be obtained using
 the L<SSL_CIPHER_get_name(3)> family of functions.
 
 Call SSL_get_cipher_list() with B<priority> starting from 0 to obtain the
 sorted list of available ciphers, until NULL is returned.
 
-Note: SSL_get_ciphers() and SSL_get_client_ciphers() return a pointer
-to an internal cipher stack, which will be freed later on when the SSL
-or SSL_SESSION object is freed.  Therefore, the calling code B<MUST
-NOT> free the return value itself.
+Note: SSL_get_ciphers(), SSL_CTX_get_ciphers() and SSL_get_client_ciphers()
+return a pointer to an internal cipher stack, which will be freed later on when
+the SSL or SSL_SESSION object is freed.  Therefore, the calling code B<MUST NOT>
+free the return value itself.
 
 The stack returned by SSL_get1_supported_ciphers() should be freed using
 sk_SSL_CIPHER_free().
@@ -66,5 +71,14 @@ See DESCRIPTION
 
 L<ssl(3)>, L<SSL_CTX_set_cipher_list(3)>,
 L<SSL_CIPHER_get_name(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

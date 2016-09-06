@@ -1,30 +1,30 @@
-{- use File::Spec::Functions qw/:DEFAULT rel2abs/; -}
 IF[{- !$disabled{"engine"} -}]
   IF[{- $disabled{"dynamic-engine"} -}]
     LIBS=../libcrypto
     SOURCE[../libcrypto]=\
-            e_padlock.c {- $target{padlock_asm_src} -} \
-            e_dasync.c
+            e_padlock.c {- $target{padlock_asm_src} -}
     IF[{- !$disabled{capieng} -}]
       SOURCE[../libcrypto]=e_capi.c
     ENDIF
   ELSE
-    ENGINES=padlock dasync ossltest
+    ENGINES=padlock
     SOURCE[padlock]=e_padlock.c {- $target{padlock_asm_src} -}
     DEPEND[padlock]=../libcrypto
-    INCLUDE[padlock]={- rel2abs(catdir($builddir,"../include")) -} ../include
+    INCLUDE[padlock]=../include
     IF[{- !$disabled{capieng} -}]
       ENGINES=capi
       SOURCE[capi]=e_capi.c
       DEPEND[capi]=../libcrypto
-      INCLUDE[capi]={- rel2abs(catdir($builddir,"../include")) -} ../include
+      INCLUDE[capi]=../include
     ENDIF
+
+    ENGINES_NO_INST=ossltest dasync
     SOURCE[dasync]=e_dasync.c
     DEPEND[dasync]=../libcrypto
-    INCLUDE[dasync]={- rel2abs(catdir($builddir,"../include")) -} ../include
+    INCLUDE[dasync]=../include
     SOURCE[ossltest]=e_ossltest.c
     DEPEND[ossltest]=../libcrypto
-    INCLUDE[ossltest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+    INCLUDE[ossltest]=../include
   ENDIF
 
   GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)

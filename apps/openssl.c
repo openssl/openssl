@@ -1,111 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-/* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -113,7 +12,6 @@
 #include <stdlib.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
-#include <openssl/rand.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
 #include <openssl/x509.h>
@@ -176,14 +74,18 @@ static int apps_startup()
                              | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 
+#ifndef OPENSSL_NO_UI
     setup_ui_method();
+#endif
 
     return 1;
 }
 
 static void apps_shutdown()
 {
+#ifndef OPENSSL_NO_UI
     destroy_ui_method();
+#endif
 }
 
 static char *make_config_name()
@@ -207,10 +109,6 @@ static char *make_config_name()
     return p;
 }
 
-#if defined( OPENSSL_SYS_VMS)
-extern char **copy_argv(int *argc, char **argv);
-#endif
-
 int main(int argc, char *argv[])
 {
     FUNCTION f, *fp;
@@ -231,8 +129,13 @@ int main(int argc, char *argv[])
     bio_out = dup_bio_out(FORMAT_TEXT);
     bio_err = dup_bio_err(FORMAT_TEXT);
 
-#if defined( OPENSSL_SYS_VMS)
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     copied_argv = argv = copy_argv(&argc, argv);
+#elif defined(_WIN32)
+    /*
+     * Replace argv[] with UTF-8 encoded strings.
+     */
+    win32_utf8argv(&argc, &argv);
 #endif
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
@@ -305,7 +208,7 @@ int main(int argc, char *argv[])
                 extern void add_history(const char *cp);
                 char *text;
 
-                char *text = readline(prompt);
+                text = readline(prompt);
                 if (text == NULL)
                     goto end;
                 i = strlen(text);
@@ -491,10 +394,8 @@ int help_main(int argc, char **argv)
             return 0;
         }
     }
-    argc = opt_num_rest();
-    argv = opt_rest();
 
-    if (argc != 0) {
+    if (opt_num_rest() != 0) {
         BIO_printf(bio_err, "Usage: %s\n", prog);
         return 1;
     }
@@ -628,7 +529,7 @@ static int function_cmp(const FUNCTION * a, const FUNCTION * b)
 
 static unsigned long function_hash(const FUNCTION * a)
 {
-    return lh_strhash(a->name);
+    return OPENSSL_LH_strhash(a->name);
 }
 
 static int SortFnByName(const void *_f1, const void *_f2)
@@ -644,9 +545,6 @@ static int SortFnByName(const void *_f1, const void *_f2)
 static void list_disabled(void)
 {
     BIO_puts(bio_out, "Disabled algorithms:\n");
-#ifdef OPENSSL_NO_AES
-    BIO_puts(bio_out, "AES\n");
-#endif
 #ifdef OPENSSL_NO_BF
     BIO_puts(bio_out, "BF\n");
 #endif
@@ -704,9 +602,6 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_HEARTBEATS
     BIO_puts(bio_out, "HEARTBEATS\n");
 #endif
-#ifdef OPENSSL_NO_HMAC
-    BIO_puts(bio_out, "HMAC\n");
-#endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
 #endif
@@ -749,17 +644,11 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SCRYPT
     BIO_puts(bio_out, "SCRYPT\n");
 #endif
-#ifdef OPENSSL_NO_SCT
-    BIO_puts(bio_out, "SCT\n");
-#endif
 #ifdef OPENSSL_NO_SCTP
     BIO_puts(bio_out, "SCTP\n");
 #endif
 #ifdef OPENSSL_NO_SEED
     BIO_puts(bio_out, "SEED\n");
-#endif
-#ifdef OPENSSL_NO_SHA
-    BIO_puts(bio_out, "SHA\n");
 #endif
 #ifdef OPENSSL_NO_SOCK
     BIO_puts(bio_out, "SOCK\n");
@@ -770,14 +659,8 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SRTP
     BIO_puts(bio_out, "SRTP\n");
 #endif
-#ifdef OPENSSL_NO_SSL
-    BIO_puts(bio_out, "SSL\n");
-#endif
 #ifdef OPENSSL_NO_SSL3
     BIO_puts(bio_out, "SSL3\n");
-#endif
-#if defined(OPENSSL_NO_TLS)
-    BIO_puts(bio_out, "TLS\n");
 #endif
 #ifdef OPENSSL_NO_TLS1
     BIO_puts(bio_out, "TLS1\n");

@@ -1,59 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2000.
- */
-/* ====================================================================
- * Copyright (c) 2000-2004 The OpenSSL Project.  All rights reserved.
+ * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stddef.h>
@@ -202,17 +153,19 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             const ASN1_TEMPLATE *seqtt;
             ASN1_VALUE **pseqval;
+            int tmplen;
             seqtt = asn1_do_adb(pval, tt, 1);
             if (!seqtt)
                 return 0;
             pseqval = asn1_get_field_ptr(pval, seqtt);
-            /* FIXME: check for errors in enhanced version */
-            seqcontlen += asn1_template_ex_i2d(pseqval, NULL, seqtt,
-                                               -1, aclass);
+            tmplen = asn1_template_ex_i2d(pseqval, NULL, seqtt, -1, aclass);
+            if (tmplen == -1 || (tmplen > INT_MAX - seqcontlen))
+                return -1;
+            seqcontlen += tmplen;
         }
 
         seqlen = ASN1_object_size(ndef, seqcontlen, tag);
-        if (!out)
+        if (!out || seqlen == -1)
             return seqlen;
         /* Output SEQUENCE header */
         ASN1_put_object(out, ndef, seqcontlen, tag, aclass);
@@ -329,19 +282,24 @@ static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
         /* Determine total length of items */
         skcontlen = 0;
         for (i = 0; i < sk_ASN1_VALUE_num(sk); i++) {
+            int tmplen;
             skitem = sk_ASN1_VALUE_value(sk, i);
-            skcontlen += ASN1_item_ex_i2d(&skitem, NULL,
-                                          ASN1_ITEM_ptr(tt->item),
-                                          -1, iclass);
+            tmplen = ASN1_item_ex_i2d(&skitem, NULL, ASN1_ITEM_ptr(tt->item),
+                                      -1, iclass);
+            if (tmplen == -1 || (skcontlen > INT_MAX - tmplen))
+                return -1;
+            skcontlen += tmplen;
         }
         sklen = ASN1_object_size(ndef, skcontlen, sktag);
+        if (sklen == -1)
+            return -1;
         /* If EXPLICIT need length of surrounding tag */
         if (flags & ASN1_TFLG_EXPTAG)
             ret = ASN1_object_size(ndef, sklen, ttag);
         else
             ret = sklen;
 
-        if (!out)
+        if (!out || ret == -1)
             return ret;
 
         /* Now encode this lot... */
@@ -370,7 +328,7 @@ static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
             return 0;
         /* Find length of EXPLICIT tag */
         ret = ASN1_object_size(ndef, i, ttag);
-        if (out) {
+        if (out && ret != -1) {
             /* Output tag and item */
             ASN1_put_object(out, ndef, i, ttag, tclass);
             ASN1_item_ex_i2d(pval, out, ASN1_ITEM_ptr(tt->item), -1, iclass);
@@ -600,9 +558,7 @@ static int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
                                    cout ? &cout : NULL);
 
     case V_ASN1_INTEGER:
-    case V_ASN1_NEG_INTEGER:
     case V_ASN1_ENUMERATED:
-    case V_ASN1_NEG_ENUMERATED:
         /*
          * These are all have the same content format as ASN1_INTEGER
          */

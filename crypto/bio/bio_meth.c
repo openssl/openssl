@@ -1,58 +1,37 @@
-/* ====================================================================
- * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include "bio_lcl.h"
+#include <internal/thread_once.h>
+
+CRYPTO_RWLOCK *bio_type_lock = NULL;
+static CRYPTO_ONCE bio_type_init = CRYPTO_ONCE_STATIC_INIT;
+
+DEFINE_RUN_ONCE_STATIC(do_bio_type_init)
+{
+    bio_type_lock = CRYPTO_THREAD_lock_new();
+    return bio_type_lock != NULL;
+}
+
+int BIO_get_new_index()
+{
+    static int bio_count = BIO_TYPE_START;
+    int newval;
+
+    if (!RUN_ONCE(&bio_type_init, do_bio_type_init)) {
+        BIOerr(BIO_F_BIO_GET_NEW_INDEX, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+    if (!CRYPTO_atomic_add(&bio_count, 1, &newval, bio_type_lock))
+        return -1;
+    return newval;
+}
 
 BIO_METHOD *BIO_meth_new(int type, const char *name)
 {
@@ -76,9 +55,9 @@ int (*BIO_meth_get_write(BIO_METHOD *biom)) (BIO *, const char *, int)
 }
 
 int BIO_meth_set_write(BIO_METHOD *biom,
-                       int (*write) (BIO *, const char *, int))
+                       int (*bwrite) (BIO *, const char *, int))
 {
-    biom->bwrite = write;
+    biom->bwrite = bwrite;
     return 1;
 }
 
@@ -88,9 +67,9 @@ int (*BIO_meth_get_read(BIO_METHOD *biom)) (BIO *, char *, int)
 }
 
 int BIO_meth_set_read(BIO_METHOD *biom,
-                      int (*read) (BIO *, char *, int))
+                      int (*bread) (BIO *, char *, int))
 {
-    biom->bread = read;
+    biom->bread = bread;
     return 1;
 }
 
@@ -100,9 +79,9 @@ int (*BIO_meth_get_puts(BIO_METHOD *biom)) (BIO *, const char *)
 }
 
 int BIO_meth_set_puts(BIO_METHOD *biom,
-                      int (*puts) (BIO *, const char *))
+                      int (*bputs) (BIO *, const char *))
 {
-    biom->bputs = puts;
+    biom->bputs = bputs;
     return 1;
 }
 
@@ -112,9 +91,9 @@ int (*BIO_meth_get_gets(BIO_METHOD *biom)) (BIO *, char *, int)
 }
 
 int BIO_meth_set_gets(BIO_METHOD *biom,
-                      int (*gets) (BIO *, char *, int))
+                      int (*bgets) (BIO *, char *, int))
 {
-    biom->bgets = gets;
+    biom->bgets = bgets;
     return 1;
 }
 

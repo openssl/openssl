@@ -1,60 +1,12 @@
 /*
- * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
- * 2000.
+ * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  * ECDH support in OpenSSL originally developed by
@@ -406,8 +358,7 @@ void ENGINE_set_table_flags(unsigned int flags);
  *   ENGINE_register_***(e) - registers the implementation from 'e' (if it has one)
  *   ENGINE_unregister_***(e) - unregister the implementation from 'e'
  *   ENGINE_register_all_***() - call ENGINE_register_***() for each 'e' in the list
- * Cleanup is automatically registered from each table when required, so
- * ENGINE_cleanup() will reverse any "register" operations.
+ * Cleanup is automatically registered from each table when required.
  */
 
 int ENGINE_register_RSA(ENGINE *e);
@@ -549,13 +500,13 @@ int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
 void *ENGINE_get_ex_data(const ENGINE *e, int idx);
 
+#if OPENSSL_API_COMPAT < 0x10100000L
 /*
- * This function cleans up anything that needs it. Eg. the ENGINE_add()
- * function automatically ensures the list cleanup function is registered to
- * be called from ENGINE_cleanup(). Similarly, all ENGINE_register_***
- * functions ensure ENGINE_cleanup() will clean up after them.
+ * This function previously cleaned up anything that needs it. Auto-deinit will
+ * now take care of it so it is no longer required to call this function.
  */
-void ENGINE_cleanup(void);
+# define ENGINE_cleanup() while(0) continue
+#endif
 
 /*
  * These return values from within the ENGINE structure. These can be useful
@@ -721,7 +672,7 @@ typedef struct st_dynamic_MEM_fns {
 } dynamic_MEM_fns;
 /*
  * FIXME: Perhaps the memory and locking code (crypto.h) should declare and
- * use these types so we (and any other dependant code) can simplify a bit??
+ * use these types so we (and any other dependent code) can simplify a bit??
  */
 /* The top-level structure */
 typedef struct st_dynamic_fns {
@@ -745,7 +696,7 @@ typedef unsigned long (*dynamic_v_check_fn) (unsigned long ossl_version);
 # define IMPLEMENT_DYNAMIC_CHECK_FN() \
         OPENSSL_EXPORT unsigned long v_check(unsigned long v); \
         OPENSSL_EXPORT unsigned long v_check(unsigned long v) { \
-                if(v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION; \
+                if (v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION; \
                 return 0; }
 
 /*
@@ -773,13 +724,13 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns); \
         OPENSSL_EXPORT \
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
-                if(ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
-                CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
-                                         fns->mem_fns.realloc_fn, \
-                                         fns->mem_fns.free_fn); \
+            if (ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
+            CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
+                                     fns->mem_fns.realloc_fn, \
+                                     fns->mem_fns.free_fn); \
         skip_cbs: \
-                if(!fn(e,id)) return 0; \
-                return 1; }
+            if (!fn(e, id)) return 0; \
+            return 1; }
 
 /*
  * If the loading application (or library) and the loaded ENGINE library
@@ -795,7 +746,7 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
 void *ENGINE_get_static_state(void);
 
 # if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
-void ENGINE_setup_bsd_cryptodev(void);
+DEPRECATEDIN_1_1_0(void ENGINE_setup_bsd_cryptodev(void))
 # endif
 
 /* BEGIN ERROR CODES */
@@ -803,7 +754,8 @@ void ENGINE_setup_bsd_cryptodev(void);
  * The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
-void ERR_load_ENGINE_strings(void);
+
+int ERR_load_ENGINE_strings(void);
 
 /* Error codes for the ENGINE functions. */
 
@@ -819,10 +771,10 @@ void ERR_load_ENGINE_strings(void);
 # define ENGINE_F_ENGINE_CTRL_CMD                         178
 # define ENGINE_F_ENGINE_CTRL_CMD_STRING                  171
 # define ENGINE_F_ENGINE_FINISH                           107
-# define ENGINE_F_ENGINE_FREE_UTIL                        108
 # define ENGINE_F_ENGINE_GET_CIPHER                       185
-# define ENGINE_F_ENGINE_GET_DEFAULT_TYPE                 177
 # define ENGINE_F_ENGINE_GET_DIGEST                       186
+# define ENGINE_F_ENGINE_GET_FIRST                        195
+# define ENGINE_F_ENGINE_GET_LAST                         196
 # define ENGINE_F_ENGINE_GET_NEXT                         115
 # define ENGINE_F_ENGINE_GET_PKEY_ASN1_METH               193
 # define ENGINE_F_ENGINE_GET_PKEY_METH                    192
@@ -834,19 +786,17 @@ void ERR_load_ENGINE_strings(void);
 # define ENGINE_F_ENGINE_LOAD_PUBLIC_KEY                  151
 # define ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT             194
 # define ENGINE_F_ENGINE_NEW                              122
+# define ENGINE_F_ENGINE_PKEY_ASN1_FIND_STR               197
 # define ENGINE_F_ENGINE_REMOVE                           123
 # define ENGINE_F_ENGINE_SET_DEFAULT_STRING               189
-# define ENGINE_F_ENGINE_SET_DEFAULT_TYPE                 126
 # define ENGINE_F_ENGINE_SET_ID                           129
 # define ENGINE_F_ENGINE_SET_NAME                         130
 # define ENGINE_F_ENGINE_TABLE_REGISTER                   184
-# define ENGINE_F_ENGINE_UNLOAD_KEY                       152
 # define ENGINE_F_ENGINE_UNLOCKED_FINISH                  191
 # define ENGINE_F_ENGINE_UP_REF                           190
 # define ENGINE_F_INT_CTRL_HELPER                         172
 # define ENGINE_F_INT_ENGINE_CONFIGURE                    188
 # define ENGINE_F_INT_ENGINE_MODULE_INIT                  187
-# define ENGINE_F_LOG_MESSAGE                             141
 
 /* Reason codes. */
 # define ENGINE_R_ALREADY_LOADED                          100
@@ -856,8 +806,6 @@ void ERR_load_ENGINE_strings(void);
 # define ENGINE_R_COMMAND_TAKES_NO_INPUT                  136
 # define ENGINE_R_CONFLICTING_ENGINE_ID                   103
 # define ENGINE_R_CTRL_COMMAND_NOT_IMPLEMENTED            119
-# define ENGINE_R_DH_NOT_IMPLEMENTED                      139
-# define ENGINE_R_DSA_NOT_IMPLEMENTED                     140
 # define ENGINE_R_DSO_FAILURE                             104
 # define ENGINE_R_DSO_NOT_FOUND                           132
 # define ENGINE_R_ENGINES_SECTION_ERROR                   148
@@ -867,7 +815,6 @@ void ERR_load_ENGINE_strings(void);
 # define ENGINE_R_FAILED_LOADING_PRIVATE_KEY              128
 # define ENGINE_R_FAILED_LOADING_PUBLIC_KEY               129
 # define ENGINE_R_FINISH_FAILED                           106
-# define ENGINE_R_GET_HANDLE_FAILED                       107
 # define ENGINE_R_ID_OR_NAME_MISSING                      108
 # define ENGINE_R_INIT_FAILED                             109
 # define ENGINE_R_INTERNAL_LIST_ERROR                     110
@@ -883,17 +830,13 @@ void ERR_load_ENGINE_strings(void);
 # define ENGINE_R_NO_LOAD_FUNCTION                        125
 # define ENGINE_R_NO_REFERENCE                            130
 # define ENGINE_R_NO_SUCH_ENGINE                          116
-# define ENGINE_R_NO_UNLOAD_FUNCTION                      126
-# define ENGINE_R_PROVIDE_PARAMETERS                      113
-# define ENGINE_R_RSA_NOT_IMPLEMENTED                     141
 # define ENGINE_R_UNIMPLEMENTED_CIPHER                    146
 # define ENGINE_R_UNIMPLEMENTED_DIGEST                    147
 # define ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD         101
 # define ENGINE_R_VERSION_INCOMPATIBILITY                 145
 
-# ifdef  __cplusplus
+#  ifdef  __cplusplus
 }
+#  endif
 # endif
-# endif
-
 #endif

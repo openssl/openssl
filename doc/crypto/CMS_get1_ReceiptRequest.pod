@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- CMS_ReceiptRequest_create0, CMS_add1_ReceiptRequest, CMS_get1_ReceiptRequest, CMS_ReceiptRequest_get0_values - CMS signed receipt request functions.
+CMS_ReceiptRequest_create0, CMS_add1_ReceiptRequest, CMS_get1_ReceiptRequest, CMS_ReceiptRequest_get0_values - CMS signed receipt request functions
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ CMS_verify().
 
 =head1 RETURN VALUES
 
-CMS_ReceiptRequest_create0() returns a signed receipt request structure or 
+CMS_ReceiptRequest_create0() returns a signed receipt request structure or
 NULL if an error occurred.
 
 CMS_add1_ReceiptRequest() returns 1 for success or 0 is an error occurred.
@@ -59,5 +59,14 @@ it is present but malformed.
 L<ERR_get_error(3)>, L<CMS_sign(3)>,
 L<CMS_sign_receipt(3)>, L<CMS_verify(3)>
 L<CMS_verify_receipt(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

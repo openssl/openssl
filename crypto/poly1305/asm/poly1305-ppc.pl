@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -17,11 +24,10 @@
 #			-m32		-m64
 #
 # Freescale e300	14.8/+80%	-
-# PPC74x0		7.40/+60%	-
-# PPC970		7.20/+114%	3.51/+205%
-# POWER6		3.96/+250%	2.02/+170%
-# POWER7		3.67/+260%	1.87/+100%
-# POWER8		-		2.13/+200%
+# PPC74x0		7.60/+60%	-
+# PPC970		7.00/+114%	3.51/+205%
+# POWER7		3.75/+260%	1.93/+100%
+# POWER8		-		2.03/+200%
 #
 # Do we need floating-point implementation for PPC? Results presented
 # in poly1305_ieee754.c are tricky to compare to, because they are for
@@ -56,7 +62,7 @@ if ($flavour =~ /64/) {
 	$PUSH	="stw";
 } else { die "nonsense $flavour"; }
 
-# Define endianess based on flavour
+# Define endianness based on flavour
 # i.e.: linux64le
 $LITTLE_ENDIAN = ($flavour=~/le$/) ? $SIZE_T : 0;
 
@@ -212,6 +218,7 @@ $code.=<<___;
 	add	$t0,$t0,$t1
 	addc	$h0,$d0,$t0
 	addze	$h1,$d1
+	addze	$h2,$h2
 
 	bdnz	Loop
 
@@ -518,6 +525,7 @@ $code.=<<___;
 	addze	$h1,$h1
 	addze	$h2,$h2
 	addze	$h3,$h3
+	addze	$h4,$h4
 
 	bdnz	Loop
 

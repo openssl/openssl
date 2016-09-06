@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+OPENSSL_init_new, OPENSSL_INIT_set_config_appname, OPENSSL_INIT_free,
 OPENSSL_init_crypto, OPENSSL_cleanup,
 OPENSSL_atexit, OPENSSL_thread_stop - OpenSSL
 initialisation and deinitialisation functions
@@ -16,8 +17,9 @@ initialisation and deinitialisation functions
  void OPENSSL_thread_stop(void);
 
  OPENSSL_INIT_SETTINGS *OPENSSL_init_new(void);
- OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *init, const char* name);
- OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *init);
+ int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *init,
+                                     const char* name);
+ void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *init);
 
 =head1 DESCRIPTION
 
@@ -190,8 +192,8 @@ described in the NOTES section below.
 The B<OPENSSL_INIT_LOAD_CONFIG> flag will load a default configuration
 file.  To specify a different file, an B<OPENSSL_INIT_SETTINGS> must
 be created and used. The routines
-OPENSSL_init_new() and OPENSSL_INIT_set_config_filename() can be used to
-allocate the object and set the configuration filename, and then the
+OPENSSL_init_new() and OPENSSL_INIT_set_config_appname() can be used to
+allocate the object and set the application name, and then the
 object can be released with OPENSSL_INIT_free() when done.
 
 =head1 NOTES
@@ -202,14 +204,24 @@ platforms this is done in response to a DLL_THREAD_DETACH message being sent to
 the libcrypto32.dll entry point. Some windows functions may cause threads to exit
 without sending this message (for example ExitProcess()). If the application
 uses such functions, then the application must free up OpenSSL resources
-directly via a call to OPENSSL_thread_stop(). Similarly this message will
-also not be sent if OpenSSL is linked statically, and therefore applications
-using static linking should also call OPENSSL_thread_stop().
+directly via a call to OPENSSL_thread_stop() on each thread. Similarly this
+message will also not be sent if OpenSSL is linked statically, and therefore
+applications using static linking should also call OPENSSL_thread_stop() on each
+thread. Additionally if OpenSSL is loaded dynamically via LoadLibrary() and the
+threads are not destroyed until after FreeLibrary() is called then each thread
+should call OPENSSL_thread_stop() prior to the FreeLibrary() call.
+
+On Linux/Unix where OpenSSL has been loaded via dlopen() and the application is
+multi-threaded and if dlclose() is subsequently called prior to the threads
+being destroyed then OpenSSL will not be able to deallocate resources associated
+with those threads. The application should either call OPENSSL_thread_stop() on
+each thread prior to the dlclose() call, or alternatively the original dlopen()
+call should use the RTLD_NODELETE flag (where available on the platform).
 
 =head1 RETURN VALUES
 
-The functions OPENSSL_init_crypto and  OPENSSL_atexit() returns 1 on success or
-0 on error.
+The functions OPENSSL_init_crypto, OPENSSL_atexit() and
+OPENSSL_INIT_set_config_appname() return 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
@@ -218,6 +230,16 @@ L<OPENSSL_init_ssl(3)>
 =head1 HISTORY
 
 The OPENSSL_init_crypto(), OPENSSL_cleanup(), OPENSSL_atexit(),
-and OPENSSL_thread_stop() functions were added in OpenSSL 1.1.0.
+OPENSSL_thread_stop(), OPENSSL_init_new(), OPENSSL_INIT_set_config_appname()
+and OPENSSL_INIT_free() functions were added in OpenSSL 1.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

@@ -1,59 +1,12 @@
 /*
- * Originally written by Bodo Moeller for the OpenSSL project.
+ * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -248,7 +201,7 @@ static void prime_field_tests(void)
     EC_GROUP *P_160 = NULL, *P_192 = NULL, *P_224 = NULL, *P_256 =
         NULL, *P_384 = NULL, *P_521 = NULL;
     EC_POINT *P, *Q, *R;
-    BIGNUM *x, *y, *z;
+    BIGNUM *x, *y, *z, *yplusone;
     unsigned char buf[100];
     size_t i, len;
     int k;
@@ -326,7 +279,8 @@ static void prime_field_tests(void)
     x = BN_new();
     y = BN_new();
     z = BN_new();
-    if (!x || !y || !z)
+    yplusone = BN_new();
+    if (x == NULL || y == NULL || z == NULL || yplusone == NULL)
         ABORT;
 
     if (!BN_hex2bn(&x, "D"))
@@ -451,6 +405,14 @@ static void prime_field_tests(void)
         ABORT;
     if (!BN_hex2bn(&y, "23a628553168947d59dcc912042351377ac5fb32"))
         ABORT;
+    if (!BN_add(yplusone, y, BN_value_one()))
+        ABORT;
+    /*
+     * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
+     * and therefore setting the coordinates should fail.
+     */
+    if (EC_POINT_set_affine_coordinates_GFp(group, P, x, yplusone, ctx))
+        ABORT;
     if (!EC_POINT_set_affine_coordinates_GFp(group, P, x, y, ctx))
         ABORT;
     if (EC_POINT_is_on_curve(group, P, ctx) <= 0)
@@ -522,6 +484,15 @@ static void prime_field_tests(void)
     if (0 != BN_cmp(y, z))
         ABORT;
 
+    if (!BN_add(yplusone, y, BN_value_one()))
+        ABORT;
+    /*
+     * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
+     * and therefore setting the coordinates should fail.
+     */
+    if (EC_POINT_set_affine_coordinates_GFp(group, P, x, yplusone, ctx))
+        ABORT;
+
     fprintf(stdout, "verify degree ...");
     if (EC_GROUP_get_degree(group) != 192)
         ABORT;
@@ -575,6 +546,15 @@ static void prime_field_tests(void)
         (&z, "BD376388B5F723FB4C22DFE6CD4375A05A07476444D5819985007E34"))
         ABORT;
     if (0 != BN_cmp(y, z))
+        ABORT;
+
+    if (!BN_add(yplusone, y, BN_value_one()))
+        ABORT;
+    /*
+     * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
+     * and therefore setting the coordinates should fail.
+     */
+    if (EC_POINT_set_affine_coordinates_GFp(group, P, x, yplusone, ctx))
         ABORT;
 
     fprintf(stdout, "verify degree ...");
@@ -637,6 +617,15 @@ static void prime_field_tests(void)
     if (0 != BN_cmp(y, z))
         ABORT;
 
+    if (!BN_add(yplusone, y, BN_value_one()))
+        ABORT;
+    /*
+     * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
+     * and therefore setting the coordinates should fail.
+     */
+    if (EC_POINT_set_affine_coordinates_GFp(group, P, x, yplusone, ctx))
+        ABORT;
+
     fprintf(stdout, "verify degree ...");
     if (EC_GROUP_get_degree(group) != 256)
         ABORT;
@@ -690,6 +679,15 @@ static void prime_field_tests(void)
                    "7CE9DA3113B5F0B8C00A60B1CE1D7E819D7A431D7C90EA0E5F"))
         ABORT;
     if (0 != BN_cmp(y, z))
+        ABORT;
+
+    if (!BN_add(yplusone, y, BN_value_one()))
+        ABORT;
+    /*
+     * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
+     * and therefore setting the coordinates should fail.
+     */
+    if (EC_POINT_set_affine_coordinates_GFp(group, P, x, yplusone, ctx))
         ABORT;
 
     fprintf(stdout, "verify degree ...");
@@ -753,6 +751,15 @@ static void prime_field_tests(void)
     if (0 != BN_cmp(y, z))
         ABORT;
 
+    if (!BN_add(yplusone, y, BN_value_one()))
+        ABORT;
+    /*
+     * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
+     * and therefore setting the coordinates should fail.
+     */
+    if (EC_POINT_set_affine_coordinates_GFp(group, P, x, yplusone, ctx))
+        ABORT;
+
     fprintf(stdout, "verify degree ...");
     if (EC_GROUP_get_degree(group) != 521)
         ABORT;
@@ -766,6 +773,10 @@ static void prime_field_tests(void)
         ABORT;
 
     /* more tests using the last curve */
+
+    /* Restore the point that got mangled in the (x, y + 1) test. */
+    if (!EC_POINT_set_affine_coordinates_GFp(group, P, x, y, ctx))
+        ABORT;
 
     if (!EC_POINT_copy(Q, P))
         ABORT;
@@ -876,6 +887,7 @@ static void prime_field_tests(void)
     BN_free(x);
     BN_free(y);
     BN_free(z);
+    BN_free(yplusone);
 
     EC_GROUP_free(P_160);
     EC_GROUP_free(P_192);
@@ -890,6 +902,13 @@ static void prime_field_tests(void)
 # ifdef OPENSSL_EC_BIN_PT_COMP
 #  define CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
         if (!BN_hex2bn(&x, _x)) ABORT; \
+        if (!BN_hex2bn(&y, _y)) ABORT; \
+        if (!BN_add(yplusone, y, BN_value_one())) ABORT;        \
+        /* \
+         * When (x, y) is on the curve, (x, y + 1) is, as it happens, not, \
+         * and therefore setting the coordinates should fail. \
+         */ \
+        if (EC_POINT_set_affine_coordinates_GF2m(group, P, x, yplusone, ctx)) ABORT; \
         if (!EC_POINT_set_compressed_coordinates_GF2m(group, P, x, _y_bit, ctx)) ABORT; \
         if (EC_POINT_is_on_curve(group, P, ctx) <= 0) ABORT; \
         if (!BN_hex2bn(&z, _order)) ABORT; \
@@ -908,6 +927,12 @@ static void prime_field_tests(void)
 #  define CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
         if (!BN_hex2bn(&x, _x)) ABORT; \
         if (!BN_hex2bn(&y, _y)) ABORT; \
+        if (!BN_add(yplusone, y, BN_value_one())) ABORT;        \
+        /* \
+         * When (x, y) is on the curve, (x, y + 1) is, as it happens, not, \
+         * and therefore setting the coordinates should fail. \
+         */ \
+        if (EC_POINT_set_affine_coordinates_GF2m(group, P, x, yplusone, ctx)) ABORT; \
         if (!EC_POINT_set_affine_coordinates_GF2m(group, P, x, y, ctx)) ABORT; \
         if (EC_POINT_is_on_curve(group, P, ctx) <= 0) ABORT; \
         if (!BN_hex2bn(&z, _order)) ABORT; \
@@ -945,7 +970,7 @@ static void char2_field_tests(void)
     EC_GROUP *C2_B163 = NULL, *C2_B233 = NULL, *C2_B283 = NULL, *C2_B409 =
         NULL, *C2_B571 = NULL;
     EC_POINT *P, *Q, *R;
-    BIGNUM *x, *y, *z, *cof;
+    BIGNUM *x, *y, *z, *cof, *yplusone;
     unsigned char buf[100];
     size_t i, len;
     int k;
@@ -957,7 +982,7 @@ static void char2_field_tests(void)
     p = BN_new();
     a = BN_new();
     b = BN_new();
-    if (!p || !a || !b)
+    if (p == NULL || a == NULL || b == NULL)
         ABORT;
 
     if (!BN_hex2bn(&p, "13"))
@@ -1023,7 +1048,8 @@ static void char2_field_tests(void)
     y = BN_new();
     z = BN_new();
     cof = BN_new();
-    if (!x || !y || !z || !cof)
+    yplusone = BN_new();
+    if (x == NULL || y == NULL || z == NULL || cof == NULL || yplusone == NULL)
         ABORT;
 
     if (!BN_hex2bn(&x, "6"))
@@ -1351,6 +1377,7 @@ static void char2_field_tests(void)
     BN_free(y);
     BN_free(z);
     BN_free(cof);
+    BN_free(yplusone);
 
     EC_GROUP_free(C2_K163);
     EC_GROUP_free(C2_B163);
@@ -1527,7 +1554,7 @@ static const struct nistp_test_params nistp_tests_params[] = {
 static void nistp_single_test(const struct nistp_test_params *test)
 {
     BN_CTX *ctx;
-    BIGNUM *p, *a, *b, *x, *y, *n, *m, *order;
+    BIGNUM *p, *a, *b, *x, *y, *n, *m, *order, *yplusone;
     EC_GROUP *NISTP;
     EC_POINT *G, *P, *Q, *Q_CHECK;
 
@@ -1542,6 +1569,7 @@ static void nistp_single_test(const struct nistp_test_params *test)
     m = BN_new();
     n = BN_new();
     order = BN_new();
+    yplusone = BN_new();
 
     NISTP = EC_GROUP_new(test->meth());
     if (!NISTP)
@@ -1563,6 +1591,14 @@ static void nistp_single_test(const struct nistp_test_params *test)
     if (!BN_hex2bn(&x, test->Qx))
         ABORT;
     if (!BN_hex2bn(&y, test->Qy))
+        ABORT;
+    if (!BN_add(yplusone, y, BN_value_one()))
+        ABORT;
+    /*
+     * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
+     * and therefore setting the coordinates should fail.
+     */
+    if (EC_POINT_set_affine_coordinates_GFp(NISTP, Q_CHECK, x, yplusone, ctx))
         ABORT;
     if (!EC_POINT_set_affine_coordinates_GFp(NISTP, Q_CHECK, x, y, ctx))
         ABORT;
@@ -1662,6 +1698,7 @@ static void nistp_single_test(const struct nistp_test_params *test)
     BN_free(x);
     BN_free(y);
     BN_free(order);
+    BN_free(yplusone);
     BN_CTX_free(ctx);
 }
 
@@ -1674,6 +1711,33 @@ static void nistp_tests()
     }
 }
 # endif
+
+static void parameter_test(void)
+{
+    EC_GROUP *group, *group2;
+    ECPARAMETERS *ecparameters;
+
+    fprintf(stderr, "\ntesting ecparameters conversion ...");
+
+    group = EC_GROUP_new_by_curve_name(NID_secp112r1);
+    if (!group)
+        ABORT;
+
+    ecparameters = EC_GROUP_get_ecparameters(group, NULL);
+    if (!ecparameters)
+        ABORT;
+    group2 = EC_GROUP_new_from_ecparameters(ecparameters);
+    if (!group2)
+        ABORT;
+    if (EC_GROUP_cmp(group, group2, NULL))
+        ABORT;
+
+    fprintf(stderr, " ok\n");
+
+    EC_GROUP_free(group);
+    EC_GROUP_free(group2);
+    ECPARAMETERS_free(ecparameters);
+}
 
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
@@ -1699,6 +1763,8 @@ int main(int argc, char *argv[])
 # endif
     /* test the internal curves */
     internal_curve_test();
+
+    parameter_test();
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)

@@ -1,111 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-/* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #if !defined(_POSIX_C_SOURCE) && defined(OPENSSL_SYS_VMS)
@@ -115,6 +14,7 @@
  */
 # define _POSIX_C_SOURCE 2
 #endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -142,7 +42,7 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
-
+#include "s_apps.h"
 #include "apps.h"
 
 #ifdef _WIN32
@@ -156,7 +56,9 @@ typedef struct {
     unsigned long mask;
 } NAME_EX_TBL;
 
+#if !defined(OPENSSL_NO_UI) || !defined(OPENSSL_NO_ENGINE)
 static UI_METHOD *ui_method = NULL;
+#endif
 
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
@@ -174,8 +76,6 @@ int chopup_args(ARGS *arg, char *buf)
     if (arg->size == 0) {
         arg->size = 20;
         arg->argv = app_malloc(sizeof(*arg->argv) * arg->size, "argv space");
-        if (arg->argv == NULL)
-            return 0;
     }
 
     for (p = buf;;) {
@@ -187,11 +87,12 @@ int chopup_args(ARGS *arg, char *buf)
 
         /* The start of something good :-) */
         if (arg->argc >= arg->size) {
+            char **tmp;
             arg->size += 20;
-            arg->argv = OPENSSL_realloc(arg->argv,
-                                        sizeof(*arg->argv) * arg->size);
-            if (arg->argv == NULL)
+            tmp = OPENSSL_realloc(arg->argv, sizeof(*arg->argv) * arg->size);
+            if (tmp == NULL)
                 return 0;
+            arg->argv = tmp;
         }
         quoted = *p == '\'' || *p == '"';
         if (quoted)
@@ -266,6 +167,7 @@ int dump_cert_text(BIO *out, X509 *x)
     return 0;
 }
 
+#ifndef OPENSSL_NO_UI
 static int ui_open(UI *ui)
 {
     return UI_method_get_opener(UI_OpenSSL())(ui);
@@ -335,20 +237,25 @@ void destroy_ui_method(void)
         ui_method = NULL;
     }
 }
+#endif
 
 int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
 {
-    UI *ui = NULL;
     int res = 0;
+#ifndef OPENSSL_NO_UI
+    UI *ui = NULL;
     const char *prompt_info = NULL;
+#endif
     const char *password = NULL;
     PW_CB_DATA *cb_data = (PW_CB_DATA *)cb_tmp;
 
     if (cb_data) {
         if (cb_data->password)
             password = cb_data->password;
+#ifndef OPENSSL_NO_UI
         if (cb_data->prompt_info)
             prompt_info = cb_data->prompt_info;
+#endif
     }
 
     if (password) {
@@ -359,6 +266,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
         return res;
     }
 
+#ifndef OPENSSL_NO_UI
     ui = UI_new_method(ui_method);
     if (ui) {
         int ok = 0;
@@ -408,12 +316,13 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
         UI_free(ui);
         OPENSSL_free(prompt);
     }
+#endif
     return res;
 }
 
-static char *app_get_pass(char *arg, int keepbio);
+static char *app_get_pass(const char *arg, int keepbio);
 
-int app_passwd(char *arg1, char *arg2, char **pass1, char **pass2)
+int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2)
 {
     int same;
     if (!arg2 || !arg1 || strcmp(arg1, arg2))
@@ -435,7 +344,7 @@ int app_passwd(char *arg1, char *arg2, char **pass1, char **pass2)
     return 1;
 }
 
-static char *app_get_pass(char *arg, int keepbio)
+static char *app_get_pass(const char *arg, int keepbio)
 {
     char *tmp, tpass[APP_PASS_LEN];
     static BIO *pwdbio = NULL;
@@ -560,9 +469,9 @@ int app_load_modules(const CONF *config)
     CONF *to_free = NULL;
 
     if (config == NULL)
-	config = to_free = app_load_config_quiet(default_config_file);
+        config = to_free = app_load_config_quiet(default_config_file);
     if (config == NULL)
-	return 1;
+        return 1;
 
     if (CONF_modules_load(config, NULL, 0) <= 0) {
         BIO_printf(bio_err, "Error configuring OpenSSL modules\n");
@@ -1017,7 +926,7 @@ void* app_malloc(int sz, const char *what)
 }
 
 /*
- * Initialize or extend, if *certs != NULL,  a certificate stack.
+ * Initialize or extend, if *certs != NULL, a certificate stack.
  */
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
                const char *pass, const char *desc)
@@ -1026,7 +935,7 @@ int load_certs(const char *file, STACK_OF(X509) **certs, int format,
 }
 
 /*
- * Initialize or extend, if *crls != NULL,  a certificate stack.
+ * Initialize or extend, if *crls != NULL, a certificate stack.
  */
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
               const char *pass, const char *desc)
@@ -1077,6 +986,7 @@ int set_name_ex(unsigned long *flags, const char *arg)
 {
     static const NAME_EX_TBL ex_tbl[] = {
         {"esc_2253", ASN1_STRFLGS_ESC_2253, 0},
+        {"esc_2254", ASN1_STRFLGS_ESC_2254, 0},
         {"esc_ctrl", ASN1_STRFLGS_ESC_CTRL, 0},
         {"esc_msb", ASN1_STRFLGS_ESC_MSB, 0},
         {"use_quote", ASN1_STRFLGS_ESC_QUOTE, 0},
@@ -1238,7 +1148,7 @@ void print_name(BIO *out, const char *title, X509_NAME *nm,
     }
 }
 
-void print_bignum_var(BIO *out, BIGNUM *in, const char *var,
+void print_bignum_var(BIO *out, const BIGNUM *in, const char *var,
                       int len, unsigned char *buffer)
 {
     BIO_printf(out, "    static unsigned char %s_%d[] = {", var, len);
@@ -1275,7 +1185,7 @@ void print_array(BIO *out, const char* title, int len, const unsigned char* d)
     BIO_printf(out, "\n};\n");
 }
 
-X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
+X509_STORE *setup_verify(const char *CAfile, const char *CApath, int noCAfile, int noCApath)
 {
     X509_STORE *store = X509_STORE_new();
     X509_LOOKUP *lookup;
@@ -1283,7 +1193,7 @@ X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
     if (store == NULL)
         goto end;
 
-    if(CAfile != NULL || !noCAfile) {
+    if (CAfile != NULL || !noCAfile) {
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
         if (lookup == NULL)
             goto end;
@@ -1296,7 +1206,7 @@ X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
             X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
     }
 
-    if(CApath != NULL || !noCApath) {
+    if (CApath != NULL || !noCApath) {
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
         if (lookup == NULL)
             goto end;
@@ -1374,7 +1284,7 @@ static unsigned long index_serial_hash(const OPENSSL_CSTRING *a)
     n = a[DB_serial];
     while (*n == '0')
         n++;
-    return (lh_strhash(n));
+    return OPENSSL_LH_strhash(n);
 }
 
 static int index_serial_cmp(const OPENSSL_CSTRING *a,
@@ -1394,7 +1304,7 @@ static int index_name_qual(char **a)
 
 static unsigned long index_name_hash(const OPENSSL_CSTRING *a)
 {
-    return (lh_strhash(a[DB_name]));
+    return OPENSSL_LH_strhash(a[DB_name]);
 }
 
 int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b)
@@ -1408,7 +1318,7 @@ static IMPLEMENT_LHASH_HASH_FN(index_name, OPENSSL_CSTRING)
 static IMPLEMENT_LHASH_COMP_FN(index_name, OPENSSL_CSTRING)
 #undef BSIZE
 #define BSIZE 256
-BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
+BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai)
 {
     BIO *in = NULL;
     BIGNUM *ret = NULL;
@@ -1453,7 +1363,7 @@ BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
     return (ret);
 }
 
-int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
+int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,
                 ASN1_INTEGER **retai)
 {
     char buf[1][BSIZE];
@@ -1503,9 +1413,10 @@ int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
     return (ret);
 }
 
-int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
+int rotate_serial(const char *serialfile, const char *new_suffix,
+                  const char *old_suffix)
 {
-    char buf[5][BSIZE];
+    char buf[2][BSIZE];
     int i, j;
 
     i = strlen(serialfile) + strlen(old_suffix);
@@ -1573,7 +1484,7 @@ int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
     return ret;
 }
 
-CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
+CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
 {
     CA_DB *retdb = NULL;
     TXT_DB *tmpdb = NULL;
@@ -1874,6 +1785,7 @@ int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
     BIO *mem;
     int len, ret;
     unsigned char tbuf[1024];
+
     mem = BIO_new(BIO_s_mem());
     if (mem == NULL)
         return -1;
@@ -1956,9 +1868,9 @@ void policies_print(X509_STORE_CTX *ctx)
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
  *   err: (maybe NULL) on failure, an error message line is written to this BIO.
- *   in: a NUL termianted string like "abc,def,ghi"
+ *   in: a NUL terminated string like "abc,def,ghi"
  *
- *   returns: a malloced buffer or NULL on failure.
+ *   returns: a malloc'd buffer or NULL on failure.
  */
 unsigned char *next_protos_parse(size_t *outlen, const char *in)
 {
@@ -2027,7 +1939,7 @@ static const char *get_dp_url(DIST_POINT *dp)
         gen = sk_GENERAL_NAME_value(gens, i);
         uri = GENERAL_NAME_get0_value(gen, &gtype);
         if (gtype == GEN_URI && ASN1_STRING_length(uri) > 6) {
-            char *uptr = (char *)ASN1_STRING_data(uri);
+            const char *uptr = (const char *)ASN1_STRING_get0_data(uri);
             if (strncmp(uptr, "http://", 7) == 0)
                 return uptr;
         }
@@ -2073,8 +1985,10 @@ static STACK_OF(X509_CRL) *crls_http_cb(X509_STORE_CTX *ctx, X509_NAME *nm)
     crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
     crl = load_crl_crldp(crldp);
     sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
-    if (!crl)
+    if (!crl) {
+        sk_X509_CRL_free(crls);
         return NULL;
+    }
     sk_X509_CRL_push(crls, crl);
     /* Try to download delta CRL */
     crldp = X509_get_ext_d2i(x, NID_freshest_crl, NULL, NULL);
@@ -2332,45 +2246,6 @@ int app_access(const char* name, int flag)
 #endif
 }
 
-int app_hex(char c)
-{
-    switch (c) {
-    default:
-    case '0':
-        return 0;
-    case '1':
-        return 1;
-    case '2':
-        return 2;
-    case '3':
-        return 3;
-    case '4':
-          return 4;
-    case '5':
-          return 5;
-    case '6':
-          return 6;
-    case '7':
-          return 7;
-    case '8':
-          return 8;
-    case '9':
-          return 9;
-    case 'a': case 'A':
-          return 0x0A;
-    case 'b': case 'B':
-          return 0x0B;
-    case 'c': case 'C':
-          return 0x0C;
-    case 'd': case 'D':
-          return 0x0D;
-    case 'e': case 'E':
-          return 0x0E;
-    case 'f': case 'F':
-          return 0x0F;
-    }
-}
-
 /* app_isdir section */
 #ifdef _WIN32
 int app_isdir(const char *name)
@@ -2499,7 +2374,21 @@ BIO *dup_bio_err(int format)
 
 void unbuffer(FILE *fp)
 {
+/*
+ * On VMS, setbuf() will only take 32-bit pointers, and a compilation
+ * with /POINTER_SIZE=64 will give off a MAYLOSEDATA2 warning here.
+ * However, we trust that the C RTL will never give us a FILE pointer
+ * above the first 4 GB of memory, so we simply turn off the warning
+ * temporarily.
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment save
+# pragma message disable maylosedata2
+#endif
     setbuf(fp, NULL);
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment restore
+#endif
 }
 
 static const char *modestr(char mode, int format)
@@ -2638,6 +2527,8 @@ BIO *bio_open_default_quiet(const char *filename, char mode, int format)
 
 void wait_for_async(SSL *s)
 {
+    /* On Windows select only works for sockets, so we simply don't wait  */
+#ifndef OPENSSL_SYS_WINDOWS
     int width = 0;
     fd_set asyncfds;
     OSSL_ASYNC_FD *fds;
@@ -2647,7 +2538,7 @@ void wait_for_async(SSL *s)
         return;
     if (numfds == 0)
         return;
-    fds = OPENSSL_malloc(sizeof(OSSL_ASYNC_FD) * numfds);
+    fds = app_malloc(sizeof(OSSL_ASYNC_FD) * numfds, "allocate async fds");
     if (!SSL_get_all_async_fds(s, fds, &numfds)) {
         OPENSSL_free(fds);
     }
@@ -2661,4 +2552,60 @@ void wait_for_async(SSL *s)
         fds++;
     }
     select(width, (void *)&asyncfds, NULL, NULL, NULL);
+#endif
+}
+
+/* if OPENSSL_SYS_WINDOWS is defined then so is OPENSSL_SYS_MSDOS */
+#if defined(OPENSSL_SYS_MSDOS)
+int has_stdin_waiting(void)
+{
+# if defined(OPENSSL_SYS_WINDOWS)
+    HANDLE inhand = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD events = 0;
+    INPUT_RECORD inputrec;
+    DWORD insize = 1;
+    BOOL peeked;
+
+    if (inhand == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+
+    peeked = PeekConsoleInput(inhand, &inputrec, insize, &events);
+    if (!peeked) {
+        /* Probably redirected input? _kbhit() does not work in this case */
+        if (!feof(stdin)) {
+            return 1;
+        }
+        return 0;
+    }
+# endif
+    return _kbhit();
+}
+#endif
+
+/* Corrupt a signature by modifying final byte */
+void corrupt_signature(const ASN1_STRING *signature)
+{
+        unsigned char *s = signature->data;
+        s[signature->length - 1] ^= 0x1;
+}
+
+int set_cert_times(X509 *x, const char *startdate, const char *enddate,
+                   int days)
+{
+    if (startdate == NULL || strcmp(startdate, "today") == 0) {
+        if (X509_gmtime_adj(X509_getm_notBefore(x), 0) == NULL)
+            return 0;
+    } else {
+        if (!ASN1_TIME_set_string(X509_getm_notBefore(x), startdate))
+            return 0;
+    }
+    if (enddate == NULL) {
+        if (X509_time_adj_ex(X509_getm_notAfter(x), days, 0, NULL)
+            == NULL)
+            return 0;
+    } else if (!ASN1_TIME_set_string(X509_getm_notAfter(x), enddate)) {
+        return 0;
+    }
+    return 1;
 }

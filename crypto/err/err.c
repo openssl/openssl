@@ -1,124 +1,24 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-/* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <internal/cryptlib_int.h>
-#include <internal/threads.h>
+#include <internal/err.h>
+#include <internal/err_int.h>
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/opensslconf.h>
+#include <internal/thread_once.h>
 
 static void err_load_strings(int lib, ERR_STRING_DATA *str);
 
@@ -196,26 +96,14 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_DSA_LIB, "DSA lib"},
     {ERR_R_X509_LIB, "X509 lib"},
     {ERR_R_ASN1_LIB, "ASN1 lib"},
-    {ERR_R_CONF_LIB, "CONF lib"},
-    {ERR_R_CRYPTO_LIB, "CRYPTO lib"},
     {ERR_R_EC_LIB, "EC lib"},
-    {ERR_R_SSL_LIB, "SSL lib"},
     {ERR_R_BIO_LIB, "BIO lib"},
     {ERR_R_PKCS7_LIB, "PKCS7 lib"},
     {ERR_R_X509V3_LIB, "X509V3 lib"},
-    {ERR_R_PKCS12_LIB, "PKCS12 lib"},
-    {ERR_R_RAND_LIB, "RAND lib"},
-    {ERR_R_DSO_LIB, "DSO lib"},
     {ERR_R_ENGINE_LIB, "ENGINE lib"},
-    {ERR_R_OCSP_LIB, "OCSP lib"},
-    {ERR_R_TS_LIB, "TS lib"},
     {ERR_R_ECDSA_LIB, "ECDSA lib"},
 
     {ERR_R_NESTED_ASN1_ERROR, "nested asn1 error"},
-    {ERR_R_BAD_ASN1_OBJECT_HEADER, "bad asn1 object header"},
-    {ERR_R_BAD_GET_ASN1_OBJECT_CALL, "bad get asn1 object call"},
-    {ERR_R_EXPECTING_AN_ASN1_SEQUENCE, "expecting an asn1 sequence"},
-    {ERR_R_ASN1_LENGTH_MISMATCH, "asn1 length mismatch"},
     {ERR_R_MISSING_ASN1_EOS, "missing asn1 eos"},
 
     {ERR_R_FATAL, "fatal"},
@@ -237,8 +125,6 @@ static CRYPTO_THREAD_LOCAL err_thread_local;
 static CRYPTO_ONCE err_string_init = CRYPTO_ONCE_STATIC_INIT;
 static CRYPTO_RWLOCK *err_string_lock;
 
-/* Predeclarations of the "err_defaults" functions */
-static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit);
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *);
 
 /*
@@ -267,33 +153,13 @@ static int err_string_data_cmp(const ERR_STRING_DATA *a,
     return (int)(a->error - b->error);
 }
 
-static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit)
-{
-    LHASH_OF(ERR_STRING_DATA) *ret = NULL;
-
-    if (lockit)
-        CRYPTO_THREAD_write_lock(err_string_lock);
-    if (!int_error_hash && create) {
-        int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
-                                                err_string_data_cmp);
-    }
-    if (int_error_hash != NULL)
-        ret = int_error_hash;
-    if (lockit)
-        CRYPTO_THREAD_unlock(err_string_lock);
-
-    return ret;
-}
-
 static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 {
     ERR_STRING_DATA *p = NULL;
-    LHASH_OF(ERR_STRING_DATA) *hash;
 
     CRYPTO_THREAD_read_lock(err_string_lock);
-    hash = get_hash(0, 0);
-    if (hash)
-        p = lh_ERR_STRING_DATA_retrieve(hash, d);
+    if (int_error_hash != NULL)
+        p = lh_ERR_STRING_DATA_retrieve(int_error_hash, d);
     CRYPTO_THREAD_unlock(err_string_lock);
 
     return p;
@@ -333,12 +199,8 @@ static void build_SYS_str_reasons(void)
         str->error = (unsigned long)i;
         if (str->string == NULL) {
             char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
-            char *src = strerror(i);
-            if (src != NULL) {
-                strncpy(*dest, src, sizeof(*dest));
-                (*dest)[sizeof(*dest) - 1] = '\0';
+            if (openssl_strerror_r(i, *dest, sizeof(*dest)))
                 str->string = *dest;
-            }
         }
         if (str->string == NULL)
             str->string = "unknown";
@@ -387,17 +249,23 @@ static void ERR_STATE_free(ERR_STATE *s)
     OPENSSL_free(s);
 }
 
-static void do_err_strings_init(void)
+DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     err_string_lock = CRYPTO_THREAD_lock_new();
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+    return err_string_lock != NULL;
 }
 
-void ERR_load_ERR_strings(void)
+void err_cleanup(void)
+{
+    CRYPTO_THREAD_lock_free(err_string_lock);
+    err_string_lock = NULL;
+}
+
+int ERR_load_ERR_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+        return 0;
 
     err_load_strings(0, ERR_str_libraries);
     err_load_strings(0, ERR_str_reasons);
@@ -405,51 +273,55 @@ void ERR_load_ERR_strings(void)
     build_SYS_str_reasons();
     err_load_strings(ERR_LIB_SYS, SYS_str_reasons);
 #endif
+    return 1;
 }
 
 static void err_load_strings(int lib, ERR_STRING_DATA *str)
 {
-    LHASH_OF(ERR_STRING_DATA) *hash;
-
     CRYPTO_THREAD_write_lock(err_string_lock);
-    hash = get_hash(1, 0);
-    if (hash) {
+    if (int_error_hash == NULL)
+        int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
+                                                err_string_data_cmp);
+    if (int_error_hash != NULL) {
         for (; str->error; str++) {
             if (lib)
                 str->error |= ERR_PACK(lib, 0, 0);
-            (void)lh_ERR_STRING_DATA_insert(hash, str);
+            (void)lh_ERR_STRING_DATA_insert(int_error_hash, str);
         }
     }
     CRYPTO_THREAD_unlock(err_string_lock);
 }
 
-void ERR_load_strings(int lib, ERR_STRING_DATA *str)
+int ERR_load_strings(int lib, ERR_STRING_DATA *str)
 {
-    ERR_load_ERR_strings();
+    if (ERR_load_ERR_strings() == 0)
+        return 0;
     err_load_strings(lib, str);
+    return 1;
 }
 
-void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
+int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 {
-    LHASH_OF(ERR_STRING_DATA) *hash;
-
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+        return 0;
 
     CRYPTO_THREAD_write_lock(err_string_lock);
-    hash = get_hash(0, 0);
-    if (hash) {
+    if (int_error_hash != NULL) {
         for (; str->error; str++) {
             if (lib)
                 str->error |= ERR_PACK(lib, 0, 0);
-            (void)lh_ERR_STRING_DATA_delete(hash, str);
+            (void)lh_ERR_STRING_DATA_delete(int_error_hash, str);
         }
     }
     CRYPTO_THREAD_unlock(err_string_lock);
+
+    return 1;
 }
 
-void ERR_free_strings(void)
+void err_free_strings_int(void)
 {
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
+        return;
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     lh_ERR_STRING_DATA_free(int_error_hash);
@@ -685,17 +557,14 @@ char *ERR_error_string(unsigned long e, char *ret)
     return ret;
 }
 
-LHASH_OF(ERR_STRING_DATA) *ERR_get_string_table(void)
-{
-    return get_hash(0, 1);
-}
-
 const char *ERR_lib_error_string(unsigned long e)
 {
     ERR_STRING_DATA d, *p;
     unsigned long l;
 
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+        return NULL;
+    }
 
     l = ERR_GET_LIB(e);
     d.error = ERR_PACK(l, 0, 0);
@@ -708,7 +577,9 @@ const char *ERR_func_error_string(unsigned long e)
     ERR_STRING_DATA d, *p;
     unsigned long l, f;
 
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+        return NULL;
+    }
 
     l = ERR_GET_LIB(e);
     f = ERR_GET_FUNC(e);
@@ -722,7 +593,9 @@ const char *ERR_reason_error_string(unsigned long e)
     ERR_STRING_DATA d, *p = NULL;
     unsigned long l, r;
 
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+        return NULL;
+    }
 
     l = ERR_GET_LIB(e);
     r = ERR_GET_REASON(e);
@@ -735,7 +608,7 @@ const char *ERR_reason_error_string(unsigned long e)
     return ((p == NULL) ? NULL : p->string);
 }
 
-void ERR_remove_thread_state(void)
+void err_delete_thread_state(void)
 {
     ERR_STATE *state = ERR_get_state();
     if (state == NULL)
@@ -745,23 +618,29 @@ void ERR_remove_thread_state(void)
     ERR_STATE_free(state);
 }
 
-#if OPENSSL_API_COMPAT < 0x10000000L
-void ERR_remove_state(unsigned long pid)
+#if OPENSSL_API_COMPAT < 0x10100000L
+void ERR_remove_thread_state(void *dummy)
 {
-    ERR_remove_thread_state();
 }
 #endif
 
-static void err_do_init(void)
+#if OPENSSL_API_COMPAT < 0x10000000L
+void ERR_remove_state(unsigned long pid)
 {
-    CRYPTO_THREAD_init_local(&err_thread_local, NULL);
+}
+#endif
+
+DEFINE_RUN_ONCE_STATIC(err_do_init)
+{
+    return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
 }
 
 ERR_STATE *ERR_get_state(void)
 {
     ERR_STATE *state = NULL;
 
-    CRYPTO_THREAD_run_once(&err_init, err_do_init);
+    if (!RUN_ONCE(&err_init, err_do_init))
+        return NULL;
 
     state = CRYPTO_THREAD_get_local(&err_thread_local);
 
@@ -787,7 +666,9 @@ int ERR_get_next_error_library(void)
 {
     int ret;
 
-    CRYPTO_THREAD_run_once(&err_string_init, do_err_strings_init);
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+        return 0;
+    }
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     ret = int_err_library_number++;

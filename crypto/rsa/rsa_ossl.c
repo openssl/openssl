@@ -1,117 +1,15 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-/* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include "internal/cryptlib.h"
 #include "internal/bn_int.h"
-#include <openssl/rsa.h>
-#include <openssl/rand.h>
+#include "rsa_locl.h"
 
 #ifndef RSA_NULL
 
@@ -401,33 +299,27 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
         if (!rsa->meth->rsa_mod_exp(ret, f, rsa, ctx))
             goto err;
     } else {
-        BIGNUM *d = NULL, *local_d = NULL;
-
-        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-            local_d = d = BN_new();
-            if (d == NULL) {
-                RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-            BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-        } else {
-            d = rsa->d;
+        BIGNUM *d = BN_new();
+        if (d == NULL) {
+            RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
+            goto err;
         }
+        BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
 
         if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
             if (!BN_MONT_CTX_set_locked
                 (&rsa->_method_mod_n, rsa->lock, rsa->n, ctx)) {
-                BN_free(local_d);
+                BN_free(d);
                 goto err;
             }
 
         if (!rsa->meth->bn_mod_exp(ret, f, d, rsa->n, ctx,
                                    rsa->_method_mod_n)) {
-            BN_free(local_d);
+            BN_free(d);
             goto err;
         }
-        /* We MUST free local_d before any further use of rsa->d */
-        BN_free(local_d);
+        /* We MUST free d before any further use of rsa->d */
+        BN_free(d);
     }
 
     if (blinding)
@@ -535,32 +427,26 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         if (!rsa->meth->rsa_mod_exp(ret, f, rsa, ctx))
             goto err;
     } else {
-        BIGNUM *d = NULL, *local_d = NULL;
-
-        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-            local_d = d = BN_new();
-            if (d == NULL) {
-                RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-            BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-        } else {
-            d = rsa->d;
+        BIGNUM *d = BN_new();
+        if (d == NULL) {
+            RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
+            goto err;
         }
+        BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
 
         if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
             if (!BN_MONT_CTX_set_locked
                 (&rsa->_method_mod_n, rsa->lock, rsa->n, ctx)) {
-                BN_free(local_d);
+                BN_free(d);
                 goto err;
             }
         if (!rsa->meth->bn_mod_exp(ret, f, d, rsa->n, ctx,
                                    rsa->_method_mod_n)) {
-            BN_free(local_d);
+            BN_free(d);
             goto err;
         }
-        /* We MUST free local_d before any further use of rsa->d */
-        BN_free(local_d);
+        /* We MUST free d before any further use of rsa->d */
+        BN_free(d);
     }
 
     if (blinding)
@@ -709,46 +595,35 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     vrfy = BN_CTX_get(ctx);
 
     {
-        BIGNUM *local_p = NULL, *local_q = NULL;
-        BIGNUM *p = NULL, *q = NULL;
+        BIGNUM *p = BN_new(), *q = BN_new();
 
         /*
          * Make sure BN_mod_inverse in Montgomery initialization uses the
-         * BN_FLG_CONSTTIME flag (unless RSA_FLAG_NO_CONSTTIME is set)
+         * BN_FLG_CONSTTIME flag
          */
-        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-            local_p = p = BN_new();
-            if (p == NULL)
-                goto err;
-            BN_with_flags(p, rsa->p, BN_FLG_CONSTTIME);
-
-            local_q = q = BN_new();
-            if (q == NULL) {
-                BN_free(local_p);
-                goto err;
-            }
-            BN_with_flags(q, rsa->q, BN_FLG_CONSTTIME);
-        } else {
-            p = rsa->p;
-            q = rsa->q;
+        if (p == NULL || q == NULL) {
+            BN_free(p);
+            BN_free(q);
+            goto err;
         }
+        BN_with_flags(p, rsa->p, BN_FLG_CONSTTIME);
+        BN_with_flags(q, rsa->q, BN_FLG_CONSTTIME);
 
         if (rsa->flags & RSA_FLAG_CACHE_PRIVATE) {
             if (!BN_MONT_CTX_set_locked
                 (&rsa->_method_mod_p, rsa->lock, p, ctx)
                 || !BN_MONT_CTX_set_locked(&rsa->_method_mod_q,
                                            rsa->lock, q, ctx)) {
-                BN_free(local_p);
-                BN_free(local_q);
+                BN_free(p);
+                BN_free(q);
                 goto err;
             }
         }
         /*
-         * We MUST free local_p and local_q before any further use of rsa->p and
-         * rsa->q
+         * We MUST free p and q before any further use of rsa->p and rsa->q
          */
-        BN_free(local_p);
-        BN_free(local_q);
+        BN_free(p);
+        BN_free(q);
     }
 
     if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
@@ -758,72 +633,58 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 
     /* compute I mod q */
     {
-        BIGNUM *local_c = NULL;
-        const BIGNUM *c;
-        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-            local_c = BN_new();
-            if (local_c == NULL)
-                goto err;
-            BN_with_flags(local_c, I, BN_FLG_CONSTTIME);
-            c = local_c;
-        } else {
-            c = I;
-        }
+        BIGNUM *c = BN_new();
+        if (c == NULL)
+            goto err;
+        BN_with_flags(c, I, BN_FLG_CONSTTIME);
+
         if (!BN_mod(r1, c, rsa->q, ctx)) {
-            BN_free(local_c);
+            BN_free(c);
             goto err;
         }
 
         {
-            BIGNUM *local_dmq1 = NULL, *dmq1;
-            /* compute r1^dmq1 mod q */
-            if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-                dmq1 = local_dmq1 = BN_new();
-                if (local_dmq1 == NULL) {
-                    BN_free(local_c);
-                    goto err;
-                }
-                BN_with_flags(dmq1, rsa->dmq1, BN_FLG_CONSTTIME);
-            } else {
-                dmq1 = rsa->dmq1;
-            }
-            if (!rsa->meth->bn_mod_exp(m1, r1, dmq1, rsa->q, ctx,
-                rsa->_method_mod_q)) {
-                BN_free(local_c);
-                BN_free(local_dmq1);
+            BIGNUM *dmq1 = BN_new();
+            if (dmq1 == NULL) {
+                BN_free(c);
                 goto err;
             }
-            /* We MUST free local_dmq1 before any further use of rsa->dmq1 */
-            BN_free(local_dmq1);
+            BN_with_flags(dmq1, rsa->dmq1, BN_FLG_CONSTTIME);
+
+            /* compute r1^dmq1 mod q */
+            if (!rsa->meth->bn_mod_exp(m1, r1, dmq1, rsa->q, ctx,
+                rsa->_method_mod_q)) {
+                BN_free(c);
+                BN_free(dmq1);
+                goto err;
+            }
+            /* We MUST free dmq1 before any further use of rsa->dmq1 */
+            BN_free(dmq1);
         }
 
         /* compute I mod p */
         if (!BN_mod(r1, c, rsa->p, ctx)) {
-            BN_free(local_c);
+            BN_free(c);
             goto err;
         }
-        /* We MUST free local_c before any further use of I */
-        BN_free(local_c);
+        /* We MUST free c before any further use of I */
+        BN_free(c);
     }
 
     {
-        BIGNUM *local_dmp1 = NULL, *dmp1;
+        BIGNUM *dmp1 = BN_new();
+        if (dmp1 == NULL)
+            goto err;
+        BN_with_flags(dmp1, rsa->dmp1, BN_FLG_CONSTTIME);
+
         /* compute r1^dmp1 mod p */
-        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-            dmp1 = local_dmp1 = BN_new();
-            if (local_dmp1 == NULL)
-                goto err;
-            BN_with_flags(dmp1, rsa->dmp1, BN_FLG_CONSTTIME);
-        } else {
-            dmp1 = rsa->dmp1;
-        }
         if (!rsa->meth->bn_mod_exp(r0, r1, dmp1, rsa->p, ctx,
                                    rsa->_method_mod_p)) {
-            BN_free(local_dmp1);
+            BN_free(dmp1);
             goto err;
         }
-        /* We MUST free local_dmp1 before any further use of rsa->dmp1 */
-        BN_free(local_dmp1);
+        /* We MUST free dmp1 before any further use of rsa->dmp1 */
+        BN_free(dmp1);
     }
 
     if (!BN_sub(r0, r0, m1))
@@ -840,22 +701,17 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         goto err;
 
     {
-        BIGNUM *local_r1 = NULL, *pr1;
-        /* Turn BN_FLG_CONSTTIME flag on before division operation */
-        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-            pr1 = local_r1 = BN_new();
-            if (local_r1 == NULL)
-                goto err;
-            BN_with_flags(pr1, r1, BN_FLG_CONSTTIME);
-        } else {
-            pr1 = r1;
-        }
+        BIGNUM *pr1 = BN_new();
+        if (pr1 == NULL)
+            goto err;
+        BN_with_flags(pr1, r1, BN_FLG_CONSTTIME);
+
         if (!BN_mod(r0, pr1, rsa->p, ctx)) {
-            BN_free(local_r1);
+            BN_free(pr1);
             goto err;
         }
-        /* We MUST free local_r1 before any further use of r1 */
-        BN_free(local_r1);
+        /* We MUST free pr1 before any further use of r1 */
+        BN_free(pr1);
     }
 
     /*
@@ -897,24 +753,18 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
              * return that instead.
              */
 
-            BIGNUM *local_d = NULL;
-            BIGNUM *d = NULL;
+            BIGNUM *d = BN_new();
+            if (d == NULL)
+                goto err;
+            BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
 
-            if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-                local_d = d = BN_new();
-                if (d == NULL)
-                    goto err;
-                BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-            } else {
-                d = rsa->d;
-            }
             if (!rsa->meth->bn_mod_exp(r0, I, d, rsa->n, ctx,
                                        rsa->_method_mod_n)) {
-                BN_free(local_d);
+                BN_free(d);
                 goto err;
             }
-            /* We MUST free local_d before any further use of rsa->d */
-            BN_free(local_d);
+            /* We MUST free d before any further use of rsa->d */
+            BN_free(d);
         }
     }
     ret = 1;
