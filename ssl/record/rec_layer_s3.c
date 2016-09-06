@@ -179,11 +179,12 @@ const char *SSL_rstate_string(const SSL *s)
 
 /*
  * Return values are as per SSL_read(), i.e.
- * >0 The number of read bytes
+ *  1 Success
  *  0 Failure (not retryable)
  * <0 Failure (may be retryable)
  */
-int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold)
+int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
+                size_t *read)
 {
     /*
      * If extend == 0, obtain new n-byte packet; if extend == 1, increase
@@ -194,13 +195,12 @@ int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold)
      * if clearold == 1, move the packet to the start of the buffer; if
      * clearold == 0 then leave any old packets where they were
      */
-    int i, len, left;
-    size_t align = 0;
+    size_t len, left, align = 0;
     unsigned char *pkt;
     SSL3_BUFFER *rb;
 
-    if (n <= 0)
-        return n;
+    if (n == 0)
+        return 0;
 
     rb = &s->rlayer.rbuf;
     if (rb->buf == NULL)
@@ -270,12 +270,13 @@ int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold)
         s->rlayer.packet_length += n;
         rb->left = left - n;
         rb->offset += n;
-        return (n);
+        *read = n;
+        return 1;
     }
 
     /* else we need to read more data */
 
-    if (n > (int)(rb->len - rb->offset)) { /* does not happen */
+    if (n > (rb->len - rb->offset)) { /* does not happen */
         SSLerr(SSL_F_SSL3_READ_N, ERR_R_INTERNAL_ERROR);
         return -1;
     }
@@ -287,11 +288,14 @@ int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold)
     else {
         if (max < n)
             max = n;
-        if (max > (int)(rb->len - rb->offset))
+        if (max > (rb->len - rb->offset))
             max = rb->len - rb->offset;
     }
 
     while (left < n) {
+        size_t bioread;
+        int ret;
+
         /*
          * Now we have len+left bytes at the front of s->s3->rbuf.buf and
          * need to read in more until we have len+n (up to len+max if
@@ -301,20 +305,23 @@ int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold)
         clear_sys_error();
         if (s->rbio != NULL) {
             s->rwstate = SSL_READING;
-            i = BIO_read(s->rbio, pkt + len + left, max - left);
+            /* TODO(size_t): Convert this function */
+            ret = BIO_read(s->rbio, pkt + len + left, max - left);
+            if (ret >= 0)
+                bioread = ret;
         } else {
             SSLerr(SSL_F_SSL3_READ_N, SSL_R_READ_BIO_NOT_SET);
-            i = -1;
+            ret = -1;
         }
 
-        if (i <= 0) {
+        if (ret <= 0) {
             rb->left = left;
             if (s->mode & SSL_MODE_RELEASE_BUFFERS && !SSL_IS_DTLS(s))
                 if (len + left == 0)
                     ssl3_release_read_buffer(s);
             return -1;
         }
-        left += i;
+        left += bioread;
         /*
          * reads should *never* span multiple packets for DTLS because the
          * underlying transport protocol is message oriented as opposed to
@@ -331,7 +338,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold)
     rb->left = left - n;
     s->rlayer.packet_length += n;
     s->rwstate = SSL_NOTHING;
-    return (n);
+    *read = n;
+    return 1;
 }
 
 /*
@@ -411,7 +419,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) {
         unsigned char aad[13];
         EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
-        int packlen;
+        size_t packlen;
 
         /* minimize address aliasing conflicts */
         if ((max_send_fragment & 0xfff) == 0)
@@ -470,11 +478,12 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
             mb_param.inp = aad;
             mb_param.len = nw;
 
+            /* TODO: CHECK ME - CAN THIS EVER BE NEGATIVE???? */
             packlen = EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
                                           EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
                                           sizeof(mb_param), &mb_param);
 
-            if (packlen <= 0 || packlen > (int)wb->len) { /* never happens */
+            if (packlen <= 0 || packlen > wb->len) { /* never happens */
                 /* free jumbo buffer */
                 ssl3_release_write_buffer(s);
                 break;
@@ -921,7 +930,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
             SSLerr(SSL_F_SSL3_WRITE_PENDING, SSL_R_BIO_NOT_SET);
             i = -1;
         }
-        if (i == SSL3_BUFFER_get_left(&wb[currbuf])) {
+        if (i == (int)SSL3_BUFFER_get_left(&wb[currbuf])) {
             SSL3_BUFFER_set_left(&wb[currbuf], 0);
             SSL3_BUFFER_add_offset(&wb[currbuf], i);
             if (currbuf + 1 < s->rlayer.numwpipes)
