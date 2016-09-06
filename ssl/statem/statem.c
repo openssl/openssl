@@ -490,12 +490,12 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
     int ret, mt;
-    unsigned long len = 0;
+    size_t len = 0;
     int (*transition) (SSL *s, int mt);
     PACKET pkt;
     MSG_PROCESS_RETURN(*process_message) (SSL *s, PACKET *pkt);
     WORK_STATE(*post_process_message) (SSL *s, WORK_STATE wst);
-    unsigned long (*max_message_size) (SSL *s);
+    size_t (*max_message_size) (SSL *s);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
     cb = get_callback(s);

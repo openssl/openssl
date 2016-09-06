@@ -84,7 +84,7 @@ struct ssl_async_args {
     int num;
     enum { READFUNC, WRITEFUNC, OTHERFUNC } type;
     union {
-        int (*func_read) (SSL *, void *, int);
+        int (*func_read) (SSL *, void *, size_t, size_t *);
         int (*func_write) (SSL *, const void *, int);
         int (*func_other) (SSL *);
     } f;
@@ -1517,7 +1517,7 @@ static int ssl_io_intern(void *vargs)
     num = args->num;
     switch (args->type) {
     case READFUNC:
-        return args->f.func_read(s, buf, num);
+        return args->f.func_read(s, buf, num, &s->asyncread);
     case WRITEFUNC:
         return args->f.func_write(s, buf, num);
     case OTHERFUNC:
@@ -1528,8 +1528,30 @@ static int ssl_io_intern(void *vargs)
 
 int SSL_read(SSL *s, void *buf, int num)
 {
+    int ret;
+    size_t read;
+
+    if (num < 0) {
+        SSLerr(SSL_F_SSL_READ, SSL_R_BAD_LENGTH);
+        return -1;
+    }
+
+    ret = SSL_read_ex(s, buf, (size_t)num, &read);
+
+    /*
+     * The cast is safe here because ret should be <= INT_MAX because num is
+     * <= INT_MAX
+     */
+    if (ret > 0)
+        ret = (int)read;
+
+    return ret;
+}
+
+int SSL_read_ex(SSL *s, void *buf, size_t num, size_t *read)
+{
     if (s->handshake_func == NULL) {
-        SSLerr(SSL_F_SSL_READ, SSL_R_UNINITIALIZED);
+        SSLerr(SSL_F_SSL_READ_EX, SSL_R_UNINITIALIZED);
         return -1;
     }
 
@@ -1540,6 +1562,7 @@ int SSL_read(SSL *s, void *buf, int num)
 
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
+        int ret;
 
         args.s = s;
         args.buf = buf;
@@ -1547,16 +1570,40 @@ int SSL_read(SSL *s, void *buf, int num)
         args.type = READFUNC;
         args.f.func_read = s->method->ssl_read;
 
-        return ssl_start_async_job(s, &args, ssl_io_intern);
+        ret = ssl_start_async_job(s, &args, ssl_io_intern);
+        *read = s->asyncread;
+        return ret;
     } else {
-        return s->method->ssl_read(s, buf, num);
+        return s->method->ssl_read(s, buf, num, read);
     }
 }
 
 int SSL_peek(SSL *s, void *buf, int num)
 {
+    int ret;
+    size_t read;
+
+    if (num < 0) {
+        SSLerr(SSL_F_SSL_PEEK, SSL_R_BAD_LENGTH);
+        return -1;
+    }
+
+    ret = SSL_peek_ex(s, buf, (size_t)num, &read);
+
+    /*
+     * The cast is safe here because ret should be <= INT_MAX because num is
+     * <= INT_MAX
+     */
+    if (ret > 0)
+        ret = (int)read;
+
+    return ret;
+}
+
+int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *read)
+{
     if (s->handshake_func == NULL) {
-        SSLerr(SSL_F_SSL_PEEK, SSL_R_UNINITIALIZED);
+        SSLerr(SSL_F_SSL_PEEK_EX, SSL_R_UNINITIALIZED);
         return -1;
     }
 
@@ -1565,6 +1612,7 @@ int SSL_peek(SSL *s, void *buf, int num)
     }
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
+        int ret;
 
         args.s = s;
         args.buf = buf;
@@ -1572,9 +1620,11 @@ int SSL_peek(SSL *s, void *buf, int num)
         args.type = READFUNC;
         args.f.func_read = s->method->ssl_peek;
 
-        return ssl_start_async_job(s, &args, ssl_io_intern);
+        ret = ssl_start_async_job(s, &args, ssl_io_intern);
+        *read = s->asyncread;
+        return ret;
     } else {
-        return s->method->ssl_peek(s, buf, num);
+        return s->method->ssl_peek(s, buf, num, read);
     }
 }
 
