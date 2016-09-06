@@ -2795,11 +2795,11 @@ int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len)
  * at that point.
  * TODO - RENAME ME
  */
-int ssl3_set_handshake_header2(SSL *s, WPACKET *pkt, WPACKET *body, int htype)
+int ssl3_set_handshake_header2(SSL *s, WPACKET *pkt, int htype)
 {
     /* Set the content type and 3 bytes for the message len */
     if (!WPACKET_put_bytes(pkt, htype, 1)
-            || !WPACKET_get_sub_packet_len(pkt, body, 3))
+            || !WPACKET_start_sub_packet_len(pkt, 3))
         return 0;
 
     return 1;

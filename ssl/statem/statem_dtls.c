@@ -1197,7 +1197,7 @@ void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
  * at that point.
  * TODO - RENAME ME
  */
-int dtls1_set_handshake_header2(SSL *s, WPACKET *pkt, WPACKET *body, int htype)
+int dtls1_set_handshake_header2(SSL *s, WPACKET *pkt, int htype)
 {
     unsigned char *header;
     dtls1_set_message_header(s, htype, 0, 0, 0);
@@ -1207,7 +1207,7 @@ int dtls1_set_handshake_header2(SSL *s, WPACKET *pkt, WPACKET *body, int htype)
      * in later
      */
     if (!WPACKET_allocate_bytes(pkt, DTLS1_HM_HEADER_LENGTH, &header)
-            || !WPACKET_get_sub_packet(pkt, body))
+            || !WPACKET_start_sub_packet(pkt))
         return 0;
 
     return 1;
@@ -1219,7 +1219,7 @@ int dtls1_close_construct_packet(SSL *s, WPACKET *pkt)
 
     if (!WPACKET_get_length(pkt, &msglen)
             || msglen > INT_MAX
-            || !WPACKET_close(pkt))
+            || !WPACKET_finish(pkt))
         return 0;
     s->d1->w_msg_hdr.msg_len = msglen - DTLS1_HM_HEADER_LENGTH;
     s->d1->w_msg_hdr.frag_len = msglen - DTLS1_HM_HEADER_LENGTH;
