@@ -68,7 +68,7 @@ void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
 static int ssl3_record_app_data_waiting(SSL *s)
 {
     SSL3_BUFFER *rbuf;
-    int left, len;
+    size_t left, len;
     unsigned char *p;
 
     rbuf = RECORD_LAYER_get_rbuf(&s->rlayer);
@@ -125,7 +125,9 @@ static int ssl3_record_app_data_waiting(SSL *s)
 int ssl3_get_record(SSL *s)
 {
     int ssl_major, ssl_minor, al;
-    int enc_err, n, i, ret = -1;
+    int enc_err, rret, ret = -1;
+    int i;
+    size_t more, n;
     SSL3_RECORD *rr;
     SSL3_BUFFER *rbuf;
     SSL_SESSION *sess;
@@ -149,11 +151,11 @@ int ssl3_get_record(SSL *s)
         if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
             (RECORD_LAYER_get_packet_length(&s->rlayer)
              < SSL3_RT_HEADER_LENGTH)) {
-            n = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH,
-                            SSL3_BUFFER_get_len(rbuf), 0,
-                            num_recs == 0 ? 1 : 0);
-            if (n <= 0)
-                return (n);     /* error or non-blocking */
+            rret = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH,
+                               SSL3_BUFFER_get_len(rbuf), 0,
+                               num_recs == 0 ? 1 : 0, &n);
+            if (rret <= 0)
+                return rret;     /* error or non-blocking */
             RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_BODY);
 
             p = RECORD_LAYER_get_packet(&s->rlayer);
@@ -274,17 +276,17 @@ int ssl3_get_record(SSL *s)
          * record
          */
         if (rr[num_recs].rec_version == SSL2_VERSION) {
-            i = rr[num_recs].length + SSL2_RT_HEADER_LENGTH
+            more = rr[num_recs].length + SSL2_RT_HEADER_LENGTH
                 - SSL3_RT_HEADER_LENGTH;
         } else {
-            i = rr[num_recs].length;
+            more = rr[num_recs].length;
         }
-        if (i > 0) {
+        if (more > 0) {
             /* now s->packet_length == SSL3_RT_HEADER_LENGTH */
 
-            n = ssl3_read_n(s, i, i, 1, 0);
-            if (n <= 0)
-                return (n);     /* error or non-blocking io */
+            rret = ssl3_read_n(s, more, more, 1, 0, &n);
+            if (rret <= 0)
+                return rret;     /* error or non-blocking io */
         }
 
         /* set state for later operations */
@@ -1482,7 +1484,8 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 int dtls1_get_record(SSL *s)
 {
     int ssl_major, ssl_minor;
-    int i, n;
+    int rret;
+    size_t more, n;
     SSL3_RECORD *rr;
     unsigned char *p = NULL;
     unsigned short version;
@@ -1508,11 +1511,11 @@ int dtls1_get_record(SSL *s)
     /* check if we have the header */
     if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
         (RECORD_LAYER_get_packet_length(&s->rlayer) < DTLS1_RT_HEADER_LENGTH)) {
-        n = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH,
-                        SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0, 1);
+        rret = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH,
+                           SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0, 1, &n);
         /* read timeout is handled by dtls1_read_bytes */
-        if (n <= 0)
-            return (n);         /* error or non-blocking */
+        if (rret <= 0)
+            return rret;         /* error or non-blocking */
 
         /* this packet contained a partial record, dump it */
         if (RECORD_LAYER_get_packet_length(&s->rlayer) !=
@@ -1575,10 +1578,10 @@ int dtls1_get_record(SSL *s)
     if (rr->length >
         RECORD_LAYER_get_packet_length(&s->rlayer) - DTLS1_RT_HEADER_LENGTH) {
         /* now s->packet_length == DTLS1_RT_HEADER_LENGTH */
-        i = rr->length;
-        n = ssl3_read_n(s, i, i, 1, 1);
+        more = rr->length;
+        rret = ssl3_read_n(s, more, more, 1, 1, &n);
         /* this packet contained a partial record, dump it */
-        if (n != i) {
+        if (rret <= 0 || n != more) {
             rr->length = 0;
             RECORD_LAYER_reset_packet_length(&s->rlayer);
             goto again;

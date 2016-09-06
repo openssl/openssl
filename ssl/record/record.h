@@ -22,9 +22,9 @@ typedef struct ssl3_buffer_st {
     /* buffer size */
     size_t len;
     /* where to 'copy from' */
-    int offset;
+    size_t offset;
     /* how many bytes left */
-    int left;
+    size_t left;
 } SSL3_BUFFER;
 
 #define SEQ_NUM_SIZE                            8
@@ -154,7 +154,7 @@ typedef struct record_layer_st {
     SSL3_RECORD rrec[SSL_MAX_PIPELINES];
     /* used internally to point at a raw packet */
     unsigned char *packet;
-    unsigned int packet_length;
+    size_t packet_length;
     /* number of bytes sent so far */
     unsigned int wnum;
     /*
