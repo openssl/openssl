@@ -846,33 +846,34 @@ foreach (sort (keys %disabled))
 		@{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
 		@{$config{sdirs}} = grep !/^engine$/, @{$config{sdirs}};
 		push @{$config{openssl_other_defines}}, "OPENSSL_NO_ENGINE";
+		print " OPENSSL_NO_ENGINE (skip engines)";
 		}
 	else
 		{
-		my ($ALGO, $algo);
-		($ALGO = $algo = $_) =~ tr/[\-a-z]/[_A-Z]/;
+		my ($WHAT, $what);
 
-		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/ || /^async$/
-				|| /^autoalginit/ || /^autoerrinit/)
+		($WHAT = $what = $_) =~ tr/[\-a-z]/[_A-Z]/;
+
+		# Fix up C macro end names
+		$WHAT = "RMD160" if $what eq "ripemd";
+
+		# fix-up crypto/directory name(s)
+		$what = "ripemd" if $what eq "rmd160";
+		$what = "whrlpool" if $what eq "whirlpool";
+
+		if (grep { $_ eq $what } @{$config{sdirs}})
 			{
-			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$ALGO";
-			print " OPENSSL_NO_$ALGO";
+			push @{$config{openssl_algorithm_defines}}, "OPENSSL_NO_$WHAT";
+			@{$config{sdirs}} = grep { $_ ne $what} @{$config{sdirs}};
 
-			if (/^err$/)	{ push @user_defines, "OPENSSL_NO_ERR"; }
+			print " OPENSSL_NO_$WHAT (skip dir)";
 			}
 		else
 			{
-			($ALGO,$algo) = ("RMD160","rmd160") if ($algo eq "ripemd");
+			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$WHAT";
+			print " OPENSSL_NO_$WHAT";
 
-			push @{$config{openssl_algorithm_defines}}, "OPENSSL_NO_$ALGO";
-			print " OPENSSL_NO_$ALGO";
-
-			# fix-up crypto/directory name(s)
-			$algo="whrlpool" if $algo eq "whirlpool";
-			$algo="ripemd" if $algo eq "rmd160";
-			@{$config{sdirs}} = grep { $_ ne $algo} @{$config{sdirs}};
-
-			print " (skip dir)";
+			if (/^err$/)	{ push @user_defines, "OPENSSL_NO_ERR"; }
 			}
 		}
 
