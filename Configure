@@ -11,6 +11,7 @@
 
 require 5.10.0;
 use strict;
+use Config;
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 use File::Path qw/mkpath/;
@@ -905,7 +906,6 @@ foreach (sort (keys %disabled))
 	}
 
 print "Configuring for $target\n";
-
 # Support for legacy targets having a name starting with 'debug-'
 my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
 if ($d) {
@@ -2019,46 +2019,19 @@ EOF
 print OUT "1;\n";
 close(OUT);
 
-
+my $perlvers = &get_perl_version();
+print "\n";
+print "PROCESSOR     =$config{processor}\n" if $config{processor};
+print "PERL          =$config{perl}\n";
+print "PERLVERSION   =$perlvers\n";
+print "HASHBANGPERL  =$config{hashbangperl}\n";
 print "CC            =$config{cross_compile_prefix}$target{cc}\n";
 print "CFLAG         =$target{cflags} $config{cflags}\n";
-print "SHARED_CFLAG  =$target{shared_cflag}\n";
 print "DEFINES       =",join(" ", @{$target{defines}}, @{$config{defines}}),"\n";
-print "LFLAG         =$target{lflags}\n";
-print "PLIB_LFLAG    =$target{plib_lflags}\n";
+#print "RANLIB        =", $target{ranlib} eq '$(CROSS_COMPILE)ranlib' ?
+#                             "$config{cross_compile_prefix}ranlib" :
+#                             "$target{ranlib}", "\n";
 print "EX_LIBS       =$target{ex_libs} $config{ex_libs}\n";
-print "APPS_OBJ      =$target{apps_obj}\n";
-print "CPUID_OBJ     =$target{cpuid_obj}\n";
-print "UPLINK_OBJ    =$target{uplink_obj}\n";
-print "BN_ASM        =$target{bn_obj}\n";
-print "EC_ASM        =$target{ec_obj}\n";
-print "DES_ENC       =$target{des_obj}\n";
-print "AES_ENC       =$target{aes_obj}\n";
-print "BF_ENC        =$target{bf_obj}\n";
-print "CAST_ENC      =$target{cast_obj}\n";
-print "RC4_ENC       =$target{rc4_obj}\n";
-print "RC5_ENC       =$target{rc5_obj}\n";
-print "MD5_OBJ_ASM   =$target{md5_obj}\n";
-print "SHA1_OBJ_ASM  =$target{sha1_obj}\n";
-print "RMD160_OBJ_ASM=$target{rmd160_obj}\n";
-print "CMLL_ENC      =$target{cmll_obj}\n";
-print "MODES_OBJ     =$target{modes_obj}\n";
-print "PADLOCK_OBJ   =$target{padlock_obj}\n";
-print "CHACHA_ENC    =$target{chacha_obj}\n";
-print "POLY1305_OBJ  =$target{poly1305_obj}\n";
-print "BLAKE2_OBJ    =$target{blake2_obj}\n";
-print "PROCESSOR     =$config{processor}\n";
-print "RANLIB        =", $target{ranlib} eq '$(CROSS_COMPILE)ranlib' ?
-                             "$config{cross_compile_prefix}ranlib" :
-                             "$target{ranlib}", "\n";
-print "ARFLAGS       =$target{arflags}\n";
-print "PERL          =$config{perl}\n";
-print "\n";
-print "SIXTY_FOUR_BIT_LONG mode\n" if $config{b64l};
-print "SIXTY_FOUR_BIT mode\n" if $config{b64};
-print "THIRTY_TWO_BIT mode\n" if $config{b32};
-print "BN_LLONG mode\n" if $config{bn_ll};
-print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} ne $def_int;
 
 my %builders = (
     unified => sub {
@@ -2069,11 +2042,6 @@ my %builders = (
     );
 
 $builders{$builder}->($builder_platform, @builder_opts);
-
-print <<"EOF";
-
-Configured for $target.
-EOF
 
 print <<"EOF" if ($disabled{threads} eq "unavailable");
 
@@ -2415,6 +2383,21 @@ sub usage
 	print STDERR "\n\nNOTE: If in doubt, on Unix-ish systems use './config'.\n";
 	exit(1);
 	}
+
+# Return the perl version.
+sub get_perl_version
+{
+    return "$Config{version} for $Config{archname}" if $config{perl} eq $^X;
+    my $l;
+    open my $FH, "$config{perl} -v|" || return "??unknown??";
+    while ( <$FH> ) {
+        chop;
+        $l .= $_;
+    }
+    close $FH;
+    $l =~ s/This is (.{1,70}).*/$1/;
+    return $l;
+}
 
 sub run_dofile
 {
