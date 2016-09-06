@@ -1568,7 +1568,9 @@ __owur int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd,
 __owur int SSL_accept(SSL *ssl);
 __owur int SSL_connect(SSL *ssl);
 __owur int SSL_read(SSL *ssl, void *buf, int num);
+__owur int SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *read);
 __owur int SSL_peek(SSL *ssl, void *buf, int num);
+__owur int SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *read);
 __owur int SSL_write(SSL *ssl, const void *buf, int num);
 long SSL_ctrl(SSL *ssl, int cmd, long larg, void *parg);
 long SSL_callback_ctrl(SSL *, int, void (*)(void));
@@ -2179,7 +2181,9 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT               303
 # define SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT         311
 # define SSL_F_SSL_PEEK                                   270
+# define SSL_F_SSL_PEEK_EX                                425
 # define SSL_F_SSL_READ                                   223
+# define SSL_F_SSL_READ_EX                                426
 # define SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT                320
 # define SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT                321
 # define SSL_F_SSL_SESSION_DUP                            348

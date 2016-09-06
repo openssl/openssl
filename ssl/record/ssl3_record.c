@@ -203,6 +203,7 @@ int ssl3_get_record(SSL *s)
                 ssl_minor = *(p++);
                 version = (ssl_major << 8) | ssl_minor;
                 rr[num_recs].rec_version = version;
+                /* TODO(size_t): CHECK ME */
                 n2s(p, rr[num_recs].length);
 
                 /* Lets check version */
@@ -383,9 +384,9 @@ int ssl3_get_record(SSL *s)
         goto f_err;
     }
 #ifdef SSL_DEBUG
-    printf("dec %d\n", rr->length);
+    printf("dec %ld\n", rr->length);
     {
-        unsigned int z;
+        size_t z;
         for (z = 0; z < rr->length; z++)
             printf("%02X%c", rr->data[z], ((z + 1) % 16) ? ' ' : '\n');
     }
@@ -527,6 +528,7 @@ int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr)
     if (rr->comp == NULL)
         return 0;
 
+    /* TODO(size_t): Convert this call */
     i = COMP_expand_block(ssl->expand, rr->comp,
                           SSL3_RT_MAX_PLAIN_LENGTH, rr->data, (int)rr->length);
     if (i < 0)
@@ -543,6 +545,7 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
 #ifndef OPENSSL_NO_COMP
     int i;
 
+    /* TODO(size_t): Convert this call */
     i = COMP_compress_block(ssl->compress, wr->data,
                             SSL3_RT_MAX_COMPRESSED_LENGTH,
                             wr->input, (int)wr->length);
@@ -570,8 +573,8 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, unsigned int n_recs, int send)
 {
     SSL3_RECORD *rec;
     EVP_CIPHER_CTX *ds;
-    unsigned long l;
-    int bs, i, mac_size = 0;
+    size_t l, i;
+    int bs, mac_size = 0;
     const EVP_CIPHER *enc;
 
     rec = inrecs;
@@ -599,6 +602,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, unsigned int n_recs, int send)
         rec->input = rec->data;
     } else {
         l = rec->length;
+        /* TODO(size_t): Convert this call */
         bs = EVP_CIPHER_CTX_block_size(ds);
 
         /* COMPRESS */
@@ -623,6 +627,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, unsigned int n_recs, int send)
             /* otherwise, rec->length >= bs */
         }
 
+        /* TODO(size_t): Convert this call */
         if (EVP_Cipher(ds, rec->data, rec->input, l) < 1)
             return -1;
 
@@ -1008,6 +1013,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
          * are hashing because that gives an attacker a timing-oracle.
          */
         /* Final param == not SSLv3 */
+        /* TODO(size_t): Convert this call */
         if (ssl3_cbc_digest_record(mac_ctx,
                                    md, &md_size,
                                    header, rec->input,
@@ -1018,6 +1024,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
             return -1;
         }
     } else {
+        /* TODO(size_t): Convert these calls */
         if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
             || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
             || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
@@ -1045,7 +1052,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
     }
     fprintf(stderr, "rec=");
     {
-        unsigned int z;
+        size_t z;
         for (z = 0; z < rec->length; z++)
             fprintf(stderr, "%02X ", rec->data[z]);
         fprintf(stderr, "\n");
@@ -1080,6 +1087,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
  *   1: if the padding was valid
  *  -1: otherwise.
  */
+ /* TODO(size_t): Convert me */
 int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
                             unsigned block_size, unsigned mac_size)
 {
@@ -1113,6 +1121,7 @@ int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
  *   1: if the padding was valid
  *  -1: otherwise.
  */
+ /* TODO(size_t): Convert me */
 int tls1_cbc_remove_padding(const SSL *s,
                             SSL3_RECORD *rec,
                             unsigned block_size, unsigned mac_size)
@@ -1198,6 +1207,7 @@ int tls1_cbc_remove_padding(const SSL *s,
  */
 #define CBC_MAC_ROTATE_IN_PLACE
 
+/* TODO(size_t): Convert me */
 void ssl3_cbc_copy_mac(unsigned char *out,
                        const SSL3_RECORD *rec, unsigned md_size)
 {
@@ -1350,9 +1360,9 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         goto err;
     }
 #ifdef SSL_DEBUG
-    printf("dec %d\n", rr->length);
+    printf("dec %ld\n", rr->length);
     {
-        unsigned int z;
+        size_t z;
         for (z = 0; z < rr->length; z++)
             printf("%02X%c", rr->data[z], ((z + 1) % 16) ? ' ' : '\n');
     }
@@ -1544,6 +1554,7 @@ int dtls1_get_record(SSL *s)
         memcpy(&(RECORD_LAYER_get_read_sequence(&s->rlayer)[2]), p, 6);
         p += 6;
 
+        /* TODO(size_t): CHECK ME */
         n2s(p, rr->length);
 
         /* Lets check version */
