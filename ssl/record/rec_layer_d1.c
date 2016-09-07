@@ -971,22 +971,23 @@ static size_t have_handshake_fragment(SSL *s, int type, unsigned char *buf,
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
-int dtls1_write_bytes(SSL *s, int type, const void *buf, int len)
+int dtls1_write_bytes(SSL *s, int type, const void *buf, size_t len,
+                      size_t *written)
 {
     int i;
 
     OPENSSL_assert(len <= SSL3_RT_MAX_PLAIN_LENGTH);
     s->rwstate = SSL_NOTHING;
-    i = do_dtls1_write(s, type, buf, len, 0);
+    i = do_dtls1_write(s, type, buf, len, 0, written);
     return i;
 }
 
 int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
-                   unsigned int len, int create_empty_fragment)
+                   size_t len, int create_empty_fragment, size_t *written)
 {
     unsigned char *p, *pseq;
     int i, mac_size, clear = 0;
-    int prefix_len = 0;
+    size_t prefix_len = 0;
     int eivlen;
     SSL3_RECORD wr;
     SSL3_BUFFER *wb;
@@ -1000,14 +1001,14 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
      */
     if (SSL3_BUFFER_get_left(wb) != 0) {
         OPENSSL_assert(0);      /* XDTLS: want to see if we ever get here */
-        return (ssl3_write_pending(s, type, buf, len));
+        return ssl3_write_pending(s, type, buf, len, written);
     }
 
     /* If we have an alert to send, lets send it */
     if (s->s3->alert_dispatch) {
         i = s->method->ssl_dispatch_alert(s);
         if (i <= 0)
-            return (i);
+            return i;
         /* if it went, fall through and send more stuff */
     }
 
@@ -1072,7 +1073,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     /* lets setup the record stuff. */
     SSL3_RECORD_set_data(&wr, p + eivlen); /* make room for IV in case of CBC */
-    SSL3_RECORD_set_length(&wr, (int)len);
+    SSL3_RECORD_set_length(&wr, len);
     SSL3_RECORD_set_input(&wr, (unsigned char *)buf);
 
     /*
@@ -1160,7 +1161,8 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
          * we are in a recursive call; just return the length, don't write
          * out anything here
          */
-        return wr.length;
+        *written = wr.length;
+        return 1;
     }
 
     /* now let's set up wb */
@@ -1177,7 +1179,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     s->rlayer.wpend_ret = len;
 
     /* we now just need to write the buffer */
-    return ssl3_write_pending(s, type, buf, len);
+    return ssl3_write_pending(s, type, buf, len, written);
  err:
     return -1;
 }

@@ -10,7 +10,8 @@
 #define USE_SOCKETS
 #include "ssl_locl.h"
 
-int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
+int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
+                               size_t *written)
 {
     int i;
 
@@ -41,8 +42,7 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
         return -1;
     }
 
-    i = dtls1_write_bytes(s, type, buf_, len);
-    return i;
+    return dtls1_write_bytes(s, type, buf_, len, written);
 }
 
 int dtls1_dispatch_alert(SSL *s)
@@ -51,6 +51,7 @@ int dtls1_dispatch_alert(SSL *s)
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
     unsigned char buf[DTLS1_AL_HEADER_LENGTH];
     unsigned char *ptr = &buf[0];
+    size_t written;
 
     s->s3->alert_dispatch = 0;
 
@@ -65,7 +66,7 @@ int dtls1_dispatch_alert(SSL *s)
     }
 #endif
 
-    i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), 0);
+    i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), 0, &written);
     if (i <= 0) {
         s->s3->alert_dispatch = 1;
         /* fprintf( stderr, "not done with alert\n" ); */
@@ -91,5 +92,5 @@ int dtls1_dispatch_alert(SSL *s)
             cb(s, SSL_CB_WRITE_ALERT, j);
         }
     }
-    return (i);
+    return i;
 }

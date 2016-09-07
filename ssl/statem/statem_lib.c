@@ -30,9 +30,10 @@
 int ssl3_do_write(SSL *s, int type)
 {
     int ret;
+    size_t written = 0;
 
     ret = ssl3_write_bytes(s, type, &s->init_buf->data[s->init_off],
-                           s->init_num);
+                           s->init_num, &written);
     if (ret < 0)
         return (-1);
     if (type == SSL3_RT_HANDSHAKE)
@@ -42,18 +43,18 @@ int ssl3_do_write(SSL *s, int type)
          */
         if (!ssl3_finish_mac(s,
                              (unsigned char *)&s->init_buf->data[s->init_off],
-                             ret))
+                             written))
             return -1;
 
-    if (ret == (int)s->init_num) {
+    if (written == s->init_num) {
         if (s->msg_callback)
             s->msg_callback(1, s->version, type, s->init_buf->data,
                             (size_t)(s->init_off + s->init_num), s,
                             s->msg_callback_arg);
         return (1);
     }
-    s->init_off += ret;
-    s->init_num -= ret;
+    s->init_off += written;
+    s->init_num -= written;
     return (0);
 }
 

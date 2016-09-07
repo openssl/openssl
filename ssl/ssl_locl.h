@@ -446,14 +446,15 @@ struct ssl_method_st {
     int (*ssl_connect) (SSL *s);
     int (*ssl_read) (SSL *s, void *buf, size_t len, size_t *read);
     int (*ssl_peek) (SSL *s, void *buf, size_t len, size_t *read);
-    int (*ssl_write) (SSL *s, const void *buf, int len);
+    int (*ssl_write) (SSL *s, const void *buf, size_t len, size_t *written);
     int (*ssl_shutdown) (SSL *s);
     int (*ssl_renegotiate) (SSL *s);
     int (*ssl_renegotiate_check) (SSL *s);
     int (*ssl_read_bytes) (SSL *s, int type, int *recvd_type,
                            unsigned char *buf, size_t len, int peek,
                            size_t *read);
-    int (*ssl_write_bytes) (SSL *s, int type, const void *buf_, int len);
+    int (*ssl_write_bytes) (SSL *s, int type, const void *buf_, size_t len,
+                            size_t *written);
     int (*ssl_dispatch_alert) (SSL *s);
     long (*ssl_ctrl) (SSL *s, int cmd, long larg, void *parg);
     long (*ssl_ctx_ctrl) (SSL_CTX *ctx, int cmd, long larg, void *parg);
@@ -747,15 +748,15 @@ struct ssl_ctx_st {
      * If we're using more than one pipeline how should we divide the data
      * up between the pipes?
      */
-    unsigned int split_send_fragment;
+    size_t split_send_fragment;
     /*
      * Maximum amount of data to send in one fragment. actual record size can
      * be more than this due to padding and MAC overheads.
      */
-    unsigned int max_send_fragment;
+    size_t max_send_fragment;
 
     /* Up to how many pipelines should we use? If 0 then 1 is assumed */
-    unsigned int max_pipelines;
+    size_t max_pipelines;
 
     /* The default read buffer length to use (0 means not set) */
     size_t default_read_buf_len;
@@ -1010,14 +1011,14 @@ struct ssl_st {
      * If we're using more than one pipeline how should we divide the data
      * up between the pipes?
      */
-    unsigned int split_send_fragment;
+    size_t split_send_fragment;
     /*
      * Maximum amount of data to send in one fragment. actual record size can
      * be more than this due to padding and MAC overheads.
      */
-    unsigned int max_send_fragment;
+    size_t max_send_fragment;
     /* Up to how many pipelines should we use? If 0 then 1 is assumed */
-    unsigned int max_pipelines;
+    size_t max_pipelines;
     /* TLS extension debug callback */
     void (*tlsext_debug_cb) (SSL *s, int client_server, int type,
                              const unsigned char *data, int len, void *arg);
@@ -1136,7 +1137,7 @@ struct ssl_st {
     /* Async Job info */
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
-    size_t asyncread;
+    size_t asyncrw;
 
     CRYPTO_RWLOCK *lock;
 };
@@ -1329,10 +1330,10 @@ struct dtls1_retransmit_state {
 
 struct hm_header_st {
     unsigned char type;
-    unsigned long msg_len;
+    size_t msg_len;
     unsigned short seq;
-    unsigned long frag_off;
-    unsigned long frag_len;
+    size_t frag_off;
+    size_t frag_len;
     unsigned int is_ccs;
     struct dtls1_retransmit_state saved_retransmit_state;
 };
@@ -1387,8 +1388,8 @@ typedef struct dtls1_state_st {
     pqueue *buffered_messages;
     /* Buffered (sent) handshake records */
     pqueue *sent_messages;
-    unsigned int link_mtu;      /* max on-the-wire DTLS packet size */
-    unsigned int mtu;           /* max DTLS packet size */
+    size_t link_mtu;      /* max on-the-wire DTLS packet size */
+    size_t mtu;           /* max DTLS packet size */
     struct hm_header_st w_msg_hdr;
     struct hm_header_st r_msg_hdr;
     struct dtls1_timeout_st timeout;
@@ -1887,7 +1888,7 @@ int ssl3_renegotiate_check(SSL *ssl);
 __owur int ssl3_dispatch_alert(SSL *s);
 __owur int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
                                  unsigned char *p);
-__owur int ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
+__owur int ssl3_finish_mac(SSL *s, const unsigned char *buf, size_t len);
 void ssl3_free_digest_list(SSL *s);
 __owur unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt,
                                             CERT_PKEY *cpk);
@@ -1899,7 +1900,7 @@ __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
 __owur int ssl3_read(SSL *s, void *buf, size_t len, size_t *read);
 __owur int ssl3_peek(SSL *s, void *buf, size_t len, size_t *read);
-__owur int ssl3_write(SSL *s, const void *buf, int len);
+__owur int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written);
 __owur int ssl3_shutdown(SSL *s);
 void ssl3_clear(SSL *s);
 __owur long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg);
@@ -1935,8 +1936,8 @@ void dtls1_set_message_header(SSL *s,
                               unsigned long len,
                               unsigned long frag_off, unsigned long frag_len);
 
-__owur int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf,
-                                      int len);
+int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
+                               size_t *written);
 
 __owur int dtls1_read_failed(SSL *s, int code);
 __owur int dtls1_buffer_message(SSL *s, int ccs);
@@ -1958,7 +1959,7 @@ void dtls1_double_timeout(SSL *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
                                          unsigned char cookie_len);
 __owur int dtls1_send_newsession_ticket(SSL *s);
-__owur unsigned int dtls1_min_mtu(SSL *s);
+__owur size_t dtls1_min_mtu(SSL *s);
 void dtls1_hm_fragment_free(hm_fragment *frag);
 __owur int dtls1_query_mtu(SSL *s);
 

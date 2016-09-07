@@ -407,3 +407,4 @@ SSL_CTX_set1_cert_store                 407	1_1_1	EXIST::FUNCTION:
 DTLS_get_data_mtu                       408	1_1_1	EXIST::FUNCTION:
 SSL_read_ex                             409	1_1_1	EXIST::FUNCTION:
 SSL_peek_ex                             410	1_1_1	EXIST::FUNCTION:
+SSL_write_ex                            411	1_1_1	EXIST::FUNCTION:
