@@ -398,6 +398,7 @@ void EVP_PKEY_free(EVP_PKEY *x)
         return;
     REF_ASSERT_ISNT(i < 0);
     EVP_PKEY_free_it(x);
+    CRYPTO_THREAD_lock_free(x->lock);
     sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
     OPENSSL_free(x);
 }
@@ -413,7 +414,6 @@ static void EVP_PKEY_free_it(EVP_PKEY *x)
     ENGINE_finish(x->engine);
     x->engine = NULL;
 #endif
-    CRYPTO_THREAD_lock_free(x->lock);
 }
 
 static int unsup_alg(BIO *out, const EVP_PKEY *pkey, int indent,
