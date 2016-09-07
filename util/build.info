@@ -1,0 +1,2 @@
+SCRIPTS_NO_INST=shlib_wrap.sh
+SOURCE[shlib_wrap.sh]=shlib_wrap.sh.in
