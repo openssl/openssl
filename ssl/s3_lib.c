@@ -3829,13 +3829,14 @@ int ssl3_shutdown(SSL *s)
         return (0);
 }
 
-int ssl3_write(SSL *s, const void *buf, int len)
+int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     clear_sys_error();
     if (s->s3->renegotiate)
         ssl3_renegotiate_check(s);
 
-    return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len);
+    return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
+                                      written);
 }
 
 static int ssl3_read_internal(SSL *s, void *buf, size_t len, int peek,

@@ -74,12 +74,12 @@ int ssl3_setup_read_buffer(SSL *s)
     return 0;
 }
 
-int ssl3_setup_write_buffer(SSL *s, unsigned int numwpipes, size_t len)
+int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
 {
     unsigned char *p;
     size_t align = 0, headerlen;
     SSL3_BUFFER *wb;
-    unsigned int currpipe;
+    size_t currpipe;
 
     s->rlayer.numwpipes = numwpipes;
 

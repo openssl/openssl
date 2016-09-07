@@ -356,13 +356,18 @@ void ssl3_free_digest_list(SSL *s)
     s->s3->handshake_dgst = NULL;
 }
 
-int ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
+int ssl3_finish_mac(SSL *s, const unsigned char *buf, size_t len)
 {
-    if (s->s3->handshake_dgst == NULL)
+    if (s->s3->handshake_dgst == NULL) {
+        int ret;
         /* Note: this writes to a memory BIO so a failure is a fatal error */
-        return BIO_write(s->s3->handshake_buffer, (void *)buf, len) == len;
-    else
+        if (len > INT_MAX)
+            return 0;
+        ret = BIO_write(s->s3->handshake_buffer, (void *)buf, (int)len);
+        return ret > 0 && ret == (int)len;
+    } else {
         return EVP_DigestUpdate(s->s3->handshake_dgst, buf, len);
+    }
 }
 
 int ssl3_digest_cached_records(SSL *s, int keep)
