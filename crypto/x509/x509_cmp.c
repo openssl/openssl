@@ -321,6 +321,57 @@ ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
     return x->cert_info->key->public_key;
 }
 
+static int check_key_signature(EVP_PKEY *pub, EVP_PKEY *priv)
+{
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(priv, NULL);
+    unsigned char digest[SHA_DIGEST_LENGTH];
+    unsigned char *sig = NULL;
+    size_t siglen;
+    int ret = 0;
+
+    if (ctx == NULL)
+        return 0;
+
+    /* We just sign dummy data. It could be random, but there's no point */
+    memset(digest, 0x5a, sizeof(digest));
+
+    if (!EVP_PKEY_sign_init(ctx))
+        goto out;
+    if (!EVP_PKEY_sign(ctx, NULL, &siglen, digest, sizeof(digest)))
+        goto out;
+    sig = OPENSSL_malloc(siglen);
+    if (!sig)
+        goto out;
+    if (!EVP_PKEY_sign(ctx, sig, &siglen, digest, sizeof(digest)))
+        goto out;
+    EVP_PKEY_CTX_free(ctx);
+
+    /* Now verify it */
+    ctx = EVP_PKEY_CTX_new(pub, NULL);
+    if (!EVP_PKEY_verify_init(ctx))
+        goto out;
+    if (!EVP_PKEY_verify(ctx, sig, siglen, digest, sizeof(digest)))
+        goto out;
+
+#ifndef OPENSSL_NO_EC
+    /* One of the reasons we have to do this is because we have a key from
+     * a hardware engine which doesn't provide public key data. And asking
+     * the hardware to perform a signature, like we just did, might be slow.
+     * So in that case, now that we have confirmed that we have a matching
+     * public key, we can *copy* the EC_POINT over from it and not have to
+     * do this again. */
+    if (priv->type == EVP_PKEY_EC &&
+        EC_KEY_get0_public_key(priv->pkey.ec) == NULL)
+        EC_KEY_set_public_key(priv->pkey.ec, EC_KEY_get0_public_key(pub->pkey.ec));
+#endif
+
+    ret = 1;
+ out:
+    OPENSSL_free(sig);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
 int X509_check_private_key(X509 *x, EVP_PKEY *k)
 {
     EVP_PKEY *xk;
@@ -343,7 +394,9 @@ int X509_check_private_key(X509 *x, EVP_PKEY *k)
         X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_KEY_TYPE_MISMATCH);
         break;
     case -2:
-        X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_UNKNOWN_KEY_TYPE);
+        ret = check_key_signature(xk, k);
+        if (ret != 1)
+            X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_UNKNOWN_KEY_TYPE);
     }
     if (xk)
         EVP_PKEY_free(xk);
