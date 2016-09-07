@@ -229,6 +229,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_SSL_VALIDATE_CT), "ssl_validate_ct"},
     {ERR_FUNC(SSL_F_SSL_VERIFY_CERT_CHAIN), "ssl_verify_cert_chain"},
     {ERR_FUNC(SSL_F_SSL_WRITE), "SSL_write"},
+    {ERR_FUNC(SSL_F_SSL_WRITE_EX), "SSL_write_ex"},
     {ERR_FUNC(SSL_F_STATE_MACHINE), "state_machine"},
     {ERR_FUNC(SSL_F_TLS12_CHECK_PEER_SIGALG), "tls12_check_peer_sigalg"},
     {ERR_FUNC(SSL_F_TLS1_CHANGE_CIPHER_STATE), "tls1_change_cipher_state"},
