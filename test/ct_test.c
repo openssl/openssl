@@ -510,39 +510,25 @@ static int test_decode_tls_sct()
 
 static int test_encode_tls_sct()
 {
-    const unsigned char log_id[] = "\xDF\x1C\x2E\xC1\x15\x00\x94\x52\x47\xA9"
-            "\x61\x68\x32\x5D\xDC\x5C\x79\x59\xE8\xF7\xC6\xD3\x88\xFC\x00\x2E"
-            "\x0B\xBD\x3F\x74\xD7\x64";
-
-    const unsigned char signature[] = "\x45\x02\x20\x48\x2F\x67\x51\xAF\x35"
-            "\xDB\xA6\x54\x36\xBE\x1F\xD6\x64\x0F\x3D\xBF\x9A\x41\x42\x94\x95"
-            "\x92\x45\x30\x28\x8F\xA3\xE5\xE2\x3E\x06\x02\x21\x00\xE4\xED\xC0"
-            "\xDB\x3A\xC5\x72\xB1\xE2\xF5\xE8\xAB\x6A\x68\x06\x53\x98\x7D\xCF"
-            "\x41\x02\x7D\xFE\xFF\xA1\x05\x51\x9D\x89\xED\xBF\x08";
+    const char log_id[] = "3xwuwRUAlFJHqWFoMl3cXHlZ6PfG04j8AC4LvT9012Q=";
+    const uint64_t timestamp = 1;
+    const char extensions[] = "";
+    const char signature[] = "RQIgSC9nUa8126ZUNr4f1mQPPb+aQUKUlZJFMCiPo+XiPgY"
+        "CIQDk7cDbOsVyseL16KtqaAZTmH3PQQJ9/v+hBVGdie2/CA==";
 
     SETUP_CT_TEST_FIXTURE();
 
     STACK_OF(SCT) *sct_list = sk_SCT_new_null();
-    SCT *sct = SCT_new();
-    if (!SCT_set_version(sct, SCT_VERSION_V1)) {
-        fprintf(stderr, "Failed to set SCT version\n");
-        return 1;
-    }
-    if (!SCT_set1_log_id(sct, log_id, 32)) {
-        fprintf(stderr, "Failed to set SCT log ID\n");
-        return 1;
-    }
-    SCT_set_timestamp(sct, 1);
-    if (!SCT_set_signature_nid(sct, NID_ecdsa_with_SHA256)) {
-        fprintf(stderr, "Failed to set SCT signature NID\n");
-        return 1;
-    }
-    if (!SCT_set1_signature(sct, signature, 71)) {
-        fprintf(stderr, "Failed to set SCT signature\n");
-        return 1;
-    }
-    sk_SCT_push(sct_list, sct);
+    SCT *sct = SCT_new_from_base64(SCT_VERSION_V1, log_id,
+                                   CT_LOG_ENTRY_TYPE_X509, timestamp,
+                                   extensions, signature);
 
+    if (sct == NULL) {
+        fprintf(stderr, "Failed to create SCT from base64-encoded test data\n");
+        return 0;
+    }
+
+    sk_SCT_push(sct_list, sct);
     fixture.sct_list = sct_list;
     fixture.sct_dir = ct_dir;
     fixture.sct_text_file = "tls1.sct";
