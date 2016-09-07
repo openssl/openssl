@@ -300,7 +300,7 @@ my $default_ranlib;
 $config{fips}=0;
 
 # Top level directories to build
-$config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "tools", "fuzz" ];
+$config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "fuzz" ];
 # crypto/ subdirectories to build
 $config{sdirs} = [
     "objects",
@@ -779,6 +779,13 @@ foreach (@argvcopy)
 			join(", ", keys %unsupported_options), "\n";
 		}
 	}
+
+if ($libs =~ /(^|\s)-Wl,-rpath,/
+    && !$disabled{shared}
+    && !($disabled{asan} && $disabled{msan} && $disabled{ubsan})) {
+    die "***** Cannot simultaneously use -rpath, shared libraries, and\n",
+	"***** any of asan, msan or ubsan\n";
+}
 
 if ($config{fips})
 	{
