@@ -39,6 +39,9 @@ OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk, OPENSSL_sk_compfu
 OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
 {
     OPENSSL_STACK *ret;
+    if ( sk->num_alloc < 0 || sk->num < 0 ) {
+        return NULL;
+    }
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return NULL;
@@ -61,6 +64,10 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
 {
     OPENSSL_STACK *ret;
     int i;
+
+    if ( sk->num < 0 ) {
+        return NULL;
+    }
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return NULL;
@@ -113,21 +120,48 @@ OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc c)
 
 int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
 {
-    const char **s;
-
-    if (st == NULL)
+    if ( st == NULL || st->num < 0 || st->num == INT_MAX || st->num_alloc < 0 ) {
         return 0;
+    }
+
     if (st->num_alloc <= st->num + 1) {
-        s = OPENSSL_realloc((char *)st->data,
-                            (unsigned int)sizeof(char *) * st->num_alloc * 2);
-        if (s == NULL)
+
+        /* Overflow checks by Guido
+        *  Cast to size_t to avoid triggering -ftrapv via overflow of st->num_alloc
+        */
+        if ( (size_t)(st->num_alloc) * 2 < (size_t)(st->num_alloc) ) {
+            return 0;
+        }
+
+        if ( (size_t)(st->num_alloc) * 2 > INT_MAX )
+        {
+            return 0;
+        }
+
+        /* Avond overflow due to multiplication by sizeof(char*) */
+        if ( (size_t)(st->num_alloc) * 2 > (~(size_t)0) / sizeof(char*) ) {
+            return 0;
+        }
+
+        /* Remove cast to unsigned int to avoid undersized allocations on > 32 bit. */
+        st->data = OPENSSL_realloc((char *)st->data,
+                            sizeof(char *) * st->num_alloc * 2);
+        if (st->data == NULL) {
+            /* Reset these counters to prevent subsequent operations on
+             * (now non-existing) heap memory
+            */
+            st->num_alloc = 0;
+            st->num = 0;
             return (0);
-        st->data = s;
+        }
         st->num_alloc *= 2;
     }
     if ((loc >= (int)st->num) || (loc < 0))
         st->data[st->num] = data;
     else {
+        if ( loc == INT_MAX ) {
+            return 0;
+        }
         memmove(&st->data[loc + 1], &st->data[loc],
                 sizeof(st->data[0]) * (st->num - loc));
         st->data[loc] = data;
@@ -151,7 +185,7 @@ void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc)
 {
     const char *ret;
 
-    if (st == NULL || loc < 0 || loc >= st->num)
+    if (st == NULL || loc < 0 || loc >= st->num )
         return NULL;
 
     ret = st->data[loc];
