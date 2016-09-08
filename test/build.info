@@ -274,6 +274,13 @@ IF[{- !$disabled{tests} -}]
   SOURCE[bio_enc_test]=bio_enc_test.c
   INCLUDE[bio_enc_test]=../include
   DEPEND[bio_enc_test]=../libcrypto
+
+  IF[{- $disabled{shared} -}]
+    PROGRAMS_NO_INST=wpackettest
+    SOURCE[wpackettest]=wpackettest.c testutil.c
+    INCLUDE[wpackettest]=../include
+    DEPEND[wpackettest]=../libcrypto ../libssl
+  ENDIF
 ENDIF
 
 {-
