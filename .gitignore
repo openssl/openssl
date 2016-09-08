@@ -16,6 +16,8 @@
 
 # *all* Makefiles
 Makefile
+# ... except in demos
+!/demos/*/Makefile
 
 # Links under apps
 /apps/CA.pl
