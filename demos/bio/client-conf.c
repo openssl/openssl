@@ -26,10 +26,6 @@ int main(int argc, char **argv)
     const char *connect_str = "localhost:4433";
     long errline = -1;
 
-    ERR_load_crypto_strings();
-    ERR_load_SSL_strings();
-    SSL_library_init();
-
     conf = NCONF_new(NULL);
 
     if (NCONF_load(conf, "connect.cnf", &errline) <= 0) {
