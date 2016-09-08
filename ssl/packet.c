@@ -11,10 +11,6 @@
 
 #define DEFAULT_BUF_SIZE    256
 
-/*
- * Allocate bytes in the WPACKET for the output. This reserves the bytes
- * and count them as "written", but doesn't actually do the writing.
- */
 int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 {
     if (pkt->subs == NULL || len == 0)
@@ -62,12 +58,6 @@ static size_t maxmaxsize(size_t lenbytes)
         return ((size_t)1 << (lenbytes * 8)) - 1 + lenbytes;
 }
 
-/*
- * Initialise a WPACKET with the buffer in |buf|. The buffer must exist
- * for the whole time that the WPACKET is being used. Additionally |lenbytes| of
- * data is preallocated at the start of the buffer to store the length of the
- * WPACKET once we know it.
- */
 int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
 {
     /* Sanity check */
@@ -98,23 +88,11 @@ int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
     return 1;
 }
 
-/*
- * Same as WPACKET_init_len except there is no preallocation of the WPACKET
- * length.
- */
 int WPACKET_init(WPACKET *pkt, BUF_MEM *buf)
 {
     return WPACKET_init_len(pkt, buf, 0);
 }
 
-/*
- * Set the WPACKET length, and the location for where we should write that
- * length. Normally this will be at the start of the WPACKET, and therefore
- * the WPACKET would have been initialised via WPACKET_init_len(). However there
- * is the possibility that the length needs to be written to some other location
- * other than the start of the WPACKET. In that case init via WPACKET_init() and
- * then set the location for the length using this function.
- */
 int WPACKET_set_packet_len(WPACKET *pkt, unsigned char *packet_len,
                            size_t lenbytes)
 {
@@ -196,12 +174,6 @@ static int wpacket_intern_close(WPACKET *pkt)
     return 1;
 }
 
-/*
- * Closes the most recent sub-packet. It also writes out the length of the
- * packet to the required location (normally the start of the WPACKET) if
- * appropriate. The top level WPACKET should be closed using WPACKET_finish()
- * instead of this function.
- */
 int WPACKET_close(WPACKET *pkt)
 {
     if (pkt->subs == NULL || pkt->subs->parent == NULL)
@@ -210,10 +182,6 @@ int WPACKET_close(WPACKET *pkt)
     return wpacket_intern_close(pkt);
 }
 
-/*
- * The same as WPACKET_close() but only for the top most WPACKET. Additionally
- * frees memory resources for this WPACKET.
- */
 int WPACKET_finish(WPACKET *pkt)
 {
     int ret;
@@ -230,10 +198,6 @@ int WPACKET_finish(WPACKET *pkt)
     return ret;
 }
 
-/*
- * Initialise a new sub-packet. Additionally |lenbytes| of data is preallocated
- * at the start of the sub-packet to store its length once we know it.
- */
 int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes)
 {
     WPACKET_SUB *sub;
@@ -262,21 +226,11 @@ int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes)
     return 1;
 }
 
-/*
- * Same as WPACKET_get_sub_packet_len() except no bytes are pre-allocated for
- * the sub-packet length.
- */
 int WPACKET_start_sub_packet(WPACKET *pkt)
 {
     return WPACKET_start_sub_packet_len(pkt, 0);
 }
 
-/*
- * Write the value stored in |val| into the WPACKET. The value will consome
- * |bytes| amount of storage. An error will occur if |val| cannot be accommdated
- * in |bytes| storage, e.g. attempting to write the value 256 into 1 byte will
- * fail.
- */
 int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t bytes)
 {
     unsigned char *data;
@@ -299,7 +253,6 @@ int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t bytes)
     return 1;
 }
 
-/* Set a maximum size that we will not allow the WPACKET to grow beyond */
 int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
 {
     WPACKET_SUB *sub;
@@ -323,9 +276,6 @@ int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
     return 1;
 }
 
-/*
- * Copy |len| bytes of data from |*src| into the WPACKET.
- */
 int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
 {
     unsigned char *dest;
@@ -341,10 +291,6 @@ int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
     return 1;
 }
 
-/*
- * Copy |len| bytes of data from |*src| into the WPACKET and prefix with its
- * length (consuming |lenbytes| of data for the length)
- */
 int WPACKET_sub_memcpy(WPACKET *pkt, const void *src, size_t len, size_t lenbytes)
 {
     if (!WPACKET_start_sub_packet_len(pkt, lenbytes)
@@ -355,10 +301,6 @@ int WPACKET_sub_memcpy(WPACKET *pkt, const void *src, size_t len, size_t lenbyte
     return 1;
 }
 
-/*
- * Return the total number of bytes written so far to the underlying buffer
- * including any storage allocated for length bytes
- */
 int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
 {
     if (written == NULL)
@@ -369,10 +311,6 @@ int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
     return 1;
 }
 
-/*
- * Returns the length of the last sub-packet. This excludes any bytes allocated
- * for the length itself.
- */
 int WPACKET_get_length(WPACKET *pkt, size_t *len)
 {
     if (pkt->subs == NULL || len == NULL)
@@ -383,9 +321,6 @@ int WPACKET_get_length(WPACKET *pkt, size_t *len)
     return 1;
 }
 
-/*
- * Release resources in a WPACKET if a failure has occurred.
- */
 void WPACKET_cleanup(WPACKET *pkt)
 {
     WPACKET_SUB *sub, *parent;
