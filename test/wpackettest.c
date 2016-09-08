@@ -98,45 +98,10 @@ static int test_WPACKET_init(void)
     return 1;
 }
 
-static int test_WPACKET_set_packet_len(void)
-{
-    WPACKET pkt;
-    size_t written;
-    unsigned char len;
-
-    /*
-     * Calling set_packet_len when the packet len is already set
-     * should fail
-     */
-    if (       !WPACKET_init_len(&pkt, buf, 1)
-            ||  WPACKET_set_packet_len(&pkt, &len, sizeof(len))
-            || !WPACKET_finish(&pkt)) {
-        testfail("test_WPACKET_set_packet_len():1 failed\n", &pkt);
-        return 0;
-    }
-
-    if (       !WPACKET_init(&pkt, buf)
-            || !WPACKET_set_packet_len(&pkt, &len, sizeof(len))
-                /* Can't set it again */
-            ||  WPACKET_set_packet_len(&pkt, &len, sizeof(len))
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
-            || !WPACKET_finish(&pkt)
-            || !WPACKET_get_total_written(&pkt, &written)
-            ||  written != sizeof(simple1)
-            ||  memcmp(buf->data, &simple1, written) != 0
-            ||  len != 1) {
-        testfail("test_WPACKET_set_packet_len():2 failed\n", &pkt);
-        return 0;
-    }
-
-    return 1;
-}
-
 static int test_WPACKET_set_max_size(void)
 {
     WPACKET pkt;
     size_t written;
-    unsigned char len;
 
     if (       !WPACKET_init(&pkt, buf)
                 /*
@@ -148,33 +113,9 @@ static int test_WPACKET_set_max_size(void)
             || !WPACKET_set_max_size(&pkt, SIZE_MAX -1)
                 /* And setting it bigger again should be ok */
             || !WPACKET_set_max_size(&pkt, SIZE_MAX)
-            || !WPACKET_set_packet_len(&pkt, &len, 1)
-                /*
-                 * Max size can't be bigger than biggest that will fit in
-                 * lenbytes
-                 */
-            ||  WPACKET_set_max_size(&pkt, 0x0101)
-                /* It can be the same as the maximum possible size */
-            || !WPACKET_set_max_size(&pkt, 0xff)
-                /* Or it can be less */
-            || !WPACKET_set_max_size(&pkt, 0x00)
-                /*
-                 * Should fail because packet is already filled
-                 */
-            ||  WPACKET_put_bytes(&pkt, 0xff, 1)
-                /*
-                 * You can't put in more bytes than max size
-                 */
-            || !WPACKET_set_max_size(&pkt, 0x01)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
-            ||  WPACKET_put_bytes(&pkt, 0xff, 1)
-            || !WPACKET_finish(&pkt)
-            || !WPACKET_get_total_written(&pkt, &written)
-            ||  written != sizeof(simple1)
-            ||  memcmp(buf->data, &simple1, written) != 0
-            ||  len != 1) {
+            || !WPACKET_finish(&pkt)) {
         testfail("test_WPACKET_set_max_size():1 failed\n", &pkt);
-        return 0;
+        return 0; 
     }
 
     if (       !WPACKET_init_len(&pkt, buf, 1)
@@ -183,16 +124,29 @@ static int test_WPACKET_set_max_size(void)
                  * length
                  */
             ||  WPACKET_set_max_size(&pkt, 0)
-            || !WPACKET_set_max_size(&pkt, 1)
+                /*
+                 * Max size can't be bigger than biggest that will fit in
+                 * lenbytes
+                 */
+            ||  WPACKET_set_max_size(&pkt, 0x0101)
+                /* It can be the same as the maximum possible size */
+            || !WPACKET_set_max_size(&pkt, 0x0100)
+                /* Or it can be less */
+            || !WPACKET_set_max_size(&pkt, 0x01)
+                /*
+                 * Should fail because packet is already filled
+                 */
             ||  WPACKET_put_bytes(&pkt, 0xff, 1)
-            || !WPACKET_set_max_size(&pkt, 2)
+                /*
+                 * You can't put in more bytes than max size
+                 */
+            || !WPACKET_set_max_size(&pkt, 0x02)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             ||  WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
             ||  written != sizeof(simple2)
-            ||  memcmp(buf->data, &simple2, written) != 0
-            ||  len != 1) {
+            ||  memcmp(buf->data, &simple2, written) != 0) {
         testfail("test_WPACKET_set_max_size():2 failed\n", &pkt);
         return 0;
     }
@@ -283,7 +237,7 @@ static int test_WPACKET_set_flags(void)
 
     /* Set packet to be non-zero length */
     if (       !WPACKET_init(&pkt, buf)
-            || !WPACKET_set_flags(&pkt, OPENSSL_WPACKET_FLAGS_NON_ZERO_LENGTH)
+            || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)
                 /* Should fail because of zero length */
             ||  WPACKET_finish(&pkt)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
@@ -298,7 +252,7 @@ static int test_WPACKET_set_flags(void)
     /* Repeat above test in a sub-packet */
     if (       !WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet(&pkt)
-            || !WPACKET_set_flags(&pkt, OPENSSL_WPACKET_FLAGS_NON_ZERO_LENGTH)
+            || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)
                 /* Should fail because of zero length */
             ||  WPACKET_close(&pkt)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
@@ -313,8 +267,7 @@ static int test_WPACKET_set_flags(void)
 
     /* Set packet to abandon non-zero length */
     if (       !WPACKET_init_len(&pkt, buf, 1)
-            || !WPACKET_set_flags(&pkt,
-                                  OPENSSL_WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
+            || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
             ||  written != 0) {
@@ -325,8 +278,7 @@ static int test_WPACKET_set_flags(void)
     /* Repeat above test but only abandon a sub-packet */
     if (       !WPACKET_init_len(&pkt, buf, 1)
             || !WPACKET_start_sub_packet_len(&pkt, 1)
-            || !WPACKET_set_flags(&pkt,
-                                  OPENSSL_WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
+            || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
             || !WPACKET_close(&pkt)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
@@ -339,8 +291,7 @@ static int test_WPACKET_set_flags(void)
     /* And repeat with a non empty sub-packet */
     if (       !WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet_len(&pkt, 1)
-            || !WPACKET_set_flags(&pkt,
-                                  OPENSSL_WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
+            || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_close(&pkt)
             || !WPACKET_finish(&pkt)
@@ -420,7 +371,6 @@ int main(int argc, char *argv[])
     buf = BUF_MEM_new();
     if (buf != NULL) {
         ADD_TEST(test_WPACKET_init);
-        ADD_TEST(test_WPACKET_set_packet_len);
         ADD_TEST(test_WPACKET_set_max_size);
         ADD_TEST(test_WPACKET_start_sub_packet);
         ADD_TEST(test_WPACKET_set_flags);

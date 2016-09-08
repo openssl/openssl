@@ -172,7 +172,7 @@ int custom_ext_add(SSL *s, int server, WPACKET *pkt, int *al)
         }
 
         if (!WPACKET_put_bytes(pkt, meth->ext_type, 2)
-                || !WPACKET_start_sub_packet_len(pkt, 2)
+                || !WPACKET_start_sub_packet_u16(pkt)
                 || (outlen > 0 && !WPACKET_memcpy(pkt, out, outlen))
                 || !WPACKET_close(pkt)) {
             *al = SSL_AD_INTERNAL_ERROR;
