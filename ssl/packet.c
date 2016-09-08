@@ -16,10 +16,7 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
     if (pkt->subs == NULL || len == 0)
         return 0;
 
-    if (SIZE_MAX - pkt->written < len)
-        return 0;
-
-    if (pkt->written + len > pkt->maxsize)
+    if (pkt->maxsize - pkt->written < len)
         return 0;
 
     if (pkt->buf->length - pkt->written < len) {
