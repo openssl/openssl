@@ -557,12 +557,12 @@ struct wpacket_sub {
     WPACKET_SUB *parent;
 
     /*
-     * Pointer to where the length of this WPACKET goes (or NULL if we don't
-     * write the length)
+     * Offset into the buffer where the length of this WPACKET goes. We use an
+     * offset in case the buffer grows and gets reallocated.
      */
-    unsigned char *packet_len;
+    size_t packet_len;
 
-    /* Number of bytes in the packet_len */
+    /* Number of bytes in the packet_len or 0 if we don't write the length */
     size_t lenbytes;
 
     /* Number of bytes written to the buf prior to this packet starting */
@@ -577,8 +577,11 @@ struct wpacket_st {
     /* The buffer where we store the output data */
     BUF_MEM *buf;
 
-    /* Pointer to where we are currently writing */
-    unsigned char *curr;
+    /*
+     * Offset into the buffer where we are currently writing. We use an offset
+     * in case the buffer grows and gets reallocated.
+     */
+    size_t curr;
 
     /* Number of bytes written so far */
     size_t written;
@@ -593,16 +596,16 @@ struct wpacket_st {
 /* Flags */
 
 /* Default */
-#define OPENSSL_WPACKET_FLAGS_NONE                      0
+#define WPACKET_FLAGS_NONE                      0
 
 /* Error on WPACKET_close() if no data written to the WPACKET */
-#define OPENSSL_WPACKET_FLAGS_NON_ZERO_LENGTH           1
+#define WPACKET_FLAGS_NON_ZERO_LENGTH           1
 
 /*
  * Abandon all changes on WPACKET_close() if no data written to the WPACKET,
  * i.e. this does not write out a zero packet length
  */
-#define OPENSSL_WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH    2
+#define WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH    2
 
 
 /*
@@ -625,17 +628,6 @@ int WPACKET_init(WPACKET *pkt, BUF_MEM *buf);
 int WPACKET_set_flags(WPACKET *pkt, unsigned int flags);
 
 /*
- * Set the WPACKET length, and the location for where we should write that
- * length. Normally this will be at the start of the WPACKET, and therefore
- * the WPACKET would have been initialised via WPACKET_init_len(). However there
- * is the possibility that the length needs to be written to some other location
- * other than the start of the WPACKET. In that case init via WPACKET_init() and
- * then set the location for the length using this function.
- */
-int WPACKET_set_packet_len(WPACKET *pkt, unsigned char *packet_len,
-                           size_t lenbytes);
-
-/*
  * Closes the most recent sub-packet. It also writes out the length of the
  * packet to the required location (normally the start of the WPACKET) if
  * appropriate. The top level WPACKET should be closed using WPACKET_finish()
@@ -654,6 +646,19 @@ int WPACKET_finish(WPACKET *pkt);
  * at the start of the sub-packet to store its length once we know it.
  */
 int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes);
+
+/*
+ * Convenience macros for calling WPACKET_start_sub_packet_len with different
+ * lengths
+ */
+#define WPACKET_start_sub_packet_u8(pkt) \
+    WPACKET_start_sub_packet_len((pkt), 1)
+#define WPACKET_start_sub_packet_u16(pkt) \
+    WPACKET_start_sub_packet_len((pkt), 2)
+#define WPACKET_start_sub_packet_u24(pkt) \
+    WPACKET_start_sub_packet_len((pkt), 3)
+#define WPACKET_start_sub_packet_u32(pkt) \
+    WPACKET_start_sub_packet_len((pkt), 4)
 
 /*
  * Same as WPACKET_start_sub_packet_len() except no bytes are pre-allocated for

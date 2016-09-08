@@ -25,23 +25,14 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
         if (pkt->buf->length > SIZE_MAX / 2) {
             newlen = SIZE_MAX;
         } else {
-            if (pkt->buf->length == 0)
-                newlen = DEFAULT_BUF_SIZE;
-            else
-                newlen = pkt->buf->length * 2;
+            newlen = (pkt->buf->length == 0) ? DEFAULT_BUF_SIZE
+                                             : pkt->buf->length * 2;
         }
         if (BUF_MEM_grow(pkt->buf, newlen) == 0)
             return 0;
-        if (pkt->curr == NULL) {
-            /*
-             * Can happen if initialised with a BUF_MEM that hasn't been
-             * pre-allocated.
-             */
-            pkt->curr = (unsigned char *)pkt->buf->data;
-        }
     }
     pkt->written += len;
-    *allocbytes = pkt->curr;
+    *allocbytes = (unsigned char *)pkt->buf->data + pkt->curr;
     pkt->curr += len;
 
     return 1;
@@ -57,12 +48,14 @@ static size_t maxmaxsize(size_t lenbytes)
 
 int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
 {
+    unsigned char *lenchars;
+
     /* Sanity check */
     if (buf == NULL)
         return 0;
 
     pkt->buf = buf;
-    pkt->curr = (unsigned char *)buf->data;
+    pkt->curr = 0;
     pkt->written = 0;
     pkt->maxsize = maxmaxsize(lenbytes);
 
@@ -76,11 +69,12 @@ int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
     pkt->subs->pwritten = lenbytes;
     pkt->subs->lenbytes = lenbytes;
 
-    if (!WPACKET_allocate_bytes(pkt, lenbytes, &(pkt->subs->packet_len))) {
+    if (!WPACKET_allocate_bytes(pkt, lenbytes, &lenchars)) {
         OPENSSL_free(pkt->subs);
         pkt->subs = NULL;
         return 0;
     }
+    pkt->subs->packet_len = lenchars - (unsigned char *)pkt->buf->data;
 
     return 1;
 }
@@ -88,25 +82,6 @@ int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
 int WPACKET_init(WPACKET *pkt, BUF_MEM *buf)
 {
     return WPACKET_init_len(pkt, buf, 0);
-}
-
-int WPACKET_set_packet_len(WPACKET *pkt, unsigned char *packet_len,
-                           size_t lenbytes)
-{
-    size_t maxmax;
-
-    /* We only allow this to be set once */
-    if (pkt->subs == NULL || pkt->subs->lenbytes != 0)
-        return 0;
-
-    pkt->subs->lenbytes = lenbytes;
-    pkt->subs->packet_len = packet_len;
-
-    maxmax = maxmaxsize(lenbytes);
-    if (pkt->maxsize > maxmax)
-        pkt->maxsize = maxmax;
-
-    return 1;
 }
 
 int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
@@ -126,16 +101,15 @@ int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
  */
 static int wpacket_intern_close(WPACKET *pkt)
 {
-    size_t packlen;
     WPACKET_SUB *sub = pkt->subs;
+    size_t packlen = pkt->written - sub->pwritten;
 
-    packlen = pkt->written - sub->pwritten;
     if (packlen == 0
-            && sub->flags & OPENSSL_WPACKET_FLAGS_NON_ZERO_LENGTH)
+            && sub->flags & WPACKET_FLAGS_NON_ZERO_LENGTH)
         return 0;
 
     if (packlen == 0
-            && sub->flags & OPENSSL_WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH) {
+            && sub->flags & WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH) {
         /* Deallocate any bytes allocated for the length of the WPACKET */
         if ((pkt->curr - sub->lenbytes) == sub->packet_len) {
             pkt->written -= sub->lenbytes;
@@ -143,17 +117,16 @@ static int wpacket_intern_close(WPACKET *pkt)
         }
 
         /* Don't write out the packet length */
-        sub->packet_len = NULL;
+        sub->packet_len = 0;
+        sub->lenbytes = 0;
     }
 
     /* Write out the WPACKET length if needed */
-    if (sub->packet_len != NULL) {
+    if (sub->lenbytes > 0) {
         size_t lenbytes;
 
-        lenbytes = sub->lenbytes;
-
-        for (; lenbytes > 0; lenbytes--) {
-            sub->packet_len[lenbytes - 1]
+        for (lenbytes = sub->lenbytes; lenbytes > 0; lenbytes--) {
+            pkt->buf->data[sub->packet_len + lenbytes - 1]
                 = (unsigned char)(packlen & 0xff);
             packlen >>= 8;
         }
@@ -187,17 +160,18 @@ int WPACKET_finish(WPACKET *pkt)
         return 0;
 
     ret = wpacket_intern_close(pkt);
-
     if (ret) {
         OPENSSL_free(pkt->subs);
         pkt->subs = NULL;
     }
+
     return ret;
 }
 
 int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes)
 {
     WPACKET_SUB *sub;
+    unsigned char *lenchars;
 
     if (pkt->subs == NULL)
         return 0;
@@ -212,13 +186,13 @@ int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes)
     sub->lenbytes = lenbytes;
 
     if (lenbytes == 0) {
-        sub->packet_len = NULL;
+        sub->packet_len = 0;
         return 1;
     }
 
-    if (!WPACKET_allocate_bytes(pkt, lenbytes, &sub->packet_len)) {
+    if (!WPACKET_allocate_bytes(pkt, lenbytes, &lenchars))
         return 0;
-    }
+    sub->packet_len = lenchars - (unsigned char *)pkt->buf->data;
 
     return 1;
 }
@@ -228,16 +202,15 @@ int WPACKET_start_sub_packet(WPACKET *pkt)
     return WPACKET_start_sub_packet_len(pkt, 0);
 }
 
-int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t bytes)
+int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t size)
 {
     unsigned char *data;
 
-    if (bytes > sizeof(unsigned int)
-            || !WPACKET_allocate_bytes(pkt, bytes, &data))
+    if (size > sizeof(unsigned int)
+            || !WPACKET_allocate_bytes(pkt, size, &data))
         return 0;
 
-    data += bytes - 1;
-    for (; bytes > 0; bytes--) {
+    for (data += size - 1; size > 0; size--) {
         *data = (unsigned char)(val & 0xff);
         data--;
         val >>= 8;
@@ -259,7 +232,8 @@ int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
         return 0;
 
     /* Find the WPACKET_SUB for the top level */
-    for (sub = pkt->subs; sub->parent != NULL; sub = sub->parent);
+    for (sub = pkt->subs; sub->parent != NULL; sub = sub->parent)
+        continue;
 
     lenbytes = sub->lenbytes;
     if (lenbytes == 0)

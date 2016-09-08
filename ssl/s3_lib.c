@@ -2799,7 +2799,7 @@ int ssl3_set_handshake_header2(SSL *s, WPACKET *pkt, int htype)
 {
     /* Set the content type and 3 bytes for the message len */
     if (!WPACKET_put_bytes(pkt, htype, 1)
-            || !WPACKET_start_sub_packet_len(pkt, 3))
+            || !WPACKET_start_sub_packet_u24(pkt))
         return 0;
 
     return 1;

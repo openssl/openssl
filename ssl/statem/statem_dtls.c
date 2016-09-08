@@ -1200,6 +1200,7 @@ void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
 int dtls1_set_handshake_header2(SSL *s, WPACKET *pkt, int htype)
 {
     unsigned char *header;
+
     dtls1_set_message_header(s, htype, 0, 0, 0);
 
     /*

@@ -794,7 +794,7 @@ int tls_construct_client_hello(SSL *s)
     else
         i = s->session->session_id_length;
     if (i > (int)sizeof(s->session->session_id)
-            || !WPACKET_start_sub_packet_len(&pkt, 1)
+            || !WPACKET_start_sub_packet_u8(&pkt)
             || (i != 0 && !WPACKET_memcpy(&pkt, s->session->session_id, i))
             || !WPACKET_close(&pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
@@ -812,7 +812,7 @@ int tls_construct_client_hello(SSL *s)
     }
 
     /* Ciphers supported */
-    if (!WPACKET_start_sub_packet_len(&pkt, 2)) {
+    if (!WPACKET_start_sub_packet_u16(&pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -825,7 +825,7 @@ int tls_construct_client_hello(SSL *s)
     }
 
     /* COMPRESSION */
-    if (!WPACKET_start_sub_packet_len(&pkt, 1)) {
+    if (!WPACKET_start_sub_packet_u8(&pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -852,13 +852,12 @@ int tls_construct_client_hello(SSL *s)
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
         goto err;
     }
-    if (!WPACKET_start_sub_packet_len(&pkt, 2)
+    if (!WPACKET_start_sub_packet_u16(&pkt)
                /*
                 * If extensions are of zero length then we don't even add the
                 * extensions length bytes
                 */
-            || !WPACKET_set_flags(&pkt,
-                                  OPENSSL_WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
+            || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
             || !ssl_add_clienthello_tlsext(s, &pkt, &al)
             || !WPACKET_close(&pkt)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
