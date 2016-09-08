@@ -482,7 +482,6 @@ int ERR_load_CT_strings(void);
 # define CT_F_CTLOG_NEW                                   117
 # define CT_F_CTLOG_NEW_FROM_BASE64                       118
 # define CT_F_CTLOG_NEW_FROM_CONF                         119
-# define CT_F_CTLOG_NEW_NULL                              120
 # define CT_F_CTLOG_STORE_LOAD_CTX_NEW                    122
 # define CT_F_CTLOG_STORE_LOAD_FILE                       123
 # define CT_F_CTLOG_STORE_LOAD_LOG                        130
