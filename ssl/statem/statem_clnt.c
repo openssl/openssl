@@ -875,6 +875,7 @@ int tls_construct_client_hello(SSL *s)
     return 1;
  err:
     ossl_statem_set_error(s);
+    WPACKET_cleanup(&pkt);
     return 0;
 }
 
