@@ -168,6 +168,9 @@ EX_LIBS= {- $target{ex_libs} ? ",".$target{ex_libs} : "" -}{- $config{ex_libs} ?
 LIB_CFLAGS={- $target{lib_cflags} || "" -}
 DSO_CFLAGS={- $target{dso_cflags} || "" -}
 BIN_CFLAGS={- $target{bin_cflags} || "" -}
+NO_INST_LIB_CFLAGS={- $target{no_inst_lib_cflags} || '$(LIB_CFLAGS)' -}
+NO_INST_DSO_CFLAGS={- $target{no_inst_dso_cflags} || '$(DSO_CFLAGS)' -}
+NO_INST_BIN_CFLAGS={- $target{no_inst_bin_cflags} || '$(BIN_CFLAGS)' -}
 
 PERL={- $config{perl} -}
 
@@ -567,9 +570,16 @@ EOF
       my $srcs =
           join(", ",
                map { abs2rel(rel2abs($_), rel2abs($forward)) } @{$args{srcs}});
-      my $ecflags = { lib => '$(LIB_CFLAGS)',
-                      dso => '$(DSO_CFLAGS)',
-                      bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
+      my $ecflags;
+      if ($args{installed}) {
+          $ecflags = { lib => '$(LIB_CFLAGS)',
+                       dso => '$(DSO_CFLAGS)',
+                       bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
+      } else {
+          $ecflags = { lib => '$(NO_INST_LIB_CFLAGS)',
+                       dso => '$(NO_INST_DSO_CFLAGS)',
+                       bin => '$(NO_INST_BIN_CFLAGS)' } -> {$args{intent}};
+      }
       my $incs_on = "\@ !";
       my $incs_off = "\@ !";
       my $incs = "";
