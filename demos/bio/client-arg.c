@@ -23,10 +23,6 @@ int main(int argc, char **argv)
     const char *connect_str = "localhost:4433";
     int nargs = argc - 1;
 
-    ERR_load_crypto_strings();
-    ERR_load_SSL_strings();
-    SSL_library_init();
-
     ctx = SSL_CTX_new(TLS_client_method());
     cctx = SSL_CONF_CTX_new();
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CLIENT);

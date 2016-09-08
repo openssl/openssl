@@ -14,6 +14,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <signal.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -33,10 +34,6 @@ int main(int argc, char *argv[])
     char buf[512];
     int ret = 1, i;
 
-    SSL_load_error_strings();
-
-    /* Add ciphers and message digests */
-    OpenSSL_add_ssl_algorithms();
 
     conf = NCONF_new(NULL);
 
