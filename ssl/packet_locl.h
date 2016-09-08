@@ -584,8 +584,7 @@ struct wpacket_st {
     size_t written;
 
     /*
-     * Maximum number of bytes we will allow to be written to this WPACKET. Zero
-     * if no maximum
+     * Maximum number of bytes we will allow to be written to this WPACKET.
      */
     size_t maxsize;
 
@@ -621,6 +620,7 @@ int WPACKET_sub_memcpy(WPACKET *pkt, const void *src, size_t len,
                        size_t lenbytes);
 int WPACKET_get_total_written(WPACKET *pkt, size_t *written);
 int WPACKET_get_length(WPACKET *pkt, size_t *len);
+void WPACKET_cleanup(WPACKET *pkt);
 
 # ifdef __cplusplus
 }

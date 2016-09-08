@@ -9,6 +9,8 @@
 
 #include "packet_locl.h"
 
+#define DEFAULT_BUF_SIZE    256
+
 /*
  * Allocate bytes in the WPACKET for the output. This reserves the bytes
  * and count them as "written", but doesn't actually do the writing.
@@ -21,24 +23,43 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
     if (SIZE_MAX - pkt->written < len)
         return 0;
 
-    if (pkt->maxsize > 0 && pkt->written + len > pkt->maxsize)
+    if (pkt->written + len > pkt->maxsize)
         return 0;
 
     if (pkt->buf->length - pkt->written < len) {
         size_t newlen;
 
-        if (pkt->buf->length > SIZE_MAX / 2)
+        if (pkt->buf->length > SIZE_MAX / 2) {
             newlen = SIZE_MAX;
-        else
-            newlen = pkt->buf->length * 2;
+        } else {
+            if (pkt->buf->length == 0)
+                newlen = DEFAULT_BUF_SIZE;
+            else
+                newlen = pkt->buf->length * 2;
+        }
         if (BUF_MEM_grow(pkt->buf, newlen) == 0)
             return 0;
+        if (pkt->curr == NULL) {
+            /*
+             * Can happen if initialised with a BUF_MEM that hasn't been
+             * pre-allocated.
+             */
+            pkt->curr = (unsigned char *)pkt->buf->data;
+        }
     }
     pkt->written += len;
     *allocbytes = pkt->curr;
     pkt->curr += len;
 
     return 1;
+}
+
+static size_t maxmaxsize(size_t lenbytes)
+{
+    if (lenbytes >= sizeof(size_t) || lenbytes == 0)
+        return SIZE_MAX;
+    else
+        return ((size_t)1 << (lenbytes * 8)) - 1 + lenbytes;
 }
 
 /*
@@ -56,7 +77,7 @@ int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
     pkt->buf = buf;
     pkt->curr = (unsigned char *)buf->data;
     pkt->written = 0;
-    pkt->maxsize = 0;
+    pkt->maxsize = maxmaxsize(lenbytes);
 
     pkt->subs = OPENSSL_zalloc(sizeof(*pkt->subs));
     if (pkt->subs == NULL)
@@ -97,12 +118,18 @@ int WPACKET_init(WPACKET *pkt, BUF_MEM *buf)
 int WPACKET_set_packet_len(WPACKET *pkt, unsigned char *packet_len,
                            size_t lenbytes)
 {
+    size_t maxmax;
+
     /* We only allow this to be set once */
-    if (pkt->subs == NULL)
+    if (pkt->subs == NULL || pkt->subs->lenbytes != 0)
         return 0;
 
     pkt->subs->lenbytes = lenbytes;
     pkt->subs->packet_len = packet_len;
+
+    maxmax = maxmaxsize(lenbytes);
+    if (pkt->maxsize > maxmax)
+        pkt->maxsize = maxmax;
 
     return 1;
 }
@@ -196,9 +223,10 @@ int WPACKET_finish(WPACKET *pkt)
 
     ret = wpacket_intern_close(pkt);
 
-    /* We free up memory no matter whether |ret| is zero or not */
-    OPENSSL_free(pkt->subs);
-    pkt->subs = NULL;
+    if (ret) {
+        OPENSSL_free(pkt->subs);
+        pkt->subs = NULL;
+    }
     return ret;
 }
 
@@ -271,12 +299,25 @@ int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t bytes)
     return 1;
 }
 
-/*
- * Set a maximum size that we will not allow the WPACKET to grow beyond. If not
- * set then there is no maximum.
- */
+/* Set a maximum size that we will not allow the WPACKET to grow beyond */
 int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
 {
+    WPACKET_SUB *sub;
+    size_t lenbytes;
+
+    if (pkt->subs == NULL)
+        return 0;
+
+    /* Find the WPACKET_SUB for the top level */
+    for (sub = pkt->subs; sub->parent != NULL; sub = sub->parent);
+
+    lenbytes = sub->lenbytes;
+    if (lenbytes == 0)
+        lenbytes = sizeof(pkt->maxsize);
+
+    if (maxmaxsize(lenbytes) < maxsize || maxsize < pkt->written)
+        return 0;
+
     pkt->maxsize = maxsize;
 
     return 1;
@@ -315,12 +356,12 @@ int WPACKET_sub_memcpy(WPACKET *pkt, const void *src, size_t len, size_t lenbyte
 }
 
 /*
- * Return the total number of bytes written so far to the underlying buffer.
- * This might includes bytes written by a parent WPACKET.
+ * Return the total number of bytes written so far to the underlying buffer
+ * including any storage allocated for length bytes
  */
 int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
 {
-    if (pkt->subs == NULL || written == NULL)
+    if (written == NULL)
         return 0;
 
     *written = pkt->written;
@@ -340,4 +381,18 @@ int WPACKET_get_length(WPACKET *pkt, size_t *len)
     *len = pkt->written - pkt->subs->pwritten;
 
     return 1;
+}
+
+/*
+ * Release resources in a WPACKET if a failure has occurred.
+ */
+void WPACKET_cleanup(WPACKET *pkt)
+{
+    WPACKET_SUB *sub, *parent;
+
+    for (sub = pkt->subs; sub != NULL; sub = parent) {
+        parent = sub->parent;
+        OPENSSL_free(sub);
+    }
+    pkt->subs = NULL;
 }
