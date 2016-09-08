@@ -4208,3 +4208,5 @@ OCSP_RESPID_set_by_key                  4158	1_1_0a	EXIST::FUNCTION:OCSP
 OCSP_RESPID_match                       4159	1_1_0a	EXIST::FUNCTION:OCSP
 DSO_pathbyaddr                          4170	1_1_0c	EXIST::FUNCTION:
 DSO_dsobyaddr                           4171	1_1_0c	EXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_get_time             4172	1_1_1	EXIST::FUNCTION:CT
+CT_POLICY_EVAL_CTX_set_time             4173	1_1_1	EXIST::FUNCTION:CT

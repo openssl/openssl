@@ -329,6 +329,8 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
             goto err;
     }
 
+    SCT_CTX_set_time(sctx, ctx->epoch_time_in_ms);
+
     /*
      * XXX: Potential for optimization.  This repeats some idempotent heavy
      * lifting on the certificate for each candidate SCT, and appears to not
