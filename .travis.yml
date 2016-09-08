@@ -39,16 +39,16 @@ matrix:
           env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers" COVERALLS="yes"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-shared enable-asan"
+          env: CONFIG_OPTS="enable-asan"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-shared enable-msan"
+          env: CONFIG_OPTS="enable-msan"
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method -fno-sanitize=alignment"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-shared no-asm enable-asan enable-rc5 enable-md2"
+          env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2"
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="no-stdio"
