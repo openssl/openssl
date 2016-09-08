@@ -36,6 +36,7 @@ static ERR_STRING_DATA CT_str_functs[] = {
     {ERR_FUNC(CT_F_O2I_SCT_LIST), "o2i_SCT_LIST"},
     {ERR_FUNC(CT_F_O2I_SCT_SIGNATURE), "o2i_SCT_signature"},
     {ERR_FUNC(CT_F_SCT_CTX_NEW), "SCT_CTX_new"},
+    {ERR_FUNC(CT_F_SCT_CTX_VERIFY), "SCT_CTX_verify"},
     {ERR_FUNC(CT_F_SCT_NEW), "SCT_new"},
     {ERR_FUNC(CT_F_SCT_NEW_FROM_BASE64), "SCT_new_from_base64"},
     {ERR_FUNC(CT_F_SCT_SET0_LOG_ID), "SCT_set0_log_id"},
@@ -45,7 +46,6 @@ static ERR_STRING_DATA CT_str_functs[] = {
     {ERR_FUNC(CT_F_SCT_SET_LOG_ENTRY_TYPE), "SCT_set_log_entry_type"},
     {ERR_FUNC(CT_F_SCT_SET_SIGNATURE_NID), "SCT_set_signature_nid"},
     {ERR_FUNC(CT_F_SCT_SET_VERSION), "SCT_set_version"},
-    {ERR_FUNC(CT_F_SCT_CTX_VERIFY), "SCT_CTX_verify"},
     {0, NULL}
 };
 
@@ -58,6 +58,7 @@ static ERR_STRING_DATA CT_str_reasons[] = {
      "log conf missing description"},
     {ERR_REASON(CT_R_LOG_CONF_MISSING_KEY), "log conf missing key"},
     {ERR_REASON(CT_R_LOG_KEY_INVALID), "log key invalid"},
+    {ERR_REASON(CT_R_SCT_FUTURE_TIMESTAMP), "sct future timestamp"},
     {ERR_REASON(CT_R_SCT_INVALID), "sct invalid"},
     {ERR_REASON(CT_R_SCT_INVALID_SIGNATURE), "sct invalid signature"},
     {ERR_REASON(CT_R_SCT_LIST_INVALID), "sct list invalid"},

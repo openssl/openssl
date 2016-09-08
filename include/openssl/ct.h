@@ -98,6 +98,21 @@ const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *c
 void CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(CT_POLICY_EVAL_CTX *ctx,
                                                CTLOG_STORE *log_store);
 
+/*
+ * Gets the time, in milliseconds since the Unix epoch, that will be used as the
+ * current time when checking whether an SCT was issued in the future.
+ * Such SCTs will fail validation, as required by RFC6962.
+ */
+uint64_t CT_POLICY_EVAL_CTX_get_time(const CT_POLICY_EVAL_CTX *ctx);
+
+/*
+ * Sets the current time, in milliseconds since the Unix epoch.
+ * The timestamps of the SCTs will be compared to this, to check that they were
+ * not issued in the future. RFC6962 states that "TLS clients MUST reject SCTs
+ * whose timestamp is in the future", so an SCT will not validate in this case.
+ */
+void CT_POLICY_EVAL_CTX_set_time(CT_POLICY_EVAL_CTX *ctx, uint64_t time_in_ms);
+
 /*****************
  * SCT functions *
  *****************/
@@ -482,6 +497,7 @@ int ERR_load_CT_strings(void);
 # define CT_F_O2I_SCT_LIST                                111
 # define CT_F_O2I_SCT_SIGNATURE                           112
 # define CT_F_SCT_CTX_NEW                                 126
+# define CT_F_SCT_CTX_VERIFY                              128
 # define CT_F_SCT_NEW                                     100
 # define CT_F_SCT_NEW_FROM_BASE64                         127
 # define CT_F_SCT_SET0_LOG_ID                             101
@@ -491,7 +507,6 @@ int ERR_load_CT_strings(void);
 # define CT_F_SCT_SET_LOG_ENTRY_TYPE                      102
 # define CT_F_SCT_SET_SIGNATURE_NID                       103
 # define CT_F_SCT_SET_VERSION                             104
-# define CT_F_SCT_CTX_VERIFY                              128
 
 /* Reason codes. */
 # define CT_R_BASE64_DECODE_ERROR                         108
@@ -501,6 +516,7 @@ int ERR_load_CT_strings(void);
 # define CT_R_LOG_CONF_MISSING_DESCRIPTION                111
 # define CT_R_LOG_CONF_MISSING_KEY                        112
 # define CT_R_LOG_KEY_INVALID                             113
+# define CT_R_SCT_FUTURE_TIMESTAMP                        116
 # define CT_R_SCT_INVALID                                 104
 # define CT_R_SCT_INVALID_SIGNATURE                       107
 # define CT_R_SCT_LIST_INVALID                            105
