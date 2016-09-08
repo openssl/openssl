@@ -43,12 +43,6 @@ extern "C" {
 # define DSO_FLAG_NAME_TRANSLATION_EXT_ONLY      0x02
 
 /*
- * The following flag controls the translation of symbol names to upper case.
- * This is currently only being implemented for OpenVMS.
- */
-# define DSO_FLAG_UPCASE_SYMBOL                  0x10
-
-/*
  * This flag loads the library with public symbols. Meaning: The exported
  * symbols of this library are public to all libraries loaded after this
  * library. At the moment only implemented in unix.
