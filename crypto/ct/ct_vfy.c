@@ -113,6 +113,10 @@ int SCT_CTX_verify(const SCT_CTX *sctx, const SCT *sct)
         CTerr(CT_F_SCT_CTX_VERIFY, CT_R_SCT_LOG_ID_MISMATCH);
         return 0;
     }
+    if (sct->timestamp > sctx->epoch_time_in_ms) {
+        CTerr(CT_F_SCT_CTX_VERIFY, CT_R_SCT_FUTURE_TIMESTAMP);
+        return 0;
+    }
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL)

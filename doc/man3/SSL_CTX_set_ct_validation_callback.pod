@@ -97,6 +97,9 @@ otherwise.
 When SCT processing is enabled, OCSP stapling will be enabled. This is because
 one possible source of SCTs is the OCSP response from a server.
 
+The time returned by SSL_SESSION_get_time() will be used to evaluate whether any
+presented SCTs have timestamps that are in the future (and therefore invalid).
+
 =head1 RESTRICTIONS
 
 Certificate Transparency validation cannot be enabled and so a callback cannot
@@ -124,7 +127,8 @@ L<ssl(7)>,
 L<SSL_session_reused(3)>,
 L<SSL_set_verify(3)>,
 L<SSL_CTX_set_verify(3)>,
-L<ssl_ct_validation_cb(3)>
+L<ssl_ct_validation_cb(3)>,
+L<SSL_SESSION_get_time(3)>
 
 =head1 COPYRIGHT
 

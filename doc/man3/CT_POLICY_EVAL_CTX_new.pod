@@ -5,7 +5,8 @@
 CT_POLICY_EVAL_CTX_new, CT_POLICY_EVAL_CTX_free,
 CT_POLICY_EVAL_CTX_get0_cert, CT_POLICY_EVAL_CTX_set1_cert,
 CT_POLICY_EVAL_CTX_get0_issuer, CT_POLICY_EVAL_CTX_set1_issuer,
-CT_POLICY_EVAL_CTX_get0_log_store, CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE -
+CT_POLICY_EVAL_CTX_get0_log_store, CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE,
+CT_POLICY_EVAL_CTX_get_time, CT_POLICY_EVAL_CTX_set_time -
 Encapsulates the data required to evaluate whether SCTs meet a Certificate Transparency policy
 
 =head1 SYNOPSIS
@@ -20,13 +21,16 @@ Encapsulates the data required to evaluate whether SCTs meet a Certificate Trans
  int CT_POLICY_EVAL_CTX_set1_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
  const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *ctx);
  void CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(CT_POLICY_EVAL_CTX *ctx, CTLOG_STORE *log_store);
+ uint64_t CT_POLICY_EVAL_CTX_get_time(const CT_POLICY_EVAL_CTX *ctx);
+ void CT_POLICY_EVAL_CTX_set_time(CT_POLICY_EVAL_CTX *ctx, uint64_t time_in_ms);
 
 =head1 DESCRIPTION
 
 A B<CT_POLICY_EVAL_CTX> is used by functions that evaluate whether Signed
 Certificate Timestamps (SCTs) fulfil a Certificate Transparency (CT) policy.
 This policy may be, for example, that at least one valid SCT is available. To
-determine this, an SCT's signature must be verified. This requires:
+determine this, an SCT's timestamp and signature must be verified.
+This requires:
 
 =over
 
@@ -35,6 +39,8 @@ determine this, an SCT's signature must be verified. This requires:
 =item * the certificate that the SCT was issued for
 
 =item * the issuer certificate (if the SCT was issued for a pre-certificate)
+
+=item * the current time
 
 =back
 
@@ -57,6 +63,12 @@ Increments the reference count of the certificate.
 
 Holds a pointer to the CTLOG_STORE, so the CTLOG_STORE must outlive the
 CT_POLICY_EVAL_CTX.
+
+=item * CT_POLICY_EVAL_CTX_set_time() to provide the current time
+
+The SCT timestamp will be compared to this time to check whether the SCT was
+supposedly issued in the future. RFC6962 states that "TLS clients MUST reject
+SCTs whose timestamp is in the future".
 
 =back
 

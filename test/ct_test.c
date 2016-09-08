@@ -29,13 +29,18 @@ static char *ct_dir = NULL;
 
 typedef struct ct_test_fixture {
     const char *test_case_name;
+    /* The current time in milliseconds */
+    uint64_t epoch_time_in_ms;
     /* The CT log store to use during tests */
     CTLOG_STORE* ctlog_store;
     /* Set the following to test handling of SCTs in X509 certificates */
     const char *certs_dir;
     char *certificate_file;
     char *issuer_file;
+    /* Expected number of SCTs */
     int expected_sct_count;
+    /* Expected number of valid SCTS */
+    int expected_valid_sct_count;
     /* Set the following to test handling of SCTs in TLS format */
     const unsigned char *tls_sct_list;
     size_t tls_sct_list_len;
@@ -49,7 +54,6 @@ typedef struct ct_test_fixture {
     const char *sct_text_file;
     /* Whether to test the validity of the SCT(s) */
     int test_validity;
-
 } CT_TEST_FIXTURE;
 
 static CT_TEST_FIXTURE set_up(const char *const test_case_name)
@@ -75,6 +79,7 @@ static CT_TEST_FIXTURE set_up(const char *const test_case_name)
     }
 
     fixture.test_case_name = test_case_name;
+    fixture.epoch_time_in_ms = 1473269626000; /* Sep 7 17:33:46 2016 GMT */
     fixture.ctlog_store = ctlog_store;
 
 end:
@@ -252,7 +257,7 @@ static int assert_validity(CT_TEST_FIXTURE fixture,
         }
     }
 
-    if (valid_sct_count != fixture.expected_sct_count) {
+    if (valid_sct_count != fixture.expected_valid_sct_count) {
         int unverified_sct_count = sk_SCT_num(scts) -
                 invalid_sct_count - valid_sct_count;
 
@@ -262,7 +267,7 @@ static int assert_validity(CT_TEST_FIXTURE fixture,
                 "%d SCTs were unverified\n",
                 invalid_sct_count,
                 valid_sct_count,
-                fixture.expected_sct_count,
+                fixture.expected_valid_sct_count,
                 unverified_sct_count);
         return 0;
     }
@@ -298,6 +303,8 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
 
     CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(
             ct_policy_ctx, fixture.ctlog_store);
+
+    CT_POLICY_EVAL_CTX_set_time(ct_policy_ctx, fixture.epoch_time_in_ms);
 
     if (fixture.certificate_file != NULL) {
         int sct_extension_index;
@@ -445,7 +452,7 @@ static int test_verify_one_sct()
     fixture.certs_dir = certs_dir;
     fixture.certificate_file = "embeddedSCTs1.pem";
     fixture.issuer_file = "embeddedSCTs1_issuer.pem";
-    fixture.expected_sct_count = 1;
+    fixture.expected_sct_count = fixture.expected_valid_sct_count = 1;
     fixture.test_validity = 1;
     EXECUTE_CT_TEST();
 }
@@ -456,7 +463,20 @@ static int test_verify_multiple_scts()
     fixture.certs_dir = certs_dir;
     fixture.certificate_file = "embeddedSCTs3.pem";
     fixture.issuer_file = "embeddedSCTs3_issuer.pem";
-    fixture.expected_sct_count = 3;
+    fixture.expected_sct_count = fixture.expected_valid_sct_count = 3;
+    fixture.test_validity = 1;
+    EXECUTE_CT_TEST();
+}
+
+static int test_verify_fails_for_future_sct()
+{
+    SETUP_CT_TEST_FIXTURE();
+    fixture.epoch_time_in_ms = 1365094800000; /* Apr 4 17:00:00 2013 GMT */
+    fixture.certs_dir = certs_dir;
+    fixture.certificate_file = "embeddedSCTs1.pem";
+    fixture.issuer_file = "embeddedSCTs1_issuer.pem";
+    fixture.expected_sct_count = 1;
+    fixture.expected_valid_sct_count = 0;
     fixture.test_validity = 1;
     EXECUTE_CT_TEST();
 }
@@ -545,6 +565,7 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_multiple_scts_in_certificate);
     ADD_TEST(test_verify_one_sct);
     ADD_TEST(test_verify_multiple_scts);
+    ADD_TEST(test_verify_fails_for_future_sct);
     ADD_TEST(test_decode_tls_sct);
     ADD_TEST(test_encode_tls_sct);
 
