@@ -55,11 +55,6 @@ char *argv[];
     sock_init();
 #endif
 
-    /* Lets get nice error messages */
-    SSL_load_error_strings();
-
-    /* Setup all the global SSL stuff */
-    OpenSSL_add_ssl_algorithms();
     ssl_ctx = SSL_CTX_new(TLS_client_method());
 
     /* Enable trust chain verification */

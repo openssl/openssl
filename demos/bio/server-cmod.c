@@ -27,11 +27,6 @@ int main(int argc, char *argv[])
     SSL_CTX *ctx;
     int ret = 1, i;
 
-    SSL_load_error_strings();
-
-    /* Add ciphers and message digests */
-    OpenSSL_add_ssl_algorithms();
-
     if (CONF_modules_load_file("cmod.cnf", "testapp", 0) <= 0) {
         fprintf(stderr, "Error processing config file\n");
         goto err;
