@@ -5,8 +5,6 @@ Port = 4433
 # Protocol = ALL, -TLSv1.2
 # Only support 3 curves
 Curves = P-521:P-384:P-256
-# Automatic curve selection
-ECDHParameters = Automatic
 # Restricted signature algorithms
 SignatureAlgorithms = RSA+SHA512:ECDSA+SHA512 
 Certificate=server.pem
