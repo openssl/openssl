@@ -2722,6 +2722,11 @@ static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p,
                 *al = TLS1_AD_INTERNAL_ERROR;
                 return 0;
             }
+            /*
+             * Could be non-NULL if server has sent multiple NPN extensions in
+             * a single Serverhello
+             */
+            OPENSSL_free(s->next_proto_negotiated);
             s->next_proto_negotiated = OPENSSL_malloc(selected_len);
             if (!s->next_proto_negotiated) {
                 *al = TLS1_AD_INTERNAL_ERROR;
