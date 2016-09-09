@@ -86,31 +86,34 @@ open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
 
 $sp="r1";
 $toc="r2";
-$rp="r3";	$ovf="r3";
+$rp="r3";
 $ap="r4";
 $bp="r5";
 $np="r6";
 $n0="r7";
 $num="r8";
-$rp="r9";	# $rp is reassigned
-$aj="r10";
-$nj="r11";
-$tj="r12";
+
+{
+my $ovf=$rp;
+my $rp="r9";	# $rp is reassigned
+my $aj="r10";
+my $nj="r11";
+my $tj="r12";
 # non-volatile registers
-$i="r20";
-$j="r21";
-$tp="r22";
-$m0="r23";
-$m1="r24";
-$lo0="r25";
-$hi0="r26";
-$lo1="r27";
-$hi1="r28";
-$alo="r29";
-$ahi="r30";
-$nlo="r31";
+my $i="r20";
+my $j="r21";
+my $tp="r22";
+my $m0="r23";
+my $m1="r24";
+my $lo0="r25";
+my $hi0="r26";
+my $lo1="r27";
+my $hi1="r28";
+my $alo="r29";
+my $ahi="r30";
+my $nlo="r31";
 #
-$nhi="r0";
+my $nhi="r0";
 
 $code=<<___;
 .machine "any"
@@ -333,7 +336,9 @@ Lcopy:				; copy or in-place refresh
 	.byte	0,12,4,0,0x80,12,6,0
 	.long	0
 .size	.bn_mul_mont_int,.-.bn_mul_mont_int
-
+___
+}
+$code.=<<___;
 .asciz  "Montgomery Multiplication for PPC, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
