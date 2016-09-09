@@ -27,12 +27,12 @@ int main(int argc, char *argv[])
     SSL_CTX *ctx;
     int ret = 1, i;
 
+    ctx = SSL_CTX_new(TLS_server_method());
+
     if (CONF_modules_load_file("cmod.cnf", "testapp", 0) <= 0) {
         fprintf(stderr, "Error processing config file\n");
         goto err;
     }
-
-    ctx = SSL_CTX_new(TLS_server_method());
 
     if (SSL_CTX_config(ctx, "server") == 0) {
         fprintf(stderr, "Error configuring server.\n");
