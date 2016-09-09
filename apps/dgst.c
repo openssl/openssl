@@ -498,6 +498,12 @@ int MAIN(int argc, char **argv)
             if (md)
                 md_name = EVP_MD_name(md);
         }
+
+        if (keyfile != NULL && argc > 1) {
+            BIO_printf(bio_err, "Can only sign or verify one file\n");
+            goto end;
+        }
+
         err = 0;
         for (i = 0; i < argc; i++) {
             int r;
