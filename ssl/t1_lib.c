@@ -2019,6 +2019,22 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                     (&extension, &responder_id_list))
                     return 0;
 
+                /*
+                 * We remove any OCSP_RESPIDs from a previous handshake
+                 * to prevent unbounded memory growth - CVE-2016-6304
+                 */
+                sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids,
+                                        OCSP_RESPID_free);
+                if (PACKET_remaining(&responder_id_list) > 0) {
+                    s->tlsext_ocsp_ids = sk_OCSP_RESPID_new_null();
+                    if (s->tlsext_ocsp_ids == NULL) {
+                        *al = SSL_AD_INTERNAL_ERROR;
+                        return 0;
+                    }
+                } else {
+                    s->tlsext_ocsp_ids = NULL;
+                }
+
                 while (PACKET_remaining(&responder_id_list) > 0) {
                     OCSP_RESPID *id;
                     PACKET responder_id;
@@ -2027,13 +2043,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                     if (!PACKET_get_length_prefixed_2(&responder_id_list,
                                                       &responder_id)
                         || PACKET_remaining(&responder_id) == 0) {
-                        return 0;
-                    }
-
-                    if (s->tlsext_ocsp_ids == NULL
-                        && (s->tlsext_ocsp_ids =
-                            sk_OCSP_RESPID_new_null()) == NULL) {
-                        *al = SSL_AD_INTERNAL_ERROR;
                         return 0;
                     }
 
