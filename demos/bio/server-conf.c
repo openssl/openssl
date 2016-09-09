@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
     char buf[512];
     int ret = 1, i;
 
+    ctx = SSL_CTX_new(TLS_server_method());
 
     conf = NCONF_new(NULL);
 
@@ -52,7 +53,6 @@ int main(int argc, char *argv[])
         goto err;
     }
 
-    ctx = SSL_CTX_new(TLS_server_method());
     cctx = SSL_CONF_CTX_new();
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_SERVER);
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CERTIFICATE);
