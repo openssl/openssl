@@ -383,6 +383,12 @@ install_ssldirs : check_INSTALLTOP
         IF F$SEARCH("OSSL_DATAROOT:[000000]openssl.cnf") .EQS. "" THEN -
                 COPY/PROT=W:R {- sourcefile("apps", "openssl-vms.cnf") -} -
                         ossl_dataroot:[000000]openssl.cnf
+        @ ! Install CTLOG configuration file
+        COPY/PROT=W:R {- sourcefile("apps", "ct_log_list.cnf") -} -
+                ossl_dataroot:[000000]ct_log_list.cnf-dist
+        IF F$SEARCH("OSSL_DATAROOT:[000000]ct_log_list.cnf") .EQS. "" THEN -
+                COPY/PROT=W:R {- sourcefile("apps", "ct_log_list.cnf") -} -
+                        ossl_dataroot:[000000]ct_log_list.cnf
 
 install_shared : check_INSTALLTOP
         @ {- output_off() if $disabled{shared}; "" -} !
