@@ -812,6 +812,9 @@
 
  PERL
                 The name of the Perl executable to use when building OpenSSL.
+                This variable is used in config script only. Configure on the
+                other hand imposes the interpreter by which it itself was
+                executed on the whole build procedure.
 
  HASHBANGPERL
                 The command string for the Perl executable to insert in the

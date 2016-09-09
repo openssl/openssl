@@ -941,7 +941,7 @@ $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
 # Allow overriding the names of some tools.  USE WITH CARE
 # Note: only Unix cares about HASHBANGPERL...  that explains
 # the default string.
-$config{perl} =    $ENV{'PERL'}    || ($^O ne "VMS" ? $^X : "perl");
+$config{perl} =    ($^O ne "VMS" ? $^X : "perl");
 $config{hashbangperl} =
     $ENV{'HASHBANGPERL'}           || $ENV{'PERL'}     || "/usr/bin/env perl";
 $target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
@@ -2019,11 +2019,10 @@ EOF
 print OUT "1;\n";
 close(OUT);
 
-my $perlvers = &get_perl_version();
 print "\n";
 print "PROCESSOR     =$config{processor}\n" if $config{processor};
 print "PERL          =$config{perl}\n";
-print "PERLVERSION   =$perlvers\n";
+print "PERLVERSION   =$Config{version} for $Config{archname}\n";
 print "HASHBANGPERL  =$config{hashbangperl}\n";
 print "CC            =$config{cross_compile_prefix}$target{cc}\n";
 print "CFLAG         =$target{cflags} $config{cflags}\n";
@@ -2383,21 +2382,6 @@ sub usage
 	print STDERR "\n\nNOTE: If in doubt, on Unix-ish systems use './config'.\n";
 	exit(1);
 	}
-
-# Return the perl version.
-sub get_perl_version
-{
-    return "$Config{version} for $Config{archname}" if $config{perl} eq $^X;
-    my $l;
-    open my $FH, "$config{perl} -v|" || return "??unknown??";
-    while ( <$FH> ) {
-        chop;
-        $l .= $_;
-    }
-    close $FH;
-    $l =~ s/This is (.{1,70}).*/$1/;
-    return $l;
-}
 
 sub run_dofile
 {
