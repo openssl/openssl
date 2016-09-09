@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include "packet_locl.h"
 
 #define DEFAULT_BUF_SIZE    256
 
 int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 {
+    /* Internal API, so should not fail */
+    assert(pkt->subs != NULL && len != 0);
     if (pkt->subs == NULL || len == 0)
         return 0;
 
@@ -50,7 +53,8 @@ int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
 {
     unsigned char *lenchars;
 
-    /* Sanity check */
+    /* Internal API, so should not fail */
+    assert(buf != NULL);
     if (buf == NULL)
         return 0;
 
@@ -86,6 +90,8 @@ int WPACKET_init(WPACKET *pkt, BUF_MEM *buf)
 
 int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
 {
+    /* Internal API, so should not fail */
+    assert(pkt->subs != NULL);
     if (pkt->subs == NULL)
         return 0;
 
@@ -146,6 +152,10 @@ static int wpacket_intern_close(WPACKET *pkt)
 
 int WPACKET_close(WPACKET *pkt)
 {
+    /*
+     * Internal API, so should not fail - but we do negative testing of this
+     * so no assert (otherwise the tests fail)
+     */
     if (pkt->subs == NULL || pkt->subs->parent == NULL)
         return 0;
 
@@ -156,6 +166,10 @@ int WPACKET_finish(WPACKET *pkt)
 {
     int ret;
 
+    /*
+     * Internal API, so should not fail - but we do negative testing of this
+     * so no assert (otherwise the tests fail)
+     */
     if (pkt->subs == NULL || pkt->subs->parent != NULL)
         return 0;
 
@@ -173,6 +187,8 @@ int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes)
     WPACKET_SUB *sub;
     unsigned char *lenchars;
 
+    /* Internal API, so should not fail */
+    assert(pkt->subs != NULL);
     if (pkt->subs == NULL)
         return 0;
 
@@ -206,6 +222,8 @@ int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t size)
 {
     unsigned char *data;
 
+    /* Internal API, so should not fail */
+    assert(size <= sizeof(unsigned int));
     if (size > sizeof(unsigned int)
             || !WPACKET_allocate_bytes(pkt, size, &data))
         return 0;
@@ -228,6 +246,8 @@ int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
     WPACKET_SUB *sub;
     size_t lenbytes;
 
+    /* Internal API, so should not fail */
+    assert(pkt->subs != NULL);
     if (pkt->subs == NULL)
         return 0;
 
@@ -274,6 +294,8 @@ int WPACKET_sub_memcpy(WPACKET *pkt, const void *src, size_t len, size_t lenbyte
 
 int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
 {
+    /* Internal API, so should not fail */
+    assert(written != NULL);
     if (written == NULL)
         return 0;
 
@@ -284,6 +306,8 @@ int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
 
 int WPACKET_get_length(WPACKET *pkt, size_t *len)
 {
+    /* Internal API, so should not fail */
+    assert(pkt->subs != NULL && len != NULL);
     if (pkt->subs == NULL || len == NULL)
         return 0;
 
