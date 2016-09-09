@@ -350,10 +350,19 @@ install_ssldirs:
 	@cp $(SRCDIR)/apps/openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
 	@chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
 	@mv -f  $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.dist
-	@if ! [ -f "$(DESTDIR)$(OPENSSLDIR)/openssl.cnf" ]; then \
+	@if [ ! -f "$(DESTDIR)$(OPENSSLDIR)/openssl.cnf" ]; then \
 		echo "install $(SRCDIR)/apps/openssl.cnf -> $(DESTDIR)$(OPENSSLDIR)/openssl.cnf"; \
 		cp $(SRCDIR)/apps/openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf; \
 		chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf; \
+	fi
+	@echo "install $(SRCDIR)/apps/ct_log_list.cnf -> $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.dist"
+	@cp $(SRCDIR)/apps/ct_log_list.cnf $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.new
+	@chmod 644 $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.new
+	@mv -f  $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.new $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.dist
+	@if [ ! -f "$(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf" ]; then \
+		echo "install $(SRCDIR)/apps/ct_log_list.cnf -> $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf"; \
+		cp $(SRCDIR)/apps/ct_log_list.cnf $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf; \
+		chmod 644 $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf; \
 	fi
 
 install_dev:
