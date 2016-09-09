@@ -213,8 +213,8 @@ static int expand(OPENSSL_LHASH *lh)
         j = (int)lh->num_alloc_nodes * 2;
         n = OPENSSL_realloc(lh->b, (int)(sizeof(OPENSSL_LH_NODE *) * j));
         if (n == NULL) {
-            /* fputs("realloc error in lhash",stderr); */
             lh->error++;
+            lh->num_nodes--;
             lh->p = 0;
             return 0;
         }
