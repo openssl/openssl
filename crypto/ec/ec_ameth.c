@@ -345,7 +345,7 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, ec_print_t ktype)
         return 0;
     }
 
-    if (ktype != EC_KEY_PRINT_PARAM) {
+    if (ktype != EC_KEY_PRINT_PARAM && EC_KEY_get0_public_key(x) != NULL) {
         publen = EC_KEY_key2buf(x, EC_KEY_get_conv_form(x), &pub, NULL);
         if (publen == 0)
             goto err;
