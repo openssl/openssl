@@ -134,10 +134,7 @@ $code=<<___;
 .globl	.bn_mul_mont_int
 .align	5
 .bn_mul_mont_int:
-	cmpwi	$num,4
 	mr	$rp,r3		; $rp is reassigned
-	li	r3,0
-	bltlr
 ___
 $code.=<<___ if ($BNSZ==4);
 	cmpwi	$num,32		; longer key performance is not better
