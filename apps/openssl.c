@@ -296,12 +296,30 @@ static void list_md_fn(const EVP_MD *m,
     }
 }
 
+static void list_missing_help(void)
+{
+    const FUNCTION *fp;
+    const OPTIONS *o;
+
+    for (fp = functions; fp->name != NULL; fp++) {
+        if ((o = fp->help) == NULL) {
+            BIO_printf(bio_out, "%s *\n", fp->name);
+            continue;
+        }
+        for ( ; o->name != NULL; o++) {
+            if (o->helpstr == NULL)
+                BIO_printf(bio_out, "%s %s\n", fp->name, o->name);
+        }
+    }
+}
+
+
 /* Unified enum for help and list commands. */
 typedef enum HELPLIST_CHOICE {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_COMMANDS, OPT_DIGEST_COMMANDS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
-    OPT_PK_ALGORITHMS, OPT_DISABLED
+    OPT_PK_ALGORITHMS, OPT_DISABLED, OPT_MISSING_HELP
 } HELPLIST_CHOICE;
 
 OPTIONS list_options[] = {
@@ -318,6 +336,8 @@ OPTIONS list_options[] = {
      "List of public key algorithms"},
     {"disabled", OPT_DISABLED, '-',
      "List of disabled features"},
+    {"missing-help", OPT_MISSING_HELP, '-',
+     "List missing detailed help strings"},
     {NULL}
 };
 
@@ -357,6 +377,9 @@ int list_main(int argc, char **argv)
             break;
         case OPT_DISABLED:
             list_disabled();
+            break;
+        case OPT_MISSING_HELP:
+            list_missing_help();
             break;
         }
         done = 1;
