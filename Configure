@@ -1181,7 +1181,7 @@ if ($^O ne "VMS" && !$disabled{makedepend}) {
         # We know that GNU C version 3 and up as well as all clang
         # versions support dependency generation
         $config{makedepprog} = $ccpcc
-            if (/clang/ || (/gcc/ && $compiler_major > 3));
+            if (/clang/ || (/gcc/ && $compiler_major >= 3));
         $ecc = "clang" if /clang/;
         $ecc = "gcc" if /gcc/;
         last if ($config{makedepprog} || !$lines--);
