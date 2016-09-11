@@ -3,6 +3,7 @@
 =head1 NAME
 
 X509_NAME_ENTRY_get0_object, X509_NAME_ENTRY_get0_data,
+X509_NAME_ENTRY_get0m_object, X509_NAME_ENTRY_get0m_data,
 X509_NAME_ENTRY_set_object, X509_NAME_ENTRY_set_data,
 X509_NAME_ENTRY_create_by_txt, X509_NAME_ENTRY_create_by_NID,
 X509_NAME_ENTRY_create_by_OBJ - X509_NAME_ENTRY utility functions
@@ -14,6 +15,9 @@ X509_NAME_ENTRY_create_by_OBJ - X509_NAME_ENTRY utility functions
  const ASN1_OBJECT * X509_NAME_ENTRY_get0_object(const X509_NAME_ENTRY *ne);
  const ASN1_STRING * X509_NAME_ENTRY_get0_data(const X509_NAME_ENTRY *ne);
 
+ ASN1_OBJECT * X509_NAME_ENTRY_get0m_object(X509_NAME_ENTRY *ne);
+ ASN1_STRING * X509_NAME_ENTRY_get0_data(X509_NAME_ENTRY *ne);
+
  int X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne, const ASN1_OBJECT *obj);
  int X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type, const unsigned char *bytes, int len);
 
@@ -24,6 +28,9 @@ X509_NAME_ENTRY_create_by_OBJ - X509_NAME_ENTRY utility functions
 =head1 DESCRIPTION
 
 X509_NAME_ENTRY_get0_object() retrieves the field name of B<ne> in
+and B<ASN1_OBJECT> structure.
+
+X509_NAME_ENTRY_get0m_object() retrieves the field name of B<ne> in
 and B<ASN1_OBJECT> structure.
 
 X509_NAME_ENTRY_get0_data() retrieves the field value of B<ne> in

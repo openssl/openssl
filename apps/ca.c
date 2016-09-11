@@ -1412,8 +1412,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         obj = X509_NAME_ENTRY_get0_object(ne);
 
         if (msie_hack) {
-            /* Dirty ugly cast to make the msie_hack compile!! */
-            ASN1_STRING *tmp = (ASN1_STRING*) str;
+            X509_NAME_ENTRY *mne = X509_NAME_get0m_entry(name, i);
+            ASN1_STRING *tmp = X509_NAME_ENTRY_get0m_data(mne);
 
             /* assume all type should be strings */
             nid = OBJ_obj2nid(obj);

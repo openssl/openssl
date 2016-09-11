@@ -4206,3 +4206,6 @@ ECPARAMETERS_new                        4156	1_1_0	EXIST::FUNCTION:EC
 OCSP_RESPID_set_by_name                 4157	1_1_0a	EXIST::FUNCTION:OCSP
 OCSP_RESPID_set_by_key                  4158	1_1_0a	EXIST::FUNCTION:OCSP
 OCSP_RESPID_match                       4159	1_1_0a	EXIST::FUNCTION:OCSP
+X509_NAME_get0m_entry                   4160	1_1_0	EXIST::FUNCTION
+X509_NAME_ENTRY_get0m_object            4161	1_1_0	EXIST::FUNCTION
+X509_NAME_ENTRY_get0m_data              4162	1_1_0	EXIST::FUNCTION

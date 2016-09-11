@@ -91,6 +91,15 @@ const X509_NAME_ENTRY *X509_NAME_get0_entry(const X509_NAME *name, int loc)
         return (sk_X509_NAME_ENTRY_value(name->entries, loc));
 }
 
+X509_NAME_ENTRY *X509_NAME_get0m_entry(X509_NAME *name, int loc)
+{
+    if (name == NULL || sk_X509_NAME_ENTRY_num(name->entries) <= loc
+        || loc < 0)
+        return NULL;
+    else
+        return sk_X509_NAME_ENTRY_value(name->entries, loc);
+}
+
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc)
 {
     X509_NAME_ENTRY *ret;
@@ -343,8 +352,22 @@ const ASN1_OBJECT *X509_NAME_ENTRY_get0_object(const X509_NAME_ENTRY *ne)
     return ne->object;
 }
 
+ASN1_OBJECT *X509_NAME_ENTRY_get0m_object(X509_NAME_ENTRY *ne)
+{
+    if (ne == NULL)
+        return NULL;
+    return ne->object;
+}
+
 const ASN1_STRING *X509_NAME_ENTRY_get0_data(const X509_NAME_ENTRY *ne)
 {
+    return ne->value;
+}
+
+ASN1_STRING *X509_NAME_ENTRY_get0m_data(X509_NAME_ENTRY *ne)
+{
+    if (ne == NULL)
+        return NULL;
     return ne->value;
 }
 

@@ -791,6 +791,7 @@ int X509_NAME_get_index_by_NID(const X509_NAME *name, int nid, int lastpos);
 int X509_NAME_get_index_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
                                int lastpos);
 const X509_NAME_ENTRY *X509_NAME_get0_entry(const X509_NAME *name, int loc);
+X509_NAME_ENTRY *X509_NAME_get0m_entry(X509_NAME *name, int loc);
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
 int X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne,
                         int loc, int set);
@@ -818,6 +819,8 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
 int X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne, const ASN1_OBJECT *obj);
 int X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
                              const unsigned char *bytes, int len);
+ASN1_OBJECT *X509_NAME_ENTRY_get0m_object(X509_NAME_ENTRY *ne);
+ASN1_STRING *X509_NAME_ENTRY_get0m_data(X509_NAME_ENTRY *ne);
 const ASN1_OBJECT *X509_NAME_ENTRY_get0_object(const X509_NAME_ENTRY *ne);
 const ASN1_STRING *X509_NAME_ENTRY_get0_data(const X509_NAME_ENTRY *ne);
 int X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne);
