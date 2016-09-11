@@ -168,6 +168,7 @@ typedef struct loopargs_st {
     EVP_CIPHER_CTX *ctx;
     HMAC_CTX *hctx;
     GCM128_CONTEXT *gcm_ctx;
+    int decrypt;
 } loopargs_t;
 
 #ifndef OPENSSL_NO_MD2
@@ -852,24 +853,20 @@ static int CRYPTO_gcm128_aad_loop(void *args)
     return count;
 }
 
-static long save_count = 0;
-static int decrypt = 0;
 static int EVP_Update_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
     unsigned char *buf = tempargs->buf;
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
     int outl, count;
-#ifndef SIGALRM
-    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
-#endif
-    if (decrypt)
+
+    if (tempargs->decrypt)
         for (count = 0; COND(nb_iter); count++)
             EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
     else
         for (count = 0; COND(nb_iter); count++)
             EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-    if (decrypt)
+    if (tempargs->decrypt)
         EVP_DecryptFinal_ex(ctx, buf, &outl);
     else
         EVP_EncryptFinal_ex(ctx, buf, &outl);
@@ -883,11 +880,8 @@ static int EVP_Digest_loop(void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char md[EVP_MAX_MD_SIZE];
     int count;
-#ifndef SIGALRM
-    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
-#endif
 
-    for (count = 0; COND(nb_iter); count++) {
+    for (count = 0; COND(c[D_EVP][testnum]); count++) {
         if (!EVP_Digest(buf, lengths[testnum], md, NULL, evp_md, NULL))
             return -1;
     }
@@ -1209,7 +1203,7 @@ int speed_main(int argc, char **argv)
     OPTION_CHOICE o;
     int multiblock = 0, pr_header = 0;
     int doit[ALGOR_NUM] = { 0 };
-    int ret = 1, i, k, misalign = 0;
+    int ret = 1, i, k, misalign = 0, decrypt = 0;
     long count = 0;
 #ifndef NO_FORK
     int multi = 0;
@@ -1650,7 +1644,6 @@ int speed_main(int argc, char **argv)
                             (DES_cblock *)loopargs[0].buf, &sch, DES_ENCRYPT);
         d = Time_F(STOP);
     } while (d < 3);
-    save_count = count;
     c[D_MD2][0] = count / 10;
     c[D_MDC2][0] = count / 10;
     c[D_MD4][0] = count;
@@ -1673,6 +1666,7 @@ int speed_main(int argc, char **argv)
     c[D_CBC_128_CML][0] = count;
     c[D_CBC_192_CML][0] = count;
     c[D_CBC_256_CML][0] = count;
+    c[D_EVP][0] = count;
     c[D_SHA256][0] = count;
     c[D_SHA512][0] = count;
     c[D_WHIRLPOOL][0] = count;
@@ -1694,6 +1688,7 @@ int speed_main(int argc, char **argv)
         c[D_HMAC][i] = c[D_HMAC][0] * 4 * l0 / l1;
         c[D_SHA1][i] = c[D_SHA1][0] * 4 * l0 / l1;
         c[D_RMD160][i] = c[D_RMD160][0] * 4 * l0 / l1;
+        c[D_EVP][i] = = c[D_EVP][0] * 4 * l0 / l1;
         c[D_SHA256][i] = c[D_SHA256][0] * 4 * l0 / l1;
         c[D_SHA512][i] = c[D_SHA512][0] * 4 * l0 / l1;
         c[D_WHIRLPOOL][i] = c[D_WHIRLPOOL][0] * 4 * l0 / l1;
@@ -2304,7 +2299,7 @@ int speed_main(int argc, char **argv)
                  * -O3 -fschedule-insns messes up an optimization here!
                  * names[D_EVP] somehow becomes NULL
                  */
-                print_message(names[D_EVP], save_count, lengths[testnum]);
+                print_message(names[D_EVP], c[D_EVP][0], lengths[testnum]);
 
                 for (k = 0; k < loopargs_len; k++) {
                     loopargs[k].ctx = EVP_CIPHER_CTX_new();
@@ -2318,6 +2313,7 @@ int speed_main(int argc, char **argv)
                 }
 
                 Time_F(START);
+                loopargs->decrypt = decrypt;
                 count = run_benchmark(async_jobs, EVP_Update_loop, loopargs);
                 d = Time_F(STOP);
                 for (k = 0; k < loopargs_len; k++) {
@@ -2326,7 +2322,7 @@ int speed_main(int argc, char **argv)
             }
             if (evp_md) {
                 names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
-                print_message(names[D_EVP], save_count, lengths[testnum]);
+                print_message(names[D_EVP], c[D_EVP][0], lengths[testnum]);
                 Time_F(START);
                 count = run_benchmark(async_jobs, EVP_Digest_loop, loopargs);
                 d = Time_F(STOP);
