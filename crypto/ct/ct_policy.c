@@ -20,18 +20,14 @@
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void)
 {
     CT_POLICY_EVAL_CTX *ctx = OPENSSL_zalloc(sizeof(CT_POLICY_EVAL_CTX));
-    time_t epoch_time_in_s;
 
     if (ctx == NULL) {
         CTerr(CT_F_CT_POLICY_EVAL_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    // Use the current time if available.
-    time(&epoch_time_in_s);
-    if (epoch_time_in_s != -1)
-        ctx->epoch_time_in_ms = epoch_time_in_s * 1000;
-
+    // time(NULL) shouldn't ever fail, so don't bother checking for -1.
+    ctx->epoch_time_in_ms = time(NULL) * 1000;
     return ctx;
 }
 
