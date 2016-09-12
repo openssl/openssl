@@ -100,6 +100,22 @@ int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
     return 1;
 }
 
+/* Store the |value| of length |size| at location |data| */
+static int put_value(unsigned char *data, size_t value, size_t size)
+{
+    for (data += size - 1; size > 0; size--) {
+        *data = (unsigned char)(value & 0xff);
+        data--;
+        value >>= 8;
+    }
+
+    /* Check whether we could fit the value in the assigned number of bytes */
+    if (value > 0)
+        return 0;
+
+    return 1;
+}
+
 
 /*
  * Internal helper function used by WPACKET_close() and WPACKET_finish() to
@@ -128,21 +144,10 @@ static int wpacket_intern_close(WPACKET *pkt)
     }
 
     /* Write out the WPACKET length if needed */
-    if (sub->lenbytes > 0) {
-        size_t lenbytes;
-
-        for (lenbytes = sub->lenbytes; lenbytes > 0; lenbytes--) {
-            pkt->buf->data[sub->packet_len + lenbytes - 1]
-                = (unsigned char)(packlen & 0xff);
-            packlen >>= 8;
-        }
-        if (packlen > 0) {
-            /*
-             * We've extended beyond the max allowed for the number of len bytes
-             */
+    if (sub->lenbytes > 0 
+                && !put_value((unsigned char *)&pkt->buf->data[sub->packet_len],
+                              packlen, sub->lenbytes))
             return 0;
-        }
-    }
 
     pkt->subs = sub->parent;
     OPENSSL_free(sub);
@@ -225,17 +230,8 @@ int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t size)
     /* Internal API, so should not fail */
     assert(size <= sizeof(unsigned int));
     if (size > sizeof(unsigned int)
-            || !WPACKET_allocate_bytes(pkt, size, &data))
-        return 0;
-
-    for (data += size - 1; size > 0; size--) {
-        *data = (unsigned char)(val & 0xff);
-        data--;
-        val >>= 8;
-    }
-
-    /* Check whether we could fit the value in the assigned number of bytes */
-    if (val > 0)
+            || !WPACKET_allocate_bytes(pkt, size, &data)
+            || !put_value(data, val, size))
         return 0;
 
     return 1;
