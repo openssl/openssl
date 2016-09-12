@@ -224,6 +224,8 @@ static int eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     const EC_GROUP *group = EC_KEY_get0_group(b->pkey.ec);
     const EC_POINT *pa = EC_KEY_get0_public_key(a->pkey.ec),
         *pb = EC_KEY_get0_public_key(b->pkey.ec);
+    if (group == NULL || pa == NULL || pb == NULL)
+        return -2;
     r = EC_POINT_cmp(group, pa, pb, NULL);
     if (r == 0)
         return 1;
@@ -394,6 +396,8 @@ static int ec_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     const EC_GROUP *group_a = EC_KEY_get0_group(a->pkey.ec),
         *group_b = EC_KEY_get0_group(b->pkey.ec);
+    if (group_a == NULL || group_b == NULL)
+        return -2;
     if (EC_GROUP_cmp(group_a, group_b, NULL))
         return 0;
     else

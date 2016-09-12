@@ -635,7 +635,8 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
         BN_free(N_bn);
         BN_free(g_bn);
     }
-    OPENSSL_cleanse(vf, vfsize);
+    if (vf != NULL)
+        OPENSSL_cleanse(vf, vfsize);
     OPENSSL_free(vf);
     BN_clear_free(s);
     BN_clear_free(v);

@@ -3696,37 +3696,34 @@ int ssl3_send_cert_status(SSL *s)
 {
     if (s->state == SSL3_ST_SW_CERT_STATUS_A) {
         unsigned char *p;
+        size_t msglen;
+
         /*-
          * Grow buffer if need be: the length calculation is as
-         * follows 1 (message type) + 3 (message length) +
+         * follows handshake_header_length +
          * 1 (ocsp response type) + 3 (ocsp response length)
          * + (ocsp response)
          */
-        if (!BUF_MEM_grow(s->init_buf, 8 + s->tlsext_ocsp_resplen)) {
+        msglen = 4 + s->tlsext_ocsp_resplen;
+        if (!BUF_MEM_grow(s->init_buf, SSL_HM_HEADER_LENGTH(s) + msglen)) {
             s->state = SSL_ST_ERR;
             return -1;
         }
 
-        p = (unsigned char *)s->init_buf->data;
+        p = ssl_handshake_start(s);
 
-        /* do the header */
-        *(p++) = SSL3_MT_CERTIFICATE_STATUS;
-        /* message length */
-        l2n3(s->tlsext_ocsp_resplen + 4, p);
         /* status type */
         *(p++) = s->tlsext_status_type;
         /* length of OCSP response */
         l2n3(s->tlsext_ocsp_resplen, p);
         /* actual response */
         memcpy(p, s->tlsext_ocsp_resp, s->tlsext_ocsp_resplen);
-        /* number of bytes to write */
-        s->init_num = 8 + s->tlsext_ocsp_resplen;
-        s->state = SSL3_ST_SW_CERT_STATUS_B;
-        s->init_off = 0;
+
+        ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_STATUS, msglen);
     }
 
     /* SSL3_ST_SW_CERT_STATUS_B */
-    return (ssl3_do_write(s, SSL3_RT_HANDSHAKE));
+    return (ssl_do_write(s));
 }
 
 # ifndef OPENSSL_NO_NEXTPROTONEG

@@ -125,7 +125,7 @@
 /* mod 128 saturating subtract of two 64-bit values in big-endian order */
 static int satsub64be(const unsigned char *v1, const unsigned char *v2)
 {
-    int ret, sat, brw, i;
+    int ret, i;
 
     if (sizeof(long) == 8)
         do {
@@ -157,28 +157,51 @@ static int satsub64be(const unsigned char *v1, const unsigned char *v2)
                 return (int)l;
         } while (0);
 
-    ret = (int)v1[7] - (int)v2[7];
-    sat = 0;
-    brw = ret >> 8;             /* brw is either 0 or -1 */
-    if (ret & 0x80) {
-        for (i = 6; i >= 0; i--) {
-            brw += (int)v1[i] - (int)v2[i];
-            sat |= ~brw;
-            brw >>= 8;
-        }
-    } else {
-        for (i = 6; i >= 0; i--) {
-            brw += (int)v1[i] - (int)v2[i];
-            sat |= brw;
-            brw >>= 8;
+    ret = 0;
+    for (i=0; i<7; i++) {
+        if (v1[i] > v2[i]) {
+            /* v1 is larger... but by how much? */
+            if (v1[i] != v2[i] + 1)
+                return 128;
+            while (++i <= 6) {
+                if (v1[i] != 0x00 || v2[i] != 0xff)
+                    return 128; /* too much */
+            }
+            /* We checked all the way to the penultimate byte,
+             * so despite higher bytes changing we actually
+             * know that it only changed from (e.g.)
+             *       ... (xx)  ff ff ff ??
+             * to   ... (xx+1) 00 00 00 ??
+             * so we add a 'bias' of 256 for the carry that
+             * happened, and will eventually return
+             * 256 + v1[7] - v2[7]. */
+            ret = 256;
+            break;
+        } else if (v2[i] > v1[i]) {
+            /* v2 is larger... but by how much? */
+            if (v2[i] != v1[i] + 1)
+                return -128;
+            while (++i <= 6) {
+                if (v2[i] != 0x00 || v1[i] != 0xff)
+                    return -128; /* too much */
+            }
+            /* Similar to the case above, we know it changed
+             * from    ... (xx)  00 00 00 ??
+             * to     ... (xx-1) ff ff ff ??
+             * so we add a 'bias' of -256 for the borrow,
+             * to return -256 + v1[7] - v2[7]. */
+            ret = -256;
         }
     }
-    brw <<= 8;                  /* brw is either 0 or -256 */
 
-    if (sat & 0xff)
-        return brw | 0x80;
+    ret += (int)v1[7] - (int)v2[7];
+
+    if (ret > 128)
+        return 128;
+    else if (ret < -128)
+        return -128;
     else
-        return brw + (ret & 0xFF);
+        return ret;
 }
 
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
@@ -1251,7 +1274,7 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             BIO_snprintf(tmp, sizeof tmp, "%d", alert_descr);
             ERR_add_error_data(2, "SSL alert number ", tmp);
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
-            SSL_CTX_remove_session(s->ctx, s->session);
+            SSL_CTX_remove_session(s->session_ctx, s->session);
             return (0);
         } else {
             al = SSL_AD_ILLEGAL_PARAMETER;

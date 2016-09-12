@@ -1082,11 +1082,6 @@ if (defined($disabled{"md5"}) || defined($disabled{"sha"})
 	$disabled{"tls1"} = "forced";
 	}
 
-if (defined($disabled{"tls1"}))
-	{
-	$disabled{"tlsext"} = "forced";
-	}
-
 if (defined($disabled{"ec"}) || defined($disabled{"dsa"})
     || defined($disabled{"dh"}))
 	{
@@ -1563,8 +1558,15 @@ $cpuid_obj="mem_clr.o"	unless ($cpuid_obj =~ /\.o$/);
 $des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
 $cast_obj=$cast_enc	unless ($cast_obj =~ /\.o$/);
-$rc4_obj=$rc4_enc	unless ($rc4_obj =~ /\.o$/);
 $rc5_obj=$rc5_enc	unless ($rc5_obj =~ /\.o$/);
+if ($rc4_obj =~ /\.o$/)
+	{
+	$cflags.=" -DRC4_ASM";
+	}
+else
+	{
+	$rc4_obj=$rc4_enc;
+	}
 if ($sha1_obj =~ /\.o$/)
 	{
 #	$sha1_obj=$sha1_enc;
