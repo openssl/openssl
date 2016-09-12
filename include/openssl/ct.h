@@ -106,9 +106,9 @@ void CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(CT_POLICY_EVAL_CTX *ctx,
 uint64_t CT_POLICY_EVAL_CTX_get_time(const CT_POLICY_EVAL_CTX *ctx);
 
 /*
- * Sets the current time, in milliseconds since the Unix epoch.
- * The timestamps of the SCTs will be compared to this, to check that they were
- * not issued in the future. RFC6962 states that "TLS clients MUST reject SCTs
+ * Sets the time to evaluate SCTs against, in milliseconds since the Unix epoch.
+ * If an SCT's timestamp is after this time, it will be interpreted as having
+ * been issued in the future. RFC6962 states that "TLS clients MUST reject SCTs
  * whose timestamp is in the future", so an SCT will not validate in this case.
  */
 void CT_POLICY_EVAL_CTX_set_time(CT_POLICY_EVAL_CTX *ctx, uint64_t time_in_ms);
