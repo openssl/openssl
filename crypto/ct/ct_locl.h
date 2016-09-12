@@ -155,10 +155,11 @@ __owur int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 __owur int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 
 /*
- * Sets the current time, in milliseconds since the Unix epoch.
- * The timestamp of the SCT will be compared to this, to check that it was not
- * issued in the future. RFC6962 states that "TLS clients MUST reject SCTs whose
- * timestamp is in the future", so SCT verification will fail in this case.
+ * Sets the time to evaluate the SCT against, in milliseconds since the Unix
+ * epoch. If the SCT's timestamp is after this time, it will be interpreted as
+ * having been issued in the future. RFC6962 states that "TLS clients MUST
+ * reject SCTs whose timestamp is in the future", so an SCT will not validate
+ * in this case.
  */
 void SCT_CTX_set_time(SCT_CTX *sctx, uint64_t time_in_ms);
 
