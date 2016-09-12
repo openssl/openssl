@@ -11,6 +11,7 @@ c_rehash, rehash - Create symbolic links to files named by the hash values
 
 B<openssl>
 B<rehash>
+B<[-h]>
 B<[-help]>
 B<[-old]>
 B<[-n]>
@@ -82,7 +83,7 @@ optionally prefixed with some text and an equals sign.
 
 =over 4
 
-=item B<-help>
+=item B<-help> B<-h>
 
 Display a brief usage message.
 
