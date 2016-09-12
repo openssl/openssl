@@ -4203,3 +4203,5 @@ ECPKPARAMETERS_free                     4153	1_1_0	EXIST::FUNCTION:EC
 ECPARAMETERS_free                       4154	1_1_0	EXIST::FUNCTION:EC
 ECPKPARAMETERS_new                      4155	1_1_0	EXIST::FUNCTION:EC
 ECPARAMETERS_new                        4156	1_1_0	EXIST::FUNCTION:EC
+OCSP_RESPID_set_by_name                 4157	1_1_0a	EXIST::FUNCTION:OCSP
+OCSP_RESPID_set_by_key                  4158	1_1_0a	EXIST::FUNCTION:OCSP
