@@ -479,10 +479,9 @@
   no-<alg>
                    Build without support for the specified algorithm, where
                    <alg> is one of: bf, blake2, camellia, cast, chacha, cmac,
-                   des, dh, dsa, ecdh, ecdsa, idea, md4, md5, mdc2, ocb,
-                   ploy1305, rc2, rc4, rmd160, scrypt, seed or whirlpool. The
-                   "ripemd" algorithm is deprecated and if used is synonymous
-                   with rmd160.
+                   des, dh, dsa, ecdh, ecdsa, idea, md4, mdc2, ocb, poly1305,
+                   rc2, rc4, rmd160, scrypt, seed or whirlpool. The "ripemd"
+                   algorithm is deprecated and if used is synonymous with rmd160.
 
   -Dxxx, -lxxx, -Lxxx, -fxxx, -mXXX, -Kxxx
                    These system specific options will be passed through to the
