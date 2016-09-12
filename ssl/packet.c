@@ -45,8 +45,8 @@ static size_t maxmaxsize(size_t lenbytes)
 {
     if (lenbytes >= sizeof(size_t) || lenbytes == 0)
         return SIZE_MAX;
-    else
-        return ((size_t)1 << (lenbytes * 8)) - 1 + lenbytes;
+
+    return ((size_t)1 << (lenbytes * 8)) - 1 + lenbytes;
 }
 
 int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
