@@ -64,11 +64,14 @@ Increments the reference count of the certificate.
 Holds a pointer to the CTLOG_STORE, so the CTLOG_STORE must outlive the
 CT_POLICY_EVAL_CTX.
 
-=item * CT_POLICY_EVAL_CTX_set_time() to provide the current time
+=item * CT_POLICY_EVAL_CTX_set_time() to set the time SCTs should be compared with to determine if they are valid
 
 The SCT timestamp will be compared to this time to check whether the SCT was
-supposedly issued in the future. RFC6962 states that "TLS clients MUST reject
-SCTs whose timestamp is in the future".
+issued in the future. RFC6962 states that "TLS clients MUST reject SCTs whose
+timestamp is in the future". Typically, the time provided to this function will
+be the current time.
+
+The time should be in milliseconds since the Unix epoch.
 
 =back
 
