@@ -179,7 +179,7 @@ static int test_WPACKET_start_sub_packet(void)
 
    /* Single sub-packet with length prefix */
     if (!WPACKET_init(&pkt, buf)
-            || !WPACKET_start_sub_packet_len(&pkt, 1)
+            || !WPACKET_start_sub_packet_u8(&pkt)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_close(&pkt)
             || !WPACKET_finish(&pkt)
@@ -192,9 +192,9 @@ static int test_WPACKET_start_sub_packet(void)
 
     /* Nested sub-packets with length prefixes */
     if (!WPACKET_init(&pkt, buf)
-            || !WPACKET_start_sub_packet_len(&pkt, 1)
+            || !WPACKET_start_sub_packet_u8(&pkt)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
-            || !WPACKET_start_sub_packet_len(&pkt, 1)
+            || !WPACKET_start_sub_packet_u8(&pkt)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_get_length(&pkt, &len)
             || len != 1
@@ -212,10 +212,10 @@ static int test_WPACKET_start_sub_packet(void)
 
     /* Sequential sub-packets with length prefixes */
     if (!WPACKET_init(&pkt, buf)
-            || !WPACKET_start_sub_packet_len(&pkt, 1)
+            || !WPACKET_start_sub_packet_u8(&pkt)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_close(&pkt)
-            || !WPACKET_start_sub_packet_len(&pkt, 1)
+            || !WPACKET_start_sub_packet_u8(&pkt)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_close(&pkt)
             || !WPACKET_finish(&pkt)
@@ -277,7 +277,7 @@ static int test_WPACKET_set_flags(void)
 
     /* Repeat above test but only abandon a sub-packet */
     if (!WPACKET_init_len(&pkt, buf, 1)
-            || !WPACKET_start_sub_packet_len(&pkt, 1)
+            || !WPACKET_start_sub_packet_u8(&pkt)
             || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
             || !WPACKET_close(&pkt)
             || !WPACKET_finish(&pkt)
@@ -290,7 +290,7 @@ static int test_WPACKET_set_flags(void)
 
     /* And repeat with a non empty sub-packet */
     if (!WPACKET_init(&pkt, buf)
-            || !WPACKET_start_sub_packet_len(&pkt, 1)
+            || !WPACKET_start_sub_packet_u8(&pkt)
             || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_close(&pkt)
@@ -327,7 +327,7 @@ static int test_WPACKET_allocate_bytes(void)
 
     /* Repeat with WPACKET_sub_allocate_bytes */
     if (!WPACKET_init_len(&pkt, buf, 1)
-            || !WPACKET_sub_allocate_bytes(&pkt, 2, &bytes, 1)) {
+            || !WPACKET_sub_allocate_bytes_u8(&pkt, 2, &bytes)) {
         testfail("test_WPACKET_allocate_bytes():3 failed\n", &pkt);
         return 0;
     }
@@ -362,7 +362,7 @@ static int test_WPACKET_memcpy(void)
 
     /* Repeat with WPACKET_sub_memcpy() */
     if (!WPACKET_init_len(&pkt, buf, 1)
-            || !WPACKET_sub_memcpy(&pkt, bytes, sizeof(bytes), 1)
+            || !WPACKET_sub_memcpy_u8(&pkt, bytes, sizeof(bytes))
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
             ||  written != sizeof(submem)

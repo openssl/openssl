@@ -41,10 +41,10 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
     return 1;
 }
 
-int WPACKET_sub_allocate_bytes(WPACKET *pkt, size_t len,
-                               unsigned char **allocbytes, size_t lenbytes)
+int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
+                                 unsigned char **allocbytes, size_t lenbytes)
 {
-    if (!WPACKET_start_sub_packet_len(pkt, lenbytes)
+    if (!WPACKET_start_sub_packet_len__(pkt, lenbytes)
             || !WPACKET_allocate_bytes(pkt, len, allocbytes)
             || !WPACKET_close(pkt))
         return 0;
@@ -198,7 +198,7 @@ int WPACKET_finish(WPACKET *pkt)
     return ret;
 }
 
-int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes)
+int WPACKET_start_sub_packet_len__(WPACKET *pkt, size_t lenbytes)
 {
     WPACKET_SUB *sub;
     unsigned char *lenchars;
@@ -231,7 +231,7 @@ int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes)
 
 int WPACKET_start_sub_packet(WPACKET *pkt)
 {
-    return WPACKET_start_sub_packet_len(pkt, 0);
+    return WPACKET_start_sub_packet_len__(pkt, 0);
 }
 
 int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t size)
@@ -290,9 +290,10 @@ int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len)
     return 1;
 }
 
-int WPACKET_sub_memcpy(WPACKET *pkt, const void *src, size_t len, size_t lenbytes)
+int WPACKET_sub_memcpy__(WPACKET *pkt, const void *src, size_t len,
+                         size_t lenbytes)
 {
-    if (!WPACKET_start_sub_packet_len(pkt, lenbytes)
+    if (!WPACKET_start_sub_packet_len__(pkt, lenbytes)
             || !WPACKET_memcpy(pkt, src, len)
             || !WPACKET_close(pkt))
         return 0;
