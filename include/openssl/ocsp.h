@@ -261,6 +261,7 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
                     STACK_OF(X509) *certs, unsigned long flags);
 int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert);
 int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert);
+int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert);
 
 X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim);
 
