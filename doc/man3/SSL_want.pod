@@ -17,6 +17,7 @@ operation
  int SSL_want_x509_lookup(const SSL *ssl);
  int SSL_want_async(const SSL *ssl);
  int SSL_want_async_job(const SSL *ssl);
+ int SSL_want_sess_lookup(const SSL *ssl);
 
 =head1 DESCRIPTION
 
@@ -80,6 +81,12 @@ SSL_ERROR_WANT_ASYNC.
 The asynchronous job could not be started because there were no async jobs
 available in the pool (see ASYNC_init_thread(3)). A call to L<SSL_get_error(3)>
 should return SSL_ERROR_WANT_ASYNC_JOB.
+
+=item SSL_SESS_LOOKUP
+
+The operation did not complete because an application callback set by
+SSL_CTX_sess_set_get_cb() has asked to be called again.
+A call to L<SSL_get_error(3)> should return SSL_ERROR_WANT_SESSION_LOOKUP.
 
 =back
 

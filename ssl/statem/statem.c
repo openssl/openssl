@@ -567,15 +567,17 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
             }
 
             s->first_packet = 0;
-            if (!PACKET_buf_init(&pkt, s->init_msg, len)) {
+
+            st->read_state = READ_STATE_PROCESS;
+            /* Fall through */
+
+        case READ_STATE_PROCESS:
+            if (!PACKET_buf_init(&pkt, s->init_msg, s->init_num)) {
                 ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
                 SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
                 return SUB_STATE_ERROR;
             }
             ret = process_message(s, &pkt);
-
-            /* Discard the packet data */
-            s->init_num = 0;
 
             switch (ret) {
             case MSG_PROCESS_ERROR:
@@ -596,6 +598,9 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                 st->read_state = READ_STATE_HEADER;
                 break;
             }
+
+            /* Discard the packet data */
+            s->init_num = 0;
             break;
 
         case READ_STATE_POST_PROCESS:

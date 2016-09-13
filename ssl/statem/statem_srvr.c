@@ -1202,11 +1202,16 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             s->hit = 1;
         } else if (i == -1) {
             goto err;
+        } else if (i == -2) {
+            s->rwstate = SSL_SESS_LOOKUP;
+            s->statem.read_state_work = WORK_MORE_A;
+            return MSG_PROCESS_ERROR;
         } else {
             /* i == 0 */
             if (!ssl_get_new_session(s, 1))
                 goto err;
         }
+        s->rwstate = SSL_NOTHING;
     }
 
     if (ssl_bytes_to_cipher_list(s, &clienthello.ciphersuites, &ciphers,

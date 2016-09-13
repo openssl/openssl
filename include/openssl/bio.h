@@ -220,6 +220,8 @@ void BIO_clear_flags(BIO *b, int flags);
 /* Returned from the accept BIO when an accept would have blocked */
 # define BIO_RR_ACCEPT                   0x03
 
+# define BIO_RR_SSL_SESSION_LOOKUP       0x04
+
 /* These are passed by the BIO callback */
 # define BIO_CB_FREE     0x01
 # define BIO_CB_READ     0x02
