@@ -1228,7 +1228,6 @@ int dtls1_close_construct_packet(SSL *s, WPACKET *pkt)
     s->init_off = 0;
 
     /* Buffer the message to handle re-xmits */
-
     if (!dtls1_buffer_message(s, 0))
         return 0;
 
