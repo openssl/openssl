@@ -1209,7 +1209,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             idlen = i2d_OCSP_RESPID(id, NULL);
             if (idlen <= 0
                        /* Sub-packet for an individual id */
-                    || !WPACKET_sub_allocate_bytes_u8(pkt, idlen, &idbytes)
+                    || !WPACKET_sub_allocate_bytes_u16(pkt, idlen, &idbytes)
                     || i2d_OCSP_RESPID(id, &idbytes) != idlen) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
