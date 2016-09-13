@@ -325,6 +325,22 @@ static int test_WPACKET_allocate_bytes(void)
         return 0;
     }
 
+    /* Repeat with WPACKET_sub_allocate_bytes */
+    if (       !WPACKET_init_len(&pkt, buf, 1)
+            || !WPACKET_sub_allocate_bytes(&pkt, 2, &bytes, 1)) {
+        testfail("test_WPACKET_allocate_bytes():3 failed\n", &pkt);
+        return 0;
+    }
+    bytes[0] = 0xfe;
+    bytes[1] = 0xff;
+    if (       !WPACKET_finish(&pkt)
+            || !WPACKET_get_total_written(&pkt, &written)
+            ||  written != sizeof(submem)
+            ||  memcmp(buf->data, &submem, written) != 0) {
+        testfail("test_WPACKET_allocate_bytes():4 failed\n", &pkt);
+        return 0;
+    }
+
     return 1;
 }
 

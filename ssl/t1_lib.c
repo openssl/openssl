@@ -1040,8 +1040,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
     /* Add RI if renegotiating */
     if (s->renegotiate) {
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_renegotiate, 2)
-                || !WPACKET_sub_memcpy(pkt, s->s3->previous_client_finished,
-                                   s->s3->previous_client_finished_len, 2)) {
+                || !WPACKET_sub_memcpy_u16(pkt, s->s3->previous_client_finished,
+                                   s->s3->previous_client_finished_len)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1058,8 +1058,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
                    /* Sub-packet for servername list (always 1 hostname)*/
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || !WPACKET_put_bytes(pkt, TLSEXT_NAMETYPE_host_name, 1)
-                || !WPACKET_sub_memcpy(pkt, s->tlsext_hostname,
-                                       strlen(s->tlsext_hostname), 2)
+                || !WPACKET_sub_memcpy_u16(pkt, s->tlsext_hostname,
+                                           strlen(s->tlsext_hostname))
                 || !WPACKET_close(pkt)
                 || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
@@ -1099,7 +1099,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_ec_point_formats, 2)
                    /* Sub-packet for formats extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_sub_memcpy(pkt, pformats, num_formats, 1)
+                || !WPACKET_sub_memcpy_u8(pkt, pformats, num_formats)
                 || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -1161,8 +1161,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             goto skip_ext;
 
         if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_session_ticket, 2)
-                || !WPACKET_sub_memcpy(pkt, s->session->tlsext_tick, ticklen,
-                                       2)) {
+                || !WPACKET_sub_memcpy_u16(pkt, s->session->tlsext_tick,
+                                           ticklen)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1209,10 +1209,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             idlen = i2d_OCSP_RESPID(id, NULL);
             if (idlen <= 0
                        /* Sub-packet for an individual id */
-                    || !WPACKET_start_sub_packet_u8(pkt)
-                    || !WPACKET_allocate_bytes(pkt, idlen, &idbytes)
-                    || i2d_OCSP_RESPID(id, &idbytes) != idlen
-                    || !WPACKET_close(pkt)) {
+                    || !WPACKET_sub_allocate_bytes_u8(pkt, idlen, &idbytes)
+                    || i2d_OCSP_RESPID(id, &idbytes) != idlen) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
@@ -1292,8 +1290,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
                     TLSEXT_TYPE_application_layer_protocol_negotiation, 2)
                    /* Sub-packet ALPN extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_sub_memcpy(pkt, s->alpn_client_proto_list,
-                                       s->alpn_client_proto_list_len, 2)
+                || !WPACKET_sub_memcpy_u16(pkt, s->alpn_client_proto_list,
+                                           s->alpn_client_proto_list_len)
                 || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -1380,16 +1378,11 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
                 hlen = 0;
 
             if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_padding, 2)
-                    || !WPACKET_start_sub_packet_u16(pkt)
-                    || !WPACKET_allocate_bytes(pkt, hlen, &padbytes)) {
+                    || !WPACKET_sub_allocate_bytes_u16(pkt, hlen, &padbytes)) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
             memset(padbytes, 0, hlen);
-            if (!WPACKET_close(pkt)) {
-                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
         }
     }
 
