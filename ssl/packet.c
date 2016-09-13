@@ -34,8 +34,8 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
         if (BUF_MEM_grow(pkt->buf, newlen) == 0)
             return 0;
     }
-    pkt->written += len;
     *allocbytes = (unsigned char *)pkt->buf->data + pkt->curr;
+    pkt->written += len;
     pkt->curr += len;
 
     return 1;
@@ -100,10 +100,10 @@ int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
     return 1;
 }
 
-/* Store the |value| of length |size| at location |data| */
-static int put_value(unsigned char *data, size_t value, size_t size)
+/* Store the |value| of length |len| at location |data| */
+static int put_value(unsigned char *data, size_t value, size_t len)
 {
-    for (data += size - 1; size > 0; size--) {
+    for (data += len - 1; len > 0; len--) {
         *data = (unsigned char)(value & 0xff);
         data--;
         value >>= 8;
@@ -127,7 +127,7 @@ static int wpacket_intern_close(WPACKET *pkt)
     size_t packlen = pkt->written - sub->pwritten;
 
     if (packlen == 0
-            && sub->flags & WPACKET_FLAGS_NON_ZERO_LENGTH)
+            && (sub->flags & WPACKET_FLAGS_NON_ZERO_LENGTH) != 0)
         return 0;
 
     if (packlen == 0
@@ -229,6 +229,7 @@ int WPACKET_put_bytes(WPACKET *pkt, unsigned int val, size_t size)
 
     /* Internal API, so should not fail */
     assert(size <= sizeof(unsigned int));
+
     if (size > sizeof(unsigned int)
             || !WPACKET_allocate_bytes(pkt, size, &data)
             || !put_value(data, val, size))

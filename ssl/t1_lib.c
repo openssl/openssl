@@ -3331,6 +3331,7 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
                        const unsigned char *psig, size_t psiglen)
 {
     size_t i;
+
     for (i = 0; i < psiglen; i += 2, psig += 2) {
         if (tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, psig)) {
             if (!WPACKET_put_bytes(pkt, psig[0], 1)
