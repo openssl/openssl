@@ -1218,7 +1218,8 @@ int dtls1_close_construct_packet(SSL *s, WPACKET *pkt)
 {
     size_t msglen;
 
-    if (!WPACKET_get_length(pkt, &msglen)
+    if (!WPACKET_close(pkt)
+            || !WPACKET_get_length(pkt, &msglen)
             || msglen > INT_MAX
             || !WPACKET_finish(pkt))
         return 0;
