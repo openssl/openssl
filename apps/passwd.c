@@ -319,6 +319,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
         || !EVP_DigestUpdate(md, magic, magic_len)
         || !EVP_DigestUpdate(md, "$", 1)
         || !EVP_DigestUpdate(md, salt_out, salt_len))
+        goto err;
 
     md2 = EVP_MD_CTX_new();
     if (md2 == NULL
