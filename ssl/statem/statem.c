@@ -566,22 +566,24 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
             /* Discard the packet data */
             s->init_num = 0;
 
-            if (ret == MSG_PROCESS_ERROR) {
+            switch (ret) {
+            case MSG_PROCESS_ERROR:
                 return SUB_STATE_ERROR;
-            }
 
-            if (ret == MSG_PROCESS_FINISHED_READING) {
+            case MSG_PROCESS_FINISHED_READING:
                 if (SSL_IS_DTLS(s)) {
                     dtls1_stop_timer(s);
                 }
                 return SUB_STATE_FINISHED;
-            }
 
-            if (ret == MSG_PROCESS_CONTINUE_PROCESSING) {
+            case MSG_PROCESS_CONTINUE_PROCESSING:
                 st->read_state = READ_STATE_POST_PROCESS;
                 st->read_state_work = WORK_MORE_A;
-            } else {
+                break;
+
+            default:
                 st->read_state = READ_STATE_HEADER;
+                break;
             }
             break;
 
