@@ -4,7 +4,7 @@
 
 OCSP_response_status, OCSP_response_get1_basic, OCSP_response_create,
 OCSP_RESPONSE_free, OCSP_RESPID_set_by_name,
-OCSP_RESPID_set_by_key - OCSP response functions
+OCSP_RESPID_set_by_key, OCSP_RESPID_match - OCSP response functions
 
 =head1 SYNOPSIS
 
@@ -17,6 +17,7 @@ OCSP_RESPID_set_by_key - OCSP response functions
 
  int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert);
  int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert);
+ int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert);
 
 =head1 DESCRIPTION
 
@@ -45,6 +46,9 @@ Note that an OCSP_RESPID can only have one of the name, or the key set. Calling
 OCSP_RESPID_set_by_name() or OCSP_RESPID_set_by_key() will clear any existing
 setting.
 
+OCSP_RESPID_match() tests whether the OCSP_RESPID given in B<respid> matches
+with the X509 certificate B<cert>.
+
 =head1 RETURN VALUES
 
 OCSP_RESPONSE_status() returns a status value.
@@ -59,6 +63,9 @@ OCSP_RESPONSE_free() does not return a value.
 
 OCSP_RESPID_set_by_name() and OCSP_RESPID_set_by_key() return 1 on success or 0
 on failure.
+
+OCSP_RESPID_match() returns 1 if the OCSP_RESPID and the X509 certificate match
+or 0 otherwise.
 
 =head1 NOTES
 
@@ -78,8 +85,8 @@ L<OCSP_RESPID_free(3)>
 
 =head1 HISTORY
 
-The OCSP_RESPID_set_by_name() and OCSP_RESPID_set_by_key() functions were added
-in OpenSSL version 1.1.0a.
+The OCSP_RESPID_set_by_name(), OCSP_RESPID_set_by_key() and OCSP_RESPID_match()
+functions were added in OpenSSL version 1.1.0a.
 
 =head1 COPYRIGHT
 
