@@ -675,6 +675,27 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t bytes,
                            unsigned char **allocbytes);
 
 /*
+ * The same as WPACKET_allocate_bytes() except additionally a new sub-packet is
+ * started for the allocated bytes, and then closed immediately afterwards. The
+ * number of length bytes for the sub-packet is in |lenbytes|.
+ */
+int WPACKET_sub_allocate_bytes(WPACKET *pkt, size_t len,
+                               unsigned char **allocbytes, size_t lenbytes);
+
+/*
+ * Convenience macros for calling WPACKET_sub_allocate_bytes with different
+ * lengths
+ */
+#define WPACKET_sub_allocate_bytes_u8(pkt, len, bytes) \
+    WPACKET_sub_allocate_bytes((pkt), (len), (bytes), 1)
+#define WPACKET_sub_allocate_bytes_u16(pkt, len, bytes) \
+    WPACKET_sub_allocate_bytes((pkt), (len), (bytes), 2)
+#define WPACKET_sub_allocate_bytes_u24(pkt, len, bytes) \
+    WPACKET_sub_allocate_bytes((pkt), (len), (bytes), 3)
+#define WPACKET_sub_allocate_bytes_u32(pkt, len, bytes) \
+    WPACKET_sub_allocate_bytes((pkt), (len), (bytes), 4)
+
+/*
  * Write the value stored in |val| into the WPACKET. The value will consume
  * |bytes| amount of storage. An error will occur if |val| cannot be
  * accommodated in |bytes| storage, e.g. attempting to write the value 256 into
@@ -694,6 +715,16 @@ int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len);
  */
 int WPACKET_sub_memcpy(WPACKET *pkt, const void *src, size_t len,
                        size_t lenbytes);
+
+/* Convenience macros for calling WPACKET_sub_memcpy with different lengths */
+#define WPACKET_sub_memcpy_u8(pkt, src, len) \
+    WPACKET_sub_memcpy((pkt), (src), (len), 1)
+#define WPACKET_sub_memcpy_u16(pkt, src, len) \
+    WPACKET_sub_memcpy((pkt), (src), (len), 2)
+#define WPACKET_sub_memcpy_bytes_u24(pkt, src, len) \
+    WPACKET_sub_memcpy((pkt), (src), (len), 3)
+#define WPACKET_sub_memcpy_bytes_u32(pkt, src, len) \
+    WPACKET_sub_memcpy((pkt), (src), (len), 4)
 
 /*
  * Return the total number of bytes written so far to the underlying buffer

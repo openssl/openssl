@@ -804,8 +804,8 @@ int tls_construct_client_hello(SSL *s)
     /* cookie stuff for DTLS */
     if (SSL_IS_DTLS(s)) {
         if (s->d1->cookie_len > sizeof(s->d1->cookie)
-                || !WPACKET_sub_memcpy(&pkt, s->d1->cookie, s->d1->cookie_len,
-                                       1)) {
+                || !WPACKET_sub_memcpy_u8(&pkt, s->d1->cookie,
+                                          s->d1->cookie_len)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -2133,7 +2133,7 @@ static int tls_construct_cke_psk_preamble(SSL *s, WPACKET *pkt, int *al)
     s->session->psk_identity = tmpidentity;
     tmpidentity = NULL;
 
-    if (!WPACKET_sub_memcpy(pkt, identity, identitylen, 2))  {
+    if (!WPACKET_sub_memcpy_u16(pkt, identity, identitylen))  {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE, ERR_R_INTERNAL_ERROR);
         *al = SSL_AD_INTERNAL_ERROR;
         goto err;
@@ -2260,9 +2260,7 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt, int *al)
 
     /* send off the data */
     DH_get0_key(dh_clnt, &pub_key, NULL);
-    if (!WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_allocate_bytes(pkt, BN_num_bytes(pub_key), &keybytes)
-            || !WPACKET_close(pkt))
+    if (!WPACKET_sub_allocate_bytes_u16(pkt, BN_num_bytes(pub_key), &keybytes))
         goto err;
 
     BN_bn2bin(pub_key, keybytes);
@@ -2306,7 +2304,7 @@ static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt, int *al)
         goto err;
     }
 
-    if (!WPACKET_sub_memcpy(pkt, encodedPoint, encoded_pt_len, 1)) {
+    if (!WPACKET_sub_memcpy_u8(pkt, encodedPoint, encoded_pt_len)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -2428,7 +2426,7 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt, int *al)
 
     if (!WPACKET_put_bytes(pkt, V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED, 1)
             || (msglen >= 0x80 && !WPACKET_put_bytes(pkt, 0x81, 1))
-            || !WPACKET_sub_memcpy(pkt, tmp, msglen, 1)) {
+            || !WPACKET_sub_memcpy_u8(pkt, tmp, msglen)) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -2463,10 +2461,8 @@ static int tls_construct_cke_srp(SSL *s, WPACKET *pkt, int *al)
     unsigned char *abytes = NULL;
 
     if (s->srp_ctx.A == NULL
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_allocate_bytes(pkt, BN_num_bytes(s->srp_ctx.A),
-                                       &abytes)
-            || !WPACKET_close(pkt)) {
+            || !WPACKET_sub_allocate_bytes_u16(pkt, BN_num_bytes(s->srp_ctx.A),
+                                               &abytes)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_SRP, ERR_R_INTERNAL_ERROR);
         return 0;
     }

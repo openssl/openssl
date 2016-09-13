@@ -41,6 +41,17 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
     return 1;
 }
 
+int WPACKET_sub_allocate_bytes(WPACKET *pkt, size_t len,
+                               unsigned char **allocbytes, size_t lenbytes)
+{
+    if (!WPACKET_start_sub_packet_len(pkt, lenbytes)
+            || !WPACKET_allocate_bytes(pkt, len, allocbytes)
+            || !WPACKET_close(pkt))
+        return 0;
+
+    return 1;
+}
+
 static size_t maxmaxsize(size_t lenbytes)
 {
     if (lenbytes >= sizeof(size_t) || lenbytes == 0)
