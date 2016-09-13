@@ -643,26 +643,27 @@ int WPACKET_finish(WPACKET *pkt);
 
 /*
  * Initialise a new sub-packet. Additionally |lenbytes| of data is preallocated
- * at the start of the sub-packet to store its length once we know it.
+ * at the start of the sub-packet to store its length once we know it. Don't
+ * call this directly. Use the convenience macros below instead.
  */
-int WPACKET_start_sub_packet_len(WPACKET *pkt, size_t lenbytes);
+int WPACKET_start_sub_packet_len__(WPACKET *pkt, size_t lenbytes);
 
 /*
  * Convenience macros for calling WPACKET_start_sub_packet_len with different
  * lengths
  */
 #define WPACKET_start_sub_packet_u8(pkt) \
-    WPACKET_start_sub_packet_len((pkt), 1)
+    WPACKET_start_sub_packet_len__((pkt), 1)
 #define WPACKET_start_sub_packet_u16(pkt) \
-    WPACKET_start_sub_packet_len((pkt), 2)
+    WPACKET_start_sub_packet_len__((pkt), 2)
 #define WPACKET_start_sub_packet_u24(pkt) \
-    WPACKET_start_sub_packet_len((pkt), 3)
+    WPACKET_start_sub_packet_len__((pkt), 3)
 #define WPACKET_start_sub_packet_u32(pkt) \
-    WPACKET_start_sub_packet_len((pkt), 4)
+    WPACKET_start_sub_packet_len__((pkt), 4)
 
 /*
- * Same as WPACKET_start_sub_packet_len() except no bytes are pre-allocated for
- * the sub-packet length.
+ * Same as WPACKET_start_sub_packet_len__() except no bytes are pre-allocated
+ * for the sub-packet length.
  */
 int WPACKET_start_sub_packet(WPACKET *pkt);
 
@@ -677,23 +678,24 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t bytes,
 /*
  * The same as WPACKET_allocate_bytes() except additionally a new sub-packet is
  * started for the allocated bytes, and then closed immediately afterwards. The
- * number of length bytes for the sub-packet is in |lenbytes|.
+ * number of length bytes for the sub-packet is in |lenbytes|. Don't call this
+ * directly. Use the convenience macros below instead.
  */
-int WPACKET_sub_allocate_bytes(WPACKET *pkt, size_t len,
-                               unsigned char **allocbytes, size_t lenbytes);
+int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
+                                 unsigned char **allocbytes, size_t lenbytes);
 
 /*
  * Convenience macros for calling WPACKET_sub_allocate_bytes with different
  * lengths
  */
 #define WPACKET_sub_allocate_bytes_u8(pkt, len, bytes) \
-    WPACKET_sub_allocate_bytes((pkt), (len), (bytes), 1)
+    WPACKET_sub_allocate_bytes__((pkt), (len), (bytes), 1)
 #define WPACKET_sub_allocate_bytes_u16(pkt, len, bytes) \
-    WPACKET_sub_allocate_bytes((pkt), (len), (bytes), 2)
+    WPACKET_sub_allocate_bytes__((pkt), (len), (bytes), 2)
 #define WPACKET_sub_allocate_bytes_u24(pkt, len, bytes) \
-    WPACKET_sub_allocate_bytes((pkt), (len), (bytes), 3)
+    WPACKET_sub_allocate_bytes__((pkt), (len), (bytes), 3)
 #define WPACKET_sub_allocate_bytes_u32(pkt, len, bytes) \
-    WPACKET_sub_allocate_bytes((pkt), (len), (bytes), 4)
+    WPACKET_sub_allocate_bytes__((pkt), (len), (bytes), 4)
 
 /*
  * Write the value stored in |val| into the WPACKET. The value will consume
@@ -711,20 +713,21 @@ int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len);
 
 /*
  * Copy |len| bytes of data from |*src| into the WPACKET and prefix with its
- * length (consuming |lenbytes| of data for the length)
+ * length (consuming |lenbytes| of data for the length). Don't call this
+ * directly. Use the convenience macros below instead.
  */
-int WPACKET_sub_memcpy(WPACKET *pkt, const void *src, size_t len,
+int WPACKET_sub_memcpy__(WPACKET *pkt, const void *src, size_t len,
                        size_t lenbytes);
 
 /* Convenience macros for calling WPACKET_sub_memcpy with different lengths */
 #define WPACKET_sub_memcpy_u8(pkt, src, len) \
-    WPACKET_sub_memcpy((pkt), (src), (len), 1)
+    WPACKET_sub_memcpy__((pkt), (src), (len), 1)
 #define WPACKET_sub_memcpy_u16(pkt, src, len) \
-    WPACKET_sub_memcpy((pkt), (src), (len), 2)
+    WPACKET_sub_memcpy__((pkt), (src), (len), 2)
 #define WPACKET_sub_memcpy_bytes_u24(pkt, src, len) \
-    WPACKET_sub_memcpy((pkt), (src), (len), 3)
+    WPACKET_sub_memcpy__((pkt), (src), (len), 3)
 #define WPACKET_sub_memcpy_bytes_u32(pkt, src, len) \
-    WPACKET_sub_memcpy((pkt), (src), (len), 4)
+    WPACKET_sub_memcpy__((pkt), (src), (len), 4)
 
 /*
  * Return the total number of bytes written so far to the underlying buffer
