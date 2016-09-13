@@ -35,7 +35,7 @@ static int test_WPACKET_init(void)
     int i;
     size_t written;
 
-    if (       !WPACKET_init(&pkt, buf)
+    if (!WPACKET_init(&pkt, buf)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
                 /* Closing a top level WPACKET should fail */
             ||  WPACKET_close(&pkt)
@@ -55,7 +55,7 @@ static int test_WPACKET_init(void)
     }
 
     /* Now try with a one byte length prefix */
-    if (       !WPACKET_init_len(&pkt, buf, 1)
+    if (!WPACKET_init_len(&pkt, buf, 1)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
@@ -66,7 +66,7 @@ static int test_WPACKET_init(void)
     }
 
     /* And a longer length prefix */
-    if (       !WPACKET_init_len(&pkt, buf, 4)
+    if (!WPACKET_init_len(&pkt, buf, 4)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
@@ -103,7 +103,7 @@ static int test_WPACKET_set_max_size(void)
     WPACKET pkt;
     size_t written;
 
-    if (       !WPACKET_init(&pkt, buf)
+    if (!WPACKET_init(&pkt, buf)
                 /*
                  * No previous lenbytes set so we should be ok to set the max
                  * possible max size
@@ -118,7 +118,7 @@ static int test_WPACKET_set_max_size(void)
         return 0; 
     }
 
-    if (       !WPACKET_init_len(&pkt, buf, 1)
+    if (!WPACKET_init_len(&pkt, buf, 1)
                 /*
                  * Should fail because we already consumed 1 byte with the
                  * length
@@ -160,7 +160,7 @@ static int test_WPACKET_start_sub_packet(void)
     size_t written;
     size_t len;
 
-    if (       !WPACKET_init(&pkt, buf)
+    if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet(&pkt)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
                 /* Can't finish because we have a sub packet */
@@ -178,7 +178,7 @@ static int test_WPACKET_start_sub_packet(void)
     }
 
    /* Single sub-packet with length prefix */
-    if (       !WPACKET_init(&pkt, buf)
+    if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet_len(&pkt, 1)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_close(&pkt)
@@ -191,7 +191,7 @@ static int test_WPACKET_start_sub_packet(void)
     }
 
     /* Nested sub-packets with length prefixes */
-    if (       !WPACKET_init(&pkt, buf)
+    if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet_len(&pkt, 1)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_start_sub_packet_len(&pkt, 1)
@@ -211,7 +211,7 @@ static int test_WPACKET_start_sub_packet(void)
     }
 
     /* Sequential sub-packets with length prefixes */
-    if (       !WPACKET_init(&pkt, buf)
+    if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet_len(&pkt, 1)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
             || !WPACKET_close(&pkt)
@@ -236,7 +236,7 @@ static int test_WPACKET_set_flags(void)
     size_t written;
 
     /* Set packet to be non-zero length */
-    if (       !WPACKET_init(&pkt, buf)
+    if (!WPACKET_init(&pkt, buf)
             || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)
                 /* Should fail because of zero length */
             ||  WPACKET_finish(&pkt)
@@ -250,7 +250,7 @@ static int test_WPACKET_set_flags(void)
     }
 
     /* Repeat above test in a sub-packet */
-    if (       !WPACKET_init(&pkt, buf)
+    if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet(&pkt)
             || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)
                 /* Should fail because of zero length */
@@ -266,7 +266,7 @@ static int test_WPACKET_set_flags(void)
     }
 
     /* Set packet to abandon non-zero length */
-    if (       !WPACKET_init_len(&pkt, buf, 1)
+    if (!WPACKET_init_len(&pkt, buf, 1)
             || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
@@ -276,7 +276,7 @@ static int test_WPACKET_set_flags(void)
     }
 
     /* Repeat above test but only abandon a sub-packet */
-    if (       !WPACKET_init_len(&pkt, buf, 1)
+    if (!WPACKET_init_len(&pkt, buf, 1)
             || !WPACKET_start_sub_packet_len(&pkt, 1)
             || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
             || !WPACKET_close(&pkt)
@@ -289,7 +289,7 @@ static int test_WPACKET_set_flags(void)
     }
 
     /* And repeat with a non empty sub-packet */
-    if (       !WPACKET_init(&pkt, buf)
+    if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet_len(&pkt, 1)
             || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
             || !WPACKET_put_bytes(&pkt, 0xff, 1)
@@ -310,14 +310,14 @@ static int test_WPACKET_allocate_bytes(void)
     size_t written;
     unsigned char *bytes;
 
-    if (       !WPACKET_init_len(&pkt, buf, 1)
+    if (!WPACKET_init_len(&pkt, buf, 1)
             || !WPACKET_allocate_bytes(&pkt, 2, &bytes)) {
         testfail("test_WPACKET_allocate_bytes():1 failed\n", &pkt);
         return 0;
     }
     bytes[0] = 0xfe;
     bytes[1] = 0xff;
-    if (       !WPACKET_finish(&pkt)
+    if (!WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
             ||  written != sizeof(alloc)
             ||  memcmp(buf->data, &alloc, written) != 0) {
@@ -326,14 +326,14 @@ static int test_WPACKET_allocate_bytes(void)
     }
 
     /* Repeat with WPACKET_sub_allocate_bytes */
-    if (       !WPACKET_init_len(&pkt, buf, 1)
+    if (!WPACKET_init_len(&pkt, buf, 1)
             || !WPACKET_sub_allocate_bytes(&pkt, 2, &bytes, 1)) {
         testfail("test_WPACKET_allocate_bytes():3 failed\n", &pkt);
         return 0;
     }
     bytes[0] = 0xfe;
     bytes[1] = 0xff;
-    if (       !WPACKET_finish(&pkt)
+    if (!WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
             ||  written != sizeof(submem)
             ||  memcmp(buf->data, &submem, written) != 0) {
@@ -350,7 +350,7 @@ static int test_WPACKET_memcpy(void)
     size_t written;
     const unsigned char bytes[] = { 0xfe, 0xff };
 
-    if (       !WPACKET_init_len(&pkt, buf, 1)
+    if (!WPACKET_init_len(&pkt, buf, 1)
             || !WPACKET_memcpy(&pkt, bytes, sizeof(bytes))
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
@@ -361,7 +361,7 @@ static int test_WPACKET_memcpy(void)
     }
 
     /* Repeat with WPACKET_sub_memcpy() */
-    if (       !WPACKET_init_len(&pkt, buf, 1)
+    if (!WPACKET_init_len(&pkt, buf, 1)
             || !WPACKET_sub_memcpy(&pkt, bytes, sizeof(bytes), 1)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
