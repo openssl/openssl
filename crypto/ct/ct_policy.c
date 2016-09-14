@@ -33,7 +33,9 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void)
     }
 
     // time(NULL) shouldn't ever fail, so don't bother checking for -1.
-    ctx->epoch_time_in_ms = (time(NULL) + SCT_CLOCK_DRIFT_TOLERANCE) * 1000;
+    ctx->epoch_time_in_ms = (uint64_t)(time(NULL) + SCT_CLOCK_DRIFT_TOLERANCE) *
+            1000;
+
     return ctx;
 }
 
