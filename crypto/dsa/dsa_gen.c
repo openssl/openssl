@@ -100,6 +100,9 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
     p = BN_CTX_get(ctx);
     test = BN_CTX_get(ctx);
 
+    if (test == NULL)
+        goto err;
+
     if (!BN_lshift(test, BN_value_one(), bits - 1))
         goto err;
 
