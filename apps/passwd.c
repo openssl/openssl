@@ -478,8 +478,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     unsigned char temp_buf[SHA512_DIGEST_LENGTH];
     size_t buf_size = 0;
     char salt_copy[17];          /* Max 16 chars plus '\0' */
-    int n;
-    unsigned int i;
+    size_t n;
     EVP_MD_CTX *md = NULL, *md2 = NULL;
     const EVP_MD *sha = NULL;
     size_t passwd_len, salt_len, magic_len;
@@ -563,11 +562,11 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         || !EVP_DigestFinal_ex(md2, buf, NULL))
         goto err;
 
-    for (i = passwd_len; i > buf_size; i -= buf_size) {
+    for (n = passwd_len; n > buf_size; n -= buf_size) {
         if (!EVP_DigestUpdate(md, buf, buf_size))
             goto err;
     }
-    if (!EVP_DigestUpdate(md, buf, i))
+    if (!EVP_DigestUpdate(md, buf, n))
         goto err;
 
     n = passwd_len;
@@ -615,24 +614,24 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         memcpy(cp, temp_buf, buf_size);
     memcpy(cp, temp_buf, n);
 
-    for (i = 0; i < rounds; i++) {
+    for (n = 0; n < rounds; n++) {
         if (!EVP_DigestInit_ex(md2, sha, NULL))
             goto err;
         if (!EVP_DigestUpdate(md2,
-                              (i & 1) ? (unsigned const char *)p_bytes : buf,
-                              (i & 1) ? passwd_len : buf_size))
+                              (n & 1) ? (unsigned const char *)p_bytes : buf,
+                              (n & 1) ? passwd_len : buf_size))
             goto err;
-        if (i % 3) {
+        if (n % 3) {
             if (!EVP_DigestUpdate(md2, s_bytes, salt_len))
                 goto err;
         }
-        if (i % 7) {
+        if (n % 7) {
             if (!EVP_DigestUpdate(md2, p_bytes, passwd_len))
                 goto err;
         }
         if (!EVP_DigestUpdate(md2,
-                              (i & 1) ? buf : (unsigned const char *)p_bytes,
-                              (i & 1) ? buf_size : passwd_len))
+                              (n & 1) ? buf : (unsigned const char *)p_bytes,
+                              (n & 1) ? buf_size : passwd_len))
                 goto err;
         if (!EVP_DigestFinal_ex(md2, buf, NULL))
                 goto err;
@@ -652,8 +651,8 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
 #define b64_from_24bit(B2, B1, B0, N)                                   \
     do {                                                                \
         unsigned int w = ((B2) << 16) | ((B1) << 8) | (B0);             \
-        int n = (N);                                                    \
-        while (n-- > 0)                                                 \
+        int i = (N);                                                    \
+        while (i-- > 0)                                                 \
             {                                                           \
                 *cp++ = cov_2char[w & 0x3f];                            \
                 w >>= 6;                                                \
