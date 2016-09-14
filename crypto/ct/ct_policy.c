@@ -17,10 +17,12 @@
 
 #include "ct_locl.h"
 
-// Number of seconds in the future that an SCT timestamp can be, by default,
-// without being considered invalid. This is added to time() when setting a
-// default value for CT_POLICY_EVAL_CTX.epoch_time_in_ms.
-// It can be overridden by calling CT_POLICY_EVAL_CTX_set_time().
+/*
+ * Number of seconds in the future that an SCT timestamp can be, by default,
+ * without being considered invalid. This is added to time() when setting a
+ * default value for CT_POLICY_EVAL_CTX.epoch_time_in_ms.
+ * It can be overridden by calling CT_POLICY_EVAL_CTX_set_time().
+ */
 static const time_t SCT_CLOCK_DRIFT_TOLERANCE = 300;
 
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void)
@@ -32,7 +34,7 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void)
         return NULL;
     }
 
-    // time(NULL) shouldn't ever fail, so don't bother checking for -1.
+    /* time(NULL) shouldn't ever fail, so don't bother checking for -1. */
     ctx->epoch_time_in_ms = (uint64_t)(time(NULL) + SCT_CLOCK_DRIFT_TOLERANCE) *
             1000;
 
