@@ -1918,7 +1918,7 @@ int tls_construct_server_key_exchange(SSL *s)
         if (md) {
             /* send signature algorithm */
             if (SSL_USE_SIGALGS(s)) {
-                if (!tls12_get_sigandhash(p, pkey, md)) {
+                if (!tls12_get_sigandhash_old(p, pkey, md)) {
                     /* Should never happen */
                     al = SSL_AD_INTERNAL_ERROR;
                     SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,

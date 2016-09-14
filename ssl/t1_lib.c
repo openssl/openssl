@@ -3119,7 +3119,31 @@ static int tls12_find_nid(int id, const tls12_lookup *table, size_t tlen)
     return NID_undef;
 }
 
-int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk, const EVP_MD *md)
+int tls12_get_sigandhash(WPACKET *pkt, const EVP_PKEY *pk, const EVP_MD *md)
+{
+    int sig_id, md_id;
+    if (!md)
+        return 0;
+    md_id = tls12_find_id(EVP_MD_type(md), tls12_md, OSSL_NELEM(tls12_md));
+    if (md_id == -1)
+        return 0;
+    sig_id = tls12_get_sigid(pk);
+    if (sig_id == -1)
+        return 0;
+    if (!WPACKET_put_bytes(pkt, md_id, 1) || !WPACKET_put_bytes(pkt, sig_id, 1))
+        return 0;
+
+    return 1;
+}
+
+/*
+ * Old version of the tls12_get_sigandhash function used by code that has not
+ * yet been converted to WPACKET yet. It will be deleted once WPACKET conversion
+ * is complete.
+ * TODO - DELETE ME
+ */
+int tls12_get_sigandhash_old(unsigned char *p, const EVP_PKEY *pk,
+                             const EVP_MD *md)
 {
     int sig_id, md_id;
     if (!md)
