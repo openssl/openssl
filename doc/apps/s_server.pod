@@ -111,8 +111,8 @@ for connections on a given port using SSL/TLS.
 
 In addition to the options below the B<s_server> utility also supports the
 common and server only options documented in the
-L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS> manual
-page.
+in the "Supported Command Line Commands" section of the L<SSL_CONF_cmd(3)>
+manual page.
 
 =over 4
 
@@ -553,6 +553,7 @@ unknown cipher suites a client says it supports.
 
 =head1 SEE ALSO
 
+L<SSL_CONF_cmd(3)>,
 L<sess_id(1)>, L<s_client(1)>, L<ciphers(1)>
 
 =head1 HISTORY

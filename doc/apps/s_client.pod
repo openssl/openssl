@@ -109,7 +109,7 @@ SSL servers.
 
 In addition to the options below the B<s_client> utility also supports the
 common and client only options documented in the
-in the L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS>
+in the "Supported Command Line Commands" section of the L<SSL_CONF_cmd(3)>
 manual page.
 
 =over 4
@@ -562,6 +562,7 @@ information whenever a session is renegotiated.
 
 =head1 SEE ALSO
 
+L<SSL_CONF_cmd(3)>,
 L<sess_id(1)>, L<s_server(1)>, L<ciphers(1)>
 
 =head1 HISTORY
