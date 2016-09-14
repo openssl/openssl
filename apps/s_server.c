@@ -2203,19 +2203,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
     }
 #ifdef FIONBIO
     if (s_nbio) {
-#    if defined(OPENSSL_SYS_VMS) && defined(__VMS_VER) && (__VMS_VER >= 70000000) 	 	 
-        /* For 64-bit --> 32-bit restricted APIs (IOCTL) */ 	 	 
-#       if __INITIAL_POINTER_SIZE == 64 	 	 
-#           pragma __required_pointer_size __save 	  	 
-#           pragma __required_pointer_size 32 	  	 
-#   endif 	  	 
-        unsigned int sl =1; 
-#       if __INITIAL_POINTER_SIZE == 64 	 	 
-#           pragma __required_pointer_size __restore 	  	 
-#       endif 	  	 
-#    else 	  	 
         unsigned long sl = 1;
-#    endif /* OPENSSL_SYS_VMS */
 
         if (!s_quiet)
             BIO_printf(bio_err, "turning on non blocking io\n");
@@ -2850,20 +2838,8 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
 
 #ifdef FIONBIO
     if (s_nbio) {
+        unsigned long sl = 1;
 
-#    if defined(OPENSSL_SYS_VMS) && defined(__VMS_VER) && (__VMS_VER >= 70000000) 	 	 
-        /* For 64-bit --> 32-bit restricted APIs (IOCTL) */ 	 	 
-#       if __INITIAL_POINTER_SIZE == 64 	 	 
-#           pragma __required_pointer_size __save 	  	 
-#           pragma __required_pointer_size 32 	  	 
-#   endif 	  	 
-        unsigned int sl ;
-#       if __INITIAL_POINTER_SIZE == 64 	 	 
-#           pragma __required_pointer_size __restore 	  	 
-#       endif 	  	 
-#    else 	  	 
-        unsigned long sl=1; 	  	 
-#    endif /* OPENSSL_SYS_VMS */
         if (!s_quiet)
             BIO_printf(bio_err, "turning on non blocking io\n");
         if (BIO_socket_ioctl(s, FIONBIO, &sl) < 0)
