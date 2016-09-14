@@ -517,7 +517,7 @@ debug_logicals :
 
 # Building targets ###################################################
 
-configdata.pm : {- join(" ", sourcefile("Configurations", "descrip.mms.tmpl"), sourcefile("Configurations", "common.tmpl")) -} $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{build_infos}}) -}
+configdata.pm : {- join(" ", sourcefile("Configurations", "descrip.mms.tmpl"), sourcefile("Configurations", "common.tmpl")) -} $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{build_infos}}, @{$config{conf_files}}) -}
         @ WRITE SYS$OUTPUT "Reconfiguring..."
         perl $(SRCDIR)Configure reconf
         @ WRITE SYS$OUTPUT "*************************************************"
