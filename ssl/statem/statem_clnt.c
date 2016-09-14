@@ -2895,22 +2895,42 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 #ifndef OPENSSL_NO_NEXTPROTONEG
 int tls_construct_next_proto(SSL *s)
 {
-    unsigned int len, padding_len;
-    unsigned char *d;
+    size_t len, padding_len;
+    unsigned char *padding = NULL;
+    WPACKET pkt;
+
+    if (!WPACKET_init(&pkt, s->init_buf)) {
+        /* Should not happen */
+        SSLerr(SSL_F_TLS_CONSTRUCT_NEXT_PROTO, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (!ssl_set_handshake_header2(s, &pkt, SSL3_MT_NEXT_PROTO)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_NEXT_PROTO, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     len = s->next_proto_negotiated_len;
     padding_len = 32 - ((len + 2) % 32);
-    d = (unsigned char *)s->init_buf->data;
-    d[4] = len;
-    memcpy(d + 5, s->next_proto_negotiated, len);
-    d[5 + len] = padding_len;
-    memset(d + 6 + len, 0, padding_len);
-    *(d++) = SSL3_MT_NEXT_PROTO;
-    l2n3(2 + len + padding_len, d);
-    s->init_num = 4 + 2 + len + padding_len;
-    s->init_off = 0;
+
+    if (!WPACKET_sub_memcpy_u8(&pkt, s->next_proto_negotiated, len)
+            || !WPACKET_sub_allocate_bytes_u8(&pkt, padding_len, &padding)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_NEXT_PROTO, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    memset(padding, 0, padding_len);
+
+    if (!ssl_close_construct_packet(s, &pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_NEXT_PROTO, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     return 1;
+ err:
+    WPACKET_cleanup(&pkt);
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+    return 0;
 }
 #endif
 
