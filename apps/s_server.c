@@ -2192,9 +2192,9 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
 #else
     struct timeval *timeoutp;
 #endif
-#if defined(OPENSSL_SYS_VMS) 	  	 
-        int stdin_sock;
-        TerminalSocket (TERM_SOCK_CREATE, &stdin_sock);
+#if defined(OPENSSL_SYS_VMS)
+    int stdin_sock;
+    TerminalSocket (TERM_SOCK_CREATE, &stdin_sock);
 #endif
 
     if ((buf = OPENSSL_malloc(bufsize)) == NULL) {
@@ -2317,13 +2317,13 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
 #endif
 
 
-#if defined(OPENSSL_SYS_VMS) 	
-        if (stdin_sock > s) 	
-            width = stdin_sock + 1; 	  	 
-    else 	  	        
-        width=s+1; 	  	
-#else 	  	       
-    width=s+1; 	  	
+#if defined(OPENSSL_SYS_VMS)
+    if (stdin_sock > s)
+        width = stdin_sock + 1;
+    else
+        width = s + 1;
+#else
+    width = s + 1;
 #endif
     for (;;) {
         int read_from_terminal;
@@ -2335,11 +2335,11 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
         if (!read_from_sslcon) {
             FD_ZERO(&readfds);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined(OPENSSL_SYS_BEOS_R5)
-    #  if defined(OPENSSL_SYS_VMS) 	  	 
-                        openssl_fdset(stdin_sock,&readfds); 	  	 
-    #  else			
-                        openssl_fdset(stdin),&readfds);
-    #endif
+# if defined(OPENSSL_SYS_VMS)
+            openssl_fdset(stdin_sock, &readfds);
+# else
+            openssl_fdset(fileno(stdin), &readfds);
+# endif
 #endif
             openssl_fdset(s, &readfds);
             /*
@@ -2390,11 +2390,11 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
 
             if (i <= 0)
                 continue;
-#if defined(OPENSSL_SYS_VMS) 	 	 
-                        if (FD_ISSET(stdin_sock,&readfds)) 	  	 
-#else
-			if (FD_ISSET(fileno(stdin),&readfds))
-#endif
+# if defined(OPENSSL_SYS_VMS)
+            if (FD_ISSET(stdin_sock, &readfds))
+# else
+            if (FD_ISSET(fileno(stdin), &readfds))
+# endif
                 read_from_terminal = 1;
 #endif
             if (FD_ISSET(s, &readfds))
@@ -2404,12 +2404,12 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
             if (s_crlf) {
                 int j, lf_num;
 
-    	#if defined(OPENSSL_SYS_VMS) 	 	 
-                i=recv(stdin_sock, buf, bufsize/2, 0);
-	#else
-		i = raw_read_stdin(buf, bufsize / 2)
-	#endif 
-               lf_num = 0;
+#if defined(OPENSSL_SYS_VMS)
+                i=recv(stdin_sock, buf, bufsize / 2, 0);
+#else
+                i = raw_read_stdin(buf, bufsize / 2);
+#endif
+                lf_num = 0;
                 /* both loops are skipped when i <= 0 */
                 for (j = 0; j < i; j++)
                     if (buf[j] == '\n')
@@ -2423,12 +2423,13 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
                     }
                 }
                 assert(lf_num == 0);
-            } else
-#if defined(OPENSSL_SYS_VMS) 	 	 
-                                i=recv(stdin_sock,buf,bufsize, 0);
+            } else {
+#if defined(OPENSSL_SYS_VMS)
+                i = recv(stdin_sock, buf, bufsize, 0);
 #else
-				i = raw_read_stdin(buf, bufsize);
-#endif 
+                i = raw_read_stdin(buf, bufsize);
+#endif
+            }
             if (!s_quiet && !s_brief) {
                 if ((i <= 0) || (buf[0] == 'Q')) {
                     BIO_printf(bio_s_out, "DONE\n");
@@ -2509,7 +2510,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
                     srp_callback_parm.user =
                         SRP_VBASE_get1_by_user(srp_callback_parm.vb,
                                                srp_callback_parm.login);
-                     if (srp_callback_parm.user)
+                    if (srp_callback_parm.user)
                         BIO_printf(bio_s_out, "LOOKUP done %s\n",
                                    srp_callback_parm.user->info);
                     else
@@ -2618,8 +2619,8 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
     }
     if (ret >= 0)
         BIO_printf(bio_s_out, "ACCEPT\n");
-#if defined(OPENSSL_SYS_VMS) 	 	 
-        TerminalSocket (TERM_SOCK_DELETE, &stdin_sock); 	  	 
+#if defined(OPENSSL_SYS_VMS)
+    TerminalSocket (TERM_SOCK_DELETE, &stdin_sock);
 #endif
     return (ret);
 }
@@ -2839,19 +2840,19 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
 #ifdef FIONBIO
     if (s_nbio) {
 
-#    if defined(OPENSSL_SYS_VMS) && defined(__VMS_VER) && (__VMS_VER >= 70000000) 	 	 
-        /* For 64-bit --> 32-bit restricted APIs (IOCTL) */ 	 	 
-#       if __INITIAL_POINTER_SIZE == 64 	 	 
-#           pragma __required_pointer_size __save 	  	 
-#           pragma __required_pointer_size 32 	  	 
-#   endif 	  	 
+# if defined(OPENSSL_SYS_VMS) && defined(__VMS_VER) && (__VMS_VER >= 70000000)
+        /* For 64-bit --> 32-bit restricted APIs (IOCTL) */
+#  if __INITIAL_POINTER_SIZE == 64
+#   pragma __required_pointer_size __save
+#   pragma __required_pointer_size 32
+#  endif
         unsigned int sl ;
-#       if __INITIAL_POINTER_SIZE == 64 	 	 
-#           pragma __required_pointer_size __restore 	  	 
-#       endif 	  	 
-#    else 	  	 
-        unsigned long sl=1; 	  	 
-#    endif /* OPENSSL_SYS_VMS */
+#  if __INITIAL_POINTER_SIZE == 64
+#   pragma __required_pointer_size __restore
+#  endif
+# else
+        unsigned long sl=1;
+# endif /* OPENSSL_SYS_VMS */
         if (!s_quiet)
             BIO_printf(bio_err, "turning on non blocking io\n");
         if (BIO_socket_ioctl(s, FIONBIO, &sl) < 0)
