@@ -2038,8 +2038,10 @@ __owur int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
                                               const PACKET *session_id,
                                               SSL_SESSION **ret);
 
-__owur int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
+__owur int tls12_get_sigandhash(WPACKET *pkt, const EVP_PKEY *pk,
                                 const EVP_MD *md);
+__owur int tls12_get_sigandhash_old(unsigned char *p, const EVP_PKEY *pk,
+                                    const EVP_MD *md);
 __owur int tls12_get_sigid(const EVP_PKEY *pk);
 __owur const EVP_MD *tls12_get_hash(unsigned char hash_alg);
 void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op);

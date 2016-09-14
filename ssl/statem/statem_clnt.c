@@ -2616,22 +2616,32 @@ int tls_client_key_exchange_post_work(SSL *s)
 
 int tls_construct_client_verify(SSL *s)
 {
-    unsigned char *p;
     EVP_PKEY *pkey;
     const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
     EVP_MD_CTX *mctx;
     unsigned u = 0;
-    unsigned long n = 0;
     long hdatalen = 0;
     void *hdata;
+    unsigned char *sig = NULL;
+    WPACKET pkt;
+
+
+    if (!WPACKET_init(&pkt, s->init_buf)) {
+        /* Should not happen */
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (!ssl_set_handshake_header2(s, &pkt, SSL3_MT_CERTIFICATE_VERIFY)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-
-    p = ssl_handshake_start(s);
     pkey = s->cert->key->privatekey;
 
     hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
@@ -2639,24 +2649,25 @@ int tls_construct_client_verify(SSL *s)
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (SSL_USE_SIGALGS(s)) {
-        if (!tls12_get_sigandhash(p, pkey, md)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-        p += 2;
-        n = 2;
+    if (SSL_USE_SIGALGS(s)&& !tls12_get_sigandhash(&pkt, pkey, md)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
     }
 #ifdef SSL_DEBUG
     fprintf(stderr, "Using client alg %s\n", EVP_MD_name(md));
 #endif
+    sig = OPENSSL_malloc(EVP_PKEY_size(pkey));
+    if (sig == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
     if (!EVP_SignInit_ex(mctx, md, NULL)
         || !EVP_SignUpdate(mctx, hdata, hdatalen)
         || (s->version == SSL3_VERSION
             && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                                 s->session->master_key_length,
                                 s->session->master_key))
-        || !EVP_SignFinal(mctx, p + 2, &u, pkey)) {
+        || !EVP_SignFinal(mctx, sig, &u, pkey)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_EVP_LIB);
         goto err;
     }
@@ -2666,24 +2677,32 @@ int tls_construct_client_verify(SSL *s)
         if (pktype == NID_id_GostR3410_2001
             || pktype == NID_id_GostR3410_2012_256
             || pktype == NID_id_GostR3410_2012_512)
-            BUF_reverse(p + 2, NULL, u);
+            BUF_reverse(sig, NULL, u);
     }
 #endif
 
-    s2n(u, p);
-    n += u + 2;
-    /* Digest cached records and discard handshake buffer */
-    if (!ssl3_digest_cached_records(s, 0))
-        goto err;
-    if (!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_VERIFY, n)) {
+    if (!WPACKET_sub_memcpy_u16(&pkt, sig, u)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
+    /* Digest cached records and discard handshake buffer */
+    if (!ssl3_digest_cached_records(s, 0))
+        goto err;
+
+    if (!ssl_close_construct_packet(s, &pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    OPENSSL_free(sig);
     EVP_MD_CTX_free(mctx);
     return 1;
  err:
+    WPACKET_cleanup(&pkt);
+    OPENSSL_free(sig);
     EVP_MD_CTX_free(mctx);
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
     return 0;
 }
 
