@@ -1830,7 +1830,7 @@ __owur X509 *ssl_cert_get0_next_certificate(CERT *c, int first);
 void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg);
 
 __owur int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk);
-__owur int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l);
+__owur int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk);
 __owur int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
                                    int ref);

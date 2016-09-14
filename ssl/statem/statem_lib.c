@@ -267,22 +267,31 @@ int tls_construct_change_cipher_spec(SSL *s)
 
 unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk)
 {
-    unsigned char *p;
-    unsigned long l = 3 + SSL_HM_HEADER_LENGTH(s);
+    WPACKET pkt;
 
-    if (!ssl_add_cert_chain(s, cpk, &l))
-        return 0;
-
-    l -= 3 + SSL_HM_HEADER_LENGTH(s);
-    p = ssl_handshake_start(s);
-    l2n3(l, p);
-    l += 3;
-
-    if (!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE, l)) {
+    if (!WPACKET_init(&pkt, s->init_buf)) {
+        /* Should not happen */
         SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
-        return 0;
+        goto err;
     }
-    return l + SSL_HM_HEADER_LENGTH(s);
+
+    if (!ssl_set_handshake_header2(s, &pkt, SSL3_MT_CERTIFICATE)
+            || !WPACKET_start_sub_packet_u24(&pkt)) {
+        SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (!ssl_add_cert_chain(s, &pkt, cpk))
+        goto err;
+
+    if (!WPACKET_close(&pkt) || !ssl_close_construct_packet(s, &pkt)) {
+        SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    return 1;
+ err:
+    WPACKET_cleanup(&pkt);
+    return 0;
 }
 
 WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
