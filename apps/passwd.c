@@ -47,10 +47,18 @@ static unsigned const char cov_2char[64] = {
     0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7A
 };
 
+typedef enum {
+    passwd_unset = 0,
+    passwd_crypt,
+    passwd_md5,
+    passwd_apr1,
+    passwd_sha256,
+    passwd_sha512
+} passwd_modes;
+
 static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
                      char *passwd, BIO *out, int quiet, int table,
-                     int reverse, size_t pw_maxlen, int usecrypt, int use1,
-                     int useapr1, int use5, int use6);
+                     int reverse, size_t pw_maxlen, passwd_modes mode);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -94,8 +102,11 @@ int passwd_main(int argc, char **argv)
     int in_noverify = 0;
 #endif
     int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
-    int ret = 1, usecrypt = 0, use1 = 0, useapr1 = 0, use5 = 0, use6 = 0;
-    size_t passwd_malloc_size = 0, pw_maxlen = 256;
+    int ret = 1;
+    passwd_modes mode = passwd_unset;
+    size_t passwd_malloc_size = 0;
+    size_t pw_maxlen = 256; /* arbitrary limit, should be enough for most
+                             * passwords */
 
     prog = opt_init(argc, argv, passwd_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -129,20 +140,30 @@ int passwd_main(int argc, char **argv)
         case OPT_REVERSE:
             reverse = 1;
             break;
+        case OPT_1:
+            if (mode != passwd_unset)
+                goto opthelp;
+            mode = passwd_md5;
+            break;
         case OPT_5:
-            use5 = 1;
+            if (mode != passwd_unset)
+                goto opthelp;
+            mode = passwd_sha256;
             break;
         case OPT_6:
-            use6 = 1;
-            break;
-        case OPT_1:
-            use1 = 1;
+            if (mode != passwd_unset)
+                goto opthelp;
+            mode = passwd_sha512;
             break;
         case OPT_APR1:
-            useapr1 = 1;
+            if (mode != passwd_unset)
+                goto opthelp;
+            mode = passwd_apr1;
             break;
         case OPT_CRYPT:
-            usecrypt = 1;
+            if (mode != passwd_unset)
+                goto opthelp;
+            mode = passwd_crypt;
             break;
         case OPT_SALT:
             passed_salt = 1;
@@ -166,25 +187,21 @@ int passwd_main(int argc, char **argv)
         passwds = argv;
     }
 
-    if (!usecrypt && !use5 && !use6 && !use1 && !useapr1) {
+    if (mode == passwd_unset) {
         /* use default */
-        usecrypt = 1;
-    }
-    if (usecrypt + use5 + use6 + use1 + useapr1 > 1) {
-        /* conflict */
-        goto opthelp;
+        mode = passwd_crypt;
     }
 
 # ifdef OPENSSL_NO_DES
-    if (usecrypt)
+    if (mode == passwd_crypt)
         goto opthelp;
 # endif
 # ifdef NO_MD5CRYPT_1
-    if (use1 || useapr1)
+    if (mode == passwd_md5 || mode == passwd_apr1)
         goto opthelp;
 # endif
 # ifdef NO_SHACRYPT
-    if (use5 || use6)
+    if (mode == passwd_sha256 || mode == passwd_sha512)
         goto opthelp;
 # endif
 
@@ -203,11 +220,8 @@ int passwd_main(int argc, char **argv)
             goto end;
     }
 
-    if (usecrypt)
+    if (mode == passwd_crypt)
         pw_maxlen = 8;
-    else if (use1 || useapr1)
-        pw_maxlen = 256;        /* arbitrary limit, should be enough for most
-                                 * passwords */
 
     if (passwds == NULL) {
         /* no passwords on the command line */
@@ -246,8 +260,7 @@ int passwd_main(int argc, char **argv)
         do {                    /* loop over list of passwords */
             passwd = *passwds++;
             if (!do_passwd(passed_salt, &salt, &salt_malloc, passwd, bio_out,
-                           quiet, table, reverse, pw_maxlen, usecrypt, use1,
-                           useapr1, use5, use6))
+                           quiet, table, reverse, pw_maxlen, mode))
                 goto end;
         }
         while (*passwds != NULL);
@@ -273,8 +286,7 @@ int passwd_main(int argc, char **argv)
 
                 if (!do_passwd
                     (passed_salt, &salt, &salt_malloc, passwd, bio_out, quiet,
-                     table, reverse, pw_maxlen, usecrypt, use1, useapr1,
-                     use5, use6))
+                     table, reverse, pw_maxlen, mode))
                     goto end;
             }
             done = (r <= 0);
@@ -703,8 +715,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
 
 static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
                      char *passwd, BIO *out, int quiet, int table,
-                     int reverse, size_t pw_maxlen, int usecrypt, int use1,
-                     int useapr1, int use5, int use6)
+                     int reverse, size_t pw_maxlen, passwd_modes mode)
 {
     char *hash = NULL;
 
@@ -714,7 +725,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     /* first make sure we have a salt */
     if (!passed_salt) {
 # ifndef OPENSSL_NO_DES
-        if (usecrypt) {
+        if (mode == passwd_crypt) {
             if (*salt_malloc_p == NULL) {
                 *salt_p = *salt_malloc_p = app_malloc(3, "salt buffer");
             }
@@ -731,7 +742,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 # endif                         /* !OPENSSL_NO_DES */
 
 # ifndef NO_MD5CRYPT_1
-        if (use1 || useapr1) {
+        if (mode == passwd_md5 || mode == passwd_apr1) {
             int i;
 
             if (*salt_malloc_p == NULL) {
@@ -747,7 +758,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 # endif                         /* !NO_MD5CRYPT_1 */
 
 # ifndef NO_SHACRYPT
-        if (use5 || use6) {
+        if (mode == passwd_sha256 || mode == passwd_sha512) {
             int i;
 
             if (*salt_malloc_p == NULL) {
@@ -780,16 +791,16 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 
     /* now compute password hash */
 # ifndef OPENSSL_NO_DES
-    if (usecrypt)
+    if (mode == passwd_crypt)
         hash = DES_crypt(passwd, *salt_p);
 # endif
 # ifndef NO_MD5CRYPT_1
-    if (use1 || useapr1)
-        hash = md5crypt(passwd, (use1 ? "1" : "apr1"), *salt_p);
+    if (mode == passwd_md5 || mode == passwd_apr1)
+        hash = md5crypt(passwd, (mode == passwd_md5 ? "1" : "apr1"), *salt_p);
 # endif
 # ifndef NO_SHACRYPT
-    if (use5 || use6)
-        hash = shacrypt(passwd, (use5 ? "5" : "6"), *salt_p);
+    if (mode == passwd_sha256 || mode == passwd_sha512)
+        hash = shacrypt(passwd, (mode == passwd_sha256 ? "5" : "6"), *salt_p);
 # endif
     assert(hash != NULL);
 
