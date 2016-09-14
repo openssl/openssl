@@ -322,7 +322,7 @@ uninstall_html_docs:
 
 # Building targets ###################################################
 
-configdata.pm: "{- $config{build_file_template} -}" "$(SRCDIR)\Configurations\common.tmpl" "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{build_infos}}) -}
+configdata.pm: "{- $config{build_file_template} -}" "$(SRCDIR)\Configurations\common.tmpl" "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
 	"$(PERL)" "$(SRCDIR)\Configure" reconf
