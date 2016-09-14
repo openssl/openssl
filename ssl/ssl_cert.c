@@ -740,46 +740,34 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     return ret;
 }
 
-/* Add a certificate to a BUF_MEM structure */
-
-static int ssl_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
+/* Add a certificate to the WPACKET */
+static int ssl_add_cert_to_buf(WPACKET *pkt, X509 *x)
 {
-    int n;
-    unsigned char *p;
+    int len;
+    unsigned char *outbytes;
 
-    n = i2d_X509(x, NULL);
-    if (n < 0 || !BUF_MEM_grow_clean(buf, (int)(n + (*l) + 3))) {
+    len = i2d_X509(x, NULL);
+    if (len < 0) {
         SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
         return 0;
     }
-    p = (unsigned char *)&(buf->data[*l]);
-    l2n3(n, p);
-    n = i2d_X509(x, &p);
-    if (n < 0) {
-        /* Shouldn't happen */
-        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
+    if (!WPACKET_sub_allocate_bytes_u24(pkt, len, &outbytes)
+            || i2d_X509(x, &outbytes) != len) {
+        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    *l += n + 3;
 
     return 1;
 }
 
 /* Add certificate chain to internal SSL BUF_MEM structure */
-int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
+int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
 {
-    BUF_MEM *buf = s->init_buf;
     int i, chain_count;
     X509 *x;
     STACK_OF(X509) *extra_certs;
     STACK_OF(X509) *chain = NULL;
     X509_STORE *chain_store;
-
-    /* TLSv1 sends a chain with nothing in it, instead of an alert */
-    if (!BUF_MEM_grow_clean(buf, 10)) {
-        SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_BUF_LIB);
-        return 0;
-    }
 
     if (!cpk || !cpk->x509)
         return 1;
@@ -839,7 +827,7 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
         for (i = 0; i < chain_count; i++) {
             x = sk_X509_value(chain, i);
 
-            if (!ssl_add_cert_to_buf(buf, l, x)) {
+            if (!ssl_add_cert_to_buf(pkt, x)) {
                 X509_STORE_CTX_free(xs_ctx);
                 return 0;
             }
@@ -851,11 +839,11 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
             SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
             return 0;
         }
-        if (!ssl_add_cert_to_buf(buf, l, x))
+        if (!ssl_add_cert_to_buf(pkt, x))
             return 0;
         for (i = 0; i < sk_X509_num(extra_certs); i++) {
             x = sk_X509_value(extra_certs, i);
-            if (!ssl_add_cert_to_buf(buf, l, x))
+            if (!ssl_add_cert_to_buf(pkt, x))
                 return 0;
         }
     }
