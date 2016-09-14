@@ -921,6 +921,8 @@ my %target = resolve_config($target);
 
 &usage if (!%target || $target{template});
 
+my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
+$config{conf_files} = [ sort keys %conf_files ];
 %target = ( %{$table{DEFAULTS}}, %target );
 
 $target{exe_extension}="";
@@ -2209,7 +2211,8 @@ sub read_config {
     close(CONFFILE);
     my %targets = ();
     {
-	local %table = %::table;    # Protect %table from tampering
+	# Protect certain tables from tampering
+	local %table = %::table;
 
 	eval $content;
 	warn $@ if $@;
@@ -2224,7 +2227,9 @@ sub read_config {
 		warn "Misconfigured target configuration for $_ (should be a hash table), ignoring...\n";
 	    }
 	    delete $targets{$_};
-	}
+	} else {
+            $targets{$_}->{_conf_fname_int} = add([ $fname ]);
+        }
     }
 
     %table = (%table, %targets);
