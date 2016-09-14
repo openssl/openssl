@@ -1464,19 +1464,7 @@ int MAIN(int argc, char **argv)
 
 #ifdef FIONBIO
     if (c_nbio) {
-#if defined(OPENSSL_SYS_VMS) && defined(__VMS_VER) && (__VMS_VER >= 70000000)  
-        /* For 64-bit --> 32-bit restricted APIs (IOCTL) */
-#if __INITIAL_POINTER_SIZE == 64 
-#pragma __required_pointer_size __save 
-#pragma __required_pointer_size 32 
-#endif 
-        unsigned int l = 1;
-#if __INITIAL_POINTER_SIZE == 64 
-#pragma __required_pointer_size __restore 
-#endif 
-#else  
         unsigned long l = 1;
-#endif /* OPENSSL_SYS_VMS */
 
         BIO_printf(bio_c_out, "turning on non blocking io\n");
         if (BIO_socket_ioctl(s, FIONBIO, &l) < 0) {
