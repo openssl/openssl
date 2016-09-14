@@ -6,6 +6,11 @@
 
   *)
 
+  *) 'openssl passwd' can now produce SHA256 and SHA512 based output,
+     using the algorithm defined in
+     https://www.akkadia.org/drepper/SHA-crypt.txt
+     [Richard Levitte]
+
  Changes between 1.0.2h and 1.1.0  [25 Aug 2016]
 
   *) Windows command-line tool supports UTF-8 opt-in option for arguments

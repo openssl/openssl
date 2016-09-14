@@ -11,6 +11,8 @@ B<openssl passwd>
 [B<-crypt>]
 [B<-1>]
 [B<-apr1>]
+[B<-5>]
+[B<-6>]
 [B<-salt> I<string>]
 [B<-in> I<file>]
 [B<-stdin>]
@@ -47,6 +49,13 @@ Use the MD5 based BSD password algorithm B<1>.
 =item B<-apr1>
 
 Use the B<apr1> algorithm (Apache variant of the BSD algorithm).
+
+=item B<-5>
+
+=item B<-6>
+
+Use the B<SHA256> / B<SHA512> based algorithms defined by Ulrich Drepper.
+See L<https://www.akkadia.org/drepper/SHA-crypt.txt>.
 
 =item B<-salt> I<string>
 
