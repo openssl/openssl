@@ -1316,44 +1316,6 @@ my %unified_info = ();
 
 my $buildinfo_debug = defined($ENV{CONFIGURE_DEBUG_BUILDINFO});
 if ($builder eq "unified") {
-    # Store the name of the template file we will build the build file from
-    # in %config.  This may be useful for the build file itself.
-    my @build_file_template_names =
-	( $builder_platform."-".$target{build_file}.".tmpl",
-	  $target{build_file}.".tmpl" );
-    my @build_file_templates = ();
-
-    # First, look in the user provided directory, if given
-    if (defined $ENV{$local_config_envname}) {
-	@build_file_templates =
-	    map {
-		if ($^O eq 'VMS') {
-		    # VMS environment variables are logical names,
-		    # which can be used as is
-		    $local_config_envname . ':' . $_;
-		} else {
-		    catfile($ENV{$local_config_envname}, $_);
-		}
-	    }
-	    @build_file_template_names;
-    }
-    # Then, look in our standard directory
-    push @build_file_templates,
-	( map { catfile($srcdir, "Configurations", $_) }
-	  @build_file_template_names );
-
-    my $build_file_template;
-    for $_ (@build_file_templates) {
-	$build_file_template = $_;
-        last if -f $build_file_template;
-
-        $build_file_template = undef;
-    }
-    if (!defined $build_file_template) {
-	die "*** Couldn't find any of:\n", join("\n", @build_file_templates), "\n";
-    }
-    $config{build_file_template} = $build_file_template;
-
     use lib catdir(dirname(__FILE__),"util");
     use with_fallback qw(Text::Template);
 
@@ -1389,6 +1351,47 @@ if ($builder eq "unified") {
         #print STDERR "DEBUG[cleanfile]: $d , $f => $res\n";
         return $res;
     }
+
+    # Store the name of the template file we will build the build file from
+    # in %config.  This may be useful for the build file itself.
+    my @build_file_template_names =
+	( $builder_platform."-".$target{build_file}.".tmpl",
+	  $target{build_file}.".tmpl" );
+    my @build_file_templates = ();
+
+    # First, look in the user provided directory, if given
+    if (defined $ENV{$local_config_envname}) {
+	@build_file_templates =
+	    map {
+		if ($^O eq 'VMS') {
+		    # VMS environment variables are logical names,
+		    # which can be used as is
+		    $local_config_envname . ':' . $_;
+		} else {
+		    catfile($ENV{$local_config_envname}, $_);
+		}
+	    }
+	    @build_file_template_names;
+    }
+    # Then, look in our standard directory
+    push @build_file_templates,
+	( map { cleanfile($srcdir, catfile("Configurations", $_), $blddir) }
+	  @build_file_template_names );
+
+    my $build_file_template;
+    for $_ (@build_file_templates) {
+	$build_file_template = $_;
+        last if -f $build_file_template;
+
+        $build_file_template = undef;
+    }
+    if (!defined $build_file_template) {
+	die "*** Couldn't find any of:\n", join("\n", @build_file_templates), "\n";
+    }
+    $config{build_file_templates}
+      = [ $build_file_template,
+          cleanfile($srcdir, catfile("Configurations", "common.tmpl"),
+                    $blddir) ];
 
     my @build_infos = ( [ ".", "build.info" ] );
     foreach (@{$config{dirs}}) {
@@ -2037,8 +2040,7 @@ print "EX_LIBS       =$target{ex_libs} $config{ex_libs}\n";
 my %builders = (
     unified => sub {
         run_dofile(catfile($blddir, $target{build_file}),
-                   $config{build_file_template},
-                   catfile($srcdir, "Configurations", "common.tmpl"));
+                   @{$config{build_file_templates}});
     },
     );
 
