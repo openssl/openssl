@@ -47,8 +47,14 @@
 # define R_OK 4
 #endif
 
-#undef BSIZE
-#define BSIZE 256
+#ifndef PATH_MAX
+# define PATH_MAX 4096
+#endif
+#ifndef NAME_MAX
+# define NAME_MAX 255
+#endif
+
+#define CERT_MAX (PATH_MAX + NAME_MAX)
 
 #define BASE_SECTION            "ca"
 
@@ -246,7 +252,7 @@ int ca_main(int argc, char **argv)
     const char *serialfile = NULL, *subj = NULL;
     char *prog, *startdate = NULL, *enddate = NULL;
     char *dbfile = NULL, *f, *randfile = NULL;
-    char new_cert[BSIZE] = { 0 };
+    char new_cert[CERT_MAX + 1];
     char tmp[10 + 1] = "\0";
     char *const *pp;
     const char *p;
@@ -261,6 +267,8 @@ int ca_main(int argc, char **argv)
     REVINFO_TYPE rev_type = REV_NONE;
     X509_REVOKED *r = NULL;
     OPTION_CHOICE o;
+
+    new_cert[CERT_MAX] = '\0';
 
     prog = opt_init(argc, argv, ca_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -988,7 +996,7 @@ end_of_options:
             j = ASN1_STRING_length(serialNumber);
             p = (const char *)ASN1_STRING_get0_data(serialNumber);
 
-            if (strlen(outdir) >= (size_t)(j ? BSIZE - j * 2 - 6 : BSIZE - 8)) {
+            if (strlen(outdir) >= (size_t)(j ? CERT_MAX - j * 2 - 6 : CERT_MAX - 8)) {
                 BIO_printf(bio_err, "certificate file name too long\n");
                 goto end;
             }
