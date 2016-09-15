@@ -3207,7 +3207,7 @@ static void close_stdin_sock(void)
     TerminalSocket (TERM_SOCK_DELETE, &stdin_sock);
 }
 
-int fileno_stdin()
+int fileno_stdin(void)
 {
     if (stdin_sock == -1) {
         TerminalSocket(TERM_SOCK_CREATE, &stdin_sock);
@@ -3217,13 +3217,13 @@ int fileno_stdin()
     return stdin_sock;
 }
 #else
-int fileno_stdin()
+int fileno_stdin(void)
 {
     return fileno(stdin);
 }
 #endif
 
-int fileno_stdout()
+int fileno_stdout(void)
 {
     return fileno(stdout);
 }
