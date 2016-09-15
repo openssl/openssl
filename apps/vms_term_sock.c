@@ -88,7 +88,7 @@ typedef struct _iosb {           /* Copied from IOSBDEF.H for Alpha  */
 # include <stdarg.h>
 # include <descrip.h>
 
-# include "term_sock.h"
+# include "vms_term_sock.h"
 
 # ifdef __alpha
 static struct _iosb TerminalDeviceIosb;
