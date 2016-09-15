@@ -90,11 +90,6 @@ typedef unsigned int u_int;
 #include <openssl/ebcdic.h>
 #endif
 
-#ifdef OPENSSL_SYS_VMS
-# include "vms_term_sock.h"
-#endif
-
-
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, unsigned char *context);
 static int www_body(int s, int stype, unsigned char *context);
@@ -2012,10 +2007,6 @@ static int sv_body(int s, int stype, unsigned char *context)
 #else
     struct timeval *timeoutp;
 #endif
-#if defined(OPENSSL_SYS_VMS)
-    int stdin_sock;
-    TerminalSocket (TERM_SOCK_CREATE, &stdin_sock);
-#endif
 
     buf = app_malloc(bufsize, "server buffer");
     if (s_nbio) {
@@ -2116,15 +2107,10 @@ static int sv_body(int s, int stype, unsigned char *context)
         SSL_set_tlsext_debug_arg(con, bio_s_out);
     }
 
-
-#if defined(OPENSSL_SYS_VMS)
-    if (stdin_sock > s)
-        width = stdin_sock + 1;
+    if (fileno_stdin() > s)
+        width = fileno_stdin() + 1;
     else
         width = s + 1;
-#else
-    width = s + 1;
-#endif
     for (;;) {
         int read_from_terminal;
         int read_from_sslcon;
@@ -2136,11 +2122,7 @@ static int sv_body(int s, int stype, unsigned char *context)
         if (!read_from_sslcon) {
             FD_ZERO(&readfds);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
-# if defined(OPENSSL_SYS_VMS)
-            openssl_fdset(stdin_sock, &readfds);
-# else
-            openssl_fdset(fileno(stdin), &readfds);
-# endif
+            openssl_fdset(fileno_stdin(), &readfds);
 #endif
             openssl_fdset(s, &readfds);
             /*
@@ -2180,11 +2162,7 @@ static int sv_body(int s, int stype, unsigned char *context)
 
             if (i <= 0)
                 continue;
-# if defined(OPENSSL_SYS_VMS)
-            if (FD_ISSET(stdin_sock, &readfds))
-# else
-            if (FD_ISSET(fileno(stdin), &readfds))
-# endif
+            if (FD_ISSET(fileno_stdin(), &readfds))
                 read_from_terminal = 1;
 #endif
             if (FD_ISSET(s, &readfds))
@@ -2194,11 +2172,7 @@ static int sv_body(int s, int stype, unsigned char *context)
             if (s_crlf) {
                 int j, lf_num;
 
-#if defined(OPENSSL_SYS_VMS)
-                i=recv(stdin_sock, buf, bufsize / 2, 0);
-#else
                 i = raw_read_stdin(buf, bufsize / 2);
-#endif
                 lf_num = 0;
                 /* both loops are skipped when i <= 0 */
                 for (j = 0; j < i; j++)
@@ -2213,13 +2187,9 @@ static int sv_body(int s, int stype, unsigned char *context)
                     }
                 }
                 assert(lf_num == 0);
-            } else {
-#if defined(OPENSSL_SYS_VMS)
-                i = recv(stdin_sock, buf, bufsize, 0);
-#else
+            } else
                 i = raw_read_stdin(buf, bufsize);
-#endif
-            }
+
             if (!s_quiet && !s_brief) {
                 if ((i <= 0) || (buf[0] == 'Q')) {
                     BIO_printf(bio_s_out, "DONE\n");
@@ -2433,9 +2403,6 @@ static int sv_body(int s, int stype, unsigned char *context)
     OPENSSL_clear_free(buf, bufsize);
     if (ret >= 0)
         BIO_printf(bio_s_out, "ACCEPT\n");
-#if defined(OPENSSL_SYS_VMS)
-    TerminalSocket (TERM_SOCK_DELETE, &stdin_sock);
-#endif
     (void)BIO_flush(bio_s_out);
     return (ret);
 }
