@@ -197,11 +197,6 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include "timeouts.h"
 
-#ifdef OPENSSL_SYS_VMS
-# include "vms_term_sock.h"
-#endif
-
-
 #if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 # undef FIONBIO
@@ -2192,10 +2187,6 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
 #else
     struct timeval *timeoutp;
 #endif
-#if defined(OPENSSL_SYS_VMS)
-    int stdin_sock;
-    TerminalSocket (TERM_SOCK_CREATE, &stdin_sock);
-#endif
 
     if ((buf = OPENSSL_malloc(bufsize)) == NULL) {
         BIO_printf(bio_err, "out of memory\n");
@@ -2316,15 +2307,10 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
     }
 #endif
 
-
-#if defined(OPENSSL_SYS_VMS)
-    if (stdin_sock > s)
-        width = stdin_sock + 1;
+    if (fileno_stdin() > s)
+        width = fileno_stdin() + 1;
     else
         width = s + 1;
-#else
-    width = s + 1;
-#endif
     for (;;) {
         int read_from_terminal;
         int read_from_sslcon;
@@ -2335,11 +2321,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
         if (!read_from_sslcon) {
             FD_ZERO(&readfds);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined(OPENSSL_SYS_BEOS_R5)
-# if defined(OPENSSL_SYS_VMS)
-            openssl_fdset(stdin_sock, &readfds);
-# else
-            openssl_fdset(fileno(stdin), &readfds);
-# endif
+            openssl_fdset(fileno_stdin(), &readfds);
 #endif
             openssl_fdset(s, &readfds);
             /*
@@ -2367,13 +2349,13 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
             /* Under BeOS-R5 the situation is similar to DOS */
             tv.tv_sec = 1;
             tv.tv_usec = 0;
-            (void)fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
+            (void)fcntl(fileno_stdin(), F_SETFL, O_NONBLOCK);
             i = select(width, (void *)&readfds, NULL, NULL, &tv);
-            if ((i < 0) || (!i && read(fileno(stdin), buf, 0) < 0))
+            if ((i < 0) || (!i && read(fileno_stdin(), buf, 0) < 0))
                 continue;
-            if (read(fileno(stdin), buf, 0) >= 0)
+            if (read(fileno_stdin(), buf, 0) >= 0)
                 read_from_terminal = 1;
-            (void)fcntl(fileno(stdin), F_SETFL, 0);
+            (void)fcntl(fileno_stdin(), F_SETFL, 0);
 #else
             if ((SSL_version(con) == DTLS1_VERSION) &&
                 DTLSv1_get_timeout(con, &timeout))
@@ -2390,11 +2372,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
 
             if (i <= 0)
                 continue;
-# if defined(OPENSSL_SYS_VMS)
-            if (FD_ISSET(stdin_sock, &readfds))
-# else
-            if (FD_ISSET(fileno(stdin), &readfds))
-# endif
+            if (FD_ISSET(fileno_stdin(), &readfds))
                 read_from_terminal = 1;
 #endif
             if (FD_ISSET(s, &readfds))
@@ -2404,11 +2382,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
             if (s_crlf) {
                 int j, lf_num;
 
-#if defined(OPENSSL_SYS_VMS)
-                i=recv(stdin_sock, buf, bufsize / 2, 0);
-#else
                 i = raw_read_stdin(buf, bufsize / 2);
-#endif
                 lf_num = 0;
                 /* both loops are skipped when i <= 0 */
                 for (j = 0; j < i; j++)
@@ -2423,13 +2397,9 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
                     }
                 }
                 assert(lf_num == 0);
-            } else {
-#if defined(OPENSSL_SYS_VMS)
-                i = recv(stdin_sock, buf, bufsize, 0);
-#else
+            } else
                 i = raw_read_stdin(buf, bufsize);
-#endif
-            }
+
             if (!s_quiet && !s_brief) {
                 if ((i <= 0) || (buf[0] == 'Q')) {
                     BIO_printf(bio_s_out, "DONE\n");
@@ -2619,9 +2589,6 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
     }
     if (ret >= 0)
         BIO_printf(bio_s_out, "ACCEPT\n");
-#if defined(OPENSSL_SYS_VMS)
-    TerminalSocket (TERM_SOCK_DELETE, &stdin_sock);
-#endif
     return (ret);
 }
 
