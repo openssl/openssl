@@ -548,6 +548,8 @@ void store_setup_crl_download(X509_STORE *st);
 
 int app_isdir(const char *);
 int app_access(const char *, int flag);
+int fileno_stdin(void);
+int fileno_stdout(void);
 int raw_read_stdin(void *, int);
 int raw_write_stdout(const void *, int);
 
