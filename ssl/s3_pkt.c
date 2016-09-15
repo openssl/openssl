@@ -1462,13 +1462,8 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             }
 #ifdef SSL_AD_MISSING_SRP_USERNAME
             else if (alert_descr == SSL_AD_MISSING_SRP_USERNAME)
-                return 0;
+                return (0);
 #endif
-            else {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_UNKNOWN_ALERT_TYPE);
-                goto f_err;
-            }
         } else if (alert_level == SSL3_AL_FATAL) {
             char tmp[16];
 
