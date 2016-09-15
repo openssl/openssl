@@ -79,33 +79,6 @@ static int int_x509_param_set_hosts(X509_VERIFY_PARAM *vpm, int mode,
     return 1;
 }
 
-static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
-{
-    if (!param)
-        return;
-    param->name = NULL;
-    param->purpose = 0;
-    param->trust = X509_TRUST_DEFAULT;
-    /*
-     * param->inh_flags = X509_VP_FLAG_DEFAULT;
-     */
-    param->inh_flags = 0;
-    param->flags = 0;
-    param->depth = -1;
-    param->auth_level = -1; /* -1 means unset, 0 is explicit */
-    sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
-    param->policies = NULL;
-    sk_OPENSSL_STRING_pop_free(param->hosts, str_free);
-    param->hosts = NULL;
-    OPENSSL_free(param->peername);
-    param->peername = NULL;
-    OPENSSL_free(param->email);
-    param->email = NULL;
-    param->emaillen = 0;
-    OPENSSL_free(param->ip);
-    param->ip = NULL;
-    param->iplen = 0;
-}
 
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
 {
@@ -114,15 +87,25 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
     param = OPENSSL_zalloc(sizeof(*param));
     if (param == NULL)
         return NULL;
-    x509_verify_param_zero(param);
+    param->trust = X509_TRUST_DEFAULT;
+    /*
+     * param->inh_flags = X509_VP_FLAG_DEFAULT;
+     */
+    param->inh_flags = 0;
+    param->depth = -1;
+    param->auth_level = -1; /* -1 means unset, 0 is explicit */
     return param;
 }
 
 void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
 {
-    if (!param)
+    if (param == NULL)
         return;
-    x509_verify_param_zero(param);
+    sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
+    sk_OPENSSL_STRING_pop_free(param->hosts, str_free);
+    OPENSSL_free(param->peername);
+    OPENSSL_free(param->email);
+    OPENSSL_free(param->ip);
     OPENSSL_free(param);
 }
 
