@@ -453,7 +453,7 @@ int X509_VERIFY_PARAM_set_flags(X509_VERIFY_PARAM *param,
                                 unsigned long flags);
 int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param,
                                   unsigned long flags);
-unsigned long X509_VERIFY_PARAM_get_flags(X509_VERIFY_PARAM *param);
+unsigned long X509_VERIFY_PARAM_get_flags(const X509_VERIFY_PARAM *param);
 int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose);
 int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust);
 void X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth);
@@ -470,7 +470,7 @@ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
                                 const char *name, size_t namelen);
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
                                      unsigned int flags);
-char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *);
+const char *X509_VERIFY_PARAM_get0_peername(const X509_VERIFY_PARAM *);
 void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *, X509_VERIFY_PARAM *);
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                  const char *email, size_t emaillen);
