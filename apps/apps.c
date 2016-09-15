@@ -2303,15 +2303,18 @@ int app_isdir(const char *name)
 #if defined(__VMS)
 # include "vms_term_sock.h"
 static int stdin_sock = -1;
+
 static void close_stdin_sock(void)
 {
     TerminalSocket (TERM_SOCK_DELETE, &stdin_sock);
 }
+
 int fileno_stdin()
 {
     if (stdin_sock == -1) {
         TerminalSocket(TERM_SOCK_CREATE, &stdin_sock);
         atexit(close_stdin_sock);
+    }
 
     return stdin_sock;
 }
@@ -2321,6 +2324,7 @@ int fileno_stdin()
     return fileno(stdin);
 }
 #endif
+
 int fileno_stdout()
 {
     return fileno(stdout);
