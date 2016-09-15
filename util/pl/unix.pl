@@ -279,7 +279,7 @@ sub get_tests
   my %fakes;
   while (my $line = <M>)
     {
-    chomp $line;
+    $line =~ s/\s+$//;
     while ($line =~ /^(.*)\\$/)
       {
       $line = $1 . <M>;
@@ -319,7 +319,7 @@ sub get_tests
       for (;;)
 	{
 	$line = <M>;
-	chomp $line;
+	$line =~ s/\s+$//;
 	last if $line eq '';
 	$targets{$t} .= "$line\n";
         }

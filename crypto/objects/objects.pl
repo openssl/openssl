@@ -5,7 +5,7 @@ $max_nid=0;
 $o=0;
 while(<NUMIN>)
 	{
-	chop;
+	s/\s+$//;
 	$o++;
 	s/#.*$//;
 	next if /^\s*$/;
@@ -28,7 +28,7 @@ $Cname="";
 $o=0;
 while (<IN>)
 	{
-	chop;
+	s/\s+$//;
 	$o++;
         if (/^!module\s+(.*)$/)
 		{

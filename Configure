@@ -853,6 +853,8 @@ while($argv_unprocessed)
 PROCESS_ARGS:
 	foreach (@argvcopy)
 		{
+		# last argument has CR if running from shell and Configure has CRLF eols
+		s /\s+$//;
 		s /^-no-/no-/; # some people just can't read the instructions
 
 		# rewrite some options in "enable-..." form
@@ -913,7 +915,7 @@ PROCESS_ARGS:
 				{
 				while (<IN>)
 					{
-					chomp;
+					s/\s+$//;
 					if (/^CONFIGURE_ARGS=(.*)/)
 						{
 						$argvstring=$1;
@@ -1686,7 +1688,7 @@ print OUT "### Generated automatically from Makefile.org by Configure.\n\n";
 my $sdirs=0;
 while (<IN>)
 	{
-	chomp;
+	s/\s+$//;
 	$sdirs = 1 if /^SDIRS=/;
 	if ($sdirs) {
 		my $dir;
@@ -1907,6 +1909,7 @@ print OUT "#define OPENSSL_CPUID_OBJ\n\n" if ($cpuid_obj ne "mem_clr.o");
 
 while (<IN>)
 	{
+	s/\s+$//;
 	if	(/^#define\s+OPENSSLDIR/)
 		{
 		my $foo = $openssldir;
@@ -1978,7 +1981,7 @@ while (<IN>)
 		printf OUT "#define BF_PTR2\n" if $bf_ptr == 2;
 	        }
 	else
-		{ print OUT $_; }
+		{ print OUT "$_\n"; }
 	}
 close(IN);
 print OUT "#ifdef  __cplusplus\n";
