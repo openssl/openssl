@@ -70,8 +70,6 @@ print "\n#ifdef INCLUDE_FUNCTION_TABLE\n";
 print "static FUNCTION functions[] = {\n";
 my %cmd_disabler = (
     ciphers  => "sock",
-    genrsa   => "rsa",
-    rsautl   => "rsa",
     gendsa   => "dsa",
     dsaparam => "dsa",
     gendh    => "dh",
