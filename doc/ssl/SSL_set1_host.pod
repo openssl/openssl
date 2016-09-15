@@ -12,7 +12,7 @@ SSL server verification parameters
  int SSL_set1_host(SSL *s, const char *hostname);
  int SSL_add1_host(SSL *s, const char *hostname);
  void SSL_set_hostflags(SSL *s, unsigned int flags);
- const char *SSL_get0_peername(SSL *s);
+ const char *SSL_get0_peername(const SSL *s);
 
 =head1 DESCRIPTION
 
