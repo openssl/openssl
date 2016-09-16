@@ -856,10 +856,10 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
         *cipher = cryptodev_aes_ctr();
         break;
     case NID_aes_192_ctr:
-        *cipher = cryptodev_aes_ctr_192();
+        *cipher = cryptodev_aes_192_ctr();
         break;
     case NID_aes_256_ctr:
-        *cipher = cryptodev_aes_ctr_256();
+        *cipher = cryptodev_aes_256_ctr();
         break;
 # endif
     default:
