@@ -72,7 +72,7 @@ typedef enum OPTION_choice {
     OPT_ASCIICRLF, OPT_NOINTERN, OPT_NOVERIFY, OPT_NOCERTS,
     OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP, OPT_BINARY, OPT_KEYID,
     OPT_NOSIGS, OPT_NO_CONTENT_VERIFY, OPT_NO_ATTR_VERIFY, OPT_INDEF,
-    OPT_NOINDEF, OPT_NOOLDMIME, OPT_CRLFEOL, OPT_NOOUT, OPT_RR_PRINT,
+    OPT_NOINDEF, OPT_CRLFEOL, OPT_NOOUT, OPT_RR_PRINT,
     OPT_RR_ALL, OPT_RR_FIRST, OPT_RCTFORM, OPT_CERTFILE, OPT_CAFILE,
     OPT_CAPATH, OPT_NOCAPATH, OPT_NOCAFILE,OPT_CONTENT, OPT_PRINT,
     OPT_SECRETKEY, OPT_SECRETKEYID, OPT_PWRI_PASSWORD, OPT_ECONTENT_TYPE,
@@ -131,7 +131,6 @@ OPTIONS cms_options[] = {
     {"stream", OPT_INDEF, '-', "Enable CMS streaming"},
     {"indef", OPT_INDEF, '-', "Same as -stream"},
     {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
-    {"nooldmime", OPT_NOOLDMIME, '-'},
     {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of CR only" },
     {"noout", OPT_NOOUT, '-', "For the -cmsout operation do not output the parsed CMS structure"},
     {"receipt_request_print", OPT_RR_PRINT, '-', "Print CMS Receipt Request" },
@@ -346,9 +345,6 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_NOINDEF:
             flags &= ~CMS_STREAM;
-            break;
-        case OPT_NOOLDMIME:
-            flags |= CMS_NOOLDMIMETYPE;
             break;
         case OPT_CRLFEOL:
             mime_eol = "\r\n";

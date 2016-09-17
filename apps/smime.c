@@ -37,7 +37,7 @@ typedef enum OPTION_choice {
     OPT_PK7OUT, OPT_TEXT, OPT_NOINTERN, OPT_NOVERIFY, OPT_NOCHAIN,
     OPT_NOCERTS, OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP,
     OPT_BINARY, OPT_NOSIGS, OPT_STREAM, OPT_INDEF, OPT_NOINDEF,
-    OPT_NOOLDMIME, OPT_CRLFEOL, OPT_RAND, OPT_ENGINE, OPT_PASSIN,
+    OPT_CRLFEOL, OPT_RAND, OPT_ENGINE, OPT_PASSIN,
     OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP, OPT_MD,
     OPT_CIPHER, OPT_INKEY, OPT_KEYFORM, OPT_CERTFILE, OPT_CAFILE,
     OPT_V_ENUM,
@@ -95,7 +95,6 @@ OPTIONS smime_options[] = {
     {"stream", OPT_STREAM, '-', "Enable CMS streaming" },
     {"indef", OPT_INDEF, '-', "Same as -stream" },
     {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
-    {"nooldmime", OPT_NOOLDMIME, '-', NULL},
     {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of CR only"},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
@@ -220,9 +219,6 @@ int smime_main(int argc, char **argv)
             break;
         case OPT_NOINDEF:
             indef = 0;
-            break;
-        case OPT_NOOLDMIME:
-            flags |= PKCS7_NOOLDMIMETYPE;
             break;
         case OPT_CRLFEOL:
             flags |= PKCS7_CRLFEOL;
