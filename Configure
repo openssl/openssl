@@ -886,7 +886,8 @@ foreach (sort (keys %disabled))
 		$what = "ripemd" if $what eq "rmd160";
 		$what = "whrlpool" if $what eq "whirlpool";
 
-		if (grep { $_ eq $what } @{$config{sdirs}})
+		if ($what ne "async" && $what ne "err"
+		    && grep { $_ eq $what } @{$config{sdirs}})
 			{
 			push @{$config{openssl_algorithm_defines}}, "OPENSSL_NO_$WHAT";
 			@{$config{sdirs}} = grep { $_ ne $what} @{$config{sdirs}};
