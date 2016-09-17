@@ -327,7 +327,7 @@ uninstall_html_docs:
 
 # Building targets ###################################################
 
-configdata.pm: "$(SRCDIR)\Configure" "{- join(" ", @{$config{build_file_templates}}) -}" {- join(" ", map { '"'.$_.'"' } @{$config{build_infos}}, @{$config{conf_files}}) -}
+configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
 	"$(PERL)" "$(SRCDIR)\Configure" reconf
