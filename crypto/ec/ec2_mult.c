@@ -253,10 +253,11 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group,
     x2 = r->X;
     z2 = r->Y;
 
-    bn_wexpand(x1, bn_get_top(group->field));
-    bn_wexpand(z1, bn_get_top(group->field));
-    bn_wexpand(x2, bn_get_top(group->field));
-    bn_wexpand(z2, bn_get_top(group->field));
+    if (bn_wexpand(x1, bn_get_top(group->field)) == NULL
+        || bn_wexpand(z1, bn_get_top(group->field)) == NULL
+        || bn_wexpand(x2, bn_get_top(group->field)) == NULL
+        || bn_wexpand(z2, bn_get_top(group->field)) == NULL)
+        goto err;
 
     if (!BN_GF2m_mod_arr(x1, point->X, group->poly))
         goto err;               /* x1 = x */
