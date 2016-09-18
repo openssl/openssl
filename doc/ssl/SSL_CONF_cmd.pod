@@ -263,16 +263,6 @@ The B<value> argument is a colon separated list of curves. The curve can be
 either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name (e.g
 B<prime256v1>). Curve names are case sensitive.
 
-=item B<ECDHParameters>
-
-This sets the temporary curve used for ephemeral ECDH modes. Only used by
-servers
-
-The B<value> argument is a curve name or the special value B<Automatic> which
-picks an appropriate curve based on client and server preferences. The curve
-can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
-(e.g B<prime256v1>). Curve names are case sensitive.
-
 =item B<MinProtocol>
 
 This sets the minimum supported SSL, TLS or DTLS version.
