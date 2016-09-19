@@ -2379,18 +2379,6 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
         goto err;
     };
     /*
-     * If we have client certificate, use its secret as peer key
-     */
-    if (s->s3->tmp.cert_req && s->cert->key->privatekey) {
-        if (EVP_PKEY_derive_set_peer(pkey_ctx, s->cert->key->privatekey) <= 0) {
-            /*
-             * If there was an error - just ignore it. Ephemeral key
-             * * would be used
-             */
-            ERR_clear_error();
-        }
-    }
-    /*
      * Compute shared IV and store it in algorithm-specific context
      * data
      */
@@ -2434,12 +2422,7 @@ static int tls_construct_cke_gost(SSL *s, unsigned char **p, int *len, int *al)
         *len = msglen + 2;
     }
     memcpy(*p, tmp, msglen);
-    /* Check if pubkey from client certificate was used */
-    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2,
-                          NULL) > 0) {
-        /* Set flag "skip certificate verify" */
-        s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
-    }
+
     EVP_PKEY_CTX_free(pkey_ctx);
     s->s3->tmp.pms = pms;
     s->s3->tmp.pmslen = pmslen;
