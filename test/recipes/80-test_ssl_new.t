@@ -44,6 +44,7 @@ my $no_npn = disabled("nextprotoneg");
 my $no_ct = disabled("ct");
 my $no_ec = disabled("ec");
 my $no_ec2m = disabled("ec2m");
+my $no_ocsp = disabled("ocsp");
 
 # Add your test here if the test conf.in generates test cases and/or
 # expectations dynamically based on the OpenSSL compile-time config.
@@ -70,7 +71,8 @@ my %skip = (
   # We should review this once we have TLS 1.3.
   "13-fragmentation.conf" => disabled("tls1_2"),
   "14-curves.conf" => disabled("tls1_2") || $no_ec || $no_ec2m,
-  "16-dtls-certstatus.conf" => $no_dtls
+  "15-certstatus.conf" => $no_ocsp,
+  "16-dtls-certstatus.conf" => $no_dtls || $no_ocsp,
 );
 
 foreach my $conf (@conf_files) {

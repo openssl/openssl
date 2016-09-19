@@ -856,7 +856,10 @@ int s_client_main(int argc, char **argv)
     enum { use_inet, use_unix, use_unknown } connect_type = use_unknown;
     int count4or6 = 0;
     int c_nbio = 0, c_msg = 0, c_ign_eof = 0, c_brief = 0;
-    int c_tlsextdebug = 0, c_status_req = 0;
+    int c_tlsextdebug = 0;
+#ifndef OPENSSL_NO_OCSP
+    int c_status_req = 0;
+#endif
     BIO *bio_c_msg = NULL;
 
     FD_ZERO(&readfds);
@@ -1067,7 +1070,9 @@ int s_client_main(int argc, char **argv)
             c_tlsextdebug = 1;
             break;
         case OPT_STATUS:
+#ifndef OPENSSL_NO_OCSP
             c_status_req = 1;
+#endif
             break;
         case OPT_WDEBUG:
 #ifdef WATT32

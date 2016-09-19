@@ -932,7 +932,10 @@ int s_server_main(int argc, char *argv[])
     const char *s_cert_file = TEST_CERT, *s_key_file = NULL, *s_chain_file = NULL;
     const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
     char *s_dcert_file = NULL, *s_dkey_file = NULL, *s_dchain_file = NULL;
-    int s_tlsextstatus = 0, no_resume_ephemeral = 0;
+#ifndef OPENSSL_NO_OCSP
+    int s_tlsextstatus = 0;
+#endif
+    int no_resume_ephemeral = 0;
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     const char *s_serverinfo_file = NULL;
 
@@ -1206,14 +1209,20 @@ int s_server_main(int argc, char *argv[])
             s_tlsextdebug = 1;
             break;
         case OPT_STATUS:
+#ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
+#endif
             break;
         case OPT_STATUS_VERBOSE:
+#ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = tlscstatp.verbose = 1;
+#endif
             break;
         case OPT_STATUS_TIMEOUT:
+#ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
             tlscstatp.timeout = atoi(opt_arg());
+#endif
             break;
         case OPT_STATUS_URL:
 #ifndef OPENSSL_NO_OCSP
