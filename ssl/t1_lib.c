@@ -176,43 +176,6 @@ static const unsigned char eccurves_default[] = {
     0, 24,                      /* secp384r1 (24) */
 };
 
-static const unsigned char eccurves_all[] = {
-    0, 29,                      /* X25519 (29) */
-    0, 23,                      /* secp256r1 (23) */
-    0, 25,                      /* secp521r1 (25) */
-    0, 24,                      /* secp384r1 (24) */
-    0, 26,                      /* brainpoolP256r1 (26) */
-    0, 27,                      /* brainpoolP384r1 (27) */
-    0, 28,                      /* brainpool512r1 (28) */
-
-    /*
-     * Remaining curves disabled by default but still permitted if set
-     * via an explicit callback or parameters.
-     */
-    0, 22,                      /* secp256k1 (22) */
-    0, 14,                      /* sect571r1 (14) */
-    0, 13,                      /* sect571k1 (13) */
-    0, 11,                      /* sect409k1 (11) */
-    0, 12,                      /* sect409r1 (12) */
-    0, 9,                       /* sect283k1 (9) */
-    0, 10,                      /* sect283r1 (10) */
-    0, 20,                      /* secp224k1 (20) */
-    0, 21,                      /* secp224r1 (21) */
-    0, 18,                      /* secp192k1 (18) */
-    0, 19,                      /* secp192r1 (19) */
-    0, 15,                      /* secp160k1 (15) */
-    0, 16,                      /* secp160r1 (16) */
-    0, 17,                      /* secp160r2 (17) */
-    0, 8,                       /* sect239k1 (8) */
-    0, 6,                       /* sect233k1 (6) */
-    0, 7,                       /* sect233r1 (7) */
-    0, 4,                       /* sect193r1 (4) */
-    0, 5,                       /* sect193r2 (5) */
-    0, 1,                       /* sect163k1 (1) */
-    0, 2,                       /* sect163r1 (2) */
-    0, 3,                       /* sect163r2 (3) */
-};
-
 static const unsigned char suiteb_curves[] = {
     0, TLSEXT_curve_P_256,
     0, TLSEXT_curve_P_384
@@ -256,6 +219,7 @@ static int tls1_get_curvelist(SSL *s, int sess,
                               const unsigned char **pcurves, size_t *num_curves)
 {
     size_t pcurveslen = 0;
+
     if (sess) {
         *pcurves = s->session->tlsext_ellipticcurvelist;
         pcurveslen = s->session->tlsext_ellipticcurvelist_length;
@@ -291,10 +255,9 @@ static int tls1_get_curvelist(SSL *s, int sess,
         SSLerr(SSL_F_TLS1_GET_CURVELIST, ERR_R_INTERNAL_ERROR);
         *num_curves = 0;
         return 0;
-    } else {
-        *num_curves = pcurveslen / 2;
-        return 1;
     }
+    *num_curves = pcurveslen / 2;
+    return 1;
 }
 
 /* See if curve is allowed by security callback */
@@ -356,6 +319,7 @@ int tls1_shared_curve(SSL *s, int nmatch)
     const unsigned char *pref, *supp;
     size_t num_pref, num_supp, i, j;
     int k;
+
     /* Can't do anything on client side */
     if (s->server == 0)
         return -1;
@@ -366,6 +330,7 @@ int tls1_shared_curve(SSL *s, int nmatch)
              * these are acceptable due to previous checks.
              */
             unsigned long cid = s->s3->tmp.new_cipher->id;
+
             if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
                 return NID_X9_62_prime256v1; /* P-256 */
             if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
@@ -380,37 +345,26 @@ int tls1_shared_curve(SSL *s, int nmatch)
      * Avoid truncation. tls1_get_curvelist takes an int
      * but s->options is a long...
      */
-    if (!tls1_get_curvelist
-        (s, (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) != 0, &supp,
-         &num_supp))
+    if (!tls1_get_curvelist(s,
+            (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) != 0,
+            &supp, &num_supp))
         /* In practice, NID_undef == 0 but let's be precise. */
         return nmatch == -1 ? 0 : NID_undef;
-    if (!tls1_get_curvelist
-        (s, !(s->options & SSL_OP_CIPHER_SERVER_PREFERENCE), &pref, &num_pref))
+    if (!tls1_get_curvelist(s,
+            (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) == 0,
+            &pref, &num_pref))
         return nmatch == -1 ? 0 : NID_undef;
 
-    /*
-     * If the client didn't send the elliptic_curves extension all of them
-     * are allowed.
-     */
-    if (num_supp == 0 && (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) != 0) {
-        supp = eccurves_all;
-        num_supp = sizeof(eccurves_all) / 2;
-    } else if (num_pref == 0 &&
-               (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) == 0) {
-        pref = eccurves_all;
-        num_pref = sizeof(eccurves_all) / 2;
-    }
-
-    k = 0;
-    for (i = 0; i < num_pref; i++, pref += 2) {
+    for (k = 0, i = 0; i < num_pref; i++, pref += 2) {
         const unsigned char *tsupp = supp;
+
         for (j = 0; j < num_supp; j++, tsupp += 2) {
             if (pref[0] == tsupp[0] && pref[1] == tsupp[1]) {
                 if (!tls_curve_allowed(s, pref, SSL_SECOP_CURVE_SHARED))
                     continue;
                 if (nmatch == k) {
                     int id = (pref[0] << 8) | pref[1];
+
                     return tls1_ec_curve_id2nid(id, NULL);
                 }
                 k++;
