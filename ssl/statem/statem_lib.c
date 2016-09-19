@@ -414,10 +414,6 @@ int tls_get_message_header(SSL *s, int *mt)
          */
         l = RECORD_LAYER_get_rrec_length(&s->rlayer)
             + SSL3_HM_HEADER_LENGTH;
-        if (l && !BUF_MEM_grow_clean(s->init_buf, (int)l)) {
-            SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER, ERR_R_BUF_LIB);
-            goto err;
-        }
         s->s3->tmp.message_size = l;
 
         s->init_msg = s->init_buf->data;
@@ -430,11 +426,6 @@ int tls_get_message_header(SSL *s, int *mt)
             SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER, SSL_R_EXCESSIVE_MESSAGE_SIZE);
             goto f_err;
         }
-        if (l && !BUF_MEM_grow_clean(s->init_buf,
-                                     (int)l + SSL3_HM_HEADER_LENGTH)) {
-            SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER, ERR_R_BUF_LIB);
-            goto err;
-        }
         s->s3->tmp.message_size = l;
 
         s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
@@ -444,7 +435,6 @@ int tls_get_message_header(SSL *s, int *mt)
     return 1;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
     return 0;
 }
 
