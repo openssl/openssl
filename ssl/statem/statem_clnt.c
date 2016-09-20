@@ -2618,7 +2618,7 @@ int tls_construct_client_verify(SSL *s)
 {
     EVP_PKEY *pkey;
     const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
-    EVP_MD_CTX *mctx;
+    EVP_MD_CTX *mctx = NULL;
     unsigned u = 0;
     long hdatalen = 0;
     void *hdata;
