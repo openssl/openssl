@@ -318,14 +318,15 @@ const char *RAND_file_name(char *buf, size_t size)
 #else
     if (OPENSSL_issetugid() == 0) {
         s = getenv("RANDFILE");
-    } else {
+    }
+    if (s == NULL || !*s) {
         use_randfile = 0;
         if (OPENSSL_issetugid() == 0)
             s = getenv("HOME");
     }
 #endif
 #ifdef DEFAULT_HOME
-    if (!use_randfile && s == NULL) {
+    if (!use_randfile && (s == NULL || !*s)) {
         s = DEFAULT_HOME;
     }
 #endif
@@ -364,5 +365,8 @@ const char *RAND_file_name(char *buf, size_t size)
             return NULL;
         }
 #endif
+    if (!buf[0]) {
+        return NULL;
+    }
     return buf;
 }
