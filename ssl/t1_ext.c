@@ -171,7 +171,7 @@ int custom_ext_add(SSL *s, int server, WPACKET *pkt, int *al)
                 continue;       /* skip this extension */
         }
 
-        if (!WPACKET_put_bytes(pkt, meth->ext_type, 2)
+        if (!WPACKET_put_bytes_u16(pkt, meth->ext_type)
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || (outlen > 0 && !WPACKET_memcpy(pkt, out, outlen))
                 || !WPACKET_close(pkt)) {

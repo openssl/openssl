@@ -36,7 +36,7 @@ static int test_WPACKET_init(void)
     size_t written;
 
     if (!WPACKET_init(&pkt, buf)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
                 /* Closing a top level WPACKET should fail */
             ||  WPACKET_close(&pkt)
                 /* Finishing a top level WPACKET should succeed */
@@ -56,7 +56,7 @@ static int test_WPACKET_init(void)
 
     /* Now try with a one byte length prefix */
     if (!WPACKET_init_len(&pkt, buf, 1)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
             ||  written != sizeof(simple2)
@@ -67,7 +67,7 @@ static int test_WPACKET_init(void)
 
     /* And a longer length prefix */
     if (!WPACKET_init_len(&pkt, buf, 4)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
             ||  written != sizeof(simple3)
@@ -85,7 +85,7 @@ static int test_WPACKET_init(void)
          * Putting more bytes in than fit for the size of the length prefix
          * should fail
          */
-        if ((!WPACKET_put_bytes(&pkt, 0xff, 1)) == (i != 256)) {
+        if ((!WPACKET_put_bytes_u8(&pkt, 0xff)) == (i != 256)) {
             testfail("test_WPACKET_init():4 failed\n", &pkt);
             return 0;
         }
@@ -136,13 +136,13 @@ static int test_WPACKET_set_max_size(void)
                 /*
                  * Should fail because packet is already filled
                  */
-            ||  WPACKET_put_bytes(&pkt, 0xff, 1)
+            ||  WPACKET_put_bytes_u8(&pkt, 0xff)
                 /*
                  * You can't put in more bytes than max size
                  */
             || !WPACKET_set_max_size(&pkt, 0x02)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
-            ||  WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
+            ||  WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
             ||  written != sizeof(simple2)
@@ -162,7 +162,7 @@ static int test_WPACKET_start_sub_packet(void)
 
     if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet(&pkt)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
                 /* Can't finish because we have a sub packet */
             ||  WPACKET_finish(&pkt)
             || !WPACKET_close(&pkt)
@@ -180,7 +180,7 @@ static int test_WPACKET_start_sub_packet(void)
    /* Single sub-packet with length prefix */
     if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet_u8(&pkt)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_close(&pkt)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
@@ -193,9 +193,9 @@ static int test_WPACKET_start_sub_packet(void)
     /* Nested sub-packets with length prefixes */
     if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet_u8(&pkt)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_start_sub_packet_u8(&pkt)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_get_length(&pkt, &len)
             || len != 1
             || !WPACKET_close(&pkt)
@@ -213,10 +213,10 @@ static int test_WPACKET_start_sub_packet(void)
     /* Sequential sub-packets with length prefixes */
     if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet_u8(&pkt)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_close(&pkt)
             || !WPACKET_start_sub_packet_u8(&pkt)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_close(&pkt)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
@@ -240,7 +240,7 @@ static int test_WPACKET_set_flags(void)
             || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)
                 /* Should fail because of zero length */
             ||  WPACKET_finish(&pkt)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
             ||  written != sizeof(simple1)
@@ -255,7 +255,7 @@ static int test_WPACKET_set_flags(void)
             || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)
                 /* Should fail because of zero length */
             ||  WPACKET_close(&pkt)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_close(&pkt)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)
@@ -292,7 +292,7 @@ static int test_WPACKET_set_flags(void)
     if (!WPACKET_init(&pkt, buf)
             || !WPACKET_start_sub_packet_u8(&pkt)
             || !WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
-            || !WPACKET_put_bytes(&pkt, 0xff, 1)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
             || !WPACKET_close(&pkt)
             || !WPACKET_finish(&pkt)
             || !WPACKET_get_total_written(&pkt, &written)

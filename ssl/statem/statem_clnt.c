@@ -782,7 +782,7 @@ int tls_construct_client_hello(SSL *s)
      * client_version in client hello and not resetting it to
      * the negotiated version.
      */
-    if (!WPACKET_put_bytes(&pkt, s->client_version, 2)
+    if (!WPACKET_put_bytes_u16(&pkt, s->client_version)
             || !WPACKET_memcpy(&pkt, s->s3->client_random, SSL3_RANDOM_SIZE)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -834,7 +834,7 @@ int tls_construct_client_hello(SSL *s)
         int compnum = sk_SSL_COMP_num(s->ctx->comp_methods);
         for (i = 0; i < compnum; i++) {
             comp = sk_SSL_COMP_value(s->ctx->comp_methods, i);
-            if (!WPACKET_put_bytes(&pkt, comp->id, 1)) {
+            if (!WPACKET_put_bytes_u8(&pkt, comp->id)) {
                 SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -842,7 +842,7 @@ int tls_construct_client_hello(SSL *s)
     }
 #endif
     /* Add the NULL method */
-    if (!WPACKET_put_bytes(&pkt, 0, 1) || !WPACKET_close(&pkt)) {
+    if (!WPACKET_put_bytes_u8(&pkt, 0) || !WPACKET_close(&pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -2424,8 +2424,8 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt, int *al)
         goto err;
     }
 
-    if (!WPACKET_put_bytes(pkt, V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED, 1)
-            || (msglen >= 0x80 && !WPACKET_put_bytes(pkt, 0x81, 1))
+    if (!WPACKET_put_bytes_u8(pkt, V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED)
+            || (msglen >= 0x80 && !WPACKET_put_bytes_u8(pkt, 0x81))
             || !WPACKET_sub_memcpy_u8(pkt, tmp, msglen)) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_INTERNAL_ERROR);

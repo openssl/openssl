@@ -1039,7 +1039,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 
     /* Add RI if renegotiating */
     if (s->renegotiate) {
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_renegotiate, 2)
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
                 || !WPACKET_sub_memcpy_u16(pkt, s->s3->previous_client_finished,
                                    s->s3->previous_client_finished_len)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
@@ -1052,12 +1052,12 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 
     if (s->tlsext_hostname != NULL) {
         /* Add TLS extension servername to the Client Hello message */
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_server_name, 2)
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
                    /* Sub-packet for server_name extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
                    /* Sub-packet for servername list (always 1 hostname)*/
                 || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes(pkt, TLSEXT_NAMETYPE_host_name, 1)
+                || !WPACKET_put_bytes_u8(pkt, TLSEXT_NAMETYPE_host_name)
                 || !WPACKET_sub_memcpy_u16(pkt, s->tlsext_hostname,
                                            strlen(s->tlsext_hostname))
                 || !WPACKET_close(pkt)
@@ -1069,7 +1069,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 #ifndef OPENSSL_NO_SRP
     /* Add SRP username if there is one */
     if (s->srp_ctx.login != NULL) {
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_srp, 2)
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_srp)
                    /* Sub-packet for SRP extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || !WPACKET_start_sub_packet_u8(pkt)
@@ -1096,7 +1096,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 
         tls1_get_formatlist(s, &pformats, &num_formats);
 
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_ec_point_formats, 2)
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ec_point_formats)
                    /* Sub-packet for formats extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || !WPACKET_sub_memcpy_u8(pkt, pformats, num_formats)
@@ -1114,7 +1114,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             return 0;
         }
 
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_elliptic_curves, 2)
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_elliptic_curves)
                    /* Sub-packet for curves extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || !WPACKET_start_sub_packet_u16(pkt)) {
@@ -1124,8 +1124,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         /* Copy curve ID if supported */
         for (i = 0; i < num_curves; i++, pcurves += 2) {
             if (tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
-                if (!WPACKET_put_bytes(pkt, pcurves[0], 1)
-                    || !WPACKET_put_bytes(pkt, pcurves[1], 1)) {
+                if (!WPACKET_put_bytes_u8(pkt, pcurves[0])
+                    || !WPACKET_put_bytes_u8(pkt, pcurves[1])) {
                         SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
                                ERR_R_INTERNAL_ERROR);
                         return 0;
@@ -1160,7 +1160,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             s->tlsext_session_ticket->data == NULL)
             goto skip_ext;
 
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_session_ticket, 2)
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_session_ticket)
                 || !WPACKET_sub_memcpy_u16(pkt, s->session->tlsext_tick,
                                            ticklen)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
@@ -1175,7 +1175,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 
         salglen = tls12_get_psigalgs(s, &salg);
 
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_signature_algorithms, 2)
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signature_algorithms)
                    /* Sub-packet for sig-algs extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
                    /* Sub-packet for the actual list */
@@ -1191,10 +1191,10 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
     if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
         int i;
 
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_status_request, 2)
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
                    /* Sub-packet for status request extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes(pkt, TLSEXT_STATUSTYPE_ocsp, 1)
+                || !WPACKET_put_bytes_u8(pkt, TLSEXT_STATUSTYPE_ocsp)
                    /* Sub-packet for the ids */
                 || !WPACKET_start_sub_packet_u16(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
@@ -1255,10 +1255,10 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         else
             mode = SSL_DTLSEXT_HB_ENABLED;
 
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_heartbeat, 2)
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_heartbeat)
                    /* Sub-packet for Hearbeat extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes(pkt, mode, 1)
+                || !WPACKET_put_bytes_u8(pkt, mode)
                 || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -1272,8 +1272,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
          * The client advertises an empty extension to indicate its support
          * for Next Protocol Negotiation
          */
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_next_proto_neg, 2)
-                || !WPACKET_put_bytes(pkt, 0, 2)) {
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_next_proto_neg)
+                || !WPACKET_put_bytes_u16(pkt, 0)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1286,8 +1286,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
      * (see longer comment below)
      */
     if (s->alpn_client_proto_list && !s->s3->tmp.finish_md_len) {
-        if (!WPACKET_put_bytes(pkt,
-                    TLSEXT_TYPE_application_layer_protocol_negotiation, 2)
+        if (!WPACKET_put_bytes_u16(pkt,
+                    TLSEXT_TYPE_application_layer_protocol_negotiation)
                    /* Sub-packet ALPN extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || !WPACKET_sub_memcpy_u16(pkt, s->alpn_client_proto_list,
@@ -1304,7 +1304,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         SRTP_PROTECTION_PROFILE *prof;
         int i, ct;
 
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_use_srtp, 2)
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_use_srtp)
                    /* Sub-packet for SRTP extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
                    /* Sub-packet for the protection profile list */
@@ -1315,7 +1315,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         ct = sk_SRTP_PROTECTION_PROFILE_num(clnt);
         for (i = 0; i < ct; i++) {
             prof = sk_SRTP_PROTECTION_PROFILE_value(clnt, i);
-            if (prof == NULL || !WPACKET_put_bytes(pkt, prof->id, 2)) {
+            if (prof == NULL || !WPACKET_put_bytes_u16(pkt, prof->id)) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
@@ -1333,24 +1333,24 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         return 0;
     }
 
-    if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_encrypt_then_mac, 2)
-            || !WPACKET_put_bytes(pkt, 0, 2)) {
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_encrypt_then_mac)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
 #ifndef OPENSSL_NO_CT
     if (s->ct_validation_callback != NULL) {
-        if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_signed_certificate_timestamp, 2)
-                || !WPACKET_put_bytes(pkt, 0, 2)) {
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signed_certificate_timestamp)
+                || !WPACKET_put_bytes_u16(pkt, 0)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
     }
 #endif
 
-    if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_extended_master_secret, 2)
-            || !WPACKET_put_bytes(pkt, 0, 2)) {
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -1377,7 +1377,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             else
                 hlen = 0;
 
-            if (!WPACKET_put_bytes(pkt, TLSEXT_TYPE_padding, 2)
+            if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_padding)
                     || !WPACKET_sub_allocate_bytes_u16(pkt, hlen, &padbytes)) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
@@ -3131,7 +3131,7 @@ int tls12_get_sigandhash(WPACKET *pkt, const EVP_PKEY *pk, const EVP_MD *md)
     sig_id = tls12_get_sigid(pk);
     if (sig_id == -1)
         return 0;
-    if (!WPACKET_put_bytes(pkt, md_id, 1) || !WPACKET_put_bytes(pkt, sig_id, 1))
+    if (!WPACKET_put_bytes_u8(pkt, md_id) || !WPACKET_put_bytes_u8(pkt, sig_id))
         return 0;
 
     return 1;
@@ -3352,8 +3352,8 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
 
     for (i = 0; i < psiglen; i += 2, psig += 2) {
         if (tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, psig)) {
-            if (!WPACKET_put_bytes(pkt, psig[0], 1)
-                    || !WPACKET_put_bytes(pkt, psig[1], 1))
+            if (!WPACKET_put_bytes_u8(pkt, psig[0])
+                    || !WPACKET_put_bytes_u8(pkt, psig[1]))
                 return 0;
         }
     }
