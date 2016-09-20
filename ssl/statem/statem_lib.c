@@ -74,20 +74,29 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt)
 
 int tls_construct_finished(SSL *s, const char *sender, int slen)
 {
-    unsigned char *p;
     int i;
-    unsigned long l;
+    WPACKET pkt;
 
-    p = ssl_handshake_start(s);
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_FINISHED)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     i = s->method->ssl3_enc->final_finish_mac(s,
                                               sender, slen,
                                               s->s3->tmp.finish_md);
-    if (i <= 0)
-        return 0;
+    if (i <= 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     s->s3->tmp.finish_md_len = i;
-    memcpy(p, s->s3->tmp.finish_md, i);
-    l = i;
+
+    if (!WPACKET_memcpy(&pkt, s->s3->tmp.finish_md, i)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     /*
      * Copy the finished so we can use it for renegotiation checks
@@ -102,12 +111,17 @@ int tls_construct_finished(SSL *s, const char *sender, int slen)
         s->s3->previous_server_finished_len = i;
     }
 
-    if (!ssl_set_handshake_header(s, SSL3_MT_FINISHED, l)) {
+    if (!ssl_close_construct_packet(s, &pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
-        return 0;
+        goto err;
     }
 
     return 1;
+ err:
+    ossl_statem_set_error(s);
+    WPACKET_cleanup(&pkt);
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+    return 0;
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
