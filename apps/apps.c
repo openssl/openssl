@@ -2340,6 +2340,8 @@ int raw_read_stdin(void *buf, int siz)
         return (-1);
 }
 #elif defined(__VMS)
+#include <sys/socket.h>
+
 int raw_read_stdin(void *buf, int siz)
 {
     return recv(fileno_stdin(), buf, siz, 0);
