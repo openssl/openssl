@@ -873,17 +873,31 @@ static int dtls_get_reassembled_message(SSL *s, long *len)
  */
 int dtls_construct_change_cipher_spec(SSL *s)
 {
-    unsigned char *p;
+    WPACKET pkt;
 
-    p = (unsigned char *)s->init_buf->data;
-    *p++ = SSL3_MT_CCS;
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !WPACKET_put_bytes(&pkt, SSL3_MT_CCS, 1)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
     s->init_num = DTLS1_CCS_HEADER_LENGTH;
 
     if (s->version == DTLS1_BAD_VER) {
         s->d1->next_handshake_write_seq++;
-        s2n(s->d1->handshake_write_seq, p);
+
+        if (!WPACKET_put_bytes(&pkt, s->d1->handshake_write_seq, 2)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
         s->init_num += 2;
+    }
+
+    if (!WPACKET_finish(&pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
     }
 
     s->init_off = 0;
@@ -894,10 +908,16 @@ int dtls_construct_change_cipher_spec(SSL *s)
     /* buffer the message to handle re-xmits */
     if (!dtls1_buffer_message(s, 1)) {
         SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
-        return 0;
+        goto err    ;
     }
 
     return 1;
+ err:
+    WPACKET_cleanup(&pkt);
+    ossl_statem_set_error(s);
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+
+    return 0;
 }
 
 #ifndef OPENSSL_NO_SCTP

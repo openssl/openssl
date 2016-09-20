@@ -269,10 +269,18 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
 
 int tls_construct_change_cipher_spec(SSL *s)
 {
-    unsigned char *p;
+    WPACKET pkt;
 
-    p = (unsigned char *)s->init_buf->data;
-    *p = SSL3_MT_CCS;
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !WPACKET_put_bytes(&pkt, SSL3_MT_CCS, 1)
+            || !WPACKET_finish(&pkt)) {
+        WPACKET_cleanup(&pkt);
+        ossl_statem_set_error(s);
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+        return 0;
+    }
+
     s->init_num = 1;
     s->init_off = 0;
 
