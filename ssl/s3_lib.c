@@ -2798,7 +2798,7 @@ int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len)
 int ssl3_set_handshake_header2(SSL *s, WPACKET *pkt, int htype)
 {
     /* Set the content type and 3 bytes for the message len */
-    if (!WPACKET_put_bytes(pkt, htype, 1)
+    if (!WPACKET_put_bytes_u8(pkt, htype)
             || !WPACKET_start_sub_packet_u24(pkt))
         return 0;
 
@@ -3598,7 +3598,7 @@ int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt, size_t *len)
         return 1;
     }
 
-    if (!WPACKET_put_bytes(pkt, c->id & 0xffff, 2))
+    if (!WPACKET_put_bytes_u16(pkt, c->id & 0xffff))
         return 0;
 
     *len = 2;

@@ -272,7 +272,7 @@ int tls_construct_change_cipher_spec(SSL *s)
     WPACKET pkt;
 
     if (!WPACKET_init(&pkt, s->init_buf)
-            || !WPACKET_put_bytes(&pkt, SSL3_MT_CCS, 1)
+            || !WPACKET_put_bytes_u8(&pkt, SSL3_MT_CCS)
             || !WPACKET_finish(&pkt)) {
         WPACKET_cleanup(&pkt);
         ossl_statem_set_error(s);
