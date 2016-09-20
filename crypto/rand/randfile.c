@@ -357,11 +357,7 @@ const char *RAND_file_name(char *buf, size_t size)
      * available.
      */
 
-    if (!buf[0])
-        if (OPENSSL_strlcpy(buf, "/dev/arandom", size) >= size) {
-            return NULL;
-        }
-    if (stat(buf, &sb) == -1)
+    if (!buf[0] || stat(buf, &sb) == -1)
         if (OPENSSL_strlcpy(buf, "/dev/arandom", size) >= size) {
             return NULL;
         }
