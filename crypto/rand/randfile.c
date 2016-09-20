@@ -316,12 +316,14 @@ const char *RAND_file_name(char *buf, size_t size)
         }
     }
 #else
-    if (OPENSSL_issetugid() == 0) {
-        s = getenv("RANDFILE");
-    } else {
+    if (OPENSSL_issetugid() != 0) {
         use_randfile = 0;
-        if (OPENSSL_issetugid() == 0)
+    } else {
+        s = getenv("RANDFILE");
+        if (s == NULL || *s == '\0') {
+            use_randfile = 0;
             s = getenv("HOME");
+        }
     }
 #endif
 #ifdef DEFAULT_HOME
