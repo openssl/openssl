@@ -362,5 +362,5 @@ const char *RAND_file_name(char *buf, size_t size)
             return NULL;
         }
 #endif
-    return buf;
+    return buf[0] ? buf : NULL;
 }
