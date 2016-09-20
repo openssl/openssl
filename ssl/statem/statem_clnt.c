@@ -2625,7 +2625,6 @@ int tls_construct_client_verify(SSL *s)
     unsigned char *sig = NULL;
     WPACKET pkt;
 
-
     if (!WPACKET_init(&pkt, s->init_buf)) {
         /* Should not happen */
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
