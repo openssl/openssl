@@ -769,7 +769,7 @@ int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
     STACK_OF(X509) *chain = NULL;
     X509_STORE *chain_store;
 
-    if (!cpk || !cpk->x509)
+    if (cpk == NULL || cpk->x509 == NULL)
         return 1;
 
     x = cpk->x509;
