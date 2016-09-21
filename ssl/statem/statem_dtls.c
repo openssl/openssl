@@ -877,7 +877,7 @@ int dtls_construct_change_cipher_spec(SSL *s)
 
     if (!WPACKET_init(&pkt, s->init_buf)
             || !WPACKET_put_bytes_u8(&pkt, SSL3_MT_CCS)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -888,7 +888,7 @@ int dtls_construct_change_cipher_spec(SSL *s)
         s->d1->next_handshake_write_seq++;
 
         if (!WPACKET_put_bytes_u16(&pkt, s->d1->handshake_write_seq)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -896,7 +896,7 @@ int dtls_construct_change_cipher_spec(SSL *s)
     }
 
     if (!WPACKET_finish(&pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
