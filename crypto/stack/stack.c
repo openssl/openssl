@@ -126,6 +126,7 @@ int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
 
     if (st->num_alloc <= (size_t)(st->num + 1)) {
         size_t doub_num_alloc = st->num_alloc * 2;
+        const char **tmpdata;
 
         /* Overflow checks */
         if (doub_num_alloc < st->num_alloc)
@@ -135,17 +136,12 @@ int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
         if (doub_num_alloc > SIZE_MAX / sizeof(char *))
             return 0;
 
-        st->data = OPENSSL_realloc((char *)st->data,
-                                   sizeof(char *) * doub_num_alloc);
-        if (st->data == NULL) {
-            /*
-             * Reset these counters to prevent subsequent operations on
-             * (now non-existing) heap memory
-             */
-            st->num_alloc = 0;
-            st->num = 0;
+        tmpdata = OPENSSL_realloc((char *)st->data,
+                                  sizeof(char *) * doub_num_alloc);
+        if (tmpdata == NULL)
             return 0;
-        }
+
+        st->data = tmpdata;
         st->num_alloc = doub_num_alloc;
     }
     if ((loc >= st->num) || (loc < 0)) {
