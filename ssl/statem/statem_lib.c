@@ -276,7 +276,7 @@ int tls_construct_change_cipher_spec(SSL *s)
             || !WPACKET_finish(&pkt)) {
         WPACKET_cleanup(&pkt);
         ossl_statem_set_error(s);
-        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         return 0;
     }

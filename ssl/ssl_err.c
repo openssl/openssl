@@ -239,6 +239,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "tls_client_key_exchange_post_work"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST),
      "tls_construct_certificate_request"},
+    {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CHANGE_CIPHER_SPEC),
+     "tls_construct_change_cipher_spec"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CKE_DHE), "tls_construct_cke_dhe"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CKE_ECDHE), "tls_construct_cke_ecdhe"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CKE_GOST), "tls_construct_cke_gost"},
