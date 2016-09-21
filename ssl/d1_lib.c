@@ -437,8 +437,8 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned char seq[SEQ_NUM_SIZE];
     const unsigned char *data;
-    unsigned char *p, *buf;
-    unsigned long reclen, fragoff, fraglen, msglen;
+    unsigned char *buf;
+    unsigned long fragoff, fraglen, msglen;
     unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BUF_MEM *bufm;
@@ -680,6 +680,10 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
         }
 
         if (next == LISTEN_SEND_VERIFY_REQUEST) {
+            WPACKET wpkt;
+            unsigned int version;
+            size_t wreclen;
+
             /*
              * There was no cookie in the ClientHello so we need to send a
              * HelloVerifyRequest. If this fails we do not worry about trying
@@ -703,60 +707,76 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
                 return -1;
             }
 
-            p = &buf[DTLS1_RT_HEADER_LENGTH];
-            msglen = dtls_raw_hello_verify_request(p + DTLS1_HM_HEADER_LENGTH,
-                                                   cookie, cookielen);
-
-            *p++ = DTLS1_MT_HELLO_VERIFY_REQUEST;
-
-            /* Message length */
-            l2n3(msglen, p);
-
-            /* Message sequence number is always 0 for a HelloVerifyRequest */
-            s2n(0, p);
-
-            /*
-             * We never fragment a HelloVerifyRequest, so fragment offset is 0
-             * and fragment length is message length
-             */
-            l2n3(0, p);
-            l2n3(msglen, p);
-
-            /* Set reclen equal to length of whole handshake message */
-            reclen = msglen + DTLS1_HM_HEADER_LENGTH;
-
-            /* Add the record header */
-            p = buf;
-
-            *(p++) = SSL3_RT_HANDSHAKE;
             /*
              * Special case: for hello verify request, client version 1.0 and we
              * haven't decided which version to use yet send back using version
              * 1.0 header: otherwise some clients will ignore it.
              */
-            if (s->method->version == DTLS_ANY_VERSION) {
-                *(p++) = DTLS1_VERSION >> 8;
-                *(p++) = DTLS1_VERSION & 0xff;
-            } else {
-                *(p++) = s->version >> 8;
-                *(p++) = s->version & 0xff;
+            version = (s->method->version == DTLS_ANY_VERSION) ? DTLS1_VERSION
+                                                               : s->version;
+
+            /* Construct the record and message headers */
+            if (!WPACKET_init(&wpkt, s->init_buf)
+                    || !WPACKET_put_bytes_u8(&wpkt, SSL3_RT_HANDSHAKE)
+                    || !WPACKET_put_bytes_u16(&wpkt, version)
+                       /*
+                        * Record sequence number is always the same as in the
+                        * received ClientHello
+                        */
+                    || !WPACKET_memcpy(&wpkt, seq, SEQ_NUM_SIZE)
+                       /* End of record, start sub packet for message */
+                    || !WPACKET_start_sub_packet_u16(&wpkt)
+                       /* Message type */
+                    || !WPACKET_put_bytes_u8(&wpkt,
+                                             DTLS1_MT_HELLO_VERIFY_REQUEST)
+                       /*
+                        * Message length - doesn't follow normal TLS convention:
+                        * the length isn't the last thing in the message header.
+                        * We'll need to fill this in later when we know the
+                        * length. Set it to zero for now
+                        */
+                    || !WPACKET_put_bytes_u24(&wpkt, 0)
+                       /*
+                        * Message sequence number is always 0 for a
+                        * HelloVerifyRequest
+                        */
+                    || !WPACKET_put_bytes_u16(&wpkt, 0)
+                       /*
+                        * We never fragment a HelloVerifyRequest, so fragment
+                        * offset is 0
+                        */
+                    || !WPACKET_put_bytes_u24(&wpkt, 0)
+                       /*
+                        * Fragment length is the same as message length, but
+                        * this *is* the last thing in the message header so we
+                        * can just start a sub-packet. No need to come back
+                        * later for this one.
+                        */
+                    || !WPACKET_start_sub_packet_u24(&wpkt)
+                       /* Create the actual HelloVerifyRequest body */
+                    || !dtls_raw_hello_verify_request(&wpkt, cookie, cookielen)
+                       /* Close message body */
+                    || !WPACKET_close(&wpkt)
+                       /* Close record body */
+                    || !WPACKET_close(&wpkt)
+                    || !WPACKET_get_total_written(&wpkt, &wreclen)
+                    || !WPACKET_finish(&wpkt)) {
+                SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
+                WPACKET_cleanup(&wpkt);
+                /* This is fatal */
+                return -1;
             }
 
             /*
-             * Record sequence number is always the same as in the received
-             * ClientHello
+             * Fix up the message len in the message header. Its the same as the
+             * fragment len which has been filled in by WPACKET, so just copy
+             * that. Destination for the message len is after the record header
+             * plus one byte for the message content type. The source is the
+             * last 3 bytes of the message header
              */
-            memcpy(p, seq, SEQ_NUM_SIZE);
-            p += SEQ_NUM_SIZE;
-
-            /* Length */
-            s2n(reclen, p);
-
-            /*
-             * Set reclen equal to length of whole record including record
-             * header
-             */
-            reclen += DTLS1_RT_HEADER_LENGTH;
+            memcpy(&buf[DTLS1_RT_HEADER_LENGTH + 1],
+                   &buf[DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH - 3],
+                   3);
 
             if (s->msg_callback)
                 s->msg_callback(1, 0, SSL3_RT_HEADER, buf,
@@ -778,7 +798,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             BIO_ADDR_free(tmpclient);
             tmpclient = NULL;
 
-            if (BIO_write(wbio, buf, reclen) < (int)reclen) {
+            if (BIO_write(wbio, buf, wreclen) < (int)wreclen) {
                 if (BIO_should_retry(wbio)) {
                     /*
                      * Non-blocking IO...but we're stateless, so we're just

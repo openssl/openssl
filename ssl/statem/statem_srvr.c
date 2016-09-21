@@ -840,32 +840,21 @@ int tls_construct_hello_request(SSL *s)
     return 1;
 }
 
-unsigned int dtls_raw_hello_verify_request(unsigned char *buf,
-                                           unsigned char *cookie,
-                                           unsigned char cookie_len)
+int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
+                                  unsigned char cookie_len)
 {
-    unsigned int msg_len;
-    unsigned char *p;
-
-    p = buf;
     /* Always use DTLS 1.0 version: see RFC 6347 */
-    *(p++) = DTLS1_VERSION >> 8;
-    *(p++) = DTLS1_VERSION & 0xFF;
+    if (!WPACKET_put_bytes_u16(pkt, DTLS1_VERSION)
+            || !WPACKET_sub_memcpy_u8(pkt, cookie, cookie_len))
+        return 0;
 
-    *(p++) = (unsigned char)cookie_len;
-    memcpy(p, cookie, cookie_len);
-    p += cookie_len;
-    msg_len = p - buf;
-
-    return msg_len;
+    return 1;
 }
 
 int dtls_construct_hello_verify_request(SSL *s)
 {
-    unsigned int len;
-    unsigned char *buf;
-
-    buf = (unsigned char *)s->init_buf->data;
+    size_t msglen;
+    WPACKET pkt;
 
     if (s->ctx->app_gen_cookie_cb == NULL ||
         s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
@@ -877,14 +866,26 @@ int dtls_construct_hello_verify_request(SSL *s)
         return 0;
     }
 
-    len = dtls_raw_hello_verify_request(&buf[DTLS1_HM_HEADER_LENGTH],
-                                        s->d1->cookie, s->d1->cookie_len);
-
-    dtls1_set_message_header(s, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0, len);
-    len += DTLS1_HM_HEADER_LENGTH;
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !ssl_set_handshake_header2(s, &pkt,
+                                          DTLS1_MT_HELLO_VERIFY_REQUEST)
+            || !dtls_raw_hello_verify_request(&pkt, s->d1->cookie,
+                                              s->d1->cookie_len)
+               /*
+                * We don't call close_construct_packet() because we don't want
+                * to buffer this message
+                */
+            || !WPACKET_close(&pkt)
+            || !WPACKET_get_length(&pkt, &msglen)
+            || !WPACKET_finish(&pkt)) {
+        SSLerr(SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST, ERR_R_INTERNAL_ERROR);
+        WPACKET_cleanup(&pkt);
+        ossl_statem_set_error(s);
+        return 0;
+    }
 
     /* number of bytes to write */
-    s->init_num = len;
+    s->init_num = (int)msglen;
     s->init_off = 0;
 
     return 1;
