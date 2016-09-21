@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.1.0 and 1.1.1 [xx XXX xxxx]
+ Changes between 1.1.0a and 1.1.1 [xx XXX xxxx]
 
   *)
 
@@ -10,6 +10,81 @@
      using the algorithm defined in
      https://www.akkadia.org/drepper/SHA-crypt.txt
      [Richard Levitte]
+
+ Changes between 1.1.0 and 1.1.0a [22 Sep 2016]
+
+  *) OCSP Status Request extension unbounded memory growth
+
+     A malicious client can send an excessively large OCSP Status Request
+     extension. If that client continually requests renegotiation, sending a
+     large OCSP Status Request extension each time, then there will be unbounded
+     memory growth on the server. This will eventually lead to a Denial Of
+     Service attack through memory exhaustion. Servers with a default
+     configuration are vulnerable even if they do not support OCSP. Builds using
+     the "no-ocsp" build time option are not affected.
+
+     This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
+     (CVE-2016-6304)
+     [Matt Caswell]
+
+  *) SSL_peek() hang on empty record
+
+     OpenSSL 1.1.0 SSL/TLS will hang during a call to SSL_peek() if the peer
+     sends an empty record. This could be exploited by a malicious peer in a
+     Denial Of Service attack.
+
+     This issue was reported to OpenSSL by Alex Gaynor.
+     (CVE-2016-6305)
+     [Matt Caswell]
+
+  *) Excessive allocation of memory in tls_get_message_header() and
+     dtls1_preprocess_fragment()
+
+     A (D)TLS message includes 3 bytes for its length in the header for the
+     message. This would allow for messages up to 16Mb in length. Messages of
+     this length are excessive and OpenSSL includes a check to ensure that a
+     peer is sending reasonably sized messages in order to avoid too much memory
+     being consumed to service a connection. A flaw in the logic of version
+     1.1.0 means that memory for the message is allocated too early, prior to
+     the excessive message length check. Due to way memory is allocated in
+     OpenSSL this could mean an attacker could force up to 21Mb to be allocated
+     to service a connection. This could lead to a Denial of Service through
+     memory exhaustion. However, the excessive message length check still takes
+     place, and this would cause the connection to immediately fail. Assuming
+     that the application calls SSL_free() on the failed conneciton in a timely
+     manner then the 21Mb of allocated memory will then be immediately freed
+     again. Therefore the excessive memory allocation will be transitory in
+     nature. This then means that there is only a security impact if:
+
+     1) The application does not call SSL_free() in a timely manner in the event
+     that the connection fails
+     or
+     2) The application is working in a constrained environment where there is
+     very little free memory
+     or
+     3) The attacker initiates multiple connection attempts such that there are
+     multiple connections in a state where memory has been allocated for the
+     connection; SSL_free() has not yet been called; and there is insufficient
+     memory to service the multiple requests.
+
+     Except in the instance of (1) above any Denial Of Service is likely to be
+     transitory because as soon as the connection fails the memory is
+     subsequently freed again in the SSL_free() call. However there is an
+     increased risk during this period of application crashes due to the lack of
+     memory - which would then mean a more serious Denial of Service.
+
+     This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
+     (CVE-2016-6307 and CVE-2016-6308)
+     [Matt Caswell]
+
+  *) solaris-x86-cc, i.e. 32-bit configuration with vendor compiler,
+     had to be removed. Primary reason is that vendor assembler can't
+     assemble our modules with -KPIC flag. As result it, assembly
+     support, was not even available as option. But its lack means
+     lack of side-channel resistant code, which is incompatible with
+     security by todays standards. Fortunately gcc is readily available
+     prepackaged option, which we firmly point at...
+     [Andy Polyakov]
 
  Changes between 1.0.2h and 1.1.0  [25 Aug 2016]
 
