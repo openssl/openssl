@@ -417,9 +417,13 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
             SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
             goto f_err;
         }
+        /*
+         * Make buffer slightly larger than message length as a precaution
+         * against small OOB reads e.g. CVE-2016-6306
+         */
         if (l
             && !BUF_MEM_grow_clean(s->init_buf,
-                                   (int)l + SSL3_HM_HEADER_LENGTH)) {
+                                   (int)l + SSL3_HM_HEADER_LENGTH + 16)) {
             SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
             goto err;
         }
