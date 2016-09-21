@@ -178,6 +178,8 @@ typedef struct record_layer_st {
     unsigned char write_sequence[SEQ_NUM_SIZE];
     /* Set to true if this is the first record in a connection */
     unsigned int is_first_record;
+    /* Count of the number of consecutive warning alerts received */
+    unsigned int alert_count;
     DTLS_RECORD_LAYER *d;
 } RECORD_LAYER;
 
