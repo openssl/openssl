@@ -1950,9 +1950,8 @@ void dtls1_start_timer(SSL *s);
 void dtls1_stop_timer(SSL *s);
 __owur int dtls1_is_timer_expired(SSL *s);
 void dtls1_double_timeout(SSL *s);
-__owur unsigned int dtls_raw_hello_verify_request(unsigned char *buf,
-                                                  unsigned char *cookie,
-                                                  unsigned char cookie_len);
+__owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
+                                         unsigned char cookie_len);
 __owur int dtls1_send_newsession_ticket(SSL *s);
 __owur unsigned int dtls1_min_mtu(SSL *s);
 void dtls1_hm_fragment_free(hm_fragment *frag);
