@@ -7,7 +7,12 @@
 
   Major changes between OpenSSL 1.1.0 and OpenSSL 1.1.0a [under development]
 
-      o
+      o OCSP Status Request extension unbounded memory growth (CVE-2016-6304)
+      o SSL_peek() hang on empty record (CVE-2016-6305)
+      o Excessive allocation of memory in tls_get_message_header()
+       (CVE-2016-6307)
+      o Excessive allocation of memory in dtls1_preprocess_fragment()
+       (CVE-2016-6308)
 
   Major changes between OpenSSL 1.0.2h and OpenSSL 1.1.0 [25 Aug 2016]
 
