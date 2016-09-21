@@ -497,11 +497,6 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
             SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
             goto f_err;
         }
-        if (l > (INT_MAX - 4)) { /* BUF_MEM_grow takes an 'int' parameter */
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
-            goto f_err;
-        }
         if (l && !BUF_MEM_grow_clean(s->init_buf, (int)l + 4)) {
             SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
             goto err;
