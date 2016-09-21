@@ -4,7 +4,14 @@
 
  Changes between 1.1.0 and 1.1.0a [xx XXX xxxx]
 
-  *)
+  *) solaris-x86-cc, i.e. 32-bit configuration with vendor compiler,
+     had to be removed. Primary reason is that vendor assembler can't
+     assemble our modules with -KPIC flag. As result it, assembly
+     support, was not even available as option. But its lack means
+     lack of side-channel resistant code, which is incompatible with
+     security by todays standards. Fortunately gcc is readily available
+     prepackaged option, which we firmly point at...
+     [Andy Polyakov]
 
  Changes between 1.0.2h and 1.1.0  [25 Aug 2016]
 
