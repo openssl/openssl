@@ -671,6 +671,9 @@ int WPACKET_start_sub_packet(WPACKET *pkt);
  * Allocate bytes in the WPACKET for the output. This reserves the bytes
  * and counts them as "written", but doesn't actually do the writing. A pointer
  * to the allocated bytes is stored in |*allocbytes|.
+ * WARNING: the allocated bytes must be filled in immediately, without further
+ * WPACKET_* calls. If not then the underlying buffer may be realloc'd and
+ * change its location.
  */
 int WPACKET_allocate_bytes(WPACKET *pkt, size_t bytes,
                            unsigned char **allocbytes);
@@ -715,7 +718,7 @@ int WPACKET_put_bytes__(WPACKET *pkt, unsigned int val, size_t bytes);
 #define WPACKET_put_bytes_u16(pkt, val) \
     WPACKET_put_bytes__((pkt), (val), 2)
 #define WPACKET_put_bytes_u24(pkt, val) \
-    WPACKET_put_bytes__((pkt), (val)), 3)
+    WPACKET_put_bytes__((pkt), (val), 3)
 #define WPACKET_put_bytes_u32(pkt, val) \
     WPACKET_sub_allocate_bytes__((pkt), (val), 4)
 
