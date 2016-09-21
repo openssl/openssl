@@ -301,7 +301,7 @@ int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param,
     return 1;
 }
 
-unsigned long X509_VERIFY_PARAM_get_flags(const X509_VERIFY_PARAM *param)
+unsigned long X509_VERIFY_PARAM_get_flags(X509_VERIFY_PARAM *param)
 {
     return param->flags;
 }
@@ -396,7 +396,7 @@ void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
     param->hostflags = flags;
 }
 
-const char *X509_VERIFY_PARAM_get0_peername(const X509_VERIFY_PARAM *param)
+char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param)
 {
     return param->peername;
 }

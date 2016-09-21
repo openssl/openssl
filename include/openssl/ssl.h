@@ -1493,7 +1493,7 @@ __owur int SSL_set_trust(SSL *s, int trust);
 
 __owur int SSL_set1_host(SSL *s, const char *hostname);
 __owur int SSL_add1_host(SSL *s, const char *hostname);
-__owur const char *SSL_get0_peername(const SSL *s);
+__owur const char *SSL_get0_peername(SSL *s);
 void SSL_set_hostflags(SSL *s, unsigned int flags);
 
 __owur int SSL_CTX_dane_enable(SSL_CTX *ctx);
