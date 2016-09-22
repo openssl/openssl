@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2h and 1.0.2i [xx XXX xxxx]
+ Changes between 1.0.2h and 1.0.2i [22 Sep 2016]
 
   *) OCSP Status Request extension unbounded memory growth
 
