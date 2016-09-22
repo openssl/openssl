@@ -3005,12 +3005,12 @@ int ssl3_send_client_key_exchange(SSL *s)
                     goto err;
                 }
                 if (alg_k & SSL_kOQSKEX_GENERIC) {
-                    if ((oqskex_kex = OQS_KEX_new(oqskex_rand, NULL, 0)) == NULL) {
+                    if ((oqskex_kex = OQS_KEX_new(oqskex_rand, NULL, 0, NULL)) == NULL) {
                         SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                         goto err;
                     }
                 } else if (alg_k & SSL_kOQSKEX_RLWE_BCNS15) {
-                    if ((oqskex_kex = OQS_KEX_rlwe_bcns15_new(oqskex_rand, NULL, 0)) == NULL) {
+                    if ((oqskex_kex = OQS_KEX_rlwe_bcns15_new(oqskex_rand, NULL, 0, NULL)) == NULL) {
                         SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                         goto err;
                     }
@@ -3119,12 +3119,12 @@ int ssl3_send_client_key_exchange(SSL *s)
                 goto err;
             }
             if (alg_k & SSL_kOQSKEX_GENERIC) {
-                if ((oqskex_kex = OQS_KEX_new(oqskex_rand, NULL, 0)) == NULL) {
+                if ((oqskex_kex = OQS_KEX_new(oqskex_rand, NULL, 0, NULL)) == NULL) {
                     SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                     goto err;
                 }
             } else if (alg_k & SSL_kOQSKEX_RLWE_BCNS15) {
-                if ((oqskex_kex = OQS_KEX_rlwe_bcns15_new(oqskex_rand, NULL, 0)) == NULL) {
+                if ((oqskex_kex = OQS_KEX_rlwe_bcns15_new(oqskex_rand, NULL, 0, NULL)) == NULL) {
                     SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                     goto err;
                 }

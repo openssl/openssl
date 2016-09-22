@@ -2447,9 +2447,9 @@ int MAIN(int argc, char **argv)
             rsa_count = 1;
         } else {
             if (j == R_OQSKEX_GENERIC) {
-                oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], NULL, 0);
+                oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], NULL, 0, NULL);
             } else if (j == R_OQSKEX_RLWE_BCNS15) {
-                oqskex_kex[j] = OQS_KEX_rlwe_bcns15_new(oqskex_rand[j], NULL, 0);
+                oqskex_kex[j] = OQS_KEX_rlwe_bcns15_new(oqskex_rand[j], NULL, 0, NULL);
             }
             if (oqskex_kex[j] == NULL) {
                 BIO_printf(bio_err,"OQSKEX failure - OQS_KEX_new.\n");
