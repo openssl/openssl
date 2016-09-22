@@ -549,7 +549,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                                            (int)s->s3->tmp.message_size
                                            + SSL3_HM_HEADER_LENGTH)) {
                 ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-                SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER, ERR_R_BUF_LIB);
+                SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_BUF_LIB);
                 return SUB_STATE_ERROR;
             }
 
