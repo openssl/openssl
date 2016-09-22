@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.1u and OpenSSL 1.0.1v [under development]
+
+      o
+
   Major changes between OpenSSL 1.0.1t and OpenSSL 1.0.1u [22 Sep 2016]
 
       o OCSP Status Request extension unbounded memory growth (CVE-2016-6304)
