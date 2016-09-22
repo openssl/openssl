@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.1.0a and OpenSSL 1.1.0b [under development]
+
+      o
+
   Major changes between OpenSSL 1.1.0 and OpenSSL 1.1.0a [22 Sep 2016]
 
       o OCSP Status Request extension unbounded memory growth (CVE-2016-6304)
