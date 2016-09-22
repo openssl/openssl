@@ -85,7 +85,7 @@ static void *(*malloc_ex_func) (size_t, const char *file, int line)
 #ifdef OPENSSL_SYS_VMS
 # if __INITIAL_POINTER_SIZE == 64
 #  define realloc _realloc64
-# else
+# elif __INITIAL_POINTER_SIZE == 32
 #  define realloc _realloc32
 # endif
 #endif

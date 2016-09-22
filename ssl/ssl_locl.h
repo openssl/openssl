@@ -594,6 +594,8 @@ typedef struct {
  */
 # define SSL_EXT_FLAG_SENT       0x2
 
+# define MAX_WARN_ALERT_COUNT    5
+
 typedef struct {
     custom_ext_method *meths;
     size_t meths_count;
@@ -701,6 +703,8 @@ typedef struct cert_st {
     unsigned char *alpn_proposed;   /* server */
     unsigned int alpn_proposed_len;
     int alpn_sent;                  /* client */
+    /* Count of the number of consecutive warning alerts received */
+    unsigned int alert_count;
 } CERT;
 
 typedef struct sess_cert_st {
