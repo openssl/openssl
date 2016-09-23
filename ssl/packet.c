@@ -24,12 +24,16 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 
     if (pkt->buf->length - pkt->written < len) {
         size_t newlen;
+        size_t reflen;
 
-        if (pkt->buf->length > SIZE_MAX / 2) {
+        reflen = (len > pkt->buf->length) ? len : pkt->buf->length;
+
+        if (reflen > SIZE_MAX / 2) {
             newlen = SIZE_MAX;
         } else {
-            newlen = (pkt->buf->length == 0) ? DEFAULT_BUF_SIZE
-                                             : pkt->buf->length * 2;
+            newlen = reflen * 2;
+            if (newlen < DEFAULT_BUF_SIZE)
+                newlen = DEFAULT_BUF_SIZE;
         }
         if (BUF_MEM_grow(pkt->buf, newlen) == 0)
             return 0;
