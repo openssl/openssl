@@ -394,7 +394,7 @@ PEM_write_bio_CMS                       393	1_1_0	EXIST::FUNCTION:CMS
 ASN1_OBJECT_new                         394	1_1_0	EXIST::FUNCTION:
 EVP_des_ede3_cfb8                       395	1_1_0	EXIST::FUNCTION:DES
 BIO_dump_indent_fp                      396	1_1_0	EXIST::FUNCTION:STDIO
-X509_NAME_ENTRY_get_data                397	1_1_0	EXIST::FUNCTION:
+X509_NAME_ENTRY_get0_data               397	1_1_0	EXIST::FUNCTION:
 BIO_socket                              398	1_1_0	EXIST::FUNCTION:SOCK
 EVP_PKEY_meth_get_derive                399	1_1_0	EXIST::FUNCTION:
 ASN1_STRING_clear_free                  400	1_1_0	EXIST::FUNCTION:
@@ -1632,7 +1632,7 @@ ASN1_SCTX_new                           1620	1_1_0	EXIST::FUNCTION:
 X509V3_EXT_get                          1621	1_1_0	EXIST::FUNCTION:
 OCSP_id_cmp                             1622	1_1_0	EXIST::FUNCTION:OCSP
 NCONF_dump_bio                          1623	1_1_0	EXIST::FUNCTION:
-X509_NAME_get_entry                     1624	1_1_0	EXIST::FUNCTION:
+X509_NAME_get0_entry                    1624	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_get1_DH                        1625	1_1_0	EXIST::FUNCTION:DH
 CRYPTO_gcm128_aad                       1626	1_1_0	EXIST::FUNCTION:
 EVP_des_cfb8                            1627	1_1_0	EXIST::FUNCTION:DES
@@ -1954,7 +1954,7 @@ i2d_OCSP_SERVICELOC                     1939	1_1_0	EXIST::FUNCTION:OCSP
 EC_POINT_copy                           1940	1_1_0	EXIST::FUNCTION:EC
 X509V3_EXT_CRL_add_nconf                1941	1_1_0	EXIST::FUNCTION:
 SHA256_Init                             1942	1_1_0	EXIST::FUNCTION:
-X509_NAME_ENTRY_get_object              1943	1_1_0	EXIST::FUNCTION:
+X509_NAME_ENTRY_get0_object             1943	1_1_0	EXIST::FUNCTION:
 ASN1_ENUMERATED_free                    1944	1_1_0	EXIST::FUNCTION:
 X509_CRL_set_meth_data                  1945	1_1_0	EXIST::FUNCTION:
 EVP_aes_192_cfb1                        1946	1_1_0	EXIST::FUNCTION:
@@ -4206,3 +4206,6 @@ ECPARAMETERS_new                        4156	1_1_0	EXIST::FUNCTION:EC
 OCSP_RESPID_set_by_name                 4157	1_1_0a	EXIST::FUNCTION:OCSP
 OCSP_RESPID_set_by_key                  4158	1_1_0a	EXIST::FUNCTION:OCSP
 OCSP_RESPID_match                       4159	1_1_0a	EXIST::FUNCTION:OCSP
+X509_NAME_get0m_entry                   4160	1_1_0	EXIST::FUNCTION
+X509_NAME_ENTRY_get0m_object            4161	1_1_0	EXIST::FUNCTION
+X509_NAME_ENTRY_get0m_data              4162	1_1_0	EXIST::FUNCTION

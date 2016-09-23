@@ -795,7 +795,7 @@ void SSL_set_hostflags(SSL *s, unsigned int flags)
     X509_VERIFY_PARAM_set_hostflags(s->param, flags);
 }
 
-const char *SSL_get0_peername(SSL *s)
+const char *SSL_get0_peername(const SSL *s)
 {
     return X509_VERIFY_PARAM_get0_peername(s->param);
 }

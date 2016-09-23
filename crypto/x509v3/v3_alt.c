@@ -301,9 +301,10 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 {
     X509_NAME *nm;
     ASN1_IA5STRING *email = NULL;
-    X509_NAME_ENTRY *ne;
+    const X509_NAME_ENTRY *ne;
     GENERAL_NAME *gen = NULL;
-    int i;
+    int i = -1;
+
     if (ctx != NULL && ctx->flags == CTX_TEST)
         return 1;
     if (!ctx || (!ctx->subject_cert && !ctx->subject_req)) {
@@ -317,14 +318,14 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
         nm = X509_REQ_get_subject_name(ctx->subject_req);
 
     /* Now add any email address(es) to STACK */
-    i = -1;
     while ((i = X509_NAME_get_index_by_NID(nm,
                                            NID_pkcs9_emailAddress, i)) >= 0) {
-        ne = X509_NAME_get_entry(nm, i);
-        email = ASN1_STRING_dup(X509_NAME_ENTRY_get_data(ne));
+        ne = X509_NAME_get0_entry(nm, i);
+        email = ASN1_STRING_dup(X509_NAME_ENTRY_get0_data(ne));
         if (move_p) {
-            X509_NAME_delete_entry(nm, i);
-            X509_NAME_ENTRY_free(ne);
+            X509_NAME_ENTRY *del = X509_NAME_delete_entry(nm, i);
+
+            X509_NAME_ENTRY_free(del);
             i--;
         }
         if (email == NULL || (gen = GENERAL_NAME_new()) == NULL) {

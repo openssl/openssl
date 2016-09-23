@@ -601,9 +601,9 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
              * Check that the last subject component isn't part of a
              * multivalued RDN
              */
-            if (X509_NAME_ENTRY_set(X509_NAME_get_entry(tmpsubject,
+            if (X509_NAME_ENTRY_set(X509_NAME_get0_entry(tmpsubject,
                                                         last_object_loc))
-                == X509_NAME_ENTRY_set(X509_NAME_get_entry(tmpsubject,
+                == X509_NAME_ENTRY_set(X509_NAME_get0_entry(tmpsubject,
                                                            last_object_loc - 1))) {
                 err = X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
                 goto proxy_name_done;
@@ -623,7 +623,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
             tmpentry =
                 X509_NAME_delete_entry(tmpsubject, last_object_loc);
             last_object_nid =
-                OBJ_obj2nid(X509_NAME_ENTRY_get_object(tmpentry));
+                OBJ_obj2nid(X509_NAME_ENTRY_get0_object(tmpentry));
 
             if (last_object_nid != NID_commonName
                 || X509_NAME_cmp(tmpsubject, tmpissuer) != 0) {

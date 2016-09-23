@@ -204,8 +204,8 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
             i = X509_NAME_get_index_by_NID(nm, NID_pkcs9_emailAddress, i);
             if (i == -1)
                 break;
-            ne = X509_NAME_get_entry(nm, i);
-            gntmp.d.rfc822Name = X509_NAME_ENTRY_get_data(ne);
+            ne = X509_NAME_get0_entry(nm, i);
+            gntmp.d.rfc822Name = (ASN1_STRING *) X509_NAME_ENTRY_get0_data(ne);
             if (gntmp.d.rfc822Name->type != V_ASN1_IA5STRING)
                 return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 
@@ -245,13 +245,14 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
     /* Process any commonName attributes in subject name */
 
     for (i = -1;;) {
-        X509_NAME_ENTRY *ne;
-        ASN1_STRING *hn;
+        const X509_NAME_ENTRY *ne;
+        const ASN1_STRING *hn;
+
         i = X509_NAME_get_index_by_NID(nm, NID_commonName, i);
         if (i == -1)
             break;
-        ne = X509_NAME_get_entry(nm, i);
-        hn = X509_NAME_ENTRY_get_data(ne);
+        ne = X509_NAME_get0_entry(nm, i);
+        hn = X509_NAME_ENTRY_get0_data(ne);
         /* Only process attributes that look like host names */
         if (asn1_valid_host(hn)) {
             unsigned char *h;
