@@ -885,6 +885,8 @@ int dtls_construct_hello_verify_request(SSL *s)
     }
 
     /* number of bytes to write */
+    s->d1->w_msg_hdr.msg_len = msglen - DTLS1_HM_HEADER_LENGTH;
+    s->d1->w_msg_hdr.frag_len = msglen - DTLS1_HM_HEADER_LENGTH;
     s->init_num = (int)msglen;
     s->init_off = 0;
 
