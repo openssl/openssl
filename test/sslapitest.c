@@ -28,6 +28,88 @@ static int ocsp_client_called = 0;
 static int cdummyarg = 1;
 static X509 *ocspcert = NULL;
 
+#define NUM_EXTRA_CERTS 40
+
+static int execute_test_large_message(const SSL_METHOD *smeth,
+                                      const SSL_METHOD *cmeth)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    int i;
+    BIO *certbio = BIO_new_file(cert, "r");
+    X509 *chaincert = NULL;
+    int certlen;
+
+    if (certbio == NULL) {
+        printf("Can't load the certficate file\n");
+        goto end;
+    }
+    chaincert = PEM_read_bio_X509(certbio, NULL, NULL, NULL);
+
+    if (!create_ssl_ctx_pair(smeth, cmeth, &sctx,
+                             &cctx, cert, privkey)) {
+        printf("Unable to create SSL_CTX pair\n");
+        goto end;
+    }
+    BIO_free(certbio);
+    certbio = NULL;
+
+    /*
+     * We assume the supplied certificate is big enough so that if we add
+     * NUM_EXTRA_CERTS it will make the overall message large enough. The
+     * default buffer size is requested to be 16k, but due to the way BUF_MEM
+     * works, it ends up allocing a little over 21k (16 * 4/3). So, in this test
+     * we need to have a message larger than that.
+     */
+    certlen = i2d_X509(chaincert, NULL);
+    OPENSSL_assert((certlen * NUM_EXTRA_CERTS)
+                   > ((SSL3_RT_MAX_PLAIN_LENGTH * 4) / 3));
+    for (i = 0; i < NUM_EXTRA_CERTS; i++) {
+        if (!X509_up_ref(chaincert)) {
+            printf("Unable to up ref cert\n");
+            goto end;
+        }
+        if (!SSL_CTX_add_extra_chain_cert(sctx, chaincert)) {
+            printf("Unable to add extra chain cert %d\n", i);
+            X509_free(chaincert);
+            goto end;
+        }
+    }
+
+    if (!create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)) {
+        printf("Unable to create SSL objects\n");
+        goto end;
+    }
+
+    if (!create_ssl_connection(serverssl, clientssl)) {
+        printf("Unable to create SSL connection\n");
+        goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    X509_free(chaincert);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+static int test_large_message_tls(void)
+{
+    return execute_test_large_message(TLS_server_method(), TLS_client_method());
+}
+
+static int test_large_message_dtls(void)
+{
+    return execute_test_large_message(DTLS_server_method(),
+                                      DTLS_client_method());
+}
+
 static int ocsp_server_cb(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
@@ -774,6 +856,8 @@ int main(int argc, char *argv[])
     CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
+    ADD_TEST(test_large_message_tls);
+    ADD_TEST(test_large_message_dtls);
     ADD_TEST(test_tlsext_status_type);
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);
