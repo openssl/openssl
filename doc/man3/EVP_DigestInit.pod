@@ -210,7 +210,7 @@ digest name passed on the command line.
  unsigned char md_value[EVP_MAX_MD_SIZE];
  int md_len, i;
 
- if (!argv[1]) {
+ if (argv[1] == NULL) {
         printf("Usage: mdtest digestname\n");
         exit(1);
  }
