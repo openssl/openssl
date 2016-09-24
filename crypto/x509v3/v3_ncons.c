@@ -247,6 +247,7 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
     for (i = -1;;) {
         X509_NAME_ENTRY *ne;
         ASN1_STRING *hn;
+
         i = X509_NAME_get_index_by_NID(nm, NID_commonName, i);
         if (i == -1)
             break;
