@@ -1040,8 +1040,10 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
     /* Add RI if renegotiating */
     if (s->renegotiate) {
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
-                || !WPACKET_sub_memcpy_u16(pkt, s->s3->previous_client_finished,
-                                   s->s3->previous_client_finished_len)) {
+                || !WPACKET_start_sub_packet_u16(pkt)
+                || !WPACKET_sub_memcpy_u8(pkt, s->s3->previous_client_finished,
+                                   s->s3->previous_client_finished_len)
+                || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
