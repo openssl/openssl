@@ -1561,7 +1561,10 @@ int MAIN(int argc, char **argv)
     SSL_set_connect_state(con);
 
     /* ok, lets connect */
-    width = SSL_get_fd(con) + 1;
+    if (fileno_stdin() > SSL_get_fd(con))
+        width = fileno_stdin() + 1;
+    else
+        width = SSL_get_fd(con) + 1;
 
     read_tty = 1;
     write_tty = 0;
@@ -1744,9 +1747,11 @@ int MAIN(int argc, char **argv)
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined (OPENSSL_SYS_BEOS_R5)
             if (tty_on) {
                 if (read_tty)
-                    openssl_fdset(fileno(stdin), &readfds);
+                    openssl_fdset(fileno_stdin(), &readfds);
+#if !defined(OPENSSL_SYS_VMS)
                 if (write_tty)
-                    openssl_fdset(fileno(stdout), &writefds);
+                    openssl_fdset(fileno_stdout(), &writefds);
+#endif
             }
             if (read_ssl)
                 openssl_fdset(SSL_get_fd(con), &readfds);
@@ -1816,14 +1821,14 @@ int MAIN(int argc, char **argv)
             /* Under BeOS-R5 the situation is similar to DOS */
             i = 0;
             stdin_set = 0;
-            (void)fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
+            (void)fcntl(fileno_stdin(), F_SETFL, O_NONBLOCK);
             if (!write_tty) {
                 if (read_tty) {
                     tv.tv_sec = 1;
                     tv.tv_usec = 0;
                     i = select(width, (void *)&readfds, (void *)&writefds,
                                NULL, &tv);
-                    if (read(fileno(stdin), sbuf, 0) >= 0)
+                    if (read(fileno_stdin(), sbuf, 0) >= 0)
                         stdin_set = 1;
                     if (!i && (stdin_set != 1 || !read_tty))
                         continue;
@@ -1831,7 +1836,7 @@ int MAIN(int argc, char **argv)
                     i = select(width, (void *)&readfds, (void *)&writefds,
                                NULL, timeoutp);
             }
-            (void)fcntl(fileno(stdin), F_SETFL, 0);
+            (void)fcntl(fileno_stdin(), F_SETFL, 0);
 #else
             i = select(width, (void *)&readfds, (void *)&writefds,
                        NULL, timeoutp);
@@ -1907,11 +1912,11 @@ int MAIN(int argc, char **argv)
                 goto shut;
             }
         }
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5) || defined(OPENSSL_SYS_VMS)
         /* Assume Windows/DOS/BeOS can always write */
         else if (!ssl_pending && write_tty)
 #else
-        else if (!ssl_pending && FD_ISSET(fileno(stdout), &writefds))
+        else if (!ssl_pending && FD_ISSET(fileno_stdout(), &writefds))
 #endif
         {
 #ifdef CHARSET_EBCDIC
@@ -2009,7 +2014,7 @@ int MAIN(int argc, char **argv)
 #elif defined(OPENSSL_SYS_BEOS_R5)
         else if (stdin_set)
 #else
-        else if (FD_ISSET(fileno(stdin), &readfds))
+        else if (FD_ISSET(fileno_stdin(), &readfds))
 #endif
         {
             if (crlf) {

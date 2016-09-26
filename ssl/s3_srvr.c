@@ -1843,12 +1843,12 @@ int ssl3_send_server_key_exchange(SSL *s)
                     goto err;
                 }
                 if (type & SSL_kOQSKEX_GENERIC) {
-                    if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, NULL, 0)) == NULL) {
+                    if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, NULL, 0, NULL)) == NULL) {
                         SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                         goto err;
                     }
                 } else if (type & SSL_kOQSKEX_RLWE_BCNS15) {
-                    if ((s->s3->tmp.oqskex_kex = OQS_KEX_rlwe_bcns15_new(s->s3->tmp.oqskex_rand, NULL, 0)) == NULL) {
+                    if ((s->s3->tmp.oqskex_kex = OQS_KEX_rlwe_bcns15_new(s->s3->tmp.oqskex_rand, NULL, 0, NULL)) == NULL) {
                         SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                         goto err;
                     }
@@ -1872,12 +1872,12 @@ int ssl3_send_server_key_exchange(SSL *s)
                 goto err;
             }
             if (type & SSL_kOQSKEX_GENERIC) {
-                if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, NULL, 0)) == NULL) {
+                if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, NULL, 0, NULL)) == NULL) {
                     SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                     goto err;
                 }
             } else if (type & SSL_kOQSKEX_RLWE_BCNS15) {
-                if ((s->s3->tmp.oqskex_kex = OQS_KEX_rlwe_bcns15_new(s->s3->tmp.oqskex_rand, NULL, 0)) == NULL) {
+                if ((s->s3->tmp.oqskex_kex = OQS_KEX_rlwe_bcns15_new(s->s3->tmp.oqskex_rand, NULL, 0, NULL)) == NULL) {
                     SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                     goto err;
                 }
@@ -3412,6 +3412,12 @@ int ssl3_get_client_certificate(SSL *s)
         goto f_err;
     }
     for (nc = 0; nc < llen;) {
+        if (nc + 3 > llen) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,
+                   SSL_R_CERT_LENGTH_MISMATCH);
+            goto f_err;
+        }
         n2l3(p, l);
         if ((l + nc + 3) > llen) {
             al = SSL_AD_DECODE_ERROR;

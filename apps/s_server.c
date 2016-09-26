@@ -2307,7 +2307,10 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
     }
 #endif
 
-    width = s + 1;
+    if (fileno_stdin() > s)
+        width = fileno_stdin() + 1;
+    else
+        width = s + 1;
     for (;;) {
         int read_from_terminal;
         int read_from_sslcon;
@@ -2318,7 +2321,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
         if (!read_from_sslcon) {
             FD_ZERO(&readfds);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined(OPENSSL_SYS_BEOS_R5)
-            openssl_fdset(fileno(stdin), &readfds);
+            openssl_fdset(fileno_stdin(), &readfds);
 #endif
             openssl_fdset(s, &readfds);
             /*
@@ -2346,13 +2349,13 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
             /* Under BeOS-R5 the situation is similar to DOS */
             tv.tv_sec = 1;
             tv.tv_usec = 0;
-            (void)fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
+            (void)fcntl(fileno_stdin(), F_SETFL, O_NONBLOCK);
             i = select(width, (void *)&readfds, NULL, NULL, &tv);
-            if ((i < 0) || (!i && read(fileno(stdin), buf, 0) < 0))
+            if ((i < 0) || (!i && read(fileno_stdin(), buf, 0) < 0))
                 continue;
-            if (read(fileno(stdin), buf, 0) >= 0)
+            if (read(fileno_stdin(), buf, 0) >= 0)
                 read_from_terminal = 1;
-            (void)fcntl(fileno(stdin), F_SETFL, 0);
+            (void)fcntl(fileno_stdin(), F_SETFL, 0);
 #else
             if ((SSL_version(con) == DTLS1_VERSION) &&
                 DTLSv1_get_timeout(con, &timeout))
@@ -2369,7 +2372,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
 
             if (i <= 0)
                 continue;
-            if (FD_ISSET(fileno(stdin), &readfds))
+            if (FD_ISSET(fileno_stdin(), &readfds))
                 read_from_terminal = 1;
 #endif
             if (FD_ISSET(s, &readfds))
@@ -2396,6 +2399,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
                 assert(lf_num == 0);
             } else
                 i = raw_read_stdin(buf, bufsize);
+
             if (!s_quiet && !s_brief) {
                 if ((i <= 0) || (buf[0] == 'Q')) {
                     BIO_printf(bio_s_out, "DONE\n");

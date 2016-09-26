@@ -1221,6 +1221,12 @@ int ssl3_get_server_certificate(SSL *s)
         goto f_err;
     }
     for (nc = 0; nc < llen;) {
+        if (nc + 3 > llen) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
+                   SSL_R_CERT_LENGTH_MISMATCH);
+            goto f_err;
+        }
         n2l3(p, l);
         if ((l + nc + 3) > llen) {
             al = SSL_AD_DECODE_ERROR;
@@ -2257,6 +2263,11 @@ int ssl3_get_certificate_request(SSL *s)
     }
 
     for (nc = 0; nc < llen;) {
+        if (nc + 2 > llen) {
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+            SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, SSL_R_CA_DN_TOO_LONG);
+            goto err;
+        }
         n2s(p, l);
         if ((l + nc + 2) > llen) {
             if ((s->options & SSL_OP_NETSCAPE_CA_DN_BUG))
@@ -3005,12 +3016,12 @@ int ssl3_send_client_key_exchange(SSL *s)
                     goto err;
                 }
                 if (alg_k & SSL_kOQSKEX_GENERIC) {
-                    if ((oqskex_kex = OQS_KEX_new(oqskex_rand, NULL, 0)) == NULL) {
+                    if ((oqskex_kex = OQS_KEX_new(oqskex_rand, NULL, 0, NULL)) == NULL) {
                         SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                         goto err;
                     }
                 } else if (alg_k & SSL_kOQSKEX_RLWE_BCNS15) {
-                    if ((oqskex_kex = OQS_KEX_rlwe_bcns15_new(oqskex_rand, NULL, 0)) == NULL) {
+                    if ((oqskex_kex = OQS_KEX_rlwe_bcns15_new(oqskex_rand, NULL, 0, NULL)) == NULL) {
                         SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                         goto err;
                     }
@@ -3119,12 +3130,12 @@ int ssl3_send_client_key_exchange(SSL *s)
                 goto err;
             }
             if (alg_k & SSL_kOQSKEX_GENERIC) {
-                if ((oqskex_kex = OQS_KEX_new(oqskex_rand, NULL, 0)) == NULL) {
+                if ((oqskex_kex = OQS_KEX_new(oqskex_rand, NULL, 0, NULL)) == NULL) {
                     SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                     goto err;
                 }
             } else if (alg_k & SSL_kOQSKEX_RLWE_BCNS15) {
-                if ((oqskex_kex = OQS_KEX_rlwe_bcns15_new(oqskex_rand, NULL, 0)) == NULL) {
+                if ((oqskex_kex = OQS_KEX_rlwe_bcns15_new(oqskex_rand, NULL, 0, NULL)) == NULL) {
                     SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                     goto err;
                 }
@@ -3211,19 +3222,6 @@ int ssl3_send_client_key_exchange(SSL *s)
                 goto err;
             }
             /*
-             * If we have client certificate, use its secret as peer key
-             */
-            if (s->s3->tmp.cert_req && s->cert->key->privatekey) {
-                if (EVP_PKEY_derive_set_peer
-                    (pkey_ctx, s->cert->key->privatekey) <= 0) {
-                    /*
-                     * If there was an error - just ignore it. Ephemeral key
-                     * * would be used
-                     */
-                    ERR_clear_error();
-                }
-            }
-            /*
              * Compute shared IV and store it in algorithm-specific context
              * data
              */
@@ -3269,12 +3267,6 @@ int ssl3_send_client_key_exchange(SSL *s)
                 n = msglen + 2;
             }
             memcpy(p, tmp, msglen);
-            /* Check if pubkey from client certificate was used */
-            if (EVP_PKEY_CTX_ctrl
-                (pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0) {
-                /* Set flag "skip certificate verify" */
-                s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
-            }
             EVP_PKEY_CTX_free(pkey_ctx);
             s->session->master_key_length =
                 s->method->ssl3_enc->generate_master_secret(s,
