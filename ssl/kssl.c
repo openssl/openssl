@@ -872,7 +872,7 @@ static size_t *populate_cksumlens(void)
 # endif                         /* KRB5_MIT_OLD11 */
 
 # ifdef KRB5CHECKAUTH
-    if (!cklens && !(cklens = (size_t *)calloc(sizeof(int), n + 1)))
+    if (!cklens && !(cklens = (size_t *)kssl_calloc(sizeof(*cklens), n + 1)))
         return NULL;
 
     for (i = 0; i < n; i++) {
@@ -1227,6 +1227,7 @@ static krb5_error_code kssl_TKT2tkt( /* IN */ krb5_context krb5context,
         return KRB5KRB_ERR_GENERIC;
     }
 
+    /* This will be freed with krb5_free_ticket(), so use system malloc. */
     if ((new5ticket = (krb5_ticket *)calloc(1, sizeof(krb5_ticket))) == NULL) {
         BIO_snprintf(kssl_err->text, KSSL_ERR_MAX,
                      "Unable to allocate new krb5_ticket.\n");
@@ -2055,7 +2056,7 @@ krb5_error_code kssl_check_authent(
 # endif                         /* KSSL_DEBUG */
 
     unencbufsize = 2 * authentp->length;
-    if ((unenc_authent = calloc(1, unencbufsize)) == NULL) {
+    if ((unenc_authent = kssl_calloc(1, unencbufsize)) == NULL) {
         kssl_err_set(kssl_err, SSL_R_KRB5_S_INIT,
                      "Unable to allocate authenticator buffer.\n");
         krb5rc = KRB5KRB_ERR_GENERIC;
@@ -2163,7 +2164,7 @@ krb5_error_code kssl_check_authent(
     if (dec_authent)
         KRB5_ENCDATA_free(dec_authent);
     if (unenc_authent)
-        free(unenc_authent);
+        kssl_free(unenc_authent);
     EVP_CIPHER_CTX_cleanup(&ciph_ctx);
     return krb5rc;
 }
@@ -2195,6 +2196,7 @@ krb5_error_code kssl_build_principal_2(
     krb5_principal new_p = NULL;
     char *new_r = NULL;
 
+    /* The principal will be freed by libkrb5, so use system malloc. */
     if ((p_data = (krb5_data *)calloc(2, sizeof(krb5_data))) == NULL ||
         (new_p = (krb5_principal)calloc(1, sizeof(krb5_principal_data)))
         == NULL)
