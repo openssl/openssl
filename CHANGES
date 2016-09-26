@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.1.0b and 1.1.0c [xx XXX xxxx]
+
+  *)
+
  Changes between 1.1.0a and 1.1.0b [26 Sep 2016]
 
   *) Fix Use After Free for large message sizes
