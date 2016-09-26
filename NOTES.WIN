@@ -36,7 +36,7 @@
      PREFIX:      %ProgramFiles(86)%\OpenSSL
      OPENSSLDIR:  %CommonProgramFiles(86)%\SSL
 
- For VC-WIN32, the following defaults are use:
+ For VC-WIN64, the following defaults are use:
 
      PREFIX:      %ProgramW6432%\OpenSSL
      OPENSSLDIR:  %CommonProgramW6432%\SSL
