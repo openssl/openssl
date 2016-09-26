@@ -11,6 +11,23 @@
      https://www.akkadia.org/drepper/SHA-crypt.txt
      [Richard Levitte]
 
+ Changes between 1.1.0a and 1.1.0b [26 Sep 2016]
+
+  *) Fix Use After Free for large message sizes
+
+     The patch applied to address CVE-2016-6307 resulted in an issue where if a
+     message larger than approx 16k is received then the underlying buffer to
+     store the incoming message is reallocated and moved. Unfortunately a
+     dangling pointer to the old location is left which results in an attempt to
+     write to the previously freed location. This is likely to result in a
+     crash, however it could potentially lead to execution of arbitrary code.
+
+     This issue only affects OpenSSL 1.1.0a.
+
+     This issue was reported to OpenSSL by Robert Święcki.
+     (CVE-2016-6309)
+     [Matt Caswell]
+
  Changes between 1.1.0 and 1.1.0a [22 Sep 2016]
 
   *) OCSP Status Request extension unbounded memory growth
