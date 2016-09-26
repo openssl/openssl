@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2i and 1.0.2j [xx XXX xxxx]
+ Changes between 1.0.2i and 1.0.2j [26 Sep 2016]
 
   *) Missing CRL sanity check
 
