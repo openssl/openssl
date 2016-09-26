@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.1.0a and OpenSSL 1.1.0b [under development]
 
-      o
+      o Fix Use After Free for large message sizes (CVE-2016-6309)
 
   Major changes between OpenSSL 1.1.0 and OpenSSL 1.1.0a [22 Sep 2016]
 
