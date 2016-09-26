@@ -831,9 +831,14 @@ static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 
 int tls_construct_hello_request(SSL *s)
 {
-    if (!ssl_set_handshake_header(s, SSL3_MT_HELLO_REQUEST, 0)) {
+    WPACKET pkt;
+
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_HELLO_REQUEST)
+            || !ssl_close_construct_packet(s, &pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_HELLO_REQUEST, ERR_R_INTERNAL_ERROR);
         ossl_statem_set_error(s);
+        WPACKET_cleanup(&pkt);
         return 0;
     }
 
