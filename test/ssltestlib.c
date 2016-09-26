@@ -587,7 +587,7 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
 
     if (SSL_is_dtls(clientssl)) {
         s_to_c_bio = BIO_new(bio_s_mempacket_test());
-        c_to_s_bio = BIO_new(bio_s_mempacket_test());;
+        c_to_s_bio = BIO_new(bio_s_mempacket_test());
     } else {
         s_to_c_bio = BIO_new(BIO_s_mem());
         c_to_s_bio = BIO_new(BIO_s_mem());
