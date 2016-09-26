@@ -56,7 +56,6 @@ typedef enum {
 typedef enum {
     SSL_TEST_HANDSHAKE_SIMPLE = 0, /* Default */
     SSL_TEST_HANDSHAKE_RESUME,
-    /* Not yet implemented */
     SSL_TEST_HANDSHAKE_RENEGOTIATE
 } ssl_handshake_mode_t;
 
