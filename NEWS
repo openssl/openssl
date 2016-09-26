@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.2i and OpenSSL 1.0.2j [under development]
 
-      o
+      o Fix Use After Free for large message sizes (CVE-2016-6309)
 
   Major changes between OpenSSL 1.0.2h and OpenSSL 1.0.2i [22 Sep 2016]
 
