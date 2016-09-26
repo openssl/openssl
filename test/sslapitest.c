@@ -46,14 +46,18 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
         goto end;
     }
     chaincert = PEM_read_bio_X509(certbio, NULL, NULL, NULL);
+    BIO_free(certbio);
+    certbio = NULL;
+    if (chaincert == NULL) {
+        printf("Unable to load certificate for chain\n");
+        goto end;
+    }
 
     if (!create_ssl_ctx_pair(smeth, cmeth, &sctx,
                              &cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         goto end;
     }
-    BIO_free(certbio);
-    certbio = NULL;
 
     /*
      * We assume the supplied certificate is big enough so that if we add
@@ -869,6 +873,8 @@ int main(int argc, char *argv[])
     ADD_TEST(test_ssl_bio_change_wbio);
 
     testresult = run_tests(argv[0]);
+
+    bio_s_mempacket_test_free();
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks(err) <= 0)
