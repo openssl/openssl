@@ -162,7 +162,13 @@ int RAND_load_file(const char *file, long bytes)
             n = (bytes < BUFSIZE) ? (int)bytes : BUFSIZE;
         else
             n = BUFSIZE;
+
         i = fread(buf, 1, n, in);
+        if (i <= 0 && ferror(in) && errno == EINTR) {
+            clearerr(in);
+            continue;
+        }
+
         if (i <= 0)
             break;
 
