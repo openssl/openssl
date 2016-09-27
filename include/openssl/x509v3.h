@@ -336,15 +336,6 @@ struct ISSUING_DIST_POINT_st {
                         NULL, NULL, \
                         table}
 
-# define EXT_IA5STRING(nid) { nid, 0, ASN1_ITEM_ref(ASN1_IA5STRING), \
-                        0,0,0,0, \
-                        (X509V3_EXT_I2S)i2s_ASN1_IA5STRING, \
-                        (X509V3_EXT_S2I)s2i_ASN1_IA5STRING, \
-                        0,0,0,0, \
-                        NULL}
-
-# define EXT_END { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-
 /* X509_PURPOSE stuff */
 
 # define EXFLAG_BCONS            0x1

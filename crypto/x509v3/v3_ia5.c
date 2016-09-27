@@ -14,15 +14,18 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-const X509V3_EXT_METHOD v3_ns_ia5_list[8] = {
-    EXT_IA5STRING(NID_netscape_base_url),
-    EXT_IA5STRING(NID_netscape_revocation_url),
-    EXT_IA5STRING(NID_netscape_ca_revocation_url),
-    EXT_IA5STRING(NID_netscape_renewal_url),
-    EXT_IA5STRING(NID_netscape_ca_policy_url),
-    EXT_IA5STRING(NID_netscape_ssl_server_name),
-    EXT_IA5STRING(NID_netscape_comment),
-    EXT_END
+/*
+ * TODO(1.2.0): clean and sweep config files reference to nsComment
+ * so #v3_ns_comment can be removed
+ */
+const X509V3_EXT_METHOD v3_ns_comment = {
+    NID_netscape_comment, 0, ASN1_ITEM_ref(ASN1_IA5STRING),
+    0, 0,
+    0, 0,
+    (X509V3_EXT_I2S) i2s_ASN1_IA5STRING,
+    (X509V3_EXT_S2I) s2i_ASN1_IA5STRING,
+    0, 0, 0, 0,
+    NULL
 };
 
 char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
@@ -44,6 +47,7 @@ ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
                                    X509V3_CTX *ctx, const char *str)
 {
     ASN1_IA5STRING *ia5;
+
     if (!str) {
         X509V3err(X509V3_F_S2I_ASN1_IA5STRING,
                   X509V3_R_INVALID_NULL_ARGUMENT);
