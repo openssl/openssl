@@ -144,12 +144,6 @@ int main(int argc, char **argv)
     const char *expected_error_string;
 
     size_t i;
-    static ASN1_ITEM_EXP *items[] = {
-        ASN1_ITEM_ref(ASN1_ANY),
-        ASN1_ITEM_ref(X509),
-        ASN1_ITEM_ref(GENERAL_NAME),
-        ASN1_ITEM_ref(ASN1_INTEGER)
-    };
 
     static error_enum expected_errors[] = {
         {"OK", ASN1_OK},
@@ -169,18 +163,16 @@ int main(int argc, char **argv)
     expected_error_string = argv[2];
     test_file = argv[3];
 
-    for (i = 0; i < OSSL_NELEM(items); i++) {
-        const ASN1_ITEM *it = ASN1_ITEM_ptr(items[i]);
-        if (strcmp(test_type_name, it->sname) == 0) {
-            item_type = it;
-            break;
-        }
-    }
+    item_type = ASN1_ITEM_lookup(test_type_name);
+
     if (item_type == NULL) {
         fprintf(stderr, "Unknown type %s\n", test_type_name);
         fprintf(stderr, "Supported types:\n");
-        for (i = 0; i < OSSL_NELEM(items); i++) {
-            const ASN1_ITEM *it = ASN1_ITEM_ptr(items[i]);
+        for (i = 0;; i++) {
+            const ASN1_ITEM *it = ASN1_ITEM_get(i);
+
+            if (it == NULL)
+                break;
             fprintf(stderr, "\t%s\n", it->sname);
         }
         return 1;
