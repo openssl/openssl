@@ -413,7 +413,8 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
             num = sk_ASN1_INTEGER_value(ref->noticenos, i);
             if (i)
                 BIO_puts(out, ", ");
-            tmp = i2s_ASN1_INTEGER(NULL, num);
+            if ((tmp = i2s_ASN1_INTEGER(NULL, num)) == NULL)
+                return;
             BIO_puts(out, tmp);
             OPENSSL_free(tmp);
         }
