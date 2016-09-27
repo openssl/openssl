@@ -339,7 +339,8 @@ IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_alpn_protocol)
 static const test_enum ssl_handshake_modes[] = {
     {"Simple", SSL_TEST_HANDSHAKE_SIMPLE},
     {"Resume", SSL_TEST_HANDSHAKE_RESUME},
-    {"Renegotiate", SSL_TEST_HANDSHAKE_RENEGOTIATE},
+    {"RenegotiateServer", SSL_TEST_HANDSHAKE_RENEG_SERVER},
+    {"RenegotiateClient", SSL_TEST_HANDSHAKE_RENEG_CLIENT},
 };
 
 __owur static int parse_handshake_mode(SSL_TEST_CTX *test_ctx, const char *value)
