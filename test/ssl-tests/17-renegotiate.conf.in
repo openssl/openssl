@@ -17,12 +17,50 @@ package ssltests;
 
 our @tests = (
     {
-        name => "renegotiate",
+        name => "renegotiate-client-no-resume",
+        server => {
+            "Options" => "NoResumptionOnRenegotiation"
+        },
+        client => {},
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-client-resume",
         server => {},
         client => {},
         test => {
             "Method" => "TLS",
-            "HandshakeMode" => "Renegotiate",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-server-no-resume",
+        server => {
+            "Options" => "NoResumptionOnRenegotiation"
+        },
+        client => {},
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateServer",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-server-resume",
+        server => {},
+        client => {},
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateServer",
+            "ResumptionExpected" => "Yes",
             "ExpectedResult" => "Success"
         }
     },
