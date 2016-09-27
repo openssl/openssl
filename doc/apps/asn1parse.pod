@@ -22,6 +22,7 @@ B<openssl> B<asn1parse>
 [B<-genstr string>]
 [B<-genconf file>]
 [B<-strictpem>]
+[B<-item name>]
 
 =head1 DESCRIPTION
 
@@ -101,6 +102,11 @@ data in a PEM format input file will be treated as being base64 encoded and
 processed whether it has the normal PEM BEGIN and END markers or not. This
 option will ignore any data prior to the start of the BEGIN marker, or after an
 END marker in a PEM file.
+
+=item B<-item name>
+
+attempt to decode and print the data as B<ASN1_ITEM name>. This can be used to
+print out the fields of any supported ASN.1 structure if the type is known.
 
 =back
 
