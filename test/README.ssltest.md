@@ -38,7 +38,8 @@ The test section supports the following options
 * HandshakeMode - which handshake flavour to test:
   - Simple - plain handshake (default)
   - Resume - test resumption
-  - Renegotiate - test renegotiation
+  - RenegotiateServer - test server initiated renegotiation
+  - RenegotiateClient - test client initiated renegotiation
 
 When HandshakeMode is Resume or Renegotiate, the original handshake is expected
 to succeed. All configured test expectations are verified against the second
