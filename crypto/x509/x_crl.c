@@ -441,7 +441,7 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
 
 void X509_CRL_METHOD_free(X509_CRL_METHOD *m)
 {
-    if (!(m->flags & X509_CRL_METHOD_DYNAMIC))
+    if (m == NULL || !(m->flags & X509_CRL_METHOD_DYNAMIC))
         return;
     OPENSSL_free(m);
 }
