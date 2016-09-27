@@ -57,9 +57,10 @@ int TS_ext_print_bio(BIO *bio, const STACK_OF(X509_EXTENSION) *extensions)
     for (i = 0; i < n; i++) {
         ex = X509v3_get_ext(extensions, i);
         obj = X509_EXTENSION_get_object(ex);
-        i2a_ASN1_OBJECT(bio, obj);
+        if (i2a_ASN1_OBJECT(bio, obj) < 0)
+            return 0;
         critical = X509_EXTENSION_get_critical(ex);
-        BIO_printf(bio, ": %s\n", critical ? "critical" : "");
+        BIO_printf(bio, ":%s\n", critical ? " critical" : "");
         if (!X509V3_EXT_print(bio, ex, 0, 4)) {
             BIO_printf(bio, "%4s", "");
             ASN1_STRING_print(bio, X509_EXTENSION_get_data(ex));
