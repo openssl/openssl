@@ -37,13 +37,13 @@ matrix:
     include:
         - os: linux
           compiler: gcc
-          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers" COVERALLS="yes"
+          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers" COVERALLS="yes"
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="enable-msan"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method -fno-sanitize=alignment"
+          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment"
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2"
