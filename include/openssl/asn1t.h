@@ -130,7 +130,7 @@ extern "C" {
                 sizeof(tname##_seq_tt) / sizeof(ASN1_TEMPLATE),\
                 NULL,\
                 sizeof(stname),\
-                #stname \
+                #tname \
         ASN1_ITEM_end(tname)
 
 # define static_ASN1_SEQUENCE_END_name(stname, tname) \
@@ -208,7 +208,7 @@ extern "C" {
                 sizeof(tname##_seq_tt) / sizeof(ASN1_TEMPLATE),\
                 &tname##_aux,\
                 sizeof(stname),\
-                #stname \
+                #tname \
         ASN1_ITEM_end(tname)
 # define static_ASN1_SEQUENCE_END_ref(stname, tname) \
         ;\
