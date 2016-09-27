@@ -38,7 +38,7 @@ The test section supports the following options
 * HandshakeMode - which handshake flavour to test:
   - Simple - plain handshake (default)
   - Resume - test resumption
-  - (Renegotiate - test renegotiation, not yet implemented)
+  - Renegotiate - test renegotiation
 
 When HandshakeMode is Resume or Renegotiate, the original handshake is expected
 to succeed. All configured test expectations are verified against the second
@@ -245,19 +245,16 @@ environment variable to point to the location of the certs. E.g., from the root
 OpenSSL directory, do
 
 ```
-$ TEST_CERTS_DIR=test/certs test/ssl_test test/ssl-tests/01-simple.conf
+$ CTLOG_FILE=test/ct/log_list.conf TEST_CERTS_DIR=test/certs test/ssl_test \
+  test/ssl-tests/01-simple.conf
 ```
 
 or for shared builds
 
 ```
-$ TEST_CERTS_DIR=test/certs util/shlib_wrap.sh test/ssl_test \
-  test/ssl-tests/01-simple.conf
+$ CTLOG_FILE=test/ct/log_list.conf  TEST_CERTS_DIR=test/certs \
+  util/shlib_wrap.sh test/ssl_test test/ssl-tests/01-simple.conf
 ```
-
-Some tests also need additional environment variables; for example, Certificate
-Transparency tests need a `CTLOG_FILE`. See `test/recipes/80-test_ssl_new.t` for
-details.
 
 Note that the test expectations sometimes depend on the Configure settings. For
 example, the negotiated protocol depends on the set of available (enabled)
