@@ -3571,26 +3571,6 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
     return cp;
 }
 
-/*
- * Old version of the ssl3_put_cipher_by_char function used by code that has not
- * yet been converted to WPACKET yet. It will be deleted once WPACKET conversion
- * is complete.
- * TODO - DELETE ME
- */
-int ssl3_put_cipher_by_char_old(const SSL_CIPHER *c, unsigned char *p)
-{
-    long l;
-
-    if (p != NULL) {
-        l = c->id;
-        if ((l & 0xff000000) != 0x03000000)
-            return (0);
-        p[0] = ((unsigned char)(l >> 8L)) & 0xFF;
-        p[1] = ((unsigned char)(l)) & 0xFF;
-    }
-    return (2);
-}
-
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt, size_t *len)
 {
     if ((c->id & 0xff000000) != 0x03000000) {

@@ -1863,7 +1863,6 @@ __owur int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
-__owur int ssl3_put_cipher_by_char_old(const SSL_CIPHER *c, unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt,
                                    size_t *len);
 int ssl3_init_finished_mac(SSL *s);
@@ -2117,8 +2116,6 @@ __owur int custom_ext_parse(SSL *s, int server,
                             unsigned int ext_type,
                             const unsigned char *ext_data, size_t ext_size,
                             int *al);
-__owur int custom_ext_add_old(SSL *s, int server, unsigned char **pret,
-                              unsigned char *limit, int *al);
 __owur int custom_ext_add(SSL *s, int server, WPACKET *pkt, int *al);
 
 __owur int custom_exts_copy(custom_ext_methods *dst,
