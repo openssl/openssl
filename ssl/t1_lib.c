@@ -1302,7 +1302,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
     }
 #ifndef OPENSSL_NO_SRTP
     if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)) {
-        STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = 0;
+        STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = SSL_get_srtp_profiles(s);
         SRTP_PROTECTION_PROFILE *prof;
         int i, ct;
 
@@ -1322,7 +1322,10 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
                 return 0;
             }
         }
-        if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+        if (!WPACKET_close(pkt)
+                   /* Add an empty use_mki value */
+                || !WPACKET_put_bytes_u8(pkt, 0)
+                || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
