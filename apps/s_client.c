@@ -577,8 +577,8 @@ OPTIONS s_client_options[] = {
     {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
     {"certform", OPT_CERTFORM, 'F',
      "Certificate format (PEM or DER) PEM default"},
-    {"key", OPT_KEY, '<', "Private key file to use, if not in -cert file"},
-    {"keyform", OPT_KEYFORM, 'F', "Key format (PEM or DER) PEM default"},
+    {"key", OPT_KEY, 's', "Private key file to use, if not in -cert file"},
+    {"keyform", OPT_KEYFORM, 'E', "Key format (PEM, DER or engine) PEM default"},
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
@@ -1202,7 +1202,7 @@ int s_client_main(int argc, char **argv)
             fallback_scsv = 1;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &key_format))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &key_format))
                 goto opthelp;
             break;
         case OPT_PASS:
