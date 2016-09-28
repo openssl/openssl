@@ -1219,6 +1219,7 @@ static int run_benchmark(int async_jobs,
 
 int speed_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     loopargs_t *loopargs = NULL;
     int async_init = 0;
     int loopargs_len = 0;
@@ -1566,7 +1567,7 @@ int speed_main(int argc, char **argv)
 #endif
 
     /* Initialize the engine after the fork */
-    (void)setup_engine(engine_id, 0);
+    e = setup_engine(engine_id, 0);
 
     /* No parameters; turn on everything. */
     if ((argc == 0) && !doit[D_EVP]) {
@@ -2819,6 +2820,7 @@ int speed_main(int argc, char **argv)
         ASYNC_cleanup_thread();
     }
     OPENSSL_free(loopargs);
+    release_engine(e);
     return (ret);
 }
 
