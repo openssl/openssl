@@ -1553,7 +1553,7 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
             ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM, 0, err, 0);
         }
         ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, ui_method, 0, 1);
-        if (!ENGINE_init(e) || !ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
+        if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
             BIO_printf(err, "can't use that engine\n");
             ERR_print_errors(err);
             ENGINE_free(e);
