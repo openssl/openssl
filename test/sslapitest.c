@@ -108,11 +108,13 @@ static int test_large_message_tls(void)
     return execute_test_large_message(TLS_server_method(), TLS_client_method());
 }
 
+#ifndef OPENSSL_NO_DTLS
 static int test_large_message_dtls(void)
 {
     return execute_test_large_message(DTLS_server_method(),
                                       DTLS_client_method());
 }
+#endif
 
 static int ocsp_server_cb(SSL *s, void *arg)
 {
@@ -861,7 +863,9 @@ int main(int argc, char *argv[])
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     ADD_TEST(test_large_message_tls);
+#ifndef OPENSSL_NO_DTLS
     ADD_TEST(test_large_message_dtls);
+#endif
     ADD_TEST(test_tlsext_status_type);
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);
