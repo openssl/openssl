@@ -1970,6 +1970,7 @@ int s_server_main(int argc, char *argv[])
 #ifdef CHARSET_EBCDIC
     BIO_meth_free(methods_ebcdic);
 #endif
+    ENGINE_finish(engine);
     return (ret);
 }
 

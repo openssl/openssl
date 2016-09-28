@@ -151,7 +151,7 @@ int enc_main(int argc, char **argv)
             passarg = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            ENGINE_finish(setup_engine(opt_arg(), 0));
             break;
         case OPT_D:
             enc = 0;

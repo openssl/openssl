@@ -1566,7 +1566,7 @@ int speed_main(int argc, char **argv)
 #endif
 
     /* Initialize the engine after the fork */
-    (void)setup_engine(engine_id, 0);
+    ENGINE_finish(setup_engine(engine_id, 0));
 
     /* No parameters; turn on everything. */
     if ((argc == 0) && !doit[D_EVP]) {

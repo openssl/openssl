@@ -184,6 +184,7 @@ int pkey_main(int argc, char **argv)
     BIO_free(in);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
+    ENGINE_finish(e);
 
     return ret;
 }

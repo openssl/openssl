@@ -272,6 +272,7 @@ int rsautl_main(int argc, char **argv)
     OPENSSL_free(rsa_in);
     OPENSSL_free(rsa_out);
     OPENSSL_free(passin);
+    ENGINE_finish(e);
     return ret;
 }
 #endif

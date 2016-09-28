@@ -398,6 +398,7 @@ int dgst_main(int argc, char **argv)
     sk_OPENSSL_STRING_free(macopts);
     OPENSSL_free(sigbuf);
     BIO_free(bmd);
+    ENGINE_finish(e);
     return (ret);
 }
 

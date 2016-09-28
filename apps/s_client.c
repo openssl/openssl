@@ -2488,6 +2488,7 @@ int s_client_main(int argc, char **argv)
     bio_c_out = NULL;
     BIO_free(bio_c_msg);
     bio_c_msg = NULL;
+    ENGINE_finish(e);
     return (ret);
 }
 

@@ -580,6 +580,7 @@ int pkcs12_main(int argc, char **argv)
     OPENSSL_free(badpass);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
+    ENGINE_finish(e);
     return (ret);
 }
 

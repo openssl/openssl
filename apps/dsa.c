@@ -251,6 +251,7 @@ int dsa_main(int argc, char **argv)
     DSA_free(dsa);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
+    ENGINE_finish(e);
     return (ret);
 }
 #endif
