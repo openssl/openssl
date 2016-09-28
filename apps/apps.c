@@ -700,7 +700,10 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
             BIO_printf(bio_err, "no engine specified\n");
         else {
 #ifndef OPENSSL_NO_ENGINE
-            pkey = ENGINE_load_private_key(e, file, ui_method, &cb_data);
+            if (ENGINE_init(e)) {
+                pkey = ENGINE_load_private_key(e, file, ui_method, &cb_data);
+                ENGINE_finish(e);
+            }
             if (pkey == NULL) {
                 BIO_printf(bio_err, "cannot load %s from engine\n", key_descrip);
                 ERR_print_errors(bio_err);
