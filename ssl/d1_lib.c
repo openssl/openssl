@@ -1,60 +1,10 @@
-/* ssl/d1_lib.c */
 /*
- * DTLS implementation written by Nagendra Modadugu
- * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
- */
-/* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -65,8 +15,6 @@
 
 #if defined(OPENSSL_SYS_VMS)
 # include <sys/timeb.h>
-#elif defined(OPENSSL_SYS_NETWARE) && !defined(_WINSOCK2API_)
-# include <sys/timeval.h>
 #elif defined(OPENSSL_SYS_VXWORKS)
 # include <sys/times.h>
 #elif !defined(OPENSSL_SYS_WIN32)
@@ -76,7 +24,6 @@
 static void get_current_time(struct timeval *t);
 static int dtls1_set_handshake_header(SSL *s, int type, unsigned long len);
 static int dtls1_handshake_write(SSL *s);
-int dtls1_listen(SSL *s, struct sockaddr *client);
 static unsigned int dtls1_link_min_mtu(void);
 
 /* XDTLS:  figure out the right values */
@@ -97,6 +44,8 @@ const SSL3_ENC_METHOD DTLSv1_enc_data = {
     SSL_ENC_FLAG_DTLS | SSL_ENC_FLAG_EXPLICIT_IV,
     DTLS1_HM_HEADER_LENGTH,
     dtls1_set_handshake_header,
+    dtls1_set_handshake_header2,
+    dtls1_close_construct_packet,
     dtls1_handshake_write
 };
 
@@ -116,6 +65,8 @@ const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
         | SSL_ENC_FLAG_SHA256_PRF | SSL_ENC_FLAG_TLS1_2_CIPHERS,
     DTLS1_HM_HEADER_LENGTH,
     dtls1_set_handshake_header,
+    dtls1_set_handshake_header2,
+    dtls1_close_construct_packet,
     dtls1_handshake_write
 };
 
@@ -135,7 +86,7 @@ int dtls1_new(SSL *s)
     if (!DTLS_RECORD_LAYER_new(&s->rlayer)) {
         return 0;
     }
-    
+
     if (!ssl3_new(s))
         return (0);
     if ((d1 = OPENSSL_zalloc(sizeof(*d1))) == NULL) {
@@ -168,6 +119,12 @@ int dtls1_new(SSL *s)
 
 static void dtls1_clear_queues(SSL *s)
 {
+    dtls1_clear_received_buffer(s);
+    dtls1_clear_sent_buffer(s);
+}
+
+void dtls1_clear_received_buffer(SSL *s)
+{
     pitem *item = NULL;
     hm_fragment *frag = NULL;
 
@@ -176,6 +133,12 @@ static void dtls1_clear_queues(SSL *s)
         dtls1_hm_fragment_free(frag);
         pitem_free(item);
     }
+}
+
+void dtls1_clear_sent_buffer(SSL *s)
+{
+    pitem *item = NULL;
+    hm_fragment *frag = NULL;
 
     while ((item = pqueue_pop(s->d1->sent_messages)) != NULL) {
         frag = (hm_fragment *)item->data;
@@ -183,6 +146,7 @@ static void dtls1_clear_queues(SSL *s)
         pitem_free(item);
     }
 }
+
 
 void dtls1_free(SSL *s)
 {
@@ -232,10 +196,13 @@ void dtls1_clear(SSL *s)
     }
 
     ssl3_clear(s);
-    if (s->options & SSL_OP_CISCO_ANYCONNECT)
-        s->client_version = s->version = DTLS1_BAD_VER;
-    else if (s->method->version == DTLS_ANY_VERSION)
+
+    if (s->method->version == DTLS_ANY_VERSION)
         s->version = DTLS_MAX_VERSION;
+#ifndef OPENSSL_NO_DTLS1_METHOD
+    else if (s->options & SSL_OP_CISCO_ANYCONNECT)
+        s->client_version = s->version = DTLS1_BAD_VER;
+#endif
     else
         s->version = s->method->version;
 }
@@ -252,9 +219,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
     case DTLS_CTRL_HANDLE_TIMEOUT:
         ret = dtls1_handle_timeout(s);
-        break;
-    case DTLS_CTRL_LISTEN:
-        ret = dtls1_listen(s, parg);
         break;
     case DTLS_CTRL_SET_LINK_MTU:
         if (larg < (long)dtls1_link_min_mtu())
@@ -277,25 +241,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
     }
     return (ret);
-}
-
-/*
- * As it's impossible to use stream ciphers in "datagram" mode, this
- * simple filter is designed to disengage them in DTLS. Unfortunately
- * there is no universal way to identify stream SSL_CIPHER, so we have
- * to explicitly list their SSL_* codes. Currently RC4 is the only one
- * available, but if new ones emerge, they will have to be added...
- */
-const SSL_CIPHER *dtls1_get_cipher(unsigned int u)
-{
-    const SSL_CIPHER *ciph = ssl3_get_cipher(u);
-
-    if (ciph != NULL) {
-        if (ciph->algorithm_enc == SSL_RC4)
-            return NULL;
-    }
-
-    return ciph;
 }
 
 void dtls1_start_timer(SSL *s)
@@ -353,7 +298,7 @@ struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft)
 
     /*
      * If remaining time is less than 15 ms, set it to 0 to prevent issues
-     * because of small devergences with socket timeouts.
+     * because of small divergences with socket timeouts.
      */
     if (timeleft->tv_sec == 0 && timeleft->tv_usec < 15000) {
         memset(timeleft, 0, sizeof(*timeleft));
@@ -397,7 +342,7 @@ void dtls1_stop_timer(SSL *s)
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
              &(s->d1->next_timeout));
     /* Clear retransmission buffer */
-    dtls1_clear_record_buffer(s);
+    dtls1_clear_sent_buffer(s);
 }
 
 int dtls1_check_timeout_num(SSL *s)
@@ -410,8 +355,7 @@ int dtls1_check_timeout_num(SSL *s)
     if (s->d1->timeout.num_alerts > 2
         && !(SSL_get_options(s) & SSL_OP_NO_QUERY_MTU)) {
         mtu =
-            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_GET_FALLBACK_MTU, 0,
-                     NULL);
+            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_GET_FALLBACK_MTU, 0, NULL);
         if (mtu < s->d1->mtu)
             s->d1->mtu = mtu;
     }
@@ -463,10 +407,13 @@ static void get_current_time(struct timeval *t)
 
     GetSystemTime(&st);
     SystemTimeToFileTime(&st, &now.ft);
+    /* re-bias to 1/1/1970 */
 # ifdef  __MINGW32__
     now.ul -= 116444736000000000ULL;
 # else
-    now.ul -= 116444736000000000UI64; /* re-bias to 1/1/1970 */
+    /* *INDENT-OFF* */
+    now.ul -= 116444736000000000UI64;
+    /* *INDENT-ON* */
 # endif
     t->tv_sec = (long)(now.ul / 10000000);
     t->tv_usec = ((int)(now.ul % 10000000)) / 10;
@@ -480,22 +427,22 @@ static void get_current_time(struct timeval *t)
 #endif
 }
 
-
 #define LISTEN_SUCCESS              2
 #define LISTEN_SEND_VERIFY_REQUEST  1
 
-
-int dtls1_listen(SSL *s, struct sockaddr *client)
+#ifndef OPENSSL_NO_SOCK
+int DTLSv1_listen(SSL *s, BIO_ADDR *client)
 {
     int next, n, ret = 0, clearpkt = 0;
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned char seq[SEQ_NUM_SIZE];
-    unsigned char *data, *p, *buf;
-    unsigned long reclen, fragoff, fraglen, msglen;
+    const unsigned char *data;
+    unsigned char *buf;
+    unsigned long fragoff, fraglen, msglen;
     unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BUF_MEM *bufm;
-    struct sockaddr_storage tmpclient;
+    BIO_ADDR *tmpclient = NULL;
     PACKET pkt, msgpkt, msgpayload, session, cookiepkt;
 
     /* Ensure there is no state left over from a previous invocation */
@@ -507,8 +454,8 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
     rbio = SSL_get_rbio(s);
     wbio = SSL_get_wbio(s);
 
-    if(!rbio || !wbio) {
-        SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_BIO_NOT_SET);
+    if (!rbio || !wbio) {
+        SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BIO_NOT_SET);
         return -1;
     }
 
@@ -527,19 +474,19 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
      * SSL_accept)
      */
     if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00)) {
-        SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNSUPPORTED_SSL_VERSION);
+        SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNSUPPORTED_SSL_VERSION);
         return -1;
     }
 
     if (s->init_buf == NULL) {
         if ((bufm = BUF_MEM_new()) == NULL) {
-            SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_MALLOC_FAILURE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_MALLOC_FAILURE);
             return -1;
         }
 
         if (!BUF_MEM_grow(bufm, SSL3_RT_MAX_PLAIN_LENGTH)) {
             BUF_MEM_free(bufm);
-            SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_MALLOC_FAILURE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_MALLOC_FAILURE);
             return -1;
         }
         s->init_buf = bufm;
@@ -561,7 +508,7 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
         n = BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH);
 
         if (n <= 0) {
-            if(BIO_should_retry(rbio)) {
+            if (BIO_should_retry(rbio)) {
                 /* Non-blocking IO */
                 goto end;
             }
@@ -572,7 +519,7 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
         clearpkt = 1;
 
         if (!PACKET_buf_init(&pkt, buf, n)) {
-            SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
             return -1;
         }
 
@@ -587,7 +534,7 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
 
         /* this packet contained a partial record, dump it */
         if (n < DTLS1_RT_HEADER_LENGTH) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_RECORD_TOO_SMALL);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_RECORD_TOO_SMALL);
             goto end;
         }
 
@@ -598,12 +545,12 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
         /* Get the record header */
         if (!PACKET_get_1(&pkt, &rectype)
             || !PACKET_get_1(&pkt, &versmajor)) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
-        if (rectype != SSL3_RT_HANDSHAKE)  {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
+        if (rectype != SSL3_RT_HANDSHAKE) {
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
 
@@ -612,22 +559,25 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
          * the same.
          */
         if (versmajor != DTLS1_VERSION_MAJOR) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
             goto end;
         }
 
         if (!PACKET_forward(&pkt, 1)
             /* Save the sequence number: 64 bits, with top 2 bytes = epoch */
             || !PACKET_copy_bytes(&pkt, seq, SEQ_NUM_SIZE)
-            || !PACKET_get_length_prefixed_2(&pkt, &msgpkt)
-            || PACKET_remaining(&pkt) != 0) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            || !PACKET_get_length_prefixed_2(&pkt, &msgpkt)) {
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
+        /*
+         * We allow data remaining at the end of the packet because there could
+         * be a second record (but we ignore it)
+         */
 
         /* This is an initial ClientHello so the epoch has to be 0 */
         if (seq[0] != 0 || seq[1] != 0) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
 
@@ -640,36 +590,43 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
             || !PACKET_get_net_2(&msgpkt, &msgseq)
             || !PACKET_get_net_3(&msgpkt, &fragoff)
             || !PACKET_get_net_3(&msgpkt, &fraglen)
-            || !PACKET_get_sub_packet(&msgpkt, &msgpayload, msglen)
+            || !PACKET_get_sub_packet(&msgpkt, &msgpayload, fraglen)
             || PACKET_remaining(&msgpkt) != 0) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
         if (msgtype != SSL3_MT_CLIENT_HELLO) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
 
         /* Message sequence number can only be 0 or 1 */
-        if(msgseq > 2) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_INVALID_SEQUENCE_NUMBER);
+        if (msgseq > 2) {
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_INVALID_SEQUENCE_NUMBER);
             goto end;
         }
 
-        /* We don't support a fragmented ClientHello whilst listening */
-        if (fragoff != 0 || fraglen != msglen) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_FRAGMENTED_CLIENT_HELLO);
+        /*
+         * We don't support fragment reassembly for ClientHellos whilst
+         * listening because that would require server side state (which is
+         * against the whole point of the ClientHello/HelloVerifyRequest
+         * mechanism). Instead we only look at the first ClientHello fragment
+         * and require that the cookie must be contained within it.
+         */
+        if (fragoff != 0 || fraglen > msglen) {
+            /* Non initial ClientHello fragment (or bad fragment) */
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_FRAGMENTED_CLIENT_HELLO);
             goto end;
         }
 
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, data,
-                            msglen + DTLS1_HM_HEADER_LENGTH, s,
+                            fraglen + DTLS1_HM_HEADER_LENGTH, s,
                             s->msg_callback_arg);
 
         if (!PACKET_get_net_2(&msgpayload, &clientvers)) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
@@ -678,14 +635,18 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
          */
         if (DTLS_VERSION_LT(clientvers, (unsigned int)s->method->version) &&
             s->method->version != DTLS_ANY_VERSION) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_WRONG_VERSION_NUMBER);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_WRONG_VERSION_NUMBER);
             goto end;
         }
 
         if (!PACKET_forward(&msgpayload, SSL3_RANDOM_SIZE)
             || !PACKET_get_length_prefixed_1(&msgpayload, &session)
             || !PACKET_get_length_prefixed_1(&msgpayload, &cookiepkt)) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            /*
+             * Could be malformed or the cookie does not fit within the initial
+             * ClientHello fragment. Either way we can't handle it.
+             */
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
@@ -700,7 +661,7 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
              * We have a cookie, so lets check it.
              */
             if (s->ctx->app_verify_cookie_cb == NULL) {
-                SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
+                SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
                 /* This is fatal */
                 return -1;
             }
@@ -719,6 +680,10 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
         }
 
         if (next == LISTEN_SEND_VERIFY_REQUEST) {
+            WPACKET wpkt;
+            unsigned int version;
+            size_t wreclen;
+
             /*
              * There was no cookie in the ClientHello so we need to send a
              * HelloVerifyRequest. If this fails we do not worry about trying
@@ -737,82 +702,104 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
             if (s->ctx->app_gen_cookie_cb == NULL ||
                 s->ctx->app_gen_cookie_cb(s, cookie, &cookielen) == 0 ||
                 cookielen > 255) {
-                SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
+                SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
                 /* This is fatal */
                 return -1;
             }
 
-            p = &buf[DTLS1_RT_HEADER_LENGTH];
-            msglen = dtls_raw_hello_verify_request(p + DTLS1_HM_HEADER_LENGTH,
-                                                   cookie, cookielen);
-
-            *p++ = DTLS1_MT_HELLO_VERIFY_REQUEST;
-
-            /* Message length */
-            l2n3(msglen, p);
-
-            /* Message sequence number is always 0 for a HelloVerifyRequest */
-            s2n(0, p);
-
-            /*
-             * We never fragment a HelloVerifyRequest, so fragment offset is 0
-             * and fragment length is message length
-             */
-            l2n3(0, p);
-            l2n3(msglen, p);
-
-            /* Set reclen equal to length of whole handshake message */
-            reclen = msglen + DTLS1_HM_HEADER_LENGTH;
-
-            /* Add the record header */
-            p = buf;
-
-            *(p++) = SSL3_RT_HANDSHAKE;
             /*
              * Special case: for hello verify request, client version 1.0 and we
              * haven't decided which version to use yet send back using version
              * 1.0 header: otherwise some clients will ignore it.
              */
-            if (s->method->version == DTLS_ANY_VERSION) {
-                *(p++) = DTLS1_VERSION >> 8;
-                *(p++) = DTLS1_VERSION & 0xff;
-            } else {
-                *(p++) = s->version >> 8;
-                *(p++) = s->version & 0xff;
+            version = (s->method->version == DTLS_ANY_VERSION) ? DTLS1_VERSION
+                                                               : s->version;
+
+            /* Construct the record and message headers */
+            if (!WPACKET_init(&wpkt, s->init_buf)
+                    || !WPACKET_put_bytes_u8(&wpkt, SSL3_RT_HANDSHAKE)
+                    || !WPACKET_put_bytes_u16(&wpkt, version)
+                       /*
+                        * Record sequence number is always the same as in the
+                        * received ClientHello
+                        */
+                    || !WPACKET_memcpy(&wpkt, seq, SEQ_NUM_SIZE)
+                       /* End of record, start sub packet for message */
+                    || !WPACKET_start_sub_packet_u16(&wpkt)
+                       /* Message type */
+                    || !WPACKET_put_bytes_u8(&wpkt,
+                                             DTLS1_MT_HELLO_VERIFY_REQUEST)
+                       /*
+                        * Message length - doesn't follow normal TLS convention:
+                        * the length isn't the last thing in the message header.
+                        * We'll need to fill this in later when we know the
+                        * length. Set it to zero for now
+                        */
+                    || !WPACKET_put_bytes_u24(&wpkt, 0)
+                       /*
+                        * Message sequence number is always 0 for a
+                        * HelloVerifyRequest
+                        */
+                    || !WPACKET_put_bytes_u16(&wpkt, 0)
+                       /*
+                        * We never fragment a HelloVerifyRequest, so fragment
+                        * offset is 0
+                        */
+                    || !WPACKET_put_bytes_u24(&wpkt, 0)
+                       /*
+                        * Fragment length is the same as message length, but
+                        * this *is* the last thing in the message header so we
+                        * can just start a sub-packet. No need to come back
+                        * later for this one.
+                        */
+                    || !WPACKET_start_sub_packet_u24(&wpkt)
+                       /* Create the actual HelloVerifyRequest body */
+                    || !dtls_raw_hello_verify_request(&wpkt, cookie, cookielen)
+                       /* Close message body */
+                    || !WPACKET_close(&wpkt)
+                       /* Close record body */
+                    || !WPACKET_close(&wpkt)
+                    || !WPACKET_get_total_written(&wpkt, &wreclen)
+                    || !WPACKET_finish(&wpkt)) {
+                SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
+                WPACKET_cleanup(&wpkt);
+                /* This is fatal */
+                return -1;
             }
 
             /*
-             * Record sequence number is always the same as in the received
-             * ClientHello
+             * Fix up the message len in the message header. Its the same as the
+             * fragment len which has been filled in by WPACKET, so just copy
+             * that. Destination for the message len is after the record header
+             * plus one byte for the message content type. The source is the
+             * last 3 bytes of the message header
              */
-            memcpy(p, seq, SEQ_NUM_SIZE);
-            p += SEQ_NUM_SIZE;
-
-            /* Length */
-            s2n(reclen, p);
-
-            /*
-             * Set reclen equal to length of whole record including record
-             * header
-             */
-            reclen += DTLS1_RT_HEADER_LENGTH;
+            memcpy(&buf[DTLS1_RT_HEADER_LENGTH + 1],
+                   &buf[DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH - 3],
+                   3);
 
             if (s->msg_callback)
                 s->msg_callback(1, 0, SSL3_RT_HEADER, buf,
                                 DTLS1_RT_HEADER_LENGTH, s, s->msg_callback_arg);
 
-            /*
-             * This is unneccessary if rbio and wbio are one and the same - but
-             * maybe they're not.
-             */
-            if(BIO_dgram_get_peer(rbio, &tmpclient) <= 0
-               || BIO_dgram_set_peer(wbio, &tmpclient) <= 0) {
-                SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
+            if ((tmpclient = BIO_ADDR_new()) == NULL) {
+                SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_MALLOC_FAILURE);
                 goto end;
             }
 
-            if (BIO_write(wbio, buf, reclen) < (int)reclen) {
-                if(BIO_should_retry(wbio)) {
+            /*
+             * This is unnecessary if rbio and wbio are one and the same - but
+             * maybe they're not. We ignore errors here - some BIOs do not
+             * support this.
+             */
+            if (BIO_dgram_get_peer(rbio, tmpclient) > 0) {
+                (void)BIO_dgram_set_peer(wbio, tmpclient);
+            }
+            BIO_ADDR_free(tmpclient);
+            tmpclient = NULL;
+
+            if (BIO_write(wbio, buf, wreclen) < (int)wreclen) {
+                if (BIO_should_retry(wbio)) {
                     /*
                      * Non-blocking IO...but we're stateless, so we're just
                      * going to drop this packet.
@@ -823,7 +810,7 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
             }
 
             if (BIO_flush(wbio) <= 0) {
-                if(BIO_should_retry(wbio)) {
+                if (BIO_should_retry(wbio)) {
                     /*
                      * Non-blocking IO...but we're stateless, so we're just
                      * going to drop this packet.
@@ -855,14 +842,16 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
      */
     ossl_statem_set_hello_verify_done(s);
 
-    if(BIO_dgram_get_peer(rbio, client) <= 0) {
-        SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
+    /*
+     * Some BIOs may not support this. If we fail we clear the client address
+     */
+    if (BIO_dgram_get_peer(rbio, client) <= 0)
+        BIO_ADDR_clear(client);
 
     ret = 1;
     clearpkt = 0;
-end:
+ end:
+    BIO_ADDR_free(tmpclient);
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
     if (clearpkt) {
         /* Dump this packet. Ignore return value */
@@ -870,11 +859,11 @@ end:
     }
     return ret;
 }
+#endif
 
 static int dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)
 {
-    unsigned char *p = (unsigned char *)s->init_buf->data;
-    dtls1_set_message_header(s, p, htype, len, 0, len);
+    dtls1_set_message_header(s, htype, len, 0, len);
     s->init_num = (int)len + DTLS1_HM_HEADER_LENGTH;
     s->init_off = 0;
     /* Buffer the message to handle re-xmits */
@@ -891,6 +880,14 @@ static int dtls1_handshake_write(SSL *s)
 }
 
 #ifndef OPENSSL_NO_HEARTBEATS
+
+# define HEARTBEAT_SIZE(payload, padding) ( \
+    1 /* heartbeat type */ + \
+    2 /* heartbeat length */ + \
+    (payload) + (padding))
+
+# define HEARTBEAT_SIZE_STD(payload) HEARTBEAT_SIZE(payload, 16)
+
 int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
 {
     unsigned char *pl;
@@ -899,35 +896,30 @@ int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
     unsigned int padding = 16;  /* Use minimum padding */
 
     if (s->msg_callback)
-        s->msg_callback(0, s->version, TLS1_RT_HEARTBEAT,
+        s->msg_callback(0, s->version, DTLS1_RT_HEARTBEAT,
                         p, length, s, s->msg_callback_arg);
 
-    /* Read type and payload length first */
-    if (1 + 2 + 16 > length)
+    /* Read type and payload length */
+    if (HEARTBEAT_SIZE_STD(0) > length)
         return 0;               /* silently discard */
     if (length > SSL3_RT_MAX_PLAIN_LENGTH)
         return 0;               /* silently discard per RFC 6520 sec. 4 */
 
     hbtype = *p++;
     n2s(p, payload);
-    if (1 + 2 + payload + 16 > length)
+    if (HEARTBEAT_SIZE_STD(payload) > length)
         return 0;               /* silently discard per RFC 6520 sec. 4 */
     pl = p;
 
     if (hbtype == TLS1_HB_REQUEST) {
         unsigned char *buffer, *bp;
-        unsigned int write_length = 1 /* heartbeat type */  +
-            2 /* heartbeat length */  +
-            payload + padding;
+        unsigned int write_length = HEARTBEAT_SIZE(payload, padding);
         int r;
 
         if (write_length > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
 
-        /*
-         * Allocate memory for the response, size is 1 byte message type,
-         * plus 2 bytes payload length, plus payload, plus padding
-         */
+        /* Allocate memory for the response. */
         buffer = OPENSSL_malloc(write_length);
         if (buffer == NULL)
             return -1;
@@ -944,10 +936,10 @@ int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
             return -1;
         }
 
-        r = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buffer, write_length);
+        r = dtls1_write_bytes(s, DTLS1_RT_HEARTBEAT, buffer, write_length);
 
         if (r >= 0 && s->msg_callback)
-            s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
+            s->msg_callback(1, s->version, DTLS1_RT_HEARTBEAT,
                             buffer, write_length, s, s->msg_callback_arg);
 
         OPENSSL_free(buffer);
@@ -979,10 +971,11 @@ int dtls1_heartbeat(SSL *s)
     int ret = -1;
     unsigned int payload = 18;  /* Sequence number + random bytes */
     unsigned int padding = 16;  /* Use minimum padding */
+    unsigned int size;
 
     /* Only send if peer supports and accepts HB requests... */
-    if (!(s->tlsext_heartbeat & SSL_TLSEXT_HB_ENABLED) ||
-        s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_SEND_REQUESTS) {
+    if (!(s->tlsext_heartbeat & SSL_DTLSEXT_HB_ENABLED) ||
+        s->tlsext_heartbeat & SSL_DTLSEXT_HB_DONT_SEND_REQUESTS) {
         SSLerr(SSL_F_DTLS1_HEARTBEAT, SSL_R_TLS_HEARTBEAT_PEER_DOESNT_ACCEPT);
         return -1;
     }
@@ -1001,15 +994,11 @@ int dtls1_heartbeat(SSL *s)
 
     /*-
      * Create HeartBeat message, we just use a sequence number
-     * as payload to distuingish different messages and add
+     * as payload to distinguish different messages and add
      * some random stuff.
-     *  - Message Type, 1 byte
-     *  - Payload Length, 2 bytes (unsigned int)
-     *  - Payload, the sequence number (2 bytes uint)
-     *  - Payload, random bytes (16 bytes uint)
-     *  - Padding
      */
-    buf = OPENSSL_malloc(1 + 2 + payload + padding);
+    size = HEARTBEAT_SIZE(payload, padding);
+    buf = OPENSSL_malloc(size);
     if (buf == NULL) {
         SSLerr(SSL_F_DTLS1_HEARTBEAT, ERR_R_MALLOC_FAILURE);
         return -1;
@@ -1033,12 +1022,11 @@ int dtls1_heartbeat(SSL *s)
         goto err;
     }
 
-    ret = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buf, 3 + payload + padding);
+    ret = dtls1_write_bytes(s, DTLS1_RT_HEARTBEAT, buf, size);
     if (ret >= 0) {
         if (s->msg_callback)
-            s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
-                            buf, 3 + payload + padding,
-                            s, s->msg_callback_arg);
+            s->msg_callback(1, s->version, DTLS1_RT_HEARTBEAT,
+                            buf, size, s, s->msg_callback_arg);
 
         dtls1_start_timer(s);
         s->tlsext_hb_pending = 1;

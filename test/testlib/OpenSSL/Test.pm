@@ -1,3 +1,10 @@
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 package OpenSSL::Test;
 
 use strict;
@@ -7,11 +14,13 @@ use Test::More 0.96;
 
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = "0.7";
+$VERSION = "0.8";
 @ISA = qw(Exporter);
-@EXPORT = (@Test::More::EXPORT, qw(setup indir app perlapp test perltest run));
-@EXPORT_OK = (@Test::More::EXPORT_OK, qw(top_dir top_file pipe with cmdstr
-                                         quotify));
+@EXPORT = (@Test::More::EXPORT, qw(setup indir app fuzz  perlapp test perltest
+                                   run));
+@EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
+                                         srctop_dir srctop_file
+                                         pipe with cmdstr quotify));
 
 =head1 NAME
 
@@ -37,8 +46,9 @@ In addition to the Test::More functions, it also provides functions that
 easily find the diverse programs within a OpenSSL build tree, as well as
 some other useful functions.
 
-This module I<depends> on the environment variable C<$TOP>.  Without it,
-it refuses to work.  See L</ENVIRONMENT> below.
+This module I<depends> on the environment variables C<$TOP> or C<$SRCTOP>
+and C<$BLDTOP>.  Without one of the combinations it refuses to work.
+See L</ENVIRONMENT> below.
 
 =cut
 
@@ -46,7 +56,7 @@ use File::Copy;
 use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
                              catdir catfile splitpath catpath devnull abs2rel
                              rel2abs/;
-use File::Path 2.00 qw/remove_tree mkpath/;
+use File::Path 2.00 qw/rmtree mkpath/;
 
 
 # The name of the test.  This is set by setup() and is used in the other
@@ -55,8 +65,13 @@ my $test_name = undef;
 
 # Directories we want to keep track of TOP, APPS, TEST and RESULTS are the
 # ones we're interested in, corresponding to the environment variables TOP
-# (mandatory), BIN_D, TEST_D and RESULT_D.
+# (mandatory), BIN_D, TEST_D, UTIL_D and RESULT_D.
 my %directories = ();
+
+# The environment variables that gave us the contents in %directories.  These
+# get modified whenever we change directories, so that subprocesses can use
+# the values of those environment variables as well
+my @direnv = ();
 
 # A bool saying if we shall stop all testing if the current recipe has failing
 # tests or not.  This is set by setup() if the environment variable STOPTEST
@@ -80,8 +95,10 @@ my %hooks = (
 my $debug = 0;
 
 # Declare some utility functions that are defined at the end
-sub top_file;
-sub top_dir;
+sub bldtop_file;
+sub bldtop_dir;
+sub srctop_file;
+sub srctop_dir;
 sub quotify;
 
 # Declare some private functions that are defined at the end
@@ -89,7 +106,6 @@ sub __env;
 sub __cwd;
 sub __apps_file;
 sub __results_file;
-sub __test_log;
 sub __fixup_cmd;
 sub __build_cmd;
 
@@ -108,29 +124,36 @@ If it's not used in a OpenSSL test recipe, the rest of the recipe will
 most likely refuse to run.
 
 C<setup> checks for environment variables (see L</ENVIRONMENT> below),
-check that C<$TOP/Configure> exists, C<chdir> into the results directory
-(defined by the C<$RESULT_D> environment variable if defined, otherwise
-C<$TEST_D> if defined, otherwise C<$TOP/test>).
+checks that C<$TOP/Configure> or C<$SRCTOP/Configure> exists, C<chdir>
+into the results directory (defined by the C<$RESULT_D> environment
+variable if defined, otherwise C<$BLDTOP/test> or C<$TOP/test>, whichever
+is defined).
 
 =back
 
 =cut
 
 sub setup {
+    my $old_test_name = $test_name;
     $test_name = shift;
 
     BAIL_OUT("setup() must receive a name") unless $test_name;
-    BAIL_OUT("setup() needs \$TOP to be defined") unless $ENV{TOP};
+    warn "setup() detected test name change.  Innocuous, so we continue...\n"
+        if $old_test_name && $old_test_name ne $test_name;
+
+    return if $old_test_name;
+
+    BAIL_OUT("setup() needs \$TOP or \$SRCTOP and \$BLDTOP to be defined")
+        unless $ENV{TOP} || ($ENV{SRCTOP} && $ENV{BLDTOP});
+    BAIL_OUT("setup() found both \$TOP and \$SRCTOP or \$BLDTOP...")
+        if $ENV{TOP} && ($ENV{SRCTOP} || $ENV{BLDTOP});
 
     __env();
 
-    BAIL_OUT("setup() expects the file Configure in the \$TOP directory")
-	unless -f top_file("Configure");
+    BAIL_OUT("setup() expects the file Configure in the source top directory")
+        unless -f srctop_file("Configure");
 
     __cwd($directories{RESULTS});
-
-    # Loop in case we're on a platform with more than one file generation
-    1 while unlink(__test_log());
 }
 
 =over 4
@@ -189,7 +212,7 @@ sub indir {
     __cwd($reverse);
 
     if ($opts{cleanup}) {
-	remove_tree($subdir, { safe => 0 });
+	rmtree($subdir, { safe => 0 });
     }
 }
 
@@ -203,10 +226,12 @@ Both of these functions take a reference to a list that is a command and
 its arguments, and some additional options (described further on).
 
 C<app> expects to find the given command (the first item in the given list
-reference) as an executable in C<$BIN_D> (if defined, otherwise C<$TOP/apps>).
+reference) as an executable in C<$BIN_D> (if defined, otherwise C<$TOP/apps>
+or C<$BLDTOP/apps>).
 
 C<test> expects to find the given command (the first item in the given list
-reference) as an executable in C<$TEST_D> (if defined, otherwise C<$TOP/test>).
+reference) as an executable in C<$TEST_D> (if defined, otherwise C<$TOP/test>
+or C<$BLDTOP/test>).
 
 Both return a CODEREF to be used by C<run>, C<pipe> or C<cmdstr>.
 
@@ -232,7 +257,23 @@ string PATH, I<or>, if the value is C<undef>, C</dev/null> or similar.
 =item B<perltest ARRAYREF, OPTS>
 
 Both these functions function the same way as B<app> and B<test>, except
-that they expect the command to be a perl script.
+that they expect the command to be a perl script.  Also, they support one
+more option:
+
+=over 4
+
+=item B<interpreter_args =E<gt> ARRAYref>
+
+The array reference is a set of arguments for perl rather than the script.
+Take care so that none of them can be seen as a script!  Flags and their
+eventual arguments only!
+
+=back
+
+An example:
+
+  ok(run(perlapp(["foo.pl", "arg1"],
+                 interpreter_args => [ "-I", srctop_dir("test") ])));
 
 =back
 
@@ -243,6 +284,13 @@ sub app {
     my %opts = @_;
     return sub { my $num = shift;
 		 return __build_cmd($num, \&__apps_file, $cmd, %opts); }
+}
+
+sub fuzz {
+    my $cmd = shift;
+    my %opts = @_;
+    return sub { my $num = shift;
+		 return __build_cmd($num, \&__fuzz_file, $cmd, %opts); }
 }
 
 sub test {
@@ -299,7 +347,7 @@ the function C<with> further down.
 =cut
 
 sub run {
-    my ($cmd, $display_cmd, %errlogs) = shift->(0);
+    my ($cmd, $display_cmd) = shift->(0);
     my %opts = @_;
 
     return () if !$cmd;
@@ -312,28 +360,46 @@ sub run {
     my @r = ();
     my $r = 0;
     my $e = 0;
+
+    # In non-verbose, we want to shut up the command interpreter, in case
+    # it has something to complain about.  On VMS, it might complain both
+    # on stdout and stderr
+    my $save_STDOUT;
+    my $save_STDERR;
+    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+        open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
+        open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
+        open STDOUT, ">", devnull();
+        open STDERR, ">", devnull();
+    }
+
+    # The dance we do with $? is the same dance the Unix shells appear to
+    # do.  For example, a program that gets aborted (and therefore signals
+    # SIGABRT = 6) will appear to exit with the code 134.  We mimic this
+    # to make it easier to compare with a manual run of the command.
     if ($opts{capture}) {
 	@r = `$prefix$cmd`;
-	$e = $? >> 8;
+	$e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
     } else {
 	system("$prefix$cmd");
-	$e = $? >> 8;
+	$e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
 	$r = $hooks{exit_checker}->($e);
     }
+
+    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+        close STDOUT;
+        close STDERR;
+        open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
+        open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
+    }
+
+    print STDERR "$prefix$display_cmd => $e\n"
+        if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
 
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
     # non-zero.
     $? = 0;
-
-    open ERR, ">>", __test_log();
-    { local $| = 1; print ERR "$display_cmd => $e\n"; }
-    foreach (keys %errlogs) {
-	copy($_,\*ERR);
-	copy($_,$errlogs{$_}) if defined($errlogs{$_});
-	unlink($_);
-    }
-    close ERR;
 
     if ($opts{capture}) {
 	return @r;
@@ -354,11 +420,11 @@ END {
 
 The following functions are exported on request when using C<OpenSSL::Test>.
 
-  # To only get the top_file function.
-  use OpenSSL::Test qw/top_file/;
+  # To only get the bldtop_file and srctop_file functions.
+  use OpenSSL::Test qw/bldtop_file srctop_file/;
 
-  # To only get the top_file function in addition to the default ones.
-  use OpenSSL::Test qw/:DEFAULT top_file/;
+  # To only get the bldtop_file function in addition to the default ones.
+  use OpenSSL::Test qw/:DEFAULT bldtop_file/;
 
 =cut
 
@@ -366,38 +432,76 @@ The following functions are exported on request when using C<OpenSSL::Test>.
 
 =over 4
 
-=item B<top_dir LIST>
+=item B<bldtop_dir LIST>
 
 LIST is a list of directories that make up a path from the top of the OpenSSL
-source directory (as indicated by the environment variable C<$TOP>).
-C<top_dir> returns the resulting directory as a string, adapted to the local
+build directory (as indicated by the environment variable C<$TOP> or
+C<$BLDTOP>).
+C<bldtop_dir> returns the resulting directory as a string, adapted to the local
 operating system.
 
 =back
 
 =cut
 
-sub top_dir {
-    return __top_dir(@_);	# This caters for operating systems that have
+sub bldtop_dir {
+    return __bldtop_dir(@_);	# This caters for operating systems that have
 				# a very distinct syntax for directories.
 }
 
 =over 4
 
-=item B<top_file LIST, FILENAME>
+=item B<bldtop_file LIST, FILENAME>
 
 LIST is a list of directories that make up a path from the top of the OpenSSL
-source directory (as indicated by the environment variable C<$TOP>) and
-FILENAME is the name of a file located in that directory path.
-C<top_file> returns the resulting file path as a string, adapted to the local
+build directory (as indicated by the environment variable C<$TOP> or
+C<$BLDTOP>) and FILENAME is the name of a file located in that directory path.
+C<bldtop_file> returns the resulting file path as a string, adapted to the local
 operating system.
 
 =back
 
 =cut
 
-sub top_file {
-    return __top_file(@_);
+sub bldtop_file {
+    return __bldtop_file(@_);
+}
+
+=over 4
+
+=item B<srctop_dir LIST>
+
+LIST is a list of directories that make up a path from the top of the OpenSSL
+source directory (as indicated by the environment variable C<$TOP> or
+C<$SRCTOP>).
+C<srctop_dir> returns the resulting directory as a string, adapted to the local
+operating system.
+
+=back
+
+=cut
+
+sub srctop_dir {
+    return __srctop_dir(@_);	# This caters for operating systems that have
+				# a very distinct syntax for directories.
+}
+
+=over 4
+
+=item B<srctop_file LIST, FILENAME>
+
+LIST is a list of directories that make up a path from the top of the OpenSSL
+source directory (as indicated by the environment variable C<$TOP> or
+C<$SRCTOP>) and FILENAME is the name of a file located in that directory path.
+C<srctop_file> returns the resulting file path as a string, adapted to the local
+operating system.
+
+=back
+
+=cut
+
+sub srctop_file {
+    return __srctop_file(@_);
 }
 
 =over 4
@@ -483,19 +587,42 @@ sub with {
 
 =over 4
 
-=item B<cmdstr CODEREF>
+=item B<cmdstr CODEREF, OPTS>
 
 C<cmdstr> takes a CODEREF from C<app> or C<test> and simply returns the
 command as a string.
+
+C<cmdstr> takes some additiona options OPTS that affect the string returned:
+
+=over 4
+
+=item B<display =E<gt> 0|1>
+
+When set to 0, the returned string will be with all decorations, such as a
+possible redirect of stderr to the null device.  This is suitable if the
+string is to be used directly in a recipe.
+
+When set to 1, the returned string will be without extra decorations.  This
+is suitable for display if that is desired (doesn't confuse people with all
+internal stuff), or if it's used to pass a command down to a subprocess.
+
+Default: 0
+
+=back
 
 =back
 
 =cut
 
 sub cmdstr {
-    my ($cmd, $display_cmd, %errlogs) = shift->(0);
+    my ($cmd, $display_cmd) = shift->(0);
+    my %opts = @_;
 
-    return $display_cmd;
+    if ($opts{display}) {
+        return $display_cmd;
+    } else {
+        return $cmd;
+    }
 }
 
 =over 4
@@ -568,11 +695,6 @@ is located.  Defaults to C<$TOP/apps> (adapted to the operating system).
 If defined, its value should be the directory where the test applications
 are located.  Defaults to C<$TOP/test> (adapted to the operating system).
 
-=item B<RESULT_D>
-
-If defined, its value should be the directory where the log files are
-located.  Defaults to C<$TEST_D>.
-
 =item B<STOPTEST>
 
 If defined, it puts testing in a different mode, where a recipe with
@@ -583,53 +705,105 @@ failures will result in a C<BAIL_OUT> at the end of its run.
 =cut
 
 sub __env {
-    $directories{TOP}     = $ENV{TOP},
-    $directories{APPS}    = $ENV{BIN_D}    || catdir($directories{TOP},"apps");
-    $directories{TEST}    = $ENV{TEST_D}   || catdir($directories{TOP},"test");
-    $directories{RESULTS} = $ENV{RESULT_D} || $directories{TEST};
+    $directories{SRCTOP}  = $ENV{SRCTOP} || $ENV{TOP};
+    $directories{BLDTOP}  = $ENV{BLDTOP} || $ENV{TOP};
+    $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
+    $directories{SRCAPPS} =                 __srctop_dir("apps");
+    $directories{BLDFUZZ} =                 __bldtop_dir("fuzz");
+    $directories{SRCFUZZ} =                 __srctop_dir("fuzz");
+    $directories{BLDTEST} = $ENV{TEST_D} || __bldtop_dir("test");
+    $directories{SRCTEST} =                 __srctop_dir("test");
+    $directories{RESULTS} = $ENV{RESULT_D} || $directories{BLDTEST};
+
+    push @direnv, "TOP"       if $ENV{TOP};
+    push @direnv, "SRCTOP"    if $ENV{SRCTOP};
+    push @direnv, "BLDTOP"    if $ENV{BLDTOP};
+    push @direnv, "BIN_D"     if $ENV{BIN_D};
+    push @direnv, "TEST_D"    if $ENV{TEST_D};
+    push @direnv, "RESULT_D"  if $ENV{RESULT_D};
 
     $end_with_bailout	  = $ENV{STOPTEST} ? 1 : 0;
 };
 
-sub __top_file {
+sub __srctop_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{TOP},@_,$f);
+    return catfile($directories{SRCTOP},@_,$f);
 }
 
-sub __top_dir {
+sub __srctop_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    return catdir($directories{TOP},@_);
+    return catdir($directories{SRCTOP},@_);
+}
+
+sub __bldtop_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    return catfile($directories{BLDTOP},@_,$f);
+}
+
+sub __bldtop_dir {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    return catdir($directories{BLDTOP},@_);
+}
+
+sub __exeext {
+    my $ext = "";
+    if ($^O eq "VMS" ) {	# VMS
+	$ext = ".exe";
+    } elsif ($^O eq "MSWin32") { # Windows
+	$ext = ".exe";
+    }
+    return $ENV{"EXE_EXT"} || $ext;
 }
 
 sub __test_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{TEST},@_,$f);
+    $f = catfile($directories{BLDTEST},@_,$f . __exeext());
+    $f = catfile($directories{SRCTEST},@_,$f) unless -x $f;
+    return $f;
 }
 
 sub __perltest_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return ($^X, catfile($directories{TEST},@_,$f));
+    $f = catfile($directories{BLDTEST},@_,$f);
+    $f = catfile($directories{SRCTEST},@_,$f) unless -f $f;
+    return ($^X, $f);
 }
 
 sub __apps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{APPS},@_,$f);
+    $f = catfile($directories{BLDAPPS},@_,$f . __exeext());
+    $f = catfile($directories{SRCAPPS},@_,$f) unless -x $f;
+    return $f;
+}
+
+sub __fuzz_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    $f = catfile($directories{BLDFUZZ},@_,$f . __exeext());
+    $f = catfile($directories{SRCFUZZ},@_,$f) unless -x $f;
+    return $f;
 }
 
 sub __perlapps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return ($^X, catfile($directories{APPS},@_,$f));
+    $f = catfile($directories{BLDAPPS},@_,$f);
+    $f = catfile($directories{SRCAPPS},@_,$f) unless -f $f;
+    return ($^X, $f);
 }
 
 sub __results_file {
@@ -637,10 +811,6 @@ sub __results_file {
 
     my $f = pop;
     return catfile($directories{RESULTS},@_,$f);
-}
-
-sub __test_log {
-    return __results_file("$test_name.log");
 }
 
 sub __cwd {
@@ -670,31 +840,58 @@ sub __cwd {
 	mkpath($dir);
     }
 
-    # Should we just bail out here as well?  I'm unsure.
-    return undef unless chdir($dir);
-
-    if ($opts{cleanup}) {
-	remove_tree(".", { safe => 0, keep_root => 1 });
-    }
+    # We are recalculating the directories we keep track of, but need to save
+    # away the result for after having moved into the new directory.
+    my %tmp_directories = ();
+    my %tmp_ENV = ();
 
     # For each of these directory variables, figure out where they are relative
     # to the directory we want to move to if they aren't absolute (if they are,
     # they don't change!)
-    my @dirtags = ("TOP", "TEST", "APPS", "RESULTS");
+    my @dirtags = sort keys %directories;
     foreach (@dirtags) {
 	if (!file_name_is_absolute($directories{$_})) {
 	    my $newpath = abs2rel(rel2abs($directories{$_}), rel2abs($dir));
-	    $directories{$_} = $newpath;
+	    $tmp_directories{$_} = $newpath;
 	}
+    }
+
+    # Treat each environment variable that was used to get us the values in
+    # %directories the same was as the paths in %directories, so any sub
+    # process can use their values properly as well
+    foreach (@direnv) {
+	if (!file_name_is_absolute($ENV{$_})) {
+	    my $newpath = abs2rel(rel2abs($ENV{$_}), rel2abs($dir));
+	    $tmp_ENV{$_} = $newpath;
+	}
+    }
+
+    # Should we just bail out here as well?  I'm unsure.
+    return undef unless chdir($dir);
+
+    if ($opts{cleanup}) {
+	rmtree(".", { safe => 0, keep_root => 1 });
+    }
+
+    # We put back new values carefully.  Doing the obvious
+    # %directories = ( %tmp_irectories )
+    # will clear out any value that happens to be an absolute path
+    foreach (keys %tmp_directories) {
+        $directories{$_} = $tmp_directories{$_};
+    }
+    foreach (keys %tmp_ENV) {
+        $ENV{$_} = $tmp_ENV{$_};
     }
 
     if ($debug) {
 	print STDERR "DEBUG: __cwd(), directories and files:\n";
-	print STDERR "  \$directories{TEST}    = \"$directories{TEST}\"\n";
+	print STDERR "  \$directories{BLDTEST} = \"$directories{BLDTEST}\"\n";
+	print STDERR "  \$directories{SRCTEST} = \"$directories{SRCTEST}\"\n";
 	print STDERR "  \$directories{RESULTS} = \"$directories{RESULTS}\"\n";
-	print STDERR "  \$directories{APPS}    = \"$directories{APPS}\"\n";
-	print STDERR "  \$directories{TOP}     = \"$directories{TOP}\"\n";
-	print STDERR "  \$test_log             = \"",__test_log(),"\"\n";
+	print STDERR "  \$directories{BLDAPPS} = \"$directories{BLDAPPS}\"\n";
+	print STDERR "  \$directories{SRCAPPS} = \"$directories{SRCAPPS}\"\n";
+	print STDERR "  \$directories{SRCTOP}  = \"$directories{SRCTOP}\"\n";
+	print STDERR "  \$directories{BLDTOP}  = \"$directories{BLDTOP}\"\n";
 	print STDERR "\n";
 	print STDERR "  current directory is \"",curdir(),"\"\n";
 	print STDERR "  the way back is \"$reverse\"\n";
@@ -705,25 +902,23 @@ sub __cwd {
 
 sub __fixup_cmd {
     my $prog = shift;
+    my $exe_shell = shift;
 
-    my $prefix = __top_file("util", "shlib_wrap.sh")." ";
-    my $ext = $ENV{"EXE_EXT"} || "";
+    my $prefix = __bldtop_file("util", "shlib_wrap.sh")." ";
 
-    if (defined($ENV{EXE_SHELL})) {
-	$prefix = "$ENV{EXE_SHELL} ";
+    if (defined($exe_shell)) {
+	$prefix = "$exe_shell ";
     } elsif ($^O eq "VMS" ) {	# VMS
-	$prefix = ($prog =~ /^[<\[]/ ? "mcr " : "mcr []");
-	$ext = ".exe";
+	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
     } elsif ($^O eq "MSWin32") { # Windows
 	$prefix = "";
-	$ext = ".exe";
     }
 
     # We test both with and without extension.  The reason
     # is that we might be passed a complete file spec, with
     # extension.
     if ( ! -x $prog ) {
-	my $prog = "$prog$ext";
+	my $prog = "$prog";
 	if ( ! -x $prog ) {
 	    $prog = undef;
 	}
@@ -749,14 +944,19 @@ sub __build_cmd {
     my $path_builder = shift;
     # Make a copy to not destroy the caller's array
     my @cmdarray = ( @{$_[0]} ); shift;
+    my %opts = @_;
 
     # We do a little dance, as $path_builder might return a list of
     # more than one.  If so, only the first is to be considered a
     # program to fix up, the rest is part of the arguments.  This
     # happens for perl scripts, where $path_builder will return
-    # a list of two, $^X and the script name
+    # a list of two, $^X and the script name.
+    # Also, if $path_builder returned more than one, we don't apply
+    # the EXE_SHELL environment variable.
     my @prog = ($path_builder->(shift @cmdarray));
-    my $cmd = __fixup_cmd(shift @prog);
+    my $first = shift @prog;
+    my $exe_shell = @prog ? undef : $ENV{EXE_SHELL};
+    my $cmd = __fixup_cmd($first, $exe_shell);
     if (@prog) {
 	if ( ! -f $prog[0] ) {
 	    print STDERR "$prog[0] not found\n";
@@ -764,8 +964,9 @@ sub __build_cmd {
 	}
     }
     my @args = (@prog, @cmdarray);
-
-    my %opts = @_;
+    if (defined($opts{interpreter_args})) {
+        unshift @args, @{$opts{interpreter_args}};
+    }
 
     return () if !$cmd;
 
@@ -784,19 +985,19 @@ sub __build_cmd {
     $stdout= " > ".$fileornull->($opts{stdout}) if exists($opts{stdout});
     $stderr=" 2> ".$fileornull->($opts{stderr}) if exists($opts{stderr});
 
-    $saved_stderr = $opts{stderr}		if defined($opts{stderr});
-
-    my $errlog =
-        __results_file($num ? "$test_name.$num.tmp_err" : "$test_name.tmp_err");
     my $display_cmd = "$cmd$arg_str$stdin$stdout$stderr";
-    $cmd .= "$arg_str$stdin$stdout 2> $errlog";
+
+    $stderr=" 2> ".$null
+        unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+
+    $cmd .= "$arg_str$stdin$stdout$stderr";
 
     if ($debug) {
 	print STDERR "DEBUG[__build_cmd]: \$cmd = \"$cmd\"\n";
 	print STDERR "DEBUG[__build_cmd]: \$display_cmd = \"$display_cmd\"\n";
     }
 
-    return ($cmd, $display_cmd, $errlog => $saved_stderr);
+    return ($cmd, $display_cmd);
 }
 
 =head1 SEE ALSO

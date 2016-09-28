@@ -1,8 +1,13 @@
 language: c
+cache: ccache
+
+before_install:
+    - pip install --user cpp-coveralls
 
 addons:
     apt:
         packages:
+            - ccache
             - clang-3.6
             - gcc-5
             - binutils-mingw-w64
@@ -18,79 +23,116 @@ os:
 
 compiler:
     - clang
-    - clang-3.6
     - gcc
-    - gcc-5
-    - i686-w64-mingw32-gcc
-    - x86_64-w64-mingw32-gcc
 
 env:
-    - CONFIG_OPTS=""
-    - CONFIG_OPTS="shared"
-    - CONFIG_OPTS="no-asm"
-    - CONFIG_OPTS="--debug --strict-warnings"
+    - CONFIG_OPTS="" DESTDIR="_install"
+    - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
+    - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
+    - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
+    - CONFIG_OPTS="no-stdio --strict-warnings" BUILDONLY="yes"
 
 matrix:
     include:
         - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="-fsanitize=address"
+          compiler: gcc
+          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers" COVERALLS="yes"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm --debug --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined"
+          env: CONFIG_OPTS="enable-asan"
         - os: linux
-          compiler: gcc-5
-          env: CONFIG_OPTS="-fsanitize=address"
-        - os: linux
-          compiler: gcc-5
-          env: CONFIG_OPTS="no-asm --debug --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined"
-    exclude:
-        - os: osx
           compiler: clang-3.6
-        - os: osx
+          env: CONFIG_OPTS="enable-msan"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method -fno-sanitize=alignment"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-stdio"
+        - os: linux
           compiler: gcc-5
-        - os: osx
+          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
+        - os: linux
           compiler: i686-w64-mingw32-gcc
-        - os: osx
+          env: CONFIG_OPTS="no-pic"
+        - os: linux
+          compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-stdio"
+        - os: linux
           compiler: x86_64-w64-mingw32-gcc
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="shared"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="shared"
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-asm"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-asm"
-    allow_failures:
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="--debug --strict-warnings"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="--debug --strict-warnings"
+          env: CONFIG_OPTS="no-pic"
+        - os: linux
+          compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-stdio"
+    exclude:
+        - os: linux
+          compiler: clang
+        - os: osx
+          compiler: gcc
 
 before_script:
-    - sh .travis-create-release.sh $TRAVIS_OS_NAME
-    - tar -xvzf _srcdist.tar.gz
-    - cd _srcdist
+    - if [ -n "$DESTDIR" ]; then
+          sh .travis-create-release.sh $TRAVIS_OS_NAME;
+          tar -xvzf _srcdist.tar.gz;
+          mkdir _build;
+          cd _build;
+          srcdir=../_srcdist;
+          top=..;
+      else
+          srcdir=.;
+          top=.;
+      fi
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
-          ./Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
+          $srcdir/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
       elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
-          ./Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
+          $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
-          ./config $CONFIG_OPTS;
+          if which ccache >/dev/null && [ "$CC" != clang-3.6 ]; then
+              CC="ccache $CC";
+          fi;
+          $srcdir/config -v $CONFIG_OPTS;
       fi
-    - cd ..
+    - cd $top
 
 script:
-    - cd _srcdist
-    - make
-    - if [ -n "$CROSS_COMPILE" ]; then
-          export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+    - if [ -z "$BUILDONLY" ]; then
+          make="make -s";
+      else
+          make="make";
       fi
-    - make test
-    - cd ..
+    - if [ -n "$DESTDIR" ]; then
+          cd _build;
+          top=..;
+      else
+          top=.;
+      fi
+    - $make update
+    - $make
+    - if [ -z "$BUILDONLY" ]; then
+          if [ -n "$CROSS_COMPILE" ]; then
+              export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+          fi;
+          HARNESS_VERBOSE=yes make test;
+      else
+          $make build_tests;
+      fi
+    - if [ -n "$DESTDIR" ]; then
+          mkdir "../$DESTDIR";
+          $make install install_docs DESTDIR="../$DESTDIR";
+      fi
+    - cd $top
+
+after_success:
+    - if [ -n "$COVERALLS" ]; then
+          coveralls -b . --gcov-options '\-lp';
+      fi;
 
 notifications:
     email:
         - openssl-commits@openssl.org
+

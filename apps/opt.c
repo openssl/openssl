@@ -1,50 +1,10 @@
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /* #define COMPILE_STANDALONE_TEST_DRIVER  */
@@ -59,6 +19,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <openssl/bio.h>
+#include <openssl/x509v3.h>
 
 #define MAX_OPT_HELP_WIDTH 30
 const char OPT_HELP_STR[] = "--";
@@ -75,16 +36,10 @@ static const OPTIONS *unknown;
 static const OPTIONS *opts;
 static char prog[40];
 
-#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L || \
-    !defined(INTMAX_MAX) && !defined(UINTMAX_MAX)
-#define opt_imax opt_long
-#define opt_umax opt_ulong
-#endif
-
 /*
  * Return the simple name of the program; removing various platform gunk.
  */
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WIN32)
 char *opt_progname(const char *argv0)
 {
     size_t i, n;
@@ -103,11 +58,6 @@ char *opt_progname(const char *argv0)
     if (n > 4 &&
         (strcmp(&p[n - 4], ".exe") == 0 || strcmp(&p[n - 4], ".EXE") == 0))
         n -= 4;
-#if defined(OPENSSL_SYS_NETWARE)
-    if (n > 4 &&
-        (strcmp(&p[n - 4], ".nlm") == 0 || strcmp(&p[n - 4], ".NLM") == 0))
-        n -= 4;
-#endif
 
     /* Copy over the name, in lowercase. */
     if (n > sizeof prog - 1)
@@ -124,7 +74,7 @@ char *opt_progname(const char *argv0)
 {
     const char *p, *q;
 
-    /* Find last special charcter sys:[foo.bar]openssl */
+    /* Find last special character sys:[foo.bar]openssl */
     for (p = argv0 + strlen(argv0); --p > argv0;)
         if (*p == ':' || *p == ']' || *p == '>') {
             p++;
@@ -174,8 +124,8 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
     unknown = NULL;
 
     for (; o->name; ++o) {
-        const OPTIONS *next;
 #ifndef NDEBUG
+        const OPTIONS *next;
         int duplicated, i;
 #endif
 
@@ -188,8 +138,9 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         assert(o->name[0] != '-');
         assert(o->retval > 0);
         switch (i) {
-        case   0: case '-': case '/': case '<': case '>': case 'F': case 'M':
-        case 'L': case 'U': case 'f': case 'n': case 'p': case 's': case 'u':
+        case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
+        case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
+        case 'u': case 'c':
             break;
         default:
             assert(0);
@@ -383,6 +334,7 @@ int opt_long(const char *value, long *result)
     long l;
     char *endp;
 
+    errno = 0;
     l = strtol(value, &endp, 0);
     if (*endp
             || endp == value
@@ -408,6 +360,7 @@ int opt_imax(const char *value, intmax_t *result)
     intmax_t m;
     char *endp;
 
+    errno = 0;
     m = strtoimax(value, &endp, 0);
     if (*endp
             || endp == value
@@ -430,6 +383,7 @@ int opt_umax(const char *value, uintmax_t *result)
     uintmax_t m;
     char *endp;
 
+    errno = 0;
     m = strtoumax(value, &endp, 0);
     if (*endp
             || endp == value
@@ -455,6 +409,7 @@ int opt_ulong(const char *value, unsigned long *result)
     char *endptr;
     unsigned long l;
 
+    errno = 0;
     l = strtoul(value, &endptr, 0);
     if (*endptr
             || endptr == value
@@ -502,14 +457,25 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         X509_VERIFY_PARAM_add0_policy(vpm, otmp);
         break;
     case OPT_V_PURPOSE:
+        /* purpose name -> purpose index */
         i = X509_PURPOSE_get_by_sname(opt_arg());
         if (i < 0) {
             BIO_printf(bio_err, "%s: Invalid purpose %s\n", prog, opt_arg());
             return 0;
         }
+
+        /* purpose index -> purpose object */
         xptmp = X509_PURPOSE_get0(i);
+
+        /* purpose object -> purpose value */
         i = X509_PURPOSE_get_id(xptmp);
-        X509_VERIFY_PARAM_set_purpose(vpm, i);
+
+        if (!X509_VERIFY_PARAM_set_purpose(vpm, i)) {
+            BIO_printf(bio_err,
+                       "%s: Internal error setting purpose %s\n",
+                       prog, opt_arg());
+            return 0;
+        }
         break;
     case OPT_V_VERIFY_NAME:
         vtmp = X509_VERIFY_PARAM_lookup(opt_arg());
@@ -524,6 +490,11 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         i = atoi(opt_arg());
         if (i >= 0)
             X509_VERIFY_PARAM_set_depth(vpm, i);
+        break;
+    case OPT_V_VERIFY_AUTH_LEVEL:
+        i = atoi(opt_arg());
+        if (i >= 0)
+            X509_VERIFY_PARAM_set_auth_level(vpm, i);
         break;
     case OPT_V_ATTIME:
         if (!opt_imax(opt_arg(), &t))
@@ -551,7 +522,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_IGNORE_CRITICAL);
         break;
     case OPT_V_ISSUER_CHECKS:
-        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_CB_ISSUER_CHECK);
+        /* NOP, deprecated */
         break;
     case OPT_V_CRL_CHECK:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_CRL_CHECK);
@@ -605,10 +576,13 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         break;
     case OPT_V_NO_ALT_CHAINS:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_NO_ALT_CHAINS);
-	break;
+        break;
     case OPT_V_NO_CHECK_TIME:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_NO_CHECK_TIME);
-	break;
+        break;
+    case OPT_V_ALLOW_PROXY_CERTS:
+        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_ALLOW_PROXY_CERTS);
+        break;
     }
     return 1;
 
@@ -729,7 +703,7 @@ int opt_next(void)
                 return -1;
             }
             break;
-        case 'L':
+        case 'l':
             if (!opt_long(arg, &lval)) {
                 BIO_printf(bio_err,
                            "%s: Invalid number \"%s\" for -%s\n",
@@ -745,9 +719,13 @@ int opt_next(void)
                 return -1;
             }
             break;
-        case 'f':
+        case 'c':
+        case 'E':
         case 'F':
+        case 'f':
             if (opt_format(arg,
+                           o->valtype == 'c' ? OPT_FMT_PDS :
+                           o->valtype == 'E' ? OPT_FMT_PDE :
                            o->valtype == 'F' ? OPT_FMT_PEMDER
                            : OPT_FMT_ANY, &ival))
                 break;
@@ -807,6 +785,7 @@ int opt_num_rest(void)
 static const char *valtype2param(const OPTIONS *o)
 {
     switch (o->valtype) {
+    case 0:
     case '-':
         return "";
     case 's':
@@ -818,15 +797,23 @@ static const char *valtype2param(const OPTIONS *o)
     case '>':
         return "outfile";
     case 'p':
-        return "pnum";
+        return "+int";
     case 'n':
-        return "num";
+        return "int";
+    case 'l':
+        return "long";
     case 'u':
-        return "unum";
+        return "ulong";
+    case 'E':
+        return "PEM|DER|ENGINE";
     case 'F':
-        return "der/pem";
+        return "PEM|DER";
     case 'f':
         return "format";
+    case 'M':
+        return "intmax";
+    case 'U':
+        return "uintmax";
     }
     return "parm";
 }
@@ -873,7 +860,7 @@ void opt_help(const OPTIONS *list)
         start[sizeof start - 1] = '\0';
 
         if (o->name == OPT_MORE_STR) {
-            /* Continuation of previous line; padd and print. */
+            /* Continuation of previous line; pad and print. */
             start[width] = '\0';
             BIO_printf(bio_err, "%s  %s\n", start, help);
             continue;

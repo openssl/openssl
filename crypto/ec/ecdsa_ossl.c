@@ -1,59 +1,10 @@
-/* crypto/ec/ecdsa_ossl.c */
 /*
- * Written by Nils Larsch for the OpenSSL project
- */
-/* ====================================================================
- * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
+ * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <string.h>
@@ -85,13 +36,19 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
                             const unsigned char *dgst, int dlen)
 {
     BN_CTX *ctx = NULL;
-    BIGNUM *k = NULL, *r = NULL, *order = NULL, *X = NULL;
+    BIGNUM *k = NULL, *r = NULL, *X = NULL;
+    const BIGNUM *order;
     EC_POINT *tmp_point = NULL;
     const EC_GROUP *group;
     int ret = 0;
 
     if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL) {
         ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (!EC_KEY_can_sign(eckey)) {
+        ECerr(EC_F_ECDSA_SIGN_SETUP, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
         return 0;
     }
 
@@ -105,9 +62,8 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 
     k = BN_new();               /* this value is later returned in *kinvp */
     r = BN_new();               /* this value is later returned in *rp */
-    order = BN_new();
     X = BN_new();
-    if (k == NULL || r == NULL || order == NULL || X == NULL) {
+    if (k == NULL || r == NULL || X == NULL) {
         ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -115,7 +71,8 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
         goto err;
     }
-    if (!EC_GROUP_get_order(group, order, ctx)) {
+    order = EC_GROUP_get0_order(group);
+    if (order == NULL) {
         ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
         goto err;
     }
@@ -223,7 +180,6 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     }
     if (ctx != ctx_in)
         BN_CTX_free(ctx);
-    BN_free(order);
     EC_POINT_free(tmp_point);
     BN_clear_free(X);
     return (ret);
@@ -240,8 +196,8 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
                                EC_KEY *eckey)
 {
     int ok = 0, i;
-    BIGNUM *kinv = NULL, *s, *m = NULL, *tmp = NULL, *order = NULL;
-    const BIGNUM *ckinv;
+    BIGNUM *kinv = NULL, *s, *m = NULL, *tmp = NULL;
+    const BIGNUM *order, *ckinv;
     BN_CTX *ctx = NULL;
     const EC_GROUP *group;
     ECDSA_SIG *ret;
@@ -255,20 +211,32 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
         return NULL;
     }
 
+    if (!EC_KEY_can_sign(eckey)) {
+        ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        return NULL;
+    }
+
     ret = ECDSA_SIG_new();
     if (ret == NULL) {
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    ret->r = BN_new();
+    ret->s = BN_new();
+    if (ret->r == NULL || ret->s == NULL) {
+        ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
     s = ret->s;
 
-    if ((ctx = BN_CTX_new()) == NULL || (order = BN_new()) == NULL ||
+    if ((ctx = BN_CTX_new()) == NULL ||
         (tmp = BN_new()) == NULL || (m = BN_new()) == NULL) {
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (!EC_GROUP_get_order(group, order, ctx)) {
+    order = EC_GROUP_get0_order(group);
+    if (order == NULL) {
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_EC_LIB);
         goto err;
     }
@@ -338,7 +306,6 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     BN_CTX_free(ctx);
     BN_clear_free(m);
     BN_clear_free(tmp);
-    BN_free(order);
     BN_clear_free(kinv);
     return ret;
 }
@@ -379,7 +346,8 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
 {
     int ret = -1, i;
     BN_CTX *ctx;
-    BIGNUM *order, *u1, *u2, *m, *X;
+    const BIGNUM *order;
+    BIGNUM *u1, *u2, *m, *X;
     EC_POINT *point = NULL;
     const EC_GROUP *group;
     const EC_POINT *pub_key;
@@ -391,13 +359,17 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
         return -1;
     }
 
+    if (!EC_KEY_can_sign(eckey)) {
+        ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        return -1;
+    }
+
     ctx = BN_CTX_new();
     if (ctx == NULL) {
         ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     BN_CTX_start(ctx);
-    order = BN_CTX_get(ctx);
     u1 = BN_CTX_get(ctx);
     u2 = BN_CTX_get(ctx);
     m = BN_CTX_get(ctx);
@@ -407,7 +379,8 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
         goto err;
     }
 
-    if (!EC_GROUP_get_order(group, order, ctx)) {
+    order = EC_GROUP_get0_order(group);
+    if (order == NULL) {
         ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_EC_LIB);
         goto err;
     }

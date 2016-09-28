@@ -2,13 +2,13 @@
 
 =head1 NAME
 
-DTLSv1_listen - listen for incoming DTLS connections.
+DTLSv1_listen - listen for incoming DTLS connections
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- int DTLSv1_listen(SSL *ssl, struct sockaddr *peer);
+ int DTLSv1_listen(SSL *ssl, BIO_ADDR *peer);
 
 =head1 DESCRIPTION
 
@@ -43,14 +43,12 @@ messages from any peer.
 When a ClientHello is received that contains a cookie that has been verified,
 then DTLSv1_listen() will return with the B<ssl> parameter updated into a state
 where the handshake can be continued by a call to (for example) SSL_accept().
-Additionally the B<struct sockaddr> location pointed to by B<peer> will be
-filled in with details of the peer that sent the ClientHello. It is the calling
-code's responsibility to ensure that the B<peer> location is sufficiently large
-to accommodate the addressing scheme in use. For example this might be done by
-allocating space for a struct sockaddr_storage and casting the pointer to it to
-a struct sockaddr * for the call to DTLSv1_listen(). Typically user code is
-expected to "connect" the underlying socket to the peer and continue the
-handshake in a connected state.
+Additionally the B<BIO_ADDR> pointed to by B<peer> will be filled in with
+details of the peer that sent the ClientHello. If the underlying BIO is unable
+to obtain the B<BIO_ADDR> of the peer (for example because the BIO does not
+support this), then B<*peer> will be cleared and the family set to AF_UNSPEC.
+Typically user code is expected to "connect" the underlying socket to the peer
+and continue the handshake in a connected state.
 
 Prior to calling DTLSv1_listen() user code must ensure that cookie generation
 and verification callbacks have been set up using
@@ -89,6 +87,16 @@ L<ssl(3)>, L<bio(3)>
 
 =head1 HISTORY
 
-DTLSv1_listen() return codes were clarified in OpenSSL 1.1.0.
+DTLSv1_listen() return codes were clarified in OpenSSL 1.1.0. The type of "peer"
+also changed in OpenSSL 1.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

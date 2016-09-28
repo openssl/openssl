@@ -1,4 +1,11 @@
-#! /usr/bin/perl
+#! /usr/bin/env perl
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 use strict;
 use warnings;
@@ -6,9 +13,13 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/splitdir curdir catfile/;
 use File::Compare;
-use OpenSSL::Test qw/:DEFAULT cmdstr top_file/;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_tsa");
+
+plan skip_all => "TS is not supported by this OpenSSL build"
+    if disabled("ts");
 
 # All these are modified inside indir further down. They need to exist
 # here, however, to be available in all subroutines.
@@ -72,12 +83,12 @@ plan tests => 20;
 note "setting up TSA test directory";
 indir "tsa" => sub
 {
-    $ENV{OPENSSL_CONF} = top_file("test", "CAtsa.cnf");
+    $ENV{OPENSSL_CONF} = srctop_file("test", "CAtsa.cnf");
     # Because that's what ../apps/CA.pl really looks at
     $ENV{OPENSSL_CONFIG} = "-config ".$ENV{OPENSSL_CONF};
-    $ENV{OPENSSL} = cmdstr(app(["openssl"]));
-    $testtsa = top_file("test", "recipes", "80-test_tsa.t");
-    $CAtsa = top_file("test", "CAtsa.cnf");
+    $ENV{OPENSSL} = cmdstr(app(["openssl"]), display => 1);
+    $testtsa = srctop_file("test", "recipes", "80-test_tsa.t");
+    $CAtsa = srctop_file("test", "CAtsa.cnf");
 
  SKIP: {
      $ENV{TSDNSECT} = "ts_ca_dn";
@@ -98,7 +109,7 @@ indir "tsa" => sub
 
      skip "failed", 16
          unless ok(run(app([@RUN, "-query", "-data", $testtsa,
-                            "-policy", "tsa_policy1", "-cert",
+                            "-tspolicy", "tsa_policy1", "-cert",
                             "-out", "req1.tsq"])),
                    'creating req1.req time stamp request for file testtsa');
 
@@ -132,7 +143,7 @@ indir "tsa" => sub
 
      skip "failed", 10
          unless ok(run(app([@RUN, "-query", "-data", $testtsa,
-                            "-policy", "tsa_policy2", "-no_nonce",
+                            "-tspolicy", "tsa_policy2", "-no_nonce",
                             "-out", "req2.tsq"])),
                    'creating req2.req time stamp request for file testtsa');
 

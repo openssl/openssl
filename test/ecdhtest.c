@@ -1,4 +1,12 @@
-/* crypto/ecdh/ecdhtest.c */
+/*
+ * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -11,59 +19,6 @@
  *
  * The ECDH software is originally written by Douglas Stebila of
  * Sun Microsystems Laboratories.
- *
- */
-/* ====================================================================
- * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
  *
  */
 
@@ -104,7 +59,7 @@ static void *KDF1_SHA1(const void *in, size_t inlen, void *out,
     return SHA1(in, inlen, out);
 }
 
-static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
+static int test_ecdh_curve(int nid, BN_CTX *ctx, BIO *out)
 {
     EC_KEY *a = NULL;
     EC_KEY *b = NULL;
@@ -131,7 +86,7 @@ static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
         goto err;
 
     BIO_puts(out, "Testing key generation with ");
-    BIO_puts(out, text);
+    BIO_puts(out, OBJ_nid2sn(nid));
 # ifdef NOISY
     BIO_puts(out, "\n");
 # else
@@ -288,77 +243,90 @@ static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
     return (ret);
 }
 
-/* Keys and shared secrets from RFC 7027 */
+typedef struct {
+    const int nid;
+    const char *da;
+    const char *db;
+    const char *Z;
+} ecdh_kat_t;
 
-static const unsigned char bp256_da[] = {
-    0x81, 0xDB, 0x1E, 0xE1, 0x00, 0x15, 0x0F, 0xF2, 0xEA, 0x33, 0x8D, 0x70,
-    0x82, 0x71, 0xBE, 0x38, 0x30, 0x0C, 0xB5, 0x42, 0x41, 0xD7, 0x99, 0x50,
-    0xF7, 0x7B, 0x06, 0x30, 0x39, 0x80, 0x4F, 0x1D
-};
-
-static const unsigned char bp256_db[] = {
-    0x55, 0xE4, 0x0B, 0xC4, 0x1E, 0x37, 0xE3, 0xE2, 0xAD, 0x25, 0xC3, 0xC6,
-    0x65, 0x45, 0x11, 0xFF, 0xA8, 0x47, 0x4A, 0x91, 0xA0, 0x03, 0x20, 0x87,
-    0x59, 0x38, 0x52, 0xD3, 0xE7, 0xD7, 0x6B, 0xD3
-};
-
-static const unsigned char bp256_Z[] = {
-    0x89, 0xAF, 0xC3, 0x9D, 0x41, 0xD3, 0xB3, 0x27, 0x81, 0x4B, 0x80, 0x94,
-    0x0B, 0x04, 0x25, 0x90, 0xF9, 0x65, 0x56, 0xEC, 0x91, 0xE6, 0xAE, 0x79,
-    0x39, 0xBC, 0xE3, 0x1F, 0x3A, 0x18, 0xBF, 0x2B
-};
-
-static const unsigned char bp384_da[] = {
-    0x1E, 0x20, 0xF5, 0xE0, 0x48, 0xA5, 0x88, 0x6F, 0x1F, 0x15, 0x7C, 0x74,
-    0xE9, 0x1B, 0xDE, 0x2B, 0x98, 0xC8, 0xB5, 0x2D, 0x58, 0xE5, 0x00, 0x3D,
-    0x57, 0x05, 0x3F, 0xC4, 0xB0, 0xBD, 0x65, 0xD6, 0xF1, 0x5E, 0xB5, 0xD1,
-    0xEE, 0x16, 0x10, 0xDF, 0x87, 0x07, 0x95, 0x14, 0x36, 0x27, 0xD0, 0x42
-};
-
-static const unsigned char bp384_db[] = {
-    0x03, 0x26, 0x40, 0xBC, 0x60, 0x03, 0xC5, 0x92, 0x60, 0xF7, 0x25, 0x0C,
-    0x3D, 0xB5, 0x8C, 0xE6, 0x47, 0xF9, 0x8E, 0x12, 0x60, 0xAC, 0xCE, 0x4A,
-    0xCD, 0xA3, 0xDD, 0x86, 0x9F, 0x74, 0xE0, 0x1F, 0x8B, 0xA5, 0xE0, 0x32,
-    0x43, 0x09, 0xDB, 0x6A, 0x98, 0x31, 0x49, 0x7A, 0xBA, 0xC9, 0x66, 0x70
-};
-
-static const unsigned char bp384_Z[] = {
-    0x0B, 0xD9, 0xD3, 0xA7, 0xEA, 0x0B, 0x3D, 0x51, 0x9D, 0x09, 0xD8, 0xE4,
-    0x8D, 0x07, 0x85, 0xFB, 0x74, 0x4A, 0x6B, 0x35, 0x5E, 0x63, 0x04, 0xBC,
-    0x51, 0xC2, 0x29, 0xFB, 0xBC, 0xE2, 0x39, 0xBB, 0xAD, 0xF6, 0x40, 0x37,
-    0x15, 0xC3, 0x5D, 0x4F, 0xB2, 0xA5, 0x44, 0x4F, 0x57, 0x5D, 0x4F, 0x42
-};
-
-static const unsigned char bp512_da[] = {
-    0x16, 0x30, 0x2F, 0xF0, 0xDB, 0xBB, 0x5A, 0x8D, 0x73, 0x3D, 0xAB, 0x71,
-    0x41, 0xC1, 0xB4, 0x5A, 0xCB, 0xC8, 0x71, 0x59, 0x39, 0x67, 0x7F, 0x6A,
-    0x56, 0x85, 0x0A, 0x38, 0xBD, 0x87, 0xBD, 0x59, 0xB0, 0x9E, 0x80, 0x27,
-    0x96, 0x09, 0xFF, 0x33, 0x3E, 0xB9, 0xD4, 0xC0, 0x61, 0x23, 0x1F, 0xB2,
-    0x6F, 0x92, 0xEE, 0xB0, 0x49, 0x82, 0xA5, 0xF1, 0xD1, 0x76, 0x4C, 0xAD,
-    0x57, 0x66, 0x54, 0x22
-};
-
-static const unsigned char bp512_db[] = {
-    0x23, 0x0E, 0x18, 0xE1, 0xBC, 0xC8, 0x8A, 0x36, 0x2F, 0xA5, 0x4E, 0x4E,
-    0xA3, 0x90, 0x20, 0x09, 0x29, 0x2F, 0x7F, 0x80, 0x33, 0x62, 0x4F, 0xD4,
-    0x71, 0xB5, 0xD8, 0xAC, 0xE4, 0x9D, 0x12, 0xCF, 0xAB, 0xBC, 0x19, 0x96,
-    0x3D, 0xAB, 0x8E, 0x2F, 0x1E, 0xBA, 0x00, 0xBF, 0xFB, 0x29, 0xE4, 0xD7,
-    0x2D, 0x13, 0xF2, 0x22, 0x45, 0x62, 0xF4, 0x05, 0xCB, 0x80, 0x50, 0x36,
-    0x66, 0xB2, 0x54, 0x29
-};
-
-static const unsigned char bp512_Z[] = {
-    0xA7, 0x92, 0x70, 0x98, 0x65, 0x5F, 0x1F, 0x99, 0x76, 0xFA, 0x50, 0xA9,
-    0xD5, 0x66, 0x86, 0x5D, 0xC5, 0x30, 0x33, 0x18, 0x46, 0x38, 0x1C, 0x87,
-    0x25, 0x6B, 0xAF, 0x32, 0x26, 0x24, 0x4B, 0x76, 0xD3, 0x64, 0x03, 0xC0,
-    0x24, 0xD7, 0xBB, 0xF0, 0xAA, 0x08, 0x03, 0xEA, 0xFF, 0x40, 0x5D, 0x3D,
-    0x24, 0xF1, 0x1A, 0x9B, 0x5C, 0x0B, 0xEF, 0x67, 0x9F, 0xE1, 0x45, 0x4B,
-    0x21, 0xC4, 0xCD, 0x1F
+static const ecdh_kat_t ecdh_kats[] = {
+    /* Keys and shared secrets from RFC 5114 */
+    { NID_X9_62_prime192v1,
+    "323FA3169D8E9C6593F59476BC142000AB5BE0E249C43426",
+    "631F95BB4A67632C9C476EEE9AB695AB240A0499307FCF62",
+    "AD420182633F8526BFE954ACDA376F05E5FF4F837F54FEBE" },
+    { NID_secp224r1,
+    "B558EB6C288DA707BBB4F8FBAE2AB9E9CB62E3BC5C7573E22E26D37F",
+    "AC3B1ADD3D9770E6F6A708EE9F3B8E0AB3B480E9F27F85C88B5E6D18",
+    "52272F50F46F4EDC9151569092F46DF2D96ECC3B6DC1714A4EA949FA" },
+    { NID_X9_62_prime256v1,
+    "814264145F2F56F2E96A8E337A1284993FAF432A5ABCE59E867B7291D507A3AF",
+    "2CE1788EC197E096DB95A200CC0AB26A19CE6BCCAD562B8EEE1B593761CF7F41",
+    "DD0F5396219D1EA393310412D19A08F1F5811E9DC8EC8EEA7F80D21C820C2788" },
+    { NID_secp384r1,
+    "D27335EA71664AF244DD14E9FD1260715DFD8A7965571C48D709EE7A7962A156"
+    "D706A90CBCB5DF2986F05FEADB9376F1",
+    "52D1791FDB4B70F89C0F00D456C2F7023B6125262C36A7DF1F80231121CCE3D3"
+    "9BE52E00C194A4132C4A6C768BCD94D2",
+    "5EA1FC4AF7256D2055981B110575E0A8CAE53160137D904C59D926EB1B8456E4"
+    "27AA8A4540884C37DE159A58028ABC0E" },
+    { NID_secp521r1,
+    "0113F82DA825735E3D97276683B2B74277BAD27335EA71664AF2430CC4F33459"
+    "B9669EE78B3FFB9B8683015D344DCBFEF6FB9AF4C6C470BE254516CD3C1A1FB4"
+    "7362",
+    "00CEE3480D8645A17D249F2776D28BAE616952D1791FDB4B70F7C3378732AA1B"
+    "22928448BCD1DC2496D435B01048066EBE4F72903C361B1A9DC1193DC2C9D089"
+    "1B96",
+    "00CDEA89621CFA46B132F9E4CFE2261CDE2D4368EB5656634C7CC98C7A00CDE5"
+    "4ED1866A0DD3E6126C9D2F845DAFF82CEB1DA08F5D87521BB0EBECA77911169C"
+    "20CC" },
+    /* Keys and shared secrets from RFC 5903 */
+    { NID_X9_62_prime256v1,
+    "C88F01F510D9AC3F70A292DAA2316DE544E9AAB8AFE84049C62A9C57862D1433",
+    "C6EF9C5D78AE012A011164ACB397CE2088685D8F06BF9BE0B283AB46476BEE53",
+    "D6840F6B42F6EDAFD13116E0E12565202FEF8E9ECE7DCE03812464D04B9442DE" },
+    { NID_secp384r1,
+    "099F3C7034D4A2C699884D73A375A67F7624EF7C6B3C0F160647B67414DCE655"
+    "E35B538041E649EE3FAEF896783AB194",
+    "41CB0779B4BDB85D47846725FBEC3C9430FAB46CC8DC5060855CC9BDA0AA2942"
+    "E0308312916B8ED2960E4BD55A7448FC",
+    "11187331C279962D93D604243FD592CB9D0A926F422E47187521287E7156C5C4"
+    "D603135569B9E9D09CF5D4A270F59746" },
+    { NID_secp521r1,
+    "0037ADE9319A89F4DABDB3EF411AACCCA5123C61ACAB57B5393DCE47608172A0"
+    "95AA85A30FE1C2952C6771D937BA9777F5957B2639BAB072462F68C27A57382D"
+    "4A52",
+    "0145BA99A847AF43793FDD0E872E7CDFA16BE30FDC780F97BCCC3F078380201E"
+    "9C677D600B343757A3BDBF2A3163E4C2F869CCA7458AA4A4EFFC311F5CB15168"
+    "5EB9",
+    "01144C7D79AE6956BC8EDB8E7C787C4521CB086FA64407F97894E5E6B2D79B04"
+    "D1427E73CA4BAA240A34786859810C06B3C715A3A8CC3151F2BEE417996D19F3"
+    "DDEA" },
+    /* Keys and shared secrets from RFC 7027 */
+    { NID_brainpoolP256r1,
+    "81DB1EE100150FF2EA338D708271BE38300CB54241D79950F77B063039804F1D",
+    "55E40BC41E37E3E2AD25C3C6654511FFA8474A91A0032087593852D3E7D76BD3",
+    "89AFC39D41D3B327814B80940B042590F96556EC91E6AE7939BCE31F3A18BF2B" },
+    { NID_brainpoolP384r1,
+    "1E20F5E048A5886F1F157C74E91BDE2B98C8B52D58E5003D57053FC4B0BD65D6"
+    "F15EB5D1EE1610DF870795143627D042",
+    "032640BC6003C59260F7250C3DB58CE647F98E1260ACCE4ACDA3DD869F74E01F"
+    "8BA5E0324309DB6A9831497ABAC96670",
+    "0BD9D3A7EA0B3D519D09D8E48D0785FB744A6B355E6304BC51C229FBBCE239BB"
+    "ADF6403715C35D4FB2A5444F575D4F42" },
+    { NID_brainpoolP512r1,
+    "16302FF0DBBB5A8D733DAB7141C1B45ACBC8715939677F6A56850A38BD87BD59"
+    "B09E80279609FF333EB9D4C061231FB26F92EEB04982A5F1D1764CAD57665422",
+    "230E18E1BCC88A362FA54E4EA3902009292F7F8033624FD471B5D8ACE49D12CF"
+    "ABBC19963DAB8E2F1EBA00BFFB29E4D72D13F2224562F405CB80503666B25429",
+    "A7927098655F1F9976FA50A9D566865DC530331846381C87256BAF3226244B76"
+    "D36403C024D7BBF0AA0803EAFF405D3D24F11A9B5C0BEF679FE1454B21C4CD1F" }
 };
 
 /* Given private value and NID, create EC_KEY structure */
 
-static EC_KEY *mk_eckey(int nid, const unsigned char *p, size_t plen)
+static EC_KEY *mk_eckey(int nid, const char *str)
 {
     int ok = 0;
     EC_KEY *k = NULL;
@@ -368,7 +336,8 @@ static EC_KEY *mk_eckey(int nid, const unsigned char *p, size_t plen)
     k = EC_KEY_new_by_curve_name(nid);
     if (!k)
         goto err;
-    priv = BN_bin2bn(p, plen, NULL);
+    if(!BN_hex2bn(&priv, str))
+        goto err;
     if (!priv)
         goto err;
     if (!EC_KEY_set_private_key(k, priv))
@@ -396,41 +365,49 @@ static EC_KEY *mk_eckey(int nid, const unsigned char *p, size_t plen)
  * value.
  */
 
-static int ecdh_kat(BIO *out, const char *cname, int nid,
-                    const unsigned char *k1, size_t k1_len,
-                    const unsigned char *k2, size_t k2_len,
-                    const unsigned char *Z, size_t Zlen)
+static int ecdh_kat(BIO *out, const ecdh_kat_t *kat)
 {
     int rv = 0;
     EC_KEY *key1 = NULL, *key2 = NULL;
-    unsigned char *Ztmp = NULL;
-    size_t Ztmplen;
+    BIGNUM *bnz = NULL;
+    unsigned char *Ztmp = NULL, *Z = NULL;
+    size_t Ztmplen, Zlen;
     BIO_puts(out, "Testing ECDH shared secret with ");
-    BIO_puts(out, cname);
-    key1 = mk_eckey(nid, k1, k1_len);
-    key2 = mk_eckey(nid, k2, k2_len);
+    BIO_puts(out, OBJ_nid2sn(kat->nid));
+    if(!BN_hex2bn(&bnz, kat->Z))
+        goto err;
+    key1 = mk_eckey(kat->nid, kat->da);
+    key2 = mk_eckey(kat->nid, kat->db);
     if (!key1 || !key2)
         goto err;
     Ztmplen = (EC_GROUP_get_degree(EC_KEY_get0_group(key1)) + 7) / 8;
-    if (Ztmplen != Zlen)
+    Zlen = BN_num_bytes(bnz);
+    if (Zlen > Ztmplen)
         goto err;
-    Ztmp = OPENSSL_malloc(Ztmplen);
+    if((Ztmp = OPENSSL_zalloc(Ztmplen)) == NULL)
+        goto err;
+    if((Z = OPENSSL_zalloc(Ztmplen)) == NULL)
+        goto err;
+    if(!BN_bn2binpad(bnz, Z, Ztmplen))
+        goto err;
     if (!ECDH_compute_key(Ztmp, Ztmplen,
                           EC_KEY_get0_public_key(key2), key1, 0))
         goto err;
-    if (memcmp(Ztmp, Z, Zlen))
+    if (memcmp(Ztmp, Z, Ztmplen))
         goto err;
-    memset(Ztmp, 0, Zlen);
+    memset(Ztmp, 0, Ztmplen);
     if (!ECDH_compute_key(Ztmp, Ztmplen,
                           EC_KEY_get0_public_key(key1), key2, 0))
         goto err;
-    if (memcmp(Ztmp, Z, Zlen))
+    if (memcmp(Ztmp, Z, Ztmplen))
         goto err;
     rv = 1;
  err:
     EC_KEY_free(key1);
     EC_KEY_free(key2);
     OPENSSL_free(Ztmp);
+    OPENSSL_free(Z);
+    BN_free(bnz);
     if (rv)
         BIO_puts(out, " ok\n");
     else {
@@ -440,16 +417,137 @@ static int ecdh_kat(BIO *out, const char *cname, int nid,
     return rv;
 }
 
-# define test_ecdh_kat(bio, curve, bits) \
-        ecdh_kat(bio, curve, NID_brainpoolP##bits##r1, \
-                bp##bits##_da, sizeof(bp##bits##_da), \
-                bp##bits##_db, sizeof(bp##bits##_db), \
-                bp##bits##_Z, sizeof(bp##bits##_Z))
+#include "ecdhtest_cavs.h"
+
+/*
+ * NIST SP800-56A co-factor ECDH tests.
+ * KATs taken from NIST documents with parameters:
+ *
+ * - (QCAVSx,QCAVSy) is the public key for CAVS.
+ * - dIUT is the private key for IUT.
+ * - (QIUTx,QIUTy) is the public key for IUT.
+ * - ZIUT is the shared secret KAT.
+ *
+ * CAVS: Cryptographic Algorithm Validation System
+ * IUT: Implementation Under Test
+ *
+ * This function tests two things:
+ *
+ * 1. dIUT * G = (QIUTx,QIUTy)
+ *    i.e. public key for IUT computes correctly.
+ * 2. x-coord of cofactor * dIUT * (QCAVSx,QCAVSy) = ZIUT
+ *    i.e. co-factor ECDH key computes correctly.
+ *
+ * returns zero on failure or unsupported curve. One otherwise.
+ */
+static int ecdh_cavs_kat(BIO *out, const ecdh_cavs_kat_t *kat)
+{
+    int rv = 0, is_char_two = 0;
+    EC_KEY *key1 = NULL;
+    EC_POINT *pub = NULL;
+    const EC_GROUP *group = NULL;
+    BIGNUM *bnz = NULL, *x = NULL, *y = NULL;
+    unsigned char *Ztmp = NULL, *Z = NULL;
+    size_t Ztmplen, Zlen;
+    BIO_puts(out, "Testing ECC CDH Primitive SP800-56A with ");
+    BIO_puts(out, OBJ_nid2sn(kat->nid));
+
+    /* dIUT is IUT's private key */
+    if ((key1 = mk_eckey(kat->nid, kat->dIUT)) == NULL)
+        goto err;
+    /* these are cofactor ECDH KATs */
+    EC_KEY_set_flags(key1, EC_FLAG_COFACTOR_ECDH);
+
+    if ((group = EC_KEY_get0_group(key1)) == NULL)
+        goto err;
+    if ((pub = EC_POINT_new(group)) == NULL)
+        goto err;
+
+    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) == NID_X9_62_characteristic_two_field)
+        is_char_two = 1;
+
+    /* (QIUTx, QIUTy) is IUT's public key */
+    if(!BN_hex2bn(&x, kat->QIUTx))
+        goto err;
+    if(!BN_hex2bn(&y, kat->QIUTy))
+        goto err;
+    if (is_char_two) {
+#ifdef OPENSSL_NO_EC2M
+        goto err;
+#else
+        if (!EC_POINT_set_affine_coordinates_GF2m(group, pub, x, y, NULL))
+            goto err;
+#endif
+    }
+    else {
+        if (!EC_POINT_set_affine_coordinates_GFp(group, pub, x, y, NULL))
+            goto err;
+    }
+    /* dIUT * G = (QIUTx, QIUTy) should hold */
+    if (EC_POINT_cmp(group, EC_KEY_get0_public_key(key1), pub, NULL))
+        goto err;
+
+    /* (QCAVSx, QCAVSy) is CAVS's public key */
+    if(!BN_hex2bn(&x, kat->QCAVSx))
+        goto err;
+    if(!BN_hex2bn(&y, kat->QCAVSy))
+        goto err;
+    if (is_char_two) {
+#ifdef OPENSSL_NO_EC2M
+        goto err;
+#else
+        if (!EC_POINT_set_affine_coordinates_GF2m(group, pub, x, y, NULL))
+            goto err;
+#endif
+    }
+    else {
+        if (!EC_POINT_set_affine_coordinates_GFp(group, pub, x, y, NULL))
+            goto err;
+    }
+
+    /* ZIUT is the shared secret */
+    if(!BN_hex2bn(&bnz, kat->ZIUT))
+        goto err;
+    Ztmplen = (EC_GROUP_get_degree(EC_KEY_get0_group(key1)) + 7) / 8;
+    Zlen = BN_num_bytes(bnz);
+    if (Zlen > Ztmplen)
+        goto err;
+    if((Ztmp = OPENSSL_zalloc(Ztmplen)) == NULL)
+        goto err;
+    if((Z = OPENSSL_zalloc(Ztmplen)) == NULL)
+        goto err;
+    if(!BN_bn2binpad(bnz, Z, Ztmplen))
+        goto err;
+    if (!ECDH_compute_key(Ztmp, Ztmplen, pub, key1, 0))
+        goto err;
+    /* shared secrets should be identical */
+    if (memcmp(Ztmp, Z, Ztmplen))
+        goto err;
+    rv = 1;
+ err:
+    EC_KEY_free(key1);
+    EC_POINT_free(pub);
+    BN_free(bnz);
+    BN_free(x);
+    BN_free(y);
+    OPENSSL_free(Ztmp);
+    OPENSSL_free(Z);
+    if (rv) {
+        BIO_puts(out, " ok\n");
+    }
+    else {
+        fprintf(stderr, "Error in ECC CDH routines\n");
+        ERR_print_errors_fp(stderr);
+    }
+    return rv;
+}
 
 int main(int argc, char *argv[])
 {
     BN_CTX *ctx = NULL;
-    int ret = 1;
+    int nid, ret = 1;
+    EC_builtin_curve *curves = NULL;
+    size_t crv_len = 0, n = 0;
     BIO *out;
 
     CRYPTO_set_mem_debug(1);
@@ -465,59 +563,49 @@ int main(int argc, char *argv[])
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
 
-    /* NIST PRIME CURVES TESTS */
-    if (!test_ecdh_curve
-        (NID_X9_62_prime192v1, "NIST Prime-Curve P-192", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_secp224r1, "NIST Prime-Curve P-224", ctx, out))
-        goto err;
-    if (!test_ecdh_curve
-        (NID_X9_62_prime256v1, "NIST Prime-Curve P-256", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_secp384r1, "NIST Prime-Curve P-384", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_secp521r1, "NIST Prime-Curve P-521", ctx, out))
-        goto err;
-# ifndef OPENSSL_NO_EC2M
-    /* NIST BINARY CURVES TESTS */
-    if (!test_ecdh_curve(NID_sect163k1, "NIST Binary-Curve K-163", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_sect163r2, "NIST Binary-Curve B-163", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_sect233k1, "NIST Binary-Curve K-233", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_sect233r1, "NIST Binary-Curve B-233", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_sect283k1, "NIST Binary-Curve K-283", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_sect283r1, "NIST Binary-Curve B-283", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_sect409k1, "NIST Binary-Curve K-409", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_sect409r1, "NIST Binary-Curve B-409", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_sect571k1, "NIST Binary-Curve K-571", ctx, out))
-        goto err;
-    if (!test_ecdh_curve(NID_sect571r1, "NIST Binary-Curve B-571", ctx, out))
-        goto err;
-# endif
-    if (!test_ecdh_kat(out, "Brainpool Prime-Curve brainpoolP256r1", 256))
-        goto err;
-    if (!test_ecdh_kat(out, "Brainpool Prime-Curve brainpoolP384r1", 384))
-        goto err;
-    if (!test_ecdh_kat(out, "Brainpool Prime-Curve brainpoolP512r1", 512))
-        goto err;
+    /* get a list of all internal curves */
+    crv_len = EC_get_builtin_curves(NULL, 0);
+    curves = OPENSSL_malloc(sizeof(*curves) * crv_len);
+    if (curves == NULL) goto err;
+
+    if (!EC_get_builtin_curves(curves, crv_len)) goto err;
+
+    /* NAMED CURVES TESTS */
+    for (n = 0; n < crv_len; n++) {
+        nid = curves[n].nid;
+        /*
+         * Skipped for X25519 because affine coordinate operations are not
+         * supported for this curve.
+         * Higher level ECDH tests are performed in evptests.txt instead.
+         */
+        if (nid == NID_X25519)
+            continue;
+        if (!test_ecdh_curve(nid, ctx, out)) goto err;
+    }
+
+    /* KATs */
+    for (n = 0; n < (sizeof(ecdh_kats)/sizeof(ecdh_kat_t)); n++) {
+        if (!ecdh_kat(out, &ecdh_kats[n]))
+            goto err;
+    }
+
+    /* NIST SP800-56A co-factor ECDH KATs */
+    for (n = 0; n < (sizeof(ecdh_cavs_kats)/sizeof(ecdh_cavs_kat_t)); n++) {
+        if (!ecdh_cavs_kat(out, &ecdh_cavs_kats[n]))
+            goto err;
+    }
 
     ret = 0;
 
  err:
     ERR_print_errors_fp(stderr);
+    OPENSSL_free(curves);
     BN_CTX_free(ctx);
     BIO_free(out);
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
+
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks_fp(stderr);
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        ret = 1;
 #endif
     EXIT(ret);
 }

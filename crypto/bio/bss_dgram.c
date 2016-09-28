@@ -1,68 +1,16 @@
-/* crypto/bio/bio_dgram.c */
 /*
- * DTLS implementation written by Nagendra Modadugu
- * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
- */
-/* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
 #include <errno.h>
-#define USE_SOCKETS
-#include "internal/cryptlib.h"
 
-#include <openssl/bio.h>
+#include "bio_lcl.h"
 #ifndef OPENSSL_NO_DGRAM
 
 # if !(defined(_WIN32) || defined(OPENSSL_SYS_VMS))
@@ -97,12 +45,6 @@
          ((a)->s6_addr32[2] == htonl(0x0000ffff)))
 # endif
 
-# ifdef WATT32
-#  define sock_write SockWrite  /* Watt-32 uses same names */
-#  define sock_read  SockRead
-#  define sock_puts  SockPuts
-# endif
-
 static int dgram_write(BIO *h, const char *buf, int num);
 static int dgram_read(BIO *h, char *buf, int size);
 static int dgram_puts(BIO *h, const char *str);
@@ -128,7 +70,7 @@ static int BIO_dgram_should_retry(int s);
 
 static void get_current_time(struct timeval *t);
 
-static BIO_METHOD methods_dgramp = {
+static const BIO_METHOD methods_dgramp = {
     BIO_TYPE_DGRAM,
     "datagram socket",
     dgram_write,
@@ -142,7 +84,7 @@ static BIO_METHOD methods_dgramp = {
 };
 
 # ifndef OPENSSL_NO_SCTP
-static BIO_METHOD methods_dgramp_sctp = {
+static const BIO_METHOD methods_dgramp_sctp = {
     BIO_TYPE_DGRAM_SCTP,
     "datagram sctp socket",
     dgram_sctp_write,
@@ -157,13 +99,7 @@ static BIO_METHOD methods_dgramp_sctp = {
 # endif
 
 typedef struct bio_dgram_data_st {
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in sa_in;
-# if OPENSSL_USE_IPV6
-        struct sockaddr_in6 sa_in6;
-# endif
-    } peer;
+    BIO_ADDR peer;
     unsigned int connected;
     unsigned int _errno;
     unsigned int mtu;
@@ -180,13 +116,7 @@ typedef struct bio_dgram_sctp_save_message_st {
 } bio_dgram_sctp_save_message;
 
 typedef struct bio_dgram_sctp_data_st {
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in sa_in;
-#  if OPENSSL_USE_IPV6
-        struct sockaddr_in6 sa_in6;
-#  endif
-    } peer;
+    BIO_ADDR peer;
     unsigned int connected;
     unsigned int _errno;
     unsigned int mtu;
@@ -204,7 +134,7 @@ typedef struct bio_dgram_sctp_data_st {
 } bio_dgram_sctp_data;
 # endif
 
-BIO_METHOD *BIO_s_datagram(void)
+const BIO_METHOD *BIO_s_datagram(void)
 {
     return (&methods_dgramp);
 }
@@ -251,7 +181,7 @@ static int dgram_clear(BIO *a)
         return (0);
     if (a->shutdown) {
         if (a->init) {
-            SHUTDOWN2(a->num);
+            BIO_closesocket(a->num);
         }
         a->init = 0;
         a->flags = 0;
@@ -314,7 +244,7 @@ static void dgram_adjust_rcv_timeout(BIO *b)
         }
 
         /*
-         * Adjust socket timeout if next handhake message timer will expire
+         * Adjust socket timeout if next handshake message timer will expire
          * earlier.
          */
         if ((data->socket_timeout.tv_sec == 0
@@ -370,40 +300,20 @@ static int dgram_read(BIO *b, char *out, int outl)
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
     int flags = 0;
 
-    struct {
-        /*
-         * See commentary in b_sock.c. <appro>
-         */
-        union {
-            size_t s;
-            int i;
-        } len;
-        union {
-            struct sockaddr sa;
-            struct sockaddr_in sa_in;
-# if OPENSSL_USE_IPV6
-            struct sockaddr_in6 sa_in6;
-# endif
-        } peer;
-    } sa;
-
-    sa.len.s = 0;
-    sa.len.i = sizeof(sa.peer);
+    BIO_ADDR peer;
+    socklen_t len = sizeof(peer);
 
     if (out != NULL) {
         clear_socket_error();
-        memset(&sa.peer, 0, sizeof(sa.peer));
+        memset(&peer, 0, sizeof(peer));
         dgram_adjust_rcv_timeout(b);
         if (data->peekmode)
             flags = MSG_PEEK;
-        ret = recvfrom(b->num, out, outl, flags, &sa.peer.sa, (void *)&sa.len);
-        if (sizeof(sa.len.i) != sizeof(sa.len.s) && sa.len.i == 0) {
-            OPENSSL_assert(sa.len.s <= sizeof(sa.peer));
-            sa.len.i = (int)sa.len.s;
-        }
+        ret = recvfrom(b->num, out, outl, flags,
+                       BIO_ADDR_sockaddr_noconst(&peer), &len);
 
         if (!data->connected && ret >= 0)
-            BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, &sa.peer);
+            BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, &peer);
 
         BIO_clear_retry_flags(b);
         if (ret < 0) {
@@ -427,18 +337,14 @@ static int dgram_write(BIO *b, const char *in, int inl)
     if (data->connected)
         ret = writesocket(b->num, in, inl);
     else {
-        int peerlen = sizeof(data->peer);
+        int peerlen = BIO_ADDR_sockaddr_size(&data->peer);
 
-        if (data->peer.sa.sa_family == AF_INET)
-            peerlen = sizeof(data->peer.sa_in);
-# if OPENSSL_USE_IPV6
-        else if (data->peer.sa.sa_family == AF_INET6)
-            peerlen = sizeof(data->peer.sa_in6);
-# endif
 # if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
-        ret = sendto(b->num, (char *)in, inl, 0, &data->peer.sa, peerlen);
+        ret = sendto(b->num, (char *)in, inl, 0,
+                     BIO_ADDR_sockaddr(&data->peer), peerlen);
 # else
-        ret = sendto(b->num, in, inl, 0, &data->peer.sa, peerlen);
+        ret = sendto(b->num, in, inl, 0,
+                     BIO_ADDR_sockaddr(&data->peer), peerlen);
 # endif
     }
 
@@ -456,27 +362,31 @@ static long dgram_get_mtu_overhead(bio_dgram_data *data)
 {
     long ret;
 
-    switch (data->peer.sa.sa_family) {
+    switch (BIO_ADDR_family(&data->peer)) {
     case AF_INET:
         /*
          * Assume this is UDP - 20 bytes for IP, 8 bytes for UDP
          */
         ret = 28;
         break;
-# if OPENSSL_USE_IPV6
+# ifdef AF_INET6
     case AF_INET6:
+        {
 #  ifdef IN6_IS_ADDR_V4MAPPED
-        if (IN6_IS_ADDR_V4MAPPED(&data->peer.sa_in6.sin6_addr))
-            /*
-             * Assume this is UDP - 20 bytes for IP, 8 bytes for UDP
-             */
-            ret = 28;
-        else
+            struct in6_addr tmp_addr;
+            if (BIO_ADDR_rawaddress(&data->peer, &tmp_addr, NULL)
+                && IN6_IS_ADDR_V4MAPPED(&tmp_addr))
+                /*
+                 * Assume this is UDP - 20 bytes for IP, 8 bytes for UDP
+                 */
+                ret = 28;
+            else
 #  endif
             /*
              * Assume this is UDP - 40 bytes for IP, 8 bytes for UDP
              */
             ret = 48;
+        }
         break;
 # endif
     default:
@@ -491,20 +401,14 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 1;
     int *ip;
-    struct sockaddr *to = NULL;
     bio_dgram_data *data = NULL;
     int sockopt_val = 0;
+    int d_errno;
 # if defined(OPENSSL_SYS_LINUX) && (defined(IP_MTU_DISCOVER) || defined(IP_MTU))
     socklen_t sockopt_len;      /* assume that system supporting IP_MTU is
                                  * modern enough to define socklen_t */
     socklen_t addr_len;
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in s4;
-#  if OPENSSL_USE_IPV6
-        struct sockaddr_in6 s6;
-#  endif
-    } addr;
+    BIO_ADDR addr;
 # endif
 
     data = (bio_dgram_data *)b->ptr;
@@ -547,20 +451,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 1;
         break;
     case BIO_CTRL_DGRAM_CONNECT:
-        to = (struct sockaddr *)ptr;
-        switch (to->sa_family) {
-        case AF_INET:
-            memcpy(&data->peer, to, sizeof(data->peer.sa_in));
-            break;
-# if OPENSSL_USE_IPV6
-        case AF_INET6:
-            memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
-            break;
-# endif
-        default:
-            memcpy(&data->peer, to, sizeof(data->peer.sa));
-            break;
-        }
+        BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
         /* (Linux)kernel sets DF bit on outgoing IP packets */
     case BIO_CTRL_DGRAM_MTU_DISCOVER:
@@ -645,18 +536,22 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DGRAM_GET_FALLBACK_MTU:
         ret = -dgram_get_mtu_overhead(data);
-        switch (data->peer.sa.sa_family) {
+        switch (BIO_ADDR_family(&data->peer)) {
         case AF_INET:
             ret += 576;
             break;
 # if OPENSSL_USE_IPV6
         case AF_INET6:
+            {
 #  ifdef IN6_IS_ADDR_V4MAPPED
-            if (IN6_IS_ADDR_V4MAPPED(&data->peer.sa_in6.sin6_addr))
-                ret += 576;
-            else
+                struct in6_addr tmp_addr;
+                if (BIO_ADDR_rawaddress(&data->peer, &tmp_addr, NULL)
+                    && IN6_IS_ADDR_V4MAPPED(&tmp_addr))
+                    ret += 576;
+                else
 #  endif
-                ret += 1280;
+                    ret += 1280;
+            }
             break;
 # endif
         default:
@@ -671,61 +566,24 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = num;
         break;
     case BIO_CTRL_DGRAM_SET_CONNECTED:
-        to = (struct sockaddr *)ptr;
-
-        if (to != NULL) {
+        if (ptr != NULL) {
             data->connected = 1;
-            switch (to->sa_family) {
-            case AF_INET:
-                memcpy(&data->peer, to, sizeof(data->peer.sa_in));
-                break;
-# if OPENSSL_USE_IPV6
-            case AF_INET6:
-                memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
-                break;
-# endif
-            default:
-                memcpy(&data->peer, to, sizeof(data->peer.sa));
-                break;
-            }
+            BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         } else {
             data->connected = 0;
             memset(&data->peer, 0, sizeof(data->peer));
         }
         break;
     case BIO_CTRL_DGRAM_GET_PEER:
-        switch (data->peer.sa.sa_family) {
-        case AF_INET:
-            ret = sizeof(data->peer.sa_in);
-            break;
-# if OPENSSL_USE_IPV6
-        case AF_INET6:
-            ret = sizeof(data->peer.sa_in6);
-            break;
-# endif
-        default:
-            ret = sizeof(data->peer.sa);
-            break;
-        }
+        ret = BIO_ADDR_sockaddr_size(&data->peer);
+        /* FIXME: if num < ret, we will only return part of an address.
+           That should bee an error, no? */
         if (num == 0 || num > ret)
             num = ret;
         memcpy(ptr, &data->peer, (ret = num));
         break;
     case BIO_CTRL_DGRAM_SET_PEER:
-        to = (struct sockaddr *)ptr;
-        switch (to->sa_family) {
-        case AF_INET:
-            memcpy(&data->peer, to, sizeof(data->peer.sa_in));
-            break;
-# if OPENSSL_USE_IPV6
-        case AF_INET6:
-            memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
-            break;
-# endif
-        default:
-            memcpy(&data->peer, to, sizeof(data->peer.sa));
-            break;
-        }
+        BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
     case BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT:
         memcpy(&(data->next_timeout), ptr, sizeof(struct timeval));
@@ -848,11 +706,11 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         /* fall-through */
     case BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP:
 # ifdef OPENSSL_SYS_WINDOWS
-        if (data->_errno == WSAETIMEDOUT)
+        d_errno = (data->_errno == WSAETIMEDOUT);
 # else
-        if (data->_errno == EAGAIN)
+        d_errno = (data->_errno == EAGAIN);
 # endif
-        {
+        if (d_errno) {
             ret = 1;
             data->_errno = 0;
         } else
@@ -945,7 +803,7 @@ static int dgram_puts(BIO *bp, const char *str)
 }
 
 # ifndef OPENSSL_NO_SCTP
-BIO_METHOD *BIO_s_datagram_sctp(void)
+const BIO_METHOD *BIO_s_datagram_sctp(void)
 {
     return (&methods_dgramp_sctp);
 }

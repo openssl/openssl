@@ -9,7 +9,7 @@ EVP_DigestVerifyInit, EVP_DigestVerifyUpdate, EVP_DigestVerifyFinal - EVP signat
  #include <openssl/evp.h>
 
  int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-			const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
+                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
  int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
  int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig, size_t siglen);
 
@@ -56,7 +56,7 @@ needed to be used to sign using SHA1 and DSA. This is no longer necessary and
 the use of clone digest is now discouraged.
 
 For some key types and parameters the random number generator must be seeded
-or the operation will fail. 
+or the operation will fail.
 
 The call to EVP_DigestVerifyFinal() internally finalizes a copy of the digest
 context. This means that EVP_VerifyUpdate() and EVP_VerifyFinal() can
@@ -76,7 +76,16 @@ L<sha(3)>, L<dgst(1)>
 
 =head1 HISTORY
 
-EVP_DigestVerifyInit(), EVP_DigestVerifyUpdate() and EVP_DigestVerifyFinal() 
+EVP_DigestVerifyInit(), EVP_DigestVerifyUpdate() and EVP_DigestVerifyFinal()
 were first added to OpenSSL 1.0.0.
+
+=head1 COPYRIGHT
+
+Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

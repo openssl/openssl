@@ -1,61 +1,15 @@
-/* crypto/ec/ec_kmeth.c */
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
- */
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/ec.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include <openssl/err.h>
 #include "ec_lcl.h"
 
@@ -106,10 +60,8 @@ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
         finish(key);
 
 #ifndef OPENSSL_NO_ENGINE
-    if (key->engine != NULL) {
-        ENGINE_finish(key->engine);
-        key->engine = NULL;
-    }
+    ENGINE_finish(key->engine);
+    key->engine = NULL;
 #endif
 
     key->meth = meth;
@@ -124,9 +76,13 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
 
     if (ret == NULL) {
         ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data)) {
+
+    ret->references = 1;
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -136,8 +92,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
     if (engine != NULL) {
         if (!ENGINE_init(engine)) {
             ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
-            OPENSSL_free(ret);
-            return NULL;
+            goto err;
         }
         ret->engine = engine;
     } else
@@ -146,21 +101,27 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
         ret->meth = ENGINE_get_EC(ret->engine);
         if (ret->meth == NULL) {
             ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
-            ENGINE_finish(ret->engine);
-            OPENSSL_free(ret);
-            return NULL;
+            goto err;
         }
     }
 #endif
 
     ret->version = 1;
     ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
-    ret->references = 1;
+
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data)) {
+        goto err;
+    }
+
     if (ret->meth->init != NULL && ret->meth->init(ret) == 0) {
-        EC_KEY_free(ret);
-        return NULL;
+        ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_INIT_FAIL);
+        goto err;
     }
     return ret;
+
+err:
+    EC_KEY_free(ret);
+    return NULL;
 }
 
 int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
@@ -168,10 +129,27 @@ int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                      void *(*KDF) (const void *in, size_t inlen, void *out,
                                    size_t *outlen))
 {
-    if (eckey->meth->compute_key != NULL)
-        return eckey->meth->compute_key(out, outlen, pub_key, eckey, KDF);
-    ECerr(EC_F_ECDH_COMPUTE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
-    return 0;
+    unsigned char *sec = NULL;
+    size_t seclen;
+    if (eckey->meth->compute_key == NULL) {
+        ECerr(EC_F_ECDH_COMPUTE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
+        return 0;
+    }
+    if (outlen > INT_MAX) {
+        ECerr(EC_F_ECDH_COMPUTE_KEY, EC_R_INVALID_OUTPUT_LENGTH);
+        return 0;
+    }
+    if (!eckey->meth->compute_key(&sec, &seclen, pub_key, eckey))
+        return 0;
+    if (KDF != NULL) {
+        KDF(sec, seclen, out, &outlen);
+    } else {
+        if (outlen > seclen)
+            outlen = seclen;
+        memcpy(out, sec, outlen);
+    }
+    OPENSSL_clear_free(sec, seclen);
+    return outlen;
 }
 
 EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth)
@@ -217,14 +195,10 @@ void EC_KEY_METHOD_set_keygen(EC_KEY_METHOD *meth,
 }
 
 void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
-                                   int (*ckey)(void *out,
-                                               size_t outlen,
+                                   int (*ckey)(unsigned char **psec,
+                                               size_t *pseclen,
                                                const EC_POINT *pub_key,
-                                               const EC_KEY *ecdh,
-                                               void *(*KDF) (const void *in,
-                                                             size_t inlen,
-                                                             void *out,
-                                                             size_t *outlen)))
+                                               const EC_KEY *ecdh))
 {
     meth->compute_key = ckey;
 }
@@ -295,14 +269,10 @@ void EC_KEY_METHOD_get_keygen(EC_KEY_METHOD *meth,
 }
 
 void EC_KEY_METHOD_get_compute_key(EC_KEY_METHOD *meth,
-                                   int (**pck)(void *out,
-                                               size_t outlen,
+                                   int (**pck)(unsigned char **pout,
+                                               size_t *poutlen,
                                                const EC_POINT *pub_key,
-                                               const EC_KEY *ecdh,
-                                               void *(*KDF) (const void *in,
-                                                             size_t inlen,
-                                                             void *out,
-                                                             size_t *outlen)))
+                                               const EC_KEY *ecdh))
 {
     if (pck != NULL)
         *pck = meth->compute_key;

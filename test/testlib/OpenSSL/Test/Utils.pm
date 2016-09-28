@@ -1,3 +1,10 @@
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 package OpenSSL::Test::Utils;
 
 use strict;
@@ -7,7 +14,8 @@ use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.1";
 @ISA = qw(Exporter);
-@EXPORT = qw(alldisabled anydisabled disabled config available_protocols);
+@EXPORT = qw(alldisabled anydisabled disabled config available_protocols
+             have_IPv4 have_IPv6);
 
 =head1 NAME
 
@@ -24,13 +32,16 @@ OpenSSL::Test::Utils - test utility functions
 
   config("fips");
 
+  have_IPv4();
+  have_IPv6();
+
 =head1 DESCRIPTION
 
 This module provides utility functions for the testing framework.
 
 =cut
 
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT bldtop_file/;
 
 =over 4
 
@@ -55,6 +66,11 @@ disabled.
 
 Returns an item from the %config hash in \$TOP/configdata.pm.
 
+=item B<have_IPv4>
+=item B<have_IPv6>
+
+Return true if IPv4 / IPv6 is possible to use on the current system.
+
 =back
 
 =cut
@@ -66,9 +82,9 @@ my $configdata_loaded = 0;
 
 sub load_configdata {
     # We eval it so it doesn't run at compile time of this file.
-    # The latter would have top_dir() complain that setup() hasn't
+    # The latter would have bldtop_file() complain that setup() hasn't
     # been run yet.
-    my $configdata = top_file("configdata.pm");
+    my $configdata = bldtop_file("configdata.pm");
     eval { require $configdata;
 	   %available_protocols = %configdata::available_protocols;
 	   %disabled = %configdata::disabled;
@@ -122,7 +138,7 @@ sub alldisabled {
     return allof(@ret);
 }
 
-#!!! Kept for backward compatibility
+# !!! Kept for backward compatibility
 # args:
 #  single string
 sub disabled {
@@ -130,6 +146,7 @@ sub disabled {
 }
 
 sub available_protocols {
+    load_configdata() unless $configdata_loaded;
     my $protocol_class = shift;
     if (exists $available_protocols{lc $protocol_class}) {
 	return @{$available_protocols{lc $protocol_class}}
@@ -140,6 +157,73 @@ sub available_protocols {
 sub config {
     return $config{$_[0]};
 }
+
+# IPv4 / IPv6 checker
+my $have_IPv4 = -1;
+my $have_IPv6 = -1;
+my $IP_factory;
+sub check_IP {
+    my $listenaddress = shift;
+
+    eval {
+        require IO::Socket::IP;
+        my $s = IO::Socket::IP->new(
+            LocalAddr => $listenaddress,
+            LocalPort => 0,
+            Listen=>1,
+            );
+        $s or die "\n";
+        $s->close();
+    };
+    if ($@ eq "") {
+        return 1;
+    }
+
+    eval {
+        require IO::Socket::INET6;
+        my $s = IO::Socket::INET6->new(
+            LocalAddr => $listenaddress,
+            LocalPort => 0,
+            Listen=>1,
+            );
+        $s or die "\n";
+        $s->close();
+    };
+    if ($@ eq "") {
+        return 1;
+    }
+
+    eval {
+        require IO::Socket::INET;
+        my $s = IO::Socket::INET->new(
+            LocalAddr => $listenaddress,
+            LocalPort => 0,
+            Listen=>1,
+            );
+        $s or die "\n";
+        $s->close();
+    };
+    if ($@ eq "") {
+        return 1;
+    }
+
+    return 0;
+}
+
+sub have_IPv4 {
+    if ($have_IPv4 < 0) {
+        $have_IPv4 = check_IP("127.0.0.1");
+    }
+    return $have_IPv4;
+}
+
+sub have_IPv6 {
+    if ($have_IPv6 < 0) {
+        $have_IPv6 = check_IP("::1");
+    }
+    return $have_IPv6;
+}
+
 
 =head1 SEE ALSO
 

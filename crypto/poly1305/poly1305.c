@@ -1,12 +1,15 @@
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project. All rights reserved.
+/*
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Rights for redistribution and usage in source and binary
- * forms are granted according to the OpenSSL license.
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdlib.h>
 #include <string.h>
+#include <openssl/crypto.h>
 
 #include "internal/poly1305.h"
 
@@ -94,7 +97,7 @@ typedef unsigned int u32;
  * POLY1305_BLOCK_SIZE and |padbit| to 0. In all other cases |padbit|
  * should be set to 1 to perform implicit padding with 128th bit.
  * poly1305_blocks does not actually check for this constraint though,
- * it's caller(*)'s resposibility to comply.
+ * it's caller(*)'s responsibility to comply.
  *
  * (*)  In the context "caller" is not application code, but higher
  *      level Poly1305_* from this very module, so that quirks are
@@ -185,9 +188,9 @@ poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit)
         h0 = (u64)(d0 = (u128)h0 + U8TOU64(inp + 0));
         h1 = (u64)(d1 = (u128)h1 + (d0 >> 64) + U8TOU64(inp + 8));
         /*
-	 * padbit can be zero only when original len was
-	 * POLY1306_BLOCK_SIZE, but we don't check
-	 */
+         * padbit can be zero only when original len was
+         * POLY1306_BLOCK_SIZE, but we don't check
+         */
         h2 += (u64)(d1 >> 64) + padbit;
 
         /* h *= r "%" p, where "%" stands for "partial remainder" */
@@ -195,7 +198,7 @@ poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit)
              ((u128)h1 * s1);
         d1 = ((u128)h0 * r1) +
              ((u128)h1 * r0) +
-	     (h2 * s1);
+             (h2 * s1);
         h2 = (h2 * r0);
 
         /* last reduction step: */
@@ -207,7 +210,17 @@ poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit)
         c = (h2 >> 2) + (h2 & ~3UL);
         h2 &= 3;
         h0 += c;
-        h1 += (c = CONSTANT_TIME_CARRY(h0,c));   /* doesn't overflow */
+        h1 += (c = CONSTANT_TIME_CARRY(h0,c));
+        h2 += CONSTANT_TIME_CARRY(h1,c);
+        /*
+         * Occasional overflows to 3rd bit of h2 are taken care of
+         * "naturally". If after this point we end up at the top of
+         * this loop, then the overflow bit will be accounted for
+         * in next iteration. If we end up in poly1305_emit, then
+         * comparison to modulus below will still count as "carry
+         * into 131st bit", so that properly reduced value will be
+         * picked in conditional move.
+         */
 
         inp += POLY1305_BLOCK_SIZE;
         len -= POLY1305_BLOCK_SIZE;
@@ -231,12 +244,12 @@ static void poly1305_emit(void *ctx, unsigned char mac[16],
     h1 = st->h[1];
     h2 = st->h[2];
 
-    /* compute h + -p */
+    /* compare to modulus by computing h + -p */
     g0 = (u64)(t = (u128)h0 + 5);
     g1 = (u64)(t = (u128)h1 + (t >> 64));
     g2 = h2 + (u64)(t >> 64);
 
-    /* if there was carry into 130th bit, h1:h0 = g1:g0 */
+    /* if there was carry into 131st bit, h1:h0 = g1:g0 */
     mask = 0 - (g2 >> 2);
     g0 &= mask;
     g1 &= mask;
@@ -361,7 +374,17 @@ poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit)
         h0 += c;
         h1 += (c = CONSTANT_TIME_CARRY(h0,c));
         h2 += (c = CONSTANT_TIME_CARRY(h1,c));
-        h3 += (c = CONSTANT_TIME_CARRY(h2,c));   /* doesn't overflow */
+        h3 += (c = CONSTANT_TIME_CARRY(h2,c));
+        h4 += CONSTANT_TIME_CARRY(h3,c);
+        /*
+         * Occasional overflows to 3rd bit of h4 are taken care of
+         * "naturally". If after this point we end up at the top of
+         * this loop, then the overflow bit will be accounted for
+         * in next iteration. If we end up in poly1305_emit, then
+         * comparison to modulus below will still count as "carry
+         * into 131st bit", so that properly reduced value will be
+         * picked in conditional move.
+         */
 
         inp += POLY1305_BLOCK_SIZE;
         len -= POLY1305_BLOCK_SIZE;
@@ -389,14 +412,14 @@ static void poly1305_emit(void *ctx, unsigned char mac[16],
     h3 = st->h[3];
     h4 = st->h[4];
 
-    /* compute h + -p */
+    /* compare to modulus by computing h + -p */
     g0 = (u32)(t = (u64)h0 + 5);
     g1 = (u32)(t = (u64)h1 + (t >> 32));
     g2 = (u32)(t = (u64)h2 + (t >> 32));
     g3 = (u32)(t = (u64)h3 + (t >> 32));
     g4 = h4 + (u32)(t >> 32);
 
-    /* if there was carry into 130th bit, h3:h0 = g3:g0 */
+    /* if there was carry into 131st bit, h3:h0 = g3:g0 */
     mask = 0 - (g4 >> 2);
     g0 &= mask;
     g1 &= mask;
@@ -454,6 +477,15 @@ void Poly1305_Init(POLY1305 *ctx, const unsigned char key[32])
 
 }
 
+#ifdef POLY1305_ASM
+/*
+ * This "eclipses" poly1305_blocks and poly1305_emit, but it's
+ * conscious choice imposed by -Wshadow compiler warnings.
+ */
+# define poly1305_blocks (*poly1305_blocks_p)
+# define poly1305_emit   (*poly1305_emit_p)
+#endif
+
 void Poly1305_Update(POLY1305 *ctx, const unsigned char *inp, size_t len)
 {
 #ifdef POLY1305_ASM
@@ -463,7 +495,7 @@ void Poly1305_Update(POLY1305 *ctx, const unsigned char *inp, size_t len)
      * property is fluently used in assembly modules to optimize
      * padbit handling on loop boundary.
      */
-    poly1305_blocks_f poly1305_blocks = ctx->func.blocks;
+    poly1305_blocks_f poly1305_blocks_p = ctx->func.blocks;
 #endif
     size_t rem, num;
 
@@ -499,8 +531,8 @@ void Poly1305_Update(POLY1305 *ctx, const unsigned char *inp, size_t len)
 void Poly1305_Final(POLY1305 *ctx, unsigned char mac[16])
 {
 #ifdef POLY1305_ASM
-    poly1305_blocks_f poly1305_blocks = ctx->func.blocks;
-    poly1305_emit_f poly1305_emit = ctx->func.emit;
+    poly1305_blocks_f poly1305_blocks_p = ctx->func.blocks;
+    poly1305_emit_f poly1305_emit_p = ctx->func.emit;
 #endif
     size_t num;
 
@@ -514,7 +546,7 @@ void Poly1305_Final(POLY1305 *ctx, unsigned char mac[16])
     poly1305_emit(ctx->opaque, mac, ctx->nonce);
 
     /* zero out the state */
-    memset(ctx, 0, sizeof(*ctx));
+    OPENSSL_cleanse(ctx, sizeof(*ctx));
 }
 
 #ifdef SELFTEST
@@ -561,7 +593,8 @@ static const struct poly1305_test poly1305_tests[] = {
      "5154ad0d2cb26e01274fc51148491f1b"
     },
     /*
-     * self-generated
+     * self-generated vectors exercise "significant" lengths, such that
+     * are handled by different code paths
      */
     {
      "ab0812724a7f1e342742cbed374d94d136c6b8795d45b3819830f2c04491faf0"
@@ -643,6 +676,21 @@ static const struct poly1305_test poly1305_tests[] = {
      "12976a08c4426d0ce8a82407c4f48207""80f8c20aa71202d1e29179cbcb555a57",
      "b846d44e9bbd53cedffbfbb6b7fa4933"
     },
+    /*
+     * 4th power of the key spills to 131th bit in SIMD key setup
+     */
+    {
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+     "ad628107e8351d0f2c231a05dc4a4106""00000000000000000000000000000000",
+     "07145a4c02fe5fa32036de68fabe9066"
+    },
     {
     /*
      * poly1305_ieee754.c failed this in final stage
@@ -657,6 +705,20 @@ static const struct poly1305_test poly1305_tests[] = {
      "da94321c5e44060489336cb65bf3989c36f7282c2f5d2b882c171e74",
      "95d5c005503e510d8cd0aa072c4a4d06""6eabc52d11653df47fbf63ab198bcc26",
      "f248312e578d9d58f8b7bb4d19105431"
+    },
+    /*
+     * AVX2 in poly1305-x86.pl failed this with 176+32 split
+     */
+    {
+    "248ac31085b6c2adaaa38259a0d7192c5c35d1bb4ef39ad94c38d1c82479e2dd"
+    "2159a077024b0589bc8a20101b506f0a1ad0bbab76e83a83f1b94be6beae74e8"
+    "74cab692c5963a75436b776121ec9f62399a3e66b2d22707dae81933b6277f3c"
+    "8516bcbe26dbbd86f373103d7cf4cad1888c952118fbfbd0d7b4bedc4ae4936a"
+    "ff91157e7aa47c54442ea78d6ac251d324a0fbe49d89cc3521b66d16e9c66a37"
+    "09894e4eb0a4eedc4ae19468e66b81f2"
+    "71351b1d921ea551047abcc6b87a901fde7db79fa1818c11336dbc07244a40eb",
+    "000102030405060708090a0b0c0d0e0f""00000000000000000000000000000000",
+    "bc939bc5281480fa99c6d68c258ec42f"
     },
     /*
      * test vectors from Google
@@ -675,6 +737,87 @@ static const struct poly1305_test poly1305_tests[] = {
      "0000000000000000000000000000000000000000000000000000000000000000",
      "746869732069732033322d6279746520""6b657920666f7220506f6c7931333035",
      "49ec78090e481ec6c26b33b91ccc0307"
+    },
+    {
+     "89dab80b7717c1db5db437860a3f70218e93e1b8f461fb677f16f35f6f87e2a9"
+     "1c99bc3a47ace47640cc95c345be5ecca5a3523c35cc01893af0b64a62033427"
+     "0372ec12482d1b1e363561698a578b359803495bb4e2ef1930b17a5190b580f1"
+     "41300df30adbeca28f6427a8bc1a999fd51c554a017d095d8c3e3127daf9f595",
+     "2d773be37adb1e4d683bf0075e79c4ee""037918535a7f99ccb7040fb5f5f43aea",
+     "c85d15ed44c378d6b00e23064c7bcd51"
+    },
+    {
+     "000000000000000b1703030200000000"
+     "06db1f1f368d696a810a349c0c714c9a5e7850c2407d721acded95e018d7a852"
+     "66a6e1289cdb4aeb18da5ac8a2b0026d24a59ad485227f3eaedbb2e7e35e1c66"
+     "cd60f9abf716dcc9ac42682dd7dab287a7024c4eefc321cc0574e16793e37cec"
+     "03c5bda42b54c114a80b57af26416c7be742005e20855c73e21dc8e2edc9d435"
+     "cb6f6059280011c270b71570051c1c9b3052126620bc1e2730fa066c7a509d53"
+     "c60e5ae1b40aa6e39e49669228c90eecb4a50db32a50bc49e90b4f4b359a1dfd"
+     "11749cd3867fcf2fb7bb6cd4738f6a4ad6f7ca5058f7618845af9f020f6c3b96"
+     "7b8f4cd4a91e2813b507ae66f2d35c18284f7292186062e10fd5510d18775351"
+     "ef334e7634ab4743f5b68f49adcab384d3fd75f7390f4006ef2a295c8c7a076a"
+     "d54546cd25d2107fbe1436c840924aaebe5b370893cd63d1325b8616fc481088"
+     "6bc152c53221b6df373119393255ee72bcaa880174f1717f9184fa91646f17a2"
+     "4ac55d16bfddca9581a92eda479201f0edbf633600d6066d1ab36d5d2415d713"
+     "51bbcd608a25108d25641992c1f26c531cf9f90203bc4cc19f5927d834b0a471"
+     "16d3884bbb164b8ec883d1ac832e56b3918a98601a08d171881541d594db399c"
+     "6ae6151221745aec814c45b0b05b565436fd6f137aa10a0c0b643761dbd6f9a9"
+     "dcb99b1a6e690854ce0769cde39761d82fcdec15f0d92d7d8e94ade8eb83fbe0",
+     "99e5822dd4173c995e3dae0ddefb9774""3fde3b080134b39f76e9bf8d0e88d546",
+     "2637408fe13086ea73f971e3425e2820"
+    },
+    /*
+     * test vectors from Hanno Böck
+     */
+    {
+     "cccccccccccccccccccccccccccccccccccccccccccccccccc80cccccccccccc"
+     "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccecccccc"
+     "ccccccccccccccccccccccccccccccc5cccccccccccccccccccccccccccccccc"
+     "cccccccccce3cccccccccccccccccccccccccccccccccccccccccccccccccccc"
+     "ccccccccaccccccccccccccccccccce6cccccccccc000000afcccccccccccccc"
+     "ccccfffffff50000000000000000000000000000000000000000000000000000"
+     "00ffffffe7000000000000000000000000000000000000000000000000000000"
+     "0000000000000000000000000000000000000000000000000000719205a8521d"
+     "fc",
+     "7f1b0264000000000000000000000000""0000000000000000cccccccccccccccc",
+     "8559b876eceed66eb37798c0457baff9"
+    },
+    {
+     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000"
+     "00000000800264",
+     "e0001600000000000000000000000000""0000aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+     "00bd1258978e205444c9aaaa82006fed"
+    },
+    {
+     "02fc",
+     "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c""0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+     "06120c0c0c0c0c0c0c0c0c0c0c0c0c0c"
+    },
+    {
+     "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b7b7b7b7b7b7a7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b7b5c7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b6e7b007b7b7b7b7b7b7b7b7b"
+     "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7a7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b5c7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b7b"
+     "7b6e7b001300000000b300000000000000000000000000000000000000000000"
+     "f20000000000000000000000000000000000002000efff000900000000000000"
+     "0000000000100000000009000000640000000000000000000000001300000000"
+     "b300000000000000000000000000000000000000000000f20000000000000000"
+     "000000000000000000002000efff00090000000000000000007a000010000000"
+     "000900000064000000000000000000000000000000000000000000000000fc",
+     "00ff0000000000000000000000000000""00000000001e00000000000000007b7b",
+     "33205bbf9e9f8f7212ab9e2ab9b7e4a5"
+    },
+    {
+     "7777777777777777777777777777777777777777777777777777777777777777"
+     "7777777777777777777777777777777777777777777777777777777777777777"
+     "777777777777777777777777ffffffe9e9acacacacacacacacacacac0000acac"
+     "ec0100acacac2caca2acacacacacacacacacacac64f2",
+     "0000007f0000007f0100002000000000""0000cf77777777777777777777777777",
+     "02ee7c8c546ddeb1a467e4c3981158b9"
     },
     /*
      * test vectors from Andrew Moon
@@ -731,14 +874,11 @@ static const struct poly1305_test poly1305_tests[] = {
 
 static unsigned char hex_digit(char h)
 {
-    if (h >= '0' && h <= '9')
-        return h - '0';
-    else if (h >= 'a' && h <= 'f')
-        return h - 'a' + 10;
-    else if (h >= 'A' && h <= 'F')
-        return h - 'A' + 10;
-    else
+    int i = OPENSSL_hexchar2int(h);
+
+    if (i < 0)
         abort();
+    return i;
 }
 
 static void hex_decode(unsigned char *out, const char *hex)
@@ -835,6 +975,24 @@ int main()
                 printf("\n");
                 return 1;
             }
+
+            for (half = 16; half < inlen; half += 16) {
+                Poly1305_Init(&poly1305, key);
+                Poly1305_Update(&poly1305, in, half);
+                Poly1305_Update(&poly1305, in+half, inlen-half);
+                Poly1305_Final(&poly1305, out);
+
+                if (memcmp(out, expected, sizeof(expected)) != 0) {
+                    printf("Poly1305 test #%d/%d+%d failed.\n",
+                                           i, half, inlen-half);
+                    printf("got:      ");
+                    hexdump(out, sizeof(out));
+                    printf("\nexpected: ");
+                    hexdump(expected, sizeof(expected));
+                    printf("\n");
+                    return 1;
+                }
+            }
         }
 
         free(in);
@@ -854,14 +1012,14 @@ int main()
         Poly1305_Init(&poly1305, key);
 
         for (i=0;i<100000;i++)
-	    Poly1305_Update(&poly1305,buf,sizeof(buf));
+            Poly1305_Update(&poly1305,buf,sizeof(buf));
 
-	stopwatch = OPENSSL_rdtsc();
+        stopwatch = OPENSSL_rdtsc();
         for (i=0;i<10000;i++)
-	    Poly1305_Update(&poly1305,buf,sizeof(buf));
-	stopwatch = OPENSSL_rdtsc() - stopwatch;
+            Poly1305_Update(&poly1305,buf,sizeof(buf));
+        stopwatch = OPENSSL_rdtsc() - stopwatch;
 
-	printf("%g\n",stopwatch/(double)(i*sizeof(buf)));
+        printf("%g\n",stopwatch/(double)(i*sizeof(buf)));
 
         stopwatch = OPENSSL_rdtsc();
         for (i=0;i<10000;i++) {

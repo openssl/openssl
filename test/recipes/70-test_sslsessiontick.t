@@ -1,59 +1,13 @@
-#!/usr/bin/perl
-# Written by Matt Caswell for the OpenSSL project.
-# ====================================================================
-# Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
+#! /usr/bin/env perl
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in
-#    the documentation and/or other materials provided with the
-#    distribution.
-#
-# 3. All advertising materials mentioning features or use of this
-#    software must display the following acknowledgment:
-#    "This product includes software developed by the OpenSSL Project
-#    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
-#
-# 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-#    endorse or promote products derived from this software without
-#    prior written permission. For written permission, please contact
-#    openssl-core@openssl.org.
-#
-# 5. Products derived from this software may not be called "OpenSSL"
-#    nor may "OpenSSL" appear in their names without prior written
-#    permission of the OpenSSL Project.
-#
-# 6. Redistributions of any form whatsoever must retain the following
-#    acknowledgment:
-#    "This product includes software developed by the OpenSSL Project
-#    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
-#
-# THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-# EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-# ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
-# ====================================================================
-#
-# This product includes cryptographic software written by Eric Young
-# (eay@cryptsoft.com).  This product includes software written by Tim
-# Hudson (tjh@cryptsoft.com).
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 use File::Temp qw(tempfile);
@@ -62,18 +16,21 @@ my $test_name = "test_sslsessiontick";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^VMS$/;
+    if $^O =~ /^(VMS|MSWin32)$/;
 
-plan skip_all => "$test_name needs the engine feature enabled"
-    if disabled("engine");
+plan skip_all => "$test_name needs the dynamic engine feature enabled"
+    if disabled("engine") || disabled("dynamic-engine");
 
-plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    if disabled("shared");
+plan skip_all => "$test_name needs the sock feature enabled"
+    if disabled("sock");
 
-$ENV{OPENSSL_ENGINES} = top_dir("engines");
+plan skip_all => "$test_name needs TLS enabled"
+    if alldisabled(available_protocols("tls"));
+
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 sub checkmessages($$$$$$);
+sub clearclient();
 sub clearall();
 
 my $chellotickext = 0;
@@ -83,16 +40,16 @@ my $ticketseen = 0;
 
 my $proxy = TLSProxy::Proxy->new(
     undef,
-    cmdstr(app(["openssl"])),
-    top_file("apps", "server.pem")
+    cmdstr(app(["openssl"]), display => 1),
+    srctop_file("apps", "server.pem"),
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
-
-plan tests => 8;
 
 #Test 1: By default with no existing session we should get a session ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 NewSessionTicket message seen; Full handshake
-$proxy->start();
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 10;
 checkmessages(1, "Default session ticket test", 1, 1, 1, 1);
 
 #Test 2: If the server does not accept tickets we should get a normal handshake
@@ -117,28 +74,30 @@ checkmessages(3, "No client support session ticket test", 0, 0, 0, 1);
 #Expected result: ClientHello extension seen; ServerHello extension not seen
 #                 NewSessionTicket message not seen; Abbreviated handshake
 clearall();
-(my $fh, my $session) = tempfile();
+(undef, my $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(4, "Session resumption session ticket test", 1, 0, 0, 0);
+unlink $session;
 
 #Test 5: Test session resumption with ticket capable client without a ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 NewSessionTicket message seen; Abbreviated handshake
 clearall();
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session." -no_ticket");
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(5, "Session resumption with ticket capable client without a "
                  ."ticket", 1, 1, 1, 0);
+unlink $session;
 
 #Test 6: Client accepts empty ticket.
 #Expected result: ClientHello extension seen; ServerHello extension seen;
@@ -150,26 +109,44 @@ checkmessages(6, "Empty ticket test",  1, 1, 1, 1);
 
 #Test 7-8: Client keeps existing ticket on empty ticket.
 clearall();
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(3);
 $proxy->filter(undef);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session." -sess_out ".$session);
 $proxy->filter(\&inject_empty_ticket_filter);
 $proxy->clientstart();
 #Expected result: ClientHello extension seen; ServerHello extension seen;
 #                 NewSessionTicket message seen; Abbreviated handshake.
 checkmessages(7, "Empty ticket resumption test",  1, 1, 1, 0);
-clearall();
+clearclient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->filter(undef);
 $proxy->clientstart();
 #Expected result: ClientHello extension seen; ServerHello extension not seen;
 #                 NewSessionTicket message not seen; Abbreviated handshake.
 checkmessages(8, "Empty ticket resumption test",  1, 0, 0, 0);
+unlink $session;
 
+#Test 9: Bad server sends the ServerHello extension but does not send a
+#NewSessionTicket
+#Expected result: Connection failure
+clearall();
+$proxy->serverflags("-no_ticket");
+$proxy->filter(\&inject_ticket_extension_filter);
+$proxy->start();
+ok(TLSProxy::Message->fail, "Server sends ticket extension but no ticket test");
+
+#Test10: Bad server does not send the ServerHello extension but does send a
+#NewSessionTicket
+#Expected result: Connection failure
+clearall();
+$proxy->serverflags("-no_ticket");
+$proxy->filter(\&inject_empty_ticket_filter);
+$proxy->start();
+ok(TLSProxy::Message->fail, "No server ticket extension but ticket sent test");
 
 sub ticket_filter
 {
@@ -197,7 +174,7 @@ sub inject_empty_ticket_filter {
     foreach my $message (@{$proxy->message_list}) {
         push @new_message_list, $message;
         if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
-            $message->set_extension(TLSProxy::ClientHello::EXT_SESSION_TICKET, "");
+            $message->set_extension(TLSProxy::Message::EXT_SESSION_TICKET, "");
             $message->repack();
             # Tack NewSessionTicket onto the ServerHello record.
             # This only works if the ServerHello is exactly one record.
@@ -213,6 +190,26 @@ sub inject_empty_ticket_filter {
     $proxy->message_list([@new_message_list]);
 }
 
+sub inject_ticket_extension_filter
+{
+    my $proxy = shift;
+
+    # We're only interested in the initial ServerHello
+    if ($proxy->flight != 1) {
+        return;
+    }
+
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
+            #Add the session ticket extension to the ServerHello even though
+            #we are not going to send a NewSessionTicket message
+            $message->set_extension(TLSProxy::Message::EXT_SESSION_TICKET, "");
+
+            $message->repack();
+        }
+    }
+}
+
 sub checkmessages($$$$$$)
 {
     my ($testno, $testname, $testch, $testsh, $testtickseen, $testhand) = @_;
@@ -225,7 +222,7 @@ sub checkmessages($$$$$$)
 		#Get the extensions data
 		my %extensions = %{$message->extension_data};
 		if (defined
-                    $extensions{TLSProxy::ClientHello::EXT_SESSION_TICKET}) {
+                    $extensions{TLSProxy::Message::EXT_SESSION_TICKET}) {
 		    if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
 			$chellotickext = 1;
 		    } else {
@@ -254,11 +251,18 @@ sub checkmessages($$$$$$)
     }
 }
 
-sub clearall()
+
+sub clearclient()
 {
     $chellotickext = 0;
     $shellotickext = 0;
     $fullhand = 0;
     $ticketseen = 0;
+    $proxy->clearClient();
+}
+
+sub clearall()
+{
+    clearclient();
     $proxy->clear();
 }

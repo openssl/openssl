@@ -2,41 +2,37 @@
 
 =head1 NAME
 
-BN_BLINDING_new, BN_BLINDING_free, BN_BLINDING_update, BN_BLINDING_convert, 
-BN_BLINDING_invert, BN_BLINDING_convert_ex, BN_BLINDING_invert_ex, 
-BN_BLINDING_get_thread_id, BN_BLINDING_set_thread_id, BN_BLINDING_thread_id, BN_BLINDING_get_flags,
-BN_BLINDING_set_flags, BN_BLINDING_create_param - blinding related BIGNUM
-functions.
+BN_BLINDING_new, BN_BLINDING_free, BN_BLINDING_update, BN_BLINDING_convert,
+BN_BLINDING_invert, BN_BLINDING_convert_ex, BN_BLINDING_invert_ex,
+BN_BLINDING_is_current_thread, BN_BLINDING_set_current_thread,
+BN_BLINDING_lock, BN_BLINDING_unlock, BN_BLINDING_get_flags,
+BN_BLINDING_set_flags, BN_BLINDING_create_param - blinding related BIGNUM functions
 
 =head1 SYNOPSIS
 
  #include <openssl/bn.h>
 
  BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai,
-	BIGNUM *mod);
+        BIGNUM *mod);
  void BN_BLINDING_free(BN_BLINDING *b);
- int BN_BLINDING_update(BN_BLINDING *b,BN_CTX *ctx);
+ int BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx);
  int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
  int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
  int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b,
-	BN_CTX *ctx);
+        BN_CTX *ctx);
  int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
-	BN_CTX *ctx);
- CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
+        BN_CTX *ctx);
+ int BN_BLINDING_is_current_thread(BN_BLINDING *b);
+ void BN_BLINDING_set_current_thread(BN_BLINDING *b);
+ int BN_BLINDING_lock(BN_BLINDING *b);
+ int BN_BLINDING_unlock(BN_BLINDING *b);
  unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
  void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
  BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
-	const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
-	int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
-	BN_MONT_CTX *m_ctx);
-
-Deprecated:
-
- #if OPENSSL_API_COMPAT < 0x10000000L
- unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
- void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
- #endif
+        const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
+        int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+                          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
+        BN_MONT_CTX *m_ctx);
 
 =head1 DESCRIPTION
 
@@ -61,11 +57,16 @@ BN_BLINDING_convert() and BN_BLINDING_invert() are wrapper
 functions for BN_BLINDING_convert_ex() and BN_BLINDING_invert_ex()
 with B<r> set to NULL.
 
-BN_BLINDING_thread_id() provides access to the B<CRYPTO_THREADID>
-object within the B<BN_BLINDING> structure. This is to help users
-provide proper locking if needed for multi-threaded use. The "thread
-id" object of a newly allocated B<BN_BLINDING> structure is
-initialised to the thread id in which BN_BLINDING_new() was called.
+BN_BLINDING_is_current_thread() returns whether the B<BN_BLINDING>
+structure is owned by the current thread. This is to help users
+provide proper locking if needed for multi-threaded use.
+
+BN_BLINDING_set_current_thread() sets the current thread as the
+owner of the B<BN_BLINDING> structure.
+
+BN_BLINDING_lock() locks the B<BN_BLINDING> structure.
+
+BN_BLINDING_unlock() unlocks the B<BN_BLINDING> structure.
 
 BN_BLINDING_get_flags() returns the BN_BLINDING flags. Currently
 there are two supported flags: B<BN_BLINDING_NO_UPDATE> and
@@ -90,13 +91,18 @@ BN_BLINDING_update(), BN_BLINDING_convert(), BN_BLINDING_invert(),
 BN_BLINDING_convert_ex() and BN_BLINDING_invert_ex() return 1 on
 success and 0 if an error occurred.
 
-BN_BLINDING_thread_id() returns a pointer to the thread id object
-within a B<BN_BLINDING> object.
+BN_BLINDING_is_current_thread() returns 1 if the current thread owns
+the B<BN_BLINDING> object, 0 otherwise.
+
+BN_BLINDING_set_current_thread() doesn't return anything.
+
+BN_BLINDING_lock(), BN_BLINDING_unlock() return 1 if the operation
+succeeded or 0 on error.
 
 BN_BLINDING_get_flags() returns the currently set B<BN_BLINDING> flags
 (a B<unsigned long> value).
 
-BN_BLINDING_create_param() returns the newly created B<BN_BLINDING> 
+BN_BLINDING_create_param() returns the newly created B<BN_BLINDING>
 parameters or NULL on error.
 
 =head1 SEE ALSO
@@ -107,5 +113,14 @@ L<bn(3)>
 
 BN_BLINDING_thread_id() was first introduced in OpenSSL 1.0.0, and it
 deprecates BN_BLINDING_set_thread_id() and BN_BLINDING_get_thread_id().
+
+=head1 COPYRIGHT
+
+Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

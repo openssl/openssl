@@ -1,59 +1,10 @@
-/* crypto/idea/ideatest.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -115,8 +66,8 @@ int main(int argc, char *argv[])
     IDEA_KEY_SCHEDULE key, dkey;
     unsigned char iv[8];
 
-    idea_set_encrypt_key(k, &key);
-    idea_ecb_encrypt(in, out, &key);
+    IDEA_set_encrypt_key(k, &key);
+    IDEA_ecb_encrypt(in, out, &key);
     if (memcmp(out, c, 8) != 0) {
         printf("ecb idea error encrypting\n");
         printf("got     :");
@@ -130,8 +81,8 @@ int main(int argc, char *argv[])
         printf("\n");
     }
 
-    idea_set_decrypt_key(&key, &dkey);
-    idea_ecb_encrypt(c, out, &dkey);
+    IDEA_set_decrypt_key(&key, &dkey);
+    IDEA_ecb_encrypt(c, out, &dkey);
     if (memcmp(out, in, 8) != 0) {
         printf("ecb idea error decrypting\n");
         printf("got     :");
@@ -149,11 +100,11 @@ int main(int argc, char *argv[])
         printf("ecb idea ok\n");
 
     memcpy(iv, k, 8);
-    idea_cbc_encrypt((unsigned char *)text, out, strlen(text) + 1, &key, iv,
+    IDEA_cbc_encrypt((unsigned char *)text, out, strlen(text) + 1, &key, iv,
                      1);
     memcpy(iv, k, 8);
-    idea_cbc_encrypt(out, out, 8, &dkey, iv, 0);
-    idea_cbc_encrypt(&(out[8]), &(out[8]), strlen(text) + 1 - 8, &dkey, iv,
+    IDEA_cbc_encrypt(out, out, 8, &dkey, iv, 0);
+    IDEA_cbc_encrypt(&(out[8]), &(out[8]), strlen(text) + 1 - 8, &dkey, iv,
                      0);
     if (memcmp(text, out, strlen(text) + 1) != 0) {
         printf("cbc idea bad\n");
@@ -168,10 +119,6 @@ int main(int argc, char *argv[])
     } else
         printf("ok\n");
 
-# ifdef OPENSSL_SYS_NETWARE
-    if (err)
-        printf("ERROR: %d\n", err);
-# endif
     EXIT(err);
 }
 
@@ -180,31 +127,31 @@ static int cfb64_test(const unsigned char *cfb_cipher)
     IDEA_KEY_SCHEDULE eks, dks;
     int err = 0, i, n;
 
-    idea_set_encrypt_key(cfb_key, &eks);
-    idea_set_decrypt_key(&eks, &dks);
+    IDEA_set_encrypt_key(cfb_key, &eks);
+    IDEA_set_decrypt_key(&eks, &dks);
     memcpy(cfb_tmp, cfb_iv, 8);
     n = 0;
-    idea_cfb64_encrypt(plain, cfb_buf1, (long)12, &eks,
+    IDEA_cfb64_encrypt(plain, cfb_buf1, (long)12, &eks,
                        cfb_tmp, &n, IDEA_ENCRYPT);
-    idea_cfb64_encrypt(&(plain[12]), &(cfb_buf1[12]),
+    IDEA_cfb64_encrypt(&(plain[12]), &(cfb_buf1[12]),
                        (long)CFB_TEST_SIZE - 12, &eks,
                        cfb_tmp, &n, IDEA_ENCRYPT);
     if (memcmp(cfb_cipher, cfb_buf1, CFB_TEST_SIZE) != 0) {
         err = 1;
-        printf("idea_cfb64_encrypt encrypt error\n");
+        printf("IDEA_cfb64_encrypt encrypt error\n");
         for (i = 0; i < CFB_TEST_SIZE; i += 8)
             printf("%s\n", pt(&(cfb_buf1[i])));
     }
     memcpy(cfb_tmp, cfb_iv, 8);
     n = 0;
-    idea_cfb64_encrypt(cfb_buf1, cfb_buf2, (long)13, &eks,
+    IDEA_cfb64_encrypt(cfb_buf1, cfb_buf2, (long)13, &eks,
                        cfb_tmp, &n, IDEA_DECRYPT);
-    idea_cfb64_encrypt(&(cfb_buf1[13]), &(cfb_buf2[13]),
+    IDEA_cfb64_encrypt(&(cfb_buf1[13]), &(cfb_buf2[13]),
                        (long)CFB_TEST_SIZE - 13, &eks,
                        cfb_tmp, &n, IDEA_DECRYPT);
     if (memcmp(plain, cfb_buf2, CFB_TEST_SIZE) != 0) {
         err = 1;
-        printf("idea_cfb_encrypt decrypt error\n");
+        printf("IDEA_cfb_encrypt decrypt error\n");
         for (i = 0; i < 24; i += 8)
             printf("%s\n", pt(&(cfb_buf2[i])));
     }

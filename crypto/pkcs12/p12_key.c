@@ -1,60 +1,10 @@
-/* p12_key.c */
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 1999.
- */
-/* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -64,9 +14,9 @@
 
 /* Uncomment out this line to get debugging info about key generation */
 /*
- * #define DEBUG_KEYGEN
+ * #define OPENSSL_DEBUG_KEYGEN
  */
-#ifdef DEBUG_KEYGEN
+#ifdef OPENSSL_DEBUG_KEYGEN
 # include <openssl/bio.h>
 extern BIO *bio_err;
 void h__dump(unsigned char *p, int len);
@@ -100,6 +50,29 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
     return ret;
 }
 
+int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
+                        int saltlen, int id, int iter, int n,
+                        unsigned char *out, const EVP_MD *md_type)
+{
+    int ret;
+    unsigned char *unipass;
+    int uniplen;
+
+    if (!pass) {
+        unipass = NULL;
+        uniplen = 0;
+    } else if (!OPENSSL_utf82uni(pass, passlen, &unipass, &uniplen)) {
+        PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UTF8, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    ret = PKCS12_key_gen_uni(unipass, uniplen, salt, saltlen,
+                             id, iter, n, out, md_type);
+    if (ret <= 0)
+        return 0;
+    OPENSSL_clear_free(unipass, uniplen);
+    return ret;
+}
+
 int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
                        unsigned char *out, const EVP_MD *md_type)
@@ -110,7 +83,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     int ret = 0;
     BIGNUM *Ij = NULL, *Bpl1 = NULL; /* These hold Ij and B + 1 */
     EVP_MD_CTX *ctx = NULL;
-#ifdef  DEBUG_KEYGEN
+#ifdef  OPENSSL_DEBUG_KEYGEN
     unsigned char *tmpout = out;
     int tmpn = n;
 #endif
@@ -119,7 +92,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     if (ctx == NULL)
         goto err;
 
-#ifdef  DEBUG_KEYGEN
+#ifdef  OPENSSL_DEBUG_KEYGEN
     fprintf(stderr, "KEYGEN DEBUG\n");
     fprintf(stderr, "ID %d, ITER %d\n", id, iter);
     fprintf(stderr, "Password (length %d):\n", passlen);
@@ -129,8 +102,8 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 #endif
     v = EVP_MD_block_size(md_type);
     u = EVP_MD_size(md_type);
-    if (u < 0)
-        return 0;
+    if (u < 0 || v <= 0)
+        goto err;
     D = OPENSSL_malloc(v);
     Ai = OPENSSL_malloc(u);
     B = OPENSSL_malloc(v + 1);
@@ -167,7 +140,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
         }
         memcpy(out, Ai, min(n, u));
         if (u >= n) {
-#ifdef DEBUG_KEYGEN
+#ifdef OPENSSL_DEBUG_KEYGEN
             fprintf(stderr, "Output KEY (length %d)\n", tmpn);
             h__dump(tmpout, tmpn);
 #endif
@@ -222,7 +195,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     return ret;
 }
 
-#ifdef DEBUG_KEYGEN
+#ifdef OPENSSL_DEBUG_KEYGEN
 void h__dump(unsigned char *p, int len)
 {
     for (; len--; p++)

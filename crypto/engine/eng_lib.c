@@ -1,79 +1,43 @@
-/* crypto/engine/eng_lib.c */
 /*
- * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
- * 2000.
- */
-/* ====================================================================
- * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include "eng_int.h"
 #include <openssl/rand.h>
 
+CRYPTO_RWLOCK *global_engine_lock;
+
+CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
+
 /* The "new"/"free" stuff first */
+
+DEFINE_RUN_ONCE(do_engine_lock_init)
+{
+    OPENSSL_init_crypto(0, NULL);
+    global_engine_lock = CRYPTO_THREAD_lock_new();
+    return global_engine_lock != NULL;
+}
 
 ENGINE *ENGINE_new(void)
 {
     ENGINE *ret;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL) {
+    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)
+        || (ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     ret->struct_ref = 1;
-    engine_ref_debug(ret, 0, 1)
-        CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data);
+    engine_ref_debug(ret, 0, 1);
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
     return ret;
 }
 
@@ -90,7 +54,6 @@ void engine_set_all_null(ENGINE *e)
     e->dsa_meth = NULL;
     e->dh_meth = NULL;
     e->rand_meth = NULL;
-    e->store_meth = NULL;
     e->ciphers = NULL;
     e->digests = NULL;
     e->destroy = NULL;
@@ -110,18 +73,13 @@ int engine_free_util(ENGINE *e, int locked)
     if (e == NULL)
         return 1;
     if (locked)
-        i = CRYPTO_add(&e->struct_ref, -1, CRYPTO_LOCK_ENGINE);
+        CRYPTO_atomic_add(&e->struct_ref, -1, &i, global_engine_lock);
     else
         i = --e->struct_ref;
     engine_ref_debug(e, 0, -1)
     if (i > 0)
         return 1;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "ENGINE_free, bad structural reference count\n");
-        abort();
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
     /* Free up any dynamically allocated public key methods */
     engine_pkey_meths_free(e);
     engine_pkey_asn1_meths_free(e);
@@ -144,8 +102,8 @@ int ENGINE_free(ENGINE *e)
 /* Cleanup stuff */
 
 /*
- * ENGINE_cleanup() is coded such that anything that does work that will need
- * cleanup can register a "cleanup" callback here. That way we don't get
+ * engine_cleanup_int() is coded such that anything that does work that will
+ * need cleanup can register a "cleanup" callback here. That way we don't get
  * linker bloat by referring to all *possible* cleanups, but any linker bloat
  * into code "X" will cause X's cleanup function to end up here.
  */
@@ -196,7 +154,7 @@ static void engine_cleanup_cb_free(ENGINE_CLEANUP_ITEM *item)
     OPENSSL_free(item);
 }
 
-void ENGINE_cleanup(void)
+void engine_cleanup_int(void)
 {
     if (int_cleanup_check(0)) {
         sk_ENGINE_CLEANUP_ITEM_pop_free(cleanup_stack,
@@ -208,6 +166,7 @@ void ENGINE_cleanup(void)
      * registering a cleanup callback.
      */
     RAND_set_rand_method(NULL);
+    CRYPTO_THREAD_lock_free(global_engine_lock);
 }
 
 /* Now the "ex_data" support */

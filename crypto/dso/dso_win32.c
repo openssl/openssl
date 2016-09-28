@@ -1,73 +1,15 @@
-/* dso_win32.c */
 /*
- * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
- * 2000.
- */
-/* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <string.h>
-#include "internal/cryptlib.h"
-#include <openssl/dso.h>
+#include "dso_locl.h"
 
-#if !defined(DSO_WIN32)
-DSO_METHOD *DSO_METHOD_win32(void)
-{
-    return NULL;
-}
-#else
+#if defined(DSO_WIN32)
 
 # ifdef _WIN32_WCE
 #  if _WIN32_WCE < 300
@@ -117,12 +59,10 @@ static HINSTANCE LoadLibraryA(LPCSTR lpLibFileName)
 
 static int win32_load(DSO *dso);
 static int win32_unload(DSO *dso);
-static void *win32_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname);
 static char *win32_name_converter(DSO *dso, const char *filename);
 static char *win32_merger(DSO *dso, const char *filespec1,
                           const char *filespec2);
-static int win32_pathbyaddr(void *addr, char *path, int sz);
 static void *win32_globallookup(const char *name);
 
 static const char *openssl_strnchr(const char *string, int c, size_t len);
@@ -131,20 +71,18 @@ static DSO_METHOD dso_meth_win32 = {
     "OpenSSL 'win32' shared library method",
     win32_load,
     win32_unload,
-    win32_bind_var,
     win32_bind_func,
     NULL,                       /* ctrl */
     win32_name_converter,
     win32_merger,
     NULL,                       /* init */
     NULL,                       /* finish */
-    win32_pathbyaddr,
     win32_globallookup
 };
 
-DSO_METHOD *DSO_METHOD_win32(void)
+DSO_METHOD *DSO_METHOD_openssl(void)
 {
-    return (&dso_meth_win32);
+    return &dso_meth_win32;
 }
 
 /*
@@ -215,40 +153,6 @@ static int win32_unload(DSO *dso)
     /* Cleanup */
     OPENSSL_free(p);
     return (1);
-}
-
-/*
- * Using GetProcAddress for variables? TODO: Check this out in the Win32 API
- * docs, there's probably a variant for variables.
- */
-static void *win32_bind_var(DSO *dso, const char *symname)
-{
-    HINSTANCE *ptr;
-    union {
-        void *p;
-        FARPROC f;
-    } sym;
-
-    if ((dso == NULL) || (symname == NULL)) {
-        DSOerr(DSO_F_WIN32_BIND_VAR, ERR_R_PASSED_NULL_PARAMETER);
-        return (NULL);
-    }
-    if (sk_void_num(dso->meth_data) < 1) {
-        DSOerr(DSO_F_WIN32_BIND_VAR, DSO_R_STACK_ERROR);
-        return (NULL);
-    }
-    ptr = sk_void_value(dso->meth_data, sk_void_num(dso->meth_data) - 1);
-    if (ptr == NULL) {
-        DSOerr(DSO_F_WIN32_BIND_VAR, DSO_R_NULL_HANDLE);
-        return (NULL);
-    }
-    sym.f = GetProcAddress(*ptr, symname);
-    if (sym.p == NULL) {
-        DSOerr(DSO_F_WIN32_BIND_VAR, DSO_R_SYM_FAILURE);
-        ERR_add_error_data(3, "symname(", symname, ")");
-        return (NULL);
-    }
-    return (sym.p);
 }
 
 static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
@@ -601,106 +505,6 @@ static const char *openssl_strnchr(const char *string, int c, size_t len)
 typedef HANDLE(WINAPI *CREATETOOLHELP32SNAPSHOT) (DWORD, DWORD);
 typedef BOOL(WINAPI *CLOSETOOLHELP32SNAPSHOT) (HANDLE);
 typedef BOOL(WINAPI *MODULE32) (HANDLE, MODULEENTRY32 *);
-
-static int win32_pathbyaddr(void *addr, char *path, int sz)
-{
-    HMODULE dll;
-    HANDLE hModuleSnap = INVALID_HANDLE_VALUE;
-    MODULEENTRY32 me32;
-    CREATETOOLHELP32SNAPSHOT create_snap;
-    CLOSETOOLHELP32SNAPSHOT close_snap;
-    MODULE32 module_first, module_next;
-
-    if (addr == NULL) {
-        union {
-            int (*f) (void *, char *, int);
-            void *p;
-        } t = {
-            win32_pathbyaddr
-        };
-        addr = t.p;
-    }
-
-    dll = LoadLibrary(TEXT(DLLNAME));
-    if (dll == NULL) {
-        DSOerr(DSO_F_WIN32_PATHBYADDR, DSO_R_UNSUPPORTED);
-        return -1;
-    }
-
-    create_snap = (CREATETOOLHELP32SNAPSHOT)
-        GetProcAddress(dll, "CreateToolhelp32Snapshot");
-    if (create_snap == NULL) {
-        FreeLibrary(dll);
-        DSOerr(DSO_F_WIN32_PATHBYADDR, DSO_R_UNSUPPORTED);
-        return -1;
-    }
-    /* We take the rest for granted... */
-# ifdef _WIN32_WCE
-    close_snap = (CLOSETOOLHELP32SNAPSHOT)
-        GetProcAddress(dll, "CloseToolhelp32Snapshot");
-# else
-    close_snap = (CLOSETOOLHELP32SNAPSHOT) CloseHandle;
-# endif
-    module_first = (MODULE32) GetProcAddress(dll, "Module32First");
-    module_next = (MODULE32) GetProcAddress(dll, "Module32Next");
-
-    hModuleSnap = (*create_snap) (TH32CS_SNAPMODULE, 0);
-    if (hModuleSnap == INVALID_HANDLE_VALUE) {
-        FreeLibrary(dll);
-        DSOerr(DSO_F_WIN32_PATHBYADDR, DSO_R_UNSUPPORTED);
-        return -1;
-    }
-
-    me32.dwSize = sizeof(me32);
-
-    if (!(*module_first) (hModuleSnap, &me32)) {
-        (*close_snap) (hModuleSnap);
-        FreeLibrary(dll);
-        DSOerr(DSO_F_WIN32_PATHBYADDR, DSO_R_FAILURE);
-        return -1;
-    }
-
-    do {
-        if ((BYTE *) addr >= me32.modBaseAddr &&
-            (BYTE *) addr < me32.modBaseAddr + me32.modBaseSize) {
-            (*close_snap) (hModuleSnap);
-            FreeLibrary(dll);
-# ifdef _WIN32_WCE
-#  if _WIN32_WCE >= 101
-            return WideCharToMultiByte(CP_ACP, 0, me32.szExePath, -1,
-                                       path, sz, NULL, NULL);
-#  else
-            {
-                int i, len = (int)wcslen(me32.szExePath);
-                if (sz <= 0)
-                    return len + 1;
-                if (len >= sz)
-                    len = sz - 1;
-                for (i = 0; i < len; i++)
-                    path[i] = (char)me32.szExePath[i];
-                path[len++] = 0;
-                return len;
-            }
-#  endif
-# else
-            {
-                int len = (int)strlen(me32.szExePath);
-                if (sz <= 0)
-                    return len + 1;
-                if (len >= sz)
-                    len = sz - 1;
-                memcpy(path, me32.szExePath, len);
-                path[len++] = 0;
-                return len;
-            }
-# endif
-        }
-    } while ((*module_next) (hModuleSnap, &me32));
-
-    (*close_snap) (hModuleSnap);
-    FreeLibrary(dll);
-    return 0;
-}
 
 static void *win32_globallookup(const char *name)
 {

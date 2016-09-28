@@ -12,7 +12,7 @@
 ;;; M-x c-set-style <RET> (or C-c . for short), and enter "eay".
 ;;; To toggle the auto-newline feature of CC mode, type C-c C-a.
 ;;;
-;;; If you're a OpenSSL developer, you might find it more comfortable
+;;; If you're an OpenSSL developer, you might find it more comfortable
 ;;; to have this style be permanent in your OpenSSL development
 ;;; directory.  To have that, please perform this:
 ;;;
@@ -28,7 +28,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Note, it could be easy to inherit from the "gnu" style...  however,
 ;; one never knows if that style will change somewhere in the future,
-;; so I've chosen to copy the "gnu" style values explicitely instead
+;; so I've chosen to copy the "gnu" style values explicitly instead
 ;; and mark them with a comment.                // RLevitte 2015-08-31
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

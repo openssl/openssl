@@ -1,59 +1,10 @@
-/* crypto/dsa/dsa_gen.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /*
@@ -63,15 +14,13 @@
  */
 #define xxxHASH    EVP_sha1()
 
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_SHA is defined */
-
+#include <openssl/opensslconf.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
-
 #include "dsa_locl.h"
 
 int DSA_generate_parameters_ex(DSA *ret, int bits,
@@ -150,6 +99,9 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
     c = BN_CTX_get(ctx);
     p = BN_CTX_get(ctx);
     test = BN_CTX_get(ctx);
+
+    if (test == NULL)
+        goto err;
 
     if (!BN_lshift(test, BN_value_one(), bits - 1))
         goto err;
@@ -376,7 +328,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     }
 
     mdsize = EVP_MD_size(evpmd);
-    /* If unverificable g generation only don't need seed */
+    /* If unverifiable g generation only don't need seed */
     if (!ret->p || !ret->q || idx >= 0) {
         if (seed_len == 0)
             seed_len = mdsize;
@@ -409,6 +361,8 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     X = BN_CTX_get(ctx);
     c = BN_CTX_get(ctx);
     test = BN_CTX_get(ctx);
+    if (test == NULL)
+        goto err;
 
     /* if p, q already supplied generate g only */
     if (ret->p && ret->q) {
@@ -642,40 +596,4 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     BN_MONT_CTX_free(mont);
     EVP_MD_CTX_free(mctx);
     return ok;
-}
-
-int dsa_paramgen_check_g(DSA *dsa)
-{
-    BN_CTX *ctx;
-    BIGNUM *tmp;
-    BN_MONT_CTX *mont = NULL;
-    int rv = -1;
-    ctx = BN_CTX_new();
-    if (ctx == NULL)
-        return -1;
-    BN_CTX_start(ctx);
-    if (BN_cmp(dsa->g, BN_value_one()) <= 0)
-        return 0;
-    if (BN_cmp(dsa->g, dsa->p) >= 0)
-        return 0;
-    tmp = BN_CTX_get(ctx);
-    if (!tmp)
-        goto err;
-    if ((mont = BN_MONT_CTX_new()) == NULL)
-        goto err;
-    if (!BN_MONT_CTX_set(mont, dsa->p, ctx))
-        goto err;
-    /* Work out g^q mod p */
-    if (!BN_mod_exp_mont(tmp, dsa->g, dsa->q, dsa->p, ctx, mont))
-        goto err;
-    if (!BN_cmp(tmp, BN_value_one()))
-        rv = 1;
-    else
-        rv = 0;
- err:
-    BN_CTX_end(ctx);
-    BN_MONT_CTX_free(mont);
-    BN_CTX_free(ctx);
-    return rv;
-
 }

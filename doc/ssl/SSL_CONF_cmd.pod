@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+SSL_CONF_cmd_value_type, SSL_CONF_finish,
 SSL_CONF_cmd - send configuration command
 
 =head1 SYNOPSIS
@@ -122,18 +123,27 @@ than the deprecated alternative commands below.
 
 =item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
-Disables protocol support for SSLv3, TLS 1.0, TLS 1.1 or TLS 1.2
-by setting the corresponding options B<SSL_OP_NO_SSL3>, B<SSL_OP_NO_TLS1>,
-B<SSL_OP_NO_TLS1_1> and B<SSL_OP_NO_TLS1_2> respectively.
+Disables protocol support for SSLv3, TLSv1.0, TLSv1.1 or TLSv1.2 by setting the
+corresponding options B<SSL_OP_NO_SSLv3>, B<SSL_OP_NO_TLSv1>, B<SSL_OP_NO_TLSv1_1>
+and B<SSL_OP_NO_TLSv1_2> respectively.
 These options are deprecated, instead use B<-min_protocol> and B<-max_protocol>.
 
 =item B<-bugs>
 
 Various bug workarounds are set, same as setting B<SSL_OP_ALL>.
 
+=item B<-comp>
+
+Enables support for SSL/TLS compression, same as clearing
+B<SSL_OP_NO_COMPRESSION>.
+This command was introduced in OpenSSL 1.1.0.
+As of OpenSSL 1.1.0, compression is off by default.
+
 =item B<-no_comp>
 
-Disables support for SSL/TLS compression, same as setting B<SSL_OP_NO_COMPRESS>.
+Disables support for SSL/TLS compression, same as setting
+B<SSL_OP_NO_COMPRESSION>.
+As of OpenSSL 1.1.0, compression is off by default.
 
 =item B<-no_ticket>
 
@@ -164,13 +174,6 @@ Set by default.
 
 enables strict mode protocol handling. Equivalent to setting
 B<SSL_CERT_FLAG_TLS_STRICT>.
-
-=item B<-debug_broken_protocol>
-
-disables various checks and permits several kinds of broken protocol behaviour
-for testing purposes: it should B<NEVER> be used in anything other than a test
-environment. Only supported if OpenSSL is configured with
-B<-DOPENSSL_SSL_DEBUG_BROKEN_PROTOCOL>.
 
 =back
 
@@ -259,16 +262,6 @@ signatures and key exchange, if applicable.
 The B<value> argument is a colon separated list of curves. The curve can be
 either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name (e.g
 B<prime256v1>). Curve names are case sensitive.
-
-=item B<ECDHParameters>
-
-This sets the temporary curve used for ephemeral ECDH modes. Only used by
-servers
-
-The B<value> argument is a curve name or the special value B<Automatic> which
-picks an appropriate curve based on client and server preferences. The curve
-can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
-(e.g B<prime256v1>). Curve names are case sensitive.
 
 =item B<MinProtocol>
 
@@ -463,7 +456,7 @@ Set supported signature algorithms:
 
  SSL_CONF_cmd(ctx, "SignatureAlgorithms", "ECDSA+SHA256:RSA+SHA256:DSA+SHA256");
 
-There are various ways to select the supported procotols.
+There are various ways to select the supported protocols.
 
 This set the minimum protocol version to TLSv1, and so disables SSLv3.
 This is the recommended way to disable protocols.
@@ -494,6 +487,10 @@ This also only enables TLSv1.2:
 Disable TLS session tickets:
 
  SSL_CONF_cmd(ctx, "Options", "-SessionTicket");
+
+Enable compression:
+
+ SSL_CONF_cmd(ctx, "Options", "Compression");
 
 Set supported curves to P-256, P-384:
 
@@ -543,5 +540,14 @@ OpenSSL passing a command which didn't take an argument would return
 B<SSL_CONF_TYPE_UNKNOWN>.
 
 B<MinProtocol> and B<MaxProtocol> where added in OpenSSL 1.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

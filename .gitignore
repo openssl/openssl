@@ -1,17 +1,8 @@
-# Object files
-*.o
-*.obj
-
-# editor artefacts
-*.swp
-.#*
-\#*#
-*~
+# Ignore editor artefacts
 /.dir-locals.el
 
 # Top level excludes
 /Makefile.orig
-/Makefile
 /MINFO
 /TABLE
 /*.a
@@ -23,41 +14,29 @@
 /tmp.*
 /configdata.pm
 
-**/Makefile
-
-/test/*.ss
-/test/*.srl
-/test/.rnd
-/test/test*.pem
-/test/newkey.pem
-/test/*.log
-
-# Certificate symbolic links
-*.0
+# *all* Makefiles
+Makefile
+# ... except in demos
+!/demos/*/Makefile
 
 # Links under apps
 /apps/CA.pl
+/apps/tsget
+/apps/tsget.pl
 /apps/md4.c
-
 
 # Auto generated headers
 /crypto/buildinf.h
-/openssl/include/opensslconf.h
 /crypto/include/internal/*_conf.h
-
-# Auto generated assembly language source files
-*.s
-!/crypto/*/asm/*.s
-/crypto/arm*.S
-/crypto/*/*.S
-*.asm
-!/crypto/*/asm/*.asm
+/openssl/include/opensslconf.h
+/util/domd
 
 # Executables
 /apps/openssl
 /test/sha256t
 /test/sha512t
 /test/gost2814789t
+/test/ssltest_old
 /test/*test
 /test/fips_aesavs
 /test/fips_desmovs
@@ -68,30 +47,40 @@
 /test/fips_ecdsavs
 /test/fips_rngvs
 /test/fips_test_suite
-*.so*
-*.dylib*
-*.dll*
-*.exe
-# Exceptions
-!/test/bctest
-!/crypto/des/times/486-50.sol
+/test/ssltest_old
+/test/x509aux
+/test/v3ext
+
+# Certain files that get created by tests on the fly
+/test/*.ss
+/test/*.srl
+/test/.rnd
+/test/test*.pem
+/test/newkey.pem
+/test/*.log
+/test/buildtest_*
+
+# Fuzz stuff.
+# Anything without an extension is an executable on Unix, so we keep files
+# with extensions.  And we keep the corpora subddir versioned as well.
+# Anything more generic with extensions that should be ignored will be taken
+# care of by general ignores for those extensions (*.o, *.obj, *.exe, ...)
+/fuzz/*
+!/fuzz/README*
+!/fuzz/corpora
+!/fuzz/*.*
 
 # Misc auto generated files
 /include/openssl/opensslconf.h
 /tools/c_rehash
-/crypto/**/lib
-/engines/**/lib
-/ssl/**/lib
-Makefile.save
-*.bak
+/tools/c_rehash.pl
+/util/shlib_wrap.sh
 /tags
 /TAGS
-cscope.out
-*.d
 /crypto.map
 /ssl.map
 
-# Windows
+# Windows (legacy)
 /tmp32
 /tmp32.dbg
 /tmp32dll
@@ -102,6 +91,7 @@ cscope.out
 /out32dll.dbg
 /inc32
 /MINFO
+/ms/.rnd
 /ms/bcb.mak
 /ms/libeay32.def
 /ms/nt.mak
@@ -134,3 +124,55 @@ cscope.out
 /test/fips_shatest.c
 /test/fips_test_suite.c
 /test/shatest.c
+
+##### Generic patterns
+# Auto generated assembly language source files
+*.s
+!/crypto/*/asm/*.s
+/crypto/arm*.S
+/crypto/*/*.S
+*.asm
+!/crypto/*/asm/*.asm
+
+# Object files
+*.o
+*.obj
+
+# editor artefacts
+*.swp
+.#*
+\#*#
+*~
+
+# Certificate symbolic links
+*.0
+
+# All kinds of executables
+*.so
+*.so.*
+*.dylib
+*.dylib.*
+*.dll
+*.dll.*
+*.exe
+*.pyc
+*.exp
+*.lib
+*.pdb
+*.ilk
+*.def
+*.rc
+*.res
+
+# Misc generated stuff
+Makefile.save
+/crypto/**/lib
+/engines/**/lib
+/ssl/**/lib
+*.bak
+cscope.*
+*.d
+pod2htmd.tmp
+
+# Windows manifest files
+*.manifest

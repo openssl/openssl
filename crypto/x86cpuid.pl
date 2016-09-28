@@ -1,8 +1,18 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC, "${dir}perlasm", "perlasm");
 require "x86asm.pl";
+
+$output = pop;
+open OUT,">$output";
+*STDOUT=*OUT;
 
 &asm_init($ARGV[0],"x86cpuid");
 
@@ -355,6 +365,31 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&ret	();
 &function_end_B("OPENSSL_cleanse");
 
+&function_begin_B("CRYPTO_memcmp");
+	&push	("esi");
+	&push	("edi");
+	&mov	("esi",&wparam(0));
+	&mov	("edi",&wparam(1));
+	&mov	("ecx",&wparam(2));
+	&xor	("eax","eax");
+	&xor	("edx","edx");
+	&cmp	("ecx",0);
+	&je	(&label("no_data"));
+&set_label("loop");
+	&mov	("dl",&BP(0,"esi"));
+	&lea	("esi",&DWP(1,"esi"));
+	&xor	("dl",&BP(0,"edi"));
+	&lea	("edi",&DWP(1,"edi"));
+	&or	("al","dl");
+	&dec	("ecx");
+	&jnz	(&label("loop"));
+	&neg	("eax");
+	&shr	("eax",31);
+&set_label("no_data");
+	&pop	("edi");
+	&pop	("esi");
+	&ret	();
+&function_end_B("CRYPTO_memcmp");
 {
 my $lasttick = "esi";
 my $lastdiff = "ebx";
@@ -457,29 +492,64 @@ my $max = "ebp";
 &function_end("OPENSSL_instrument_bus2");
 }
 
-&function_begin_B("OPENSSL_ia32_rdrand");
+sub gen_random {
+my $rdop = shift;
+&function_begin_B("OPENSSL_ia32_${rdop}");
 	&mov	("ecx",8);
 &set_label("loop");
-	&rdrand	("eax");
+	&${rdop}("eax");
 	&jc	(&label("break"));
 	&loop	(&label("loop"));
 &set_label("break");
 	&cmp	("eax",0);
 	&cmove	("eax","ecx");
 	&ret	();
-&function_end_B("OPENSSL_ia32_rdrand");
+&function_end_B("OPENSSL_ia32_${rdop}");
 
-&function_begin_B("OPENSSL_ia32_rdseed");
+&function_begin_B("OPENSSL_ia32_${rdop}_bytes");
+	&push	("edi");
+	&push	("ebx");
+	&xor	("eax","eax");		# return value
+	&mov	("edi",&wparam(0));
+	&mov	("ebx",&wparam(1));
+
+	&cmp	("ebx",0);
+	&je	(&label("done"));
+
 	&mov	("ecx",8);
 &set_label("loop");
-	&rdseed	("eax");
+	&${rdop}("edx");
 	&jc	(&label("break"));
 	&loop	(&label("loop"));
-&set_label("break");
-	&cmp	("eax",0);
-	&cmove	("eax","ecx");
+	&jmp	(&label("done"));
+
+&set_label("break",16);
+	&cmp	("ebx",4);
+	&jb	(&label("tail"));
+	&mov	(&DWP(0,"edi"),"edx");
+	&lea	("edi",&DWP(4,"edi"));
+	&add	("eax",4);
+	&sub	("ebx",4);
+	&jz	(&label("done"));
+	&mov	("ecx",8);
+	&jmp	(&label("loop"));
+
+&set_label("tail",16);
+	&mov	(&BP(0,"edi"),"dl");
+	&lea	("edi",&DWP(1,"edi"));
+	&inc	("eax");
+	&shr	("edx",8);
+	&dec	("ebx");
+	&jnz	(&label("tail"));
+
+&set_label("done");
+	&pop	("ebx");
+	&pop	("edi");
 	&ret	();
-&function_end_B("OPENSSL_ia32_rdseed");
+&function_end_B("OPENSSL_ia32_${rdop}_bytes");
+}
+&gen_random("rdrand");
+&gen_random("rdseed");
 
 &initseg("OPENSSL_cpuid_setup");
 
@@ -487,3 +557,5 @@ my $max = "ebp";
 &hidden("OPENSSL_ia32cap_P");
 
 &asm_finish();
+
+close STDOUT;

@@ -1,61 +1,11 @@
-/* test/packettest.c */
 /*
- * Written by Matt Caswell for the OpenSSL project.
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
-
 
 #include "../ssl/packet_locl.h"
 
@@ -72,6 +22,24 @@ static int test_PACKET_remaining(unsigned char buf[BUF_LEN])
             || !PACKET_forward(&pkt, 1)
             ||  PACKET_remaining(&pkt) != 0) {
         fprintf(stderr, "test_PACKET_remaining() failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+static int test_PACKET_end(unsigned char buf[BUF_LEN])
+{
+    PACKET pkt;
+
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            ||  PACKET_remaining(&pkt) != BUF_LEN
+            ||  PACKET_end(&pkt) != buf + BUF_LEN
+            || !PACKET_forward(&pkt, BUF_LEN - 1)
+            || PACKET_end(&pkt) != buf + BUF_LEN
+            || !PACKET_forward(&pkt, 1)
+            || PACKET_end(&pkt) != buf + BUF_LEN) {
+        fprintf(stderr, "test_PACKET_end() failed\n");
         return 0;
     }
 
@@ -198,7 +166,7 @@ static int test_PACKET_get_sub_packet(unsigned char buf[BUF_LEN])
 
 static int test_PACKET_get_bytes(unsigned char buf[BUF_LEN])
 {
-    unsigned char *bytes;
+    const unsigned char *bytes;
     PACKET pkt;
 
     if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
@@ -309,9 +277,29 @@ static int test_PACKET_strndup()
     return 1;
 }
 
+static int test_PACKET_contains_zero_byte()
+{
+    char buf[10], buf2[10];
+    PACKET pkt;
+
+    memset(buf, 'x', 10);
+    memset(buf2, 'y', 10);
+    buf2[5] = '\0';
+
+    if (       !PACKET_buf_init(&pkt, (unsigned char*)buf, 10)
+            ||  PACKET_contains_zero_byte(&pkt)
+            || !PACKET_buf_init(&pkt, (unsigned char*)buf2, 10)
+            || !PACKET_contains_zero_byte(&pkt)) {
+        fprintf(stderr, "test_PACKET_contains_zero_byte failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 static int test_PACKET_forward(unsigned char buf[BUF_LEN])
 {
-    unsigned char *byte;
+    const unsigned char *byte;
     PACKET pkt;
 
     if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
@@ -458,6 +446,57 @@ static int test_PACKET_get_length_prefixed_3()
     return 1;
 }
 
+static int test_PACKET_as_length_prefixed_1()
+{
+    unsigned char buf[BUF_LEN];
+    const size_t len = 16;
+    unsigned int i;
+    PACKET pkt, exact_pkt, subpkt;
+
+    buf[0] = len;
+    for (i = 1; i < BUF_LEN; i++) {
+        buf[i] = (i * 2) & 0xff;
+    }
+
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_buf_init(&exact_pkt, buf, len + 1)
+            ||  PACKET_as_length_prefixed_1(&pkt, &subpkt)
+            ||  PACKET_remaining(&pkt) != BUF_LEN
+            || !PACKET_as_length_prefixed_1(&exact_pkt, &subpkt)
+            ||  PACKET_remaining(&exact_pkt) != 0
+            ||  PACKET_remaining(&subpkt) != len) {
+        fprintf(stderr, "test_PACKET_as_length_prefixed_1() failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+static int test_PACKET_as_length_prefixed_2()
+{
+    unsigned char buf[1024];
+    const size_t len = 516;  /* 0x0204 */
+    unsigned int i;
+    PACKET pkt, exact_pkt, subpkt;
+
+    for (i = 1; i <= 1024; i++) {
+        buf[i-1] = (i * 2) & 0xff;
+    }
+
+    if (       !PACKET_buf_init(&pkt, buf, 1024)
+            || !PACKET_buf_init(&exact_pkt, buf, len + 2)
+            ||  PACKET_as_length_prefixed_2(&pkt, &subpkt)
+            ||  PACKET_remaining(&pkt) != 1024
+            || !PACKET_as_length_prefixed_2(&exact_pkt, &subpkt)
+            ||  PACKET_remaining(&exact_pkt) != 0
+            ||  PACKET_remaining(&subpkt) != len) {
+        fprintf(stderr, "test_PACKET_as_length_prefixed_2() failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     unsigned char buf[BUF_LEN];
@@ -471,6 +510,7 @@ int main(int argc, char **argv)
     if (       !test_PACKET_buf_init()
             || !test_PACKET_null_init()
             || !test_PACKET_remaining(buf)
+            || !test_PACKET_end(buf)
             || !test_PACKET_equal(buf)
             || !test_PACKET_get_1(buf)
             || !test_PACKET_get_4(buf)
@@ -483,10 +523,13 @@ int main(int argc, char **argv)
             || !test_PACKET_copy_all(buf)
             || !test_PACKET_memdup(buf)
             || !test_PACKET_strndup()
+            || !test_PACKET_contains_zero_byte()
             || !test_PACKET_forward(buf)
             || !test_PACKET_get_length_prefixed_1()
             || !test_PACKET_get_length_prefixed_2()
-            || !test_PACKET_get_length_prefixed_3()) {
+            || !test_PACKET_get_length_prefixed_3()
+            || !test_PACKET_as_length_prefixed_1()
+            || !test_PACKET_as_length_prefixed_2()) {
         return 1;
     }
     printf("PASS\n");

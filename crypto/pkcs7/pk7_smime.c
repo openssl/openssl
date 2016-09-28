@@ -1,60 +1,10 @@
-/* pk7_smime.c */
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
- */
-/* ====================================================================
- * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /* Simple PKCS#7 processing functions */
@@ -258,7 +208,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
     X509 *signer;
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
     PKCS7_SIGNER_INFO *si;
-    X509_STORE_CTX cert_ctx;
+    X509_STORE_CTX *cert_ctx = NULL;
     char *buf = NULL;
     int i, j = 0, k, ret = 0;
     BIO *p7bio = NULL;
@@ -280,10 +230,18 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         return 0;
     }
 
-    /* Check for data and content: two sets of data */
-    if (!PKCS7_get_detached(p7) && indata) {
-        PKCS7err(PKCS7_F_PKCS7_VERIFY, PKCS7_R_CONTENT_AND_DATA_PRESENT);
-        return 0;
+    if (flags & PKCS7_NO_DUAL_CONTENT) {
+        /*
+         * This was originally "#if 0" because we thought that only old broken
+         * Netscape did this.  It turns out that Authenticode uses this kind
+         * of "extended" PKCS7 format, and things like UEFI secure boot and
+         * tools like osslsigncode need it.  In Authenticode the verification
+         * process is different, but the existing PKCs7 verification works.
+         */
+        if (!PKCS7_get_detached(p7) && indata) {
+            PKCS7err(PKCS7_F_PKCS7_VERIFY, PKCS7_R_CONTENT_AND_DATA_PRESENT);
+            return 0;
+        }
     }
 
     sinfos = PKCS7_get_signer_info(p7);
@@ -299,26 +257,29 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 
     /* Now verify the certificates */
 
+    cert_ctx = X509_STORE_CTX_new();
+    if (cert_ctx == NULL)
+        goto err;
     if (!(flags & PKCS7_NOVERIFY))
         for (k = 0; k < sk_X509_num(signers); k++) {
             signer = sk_X509_value(signers, k);
             if (!(flags & PKCS7_NOCHAIN)) {
-                if (!X509_STORE_CTX_init(&cert_ctx, store, signer,
+                if (!X509_STORE_CTX_init(cert_ctx, store, signer,
                                          p7->d.sign->cert)) {
                     PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_X509_LIB);
                     goto err;
                 }
-                X509_STORE_CTX_set_default(&cert_ctx, "smime_sign");
-            } else if (!X509_STORE_CTX_init(&cert_ctx, store, signer, NULL)) {
+                X509_STORE_CTX_set_default(cert_ctx, "smime_sign");
+            } else if (!X509_STORE_CTX_init(cert_ctx, store, signer, NULL)) {
                 PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_X509_LIB);
                 goto err;
             }
             if (!(flags & PKCS7_NOCRL))
-                X509_STORE_CTX_set0_crls(&cert_ctx, p7->d.sign->crl);
-            i = X509_verify_cert(&cert_ctx);
+                X509_STORE_CTX_set0_crls(cert_ctx, p7->d.sign->crl);
+            i = X509_verify_cert(cert_ctx);
             if (i <= 0)
-                j = X509_STORE_CTX_get_error(&cert_ctx);
-            X509_STORE_CTX_cleanup(&cert_ctx);
+                j = X509_STORE_CTX_get_error(cert_ctx);
+            X509_STORE_CTX_cleanup(cert_ctx);
             if (i <= 0) {
                 PKCS7err(PKCS7_F_PKCS7_VERIFY,
                          PKCS7_R_CERTIFICATE_VERIFY_ERROR);
@@ -397,6 +358,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
     ret = 1;
 
  err:
+    X509_STORE_CTX_free(cert_ctx);
     OPENSSL_free(buf);
     if (tmpin == indata) {
         if (indata)

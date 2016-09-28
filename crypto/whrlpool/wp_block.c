@@ -1,3 +1,12 @@
+/*
+ * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 /**
  * The Whirlpool hashing function.
  *
@@ -146,7 +155,7 @@ typedef unsigned long long u64;
  * one quadword load. One can argue that that many single-byte loads
  * is too excessive, as one could load a quadword and "milk" it for
  * eight 8-bit values instead. Well, yes, but in order to do so *and*
- * avoid excessive loads you have to accomodate a handful of 64-bit
+ * avoid excessive loads you have to accommodate a handful of 64-bit
  * values in the register bank and issue a bunch of shifts and mask.
  * It's a tradeoff: loads vs. shift and mask in big register bank[!].
  * On most CPUs eight single-byte loads are faster and I let other

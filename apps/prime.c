@@ -1,50 +1,10 @@
-/* ====================================================================
- * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <string.h>
@@ -122,16 +82,34 @@ int prime_main(int argc, char **argv)
             goto end;
         }
         bn = BN_new();
-        BN_generate_prime_ex(bn, bits, safe, NULL, NULL, NULL);
+        if (bn == NULL) {
+            BIO_printf(bio_err, "Out of memory.\n");
+            goto end;
+        }
+        if (!BN_generate_prime_ex(bn, bits, safe, NULL, NULL, NULL)) {
+            BIO_printf(bio_err, "Failed to generate prime.\n");
+            goto end;
+        }
         s = hex ? BN_bn2hex(bn) : BN_bn2dec(bn);
+        if (s == NULL) {
+            BIO_printf(bio_err, "Out of memory.\n");
+            goto end;
+        }
         BIO_printf(bio_out, "%s\n", s);
         OPENSSL_free(s);
     } else {
         for ( ; *argv; argv++) {
+            int r;
+
             if (hex)
-                BN_hex2bn(&bn, argv[0]);
+                r = BN_hex2bn(&bn, argv[0]);
             else
-                BN_dec2bn(&bn, argv[0]);
+                r = BN_dec2bn(&bn, argv[0]);
+
+            if(!r) {
+                BIO_printf(bio_err, "Failed to process value (%s)\n", argv[0]);
+                goto end;
+            }
 
             BN_print(bio_out, bn);
             BIO_printf(bio_out, " (%s) %s prime\n",
@@ -141,8 +119,8 @@ int prime_main(int argc, char **argv)
         }
     }
 
-    BN_free(bn);
-
+    ret = 0;
  end:
+    BN_free(bn);
     return ret;
 }

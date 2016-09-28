@@ -1,73 +1,20 @@
 /*
- * ! \file ssl/ssl_conf.c \brief SSL configuration functions
- */
-/* ====================================================================
- * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
+ * Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
-#ifdef REF_CHECK
-# include <assert.h>
-#endif
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/conf.h>
 #include <openssl/objects.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/dh.h>
 
 /*
- * structure holding name tables. This is used for pemitted elements in lists
+ * structure holding name tables. This is used for permitted elements in lists
  * such as TLSv1.
  */
 
@@ -169,7 +116,7 @@ static void ssl_set_option(SSL_CONF_CTX *cctx, unsigned int name_flags,
         break;
 
     case SSL_TFLAG_VFY:
-        pflags =  cctx->pvfy_flags;
+        pflags = cctx->pvfy_flags;
         break;
 
     case SSL_TFLAG_OPTION:
@@ -195,8 +142,7 @@ static int ssl_match_option(SSL_CONF_CTX *cctx, const ssl_flag_tbl *tbl,
     if (namelen == -1) {
         if (strcmp(tbl->name, name))
             return 0;
-    } else if (tbl->namelen != namelen
-               || strncasecmp(tbl->name, name, namelen))
+    } else if (tbl->namelen != namelen || strncasecmp(tbl->name, name, namelen))
         return 0;
     ssl_set_option(cctx, tbl->name_flags, tbl->option_value, onoff);
     return 1;
@@ -245,8 +191,7 @@ static int cmd_SignatureAlgorithms(SSL_CONF_CTX *cctx, const char *value)
 }
 
 /* Set supported client signature algorithms */
-static int cmd_ClientSignatureAlgorithms(SSL_CONF_CTX *cctx,
-                                         const char *value)
+static int cmd_ClientSignatureAlgorithms(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv;
     if (cctx->ssl)
@@ -338,7 +283,8 @@ static int protocol_from_string(const char *value)
         {"TLSv1.1", TLS1_1_VERSION},
         {"TLSv1.2", TLS1_2_VERSION},
         {"DTLSv1", DTLS1_VERSION},
-        {"DTLSv1.2", DTLS1_2_VERSION}};
+        {"DTLSv1.2", DTLS1_2_VERSION}
+    };
     size_t i;
     size_t n = OSSL_NELEM(versions);
 
@@ -582,6 +528,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("no_tls1_2", 0),
     SSL_CONF_CMD_SWITCH("bugs", 0),
     SSL_CONF_CMD_SWITCH("no_comp", 0),
+    SSL_CONF_CMD_SWITCH("comp", 0),
     SSL_CONF_CMD_SWITCH("ecdh_single", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("no_ticket", 0),
     SSL_CONF_CMD_SWITCH("serverpref", SSL_CONF_FLAG_SERVER),
@@ -590,9 +537,6 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("no_resumption_on_reneg", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("no_legacy_server_connect", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("strict", 0),
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    SSL_CONF_CMD_SWITCH("debug_broken_protocol", 0),
-#endif
     SSL_CONF_CMD_STRING(SignatureAlgorithms, "sigalgs", 0),
     SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs", 0),
     SSL_CONF_CMD_STRING(Curves, "curves", 0),
@@ -601,8 +545,8 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
 #endif
     SSL_CONF_CMD_STRING(CipherString, "cipher", 0),
     SSL_CONF_CMD_STRING(Protocol, NULL, 0),
-    SSL_CONF_CMD_STRING(MinProtocol, "min_protocol", SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CLIENT),
-    SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CLIENT),
+    SSL_CONF_CMD_STRING(MinProtocol, "min_protocol", 0),
+    SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", 0),
     SSL_CONF_CMD_STRING(Options, NULL, 0),
     SSL_CONF_CMD_STRING(VerifyMode, NULL, 0),
     SSL_CONF_CMD(Certificate, "cert", SSL_CONF_FLAG_CERTIFICATE,
@@ -641,6 +585,7 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_NO_TLSv1_2, 0},     /* no_tls1_2 */
     {SSL_OP_ALL, 0},            /* bugs */
     {SSL_OP_NO_COMPRESSION, 0}, /* no_comp */
+    {SSL_OP_NO_COMPRESSION, SSL_TFLAG_INV}, /* comp */
     {SSL_OP_SINGLE_ECDH_USE, 0}, /* ecdh_single */
     {SSL_OP_NO_TICKET, 0},      /* no_ticket */
     {SSL_OP_CIPHER_SERVER_PREFERENCE, 0}, /* serverpref */
@@ -653,9 +598,6 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     /* no_legacy_server_connect */
     {SSL_OP_LEGACY_SERVER_CONNECT, SSL_TFLAG_INV},
     {SSL_CERT_FLAG_TLS_STRICT, SSL_TFLAG_CERT}, /* strict */
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    {SSL_CERT_FLAG_BROKEN_PROTOCOL, SSL_TFLAG_CERT} /* debug_broken_protocol */
-#endif
 };
 
 static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
@@ -682,8 +624,7 @@ static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
 }
 
 /* Determine if a command is allowed according to cctx flags */
-static int ssl_conf_cmd_allowed(SSL_CONF_CTX *cctx,
-                                const ssl_conf_cmd_tbl * t)
+static int ssl_conf_cmd_allowed(SSL_CONF_CTX *cctx, const ssl_conf_cmd_tbl * t)
 {
     unsigned int tfl = t->flags;
     unsigned int cfl = cctx->flags;
@@ -721,8 +662,7 @@ static const ssl_conf_cmd_tbl *ssl_conf_cmd_lookup(SSL_CONF_CTX *cctx,
     return NULL;
 }
 
-static int ctrl_switch_option(SSL_CONF_CTX *cctx,
-                              const ssl_conf_cmd_tbl * cmd)
+static int ctrl_switch_option(SSL_CONF_CTX *cctx, const ssl_conf_cmd_tbl * cmd)
 {
     /* Find index of command in table */
     size_t idx = cmd - ssl_conf_cmds;

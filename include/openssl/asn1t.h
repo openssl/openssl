@@ -1,61 +1,12 @@
-/* asn1t.h */
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2000.
+ * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 #ifndef HEADER_ASN1T_H
 # define HEADER_ASN1T_H
 
@@ -208,8 +159,8 @@ extern "C" {
         static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
         ASN1_SEQUENCE(tname)
 
-# define ASN1_SEQUENCE_ref(tname, cb, lck) \
-        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), lck, cb, 0}; \
+# define ASN1_SEQUENCE_ref(tname, cb) \
+        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), offsetof(tname, lock), cb, 0}; \
         ASN1_SEQUENCE(tname)
 
 # define ASN1_SEQUENCE_enc(tname, enc, cb) \
@@ -229,7 +180,7 @@ extern "C" {
         ASN1_ITEM_end(tname)
 # define static_ASN1_NDEF_SEQUENCE_END(tname) \
         ;\
-        static_ASN1_ITEM_start(tname)			\
+        static_ASN1_ITEM_start(tname) \
                 ASN1_ITYPE_NDEF_SEQUENCE,\
                 V_ASN1_SEQUENCE,\
                 tname##_seq_tt,\
@@ -241,7 +192,7 @@ extern "C" {
 
 # define ASN1_BROKEN_SEQUENCE_END(stname) ASN1_SEQUENCE_END_ref(stname, stname)
 # define static_ASN1_BROKEN_SEQUENCE_END(stname) \
-	static_ASN1_SEQUENCE_END_ref(stname, stname)
+        static_ASN1_SEQUENCE_END_ref(stname, stname)
 
 # define ASN1_SEQUENCE_END_enc(stname, tname) ASN1_SEQUENCE_END_ref(stname, tname)
 
@@ -464,12 +415,12 @@ extern "C" {
 
 # ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
 
-#  define ASN1_ADB_END(name, flags, field, app_table, def, none) \
+#  define ASN1_ADB_END(name, flags, field, adb_cb, def, none) \
         ;\
         static const ASN1_ADB name##_adb = {\
                 flags,\
                 offsetof(name, field),\
-                app_table,\
+                adb_cb,\
                 name##_adbtbl,\
                 sizeof(name##_adbtbl) / sizeof(ASN1_ADB_TABLE),\
                 def,\
@@ -478,7 +429,7 @@ extern "C" {
 
 # else
 
-#  define ASN1_ADB_END(name, flags, field, app_table, def, none) \
+#  define ASN1_ADB_END(name, flags, field, adb_cb, def, none) \
         ;\
         static const ASN1_ITEM *name##_adb(void) \
         { \
@@ -486,7 +437,7 @@ extern "C" {
                 {\
                 flags,\
                 offsetof(name, field),\
-                app_table,\
+                adb_cb,\
                 name##_adbtbl,\
                 sizeof(name##_adbtbl) / sizeof(ASN1_ADB_TABLE),\
                 def,\
@@ -513,9 +464,7 @@ struct ASN1_TEMPLATE_st {
     unsigned long flags;        /* Various flags */
     long tag;                   /* tag, not used if no tagging */
     unsigned long offset;       /* Offset of this field in structure */
-# ifndef NO_ASN1_FIELD_NAMES
     const char *field_name;     /* Field name */
-# endif
     ASN1_ITEM_EXP *item;        /* Relevant ASN1_ITEM or ASN1_ADB */
 };
 
@@ -530,7 +479,7 @@ typedef struct ASN1_ADB_st ASN1_ADB;
 struct ASN1_ADB_st {
     unsigned long flags;        /* Various flags */
     unsigned long offset;       /* Offset of selector field */
-    STACK_OF(ASN1_ADB_TABLE) **app_items; /* Application defined items */
+    int (*adb_cb)(long *psel);  /* Application callback */
     const ASN1_ADB_TABLE *tbl;  /* Table of possible types */
     long tblcount;              /* Number of entries in tbl */
     const ASN1_TEMPLATE *default_tt; /* Type to use if no match */
@@ -632,9 +581,7 @@ struct ASN1_ITEM_st {
     long tcount;                /* Number of templates if SEQUENCE or CHOICE */
     const void *funcs;          /* functions that handle this type */
     long size;                  /* Structure size (usually) */
-# ifndef NO_ASN1_FIELD_NAMES
     const char *sname;          /* Structure name */
-# endif
 };
 
 /*-
@@ -705,13 +652,6 @@ struct ASN1_TLC_st {
 };
 
 /* Typedefs for ASN1 function pointers */
-
-typedef ASN1_VALUE *ASN1_new_func(void);
-typedef void ASN1_free_func(ASN1_VALUE *a);
-typedef ASN1_VALUE *ASN1_d2i_func(ASN1_VALUE **a, const unsigned char **in,
-                                  long length);
-typedef int ASN1_i2d_func(ASN1_VALUE *a, unsigned char **in);
-
 typedef int ASN1_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                         const ASN1_ITEM *it, int tag, int aclass, char opt,
                         ASN1_TLC *ctx);

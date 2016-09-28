@@ -1,123 +1,119 @@
-/* crypto/bn/bn_lcl.h */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-/* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifndef HEADER_BN_LCL_H
 # define HEADER_BN_LCL_H
 
-# include "internal/bn_conf.h"
+/*
+ * The EDK2 build doesn't use bn_conf.h; it sets THIRTY_TWO_BIT or
+ * SIXTY_FOUR_BIT in its own environment since it doesn't re-run our
+ * Configure script and needs to support both 32-bit and 64-bit.
+ */
+# include <openssl/opensslconf.h>
+
+# if !defined(OPENSSL_SYS_UEFI)
+#  include "internal/bn_conf.h"
+# endif
+
 # include "internal/bn_int.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+/*
+ * These preprocessor symbols control various aspects of the bignum headers
+ * and library code. They're not defined by any "normal" configuration, as
+ * they are intended for development and testing purposes. NB: defining all
+ * three can be useful for debugging application code as well as openssl
+ * itself. BN_DEBUG - turn on various debugging alterations to the bignum
+ * code BN_DEBUG_RAND - uses random poisoning of unused words to trip up
+ * mismanagement of bignum internals. You must also define BN_DEBUG.
+ */
+/* #define BN_DEBUG */
+/* #define BN_DEBUG_RAND */
+
+# ifndef OPENSSL_SMALL_FOOTPRINT
+#  define BN_MUL_COMBA
+#  define BN_SQR_COMBA
+#  define BN_RECURSION
+# endif
+
+/*
+ * This next option uses the C libraries (2 word)/(1 word) function. If it is
+ * not defined, I use my C version (which is slower). The reason for this
+ * flag is that when the particular C compiler library routine is used, and
+ * the library is linked with a different compiler, the library is missing.
+ * This mostly happens when the library is built with gcc and then linked
+ * using normal cc.  This would be a common occurrence because gcc normally
+ * produces code that is 2 times faster than system compilers for the big
+ * number stuff. For machines with only one compiler (or shared libraries),
+ * this should be on.  Again this in only really a problem on machines using
+ * "long long's", are 32bit, and are not using my assembler code.
+ */
+# if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || \
+    defined(OPENSSL_SYS_WIN32) || defined(linux)
+#  define BN_DIV2W
+# endif
+
+/*
+ * 64-bit processor with LP64 ABI
+ */
+# ifdef SIXTY_FOUR_BIT_LONG
+#  define BN_ULLONG       unsigned long long
+#  define BN_BITS4        32
+#  define BN_MASK2        (0xffffffffffffffffL)
+#  define BN_MASK2l       (0xffffffffL)
+#  define BN_MASK2h       (0xffffffff00000000L)
+#  define BN_MASK2h1      (0xffffffff80000000L)
+#  define BN_DEC_CONV     (10000000000000000000UL)
+#  define BN_DEC_NUM      19
+#  define BN_DEC_FMT1     "%lu"
+#  define BN_DEC_FMT2     "%019lu"
+# endif
+
+/*
+ * 64-bit processor other than LP64 ABI
+ */
+# ifdef SIXTY_FOUR_BIT
+#  undef BN_LLONG
+#  undef BN_ULLONG
+#  define BN_BITS4        32
+#  define BN_MASK2        (0xffffffffffffffffLL)
+#  define BN_MASK2l       (0xffffffffL)
+#  define BN_MASK2h       (0xffffffff00000000LL)
+#  define BN_MASK2h1      (0xffffffff80000000LL)
+#  define BN_DEC_CONV     (10000000000000000000ULL)
+#  define BN_DEC_NUM      19
+#  define BN_DEC_FMT1     "%llu"
+#  define BN_DEC_FMT2     "%019llu"
+# endif
+
+# ifdef THIRTY_TWO_BIT
+#  ifdef BN_LLONG
+#   if defined(_WIN32) && !defined(__GNUC__)
+#    define BN_ULLONG     unsigned __int64
+#   else
+#    define BN_ULLONG     unsigned long long
+#   endif
+#  endif
+#  define BN_BITS4        16
+#  define BN_MASK2        (0xffffffffL)
+#  define BN_MASK2l       (0xffff)
+#  define BN_MASK2h1      (0xffff8000L)
+#  define BN_MASK2h       (0xffff0000L)
+#  define BN_DEC_CONV     (1000000000L)
+#  define BN_DEC_NUM      9
+#  define BN_DEC_FMT1     "%u"
+#  define BN_DEC_FMT2     "%09u"
+# endif
+
 
 /*-
  * Bignum consistency macros
@@ -161,18 +157,18 @@ int RAND_pseudo_bytes(unsigned char *buf, int num);
 #   endif
 #   define bn_pollute(a) \
         do { \
-                const BIGNUM *_bnum1 = (a); \
-                if(_bnum1->top < _bnum1->dmax) { \
-                        unsigned char _tmp_char; \
-                        /* We cast away const without the compiler knowing, any \
-                         * *genuinely* constant variables that aren't mutable \
-                         * wouldn't be constructed with top!=dmax. */ \
-                        BN_ULONG *_not_const; \
-                        memcpy(&_not_const, &_bnum1->d, sizeof(_not_const)); \
-                        RAND_bytes(&_tmp_char, 1); /* Debug only - safe to ignore error return */\
-                        memset(_not_const + _bnum1->top, _tmp_char, \
-                                sizeof(*_not_const) * (_bnum1->dmax - _bnum1->top)); \
-                } \
+            const BIGNUM *_bnum1 = (a); \
+            if (_bnum1->top < _bnum1->dmax) { \
+                unsigned char _tmp_char; \
+                /* We cast away const without the compiler knowing, any \
+                 * *genuinely* constant variables that aren't mutable \
+                 * wouldn't be constructed with top!=dmax. */ \
+                BN_ULONG *_not_const; \
+                memcpy(&_not_const, &_bnum1->d, sizeof(_not_const)); \
+                RAND_bytes(&_tmp_char, 1); /* Debug only - safe to ignore error return */\
+                memset(_not_const + _bnum1->top, _tmp_char, \
+                       sizeof(*_not_const) * (_bnum1->dmax - _bnum1->top)); \
+            } \
         } while(0)
 #   ifdef BN_DEBUG_TRIX
 #    undef RAND_pseudo_bytes
@@ -261,9 +257,9 @@ struct bn_gencb_st {
     unsigned int ver;           /* To handle binary (in)compatibility */
     void *arg;                  /* callback-specific data */
     union {
-        /* if(ver==1) - handles old style callbacks */
+        /* if (ver==1) - handles old style callbacks */
         void (*cb_1) (int, int, void *);
-        /* if(ver==2) - new callback style */
+        /* if (ver==2) - new callback style */
         int (*cb_2) (int, int, BN_GENCB *);
     } cb;
 };
@@ -432,8 +428,8 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
 #   endif
 #  elif defined(__mips) && (defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG))
 #   if defined(__GNUC__) && __GNUC__>=2
-#    if __GNUC__>4 || (__GNUC__>=4 && __GNUC_MINOR__>=4)
-                                     /* "h" constraint is no more since 4.4 */
+#    if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
+      /* "h" constraint is not an option on R6 and was removed in 4.4 */
 #     define BN_UMULT_HIGH(a,b)          (((__uint128_t)(a)*(b))>>64)
 #     define BN_UMULT_LOHI(low,high,a,b) ({     \
         __uint128_t ret=(__uint128_t)(a)*(b);   \
@@ -676,6 +672,17 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
                          const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx);
 int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx);
+
+static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
+{
+    if (bits > (INT_MAX - BN_BITS2 + 1))
+        return NULL;
+
+    if (((bits+BN_BITS2-1)/BN_BITS2) <= (a)->dmax)
+        return a;
+
+    return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);
+}
 
 #ifdef  __cplusplus
 }

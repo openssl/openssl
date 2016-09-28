@@ -1,113 +1,12 @@
-/* ssl/statem/statem_lib.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  * ECC cipher suite support in OpenSSL originally developed by
@@ -120,7 +19,6 @@
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
@@ -142,8 +40,10 @@ int ssl3_do_write(SSL *s, int type)
          * should not be done for 'Hello Request's, but in that case we'll
          * ignore the result anyway
          */
-        ssl3_finish_mac(s, (unsigned char *)&s->init_buf->data[s->init_off],
-                        ret);
+        if (!ssl3_finish_mac(s,
+                             (unsigned char *)&s->init_buf->data[s->init_off],
+                             ret))
+            return -1;
 
     if (ret == s->init_num) {
         if (s->msg_callback)
@@ -157,22 +57,46 @@ int ssl3_do_write(SSL *s, int type)
     return (0);
 }
 
+int tls_close_construct_packet(SSL *s, WPACKET *pkt)
+{
+    size_t msglen;
+
+    if (!WPACKET_close(pkt)
+            || !WPACKET_get_length(pkt, &msglen)
+            || msglen > INT_MAX
+            || !WPACKET_finish(pkt))
+        return 0;
+    s->init_num = (int)msglen;
+    s->init_off = 0;
+
+    return 1;
+}
+
 int tls_construct_finished(SSL *s, const char *sender, int slen)
 {
-    unsigned char *p;
     int i;
-    unsigned long l;
+    WPACKET pkt;
 
-    p = ssl_handshake_start(s);
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_FINISHED)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     i = s->method->ssl3_enc->final_finish_mac(s,
                                               sender, slen,
                                               s->s3->tmp.finish_md);
-    if (i <= 0)
-        return 0;
+    if (i <= 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     s->s3->tmp.finish_md_len = i;
-    memcpy(p, s->s3->tmp.finish_md, i);
-    l = i;
+
+    if (!WPACKET_memcpy(&pkt, s->s3->tmp.finish_md, i)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     /*
      * Copy the finished so we can use it for renegotiation checks
@@ -187,12 +111,17 @@ int tls_construct_finished(SSL *s, const char *sender, int slen)
         s->s3->previous_server_finished_len = i;
     }
 
-    if (!ssl_set_handshake_header(s, SSL3_MT_FINISHED, l)) {
+    if (!ssl_close_construct_packet(s, &pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
-        return 0;
+        goto err;
     }
 
     return 1;
+ err:
+    ossl_statem_set_error(s);
+    WPACKET_cleanup(&pkt);
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+    return 0;
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -238,13 +167,13 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
      */
     if (SSL_IS_DTLS(s)) {
         if ((s->version == DTLS1_BAD_VER
-                        && remain != DTLS1_CCS_HEADER_LENGTH + 1)
-                    || (s->version != DTLS1_BAD_VER
-                        && remain != DTLS1_CCS_HEADER_LENGTH - 1)) {
-                al = SSL_AD_ILLEGAL_PARAMETER;
-                SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
-                       SSL_R_BAD_CHANGE_CIPHER_SPEC);
-                goto f_err;
+             && remain != DTLS1_CCS_HEADER_LENGTH + 1)
+            || (s->version != DTLS1_BAD_VER
+                && remain != DTLS1_CCS_HEADER_LENGTH - 1)) {
+            al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
+                   SSL_R_BAD_CHANGE_CIPHER_SPEC);
+            goto f_err;
         }
     } else {
         if (remain != 0) {
@@ -340,10 +269,18 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
 
 int tls_construct_change_cipher_spec(SSL *s)
 {
-    unsigned char *p;
+    WPACKET pkt;
 
-    p = (unsigned char *)s->init_buf->data;
-    *p = SSL3_MT_CCS;
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !WPACKET_put_bytes_u8(&pkt, SSL3_MT_CCS)
+            || !WPACKET_finish(&pkt)) {
+        WPACKET_cleanup(&pkt);
+        ossl_statem_set_error(s);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
+        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+        return 0;
+    }
+
     s->init_num = 1;
     s->init_off = 0;
 
@@ -352,22 +289,31 @@ int tls_construct_change_cipher_spec(SSL *s)
 
 unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk)
 {
-    unsigned char *p;
-    unsigned long l = 3 + SSL_HM_HEADER_LENGTH(s);
+    WPACKET pkt;
 
-    if (!ssl_add_cert_chain(s, cpk, &l))
-        return 0;
-
-    l -= 3 + SSL_HM_HEADER_LENGTH(s);
-    p = ssl_handshake_start(s);
-    l2n3(l, p);
-    l += 3;
-
-    if (!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE, l)) {
+    if (!WPACKET_init(&pkt, s->init_buf)) {
+        /* Should not happen */
         SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
-        return 0;
+        goto err;
     }
-    return l + SSL_HM_HEADER_LENGTH(s);
+
+    if (!ssl_set_handshake_header2(s, &pkt, SSL3_MT_CERTIFICATE)
+            || !WPACKET_start_sub_packet_u24(&pkt)) {
+        SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (!ssl_add_cert_chain(s, &pkt, cpk))
+        goto err;
+
+    if (!WPACKET_close(&pkt) || !ssl_close_construct_packet(s, &pkt)) {
+        SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    return 1;
+ err:
+    WPACKET_cleanup(&pkt);
+    return 0;
 }
 
 WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
@@ -431,6 +377,7 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
             s->d1->handshake_read_seq = 0;
             s->d1->handshake_write_seq = 0;
             s->d1->next_handshake_write_seq = 0;
+            dtls1_clear_received_buffer(s);
         }
     }
 
@@ -449,12 +396,24 @@ int tls_get_message_header(SSL *s, int *mt)
     do {
         while (s->init_num < SSL3_HM_HEADER_LENGTH) {
             i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, &recvd_type,
-                &p[s->init_num], SSL3_HM_HEADER_LENGTH - s->init_num, 0);
+                                          &p[s->init_num],
+                                          SSL3_HM_HEADER_LENGTH - s->init_num,
+                                          0);
             if (i <= 0) {
                 s->rwstate = SSL_READING;
                 return 0;
             }
             if (recvd_type == SSL3_RT_CHANGE_CIPHER_SPEC) {
+                /*
+                 * A ChangeCipherSpec must be a single byte and may not occur
+                 * in the middle of a handshake message.
+                 */
+                if (s->init_num != 0 || i != 1 || p[0] != SSL3_MT_CCS) {
+                    al = SSL_AD_UNEXPECTED_MESSAGE;
+                    SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER,
+                           SSL_R_BAD_CHANGE_CIPHER_SPEC);
+                    goto f_err;
+                }
                 s->s3->tmp.message_type = *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
                 s->init_num = i - 1;
                 s->s3->tmp.message_size = i;
@@ -491,21 +450,16 @@ int tls_get_message_header(SSL *s, int *mt)
     *mt = *p;
     s->s3->tmp.message_type = *(p++);
 
-    if(RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
         /*
          * Only happens with SSLv3+ in an SSLv2 backward compatible
          * ClientHello
+         *
+         * Total message size is the remaining record bytes to read
+         * plus the SSL3_HM_HEADER_LENGTH bytes that we already read
          */
-         /*
-          * Total message size is the remaining record bytes to read
-          * plus the SSL3_HM_HEADER_LENGTH bytes that we already read
-          */
         l = RECORD_LAYER_get_rrec_length(&s->rlayer)
             + SSL3_HM_HEADER_LENGTH;
-        if (l && !BUF_MEM_grow_clean(s->init_buf, (int)l)) {
-            SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER, ERR_R_BUF_LIB);
-            goto err;
-        }
         s->s3->tmp.message_size = l;
 
         s->init_msg = s->init_buf->data;
@@ -518,11 +472,6 @@ int tls_get_message_header(SSL *s, int *mt)
             SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER, SSL_R_EXCESSIVE_MESSAGE_SIZE);
             goto f_err;
         }
-        if (l && !BUF_MEM_grow_clean(s->init_buf,
-                                    (int)l + SSL3_HM_HEADER_LENGTH)) {
-            SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER, ERR_R_BUF_LIB);
-            goto err;
-        }
         s->s3->tmp.message_size = l;
 
         s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
@@ -532,7 +481,6 @@ int tls_get_message_header(SSL *s, int *mt)
     return 1;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
     return 0;
 }
 
@@ -572,14 +520,25 @@ int tls_get_message_body(SSL *s, unsigned long *len)
 #endif
 
     /* Feed this message into MAC computation. */
-    if(RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
-        ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num);
+    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+        if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                             s->init_num)) {
+            SSLerr(SSL_F_TLS_GET_MESSAGE_BODY, ERR_R_EVP_LIB);
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+            *len = 0;
+            return 0;
+        }
         if (s->msg_callback)
-            s->msg_callback(0, SSL2_VERSION, 0,  s->init_buf->data,
+            s->msg_callback(0, SSL2_VERSION, 0, s->init_buf->data,
                             (size_t)s->init_num, s, s->msg_callback_arg);
     } else {
-        ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-            s->init_num + SSL3_HM_HEADER_LENGTH);
+        if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                             s->init_num + SSL3_HM_HEADER_LENGTH)) {
+            SSLerr(SSL_F_TLS_GET_MESSAGE_BODY, ERR_R_EVP_LIB);
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+            *len = 0;
+            return 0;
+        }
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
                             (size_t)s->init_num + SSL3_HM_HEADER_LENGTH, s,
@@ -600,43 +559,31 @@ int tls_get_message_body(SSL *s, unsigned long *len)
     return 1;
 }
 
-int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
+int ssl_cert_type(const X509 *x, const EVP_PKEY *pk)
 {
-    EVP_PKEY *pk;
-    int ret = -1, i;
+    if (pk == NULL && (pk = X509_get0_pubkey(x)) == NULL)
+        return -1;
 
-    if (pkey == NULL)
-        pk = X509_get_pubkey(x);
-    else
-        pk = pkey;
-    if (pk == NULL)
-        goto err;
-
-    i = EVP_PKEY_id(pk);
-    if (i == EVP_PKEY_RSA) {
-        ret = SSL_PKEY_RSA_ENC;
-    } else if (i == EVP_PKEY_DSA) {
-        ret = SSL_PKEY_DSA_SIGN;
-    }
+    switch (EVP_PKEY_id(pk)) {
+    default:
+        return -1;
+    case EVP_PKEY_RSA:
+        return SSL_PKEY_RSA_ENC;
+    case EVP_PKEY_DSA:
+        return SSL_PKEY_DSA_SIGN;
 #ifndef OPENSSL_NO_EC
-    else if (i == EVP_PKEY_EC) {
-        ret = SSL_PKEY_ECC;
-    }
+    case EVP_PKEY_EC:
+        return SSL_PKEY_ECC;
 #endif
 #ifndef OPENSSL_NO_GOST
-    else if (i == NID_id_GostR3410_2001) {
-        ret = SSL_PKEY_GOST01;
-    } else if (i == NID_id_GostR3410_2012_256) {
-        ret = SSL_PKEY_GOST12_256;
-    } else if (i == NID_id_GostR3410_2012_512) {
-        ret = SSL_PKEY_GOST12_512;
-    }
+    case NID_id_GostR3410_2001:
+        return SSL_PKEY_GOST01;
+    case NID_id_GostR3410_2012_256:
+        return SSL_PKEY_GOST12_256;
+    case NID_id_GostR3410_2012_512:
+        return SSL_PKEY_GOST12_512;
 #endif
-
- err:
-    if (!pkey)
-        EVP_PKEY_free(pk);
-    return (ret);
+    }
 }
 
 int ssl_verify_alarm_type(long type)
@@ -660,6 +607,13 @@ int ssl_verify_alarm_type(long type)
     case X509_V_ERR_CRL_NOT_YET_VALID:
     case X509_V_ERR_CERT_UNTRUSTED:
     case X509_V_ERR_CERT_REJECTED:
+    case X509_V_ERR_HOSTNAME_MISMATCH:
+    case X509_V_ERR_EMAIL_MISMATCH:
+    case X509_V_ERR_IP_ADDRESS_MISMATCH:
+    case X509_V_ERR_DANE_NO_MATCH:
+    case X509_V_ERR_EE_KEY_TOO_SMALL:
+    case X509_V_ERR_CA_KEY_TOO_SMALL:
+    case X509_V_ERR_CA_MD_TOO_WEAK:
         al = SSL_AD_BAD_CERTIFICATE;
         break;
     case X509_V_ERR_CERT_SIGNATURE_FAILURE:
@@ -673,7 +627,10 @@ int ssl_verify_alarm_type(long type)
     case X509_V_ERR_CERT_REVOKED:
         al = SSL_AD_CERTIFICATE_REVOKED;
         break;
+    case X509_V_ERR_UNSPECIFIED:
     case X509_V_ERR_OUT_OF_MEM:
+    case X509_V_ERR_INVALID_CALL:
+    case X509_V_ERR_STORE_LOOKUP:
         al = SSL_AD_INTERNAL_ERROR;
         break;
     case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
@@ -705,7 +662,7 @@ int ssl_allow_compression(SSL *s)
     return ssl_security(s, SSL_SECOP_COMPRESSION, 0, 0, NULL);
 }
 
-static int version_cmp(SSL *s, int a, int b)
+static int version_cmp(const SSL *s, int a, int b)
 {
     int dtls = SSL_IS_DTLS(s);
 
@@ -718,8 +675,8 @@ static int version_cmp(SSL *s, int a, int b)
 
 typedef struct {
     int version;
-    const SSL_METHOD *(*cmeth)(void);
-    const SSL_METHOD *(*smeth)(void);
+    const SSL_METHOD *(*cmeth) (void);
+    const SSL_METHOD *(*smeth) (void);
 } version_info;
 
 #if TLS_MAX_VERSION != TLS1_2_VERSION
@@ -728,26 +685,26 @@ typedef struct {
 
 static const version_info tls_version_table[] = {
 #ifndef OPENSSL_NO_TLS1_2
-    { TLS1_2_VERSION, TLSv1_2_client_method, TLSv1_2_server_method },
+    {TLS1_2_VERSION, tlsv1_2_client_method, tlsv1_2_server_method},
 #else
-    { TLS1_2_VERSION, NULL, NULL },
+    {TLS1_2_VERSION, NULL, NULL},
 #endif
 #ifndef OPENSSL_NO_TLS1_1
-    { TLS1_1_VERSION, TLSv1_1_client_method, TLSv1_1_server_method },
+    {TLS1_1_VERSION, tlsv1_1_client_method, tlsv1_1_server_method},
 #else
-    { TLS1_1_VERSION, NULL, NULL },
+    {TLS1_1_VERSION, NULL, NULL},
 #endif
 #ifndef OPENSSL_NO_TLS1
-    { TLS1_VERSION, TLSv1_client_method, TLSv1_server_method },
+    {TLS1_VERSION, tlsv1_client_method, tlsv1_server_method},
 #else
-    { TLS1_VERSION, NULL, NULL },
+    {TLS1_VERSION, NULL, NULL},
 #endif
 #ifndef OPENSSL_NO_SSL3
-    { SSL3_VERSION, SSLv3_client_method, SSLv3_server_method },
+    {SSL3_VERSION, sslv3_client_method, sslv3_server_method},
 #else
-    { SSL3_VERSION, NULL, NULL },
+    {SSL3_VERSION, NULL, NULL},
 #endif
-    { 0, NULL, NULL },
+    {0, NULL, NULL},
 };
 
 #if DTLS_MAX_VERSION != DTLS1_2_VERSION
@@ -756,16 +713,18 @@ static const version_info tls_version_table[] = {
 
 static const version_info dtls_version_table[] = {
 #ifndef OPENSSL_NO_DTLS1_2
-    { DTLS1_2_VERSION, DTLSv1_2_client_method, DTLSv1_2_server_method },
+    {DTLS1_2_VERSION, dtlsv1_2_client_method, dtlsv1_2_server_method},
 #else
-    { DTLS1_2_VERSION, NULL, NULL },
+    {DTLS1_2_VERSION, NULL, NULL},
 #endif
 #ifndef OPENSSL_NO_DTLS1
-    { DTLS1_VERSION, DTLSv1_client_method, DTLSv1_server_method },
+    {DTLS1_VERSION, dtlsv1_client_method, dtlsv1_server_method},
+    {DTLS1_BAD_VER, dtls_bad_ver_client_method, NULL},
 #else
-    { DTLS1_VERSION, NULL, NULL },
+    {DTLS1_VERSION, NULL, NULL},
+    {DTLS1_BAD_VER, NULL, NULL},
 #endif
-    { 0, NULL, NULL },
+    {0, NULL, NULL},
 };
 
 /*
@@ -776,7 +735,7 @@ static const version_info dtls_version_table[] = {
  *
  * Returns 0 on success, or an SSL error reason on failure.
  */
-static int ssl_method_error(SSL *s, const SSL_METHOD *method)
+static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 {
     int version = method->version;
 
@@ -786,7 +745,7 @@ static int ssl_method_error(SSL *s, const SSL_METHOD *method)
         return SSL_R_VERSION_TOO_LOW;
 
     if (s->max_proto_version != 0 &&
-             version_cmp(s, version, s->max_proto_version) > 0)
+        version_cmp(s, version, s->max_proto_version) > 0)
         return SSL_R_VERSION_TOO_HIGH;
 
     if ((s->options & method->mask) != 0)
@@ -796,6 +755,44 @@ static int ssl_method_error(SSL *s, const SSL_METHOD *method)
     else if ((method->flags & SSL_METHOD_NO_FIPS) != 0 && FIPS_mode())
         return SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE;
 
+    return 0;
+}
+
+/*
+ * ssl_version_supported - Check that the specified `version` is supported by
+ * `SSL *` instance
+ *
+ * @s: The SSL handle for the candidate method
+ * @version: Protocol version to test against
+ *
+ * Returns 1 when supported, otherwise 0
+ */
+int ssl_version_supported(const SSL *s, int version)
+{
+    const version_info *vent;
+    const version_info *table;
+
+    switch (s->method->version) {
+    default:
+        /* Version should match method version for non-ANY method */
+        return version_cmp(s, version, s->version) == 0;
+    case TLS_ANY_VERSION:
+        table = tls_version_table;
+        break;
+    case DTLS_ANY_VERSION:
+        table = dtls_version_table;
+        break;
+    }
+
+    for (vent = table;
+         vent->version != 0 && version_cmp(s, version, vent->version) <= 0;
+         ++vent) {
+        if (vent->cmeth != NULL &&
+            version_cmp(s, version, vent->version) == 0 &&
+            ssl_method_error(s, vent->cmeth()) == 0) {
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -835,8 +832,7 @@ int ssl_check_version_downgrade(SSL *s)
     }
 
     for (vent = table; vent->version != 0; ++vent) {
-        if (vent->smeth != NULL &&
-            ssl_method_error(s, vent->smeth()) == 0)
+        if (vent->smeth != NULL && ssl_method_error(s, vent->smeth()) == 0)
             return s->version == vent->version;
     }
     return 0;
@@ -890,7 +886,7 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
 
     case DTLS_ANY_VERSION:
         if (DTLS_VERSION_GT(version, DTLS_MAX_VERSION) ||
-            DTLS_VERSION_LT(version, DTLS1_VERSION))
+            DTLS_VERSION_LT(version, DTLS1_BAD_VER))
             return 0;
         break;
     }
@@ -988,7 +984,6 @@ int ssl_choose_client_version(SSL *s, int version)
          * versions they don't want.  If not, then easy to fix, just return
          * ssl_method_error(s, s->method)
          */
-        s->session->ssl_version = s->version;
         return 0;
     case TLS_ANY_VERSION:
         table = tls_version_table;
@@ -1011,30 +1006,34 @@ int ssl_choose_client_version(SSL *s, int version)
         if (err != 0)
             return err;
         s->method = method;
-        s->session->ssl_version = s->version = version;
+        s->version = version;
         return 0;
     }
 
     return SSL_R_UNSUPPORTED_PROTOCOL;
 }
 
-/*-
- * ssl_set_client_hello_version - Work out what version we should be using for
- * the initial ClientHello if the version is initially (D)TLS_ANY_VERSION.  We
- * apply any explicit SSL_OP_NO_xxx options, the MinProtocol and MaxProtocol
- * configuration commands, any Suite B or FIPS_mode() constraints and any floor
- * imposed by the security level here, so we don't advertise the wrong protocol
- * version to only reject the outcome later.
+/*
+ * ssl_get_client_min_max_version - get minimum and maximum client version
+ * @s: The SSL connection
+ * @min_version: The minimum supported version
+ * @max_version: The maximum supported version
  *
- * Computing the right floor matters.  If, e.g.,  TLS 1.0 and 1.2 are enabled,
+ * Work out what version we should be using for the initial ClientHello if the
+ * version is initially (D)TLS_ANY_VERSION.  We apply any explicit SSL_OP_NO_xxx
+ * options, the MinProtocol and MaxProtocol configuration commands, any Suite B
+ * or FIPS_mode() constraints and any floor imposed by the security level here,
+ * so we don't advertise the wrong protocol version to only reject the outcome later.
+ *
+ * Computing the right floor matters.  If, e.g., TLS 1.0 and 1.2 are enabled,
  * TLS 1.1 is disabled, but the security level, Suite-B  and/or MinProtocol
  * only allow TLS 1.2, we want to advertise TLS1.2, *not* TLS1.
  *
- * @s: client SSL handle.
- *
- * Returns 0 on success or an SSL error reason number on failure.
+ * Returns 0 on success or an SSL error reason number on failure.  On failure
+ * min_version and max_version will also be set to 0.
  */
-int ssl_set_client_hello_version(SSL *s)
+int ssl_get_client_min_max_version(const SSL *s, int *min_version,
+                                   int *max_version)
 {
     int version;
     int hole;
@@ -1052,7 +1051,7 @@ int ssl_set_client_hello_version(SSL *s)
          * versions they don't want.  If not, then easy to fix, just return
          * ssl_method_error(s, s->method)
          */
-        s->client_version = s->version;
+        *min_version = *max_version = s->version;
         return 0;
     case TLS_ANY_VERSION:
         table = tls_version_table;
@@ -1083,7 +1082,7 @@ int ssl_set_client_hello_version(SSL *s)
      * If we again hit an enabled method after the new hole, it becomes
      * selected, as we start from scratch.
      */
-    version = 0;
+    *min_version = version = 0;
     hole = 1;
     for (vent = table; vent->version != 0; ++vent) {
         /*
@@ -1099,18 +1098,40 @@ int ssl_set_client_hello_version(SSL *s)
             hole = 1;
         } else if (!hole) {
             single = NULL;
+            *min_version = method->version;
         } else {
             version = (single = method)->version;
+            *min_version = version;
             hole = 0;
         }
     }
+
+    *max_version = version;
 
     /* Fail if everything is disabled */
     if (version == 0)
         return SSL_R_NO_PROTOCOLS_AVAILABLE;
 
-    if (single != NULL)
-        s->method = single;
-    s->client_version = s->version = version;
+    return 0;
+}
+
+/*
+ * ssl_set_client_hello_version - Work out what version we should be using for
+ * the initial ClientHello.
+ *
+ * @s: client SSL handle.
+ *
+ * Returns 0 on success or an SSL error reason number on failure.
+ */
+int ssl_set_client_hello_version(SSL *s)
+{
+    int ver_min, ver_max, ret;
+
+    ret = ssl_get_client_min_max_version(s, &ver_min, &ver_max);
+
+    if (ret != 0)
+        return ret;
+
+    s->client_version = s->version = ver_max;
     return 0;
 }

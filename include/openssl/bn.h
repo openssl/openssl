@@ -1,113 +1,12 @@
-/* crypto/bn/bn.h */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -127,7 +26,7 @@
 
 # include <openssl/e_os2.h>
 # ifndef OPENSSL_NO_STDIO
-#  include <stdio.h>            /* FILE */
+#  include <stdio.h>
 # endif
 # include <openssl/opensslconf.h>
 # include <openssl/ossl_typ.h>
@@ -138,126 +37,29 @@ extern "C" {
 #endif
 
 /*
- * These preprocessor symbols control various aspects of the bignum headers
- * and library code. They're not defined by any "normal" configuration, as
- * they are intended for development and testing purposes. NB: defining all
- * three can be useful for debugging application code as well as openssl
- * itself. BN_DEBUG - turn on various debugging alterations to the bignum
- * code BN_DEBUG_RAND - uses random poisoning of unused words to trip up
- * mismanagement of bignum internals. You must also define BN_DEBUG.
- */
-/* #define BN_DEBUG */
-/* #define BN_DEBUG_RAND */
-
-# ifndef OPENSSL_SMALL_FOOTPRINT
-#  define BN_MUL_COMBA
-#  define BN_SQR_COMBA
-#  define BN_RECURSION
-# endif
-
-/*
- * This next option uses the C libraries (2 word)/(1 word) function. If it is
- * not defined, I use my C version (which is slower). The reason for this
- * flag is that when the particular C compiler library routine is used, and
- * the library is linked with a different compiler, the library is missing.
- * This mostly happens when the library is built with gcc and then linked
- * using normal cc.  This would be a common occurrence because gcc normally
- * produces code that is 2 times faster than system compilers for the big
- * number stuff. For machines with only one compiler (or shared libraries),
- * this should be on.  Again this in only really a problem on machines using
- * "long long's", are 32bit, and are not using my assembler code.
- */
-# if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || \
-    defined(OPENSSL_SYS_WIN32) || defined(linux)
-#  ifndef BN_DIV2W
-#   define BN_DIV2W
-#  endif
-# endif
-
-/*
- * assuming long is 64bit - this is the DEC Alpha unsigned long long is only
- * 64 bits :-(, don't define BN_LLONG for the DEC Alpha
+ * 64-bit processor with LP64 ABI
  */
 # ifdef SIXTY_FOUR_BIT_LONG
-#  define BN_ULLONG       unsigned long long
 #  define BN_ULONG        unsigned long
-#  define BN_LONG         long
-#  define BN_BITS         128
 #  define BN_BYTES        8
-#  define BN_BITS2        64
-#  define BN_BITS4        32
-#  define BN_MASK         (0xffffffffffffffffffffffffffffffffLL)
-#  define BN_MASK2        (0xffffffffffffffffL)
-#  define BN_MASK2l       (0xffffffffL)
-#  define BN_MASK2h       (0xffffffff00000000L)
-#  define BN_MASK2h1      (0xffffffff80000000L)
-#  define BN_TBIT         (0x8000000000000000L)
-#  define BN_DEC_CONV     (10000000000000000000UL)
-#  define BN_DEC_FMT1     "%lu"
-#  define BN_DEC_FMT2     "%019lu"
-#  define BN_DEC_NUM      19
-#  define BN_HEX_FMT1     "%lX"
-#  define BN_HEX_FMT2     "%016lX"
 # endif
 
 /*
- * This is where the long long data type is 64 bits, but long is 32. For
- * machines where there are 64bit registers, this is the mode to use. IRIX,
- * on R4000 and above should use this mode, along with the relevant assembler
- * code :-).  Do NOT define BN_LLONG.
+ * 64-bit processor other than LP64 ABI
  */
 # ifdef SIXTY_FOUR_BIT
-#  undef BN_LLONG
-#  undef BN_ULLONG
 #  define BN_ULONG        unsigned long long
-#  define BN_LONG         long long
-#  define BN_BITS         128
 #  define BN_BYTES        8
-#  define BN_BITS2        64
-#  define BN_BITS4        32
-#  define BN_MASK2        (0xffffffffffffffffLL)
-#  define BN_MASK2l       (0xffffffffL)
-#  define BN_MASK2h       (0xffffffff00000000LL)
-#  define BN_MASK2h1      (0xffffffff80000000LL)
-#  define BN_TBIT         (0x8000000000000000LL)
-#  define BN_DEC_CONV     (10000000000000000000ULL)
-#  define BN_DEC_FMT1     "%llu"
-#  define BN_DEC_FMT2     "%019llu"
-#  define BN_DEC_NUM      19
-#  define BN_HEX_FMT1     "%llX"
-#  define BN_HEX_FMT2     "%016llX"
 # endif
 
 # ifdef THIRTY_TWO_BIT
-#  ifdef BN_LLONG
-#   if defined(_WIN32) && !defined(__GNUC__)
-#    define BN_ULLONG     unsigned __int64
-#    define BN_MASK       (0xffffffffffffffffI64)
-#   else
-#    define BN_ULLONG     unsigned long long
-#    define BN_MASK       (0xffffffffffffffffLL)
-#   endif
-#  endif
 #  define BN_ULONG        unsigned int
-#  define BN_LONG         int
-#  define BN_BITS         64
 #  define BN_BYTES        4
-#  define BN_BITS2        32
-#  define BN_BITS4        16
-#  define BN_MASK2        (0xffffffffL)
-#  define BN_MASK2l       (0xffff)
-#  define BN_MASK2h1      (0xffff8000L)
-#  define BN_MASK2h       (0xffff0000L)
-#  define BN_TBIT         (0x80000000L)
-#  define BN_DEC_CONV     (1000000000L)
-#  define BN_DEC_FMT1     "%u"
-#  define BN_DEC_FMT2     "%09u"
-#  define BN_DEC_NUM      9
-#  define BN_HEX_FMT1     "%X"
-#  define BN_HEX_FMT2     "%08X"
 # endif
 
-# define BN_DEFAULT_BITS 1280
+# define BN_BITS2       (BN_BYTES * 8)
+# define BN_BITS        (BN_BITS2 * 2)
+# define BN_TBIT        ((BN_ULONG)1 << (BN_BITS2 - 1))
 
 # define BN_FLG_MALLOCED         0x01
 # define BN_FLG_STATIC_DATA      0x02
@@ -274,11 +76,20 @@ extern "C" {
 # if OPENSSL_API_COMPAT < 0x00908000L
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
-#  define BN_FLG_FREE            0x8000 /* used for debuging */
+#  define BN_FLG_FREE            0x8000 /* used for debugging */
 # endif
 
 void BN_set_flags(BIGNUM *b, int n);
 int BN_get_flags(const BIGNUM *b, int n);
+
+/* Values for |top| in BN_rand() */
+#define BN_RAND_TOP_ANY    -1
+#define BN_RAND_TOP_ONE     0
+#define BN_RAND_TOP_TWO     1
+
+/* Values for |bottom| in BN_rand() */
+#define BN_RAND_BOTTOM_ANY  0
+#define BN_RAND_BOTTOM_ODD  1
 
 /*
  * get a clone of a BIGNUM with changed flags, for *temporary* use only (the
@@ -288,7 +99,7 @@ int BN_get_flags(const BIGNUM *b, int n);
  */
 void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags);
 
-/* Wrapper function to make using BN_GENCB easier,  */
+/* Wrapper function to make using BN_GENCB easier */
 int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 
 BN_GENCB *BN_GENCB_new(void);
@@ -368,6 +179,9 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
 void BN_swap(BIGNUM *a, BIGNUM *b);
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2bin(const BIGNUM *a, unsigned char *to);
+int BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen);
+BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret);
+int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_mpi2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2mpi(const BIGNUM *a, unsigned char *to);
 int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
@@ -442,11 +256,7 @@ int BN_mask_bits(BIGNUM *a, int n);
 # ifndef OPENSSL_NO_STDIO
 int BN_print_fp(FILE *fp, const BIGNUM *a);
 # endif
-# ifdef HEADER_BIO_H
-int BN_print(BIO *fp, const BIGNUM *a);
-# else
-int BN_print(void *fp, const BIGNUM *a);
-# endif
+int BN_print(BIO *bio, const BIGNUM *a);
 int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx);
 int BN_rshift(BIGNUM *r, const BIGNUM *a, int n);
 int BN_rshift1(BIGNUM *r, const BIGNUM *a);
@@ -515,7 +325,7 @@ int BN_from_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
 void BN_MONT_CTX_free(BN_MONT_CTX *mont);
 int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx);
 BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from);
-BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
+BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,
                                     const BIGNUM *mod, BN_CTX *ctx);
 
 /* BN_BLINDING flags */
@@ -530,11 +340,12 @@ int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *);
 int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
                           BN_CTX *);
-DEPRECATEDIN_1_0_0(unsigned long
-                   BN_BLINDING_get_thread_id(const BN_BLINDING *))
-DEPRECATEDIN_1_0_0(void
-                   BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long))
-CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
+
+int BN_BLINDING_is_current_thread(BN_BLINDING *b);
+void BN_BLINDING_set_current_thread(BN_BLINDING *b);
+int BN_BLINDING_lock(BN_BLINDING *b);
+int BN_BLINDING_unlock(BN_BLINDING *b);
+
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
 void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
 BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
@@ -656,16 +467,27 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
                           size_t message_len, BN_CTX *ctx);
 
 /* Primes from RFC 2409 */
-BIGNUM *get_rfc2409_prime_768(BIGNUM *bn);
-BIGNUM *get_rfc2409_prime_1024(BIGNUM *bn);
+BIGNUM *BN_get_rfc2409_prime_768(BIGNUM *bn);
+BIGNUM *BN_get_rfc2409_prime_1024(BIGNUM *bn);
 
 /* Primes from RFC 3526 */
-BIGNUM *get_rfc3526_prime_1536(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_2048(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_3072(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_4096(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_6144(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_8192(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_1536(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_2048(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_3072(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
+BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
+
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
+#  define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
+#  define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536
+#  define get_rfc3526_prime_2048 BN_get_rfc3526_prime_2048
+#  define get_rfc3526_prime_3072 BN_get_rfc3526_prime_3072
+#  define get_rfc3526_prime_4096 BN_get_rfc3526_prime_4096
+#  define get_rfc3526_prime_6144 BN_get_rfc3526_prime_6144
+#  define get_rfc3526_prime_8192 BN_get_rfc3526_prime_8192
+# endif
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
 
@@ -674,7 +496,8 @@ int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
  * The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
-void ERR_load_BN_strings(void);
+
+int ERR_load_BN_strings(void);
 
 /* Error codes for the BN functions. */
 
@@ -692,10 +515,8 @@ void ERR_load_BN_strings(void);
 # define BN_F_BN_CTX_NEW                                  106
 # define BN_F_BN_CTX_START                                129
 # define BN_F_BN_DIV                                      107
-# define BN_F_BN_DIV_NO_BRANCH                            138
 # define BN_F_BN_DIV_RECP                                 130
 # define BN_F_BN_EXP                                      123
-# define BN_F_BN_EXPAND2                                  108
 # define BN_F_BN_EXPAND_INTERNAL                          120
 # define BN_F_BN_GENCB_NEW                                143
 # define BN_F_BN_GENERATE_DSA_NONCE                       140
@@ -717,7 +538,6 @@ void ERR_load_BN_strings(void);
 # define BN_F_BN_MOD_INVERSE                              110
 # define BN_F_BN_MOD_INVERSE_NO_BRANCH                    139
 # define BN_F_BN_MOD_LSHIFT_QUICK                         119
-# define BN_F_BN_MOD_MUL_RECIPROCAL                       111
 # define BN_F_BN_MOD_SQRT                                 121
 # define BN_F_BN_MPI2BN                                   112
 # define BN_F_BN_NEW                                      113
@@ -749,7 +569,7 @@ void ERR_load_BN_strings(void);
 # define BN_R_TOO_MANY_ITERATIONS                         113
 # define BN_R_TOO_MANY_TEMPORARY_VARIABLES                109
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
 #endif

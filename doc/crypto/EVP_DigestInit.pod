@@ -3,13 +3,13 @@
 =head1 NAME
 
 EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy_ex,
-EVP_DigestInit_ex, EVP_DigestUpdate, EVP_DigestFinal_ex, EVP_MAX_MD_SIZE,
+EVP_DigestInit_ex, EVP_DigestUpdate, EVP_DigestFinal_ex,
 EVP_DigestInit, EVP_DigestFinal, EVP_MD_CTX_copy, EVP_MD_type,
 EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_CTX_md, EVP_MD_CTX_size,
 EVP_MD_CTX_block_size, EVP_MD_CTX_type, EVP_md_null, EVP_md2, EVP_md5, EVP_sha1,
 EVP_sha224, EVP_sha256, EVP_sha384, EVP_sha512, EVP_mdc2,
-EVP_ripemd160, EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj -
-EVP digest routines
+EVP_ripemd160, EVP_blake2b_512, EVP_blake2s_256, EVP_get_digestbyname,
+EVP_get_digestbynid, EVP_get_digestbyobj - EVP digest routines
 
 =head1 SYNOPSIS
 
@@ -24,32 +24,23 @@ EVP digest routines
  int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md,
         unsigned int *s);
 
- int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out,const EVP_MD_CTX *in);
+ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 
  int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
  int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
         unsigned int *s);
 
- int EVP_MD_CTX_copy(EVP_MD_CTX *out,EVP_MD_CTX *in);
-
- #define EVP_MAX_MD_SIZE 64	/* SHA512 */
+ int EVP_MD_CTX_copy(EVP_MD_CTX *out, EVP_MD_CTX *in);
 
  int EVP_MD_type(const EVP_MD *md);
- int EVP_MD_pkey_type(const EVP_MD *md);	
+ int EVP_MD_pkey_type(const EVP_MD *md);
  int EVP_MD_size(const EVP_MD *md);
  int EVP_MD_block_size(const EVP_MD *md);
 
  const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
- int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
-                                              const void *data, size_t count);
- void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
-                               int (*update) (EVP_MD_CTX *ctx,
-                                              const void *data, size_t count));
  int EVP_MD_CTX_size(const EVP_MD *ctx);
  int EVP_MD_CTX_block_size(const EVP_MD *ctx);
  int EVP_MD_CTX_type(const EVP_MD *ctx);
- EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
- void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
 
  const EVP_MD *EVP_md_null(void);
  const EVP_MD *EVP_md2(void);
@@ -57,6 +48,8 @@ EVP digest routines
  const EVP_MD *EVP_sha1(void);
  const EVP_MD *EVP_mdc2(void);
  const EVP_MD *EVP_ripemd160(void);
+ const EVP_MD *EVP_blake2b_512(void);
+ const EVP_MD *EVP_blake2s_256(void);
 
  const EVP_MD *EVP_sha224(void);
  const EVP_MD *EVP_sha256(void);
@@ -134,17 +127,17 @@ are no longer linked this function is only retained for compatibility
 reasons.
 
 EVP_md2(), EVP_md5(), EVP_sha1(), EVP_sha224(), EVP_sha256(),
-EVP_sha384(), EVP_sha512(), EVP_mdc2() and EVP_ripemd160() return B<EVP_MD>
-structures for the MD2, MD5, SHA1, SHA224, SHA256, SHA384, SHA512, MDC2
-and RIPEMD160 digest algorithms respectively.
+EVP_sha384(), EVP_sha512(), EVP_mdc2(), EVP_ripemd160(), EVP_blake2b_512(), and
+EVP_blake2s_256() return B<EVP_MD> structures for the MD2, MD5, SHA1, SHA224,
+SHA256, SHA384, SHA512, MDC2, RIPEMD160, BLAKE2b-512, and BLAKE2s-256 digest
+algorithms respectively.
 
 EVP_md_null() is a "null" message digest that does nothing: i.e. the hash it
 returns is of zero length.
 
 EVP_get_digestbyname(), EVP_get_digestbynid() and EVP_get_digestbyobj()
 return an B<EVP_MD> structure when passed a digest name, a digest NID or
-an ASN1_OBJECT structure respectively. The digest table must be initialized
-using, for example, OpenSSL_add_all_digests() for these functions to work.
+an ASN1_OBJECT structure respectively.
 
 =head1 RETURN VALUES
 
@@ -160,8 +153,8 @@ EVP_MD_size(), EVP_MD_block_size(), EVP_MD_CTX_size() and
 EVP_MD_CTX_block_size() return the digest or block size in bytes.
 
 EVP_md_null(), EVP_md2(), EVP_md5(), EVP_sha1(),
-EVP_mdc2() and EVP_ripemd160() return pointers to the
-corresponding EVP_MD structures.
+EVP_mdc2(), EVP_ripemd160(), EVP_blake2b_512(), and EVP_blake2s_256() return
+pointers to the corresponding EVP_MD structures.
 
 EVP_get_digestbyname(), EVP_get_digestbynid() and EVP_get_digestbyobj()
 return either an B<EVP_MD> structure or NULL if an error occurs.
@@ -210,18 +203,16 @@ digest name passed on the command line.
  unsigned char md_value[EVP_MAX_MD_SIZE];
  int md_len, i;
 
- OpenSSL_add_all_digests();
-
  if(!argv[1]) {
- 	printf("Usage: mdtest digestname\n");
-	exit(1);
+        printf("Usage: mdtest digestname\n");
+        exit(1);
  }
 
  md = EVP_get_digestbyname(argv[1]);
 
  if(!md) {
- 	printf("Unknown message digest %s\n", argv[1]);
-	exit(1);
+        printf("Unknown message digest %s\n", argv[1]);
+        exit(1);
  }
 
  mdctx = EVP_MD_CTX_new();
@@ -232,12 +223,10 @@ digest name passed on the command line.
  EVP_MD_CTX_free(mdctx);
 
  printf("Digest is: ");
- for(i = 0; i < md_len; i++)
- 	printf("%02x", md_value[i]);
+ for (i = 0; i < md_len; i++)
+        printf("%02x", md_value[i]);
  printf("\n");
 
- /* Call this once before exit. */
- EVP_cleanup();
  exit(0);
  }
 
@@ -257,5 +246,14 @@ EVP_MD_CTX_new() and EVP_MD_CTX_free() in OpenSSL 1.1.
 The link between digests and signing algorithms was fixed in OpenSSL 1.0 and
 later, so now EVP_sha1() can be used with RSA and DSA. The legacy EVP_dss1()
 was removed in OpenSSL 1.1.0
+
+=head1 COPYRIGHT
+
+Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
 
 =cut

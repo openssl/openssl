@@ -1,59 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
- */
-/* ====================================================================
- * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /* S/MIME utility function */
@@ -86,7 +37,7 @@ typedef enum OPTION_choice {
     OPT_PK7OUT, OPT_TEXT, OPT_NOINTERN, OPT_NOVERIFY, OPT_NOCHAIN,
     OPT_NOCERTS, OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP,
     OPT_BINARY, OPT_NOSIGS, OPT_STREAM, OPT_INDEF, OPT_NOINDEF,
-    OPT_NOOLDMIME, OPT_CRLFEOL, OPT_RAND, OPT_ENGINE, OPT_PASSIN,
+    OPT_CRLFEOL, OPT_RAND, OPT_ENGINE, OPT_PASSIN,
     OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP, OPT_MD,
     OPT_CIPHER, OPT_INKEY, OPT_KEYFORM, OPT_CERTFILE, OPT_CAFILE,
     OPT_V_ENUM,
@@ -115,15 +66,15 @@ OPTIONS smime_options[] = {
     {"noattr", OPT_NOATTR, '-', "Don't include any signed attributes"},
     {"binary", OPT_BINARY, '-', "Don't translate message to text"},
     {"certfile", OPT_CERTFILE, '<', "Other certificates file"},
-    {"signer", OPT_SIGNER, '<', "Signer certificate file"},
+    {"signer", OPT_SIGNER, 's', "Signer certificate file"},
     {"recip", OPT_RECIP, '<', "Recipient certificate file for decryption"},
     {"in", OPT_IN, '<', "Input file"},
-    {"inform", OPT_INFORM, 'F', "Input format SMIME (default), PEM or DER"},
+    {"inform", OPT_INFORM, 'c', "Input format SMIME (default), PEM or DER"},
     {"inkey", OPT_INKEY, '<',
      "Input private key (if not signer or recipient)"},
     {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
     {"out", OPT_OUT, '>', "Output file"},
-    {"outform", OPT_OUTFORM, 'F',
+    {"outform", OPT_OUTFORM, 'c',
      "Output format SMIME (default), PEM or DER"},
     {"content", OPT_CONTENT, '<',
      "Supply or override content for detached signature"},
@@ -137,18 +88,18 @@ OPTIONS smime_options[] = {
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
-    {"resign", OPT_RESIGN, '-'},
-    {"nochain", OPT_NOCHAIN, '-'},
-    {"nosmimecap", OPT_NOSMIMECAP, '-'},
-    {"stream", OPT_STREAM, '-'},
-    {"indef", OPT_INDEF, '-'},
-    {"noindef", OPT_NOINDEF, '-'},
-    {"nooldmime", OPT_NOOLDMIME, '-'},
-    {"crlfeol", OPT_CRLFEOL, '-'},
+    {"resign", OPT_RESIGN, '-', "Resign a signed message"},
+    {"nochain", OPT_NOCHAIN, '-', 
+     "set PKCS7_NOCHAIN so certificates contained in the message are not used as untrusted CAs" },
+    {"nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute"},
+    {"stream", OPT_STREAM, '-', "Enable CMS streaming" },
+    {"indef", OPT_INDEF, '-', "Same as -stream" },
+    {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
+    {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of CR only"},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"md", OPT_MD, 's'},
+    {"md", OPT_MD, 's', "Digest algorithm to use when signing or resigning"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
     OPT_V_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
@@ -169,8 +120,8 @@ int smime_main(int argc, char **argv)
     X509_VERIFY_PARAM *vpm = NULL;
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *sign_md = NULL;
-    char *CAfile = NULL, *CApath = NULL, *inrand = NULL;
-    char *certfile = NULL, *keyfile = NULL, *contfile = NULL, *prog;
+    const char *CAfile = NULL, *CApath = NULL, *prog = NULL;
+    char *certfile = NULL, *keyfile = NULL, *contfile = NULL, *inrand = NULL;
     char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile =
         NULL;
     char *passinarg = NULL, *passin = NULL, *to = NULL, *from =
@@ -183,6 +134,7 @@ int smime_main(int argc, char **argv)
         FORMAT_PEM;
     int vpmtouched = 0, rv = 0;
     ENGINE *e = NULL;
+    const char *mime_eol = "\n";
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         return 1;
@@ -200,14 +152,14 @@ int smime_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDS, &informat))
                 goto opthelp;
             break;
         case OPT_IN:
             infile = opt_arg();
             break;
         case OPT_OUTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDS, &outformat))
                 goto opthelp;
             break;
         case OPT_OUT:
@@ -268,11 +220,9 @@ int smime_main(int argc, char **argv)
         case OPT_NOINDEF:
             indef = 0;
             break;
-        case OPT_NOOLDMIME:
-            flags |= PKCS7_NOOLDMIMETYPE;
-            break;
         case OPT_CRLFEOL:
             flags |= PKCS7_CRLFEOL;
+            mime_eol = "\r\n";
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -322,7 +272,7 @@ int smime_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_INKEY:
-            /* If previous -inkey arument add signer to list */
+            /* If previous -inkey argument add signer to list */
             if (keyfile) {
                 if (signerfile == NULL) {
                     BIO_printf(bio_err,
@@ -458,7 +408,7 @@ int smime_main(int argc, char **argv)
             goto end;
         while (*argv) {
             cert = load_cert(*argv, FORMAT_PEM,
-                             NULL, e, "recipient certificate file");
+                             "recipient certificate file");
             if (cert == NULL)
                 goto end;
             sk_X509_push(encerts, cert);
@@ -468,7 +418,7 @@ int smime_main(int argc, char **argv)
     }
 
     if (certfile) {
-        if (!load_certs(certfile, &other, FORMAT_PEM, NULL, e,
+        if (!load_certs(certfile, &other, FORMAT_PEM, NULL,
                         "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
@@ -476,8 +426,8 @@ int smime_main(int argc, char **argv)
     }
 
     if (recipfile && (operation == SMIME_DECRYPT)) {
-        if ((recip = load_cert(recipfile, FORMAT_PEM, NULL,
-                                e, "recipient certificate file")) == NULL) {
+        if ((recip = load_cert(recipfile, FORMAT_PEM,
+                               "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -572,8 +522,8 @@ int smime_main(int argc, char **argv)
         for (i = 0; i < sk_OPENSSL_STRING_num(sksigners); i++) {
             signerfile = sk_OPENSSL_STRING_value(sksigners, i);
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
-            signer = load_cert(signerfile, FORMAT_PEM, NULL,
-                               e, "signer certificate");
+            signer = load_cert(signerfile, FORMAT_PEM,
+                               "signer certificate");
             if (!signer)
                 goto end;
             key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
@@ -623,11 +573,11 @@ int smime_main(int argc, char **argv)
         PEM_write_bio_PKCS7(out, p7);
     else {
         if (to)
-            BIO_printf(out, "To: %s\n", to);
+            BIO_printf(out, "To: %s%s", to, mime_eol);
         if (from)
-            BIO_printf(out, "From: %s\n", from);
+            BIO_printf(out, "From: %s%s", from, mime_eol);
         if (subject)
-            BIO_printf(out, "Subject: %s\n", subject);
+            BIO_printf(out, "Subject: %s%s", subject, mime_eol);
         if (outformat == FORMAT_SMIME) {
             if (operation == SMIME_RESIGN)
                 rv = SMIME_write_PKCS7(out, p7, indata, flags);

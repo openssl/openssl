@@ -1,56 +1,10 @@
-/* ssl/t1_trce.c */
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
- */
-/* ====================================================================
- * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
+ * Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include "ssl_locl.h"
@@ -117,7 +71,7 @@ static ssl_trace_tbl ssl_content_tbl[] = {
     {SSL3_RT_ALERT, "Alert"},
     {SSL3_RT_HANDSHAKE, "Handshake"},
     {SSL3_RT_APPLICATION_DATA, "ApplicationData"},
-    {TLS1_RT_HEARTBEAT, "HeartBeat"}
+    {DTLS1_RT_HEARTBEAT, "HeartBeat"}
 };
 
 /* Handshake types */
@@ -461,13 +415,13 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xC0AD, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM"},
     {0xC0AE, "TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8"},
     {0xC0AF, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8"},
-    {0xCCA8, "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305" },
-    {0xCCA9, "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305" },
-    {0xCCAA, "TLS_DHE_RSA_WITH_CHACHA20_POLY1305" },
-    {0xCCAB, "TLS_PSK_WITH_CHACHA20_POLY1305" },
-    {0xCCAC, "TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305" },
-    {0xCCAD, "TLS_DHE_PSK_WITH_CHACHA20_POLY1305" },
-    {0xCCAE, "TLS_RSA_PSK_WITH_CHACHA20_POLY1305" },
+    {0xCCA8, "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"},
+    {0xCCA9, "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"},
+    {0xCCAA, "TLS_DHE_RSA_WITH_CHACHA20_POLY1305"},
+    {0xCCAB, "TLS_PSK_WITH_CHACHA20_POLY1305"},
+    {0xCCAC, "TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305"},
+    {0xCCAD, "TLS_DHE_PSK_WITH_CHACHA20_POLY1305"},
+    {0xCCAE, "TLS_RSA_PSK_WITH_CHACHA20_POLY1305"},
     {0xFEFE, "SSL_RSA_FIPS_WITH_DES_CBC_SHA"},
     {0xFEFF, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
 };
@@ -498,7 +452,10 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_heartbeat, "heartbeat"},
     {TLSEXT_TYPE_session_ticket, "session_ticket"},
     {TLSEXT_TYPE_renegotiate, "renegotiate"},
+# ifndef OPENSSL_NO_NEXTPROTONEG
     {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"},
+# endif
+    {TLSEXT_TYPE_signed_certificate_timestamp, "signed_certificate_timestamps"},
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"}
@@ -533,6 +490,7 @@ static ssl_trace_tbl ssl_curve_tbl[] = {
     {26, "brainpoolP256r1"},
     {27, "brainpoolP384r1"},
     {28, "brainpoolP512r1"},
+    {29, "ecdh_x25519"},
     {0xFF01, "arbitrary_explicit_prime_curves"},
     {0xFF02, "arbitrary_explicit_char2_curves"}
 };
@@ -700,8 +658,7 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
         xlen = ext[0];
         if (extlen != xlen + 1)
             return 0;
-        return ssl_trace_list(bio, indent + 2,
-                              ext + 1, xlen, 1, ssl_point_tbl);
+        return ssl_trace_list(bio, indent + 2, ext + 1, xlen, 1, ssl_point_tbl);
 
     case TLSEXT_TYPE_elliptic_curves:
         if (extlen < 2)
@@ -709,8 +666,7 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
         xlen = (ext[0] << 8) | ext[1];
         if (extlen != xlen + 2)
             return 0;
-        return ssl_trace_list(bio, indent + 2,
-                              ext + 2, xlen, 2, ssl_curve_tbl);
+        return ssl_trace_list(bio, indent + 2, ext + 2, xlen, 2, ssl_curve_tbl);
 
     case TLSEXT_TYPE_signature_algorithms:
 
@@ -748,8 +704,7 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
             ssl_print_hex(bio, indent + 4, "client_verify_data", ext, xlen);
             if (server) {
                 ext += xlen;
-                ssl_print_hex(bio, indent + 4,
-                              "server_verify_data", ext, xlen);
+                ssl_print_hex(bio, indent + 4, "server_verify_data", ext, xlen);
             }
         } else {
             BIO_indent(bio, indent + 4, 80);
@@ -771,7 +726,7 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
         break;
 
     default:
-        BIO_dump_indent(bio, (char *)ext, extlen, indent + 2);
+        BIO_dump_indent(bio, (const char *)ext, extlen, indent + 2);
     }
     return 1;
 }
@@ -801,8 +756,7 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
         if (msglen < extlen + 4)
             return 0;
         msg += 4;
-        if (!ssl_print_extension(bio, indent + 2, server,
-                                 extype, msg, extlen))
+        if (!ssl_print_extension(bio, indent + 2, server, extype, msg, extlen))
             return 0;
         msg += extlen;
         msglen -= extlen + 4;
@@ -866,8 +820,7 @@ static int ssl_print_client_hello(BIO *bio, SSL *ssl, int indent,
 }
 
 static int dtls_print_hello_vfyrequest(BIO *bio, int indent,
-                                       const unsigned char *msg,
-                                       size_t msglen)
+                                       const unsigned char *msg, size_t msglen)
 {
     if (!ssl_print_version(bio, indent, "server_version", &msg, &msglen))
         return 0;
@@ -921,14 +874,6 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
         *pname = "ECDHE";
         return SSL_kECDHE;
     }
-    if (alg_k & SSL_kECDHr) {
-        *pname = "ECDH RSA";
-        return SSL_kECDHr;
-    }
-    if (alg_k & SSL_kECDHe) {
-        *pname = "ECDH ECDSA";
-        return SSL_kECDHe;
-    }
     if (alg_k & SSL_kPSK) {
         *pname = "PSK";
         return SSL_kPSK;
@@ -979,8 +924,7 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
                           "EncyptedPreMasterSecret", msg, msglen);
         } else {
             if (!ssl_print_hexbuf(bio, indent + 2,
-                                  "EncyptedPreMasterSecret", 2,
-                                  &msg, &msglen))
+                                  "EncyptedPreMasterSecret", 2, &msg, &msglen))
                 return 0;
         }
         break;
@@ -991,13 +935,6 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
         break;
 
-    case SSL_kECDHr:
-    case SSL_kECDHe:
-        if (msglen == 0) {
-            BIO_indent(bio, indent + 2, 80);
-            BIO_puts(bio, "implicit\n");
-            break;
-        }
     case SSL_kECDHE:
     case SSL_kECDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1, &msg, &msglen))
@@ -1023,17 +960,9 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
     }
     switch (id) {
-        /* Should never happen */
-    case SSL_kECDHr:
-    case SSL_kECDHe:
-        BIO_indent(bio, indent + 2, 80);
-        BIO_printf(bio, "Unexpected Message\n");
-        break;
-
     case SSL_kRSA:
 
-        if (!ssl_print_hexbuf(bio, indent + 2, "rsa_modulus", 2,
-                              &msg, &msglen))
+        if (!ssl_print_hexbuf(bio, indent + 2, "rsa_modulus", 2, &msg, &msglen))
             return 0;
         if (!ssl_print_hexbuf(bio, indent + 2, "rsa_exponent", 2,
                               &msg, &msglen))
@@ -1050,7 +979,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
         break;
 
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
     case SSL_kECDHE:
     case SSL_kECDHEPSK:
         if (msglen < 1)
@@ -1076,7 +1005,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
         }
         break;
-#endif
+# endif
 
     case SSL_kPSK:
     case SSL_kRSAPSK:
@@ -1322,7 +1251,7 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl,
     default:
         BIO_indent(bio, indent + 2, 80);
         BIO_puts(bio, "Unsupported, hex dump follows:\n");
-        BIO_dump_indent(bio, (char *)msg, msglen, indent + 4);
+        BIO_dump_indent(bio, (const char *)msg, msglen, indent + 4);
     }
     return 1;
 }
@@ -1357,8 +1286,7 @@ void SSL_trace(int write_p, int version, int content_type,
     if (write_p == 2) {
         BIO_puts(bio, "Session ");
         ssl_print_hex(bio, 0,
-                      ssl_trace_str(content_type, ssl_crypto_tbl),
-                      msg, msglen);
+                      ssl_trace_str(content_type, ssl_crypto_tbl), msg, msglen);
         return;
     }
     switch (content_type) {
@@ -1401,7 +1329,7 @@ void SSL_trace(int write_p, int version, int content_type,
                        SSL_alert_type_string_long(msg[0] << 8),
                        msg[0], SSL_alert_desc_string_long(msg[1]), msg[1]);
         }
-    case TLS1_RT_HEARTBEAT:
+    case DTLS1_RT_HEARTBEAT:
         ssl_print_heartbeat(bio, 4, msg, msglen);
         break;
 
