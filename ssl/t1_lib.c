@@ -1505,6 +1505,7 @@ int ssl_add_serverhello_tlsext(SSL *s, WPACKET *pkt, int *al)
 #ifndef OPENSSL_NO_HEARTBEATS
     /* Add Heartbeat extension if we've received one */
     if (SSL_IS_DTLS(s) && (s->tlsext_heartbeat & SSL_DTLSEXT_HB_ENABLED)) {
+        unsigned int mode;
         /*-
          * Set mode:
          * 1: peer may send requests
