@@ -1499,26 +1499,23 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 
 int tls_construct_server_hello(SSL *s)
 {
-    unsigned char *buf;
-    unsigned char *p, *d;
-    int i, sl;
-    int al = 0;
-    unsigned long l;
+    int sl;
+    int al = SSL_AD_INTERNAL_ERROR;
+    int compm;
+    size_t len;
+    WPACKET pkt;
 
-    buf = (unsigned char *)s->init_buf->data;
-
-    /* Do the message type and length last */
-    d = p = ssl_handshake_start(s);
-
-    *(p++) = s->version >> 8;
-    *(p++) = s->version & 0xff;
-
-    /*
-     * Random stuff. Filling of the server_random takes place in
-     * tls_process_client_hello()
-     */
-    memcpy(p, s->s3->server_random, SSL3_RANDOM_SIZE);
-    p += SSL3_RANDOM_SIZE;
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_SERVER_HELLO)
+            || !WPACKET_put_bytes_u16(&pkt, s->version)
+               /*
+                * Random stuff. Filling of the server_random takes place in
+                * tls_process_client_hello()
+                */
+            || !WPACKET_memcpy(&pkt, s->s3->server_random, SSL3_RANDOM_SIZE)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     /*-
      * There are several cases for the session ID to send
@@ -1544,50 +1541,35 @@ int tls_construct_server_hello(SSL *s)
     sl = s->session->session_id_length;
     if (sl > (int)sizeof(s->session->session_id)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
-        ossl_statem_set_error(s);
-        return 0;
+        goto err;
     }
-    *(p++) = sl;
-    memcpy(p, s->session->session_id, sl);
-    p += sl;
 
-    /* put the cipher */
-    i = ssl3_put_cipher_by_char_old(s->s3->tmp.new_cipher, p);
-    p += i;
-
-    /* put the compression method */
+    /* set up the compression method */
 #ifdef OPENSSL_NO_COMP
-    *(p++) = 0;
+    compm = 0;
 #else
     if (s->s3->tmp.new_compression == NULL)
-        *(p++) = 0;
+        compm = 0;
     else
-        *(p++) = s->s3->tmp.new_compression->id;
+        compm = s->s3->tmp.new_compression->id;
 #endif
 
-    if (ssl_prepare_serverhello_tlsext(s) <= 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, SSL_R_SERVERHELLO_TLSEXT);
-        ossl_statem_set_error(s);
-        return 0;
-    }
-    if ((p =
-         ssl_add_serverhello_tlsext(s, p, buf + SSL3_RT_MAX_PLAIN_LENGTH,
-                                    &al)) == NULL) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    if (!WPACKET_sub_memcpy_u8(&pkt, s->session->session_id, sl)
+            || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, &pkt, &len)
+            || !WPACKET_put_bytes_u8(&pkt, compm)
+            || !ssl_prepare_serverhello_tlsext(s)
+            || !ssl_add_serverhello_tlsext(s, &pkt, &al)
+            || !ssl_close_construct_packet(s, &pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
-        ossl_statem_set_error(s);
-        return 0;
-    }
-
-    /* do the header */
-    l = (p - d);
-    if (!ssl_set_handshake_header(s, SSL3_MT_SERVER_HELLO, l)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
-        ossl_statem_set_error(s);
-        return 0;
+        goto err;
     }
 
     return 1;
+ err:
+    WPACKET_cleanup(&pkt);
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+    ossl_statem_set_error(s);
+    return 0;
 }
 
 int tls_construct_server_done(SSL *s)

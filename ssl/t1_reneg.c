@@ -50,32 +50,18 @@ int ssl_parse_clienthello_renegotiate_ext(SSL *s, PACKET *pkt, int *al)
 }
 
 /* Add the server's renegotiation binding */
-int ssl_add_serverhello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
-                                        int maxlen)
+int ssl_add_serverhello_renegotiate_ext(SSL *s, WPACKET *pkt)
 {
-    if (p) {
-        if ((s->s3->previous_client_finished_len +
-             s->s3->previous_server_finished_len + 1) > maxlen) {
-            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_RENEGOTIATE_EXT,
-                   SSL_R_RENEGOTIATE_EXT_TOO_LONG);
-            return 0;
-        }
-
-        /* Length byte */
-        *p = s->s3->previous_client_finished_len +
-            s->s3->previous_server_finished_len;
-        p++;
-
-        memcpy(p, s->s3->previous_client_finished,
-               s->s3->previous_client_finished_len);
-        p += s->s3->previous_client_finished_len;
-
-        memcpy(p, s->s3->previous_server_finished,
-               s->s3->previous_server_finished_len);
-    }
-
-    *len = s->s3->previous_client_finished_len
-        + s->s3->previous_server_finished_len + 1;
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u8(pkt)
+            || !WPACKET_memcpy(pkt, s->s3->previous_client_finished,
+                               s->s3->previous_client_finished_len)
+            || !WPACKET_memcpy(pkt, s->s3->previous_server_finished,
+                               s->s3->previous_server_finished_len)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt))
+        return 0;
 
     return 1;
 }

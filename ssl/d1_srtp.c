@@ -203,30 +203,6 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, PACKET *pkt, int *al)
     return 0;
 }
 
-int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
-                                     int maxlen)
-{
-    if (p) {
-        if (maxlen < 5) {
-            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT,
-                   SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG);
-            return 1;
-        }
-
-        if (s->srtp_profile == 0) {
-            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT,
-                   SSL_R_USE_SRTP_NOT_NEGOTIATED);
-            return 1;
-        }
-        s2n(2, p);
-        s2n(s->srtp_profile->id, p);
-        *p++ = 0;
-    }
-    *len = 5;
-
-    return 0;
-}
-
 int ssl_parse_serverhello_use_srtp_ext(SSL *s, PACKET *pkt, int *al)
 {
     unsigned int id, ct, mki;
