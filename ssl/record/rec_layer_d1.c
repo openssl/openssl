@@ -359,8 +359,10 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     /*
      * check whether there's a handshake message (client hello?) waiting
      */
-    if ((ret = have_handshake_fragment(s, type, buf, len)))
+    if ((ret = have_handshake_fragment(s, type, buf, len))) {
+        *recvd_type = SSL3_RT_HANDSHAKE;
         return ret;
+    }
 
     /*
      * Now s->rlayer.d->handshake_fragment_len == 0 if
