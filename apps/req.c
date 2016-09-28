@@ -820,6 +820,7 @@ int req_main(int argc, char **argv)
     X509_REQ_free(req);
     X509_free(x509ss);
     ASN1_INTEGER_free(serial);
+    release_engine(e);
     if (passin != nofree_passin)
         OPENSSL_free(passin);
     if (passout != nofree_passout)

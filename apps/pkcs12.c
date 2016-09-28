@@ -574,6 +574,7 @@ int pkcs12_main(int argc, char **argv)
     PKCS12_free(p12);
     if (export_cert || inrand)
         app_RAND_write_file(NULL);
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     sk_OPENSSL_STRING_free(canames);

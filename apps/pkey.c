@@ -180,6 +180,7 @@ int pkey_main(int argc, char **argv)
 
  end:
     EVP_PKEY_free(pkey);
+    release_engine(e);
     BIO_free_all(out);
     BIO_free(in);
     OPENSSL_free(passin);

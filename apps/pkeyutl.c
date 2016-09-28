@@ -323,6 +323,7 @@ int pkeyutl_main(int argc, char **argv)
 
  end:
     EVP_PKEY_CTX_free(ctx);
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     OPENSSL_free(buf_in);

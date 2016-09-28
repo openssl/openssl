@@ -209,6 +209,7 @@ OPTIONS srp_options[] = {
 
 int srp_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     CA_DB *db = NULL;
     CONF *conf = NULL;
     int gNindex = -1, maxgN = -1, ret = 1, errors = 0, verbose = 0, i;
@@ -269,7 +270,7 @@ int srp_main(int argc, char **argv)
             passoutarg = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         }
     }
@@ -602,6 +603,7 @@ int srp_main(int argc, char **argv)
         app_RAND_write_file(randfile);
     NCONF_free(conf);
     free_index(db);
+    release_engine(e);
     return (ret);
 }
 #endif

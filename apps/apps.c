@@ -1272,13 +1272,19 @@ ENGINE *setup_engine(const char *engine, int debug)
         }
 
         BIO_printf(bio_err, "engine \"%s\" set.\n", ENGINE_get_id(e));
-
-        /* Free our "structural" reference. */
-        ENGINE_free(e);
     }
     return e;
 }
 #endif
+
+void release_engine(ENGINE *e)
+{
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        /* Free our "structural" reference. */
+        ENGINE_free(e);
+#endif
+}
 
 static unsigned long index_serial_hash(const OPENSSL_CSTRING *a)
 {

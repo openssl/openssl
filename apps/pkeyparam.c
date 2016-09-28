@@ -33,6 +33,7 @@ OPTIONS pkeyparam_options[] = {
 
 int pkeyparam_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     EVP_PKEY *pkey = NULL;
     int text = 0, noout = 0, ret = 1;
@@ -58,7 +59,7 @@ int pkeyparam_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_TEXT:
             text = 1;
@@ -95,6 +96,7 @@ int pkeyparam_main(int argc, char **argv)
 
  end:
     EVP_PKEY_free(pkey);
+    release_engine(e);
     BIO_free_all(out);
     BIO_free(in);
 

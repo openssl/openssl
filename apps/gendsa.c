@@ -46,6 +46,7 @@ OPTIONS gendsa_options[] = {
 
 int gendsa_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     BIO *out = NULL, *in = NULL;
     DSA *dsa = NULL;
     const EVP_CIPHER *enc = NULL;
@@ -74,7 +75,7 @@ int gendsa_main(int argc, char **argv)
             passoutarg = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -139,6 +140,7 @@ int gendsa_main(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     DSA_free(dsa);
+    release_engine(e);
     OPENSSL_free(passout);
     return (ret);
 }

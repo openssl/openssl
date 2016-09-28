@@ -187,6 +187,7 @@ int spkac_main(int argc, char **argv)
     NETSCAPE_SPKI_free(spki);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
+    release_engine(e);
     OPENSSL_free(passin);
     return (ret);
 }

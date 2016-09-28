@@ -60,6 +60,7 @@ OPTIONS verify_options[] = {
 
 int verify_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
     X509_STORE *store = NULL;
@@ -140,7 +141,7 @@ int verify_main(int argc, char **argv)
             crl_download = 1;
             break;
         case OPT_ENGINE:
-            if (setup_engine(opt_arg(), 0) == NULL) {
+            if ((e = setup_engine(opt_arg(), 0)) == NULL) {
                 /* Failure message already displayed */
                 goto end;
             }
@@ -191,6 +192,7 @@ int verify_main(int argc, char **argv)
     sk_X509_pop_free(untrusted, X509_free);
     sk_X509_pop_free(trusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    release_engine(e);
     return (ret < 0 ? 2 : ret);
 }
 

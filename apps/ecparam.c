@@ -87,6 +87,7 @@ static OPT_PAIR encodings[] = {
 
 int ecparam_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     BIGNUM *ec_gen = NULL, *ec_order = NULL, *ec_cofactor = NULL;
     BIGNUM *ec_p = NULL, *ec_a = NULL, *ec_b = NULL;
     BIO *in = NULL, *out = NULL;
@@ -168,7 +169,7 @@ int ecparam_main(int argc, char **argv)
             need_rand = 1;
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         }
     }
@@ -454,9 +455,10 @@ int ecparam_main(int argc, char **argv)
     BN_free(ec_order);
     BN_free(ec_cofactor);
     OPENSSL_free(buffer);
+    EC_GROUP_free(group);
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
-    EC_GROUP_free(group);
     return (ret);
 }
 

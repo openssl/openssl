@@ -66,6 +66,7 @@ OPTIONS dsaparam_options[] = {
 
 int dsaparam_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     DSA *dsa = NULL;
     BIO *in = NULL, *out = NULL;
     BN_GENCB *cb = NULL;
@@ -105,7 +106,7 @@ int dsaparam_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_TIMEBOMB:
 # ifdef GENCB_TEST
@@ -285,6 +286,7 @@ int dsaparam_main(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     DSA_free(dsa);
+    release_engine(e);
     return (ret);
 }
 

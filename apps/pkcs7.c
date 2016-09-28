@@ -44,6 +44,7 @@ OPTIONS pkcs7_options[] = {
 
 int pkcs7_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     PKCS7 *p7 = NULL;
     BIO *in = NULL, *out = NULL;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
@@ -90,7 +91,7 @@ int pkcs7_main(int argc, char **argv)
             print_certs = 1;
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         }
     }
@@ -189,6 +190,7 @@ int pkcs7_main(int argc, char **argv)
     ret = 0;
  end:
     PKCS7_free(p7);
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     return (ret);
