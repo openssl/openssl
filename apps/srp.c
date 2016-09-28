@@ -294,6 +294,7 @@ int MAIN(int argc, char **argv)
     long errorline = -1;
     char *randfile = NULL;
 # ifndef OPENSSL_NO_ENGINE
+    ENGINE *e = NULL;
     char *engine = NULL;
 # endif
     char *tofree = NULL;
@@ -412,7 +413,7 @@ int MAIN(int argc, char **argv)
     ERR_load_crypto_strings();
 
 # ifndef OPENSSL_NO_ENGINE
-    setup_engine(bio_err, engine, 0);
+    e = setup_engine(bio_err, engine, 0);
 # endif
 
     if (!app_passwd(bio_err, passargin, passargout, &passin, &passout)) {
@@ -760,6 +761,10 @@ int MAIN(int argc, char **argv)
     if (db)
         free_index(db);
 
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     OBJ_cleanup();
     apps_shutdown();
     OPENSSL_EXIT(ret);

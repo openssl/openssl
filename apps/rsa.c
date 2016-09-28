@@ -419,6 +419,10 @@ int MAIN(int argc, char **argv)
     } else
         ret = 0;
  end:
+# ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+# endif
     if (out != NULL)
         BIO_free_all(out);
     if (rsa != NULL)

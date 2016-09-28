@@ -1564,11 +1564,15 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
         }
 
         BIO_printf(err, "engine \"%s\" set.\n", ENGINE_get_id(e));
-
-        /* Free our "structural" reference. */
-        ENGINE_free(e);
     }
     return e;
+}
+
+void release_engine(ENGINE *e)
+{
+    if (e != NULL)
+        /* Free our "structural" reference. */
+        ENGINE_free(e);
 }
 #endif
 

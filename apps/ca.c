@@ -1485,6 +1485,10 @@ int MAIN(int argc, char **argv)
     X509_CRL_free(crl);
     NCONF_free(conf);
     NCONF_free(extconf);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     OBJ_cleanup();
     apps_shutdown();
     OPENSSL_EXIT(ret);

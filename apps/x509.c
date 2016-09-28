@@ -1040,6 +1040,10 @@ int MAIN(int argc, char **argv)
     ASN1_INTEGER_free(sno);
     sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     if (passin)
         OPENSSL_free(passin);
     apps_shutdown();

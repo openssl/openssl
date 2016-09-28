@@ -736,6 +736,10 @@ int MAIN(int argc, char **argv)
     X509_free(signer);
     EVP_PKEY_free(key);
     PKCS7_free(p7);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     BIO_free(in);
     BIO_free(indata);
     BIO_free_all(out);

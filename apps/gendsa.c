@@ -87,6 +87,7 @@ int MAIN(int argc, char **argv)
     const EVP_CIPHER *enc = NULL;
 # ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
+    ENGINE *e = NULL;
 # endif
 
     apps_startup();
@@ -207,7 +208,7 @@ int MAIN(int argc, char **argv)
         goto end;
     }
 # ifndef OPENSSL_NO_ENGINE
-    setup_engine(bio_err, engine, 0);
+    e = setup_engine(bio_err, engine, 0);
 # endif
 
     if (!app_passwd(bio_err, NULL, passargout, NULL, &passout)) {
@@ -273,6 +274,10 @@ int MAIN(int argc, char **argv)
         BIO_free_all(out);
     if (dsa != NULL)
         DSA_free(dsa);
+# ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+# endif
     if (passout)
         OPENSSL_free(passout);
     apps_shutdown();

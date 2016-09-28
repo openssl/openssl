@@ -357,6 +357,10 @@ int MAIN(int argc, char **argv)
  end:
     if (ctx)
         EVP_PKEY_CTX_free(ctx);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     BIO_free(in);
     BIO_free_all(out);
     if (buf_in != NULL)

@@ -255,6 +255,10 @@ int MAIN(int argc, char **argv)
     sk_X509_pop_free(untrusted, X509_free);
     sk_X509_pop_free(trusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     apps_shutdown();
     OPENSSL_EXIT(ret < 0 ? 2 : ret);
 }

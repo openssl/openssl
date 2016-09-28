@@ -123,6 +123,7 @@ int MAIN(int argc, char **argv)
     int need_rand = 0;
 # ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
+    ENGINE *e = NULL;
 # endif
 # ifdef GENCB_TEST
     int timebomb = 0;
@@ -264,7 +265,7 @@ int MAIN(int argc, char **argv)
     }
 
 # ifndef OPENSSL_NO_ENGINE
-    setup_engine(bio_err, engine, 0);
+    e = setup_engine(bio_err, engine, 0);
 # endif
 
     if (need_rand) {
@@ -433,6 +434,10 @@ int MAIN(int argc, char **argv)
         BIO_free_all(out);
     if (dsa != NULL)
         DSA_free(dsa);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

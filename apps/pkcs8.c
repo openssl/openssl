@@ -391,6 +391,10 @@ int MAIN(int argc, char **argv)
     X509_SIG_free(p8);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
     EVP_PKEY_free(pkey);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     BIO_free_all(out);
     BIO_free(in);
     if (passin)

@@ -2123,6 +2123,10 @@ int MAIN(int argc, char **argv)
         OPENSSL_cleanse(mbuf, BUFSIZZ);
         OPENSSL_free(mbuf);
     }
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     if (bio_c_out != NULL) {
         BIO_free(bio_c_out);
         bio_c_out = NULL;
