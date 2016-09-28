@@ -166,6 +166,7 @@ int genrsa_main(int argc, char **argv)
     BN_GENCB_free(cb);
     RSA_free(rsa);
     BIO_free_all(out);
+    release_engine(eng);
     OPENSSL_free(passout);
     if (ret != 0)
         ERR_print_errors(bio_err);
