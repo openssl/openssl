@@ -358,6 +358,10 @@ int MAIN(int argc, char **argv)
         BIO_free_all(out);
     if (dsa != NULL)
         DSA_free(dsa);
+# ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+# endif
     if (passin)
         OPENSSL_free(passin);
     if (passout)

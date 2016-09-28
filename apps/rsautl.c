@@ -327,6 +327,10 @@ int MAIN(int argc, char **argv)
         BIO_write(out, rsa_out, rsa_outlen);
  end:
     RSA_free(rsa);
+# ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+# endif
     BIO_free(in);
     BIO_free_all(out);
     if (rsa_in)

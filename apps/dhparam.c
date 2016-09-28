@@ -161,6 +161,7 @@ int MAIN(int argc, char **argv)
     char *inrand = NULL;
 # ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
+    ENGINE *e = NULL;
 # endif
     int num = 0, g = 0;
 
@@ -271,7 +272,7 @@ int MAIN(int argc, char **argv)
     ERR_load_crypto_strings();
 
 # ifndef OPENSSL_NO_ENGINE
-    setup_engine(bio_err, engine, 0);
+    e = setup_engine(bio_err, engine, 0);
 # endif
 
     if (g && !num)
@@ -512,6 +513,10 @@ int MAIN(int argc, char **argv)
         BIO_free_all(out);
     if (dh != NULL)
         DH_free(dh);
+# ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+# endif
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

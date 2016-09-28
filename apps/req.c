@@ -1040,6 +1040,10 @@ int MAIN(int argc, char **argv)
     X509_REQ_free(req);
     X509_free(x509ss);
     ASN1_INTEGER_free(serial);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     if (passargin && passin)
         OPENSSL_free(passin);
     if (passargout && passout)

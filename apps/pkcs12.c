@@ -756,6 +756,10 @@ int MAIN(int argc, char **argv)
 # ifdef CRYPTO_MDEBUG
     CRYPTO_remove_all_info();
 # endif
+# ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+# endif
     BIO_free(in);
     BIO_free_all(out);
     if (canames)

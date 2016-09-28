@@ -1170,6 +1170,10 @@ int MAIN(int argc, char **argv)
     EVP_PKEY_free(key);
     CMS_ContentInfo_free(cms);
     CMS_ContentInfo_free(rcms);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     BIO_free(rctin);
     BIO_free(in);
     BIO_free(indata);

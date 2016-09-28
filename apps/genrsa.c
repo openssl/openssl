@@ -314,6 +314,10 @@ int MAIN(int argc, char **argv)
         RSA_free(rsa);
     if (out)
         BIO_free_all(out);
+# ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+# endif
     if (passout)
         OPENSSL_free(passout);
     if (ret != 0)

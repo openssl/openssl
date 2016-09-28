@@ -537,6 +537,10 @@ int MAIN(int argc, char **argv)
         OPENSSL_free(sigbuf);
     if (bmd != NULL)
         BIO_free(bmd);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     apps_shutdown();
     OPENSSL_EXIT(err);
 }

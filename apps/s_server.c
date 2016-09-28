@@ -2129,6 +2129,10 @@ int MAIN(int argc, char *argv[])
     if (jpake_secret && psk_key)
         OPENSSL_free(psk_key);
 #endif
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     if (bio_s_out != NULL) {
         BIO_free(bio_s_out);
         bio_s_out = NULL;

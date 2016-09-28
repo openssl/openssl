@@ -305,6 +305,10 @@ int MAIN(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        release_engine(e);
+#endif
     if (passin)
         OPENSSL_free(passin);
     apps_shutdown();
