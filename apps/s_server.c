@@ -1963,6 +1963,7 @@ int s_server_main(int argc, char *argv[])
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
     SSL_CONF_CTX_free(cctx);
+    release_engine(engine);
     BIO_free(bio_s_out);
     bio_s_out = NULL;
     BIO_free(bio_s_msg);
