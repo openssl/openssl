@@ -1572,19 +1572,26 @@ int tls_construct_server_hello(SSL *s)
 
 int tls_construct_server_done(SSL *s)
 {
-    if (!ssl_set_handshake_header(s, SSL3_MT_SERVER_DONE, 0)) {
+    WPACKET pkt;
+
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_SERVER_DONE)
+            || !ssl_close_construct_packet(s, &pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_DONE, ERR_R_INTERNAL_ERROR);
-        ossl_statem_set_error(s);
-        return 0;
+        goto err;
     }
 
     if (!s->s3->tmp.cert_request) {
-        if (!ssl3_digest_cached_records(s, 0)) {
-            ossl_statem_set_error(s);
-        }
+        if (!ssl3_digest_cached_records(s, 0))
+            goto err;
     }
-
     return 1;
+
+ err:
+    WPACKET_cleanup(&pkt);
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+    ossl_statem_set_error(s);
+    return 0;
 }
 
 int tls_construct_server_key_exchange(SSL *s)
