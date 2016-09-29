@@ -2750,7 +2750,6 @@ const SSL3_ENC_METHOD SSLv3_enc_data = {
              int use_context))ssl_undefined_function,
     0,
     SSL3_HM_HEADER_LENGTH,
-    ssl3_set_handshake_header,
     ssl3_set_handshake_header2,
     tls_close_construct_packet,
     ssl3_handshake_write
@@ -2776,17 +2775,6 @@ const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
         return (&(ssl3_ciphers[SSL3_NUM_CIPHERS - 1 - u]));
     else
         return (NULL);
-}
-
-int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len)
-{
-    unsigned char *p = (unsigned char *)s->init_buf->data;
-    *(p++) = htype;
-    l2n3(len, p);
-    s->init_num = (int)len + SSL3_HM_HEADER_LENGTH;
-    s->init_off = 0;
-
-    return 1;
 }
 
 /*
