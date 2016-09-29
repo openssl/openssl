@@ -14,6 +14,27 @@
 
 int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 {
+    if (!WPACKET_reserve_bytes(pkt, len, allocbytes))
+        return 0;
+    pkt->written += len;
+    pkt->curr += len;
+
+    return 1;
+}
+
+int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
+                                 unsigned char **allocbytes, size_t lenbytes)
+{
+    if (!WPACKET_start_sub_packet_len__(pkt, lenbytes)
+            || !WPACKET_allocate_bytes(pkt, len, allocbytes)
+            || !WPACKET_close(pkt))
+        return 0;
+
+    return 1;
+}
+
+int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
+{
     /* Internal API, so should not fail */
     assert(pkt->subs != NULL && len != 0);
     if (pkt->subs == NULL || len == 0)
@@ -39,19 +60,17 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
             return 0;
     }
     *allocbytes = (unsigned char *)pkt->buf->data + pkt->curr;
-    pkt->written += len;
-    pkt->curr += len;
 
     return 1;
 }
 
-int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
-                                 unsigned char **allocbytes, size_t lenbytes)
+int WPACKET_sub_reserve_bytes__(WPACKET *pkt, size_t len,
+                                unsigned char **allocbytes, size_t lenbytes)
 {
-    if (!WPACKET_start_sub_packet_len__(pkt, lenbytes)
-            || !WPACKET_allocate_bytes(pkt, len, allocbytes)
-            || !WPACKET_close(pkt))
+    if (!WPACKET_reserve_bytes(pkt, lenbytes + len, allocbytes))
         return 0;
+
+    *allocbytes += lenbytes;
 
     return 1;
 }
