@@ -758,7 +758,7 @@ int WPACKET_put_bytes__(WPACKET *pkt, unsigned int val, size_t bytes);
 #define WPACKET_put_bytes_u24(pkt, val) \
     WPACKET_put_bytes__((pkt), (val), 3)
 #define WPACKET_put_bytes_u32(pkt, val) \
-    WPACKET_sub_allocate_bytes__((pkt), (val), 4)
+    WPACKET_put_bytes__((pkt), (val), 4)
 
 /* Set a maximum size that we will not allow the WPACKET to grow beyond */
 int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize);
