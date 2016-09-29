@@ -1960,62 +1960,66 @@ int tls_construct_server_key_exchange(SSL *s)
 
 int tls_construct_certificate_request(SSL *s)
 {
-    unsigned char *p, *d;
-    int i, j, nl, off, n;
+    int i, nl;
     STACK_OF(X509_NAME) *sk = NULL;
-    X509_NAME *name;
-    BUF_MEM *buf;
+    WPACKET pkt;
 
-    buf = s->init_buf;
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !ssl_set_handshake_header2(s, &pkt,
+                                          SSL3_MT_CERTIFICATE_REQUEST)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
-    d = p = ssl_handshake_start(s);
 
     /* get the list of acceptable cert types */
-    p++;
-    n = ssl3_get_req_cert_type(s, p);
-    d[0] = n;
-    p += n;
-    n++;
+    if (!WPACKET_start_sub_packet_u8(&pkt)
+            || !ssl3_get_req_cert_type(s, &pkt)
+            || !WPACKET_close(&pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     if (SSL_USE_SIGALGS(s)) {
         const unsigned char *psigs;
-        unsigned char *etmp = p;
         nl = tls12_get_psigalgs(s, &psigs);
-        /* Skip over length for now */
-        p += 2;
-        nl = tls12_copy_sigalgs_old(s, p, psigs, nl);
-        /* Now fill in length */
-        s2n(nl, etmp);
-        p += nl;
-        n += nl + 2;
+        if (!WPACKET_start_sub_packet_u16(&pkt)
+                || !tls12_copy_sigalgs(s, &pkt, psigs, nl)
+                || !WPACKET_close(&pkt)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
+                   ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
     }
 
-    off = n;
-    p += 2;
-    n += 2;
+    /* Start sub-packet for client CA list */
+    if (!WPACKET_start_sub_packet_u16(&pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     sk = SSL_get_client_CA_list(s);
-    nl = 0;
     if (sk != NULL) {
         for (i = 0; i < sk_X509_NAME_num(sk); i++) {
-            name = sk_X509_NAME_value(sk, i);
-            j = i2d_X509_NAME(name, NULL);
-            if (!BUF_MEM_grow_clean(buf, SSL_HM_HEADER_LENGTH(s) + n + j + 2)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_BUF_LIB);
+            unsigned char *namebytes;
+            X509_NAME *name = sk_X509_NAME_value(sk, i);
+            int namelen;
+
+            if (name == NULL
+                    || (namelen = i2d_X509_NAME(name, NULL)) < 0
+                    || !WPACKET_sub_allocate_bytes_u16(&pkt, namelen,
+                                                       &namebytes)
+                    || i2d_X509_NAME(name, &namebytes) != namelen) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
+                       ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            p = ssl_handshake_start(s) + n;
-            s2n(j, p);
-            i2d_X509_NAME(name, &p);
-            n += 2 + j;
-            nl += 2 + j;
         }
     }
     /* else no CA names */
-    p = ssl_handshake_start(s) + off;
-    s2n(nl, p);
 
-    if (!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_REQUEST, n)) {
+    if (!WPACKET_close(&pkt)
+            || !ssl_close_construct_packet(s, &pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -2024,6 +2028,8 @@ int tls_construct_certificate_request(SSL *s)
 
     return 1;
  err:
+    WPACKET_cleanup(&pkt);
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
     ossl_statem_set_error(s);
     return 0;
 }
