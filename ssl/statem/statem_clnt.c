@@ -2496,7 +2496,7 @@ int tls_construct_client_key_exchange(SSL *s)
     } else if (alg_k & SSL_kSRP) {
         if (!tls_construct_cke_srp(s, &pkt, &al))
             goto err;
-    } else {
+    } else if (!(alg_k & SSL_kPSK)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
         goto err;
