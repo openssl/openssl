@@ -872,12 +872,9 @@ static int dtls_get_reassembled_message(SSL *s, long *len)
  * ssl->session->read_compression       assign
  * ssl->session->read_hash              assign
  */
-int dtls_construct_change_cipher_spec(SSL *s)
+int dtls_construct_change_cipher_spec(SSL *s, WPACKET *pkt)
 {
-    WPACKET pkt;
-
-    if (!WPACKET_init(&pkt, s->init_buf)
-            || !WPACKET_put_bytes_u8(&pkt, SSL3_MT_CCS)) {
+    if (!WPACKET_put_bytes_u8(pkt, SSL3_MT_CCS)) {
         SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -888,17 +885,12 @@ int dtls_construct_change_cipher_spec(SSL *s)
     if (s->version == DTLS1_BAD_VER) {
         s->d1->next_handshake_write_seq++;
 
-        if (!WPACKET_put_bytes_u16(&pkt, s->d1->handshake_write_seq)) {
+        if (!WPACKET_put_bytes_u16(pkt, s->d1->handshake_write_seq)) {
             SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
         s->init_num += 2;
-    }
-
-    if (!WPACKET_finish(&pkt)) {
-        SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
-        goto err;
     }
 
     s->init_off = 0;
@@ -913,11 +905,9 @@ int dtls_construct_change_cipher_spec(SSL *s)
     }
 
     return 1;
- err:
-    WPACKET_cleanup(&pkt);
-    ossl_statem_set_error(s);
-    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
 
+ err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
     return 0;
 }
 
@@ -1235,8 +1225,7 @@ int dtls1_close_construct_packet(SSL *s, WPACKET *pkt)
 
     if (!WPACKET_close(pkt)
             || !WPACKET_get_length(pkt, &msglen)
-            || msglen > INT_MAX
-            || !WPACKET_finish(pkt))
+            || msglen > INT_MAX)
         return 0;
     s->d1->w_msg_hdr.msg_len = msglen - DTLS1_HM_HEADER_LENGTH;
     s->d1->w_msg_hdr.frag_len = msglen - DTLS1_HM_HEADER_LENGTH;
