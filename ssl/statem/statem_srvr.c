@@ -1610,7 +1610,7 @@ int tls_construct_server_key_exchange(SSL *s)
             || !ssl_set_handshake_header2(s, &pkt,
                                           SSL3_MT_SERVER_KEY_EXCHANGE)
             || !WPACKET_get_total_written(&pkt, &paramoffset)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
         goto f_err;
     }
 
