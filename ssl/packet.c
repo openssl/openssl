@@ -16,9 +16,9 @@ int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 {
     if (!WPACKET_reserve_bytes(pkt, len, allocbytes))
         return 0;
+
     pkt->written += len;
     pkt->curr += len;
-
     return 1;
 }
 
