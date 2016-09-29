@@ -2078,7 +2078,9 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370
 # define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
 # define SSL_F_OPENSSL_INIT_SSL                           342
+# define SSL_F_OSSL_STATEM_CLIENT_CONSTRUCT_MESSAGE       430
 # define SSL_F_OSSL_STATEM_CLIENT_READ_TRANSITION         417
+# define SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE       431
 # define SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION         418
 # define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SSL3_CHANGE_CIPHER_STATE                   129

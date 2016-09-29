@@ -109,7 +109,6 @@ __owur MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt);
 __owur WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst);
 __owur int tls_construct_server_hello(SSL *s, WPACKET *pkt);
-__owur int tls_construct_hello_request(SSL *s, WPACKET *pkt);
 __owur int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt);
 __owur int tls_construct_server_certificate(SSL *s, WPACKET *pkt);
 __owur int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt);

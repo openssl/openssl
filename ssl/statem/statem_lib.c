@@ -75,11 +75,6 @@ int tls_construct_finished(SSL *s, WPACKET *pkt, const char *sender, int slen)
 {
     int i;
 
-    if (!ssl_set_handshake_header(s, pkt, SSL3_MT_FINISHED)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
     i = s->method->ssl3_enc->final_finish_mac(s,
                                               sender, slen,
                                               s->s3->tmp.finish_md);
@@ -106,11 +101,6 @@ int tls_construct_finished(SSL *s, WPACKET *pkt, const char *sender, int slen)
         OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_server_finished, s->s3->tmp.finish_md, i);
         s->s3->previous_server_finished_len = i;
-    }
-
-    if (!ssl_close_construct_packet(s, pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
-        goto err;
     }
 
     return 1;
@@ -278,11 +268,9 @@ int tls_construct_change_cipher_spec(SSL *s, WPACKET *pkt)
 
 unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
 {
-    if (!ssl_set_handshake_header(s, pkt, SSL3_MT_CERTIFICATE)
-            || !WPACKET_start_sub_packet_u24(pkt)
+    if (!WPACKET_start_sub_packet_u24(pkt)
             || !ssl_add_cert_chain(s, pkt, cpk)
-            || !WPACKET_close(pkt)
-            || !ssl_close_construct_packet(s, pkt)) {
+            || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
         return 0;
     }
