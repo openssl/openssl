@@ -1212,13 +1212,7 @@ void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
     n2l3(data, msg_hdr->frag_len);
 }
 
-/*
- * Temporary name. To be renamed dtls1_set_handshake_header() once all WPACKET
- * conversion is complete. The old dtls1_set_handshake_heder() can be deleted
- * at that point.
- * TODO - RENAME ME
- */
-int dtls1_set_handshake_header2(SSL *s, WPACKET *pkt, int htype)
+int dtls1_set_handshake_header(SSL *s, WPACKET *pkt, int htype)
 {
     unsigned char *header;
 
