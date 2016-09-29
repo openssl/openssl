@@ -622,52 +622,91 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
 int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt)
 {
     OSSL_STATEM *st = &s->statem;
+    int (*confunc) (SSL *s, WPACKET *pkt) = NULL;
+    int ret = 1, mt;
 
-    switch (st->hand_state) {
-    default:
-        /* Shouldn't happen */
-        return 0;
-
-    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
-        return dtls_construct_hello_verify_request(s, pkt);
-
-    case TLS_ST_SW_HELLO_REQ:
-        return tls_construct_hello_request(s, pkt);
-
-    case TLS_ST_SW_SRVR_HELLO:
-        return tls_construct_server_hello(s, pkt);
-
-    case TLS_ST_SW_CERT:
-        return tls_construct_server_certificate(s, pkt);
-
-    case TLS_ST_SW_KEY_EXCH:
-        return tls_construct_server_key_exchange(s, pkt);
-
-    case TLS_ST_SW_CERT_REQ:
-        return tls_construct_certificate_request(s, pkt);
-
-    case TLS_ST_SW_SRVR_DONE:
-        return tls_construct_server_done(s, pkt);
-
-    case TLS_ST_SW_SESSION_TICKET:
-        return tls_construct_new_session_ticket(s, pkt);
-
-    case TLS_ST_SW_CERT_STATUS:
-        return tls_construct_cert_status(s, pkt);
-
-    case TLS_ST_SW_CHANGE:
+    if (st->hand_state == TLS_ST_SW_CHANGE) {
+        /* Special case becase it is a different content type */
         if (SSL_IS_DTLS(s))
             return dtls_construct_change_cipher_spec(s, pkt);
-        else
-            return tls_construct_change_cipher_spec(s, pkt);
 
-    case TLS_ST_SW_FINISHED:
-        return tls_construct_finished(s, pkt,
-                                      s->method->
-                                      ssl3_enc->server_finished_label,
-                                      s->method->
-                                      ssl3_enc->server_finished_label_len);
+        return tls_construct_change_cipher_spec(s, pkt);
+    } else if (st->hand_state == DTLS_ST_SW_HELLO_VERIFY_REQUEST) {
+        /* Special case because we don't call ssl_close_construct_packet() */
+        return dtls_construct_hello_verify_request(s, pkt);
+    } else {
+        switch (st->hand_state) {
+        default:
+            /* Shouldn't happen */
+            return 0;
+
+        case TLS_ST_SW_HELLO_REQ:
+            /* No construction function needed */
+            mt = SSL3_MT_HELLO_REQUEST;
+            break;
+
+        case TLS_ST_SW_SRVR_HELLO:
+            confunc = tls_construct_server_hello;
+            mt = SSL3_MT_SERVER_HELLO;
+            break;
+
+        case TLS_ST_SW_CERT:
+            confunc = tls_construct_server_certificate;
+            mt = SSL3_MT_CERTIFICATE;
+            break;
+
+        case TLS_ST_SW_KEY_EXCH:
+            confunc = tls_construct_server_key_exchange;
+            mt = SSL3_MT_SERVER_KEY_EXCHANGE;
+            break;
+
+        case TLS_ST_SW_CERT_REQ:
+            confunc = tls_construct_certificate_request;
+            mt = SSL3_MT_CERTIFICATE_REQUEST;
+            break;
+
+        case TLS_ST_SW_SRVR_DONE:
+            confunc = tls_construct_server_done;
+            mt = SSL3_MT_SERVER_DONE;
+            break;
+
+        case TLS_ST_SW_SESSION_TICKET:
+            confunc = tls_construct_new_session_ticket;
+            mt = SSL3_MT_NEWSESSION_TICKET;
+            break;
+
+        case TLS_ST_SW_CERT_STATUS:
+            confunc = tls_construct_cert_status;
+            mt = SSL3_MT_CERTIFICATE_STATUS;
+            break;
+
+        case TLS_ST_SW_FINISHED:
+            mt = SSL3_MT_FINISHED;
+            break;
+        }
+
+        if (!ssl_set_handshake_header(s, pkt, mt)) {
+            SSLerr(SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE,
+                   ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        if (st->hand_state == TLS_ST_SW_FINISHED)
+            ret = tls_construct_finished(s, pkt,
+                                         s->method->
+                                         ssl3_enc->server_finished_label,
+                                         s->method->
+                                         ssl3_enc->server_finished_label_len);
+        else if (confunc != NULL)
+            ret = confunc(s, pkt);
+
+        if (!ret || !ssl_close_construct_packet(s, pkt)) {
+            SSLerr(SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE,
+                   ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
+    return 1;
 }
 
 /*
@@ -828,17 +867,6 @@ static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
     return ret;
 }
 #endif
-
-int tls_construct_hello_request(SSL *s, WPACKET *pkt)
-{
-    if (!ssl_set_handshake_header(s, pkt, SSL3_MT_HELLO_REQUEST)
-            || !ssl_close_construct_packet(s, pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_HELLO_REQUEST, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    return 1;
-}
 
 int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
                                   unsigned char cookie_len)
@@ -1492,8 +1520,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
     int sl, compm, al = SSL_AD_INTERNAL_ERROR;
     size_t len;
 
-    if (!ssl_set_handshake_header(s, pkt, SSL3_MT_SERVER_HELLO)
-            || !WPACKET_put_bytes_u16(pkt, s->version)
+    if (!WPACKET_put_bytes_u16(pkt, s->version)
                /*
                 * Random stuff. Filling of the server_random takes place in
                 * tls_process_client_hello()
@@ -1544,8 +1571,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
             || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt, &len)
             || !WPACKET_put_bytes_u8(pkt, compm)
             || !ssl_prepare_serverhello_tlsext(s)
-            || !ssl_add_serverhello_tlsext(s, pkt, &al)
-            || !ssl_close_construct_packet(s, pkt)) {
+            || !ssl_add_serverhello_tlsext(s, pkt, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -1558,21 +1584,13 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
 
 int tls_construct_server_done(SSL *s, WPACKET *pkt)
 {
-    if (!ssl_set_handshake_header(s, pkt, SSL3_MT_SERVER_DONE)
-            || !ssl_close_construct_packet(s, pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_DONE, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
     if (!s->s3->tmp.cert_request) {
-        if (!ssl3_digest_cached_records(s, 0))
-            goto err;
+        if (!ssl3_digest_cached_records(s, 0)) {
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+            return 0;
+        }
     }
     return 1;
-
- err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-    return 0;
 }
 
 int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
@@ -1593,9 +1611,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
     EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
     size_t paramlen, paramoffset;
 
-    if (!ssl_set_handshake_header(s, pkt,
-                                         SSL3_MT_SERVER_KEY_EXCHANGE)
-            || !WPACKET_get_total_written(pkt, &paramoffset)) {
+    if (!WPACKET_get_total_written(pkt, &paramoffset)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
         goto f_err;
     }
@@ -1900,11 +1916,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         }
     }
 
-    if (!ssl_close_construct_packet(s, pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-        goto f_err;
-    }
-
     EVP_MD_CTX_free(md_ctx);
     return 1;
  f_err:
@@ -1924,13 +1935,6 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
 {
     int i, nl;
     STACK_OF(X509_NAME) *sk = NULL;
-
-    if (!ssl_set_handshake_header(s, pkt,
-                                         SSL3_MT_CERTIFICATE_REQUEST)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
 
     /* get the list of acceptable cert types */
     if (!WPACKET_start_sub_packet_u8(pkt)
@@ -1978,8 +1982,7 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
     }
     /* else no CA names */
 
-    if (!WPACKET_close(pkt)
-            || !ssl_close_construct_packet(s, pkt)) {
+    if (!WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -2954,11 +2957,6 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         return 0;
     }
 
-    if (!ssl_set_handshake_header(s, pkt, SSL3_MT_NEWSESSION_TICKET)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
     ctx = EVP_CIPHER_CTX_new();
     hctx = HMAC_CTX_new();
     if (ctx == NULL || hctx == NULL) {
@@ -3067,8 +3065,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             || hlen > EVP_MAX_MD_SIZE
             || !WPACKET_allocate_bytes(pkt, hlen, &macdata2)
             || macdata1 != macdata2
-            || !WPACKET_close(pkt)
-            || !ssl_close_construct_packet(s, pkt)) {
+            || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -3087,11 +3084,9 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
 
 int tls_construct_cert_status(SSL *s, WPACKET *pkt)
 {
-    if (!ssl_set_handshake_header(s, pkt, SSL3_MT_CERTIFICATE_STATUS)
-            || !WPACKET_put_bytes_u8(pkt, s->tlsext_status_type)
+    if (!WPACKET_put_bytes_u8(pkt, s->tlsext_status_type)
             || !WPACKET_sub_memcpy_u24(pkt, s->tlsext_ocsp_resp,
-                                       s->tlsext_ocsp_resplen)
-            || !ssl_close_construct_packet(s, pkt)) {
+                                       s->tlsext_ocsp_resplen)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_STATUS, ERR_R_INTERNAL_ERROR);
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         return 0;
