@@ -42,7 +42,7 @@ const SSL3_ENC_METHOD DTLSv1_enc_data = {
     tls1_export_keying_material,
     SSL_ENC_FLAG_DTLS | SSL_ENC_FLAG_EXPLICIT_IV,
     DTLS1_HM_HEADER_LENGTH,
-    dtls1_set_handshake_header2,
+    dtls1_set_handshake_header,
     dtls1_close_construct_packet,
     dtls1_handshake_write
 };
@@ -62,7 +62,7 @@ const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
     SSL_ENC_FLAG_DTLS | SSL_ENC_FLAG_EXPLICIT_IV | SSL_ENC_FLAG_SIGALGS
         | SSL_ENC_FLAG_SHA256_PRF | SSL_ENC_FLAG_TLS1_2_CIPHERS,
     DTLS1_HM_HEADER_LENGTH,
-    dtls1_set_handshake_header2,
+    dtls1_set_handshake_header,
     dtls1_close_construct_packet,
     dtls1_handshake_write
 };

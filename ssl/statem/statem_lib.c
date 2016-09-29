@@ -78,7 +78,7 @@ int tls_construct_finished(SSL *s, const char *sender, int slen)
     WPACKET pkt;
 
     if (!WPACKET_init(&pkt, s->init_buf)
-            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_FINISHED)) {
+            || !ssl_set_handshake_header(s, &pkt, SSL3_MT_FINISHED)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -297,7 +297,7 @@ unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk)
         goto err;
     }
 
-    if (!ssl_set_handshake_header2(s, &pkt, SSL3_MT_CERTIFICATE)
+    if (!ssl_set_handshake_header(s, &pkt, SSL3_MT_CERTIFICATE)
             || !WPACKET_start_sub_packet_u24(&pkt)) {
         SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
         goto err;

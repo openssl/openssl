@@ -834,7 +834,7 @@ int tls_construct_hello_request(SSL *s)
     WPACKET pkt;
 
     if (!WPACKET_init(&pkt, s->init_buf)
-            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_HELLO_REQUEST)
+            || !ssl_set_handshake_header(s, &pkt, SSL3_MT_HELLO_REQUEST)
             || !ssl_close_construct_packet(s, &pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_HELLO_REQUEST, ERR_R_INTERNAL_ERROR);
         ossl_statem_set_error(s);
@@ -872,8 +872,8 @@ int dtls_construct_hello_verify_request(SSL *s)
     }
 
     if (!WPACKET_init(&pkt, s->init_buf)
-            || !ssl_set_handshake_header2(s, &pkt,
-                                          DTLS1_MT_HELLO_VERIFY_REQUEST)
+            || !ssl_set_handshake_header(s, &pkt,
+                                         DTLS1_MT_HELLO_VERIFY_REQUEST)
             || !dtls_raw_hello_verify_request(&pkt, s->d1->cookie,
                                               s->d1->cookie_len)
                /*
@@ -1504,7 +1504,7 @@ int tls_construct_server_hello(SSL *s)
     WPACKET pkt;
 
     if (!WPACKET_init(&pkt, s->init_buf)
-            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_SERVER_HELLO)
+            || !ssl_set_handshake_header(s, &pkt, SSL3_MT_SERVER_HELLO)
             || !WPACKET_put_bytes_u16(&pkt, s->version)
                /*
                 * Random stuff. Filling of the server_random takes place in
@@ -1575,7 +1575,7 @@ int tls_construct_server_done(SSL *s)
     WPACKET pkt;
 
     if (!WPACKET_init(&pkt, s->init_buf)
-            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_SERVER_DONE)
+            || !ssl_set_handshake_header(s, &pkt, SSL3_MT_SERVER_DONE)
             || !ssl_close_construct_packet(s, &pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_DONE, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -1614,8 +1614,8 @@ int tls_construct_server_key_exchange(SSL *s)
     size_t paramlen, paramoffset;
 
     if (!WPACKET_init(&pkt, s->init_buf)
-            || !ssl_set_handshake_header2(s, &pkt,
-                                          SSL3_MT_SERVER_KEY_EXCHANGE)
+            || !ssl_set_handshake_header(s, &pkt,
+                                         SSL3_MT_SERVER_KEY_EXCHANGE)
             || !WPACKET_get_total_written(&pkt, &paramoffset)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
         goto f_err;
@@ -1950,8 +1950,8 @@ int tls_construct_certificate_request(SSL *s)
     WPACKET pkt;
 
     if (!WPACKET_init(&pkt, s->init_buf)
-            || !ssl_set_handshake_header2(s, &pkt,
-                                          SSL3_MT_CERTIFICATE_REQUEST)) {
+            || !ssl_set_handshake_header(s, &pkt,
+                                         SSL3_MT_CERTIFICATE_REQUEST)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -2985,7 +2985,7 @@ int tls_construct_new_session_ticket(SSL *s)
     }
 
     if (!WPACKET_init(&pkt, s->init_buf)
-            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_NEWSESSION_TICKET)) {
+            || !ssl_set_handshake_header(s, &pkt, SSL3_MT_NEWSESSION_TICKET)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -3123,8 +3123,7 @@ int tls_construct_cert_status(SSL *s)
     WPACKET pkt;
 
     if (!WPACKET_init(&pkt, s->init_buf)
-            || !ssl_set_handshake_header2(s, &pkt,
-                                          SSL3_MT_CERTIFICATE_STATUS)
+            || !ssl_set_handshake_header(s, &pkt, SSL3_MT_CERTIFICATE_STATUS)
             || !WPACKET_put_bytes_u8(&pkt, s->tlsext_status_type)
             || !WPACKET_sub_memcpy_u24(&pkt, s->tlsext_ocsp_resp,
                                        s->tlsext_ocsp_resplen)

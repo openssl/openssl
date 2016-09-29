@@ -738,7 +738,7 @@ int tls_construct_client_hello(SSL *s)
     if (i && ssl_fill_hello_random(s, 0, p, sizeof(s->s3->client_random)) <= 0)
         goto err;
 
-    if (!ssl_set_handshake_header2(s, &pkt, SSL3_MT_CLIENT_HELLO)) {
+    if (!ssl_set_handshake_header(s, &pkt, SSL3_MT_CLIENT_HELLO)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -2469,7 +2469,7 @@ int tls_construct_client_key_exchange(SSL *s)
         goto err;
     }
 
-    if (!ssl_set_handshake_header2(s, &pkt, SSL3_MT_CLIENT_KEY_EXCHANGE)) {
+    if (!ssl_set_handshake_header(s, &pkt, SSL3_MT_CLIENT_KEY_EXCHANGE)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -2605,7 +2605,7 @@ int tls_construct_client_verify(SSL *s)
         goto err;
     }
 
-    if (!ssl_set_handshake_header2(s, &pkt, SSL3_MT_CERTIFICATE_VERIFY)) {
+    if (!ssl_set_handshake_header(s, &pkt, SSL3_MT_CERTIFICATE_VERIFY)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -2878,7 +2878,7 @@ int tls_construct_next_proto(SSL *s)
         goto err;
     }
 
-    if (!ssl_set_handshake_header2(s, &pkt, SSL3_MT_NEXT_PROTO)) {
+    if (!ssl_set_handshake_header(s, &pkt, SSL3_MT_NEXT_PROTO)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_NEXT_PROTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
