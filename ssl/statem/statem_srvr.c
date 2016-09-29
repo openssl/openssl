@@ -1813,6 +1813,7 @@ int tls_construct_server_key_exchange(SSL *s)
          */
         if ((i == 2) && (type & (SSL_kDHE | SSL_kDHEPSK))) {
             size_t len = BN_num_bytes(r[0]) - BN_num_bytes(r[2]);
+
             if (len > 0) {
                 if (!WPACKET_allocate_bytes(&pkt, len, &binval)) {
                     SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
