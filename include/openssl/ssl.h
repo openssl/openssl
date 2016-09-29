@@ -2231,6 +2231,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY                358
 # define SSL_F_TLS_CONSTRUCT_FINISHED                     359
 # define SSL_F_TLS_CONSTRUCT_HELLO_REQUEST                373
+# define SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET           428
 # define SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE           374
 # define SSL_F_TLS_CONSTRUCT_SERVER_DONE                  375
 # define SSL_F_TLS_CONSTRUCT_SERVER_HELLO                 376

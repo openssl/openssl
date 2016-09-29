@@ -256,6 +256,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_FINISHED), "tls_construct_finished"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_HELLO_REQUEST),
      "tls_construct_hello_request"},
+    {ERR_FUNC(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET),
+     "tls_construct_new_session_ticket"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE),
      "tls_construct_server_certificate"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_SERVER_DONE), "tls_construct_server_done"},
