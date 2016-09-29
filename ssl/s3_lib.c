@@ -3708,15 +3708,13 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     return (ret);
 }
 
-int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
+int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt)
 {
-    int ret = 0;
     uint32_t alg_k, alg_a = 0;
 
     /* If we have custom certificate types set, use them */
     if (s->cert->ctypes) {
-        memcpy(p, s->cert->ctypes, s->cert->ctype_num);
-        return (int)s->cert->ctype_num;
+        return WPACKET_memcpy(pkt, s->cert->ctypes, s->cert->ctype_num);
     }
     /* Get mask of algorithms disabled by signature list */
     ssl_set_sig_mask(&alg_a, s, SSL_SECOP_SIGALG_MASK);
@@ -3724,45 +3722,43 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
 #ifndef OPENSSL_NO_GOST
-    if (s->version >= TLS1_VERSION) {
-        if (alg_k & SSL_kGOST) {
-            p[ret++] = TLS_CT_GOST01_SIGN;
-            p[ret++] = TLS_CT_GOST12_SIGN;
-            p[ret++] = TLS_CT_GOST12_512_SIGN;
-            return (ret);
-        }
-    }
+    if (s->version >= TLS1_VERSION && (alg_k & SSL_kGOST))
+            return WPACKET_put_bytes_u8(pkt, TLS_CT_GOST01_SIGN)
+                    && WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_SIGN)
+                    && WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_512_SIGN);
 #endif
 
     if ((s->version == SSL3_VERSION) && (alg_k & SSL_kDHE)) {
 #ifndef OPENSSL_NO_DH
 # ifndef OPENSSL_NO_RSA
-        p[ret++] = SSL3_CT_RSA_EPHEMERAL_DH;
+        if (!WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_EPHEMERAL_DH))
+            return 0;
 # endif
 # ifndef OPENSSL_NO_DSA
-        p[ret++] = SSL3_CT_DSS_EPHEMERAL_DH;
+        if (!WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_EPHEMERAL_DH))
+            return 0;
 # endif
 #endif                          /* !OPENSSL_NO_DH */
     }
 #ifndef OPENSSL_NO_RSA
-    if (!(alg_a & SSL_aRSA))
-        p[ret++] = SSL3_CT_RSA_SIGN;
+    if (!(alg_a & SSL_aRSA) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_SIGN))
+        return 0;
 #endif
 #ifndef OPENSSL_NO_DSA
-    if (!(alg_a & SSL_aDSS))
-        p[ret++] = SSL3_CT_DSS_SIGN;
+    if (!(alg_a & SSL_aDSS) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_SIGN))
+        return 0;
 #endif
 #ifndef OPENSSL_NO_EC
     /*
      * ECDSA certs can be used with RSA cipher suites too so we don't
      * need to check for SSL_kECDH or SSL_kECDHE
      */
-    if (s->version >= TLS1_VERSION) {
-        if (!(alg_a & SSL_aECDSA))
-            p[ret++] = TLS_CT_ECDSA_SIGN;
-    }
+    if (s->version >= TLS1_VERSION
+            && !(alg_a & SSL_aECDSA)
+            && !WPACKET_put_bytes_u8(pkt, TLS_CT_ECDSA_SIGN))
+        return 0;
 #endif
-    return (ret);
+    return 1;
 }
 
 static int ssl3_set_req_cert_type(CERT *c, const unsigned char *p, size_t len)
