@@ -3125,36 +3125,23 @@ int tls_construct_new_session_ticket(SSL *s)
 
 int tls_construct_cert_status(SSL *s)
 {
-    unsigned char *p;
-    size_t msglen;
+    WPACKET pkt;
 
-    /*-
-     * Grow buffer if need be: the length calculation is as
-     * follows handshake_header_length +
-     * 1 (ocsp response type) + 3 (ocsp response length)
-     * + (ocsp response)
-     */
-    msglen = 4 + s->tlsext_ocsp_resplen;
-    if (!BUF_MEM_grow(s->init_buf, SSL_HM_HEADER_LENGTH(s) + msglen))
-        goto err;
-
-    p = ssl_handshake_start(s);
-
-    /* status type */
-    *(p++) = s->tlsext_status_type;
-    /* length of OCSP response */
-    l2n3(s->tlsext_ocsp_resplen, p);
-    /* actual response */
-    memcpy(p, s->tlsext_ocsp_resp, s->tlsext_ocsp_resplen);
-
-    if (!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_STATUS, msglen))
-        goto err;
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !ssl_set_handshake_header2(s, &pkt,
+                                          SSL3_MT_CERTIFICATE_STATUS)
+            || !WPACKET_put_bytes_u8(&pkt, s->tlsext_status_type)
+            || !WPACKET_sub_memcpy_u24(&pkt, s->tlsext_ocsp_resp,
+                                       s->tlsext_ocsp_resplen)
+            || !ssl_close_construct_packet(s, &pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_STATUS, ERR_R_INTERNAL_ERROR);
+        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+        ossl_statem_set_error(s);
+        WPACKET_cleanup(&pkt);
+        return 0;
+    }
 
     return 1;
-
- err:
-    ossl_statem_set_error(s);
-    return 0;
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
