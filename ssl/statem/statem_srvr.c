@@ -1499,9 +1499,7 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 
 int tls_construct_server_hello(SSL *s)
 {
-    int sl;
-    int al = SSL_AD_INTERNAL_ERROR;
-    int compm;
+    int sl, compm, al = SSL_AD_INTERNAL_ERROR;
     size_t len;
     WPACKET pkt;
 
