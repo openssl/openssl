@@ -2068,8 +2068,6 @@ __owur int ssl_add_serverhello_renegotiate_ext(SSL *s, WPACKET *pkt);
 __owur int ssl_parse_serverhello_renegotiate_ext(SSL *s, PACKET *pkt, int *al);
 __owur int ssl_parse_clienthello_renegotiate_ext(SSL *s, PACKET *pkt, int *al);
 __owur long ssl_get_algorithm2(SSL *s);
-__owur size_t tls12_copy_sigalgs_old(SSL *s, unsigned char *out,
-                                     const unsigned char *psig, size_t psiglen);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
                               const unsigned char *psig, size_t psiglen);
 __owur int tls1_save_sigalgs(SSL *s, const unsigned char *data, int dsize);
