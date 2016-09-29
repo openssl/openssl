@@ -2956,15 +2956,17 @@ int tls_construct_new_session_ticket(SSL *s)
     unsigned char *senc = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     HMAC_CTX *hctx = NULL;
-    unsigned char *p, *macstart;
+    unsigned char *p, *encdata1, *encdata2, *macdata1, *macdata2;
     const unsigned char *const_p;
-    int len, slen_full, slen;
+    int len, slen_full, slen, lenfinal;
     SSL_SESSION *sess;
     unsigned int hlen;
     SSL_CTX *tctx = s->initial_ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char key_name[TLSEXT_KEYNAME_LENGTH];
     int iv_len;
+    size_t macoffset, macendoffset;
+    WPACKET pkt;
 
     /* get session encoding length */
     slen_full = i2d_SSL_SESSION(s->session, NULL);
@@ -2980,6 +2982,12 @@ int tls_construct_new_session_ticket(SSL *s)
     if (senc == NULL) {
         ossl_statem_set_error(s);
         return 0;
+    }
+
+    if (!WPACKET_init(&pkt, s->init_buf)
+            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_NEWSESSION_TICKET)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        goto err;
     }
 
     ctx = EVP_CIPHER_CTX_new();
@@ -3014,21 +3022,6 @@ int tls_construct_new_session_ticket(SSL *s)
     }
     SSL_SESSION_free(sess);
 
-    /*-
-     * Grow buffer if need be: the length calculation is as
-     * follows handshake_header_length +
-     * 4 (ticket lifetime hint) + 2 (ticket length) +
-     * sizeof(keyname) + max_iv_len (iv length) +
-     * max_enc_block_size (max encrypted session * length) +
-     * max_md_size (HMAC) + session_length.
-     */
-    if (!BUF_MEM_grow(s->init_buf,
-                      SSL_HM_HEADER_LENGTH(s) + 6 + sizeof(key_name) +
-                      EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
-                      EVP_MAX_MD_SIZE + slen))
-        goto err;
-
-    p = ssl_handshake_start(s);
     /*
      * Initialize HMAC and cipher contexts. If callback present it does
      * all the work otherwise use generated values from parent ctx.
@@ -3039,11 +3032,15 @@ int tls_construct_new_session_ticket(SSL *s)
                                              hctx, 1);
 
         if (ret == 0) {
-            l2n(0, p);          /* timeout */
-            s2n(0, p);          /* length */
-            if (!ssl_set_handshake_header
-                (s, SSL3_MT_NEWSESSION_TICKET, p - ssl_handshake_start(s)))
+
+            /* Put timeout and length */
+            if (!WPACKET_put_bytes_u32(&pkt, 0)
+                    || !WPACKET_put_bytes_u16(&pkt, 0)
+                    || !ssl_close_construct_packet(s, &pkt)) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
+                       ERR_R_INTERNAL_ERROR);
                 goto err;
+            }
             OPENSSL_free(senc);
             EVP_CIPHER_CTX_free(ctx);
             HMAC_CTX_free(hctx);
@@ -3074,44 +3071,38 @@ int tls_construct_new_session_ticket(SSL *s)
      * for resumed session (for simplicity), and guess that tickets for
      * new sessions will live as long as their sessions.
      */
-    l2n(s->hit ? 0 : s->session->timeout, p);
-
-    /* Skip ticket length for now */
-    p += 2;
-    /* Output key name */
-    macstart = p;
-    memcpy(p, key_name, sizeof(key_name));
-    p += sizeof(key_name);
-    /* output IV */
-    memcpy(p, iv, iv_len);
-    p += iv_len;
-    /* Encrypt session data */
-    if (!EVP_EncryptUpdate(ctx, p, &len, senc, slen))
+    if (!WPACKET_put_bytes_u32(&pkt, s->hit ? 0 : s->session->timeout)
+               /* Now the actual ticket data */
+            || !WPACKET_start_sub_packet_u16(&pkt)
+            || !WPACKET_get_total_written(&pkt, &macoffset)
+               /* Output key name */
+            || !WPACKET_memcpy(&pkt, key_name, sizeof(key_name))
+               /* output IV */
+            || !WPACKET_memcpy(&pkt, iv, iv_len)
+            || !WPACKET_reserve_bytes(&pkt, slen + EVP_MAX_BLOCK_LENGTH,
+                                      &encdata1)
+               /* Encrypt session data */
+            || !EVP_EncryptUpdate(ctx, encdata1, &len, senc, slen)
+            || !WPACKET_allocate_bytes(&pkt, len, &encdata2)
+            || encdata1 != encdata2
+            || !EVP_EncryptFinal(ctx, encdata1 + len, &lenfinal)
+            || !WPACKET_allocate_bytes(&pkt, lenfinal, &encdata2)
+            || encdata1 + len != encdata2
+            || len + lenfinal > slen + EVP_MAX_BLOCK_LENGTH
+            || !WPACKET_get_total_written(&pkt, &macendoffset)
+            || !HMAC_Update(hctx,
+                            (unsigned char *)s->init_buf->data + macoffset,
+                            macendoffset - macoffset)
+            || !WPACKET_reserve_bytes(&pkt, EVP_MAX_MD_SIZE, &macdata1)
+            || !HMAC_Final(hctx, macdata1, &hlen)
+            || hlen > EVP_MAX_MD_SIZE
+            || !WPACKET_allocate_bytes(&pkt, hlen, &macdata2)
+            || macdata1 != macdata2
+            || !WPACKET_close(&pkt)
+            || !ssl_close_construct_packet(s, &pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
-    p += len;
-    if (!EVP_EncryptFinal(ctx, p, &len))
-        goto err;
-    p += len;
-
-    if (!HMAC_Update(hctx, macstart, p - macstart))
-        goto err;
-    if (!HMAC_Final(hctx, p, &hlen))
-        goto err;
-
-    EVP_CIPHER_CTX_free(ctx);
-    HMAC_CTX_free(hctx);
-    ctx = NULL;
-    hctx = NULL;
-
-    p += hlen;
-    /* Now write out lengths: p points to end of data written */
-    /* Total length */
-    len = p - ssl_handshake_start(s);
-    /* Skip ticket lifetime hint */
-    p = ssl_handshake_start(s) + 4;
-    s2n(len - 6, p);
-    if (!ssl_set_handshake_header(s, SSL3_MT_NEWSESSION_TICKET, len))
-        goto err;
+    }
     OPENSSL_free(senc);
 
     return 1;
@@ -3119,7 +3110,9 @@ int tls_construct_new_session_ticket(SSL *s)
     OPENSSL_free(senc);
     EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
     ossl_statem_set_error(s);
+    WPACKET_cleanup(&pkt);
     return 0;
 }
 
