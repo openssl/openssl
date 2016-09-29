@@ -1879,7 +1879,8 @@ __owur int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
                                  unsigned char *p);
 __owur int ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
 void ssl3_free_digest_list(SSL *s);
-__owur unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk);
+__owur unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt,
+                                            CERT_PKEY *cpk);
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
                                             STACK_OF(SSL_CIPHER) *clnt,
                                             STACK_OF(SSL_CIPHER) *srvr);

@@ -708,8 +708,9 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
     WRITE_TRAN(*transition) (SSL *s);
     WORK_STATE(*pre_work) (SSL *s, WORK_STATE wst);
     WORK_STATE(*post_work) (SSL *s, WORK_STATE wst);
-    int (*construct_message) (SSL *s);
+    int (*construct_message) (SSL *s, WPACKET *pkt);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
+    WPACKET pkt;
 
     cb = get_callback(s);
 
@@ -764,8 +765,13 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
             }
-            if (construct_message(s) == 0)
+            if (!WPACKET_init(&pkt, s->init_buf)
+                    || !construct_message(s, &pkt)
+                    || !WPACKET_finish(&pkt)) {
+                WPACKET_cleanup(&pkt);
+                ossl_statem_set_error(s);
                 return SUB_STATE_ERROR;
+            }
 
             /* Fall through */
 
