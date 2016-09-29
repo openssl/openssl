@@ -1584,8 +1584,6 @@ typedef struct ssl3_enc_method {
     /* Handshake header length */
     unsigned int hhlen;
     /* Set the handshake header */
-    int (*set_handshake_header) (SSL *s, int type, unsigned long len);
-    /* Set the handshake header */
     int (*set_handshake_header2) (SSL *s, WPACKET *pkt, int type);
     /* Close construction of the handshake message */
     int (*close_construct_packet) (SSL *s, WPACKET *pkt);
@@ -1596,8 +1594,6 @@ typedef struct ssl3_enc_method {
 # define SSL_HM_HEADER_LENGTH(s) s->method->ssl3_enc->hhlen
 # define ssl_handshake_start(s) \
         (((unsigned char *)s->init_buf->data) + s->method->ssl3_enc->hhlen)
-# define ssl_set_handshake_header(s, htype, len) \
-        s->method->ssl3_enc->set_handshake_header(s, htype, len)
 # define ssl_set_handshake_header2(s, pkt, htype) \
         s->method->ssl3_enc->set_handshake_header2((s), (pkt), (htype))
 # define ssl_close_construct_packet(s, pkt) \
@@ -1903,7 +1899,6 @@ __owur long ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp) (void));
 __owur int ssl3_do_change_cipher_spec(SSL *ssl);
 __owur long ssl3_default_timeout(void);
 
-__owur int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
 __owur int ssl3_set_handshake_header2(SSL *s, WPACKET *pkt, int htype);
 __owur int tls_close_construct_packet(SSL *s, WPACKET *pkt);
 __owur int dtls1_set_handshake_header2(SSL *s, WPACKET *pkt, int htype);
