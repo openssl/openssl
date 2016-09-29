@@ -675,7 +675,7 @@ int WPACKET_start_sub_packet(WPACKET *pkt);
  * WPACKET_* calls. If not then the underlying buffer may be realloc'd and
  * change its location.
  */
-int WPACKET_allocate_bytes(WPACKET *pkt, size_t bytes,
+int WPACKET_allocate_bytes(WPACKET *pkt, size_t len,
                            unsigned char **allocbytes);
 
 /*
@@ -699,6 +699,34 @@ int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
     WPACKET_sub_allocate_bytes__((pkt), (len), (bytes), 3)
 #define WPACKET_sub_allocate_bytes_u32(pkt, len, bytes) \
     WPACKET_sub_allocate_bytes__((pkt), (len), (bytes), 4)
+
+/*
+ * The same as WPACKET_allocate_bytes() except the reserved bytes are not
+ * actually counted as written. Typically this will be for when we don't know
+ * how big arbitrary data is going to be up front, but we do know what the
+ * maximum size will be. If this function is used, then it should be immediately
+ * followed by a WPACKET_allocate_bytes() call before any other WPACKET
+ * functions are called (unless the write to the allocated bytes is abandoned).
+ */
+int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes);
+
+/*
+ * The "reserve_bytes" equivalent of WPACKET_sub_allocate_bytes__()
+ */
+int WPACKET_sub_reserve_bytes__(WPACKET *pkt, size_t len,
+                                 unsigned char **allocbytes, size_t lenbytes);
+
+/*
+ * Convenience macros for  WPACKET_sub_reserve_bytes with different lengths
+ */
+#define WPACKET_sub_reserve_bytes_u8(pkt, len, bytes) \
+    WPACKET_reserve_bytes__((pkt), (len), (bytes), 1)
+#define WPACKET_sub_reserve_bytes_u16(pkt, len, bytes) \
+    WPACKET_sub_reserve_bytes__((pkt), (len), (bytes), 2)
+#define WPACKET_sub_reserve_bytes_u24(pkt, len, bytes) \
+    WPACKET_sub_reserve_bytes__((pkt), (len), (bytes), 3)
+#define WPACKET_sub_reserve_bytes_u32(pkt, len, bytes) \
+    WPACKET_sub_reserve_bytes__((pkt), (len), (bytes), 4)
 
 /*
  * Write the value stored in |val| into the WPACKET. The value will consume
