@@ -779,9 +779,9 @@ int WPACKET_sub_memcpy__(WPACKET *pkt, const void *src, size_t len,
     WPACKET_sub_memcpy__((pkt), (src), (len), 1)
 #define WPACKET_sub_memcpy_u16(pkt, src, len) \
     WPACKET_sub_memcpy__((pkt), (src), (len), 2)
-#define WPACKET_sub_memcpy_bytes_u24(pkt, src, len) \
+#define WPACKET_sub_memcpy_u24(pkt, src, len) \
     WPACKET_sub_memcpy__((pkt), (src), (len), 3)
-#define WPACKET_sub_memcpy_bytes_u32(pkt, src, len) \
+#define WPACKET_sub_memcpy_u32(pkt, src, len) \
     WPACKET_sub_memcpy__((pkt), (src), (len), 4)
 
 /*
