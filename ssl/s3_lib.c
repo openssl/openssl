@@ -2779,6 +2779,10 @@ const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 
 int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype)
 {
+    /* No header in the event of a CCS */
+    if (htype == SSL3_MT_CHANGE_CIPHER_SPEC)
+        return 1;
+
     /* Set the content type and 3 bytes for the message len */
     if (!WPACKET_put_bytes_u8(pkt, htype)
             || !WPACKET_start_sub_packet_u24(pkt))

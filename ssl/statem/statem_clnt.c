@@ -516,69 +516,69 @@ int ossl_statem_client_construct_message(SSL *s, WPACKET *pkt)
     int (*confunc) (SSL *s, WPACKET *pkt) = NULL;
     int ret = 1, mt;
 
-    if (st->hand_state == TLS_ST_CW_CHANGE) {
-        /* Special case becase it is a different content type */
+    switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return 0;
+
+    case TLS_ST_CW_CHANGE:
         if (SSL_IS_DTLS(s))
-            return dtls_construct_change_cipher_spec(s, pkt);
+            confunc = dtls_construct_change_cipher_spec;
+        else
+            confunc = tls_construct_change_cipher_spec;
+        mt = SSL3_MT_CHANGE_CIPHER_SPEC;
+        break;
 
-        return tls_construct_change_cipher_spec(s, pkt);
-    } else {
-        switch (st->hand_state) {
-        default:
-            /* Shouldn't happen */
-            return 0;
+    case TLS_ST_CW_CLNT_HELLO:
+        confunc = tls_construct_client_hello;
+        mt = SSL3_MT_CLIENT_HELLO;
+        break;
 
-        case TLS_ST_CW_CLNT_HELLO:
-            confunc = tls_construct_client_hello;
-            mt = SSL3_MT_CLIENT_HELLO;
-            break;
+    case TLS_ST_CW_CERT:
+        confunc = tls_construct_client_certificate;
+        mt = SSL3_MT_CERTIFICATE;
+        break;
 
-        case TLS_ST_CW_CERT:
-            confunc = tls_construct_client_certificate;
-            mt = SSL3_MT_CERTIFICATE;
-            break;
+    case TLS_ST_CW_KEY_EXCH:
+        confunc = tls_construct_client_key_exchange;
+        mt = SSL3_MT_CLIENT_KEY_EXCHANGE;
+        break;
 
-        case TLS_ST_CW_KEY_EXCH:
-            confunc = tls_construct_client_key_exchange;
-            mt = SSL3_MT_CLIENT_KEY_EXCHANGE;
-            break;
-
-        case TLS_ST_CW_CERT_VRFY:
-            confunc = tls_construct_client_verify;
-            mt = SSL3_MT_CERTIFICATE_VERIFY;
-            break;
+    case TLS_ST_CW_CERT_VRFY:
+        confunc = tls_construct_client_verify;
+        mt = SSL3_MT_CERTIFICATE_VERIFY;
+        break;
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
-        case TLS_ST_CW_NEXT_PROTO:
-            confunc = tls_construct_next_proto;
-            mt = SSL3_MT_NEXT_PROTO;
-            break;
+    case TLS_ST_CW_NEXT_PROTO:
+        confunc = tls_construct_next_proto;
+        mt = SSL3_MT_NEXT_PROTO;
+        break;
 #endif
-        case TLS_ST_CW_FINISHED:
-            mt = SSL3_MT_FINISHED;
-            break;
-        }
+    case TLS_ST_CW_FINISHED:
+        mt = SSL3_MT_FINISHED;
+        break;
+    }
 
-        if (!ssl_set_handshake_header(s, pkt, mt)) {
-            SSLerr(SSL_F_OSSL_STATEM_CLIENT_CONSTRUCT_MESSAGE,
-                   ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
+    if (!ssl_set_handshake_header(s, pkt, mt)) {
+        SSLerr(SSL_F_OSSL_STATEM_CLIENT_CONSTRUCT_MESSAGE,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
-        if (st->hand_state == TLS_ST_CW_FINISHED)
-            ret = tls_construct_finished(s, pkt,
-                                         s->method->
-                                         ssl3_enc->client_finished_label,
-                                         s->method->
-                                         ssl3_enc->client_finished_label_len);
-        else
-            ret = confunc(s, pkt);
+    if (st->hand_state == TLS_ST_CW_FINISHED)
+        ret = tls_construct_finished(s, pkt,
+                                     s->method->
+                                     ssl3_enc->client_finished_label,
+                                     s->method->
+                                     ssl3_enc->client_finished_label_len);
+    else
+        ret = confunc(s, pkt);
 
-        if (!ret || !ssl_close_construct_packet(s, pkt)) {
-            SSLerr(SSL_F_OSSL_STATEM_CLIENT_CONSTRUCT_MESSAGE,
-                   ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
+    if (!ret || !ssl_close_construct_packet(s, pkt, mt)) {
+        SSLerr(SSL_F_OSSL_STATEM_CLIENT_CONSTRUCT_MESSAGE,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
     }
     return 1;
 }

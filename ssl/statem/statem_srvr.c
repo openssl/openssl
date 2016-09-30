@@ -625,87 +625,90 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt)
     int (*confunc) (SSL *s, WPACKET *pkt) = NULL;
     int ret = 1, mt;
 
-    if (st->hand_state == TLS_ST_SW_CHANGE) {
-        /* Special case becase it is a different content type */
+    switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return 0;
+
+    case TLS_ST_SW_CHANGE:
         if (SSL_IS_DTLS(s))
-            return dtls_construct_change_cipher_spec(s, pkt);
+            confunc = dtls_construct_change_cipher_spec;
+        else
+            confunc = tls_construct_change_cipher_spec;
+        mt = SSL3_MT_CHANGE_CIPHER_SPEC;
+        break;
 
-        return tls_construct_change_cipher_spec(s, pkt);
-    } else if (st->hand_state == DTLS_ST_SW_HELLO_VERIFY_REQUEST) {
-        /* Special case because we don't call ssl_close_construct_packet() */
-        return dtls_construct_hello_verify_request(s, pkt);
-    } else {
-        switch (st->hand_state) {
-        default:
-            /* Shouldn't happen */
-            return 0;
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        confunc = dtls_construct_hello_verify_request;
+        mt = DTLS1_MT_HELLO_VERIFY_REQUEST;
+        break;
 
-        case TLS_ST_SW_HELLO_REQ:
-            /* No construction function needed */
-            mt = SSL3_MT_HELLO_REQUEST;
-            break;
+    case TLS_ST_SW_HELLO_REQ:
+        /* No construction function needed */
+        mt = SSL3_MT_HELLO_REQUEST;
+        break;
 
-        case TLS_ST_SW_SRVR_HELLO:
-            confunc = tls_construct_server_hello;
-            mt = SSL3_MT_SERVER_HELLO;
-            break;
+    case TLS_ST_SW_SRVR_HELLO:
+        confunc = tls_construct_server_hello;
+        mt = SSL3_MT_SERVER_HELLO;
+        break;
 
-        case TLS_ST_SW_CERT:
-            confunc = tls_construct_server_certificate;
-            mt = SSL3_MT_CERTIFICATE;
-            break;
+    case TLS_ST_SW_CERT:
+        confunc = tls_construct_server_certificate;
+        mt = SSL3_MT_CERTIFICATE;
+        break;
 
-        case TLS_ST_SW_KEY_EXCH:
-            confunc = tls_construct_server_key_exchange;
-            mt = SSL3_MT_SERVER_KEY_EXCHANGE;
-            break;
+    case TLS_ST_SW_KEY_EXCH:
+        confunc = tls_construct_server_key_exchange;
+        mt = SSL3_MT_SERVER_KEY_EXCHANGE;
+        break;
 
-        case TLS_ST_SW_CERT_REQ:
-            confunc = tls_construct_certificate_request;
-            mt = SSL3_MT_CERTIFICATE_REQUEST;
-            break;
+    case TLS_ST_SW_CERT_REQ:
+        confunc = tls_construct_certificate_request;
+        mt = SSL3_MT_CERTIFICATE_REQUEST;
+        break;
 
-        case TLS_ST_SW_SRVR_DONE:
-            confunc = tls_construct_server_done;
-            mt = SSL3_MT_SERVER_DONE;
-            break;
+    case TLS_ST_SW_SRVR_DONE:
+        confunc = tls_construct_server_done;
+        mt = SSL3_MT_SERVER_DONE;
+        break;
 
-        case TLS_ST_SW_SESSION_TICKET:
-            confunc = tls_construct_new_session_ticket;
-            mt = SSL3_MT_NEWSESSION_TICKET;
-            break;
+    case TLS_ST_SW_SESSION_TICKET:
+        confunc = tls_construct_new_session_ticket;
+        mt = SSL3_MT_NEWSESSION_TICKET;
+        break;
 
-        case TLS_ST_SW_CERT_STATUS:
-            confunc = tls_construct_cert_status;
-            mt = SSL3_MT_CERTIFICATE_STATUS;
-            break;
+    case TLS_ST_SW_CERT_STATUS:
+        confunc = tls_construct_cert_status;
+        mt = SSL3_MT_CERTIFICATE_STATUS;
+        break;
 
-        case TLS_ST_SW_FINISHED:
-            mt = SSL3_MT_FINISHED;
-            break;
-        }
-
-        if (!ssl_set_handshake_header(s, pkt, mt)) {
-            SSLerr(SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE,
-                   ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-
-        if (st->hand_state == TLS_ST_SW_FINISHED)
-            ret = tls_construct_finished(s, pkt,
-                                         s->method->
-                                         ssl3_enc->server_finished_label,
-                                         s->method->
-                                         ssl3_enc->server_finished_label_len);
-        else if (confunc != NULL)
-            ret = confunc(s, pkt);
-
-        if (!ret || !ssl_close_construct_packet(s, pkt)) {
-            SSLerr(SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE,
-                   ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
+    case TLS_ST_SW_FINISHED:
+        mt = SSL3_MT_FINISHED;
+        break;
     }
+
+    if (!ssl_set_handshake_header(s, pkt, mt)) {
+        SSLerr(SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (st->hand_state == TLS_ST_SW_FINISHED)
+        ret = tls_construct_finished(s, pkt,
+                                     s->method->
+                                     ssl3_enc->server_finished_label,
+                                     s->method->
+                                     ssl3_enc->server_finished_label_len);
+    else if (confunc != NULL)
+        ret = confunc(s, pkt);
+
+    if (!ret || !ssl_close_construct_packet(s, pkt, mt)) {
+        SSLerr(SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
     return 1;
 }
 
@@ -881,8 +884,6 @@ int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
 
 int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
 {
-    size_t msglen;
-
     if (s->ctx->app_gen_cookie_cb == NULL ||
         s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
                                   &(s->d1->cookie_len)) == 0 ||
@@ -892,26 +893,11 @@ int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
         return 0;
     }
 
-    if (!ssl_set_handshake_header(s, pkt,
-                                         DTLS1_MT_HELLO_VERIFY_REQUEST)
-            || !dtls_raw_hello_verify_request(pkt, s->d1->cookie,
-                                              s->d1->cookie_len)
-               /*
-                * We don't call close_construct_packet() because we don't want
-                * to buffer this message
-                */
-            || !WPACKET_close(pkt)
-            || !WPACKET_get_length(pkt, &msglen)
-            || !WPACKET_finish(pkt)) {
+    if (!dtls_raw_hello_verify_request(pkt, s->d1->cookie,
+                                              s->d1->cookie_len)) {
         SSLerr(SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-
-    /* number of bytes to write */
-    s->d1->w_msg_hdr.msg_len = msglen - DTLS1_HM_HEADER_LENGTH;
-    s->d1->w_msg_hdr.frag_len = msglen - DTLS1_HM_HEADER_LENGTH;
-    s->init_num = (int)msglen;
-    s->init_off = 0;
 
     return 1;
 }
@@ -3002,8 +2988,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
 
             /* Put timeout and length */
             if (!WPACKET_put_bytes_u32(pkt, 0)
-                    || !WPACKET_put_bytes_u16(pkt, 0)
-                    || !ssl_close_construct_packet(s, pkt)) {
+                    || !WPACKET_put_bytes_u16(pkt, 0)) {
                 SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
                        ERR_R_INTERNAL_ERROR);
                 goto err;

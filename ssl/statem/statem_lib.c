@@ -57,11 +57,11 @@ int ssl3_do_write(SSL *s, int type)
     return (0);
 }
 
-int tls_close_construct_packet(SSL *s, WPACKET *pkt)
+int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
 {
     size_t msglen;
 
-    if (!WPACKET_close(pkt)
+    if ((htype != SSL3_MT_CHANGE_CIPHER_SPEC && !WPACKET_close(pkt))
             || !WPACKET_get_length(pkt, &msglen)
             || msglen > INT_MAX)
         return 0;
@@ -259,9 +259,6 @@ int tls_construct_change_cipher_spec(SSL *s, WPACKET *pkt)
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         return 0;
     }
-
-    s->init_num = 1;
-    s->init_off = 0;
 
     return 1;
 }

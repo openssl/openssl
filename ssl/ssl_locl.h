@@ -1586,7 +1586,7 @@ typedef struct ssl3_enc_method {
     /* Set the handshake header */
     int (*set_handshake_header) (SSL *s, WPACKET *pkt, int type);
     /* Close construction of the handshake message */
-    int (*close_construct_packet) (SSL *s, WPACKET *pkt);
+    int (*close_construct_packet) (SSL *s, WPACKET *pkt, int htype);
     /* Write out handshake message */
     int (*do_write) (SSL *s);
 } SSL3_ENC_METHOD;
@@ -1596,8 +1596,8 @@ typedef struct ssl3_enc_method {
         (((unsigned char *)s->init_buf->data) + s->method->ssl3_enc->hhlen)
 # define ssl_set_handshake_header(s, pkt, htype) \
         s->method->ssl3_enc->set_handshake_header((s), (pkt), (htype))
-# define ssl_close_construct_packet(s, pkt) \
-        s->method->ssl3_enc->close_construct_packet((s), (pkt))
+# define ssl_close_construct_packet(s, pkt, htype) \
+        s->method->ssl3_enc->close_construct_packet((s), (pkt), (htype))
 # define ssl_do_write(s)  s->method->ssl3_enc->do_write(s)
 
 /* Values for enc_flags */
@@ -1901,9 +1901,9 @@ __owur int ssl3_do_change_cipher_spec(SSL *ssl);
 __owur long ssl3_default_timeout(void);
 
 __owur int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype);
-__owur int tls_close_construct_packet(SSL *s, WPACKET *pkt);
+__owur int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype);
 __owur int dtls1_set_handshake_header(SSL *s, WPACKET *pkt, int htype);
-__owur int dtls1_close_construct_packet(SSL *s, WPACKET *pkt);
+__owur int dtls1_close_construct_packet(SSL *s, WPACKET *pkt, int htype);
 __owur int ssl3_handshake_write(SSL *s);
 
 __owur int ssl_allow_compression(SSL *s);
