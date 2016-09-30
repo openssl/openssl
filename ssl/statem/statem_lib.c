@@ -71,9 +71,19 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
     return 1;
 }
 
-int tls_construct_finished(SSL *s, WPACKET *pkt, const char *sender, int slen)
+int tls_construct_finished(SSL *s, WPACKET *pkt)
 {
     int i;
+    const char *sender;
+    int slen;
+
+    if (s->server) {
+        sender = s->method->ssl3_enc->server_finished_label;
+        slen = s->method->ssl3_enc->server_finished_label_len;
+    } else {
+        sender = s->method->ssl3_enc->client_finished_label;
+        slen = s->method->ssl3_enc->client_finished_label_len;
+    }
 
     i = s->method->ssl3_enc->final_finish_mac(s,
                                               sender, slen,

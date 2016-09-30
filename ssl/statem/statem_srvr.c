@@ -623,7 +623,7 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt)
 {
     OSSL_STATEM *st = &s->statem;
     int (*confunc) (SSL *s, WPACKET *pkt) = NULL;
-    int ret = 1, mt;
+    int mt;
 
     switch (st->hand_state) {
     default:
@@ -684,26 +684,14 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt)
         break;
 
     case TLS_ST_SW_FINISHED:
+        confunc = tls_construct_finished;
         mt = SSL3_MT_FINISHED;
         break;
     }
 
-    if (!ssl_set_handshake_header(s, pkt, mt)) {
-        SSLerr(SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE,
-               ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    if (st->hand_state == TLS_ST_SW_FINISHED)
-        ret = tls_construct_finished(s, pkt,
-                                     s->method->
-                                     ssl3_enc->server_finished_label,
-                                     s->method->
-                                     ssl3_enc->server_finished_label_len);
-    else if (confunc != NULL)
-        ret = confunc(s, pkt);
-
-    if (!ret || !ssl_close_construct_packet(s, pkt, mt)) {
+    if (!ssl_set_handshake_header(s, pkt, mt)
+            || (confunc != NULL && !confunc(s, pkt))
+            || !ssl_close_construct_packet(s, pkt, mt)) {
         SSLerr(SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE,
                ERR_R_INTERNAL_ERROR);
         return 0;
