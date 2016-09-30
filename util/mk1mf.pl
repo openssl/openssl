@@ -339,18 +339,18 @@ $OPENSSLDIR =~ s|/|$o|g;
 
 # Build OQS
 if ($platform eq "VC-WIN32") {
-    $OQSVSBUILD = "msbuild liboqs.sln /p:Configuration=Release;Platform=x86"
+$vsplatform = "x86";
 }
 elsif (($platform eq "VC-WIN64A") || ($platform eq "VC-WIN64I"))  {
-    $OQSVSBUILD = "msbuild liboqs.sln /p:Configuration=Release;Platform=x64"
+$vsplatform = "x64";
 }
-elsif ($platform eq "debug-VC-WIN32") {
-    $OQSVSBUILD = "msbuild liboqs.sln /p:Configuration=Debug;Platform=x86"
+if ($debug = "1") {
+$vsconfig = "Debug";
 }
-elsif (($platform eq "debug-VC-WIN64A") || ($platform eq "VC-WIN64I"))  {
-    $OQSVSBUILD = "msbuild liboqs.sln /p:Configuration=Debug;Platform=x64"
+else {
+$vsconfig = "Release";
 }
-
+$OQSVSBUILD = "msbuild vendor${o}liboqs${o}VisualStudio${o}liboqs.sln /p:Configuration=$vsconfig;Platform=$vsplatform /t:rebuild";
 
 #############################################
 # We parse in input file and 'store' info for later printing.
@@ -501,7 +501,7 @@ EX_LIBS=$ex_libs
 SRC_D=$src_dir
 
 LINK_CMD=$link
-LFLAGS=$lflags
+LFLAGS=$lflags /libpath:vendor${o}liboqs${o}VisualStudio${o}$vsplatform${o}$vsconfig
 RSC=$rsc
 
 # The output directory for everything interesting
@@ -595,6 +595,8 @@ $banner
 buildoqs:
 	\@echo Building OQS
 	$OQSVSBUILD
+	\$(MKDIR) \"\$(INCOQS_D)\"
+        \$(CP) \"\$(LIBOQS_INCLUDE)${o}*.h" \"\$(INCOQS_D)\"
 
 \$(TMP_D):
 	\$(MKDIR) \"\$(TMP_D)\"
@@ -610,10 +612,6 @@ buildoqs:
 
 \$(INCO_D): \$(INC_D)
 	\$(MKDIR) \"\$(INCO_D)\"
-
-\$(INCOQS_D): \$(INC_D)
-	\$(MKDIR) \"\$(INCOQS_D)\"
-        \$(CP) LIBOQS_INCLUDE${o}kex.h \"\$(INCOQS_D)\"
 
 \$(INC_D):
 	\$(MKDIR) \"\$(INC_D)\"
