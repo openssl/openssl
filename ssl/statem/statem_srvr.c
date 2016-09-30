@@ -613,17 +613,18 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
 }
 
 /*
- * Construct a message to be sent from the server to the client.
+ * Get the message construction function and message type for sending from the
+ * server
  *
  * Valid return values are:
  *   1: Success
  *   0: Error
  */
-int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt)
+int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
+                                         int (**confunc) (SSL *s, WPACKET *pkt),
+                                         int *mt)
 {
     OSSL_STATEM *st = &s->statem;
-    int (*confunc) (SSL *s, WPACKET *pkt) = NULL;
-    int mt;
 
     switch (st->hand_state) {
     default:
@@ -632,69 +633,62 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt)
 
     case TLS_ST_SW_CHANGE:
         if (SSL_IS_DTLS(s))
-            confunc = dtls_construct_change_cipher_spec;
+            *confunc = dtls_construct_change_cipher_spec;
         else
-            confunc = tls_construct_change_cipher_spec;
-        mt = SSL3_MT_CHANGE_CIPHER_SPEC;
+            *confunc = tls_construct_change_cipher_spec;
+        *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
         break;
 
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
-        confunc = dtls_construct_hello_verify_request;
-        mt = DTLS1_MT_HELLO_VERIFY_REQUEST;
+        *confunc = dtls_construct_hello_verify_request;
+        *mt = DTLS1_MT_HELLO_VERIFY_REQUEST;
         break;
 
     case TLS_ST_SW_HELLO_REQ:
         /* No construction function needed */
-        mt = SSL3_MT_HELLO_REQUEST;
+        *confunc = NULL;
+        *mt = SSL3_MT_HELLO_REQUEST;
         break;
 
     case TLS_ST_SW_SRVR_HELLO:
-        confunc = tls_construct_server_hello;
-        mt = SSL3_MT_SERVER_HELLO;
+        *confunc = tls_construct_server_hello;
+        *mt = SSL3_MT_SERVER_HELLO;
         break;
 
     case TLS_ST_SW_CERT:
-        confunc = tls_construct_server_certificate;
-        mt = SSL3_MT_CERTIFICATE;
+        *confunc = tls_construct_server_certificate;
+        *mt = SSL3_MT_CERTIFICATE;
         break;
 
     case TLS_ST_SW_KEY_EXCH:
-        confunc = tls_construct_server_key_exchange;
-        mt = SSL3_MT_SERVER_KEY_EXCHANGE;
+        *confunc = tls_construct_server_key_exchange;
+        *mt = SSL3_MT_SERVER_KEY_EXCHANGE;
         break;
 
     case TLS_ST_SW_CERT_REQ:
-        confunc = tls_construct_certificate_request;
-        mt = SSL3_MT_CERTIFICATE_REQUEST;
+        *confunc = tls_construct_certificate_request;
+        *mt = SSL3_MT_CERTIFICATE_REQUEST;
         break;
 
     case TLS_ST_SW_SRVR_DONE:
-        confunc = tls_construct_server_done;
-        mt = SSL3_MT_SERVER_DONE;
+        *confunc = tls_construct_server_done;
+        *mt = SSL3_MT_SERVER_DONE;
         break;
 
     case TLS_ST_SW_SESSION_TICKET:
-        confunc = tls_construct_new_session_ticket;
-        mt = SSL3_MT_NEWSESSION_TICKET;
+        *confunc = tls_construct_new_session_ticket;
+        *mt = SSL3_MT_NEWSESSION_TICKET;
         break;
 
     case TLS_ST_SW_CERT_STATUS:
-        confunc = tls_construct_cert_status;
-        mt = SSL3_MT_CERTIFICATE_STATUS;
+        *confunc = tls_construct_cert_status;
+        *mt = SSL3_MT_CERTIFICATE_STATUS;
         break;
 
     case TLS_ST_SW_FINISHED:
-        confunc = tls_construct_finished;
-        mt = SSL3_MT_FINISHED;
+        *confunc = tls_construct_finished;
+        *mt = SSL3_MT_FINISHED;
         break;
-    }
-
-    if (!ssl_set_handshake_header(s, pkt, mt)
-            || (confunc != NULL && !confunc(s, pkt))
-            || !ssl_close_construct_packet(s, pkt, mt)) {
-        SSLerr(SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE,
-               ERR_R_INTERNAL_ERROR);
-        return 0;
     }
 
     return 1;
