@@ -21,12 +21,14 @@
 static char *cert = NULL;
 static char *privkey = NULL;
 
+#ifndef OPENSSL_NO_OCSP
 static const unsigned char orespder[] = "Dummy OCSP Response";
 static int ocsp_server_called = 0;
 static int ocsp_client_called = 0;
 
 static int cdummyarg = 1;
 static X509 *ocspcert = NULL;
+#endif
 
 #define NUM_EXTRA_CERTS 40
 
@@ -116,6 +118,7 @@ static int test_large_message_dtls(void)
 }
 #endif
 
+#ifndef OPENSSL_NO_OCSP
 static int ocsp_server_cb(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
@@ -166,6 +169,7 @@ static int ocsp_client_cb(SSL *s, void *arg)
 
     return 1;
 }
+
 
 static int test_tlsext_status_type(void)
 {
@@ -349,6 +353,7 @@ static int test_tlsext_status_type(void)
 
     return testresult;
 }
+#endif  /* ndef OPENSSL_NO_OCSP */
 
 typedef struct ssl_session_test_fixture {
     const char *test_case_name;
@@ -866,7 +871,9 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_DTLS
     ADD_TEST(test_large_message_dtls);
 #endif
+#ifndef OPENSSL_NO_OCSP
     ADD_TEST(test_tlsext_status_type);
+#endif
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
