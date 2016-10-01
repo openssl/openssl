@@ -11,19 +11,20 @@ use strict;
 use warnings;
 
 use OpenSSL::Test;
+use OpenSSL::Test::Utils;
 
 setup("test_passwd");
 
-plan tests => 6;
+plan tests => disabled("des") ? 4 : 6;
 
 ok(compare1stline([qw{openssl passwd password}], '^.{13}\R$'),
-   'crypt password with random salt');
+   'crypt password with random salt') if !disabled("des");
 ok(compare1stline([qw{openssl passwd -1 password}], '^\$1\$.{8}\$.{22}\R$'),
    'BSD style MD5 password with random salt');
 ok(compare1stline([qw{openssl passwd -apr1 password}], '^\$apr1\$.{8}\$.{22}\R$'),
    'Apache style MD5 password with random salt');
 ok(compare1stline([qw{openssl passwd -salt xx password}], '^xxj31ZMTZzkVA\R$'),
-   'crypt password with salt xx');
+   'crypt password with salt xx') if !disabled("des");
 ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -1 password}], '^\$1\$xxxxxxxx\$UYCIxa628\.9qXjpQCjM4a\.\R$'),
    'BSD style MD5 password with salt xxxxxxxx');
 ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -apr1 password}], '^\$apr1\$xxxxxxxx\$dxHfLAsjHkDRmG83UXe8K0\R$'),
