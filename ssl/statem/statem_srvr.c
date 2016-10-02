@@ -3103,6 +3103,8 @@ int tls_construct_new_session_ticket(SSL *s)
         SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    EVP_CIPHER_CTX_free(ctx);
+    HMAC_CTX_free(hctx);
     OPENSSL_free(senc);
 
     return 1;
