@@ -45,6 +45,8 @@ DEFINE_STACK_OF(MIME_HEADER)
 /* Month values for printing out times */
 extern const char *_asn1_mon[12];
 
+void asn1_string_embed_free(ASN1_STRING *a, int embed);
+
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int asn1_set_choice_selector(ASN1_VALUE **pval, int value,
                              const ASN1_ITEM *it);
@@ -63,7 +65,7 @@ int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval,
 int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
                   const ASN1_ITEM *it);
 
-void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
+void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed);
 void asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 
 ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
