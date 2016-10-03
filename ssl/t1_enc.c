@@ -88,7 +88,8 @@ static int tls1_PRF(SSL *s,
     return ret;
 }
 
-static int tls1_generate_key_block(SSL *s, unsigned char *km, int num)
+/* TODO(size_t): convert me */
+static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
 {
     int ret;
     ret = tls1_PRF(s,
@@ -360,9 +361,9 @@ int tls1_setup_key_block(SSL *s)
     unsigned char *p;
     const EVP_CIPHER *c;
     const EVP_MD *hash;
-    int num;
     SSL_COMP *comp;
-    int mac_type = NID_undef, mac_secret_size = 0;
+    int mac_type = NID_undef;
+    size_t num, mac_secret_size = 0;
     int ret = 0;
 
     if (s->s3->tmp.key_block_length != 0)
@@ -409,7 +410,7 @@ int tls1_setup_key_block(SSL *s)
     }
     printf("master key\n");
     {
-        int z;
+        size_t z;
         for (z = 0; z < s->session->master_key_length; z++)
             printf("%02X%c", s->session->master_key[z],
                    ((z + 1) % 16) ? ' ' : '\n');
@@ -420,7 +421,7 @@ int tls1_setup_key_block(SSL *s)
 #ifdef SSL_DEBUG
     printf("\nkey block\n");
     {
-        int z;
+        size_t z;
         for (z = 0; z < num; z++)
             printf("%02X%c", p[z], ((z + 1) % 16) ? ' ' : '\n');
     }
@@ -452,15 +453,13 @@ int tls1_setup_key_block(SSL *s)
 
 int tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 {
-    int hashlen;
+    size_t hashlen;
     unsigned char hash[EVP_MAX_MD_SIZE];
 
     if (!ssl3_digest_cached_records(s, 0))
         return 0;
 
-    hashlen = ssl_handshake_hash(s, hash, sizeof(hash));
-
-    if (hashlen == 0)
+    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
         return 0;
 
     if (!tls1_PRF(s, str, slen, hash, hashlen, NULL, 0, NULL, 0, NULL, 0,
@@ -472,19 +471,20 @@ int tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 }
 
 int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
-                                int len)
+                                size_t len, size_t *secret_size)
 {
     if (s->session->flags & SSL_SESS_FLAG_EXTMS) {
         unsigned char hash[EVP_MAX_MD_SIZE * 2];
-        int hashlen;
+        size_t hashlen;
         /*
          * Digest cached records keeping record buffer (if present): this wont
          * affect client auth because we're freezing the buffer at the same
          * point (after client key exchange and before certificate verify)
          */
         if (!ssl3_digest_cached_records(s, 1))
-            return -1;
-        hashlen = ssl_handshake_hash(s, hash, sizeof(hash));
+            return 0;
+        if(!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
+            return 0;
 #ifdef SSL_DEBUG
         fprintf(stderr, "Handshake hashes:\n");
         BIO_dump_fp(stderr, (char *)hash, hashlen);
@@ -536,7 +536,8 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     }
 #endif
 
-    return (SSL3_MASTER_SECRET_SIZE);
+    *secret_size = SSL3_MASTER_SECRET_SIZE;
+    return 1;
 }
 
 int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,

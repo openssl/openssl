@@ -1231,12 +1231,19 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
     if (!s->hit && s->version >= TLS1_VERSION && s->tls_session_secret_cb) {
         const SSL_CIPHER *pref_cipher = NULL;
+        /*
+         * s->session->master_key_length is a size_t, but this is an int for
+         * backwards compat reasons
+         */
+        int master_key_length;
 
-        s->session->master_key_length = sizeof(s->session->master_key);
+        master_key_length = sizeof(s->session->master_key);
         if (s->tls_session_secret_cb(s, s->session->master_key,
-                                     &s->session->master_key_length, ciphers,
+                                     &master_key_length, ciphers,
                                      &pref_cipher,
-                                     s->tls_session_secret_cb_arg)) {
+                                     s->tls_session_secret_cb_arg)
+                && master_key_length > 0) {
+            s->session->master_key_length = master_key_length;
             s->hit = 1;
             s->session->ciphers = ciphers;
             s->session->verify_result = X509_V_OK;
