@@ -2101,7 +2101,7 @@ __owur int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
                                   size_t data_plus_mac_size,
                                   size_t data_plus_mac_plus_padding_size,
                                   const unsigned char *mac_secret,
-                                  unsigned mac_secret_length, char is_sslv3);
+                                  size_t mac_secret_length, char is_sslv3);
 
 __owur int tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
                                  EVP_MD_CTX *mac_ctx, const unsigned char *data,
