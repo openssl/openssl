@@ -2736,8 +2736,8 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
 int tls_construct_client_certificate(SSL *s, WPACKET *pkt)
 {
     if (!ssl3_output_cert_chain(s, pkt,
-                                (s->s3->tmp.cert_req ==
-                                 2) ? NULL : s->cert->key)) {
+                               (s->s3->tmp.cert_req == 2) ? NULL
+                                                          : s->cert->key)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         return 0;
