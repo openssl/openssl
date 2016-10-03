@@ -163,8 +163,6 @@ typedef struct loopargs_st {
 #endif
 #ifndef OPENSSL_NO_EC
     EC_KEY *ecdsa[EC_NUM];
-    //EVP_PKEY *ecdh_a[EC_NUM];
-    //EVP_PKEY *ecdh_b[EC_NUM];
     EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
     unsigned char *secret_a;
     unsigned char *secret_b;
@@ -226,7 +224,6 @@ static int DSA_verify_loop(void *args);
 #ifndef OPENSSL_NO_EC
 static int ECDSA_sign_loop(void *args);
 static int ECDSA_verify_loop(void *args);
-static int ECDH_compute_key_loop(void *args);
 #endif
 static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_t *loopargs);
 
@@ -1043,11 +1040,10 @@ static long ecdh_c[EC_NUM][1];
 
 static void ECDH_EVP_derive_key(unsigned char *derived_secret,
                             size_t *outlen,
-                            /*EVP_PKEY *ecdh_a,EVP_PKEY *ecdh_b,*/
                             EVP_PKEY_CTX *ctx)
 {
     if( !EVP_PKEY_derive(ctx, derived_secret, outlen) ) {
-        // FIXME: handle errors
+        /* FIXME: handle errors */
         ;
     }
     return;
@@ -1056,28 +1052,17 @@ static void ECDH_EVP_derive_key(unsigned char *derived_secret,
 static int ECDH_EVP_derive_key_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
-    //EVP_PKEY *ecdh_a = tempargs->ecdh_a[testnum];
-    //EVP_PKEY *ecdh_b = tempargs->ecdh_b[testnum];
     EVP_PKEY_CTX *ctx = tempargs->ecdh_ctx[testnum];
     unsigned char *derived_secret = tempargs->secret_a;
     int count;
     size_t *outlen = &(tempargs->outlen);
 
     for (count = 0; COND(ecdh_c[testnum][0]); count++) {
-        ECDH_EVP_derive_key(derived_secret, outlen, /*ecdh_a, ecdh_b,*/ ctx);
+        ECDH_EVP_derive_key(derived_secret, outlen, ctx);
     }
     return count;
 }
 
-static const size_t KDF1_SHA1_len = 20;
-static void *KDF1_SHA1(const void *in, size_t inlen, void *out,
-                       size_t *outlen)
-{
-    if (*outlen < SHA_DIGEST_LENGTH)
-        return NULL;
-    *outlen = SHA_DIGEST_LENGTH;
-    return SHA1(in, inlen, out);
-}
 #endif                          /* OPENSSL_NO_EC */
 
 static int run_benchmark(int async_jobs,
@@ -2575,7 +2560,7 @@ int speed_main(int argc, char **argv)
             EVP_PKEY *key_A = NULL, *key_B = NULL;
 
             if (testnum == R_EC_X25519) {
-                kctx = EVP_PKEY_CTX_new_id(test_curves[testnum], NULL); // keygen ctx from NID
+                kctx = EVP_PKEY_CTX_new_id(test_curves[testnum], NULL); /* keygen ctx from NID */
             } else {
                 EVP_PKEY_CTX *pctx = NULL;
                 EVP_PKEY *params = NULL;
@@ -2601,8 +2586,8 @@ int speed_main(int argc, char **argv)
                 EVP_PKEY_free(params); params = NULL;
                 EVP_PKEY_CTX_free(pctx); pctx = NULL;
             }
-            if (    !kctx || // keygen ctx is not null
-                    !EVP_PKEY_keygen_init(kctx) || // init keygen ctx
+            if (    !kctx || /* keygen ctx is not null */
+                    !EVP_PKEY_keygen_init(kctx) || /* init keygen ctx */
                     0) {
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH keygen failure.\n");
@@ -2611,11 +2596,11 @@ int speed_main(int argc, char **argv)
                 break;
             }
 
-            if (    !EVP_PKEY_keygen(kctx, &key_A) || // generate secret key A
-                    !EVP_PKEY_keygen(kctx, &key_B) || // generate secret key B
-                    !(ctx = EVP_PKEY_CTX_new(key_A, NULL)) || // derivation ctx from skeyA
-                    !EVP_PKEY_derive_init(ctx) || // init derivation ctx
-                    !EVP_PKEY_derive_set_peer(ctx, key_B) || // set peer pubkey in ctx
+            if (    !EVP_PKEY_keygen(kctx, &key_A) || /* generate secret key A */
+                    !EVP_PKEY_keygen(kctx, &key_B) || /* generate secret key B */
+                    !(ctx = EVP_PKEY_CTX_new(key_A, NULL)) || /* derivation ctx from skeyA */
+                    !EVP_PKEY_derive_init(ctx) || /* init derivation ctx */
+                    !EVP_PKEY_derive_set_peer(ctx, key_B) || /* set peer pubkey in ctx */
                     0) {
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH key generation failure.\n");
@@ -2624,8 +2609,6 @@ int speed_main(int argc, char **argv)
                 break;
             }
 
-            //loopargs[i].ecdh_a[testnum] = key_A;
-            //loopargs[i].ecdh_b[testnum] = key_B;
             loopargs[i].ecdh_ctx[testnum] = ctx;
 
             EVP_PKEY_CTX_free(kctx); kctx = NULL;
@@ -2805,8 +2788,6 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_EC
         for (k = 0; k < EC_NUM; k++) {
             EC_KEY_free(loopargs[i].ecdsa[k]);
-            //EVP_PKEY_free(loopargs[i].ecdh_a[k]);
-            //EVP_PKEY_free(loopargs[i].ecdh_b[k]);
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
         }
         OPENSSL_free(loopargs[i].secret_a);
