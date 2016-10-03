@@ -74,8 +74,10 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
     bits = (bits + 63) / 64 * 64;
 
     if (seed_in != NULL) {
-        if (seed_len < (size_t)qsize)
+        if (seed_len < (size_t)qsize) {
+            DSAerr(DSA_F_DSA_BUILTIN_PARAMGEN, DSA_R_SEED_LEN_SMALL);
             return 0;
+        }
         if (seed_len > (size_t)qsize) {
             /* Only consume as much seed as is expected. */
             seed_len = qsize;
