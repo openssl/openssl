@@ -163,8 +163,9 @@ typedef struct loopargs_st {
 #endif
 #ifndef OPENSSL_NO_EC
     EC_KEY *ecdsa[EC_NUM];
-    EC_KEY *ecdh_a[EC_NUM];
-    EC_KEY *ecdh_b[EC_NUM];
+    //EVP_PKEY *ecdh_a[EC_NUM];
+    //EVP_PKEY *ecdh_b[EC_NUM];
+    EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
     unsigned char *secret_a;
     unsigned char *secret_b;
     size_t      outlen;
@@ -1040,20 +1041,30 @@ static int ECDSA_verify_loop(void *args)
 /* ******************************************************************** */
 static long ecdh_c[EC_NUM][1];
 
-static int ECDH_compute_key_loop(void *args)
+static void ECDH_EVP_derive_key(unsigned char *derived_secret,
+                            size_t *outlen,
+                            /*EVP_PKEY *ecdh_a,EVP_PKEY *ecdh_b,*/
+                            EVP_PKEY_CTX *ctx)
 {
-    loopargs_t *tempargs = *(loopargs_t **)args;
-    EC_KEY **ecdh_a = tempargs->ecdh_a;
-    EC_KEY **ecdh_b = tempargs->ecdh_b;
-    unsigned char *secret_a = tempargs->secret_a;
+    if( !EVP_PKEY_derive(ctx, derived_secret, outlen) ) {
+        // FIXME: handle errors
+        ;
+    }
+    return;
+}
+
+static int ECDH_EVP_derive_key_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    //EVP_PKEY *ecdh_a = tempargs->ecdh_a[testnum];
+    //EVP_PKEY *ecdh_b = tempargs->ecdh_b[testnum];
+    EVP_PKEY_CTX *ctx = tempargs->ecdh_ctx[testnum];
+    unsigned char *derived_secret = tempargs->secret_a;
     int count;
-    size_t outlen = tempargs->outlen;
-    kdf_fn kdf = tempargs->kdf;
+    size_t *outlen = &(tempargs->outlen);
 
     for (count = 0; COND(ecdh_c[testnum][0]); count++) {
-        ECDH_compute_key(secret_a, outlen,
-                EC_KEY_get0_public_key(ecdh_b[testnum]),
-                ecdh_a[testnum], kdf);
+        ECDH_EVP_derive_key(derived_secret, outlen, /*ecdh_a, ecdh_b,*/ ctx);
     }
     return count;
 }
@@ -2558,85 +2569,80 @@ int speed_main(int argc, char **argv)
 
         if (!ecdh_doit[testnum])
             continue;
+
         for (i = 0; i < loopargs_len; i++) {
-            loopargs[i].ecdh_a[testnum] = EC_KEY_new_by_curve_name(test_curves[testnum]);
-            loopargs[i].ecdh_b[testnum] = EC_KEY_new_by_curve_name(test_curves[testnum]);
-            if (loopargs[i].ecdh_a[testnum] == NULL ||
-                loopargs[i].ecdh_b[testnum] == NULL) {
+            EVP_PKEY_CTX *kctx = NULL, *ctx = NULL;
+            EVP_PKEY *key_A = NULL, *key_B = NULL;
+
+            if (testnum == R_EC_X25519) {
+                kctx = EVP_PKEY_CTX_new_id(test_curves[testnum], NULL); // keygen ctx from NID
+            } else {
+                EVP_PKEY_CTX *pctx = NULL;
+                EVP_PKEY *params = NULL;
+
+                if(     /* Create the context for parameter generation */
+                        !(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) ||
+                        /* Initialise the parameter generation */
+                        !EVP_PKEY_paramgen_init(pctx) ||
+                        /* Set the curve by NID */
+                        !EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, test_curves[testnum]) ||
+                        /* Create the parameter object params */
+                        !EVP_PKEY_paramgen(pctx, &params) ||
+                        0) {
+                    ecdh_checks = 0;
+                    BIO_printf(bio_err, "ECDH init failure.\n");
+                    ERR_print_errors(bio_err);
+                    rsa_count = 1;
+                    break;
+                }
+                /* Create the context for the key generation */
+                kctx = EVP_PKEY_CTX_new(params, NULL);
+
+                EVP_PKEY_free(params); params = NULL;
+                EVP_PKEY_CTX_free(pctx); pctx = NULL;
+            }
+            if (    !kctx || // keygen ctx is not null
+                    !EVP_PKEY_keygen_init(kctx) || // init keygen ctx
+                    0) {
                 ecdh_checks = 0;
+                BIO_printf(bio_err, "ECDH keygen failure.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
                 break;
             }
+
+            if (    !EVP_PKEY_keygen(kctx, &key_A) || // generate secret key A
+                    !EVP_PKEY_keygen(kctx, &key_B) || // generate secret key B
+                    !(ctx = EVP_PKEY_CTX_new(key_A, NULL)) || // derivation ctx from skeyA
+                    !EVP_PKEY_derive_init(ctx) || // init derivation ctx
+                    !EVP_PKEY_derive_set_peer(ctx, key_B) || // set peer pubkey in ctx
+                    0) {
+                ecdh_checks = 0;
+                BIO_printf(bio_err, "ECDH key generation failure.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                break;
+            }
+
+            //loopargs[i].ecdh_a[testnum] = key_A;
+            //loopargs[i].ecdh_b[testnum] = key_B;
+            loopargs[i].ecdh_ctx[testnum] = ctx;
+
+            EVP_PKEY_CTX_free(kctx); kctx = NULL;
         }
-        if (ecdh_checks == 0) {
-            BIO_printf(bio_err, "ECDH failure.\n");
-            ERR_print_errors(bio_err);
-            rsa_count = 1;
-        } else {
-            for (i = 0; i < loopargs_len; i++) {
-                /* generate two ECDH key pairs */
-                if (!EC_KEY_generate_key(loopargs[i].ecdh_a[testnum]) ||
-                        !EC_KEY_generate_key(loopargs[i].ecdh_b[testnum])) {
-                    BIO_printf(bio_err, "ECDH key generation failure.\n");
-                    ERR_print_errors(bio_err);
-                    ecdh_checks = 0;
-                    rsa_count = 1;
-                } else {
-                    int secret_size_a, secret_size_b;
-                    /*
-                     * If field size is not more than 24 octets, then use SHA-1
-                     * hash of result; otherwise, use result (see section 4.8 of
-                     * draft-ietf-tls-ecc-03.txt).
-                     */
-                    int field_size = EC_GROUP_get_degree(
-                            EC_KEY_get0_group(loopargs[i].ecdh_a[testnum]));
-
-                    if (field_size <= 24 * 8) {                 /* 192 bits */
-                        loopargs[i].outlen = KDF1_SHA1_len;
-                        loopargs[i].kdf = KDF1_SHA1;
-                    } else {
-                        loopargs[i].outlen = (field_size + 7) / 8;
-                        loopargs[i].kdf = NULL;
-                    }
-                    secret_size_a =
-                        ECDH_compute_key(loopargs[i].secret_a, loopargs[i].outlen,
-                                EC_KEY_get0_public_key(loopargs[i].ecdh_b[testnum]),
-                                loopargs[i].ecdh_a[testnum], loopargs[i].kdf);
-                    secret_size_b =
-                        ECDH_compute_key(loopargs[i].secret_b, loopargs[i].outlen,
-                                EC_KEY_get0_public_key(loopargs[i].ecdh_a[testnum]),
-                                loopargs[i].ecdh_b[testnum], loopargs[i].kdf);
-                    if (secret_size_a != secret_size_b)
-                        ecdh_checks = 0;
-                    else
-                        ecdh_checks = 1;
-
-                    for (k = 0; k < secret_size_a && ecdh_checks == 1; k++) {
-                        if (loopargs[i].secret_a[k] != loopargs[i].secret_b[k])
-                            ecdh_checks = 0;
-                    }
-
-                    if (ecdh_checks == 0) {
-                        BIO_printf(bio_err, "ECDH computations don't match.\n");
-                        ERR_print_errors(bio_err);
-                        rsa_count = 1;
-                        break;
-                    }
-                }
-            }
-            if (ecdh_checks != 0) {
-                pkey_print_message("", "ecdh",
-                        ecdh_c[testnum][0],
-                        test_curves_bits[testnum], ECDH_SECONDS);
-                Time_F(START);
-                count = run_benchmark(async_jobs, ECDH_compute_key_loop, loopargs);
-                d = Time_F(STOP);
-                BIO_printf(bio_err,
-                        mr ? "+R7:%ld:%d:%.2f\n" :
-                        "%ld %d-bit ECDH ops in %.2fs\n", count,
-                        test_curves_bits[testnum], d);
-                ecdh_results[testnum][0] = d / (double)count;
-                rsa_count = count;
-            }
+        if (ecdh_checks != 0) {
+            pkey_print_message("", "ecdh",
+                    ecdh_c[testnum][0],
+                    test_curves_bits[testnum], ECDH_SECONDS);
+            Time_F(START);
+            count = run_benchmark(async_jobs, ECDH_EVP_derive_key_loop, loopargs);
+            d = Time_F(STOP);
+            BIO_printf(bio_err,
+                    mr ? "+R7:%ld:%d:%.2f\n" :
+                    "%ld %d-bit ECDH ops in %.2fs\n", count,
+                    test_curves_bits[testnum], d);
+            ecdh_results[testnum][0] = d / (double)count;
+            rsa_count = count;
         }
 
         if (rsa_count <= 1) {
@@ -2799,8 +2805,9 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_EC
         for (k = 0; k < EC_NUM; k++) {
             EC_KEY_free(loopargs[i].ecdsa[k]);
-            EC_KEY_free(loopargs[i].ecdh_a[k]);
-            EC_KEY_free(loopargs[i].ecdh_b[k]);
+            //EVP_PKEY_free(loopargs[i].ecdh_a[k]);
+            //EVP_PKEY_free(loopargs[i].ecdh_b[k]);
+            EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
         }
         OPENSSL_free(loopargs[i].secret_a);
         OPENSSL_free(loopargs[i].secret_b);
