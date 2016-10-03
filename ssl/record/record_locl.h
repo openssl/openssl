@@ -107,11 +107,11 @@ int ssl3_get_record(SSL *s);
 __owur int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr);
 __owur int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr);
 void ssl3_cbc_copy_mac(unsigned char *out,
-                       const SSL3_RECORD *rec, unsigned md_size);
+                       const SSL3_RECORD *rec, size_t md_size);
 __owur int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
-                                   unsigned block_size, unsigned mac_size);
+                                   size_t block_size, size_t mac_size);
 __owur int tls1_cbc_remove_padding(const SSL *s,
                                    SSL3_RECORD *rec,
-                                   unsigned block_size, unsigned mac_size);
+                                   size_t block_size, size_t mac_size);
 int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap);
 __owur int dtls1_get_record(SSL *s);

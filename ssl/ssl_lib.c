@@ -59,7 +59,7 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
      * evil casts, but these functions are only called if there's a library
      * bug
      */
-    (int (*)(SSL *, SSL3_RECORD *, unsigned int, int))ssl_undefined_function,
+    (int (*)(SSL *, SSL3_RECORD *, size_t, int))ssl_undefined_function,
     (int (*)(SSL *, SSL3_RECORD *, unsigned char *, int))ssl_undefined_function,
     ssl_undefined_function,
     (int (*)(SSL *, unsigned char *, unsigned char *, int))
