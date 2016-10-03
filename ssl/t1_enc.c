@@ -116,10 +116,10 @@ int tls1_change_cipher_state(SSL *s, int which)
 #endif
     const EVP_MD *m;
     int mac_type;
-    int *mac_secret_size;
+    size_t *mac_secret_size;
     EVP_MD_CTX *mac_ctx;
     EVP_PKEY *mac_key;
-    int n, i, j, k, cl;
+    size_t n, i, j, k, cl;
     int reuse_dd = 0;
 
     c = s->s3->tmp.new_sym_enc;
@@ -214,6 +214,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     p = s->s3->tmp.key_block;
     i = *mac_secret_size = s->s3->tmp.new_mac_secret_size;
 
+    /* TODO(size_t): convert me */
     cl = EVP_CIPHER_key_length(c);
     j = cl;
     /* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
