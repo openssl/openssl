@@ -3964,6 +3964,8 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                int free_pms)
 {
     unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+    int ret = 0;
+
     if (alg_k & SSL_PSK) {
 #ifndef OPENSSL_NO_PSK
         unsigned char *pskpms, *t;
@@ -3978,10 +3980,8 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 
         pskpmslen = 4 + pmslen + psklen;
         pskpms = OPENSSL_malloc(pskpmslen);
-        if (pskpms == NULL) {
-            s->session->master_key_length = 0;
+        if (pskpms == NULL)
             goto err;
-        }
         t = pskpms;
         s2n(pmslen, t);
         if (alg_k & SSL_kPSK)
@@ -3994,23 +3994,23 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 
         OPENSSL_clear_free(s->s3->tmp.psk, psklen);
         s->s3->tmp.psk = NULL;
-        s->session->master_key_length =
-            s->method->ssl3_enc->generate_master_secret(s,
-                                                        s->session->master_key,
-                                                        pskpms, pskpmslen);
+        if (!s->method->ssl3_enc->generate_master_secret(s,
+                    s->session->master_key,pskpms, pskpmslen,
+                    &s->session->master_key_length))
+            goto err;
         OPENSSL_clear_free(pskpms, pskpmslen);
 #else
         /* Should never happen */
-        s->session->master_key_length = 0;
         goto err;
 #endif
     } else {
-        s->session->master_key_length =
-            s->method->ssl3_enc->generate_master_secret(s,
-                                                        s->session->master_key,
-                                                        pms, pmslen);
+        if (!s->method->ssl3_enc->generate_master_secret(s,
+                s->session->master_key, pms, pmslen,
+                &s->session->master_key_length))
+            goto err;
     }
 
+    ret = 1;
  err:
     if (pms) {
         if (free_pms)
@@ -4020,7 +4020,7 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
     }
     if (s->server == 0)
         s->s3->tmp.pms = NULL;
-    return s->session->master_key_length >= 0;
+    return ret;
 }
 
 /* Generate a private key from parameters */

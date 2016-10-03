@@ -197,7 +197,7 @@ static int ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
     EVP_PKEY_HMAC,
 };
 
-static int ssl_mac_secret_size[SSL_MD_NUM_IDX];
+static size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
 
 #define CIPHER_ADD      1
 #define CIPHER_KILL     2
@@ -399,8 +399,9 @@ void ssl_load_ciphers(void)
         if (md == NULL) {
             disabled_mac_mask |= t->mask;
         } else {
-            ssl_mac_secret_size[i] = EVP_MD_size(md);
-            OPENSSL_assert(ssl_mac_secret_size[i] >= 0);
+            int tmpsize = EVP_MD_size(md);
+            OPENSSL_assert(tmpsize >= 0);
+            ssl_mac_secret_size[i] = tmpsize;
         }
     }
     /* Make sure we can access MD5 and SHA1 */
@@ -502,7 +503,7 @@ static int load_builtin_compressions(void)
 
 int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
                        const EVP_MD **md, int *mac_pkey_type,
-                       int *mac_secret_size, SSL_COMP **comp, int use_etm)
+                       size_t *mac_secret_size, SSL_COMP **comp, int use_etm)
 {
     int i;
     const SSL_CIPHER *c;

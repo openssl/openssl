@@ -500,7 +500,7 @@ struct ssl_method_st {
 struct ssl_session_st {
     int ssl_version;            /* what ssl version session info is being kept
                                  * in here? */
-    int master_key_length;
+    size_t master_key_length;
     unsigned char master_key[SSL_MAX_MASTER_KEY_LENGTH];
     /* session_id - valid? */
     unsigned int session_id_length;
@@ -1200,7 +1200,7 @@ typedef struct ssl3_state_st {
         int ctype_num;
         char ctype[SSL3_CT_NUMBER];
         STACK_OF(X509_NAME) *ca_names;
-        int key_block_length;
+        size_t key_block_length;
         unsigned char *key_block;
         const EVP_CIPHER *new_sym_enc;
         const EVP_MD *new_hash;
@@ -1570,7 +1570,7 @@ typedef struct ssl3_enc_method {
     int (*mac) (SSL *, SSL3_RECORD *, unsigned char *, int);
     int (*setup_key_block) (SSL *);
     int (*generate_master_secret) (SSL *, unsigned char *, unsigned char *,
-                                   int);
+                                   size_t, size_t *);
     int (*change_cipher_state) (SSL *, int);
     int (*final_finish_mac) (SSL *, const char *, int, unsigned char *);
     int finish_mac_length;
@@ -1819,7 +1819,7 @@ __owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
 void ssl_update_cache(SSL *s, int mode);
 __owur int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
                               const EVP_MD **md, int *mac_pkey_type,
-                              int *mac_secret_size, SSL_COMP **comp,
+                              size_t *mac_secret_size, SSL_COMP **comp,
                               int use_etm);
 __owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
                                    size_t *int_overhead, size_t *blocksize,
@@ -1879,7 +1879,8 @@ void ssl3_cleanup_key_block(SSL *s);
 __owur int ssl3_do_write(SSL *s, int type);
 int ssl3_send_alert(SSL *s, int level, int desc);
 __owur int ssl3_generate_master_secret(SSL *s, unsigned char *out,
-                                       unsigned char *p, int len);
+                                       unsigned char *p, size_t len,
+                                       size_t *secret_size);
 __owur int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt);
 __owur int ssl3_num_ciphers(void);
 __owur const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
@@ -1985,7 +1986,8 @@ __owur int tls1_setup_key_block(SSL *s);
 __owur int tls1_final_finish_mac(SSL *s,
                                  const char *str, int slen, unsigned char *p);
 __owur int tls1_generate_master_secret(SSL *s, unsigned char *out,
-                                       unsigned char *p, int len);
+                                       unsigned char *p, size_t len,
+                                       size_t *secret_size);
 __owur int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                        const char *label, size_t llen,
                                        const unsigned char *p, size_t plen,
@@ -2086,7 +2088,8 @@ __owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op);
 __owur int ssl_parse_clienthello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 __owur int ssl_parse_serverhello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 
-__owur int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen);
+__owur int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
+                                 size_t *hashlen);
 __owur const EVP_MD *ssl_md(int idx);
 __owur const EVP_MD *ssl_handshake_md(SSL *s);
 __owur const EVP_MD *ssl_prf_md(SSL *s);
