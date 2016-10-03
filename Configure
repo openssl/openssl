@@ -293,9 +293,6 @@ if (defined $ENV{$local_config_envname}) {
     }
 }
 
-
-print "Configuring OpenSSL version $config{version} ($config{version_num})\n";
-
 $config{prefix}="";
 $config{openssldir}="";
 $config{processor}="";
@@ -853,6 +850,9 @@ if ($target eq "HASH") {
     exit 0;
 }
 
+print "Configuring OpenSSL version $config{version} ($config{version_num})\n";
+print "for $target\n";
+
 # Backward compatibility?
 if ($target =~ m/^CygWin32(-.*)$/) {
     $target = "Cygwin".$1;
@@ -922,7 +922,6 @@ foreach (sort (keys %disabled))
 	print "\n";
 	}
 
-print "Configuring for $target\n";
 # Support for legacy targets having a name starting with 'debug-'
 my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
 if ($d) {
