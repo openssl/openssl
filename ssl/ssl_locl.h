@@ -1144,9 +1144,9 @@ struct ssl_st {
 
 typedef struct ssl3_state_st {
     long flags;
-    int read_mac_secret_size;
+    size_t read_mac_secret_size;
     unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
-    int write_mac_secret_size;
+    size_t write_mac_secret_size;
     unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
     unsigned char server_random[SSL3_RANDOM_SIZE];
     unsigned char client_random[SSL3_RANDOM_SIZE];
@@ -1205,7 +1205,7 @@ typedef struct ssl3_state_st {
         const EVP_CIPHER *new_sym_enc;
         const EVP_MD *new_hash;
         int new_mac_pkey_type;
-        int new_mac_secret_size;
+        size_t new_mac_secret_size;
 # ifndef OPENSSL_NO_COMP
         const SSL_COMP *new_compression;
 # else
