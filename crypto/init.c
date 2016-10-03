@@ -103,8 +103,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
                     "err_load_crypto_strings_int()\n");
 # endif
     ret = err_load_crypto_strings_int();
-#endif
     load_crypto_strings_inited = 1;
+#endif    
     return ret;
 }
 
