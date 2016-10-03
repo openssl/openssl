@@ -62,7 +62,7 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
     (int (*)(SSL *, SSL3_RECORD *, size_t, int))ssl_undefined_function,
     (int (*)(SSL *, SSL3_RECORD *, unsigned char *, int))ssl_undefined_function,
     ssl_undefined_function,
-    (int (*)(SSL *, unsigned char *, unsigned char *, int))
+    (int (*)(SSL *, unsigned char *, unsigned char *, size_t, size_t *))
         ssl_undefined_function,
     (int (*)(SSL *, int))ssl_undefined_function,
     (int (*)(SSL *, const char *, int, unsigned char *))
@@ -3593,13 +3593,9 @@ size_t SSL_get_server_random(const SSL *ssl, unsigned char *out, size_t outlen)
 size_t SSL_SESSION_get_master_key(const SSL_SESSION *session,
                                   unsigned char *out, size_t outlen)
 {
-    if (session->master_key_length < 0) {
-        /* Should never happen */
-        return 0;
-    }
     if (outlen == 0)
         return session->master_key_length;
-    if (outlen > (size_t)session->master_key_length)
+    if (outlen > session->master_key_length)
         outlen = session->master_key_length;
     memcpy(out, session->master_key, outlen);
     return outlen;
@@ -3830,23 +3826,28 @@ void ssl_clear_hash_ctx(EVP_MD_CTX **hash)
 }
 
 /* Retrieve handshake hashes */
-int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen)
+int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
+                       size_t *hashlen)
 {
     EVP_MD_CTX *ctx = NULL;
     EVP_MD_CTX *hdgst = s->s3->handshake_dgst;
-    int ret = EVP_MD_CTX_size(hdgst);
-    if (ret < 0 || ret > outlen) {
-        ret = 0;
+    int hashleni = EVP_MD_CTX_size(hdgst);
+    int ret = 0;
+
+    if (hashleni < 0 || (size_t)hashleni > outlen)
         goto err;
-    }
+
     ctx = EVP_MD_CTX_new();
-    if (ctx == NULL) {
-        ret = 0;
+    if (ctx == NULL)
         goto err;
-    }
+
     if (!EVP_MD_CTX_copy_ex(ctx, hdgst)
         || EVP_DigestFinal_ex(ctx, out, NULL) <= 0)
-        ret = 0;
+        goto err;
+
+    *hashlen = hashleni;
+
+    ret = 1;
  err:
     EVP_MD_CTX_free(ctx);
     return ret;
