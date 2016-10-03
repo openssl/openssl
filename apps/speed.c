@@ -1038,15 +1038,17 @@ static int ECDSA_verify_loop(void *args)
 /* ******************************************************************** */
 static long ecdh_c[EC_NUM][1];
 
-static void ECDH_EVP_derive_key(unsigned char *derived_secret,
+static int ECDH_EVP_derive_key(unsigned char *derived_secret,
                             size_t *outlen,
                             EVP_PKEY_CTX *ctx)
 {
-    if( !EVP_PKEY_derive(ctx, derived_secret, outlen) ) {
-        /* FIXME: handle errors */
-        ;
+    int rt=1;
+    if ( (rt=EVP_PKEY_derive(ctx, derived_secret, outlen)) <= 0 ) {
+        BIO_printf(bio_err, "ECDH EVP_PKEY_derive failure: returned %d\n", rt);
+        ERR_print_errors(bio_err);
+        return rt;
     }
-    return;
+    return rt;
 }
 
 static int ECDH_EVP_derive_key_loop(void *args)
@@ -1058,7 +1060,8 @@ static int ECDH_EVP_derive_key_loop(void *args)
     size_t *outlen = &(tempargs->outlen);
 
     for (count = 0; COND(ecdh_c[testnum][0]); count++) {
-        ECDH_EVP_derive_key(derived_secret, outlen, ctx);
+        if ( !ECDH_EVP_derive_key(derived_secret, outlen, ctx) )
+            break;
     }
     return count;
 }
@@ -2565,7 +2568,7 @@ int speed_main(int argc, char **argv)
                 EVP_PKEY_CTX *pctx = NULL;
                 EVP_PKEY *params = NULL;
 
-                if(     /* Create the context for parameter generation */
+                if (    /* Create the context for parameter generation */
                         !(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) ||
                         /* Initialise the parameter generation */
                         !EVP_PKEY_paramgen_init(pctx) ||
