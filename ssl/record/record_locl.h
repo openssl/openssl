@@ -100,8 +100,8 @@ int ssl3_release_write_buffer(SSL *s);
 #define SSL3_RECORD_is_read(r)                  ((r)->read)
 #define SSL3_RECORD_set_read(r)                 ((r)->read = 1)
 
-void SSL3_RECORD_clear(SSL3_RECORD *r, unsigned int num_recs);
-void SSL3_RECORD_release(SSL3_RECORD *r, unsigned int num_recs);
+void SSL3_RECORD_clear(SSL3_RECORD *r, size_t);
+void SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs);
 void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
 int ssl3_get_record(SSL *s);
 __owur int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr);
