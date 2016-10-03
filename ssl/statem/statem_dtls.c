@@ -872,53 +872,18 @@ static int dtls_get_reassembled_message(SSL *s, long *len)
  * ssl->session->read_compression       assign
  * ssl->session->read_hash              assign
  */
-int dtls_construct_change_cipher_spec(SSL *s)
+int dtls_construct_change_cipher_spec(SSL *s, WPACKET *pkt)
 {
-    WPACKET pkt;
-
-    if (!WPACKET_init(&pkt, s->init_buf)
-            || !WPACKET_put_bytes_u8(&pkt, SSL3_MT_CCS)) {
-        SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
-    s->init_num = DTLS1_CCS_HEADER_LENGTH;
-
     if (s->version == DTLS1_BAD_VER) {
         s->d1->next_handshake_write_seq++;
 
-        if (!WPACKET_put_bytes_u16(&pkt, s->d1->handshake_write_seq)) {
+        if (!WPACKET_put_bytes_u16(pkt, s->d1->handshake_write_seq)) {
             SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
-            goto err;
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         }
-
-        s->init_num += 2;
-    }
-
-    if (!WPACKET_finish(&pkt)) {
-        SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    s->init_off = 0;
-
-    dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
-                                 s->d1->handshake_write_seq, 0, 0);
-
-    /* buffer the message to handle re-xmits */
-    if (!dtls1_buffer_message(s, 1)) {
-        SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
-        goto err    ;
     }
 
     return 1;
- err:
-    WPACKET_cleanup(&pkt);
-    ossl_statem_set_error(s);
-    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-
-    return 0;
 }
 
 #ifndef OPENSSL_NO_SCTP
@@ -1212,46 +1177,52 @@ void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
     n2l3(data, msg_hdr->frag_len);
 }
 
-/*
- * Temporary name. To be renamed dtls1_set_handshake_header() once all WPACKET
- * conversion is complete. The old dtls1_set_handshake_heder() can be deleted
- * at that point.
- * TODO - RENAME ME
- */
-int dtls1_set_handshake_header2(SSL *s, WPACKET *pkt, int htype)
+int dtls1_set_handshake_header(SSL *s, WPACKET *pkt, int htype)
 {
     unsigned char *header;
 
-    dtls1_set_message_header(s, htype, 0, 0, 0);
-
-    /*
-     * We allocate space at the start for the message header. This gets filled
-     * in later
-     */
-    if (!WPACKET_allocate_bytes(pkt, DTLS1_HM_HEADER_LENGTH, &header)
-            || !WPACKET_start_sub_packet(pkt))
-        return 0;
+    if (htype == SSL3_MT_CHANGE_CIPHER_SPEC) {
+        s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
+        dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
+                                     s->d1->handshake_write_seq, 0, 0);
+        if (!WPACKET_put_bytes_u8(pkt, SSL3_MT_CCS))
+            return 0;
+    } else {
+        dtls1_set_message_header(s, htype, 0, 0, 0);
+        /*
+         * We allocate space at the start for the message header. This gets
+         * filled in later
+         */
+        if (!WPACKET_allocate_bytes(pkt, DTLS1_HM_HEADER_LENGTH, &header)
+                || !WPACKET_start_sub_packet(pkt))
+            return 0;
+    }
 
     return 1;
 }
 
-int dtls1_close_construct_packet(SSL *s, WPACKET *pkt)
+int dtls1_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
 {
     size_t msglen;
 
-    if (!WPACKET_close(pkt)
+    if ((htype != SSL3_MT_CHANGE_CIPHER_SPEC && !WPACKET_close(pkt))
             || !WPACKET_get_length(pkt, &msglen)
-            || msglen > INT_MAX
-            || !WPACKET_finish(pkt))
+            || msglen > INT_MAX)
         return 0;
-    s->d1->w_msg_hdr.msg_len = msglen - DTLS1_HM_HEADER_LENGTH;
-    s->d1->w_msg_hdr.frag_len = msglen - DTLS1_HM_HEADER_LENGTH;
+
+    if (htype != SSL3_MT_CHANGE_CIPHER_SPEC) {
+        s->d1->w_msg_hdr.msg_len = msglen - DTLS1_HM_HEADER_LENGTH;
+        s->d1->w_msg_hdr.frag_len = msglen - DTLS1_HM_HEADER_LENGTH;
+    }
     s->init_num = (int)msglen;
     s->init_off = 0;
 
-    /* Buffer the message to handle re-xmits */
-    if (!dtls1_buffer_message(s, 0))
-        return 0;
+    if (htype != DTLS1_MT_HELLO_VERIFY_REQUEST) {
+        /* Buffer the message to handle re-xmits */
+        if (!dtls1_buffer_message(s, htype == SSL3_MT_CHANGE_CIPHER_SPEC
+                                     ? 1 : 0))
+            return 0;
+    }
 
     return 1;
 }

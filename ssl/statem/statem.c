@@ -708,8 +708,13 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
     WRITE_TRAN(*transition) (SSL *s);
     WORK_STATE(*pre_work) (SSL *s, WORK_STATE wst);
     WORK_STATE(*post_work) (SSL *s, WORK_STATE wst);
-    int (*construct_message) (SSL *s);
+    int (*get_construct_message_f) (SSL *s, WPACKET *pkt,
+                                    int (**confunc) (SSL *s, WPACKET *pkt),
+                                    int *mt);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
+    int (*confunc) (SSL *s, WPACKET *pkt);
+    int mt;
+    WPACKET pkt;
 
     cb = get_callback(s);
 
@@ -717,12 +722,12 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
         transition = ossl_statem_server_write_transition;
         pre_work = ossl_statem_server_pre_work;
         post_work = ossl_statem_server_post_work;
-        construct_message = ossl_statem_server_construct_message;
+        get_construct_message_f = ossl_statem_server_construct_message;
     } else {
         transition = ossl_statem_client_write_transition;
         pre_work = ossl_statem_client_pre_work;
         post_work = ossl_statem_client_post_work;
-        construct_message = ossl_statem_client_construct_message;
+        get_construct_message_f = ossl_statem_client_construct_message;
     }
 
     while (1) {
@@ -764,8 +769,16 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
             }
-            if (construct_message(s) == 0)
+            if (!WPACKET_init(&pkt, s->init_buf)
+                    || !get_construct_message_f(s, &pkt, &confunc, &mt)
+                    || !ssl_set_handshake_header(s, &pkt, mt)
+                    || (confunc != NULL && !confunc(s, &pkt))
+                    || !ssl_close_construct_packet(s, &pkt, mt)
+                    || !WPACKET_finish(&pkt)) {
+                WPACKET_cleanup(&pkt);
+                ossl_statem_set_error(s);
                 return SUB_STATE_ERROR;
+            }
 
             /* Fall through */
 

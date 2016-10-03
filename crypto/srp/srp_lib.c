@@ -14,92 +14,40 @@
 # include <openssl/evp.h>
 # include "internal/bn_srp.h"
 
-static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g)
-{
-    /* k = SHA1(N | PAD(g)) -- tls-srp draft 8 */
+/* calculate = SHA1(PAD(x) || PAD(y)) */
 
+static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N)
+{
     unsigned char digest[SHA_DIGEST_LENGTH];
     unsigned char *tmp = NULL;
-    EVP_MD_CTX *ctxt = NULL;
-    int longg;
-    int longN = BN_num_bytes(N);
+    int numN = BN_num_bytes(N);
     BIGNUM *res = NULL;
-
-    if (BN_ucmp(g, N) >= 0)
+    if (x != N && BN_ucmp(x, N) >= 0)
         return NULL;
-
-    ctxt = EVP_MD_CTX_new();
-    if (ctxt == NULL)
+    if (y != N && BN_ucmp(y, N) >= 0)
         return NULL;
-    if ((tmp = OPENSSL_malloc(longN)) == NULL)
+    if ((tmp = OPENSSL_malloc(numN * 2)) == NULL)
         goto err;
-    BN_bn2bin(N, tmp);
-
-    if (!EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
-        || !EVP_DigestUpdate(ctxt, tmp, longN))
-        goto err;
-
-    memset(tmp, 0, longN);
-    longg = BN_bn2bin(g, tmp);
-    /* use the zeros behind to pad on left */
-    if (!EVP_DigestUpdate(ctxt, tmp + longg, longN - longg)
-        || !EVP_DigestUpdate(ctxt, tmp, longg))
-        goto err;
-
-    if (!EVP_DigestFinal_ex(ctxt, digest, NULL))
+    if (BN_bn2binpad(x, tmp, numN) < 0
+        || BN_bn2binpad(y, tmp + numN, numN) < 0
+        || !EVP_Digest(tmp, numN * 2, digest, NULL, EVP_sha1(), NULL))
         goto err;
     res = BN_bin2bn(digest, sizeof(digest), NULL);
  err:
     OPENSSL_free(tmp);
-    EVP_MD_CTX_free(ctxt);
     return res;
+}
+
+static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g)
+{
+    /* k = SHA1(N | PAD(g)) -- tls-srp draft 8 */
+    return srp_Calc_xy(N, g, N);
 }
 
 BIGNUM *SRP_Calc_u(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N)
 {
     /* k = SHA1(PAD(A) || PAD(B) ) -- tls-srp draft 8 */
-
-    BIGNUM *u = NULL;
-    unsigned char cu[SHA_DIGEST_LENGTH];
-    unsigned char *cAB = NULL;
-    EVP_MD_CTX *ctxt = NULL;
-    int longN;
-    if ((A == NULL) || (B == NULL) || (N == NULL))
-        return NULL;
-
-    if (BN_ucmp(A, N) >= 0 || BN_ucmp(B, N) >= 0)
-        return NULL;
-
-    longN = BN_num_bytes(N);
-
-    ctxt = EVP_MD_CTX_new();
-    if (ctxt == NULL)
-        return NULL;
-    if ((cAB = OPENSSL_malloc(2 * longN)) == NULL)
-        goto err;
-
-    memset(cAB, 0, longN);
-
-    if (!EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
-        || !EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(A, cAB + longN), longN)
-        || !EVP_DigestUpdate(ctxt, cAB + BN_bn2bin(B, cAB + longN), longN))
-        goto err;
-
-    if (!EVP_DigestFinal_ex(ctxt, cu, NULL))
-        goto err;
-
-    if ((u = BN_bin2bn(cu, sizeof(cu), NULL)) == NULL)
-        goto err;
-    if (BN_is_zero(u)) {
-        BN_free(u);
-        u = NULL;
-    }
-
- err:
-    OPENSSL_free(cAB);
-    EVP_MD_CTX_free(ctxt);
-
-    return u;
+    return srp_Calc_xy(A, B, N);
 }
 
 BIGNUM *SRP_Calc_server_key(const BIGNUM *A, const BIGNUM *v, const BIGNUM *u,

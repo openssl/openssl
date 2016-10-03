@@ -57,14 +57,13 @@ int ssl3_do_write(SSL *s, int type)
     return (0);
 }
 
-int tls_close_construct_packet(SSL *s, WPACKET *pkt)
+int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
 {
     size_t msglen;
 
-    if (!WPACKET_close(pkt)
+    if ((htype != SSL3_MT_CHANGE_CIPHER_SPEC && !WPACKET_close(pkt))
             || !WPACKET_get_length(pkt, &msglen)
-            || msglen > INT_MAX
-            || !WPACKET_finish(pkt))
+            || msglen > INT_MAX)
         return 0;
     s->init_num = (int)msglen;
     s->init_off = 0;
@@ -72,15 +71,18 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt)
     return 1;
 }
 
-int tls_construct_finished(SSL *s, const char *sender, int slen)
+int tls_construct_finished(SSL *s, WPACKET *pkt)
 {
     int i;
-    WPACKET pkt;
+    const char *sender;
+    int slen;
 
-    if (!WPACKET_init(&pkt, s->init_buf)
-            || !ssl_set_handshake_header2(s, &pkt, SSL3_MT_FINISHED)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
-        goto err;
+    if (s->server) {
+        sender = s->method->ssl3_enc->server_finished_label;
+        slen = s->method->ssl3_enc->server_finished_label_len;
+    } else {
+        sender = s->method->ssl3_enc->client_finished_label;
+        slen = s->method->ssl3_enc->client_finished_label_len;
     }
 
     i = s->method->ssl3_enc->final_finish_mac(s,
@@ -93,7 +95,7 @@ int tls_construct_finished(SSL *s, const char *sender, int slen)
 
     s->s3->tmp.finish_md_len = i;
 
-    if (!WPACKET_memcpy(&pkt, s->s3->tmp.finish_md, i)) {
+    if (!WPACKET_memcpy(pkt, s->s3->tmp.finish_md, i)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -111,15 +113,8 @@ int tls_construct_finished(SSL *s, const char *sender, int slen)
         s->s3->previous_server_finished_len = i;
     }
 
-    if (!ssl_close_construct_packet(s, &pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
     return 1;
  err:
-    ossl_statem_set_error(s);
-    WPACKET_cleanup(&pkt);
     ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
     return 0;
 }
@@ -267,53 +262,26 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-int tls_construct_change_cipher_spec(SSL *s)
+int tls_construct_change_cipher_spec(SSL *s, WPACKET *pkt)
 {
-    WPACKET pkt;
-
-    if (!WPACKET_init(&pkt, s->init_buf)
-            || !WPACKET_put_bytes_u8(&pkt, SSL3_MT_CCS)
-            || !WPACKET_finish(&pkt)) {
-        WPACKET_cleanup(&pkt);
-        ossl_statem_set_error(s);
+    if (!WPACKET_put_bytes_u8(pkt, SSL3_MT_CCS)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         return 0;
     }
 
-    s->init_num = 1;
-    s->init_off = 0;
-
     return 1;
 }
 
-unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk)
+unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
 {
-    WPACKET pkt;
-
-    if (!WPACKET_init(&pkt, s->init_buf)) {
-        /* Should not happen */
+    if (!WPACKET_start_sub_packet_u24(pkt)
+            || !ssl_add_cert_chain(s, pkt, cpk)
+            || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    if (!ssl_set_handshake_header2(s, &pkt, SSL3_MT_CERTIFICATE)
-            || !WPACKET_start_sub_packet_u24(&pkt)) {
-        SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    if (!ssl_add_cert_chain(s, &pkt, cpk))
-        goto err;
-
-    if (!WPACKET_close(&pkt) || !ssl_close_construct_packet(s, &pkt)) {
-        SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
-        goto err;
+        return 0;
     }
     return 1;
- err:
-    WPACKET_cleanup(&pkt);
-    return 0;
 }
 
 WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)

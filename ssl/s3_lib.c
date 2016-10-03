@@ -2751,7 +2751,6 @@ const SSL3_ENC_METHOD SSLv3_enc_data = {
     0,
     SSL3_HM_HEADER_LENGTH,
     ssl3_set_handshake_header,
-    ssl3_set_handshake_header2,
     tls_close_construct_packet,
     ssl3_handshake_write
 };
@@ -2778,25 +2777,12 @@ const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
         return (NULL);
 }
 
-int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len)
+int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype)
 {
-    unsigned char *p = (unsigned char *)s->init_buf->data;
-    *(p++) = htype;
-    l2n3(len, p);
-    s->init_num = (int)len + SSL3_HM_HEADER_LENGTH;
-    s->init_off = 0;
+    /* No header in the event of a CCS */
+    if (htype == SSL3_MT_CHANGE_CIPHER_SPEC)
+        return 1;
 
-    return 1;
-}
-
-/*
- * Temporary name. To be renamed ssl3_set_handshake_header() once all WPACKET
- * conversion is complete. The old ssl3_set_handshake_heder() can be deleted
- * at that point.
- * TODO - RENAME ME
- */
-int ssl3_set_handshake_header2(SSL *s, WPACKET *pkt, int htype)
-{
     /* Set the content type and 3 bytes for the message len */
     if (!WPACKET_put_bytes_u8(pkt, htype)
             || !WPACKET_start_sub_packet_u24(pkt))

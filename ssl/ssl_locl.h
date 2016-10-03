@@ -1584,11 +1584,9 @@ typedef struct ssl3_enc_method {
     /* Handshake header length */
     unsigned int hhlen;
     /* Set the handshake header */
-    int (*set_handshake_header) (SSL *s, int type, unsigned long len);
-    /* Set the handshake header */
-    int (*set_handshake_header2) (SSL *s, WPACKET *pkt, int type);
+    int (*set_handshake_header) (SSL *s, WPACKET *pkt, int type);
     /* Close construction of the handshake message */
-    int (*close_construct_packet) (SSL *s, WPACKET *pkt);
+    int (*close_construct_packet) (SSL *s, WPACKET *pkt, int htype);
     /* Write out handshake message */
     int (*do_write) (SSL *s);
 } SSL3_ENC_METHOD;
@@ -1596,12 +1594,10 @@ typedef struct ssl3_enc_method {
 # define SSL_HM_HEADER_LENGTH(s) s->method->ssl3_enc->hhlen
 # define ssl_handshake_start(s) \
         (((unsigned char *)s->init_buf->data) + s->method->ssl3_enc->hhlen)
-# define ssl_set_handshake_header(s, htype, len) \
-        s->method->ssl3_enc->set_handshake_header(s, htype, len)
-# define ssl_set_handshake_header2(s, pkt, htype) \
-        s->method->ssl3_enc->set_handshake_header2((s), (pkt), (htype))
-# define ssl_close_construct_packet(s, pkt) \
-        s->method->ssl3_enc->close_construct_packet((s), (pkt))
+# define ssl_set_handshake_header(s, pkt, htype) \
+        s->method->ssl3_enc->set_handshake_header((s), (pkt), (htype))
+# define ssl_close_construct_packet(s, pkt, htype) \
+        s->method->ssl3_enc->close_construct_packet((s), (pkt), (htype))
 # define ssl_do_write(s)  s->method->ssl3_enc->do_write(s)
 
 /* Values for enc_flags */
@@ -1883,7 +1879,8 @@ __owur int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
                                  unsigned char *p);
 __owur int ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
 void ssl3_free_digest_list(SSL *s);
-__owur unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk);
+__owur unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt,
+                                            CERT_PKEY *cpk);
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
                                             STACK_OF(SSL_CIPHER) *clnt,
                                             STACK_OF(SSL_CIPHER) *srvr);
@@ -1903,11 +1900,10 @@ __owur long ssl3_ctx_callback_ctrl(SSL_CTX *s, int cmd, void (*fp) (void));
 __owur int ssl3_do_change_cipher_spec(SSL *ssl);
 __owur long ssl3_default_timeout(void);
 
-__owur int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
-__owur int ssl3_set_handshake_header2(SSL *s, WPACKET *pkt, int htype);
-__owur int tls_close_construct_packet(SSL *s, WPACKET *pkt);
-__owur int dtls1_set_handshake_header2(SSL *s, WPACKET *pkt, int htype);
-__owur int dtls1_close_construct_packet(SSL *s, WPACKET *pkt);
+__owur int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype);
+__owur int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype);
+__owur int dtls1_set_handshake_header(SSL *s, WPACKET *pkt, int htype);
+__owur int dtls1_close_construct_packet(SSL *s, WPACKET *pkt, int htype);
 __owur int ssl3_handshake_write(SSL *s);
 
 __owur int ssl_allow_compression(SSL *s);
@@ -2037,8 +2033,6 @@ __owur int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
 
 __owur int tls12_get_sigandhash(WPACKET *pkt, const EVP_PKEY *pk,
                                 const EVP_MD *md);
-__owur int tls12_get_sigandhash_old(unsigned char *p, const EVP_PKEY *pk,
-                                    const EVP_MD *md);
 __owur int tls12_get_sigid(const EVP_PKEY *pk);
 __owur const EVP_MD *tls12_get_hash(unsigned char hash_alg);
 void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op);

@@ -22,7 +22,6 @@
 #endif
 
 static void get_current_time(struct timeval *t);
-static int dtls1_set_handshake_header(SSL *s, int type, unsigned long len);
 static int dtls1_handshake_write(SSL *s);
 static unsigned int dtls1_link_min_mtu(void);
 
@@ -44,7 +43,6 @@ const SSL3_ENC_METHOD DTLSv1_enc_data = {
     SSL_ENC_FLAG_DTLS | SSL_ENC_FLAG_EXPLICIT_IV,
     DTLS1_HM_HEADER_LENGTH,
     dtls1_set_handshake_header,
-    dtls1_set_handshake_header2,
     dtls1_close_construct_packet,
     dtls1_handshake_write
 };
@@ -65,7 +63,6 @@ const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
         | SSL_ENC_FLAG_SHA256_PRF | SSL_ENC_FLAG_TLS1_2_CIPHERS,
     DTLS1_HM_HEADER_LENGTH,
     dtls1_set_handshake_header,
-    dtls1_set_handshake_header2,
     dtls1_close_construct_packet,
     dtls1_handshake_write
 };
@@ -860,19 +857,6 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     return ret;
 }
 #endif
-
-static int dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)
-{
-    dtls1_set_message_header(s, htype, len, 0, len);
-    s->init_num = (int)len + DTLS1_HM_HEADER_LENGTH;
-    s->init_off = 0;
-    /* Buffer the message to handle re-xmits */
-
-    if (!dtls1_buffer_message(s, 0))
-        return 0;
-
-    return 1;
-}
 
 static int dtls1_handshake_write(SSL *s)
 {
