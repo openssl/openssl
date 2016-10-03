@@ -33,10 +33,10 @@ static const unsigned char ssl3_pad_2[48] = {
 /*
  * Clear the contents of an SSL3_RECORD but retain any memory allocated
  */
-void SSL3_RECORD_clear(SSL3_RECORD *r, unsigned int num_recs)
+void SSL3_RECORD_clear(SSL3_RECORD *r, size_t num_recs)
 {
     unsigned char *comp;
-    unsigned int i;
+    size_t i;
 
     for (i = 0; i < num_recs; i++) {
         comp = r[i].comp;
@@ -46,9 +46,9 @@ void SSL3_RECORD_clear(SSL3_RECORD *r, unsigned int num_recs)
     }
 }
 
-void SSL3_RECORD_release(SSL3_RECORD *r, unsigned int num_recs)
+void SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs)
 {
-    unsigned int i;
+    size_t i;
 
     for (i = 0; i < num_recs; i++) {
         OPENSSL_free(r[i].comp);
