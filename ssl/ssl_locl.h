@@ -612,7 +612,7 @@ struct ssl_ctx_st {
      * Most session-ids that will be cached, default is
      * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited.
      */
-    unsigned long session_cache_size;
+   size_t session_cache_size;
     struct ssl_session_st *session_cache_head;
     struct ssl_session_st *session_cache_tail;
     /*
@@ -711,7 +711,7 @@ struct ssl_ctx_st {
     uint32_t mode;
     int min_proto_version;
     int max_proto_version;
-    long max_cert_list;
+    size_t max_cert_list;
 
     struct cert_st /* CERT */ *cert;
     int read_ahead;
@@ -848,7 +848,7 @@ struct ssl_ctx_st {
      * format.
      */
     unsigned char *alpn_client_proto_list;
-    unsigned alpn_client_proto_list_len;
+    size_t alpn_client_proto_list_len;
 
     /* Shared DANE context */
     struct dane_ctx_st dane;
@@ -1003,7 +1003,7 @@ struct ssl_st {
     uint32_t mode;
     int min_proto_version;
     int max_proto_version;
-    long max_cert_list;
+    size_t max_cert_list;
     int first_packet;
     /* what was passed, used for SSLv3/TLS rollback check */
     int client_version;
@@ -1090,7 +1090,7 @@ struct ssl_st {
      * the Finished message.
      */
     unsigned char *next_proto_negotiated;
-    unsigned char next_proto_negotiated_len;
+    size_t next_proto_negotiated_len;
 # endif
 # define session_ctx initial_ctx
     /* What we'll do */
@@ -1113,7 +1113,7 @@ struct ssl_st {
      * format.
      */
     unsigned char *alpn_client_proto_list;
-    unsigned alpn_client_proto_list_len;
+    size_t alpn_client_proto_list_len;
     /*-
      * 1 if we are renegotiating.
      * 2 if we are a server and are inside a handshake
@@ -1185,9 +1185,9 @@ typedef struct ssl3_state_st {
     struct {
         /* actually only need to be 16+20 for SSLv3 and 12 for TLS */
         unsigned char finish_md[EVP_MAX_MD_SIZE * 2];
-        int finish_md_len;
+        size_t finish_md_len;
         unsigned char peer_finish_md[EVP_MAX_MD_SIZE * 2];
-        int peer_finish_md_len;
+        size_t peer_finish_md_len;
         size_t message_size;
         int message_type;
         /* used to hold the new cipher we are going to use */
@@ -1259,9 +1259,9 @@ typedef struct ssl3_state_st {
 
     /* Connection binding to prevent renegotiation attacks */
     unsigned char previous_client_finished[EVP_MAX_MD_SIZE];
-    unsigned char previous_client_finished_len;
+    size_t previous_client_finished_len;
     unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
-    unsigned char previous_server_finished_len;
+    size_t previous_server_finished_len;
     int send_connection_binding; /* TODOEKR */
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1572,7 +1572,7 @@ typedef struct ssl3_enc_method {
     int (*generate_master_secret) (SSL *, unsigned char *, unsigned char *,
                                    size_t, size_t *);
     int (*change_cipher_state) (SSL *, int);
-    int (*final_finish_mac) (SSL *, const char *, int, unsigned char *);
+    size_t (*final_finish_mac) (SSL *, const char *, int, unsigned char *);
     int finish_mac_length;
     const char *client_finished_label;
     int client_finished_label_len;
@@ -1887,8 +1887,8 @@ __owur const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl);
 int ssl3_renegotiate_check(SSL *ssl);
 __owur int ssl3_dispatch_alert(SSL *s);
-__owur int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
-                                 unsigned char *p);
+__owur size_t ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
+                                    unsigned char *p);
 __owur int ssl3_finish_mac(SSL *s, const unsigned char *buf, size_t len);
 void ssl3_free_digest_list(SSL *s);
 __owur unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt,
@@ -1983,8 +1983,8 @@ void ssl_free_wbio_buffer(SSL *s);
 
 __owur int tls1_change_cipher_state(SSL *s, int which);
 __owur int tls1_setup_key_block(SSL *s);
-__owur int tls1_final_finish_mac(SSL *s,
-                                 const char *str, int slen, unsigned char *p);
+__owur size_t tls1_final_finish_mac(SSL *s, const char *str, int slen,
+                                    unsigned char *p);
 __owur int tls1_generate_master_secret(SSL *s, unsigned char *out,
                                        unsigned char *p, size_t len,
                                        size_t *secret_size);
