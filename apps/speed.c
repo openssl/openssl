@@ -166,7 +166,7 @@ typedef struct loopargs_st {
     EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
     unsigned char *secret_a;
     unsigned char *secret_b;
-    size_t      outlen;
+    size_t      outlen[EC_NUM];
     kdf_fn      kdf;
 #endif
     EVP_CIPHER_CTX *ctx;
@@ -1057,7 +1057,7 @@ static int ECDH_EVP_derive_key_loop(void *args)
     EVP_PKEY_CTX *ctx = tempargs->ecdh_ctx[testnum];
     unsigned char *derived_secret = tempargs->secret_a;
     int count;
-    size_t *outlen = &(tempargs->outlen);
+    size_t *outlen = &(tempargs->outlen[testnum]);
 
     for (count = 0; COND(ecdh_c[testnum][0]); count++) {
         if ( !ECDH_EVP_derive_key(derived_secret, outlen, ctx) )
@@ -2561,6 +2561,7 @@ int speed_main(int argc, char **argv)
         for (i = 0; i < loopargs_len; i++) {
             EVP_PKEY_CTX *kctx = NULL, *ctx = NULL;
             EVP_PKEY *key_A = NULL, *key_B = NULL;
+            size_t outlen;
 
             if (testnum == R_EC_X25519) {
                 kctx = EVP_PKEY_CTX_new_id(test_curves[testnum], NULL); /* keygen ctx from NID */
@@ -2604,6 +2605,8 @@ int speed_main(int argc, char **argv)
                     !(ctx = EVP_PKEY_CTX_new(key_A, NULL)) || /* derivation ctx from skeyA */
                     !EVP_PKEY_derive_init(ctx) || /* init derivation ctx */
                     !EVP_PKEY_derive_set_peer(ctx, key_B) || /* set peer pubkey in ctx */
+                    !EVP_PKEY_derive(ctx, NULL, &outlen) || /* determine max length */
+                    outlen > MAX_ECDH_SIZE || /* avoid buffer overflow */
                     0) {
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH key generation failure.\n");
@@ -2613,6 +2616,7 @@ int speed_main(int argc, char **argv)
             }
 
             loopargs[i].ecdh_ctx[testnum] = ctx;
+            loopargs[i].outlen[testnum] = outlen;
 
             EVP_PKEY_CTX_free(kctx); kctx = NULL;
         }
