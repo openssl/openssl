@@ -612,7 +612,7 @@ struct ssl_ctx_st {
      * Most session-ids that will be cached, default is
      * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited.
      */
-   size_t session_cache_size;
+    size_t session_cache_size;
     struct ssl_session_st *session_cache_head;
     struct ssl_session_st *session_cache_tail;
     /*
@@ -1378,7 +1378,7 @@ int pqueue_size(pqueue *pq);
 
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
-    unsigned int cookie_len;
+    size_t cookie_len;
     unsigned int cookie_verified;
     /* handshake message numbers */
     unsigned short handshake_write_seq;
@@ -1958,7 +1958,7 @@ void dtls1_stop_timer(SSL *s);
 __owur int dtls1_is_timer_expired(SSL *s);
 void dtls1_double_timeout(SSL *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
-                                         unsigned char cookie_len);
+                                         size_t cookie_len);
 __owur int dtls1_send_newsession_ticket(SSL *s);
 __owur size_t dtls1_min_mtu(SSL *s);
 void dtls1_hm_fragment_free(hm_fragment *frag);

@@ -870,7 +870,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
 MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt)
 {
     int al;
-    unsigned int cookie_len;
+    size_t cookie_len;
     PACKET cookiepkt;
 
     if (!PACKET_forward(pkt, 2)
