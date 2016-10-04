@@ -1572,7 +1572,7 @@ typedef struct ssl3_enc_method {
     int (*generate_master_secret) (SSL *, unsigned char *, unsigned char *,
                                    size_t, size_t *);
     int (*change_cipher_state) (SSL *, int);
-    size_t (*final_finish_mac) (SSL *, const char *, int, unsigned char *);
+    size_t (*final_finish_mac) (SSL *, const char *, size_t, unsigned char *);
     int finish_mac_length;
     const char *client_finished_label;
     int client_finished_label_len;
@@ -1862,7 +1862,7 @@ __owur int ssl_verify_alarm_type(long type);
 void ssl_sort_cipher_list(void);
 void ssl_load_ciphers(void);
 __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field,
-                                 int len);
+                                 size_t len);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                       int free_pms);
 __owur EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm);
@@ -1887,7 +1887,7 @@ __owur const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl);
 int ssl3_renegotiate_check(SSL *ssl);
 __owur int ssl3_dispatch_alert(SSL *s);
-__owur size_t ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
+__owur size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t slen,
                                     unsigned char *p);
 __owur int ssl3_finish_mac(SSL *s, const unsigned char *buf, size_t len);
 void ssl3_free_digest_list(SSL *s);
@@ -1983,7 +1983,7 @@ void ssl_free_wbio_buffer(SSL *s);
 
 __owur int tls1_change_cipher_state(SSL *s, int which);
 __owur int tls1_setup_key_block(SSL *s);
-__owur size_t tls1_final_finish_mac(SSL *s, const char *str, int slen,
+__owur size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
                                     unsigned char *p);
 __owur int tls1_generate_master_secret(SSL *s, unsigned char *out,
                                        unsigned char *p, size_t len,

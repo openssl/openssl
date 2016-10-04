@@ -407,7 +407,8 @@ int ssl3_digest_cached_records(SSL *s, int keep)
     return 1;
 }
 
-size_t ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
+size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
+                             unsigned char *p)
 {
     int ret;
     EVP_MD_CTX *ctx = NULL;
