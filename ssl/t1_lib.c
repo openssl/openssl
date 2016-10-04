@@ -21,7 +21,7 @@
 #include <openssl/ct.h>
 
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
-                              const unsigned char *sess_id, int sesslen,
+                              const unsigned char *sess_id, size_t sesslen,
                               SSL_SESSION **psess);
 static int ssl_check_clienthello_tlsext_early(SSL *s);
 static int ssl_check_serverhello_tlsext(SSL *s);
@@ -2964,7 +2964,7 @@ int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
  */
 static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
                               int eticklen, const unsigned char *sess_id,
-                              int sesslen, SSL_SESSION **psess)
+                              size_t sesslen, SSL_SESSION **psess)
 {
     SSL_SESSION *sess;
     unsigned char *sdec;

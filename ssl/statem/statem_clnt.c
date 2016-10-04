@@ -696,8 +696,8 @@ WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
 int tls_construct_client_hello(SSL *s, WPACKET *pkt)
 {
     unsigned char *p;
-    int i;
-    int protverr;
+    size_t sess_id_len;
+    int i, protverr;
     int al = SSL_AD_HANDSHAKE_FAILURE;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
@@ -788,12 +788,13 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
 
     /* Session ID */
     if (s->new_session)
-        i = 0;
+        sess_id_len = 0;
     else
-        i = s->session->session_id_length;
-    if (i > (int)sizeof(s->session->session_id)
+        sess_id_len = s->session->session_id_length;
+    if (sess_id_len > sizeof(s->session->session_id)
             || !WPACKET_start_sub_packet_u8(pkt)
-            || (i != 0 && !WPACKET_memcpy(pkt, s->session->session_id, i))
+            || (sess_id_len != 0 && !WPACKET_memcpy(pkt, s->session->session_id,
+                                                    sess_id_len))
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -1880,6 +1881,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     int al;
     unsigned int ticklen;
     unsigned long ticket_lifetime_hint;
+    unsigned int sess_len;
 
     if (!PACKET_get_net_4(pkt, &ticket_lifetime_hint)
         || !PACKET_get_net_2(pkt, &ticklen)
@@ -1944,12 +1946,17 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
      * elsewhere in OpenSSL. The session ID is set to the SHA256 (or SHA1 is
      * SHA256 is disabled) hash of the ticket.
      */
+    /*
+     * TODO(size_t): we use sess_len here because EVP_Digest expects an int
+     * but s->session->session_id_length is a size_t
+     */
     if (!EVP_Digest(s->session->tlsext_tick, ticklen,
-                    s->session->session_id, &s->session->session_id_length,
+                    s->session->session_id, &sess_len,
                     EVP_sha256(), NULL)) {
         SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, ERR_R_EVP_LIB);
         goto err;
     }
+    s->session->session_id_length = sess_len;
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);

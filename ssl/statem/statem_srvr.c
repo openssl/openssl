@@ -1491,8 +1491,8 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 
 int tls_construct_server_hello(SSL *s, WPACKET *pkt)
 {
-    int sl, compm, al = SSL_AD_INTERNAL_ERROR;
-    size_t len;
+    int compm, al = SSL_AD_INTERNAL_ERROR;
+    size_t sl, len;
 
     if (!WPACKET_put_bytes_u16(pkt, s->version)
                /*
@@ -1526,7 +1526,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
         s->session->session_id_length = 0;
 
     sl = s->session->session_id_length;
-    if (sl > (int)sizeof(s->session->session_id)) {
+    if (sl > sizeof(s->session->session_id)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
