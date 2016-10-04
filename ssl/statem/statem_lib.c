@@ -74,7 +74,7 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
 
 int tls_construct_finished(SSL *s, WPACKET *pkt)
 {
-    int i;
+    size_t finish_md_len;
     const char *sender;
     int slen;
 
@@ -86,17 +86,17 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
         slen = s->method->ssl3_enc->client_finished_label_len;
     }
 
-    i = s->method->ssl3_enc->final_finish_mac(s,
-                                              sender, slen,
-                                              s->s3->tmp.finish_md);
-    if (i <= 0) {
+    finish_md_len = s->method->ssl3_enc->final_finish_mac(s,
+                                                          sender, slen,
+                                                          s->s3->tmp.finish_md);
+    if (finish_md_len == 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    s->s3->tmp.finish_md_len = i;
+    s->s3->tmp.finish_md_len = finish_md_len;
 
-    if (!WPACKET_memcpy(pkt, s->s3->tmp.finish_md, i)) {
+    if (!WPACKET_memcpy(pkt, s->s3->tmp.finish_md, finish_md_len)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -105,13 +105,15 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
      * Copy the finished so we can use it for renegotiation checks
      */
     if (!s->server) {
-        OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
-        memcpy(s->s3->previous_client_finished, s->s3->tmp.finish_md, i);
-        s->s3->previous_client_finished_len = i;
+        OPENSSL_assert(finish_md_len <= EVP_MAX_MD_SIZE);
+        memcpy(s->s3->previous_client_finished, s->s3->tmp.finish_md,
+               finish_md_len);
+        s->s3->previous_client_finished_len = finish_md_len;
     } else {
-        OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
-        memcpy(s->s3->previous_server_finished, s->s3->tmp.finish_md, i);
-        s->s3->previous_server_finished_len = i;
+        OPENSSL_assert(finish_md_len <= EVP_MAX_MD_SIZE);
+        memcpy(s->s3->previous_server_finished, s->s3->tmp.finish_md,
+               finish_md_len);
+        s->s3->previous_server_finished_len = finish_md_len;
     }
 
     return 1;
@@ -219,7 +221,8 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
 
 MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
 {
-    int al, i;
+    int al;
+    size_t md_len;
 
     /* If this occurs, we have missed a message */
     if (!s->s3->change_cipher_spec) {
@@ -229,15 +232,16 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
     }
     s->s3->change_cipher_spec = 0;
 
-    i = s->s3->tmp.peer_finish_md_len;
+    md_len = s->s3->tmp.peer_finish_md_len;
 
-    if ((unsigned long)i != PACKET_remaining(pkt)) {
+    if (md_len != PACKET_remaining(pkt)) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_BAD_DIGEST_LENGTH);
         goto f_err;
     }
 
-    if (CRYPTO_memcmp(PACKET_data(pkt), s->s3->tmp.peer_finish_md, i) != 0) {
+    if (CRYPTO_memcmp(PACKET_data(pkt), s->s3->tmp.peer_finish_md,
+                      md_len) != 0) {
         al = SSL_AD_DECRYPT_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_DIGEST_CHECK_FAILED);
         goto f_err;
@@ -247,13 +251,15 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
      * Copy the finished so we can use it for renegotiation checks
      */
     if (s->server) {
-        OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
-        memcpy(s->s3->previous_client_finished, s->s3->tmp.peer_finish_md, i);
-        s->s3->previous_client_finished_len = i;
+        OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
+        memcpy(s->s3->previous_client_finished, s->s3->tmp.peer_finish_md,
+               md_len);
+        s->s3->previous_client_finished_len = md_len;
     } else {
-        OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
-        memcpy(s->s3->previous_server_finished, s->s3->tmp.peer_finish_md, i);
-        s->s3->previous_server_finished_len = i;
+        OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
+        memcpy(s->s3->previous_server_finished, s->s3->tmp.peer_finish_md,
+               md_len);
+        s->s3->previous_server_finished_len = md_len;
     }
 
     return MSG_PROCESS_FINISHED_READING;

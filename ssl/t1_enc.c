@@ -451,7 +451,7 @@ int tls1_setup_key_block(SSL *s)
     return (ret);
 }
 
-int tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
+size_t tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
 {
     size_t hashlen;
     unsigned char hash[EVP_MAX_MD_SIZE];
