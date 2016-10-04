@@ -2587,8 +2587,10 @@ int speed_main(int argc, char **argv)
             continue;
 
         for (i = 0; i < loopargs_len; i++) {
-            EVP_PKEY_CTX *kctx = NULL, *ctx = NULL;
-            EVP_PKEY *key_A = NULL, *key_B = NULL;
+            EVP_PKEY_CTX *kctx = NULL;
+            EVP_PKEY_CTX *ctx = NULL;
+            EVP_PKEY *key_A = NULL;
+            EVP_PKEY *key_B = NULL;
             size_t outlen;
 
             if (testnum == R_EC_X25519) {
@@ -2606,7 +2608,7 @@ int speed_main(int argc, char **argv)
                                                                test_curves
                                                                [testnum]) ||
                        /* Create the parameter object params */
-                       !EVP_PKEY_paramgen(pctx, &params) || 0) {
+                       !EVP_PKEY_paramgen(pctx, &params)) {
                     ecdh_checks = 0;
                     BIO_printf(bio_err, "ECDH init failure.\n");
                     ERR_print_errors(bio_err);
@@ -2622,8 +2624,7 @@ int speed_main(int argc, char **argv)
                 pctx = NULL;
             }
             if (!kctx ||        /* keygen ctx is not null */
-                !EVP_PKEY_keygen_init(kctx) || /* init keygen ctx */
-                0) {
+                !EVP_PKEY_keygen_init(kctx) /* init keygen ctx */ ) {
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH keygen failure.\n");
                 ERR_print_errors(bio_err);
@@ -2637,8 +2638,7 @@ int speed_main(int argc, char **argv)
                 !EVP_PKEY_derive_init(ctx) || /* init derivation ctx */
                 !EVP_PKEY_derive_set_peer(ctx, key_B) || /* set peer pubkey in ctx */
                 !EVP_PKEY_derive(ctx, NULL, &outlen) || /* determine max length */
-                outlen > MAX_ECDH_SIZE || /* avoid buffer overflow */
-                0) {
+                outlen > MAX_ECDH_SIZE /* avoid buffer overflow */ ) {
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH key generation failure.\n");
                 ERR_print_errors(bio_err);
