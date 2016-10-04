@@ -57,7 +57,7 @@ int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)
 
 int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 {
-    unsigned int i;
+    size_t i;
     const char *s;
 
     if (x == NULL)
@@ -98,7 +98,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
     }
     if (BIO_puts(bp, "\n    Master-Key: ") <= 0)
         goto err;
-    for (i = 0; i < (unsigned int)x->master_key_length; i++) {
+    for (i = 0; i < x->master_key_length; i++) {
         if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
             goto err;
     }
@@ -181,7 +181,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
  */
 int SSL_SESSION_print_keylog(BIO *bp, const SSL_SESSION *x)
 {
-    unsigned int i;
+    size_t i;
 
     if (x == NULL)
         goto err;
@@ -204,7 +204,7 @@ int SSL_SESSION_print_keylog(BIO *bp, const SSL_SESSION *x)
     }
     if (BIO_puts(bp, " Master-Key:") <= 0)
         goto err;
-    for (i = 0; i < (unsigned int)x->master_key_length; i++) {
+    for (i = 0; i < x->master_key_length; i++) {
         if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
             goto err;
     }

@@ -503,14 +503,14 @@ struct ssl_session_st {
     size_t master_key_length;
     unsigned char master_key[SSL_MAX_MASTER_KEY_LENGTH];
     /* session_id - valid? */
-    unsigned int session_id_length;
+    size_t session_id_length;
     unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
     /*
      * this is used to determine whether the session is being reused in the
      * appropriate context. It is up to the application to set this, via
      * SSL_new
      */
-    unsigned int sid_ctx_length;
+    size_t sid_ctx_length;
     unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 # ifndef OPENSSL_NO_PSK
     char *psk_identity_hint;
@@ -722,7 +722,7 @@ struct ssl_ctx_st {
     void *msg_callback_arg;
 
     uint32_t verify_mode;
-    unsigned int sid_ctx_length;
+    size_t sid_ctx_length;
     unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
     /* called 'verify_callback' in the SSL */
     int (*default_verify_callback) (int ok, X509_STORE_CTX *ctx);
@@ -958,7 +958,7 @@ struct ssl_st {
      * the session_id_context is used to ensure sessions are only reused in
      * the appropriate context
      */
-    unsigned int sid_ctx_length;
+    size_t sid_ctx_length;
     unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
     /* This can also be in the session once a session is established */
     SSL_SESSION *session;
