@@ -1780,7 +1780,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
             goto err;
         }
         memcpy(s->cert->ctypes, data, ctype_num);
-        s->cert->ctype_num = (size_t)ctype_num;
+        s->cert->ctype_num = ctype_num;
         ctype_num = SSL3_CT_NUMBER;
     }
     for (i = 0; i < ctype_num; i++)

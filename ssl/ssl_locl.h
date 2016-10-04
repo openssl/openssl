@@ -1934,8 +1934,8 @@ __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
 void dtls1_set_message_header(SSL *s,
                               unsigned char mt,
-                              unsigned long len,
-                              unsigned long frag_off, unsigned long frag_len);
+                              size_t len,
+                              size_t frag_off, size_t frag_len);
 
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
                                size_t *written);
@@ -2037,7 +2037,7 @@ __owur int ssl_prepare_serverhello_tlsext(SSL *s);
 #  ifndef OPENSSL_NO_HEARTBEATS
 __owur int dtls1_heartbeat(SSL *s);
 __owur int dtls1_process_heartbeat(SSL *s, unsigned char *p,
-                                   unsigned int length);
+                                   size_t length);
 #  endif
 
 __owur int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
@@ -2077,7 +2077,7 @@ __owur int ssl_parse_clienthello_renegotiate_ext(SSL *s, PACKET *pkt, int *al);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
                               const unsigned char *psig, size_t psiglen);
-__owur int tls1_save_sigalgs(SSL *s, const unsigned char *data, int dsize);
+__owur int tls1_save_sigalgs(SSL *s, const unsigned char *data, size_t dsize);
 __owur int tls1_process_sigalgs(SSL *s);
 __owur size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs);
 __owur int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,

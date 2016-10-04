@@ -20,7 +20,7 @@
 #include "ssl_locl.h"
 #include <openssl/ct.h>
 
-static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
+static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, size_t ticklen,
                               const unsigned char *sess_id, size_t sesslen,
                               SSL_SESSION **psess);
 static int ssl_check_clienthello_tlsext_early(SSL *s);
@@ -2963,7 +2963,7 @@ int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
  *    4: same as 3, but the ticket needs to be renewed.
  */
 static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
-                              int eticklen, const unsigned char *sess_id,
+                              size_t eticklen, const unsigned char *sess_id,
                               size_t sesslen, SSL_SESSION **psess)
 {
     SSL_SESSION *sess;
@@ -3017,13 +3017,14 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      * Attempt to process session ticket, first conduct sanity and integrity
      * checks on ticket.
      */
+    /* TODO(size_t) : convert me */
     mlen = HMAC_size(hctx);
     if (mlen < 0) {
         goto err;
     }
     /* Sanity check ticket length: must exceed keyname + IV + HMAC */
     if (eticklen <=
-        TLSEXT_KEYNAME_LENGTH + EVP_CIPHER_CTX_iv_length(ctx) + mlen) {
+        TLSEXT_KEYNAME_LENGTH + EVP_CIPHER_CTX_iv_length(ctx) + (size_t)mlen) {
         ret = 2;
         goto err;
     }
@@ -3411,7 +3412,7 @@ static int tls1_set_shared_sigalgs(SSL *s)
 
 /* Set preferred digest for each key type */
 
-int tls1_save_sigalgs(SSL *s, const unsigned char *data, int dsize)
+int tls1_save_sigalgs(SSL *s, const unsigned char *data, size_t dsize)
 {
     CERT *c = s->cert;
     /* Extension ignored for inappropriate versions */
