@@ -214,11 +214,6 @@ int dtls1_do_write(SSL *s, int type)
         else
             len = s->init_num;
 
-        /* Shouldn't ever happen */
-        /* TODO(size_t): can this go now? */
-        if (len > INT_MAX)
-            len = INT_MAX;
-
         /*
          * XDTLS: this function is too long.  split out the CCS part
          */
