@@ -1119,8 +1119,8 @@ int dtls1_retransmit_message(SSL *s, unsigned short seq, int *found)
 }
 
 void dtls1_set_message_header(SSL *s,
-                              unsigned char mt, unsigned long len,
-                              unsigned long frag_off, unsigned long frag_len)
+                              unsigned char mt, size_t len,
+                              size_t frag_off, size_t frag_len)
 {
     if (frag_off == 0) {
         s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
