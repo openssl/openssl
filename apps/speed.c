@@ -1040,11 +1040,8 @@ static int ECDH_EVP_derive_key_loop(void *args)
     size_t *outlen = &(tempargs->outlen[testnum]);
 
     for (count = 0; COND(ecdh_c[testnum][0]); count++)
-        if (EVP_PKEY_derive(ctx, derived_secret, outlen) <= 0) {
-            BIO_printf(bio_err, "ECDH EVP_PKEY_derive failure\n");
-            ERR_print_errors(bio_err);
-            break;
-        }
+        EVP_PKEY_derive(ctx, derived_secret, outlen);
+
     return count;
 }
 
@@ -2578,10 +2575,12 @@ int speed_main(int argc, char **argv)
 
         for (i = 0; i < loopargs_len; i++) {
             EVP_PKEY_CTX *kctx = NULL;
+            EVP_PKEY_CTX *test_ctx = NULL;
             EVP_PKEY_CTX *ctx = NULL;
             EVP_PKEY *key_A = NULL;
             EVP_PKEY *key_B = NULL;
             size_t outlen;
+            size_t test_outlen;
 
             if (testnum == R_EC_X25519) {
                 kctx = EVP_PKEY_CTX_new_id(test_curves[testnum], NULL); /* keygen ctx from NID */
@@ -2628,9 +2627,38 @@ int speed_main(int argc, char **argv)
                 !EVP_PKEY_derive_init(ctx) || /* init derivation ctx */
                 !EVP_PKEY_derive_set_peer(ctx, key_B) || /* set peer pubkey in ctx */
                 !EVP_PKEY_derive(ctx, NULL, &outlen) || /* determine max length */
+                outlen == 0 ||  /* ensure outlen is a valid size */
                 outlen > MAX_ECDH_SIZE /* avoid buffer overflow */ ) {
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH key generation failure.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                break;
+            }
+
+            /* Here we perform a test run, comparing the output of a*B and b*A;
+             * we try this here and assume that further EVP_PKEY_derive calls
+             * never fail, so we can skip checks in the actually benchmarked
+             * code, for maximum performance. */
+            if (!(test_ctx = EVP_PKEY_CTX_new(key_B, NULL)) || /* test ctx from skeyB */
+                !EVP_PKEY_derive_init(test_ctx) || /* init derivation test_ctx */
+                !EVP_PKEY_derive_set_peer(test_ctx, key_A) || /* set peer pubkey in test_ctx */
+                !EVP_PKEY_derive(test_ctx, NULL, &test_outlen) || /* determine max length */
+                !EVP_PKEY_derive(ctx, loopargs[i].secret_a, &outlen) || /* compute a*B */
+                !EVP_PKEY_derive(test_ctx, loopargs[i].secret_b, &test_outlen) || /* compute b*A */
+                test_outlen != outlen /* compare output length */ ) {
+                ecdh_checks = 0;
+                BIO_printf(bio_err, "ECDH computation failure.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+                break;
+            }
+            for (k = 0; (unsigned int)k < test_outlen && ecdh_checks == 1; k++) {
+                if (loopargs[i].secret_a[k] != loopargs[i].secret_b[k])
+                    ecdh_checks = 0;
+            }
+            if (ecdh_checks == 0) {
+                BIO_printf(bio_err, "ECDH computations don't match.\n");
                 ERR_print_errors(bio_err);
                 rsa_count = 1;
                 break;
@@ -2641,6 +2669,8 @@ int speed_main(int argc, char **argv)
 
             EVP_PKEY_CTX_free(kctx);
             kctx = NULL;
+            EVP_PKEY_CTX_free(test_ctx);
+            test_ctx = NULL;
         }
         if (ecdh_checks != 0) {
             pkey_print_message("", "ecdh",
