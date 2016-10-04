@@ -202,7 +202,6 @@ int ssl3_get_record(SSL *s)
                 ssl_minor = *(p++);
                 version = (ssl_major << 8) | ssl_minor;
                 rr[num_recs].rec_version = version;
-                /* TODO(size_t): CHECK ME */
                 n2s(p, rr[num_recs].length);
 
                 /* Lets check version */
@@ -1108,7 +1107,6 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
  *   1: if the padding was valid
  *  -1: otherwise.
  */
- /* TODO(size_t): Convert me */
 int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
                             size_t block_size, size_t mac_size)
 {
@@ -1123,7 +1121,6 @@ int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
         return 0;
 
     padding_length = rec->data[rec->length - 1];
-    /* TODO(size_t): size_t constant_time ? */
     good = constant_time_ge(rec->length, padding_length + overhead);
     /* SSLv3 requires that the padding is minimal. */
     good &= constant_time_ge(block_size, padding_length + 1);
@@ -1176,7 +1173,6 @@ int tls1_cbc_remove_padding(const SSL *s,
         return 1;
     }
 
-    /* TODO(size_t): size_t constant_time?? */
     good = constant_time_ge(rec->length, overhead + padding_length);
     /*
      * The padding consists of a length byte at the end of the record and
@@ -1279,7 +1275,6 @@ void ssl3_cbc_copy_mac(unsigned char *out,
 
     memset(rotated_mac, 0, md_size);
     for (i = scan_start, j = 0; i < rec->orig_len; i++) {
-        /* TODO(size_t): should we have constant_time variants for size_t? */
         unsigned char mac_started = constant_time_ge_8(i, mac_start);
         unsigned char mac_ended = constant_time_ge_8(i, mac_end);
         unsigned char b = rec->data[i];
@@ -1587,7 +1582,6 @@ int dtls1_get_record(SSL *s)
         memcpy(&(RECORD_LAYER_get_read_sequence(&s->rlayer)[2]), p, 6);
         p += 6;
 
-        /* TODO(size_t): CHECK ME */
         n2s(p, rr->length);
 
         /* Lets check version */
