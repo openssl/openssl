@@ -104,6 +104,12 @@ static __FILE_ptr32 (*const vms_fopen)(const char *, const char *, ...) =
 
 #define RFILE ".rnd"
 
+#ifdef EINTR
+# define INTERRUPTED(in) (ferror(in) && errno == EINTR)
+#else
+# define INTERRUPTED (0)
+#endif
+
 /*
  * Note that these functions are intended for seed files only. Entropy
  * devices and EGD sockets are handled in rand_unix.c
@@ -164,13 +170,15 @@ int RAND_load_file(const char *file, long bytes)
             n = BUFSIZE;
 
         i = fread(buf, 1, n, in);
-        if (i <= 0 && ferror(in) && errno == EINTR) {
-            clearerr(in);
-            continue;
+        if (i <= 0) {
+            if (INTERRUPTED(in)) {
+                /* Interrupted by a signal, resume reading */
+                clearerr(in);
+                continue;
+            } else {
+                break;
+            }
         }
-
-        if (i <= 0)
-            break;
 
         RAND_add(buf, i, (double)i);
         ret += i;
