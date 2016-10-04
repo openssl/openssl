@@ -43,19 +43,18 @@
 
 /* seed1 through seed5 are concatenated */
 static int tls1_PRF(SSL *s,
-                    const void *seed1, int seed1_len,
-                    const void *seed2, int seed2_len,
-                    const void *seed3, int seed3_len,
-                    const void *seed4, int seed4_len,
-                    const void *seed5, int seed5_len,
-                    const unsigned char *sec, int slen,
-                    unsigned char *out, int olen)
+                    const void *seed1, size_t seed1_len,
+                    const void *seed2, size_t seed2_len,
+                    const void *seed3, size_t seed3_len,
+                    const void *seed4, size_t seed4_len,
+                    const void *seed5, size_t seed5_len,
+                    const unsigned char *sec, size_t slen,
+                    unsigned char *out, size_t olen)
 {
     const EVP_MD *md = ssl_prf_md(s);
     EVP_PKEY_CTX *pctx = NULL;
 
     int ret = 0;
-    size_t outlen = olen;
 
     if (md == NULL) {
         /* Should never happen */
@@ -79,7 +78,7 @@ static int tls1_PRF(SSL *s,
     if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed5, seed5_len) <= 0)
         goto err;
 
-    if (EVP_PKEY_derive(pctx, out, &outlen) <= 0)
+    if (EVP_PKEY_derive(pctx, out, &olen) <= 0)
         goto err;
     ret = 1;
 
@@ -88,7 +87,6 @@ static int tls1_PRF(SSL *s,
     return ret;
 }
 
-/* TODO(size_t): convert me */
 static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
 {
     int ret;
@@ -451,7 +449,8 @@ int tls1_setup_key_block(SSL *s)
     return (ret);
 }
 
-size_t tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *out)
+size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
+                             unsigned char *out)
 {
     size_t hashlen;
     unsigned char hash[EVP_MAX_MD_SIZE];

@@ -3941,7 +3941,7 @@ long ssl_get_algorithm2(SSL *s)
  * Fill a ClientRandom or ServerRandom field of length len. Returns <= 0 on
  * failure, 1 on success.
  */
-int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
+int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len)
 {
     int send_time = 0;
 
