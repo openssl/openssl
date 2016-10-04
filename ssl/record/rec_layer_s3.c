@@ -418,6 +418,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         unsigned char aad[13];
         EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
         size_t packlen;
+        int packleni;
 
         /* minimize address aliasing conflicts */
         if ((max_send_fragment & 0xfff) == 0)
@@ -476,12 +477,11 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
             mb_param.inp = aad;
             mb_param.len = nw;
 
-            /* TODO: CHECK ME - CAN THIS EVER BE NEGATIVE???? */
-            packlen = EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
+            packleni = EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
                                           EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
                                           sizeof(mb_param), &mb_param);
-
-            if (packlen <= 0 || packlen > wb->len) { /* never happens */
+            packlen = (size_t)packleni;
+            if (packleni <= 0 || packlen > wb->len) { /* never happens */
                 /* free jumbo buffer */
                 ssl3_release_write_buffer(s);
                 break;
