@@ -1031,18 +1031,6 @@ static int ECDSA_verify_loop(void *args)
 /* ******************************************************************** */
 static long ecdh_c[EC_NUM][1];
 
-static int ECDH_EVP_derive_key(unsigned char *derived_secret,
-                               size_t *outlen, EVP_PKEY_CTX *ctx)
-{
-    int rt = 1;
-    if ((rt = EVP_PKEY_derive(ctx, derived_secret, outlen)) <= 0) {
-        BIO_printf(bio_err, "ECDH EVP_PKEY_derive failure: returned %d\n", rt);
-        ERR_print_errors(bio_err);
-        return rt;
-    }
-    return rt;
-}
-
 static int ECDH_EVP_derive_key_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -1051,10 +1039,12 @@ static int ECDH_EVP_derive_key_loop(void *args)
     int count;
     size_t *outlen = &(tempargs->outlen[testnum]);
 
-    for (count = 0; COND(ecdh_c[testnum][0]); count++) {
-        if (!ECDH_EVP_derive_key(derived_secret, outlen, ctx))
+    for (count = 0; COND(ecdh_c[testnum][0]); count++)
+        if (EVP_PKEY_derive(ctx, derived_secret, outlen) <= 0) {
+            BIO_printf(bio_err, "ECDH EVP_PKEY_derive failure\n");
+            ERR_print_errors(bio_err);
             break;
-    }
+        }
     return count;
 }
 
