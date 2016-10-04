@@ -853,7 +853,7 @@ static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 #endif
 
 int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
-                                  unsigned char cookie_len)
+                                  size_t cookie_len)
 {
     /* Always use DTLS 1.0 version: see RFC 6347 */
     if (!WPACKET_put_bytes_u16(pkt, DTLS1_VERSION)
@@ -865,14 +865,16 @@ int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
 
 int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
 {
+    unsigned int cookie_leni;
     if (s->ctx->app_gen_cookie_cb == NULL ||
         s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
-                                  &(s->d1->cookie_len)) == 0 ||
-        s->d1->cookie_len > 255) {
+                                  &cookie_leni) == 0 ||
+        cookie_leni > 255) {
         SSLerr(SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST,
                SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return 0;
     }
+    s->d1->cookie_len = cookie_leni;
 
     if (!dtls_raw_hello_verify_request(pkt, s->d1->cookie,
                                               s->d1->cookie_len)) {
