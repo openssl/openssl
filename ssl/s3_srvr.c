@@ -1838,17 +1838,17 @@ int ssl3_send_server_key_exchange(SSL *s)
 
 #ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
             if ((type & SSL_kOQSKEX_GENERIC) || (type & SSL_kOQSKEX_RLWE_BCNS15)) {
-                if ((s->s3->tmp.oqskex_rand = OQS_RAND_new()) == NULL) {
+                if ((s->s3->tmp.oqskex_rand = OQS_RAND_new(OQS_RAND_alg_default)) == NULL) {
                     SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                     goto err;
                 }
                 if (type & SSL_kOQSKEX_GENERIC) {
-                    if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, NULL, 0, NULL)) == NULL) {
+                    if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, OQS_KEX_alg_default, NULL, 0, NULL)) == NULL) {
                         SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                         goto err;
                     }
                 } else if (type & SSL_kOQSKEX_RLWE_BCNS15) {
-                    if ((s->s3->tmp.oqskex_kex = OQS_KEX_rlwe_bcns15_new(s->s3->tmp.oqskex_rand, NULL, 0, NULL)) == NULL) {
+                    if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, OQS_KEX_alg_rlwe_bcns15, NULL, 0, NULL)) == NULL) {
                         SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                         goto err;
                     }
@@ -1867,17 +1867,17 @@ int ssl3_send_server_key_exchange(SSL *s)
 #endif                          /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_OQSKEX
         if (((type & SSL_kOQSKEX_GENERIC) || (type & SSL_kOQSKEX_RLWE_BCNS15)) && !(type & SSL_kEECDH)) {
-            if ((s->s3->tmp.oqskex_rand = OQS_RAND_new()) == NULL) {
+            if ((s->s3->tmp.oqskex_rand = OQS_RAND_new(OQS_RAND_alg_default)) == NULL) {
                 SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             if (type & SSL_kOQSKEX_GENERIC) {
-                if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, NULL, 0, NULL)) == NULL) {
+                if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, OQS_KEX_alg_default, NULL, 0, NULL)) == NULL) {
                     SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                     goto err;
                 }
             } else if (type & SSL_kOQSKEX_RLWE_BCNS15) {
-                if ((s->s3->tmp.oqskex_kex = OQS_KEX_rlwe_bcns15_new(s->s3->tmp.oqskex_rand, NULL, 0, NULL)) == NULL) {
+                if ((s->s3->tmp.oqskex_kex = OQS_KEX_new(s->s3->tmp.oqskex_rand, OQS_KEX_alg_rlwe_bcns15, NULL, 0, NULL)) == NULL) {
                     SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
                     goto err;
                 }

@@ -2440,16 +2440,16 @@ int MAIN(int argc, char **argv)
         if (!oqskex_doit[j])
             continue;
 
-        oqskex_rand[j] = OQS_RAND_new();
+        oqskex_rand[j] = OQS_RAND_new(OQS_RAND_alg_default);
         if (oqskex_rand[j] == NULL) {
             BIO_printf(bio_err,"OQSKEX failure - OQS_RAND_new().\n");
             ERR_print_errors(bio_err);
             rsa_count = 1;
         } else {
             if (j == R_OQSKEX_GENERIC) {
-                oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], NULL, 0, NULL);
+                oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], OQS_KEX_alg_default, NULL, 0, NULL);
             } else if (j == R_OQSKEX_RLWE_BCNS15) {
-                oqskex_kex[j] = OQS_KEX_rlwe_bcns15_new(oqskex_rand[j], NULL, 0, NULL);
+                oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], OQS_KEX_alg_rlwe_bcns15, NULL, 0, NULL);
             }
             if (oqskex_kex[j] == NULL) {
                 BIO_printf(bio_err,"OQSKEX failure - OQS_KEX_new.\n");
