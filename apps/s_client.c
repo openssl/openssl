@@ -2028,11 +2028,14 @@ int s_client_main(int argc, char **argv)
             (void)BIO_flush(fbio);
             /* wait for multi-line response to end CONNECT response */
             do {
+                const char *tmp_search = NULL;
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
-                if (strstr(mbuf, "200") != NULL
-                    && strstr(mbuf, "established") != NULL)
+                if (strchr(mbuf, ':') == NULL /* Not looking for headers */
+                    && (tmp_search = strchr(mbuf, ' ')) != NULL
+                    && tmp_search[1] == '2' /* Status code 2xx */
+                    )
                     foundit++;
-            } while (mbuf_len > 3 && foundit == 0);
+            } while (mbuf_len > 2 && foundit == 0);
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
