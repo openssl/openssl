@@ -57,7 +57,7 @@ Builds have been tested on Mac OS X 10.11.6, macOS 10.12, Ubuntu 16.04.1, and Wi
 
 To build, clone or download the source from Github:
 
-	git clone --branch OpenSSL_1_0_2-stable --recursive https://github.com/open-quantum-safe/openssl.git
+	git clone --branch OpenSSL_1_0_2-stable https://github.com/open-quantum-safe/openssl.git
 	cd openssl
 
 To configure OpenSSL, on Linux type:
