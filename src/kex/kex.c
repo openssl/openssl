@@ -5,14 +5,18 @@
 #define UNUSED __attribute__ ((unused))
 #endif
 
+#include <assert.h>
+
 #include <oqs/kex.h>
 #include <oqs/kex_rlwe_bcns15.h>
 
 OQS_KEX *OQS_KEX_new(OQS_RAND *rand, enum OQS_KEX_alg_name alg_name, UNUSED const uint8_t *seed, UNUSED const UNUSED size_t seed_len, UNUSED const char *named_parameters) {
 	switch (alg_name) {
+	case OQS_KEX_alg_default:
 	case OQS_KEX_alg_rlwe_bcns15:
-	default:
 		return OQS_KEX_rlwe_bcns15_new(rand);
+	default:
+		assert(0);
 	}
 }
 
