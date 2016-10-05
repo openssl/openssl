@@ -1,0 +1,49 @@
+language: c
+sudo: false
+
+matrix:
+  include:
+  - os: linux
+    compiler: gcc
+    env: CC_OQS=gcc-4.8
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-4.8
+  - os: linux
+    compiler: gcc
+    env: CC_OQS=gcc-4.9
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-4.9
+  - os: linux
+    compiler: gcc
+    env: CC_OQS=gcc-5
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-5
+  - os: linux
+    compiler: gcc
+    env: CC_OQS=gcc-6
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-6
+  - os: osx
+    compiler: clang
+    env: CC_OQS=clang
+  
+
+script:
+  - make
+  - make check
