@@ -22,7 +22,7 @@ local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
 local $zlib_lib = "";
 local $perl_asm = 0;	# 1 to autobuild asm files from perl scripts
 
-my $ex_l_libs = "";
+my $ex_l_libs = "oqs.lib";
 
 # Options to import from top level Makefile
 
@@ -337,6 +337,21 @@ $link="$bin_dir$link" if ($link !~ /^\$/);
 $INSTALLTOP =~ s|/|$o|g;
 $OPENSSLDIR =~ s|/|$o|g;
 
+# Build OQS
+if ($platform eq "VC-WIN32") {
+$vsplatform = "x86";
+}
+elsif (($platform eq "VC-WIN64A") || ($platform eq "VC-WIN64I"))  {
+$vsplatform = "x64";
+}
+if ($debug = "1") {
+$vsconfig = "Debug";
+}
+else {
+$vsconfig = "Release";
+}
+$OQSVSBUILD = "msbuild vendor${o}liboqs${o}VisualStudio${o}liboqs.sln /p:Configuration=$vsconfig;Platform=$vsplatform /t:rebuild";
+
 #############################################
 # We parse in input file and 'store' info for later printing.
 open(IN,"<$infile") || die "unable to open $infile:$!\n";
@@ -486,7 +501,7 @@ EX_LIBS=$ex_libs
 SRC_D=$src_dir
 
 LINK_CMD=$link
-LFLAGS=$lflags
+LFLAGS=$lflags /libpath:vendor${o}liboqs${o}VisualStudio${o}$vsplatform${o}$vsconfig
 RSC=$rsc
 
 # The output directory for everything interesting
@@ -496,6 +511,7 @@ TMP_D=$tmp_dir
 # The output directory for the header files
 INC_D=$inc_dir
 INCO_D=$inc_dir${o}openssl
+INCOQS_D=$inc_dir${o}oqs
 
 PERL=$perl
 CP=$cp
@@ -518,6 +534,10 @@ O_FIPSCANISTER=\$(FIPSLIB_D)${o}fipscanister.lib
 FIPS_SHA1_EXE=\$(FIPSDIR)${o}bin${o}fips_standalone_sha1${exep}
 PREMAIN_DSO_EXE=\$(BIN_D)${o}fips_premain_dso$exep
 FIPSLINK=\$(PERL) \$(FIPSDIR)${o}bin${o}fipslink.pl
+
+# OQS headers
+LIBOQS_INCLUDE = vendor${o}liboqs${o}VisualStudio${o}include${o}oqs
+LIBOQS_HEADER = kex.h kex_rlwe_bcns15.h rand.h rand_urandom_chacha20.h
 
 ######################################################
 # You should not need to touch anything below this point
@@ -567,10 +587,16 @@ LIBS_DEP=\$(O_CRYPTO) \$(O_SSL)
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe $build_targets
+all: banner buildoqs \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe $build_targets
 
 banner:
 $banner
+
+buildoqs:
+	\@echo Building OQS
+	$OQSVSBUILD
+	\$(MKDIR) \"\$(INCOQS_D)\"
+        \$(CP) \"\$(LIBOQS_INCLUDE)${o}*.h" \"\$(INCOQS_D)\"
 
 \$(TMP_D):
 	\$(MKDIR) \"\$(TMP_D)\"
@@ -606,8 +632,10 @@ install: all
 	\$(MKDIR) \"\$(INSTALLTOP)${o}bin\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}include\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(MKDIR) \"\$(INSTALLTOP)${o}include${o}oqs\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"\$(INCO_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"\$(INCOQS_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}oqs\"
 	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin\"
 	\$(MKDIR) \"\$(OPENSSLDIR)\"
 	\$(CP) apps${o}openssl.cnf \"\$(OPENSSLDIR)\"

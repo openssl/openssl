@@ -1,10 +1,12 @@
-# open-quantum-safe/openssl
+open-quantum-safe/openssl
+=========================
 
 OpenSSL is an open-source TLS/SSL and crypto library [https://openssl.org/](https://openssl.org/).  ([View the original README file for OpenSSL](https://github.com/open-quantum-safe/openssl/blob/OpenSSL_1_0_2-stable/README).)
 
 This repository contains a fork of OpenSSL that adds quantum-safe cryptographic algorithms and ciphersuites.
 
-## Overview
+Overview
+--------
 
 The **Open Quantum Safe (OQS) project** has the goal of developing and prototyping quantum-resistant cryptography.  
 
@@ -12,9 +14,10 @@ The **Open Quantum Safe (OQS) project** has the goal of developing and prototypi
 
 **open-quantum-safe/openssl** is an integration of liboqs into OpenSSL 1.0.2.  The goal of this integration is to provide easy prototyping of quantum-resistant cryptography.  The integration should not be considered "production quality".
 
-More information on OQS can be found in slides 64–67 of [this presentation](https://www.douglas.stebila.ca/files/research/presentations/20160812-SAC.pdf) by Douglas Stebila.
+More information on OQS can be found on our website: [http://openquantumsafe.org/](http://openquantumsafe.org/).
 
-## Contents
+Contents
+--------
 
 open-quantum-safe/openssl currently contains:
 
@@ -45,9 +48,12 @@ For each post-quantum key exchange primitive `X`, there are the following cipher
 There is also a "generic" ciphersuite (`X` = `GENERIC`) which uses whichever key exchange primitive is configured as the default key exchange primitive in liboqs.  It is set to `GENERIC` = `RLWE_BCNS15`, but this can be changed.
 
 
-## Building
+Building
+--------
 
-Builds have been tested on Mac OS X 10.11.6 and Ubuntu 16.04.1.
+Builds have been tested on Mac OS X 10.11.6, macOS 10.12, Ubuntu 16.04.1, and Windows 10.
+
+### Linux and macOS
 
 To build, clone or download the source from Github:
 
@@ -69,7 +75,12 @@ Then type:
 	
 This will build both liboqs and OpenSSL.  
 
-## Running
+### Windows
+
+Windows binaries can be generated using the standard build process for OpenSSL on Windows.
+
+Running
+-------
 
 See the [liboqs Github site](https://github.com/open-quantum-safe/liboqs/) for information on test programs in liboqs.
 
@@ -108,11 +119,12 @@ In another terminal window, you can run a TLS client for any or all of the suppo
 	apps/openssl s_client -cipher OQSKEX-RLWE-BCNS15
 	apps/openssl s_client -cipher OQSKEX-RLWE-BCNS15-ECDHE
 
-## Current status and plans
+Current status and plans
+------------------------
 
 Our initial launch of the liboqs integration into OpenSSL was on August 25, 2016.  
 
-At this point, there are no plans to add further functionality to the OpenSSL integration, beyond supporting additional algorithms added by liboqs.  See the [liboqs](https://github.com/open-quantum-safe/liboqs/#current-status-and-plans) page for more information about liboqs plans.  
+At this point, there are no plans to add further functionality to the OpenSSL integration, beyond supporting additional algorithms added by liboqs.  See the [liboqs](https://github.com/open-quantum-safe/liboqs/#current-status-and-plans) page for more information about liboqs plans.  Update: we realize there is interest in quantum-safe signature integration in OpenSSL, and will consider this when we begin to add signature schemes to liboqs; volunteers welcome!
 
 We will endeavour to regularly sync our branch with commits in the original openssl/openssl repository.
 
@@ -121,11 +133,13 @@ For future reference, adding new algorithms/ciphersuites can easily be done by f
 - apps/speed: [commit cb91c708b8bec35284054562295d6b9adff76d2a](https://github.com/open-quantum-safe/openssl/commit/cb91c708b8bec35284054562295d6b9adff76d2a)
 - ssl: [commit 3a04b822b317ac548933c10974bea638086cf29e](https://github.com/open-quantum-safe/openssl/commit/3a04b822b317ac548933c10974bea638086cf29e)
 
-## License
+License
+-------
 
 All modifications in the open-quantum-safe/openssl repository are released under the same terms as OpenSSL, namely as described in the file [LICENSE](https://github.com/open-quantum-safe/openssl/blob/OpenSSL_1_0_2-stable/LICENSE).  
 
-## Team
+Team
+----
 
 The Open Quantum Safe project is lead by [Michele Mosca](http://faculty.iqc.uwaterloo.ca/mmosca/) (University of Waterloo) and [Douglas Stebila](https://www.douglas.stebila.ca/research/) (McMaster University).
 
