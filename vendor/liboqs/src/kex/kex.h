@@ -12,6 +12,7 @@
 #include <oqs/rand.h>
 
 enum OQS_KEX_alg_name {
+	OQS_KEX_alg_default,
 	OQS_KEX_alg_rlwe_bcns15,
 };
 
