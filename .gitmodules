@@ -1,3 +1,0 @@
-[submodule "vendor/liboqs"]
-	path = vendor/liboqs
-	url = https://github.com/open-quantum-safe/liboqs
