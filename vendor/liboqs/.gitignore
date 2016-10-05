@@ -1,0 +1,53 @@
+# Linked headers
+include
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+/test_kex
+/test_rand
+
+# Debug files
+*.dSYM/
+*.su
+
+# Generated documentation
+docs
+
+# Backup files
+*~
+
+# Visual Studio files
+VisualStudio/*.db
+VisualStudio/*.opendb
+VisualStudio/.vs/
+VisualStudio/**/Win32/
+VisualStudio/**/x64/
+VisualStudio/include/
+VisualStudio/**/*.user
