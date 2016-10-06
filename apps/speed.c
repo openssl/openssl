@@ -2653,11 +2653,11 @@ int speed_main(int argc, char **argv)
                 rsa_count = 1;
                 break;
             }
-            for (k = 0; (unsigned int)k < test_outlen && ecdh_checks == 1; k++) {
-                if (loopargs[i].secret_a[k] != loopargs[i].secret_b[k])
-                    ecdh_checks = 0;
-            }
-            if (ecdh_checks == 0) {
+
+            /* Compare the computation results: CRYPTO_memcmp() returns 0 if equal */
+            if (CRYPTO_memcmp(loopargs[i].secret_a,
+                              loopargs[i].secret_b, outlen)) {
+                ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH computations don't match.\n");
                 ERR_print_errors(bio_err);
                 rsa_count = 1;
