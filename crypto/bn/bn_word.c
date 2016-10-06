@@ -89,6 +89,8 @@ BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w)
     if ((a->top > 0) && (a->d[a->top - 1] == 0))
         a->top--;
     ret >>= j;
+    if (!a->top)
+        a->neg = 0; /* don't allow negative zero */
     bn_check_top(a);
     return (ret);
 }
