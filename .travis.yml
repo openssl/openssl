@@ -112,7 +112,7 @@ script:
           top=.;
       fi
     - $make update
-    - $make
+    - $make -j2
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
