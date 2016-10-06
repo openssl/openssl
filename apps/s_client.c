@@ -2420,13 +2420,6 @@ int s_client_main(int argc, char **argv)
                 SSL_renegotiate(con);
                 cbuf_len = 0;
             }
-#ifndef OPENSSL_NO_HEARTBEATS
-            else if ((!c_ign_eof) && (cbuf[0] == 'B' && cmdletters)) {
-                BIO_printf(bio_err, "HEARTBEATING\n");
-                SSL_heartbeat(con);
-                cbuf_len = 0;
-            }
-#endif
             else {
                 cbuf_len = i;
                 cbuf_off = 0;

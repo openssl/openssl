@@ -705,9 +705,6 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
         }
         break;
 
-    case TLSEXT_TYPE_heartbeat:
-        return 0;
-
     case TLSEXT_TYPE_session_ticket:
         if (extlen != 0)
             ssl_print_hex(bio, indent + 4, "ticket", ext, extlen);
