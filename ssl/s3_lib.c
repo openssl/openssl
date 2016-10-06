@@ -2756,7 +2756,6 @@ const SSL3_ENC_METHOD SSLv3_enc_data = {
     ssl3_generate_master_secret,
     ssl3_change_cipher_state,
     ssl3_final_finish_mac,
-    MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH,
     SSL3_MD_CLIENT_FINISHED_CONST, 4,
     SSL3_MD_SERVER_FINISHED_CONST, 4,
     ssl3_alert_code,
@@ -2764,7 +2763,6 @@ const SSL3_ENC_METHOD SSLv3_enc_data = {
              size_t, const unsigned char *, size_t,
              int use_context))ssl_undefined_function,
     0,
-    SSL3_HM_HEADER_LENGTH,
     ssl3_set_handshake_header,
     tls_close_construct_packet,
     ssl3_handshake_write
@@ -3037,6 +3035,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP:
         *(unsigned char **)parg = s->tlsext_ocsp_resp;
+        if (s->tlsext_ocsp_resplen == 0)
+            return -1;
         return s->tlsext_ocsp_resplen;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:

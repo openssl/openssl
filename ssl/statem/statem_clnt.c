@@ -1968,7 +1968,8 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
 {
     int al;
-    unsigned long resplen;
+    unsigned long resplenl;
+    size_t resplen;
     unsigned int type;
 
     if (!PACKET_get_1(pkt, &type)
@@ -1977,12 +1978,13 @@ MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, SSL_R_UNSUPPORTED_STATUS_TYPE);
         goto f_err;
     }
-    if (!PACKET_get_net_3(pkt, &resplen)
-        || PACKET_remaining(pkt) != resplen) {
+    if (!PACKET_get_net_3(pkt, &resplenl)
+        || PACKET_remaining(pkt) != resplenl) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
+    resplen = resplenl;
     s->tlsext_ocsp_resp = OPENSSL_malloc(resplen);
     if (s->tlsext_ocsp_resp == NULL) {
         al = SSL_AD_INTERNAL_ERROR;
