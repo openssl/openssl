@@ -276,10 +276,14 @@ IF[{- !$disabled{tests} -}]
   DEPEND[bio_enc_test]=../libcrypto
 
   IF[{- $disabled{shared} -}]
-    PROGRAMS_NO_INST=wpackettest
+    PROGRAMS_NO_INST=wpackettest cipher_overhead_test
     SOURCE[wpackettest]=wpackettest.c testutil.c
     INCLUDE[wpackettest]=../include
     DEPEND[wpackettest]=../libcrypto ../libssl
+
+    SOURCE[cipher_overhead_test]=cipher_overhead_test.c
+    INCLUDE[cipher_overhead_test]=.. ../include
+    DEPEND[cipher_overhead_test]=../libcrypto ../libssl
   ENDIF
 ENDIF
 
