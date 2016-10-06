@@ -36,7 +36,7 @@ commonName			= $ENV::CN
 basicConstraints=critical, CA:FALSE
 keyUsage=critical, nonRepudiation, digitalSignature, keyEncipherment
 
-# This will be displayed in Netscape's comment listbox.
+# TODO(1.2.0): old and deprecated extension to be removed
 nsComment			= "OpenSSL Generated Certificate"
 
 # PKIX recommendations harmless if included in all certificates.
@@ -48,7 +48,7 @@ authorityKeyIdentifier=keyid
 basicConstraints=critical, CA:FALSE
 keyUsage=critical, nonRepudiation, digitalSignature, keyEncipherment
 
-# This will be displayed in Netscape's comment listbox.
+# TODO(1.2.0): old and deprecated extension to be removed
 nsComment			= "OpenSSL Generated Certificate"
 
 # PKIX recommendations harmless if included in all certificates.

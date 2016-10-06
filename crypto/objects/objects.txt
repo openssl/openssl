@@ -839,6 +839,7 @@ id-ce 56		: noRevAvail		: X509v3 No Revocation Available
 ext-key-usage 0		: anyExtendedKeyUsage	: Any Extended Key Usage
 
 
+# Older and deprecated Netscape extensions
 !Cname netscape
 2 16 840 1 113730	: Netscape		: Netscape Communications Corp.
 !Cname netscape-cert-extension
