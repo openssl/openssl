@@ -134,7 +134,7 @@ int ssl3_setup_buffers(SSL *s)
 int ssl3_release_write_buffer(SSL *s)
 {
     SSL3_BUFFER *wb;
-    unsigned int pipes;
+    size_t pipes;
 
     pipes = s->rlayer.numwpipes;
     while (pipes > 0) {

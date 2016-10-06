@@ -67,7 +67,6 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
     (int (*)(SSL *, int))ssl_undefined_function,
     (size_t (*)(SSL *, const char *, size_t, unsigned char *))
         ssl_undefined_function,
-    0,                          /* finish_mac_length */
     NULL,                       /* client_finished_label */
     0,                          /* client_finished_label_len */
     NULL,                       /* server_finished_label */
@@ -598,7 +597,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->tlsext_ocsp_ids = NULL;
     s->tlsext_ocsp_exts = NULL;
     s->tlsext_ocsp_resp = NULL;
-    s->tlsext_ocsp_resplen = -1;
+    s->tlsext_ocsp_resplen = 0;
     SSL_CTX_up_ref(ctx);
     s->initial_ctx = ctx;
 #ifndef OPENSSL_NO_EC
@@ -1293,14 +1292,19 @@ int SSL_get_read_ahead(const SSL *s)
 
 int SSL_pending(const SSL *s)
 {
+    size_t pending = s->method->ssl_pending(s);
+
     /*
      * SSL_pending cannot work properly if read-ahead is enabled
      * (SSL_[CTX_]ctrl(..., SSL_CTRL_SET_READ_AHEAD, 1, NULL)), and it is
      * impossible to fix since SSL_pending cannot report errors that may be
      * observed while scanning the new data. (Note that SSL_pending() is
      * often used as a boolean value, so we'd better not return -1.)
+     *
+     * SSL_pending also cannot work properly if the value >INT_MAX. In that case
+     * we just return INT_MAX.
      */
-    return (s->method->ssl_pending(s));
+    return pending < INT_MAX ? pending : INT_MAX;
 }
 
 int SSL_has_pending(const SSL *s)

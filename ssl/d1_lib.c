@@ -35,13 +35,11 @@ const SSL3_ENC_METHOD DTLSv1_enc_data = {
     tls1_generate_master_secret,
     tls1_change_cipher_state,
     tls1_final_finish_mac,
-    TLS1_FINISH_MAC_LENGTH,
     TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
     tls1_export_keying_material,
     SSL_ENC_FLAG_DTLS | SSL_ENC_FLAG_EXPLICIT_IV,
-    DTLS1_HM_HEADER_LENGTH,
     dtls1_set_handshake_header,
     dtls1_close_construct_packet,
     dtls1_handshake_write
@@ -54,14 +52,12 @@ const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
     tls1_generate_master_secret,
     tls1_change_cipher_state,
     tls1_final_finish_mac,
-    TLS1_FINISH_MAC_LENGTH,
     TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
     tls1_export_keying_material,
     SSL_ENC_FLAG_DTLS | SSL_ENC_FLAG_EXPLICIT_IV | SSL_ENC_FLAG_SIGALGS
         | SSL_ENC_FLAG_SHA256_PRF | SSL_ENC_FLAG_TLS1_2_CIPHERS,
-    DTLS1_HM_HEADER_LENGTH,
     dtls1_set_handshake_header,
     dtls1_close_construct_packet,
     dtls1_handshake_write
@@ -435,7 +431,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     unsigned char seq[SEQ_NUM_SIZE];
     const unsigned char *data;
     unsigned char *buf;
-    unsigned long fragoff, fraglen, msglen;
+    size_t fragoff, fraglen, msglen;
     unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BUF_MEM *bufm;
@@ -663,8 +659,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
                 return -1;
             }
             if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookiepkt),
-                                             PACKET_remaining(&cookiepkt)) ==
-                0) {
+                    (unsigned int)PACKET_remaining(&cookiepkt)) == 0) {
                 /*
                  * We treat invalid cookies in the same was as no cookie as
                  * per RFC6347
@@ -795,6 +790,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             BIO_ADDR_free(tmpclient);
             tmpclient = NULL;
 
+            /* TODO(size_t): convert this call */
             if (BIO_write(wbio, buf, wreclen) < (int)wreclen) {
                 if (BIO_should_retry(wbio)) {
                     /*
@@ -1072,7 +1068,7 @@ int dtls1_query_mtu(SSL *s)
                 /* Set to min mtu */
                 s->d1->mtu = dtls1_min_mtu(s);
                 BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SET_MTU,
-                         s->d1->mtu, NULL);
+                         (long)s->d1->mtu, NULL);
             }
         } else
             return 0;

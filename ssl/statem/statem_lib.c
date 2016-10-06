@@ -76,7 +76,7 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
 {
     size_t finish_md_len;
     const char *sender;
-    int slen;
+    size_t slen;
 
     if (s->server) {
         sender = s->method->ssl3_enc->server_finished_label;
@@ -130,7 +130,7 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
 static void ssl3_take_mac(SSL *s)
 {
     const char *sender;
-    int slen;
+    size_t slen;
     /*
      * If no new cipher setup return immediately: other functions will set
      * the appropriate error.
