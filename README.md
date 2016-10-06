@@ -133,6 +133,11 @@ For future reference, adding new algorithms/ciphersuites can easily be done by f
 - apps/speed: [commit cb91c708b8bec35284054562295d6b9adff76d2a](https://github.com/open-quantum-safe/openssl/commit/cb91c708b8bec35284054562295d6b9adff76d2a)
 - ssl: [commit 3a04b822b317ac548933c10974bea638086cf29e](https://github.com/open-quantum-safe/openssl/commit/3a04b822b317ac548933c10974bea638086cf29e)
 
+Note
+----
+
+Proofs of TLS such as [[JKSS12]](https://eprint.iacr.org/2011/219) and [[KPW13]](https://eprint.iacr.org/2013/339) require a key exchange mechanism that has a form of active security, either in the form of the PRF-ODH assumption, or an IND-CCA KEM.  Most basic post-quantum key exchange mechanisms do not achieve active security, and would need to have an IND-CPA to IND-CCA KEM transform applied [[Pei14]](https://eprint.iacr.org/2014/070) or be protected from active attacks using a signature scheme [[BCNS15]](https://eprint.iacr.org/2014/599).  Neither countermeasure is currently applied in this prototype OpenSSL integration, so existing proofs of security of TLS against active attackers do not apply to this software.  Improving this is an active research goal.
+
 License
 -------
 
