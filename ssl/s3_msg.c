@@ -15,7 +15,7 @@ int ssl3_do_change_cipher_spec(SSL *s)
     int i;
     size_t finish_md_len;
     const char *sender;
-    int slen;
+    size_t slen;
 
     if (s->server)
         i = SSL3_CHANGE_CIPHER_SERVER_READ;

@@ -461,7 +461,7 @@ struct ssl_method_st {
     const SSL_CIPHER *(*get_cipher_by_char) (const unsigned char *ptr);
     int (*put_cipher_by_char) (const SSL_CIPHER *cipher, WPACKET *pkt,
                                size_t *len);
-    int (*ssl_pending) (const SSL *s);
+    size_t (*ssl_pending) (const SSL *s);
     int (*num_ciphers) (void);
     const SSL_CIPHER *(*get_cipher) (unsigned ncipher);
     long (*get_timeout) (void);
@@ -1061,7 +1061,7 @@ struct ssl_st {
     X509_EXTENSIONS *tlsext_ocsp_exts;
     /* OCSP response received or to be sent */
     unsigned char *tlsext_ocsp_resp;
-    int tlsext_ocsp_resplen;
+    size_t tlsext_ocsp_resplen;
     /* RFC4507 session ticket expected to be received or sent */
     int tlsext_ticket_expected;
 # ifndef OPENSSL_NO_EC
@@ -1374,7 +1374,7 @@ pitem *pqueue_pop(pqueue *pq);
 pitem *pqueue_find(pqueue *pq, unsigned char *prio64be);
 pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
-int pqueue_size(pqueue *pq);
+size_t pqueue_size(pqueue *pq);
 
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
@@ -1573,11 +1573,10 @@ typedef struct ssl3_enc_method {
                                    size_t, size_t *);
     int (*change_cipher_state) (SSL *, int);
     size_t (*final_finish_mac) (SSL *, const char *, size_t, unsigned char *);
-    int finish_mac_length;
     const char *client_finished_label;
-    int client_finished_label_len;
+    size_t client_finished_label_len;
     const char *server_finished_label;
-    int server_finished_label_len;
+    size_t server_finished_label_len;
     int (*alert_value) (int);
     int (*export_keying_material) (SSL *, unsigned char *, size_t,
                                    const char *, size_t,
@@ -1585,8 +1584,6 @@ typedef struct ssl3_enc_method {
                                    int use_context);
     /* Various flags indicating protocol version requirements */
     uint32_t enc_flags;
-    /* Handshake header length */
-    unsigned int hhlen;
     /* Set the handshake header */
     int (*set_handshake_header) (SSL *s, WPACKET *pkt, int type);
     /* Close construction of the handshake message */
@@ -1595,9 +1592,6 @@ typedef struct ssl3_enc_method {
     int (*do_write) (SSL *s);
 } SSL3_ENC_METHOD;
 
-# define SSL_HM_HEADER_LENGTH(s) s->method->ssl3_enc->hhlen
-# define ssl_handshake_start(s) \
-        (((unsigned char *)s->init_buf->data) + s->method->ssl3_enc->hhlen)
 # define ssl_set_handshake_header(s, pkt, htype) \
         s->method->ssl3_enc->set_handshake_header((s), (pkt), (htype))
 # define ssl_close_construct_packet(s, pkt, htype) \

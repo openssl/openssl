@@ -122,10 +122,9 @@ void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
     memset(rl->write_sequence, 0, sizeof(rl->write_sequence));
 }
 
-int ssl3_pending(const SSL *s)
+size_t ssl3_pending(const SSL *s)
 {
-    unsigned int i;
-    int num = 0;
+    size_t i, num = 0;
 
     if (s->rlayer.rstate == SSL_ST_READ_BODY)
         return 0;
@@ -429,7 +428,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
 
             packlen = EVP_CIPHER_CTX_ctrl(s->enc_write_ctx,
                                           EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE,
-                                          max_send_fragment, NULL);
+                                          (int)max_send_fragment, NULL);
 
             if (len >= 8 * max_send_fragment)
                 packlen *= 8;
@@ -443,7 +442,8 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         } else if (tot == len) { /* done? */
             /* free jumbo buffer */
             ssl3_release_write_buffer(s);
-            return tot;
+            *written = tot;
+            return 1;
         }
 
         n = (len - tot);
