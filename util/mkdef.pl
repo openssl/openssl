@@ -101,7 +101,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # RFC3779
 			 "RFC3779",
 			 # TLS
-			 "PSK", "SRP", "HEARTBEATS",
+			 "PSK", "SRP",
 			 # CMS
 			 "CMS",
                          "OCSP",

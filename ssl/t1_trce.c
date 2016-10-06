@@ -71,7 +71,6 @@ static ssl_trace_tbl ssl_content_tbl[] = {
     {SSL3_RT_ALERT, "Alert"},
     {SSL3_RT_HANDSHAKE, "Handshake"},
     {SSL3_RT_APPLICATION_DATA, "ApplicationData"},
-    {DTLS1_RT_HEARTBEAT, "HeartBeat"}
 };
 
 /* Handshake types */
@@ -449,7 +448,6 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_srp, "srp"},
     {TLSEXT_TYPE_signature_algorithms, "signature_algorithms"},
     {TLSEXT_TYPE_use_srtp, "use_srtp"},
-    {TLSEXT_TYPE_heartbeat, "heartbeat"},
     {TLSEXT_TYPE_session_ticket, "session_ticket"},
     {TLSEXT_TYPE_renegotiate, "renegotiate"},
 # ifndef OPENSSL_NO_NEXTPROTONEG
@@ -527,11 +525,6 @@ static ssl_trace_tbl ssl_sig_tbl[] = {
 static ssl_trace_tbl ssl_hb_tbl[] = {
     {1, "peer_allowed_to_send"},
     {2, "peer_not_allowed_to_send"}
-};
-
-static ssl_trace_tbl ssl_hb_type_tbl[] = {
-    {1, "heartbeat_request"},
-    {2, "heartbeat_response"}
 };
 
 static ssl_trace_tbl ssl_ctype_tbl[] = {
@@ -713,12 +706,7 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
         break;
 
     case TLSEXT_TYPE_heartbeat:
-        if (extlen != 1)
-            return 0;
-        BIO_indent(bio, indent + 2, 80);
-        BIO_printf(bio, "HeartbeatMode: %s\n",
-                   ssl_trace_str(ext[0], ssl_hb_tbl));
-        break;
+        return 0;
 
     case TLSEXT_TYPE_session_ticket:
         if (extlen != 0)
@@ -1256,22 +1244,6 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl,
     return 1;
 }
 
-static int ssl_print_heartbeat(BIO *bio, int indent,
-                               const unsigned char *msg, size_t msglen)
-{
-    if (msglen < 3)
-        return 0;
-    BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "HeartBeatMessageType: %s\n",
-               ssl_trace_str(msg[0], ssl_hb_type_tbl));
-    msg++;
-    msglen--;
-    if (!ssl_print_hexbuf(bio, indent, "payload", 2, &msg, &msglen))
-        return 0;
-    ssl_print_hex(bio, indent, "padding", msg, msglen);
-    return 1;
-}
-
 const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c)
 {
     return ssl_trace_str(c->id & 0xFFFF, ssl_ciphers_tbl);
@@ -1329,9 +1301,6 @@ void SSL_trace(int write_p, int version, int content_type,
                        SSL_alert_type_string_long(msg[0] << 8),
                        msg[0], SSL_alert_desc_string_long(msg[1]), msg[1]);
         }
-    case DTLS1_RT_HEARTBEAT:
-        ssl_print_heartbeat(bio, 4, msg, msglen);
-        break;
 
     }
 

@@ -572,21 +572,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             dest = s->rlayer.d->alert_fragment;
             dest_len = &s->rlayer.d->alert_fragment_len;
         }
-#ifndef OPENSSL_NO_HEARTBEATS
-        else if (SSL3_RECORD_get_type(rr) == DTLS1_RT_HEARTBEAT) {
-            /* We allow a 0 return */
-            if (dtls1_process_heartbeat(s, SSL3_RECORD_get_data(rr),
-                                        SSL3_RECORD_get_length(rr)) < 0) {
-                return -1;
-            }
-            /* Exit and notify application to read again */
-            SSL3_RECORD_set_length(rr, 0);
-            s->rwstate = SSL_READING;
-            BIO_clear_retry_flags(SSL_get_rbio(s));
-            BIO_set_retry_read(SSL_get_rbio(s));
-            return (-1);
-        }
-#endif
         /* else it's a CCS message, or application data or wrong */
         else if (SSL3_RECORD_get_type(rr) != SSL3_RT_CHANGE_CIPHER_SPEC) {
             /*

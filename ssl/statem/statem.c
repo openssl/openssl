@@ -251,20 +251,6 @@ static int state_machine(SSL *s, int server)
     }
 #endif
 
-#ifndef OPENSSL_NO_HEARTBEATS
-    /*
-     * If we're awaiting a HeartbeatResponse, pretend we already got and
-     * don't await it anymore, because Heartbeats don't make sense during
-     * handshakes anyway.
-     */
-    if (s->tlsext_hb_pending) {
-        if (SSL_IS_DTLS(s))
-            dtls1_stop_timer(s);
-        s->tlsext_hb_pending = 0;
-        s->tlsext_hb_seq++;
-    }
-#endif
-
     /* Initialise state machine */
 
     if (st->state == MSG_FLOW_RENEGOTIATE) {

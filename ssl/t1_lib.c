@@ -1240,30 +1240,6 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         }
     }
 #endif
-#ifndef OPENSSL_NO_HEARTBEATS
-    if (SSL_IS_DTLS(s)) {
-        unsigned int mode;
-
-        /*-
-         * Set mode:
-         * 1: peer may send requests
-         * 2: peer not allowed to send requests
-         */
-        if (s->tlsext_heartbeat & SSL_DTLSEXT_HB_DONT_RECV_REQUESTS)
-            mode = SSL_DTLSEXT_HB_DONT_SEND_REQUESTS;
-        else
-            mode = SSL_DTLSEXT_HB_ENABLED;
-
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_heartbeat)
-                   /* Sub-packet for Hearbeat extension */
-                || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes_u8(pkt, mode)
-                || !WPACKET_close(pkt)) {
-            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-    }
-#endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (s->ctx->next_proto_select_cb && !s->s3->tmp.finish_md_len) {
@@ -1502,30 +1478,6 @@ int ssl_add_serverhello_tlsext(SSL *s, WPACKET *pkt, int *al)
             return 0;
         }
     }
-#ifndef OPENSSL_NO_HEARTBEATS
-    /* Add Heartbeat extension if we've received one */
-    if (SSL_IS_DTLS(s) && (s->tlsext_heartbeat & SSL_DTLSEXT_HB_ENABLED)) {
-        unsigned int mode;
-        /*-
-         * Set mode:
-         * 1: peer may send requests
-         * 2: peer not allowed to send requests
-         */
-        if (s->tlsext_heartbeat & SSL_DTLSEXT_HB_DONT_RECV_REQUESTS)
-            mode = SSL_DTLSEXT_HB_DONT_SEND_REQUESTS;
-        else
-            mode = SSL_DTLSEXT_HB_ENABLED;
-
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_heartbeat)
-                || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes_u8(pkt, mode)
-                || !WPACKET_close(pkt)) {
-            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-
-    }
-#endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     next_proto_neg_seen = s->s3->next_proto_neg_seen;
@@ -1768,10 +1720,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
     OPENSSL_free(s->s3->alpn_proposed);
     s->s3->alpn_proposed = NULL;
     s->s3->alpn_proposed_len = 0;
-#ifndef OPENSSL_NO_HEARTBEATS
-    s->tlsext_heartbeat &= ~(SSL_DTLSEXT_HB_ENABLED |
-                             SSL_DTLSEXT_HB_DONT_SEND_REQUESTS);
-#endif
 
 #ifndef OPENSSL_NO_EC
     if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
@@ -2067,29 +2015,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                 s->tlsext_status_type = -1;
             }
         }
-#ifndef OPENSSL_NO_HEARTBEATS
-        else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_heartbeat) {
-            unsigned int hbtype;
-
-            if (!PACKET_get_1(&extension, &hbtype)
-                || PACKET_remaining(&extension)) {
-                *al = SSL_AD_DECODE_ERROR;
-                return 0;
-            }
-            switch (hbtype) {
-            case 0x01:         /* Client allows us to send HB requests */
-                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_ENABLED;
-                break;
-            case 0x02:         /* Client doesn't accept HB requests */
-                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_ENABLED;
-                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_DONT_SEND_REQUESTS;
-                break;
-            default:
-                *al = SSL_AD_ILLEGAL_PARAMETER;
-                return 0;
-            }
-        }
-#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
         else if (type == TLSEXT_TYPE_next_proto_neg &&
                  s->s3->tmp.finish_md_len == 0) {
@@ -2226,10 +2151,6 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
 
     OPENSSL_free(s->s3->alpn_selected);
     s->s3->alpn_selected = NULL;
-#ifndef OPENSSL_NO_HEARTBEATS
-    s->tlsext_heartbeat &= ~(SSL_DTLSEXT_HB_ENABLED |
-                             SSL_DTLSEXT_HB_DONT_SEND_REQUESTS);
-#endif
 
     s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 
@@ -2419,27 +2340,6 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
             }
             s->s3->alpn_selected_len = len;
         }
-#ifndef OPENSSL_NO_HEARTBEATS
-        else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_heartbeat) {
-            unsigned int hbtype;
-            if (!PACKET_get_1(&spkt, &hbtype)) {
-                *al = SSL_AD_DECODE_ERROR;
-                return 0;
-            }
-            switch (hbtype) {
-            case 0x01:         /* Server allows us to send HB requests */
-                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_ENABLED;
-                break;
-            case 0x02:         /* Server doesn't accept HB requests */
-                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_ENABLED;
-                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_DONT_SEND_REQUESTS;
-                break;
-            default:
-                *al = SSL_AD_ILLEGAL_PARAMETER;
-                return 0;
-            }
-        }
-#endif
 #ifndef OPENSSL_NO_SRTP
         else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_use_srtp) {
             if (ssl_parse_serverhello_use_srtp_ext(s, &spkt, al))
