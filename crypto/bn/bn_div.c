@@ -254,9 +254,9 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     wnump = &(snum->d[num_n - 1]);
 
     /* Setup to 'res' */
-    res->neg = (num->neg ^ divisor->neg);
     if (!bn_wexpand(res, (loop + 1)))
         goto err;
+    res->neg = (num->neg ^ divisor->neg);
     res->top = loop - no_branch;
     resp = &(res->d[loop - 1]);
 
