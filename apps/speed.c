@@ -144,9 +144,6 @@ static volatile int run = 0;
 static int mr = 0;
 static int usertime = 1;
 
-typedef void *(*kdf_fn) (const void *in, size_t inlen, void *out,
-                         size_t *xoutlen);
-
 typedef struct loopargs_st {
     ASYNC_JOB *inprogress_job;
     ASYNC_WAIT_CTX *wait_ctx;
@@ -167,7 +164,6 @@ typedef struct loopargs_st {
     unsigned char *secret_a;
     unsigned char *secret_b;
     size_t outlen[EC_NUM];
-    kdf_fn kdf;
 #endif
     EVP_CIPHER_CTX *ctx;
     HMAC_CTX *hctx;
