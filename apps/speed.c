@@ -2578,6 +2578,13 @@ int speed_main(int argc, char **argv)
             size_t outlen;
             size_t test_outlen;
 
+            /* Ensure that the error queue is empty */
+            if (ERR_peek_error()) {
+                BIO_printf(bio_err,
+                           "WARNING: the error queue contains previous unhandled errors.\n");
+                ERR_print_errors(bio_err);
+            }
+
             /* Let's try to create a ctx directly from the NID: this works for
              * curves like Curve25519 that are not implemented through the low
              * level EC interface.
@@ -2588,6 +2595,25 @@ int speed_main(int argc, char **argv)
             if (!kctx) {
                 EVP_PKEY_CTX *pctx = NULL;
                 EVP_PKEY *params = NULL;
+
+                /* If we reach this code EVP_PKEY_CTX_new_id() failed and a
+                 * "int_ctx_new:unsupported algorithm" error was added to the
+                 * error queue.
+                 * We remove it from the error queue as we are handling it. */
+                unsigned long error = ERR_peek_error(); /* peek the latest error in the queue */
+                if (error == ERR_peek_last_error() && /* oldest and latest errors match */
+                    /* check that the error origin matches */
+                    ERR_GET_LIB(error) == ERR_LIB_EVP &&
+                    ERR_GET_FUNC(error) == EVP_F_INT_CTX_NEW &&
+                    ERR_GET_REASON(error) == EVP_R_UNSUPPORTED_ALGORITHM)
+                    ERR_get_error(); /* pop error from queue */
+                if (ERR_peek_error()) {
+                    BIO_printf(bio_err,
+                               "Unhandled error in the error queue during ECDH init.\n");
+                    ERR_print_errors(bio_err);
+                    rsa_count = 1;
+                    break;
+                }
 
                 if (            /* Create the context for parameter generation */
                        !(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) ||
