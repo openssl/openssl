@@ -2578,9 +2578,14 @@ int speed_main(int argc, char **argv)
             size_t outlen;
             size_t test_outlen;
 
-            if (testnum == R_EC_X25519) {
-                kctx = EVP_PKEY_CTX_new_id(test_curves[testnum], NULL); /* keygen ctx from NID */
-            } else {
+            /* Let's try to create a ctx directly from the NID: this works for
+             * curves like Curve25519 that are not implemented through the low
+             * level EC interface.
+             * If this fails we try creating a EVP_PKEY_EC generic param ctx,
+             * then we set the curve by NID before deriving the actual keygen
+             * ctx for that specific curve. */
+            kctx = EVP_PKEY_CTX_new_id(test_curves[testnum], NULL); /* keygen ctx from NID */
+            if (!kctx) {
                 EVP_PKEY_CTX *pctx = NULL;
                 EVP_PKEY *params = NULL;
 
@@ -2595,7 +2600,7 @@ int speed_main(int argc, char **argv)
                        /* Create the parameter object params */
                        !EVP_PKEY_paramgen(pctx, &params)) {
                     ecdh_checks = 0;
-                    BIO_printf(bio_err, "ECDH init failure.\n");
+                    BIO_printf(bio_err, "ECDH EC params init failure.\n");
                     ERR_print_errors(bio_err);
                     rsa_count = 1;
                     break;
