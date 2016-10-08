@@ -732,3 +732,11 @@
 -T uintmax_t
 -T pqueue
 -T danetls_record
+-T CTLOG_STORE
+-T OPENSSL_INIT_SETTINGS
+-T OSSL_HANDSHAKE_STATE
+-T OSSL_STATEM
+-T ossl_intmax_t
+-T ossl_intmax_t
+-T ossl_uintmax_t
+-T ossl_uintmax_t
