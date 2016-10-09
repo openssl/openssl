@@ -114,7 +114,7 @@ script:
     - $make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
-              sudo apt-get -yq install wine;
+              sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
           HARNESS_VERBOSE=yes make test;
