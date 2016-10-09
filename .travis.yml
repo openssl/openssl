@@ -12,7 +12,6 @@ addons:
             - gcc-5
             - binutils-mingw-w64
             - gcc-mingw-w64
-            - wine
         sources:
             - llvm-toolchain-precise-3.6
             - ubuntu-toolchain-r-test
@@ -60,13 +59,13 @@ matrix:
           env: CONFIG_OPTS="no-pic"
         - os: linux
           compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio"
+          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
         - os: linux
           compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
         - os: linux
           compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio"
+          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
     exclude:
         - os: linux
           compiler: clang
@@ -115,6 +114,7 @@ script:
     - $make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
+              sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
           HARNESS_VERBOSE=yes make test;
