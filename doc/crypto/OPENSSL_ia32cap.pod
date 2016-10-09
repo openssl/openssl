@@ -124,9 +124,8 @@ requirements are summarized in below table:
    ------------+--------+--------+--------
    AVX         | 2.19   | 2.09   | 3.0
    AVX2        | 2.22   | 2.10   | 3.1
+   ADCX/ADOX   | 2.23   | 2.10   | 3.3
    AVX512      | 2.25   | 2.11.8 | 3.6
-
-B<OPENSSL_ia32cap> is a macro returning the first word of the vector.
 
 =head1 COPYRIGHT
 
