@@ -2,7 +2,9 @@ language: c
 cache: ccache
 
 before_install:
-    - pip install --user cpp-coveralls
+    - if [ -n "$COVERALLS" ]; then
+          pip install --user cpp-coveralls;
+      fi;
 
 addons:
     apt:
@@ -38,9 +40,6 @@ matrix:
           env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers" COVERALLS="yes"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="enable-asan"
-        - os: linux
-          compiler: clang-3.6
           env: CONFIG_OPTS="enable-msan"
         - os: linux
           compiler: clang-3.6
@@ -49,23 +48,17 @@ matrix:
           compiler: clang-3.6
           env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2"
         - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="no-stdio"
-        - os: linux
           compiler: gcc-5
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
         - os: linux
           compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-pic"
+          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
         - os: linux
           compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
-        - os: linux
-          compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
         - os: linux
           compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
+          env: CONFIG_OPTS="no-pic"
     exclude:
         - os: linux
           compiler: clang
