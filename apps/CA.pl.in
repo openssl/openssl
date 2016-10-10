@@ -237,7 +237,7 @@ sub newpairbag
     if (-f "${CERTTOP}/certs/${cname}.pem") {
         print STDERR "Certificate file ${cname}.pem already exists!\n"
         . "Please run \'$ME -revoke-pairbag $cname\' and then try again\n";
-        exit 1
+        exit 1;
     }
     chdir "${CERTTOP}/newcerts";
     # create a certificate request with a private key
@@ -248,7 +248,7 @@ sub newpairbag
     }
     $RET = run("$CA $OPENSSL_CONFIG -out $NEWCERT $DAYS"
            . " -infiles $NEWREQ");
-    if ($RET != 0) {
+    if ($RET != 0 || ! -f $NEWCERT || -z $NEWCERT) {
         print STDERR "Signing of certificate failed\n";
         exit 1;
     }
