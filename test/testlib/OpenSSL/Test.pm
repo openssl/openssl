@@ -16,8 +16,8 @@ use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.8";
 @ISA = qw(Exporter);
-@EXPORT = (@Test::More::EXPORT, qw(setup indir app fuzz  perlapp test perltest
-                                   run));
+@EXPORT = (@Test::More::EXPORT, qw(setup run indir cmd app fuzz test
+                                   perlapp perltest));
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
                                          pipe with cmdstr quotify));
@@ -218,25 +218,16 @@ sub indir {
 
 =over 4
 
-=item B<app ARRAYREF, OPTS>
+=item B<cmd ARRAYREF, OPTS>
 
-=item B<test ARRAYREF, OPTS>
+This functions build up a platform dependent command based on the
+input.  It takes a reference to a list that is the executable or
+script and its arguments, and some additional options (described
+further on).
 
-Both of these functions take a reference to a list that is a command and
-its arguments, and some additional options (described further on).
+It returns a CODEREF to be used by C<run>, C<pipe> or C<cmdstr>.
 
-C<app> expects to find the given command (the first item in the given list
-reference) as an executable in C<$BIN_D> (if defined, otherwise C<$TOP/apps>
-or C<$BLDTOP/apps>).
-
-C<test> expects to find the given command (the first item in the given list
-reference) as an executable in C<$TEST_D> (if defined, otherwise C<$TOP/test>
-or C<$BLDTOP/test>).
-
-Both return a CODEREF to be used by C<run>, C<pipe> or C<cmdstr>.
-
-The options that both C<app> and C<test> can take are in the form of hash
-values:
+The options that C<cmd> can take are in the form of hash values:
 
 =over 4
 
@@ -252,21 +243,42 @@ string PATH, I<or>, if the value is C<undef>, C</dev/null> or similar.
 
 =back
 
+=item B<app ARRAYREF, OPTS>
+
+=item B<test ARRAYREF, OPTS>
+
+Both of these are specific applications of C<cmd>, with just a couple
+of small difference:
+
+C<app> expects to find the given command (the first item in the given list
+reference) as an executable in C<$BIN_D> (if defined, otherwise C<$TOP/apps>
+or C<$BLDTOP/apps>).
+
+C<test> expects to find the given command (the first item in the given list
+reference) as an executable in C<$TEST_D> (if defined, otherwise C<$TOP/test>
+or C<$BLDTOP/test>).
+
+Also, for both C<app> and C<test>, the command may be prefixed with
+the content of the environment variable C<$EXE_SHELL>, which is useful
+in case OpenSSL has been cross compiled.
+
 =item B<perlapp ARRAYREF, OPTS>
 
 =item B<perltest ARRAYREF, OPTS>
 
-Both these functions function the same way as B<app> and B<test>, except
-that they expect the command to be a perl script.  Also, they support one
-more option:
+These are also specific applications of C<cmd>, where the interpreter
+is predefined to be C<perl>, and they expect the script to be
+interpreted to reside in the same location as C<app> and C<test>.
+
+C<perlapp> and C<perltest> will also take the following option:
 
 =over 4
 
 =item B<interpreter_args =E<gt> ARRAYref>
 
-The array reference is a set of arguments for perl rather than the script.
-Take care so that none of them can be seen as a script!  Flags and their
-eventual arguments only!
+The array reference is a set of arguments for the interpreter rather
+than the script.  Take care so that none of them can be seen as a
+script!  Flags and their eventual arguments only!
 
 =back
 
@@ -277,54 +289,106 @@ An example:
 
 =back
 
+=begin comment
+
+One might wonder over the complexity of C<apps>, C<fuzz>, C<test>, ...
+with all the lazy evaluations and all that.  The reason for this is that
+we want to make sure the directory in which those programs are found are
+correct at the time these commands are used.  Consider the following code
+snippet:
+
+  my $cmd = app(["openssl", ...]);
+
+  indir "foo", sub {
+      ok(run($cmd), "Testing foo")
+  };
+
+If there wasn't this lazy evaluation, the directory where C<openssl> is
+found would be incorrect at the time C<run> is called, because it was
+calculated before we moved into the directory "foo".
+
+=end comment
+
 =cut
+
+sub cmd {
+    my $cmd = shift;
+    my %opts = @_;
+    return sub { my $num = shift;
+                 # Make a copy to not destroy the caller's array
+                 my @cmdargs = ( @$cmd );
+                 my @prog = __wrap_cmd(shift @cmdargs,
+                                       $opts{exe_shell} // ());
+
+                 return __decorate_cmd($num, [ @prog, quotify(@cmdargs) ],
+                                       %opts); }
+}
 
 sub app {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my $num = shift;
-		 return __build_cmd($num, \&__apps_file, $cmd, %opts); }
+    return sub { my @cmdargs = ( @{$cmd} );
+                 my @prog = __fixup_prg(__apps_file(shift @cmdargs,
+                                                    __exeext()));
+                 return cmd([ @prog, @cmdargs ],
+                            exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift); }
 }
 
 sub fuzz {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my $num = shift;
-		 return __build_cmd($num, \&__fuzz_file, $cmd, %opts); }
+    return sub { my @cmdargs = ( @{$cmd} );
+                 my @prog = __fixup_prg(__fuzz_file(shift @cmdargs,
+                                                    __exeext()));
+                 return cmd([ @prog, @cmdargs ],
+                            exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift); }
 }
 
 sub test {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my $num = shift;
-		 return __build_cmd($num, \&__test_file, $cmd, %opts); }
+    return sub { my @cmdargs = ( @{$cmd} );
+                 my @prog = __fixup_prg(__test_file(shift @cmdargs,
+                                                    __exeext()));
+                 return cmd([ @prog, @cmdargs ],
+                            exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift); }
 }
 
 sub perlapp {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my $num = shift;
-		 return __build_cmd($num, \&__perlapps_file, $cmd, %opts); }
+    return sub { my @interpreter_args = defined $opts{interpreter_args} ?
+                     @{$opts{interpreter_args}} : ();
+                 my @interpreter = __fixup_prg($^X);
+                 my @cmdargs = ( @{$cmd} );
+                 my @prog = __apps_file(shift @cmdargs, undef);
+                 return cmd([ @interpreter, @interpreter_args,
+                              @prog, @cmdargs ], %opts) -> (shift); }
 }
 
 sub perltest {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my $num = shift;
-		 return __build_cmd($num, \&__perltest_file, $cmd, %opts); }
+    return sub { my @interpreter_args = defined $opts{interpreter_args} ?
+                     @{$opts{interpreter_args}} : ();
+                 my @interpreter = __fixup_prg($^X);
+                 my @cmdargs = ( @{$cmd} );
+                 my @prog = __test_file(shift @cmdargs, undef);
+                 return cmd([ @interpreter, @interpreter_args,
+                              @prog, @cmdargs ], %opts) -> (shift); }
 }
 
 =over 4
 
 =item B<run CODEREF, OPTS>
 
-This CODEREF is expected to be the value return by C<app> or C<test>,
-anything else will most likely cause an error unless you know what you're
-doing.
+CODEREF is expected to be the value return by C<cmd> or any of its
+derivatives, anything else will most likely cause an error unless you
+know what you're doing.
 
 C<run> executes the command returned by CODEREF and return either the
-resulting output (if the option C<capture> is set true) or a boolean indicating
-if the command succeeded or not.
+resulting output (if the option C<capture> is set true) or a boolean
+indicating if the command succeeded or not.
 
 The options that C<run> can take are in the form of hash values:
 
@@ -764,46 +828,31 @@ sub __exeext {
 sub __test_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
+    my $e = pop || "";
     my $f = pop;
-    $f = catfile($directories{BLDTEST},@_,$f . __exeext());
-    $f = catfile($directories{SRCTEST},@_,$f) unless -x $f;
-    return $f;
-}
-
-sub __perltest_file {
-    BAIL_OUT("Must run setup() first") if (! $test_name);
-
-    my $f = pop;
-    $f = catfile($directories{BLDTEST},@_,$f);
+    $f = catfile($directories{BLDTEST},@_,$f . $e);
     $f = catfile($directories{SRCTEST},@_,$f) unless -f $f;
-    return ($^X, $f);
+    return $f;
 }
 
 sub __apps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
+    my $e = pop || "";
     my $f = pop;
-    $f = catfile($directories{BLDAPPS},@_,$f . __exeext());
-    $f = catfile($directories{SRCAPPS},@_,$f) unless -x $f;
+    $f = catfile($directories{BLDAPPS},@_,$f . $e);
+    $f = catfile($directories{SRCAPPS},@_,$f) unless -f $f;
     return $f;
 }
 
 sub __fuzz_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
+    my $e = pop || "";
     my $f = pop;
-    $f = catfile($directories{BLDFUZZ},@_,$f . __exeext());
-    $f = catfile($directories{SRCFUZZ},@_,$f) unless -x $f;
+    $f = catfile($directories{BLDFUZZ},@_,$f . $e);
+    $f = catfile($directories{SRCFUZZ},@_,$f) unless -f $f;
     return $f;
-}
-
-sub __perlapps_file {
-    BAIL_OUT("Must run setup() first") if (! $test_name);
-
-    my $f = pop;
-    $f = catfile($directories{BLDAPPS},@_,$f);
-    $f = catfile($directories{SRCAPPS},@_,$f) unless -f $f;
-    return ($^X, $f);
 }
 
 sub __results_file {
@@ -900,18 +949,46 @@ sub __cwd {
     return $reverse;
 }
 
-sub __fixup_cmd {
-    my $prog = shift;
+# __wrap_cmd CMD
+# __wrap_cmd CMD, EXE_SHELL
+#
+# __wrap_cmd "wraps" CMD (string) with a beginning command that makes sure
+# the command gets executed with an appropriate environment.  If EXE_SHELL
+# is given, it is used as the beginning command.
+#
+# __wrap_cmd returns a list that should be used to build up a larger list
+# of command tokens, or be joined together like this:
+#
+#    join(" ", __wrap_cmd($cmd))
+sub __wrap_cmd {
+    my $cmd = shift;
     my $exe_shell = shift;
 
-    my $prefix = __bldtop_file("util", "shlib_wrap.sh")." ";
+    my @prefix = ( __bldtop_file("util", "shlib_wrap.sh") );
 
-    if (defined($exe_shell)) {
-	$prefix = "$exe_shell ";
-    } elsif ($^O eq "VMS" ) {	# VMS
+    if(defined($exe_shell)) {
+	@prefix = ( $exe_shell );
+    } elsif ($^O eq "VMS" || $^O eq "MSWin32") {
+	# VMS and Windows don't use any wrapper script for the moment
+	@prefix = ();
+    }
+
+    return (@prefix, $cmd);
+}
+
+# __fixup_prg PROG
+#
+# __fixup_prg does whatever fixup is needed to execute an executable binary
+# given by PROG (string).
+#
+# __fixup_prg returns a string with the possibly prefixed program path spec.
+sub __fixup_prg {
+    my $prog = shift;
+
+    my $prefix = "";
+
+    if ($^O eq "VMS" ) {
 	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
-    } elsif ($^O eq "MSWin32") { # Windows
-	$prefix = "";
     }
 
     # We test both with and without extension.  The reason
@@ -937,45 +1014,15 @@ sub __fixup_cmd {
     return undef;
 }
 
-sub __build_cmd {
+sub __decorate_cmd {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $num = shift;
-    my $path_builder = shift;
-    # Make a copy to not destroy the caller's array
-    my @cmdarray = ( @{$_[0]} ); shift;
+    my $cmd = shift;
     my %opts = @_;
 
-    # We do a little dance, as $path_builder might return a list of
-    # more than one.  If so, only the first is to be considered a
-    # program to fix up, the rest is part of the arguments.  This
-    # happens for perl scripts, where $path_builder will return
-    # a list of two, $^X and the script name.
-    # Also, if $path_builder returned more than one, we don't apply
-    # the EXE_SHELL environment variable.
-    my @prog = ($path_builder->(shift @cmdarray));
-    my $first = shift @prog;
-    my $exe_shell = @prog ? undef : $ENV{EXE_SHELL};
-    my $cmd = __fixup_cmd($first, $exe_shell);
-    if (@prog) {
-	if ( ! -f $prog[0] ) {
-	    print STDERR "$prog[0] not found\n";
-	    $cmd = undef;
-	}
-    }
-    my @args = (@prog, @cmdarray);
-    if (defined($opts{interpreter_args})) {
-        unshift @args, @{$opts{interpreter_args}};
-    }
-
-    return () if !$cmd;
-
-    my $arg_str = "";
+    my $cmdstr = join(" ", @$cmd);
     my $null = devnull();
-
-
-    $arg_str = " ".join(" ", quotify @args) if @args;
-
     my $fileornull = sub { $_[0] ? $_[0] : $null; };
     my $stdin = "";
     my $stdout = "";
@@ -985,19 +1032,19 @@ sub __build_cmd {
     $stdout= " > ".$fileornull->($opts{stdout}) if exists($opts{stdout});
     $stderr=" 2> ".$fileornull->($opts{stderr}) if exists($opts{stderr});
 
-    my $display_cmd = "$cmd$arg_str$stdin$stdout$stderr";
+    my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
     $stderr=" 2> ".$null
         unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
 
-    $cmd .= "$arg_str$stdin$stdout$stderr";
+    $cmdstr .= "$stdin$stdout$stderr";
 
     if ($debug) {
-	print STDERR "DEBUG[__build_cmd]: \$cmd = \"$cmd\"\n";
-	print STDERR "DEBUG[__build_cmd]: \$display_cmd = \"$display_cmd\"\n";
+	print STDERR "DEBUG[__decorate_cmd]: \$cmdstr = \"$cmdstr\"\n";
+	print STDERR "DEBUG[__decorate_cmd]: \$display_cmd = \"$display_cmd\"\n";
     }
 
-    return ($cmd, $display_cmd);
+    return ($cmdstr, $display_cmd);
 }
 
 =head1 SEE ALSO
