@@ -26,7 +26,7 @@
 # So far RSA *sign* performance improvement over pre-bn_mul_mont asm
 # for 64-bit application running on PPC970/G5 is:
 #
-# 512-bit	+65%	
+# 512-bit	+65%
 # 1024-bit	+35%
 # 2048-bit	+18%
 # 4096-bit	+4%
@@ -49,7 +49,7 @@ if ($flavour =~ /32/) {
 	$UMULL=	"mullw";	# unsigned multiply low
 	$UMULH=	"mulhwu";	# unsigned multiply high
 	$UCMP=	"cmplw";	# unsigned compare
-	$SHRI=	"srwi";		# unsigned shift right by immediate	
+	$SHRI=	"srwi";		# unsigned shift right by immediate
 	$PUSH=	$ST;
 	$POP=	$LD;
 } elsif ($flavour =~ /64/) {
@@ -69,7 +69,7 @@ if ($flavour =~ /32/) {
 	$UMULL=	"mulld";	# unsigned multiply low
 	$UMULH=	"mulhdu";	# unsigned multiply high
 	$UCMP=	"cmpld";	# unsigned compare
-	$SHRI=	"srdi";		# unsigned shift right by immediate	
+	$SHRI=	"srdi";		# unsigned shift right by immediate
 	$PUSH=	$ST;
 	$POP=	$LD;
 } else { die "nonsense $flavour"; }

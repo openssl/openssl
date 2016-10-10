@@ -178,7 +178,7 @@ static int wpacket_intern_close(WPACKET *pkt)
     }
 
     /* Write out the WPACKET length if needed */
-    if (sub->lenbytes > 0 
+    if (sub->lenbytes > 0
                 && !put_value((unsigned char *)&pkt->buf->data[sub->packet_len],
                               packlen, sub->lenbytes))
             return 0;

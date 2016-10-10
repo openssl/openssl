@@ -1049,7 +1049,7 @@ my $bptr="%rdx";	# const void *table,
 my $nptr="%rcx";	# const BN_ULONG *nptr,
 my $n0  ="%r8";		# const BN_ULONG *n0);
 my $num ="%r9";		# int num, has to be divisible by 8
-			# int pwr 
+			# int pwr
 
 my ($i,$j,$tptr)=("%rbp","%rcx",$rptr);
 my @A0=("%r10","%r11");
@@ -1126,7 +1126,7 @@ $code.=<<___;
 	ja	.Lpwr_page_walk
 .Lpwr_page_walk_done:
 
-	mov	$num,%r10	
+	mov	$num,%r10
 	neg	$num
 
 	##############################################################
@@ -2036,7 +2036,7 @@ __bn_post4x_internal:
 	jnz	.Lsqr4x_sub
 
 	mov	$num,%r10		# prepare for back-to-back call
-	neg	$num			# restore $num	
+	neg	$num			# restore $num
 	ret
 .size	__bn_post4x_internal,.-__bn_post4x_internal
 ___
@@ -2259,7 +2259,7 @@ bn_mulx4x_mont_gather5:
 	mov	\$0,%r10
 	cmovc	%r10,%r11
 	sub	%r11,%rbp
-.Lmulx4xsp_done:	
+.Lmulx4xsp_done:
 	and	\$-64,%rbp		# ensure alignment
 	mov	%rsp,%r11
 	sub	%rbp,%r11
@@ -2741,7 +2741,7 @@ bn_powerx5:
 	ja	.Lpwrx_page_walk
 .Lpwrx_page_walk_done:
 
-	mov	$num,%r10	
+	mov	$num,%r10
 	neg	$num
 
 	##############################################################

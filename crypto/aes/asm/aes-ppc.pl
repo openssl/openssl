@@ -1433,10 +1433,10 @@ $code.=<<___;
 	xor	$s1,$s1,$acc05
 	xor	$s2,$s2,$acc06
 	xor	$s3,$s3,$acc07
-	xor	$s0,$s0,$acc08		# ^= ROTATE(r8,8)	
-	xor	$s1,$s1,$acc09	
-	xor	$s2,$s2,$acc10	
-	xor	$s3,$s3,$acc11	
+	xor	$s0,$s0,$acc08		# ^= ROTATE(r8,8)
+	xor	$s1,$s1,$acc09
+	xor	$s2,$s2,$acc10
+	xor	$s3,$s3,$acc11
 
 	b	Ldec_compact_loop
 .align	4

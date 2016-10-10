@@ -151,7 +151,7 @@ my %globals;
 	if ($gas) {
 	    if ($self->{op} eq "movz") {	# movz is pain...
 		sprintf "%s%s%s",$self->{op},$self->{sz},shift;
-	    } elsif ($self->{op} =~ /^set/) { 
+	    } elsif ($self->{op} =~ /^set/) {
 		"$self->{op}";
 	    } elsif ($self->{op} eq "ret") {
 		my $epilogue = "";
@@ -178,7 +178,7 @@ my %globals;
 		$self->{op} .= $self->{sz};
 	    } elsif ($self->{op} eq "call" && $current_segment eq ".CRT\$XCU") {
 		$self->{op} = "\tDQ";
-	    } 
+	    }
 	    $self->{op};
 	}
     }
@@ -639,7 +639,7 @@ my %globals;
 							if ($sz eq "D" && ($current_segment=~/.[px]data/ || $dir eq ".rva"))
 							{ $var=~s/([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
 							$var;
-						    };  
+						    };
 
 				    $sz =~ tr/bvlrq/BWDDQ/;
 				    $self->{value} = "\tD$sz\t";
@@ -649,7 +649,7 @@ my %globals;
 				  };
 		/\.byte/    && do { my @str=split(/,\s*/,$$line);
 				    map(s/(0b[0-1]+)/oct($1)/eig,@str);
-				    map(s/0x([0-9a-f]+)/0$1h/ig,@str) if ($masm);	
+				    map(s/0x([0-9a-f]+)/0$1h/ig,@str) if ($masm);
 				    while ($#str>15) {
 					$self->{value}.="DB\t"
 						.join(",",@str[0..15])."\n";
@@ -896,7 +896,7 @@ while(defined(my $line=<>)) {
 	printf "%s",$directive->out();
     } elsif (my $opcode=opcode->re(\$line)) {
 	my $asm = eval("\$".$opcode->mnemonic());
-	
+
 	if ((ref($asm) eq 'CODE') && scalar(my @bytes=&$asm($line))) {
 	    print $gas?".byte\t":"DB\t",join(',',@bytes),"\n";
 	    next;
@@ -974,7 +974,7 @@ close STDOUT;
 # %r13		-		-
 # %r14		-		-
 # %r15		-		-
-# 
+#
 # (*)	volatile register
 # (-)	preserved by callee
 # (#)	Nth argument, volatile

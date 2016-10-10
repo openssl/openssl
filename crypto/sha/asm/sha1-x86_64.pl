@@ -262,7 +262,7 @@ sha1_block_data_order:
 	jz	.Lialu
 ___
 $code.=<<___ if ($shaext);
-	test	\$`1<<29`,%r10d		# check SHA bit	
+	test	\$`1<<29`,%r10d		# check SHA bit
 	jnz	_shaext_shortcut
 ___
 $code.=<<___ if ($avx>1);

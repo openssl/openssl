@@ -115,7 +115,7 @@ static int test_WPACKET_set_max_size(void)
             || !WPACKET_set_max_size(&pkt, SIZE_MAX)
             || !WPACKET_finish(&pkt)) {
         testfail("test_WPACKET_set_max_size():1 failed\n", &pkt);
-        return 0; 
+        return 0;
     }
 
     if (!WPACKET_init_len(&pkt, buf, 1)
