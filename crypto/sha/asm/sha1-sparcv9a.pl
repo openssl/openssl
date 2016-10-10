@@ -519,7 +519,7 @@ $code.=<<___;
 	mov		$Cctx,$C
 	mov		$Dctx,$D
 	mov		$Ectx,$E
-	alignaddr	%g0,$tmp0,%g0	
+	alignaddr	%g0,$tmp0,%g0
 	dec		1,$len
 	ba		.Loop
 	mov		$nXfer,$Xfer

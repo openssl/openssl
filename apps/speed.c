@@ -1187,8 +1187,8 @@ static int run_benchmark(int async_jobs,
                 continue;
 #endif
 
-            ret = ASYNC_start_job(&loopargs[i].inprogress_job, 
-                    loopargs[i].wait_ctx, &job_op_count, loop_function, 
+            ret = ASYNC_start_job(&loopargs[i].inprogress_job,
+                    loopargs[i].wait_ctx, &job_op_count, loop_function,
                     (void *)(loopargs + i), sizeof(loopargs_t));
             switch (ret) {
             case ASYNC_PAUSE:

@@ -707,7 +707,7 @@ int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
  * maximum size will be. If this function is used, then it should be immediately
  * followed by a WPACKET_allocate_bytes() call before any other WPACKET
  * functions are called (unless the write to the allocated bytes is abandoned).
- * 
+ *
  * For example: If we are generating a signature, then the size of that
  * signature may not be known in advance. We can use WPACKET_reserve_bytes() to
  * handle this:

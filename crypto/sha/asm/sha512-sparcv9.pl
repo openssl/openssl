@@ -102,7 +102,7 @@ if ($output =~ /512/) {
 
 	$locals=0;		# X[16] is register resident
 	@X=("%o0","%o1","%o2","%o3","%o4","%o5","%g1","%o7");
-	
+
 	$A="%l0";
 	$B="%l1";
 	$C="%l2";
@@ -254,7 +254,7 @@ $code.=<<___;
 	$SLL	$a,`$SZ*8-@Sigma0[1]`,$tmp1
 	xor	$tmp0,$h,$h
 	$SRL	$a,@Sigma0[2],$tmp0
-	xor	$tmp1,$h,$h	
+	xor	$tmp1,$h,$h
 	$SLL	$a,`$SZ*8-@Sigma0[0]`,$tmp1
 	xor	$tmp0,$h,$h
 	xor	$tmp1,$h,$h		! Sigma0(a)

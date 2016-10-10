@@ -1051,7 +1051,7 @@ if ($PREFIX eq "aesni") {
 &set_label("ctr32_one_shortcut",16);
 	&movups	($inout0,&QWP(0,$rounds_));	# load ivec
 	&mov	($rounds,&DWP(240,$key));
-	
+
 &set_label("ctr32_one");
 	if ($inline)
 	{   &aesni_inline_generate1("enc");	}
