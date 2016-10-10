@@ -31,7 +31,7 @@
 # multiplying 64 by CPU clock frequency and dividing by relevant
 # value from the given table:
 #
-#		$SCALE=2/8	icc8	gcc3	
+#		$SCALE=2/8	icc8	gcc3
 # Intel P4	3200/4600	4600(*)	6400
 # Intel PIII	2900/3000	4900	5400
 # AMD K[78]	2500/1800	9900	8200(**)
@@ -502,6 +502,6 @@ for($i=0;$i<8;$i++) {
 	&L(0xca,0x2d,0xbf,0x07,0xad,0x5a,0x83,0x33);
 
 &function_end_B("whirlpool_block_mmx");
-&asm_finish(); 
+&asm_finish();
 
 close STDOUT;

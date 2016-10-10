@@ -47,7 +47,7 @@
 #
 # Performance in clock cycles per processed byte (less is better):
 #
-#		gcc	icc	x86 asm(*)	SIMD	x86_64 asm(**)	
+#		gcc	icc	x86 asm(*)	SIMD	x86_64 asm(**)
 # Pentium	46	57	40/38		-	-
 # PIII		36	33	27/24		-	-
 # P4		41	38	28		-	17.3
@@ -276,7 +276,7 @@ my $suffix=shift;
 	&mov	($Coff,"ecx");
 	&mov	($Doff,"edi");
 	&mov	(&DWP(0,"esp"),"ebx");	# magic
-	&mov	($E,&DWP(16,"esi"));	
+	&mov	($E,&DWP(16,"esi"));
 	&mov	("ebx",&DWP(20,"esi"));
 	&mov	("ecx",&DWP(24,"esi"));
 	&mov	("edi",&DWP(28,"esi"));
@@ -385,7 +385,7 @@ my @AH=($A,$K256);
 	&xor	($AH[1],"ecx");		# magic
 	&mov	(&DWP(8,"esp"),"ecx");
 	&mov	(&DWP(12,"esp"),"ebx");
-	&mov	($E,&DWP(16,"esi"));	
+	&mov	($E,&DWP(16,"esi"));
 	&mov	("ebx",&DWP(20,"esi"));
 	&mov	("ecx",&DWP(24,"esi"));
 	&mov	("esi",&DWP(28,"esi"));

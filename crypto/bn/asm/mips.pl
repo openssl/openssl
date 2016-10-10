@@ -603,13 +603,13 @@ $code.=<<___;
 	sltu	$v0,$t2,$ta2
 	$ST	$t2,-2*$BNSZ($a0)
 	$ADDU	$v0,$t8
-	
+
 	$ADDU	$ta3,$t3
 	sltu	$t9,$ta3,$t3
 	$ADDU	$t3,$ta3,$v0
 	sltu	$v0,$t3,$ta3
 	$ST	$t3,-$BNSZ($a0)
-	
+
 	.set	noreorder
 	bgtz	$at,.L_bn_add_words_loop
 	$ADDU	$v0,$t9
@@ -808,7 +808,7 @@ bn_div_3_words:
 				# so that we can save two arguments
 				# and return address in registers
 				# instead of stack:-)
-				
+
 	$LD	$a0,($a3)
 	move	$ta2,$a1
 	bne	$a0,$a2,bn_div_3_words_internal

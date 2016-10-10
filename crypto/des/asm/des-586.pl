@@ -85,7 +85,7 @@ sub DES_encrypt_internal()
 
 	&function_end_B("_x86_DES_encrypt");
 	}
-	
+
 sub DES_decrypt_internal()
 	{
 	&function_begin_B("_x86_DES_decrypt");
@@ -122,7 +122,7 @@ sub DES_decrypt_internal()
 
 	&function_end_B("_x86_DES_decrypt");
 	}
-	
+
 sub DES_encrypt
 	{
 	local($name,$do_ip)=@_;
@@ -283,7 +283,7 @@ sub IP_new
 	&R_PERM_OP($l,$tt,$r,14,"0x33333333",$r);
 	&R_PERM_OP($tt,$r,$l,22,"0x03fc03fc",$r);
 	&R_PERM_OP($l,$r,$tt, 9,"0xaaaaaaaa",$r);
-	
+
 	if ($lr != 3)
 		{
 		if (($lr-3) < 0)

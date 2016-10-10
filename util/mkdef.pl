@@ -24,7 +24,7 @@
 #	existence:platform:kind:algorithms
 #
 # - "existence" can be "EXIST" or "NOEXIST" depending on if the symbol is
-#   found somewhere in the source, 
+#   found somewhere in the source,
 # - "platforms" is empty if it exists on all platforms, otherwise it contains
 #   comma-separated list of the platform, just as they are if the symbol exists
 #   for those platforms, or prepended with a "!" if not.  This helps resolve
@@ -172,7 +172,7 @@ foreach (@ARGV, split(/ /, $config{options}))
 
 	$do_ssl=1 if $_ eq "libssl";
 	if ($_ eq "ssl") {
-		$do_ssl=1; 
+		$do_ssl=1;
 		$libname=$_
 	}
 	$do_crypto=1 if $_ eq "libcrypto";
@@ -211,7 +211,7 @@ foreach (@ARGV, split(/ /, $config{options}))
 
 	}
 
-if (!$libname) { 
+if (!$libname) {
 	if ($do_ssl) {
 		$libname="LIBSSL";
 	}
@@ -339,7 +339,7 @@ if($do_crypto == 1) {
 	}
 	&update_numbers(*OUT,"LIBCRYPTO",*crypto_list,$max_crypto,@crypto_symbols);
 	close OUT;
-} 
+}
 
 } elsif ($do_checkexist) {
 	&check_existing(*ssl_list, @ssl_symbols)

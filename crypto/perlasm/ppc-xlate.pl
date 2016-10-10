@@ -36,7 +36,7 @@ my $globl = sub {
     my $ret;
 
     $name =~ s|^\.||;
- 
+
     SWITCH: for ($flavour) {
 	/aix/		&& do { if (!$$type) {
 				    $$type = "\@function";
