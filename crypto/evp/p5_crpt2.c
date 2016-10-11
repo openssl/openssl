@@ -33,6 +33,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                       const unsigned char *salt, int saltlen, int iter,
                       const EVP_MD *digest, int keylen, unsigned char *out)
 {
+    const char *empty = "";
     unsigned char digtmp[EVP_MAX_MD_SIZE], *p, itmp[4];
     int cplen, j, k, tkeylen, mdlen;
     unsigned long i = 1;
@@ -47,10 +48,12 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
         return 0;
     p = out;
     tkeylen = keylen;
-    if (!pass)
+    if (pass == NULL) {
+        pass = empty;
         passlen = 0;
-    else if (passlen == -1)
+    } else if (passlen == -1) {
         passlen = strlen(pass);
+    }
     if (!HMAC_Init_ex(hctx_tpl, pass, passlen, digest, NULL)) {
         HMAC_CTX_free(hctx_tpl);
         return 0;
