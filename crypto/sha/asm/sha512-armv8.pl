@@ -1,17 +1,11 @@
 #! /usr/bin/env perl
-# Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
-#
-# Licensed under the OpenSSL license (the "License").  You may not use
-# this file except in compliance with the License.  You can obtain a copy
-# in the file LICENSE in the source distribution or at
-# https://www.openssl.org/source/license.html
-
-#
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
+#
+# Permission to use under GPLv2 terms is granted.
 # ====================================================================
 #
 # SHA256/512 for ARMv8.
@@ -37,16 +31,20 @@
 #	generated with -mgeneral-regs-only is significanty faster
 #	and the gap is only 40-90%.
 
-$flavour=shift;
-$output=shift;
+$output=pop;
+$flavour=pop;
 
-$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
-( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
-die "can't locate arm-xlate.pl";
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
-*STDOUT=*OUT;
+    open OUT,"| \"$^X\" $xlate $flavour $output";
+    *STDOUT=*OUT;
+} else {
+    open STDOUT,">$output";
+}
 
 if ($output =~ /512/) {
 	$BITS=512;
@@ -166,7 +164,9 @@ ___
 }
 
 $code.=<<___;
-#include "arm_arch.h"
+#ifndef	__KERNEL__
+# include "arm_arch.h"
+#endif
 
 .text
 
@@ -177,16 +177,18 @@ $code.=<<___;
 $func:
 ___
 $code.=<<___	if ($SZ==4);
-#ifdef	__ILP32__
+#ifndef	__KERNEL__
+# ifdef	__ILP32__
 	ldrsw	x16,.LOPENSSL_armcap_P
-#else
+# else
 	ldr	x16,.LOPENSSL_armcap_P
-#endif
+# endif
 	adr	x17,.LOPENSSL_armcap_P
 	add	x16,x16,x17
 	ldr	w16,[x16]
 	tst	w16,#ARMV8_SHA256
 	b.ne	.Lv8_entry
+#endif
 ___
 $code.=<<___;
 	stp	x29,x30,[sp,#-128]!
@@ -321,12 +323,14 @@ $code.=<<___ if ($SZ==4);
 ___
 $code.=<<___;
 .size	.LK$BITS,.-.LK$BITS
+#ifndef	__KERNEL__
 .align	3
 .LOPENSSL_armcap_P:
-#ifdef	__ILP32__
+# ifdef	__ILP32__
 	.long	OPENSSL_armcap_P-.
-#else
+# else
 	.quad	OPENSSL_armcap_P-.
+# endif
 #endif
 .asciz	"SHA$BITS block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
@@ -341,6 +345,7 @@ my ($W0,$W1)=("v16.4s","v17.4s");
 my ($ABCD_SAVE,$EFGH_SAVE)=("v18.16b","v19.16b");
 
 $code.=<<___;
+#ifndef	__KERNEL__
 .type	sha256_block_armv8,%function
 .align	6
 sha256_block_armv8:
@@ -409,11 +414,14 @@ $code.=<<___;
 	ldr		x29,[sp],#16
 	ret
 .size	sha256_block_armv8,.-sha256_block_armv8
+#endif
 ___
 }
 
 $code.=<<___;
+#ifndef	__KERNEL__
 .comm	OPENSSL_armcap_P,4,4
+#endif
 ___
 
 {   my  %opcode = (
@@ -430,6 +438,14 @@ ___
 			$mnemonic,$arg;
     }
 }
+
+open SELF,$0;
+while(<SELF>) {
+        next if (/^#!/);
+        last if (!s/^#/\/\// and !/^$/);
+        print;
+}
+close SELF;
 
 foreach(split("\n",$code)) {
 
