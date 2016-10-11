@@ -182,7 +182,11 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
                 goto err;
         }
     }
-    /* All entries have been converted: free up references in intname.s */
+    /*
+     * All entries have now been pushed to nm->x.entries
+     * free up the stacks in intname.s but not the entries
+     * themselves.
+     */
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s, sk_X509_NAME_ENTRY_free);
     intname.s = NULL;
     ret = x509_name_canon(nm.x);
