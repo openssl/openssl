@@ -1394,12 +1394,6 @@ sub load_numbers
 			$ret{$a[0]}=$a[1];
 			$num_noinfo++;
 		} else {
-			#Sanity check the version number
-			if (defined $prevversion) {
-				check_version_lte($prevversion, $a[2]);
-			}
-			check_version_lte($a[2], $currversion);
-			$prevversion = $a[2];
 			$ret{$a[0]}=$a[1]."\\".$a[2]."\\".$a[3]; # \\ is a special marker
 		}
 		$max_num = $a[1] if $a[1] > $max_num;
@@ -1603,80 +1597,6 @@ sub get_next_letter()
 		return $thisletter."a";
 	} else {
 		return $baseletter.(++$endletter);
-	}
-}
-
-#Check if a version is less than or equal to the current version. Its a fatal
-#error if not. They must also only differ in letters, or the last number (i.e.
-#the first two numbers must be the same)
-sub check_version_lte()
-{
-	my ($testversion, $currversion) = @_;
-	my $lentv;
-	my $lencv;
-	my $cvbase;
-
-	my ($cvnums) = $currversion =~ /^(\d_\d_\d)[a-z]*$/;
-	my ($tvnums) = $testversion =~ /^(\d_\d_\d)[a-z]*$/;
-
-	#Die if we can't parse the version numbers or they don't look sane
-	die "Invalid version number: $testversion and $currversion\n"
-		if (!defined($cvnums) || !defined($tvnums)
-			|| length($cvnums) != 5
-			|| length($tvnums) != 5);
-
-	#If the base versions (without letters) don't match check they only differ
-	#in the last number
-	if ($cvnums ne $tvnums) {
-		die "Invalid version number: $testversion "
-			."for current version $currversion\n"
-			if (substr($cvnums, -1) < substr($tvnums, -1)
-				|| substr($cvnums, 0, 4) ne substr($tvnums, 0, 4));
-		return;
-	}
-	#If we get here then the base version (i.e. the numbers) are the same - they
-	#only differ in the letters
-
-	$lentv = length $testversion;
-	$lencv = length $currversion;
-
-	#If the testversion has more letters than the current version then it must
-	#be later (or malformed)
-	if ($lentv > $lencv) {
-		die "Invalid version number: $testversion "
-			."is greater than $currversion\n";
-	}
-
-	#Get the last letter from the current version
-	my ($cvletter) = $currversion =~ /([a-z])$/;
-	if (defined $cvletter) {
-		($cvbase) = $currversion =~ /(\d_\d_\d[a-z]*)$cvletter$/;
-	} else {
-		$cvbase = $currversion;
-	}
-	die "Unable to parse version number $currversion" if (!defined $cvbase);
-	my $tvbase;
-	my ($tvletter) = $testversion =~ /([a-z])$/;
-	if (defined $tvletter) {
-		($tvbase) = $testversion =~ /(\d_\d_\d[a-z]*)$tvletter$/;
-	} else {
-		$tvbase = $testversion;
-	}
-	die "Unable to parse version number $testversion" if (!defined $tvbase);
-
-	if ($lencv > $lentv) {
-		#If current version has more letters than testversion then testversion
-		#minus the final letter must be a substring of the current version
-		die "Invalid version number $testversion "
-			."is greater than $currversion or is invalid\n"
-			if (index($cvbase, $tvbase) != 0);
-	} else {
-		#If both versions have the same number of letters then they must be
-		#equal up to the last letter, and the last letter in testversion must
-		#be less than or equal to the last letter in current version.
-		die "Invalid version number $testversion "
-			."is greater than $currversion\n"
-			if (($cvbase ne $tvbase) && ($tvletter gt $cvletter));
 	}
 }
 
