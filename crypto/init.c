@@ -62,25 +62,65 @@ static CRYPTO_RWLOCK *init_lock = NULL;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
-DEFINE_RUN_ONCE_STATIC(ossl_init_base)
+
+static int core_base_init(void)
 {
-#ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_base: Setting up stop handlers\n");
-#endif
     /*
      * We use a dummy thread local key here. We use the destructor to detect
      * when the thread is going to stop (where that feature is available)
      */
     CRYPTO_THREAD_init_local(&threadstopkey, ossl_init_thread_stop_wrap);
-#ifndef OPENSSL_SYS_UEFI
-    atexit(OPENSSL_cleanup);
-#endif
     if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
         return 0;
     OPENSSL_cpuid_setup();
     base_inited = 1;
+
     return 1;
 }
+
+#ifdef _WINN32_WINNT
+int ossl_cleanup_wrapper(void)
+{
+    OPENSSL_cleanup();
+
+    return 0;
+}
+#endif
+
+DEFINE_RUN_ONCE_STATIC(ossl_init_base)
+{
+#ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_base: Setting up stop handlers\n");
+#endif
+
+    if (!core_base_init())
+        return 0;
+
+#ifndef OPENSSL_SYS_UEFI
+# ifdef _WINN32_WINNT
+    _onexit(ossl_cleanup_wrapper);
+# else
+    atexit(OPENSSL_cleanup);
+# endif
+#endif
+
+    return 1;
+}
+
+#ifndef OPENSSL_NO_ATEXIT_CONTROL
+DEFINE_RUN_ONCE_STATIC(ossl_init_no_atexit_base)
+{
+# ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_no_atexit_init_base: "
+                    "Setting up stop handlers\n");
+# endif
+
+    if (!core_base_init())
+        return 0;
+
+    return 1;
+}
+#endif
 
 static CRYPTO_ONCE load_crypto_strings = CRYPTO_ONCE_STATIC_INIT;
 static int load_crypto_strings_inited = 0;
@@ -342,6 +382,13 @@ int ossl_init_thread_start(uint64_t opts)
     return 1;
 }
 
+void OPENSSL_cond_cleanup(void)
+{
+#ifndef OPENSSL_NO_ATEXIT_CONTROL
+    OPENSSL_cleanup();
+#endif
+}
+
 void OPENSSL_cleanup(void)
 {
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
@@ -474,8 +521,15 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
     }
 
+#ifndef OPENSSL_NO_ATEXIT_CONTROL
+    if (((opts & OPENSSL_INIT_NO_ATEXIT)
+                && !RUN_ONCE(&base, ossl_init_no_atexit_base))
+            || !RUN_ONCE(&base, ossl_init_base))
+        return 0;
+#else
     if (!RUN_ONCE(&base, ossl_init_base))
         return 0;
+#endif
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
             && !RUN_ONCE(&load_crypto_strings,

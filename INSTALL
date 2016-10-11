@@ -223,6 +223,17 @@
                    Do not use assembler code. On some platforms a small amount
                    of assembler code may still be used.
 
+  enable-atexit-control
+                   By default OpenSSL will clean itself up via an atexit()
+                   handler. Most platforms will call the atexit() handler on
+                   dlclose() if OpenSSL has been dynamically loaded at runtime.
+                   However, some platforms only attempt to call the atexit()
+                   handler on process termination which may cause crashes if
+                   OpenSSL has been dynamically loaded. This option enables the
+                   ability to switch off the atexit() handler - see the
+                   OPENSSL_init_crypto() man page. It should *only* be used on
+                   platforms that do not call atexit() handlers on dlclose().
+
   no-async
                    Do not build support for async operations.
 

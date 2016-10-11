@@ -327,6 +327,7 @@ my @disablables = (
     "asan",
     "asm",
     "async",
+    "atexit-control",
     "autoalginit",
     "autoerrinit",
     "bf",
@@ -422,6 +423,7 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
                   "asan"		=> "default",
+		  "atexit-control"	=> "default",
 		  "crypto-mdebug"       => "default",
 		  "crypto-mdebug-backtrace" => "default",
 		  "ec_nistp_64_gcc_128" => "default",

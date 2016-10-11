@@ -368,6 +368,7 @@ int CRYPTO_memcmp(const volatile void * volatile in_a,
 # define OPENSSL_INIT_ENGINE_PADLOCK         0x00004000L
 # define OPENSSL_INIT_ENGINE_AFALG           0x00008000L
 /* OPENSSL_INIT flag 0x00010000 reserved for internal use */
+# define OPENSSL_INIT_NO_ATEXIT              0x00020000L
 /* OPENSSL_INIT flag range 0xfff00000 reserved for OPENSSL_init_ssl() */
 /* Max OPENSSL_INIT flag value is 0x80000000 */
 
@@ -379,6 +380,7 @@ int CRYPTO_memcmp(const volatile void * volatile in_a,
 
 
 /* Library initialisation functions */
+void OPENSSL_cond_cleanup(void);
 void OPENSSL_cleanup(void);
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 int OPENSSL_atexit(void (*handler)(void));

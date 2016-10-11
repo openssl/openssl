@@ -12,6 +12,7 @@ initialisation and deinitialisation functions
  #include <openssl/crypto.h>
 
  void OPENSSL_cleanup(void);
+ void OPENSSL_cond_cleanup(void);
  int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
  int OPENSSL_atexit(void (*handler)(void));
  void OPENSSL_thread_stop(void);
@@ -150,6 +151,17 @@ With this option the library will automatically load and initialise all the
 built in engines listed above with the exception of the openssl and dasync
 engines. This not a default option.
 
+=item OPENSSL_INIT_NO_ATEXIT
+
+By default OpenSSL will clean itself up via an atexit() handler. Most platforms
+will call the atexit() handler on dlclose() if OpenSSL has been dynamically
+loaded at runtime. However, some less common platforms only attempt to call the
+atexit() handler on process termination which may cause crashes if OpenSSL has
+been dynamically loaded. This option switches off the atexit() handler. It only
+has an effect if OpenSSL has been built using the "enable-atexit-control" option
+(which is off by default) - otherwise it is ignored. If this is used then
+OpenSSL must be cleaned up manually (see OPENSSL_cond_cleanup() below).
+
 =back
 
 Multiple options may be combined together in a single call to
@@ -169,6 +181,13 @@ are discouraged from calling this function and should instead, typically, rely
 on auto-deinitialisation. This is to avoid error conditions where both an
 application and a library it depends on both use OpenSSL, and the library
 deinitialises it before the application has finished using it.
+
+If the OPENSSL_INIT_NO_ATEXIT option has been used then OPENSSL_cond_cleanup()
+should be called when OpenSSL is no longer needed. This has the effect of
+conditionally calling OPENSSL_cleanup() if and only if the library has been
+built with the "enable-atexit-control" option. Care should be taken to avoid
+cleaning up OpenSSL if other libraries or the main application may still be
+using it.
 
 Once OPENSSL_cleanup() has been called the library cannot be reinitialised.
 Attempts to call OPENSSL_init_crypto() will fail and an ERR_R_INIT_FAIL error
