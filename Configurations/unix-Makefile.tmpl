@@ -1015,7 +1015,7 @@ $target: $lib$libext $deps $ordinalsfile
 		LIBNAME=$libname LIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
 		LIBCOMPATVERSIONS=';\$(SHLIB_VERSION_HISTORY)' \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(LIB_CFLAGS)' \\
-		LDFLAGS='\$(LDFLAGS)' \\
+		LDFLAGS='\$(LDFLAGS)' LIBRPATH='\$(INSTALLTOP)/\$(LIBDIR)' \\
 		SHARED_LDFLAGS='\$(LIB_LDFLAGS)' SHLIB_EXT=$shlibext \\
 		RC='\$(RC)' SHARED_RCFLAGS='\$(RCFLAGS)' \\
 		link_shlib.$shlib_target
