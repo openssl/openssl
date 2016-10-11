@@ -127,6 +127,8 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
     long len;
 
     *buflen = 0;
+
+    /* Check for empty value */
     if (!*value) {
         /*
          * Don't return NULL for zero length buffer.
@@ -141,6 +143,14 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
         *buflen = 0;
         return 1;
     }
+
+    /* Check for NULL literal */
+    if (strcmp(value, "NULL") == 0) {
+        *buf = NULL;
+        *buflen = 0;
+        return 1;
+    }
+
     /* Check for string literal */
     if (value[0] == '"') {
         size_t vlen;
@@ -155,6 +165,7 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
         return 1;
     }
 
+    /* Otherwise assume as hex literal and convert it to binary buffer */
     *buf = OPENSSL_hexstr2buf(value, &len);
     if (!*buf) {
         fprintf(stderr, "Value=%s\n", value);
@@ -640,7 +651,7 @@ int main(int argc, char **argv)
 
     memset(&t, 0, sizeof(t));
     t.start_line = -1;
-    in = BIO_new_file(argv[1], "r");
+    in = BIO_new_file(argv[1], "rb");
     if (in == NULL) {
         fprintf(stderr, "Can't open %s for reading\n", argv[1]);
         return 1;
