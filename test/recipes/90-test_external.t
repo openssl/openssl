@@ -21,6 +21,8 @@ plan tests => 1;
 
 indir $ENV{BORING_RUNNER_DIR} => sub {
     ok(!system("go", "test", "-shim-path",
-               srctop_file("test", "ossl_shim", "ossl_shim"), "-pipe"),
+               srctop_file("test", "ossl_shim", "ossl_shim"),
+               "-shim-config",
+               srctop_file("test", "ossl_shim", "ossl_config.json"), "-pipe"),
        "running external tests");
 }, create => 0, cleanup => 0;
