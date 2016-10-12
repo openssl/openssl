@@ -951,7 +951,7 @@ EOF
       }
       my $cc = '$(CC)';
       my $cflags = '$(CFLAGS)';
-      if (grep /\.cc$/, @srcs) {
+      if (grep /\.(cc|cpp)$/, @srcs) {
           $cc = '$(CXX)';
           $cflags = '$(CXXFLAGS)';
           $cflags .= ' ' . { lib => '$(LIB_CXXFLAGS)',
