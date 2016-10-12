@@ -189,7 +189,7 @@ LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag}
                # be cautious and pass -rpath to linker only when
                # $prefix is not /usr.
                . ($config{target} =~ m|^BSD-| && $prefix !~ m|^/usr/.*$|
-                  ? " -Wl,-rpath,\$\$(LIBRPATH)" : "") -}
+                  ? " -Wl,--enable-new-dtags,-rpath,\$\$(LIBRPATH)" : "") -}
 DSO_CFLAGS={- $target{shared_cflag} || "" -}
 DSO_CXXFLAGS={- $target{shared_cxxflag} || "" -}
 DSO_LDFLAGS=$(LIB_LDFLAGS)
@@ -1030,7 +1030,7 @@ $target: $lib$libext $deps $ordinalsfile
 		LIBNAME=$libname LIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
 		LIBCOMPATVERSIONS=';\$(SHLIB_VERSION_HISTORY)' \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(LIB_CFLAGS)' \\
-		LDFLAGS='\$(LDFLAGS)' \\
+		LDFLAGS='\$(LDFLAGS)' LIBRPATH='\$(INSTALLTOP)/\$(LIBDIR)' \\
 		SHARED_LDFLAGS='\$(LIB_LDFLAGS)' SHLIB_EXT=$shlibext \\
 		RC='\$(RC)' SHARED_RCFLAGS='\$(RCFLAGS)' \\
 		link_shlib.$shlib_target
