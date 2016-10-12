@@ -500,6 +500,9 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
     const char *ls, *fs, *rs;
     unsigned long l, f, r;
 
+    if (len == 0)
+        return;
+
     l = ERR_GET_LIB(e);
     f = ERR_GET_FUNC(e);
     r = ERR_GET_REASON(e);
