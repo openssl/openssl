@@ -1094,7 +1094,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
      * wb->buf
      */
 
-    if (mac_size != 0) {
+    if (!SSL_USE_ETM(s) && mac_size != 0) {
         if (s->method->ssl3_enc->mac(s, &wr,
                                      &(p[SSL3_RECORD_get_length(&wr) + eivlen]),
                                      1) < 0)
@@ -1111,6 +1111,14 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     if (s->method->ssl3_enc->enc(s, &wr, 1, 1) < 1)
         goto err;
+
+    if (SSL_USE_ETM(s) && mac_size != 0) {
+        if (s->method->ssl3_enc->mac(s, &wr,
+                                     &(p[SSL3_RECORD_get_length(&wr)]),
+                                     1) < 0)
+            goto err;
+        SSL3_RECORD_add_length(&wr, mac_size);
+    }
 
     /* record length after mac and block padding */
     /*

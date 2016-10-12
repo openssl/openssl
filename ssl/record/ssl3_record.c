@@ -1314,6 +1314,26 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     rr->data = rr->input;
     rr->orig_len = rr->length;
 
+    if (SSL_USE_ETM(s) && s->read_hash) {
+        unsigned char *mac;
+        mac_size = EVP_MD_CTX_size(s->read_hash);
+        OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
+        if (rr->orig_len < mac_size) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_DTLS1_PROCESS_RECORD, SSL_R_LENGTH_TOO_SHORT);
+            goto f_err;
+        }
+        rr->length -= mac_size;
+        mac = rr->data + rr->length;
+        i = s->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );
+        if (i < 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
+            al = SSL_AD_BAD_RECORD_MAC;
+            SSLerr(SSL_F_DTLS1_PROCESS_RECORD,
+                   SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
+            goto f_err;
+        }
+    }
+
     enc_err = s->method->ssl3_enc->enc(s, rr, 1, 0);
     /*-
      * enc_err is:
@@ -1338,7 +1358,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 #endif
 
     /* r->length is now the compressed data plus mac */
-    if ((sess != NULL) &&
+    if ((sess != NULL) && !SSL_USE_ETM(s) &&
         (s->enc_read_ctx != NULL) && (EVP_MD_CTX_md(s->read_hash) != NULL)) {
         /* s->read_hash != NULL => mac_size != -1 */
         unsigned char *mac = NULL;
