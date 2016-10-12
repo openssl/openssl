@@ -176,20 +176,7 @@ PLIB_LDFLAGS= {- $target{plib_lflags} -}
 EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 LIB_CFLAGS={- $target{shared_cflag} || "" -}
 LIB_CXXFLAGS={- $target{shared_cxxflag} || "" -}
-LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag}
-               # Unlike other OSes (like Solaris, Linux, Tru64,
-               # IRIX) BSD run-time linkers (tested OpenBSD, NetBSD
-               # and FreeBSD) "demand" RPATH set on .so objects.
-               # Apparently application RPATH is not global and
-               # does not apply to .so linked with other .so.
-               # Problem manifests itself when libssl.so fails to
-               # load libcrypto.so. One can argue that we should
-               # engrave this into Makefile.shared rules or into
-               # BSD-* config lines above. Meanwhile let's try to
-               # be cautious and pass -rpath to linker only when
-               # $prefix is not /usr.
-               . ($config{target} =~ m|^BSD-| && $prefix !~ m|^/usr/.*$|
-                  ? " -Wl,-rpath,\$\$(LIBRPATH)" : "") -}
+LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag} -}
 DSO_CFLAGS={- $target{shared_cflag} || "" -}
 DSO_CXXFLAGS={- $target{shared_cxxflag} || "" -}
 DSO_LDFLAGS=$(LIB_LDFLAGS)
