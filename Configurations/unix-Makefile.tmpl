@@ -153,6 +153,10 @@ LIBDIR={- #
 ENGINESDIR={- use File::Spec::Functions;
               catdir($prefix,$libdir,"engines-$sover") -}
 
+# Convenience variable for those who want to set the rpath in shared
+# libraries and applications
+LIBRPATH=$(INSTALLTOP)/$(LIBDIR)
+
 MANDIR=$(INSTALLTOP)/share/man
 DOCDIR=$(INSTALLTOP)/share/doc/$(BASENAME)
 HTMLDIR=$(DOCDIR)/html
@@ -1094,7 +1098,7 @@ $bin$exeext: $objs $deps
 		APPNAME=$bin$exeext OBJECTS="$objs" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
 		CC='$cc' CFLAGS='$cflags' \\
-		LDFLAGS='\$(LDFLAGS)' LIBRPATH='\$(INSTALLTOP)/\$(LIBDIR)' \\
+		LDFLAGS='\$(LDFLAGS)' \\
 		link_app.$shlib_target
 EOF
   }
