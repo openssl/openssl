@@ -11,6 +11,12 @@
      https://www.akkadia.org/drepper/SHA-crypt.txt
      [Richard Levitte]
 
+ Changes between 1.1.0b and 1.1.0c [xx XXX xxxx]
+
+  *) Removed automatic addition of RPATH in shared libraries and executables,
+     as this was a remainder from OpenSSL 1.0.x and isn't needed any more.
+     [Richard Levitte]
+
  Changes between 1.1.0a and 1.1.0b [26 Sep 2016]
 
   *) Fix Use After Free for large message sizes
