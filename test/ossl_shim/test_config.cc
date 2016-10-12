@@ -46,7 +46,6 @@ T *FindField(TestConfig *config, const Flag<T> (&flags)[N], const char *flag) {
 const Flag<bool> kBoolFlags[] = {
   { "-server", &TestConfig::is_server },
   { "-dtls", &TestConfig::is_dtls },
-  { "-resume", &TestConfig::resume },
   { "-fallback-scsv", &TestConfig::fallback_scsv },
   { "-require-any-client-certificate",
     &TestConfig::require_any_client_certificate },
@@ -56,12 +55,15 @@ const Flag<bool> kBoolFlags[] = {
     &TestConfig::write_different_record_sizes },
   { "-cbc-record-splitting", &TestConfig::cbc_record_splitting },
   { "-partial-write", &TestConfig::partial_write },
+  { "-no-tls13", &TestConfig::no_tls13 },
   { "-no-tls12", &TestConfig::no_tls12 },
   { "-no-tls11", &TestConfig::no_tls11 },
   { "-no-tls1", &TestConfig::no_tls1 },
   { "-no-ssl3", &TestConfig::no_ssl3 },
+  { "-enable-channel-id", &TestConfig::enable_channel_id },
   { "-shim-writes-first", &TestConfig::shim_writes_first },
   { "-expect-session-miss", &TestConfig::expect_session_miss },
+  { "-decline-alpn", &TestConfig::decline_alpn },
   { "-expect-extended-master-secret",
     &TestConfig::expect_extended_master_secret },
   { "-enable-ocsp-stapling", &TestConfig::enable_ocsp_stapling },
@@ -100,6 +102,10 @@ const Flag<bool> kBoolFlags[] = {
   { "-use-sparse-dh-prime", &TestConfig::use_sparse_dh_prime },
   { "-use-old-client-cert-callback",
     &TestConfig::use_old_client_cert_callback },
+  { "-use-null-client-ca-list", &TestConfig::use_null_client_ca_list },
+  { "-send-alert", &TestConfig::send_alert },
+  { "-peek-then-read", &TestConfig::peek_then_read },
+  { "-enable-grease", &TestConfig::enable_grease },
 };
 
 const Flag<std::string> kStringFlags[] = {
@@ -138,15 +144,22 @@ const Flag<std::string> kBase64Flags[] = {
 
 const Flag<int> kIntFlags[] = {
   { "-port", &TestConfig::port },
+  { "-resume-count", &TestConfig::resume_count },
   { "-min-version", &TestConfig::min_version },
   { "-max-version", &TestConfig::max_version },
   { "-mtu", &TestConfig::mtu },
   { "-export-keying-material", &TestConfig::export_keying_material },
   { "-expect-total-renegotiations", &TestConfig::expect_total_renegotiations },
-  { "-expect-server-key-exchange-hash",
-    &TestConfig::expect_server_key_exchange_hash },
-  { "-expect-key-exchange-info",
-    &TestConfig::expect_key_exchange_info },
+  { "-expect-peer-signature-algorithm",
+    &TestConfig::expect_peer_signature_algorithm },
+  { "-expect-curve-id", &TestConfig::expect_curve_id },
+  { "-expect-dhe-group-size", &TestConfig::expect_dhe_group_size },
+  { "-initial-timeout-duration-ms", &TestConfig::initial_timeout_duration_ms },
+  { "-max-cert-list", &TestConfig::max_cert_list },
+};
+
+const Flag<std::vector<int>> kIntVectorFlags[] = {
+  { "-signing-prefs", &TestConfig::signing_prefs },
 };
 
 }  // namespace
@@ -197,6 +210,20 @@ bool ParseConfig(int argc, char **argv, TestConfig *out_config) {
         return false;
       }
       *int_field = atoi(argv[i]);
+      continue;
+    }
+
+    std::vector<int> *int_vector_field =
+        FindField(out_config, kIntVectorFlags, argv[i]);
+    if (int_vector_field) {
+      i++;
+      if (i >= argc) {
+        fprintf(stderr, "Missing parameter\n");
+        return false;
+      }
+
+      // Each instance of the flag adds to the list.
+      int_vector_field->push_back(atoi(argv[i]));
       continue;
     }
 
