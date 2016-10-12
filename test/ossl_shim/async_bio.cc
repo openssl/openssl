@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include <openssl/bio.h>
 #include <openssl/crypto.h>
 
 
@@ -158,12 +159,12 @@ static const BIO_METHOD *AsyncMethod(void)
 
 }  // namespace
 
-ScopedBIO AsyncBioCreate() {
-  return ScopedBIO(BIO_new(AsyncMethod()));
+bssl::UniquePtr<BIO> AsyncBioCreate() {
+  return bssl::UniquePtr<BIO>(BIO_new(AsyncMethod()));
 }
 
-ScopedBIO AsyncBioCreateDatagram() {
-  ScopedBIO ret(BIO_new(AsyncMethod()));
+bssl::UniquePtr<BIO> AsyncBioCreateDatagram() {
+  bssl::UniquePtr<BIO> ret(BIO_new(AsyncMethod()));
   if (!ret) {
     return nullptr;
   }
