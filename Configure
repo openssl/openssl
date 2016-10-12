@@ -222,6 +222,8 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 	    if defined($configdata::config{cross_compile_prefix});
 	$ENV{CC} = $configdata::config{cc}
 	    if defined($configdata::config{cc});
+	$ENV{CXX} = $configdata::config{cxx}
+	    if defined($configdata::config{cxx});
 	$ENV{BUILDFILE} = $configdata::config{build_file}
 	    if defined($configdata::config{build_file});
 	$ENV{$local_config_envname} = $configdata::config{local_config_dir}
@@ -231,6 +233,7 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 	print "    CROSS_COMPILE = ",$ENV{CROSS_COMPILE},"\n"
 	    if $ENV{CROSS_COMPILE};
 	print "    CC = ",$ENV{CC},"\n" if $ENV{CC};
+	print "    CXX = ",$ENV{CXX},"\n" if $ENV{CXX};
 	print "    BUILDFILE = ",$ENV{BUILDFILE},"\n" if $ENV{BUILDFILE};
 	print "    $local_config_envname = ",$ENV{$local_config_envname},"\n"
 	    if $ENV{$local_config_envname};
@@ -927,6 +930,7 @@ my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
 $config{conf_files} = [ sort keys %conf_files ];
 %target = ( %{$table{DEFAULTS}}, %target );
 
+$target{cxxflags}=$target{cflags} unless defined $target{cxxflags};
 $target{exe_extension}="";
 $target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
                                   || $config{target} =~ /^(?:Cygwin|mingw)/);
@@ -962,6 +966,7 @@ $target{build_file} = $ENV{BUILDFILE} || $target{build_file} || "Makefile";
 
 # Cache information necessary for reconfiguration
 $config{cc} = $target{cc};
+$config{cxx} = $target{cxx};
 $config{build_file} = $target{build_file};
 
 # For cflags, lflags, plib_lflags, ex_libs and defines, add the debug_
@@ -969,6 +974,7 @@ $config{build_file} = $target{build_file};
 # Do it in such a way that no spurious space is appended (hence the grep).
 $config{defines} = [];
 $config{cflags} = "";
+$config{cxxflags} = "";
 $config{ex_libs} = "";
 $config{shared_ldflag} = "";
 
@@ -1747,9 +1753,11 @@ EOF
                 if (! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
-                # We recognise C and asm files
-                if ($s =~ /\.[csS]\b$/) {
-                    (my $o = $_) =~ s/\.[csS]\b$/.o/;
+                # We recognise C++, C and asm files
+                if ($s =~ /\.(cc|c|s|S)$/) {
+                    my $o = $_;
+                    $o =~ s/\.[csS]$/.o/; # C and assembler
+                    $o =~ s/\.cc$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{sources}->{$ddest}->{$o} = 1;
                     $unified_info{sources}->{$o}->{$s} = 1;
@@ -1773,9 +1781,11 @@ EOF
                 if (! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
-                # We recognise C and asm files
-                if ($s =~ /\.[csS]\b$/) {
-                    (my $o = $_) =~ s/\.[csS]\b$/.o/;
+                # We recognise C++, C and asm files
+                if ($s =~ /\.(cc|c|s|S)$/) {
+                    my $o = $_;
+                    $o =~ s/\.[csS]$/.o/; # C and assembler
+                    $o =~ s/\.cc$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$o} = 1;
                     $unified_info{sources}->{$o}->{$s} = 1;
@@ -1898,7 +1908,9 @@ EOF
 foreach (grep /_(asm|aux)_src$/, keys %target) {
     my $src = $_;
     (my $obj = $_) =~ s/_(asm|aux)_src$/_obj/;
-    ($target{$obj} = $target{$src}) =~ s/\.[csS]\b/.o/g;
+    $target{$obj} = $target{$src};
+    $target{$obj} =~ s/\.[csS]\b/.o/g; # C and assembler
+    $target{$obj} =~ s/\.cc\b/_cc.o/g; # C++
 }
 
 # Write down our configuration where it fits #########################
@@ -2033,6 +2045,10 @@ print "PERLVERSION   =$Config{version} for $Config{archname}\n";
 print "HASHBANGPERL  =$config{hashbangperl}\n";
 print "CC            =$config{cross_compile_prefix}$target{cc}\n";
 print "CFLAG         =$target{cflags} $config{cflags}\n";
+print "CXX           =$config{cross_compile_prefix}$target{cxx}\n"
+    if defined $target{cxx};
+print "CXXFLAG       =$target{cxxflags} $config{cxxflags}\n"
+    if defined $target{cxx};
 print "DEFINES       =",join(" ", @{$target{defines}}, @{$config{defines}}),"\n";
 #print "RANLIB        =", $target{ranlib} eq '$(CROSS_COMPILE)ranlib' ?
 #                             "$config{cross_compile_prefix}ranlib" :
