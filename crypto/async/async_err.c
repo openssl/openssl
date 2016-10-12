@@ -29,6 +29,8 @@ static ERR_STRING_DATA ASYNC_str_functs[] = {
 };
 
 static ERR_STRING_DATA ASYNC_str_reasons[] = {
+    {ERR_REASON(ASYNC_R_CALLED_WITH_WRONG_FUNC_POINTER),
+     "called with wrong func pointer"},
     {ERR_REASON(ASYNC_R_FAILED_TO_SET_POOL), "failed to set pool"},
     {ERR_REASON(ASYNC_R_FAILED_TO_SWAP_CONTEXT), "failed to swap context"},
     {ERR_REASON(ASYNC_R_INIT_FAILED), "init failed"},

@@ -65,6 +65,7 @@ int ASYNC_pause_job(void);
 
 ASYNC_JOB *ASYNC_get_current_job(void);
 ASYNC_WAIT_CTX *ASYNC_get_wait_ctx(ASYNC_JOB *job);
+void *ASYNC_get_funcargs(ASYNC_JOB *job);
 void ASYNC_block_pause(void);
 void ASYNC_unblock_pause(void);
 
@@ -87,6 +88,7 @@ int ERR_load_ASYNC_strings(void);
 # define ASYNC_F_ASYNC_START_JOB                          105
 
 /* Reason codes. */
+# define ASYNC_R_CALLED_WITH_WRONG_FUNC_POINTER           104
 # define ASYNC_R_FAILED_TO_SET_POOL                       101
 # define ASYNC_R_FAILED_TO_SWAP_CONTEXT                   102
 # define ASYNC_R_INIT_FAILED                              105

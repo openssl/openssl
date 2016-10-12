@@ -356,6 +356,8 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_BLOCK_CIPHER_PAD_IS_WRONG),
      "block cipher pad is wrong"},
     {ERR_REASON(SSL_R_BN_LIB), "bn lib"},
+    {ERR_REASON(SSL_R_CALLED_WITH_WRONG_FUNC_POINTER),
+     "called with wrong func pointer"},
     {ERR_REASON(SSL_R_CA_DN_LENGTH_MISMATCH), "ca dn length mismatch"},
     {ERR_REASON(SSL_R_CA_KEY_TOO_SMALL), "ca key too small"},
     {ERR_REASON(SSL_R_CA_MD_TOO_WEAK), "ca md too weak"},

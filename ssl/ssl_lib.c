@@ -1476,10 +1476,46 @@ static int ssl_start_async_job(SSL *s, struct ssl_async_args *args,
                                int (*func) (void *))
 {
     int ret;
+    struct ssl_async_args *existingargs;
     if (s->waitctx == NULL) {
         s->waitctx = ASYNC_WAIT_CTX_new();
         if (s->waitctx == NULL)
             return -1;
+    }
+    if (s->job) {
+        existingargs = (struct ssl_async_args*)ASYNC_get_funcargs(s->job);
+        if (existingargs) {
+            if (args->type != existingargs->type) {
+                SSLerr(SSL_F_SSL_START_ASYNC_JOB,
+                       SSL_R_CALLED_WITH_WRONG_FUNC_POINTER);
+                return -1;
+            } else {
+                switch (args->type) {
+                case READFUNC:
+                    if (args->f.func_read != existingargs->f.func_read) {
+                        SSLerr(SSL_F_SSL_START_ASYNC_JOB,
+                               SSL_R_CALLED_WITH_WRONG_FUNC_POINTER);
+                        return -1;
+                    }
+                    break;
+                case WRITEFUNC:
+                    if (args->f.func_write != existingargs->f.func_write) {
+                        SSLerr(SSL_F_SSL_START_ASYNC_JOB,
+                               SSL_R_CALLED_WITH_WRONG_FUNC_POINTER);
+                        return -1;
+                    }
+                    break;
+                case OTHERFUNC:
+                    if (args->f.func_other != existingargs->f.func_other) {
+                        SSLerr(SSL_F_SSL_START_ASYNC_JOB,
+                               SSL_R_CALLED_WITH_WRONG_FUNC_POINTER);
+                        return -1;
+                    }
+                    break;
+                }
+
+            }
+        }
     }
     switch (ASYNC_start_job(&s->job, s->waitctx, &ret, func, args,
                             sizeof(struct ssl_async_args))) {
@@ -3019,6 +3055,7 @@ int SSL_do_handshake(SSL *s)
             struct ssl_async_args args;
 
             args.s = s;
+            args.type = OTHERFUNC;
 
             ret = ssl_start_async_job(s, &args, ssl_do_handshake_intern);
         } else {
