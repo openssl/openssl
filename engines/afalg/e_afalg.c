@@ -322,12 +322,12 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
 }
 
 static ossl_inline void afalg_set_op_sk(struct cmsghdr *cmsg,
-                                   const unsigned int op)
+                                   const ALG_OP_TYPE op)
 {
     cmsg->cmsg_level = SOL_ALG;
     cmsg->cmsg_type = ALG_SET_OP;
     cmsg->cmsg_len = CMSG_LEN(ALG_OP_LEN);
-    *CMSG_DATA(cmsg) = (char)op;
+    memcpy(CMSG_DATA(cmsg), &op, ALG_OP_LEN);
 }
 
 static void afalg_set_iv_sk(struct cmsghdr *cmsg, const unsigned char *iv,
