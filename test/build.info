@@ -275,6 +275,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bio_enc_test]=../include
   DEPEND[bio_enc_test]=../libcrypto
 
+  IF[{- !$disabled{psk} -}]
+    PROGRAMS_NO_INST=dtls_mtu_test
+    SOURCE[dtls_mtu_test]=dtls_mtu_test.c ssltestlib.c
+    INCLUDE[dtls_mtu_test]=.. ../include
+    DEPEND[dtls_mtu_test]=../libcrypto ../libssl
+  ENDIF
+
   IF[{- $disabled{shared} -}]
     PROGRAMS_NO_INST=wpackettest cipher_overhead_test
     SOURCE[wpackettest]=wpackettest.c testutil.c
