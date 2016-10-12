@@ -1358,8 +1358,17 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     /* Add custom TLS Extensions to ClientHello */
     if (!custom_ext_add(s, 0, &ret, limit, al))
         return NULL;
-    s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
-    s2n(0, ret);
+    /*
+     * In 1.1.0 before 1.1.0c we negotiated EtM with DTLS, then just
+     * silently failed to actually do it. It is fixed in 1.1.1 but to
+     * ease the transition especially from 1.1.0b to 1.1.0c, we just
+     * disable it in 1.1.0.
+     */
+    if (!SSL_IS_DTLS(s)) {
+        s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
+        s2n(0, ret);
+    }
+
 #ifndef OPENSSL_NO_CT
     if (s->ct_validation_callback != NULL) {
         s2n(TLSEXT_TYPE_signed_certificate_timestamp, ret);
@@ -1596,7 +1605,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * Don't use encrypt_then_mac if AEAD or RC4 might want to disable
          * for other cases too.
          */
-        if (s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD
+        if (SSL_IS_DTLS(s) || s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD
             || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4
             || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT
             || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT12)
