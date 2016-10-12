@@ -310,6 +310,12 @@
   no-err
                    Don't compile in any error strings.
 
+  enable-external-tests
+                   Enable building of integration with external test suites.
+                   This is a developer option and may not work on all platforms.
+                   The only supported external test suite at the current time is
+                   the BoringSSL test suite.
+
   no-filenames
                    Don't compile in filename and line number information (e.g.
                    for errors and memory allocation).
