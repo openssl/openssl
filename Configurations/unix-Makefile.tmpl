@@ -169,10 +169,13 @@ CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
 CFLAGS={- our $cflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cflags} -} {- $config{cflags} -}
 CFLAGS_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
+CXX= $(CROSS_COMPILE){- $target{cxx} -}
+CXXFLAGS={- our $cxxflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cxxflags} -} {- $config{cxxflags} -}
 LDFLAGS= {- $target{lflags} -}
 PLIB_LDFLAGS= {- $target{plib_lflags} -}
 EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 LIB_CFLAGS={- $target{shared_cflag} || "" -}
+LIB_CXXFLAGS={- $target{shared_cxxflag} || "" -}
 LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag}
                # Unlike other OSes (like Solaris, Linux, Tru64,
                # IRIX) BSD run-time linkers (tested OpenBSD, NetBSD
@@ -188,8 +191,10 @@ LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag}
                . ($config{target} =~ m|^BSD-| && $prefix !~ m|^/usr/.*$|
                   ? " -Wl,-rpath,\$\$(LIBRPATH)" : "") -}
 DSO_CFLAGS={- $target{shared_cflag} || "" -}
+DSO_CXXFLAGS={- $target{shared_cxxflag} || "" -}
 DSO_LDFLAGS=$(LIB_LDFLAGS)
 BIN_CFLAGS={- $target{bin_cflags} -}
+BIN_CXXFLAGS={- $target{bin_cxxflag} || "" -}
 
 PERL={- $config{perl} -}
 
@@ -944,16 +949,26 @@ EOF
               $incs .= " -I".$withargs{zlib_include};
           }
       }
-      my $ecflags = { lib => '$(LIB_CFLAGS)',
-                      dso => '$(DSO_CFLAGS)',
-                      bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
+      my $cc = '$(CC)';
+      my $cflags = '$(CFLAGS)';
+      if (grep /\.(cc|cpp)$/, @srcs) {
+          $cc = '$(CXX)';
+          $cflags = '$(CXXFLAGS)';
+          $cflags .= ' ' . { lib => '$(LIB_CXXFLAGS)',
+                             dso => '$(DSO_CXXFLAGS)',
+                             bin => '$(BIN_CXXFLAGS)' } -> {$args{intent}};
+      } else {
+          $cflags .= ' ' . { lib => '$(LIB_CFLAGS)',
+                             dso => '$(DSO_CFLAGS)',
+                             bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
+      }
       my $makedepprog = $config{makedepprog};
       my $recipe = <<"EOF";
 $obj$objext: $deps
 EOF
       if (!$disabled{makedepend} && $makedepprog !~ /\/makedepend/) {
           $recipe .= <<"EOF";
-	\$(CC) $incs \$(CFLAGS) $ecflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
+	$cc $incs $cflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
 	\@touch $obj$depext.tmp
 	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
 		rm -f $obj$depext.tmp; \\
@@ -963,11 +978,11 @@ EOF
 EOF
       } else {
           $recipe .= <<"EOF";
-	\$(CC) $incs \$(CFLAGS) $ecflags -c -o \$\@ $srcs
+	$cc $incs $cflags -c -o \$\@ $srcs
 EOF
           if (!$disabled{makedepend} && $makedepprog =~ /\/makedepend/) {
               $recipe .= <<"EOF";
-	-\$(MAKEDEPEND) -f- -o"|\$\@" -- $incs \$(CFLAGS) $ecflags -- $srcs \\
+	-\$(MAKEDEPEND) -f- -o"|\$\@" -- $incs $cflags -- $srcs \\
 	    >$obj$depext.tmp 2>/dev/null
 	-\$(PERL) -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//; \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' $obj$depext.tmp
 	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
@@ -1078,6 +1093,12 @@ EOF
                                     (my $l = $f) =~ s/^lib//;
                                     " -L$d -l$l" } @{$args{deps}});
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
+      my $cc = '$(CC)';
+      my $cflags = '$(CFLAGS) $(BIN_CFLAGS)';
+      if (grep /_cc$/, @{$args{objs}}) {
+          $cc = '$(CXX)';
+          $cflags = '$(CXXFLAGS) $(BIN_CXXFLAGS)';
+      }
       return <<"EOF";
 $bin$exeext: $objs $deps
 	\$(RM) $bin$exeext
@@ -1085,7 +1106,7 @@ $bin$exeext: $objs $deps
 		PERL="\$(PERL)" SRCDIR=\$(SRCDIR) \\
 		APPNAME=$bin$exeext OBJECTS="$objs" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
-		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(BIN_CFLAGS)' \\
+		CC='$cc' CFLAGS='$cflags' \\
 		LDFLAGS='\$(LDFLAGS)' LIBRPATH='\$(INSTALLTOP)/\$(LIBDIR)' \\
 		link_app.$shlib_target
 EOF
