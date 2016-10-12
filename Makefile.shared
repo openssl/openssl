@@ -176,7 +176,7 @@ DO_GNU_SO=\
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	$(DO_GNU_SO_COMMON)
-DO_GNU_APP=LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBRPATH)"
+DO_GNU_APP=LDFLAGS="$(CFLAGS) $(LDFLAGS)"
 
 #This is rather special.  It's a special target with which one can link
 #applications without bothering with any features that have anything to
@@ -220,7 +220,7 @@ link_shlib.bsd:
 	fi; $(LINK_SO_SHLIB)
 link_app.bsd:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
-	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBPATH)"; \
+	LDFLAGS="$(CFLAGS) $(LDFLAGS)"; \
 	fi; $(LINK_APP)
 
 # For Darwin AKA Mac OS/X (dyld)
@@ -352,7 +352,7 @@ link_app.alpha-osf1:
 	@if $(DETECT_GNU_LD); then \
 		$(DO_GNU_APP); \
 	else \
-		LDFLAGS="$(CFLAGS) $(LDFLAGS) -rpath $(LIBRPATH)"; \
+		LDFLAGS="$(CFLAGS) $(LDFLAGS)"; \
 	fi; \
 	$(LINK_APP)
 
@@ -385,7 +385,7 @@ link_app.solaris:
 	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_APP); \
 	else \
-		LDFLAGS="$(CFLAGS) $(LDFLAGS) -R $(LIBRPATH)"; \
+		LDFLAGS="$(CFLAGS) $(LDFLAGS)"; \
 	fi; \
 	$(LINK_APP)
 
@@ -476,7 +476,7 @@ link_shlib.irix:
 	fi; \
 	$(LINK_SO_SHLIB)
 link_app.irix:
-	@LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
+	@LDFLAGS="$(CFLAGS) $(LDFLAGS)"; \
 	$(LINK_APP)
 
 # 32-bit PA-RISC HP-UX embeds the -L pathname of libs we link with, so
@@ -514,7 +514,7 @@ link_shlib.hpux:
 	$(LINK_SO_SHLIB) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
 link_app.hpux:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
-	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,+s,+cdp,../:,+cdp,./:,+b,$(LIBRPATH)"; \
+	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,+s,+cdp,../:,+cdp,./:"; \
 	fi; \
 	$(LINK_APP)
 
@@ -540,7 +540,7 @@ link_shlib.aix:
 	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SOVER 2>&1 > /dev/null ; \
 	$(LINK_SO_SHLIB_VIA_O)
 link_app.aix:
-	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
+	LDFLAGS="$(CFLAGS) -Wl,-bsvr4 $(LDFLAGS)"; \
 	$(LINK_APP)
 
 
