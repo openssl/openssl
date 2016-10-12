@@ -81,7 +81,7 @@ SunOS|IRIX*)
 	;;
 esac
 
-{- output_off() if $config{ex_libs} !~ /(^|\s)-Wl,-rpath,/; ""; -}
+{- output_off() if $config{ex_libs} !~ /,-rpath,/; ""; -}
 if [ -f "$LIBCRYPTOSO" -a -z "$preload_var" ]; then
 	# Following three lines are major excuse for isolating them into
 	# this wrapper script. Original reason for setting LD_PRELOAD
@@ -97,7 +97,7 @@ if [ -f "$LIBCRYPTOSO" -a -z "$preload_var" ]; then
 	DYLD_INSERT_LIBRARIES="$LIBCRYPTOSO:$LIBSSLSO"	# MacOS X
 	export LD_PRELOAD _RLD_LIST DYLD_INSERT_LIBRARIES
 fi
-{- output_on() if $config{ex_libs} !~ /(^|\s)-Wl,-rpath,/; ""; -}
+{- output_on() if $config{ex_libs} !~ /,-rpath,/; ""; -}
 
 cmd="$1"; [ -x "$cmd" ] || cmd="$cmd${EXE_EXT}"
 shift
