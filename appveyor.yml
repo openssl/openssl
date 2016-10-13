@@ -39,7 +39,7 @@ build_script:
 
 test_script:
     - cd _build
-    - nmake test
+    - nmake test V=1
     - cd ..
 
 # Fake deploy script to test installation
