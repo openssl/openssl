@@ -285,7 +285,7 @@ if (defined $ENV{$local_config_envname}) {
 }
 
 
-print "Configuring OpenSSL version $config{version} (0x$config{version_num})\n";
+print "Configuring OpenSSL version $config{version} ($config{version_num})\n";
 
 $config{prefix}="";
 $config{openssldir}="";
