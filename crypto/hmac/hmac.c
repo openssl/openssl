@@ -157,31 +157,36 @@ void HMAC_CTX_free(HMAC_CTX *ctx)
     }
 }
 
-int HMAC_CTX_reset(HMAC_CTX *ctx)
+static int hmac_ctx_alloc_mds(HMAC_CTX *ctx)
 {
-    hmac_ctx_cleanup(ctx);
     if (ctx->i_ctx == NULL)
         ctx->i_ctx = EVP_MD_CTX_new();
     if (ctx->i_ctx == NULL)
-        goto err;
+        return 0;
     if (ctx->o_ctx == NULL)
         ctx->o_ctx = EVP_MD_CTX_new();
     if (ctx->o_ctx == NULL)
-        goto err;
+        return 0;
     if (ctx->md_ctx == NULL)
         ctx->md_ctx = EVP_MD_CTX_new();
     if (ctx->md_ctx == NULL)
-        goto err;
-    ctx->md = NULL;
+        return 0;
     return 1;
- err:
+}
+
+int HMAC_CTX_reset(HMAC_CTX *ctx)
+{
     hmac_ctx_cleanup(ctx);
-    return 0;
+    if (!hmac_ctx_alloc_mds(ctx)) {
+        hmac_ctx_cleanup(ctx);
+        return 0;
+    }
+    return 1;
 }
 
 int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx)
 {
-    if (!HMAC_CTX_reset(dctx))
+    if (!hmac_ctx_alloc_mds(dctx))
         goto err;
     if (!EVP_MD_CTX_copy_ex(dctx->i_ctx, sctx->i_ctx))
         goto err;
