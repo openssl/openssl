@@ -1356,8 +1356,9 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
      * silently failed to actually do it. It is fixed in 1.1.1 but to
      * ease the transition especially from 1.1.0b to 1.1.0c, we just
      * disable it in 1.1.0.
+     * Also skip if SSL_OP_NO_ENCRYPT_THEN_MAC is set.
      */
-    if (!SSL_IS_DTLS(s)) {
+    if (!SSL_IS_DTLS(s) && !(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)) {
         /*-
          * check for enough space.
          * 4 bytes for the ETM type and extension length
@@ -2285,7 +2286,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                 return 0;
         }
 #endif
-        else if (type == TLSEXT_TYPE_encrypt_then_mac)
+        else if (type == TLSEXT_TYPE_encrypt_then_mac &&
+                 !(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC))
             s->tlsext_use_etm = 1;
         /*
          * Note: extended master secret extension handled in
@@ -2605,7 +2607,8 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
 #endif
         else if (type == TLSEXT_TYPE_encrypt_then_mac) {
             /* Ignore if inappropriate ciphersuite */
-            if (s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD
+            if (!(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC) &&
+                s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD
                 && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4)
                 s->tlsext_use_etm = 1;
         } else if (type == TLSEXT_TYPE_extended_master_secret) {

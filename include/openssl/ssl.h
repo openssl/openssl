@@ -297,6 +297,8 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 # define SSL_OP_NO_COMPRESSION                           0x00020000U
 /* Permit unsafe legacy renegotiation */
 # define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION        0x00040000U
+/* Disable encrypt-then-mac */
+# define SSL_OP_NO_ENCRYPT_THEN_MAC                      0x00080000U
 /*
  * Set on servers to choose the cipher according to the server's preferences
  */
