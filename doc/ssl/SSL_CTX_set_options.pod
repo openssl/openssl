@@ -189,6 +189,14 @@ Allow legacy insecure renegotiation between OpenSSL and unpatched servers
 B<only>: this option is currently set by default. See the
 B<SECURE RENEGOTIATION> section for more details.
 
+=item SSL_OP_NO_ENCRYPT_THEN_MAC
+
+Normally clients and servers will transparently attempt to negotiate the
+RFC7366 Encrypt-then-MAC option on TLS and DTLS connection.
+
+If this option is set, Encrypt-then-MAC is disabled. Clients will not
+propose, and servers will not accept the extension.
+
 =back
 
 =head1 SECURE RENEGOTIATION
