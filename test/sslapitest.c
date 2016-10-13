@@ -170,7 +170,6 @@ static int ocsp_client_cb(SSL *s, void *arg)
     return 1;
 }
 
-
 static int test_tlsext_status_type(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
