@@ -1335,10 +1335,12 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         return 0;
     }
 
-    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_encrypt_then_mac)
+    if (!(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)) {
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_encrypt_then_mac)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
-        SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-        return 0;
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 
 #ifndef OPENSSL_NO_CT
@@ -2128,7 +2130,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                 return 0;
         }
 #endif
-        else if (type == TLSEXT_TYPE_encrypt_then_mac)
+        else if (type == TLSEXT_TYPE_encrypt_then_mac &&
+                 !(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC))
             s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
         /*
          * Note: extended master secret extension handled in
@@ -2448,7 +2451,8 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
 #endif
         else if (type == TLSEXT_TYPE_encrypt_then_mac) {
             /* Ignore if inappropriate ciphersuite */
-            if (s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD
+            if (!(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC) &&
+                s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD
                 && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4)
                 s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
         } else if (type == TLSEXT_TYPE_extended_master_secret) {
