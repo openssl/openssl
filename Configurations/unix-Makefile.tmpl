@@ -996,6 +996,7 @@ reconfigure reconf:
       my $generator = join(" ", @{$args{generator}});
       my $generator_incs = join("", map { " -I".$_ } @{$args{generator_incs}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      my $defs = join("", map { " -D".$_ } @{$args{defs}});
       my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
 
       if ($args{src} =~ /\.ld$/) {
@@ -1049,7 +1050,7 @@ EOF
           }
           return <<"EOF";
 $args{src}: $args{generator}->[0] $deps
-	\$(CC) $incs $cppflags -E $args{generator}->[0] | \\
+	\$(CC) $incs $cppflags $defs -E $args{generator}->[0] | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
       }
@@ -1065,6 +1066,7 @@ EOF
       my $srcs = join(" ",  @srcs);
       my $deps = join(" ", @srcs, @{$args{deps}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      my $defs = join("", map { " -D".$_ } @{$args{defs}});
       my $cmd;
       my $cmdflags;
       my $cmdcompile;
@@ -1106,13 +1108,13 @@ EOF
           # hardly a point to drag it along...
           $recipe .= <<"EOF";
 $obj$objext: $deps
-	$cmd $incs $cmdflags -c -o \$\@ $srcs
+	$cmd $incs $defs $cmdflags -c -o \$\@ $srcs
 EOF
       } elsif (defined $makedepprog && $makedepprog !~ /\/makedepend/
                && !grep /\.rc$/, @srcs) {
           $recipe .= <<"EOF";
 $obj$objext: $deps
-	$cmd $incs $cmdflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
+	$cmd $incs $defs $cmdflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
 	\@touch $obj$depext.tmp
 	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
 		rm -f $obj$depext.tmp; \\
@@ -1123,7 +1125,7 @@ EOF
       } else {
           $recipe .= <<"EOF";
 $obj$objext: $deps
-	$cmd $incs $cmdflags $cmdcompile -o \$\@ $srcs
+	$cmd $incs $defs $cmdflags $cmdcompile -o \$\@ $srcs
 EOF
           if (defined $makedepprog  && $makedepprog =~ /\/makedepend/) {
               $recipe .= <<"EOF";
