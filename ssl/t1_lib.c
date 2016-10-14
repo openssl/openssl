@@ -1479,7 +1479,14 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         } else
             extlen = 0;
 
-        if ((long)(limit - ret - 7 - extlen - idlen) < 0)
+        /*
+         * 2 bytes for status request type
+         * 2 bytes for status request len
+         * 1 byte for OCSP request type
+         * 2 bytes for length of ids
+         * 2 bytes for length of extensions
+         */
+        if ((long)(limit - ret - 9 - extlen - idlen) < 0)
             return NULL;
         s2n(TLSEXT_TYPE_status_request, ret);
         if (extlen + idlen > 0xFFF0)
