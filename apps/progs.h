@@ -48,6 +48,7 @@ extern int list_main(int argc, char *argv[]);
 extern int nseq_main(int argc, char *argv[]);
 extern int ocsp_main(int argc, char *argv[]);
 extern int passwd_main(int argc, char *argv[]);
+extern int pbe_main(int argc, char *argv[]);
 extern int pkcs12_main(int argc, char *argv[]);
 extern int pkcs7_main(int argc, char *argv[]);
 extern int pkcs8_main(int argc, char *argv[]);
@@ -97,6 +98,7 @@ extern OPTIONS list_options[];
 extern OPTIONS nseq_options[];
 extern OPTIONS ocsp_options[];
 extern OPTIONS passwd_options[];
+extern OPTIONS pbe_options[];
 extern OPTIONS pkcs12_options[];
 extern OPTIONS pkcs7_options[];
 extern OPTIONS pkcs8_options[];
@@ -170,6 +172,7 @@ static FUNCTION functions[] = {
     { FT_general, "ocsp", ocsp_main, ocsp_options },
 #endif
     { FT_general, "passwd", passwd_main, passwd_options },
+    { FT_general, "pbe", pbe_main, pbe_options },
 #ifndef OPENSSL_NO_DES
     { FT_general, "pkcs12", pkcs12_main, pkcs12_options },
 #endif
