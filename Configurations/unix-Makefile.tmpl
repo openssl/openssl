@@ -174,7 +174,7 @@ CC= $(CROSS_COMPILE){- $target{cc} -}
 CFLAGS={- our $cflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cflags} -} {- $config{cflags} -}
 CFLAGS_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
 CXX= $(CROSS_COMPILE){- $target{cxx} -}
-CXXFLAGS={- our $cxxflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cxxflags} -} {- $config{cxxflags} -}
+CXXFLAGS={- our $cxxflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cxxflags} -} {- $config{cxxflags} -} -std=c++11
 LDFLAGS= {- $target{lflags} -}
 PLIB_LDFLAGS= {- $target{plib_lflags} -}
 EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
