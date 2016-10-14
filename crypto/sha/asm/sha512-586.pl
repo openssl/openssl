@@ -36,6 +36,7 @@
 # VIA Nano	91	-	52	33	14.7
 # Atom		126	-	68	48(***)	14.7
 # Silvermont	97	-	58	42(***)	17.5
+# Goldmont	80	-	48	19.5	12.0
 #
 # (*)	whichever best applicable.
 # (**)	x86_64 assembler performance is presented for reference

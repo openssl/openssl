@@ -98,8 +98,9 @@
 # VIA Nano	23.0	16.5(+39%)  -		    14.7    -
 # Atom		23.0	18.9(+22%)  -		    14.7    -
 # Silvermont	27.4	20.6(+33%)  -               17.5    -
+# Goldmont	18.9	14.3(+32%)  4.16(+350%)     12.0    -
 #
-# (*)	whichever best applicable;
+# (*)	whichever best applicable, including SHAEXT;
 # (**)	switch from ror to shrd stands for fair share of improvement;
 # (***)	execution time is fully determined by remaining integer-only
 #	part, body_00_15; reducing the amount of SIMD instructions
