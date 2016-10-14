@@ -153,13 +153,16 @@ void KeccakF1600(uint64_t A[5][5])
 
 /*
  * SHA3_absorb can be called multiple times, but at each invocation
- * |len| is expected to be divisible by |r|, effectively the blocksize.
- * Latter is commonly (1600 - 256*n)/8, e.g. 168, 136, 104, 72, but can
- * also be (1600 - 448)/8 = 144. This also means that message padding is
+ * largest multiple of |r| out of |len| bytes are processed. Then
+ * remaining amount of bytes are returned. This is done to spare caller
+ * trouble of calculating the largest multiple of |r|, effectively the
+ * blocksize. It is commonly (1600 - 256*n)/8, e.g. 168, 136, 104, 72,
+ * but can also be (1600 - 448)/8 = 144. All this means that message
+ * padding and intermediate sub-block buffering, byte- or bitwise, is
  * caller's reponsibility.
  */
-void SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
-                 size_t r)
+size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
+                   size_t r)
 {
     uint64_t *A_flat = (uint64_t *)A;
     size_t i, w = r / 8;
@@ -175,12 +178,13 @@ void SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
         KeccakF1600(A);
         len -= r;
     }
-    assert(len == 0);
+
+    return len;
 }
 
 /*
- * SHA3_squeeze is called once at the end to generate |out| of |len|
- * bytes.
+ * SHA3_squeeze is called once at the end to generate |out| hash value
+ * of |len| bytes.
  */
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
 {
