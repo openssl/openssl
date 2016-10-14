@@ -223,7 +223,9 @@ sub indir {
 This functions build up a platform dependent command based on the
 input.  It takes a reference to a list that is the executable or
 script and its arguments, and some additional options (described
-further on).
+further on).  Where necessary, the command will be wrapped in a
+suitable environment to make sure the correct shared libraries are
+used (currently only on Unix).
 
 It returns a CODEREF to be used by C<run>, C<pipe> or C<cmdstr>.
 
@@ -789,6 +791,14 @@ sub __env {
     $end_with_bailout	  = $ENV{STOPTEST} ? 1 : 0;
 };
 
+# __srctop_file and __srctop_dir are helpers to build file and directory
+# names on top of the source directory.  They depend on $SRCTOP, and
+# therefore on the proper use of setup() and when needed, indir().
+# __bldtop_file and __bldtop_dir do the same thing but relative to $BLDTOP.
+# __srctop_file and __bldtop_file take the same kind of argument as
+# File::Spec::Functions::catfile.
+# Similarly, __srctop_dir and __bldtop_dir take the same kind of argument
+# as File::Spec::Functions::catdir
 sub __srctop_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
@@ -815,6 +825,9 @@ sub __bldtop_dir {
     return catdir($directories{BLDTOP},@_);
 }
 
+# __exeext is a function that returns the platform dependent file extension
+# for executable binaries, or the value of the environment variable $EXE_EXT
+# if that one is defined.
 sub __exeext {
     my $ext = "";
     if ($^O eq "VMS" ) {	# VMS
@@ -825,6 +838,15 @@ sub __exeext {
     return $ENV{"EXE_EXT"} || $ext;
 }
 
+# __test_file, __apps_file and __fuzz_file return the full path to a file
+# relative to the test/, apps/ or fuzz/ directory in the build tree or the
+# source tree, depending on where the file is found.  Note that when looking
+# in the build tree, the file name with an added extension is looked for, if
+# an extension is given.  The intent is to look for executable binaries (in
+# the build tree) or possibly scripts (in the source tree).
+# These functions all take the same arguments as File::Spec::Functions::catfile,
+# *plus* a mandatory extension argument.  This extension argument can be undef,
+# and is ignored in such a case.
 sub __test_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
@@ -861,6 +883,16 @@ sub __results_file {
     my $f = pop;
     return catfile($directories{RESULTS},@_,$f);
 }
+
+# __cwd DIR
+# __cwd DIR, OPTS
+#
+# __cwd changes directory to DIR (string) and changes all the relative
+# entries in %directories accordingly.  OPTS is an optional series of
+# hash style arguments to alter __cwd's behavior:
+#
+#    create = 0|1       The directory we move to is created if 1, not if 0.
+#    cleanup = 0|1      The directory we move from is removed if 1, not if 0.
 
 sub __cwd {
     my $dir = catdir(shift);
@@ -1014,6 +1046,16 @@ sub __fixup_prg {
     return undef;
 }
 
+# __decorate_cmd NUM, CMDARRAYREF
+#
+# __decorate_cmd takes a command number NUM and a command token array
+# CMDARRAYREF, builds up a command string from them and decorates it
+# with necessary redirections.
+# __decorate_cmd returns a list of two strings, one with the command
+# string to actually be used, the other to be displayed for the user.
+# The reason these strings might differ is that we redirect stderr to
+# the null device unless we're verbose and unless the user has
+# explicitly specified a stderr redirection.
 sub __decorate_cmd {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
