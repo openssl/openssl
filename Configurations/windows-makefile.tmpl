@@ -501,6 +501,7 @@ reconfigure reconf:
       my $generator = '"'.$gen0.'"'.join('', map { " $_" } @gens);
       my $generator_incs = join("", map { " -I \"$_\"" } @{$args{generator_incs}});
       my $incs = join("", map { " /I \"$_\"" } @{$args{incs}});
+      my $defs = join("", map { " /D".$_ } @{$args{defs}});
       my $deps = @{$args{deps}} ?
           '"'.join('" "', @{$args{generator_deps}}, @{$args{deps}}).'"' : '';
 
@@ -558,7 +559,7 @@ EOF
 $target: "$args{generator}->[0]" $deps
 	set ASM=\$(AS)
 	$generator \$@.S
-	\$(CPP) $cppflags \$@.S > \$@.i && move /Y \$@.i \$@
+	\$(CPP) $cppflags $defs \$@.S > \$@.i && move /Y \$@.i \$@
         del /Q \$@.S
 EOF
               }
@@ -571,7 +572,7 @@ EOF
           }
           return <<"EOF";
 $target: "$args{generator}->[0]" $deps
-	\$(CPP) $incs $cppflags "$args{generator}->[0]" > \$@.i && move /Y \$@.i \$@
+	\$(CPP) $incs $cppflags $defs "$args{generator}->[0]" > \$@.i && move /Y \$@.i \$@
 EOF
       }
   }
@@ -583,6 +584,7 @@ EOF
      my $srcs = '"'.join('" "',  @srcs).'"';
      my $deps = '"'.join('" "', @srcs, @{$args{deps}}).'"';
      my $incs = join("", map { ' /I "'.$_.'"' } @{$args{incs}});
+     my $defs = join("", map { " /D".$_ } @{$args{defs}});
      my $cflags = { shlib => ' $(LIB_CFLAGS)',
 		    lib => ' $(LIB_CFLAGS)',
 		    dso => ' $(DSO_CFLAGS)',
@@ -612,15 +614,15 @@ EOF
      } elsif ($srcs[0] =~ /.S$/) {
          return <<"EOF";
 $obj$objext: $deps
-	\$(CC) /EP /D__ASSEMBLER__ $cflags $srcs > \$@.asm && \$(AS) $asflags \$(ASOUTFLAG)\$\@ \$@.asm
+	\$(CC) /EP /D__ASSEMBLER__ $cflags $defs $srcs > \$@.asm && \$(AS) $asflags \$(ASOUTFLAG)\$\@ \$@.asm
 EOF
      }
      my $recipe = <<"EOF";
 $obj$objext: $deps
-	\$(CC) $cflags -c \$(COUTFLAG)\$\@ $srcs
+	\$(CC) $cflags $defs -c \$(COUTFLAG)\$\@ $srcs
 EOF
      $recipe .= <<"EOF"	unless $disabled{makedepend};
-	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 > $obj$depext
+	\$(CC) $cflags $defs /Zs /showIncludes $srcs 2>&1 > $obj$depext
 EOF
      return $recipe;
  }
