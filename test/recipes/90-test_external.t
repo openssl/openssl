@@ -9,7 +9,7 @@
 
 use OpenSSL::Test;
 use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file cmdstr/;
 
 setup("test_external");
 
@@ -20,9 +20,19 @@ if (!$ENV{BORING_RUNNER_DIR}) {
 plan tests => 1;
 
 indir $ENV{BORING_RUNNER_DIR} => sub {
-    ok(!system("go", "test", "-shim-path",
-               srctop_file("test", "ossl_shim", "ossl_shim"),
-               "-shim-config",
-               srctop_file("test", "ossl_shim", "ossl_config.json"), "-pipe"),
-       "running external tests");
+    ok(filter_run(executable(["go", "test", "-shim-path",
+                              srctop_file("test", "ossl_shim", "ossl_shim"),
+                              "-shim-config",
+                              srctop_file("test", "ossl_shim",
+                                          "ossl_config.json"),
+                              "-pipe"])),
 }, create => 0, cleanup => 0;
+
+sub filter_run {
+    my $cmd = cmdstr(shift);
+    open(PIPE, "-|", $cmd);
+    while(<PIPE>) {
+        print STDOUT "go test: ", $_;
+    }
+    close PIPE;
+}
