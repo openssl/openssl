@@ -198,8 +198,6 @@ static bool InstallCertificate(SSL *ssl) {
   }
 
   if (pkey) {
-    TestState *test_state = GetTestState(ssl);
-    const TestConfig *config = GetTestConfig(ssl);
     if (!SSL_use_PrivateKey(ssl, pkey.get())) {
       return false;
     }
