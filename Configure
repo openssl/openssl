@@ -1767,7 +1767,9 @@ EOF
                     $s = cleanfile($buildd, $_, $blddir);
                 }
                 # We recognise C++, C and asm files
-                if ($s =~ /\.(cc|cpp|c|s|S)$/) {
+                # However, no transformation should be made if the destination
+                # is an object file
+                if ($dest !~ /\.o$/ && $s =~ /\.(cc|cpp|c|s|S)$/) {
                     my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
