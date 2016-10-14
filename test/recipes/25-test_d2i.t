@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_d2i");
 
-plan tests => 13;
+plan tests => 14;
 
 ok(run(test(["d2i_test", "X509", "decode",
              srctop_file('test','d2i-tests','bad_cert.der')])),
@@ -79,3 +79,10 @@ ok(run(test(["d2i_test", "ASN1_INTEGER", "decode",
 ok(run(test(["d2i_test", "ASN1_INTEGER", "decode",
              srctop_file('test','d2i-tests','bad-int-padminus1.der')])),
    "Running d2i_test bad-int-padminus1.der INTEGER");
+
+# Invalid CMS structure with decode error in CHOICE value.
+# Test for CVE-2016-7053
+
+ok(run(test(["d2i_test", "CMS_ContentInfo", "decode",
+             srctop_file('test','d2i-tests','bad-cms.der')])),
+   "Running d2i_test bad-cms.der CMS ContentInfo");
