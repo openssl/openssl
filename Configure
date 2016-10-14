@@ -962,6 +962,7 @@ $config{perl} =    ($^O ne "VMS" ? $^X : "perl");
 $config{hashbangperl} =
     $ENV{'HASHBANGPERL'}           || $ENV{'PERL'}     || "/usr/bin/env perl";
 $target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
+$target{cxx} =     $ENV{'CXX'}     || $target{cxx}     || "c++";
 $target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  ||
                    (which("$config{cross_compile_prefix}ranlib") ?
                           "\$(CROSS_COMPILE)ranlib" : "true");
