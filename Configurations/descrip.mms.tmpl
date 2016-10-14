@@ -199,7 +199,8 @@ ASOUTFLAG={- $target{asoutflag} -}$(OSSL_EMPTY)
 CNF_ASFLAGS={- join('', $target{asflags} || (),
                         @{$config{asflags}}) -}
 CNF_DEFINES={- our $defines2 = join('', map { ",$_" } @{$target{defines}},
-                                                      @{$config{defines}}) -}
+                                                      @{$config{defines}},
+                                                      "'extradefines'") -}
 CNF_INCLUDES={- our $includes2 = join(',', @{$target{includes}},
                                            @{$config{includes}}) -}
 CNF_CPPFLAGS={- our $cppflags2 = join('', $target{cppflags} || (),
@@ -810,6 +811,7 @@ EOF
                                    @{$args{incs}});
           my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
           my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
+          my $defs = join("", map { ",".$_ } @{$args{defs}});
           if (defined($generator)) {
               # If the target is named foo.S in build.info, we want to
               # end up generating foo.s in two steps.
@@ -818,8 +820,10 @@ EOF
 $target : $args{generator}->[0] $deps
 	$generator \$\@-S
         \@ $incs_on
+        \@ extradefines = "$defs"
 	PIPE \$(CPP) $cppflags \$\@-S | -
         \$(PERL) -ne "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" > \$\@-i
+        \@ DELETE/SYMBOL/LOCAL extradefines
         \@ $incs_off
         RENAME \$\@-i \$\@
         DELETE \$\@-S
@@ -834,9 +838,11 @@ EOF
           return <<"EOF";
 $target : $args{generator}->[0] $deps
         \@ $incs_on
+        \@ extradefines = "$defs"
         SHOW SYMBOL qual_includes
         PIPE \$(CPP) $cppflags $args{generator}->[0] | -
         \$(PERL) "-ne" "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" > \$\@
+        \@ DELETE/SYMBOL/LOCAL extradefines
         \@ $incs_off
 EOF
       }
@@ -894,6 +900,7 @@ EOF
 		   lib => '$(LIB_CPPFLAGS)',
 		   dso => '$(DSO_CPPFLAGS)',
 		   bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
+      my $defs = join("", map { ",".$_ } @{$args{defs}});
 
       my @incs_cmds = includes({ shlib => '$(LIB_INCLUDES)',
                                  lib => '$(LIB_INCLUDES)',
@@ -914,7 +921,9 @@ $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
         \@ $incs_on
+        \@ extradefines = "$defs"
         \$(CC) ${cflags}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
+        \@ DELETE/SYMBOL/LOCAL extradefines
         \@ $incs_off
         SET DEFAULT $backward
         ${after}
