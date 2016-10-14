@@ -85,6 +85,7 @@
                              deps => $unified_info{depends}->{$src},
                              incs => [ @{$unified_info{includes}->{$obj}},
                                        @{$unified_info{includes}->{$bin}} ],
+                             defs => $unified_info{defines}->{$obj},
                              %opts);
          foreach (@{$unified_info{depends}->{$src}}) {
              dogenerate($_, $obj, $bin, %opts);
@@ -107,6 +108,7 @@
                          deps => $unified_info{depends}->{$obj},
                          incs => [ @{$unified_info{includes}->{$obj}},
                                    @{$unified_info{includes}->{$bin}} ],
+                         defs => $unified_info{defines}->{$obj},
                          %opts);
          foreach ((@{$unified_info{sources}->{$obj}},
                    @{$unified_info{depends}->{$obj}})) {
