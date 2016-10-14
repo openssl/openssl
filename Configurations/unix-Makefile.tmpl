@@ -863,6 +863,7 @@ configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build
       my $generator = join(" ", @{$args{generator}});
       my $generator_incs = join("", map { " -I".$_ } @{$args{generator_incs}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      my $defs = join("", map { " -D".$_ } @{$args{defs}});
       my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
 
       if ($args{src} !~ /\.[sS]$/) {
@@ -901,7 +902,7 @@ EOF
 $target: $args{generator}->[0] $deps
 	( trap "rm -f \$@.*" INT 0; \\
 	  $generator \$@.S; \\
-	  \$(CC) $incs \$(CFLAGS) -E \$@.S | \\
+	  \$(CC) $incs \$(CFLAGS) $defs -E \$@.S | \\
 	  \$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@.i && \\
 	  mv -f \$@.i \$@ )
 EOF
@@ -914,7 +915,7 @@ EOF
           }
           return <<"EOF";
 $args{src}: $args{generator}->[0] $deps
-	\$(CC) $incs \$(CFLAGS) -E \$< | \\
+	\$(CC) $incs \$(CFLAGS) $defs -E \$< | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
       }
@@ -935,6 +936,7 @@ EOF
       my $srcs = join(" ",  @srcs);
       my $deps = join(" ", @srcs, @{$args{deps}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      my $defs = join("", map { " -D".$_ } @{$args{defs}});
       unless ($disabled{zlib}) {
           if ($withargs{zlib_include}) {
               $incs .= " -I".$withargs{zlib_include};
@@ -959,7 +961,7 @@ $obj$objext: $deps
 EOF
       if (!$disabled{makedepend} && $makedepprog !~ /\/makedepend/) {
           $recipe .= <<"EOF";
-	$cc $incs $cflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
+	$cc $incs $cflags $defs -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
 	\@touch $obj$depext.tmp
 	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
 		rm -f $obj$depext.tmp; \\
@@ -969,7 +971,7 @@ EOF
 EOF
       } else {
           $recipe .= <<"EOF";
-	$cc $incs $cflags -c -o \$\@ $srcs
+	$cc $incs $cflags $defs -c -o \$\@ $srcs
 EOF
           if (!$disabled{makedepend} && $makedepprog =~ /\/makedepend/) {
               $recipe .= <<"EOF";
