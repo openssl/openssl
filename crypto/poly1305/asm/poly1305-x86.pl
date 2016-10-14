@@ -30,6 +30,7 @@
 # Sandy Bridge	3.90/+100%	1.36
 # Haswell	3.88/+70%	1.18		0.72
 # Silvermont	11.0/+40%	4.80
+# Goldmont	4.10/+200%	2.10
 # VIA Nano	6.71/+90%	2.47
 # Sledgehammer	3.51/+180%	4.27
 # Bulldozer	4.53/+140%	1.31

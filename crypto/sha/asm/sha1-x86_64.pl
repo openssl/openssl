@@ -85,9 +85,11 @@
 # VIA Nano	9.32		7.15/+30%
 # Atom		10.3		9.17/+12%
 # Silvermont	13.1(*)		9.37/+40%
+# Goldmont	8.13		6.42/+27%	1.70/+380%(**)
 #
 # (*)	obviously suboptimal result, nothing was done about it,
 #	because SSSE3 code is compiled unconditionally;
+# (**)	SHAEXT result
 
 $flavour = shift;
 $output  = shift;

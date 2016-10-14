@@ -179,6 +179,7 @@
 # Haswell	4.44/0.63	0.63	0.73	0.63	0.70
 # Skylake	2.62/0.63	0.63	0.63	0.63
 # Silvermont	5.75/3.54	3.56	4.12	3.87(*)	4.11
+# Goldmont	3.82/1.26	1.26	1.29	1.29	1.50
 # Bulldozer	5.77/0.70	0.72	0.90	0.70	0.95
 #
 # (*)	Atom Silvermont ECB result is suboptimal because of penalties

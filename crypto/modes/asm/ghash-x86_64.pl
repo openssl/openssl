@@ -74,6 +74,7 @@
 # Skylake	0.44(+110%)(if system doesn't support AVX)
 # Bulldozer	1.49(+27%)
 # Silvermont	2.88(+13%)
+# Goldmont	1.08(+24%)
 
 # March 2013
 #
