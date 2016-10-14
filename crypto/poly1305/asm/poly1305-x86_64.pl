@@ -29,6 +29,7 @@
 # Haswell	1.14/+175%	1.11		0.65
 # Skylake	1.13/+120%	0.96		0.51
 # Silvermont	2.83/+95%	-
+# Goldmont	1.70/+180%	-
 # VIA Nano	1.82/+150%	-
 # Sledgehammer	1.38/+160%	-
 # Bulldozer	2.30/+130%	0.97

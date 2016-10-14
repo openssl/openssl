@@ -48,6 +48,7 @@
 # Nehalem(**) 	7.63		6.88		+11%
 # Atom	    	17.1		16.4		+4%
 # Silvermont	-		12.9
+# Goldmont	-		8.85
 #
 # (*)	Comparison is not completely fair, because "this" is ECB,
 #	i.e. no extra processing such as counter values calculation
@@ -87,6 +88,7 @@
 # Nehalem	7.80
 # Atom		17.9
 # Silvermont	14.0
+# Goldmont	10.2
 #
 # November 2011.
 #
