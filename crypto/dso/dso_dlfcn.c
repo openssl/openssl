@@ -44,6 +44,7 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname);
 static char *dlfcn_name_converter(DSO *dso, const char *filename);
 static char *dlfcn_merger(DSO *dso, const char *filespec1,
                           const char *filespec2);
+static int dlfcn_pathbyaddr(void *addr, char *path, int sz);
 static void *dlfcn_globallookup(const char *name);
 
 static DSO_METHOD dso_meth_dlfcn = {
@@ -56,6 +57,7 @@ static DSO_METHOD dso_meth_dlfcn = {
     dlfcn_merger,
     NULL,                       /* init */
     NULL,                       /* finish */
+    dlfcn_pathbyaddr,
     dlfcn_globallookup
 };
 
@@ -305,6 +307,38 @@ static int dladdr(void *address, Dl_info *dl)
     return (int)v;
 }
 # endif                         /* __sgi */
+
+static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
+{
+# ifdef HAVE_DLINFO
+    Dl_info dli;
+    int len;
+
+    if (addr == NULL) {
+        union {
+            int (*f) (void *, char *, int);
+            void *p;
+        } t = {
+            dlfcn_pathbyaddr
+        };
+        addr = t.p;
+    }
+
+    if (dladdr(addr, &dli)) {
+        len = (int)strlen(dli.dli_fname);
+        if (sz <= 0)
+            return len + 1;
+        if (len >= sz)
+            len = sz - 1;
+        memcpy(path, dli.dli_fname, len);
+        path[len++] = 0;
+        return len;
+    }
+
+    ERR_add_error_data(2, "dlfcn_pathbyaddr(): ", dlerror());
+# endif
+    return -1;
+}
 
 static void *dlfcn_globallookup(const char *name)
 {

@@ -50,7 +50,9 @@ static DSO_METHOD dso_meth_vms = {
     vms_name_converter,
     vms_merger,
     NULL,                       /* init */
-    NULL                        /* finish */
+    NULL,                       /* finish */
+    NULL,                       /* pathbyaddr */
+    NULL                        /* globallookup */
 };
 
 /*

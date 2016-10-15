@@ -304,6 +304,18 @@ char *DSO_convert_filename(DSO *dso, const char *filename)
     return (result);
 }
 
+int DSO_pathbyaddr(void *addr, char *path, int sz)
+{
+    DSO_METHOD *meth = default_DSO_meth;
+    if (meth == NULL)
+        meth = DSO_METHOD_openssl();
+    if (meth->pathbyaddr == NULL) {
+        DSOerr(DSO_F_DSO_PATHBYADDR, DSO_R_UNSUPPORTED);
+        return -1;
+    }
+    return (*meth->pathbyaddr) (addr, path, sz);
+}
+
 void *DSO_global_lookup(const char *name)
 {
     DSO_METHOD *meth = default_DSO_meth;
