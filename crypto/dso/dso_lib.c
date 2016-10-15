@@ -73,9 +73,11 @@ int DSO_free(DSO *dso)
         return 1;
     REF_ASSERT_ISNT(i < 0);
 
-    if ((dso->meth->dso_unload != NULL) && !dso->meth->dso_unload(dso)) {
-        DSOerr(DSO_F_DSO_FREE, DSO_R_UNLOAD_FAILED);
-        return 0;
+    if ((dso->flags & DSO_FLAG_NO_UNLOAD_ON_FREE) == 0) {
+        if ((dso->meth->dso_unload != NULL) && !dso->meth->dso_unload(dso)) {
+            DSOerr(DSO_F_DSO_FREE, DSO_R_UNLOAD_FAILED);
+            return 0;
+        }
     }
 
     if ((dso->meth->finish != NULL) && !dso->meth->finish(dso)) {
@@ -314,6 +316,21 @@ int DSO_pathbyaddr(void *addr, char *path, int sz)
         return -1;
     }
     return (*meth->pathbyaddr) (addr, path, sz);
+}
+
+DSO *DSO_dsobyaddr(void *addr, int flags)
+{
+    DSO *ret = NULL;
+    char *filename = NULL;
+    int len = DSO_pathbyaddr(addr, NULL, 0);
+
+    filename = OPENSSL_malloc(len);
+    if (filename != NULL
+            && DSO_pathbyaddr(addr, filename, len) == len)
+        ret = DSO_load(NULL, filename, NULL, flags);
+
+    OPENSSL_free(filename);
+    return ret;
 }
 
 void *DSO_global_lookup(const char *name)
