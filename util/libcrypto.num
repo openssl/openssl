@@ -4216,3 +4216,4 @@ BIO_meth_get_read_ex                    4166	1_1_1	EXIST::FUNCTION:
 BIO_write_ex                            4167	1_1_1	EXIST::FUNCTION:
 BIO_meth_get_write_ex                   4168	1_1_1	EXIST::FUNCTION:
 BIO_meth_set_write_ex                   4169	1_1_1	EXIST::FUNCTION:
+DSO_pathbyaddr                          4170	1_1_0c	EXIST::FUNCTION:

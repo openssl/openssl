@@ -77,6 +77,7 @@ static DSO_METHOD dso_meth_win32 = {
     win32_merger,
     NULL,                       /* init */
     NULL,                       /* finish */
+    NULL,                       /* pathbyaddr */
     win32_globallookup
 };
 
