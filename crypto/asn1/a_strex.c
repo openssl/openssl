@@ -601,7 +601,7 @@ int asn1_valid_host(const ASN1_STRING *host)
     const unsigned char *hostptr = host->data;
     int type = host->type;
     int i;
-    char width = -1;
+    signed char width = -1;
     unsigned short chflags = 0, prevchflags;
 
     if (type > 0 && type < 31)
