@@ -99,6 +99,8 @@ struct dso_meth_st {
     /* [De]Initialisation handlers. */
     int (*init) (DSO *dso);
     int (*finish) (DSO *dso);
+    /* Return pathname of the module containing location */
+    int (*pathbyaddr) (void *addr, char *path, int sz);
     /* Perform global symbol lookup, i.e. among *all* modules */
     void *(*globallookup) (const char *symname);
 };
