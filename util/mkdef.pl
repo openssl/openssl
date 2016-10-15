@@ -1630,8 +1630,7 @@ sub check_version_lte()
 	if ($cvnums ne $tvnums) {
 		die "Invalid version number: $testversion "
 			."for current version $currversion\n"
-			if (substr($cvnums, -1) < substr($tvnums, -1)
-				|| substr($cvnums, 0, 4) ne substr($tvnums, 0, 4));
+			if (substr($cvnums, 0, 4) ne substr($tvnums, 0, 4));
 		return;
 	}
 	#If we get here then the base version (i.e. the numbers) are the same - they
