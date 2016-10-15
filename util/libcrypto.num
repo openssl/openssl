@@ -4207,3 +4207,4 @@ OCSP_RESPID_set_by_name                 4157	1_1_0a	EXIST::FUNCTION:OCSP
 OCSP_RESPID_set_by_key                  4158	1_1_0a	EXIST::FUNCTION:OCSP
 OCSP_RESPID_match                       4159	1_1_0a	EXIST::FUNCTION:OCSP
 DSO_pathbyaddr                          4170	1_1_0c	EXIST::FUNCTION:
+DSO_dsobyaddr                           4171	1_1_0c	EXIST::FUNCTION:
