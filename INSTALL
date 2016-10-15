@@ -314,7 +314,8 @@
                    Enable building of integration with external test suites.
                    This is a developer option and may not work on all platforms.
                    The only supported external test suite at the current time is
-                   the BoringSSL test suite.
+                   the BoringSSL test suite. See the file test/README.external
+                   for further details.
 
   no-filenames
                    Don't compile in filename and line number information (e.g.
