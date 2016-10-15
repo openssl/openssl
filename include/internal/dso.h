@@ -43,6 +43,11 @@ extern "C" {
 # define DSO_FLAG_NAME_TRANSLATION_EXT_ONLY      0x02
 
 /*
+ * Don't unload the DSO when we call DSO_free()
+ */
+# define DSO_FLAG_NO_UNLOAD_ON_FREE              0x04
+
+/*
  * This flag loads the library with public symbols. Meaning: The exported
  * symbols of this library are public to all libraries loaded after this
  * library. At the moment only implemented in unix.
@@ -140,6 +145,12 @@ DSO_METHOD *DSO_METHOD_openssl(void);
  * denotes error.
  */
 int DSO_pathbyaddr(void *addr, char *path, int sz);
+
+/*
+ * Like DSO_pathbyaddr() but instead returns a handle to the DSO for the symbol
+ * or NULL on error.
+ */
+DSO *DSO_dsobyaddr(void *addr, int flags);
 
 /*
  * This function should be used with caution! It looks up symbols in *all*
