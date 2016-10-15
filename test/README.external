@@ -11,7 +11,7 @@ platforms.
 In order to run the BoringSSL tests with OpenSSL, first checkout the BoringSSL
 source code into an appropriate directory:
 
-$ git clone boringssl https://boringssl.googlesource.com/boringssl
+$ git clone https://boringssl.googlesource.com/boringssl boringssl
 
 The BoringSSL tests are only confirmed to work at a specific commit in the
 BoringSSL repository. Later commits may or may not pass the test suite:
