@@ -1261,7 +1261,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         } else
             extlen = 0;
 
-        if ((long)(limit - ret - 7 - extlen - idlen) < 0)
+        if ((long)(limit - ret - 9 - extlen - idlen) < 0)
             return NULL;
         s2n(TLSEXT_TYPE_status_request, ret);
         if (extlen + idlen > 0xFFF0)
@@ -1358,14 +1358,24 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     /* Add custom TLS Extensions to ClientHello */
     if (!custom_ext_add(s, 0, &ret, limit, al))
         return NULL;
+
+    if ((limit - ret - 4) < 0)
+        return NULL;
+
     s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
     s2n(0, ret);
 #ifndef OPENSSL_NO_CT
     if (s->ct_validation_callback != NULL) {
+        if ((limit - ret - 4) < 0)
+            return NULL;
+
         s2n(TLSEXT_TYPE_signed_certificate_timestamp, ret);
         s2n(0, ret);
     }
 #endif
+    if ((limit - ret - 4) < 0)
+        return NULL;
+
     s2n(TLSEXT_TYPE_extended_master_secret, ret);
     s2n(0, ret);
 
@@ -1384,6 +1394,9 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
                 hlen -= 4;
             else
                 hlen = 0;
+
+            if ((limit - ret - 4 - hlen) < 0)
+                return NULL;
 
             s2n(TLSEXT_TYPE_padding, ret);
             s2n(hlen, ret);
@@ -1602,11 +1615,15 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
             || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT12)
             s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
         else {
+            if ((long)(limit - ret - 4) < 0)
+                return NULL;
             s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
             s2n(0, ret);
         }
     }
     if (s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) {
+        if ((long)(limit - ret - 4) < 0)
+            return NULL;
         s2n(TLSEXT_TYPE_extended_master_secret, ret);
         s2n(0, ret);
     }
