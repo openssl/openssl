@@ -1358,14 +1358,24 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     /* Add custom TLS Extensions to ClientHello */
     if (!custom_ext_add(s, 0, &ret, limit, al))
         return NULL;
+
+    if ((limit - ret - 4) < 0)
+        return NULL;
+
     s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
     s2n(0, ret);
 #ifndef OPENSSL_NO_CT
     if (s->ct_validation_callback != NULL) {
+        if ((limit - ret - 4) < 0)
+            return NULL;
+
         s2n(TLSEXT_TYPE_signed_certificate_timestamp, ret);
         s2n(0, ret);
     }
 #endif
+    if ((limit - ret - 4) < 0)
+        return NULL;
+
     s2n(TLSEXT_TYPE_extended_master_secret, ret);
     s2n(0, ret);
 
@@ -1385,6 +1395,9 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
             else
                 hlen = 0;
 
+            if ((limit - ret - 4) < 0)
+                return NULL;
+
             s2n(TLSEXT_TYPE_padding, ret);
             s2n(hlen, ret);
             memset(ret, 0, hlen);
@@ -1396,6 +1409,9 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
 
     if ((extdatalen = ret - orig - 2) == 0)
         return orig;
+
+    if ((limit - ret - 2) < 0)
+        return NULL;
 
     s2n(extdatalen, orig);
     return ret;
