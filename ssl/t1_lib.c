@@ -1410,9 +1410,6 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     if ((extdatalen = ret - orig - 2) == 0)
         return orig;
 
-    if ((limit - ret - 2) < 0)
-        return NULL;
-
     s2n(extdatalen, orig);
     return ret;
 }
