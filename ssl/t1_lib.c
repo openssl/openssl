@@ -1479,7 +1479,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         } else
             extlen = 0;
 
-        if ((long)(limit - ret - 7 - extlen - idlen) < 0)
+        if ((long)(limit - ret - 9 - extlen - idlen) < 0)
             return NULL;
         s2n(TLSEXT_TYPE_status_request, ret);
         if (extlen + idlen > 0xFFF0)
@@ -1587,6 +1587,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
             else
                 hlen = 0;
 
+            if ((long)(limit - ret - 4 - hlen) < 0)
+                return NULL;
             s2n(TLSEXT_TYPE_padding, ret);
             s2n(hlen, ret);
             memset(ret, 0, hlen);
