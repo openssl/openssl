@@ -1395,7 +1395,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
             else
                 hlen = 0;
 
-            if ((limit - ret - 4) < 0)
+            if ((limit - ret - 4 - hlen) < 0)
                 return NULL;
 
             s2n(TLSEXT_TYPE_padding, ret);
