@@ -50,7 +50,8 @@ typedef enum OPTION_choice {
     OPT_ADDTRUST, OPT_ADDREJECT, OPT_SETALIAS, OPT_CERTOPT, OPT_NAMEOPT,
     OPT_C, OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
     OPT_MODULUS, OPT_PUBKEY, OPT_X509TOREQ, OPT_TEXT, OPT_HASH,
-    OPT_ISSUER_HASH, OPT_SUBJECT, OPT_ISSUER, OPT_FINGERPRINT, OPT_DATES,
+    OPT_ISSUER_HASH, OPT_SUBJECT, OPT_SUBJ, OPT_UTF8, OPT_MULTIVALUE_RDN,
+    OPT_ISSUER, OPT_FINGERPRINT, OPT_DATES,
     OPT_PURPOSE, OPT_STARTDATE, OPT_ENDDATE, OPT_CHECKEND, OPT_CHECKHOST,
     OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST,
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
@@ -74,6 +75,11 @@ const OPTIONS x509_options[] = {
     {"issuer_hash", OPT_ISSUER_HASH, '-', "Print issuer hash value"},
     {"hash", OPT_HASH, '-', "Synonym for -subject_hash"},
     {"subject", OPT_SUBJECT, '-', "Print subject DN"},
+    {"subj", OPT_SUBJ, 's', "Set or modify request subject"},
+    {"utf8", OPT_UTF8, '-', 
+    "Input characters in subject set/modify are UTF8 (default ASCII)"},
+    {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
+     "Enable support for multivalued RDNs in subject set/modify"},
     {"issuer", OPT_ISSUER, '-', "Print issuer DN"},
     {"email", OPT_EMAIL, '-', "Print email address(es)"},
     {"startdate", OPT_STARTDATE, '-', "Set notBefore field"},
@@ -160,7 +166,7 @@ int x509_main(int argc, char **argv)
     char *checkhost = NULL, *checkemail = NULL, *checkip = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
     char *infile = NULL, *outfile = NULL, *keyfile = NULL, *CAfile = NULL;
-    char buf[256], *prog;
+    char buf[256], *prog, *subj = NULL;
     int x509req = 0, days = DEF_DAYS, modulus = 0, pubkey = 0, pprint = 0;
     int C = 0, CAformat = FORMAT_PEM, CAkeyformat = FORMAT_PEM;
     int fingerprint = 0, reqfile = 0, need_rand = 0, checkend = 0;
@@ -168,8 +174,9 @@ int x509_main(int argc, char **argv)
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
     int noout = 0, sign_flag = 0, CA_flag = 0, CA_createserial = 0, email = 0;
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
-    int ret = 1, i, num = 0, badsig = 0, clrext = 0, nocert = 0;
+    int ret = 1, i, num = 0, badsig = 0, clrext = 0, nocert = 0, multirdn = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0;
+    unsigned long chtype = MBSTRING_ASC;
     int enddate = 0;
     time_t checkoffset = 0;
     unsigned long nmflag = 0, certflag = 0;
@@ -344,6 +351,15 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_SUBJECT:
             subject = ++num;
+            break;
+        case OPT_SUBJ:
+            subj = opt_arg();
+            break;
+        case OPT_UTF8:
+            chtype = MBSTRING_UTF8;
+            break;
+        case OPT_MULTIVALUE_RDN:
+            multirdn = 1;
             break;
         case OPT_ISSUER:
             issuer = ++num;
@@ -540,6 +556,19 @@ int x509_main(int argc, char **argv)
 
         print_name(bio_err, "subject=", X509_REQ_get_subject_name(req),
                    nmflag);
+
+        if (subj) {
+  	    X509_NAME *n = parse_name(subj, chtype, multirdn); 
+            if (!n) {
+               ERR_print_errors(bio_err);
+               goto end;
+            }
+            X509_REQ_set_subject_name(req, n);
+
+            print_name(bio_err, "Overwrittten by subject=", X509_REQ_get_subject_name(req),
+                   nmflag);
+            X509_NAME_free(n);
+        }
 
         if ((x = X509_new()) == NULL)
             goto end;

@@ -1714,12 +1714,16 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
     char *work;
     X509_NAME *n;
 
-    if (*cp++ != '/')
+    if (*cp++ != '/') {
+        ERR_clear_error();
+        BIO_printf(bio_err, "Subject does not start with a '/'\n");
         return NULL;
+    }
 
     n = X509_NAME_new();
     if (n == NULL)
         return NULL;
+
     work = OPENSSL_strdup(cp);
     if (work == NULL)
         goto err;
