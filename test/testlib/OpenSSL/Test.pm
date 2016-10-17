@@ -94,21 +94,6 @@ my %hooks = (
 # Debug flag, to be set manually when needed
 my $debug = 0;
 
-# Declare some utility functions that are defined at the end
-sub bldtop_file;
-sub bldtop_dir;
-sub srctop_file;
-sub srctop_dir;
-sub quotify;
-
-# Declare some private functions that are defined at the end
-sub __env;
-sub __cwd;
-sub __apps_file;
-sub __results_file;
-sub __fixup_cmd;
-sub __build_cmd;
-
 =head2 Main functions
 
 The following functions are exported by default when using C<OpenSSL::Test>.
