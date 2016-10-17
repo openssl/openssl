@@ -104,7 +104,7 @@ int dhparam_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            ENGINE_finish(setup_engine(opt_arg(), 0));
             break;
         case OPT_CHECK:
             check = 1;

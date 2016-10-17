@@ -169,6 +169,7 @@ int genrsa_main(int argc, char **argv)
     OPENSSL_free(passout);
     if (ret != 0)
         ERR_print_errors(bio_err);
+    ENGINE_finish(eng);
     return (ret);
 }
 

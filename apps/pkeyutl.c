@@ -329,6 +329,7 @@ int pkeyutl_main(int argc, char **argv)
     OPENSSL_free(buf_out);
     OPENSSL_free(sig);
     sk_OPENSSL_STRING_free(pkeyopts);
+    ENGINE_finish(e);
     return ret;
 }
 

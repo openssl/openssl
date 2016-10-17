@@ -68,6 +68,7 @@ int verify_main(int argc, char **argv)
     int noCApath = 0, noCAfile = 0;
     int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
     OPTION_CHOICE o;
+    ENGINE *e;
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
@@ -140,10 +141,11 @@ int verify_main(int argc, char **argv)
             crl_download = 1;
             break;
         case OPT_ENGINE:
-            if (setup_engine(opt_arg(), 0) == NULL) {
+            e = setup_engine(opt_arg(), 0);
+	    if (e == NULL)
                 /* Failure message already displayed */
                 goto end;
-            }
+            ENGINE_finish(e);
             break;
         case OPT_SHOW_CHAIN:
             show_chain = 1;

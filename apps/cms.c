@@ -1114,6 +1114,7 @@ int cms_main(int argc, char **argv)
     BIO_free(indata);
     BIO_free_all(out);
     OPENSSL_free(passin);
+    ENGINE_finish(e);
     return (ret);
 }
 

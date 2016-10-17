@@ -894,6 +894,7 @@ int x509_main(int argc, char **argv)
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
     ASN1_OBJECT_free(objtmp);
     OPENSSL_free(passin);
+    ENGINE_finish(e);
     return (ret);
 }
 

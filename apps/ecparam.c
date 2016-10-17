@@ -168,7 +168,7 @@ int ecparam_main(int argc, char **argv)
             need_rand = 1;
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            ENGINE_finish(setup_engine(opt_arg(), 0));
             break;
         }
     }

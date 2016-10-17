@@ -275,6 +275,7 @@ int ec_main(int argc, char **argv)
     EC_KEY_free(eckey);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
+    ENGINE_finish(e);
     return (ret);
 }
 #endif
