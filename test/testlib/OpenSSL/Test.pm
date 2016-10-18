@@ -1016,14 +1016,9 @@ sub __fixup_prg {
 	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
     }
 
-    # We test both with and without extension.  The reason
-    # is that we might be passed a complete file spec, with
-    # extension.
+    # We test if the program to use exists.
     if ( ! -x $prog ) {
-	my $prog = "$prog";
-	if ( ! -x $prog ) {
-	    $prog = undef;
-	}
+	$prog = undef;
     }
 
     if (defined($prog)) {
