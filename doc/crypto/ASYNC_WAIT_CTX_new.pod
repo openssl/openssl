@@ -78,20 +78,20 @@ application will have to periodically "poll" the job by attempting to restart it
 to see if it is ready to continue.
 
 Async aware code (e.g. engines) can get the current ASYNC_WAIT_CTX from the job
-via L<ASYNC_get_async_wait_ctx(3)> and provide a file descriptor to use for
-waiting on by calling ASYNC_WAIT_CTX_set_wait_fd(). Typically this would be done
-by an engine immediately prior to calling ASYNC_pause_job() and not by end user
-code. An existing association with a file descriptor can be obtained using
+via L<ASYNC_get_wait_ctx(3)> and provide a file descriptor to use for waiting
+on by calling ASYNC_WAIT_CTX_set_wait_fd(). Typically this would be done by an
+engine immediately prior to calling ASYNC_pause_job() and not by end user code.
+An existing association with a file descriptor can be obtained using
 ASYNC_WAIT_CTX_get_fd() and cleared using ASYNC_WAIT_CTX_clear_fd(). Both of
-these functions requires a B<key> value which is unique to the async aware code.
-This could be any unique value but a good candidate might be the B<ENGINE *> for
-the engine. The B<custom_data> parameter can be any value, and will be returned
-in a subsequent call to ASYNC_WAIT_CTX_get_fd(). The
+these functions requires a B<key> value which is unique to the async aware
+code.  This could be any unique value but a good candidate might be the
+B<ENGINE *> for the engine. The B<custom_data> parameter can be any value, and
+will be returned in a subsequent call to ASYNC_WAIT_CTX_get_fd(). The
 ASYNC_WAIT_CTX_set_wait_fd() function also expects a pointer to a "cleanup"
-routine. This can be NULL but if provided will automatically get called when the
-ASYNC_WAIT_CTX is freed, and gives the engine the opportunity to close the fd or
-any other resources. Note: The "cleanup" routine does not get called if the fd
-is cleared directly via a call to ASYNC_WAIT_CTX_clear_fd().
+routine. This can be NULL but if provided will automatically get called when
+the ASYNC_WAIT_CTX is freed, and gives the engine the opportunity to close the
+fd or any other resources. Note: The "cleanup" routine does not get called if
+the fd is cleared directly via a call to ASYNC_WAIT_CTX_clear_fd().
 
 An example of typical usage might be an async capable engine. User code would
 initiate cryptographic operations. The engine would initiate those operations
