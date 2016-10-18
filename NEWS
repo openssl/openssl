@@ -5,9 +5,13 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.2i and OpenSSL 1.0.2j [under development]
+  Major changes between OpenSSL 1.0.2j and OpenSSL 1.0.2k [under development]
 
       o
+
+  Major changes between OpenSSL 1.0.2i and OpenSSL 1.0.2j [26 Sep 2016]
+
+      o Missing CRL sanity check (CVE-2016-7052)
 
   Major changes between OpenSSL 1.0.2h and OpenSSL 1.0.2i [22 Sep 2016]
 

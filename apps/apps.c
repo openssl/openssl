@@ -972,7 +972,10 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
         if (!e)
             BIO_printf(err, "no engine specified\n");
         else {
-            pkey = ENGINE_load_private_key(e, file, ui_method, &cb_data);
+            if (ENGINE_init(e)) {
+                pkey = ENGINE_load_private_key(e, file, ui_method, &cb_data);
+                ENGINE_finish(e);
+            }
             if (!pkey) {
                 BIO_printf(err, "cannot load %s from engine\n", key_descrip);
                 ERR_print_errors(err);
