@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <internal/thread_once.h>
+#include <internal/dso.h>
 
 static int stopped = 0;
 
@@ -79,6 +80,18 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
         return 0;
     OPENSSL_cpuid_setup();
     base_inited = 1;
+
+    /*
+     * Deliberately leak a reference to ourselves. This will force the library
+     * to remain loaded until the atexit() handler is run a process exit.
+     */
+    {
+        DSO *dso = NULL;
+
+        dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
+        DSO_free(dso);
+    }
+
     return 1;
 }
 
@@ -574,6 +587,24 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 int OPENSSL_atexit(void (*handler)(void))
 {
     OPENSSL_INIT_STOP *newhand;
+
+    /*
+     * Deliberately leak a reference to the handler. This will force the
+     * library/code containing the handler to remain loaded until we run the
+     * atexit handler.
+     */
+    {
+        DSO *dso = NULL;
+        union {
+            void *sym;
+            void (*func)(void);
+        } handlersym;
+
+        handlersym.func = handler;
+
+        dso = DSO_dsobyaddr(handlersym.sym, DSO_FLAG_NO_UNLOAD_ON_FREE);
+        DSO_free(dso);
+    }
 
     newhand = OPENSSL_malloc(sizeof(*newhand));
     if (newhand == NULL)
