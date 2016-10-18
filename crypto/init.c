@@ -81,6 +81,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     OPENSSL_cpuid_setup();
     base_inited = 1;
 
+#ifndef OPENSSL_USE_NODELETE
     /*
      * Deliberately leak a reference to ourselves. This will force the library
      * to remain loaded until the atexit() handler is run a process exit.
@@ -91,6 +92,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
         dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
         DSO_free(dso);
     }
+#endif
 
     return 1;
 }
@@ -588,10 +590,11 @@ int OPENSSL_atexit(void (*handler)(void))
 {
     OPENSSL_INIT_STOP *newhand;
 
+#ifndef OPENSSL_USE_NODELETE
     /*
      * Deliberately leak a reference to the handler. This will force the
      * library/code containing the handler to remain loaded until we run the
-     * atexit handler.
+     * atexit handler. If -znodelete has been used then this is unneccessary.
      */
     {
         DSO *dso = NULL;
@@ -605,6 +608,7 @@ int OPENSSL_atexit(void (*handler)(void))
         dso = DSO_dsobyaddr(handlersym.sym, DSO_FLAG_NO_UNLOAD_ON_FREE);
         DSO_free(dso);
     }
+#endif
 
     newhand = OPENSSL_malloc(sizeof(*newhand));
     if (newhand == NULL)
