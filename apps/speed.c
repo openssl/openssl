@@ -196,6 +196,7 @@
 #  include <oqs/rand.h>
 #  include <oqs/kex.h>
 #  include <oqs/kex_rlwe_bcns15.h>
+#  include <oqs/kex_rlwe_newhope.h>
 # endif
 # include <openssl/modes.h>
 
@@ -251,7 +252,7 @@ static int do_multi(int multi);
 # define SIZE_NUM        5
 # define RSA_NUM         4
 # define DSA_NUM         3
-# define OQSKEX_NUM      2
+# define OQSKEX_NUM      3
 
 # define EC_NUM       16
 # define MAX_ECDH_SIZE 256
@@ -555,6 +556,7 @@ int MAIN(int argc, char **argv)
 
 # define R_OQSKEX_GENERIC        0
 # define R_OQSKEX_RLWE_BCNS15    1
+# define R_OQSKEX_RLWE_NEWHOPE   2
 
 # ifndef OPENSSL_NO_RSA
     RSA *rsa_key[RSA_NUM];
@@ -632,7 +634,8 @@ int MAIN(int argc, char **argv)
 # ifndef OPENSSL_NO_OQSKEX
     static const char *test_oqskex_names[OQSKEX_NUM] = {
         "generic",
-        "rlwe_bcns15"
+        "rlwe_bcns15",
+        "rlwe_newhope"
     };
 # endif
 
@@ -1121,6 +1124,8 @@ int MAIN(int argc, char **argv)
             oqskex_doit[R_OQSKEX_GENERIC] = 2;
         else if (strcmp(*argv, "oqskex_rlwe_bcns15") == 0)
             oqskex_doit[R_OQSKEX_RLWE_BCNS15] = 2;
+        else if (strcmp(*argv, "oqskex_rlwe_newhope") == 0)
+            oqskex_doit[R_OQSKEX_RLWE_NEWHOPE] = 2;
         else if (strcmp(*argv, "oqskex") == 0) {
             for (i = 0; i < OQSKEX_NUM; i++)
                 oqskex_doit[i] = 1;
@@ -1229,7 +1234,7 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err, "ecdh\n");
 # endif
 # ifndef OPENSSL_NO_OQSKEX
-            BIO_printf(bio_err, "oqskex_generic  oqskex_rlwe_bcns15\n");
+            BIO_printf(bio_err, "oqskex_generic  oqskex_rlwe_bcns15  oqskex_rlwe_newhope\n");
             BIO_printf(bio_err, "oqskex\n");
 # endif
 
@@ -2450,6 +2455,8 @@ int MAIN(int argc, char **argv)
                 oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], OQS_KEX_alg_default, NULL, 0, NULL);
             } else if (j == R_OQSKEX_RLWE_BCNS15) {
                 oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], OQS_KEX_alg_rlwe_bcns15, NULL, 0, NULL);
+            } else if (j == R_OQSKEX_RLWE_NEWHOPE) {
+                oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], OQS_KEX_alg_rlwe_newhope, NULL, 0, NULL);
             }
             if (oqskex_kex[j] == NULL) {
                 BIO_printf(bio_err,"OQSKEX failure - OQS_KEX_new.\n");
