@@ -1,0 +1,9 @@
+The files in this directory (except kex_rlwe_newhope.*) were originally written 
+by Erdem Alkim, Léo Ducas, Thomas Pöppelmann, and Peter Schwabe 
+(https://github.com/tpoeppelmann/newhope).
+
+
+The following license applies to all files in the src/kex_rlwe_newhope directory.
+
+
+Public domain.

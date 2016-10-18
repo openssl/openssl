@@ -1,3 +1,8 @@
+The files in this directory (except kex_rlwe_bcns15.*) were originally written
+by Joppe W. Bos, Craig Costello, Michael Naehrig, and Douglas Stebila
+(https://github.com/dstebila/rlwekex).
+
+
 The following license applies to all files in the src/kex_rlwe_bcns15 directory.
 
 

@@ -16,7 +16,7 @@ OQS will also include integrations into application-level protocols to provide e
 
 - **open-quantum-safe/openssl** is an integration of liboqs into OpenSSL 1.0.2.  The goal of this integration is to provide easy prototyping of quantum-resistant cryptography.  The integration should not be considered "production quality".  See more about this integration in its GitHub repository [open-quantum-safe/openssl/](https://github.com/open-quantum-safe/openssl/).
 
-More information on OQS can be found on our website: [http://openquantumsafe.org/](http://openquantumsafe.org/).
+More information on OQS can be found on our website: [https://openquantumsafe.org/](https://openquantumsafe.org/).
 
 Contents
 --------
@@ -25,6 +25,7 @@ liboqs currently contains:
 
 - `rand_urandom_chacha20`: pseudorandom number generator seeded from /dev/urandom and expanded using the ChaCha20 stream cipher
 - `kex_rlwe_bcns15`: key exchange from the ring learning with errors problem (Bos, Costello, Naehrig, Stebila, *IEEE Symposium on Security & Privacy 2015*, [https://eprint.iacr.org/2014/599](https://eprint.iacr.org/2014/599))
+- `kex_rlwe_newhope`: "NewHope": key exchange from the ring learning with errors problem (Alkim, Ducas, Pöppelmann, Schwabe, *USENIX Security 2016*, [https://eprint.iacr.org/2015/1092](https://eprint.iacr.org/2015/1092)) (using the reference C implementation of NewHope from [https://github.com/tpoeppelmann/newhope](https://github.com/tpoeppelmann/newhope))
 
 Building and Running
 --------------------
@@ -87,13 +88,14 @@ Since our initial launch, we have made the following updates:
 - Integration of liboqs into OpenSSL to enable testing of post-quantum algorithms in TLS connections ([open-quantum-safe/openssl/](https://github.com/open-quantum-safe/openssl/))
 - Licensing liboqs under the MIT license (see below)
 - Building on Windows
+- Use of travis continuous integration system for testing
+- `kex_rlwe_newhope` wrapper around "NewHope" ring-LWE key exchange ([https://eprint.iacr.org/2015/1092](https://eprint.iacr.org/2015/1092))
 
 We plan to be making the following updates over the next month:
 
 - `kex_lwe_frodo` implementation ([https://eprint.iacr.org/2016/659](https://eprint.iacr.org/2016/659))
 - `kex_rlwe_bcns15` generalization to multiple security levels
 - `kex_ntru_ees743p1` wrapper around NTRU open source public key encryption ([https://github.com/NTRUOpenSourceProject/ntru-crypto](https://github.com/NTRUOpenSourceProject/ntru-crypto))
-- `kex_rlwe_newhope` wrapper around "NewHope" ring-LWE key exchange ([https://eprint.iacr.org/2015/1092](https://eprint.iacr.org/2015/1092))
 - Benchmarking scripts for key exchange algorithms
 - Detailed Doxygen documentation for existing API and public functions
 - Modular build system
@@ -115,6 +117,7 @@ liboqs is licensed under the MIT License; see [https://github.com/open-quantum-s
 
 - `src/kex_rlwe_bcns15`: public domain ([http://unlicense.org](http://unlicense.org))
 - `src/rand_urandom_chacha20/external`: public domain
+- `src/kex_rlwe_newhope`: public domain
 
 Team
 ----
