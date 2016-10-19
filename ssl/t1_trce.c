@@ -94,37 +94,43 @@ static ssl_trace_tbl ssl_handshake_tbl[] = {
 };
 
 /* Cipher suites */
+/* https://www.ietf.org/assignments/tls-parameters/tls-parameters.txt */
 static ssl_trace_tbl ssl_ciphers_tbl[] = {
-    {0x0000, "SSL_NULL_WITH_NULL_NULL"},
-    {0x0001, "SSL_RSA_WITH_NULL_MD5"},
-    {0x0002, "SSL_RSA_WITH_NULL_SHA"},
-    {0x0003, "SSL_RSA_EXPORT_WITH_RC4_40_MD5"},
-    {0x0004, "SSL_RSA_WITH_RC4_128_MD5"},
-    {0x0005, "SSL_RSA_WITH_RC4_128_SHA"},
-    {0x0006, "SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5"},
-    {0x0007, "SSL_RSA_WITH_IDEA_CBC_SHA"},
-    {0x0008, "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA"},
-    {0x0009, "SSL_RSA_WITH_DES_CBC_SHA"},
-    {0x000A, "SSL_RSA_WITH_3DES_EDE_CBC_SHA"},
-    {0x000B, "SSL_DH_DSS_EXPORT_WITH_DES40_CBC_SHA"},
-    {0x000C, "SSL_DH_DSS_WITH_DES_CBC_SHA"},
-    {0x000D, "SSL_DH_DSS_WITH_3DES_EDE_CBC_SHA"},
-    {0x000E, "SSL_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"},
-    {0x000F, "SSL_DH_RSA_WITH_DES_CBC_SHA"},
-    {0x0010, "SSL_DH_RSA_WITH_3DES_EDE_CBC_SHA"},
-    {0x0011, "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA"},
-    {0x0012, "SSL_DHE_DSS_WITH_DES_CBC_SHA"},
-    {0x0013, "SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA"},
-    {0x0014, "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA"},
-    {0x0015, "SSL_DHE_RSA_WITH_DES_CBC_SHA"},
-    {0x0016, "SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA"},
-    {0x0017, "SSL_DH_anon_EXPORT_WITH_RC4_40_MD5"},
-    {0x0018, "SSL_DH_anon_WITH_RC4_128_MD5"},
-    {0x0019, "SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA"},
-    {0x001A, "SSL_DH_anon_WITH_DES_CBC_SHA"},
-    {0x001B, "SSL_DH_anon_WITH_3DES_EDE_CBC_SHA"},
-    {0x001D, "SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA"},
-    {0x001E, "SSL_FORTEZZA_KEA_WITH_RC4_128_SHA"},
+    {0x0000, "TLS_NULL_WITH_NULL_NULL"},
+    {0x0001, "TLS_RSA_WITH_NULL_MD5"},
+    {0x0002, "TLS_RSA_WITH_NULL_SHA"},
+    {0x0003, "TLS_RSA_EXPORT_WITH_RC4_40_MD5"},
+    {0x0004, "TLS_RSA_WITH_RC4_128_MD5"},
+    {0x0005, "TLS_RSA_WITH_RC4_128_SHA"},
+    {0x0006, "TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5"},
+    {0x0007, "TLS_RSA_WITH_IDEA_CBC_SHA"},
+    {0x0008, "TLS_RSA_EXPORT_WITH_DES40_CBC_SHA"},
+    {0x0009, "TLS_RSA_WITH_DES_CBC_SHA"},
+    {0x000A, "TLS_RSA_WITH_3DES_EDE_CBC_SHA"},
+    {0x000B, "TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA"},
+    {0x000C, "TLS_DH_DSS_WITH_DES_CBC_SHA"},
+    {0x000D, "TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA"},
+    {0x000E, "TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"},
+    {0x000F, "TLS_DH_RSA_WITH_DES_CBC_SHA"},
+    {0x0010, "TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA"},
+    {0x0011, "TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA"},
+    {0x0012, "TLS_DHE_DSS_WITH_DES_CBC_SHA"},
+    {0x0013, "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA"},
+    {0x0014, "TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA"},
+    {0x0015, "TLS_DHE_RSA_WITH_DES_CBC_SHA"},
+    {0x0016, "TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA"},
+    {0x0017, "TLS_DH_anon_EXPORT_WITH_RC4_40_MD5"},
+    {0x0018, "TLS_DH_anon_WITH_RC4_128_MD5"},
+    {0x0019, "TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA"},
+    {0x001A, "TLS_DH_anon_WITH_DES_CBC_SHA"},
+    {0x001B, "TLS_DH_anon_WITH_3DES_EDE_CBC_SHA"},
+    /** Was 'SSL_FORTEZZA_KEA_WITH_RC4_128_SHA'
+        https://www.ietf.org/proceedings/42/I-D/draft-ietf-tls-kerb-cipher-suites-02.txt
+        https://www.ietf.org/mail-archive/web/tls/current/msg00036.html
+        https://www.ietf.org/rfc/rfc6101.txt
+    **/
+    {0x001E, "TLS_KRB5_WITH_DES_CBC_SHA"},
+    /** **/
     {0x001F, "TLS_KRB5_WITH_3DES_EDE_CBC_SHA"},
     {0x0020, "TLS_KRB5_WITH_RC4_128_SHA"},
     {0x0021, "TLS_KRB5_WITH_IDEA_CBC_SHA"},
@@ -165,6 +171,17 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0x0044, "TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA"},
     {0x0045, "TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA"},
     {0x0046, "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA"},
+    /* http://www.carbonwind.net/TLS_Cipher_Suites_Project/tls_ssl_cipher_suites_simple_table_all.htm */
+    {0x0060, "TLS_RSA_EXPORT1024_WITH_RC4_56_MD5"},
+    {0x0061, "TLS_RSA_EXPORT1024_WITH_RC2_56_MD5"},
+    /**/
+    /* https://tools.ietf.org/html/draft-ietf-tls-56-bit-ciphersuites-01 */
+    {0x0062, "TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA"},
+    {0x0063, "TLS_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA"},
+    {0x0064, "TLS_RSA_EXPORT1024_WITH_RC4_56_SHA"},
+    {0x0065, "TLS_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA"},
+    {0x0066, "TLS_DHE_DSS_WITH_RC4_128_SHA"},
+    /**/
     {0x0067, "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256"},
     {0x0068, "TLS_DH_DSS_WITH_AES_256_CBC_SHA256"},
     {0x0069, "TLS_DH_RSA_WITH_AES_256_CBC_SHA256"},
@@ -172,6 +189,12 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0x006B, "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256"},
     {0x006C, "TLS_DH_anon_WITH_AES_128_CBC_SHA256"},
     {0x006D, "TLS_DH_anon_WITH_AES_256_CBC_SHA256"},
+    /* https://tools.ietf.org/html/draft-chudov-cryptopro-cptls-04 */
+    {0x0080, "TLS_GOSTR341094_WITH_28147_CNT_IMIT"},
+    {0x0081, "TLS_GOSTR341001_WITH_28147_CNT_IMIT"},
+    {0x0082, "TLS_GOSTR341094_WITH_NULL_GOSTR3411"},
+    {0x0083, "TLS_GOSTR341001_WITH_NULL_GOSTR3411"},
+    /**/
     {0x0084, "TLS_RSA_WITH_CAMELLIA_256_CBC_SHA"},
     {0x0085, "TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA"},
     {0x0086, "TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA"},
@@ -415,6 +438,7 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xC0AD, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM"},
     {0xC0AE, "TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8"},
     {0xC0AF, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8"},
+    /* https://tools.ietf.org/html/draft-ietf-tls-chacha20-poly1305-01 */
     {0xCCA8, "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"},
     {0xCCA9, "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"},
     {0xCCAA, "TLS_DHE_RSA_WITH_CHACHA20_POLY1305"},
@@ -422,8 +446,27 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xCCAC, "TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305"},
     {0xCCAD, "TLS_DHE_PSK_WITH_CHACHA20_POLY1305"},
     {0xCCAE, "TLS_RSA_PSK_WITH_CHACHA20_POLY1305"},
+    {0xCC13, "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"},
+    {0xCC14, "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256"},
+    {0xCC15, "TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256"},
+    /**/
+    /* http://www-archive.mozilla.org/projects/security/pki/nss/ssl/fips-ssl-ciphersuites.html */
     {0xFEFE, "SSL_RSA_FIPS_WITH_DES_CBC_SHA"},
     {0xFEFF, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
+    {0xFEFE, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
+    {0xFFE0, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
+    {0xFFE1, "SSL_RSA_FIPS_WITH_DES_CBC_SHA"},
+    /**/
+    /* https://tools.ietf.org/html/draft-hickman-netscape-ssl-00 */
+    {0x010080, "SSL_CK_RC4_128_WITH_MD5"},
+    {0x020080, "SSL_CK_RC4_128_EXPORT40_WITH_MD5"},
+    {0x030080, "SSL_CK_RC2_128_CBC_WITH_MD5"},
+    {0x040080, "SSL_CK_RC2_128_CBC_EXPORT40_WITH_MD5"},
+    {0x050080, "SSL_CK_IDEA_128_CBC_WITH_MD5"},
+    {0x060040, "SSL_CK_DES_64_CBC_WITH_MD5"},
+    {0x0700C0, "SSL_CK_DES_192_EDE3_CBC_WITH_MD5"},
+    {0x080080, "SSL_CK_RC4_64_WITH_MD5"},
+    /**/
 };
 
 /* Compression methods */
@@ -1274,7 +1317,7 @@ static int ssl_print_heartbeat(BIO *bio, int indent,
 
 const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c)
 {
-    return ssl_trace_str(c->id & 0xFFFF, ssl_ciphers_tbl);
+    return ssl_trace_str(c->id & 0xFFFFFF, ssl_ciphers_tbl);
 }
 
 void SSL_trace(int write_p, int version, int content_type,
