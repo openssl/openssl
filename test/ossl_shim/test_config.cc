@@ -191,6 +191,7 @@ bool ParseConfig(int argc, char **argv, TestConfig *out_config) {
     }
 
     fprintf(stderr, "Unknown argument: %s\n", argv[i]);
+    exit(89);
     return false;
   }
 
