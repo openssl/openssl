@@ -71,9 +71,9 @@ int ssl_add_serverhello_renegotiate_ext(SSL *s, WPACKET *pkt)
  */
 int ssl_parse_serverhello_renegotiate_ext(SSL *s, PACKET *pkt, int *al)
 {
-    unsigned int expected_len = s->s3->previous_client_finished_len
+    size_t expected_len = s->s3->previous_client_finished_len
         + s->s3->previous_server_finished_len;
-    unsigned int ilen;
+    size_t ilen;
     const unsigned char *data;
 
     /* Check for logic errors */
@@ -81,7 +81,7 @@ int ssl_parse_serverhello_renegotiate_ext(SSL *s, PACKET *pkt, int *al)
     OPENSSL_assert(!expected_len || s->s3->previous_server_finished_len);
 
     /* Parse the length byte */
-    if (!PACKET_get_1(pkt, &ilen)) {
+    if (!PACKET_get_1_len(pkt, &ilen)) {
         SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
         *al = SSL_AD_ILLEGAL_PARAMETER;

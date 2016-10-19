@@ -236,14 +236,14 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
 const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
 {
     if (len)
-        *len = s->session_id_length;
+        *len = (unsigned int)s->session_id_length;
     return s->session_id;
 }
 const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *s,
                                                 unsigned int *len)
 {
     if (len != NULL)
-        *len = s->sid_ctx_length;
+        *len = (unsigned int)s->sid_ctx_length;
     return s->sid_ctx;
 }
 
@@ -369,7 +369,7 @@ int ssl_get_new_session(SSL *s, int session)
         CRYPTO_THREAD_unlock(s->lock);
         /* Choose a session ID */
         memset(ss->session_id, 0, ss->session_id_length);
-        tmp = ss->session_id_length;
+        tmp = (int)ss->session_id_length;
         if (!cb(s, ss->session_id, &tmp)) {
             /* The callback failed */
             SSLerr(SSL_F_SSL_GET_NEW_SESSION,
@@ -391,7 +391,7 @@ int ssl_get_new_session(SSL *s, int session)
         ss->session_id_length = tmp;
         /* Finally, check for a conflict */
         if (SSL_has_matching_session_id(s, ss->session_id,
-                                        ss->session_id_length)) {
+                                        (unsigned int)ss->session_id_length)) {
             SSLerr(SSL_F_SSL_GET_NEW_SESSION, SSL_R_SSL_SESSION_ID_CONFLICT);
             SSL_SESSION_free(ss);
             return (0);
@@ -502,7 +502,7 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
         ret == NULL && s->session_ctx->get_session_cb != NULL) {
         int copy = 1;
         ret = s->session_ctx->get_session_cb(s, PACKET_data(session_id),
-                                             PACKET_remaining(session_id),
+                                             (int)PACKET_remaining(session_id),
                                              &copy);
 
         if (ret != NULL) {
