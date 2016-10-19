@@ -24,7 +24,7 @@ indir $ENV{BORING_RUNNER_DIR} => sub {
                       srctop_file("test", "ossl_shim", "ossl_shim"),
                       "-shim-config",
                       srctop_file("test", "ossl_shim", "ossl_config.json"),
-                      "-pipe"])),
+                      "-pipe", "-allow-unimplemented"])),
         "running external tests");
 }, create => 0, cleanup => 0;
 
