@@ -579,10 +579,10 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
 
         /* Finished processing the record header, now process the message */
         if (!PACKET_get_1(&msgpkt, &msgtype)
-            || !PACKET_get_net_3(&msgpkt, &msglen)
+            || !PACKET_get_net_3_len(&msgpkt, &msglen)
             || !PACKET_get_net_2(&msgpkt, &msgseq)
-            || !PACKET_get_net_3(&msgpkt, &fragoff)
-            || !PACKET_get_net_3(&msgpkt, &fraglen)
+            || !PACKET_get_net_3_len(&msgpkt, &fragoff)
+            || !PACKET_get_net_3_len(&msgpkt, &fraglen)
             || !PACKET_get_sub_packet(&msgpkt, &msgpayload, fraglen)
             || PACKET_remaining(&msgpkt) != 0) {
             SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
