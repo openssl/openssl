@@ -504,7 +504,7 @@ class SocketCloser {
     // Half-close and drain the socket before releasing it. This seems to be
     // necessary for graceful shutdown on Windows. It will also avoid write
     // failures in the test runner.
-#if defined(OPENSSL_WINDOWS)
+#if defined(OPENSSL_SYS_WINDOWS)
     shutdown(sock_, SD_SEND);
 #else
     shutdown(sock_, SHUT_WR);
@@ -1207,7 +1207,7 @@ static int Main(int argc, char **argv) {
   // Anything following this line will be considered an error.
   StderrDelimiter delimiter;
 
-#if defined(OPENSSL_WINDOWS)
+#if defined(OPENSSL_SYS_WINDOWS)
   /* Initialize Winsock. */
   WORD wsa_version = MAKEWORD(2, 2);
   WSADATA wsa_data;
