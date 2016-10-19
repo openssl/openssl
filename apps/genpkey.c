@@ -275,10 +275,7 @@ int MAIN(int argc, char **argv)
     if (out)
         BIO_free_all(out);
     BIO_free(in);
-#ifndef OPENSSL_NO_ENGINE
-    if (e != NULL)
-        release_engine(e);
-#endif
+    release_engine(e);
     if (pass)
         OPENSSL_free(pass);
     return ret;

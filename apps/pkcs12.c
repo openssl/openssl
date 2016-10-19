@@ -129,9 +129,7 @@ int MAIN(int argc, char **argv)
     char *inrand = NULL;
     char *macalg = NULL;
     char *CApath = NULL, *CAfile = NULL;
-# ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
-# endif
 
     apps_startup();
 
@@ -406,9 +404,7 @@ int MAIN(int argc, char **argv)
                    "-LMK          Add local machine keyset attribute to private key\n");
         goto end;
     }
-# ifndef OPENSSL_NO_ENGINE
     e = setup_engine(bio_err, engine, 0);
-# endif
 
     if (passarg) {
         if (export_cert)
@@ -756,10 +752,7 @@ int MAIN(int argc, char **argv)
 # ifdef CRYPTO_MDEBUG
     CRYPTO_remove_all_info();
 # endif
-# ifndef OPENSSL_NO_ENGINE
-    if (e != NULL)
-        release_engine(e);
-# endif
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     if (canames)

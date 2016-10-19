@@ -121,10 +121,8 @@ int MAIN(int argc, char **argv)
     char *infile, *outfile, *prog, *inrand = NULL;
     int numbits = -1, num, genkey = 0;
     int need_rand = 0;
-# ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
     ENGINE *e = NULL;
-# endif
 # ifdef GENCB_TEST
     int timebomb = 0;
 # endif
@@ -264,9 +262,7 @@ int MAIN(int argc, char **argv)
         }
     }
 
-# ifndef OPENSSL_NO_ENGINE
     e = setup_engine(bio_err, engine, 0);
-# endif
 
     if (need_rand) {
         app_RAND_load_file(NULL, bio_err, (inrand != NULL));
@@ -434,10 +430,7 @@ int MAIN(int argc, char **argv)
         BIO_free_all(out);
     if (dsa != NULL)
         DSA_free(dsa);
-#ifndef OPENSSL_NO_ENGINE
-    if (e != NULL)
-        release_engine(e);
-#endif
+    release_engine(e);
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

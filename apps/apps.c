@@ -1535,11 +1535,13 @@ static ENGINE *try_load_engine(BIO *err, const char *engine, int debug)
     }
     return e;
 }
+#endif
 
 ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 {
     ENGINE *e = NULL;
 
+#ifndef OPENSSL_NO_ENGINE
     if (engine) {
         if (strcmp(engine, "auto") == 0) {
             BIO_printf(err, "enabling auto ENGINE support\n");
@@ -1565,16 +1567,18 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 
         BIO_printf(err, "engine \"%s\" set.\n", ENGINE_get_id(e));
     }
+#endif
     return e;
 }
 
 void release_engine(ENGINE *e)
 {
+#ifndef OPENSSL_NO_ENGINE
     if (e != NULL)
         /* Free our "structural" reference. */
         ENGINE_free(e);
-}
 #endif
+}
 
 int load_config(BIO *err, CONF *cnf)
 {

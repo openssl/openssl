@@ -372,9 +372,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 {
-# ifndef OPENSSL_NO_ENGINE
     ENGINE *e = NULL;
-#endif
     unsigned char *buf = NULL, *buf2 = NULL;
     int mret = 1;
     long count = 0, save_count = 0;
@@ -2529,10 +2527,7 @@ int MAIN(int argc, char **argv)
     }
 # endif
 
-#ifndef OPENSSL_NO_ENGINE
-    if (e != NULL)
-        release_engine(e);
-#endif
+    release_engine(e);
     apps_shutdown();
     OPENSSL_EXIT(mret);
 }
