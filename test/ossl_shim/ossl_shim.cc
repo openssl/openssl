@@ -176,10 +176,8 @@ static bool InstallCertificate(SSL *ssl) {
     return false;
   }
 
-  if (pkey) {
-    if (!SSL_use_PrivateKey(ssl, pkey.get())) {
-      return false;
-    }
+  if (pkey && !SSL_use_PrivateKey(ssl, pkey.get())) {
+    return false;
   }
 
   if (x509 && !SSL_use_certificate(ssl, x509.get())) {
