@@ -155,7 +155,7 @@ static void ssl3_take_mac(SSL *s)
 MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
 {
     int al;
-    long remain;
+    size_t remain;
 
     remain = PACKET_remaining(pkt);
     /*

@@ -357,7 +357,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
 
     if (k > 0) {
         if (is_sslv3) {
-            unsigned overhang;
+            size_t overhang;
 
             /*
              * The SSLv3 header is larger than a single block. overhang is

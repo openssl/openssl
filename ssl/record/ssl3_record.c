@@ -1022,8 +1022,8 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
     header[8] = rec->type;
     header[9] = (unsigned char)(ssl->version >> 8);
     header[10] = (unsigned char)(ssl->version);
-    header[11] = (rec->length) >> 8;
-    header[12] = (rec->length) & 0xff;
+    header[11] = (unsigned char)(rec->length >> 8);
+    header[12] = (unsigned char)(rec->length & 0xff);
 
     if (!send && !SSL_USE_ETM(ssl) &&
         EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&

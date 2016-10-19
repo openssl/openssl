@@ -175,7 +175,7 @@ static int ssl_cipher_info_find(const ssl_cipher_table * table,
     size_t i;
     for (i = 0; i < table_cnt; i++, table++) {
         if (table->mask == mask)
-            return i;
+            return (int)i;
     }
     return -1;
 }

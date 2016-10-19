@@ -3035,9 +3035,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP:
         *(unsigned char **)parg = s->tlsext_ocsp_resp;
-        if (s->tlsext_ocsp_resplen == 0)
+        if (s->tlsext_ocsp_resplen == 0
+                || s->tlsext_ocsp_resplen > LONG_MAX)
             return -1;
-        return s->tlsext_ocsp_resplen;
+        return (long)s->tlsext_ocsp_resplen;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
         OPENSSL_free(s->tlsext_ocsp_resp);
@@ -3955,9 +3956,10 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len)
         unsigned long Time = (unsigned long)time(NULL);
         unsigned char *p = result;
         l2n(Time, p);
-        return RAND_bytes(p, len - 4);
+        /* TODO(size_t): Convert this */
+        return RAND_bytes(p, (int)(len - 4));
     } else
-        return RAND_bytes(result, len);
+        return RAND_bytes(result, (int)len);
 }
 
 int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,

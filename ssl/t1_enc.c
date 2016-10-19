@@ -64,18 +64,18 @@ static int tls1_PRF(SSL *s,
     pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
     if (pctx == NULL || EVP_PKEY_derive_init(pctx) <= 0
         || EVP_PKEY_CTX_set_tls1_prf_md(pctx, md) <= 0
-        || EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, slen) <= 0)
+        || EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, (int)slen) <= 0)
         goto err;
 
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed1, seed1_len) <= 0)
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed1, (int)seed1_len) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed2, seed2_len) <= 0)
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed2, (int)seed2_len) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed3, seed3_len) <= 0)
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed3, (int)seed3_len) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed4, seed4_len) <= 0)
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed4, (int)seed4_len) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed5, seed5_len) <= 0)
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed5, (int)seed5_len) <= 0)
         goto err;
 
     if (EVP_PKEY_derive(pctx, out, &olen) <= 0)
@@ -250,8 +250,9 @@ int tls1_change_cipher_state(SSL *s, int which)
     memcpy(mac_secret, ms, i);
 
     if (!(EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
+        /* TODO(size_t): Convert this function */
         mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
-                                       mac_secret, *mac_secret_size);
+                                       mac_secret, (int)*mac_secret_size);
         if (mac_key == NULL
             || EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key) <= 0) {
             EVP_PKEY_free(mac_key);
@@ -271,7 +272,8 @@ int tls1_change_cipher_state(SSL *s, int which)
 
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
         if (!EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE))
-            || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, k, iv)) {
+            || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, (int)k,
+                                    iv)) {
             SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
             goto err2;
         }
@@ -285,7 +287,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         if (!EVP_CipherInit_ex(dd, c, NULL, NULL, NULL, (which & SSL3_CC_WRITE))
             || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_IVLEN, 12, NULL)
             || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_TAG, taglen, NULL)
-            || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_CCM_SET_IV_FIXED, k, iv)
+            || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_CCM_SET_IV_FIXED, (int)k, iv)
             || !EVP_CipherInit_ex(dd, NULL, NULL, key, NULL, -1)) {
             SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
             goto err2;
@@ -299,7 +301,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     /* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
     if ((EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) && *mac_secret_size
         && !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_MAC_KEY,
-                                *mac_secret_size, mac_secret)) {
+                                (int)*mac_secret_size, mac_secret)) {
         SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
         goto err2;
     }
