@@ -1110,4 +1110,6 @@ static int set_pbe(BIO *err, int *ppbe, const char *str)
     return 1;
 }
 
+#else
+static void *dummy = &dummy;
 #endif
