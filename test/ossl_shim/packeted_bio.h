@@ -18,7 +18,7 @@
 #include <openssl/base.h>
 #include <openssl/bio.h>
 
-#if defined(OPENSSL_WINDOWS)
+#if defined(OPENSSL_SYS_WINDOWS)
 OPENSSL_MSVC_PRAGMA(warning(push, 3))
 #include <winsock2.h>
 OPENSSL_MSVC_PRAGMA(warning(pop))
