@@ -49,7 +49,6 @@ const Flag<bool> kBoolFlags[] = {
   { "-fallback-scsv", &TestConfig::fallback_scsv },
   { "-require-any-client-certificate",
     &TestConfig::require_any_client_certificate },
-  { "-false-start", &TestConfig::false_start },
   { "-async", &TestConfig::async },
   { "-write-different-record-sizes",
     &TestConfig::write_different_record_sizes },
@@ -60,24 +59,18 @@ const Flag<bool> kBoolFlags[] = {
   { "-no-tls11", &TestConfig::no_tls11 },
   { "-no-tls1", &TestConfig::no_tls1 },
   { "-no-ssl3", &TestConfig::no_ssl3 },
-  { "-enable-channel-id", &TestConfig::enable_channel_id },
   { "-shim-writes-first", &TestConfig::shim_writes_first },
   { "-expect-session-miss", &TestConfig::expect_session_miss },
   { "-decline-alpn", &TestConfig::decline_alpn },
   { "-expect-extended-master-secret",
     &TestConfig::expect_extended_master_secret },
-  { "-enable-ocsp-stapling", &TestConfig::enable_ocsp_stapling },
-  { "-enable-signed-cert-timestamps",
-    &TestConfig::enable_signed_cert_timestamps },
   { "-implicit-handshake", &TestConfig::implicit_handshake },
   { "-use-early-callback", &TestConfig::use_early_callback },
   { "-fail-early-callback", &TestConfig::fail_early_callback },
-  { "-install-ddos-callback", &TestConfig::install_ddos_callback },
   { "-fail-ddos-callback", &TestConfig::fail_ddos_callback },
   { "-fail-second-ddos-callback", &TestConfig::fail_second_ddos_callback },
   { "-handshake-never-done", &TestConfig::handshake_never_done },
   { "-use-export-context", &TestConfig::use_export_context },
-  { "-tls-unique", &TestConfig::tls_unique },
   { "-expect-ticket-renewal", &TestConfig::expect_ticket_renewal },
   { "-expect-no-session", &TestConfig::expect_no_session },
   { "-use-ticket-callback", &TestConfig::use_ticket_callback },
@@ -93,30 +86,24 @@ const Flag<bool> kBoolFlags[] = {
   { "-verify-fail", &TestConfig::verify_fail },
   { "-verify-peer", &TestConfig::verify_peer },
   { "-expect-verify-result", &TestConfig::expect_verify_result },
-  { "-renegotiate-once", &TestConfig::renegotiate_once },
   { "-renegotiate-freely", &TestConfig::renegotiate_freely },
-  { "-renegotiate-ignore", &TestConfig::renegotiate_ignore },
-  { "-disable-npn", &TestConfig::disable_npn },
   { "-p384-only", &TestConfig::p384_only },
   { "-enable-all-curves", &TestConfig::enable_all_curves },
   { "-use-sparse-dh-prime", &TestConfig::use_sparse_dh_prime },
   { "-use-old-client-cert-callback",
     &TestConfig::use_old_client_cert_callback },
   { "-use-null-client-ca-list", &TestConfig::use_null_client_ca_list },
-  { "-send-alert", &TestConfig::send_alert },
   { "-peek-then-read", &TestConfig::peek_then_read },
   { "-enable-grease", &TestConfig::enable_grease },
 };
 
 const Flag<std::string> kStringFlags[] = {
-  { "-digest-prefs", &TestConfig::digest_prefs },
   { "-key-file", &TestConfig::key_file },
   { "-cert-file", &TestConfig::cert_file },
   { "-expect-server-name", &TestConfig::expected_server_name },
   { "-advertise-npn", &TestConfig::advertise_npn },
   { "-expect-next-proto", &TestConfig::expected_next_proto },
   { "-select-next-proto", &TestConfig::select_next_proto },
-  { "-send-channel-id", &TestConfig::send_channel_id },
   { "-host-name", &TestConfig::host_name },
   { "-advertise-alpn", &TestConfig::advertise_alpn },
   { "-expect-alpn", &TestConfig::expected_alpn },
@@ -126,20 +113,15 @@ const Flag<std::string> kStringFlags[] = {
   { "-psk-identity", &TestConfig::psk_identity },
   { "-srtp-profiles", &TestConfig::srtp_profiles },
   { "-cipher", &TestConfig::cipher },
-  { "-cipher-tls10", &TestConfig::cipher_tls10 },
-  { "-cipher-tls11", &TestConfig::cipher_tls11 },
   { "-export-label", &TestConfig::export_label },
   { "-export-context", &TestConfig::export_context },
 };
 
 const Flag<std::string> kBase64Flags[] = {
   { "-expect-certificate-types", &TestConfig::expected_certificate_types },
-  { "-expect-channel-id", &TestConfig::expected_channel_id },
   { "-expect-ocsp-response", &TestConfig::expected_ocsp_response },
   { "-expect-signed-cert-timestamps",
     &TestConfig::expected_signed_cert_timestamps },
-  { "-ocsp-response", &TestConfig::ocsp_response },
-  { "-signed-cert-timestamps", &TestConfig::signed_cert_timestamps },
 };
 
 const Flag<int> kIntFlags[] = {
@@ -154,12 +136,7 @@ const Flag<int> kIntFlags[] = {
     &TestConfig::expect_peer_signature_algorithm },
   { "-expect-curve-id", &TestConfig::expect_curve_id },
   { "-expect-dhe-group-size", &TestConfig::expect_dhe_group_size },
-  { "-initial-timeout-duration-ms", &TestConfig::initial_timeout_duration_ms },
   { "-max-cert-list", &TestConfig::max_cert_list },
-};
-
-const Flag<std::vector<int>> kIntVectorFlags[] = {
-  { "-signing-prefs", &TestConfig::signing_prefs },
 };
 
 }  // namespace
@@ -210,20 +187,6 @@ bool ParseConfig(int argc, char **argv, TestConfig *out_config) {
         return false;
       }
       *int_field = atoi(argv[i]);
-      continue;
-    }
-
-    std::vector<int> *int_vector_field =
-        FindField(out_config, kIntVectorFlags, argv[i]);
-    if (int_vector_field) {
-      i++;
-      if (i >= argc) {
-        fprintf(stderr, "Missing parameter\n");
-        return false;
-      }
-
-      // Each instance of the flag adds to the list.
-      int_vector_field->push_back(atoi(argv[i]));
       continue;
     }
 
