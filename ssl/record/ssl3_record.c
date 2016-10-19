@@ -367,7 +367,7 @@ int ssl3_get_record(SSL *s)
             rr[j].length -= mac_size;
             mac = rr[j].data + rr[j].length;
             i = s->method->ssl3_enc->mac(s, &rr[j], md, 0 /* not send */ );
-            if (i < 0 || CRYPTO_memcmp(md, mac, mac_size) != 0) {
+            if (i == 0 || CRYPTO_memcmp(md, mac, mac_size) != 0) {
                 al = SSL_AD_BAD_RECORD_MAC;
                 SSLerr(SSL_F_SSL3_GET_RECORD,
                        SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
@@ -446,7 +446,7 @@ int ssl3_get_record(SSL *s)
             }
 
             i = s->method->ssl3_enc->mac(s, &rr[j], md, 0 /* not send */ );
-            if (i < 0 || mac == NULL
+            if (i == 0 || mac == NULL
                 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
                 enc_err = -1;
             if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
@@ -899,7 +899,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
 
     t = EVP_MD_CTX_size(hash);
     if (t < 0)
-        return -1;
+        return 0;
     md_size = t;
     npad = (48 / md_size) * md_size;
 
@@ -938,14 +938,14 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
                                    header, rec->input,
                                    rec->length + md_size, rec->orig_len,
                                    mac_sec, md_size, 1) <= 0)
-            return -1;
+            return 0;
     } else {
         unsigned int md_size_u;
         /* Chop the digest off the end :-) */
         EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
 
         if (md_ctx == NULL)
-            return -1;
+            return 0;
 
         rec_char = rec->type;
         p = md;
@@ -964,15 +964,14 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
             || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
             || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
             EVP_MD_CTX_reset(md_ctx);
-            return -1;
+            return 0;
         }
-        md_size = md_size_u;
 
         EVP_MD_CTX_free(md_ctx);
     }
 
     ssl3_record_sequence_update(seq);
-    return (md_size);
+    return 1;
 }
 
 int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
@@ -1005,7 +1004,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
     } else {
         hmac = EVP_MD_CTX_new();
         if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash))
-            return -1;
+            return 0;
         mac_ctx = hmac;
     }
 
@@ -1051,14 +1050,14 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
             || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
             || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
             EVP_MD_CTX_free(hmac);
-            return -1;
+            return 0;
         }
         if (!send && !SSL_USE_ETM(ssl) && FIPS_mode())
             if (!tls_fips_digest_extra(ssl->enc_read_ctx,
                                        mac_ctx, rec->input,
                                        rec->length, rec->orig_len)) {
                 EVP_MD_CTX_free(hmac);
-                return -1;
+                return 0;
             }
     }
 
@@ -1096,7 +1095,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
         fprintf(stderr, "\n");
     }
 #endif
-    return (md_size);
+    return 1;
 }
 
 /*-
@@ -1360,7 +1359,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         rr->length -= mac_size;
         mac = rr->data + rr->length;
         i = s->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );
-        if (i < 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
+        if (i == 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
             al = SSL_AD_BAD_RECORD_MAC;
             SSLerr(SSL_F_DTLS1_PROCESS_RECORD,
                    SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
@@ -1444,7 +1443,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         }
 
         i = s->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );
-        if (i < 0 || mac == NULL
+        if (i == 0 || mac == NULL
             || CRYPTO_memcmp(md, mac, mac_size) != 0)
             enc_err = -1;
         if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)

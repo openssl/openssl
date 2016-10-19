@@ -817,9 +817,9 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          */
 
         if (!SSL_USE_ETM(s) && mac_size != 0) {
-            if (s->method->ssl3_enc->mac(s, &wr[j],
-                                         &(outbuf[j][wr[j].length + eivlen]),
-                                         1) < 0)
+            if (!s->method->ssl3_enc->mac(s, &wr[j],
+                                          &(outbuf[j][wr[j].length + eivlen]),
+                                          1))
                 goto err;
             SSL3_RECORD_add_length(&wr[j], mac_size);
         }
@@ -840,8 +840,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
     for (j = 0; j < numpipes; j++) {
         if (SSL_USE_ETM(s) && mac_size != 0) {
-            if (s->method->ssl3_enc->mac(s, &wr[j],
-                                         outbuf[j] + wr[j].length, 1) < 0)
+            if (!s->method->ssl3_enc->mac(s, &wr[j],
+                                          outbuf[j] + wr[j].length, 1))
                 goto err;
             SSL3_RECORD_add_length(&wr[j], mac_size);
         }
