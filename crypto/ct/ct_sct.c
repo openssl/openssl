@@ -45,6 +45,11 @@ void SCT_free(SCT *sct)
     OPENSSL_free(sct);
 }
 
+void SCT_LIST_free(STACK_OF(SCT) *a)
+{
+    sk_SCT_pop_free(a, SCT_free);
+}
+
 int SCT_set_version(SCT *sct, sct_version_t version)
 {
     if (version != SCT_VERSION_V1) {
