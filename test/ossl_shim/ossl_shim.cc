@@ -154,16 +154,6 @@ static bool GetCertificate(SSL *ssl, bssl::UniquePtr<X509> *out_x509,
                            bssl::UniquePtr<EVP_PKEY> *out_pkey) {
   const TestConfig *config = GetTestConfig(ssl);
 
-  if (!config->digest_prefs.empty()) {
-    fprintf(stderr, "Digest prefs not supported.\n");
-    return false;
-  }
-
-  if (!config->signing_prefs.empty()) {
-    fprintf(stderr, "Set signing algorithm prefs not supported\n");
-    return false;
-  }
-
   if (!config->key_file.empty()) {
     *out_pkey = LoadPrivateKey(config->key_file.c_str());
     if (!*out_pkey) {
@@ -175,10 +165,6 @@ static bool GetCertificate(SSL *ssl, bssl::UniquePtr<X509> *out_x509,
     if (!*out_x509) {
       return false;
     }
-  }
-  if (!config->ocsp_response.empty()) {
-    fprintf(stderr, "OCSP response not supported.\n");
-    return false;
   }
   return true;
 }
@@ -564,11 +550,6 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
     return nullptr;
   }
 
-  if (!config->cipher_tls10.empty() || !config->cipher_tls11.empty()) {
-    fprintf(stderr, "version-specific cipher lists not supported.\n");
-    return nullptr;
-  }
-
   DH *tmpdh;
 
   if (config->use_sparse_dh_prime) {
@@ -653,11 +634,6 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
     SSL_CTX_set_cert_verify_callback(ssl_ctx.get(), VerifyFail, NULL);
   } else {
     SSL_CTX_set_cert_verify_callback(ssl_ctx.get(), VerifySucceed, NULL);
-  }
-
-  if (!config->signed_cert_timestamps.empty()) {
-    fprintf(stderr, "SCTs not supported.\n");
-    return nullptr;
   }
 
   if (config->use_null_client_ca_list) {
@@ -806,14 +782,12 @@ static bool CheckHandshakeProperties(SSL *ssl, bool is_resume) {
     return false;
   }
 
-  bool expect_handshake_done = is_resume || !config->false_start;
-  if (expect_handshake_done != GetTestState(ssl)->handshake_done) {
-    fprintf(stderr, "handshake was%s completed\n",
-            GetTestState(ssl)->handshake_done ? "" : " not");
+  if (!GetTestState(ssl)->handshake_done) {
+    fprintf(stderr, "handshake was not completed\n");
     return false;
   }
 
-  if (expect_handshake_done && !config->is_server) {
+  if (!config->is_server) {
     bool expect_new_session =
         !config->expect_no_session &&
         (!SSL_session_reused(ssl) || config->expect_ticket_renewal) &&
@@ -930,10 +904,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
   if (config->verify_peer) {
     SSL_set_verify(ssl.get(), SSL_VERIFY_PEER, NULL);
   }
-  if (config->false_start) {
-    fprintf(stderr, "False Start not supported\n");
-    return false;
-  }
   if (config->partial_write) {
     SSL_set_mode(ssl.get(), SSL_MODE_ENABLE_PARTIAL_WRITE);
   }
@@ -951,14 +921,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
   }
   if (config->no_ssl3) {
     SSL_set_options(ssl.get(), SSL_OP_NO_SSLv3);
-  }
-  if (!config->expected_channel_id.empty()) {
-    fprintf(stderr, "Channel ID not supported\n");
-    return false;
-  }
-  if (!config->send_channel_id.empty()) {
-    fprintf(stderr, "Channel ID not supported\n");
-    return false;
   }
   if (!config->host_name.empty() &&
       !SSL_set_tlsext_host_name(ssl.get(), config->host_name.c_str())) {
@@ -982,14 +944,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
       SSL_set_tlsext_use_srtp(ssl.get(), config->srtp_profiles.c_str())) {
     return false;
   }
-  if (config->enable_ocsp_stapling) {
-    fprintf(stderr, "OCSP stapling not supported (with the same API).\n");
-    return false;
-  }
-  if (config->enable_signed_cert_timestamps) {
-    fprintf(stderr, "SCTs not supported (with the same API).\n");
-    return false;
-  }
   if (config->min_version != 0 &&
       !SSL_set_min_proto_version(ssl.get(), (uint16_t)config->min_version)) {
     return false;
@@ -1002,27 +956,11 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     SSL_set_options(ssl.get(), SSL_OP_NO_QUERY_MTU);
     SSL_set_mtu(ssl.get(), config->mtu);
   }
-  if (config->install_ddos_callback) {
-    fprintf(stderr, "DDoS callback not supported.\n");
-    return false;
-  }
-  if (config->renegotiate_once) {
-    fprintf(stderr, "renegotiate_once not supported.\n");
-    return false;
-  }
   if (config->renegotiate_freely) {
     // This is always on for OpenSSL.
   }
-  if (config->renegotiate_ignore) {
-    fprintf(stderr, "renegotiate_ignore not supported.\n");
-    return false;
-  }
   if (!config->check_close_notify) {
     SSL_set_quiet_shutdown(ssl.get(), 1);
-  }
-  if (config->disable_npn) {
-    fprintf(stderr, "SSL_OP_DISABLE_NPN not supported.\n");
-    return false;
   }
   if (config->p384_only) {
     int nid = NID_secp384r1;
@@ -1038,10 +976,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
                          OPENSSL_ARRAY_SIZE(kAllCurves))) {
       return false;
     }
-  }
-  if (config->initial_timeout_duration_ms > 0) {
-    fprintf(stderr, "Setting DTLS initial timeout duration not supported.\n");
-    return false;
   }
   if (config->max_cert_list > 0) {
     SSL_set_max_cert_list(ssl.get(), config->max_cert_list);
@@ -1137,16 +1071,6 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     }
   }
 
-  if (config->tls_unique) {
-    fprintf(stderr, "tls_unique not supported\n");
-    return false;
-  }
-
-  if (config->send_alert) {
-    fprintf(stderr, "Sending an alert not supported\n");
-    return false;
-  }
-
   if (config->write_different_record_sizes) {
     if (config->is_dtls) {
       fprintf(stderr, "write_different_record_sizes not supported for DTLS\n");
@@ -1223,7 +1147,7 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     }
   }
 
-  if (!config->is_server && !config->false_start &&
+  if (!config->is_server &&
       !config->implicit_handshake &&
       // Session tickets are sent post-handshake in TLS 1.3.
       GetProtocolVersion(ssl.get()) < TLS1_3_VERSION &&
