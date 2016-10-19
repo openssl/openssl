@@ -400,8 +400,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     for (i = num_starting_blocks; i <= num_starting_blocks + variance_blocks;
          i++) {
         unsigned char block[MAX_HASH_BLOCK_SIZE];
-        unsigned char is_block_a = constant_time_eq_8(i, index_a);
-        unsigned char is_block_b = constant_time_eq_8(i, index_b);
+        unsigned char is_block_a = constant_time_eq_8_s(i, index_a);
+        unsigned char is_block_b = constant_time_eq_8_s(i, index_b);
         for (j = 0; j < md_block_size; j++) {
             unsigned char b = 0, is_past_c, is_past_cp1;
             if (k < header_length)
@@ -410,8 +410,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
                 b = data[k - header_length];
             k++;
 
-            is_past_c = is_block_a & constant_time_ge_8(j, c);
-            is_past_cp1 = is_block_a & constant_time_ge_8(j, c + 1);
+            is_past_c = is_block_a & constant_time_ge_8_s(j, c);
+            is_past_cp1 = is_block_a & constant_time_ge_8_s(j, c + 1);
             /*
              * If this is the block containing the end of the application
              * data, and we are at the offset for the 0x80 value, then
