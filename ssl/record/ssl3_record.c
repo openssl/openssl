@@ -1034,7 +1034,6 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
          * are hashing because that gives an attacker a timing-oracle.
          */
         /* Final param == not SSLv3 */
-        /* TODO(size_t): Convert this call */
         if (ssl3_cbc_digest_record(mac_ctx,
                                    md, &md_size,
                                    header, rec->input,
