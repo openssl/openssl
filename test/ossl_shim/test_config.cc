@@ -52,7 +52,6 @@ const Flag<bool> kBoolFlags[] = {
   { "-async", &TestConfig::async },
   { "-write-different-record-sizes",
     &TestConfig::write_different_record_sizes },
-  { "-cbc-record-splitting", &TestConfig::cbc_record_splitting },
   { "-partial-write", &TestConfig::partial_write },
   { "-no-tls13", &TestConfig::no_tls13 },
   { "-no-tls12", &TestConfig::no_tls12 },
@@ -65,10 +64,6 @@ const Flag<bool> kBoolFlags[] = {
   { "-expect-extended-master-secret",
     &TestConfig::expect_extended_master_secret },
   { "-implicit-handshake", &TestConfig::implicit_handshake },
-  { "-use-early-callback", &TestConfig::use_early_callback },
-  { "-fail-early-callback", &TestConfig::fail_early_callback },
-  { "-fail-ddos-callback", &TestConfig::fail_ddos_callback },
-  { "-fail-second-ddos-callback", &TestConfig::fail_second_ddos_callback },
   { "-handshake-never-done", &TestConfig::handshake_never_done },
   { "-use-export-context", &TestConfig::use_export_context },
   { "-expect-ticket-renewal", &TestConfig::expect_ticket_renewal },
@@ -94,7 +89,6 @@ const Flag<bool> kBoolFlags[] = {
     &TestConfig::use_old_client_cert_callback },
   { "-use-null-client-ca-list", &TestConfig::use_null_client_ca_list },
   { "-peek-then-read", &TestConfig::peek_then_read },
-  { "-enable-grease", &TestConfig::enable_grease },
 };
 
 const Flag<std::string> kStringFlags[] = {
@@ -119,9 +113,6 @@ const Flag<std::string> kStringFlags[] = {
 
 const Flag<std::string> kBase64Flags[] = {
   { "-expect-certificate-types", &TestConfig::expected_certificate_types },
-  { "-expect-ocsp-response", &TestConfig::expected_ocsp_response },
-  { "-expect-signed-cert-timestamps",
-    &TestConfig::expected_signed_cert_timestamps },
 };
 
 const Flag<int> kIntFlags[] = {
@@ -132,10 +123,6 @@ const Flag<int> kIntFlags[] = {
   { "-mtu", &TestConfig::mtu },
   { "-export-keying-material", &TestConfig::export_keying_material },
   { "-expect-total-renegotiations", &TestConfig::expect_total_renegotiations },
-  { "-expect-peer-signature-algorithm",
-    &TestConfig::expect_peer_signature_algorithm },
-  { "-expect-curve-id", &TestConfig::expect_curve_id },
-  { "-expect-dhe-group-size", &TestConfig::expect_dhe_group_size },
   { "-max-cert-list", &TestConfig::max_cert_list },
 };
 
