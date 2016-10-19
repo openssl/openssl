@@ -31,15 +31,6 @@ struct AsyncBio {
 };
 
 AsyncBio *GetData(BIO *bio) {
-  /*
-   * TODO: Missing accessor? This probably needs a BIO_get_method() in OpenSSL
-   *       For now skip this check
-   */
-#if 0
-  if (bio->method != &g_async_bio_method) {
-    return NULL;
-  }
-#endif
   return (AsyncBio *)BIO_get_data(bio);
 }
 
