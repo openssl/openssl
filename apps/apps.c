@@ -1251,11 +1251,13 @@ static ENGINE *try_load_engine(const char *engine)
     }
     return e;
 }
+#endif
 
 ENGINE *setup_engine(const char *engine, int debug)
 {
     ENGINE *e = NULL;
 
+#ifndef OPENSSL_NO_ENGINE
     if (engine) {
         if (strcmp(engine, "auto") == 0) {
             BIO_printf(bio_err, "enabling auto ENGINE support\n");
@@ -1281,9 +1283,9 @@ ENGINE *setup_engine(const char *engine, int debug)
 
         BIO_printf(bio_err, "engine \"%s\" set.\n", ENGINE_get_id(e));
     }
+#endif
     return e;
 }
-#endif
 
 void release_engine(ENGINE *e)
 {
