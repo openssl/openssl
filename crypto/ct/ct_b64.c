@@ -45,6 +45,11 @@ static int ct_base64_decode(const char *in, unsigned char **out)
         goto err;
     }
 
+    /* Subtract padding bytes from |outlen| */
+    while (in[--inlen] == '=') {
+        --outlen;
+    }
+
     *out = outbuf;
     return outlen;
 err:
