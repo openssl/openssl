@@ -614,7 +614,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int send)
         /* COMPRESS */
 
         if ((bs != 1) && send) {
-            i = bs - ((int)l % bs);
+            i = bs - (l % bs);
 
             /* we need to add 'i-1' padding bytes */
             l += i;
@@ -624,7 +624,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int send)
              */
             memset(&rec->input[rec->length], 0, i);
             rec->length += i;
-            rec->input[l - 1] = (i - 1);
+            rec->input[l - 1] = (unsigned char)(i - 1);
         }
 
         if (!send) {
@@ -634,7 +634,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int send)
         }
 
         /* TODO(size_t): Convert this call */
-        if (EVP_Cipher(ds, rec->data, rec->input, l) < 1)
+        if (EVP_Cipher(ds, rec->data, rec->input, (unsigned int)l) < 1)
             return -1;
 
         if (EVP_MD_CTX_md(s->read_hash) != NULL) {
@@ -767,8 +767,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
                 buf[ctr][8] = recs[ctr].type;
                 buf[ctr][9] = (unsigned char)(s->version >> 8);
                 buf[ctr][10] = (unsigned char)(s->version);
-                buf[ctr][11] = recs[ctr].length >> 8;
-                buf[ctr][12] = recs[ctr].length & 0xff;
+                buf[ctr][11] = (unsigned char)(recs[ctr].length >> 8);
+                buf[ctr][12] = (unsigned char)(recs[ctr].length & 0xff);
                 pad = EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_AEAD_TLS1_AAD,
                                           EVP_AEAD_TLS1_AAD_LEN, buf[ctr]);
                 if (pad <= 0)
@@ -780,14 +780,14 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
                 }
 
             } else if ((bs != 1) && send) {
-                padnum = bs - ((int)reclen[ctr] % bs);
+                padnum = bs - (reclen[ctr] % bs);
 
                 /* Add weird padding of upto 256 bytes */
 
                 if (padnum > MAX_PADDING)
                     return -1;
                 /* we need to add 'padnum' padding bytes of value padval */
-                padval = padnum - 1;
+                padval = (unsigned char)(padnum - 1);
                 for (loop = reclen[ctr]; loop < reclen[ctr] + padnum; loop++)
                     recs[ctr].input[loop] = padval;
                 reclen[ctr] += padnum;
@@ -807,7 +807,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
                 data[ctr] = recs[ctr].data;
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS,
-                                    n_recs, data) <= 0) {
+                                    (int)n_recs, data) <= 0) {
                 SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
             }
             /* Set the input buffers */
@@ -815,15 +815,17 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
                 data[ctr] = recs[ctr].input;
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_INPUT_BUFS,
-                                    n_recs, data) <= 0
+                                    (int)n_recs, data) <= 0
                 || EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_INPUT_LENS,
-                                       n_recs, reclen) <= 0) {
+                                       (int)n_recs, reclen) <= 0) {
                 SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
                 return -1;
             }
         }
 
-        tmpr = EVP_Cipher(ds, recs[0].data, recs[0].input, reclen[0]);
+        /* TODO(size_t): Convert this call */
+        tmpr = EVP_Cipher(ds, recs[0].data, recs[0].input,
+                          (unsigned int)reclen[0]);
         if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
              & EVP_CIPH_FLAG_CUSTOM_CIPHER)
             ? (tmpr < 0)
@@ -882,7 +884,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
     const EVP_MD_CTX *hash;
     unsigned char *p, rec_char;
     size_t md_size;
-    int npad;
+    size_t npad;
     int t;
 
     if (send) {
@@ -919,7 +921,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
          * total size.
          */
         unsigned char header[75];
-        unsigned j = 0;
+        size_t j = 0;
         memcpy(header + j, mac_sec, md_size);
         j += md_size;
         memcpy(header + j, ssl3_pad_1, npad);
@@ -927,8 +929,8 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
         memcpy(header + j, seq, 8);
         j += 8;
         header[j++] = rec->type;
-        header[j++] = rec->length >> 8;
-        header[j++] = rec->length & 0xff;
+        header[j++] = (unsigned char)(rec->length >> 8);
+        header[j++] = (unsigned char)(rec->length & 0xff);
 
         /* Final param == is SSLv3 */
         if (ssl3_cbc_digest_record(hash,
