@@ -86,18 +86,11 @@ struct TestState {
   BIO *async_bio = nullptr;
   // packeted_bio is the packeted BIO which simulates read timeouts.
   BIO *packeted_bio = nullptr;
-  bssl::UniquePtr<EVP_PKEY> channel_id;
   bool cert_ready = false;
   bssl::UniquePtr<SSL_SESSION> session;
-  bssl::UniquePtr<SSL_SESSION> pending_session;
-  bool early_callback_called = false;
   bool handshake_done = false;
   // private_key is the underlying private key used when testing custom keys.
   bssl::UniquePtr<EVP_PKEY> private_key;
-  std::vector<uint8_t> private_key_result;
-  // private_key_retries is the number of times an asynchronous private key
-  // operation has been retried.
-  unsigned private_key_retries = 0;
   bool got_new_session = false;
   bssl::UniquePtr<SSL_SESSION> new_session;
   bool ticket_decrypt_done = false;
