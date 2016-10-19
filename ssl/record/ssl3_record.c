@@ -1112,7 +1112,7 @@ int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
                             size_t block_size, size_t mac_size)
 {
     size_t padding_length;
-    unsigned good;
+    size_t good;
     const size_t overhead = 1 /* padding length byte */  + mac_size;
 
     /*
@@ -1122,11 +1122,11 @@ int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
         return 0;
 
     padding_length = rec->data[rec->length - 1];
-    good = constant_time_ge(rec->length, padding_length + overhead);
+    good = constant_time_ge_s(rec->length, padding_length + overhead);
     /* SSLv3 requires that the padding is minimal. */
-    good &= constant_time_ge(block_size, padding_length + 1);
+    good &= constant_time_ge_s(block_size, padding_length + 1);
     rec->length -= good & (padding_length + 1);
-    return constant_time_select_int(good, 1, -1);
+    return constant_time_select_int_s(good, 1, -1);
 }
 
 /*-
@@ -1146,7 +1146,7 @@ int tls1_cbc_remove_padding(const SSL *s,
                             SSL3_RECORD *rec,
                             size_t block_size, size_t mac_size)
 {
-    unsigned good;
+    size_t good;
     size_t padding_length, to_check, i;
     const size_t overhead = 1 /* padding length byte */  + mac_size;
     /* Check if version requires explicit IV */
@@ -1174,7 +1174,7 @@ int tls1_cbc_remove_padding(const SSL *s,
         return 1;
     }
 
-    good = constant_time_ge(rec->length, overhead + padding_length);
+    good = constant_time_ge_s(rec->length, overhead + padding_length);
     /*
      * The padding consists of a length byte at the end of the record and
      * then that many bytes of padding, all with the same value as the length
@@ -1189,7 +1189,7 @@ int tls1_cbc_remove_padding(const SSL *s,
         to_check = rec->length;
 
     for (i = 0; i < to_check; i++) {
-        unsigned char mask = constant_time_ge_8(padding_length, i);
+        unsigned char mask = constant_time_ge_8_s(padding_length, i);
         unsigned char b = rec->data[rec->length - 1 - i];
         /*
          * The final |padding_length+1| bytes should all have the value
@@ -1202,10 +1202,10 @@ int tls1_cbc_remove_padding(const SSL *s,
      * If any of the final |padding_length+1| bytes had the wrong value, one
      * or more of the lower eight bits of |good| will be cleared.
      */
-    good = constant_time_eq(0xff, good & 0xff);
+    good = constant_time_eq_s(0xff, good & 0xff);
     rec->length -= good & (padding_length + 1);
 
-    return constant_time_select_int(good, 1, -1);
+    return constant_time_select_int_s(good, 1, -1);
 }
 
 /*-
@@ -1248,9 +1248,9 @@ void ssl3_cbc_copy_mac(unsigned char *out,
      * MAC's position can only vary by 255 bytes.
      */
     size_t scan_start = 0;
-    unsigned i, j;
-    unsigned div_spoiler;
-    unsigned rotate_offset;
+    size_t i, j;
+    size_t div_spoiler;
+    size_t rotate_offset;
 
     OPENSSL_assert(rec->orig_len >= md_size);
     OPENSSL_assert(md_size <= EVP_MAX_MD_SIZE);
@@ -1276,11 +1276,11 @@ void ssl3_cbc_copy_mac(unsigned char *out,
 
     memset(rotated_mac, 0, md_size);
     for (i = scan_start, j = 0; i < rec->orig_len; i++) {
-        unsigned char mac_started = constant_time_ge_8(i, mac_start);
-        unsigned char mac_ended = constant_time_ge_8(i, mac_end);
+        unsigned char mac_started = constant_time_ge_8_s(i, mac_start);
+        unsigned char mac_ended = constant_time_ge_8_s(i, mac_end);
         unsigned char b = rec->data[i];
         rotated_mac[j++] |= b & mac_started & ~mac_ended;
-        j &= constant_time_lt(j, md_size);
+        j &= constant_time_lt_s(j, md_size);
     }
 
     /* Now rotate the MAC */
@@ -1290,17 +1290,17 @@ void ssl3_cbc_copy_mac(unsigned char *out,
         /* in case cache-line is 32 bytes, touch second line */
         ((volatile unsigned char *)rotated_mac)[rotate_offset ^ 32];
         out[j++] = rotated_mac[rotate_offset++];
-        rotate_offset &= constant_time_lt(rotate_offset, md_size);
+        rotate_offset &= constant_time_lt_s(rotate_offset, md_size);
     }
 #else
     memset(out, 0, md_size);
     rotate_offset = md_size - rotate_offset;
-    rotate_offset &= constant_time_lt(rotate_offset, md_size);
+    rotate_offset &= constant_time_lt_s(rotate_offset, md_size);
     for (i = 0; i < md_size; i++) {
         for (j = 0; j < md_size; j++)
-            out[j] |= rotated_mac[i] & constant_time_eq_8(j, rotate_offset);
+            out[j] |= rotated_mac[i] & constant_time_eq_8_s(j, rotate_offset);
         rotate_offset++;
-        rotate_offset &= constant_time_lt(rotate_offset, md_size);
+        rotate_offset &= constant_time_lt_s(rotate_offset, md_size);
     }
 #endif
 }
