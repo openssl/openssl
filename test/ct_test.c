@@ -61,30 +61,28 @@ static CT_TEST_FIXTURE set_up(const char *const test_case_name)
 {
     CT_TEST_FIXTURE fixture;
     int setup_ok = 1;
-    CTLOG_STORE *ctlog_store;
 
     memset(&fixture, 0, sizeof(fixture));
 
-    ctlog_store = CTLOG_STORE_new();
+    fixture.test_case_name = test_case_name;
+    fixture.epoch_time_in_ms = 1473269626000; /* Sep 7 17:33:46 2016 GMT */
+    fixture.ctlog_store = CTLOG_STORE_new();
 
-    if (ctlog_store == NULL) {
+    if (fixture.ctlog_store == NULL) {
         setup_ok = 0;
         fprintf(stderr, "Failed to create a new CT log store\n");
         goto end;
     }
 
-    if (CTLOG_STORE_load_default_file(ctlog_store) != 1) {
+    if (CTLOG_STORE_load_default_file(fixture.ctlog_store) != 1) {
         setup_ok = 0;
         fprintf(stderr, "Failed to load CT log list\n");
         goto end;
     }
 
-    fixture.test_case_name = test_case_name;
-    fixture.epoch_time_in_ms = 1473269626000; /* Sep 7 17:33:46 2016 GMT */
-    fixture.ctlog_store = ctlog_store;
-
 end:
     if (!setup_ok) {
+        CTLOG_STORE_free(fixture.ctlog_store);
         exit(EXIT_FAILURE);
     }
     return fixture;
@@ -515,21 +513,22 @@ static int test_encode_tls_sct()
     const char extensions[] = "";
     const char signature[] = "BAMARzBAMiBIL2dRrzXbplQ2vh/WZA89v5pBQpSVkkUwKI+j5"
             "eI+BgIhAOTtwNs6xXKx4vXoq2poBlOYfc9BAn3+/6EFUZ2J7b8I";
+    SCT *sct = NULL;
 
     SETUP_CT_TEST_FIXTURE();
 
-    STACK_OF(SCT) *sct_list = sk_SCT_new_null();
-    SCT *sct = SCT_new_from_base64(SCT_VERSION_V1, log_id,
-                                   CT_LOG_ENTRY_TYPE_X509, timestamp,
-                                   extensions, signature);
+    fixture.sct_list = sk_SCT_new_null();
+    sct = SCT_new_from_base64(SCT_VERSION_V1, log_id,
+                              CT_LOG_ENTRY_TYPE_X509, timestamp,
+                              extensions, signature);
 
     if (sct == NULL) {
+        tear_down(fixture);
         fprintf(stderr, "Failed to create SCT from base64-encoded test data\n");
         return 0;
     }
 
-    sk_SCT_push(sct_list, sct);
-    fixture.sct_list = sct_list;
+    sk_SCT_push(fixture.sct_list, sct);
     fixture.sct_dir = ct_dir;
     fixture.sct_text_file = "tls1.sct";
     EXECUTE_CT_TEST();
