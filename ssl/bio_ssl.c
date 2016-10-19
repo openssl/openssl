@@ -103,12 +103,7 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 
     BIO_clear_retry_flags(b);
 
-    if (size > INT_MAX)
-        size = INT_MAX;
-
-    ret = SSL_read(ssl, buf, size);
-    if (ret > 0)
-        *readbytes = ret;
+    ret = SSL_read_ex(ssl, buf, size, readbytes);
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
