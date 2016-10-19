@@ -741,7 +741,7 @@ typedef enum PROTOCOL_choice {
     PROTO_CONNECT,
     PROTO_IRC,
     PROTO_POSTGRES,
-    PROTO_LDAP,
+    PROTO_LDAP
 } PROTOCOL_CHOICE;
 
 static const OPT_PAIR services[] = {
