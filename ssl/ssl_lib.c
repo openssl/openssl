@@ -80,7 +80,7 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
 struct ssl_async_args {
     SSL *s;
     void *buf;
-    int num;
+    size_t num;
     enum { READFUNC, WRITEFUNC, OTHERFUNC } type;
     union {
         int (*func_read) (SSL *, void *, size_t, size_t *);
@@ -318,14 +318,14 @@ static int dane_tlsa_add(SSL_DANE *dane,
     t->usage = usage;
     t->selector = selector;
     t->mtype = mtype;
-    t->data = OPENSSL_malloc(ilen);
+    t->data = OPENSSL_malloc(dlen);
     if (t->data == NULL) {
         tlsa_free(t);
         SSLerr(SSL_F_DANE_TLSA_ADD, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    memcpy(t->data, data, ilen);
-    t->dlen = ilen;
+    memcpy(t->data, data, dlen);
+    t->dlen = dlen;
 
     /* Validate and cache full certificate or public key */
     if (mtype == DANETLS_MATCHING_FULL) {
@@ -335,7 +335,7 @@ static int dane_tlsa_add(SSL_DANE *dane,
 
         switch (selector) {
         case DANETLS_SELECTOR_CERT:
-            if (!d2i_X509(&cert, &p, dlen) || p < data ||
+            if (!d2i_X509(&cert, &p, ilen) || p < data ||
                 dlen != (size_t)(p - data)) {
                 tlsa_free(t);
                 SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_BAD_CERTIFICATE);
@@ -370,7 +370,7 @@ static int dane_tlsa_add(SSL_DANE *dane,
             break;
 
         case DANETLS_SELECTOR_SPKI:
-            if (!d2i_PUBKEY(&pkey, &p, dlen) || p < data ||
+            if (!d2i_PUBKEY(&pkey, &p, ilen) || p < data ||
                 dlen != (size_t)(p - data)) {
                 tlsa_free(t);
                 SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_BAD_PUBLIC_KEY);
@@ -1304,7 +1304,7 @@ int SSL_pending(const SSL *s)
      * SSL_pending also cannot work properly if the value >INT_MAX. In that case
      * we just return INT_MAX.
      */
-    return pending < INT_MAX ? pending : INT_MAX;
+    return pending < INT_MAX ? (int)pending : INT_MAX;
 }
 
 int SSL_has_pending(const SSL *s)
@@ -1382,7 +1382,7 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
     CRYPTO_atomic_add(&f->cert->references, 1, &i, f->cert->lock);
     ssl_cert_free(t->cert);
     t->cert = f->cert;
-    if (!SSL_set_session_id_context(t, f->sid_ctx, f->sid_ctx_length)) {
+    if (!SSL_set_session_id_context(t, f->sid_ctx, (int)f->sid_ctx_length)) {
         return 0;
     }
 
@@ -1513,7 +1513,7 @@ static int ssl_io_intern(void *vargs)
     struct ssl_async_args *args;
     SSL *s;
     void *buf;
-    int num;
+    size_t num;
 
     args = (struct ssl_async_args *)vargs;
     s = args->s;
@@ -1767,11 +1767,13 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_CLEAR_MODE:
         return (s->mode &= ~larg);
     case SSL_CTRL_GET_MAX_CERT_LIST:
-        return (s->max_cert_list);
+        return (long)(s->max_cert_list);
     case SSL_CTRL_SET_MAX_CERT_LIST:
-        l = s->max_cert_list;
-        s->max_cert_list = larg;
-        return (l);
+        if (larg < 0)
+            return 0;
+        l = (long)s->max_cert_list;
+        s->max_cert_list = (size_t)larg;
+        return l;
     case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
@@ -1879,18 +1881,22 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return 1;
 
     case SSL_CTRL_GET_MAX_CERT_LIST:
-        return (ctx->max_cert_list);
+        return (long)(ctx->max_cert_list);
     case SSL_CTRL_SET_MAX_CERT_LIST:
-        l = ctx->max_cert_list;
-        ctx->max_cert_list = larg;
-        return (l);
+        if (larg < 0)
+            return 0;
+        l = (long)ctx->max_cert_list;
+        ctx->max_cert_list = (size_t)larg;
+        return l;
 
     case SSL_CTRL_SET_SESS_CACHE_SIZE:
-        l = ctx->session_cache_size;
-        ctx->session_cache_size = larg;
-        return (l);
+        if (larg < 0)
+            return 0;
+        l = (long)ctx->session_cache_size;
+        ctx->session_cache_size = (size_t)larg;
+        return l;
     case SSL_CTRL_GET_SESS_CACHE_SIZE:
-        return (ctx->session_cache_size);
+        return (long)(ctx->session_cache_size);
     case SSL_CTRL_SET_SESS_CACHE_MODE:
         l = ctx->session_cache_mode;
         ctx->session_cache_mode = larg;
@@ -2249,7 +2255,7 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
     if (!*data) {
         *len = 0;
     } else {
-        *len = s->next_proto_negotiated_len;
+        *len = (unsigned int)s->next_proto_negotiated_len;
     }
 }
 
@@ -2366,7 +2372,7 @@ void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
     if (*data == NULL)
         *len = 0;
     else
-        *len = ssl->s3->alpn_selected_len;
+        *len = (unsigned int)ssl->s3->alpn_selected_len;
 }
 
 int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
@@ -3227,7 +3233,8 @@ SSL *SSL_dup(SSL *s)
                 goto err;
         }
 
-        if (!SSL_set_session_id_context(ret, s->sid_ctx, s->sid_ctx_length))
+        if (!SSL_set_session_id_context(ret, s->sid_ctx,
+                                        (int)s->sid_ctx_length))
             goto err;
     }
 
@@ -4068,7 +4075,7 @@ static int ct_extract_ocsp_response_scts(SSL *s)
         goto err;
 
     p = s->tlsext_ocsp_resp;
-    rsp = d2i_OCSP_RESPONSE(NULL, &p, s->tlsext_ocsp_resplen);
+    rsp = d2i_OCSP_RESPONSE(NULL, &p, (int)s->tlsext_ocsp_resplen);
     if (rsp == NULL)
         goto err;
 

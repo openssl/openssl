@@ -73,7 +73,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
     ssl_names_count = cnt;
     for (i = 0; i < ssl_names_count; i++) {
         struct ssl_conf_name *ssl_name = ssl_names + i;
-        CONF_VALUE *sect = sk_CONF_VALUE_value(cmd_lists, i);
+        CONF_VALUE *sect = sk_CONF_VALUE_value(cmd_lists, (int)i);
         STACK_OF(CONF_VALUE) *cmds = NCONF_get_section(cnf, sect->value);
         if (sk_CONF_VALUE_num(cmds) <= 0) {
             if (cmds == NULL)
@@ -94,7 +94,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
         ssl_name->cmd_count = cnt;
         for (j = 0; j < cnt; j++) {
             const char *name;
-            CONF_VALUE *cmd_conf = sk_CONF_VALUE_value(cmds, j);
+            CONF_VALUE *cmd_conf = sk_CONF_VALUE_value(cmds, (int)j);
             struct ssl_conf_cmd *cmd = ssl_name->cmds + j;
             /* Skip any initial dot in name */
             name = strchr(cmd_conf->name, '.');

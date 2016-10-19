@@ -102,7 +102,7 @@ static void ssl_session_oinit(ASN1_OCTET_STRING **dest, ASN1_OCTET_STRING *os,
                               unsigned char *data, size_t len)
 {
     os->data = data;
-    os->length = len;
+    os->length = (int)len;
     os->flags = 0;
     *dest = os;
 }

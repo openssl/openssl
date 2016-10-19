@@ -439,7 +439,7 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
 
     if ((sender != NULL && EVP_DigestUpdate(ctx, sender, len) <= 0)
         || EVP_MD_CTX_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                           s->session->master_key_length,
+                           (int)s->session->master_key_length,
                            s->session->master_key) <= 0
         || EVP_DigestFinal_ex(ctx, p, NULL) <= 0) {
         SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, ERR_R_INTERNAL_ERROR);

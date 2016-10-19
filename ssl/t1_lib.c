@@ -246,7 +246,7 @@ int tls1_ec_nid2curve_id(int nid)
     size_t i;
     for (i = 0; i < OSSL_NELEM(nid_list); i++) {
         if (nid_list[i].nid == nid)
-            return i + 1;
+            return (int)(i + 1);
     }
     return 0;
 }
@@ -1151,7 +1151,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 #endif                          /* OPENSSL_NO_EC */
 
     if (tls_use_ticket(s)) {
-        int ticklen;
+        size_t ticklen;
         if (!s->new_session && s->session && s->session->tlsext_tick)
             ticklen = s->session->tlsext_ticklen;
         else if (s->session && s->tlsext_session_ticket &&
@@ -1663,7 +1663,7 @@ static int tls1_alpn_handle_client_hello_late(SSL *s, int *al)
     if (s->ctx->alpn_select_cb != NULL && s->s3->alpn_proposed != NULL) {
         int r = s->ctx->alpn_select_cb(s, &selected, &selected_len,
                                        s->s3->alpn_proposed,
-                                       s->s3->alpn_proposed_len,
+                                       (unsigned int)s->s3->alpn_proposed_len,
                                        s->ctx->alpn_select_cb_arg);
 
         if (r == SSL_TLSEXT_ERR_OK) {
@@ -1825,7 +1825,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
 
         if (s->tlsext_debug_cb)
             s->tlsext_debug_cb(s, 0, type, PACKET_data(&extension),
-                               PACKET_remaining(&extension),
+                               (int)PACKET_remaining(&extension),
                                s->tlsext_debug_arg);
 
         if (type == TLSEXT_TYPE_renegotiate) {
@@ -1977,7 +1977,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
         else if (type == TLSEXT_TYPE_session_ticket) {
             if (s->tls_session_ticket_ext_cb &&
                 !s->tls_session_ticket_ext_cb(s, PACKET_data(&extension),
-                                              PACKET_remaining(&extension),
+                                              (int)PACKET_remaining(&extension),
                                               s->tls_session_ticket_ext_cb_arg))
             {
                 *al = TLS1_AD_INTERNAL_ERROR;
@@ -2039,8 +2039,9 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                     }
 
                     id_data = PACKET_data(&responder_id);
+                    /* TODO(size_t): Convert d2i_* to size_t */
                     id = d2i_OCSP_RESPID(NULL, &id_data,
-                                         PACKET_remaining(&responder_id));
+                                         (int)PACKET_remaining(&responder_id));
                     if (id == NULL)
                         return 0;
 
@@ -2066,7 +2067,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                                                X509_EXTENSION_free);
                     s->tlsext_ocsp_exts =
                         d2i_X509_EXTENSIONS(NULL, &ext_data,
-                                            PACKET_remaining(&exts));
+                                            (int)PACKET_remaining(&exts));
                     if (s->tlsext_ocsp_exts == NULL
                         || ext_data != PACKET_end(&exts)) {
                         return 0;
@@ -2961,7 +2962,8 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     SSL_SESSION *sess;
     unsigned char *sdec;
     const unsigned char *p;
-    int slen, mlen, renew_ticket = 0, ret = -1;
+    int slen, renew_ticket = 0, ret = -1, declen;
+    size_t mlen;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
     EVP_CIPHER_CTX *ctx;
@@ -3009,14 +3011,13 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      * Attempt to process session ticket, first conduct sanity and integrity
      * checks on ticket.
      */
-    /* TODO(size_t) : convert me */
     mlen = HMAC_size(hctx);
-    if (mlen < 0) {
+    if (mlen == 0) {
         goto err;
     }
     /* Sanity check ticket length: must exceed keyname + IV + HMAC */
     if (eticklen <=
-        TLSEXT_KEYNAME_LENGTH + EVP_CIPHER_CTX_iv_length(ctx) + (size_t)mlen) {
+        TLSEXT_KEYNAME_LENGTH + EVP_CIPHER_CTX_iv_length(ctx) + mlen) {
         ret = 2;
         goto err;
     }
@@ -3036,17 +3037,18 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     p = etick + 16 + EVP_CIPHER_CTX_iv_length(ctx);
     eticklen -= 16 + EVP_CIPHER_CTX_iv_length(ctx);
     sdec = OPENSSL_malloc(eticklen);
-    if (sdec == NULL || EVP_DecryptUpdate(ctx, sdec, &slen, p, eticklen) <= 0) {
+    if (sdec == NULL || EVP_DecryptUpdate(ctx, sdec, &slen, p,
+                                          (int)eticklen) <= 0) {
         EVP_CIPHER_CTX_free(ctx);
         OPENSSL_free(sdec);
         return -1;
     }
-    if (EVP_DecryptFinal(ctx, sdec + slen, &mlen) <= 0) {
+    if (EVP_DecryptFinal(ctx, sdec + slen, &declen) <= 0) {
         EVP_CIPHER_CTX_free(ctx);
         OPENSSL_free(sdec);
         return 2;
     }
-    slen += mlen;
+    slen += declen;
     EVP_CIPHER_CTX_free(ctx);
     ctx = NULL;
     p = sdec;
@@ -3327,9 +3329,9 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
 }
 
 /* Given preference and allowed sigalgs set shared sigalgs */
-static int tls12_shared_sigalgs(SSL *s, TLS_SIGALGS *shsig,
-                                const unsigned char *pref, size_t preflen,
-                                const unsigned char *allow, size_t allowlen)
+static size_t tls12_shared_sigalgs(SSL *s, TLS_SIGALGS *shsig,
+                                   const unsigned char *pref, size_t preflen,
+                                   const unsigned char *allow, size_t allowlen)
 {
     const unsigned char *ptmp, *atmp;
     size_t i, j, nmatch = 0;
@@ -3491,7 +3493,8 @@ int SSL_get_sigalgs(SSL *s, int idx,
                     unsigned char *rsig, unsigned char *rhash)
 {
     const unsigned char *psig = s->s3->tmp.peer_sigalgs;
-    if (psig == NULL)
+    size_t numsigalgs = s->s3->tmp.peer_sigalgslen / 2;
+    if (psig == NULL || numsigalgs > INT_MAX)
         return 0;
     if (idx >= 0) {
         idx <<= 1;
@@ -3504,7 +3507,7 @@ int SSL_get_sigalgs(SSL *s, int idx,
             *rsig = psig[1];
         tls1_lookup_sigalg(phash, psign, psignhash, psig);
     }
-    return s->s3->tmp.peer_sigalgslen / 2;
+    return (int)numsigalgs;
 }
 
 int SSL_get_shared_sigalgs(SSL *s, int idx,
@@ -3512,7 +3515,8 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
                            unsigned char *rsig, unsigned char *rhash)
 {
     TLS_SIGALGS *shsigalgs = s->cert->shared_sigalgs;
-    if (!shsigalgs || idx >= (int)s->cert->shared_sigalgslen)
+    if (!shsigalgs || idx >= (int)s->cert->shared_sigalgslen
+            || s->cert->shared_sigalgslen > INT_MAX)
         return 0;
     shsigalgs += idx;
     if (phash)
@@ -3525,7 +3529,7 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
         *rsig = shsigalgs->rsign;
     if (rhash)
         *rhash = shsigalgs->rhash;
-    return s->cert->shared_sigalgslen;
+    return (int)s->cert->shared_sigalgslen;
 }
 
 #define MAX_SIGALGLEN   (TLSEXT_hash_num * TLSEXT_signature_num * 2)
@@ -3698,7 +3702,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         /* idx == -2 means checking client certificate chains */
         if (idx == -2) {
             cpk = c->key;
-            idx = cpk - c->pkeys;
+            idx = (int)(cpk - c->pkeys);
         } else
             cpk = c->pkeys + idx;
         pvalid = s->s3->tmp.valid_flags + idx;

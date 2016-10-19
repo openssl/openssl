@@ -390,11 +390,10 @@ int dtls_get_message(SSL *s, int *mt, size_t *len)
  * permitted in a DTLS handshake message for |s|. The minimum is 16KB, but
  * may be greater if the maximum certificate list size requires it.
  */
-static unsigned long dtls1_max_handshake_message_len(const SSL *s)
+static size_t dtls1_max_handshake_message_len(const SSL *s)
 {
-    unsigned long max_len =
-        DTLS1_HM_HEADER_LENGTH + SSL3_RT_MAX_ENCRYPTED_LENGTH;
-    if (max_len < (unsigned long)s->max_cert_list)
+    size_t max_len = DTLS1_HM_HEADER_LENGTH + SSL3_RT_MAX_ENCRYPTED_LENGTH;
+    if (max_len < s->max_cert_list)
         return s->max_cert_list;
     return max_len;
 }
