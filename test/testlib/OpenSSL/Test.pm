@@ -301,68 +301,76 @@ calculated before we moved into the directory "foo".
 sub cmd {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my $num = shift;
-                 # Make a copy to not destroy the caller's array
-                 my @cmdargs = ( @$cmd );
-                 my @prog = __wrap_cmd(shift @cmdargs,
-                                       $opts{exe_shell} // ());
+    return sub {
+        my $num = shift;
+        # Make a copy to not destroy the caller's array
+        my @cmdargs = ( @$cmd );
+        my @prog = __wrap_cmd(shift @cmdargs, $opts{exe_shell} // ());
 
-                 return __decorate_cmd($num, [ @prog, quotify(@cmdargs) ],
-                                       %opts); }
+        return __decorate_cmd($num, [ @prog, quotify(@cmdargs) ],
+                              %opts);
+    }
 }
 
 sub app {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my @cmdargs = ( @{$cmd} );
-                 my @prog = __fixup_prg(__apps_file(shift @cmdargs,
-                                                    __exeext()));
-                 return cmd([ @prog, @cmdargs ],
-                            exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift); }
+    return sub {
+        my @cmdargs = ( @{$cmd} );
+        my @prog = __fixup_prg(__apps_file(shift @cmdargs, __exeext()));
+        return cmd([ @prog, @cmdargs ],
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+    }
 }
 
 sub fuzz {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my @cmdargs = ( @{$cmd} );
-                 my @prog = __fixup_prg(__fuzz_file(shift @cmdargs,
-                                                    __exeext()));
-                 return cmd([ @prog, @cmdargs ],
-                            exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift); }
+    return sub {
+        my @cmdargs = ( @{$cmd} );
+        my @prog = __fixup_prg(__fuzz_file(shift @cmdargs, __exeext()));
+        return cmd([ @prog, @cmdargs ],
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+    }
 }
 
 sub test {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my @cmdargs = ( @{$cmd} );
-                 my @prog = __fixup_prg(__test_file(shift @cmdargs,
-                                                    __exeext()));
-                 return cmd([ @prog, @cmdargs ],
-                            exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift); }
+    return sub {
+        my @cmdargs = ( @{$cmd} );
+        my @prog = __fixup_prg(__test_file(shift @cmdargs, __exeext()));
+        return cmd([ @prog, @cmdargs ],
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+    }
 }
 
 sub perlapp {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my @interpreter_args = defined $opts{interpreter_args} ?
-                     @{$opts{interpreter_args}} : ();
-                 my @interpreter = __fixup_prg($^X);
-                 my @cmdargs = ( @{$cmd} );
-                 my @prog = __apps_file(shift @cmdargs, undef);
-                 return cmd([ @interpreter, @interpreter_args,
-                              @prog, @cmdargs ], %opts) -> (shift); }
+    return sub {
+        my @interpreter_args = defined $opts{interpreter_args} ?
+            @{$opts{interpreter_args}} : ();
+        my @interpreter = __fixup_prg($^X);
+        my @cmdargs = ( @{$cmd} );
+        my @prog = __apps_file(shift @cmdargs, undef);
+        return cmd([ @interpreter, @interpreter_args,
+                     @prog, @cmdargs ], %opts) -> (shift);
+    }
 }
 
 sub perltest {
     my $cmd = shift;
     my %opts = @_;
-    return sub { my @interpreter_args = defined $opts{interpreter_args} ?
-                     @{$opts{interpreter_args}} : ();
-                 my @interpreter = __fixup_prg($^X);
-                 my @cmdargs = ( @{$cmd} );
-                 my @prog = __test_file(shift @cmdargs, undef);
-                 return cmd([ @interpreter, @interpreter_args,
-                              @prog, @cmdargs ], %opts) -> (shift); }
+    return sub {
+        my @interpreter_args = defined $opts{interpreter_args} ?
+            @{$opts{interpreter_args}} : ();
+        my @interpreter = __fixup_prg($^X);
+        my @cmdargs = ( @{$cmd} );
+        my @prog = __test_file(shift @cmdargs, undef);
+        return cmd([ @interpreter, @interpreter_args,
+                     @prog, @cmdargs ], %opts) -> (shift);
+    }
 }
 
 =over 4
