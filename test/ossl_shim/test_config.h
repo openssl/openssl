@@ -35,7 +35,6 @@ struct TestConfig {
   std::string select_next_proto;
   bool async = false;
   bool write_different_record_sizes = false;
-  bool cbc_record_splitting = false;
   bool partial_write = false;
   bool no_tls13 = false;
   bool no_tls12 = false;
@@ -54,16 +53,10 @@ struct TestConfig {
   std::string psk;
   std::string psk_identity;
   std::string srtp_profiles;
-  std::string expected_ocsp_response;
-  std::string expected_signed_cert_timestamps;
   int min_version = 0;
   int max_version = 0;
   int mtu = 0;
   bool implicit_handshake = false;
-  bool use_early_callback = false;
-  bool fail_early_callback = false;
-  bool fail_ddos_callback = false;
-  bool fail_second_ddos_callback = false;
   std::string cipher;
   bool handshake_never_done = false;
   int export_keying_material = 0;
@@ -85,16 +78,12 @@ struct TestConfig {
   bool expect_verify_result = false;
   int expect_total_renegotiations = 0;
   bool renegotiate_freely = false;
-  int expect_peer_signature_algorithm = 0;
   bool p384_only = false;
   bool enable_all_curves = false;
   bool use_sparse_dh_prime = false;
-  int expect_curve_id = 0;
-  int expect_dhe_group_size = 0;
   bool use_old_client_cert_callback = false;
   bool use_null_client_ca_list = false;
   bool peek_then_read = false;
-  bool enable_grease = false;
   int max_cert_list = 0;
 };
 
