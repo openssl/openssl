@@ -430,12 +430,9 @@ __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 
 #endif
 
-# ifdef OPENSSL_NO_ENGINE
-#  define setup_engine(engine, debug) NULL
-# else
 ENGINE *setup_engine(const char *engine, int debug);
-# endif
 void release_engine(ENGINE *e);
+
 # ifndef OPENSSL_NO_OCSP
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
                                  const char *host, const char *path,
