@@ -340,7 +340,7 @@ static int CertCallback(SSL *ssl, void *arg) {
   }
 
   // The certificate will be installed via other means.
-  if (!config->async || config->use_early_callback ||
+  if (!config->async ||
       config->use_old_client_cert_callback) {
     return 1;
   }
@@ -890,8 +890,7 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     return false;
   }
   // Install the certificate synchronously if nothing else will handle it.
-  if (!config->use_early_callback &&
-      !config->use_old_client_cert_callback &&
+  if (!config->use_old_client_cert_callback &&
       !config->async &&
       !InstallCertificate(ssl.get())) {
     return false;
