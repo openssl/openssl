@@ -515,8 +515,8 @@ static int test_encode_tls_sct()
     const char log_id[] = "3xwuwRUAlFJHqWFoMl3cXHlZ6PfG04j8AC4LvT9012Q=";
     const uint64_t timestamp = 1;
     const char extensions[] = "";
-    const char signature[] = "RQIgSC9nUa8126ZUNr4f1mQPPb+aQUKUlZJFMCiPo+XiPgY"
-        "CIQDk7cDbOsVyseL16KtqaAZTmH3PQQJ9/v+hBVGdie2/CA==";
+    const char signature[] = "BAMARzBAMiBIL2dRrzXbplQ2vh/WZA89v5pBQpSVkkUwKI+j5"
+            "eI+BgIhAOTtwNs6xXKx4vXoq2poBlOYfc9BAn3+/6EFUZ2J7b8I";
 
     SETUP_CT_TEST_FIXTURE();
 
