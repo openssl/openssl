@@ -319,9 +319,7 @@ int MAIN(int argc, char **argv)
 #define BSIZE 256
     MS_STATIC char buf[3][BSIZE];
     char *randfile = NULL;
-#ifndef OPENSSL_NO_ENGINE
     char *engine = NULL;
-#endif
     char *tofree = NULL;
     DB_ATTR db_attr;
 
@@ -595,9 +593,7 @@ int MAIN(int argc, char **argv)
     if (!load_config(bio_err, conf))
         goto err;
 
-#ifndef OPENSSL_NO_ENGINE
     e = setup_engine(bio_err, engine, 0);
-#endif
 
     /* Lets get the config section we are using */
     if (section == NULL) {
@@ -1485,10 +1481,7 @@ int MAIN(int argc, char **argv)
     X509_CRL_free(crl);
     NCONF_free(conf);
     NCONF_free(extconf);
-#ifndef OPENSSL_NO_ENGINE
-    if (e != NULL)
-        release_engine(e);
-#endif
+    release_engine(e);
     OBJ_cleanup();
     apps_shutdown();
     OPENSSL_EXIT(ret);
