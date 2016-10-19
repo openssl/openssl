@@ -254,11 +254,6 @@ err:
     return -1;
 }
 
-void SCT_LIST_free(STACK_OF(SCT) *a)
-{
-    sk_SCT_pop_free(a, SCT_free);
-}
-
 STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
                             size_t len)
 {
