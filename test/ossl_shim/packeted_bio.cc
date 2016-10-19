@@ -58,12 +58,6 @@ struct PacketedBio {
 };
 
 PacketedBio *GetData(BIO *bio) {
-#if 0
-  /* Missing accessor BIO_get_method()?? Disabled for now */
-  if (bio->method != &g_packeted_bio_method) {
-    return NULL;
-  }
-#endif
   return (PacketedBio *)BIO_get_data(bio);
 }
 
