@@ -556,6 +556,7 @@ int BIO_read(BIO *b, void *data, int len);
 int BIO_read_ex(BIO *b, void *out, size_t outl, size_t *read);
 int BIO_gets(BIO *bp, char *buf, int size);
 int BIO_write(BIO *b, const void *data, int len);
+int BIO_write_ex(BIO *b, const void *in, size_t inl, size_t *written);
 int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
@@ -743,8 +744,12 @@ __bio_h__attr__((__format__(__printf__, 3, 0)));
 BIO_METHOD *BIO_meth_new(int type, const char *name);
 void BIO_meth_free(BIO_METHOD *biom);
 int (*BIO_meth_get_write(BIO_METHOD *biom)) (BIO *, const char *, int);
+int (*BIO_meth_get_write_ex(BIO_METHOD *biom)) (BIO *, const char *, size_t,
+                                                size_t *);
 int BIO_meth_set_write(BIO_METHOD *biom,
                        int (*write) (BIO *, const char *, int));
+int BIO_meth_set_write_ex(BIO_METHOD *biom,
+                       int (*bwrite) (BIO *, const char *, size_t, size_t *));
 int (*BIO_meth_get_read(BIO_METHOD *biom)) (BIO *, char *, int);
 int (*BIO_meth_get_read_ex(BIO_METHOD *biom)) (BIO *, char *, size_t, size_t *);
 int BIO_meth_set_read(BIO_METHOD *biom,
@@ -812,6 +817,7 @@ int ERR_load_BIO_strings(void);
 # define BIO_F_BIO_SOCK_INFO                              141
 # define BIO_F_BIO_SOCK_INIT                              112
 # define BIO_F_BIO_WRITE                                  113
+# define BIO_F_BIO_WRITE_EX                               119
 # define BIO_F_BUFFER_CTRL                                114
 # define BIO_F_CONN_CTRL                                  127
 # define BIO_F_CONN_STATE                                 115

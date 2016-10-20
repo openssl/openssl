@@ -73,6 +73,8 @@ static void get_current_time(struct timeval *t);
 static const BIO_METHOD methods_dgramp = {
     BIO_TYPE_DGRAM,
     "datagram socket",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     dgram_write,
     /* TODO: Convert to new style read function */
     bread_conv,
