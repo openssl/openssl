@@ -17,7 +17,7 @@ BIO_s_socket, BIO_new_socket - socket BIO
 BIO_s_socket() returns the socket BIO method. This is a wrapper
 round the platform's socket routines.
 
-BIO_read() and BIO_write() read or write the underlying socket.
+BIO_read_ex() and BIO_write_ex() read or write the underlying socket.
 BIO_puts() is supported but BIO_gets() is not.
 
 If the close flag is set then the socket is shut down and closed
