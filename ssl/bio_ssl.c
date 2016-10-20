@@ -16,7 +16,7 @@
 #include <openssl/err.h>
 #include "ssl_locl.h"
 
-static int ssl_write(BIO *h, const char *buf, int num);
+static int ssl_write(BIO *h, const char *buf, size_t num, size_t *written);
 static int ssl_read(BIO *b, char *out, size_t outl, size_t *read);
 static int ssl_puts(BIO *h, const char *str);
 static long ssl_ctrl(BIO *h, int cmd, long arg1, void *arg2);
@@ -36,6 +36,7 @@ typedef struct bio_ssl_st {
 static const BIO_METHOD methods_sslp = {
     BIO_TYPE_SSL, "ssl",
     ssl_write,
+    NULL,
     ssl_read,
     NULL,
     ssl_puts,
@@ -106,13 +107,15 @@ static int ssl_read(BIO *b, char *out, size_t outl, size_t *read)
         return -1;
 
     ret = SSL_read(ssl, out, outl);
+    if (ret > 0)
+        *read = ret;
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
         if (ret <= 0)
             break;
         if (sb->renegotiate_count > 0) {
-            sb->byte_count += ret;
+            sb->byte_count += *read;
             if (sb->byte_count > sb->renegotiate_count) {
                 sb->byte_count = 0;
                 sb->num_renegotiates++;
@@ -159,15 +162,10 @@ static int ssl_read(BIO *b, char *out, size_t outl, size_t *read)
 
     BIO_set_retry_reason(b, retry_reason);
 
-    if (ret < 0)
-        return ret;
-
-    *read = (size_t)ret;
-
-    return 1;
+    return ret;
 }
 
-static int ssl_write(BIO *b, const char *out, int outl)
+static int ssl_write(BIO *b, const char *out, size_t outl, size_t *written)
 {
     int ret, r = 0;
     int retry_reason = 0;
@@ -181,9 +179,9 @@ static int ssl_write(BIO *b, const char *out, int outl)
 
     BIO_clear_retry_flags(b);
 
-    /*
-     * ret=SSL_do_handshake(ssl); if (ret > 0)
-     */
+    if (outl > INT_MAX)
+        return 0;
+
     ret = SSL_write(ssl, out, outl);
 
     switch (SSL_get_error(ssl, ret)) {
@@ -230,6 +228,12 @@ static int ssl_write(BIO *b, const char *out, int outl)
     }
 
     BIO_set_retry_reason(b, retry_reason);
+
+    if (ret > 0) {
+        *written = ret;
+        ret = 1;
+    }
+
     return ret;
 }
 

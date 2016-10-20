@@ -51,6 +51,8 @@ static int file_free(BIO *data);
 static const BIO_METHOD methods_filep = {
     BIO_TYPE_FILE,
     "FILE pointer",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     file_write,
     /* TODO: Convert to new style read function */
     bread_conv,

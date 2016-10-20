@@ -12,7 +12,8 @@
 struct bio_method_st {
     int type;
     const char *name;
-    int (*bwrite) (BIO *, const char *, int);
+    int (*bwrite) (BIO *, const char *, size_t, size_t *);
+    int (*bwrite_old) (BIO *, const char *, int);
     int (*bread) (BIO *, char *, size_t, size_t *);
     int (*bread_old) (BIO *, char *, int);
     int (*bputs) (BIO *, const char *);
@@ -28,4 +29,5 @@ void bio_cleanup(void);
 
 
 /* Old style to new style BIO_METHOD conversion functions */
+int bwrite_conv(BIO *bio, const char *in, size_t inl, size_t *written);
 int bread_conv(BIO *bio, char *out, size_t outl, size_t *read);

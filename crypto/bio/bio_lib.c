@@ -284,35 +284,54 @@ int BIO_read_ex(BIO *b, void *out, size_t outl, size_t *read)
 
 int BIO_write(BIO *b, const void *in, int inl)
 {
-    int i;
-    long (*cb) (BIO *, int, const char *, int, long, long);
+    size_t written;
+    int ret;
+
+    if (inl < 0)
+        return 0;
+
+    ret = BIO_write_ex(b, in, (size_t)inl, &written);
+
+    if (ret > 0) {
+        /* *written should always be <= inl */
+        ret = (int)written;
+    }
+
+    return ret;
+}
+
+int BIO_write_ex(BIO *b, const void *in, size_t inl, size_t *written)
+{
+    int ret;
 
     if (b == NULL)
         return (0);
 
-    cb = b->callback;
     if ((b->method == NULL) || (b->method->bwrite == NULL)) {
-        BIOerr(BIO_F_BIO_WRITE, BIO_R_UNSUPPORTED_METHOD);
+        BIOerr(BIO_F_BIO_WRITE_EX, BIO_R_UNSUPPORTED_METHOD);
         return (-2);
     }
 
-    if ((cb != NULL) &&
-        ((i = (int)cb(b, BIO_CB_WRITE, in, inl, 0L, 1L)) <= 0))
-        return (i);
+    if ((b->callback != NULL || b->callback_ex != NULL) &&
+        ((ret = bio_call_callback(b, BIO_CB_WRITE, in, inl, 0, 0L, 1L, written,
+                                  NULL)) <= 0))
+        return ret;
 
     if (!b->init) {
-        BIOerr(BIO_F_BIO_WRITE, BIO_R_UNINITIALIZED);
-        return (-2);
+        BIOerr(BIO_F_BIO_WRITE_EX, BIO_R_UNINITIALIZED);
+        return -2;
     }
 
-    i = b->method->bwrite(b, in, inl);
+    ret = b->method->bwrite(b, in, inl, written);
 
-    if (i > 0)
-        b->num_write += (uint64_t)i;
+    if (ret > 0)
+        b->num_write += (uint64_t)*written;
 
-    if (cb != NULL)
-        i = (int)cb(b, BIO_CB_WRITE | BIO_CB_RETURN, in, inl, 0L, (long)i);
-    return (i);
+    if (b->callback != NULL || b->callback_ex != NULL)
+        ret = bio_call_callback(b, BIO_CB_WRITE | BIO_CB_RETURN, in, inl, 0,
+                                0L, ret, written, NULL);
+
+    return ret;
 }
 
 int BIO_puts(BIO *b, const char *in)
