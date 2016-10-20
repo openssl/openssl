@@ -2,82 +2,100 @@
 
 =head1 NAME
 
-SSL_read - read bytes from a TLS/SSL connection
+SSL_read_ex, SSL_read - read bytes from a TLS/SSL connection
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
+ int SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *read);
  int SSL_read(SSL *ssl, void *buf, int num);
+
+ int SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *read);
+ int SSL_peek(SSL *ssl, void *buf, int num);
 
 =head1 DESCRIPTION
 
-SSL_read() tries to read B<num> bytes from the specified B<ssl> into the
-buffer B<buf>.
+SSL_read_ex() and SSL_read() try to read B<num> bytes from the specified B<ssl>
+into the buffer B<buf>. On success SSL_read_ex() will store the number of bytes
+actually read in B<*read>.
+
+SSL_peek_ex() and SSL_peek() are identical to SSL_read_ex() and SSL_read()
+respectively except no bytes are actually removed from the underlying BIO during
+the read, so that a subsequent call to SSL_read_ex() or SSL_read() will yield
+the same bytes.
 
 =head1 NOTES
 
-If necessary, SSL_read() will negotiate a TLS/SSL session, if
+In this notes section all comments that apply to SSL_read_ex() or SSL_read()
+also apply to SSL_peek_ex() and SSL_peek().
+
+If necessary, SSL_read_ex() or SSL_read() will negotiate a TLS/SSL session, if
 not already explicitly performed by L<SSL_connect(3)> or
 L<SSL_accept(3)>. If the
 peer requests a re-negotiation, it will be performed transparently during
-the SSL_read() operation. The behaviour of SSL_read() depends on the
-underlying BIO.
+the SSL_read_ex() or SSL_read() operation. The behaviour of SSL_read_ex() and
+SSL_read() depends on the underlying BIO.
 
 For the transparent negotiation to succeed, the B<ssl> must have been
 initialized to client or server mode. This is being done by calling
 L<SSL_set_connect_state(3)> or SSL_set_accept_state()
-before the first call to an SSL_read() or L<SSL_write(3)>
-function.
+before the first call to an SSL_read_ex(), SSL_read(), L<SSL_write_ex(3)> or
+L<SSL_write(3)> function.
 
-SSL_read() works based on the SSL/TLS records. The data are received in
-records (with a maximum record size of 16kB for SSLv3/TLSv1). Only when a
-record has been completely received, it can be processed (decryption and
+SSL_read_ex() and SSL_read() work based on the SSL/TLS records. The data are
+received in records (with a maximum record size of 16kB for SSLv3/TLSv1). Only
+when a record has been completely received, it can be processed (decryption and
 check of integrity). Therefore data that was not retrieved at the last
-call of SSL_read() can still be buffered inside the SSL layer and will be
-retrieved on the next call to SSL_read(). If B<num> is higher than the
-number of bytes buffered, SSL_read() will return with the bytes buffered.
-If no more bytes are in the buffer, SSL_read() will trigger the processing
-of the next record. Only when the record has been received and processed
-completely, SSL_read() will return reporting success. At most the contents
-of the record will be returned. As the size of an SSL/TLS record may exceed
-the maximum packet size of the underlying transport (e.g. TCP), it may
-be necessary to read several packets from the transport layer before the
-record is complete and SSL_read() can succeed.
+call of SSL_read_ex() or SSL_read() can still be buffered inside the SSL layer
+and will be retrieved on the next call to SSL_read_ex() or SSL_read(). If B<num>
+is higher than the number of bytes buffered, SSL_read_ex() or SSL_read() will
+return with the bytes buffered. If no more bytes are in the buffer, SSL_read()
+will trigger the processing of the next record. Only when the record has been
+received and processed completely, SSL_read_ex() or SSL_read() will return
+reporting success. At most the contents of the record will be returned. As the
+size of an SSL/TLS record may exceed the maximum packet size of the underlying
+transport (e.g. TCP), it may be necessary to read several packets from the
+transport layer before the record is complete and SSL_read_ex() or SSL_read()
+can succeed.
 
-If the underlying BIO is B<blocking>, SSL_read() will only return, once the
-read operation has been finished or an error occurred, except when a
-renegotiation take place, in which case a SSL_ERROR_WANT_READ may occur.
+If the underlying BIO is B<blocking>, SSL_read_ex() or SSL_read() will only
+return, once the read operation has been finished or an error occurred, except
+when a renegotiation take place, in which case a SSL_ERROR_WANT_READ may occur.
 This behaviour can be controlled with the SSL_MODE_AUTO_RETRY flag of the
 L<SSL_CTX_set_mode(3)> call.
 
-If the underlying BIO is B<non-blocking>, SSL_read() will also return
-when the underlying BIO could not satisfy the needs of SSL_read()
-to continue the operation. In this case a call to
+If the underlying BIO is B<non-blocking>, SSL_read_ex() or SSL_read() will also
+return when the underlying BIO could not satisfy the needs of SSL_read_ex() or
+SSL_read() to continue the operation. In this case a call to
 L<SSL_get_error(3)> with the
-return value of SSL_read() will yield B<SSL_ERROR_WANT_READ> or
+return value of SSL_read_ex() or SSL_read() will yield B<SSL_ERROR_WANT_READ> or
 B<SSL_ERROR_WANT_WRITE>. As at any time a re-negotiation is possible, a
-call to SSL_read() can also cause write operations! The calling process
-then must repeat the call after taking appropriate action to satisfy the
-needs of SSL_read(). The action depends on the underlying BIO. When using a
-non-blocking socket, nothing is to be done, but select() can be used to check
-for the required condition. When using a buffering BIO, like a BIO pair, data
-must be written into or retrieved out of the BIO before being able to continue.
+call to SSL_read_ex() or SSL_read() can also cause write operations! The calling
+process then must repeat the call after taking appropriate action to satisfy the
+needs of SSL_read_ex() or SSL_read(). The action depends on the underlying BIO.
+When using a non-blocking socket, nothing is to be done, but select() can be
+used to check for the required condition. When using a buffering BIO, like a
+BIO pair, data must be written into or retrieved out of the BIO before being
+able to continue.
 
 L<SSL_pending(3)> can be used to find out whether there
 are buffered bytes available for immediate retrieval. In this case
-SSL_read() can be called without blocking or actually receiving new
-data from the underlying socket.
+SSL_read_ex() or SSL_read() can be called without blocking or actually receiving
+new data from the underlying socket.
 
 =head1 WARNING
 
-When an SSL_read() operation has to be repeated because of
+When an SSL_read_ex() or SSL_read() operation has to be repeated because of
 B<SSL_ERROR_WANT_READ> or B<SSL_ERROR_WANT_WRITE>, it must be repeated
 with the same arguments.
 
 =head1 RETURN VALUES
 
-The following return values can occur:
+SSL_read_ex() will return 1 for success or 0 for failure. In the event of a
+failure call SSL_get_error() to find out the reason.
+
+For SSL_read() the following return values can occur:
 
 =over 4
 
@@ -108,7 +126,7 @@ return value B<ret> to find out the reason.
 
 =head1 SEE ALSO
 
-L<SSL_get_error(3)>, L<SSL_write(3)>,
+L<SSL_get_error(3)>, L<SSL_write_ex(3)>,
 L<SSL_CTX_set_mode(3)>, L<SSL_CTX_new(3)>,
 L<SSL_connect(3)>, L<SSL_accept(3)>
 L<SSL_set_connect_state(3)>,
