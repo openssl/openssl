@@ -348,7 +348,7 @@ int BIO_write_ex(BIO *b, const void *in, size_t inl, size_t *written)
 int BIO_puts(BIO *b, const char *in)
 {
     int ret;
-    size_t written;
+    size_t written = 0;
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bputs == NULL)) {
         BIOerr(BIO_F_BIO_PUTS, BIO_R_UNSUPPORTED_METHOD);
@@ -391,7 +391,7 @@ int BIO_puts(BIO *b, const char *in)
 int BIO_gets(BIO *b, char *out, int outl)
 {
     int ret;
-    size_t read;
+    size_t read = 0;
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bgets == NULL)) {
         BIOerr(BIO_F_BIO_GETS, BIO_R_UNSUPPORTED_METHOD);
