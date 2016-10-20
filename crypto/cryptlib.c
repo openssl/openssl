@@ -84,9 +84,9 @@ void OPENSSL_cpuid_setup(void)
 }
 #endif
 
+#include <signal.h>
 #if defined(_WIN32) && !defined(__CYGWIN__)
 # include <tchar.h>
-# include <signal.h>
 # ifdef __WATCOMC__
 #  if defined(_UNICODE) || defined(__UNICODE__)
 #   define _vsntprintf _vsnwprintf
@@ -303,6 +303,20 @@ void OPENSSL_die(const char *message, const char *file, int line)
     raise(SIGABRT);
 # endif
     _exit(3);
+#endif
+}
+
+void OPENSSL_trap(const char *message, const char *file, int line)
+{
+    OPENSSL_showfatal("%s:%d: OpenSSL trap: %s\n", file, line, message);
+#ifdef _MSC_VER
+    /* __debugbreak() is a compiler intrinsic, DebugBreak() is a function
+     * that essentially calles __debugbreak().  We might as well use the
+     * intrinsic directly.
+     */
+    __debugbreak();
+#else
+    raise(SIGTRAP);
 #endif
 }
 

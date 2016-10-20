@@ -31,7 +31,7 @@ extern "C" {
 
 # if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
 #  define REF_ASSERT_ISNT(test) \
-    (void)((test) ? (OPENSSL_die("refcount error", __FILE__, __LINE__), 1) : 0)
+    (void)((test) ? (OPENSSL_trap("refcount error", __FILE__, __LINE__), 1) : 0)
 # else
 #  define REF_ASSERT_ISNT(i)
 # endif
