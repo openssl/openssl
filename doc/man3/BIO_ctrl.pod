@@ -94,7 +94,7 @@ return the amount of pending data.
 =head1 NOTES
 
 BIO_flush(), because it can write data may return 0 or -1 indicating
-that the call should be retried later in a similar manner to BIO_write().
+that the call should be retried later in a similar manner to BIO_write_ex().
 The BIO_should_retry() call should be used and appropriate action taken
 is the call fails.
 

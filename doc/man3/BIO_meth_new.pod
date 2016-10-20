@@ -3,11 +3,12 @@
 =head1 NAME
 
 BIO_get_new_index,
-BIO_meth_new, BIO_meth_free, BIO_meth_get_write, BIO_meth_set_write,
-BIO_meth_get_read, BIO_meth_set_read, BIO_meth_get_puts, BIO_meth_set_puts,
-BIO_meth_get_gets, BIO_meth_set_gets, BIO_meth_get_ctrl, BIO_meth_set_ctrl,
-BIO_meth_get_create, BIO_meth_set_create, BIO_meth_get_destroy,
-BIO_meth_set_destroy, BIO_meth_get_callback_ctrl,
+BIO_meth_new, BIO_meth_free, BIO_meth_get_read_ex, BIO_meth_set_read_ex,
+BIO_meth_get_write_ex, BIO_meth_set_write_ex, BIO_meth_get_write,
+BIO_meth_set_write, BIO_meth_get_read, BIO_meth_set_read, BIO_meth_get_puts,
+BIO_meth_set_puts, BIO_meth_get_gets, BIO_meth_set_gets, BIO_meth_get_ctrl,
+BIO_meth_set_ctrl, BIO_meth_get_create, BIO_meth_set_create,
+BIO_meth_get_destroy, BIO_meth_set_destroy, BIO_meth_get_callback_ctrl,
 BIO_meth_set_callback_ctrl  - Routines to build up BIO methods
 
 =head1 SYNOPSIS
@@ -17,10 +18,19 @@ BIO_meth_set_callback_ctrl  - Routines to build up BIO methods
  int BIO_get_new_index(void);
  BIO_METHOD *BIO_meth_new(int type, const char *name);
  void BIO_meth_free(BIO_METHOD *biom);
+ int (*BIO_meth_get_write_ex(BIO_METHOD *biom)) (BIO *, const char *, size_t,
+                                                 size_t *);
  int (*BIO_meth_get_write(BIO_METHOD *biom)) (BIO *, const char *, int);
+ int BIO_meth_set_write_ex(BIO_METHOD *biom,
+                           int (*bwrite) (BIO *, const char *, size_t,
+                                          size_t *));
  int BIO_meth_set_write(BIO_METHOD *biom,
                         int (*write) (BIO *, const char *, int));
+ int (*BIO_meth_get_read_ex(BIO_METHOD *biom)) (BIO *, char *, size_t,
+                                                size_t *);
  int (*BIO_meth_get_read(BIO_METHOD *biom)) (BIO *, char *, int);
+ int BIO_meth_set_read_ex(BIO_METHOD *biom,
+                          int (*bread) (BIO *, char *, size_t, size_t *));
  int BIO_meth_set_read(BIO_METHOD *biom,
                        int (*read) (BIO *, char *, int));
  int (*BIO_meth_get_puts(BIO_METHOD *biom)) (BIO *, const char *);
@@ -64,15 +74,23 @@ more information.
 BIO_meth_free() destroys a B<BIO_METHOD> structure and frees up any memory
 associated with it.
 
-BIO_meth_get_write() and BIO_meth_set_write() get and set the function used for
-writing arbitrary length data to the BIO respectively. This function will be
-called in response to the application calling BIO_write(). The parameters for
-the function have the same meaning as for BIO_write().
+BIO_meth_get_write_ex() and BIO_meth_set_write_ex() get and set the function
+used for writing arbitrary length data to the BIO respectively. This function
+will be called in response to the application calling BIO_write_ex() or
+BIO_write(). The parameters for the function have the same meaning as for
+BIO_write_ex(). Older code may call BIO_meth_get_write() and
+BIO_meth_set_write() instead. Applications should not call both
+BIO_meth_set_write_ex() and BIO_meth_set_write() or call BIO_meth_get_write()
+when the function was set with BIO_meth_set_write_ex().
 
-BIO_meth_get_read() and BIO_meth_set_read() get and set the function used for
-reading arbitrary length data from the BIO respectively. This function will be
-called in response to the application calling BIO_read(). The parameters for the
-function have the same meaning as for BIO_read().
+BIO_meth_get_read_ex() and BIO_meth_set_read_ex() get and set the function used
+for reading arbitrary length data from the BIO respectively. This function will
+be called in response to the application calling BIO_read_ex() or BIO_read().
+The parameters for the function have the same meaning as for BIO_read_ex().
+Older code may call BIO_meth_get_read() and BIO_meth_set_read() instead.
+Applications should not call both BIO_meth_set_read_ex() and BIO_meth_set_read()
+or call BIO_meth_get_read() when the function was set with
+BIO_meth_set_read_ex().
 
 BIO_meth_get_puts() and BIO_meth_set_puts() get and set the function used for
 writing a NULL terminated string to the BIO respectively. This function will be
@@ -113,7 +131,7 @@ the function have the same meaning as for BIO_callback_ctrl().
 
 =head1 SEE ALSO
 
-L<bio>, L<BIO_find_type>, L<BIO_ctrl>, L<BIO_read>, L<BIO_new>
+L<bio>, L<BIO_find_type>, L<BIO_ctrl>, L<BIO_read_ex>, L<BIO_new>
 
 =head1 HISTORY
 

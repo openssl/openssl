@@ -24,7 +24,7 @@ functions
 =head1 DESCRIPTION
 
 These functions determine why a BIO is not able to read or write data.
-They will typically be called after a failed BIO_read() or BIO_write()
+They will typically be called after a failed BIO_read_ex() or BIO_write_ex()
 call.
 
 BIO_should_retry() is true if the call that produced this condition
@@ -65,7 +65,7 @@ BIO_retry_type(), and BIO_should_retry(), are implemented as macros.
 
 If BIO_should_retry() returns false then the precise "error condition"
 depends on the BIO type that caused it and the return code of the BIO
-operation. For example if a call to BIO_read() on a socket BIO returns
+operation. For example if a call to BIO_read_ex() on a socket BIO returns
 0 and BIO_should_retry() is false then the cause will be that the
 connection closed. A similar condition on a file BIO will mean that it
 has reached EOF. Some BIO types may place additional information on
