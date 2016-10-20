@@ -241,8 +241,7 @@ typedef long (*BIO_callback_fn)(BIO *b, int oper, const char *argp, int argi,
                                 long argl, long ret);
 typedef long (*BIO_callback_fn_ex)(BIO *b, int oper, const char *argp,
                                    size_t len, int argi,
-                                   long argl, int ret, size_t *processed,
-                                   long *lret);
+                                   long argl, int ret, size_t *processed);
 BIO_callback_fn BIO_get_callback(const BIO *b);
 void BIO_set_callback(BIO *b, BIO_callback_fn callback);
 
