@@ -88,7 +88,7 @@ static int ssl_free(BIO *a)
     return 1;
 }
 
-static int ssl_read(BIO *b, char *out, size_t outl, size_t *read)
+static int ssl_read(BIO *b, char *out, size_t outl, size_t *readbytes)
 {
     int ret = 1;
     BIO_SSL *sb;
@@ -108,14 +108,14 @@ static int ssl_read(BIO *b, char *out, size_t outl, size_t *read)
 
     ret = SSL_read(ssl, out, outl);
     if (ret > 0)
-        *read = ret;
+        *readbytes = ret;
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
         if (ret <= 0)
             break;
         if (sb->renegotiate_count > 0) {
-            sb->byte_count += *read;
+            sb->byte_count += *readbytes;
             if (sb->byte_count > sb->renegotiate_count) {
                 sb->byte_count = 0;
                 sb->num_renegotiates++;
