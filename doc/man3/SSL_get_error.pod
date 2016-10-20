@@ -14,9 +14,9 @@ SSL_get_error - obtain result code for TLS/SSL I/O operation
 
 SSL_get_error() returns a result code (suitable for the C "switch"
 statement) for a preceding call to SSL_connect(), SSL_accept(), SSL_do_handshake(),
-SSL_read(), SSL_peek(), or SSL_write() on B<ssl>.  The value returned by
-that TLS/SSL I/O function must be passed to SSL_get_error() in parameter
-B<ret>.
+SSL_read_ex(), SSL_read(), SSL_peek_ex(), SSL_peek(), SSL_write_ex() or
+SSL_write() on B<ssl>.  The value returned by that TLS/SSL I/O function must be
+passed to SSL_get_error() in parameter B<ret>.
 
 In addition to B<ssl> and B<ret>, SSL_get_error() inspects the
 current thread's OpenSSL error queue.  Thus, SSL_get_error() must be
@@ -64,10 +64,11 @@ TLS/SSL I/O function should be retried.
 
 Caveat: Any TLS/SSL I/O function can lead to either of
 B<SSL_ERROR_WANT_READ> and B<SSL_ERROR_WANT_WRITE>.  In particular,
-SSL_read() or SSL_peek() may want to write data and SSL_write() may want
-to read data.  This is mainly because TLS/SSL handshakes may occur at any
-time during the protocol (initiated by either the client or the server);
-SSL_read(), SSL_peek(), and SSL_write() will handle any pending handshakes.
+SSL_read_ex(), SSL_read() SSL_peek_ex() or SSL_peek() may want to write data and
+SSL_write() or SSL_write_ex() may want to read data.  This is mainly because
+TLS/SSL handshakes may occur at any time during the protocol (initiated by
+either the client or the server); SSL_read_ex(), SSL_read(), SSL_peek_ex(),
+SSL_peek(), SSL_write_ex() and SSL_write() will handle any pending handshakes.
 
 =item SSL_ERROR_WANT_CONNECT, SSL_ERROR_WANT_ACCEPT
 
