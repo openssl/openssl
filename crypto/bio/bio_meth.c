@@ -112,7 +112,7 @@ int bread_conv(BIO *bio, char *out, size_t outl, size_t *read)
     int ret;
 
     if (outl > INT_MAX)
-        return 0;
+        outl = INT_MAX;
 
     ret = bio->method->bread_old(bio, out, (int)outl);
 
