@@ -28,8 +28,8 @@ connection with the object.
 Then the TLS/SSL handshake is performed using
 L<SSL_accept(3)> or L<SSL_connect(3)>
 respectively.
-L<SSL_read(3)> and L<SSL_write(3)> are used
-to read and write data on the TLS/SSL connection.
+L<SSL_read_ex(3)>, L<SSL_read(3)>, L<SSL_write_ex(3)> and L<SSL_write(3)> are
+used to read and write data on the TLS/SSL connection.
 L<SSL_shutdown(3)> can be used to shut down the
 TLS/SSL connection.
 
@@ -792,6 +792,7 @@ L<SSL_get_version(3)>,
 L<SSL_load_client_CA_file(3)>,
 L<SSL_new(3)>,
 L<SSL_pending(3)>,
+L<SSL_read_ex(3)>,
 L<SSL_read(3)>,
 L<SSL_rstate_string(3)>,
 L<SSL_session_reused(3)>,
@@ -803,6 +804,7 @@ L<SSL_set_shutdown(3)>,
 L<SSL_shutdown(3)>,
 L<SSL_state_string(3)>,
 L<SSL_want(3)>,
+L<SSL_write_ex(3)>,
 L<SSL_write(3)>,
 L<SSL_SESSION_free(3)>,
 L<SSL_SESSION_get_time(3)>,
