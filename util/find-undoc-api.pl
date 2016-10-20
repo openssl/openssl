@@ -44,13 +44,11 @@ sub getdocced()
     my %return;
 
     foreach my $pod ( glob("$dir/*.pod") ) {
-        next if $pod eq 'doc/crypto/crypto.pod';
-        next if $pod eq 'doc/ssl/ssl.pod';
         my %podinfo = extract_pod_info($pod);
         foreach my $n ( @{$podinfo{names}} ) {
             $return{$n} = $pod;
             print "# Duplicate $n in $pod and $dups{$n}\n"
-                if defined $dups{$n};
+                if defined $dups{$n} && $dups{$n} ne $pod;
             $dups{$n} = $pod;
         }
     }
@@ -58,11 +56,11 @@ sub getdocced()
     return %return;
 }
 
+my %docced = &getdocced('doc/man3');
+
 sub printem()
 {
-    my $docdir = shift;
     my $numfile = shift;
-    my %docced = &getdocced($docdir);
     my $count = 0;
 
     foreach my $func ( &parsenum($numfile) ) {
@@ -77,6 +75,5 @@ sub printem()
     print "# Found $count missing from $numfile\n\n";
 }
 
-
-&printem('doc/crypto', 'util/libcrypto.num');
-&printem('doc/ssl', 'util/libssl.num');
+&printem('util/libcrypto.num');
+&printem('util/libssl.num');
