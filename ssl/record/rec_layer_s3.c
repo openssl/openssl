@@ -293,7 +293,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
     }
 
     while (left < n) {
-        size_t bioread;
+        size_t bioread = 0;
         int ret;
 
         /*
@@ -908,7 +908,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
     int i;
     SSL3_BUFFER *wb = s->rlayer.wbuf;
     size_t currbuf = 0;
-    size_t tmpwrit;
+    size_t tmpwrit = 0;
 
     if ((s->rlayer.wpend_tot > len)
         || ((s->rlayer.wpend_buf != buf) &&
