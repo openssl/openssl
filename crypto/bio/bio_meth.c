@@ -51,12 +51,47 @@ void BIO_meth_free(BIO_METHOD *biom)
 
 int (*BIO_meth_get_write(BIO_METHOD *biom)) (BIO *, const char *, int)
 {
+    return biom->bwrite_old;
+}
+
+int (*BIO_meth_get_write_ex(BIO_METHOD *biom)) (BIO *, const char *, size_t,
+                                                size_t *)
+{
     return biom->bwrite;
+}
+
+/* Conversion for old style bwrite to new style */
+int bwrite_conv(BIO *bio, const char *in, size_t inl, size_t *written)
+{
+    int ret;
+
+    if (inl > INT_MAX)
+        return 0;
+
+    ret = bio->method->bwrite_old(bio, in, (int)inl);
+
+    if (ret <= 0) {
+        *written = 0;
+        return ret;
+    }
+
+    *written = (size_t)ret;
+
+    return 1;
 }
 
 int BIO_meth_set_write(BIO_METHOD *biom,
                        int (*bwrite) (BIO *, const char *, int))
 {
+    biom->bwrite_old = bwrite;
+    biom->bwrite = bwrite_conv;
+    return 1;
+}
+
+int BIO_meth_set_write_ex(BIO_METHOD *biom,
+                       int (*bwrite) (BIO *, const char *, size_t, size_t *))
+{
+    biom->bwrite_old = NULL;
     biom->bwrite = bwrite;
     return 1;
 }
@@ -102,6 +137,7 @@ int BIO_meth_set_read(BIO_METHOD *biom,
 int BIO_meth_set_read_ex(BIO_METHOD *biom,
                          int (*bread) (BIO *, char *, size_t, size_t *))
 {
+    biom->bread_old = NULL;
     biom->bread = bread;
     return 1;
 }

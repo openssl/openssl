@@ -50,6 +50,7 @@ static ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_FUNC(BIO_F_BIO_SOCK_INFO), "BIO_sock_info"},
     {ERR_FUNC(BIO_F_BIO_SOCK_INIT), "BIO_sock_init"},
     {ERR_FUNC(BIO_F_BIO_WRITE), "BIO_write"},
+    {ERR_FUNC(BIO_F_BIO_WRITE_EX), "BIO_write_ex"},
     {ERR_FUNC(BIO_F_BUFFER_CTRL), "buffer_ctrl"},
     {ERR_FUNC(BIO_F_CONN_CTRL), "conn_ctrl"},
     {ERR_FUNC(BIO_F_CONN_STATE), "conn_state"},
