@@ -23,8 +23,8 @@ BIO that digests any data passed through it, it is a BIO wrapper
 for the digest routines EVP_DigestInit(), EVP_DigestUpdate()
 and EVP_DigestFinal().
 
-Any data written or read through a digest BIO using BIO_read() and
-BIO_write() is digested.
+Any data written or read through a digest BIO using BIO_read_ex() and
+BIO_write_ex() is digested.
 
 BIO_gets(), if its B<size> parameter is large enough finishes the
 digest calculation and returns the digest value. BIO_puts() is

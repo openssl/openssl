@@ -28,7 +28,7 @@ BIO_s_file() returns the BIO file method. As its name implies it
 is a wrapper round the stdio FILE structure and it is a
 source/sink BIO.
 
-Calls to BIO_read() and BIO_write() read and write data to the
+Calls to BIO_read_ex() and BIO_write_ex() read and write data to the
 underlying stream. BIO_gets() and BIO_puts() are supported on file BIOs.
 
 BIO_flush() on a file BIO calls the fflush() function on the wrapped
@@ -142,8 +142,8 @@ occurred this differs from other types of BIO which will typically return
 
 L<BIO_seek(3)>, L<BIO_tell(3)>,
 L<BIO_reset(3)>, L<BIO_flush(3)>,
-L<BIO_read(3)>,
-L<BIO_write(3)>, L<BIO_puts(3)>,
+L<BIO_read_ex(3)>,
+L<BIO_write_ex(3)>, L<BIO_puts(3)>,
 L<BIO_gets(3)>, L<BIO_printf(3)>,
 L<BIO_set_close(3)>, L<BIO_get_close(3)>
 

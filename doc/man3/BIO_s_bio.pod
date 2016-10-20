@@ -44,10 +44,10 @@ One typical use of BIO pairs is to place TLS/SSL I/O under application control, 
 can be used when the application wishes to use a non standard transport for
 TLS/SSL or the normal socket routines are inappropriate.
 
-Calls to BIO_read() will read data from the buffer or request a retry if no
+Calls to BIO_read_ex() will read data from the buffer or request a retry if no
 data is available.
 
-Calls to BIO_write() will place data in the buffer or request a retry if the
+Calls to BIO_write_ex() will place data in the buffer or request a retry if the
 buffer is full.
 
 The standard calls BIO_ctrl_pending() and BIO_ctrl_wpending() can be used to
@@ -80,9 +80,9 @@ BIO_free() is not called.
 
 BIO_get_write_guarantee() and BIO_ctrl_get_write_guarantee() return the maximum
 length of data that can be currently written to the BIO. Writes larger than this
-value will return a value from BIO_write() less than the amount requested or if the
-buffer is full request a retry. BIO_ctrl_get_write_guarantee() is a function
-whereas BIO_get_write_guarantee() is a macro.
+value will return a value from BIO_write_ex() less than the amount requested or
+if the buffer is full request a retry. BIO_ctrl_get_write_guarantee() is a
+function whereas BIO_get_write_guarantee() is a macro.
 
 BIO_get_read_request() and BIO_ctrl_get_read_request() return the
 amount of data requested, or the buffer size if it is less, if the
@@ -111,12 +111,12 @@ it to the underlying transport. This must be done before any normal processing
 (such as calling select() ) due to a request and BIO_should_read() being true.
 
 To see why this is important consider a case where a request is sent using
-BIO_write() and a response read with BIO_read(), this can occur during an
-TLS/SSL handshake for example. BIO_write() will succeed and place data in the write
-buffer. BIO_read() will initially fail and BIO_should_read() will be true. If
-the application then waits for data to be available on the underlying transport
-before flushing the write buffer it will never succeed because the request was
-never sent!
+BIO_write_ex() and a response read with BIO_read_ex(), this can occur during an
+TLS/SSL handshake for example. BIO_write_ex() will succeed and place data in the
+write buffer. BIO_read_ex() will initially fail and BIO_should_read() will be
+true. If the application then waits for data to be available on the underlying
+transport before flushing the write buffer it will never succeed because the
+request was never sent!
 
 BIO_eof() is true if no data is in the peer BIO and the peer BIO has been
 shutdown.
@@ -187,7 +187,7 @@ the peer might be waiting for the data before being able to continue.
 =head1 SEE ALSO
 
 L<SSL_set_bio(3)>, L<ssl(3)>, L<bio(3)>,
-L<BIO_should_retry(3)>, L<BIO_read(3)>
+L<BIO_should_retry(3)>, L<BIO_read_ex(3)>
 
 =head1 COPYRIGHT
 

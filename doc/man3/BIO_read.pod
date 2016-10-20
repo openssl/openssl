@@ -2,18 +2,29 @@
 
 =head1 NAME
 
-BIO_read, BIO_write, BIO_gets, BIO_puts - BIO I/O functions
+BIO_read_ex, BIO_write_ex, BIO_read, BIO_write, BIO_gets, BIO_puts
+- BIO I/O functions
 
 =head1 SYNOPSIS
 
  #include <openssl/bio.h>
 
- int    BIO_read(BIO *b, void *buf, int len);
- int    BIO_gets(BIO *b, char *buf, int size);
- int    BIO_write(BIO *b, const void *buf, int len);
- int    BIO_puts(BIO *b, const char *buf);
+ int BIO_read_ex(BIO *b, void *out, size_t outl, size_t *read);
+ int BIO_write_ex(BIO *b, const void *in, size_t inl, size_t *written);
+
+ int BIO_read(BIO *b, void *buf, int len);
+ int BIO_gets(BIO *b, char *buf, int size);
+ int BIO_write(BIO *b, const void *buf, int len);
+ int BIO_puts(BIO *b, const char *buf);
 
 =head1 DESCRIPTION
+
+BIO_read_ex() attempts to read B<outl> bytes from BIO B<b> and places the data
+in B<out>. If any bytes were successfully read then the number of bytes read is
+stored in B<*read>.
+
+BIO_write_ex() attempts to write B<inl> bytes from B<in> to BIO B<b>. If
+successful then the number of bytes written is stored in B<*written>.
 
 BIO_read() attempts to read B<len> bytes from BIO B<b> and places
 the data in B<buf>.
@@ -31,7 +42,10 @@ BIO_puts() attempts to write a NUL-terminated string B<buf> to BIO B<b>.
 
 =head1 RETURN VALUES
 
-All these functions return either the amount of data successfully read or
+BIO_read_ex() and BIO_write_ex() return 1 if data was successfully read or
+written, and 0 otherwise.
+
+All other functions return either the amount of data successfully read or
 written (if the return value is positive) or that no data was successfully
 read or written if the result is 0 or -1. If the return value is -2 then
 the operation is not implemented in the specific BIO type.  The trailing

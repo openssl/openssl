@@ -108,7 +108,7 @@ already been established this call has no effect.
 SSL BIOs are exceptional in that if the underlying transport
 is non blocking they can still request a retry in exceptional
 circumstances. Specifically this will happen if a session
-renegotiation takes place during a BIO_read() operation, one
+renegotiation takes place during a BIO_read_ex() operation, one
 case where this happens is when step up occurs.
 
 The SSL flag SSL_AUTO_RETRY can be
