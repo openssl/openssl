@@ -61,14 +61,14 @@ int (*BIO_meth_get_write_ex(BIO_METHOD *biom)) (BIO *, const char *, size_t,
 }
 
 /* Conversion for old style bwrite to new style */
-int bwrite_conv(BIO *bio, const char *in, size_t inl, size_t *written)
+int bwrite_conv(BIO *bio, const char *data, size_t datal, size_t *written)
 {
     int ret;
 
-    if (inl > INT_MAX)
-        inl = INT_MAX;
+    if (datal > INT_MAX)
+        datal = INT_MAX;
 
-    ret = bio->method->bwrite_old(bio, in, (int)inl);
+    ret = bio->method->bwrite_old(bio, data, (int)datal);
 
     if (ret <= 0) {
         *written = 0;
@@ -107,14 +107,14 @@ int (*BIO_meth_get_read_ex(BIO_METHOD *biom)) (BIO *, char *, size_t, size_t *)
 }
 
 /* Conversion for old style bread to new style */
-int bread_conv(BIO *bio, char *out, size_t outl, size_t *read)
+int bread_conv(BIO *bio, char *data, size_t datal, size_t *read)
 {
     int ret;
 
-    if (outl > INT_MAX)
-        outl = INT_MAX;
+    if (datal > INT_MAX)
+        datal = INT_MAX;
 
-    ret = bio->method->bread_old(bio, out, (int)outl);
+    ret = bio->method->bread_old(bio, data, (int)datal);
 
     if (ret <= 0) {
         *read = 0;
