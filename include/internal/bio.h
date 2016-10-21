@@ -29,5 +29,5 @@ void bio_cleanup(void);
 
 
 /* Old style to new style BIO_METHOD conversion functions */
-int bwrite_conv(BIO *bio, const char *in, size_t inl, size_t *written);
-int bread_conv(BIO *bio, char *out, size_t outl, size_t *read);
+int bwrite_conv(BIO *bio, const char *data, size_t datal, size_t *written);
+int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
