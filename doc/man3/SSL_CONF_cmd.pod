@@ -121,12 +121,13 @@ if specified.
 To restrict the supported protocol versions use these commands rather
 than the deprecated alternative commands below.
 
-=item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
+=item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
 
-Disables protocol support for SSLv3, TLSv1.0, TLSv1.1 or TLSv1.2 by setting the
-corresponding options B<SSL_OP_NO_SSLv3>, B<SSL_OP_NO_TLSv1>, B<SSL_OP_NO_TLSv1_1>
-and B<SSL_OP_NO_TLSv1_2> respectively.
-These options are deprecated, instead use B<-min_protocol> and B<-max_protocol>.
+Disables protocol support for SSLv3, TLSv1.0, TLSv1.1, TLSv1.2 or TLSv1.3 by
+setting the corresponding options B<SSL_OP_NO_SSLv3>, B<SSL_OP_NO_TLSv1>,
+B<SSL_OP_NO_TLSv1_1>, B<SSL_OP_NO_TLSv1_2> and B<SSL_OP_NO_TLSv1_3>
+respectively. These options are deprecated, instead use B<-min_protocol> and
+B<-max_protocol>.
 
 =item B<-bugs>
 

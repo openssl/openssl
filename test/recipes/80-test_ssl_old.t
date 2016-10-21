@@ -21,10 +21,10 @@ setup("test_ssl");
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_srp, $no_psk,
-    $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2,
+    $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
     $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =
     anydisabled qw/rsa dsa dh ec srp psk
-                   ssl3 tls1 tls1_1 tls1_2
+                   ssl3 tls1 tls1_1 tls1_2 tls1_3
                    dtls dtls1 dtls1_2 ct/;
 my $no_anytls = alldisabled(available_protocols("tls"));
 my $no_anydtls = alldisabled(available_protocols("dtls"));
@@ -446,6 +446,7 @@ sub testssl {
 
 	my @protocols = ();
 	# FIXME: I feel unsure about the following line, is that really just TLSv1.2, or is it all of the SSLv3/TLS protocols?
+        push(@protocols, "TLSv1.3") unless $no_tls1_3;
         push(@protocols, "TLSv1.2") unless $no_tls1_2;
         push(@protocols, "SSLv3") unless $no_ssl3;
 	my $protocolciphersuitcount = 0;
@@ -463,22 +464,27 @@ sub testssl {
 
         # The count of protocols is because in addition to the ciphersuits
         # we got above, we're running a weak DH test for each protocol
-	plan tests => $protocolciphersuitcount + scalar(@protocols);
+        plan tests => $protocolciphersuitcount + scalar(@protocols);
 
-	foreach my $protocol (@protocols) {
-	    note "Testing ciphersuites for $protocol";
-	    foreach my $cipher (@{$ciphersuites{$protocol}}) {
-		ok(run(test([@ssltest, @exkeys, "-cipher", $cipher,
-			     $protocol eq "SSLv3" ? ("-ssl3") : ()])),
-		   "Testing $cipher");
-	    }
+        foreach my $protocol (@protocols) {
+            note "Testing ciphersuites for $protocol";
+            my $flag = "";
+            if ($protocol eq "SSLv3") {
+                $flag = "-ssl3";
+            } elsif ($protocol eq "TLSv1.2") {
+                $flag = "-tls1_2";
+            }
+            foreach my $cipher (@{$ciphersuites{$protocol}}) {
+                ok(run(test([@ssltest, @exkeys, "-cipher", $cipher, $flag])),
+                "Testing $cipher");
+            }
             is(run(test([@ssltest,
                          "-s_cipher", "EDH",
                          "-c_cipher", 'EDH:@SECLEVEL=1',
                          "-dhe512",
                          $protocol eq "SSLv3" ? ("-ssl3") : ()])), 0,
                "testing connection with weak DH, expecting failure");
-	}
+        }
     };
 
     subtest 'RSA/(EC)DHE/PSK tests' => sub {

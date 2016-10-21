@@ -210,7 +210,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
 # define OPT_S_ENUM \
         OPT_S__FIRST=3000, \
         OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
-        OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
+        OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_STRICT, OPT_S_SIGALGS, \
         OPT_S_CLIENTSIGALGS, OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
@@ -222,6 +222,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"no_tls1", OPT_S_NOTLS1, '-', "Just disable TLSv1"}, \
         {"no_tls1_1", OPT_S_NOTLS1_1, '-', "Just disable TLSv1.1" }, \
         {"no_tls1_2", OPT_S_NOTLS1_2, '-', "Just disable TLSv1.2"}, \
+        {"no_tls1_3", OPT_S_NOTLS1_3, '-', "Just disable TLSv1.3"}, \
         {"bugs", OPT_S_BUGS, '-', "Turn on SSL bug compatibility"}, \
         {"no_comp", OPT_S_NO_COMP, '-', "Disable SSL/TLS compression (default)" }, \
         {"comp", OPT_S_COMP, '-', "Use SSL/TLS-level compression" }, \
@@ -259,6 +260,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_NOTLS1: \
         case OPT_S_NOTLS1_1: \
         case OPT_S_NOTLS1_2: \
+        case OPT_S_NOTLS1_3: \
         case OPT_S_BUGS: \
         case OPT_S_NO_COMP: \
         case OPT_S_COMP: \
@@ -279,7 +281,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
 
 #define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
-  || o == OPT_S_NOTLS1_2)
+  || o == OPT_S_NOTLS1_2 || o == OPT_S_NOTLS1_3)
 
 /*
  * Option parsing.

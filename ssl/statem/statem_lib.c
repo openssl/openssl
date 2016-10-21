@@ -647,11 +647,16 @@ typedef struct {
     const SSL_METHOD *(*smeth) (void);
 } version_info;
 
-#if TLS_MAX_VERSION != TLS1_2_VERSION
-# error Code needs update for TLS_method() support beyond TLS1_2_VERSION.
+#if TLS_MAX_VERSION != TLS1_3_VERSION
+# error Code needs update for TLS_method() support beyond TLS1_3_VERSION.
 #endif
 
 static const version_info tls_version_table[] = {
+#ifndef OPENSSL_NO_TLS1_3
+    {TLS1_3_VERSION, tlsv1_3_client_method, tlsv1_3_server_method},
+#else
+    {TLS1_3_VERSION, NULL, NULL},
+#endif
 #ifndef OPENSSL_NO_TLS1_2
     {TLS1_2_VERSION, tlsv1_2_client_method, tlsv1_2_server_method},
 #else

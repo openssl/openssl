@@ -147,8 +147,10 @@ sub start
                 or die "Failed to redirect stdout: $!";
             open(STDERR, ">&STDOUT");
         }
+        # TODO(TLS1.3): Temporarily disabled for TLS1.3...no shared cipher
+        # because the TLS1.3 ciphersuites are not compatible with ossltest
         my $execcmd = $self->execute
-            ." s_server -no_comp -rev -engine ossltest -accept "
+            ." s_server -no_tls1_3 -no_comp -rev -engine ossltest -accept "
             .($self->server_port)
             ." -cert ".$self->cert." -naccept ".$self->serverconnects;
         if ($self->ciphers ne "") {

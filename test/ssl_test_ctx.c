@@ -152,6 +152,7 @@ const char *ssl_alert_name(int alert)
 /********************/
 
 static const test_enum ssl_protocols[] = {
+     {"TLSv1.3", TLS1_3_VERSION},
      {"TLSv1.2", TLS1_2_VERSION},
      {"TLSv1.1", TLS1_1_VERSION},
      {"TLSv1", TLS1_VERSION},
