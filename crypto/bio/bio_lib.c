@@ -244,31 +244,19 @@ int BIO_method_type(const BIO *b)
     return b->method->type;
 }
 
-int BIO_read(BIO *b, void *out, int outl)
-{
-    size_t read;
-    int ret;
-
-    if (outl < 0)
-        return 0;
-
-    ret = BIO_read_ex(b, out, (size_t)outl, &read);
-
-    if (ret > 0) {
-        /* *read should always be <= outl */
-        ret = (int)read;
-    }
-
-    return ret;
-}
-
-int BIO_read_ex(BIO *b, void *out, size_t outl, size_t *read)
+/*
+ * This is essentially the same as BIO_read_ex() except that it allows
+ * 0 or a -ve value to indicate failure (retryable or not) in the return. This
+ * is for compatibility with the old style BIO_read(), where existing code may
+ * make assumptions about the return value that it might get.
+ */
+static int bio_read_intern(BIO *b, void *out, size_t outl, size_t *read)
 {
     int ret;
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bread == NULL)) {
         BIOerr(BIO_F_BIO_READ_EX, BIO_R_UNSUPPORTED_METHOD);
-        return (-2);
+        return -2;
     }
 
     if ((b->callback != NULL || b->callback_ex != NULL) &&
@@ -293,34 +281,48 @@ int BIO_read_ex(BIO *b, void *out, size_t outl, size_t *read)
     return ret;
 }
 
-int BIO_write(BIO *b, const void *in, int inl)
+int BIO_read(BIO *b, void *out, int outl)
 {
-    size_t written;
+    size_t read;
     int ret;
 
-    if (inl < 0)
+    if (outl < 0)
         return 0;
 
-    ret = BIO_write_ex(b, in, (size_t)inl, &written);
+    ret = bio_read_intern(b, out, (size_t)outl, &read);
 
     if (ret > 0) {
-        /* *written should always be <= inl */
-        ret = (int)written;
+        /* *read should always be <= outl */
+        ret = (int)read;
     }
 
     return ret;
 }
 
-int BIO_write_ex(BIO *b, const void *in, size_t inl, size_t *written)
+int BIO_read_ex(BIO *b, void *out, size_t outl, size_t *read)
+{
+    int ret;
+
+    ret = bio_read_intern(b, out, outl, read);
+
+    if (ret > 0)
+        ret = 1;
+    else
+        ret = 0;
+
+    return ret;
+}
+
+static int bio_write_intern(BIO *b, const void *in, size_t inl, size_t *written)
 {
     int ret;
 
     if (b == NULL)
-        return (0);
+        return 0;
 
     if ((b->method == NULL) || (b->method->bwrite == NULL)) {
         BIOerr(BIO_F_BIO_WRITE_EX, BIO_R_UNSUPPORTED_METHOD);
-        return (-2);
+        return -2;
     }
 
     if ((b->callback != NULL || b->callback_ex != NULL) &&
@@ -341,6 +343,38 @@ int BIO_write_ex(BIO *b, const void *in, size_t inl, size_t *written)
     if (b->callback != NULL || b->callback_ex != NULL)
         ret = (int)bio_call_callback(b, BIO_CB_WRITE | BIO_CB_RETURN, in, inl,
                                      0, 0L, ret, written);
+
+    return ret;
+}
+
+int BIO_write(BIO *b, const void *in, int inl)
+{
+    size_t written;
+    int ret;
+
+    if (inl < 0)
+        return 0;
+
+    ret = bio_write_intern(b, in, (size_t)inl, &written);
+
+    if (ret > 0) {
+        /* *written should always be <= inl */
+        ret = (int)written;
+    }
+
+    return ret;
+}
+
+int BIO_write_ex(BIO *b, const void *in, size_t inl, size_t *written)
+{
+    int ret;
+
+    ret = bio_write_intern(b, in, inl, written);
+
+    if (ret > 0)
+        ret = 1;
+    else
+        ret = 0;
 
     return ret;
 }
