@@ -886,6 +886,7 @@ static int protocol_from_string(const char *value)
         {"tls1", TLS1_VERSION},
         {"tls1.1", TLS1_1_VERSION},
         {"tls1.2", TLS1_2_VERSION},
+        {"tls1.3", TLS1_3_VERSION},
         {"dtls1", DTLS1_VERSION},
         {"dtls1.2", DTLS1_2_VERSION}};
     size_t i;
@@ -958,7 +959,7 @@ int main(int argc, char *argv[])
     int badop = 0;
     enum { BIO_MEM, BIO_PAIR, BIO_IPV4, BIO_IPV6 } bio_type = BIO_MEM;
     int force = 0;
-    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, ssl3 = 0, ret = 1;
+    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, tls1_2 = 0, ssl3 = 0, ret = 1;
     int client_auth = 0;
     int server_auth = 0, i;
     struct app_verify_arg app_verify_arg =
@@ -1123,7 +1124,9 @@ int main(int argc, char *argv[])
             min_version = TLS1_VERSION;
         }
 #endif
-        else if (strcmp(*argv, "-tls1") == 0) {
+        else if (strcmp(*argv, "-tls1_2") == 0) {
+            tls1_2 = 1;
+        } else if (strcmp(*argv, "-tls1") == 0) {
             tls1 = 1;
         } else if (strcmp(*argv, "-ssl3") == 0) {
             ssl3 = 1;
@@ -1329,8 +1332,8 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (ssl3 + tls1 + dtls + dtls1 + dtls12 > 1) {
-        fprintf(stderr, "At most one of -ssl3, -tls1, -dtls, -dtls1 or -dtls12 should "
+    if (ssl3 + tls1 + tls1_2 + dtls + dtls1 + dtls12 > 1) {
+        fprintf(stderr, "At most one of -ssl3, -tls1, -tls1_2, -dtls, -dtls1 or -dtls12 should "
                 "be requested.\n");
         EXIT(1);
     }
@@ -1342,6 +1345,11 @@ int main(int argc, char *argv[])
 #endif
 #ifdef OPENSSL_NO_TLS1
     if (tls1)
+        no_protocol = 1;
+    else
+#endif
+#ifdef OPENSSL_NO_TLS1_2
+    if (tls1_2)
         no_protocol = 1;
     else
 #endif
@@ -1369,10 +1377,11 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (!ssl3 && !tls1 && !dtls && !dtls1 && !dtls12 && number > 1 && !reuse && !force) {
+    if (!ssl3 && !tls1 && !tls1_2 && !dtls && !dtls1 && !dtls12 && number > 1
+            && !reuse && !force) {
         fprintf(stderr, "This case cannot work.  Use -f to perform "
                 "the test anyway (and\n-d to see what happens), "
-                "or add one of -ssl3, -tls1, -dtls, -dtls1, -dtls12, -reuse\n"
+                "or add one of -ssl3, -tls1, -tls1_2, -dtls, -dtls1, -dtls12, -reuse\n"
                 "to avoid protocol mismatch.\n");
         EXIT(1);
     }
@@ -1435,6 +1444,9 @@ int main(int argc, char *argv[])
     } else if (tls1) {
         min_version = TLS1_VERSION;
         max_version = TLS1_VERSION;
+    } else if (tls1_2) {
+        min_version = TLS1_2_VERSION;
+        max_version = TLS1_2_VERSION;
     }
 #endif
 #ifndef OPENSSL_NO_DTLS

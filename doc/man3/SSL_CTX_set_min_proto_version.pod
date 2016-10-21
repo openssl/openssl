@@ -29,8 +29,8 @@ versions down to the lowest version, or up to the highest version
 supported by the library, respectively.
 
 Currently supported versions are B<SSL3_VERSION>, B<TLS1_VERSION>,
-B<TLS1_1_VERSION>, B<TLS1_2_VERSION> for TLS and B<DTLS1_VERSION>,
-B<DTLS1_2_VERSION> for DTLS.
+B<TLS1_1_VERSION>, B<TLS1_2_VERSION>, B<TLS1_3_VERSION> for TLS and
+B<DTLS1_VERSION>, B<DTLS1_2_VERSION> for DTLS.
 
 =head1 RETURN VALUES
 

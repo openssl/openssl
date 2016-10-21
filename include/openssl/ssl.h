@@ -343,12 +343,13 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_NO_TLSv1                                 0x04000000U
 # define SSL_OP_NO_TLSv1_2                               0x08000000U
 # define SSL_OP_NO_TLSv1_1                               0x10000000U
+# define SSL_OP_NO_TLSv1_3                               0x20000000U
 
 # define SSL_OP_NO_DTLSv1                                0x04000000U
 # define SSL_OP_NO_DTLSv1_2                              0x08000000U
 
 # define SSL_OP_NO_SSL_MASK (SSL_OP_NO_SSLv3|\
-        SSL_OP_NO_TLSv1|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2)
+        SSL_OP_NO_TLSv1|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2|SSL_OP_NO_TLSv1_3)
 # define SSL_OP_NO_DTLS_MASK (SSL_OP_NO_DTLSv1|SSL_OP_NO_DTLSv1_2)
 
 
