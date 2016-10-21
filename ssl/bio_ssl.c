@@ -16,8 +16,8 @@
 #include <openssl/err.h>
 #include "ssl_locl.h"
 
-static int ssl_write(BIO *h, const char *buf, size_t num, size_t *written);
-static int ssl_read(BIO *b, char *out, size_t outl, size_t *read);
+static int ssl_write(BIO *h, const char *buf, size_t size, size_t *written);
+static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes);
 static int ssl_puts(BIO *h, const char *str);
 static long ssl_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int ssl_new(BIO *h);
@@ -88,7 +88,7 @@ static int ssl_free(BIO *a)
     return 1;
 }
 
-static int ssl_read(BIO *b, char *out, size_t outl, size_t *readbytes)
+static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 {
     int ret = 1;
     BIO_SSL *sb;
@@ -96,17 +96,17 @@ static int ssl_read(BIO *b, char *out, size_t outl, size_t *readbytes)
     int retry_reason = 0;
     int r = 0;
 
-    if (out == NULL)
-        return (0);
+    if (buf == NULL)
+        return 0;
     sb = BIO_get_data(b);
     ssl = sb->ssl;
 
     BIO_clear_retry_flags(b);
 
-    if (outl > INT_MAX)
-        return -1;
+    if (size > INT_MAX)
+        size = INT_MAX;
 
-    ret = SSL_read(ssl, out, outl);
+    ret = SSL_read(ssl, buf, size);
     if (ret > 0)
         *readbytes = ret;
 
@@ -165,24 +165,24 @@ static int ssl_read(BIO *b, char *out, size_t outl, size_t *readbytes)
     return ret;
 }
 
-static int ssl_write(BIO *b, const char *out, size_t outl, size_t *written)
+static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 {
     int ret, r = 0;
     int retry_reason = 0;
     SSL *ssl;
     BIO_SSL *bs;
 
-    if (out == NULL)
-        return (0);
+    if (buf == NULL)
+        return 0;
     bs = BIO_get_data(b);
     ssl = bs->ssl;
 
     BIO_clear_retry_flags(b);
 
-    if (outl > INT_MAX)
-        return 0;
+    if (size > INT_MAX)
+        size = INT_MAX;
 
-    ret = SSL_write(ssl, out, outl);
+    ret = SSL_write(ssl, buf, size);
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
