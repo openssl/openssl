@@ -406,6 +406,12 @@
      template in Configurations, like unix-Makefile.tmpl or
      descrip.mms.tmpl.
 
+     With this change, the library names were also renamed on Windows
+     and on VMS.  They now have names that are closer to the standard
+     on Unix, and include the major version number, and in certain
+     cases, the architecture they are built for.  See "Notes on shared
+     libraries" in INSTALL.
+
      We rely heavily on the perl module Text::Template.
      [Richard Levitte]
 
