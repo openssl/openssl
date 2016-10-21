@@ -66,7 +66,7 @@ int bwrite_conv(BIO *bio, const char *in, size_t inl, size_t *written)
     int ret;
 
     if (inl > INT_MAX)
-        return 0;
+        inl = INT_MAX;
 
     ret = bio->method->bwrite_old(bio, in, (int)inl);
 
