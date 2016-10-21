@@ -34,7 +34,7 @@ B<DTLS1_2_VERSION> for DTLS.
 
 =head1 RETURN VALUES
 
-Both functions return 1 on success and 0 on failure.
+These functions return 1 on success and 0 on failure.
 
 =head1 NOTES
 
