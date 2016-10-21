@@ -40,12 +40,7 @@ build_script:
 test_script:
     - cd _build
     - nmake test
-    - cd ..
-
-# Fake deploy script to test installation
-deploy_script:
-    - mkdir _install
-    - cd _build
+    - mkdir ..\_install
     - nmake install install_docs DESTDIR=..\_install
     - cd ..
 
