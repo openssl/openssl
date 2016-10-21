@@ -278,6 +278,10 @@ static int bio_read_intern(BIO *b, void *data, size_t datal, size_t *read)
         ret = (int)bio_call_callback(b, BIO_CB_READ | BIO_CB_RETURN, data,
                                      datal, 0, 0L, ret, read);
 
+    /* Shouldn't happen */
+    if (ret > 0 && *read > datal)
+        return -1;
+
     return ret;
 }
 
@@ -433,6 +437,11 @@ int BIO_gets(BIO *b, char *out, int outl)
         return (-2);
     }
 
+    if (outl < 0) {
+        BIOerr(BIO_F_BIO_GETS, BIO_R_INVALID_ARGUMENT);
+        return 0;
+    }
+
     if (b->callback != NULL || b->callback_ex != NULL) {
         ret = (int)bio_call_callback(b, BIO_CB_GETS, out, outl, 0, 0L, 1, NULL);
         if (ret <= 0)
@@ -456,7 +465,8 @@ int BIO_gets(BIO *b, char *out, int outl)
                                      0, 0L, ret, &read);
 
     if (ret > 0) {
-        if (read > INT_MAX)
+        /* Shouldn't happen */
+        if (read > (size_t)outl)
             ret = -1;
         else
             ret = (int)read;
