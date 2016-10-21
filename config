@@ -187,6 +187,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
         echo "${MACH}-${ARCH}-freebsd${VERS}"; exit 0
         ;;
 
+    DragonFly:*)
+	echo "${MACHINE}-whatever-dragonfly"; exit 0
+	;;
+
     FreeBSD:*)
 	echo "${MACHINE}-whatever-freebsd"; exit 0
 	;;
@@ -697,6 +701,7 @@ case "$GUESSOS" in
   powerpc64-*-*bsd*)	OUT="BSD-generic64"; options="$options -DB_ENDIAN" ;;
   sparc64-*-*bsd*)	OUT="BSD-sparc64" ;;
   ia64-*-*bsd*)		OUT="BSD-ia64" ;;
+  x86_64-*-dragonfly*)  OUT="BSD-x86_64" ;;
   amd64-*-*bsd*)	OUT="BSD-x86_64" ;;
   *86*-*-*bsd*)		# mimic ld behaviour when it's looking for libc...
 			if [ -L /usr/lib/libc.so ]; then	# [Free|Net]BSD
