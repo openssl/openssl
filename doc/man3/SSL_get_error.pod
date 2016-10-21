@@ -64,11 +64,11 @@ TLS/SSL I/O function should be retried.
 
 Caveat: Any TLS/SSL I/O function can lead to either of
 B<SSL_ERROR_WANT_READ> and B<SSL_ERROR_WANT_WRITE>.  In particular,
-SSL_read_ex(), SSL_read() SSL_peek_ex() or SSL_peek() may want to write data and
-SSL_write() or SSL_write_ex() may want to read data.  This is mainly because
+SSL_read_ex(), SSL_read(), SSL_peek_ex(), or SSL_peek() may want to write data
+and SSL_write() or SSL_write_ex() may want to read data.  This is mainly because
 TLS/SSL handshakes may occur at any time during the protocol (initiated by
 either the client or the server); SSL_read_ex(), SSL_read(), SSL_peek_ex(),
-SSL_peek(), SSL_write_ex() and SSL_write() will handle any pending handshakes.
+SSL_peek(), SSL_write_ex(), and SSL_write() will handle any pending handshakes.
 
 =item SSL_ERROR_WANT_CONNECT, SSL_ERROR_WANT_ACCEPT
 
