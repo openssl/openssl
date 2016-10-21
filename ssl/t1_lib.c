@@ -1371,6 +1371,40 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         return 0;
     }
 
+
+    /* TODO(TLS1.3): Should we add this extension for versions < TLS1.3? */
+    if (!SSL_IS_DTLS(s) && s->version >= TLS1_3_VERSION) {
+        int min_version, max_version, reason, currv;
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
+                || !WPACKET_start_sub_packet_u16(pkt)
+                || !WPACKET_start_sub_packet_u8(pkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        reason = ssl_get_client_min_max_version(s, &min_version, &max_version);
+        if (reason != 0) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, reason);
+            return 0;
+        }
+        for (currv = max_version; currv >= min_version; currv--) {
+            /* TODO(TLS1.3): Remove this first if clause prior to release!! */
+            if (currv == TLS1_3_VERSION) {
+                if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)) {
+                    SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
+                           ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+            } else if (!WPACKET_put_bytes_u16(pkt, currv)) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+        if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+
     /*
      * Add padding to workaround bugs in F5 terminators. See
      * https://tools.ietf.org/html/draft-agl-tls-padding-03 NB: because this
