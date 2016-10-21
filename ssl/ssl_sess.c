@@ -320,6 +320,9 @@ int ssl_get_new_session(SSL *s, int session)
         } else if (s->version == TLS1_2_VERSION) {
             ss->ssl_version = TLS1_2_VERSION;
             ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
+        } else if (s->version == TLS1_3_VERSION) {
+            ss->ssl_version = TLS1_3_VERSION;
+            ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
         } else if (s->version == DTLS1_BAD_VER) {
             ss->ssl_version = DTLS1_BAD_VER;
             ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;

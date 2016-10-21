@@ -65,7 +65,8 @@ extern "C" {
 # define TLS1_VERSION                    0x0301
 # define TLS1_1_VERSION                  0x0302
 # define TLS1_2_VERSION                  0x0303
-# define TLS_MAX_VERSION                 TLS1_2_VERSION
+# define TLS1_3_VERSION                  0x0304
+# define TLS_MAX_VERSION                 TLS1_3_VERSION
 
 /* Special value for method supporting multiple versions */
 # define TLS_ANY_VERSION                 0x10000
@@ -599,6 +600,9 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 # define TLS1_CK_DHE_PSK_WITH_CHACHA20_POLY1305           0x0300CCAD
 # define TLS1_CK_RSA_PSK_WITH_CHACHA20_POLY1305           0x0300CCAE
 
+/* TLS v1.3 ciphersuites */
+# define TLS1_3_CK_AES_128_GCM_SHA256                     0x03000D01
+
 /*
  * XXX Backward compatibility alert: Older versions of OpenSSL gave some DHE
  * ciphers names with "EDH" instead of "DHE".  Going forward, we should be
@@ -867,6 +871,13 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 # define TLS1_TXT_ECDHE_PSK_WITH_CHACHA20_POLY1305         "ECDHE-PSK-CHACHA20-POLY1305"
 # define TLS1_TXT_DHE_PSK_WITH_CHACHA20_POLY1305           "DHE-PSK-CHACHA20-POLY1305"
 # define TLS1_TXT_RSA_PSK_WITH_CHACHA20_POLY1305           "RSA-PSK-CHACHA20-POLY1305"
+
+/* TLSv1.3 ciphersuites */
+/*
+ * TODO(TLS1.3): Review the naming scheme for TLSv1.3 ciphers and also the
+ * cipherstring selection process for these ciphers
+ */
+# define TLS1_3_TXT_AES_128_GCM_SHA256                     "TLS13-AES-128-GCM-SHA256"
 
 # define TLS_CT_RSA_SIGN                 1
 # define TLS_CT_DSS_SIGN                 2

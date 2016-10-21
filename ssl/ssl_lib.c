@@ -3072,7 +3072,9 @@ const SSL_METHOD *ssl_bad_method(int ver)
 
 const char *ssl_protocol_to_string(int version)
 {
-    if (version == TLS1_2_VERSION)
+    if (version == TLS1_3_VERSION)
+        return "TLSv1.3";
+    else if (version == TLS1_2_VERSION)
         return "TLSv1.2";
     else if (version == TLS1_1_VERSION)
         return "TLSv1.1";

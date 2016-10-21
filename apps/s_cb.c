@@ -453,6 +453,7 @@ static STRINT_PAIR ssl_versions[] = {
     {"TLS 1.0", TLS1_VERSION},
     {"TLS 1.1", TLS1_1_VERSION},
     {"TLS 1.2", TLS1_2_VERSION},
+    {"TLS 1.3", TLS1_3_VERSION},
     {"DTLS 1.0", DTLS1_VERSION},
     {"DTLS 1.0 (bad)", DTLS1_BAD_VER},
     {NULL}
@@ -522,6 +523,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         version == TLS1_VERSION ||
         version == TLS1_1_VERSION ||
         version == TLS1_2_VERSION ||
+        version == TLS1_3_VERSION ||
         version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
         switch (content_type) {
         case 20:

@@ -61,6 +61,7 @@ static ssl_trace_tbl ssl_version_tbl[] = {
     {TLS1_VERSION, "TLS 1.0"},
     {TLS1_1_VERSION, "TLS 1.1"},
     {TLS1_2_VERSION, "TLS 1.2"},
+    {TLS1_3_VERSION, "TLS 1.3"},
     {DTLS1_VERSION, "DTLS 1.0"},
     {DTLS1_2_VERSION, "DTLS 1.2"},
     {DTLS1_BAD_VER, "DTLS 1.0 (bad)"}
@@ -422,6 +423,7 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xCCAC, "TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305"},
     {0xCCAD, "TLS_DHE_PSK_WITH_CHACHA20_POLY1305"},
     {0xCCAE, "TLS_RSA_PSK_WITH_CHACHA20_POLY1305"},
+    {0x0D01, "TLS_AES_128_GCM_SHA256"},
     {0xFEFE, "SSL_RSA_FIPS_WITH_DES_CBC_SHA"},
     {0xFEFF, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
 };

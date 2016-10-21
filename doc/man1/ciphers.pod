@@ -15,6 +15,7 @@ B<openssl> B<ciphers>
 [B<-tls1>]
 [B<-tls1_1>]
 [B<-tls1_2>]
+[B<-tls1_3>]
 [B<-s>]
 [B<-psk>]
 [B<-srp>]
@@ -68,6 +69,11 @@ L<SSL_CIPHER_description(3)>.
 =item B<-V>
 
 Like B<-v>, but include the official cipher suite values in hex.
+
+=item B<-tls1_3>
+
+In combination with the B<-s> option, list the ciphers which would be used if
+TLSv1.3 were negotiated.
 
 =item B<-tls1_2>
 

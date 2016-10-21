@@ -834,6 +834,21 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+    {
+     1,
+     TLS1_3_TXT_AES_128_GCM_SHA256,
+     TLS1_3_CK_AES_128_GCM_SHA256,
+     SSL_kRSA,
+     SSL_aRSA,
+     SSL_AES128GCM,
+     SSL_AEAD,
+     TLS1_3_VERSION, TLS1_3_VERSION,
+     0, 0,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
 
 #ifndef OPENSSL_NO_EC
     {
