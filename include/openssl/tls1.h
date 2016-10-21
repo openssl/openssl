@@ -68,6 +68,9 @@ extern "C" {
 # define TLS1_3_VERSION                  0x0304
 # define TLS_MAX_VERSION                 TLS1_3_VERSION
 
+/* TODO(TLS1.3) REMOVE ME: Version indicator for draft -17 */
+# define TLS1_3_VERSION_DRAFT            0x7f11
+
 /* Special value for method supporting multiple versions */
 # define TLS_ANY_VERSION                 0x10000
 
@@ -162,6 +165,9 @@ extern "C" {
 
 /* ExtensionType value from RFC4507 */
 # define TLSEXT_TYPE_session_ticket              35
+
+/* As defined for TLS1.3 */
+# define TLSEXT_TYPE_supported_versions          43
 
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
