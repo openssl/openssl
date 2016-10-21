@@ -250,7 +250,7 @@ int BIO_method_type(const BIO *b)
  * is for compatibility with the old style BIO_read(), where existing code may
  * make assumptions about the return value that it might get.
  */
-static int bio_read_intern(BIO *b, void *out, size_t outl, size_t *read)
+static int bio_read_intern(BIO *b, void *data, size_t datal, size_t *read)
 {
     int ret;
 
@@ -260,7 +260,7 @@ static int bio_read_intern(BIO *b, void *out, size_t outl, size_t *read)
     }
 
     if ((b->callback != NULL || b->callback_ex != NULL) &&
-        ((ret = (int)bio_call_callback(b, BIO_CB_READ, out, outl, 0, 0L, 1L,
+        ((ret = (int)bio_call_callback(b, BIO_CB_READ, data, datal, 0, 0L, 1L,
                                        read)) <= 0))
         return ret;
 
@@ -269,27 +269,27 @@ static int bio_read_intern(BIO *b, void *out, size_t outl, size_t *read)
         return -2;
     }
 
-    ret = b->method->bread(b, out, outl, read);
+    ret = b->method->bread(b, data, datal, read);
 
     if (ret > 0)
         b->num_read += (uint64_t)*read;
 
     if (b->callback != NULL || b->callback_ex != NULL)
-        ret = (int)bio_call_callback(b, BIO_CB_READ | BIO_CB_RETURN, out, outl,
-                                     0, 0L, ret, read);
+        ret = (int)bio_call_callback(b, BIO_CB_READ | BIO_CB_RETURN, data,
+                                     datal, 0, 0L, ret, read);
 
     return ret;
 }
 
-int BIO_read(BIO *b, void *out, int outl)
+int BIO_read(BIO *b, void *data, int datal)
 {
     size_t read;
     int ret;
 
-    if (outl < 0)
+    if (datal < 0)
         return 0;
 
-    ret = bio_read_intern(b, out, (size_t)outl, &read);
+    ret = bio_read_intern(b, data, (size_t)datal, &read);
 
     if (ret > 0) {
         /* *read should always be <= outl */
@@ -299,11 +299,11 @@ int BIO_read(BIO *b, void *out, int outl)
     return ret;
 }
 
-int BIO_read_ex(BIO *b, void *out, size_t outl, size_t *read)
+int BIO_read_ex(BIO *b, void *data, size_t datal, size_t *read)
 {
     int ret;
 
-    ret = bio_read_intern(b, out, outl, read);
+    ret = bio_read_intern(b, data, datal, read);
 
     if (ret > 0)
         ret = 1;
@@ -313,7 +313,8 @@ int BIO_read_ex(BIO *b, void *out, size_t outl, size_t *read)
     return ret;
 }
 
-static int bio_write_intern(BIO *b, const void *in, size_t inl, size_t *written)
+static int bio_write_intern(BIO *b, const void *data, size_t datal,
+                            size_t *written)
 {
     int ret;
 
@@ -326,7 +327,7 @@ static int bio_write_intern(BIO *b, const void *in, size_t inl, size_t *written)
     }
 
     if ((b->callback != NULL || b->callback_ex != NULL) &&
-        ((ret = (int)bio_call_callback(b, BIO_CB_WRITE, in, inl, 0, 0L, 1L,
+        ((ret = (int)bio_call_callback(b, BIO_CB_WRITE, data, datal, 0, 0L, 1L,
                                        written)) <= 0))
         return ret;
 
@@ -335,27 +336,27 @@ static int bio_write_intern(BIO *b, const void *in, size_t inl, size_t *written)
         return -2;
     }
 
-    ret = b->method->bwrite(b, in, inl, written);
+    ret = b->method->bwrite(b, data, datal, written);
 
     if (ret > 0)
         b->num_write += (uint64_t)*written;
 
     if (b->callback != NULL || b->callback_ex != NULL)
-        ret = (int)bio_call_callback(b, BIO_CB_WRITE | BIO_CB_RETURN, in, inl,
-                                     0, 0L, ret, written);
+        ret = (int)bio_call_callback(b, BIO_CB_WRITE | BIO_CB_RETURN, data,
+                                     datal, 0, 0L, ret, written);
 
     return ret;
 }
 
-int BIO_write(BIO *b, const void *in, int inl)
+int BIO_write(BIO *b, const void *data, int datal)
 {
     size_t written;
     int ret;
 
-    if (inl < 0)
+    if (datal < 0)
         return 0;
 
-    ret = bio_write_intern(b, in, (size_t)inl, &written);
+    ret = bio_write_intern(b, data, (size_t)datal, &written);
 
     if (ret > 0) {
         /* *written should always be <= inl */
@@ -365,11 +366,11 @@ int BIO_write(BIO *b, const void *in, int inl)
     return ret;
 }
 
-int BIO_write_ex(BIO *b, const void *in, size_t inl, size_t *written)
+int BIO_write_ex(BIO *b, const void *data, size_t datal, size_t *written)
 {
     int ret;
 
-    ret = bio_write_intern(b, in, inl, written);
+    ret = bio_write_intern(b, data, datal, written);
 
     if (ret > 0)
         ret = 1;
