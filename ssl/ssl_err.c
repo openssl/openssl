@@ -279,6 +279,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "tls_construct_server_key_exchange"},
     {ERR_FUNC(SSL_F_TLS_GET_MESSAGE_BODY), "tls_get_message_body"},
     {ERR_FUNC(SSL_F_TLS_GET_MESSAGE_HEADER), "tls_get_message_header"},
+    {ERR_FUNC(SSL_F_TLS_PARSE_RAW_EXTENSIONS), "tls_parse_raw_extensions"},
     {ERR_FUNC(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO),
      "tls_post_process_client_hello"},
     {ERR_FUNC(SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE),
