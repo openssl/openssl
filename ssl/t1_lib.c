@@ -2826,8 +2826,8 @@ int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt)
  *
  * Returns a pointer to the found RAW_EXTENSION data, or NULL if not found.
  */
-static RAW_EXTENSION *get_extension_by_type(RAW_EXTENSION *exts, size_t numexts,
-                                            unsigned int type)
+RAW_EXTENSION *tls_get_extension_by_type(RAW_EXTENSION *exts, size_t numexts,
+                                         unsigned int type)
 {
     size_t loop;
 
@@ -2885,9 +2885,9 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
     if (s->version <= SSL3_VERSION || !tls_use_ticket(s))
         return 0;
 
-    ticketext = get_extension_by_type(hello->pre_proc_exts,
-                                      hello->num_extensions,
-                                      TLSEXT_TYPE_session_ticket);
+    ticketext = tls_get_extension_by_type(hello->pre_proc_exts,
+                                          hello->num_extensions,
+                                          TLSEXT_TYPE_session_ticket);
     if (ticketext == NULL)
         return 0;
 
@@ -2948,8 +2948,9 @@ int tls_check_client_ems_support(SSL *s, const CLIENTHELLO_MSG *hello)
     if (s->version <= SSL3_VERSION)
         return 1;
 
-    emsext = get_extension_by_type(hello->pre_proc_exts, hello->num_extensions,
-                                   TLSEXT_TYPE_extended_master_secret);
+    emsext = tls_get_extension_by_type(hello->pre_proc_exts,
+                                       hello->num_extensions,
+                                       TLSEXT_TYPE_extended_master_secret);
 
     /*
      * No extensions is a success - we have successfully discovered that the
