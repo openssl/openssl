@@ -19,7 +19,8 @@ our @tests = (
     {
         name => "renegotiate-client-no-resume",
         server => {
-            "Options" => "NoResumptionOnRenegotiation"
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
         },
         client => {},
         test => {
@@ -31,7 +32,9 @@ our @tests = (
     },
     {
         name => "renegotiate-client-resume",
-        server => {},
+        server => {
+            "MaxProtocol" => "TLSv1.2"
+        },
         client => {},
         test => {
             "Method" => "TLS",
@@ -43,7 +46,8 @@ our @tests = (
     {
         name => "renegotiate-server-no-resume",
         server => {
-            "Options" => "NoResumptionOnRenegotiation"
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
         },
         client => {},
         test => {
@@ -55,7 +59,9 @@ our @tests = (
     },
     {
         name => "renegotiate-server-resume",
-        server => {},
+        server => {
+            "MaxProtocol" => "TLSv1.2"
+        },
         client => {},
         test => {
             "Method" => "TLS",

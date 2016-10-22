@@ -2056,6 +2056,9 @@ __owur int dtls1_process_heartbeat(SSL *s, unsigned char *p,
                                    size_t length);
 #  endif
 
+__owur RAW_EXTENSION *tls_get_extension_by_type(RAW_EXTENSION *exts,
+                                                size_t numexts,
+                                                unsigned int type);
 __owur int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                                       SSL_SESSION **ret);
 __owur int tls_check_client_ems_support(SSL *s, const CLIENTHELLO_MSG *hello);

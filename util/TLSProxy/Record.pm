@@ -35,6 +35,7 @@ my %record_type = (
 );
 
 use constant {
+    VERS_TLS_1_4 => 773,
     VERS_TLS_1_3 => 772,
     VERS_TLS_1_2 => 771,
     VERS_TLS_1_1 => 770,

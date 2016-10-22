@@ -996,6 +996,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
     const version_info *vent;
     const version_info *table;
     int disabled = 0;
+    RAW_EXTENSION *suppversions;
 
     s->client_version = client_version;
 
@@ -1019,6 +1020,73 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
         break;
     }
 
+    suppversions = tls_get_extension_by_type(hello->pre_proc_exts,
+                                             hello->num_extensions,
+                                             TLSEXT_TYPE_supported_versions);
+
+    /*
+     * TODO(TLS1.3): We only look at this if our max protocol version is TLS1.3
+     * or above. Should we allow it for lower versions too?
+     */
+    if (suppversions != NULL && !SSL_IS_DTLS(s)
+            && (s->max_proto_version == 0
+                || TLS1_3_VERSION <= s->max_proto_version)) {
+        unsigned int candidate_vers = 0;
+        unsigned int best_vers = 0;
+        const SSL_METHOD *best_method = NULL;
+        PACKET versionslist;
+
+        if (!PACKET_get_length_prefixed_1(&suppversions->data, &versionslist)
+                || PACKET_remaining(&suppversions->data) != 0) {
+            /* Trailing or invalid data? */
+            return SSL_R_LENGTH_MISMATCH;
+        }
+
+        while (PACKET_get_net_2(&versionslist, &candidate_vers)) {
+            /* TODO(TLS1.3): Remove this before release */
+            if (candidate_vers == TLS1_3_VERSION_DRAFT)
+                candidate_vers = TLS1_3_VERSION;
+            if ((int)candidate_vers > s->client_version)
+                s->client_version = candidate_vers;
+            if (version_cmp(s, candidate_vers, best_vers) <= 0)
+                continue;
+            for (vent = table;
+                 vent->version != 0 && vent->version != (int)candidate_vers;
+                 ++vent);
+            if (vent->version != 0) {
+                const SSL_METHOD *method;
+
+                method = vent->smeth();
+                if (ssl_method_error(s, method) == 0) {
+                    best_vers = candidate_vers;
+                    best_method = method;
+                }
+            }
+        }
+        if (PACKET_remaining(&versionslist) != 0) {
+            /* Trailing data? */
+            return SSL_R_LENGTH_MISMATCH;
+        }
+
+        if (best_vers > 0) {
+            s->version = best_vers;
+            s->method = best_method;
+            return 0;
+        }
+        return SSL_R_UNSUPPORTED_PROTOCOL;
+    }
+
+    /*
+     * If the supported versions extension isn't present, then the highest
+     * version we can negotiate is TLSv1.2
+     */
+    if (version_cmp(s, client_version, TLS1_3_VERSION) >= 0)
+        client_version = TLS1_2_VERSION;
+
+    /*
+     * No supported versions extension, so we just use the version supplied in
+     * the ClientHello.
+     */
     for (vent = table; vent->version != 0; ++vent) {
         const SSL_METHOD *method;
 
