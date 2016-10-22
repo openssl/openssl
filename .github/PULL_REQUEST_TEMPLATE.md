@@ -6,8 +6,9 @@ Contributors guide: https://github.com/openssl/openssl/blob/master/CONTRIBUTING
 
 ##### Checklist
 <!-- Remove items that do not apply. For completed items, change [ ] to [x]. -->
-- [ ] documentation is changed or added
-- [ ] tests are updated
+- [ ] documentation is added or updated
+- [ ] tests are added or updated
+- [ ] CLA is signed
 
 ##### Description of change
 <!-- Provide a description of the changes.
