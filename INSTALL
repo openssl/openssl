@@ -947,7 +947,7 @@
  where OpenSSL does not know how to build shared libraries the "no-shared"
  option will be forced and only static libraries will be created.
 
- Shared libraries are named a little different on different platforms.
+ Shared libraries are named a little differently on different platforms.
  One way or another, they all have the major OpenSSL version number as
  part of the file name, i.e. for OpenSSL 1.1.x, 1.1 is somehow part of
  the name.
