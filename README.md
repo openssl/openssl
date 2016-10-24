@@ -32,6 +32,7 @@ liboqs currently supports the following key exchange mechanisms:
 
 - `RLWE_BCNS15`: key exchange from the ring learning with errors problem (Bos, Costello, Naehrig, Stebila, *IEEE Symposium on Security & Privacy 2015*, [https://eprint.iacr.org/2014/599](https://eprint.iacr.org/2014/599))
 - `RLWE_NEWHOPE`: "NewHope": key exchange from the ring learning with errors problem (Alkim, Ducas, Pöppelmann, Schwabe, *USENIX Security 2016*, [https://eprint.iacr.org/2015/1092](https://eprint.iacr.org/2015/1092)) (using the reference C implementation of NewHope from [https://github.com/tpoeppelmann/newhope](https://github.com/tpoeppelmann/newhope))
+- `LWE_FRODO_RECOMMENDED`: "Frodo": key exchange from the learning with errors problem (Bos, Costello, Ducas, Mironov, Naehrig, Nikolaenko, Raghunathan, Stebila, *ACM Conference on Computer and Communications Security 2016*, [http://eprint.iacr.org/2016/659](http://eprint.iacr.org/2016/659)); using the "recommended" parameter set
 
 ### Ciphersuites
 
@@ -97,7 +98,7 @@ OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) whi
 
 To see the list of supported ciphersuites from OQS, type:
 
-	apps/openssl ciphers OQSKEX-GENERIC:OQSKEX-GENERIC-ECDHE:OQSKEX-RLWE-BCNS15:OQSKEX-RLWE-BCNS15-ECDHE:OQSKEX-RLWE-NEWHOPE:OQSKEX-RLWE-NEWHOPE-ECDHE
+	apps/openssl ciphers OQSKEX-GENERIC:OQSKEX-GENERIC-ECDHE:OQSKEX-RLWE-BCNS15:OQSKEX-RLWE-BCNS15-ECDHE:OQSKEX-RLWE-NEWHOPE:OQSKEX-RLWE-NEWHOPE-ECDHE:OQSKEX-LWE-FRODO-RECOMMENDED:OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE
 
 To run a server, we first need to generate a self-signed X.509 certificate.  Run the following command:
 
@@ -111,7 +112,7 @@ When done, type to combine the key and certificate (as required by `s_server`):
 
 To run a basic TLS server with all OQS ciphersuites enabled:
 
-	apps/openssl s_server -cipher OQSKEX-GENERIC:OQSKEX-GENERIC-ECDHE:OQSKEX-RLWE-BCNS15:OQSKEX-RLWE-BCNS15-ECDHE
+	apps/openssl s_server -cipher OQSKEX-GENERIC:OQSKEX-GENERIC-ECDHE:OQSKEX-RLWE-BCNS15:OQSKEX-RLWE-BCNS15-ECDHE:OQSKEX-RLWE-NEWHOPE:OQSKEX-RLWE-NEWHOPE-ECDHE:OQSKEX-LWE-FRODO-RECOMMENDED:OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE
 
 In another terminal window, you can run a TLS client for any or all of the supported ciphersuites, for example:
 
@@ -121,6 +122,8 @@ In another terminal window, you can run a TLS client for any or all of the suppo
 	apps/openssl s_client -cipher OQSKEX-RLWE-BCNS15-ECDHE
 	apps/openssl s_client -cipher OQSKEX-RLWE-NEWHOPE
 	apps/openssl s_client -cipher OQSKEX-RLWE-NEWHOPE-ECDHE
+	apps/openssl s_client -cipher OQSKEX-LWE-FRODO-RECOMMENDED
+	apps/openssl s_client -cipher OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE
 
 Current status and plans
 ------------------------
