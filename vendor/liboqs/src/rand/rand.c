@@ -11,6 +11,7 @@ OQS_RAND *OQS_RAND_new(enum OQS_RAND_alg_name alg_name) {
 		return OQS_RAND_urandom_chacha20_new();
 	default:
 		assert(0);
+		return NULL; // avoid the warning of potentialy uninitialized variable in VS
 	}
 }
 

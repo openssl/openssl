@@ -24,6 +24,8 @@
     <ClInclude Include="..\..\src\kex_rlwe_bcns15\local.h" />
     <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_a.h" />
     <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_table.h" />
+    <ClInclude Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" />
+    <ClInclude Include="..\..\src\kex_rlwe_newhope\params.h" />
     <ClInclude Include="..\..\src\rand\rand.h" />
     <ClInclude Include="..\..\src\rand_urandom_chacha20\rand_urandom_chacha20.h" />
   </ItemGroup>
@@ -33,6 +35,8 @@
     <ClCompile Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.c" />
     <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe.c" />
     <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe_kex.c" />
+    <ClCompile Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.c" />
+    <ClCompile Include="..\..\src\kex_rlwe_newhope\newhope.c" />
     <ClCompile Include="..\..\src\rand\rand.c" />
     <ClCompile Include="..\..\src\rand_urandom_chacha20\rand_urandom_chacha20.c" />
   </ItemGroup>
@@ -115,7 +119,8 @@ del /Q "$(SolutionDir)include\oqs\*.*"
 copy "$(SolutionDir)..\src\rand\rand.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex\kex.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"</Command>
+copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -138,7 +143,8 @@ del /Q "$(SolutionDir)include\oqs\*.*"
 copy "$(SolutionDir)..\src\rand\rand.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex\kex.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"</Command>
+copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -165,7 +171,8 @@ del /Q "$(SolutionDir)include\oqs\*.*"
 copy "$(SolutionDir)..\src\rand\rand.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex\kex.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"</Command>
+copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -192,7 +199,8 @@ del /Q "$(SolutionDir)include\oqs\*.*"
 copy "$(SolutionDir)..\src\rand\rand.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex\kex.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"</Command>
+copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -57,7 +57,7 @@ matrix:
       - cd astyle/build/gcc && make && export PATH=$(pwd)/bin:$PATH && cd ../../../
   - os: osx
     compiler: clang
-    env: CC_OQS=clang
+    env: CC_OQS=clang AES_NI=0
     before_install:
       - brew install astyle  
 

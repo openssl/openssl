@@ -6,22 +6,25 @@
 static void encode_a(unsigned char *r, const poly *pk, const unsigned char *seed) {
 	int i;
 	poly_tobytes(r, pk);
-	for (i = 0; i < NEWHOPE_SEEDBYTES; i++)
+	for (i = 0; i < NEWHOPE_SEEDBYTES; i++) {
 		r[POLY_BYTES + i] = seed[i];
+	}
 }
 
 static void decode_a(poly *pk, unsigned char *seed, const unsigned char *r) {
 	int i;
 	poly_frombytes(pk, r);
-	for (i = 0; i < NEWHOPE_SEEDBYTES; i++)
+	for (i = 0; i < NEWHOPE_SEEDBYTES; i++) {
 		seed[i] = r[POLY_BYTES + i];
+	}
 }
 
 static void encode_b(unsigned char *r, const poly *b, const poly *c) {
 	int i;
 	poly_tobytes(r, b);
-	for (i = 0; i < PARAM_N / 4; i++)
+	for (i = 0; i < PARAM_N / 4; i++) {
 		r[POLY_BYTES + i] = c->coeffs[4 * i] | (c->coeffs[4 * i + 1] << 2) | (c->coeffs[4 * i + 2] << 4) | (c->coeffs[4 * i + 3] << 6);
+	}
 }
 
 static void decode_b(poly *b, poly *c, const unsigned char *r) {

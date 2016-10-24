@@ -13,4 +13,9 @@
 #define NEWHOPE_SENDABYTES (POLY_BYTES + NEWHOPE_SEEDBYTES)
 #define NEWHOPE_SENDBBYTES (POLY_BYTES + NEWHOPE_RECBYTES)
 
+
+#if defined(WINDOWS)
+typedef unsigned __int16 uint16_t;
+#endif
+
 #endif
