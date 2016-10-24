@@ -1,9 +1,16 @@
+#if defined(WINDOWS)
+#define UNUSED
+// FIXME: __attribute__ fails in VS, is there something else I should define?
+#else
 #define UNUSED __attribute__ ((unused))
+#endif
 
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#if !defined(WINDOWS)
 #include <strings.h>
+#include <unistd.h>
+#endif
 
 #include <oqs/kex.h>
 #include <oqs/rand.h>
@@ -14,7 +21,9 @@
 
 OQS_KEX *OQS_KEX_rlwe_newhope_new(OQS_RAND *rand) {
 	OQS_KEX *k = malloc(sizeof(OQS_KEX));
-	if (k == NULL) return NULL;
+	if (k == NULL) {
+		return NULL;
+	}
 	k->method_name = strdup("RLWE NewHope");
 	k->estimated_classical_security = 229; // http://eprint.iacr.org/2015/1092.pdf Table 1 NewHope dual known classical
 	k->estimated_quantum_security = 206; // http://eprint.iacr.org/2015/1092.pdf Table 1 NewHope dual known quantum
@@ -37,9 +46,13 @@ int OQS_KEX_rlwe_newhope_alice_0(UNUSED OQS_KEX *k, void **alice_priv, uint8_t *
 
 	/* allocate public/private key pair */
 	*alice_msg = malloc(NEWHOPE_SENDABYTES);
-	if (*alice_msg == NULL) goto err;
+	if (*alice_msg == NULL) {
+		goto err;
+	}
 	*alice_priv = malloc(sizeof(poly));
-	if (*alice_priv == NULL) goto err;
+	if (*alice_priv == NULL) {
+		goto err;
+	}
 
 	/* generate public/private key pair */
 	keygen(*alice_msg, (poly *) (*alice_priv), k->rand);
@@ -65,13 +78,19 @@ int OQS_KEX_rlwe_newhope_bob(UNUSED OQS_KEX *k, const uint8_t *alice_msg, const 
 
 	int ret;
 
-	if (alice_msg_len != NEWHOPE_SENDABYTES) goto err;
+	if (alice_msg_len != NEWHOPE_SENDABYTES) {
+		goto err;
+	}
 
 	/* allocate message and session key */
 	*bob_msg = malloc(NEWHOPE_SENDBBYTES);
-	if (*bob_msg == NULL) goto err;
+	if (*bob_msg == NULL) {
+		goto err;
+	}
 	*key = malloc(32);
-	if (*key == NULL) goto err;
+	if (*key == NULL) {
+		goto err;
+	}
 
 	/* generate Bob's response */
 	sharedb(*key, *bob_msg, alice_msg, k->rand);
@@ -98,11 +117,15 @@ int OQS_KEX_rlwe_newhope_alice_1(UNUSED OQS_KEX *k, const void *alice_priv, cons
 
 	int ret;
 
-	if (bob_msg_len != NEWHOPE_SENDBBYTES) goto err;
+	if (bob_msg_len != NEWHOPE_SENDBBYTES) {
+		goto err;
+	}
 
 	/* allocate session key */
 	*key = malloc(32);
-	if (*key == NULL) goto err;
+	if (*key == NULL) {
+		goto err;
+	}
 
 	/* generate Alice's session key */
 	shareda(*key, (poly *) alice_priv, bob_msg);

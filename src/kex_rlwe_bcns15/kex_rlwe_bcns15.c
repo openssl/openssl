@@ -28,7 +28,8 @@ OQS_KEX *OQS_KEX_rlwe_bcns15_new(OQS_RAND *rand) {
 	}
 
 	k->ctx = malloc(sizeof(struct oqs_kex_rlwe_bcns15_fft_ctx));
-	if (NULL == k->ctx) {
+	if (k->ctx == NULL) {
+		free(k);
 		return NULL;
 	}
 

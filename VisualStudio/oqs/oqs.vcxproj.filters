@@ -13,51 +13,81 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\BCNS15">
+      <UniqueIdentifier>{178cf83e-52eb-4ead-a1ca-33558ffd988e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\rand">
+      <UniqueIdentifier>{15505124-034e-4100-a6cb-a32309738b25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BCNS15">
+      <UniqueIdentifier>{768db348-be19-4ce5-a6bc-22d81c2c59d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\rand">
+      <UniqueIdentifier>{65721ee8-a809-4e67-88a8-ad33d6a6a800}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Newhope">
+      <UniqueIdentifier>{d26b84bb-a12a-4229-b619-8ddfdaca9928}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Newhope">
+      <UniqueIdentifier>{9445c3c6-bd2e-4448-8cba-a986ef929d45}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\kex\kex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\kex_rlwe_bcns15\local.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_a.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_table.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\rand_urandom_chacha20\rand_urandom_chacha20.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\BCNS15</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\rand\rand.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\rand</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\rand_urandom_chacha20\rand_urandom_chacha20.h">
+      <Filter>Header Files\rand</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_a.h">
+      <Filter>Header Files\BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_table.h">
+      <Filter>Header Files\BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\local.h">
+      <Filter>Header Files\BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.h">
+      <Filter>Header Files\Newhope</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_newhope\params.h">
+      <Filter>Header Files\Newhope</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\kex_rlwe_bcns15\fft.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe_kex.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\kex\kex.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_bcns15\fft.c">
+      <Filter>Source Files\BCNS15</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.c">
+      <Filter>Source Files\BCNS15</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\rand\rand.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\rand</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\rand_urandom_chacha20\rand_urandom_chacha20.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\rand</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe_kex.c">
+      <Filter>Source Files\BCNS15</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe.c">
+      <Filter>Source Files\BCNS15</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.c">
+      <Filter>Source Files\Newhope</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_newhope\newhope.c">
+      <Filter>Source Files\Newhope</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

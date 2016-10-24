@@ -32,6 +32,7 @@ include
 *.hex
 /test_kex
 /test_rand
+/test_aes
 
 # Debug files
 *.dSYM/

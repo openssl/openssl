@@ -1,17 +1,11 @@
-#if defined(WINDOWS)
-#define UNUSED
-// FIXME: __attribute__ fails in VS, is there something else I should define?
-#else
-#define UNUSED __attribute__ ((unused))
-#endif
-
 #include <assert.h>
 
 #include <oqs/kex.h>
 #include <oqs/kex_rlwe_bcns15.h>
 #include <oqs/kex_rlwe_newhope.h>
+#include <oqs/kex_lwe_frodo.h>
 
-OQS_KEX *OQS_KEX_new(OQS_RAND *rand, enum OQS_KEX_alg_name alg_name, UNUSED const uint8_t *seed, UNUSED const UNUSED size_t seed_len, UNUSED const char *named_parameters) {
+OQS_KEX *OQS_KEX_new(OQS_RAND *rand, enum OQS_KEX_alg_name alg_name, const uint8_t *seed, const size_t seed_len, const char *named_parameters) {
 	switch (alg_name) {
 	case OQS_KEX_alg_default:
 		return OQS_KEX_rlwe_bcns15_new(rand);
@@ -19,8 +13,11 @@ OQS_KEX *OQS_KEX_new(OQS_RAND *rand, enum OQS_KEX_alg_name alg_name, UNUSED cons
 		return OQS_KEX_rlwe_bcns15_new(rand);
 	case OQS_KEX_alg_rlwe_newhope:
 		return OQS_KEX_rlwe_newhope_new(rand);
+	case OQS_KEX_alg_lwe_frodo:
+		return OQS_KEX_lwe_frodo_new(rand, seed, seed_len, named_parameters);
 	default:
 		assert(0);
+		return NULL;
 	}
 }
 

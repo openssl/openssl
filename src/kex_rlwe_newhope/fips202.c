@@ -334,26 +334,31 @@ static void keccak_absorb(uint64_t *s,
 	unsigned long long i;
 	unsigned char t[200];
 
-	for (i = 0; i < 25; ++i)
+	for (i = 0; i < 25; ++i) {
 		s[i] = 0;
+	}
 
 	while (mlen >= r) {
-		for (i = 0; i < r / 8; ++i)
+		for (i = 0; i < r / 8; ++i) {
 			s[i] ^= load64(m + 8 * i);
+		}
 
 		KeccakF1600_StatePermute(s);
 		mlen -= r;
 		m += r;
 	}
 
-	for (i = 0; i < r; ++i)
+	for (i = 0; i < r; ++i) {
 		t[i] = 0;
-	for (i = 0; i < mlen; ++i)
+	}
+	for (i = 0; i < mlen; ++i) {
 		t[i] = m[i];
+	}
 	t[i] = p;
 	t[r - 1] |= 128;
-	for (i = 0; i < r / 8; ++i)
+	for (i = 0; i < r / 8; ++i) {
 		s[i] ^= load64(t + 8 * i);
+	}
 }
 
 
@@ -386,6 +391,7 @@ static void sha3256(unsigned char *output, const unsigned char *input, unsigned 
 
 	keccak_absorb(s, SHA3_256_RATE, input, inputByteLen, 0x06);
 	keccak_squeezeblocks(t, 1, s, SHA3_256_RATE);
-	for (i = 0; i < 32; i++)
+	for (i = 0; i < 32; i++) {
 		output[i] = t[i];
+	}
 }

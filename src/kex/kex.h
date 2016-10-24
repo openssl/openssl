@@ -15,6 +15,7 @@ enum OQS_KEX_alg_name {
 	OQS_KEX_alg_default,
 	OQS_KEX_alg_rlwe_bcns15,
 	OQS_KEX_alg_rlwe_newhope,
+	OQS_KEX_alg_lwe_frodo,
 };
 
 typedef struct OQS_KEX OQS_KEX;
@@ -49,7 +50,7 @@ typedef struct OQS_KEX {
 	/**
 	 * An instance-specific seed, if any.
 	 */
-	const uint8_t *seed;
+	uint8_t *seed;
 
 	/**
 	 * Size of instance-specific seed, if any.
@@ -59,7 +60,7 @@ typedef struct OQS_KEX {
 	/**
 	 * Named parameters for this key exchange method instance, if any.
 	 */
-	const char *named_parameters;
+	char *named_parameters;
 
 	/**
 	 * Opaque pointer for passing around instance-specific data
