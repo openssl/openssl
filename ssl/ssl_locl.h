@@ -318,6 +318,7 @@
 # define SSL_kOQSKEX_GENERIC     0x00001000L
 # define SSL_kOQSKEX_RLWE_BCNS15 0x00002000L
 # define SSL_kOQSKEX_RLWE_NEWHOPE 0x00004000L
+# define SSL_kOQSKEX_LWE_FRODO_RECOMMENDED 0x00008000L
 
 /* Bits for algorithm_auth (server authentication) */
 /* RSA auth */
