@@ -167,6 +167,8 @@ size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
     uint64_t *A_flat = (uint64_t *)A;
     size_t i, w = r / 8;
 
+    assert(r < (25 * sizeof(A[0][0])) && (r % 8) == 0);
+
     while (len >= r) {
         for (i = 0; i < w; i++) {
             A_flat[i] ^= (uint64_t)inp[0]       | (uint64_t)inp[1] << 8  |
@@ -190,6 +192,8 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
 {
     uint64_t *A_flat = (uint64_t *)A;
     size_t i, rem, w = r / 8;
+
+    assert(r < (25 * sizeof(A[0][0])) && (r % 8) == 0);
 
     while (len >= r) {
         for (i = 0; i < w; i++) {
