@@ -8,16 +8,20 @@
 
 use strict;
 use OpenSSL::Test qw/:DEFAULT bldtop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_self");
 
-plan tests => 4;
+plan skip_all => "Only useful when building shared libraries"
+    if disabled("shared");
 
 my @known_selftests =
     ( "selftests/crypto/sha_keccak1600",
       "selftests/crypto/modes_cts128",
       "selftests/crypto/modes_gcm128",
       "selftests/crypto/poly1305_poly1305" );
+
+plan tests => scalar @known_selftests;
 
 foreach (@known_selftests) {
     ok(run(test([$_])), "Running $_");
