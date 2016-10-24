@@ -316,6 +316,8 @@ $config{sdirs} = [
     "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui",
     "cms", "ts", "srp", "cmac", "ct", "async", "kdf"
     ];
+# test/ subdirectories
+$config{tdirs} = [ "selftests/crypto" ];
 
 # Known TLS and DTLS protocols
 my @tls = qw(ssl3 tls1 tls1_1 tls1_2);
@@ -1423,6 +1425,10 @@ if ($builder eq "unified") {
     foreach (@{$config{engdirs}}) {
         push @build_infos, [ catdir("engines", $_), "build.info" ]
             if (-f catfile($srcdir, "engines", $_, "build.info"));
+    }
+    foreach (@{$config{tdirs}}) {
+        push @build_infos, [ catdir("test", $_), "build.info" ]
+            if (-f catfile($srcdir, "test", $_, "build.info"));
     }
 
     $config{build_infos} = [ ];
