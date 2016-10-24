@@ -1668,9 +1668,10 @@ void CRYPTO_gcm128_release(GCM128_CONTEXT *ctx)
 #if defined(SELFTEST)
 # include <stdio.h>
 # include <openssl/aes.h>
+# include "internal/cryptlib.h"
 
 /* Test Case 1 */
-static const u8 K1[16], *P1 = NULL, *A1 = NULL, IV1[12], *C1 = NULL;
+static const u8 K1[16], P1[] = { 00 }, A1[] = { 00 }, IV1[12], C1[] = { 00 };
 static const u8 T1[] = {
     0x58, 0xe2, 0xfc, 0xce, 0xfa, 0x7e, 0x30, 0x61,
     0x36, 0x7f, 0x1d, 0x57, 0xa4, 0xe7, 0x45, 0x5a
@@ -1822,7 +1823,7 @@ static const u8 T6[] = {
 };
 
 /* Test Case 7 */
-static const u8 K7[24], *P7 = NULL, *A7 = NULL, IV7[12], *C7 = NULL;
+static const u8 K7[24], P7[] = { 0 }, A7[] = { 0 }, IV7[12], C7[] = { 0 };
 static const u8 T7[] = {
     0xcd, 0x33, 0xb2, 0x8a, 0xc7, 0x73, 0xf7, 0x4b,
     0xa0, 0x0e, 0xd1, 0xf3, 0x12, 0x57, 0x24, 0x35
@@ -1973,7 +1974,7 @@ static const u8 T12[] = {
 };
 
 /* Test Case 13 */
-static const u8 K13[32], *P13 = NULL, *A13 = NULL, IV13[12], *C13 = NULL;
+static const u8 K13[32], P13[] = { 0 }, A13[] = { 0 }, IV13[12], C13[] = { 0 };
 static const u8 T13[] = {
     0x53, 0x0f, 0x8a, 0xfb, 0xc7, 0x45, 0x36, 0xb9,
     0xa9, 0x63, 0xb4, 0xf1, 0xc4, 0xcb, 0x73, 0x8b
@@ -2209,17 +2210,23 @@ static const u8 T20[] = {
         CRYPTO_gcm128_init(&ctx,&key,(block128_f)AES_encrypt);  \
         CRYPTO_gcm128_setiv(&ctx,IV##n,sizeof(IV##n));          \
         memset(out,0,sizeof(out));                              \
-        if (A##n) CRYPTO_gcm128_aad(&ctx,A##n,sizeof(A##n));    \
-        if (P##n) CRYPTO_gcm128_encrypt(&ctx,P##n,out,sizeof(out));     \
+        if (sizeof(A##n) > sizeof(A##n[0]))                     \
+            CRYPTO_gcm128_aad(&ctx,A##n,sizeof(A##n));          \
+        if (sizeof(P##n) > sizeof(P##n[0]))                     \
+            CRYPTO_gcm128_encrypt(&ctx,P##n,out,sizeof(out));   \
         if (CRYPTO_gcm128_finish(&ctx,T##n,16) ||               \
-            (C##n && memcmp(out,C##n,sizeof(out))))             \
+            (sizeof(C##n) > sizeof(C##n[0])                     \
+             && memcmp(out,C##n,sizeof(out))))                  \
                 ret++, printf ("encrypt test#%d failed.\n",n);  \
         CRYPTO_gcm128_setiv(&ctx,IV##n,sizeof(IV##n));          \
         memset(out,0,sizeof(out));                              \
-        if (A##n) CRYPTO_gcm128_aad(&ctx,A##n,sizeof(A##n));    \
-        if (C##n) CRYPTO_gcm128_decrypt(&ctx,C##n,out,sizeof(out));     \
+        if (sizeof(A##n) > sizeof(A##n[0]))                     \
+            CRYPTO_gcm128_aad(&ctx,A##n,sizeof(A##n));          \
+        if (sizeof(C##n) > sizeof(C##n[0]))                     \
+            CRYPTO_gcm128_decrypt(&ctx,C##n,out,sizeof(out));   \
         if (CRYPTO_gcm128_finish(&ctx,T##n,16) ||               \
-            (P##n && memcmp(out,P##n,sizeof(out))))             \
+            (sizeof(P##n) > sizeof(P##n[0])                     \
+             && memcmp(out,P##n,sizeof(out))))                  \
                 ret++, printf ("decrypt test#%d failed.\n",n);  \
         } while(0)
 
@@ -2252,7 +2259,7 @@ int main()
 
 # ifdef OPENSSL_CPUID_OBJ
     {
-        size_t start, stop, gcm_t, ctr_t, OPENSSL_rdtsc();
+        size_t start, gcm_t, ctr_t, OPENSSL_rdtsc();
         union {
             u64 u;
             u8 c[1024];
