@@ -107,8 +107,6 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
-        if (*readbytes == 0)
-            break;
         if (sb->renegotiate_count > 0) {
             sb->byte_count += *readbytes;
             if (sb->byte_count > sb->renegotiate_count) {
@@ -178,8 +176,6 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
-        if (*written == 0)
-            break;
         if (bs->renegotiate_count > 0) {
             bs->byte_count += *written;
             if (bs->byte_count > bs->renegotiate_count) {
