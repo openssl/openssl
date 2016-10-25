@@ -389,7 +389,7 @@ int ssl3_get_record(SSL *s)
         goto f_err;
     }
 #ifdef SSL_DEBUG
-    printf("dec %ld\n", rr->length);
+    printf("dec %"OSSLzu"\n", rr->length);
     {
         size_t z;
         for (z = 0; z < rr->length; z++)
