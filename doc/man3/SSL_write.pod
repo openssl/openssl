@@ -71,8 +71,16 @@ undefined.
 
 =head1 RETURN VALUES
 
-SSL_write_ex() will return 1 for success or 0 for failure. In the event of a
-failure call SSL_get_error() to find out the reason.
+SSL_write_ex() will return 1 for success or 0 for failure. Success means that
+all requested application data bytes have been written to the SSL connection or,
+if SSL_MODE_ENABLE_PARTIAL_WRITE is in use, at least 1 application data byte has
+been written to the SSL connection. Failure means that not all the requested
+bytes have been written yet (if SSL_MODE_ENABLE_PARTIAL_WRITE is not in use) or
+no bytes could be written to the SSL connection (if
+SSL_MODE_ENABLE_PARTIAL_WRITE is in use). Failures can be retryable (e.g. the
+network write buffer has temporarily filled up) or non-retryable (e.g. a fatal
+network error). In the event of a failure call L<SSL_get_error(3)> to find out
+the reason and if the call is retryable or not.
 
 For SSL_write() the following return values can occur:
 
