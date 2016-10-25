@@ -260,10 +260,11 @@ static void st_free(ASN1_STRING_TABLE *tbl)
 
 #ifdef STRING_TABLE_TEST
 
-main()
+int main()
 {
-    ASN1_STRING_TABLE *tmp;
-    int i, last_nid = -1;
+    const ASN1_STRING_TABLE *tmp;
+    size_t i;
+    int last_nid = -1;
 
     for (tmp = tbl_standard, i = 0; i < OSSL_NELEM(tbl_standard); i++, tmp++) {
         if (tmp->nid < last_nid) {
@@ -279,9 +280,9 @@ main()
     }
 
     for (tmp = tbl_standard, i = 0; i < OSSL_NELEM(tbl_standard); i++, tmp++)
-        printf("Index %d, NID %d, Name=%s\n", i, tmp->nid,
+        printf("Index %zu, NID %d, Name=%s\n", i, tmp->nid,
                OBJ_nid2ln(tmp->nid));
-
+    exit(1);
 }
 
 #endif

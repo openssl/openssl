@@ -28,4 +28,21 @@ IF[{- !$disabled{tests} -}]
     DEPEND[poly1305_poly1305]=../../../libcrypto
     MACRO[poly1305_poly1305.o]=SELFTEST
   ENDIF
+
+  PROGRAMS_NO_INST=asn1_a_strnid
+  SOURCE[asn1_a_strnid]=asn1_a_strnid.o
+  SOURCE[asn1_a_strnid.o]=../../../crypto/asn1/a_strnid.c
+  INCLUDE[asn1_a_strnid.o]=../../.. ../../../include ../../../crypto/include
+  DEPEND[asn1_a_strnid]=../../../libcrypto
+  MACRO[asn1_a_strnid.o]=STRING_TABLE_TEST
+
+  IF[{- $disabled{shared} -}]
+    # Note: this one only prints, no varying exit codes
+    PROGRAMS_NO_INST=asn1_ameth_lib
+    SOURCE[asn1_ameth_lib]=asn1_ameth_lib.o
+    SOURCE[asn1_ameth_lib.o]=../../../crypto/asn1/ameth_lib.c
+    INCLUDE[asn1_ameth_lib.o]=../../.. ../../../include ../../../crypto/include
+    DEPEND[asn1_ameth_lib]=../../../libcrypto
+    MACRO[asn1_ameth_lib.o]=TEST
+  ENDIF
 ENDIF

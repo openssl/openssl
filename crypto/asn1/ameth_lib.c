@@ -50,11 +50,11 @@ typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 static STACK_OF(EVP_PKEY_ASN1_METHOD) *app_methods = NULL;
 
 #ifdef TEST
-void main()
+int main()
 {
-    int i;
+    size_t i;
     for (i = 0; i < OSSL_NELEM(standard_methods); i++)
-        fprintf(stderr, "Number %d id=%d (%s)\n", i,
+        fprintf(stderr, "Number %zu id=%d (%s)\n", i,
                 standard_methods[i]->pkey_id,
                 OBJ_nid2sn(standard_methods[i]->pkey_id));
 }
