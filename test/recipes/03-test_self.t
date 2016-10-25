@@ -12,17 +12,21 @@ use OpenSSL::Test::Utils;
 
 setup("test_self");
 
-plan skip_all => "Only useful when building shared libraries"
-    if disabled("shared");
+my $no_shared = disabled("shared");
 
-my @known_selftests =
-    ( "selftests/crypto/sha_keccak1600",
-      "selftests/crypto/modes_cts128",
-      "selftests/crypto/modes_gcm128",
-      "selftests/crypto/poly1305_poly1305" );
+my %known_selftests =
+    ( "selftests/crypto/sha_keccak1600" => 1,
+      "selftests/crypto/modes_cts128" => 1,
+      "selftests/crypto/modes_gcm128" => $no_shared,
+      "selftests/crypto/poly1305_poly1305" => $no_shared );
 
-plan tests => scalar @known_selftests;
+plan tests => scalar keys %known_selftests;
 
-foreach (@known_selftests) {
-    ok(run(test([$_])), "Running $_");
+foreach (keys %known_selftests) {
+ SKIP:
+    {
+	skip "Skipping $_, it can only run with no-shared configurations", 1
+	    unless $known_selftests{$_};
+	ok(run(test([$_])), "Running $_");
+    }
 }
