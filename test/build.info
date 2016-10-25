@@ -281,6 +281,20 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[wpackettest]=../include
     DEPEND[wpackettest]=../libcrypto ../libssl
   ENDIF
+
+  IF[{- !$disabled{poly1305} -}]
+    PROGRAMS_NO_INST=poly1305_internal_test
+  ENDIF
+
+  SOURCE[poly1305_internal_test]=poly1305_internal_test.c testutil.c
+  IF[{- !$disabled{shared} -}]
+    SOURCE[poly1305_internal_test]= ../crypto/poly1305/poly1305.c \
+        {- $target{poly1305_asm_src} ? "../crypto/poly1305/".$target{poly1305_asm_src} : "" -} \
+        {- $target{cpuid_asm_src} ? "../crypto/".$target{cpuid_asm_src} : "" -} \
+        ../crypto/cryptlib.c
+  ENDIF
+  INCLUDE[poly1305_internal_test]=.. ../include ../crypto/include
+  DEPEND[poly1305_internal_test]=../libcrypto
 ENDIF
 
 {-
