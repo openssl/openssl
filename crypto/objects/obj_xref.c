@@ -13,6 +13,7 @@
 
 static STACK_OF(nid_triple) *sig_app, *sigx_app;
 
+#ifndef OBJ_XREF_TEST2
 static int sig_cmp(const nid_triple *a, const nid_triple *b)
 {
     return a->sign_id - b->sign_id;
@@ -20,13 +21,16 @@ static int sig_cmp(const nid_triple *a, const nid_triple *b)
 
 DECLARE_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
+#endif
 
 static int sig_sk_cmp(const nid_triple *const *a, const nid_triple *const *b)
 {
     return (*a)->sign_id - (*b)->sign_id;
 }
 
+#ifndef OBJ_XREF_TEST2
 DECLARE_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, sigx);
+#endif
 
 static int sigx_cmp(const nid_triple *const *a, const nid_triple *const *b)
 {
@@ -37,7 +41,9 @@ static int sigx_cmp(const nid_triple *const *a, const nid_triple *const *b)
     return (*a)->pkey_id - (*b)->pkey_id;
 }
 
+#ifndef OBJ_XREF_TEST2
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, sigx);
+#endif
 
 int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 {
@@ -139,19 +145,21 @@ void OBJ_sigid_free(void)
 
 #ifdef OBJ_XREF_TEST
 
-main()
+int main()
 {
     int n1, n2, n3;
+    size_t i;
+    int rv;
 
-    int i, rv;
 # ifdef OBJ_XREF_TEST2
     for (i = 0; i < OSSL_NELEM(sigoid_srt); i++) {
-        OBJ_add_sigid(sigoid_srt[i][0], sigoid_srt[i][1], sigoid_srt[i][2]);
+        OBJ_add_sigid(sigoid_srt[i].sign_id, sigoid_srt[i].hash_id,
+                      sigoid_srt[i].pkey_id);
     }
 # endif
 
     for (i = 0; i < OSSL_NELEM(sigoid_srt); i++) {
-        n1 = sigoid_srt[i][0];
+        n1 = sigoid_srt[i].sign_id;
         rv = OBJ_find_sigid_algs(n1, &n2, &n3);
         printf("Forward: %d, %s %s %s\n", rv,
                OBJ_nid2ln(n1), OBJ_nid2ln(n2), OBJ_nid2ln(n3));

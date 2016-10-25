@@ -61,4 +61,12 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[mdc2_mdc2dgst.o]=../../../include
   DEPEND[mdc2_mdc2dgst]=../../../libcrypto
   MACRO[mdc2_mdc2dgst.o]=TEST
+
+  # Note: this one only prints, no varying exit codes
+  PROGRAMS_NO_INST=objects_obj_xref
+  SOURCE[objects_obj_xref]=objects_obj_xref.o
+  SOURCE[objects_obj_xref.o]=../../../crypto/objects/obj_xref.c
+  INCLUDE[objects_obj_xref.o]=../../.. ../../../include
+  DEPEND[objects_obj_xref]=../../../libcrypto
+  MACRO[objects_obj_xref.o]=OBJ_XREF_TEST OBJ_XREF_TEST2
 ENDIF
