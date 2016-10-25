@@ -247,7 +247,7 @@ int BIO_method_type(const BIO *b)
  * This is for compatibility with the old style BIO_read(), where existing code
  * may make assumptions about the return value that it might get.
  */
-static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *read)
+static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 {
     int ret;
 
@@ -258,7 +258,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *read)
 
     if ((b->callback != NULL || b->callback_ex != NULL) &&
         ((ret = (int)bio_call_callback(b, BIO_CB_READ, data, dlen, 0, 0L, 1L,
-                                       read)) <= 0))
+                                       readbytes)) <= 0))
         return ret;
 
     if (!b->init) {
@@ -266,17 +266,17 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *read)
         return -2;
     }
 
-    ret = b->method->bread(b, data, dlen, read);
+    ret = b->method->bread(b, data, dlen, readbytes);
 
     if (ret > 0)
         b->num_read += (uint64_t)*read;
 
     if (b->callback != NULL || b->callback_ex != NULL)
         ret = (int)bio_call_callback(b, BIO_CB_READ | BIO_CB_RETURN, data,
-                                     dlen, 0, 0L, ret, read);
+                                     dlen, 0, 0L, ret, readbytes);
 
     /* Shouldn't happen */
-    if (ret > 0 && *read > dlen) {
+    if (ret > 0 && *readbytes > dlen) {
         BIOerr(BIO_F_BIO_READ_INTERN, ERR_R_INTERNAL_ERROR);
         return -1;
     }
@@ -286,27 +286,27 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *read)
 
 int BIO_read(BIO *b, void *data, int dlen)
 {
-    size_t read;
+    size_t readbytes;
     int ret;
 
     if (dlen < 0)
         return 0;
 
-    ret = bio_read_intern(b, data, (size_t)dlen, &read);
+    ret = bio_read_intern(b, data, (size_t)dlen, &readbytes);
 
     if (ret > 0) {
-        /* *read should always be <= outl */
-        ret = (int)read;
+        /* *readbytes should always be <= outl */
+        ret = (int)readbytes;
     }
 
     return ret;
 }
 
-int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *read)
+int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *readbytes)
 {
     int ret;
 
-    ret = bio_read_intern(b, data, dlen, read);
+    ret = bio_read_intern(b, data, dlen, readbytes);
 
     if (ret > 0)
         ret = 1;
@@ -431,7 +431,7 @@ int BIO_puts(BIO *b, const char *in)
 int BIO_gets(BIO *b, char *out, int outl)
 {
     int ret;
-    size_t read = 0;
+    size_t readbytes = 0;
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bgets == NULL)) {
         BIOerr(BIO_F_BIO_GETS, BIO_R_UNSUPPORTED_METHOD);
@@ -457,20 +457,20 @@ int BIO_gets(BIO *b, char *out, int outl)
     ret = b->method->bgets(b, out, outl);
 
     if (ret > 0) {
-        read = ret;
+        readbytes = ret;
         ret = 1;
     }
 
     if (b->callback != NULL || b->callback_ex != NULL)
         ret = (int)bio_call_callback(b, BIO_CB_GETS | BIO_CB_RETURN, out, outl,
-                                     0, 0L, ret, &read);
+                                     0, 0L, ret, &readbytes);
 
     if (ret > 0) {
         /* Shouldn't happen */
-        if (read > (size_t)outl)
+        if (readbytes > (size_t)outl)
             ret = -1;
         else
-            ret = (int)read;
+            ret = (int)readbytes;
     }
 
     return ret;
