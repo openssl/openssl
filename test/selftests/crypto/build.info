@@ -69,4 +69,26 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[objects_obj_xref.o]=../../.. ../../../include
   DEPEND[objects_obj_xref]=../../../libcrypto
   MACRO[objects_obj_xref.o]=OBJ_XREF_TEST OBJ_XREF_TEST2
+
+  IF[{- $disabled{shared} -}]
+    PROGRAMS_NO_INST=x509v3_tabtest
+    SOURCE[x509v3_tabtest]=x509v3_tabtest.o
+    SOURCE[x509v3_tabtest.o]=../../../crypto/x509v3/tabtest.c
+    INCLUDE[x509v3_tabtest.o]=../../.. ../../../include
+    DEPEND[x509v3_tabtest]=../../../libcrypto
+  ENDIF
+
+  # Note: manual test program
+  PROGRAMS_NO_INST=x509v3_v3conf
+  SOURCE[x509v3_v3conf]=x509v3_v3conf.o
+  SOURCE[x509v3_v3conf.o]=../../../crypto/x509v3/v3conf.c
+  INCLUDE[x509v3_v3conf.o]=../../.. ../../../include ../../../crypto/include
+  DEPEND[x509v3_v3conf]=../../../libcrypto
+
+  # Note: manual test program
+  PROGRAMS_NO_INST=x509v3_v3prin
+  SOURCE[x509v3_v3prin]=x509v3_v3prin.o
+  SOURCE[x509v3_v3prin.o]=../../../crypto/x509v3/v3prin.c
+  INCLUDE[x509v3_v3prin.o]=../../../include
+  DEPEND[x509v3_v3prin]=../../../libcrypto
 ENDIF

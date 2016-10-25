@@ -12,7 +12,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
-#include "ext_dat.h"
+#include "x509v3_lcl.h"
 
 static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
                                     X509V3_CTX *ctx,

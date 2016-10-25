@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509v3.h>
 #include "internal/x509_int.h"
-#include "ext_dat.h"
+#include "x509v3_lcl.h"
 
 static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
                                       X509V3_CTX *ctx, char *str);

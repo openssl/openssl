@@ -18,7 +18,8 @@ my %known_selftests =
     ( "selftests/crypto/sha_keccak1600" => 1,
       "selftests/crypto/modes_cts128" => 1,
       "selftests/crypto/modes_gcm128" => $no_shared,
-      "selftests/crypto/poly1305_poly1305" => $no_shared );
+      "selftests/crypto/poly1305_poly1305" => $no_shared,
+      "selftests/crypto/x509v3_tabtest" => $no_shared );
 
 plan tests => scalar keys %known_selftests;
 
