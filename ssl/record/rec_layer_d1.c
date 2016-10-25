@@ -336,7 +336,7 @@ int dtls1_process_buffered_records(SSL *s)
  *             none of our business
  */
 int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
-                     size_t len, int peek, size_t *read)
+                     size_t len, int peek, size_t *readbytes)
 {
     int al, i, j, iret;
     size_t ret, n;
@@ -362,7 +362,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     ret = have_handshake_fragment(s, type, buf, len);
     if (ret > 0) {
         *recvd_type = SSL3_RT_HANDSHAKE;
-        *read = ret;
+        *readbytes = ret;
         return 1;
     }
 
@@ -548,7 +548,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             return 0;
         }
 #endif
-        *read = n;
+        *readbytes = n;
         return 1;
     }
 
