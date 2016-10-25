@@ -1592,7 +1592,7 @@ if ($builder eq "unified") {
                             || $target_kind eq $target{build_file}."(".$builder_platform.")");
                 }
             },
-            qr/^(?:#.*|\s*)$/ => sub { },
+            qr/^\s*(?:#.*)?$/ => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
             "BEFORE" => sub {
                 if ($buildinfo_debug) {
