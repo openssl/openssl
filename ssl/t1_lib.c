@@ -20,6 +20,10 @@
 #include "ssl_locl.h"
 #include <openssl/ct.h>
 
+
+#define CHECKLEN(curr, val, limit) \
+    (((curr) >= (limit)) || (size_t)((limit) - (curr)) < (size_t)(val))
+
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
                               const unsigned char *sess_id, int sesslen,
                               SSL_SESSION **psess);
@@ -1049,7 +1053,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
             return NULL;
         }
 
-        if (ret >= limit || limit - ret < 4 + el)
+        if (CHECKLEN(ret, 4 + el, limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_renegotiate, ret);
@@ -1079,7 +1083,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * + hostname length
          */
         size_str = strlen(s->tlsext_hostname);
-        if (ret >= limit || (size_t)(limit - ret) < 9 + size_str)
+        if (CHECKLEN(ret, 9 + size_str, limit))
             return NULL;
 
         /* extension type and length */
@@ -1112,7 +1116,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * 1 for the srp user identity
          * + srp user identity length
          */
-        if (ret >= limit || (size_t)(limit - ret) < 5 + login_len)
+        if (CHECKLEN(ret, 5 + login_len, limit))
             return NULL;
 
         /* fill in the extension */
@@ -1146,7 +1150,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * 1 byte for the length of the formats
          * + formats length
          */
-        if (ret >= limit || (size_t)(limit - ret) < 5 + num_formats)
+        if (CHECKLEN(ret, 5 + num_formats, limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_ec_point_formats, ret);
@@ -1173,7 +1177,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * 2 bytes for the curve list length
          * + curve list length
          */
-        if (ret >= limit || (size_t)(limit - ret) < 6 + (num_curves * 2))
+        if (CHECKLEN(ret, 6 + (num_curves * 2), limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_elliptic_curves, ret);
@@ -1216,7 +1220,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * Check for enough room 2 for extension type, 2 for len rest for
          * ticket
          */
-        if (ret >= limit || (size_t)(limit - ret) < 4 + ticklen)
+        if (CHECKLEN(ret, 4 + ticklen, limit))
             return NULL;
         s2n(TLSEXT_TYPE_session_ticket, ret);
         s2n(ticklen, ret);
@@ -1239,7 +1243,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * 2 bytes for the sigalg list length
          * + sigalg list length
          */
-        if (ret >= limit || (size_t)(limit - ret) < salglen + 6)
+        if (CHECKLEN(ret, salglen + 6, limit))
             return NULL;
         s2n(TLSEXT_TYPE_signature_algorithms, ret);
         etmp = ret;
@@ -1283,8 +1287,10 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * 1 byte for OCSP request type
          * 2 bytes for length of ids
          * 2 bytes for length of extensions
+         * + length of ids
+         * + length of extensions
          */
-        if (ret >= limit || (size_t)(limit - ret) < 9 + idlen + extlen)
+        if (CHECKLEN(ret, 9 + idlen + extlen, limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_status_request, ret);
@@ -1315,7 +1321,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * 4 bytes for the heartbeat ext type and extension length
          * 1 byte for the mode
          */
-        if (ret >= limit || limit - ret < 5)
+        if (CHECKLEN(ret, 5, limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_heartbeat, ret);
@@ -1343,7 +1349,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * check for enough space.
          * 4 bytes for the NPN ext type and extension length
          */
-        if (ret >= limit || limit - ret < 4)
+        if (CHECKLEN(ret, 4, limit))
             return NULL;
         s2n(TLSEXT_TYPE_next_proto_neg, ret);
         s2n(0, ret);
@@ -1362,7 +1368,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * 2 bytes for the ALPN protocol list length
          * + ALPN protocol list length
          */
-        if (ret >= limit || limit - ret < 6 + s->alpn_client_proto_list_len)
+        if (CHECKLEN(ret, 6 + s->alpn_client_proto_list_len, limit))
             return NULL;
         s2n(TLSEXT_TYPE_application_layer_protocol_negotiation, ret);
         s2n(2 + s->alpn_client_proto_list_len, ret);
@@ -1386,7 +1392,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * 4 bytes for the SRTP type and extension length
          * + SRTP profiles length
          */
-        if (ret >= limit || limit - ret < 4 + el)
+        if (CHECKLEN(ret, 4 + el, limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_use_srtp, ret);
@@ -1414,7 +1420,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * check for enough space.
          * 4 bytes for the ETM type and extension length
          */
-        if (ret >= limit || limit - ret < 4 )
+        if (CHECKLEN(ret, 4, limit))
             return NULL;
         s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
         s2n(0, ret);
@@ -1426,7 +1432,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
          * check for enough space.
          * 4 bytes for the SCT type and extension length
          */
-        if (ret >= limit || limit - ret < 4 )
+        if (CHECKLEN(ret, 4, limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_signed_certificate_timestamp, ret);
@@ -1438,7 +1444,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
      * check for enough space.
      * 4 bytes for the EMS type and extension length
      */
-    if (ret >= limit || limit - ret < 4 )
+    if (CHECKLEN(ret, 4, limit))
         return NULL;
     s2n(TLSEXT_TYPE_extended_master_secret, ret);
     s2n(0, ret);
@@ -1468,7 +1474,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
              * 4 bytes for the padding type and extension length
              * + padding length
              */
-            if (ret >= limit || limit - ret < 4 + hlen)
+            if (CHECKLEN(ret, 4 + hlen, limit))
                 return NULL;
             s2n(TLSEXT_TYPE_padding, ret);
             s2n(hlen, ret);
@@ -1519,7 +1525,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * 4 bytes for the reneg type and extension length
          * + reneg data length
          */
-        if (ret >= limit || limit - ret < 4 + el)
+        if (CHECKLEN(ret, 4 + el, limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_renegotiate, ret);
@@ -1543,7 +1549,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * check for enough space.
          * 4 bytes for the server name type and extension length
          */
-        if (ret >= limit || limit - ret < 4 )
+        if (CHECKLEN(ret, 4, limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_server_name, ret);
@@ -1570,7 +1576,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * 1 byte for the points format list length
          * + length of points format list
          */
-        if (ret >= limit || (size_t)(limit - ret) < 5 + plistlen)
+        if (CHECKLEN(ret, 5 + plistlen, limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_ec_point_formats, ret);
@@ -1591,7 +1597,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * check for enough space.
          * 4 bytes for the Ticket type and extension length
          */
-        if (ret >= limit || limit - ret < 4)
+        if (CHECKLEN(ret, 4, limit))
             return NULL;
         s2n(TLSEXT_TYPE_session_ticket, ret);
         s2n(0, ret);
@@ -1608,7 +1614,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * check for enough space.
          * 4 bytes for the Status request type and extension length
          */
-        if (ret >= limit || limit - ret < 4)
+        if (CHECKLEN(ret, 4, limit))
             return NULL;
         s2n(TLSEXT_TYPE_status_request, ret);
         s2n(0, ret);
@@ -1627,7 +1633,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * 4 bytes for the SRTP profiles type and extension length
          * + length of the SRTP profiles list
          */
-        if (ret >= limit || limit - ret < 4 + el)
+        if (CHECKLEN(ret, 4 + el, limit))
             return NULL;
 
         s2n(TLSEXT_TYPE_use_srtp, ret);
@@ -1654,7 +1660,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
         };
 
         /* check for enough space. */
-        if (ret >= limit || (size_t)(limit - ret) < sizeof(cryptopro_ext))
+        if (CHECKLEN(ret, sizeof(cryptopro_ext), limit))
             return NULL;
         memcpy(ret, cryptopro_ext, sizeof(cryptopro_ext));
         ret += sizeof(cryptopro_ext);
@@ -1668,7 +1674,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * 4 bytes for the Heartbeat type and extension length
          * 1 byte for the mode
          */
-        if (ret >= limit || limit - ret < 5)
+        if (CHECKLEN(ret, 5, limit))
             return NULL;
         s2n(TLSEXT_TYPE_heartbeat, ret);
         s2n(1, ret);
@@ -1702,7 +1708,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
              * 4 bytes for the NPN type and extension length
              * + length of protocols list
              */
-            if (ret >= limit || limit - ret < 4 + npalen)
+            if (CHECKLEN(ret, 4 + npalen, limit))
                 return NULL;
             s2n(TLSEXT_TYPE_next_proto_neg, ret);
             s2n(npalen, ret);
@@ -1729,7 +1735,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
              * check for enough space.
              * 4 bytes for the ETM type and extension length
              */
-            if (ret >= limit || limit - ret < 4)
+            if (CHECKLEN(ret, 4, limit))
                 return NULL;
             s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
             s2n(0, ret);
@@ -1740,7 +1746,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * check for enough space.
          * 4 bytes for the EMS type and extension length
          */
-        if (ret >= limit || limit - ret < 4)
+        if (CHECKLEN(ret, 4, limit))
             return NULL;
         s2n(TLSEXT_TYPE_extended_master_secret, ret);
         s2n(0, ret);
@@ -1757,7 +1763,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * 1 byte for selected protocol length
          * + length of the selected protocol
          */
-        if (ret >= limit || (size_t)(limit - ret) < 7 + len)
+        if (CHECKLEN(ret, 7 + len, limit))
             return NULL;
         s2n(TLSEXT_TYPE_application_layer_protocol_negotiation, ret);
         s2n(3 + len, ret);
