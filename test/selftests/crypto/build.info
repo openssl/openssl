@@ -1,4 +1,4 @@
-IF[{- !$disabled{tests} && $disabled{shared} -}]
+IF[{- !$disabled{tests} -}]
   PROGRAMS_NO_INST=sha_keccak1600
   SOURCE[sha_keccak1600]=sha_keccak1600.o
   SOURCE[sha_keccak1600.o]=../../../crypto/sha/keccak1600.c
@@ -11,17 +11,21 @@ IF[{- !$disabled{tests} && $disabled{shared} -}]
   DEPEND[modes_cts128]=../../../libcrypto
   MACRO[modes_cts128.o]=SELFTEST
 
-  PROGRAMS_NO_INST=modes_gcm128
-  SOURCE[modes_gcm128]=modes_gcm128.o
-  SOURCE[modes_gcm128.o]=../../../crypto/modes/gcm128.c
-  INCLUDE[modes_gcm128.o]=../../.. ../../../include ../../../crypto/include
-  DEPEND[modes_gcm128]=../../../libcrypto
-  MACRO[modes_gcm128.o]=SELFTEST
+  IF[{- $disabled{shared} -}]
+    PROGRAMS_NO_INST=modes_gcm128
+    SOURCE[modes_gcm128]=modes_gcm128.o
+    SOURCE[modes_gcm128.o]=../../../crypto/modes/gcm128.c
+    INCLUDE[modes_gcm128.o]=../../.. ../../../include ../../../crypto/include
+    DEPEND[modes_gcm128]=../../../libcrypto
+    MACRO[modes_gcm128.o]=SELFTEST
+  ENDIF
 
-  PROGRAMS_NO_INST=poly1305_poly1305
-  SOURCE[poly1305_poly1305]=poly1305_poly1305.o
-  SOURCE[poly1305_poly1305.o]=../../../crypto/poly1305/poly1305.c
-  INCLUDE[poly1305_poly1305.o]=../../../include ../../../crypto/include
-  DEPEND[poly1305_poly1305]=../../../libcrypto
-  MACRO[poly1305_poly1305.o]=SELFTEST
+  IF[{- $disabled{shared} -}]
+    PROGRAMS_NO_INST=poly1305_poly1305
+    SOURCE[poly1305_poly1305]=poly1305_poly1305.o
+    SOURCE[poly1305_poly1305.o]=../../../crypto/poly1305/poly1305.c
+    INCLUDE[poly1305_poly1305.o]=../../../include ../../../crypto/include
+    DEPEND[poly1305_poly1305]=../../../libcrypto
+    MACRO[poly1305_poly1305.o]=SELFTEST
+  ENDIF
 ENDIF
