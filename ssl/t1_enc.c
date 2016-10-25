@@ -264,7 +264,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 #ifdef SSL_DEBUG
     printf("which = %04X\nmac key=", which);
     {
-        int z;
+        size_t z;
         for (z = 0; z < i; z++)
             printf("%02X%c", ms[z], ((z + 1) % 16) ? ' ' : '\n');
     }
@@ -334,7 +334,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     }
     printf("\niv=");
     {
-        int z;
+        size_t z;
         for (z = 0; z < k; z++)
             printf("%02X%c", iv[z], ((z + 1) % 16) ? ' ' : '\n');
     }
