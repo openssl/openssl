@@ -87,10 +87,10 @@ with the same arguments.
 
 =head1 RETURN VALUES
 
-SSL_read_ex() will return 1 for success or 0 for failure. In the event of a
-failure call SSL_get_error() to find out the reason.
+SSL_read_ex() and SSL_peek_ex() will return 1 for success or 0 for failure. In
+the event of a failure call SSL_get_error() to find out the reason.
 
-For SSL_read() the following return values can occur:
+For SSL_read() and SSL_peek() the following return values can occur:
 
 =over 4
 
