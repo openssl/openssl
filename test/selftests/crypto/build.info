@@ -53,4 +53,12 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[evp_p5_crpt2.o]=../../.. ../../../include ../../../crypto/include
   DEPEND[evp_p5_crpt2]=../../../libcrypto
   MACRO[evp_p5_crpt2.o]=DO_TEST
+
+  # Note: this one only prints, no varying exit codes
+  PROGRAMS_NO_INST=mdc2_mdc2dgst
+  SOURCE[mdc2_mdc2dgst]=mdc2_mdc2dgst.o
+  SOURCE[mdc2_mdc2dgst.o]=../../../crypto/mdc2/mdc2dgst.c
+  INCLUDE[mdc2_mdc2dgst.o]=../../../include
+  DEPEND[mdc2_mdc2dgst]=../../../libcrypto
+  MACRO[mdc2_mdc2dgst.o]=TEST
 ENDIF
