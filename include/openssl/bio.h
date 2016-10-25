@@ -551,11 +551,11 @@ void BIO_set_shutdown(BIO *a, int shut);
 int BIO_get_shutdown(BIO *a);
 void BIO_vfree(BIO *a);
 int BIO_up_ref(BIO *a);
-int BIO_read(BIO *b, void *data, int datal);
-int BIO_read_ex(BIO *b, void *data, size_t datal, size_t *read);
+int BIO_read(BIO *b, void *data, int dlen);
+int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *read);
 int BIO_gets(BIO *bp, char *buf, int size);
-int BIO_write(BIO *b, const void *data, int datal);
-int BIO_write_ex(BIO *b, const void *data, size_t datal, size_t *written);
+int BIO_write(BIO *b, const void *data, int dlen);
+int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written);
 int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
@@ -811,12 +811,14 @@ int ERR_load_BIO_strings(void);
 # define BIO_F_BIO_PUTS                                   110
 # define BIO_F_BIO_READ                                   111
 # define BIO_F_BIO_READ_EX                                105
+# define BIO_F_BIO_READ_INTERN                            120
 # define BIO_F_BIO_SOCKET                                 140
 # define BIO_F_BIO_SOCKET_NBIO                            142
 # define BIO_F_BIO_SOCK_INFO                              141
 # define BIO_F_BIO_SOCK_INIT                              112
 # define BIO_F_BIO_WRITE                                  113
 # define BIO_F_BIO_WRITE_EX                               119
+# define BIO_F_BIO_WRITE_INTERN                           128
 # define BIO_F_BUFFER_CTRL                                114
 # define BIO_F_CONN_CTRL                                  127
 # define BIO_F_CONN_STATE                                 115
@@ -842,6 +844,7 @@ int ERR_load_BIO_strings(void);
 # define BIO_R_INVALID_ARGUMENT                           125
 # define BIO_R_INVALID_SOCKET                             135
 # define BIO_R_IN_USE                                     123
+# define BIO_R_LENGTH_TOO_LONG                            102
 # define BIO_R_LISTEN_V6_ONLY                             136
 # define BIO_R_LOOKUP_RETURNED_NOTHING                    142
 # define BIO_R_MALFORMED_HOST_OR_SERVICE                  130
