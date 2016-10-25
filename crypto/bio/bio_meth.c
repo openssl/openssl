@@ -107,7 +107,7 @@ int (*BIO_meth_get_read_ex(BIO_METHOD *biom)) (BIO *, char *, size_t, size_t *)
 }
 
 /* Conversion for old style bread to new style */
-int bread_conv(BIO *bio, char *data, size_t datal, size_t *read)
+int bread_conv(BIO *bio, char *data, size_t datal, size_t *readbytes)
 {
     int ret;
 
@@ -117,11 +117,11 @@ int bread_conv(BIO *bio, char *data, size_t datal, size_t *read)
     ret = bio->method->bread_old(bio, data, (int)datal);
 
     if (ret <= 0) {
-        *read = 0;
+        *readbytes = 0;
         return ret;
     }
 
-    *read = (size_t)ret;
+    *readbytes = (size_t)ret;
 
     return 1;
 }
