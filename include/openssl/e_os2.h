@@ -276,6 +276,17 @@ typedef unsigned __int64 uint64_t;
 #  endif
 # endif
 
+/* Format specifier for printing size_t */
+# if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+#  define OSSLzu  "zu"
+# else
+#  ifdef THIRTY_TWO_BIT
+#   define OSSLzu "u"
+#  else
+#   define OSSLzu PRIu64
+#  endif
+# endif
+
 /* ossl_inline: portable inline definition usable in public headers */
 # if !defined(inline) && !defined(__cplusplus)
 #  if defined(__STDC_VERSION__) && __STDC_VERSION__>=199901L
