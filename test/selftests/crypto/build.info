@@ -45,4 +45,12 @@ IF[{- !$disabled{tests} -}]
     DEPEND[asn1_ameth_lib]=../../../libcrypto
     MACRO[asn1_ameth_lib.o]=TEST
   ENDIF
+
+  # Note: this one only prints, no varying exit codes
+  PROGRAMS_NO_INST=evp_p5_crpt2
+  SOURCE[evp_p5_crpt2]=evp_p5_crpt2.o
+  SOURCE[evp_p5_crpt2.o]=../../../crypto/evp/p5_crpt2.c
+  INCLUDE[evp_p5_crpt2.o]=../../.. ../../../include ../../../crypto/include
+  DEPEND[evp_p5_crpt2]=../../../libcrypto
+  MACRO[evp_p5_crpt2.o]=DO_TEST
 ENDIF

@@ -130,7 +130,7 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
 }
 
 # ifdef DO_TEST
-main()
+int main()
 {
     unsigned char out[4];
     unsigned char salt[] = { 0x12, 0x34, 0x56, 0x78 };
