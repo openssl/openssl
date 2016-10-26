@@ -444,15 +444,15 @@ struct ssl_method_st {
     void (*ssl_free) (SSL *s);
     int (*ssl_accept) (SSL *s);
     int (*ssl_connect) (SSL *s);
-    int (*ssl_read) (SSL *s, void *buf, size_t len, size_t *read);
-    int (*ssl_peek) (SSL *s, void *buf, size_t len, size_t *read);
+    int (*ssl_read) (SSL *s, void *buf, size_t len, size_t *readbytes);
+    int (*ssl_peek) (SSL *s, void *buf, size_t len, size_t *readbytes);
     int (*ssl_write) (SSL *s, const void *buf, size_t len, size_t *written);
     int (*ssl_shutdown) (SSL *s);
     int (*ssl_renegotiate) (SSL *s);
     int (*ssl_renegotiate_check) (SSL *s);
     int (*ssl_read_bytes) (SSL *s, int type, int *recvd_type,
                            unsigned char *buf, size_t len, int peek,
-                           size_t *read);
+                           size_t *readbytes);
     int (*ssl_write_bytes) (SSL *s, int type, const void *buf_, size_t len,
                             size_t *written);
     int (*ssl_dispatch_alert) (SSL *s);
@@ -1893,8 +1893,8 @@ __owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
 __owur int ssl3_digest_cached_records(SSL *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
-__owur int ssl3_read(SSL *s, void *buf, size_t len, size_t *read);
-__owur int ssl3_peek(SSL *s, void *buf, size_t len, size_t *read);
+__owur int ssl3_read(SSL *s, void *buf, size_t len, size_t *readbytes);
+__owur int ssl3_peek(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written);
 __owur int ssl3_shutdown(SSL *s);
 void ssl3_clear(SSL *s);
