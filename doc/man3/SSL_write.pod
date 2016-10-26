@@ -80,7 +80,7 @@ no bytes could be written to the SSL connection (if
 SSL_MODE_ENABLE_PARTIAL_WRITE is in use). Failures can be retryable (e.g. the
 network write buffer has temporarily filled up) or non-retryable (e.g. a fatal
 network error). In the event of a failure call L<SSL_get_error(3)> to find out
-the reason and if the call is retryable or not.
+the reason which indicates whether the call is retryable or not.
 
 For SSL_write() the following return values can occur:
 

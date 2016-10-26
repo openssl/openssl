@@ -92,8 +92,8 @@ Success means that 1 or more application data bytes have been read from the SSL
 connection. Failure means that no bytes could be read from the SSL connection.
 Failures can be retryable (e.g. we are waiting for more bytes to
 be delivered by the network) or non-retryable (e.g. a fatal network error). In
-the event of a failure call L<SSL_get_error(3)> to find out the reason and if
-the call is retryable or not.
+the event of a failure call L<SSL_get_error(3)> to find out the reason which
+indicates whether the call is retryable or not.
 
 For SSL_read() and SSL_peek() the following return values can occur:
 
