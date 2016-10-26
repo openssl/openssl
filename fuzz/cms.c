@@ -22,8 +22,12 @@ int FuzzerInitialize(int *argc, char ***argv) {
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
     CMS_ContentInfo *i;
-    BIO *in = BIO_new(BIO_s_mem());
+    BIO *in;
+    if (!len) {
+        return 0;
+    }
 
+    in = BIO_new(BIO_s_mem());
     OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
     i = d2i_CMS_bio(in, NULL);
     CMS_ContentInfo_free(i);
