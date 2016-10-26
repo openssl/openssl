@@ -573,12 +573,9 @@ PROCESS_PODS=\
 	set -e; \
 	here=`cd $(SRCDIR); pwd`; \
 	point=$$here/util/point.sh; \
-	for ds in apps:1 crypto:3 ssl:3; do \
-	    defdir=`echo $$ds | cut -f1 -d:`; \
-	    defsec=`echo $$ds | cut -f2 -d:`; \
-	    for p in $(SRCDIR)/doc/$$defdir/*.pod; do \
-		SEC=`sed -ne 's/^=for  *comment  *openssl_manual_section: *\([0-9]\) *$$/\1/p' $$p`; \
-		[ -z "$$SEC" ] && SEC=$$defsec; \
+	for ds in man1 man3 man5 man7 ; do \
+	    SEC=`echo $$ds | sed -e s/man//`; \
+	    for p in $(SRCDIR)/doc/$$ds/*.pod; do \
 		fn=`basename $$p .pod`; \
 		Name=$$fn; \
 		NAME=`echo $$fn | tr '[a-z]' '[A-Z]'`; \
@@ -608,12 +605,9 @@ PROCESS_PODS=\
 UNINSTALL_DOCS=\
 	set -e; \
 	here=`cd $(SRCDIR); pwd`; \
-	for ds in apps:1 crypto:3 ssl:3; do \
-	    defdir=`echo $$ds | cut -f1 -d:`; \
-	    defsec=`echo $$ds | cut -f2 -d:`; \
-	    for p in $(SRCDIR)/doc/$$defdir/*.pod; do \
-		SEC=`sed -ne 's/^=for  *comment  *openssl_manual_section: *\([0-9]\) *$$/\1/p' $$p`; \
-		[ -z "$$SEC" ] && SEC=$$defsec; \
+	for ds in man1 man3 man5 man7 ; do \
+	    SEC=`echo $$ds | sed -e s/man//`; \
+	    for p in $(SRCDIR)/doc/$$ds/*.pod; do \
 		fn=`basename $$p .pod`; \
 		suf=`eval "echo $$OUTSUFFIX"`; \
 		top=`eval "echo $$OUTTOP"`; \

@@ -28,26 +28,23 @@ use OpenSSL::Util::Pod;
 my %options = ();
 GetOptions(\%options,
            'sourcedir=s',       # Source directory
-           'subdir=s%',         # Subdirectories to look through,
+           'section=i@',        # Subdirectories to look through,
                                 # with associated section numbers
            'destdir=s',         # Destination directory
            #'in=s@',             # Explicit files to process (ignores sourcedir)
-           #'section=i',         # Default section used for --in files
            'type=s',            # The result type, 'man' or 'html'
            'remove',            # To remove files rather than writing them
            'dry-run|n',         # Only output file names on STDOUT
            'debug|D+',
           );
 
-unless ($options{subdir}) {
-    $options{subdir} = { apps   => '1',
-                         crypto => '3',
-                         ssl    => '3' };
+unless ($options{section}) {
+    $options{section} = [ 1, 3, 5, 7 ];
 }
 unless ($options{sourcedir}) {
     $options{sourcedir} = catdir($config{sourcedir}, "doc");
 }
-pod2usage(1) unless ( defined $options{subdir}
+pod2usage(1) unless ( defined $options{section}
                       && defined $options{sourcedir}
                       && defined $options{destdir}
                       && defined $options{type}
@@ -62,8 +59,8 @@ if ($options{debug}) {
         if defined $options{destdir};
     print STDERR "DEBUG:   --type      = $options{type}\n"
         if defined $options{type};
-    foreach (keys %{$options{subdir}}) {
-        print STDERR "DEBUG:   --subdir    = $_=$options{subdir}->{$_}\n";
+    foreach (sort @{$options{section}}) {
+        print STDERR "DEBUG:   --section   = $_\n";
     }
     print STDERR "DEBUG:   --remove    = $options{remove}\n"
         if defined $options{remove};
@@ -75,8 +72,8 @@ if ($options{debug}) {
 
 my $symlink_exists = eval { symlink("",""); 1 };
 
-foreach my $subdir (keys %{$options{subdir}}) {
-    my $section = $options{subdir}->{$subdir};
+foreach my $section (sort @{$options{section}}) {
+    my $subdir = "man$section";
     my $podsourcedir = catfile($options{sourcedir}, $subdir);
     my $podglob = catfile($podsourcedir, "*.pod");
 

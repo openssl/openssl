@@ -1,7 +1,5 @@
 =pod
 
-=for comment openssl_manual_section:7
-
 =head1 NAME
 
 des_modes - the variants of DES and other crypto algorithms of OpenSSL

@@ -26,10 +26,6 @@ my %mandatory_sections =
       3      => [ 'SYNOPSIS', 'RETURN\s+VALUES' ],
       5      => [ ],
       7      => [ ] );
-my %default_sections =
-    ( apps   => 1,
-      crypto => 3,
-      ssl    => 3 );
 
 # Cross-check functions in the NAME and SYNOPSIS section.
 sub name_synopsis()
@@ -112,8 +108,7 @@ sub check()
 
     &name_synopsis($id, $filename, $contents)
         unless $contents =~ /=for comment generic/
-            or $contents =~ /=for comment openssl_manual_section:7/
-            or $filename =~ m@/apps/@;
+            or $filename =~ m@man[157]/@;
 
     print "$id doesn't start with =pod\n"
         if $contents !~ /^=pod/;
@@ -156,10 +151,8 @@ sub check()
 
     # Find what section this page is in.  If run from "." assume
     # section 3.
-    my $section = $default_sections{$dirname} || 3;
-    if ($contents =~ /^=for\s+comment\s+openssl_manual_section:\s*(\d+)\s*$/m) {
-        $section = $1;
-    }
+    my $section = 3;
+    $section = $1 if $dirname =~ /man([1-9])/;
 
     foreach ((@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}})) {
         print "$id doesn't have a head1 section matching $_\n"
