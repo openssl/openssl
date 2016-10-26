@@ -364,7 +364,7 @@ int tls_get_message_header(SSL *s, int *mt)
     /* s->init_num < SSL3_HM_HEADER_LENGTH */
     int skip_message, i, recvd_type, al;
     unsigned char *p;
-    size_t l, read;
+    size_t l, readbytes;
 
     p = (unsigned char *)s->init_buf->data;
 
@@ -373,7 +373,7 @@ int tls_get_message_header(SSL *s, int *mt)
             i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, &recvd_type,
                                           &p[s->init_num],
                                           SSL3_HM_HEADER_LENGTH - s->init_num,
-                                          0, &read);
+                                          0, &readbytes);
             if (i <= 0) {
                 s->rwstate = SSL_READING;
                 return 0;
@@ -383,22 +383,22 @@ int tls_get_message_header(SSL *s, int *mt)
                  * A ChangeCipherSpec must be a single byte and may not occur
                  * in the middle of a handshake message.
                  */
-                if (s->init_num != 0 || read != 1 || p[0] != SSL3_MT_CCS) {
+                if (s->init_num != 0 || readbytes != 1 || p[0] != SSL3_MT_CCS) {
                     al = SSL_AD_UNEXPECTED_MESSAGE;
                     SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER,
                            SSL_R_BAD_CHANGE_CIPHER_SPEC);
                     goto f_err;
                 }
                 s->s3->tmp.message_type = *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
-                s->init_num = read - 1;
-                s->s3->tmp.message_size = read;
+                s->init_num = readbytes - 1;
+                s->s3->tmp.message_size = readbytes;
                 return 1;
             } else if (recvd_type != SSL3_RT_HANDSHAKE) {
                 al = SSL_AD_UNEXPECTED_MESSAGE;
                 SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER, SSL_R_CCS_RECEIVED_EARLY);
                 goto f_err;
             }
-            s->init_num += read;
+            s->init_num += readbytes;
         }
 
         skip_message = 0;
@@ -461,7 +461,7 @@ int tls_get_message_header(SSL *s, int *mt)
 
 int tls_get_message_body(SSL *s, size_t *len)
 {
-    size_t n, read;
+    size_t n, readbytes;
     unsigned char *p;
     int i;
 
@@ -475,14 +475,14 @@ int tls_get_message_body(SSL *s, size_t *len)
     n = s->s3->tmp.message_size - s->init_num;
     while (n > 0) {
         i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
-                                      &p[s->init_num], n, 0, &read);
+                                      &p[s->init_num], n, 0, &readbytes);
         if (i <= 0) {
             s->rwstate = SSL_READING;
             *len = 0;
             return 0;
         }
-        s->init_num += read;
-        n -= read;
+        s->init_num += readbytes;
+        n -= readbytes;
     }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG

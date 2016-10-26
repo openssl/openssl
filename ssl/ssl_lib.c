@@ -1533,26 +1533,26 @@ static int ssl_io_intern(void *vargs)
 int SSL_read(SSL *s, void *buf, int num)
 {
     int ret;
-    size_t read;
+    size_t readbytes;
 
     if (num < 0) {
         SSLerr(SSL_F_SSL_READ, SSL_R_BAD_LENGTH);
         return -1;
     }
 
-    ret = SSL_read_ex(s, buf, (size_t)num, &read);
+    ret = SSL_read_ex(s, buf, (size_t)num, &readbytes);
 
     /*
      * The cast is safe here because ret should be <= INT_MAX because num is
      * <= INT_MAX
      */
     if (ret > 0)
-        ret = (int)read;
+        ret = (int)readbytes;
 
     return ret;
 }
 
-int SSL_read_ex(SSL *s, void *buf, size_t num, size_t *read)
+int SSL_read_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
     if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_READ_EX, SSL_R_UNINITIALIZED);
@@ -1575,36 +1575,36 @@ int SSL_read_ex(SSL *s, void *buf, size_t num, size_t *read)
         args.f.func_read = s->method->ssl_read;
 
         ret = ssl_start_async_job(s, &args, ssl_io_intern);
-        *read = s->asyncrw;
+        *readbytes = s->asyncrw;
         return ret;
     } else {
-        return s->method->ssl_read(s, buf, num, read);
+        return s->method->ssl_read(s, buf, num, readbytes);
     }
 }
 
 int SSL_peek(SSL *s, void *buf, int num)
 {
     int ret;
-    size_t read;
+    size_t readbytes;
 
     if (num < 0) {
         SSLerr(SSL_F_SSL_PEEK, SSL_R_BAD_LENGTH);
         return -1;
     }
 
-    ret = SSL_peek_ex(s, buf, (size_t)num, &read);
+    ret = SSL_peek_ex(s, buf, (size_t)num, &readbytes);
 
     /*
      * The cast is safe here because ret should be <= INT_MAX because num is
      * <= INT_MAX
      */
     if (ret > 0)
-        ret = (int)read;
+        ret = (int)readbytes;
 
     return ret;
 }
 
-int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *read)
+int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
     if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_PEEK_EX, SSL_R_UNINITIALIZED);
@@ -1625,10 +1625,10 @@ int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *read)
         args.f.func_read = s->method->ssl_peek;
 
         ret = ssl_start_async_job(s, &args, ssl_io_intern);
-        *read = s->asyncrw;
+        *readbytes = s->asyncrw;
         return ret;
     } else {
-        return s->method->ssl_peek(s, buf, num, read);
+        return s->method->ssl_peek(s, buf, num, readbytes);
     }
 }
 
