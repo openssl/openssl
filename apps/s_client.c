@@ -740,7 +740,8 @@ typedef enum PROTOCOL_choice {
     PROTO_XMPP_SERVER,
     PROTO_CONNECT,
     PROTO_IRC,
-    PROTO_POSTGRES
+    PROTO_POSTGRES,
+    PROTO_LDAP
 } PROTOCOL_CHOICE;
 
 static const OPT_PAIR services[] = {
@@ -753,6 +754,7 @@ static const OPT_PAIR services[] = {
     {"telnet", PROTO_TELNET},
     {"irc", PROTO_IRC},
     {"postgres", PROTO_POSTGRES},
+    {"ldap", PROTO_LDAP},
     {NULL, 0}
 };
 
@@ -2105,6 +2107,32 @@ int s_client_main(int argc, char **argv)
                 goto shut;
         }
         break;
+    case PROTO_LDAP:
+        {
+            char *ldap_tls_genconf = "asn1=SEQUENCE:LDAPMessage\n"
+                "[LDAPMessage]\n"
+                "messageID=INTEGER:1\n"
+                "extendedReq=EXPLICIT:23A,IMPLICIT:0C,FORMAT:ASCII,OCT:1.3.6.1.4.1.1466.20037\n";
+            long errline;
+            char *genstr;
+            ASN1_TYPE *atyp = NULL;
+            CONF *cnf = NCONF_new(NULL);
+            BIO *ldapbio = BIO_new(BIO_s_mem());
+
+            BIO_puts(ldapbio, ldap_tls_genconf);
+            NCONF_load_bio(cnf, ldapbio, &errline);
+            genstr = NCONF_get_string(cnf, "default", "asn1");
+            atyp = ASN1_generate_nconf(genstr, cnf);
+
+            BIO_printf(sbio, (const char *) atyp->value.sequence->data, host);
+            BIO_read(sbio,sbuf,BUFSIZZ);
+
+            BIO_free(ldapbio);
+            NCONF_free(cnf);
+            ASN1_TYPE_free(atyp);
+        }
+        break;
+
     }
 
     for (;;) {
