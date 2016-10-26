@@ -357,6 +357,7 @@ configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{b
       my $generator = '"'.join('" "', @{$args{generator}}).'"';
       my $generator_incs = join("", map { " -I \"$_\"" } @{$args{generator_incs}});
       my $incs = join("", map { " /I \"$_\"" } @{$args{incs}});
+      my $defs = join("", map { " /D".$_ } @{$args{defs}});
       my $deps = @{$args{deps}} ?
           '"'.join('" "', @{$args{generator_deps}}, @{$args{deps}}).'"' : '';
 
@@ -393,7 +394,7 @@ EOF
 $target: "$args{generator}->[0]" $deps
 	set ASM=\$(AS)
 	$generator \$@.S
-	\$(CC) $incs \$(CFLAGS) /EP /C \$@.S > \$@.i && move /Y \$@.i \$@
+	\$(CC) $incs \$(CFLAGS) $defs /EP /C \$@.S > \$@.i && move /Y \$@.i \$@
         del /Q \$@.S
 EOF
               }
@@ -406,7 +407,7 @@ EOF
           }
           return <<"EOF";
 $target: "$args{generator}->[0]" $deps
-	\$(CC) $incs \$(CFLAGS) /EP /C "$args{generator}->[0]" > \$@.i && move /Y \$@.i \$@
+	\$(CC) $incs \$(CFLAGS) $defs /EP /C "$args{generator}->[0]" > \$@.i && move /Y \$@.i \$@
 EOF
       }
   }
@@ -419,6 +420,7 @@ EOF
      my $srcs = '"'.join('" "',  @srcs).'"';
      my $deps = '"'.join('" "', @srcs, @{$args{deps}}).'"';
      my $incs = join("", map { ' /I "'.$_.'"' } @{$args{incs}});
+     my $defs = join("", map { " /D".$_ } @{$args{defs}});
      unless ($disabled{zlib}) {
          if ($withargs{zlib_include}) {
              $incs .= ' /I "'.$withargs{zlib_include}.'"';
@@ -436,7 +438,7 @@ EOF
      }
      return <<"EOF"	if (!$disabled{makedepend});
 $obj$depext: $deps
-	\$(CC) \$(CFLAGS) $ecflags$inc /Zs /showIncludes $srcs 2>&1 | \\
+	\$(CC) $incs \$(CFLAGS) $ecflags $defs /Zs /showIncludes $srcs 2>&1 | \\
 	    "\$(PERL)" -n << > $obj$depext
 chomp;
 s/^Note: including file: *//;
@@ -444,13 +446,13 @@ s/^Note: including file: *//;
 END { print '$obj$objext: ',join(" ", sort keys \%collect),"\\n" }
 <<
 $obj$objext: $obj$depext
-	\$(CC) $incs \$(CFLAGS) $ecflags -c \$(COUTFLAG)\$\@ @<<
+	\$(CC) $incs \$(CFLAGS) $ecflags $defs -c \$(COUTFLAG)\$\@ @<<
 $srcs
 <<
 EOF
     return <<"EOF"	if ($disabled{makedepend});
 $obj$objext: $deps
-	\$(CC) $incs \$(CFLAGS) $ecflags -c \$(COUTFLAG)\$\@ $srcs
+	\$(CC) $incs \$(CFLAGS) $ecflags $defs -c \$(COUTFLAG)\$\@ $srcs
 EOF
  }
 

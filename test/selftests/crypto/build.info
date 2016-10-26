@@ -1,0 +1,94 @@
+IF[{- !$disabled{tests} -}]
+  PROGRAMS_NO_INST=sha_keccak1600
+  SOURCE[sha_keccak1600]=sha_keccak1600.o
+  SOURCE[sha_keccak1600.o]=../../../crypto/sha/keccak1600.c
+  MACRO[sha_keccak1600.o]=SELFTEST
+
+  PROGRAMS_NO_INST=modes_cts128
+  SOURCE[modes_cts128]=modes_cts128.o
+  SOURCE[modes_cts128.o]=../../../crypto/modes/cts128.c
+  INCLUDE[modes_cts128.o]=../../../include
+  DEPEND[modes_cts128]=../../../libcrypto
+  MACRO[modes_cts128.o]=SELFTEST
+
+  IF[{- $disabled{shared} -}]
+    PROGRAMS_NO_INST=modes_gcm128
+    SOURCE[modes_gcm128]=modes_gcm128.o
+    SOURCE[modes_gcm128.o]=../../../crypto/modes/gcm128.c
+    INCLUDE[modes_gcm128.o]=../../.. ../../../include ../../../crypto/include
+    DEPEND[modes_gcm128]=../../../libcrypto
+    MACRO[modes_gcm128.o]=SELFTEST
+  ENDIF
+
+  IF[{- $disabled{shared} -}]
+    PROGRAMS_NO_INST=poly1305_poly1305
+    SOURCE[poly1305_poly1305]=poly1305_poly1305.o
+    SOURCE[poly1305_poly1305.o]=../../../crypto/poly1305/poly1305.c
+    INCLUDE[poly1305_poly1305.o]=../../../include ../../../crypto/include
+    DEPEND[poly1305_poly1305]=../../../libcrypto
+    MACRO[poly1305_poly1305.o]=SELFTEST
+  ENDIF
+
+  PROGRAMS_NO_INST=asn1_a_strnid
+  SOURCE[asn1_a_strnid]=asn1_a_strnid.o
+  SOURCE[asn1_a_strnid.o]=../../../crypto/asn1/a_strnid.c
+  INCLUDE[asn1_a_strnid.o]=../../.. ../../../include ../../../crypto/include
+  DEPEND[asn1_a_strnid]=../../../libcrypto
+  MACRO[asn1_a_strnid.o]=STRING_TABLE_TEST
+
+  IF[{- $disabled{shared} -}]
+    # Note: this one only prints, no varying exit codes
+    PROGRAMS_NO_INST=asn1_ameth_lib
+    SOURCE[asn1_ameth_lib]=asn1_ameth_lib.o
+    SOURCE[asn1_ameth_lib.o]=../../../crypto/asn1/ameth_lib.c
+    INCLUDE[asn1_ameth_lib.o]=../../.. ../../../include ../../../crypto/include
+    DEPEND[asn1_ameth_lib]=../../../libcrypto
+    MACRO[asn1_ameth_lib.o]=TEST
+  ENDIF
+
+  # Note: this one only prints, no varying exit codes
+  PROGRAMS_NO_INST=evp_p5_crpt2
+  SOURCE[evp_p5_crpt2]=evp_p5_crpt2.o
+  SOURCE[evp_p5_crpt2.o]=../../../crypto/evp/p5_crpt2.c
+  INCLUDE[evp_p5_crpt2.o]=../../.. ../../../include ../../../crypto/include
+  DEPEND[evp_p5_crpt2]=../../../libcrypto
+  MACRO[evp_p5_crpt2.o]=DO_TEST
+
+  # Note: this one only prints, no varying exit codes
+  PROGRAMS_NO_INST=mdc2_mdc2dgst
+  SOURCE[mdc2_mdc2dgst]=mdc2_mdc2dgst.o
+  SOURCE[mdc2_mdc2dgst.o]=../../../crypto/mdc2/mdc2dgst.c
+  INCLUDE[mdc2_mdc2dgst.o]=../../../include
+  DEPEND[mdc2_mdc2dgst]=../../../libcrypto
+  MACRO[mdc2_mdc2dgst.o]=TEST
+
+  # Note: this one only prints, no varying exit codes
+  PROGRAMS_NO_INST=objects_obj_xref
+  SOURCE[objects_obj_xref]=objects_obj_xref.o
+  SOURCE[objects_obj_xref.o]=../../../crypto/objects/obj_xref.c
+  INCLUDE[objects_obj_xref.o]=../../.. ../../../include
+  DEPEND[objects_obj_xref]=../../../libcrypto
+  MACRO[objects_obj_xref.o]=OBJ_XREF_TEST OBJ_XREF_TEST2
+
+  IF[{- $disabled{shared} -}]
+    PROGRAMS_NO_INST=x509v3_tabtest
+    SOURCE[x509v3_tabtest]=x509v3_tabtest.o
+    SOURCE[x509v3_tabtest.o]=../../../crypto/x509v3/tabtest.c
+    INCLUDE[x509v3_tabtest.o]=../../.. ../../../include
+    DEPEND[x509v3_tabtest]=../../../libcrypto
+  ENDIF
+
+  # Note: manual test program
+  PROGRAMS_NO_INST=x509v3_v3conf
+  SOURCE[x509v3_v3conf]=x509v3_v3conf.o
+  SOURCE[x509v3_v3conf.o]=../../../crypto/x509v3/v3conf.c
+  INCLUDE[x509v3_v3conf.o]=../../.. ../../../include ../../../crypto/include
+  DEPEND[x509v3_v3conf]=../../../libcrypto
+
+  # Note: manual test program
+  PROGRAMS_NO_INST=x509v3_v3prin
+  SOURCE[x509v3_v3prin]=x509v3_v3prin.o
+  SOURCE[x509v3_v3prin.o]=../../../crypto/x509v3/v3prin.c
+  INCLUDE[x509v3_v3prin.o]=../../../include
+  DEPEND[x509v3_v3prin]=../../../libcrypto
+ENDIF

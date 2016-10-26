@@ -983,7 +983,7 @@ int main()
                 Poly1305_Final(&poly1305, out);
 
                 if (memcmp(out, expected, sizeof(expected)) != 0) {
-                    printf("Poly1305 test #%d/%d+%d failed.\n",
+                    printf("Poly1305 test #%d/%zu+%zu failed.\n",
                                            i, half, inlen-half);
                     printf("got:      ");
                     hexdump(out, sizeof(out));

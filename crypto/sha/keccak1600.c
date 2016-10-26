@@ -14,6 +14,12 @@
 #define ROL64(a, offset) ((offset) ? (((a) << offset) | ((a) >> (64-offset))) \
                                    : a)
 
+/* Forward declarations to fend off picky compilers */
+void KeccakF1600(uint64_t A[5][5]);
+size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
+                   size_t r);
+void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
+
 static void Theta(uint64_t A[5][5])
 {
     uint64_t C[5], D[5];
@@ -248,6 +254,10 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
  * SHAKE_128    SHA3_sponge(inp, len, out, d, (1600-256)/8);
  * SHAKE_256    SHA3_sponge(inp, len, out, d, (1600-512)/8);
  */
+
+/* Forward declaration to fend off picky compilers */
+void SHA3_sponge(const unsigned char *inp, size_t len,
+                 unsigned char *out, size_t d, size_t r);
 
 void SHA3_sponge(const unsigned char *inp, size_t len,
                  unsigned char *out, size_t d, size_t r)

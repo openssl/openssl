@@ -12,7 +12,7 @@
 #include <openssl/asn1.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
-#include "ext_dat.h"
+#include "x509v3_lcl.h"
 
 const X509V3_EXT_METHOD v3_ns_ia5_list[8] = {
     EXT_IA5STRING(NID_netscape_base_url),

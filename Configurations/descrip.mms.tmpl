@@ -160,7 +160,9 @@ OPENSSLDIR_C={- $osslprefix -}DATAROOT:[000000]
 ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover.$target{pointer_size} -}:
 
 CC= {- $target{cc} -}
-CFLAGS= /DEFINE=({- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR_C)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR_C)\"\"\"") -}) {- $target{cflags} -} {- $config{cflags} -}
+DEFINES= {- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR_C)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR_C)\"\"\"") -}
+CFLAGS_NODEF= {- $target{cflags} -} {- $config{cflags} -}
+CFLAGS= /DEFINE=($(DEFINES)) $(CFLAGS_NODEF)
 CFLAGS_Q=$(CFLAGS)
 DEPFLAG= /DEFINE=({- join(",", @{$config{depdefines}}) -})
 LDFLAGS= {- $target{lflags} -}
@@ -591,6 +593,7 @@ EOF
       my $incs = "";
       my @incs = ();
       push @incs, @{$args{incs}} if @{$args{incs}};
+      my $defs = join("", map { ",".$_ } @{$args{defs}});
       unless ($disabled{zlib}) {
           # GNV$ZLIB_INCLUDE is the standard logical name for later zlib
           # incarnations.
@@ -616,7 +619,7 @@ $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
         $incs_on
-        \$(CC) \$(CFLAGS)${ecflags}${incs}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
+        \$(CC) /DEFINE=(\$(DEFINES)$defs) \$(CFLAGS_NODEF)${ecflags}${incs}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
         $incs_off
         SET DEFAULT $backward
         ${after}

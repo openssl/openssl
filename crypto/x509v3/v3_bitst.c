@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
-#include "ext_dat.h"
+#include "x509v3_lcl.h"
 
 static BIT_STRING_BITNAME ns_cert_type_table[] = {
     {0, "SSL Client", "client"},

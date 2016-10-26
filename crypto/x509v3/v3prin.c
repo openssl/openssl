@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <openssl/asn1.h>
 #include <openssl/conf.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
@@ -21,7 +23,6 @@ int main(int argc, char **argv)
     X509_EXTENSION *ext;
 
     X509V3_add_standard_extensions();
-    ERR_load_crypto_strings();
     if (!argv[1]) {
         fprintf(stderr, "Usage v3prin cert.pem\n");
         exit(1);
@@ -30,7 +31,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Can't open %s\n", argv[1]);
         exit(1);
     }
-    if ((cert = PEM_read_X509(inf, NULL, NULL)) == NULL) {
+    if ((cert = PEM_read_X509(inf, NULL, NULL, NULL)) == NULL) {
         fprintf(stderr, "Can't read certificate %s\n", argv[1]);
         ERR_print_errors_fp(stderr);
         exit(1);
@@ -40,7 +41,7 @@ int main(int argc, char **argv)
     printf("%d extensions\n", count);
     for (i = 0; i < count; i++) {
         ext = X509_get_ext(cert, i);
-        printf("%s\n", OBJ_nid2ln(OBJ_obj2nid(ext->object)));
+        printf("%s\n", OBJ_nid2ln(OBJ_obj2nid(X509_EXTENSION_get_object(ext))));
         if (!X509V3_EXT_print_fp(stdout, ext, 0, 0))
             ERR_print_errors_fp(stderr);
         printf("\n");

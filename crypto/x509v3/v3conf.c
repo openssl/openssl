@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/conf.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
@@ -18,7 +19,7 @@
 
 int main(int argc, char **argv)
 {
-    LHASH *conf;
+    LHASH_OF(CONF_VALUE) *conf;
     X509 *cert;
     FILE *inf;
     char *conf_file;
@@ -26,7 +27,6 @@ int main(int argc, char **argv)
     int count;
     X509_EXTENSION *ext;
     X509V3_add_standard_extensions();
-    ERR_load_crypto_strings();
     if (!argv[1]) {
         fprintf(stderr, "Usage: v3conf cert.pem [file.cnf]\n");
         exit(1);
@@ -46,15 +46,15 @@ int main(int argc, char **argv)
         fprintf(stderr, "Can't open certificate file %s\n", argv[1]);
         exit(1);
     }
-    cert = PEM_read_X509(inf, NULL, NULL);
+    cert = PEM_read_X509(inf, NULL, NULL, NULL);
     if (!cert) {
         fprintf(stderr, "Error reading certificate file %s\n", argv[1]);
         exit(1);
     }
     fclose(inf);
 
-    sk_pop_free(cert->cert_info->extensions, X509_EXTENSION_free);
-    cert->cert_info->extensions = NULL;
+    while(X509_get_ext(cert, 0) != NULL)
+        X509_delete_ext(cert, 0);
 
     if (!X509V3_EXT_add_conf(conf, NULL, "test_section", cert)) {
         fprintf(stderr, "Error adding extensions\n");
@@ -66,8 +66,8 @@ int main(int argc, char **argv)
     printf("%d extensions\n", count);
     for (i = 0; i < count; i++) {
         ext = X509_get_ext(cert, i);
-        printf("%s", OBJ_nid2ln(OBJ_obj2nid(ext->object)));
-        if (ext->critical)
+        printf("%s", OBJ_nid2ln(OBJ_obj2nid(X509_EXTENSION_get_object(ext))));
+        if (X509_EXTENSION_get_critical(ext))
             printf(",critical:\n");
         else
             printf(":\n");

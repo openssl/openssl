@@ -21,7 +21,7 @@
 #include <openssl/x509.h>
 #include "internal/x509_int.h"
 #include <openssl/bn.h>
-#include "ext_dat.h"
+#include "x509v3_lcl.h"
 
 #ifndef OPENSSL_NO_RFC3779
 

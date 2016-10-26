@@ -16,27 +16,31 @@
 
 #include <openssl/x509v3.h>
 
+#include "x509v3_lcl.h"
 #include "ext_dat.h"
 
-main()
+#include "e_os.h"
+
+int main()
 {
-    int i, prev = -1, bad = 0;
-    X509V3_EXT_METHOD **tmp;
-    i = OSSL_NELEM(standard_exts);
-    if (i != STANDARD_EXTENSION_COUNT)
-        fprintf(stderr, "Extension number invalid expecting %d\n", i);
+    size_t i;
+    int prev = -1, bad = 0;
+    const X509V3_EXT_METHOD **tmp;
+
     tmp = standard_exts;
-    for (i = 0; i < STANDARD_EXTENSION_COUNT; i++, tmp++) {
+    for (i = 0; i < OSSL_NELEM(standard_exts); i++, tmp++) {
         if ((*tmp)->ext_nid < prev)
             bad = 1;
         prev = (*tmp)->ext_nid;
 
     }
-    if (bad) {
+    if (bad == 1) {
         tmp = standard_exts;
         fprintf(stderr, "Extensions out of order!\n");
-        for (i = 0; i < STANDARD_EXTENSION_COUNT; i++, tmp++)
+        for (i = 0; i < OSSL_NELEM(standard_exts); i++, tmp++)
             printf("%d : %s\n", (*tmp)->ext_nid, OBJ_nid2sn((*tmp)->ext_nid));
     } else
         fprintf(stderr, "Order OK\n");
+
+    exit(bad);
 }

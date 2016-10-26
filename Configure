@@ -316,6 +316,8 @@ $config{sdirs} = [
     "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui",
     "cms", "ts", "srp", "cmac", "ct", "async", "kdf"
     ];
+# test/ subdirectories
+$config{tdirs} = [ "selftests/crypto" ];
 
 # Known TLS and DTLS protocols
 my @tls = qw(ssl3 tls1 tls1_1 tls1_2);
@@ -1424,6 +1426,10 @@ if ($builder eq "unified") {
         push @build_infos, [ catdir("engines", $_), "build.info" ]
             if (-f catfile($srcdir, "engines", $_, "build.info"));
     }
+    foreach (@{$config{tdirs}}) {
+        push @build_infos, [ catdir("test", $_), "build.info" ]
+            if (-f catfile($srcdir, "test", $_, "build.info"));
+    }
 
     $config{build_infos} = [ ];
 
@@ -1452,6 +1458,7 @@ if ($builder eq "unified") {
         my %sources = ();
         my %shared_sources = ();
         my %includes = ();
+        my %defines = ();
         my %depends = ();
         my %renames = ();
         my %sharednames = ();
@@ -1561,6 +1568,9 @@ if ($builder eq "unified") {
             qr/^\s*INCLUDE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
             => sub { push @{$includes{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*MACRO\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { push @{$defines{$1}}, tokenize($2)
+                         if !@skip || $skip[$#skip] > 0 },
             qr/^\s*DEPEND\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
             => sub { push @{$depends{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
@@ -1590,7 +1600,7 @@ if ($builder eq "unified") {
                             || $target_kind eq $target{build_file}."(".$builder_platform.")");
                 }
             },
-            qr/^(?:#.*|\s*)$/ => sub { },
+            qr/^\s*(?:#.*)?$/ => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
             "BEFORE" => sub {
                 if ($buildinfo_debug) {
@@ -1764,7 +1774,9 @@ EOF
                     $s = cleanfile($buildd, $_, $blddir);
                 }
                 # We recognise C++, C and asm files
-                if ($s =~ /\.(cc|cpp|c|s|S)$/) {
+                # However, no transformation should be made if the destination
+                # is an object file
+                if ($dest !~ /\.o$/ && $s =~ /\.(cc|cpp|c|s|S)$/) {
                     my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
@@ -1881,6 +1893,27 @@ EOF
                     unless grep { $_ eq $ib } @{$unified_info{includes}->{$ddest}->{build}};
             }
         }
+
+        foreach (keys %defines) {
+            my $dest = $_;
+            my $ddest = cleanfile($sourced, $_, $blddir);
+
+            # If the destination doesn't exist in source, it can only be
+            # a generated file in the build tree.
+            if (! -f $ddest) {
+                $ddest = cleanfile($buildd, $_, $blddir);
+                if ($unified_info{rename}->{$ddest}) {
+                    $ddest = $unified_info{rename}->{$ddest};
+                }
+            }
+            foreach (@{$defines{$dest}}) {
+                m|^([^=]*)(=.*)?$|;
+                die "0 length macro name not permitted\n" if $1 eq "";
+                die "$1 defined more than once\n"
+                    if defined $unified_info{defines}->{$ddest}->{$1};
+                $unified_info{defines}->{$ddest}->{$1} = $2;
+            }
+        }
     }
 
     ### Make unified_info a bit more efficient
@@ -1894,6 +1927,12 @@ EOF
             $unified_info{$l1}->{$l2} =
                 [ sort keys %{$unified_info{$l1}->{$l2}} ];
         }
+    }
+    # Defines
+    foreach my $dest (sort keys %{$unified_info{defines}}) {
+        $unified_info{defines}->{$dest}
+            = [ map { $_.$unified_info{defines}->{$dest}->{$_} }
+                sort keys %{$unified_info{defines}->{$dest}} ];
     }
     # Includes
     foreach my $dest (sort keys %{$unified_info{includes}}) {
