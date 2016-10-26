@@ -184,7 +184,7 @@ const char *SSL_rstate_string(const SSL *s)
  * <0 Failure (may be retryable)
  */
 int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
-                size_t *read)
+                size_t *readbytes)
 {
     /*
      * If extend == 0, obtain new n-byte packet; if extend == 1, increase
@@ -270,7 +270,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
         s->rlayer.packet_length += n;
         rb->left = left - n;
         rb->offset += n;
-        *read = n;
+        *readbytes = n;
         return 1;
     }
 
@@ -338,7 +338,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
     rb->left = left - n;
     s->rlayer.packet_length += n;
     s->rwstate = SSL_NOTHING;
-    *read = n;
+    *readbytes = n;
     return 1;
 }
 
@@ -992,10 +992,10 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
  *             none of our business
  */
 int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
-                    size_t len, int peek, size_t *read)
+                    size_t len, int peek, size_t *readbytes)
 {
     int al, i, j, ret;
-    size_t n, curr_rec, num_recs, read_bytes;
+    size_t n, curr_rec, num_recs, totalbytes;
     SSL3_RECORD *rr;
     SSL3_BUFFER *rbuf;
     void (*cb) (const SSL *ssl, int type2, int val) = NULL;
@@ -1038,7 +1038,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         if (recvd_type != NULL)
             *recvd_type = SSL3_RT_HANDSHAKE;
 
-        *read = n;
+        *readbytes = n;
         return 1;
     }
 
@@ -1156,12 +1156,12 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         if (len == 0)
             return 0;
 
-        read_bytes = 0;
+        totalbytes = 0;
         do {
-            if (len - read_bytes > SSL3_RECORD_get_length(rr))
+            if (len - totalbytes > SSL3_RECORD_get_length(rr))
                 n = SSL3_RECORD_get_length(rr);
             else
-                n = len - read_bytes;
+                n = len - totalbytes;
 
             memcpy(buf, &(rr->data[rr->off]), n);
             buf += n;
@@ -1183,10 +1183,10 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 curr_rec++;
                 rr++;
             }
-            read_bytes += n;
+            totalbytes += n;
         } while (type == SSL3_RT_APPLICATION_DATA && curr_rec < num_recs
-                 && read_bytes < len);
-        if (read_bytes == 0) {
+                 && totalbytes < len);
+        if (totalbytes == 0) {
             /* We must have read empty records. Get more data */
             goto start;
         }
@@ -1194,7 +1194,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             && (s->mode & SSL_MODE_RELEASE_BUFFERS)
             && SSL3_BUFFER_get_left(rbuf) == 0)
             ssl3_release_read_buffer(s);
-        *read = read_bytes;
+        *readbytes = totalbytes;
         return 1;
     }
 

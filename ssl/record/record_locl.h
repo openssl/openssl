@@ -39,7 +39,7 @@
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
 __owur int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
-                       size_t *read);
+                       size_t *readbytes);
 
 void RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, const unsigned char *ws);
 DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
