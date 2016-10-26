@@ -217,6 +217,12 @@ int FuzzerInitialize(int *argc, char ***argv) {
 }
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
+    SSL *server;
+    BIO *in;
+    BIO *out;
+    if (!len) {
+        return 0;
+    }
     /* TODO: make this work for OpenSSL. There's a PREDICT define that may do
      * the job.
      * TODO: use the ossltest engine (optionally?) to disable crypto checks.
@@ -224,9 +230,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
      */
 
     /* This only fuzzes the initial flow from the client so far. */
-    SSL *server = SSL_new(ctx);
-    BIO *in = BIO_new(BIO_s_mem());
-    BIO *out = BIO_new(BIO_s_mem());
+    server = SSL_new(ctx);
+    in = BIO_new(BIO_s_mem());
+    out = BIO_new(BIO_s_mem());
     SSL_set_bio(server, in, out);
     SSL_set_accept_state(server);
     OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
