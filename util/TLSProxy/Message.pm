@@ -62,6 +62,7 @@ use constant {
     EXT_ENCRYPT_THEN_MAC => 22,
     EXT_EXTENDED_MASTER_SECRET => 23,
     EXT_SESSION_TICKET => 35,
+    EXT_SUPPORTED_VERSIONS => 43,
     # This extension does not exist and isn't recognised by OpenSSL.
     # We use it to test handling of duplicate extensions.
     EXT_DUPLICATE_EXTENSION => 1234
