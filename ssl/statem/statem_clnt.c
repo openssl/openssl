@@ -1224,7 +1224,21 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     }
 
     i = ssl_verify_cert_chain(s, sk);
-    if ((s->verify_mode & SSL_VERIFY_PEER) && i <= 0) {
+    /*
+     * The documented interface is that SSL_VERIFY_PEER should be set in order
+     * for client side verification of the server certificate to take place.
+     * However, historically the code has only checked that *any* flag is set
+     * to cause server verification to take place. Use of the other flags makes
+     * no sense in client mode. An attempt to clean up the semantics was
+     * reverted because at least one application *only* set
+     * SSL_VERIFY_FAIL_IF_NO_PEER_CERT. Prior to the clean up this still caused
+     * server verification to take place, after the clean up it silently did
+     * nothing. SSL_CTX_set_verify()/SSL_set_verify() cannot validate the flags
+     * sent to them because they are void functions. Therefore, we now use the
+     * (less clean) historic behaviour of performing validation if any flag is
+     * set. The *documented* interface remains the same.
+     */
+    if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
         al = ssl_verify_alarm_type(s->verify_result);
         SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
                SSL_R_CERTIFICATE_VERIFY_FAILED);
