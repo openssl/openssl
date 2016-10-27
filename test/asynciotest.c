@@ -234,12 +234,17 @@ static int async_puts(BIO *bio, const char *str)
     return async_write(bio, str, strlen(str));
 }
 
+#define MAX_ATTEMPTS    100
+
 int main(int argc, char *argv[])
 {
     SSL_CTX *serverctx = NULL, *clientctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     BIO *s_to_c_fbio = NULL, *c_to_s_fbio = NULL;
-    int test, err = 1;
+    int test, err = 1, ret;
+    size_t i, j;
+    const char testdata[] = "Test data";
+    char buf[sizeof(testdata)];
 
     CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
@@ -285,6 +290,42 @@ int main(int argc, char *argv[])
         if (!create_ssl_connection(serverssl, clientssl)) {
             printf("Test %d failed: Create SSL connection failed\n", test);
             goto end;
+        }
+
+        /*
+         * Send and receive some test data. Do the whole thing twice to ensure
+         * we hit at least one async event in both reading and writing
+         */
+        for (j = 0; j < 2; j++) {
+            /*
+             * Write some test data. It should never take more than 2 attempts
+             * (the first one might be a retryable fail). A zero return from
+             * SSL_write() is a non-retryable failure, so fail immediately if
+             * we get that.
+             */
+            for (ret = -1, i = 0; ret < 0 && i < 2 * sizeof(testdata); i++)
+                ret = SSL_write(clientssl, testdata, sizeof(testdata));
+            if (ret <= 0) {
+                printf("Test %d failed: Failed to write app data\n", test);
+                goto end;
+            }
+            /*
+             * Now read the test data. It may take more attemps here because
+             * it could fail once for each byte read, including all overhead
+             * bytes from the record header/padding etc. Fail immediately if we
+             * get a zero return from SSL_read().
+             */
+            for (ret = -1, i = 0; ret < 0 && i < MAX_ATTEMPTS; i++)
+                ret = SSL_read(serverssl, buf, sizeof(buf));
+            if (ret <= 0) {
+                printf("Test %d failed: Failed to read app data\n", test);
+                goto end;
+            }
+            if (ret != sizeof(testdata)
+                    || memcmp(buf, testdata, sizeof(testdata)) != 0) {
+                printf("Test %d failed: Unexpected app data received\n", test);
+                goto end;
+            }
         }
 
         /* Also frees the BIOs */
