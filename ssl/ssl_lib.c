@@ -3550,6 +3550,8 @@ X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *ctx)
 void SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store)
 {
     X509_STORE_free(ctx->cert_store);
+    if (store != NULL)
+        X509_STORE_up_ref(store);
     ctx->cert_store = store;
 }
 
