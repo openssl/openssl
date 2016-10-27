@@ -282,6 +282,21 @@ IF[{- !$disabled{tests} -}]
     DEPEND[wpackettest]=../libcrypto ../libssl
   ENDIF
 
+  # Internal test programs.  These are essentially a collection of internal
+  # test routines.  Because they sometimes need to reach internal symbols that
+  # aren't available through the shared library (at least on Linux, Solaris,
+  # Windows and VMS, where the exported symbols are those listed in util/*.num),
+  # these programs may be built on files directly picked from inside crypto/
+  # or ssl/, to test using symbols that exist in those specific files.  These
+  # programs will also be linked with libcrypto / libssl, so we don't pick
+  # out more specific files than necessary.
+  # This might mean we have multiply defined symbols, but since linking is
+  # ordered with object files first and libraries after, the symbols from the
+  # object files will be chosen before those in the libraries.  This is handled
+  # properly by all linkers.
+  # Note that when building with static libraries, none of those extra files
+  # are needed, since all symbols are available anyway, regardless of what's
+  # listed in util/*.num.
   IF[{- !$disabled{poly1305} -}]
     PROGRAMS_NO_INST=poly1305_internal_test
   ENDIF
