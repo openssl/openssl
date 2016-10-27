@@ -314,7 +314,7 @@ IF[{- !$disabled{tests} -}]
   # Note that when building with static libraries, none of those extra files
   # are needed, since all symbols are available anyway, regardless of what's
   # listed in util/*.num.
-  PROGRAMS_NO_INST=asn1_internal_test modes_internal_test
+  PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test
   IF[{- !$disabled{poly1305} -}]
     PROGRAMS_NO_INST=poly1305_internal_test
   ENDIF
@@ -349,6 +349,28 @@ IF[{- !$disabled{tests} -}]
   ENDIF
   INCLUDE[modes_internal_test]=.. ../include
   DEPEND[modes_internal_test]=../libcrypto
+
+  # The reason for the huge amount of directly included x509v3 files
+  # is that a table that is checked by x509_internal_test refers to
+  # structures that are spread all over those files.
+  SOURCE[x509_internal_test]=x509_internal_test.c testutil.c
+  IF[{- !$disabled{shared} -}]
+    SOURCE[x509_internal_test]= ../crypto/x509v3/v3_bitst.c \
+        ../crypto/x509v3/v3_ia5.c ../crypto/x509v3/v3_skey.c \
+        ../crypto/x509v3/v3_pku.c ../crypto/x509v3/v3_alt.c \
+        ../crypto/x509v3/v3_bcons.c ../crypto/x509v3/v3_int.c \
+        ../crypto/x509v3/v3_cpols.c ../crypto/x509v3/v3_akey.c \
+        ../crypto/x509v3/v3_crld.c ../crypto/x509v3/v3_utl.c \
+        ../crypto/x509v3/v3_extku.c ../crypto/x509v3/v3_enum.c \
+        ../crypto/x509v3/v3_sxnet.c ../crypto/x509v3/v3_info.c \
+        ../crypto/x509v3/v3_addr.c ../crypto/x509v3/v3_asid.c \
+        ../crypto/x509v3/v3_pcons.c ../crypto/x509v3/v3_pmaps.c \
+        ../crypto/x509v3/v3_pci.c ../crypto/x509v3/v3_ncons.c \
+        ../crypto/x509v3/v3_tlsf.c ../crypto/ocsp/v3_ocsp.c \
+        ../crypto/ct/ct_x509v3.c ../crypto/asn1/a_strex.c
+  ENDIF
+  INCLUDE[x509_internal_test]=.. ../include
+  DEPEND[x509_internal_test]=../libcrypto
 ENDIF
 
 {-
