@@ -314,7 +314,7 @@ IF[{- !$disabled{tests} -}]
   # Note that when building with static libraries, none of those extra files
   # are needed, since all symbols are available anyway, regardless of what's
   # listed in util/*.num.
-  PROGRAMS_NO_INST=asn1_internal_test
+  PROGRAMS_NO_INST=asn1_internal_test modes_internal_test
   IF[{- !$disabled{poly1305} -}]
     PROGRAMS_NO_INST=poly1305_internal_test
   ENDIF
@@ -339,6 +339,16 @@ IF[{- !$disabled{tests} -}]
   ENDIF
   INCLUDE[asn1_internal_test]=.. ../include ../crypto/include
   DEPEND[asn1_internal_test]=../libcrypto
+
+  SOURCE[modes_internal_test]=modes_internal_test.c testutil.c
+  IF[{- !$disabled{shared} -}]
+    SOURCE[modes_internal_test]= {- $target{cpuid_asm_src}
+                                    ? "../crypto/".$target{cpuid_asm_src}
+                                    : "" -} \
+        ../crypto/cryptlib.c
+  ENDIF
+  INCLUDE[modes_internal_test]=.. ../include
+  DEPEND[modes_internal_test]=../libcrypto
 ENDIF
 
 {-
