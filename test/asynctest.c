@@ -249,6 +249,34 @@ static int test_ASYNC_block_pause()
     return 1;
 }
 
+static int test_ASYNC_func_pointer_mismatch()
+{
+    ASYNC_JOB *job = NULL;
+    int funcret;
+    ASYNC_WAIT_CTX *waitctx = NULL;
+
+    if (       !ASYNC_init_thread(1, 0)
+            || (waitctx = ASYNC_WAIT_CTX_new()) == NULL
+            || ASYNC_start_job(&job, waitctx, &funcret, add_two, NULL, 0)
+                != ASYNC_PAUSE
+            || ASYNC_start_job(&job, waitctx, &funcret, only_pause, NULL, 0)
+                != ASYNC_ERR
+            || ERR_GET_REASON(ERR_get_error()) 
+                != ASYNC_R_CALLED_WITH_WRONG_FUNC_POINTER
+            || ASYNC_start_job(&job, waitctx, &funcret, add_two, NULL, 0)
+                != ASYNC_FINISH
+            || funcret != 2) {
+        fprintf(stderr, "test_ASYNC_func_pointer_mismatch() failed\n");
+        ASYNC_WAIT_CTX_free(waitctx);
+        ASYNC_cleanup_thread();
+        return 0;
+    }
+
+    ASYNC_WAIT_CTX_free(waitctx);
+    ASYNC_cleanup_thread();
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     if (!ASYNC_is_capable()) {
@@ -262,7 +290,8 @@ int main(int argc, char **argv)
                 || !test_ASYNC_start_job()
                 || !test_ASYNC_get_current_job()
                 || !test_ASYNC_WAIT_CTX_get_all_fds()
-                || !test_ASYNC_block_pause()) {
+                || !test_ASYNC_block_pause()
+                || !test_ASYNC_func_pointer_mismatch()) {
             return 1;
         }
     }

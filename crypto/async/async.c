@@ -178,6 +178,17 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
 
     if (*job) {
         ctx->currjob = *job;
+        if (ctx->currjob->func != func) {
+            /*
+             * If a job exists then it must be called with the same function
+             * pointer as when it was created. Otherwise the caller may get
+             * unexpected behaviour because the function that will continue
+             * execution is not the function that was called.
+             */
+            ASYNCerr(ASYNC_F_ASYNC_START_JOB,
+                     ASYNC_R_CALLED_WITH_WRONG_FUNC_POINTER);
+            return ASYNC_ERR;
+        }
     }
 
     for (;;) {
@@ -405,6 +416,11 @@ ASYNC_JOB *ASYNC_get_current_job(void)
 ASYNC_WAIT_CTX *ASYNC_get_wait_ctx(ASYNC_JOB *job)
 {
     return job->waitctx;
+}
+
+void *ASYNC_get_funcargs(ASYNC_JOB *job)
+{
+    return job->funcargs;
 }
 
 void ASYNC_block_pause(void)
