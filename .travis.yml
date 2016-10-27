@@ -1,0 +1,138 @@
+language: c
+cache: ccache
+
+before_install:
+    - pip install --user cpp-coveralls
+
+addons:
+    apt:
+        packages:
+            - ccache
+            - clang-3.6
+            - gcc-5
+            - binutils-mingw-w64
+            - gcc-mingw-w64
+            - wine
+        sources:
+            - llvm-toolchain-precise-3.6
+            - ubuntu-toolchain-r-test
+
+os:
+    - linux
+    - osx
+
+compiler:
+    - clang
+    - gcc
+
+env:
+    - CONFIG_OPTS="" DESTDIR="_install"
+    - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
+    - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
+    - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
+    - CONFIG_OPTS="no-stdio --strict-warnings" BUILDONLY="yes"
+
+matrix:
+    include:
+        - os: linux
+          compiler: gcc
+          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers" COVERALLS="yes"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-shared enable-asan"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-shared enable-msan"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method -fno-sanitize=alignment"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-shared no-asm enable-asan enable-rc5 enable-md2"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-stdio"
+        - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
+        - os: linux
+          compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-pic"
+        - os: linux
+          compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-stdio"
+        - os: linux
+          compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-pic"
+        - os: linux
+          compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-stdio"
+    exclude:
+        - os: linux
+          compiler: clang
+        - os: osx
+          compiler: gcc
+
+before_script:
+    - if [ -n "$DESTDIR" ]; then
+          sh .travis-create-release.sh $TRAVIS_OS_NAME;
+          tar -xvzf _srcdist.tar.gz;
+          mkdir _build;
+          cd _build;
+          srcdir=../_srcdist;
+          top=..;
+      else
+          srcdir=.;
+          top=.;
+      fi
+    - if [ "$CC" == i686-w64-mingw32-gcc ]; then
+          export CROSS_COMPILE=${CC%%gcc}; unset CC;
+          $srcdir/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
+      elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
+          export CROSS_COMPILE=${CC%%gcc}; unset CC;
+          $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
+      else
+          if which ccache >/dev/null && [ "$CC" != clang-3.6 ]; then
+              CC="ccache $CC";
+          fi;
+          $srcdir/config -v $CONFIG_OPTS;
+      fi
+    - cd $top
+
+script:
+    - if [ -z "$BUILDONLY" ]; then
+          make="make -s";
+      else
+          make="make";
+      fi
+    - if [ -n "$DESTDIR" ]; then
+          cd _build;
+          top=..;
+      else
+          top=.;
+      fi
+    - $make update
+    - $make
+    - if [ -z "$BUILDONLY" ]; then
+          if [ -n "$CROSS_COMPILE" ]; then
+              export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+          fi;
+          HARNESS_VERBOSE=yes make test;
+      else
+          $make build_tests;
+      fi
+    - if [ -n "$DESTDIR" ]; then
+          mkdir "../$DESTDIR";
+          $make install install_docs DESTDIR="../$DESTDIR";
+      fi
+    - cd $top
+
+after_success:
+    - if [ -n "$COVERALLS" ]; then
+          coveralls -b . --gcov-options '\-lp';
+      fi;
+
+notifications:
+    email:
+        - openssl-commits@openssl.org
+

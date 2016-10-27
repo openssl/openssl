@@ -1,9 +1,19 @@
-#!/usr/local/bin/perl
+#! /usr/bin/env perl
+# Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
 
-push(@INC,"perlasm","../../perlasm");
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
-&asm_init($ARGV[0],"bn-586.pl");
+$output = pop;
+open STDOUT,">$output";
+
+&asm_init($ARGV[0],$0);
 
 &bn_mul_comba("bn_mul_comba8",8);
 &bn_mul_comba("bn_mul_comba4",4);
@@ -11,6 +21,8 @@ require "x86asm.pl";
 &bn_sqr_comba("bn_sqr_comba4",4);
 
 &asm_finish();
+
+close STDOUT;
 
 sub mul_add_c
 	{
