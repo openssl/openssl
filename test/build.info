@@ -315,6 +315,9 @@ IF[{- !$disabled{tests} -}]
   # are needed, since all symbols are available anyway, regardless of what's
   # listed in util/*.num.
   PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test
+  IF[{- !$disabled{mdc2} -}]
+    PROGRAMS_NO_INST=mdc2_internal_test
+  ENDIF
   IF[{- !$disabled{poly1305} -}]
     PROGRAMS_NO_INST=poly1305_internal_test
   ENDIF
@@ -371,6 +374,10 @@ IF[{- !$disabled{tests} -}]
   ENDIF
   INCLUDE[x509_internal_test]=.. ../include
   DEPEND[x509_internal_test]=../libcrypto
+
+  SOURCE[mdc2_internal_test]=mdc2_internal_test.c testutil.c
+  INCLUDE[mdc2_internal_test]=.. ../include
+  DEPEND[mdc2_internal_test]=../libcrypto
 ENDIF
 
 {-
