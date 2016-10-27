@@ -571,7 +571,7 @@ static ssl_trace_tbl ssl_supp_versions_tbl[] = {
     {TLS1_1_VERSION, "TLSv1.1"},
     {TLS1_2_VERSION, "TLSv1.2"},
     {TLS1_3_VERSION, "TLSv1.3"},
-    {TLS1_3_VERSION_DRAFT, "TLSv1.3 draft 17"}
+    {TLS1_3_VERSION_DRAFT, "TLSv1.3 draft 18"}
 };
 
 static void ssl_print_hex(BIO *bio, int indent, const char *name,
