@@ -9,21 +9,21 @@ BIO_read_ex, BIO_write_ex, BIO_read, BIO_write, BIO_gets, BIO_puts
 
  #include <openssl/bio.h>
 
- int BIO_read_ex(BIO *b, void *out, size_t outl, size_t *read);
- int BIO_write_ex(BIO *b, const void *in, size_t inl, size_t *written);
+ int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *readbytes);
+ int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written);
 
- int BIO_read(BIO *b, void *buf, int len);
+ int BIO_read(BIO *b, void *data, int dlen);
  int BIO_gets(BIO *b, char *buf, int size);
- int BIO_write(BIO *b, const void *buf, int len);
+ int BIO_write(BIO *b, const void *data, int dlen);
  int BIO_puts(BIO *b, const char *buf);
 
 =head1 DESCRIPTION
 
-BIO_read_ex() attempts to read B<outl> bytes from BIO B<b> and places the data
-in B<out>. If any bytes were successfully read then the number of bytes read is
-stored in B<*read>.
+BIO_read_ex() attempts to read B<dlen> bytes from BIO B<b> and places the data
+in B<data>. If any bytes were successfully read then the number of bytes read is
+stored in B<*readbytes>.
 
-BIO_write_ex() attempts to write B<inl> bytes from B<in> to BIO B<b>. If
+BIO_write_ex() attempts to write B<dlen> bytes from B<data> to BIO B<b>. If
 successful then the number of bytes written is stored in B<*written>.
 
 BIO_read() attempts to read B<len> bytes from BIO B<b> and places
@@ -31,7 +31,7 @@ the data in B<buf>.
 
 BIO_gets() performs the BIOs "gets" operation and places the data
 in B<buf>. Usually this operation will attempt to read a line of data
-from the BIO of maximum length B<len-1>. There are exceptions to this,
+from the BIO of maximum length B<size-1>. There are exceptions to this,
 however; for example, BIO_gets() on a digest BIO will calculate and
 return the digest and other BIOs may not support BIO_gets() at all.
 The returned string is always NUL-terminated.
