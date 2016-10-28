@@ -3,7 +3,7 @@
 LibFuzzer
 =========
 
-Or, how to fuzz OpenSSL with [libfuzzer](llvm.org/docs/LibFuzzer.html).
+Or, how to fuzz OpenSSL with [libfuzzer](http://llvm.org/docs/LibFuzzer.html).
 
 Starting from a vanilla+OpenSSH server Ubuntu install.
 
