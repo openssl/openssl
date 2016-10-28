@@ -37,6 +37,7 @@ my $proxy = TLSProxy::Proxy->new(
 #Test 1: Injecting out of context empty records should fail
 my $content_type = TLSProxy::Record::RT_APPLICATION_DATA;
 my $inject_recs_num = 1;
+$proxy->serverflags("-tls1_2");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 9;
 ok(TLSProxy::Message->fail(), "Out of context empty records test");
@@ -44,6 +45,7 @@ ok(TLSProxy::Message->fail(), "Out of context empty records test");
 #Test 2: Injecting in context empty records should succeed
 $proxy->clear();
 $content_type = TLSProxy::Record::RT_HANDSHAKE;
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->success(), "In context empty records test");
 
@@ -51,6 +53,7 @@ ok(TLSProxy::Message->success(), "In context empty records test");
 $proxy->clear();
 #We allow 32 consecutive in context empty records
 $inject_recs_num = 33;
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Too many in context empty records test");
 
@@ -59,6 +62,7 @@ ok(TLSProxy::Message->fail(), "Too many in context empty records test");
 #        alert, i.e. this will look like a disorderly close
 $proxy->clear();
 $proxy->filter(\&add_frag_alert_filter);
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(!TLSProxy::Message->end(), "Fragmented alert records test");
 
@@ -75,6 +79,7 @@ use constant {
 my $sslv2testtype = TLSV1_2_IN_SSLV2;
 $proxy->clear();
 $proxy->filter(\&add_sslv2_filter);
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->success(), "TLSv1.2 in SSLv2 ClientHello test");
 
@@ -83,6 +88,7 @@ ok(TLSProxy::Message->success(), "TLSv1.2 in SSLv2 ClientHello test");
 #        protocol so we don't even send an alert in this case.
 $sslv2testtype = SSLV2_IN_SSLV2;
 $proxy->clear();
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(!TLSProxy::Message->end(), "SSLv2 in SSLv2 ClientHello test");
 
@@ -91,6 +97,7 @@ ok(!TLSProxy::Message->end(), "SSLv2 in SSLv2 ClientHello test");
 #        reasons
 $sslv2testtype = FRAGMENTED_IN_TLSV1_2;
 $proxy->clear();
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->success(), "Fragmented ClientHello in TLSv1.2 test");
 
@@ -98,6 +105,7 @@ ok(TLSProxy::Message->success(), "Fragmented ClientHello in TLSv1.2 test");
 #        record; and another TLS1.2 record. This isn't allowed so should fail
 $sslv2testtype = FRAGMENTED_IN_SSLV2;
 $proxy->clear();
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Fragmented ClientHello in TLSv1.2/SSLv2 test");
 
@@ -105,6 +113,7 @@ ok(TLSProxy::Message->fail(), "Fragmented ClientHello in TLSv1.2/SSLv2 test");
 #        fail because an SSLv2 ClientHello must be the first record.
 $sslv2testtype = ALERT_BEFORE_SSLV2;
 $proxy->clear();
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Alert before SSLv2 ClientHello test");
 sub add_empty_recs_filter

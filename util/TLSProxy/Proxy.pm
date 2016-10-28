@@ -48,7 +48,7 @@ sub new
         cert => $cert,
         debug => $debug,
         cipherc => "",
-        ciphers => "AES128-SHA",
+        ciphers => "AES128-SHA:TLS13-AES-128-GCM-SHA256",
         flight => 0,
         record_list => [],
         message_list => [],
@@ -113,7 +113,7 @@ sub clear
     my $self = shift;
 
     $self->clearClient;
-    $self->{ciphers} = "AES128-SHA";
+    $self->{ciphers} = "AES128-SHA:TLS13-AES-128-GCM-SHA256";
     $self->{serverflags} = "";
     $self->{serverconnects} = 1;
     $self->{serverpid} = 0;
@@ -147,10 +147,8 @@ sub start
                 or die "Failed to redirect stdout: $!";
             open(STDERR, ">&STDOUT");
         }
-        # TODO(TLS1.3): Temporarily disabled for TLS1.3...no shared cipher
-        # because the TLS1.3 ciphersuites are not compatible with ossltest
         my $execcmd = $self->execute
-            ." s_server -no_tls1_3 -no_comp -rev -engine ossltest -accept "
+            ." s_server -no_comp -rev -engine ossltest -accept "
             .($self->server_port)
             ." -cert ".$self->cert." -naccept ".$self->serverconnects;
         if ($self->ciphers ne "") {
