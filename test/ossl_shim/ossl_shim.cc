@@ -83,7 +83,6 @@ struct TestState {
   // packeted_bio is the packeted BIO which simulates read timeouts.
   BIO *packeted_bio = nullptr;
   bool cert_ready = false;
-  bssl::UniquePtr<SSL_SESSION> session;
   bool handshake_done = false;
   // private_key is the underlying private key used when testing custom keys.
   bssl::UniquePtr<EVP_PKEY> private_key;
