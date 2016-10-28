@@ -107,7 +107,7 @@ sub get_records
 
             if (($server && $server_ccs_seen)
                      || (!$server && $client_ccs_seen)) {
-                if ($etm) {
+                if ($version != VERS_TLS_1_3() && $etm) {
                     $record->decryptETM();
                 } else {
                     $record->decrypt();
@@ -221,22 +221,27 @@ sub decryptETM
 sub decrypt()
 {
     my ($self) = shift;
-
+    my $mactaglen = 20;
     my $data = $self->data;
 
-    if($self->version >= VERS_TLS_1_1()) {
-        #TLS1.1+ has an explicit IV. Throw it away
+    #Throw away any IVs
+    if ($self->version >= VERS_TLS_1_3()) {
+        #8 bytes for a GCM IV
+        $data = substr($data, 8);
+        $mactaglen = 16;
+    } elsif ($self->version >= VERS_TLS_1_1()) {
+        #16 bytes for a standard IV
         $data = substr($data, 16);
+
+        #Find out what the padding byte is
+        my $padval = unpack("C", substr($data, length($data) - 1));
+
+        #Throw away the padding
+        $data = substr($data, 0, length($data) - ($padval + 1));
     }
 
-    #Find out what the padding byte is
-    my $padval = unpack("C", substr($data, length($data) - 1));
-
-    #Throw away the padding
-    $data = substr($data, 0, length($data) - ($padval + 1));
-
-    #Throw away the MAC (assumes MAC is 20 bytes for now. FIXME)
-    $data = substr($data, 0, length($data) - 20);
+    #Throw away the MAC or TAG
+    $data = substr($data, 0, length($data) - $mactaglen);
 
     $self->decrypt_data($data);
     $self->decrypt_len(length($data));

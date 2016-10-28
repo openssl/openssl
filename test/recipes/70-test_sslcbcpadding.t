@@ -40,6 +40,7 @@ my @test_offsets = (0, 128, 254, 255);
 
 # Test that maximally-padded records are accepted.
 my $bad_padding_offset = -1;
+$proxy->serverflags("-tls1_2");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 1 + scalar(@test_offsets);
 ok(TLSProxy::Message->success(), "Maximally-padded record test");
