@@ -295,7 +295,7 @@ int BIO_read(BIO *b, void *data, int dlen)
     ret = bio_read_intern(b, data, (size_t)dlen, &readbytes);
 
     if (ret > 0) {
-        /* *readbytes should always be <= outl */
+        /* *readbytes should always be <= dlen */
         ret = (int)readbytes;
     }
 
@@ -362,7 +362,7 @@ int BIO_write(BIO *b, const void *data, int dlen)
     ret = bio_write_intern(b, data, (size_t)dlen, &written);
 
     if (ret > 0) {
-        /* *written should always be <= inl */
+        /* *written should always be <= dlen */
         ret = (int)written;
     }
 
@@ -383,7 +383,7 @@ int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written)
     return ret;
 }
 
-int BIO_puts(BIO *b, const char *in)
+int BIO_puts(BIO *b, const char *buf)
 {
     int ret;
     size_t written = 0;
@@ -394,7 +394,7 @@ int BIO_puts(BIO *b, const char *in)
     }
 
     if (b->callback != NULL || b->callback_ex != NULL) {
-        ret = (int)bio_call_callback(b, BIO_CB_PUTS, in, 0, 0, 0L, 1L, NULL);
+        ret = (int)bio_call_callback(b, BIO_CB_PUTS, buf, 0, 0, 0L, 1L, NULL);
         if (ret <= 0)
             return ret;
     }
@@ -404,7 +404,7 @@ int BIO_puts(BIO *b, const char *in)
         return -2;
     }
 
-    ret = b->method->bputs(b, in);
+    ret = b->method->bputs(b, buf);
 
     if (ret > 0) {
         b->num_write += (uint64_t)ret;
@@ -413,7 +413,7 @@ int BIO_puts(BIO *b, const char *in)
     }
 
     if (b->callback != NULL || b->callback_ex != NULL)
-        ret = (int)bio_call_callback(b, BIO_CB_PUTS | BIO_CB_RETURN, in, 0, 0,
+        ret = (int)bio_call_callback(b, BIO_CB_PUTS | BIO_CB_RETURN, buf, 0, 0,
                                      0L, ret, &written);
 
     if (ret > 0) {
@@ -428,7 +428,7 @@ int BIO_puts(BIO *b, const char *in)
     return ret;
 }
 
-int BIO_gets(BIO *b, char *out, int outl)
+int BIO_gets(BIO *b, char *buf, int size)
 {
     int ret;
     size_t readbytes = 0;
@@ -438,13 +438,13 @@ int BIO_gets(BIO *b, char *out, int outl)
         return (-2);
     }
 
-    if (outl < 0) {
+    if (size < 0) {
         BIOerr(BIO_F_BIO_GETS, BIO_R_INVALID_ARGUMENT);
         return 0;
     }
 
     if (b->callback != NULL || b->callback_ex != NULL) {
-        ret = (int)bio_call_callback(b, BIO_CB_GETS, out, outl, 0, 0L, 1, NULL);
+        ret = (int)bio_call_callback(b, BIO_CB_GETS, buf, size, 0, 0L, 1, NULL);
         if (ret <= 0)
             return ret;
     }
@@ -454,7 +454,7 @@ int BIO_gets(BIO *b, char *out, int outl)
         return (-2);
     }
 
-    ret = b->method->bgets(b, out, outl);
+    ret = b->method->bgets(b, buf, size);
 
     if (ret > 0) {
         readbytes = ret;
@@ -462,12 +462,12 @@ int BIO_gets(BIO *b, char *out, int outl)
     }
 
     if (b->callback != NULL || b->callback_ex != NULL)
-        ret = (int)bio_call_callback(b, BIO_CB_GETS | BIO_CB_RETURN, out, outl,
+        ret = (int)bio_call_callback(b, BIO_CB_GETS | BIO_CB_RETURN, buf, size,
                                      0, 0L, ret, &readbytes);
 
     if (ret > 0) {
         /* Shouldn't happen */
-        if (readbytes > (size_t)outl)
+        if (readbytes > (size_t)size)
             ret = -1;
         else
             ret = (int)readbytes;
