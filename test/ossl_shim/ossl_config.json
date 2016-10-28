@@ -1,6 +1,7 @@
 
 {
     "DisabledTests" : {
+            "*TLS13*":"No TLS1.3 support yet",
             "UnauthenticatedECDH":"Test failure - reason unknown",
             "SkipServerKeyExchange":"Test failure - reason unknown",
             "FragmentAlert-DTLS":"Test failure - reason unknown",
