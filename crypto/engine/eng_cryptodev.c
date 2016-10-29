@@ -534,12 +534,13 @@ static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 
 static int cryptodev_cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void *p2)
 {
-    struct dev_crypto_state *state = ctx->cipher_data;
+    struct dev_crypto_state *state = EVP_CIPHER_CTX_get_cipher_data(ctx);
     struct session_op *sess = &state->d_sess;
 
     if (type == EVP_CTRL_COPY) {
         EVP_CIPHER_CTX *out = p2;
-        return cryptodev_init_key(out, sess->key, ctx->iv, 0);
+        return cryptodev_init_key(out, (unsigned char *)sess->key,
+                                 EVP_CIPHER_CTX_iv(ctx), 0);
     }
 
     return 0;
