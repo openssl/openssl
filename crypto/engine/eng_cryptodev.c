@@ -1131,8 +1131,6 @@ static int cryptodev_digest_final(EVP_MD_CTX *ctx, unsigned char *md)
     struct dev_crypto_state *state = EVP_MD_CTX_md_data(ctx);
     struct session_op *sess = &state->d_sess;
 
-    int ret = 1;
-
     if (!md || state->d_fd < 0) {
         printf("cryptodev_digest_final: illegal input\n");
         return (0);
@@ -1157,7 +1155,7 @@ static int cryptodev_digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 
     memcpy(md, state->digest_res, EVP_MD_CTX_size(ctx));
 
-    return (ret);
+    return 1;
 }
 
 static int cryptodev_digest_cleanup(EVP_MD_CTX *ctx)
