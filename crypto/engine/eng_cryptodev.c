@@ -191,11 +191,6 @@ static struct {
     int nid;
     int digestlen;
 } digests[] = {
-#  if 0
-        /* HMAC is not supported */
-    {CRYPTO_MD5_HMAC, NID_hmacWithMD5, 16},
-    {CRYPTO_SHA1_HMAC, NID_hmacWithSHA1, 20},
-#  endif
     {CRYPTO_MD5, NID_md5, 16},
     {CRYPTO_SHA1, NID_sha1, 20},
     {CRYPTO_SHA2_256, NID_sha256, 32},
