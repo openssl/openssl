@@ -115,10 +115,11 @@ err:
 
 /*
  * int_rsa_verify verifies an RSA signature in |sigbuf| using |rsa|. It may be
- * called in two modes. If |rm| is NULL, it verifiers the signature for digest
+ * called in two modes. If |rm| is NULL, it verifies the signature for digest
  * |m|. Otherwise, it recovers the digest from the signature, writing the digest
  * to |rm| and the length to |*prm_len|. |type| is the NID of the digest
- * algorithm to use.
+ * algorithm to use. It returns one on successful verification and zero
+ * otherwise.
  */
 int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
                    unsigned char *rm, size_t *prm_len,
