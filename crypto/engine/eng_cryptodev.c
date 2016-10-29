@@ -184,7 +184,6 @@ static struct {
     {
         CRYPTO_AES_CBC, NID_aes_256_cbc, 16, 32,
     },
-# ifdef CRYPTO_AES_CTR
     {
         CRYPTO_AES_CTR, NID_aes_128_ctr, 14, 16,
     },
@@ -194,7 +193,6 @@ static struct {
     {
         CRYPTO_AES_CTR, NID_aes_256_ctr, 14, 32,
     },
-# endif
     {
         CRYPTO_BLF_CBC, NID_bf_cbc, 8, 16,
     },
@@ -812,7 +810,6 @@ static const EVP_CIPHER *cryptodev_aes_256_cbc(void)
     return aes_256_cbc_cipher;
 }
 
-# ifdef CRYPTO_AES_CTR
 static EVP_CIPHER *aes_ctr_cipher = NULL;
 static const EVP_CIPHER *cryptodev_aes_ctr(void)
 {
@@ -912,7 +909,6 @@ static const EVP_CIPHER *cryptodev_aes_ecb(void)
         }
         aes_ecb_cipher = cipher;
     }
-# endif
     return aes_ecb_cipher;
 }
 
@@ -1010,7 +1006,6 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     case NID_aes_256_cbc:
         *cipher = cryptodev_aes_256_cbc();
         break;
-# ifdef CRYPTO_AES_CTR
     case NID_aes_128_ctr:
         *cipher = cryptodev_aes_ctr();
         break;
@@ -1029,7 +1024,6 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     case NID_aes_256_ecb:
         *cipher = cryptodev_aes_256_ecb();
         break;
-# endif
     default:
         *cipher = NULL;
         break;
@@ -1447,7 +1441,6 @@ static int cryptodev_engine_destroy(ENGINE *e)
     aes_192_cbc_cipher = NULL;
     EVP_CIPHER_meth_free(aes_256_cbc_cipher);
     aes_256_cbc_cipher = NULL;
-# ifdef CRYPTO_AES_CTR
     EVP_CIPHER_meth_free(aes_ctr_cipher);
     aes_ctr_cipher = NULL;
     EVP_CIPHER_meth_free(aes_192_ctr_cipher);
@@ -1460,7 +1453,6 @@ static int cryptodev_engine_destroy(ENGINE *e)
     aes_192_ecb_cipher = NULL;
     EVP_CIPHER_meth_free(aes_256_ecb_cipher);
     aes_256_ecb_cipher = NULL;
-# endif
 # ifdef USE_CRYPTODEV_DIGESTS
     EVP_MD_meth_free(sha1_md);
     sha1_md = NULL;
