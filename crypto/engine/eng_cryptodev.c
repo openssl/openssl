@@ -204,9 +204,11 @@ static struct {
     {
         CRYPTO_SKIPJACK_CBC, NID_undef, 0, 0,
     },
-    {
-        0, NID_undef, 0, 0,
-    },
+    {CRYPTO_3DES_ECB, NID_des_ede3_ecb, 0, 24},
+    {CRYPTO_AES_ECB, NID_aes_128_ecb, 0, 16},
+    {CRYPTO_AES_ECB, NID_aes_192_ecb, 0, 24},
+    {CRYPTO_AES_ECB, NID_aes_256_ecb, 0, 32},
+    {0, NID_undef, 0, 0},
 };
 
 # ifdef USE_CRYPTODEV_DIGESTS
@@ -661,6 +663,30 @@ static const EVP_CIPHER *cryptodev_3des_cbc(void)
     return des3_cbc_cipher;
 }
 
+/* 3DES ECB EVP */
+static EVP_CIPHER *des3_ecb_cipher = NULL;
+static const EVP_CIPHER *cryptodev_3des_ecb(void)
+{
+    if (des3_ecb_cipher == NULL) {
+        EVP_CIPHER *cipher = EVP_CIPHER_meth_new(NID_des_ede3_ecb, 8, 24);
+
+        if (cipher == NULL
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_ECB_MODE)
+            || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
+            || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
+            || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(cipher,
+                                                  sizeof(struct
+                                                         dev_crypto_state))) {
+            EVP_CIPHER_meth_free(cipher);
+            cipher = NULL;
+        }
+        des3_ecb_cipher = cipher;
+    }
+    return des3_ecb_cipher;
+}
+
 static EVP_CIPHER *bf_cbc_cipher = NULL;
 static const EVP_CIPHER *cryptodev_bf_cbc(void)
 {
@@ -861,7 +887,89 @@ static const EVP_CIPHER *cryptodev_aes_256_ctr(void)
     }
     return aes_256_ctr_cipher;
 }
+
+static EVP_CIPHER *aes_ecb_cipher = NULL;
+static const EVP_CIPHER *cryptodev_aes_ecb(void)
+{
+    if (aes_ecb_cipher == NULL) {
+        EVP_CIPHER *cipher = EVP_CIPHER_meth_new(NID_aes_128_ecb, 16, 16);
+
+        if (cipher == NULL
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_ECB_MODE)
+            || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
+            || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
+            || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(cipher,
+                                                  sizeof(struct
+                                                         dev_crypto_state))
+            || !EVP_CIPHER_meth_set_set_asn1_params(cipher,
+                                                    EVP_CIPHER_set_asn1_iv)
+            || !EVP_CIPHER_meth_set_get_asn1_params(cipher,
+                                                    EVP_CIPHER_get_asn1_iv)) {
+            EVP_CIPHER_meth_free(cipher);
+            cipher = NULL;
+        }
+        aes_ecb_cipher = cipher;
+    }
 # endif
+    return aes_ecb_cipher;
+}
+
+static EVP_CIPHER *aes_192_ecb_cipher = NULL;
+static const EVP_CIPHER *cryptodev_aes_192_ecb(void)
+{
+    if (aes_192_ecb_cipher == NULL) {
+        EVP_CIPHER *cipher = EVP_CIPHER_meth_new(NID_aes_192_ecb, 16, 24);
+
+        if (cipher == NULL
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_ECB_MODE)
+            || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
+            || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
+            || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(cipher,
+                                                  sizeof(struct
+                                                         dev_crypto_state))
+            || !EVP_CIPHER_meth_set_set_asn1_params(cipher,
+                                                    EVP_CIPHER_set_asn1_iv)
+            || !EVP_CIPHER_meth_set_get_asn1_params(cipher,
+                                                    EVP_CIPHER_get_asn1_iv)) {
+            EVP_CIPHER_meth_free(cipher);
+            cipher = NULL;
+        }
+        aes_192_ecb_cipher = cipher;
+    }
+    return aes_192_ecb_cipher;
+}
+
+static EVP_CIPHER *aes_256_ecb_cipher = NULL;
+static const EVP_CIPHER *cryptodev_aes_256_ecb(void)
+{
+    if (aes_256_ecb_cipher == NULL) {
+        EVP_CIPHER *cipher = EVP_CIPHER_meth_new(NID_aes_256_ecb, 16, 32);
+
+        if (cipher == NULL
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_ECB_MODE)
+            || !EVP_CIPHER_meth_set_init(cipher, cryptodev_init_key)
+            || !EVP_CIPHER_meth_set_do_cipher(cipher, cryptodev_cipher)
+            || !EVP_CIPHER_meth_set_cleanup(cipher, cryptodev_cleanup)
+            || !EVP_CIPHER_meth_set_ctrl(cipher, cryptodev_cipher_ctrl)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(cipher,
+                                                  sizeof(struct
+                                                         dev_crypto_state))
+            || !EVP_CIPHER_meth_set_set_asn1_params(cipher,
+                                                    EVP_CIPHER_set_asn1_iv)
+            || !EVP_CIPHER_meth_set_get_asn1_params(cipher,
+                                                    EVP_CIPHER_get_asn1_iv)) {
+            EVP_CIPHER_meth_free(cipher);
+            cipher = NULL;
+        }
+        aes_256_ecb_cipher = cipher;
+    }
+    return aes_256_ecb_cipher;
+}
+
 /*
  * Registered by the ENGINE when used to find out how to deal with
  * a particular NID in the ENGINE. this says what we'll do at the
@@ -880,6 +988,9 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
         break;
     case NID_des_ede3_cbc:
         *cipher = cryptodev_3des_cbc();
+        break;
+    case NID_des_ede3_ecb:
+        *cipher = cryptodev_3des_ecb();
         break;
     case NID_des_cbc:
         *cipher = cryptodev_des_cbc();
@@ -908,6 +1019,15 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
         break;
     case NID_aes_256_ctr:
         *cipher = cryptodev_aes_256_ctr();
+        break;
+    case NID_aes_128_ecb:
+        *cipher = cryptodev_aes_ecb();
+        break;
+    case NID_aes_192_ecb:
+        *cipher = cryptodev_aes_192_ecb();
+        break;
+    case NID_aes_256_ecb:
+        *cipher = cryptodev_aes_256_ecb();
         break;
 # endif
     default:
@@ -1315,6 +1435,8 @@ static int cryptodev_engine_destroy(ENGINE *e)
     des_cbc_cipher = NULL;
     EVP_CIPHER_meth_free(des3_cbc_cipher);
     des3_cbc_cipher = NULL;
+    EVP_CIPHER_meth_free(des3_ecb_cipher);
+    des3_ecb_cipher = NULL;
     EVP_CIPHER_meth_free(bf_cbc_cipher);
     bf_cbc_cipher = NULL;
     EVP_CIPHER_meth_free(cast_cbc_cipher);
@@ -1332,6 +1454,12 @@ static int cryptodev_engine_destroy(ENGINE *e)
     aes_192_ctr_cipher = NULL;
     EVP_CIPHER_meth_free(aes_256_ctr_cipher);
     aes_256_ctr_cipher = NULL;
+    EVP_CIPHER_meth_free(aes_ecb_cipher);
+    aes_ecb_cipher = NULL;
+    EVP_CIPHER_meth_free(aes_192_ecb_cipher);
+    aes_192_ecb_cipher = NULL;
+    EVP_CIPHER_meth_free(aes_256_ecb_cipher);
+    aes_256_ecb_cipher = NULL;
 # endif
 # ifdef USE_CRYPTODEV_DIGESTS
     EVP_MD_meth_free(sha1_md);
