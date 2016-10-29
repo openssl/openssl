@@ -69,7 +69,7 @@ static int encode_pkcs1(unsigned char **out, int *out_len, int type,
 int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
              unsigned char *sigret, unsigned int *siglen, RSA *rsa)
 {
-    int i, encoded_len = 0, ret = 0;
+    int encrypt_len, encoded_len = 0, ret = 0;
     unsigned char *tmps = NULL;
     const unsigned char *encoded = NULL;
 
@@ -79,9 +79,11 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 
     /* Compute the encoded digest. */
     if (type == NID_md5_sha1) {
-	/* NID_md5_sha1 corresponds to the MD5/SHA1 combination in TLS 1.1 and
-	 * earlier. It has no DigestInfo wrapper but otherwise is
-	 * RSASSA-PKCS1-v1_5. */
+        /*
+         * NID_md5_sha1 corresponds to the MD5/SHA1 combination in TLS 1.1 and
+         * earlier. It has no DigestInfo wrapper but otherwise is
+         * RSASSA-PKCS1-v1_5.
+         */
         if (m_len != SSL_SIG_LENGTH) {
             RSAerr(RSA_F_RSA_SIGN, RSA_R_INVALID_MESSAGE_LENGTH);
             return 0;
@@ -98,12 +100,12 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
         RSAerr(RSA_F_RSA_SIGN, RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         goto err;
     }
-    i = RSA_private_encrypt(encoded_len, encoded, sigret, rsa,
-                            RSA_PKCS1_PADDING);
-    if (i <= 0)
+    encrypt_len = RSA_private_encrypt(encoded_len, encoded, sigret, rsa,
+                                      RSA_PKCS1_PADDING);
+    if (encrypt_len <= 0)
         goto err;
 
-    *siglen = i;
+    *siglen = encrypt_len;
     ret = 1;
 
 err:
@@ -111,13 +113,19 @@ err:
     return ret;
 }
 
-int int_rsa_verify(int dtype, const unsigned char *m,
-                   unsigned int m_len,
+/*
+ * int_rsa_verify verifies an RSA signature in |sigbuf| using |rsa|. It may be
+ * called in two modes. If |rm| is NULL, it verifiers the signature for digest
+ * |m|. Otherwise, it recovers the digest from the signature, writing the digest
+ * to |rm| and the length to |*prm_len|. |type| is the NID of the digest
+ * algorithm to use.
+ */
+int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
                    unsigned char *rm, size_t *prm_len,
                    const unsigned char *sigbuf, size_t siglen, RSA *rsa)
 {
-    int i, ret = 0, encoded_len = 0;
-    unsigned char *s = NULL, *encoded = NULL;
+    int decrypt_len, ret = 0, encoded_len = 0;
+    unsigned char *decrypt_buf = NULL, *encoded = NULL;
 
     if (siglen != (size_t)RSA_size(rsa)) {
         RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_WRONG_SIGNATURE_LENGTH);
@@ -125,70 +133,94 @@ int int_rsa_verify(int dtype, const unsigned char *m,
     }
 
     /* Recover the encoded digest. */
-    s = OPENSSL_malloc(siglen);
-    if (s == NULL) {
+    decrypt_buf = OPENSSL_malloc(siglen);
+    if (decrypt_buf == NULL) {
         RSAerr(RSA_F_INT_RSA_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    i = RSA_public_decrypt((int)siglen, sigbuf, s, rsa, RSA_PKCS1_PADDING);
-    if (i <= 0)
+    decrypt_len = RSA_public_decrypt((int)siglen, sigbuf, decrypt_buf, rsa,
+                                     RSA_PKCS1_PADDING);
+    if (decrypt_len <= 0)
         goto err;
 
-    if (dtype == NID_md5_sha1) {
-	/* NID_md5_sha1 corresponds to the MD5/SHA1 combination in TLS 1.1 and
-	 * earlier. It has no DigestInfo wrapper but otherwise is
-	 * RSASSA-PKCS1-v1_5. */
-        if (i != SSL_SIG_LENGTH) {
+    if (type == NID_md5_sha1) {
+        /*
+         * NID_md5_sha1 corresponds to the MD5/SHA1 combination in TLS 1.1 and
+         * earlier. It has no DigestInfo wrapper but otherwise is
+         * RSASSA-PKCS1-v1_5.
+         */
+        if (decrypt_len != SSL_SIG_LENGTH) {
             RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
             goto err;
         }
 
         if (rm != NULL) {
-            memcpy(rm, s, SSL_SIG_LENGTH);
+            memcpy(rm, decrypt_buf, SSL_SIG_LENGTH);
             *prm_len = SSL_SIG_LENGTH;
-        } else if (memcmp(s, m, SSL_SIG_LENGTH) != 0) {
-            RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
-            goto err;
+        } else {
+            if (m_len != SSL_SIG_LENGTH) {
+                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_INVALID_MESSAGE_LENGTH);
+                goto err;
+            }
+
+            if (memcmp(decrypt_buf, m, SSL_SIG_LENGTH) != 0) {
+                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
+                goto err;
+            }
         }
-    } else if (dtype == NID_mdc2 && i == 18 && s[0] == 0x04 && s[1] == 0x10) {
+    } else if (type == NID_mdc2 && decrypt_len == 2 + 16
+               && decrypt_buf[0] == 0x04 && decrypt_buf[1] == 0x10) {
         /*
          * Oddball MDC2 case: signature can be OCTET STRING. check for correct
          * tag and length octets.
          */
         if (rm != NULL) {
-            memcpy(rm, s + 2, 16);
+            memcpy(rm, decrypt_buf + 2, 16);
             *prm_len = 16;
-        } else if (memcmp(m, s + 2, 16) != 0) {
-            RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
-            goto err;
+        } else {
+            if (m_len != 16) {
+                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_INVALID_MESSAGE_LENGTH);
+                goto err;
+            }
+
+            if (memcmp(m, decrypt_buf + 2, 16) != 0) {
+                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
+                goto err;
+            }
         }
     } else {
         /*
-         * In verifyrecover mode, construct the encoded form using the end of
-         * the structure. If the DigestInfo prefix is invalid, the signature
-         * check will cover it.
+         * If recovering the digest, extract a digest-sized output from the end
+         * of |decrypt_buf| for |encode_pkcs1|, then compare the decryption
+         * output as in a standard verification.
          */
         if (rm != NULL) {
-            const EVP_MD *md = EVP_get_digestbynid(dtype);
+            const EVP_MD *md = EVP_get_digestbynid(type);
+            if (md == NULL) {
+                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_UNKNOWN_ALGORITHM_TYPE);
+                goto err;
+            }
+
             m_len = EVP_MD_size(md);
-            if (md != NULL && m_len > (size_t)i) {
+            if (m_len > (size_t)decrypt_len) {
                 RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_INVALID_DIGEST_LENGTH);
                 goto err;
             }
-            m = s + i - m_len;
+            m = decrypt_buf + decrypt_len - m_len;
         }
 
         /* Construct the encoded digest and ensure it matches. */
-        if (!encode_pkcs1(&encoded, &encoded_len, dtype, m, m_len))
+        if (!encode_pkcs1(&encoded, &encoded_len, type, m, m_len))
             goto err;
 
-        if (encoded_len != i
-            || memcmp(encoded, s, encoded_len) != 0) {
+        if (encoded_len != decrypt_len
+            || memcmp(encoded, decrypt_buf, encoded_len) != 0) {
             RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
             goto err;
         }
 
+        /* Output the recovered digest. */
         if (rm != NULL) {
             memcpy(rm, m, m_len);
             *prm_len = m_len;
@@ -199,17 +231,17 @@ int int_rsa_verify(int dtype, const unsigned char *m,
 
 err:
     OPENSSL_clear_free(encoded, (size_t)encoded_len);
-    OPENSSL_clear_free(s, siglen);
+    OPENSSL_clear_free(decrypt_buf, siglen);
     return ret;
 }
 
-int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
+int RSA_verify(int type, const unsigned char *m, unsigned int m_len,
                const unsigned char *sigbuf, unsigned int siglen, RSA *rsa)
 {
 
     if (rsa->meth->rsa_verify) {
-        return rsa->meth->rsa_verify(dtype, m, m_len, sigbuf, siglen, rsa);
+        return rsa->meth->rsa_verify(type, m, m_len, sigbuf, siglen, rsa);
     }
 
-    return int_rsa_verify(dtype, m, m_len, NULL, NULL, sigbuf, siglen, rsa);
+    return int_rsa_verify(type, m, m_len, NULL, NULL, sigbuf, siglen, rsa);
 }
