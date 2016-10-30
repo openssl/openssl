@@ -318,7 +318,7 @@ $config{sdirs} = [
     ];
 
 # Known TLS and DTLS protocols
-my @tls = qw(ssl3 tls1 tls1_1 tls1_2);
+my @tls = qw(ssl3 tls1 tls1_1 tls1_2 tls1_3);
 my @dtls = qw(dtls1 dtls1_2);
 
 # Explicitly known options that are possible to disable.  They can
@@ -440,6 +440,8 @@ our %disabled = ( # "what"         => "comment"
 		  "ssl3"                => "default",
 		  "ssl3-method"         => "default",
                   "ubsan"		=> "default",
+          #TODO(TLS1.3): Temporarily disabled while this is a WIP
+		  "tls1_3"              => "default",
 		  "unit-test"           => "default",
 		  "weak-ssl-ciphers"    => "default",
 		  "zlib"                => "default",
@@ -476,7 +478,7 @@ my @disable_cascades = (
     sub { $disabled{rsa}
 	  && ($disabled{dsa} || $disabled{dh})
 	  && ($disabled{ecdsa} || $disabled{ecdh}); }
-			=> [ "tls1", "tls1_1", "tls1_2",
+			=> [ "tls1", "tls1_1", "tls1_2", "tls1_3",
 			     "dtls1", "dtls1_2" ],
 
     "tls"		=> [ @tls ],

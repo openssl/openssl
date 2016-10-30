@@ -34,7 +34,8 @@ plan tests => 18;  # = scalar @conf_srcs
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
 my $is_default_tls = (disabled("ssl3") && !disabled("tls1") &&
-                      !disabled("tls1_1") && !disabled("tls1_2"));
+                      !disabled("tls1_1") && !disabled("tls1_2") &&
+                      disabled("tls1_3"));
 
 my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
 

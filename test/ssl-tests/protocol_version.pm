@@ -137,6 +137,7 @@ sub generate_resumption_tests {
 
     my @protocols = $dtls ? @dtls_protocols : @tls_protocols;
     my $min_enabled  = $dtls ? $min_dtls_enabled : $min_tls_enabled;
+    my $max_enabled = $dtls ? $max_dtls_enabled : $max_tls_enabled;
 
     if (no_tests($dtls)) {
         return;
@@ -146,10 +147,10 @@ sub generate_resumption_tests {
     my @client_tests = ();
 
     # Obtain the first session against a fixed-version server/client.
-    foreach my $original_protocol($min_enabled..$#protocols) {
+    foreach my $original_protocol($min_enabled..$max_enabled) {
         # Upgrade or downgrade the server/client max version support and test
         # that it upgrades, downgrades or resumes the session as well.
-        foreach my $resume_protocol($min_enabled..$#protocols) {
+        foreach my $resume_protocol($min_enabled..$max_enabled) {
             my $resumption_expected;
             # We should only resume on exact version match.
             if ($original_protocol eq $resume_protocol) {
