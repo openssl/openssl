@@ -152,6 +152,16 @@ static void ssl3_take_mac(SSL *s)
 }
 #endif
 
+/*
+ * Comparison function used in a call to qsort (see tls_collect_extensions()
+ * below.)
+ * The two arguments |p1| and |p2| are expected to be pointers to RAW_EXTENSIONs
+ *
+ * Returns:
+ *  1 if the type for p1 is greater than p2
+ *  0 if the type for p1 and p2 are the same
+ * -1 if the type for p1 is less than p2
+ */
 static int compare_extensions(const void *p1, const void *p2)
 {
     const RAW_EXTENSION *e1 = (const RAW_EXTENSION *)p1;
@@ -208,7 +218,7 @@ int tls_collect_extensions(PACKET *packet, RAW_EXTENSION **res,
             goto err;
         }
 
-        /* Second pass: gather the extension types. */
+        /* Second pass: collect the extensions. */
         for (i = 0; i < num_extensions; i++) {
             if (!PACKET_get_net_2(packet, &raw_extensions[i].type) ||
                 !PACKET_get_length_prefixed_2(packet,
