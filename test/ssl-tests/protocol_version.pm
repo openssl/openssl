@@ -236,9 +236,10 @@ sub expected_result {
         return ("ServerFail", undef);
     } elsif ($c_min > $s_max) {
         my @prots = @$protocols;
-        if ($prots[$c_min] eq "TLSv1.3") {
-            # Client won't have sent any ciphersuite the server recognises
-                        return ("ServerFail", undef);
+        if ($prots[$c_max] eq "TLSv1.3") {
+            # Client will have sent supported_versions, so server will know
+            # that there are no overlapping versions.
+            return ("ServerFail", undef);
         } else {
             # Server will try with a version that is lower than the lowest
             # supported client version.
