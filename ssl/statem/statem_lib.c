@@ -156,12 +156,13 @@ static int compare_extensions(const void *p1, const void *p2)
 {
     const RAW_EXTENSION *e1 = (const RAW_EXTENSION *)p1;
     const RAW_EXTENSION *e2 = (const RAW_EXTENSION *)p2;
+
     if (e1->type < e2->type)
         return -1;
     else if (e1->type > e2->type)
         return 1;
-    else
-        return 0;
+
+    return 0;
 }
 
 /*
@@ -174,7 +175,7 @@ static int compare_extensions(const void *p1, const void *p2)
  * types, and 0 if the extensions contain duplicates, could not be successfully
  * parsed, or an internal error occurred.
  */
-int tls_parse_raw_extensions(PACKET *packet, RAW_EXTENSION **res,
+int tls_collect_extensions(PACKET *packet, RAW_EXTENSION **res,
                              size_t *numfound, int *ad)
 {
     PACKET extensions = *packet;
@@ -185,20 +186,22 @@ int tls_parse_raw_extensions(PACKET *packet, RAW_EXTENSION **res,
     while (PACKET_remaining(&extensions) > 0) {
         unsigned int type;
         PACKET extension;
+
         if (!PACKET_get_net_2(&extensions, &type) ||
             !PACKET_get_length_prefixed_2(&extensions, &extension)) {
             *ad = SSL_AD_DECODE_ERROR;
-            goto done;
+            goto err;
         }
         num_extensions++;
     }
 
     if (num_extensions > 0) {
-        raw_extensions = OPENSSL_malloc(sizeof(RAW_EXTENSION) * num_extensions);
+        raw_extensions = OPENSSL_malloc(sizeof(*raw_extensions)
+                                        * num_extensions);
         if (raw_extensions == NULL) {
             *ad = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PARSE_RAW_EXTENSIONS, ERR_R_MALLOC_FAILURE);
-            goto done;
+            goto err;
         }
 
         /* Second pass: gather the extension types. */
@@ -209,22 +212,22 @@ int tls_parse_raw_extensions(PACKET *packet, RAW_EXTENSION **res,
                 /* This should not happen. */
                 *ad = SSL_AD_INTERNAL_ERROR;
                 SSLerr(SSL_F_TLS_PARSE_RAW_EXTENSIONS, ERR_R_INTERNAL_ERROR);
-                goto done;
+                goto err;
             }
         }
 
         if (PACKET_remaining(packet) != 0) {
             *ad = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PARSE_RAW_EXTENSIONS, SSL_R_LENGTH_MISMATCH);
-            goto done;
+            goto err;
         }
         /* Sort the extensions and make sure there are no duplicates. */
-        qsort(raw_extensions, num_extensions, sizeof(RAW_EXTENSION),
+        qsort(raw_extensions, num_extensions, sizeof(*raw_extensions),
               compare_extensions);
         for (i = 1; i < num_extensions; i++) {
             if (raw_extensions[i - 1].type == raw_extensions[i].type) {
                 *ad = SSL_AD_DECODE_ERROR;
-                goto done;
+                goto err;
             }
         }
     }
@@ -233,7 +236,7 @@ int tls_parse_raw_extensions(PACKET *packet, RAW_EXTENSION **res,
     *numfound = num_extensions;
     return 1;
 
- done:
+ err:
     OPENSSL_free(raw_extensions);
     return 0;
 }
