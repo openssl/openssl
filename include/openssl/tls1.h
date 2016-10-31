@@ -174,6 +174,7 @@ extern "C" {
 # define TLSEXT_TYPE_session_ticket              35
 
 /* As defined for TLS1.3 */
+# define TLSEXT_TYPE_key_share                   40
 # define TLSEXT_TYPE_supported_versions          43
 
 /* Temporary extension type */
