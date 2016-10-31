@@ -1371,8 +1371,6 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         return 0;
     }
 
-
-    /* TODO(TLS1.3): Should we add this extension for versions < TLS1.3? */
     if (!SSL_IS_DTLS(s) && s->version >= TLS1_3_VERSION) {
         int min_version, max_version, reason, currv;
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
