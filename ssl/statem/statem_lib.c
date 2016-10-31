@@ -1024,13 +1024,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
                                              hello->num_extensions,
                                              TLSEXT_TYPE_supported_versions);
 
-    /*
-     * TODO(TLS1.3): We only look at this if our max protocol version is TLS1.3
-     * or above. Should we allow it for lower versions too?
-     */
-    if (suppversions != NULL && !SSL_IS_DTLS(s)
-            && (s->max_proto_version == 0
-                || TLS1_3_VERSION <= s->max_proto_version)) {
+    if (suppversions != NULL && !SSL_IS_DTLS(s)) {
         unsigned int candidate_vers = 0;
         unsigned int best_vers = 0;
         const SSL_METHOD *best_method = NULL;
