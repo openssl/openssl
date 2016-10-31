@@ -204,7 +204,7 @@ int tls_collect_extensions(PACKET *packet, RAW_EXTENSION **res,
                                         * num_extensions);
         if (raw_extensions == NULL) {
             *ad = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PARSE_RAW_EXTENSIONS, ERR_R_MALLOC_FAILURE);
+            SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -215,14 +215,14 @@ int tls_collect_extensions(PACKET *packet, RAW_EXTENSION **res,
                                               &raw_extensions[i].data)) {
                 /* This should not happen. */
                 *ad = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_PARSE_RAW_EXTENSIONS, ERR_R_INTERNAL_ERROR);
+                SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
         }
 
         if (PACKET_remaining(packet) != 0) {
             *ad = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_TLS_PARSE_RAW_EXTENSIONS, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_LENGTH_MISMATCH);
             goto err;
         }
         /* Sort the extensions and make sure there are no duplicates. */

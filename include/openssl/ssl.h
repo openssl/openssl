@@ -2233,6 +2233,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS1_SETUP_KEY_BLOCK                       211
 # define SSL_F_TLS1_SET_SERVER_SIGALGS                    335
 # define SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK          354
+# define SSL_F_TLS_COLLECT_EXTENSIONS                     432
 # define SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST          372
 # define SSL_F_TLS_CONSTRUCT_CERT_STATUS                  429
 # define SSL_F_TLS_CONSTRUCT_CHANGE_CIPHER_SPEC           427
@@ -2256,7 +2257,6 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE          377
 # define SSL_F_TLS_GET_MESSAGE_BODY                       351
 # define SSL_F_TLS_GET_MESSAGE_HEADER                     387
-# define SSL_F_TLS_PARSE_RAW_EXTENSIONS                   432
 # define SSL_F_TLS_POST_PROCESS_CLIENT_HELLO              378
 # define SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE       384
 # define SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE             360
