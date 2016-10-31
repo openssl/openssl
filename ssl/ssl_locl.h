@@ -1624,7 +1624,7 @@ typedef struct ssl3_comp_st {
 } SSL3_COMP;
 # endif
 
-typedef struct {
+typedef struct raw_extension_st {
     unsigned int type;
     PACKET data;
 } RAW_EXTENSION;
