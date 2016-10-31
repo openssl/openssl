@@ -781,11 +781,12 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
      * the negotiated version.
      *
      * For TLS 1.3 we always set the ClientHello version to 1.2 and rely on the
-     * supported_versions extension for the reall supported versions.
+     * supported_versions extension for the real supported versions.
      */
     if (!WPACKET_put_bytes_u16(pkt,
-                (!SSL_IS_DTLS(s) && s->client_version >= TLS1_3_VERSION)
-                ? TLS1_2_VERSION : s->client_version)
+                               (!SSL_IS_DTLS(s)
+                                   && s->client_version >= TLS1_3_VERSION)
+                               ? TLS1_2_VERSION : s->client_version)
             || !WPACKET_memcpy(pkt, s->s3->client_random, SSL3_RANDOM_SIZE)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         return 0;
