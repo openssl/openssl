@@ -3072,24 +3072,35 @@ const SSL_METHOD *ssl_bad_method(int ver)
 
 const char *ssl_protocol_to_string(int version)
 {
-    if (version == TLS1_3_VERSION)
+    switch(version)
+    {
+    case TLS1_3_VERSION:
         return "TLSv1.3";
-    else if (version == TLS1_2_VERSION)
+
+    case TLS1_2_VERSION:
         return "TLSv1.2";
-    else if (version == TLS1_1_VERSION)
+
+    case TLS1_1_VERSION:
         return "TLSv1.1";
-    else if (version == TLS1_VERSION)
+
+    case TLS1_VERSION:
         return "TLSv1";
-    else if (version == SSL3_VERSION)
+
+    case SSL3_VERSION:
         return "SSLv3";
-    else if (version == DTLS1_BAD_VER)
+
+    case DTLS1_BAD_VER:
         return "DTLSv0.9";
-    else if (version == DTLS1_VERSION)
+
+    case DTLS1_VERSION:
         return "DTLSv1";
-    else if (version == DTLS1_2_VERSION)
+
+    case DTLS1_2_VERSION:
         return "DTLSv1.2";
-    else
-        return ("unknown");
+
+    default:
+        return "unknown";
+    }
 }
 
 const char *SSL_get_version(const SSL *s)
