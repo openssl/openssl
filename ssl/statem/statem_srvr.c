@@ -907,6 +907,8 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
      * structure.
      */
 
+    memset(&clienthello, 0, sizeof(clienthello));
+
     clienthello.isv2 = RECORD_LAYER_is_sslv2_record(&s->rlayer);
 
     PACKET_null_init(&cookie);
@@ -1423,6 +1425,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     }
 
     sk_SSL_CIPHER_free(ciphers);
+    OPENSSL_free(clienthello.pre_proc_exts);
     return MSG_PROCESS_CONTINUE_PROCESSING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -1430,6 +1433,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     ossl_statem_set_error(s);
 
     sk_SSL_CIPHER_free(ciphers);
+    OPENSSL_free(clienthello.pre_proc_exts);
     return MSG_PROCESS_ERROR;
 
 }
