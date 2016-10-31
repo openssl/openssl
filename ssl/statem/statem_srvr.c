@@ -903,18 +903,15 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     CLIENTHELLO_MSG clienthello;
 
     /*
-     * First step is to parse the raw ClientHello data into the CLIENTHELLO_MSG
-     * structure.
+     * First, parse the raw ClientHello data into the CLIENTHELLO_MSG structure.
      */
-
     memset(&clienthello, 0, sizeof(clienthello));
-
     clienthello.isv2 = RECORD_LAYER_is_sslv2_record(&s->rlayer);
-
     PACKET_null_init(&cookie);
 
     if (clienthello.isv2) {
         unsigned int mt;
+
         /*-
          * An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
          * header is sent directly on the wire, not wrapped as a TLS
@@ -988,11 +985,11 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         }
 
         /* Load the client random and compression list. */
-        challenge_len = challenge_len > SSL3_RANDOM_SIZE ? SSL3_RANDOM_SIZE :
-            challenge_len;
-        memset(clienthello.random, 0, SSL3_RANDOM_SIZE);
+        challenge_len = challenge_len > sizeof(clienthello.random)
+                        ? sizeof(clienthello.random) : challenge_len;
+        memset(clienthello.random, 0, sizeof(clienthello.random));
         if (!PACKET_copy_bytes(&challenge,
-                               clienthello.random + SSL3_RANDOM_SIZE -
+                               clienthello.random + sizeof(clienthello.random) -
                                challenge_len, challenge_len)
             /* Advertise only null compression. */
             || !PACKET_buf_init(&compression, &null_compression, 1)) {
@@ -1069,9 +1066,9 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /* We preserve the raw extensions PACKET for later use */
+    /* Preserve the raw extensions PACKET for later use */
     extensions = clienthello.extensions;
-    if (!tls_parse_raw_extensions(&extensions, &clienthello.pre_proc_exts,
+    if (!tls_collect_extensions(&extensions, &clienthello.pre_proc_exts,
                                   &clienthello.num_extensions, &al)) {
         /* SSLerr already been called */
         goto f_err;
@@ -1085,18 +1082,18 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     /* Choose the version */
 
     if (clienthello.isv2) {
-        if (clienthello.version == 0x0002) {
-            /* This is real SSLv2. We don't support it. */
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
-            goto err;
-        } else if ((clienthello.version & 0xff00) == (SSL3_VERSION_MAJOR << 8)) {
-            /* SSLv3/TLS */
-            s->client_version = clienthello.version;
-        } else {
-            /* No idea what protocol this is */
+        if (clienthello.version == SSL2_VERSION
+                || (clienthello.version & 0xff00)
+                   != (SSL3_VERSION_MAJOR << 8)) {
+            /*
+             * This is real SSLv2 or something complete unknown. We don't
+             * support it.
+             */
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
             goto err;
         }
+        /* SSLv3/TLS */
+        s->client_version = clienthello.version;
     }
     /*
      * Do SSL/TLS version negotiation if applicable. For DTLS we just check
@@ -1114,10 +1111,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     if (protverr) {
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, protverr);
         if ((!s->enc_write_ctx && !s->write_hash)) {
-            /*
-             * similar to ssl3_get_record, send alert using remote version
-             * number
-             */
+            /* like ssl3_get_record, send alert using remote version number */
             s->version = s->client_version = clienthello.version;
         }
         al = SSL_AD_PROTOCOL_VERSION;
@@ -1160,8 +1154,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     s->hit = 0;
 
     /* We need to do this before getting the session */
-    if (!tls_check_client_ems_support(s, &clienthello))
-    {
+    if (!tls_check_client_ems_support(s, &clienthello)) {
         /* Only fails if the extension is malformed */
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
@@ -1212,7 +1205,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         }
     }
 
-    if (ssl_bytes_to_cipher_list(s, &clienthello.ciphersuites, &(ciphers),
+    if (ssl_bytes_to_cipher_list(s, &clienthello.ciphersuites, &ciphers,
                                  clienthello.isv2, &al) == NULL) {
         goto f_err;
     }

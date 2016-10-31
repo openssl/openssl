@@ -1809,15 +1809,17 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
      * resumption.
      */
     for (loop = 0; loop < hello->num_extensions; loop++) {
+        RAW_EXTENSION *currext = &hello->pre_proc_exts[loop];
+
         if (s->tlsext_debug_cb)
-            s->tlsext_debug_cb(s, 0, hello->pre_proc_exts[loop].type,
-                               PACKET_data(&hello->pre_proc_exts[loop].data),
-                               PACKET_remaining(&hello->pre_proc_exts[loop].data),
+            s->tlsext_debug_cb(s, 0, currext->type,
+                               PACKET_data(&currext->data),
+                               PACKET_remaining(&currext->data),
                                s->tlsext_debug_arg);
 
-        if (hello->pre_proc_exts[loop].type == TLSEXT_TYPE_renegotiate) {
+        if (currext->type == TLSEXT_TYPE_renegotiate) {
             if (!ssl_parse_clienthello_renegotiate_ext(s,
-                    &hello->pre_proc_exts[loop].data, al))
+                    &currext->data, al))
                 return 0;
             renegotiate_seen = 1;
         } else if (s->version == SSL3_VERSION) {
@@ -1847,12 +1849,11 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
  *
  */
 
-        else if (hello->pre_proc_exts[loop].type == TLSEXT_TYPE_server_name) {
+        else if (currext->type == TLSEXT_TYPE_server_name) {
             unsigned int servname_type;
             PACKET sni, hostname;
 
-            if (!PACKET_as_length_prefixed_2(&hello->pre_proc_exts[loop].data,
-                                             &sni)
+            if (!PACKET_as_length_prefixed_2(&currext->data, &sni)
                 /* ServerNameList must be at least 1 byte long. */
                 || PACKET_remaining(&sni) == 0) {
                 return 0;
@@ -1904,11 +1905,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
             }
         }
 #ifndef OPENSSL_NO_SRP
-        else if (hello->pre_proc_exts[loop].type == TLSEXT_TYPE_srp) {
+        else if (currext->type == TLSEXT_TYPE_srp) {
             PACKET srp_I;
 
-            if (!PACKET_as_length_prefixed_1(&hello->pre_proc_exts[loop].data,
-                                             &srp_I))
+            if (!PACKET_as_length_prefixed_1(&currext->data, &srp_I))
                 return 0;
 
             if (PACKET_contains_zero_byte(&srp_I))
@@ -1926,11 +1926,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
 #endif
 
 #ifndef OPENSSL_NO_EC
-        else if (hello->pre_proc_exts[loop].type
-                 == TLSEXT_TYPE_ec_point_formats) {
+        else if (currext->type == TLSEXT_TYPE_ec_point_formats) {
             PACKET ec_point_format_list;
 
-            if (!PACKET_as_length_prefixed_1(&hello->pre_proc_exts[loop].data,
+            if (!PACKET_as_length_prefixed_1(&currext->data,
                                              &ec_point_format_list)
                 || PACKET_remaining(&ec_point_format_list) == 0) {
                 return 0;
@@ -1945,12 +1944,11 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                     return 0;
                 }
             }
-        } else if (hello->pre_proc_exts[loop].type
-                   == TLSEXT_TYPE_elliptic_curves) {
+        } else if (currext->type == TLSEXT_TYPE_elliptic_curves) {
             PACKET elliptic_curve_list;
 
             /* Each NamedCurve is 2 bytes and we must have at least 1. */
-            if (!PACKET_as_length_prefixed_2(&hello->pre_proc_exts[loop].data,
+            if (!PACKET_as_length_prefixed_2(&currext->data,
                                              &elliptic_curve_list)
                 || PACKET_remaining(&elliptic_curve_list) == 0
                 || (PACKET_remaining(&elliptic_curve_list) % 2) != 0) {
@@ -1968,21 +1966,19 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
             }
         }
 #endif                          /* OPENSSL_NO_EC */
-        else if (hello->pre_proc_exts[loop].type
-                 == TLSEXT_TYPE_session_ticket) {
+        else if (currext->type == TLSEXT_TYPE_session_ticket) {
             if (s->tls_session_ticket_ext_cb &&
                 !s->tls_session_ticket_ext_cb(s,
-                    PACKET_data(&hello->pre_proc_exts[loop].data),
-                    PACKET_remaining(&hello->pre_proc_exts[loop].data),
+                    PACKET_data(&currext->data),
+                    PACKET_remaining(&currext->data),
                     s->tls_session_ticket_ext_cb_arg)) {
                 *al = TLS1_AD_INTERNAL_ERROR;
                 return 0;
             }
-        } else if (hello->pre_proc_exts[loop].type
-                   == TLSEXT_TYPE_signature_algorithms) {
+        } else if (currext->type == TLSEXT_TYPE_signature_algorithms) {
             PACKET supported_sig_algs;
 
-            if (!PACKET_as_length_prefixed_2(&hello->pre_proc_exts[loop].data,
+            if (!PACKET_as_length_prefixed_2(&currext->data,
                                              &supported_sig_algs)
                 || (PACKET_remaining(&supported_sig_algs) % 2) != 0
                 || PACKET_remaining(&supported_sig_algs) == 0) {
@@ -1995,9 +1991,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                     return 0;
                 }
             }
-        } else if (hello->pre_proc_exts[loop].type
-                   == TLSEXT_TYPE_status_request) {
-            if (!PACKET_get_1(&hello->pre_proc_exts[loop].data,
+        } else if (currext->type == TLSEXT_TYPE_status_request) {
+            if (!PACKET_get_1(&currext->data,
                               (unsigned int *)&s->tlsext_status_type)) {
                 return 0;
             }
@@ -2006,7 +2001,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                 const unsigned char *ext_data;
                 PACKET responder_id_list, exts;
                 if (!PACKET_get_length_prefixed_2
-                    (&hello->pre_proc_exts[loop].data, &responder_id_list))
+                    (&currext->data, &responder_id_list))
                     return 0;
 
                 /*
@@ -2057,7 +2052,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
 
                 /* Read in request_extensions */
                 if (!PACKET_as_length_prefixed_2(
-                        &hello->pre_proc_exts[loop].data, &exts))
+                        &currext->data, &exts))
                     return 0;
 
                 if (PACKET_remaining(&exts) > 0) {
@@ -2082,12 +2077,11 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
             }
         }
 #ifndef OPENSSL_NO_HEARTBEATS
-        else if (SSL_IS_DTLS(s)
-                 && hello->pre_proc_exts[loop].type == TLSEXT_TYPE_heartbeat) {
+        else if (SSL_IS_DTLS(s) && currext->type == TLSEXT_TYPE_heartbeat) {
             unsigned int hbtype;
 
-            if (!PACKET_get_1(&hello->pre_proc_exts[loop].data, &hbtype)
-                || PACKET_remaining(&hello->pre_proc_exts[loop].data)) {
+            if (!PACKET_get_1(&currext->data, &hbtype)
+                || PACKET_remaining(&currext->data)) {
                 *al = SSL_AD_DECODE_ERROR;
                 return 0;
             }
@@ -2106,7 +2100,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
         }
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
-        else if (hello->pre_proc_exts[loop].type == TLSEXT_TYPE_next_proto_neg
+        else if (currext->type == TLSEXT_TYPE_next_proto_neg
                  && s->s3->tmp.finish_md_len == 0) {
             /*-
              * We shouldn't accept this extension on a
@@ -2129,24 +2123,24 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
         }
 #endif
 
-        else if (hello->pre_proc_exts[loop].type
+        else if (currext->type
                      == TLSEXT_TYPE_application_layer_protocol_negotiation
                  && s->s3->tmp.finish_md_len == 0) {
             if (!tls1_alpn_handle_client_hello(s,
-                    &hello->pre_proc_exts[loop].data, al))
+                    &currext->data, al))
                 return 0;
         }
 
         /* session ticket processed earlier */
 #ifndef OPENSSL_NO_SRTP
         else if (SSL_IS_DTLS(s) && SSL_get_srtp_profiles(s)
-                 && hello->pre_proc_exts[loop].type == TLSEXT_TYPE_use_srtp) {
+                 && currext->type == TLSEXT_TYPE_use_srtp) {
             if (ssl_parse_clienthello_use_srtp_ext(s,
-                    &hello->pre_proc_exts[loop].data, al))
+                    &currext->data, al))
                 return 0;
         }
 #endif
-        else if (hello->pre_proc_exts[loop].type == TLSEXT_TYPE_encrypt_then_mac
+        else if (currext->type == TLSEXT_TYPE_encrypt_then_mac
                  && !(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC))
             s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
         /*
@@ -2162,9 +2156,9 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
          * ServerHello may be later returned.
          */
         else if (!s->hit) {
-            if (custom_ext_parse(s, 1, hello->pre_proc_exts[loop].type,
-                    PACKET_data(&hello->pre_proc_exts[loop].data),
-                    PACKET_remaining(&hello->pre_proc_exts[loop].data), al) <= 0)
+            if (custom_ext_parse(s, 1, currext->type,
+                    PACKET_data(&currext->data),
+                    PACKET_remaining(&currext->data), al) <= 0)
                 return 0;
         }
     }
