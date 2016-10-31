@@ -2888,8 +2888,11 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
 }
 
 /*
- * Sets the extended master secret flag is set if the extension is present
- * in the ClientHello
+ * Sets the extended master secret flag if the extension is present in the
+ * ClientHello
+ * Returns:
+ *  1 on success
+ *  0 on error
  */
 int tls_check_client_ems_support(SSL *s, CLIENTHELLO_MSG *hello)
 {

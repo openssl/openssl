@@ -175,6 +175,10 @@ static int compare_extensions(const void *p1, const void *p2)
  * types, and 0 if the extensions contain duplicates, could not be successfully
  * parsed, or an internal error occurred.
  */
+/*
+ * TODO(TLS1.3): Refactor ServerHello extension parsing to use this and then
+ * remove tls1_check_duplicate_extensions()
+ */
 int tls_collect_extensions(PACKET *packet, RAW_EXTENSION **res,
                              size_t *numfound, int *ad)
 {

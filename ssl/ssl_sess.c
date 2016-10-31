@@ -432,8 +432,7 @@ int ssl_get_new_session(SSL *s, int session)
  * ssl_get_prev attempts to find an SSL_SESSION to be used to resume this
  * connection. It is only called by servers.
  *
- *   ext: ClientHello extensions (including length prefix)
- *   session_id: ClientHello session ID.
+ *   hello: The parsed ClientHello data
  *
  * Returns:
  *   -1: error
