@@ -1026,9 +1026,13 @@ static int tls1_check_duplicate_extensions(const PACKET *packet)
 int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
 {
 #ifndef OPENSSL_NO_EC
-    /* See if we support any ECC ciphersuites */
+    const unsigned char *pcurves = NULL;
+    size_t num_curves = 0;
     int using_ecc = 0;
-    if (s->version >= TLS1_VERSION || SSL_IS_DTLS(s)) {
+
+    /* See if we support any ECC ciphersuites */
+    if ((s->version >= TLS1_VERSION && s->version <= TLS1_2_VERSION)
+            || SSL_IS_DTLS(s)) {
         int i;
         unsigned long alg_k, alg_a;
         STACK_OF(SSL_CIPHER) *cipher_stack = SSL_get_ciphers(s);
@@ -1044,6 +1048,18 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
                 break;
             }
         }
+    } else if (s->version >= TLS1_3_VERSION) {
+        /*
+         * TODO(TLS1.3): We always use ECC for TLSv1.3 at the moment. This will
+         * change if we implement DH key shares
+         */
+        using_ecc = 1;
+    }
+#else
+    if (s->version >= TLS1_3_VERSION) {
+        /* Shouldn't happen! */
+        SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 #endif
 
@@ -1102,8 +1118,8 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         /*
          * Add TLS extension ECPointFormats to the ClientHello message
          */
-        const unsigned char *pcurves, *pformats;
-        size_t num_curves, num_formats;
+        const unsigned char *pformats, *pcurvestmp;
+        size_t num_formats;
         size_t i;
 
         tls1_get_formatlist(s, &pformats, &num_formats);
@@ -1126,6 +1142,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
+        pcurvestmp = pcurves;
 
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_groups)
                    /* Sub-packet for supported_groups extension */
@@ -1135,10 +1152,10 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             return 0;
         }
         /* Copy curve ID if supported */
-        for (i = 0; i < num_curves; i++, pcurves += 2) {
+        for (i = 0; i < num_curves; i++, pcurvestmp += 2) {
             if (tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
-                if (!WPACKET_put_bytes_u8(pkt, pcurves[0])
-                    || !WPACKET_put_bytes_u8(pkt, pcurves[1])) {
+                if (!WPACKET_put_bytes_u8(pkt, pcurvestmp[0])
+                    || !WPACKET_put_bytes_u8(pkt, pcurvestmp[1])) {
                         SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
                                ERR_R_INTERNAL_ERROR);
                         return 0;
@@ -1349,8 +1366,13 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         return 0;
     }
 
+    /* TLS1.3 specific extensions */
     if (SSL_IS_TLS13(s)) {
         int min_version, max_version, reason, currv;
+        size_t i, sharessent = 0;
+
+        /* TODO(TLS1.3): Should we add this extension for versions < TLS1.3? */
+        /* supported_versions extension */
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || !WPACKET_start_sub_packet_u8(pkt)) {
@@ -1378,6 +1400,79 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             } else if (!WPACKET_put_bytes_u16(pkt, currv)) {
                 SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
                 return 0;
+            }
+        }
+        if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+
+        /* key_share extension */
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
+                   /* Extension data sub-packet */
+                || !WPACKET_start_sub_packet_u16(pkt)
+                   /* KeyShare list sub-packet */
+                || !WPACKET_start_sub_packet_u16(pkt)) {
+            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        /*
+         * TODO(TLS1.3): Make the number of key_shares sent configurable. For
+         * now, just send one
+         */
+        for (i = 0; i < num_curves && sharessent < 1; i++, pcurves += 2) {
+            if (tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
+                unsigned char *encodedPoint = NULL;
+                unsigned int curve_id = 0;
+                EVP_PKEY *key_share_key = NULL;
+                size_t encodedlen;
+
+                if (s->s3->tmp.pkey != NULL) {
+                    /* Shouldn't happen! */
+                    SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
+                           ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+
+                /* Generate a key for this key_share */
+                curve_id = (pcurves[0] << 8) | pcurves[1];
+                key_share_key = ssl_generate_pkey_curve(curve_id);
+                if (key_share_key == NULL) {
+                    SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_EVP_LIB);
+                    return 0;
+                }
+
+                /* Encode the public key. */
+                encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
+                                                            &encodedPoint);
+                if (encodedlen == 0) {
+                    SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_EC_LIB);
+                    EVP_PKEY_free(key_share_key);
+                    return 0;
+                }
+
+                /* Create KeyShareEntry */
+                if (!WPACKET_put_bytes_u16(pkt, curve_id)
+                        || !WPACKET_sub_memcpy_u16(pkt, encodedPoint,
+                                                   encodedlen)) {
+                    SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
+                           ERR_R_INTERNAL_ERROR);
+                    EVP_PKEY_free(key_share_key);
+                    OPENSSL_free(encodedPoint);
+                    return 0;
+                }
+
+                /*
+                 * TODO(TLS1.3): When changing to send more than one key_share
+                 * we're going to need to be able to save more than one EVP_PKEY
+                 * For now we reuse the existing tmp.pkey
+                 */
+                s->s3->group_id = curve_id;
+                s->s3->tmp.pkey = key_share_key;
+                sharessent++;
+                OPENSSL_free(encodedPoint);
             }
         }
         if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
