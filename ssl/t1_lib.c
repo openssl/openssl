@@ -1753,14 +1753,15 @@ static void ssl_check_for_safari(SSL *s, CLIENTHELLO_MSG *hello)
 #endif                          /* !OPENSSL_NO_EC */
 
 /*
- * Parse ClientHello extensions and stash extension info in various parts of
- * the SSL object. Verify that there are no duplicate extensions.
+ * Loop through all remaining ClientHello extensions that we collected earlier
+ * and haven't already processed. For each one parse it and update the SSL
+ * object as required.
  *
  * Behaviour upon resumption is extension-specific. If the extension has no
  * effect during resumption, it is parsed (to verify its format) but otherwise
  * ignored.
  *
- * Consumes the entire packet in |pkt|. Returns 1 on success and 0 on failure.
+ * Returns 1 on success and 0 on failure.
  * Upon failure, sets |al| to the appropriate alert.
  */
 static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
@@ -2781,6 +2782,16 @@ int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt)
     return 1;
 }
 
+/*
+ * Given a list of extensions that we collected earlier, find one of a given
+ * type and return it.
+ *
+ * |exts| is the set of extensions previously collected.
+ * |numexts| is the number of extensions that we have.
+ * |type| the type of the extension that we are looking for.
+ *
+ * Returns a pointer to the found RAW_EXTENSION data, or NULL if not found.
+ */
 static RAW_EXTENSION *get_extension_by_type(RAW_EXTENSION *exts, size_t numexts,
                                             unsigned int type)
 {
