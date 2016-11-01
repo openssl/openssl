@@ -13,19 +13,19 @@ use OpenSSL::Test::Utils;
 setup("test_internal");
 
 my %known_internal_tests =
-  ( asn1_internal_test => 1,
-    modes_internal_test => 1,
-    mdc2_internal_test => !disabled("mdc2"),
+  ( mdc2_internal_test => !disabled("mdc2"),
     poly1305_internal_test => !disabled("poly1305"),
+    modes_internal_test => 1,
+    asn1_internal_test => 1,
     x509_internal_test => 1 );
 
-plan tests => scalar keys %known_selftests;
+plan tests => scalar keys %known_internal_tests;
 
-foreach (keys %known_selftests) {
+foreach (keys %known_internal_tests) {
  SKIP:
     {
 	skip "Skipping $_, it's disabled in this configuration", 1
-	    unless $known_selftests{$_};
+	    unless $known_internal_tests{$_};
 	ok(run(test([$_])), "Running $_");
     }
 }
