@@ -2427,6 +2427,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_NO_SHARED_CIPHER                           193
 # define SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS             376
 # define SSL_R_NO_SRTP_PROFILES                           359
+# define SSL_R_NO_SUITABLE_KEY_SHARE                      101
 # define SSL_R_NO_VALID_SCTS                              216
 # define SSL_R_NO_VERIFY_COOKIE_CALLBACK                  403
 # define SSL_R_NULL_SSL_CTX                               195
