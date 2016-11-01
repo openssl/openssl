@@ -265,11 +265,13 @@ static const EVP_CIPHER *ossltest_aes_128_cbc(void)
     return _hidden_aes_128_cbc;
 }
 static EVP_CIPHER *_hidden_aes_128_gcm = NULL;
+
 #define AES_GCM_FLAGS   (EVP_CIPH_FLAG_DEFAULT_ASN1 \
                 | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
                 | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT \
                 | EVP_CIPH_CUSTOM_COPY |EVP_CIPH_FLAG_AEAD_CIPHER \
                 | EVP_CIPH_GCM_MODE)
+
 static const EVP_CIPHER *ossltest_aes_128_gcm(void)
 {
     if (_hidden_aes_128_gcm == NULL
@@ -615,11 +617,10 @@ int ossltest_aes128_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                const unsigned char *in, size_t inl)
 {
-    unsigned char *tmpbuf;
     const size_t datalen = inl - EVP_GCM_TLS_EXPLICIT_IV_LEN
                            - EVP_GCM_TLS_TAG_LEN;
+    unsigned char *tmpbuf = OPENSSL_malloc(datalen);
 
-    tmpbuf = OPENSSL_malloc(datalen);
     if (tmpbuf == NULL)
         return -1;
 
@@ -643,10 +644,6 @@ int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static int ossltest_aes128_gcm_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
                                     void *ptr)
 {
-    int ret;
-
     /* Pass the ctrl down */
-    ret = EVP_CIPHER_meth_get_ctrl(EVP_aes_128_gcm())(ctx, type, arg, ptr);
-
-    return ret;
+    return EVP_CIPHER_meth_get_ctrl(EVP_aes_128_gcm())(ctx, type, arg, ptr);
 }
