@@ -2637,12 +2637,64 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
             s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
             if (!s->hit)
                 s->session->flags |= SSL_SESS_FLAG_EXTMS;
-        }
+        } else if (type == TLSEXT_TYPE_key_share
+                && s->version == TLS1_3_VERSION) {
+            unsigned int group_id;
+            PACKET encoded_pt;
+            EVP_PKEY *ckey = s->s3->tmp.pkey, *skey = NULL;
+
+            /* Sanity check */
+            if (ckey == NULL) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+
+            if (!PACKET_get_net_2(&spkt, &group_id)) {
+                *al = SSL_AD_HANDSHAKE_FAILURE;
+                SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT,
+                       SSL_R_LENGTH_MISMATCH);
+                return 0;
+            }
+
+            if (group_id != s->s3->group_id) {
+                /*
+                 * This isn't for the group that we sent in the original
+                 * key_share!
+                 */
+                *al = SSL_AD_HANDSHAKE_FAILURE;
+                SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT,
+                       SSL_R_BAD_KEY_SHARE);
+                return 0;
+            }
+
+            /* TODO(TLS1.3): Create skey from ckey */
+            skey = ssl_generate_pkey(ckey);
+
+            if (!PACKET_as_length_prefixed_2(&spkt, &encoded_pt)) {
+                *al = SSL_AD_DECODE_ERROR;
+                SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT,
+                       SSL_R_LENGTH_MISMATCH);
+                return 0;
+            }
+
+            if (!EVP_PKEY_set1_tls_encodedpoint(skey, PACKET_data(&encoded_pt),
+                                                PACKET_remaining(&encoded_pt))) {
+                *al = SSL_AD_DECODE_ERROR;
+                SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT, SSL_R_BAD_ECPOINT);
+                return 0;
+            }
+
+            /*
+             * TODO(TLS1.3): Throw it all away for now, later we will use the
+             * two keys.
+             */
+            EVP_PKEY_free(skey);
         /*
          * If this extension type was not otherwise handled, but matches a
          * custom_cli_ext_record, then send it to the c callback
          */
-        else if (custom_ext_parse(s, 0, type, data, size, al) <= 0)
+        } else if (custom_ext_parse(s, 0, type, data, size, al) <= 0)
             return 0;
     }
 
