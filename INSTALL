@@ -326,9 +326,6 @@
                    available if the GOST algorithms are also available through
                    loading an externally supplied engine.
 
-  enable-heartbeats
-                   Build support for DTLS heartbeats.
-
   no-hw-padlock
                    Don't build the padlock engine.
 

@@ -1095,17 +1095,6 @@ struct ssl_st {
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
     /* What's been chosen */
     SRTP_PROTECTION_PROFILE *srtp_profile;
-        /*-
-         * Is use of the Heartbeat extension negotiated?
-         *  0: disabled
-         *  1: enabled
-         *  2: enabled, but not allowed to send Requests
-         */
-    unsigned int tlsext_heartbeat;
-    /* Indicates if a HeartbeatRequest is in flight */
-    unsigned int tlsext_hb_pending;
-    /* HeartbeatRequest sequence number */
-    unsigned int tlsext_hb_seq;
     /*
      * For a client, this contains the list of supported protocols in wire
      * format.
@@ -1390,7 +1379,7 @@ typedef struct dtls1_state_st {
     struct hm_header_st r_msg_hdr;
     struct dtls1_timeout_st timeout;
     /*
-     * Indicates when the last handshake msg or heartbeat sent will timeout
+     * Indicates when the last handshake msg sent will timeout
      */
     struct timeval next_timeout;
     /* Timeout duration */
@@ -1778,10 +1767,6 @@ const SSL_METHOD *func_name(void)  \
 struct openssl_ssl_test_functions {
     int (*p_ssl_init_wbio_buffer) (SSL *s);
     int (*p_ssl3_setup_buffers) (SSL *s);
-# ifndef OPENSSL_NO_HEARTBEATS
-    int (*p_dtls1_process_heartbeat) (SSL *s,
-                                      unsigned char *p, unsigned int length);
-# endif
 };
 
 const char *ssl_protocol_to_string(int version);
@@ -2021,12 +2006,6 @@ __owur int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt);
 __owur int ssl_prepare_clienthello_tlsext(SSL *s);
 __owur int ssl_prepare_serverhello_tlsext(SSL *s);
 
-#  ifndef OPENSSL_NO_HEARTBEATS
-__owur int dtls1_heartbeat(SSL *s);
-__owur int dtls1_process_heartbeat(SSL *s, unsigned char *p,
-                                   unsigned int length);
-#  endif
-
 __owur int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
                                               const PACKET *session_id,
                                               SSL_SESSION **ret);
@@ -2120,7 +2099,6 @@ void ssl_comp_free_compression_methods_int(void);
 
 #  define ssl_init_wbio_buffer SSL_test_functions()->p_ssl_init_wbio_buffer
 #  define ssl3_setup_buffers SSL_test_functions()->p_ssl3_setup_buffers
-#  define dtls1_process_heartbeat SSL_test_functions()->p_dtls1_process_heartbeat
 
 # endif
 #endif

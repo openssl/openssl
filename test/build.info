@@ -11,7 +11,7 @@ IF[{- !$disabled{tests} -}]
           randtest dhtest enginetest casttest \
           bftest ssltest_old dsatest exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
-          danetest heartbeat_test p5_crpt2_test bad_dtls_test \
+          danetest p5_crpt2_test bad_dtls_test \
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
@@ -169,10 +169,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[danetest]=danetest.c
   INCLUDE[danetest]=../include
   DEPEND[danetest]=../libcrypto ../libssl
-
-  SOURCE[heartbeat_test]=heartbeat_test.c testutil.c
-  INCLUDE[heartbeat_test]=.. ../include
-  DEPEND[heartbeat_test]=../libcrypto ../libssl
 
   SOURCE[p5_crpt2_test]=p5_crpt2_test.c
   INCLUDE[p5_crpt2_test]=../include
