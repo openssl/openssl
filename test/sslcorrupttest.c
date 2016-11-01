@@ -130,7 +130,7 @@ static void bio_f_tls_corrupt_filter_free(void)
  * with apps/server.pem used even in other tests. For this reason
  * |cipher_list| is initialized with RSA ciphers' names. This
  * naturally means that if test is to be re-purposed for other
- * type of key, then NIS_auth_* filter below would need adjustment.
+ * type of key, then NID_auth_* filter below would need adjustment.
  */
 static const char **cipher_list = NULL;
 
