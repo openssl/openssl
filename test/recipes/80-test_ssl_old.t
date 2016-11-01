@@ -448,6 +448,8 @@ sub testssl {
 	# FIXME: I feel unsure about the following line, is that really just TLSv1.2, or is it all of the SSLv3/TLS protocols?
         push(@protocols, "TLSv1.2") unless $no_tls1_2;
         push(@protocols, "SSLv3") unless $no_ssl3;
+        push(@protocols, "DTLSv1") unless $no_dtls1;
+        push(@protocols, "DTLSv1.2") unless $no_dtls1_2;
 	my $protocolciphersuitcount = 0;
 	my %ciphersuites =
 	    map { my @c =
@@ -466,10 +468,15 @@ sub testssl {
 	plan tests => $protocolciphersuitcount + scalar(@protocols);
 
 	foreach my $protocol (@protocols) {
+	    my @protoarg = ();
+	    @protoarg = ("-ssl3") if $protocol eq "SSLv3";
+	    @protoarg = ("-dtls1") if $protocol eq "DTLSv1";
+	    @protoarg = ("-dtls12") if $protocol eq "DTLSv1.2";
+
 	    note "Testing ciphersuites for $protocol";
 	    foreach my $cipher (@{$ciphersuites{$protocol}}) {
 		ok(run(test([@ssltest, @exkeys, "-cipher", $cipher,
-			     $protocol eq "SSLv3" ? ("-ssl3") : ()])),
+			     (@protoarg)])),
 		   "Testing $cipher");
 	    }
             is(run(test([@ssltest,

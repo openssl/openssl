@@ -21,6 +21,8 @@ typedef enum OPTION_choice {
     OPT_TLS1,
     OPT_TLS1_1,
     OPT_TLS1_2,
+    OPT_DTLS1,
+    OPT_DTLS1_2,
     OPT_PSK,
     OPT_SRP,
     OPT_V, OPT_UPPER_V, OPT_S
@@ -42,6 +44,12 @@ const OPTIONS ciphers_options[] = {
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     {"tls1_2", OPT_TLS1_2, '-', "TLS1.2 mode"},
+#endif
+#ifndef OPENSSL_NO_DTLS1
+    {"dtls1", OPT_DTLS1, '-', "DTLS1 mode"},
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+    {"dtls1_2", OPT_DTLS1_2, '-', "DTLS1.2 mode"},
 #endif
 #ifndef OPENSSL_NO_SSL_TRACE
     {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
@@ -135,6 +143,20 @@ int ciphers_main(int argc, char **argv)
             min_version = TLS1_2_VERSION;
             max_version = TLS1_2_VERSION;
             break;
+#ifndef OPENSSL_NO_DTLS1
+        case OPT_DTLS1:
+            min_version = DTLS1_VERSION;
+            max_version = DTLS1_VERSION;
+            meth = DTLS_server_method();
+            break;
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+        case OPT_DTLS1_2:
+            min_version = DTLS1_2_VERSION;
+            max_version = DTLS1_2_VERSION;
+            meth = DTLS_server_method();
+            break;
+#endif
         case OPT_PSK:
 #ifndef OPENSSL_NO_PSK
             psk = 1;

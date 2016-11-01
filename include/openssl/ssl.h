@@ -170,6 +170,8 @@ extern "C" {
 # define SSL_TXT_TLSV1           "TLSv1"
 # define SSL_TXT_TLSV1_1         "TLSv1.1"
 # define SSL_TXT_TLSV1_2         "TLSv1.2"
+# define SSL_TXT_DTLSV1          "DTLSv1"
+# define SSL_TXT_DTLSV1_2        "DTLSv1.2"
 
 # define SSL_TXT_ALL             "ALL"
 
