@@ -433,7 +433,6 @@ our %disabled = ( # "what"         => "comment"
 		  "fuzz-afl"		=> "default",
 		  "heartbeats"          => "default",
 		  "md2"                 => "default",
-		  "mdc2"                => "default",
                   "msan"                => "default",
 		  "rc5"                 => "default",
 		  "sctp"                => "default",

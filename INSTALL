@@ -474,12 +474,12 @@
 
   enable-<alg>
                    Build with support for the specified algorithm, where <alg>
-                   is one of: md2, mdc2, or rc5.
+                   is one of: md2 or rc5.
 
   no-<alg>
                    Build without support for the specified algorithm, where
                    <alg> is one of: bf, blake2, camellia, cast, chacha, cmac,
-                   des, dh, dsa, ecdh, ecdsa, idea, md4, ocb, poly1305,
+                   des, dh, dsa, ecdh, ecdsa, idea, md4, mdc2, ocb, poly1305,
                    rc2, rc4, rmd160, scrypt, seed or whirlpool. The "ripemd"
                    algorithm is deprecated and if used is synonymous with rmd160.
 
