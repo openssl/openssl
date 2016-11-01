@@ -334,8 +334,6 @@ ENGINE *ENGINE_by_id(const char *id);
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_PADLOCK, NULL)
 #  define ENGINE_load_capi() \
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CAPI, NULL)
-#  define ENGINE_load_dasync() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_DASYNC, NULL)
 #  define ENGINE_load_afalg() \
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_AFALG, NULL)
 # endif
