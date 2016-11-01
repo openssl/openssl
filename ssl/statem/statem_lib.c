@@ -1046,7 +1046,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
             for (vent = table;
                  vent->version != 0 && vent->version != (int)candidate_vers;
                  ++vent)
-                ;
+                continue;
             if (vent->version != 0 && vent->smeth != NULL) {
                 const SSL_METHOD *method;
 
