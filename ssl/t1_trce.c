@@ -447,6 +447,7 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_client_authz, "client_authz"},
     {TLSEXT_TYPE_server_authz, "server_authz"},
     {TLSEXT_TYPE_cert_type, "cert_type"},
+    {TLSEXT_TYPE_key_share, "key_share"},
     {TLSEXT_TYPE_supported_groups, "supported_groups"},
     {TLSEXT_TYPE_ec_point_formats, "ec_point_formats"},
     {TLSEXT_TYPE_srp, "srp"},
@@ -645,7 +646,7 @@ static int ssl_print_signature(BIO *bio, int indent, SSL *s,
 static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
                                const unsigned char *ext, size_t extlen)
 {
-    size_t xlen;
+    size_t xlen, share_len;
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "extension_type=%s(%d), length=%d\n",
                ssl_trace_str(extype, ssl_exts_tbl), extype, (int)extlen);
@@ -716,6 +717,35 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
     case TLSEXT_TYPE_session_ticket:
         if (extlen != 0)
             ssl_print_hex(bio, indent + 4, "ticket", ext, extlen);
+        break;
+
+    case TLSEXT_TYPE_key_share:
+        if (extlen < 2)
+            return 0;
+        if (server) {
+            xlen = extlen;
+        } else {
+            xlen = (ext[0] << 8) | ext[1];
+            if (extlen != xlen + 2)
+                return 0;
+            ext += 2;
+        }
+        for (; xlen > 0; ext += share_len, xlen -= share_len) {
+            int group_id;
+
+            if (xlen < 4)
+                return 0;
+            group_id = (ext[0] << 8) | ext[1];
+            share_len = (ext[2] << 8) | ext[3];
+            ext += 4;
+            xlen -= 4;
+            if (xlen < share_len)
+                return 0;
+            BIO_indent(bio, indent + 4, 80);
+            BIO_printf(bio, "NamedGroup: %s\n",
+                       ssl_trace_str(group_id, ssl_groups_tbl));
+            ssl_print_hex(bio, indent + 4, "key_exchange: ", ext, share_len);
+        }
         break;
 
     case TLSEXT_TYPE_supported_versions:
