@@ -1813,6 +1813,9 @@ __owur int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
                               const EVP_MD **md, int *mac_pkey_type,
                               int *mac_secret_size, SSL_COMP **comp,
                               int use_etm);
+__owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
+                                   size_t *int_overhead, size_t *blocksize,
+                                   size_t *ext_overhead);
 __owur int ssl_cipher_get_cert_index(const SSL_CIPHER *c);
 __owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl,
                                                 const unsigned char *ptr);
