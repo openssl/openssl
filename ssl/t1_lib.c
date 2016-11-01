@@ -1648,6 +1648,47 @@ int ssl_add_serverhello_tlsext(SSL *s, WPACKET *pkt, int *al)
         }
     }
 #endif
+
+    if (s->version == TLS1_3_VERSION) {
+        unsigned char *encodedPoint;
+        size_t encoded_pt_len = 0;
+        EVP_PKEY *ckey = NULL, *skey = NULL;
+
+        ckey = s->s3->peer_tmp;
+        if (ckey == NULL) {
+            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
+                || !WPACKET_start_sub_packet_u16(pkt)
+                || !WPACKET_put_bytes_u16(pkt, s->s3->group_id)) {
+            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        skey = ssl_generate_pkey(ckey);
+
+        /* Generate encoding of server key */
+        encoded_pt_len = EVP_PKEY_get1_tls_encodedpoint(skey, &encodedPoint);
+        if (encoded_pt_len == 0) {
+            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_EC_LIB);
+            EVP_PKEY_free(skey);
+            return 0;
+        }
+
+        if (!WPACKET_sub_memcpy_u16(pkt, encodedPoint, encoded_pt_len)
+                || !WPACKET_close(pkt)) {
+            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            EVP_PKEY_free(skey);
+            OPENSSL_free(encodedPoint);
+            return 0;
+        }
+
+        s->s3->tmp.pkey = skey;
+        OPENSSL_free(encodedPoint);
+    }
+
     if (!custom_ext_add(s, 1, pkt, al)) {
         SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -2293,6 +2334,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                     EVP_PKEY_CTX_free(pctx);
                     pctx = NULL;
                 }
+                s->s3->group_id = group_id;
 
                 if (!EVP_PKEY_set1_tls_encodedpoint(s->s3->peer_tmp,
                         PACKET_data(&encoded_pt),
