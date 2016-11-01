@@ -108,4 +108,4 @@ int strings_equal(const char *desc, const char *s1, const char *s2);
             ERR_print_errors_fp(stderr);        \
             OPENSSL_assert(!#condition);        \
         }                                       \
-    } while (0);
+    } while (0)
