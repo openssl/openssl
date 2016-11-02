@@ -68,10 +68,90 @@ static STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
                                                       int *al);
 
 /*
- * server_read_transition() encapsulates the logic for the allowed handshake
- * state transitions when the server is reading messages from the client. The
- * message type that the client has sent is provided in |mt|. The current state
- * is in |s->statem.hand_state|.
+ * ossl_statem_server13_read_transition() encapsulates the logic for the allowed
+ * handshake state transitions when a TLSv1.3 server is reading messages from
+ * the client. The message type that the client has sent is provided in |mt|.
+ * The current state is in |s->statem.hand_state|.
+ *
+ *  Valid return values are:
+ *  1: Success (transition allowed)
+ *  0: Error (transition not allowed)
+ */
+static int ossl_statem_server13_read_transition(SSL *s, int mt)
+{
+    OSSL_STATEM *st = &s->statem;
+
+    /*
+     * Note: There is no case for TLS_ST_BEFORE because at that stage we have
+     * not negotiated TLSv1.3 yet, so that case is handled by
+     * ossl_statem_server_read_transition()
+     */
+    switch (st->hand_state) {
+    default:
+        break;
+
+    case TLS_ST_SW_SRVR_DONE:
+        if (s->s3->tmp.cert_request) {
+            if (mt == SSL3_MT_CERTIFICATE) {
+                st->hand_state = TLS_ST_SR_CERT;
+                return 1;
+            }
+        } else {
+            if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+                st->hand_state = TLS_ST_SR_CHANGE;
+                return 1;
+            }
+        }
+        break;
+
+    case TLS_ST_SR_CERT:
+        if (s->session->peer == NULL) {
+            if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+                st->hand_state = TLS_ST_SR_CHANGE;
+                return 1;
+            }
+        } else {
+            if (mt == SSL3_MT_CERTIFICATE_VERIFY) {
+                st->hand_state = TLS_ST_SR_CERT_VRFY;
+                return 1;
+            }
+        }
+        break;
+
+    case TLS_ST_SR_CERT_VRFY:
+        if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+            st->hand_state = TLS_ST_SR_CHANGE;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_SR_CHANGE:
+        if (mt == SSL3_MT_FINISHED) {
+            st->hand_state = TLS_ST_SR_FINISHED;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_SW_FINISHED:
+        if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+            st->hand_state = TLS_ST_SR_CHANGE;
+            return 1;
+        }
+        break;
+    }
+
+    /* No valid transition found */
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_UNEXPECTED_MESSAGE);
+    SSLerr(SSL_F_OSSL_STATEM_SERVER13_READ_TRANSITION,
+           SSL_R_UNEXPECTED_MESSAGE);
+    return 0;
+}
+
+/*
+ * ossl_statem_server_read_transition() encapsulates the logic for the allowed
+ * handshake state transitions when the server is reading messages from the
+ * client. The message type that the client has sent is provided in |mt|. The
+ * current state is in |s->statem.hand_state|.
  *
  *  Valid return values are:
  *  1: Success (transition allowed)
@@ -80,6 +160,9 @@ static STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
 int ossl_statem_server_read_transition(SSL *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
+
+    if (s->method->version == TLS1_3_VERSION)
+        return ossl_statem_server13_read_transition(s, mt);
 
     switch (st->hand_state) {
     default:
@@ -304,12 +387,115 @@ static int send_certificate_request(SSL *s)
 }
 
 /*
- * server_write_transition() works out what handshake state to move to next
- * when the server is writing messages to be sent to the client.
+ * ossl_statem_server13_write_transition() works out what handshake state to
+ * move to next when a TLSv1.3 server is writing messages to be sent to the
+ * client.
+ *
+ * Return values:
+ * WRITE_TRAN_ERROR - an error occurred
+ * WRITE_TRAN_CONTINUE - Successful transition, more writing to be done
+ * WRITE_TRAN_FINISHED - Successful transition, no more writing to be done
+ */
+static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
+{
+    OSSL_STATEM *st = &s->statem;
+
+    /*
+     * No case for TLS_ST_BEFORE, because at that stage we have not negotiated
+     * TLSv1.3 yet, so that is handled by ossl_statem_server_write_transition()
+     */
+
+    switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        return WRITE_TRAN_ERROR;
+
+    case TLS_ST_SR_CLNT_HELLO:
+        st->hand_state = TLS_ST_SW_SRVR_HELLO;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_SRVR_HELLO:
+        if (s->hit) {
+            if (s->tlsext_ticket_expected)
+                st->hand_state = TLS_ST_SW_SESSION_TICKET;
+            else
+                st->hand_state = TLS_ST_SW_CHANGE;
+        } else {
+            st->hand_state = TLS_ST_SW_CERT;
+        }
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_CERT:
+        if (s->tlsext_status_expected) {
+            st->hand_state = TLS_ST_SW_CERT_STATUS;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
+
+    case TLS_ST_SW_CERT_STATUS:
+        if (send_certificate_request(s)) {
+            st->hand_state = TLS_ST_SW_CERT_REQ;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
+
+    case TLS_ST_SW_CERT_REQ:
+        st->hand_state = TLS_ST_SW_SRVR_DONE;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_SRVR_DONE:
+        return WRITE_TRAN_FINISHED;
+
+    case TLS_ST_SR_FINISHED:
+        if (s->hit) {
+            st->hand_state = TLS_ST_OK;
+            ossl_statem_set_in_init(s, 0);
+            return WRITE_TRAN_CONTINUE;
+        } else if (s->tlsext_ticket_expected) {
+            st->hand_state = TLS_ST_SW_SESSION_TICKET;
+        } else {
+            st->hand_state = TLS_ST_SW_CHANGE;
+        }
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_SESSION_TICKET:
+        st->hand_state = TLS_ST_SW_CHANGE;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_CHANGE:
+        st->hand_state = TLS_ST_SW_FINISHED;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_FINISHED:
+        if (s->hit) {
+            return WRITE_TRAN_FINISHED;
+        }
+        st->hand_state = TLS_ST_OK;
+        ossl_statem_set_in_init(s, 0);
+        return WRITE_TRAN_CONTINUE;
+    }
+}
+
+/*
+ * ossl_statem_server_write_transition() works out what handshake state to move
+ * to next when the server is writing messages to be sent to the client.
+ *
+ * Return values:
+ * WRITE_TRAN_ERROR - an error occurred
+ * WRITE_TRAN_CONTINUE - Successful transition, more writing to be done
+ * WRITE_TRAN_FINISHED - Successful transition, no more writing to be done
  */
 WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
+
+    /*
+     * Note that before the ClientHello we don't know what version we are going
+     * to negotiate yet, so we don't take this branch until later
+     */
+
+    if (s->method->version == TLS1_3_VERSION)
+        return ossl_statem_server13_write_transition(s);
 
     switch (st->hand_state) {
     default:
@@ -2316,7 +2502,7 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt, int *al)
         goto err;
     }
 
-    if (ssl_derive(s, skey, ckey) == 0) {
+    if (ssl_derive(s, skey, ckey, 1) == 0) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CKE_DHE, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -2376,7 +2562,7 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt, int *al)
         }
     }
 
-    if (ssl_derive(s, skey, ckey) == 0) {
+    if (ssl_derive(s, skey, ckey, 1) == 0) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CKE_ECDHE, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -2776,6 +2962,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         al = SSL_AD_INTERNAL_ERROR;
         goto f_err;
     }
+
 #ifdef SSL_DEBUG
     fprintf(stderr, "Using client verify alg %s\n", EVP_MD_name(md));
 #endif
@@ -2931,6 +3118,17 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 
     sk_X509_pop_free(s->session->peer_chain, X509_free);
     s->session->peer_chain = sk;
+
+    /*
+     * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
+     * message
+     */
+    if (s->version == TLS1_3_VERSION && !ssl3_digest_cached_records(s, 1)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
+
     /*
      * Inconsistency alert: cert_chain does *not* include the peer's own
      * certificate, while we do include it in statem_clnt.c

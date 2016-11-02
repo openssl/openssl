@@ -4068,7 +4068,7 @@ EVP_PKEY *ssl_generate_pkey_curve(int id)
 #endif
 
 /* Derive premaster or master secret for ECDH/DH */
-int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey)
+int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int genmaster)
 {
     int rv = 0;
     unsigned char *pms = NULL;
@@ -4093,12 +4093,12 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey)
     if (EVP_PKEY_derive(pctx, pms, &pmslen) <= 0)
         goto err;
 
-    if (s->server) {
-        /* For server generate master secret and discard premaster */
+    if (genmaster) {
+        /* Generate master secret and discard premaster */
         rv = ssl_generate_master_secret(s, pms, pmslen, 1);
         pms = NULL;
     } else {
-        /* For client just save premaster secret */
+        /* Save premaster secret */
         s->s3->tmp.pms = pms;
         s->s3->tmp.pmslen = pmslen;
         pms = NULL;

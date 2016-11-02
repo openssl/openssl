@@ -229,7 +229,7 @@ sub checkmessages($$$$$$)
 			$shellotickext = 1;
 		    }
 		}
-	    } elsif ($message->mt == TLSProxy::Message::MT_CLIENT_KEY_EXCHANGE) {
+	    } elsif ($message->mt == TLSProxy::Message::MT_CERTIFICATE) {
 		#Must be doing a full handshake
 		$fullhand = 1;
 	    } elsif ($message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
