@@ -1684,9 +1684,15 @@ int ssl_add_serverhello_tlsext(SSL *s, WPACKET *pkt, int *al)
             OPENSSL_free(encodedPoint);
             return 0;
         }
+        OPENSSL_free(encodedPoint);
 
         s->s3->tmp.pkey = skey;
-        OPENSSL_free(encodedPoint);
+
+        if (ssl_derive(s, skey, ckey, 1) == 0) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
 
     if (!custom_ext_add(s, 1, pkt, al)) {
@@ -2633,7 +2639,8 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                 s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD
                 && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4)
                 s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
-        } else if (type == TLSEXT_TYPE_extended_master_secret) {
+        } else if (type == TLSEXT_TYPE_extended_master_secret &&
+                (SSL_IS_DTLS(s) || s->version < TLS1_3_VERSION)) {
             s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
             if (!s->hit)
                 s->session->flags |= SSL_SESS_FLAG_EXTMS;
@@ -2668,7 +2675,6 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                 return 0;
             }
 
-            /* TODO(TLS1.3): Create skey from ckey */
             skey = ssl_generate_pkey(ckey);
 
             if (!PACKET_as_length_prefixed_2(&spkt, &encoded_pt)) {
@@ -2685,10 +2691,12 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                 return 0;
             }
 
-            /*
-             * TODO(TLS1.3): Throw it all away for now, later we will use the
-             * two keys.
-             */
+            if (ssl_derive(s, ckey, skey, 1) == 0) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+                EVP_PKEY_free(skey);
+                return 0;
+            }
             EVP_PKEY_free(skey);
         /*
          * If this extension type was not otherwise handled, but matches a
@@ -3128,7 +3136,7 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
 
 /*
  * Sets the extended master secret flag if the extension is present in the
- * ClientHello
+ * ClientHello and we can support it
  * Returns:
  *  1 on success
  *  0 on error
@@ -3139,7 +3147,8 @@ int tls_check_client_ems_support(SSL *s, const CLIENTHELLO_MSG *hello)
 
     s->s3->flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
 
-    if (s->version <= SSL3_VERSION)
+    if (!SSL_IS_DTLS(s) && (s->version < TLS1_VERSION
+                            || s->version > TLS1_2_VERSION))
         return 1;
 
     emsext = tls_get_extension_by_type(hello->pre_proc_exts,
