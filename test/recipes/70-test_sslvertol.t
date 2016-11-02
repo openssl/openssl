@@ -34,15 +34,28 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-#Test 1: Asking for TLS1.4 should pass
+#This file does tests without the supported_versions extension.
+#See 70-test_sslversions.t for tests with supported versions.
+#Test 1: Asking for TLS1.4 should pass and negotiate TLS1.2
 my $client_version = TLSProxy::Record::VERS_TLS_1_4;
-#We don't want the supported versions extension for this test
 $proxy->clientflags("-no_tls1_3");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 2;
-ok(TLSProxy::Message->success(), "Version tolerance test, TLS 1.4");
+plan tests => 3;
+my $record = pop @{$proxy->record_list};
+ok(TLSProxy::Message->success()
+   && $record->version() == TLSProxy::Record::VERS_TLS_1_2,
+   "Version tolerance test, TLS 1.4");
 
-#Test 2: Testing something below SSLv3 should fail
+#Test 2: Asking for TLS1.3 should succeed and negotiate TLS1.2
+$proxy->clear();
+$proxy->clientflags("-no_tls1_3");
+$proxy->start();
+$record = pop @{$proxy->record_list};
+ok(TLSProxy::Message->success()
+   && $record->version() == TLSProxy::Record::VERS_TLS_1_2,
+   "Version tolerance test, TLS 1.3");
+
+#Test 3: Testing something below SSLv3 should fail
 $client_version = TLSProxy::Record::VERS_SSL_3_0 - 1;
 $proxy->clear();
 $proxy->clientflags("-no_tls1_3");
