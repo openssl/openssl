@@ -4,7 +4,8 @@
 
  Changes between 1.1.0a and 1.1.1 [xx XXX xxxx]
 
-  *)
+  *) MDC2 is now disabled by default.
+     [Rich Salz]
 
   *) 'openssl passwd' can now produce SHA256 and SHA512 based output,
      using the algorithm defined in
