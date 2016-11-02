@@ -4,7 +4,11 @@
 
  Changes between 1.0.2j and 1.0.2k [xx XXX xxxx]
 
-  *)
+  *) OpenSSL now fails if it receives an unrecognised record type in TLS1.0
+     or TLS1.1. Previously this only happened in SSLv3 and TLS1.2. This is to
+     prevent issues where no progress is being made and the peer continually
+     sends unrecognised record types, using up resources processing them.
+     [Matt Caswell]
 
  Changes between 1.0.2i and 1.0.2j [26 Sep 2016]
 
