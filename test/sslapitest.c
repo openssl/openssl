@@ -31,7 +31,7 @@ static X509 *ocspcert = NULL;
 #define NUM_EXTRA_CERTS 40
 
 static int execute_test_large_message(const SSL_METHOD *smeth,
-                                      const SSL_METHOD *cmeth)
+                                      const SSL_METHOD *cmeth, int read_ahead)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -57,6 +57,14 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
                              &cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         goto end;
+    }
+
+    if(read_ahead) {
+        /*
+         * Test that read_ahead works correctly when dealing with large
+         * records
+         */
+        SSL_CTX_set_read_ahead(cctx, 1);
     }
 
     /*
@@ -105,14 +113,25 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
 
 static int test_large_message_tls(void)
 {
-    return execute_test_large_message(TLS_server_method(), TLS_client_method());
+    return execute_test_large_message(TLS_server_method(), TLS_client_method(),
+                                      0);
+}
+
+static int test_large_message_tls_read_ahead(void)
+{
+    return execute_test_large_message(TLS_server_method(), TLS_client_method(),
+                                      1);
 }
 
 #ifndef OPENSSL_NO_DTLS
 static int test_large_message_dtls(void)
 {
+    /*
+     * read_ahead is not relevant to DTLS because DTLS always acts as if
+     * read_ahead is set.
+     */
     return execute_test_large_message(DTLS_server_method(),
-                                      DTLS_client_method());
+                                      DTLS_client_method(), 0);
 }
 #endif
 
@@ -863,6 +882,7 @@ int main(int argc, char *argv[])
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     ADD_TEST(test_large_message_tls);
+    ADD_TEST(test_large_message_tls_read_ahead);
 #ifndef OPENSSL_NO_DTLS
     ADD_TEST(test_large_message_dtls);
 #endif
