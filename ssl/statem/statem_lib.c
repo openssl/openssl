@@ -1002,6 +1002,11 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
 
     switch (server_version) {
     default:
+        /*
+         * TODO(TLS1.3): This check will fail if someone attempts to do
+         * renegotiation in TLS1.3 at the moment. We need to ensure we disable
+         * renegotiation for TLS1.3
+         */
         if (version_cmp(s, client_version, s->version) < 0)
             return SSL_R_WRONG_SSL_VERSION;
         /*
