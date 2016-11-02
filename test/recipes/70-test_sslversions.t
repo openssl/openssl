@@ -17,7 +17,8 @@ use constant {
     UNRECOGNISED_VERSIONS => 2,
     NO_EXTENSION => 3,
     EMPTY_EXTENSION => 4,
-    NO_TLS1_3 => 5
+    NO_TLS1_3 => 5,
+    WITH_TLS1_4 => 6
 };
 
 my $testtype;
@@ -54,7 +55,7 @@ my $proxy = TLSProxy::Proxy->new(
 $testtype = EMPTY_EXTENSION;
 $proxy->filter(\&modify_supported_versions_filter);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 6;
+plan tests => 7;
 ok(TLSProxy::Message->fail(), "Empty supported versions");
 
 #Test 2: supported_versions extension with no recognised versions should not
@@ -99,6 +100,15 @@ ok(TLSProxy::Message->success()
    && $record->version() == TLSProxy::Record::VERS_TLS_1_1,
    "No TLS1.3 in supported versions extension");
 
+#Test 7: TLS1.4 and TLS1.3 in supported versions. Should succeed and use TLS1.3
+$proxy->clear();
+$testtype = WITH_TLS1_4;
+$proxy->start();
+$record = pop @{$proxy->record_list};
+ok(TLSProxy::Message->success()
+   && $record->version() == TLSProxy::Record::VERS_TLS_1_3,
+   "TLS1.4 in supported versions extension");
+
 sub modify_supported_versions_filter
 {
     my $proxy = shift;
@@ -126,10 +136,16 @@ sub modify_supported_versions_filter
                     0x04, # Length
                     0x03, 0x02, #TLSv1.1
                     0x03, 0x01; #TLSv1.0
+            } elsif ($testtype == WITH_TLS1_4) {
+                    $ext = pack "C5",
+                        0x04, # Length
+                        0x03, 0x05, #TLSv1.4
+                        0x03, 0x04; #TLSv1.3
             }
             if ($testtype == REVERSE_ORDER_VERSIONS
                     || $testtype == UNRECOGNISED_VERSIONS
-                    || $testtype == NO_TLS1_3) {
+                    || $testtype == NO_TLS1_3
+                    || $testtype == WITH_TLS1_4) {
                 $message->set_extension(
                     TLSProxy::Message::EXT_SUPPORTED_VERSIONS, $ext);
             } elsif ($testtype == EMPTY_EXTENSION) {
