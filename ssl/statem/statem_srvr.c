@@ -1427,8 +1427,8 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
     sk_SSL_CIPHER_free(ciphers);
     OPENSSL_free(clienthello.pre_proc_exts);
-    return MSG_PROCESS_ERROR;
 
+    return MSG_PROCESS_ERROR;
 }
 
 WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
