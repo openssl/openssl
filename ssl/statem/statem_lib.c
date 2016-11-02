@@ -1053,7 +1053,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
                  vent->version != 0 && vent->version != (int)candidate_vers;
                  ++vent)
                 ;
-            if (vent->version != 0) {
+            if (vent->version != 0 && vent->smeth != NULL) {
                 const SSL_METHOD *method;
 
                 method = vent->smeth();
