@@ -62,7 +62,8 @@ my %conf_dependent_tests = (
 # conditions.
 my %skip = (
   "07-dtls-protocol-version.conf" => $no_dtls,
-  "08-npn.conf" => $no_tls || $no_npn,
+  "08-npn.conf" => (disabled("tls1") && disabled("tls1_1")
+                    && disabled("tls1_2")) || $no_npn,
   "10-resumption.conf" => disabled("tls1_1") || disabled("tls1_2"),
   "11-dtls_resumption.conf" => disabled("dtls1") || disabled("dtls1_2"),
   "12-ct.conf" => $no_tls || $no_ct || $no_ec,
