@@ -22,14 +22,16 @@ use constant {
     RT_APPLICATION_DATA => 23,
     RT_HANDSHAKE => 22,
     RT_ALERT => 21,
-    RT_CCS => 20
+    RT_CCS => 20,
+    RT_UNKNOWN => 100
 };
 
 my %record_type = (
     RT_APPLICATION_DATA, "APPLICATION DATA",
     RT_HANDSHAKE, "HANDSHAKE",
     RT_ALERT, "ALERT",
-    RT_CCS, "CCS"
+    RT_CCS, "CCS",
+    RT_UNKNOWN, "UNKNOWN"
 );
 
 use constant {

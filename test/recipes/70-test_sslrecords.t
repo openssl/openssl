@@ -38,7 +38,11 @@ my $proxy = TLSProxy::Proxy->new(
 my $content_type = TLSProxy::Record::RT_APPLICATION_DATA;
 my $inject_recs_num = 1;
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 9;
+my $num_tests = 10;
+if (!disabled("tls1_1")) {
+    $num_tests++;
+}
+plan tests => $num_tests;
 ok(TLSProxy::Message->fail(), "Out of context empty records test");
 
 #Test 2: Injecting in context empty records should succeed
@@ -107,6 +111,23 @@ $sslv2testtype = ALERT_BEFORE_SSLV2;
 $proxy->clear();
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Alert before SSLv2 ClientHello test");
+
+#Unregcognised record type tests
+
+#Test 10: Sending an unrecognised record type in TLS1.2 should fail
+$proxy->clear();
+$proxy->filter(\&add_unknown_record_type);
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Unrecognised record type in TLS1.2");
+
+#Test 11: Sending an unrecognised record type in TLS1.1 should fail
+if (!disabled("tls1_1")) {
+    $proxy->clear();
+    $proxy->clientflags("-tls1_1");
+    $proxy->start();
+    ok(TLSProxy::Message->fail(), "Unrecognised record type in TLS1.1");
+}
+
 sub add_empty_recs_filter
 {
     my $proxy = shift;
@@ -332,4 +353,29 @@ sub add_sslv2_filter
         push @{$proxy->record_list}, $record;
     }
 
+}
+
+sub add_unknown_record_type
+{
+    my $proxy = shift;
+
+    # We'll change a record after the initial version neg has taken place
+    if ($proxy->flight != 2) {
+        return;
+    }
+
+    my $lastrec = ${$proxy->record_list}[-1];
+    my $record = TLSProxy::Record->new(
+        2,
+        TLSProxy::Record::RT_UNKNOWN,
+        $lastrec->version(),
+        1,
+        0,
+        1,
+        1,
+        "X",
+        "X"
+    );
+
+    unshift @{$proxy->record_list}, $record;
 }
