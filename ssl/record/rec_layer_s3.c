@@ -241,6 +241,18 @@ int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold)
         /* ... now we can act as if 'extend' was set */
     }
 
+    len = s->rlayer.packet_length;
+    pkt = rb->buf + align;
+    /*
+     * Move any available bytes to front of buffer: 'len' bytes already
+     * pointed to by 'packet', 'left' extra ones at the end
+     */
+    if (s->rlayer.packet != pkt && clearold == 1) {
+        memmove(pkt, s->rlayer.packet, len + left);
+        s->rlayer.packet = pkt;
+        rb->offset = len + align;
+    }
+
     /*
      * For DTLS/UDP reads should not span multiple packets because the read
      * operation returns the whole packet at once (as long as it fits into
@@ -262,18 +274,6 @@ int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold)
     }
 
     /* else we need to read more data */
-
-    len = s->rlayer.packet_length;
-    pkt = rb->buf + align;
-    /*
-     * Move any available bytes to front of buffer: 'len' bytes already
-     * pointed to by 'packet', 'left' extra ones at the end
-     */
-    if (s->rlayer.packet != pkt && clearold == 1) { /* len > 0 */
-        memmove(pkt, s->rlayer.packet, len + left);
-        s->rlayer.packet = pkt;
-        rb->offset = len + align;
-    }
 
     if (n > (int)(rb->len - rb->offset)) { /* does not happen */
         SSLerr(SSL_F_SSL3_READ_N, ERR_R_INTERNAL_ERROR);
