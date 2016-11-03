@@ -275,7 +275,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bio_enc_test]=../include
   DEPEND[bio_enc_test]=../libcrypto
 
-  IF[{- !disabled{shared} -}]
+  IF[{- !$disabled{shared} -}]
     PROGRAMS_NO_INST=shlibloadtest
     SOURCE[shlibloadtest]=shlibloadtest.c
     INCLUDE[shlibloadtest]=../include
