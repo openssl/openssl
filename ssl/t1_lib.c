@@ -1649,7 +1649,7 @@ int ssl_add_serverhello_tlsext(SSL *s, WPACKET *pkt, int *al)
     }
 #endif
 
-    if (s->version == TLS1_3_VERSION) {
+    if (s->version == TLS1_3_VERSION && !s->hit) {
         unsigned char *encodedPoint;
         size_t encoded_pt_len = 0;
         EVP_PKEY *ckey = NULL, *skey = NULL;
@@ -1885,6 +1885,79 @@ static void ssl_check_for_safari(SSL *s, const CLIENTHELLO_MSG *hello)
 }
 #endif                          /* !OPENSSL_NO_EC */
 
+
+/*
+ * Process the supported_groups extension if present. Returns success if the
+ * extension is absent, or if it has been successfully processed.
+ *
+ * Returns
+ * 1 on success
+ * 0 on failure
+ */
+static int tls_process_supported_groups(SSL *s, CLIENTHELLO_MSG *hello)
+{
+#ifndef OPENSSL_NO_EC
+    PACKET supported_groups_list;
+    RAW_EXTENSION *suppgroups = tls_get_extension_by_type(hello->pre_proc_exts,
+                                    hello->num_extensions,
+                                    TLSEXT_TYPE_supported_groups);
+
+    if (suppgroups == NULL)
+        return 1;
+
+    /* Each group is 2 bytes and we must have at least 1. */
+    if (!PACKET_as_length_prefixed_2(&suppgroups->data,
+                                     &supported_groups_list)
+        || PACKET_remaining(&supported_groups_list) == 0
+        || (PACKET_remaining(&supported_groups_list) % 2) != 0) {
+        return 0;
+    }
+
+    if (!s->hit
+            && !PACKET_memdup(&supported_groups_list,
+                              &s->session->tlsext_supportedgroupslist,
+                              &s->session->tlsext_supportedgroupslist_length)) {
+        return 0;
+    }
+#endif
+    return 1;
+}
+
+/*
+ * Checks a list of |groups| to determine if the |group_id| is in it. If it is
+ * and |checkallow| is 1 then additionally check if the group is allowed to be
+ * used.
+ *
+ * Returns:
+ * 1 if the group is in the list (and allowed if |checkallow| is 1)
+ * 0 otherwise
+ */
+static int check_in_list(SSL *s, unsigned int group_id,
+                         const unsigned char *groups, size_t num_groups,
+                         int checkallow)
+{
+    size_t i;
+
+    if (groups == NULL || num_groups == 0)
+        return 0;
+
+    for (i = 0; i < num_groups; i++, groups += 2) {
+        unsigned int share_id = (groups[0] << 8) | (groups[1]);
+        if (group_id == share_id
+                && (!checkallow || tls_curve_allowed(s, groups,
+                                                     SSL_SECOP_CURVE_CHECK))) {
+            break;
+        }
+    }
+
+    if (i == num_groups) {
+        /* Not in list */
+        return 0;
+    }
+
+    return 1;
+}
+
 /*
  * Loop through all remaining ClientHello extensions that we collected earlier
  * and haven't already processed. For each one parse it and update the SSL
@@ -1932,6 +2005,15 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
 #endif
 
     s->srtp_profile = NULL;
+
+    /*
+     * We process the supported_groups extension first so that is done before
+     * we get to key_share which needs to use the information in it.
+     */
+    if (!tls_process_supported_groups(s, hello)) {
+        *al = TLS1_AD_INTERNAL_ERROR;
+        return 0;
+    }
 
     /*
      * We parse all extensions to ensure the ClientHello is well-formed but,
@@ -2070,26 +2152,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                                    &s->session->tlsext_ecpointformatlist,
                                    &s->
                                    session->tlsext_ecpointformatlist_length)) {
-                    *al = TLS1_AD_INTERNAL_ERROR;
-                    return 0;
-                }
-            }
-        } else if (currext->type == TLSEXT_TYPE_supported_groups) {
-            PACKET supported_groups_list;
-
-            /* Each group is 2 bytes and we must have at least 1. */
-            if (!PACKET_as_length_prefixed_2(&currext->data,
-                                             &supported_groups_list)
-                || PACKET_remaining(&supported_groups_list) == 0
-                || (PACKET_remaining(&supported_groups_list) % 2) != 0) {
-                return 0;
-            }
-
-            if (!s->hit) {
-                if (!PACKET_memdup(&supported_groups_list,
-                                   &s->session->tlsext_supportedgroupslist,
-                                   &s->
-                                   session->tlsext_supportedgroupslist_length)) {
                     *al = TLS1_AD_INTERNAL_ERROR;
                     return 0;
                 }
@@ -2251,11 +2313,11 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                  && !(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)) {
             s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
         } else if (currext->type == TLSEXT_TYPE_key_share
-                   && s->version == TLS1_3_VERSION) {
+                   && s->version == TLS1_3_VERSION && !s->hit) {
             unsigned int group_id;
             PACKET key_share_list, encoded_pt;
             const unsigned char *curves;
-            size_t num_curves, i;
+            size_t num_curves;
             int group_nid;
             unsigned int curve_flags;
 
@@ -2283,6 +2345,20 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                     return 0;
                 }
 
+                /* Check this share is in supported_groups */
+                if (!tls1_get_curvelist(s, 1, &curves, &num_curves)) {
+                    *al = SSL_AD_INTERNAL_ERROR;
+                    SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
+                           ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+                if (!check_in_list(s, group_id, curves, num_curves, 0)) {
+                    *al = SSL_AD_HANDSHAKE_FAILURE;
+                    SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
+                           SSL_R_BAD_KEY_SHARE);
+                    return 0;
+                }
+
                 /* Find a share that we can use */
                 if (!tls1_get_curvelist(s, 0, &curves, &num_curves)) {
                     *al = SSL_AD_INTERNAL_ERROR;
@@ -2290,16 +2366,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                            ERR_R_INTERNAL_ERROR);
                     return 0;
                 }
-                for (i = 0; i < num_curves; i++, curves += 2) {
-                    unsigned int share_id = (curves[0] << 8) | (curves[1]);
-                    if (group_id == share_id
-                            && tls_curve_allowed(s, curves,
-                                                 SSL_SECOP_CURVE_CHECK)) {
-                        break;
-                    }
-                }
-
-                if (i == num_curves) {
+                if (!check_in_list(s, group_id, curves, num_curves, 1)) {
                     /* Share not suitable */
                     continue;
                 }
