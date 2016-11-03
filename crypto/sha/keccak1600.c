@@ -172,7 +172,7 @@ void KeccakF1600(uint64_t A[5][5])
 #elif defined(KECCAK_1X)
 /*
  * This implementation is optimization of above code featuring unroll
- * of even y-loops and their fusion and code motion. It also minimizes
+ * of even y-loops, their fusion and code motion. It also minimizes
  * temporary storage. Compiler would normally do all these things for
  * you, purpose of manual optimization is to provide "unobscured"
  * reference for assembly implementation [in case this approach is
@@ -300,10 +300,12 @@ void KeccakF1600(uint64_t A[5][5])
 #elif defined(KECCAK_2X)
 /*
  * This implementation is variant of KECCAK_1X above with outer-most
- * loop unrolled twice. This allows to take temporary storage
+ * round loop unrolled twice. This allows to take temporary storage
  * out of round procedure and simplify references to it by alternating
  * it with actual data (see round loop below). Just like original, it's
- * rather meant as reference for some assembly implementation.
+ * rather meant as reference for an assembly implementation. It's likely
+ * to provide best instruction per processed byte ratio at minimal
+ * round unroll factor...
  */
 static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
 {
@@ -417,8 +419,8 @@ void KeccakF1600(uint64_t A[5][5])
  * This implementation is KECCAK_1X from above combined 4 times with
  * a twist that allows to omit temporary storage and perform in-place
  * processing. It's discussed in section 2.5 of "Keccak implementation
- * overview". It's likely to provide best instruction per processed
- * byte ratio...
+ * overview". It's likely to be best suited for processors with large
+ * register bank...
  */
 static void FourRounds(uint64_t A[5][5], size_t i)
 {
@@ -443,6 +445,7 @@ static void FourRounds(uint64_t A[5][5], size_t i)
 
     assert(i <= (sizeof(iotas) / sizeof(iotas[0]) - 4));
 
+    /* Round 4*n */
     C[0] = A[0][0] ^ A[1][0] ^ A[2][0] ^ A[3][0] ^ A[4][0];
     C[1] = A[0][1] ^ A[1][1] ^ A[2][1] ^ A[3][1] ^ A[4][1];
     C[2] = A[0][2] ^ A[1][2] ^ A[2][2] ^ A[3][2] ^ A[4][2];
@@ -515,7 +518,7 @@ static void FourRounds(uint64_t A[5][5], size_t i)
     C[3] ^= A[1][3] = B[3] ^ (~B[4] & B[0]);
     C[4] ^= A[2][4] = B[4] ^ (~B[0] & B[1]);
 
-
+    /* Round 4*n+1 */
     D[0] = ROL64(C[1], 1) ^ C[4];
     D[1] = ROL64(C[2], 1) ^ C[0];
     D[2] = ROL64(C[3], 1) ^ C[1];
@@ -582,7 +585,7 @@ static void FourRounds(uint64_t A[5][5], size_t i)
     C[3] ^= A[0][3] = B[3] ^ (~B[4] & B[0]);
     C[4] ^= A[3][4] = B[4] ^ (~B[0] & B[1]);
 
-
+    /* Round 4*n+2 */
     D[0] = ROL64(C[1], 1) ^ C[4];
     D[1] = ROL64(C[2], 1) ^ C[0];
     D[2] = ROL64(C[3], 1) ^ C[1];
@@ -649,7 +652,7 @@ static void FourRounds(uint64_t A[5][5], size_t i)
     C[3] ^= A[3][3] = B[3] ^ (~B[4] & B[0]);
     C[4] ^= A[0][4] = B[4] ^ (~B[0] & B[1]);
 
-
+    /* Round 4*n+3 */
     D[0] = ROL64(C[1], 1) ^ C[4];
     D[1] = ROL64(C[2], 1) ^ C[0];
     D[2] = ROL64(C[3], 1) ^ C[1];
