@@ -15,17 +15,33 @@
                                    : a)
 
 #if defined(KECCAK_REF)
-
+/*
+ * This is straightforward or "maximum clarity" implementation aiming
+ * to resemble section 3.2 of the FIPS PUB 202 "SHA-3 Standard:
+ * Permutation-Based Hash and Extendible-Output Functions" as much as
+ * possible. With one caveat. Because of the way C stores matrices,
+ * references to A[x,y] in the specification are presented as A[y][x].
+ * Implementation unrolls inner x-loops so that modulo 5 operations are
+ * explicitly pre-computed.
+ */
 static void Theta(uint64_t A[5][5])
 {
     uint64_t C[5], D[5];
     size_t y;
 
-    C[0] = A[0][0] ^ A[1][0] ^ A[2][0] ^ A[3][0] ^ A[4][0];
-    C[1] = A[0][1] ^ A[1][1] ^ A[2][1] ^ A[3][1] ^ A[4][1];
-    C[2] = A[0][2] ^ A[1][2] ^ A[2][2] ^ A[3][2] ^ A[4][2];
-    C[3] = A[0][3] ^ A[1][3] ^ A[2][3] ^ A[3][3] ^ A[4][3];
-    C[4] = A[0][4] ^ A[1][4] ^ A[2][4] ^ A[3][4] ^ A[4][4];
+    C[0] = A[0][0];
+    C[1] = A[0][1];
+    C[2] = A[0][2];
+    C[3] = A[0][3];
+    C[4] = A[0][4];
+
+    for (y = 1; y < 5; y++) {
+        C[0] ^= A[y][0];
+        C[1] ^= A[y][1];
+        C[2] ^= A[y][2];
+        C[3] ^= A[y][3];
+        C[4] ^= A[y][4];
+    }
 
     D[0] = ROL64(C[1], 1) ^ C[4];
     D[1] = ROL64(C[2], 1) ^ C[0];
@@ -154,7 +170,16 @@ void KeccakF1600(uint64_t A[5][5])
 }
 
 #elif defined(KECCAK_1X)
-
+/*
+ * This implementation is optimization of above code featuring unroll
+ * of even y-loops and their fusion and code motion. It also minimizes
+ * temporary storage. Compiler would normally do all these things for
+ * you, purpose of manual optimization is to provide "unobscured"
+ * reference for assembly implementation [in case this approach is
+ * chosen for implementation on some platform]. In the nutshell it's
+ * equivalent of "plane-per-plane processing" approach discussed in
+ * section 2.4 of "Keccak implementation overview".
+ */
 static void Round(uint64_t A[5][5], size_t i)
 {
     uint64_t C[5], D[5], T[2][5];
@@ -272,8 +297,129 @@ void KeccakF1600(uint64_t A[5][5])
     }
 }
 
-#else
+#elif defined(KECCAK_2X)
+/*
+ * This implementation is variant of KECCAK_1X above with outer-most
+ * loop unrolled twice. This allows to take temporary storage
+ * out of round procedure and simplify references to it by alternating
+ * it with actual data (see round loop below). Just like original, it's
+ * rather meant as reference for some assembly implementation.
+ */
+static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
+{
+    uint64_t C[5], D[5];
+    static const unsigned char rhotates[5][5] = {
+        {  0,  1, 62, 28, 27 },
+        { 36, 44,  6, 55, 20 },
+        {  3, 10, 43, 25, 39 },
+        { 41, 45, 15, 21,  8 },
+        { 18,  2, 61, 56, 14 }
+    };
+    static const uint64_t iotas[] = {
+        0x0000000000000001U, 0x0000000000008082U, 0x800000000000808aU,
+        0x8000000080008000U, 0x000000000000808bU, 0x0000000080000001U,
+        0x8000000080008081U, 0x8000000000008009U, 0x000000000000008aU,
+        0x0000000000000088U, 0x0000000080008009U, 0x000000008000000aU,
+        0x000000008000808bU, 0x800000000000008bU, 0x8000000000008089U,
+        0x8000000000008003U, 0x8000000000008002U, 0x8000000000000080U,
+        0x000000000000800aU, 0x800000008000000aU, 0x8000000080008081U,
+        0x8000000000008080U, 0x0000000080000001U, 0x8000000080008008U
+    };
 
+    assert(i < (sizeof(iotas) / sizeof(iotas[0])));
+
+    C[0] = A[0][0] ^ A[1][0] ^ A[2][0] ^ A[3][0] ^ A[4][0];
+    C[1] = A[0][1] ^ A[1][1] ^ A[2][1] ^ A[3][1] ^ A[4][1];
+    C[2] = A[0][2] ^ A[1][2] ^ A[2][2] ^ A[3][2] ^ A[4][2];
+    C[3] = A[0][3] ^ A[1][3] ^ A[2][3] ^ A[3][3] ^ A[4][3];
+    C[4] = A[0][4] ^ A[1][4] ^ A[2][4] ^ A[3][4] ^ A[4][4];
+
+    D[0] = ROL64(C[1], 1) ^ C[4];
+    D[1] = ROL64(C[2], 1) ^ C[0];
+    D[2] = ROL64(C[3], 1) ^ C[1];
+    D[3] = ROL64(C[4], 1) ^ C[2];
+    D[4] = ROL64(C[0], 1) ^ C[3];
+
+    C[0] =       A[0][0] ^ D[0]; /* rotate by 0 */
+    C[1] = ROL64(A[1][1] ^ D[1], rhotates[1][1]);
+    C[2] = ROL64(A[2][2] ^ D[2], rhotates[2][2]);
+    C[3] = ROL64(A[3][3] ^ D[3], rhotates[3][3]);
+    C[4] = ROL64(A[4][4] ^ D[4], rhotates[4][4]);
+
+    R[0][0] = C[0] ^ (~C[1] & C[2]) ^ iotas[i];
+    R[0][1] = C[1] ^ (~C[2] & C[3]);
+    R[0][2] = C[2] ^ (~C[3] & C[4]);
+    R[0][3] = C[3] ^ (~C[4] & C[0]);
+    R[0][4] = C[4] ^ (~C[0] & C[1]);
+
+    C[0] = ROL64(A[0][3] ^ D[3], rhotates[0][3]);
+    C[1] = ROL64(A[1][4] ^ D[4], rhotates[1][4]);
+    C[2] = ROL64(A[2][0] ^ D[0], rhotates[2][0]);
+    C[3] = ROL64(A[3][1] ^ D[1], rhotates[3][1]);
+    C[4] = ROL64(A[4][2] ^ D[2], rhotates[4][2]);
+
+    R[1][0] = C[0] ^ (~C[1] & C[2]);
+    R[1][1] = C[1] ^ (~C[2] & C[3]);
+    R[1][2] = C[2] ^ (~C[3] & C[4]);
+    R[1][3] = C[3] ^ (~C[4] & C[0]);
+    R[1][4] = C[4] ^ (~C[0] & C[1]);
+
+    C[0] = ROL64(A[0][1] ^ D[1], rhotates[0][1]);
+    C[1] = ROL64(A[1][2] ^ D[2], rhotates[1][2]);
+    C[2] = ROL64(A[2][3] ^ D[3], rhotates[2][3]);
+    C[3] = ROL64(A[3][4] ^ D[4], rhotates[3][4]);
+    C[4] = ROL64(A[4][0] ^ D[0], rhotates[4][0]);
+
+    R[2][0] = C[0] ^ (~C[1] & C[2]);
+    R[2][1] = C[1] ^ (~C[2] & C[3]);
+    R[2][2] = C[2] ^ (~C[3] & C[4]);
+    R[2][3] = C[3] ^ (~C[4] & C[0]);
+    R[2][4] = C[4] ^ (~C[0] & C[1]);
+
+    C[0] = ROL64(A[0][4] ^ D[4], rhotates[0][4]);
+    C[1] = ROL64(A[1][0] ^ D[0], rhotates[1][0]);
+    C[2] = ROL64(A[2][1] ^ D[1], rhotates[2][1]);
+    C[3] = ROL64(A[3][2] ^ D[2], rhotates[3][2]);
+    C[4] = ROL64(A[4][3] ^ D[3], rhotates[4][3]);
+
+    R[3][0] = C[0] ^ (~C[1] & C[2]);
+    R[3][1] = C[1] ^ (~C[2] & C[3]);
+    R[3][2] = C[2] ^ (~C[3] & C[4]);
+    R[3][3] = C[3] ^ (~C[4] & C[0]);
+    R[3][4] = C[4] ^ (~C[0] & C[1]);
+
+    C[0] = ROL64(A[0][2] ^ D[2], rhotates[0][2]);
+    C[1] = ROL64(A[1][3] ^ D[3], rhotates[1][3]);
+    C[2] = ROL64(A[2][4] ^ D[4], rhotates[2][4]);
+    C[3] = ROL64(A[3][0] ^ D[0], rhotates[3][0]);
+    C[4] = ROL64(A[4][1] ^ D[1], rhotates[4][1]);
+
+    R[4][0] = C[0] ^ (~C[1] & C[2]);
+    R[4][1] = C[1] ^ (~C[2] & C[3]);
+    R[4][2] = C[2] ^ (~C[3] & C[4]);
+    R[4][3] = C[3] ^ (~C[4] & C[0]);
+    R[4][4] = C[4] ^ (~C[0] & C[1]);
+}
+
+void KeccakF1600(uint64_t A[5][5])
+{
+    uint64_t T[5][5];
+    size_t i;
+
+    for (i = 0; i < 24; i += 2) {
+        Round(T, A, i);
+        Round(A, T, i + 1);
+    }
+}
+
+#else
+/*
+ * This implementation is KECCAK_1X from above combined 4 times with
+ * a twist that allows to omit temporary storage and perform in-place
+ * processing. It's discussed in section 2.5 of "Keccak implementation
+ * overview". It's likely to provide best instruction per processed
+ * byte ratio...
+ */
 static void FourRounds(uint64_t A[5][5], size_t i)
 {
     uint64_t B[5], C[5], D[5];
@@ -575,7 +721,7 @@ void KeccakF1600(uint64_t A[5][5])
 {
     size_t i;
 
-    for (i = 0; i < 24; i+=4) {
+    for (i = 0; i < 24; i += 4) {
         FourRounds(A, i);
     }
 }
