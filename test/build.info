@@ -282,7 +282,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[dtls_mtu_test]=../libcrypto ../libssl
   ENDIF
 
-  IF[{- !disabled{shared} -}]
+  IF[{- !$disabled{shared} -}]
     PROGRAMS_NO_INST=shlibloadtest
     SOURCE[shlibloadtest]=shlibloadtest.c
     INCLUDE[shlibloadtest]=../include
