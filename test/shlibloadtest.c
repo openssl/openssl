@@ -44,7 +44,7 @@ typedef void * SHLIB;
 typedef void * SHLIB_SYM;
 # define SHLIB_INIT NULL
 
-static int shlib_load(char *filename, SHLIB *lib)
+static int shlib_load(const char *filename, SHLIB *lib)
 {
     *lib = dlopen(filename, RTLD_GLOBAL | RTLD_LAZY);
 
@@ -77,7 +77,7 @@ typedef HINSTANCE SHLIB;
 typedef void * SHLIB_SYM;
 # define SHLIB_INIT 0
 
-static int shlib_load(char *filename, SHLIB *lib)
+static int shlib_load(const char *filename, SHLIB *lib)
 {
     *lib = LoadLibraryA(filename);
     if (*lib == NULL)
