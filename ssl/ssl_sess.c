@@ -588,6 +588,23 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
         goto err;
     }
 
+    /*
+     * TODO(TLS1.3): This is temporary, because TLSv1.3 resumption is completely
+     * different. For now though we're still using the old resumption logic, so
+     * to avoid test failures we need this. Remove this code!
+     * 
+     * Check TLS version consistency. We can't resume <=TLSv1.2 session if we
+     * have negotiated TLSv1.3, and vice versa.
+     */
+    if (!SSL_IS_DTLS(s)
+            && ((ret->ssl_version <= TLS1_2_VERSION
+                 && s->version >=TLS1_3_VERSION)
+                || (ret->ssl_version >= TLS1_3_VERSION
+                    && s->version <= TLS1_2_VERSION))) {
+        /* Continue but do not resume */
+        goto err;
+    }
+
     /* Check extended master secret extension consistency */
     if (ret->flags & SSL_SESS_FLAG_EXTMS) {
         /* If old session includes extms, but new does not: abort handshake */
