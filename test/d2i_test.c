@@ -118,7 +118,6 @@ static int execute_test(D2I_TEST_FIXTURE fixture)
 
 static void tear_down(D2I_TEST_FIXTURE fixture)
 {
-    ERR_print_errors_fp(stderr);
 }
 
 #define SETUP_D2I_TEST_FIXTURE() \

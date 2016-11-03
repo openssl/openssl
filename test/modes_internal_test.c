@@ -210,7 +210,6 @@ static int execute_cts128_nist(CTS128_FIXTURE fixture)
 
 static void teardown_cts128(CTS128_FIXTURE fixture)
 {
-    ERR_print_errors_fp(stderr);
 }
 
 /**********************************************************************
@@ -279,7 +278,6 @@ static int execute_gcm128(GCM128_FIXTURE fixture)
 
 static void teardown_gcm128(GCM128_FIXTURE fixture)
 {
-    ERR_print_errors_fp(stderr);
 }
 
 static void benchmark_gcm128(const unsigned char *K, size_t Klen,

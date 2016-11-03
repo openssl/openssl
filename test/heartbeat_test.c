@@ -155,7 +155,6 @@ static int dummy_handshake(SSL *s)
 
 static void tear_down(HEARTBEAT_TEST_FIXTURE fixture)
 {
-    ERR_print_errors_fp(stderr);
     SSL_free(fixture.s);
     SSL_CTX_free(fixture.ctx);
 }
@@ -365,7 +364,6 @@ int main(int argc, char *argv[])
     ADD_TEST(test_dtls1_heartbleed_excessive_plaintext_length);
 
     result = run_tests(argv[0]);
-    ERR_print_errors_fp(stderr);
     return result;
 }
 
