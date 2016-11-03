@@ -44,22 +44,9 @@ typedef void * SHLIB;
 typedef void * SHLIB_SYM;
 # define SHLIB_INIT NULL
 
-# define SHARED_LIBRARY_SUFFIX ".so"
-
 static int shlib_load(char *filename, SHLIB *lib)
 {
-    char *tmpfile;
-    size_t filenamelen = strlen(filename);
-
-    /* Total length = base filename len + suffix len + 1 for NULL terminator */
-    tmpfile = malloc(filenamelen + sizeof(SHARED_LIBRARY_SUFFIX) + 1);
-    if (tmpfile == NULL)
-        return 0;
-    strcpy(tmpfile, filename);
-    strcpy(tmpfile + filenamelen, SHARED_LIBRARY_SUFFIX);
-
-    *lib = dlopen(tmpfile, RTLD_GLOBAL | RTLD_LAZY);
-    free(tmpfile);
+    *lib = dlopen(filename, RTLD_GLOBAL | RTLD_LAZY);
 
     if (*lib == NULL)
         return 0;
