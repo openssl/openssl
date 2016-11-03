@@ -77,6 +77,7 @@ int run_tests(const char *test_prog_name)
     for (i = 0; i != num_tests; ++i) {
         if (all_tests[i].num == -1) {
             int ret = all_tests[i].test_fn();
+
             if (!ret) {
                 printf("** %s failed **\n--------\n",
                        all_tests[i].test_case_name);
@@ -86,6 +87,7 @@ int run_tests(const char *test_prog_name)
         } else {
             for (j = 0; j < all_tests[i].num; j++) {
                 int ret = all_tests[i].param_test_fn(j);
+
                 if (!ret) {
                     printf("** %s failed test %d\n--------\n",
                            all_tests[i].test_case_name, j);

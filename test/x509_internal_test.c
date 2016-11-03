@@ -17,28 +17,16 @@
 #include "testutil.h"
 #include "e_os.h"
 
-typedef struct {
-    const char *test_case_name;
-    const char *test_section;
-} SIMPLE_FIXTURE;
-
 /**********************************************************************
  *
  * Test of x509v3
  *
  ***/
 
-static SIMPLE_FIXTURE setup_standard_exts(const char *const test_case_name)
-{
-    SIMPLE_FIXTURE fixture;
-    fixture.test_case_name = test_case_name;
-    return fixture;
-}
-
 #include "../crypto/x509v3/ext_dat.h"
 #include "../crypto/x509v3/standard_exts.h"
 
-static int execute_standard_exts(SIMPLE_FIXTURE fixture)
+static int test_standard_exts()
 {
     size_t i;
     int prev = -1, good = 1;
@@ -64,36 +52,9 @@ static int execute_standard_exts(SIMPLE_FIXTURE fixture)
     return good;
 }
 
-static void teardown_standard_exts(SIMPLE_FIXTURE fixture)
-{
-}
-
-/**********************************************************************
- *
- * Test driver
- *
- ***/
-
-static struct {
-    const char *section;
-    SIMPLE_FIXTURE (*setup)(const char *const test_case_name);
-    int (*execute)(SIMPLE_FIXTURE);
-    void (*teardown)(SIMPLE_FIXTURE);
-} tests[] = {
-    {"standard_exts", setup_standard_exts, execute_standard_exts,
-     teardown_standard_exts},
-};
-
-static int drive_tests(int idx)
-{
-    SETUP_TEST_FIXTURE(SIMPLE_FIXTURE, tests[idx].setup);
-    fixture.test_section = tests[idx].section;
-    EXECUTE_TEST(tests[idx].execute, tests[idx].teardown);
-}
-
 int main(int argc, char **argv)
 {
-    ADD_ALL_TESTS(drive_tests, OSSL_NELEM(tests));
+    ADD_TEST(test_standard_exts);
 
     return run_tests(argv[0]);
 }
