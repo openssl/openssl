@@ -198,6 +198,7 @@ tests: build_generated build_programs_nodep build_engines_nodep depend
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
 	set PERL=$(PERL)
+	set OPENSSL_DEBUG_MEMORY=on
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
 	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
