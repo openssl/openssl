@@ -66,7 +66,6 @@ static int execute_tbl_standard(SIMPLE_FIXTURE fixture)
 
 static void teardown_tbl_standard(SIMPLE_FIXTURE fixture)
 {
-    ERR_print_errors_fp(stderr);
 }
 
 /**********************************************************************
@@ -116,7 +115,6 @@ static int execute_standard_methods(SIMPLE_FIXTURE fixture)
 
 static void teardown_standard_methods(SIMPLE_FIXTURE fixture)
 {
-    ERR_print_errors_fp(stderr);
 }
 
 /**********************************************************************
