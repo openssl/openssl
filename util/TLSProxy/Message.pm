@@ -59,10 +59,12 @@ my %message_type = (
 
 use constant {
     EXT_STATUS_REQUEST => 5,
+    EXT_SUPPORTED_GROUPS => 10,
     EXT_ENCRYPT_THEN_MAC => 22,
     EXT_EXTENDED_MASTER_SECRET => 23,
     EXT_SESSION_TICKET => 35,
     EXT_SUPPORTED_VERSIONS => 43,
+    EXT_KEY_SHARE => 40,
     # This extension does not exist and isn't recognised by OpenSSL.
     # We use it to test handling of duplicate extensions.
     EXT_DUPLICATE_EXTENSION => 1234
