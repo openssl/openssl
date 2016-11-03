@@ -298,6 +298,86 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[cipher_overhead_test]=.. ../include
     DEPEND[cipher_overhead_test]=../libcrypto ../libssl
   ENDIF
+
+  # Internal test programs.  These are essentially a collection of internal
+  # test routines.  Because they sometimes need to reach internal symbols that
+  # aren't available through the shared library (at least on Linux, Solaris,
+  # Windows and VMS, where the exported symbols are those listed in util/*.num),
+  # these programs may be built on files directly picked from inside crypto/
+  # or ssl/, to test using symbols that exist in those specific files.  These
+  # programs will also be linked with libcrypto / libssl, so we don't pick
+  # out more specific files than necessary.
+  # This might mean we have multiply defined symbols, but since linking is
+  # ordered with object files first and libraries after, the symbols from the
+  # object files will be chosen before those in the libraries.  This is handled
+  # properly by all linkers.
+  # Note that when building with static libraries, none of those extra files
+  # are needed, since all symbols are available anyway, regardless of what's
+  # listed in util/*.num.
+  PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test
+  IF[{- !$disabled{mdc2} -}]
+    PROGRAMS_NO_INST=mdc2_internal_test
+  ENDIF
+  IF[{- !$disabled{poly1305} -}]
+    PROGRAMS_NO_INST=poly1305_internal_test
+  ENDIF
+
+  SOURCE[poly1305_internal_test]=poly1305_internal_test.c testutil.c
+  IF[{- !$disabled{shared} -}]
+    SOURCE[poly1305_internal_test]= ../crypto/poly1305/poly1305.c \
+        {- $target{poly1305_asm_src} ? "../crypto/poly1305/".$target{poly1305_asm_src} : "" -} \
+        {- $target{cpuid_asm_src} ? "../crypto/".$target{cpuid_asm_src} : "" -} \
+        ../crypto/cryptlib.c
+  ENDIF
+  INCLUDE[poly1305_internal_test]=.. ../include ../crypto/include
+  DEPEND[poly1305_internal_test]=../libcrypto
+
+  SOURCE[asn1_internal_test]=asn1_internal_test.c testutil.c
+  IF[{- !$disabled{shared} -}]
+    SOURCE[asn1_internal_test]= ../crypto/asn1/a_strnid.c \
+        ../crypto/rsa/rsa_ameth.c ../crypto/dsa/dsa_ameth.c \
+        ../crypto/dh/dh_ameth.c ../crypto/ec/ec_ameth.c \
+        ../crypto/hmac/hm_ameth.c ../crypto/cmac/cm_ameth.c \
+        ../crypto/ec/ecx_meth.c ../crypto/ec/curve25519.c
+  ENDIF
+  INCLUDE[asn1_internal_test]=.. ../include ../crypto/include
+  DEPEND[asn1_internal_test]=../libcrypto
+
+  SOURCE[modes_internal_test]=modes_internal_test.c testutil.c
+  IF[{- !$disabled{shared} -}]
+    SOURCE[modes_internal_test]= {- $target{cpuid_asm_src}
+                                    ? "../crypto/".$target{cpuid_asm_src}
+                                    : "" -} \
+        ../crypto/cryptlib.c
+  ENDIF
+  INCLUDE[modes_internal_test]=.. ../include
+  DEPEND[modes_internal_test]=../libcrypto
+
+  # The reason for the huge amount of directly included x509v3 files
+  # is that a table that is checked by x509_internal_test refers to
+  # structures that are spread all over those files.
+  SOURCE[x509_internal_test]=x509_internal_test.c testutil.c
+  IF[{- !$disabled{shared} -}]
+    SOURCE[x509_internal_test]= ../crypto/x509v3/v3_bitst.c \
+        ../crypto/x509v3/v3_ia5.c ../crypto/x509v3/v3_skey.c \
+        ../crypto/x509v3/v3_pku.c ../crypto/x509v3/v3_alt.c \
+        ../crypto/x509v3/v3_bcons.c ../crypto/x509v3/v3_int.c \
+        ../crypto/x509v3/v3_cpols.c ../crypto/x509v3/v3_akey.c \
+        ../crypto/x509v3/v3_crld.c ../crypto/x509v3/v3_utl.c \
+        ../crypto/x509v3/v3_extku.c ../crypto/x509v3/v3_enum.c \
+        ../crypto/x509v3/v3_sxnet.c ../crypto/x509v3/v3_info.c \
+        ../crypto/x509v3/v3_addr.c ../crypto/x509v3/v3_asid.c \
+        ../crypto/x509v3/v3_pcons.c ../crypto/x509v3/v3_pmaps.c \
+        ../crypto/x509v3/v3_pci.c ../crypto/x509v3/v3_ncons.c \
+        ../crypto/x509v3/v3_tlsf.c ../crypto/ocsp/v3_ocsp.c \
+        ../crypto/ct/ct_x509v3.c ../crypto/asn1/a_strex.c
+  ENDIF
+  INCLUDE[x509_internal_test]=.. ../include
+  DEPEND[x509_internal_test]=../libcrypto
+
+  SOURCE[mdc2_internal_test]=mdc2_internal_test.c testutil.c
+  INCLUDE[mdc2_internal_test]=.. ../include
+  DEPEND[mdc2_internal_test]=../libcrypto
 ENDIF
 
 {-

@@ -751,13 +751,46 @@ EOF
                              $x =~ s|(\.OLB)|$1/LIB|;
                              "WRITE OPT_FILE \"$x\"" } @deps)
           || "\@ !";
+      # The linking commands looks a bit complex, but it's for good reason.
+      # When you link, say, foo.obj, bar.obj and libsomething.exe/share, and
+      # bar.obj happens to have a symbol that also exists in libsomething.exe,
+      # the linker will warn about it, loudly, and will then choose to pick
+      # the first copy encountered (the one in bar.obj in this example).
+      # On Unix and on Windows, the corresponding maneuvre goes through
+      # silently with the same effect.
+      # With some test programs, made for checking the internals of OpenSSL,
+      # we do this kind of linking deliberately, picking a few specific object
+      # files from within [.crypto] or [.ssl] so we can reach symbols that are
+      # otherwise unreachable (since the shareable images only exports the
+      # symbols listed in [.util]*.num), and then with the shared libraries
+      # themselves.  So we need to silence the warning about multiply defined
+      # symbols, to mimic the way linking work on Unix and Windows, and so
+      # the build isn't interrupted (MMS stops when warnings are signaled,
+      # by default), and so someone building doesn't have to worry where it
+      # isn't necessary.  If there are other warnings, however, we show them
+      # and let it break the build.
       return <<"EOF";
 $bin.EXE : $deps
         OPEN/WRITE/SHARE=READ OPT_FILE $bin.OPT
         $write_opt1
         $write_opt2
         CLOSE OPT_FILE
-        LINK/EXEC=$bin.EXE \$(LDFLAGS) $bin.OPT/OPT \$(EX_LIBS)
+        - pipe SPAWN/WAIT/NOLOG/OUT=$bin.LINKLOG -
+                    LINK/EXEC=$bin.EXE \$(LDFLAGS) $bin.OPT/OPT \$(EX_LIBS) ; -
+               link_status = \$status ; link_severity = link_status .AND. 7
+        @ search_severity = 1
+        -@ IF link_severity .EQ. 0 THEN -
+                pipe SEARCH $bin.LINKLOG "%","-"/MATCH=AND | -
+                     SPAWN/WAIT/NOLOG/OUT=NLA0: -
+                          SEARCH SYS\$INPUT: "-W-MULDEF,"/MATCH=NOR ; -
+                     search_severity = \$severity
+        @ ! search_severity is 3 when the last search didn't find any matching
+        @ ! string: %SEARCH-I-NOMATCHES, no strings matched
+        -@ IF search_severity .NE. 3 .OR. link_severity .NE. 1 THEN -
+                TYPE $bin.LINKLOG
+        -@ DELETE $bin.LINKLOG;*
+        @ IF search_severity .NE. 3 .OR. link_severity .NE. 1 THEN -
+                SPAWN/WAIT/NOLOG EXIT 'link_status'
         - PURGE $bin.EXE,$bin.OPT
 EOF
   }
