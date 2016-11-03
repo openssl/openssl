@@ -1450,7 +1450,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     }
 
     /* Check we've got a key_share for TLSv1.3 */
-    if (s->version == TLS1_3_VERSION && s->s3->peer_tmp == NULL) {
+    if (s->version == TLS1_3_VERSION && s->s3->peer_tmp == NULL && !s->hit) {
         /* No suitable share */
         /* TODO(1.3): Send a HelloRetryRequest */
         al = SSL_AD_HANDSHAKE_FAILURE;
