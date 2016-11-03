@@ -13,7 +13,7 @@ TLS PRF key derivation algorithm
  int EVP_PKEY_CTX_set_tls1_prf_md(EVP_PKEY_CTX *pctx, const EVP_MD *md);
  int EVP_PKEY_CTX_set1_tls1_prf_secret(EVP_PKEY_CTX *pctx,
                                        unsigned char *sec, int seclen);
- int EVP_PKEY_CTX_add1_tls1_prf_seed(EVP_PKEY_CTX *pctx, seed, seedlen)
+ int EVP_PKEY_CTX_add1_tls1_prf_seed(EVP_PKEY_CTX *pctx,
                                      unsigned char *seed, int seedlen);
 
 =head1 DESCRIPTION
