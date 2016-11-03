@@ -18,27 +18,15 @@
 #include "testutil.h"
 #include "e_os.h"
 
-typedef struct {
-    const char *test_case_name;
-    const char *test_section;
-} SIMPLE_FIXTURE;
-
 /**********************************************************************
  *
  * Test of a_strnid's tbl_standard
  *
  ***/
 
-static SIMPLE_FIXTURE setup_tbl_standard(const char *const test_case_name)
-{
-    SIMPLE_FIXTURE fixture;
-    fixture.test_case_name = test_case_name;
-    return fixture;
-}
-
 #include "../crypto/asn1/tbl_standard.h"
 
-static int execute_tbl_standard(SIMPLE_FIXTURE fixture)
+static int test_tbl_standard()
 {
     const ASN1_STRING_TABLE *tmp;
     int last_nid = -1;
@@ -53,19 +41,15 @@ static int execute_tbl_standard(SIMPLE_FIXTURE fixture)
     }
 
     if (last_nid != 0) {
-        fprintf(stderr, "%s: Table order OK\n", fixture.test_section);
+        fprintf(stderr, "asn1 tbl_standard: Table order OK\n");
         return 1;
     }
 
     for (tmp = tbl_standard, i = 0; i < OSSL_NELEM(tbl_standard); i++, tmp++)
-        fprintf(stderr, "%s: Index %" OSSLzu ", NID %d, Name=%s\n",
-               fixture.test_section, i, tmp->nid, OBJ_nid2ln(tmp->nid));
+        fprintf(stderr, "asn1 tbl_standard: Index %" OSSLzu ", NID %d, Name=%s\n",
+                i, tmp->nid, OBJ_nid2ln(tmp->nid));
 
     return 0;
-}
-
-static void teardown_tbl_standard(SIMPLE_FIXTURE fixture)
-{
 }
 
 /**********************************************************************
@@ -74,17 +58,10 @@ static void teardown_tbl_standard(SIMPLE_FIXTURE fixture)
  *
  ***/
 
-static SIMPLE_FIXTURE setup_standard_methods(const char *const test_case_name)
-{
-    SIMPLE_FIXTURE fixture;
-    fixture.test_case_name = test_case_name;
-    return fixture;
-}
-
 #include "internal/asn1_int.h"
 #include "../crypto/asn1/standard_methods.h"
 
-static int execute_standard_methods(SIMPLE_FIXTURE fixture)
+static int test_standard_methods()
 {
     const EVP_PKEY_ASN1_METHOD **tmp;
     int last_pkey_id = -1;
@@ -100,51 +77,23 @@ static int execute_standard_methods(SIMPLE_FIXTURE fixture)
     }
 
     if (last_pkey_id != 0) {
-        fprintf(stderr, "%s: Table order OK\n", fixture.test_section);
+        fprintf(stderr, "asn1 standard methods: Table order OK\n");
         return 1;
     }
 
     for (tmp = standard_methods, i = 0; i < OSSL_NELEM(standard_methods);
          i++, tmp++)
-        fprintf(stderr, "%s: Index %" OSSLzu ", pkey ID %d, Name=%s\n",
-               fixture.test_section, i, (*tmp)->pkey_id,
-               OBJ_nid2sn((*tmp)->pkey_id));
+        fprintf(stderr, "asn1 standard methods: Index %" OSSLzu
+                ", pkey ID %d, Name=%s\n", i, (*tmp)->pkey_id,
+                OBJ_nid2sn((*tmp)->pkey_id));
 
     return 0;
 }
 
-static void teardown_standard_methods(SIMPLE_FIXTURE fixture)
-{
-}
-
-/**********************************************************************
- *
- * Test driver
- *
- ***/
-
-static struct {
-    const char *section;
-    SIMPLE_FIXTURE (*setup)(const char *const test_case_name);
-    int (*execute)(SIMPLE_FIXTURE);
-    void (*teardown)(SIMPLE_FIXTURE);
-} tests[] = {
-    {"asn1 tlb_standard", setup_tbl_standard, execute_tbl_standard,
-     teardown_tbl_standard},
-    {"asn1 standard_methods", setup_standard_methods, execute_standard_methods,
-     teardown_standard_methods}
-};
-
-static int drive_tests(int idx)
-{
-    SETUP_TEST_FIXTURE(SIMPLE_FIXTURE, tests[idx].setup);
-    fixture.test_section = tests[idx].section;
-    EXECUTE_TEST(tests[idx].execute, tests[idx].teardown);
-}
-
 int main(int argc, char **argv)
 {
-    ADD_ALL_TESTS(drive_tests, OSSL_NELEM(tests));
+    ADD_TEST(test_tbl_standard);
+    ADD_TEST(test_standard_methods);
 
     return run_tests(argv[0]);
 }
