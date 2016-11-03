@@ -13,14 +13,14 @@ TLS PRF key derivation algorithm
  int EVP_PKEY_CTX_set_tls1_prf_md(EVP_PKEY_CTX *pctx, const EVP_MD *md);
  int EVP_PKEY_CTX_set1_tls1_prf_secret(EVP_PKEY_CTX *pctx,
                                        unsigned char *sec, int seclen);
- int EVP_PKEY_CTX_add1_tls1_prf_seed(EVP_PKEY_CTX *pctx, seed, seedlen)
+ int EVP_PKEY_CTX_add1_tls1_prf_seed(EVP_PKEY_CTX *pctx,
                                      unsigned char *seed, int seedlen);
 
 =head1 DESCRIPTION
 
 The B<EVP_PKEY_TLS1_PRF> algorithm implements the PRF key derivation function for
 TLS. It has no associated private key and only implements key derivation
-using EVP_PKEY_derive().
+using L<EVP_PKEY_derive(3)>.
 
 EVP_PKEY_set_tls1_prf_md() sets the message digest associated with the
 TLS PRF. EVP_md5_sha1() is treated as a special case which uses the PRF
