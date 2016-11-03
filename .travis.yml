@@ -36,6 +36,9 @@ env:
 matrix:
     include:
         - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
+        - os: linux
           compiler: gcc
           env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers" COVERALLS="yes"
         - os: linux
