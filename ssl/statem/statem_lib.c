@@ -391,6 +391,7 @@ int tls_get_message_header(SSL *s, int *mt)
                 }
                 s->s3->tmp.message_type = *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
                 s->init_num = readbytes - 1;
+                s->init_msg = s->init_buf->data;
                 s->s3->tmp.message_size = readbytes;
                 return 1;
             } else if (recvd_type != SSL3_RT_HANDSHAKE) {
