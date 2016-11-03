@@ -167,7 +167,6 @@ static void tear_down(CIPHERLIST_TEST_FIXTURE fixture)
 {
     SSL_CTX_free(fixture.server);
     SSL_CTX_free(fixture.client);
-    ERR_print_errors_fp(stderr);
 }
 
 #define SETUP_CIPHERLIST_TEST_FIXTURE() \

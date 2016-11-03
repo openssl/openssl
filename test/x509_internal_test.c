@@ -66,7 +66,6 @@ static int execute_standard_exts(SIMPLE_FIXTURE fixture)
 
 static void teardown_standard_exts(SIMPLE_FIXTURE fixture)
 {
-    ERR_print_errors_fp(stderr);
 }
 
 /**********************************************************************
