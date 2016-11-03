@@ -28,12 +28,12 @@ typedef void (*SSL_CTX_free_t)(SSL_CTX *);
 typedef unsigned long (*ERR_get_error_t)(void);
 typedef unsigned long (*OpenSSL_version_num_t)(void);
 
-TLS_method_t TLS_method;
-SSL_CTX_new_t SSL_CTX_new;
-SSL_CTX_free_t SSL_CTX_free;
+static TLS_method_t TLS_method;
+static SSL_CTX_new_t SSL_CTX_new;
+static SSL_CTX_free_t SSL_CTX_free;
 
-ERR_get_error_t ERR_get_error;
-OpenSSL_version_num_t OpenSSL_version_num;
+static ERR_get_error_t ERR_get_error;
+static OpenSSL_version_num_t OpenSSL_version_num;
 
 
 #ifdef DSO_DLFCN
@@ -42,6 +42,7 @@ OpenSSL_version_num_t OpenSSL_version_num;
 
 typedef void * SHLIB;
 typedef void * SHLIB_SYM;
+# define SHLIB_INIT NULL
 
 # define SHARED_LIBRARY_SUFFIX ".so"
 
@@ -87,6 +88,7 @@ static int shlib_close(SHLIB lib)
 
 typedef HINSTANCE SHLIB;
 typedef void * SHLIB_SYM;
+# define SHLIB_INIT 0
 
 static int shlib_load(char *filename, SHLIB *lib)
 {
@@ -129,7 +131,7 @@ enum test_types_en {
 
 int main(int argc, char **argv)
 {
-    SHLIB ssllib, cryptolib;
+    SHLIB ssllib = SHLIB_INIT, cryptolib = SHLIB_INIT;
     SSL_CTX *ctx;
     union {
         void (*func) (void);
