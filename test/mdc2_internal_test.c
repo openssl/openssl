@@ -21,46 +21,6 @@ typedef struct {
     const unsigned char expected[MDC2_DIGEST_LENGTH];
 } TESTDATA;
 
-typedef struct {
-    const char *case_name;
-    int num;
-    const TESTDATA *data;
-} SIMPLE_FIXTURE;
-
-/**********************************************************************
- *
- * Test of mdc2 internal functions
- *
- ***/
-
-static SIMPLE_FIXTURE setup_mdc2(const char *const test_case_name)
-{
-    SIMPLE_FIXTURE fixture;
-    fixture.case_name = test_case_name;
-    return fixture;
-}
-
-static int execute_mdc2(SIMPLE_FIXTURE fixture)
-{
-    unsigned char md[MDC2_DIGEST_LENGTH];
-    MDC2_CTX c;
-
-    MDC2_Init(&c);
-    MDC2_Update(&c, (const unsigned char *)fixture.data->input,
-                strlen(fixture.data->input));
-    MDC2_Final(&(md[0]), &c);
-
-    if (memcmp(fixture.data->expected, md, MDC2_DIGEST_LENGTH)) {
-        fprintf(stderr, "mdc2 test %d: unexpected output\n", fixture.num);
-        return 0;
-    }
-
-    return 1;
-}
-
-static void teardown_mdc2(SIMPLE_FIXTURE fixture)
-{
-}
 
 /**********************************************************************
  *
@@ -78,17 +38,34 @@ static TESTDATA tests[] = {
     }
 };
 
-static int drive_tests(int idx)
+/**********************************************************************
+ *
+ * Test of mdc2 internal functions
+ *
+ ***/
+
+static int test_mdc2(int idx)
 {
-    SETUP_TEST_FIXTURE(SIMPLE_FIXTURE, setup_mdc2);
-    fixture.num = idx;
-    fixture.data = &tests[idx];
-    EXECUTE_TEST(execute_mdc2, teardown_mdc2);
+    unsigned char md[MDC2_DIGEST_LENGTH];
+    MDC2_CTX c;
+    const TESTDATA testdata = tests[idx];
+
+    MDC2_Init(&c);
+    MDC2_Update(&c, (const unsigned char *)testdata.input,
+                strlen(testdata.input));
+    MDC2_Final(&(md[0]), &c);
+
+    if (memcmp(testdata.expected, md, MDC2_DIGEST_LENGTH)) {
+        fprintf(stderr, "mdc2 test %d: unexpected output\n", idx);
+        return 0;
+    }
+
+    return 1;
 }
 
 int main(int argc, char **argv)
 {
-    ADD_ALL_TESTS(drive_tests, OSSL_NELEM(tests));
+    ADD_ALL_TESTS(test_mdc2, OSSL_NELEM(tests));
 
     return run_tests(argv[0]);
 }
