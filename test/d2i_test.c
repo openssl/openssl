@@ -41,18 +41,7 @@ typedef struct {
 
 static expected_error_t expected_error = ASN1_UNKNOWN;
 
-typedef struct d2i_test_fixture {
-    const char *test_case_name;
-} D2I_TEST_FIXTURE;
-
-static D2I_TEST_FIXTURE set_up(const char *const test_case_name)
-{
-    D2I_TEST_FIXTURE fixture;
-    fixture.test_case_name = test_case_name;
-    return fixture;
-}
-
-static int execute_test(D2I_TEST_FIXTURE fixture)
+static int test_bad_asn1()
 {
     BIO *bio = NULL;
     ASN1_VALUE *value = NULL;
@@ -114,23 +103,6 @@ static int execute_test(D2I_TEST_FIXTURE fixture)
     OPENSSL_free(der);
     ASN1_item_free(value, item_type);
     return ret;
-}
-
-static void tear_down(D2I_TEST_FIXTURE fixture)
-{
-    ERR_print_errors_fp(stderr);
-}
-
-#define SETUP_D2I_TEST_FIXTURE() \
-    SETUP_TEST_FIXTURE(D2I_TEST_FIXTURE, set_up)
-
-#define EXECUTE_D2I_TEST() \
-    EXECUTE_TEST(execute_test, tear_down)
-
-static int test_bad_asn1()
-{
-    SETUP_D2I_TEST_FIXTURE();
-    EXECUTE_D2I_TEST();
 }
 
 /*

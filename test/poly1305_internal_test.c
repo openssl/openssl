@@ -144,7 +144,6 @@ static int execute_poly1305(SIMPLE_FIXTURE fixture)
 
 static void teardown_poly1305(SIMPLE_FIXTURE fixture)
 {
-    ERR_print_errors_fp(stderr);
 }
 
 static void benchmark_poly1305()

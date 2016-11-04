@@ -233,7 +233,6 @@ static int execute_failure_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
 static void tear_down(SSL_TEST_CTX_TEST_FIXTURE fixture)
 {
     SSL_TEST_CTX_free(fixture.expected_ctx);
-    ERR_print_errors_fp(stderr);
 }
 
 #define SETUP_SSL_TEST_CTX_TEST_FIXTURE()                       \

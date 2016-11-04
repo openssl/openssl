@@ -12,7 +12,15 @@
 
 #include <openssl/err.h>
 
+/*
+ * In main(), call ADD_TEST to register each test case function, then call
+ * run_tests() to execute all tests and report the results. The result
+ * returned from run_tests() should be used as the return value for main().
+ */
+# define ADD_TEST(test_function) add_test(#test_function, test_function)
+
 /*-
+ * Test cases that share common setup should use the helper
  * SETUP_TEST_FIXTURE and EXECUTE_TEST macros for test case functions.
  *
  * SETUP_TEST_FIXTURE will call set_up() to create a new TEST_FIXTURE_TYPE
@@ -67,13 +75,6 @@
 # else
 #  define TEST_CASE_NAME __func__
 # endif                         /* __STDC_VERSION__ */
-
-/*
- * In main(), call ADD_TEST to register each test case function, then call
- * run_tests() to execute all tests and report the results. The result
- * returned from run_tests() should be used as the return value for main().
- */
-# define ADD_TEST(test_function) add_test(#test_function, test_function)
 
 /*
  * Simple parameterized tests. Adds a test_function(idx) test for each
