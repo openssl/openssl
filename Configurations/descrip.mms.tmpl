@@ -63,17 +63,13 @@
   }
   my $sd1 = sourcedir("ssl","record");
   my $sd2 = sourcedir("ssl","statem");
-  $unified_info{before}->{"[.test]heartbeat_test.OBJ"}
-      = $unified_info{before}->{"[.test]ssltest_old.OBJ"}
-      = qq(record_include = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define record 'record_include'
-        statem_include = F\$PARSE("$sd2","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define statem 'statem_include');
-  $unified_info{after}->{"[.test]heartbeat_test.OBJ"}
-      = $unified_info{after}->{"[.test]ssltest.OBJ"}
-      = qq(deassign statem
-        deassign record);
-  foreach (grep /^\[\.ssl\.(?:record|statem)\].*\.o$/, keys %{$unified_info{sources}}) {
+  my @ssl_locl_users =
+      ( "[.test]cipher_overhead_test.o",
+        "[.test]dtls_mtu_test.o",
+        "[.test]heartbeat_test.o",
+        "[.test]ssltest_old.o",
+        grep /^\[\.ssl\.(?:record|statem)\].*\.o$/, keys %{$unified_info{sources}} );
+  foreach (@ssl_locl_users) {
       (my $x = $_) =~ s|\.o$|.OBJ|;
       $unified_info{before}->{$x}
           = qq(record_include = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
