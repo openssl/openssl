@@ -136,7 +136,7 @@ The TCP port to listen on for connections. If not specified 4433 is used.
 
 =item B<-accept val>
 
-The TCP optional ost and port to listen on for connections. If not specified 4433 is used.
+The TCP optional host and port to listen on for connections. If not specified 4433 is used.
 
 =item B<-naccept count>
 
