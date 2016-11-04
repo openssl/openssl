@@ -28,24 +28,11 @@ typedef struct {
     SIZED_DATA expected;
 } TESTDATA;
 
-typedef struct {
-    const char *test_case_name;
-    int test_num;
-    const TESTDATA *test_data;
-} SIMPLE_FIXTURE;
-
 /**********************************************************************
  *
  * Test of poly1305 internal functions
  *
  ***/
-
-static SIMPLE_FIXTURE setup_poly1305(const char *const test_case_name)
-{
-    SIMPLE_FIXTURE fixture;
-    fixture.test_case_name = test_case_name;
-    return fixture;
-}
 
 /* TODO : hex decoder / encoder should be implemented in testutil.c */
 static void hexdump(const unsigned char *a, size_t len)
@@ -54,96 +41,6 @@ static void hexdump(const unsigned char *a, size_t len)
 
     for (i = 0; i < len; i++)
         fprintf(stderr, "%02x", a[i]);
-}
-
-static int execute_poly1305(SIMPLE_FIXTURE fixture)
-{
-    POLY1305 poly1305;
-    unsigned int i = fixture.test_num;
-    const TESTDATA *test = fixture.test_data;
-    const unsigned char *in = test->input.data;
-    size_t inlen = test->input.size;
-    const unsigned char *key = test->key.data;
-    const unsigned char *expected = test->expected.data;
-    size_t expectedlen = test->expected.size;
-    unsigned char out[16];
-
-    if (expectedlen != sizeof(out))
-        return 0;
-
-    Poly1305_Init(&poly1305, key);
-    Poly1305_Update(&poly1305, in, inlen);
-    Poly1305_Final(&poly1305, out);
-
-    if (memcmp(out, expected, expectedlen) != 0) {
-        fprintf(stderr, "Poly1305 test #%d failed.\n", i);
-        fprintf(stderr, "got:      ");
-        hexdump(out, sizeof(out));
-        fprintf(stderr, "\nexpected: ");
-        hexdump(expected, expectedlen);
-        fprintf(stderr, "\n");
-        return 0;
-    }
-
-    if (inlen > 16) {
-        Poly1305_Init(&poly1305, key);
-        Poly1305_Update(&poly1305, in, 1);
-        Poly1305_Update(&poly1305, in+1, inlen-1);
-        Poly1305_Final(&poly1305, out);
-
-        if (memcmp(out, expected, expectedlen) != 0) {
-            fprintf(stderr, "Poly1305 test #%d/1+(N-1) failed.\n", i);
-            fprintf(stderr, "got:      ");
-            hexdump(out, sizeof(out));
-            fprintf(stderr, "\nexpected: ");
-            hexdump(expected, expectedlen);
-            fprintf(stderr, "\n");
-            return 0;
-        }
-    }
-
-    if (inlen > 32) {
-        size_t half = inlen / 2;
-
-        Poly1305_Init(&poly1305, key);
-        Poly1305_Update(&poly1305, in, half);
-        Poly1305_Update(&poly1305, in+half, inlen-half);
-        Poly1305_Final(&poly1305, out);
-
-        if (memcmp(out, expected, expectedlen) != 0) {
-            fprintf(stderr, "Poly1305 test #%d/2 failed.\n", i);
-            fprintf(stderr, "got:      ");
-            hexdump(out, sizeof(out));
-            fprintf(stderr, "\nexpected: ");
-            hexdump(expected, expectedlen);
-            fprintf(stderr, "\n");
-            return 0;
-        }
-
-        for (half = 16; half < inlen; half += 16) {
-            Poly1305_Init(&poly1305, key);
-            Poly1305_Update(&poly1305, in, half);
-            Poly1305_Update(&poly1305, in+half, inlen-half);
-            Poly1305_Final(&poly1305, out);
-
-            if (memcmp(out, expected, expectedlen) != 0) {
-                fprintf(stderr, "Poly1305 test #%d/%" OSSLzu "+%" OSSLzu " failed.\n",
-                       i, half, inlen-half);
-                fprintf(stderr, "got:      ");
-                hexdump(out, sizeof(out));
-                fprintf(stderr, "\nexpected: ");
-                hexdump(expected, expectedlen);
-                fprintf(stderr, "\n");
-                return 0;
-            }
-        }
-    }
-
-    return 1;
-}
-
-static void teardown_poly1305(SIMPLE_FIXTURE fixture)
-{
 }
 
 static void benchmark_poly1305()
@@ -185,12 +82,6 @@ static void benchmark_poly1305()
             "Benchmarking of poly1305 isn't available on this platform\n");
 # endif
 }
-
-/**********************************************************************
- *
- * Test driver
- *
- ***/
 
 static TESTDATA tests[] = {
     /*
@@ -1662,12 +1553,89 @@ static TESTDATA tests[] = {
     }
 };
 
-static int drive_tests(int idx)
+static int test_poly1305(int idx)
 {
-    SETUP_TEST_FIXTURE(SIMPLE_FIXTURE, setup_poly1305);
-    fixture.test_num = idx;
-    fixture.test_data = &tests[idx];
-    EXECUTE_TEST(execute_poly1305, teardown_poly1305);
+    POLY1305 poly1305;
+    const TESTDATA test = tests[idx];
+    const unsigned char *in = test.input.data;
+    size_t inlen = test.input.size;
+    const unsigned char *key = test.key.data;
+    const unsigned char *expected = test.expected.data;
+    size_t expectedlen = test.expected.size;
+    unsigned char out[16];
+
+    if (expectedlen != sizeof(out))
+        return 0;
+
+    Poly1305_Init(&poly1305, key);
+    Poly1305_Update(&poly1305, in, inlen);
+    Poly1305_Final(&poly1305, out);
+
+    if (memcmp(out, expected, expectedlen) != 0) {
+        fprintf(stderr, "Poly1305 test #%d failed.\n", idx);
+        fprintf(stderr, "got:      ");
+        hexdump(out, sizeof(out));
+        fprintf(stderr, "\nexpected: ");
+        hexdump(expected, expectedlen);
+        fprintf(stderr, "\n");
+        return 0;
+    }
+
+    if (inlen > 16) {
+        Poly1305_Init(&poly1305, key);
+        Poly1305_Update(&poly1305, in, 1);
+        Poly1305_Update(&poly1305, in+1, inlen-1);
+        Poly1305_Final(&poly1305, out);
+
+        if (memcmp(out, expected, expectedlen) != 0) {
+            fprintf(stderr, "Poly1305 test #%d/1+(N-1) failed.\n", idx);
+            fprintf(stderr, "got:      ");
+            hexdump(out, sizeof(out));
+            fprintf(stderr, "\nexpected: ");
+            hexdump(expected, expectedlen);
+            fprintf(stderr, "\n");
+            return 0;
+        }
+    }
+
+    if (inlen > 32) {
+        size_t half = inlen / 2;
+
+        Poly1305_Init(&poly1305, key);
+        Poly1305_Update(&poly1305, in, half);
+        Poly1305_Update(&poly1305, in+half, inlen-half);
+        Poly1305_Final(&poly1305, out);
+
+        if (memcmp(out, expected, expectedlen) != 0) {
+            fprintf(stderr, "Poly1305 test #%d/2 failed.\n", idx);
+            fprintf(stderr, "got:      ");
+            hexdump(out, sizeof(out));
+            fprintf(stderr, "\nexpected: ");
+            hexdump(expected, expectedlen);
+            fprintf(stderr, "\n");
+            return 0;
+        }
+
+        for (half = 16; half < inlen; half += 16) {
+            Poly1305_Init(&poly1305, key);
+            Poly1305_Update(&poly1305, in, half);
+            Poly1305_Update(&poly1305, in+half, inlen-half);
+            Poly1305_Final(&poly1305, out);
+
+            if (memcmp(out, expected, expectedlen) != 0) {
+                fprintf(stderr, "Poly1305 test #%d/%" OSSLzu "+%" OSSLzu " failed.\n",
+                       idx, half, inlen-half);
+                fprintf(stderr, "got:      ");
+                hexdump(out, sizeof(out));
+                fprintf(stderr, "\nexpected: ");
+                hexdump(expected, expectedlen);
+                fprintf(stderr, "\n");
+                return 0;
+            }
+        }
+    }
+
+    return 1;
 }
 
 int main(int argc, char **argv)
@@ -1683,7 +1651,7 @@ int main(int argc, char **argv)
             goto help;
     }
 
-    ADD_ALL_TESTS(drive_tests, OSSL_NELEM(tests));
+    ADD_ALL_TESTS(test_poly1305, OSSL_NELEM(tests));
 
     result = run_tests(argv[0]);
 
