@@ -2754,7 +2754,8 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
 
             skey = ssl_generate_pkey(ckey);
 
-            if (!PACKET_as_length_prefixed_2(&spkt, &encoded_pt)) {
+            if (!PACKET_as_length_prefixed_2(&spkt, &encoded_pt)
+                    || PACKET_remaining(&encoded_pt) == 0) {
                 *al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT,
                        SSL_R_LENGTH_MISMATCH);
