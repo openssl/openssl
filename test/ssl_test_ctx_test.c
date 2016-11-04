@@ -216,20 +216,6 @@ static int execute_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
     return success;
 }
 
-static int execute_failure_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
-{
-    SSL_TEST_CTX *ctx = SSL_TEST_CTX_create(conf, fixture.test_section);
-
-    if (ctx != NULL) {
-        fprintf(stderr, "Parsing bad configuration %s succeeded.\n",
-                fixture.test_section);
-        SSL_TEST_CTX_free(ctx);
-        return 0;
-    }
-
-    return 1;
-}
-
 static void tear_down(SSL_TEST_CTX_TEST_FIXTURE fixture)
 {
     SSL_TEST_CTX_free(fixture.expected_ctx);
@@ -239,8 +225,6 @@ static void tear_down(SSL_TEST_CTX_TEST_FIXTURE fixture)
     SETUP_TEST_FIXTURE(SSL_TEST_CTX_TEST_FIXTURE, set_up)
 #define EXECUTE_SSL_TEST_CTX_TEST()             \
     EXECUTE_TEST(execute_test, tear_down)
-#define EXECUTE_SSL_TEST_CTX_FAILURE_TEST()             \
-    EXECUTE_TEST(execute_failure_test, tear_down)
 
 static int test_empty_configuration()
 {
@@ -307,9 +291,16 @@ static const char *bad_configurations[] = {
 
 static int test_bad_configuration(int idx)
 {
-        SETUP_SSL_TEST_CTX_TEST_FIXTURE();
-        fixture.test_section = bad_configurations[idx];
-        EXECUTE_SSL_TEST_CTX_FAILURE_TEST();
+    SSL_TEST_CTX *ctx = SSL_TEST_CTX_create(conf, bad_configurations[idx]);
+
+    if (ctx != NULL) {
+        fprintf(stderr, "Parsing bad configuration %s succeeded.\n",
+                bad_configurations[idx]);
+        SSL_TEST_CTX_free(ctx);
+        return 0;
+    }
+
+    return 1;
 }
 
 int main(int argc, char **argv)

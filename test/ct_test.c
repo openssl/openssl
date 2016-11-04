@@ -507,20 +507,20 @@ static int test_encode_tls_sct()
     SCT *sct = SCT_new();
     if (!SCT_set_version(sct, SCT_VERSION_V1)) {
         fprintf(stderr, "Failed to set SCT version\n");
-        return 1;
+        return 0;
     }
     if (!SCT_set1_log_id(sct, log_id, 32)) {
         fprintf(stderr, "Failed to set SCT log ID\n");
-        return 1;
+        return 0;
     }
     SCT_set_timestamp(sct, 1);
     if (!SCT_set_signature_nid(sct, NID_ecdsa_with_SHA256)) {
         fprintf(stderr, "Failed to set SCT signature NID\n");
-        return 1;
+        return 0;
     }
     if (!SCT_set1_signature(sct, signature, 71)) {
         fprintf(stderr, "Failed to set SCT signature\n");
-        return 1;
+        return 0;
     }
     sk_SCT_push(sct_list, sct);
 

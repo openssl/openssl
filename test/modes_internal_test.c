@@ -29,316 +29,6 @@ typedef struct {
  *
  ***/
 
-typedef struct {
-    const char *case_name;
-    int num;
-    const AES_KEY *encrypt_key_schedule;
-    const AES_KEY *decrypt_key_schedule;
-    const unsigned char *input;
-    SIZED_DATA iv;
-    const SIZED_DATA *vector;
-} CTS128_FIXTURE;
-
-static CTS128_FIXTURE setup_cts128(const char *const test_case_name)
-{
-    CTS128_FIXTURE fixture;
-    fixture.case_name = test_case_name;
-    return fixture;
-}
-
-static int execute_cts128(CTS128_FIXTURE fixture)
-{
-    const unsigned char *test_iv = fixture.iv.data;
-    size_t test_iv_len = fixture.iv.size;
-    const unsigned char *vector = fixture.vector->data;
-    size_t len = fixture.vector->size;
-    const unsigned char *test_input = fixture.input;
-    const AES_KEY *encrypt_key_schedule = fixture.encrypt_key_schedule;
-    const AES_KEY *decrypt_key_schedule = fixture.decrypt_key_schedule;
-    unsigned char iv[16];
-    unsigned char cleartext[64], ciphertext[64];
-    size_t tail;
-
-    fprintf(stderr, "vector_%" OSSLzu "\n", len);
-    fflush(stdout);
-
-    if ((tail = len % 16) == 0)
-        tail = 16;
-    tail += 16;
-
-    /* test block-based encryption */
-    memcpy(iv, test_iv, test_iv_len);
-    CRYPTO_cts128_encrypt_block(test_input, ciphertext, len,
-                                encrypt_key_schedule, iv,
-                                (block128_f)AES_encrypt);
-    if (memcmp(ciphertext, vector, len)) {
-        fprintf(stderr, "block encrypt: output_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-    if (memcmp(iv, vector + len - tail, sizeof(iv))) {
-        fprintf(stderr, "block encrypt: iv_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-
-    /* test block-based decryption */
-    memcpy(iv, test_iv, test_iv_len);
-    CRYPTO_cts128_decrypt_block(ciphertext, cleartext, len,
-                                decrypt_key_schedule, iv,
-                                (block128_f)AES_decrypt);
-    if (memcmp(cleartext, test_input, len)) {
-        fprintf(stderr, "block decrypt: input_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-    if (memcmp(iv, vector + len - tail, sizeof(iv))) {
-        fprintf(stderr, "block decrypt: iv_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-
-    /* test streamed encryption */
-    memcpy(iv, test_iv, test_iv_len);
-    CRYPTO_cts128_encrypt(test_input, ciphertext, len, encrypt_key_schedule,
-                          iv, (cbc128_f) AES_cbc_encrypt);
-    if (memcmp(ciphertext, vector, len)) {
-        fprintf(stderr, "stream encrypt: output_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-    if (memcmp(iv, vector + len - tail, sizeof(iv))) {
-        fprintf(stderr, "stream encrypt: iv_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-
-    /* test streamed decryption */
-    memcpy(iv, test_iv, test_iv_len);
-    CRYPTO_cts128_decrypt(ciphertext, cleartext, len, decrypt_key_schedule, iv,
-                          (cbc128_f)AES_cbc_encrypt);
-    if (memcmp(cleartext, test_input, len)) {
-        fprintf(stderr, "stream decrypt: input_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-    if (memcmp(iv, vector + len - tail, sizeof(iv))) {
-        fprintf(stderr, "stream decrypt: iv_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-
-    return 1;
-}
-
-static int execute_cts128_nist(CTS128_FIXTURE fixture)
-{
-    const unsigned char *test_iv = fixture.iv.data;
-    size_t test_iv_len = fixture.iv.size;
-    const unsigned char *vector = fixture.vector->data;
-    size_t len = fixture.vector->size;
-    const unsigned char *test_input = fixture.input;
-    const AES_KEY *encrypt_key_schedule = fixture.encrypt_key_schedule;
-    const AES_KEY *decrypt_key_schedule = fixture.decrypt_key_schedule;
-    unsigned char iv[16];
-    unsigned char cleartext[64], ciphertext[64], nistvector[64];
-    size_t tail;
-
-    fprintf(stderr, "nistvector_%" OSSLzu "\n", len);
-    fflush(stdout);
-
-    if ((tail = len % 16) == 0)
-        tail = 16;
-
-    len -= 16 + tail;
-    memcpy(nistvector, vector, len);
-    /* flip two last blocks */
-    memcpy(nistvector + len, vector + len + 16, tail);
-    memcpy(nistvector + len + tail, vector + len, 16);
-    len += 16 + tail;
-    tail = 16;
-
-    /* test block-based encryption */
-    memcpy(iv, test_iv, test_iv_len);
-    CRYPTO_nistcts128_encrypt_block(test_input, ciphertext, len,
-                                    encrypt_key_schedule, iv,
-                                    (block128_f)AES_encrypt);
-    if (memcmp(ciphertext, nistvector, len)) {
-        fprintf(stderr, "output_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-    if (memcmp(iv, nistvector + len - tail, sizeof(iv))) {
-        fprintf(stderr, "iv_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-
-    /* test block-based decryption */
-    memcpy(iv, test_iv, test_iv_len);
-    CRYPTO_nistcts128_decrypt_block(ciphertext, cleartext, len,
-                                    decrypt_key_schedule, iv,
-                                    (block128_f)AES_decrypt);
-    if (memcmp(cleartext, test_input, len)) {
-        fprintf(stderr, "input_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-    if (memcmp(iv, nistvector + len - tail, sizeof(iv))) {
-        fprintf(stderr, "iv_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-
-    /* test streamed encryption */
-    memcpy(iv, test_iv, test_iv_len);
-    CRYPTO_nistcts128_encrypt(test_input, ciphertext, len,
-                              encrypt_key_schedule, iv,
-                              (cbc128_f)AES_cbc_encrypt);
-    if (memcmp(ciphertext, nistvector, len)) {
-        fprintf(stderr, "output_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-    if (memcmp(iv, nistvector + len - tail, sizeof(iv))) {
-        fprintf(stderr, "iv_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-
-    /* test streamed decryption */
-    memcpy(iv, test_iv, test_iv_len);
-    CRYPTO_nistcts128_decrypt(ciphertext, cleartext, len, decrypt_key_schedule,
-                              iv, (cbc128_f)AES_cbc_encrypt);
-    if (memcmp(cleartext, test_input, len)) {
-        fprintf(stderr, "input_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-    if (memcmp(iv, nistvector + len - tail, sizeof(iv))) {
-        fprintf(stderr, "iv_%" OSSLzu " mismatch\n", len);
-        return 0;
-    }
-
-    return 1;
-}
-
-static void teardown_cts128(CTS128_FIXTURE fixture)
-{
-}
-
-/**********************************************************************
- *
- * Test of gcm128
- *
- ***/
-
-typedef struct {
-    const char *case_name;
-    int num;
-    SIZED_DATA K;
-    SIZED_DATA IV;
-    SIZED_DATA A;
-    SIZED_DATA P;
-    SIZED_DATA C;
-    SIZED_DATA T;
-} GCM128_FIXTURE;
-
-static GCM128_FIXTURE setup_gcm128(const char *const test_case_name)
-{
-    GCM128_FIXTURE fixture;
-    fixture.case_name = test_case_name;
-    return fixture;
-}
-
-static int execute_gcm128(GCM128_FIXTURE fixture)
-{
-    unsigned char out[512];
-    SIZED_DATA *K = &fixture.K;
-    SIZED_DATA *IV = &fixture.IV;
-    SIZED_DATA *A = &fixture.A;
-    SIZED_DATA *P = &fixture.P;
-    SIZED_DATA *C = &fixture.C;
-    SIZED_DATA *T = &fixture.T;
-    int n = fixture.num;
-    GCM128_CONTEXT ctx;
-    AES_KEY key;
-    int err = 0;
-
-    AES_set_encrypt_key(K->data, K->size * 8, &key);
-
-    CRYPTO_gcm128_init(&ctx, &key, (block128_f)AES_encrypt);
-    CRYPTO_gcm128_setiv(&ctx, IV->data, IV->size);
-    memset(out, 0, P->size);
-    if (A->data)
-        CRYPTO_gcm128_aad(&ctx, A->data, A->size);
-    if (P->data)
-        CRYPTO_gcm128_encrypt( &ctx, P->data, out, P->size);
-    if (CRYPTO_gcm128_finish(&ctx, T->data, 16)
-        || (C->data && memcmp(out, C->data, P->size)))
-        err++, fprintf(stderr, "encrypt test#%d failed.\n", n);
-
-    CRYPTO_gcm128_setiv(&ctx, IV->data, IV->size);
-    memset(out, 0, P->size);
-    if (A->data)
-        CRYPTO_gcm128_aad(&ctx, A->data, A->size);
-    if (C->data)
-        CRYPTO_gcm128_decrypt(&ctx, C->data, out, P->size);
-    if (CRYPTO_gcm128_finish(&ctx, T->data, 16)
-        || (P->data && memcmp(out, P->data, P->size)))
-        err++, fprintf(stderr, "decrypt test#%d failed.\n", n);
-
-    return err == 0;
-}
-
-static void teardown_gcm128(GCM128_FIXTURE fixture)
-{
-}
-
-static void benchmark_gcm128(const unsigned char *K, size_t Klen,
-                             const unsigned char *IV, size_t IVlen)
-{
-#ifdef OPENSSL_CPUID_OBJ
-    GCM128_CONTEXT ctx;
-    AES_KEY key;
-    size_t start, gcm_t, ctr_t, OPENSSL_rdtsc();
-    union {
-        u64 u;
-        u8 c[1024];
-    } buf;
-
-    AES_set_encrypt_key(K, Klen * 8, &key);
-    CRYPTO_gcm128_init(&ctx, &key, (block128_f) AES_encrypt);
-    CRYPTO_gcm128_setiv(&ctx, IV, IVlen);
-
-    CRYPTO_gcm128_encrypt(&ctx, buf.c, buf.c, sizeof(buf));
-    start = OPENSSL_rdtsc();
-    CRYPTO_gcm128_encrypt(&ctx, buf.c, buf.c, sizeof(buf));
-    gcm_t = OPENSSL_rdtsc() - start;
-
-    CRYPTO_ctr128_encrypt(buf.c, buf.c, sizeof(buf),
-                          &key, ctx.Yi.c, ctx.EKi.c, &ctx.mres,
-                          (block128_f) AES_encrypt);
-    start = OPENSSL_rdtsc();
-    CRYPTO_ctr128_encrypt(buf.c, buf.c, sizeof(buf),
-                          &key, ctx.Yi.c, ctx.EKi.c, &ctx.mres,
-                          (block128_f) AES_encrypt);
-    ctr_t = OPENSSL_rdtsc() - start;
-
-    printf("%.2f-%.2f=%.2f\n",
-           gcm_t / (double)sizeof(buf),
-           ctr_t / (double)sizeof(buf),
-           (gcm_t - ctr_t) / (double)sizeof(buf));
-# ifdef GHASH
-    {
-        void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
-                             const u8 *inp, size_t len) = ctx.ghash;
-
-        GHASH((&ctx), buf.c, sizeof(buf));
-        start = OPENSSL_rdtsc();
-        for (i = 0; i < 100; ++i)
-            GHASH((&ctx), buf.c, sizeof(buf));
-        gcm_t = OPENSSL_rdtsc() - start;
-        printf("%.2f\n", gcm_t / (double)sizeof(buf) / (double)i);
-    }
-# endif
-#else
-    fprintf(stderr,
-            "Benchmarking of modes isn't available on this platform\n");
-#endif
-}
-
-/**********************************************************************
- *
- * Test driver
- *
- ***/
-
 /* cts128 test vectors from RFC 3962 */
 static const unsigned char cts128_test_key[16] = "chicken teriyaki";
 static const unsigned char cts128_test_input[64] =
@@ -433,31 +123,173 @@ static AES_KEY *cts128_decrypt_key_schedule()
     return &ks;
 }
 
-static int drive_cts128_tests(int idx)
+typedef struct {
+    const char *case_name;
+    int num;
+    size_t (*transform_output)(const unsigned char *in, unsigned char *out,
+                               size_t len);
+    size_t (*encrypt_block)(const unsigned char *in,
+                            unsigned char *out, size_t len,
+                            const void *key, unsigned char ivec[16],
+                            block128_f block);
+    size_t (*encrypt)(const unsigned char *in, unsigned char *out,
+                      size_t len, const void *key,
+                      unsigned char ivec[16], cbc128_f cbc);
+    size_t (*decrypt_block)(const unsigned char *in,
+                            unsigned char *out, size_t len,
+                            const void *key, unsigned char ivec[16],
+                            block128_f block);
+    size_t (*decrypt)(const unsigned char *in, unsigned char *out,
+                      size_t len, const void *key,
+                      unsigned char ivec[16], cbc128_f cbc);
+} CTS128_FIXTURE;
+
+
+static CTS128_FIXTURE setup_cts128(const char *const test_case_name)
 {
-    SETUP_TEST_FIXTURE(CTS128_FIXTURE, setup_cts128);
-    fixture.num = idx;
-    fixture.encrypt_key_schedule = cts128_encrypt_key_schedule();
-    fixture.decrypt_key_schedule = cts128_decrypt_key_schedule();
-    fixture.input = cts128_test_input;
-    fixture.iv.size = sizeof(cts128_test_iv);
-    fixture.iv.data = cts128_test_iv;
-    fixture.vector = &cts128_vectors[idx];
-    EXECUTE_TEST(execute_cts128, teardown_cts128);
+    CTS128_FIXTURE fixture;
+    fixture.case_name = test_case_name;
+    return fixture;
 }
 
-static int drive_cts128_nist_tests(int idx)
+static size_t transform_output(const unsigned char *in, unsigned char *out,
+                               size_t len)
+{
+    size_t tail;
+
+    memcpy(out, in, len);
+    if ((tail = len % 16) == 0)
+        tail = 16;
+    tail += 16;
+
+    return tail;
+}
+
+static size_t transform_output_nist(const unsigned char *in, unsigned char *out,
+                                    size_t len)
+{
+    size_t tail;
+
+    if ((tail = len % 16) == 0)
+        tail = 16;
+    len -= 16 + tail;
+    memcpy(out, in, len);
+    /* flip two last blocks */
+    memcpy(out + len, in + len + 16, tail);
+    memcpy(out + len + tail, in + len, 16);
+    len += 16 + tail;
+    tail = 16;
+
+    return tail;
+}
+
+static int execute_cts128(CTS128_FIXTURE fixture)
+{
+    const unsigned char *test_iv = cts128_test_iv;
+    size_t test_iv_len = sizeof(cts128_test_iv);
+    const unsigned char *orig_vector = cts128_vectors[fixture.num].data;
+    size_t len = cts128_vectors[fixture.num].size;
+    const unsigned char *test_input = cts128_test_input;
+    const AES_KEY *encrypt_key_schedule = cts128_encrypt_key_schedule();
+    const AES_KEY *decrypt_key_schedule = cts128_decrypt_key_schedule();
+    unsigned char iv[16];
+    /* The largest test inputs are = 64 bytes. */
+    unsigned char cleartext[64], ciphertext[64], vector[64];
+    size_t tail;
+
+    fprintf(stderr, "%s_vector_%" OSSLzu "\n", fixture.case_name, len);
+    fflush(stdout);
+
+    tail = fixture.transform_output(orig_vector, vector, len);
+
+    /* test block-based encryption */
+    memcpy(iv, test_iv, test_iv_len);
+    fixture.encrypt_block(test_input, ciphertext, len,
+                          encrypt_key_schedule, iv,
+                          (block128_f)AES_encrypt);
+    if (memcmp(ciphertext, vector, len)) {
+        fprintf(stderr, "block encrypt: output_%" OSSLzu " mismatch\n", len);
+        return 0;
+    }
+    if (memcmp(iv, vector + len - tail, sizeof(iv))) {
+        fprintf(stderr, "block encrypt: iv_%" OSSLzu " mismatch\n", len);
+        return 0;
+    }
+
+    /* test block-based decryption */
+    memcpy(iv, test_iv, test_iv_len);
+    fixture.decrypt_block(ciphertext, cleartext, len,
+                          decrypt_key_schedule, iv,
+                          (block128_f)AES_decrypt);
+    if (memcmp(cleartext, test_input, len)) {
+        fprintf(stderr, "block decrypt: input_%" OSSLzu " mismatch\n", len);
+        return 0;
+    }
+    if (memcmp(iv, vector + len - tail, sizeof(iv))) {
+        fprintf(stderr, "block decrypt: iv_%" OSSLzu " mismatch\n", len);
+        return 0;
+    }
+
+    /* test streamed encryption */
+    memcpy(iv, test_iv, test_iv_len);
+    fixture.encrypt(test_input, ciphertext, len, encrypt_key_schedule,
+                    iv, (cbc128_f) AES_cbc_encrypt);
+    if (memcmp(ciphertext, vector, len)) {
+        fprintf(stderr, "stream encrypt: output_%" OSSLzu " mismatch\n", len);
+        return 0;
+    }
+    if (memcmp(iv, vector + len - tail, sizeof(iv))) {
+        fprintf(stderr, "stream encrypt: iv_%" OSSLzu " mismatch\n", len);
+        return 0;
+    }
+
+    /* test streamed decryption */
+    memcpy(iv, test_iv, test_iv_len);
+    fixture.decrypt(ciphertext, cleartext, len, decrypt_key_schedule, iv,
+                    (cbc128_f)AES_cbc_encrypt);
+    if (memcmp(cleartext, test_input, len)) {
+        fprintf(stderr, "stream decrypt: input_%" OSSLzu " mismatch\n", len);
+        return 0;
+    }
+    if (memcmp(iv, vector + len - tail, sizeof(iv))) {
+        fprintf(stderr, "stream decrypt: iv_%" OSSLzu " mismatch\n", len);
+        return 0;
+    }
+
+    return 1;
+}
+
+static int test_cts128(int idx)
 {
     SETUP_TEST_FIXTURE(CTS128_FIXTURE, setup_cts128);
+    fixture.transform_output = transform_output;
+    fixture.encrypt_block = CRYPTO_cts128_encrypt_block;
+    fixture.encrypt = CRYPTO_cts128_encrypt;
+    fixture.decrypt_block = CRYPTO_cts128_decrypt_block;
+    fixture.decrypt = CRYPTO_cts128_decrypt;
+    fixture.case_name = "cts128";
     fixture.num = idx;
-    fixture.encrypt_key_schedule = cts128_encrypt_key_schedule();
-    fixture.decrypt_key_schedule = cts128_decrypt_key_schedule();
-    fixture.input = cts128_test_input;
-    fixture.iv.size = sizeof(cts128_test_iv);
-    fixture.iv.data = cts128_test_iv;
-    fixture.vector = &cts128_vectors[idx];
-    EXECUTE_TEST(execute_cts128_nist, teardown_cts128);
+    EXECUTE_TEST_NO_TEARDOWN(execute_cts128);
 }
+
+static int test_cts128_nist(int idx)
+{
+    SETUP_TEST_FIXTURE(CTS128_FIXTURE, setup_cts128);
+    fixture.transform_output = transform_output_nist;
+    fixture.encrypt_block = CRYPTO_nistcts128_encrypt_block;
+    fixture.encrypt = CRYPTO_nistcts128_encrypt;
+    fixture.decrypt_block = CRYPTO_nistcts128_decrypt_block;
+    fixture.decrypt = CRYPTO_nistcts128_decrypt;
+    fixture.case_name = "cts128_nist";
+    fixture.num = idx;
+    EXECUTE_TEST_NO_TEARDOWN(execute_cts128);
+}
+
+/**********************************************************************
+ *
+ * Test of gcm128
+ *
+ ***/
 
 /* Test Case 1 */
 static const u8 K1[16], P1[] = { 0 }, A1[] = { 0 }, IV1[12], C1[] = { 0 };
@@ -1032,23 +864,104 @@ static struct gcm128_data {
     GCM128_TEST_VECTOR(20)
 };
 
-static int drive_gcm128_tests(int idx)
+static int test_gcm128(int idx)
 {
-    SETUP_TEST_FIXTURE(GCM128_FIXTURE, setup_gcm128);
-    fixture.num = idx;
-    fixture.K.size = gcm128_vectors[idx].K.size;
-    fixture.K.data = fixture.K.size == 1 ? NULL : gcm128_vectors[idx].K.data;
-    fixture.IV.size = gcm128_vectors[idx].IV.size;
-    fixture.IV.data = fixture.IV.size == 1 ? NULL : gcm128_vectors[idx].IV.data;
-    fixture.A.size = gcm128_vectors[idx].A.size;
-    fixture.A.data = fixture.A.size == 1 ? NULL : gcm128_vectors[idx].A.data;
-    fixture.P.size = gcm128_vectors[idx].P.size;
-    fixture.P.data = fixture.P.size == 1 ? NULL : gcm128_vectors[idx].P.data;
-    fixture.C.size = gcm128_vectors[idx].C.size;
-    fixture.C.data = fixture.C.size == 1 ? NULL : gcm128_vectors[idx].C.data;
-    fixture.T.size = gcm128_vectors[idx].T.size;
-    fixture.T.data = fixture.T.size == 1 ? NULL : gcm128_vectors[idx].T.data;
-    EXECUTE_TEST(execute_gcm128, teardown_gcm128);
+    unsigned char out[512];
+    SIZED_DATA K = gcm128_vectors[idx].K;
+    SIZED_DATA IV = gcm128_vectors[idx].IV;
+    SIZED_DATA A = gcm128_vectors[idx].A;
+    SIZED_DATA P = gcm128_vectors[idx].P;
+    SIZED_DATA C = gcm128_vectors[idx].C;
+    SIZED_DATA T = gcm128_vectors[idx].T;
+    GCM128_CONTEXT ctx;
+    AES_KEY key;
+    int err = 0;
+
+    /* Size 1 inputs are special-cased to signal NULL. */
+    if (A.size == 1)
+        A.data = NULL;
+    if (P.size == 1)
+        P.data = NULL;
+    if (C.size == 1)
+        C.data = NULL;
+
+    AES_set_encrypt_key(K.data, K.size * 8, &key);
+
+    CRYPTO_gcm128_init(&ctx, &key, (block128_f)AES_encrypt);
+    CRYPTO_gcm128_setiv(&ctx, IV.data, IV.size);
+    memset(out, 0, P.size);
+    if (A.data)
+        CRYPTO_gcm128_aad(&ctx, A.data, A.size);
+    if (P.data)
+        CRYPTO_gcm128_encrypt( &ctx, P.data, out, P.size);
+    if (CRYPTO_gcm128_finish(&ctx, T.data, 16)
+        || (C.data && memcmp(out, C.data, P.size)))
+        err++, fprintf(stderr, "encrypt test#%d failed.\n", idx);
+
+    CRYPTO_gcm128_setiv(&ctx, IV.data, IV.size);
+    memset(out, 0, P.size);
+    if (A.data)
+        CRYPTO_gcm128_aad(&ctx, A.data, A.size);
+    if (C.data)
+        CRYPTO_gcm128_decrypt(&ctx, C.data, out, P.size);
+    if (CRYPTO_gcm128_finish(&ctx, T.data, 16)
+        || (P.data && memcmp(out, P.data, P.size)))
+        err++, fprintf(stderr, "decrypt test#%d failed.\n", idx);
+
+    return err == 0;
+}
+
+static void benchmark_gcm128(const unsigned char *K, size_t Klen,
+                             const unsigned char *IV, size_t IVlen)
+{
+#ifdef OPENSSL_CPUID_OBJ
+    GCM128_CONTEXT ctx;
+    AES_KEY key;
+    size_t start, gcm_t, ctr_t, OPENSSL_rdtsc();
+    union {
+        u64 u;
+        u8 c[1024];
+    } buf;
+
+    AES_set_encrypt_key(K, Klen * 8, &key);
+    CRYPTO_gcm128_init(&ctx, &key, (block128_f) AES_encrypt);
+    CRYPTO_gcm128_setiv(&ctx, IV, IVlen);
+
+    CRYPTO_gcm128_encrypt(&ctx, buf.c, buf.c, sizeof(buf));
+    start = OPENSSL_rdtsc();
+    CRYPTO_gcm128_encrypt(&ctx, buf.c, buf.c, sizeof(buf));
+    gcm_t = OPENSSL_rdtsc() - start;
+
+    CRYPTO_ctr128_encrypt(buf.c, buf.c, sizeof(buf),
+                          &key, ctx.Yi.c, ctx.EKi.c, &ctx.mres,
+                          (block128_f) AES_encrypt);
+    start = OPENSSL_rdtsc();
+    CRYPTO_ctr128_encrypt(buf.c, buf.c, sizeof(buf),
+                          &key, ctx.Yi.c, ctx.EKi.c, &ctx.mres,
+                          (block128_f) AES_encrypt);
+    ctr_t = OPENSSL_rdtsc() - start;
+
+    printf("%.2f-%.2f=%.2f\n",
+           gcm_t / (double)sizeof(buf),
+           ctr_t / (double)sizeof(buf),
+           (gcm_t - ctr_t) / (double)sizeof(buf));
+# ifdef GHASH
+    {
+        void (*gcm_ghash_p) (u64 Xi[2], const u128 Htable[16],
+                             const u8 *inp, size_t len) = ctx.ghash;
+
+        GHASH((&ctx), buf.c, sizeof(buf));
+        start = OPENSSL_rdtsc();
+        for (i = 0; i < 100; ++i)
+            GHASH((&ctx), buf.c, sizeof(buf));
+        gcm_t = OPENSSL_rdtsc() - start;
+        printf("%.2f\n", gcm_t / (double)sizeof(buf) / (double)i);
+    }
+# endif
+#else
+    fprintf(stderr,
+            "Benchmarking of modes isn't available on this platform\n");
+#endif
 }
 
 int main(int argc, char **argv)
@@ -1064,9 +977,9 @@ int main(int argc, char **argv)
             goto help;
     }
 
-    ADD_ALL_TESTS(drive_cts128_tests, OSSL_NELEM(cts128_vectors));
-    ADD_ALL_TESTS(drive_cts128_nist_tests, OSSL_NELEM(cts128_vectors));
-    ADD_ALL_TESTS(drive_gcm128_tests, OSSL_NELEM(gcm128_vectors));
+    ADD_ALL_TESTS(test_cts128, OSSL_NELEM(cts128_vectors));
+    ADD_ALL_TESTS(test_cts128_nist, OSSL_NELEM(cts128_vectors));
+    ADD_ALL_TESTS(test_gcm128, OSSL_NELEM(gcm128_vectors));
 
     result = run_tests(argv[0]);
 
