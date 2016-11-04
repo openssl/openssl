@@ -164,9 +164,8 @@ __owur static ossl_inline int PACKET_get_net_2(PACKET *pkt, unsigned int *data)
 __owur static ossl_inline int PACKET_get_net_2_len(PACKET *pkt, size_t *data)
 {
     unsigned int i;
-    int ret;
+    int ret = PACKET_get_net_2(pkt, &i);
 
-    ret = PACKET_get_net_2(pkt, &i);
     if (ret)
         *data = (size_t)i;
 
@@ -206,9 +205,8 @@ __owur static ossl_inline int PACKET_get_net_3(PACKET *pkt, unsigned long *data)
 __owur static ossl_inline int PACKET_get_net_3_len(PACKET *pkt, size_t *data)
 {
     unsigned long i;
-    int ret;
+    int ret = PACKET_get_net_3(pkt, &i);
 
-    ret = PACKET_get_net_3(pkt, &i);
     if (ret)
         *data = (size_t)i;
 
@@ -249,9 +247,8 @@ __owur static ossl_inline int PACKET_get_net_4(PACKET *pkt, unsigned long *data)
 __owur static ossl_inline int PACKET_get_net_4_len(PACKET *pkt, size_t *data)
 {
     unsigned long i;
-    int ret;
+    int ret = PACKET_get_net_4(pkt, &i);
 
-    ret = PACKET_get_net_4(pkt, &i);
     if (ret)
         *data = (size_t)i;
 
@@ -285,9 +282,8 @@ __owur static ossl_inline int PACKET_get_1(PACKET *pkt, unsigned int *data)
 __owur static ossl_inline int PACKET_get_1_len(PACKET *pkt, size_t *data)
 {
     unsigned int i;
-    int ret;
+    int ret = PACKET_get_1(pkt, &i);
 
-    ret = PACKET_get_1(pkt, &i);
     if (ret)
         *data = (size_t)i;
 
