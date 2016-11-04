@@ -135,8 +135,10 @@ at build-time).
 This adds some overhead by keeping a list of all memory allocations, and
 removes items from the list when they are free'd.
 This is most useful for identifying memory leaks.
-CRYPTO_set_mem_debug() turns this tracking on and off.  It is normally
-called at startup, but can be called at any time.
+CRYPTO_set_mem_debug() turns this tracking on and off.  In order to have
+any effect, is must be called before any of the allocation functions
+(e.g., CRYPTO_malloc()) are called, and is therefore normally one of the
+first lines of main() in an application.
 
 CRYPTO_mem_ctrl() provides fine-grained control of memory leak tracking.
 To enable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of

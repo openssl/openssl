@@ -34,26 +34,27 @@ The following mode changes are available:
 
 =item SSL_MODE_ENABLE_PARTIAL_WRITE
 
-Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
-when just a single record has been written). When not set (the default),
-SSL_write() will only report success once the complete chunk was written.
-Once SSL_write() returns with r, r bytes have been successfully written
-and the next call to SSL_write() must only send the n-r bytes left,
-imitating the behaviour of write().
+Allow SSL_write_ex(..., n, &r) to return with 0 < r < n (i.e. report success
+when just a single record has been written). This works in a similar way for
+SSL_write(). When not set (the default), SSL_write_ex() or SSL_write() will only
+report success once the complete chunk was written. Once SSL_write_ex() or
+SSL_write() returns successful, B<r> bytes have been written and the next call
+to SSL_write_ex() or SSL_write() must only send the n-r bytes left, imitating
+the behaviour of write().
 
 =item SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
 
-Make it possible to retry SSL_write() with changed buffer location
-(the buffer contents must stay the same). This is not the default to avoid
-the misconception that non-blocking SSL_write() behaves like
+Make it possible to retry SSL_write_ex() or SSL_write() with changed buffer
+location (the buffer contents must stay the same). This is not the default to
+avoid the misconception that non-blocking SSL_write() behaves like
 non-blocking write().
 
 =item SSL_MODE_AUTO_RETRY
 
 Never bother the application with retries if the transport is blocking.
 If a renegotiation take place during normal operation, a
-L<SSL_read(3)> or L<SSL_write(3)> would return
-with -1 and indicate the need to retry with SSL_ERROR_WANT_READ.
+L<SSL_read_ex(3)>, L<SSL_read(3)>, L<SSL_write_ex(3)> or L<SSL_write(3)> would
+return with a failure and indicate the need to retry with SSL_ERROR_WANT_READ.
 In a non-blocking environment applications must be prepared to handle
 incomplete read/write operations.
 In a blocking environment, applications are not always prepared to
@@ -96,7 +97,8 @@ SSL_CTX_get_mode() and SSL_get_mode() return the current bitmask.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_read(3)>, L<SSL_write(3)>, L<SSL_get_error(3)>
+L<ssl(3)>, L<SSL_read_ex(3)>, L<SSL_read(3)>, L<SSL_write_ex(3)> or
+L<SSL_write(3)>, L<SSL_get_error(3)>
 
 =head1 HISTORY
 

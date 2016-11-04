@@ -2756,7 +2756,6 @@ const SSL3_ENC_METHOD SSLv3_enc_data = {
     ssl3_generate_master_secret,
     ssl3_change_cipher_state,
     ssl3_final_finish_mac,
-    MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH,
     SSL3_MD_CLIENT_FINISHED_CONST, 4,
     SSL3_MD_SERVER_FINISHED_CONST, 4,
     ssl3_alert_code,
@@ -2764,7 +2763,6 @@ const SSL3_ENC_METHOD SSLv3_enc_data = {
              size_t, const unsigned char *, size_t,
              int use_context))ssl_undefined_function,
     0,
-    SSL3_HM_HEADER_LENGTH,
     ssl3_set_handshake_header,
     tls_close_construct_packet,
     ssl3_handshake_write
@@ -3037,7 +3035,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP:
         *(unsigned char **)parg = s->tlsext_ocsp_resp;
-        return s->tlsext_ocsp_resplen;
+        if (s->tlsext_ocsp_resplen == 0
+                || s->tlsext_ocsp_resplen > LONG_MAX)
+            return -1;
+        return (long)s->tlsext_ocsp_resplen;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
         OPENSSL_free(s->tlsext_ocsp_resp);
@@ -3812,12 +3813,13 @@ int ssl3_shutdown(SSL *s)
             return (ret);
         }
     } else if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN)) {
+        size_t readbytes;
         /*
          * If we are waiting for a close from our peer, we are closed
          */
-        s->method->ssl_read_bytes(s, 0, NULL, NULL, 0, 0);
+        s->method->ssl_read_bytes(s, 0, NULL, NULL, 0, 0, &readbytes);
         if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN)) {
-            return (-1);        /* return WANT_READ */
+            return -1;        /* return WANT_READ */
         }
     }
 
@@ -3828,16 +3830,18 @@ int ssl3_shutdown(SSL *s)
         return (0);
 }
 
-int ssl3_write(SSL *s, const void *buf, int len)
+int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     clear_sys_error();
     if (s->s3->renegotiate)
         ssl3_renegotiate_check(s);
 
-    return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len);
+    return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
+                                      written);
 }
 
-static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
+static int ssl3_read_internal(SSL *s, void *buf, size_t len, int peek,
+                              size_t *readbytes)
 {
     int ret;
 
@@ -3847,7 +3851,7 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
     s->s3->in_read_app_data = 1;
     ret =
         s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf, len,
-                                  peek);
+                                  peek, readbytes);
     if ((ret == -1) && (s->s3->in_read_app_data == 2)) {
         /*
          * ssl3_read_bytes decided to call s->handshake_func, which called
@@ -3859,22 +3863,22 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
         ossl_statem_set_in_handshake(s, 1);
         ret =
             s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf,
-                                      len, peek);
+                                      len, peek, readbytes);
         ossl_statem_set_in_handshake(s, 0);
     } else
         s->s3->in_read_app_data = 0;
 
-    return (ret);
+    return ret;
 }
 
-int ssl3_read(SSL *s, void *buf, int len)
+int ssl3_read(SSL *s, void *buf, size_t len, size_t *readbytes)
 {
-    return ssl3_read_internal(s, buf, len, 0);
+    return ssl3_read_internal(s, buf, len, 0, readbytes);
 }
 
-int ssl3_peek(SSL *s, void *buf, int len)
+int ssl3_peek(SSL *s, void *buf, size_t len, size_t *readbytes)
 {
-    return ssl3_read_internal(s, buf, len, 1);
+    return ssl3_read_internal(s, buf, len, 1, readbytes);
 }
 
 int ssl3_renegotiate(SSL *s)
@@ -3938,7 +3942,7 @@ long ssl_get_algorithm2(SSL *s)
  * Fill a ClientRandom or ServerRandom field of length len. Returns <= 0 on
  * failure, 1 on success.
  */
-int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
+int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len)
 {
     int send_time = 0;
 
@@ -3952,15 +3956,18 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, int len)
         unsigned long Time = (unsigned long)time(NULL);
         unsigned char *p = result;
         l2n(Time, p);
-        return RAND_bytes(p, len - 4);
+        /* TODO(size_t): Convert this */
+        return RAND_bytes(p, (int)(len - 4));
     } else
-        return RAND_bytes(result, len);
+        return RAND_bytes(result, (int)len);
 }
 
 int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                int free_pms)
 {
     unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+    int ret = 0;
+
     if (alg_k & SSL_PSK) {
 #ifndef OPENSSL_NO_PSK
         unsigned char *pskpms, *t;
@@ -3975,10 +3982,8 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 
         pskpmslen = 4 + pmslen + psklen;
         pskpms = OPENSSL_malloc(pskpmslen);
-        if (pskpms == NULL) {
-            s->session->master_key_length = 0;
+        if (pskpms == NULL)
             goto err;
-        }
         t = pskpms;
         s2n(pmslen, t);
         if (alg_k & SSL_kPSK)
@@ -3991,23 +3996,23 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 
         OPENSSL_clear_free(s->s3->tmp.psk, psklen);
         s->s3->tmp.psk = NULL;
-        s->session->master_key_length =
-            s->method->ssl3_enc->generate_master_secret(s,
-                                                        s->session->master_key,
-                                                        pskpms, pskpmslen);
+        if (!s->method->ssl3_enc->generate_master_secret(s,
+                    s->session->master_key,pskpms, pskpmslen,
+                    &s->session->master_key_length))
+            goto err;
         OPENSSL_clear_free(pskpms, pskpmslen);
 #else
         /* Should never happen */
-        s->session->master_key_length = 0;
         goto err;
 #endif
     } else {
-        s->session->master_key_length =
-            s->method->ssl3_enc->generate_master_secret(s,
-                                                        s->session->master_key,
-                                                        pms, pmslen);
+        if (!s->method->ssl3_enc->generate_master_secret(s,
+                s->session->master_key, pms, pmslen,
+                &s->session->master_key_length))
+            goto err;
     }
 
+    ret = 1;
  err:
     if (pms) {
         if (free_pms)
@@ -4017,7 +4022,7 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
     }
     if (s->server == 0)
         s->s3->tmp.pms = NULL;
-    return s->session->master_key_length >= 0;
+    return ret;
 }
 
 /* Generate a private key from parameters */

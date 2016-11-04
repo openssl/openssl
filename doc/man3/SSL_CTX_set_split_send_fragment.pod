@@ -58,19 +58,19 @@ Pipelining operates slightly differently for reading encrypted data compared to
 writing encrypted data. SSL_CTX_set_split_send_fragment() and
 SSL_set_split_send_fragment() define how data is split up into pipelines when
 writing encrypted data. The number of pipelines used will be determined by the
-amount of data provided to the SSL_write() call divided by
+amount of data provided to the SSL_write_ex() or SSL_write() call divided by
 B<split_send_fragment>.
 
 For example if B<split_send_fragment> is set to 2000 and B<max_pipelines> is 4
 then:
 
-SSL_write called with 0-2000 bytes == 1 pipeline used
+SSL_write/SSL_write_ex called with 0-2000 bytes == 1 pipeline used
 
-SSL_write called with 2001-4000 bytes == 2 pipelines used
+SSL_write/SSL_write_ex called with 2001-4000 bytes == 2 pipelines used
 
-SSL_write called with 4001-6000 bytes == 3 pipelines used
+SSL_write/SSL_write_ex called with 4001-6000 bytes == 3 pipelines used
 
-SSL_write called with 6001+ bytes == 4 pipelines used
+SSL_write/SSL_write_ex called with 6001+ bytes == 4 pipelines used
 
 B<split_send_fragment> must always be less than or equal to
 B<max_send_fragment>. By default it is set to be equal to B<max_send_fragment>.

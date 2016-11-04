@@ -134,7 +134,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
                            size_t data_plus_mac_size,
                            size_t data_plus_mac_plus_padding_size,
                            const unsigned char *mac_secret,
-                           unsigned mac_secret_length, char is_sslv3)
+                           size_t mac_secret_length, char is_sslv3)
 {
     union {
         double align;
@@ -142,23 +142,24 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     } md_state;
     void (*md_final_raw) (void *ctx, unsigned char *md_out);
     void (*md_transform) (void *ctx, const unsigned char *block);
-    unsigned md_size, md_block_size = 64;
-    unsigned sslv3_pad_length = 40, header_length, variance_blocks,
+    size_t md_size, md_block_size = 64;
+    size_t sslv3_pad_length = 40, header_length, variance_blocks,
         len, max_mac_bytes, num_blocks,
         num_starting_blocks, k, mac_end_offset, c, index_a, index_b;
-    unsigned int bits;          /* at most 18 bits */
+    size_t bits;          /* at most 18 bits */
     unsigned char length_bytes[MAX_HASH_BIT_COUNT_BYTES];
     /* hmac_pad is the masked HMAC key. */
     unsigned char hmac_pad[MAX_HASH_BLOCK_SIZE];
     unsigned char first_block[MAX_HASH_BLOCK_SIZE];
     unsigned char mac_out[EVP_MAX_MD_SIZE];
-    unsigned i, j, md_out_size_u;
+    size_t i, j;
+    unsigned md_out_size_u;
     EVP_MD_CTX *md_ctx = NULL;
     /*
      * mdLengthSize is the number of bytes in the length field that
      * terminates * the hash.
      */
-    unsigned md_length_size = 8;
+    size_t md_length_size = 8;
     char length_is_big_endian = 1;
     int ret;
 
@@ -356,7 +357,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
 
     if (k > 0) {
         if (is_sslv3) {
-            unsigned overhang;
+            size_t overhang;
 
             /*
              * The SSLv3 header is larger than a single block. overhang is
@@ -399,8 +400,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     for (i = num_starting_blocks; i <= num_starting_blocks + variance_blocks;
          i++) {
         unsigned char block[MAX_HASH_BLOCK_SIZE];
-        unsigned char is_block_a = constant_time_eq_8(i, index_a);
-        unsigned char is_block_b = constant_time_eq_8(i, index_b);
+        unsigned char is_block_a = constant_time_eq_8_s(i, index_a);
+        unsigned char is_block_b = constant_time_eq_8_s(i, index_b);
         for (j = 0; j < md_block_size; j++) {
             unsigned char b = 0, is_past_c, is_past_cp1;
             if (k < header_length)
@@ -409,8 +410,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
                 b = data[k - header_length];
             k++;
 
-            is_past_c = is_block_a & constant_time_ge_8(j, c);
-            is_past_cp1 = is_block_a & constant_time_ge_8(j, c + 1);
+            is_past_c = is_block_a & constant_time_ge_8_s(j, c);
+            is_past_cp1 = is_block_a & constant_time_ge_8_s(j, c + 1);
             /*
              * If this is the block containing the end of the application
              * data, and we are at the offset for the 0x80 value, then
@@ -471,6 +472,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
             || EVP_DigestUpdate(md_ctx, mac_out, md_size) <= 0)
             goto err;
     }
+    /* TODO(size_t): Convert me */
     ret = EVP_DigestFinal(md_ctx, md_out, &md_out_size_u);
     if (ret && md_out_size)
         *md_out_size = md_out_size_u;

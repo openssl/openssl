@@ -717,7 +717,7 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
  * Returns the maximum allowed length for the current message that we are
  * reading. Excludes the message header.
  */
-unsigned long ossl_statem_server_max_message_size(SSL *s)
+size_t ossl_statem_server_max_message_size(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -853,7 +853,7 @@ static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 #endif
 
 int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
-                                  unsigned char cookie_len)
+                                  size_t cookie_len)
 {
     /* Always use DTLS 1.0 version: see RFC 6347 */
     if (!WPACKET_put_bytes_u16(pkt, DTLS1_VERSION)
@@ -865,14 +865,16 @@ int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
 
 int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
 {
+    unsigned int cookie_leni;
     if (s->ctx->app_gen_cookie_cb == NULL ||
         s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
-                                  &(s->d1->cookie_len)) == 0 ||
-        s->d1->cookie_len > 255) {
+                                  &cookie_leni) == 0 ||
+        cookie_leni > 255) {
         SSLerr(SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST,
                SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return 0;
     }
+    s->d1->cookie_len = cookie_leni;
 
     if (!dtls_raw_hello_verify_request(pkt, s->d1->cookie,
                                               s->d1->cookie_len)) {
@@ -886,7 +888,8 @@ int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
 MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 {
     int i, al = SSL_AD_INTERNAL_ERROR;
-    unsigned int j, complen = 0;
+    unsigned int j;
+    size_t loop, complen = 0;
     unsigned long id;
     const SSL_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
@@ -1085,8 +1088,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
             if (s->ctx->app_verify_cookie_cb != NULL) {
                 if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookie),
-                                                 PACKET_remaining(&cookie)) ==
-                    0) {
+                        (unsigned int)PACKET_remaining(&cookie)) == 0) {
                     al = SSL_AD_HANDSHAKE_FAILURE;
                     SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
                            SSL_R_COOKIE_MISMATCH);
@@ -1195,12 +1197,12 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     }
 
     complen = PACKET_remaining(&compression);
-    for (j = 0; j < complen; j++) {
-        if (PACKET_data(&compression)[j] == 0)
+    for (loop = 0; loop < complen; loop++) {
+        if (PACKET_data(&compression)[loop] == 0)
             break;
     }
 
-    if (j >= complen) {
+    if (loop >= complen) {
         /* no compress */
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_NO_COMPRESSION_SPECIFIED);
@@ -1231,12 +1233,19 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
     if (!s->hit && s->version >= TLS1_VERSION && s->tls_session_secret_cb) {
         const SSL_CIPHER *pref_cipher = NULL;
+        /*
+         * s->session->master_key_length is a size_t, but this is an int for
+         * backwards compat reasons
+         */
+        int master_key_length;
 
-        s->session->master_key_length = sizeof(s->session->master_key);
+        master_key_length = sizeof(s->session->master_key);
         if (s->tls_session_secret_cb(s, s->session->master_key,
-                                     &s->session->master_key_length, ciphers,
+                                     &master_key_length, ciphers,
                                      &pref_cipher,
-                                     s->tls_session_secret_cb_arg)) {
+                                     s->tls_session_secret_cb_arg)
+                && master_key_length > 0) {
+            s->session->master_key_length = master_key_length;
             s->hit = 1;
             s->session->ciphers = ciphers;
             s->session->verify_result = X509_V_OK;
@@ -1484,8 +1493,8 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 
 int tls_construct_server_hello(SSL *s, WPACKET *pkt)
 {
-    int sl, compm, al = SSL_AD_INTERNAL_ERROR;
-    size_t len;
+    int compm, al = SSL_AD_INTERNAL_ERROR;
+    size_t sl, len;
 
     if (!WPACKET_put_bytes_u16(pkt, s->version)
                /*
@@ -1519,7 +1528,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
         s->session->session_id_length = 0;
 
     sl = s->session->session_id_length;
-    if (sl > (int)sizeof(s->session->session_id)) {
+    if (sl > sizeof(s->session->session_id)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -1567,7 +1576,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_EC
     unsigned char *encodedPoint = NULL;
-    int encodedlen = 0;
+    size_t encodedlen = 0;
     int curve_id = 0;
 #endif
     EVP_PKEY *pkey;
@@ -1900,7 +1909,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 
 int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
 {
-    int i, nl;
+    int i;
     STACK_OF(X509_NAME) *sk = NULL;
 
     /* get the list of acceptable cert types */
@@ -1913,7 +1922,7 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
 
     if (SSL_USE_SIGALGS(s)) {
         const unsigned char *psigs;
-        nl = tls12_get_psigalgs(s, &psigs);
+        size_t nl = tls12_get_psigalgs(s, &psigs);
         if (!WPACKET_start_sub_packet_u16(pkt)
                 || !tls12_copy_sigalgs(s, pkt, psigs, nl)
                 || !WPACKET_close(pkt)) {
@@ -2094,9 +2103,10 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt, int *al)
      * Decrypt with no padding. PKCS#1 padding will be removed as part of
      * the timing-sensitive code below.
      */
-    decrypt_len = RSA_private_decrypt(PACKET_remaining(&enc_premaster),
-                                      PACKET_data(&enc_premaster),
-                                      rsa_decrypt, rsa, RSA_NO_PADDING);
+     /* TODO(size_t): Convert this function */
+    decrypt_len = (int)RSA_private_decrypt((int)PACKET_remaining(&enc_premaster),
+                                           PACKET_data(&enc_premaster),
+                                           rsa_decrypt, rsa, RSA_NO_PADDING);
     if (decrypt_len < 0)
         goto err;
 
@@ -2377,7 +2387,7 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt, int *al)
     unsigned long alg_a;
     int Ttag, Tclass;
     long Tlen;
-    long sess_key_len;
+    size_t sess_key_len;
     const unsigned char *data;
     int ret = 0;
 
@@ -2427,8 +2437,9 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt, int *al)
         SSLerr(SSL_F_TLS_PROCESS_CKE_GOST, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    /* TODO(size_t): Convert this function */
     if (ASN1_get_object((const unsigned char **)&data, &Tlen, &Ttag,
-                        &Tclass, sess_key_len) != V_ASN1_CONSTRUCTED
+                        &Tclass, (long)sess_key_len) != V_ASN1_CONSTRUCTED
         || Ttag != V_ASN1_SEQUENCE || Tclass != V_ASN1_UNIVERSAL) {
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CKE_GOST, SSL_R_DECRYPTION_FAILED);
@@ -2730,7 +2741,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 
     if (s->version == SSL3_VERSION
         && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                            s->session->master_key_length,
+                            (int)s->session->master_key_length,
                             s->session->master_key)) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
         al = SSL_AD_INTERNAL_ERROR;

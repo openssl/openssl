@@ -23,10 +23,10 @@
 
 static void get_current_time(struct timeval *t);
 static int dtls1_handshake_write(SSL *s);
-static unsigned int dtls1_link_min_mtu(void);
+static size_t dtls1_link_min_mtu(void);
 
 /* XDTLS:  figure out the right values */
-static const unsigned int g_probable_mtu[] = { 1500, 512, 256 };
+static const size_t g_probable_mtu[] = { 1500, 512, 256 };
 
 const SSL3_ENC_METHOD DTLSv1_enc_data = {
     tls1_enc,
@@ -35,13 +35,11 @@ const SSL3_ENC_METHOD DTLSv1_enc_data = {
     tls1_generate_master_secret,
     tls1_change_cipher_state,
     tls1_final_finish_mac,
-    TLS1_FINISH_MAC_LENGTH,
     TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
     tls1_export_keying_material,
     SSL_ENC_FLAG_DTLS | SSL_ENC_FLAG_EXPLICIT_IV,
-    DTLS1_HM_HEADER_LENGTH,
     dtls1_set_handshake_header,
     dtls1_close_construct_packet,
     dtls1_handshake_write
@@ -54,14 +52,12 @@ const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
     tls1_generate_master_secret,
     tls1_change_cipher_state,
     tls1_final_finish_mac,
-    TLS1_FINISH_MAC_LENGTH,
     TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
     tls1_export_keying_material,
     SSL_ENC_FLAG_DTLS | SSL_ENC_FLAG_EXPLICIT_IV | SSL_ENC_FLAG_SIGALGS
         | SSL_ENC_FLAG_SHA256_PRF | SSL_ENC_FLAG_TLS1_2_CIPHERS,
-    DTLS1_HM_HEADER_LENGTH,
     dtls1_set_handshake_header,
     dtls1_close_construct_packet,
     dtls1_handshake_write
@@ -164,8 +160,8 @@ void dtls1_clear(SSL *s)
 {
     pqueue *buffered_messages;
     pqueue *sent_messages;
-    unsigned int mtu;
-    unsigned int link_mtu;
+    size_t mtu;
+    size_t link_mtu;
 
     DTLS_RECORD_LAYER_clear(&s->rlayer);
 
@@ -344,7 +340,7 @@ void dtls1_stop_timer(SSL *s)
 
 int dtls1_check_timeout_num(SSL *s)
 {
-    unsigned int mtu;
+    size_t mtu;
 
     s->d1->timeout.num_alerts++;
 
@@ -435,7 +431,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     unsigned char seq[SEQ_NUM_SIZE];
     const unsigned char *data;
     unsigned char *buf;
-    unsigned long fragoff, fraglen, msglen;
+    size_t fragoff, fraglen, msglen;
     unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BUF_MEM *bufm;
@@ -583,10 +579,10 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
 
         /* Finished processing the record header, now process the message */
         if (!PACKET_get_1(&msgpkt, &msgtype)
-            || !PACKET_get_net_3(&msgpkt, &msglen)
+            || !PACKET_get_net_3_len(&msgpkt, &msglen)
             || !PACKET_get_net_2(&msgpkt, &msgseq)
-            || !PACKET_get_net_3(&msgpkt, &fragoff)
-            || !PACKET_get_net_3(&msgpkt, &fraglen)
+            || !PACKET_get_net_3_len(&msgpkt, &fragoff)
+            || !PACKET_get_net_3_len(&msgpkt, &fraglen)
             || !PACKET_get_sub_packet(&msgpkt, &msgpayload, fraglen)
             || PACKET_remaining(&msgpkt) != 0) {
             SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
@@ -663,8 +659,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
                 return -1;
             }
             if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookiepkt),
-                                             PACKET_remaining(&cookiepkt)) ==
-                0) {
+                    (unsigned int)PACKET_remaining(&cookiepkt)) == 0) {
                 /*
                  * We treat invalid cookies in the same was as no cookie as
                  * per RFC6347
@@ -795,6 +790,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             BIO_ADDR_free(tmpclient);
             tmpclient = NULL;
 
+            /* TODO(size_t): convert this call */
             if (BIO_write(wbio, buf, wreclen) < (int)wreclen) {
                 if (BIO_should_retry(wbio)) {
                     /*
@@ -872,12 +868,13 @@ static int dtls1_handshake_write(SSL *s)
 
 # define HEARTBEAT_SIZE_STD(payload) HEARTBEAT_SIZE(payload, 16)
 
-int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
+int dtls1_process_heartbeat(SSL *s, unsigned char *p, size_t length)
 {
     unsigned char *pl;
     unsigned short hbtype;
     unsigned int payload;
     unsigned int padding = 16;  /* Use minimum padding */
+    size_t written;
 
     if (s->msg_callback)
         s->msg_callback(0, s->version, DTLS1_RT_HEARTBEAT,
@@ -897,7 +894,7 @@ int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
 
     if (hbtype == TLS1_HB_REQUEST) {
         unsigned char *buffer, *bp;
-        unsigned int write_length = HEARTBEAT_SIZE(payload, padding);
+        size_t write_length = HEARTBEAT_SIZE(payload, padding);
         int r;
 
         if (write_length > SSL3_RT_MAX_PLAIN_LENGTH)
@@ -920,16 +917,17 @@ int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
             return -1;
         }
 
-        r = dtls1_write_bytes(s, DTLS1_RT_HEARTBEAT, buffer, write_length);
+        r = dtls1_write_bytes(s, DTLS1_RT_HEARTBEAT, buffer, write_length,
+                              &written);
 
-        if (r >= 0 && s->msg_callback)
+        if (r > 0 && s->msg_callback)
             s->msg_callback(1, s->version, DTLS1_RT_HEARTBEAT,
                             buffer, write_length, s, s->msg_callback_arg);
 
         OPENSSL_free(buffer);
 
-        if (r < 0)
-            return r;
+        if (r <= 0)
+            return -1;
     } else if (hbtype == TLS1_HB_RESPONSE) {
         unsigned int seq;
 
@@ -953,9 +951,9 @@ int dtls1_heartbeat(SSL *s)
 {
     unsigned char *buf, *p;
     int ret = -1;
-    unsigned int payload = 18;  /* Sequence number + random bytes */
-    unsigned int padding = 16;  /* Use minimum padding */
-    unsigned int size;
+    size_t payload = 18;  /* Sequence number + random bytes */
+    size_t padding = 16;  /* Use minimum padding */
+    size_t size, written;
 
     /* Only send if peer supports and accepts HB requests... */
     if (!(s->tlsext_heartbeat & SSL_DTLSEXT_HB_ENABLED) ||
@@ -1006,8 +1004,8 @@ int dtls1_heartbeat(SSL *s)
         goto err;
     }
 
-    ret = dtls1_write_bytes(s, DTLS1_RT_HEARTBEAT, buf, size);
-    if (ret >= 0) {
+    ret = dtls1_write_bytes(s, DTLS1_RT_HEARTBEAT, buf, size, &written);
+    if (ret > 0) {
         if (s->msg_callback)
             s->msg_callback(1, s->version, DTLS1_RT_HEARTBEAT,
                             buf, size, s, s->msg_callback_arg);
@@ -1070,7 +1068,7 @@ int dtls1_query_mtu(SSL *s)
                 /* Set to min mtu */
                 s->d1->mtu = dtls1_min_mtu(s);
                 BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SET_MTU,
-                         s->d1->mtu, NULL);
+                         (long)s->d1->mtu, NULL);
             }
         } else
             return 0;
@@ -1078,13 +1076,13 @@ int dtls1_query_mtu(SSL *s)
     return 1;
 }
 
-static unsigned int dtls1_link_min_mtu(void)
+static size_t dtls1_link_min_mtu(void)
 {
     return (g_probable_mtu[(sizeof(g_probable_mtu) /
                             sizeof(g_probable_mtu[0])) - 1]);
 }
 
-unsigned int dtls1_min_mtu(SSL *s)
+size_t dtls1_min_mtu(SSL *s)
 {
     return dtls1_link_min_mtu() - BIO_dgram_get_mtu_overhead(SSL_get_wbio(s));
 }

@@ -160,6 +160,18 @@ __owur static ossl_inline int PACKET_get_net_2(PACKET *pkt, unsigned int *data)
     return 1;
 }
 
+/* Same as PACKET_get_net_2() but for a size_t */
+__owur static ossl_inline int PACKET_get_net_2_len(PACKET *pkt, size_t *data)
+{
+    unsigned int i;
+    int ret = PACKET_get_net_2(pkt, &i);
+
+    if (ret)
+        *data = (size_t)i;
+
+    return ret;
+}
+
 /*
  * Peek ahead at 3 bytes in network order from |pkt| and store the value in
  * |*data|
@@ -187,6 +199,18 @@ __owur static ossl_inline int PACKET_get_net_3(PACKET *pkt, unsigned long *data)
     packet_forward(pkt, 3);
 
     return 1;
+}
+
+/* Same as PACKET_get_net_3() but for a size_t */
+__owur static ossl_inline int PACKET_get_net_3_len(PACKET *pkt, size_t *data)
+{
+    unsigned long i;
+    int ret = PACKET_get_net_3(pkt, &i);
+
+    if (ret)
+        *data = (size_t)i;
+
+    return ret;
 }
 
 /*
@@ -219,6 +243,18 @@ __owur static ossl_inline int PACKET_get_net_4(PACKET *pkt, unsigned long *data)
     return 1;
 }
 
+/* Same as PACKET_get_net_4() but for a size_t */
+__owur static ossl_inline int PACKET_get_net_4_len(PACKET *pkt, size_t *data)
+{
+    unsigned long i;
+    int ret = PACKET_get_net_4(pkt, &i);
+
+    if (ret)
+        *data = (size_t)i;
+
+    return ret;
+}
+
 /* Peek ahead at 1 byte from |pkt| and store the value in |*data| */
 __owur static ossl_inline int PACKET_peek_1(const PACKET *pkt,
                                             unsigned int *data)
@@ -240,6 +276,18 @@ __owur static ossl_inline int PACKET_get_1(PACKET *pkt, unsigned int *data)
     packet_forward(pkt, 1);
 
     return 1;
+}
+
+/* Same as PACKET_get_1() but for a size_t */
+__owur static ossl_inline int PACKET_get_1_len(PACKET *pkt, size_t *data)
+{
+    unsigned int i;
+    int ret = PACKET_get_1(pkt, &i);
+
+    if (ret)
+        *data = (size_t)i;
+
+    return ret;
 }
 
 /*

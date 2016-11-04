@@ -102,7 +102,7 @@ static void ssl_session_oinit(ASN1_OCTET_STRING **dest, ASN1_OCTET_STRING *os,
                               unsigned char *data, size_t len)
 {
     os->data = data;
-    os->length = len;
+    os->length = (int)len;
     os->flags = 0;
     *dest = os;
 }
@@ -223,14 +223,14 @@ static int ssl_session_strndup(char **pdst, ASN1_OCTET_STRING *src)
 
 /* Copy an OCTET STRING, return error if it exceeds maximum length */
 
-static int ssl_session_memcpy(unsigned char *dst, unsigned int *pdstlen,
-                              ASN1_OCTET_STRING *src, int maxlen)
+static int ssl_session_memcpy(unsigned char *dst, size_t *pdstlen,
+                              ASN1_OCTET_STRING *src, size_t maxlen)
 {
     if (src == NULL) {
         *pdstlen = 0;
         return 1;
     }
-    if (src->length > maxlen)
+    if (src->length < 0 || src->length > (int)maxlen)
         return 0;
     memcpy(dst, src->data, src->length);
     *pdstlen = src->length;
@@ -241,7 +241,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
                              long length)
 {
     long id;
-    unsigned int tmpl;
+    size_t tmpl;
     const unsigned char *p = *pp;
     SSL_SESSION_ASN1 *as = NULL;
     SSL_SESSION *ret = NULL;

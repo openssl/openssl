@@ -10,7 +10,7 @@
 #include "../ssl_locl.h"
 #include "record_locl.h"
 
-void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n)
+void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, size_t n)
 {
     if (d != NULL)
         memcpy(b->buf, d, n);
@@ -74,12 +74,12 @@ int ssl3_setup_read_buffer(SSL *s)
     return 0;
 }
 
-int ssl3_setup_write_buffer(SSL *s, unsigned int numwpipes, size_t len)
+int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
 {
     unsigned char *p;
     size_t align = 0, headerlen;
     SSL3_BUFFER *wb;
-    unsigned int currpipe;
+    size_t currpipe;
 
     s->rlayer.numwpipes = numwpipes;
 
@@ -134,7 +134,7 @@ int ssl3_setup_buffers(SSL *s)
 int ssl3_release_write_buffer(SSL *s)
 {
     SSL3_BUFFER *wb;
-    unsigned int pipes;
+    size_t pipes;
 
     pipes = s->rlayer.numwpipes;
     while (pipes > 0) {
