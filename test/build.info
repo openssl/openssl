@@ -1,3 +1,11 @@
+{-
+     use File::Spec::Functions;
+     sub rebase_files
+     {
+         my ($base, $files) = @_;
+         return join(" ", map { "$base/$_" } split(/\s+/, $files));
+     }
+-}
 IF[{- !$disabled{tests} -}]
   PROGRAMS_NO_INST=\
           aborttest \
@@ -325,8 +333,8 @@ IF[{- !$disabled{tests} -}]
   SOURCE[poly1305_internal_test]=poly1305_internal_test.c testutil.c
   IF[{- !$disabled{shared} -}]
     SOURCE[poly1305_internal_test]= ../crypto/poly1305/poly1305.c \
-        {- $target{poly1305_asm_src} ? "../crypto/poly1305/".$target{poly1305_asm_src} : "" -} \
-        {- $target{cpuid_asm_src} ? "../crypto/".$target{cpuid_asm_src} : "" -} \
+        {- rebase_files("../crypto/poly1305", $target{poly1305_asm_src}) -} \
+        {- rebase_files("../crypto", $target{cpuid_asm_src}) -} \
         ../crypto/cryptlib.c
   ENDIF
   INCLUDE[poly1305_internal_test]=.. ../include ../crypto/include
@@ -345,9 +353,8 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[modes_internal_test]=modes_internal_test.c testutil.c
   IF[{- !$disabled{shared} -}]
-    SOURCE[modes_internal_test]= {- $target{cpuid_asm_src}
-                                    ? "../crypto/".$target{cpuid_asm_src}
-                                    : "" -} \
+    SOURCE[modes_internal_test]= \
+        {- rebase_files("../crypto", $target{cpuid_asm_src}); -} \
         ../crypto/cryptlib.c
   ENDIF
   INCLUDE[modes_internal_test]=.. ../include
