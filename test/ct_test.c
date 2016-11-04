@@ -88,7 +88,6 @@ static void tear_down(CT_TEST_FIXTURE fixture)
 {
     CTLOG_STORE_free(fixture.ctlog_store);
     SCT_LIST_free(fixture.sct_list);
-    ERR_print_errors_fp(stderr);
 }
 
 static char *mk_file_path(const char *dir, const char *file)

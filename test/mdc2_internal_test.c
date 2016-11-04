@@ -60,7 +60,6 @@ static int execute_mdc2(SIMPLE_FIXTURE fixture)
 
 static void teardown_mdc2(SIMPLE_FIXTURE fixture)
 {
-    ERR_print_errors_fp(stderr);
 }
 
 /**********************************************************************
