@@ -301,8 +301,6 @@ err:
     SSL_CTX_free(resume_server_ctx);
     SSL_CTX_free(resume_client_ctx);
     SSL_TEST_CTX_free(test_ctx);
-    if (ret != 1)
-        ERR_print_errors_fp(stderr);
     HANDSHAKE_RESULT_free(result);
     return ret;
 }
