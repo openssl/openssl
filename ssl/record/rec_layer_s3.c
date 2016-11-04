@@ -276,7 +276,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
 
     /* else we need to read more data */
 
-    if (n > (rb->len - rb->offset)) { /* does not happen */
+    if (n > rb->len - rb->offset) { /* does not happen */
         SSLerr(SSL_F_SSL3_READ_N, ERR_R_INTERNAL_ERROR);
         return -1;
     }
@@ -288,7 +288,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
     else {
         if (max < n)
             max = n;
-        if (max > (rb->len - rb->offset))
+        if (max > rb->len - rb->offset)
             max = rb->len - rb->offset;
     }
 
@@ -610,7 +610,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
             return i;
         }
 
-        if ((tmpwrit == n) ||
+        if (tmpwrit == n ||
             (type == SSL3_RT_APPLICATION_DATA &&
              (s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE))) {
             /*
