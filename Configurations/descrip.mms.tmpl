@@ -223,7 +223,7 @@ NODEBUG=@
         $(NODEBUG) !
         $(NODEBUG) ! Figure out the architecture
         $(NODEBUG) !
-        $(NODEBUG) arch == f$edit( f$getsyi( "arch_name"), "upcase")
+        $(NODEBUG) arch = f$edit( f$getsyi( "arch_name"), "upcase")
         $(NODEBUG) !
         $(NODEBUG) ! Set up logical names for the libraries, so LINK and
         $(NODEBUG) ! running programs can use them.
