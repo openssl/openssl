@@ -299,7 +299,7 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 memcpy(out, actx->tag, POLY1305_BLOCK_SIZE);
             } else {
                 if (CRYPTO_memcmp(temp, in, POLY1305_BLOCK_SIZE)) {
-                    memset(out, 0, plen);
+                    memset(out - plen, 0, plen);
                     return -1;
                 }
             }
