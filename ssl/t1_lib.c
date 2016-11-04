@@ -2318,7 +2318,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
             PACKET key_share_list, encoded_pt;
             const unsigned char *curves;
             size_t num_curves;
-            int group_nid;
+            int group_nid, found = 0;
             unsigned int curve_flags;
 
             /* Sanity check */
@@ -2338,12 +2338,20 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
             while (PACKET_remaining(&key_share_list) > 0) {
                 if (!PACKET_get_net_2(&key_share_list, &group_id)
                         || !PACKET_get_length_prefixed_2(&key_share_list,
-                                                         &encoded_pt)) {
+                                                         &encoded_pt)
+                        || PACKET_remaining(&encoded_pt) == 0) {
                     *al = SSL_AD_HANDSHAKE_FAILURE;
                     SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
                            SSL_R_LENGTH_MISMATCH);
                     return 0;
                 }
+
+                /*
+                 * If we already found a suitable key_share we loop through the
+                 * rest to verify the structure, but don't process them.
+                 */
+                if (found)
+                    continue;
 
                 /* Check this share is in supported_groups */
                 if (!tls1_get_curvelist(s, 1, &curves, &num_curves)) {
@@ -2416,6 +2424,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                     SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT, SSL_R_BAD_ECPOINT);
                     return 0;
                 }
+
+                found = 1;
             }
         }
         /*
