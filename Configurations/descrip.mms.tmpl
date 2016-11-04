@@ -788,11 +788,14 @@ $bin.EXE : $deps
                      search_severity = \$severity
         @ ! search_severity is 3 when the last search didn't find any matching
         @ ! string: %SEARCH-I-NOMATCHES, no strings matched
-        -@ IF search_severity .NE. 3 .OR. link_severity .NE. 1 THEN -
-                TYPE $bin.LINKLOG
+        @ ! If that was the result, we pretend linking got through without
+        @ ! fault or warning.
+        @ IF search_severity .EQ. 3 THEN link_severity = 1
+        @ ! At this point, if link_severity shows that there was a fault
+        @ ! or warning, make sure to restore the linking status.
+        -@ IF .NOT. link_severity THEN TYPE $bin.LINKLOG
         -@ DELETE $bin.LINKLOG;*
-        @ IF search_severity .NE. 3 .OR. link_severity .NE. 1 THEN -
-                SPAWN/WAIT/NOLOG EXIT 'link_status'
+        @ IF .NOT. link_severity THEN SPAWN/WAIT/NOLOG EXIT 'link_status'
         - PURGE $bin.EXE,$bin.OPT
 EOF
   }
