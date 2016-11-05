@@ -9,11 +9,11 @@
 
 #include "internal/constant_time_locl.h"
 #include "e_os.h"
-#include <openssl/e_os2.h>
 
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "internal/numbers.h"
 
 static const unsigned int CONSTTIME_TRUE = (unsigned)(~0);
 static const unsigned int CONSTTIME_FALSE = 0;
