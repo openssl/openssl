@@ -8,7 +8,7 @@
  */
 
 #if defined(_WIN32)
-#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#define _WINSOCKAPI_  
 # include <windows.h>
 #endif
 

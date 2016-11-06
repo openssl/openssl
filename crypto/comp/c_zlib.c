@@ -74,7 +74,7 @@ static COMP_METHOD zlib_stateful_method = {
  * and we do not link to a .LIB file when ZLIB_SHARED is set.
  */
 # if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#define _WINSOCKAPI_   
 #  include <windows.h>
 # endif                         /* !(OPENSSL_SYS_WINDOWS ||
                                  * OPENSSL_SYS_WIN32) */
