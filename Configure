@@ -684,7 +684,7 @@ while (@argvcopy)
 		$config{fips} = 1;
 		$nofipscanistercheck = 1;
 		}
-	elsif (/^[-+]/)
+	elsif (/^[-+\/]/)
 		{
 		if (/^--prefix=(.*)$/)
 			{
@@ -756,11 +756,22 @@ while (@argvcopy)
 			$disabled{"shared"} = "forced";
 			$disabled{"threads"} = "forced";
 			}
-		elsif (/^-D(.*)$/)
+		elsif (/^[-\/]D(.*)$/)
 			{
 			push @user_defines, $1;
 			}
-		else	# common if (/^[-+]/), just pass down...
+		elsif (/^\/link$/)
+			{
+			# This is Visual Studio-specific thing.
+			# Consume all options that start with slash, e.g.
+			# /link /subsystem:console,5.1. Yes, it has to
+			# be last or terminated with non-slash option.
+			while (@argvcopy[0] =~ /^\//)
+				{
+				$libs.=shift(@argvcopy) . " ";
+				}
+			}
+		else	# common if (/^[-+\/]/), just pass down...
 			{
 			$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
 			$user_cflags.=" ".$_;
