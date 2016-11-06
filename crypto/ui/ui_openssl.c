@@ -61,6 +61,7 @@
 #endif
 
 #ifdef WIN_CONSOLE_BUG
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
 # include <windows.h>
 # ifndef OPENSSL_SYS_WINCE
 #  include <wincon.h>

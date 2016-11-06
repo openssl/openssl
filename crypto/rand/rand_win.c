@@ -12,6 +12,7 @@
 #include "rand_lcl.h"
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
 # include <windows.h>
 /* On Windows 7 or higher use BCrypt instead of the legacy CryptoAPI */
 # if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0601
