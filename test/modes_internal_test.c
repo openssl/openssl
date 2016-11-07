@@ -16,6 +16,7 @@
 #include <openssl/modes.h>
 #include "../crypto/modes/modes_lcl.h"
 #include "testutil.h"
+#include "test_main_custom.h"
 #include "e_os.h"
 
 typedef struct {
@@ -964,7 +965,7 @@ static void benchmark_gcm128(const unsigned char *K, size_t Klen,
 #endif
 }
 
-int main(int argc, char **argv)
+int test_main(int argc, char **argv)
 {
     int result = 0;
     int iter_argv;

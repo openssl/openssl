@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "testutil.h"
+#include "test_main_custom.h"
 #include "internal/poly1305.h"
 #include "../crypto/poly1305/poly1305_local.h"
 #include "e_os.h"
@@ -1638,7 +1639,7 @@ static int test_poly1305(int idx)
     return 1;
 }
 
-int main(int argc, char **argv)
+int test_main(int argc, char **argv)
 {
     int result = 0;
     int iter_argv;

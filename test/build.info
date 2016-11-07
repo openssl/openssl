@@ -226,7 +226,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[dtlsv1listentest]=.. ../include
   DEPEND[dtlsv1listentest]=../libssl
 
-  SOURCE[ct_test]=ct_test.c testutil.c
+  SOURCE[ct_test]=ct_test.c testutil.c test_main_custom.c
   INCLUDE[ct_test]=../crypto/include ../include
   DEPEND[ct_test]=../libcrypto
 
@@ -238,19 +238,19 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[afalgtest]=.. ../include
   DEPEND[afalgtest]=../libcrypto
 
-  SOURCE[d2i_test]=d2i_test.c testutil.c
+  SOURCE[d2i_test]=d2i_test.c testutil.c test_main_custom.c
   INCLUDE[d2i_test]=.. ../include
   DEPEND[d2i_test]=../libcrypto
 
-  SOURCE[ssl_test_ctx_test]=ssl_test_ctx_test.c ssl_test_ctx.c testutil.c
+  SOURCE[ssl_test_ctx_test]=ssl_test_ctx_test.c ssl_test_ctx.c testutil.c test_main_custom.c
   INCLUDE[ssl_test_ctx_test]=.. ../include
   DEPEND[ssl_test_ctx_test]=../libcrypto
 
-  SOURCE[ssl_test]=ssl_test.c ssl_test_ctx.c testutil.c handshake_helper.c
+  SOURCE[ssl_test]=ssl_test.c ssl_test_ctx.c testutil.c handshake_helper.c test_main_custom.c
   INCLUDE[ssl_test]=.. ../include
   DEPEND[ssl_test]=../libcrypto ../libssl
 
-  SOURCE[cipherlist_test]=cipherlist_test.c testutil.c
+  SOURCE[cipherlist_test]=cipherlist_test.c testutil.c test_main.c
   INCLUDE[cipherlist_test]=.. ../include
   DEPEND[cipherlist_test]=../libcrypto ../libssl
 
@@ -271,11 +271,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bioprinttest]=../include
   DEPEND[bioprinttest]=../libcrypto
 
-  SOURCE[sslapitest]=sslapitest.c ssltestlib.c testutil.c
+  SOURCE[sslapitest]=sslapitest.c ssltestlib.c testutil.c test_main_custom.c
   INCLUDE[sslapitest]=../include
   DEPEND[sslapitest]=../libcrypto ../libssl
 
-  SOURCE[dtlstest]=dtlstest.c ssltestlib.c testutil.c
+  SOURCE[dtlstest]=dtlstest.c ssltestlib.c testutil.c test_main_custom.c
   INCLUDE[dtlstest]=../include .
   DEPEND[dtlstest]=../libcrypto ../libssl
 
@@ -298,7 +298,7 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- $disabled{shared} -}]
     PROGRAMS_NO_INST=wpackettest cipher_overhead_test
-    SOURCE[wpackettest]=wpackettest.c testutil.c
+    SOURCE[wpackettest]=wpackettest.c testutil.c test_main_custom.h
     INCLUDE[wpackettest]=../include
     DEPEND[wpackettest]=../libcrypto ../libssl
 
@@ -330,7 +330,7 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS_NO_INST=poly1305_internal_test
   ENDIF
 
-  SOURCE[poly1305_internal_test]=poly1305_internal_test.c testutil.c
+  SOURCE[poly1305_internal_test]=poly1305_internal_test.c testutil.c test_main_custom.c
   IF[{- !$disabled{shared} -}]
     SOURCE[poly1305_internal_test]= ../crypto/poly1305/poly1305.c \
         {- rebase_files("../crypto/poly1305", $target{poly1305_asm_src}) -} \
@@ -340,7 +340,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[poly1305_internal_test]=.. ../include ../crypto/include
   DEPEND[poly1305_internal_test]=../libcrypto
 
-  SOURCE[asn1_internal_test]=asn1_internal_test.c testutil.c
+  SOURCE[asn1_internal_test]=asn1_internal_test.c testutil.c test_main.c
   IF[{- !$disabled{shared} -}]
     SOURCE[asn1_internal_test]= ../crypto/asn1/a_strnid.c \
         ../crypto/rsa/rsa_ameth.c ../crypto/dsa/dsa_ameth.c \
@@ -351,7 +351,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[asn1_internal_test]=.. ../include ../crypto/include
   DEPEND[asn1_internal_test]=../libcrypto
 
-  SOURCE[modes_internal_test]=modes_internal_test.c testutil.c
+  SOURCE[modes_internal_test]=modes_internal_test.c testutil.c test_main_custom.c
   IF[{- !$disabled{shared} -}]
     SOURCE[modes_internal_test]= \
         {- rebase_files("../crypto", $target{cpuid_asm_src}); -} \
@@ -363,7 +363,7 @@ IF[{- !$disabled{tests} -}]
   # The reason for the huge amount of directly included x509v3 files
   # is that a table that is checked by x509_internal_test refers to
   # structures that are spread all over those files.
-  SOURCE[x509_internal_test]=x509_internal_test.c testutil.c
+  SOURCE[x509_internal_test]=x509_internal_test.c testutil.c test_main.c
   IF[{- !$disabled{shared} -}]
     SOURCE[x509_internal_test]= ../crypto/x509v3/v3_bitst.c \
         ../crypto/x509v3/v3_ia5.c ../crypto/x509v3/v3_skey.c \
@@ -382,7 +382,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[x509_internal_test]=.. ../include
   DEPEND[x509_internal_test]=../libcrypto
 
-  SOURCE[mdc2_internal_test]=mdc2_internal_test.c testutil.c
+  SOURCE[mdc2_internal_test]=mdc2_internal_test.c testutil.c test_main.c
   INCLUDE[mdc2_internal_test]=.. ../include
   DEPEND[mdc2_internal_test]=../libcrypto
 ENDIF

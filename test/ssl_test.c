@@ -17,6 +17,7 @@
 #include "handshake_helper.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
+#include "test_main_custom.h"
 
 static CONF *conf = NULL;
 
@@ -296,7 +297,7 @@ err:
     return ret;
 }
 
-int main(int argc, char **argv)
+int test_main(int argc, char **argv)
 {
     int result = 0;
     long num_tests;
@@ -315,5 +316,6 @@ int main(int argc, char **argv)
     ADD_ALL_TESTS(test_handshake, (int)(num_tests));
     result = run_tests(argv[0]);
 
+    NCONF_free(conf);
     return result;
 }

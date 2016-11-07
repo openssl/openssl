@@ -14,6 +14,7 @@
 
 #include <openssl/mdc2.h>
 #include "testutil.h"
+#include "test_main.h"
 #include "e_os.h"
 
 typedef struct {
@@ -63,9 +64,7 @@ static int test_mdc2(int idx)
     return 1;
 }
 
-int main(int argc, char **argv)
+void register_tests()
 {
     ADD_ALL_TESTS(test_mdc2, OSSL_NELEM(tests));
-
-    return run_tests(argv[0]);
 }
