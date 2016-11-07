@@ -97,9 +97,9 @@ salt value "salt" and info value "label":
     /* Error */
  if (EVP_PKEY_CTX_set_hkdf_md(pctx, EVP_sha256()) <= 0)
     /* Error */
- if (EVP_PKEY_CTX_set1_salt(pctx, "salt", 4) <= 0)
+ if (EVP_PKEY_CTX_set1_hkdf_salt(pctx, "salt", 4) <= 0)
     /* Error */
- if (EVP_PKEY_CTX_set1_key(pctx, "secret", 6) <= 0)
+ if (EVP_PKEY_CTX_set1_hkdf_key(pctx, "secret", 6) <= 0)
     /* Error */
  if (EVP_PKEY_CTX_add1_hkdf_info(pctx, "label", 6) <= 0)
     /* Error */
