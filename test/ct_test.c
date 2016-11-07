@@ -18,9 +18,9 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "testutil.h"
+#include "test_main_custom.h"
 
 #ifndef OPENSSL_NO_CT
-
 /* Used when declaring buffers to read text files into */
 #define CT_TEST_MAX_FILE_SIZE 8096
 
@@ -530,15 +530,10 @@ static int test_encode_tls_sct()
     EXECUTE_CT_TEST();
 }
 
-int main(int argc, char *argv[])
+int test_main(int argc, char *argv[])
 {
     int result = 0;
-    char *tmp_env = NULL;
-
-    tmp_env = getenv("OPENSSL_DEBUG_MEMORY");
-    if (tmp_env != NULL && strcmp(tmp_env, "on") == 0)
-        CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+    char *tmp_env;
 
     tmp_env = getenv("CT_DIR");
     ct_dir = OPENSSL_strdup(tmp_env != NULL ? tmp_env : "ct");
@@ -554,24 +549,10 @@ int main(int argc, char *argv[])
     ADD_TEST(test_encode_tls_sct);
 
     result = run_tests(argv[0]);
-    ERR_print_errors_fp(stderr);
 
     OPENSSL_free(ct_dir);
     OPENSSL_free(certs_dir);
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
-        result = 1;
-#endif
-
     return result;
 }
-
-#else /* OPENSSL_NO_CT */
-
-int main(int argc, char* argv[])
-{
-    return EXIT_SUCCESS;
-}
-
-#endif /* OPENSSL_NO_CT */
+#endif

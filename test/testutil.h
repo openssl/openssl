@@ -11,13 +11,51 @@
 # define HEADER_TESTUTIL_H
 
 #include <openssl/err.h>
+#include <openssl/e_os2.h>
+
+/*-
+ * Simple unit tests should implement register_tests() from test_main.h
+ * and link against test_main.c.
+ * To register tests, call ADD_TEST or ADD_ALL_TESTS:
+ *
+ * #include "test_main.h"
+ *
+ * void register_tests(void)
+ * {
+ *     ADD_TEST(test_foo);
+ *     ADD_ALL_TESTS(test_bar, num_test_bar);
+ * }
+ *
+ * Tests that need to perform custom setup or read command-line arguments should
+ * implement test_main() from test_main_custom.h and link against
+ * test_main_custom.c:
+ *
+ * int test_main(int argc, char *argv[])
+ * {
+ *     int ret;
+ *
+ *     // Custom setup ...
+ *
+ *     ADD_TEST(test_foo);
+ *     ADD_ALL_TESTS(test_bar, num_test_bar);
+ *     // Add more tests ...
+ *
+ *     ret = run_tests(argv[0]);
+ *
+ *     // Custom teardown ...
+ *
+ *     return ret;
+ * }
+ */
+
+/* Adds a simple test case. */
+# define ADD_TEST(test_function) add_test(#test_function, test_function)
 
 /*
- * In main(), call ADD_TEST to register each test case function, then call
- * run_tests() to execute all tests and report the results. The result
- * returned from run_tests() should be used as the return value for main().
+ * Simple parameterized tests. Calls test_function(idx) for each 0 <= idx < num.
  */
-# define ADD_TEST(test_function) add_test(#test_function, test_function)
+# define ADD_ALL_TESTS(test_function, num) \
+  add_all_tests(#test_function, test_function, num)
 
 /*-
  * Test cases that share common setup should use the helper
@@ -82,15 +120,21 @@
 # endif                         /* __STDC_VERSION__ */
 
 /*
- * Simple parameterized tests. Adds a test_function(idx) test for each
- * 0 <= idx < num.
+ * Internal helpers. Test programs shouldn't use these directly, but should
+ * rather link to one of the helper main() methods.
  */
-# define ADD_ALL_TESTS(test_function, num) \
-  add_all_tests(#test_function, test_function, num)
+
+/* setup_test() should be called as the first thing in a test main(). */
+void setup_test(void);
+/*
+ * finish_test() should be called as the last thing in a test main().
+ * The result of run_tests() should be the input to finish_test().
+ */
+__owur int finish_test(int ret);
 
 void add_test(const char *test_case_name, int (*test_fn) ());
 void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num);
-int run_tests(const char *test_prog_name);
+__owur int run_tests(const char *test_prog_name);
 
 /*
  *  Test assumption verification helpers.
@@ -101,7 +145,6 @@ int run_tests(const char *test_prog_name);
  * Otherwise, returns 0 and pretty-prints diagnostics using |desc|.
  */
 int strings_equal(const char *desc, const char *s1, const char *s2);
-#endif                          /* HEADER_TESTUTIL_H */
 
 /*
  * For "impossible" conditions such as malloc failures or bugs in test code,
@@ -115,3 +158,4 @@ int strings_equal(const char *desc, const char *s1, const char *s2);
             OPENSSL_assert(!#condition);        \
         }                                       \
     } while (0)
+#endif                          /* HEADER_TESTUTIL_H */

@@ -11,6 +11,7 @@
 #include <openssl/buffer.h>
 #include "../ssl/packet_locl.h"
 #include "testutil.h"
+#include "test_main_custom.h"
 
 const static unsigned char simple1 = 0xff;
 const static unsigned char simple2[] = { 0x01, 0xff };
@@ -401,15 +402,9 @@ static int test_WPACKET_memcpy(void)
     return 1;
 }
 
-int main(int argc, char *argv[])
+int test_main(int argc, char *argv[])
 {
-    BIO *err = NULL;
     int testresult = 0;
-
-    err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     buf = BUF_MEM_new();
     if (buf != NULL) {
@@ -425,15 +420,5 @@ int main(int argc, char *argv[])
         BUF_MEM_free(buf);
     }
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(err) <= 0)
-        testresult = 1;
-#endif
-    BIO_free(err);
-
-    if (!testresult)
-        printf("PASS\n");
-
     return testresult;
 }
-
