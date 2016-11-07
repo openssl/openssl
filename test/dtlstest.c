@@ -14,6 +14,7 @@
 
 #include "ssltestlib.h"
 #include "testutil.h"
+#include "test_main_custom.h"
 
 static char *cert = NULL;
 static char *privkey = NULL;
@@ -104,9 +105,8 @@ static int test_dtls_unprocessed(int testidx)
     return testresult;
 }
 
-int main(int argc, char *argv[])
+int test_main(int argc, char *argv[])
 {
-    BIO *err = NULL;
     int testresult = 1;
 
     if (argc != 3) {
@@ -117,26 +117,12 @@ int main(int argc, char *argv[])
     cert = argv[1];
     privkey = argv[2];
 
-    err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
     ADD_ALL_TESTS(test_dtls_unprocessed, NUM_TESTS);
 
     testresult = run_tests(argv[0]);
 
     bio_f_tls_dump_filter_free();
     bio_s_mempacket_test_free();
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(err) <= 0)
-        testresult = 1;
-#endif
-    BIO_free(err);
-
-    if (!testresult)
-        printf("PASS\n");
 
     return testresult;
 }

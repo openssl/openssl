@@ -15,6 +15,8 @@
 #include <string.h>
 #include "e_os.h"
 
+#include <openssl/opensslconf.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 
 /*
@@ -55,6 +57,42 @@ void add_all_tests(const char *test_case_name, int(*test_fn)(int idx),
     all_tests[num_tests].num = num;
     ++num_tests;
     num_test_cases += num;
+}
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+static int should_report_leaks()
+{
+    /*
+     * When compiled with enable-crypto-mdebug, OPENSSL_DEBUG_MEMORY=0
+     * can be used to disable leak checking at runtime.
+     * Note this only works when running the test binary manually;
+     * the test harness always enables OPENSSL_DEBUG_MEMORY.
+     */
+    char *mem_debug_env = getenv("OPENSSL_DEBUG_MEMORY");
+
+    return mem_debug_env == NULL
+        || (strcmp(mem_debug_env, "0") && strcmp(mem_debug_env, ""));
+}
+#endif
+
+
+void setup_test()
+{
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (should_report_leaks()) {
+        CRYPTO_set_mem_debug(1);
+        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+    }
+#endif
+}
+
+int finish_test(int ret)
+{
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (should_report_leaks() && CRYPTO_mem_leaks_fp(stderr) <= 0)
+        return EXIT_FAILURE;
+#endif
+    return ret;
 }
 
 static void finalize(int success)

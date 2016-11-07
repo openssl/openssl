@@ -18,6 +18,7 @@
 #include <openssl/tls1.h>
 
 #include "e_os.h"
+#include "test_main.h"
 #include "testutil.h"
 
 typedef struct cipherlist_test_fixture {
@@ -189,14 +190,8 @@ static int test_default_cipherlist_explicit()
     EXECUTE_CIPHERLIST_TEST();
 }
 
-int main(int argc, char **argv)
+void register_tests()
 {
-    int result = 0;
-
     ADD_TEST(test_default_cipherlist_implicit);
     ADD_TEST(test_default_cipherlist_explicit);
-
-    result = run_tests(argv[0]);
-
-    return result;
 }

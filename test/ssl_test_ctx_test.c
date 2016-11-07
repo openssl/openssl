@@ -18,6 +18,7 @@
 #include "e_os.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
+#include "test_main_custom.h"
 #include <openssl/e_os2.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
@@ -303,7 +304,7 @@ static int test_bad_configuration(int idx)
     return 1;
 }
 
-int main(int argc, char **argv)
+int test_main(int argc, char **argv)
 {
     int result = 0;
 

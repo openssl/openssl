@@ -15,6 +15,7 @@
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "test_main.h"
 #include "testutil.h"
 #include "e_os.h"
 
@@ -90,10 +91,8 @@ static int test_standard_methods()
     return 0;
 }
 
-int main(int argc, char **argv)
+void register_tests(void)
 {
     ADD_TEST(test_tbl_standard);
     ADD_TEST(test_standard_methods);
-
-    return run_tests(argv[0]);
 }

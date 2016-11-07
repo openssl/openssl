@@ -15,6 +15,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "testutil.h"
+#include "test_main.h"
 #include "e_os.h"
 
 /**********************************************************************
@@ -52,9 +53,7 @@ static int test_standard_exts()
     return good;
 }
 
-int main(int argc, char **argv)
+void register_tests()
 {
     ADD_TEST(test_standard_exts);
-
-    return run_tests(argv[0]);
 }
