@@ -278,11 +278,6 @@ sub content_type
     my $self = shift;
     return $self->{content_type};
 }
-sub version
-{
-    my $self = shift;
-    return $self->{version};
-}
 sub sslv2
 {
     my $self = shift;
@@ -331,5 +326,13 @@ sub len
       $self->{len} = shift;
     }
     return $self->{len};
+}
+sub version
+{
+    my $self = shift;
+    if (@_) {
+      $self->{version} = shift;
+    }
+    return $self->{version};
 }
 1;
