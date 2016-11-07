@@ -950,7 +950,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         /*
          * Handle an SSLv2 backwards compatible ClientHello
          * Note, this is only for SSLv3+ using the backward compatible format.
-         * Real SSLv2 is not supported, and is rejected above.
+         * Real SSLv2 is not supported, and is rejected below.
          */
         unsigned int ciphersuite_len, session_id_len, challenge_len;
         PACKET challenge;
@@ -973,7 +973,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
         if (!PACKET_get_sub_packet(pkt, &clienthello.ciphersuites,
                                    ciphersuite_len)
-            || !PACKET_get_sub_packet(pkt, &session_id,
+            || !PACKET_copy_bytes(pkt, clienthello.session_id,
                                       clienthello.session_id_len)
             || !PACKET_get_sub_packet(pkt, &challenge, challenge_len)
             /* No extensions. */
@@ -1002,7 +1002,10 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     } else {
         /* Regular ClientHello. */
         if (!PACKET_copy_bytes(pkt, clienthello.random, SSL3_RANDOM_SIZE)
-            || !PACKET_get_length_prefixed_1(pkt, &session_id)) {
+            || !PACKET_get_length_prefixed_1(pkt, &session_id)
+            || !PACKET_copy_all(&session_id, clienthello.session_id,
+                    SSL_MAX_SSL_SESSION_ID_LENGTH,
+                    &clienthello.session_id_len)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
             goto f_err;
@@ -1057,10 +1060,8 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     }
 
     if (!PACKET_copy_all(&compression, clienthello.compressions,
-                         MAX_COMPRESSIONS_SIZE, &clienthello.compressions_len)
-            || !PACKET_copy_all(&session_id, clienthello.session_id,
-                                SSL_MAX_SSL_SESSION_ID_LENGTH,
-                                &clienthello.session_id_len)) {
+                         MAX_COMPRESSIONS_SIZE,
+                         &clienthello.compressions_len)) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
         goto f_err;
