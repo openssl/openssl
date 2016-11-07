@@ -62,6 +62,8 @@ static ssl_trace_tbl ssl_version_tbl[] = {
     {TLS1_1_VERSION, "TLS 1.1"},
     {TLS1_2_VERSION, "TLS 1.2"},
     {TLS1_3_VERSION, "TLS 1.3"},
+    /* TODO(TLS1.3): Remove this line before release */
+    {TLS1_3_VERSION_DRAFT, TLS1_3_VERSION_DRAFT_TXT},
     {DTLS1_VERSION, "DTLS 1.0"},
     {DTLS1_2_VERSION, "DTLS 1.2"},
     {DTLS1_BAD_VER, "DTLS 1.0 (bad)"}
@@ -571,7 +573,7 @@ static ssl_trace_tbl ssl_supp_versions_tbl[] = {
     {TLS1_1_VERSION, "TLSv1.1"},
     {TLS1_2_VERSION, "TLSv1.2"},
     {TLS1_3_VERSION, "TLSv1.3"},
-    {TLS1_3_VERSION_DRAFT, "TLSv1.3 draft 18"}
+    {TLS1_3_VERSION_DRAFT, TLS1_3_VERSION_DRAFT_TXT}
 };
 
 static void ssl_print_hex(BIO *bio, int indent, const char *name,
