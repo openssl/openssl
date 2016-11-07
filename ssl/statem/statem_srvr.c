@@ -963,7 +963,6 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
-        clienthello.session_id_len = session_id_len;
 
         if (session_id_len > SSL_MAX_SSL_SESSION_ID_LENGTH) {
             al = SSL_AD_DECODE_ERROR;
@@ -973,8 +972,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
         if (!PACKET_get_sub_packet(pkt, &clienthello.ciphersuites,
                                    ciphersuite_len)
-            || !PACKET_copy_bytes(pkt, clienthello.session_id,
-                                      clienthello.session_id_len)
+            || !PACKET_copy_bytes(pkt, clienthello.session_id, session_id_len)
             || !PACKET_get_sub_packet(pkt, &challenge, challenge_len)
             /* No extensions. */
             || PACKET_remaining(pkt) != 0) {
@@ -983,6 +981,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
+        clienthello.session_id_len = session_id_len;
 
         /* Load the client random and compression list. */
         challenge_len = challenge_len > sizeof(clienthello.random)
