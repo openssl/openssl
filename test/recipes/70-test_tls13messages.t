@@ -60,17 +60,18 @@ sub checkmessages($$);
 
 #Test 1: Check we get all the right messages for a default handshake
 (undef, my $session) = tempfile();
-$proxy->serverconnects(2);
+#$proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 4;
+plan tests => 3;
 checkmessages(DEFAULT_HANDSHAKE, "Default handshake test");
 
+#TODO(TLS1.3): Test temporarily disabled until we implement TLS1.3 resumption
 #Test 2: Resumption handshake
-$proxy->clearClient();
-$proxy->clientflags("-sess_in ".$session);
-$proxy->clientstart();
-checkmessages(RESUME_HANDSHAKE, "Resumption handshake test");
+#$proxy->clearClient();
+#$proxy->clientflags("-sess_in ".$session);
+#$proxy->clientstart();
+#checkmessages(RESUME_HANDSHAKE, "Resumption handshake test");
 unlink $session;
 
 #Test 3: A default handshake, but with a CertificateStatus message

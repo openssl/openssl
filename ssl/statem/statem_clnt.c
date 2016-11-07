@@ -1089,17 +1089,22 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     s->hit = 0;
 
     /* Get the session-id. */
-    if (!PACKET_get_length_prefixed_1(pkt, &session_id)) {
-        al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
-        goto f_err;
-    }
-    session_id_len = PACKET_remaining(&session_id);
-    if (session_id_len > sizeof s->session->session_id
-        || session_id_len > SSL3_SESSION_ID_SIZE) {
-        al = SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_SSL3_SESSION_ID_TOO_LONG);
-        goto f_err;
+    if (!SSL_IS_TLS13(s)) {
+        if (!PACKET_get_length_prefixed_1(pkt, &session_id)) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+            goto f_err;
+        }
+        session_id_len = PACKET_remaining(&session_id);
+        if (session_id_len > sizeof s->session->session_id
+            || session_id_len > SSL3_SESSION_ID_SIZE) {
+            al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
+                   SSL_R_SSL3_SESSION_ID_TOO_LONG);
+            goto f_err;
+        }
+    } else {
+        session_id_len = 0;
     }
 
     if (!PACKET_get_bytes(pkt, &cipherchars, TLS_CIPHER_LEN)) {
@@ -1120,8 +1125,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
      * we can resume, and later peek at the next handshake message to see if the
      * server wants to resume.
      */
-    if (s->version >= TLS1_VERSION && s->tls_session_secret_cb &&
-        s->session->tlsext_tick) {
+    if (s->version >= TLS1_VERSION && !SSL_IS_TLS13(s)
+            && s->tls_session_secret_cb && s->session->tlsext_tick) {
         const SSL_CIPHER *pref_cipher = NULL;
         /*
          * s->session->master_key_length is a size_t, but this is an int for
@@ -1235,11 +1240,16 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     s->s3->tmp.new_cipher = c;
     /* lets get the compression algorithm */
     /* COMPRESSION */
-    if (!PACKET_get_1(pkt, &compression)) {
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
-        al = SSL_AD_DECODE_ERROR;
-        goto f_err;
+    if (!SSL_IS_TLS13(s)) {
+        if (!PACKET_get_1(pkt, &compression)) {
+            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+            al = SSL_AD_DECODE_ERROR;
+            goto f_err;
+        }
+    } else {
+        compression = 0;
     }
+
 #ifdef OPENSSL_NO_COMP
     if (compression != 0) {
         al = SSL_AD_ILLEGAL_PARAMETER;

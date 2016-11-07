@@ -1773,9 +1773,11 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
         compm = s->s3->tmp.new_compression->id;
 #endif
 
-    if (!WPACKET_sub_memcpy_u8(pkt, s->session->session_id, sl)
+    if ((!SSL_IS_TLS13(s)
+                && !WPACKET_sub_memcpy_u8(pkt, s->session->session_id, sl))
             || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt, &len)
-            || !WPACKET_put_bytes_u8(pkt, compm)
+            || (!SSL_IS_TLS13(s)
+                && !WPACKET_put_bytes_u8(pkt, compm))
             || !ssl_prepare_serverhello_tlsext(s)
             || !ssl_add_serverhello_tlsext(s, pkt, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);

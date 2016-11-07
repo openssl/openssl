@@ -18,63 +18,72 @@ package ssltests;
 our @tests = (
     # Currently only have tests for certs without SCTs.
     {
-	name => "ct-permissive",
-	server => { },
-	client => {
-     	    extra => {
-	        "CTValidation" => "Permissive",
-	    },
-	},
-	test => {
-	    "ExpectedResult" => "Success",
-	},
+        name => "ct-permissive",
+        server => { },
+        client => {
+            extra => {
+                "CTValidation" => "Permissive",
+            },
+        },
+        test => {
+            "ExpectedResult" => "Success",
+        },
     }, 
     {
-	name => "ct-strict",
-	server => { },
-	client => {
-     	    extra => {
-	        "CTValidation" => "Strict",
-	    },
-	},
-	test => {
-	    "ExpectedResult" => "ClientFail",
-	    "ExpectedClientAlert" => "HandshakeFailure",
-	},
+        name => "ct-strict",
+        server => { },
+        client => {
+            extra => {
+                "CTValidation" => "Strict",
+            },
+        },
+        test => {
+            "ExpectedResult" => "ClientFail",
+            "ExpectedClientAlert" => "HandshakeFailure",
+        },
     },
     {
-	name => "ct-permissive-resumption",
-	server => { },
-	client => {
-     	    extra => {
-	        "CTValidation" => "Permissive",
-	    },
-	},
-	test => {
-	    "HandshakeMode" => "Resume",
-	    "ResumptionExpected" => "Yes",
-	    "ExpectedResult" => "Success",
-	},
+        name => "ct-permissive-resumption",
+        server => { },
+        client => {
+            #TODO(TLS1.3): Temporarily set to TLSv1.2 until we implement TLS1.3
+            #              resumption
+            MaxProtocol => "TLSv1.2",
+            extra => {
+                "CTValidation" => "Permissive",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success",
+        },
     }, 
     {
-	name => "ct-strict-resumption",
-	server => { },
-	client => {
-     	    extra => {
-	        "CTValidation" => "Permissive",
-	    },
-	},
-	# SCTs are not present during resumption, so the resumption
-	# should succeed.
-	resume_client => {
-     	    extra => {
-	        "CTValidation" => "Strict",
-	    },
-	},
-	test => {
-	    "HandshakeMode" => "Resume",
-	    "ResumptionExpected" => "Yes",
-	    "ExpectedResult" => "Success",
-	},
+        name => "ct-strict-resumption",
+        server => { },
+        client => {
+            #TODO(TLS1.3): Temporarily set to TLSv1.2 until we implement TLS1.3
+            #              resumption
+            MaxProtocol => "TLSv1.2",
+            extra => {
+                "CTValidation" => "Permissive",
+            },
+        },
+        # SCTs are not present during resumption, so the resumption
+        # should succeed.
+        resume_client => {
+            #TODO(TLS1.3): Temporarily set to TLSv1.2 until we implement TLS1.3
+            #              resumption
+            MaxProtocol => "TLSv1.2",
+            extra => {
+                "CTValidation" => "Strict",
+            },
+        },
+        test => {
+            "HandshakeMode" => "Resume",
+            "ResumptionExpected" => "Yes",
+            "ExpectedResult" => "Success",
+        },
     },
 );

@@ -430,6 +430,12 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
     SSL_CTX_set_min_proto_version(cctx, TLS1_2_VERSION);
 #endif
 
+    /*
+     * TODO(TLS1.3): Test temporarily disabled for TLS1.3 until we've
+     * implemented session resumption.
+     */
+    SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION);
+
     /* Set up session cache */
     if (fix.use_ext_cache) {
         SSL_CTX_sess_set_new_cb(cctx, new_session_cb);

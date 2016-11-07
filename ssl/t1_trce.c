@@ -588,12 +588,17 @@ static int ssl_print_hexbuf(BIO *bio, int indent,
 }
 
 static int ssl_print_version(BIO *bio, int indent, const char *name,
-                             const unsigned char **pmsg, size_t *pmsglen)
+                             const unsigned char **pmsg, size_t *pmsglen,
+                             unsigned int *version)
 {
     int vers;
     if (*pmsglen < 2)
         return 0;
     vers = ((*pmsg)[0] << 8) | (*pmsg)[1];
+    if (version != NULL) {
+        /* TODO(TLS1.3): Remove the draft conditional here before release */
+        *version = (vers == TLS1_3_VERSION_DRAFT) ? TLS1_3_VERSION : vers;
+    }
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "%s=0x%x (%s)\n",
                name, vers, ssl_trace_str(vers, ssl_version_tbl));
@@ -796,7 +801,7 @@ static int ssl_print_client_hello(BIO *bio, SSL *ssl, int indent,
 {
     size_t len;
     unsigned int cs;
-    if (!ssl_print_version(bio, indent, "client_version", &msg, &msglen))
+    if (!ssl_print_version(bio, indent, "client_version", &msg, &msglen, NULL))
         return 0;
     if (!ssl_print_random(bio, indent, &msg, &msglen))
         return 0;
@@ -849,7 +854,7 @@ static int ssl_print_client_hello(BIO *bio, SSL *ssl, int indent,
 static int dtls_print_hello_vfyrequest(BIO *bio, int indent,
                                        const unsigned char *msg, size_t msglen)
 {
-    if (!ssl_print_version(bio, indent, "server_version", &msg, &msglen))
+    if (!ssl_print_version(bio, indent, "server_version", &msg, &msglen, NULL))
         return 0;
     if (!ssl_print_hexbuf(bio, indent, "cookie", 1, &msg, &msglen))
         return 0;
@@ -860,11 +865,13 @@ static int ssl_print_server_hello(BIO *bio, int indent,
                                   const unsigned char *msg, size_t msglen)
 {
     unsigned int cs;
-    if (!ssl_print_version(bio, indent, "server_version", &msg, &msglen))
+    unsigned int vers;
+    if (!ssl_print_version(bio, indent, "server_version", &msg, &msglen, &vers))
         return 0;
     if (!ssl_print_random(bio, indent, &msg, &msglen))
         return 0;
-    if (!ssl_print_hexbuf(bio, indent, "session_id", 1, &msg, &msglen))
+    if (vers != TLS1_3_VERSION
+            && !ssl_print_hexbuf(bio, indent, "session_id", 1, &msg, &msglen))
         return 0;
     if (msglen < 2)
         return 0;
@@ -874,13 +881,15 @@ static int ssl_print_server_hello(BIO *bio, int indent,
                msg[0], msg[1], ssl_trace_str(cs, ssl_ciphers_tbl));
     msg += 2;
     msglen -= 2;
-    if (msglen < 1)
-        return 0;
-    BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "compression_method: %s (0x%02X)\n",
-               ssl_trace_str(msg[0], ssl_comp_tbl), msg[0]);
-    msg++;
-    msglen--;
+    if (vers != TLS1_3_VERSION) {
+        if (msglen < 1)
+            return 0;
+        BIO_indent(bio, indent, 80);
+        BIO_printf(bio, "compression_method: %s (0x%02X)\n",
+                   ssl_trace_str(msg[0], ssl_comp_tbl), msg[0]);
+        msg++;
+        msglen--;
+    }
     if (!ssl_print_extensions(bio, indent, 1, msg, msglen))
         return 0;
     return 1;
