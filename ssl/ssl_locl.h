@@ -1633,7 +1633,7 @@ typedef struct raw_extension_st {
 
 typedef struct {
     unsigned int isv2;
-    unsigned int version;
+    unsigned int legacy_version;
     unsigned char random[SSL3_RANDOM_SIZE];
     size_t session_id_len;
     unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
