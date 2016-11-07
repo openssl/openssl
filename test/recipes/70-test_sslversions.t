@@ -17,7 +17,7 @@ use constant {
     UNRECOGNISED_VERSIONS => 2,
     NO_EXTENSION => 3,
     EMPTY_EXTENSION => 4,
-    NO_TLS1_3 => 5,
+    TLS1_1_AND_1_0_ONLY => 5,
     WITH_TLS1_4 => 6
 };
 
@@ -93,12 +93,12 @@ ok(TLSProxy::Message->success()
 #Test 6: no TLSv1.3 or TLSv1.2 version in supported versions extension, but
 #TLSv1.1 and TLSv1.0 are present. Should just use TLSv1.1 and succeed
 $proxy->clear();
-$testtype = NO_TLS1_3;
+$testtype = TLS1_1_AND_1_0_ONLY;
 $proxy->start();
 $record = pop @{$proxy->record_list};
 ok(TLSProxy::Message->success()
    && $record->version() == TLSProxy::Record::VERS_TLS_1_1,
-   "No TLS1.3 in supported versions extension");
+   "TLS1.1 and TLS1.0 in supported versions extension only");
 
 #Test 7: TLS1.4 and TLS1.3 in supported versions. Should succeed and use TLS1.3
 $proxy->clear();
@@ -131,7 +131,7 @@ sub modify_supported_versions_filter
                     0x04, # Length
                     0x04, 0x04, #Some unrecognised version
                     0x04, 0x03; #Another unrecognised version
-            } elsif ($testtype == NO_TLS1_3) {
+            } elsif ($testtype == TLS1_1_AND_1_0_ONLY) {
                 $ext = pack "C5",
                     0x04, # Length
                     0x03, 0x02, #TLSv1.1
@@ -144,7 +144,7 @@ sub modify_supported_versions_filter
             }
             if ($testtype == REVERSE_ORDER_VERSIONS
                     || $testtype == UNRECOGNISED_VERSIONS
-                    || $testtype == NO_TLS1_3
+                    || $testtype == TLS1_1_AND_1_0_ONLY
                     || $testtype == WITH_TLS1_4) {
                 $message->set_extension(
                     TLSProxy::Message::EXT_SUPPORTED_VERSIONS, $ext);
