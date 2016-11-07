@@ -48,6 +48,7 @@ ok(TLSProxy::Message->success(), "Maximally-padded record test");
 # Test that invalid padding is rejected.
 foreach my $offset (@test_offsets) {
     $proxy->clear();
+    $proxy->serverflags("-tls1_2");
     $bad_padding_offset = $offset;
     $proxy->start();
     ok(TLSProxy::Message->fail(), "Invalid padding byte $bad_padding_offset");
