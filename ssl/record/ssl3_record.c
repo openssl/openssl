@@ -204,8 +204,9 @@ int ssl3_get_record(SSL *s)
                 rr[num_recs].rec_version = version;
                 n2s(p, rr[num_recs].length);
 
-                /* Lets check version */
-                if (!s->first_packet && version != s->version) {
+                /* Lets check version. In TLSv1.3 we ignore this field */
+                if (!s->first_packet && s->version != TLS1_3_VERSION
+                        && version != s->version) {
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
                     if ((s->version & 0xFF00) == (version & 0xFF00)
                         && !s->enc_write_ctx && !s->write_hash) {
