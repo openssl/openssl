@@ -601,7 +601,7 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 # define TLS1_CK_RSA_PSK_WITH_CHACHA20_POLY1305           0x0300CCAE
 
 /* TLS v1.3 ciphersuites */
-# define TLS1_3_CK_AES_128_GCM_SHA256                     0x03000D01
+# define TLS1_3_CK_AES_128_GCM_SHA256                     0x03001301
 
 /*
  * XXX Backward compatibility alert: Older versions of OpenSSL gave some DHE
