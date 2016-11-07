@@ -1690,7 +1690,7 @@ static int tls1_alpn_handle_client_hello_late(SSL *s, int *al)
 #ifndef OPENSSL_NO_EC
 /*-
  * ssl_check_for_safari attempts to fingerprint Safari using OS X
- * SecureTransport using the TLS extension block in |pkt|.
+ * SecureTransport using the TLS extension block in |hello|.
  * Safari, since 10.6, sends exactly these extensions, in this order:
  *   SNI,
  *   elliptic_curves
