@@ -939,7 +939,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         }
     }
 
-    if (!PACKET_get_net_2(pkt, &clienthello.version)) {
+    if (!PACKET_get_net_2(pkt, &clienthello.legacy_version)) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
         goto err;
@@ -1082,8 +1082,8 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     /* Choose the version */
 
     if (clienthello.isv2) {
-        if (clienthello.version == SSL2_VERSION
-                || (clienthello.version & 0xff00)
+        if (clienthello.legacy_version == SSL2_VERSION
+                || (clienthello.legacy_version & 0xff00)
                    != (SSL3_VERSION_MAJOR << 8)) {
             /*
              * This is real SSLv2 or something complete unknown. We don't
@@ -1093,7 +1093,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             goto err;
         }
         /* SSLv3/TLS */
-        s->client_version = clienthello.version;
+        s->client_version = clienthello.legacy_version;
     }
     /*
      * Do SSL/TLS version negotiation if applicable. For DTLS we just check
@@ -1102,7 +1102,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     if (!SSL_IS_DTLS(s)) {
         protverr = ssl_choose_server_version(s, &clienthello);
     } else if (s->method->version != DTLS_ANY_VERSION &&
-               DTLS_VERSION_LT((int)clienthello.version, s->version)) {
+               DTLS_VERSION_LT((int)clienthello.legacy_version, s->version)) {
         protverr = SSL_R_VERSION_TOO_LOW;
     } else {
         protverr = 0;
@@ -1112,7 +1112,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, protverr);
         if ((!s->enc_write_ctx && !s->write_hash)) {
             /* like ssl3_get_record, send alert using remote version number */
-            s->version = s->client_version = clienthello.version;
+            s->version = s->client_version = clienthello.legacy_version;
         }
         al = SSL_AD_PROTOCOL_VERSION;
         goto f_err;

@@ -991,7 +991,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
      * handle version.
      */
     int server_version = s->method->version;
-    int client_version = hello->version;
+    int client_version = hello->legacy_version;
     const version_info *vent;
     const version_info *table;
     int disabled = 0;
