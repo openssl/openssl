@@ -1118,6 +1118,10 @@ int ssl_choose_client_version(SSL *s, int version)
     const version_info *vent;
     const version_info *table;
 
+    /* TODO(TLS1.3): Remove this before release */
+    if (version == TLS1_3_VERSION_DRAFT)
+        version = TLS1_3_VERSION;
+
     switch (s->method->version) {
     default:
         if (version != s->version)

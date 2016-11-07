@@ -1544,7 +1544,9 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
     int compm, al = SSL_AD_INTERNAL_ERROR;
     size_t sl, len;
 
-    if (!WPACKET_put_bytes_u16(pkt, s->version)
+    /* TODO(TLS1.3): Remove the DRAFT conditional before release */
+    if (!WPACKET_put_bytes_u16(pkt, (s->version == TLS1_3_VERSION)
+                                    ? TLS1_3_VERSION_DRAFT : s->version)
                /*
                 * Random stuff. Filling of the server_random takes place in
                 * tls_process_client_hello()
