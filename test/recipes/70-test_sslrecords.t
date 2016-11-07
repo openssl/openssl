@@ -39,8 +39,11 @@ my $content_type = TLSProxy::Record::RT_APPLICATION_DATA;
 my $inject_recs_num = 1;
 $proxy->serverflags("-tls1_2");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-my $num_tests = 10;
+my $num_tests = 11;
 if (!disabled("tls1_1")) {
+    $num_tests++;
+}
+if (!disabled("tls1_3")) {
     $num_tests++;
 }
 plan tests => $num_tests;
@@ -135,6 +138,21 @@ if (!disabled("tls1_1")) {
     $proxy->clientflags("-tls1_1");
     $proxy->start();
     ok(TLSProxy::Message->fail(), "Unrecognised record type in TLS1.1");
+}
+
+#Test 12: Sending a different record version in TLS1.2 should fail
+$proxy->clear();
+$proxy->clientflags("-tls1_2");
+$proxy->filter(\&change_version);
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Changed record version in TLS1.2");
+
+#Test 13: Sending a different record version in TLS1.3 should succeed
+if (!disabled("tls1_3")) {
+    $proxy->clear();
+    $proxy->filter(\&change_version);
+    $proxy->start();
+    ok(TLSProxy::Message->success(), "Changed record version in TLS1.3");
 }
 
 sub add_empty_recs_filter
@@ -387,4 +405,16 @@ sub add_unknown_record_type
     );
 
     unshift @{$proxy->record_list}, $record;
+}
+
+sub change_version
+{
+    my $proxy = shift;
+
+    # We'll change a version after the initial version neg has taken place
+    if ($proxy->flight != 2) {
+        return;
+    }
+
+    (${$proxy->record_list}[-1])->version(TLSProxy::Record::VERS_TLS_1_1);
 }
