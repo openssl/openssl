@@ -983,12 +983,16 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         }
         clienthello.session_id_len = session_id_len;
 
-        /* Load the client random and compression list. */
-        challenge_len = challenge_len > sizeof(clienthello.random)
-                        ? sizeof(clienthello.random) : challenge_len;
-        memset(clienthello.random, 0, sizeof(clienthello.random));
+        /* Load the client random and compression list. We use SSL3_RANDOM_SIZE
+         * here rather than sizeof(clienthello.random) because that is the limit
+         * for SSLv3 and it is fixed. It won't change even if
+         * sizeof(clienthello.random) does.
+         */
+        challenge_len = challenge_len > SSL3_RANDOM_SIZE
+                        ? SSL3_RANDOM_SIZE : challenge_len;
+        memset(clienthello.random, 0, SSL3_RANDOM_SIZE);
         if (!PACKET_copy_bytes(&challenge,
-                               clienthello.random + sizeof(clienthello.random) -
+                               clienthello.random + SSL3_RANDOM_SIZE -
                                challenge_len, challenge_len)
             /* Advertise only null compression. */
             || !PACKET_buf_init(&compression, &null_compression, 1)) {
