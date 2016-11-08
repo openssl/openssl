@@ -17,8 +17,8 @@
 /* Always filled with zeros */
 static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
 
-const unsigned char keylabel[] = "key";
-const unsigned char ivlabel[] = "iv";
+static const unsigned char keylabel[] = "key";
+static const unsigned char ivlabel[] = "iv";
 
 /*
  * Given a |secret|; a |label| of length |labellen|; and a |hash| of the
