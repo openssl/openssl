@@ -33,6 +33,9 @@ int WPACKET_sub_allocate_bytes__(WPACKET *pkt, size_t len,
     return 1;
 }
 
+#define GETBUF(p)   (((p)->staticbuf != NULL) \
+                     ? (p)->staticbuf : (unsigned char *)(p)->buf->data)
+
 int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 {
     /* Internal API, so should not fail */
@@ -43,7 +46,7 @@ int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
     if (pkt->maxsize - pkt->written < len)
         return 0;
 
-    if (pkt->buf->length - pkt->written < len) {
+    if (pkt->staticbuf == NULL && (pkt->buf->length - pkt->written < len)) {
         size_t newlen;
         size_t reflen;
 
@@ -59,7 +62,7 @@ int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
         if (BUF_MEM_grow(pkt->buf, newlen) == 0)
             return 0;
     }
-    *allocbytes = (unsigned char *)pkt->buf->data + pkt->curr;
+    *allocbytes = GETBUF(pkt) + pkt->curr;
 
     return 1;
 }
@@ -83,19 +86,12 @@ static size_t maxmaxsize(size_t lenbytes)
     return ((size_t)1 << (lenbytes * 8)) - 1 + lenbytes;
 }
 
-int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
+static int wpacket_intern_init_len(WPACKET *pkt, size_t lenbytes)
 {
     unsigned char *lenchars;
 
-    /* Internal API, so should not fail */
-    assert(buf != NULL);
-    if (buf == NULL)
-        return 0;
-
-    pkt->buf = buf;
     pkt->curr = 0;
     pkt->written = 0;
-    pkt->maxsize = maxmaxsize(lenbytes);
 
     pkt->subs = OPENSSL_zalloc(sizeof(*pkt->subs));
     if (pkt->subs == NULL)
@@ -112,9 +108,40 @@ int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
         pkt->subs = NULL;
         return 0;
     }
-    pkt->subs->packet_len = lenchars - (unsigned char *)pkt->buf->data;
+    pkt->subs->packet_len = lenchars - GETBUF(pkt);
 
     return 1;
+}
+
+int WPACKET_init_static_len(WPACKET *pkt, unsigned char *buf, size_t len,
+                            size_t lenbytes)
+{
+    size_t max = maxmaxsize(lenbytes);
+
+    /* Internal API, so should not fail */
+    assert(buf != NULL && len > 0);
+    if (buf == NULL || len == 0)
+        return 0;
+
+    pkt->staticbuf = buf;
+    pkt->buf = NULL;
+    pkt->maxsize = (max < len) ? max : len;
+
+    return wpacket_intern_init_len(pkt, lenbytes);
+}
+
+int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
+{
+    /* Internal API, so should not fail */
+    assert(buf != NULL);
+    if (buf == NULL)
+        return 0;
+
+    pkt->staticbuf = NULL;
+    pkt->buf = buf;
+    pkt->maxsize = maxmaxsize(lenbytes);
+
+    return wpacket_intern_init_len(pkt, lenbytes);
 }
 
 int WPACKET_init(WPACKET *pkt, BUF_MEM *buf)
@@ -179,8 +206,8 @@ static int wpacket_intern_close(WPACKET *pkt)
 
     /* Write out the WPACKET length if needed */
     if (sub->lenbytes > 0
-                && !put_value((unsigned char *)&pkt->buf->data[sub->packet_len],
-                              packlen, sub->lenbytes))
+                && !put_value(&GETBUF(pkt)[sub->packet_len], packlen,
+                              sub->lenbytes))
             return 0;
 
     pkt->subs = sub->parent;
@@ -248,7 +275,7 @@ int WPACKET_start_sub_packet_len__(WPACKET *pkt, size_t lenbytes)
     if (!WPACKET_allocate_bytes(pkt, lenbytes, &lenchars))
         return 0;
     /* Convert to an offset in case the underlying BUF_MEM gets realloc'd */
-    sub->packet_len = lenchars - (unsigned char *)pkt->buf->data;
+    sub->packet_len = lenchars - GETBUF(pkt);
 
     return 1;
 }
