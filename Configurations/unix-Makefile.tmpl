@@ -761,7 +761,7 @@ tar:
 	cd $(SRCDIR); ls -l $(TARFILE).gz
 
 dist:
-	@$(MAKE) PREPARE_CMD='./Configure dist' tar
+	@$(MAKE) PREPARE_CMD='$(PERL) ./Configure dist' tar
 
 # Helper targets #####################################################
 
@@ -820,7 +820,7 @@ openssl.pc:
 configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
-	$(SRCDIR)/Configure reconf
+	$(PERL) $(SRCDIR)/Configure reconf
 	@echo "**************************************************"
 	@echo "***                                            ***"
 	@echo "***   Please run the same make command again   ***"
