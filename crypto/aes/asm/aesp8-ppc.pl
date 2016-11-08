@@ -3011,7 +3011,7 @@ _aesp8_xts_enc5x:
 	 vxor		$twk0,$twk0,v31
 
 	vcipher		$out0,$out0,v26
-	lvsr		$inpperm,r0,$taillen	# $in5 is no more
+	lvsr		$inpperm,0,$taillen	# $in5 is no more
 	vcipher		$out1,$out1,v26
 	vcipher		$out2,$out2,v26
 	vcipher		$out3,$out3,v26
