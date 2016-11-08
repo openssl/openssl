@@ -136,12 +136,7 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
 
     case TLS_ST_CR_SRVR_HELLO:
         if (s->hit) {
-            if (s->tlsext_ticket_expected) {
-                if (mt == SSL3_MT_NEWSESSION_TICKET) {
-                    st->hand_state = TLS_ST_CR_SESSION_TICKET;
-                    return 1;
-                }
-            } else if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+            if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
                 st->hand_state = TLS_ST_CR_CHANGE;
                 return 1;
             }
@@ -182,18 +177,6 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_CW_FINISHED:
-        if (s->tlsext_ticket_expected) {
-            if (mt == SSL3_MT_NEWSESSION_TICKET) {
-                st->hand_state = TLS_ST_CR_SESSION_TICKET;
-                return 1;
-            }
-        } else if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-            st->hand_state = TLS_ST_CR_CHANGE;
-            return 1;
-        }
-        break;
-
-    case TLS_ST_CR_SESSION_TICKET:
         if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
             st->hand_state = TLS_ST_CR_CHANGE;
             return 1;

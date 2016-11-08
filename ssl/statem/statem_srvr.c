@@ -419,8 +419,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
 
     case TLS_ST_SW_SRVR_HELLO:
         if (s->hit)
-            st->hand_state = s->tlsext_ticket_expected
-                                ? TLS_ST_SW_SESSION_TICKET : TLS_ST_SW_CHANGE;
+            st->hand_state = TLS_ST_SW_CHANGE;
         else
             st->hand_state = TLS_ST_SW_CERT;
 
@@ -453,14 +452,10 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
             ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
         }
-
-        st->hand_state = s->tlsext_ticket_expected ? TLS_ST_SW_SESSION_TICKET
-                                                   : TLS_ST_SW_CHANGE;
-        return WRITE_TRAN_CONTINUE;
-
-    case TLS_ST_SW_SESSION_TICKET:
         st->hand_state = TLS_ST_SW_CHANGE;
+
         return WRITE_TRAN_CONTINUE;
+
 
     case TLS_ST_SW_CHANGE:
         st->hand_state = TLS_ST_SW_FINISHED;
