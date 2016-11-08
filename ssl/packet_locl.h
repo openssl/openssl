@@ -625,6 +625,9 @@ struct wpacket_st {
     /* The buffer where we store the output data */
     BUF_MEM *buf;
 
+    /* Fixed sized buffer which can be used as an alternative to buf */
+    unsigned char *staticbuf;
+
     /*
      * Offset into the buffer where we are currently writing. We use an offset
      * in case the buffer grows and gets reallocated.
@@ -670,6 +673,13 @@ int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes);
  */
 int WPACKET_init(WPACKET *pkt, BUF_MEM *buf);
 
+/*
+ * Same as WPACKET_init_len except we do not use a growable BUF_MEM structure.
+ * A fixed buffer of memory |buf| of size |len| is used instead. A failure will
+ * occur if you attempt to write beyond the end of the buffer
+ */
+int WPACKET_init_static_len(WPACKET *pkt, unsigned char *buf, size_t len,
+                            size_t lenbytes);
 /*
  * Set the flags to be applied to the current sub-packet
  */

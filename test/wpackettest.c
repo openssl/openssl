@@ -20,6 +20,7 @@ const static unsigned char seqsub[] = { 0x01, 0xff, 0x01, 0xff };
 const static unsigned char empty = 0x00;
 const static unsigned char alloc[] = { 0x02, 0xfe, 0xff };
 const static unsigned char submem[] = { 0x03, 0x02, 0xfe, 0xff };
+const static unsigned char fixed[] = { 0xff, 0xff, 0xff };
 
 static BUF_MEM *buf;
 
@@ -34,6 +35,7 @@ static int test_WPACKET_init(void)
     WPACKET pkt;
     int i;
     size_t written;
+    unsigned char sbuf[3];
 
     if (!WPACKET_init(&pkt, buf)
             || !WPACKET_put_bytes_u8(&pkt, 0xff)
@@ -92,6 +94,31 @@ static int test_WPACKET_init(void)
     }
     if (!WPACKET_finish(&pkt)) {
         testfail("test_WPACKET_init():4 failed\n", &pkt);
+        return 0;
+    }
+
+    /* Test initialising from a fixed size buffer */
+    if (!WPACKET_init_static_len(&pkt, sbuf, sizeof(sbuf), 0)
+                /* Adding 3 bytes should succeed */
+            || !WPACKET_put_bytes_u24(&pkt, 0xffffff)
+                /* Adding 1 more byte should fail */
+            ||  WPACKET_put_bytes_u8(&pkt, 0xff)
+                /* Finishing the top level WPACKET should succeed */
+            || !WPACKET_finish(&pkt)
+            || !WPACKET_get_total_written(&pkt, &written)
+            ||  written != sizeof(fixed)
+            || memcmp(sbuf, fixed, sizeof(sbuf)) != 0
+                /* Initialise with 1 len byte */
+            || !WPACKET_init_static_len(&pkt, sbuf, sizeof(sbuf), 1)
+                /* Adding 2 bytes should succeed */
+            || !WPACKET_put_bytes_u16(&pkt, 0xfeff)
+                /* Adding 1 more byte should fail */
+            ||  WPACKET_put_bytes_u8(&pkt, 0xff)
+            || !WPACKET_finish(&pkt)
+            || !WPACKET_get_total_written(&pkt, &written)
+            ||  written != sizeof(alloc)
+            ||  memcmp(sbuf, alloc, written) != 0) {
+        testfail("test_WPACKET_init():5 failed\n", &pkt);
         return 0;
     }
 
