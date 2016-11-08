@@ -973,7 +973,7 @@
  and libssl-1_1-x64.dll for 64-bit x86_64 Windows, and libcrypto-1_1-ia64.dll
  and libssl-1_1-ia64.dll for IA64 Windows.  With MSVC, the import libraries
  are named libcrypto.lib and libssl.lib, while with MingW, they are named
- libcrypto.dll.a and libddl.dll.a.
+ libcrypto.dll.a and libssl.dll.a.
 
  On VMS, shareable images (VMS speak for shared libraries) are named
  ossl$libcrypto0101_shr.exe and ossl$libssl0101_shr.exe.  However, when
