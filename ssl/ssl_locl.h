@@ -2058,7 +2058,7 @@ __owur int dtls1_process_heartbeat(SSL *s, unsigned char *p,
 
 __owur int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                                       SSL_SESSION **ret);
-__owur int tls_check_client_ems_support(SSL *s, CLIENTHELLO_MSG *hello);
+__owur int tls_check_client_ems_support(SSL *s, const CLIENTHELLO_MSG *hello);
 
 __owur int tls12_get_sigandhash(WPACKET *pkt, const EVP_PKEY *pk,
                                 const EVP_MD *md);
