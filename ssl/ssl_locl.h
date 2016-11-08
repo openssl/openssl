@@ -944,6 +944,12 @@ struct ssl_st {
      * be 'copied' into these ones
      */
     uint32_t mac_flags;
+    /*
+     * The TLS1.3 early_secret and handshake_secret. The master_secret is stored
+     * in the session.
+     */
+    unsigned char early_secret[EVP_MAX_MD_SIZE];
+    unsigned char handshake_secret[EVP_MAX_MD_SIZE];
     EVP_CIPHER_CTX *enc_read_ctx; /* cryptographic state */
     EVP_MD_CTX *read_hash;      /* used for mac generation */
     COMP_CTX *compress;         /* compression */
@@ -2004,6 +2010,21 @@ __owur size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
 __owur int tls1_generate_master_secret(SSL *s, unsigned char *out,
                                        unsigned char *p, size_t len,
                                        size_t *secret_size);
+__owur int tls13_derive_secret(SSL *s, const unsigned char *insecret,
+                               const unsigned char *label, size_t labellen,
+                               unsigned char *secret);
+__owur int tls13_derive_key(SSL *s, const unsigned char *secret,
+                            unsigned char *key, size_t keylen);
+__owur int tls13_derive_iv(SSL *s, const unsigned char *secret,
+                           unsigned char *iv, size_t ivlen);
+__owur int tls13_generate_early_secret(SSL *s, const unsigned char *insecret,
+                                       size_t insecretlen);
+__owur int tls13_generate_handshake_secret(SSL *s,
+                                           const unsigned char *insecret,
+                                           size_t insecretlen);
+__owur int tls13_generate_master_secret(SSL *s, unsigned char *out,
+                                        unsigned char *prev, size_t prevlen,
+                                        size_t *secret_size);
 __owur int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                        const char *label, size_t llen,
                                        const unsigned char *p, size_t plen,
