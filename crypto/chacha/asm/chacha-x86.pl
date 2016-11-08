@@ -50,7 +50,7 @@ for (@ARGV) { $xmm=1 if (/-DOPENSSL_IA32_SSE2/); }
 $ymm=1 if ($xmm &&
 		`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 			=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
-		$1>=2.19);	# first version supporting AVX
+		($gasver=$1)>=2.19);	# first version supporting AVX
 
 $ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32n" &&
 		`nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
@@ -465,6 +465,12 @@ if ($ymm) {
 				    &label("pic_point"),"eax"));
 	&movdqu		("xmm3",&QWP(0,"ebx"));		# counter and nonce
 
+if (defined($gasver) && $gasver>=2.17) {		# even though we encode
+							# pshufb manually, we
+							# handle only register
+							# operands, while this
+							# segment uses memory
+							# operand...
 	&cmp		($len,64*4);
 	&jb		(&label("1x"));
 
@@ -646,6 +652,7 @@ if ($ymm) {
 	&paddd		("xmm2",&QWP(16*6,"eax"));	# +four
 	&pand		("xmm3",&QWP(16*7,"eax"));
 	&por		("xmm3","xmm2");		# counter value
+}
 {
 my ($a,$b,$c,$d,$t,$t1,$rot16,$rot24)=map("xmm$_",(0..7));
 
