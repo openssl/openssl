@@ -943,7 +943,7 @@ int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op)
 
 static int tls_use_ticket(SSL *s)
 {
-    if (s->options & SSL_OP_NO_TICKET)
+    if (s->options & SSL_OP_NO_TICKET || SSL_IS_TLS13(s))
         return 0;
     return ssl_security(s, SSL_SECOP_TICKET, 0, 0, NULL);
 }
@@ -2287,7 +2287,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
             }
         }
 #endif                          /* OPENSSL_NO_EC */
-        else if (currext->type == TLSEXT_TYPE_session_ticket) {
+        else if (currext->type == TLSEXT_TYPE_session_ticket
+                && !SSL_IS_TLS13(s)) {
             if (s->tls_session_ticket_ext_cb &&
                 !s->tls_session_ticket_ext_cb(s,
                     PACKET_data(&currext->data),
@@ -3176,7 +3177,8 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
     s->tlsext_ticket_expected = 0;
 
     /*
-     * If tickets disabled behave as if no ticket present to permit stateful
+     * If tickets disabled or not supported by the protocol version
+     * (e.g. TLSv1.3) behave as if no ticket present to permit stateful
      * resumption.
      */
     if (s->version <= SSL3_VERSION || !tls_use_ticket(s))
