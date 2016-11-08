@@ -1701,7 +1701,7 @@ static int tls1_alpn_handle_client_hello_late(SSL *s, int *al)
  * Sadly we cannot differentiate 10.6, 10.7 and 10.8.4 (which work), from
  * 10.8..10.8.3 (which don't work).
  */
-static void ssl_check_for_safari(SSL *s, CLIENTHELLO_MSG *hello)
+static void ssl_check_for_safari(SSL *s, const CLIENTHELLO_MSG *hello)
 {
     unsigned int type;
     PACKET sni, tmppkt;
@@ -2905,7 +2905,7 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
  *  1 on success
  *  0 on error
  */
-int tls_check_client_ems_support(SSL *s, CLIENTHELLO_MSG *hello)
+int tls_check_client_ems_support(SSL *s, const CLIENTHELLO_MSG *hello)
 {
     RAW_EXTENSION *emsext;
 
