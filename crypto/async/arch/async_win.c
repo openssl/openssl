@@ -11,7 +11,8 @@
 #include "../async_locl.h"
 
 #ifdef ASYNC_WIN
-#define _WINSOCKAPI_  
+	
+# define _WINSOCKAPI_  
 # include <windows.h>
 # include "internal/cryptlib.h"
 
