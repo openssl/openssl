@@ -133,6 +133,21 @@ static int pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_hkdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
                               const char *value)
 {
+    if (strcmp(type, "mode") == 0) {
+        int mode;
+
+        if (strcmp(value, "EXTRACT_AND_EXPAND") == 0)
+            mode = EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND;
+        else if (strcmp(value, "EXTRACT_ONLY") == 0)
+            mode = EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY;
+        else if (strcmp(value, "EXPAND_ONLY") == 0)
+            mode = EVP_PKEY_HKDEF_MODE_EXPAND_ONLY;
+        else
+            return 0;
+
+        return EVP_PKEY_CTX_hkdf_mode(ctx, mode);
+    }
+
     if (strcmp(type, "md") == 0)
         return EVP_PKEY_CTX_set_hkdf_md(ctx, EVP_get_digestbyname(value));
 
