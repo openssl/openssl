@@ -221,6 +221,9 @@ const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs);
 int OCSP_resp_get0_id(const OCSP_BASICRESP *bs,
                       const ASN1_OCTET_STRING **pid,
                       const X509_NAME **pname);
+int OCSP_resp_get1_id(const OCSP_BASICRESP *bs,
+                      ASN1_OCTET_STRING **pid,
+                      X509_NAME **pname);
 
 int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last);
 int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,

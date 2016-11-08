@@ -4299,3 +4299,4 @@ UI_method_get_data_destructor           4241	1_1_1	EXIST::FUNCTION:UI
 ERR_load_strings_const                  4242	1_1_1	EXIST::FUNCTION:
 ASN1_TIME_to_tm                         4243	1_1_1	EXIST::FUNCTION:
 ASN1_TIME_set_string_X509               4244	1_1_1	EXIST::FUNCTION:
+OCSP_resp_get1_id                       4245	1_1_1	EXIST::FUNCTION:OCSP
