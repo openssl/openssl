@@ -7,6 +7,7 @@ X509_get_pathlen,
 X509_get_extension_flags,
 X509_get_key_usage,
 X509_get_extended_key_usage,
+X509_get_netscape_cert_usage,
 X509_set_proxy_flag,
 X509_set_proxy_pathlen,
 X509_get_proxy_pathlen - retrieve certificate extension data
@@ -19,6 +20,7 @@ X509_get_proxy_pathlen - retrieve certificate extension data
    uint32_t X509_get_extension_flags(X509 *x);
    uint32_t X509_get_key_usage(X509 *x);
    uint32_t X509_get_extended_key_usage(X509 *x);
+   uint32_t X509_get_netscape_cert_usage(X509 *x);
    const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x);
    void X509_set_proxy_flag(X509 *x);
    void X509_set_proxy_pathlen(int l);
@@ -104,6 +106,12 @@ B<id-kp-emailProtection>, B<id-kp-codeSigning>, B<id-kp-OCSPSigning>,
 B<id-kp-timeStamping>, B<id-kp-dvcs> and B<anyExtendedKeyUsage> respectively.
 Additionally B<XKU_SGC> is set if either Netscape or Microsoft SGC OIDs are
 present.
+
+X509_get_netscape_cert_usage() returns the value of the netscape cert
+extension. If netscape cert is present it will return zero or more of the
+flags: B<NS_SSL_SERVER>, B<NS_SSL_CLIENT>, B<NS_SMIME>, B<NS_OBJSIGN>
+B<NS_SSL_CA>, B<NS_SMIME_CA>, B<NS_OBJSIGN_CA> or B<NS_ANY_CA> corresponding
+to individual bits of the netscape cert extension.
 
 X509_get_extended_key_usage() return an internal pointer to the subject key
 identifier of B<x> as an B<ASN1_OCTET_STRING> or B<NULL> if the extension
