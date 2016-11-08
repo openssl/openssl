@@ -2242,6 +2242,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_WRITE_EX                               433
 # define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
+# define SSL_F_TLS13_CHANGE_CIPHER_STATE                  435
 # define SSL_F_TLS1_CHANGE_CIPHER_STATE                   209
 # define SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS            341
 # define SSL_F_TLS1_ENC                                   401
