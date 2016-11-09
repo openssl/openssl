@@ -1371,7 +1371,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         return 0;
     }
 
-    if (!SSL_IS_DTLS(s) && s->version >= TLS1_3_VERSION) {
+    if (SSL_IS_TLS13(s)) {
         int min_version, max_version, reason, currv;
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
                 || !WPACKET_start_sub_packet_u16(pkt)
@@ -1384,6 +1384,11 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, reason);
             return 0;
         }
+        /*
+         * TODO(TLS1.3): There is some discussion on the TLS list as to wheter
+         * we should include versions <TLS1.2. For the moment we do. To be
+         * reviewed later.
+         */
         for (currv = max_version; currv >= min_version; currv--) {
             /* TODO(TLS1.3): Remove this first if clause prior to release!! */
             if (currv == TLS1_3_VERSION) {

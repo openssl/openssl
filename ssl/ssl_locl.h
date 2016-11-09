@@ -349,6 +349,10 @@
 
 /* Check if an SSL structure is using DTLS */
 # define SSL_IS_DTLS(s)  (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
+
+/* Check if we are using TLSv1.3 */
+# define SSL_IS_TLS13(s) (!SSL_IS_DTLS(s) && (s)->version >= TLS1_3_VERSION)
+
 /* See if we need explicit IV */
 # define SSL_USE_EXPLICIT_IV(s)  \
                 (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_EXPLICIT_IV)

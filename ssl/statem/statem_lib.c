@@ -1044,6 +1044,11 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
             /* TODO(TLS1.3): Remove this before release */
             if (candidate_vers == TLS1_3_VERSION_DRAFT)
                 candidate_vers = TLS1_3_VERSION;
+            /*
+             * TODO(TLS1.3): There is some discussion on the TLS list about
+             * wheter to ignore versions <TLS1.2 in supported_versions. At the
+             * moment we honour them if present. To be reviewed later
+             */
             if ((int)candidate_vers > s->client_version)
                 s->client_version = candidate_vers;
             if (version_cmp(s, candidate_vers, best_vers) <= 0)
