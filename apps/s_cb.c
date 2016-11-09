@@ -307,50 +307,52 @@ int ssl_print_point_formats(BIO *out, SSL *s)
     return 1;
 }
 
-int ssl_print_curves(BIO *out, SSL *s, int noshared)
+int ssl_print_groups(BIO *out, SSL *s, int noshared)
 {
-    int i, ncurves, *curves, nid;
-    const char *cname;
+    int i, ngroups, *groups, nid;
+    const char *gname;
 
-    ncurves = SSL_get1_curves(s, NULL);
-    if (ncurves <= 0)
+    ngroups = SSL_get1_groups(s, NULL);
+    if (ngroups <= 0)
         return 1;
-    curves = app_malloc(ncurves * sizeof(int), "curves to print");
-    SSL_get1_curves(s, curves);
+    groups = app_malloc(ngroups * sizeof(int), "groups to print");
+    SSL_get1_groups(s, groups);
 
-    BIO_puts(out, "Supported Elliptic Curves: ");
-    for (i = 0; i < ncurves; i++) {
+    BIO_puts(out, "Supported Elliptic Groups: ");
+    for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
-        nid = curves[i];
+        nid = groups[i];
         /* If unrecognised print out hex version */
         if (nid & TLSEXT_nid_unknown)
             BIO_printf(out, "0x%04X", nid & 0xFFFF);
         else {
+            /* TODO(TLS1.3): Get group name here */
             /* Use NIST name for curve if it exists */
-            cname = EC_curve_nid2nist(nid);
-            if (!cname)
-                cname = OBJ_nid2sn(nid);
-            BIO_printf(out, "%s", cname);
+            gname = EC_curve_nid2nist(nid);
+            if (!gname)
+                gname = OBJ_nid2sn(nid);
+            BIO_printf(out, "%s", gname);
         }
     }
-    OPENSSL_free(curves);
+    OPENSSL_free(groups);
     if (noshared) {
         BIO_puts(out, "\n");
         return 1;
     }
-    BIO_puts(out, "\nShared Elliptic curves: ");
-    ncurves = SSL_get_shared_curve(s, -1);
-    for (i = 0; i < ncurves; i++) {
+    BIO_puts(out, "\nShared Elliptic groups: ");
+    ngroups = SSL_get_shared_group(s, -1);
+    for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
-        nid = SSL_get_shared_curve(s, i);
-        cname = EC_curve_nid2nist(nid);
-        if (!cname)
-            cname = OBJ_nid2sn(nid);
-        BIO_printf(out, "%s", cname);
+        nid = SSL_get_shared_group(s, i);
+        /* TODO(TLS1.3): Convert for DH groups */
+        gname = EC_curve_nid2nist(nid);
+        if (!gname)
+            gname = OBJ_nid2sn(nid);
+        BIO_printf(out, "%s", gname);
     }
-    if (ncurves == 0)
+    if (ngroups == 0)
         BIO_puts(out, "NONE");
     BIO_puts(out, "\n");
     return 1;
@@ -604,7 +606,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"client authz", TLSEXT_TYPE_client_authz},
     {"server authz", TLSEXT_TYPE_server_authz},
     {"cert type", TLSEXT_TYPE_cert_type},
-    {"elliptic curves", TLSEXT_TYPE_elliptic_curves},
+    {"supported_groups", TLSEXT_TYPE_supported_groups},
     {"EC point formats", TLSEXT_TYPE_ec_point_formats},
     {"SRP", TLSEXT_TYPE_srp},
     {"signature algorithms", TLSEXT_TYPE_signature_algorithms},
@@ -1093,7 +1095,7 @@ void print_ssl_summary(SSL *s)
 #ifndef OPENSSL_NO_EC
     ssl_print_point_formats(bio_err, s);
     if (SSL_is_server(s))
-        ssl_print_curves(bio_err, s, 1);
+        ssl_print_groups(bio_err, s, 1);
     else
         ssl_print_tmp_key(bio_err, s);
 #else

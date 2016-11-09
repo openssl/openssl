@@ -132,7 +132,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->tlsext_hostname = NULL;
 #ifndef OPENSSL_NO_EC
     dest->tlsext_ecpointformatlist = NULL;
-    dest->tlsext_ellipticcurvelist = NULL;
+    dest->tlsext_supportedgroupslist = NULL;
 #endif
     dest->tlsext_tick = NULL;
 #ifndef OPENSSL_NO_SRP
@@ -198,11 +198,11 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
         if (dest->tlsext_ecpointformatlist == NULL)
             goto err;
     }
-    if (src->tlsext_ellipticcurvelist) {
-        dest->tlsext_ellipticcurvelist =
-            OPENSSL_memdup(src->tlsext_ellipticcurvelist,
-                           src->tlsext_ellipticcurvelist_length);
-        if (dest->tlsext_ellipticcurvelist == NULL)
+    if (src->tlsext_supportedgroupslist) {
+        dest->tlsext_supportedgroupslist =
+            OPENSSL_memdup(src->tlsext_supportedgroupslist,
+                           src->tlsext_supportedgroupslist_length);
+        if (dest->tlsext_supportedgroupslist == NULL)
             goto err;
     }
 #endif
@@ -753,8 +753,8 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 #ifndef OPENSSL_NO_EC
     ss->tlsext_ecpointformatlist_length = 0;
     OPENSSL_free(ss->tlsext_ecpointformatlist);
-    ss->tlsext_ellipticcurvelist_length = 0;
-    OPENSSL_free(ss->tlsext_ellipticcurvelist);
+    ss->tlsext_supportedgroupslist_length = 0;
+    OPENSSL_free(ss->tlsext_supportedgroupslist);
 #endif                          /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(ss->psk_identity_hint);

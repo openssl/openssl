@@ -448,7 +448,7 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_client_authz, "client_authz"},
     {TLSEXT_TYPE_server_authz, "server_authz"},
     {TLSEXT_TYPE_cert_type, "cert_type"},
-    {TLSEXT_TYPE_elliptic_curves, "elliptic_curves"},
+    {TLSEXT_TYPE_supported_groups, "supported_groups"},
     {TLSEXT_TYPE_ec_point_formats, "ec_point_formats"},
     {TLSEXT_TYPE_srp, "srp"},
     {TLSEXT_TYPE_signature_algorithms, "signature_algorithms"},
@@ -466,7 +466,7 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"}
 };
 
-static ssl_trace_tbl ssl_curve_tbl[] = {
+static ssl_trace_tbl ssl_groups_tbl[] = {
     {1, "sect163k1 (K-163)"},
     {2, "sect163r1"},
     {3, "sect163r2 (B-163)"},
@@ -665,13 +665,13 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
             return 0;
         return ssl_trace_list(bio, indent + 2, ext + 1, xlen, 1, ssl_point_tbl);
 
-    case TLSEXT_TYPE_elliptic_curves:
+    case TLSEXT_TYPE_supported_groups:
         if (extlen < 2)
             return 0;
         xlen = (ext[0] << 8) | ext[1];
         if (extlen != xlen + 2)
             return 0;
-        return ssl_trace_list(bio, indent + 2, ext + 2, xlen, 2, ssl_curve_tbl);
+        return ssl_trace_list(bio, indent + 2, ext + 2, xlen, 2, ssl_groups_tbl);
 
     case TLSEXT_TYPE_signature_algorithms:
 
@@ -1009,7 +1009,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
                 return 0;
             curve = (msg[1] << 8) | msg[2];
             BIO_printf(bio, "named_curve: %s (%d)\n",
-                       ssl_trace_str(curve, ssl_curve_tbl), curve);
+                       ssl_trace_str(curve, ssl_groups_tbl), curve);
             msg += 3;
             msglen -= 3;
             if (!ssl_print_hexbuf(bio, indent + 2, "point", 1, &msg, &msglen))

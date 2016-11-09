@@ -242,7 +242,7 @@ int SSL_extension_supported(unsigned int ext_type)
         /* Internally supported extensions. */
     case TLSEXT_TYPE_application_layer_protocol_negotiation:
     case TLSEXT_TYPE_ec_point_formats:
-    case TLSEXT_TYPE_elliptic_curves:
+    case TLSEXT_TYPE_supported_groups:
     case TLSEXT_TYPE_heartbeat:
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLSEXT_TYPE_next_proto_neg:

@@ -2,12 +2,24 @@
 
 =head1 NAME
 
+SSL_CTX_set1_groups, SSL_CTX_set1_groups_list, SSL_set1_groups,
+SSL_set1_groups_list, SSL_get1_groups, SSL_get_shared_group,
 SSL_CTX_set1_curves, SSL_CTX_set1_curves_list, SSL_set1_curves,
-SSL_set1_curves_list, SSL_get1_curves, SSL_get_shared_curve - EC supported curve functions
+SSL_set1_curves_list, SSL_get1_curves, SSL_get_shared_curve
+- EC supported curve functions
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
+
+ int SSL_CTX_set1_groups(SSL_CTX *ctx, int *glist, int glistlen);
+ int SSL_CTX_set1_groups_list(SSL_CTX *ctx, char *list);
+
+ int SSL_set1_groups(SSL *ssl, int *glist, int glistlen);
+ int SSL_set1_groups_list(SSL *ssl, char *list);
+
+ int SSL_get1_groups(SSL *ssl, int *groups);
+ int SSL_get_shared_group(SSL *s, int n);
 
  int SSL_CTX_set1_curves(SSL_CTX *ctx, int *clist, int clistlen);
  int SSL_CTX_set1_curves_list(SSL_CTX *ctx, char *list);
@@ -20,35 +32,41 @@ SSL_set1_curves_list, SSL_get1_curves, SSL_get_shared_curve - EC supported curve
 
 =head1 DESCRIPTION
 
-SSL_CTX_set1_curves() sets the supported curves for B<ctx> to B<clistlen>
-curves in the array B<clist>. The array consist of all NIDs of curves in
-preference order. For a TLS client the curves are used directly in the
-supported curves extension. For a TLS server the curves are used to
-determine the set of shared curves.
+SSL_CTX_set1_groups() sets the supported groups for B<ctx> to B<glistlen>
+groups in the array B<glist>. The array consist of all NIDs of groups in
+preference order. For a TLS client the groups are used directly in the
+supported groups extension. For a TLS server the groups are used to
+determine the set of shared groups.
 
-SSL_CTX_set1_curves_list() sets the supported curves for B<ctx> to
-string B<list>. The string is a colon separated list of curve NIDs or
+SSL_CTX_set1_groups_list() sets the supported groups for B<ctx> to
+string B<list>. The string is a colon separated list of group NIDs or
 names, for example "P-521:P-384:P-256".
 
-SSL_set1_curves() and SSL_set1_curves_list() are similar except they set
-supported curves for the SSL structure B<ssl>.
+SSL_set1_groups() and SSL_set1_groups_list() are similar except they set
+supported groups for the SSL structure B<ssl>.
 
-SSL_get1_curves() returns the set of supported curves sent by a client
-in the supported curves extension. It returns the total number of
-supported curves. The B<curves> parameter can be B<NULL> to simply
-return the number of curves for memory allocation purposes. The
-B<curves> array is in the form of a set of curve NIDs in preference
-order. It can return zero if the client did not send a supported curves
+SSL_get1_groups() returns the set of supported groups sent by a client
+in the supported groups extension. It returns the total number of
+supported groups. The B<groups> parameter can be B<NULL> to simply
+return the number of groups for memory allocation purposes. The
+B<groups> array is in the form of a set of group NIDs in preference
+order. It can return zero if the client did not send a supported groups
 extension.
 
-SSL_get_shared_curve() returns shared curve B<n> for a server-side
-SSL B<ssl>. If B<n> is -1 then the total number of shared curves is
+SSL_get_shared_group() returns shared group B<n> for a server-side
+SSL B<ssl>. If B<n> is -1 then the total number of shared groups is
 returned, which may be zero. Other than for diagnostic purposes,
-most applications will only be interested in the first shared curve
+most applications will only be interested in the first shared group
 so B<n> is normally set to zero. If the value B<n> is out of range,
 NID_undef is returned.
 
 All these functions are implemented as macros.
+
+The curve functions are synonyms for the equivalently named group functions and
+are identical in every respect. They exist because, prior to TLS1.3, there was
+only the concept of supported curves. In TLS1.3 this was renamed to supported
+groups, and extended to include Diffie Hellman groups. The group functions
+should be used in preference.
 
 =head1 NOTES
 
@@ -58,16 +76,16 @@ consider using the SSL_CONF interface instead of manually parsing options.
 
 =head1 RETURN VALUES
 
-SSL_CTX_set1_curves(), SSL_CTX_set1_curves_list(), SSL_set1_curves() and
-SSL_set1_curves_list(), return 1 for success and 0 for failure.
+SSL_CTX_set1_groups(), SSL_CTX_set1_groups_list(), SSL_set1_groups() and
+SSL_set1_groups_list(), return 1 for success and 0 for failure.
 
-SSL_get1_curves() returns the number of curves, which may be zero.
+SSL_get1_groups() returns the number of groups, which may be zero.
 
-SSL_get_shared_curve() returns the NID of shared curve B<n> or NID_undef if there
-is no shared curve B<n>; or the total number of shared curves if B<n>
+SSL_get_shared_group() returns the NID of shared group B<n> or NID_undef if there
+is no shared group B<n>; or the total number of shared groups if B<n>
 is -1.
 
-When called on a client B<ssl>, SSL_get_shared_curve() has no meaning and
+When called on a client B<ssl>, SSL_get_shared_group() has no meaning and
 returns -1.
 
 =head1 SEE ALSO
@@ -76,7 +94,8 @@ L<SSL_CTX_add_extra_chain_cert(3)>
 
 =head1 HISTORY
 
-These functions were first added to OpenSSL 1.0.2.
+The curve functions were first added to OpenSSL 1.0.2. The equivalent group
+functions were first added to OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

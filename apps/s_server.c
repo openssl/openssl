@@ -2560,7 +2560,7 @@ static int init_ssl_connection(SSL *con)
     ssl_print_sigalgs(bio_s_out, con);
 #ifndef OPENSSL_NO_EC
     ssl_print_point_formats(bio_s_out, con);
-    ssl_print_curves(bio_s_out, con, 0);
+    ssl_print_groups(bio_s_out, con, 0);
 #endif
     BIO_printf(bio_s_out, "CIPHER is %s\n", (str != NULL) ? str : "(NONE)");
 
@@ -2847,7 +2847,7 @@ static int www_body(int s, int stype, unsigned char *context)
             }
             ssl_print_sigalgs(io, con);
 #ifndef OPENSSL_NO_EC
-            ssl_print_curves(io, con, 0);
+            ssl_print_groups(io, con, 0);
 #endif
             BIO_printf(io, (SSL_session_reused(con)
                             ? "---\nReused, " : "---\nNew, "));
