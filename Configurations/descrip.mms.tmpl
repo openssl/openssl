@@ -63,12 +63,8 @@
   }
   my $sd1 = sourcedir("ssl","record");
   my $sd2 = sourcedir("ssl","statem");
-  my @ssl_locl_users =
-      ( "[.test]cipher_overhead_test.o",
-        "[.test]dtls_mtu_test.o",
-        "[.test]heartbeat_test.o",
-        "[.test]ssltest_old.o",
-        grep /^\[\.ssl\.(?:record|statem)\].*\.o$/, keys %{$unified_info{sources}} );
+  my @ssl_locl_users = grep(/^\[\.(?:ssl\.(?:record|statem)|test)\].*\.o$/,
+                            keys %{$unified_info{sources}});
   foreach (@ssl_locl_users) {
       (my $x = $_) =~ s|\.o$|.OBJ|;
       $unified_info{before}->{$x}
