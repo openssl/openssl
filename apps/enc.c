@@ -38,7 +38,7 @@ typedef enum OPTION_choice {
     OPT_E, OPT_IN, OPT_OUT, OPT_PASS, OPT_ENGINE, OPT_D, OPT_P, OPT_V,
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
-    OPT_UPPER_S, OPT_IV, OPT_MD, OPT_CIPHER
+    OPT_UPPER_S, OPT_IV, OPT_MD, OPT_ITER, OPT_CIPHER
 } OPTION_CHOICE;
 
 const OPTIONS enc_options[] = {
@@ -67,6 +67,7 @@ const OPTIONS enc_options[] = {
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
     {"md", OPT_MD, 's', "Use specified digest to create a key from the passphrase"},
+    {"iter", OPT_ITER, 'p', "Specify the iteration count"},
     {"none", OPT_NONE, '-', "Don't encrypt"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 #ifdef ZLIB
@@ -99,6 +100,7 @@ int enc_main(int argc, char **argv)
     int ret = 1, inl, nopad = 0;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     unsigned char *buff = NULL, salt[PKCS5_SALT_LEN];
+    int iter = 1;
     long n;
 #ifdef ZLIB
     int do_zlib = 0;
@@ -243,6 +245,9 @@ int enc_main(int argc, char **argv)
                 goto opthelp;
             cipher = c;
             break;
+        case OPT_ITER:
+            if (!opt_int(opt_arg(), &iter))
+                goto opthelp;
         case OPT_NONE:
             cipher = NULL;
             break;
@@ -424,7 +429,7 @@ int enc_main(int argc, char **argv)
 
             if (!EVP_BytesToKey(cipher, dgst, sptr,
                                 (unsigned char *)str,
-                                str_len, 1, key, iv)) {
+                                str_len, iter, key, iv)) {
                 BIO_printf(bio_err, "EVP_BytesToKey failed\n");
                 goto end;
             }

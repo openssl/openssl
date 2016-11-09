@@ -25,6 +25,7 @@ B<openssl enc -ciphername>
 [B<-nosalt>]
 [B<-z>]
 [B<-md digest>]
+[B<-iter count>]
 [B<-p>]
 [B<-P>]
 [B<-bufsize number>]
@@ -102,6 +103,11 @@ the B<-pass> argument.
 
 Use the specified digest to create the key from the passphrase.
 The default algorithm is sha-256.
+
+=item B<-iter count>
+
+Use a given number of iterations on the password in deriving the encryption key.
+High values increase the time required to brute-force the resulting file.
 
 =item B<-nosalt>
 
@@ -330,8 +336,6 @@ Decrypt some data using a supplied 40 bit RC4 key:
 =head1 BUGS
 
 The B<-A> option when used with large files doesn't work properly.
-
-There should be an option to allow an iteration count to be included.
 
 The B<enc> program only supports a fixed number of algorithms with
 certain parameters. So if, for example, you want to use RC2 with a
