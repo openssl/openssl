@@ -12,6 +12,8 @@ addons:
             - ccache
             - clang-3.6
             - gcc-5
+            - g++-5
+            - golang
             - binutils-mingw-w64
             - gcc-mingw-w64
         sources:
@@ -39,8 +41,8 @@ matrix:
           compiler: clang-3.6
           env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
         - os: linux
-          compiler: gcc
-          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers" COVERALLS="yes"
+          compiler: gcc-5
+          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers enable-external-tests" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="enable-msan"
@@ -100,11 +102,9 @@ script:
       else
           make="make";
       fi
+    - top=${PWD}
     - if [ -n "$DESTDIR" ]; then
           cd _build;
-          top=..;
-      else
-          top=.;
       fi
     - $make update
     - $make
@@ -113,13 +113,13 @@ script:
               sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
-          HARNESS_VERBOSE=yes make test;
+          HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test;
       else
           $make build_tests;
       fi
     - if [ -n "$DESTDIR" ]; then
-          mkdir "../$DESTDIR";
-          $make install install_docs DESTDIR="../$DESTDIR";
+          mkdir "$top/$DESTDIR";
+          $make install install_docs DESTDIR="$top/$DESTDIR";
       fi
     - cd $top
 
