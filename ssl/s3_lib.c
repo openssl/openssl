@@ -4067,8 +4067,8 @@ EVP_PKEY *ssl_generate_pkey_curve(int id)
 }
 #endif
 
-/* Derive premaster or master secret for ECDH/DH */
-int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int genmaster)
+/* Derive secrets for ECDH/DH */
+int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
 {
     int rv = 0;
     unsigned char *pms = NULL;
@@ -4093,9 +4093,20 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int genmaster)
     if (EVP_PKEY_derive(pctx, pms, &pmslen) <= 0)
         goto err;
 
-    if (genmaster) {
-        /* Generate master secret and discard premaster */
-        rv = ssl_generate_master_secret(s, pms, pmslen, 1);
+    if (gensecret) {
+        if (SSL_IS_TLS13(s)) {
+            /*
+             * TODO(TLS1.3): For now we just use the default early_secret, this
+             * will need to change later when other early_secrets will be
+             * possible.
+             */
+            rv = tls13_generate_early_secret(s, NULL, 0)
+                 && tls13_generate_handshake_secret(s, pms, pmslen);
+            OPENSSL_free(pms);
+        } else {
+            /* Generate master secret and discard premaster */
+            rv = ssl_generate_master_secret(s, pms, pmslen, 1);
+        }
         pms = NULL;
     } else {
         /* Save premaster secret */

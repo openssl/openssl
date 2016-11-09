@@ -136,15 +136,25 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
 
     case TLS_ST_CR_SRVR_HELLO:
         if (s->hit) {
-            if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-                st->hand_state = TLS_ST_CR_CHANGE;
+            if (mt == SSL3_MT_FINISHED) {
+                st->hand_state = TLS_ST_CR_FINISHED;
                 return 1;
             }
         } else {
-            if (mt == SSL3_MT_CERTIFICATE) {
+            if (mt == SSL3_MT_CERTIFICATE_REQUEST) {
+                st->hand_state = TLS_ST_CR_CERT_REQ;
+                return 1;
+            } else if (mt == SSL3_MT_CERTIFICATE) {
                 st->hand_state = TLS_ST_CR_CERT;
                 return 1;
             }
+        }
+        break;
+
+    case TLS_ST_CR_CERT_REQ:
+        if (mt == SSL3_MT_CERTIFICATE) {
+            st->hand_state = TLS_ST_CR_CERT;
+            return 1;
         }
         break;
 
@@ -160,38 +170,14 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
         /* Fall through */
 
     case TLS_ST_CR_CERT_STATUS:
-        if (mt == SSL3_MT_CERTIFICATE_REQUEST) {
-            if (cert_req_allowed(s)) {
-                st->hand_state = TLS_ST_CR_CERT_REQ;
-                return 1;
-            }
-            goto err;
-        }
-        /* Fall through */
-
-    case TLS_ST_CR_CERT_REQ:
-        if (mt == SSL3_MT_SERVER_DONE) {
-            st->hand_state = TLS_ST_CR_SRVR_DONE;
-            return 1;
-        }
-        break;
-
-    case TLS_ST_CW_FINISHED:
-        if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-            st->hand_state = TLS_ST_CR_CHANGE;
-            return 1;
-        }
-        break;
-
-    case TLS_ST_CR_CHANGE:
         if (mt == SSL3_MT_FINISHED) {
             st->hand_state = TLS_ST_CR_FINISHED;
             return 1;
         }
         break;
+
     }
 
- err:
     /* No valid transition found */
     ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_UNEXPECTED_MESSAGE);
     SSLerr(SSL_F_OSSL_STATEM_CLIENT13_READ_TRANSITION,
@@ -393,38 +379,22 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         /* Shouldn't happen */
         return WRITE_TRAN_ERROR;
 
-    case TLS_ST_CR_SRVR_DONE:
+    case TLS_ST_CR_FINISHED:
         st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
-                                                    : TLS_ST_CW_CHANGE;
+                                                    : TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CERT:
         /* If a non-empty Certificate we also send CertificateVerify */
         st->hand_state = (s->s3->tmp.cert_req == 1) ? TLS_ST_CW_CERT_VRFY
-                                                    : TLS_ST_CW_CHANGE;
+                                                    : TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CERT_VRFY:
-        st->hand_state = TLS_ST_CW_CHANGE;
-        return WRITE_TRAN_CONTINUE;
-
-    case TLS_ST_CW_CHANGE:
         st->hand_state = TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_FINISHED:
-        if (s->hit) {
-            st->hand_state = TLS_ST_OK;
-            ossl_statem_set_in_init(s, 0);
-            return WRITE_TRAN_CONTINUE;
-        }
-        return WRITE_TRAN_FINISHED;
-
-    case TLS_ST_CR_FINISHED:
-        if (s->hit) {
-            st->hand_state = TLS_ST_CW_CHANGE;
-            return WRITE_TRAN_CONTINUE;
-        }
         st->hand_state = TLS_ST_OK;
         ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
@@ -666,6 +636,12 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
 #endif
         if (statem_flush(s) != 1)
             return WORK_MORE_B;
+
+        if (SSL_IS_TLS13(s)) {
+            if (!s->method->ssl3_enc->change_cipher_state(s,
+                        SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_CLIENT_WRITE))
+            return WORK_ERROR;
+        }
         break;
     }
 
@@ -1342,6 +1318,21 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
                  sizeof(sctpauthkey), sctpauthkey);
     }
 #endif
+
+    /*
+     * In TLSv1.3 we have some post-processing to change cipher state, otherwise
+     * we're done with this message
+     */
+    if (SSL_IS_TLS13(s)
+            && (!s->method->ssl3_enc->setup_key_block(s)
+                || !s->method->ssl3_enc->change_cipher_state(s,
+                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE)
+                || !s->method->ssl3_enc->change_cipher_state(s,
+                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ))) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_CANNOT_CHANGE_CIPHER);
+        goto f_err;
+    }
 
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
