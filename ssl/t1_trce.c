@@ -567,15 +567,6 @@ static ssl_trace_tbl ssl_crypto_tbl[] = {
     {TLS1_RT_CRYPTO_FIXED_IV | TLS1_RT_CRYPTO_READ, "Read IV (fixed part)"}
 };
 
-static ssl_trace_tbl ssl_supp_versions_tbl[] = {
-    {SSL3_VERSION, "SSLv3"},
-    {TLS1_VERSION, "TLSv1.0"},
-    {TLS1_1_VERSION, "TLSv1.1"},
-    {TLS1_2_VERSION, "TLSv1.2"},
-    {TLS1_3_VERSION, "TLSv1.3"},
-    {TLS1_3_VERSION_DRAFT, TLS1_3_VERSION_DRAFT_TXT}
-};
-
 static void ssl_print_hex(BIO *bio, int indent, const char *name,
                           const unsigned char *msg, size_t msglen)
 {
@@ -746,7 +737,7 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
         if (extlen != xlen + 1)
             return 0;
         return ssl_trace_list(bio, indent + 2, ext + 1, xlen, 2,
-                              ssl_supp_versions_tbl);
+                              ssl_version_tbl);
 
     default:
         BIO_dump_indent(bio, (const char *)ext, extlen, indent + 2);
