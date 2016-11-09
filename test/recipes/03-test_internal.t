@@ -12,12 +12,14 @@ use OpenSSL::Test::Utils;
 
 setup("test_internal");
 
+my $shared_windows = $^O eq 'MSWin32' && !disabled("shared");
+
 my %known_internal_tests =
   ( mdc2_internal_test => !disabled("mdc2"),
-    poly1305_internal_test => !disabled("poly1305"),
-    modes_internal_test => 1,
-    asn1_internal_test => 1,
-    x509_internal_test => 1 );
+    poly1305_internal_test => !disabled("poly1305") && !$shared_windows,
+    modes_internal_test => !$shared_windows,
+    asn1_internal_test => !$shared_windows,
+    x509_internal_test => !$shared_windows );
 
 plan tests => scalar keys %known_internal_tests;
 
