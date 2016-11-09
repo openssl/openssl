@@ -1109,10 +1109,10 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS        83
 # define SSL_CTRL_CHAIN                          88
 # define SSL_CTRL_CHAIN_CERT                     89
-# define SSL_CTRL_GET_CURVES                     90
-# define SSL_CTRL_SET_CURVES                     91
-# define SSL_CTRL_SET_CURVES_LIST                92
-# define SSL_CTRL_GET_SHARED_CURVE               93
+# define SSL_CTRL_GET_GROUPS                     90
+# define SSL_CTRL_SET_GROUPS                     91
+# define SSL_CTRL_SET_GROUPS_LIST                92
+# define SSL_CTRL_GET_SHARED_GROUP               93
 # define SSL_CTRL_SET_SIGALGS                    97
 # define SSL_CTRL_SET_SIGALGS_LIST               98
 # define SSL_CTRL_CERT_FLAGS                     99
@@ -1227,18 +1227,30 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s,SSL_CTRL_SET_CHAIN_CERT_STORE,0,(char *)st)
 # define SSL_set1_chain_cert_store(s,st) \
         SSL_ctrl(s,SSL_CTRL_SET_CHAIN_CERT_STORE,1,(char *)st)
+# define SSL_get1_groups(ctx, s) \
+        SSL_ctrl(ctx,SSL_CTRL_GET_GROUPS,0,(char *)s)
 # define SSL_get1_curves(ctx, s) \
-        SSL_ctrl(ctx,SSL_CTRL_GET_CURVES,0,(char *)s)
+        SSL_get1_groups((ctx), (s))
+# define SSL_CTX_set1_groups(ctx, glist, glistlen) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS,glistlen,(char *)glist)
+# define SSL_CTX_set1_groups_list(ctx, s) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS_LIST,0,(char *)s)
 # define SSL_CTX_set1_curves(ctx, clist, clistlen) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CURVES,clistlen,(char *)clist)
+        SSL_CTX_set1_groups((ctx), (clist), (clistlen))
 # define SSL_CTX_set1_curves_list(ctx, s) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CURVES_LIST,0,(char *)s)
+        SSL_CTX_set1_groups_list((ctx), (s))
+# define SSL_set1_groups(ctx, glist, glistlen) \
+        SSL_ctrl(ctx,SSL_CTRL_SET_GROUPS,glistlen,(char *)glist)
+# define SSL_set1_groups_list(ctx, s) \
+        SSL_ctrl(ctx,SSL_CTRL_SET_GROUPS_LIST,0,(char *)s)
 # define SSL_set1_curves(ctx, clist, clistlen) \
-        SSL_ctrl(ctx,SSL_CTRL_SET_CURVES,clistlen,(char *)clist)
+        SSL_set1_groups((ctx), (clist), (clistlen))
 # define SSL_set1_curves_list(ctx, s) \
-        SSL_ctrl(ctx,SSL_CTRL_SET_CURVES_LIST,0,(char *)s)
+        SSL_set1_groups_list((ctx), (s))
+# define SSL_get_shared_group(s, n) \
+        SSL_ctrl(s,SSL_CTRL_GET_SHARED_GROUP,n,NULL)
 # define SSL_get_shared_curve(s, n) \
-        SSL_ctrl(s,SSL_CTRL_GET_SHARED_CURVE,n,NULL)
+        SSL_get_shared_group((s), (n))
 # define SSL_CTX_set1_sigalgs(ctx, slist, slistlen) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_SIGALGS,slistlen,(int *)slist)
 # define SSL_CTX_set1_sigalgs_list(ctx, s) \

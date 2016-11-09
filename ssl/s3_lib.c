@@ -2969,8 +2969,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             nid = EC_GROUP_get_curve_name(group);
             if (nid == NID_undef)
                 return 0;
-            return tls1_set_curves(&s->tlsext_ellipticcurvelist,
-                                   &s->tlsext_ellipticcurvelist_length,
+            return tls1_set_groups(&s->tlsext_supportedgroupslist,
+                                   &s->tlsext_supportedgroupslist_length,
                                    &nid, 1);
         }
         break;
@@ -3112,20 +3112,21 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         return ssl_cert_set_current(s->cert, larg);
 
 #ifndef OPENSSL_NO_EC
-    case SSL_CTRL_GET_CURVES:
+    case SSL_CTRL_GET_GROUPS:
         {
             unsigned char *clist;
             size_t clistlen;
             if (!s->session)
                 return 0;
-            clist = s->session->tlsext_ellipticcurvelist;
-            clistlen = s->session->tlsext_ellipticcurvelist_length / 2;
+            clist = s->session->tlsext_supportedgroupslist;
+            clistlen = s->session->tlsext_supportedgroupslist_length / 2;
             if (parg) {
                 size_t i;
                 int *cptr = parg;
                 unsigned int cid, nid;
                 for (i = 0; i < clistlen; i++) {
                     n2s(clist, cid);
+                    /* TODO(TLS1.3): Handle DH groups here */
                     nid = tls1_ec_curve_id2nid(cid, NULL);
                     if (nid != 0)
                         cptr[i] = nid;
@@ -3136,16 +3137,16 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return (int)clistlen;
         }
 
-    case SSL_CTRL_SET_CURVES:
-        return tls1_set_curves(&s->tlsext_ellipticcurvelist,
-                               &s->tlsext_ellipticcurvelist_length, parg, larg);
+    case SSL_CTRL_SET_GROUPS:
+        return tls1_set_groups(&s->tlsext_supportedgroupslist,
+                               &s->tlsext_supportedgroupslist_length, parg, larg);
 
-    case SSL_CTRL_SET_CURVES_LIST:
-        return tls1_set_curves_list(&s->tlsext_ellipticcurvelist,
-                                    &s->tlsext_ellipticcurvelist_length, parg);
+    case SSL_CTRL_SET_GROUPS_LIST:
+        return tls1_set_groups_list(&s->tlsext_supportedgroupslist,
+                                    &s->tlsext_supportedgroupslist_length, parg);
 
-    case SSL_CTRL_GET_SHARED_CURVE:
-        return tls1_shared_curve(s, larg);
+    case SSL_CTRL_GET_SHARED_GROUP:
+        return tls1_shared_group(s, larg);
 
 #endif
     case SSL_CTRL_SET_SIGALGS:
@@ -3320,8 +3321,8 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             nid = EC_GROUP_get_curve_name(group);
             if (nid == NID_undef)
                 return 0;
-            return tls1_set_curves(&ctx->tlsext_ellipticcurvelist,
-                                   &ctx->tlsext_ellipticcurvelist_length,
+            return tls1_set_groups(&ctx->tlsext_supportedgroupslist,
+                                   &ctx->tlsext_supportedgroupslist_length,
                                    &nid, 1);
         }
         /* break; */
@@ -3417,14 +3418,14 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 #endif
 
 #ifndef OPENSSL_NO_EC
-    case SSL_CTRL_SET_CURVES:
-        return tls1_set_curves(&ctx->tlsext_ellipticcurvelist,
-                               &ctx->tlsext_ellipticcurvelist_length,
+    case SSL_CTRL_SET_GROUPS:
+        return tls1_set_groups(&ctx->tlsext_supportedgroupslist,
+                               &ctx->tlsext_supportedgroupslist_length,
                                parg, larg);
 
-    case SSL_CTRL_SET_CURVES_LIST:
-        return tls1_set_curves_list(&ctx->tlsext_ellipticcurvelist,
-                                    &ctx->tlsext_ellipticcurvelist_length,
+    case SSL_CTRL_SET_GROUPS_LIST:
+        return tls1_set_groups_list(&ctx->tlsext_supportedgroupslist,
+                                    &ctx->tlsext_supportedgroupslist_length,
                                     parg);
 #endif
     case SSL_CTRL_SET_SIGALGS:

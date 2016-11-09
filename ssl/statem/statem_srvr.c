@@ -1736,7 +1736,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         }
 
         /* Get NID of appropriate shared curve */
-        nid = tls1_shared_curve(s, -2);
+        nid = tls1_shared_group(s, -2);
         curve_id = tls1_ec_nid2curve_id(nid);
         if (curve_id == 0) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
