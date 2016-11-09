@@ -9,15 +9,22 @@
  # there are no duplicate dependencies and that they are in the
  # right order.  This is especially used to sort the list of
  # libraries that a build depends on.
+ sub extensionlesslib {
+     my @result = map { $_ =~ /(\.a)?$/; $` } @_;
+     return @result if wantarray;
+     return $result[0];
+ }
  sub resolvedepends {
      my $thing = shift;
+     my $extensionlessthing = extensionlesslib($thing);
      my @listsofar = @_;    # to check if we're looping
-     my @list = @{$unified_info{depends}->{$thing}};
+     my @list = @{$unified_info{depends}->{$extensionlessthing}};
      my @newlist = ();
      if (scalar @list) {
          foreach my $item (@list) {
+             my $extensionlessitem = extensionlesslib($item);
              # It's time to break off when the dependency list starts looping
-             next if grep { $_ eq $item } @listsofar;
+             next if grep { extensionlesslib($_) eq $extensionlessitem } @listsofar;
              push @newlist, $item, resolvedepends($item, @listsofar, $item);
          }
      }
@@ -28,8 +35,9 @@
      my @newlist = ();
      while (@list) {
          my $item = shift @list;
+         my $extensionlessitem = extensionlesslib($item);
          push @newlist, $item
-             unless grep { $item eq $_ } @list;
+             unless grep { $extensionlessitem eq extensionlesslib($_) } @list;
      }
      @newlist;
  }
