@@ -550,8 +550,8 @@ struct ssl_session_st {
 # ifndef OPENSSL_NO_EC
     size_t tlsext_ecpointformatlist_length;
     unsigned char *tlsext_ecpointformatlist; /* peer's list */
-    size_t tlsext_ellipticcurvelist_length;
-    unsigned char *tlsext_ellipticcurvelist; /* peer's list */
+    size_t tlsext_supportedgroupslist_length;
+    unsigned char *tlsext_supportedgroupslist; /* peer's list */
 # endif                         /* OPENSSL_NO_EC */
     /* RFC4507 info */
     unsigned char *tlsext_tick; /* Session ticket */
@@ -864,8 +864,8 @@ struct ssl_ctx_st {
     /* EC extension values inherited by SSL structure */
     size_t tlsext_ecpointformatlist_length;
     unsigned char *tlsext_ecpointformatlist;
-    size_t tlsext_ellipticcurvelist_length;
-    unsigned char *tlsext_ellipticcurvelist;
+    size_t tlsext_supportedgroupslist_length;
+    unsigned char *tlsext_supportedgroupslist;
 # endif                         /* OPENSSL_NO_EC */
 
     /* ext status type used for CSR extension (OCSP Stapling) */
@@ -1074,9 +1074,9 @@ struct ssl_st {
     size_t tlsext_ecpointformatlist_length;
     /* our list */
     unsigned char *tlsext_ecpointformatlist;
-    size_t tlsext_ellipticcurvelist_length;
+    size_t tlsext_supportedgroupslist_length;
     /* our list */
-    unsigned char *tlsext_ellipticcurvelist;
+    unsigned char *tlsext_supportedgroupslist;
 # endif                         /* OPENSSL_NO_EC */
     /* TLS Session Ticket extension override */
     TLS_SESSION_TICKET_EXT *tlsext_session_ticket;
@@ -2049,10 +2049,10 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 __owur int tls1_ec_curve_id2nid(int curve_id, unsigned int *pflags);
 __owur int tls1_ec_nid2curve_id(int nid);
 __owur int tls1_check_curve(SSL *s, const unsigned char *p, size_t len);
-__owur int tls1_shared_curve(SSL *s, int nmatch);
-__owur int tls1_set_curves(unsigned char **pext, size_t *pextlen,
+__owur int tls1_shared_group(SSL *s, int nmatch);
+__owur int tls1_set_groups(unsigned char **pext, size_t *pextlen,
                            int *curves, size_t ncurves);
-__owur int tls1_set_curves_list(unsigned char **pext, size_t *pextlen,
+__owur int tls1_set_groups_list(unsigned char **pext, size_t *pextlen,
                                 const char *str);
 __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 __owur EVP_PKEY *ssl_generate_pkey_curve(int id);

@@ -610,14 +610,14 @@ SSL *SSL_new(SSL_CTX *ctx)
         s->tlsext_ecpointformatlist_length =
             ctx->tlsext_ecpointformatlist_length;
     }
-    if (ctx->tlsext_ellipticcurvelist) {
-        s->tlsext_ellipticcurvelist =
-            OPENSSL_memdup(ctx->tlsext_ellipticcurvelist,
-                           ctx->tlsext_ellipticcurvelist_length);
-        if (!s->tlsext_ellipticcurvelist)
+    if (ctx->tlsext_supportedgroupslist) {
+        s->tlsext_supportedgroupslist =
+            OPENSSL_memdup(ctx->tlsext_supportedgroupslist,
+                           ctx->tlsext_supportedgroupslist_length);
+        if (!s->tlsext_supportedgroupslist)
             goto err;
-        s->tlsext_ellipticcurvelist_length =
-            ctx->tlsext_ellipticcurvelist_length;
+        s->tlsext_supportedgroupslist_length =
+            ctx->tlsext_supportedgroupslist_length;
     }
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1001,7 +1001,7 @@ void SSL_free(SSL *s)
     SSL_CTX_free(s->initial_ctx);
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(s->tlsext_ecpointformatlist);
-    OPENSSL_free(s->tlsext_ellipticcurvelist);
+    OPENSSL_free(s->tlsext_supportedgroupslist);
 #endif                          /* OPENSSL_NO_EC */
     sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts, X509_EXTENSION_free);
 #ifndef OPENSSL_NO_OCSP
@@ -1857,8 +1857,8 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     if (ctx == NULL) {
         switch (cmd) {
 #ifndef OPENSSL_NO_EC
-        case SSL_CTRL_SET_CURVES_LIST:
-            return tls1_set_curves_list(NULL, NULL, parg);
+        case SSL_CTRL_SET_GROUPS_LIST:
+            return tls1_set_groups_list(NULL, NULL, parg);
 #endif
         case SSL_CTRL_SET_SIGALGS_LIST:
         case SSL_CTRL_SET_CLIENT_SIGALGS_LIST:
@@ -2630,7 +2630,7 @@ void SSL_CTX_free(SSL_CTX *a)
 
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(a->tlsext_ecpointformatlist);
-    OPENSSL_free(a->tlsext_ellipticcurvelist);
+    OPENSSL_free(a->tlsext_supportedgroupslist);
 #endif
     OPENSSL_free(a->alpn_client_proto_list);
 

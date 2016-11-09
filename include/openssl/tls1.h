@@ -124,8 +124,14 @@ extern "C" {
 # define TLSEXT_TYPE_cert_type           9
 
 /* ExtensionType values from RFC4492 */
-# define TLSEXT_TYPE_elliptic_curves             10
+/*
+ * Prior to TLSv1.3 the supported_groups extension was known as
+ * elliptic_curves
+ */
+# define TLSEXT_TYPE_supported_groups            10
+# define TLSEXT_TYPE_elliptic_curves             TLSEXT_TYPE_supported_groups
 # define TLSEXT_TYPE_ec_point_formats            11
+
 
 /* ExtensionType value from RFC5054 */
 # define TLSEXT_TYPE_srp                         12

@@ -268,8 +268,8 @@ static int tls1_get_curvelist(SSL *s, int sess,
 {
     size_t pcurveslen = 0;
     if (sess) {
-        *pcurves = s->session->tlsext_ellipticcurvelist;
-        pcurveslen = s->session->tlsext_ellipticcurvelist_length;
+        *pcurves = s->session->tlsext_supportedgroupslist;
+        pcurveslen = s->session->tlsext_supportedgroupslist_length;
     } else {
         /* For Suite B mode only include P-256, P-384 */
         switch (tls1_suiteb(s)) {
@@ -288,8 +288,8 @@ static int tls1_get_curvelist(SSL *s, int sess,
             pcurveslen = 2;
             break;
         default:
-            *pcurves = s->tlsext_ellipticcurvelist;
-            pcurveslen = s->tlsext_ellipticcurvelist_length;
+            *pcurves = s->tlsext_supportedgroupslist;
+            pcurveslen = s->tlsext_supportedgroupslist_length;
         }
         if (!*pcurves) {
             *pcurves = eccurves_default;
@@ -356,13 +356,13 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 }
 
 /*-
- * For nmatch >= 0, return the NID of the |nmatch|th shared curve or NID_undef
+ * For nmatch >= 0, return the NID of the |nmatch|th shared group or NID_undef
  * if there is no match.
  * For nmatch == -1, return number of matches
- * For nmatch == -2, return the NID of the curve to use for
+ * For nmatch == -2, return the NID of the group to use for
  * an EC tmp key, or NID_undef if there is no match.
  */
-int tls1_shared_curve(SSL *s, int nmatch)
+int tls1_shared_group(SSL *s, int nmatch)
 {
     const unsigned char *pref, *supp;
     size_t num_pref, num_supp, i, j;
@@ -434,34 +434,35 @@ int tls1_shared_curve(SSL *s, int nmatch)
     return NID_undef;
 }
 
-int tls1_set_curves(unsigned char **pext, size_t *pextlen,
-                    int *curves, size_t ncurves)
+int tls1_set_groups(unsigned char **pext, size_t *pextlen,
+                    int *groups, size_t ngroups)
 {
-    unsigned char *clist, *p;
+    unsigned char *glist, *p;
     size_t i;
     /*
-     * Bitmap of curves included to detect duplicates: only works while curve
+     * Bitmap of groups included to detect duplicates: only works while group
      * ids < 32
      */
     unsigned long dup_list = 0;
-    clist = OPENSSL_malloc(ncurves * 2);
-    if (clist == NULL)
+    glist = OPENSSL_malloc(ngroups * 2);
+    if (glist == NULL)
         return 0;
-    for (i = 0, p = clist; i < ncurves; i++) {
+    for (i = 0, p = glist; i < ngroups; i++) {
         unsigned long idmask;
         int id;
-        id = tls1_ec_nid2curve_id(curves[i]);
+        /* TODO(TLS1.3): Convert for DH groups */
+        id = tls1_ec_nid2curve_id(groups[i]);
         idmask = 1L << id;
         if (!id || (dup_list & idmask)) {
-            OPENSSL_free(clist);
+            OPENSSL_free(glist);
             return 0;
         }
         dup_list |= idmask;
         s2n(id, p);
     }
     OPENSSL_free(*pext);
-    *pext = clist;
-    *pextlen = ncurves * 2;
+    *pext = glist;
+    *pextlen = ngroups * 2;
     return 1;
 }
 
@@ -500,8 +501,8 @@ static int nid_cb(const char *elem, int len, void *arg)
     return 1;
 }
 
-/* Set curves based on a colon separate list */
-int tls1_set_curves_list(unsigned char **pext, size_t *pextlen, const char *str)
+/* Set groups based on a colon separate list */
+int tls1_set_groups_list(unsigned char **pext, size_t *pextlen, const char *str)
 {
     nid_cb_st ncb;
     ncb.nidcnt = 0;
@@ -509,7 +510,7 @@ int tls1_set_curves_list(unsigned char **pext, size_t *pextlen, const char *str)
         return 0;
     if (pext == NULL)
         return 1;
-    return tls1_set_curves(pext, pextlen, ncb.nid_arr, ncb.nidcnt);
+    return tls1_set_groups(pext, pextlen, ncb.nid_arr, ncb.nidcnt);
 }
 
 /* For an EC key set TLS id and required compression based on parameters */
@@ -706,7 +707,7 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
         return 1;
     }
     /* Need a shared curve */
-    if (tls1_shared_curve(s, 0))
+    if (tls1_shared_group(s, 0))
         return 1;
     return 0;
 }
@@ -1117,16 +1118,17 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         }
 
         /*
-         * Add TLS extension EllipticCurves to the ClientHello message
+         * Add TLS extension supported_groups to the ClientHello message
          */
-        pcurves = s->tlsext_ellipticcurvelist;
+        /* TODO(TLS1.3): Add support for DHE groups */
+        pcurves = s->tlsext_supportedgroupslist;
         if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
 
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_elliptic_curves)
-                   /* Sub-packet for curves extension */
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_groups)
+                   /* Sub-packet for supported_groups extension */
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || !WPACKET_start_sub_packet_u16(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
@@ -1945,22 +1947,22 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                     return 0;
                 }
             }
-        } else if (currext->type == TLSEXT_TYPE_elliptic_curves) {
-            PACKET elliptic_curve_list;
+        } else if (currext->type == TLSEXT_TYPE_supported_groups) {
+            PACKET supported_groups_list;
 
-            /* Each NamedCurve is 2 bytes and we must have at least 1. */
+            /* Each group is 2 bytes and we must have at least 1. */
             if (!PACKET_as_length_prefixed_2(&currext->data,
-                                             &elliptic_curve_list)
-                || PACKET_remaining(&elliptic_curve_list) == 0
-                || (PACKET_remaining(&elliptic_curve_list) % 2) != 0) {
+                                             &supported_groups_list)
+                || PACKET_remaining(&supported_groups_list) == 0
+                || (PACKET_remaining(&supported_groups_list) % 2) != 0) {
                 return 0;
             }
 
             if (!s->hit) {
-                if (!PACKET_memdup(&elliptic_curve_list,
-                                   &s->session->tlsext_ellipticcurvelist,
+                if (!PACKET_memdup(&supported_groups_list,
+                                   &s->session->tlsext_supportedgroupslist,
                                    &s->
-                                   session->tlsext_ellipticcurvelist_length)) {
+                                   session->tlsext_supportedgroupslist_length)) {
                     *al = TLS1_AD_INTERNAL_ERROR;
                     return 0;
                 }

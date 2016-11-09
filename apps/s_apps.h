@@ -59,7 +59,7 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
                        STACK_OF(X509) *chain, int build_chain);
 int ssl_print_sigalgs(BIO *out, SSL *s);
 int ssl_print_point_formats(BIO *out, SSL *s);
-int ssl_print_curves(BIO *out, SSL *s, int noshared);
+int ssl_print_groups(BIO *out, SSL *s, int noshared);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, const char *host, const char *port,
