@@ -13,19 +13,20 @@
 
 DH_METHOD *DH_meth_new(const char *name, int flags)
 {
-    DH_METHOD *dhm = OPENSSL_zalloc(sizeof(DH_METHOD));
+    DH_METHOD *dhm = OPENSSL_zalloc(sizeof(*dhm));
 
     if (dhm != NULL) {
-        dhm->name = OPENSSL_strdup(name);
-        if (dhm->name == NULL) {
-            OPENSSL_free(dhm);
-            DHerr(DH_F_DH_METH_NEW, ERR_R_MALLOC_FAILURE);
-            return NULL;
-        }
         dhm->flags = flags;
+
+        dhm->name = OPENSSL_strdup(name);
+        if (dhm->name != NULL)
+            return dhm;
+
+        OPENSSL_free(dhm);
     }
 
-    return dhm;
+    DHerr(DH_F_DH_METH_NEW, ERR_R_MALLOC_FAILURE);
+    return NULL;
 }
 
 void DH_meth_free(DH_METHOD *dhm)
@@ -38,21 +39,20 @@ void DH_meth_free(DH_METHOD *dhm)
 
 DH_METHOD *DH_meth_dup(const DH_METHOD *dhm)
 {
-    DH_METHOD *ret;
-
-    ret = OPENSSL_malloc(sizeof(DH_METHOD));
+    DH_METHOD *ret = OPENSSL_malloc(sizeof(*ret));
 
     if (ret != NULL) {
         memcpy(ret, dhm, sizeof(*dhm));
+
         ret->name = OPENSSL_strdup(dhm->name);
-        if (ret->name == NULL) {
-            OPENSSL_free(ret);
-            DHerr(DH_F_DH_METH_DUP, ERR_R_MALLOC_FAILURE);
-            return NULL;
-        }
+        if (ret->name != NULL)
+            return ret;
+
+        OPENSSL_free(ret);
     }
 
-    return ret;
+    DHerr(DH_F_DH_METH_DUP, ERR_R_MALLOC_FAILURE);
+    return NULL;
 }
 
 const char *DH_meth_get0_name(const DH_METHOD *dhm)
@@ -62,9 +62,8 @@ const char *DH_meth_get0_name(const DH_METHOD *dhm)
 
 int DH_meth_set1_name(DH_METHOD *dhm, const char *name)
 {
-    char *tmpname;
+    char *tmpname = OPENSSL_strdup(name);
 
-    tmpname = OPENSSL_strdup(name);
     if (tmpname == NULL) {
         DHerr(DH_F_DH_METH_SET1_NAME, ERR_R_MALLOC_FAILURE);
         return 0;
