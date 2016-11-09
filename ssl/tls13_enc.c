@@ -214,6 +214,53 @@ int tls13_generate_master_secret(SSL *s, unsigned char *out,
     return tls13_generate_secret(s, prev, NULL, 0, out);
 }
 
+/*
+ * Generates the mac for the Finished message.
+ *
+ * Returns the length of the MAC or 0 on error.
+ */
+size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
+                             unsigned char *out)
+{
+    size_t hashlen;
+    const EVP_MD *md;
+
+    /*
+     * TODO(TLS1.3): This is a dummy implementation for now. We need to come
+     * back and fill this in.
+     */
+    md = ssl_handshake_md(s);
+    hashlen = EVP_MD_size(md);
+    memset(out, 0, hashlen);
+
+    return hashlen;
+}
+
+/*
+ * There isn't really a key block in TLSv1.3, but we still need this function
+ * for initialising the cipher and hash.
+ *
+ * Returns 1 on success or 0 on failure.
+ */
+int tls13_setup_key_block(SSL *s)
+{
+    const EVP_CIPHER *c;
+    const EVP_MD *hash;
+    int mac_type = NID_undef;
+
+    s->session->cipher = s->s3->tmp.new_cipher;
+    if (!ssl_cipher_get_evp
+        (s->session, &c, &hash, &mac_type, NULL, NULL, 0)) {
+        SSLerr(SSL_F_TLS13_SETUP_KEY_BLOCK, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
+        return 0;
+    }
+
+    s->s3->tmp.new_sym_enc = c;
+    s->s3->tmp.new_hash = hash;
+
+    return 1;
+}
+
 const unsigned char client_handshake_traffic[] =
     "client handshake traffic secret";
 const unsigned char client_application_traffic[] =

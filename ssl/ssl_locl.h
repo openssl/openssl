@@ -2002,6 +2002,9 @@ __owur size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
 __owur int tls1_generate_master_secret(SSL *s, unsigned char *out,
                                        unsigned char *p, size_t len,
                                        size_t *secret_size);
+__owur int tls13_setup_key_block(SSL *s);
+__owur size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
+                                     unsigned char *p);
 __owur int tls13_change_cipher_state(SSL *s, int which);
 __owur int tls13_derive_secret(SSL *s, const unsigned char *insecret,
                                const unsigned char *label, size_t labellen,
