@@ -1624,6 +1624,29 @@ typedef struct ssl3_comp_st {
 } SSL3_COMP;
 # endif
 
+typedef struct raw_extension_st {
+    unsigned int type;
+    PACKET data;
+} RAW_EXTENSION;
+
+#define MAX_COMPRESSIONS_SIZE   255
+
+typedef struct {
+    unsigned int isv2;
+    unsigned int legacy_version;
+    unsigned char random[SSL3_RANDOM_SIZE];
+    size_t session_id_len;
+    unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
+    size_t dtls_cookie_len;
+    unsigned char dtls_cookie[DTLS1_COOKIE_LENGTH];
+    PACKET ciphersuites;
+    size_t compressions_len;
+    unsigned char compressions[MAX_COMPRESSIONS_SIZE];
+    PACKET extensions;
+    size_t num_extensions;
+    RAW_EXTENSION *pre_proc_exts;
+} CLIENTHELLO_MSG;
+
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 
 __owur const SSL_METHOD *ssl_bad_method(int ver);
@@ -1797,8 +1820,7 @@ __owur CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
 __owur int ssl_get_new_session(SSL *s, int session);
-__owur int ssl_get_prev_session(SSL *s, const PACKET *ext,
-                                const PACKET *session_id);
+__owur int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello);
 __owur SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket);
 __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
@@ -1919,7 +1941,7 @@ __owur int ssl_version_supported(const SSL *s, int version);
 __owur int ssl_set_client_hello_version(SSL *s);
 __owur int ssl_check_version_downgrade(SSL *s);
 __owur int ssl_set_version_bound(int method_version, int version, int *bound);
-__owur int ssl_choose_server_version(SSL *s);
+__owur int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello);
 __owur int ssl_choose_client_version(SSL *s, int version);
 int ssl_get_client_min_max_version(const SSL *s, int *min_version,
                                    int *max_version);
@@ -2020,7 +2042,7 @@ __owur int tls1_shared_list(SSL *s,
                             const unsigned char *l2, size_t l2len, int nmatch);
 __owur int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al);
 __owur int ssl_add_serverhello_tlsext(SSL *s, WPACKET *pkt, int *al);
-__owur int ssl_parse_clienthello_tlsext(SSL *s, PACKET *pkt);
+__owur int ssl_parse_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello);
 void ssl_set_default_md(SSL *s);
 __owur int tls1_set_server_sigalgs(SSL *s);
 __owur int ssl_check_clienthello_tlsext_late(SSL *s, int *al);
@@ -2034,9 +2056,9 @@ __owur int dtls1_process_heartbeat(SSL *s, unsigned char *p,
                                    size_t length);
 #  endif
 
-__owur int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
-                                              const PACKET *session_id,
-                                              SSL_SESSION **ret);
+__owur int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
+                                      SSL_SESSION **ret);
+__owur int tls_check_client_ems_support(SSL *s, const CLIENTHELLO_MSG *hello);
 
 __owur int tls12_get_sigandhash(WPACKET *pkt, const EVP_PKEY *pk,
                                 const EVP_MD *md);
