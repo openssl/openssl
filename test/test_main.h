@@ -11,7 +11,7 @@
 # define HEADER_TEST_MAIN_H
 
 /*
- * Simple unit tests should implement register_tests() and link to test_main.cc.
+ * Simple unit tests should implement register_tests() and link to test_main.c.
  */
 extern void register_tests(void);
 

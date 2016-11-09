@@ -69,6 +69,7 @@ static int should_report_leaks()
      * the test harness always enables OPENSSL_DEBUG_MEMORY.
      */
     char *mem_debug_env = getenv("OPENSSL_DEBUG_MEMORY");
+
     return mem_debug_env == NULL
         || (strcmp(mem_debug_env, "0") && strcmp(mem_debug_env, ""));
 }

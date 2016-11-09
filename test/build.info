@@ -298,7 +298,7 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- $disabled{shared} -}]
     PROGRAMS_NO_INST=wpackettest cipher_overhead_test
-    SOURCE[wpackettest]=wpackettest.c testutil.c test_main_custom.h
+    SOURCE[wpackettest]=wpackettest.c testutil.c test_main_custom.c
     INCLUDE[wpackettest]=../include
     DEPEND[wpackettest]=../libcrypto ../libssl
 

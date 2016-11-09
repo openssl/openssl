@@ -20,6 +20,7 @@
 #include "testutil.h"
 #include "test_main_custom.h"
 
+#ifndef OPENSSL_NO_CT
 /* Used when declaring buffers to read text files into */
 #define CT_TEST_MAX_FILE_SIZE 8096
 
@@ -554,3 +555,4 @@ int test_main(int argc, char *argv[])
 
     return result;
 }
+#endif

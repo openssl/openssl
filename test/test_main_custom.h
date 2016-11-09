@@ -12,7 +12,7 @@
 
 /*
  * Unit tests that need a custom main() should implement test_main and link to
- * test_main_custom.cc
+ * test_main_custom.c
  * test_main() should return the result of run_tests().
  */
 extern int test_main(int argc, char *argv[]);

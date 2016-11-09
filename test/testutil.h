@@ -15,7 +15,7 @@
 
 /*-
  * Simple unit tests should implement register_tests() from test_main.h
- * and link against test_main.cc.
+ * and link against test_main.c.
  * To register tests, call ADD_TEST or ADD_ALL_TESTS:
  *
  * #include "test_main.h"
@@ -28,7 +28,7 @@
  *
  * Tests that need to perform custom setup or read command-line arguments should
  * implement test_main() from test_main_custom.h and link against
- * test_main_custom.cc:
+ * test_main_custom.c:
  *
  * int test_main(int argc, char *argv[])
  * {
