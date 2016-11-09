@@ -347,8 +347,10 @@ configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{b
  # It takes a list of library names and outputs a list of dependencies
  sub compute_lib_depends {
      if ($disabled{shared}) {
-	 return map { $_.$libext } @_;
+	 return map { $_ =~ /\.a$/ ? $`.$libext : $_.$libext } @_;
      }
+     die "Linking with static OpenSSL libraries is not supported in this configuration\n"
+         if grep /\.a$/, @_;
      return map { shlib_import($_) } @_;
  }
 

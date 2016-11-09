@@ -529,6 +529,17 @@ configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{bu
   use File::Basename;
   use File::Spec::Functions qw/abs2rel rel2abs catfile catdir/;
 
+  # Helper function to figure out dependencies on libraries
+  # It takes a list of library names and outputs a list of dependencies
+  sub compute_lib_depends {
+      if ($disabled{shared}) {
+          return map { $_ =~ /\.a$/ ? $`.".OLB" : $_.".OLB" } @_;
+      }
+      return map { $_ =~ /\.a$/
+                   ? $`.".OLB"
+                   : $unified_info{sharednames}->{$_}.".EXE" } @_;
+  }
+
   sub generatesrc {
       my %args = @_;
       my $generator = join(" ", @{$args{generator}});
@@ -631,9 +642,7 @@ EOF
       my $libd = dirname($lib);
       my $libn = basename($lib);
       (my $mkdef_key = $libn) =~ s/^${osslprefix_q}lib([^0-9]*)\d*/$1/i;
-      my @deps = map {
-          $disabled{shared} ? $_.".OLB"
-              : $unified_info{sharednames}->{$_}.".EXE"; } @{$args{deps}};
+      my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @deps);
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
@@ -679,9 +688,7 @@ EOF
       my $libn = basename($lib);
       (my $libn_nolib = $libn) =~ s/^lib//;
       my @objs = map { "$_.OBJ" } @{$args{objs}};
-      my @deps = map {
-          $disabled{shared} ? $_.".OLB"
-              : $unified_info{sharednames}->{$_}.".EXE"; } @{$args{deps}};
+      my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @objs, @deps);
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       my $engine_opt = abs2rel(rel2abs(catfile($config{sourcedir},
@@ -731,9 +738,7 @@ EOF
       my $bind = dirname($bin);
       my $binn = basename($bin);
       my @objs = map { "$_.OBJ" } @{$args{objs}};
-      my @deps = map {
-          $disabled{shared} ? $_.".OLB"
-              : $unified_info{sharednames}->{$_}.".EXE"; } @{$args{deps}};
+      my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @objs, @deps);
       # The "[]" hack is because in .OPT files, each line inherits the
       # previous line's file spec as default, so if no directory spec
