@@ -228,10 +228,10 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 
 int RAND_egd_bytes(const char *path, int bytes)
 {
-    int num, ret = 0;
+    int num, ret = -1;
 
     num = RAND_query_egd_bytes(path, NULL, bytes);
-    if (num < 1 || RAND_status() == 1)
+    if (RAND_status() == 1)
         ret = num;
  err:
     return (ret);
