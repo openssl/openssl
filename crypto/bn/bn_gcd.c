@@ -277,8 +277,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                 if (!BN_uadd(Y, Y, X))
                     goto err;
                 /*
-                 * as above, BN_mod_add_quick(Y, Y, X, n) would slow things
-                 * down
+                 * as above, BN_mod_add_quick(Y, Y, X, n) would slow things down
                  */
                 if (!BN_usub(A, A, B))
                     goto err;
@@ -348,8 +347,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
              * (**)  sign*Y*a  ==  D*B + M   (mod |n|).
              */
 
-            tmp = A;            /* keep the BIGNUM object, the value does not
-                                 * matter */
+            tmp = A;    /* keep the BIGNUM object, the value does not matter */
 
             /* (A, B) := (B, A mod B) ... */
             A = B;
@@ -377,8 +375,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
              */
 
             /*
-             * most of the time D is very small, so we can optimize tmp :=
-             * D*X+Y
+             * most of the time D is very small, so we can optimize tmp := D*X+Y
              */
             if (BN_is_one(D)) {
                 if (!BN_add(tmp, X, Y))
@@ -403,8 +400,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                     goto err;
             }
 
-            M = Y;              /* keep the BIGNUM object, the value does not
-                                 * matter */
+            M = Y;      /* keep the BIGNUM object, the value does not matter */
             Y = X;
             X = tmp;
             sign = -sign;
