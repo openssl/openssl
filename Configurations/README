@@ -339,6 +339,17 @@ source as well.  However, the files given through SOURCE are expected
 to be located in the source tree while files given through DEPEND are
 expected to be located in the build tree)
 
+It's also possible to depend on static libraries explicitely:
+
+    DEPEND[foo]=libsomething.a
+    DEPEND[libbar]=libsomethingelse.a
+
+This should be rarely used, and care should be taken to make sure it's
+only used when supported.  For example, native Windows build doesn't
+support build static libraries and DLLs at the same time, so using
+static libraries on Windows can only be done when configured
+'no-shared'.
+
 For some libraries, we maintain files with public symbols and their
 slot in a transfer vector (important on some platforms).  It can be
 declared like this:
