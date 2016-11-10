@@ -79,8 +79,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
     int dump_indent, dump_cont = 0;
 
     if (depth > ASN1_PARSE_MAXDEPTH) {
-            BIO_puts(bp, "BAD RECURSION DEPTH\n");
-            return 0;
+        BIO_puts(bp, "BAD RECURSION DEPTH\n");
+        return 0;
     }
 
     dump_indent = 6;            /* Because we know BIO_dump_indent() */
