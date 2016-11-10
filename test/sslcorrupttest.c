@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include "ssltestlib.h"
 #include "testutil.h"
 
@@ -182,6 +183,8 @@ static int test_ssl_corrupt(int testidx)
     BIO *c_to_s_fbio;
     int testresult = 0;
     static unsigned char junk[16000] = { 0 };
+    STACK_OF(SSL_CIPHER) *ciphers;
+    const SSL_CIPHER *currcipher;
 
     printf("Starting Test %d, %s\n", testidx, cipher_list[testidx]);
 
@@ -194,6 +197,29 @@ static int test_ssl_corrupt(int testidx)
     if (!SSL_CTX_set_cipher_list(cctx, cipher_list[testidx])) {
         printf("Failed setting cipher list\n");
         goto end;
+    }
+
+    ciphers = SSL_CTX_get_ciphers(cctx);
+    if (ciphers == NULL || sk_SSL_CIPHER_num(ciphers) != 1) {
+        printf("Unexpected ciphers set\n");
+        goto end;
+    }
+    currcipher = sk_SSL_CIPHER_value(ciphers, 0);
+    if (currcipher == NULL) {
+        printf("Failed getting the current cipher\n");
+        goto end;
+    }
+
+    /*
+     * If we haven't got a TLSv1.3 cipher, then we mustn't attempt to use
+     * TLSv1.3. Version negotiation happens before cipher selection, so we will
+     * get a "no shared cipher" error.
+     */
+    if (strcmp(SSL_CIPHER_get_version(currcipher), "TLSv1.3") != 0) {
+        if (!SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION)) {
+            printf("Failed setting max protocol version\n");
+            goto end;
+        }
     }
 
     c_to_s_fbio = BIO_new(bio_f_tls_corrupt_filter());
