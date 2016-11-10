@@ -6,9 +6,13 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_sslcorrupt");
+
+plan skip_all => "No TLS protocols are supported by this OpenSSL build"
+    if alldisabled(available_protocols("tls"));
 
 plan tests => 1;
 
