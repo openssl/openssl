@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.1.0b and 1.1.0c [xx XXX xxxx]
+ Changes between 1.1.0b and 1.1.0c [10 Nov 2016]
 
   *) ChaCha20/Poly1305 heap-buffer-overflow
 

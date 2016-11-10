@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.1.0b and OpenSSL 1.1.0c [under development]
+  Major changes between OpenSSL 1.1.0b and OpenSSL 1.1.0c [10 Nov 2016]
 
       o ChaCha20/Poly1305 heap-buffer-overflow (CVE-2016-7054)
       o CMS Null dereference (CVE-2016-7053)
