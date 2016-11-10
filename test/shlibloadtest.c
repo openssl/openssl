@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include <openssl/opensslv.h>
 
+/* The test is only currently implemented for DSO_DLFCN and DSO_WIN32 */
+#if defined(DSO_DLFCN) || defined(DSO_WIN32)
+
 #define SSL_CTX_NEW "SSL_CTX_new"
 #define SSL_CTX_FREE "SSL_CTX_free"
 #define TLS_METHOD "TLS_method"
@@ -34,7 +37,6 @@ static SSL_CTX_free_t SSL_CTX_free;
 
 static ERR_get_error_t ERR_get_error;
 static OpenSSL_version_num_t OpenSSL_version_num;
-
 
 #ifdef DSO_DLFCN
 
@@ -102,9 +104,6 @@ static int shlib_close(SHLIB lib)
 }
 
 #endif
-
-/* The test is only currently implemented for DSO_DLFCN and DSO_WIN32 */
-#if defined(DSO_DLFCN) || defined(DSO_WIN32)
 
 # define CRYPTO_FIRST_OPT    "-crypto_first"
 # define SSL_FIRST_OPT       "-ssl_first"
