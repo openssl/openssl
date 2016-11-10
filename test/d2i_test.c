@@ -20,7 +20,9 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/cms.h>
+#ifndef OPENSSL_NO_CMS
+# include <openssl/cms.h>
+#endif
 #include "e_os.h"
 
 static const ASN1_ITEM *item_type;
@@ -151,7 +153,9 @@ int main(int argc, char **argv)
         ASN1_ITEM_ref(X509),
         ASN1_ITEM_ref(GENERAL_NAME),
         ASN1_ITEM_ref(ASN1_INTEGER),
+#ifndef OPENSSL_NO_CMS
         ASN1_ITEM_ref(CMS_ContentInfo)
+#endif
     };
 
     static error_enum expected_errors[] = {
