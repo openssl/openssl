@@ -50,13 +50,12 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
                                   unsigned char *aiv, uint64_t N, uint64_t r,
                                   uint64_t p)
 {
-    X509_ALGOR *scheme = NULL, *kalg = NULL, *ret = NULL;
+    X509_ALGOR *scheme = NULL, *ret = NULL;
     int alg_nid;
     size_t keylen = 0;
     EVP_CIPHER_CTX *ctx = NULL;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     PBE2PARAM *pbe2 = NULL;
-    ASN1_OBJECT *obj;
 
     if (!cipher) {
         ASN1err(ASN1_F_PKCS5_PBE2_SET_SCRYPT, ERR_R_PASSED_NULL_PARAMETER);
@@ -75,7 +74,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
                 ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
         goto err;
     }
-    obj = OBJ_nid2obj(alg_nid);
+
     pbe2 = PBE2PARAM_new();
     if (pbe2 == NULL)
         goto merr;
@@ -83,7 +82,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     /* Setup the AlgorithmIdentifier for the encryption scheme */
     scheme = pbe2->encryption;
 
-    scheme->algorithm = obj;
+    scheme->algorithm = OBJ_nid2obj(alg_nid);
     scheme->parameter = ASN1_TYPE_new();
     if (scheme->parameter == NULL)
         goto merr;
@@ -149,12 +148,10 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
 
  err:
     PBE2PARAM_free(pbe2);
-    X509_ALGOR_free(kalg);
     X509_ALGOR_free(ret);
     EVP_CIPHER_CTX_free(ctx);
 
     return NULL;
-
 }
 
 static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
@@ -162,9 +159,8 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
                                     uint64_t p)
 {
     X509_ALGOR *keyfunc = NULL;
-    SCRYPT_PARAMS *sparam = NULL;
+    SCRYPT_PARAMS *sparam = SCRYPT_PARAMS_new();
 
-    sparam = SCRYPT_PARAMS_new();
     if (sparam == NULL)
         goto merr;
 
