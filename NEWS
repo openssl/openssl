@@ -11,6 +11,9 @@
 
   Major changes between OpenSSL 1.1.0a and OpenSSL 1.1.0b [26 Sep 2016]
 
+      o ChaCha20/Poly1305 heap-buffer-overflow (CVE-2016-7054)
+      o CMS Null dereference (CVE-2016-7053)
+      o Montgomery multiplication may produce incorrect results (CVE-2016-7055)
       o Fix Use After Free for large message sizes (CVE-2016-6309)
 
   Major changes between OpenSSL 1.1.0 and OpenSSL 1.1.0a [22 Sep 2016]
