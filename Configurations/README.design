@@ -142,7 +142,7 @@ dasync's source is 'engines/e_dasync.c' and ossltest's source is
 'engines/e_ossltest.c' and that the include directory 'include/' may
 be used when building anything that will be part of these engines.
 Also, both engines depend on the library 'libcrypto' to function
-properly.  ossltest is explicitely linked with the static variant of
+properly.  ossltest is explicitly linked with the static variant of
 the library 'libcrypto'.  Finally, only dasync is being installed, as
 ossltest is only for internal testing.
 
