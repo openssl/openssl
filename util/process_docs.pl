@@ -90,7 +90,7 @@ foreach my $section (sort @{$options{section}}) {
         my $suffix = { man  => ".$podinfo{section}",
                        html => ".html" } -> {$options{type}};
         my $generate = { man  => "pod2man --name=$name --section=$podinfo{section} --center=OpenSSL --release=$config{version} \"$podpath\"",
-                         html => "pod2html \"--podroot=$options{sourcedir}\" --htmldir=$updir --podpath=apps:crypto:ssl \"--infile=$podpath\" \"--title=$podname\""
+                         html => "pod2html \"--podroot=$options{sourcedir}\" --htmldir=$updir --podpath=man1:man3:mn5:man7 \"--infile=$podpath\" \"--title=$podname\""
                          } -> {$options{type}};
         my $output_dir = catdir($options{destdir}, "man$podinfo{section}");
         my $output_file = $podname . $suffix;
@@ -102,7 +102,7 @@ foreach my $section (sort @{$options{section}}) {
                 if $options{debug};
             unless ($options{"dry-run"}) {
                 @output = `$generate`;
-                map { s|href="http://man\.he\.net/man|href="../man|g; } @output
+                map { s|href="http://man\.he\.net/(man\d/[^"]+)(?:\.html)?"|href="../$1.html|g; } @output
                     if $options{type} eq "html";
             }
             print STDERR "DEBUG: Done processing\n" if $options{debug};
