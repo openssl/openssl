@@ -246,8 +246,8 @@ it to:
 
 =head1 SEE ALSO
 
-L<blowfish(3)>, L<des(3)>, L<idea(3)>,
-L<rc2(3)>
+L<BF_encrypt(3)>, L<DES_crypt(3)>, L<IDEA(3)>,
+L<RC2(3)>
 
 =head1 COPYRIGHT
 

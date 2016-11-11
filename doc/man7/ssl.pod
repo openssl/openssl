@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL - OpenSSL SSL/TLS library
+ssl - OpenSSL SSL/TLS library
 
 =head1 SYNOPSIS
 
@@ -736,7 +736,7 @@ See the individual manual pages for details.
 
 =head1 SEE ALSO
 
-L<openssl(1)>, L<crypto(3)>,
+L<openssl(1)>, L<crypto(7)>,
 L<CRYPTO_get_ex_new_index(3)>,
 L<SSL_accept(3)>, L<SSL_clear(3)>,
 L<SSL_connect(3)>,
