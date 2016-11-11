@@ -564,7 +564,7 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
     return 0;
 }
 
-#define MAXLOOPS    100000
+#define MAXLOOPS    1000000
 
 /*
  * NOTE: Transfers control of the BIOs - this function will free them on error

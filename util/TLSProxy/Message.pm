@@ -115,9 +115,9 @@ sub get_messages
             die "CCS received before message data complete\n";
         }
         if ($server) {
-            TLSProxy::Record->server_ccs_seen(1);
+            TLSProxy::Record->server_encrypting(1);
         } else {
-            TLSProxy::Record->client_ccs_seen(1);
+            TLSProxy::Record->client_encrypting(1);
         }
     } elsif ($record->content_type == TLSProxy::Record::RT_HANDSHAKE) {
         if ($record->len == 0 || $record->len_real == 0) {
