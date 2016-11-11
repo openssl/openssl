@@ -469,6 +469,7 @@ static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email
         return 1;
     emtmp = OPENSSL_strdup((char *)email->data);
     if (emtmp == NULL || !sk_OPENSSL_STRING_push(*sk, emtmp)) {
+        OPENSSL_free(emtmp);    /* free on push failure */
         X509_email_free(*sk);
         *sk = NULL;
         return 0;
