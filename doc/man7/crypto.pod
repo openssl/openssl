@@ -46,7 +46,7 @@ See the individual manual pages for details.
 
 =head1 SEE ALSO
 
-L<openssl(1)>, L<ssl(3)>
+L<openssl(1)>, L<ssl(7)>
 
 =head1 COPYRIGHT
 

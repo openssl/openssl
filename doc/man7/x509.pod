@@ -58,7 +58,7 @@ L<d2i_X509_CRL(3)>,
 L<d2i_X509_NAME(3)>,
 L<d2i_X509_REQ(3)>,
 L<d2i_X509_SIG(3)>,
-L<crypto(3)>,
+L<crypto(7)>,
 L<x509v3(3)>
 
 =head1 COPYRIGHT
