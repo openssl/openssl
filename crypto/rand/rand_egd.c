@@ -231,6 +231,8 @@ int RAND_egd_bytes(const char *path, int bytes)
     int num, ret = -1;
 
     num = RAND_query_egd_bytes(path, NULL, bytes);
+    if (num < 0)
+        goto err;
     if (RAND_status() == 1)
         ret = num;
  err:
