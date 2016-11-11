@@ -608,6 +608,8 @@ You could also look at the 'test' directory for more examples.
 
 =head1 BUGS
 
+=for comment foreign manuals: procmail(1), perl(1)
+
 If you find any bugs or you have suggestions please write to
 Zoltan Glozik <zglozik@opentsa.org>. Known issues:
 

@@ -33,10 +33,6 @@ to produce the error message:
 
  error:2006D080:BIO routines:BIO_new_file:no such file
 
-=head1 SEE ALSO
-
-L<err(3)>
-
 =head1 COPYRIGHT
 
 Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
