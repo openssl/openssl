@@ -11,8 +11,8 @@ use TLSProxy::Proxy;
 
 package TLSProxy::Record;
 
-my $server_ccs_seen = 0;
-my $client_ccs_seen = 0;
+my $server_encrypting = 0;
+my $client_encrypting = 0;
 my $etm = 0;
 
 use constant TLS_RECORD_HEADER_LENGTH => 5;
@@ -36,6 +36,7 @@ my %record_type = (
 
 use constant {
     VERS_TLS_1_4 => 773,
+    VERS_TLS_1_3_DRAFT => 32530,
     VERS_TLS_1_3 => 772,
     VERS_TLS_1_2 => 771,
     VERS_TLS_1_1 => 770,
@@ -108,8 +109,8 @@ sub get_records
                 substr($packet, TLS_RECORD_HEADER_LENGTH, $len_real)
             );
 
-            if (($server && $server_ccs_seen)
-                     || (!$server && $client_ccs_seen)) {
+            if (($server && $server_encrypting)
+                     || (!$server && $client_encrypting)) {
                 if ($version != VERS_TLS_1_3() && $etm) {
                     $record->decryptETM();
                 } else {
@@ -133,26 +134,26 @@ sub get_records
 
 sub clear
 {
-    $server_ccs_seen = 0;
-    $client_ccs_seen = 0;
+    $server_encrypting = 0;
+    $client_encrypting = 0;
 }
 
 #Class level accessors
-sub server_ccs_seen
+sub server_encrypting
 {
     my $class = shift;
     if (@_) {
-      $server_ccs_seen = shift;
+      $server_encrypting = shift;
     }
-    return $server_ccs_seen;
+    return $server_encrypting;
 }
-sub client_ccs_seen
+sub client_encrypting
 {
     my $class = shift;
     if (@_) {
-      $client_ccs_seen = shift;
+      $client_encrypting= shift;
     }
-    return $client_ccs_seen;
+    return $client_encrypting;
 }
 #Enable/Disable Encrypt-then-MAC
 sub etm

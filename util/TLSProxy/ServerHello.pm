@@ -94,6 +94,12 @@ sub parse
 
     $self->process_data();
 
+    # TODO(TLS1.3): Replace this reference to draft version before release
+    if ($server_version == TLSProxy::Record::VERS_TLS_1_3_DRAFT) {
+        TLSProxy::Record->server_encrypting(1);
+        TLSProxy::Record->client_encrypting(1);
+    }
+
     print "    Server Version:".$server_version."\n";
     print "    Session ID Len:".$session_id_len."\n";
     print "    Ciphersuite:".$ciphersuite."\n";

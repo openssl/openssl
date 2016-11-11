@@ -142,8 +142,9 @@ static int async_write(BIO *bio, const char *in, int inl)
                 abort();
 
             while (PACKET_remaining(&pkt) > 0) {
-                PACKET payload;
+                PACKET payload, wholebody;
                 unsigned int contenttype, versionhi, versionlo, data;
+                unsigned int msgtype = 0, negversion;
 
                 if (   !PACKET_get_1(&pkt, &contenttype)
                     || !PACKET_get_1(&pkt, &versionhi)
@@ -153,6 +154,17 @@ static int async_write(BIO *bio, const char *in, int inl)
 
                 /* Pretend we wrote out the record header */
                 written += SSL3_RT_HEADER_LENGTH;
+
+                wholebody = payload;
+                if (contenttype == SSL3_RT_HANDSHAKE
+                        && !PACKET_get_1(&wholebody, &msgtype))
+                    abort();
+
+                if (msgtype == SSL3_MT_SERVER_HELLO
+                        && (!PACKET_forward(&wholebody,
+                                            SSL3_HM_HEADER_LENGTH - 1)
+                            || !PACKET_get_net_2(&wholebody, &negversion)))
+                    abort();
 
                 while (PACKET_get_1(&payload, &data)) {
                     /* Create a new one byte long record for each byte in the
@@ -177,10 +189,14 @@ static int async_write(BIO *bio, const char *in, int inl)
                     written++;
                 }
                 /*
-                 * We can't fragment anything after the CCS, otherwise we
-                 * get a bad record MAC
+                 * We can't fragment anything after the ServerHello (or CCS <=
+                 * TLS1.2), otherwise we get a bad record MAC
+                 * TODO(TLS1.3): Change TLS1_3_VERSION_DRAFT to TLS1_3_VERSION
+                 * before release
                  */
-                if (contenttype == SSL3_RT_CHANGE_CIPHER_SPEC) {
+                if (contenttype == SSL3_RT_CHANGE_CIPHER_SPEC
+                        || (negversion == TLS1_3_VERSION_DRAFT
+                            && msgtype == SSL3_MT_SERVER_HELLO)) {
                     fragment = 0;
                     break;
                 }
