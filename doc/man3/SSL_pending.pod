@@ -51,7 +51,7 @@ returns 1 if there is buffered record data in the SSL object and 0 otherwise.
 =head1 SEE ALSO
 
 L<SSL_read_ex(3)>, L<SSL_read(3)>, L<SSL_CTX_set_read_ahead(3)>,
-L<SSL_CTX_set_split_send_fragment(3)>, L<ssl(3)>
+L<SSL_CTX_set_split_send_fragment(3)>, L<ssl(7)>
 
 =head1 HISTORY
 

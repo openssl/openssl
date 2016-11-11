@@ -37,7 +37,7 @@ value.
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<RAND_add(3)>
 
 =head1 HISTORY

@@ -309,7 +309,7 @@ The expected output from executing the above example program is:
 
 =head1 SEE ALSO
 
-L<crypto(3)>, L<ERR_print_errors(3)>
+L<crypto(7)>, L<ERR_print_errors(3)>
 
 =head1 HISTORY
 

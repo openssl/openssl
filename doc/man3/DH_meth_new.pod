@@ -137,7 +137,7 @@ DH_meth_set1_name() and all DH_meth_set_*() functions return 1 on success or
 
 =head1 SEE ALSO
 
-L<dh(3)>, L<DH_new(3)>, L<DH_generate_parameters(3)>, L<DH_generate_key(3)>,
+L<DH_new(3)>, L<DH_new(3)>, L<DH_generate_parameters(3)>, L<DH_generate_key(3)>,
 L<DH_set_method(3)>, L<DH_size(3)>, L<DH_get0_pqg(3)>
 
 =head1 HISTORY

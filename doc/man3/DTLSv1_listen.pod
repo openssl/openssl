@@ -83,7 +83,7 @@ whilst return codes >0 indicate success.
 =head1 SEE ALSO
 
 L<SSL_get_error(3)>, L<SSL_accept(3)>,
-L<ssl(3)>, L<bio(3)>
+L<ssl(7)>, L<bio(7)>
 
 =head1 HISTORY
 

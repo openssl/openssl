@@ -71,7 +71,7 @@ returns a pointer to the newly allocated structure.
 
 =head1 SEE ALSO
 
-L<dh(3)>, L<DH_new(3)>, L<DH_meth_new(3)>
+L<DH_new(3)>, L<DH_new(3)>, L<DH_meth_new(3)>
 
 =head1 COPYRIGHT
 

@@ -30,7 +30,7 @@ exists in the given CTLOG_STORE, otherwise it returns NULL.
 
 =head1 SEE ALSO
 
-L<ct(3)>,
+L<ct(7)>,
 L<CTLOG_STORE_new(3)>
 
 =head1 HISTORY

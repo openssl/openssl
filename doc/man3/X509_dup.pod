@@ -234,9 +234,9 @@ X509_VAL_new,
 X509_dup,
 - ASN1 object utilities
 
-=for comment generic
-
 =head1 SYNOPSIS
+
+=for comment generic
 
  #include <openssl/asn1t.h>
 

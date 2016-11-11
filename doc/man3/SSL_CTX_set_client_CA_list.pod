@@ -86,7 +86,7 @@ Scan all certificates in B<CAfile> and list them as acceptable CAs:
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<SSL_get_client_CA_list(3)>,
 L<SSL_load_client_CA_file(3)>,
 L<SSL_CTX_load_verify_locations(3)>

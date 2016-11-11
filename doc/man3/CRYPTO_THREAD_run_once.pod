@@ -149,7 +149,7 @@ You can find out if OpenSSL was configured with thread support:
 
 =head1 SEE ALSO
 
-L<crypto(3)>
+L<crypto(7)>
 
 =head1 COPYRIGHT
 

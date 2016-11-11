@@ -46,7 +46,7 @@ more probability).
 
 =head1 SEE ALSO
 
-L<bn(3)>, L<DH_size(3)>, L<DSA_size(3)>,
+L<bn(7)>, L<DH_size(3)>, L<DSA_size(3)>,
 L<RSA_size(3)>
 
 =head1 COPYRIGHT

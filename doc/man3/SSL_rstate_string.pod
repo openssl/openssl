@@ -54,7 +54,7 @@ The read state is unknown. This should never happen.
 
 =head1 SEE ALSO
 
-L<ssl(3)>
+L<ssl(7)>
 
 =head1 COPYRIGHT
 

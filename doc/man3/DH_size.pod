@@ -28,7 +28,7 @@ The size.
 
 =head1 SEE ALSO
 
-L<dh(3)>, L<DH_generate_key(3)>,
+L<DH_new(3)>, L<DH_generate_key(3)>,
 L<BN_num_bits(3)>
 
 =head1 HISTORY

@@ -25,7 +25,7 @@ can also be achieved: an application can support configuration features
 in newer versions of OpenSSL automatically.
 
 A configuration file must have been previously loaded, for example using
-CONF_modules_load_file(). See L<config(3)> for details of the configuration
+CONF_modules_load_file(). See L<config(5)> for details of the configuration
 file syntax.
 
 =head1 RETURN VALUES
@@ -73,7 +73,7 @@ the need for any additional application code.
 
 =head1 SEE ALSO
 
-L<config(3)>,
+L<config(5)>,
 L<SSL_CONF_cmd(3)>,
 L<CONF_modules_load_file(3)>
 

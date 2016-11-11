@@ -123,7 +123,7 @@ windows.h prior to async.h.
 
 =head1 SEE ALSO
 
-L<crypto(3)>, L<ASYNC_start_job(3)>
+L<crypto(7)>, L<ASYNC_start_job(3)>
 
 =head1 HISTORY
 

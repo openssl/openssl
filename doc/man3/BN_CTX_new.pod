@@ -57,7 +57,7 @@ replace use of BN_CTX_init with BN_CTX_new instead:
 
 =head1 SEE ALSO
 
-L<bn(3)>, L<ERR_get_error(3)>, L<BN_add(3)>,
+L<bn(7)>, L<ERR_get_error(3)>, L<BN_add(3)>,
 L<BN_CTX_start(3)>
 
 =head1 HISTORY

@@ -78,7 +78,7 @@ CT_POLICY_EVAL_CTX_new() will return NULL if malloc fails.
 
 =head1 SEE ALSO
 
-L<ct(3)>
+L<ct(7)>
 
 =head1 HISTORY
 
