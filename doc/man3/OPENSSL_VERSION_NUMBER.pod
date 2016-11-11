@@ -92,7 +92,7 @@ The version number.
 
 =head1 SEE ALSO
 
-L<crypto(3)>
+L<crypto(7)>
 
 =head1 COPYRIGHT
 

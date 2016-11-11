@@ -53,7 +53,7 @@ unsigned long but this value is also returned on error.
 
 =head1 SEE ALSO
 
-L<bn(3)>, L<BN_bn2bin(3)>
+L<bn(7)>, L<BN_bn2bin(3)>
 
 =head1 COPYRIGHT
 

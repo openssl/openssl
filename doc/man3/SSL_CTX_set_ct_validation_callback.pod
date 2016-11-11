@@ -119,7 +119,7 @@ callback) is set.
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 <SSL_get_verify_result(3)>,
 L<SSL_session_reused(3)>,
 L<SSL_set_verify(3)>,

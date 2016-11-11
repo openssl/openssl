@@ -47,7 +47,7 @@ B<(BN_ULONG)-1> if an error occurred.
 
 =head1 SEE ALSO
 
-L<bn(3)>, L<ERR_get_error(3)>, L<BN_add(3)>
+L<bn(7)>, L<ERR_get_error(3)>, L<BN_add(3)>
 
 =head1 COPYRIGHT
 

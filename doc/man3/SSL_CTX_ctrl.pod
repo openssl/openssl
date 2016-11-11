@@ -29,7 +29,7 @@ supplied via the B<cmd> parameter.
 
 =head1 SEE ALSO
 
-L<ssl(3)>
+L<ssl(7)>
 
 =head1 COPYRIGHT
 

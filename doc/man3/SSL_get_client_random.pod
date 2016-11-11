@@ -71,7 +71,7 @@ of bytes they would copy--that is, the length of the underlying field.
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<RAND_bytes(3)>,
 L<SSL_export_keying_material(3)>
 

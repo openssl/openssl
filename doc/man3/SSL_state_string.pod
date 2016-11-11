@@ -40,7 +40,7 @@ Detailed description of possible states to be included later.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_CTX_set_info_callback(3)>
+L<ssl(7)>, L<SSL_CTX_set_info_callback(3)>
 
 =head1 COPYRIGHT
 

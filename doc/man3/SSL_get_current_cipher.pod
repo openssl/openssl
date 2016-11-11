@@ -41,7 +41,7 @@ These are implemented as macros.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_CIPHER_get_name(3)>
+L<ssl(7)>, L<SSL_CIPHER_get_name(3)>
 
 =head1 COPYRIGHT
 

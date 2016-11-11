@@ -78,7 +78,7 @@ returned value will be SCT_VALIDATION_STATUS_NOT_SET.
 
 =head1 SEE ALSO
 
-L<ct(3)>
+L<ct(7)>
 
 =head1 HISTORY
 

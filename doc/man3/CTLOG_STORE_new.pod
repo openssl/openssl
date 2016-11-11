@@ -59,7 +59,7 @@ all CT logs in the file are successfully parsed and loaded, 0 otherwise.
 
 =head1 SEE ALSO
 
-L<ct(3)>,
+L<ct(7)>,
 L<CTLOG_STORE_get0_log_by_id(3)>,
 L<SSL_CTX_set_ctlog_list_file(3)>
 

@@ -70,10 +70,10 @@ B<OCSP_CERTID> structure is freed.
 
 =head1 SEE ALSO
 
-L<crypto(3)>,
+L<crypto(7)>,
 L<OCSP_request_add1_nonce(3)>,
 L<OCSP_REQUEST_new(3)>,
-L<OCSP_response_find_status(3)>,
+L<OCSP_resp_find_status(3)>,
 L<OCSP_response_status(3)>,
 L<OCSP_sendreq_new(3)>
 

@@ -78,7 +78,7 @@ The operation failed. Check the error queue to find out the reason.
 
 =head1 SEE ALSO
 
-L<ssl(3)>
+L<ssl(7)>
 
 =head1 HISTORY
 

@@ -72,7 +72,7 @@ success, and -1 if the connection failed. The PRNG state is not considered.
 
 =head1 SEE ALSO
 
-L<rand(3)>, L<RAND_add(3)>,
+L<RAND_bytes(3)>, L<RAND_add(3)>,
 L<RAND_cleanup(3)>
 
 =head1 COPYRIGHT

@@ -31,7 +31,7 @@ The functions described here return no value.
 
 =head1 SEE ALSO
 
-L<err(3)>, L<OPENSSL_init_crypto(3)>
+L<err(7)>, L<OPENSSL_init_crypto(3)>
 
 =head1 HISTORY
 

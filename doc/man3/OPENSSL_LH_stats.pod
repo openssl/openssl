@@ -50,7 +50,7 @@ These functions do not return values.
 
 =head1 SEE ALSO
 
-L<bio(3)>, L<lhash(3)>
+L<bio(7)>, L<LHASH(3)>
 
 =head1 COPYRIGHT
 

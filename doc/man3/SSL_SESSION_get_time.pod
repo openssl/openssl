@@ -60,7 +60,7 @@ If any of the function is passed the NULL pointer for the session B<s>,
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<SSL_CTX_set_timeout(3)>,
 L<SSL_get_default_timeout(3)>
 

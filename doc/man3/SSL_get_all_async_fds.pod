@@ -7,9 +7,9 @@ SSL_get_all_async_fds,
 SSL_get_changed_async_fds
 - manage asynchronous operations
 
-=for comment multiple includes
-
 =head1 SYNOPSIS
+
+=for comment multiple includes
 
  #include <openssl/async.h>
  #include <openssl/ssl.h>

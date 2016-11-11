@@ -118,7 +118,7 @@ L<SSL_get_error(3)>, L<SSL_connect(3)>,
 L<SSL_accept(3)>, L<SSL_set_shutdown(3)>,
 L<SSL_CTX_set_quiet_shutdown(3)>,
 L<SSL_clear(3)>, L<SSL_free(3)>,
-L<ssl(3)>, L<bio(3)>
+L<ssl(7)>, L<bio(7)>
 
 =head1 COPYRIGHT
 

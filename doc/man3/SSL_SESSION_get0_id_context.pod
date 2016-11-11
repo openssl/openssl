@@ -22,7 +22,7 @@ should not be released.
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<SSL_set_session_id_context(3)>
 
 =head1 HISTORY

@@ -93,7 +93,7 @@ are not to be used in signature schemes.
 
 =head1 SEE ALSO
 
-L<dh(3)>, L<ERR_get_error(3)>, L<rand(3)>,
+L<DH_new(3)>, L<ERR_get_error(3)>, L<RAND_bytes(3)>,
 L<DH_free(3)>
 
 =head1 COPYRIGHT

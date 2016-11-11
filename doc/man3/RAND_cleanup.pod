@@ -24,7 +24,7 @@ RAND_cleanup() returns no value.
 
 =head1 SEE ALSO
 
-L<rand(3)>
+L<RAND_bytes(3)>
 
 =head1 HISTORY
 

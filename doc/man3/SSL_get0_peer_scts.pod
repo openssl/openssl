@@ -30,7 +30,7 @@ SSL_get0_peer_scts() returns a list of SCTs found, or NULL if an error occurs.
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<SSL_CTX_set_ct_validation_callback(3)>
 
 =head1 COPYRIGHT

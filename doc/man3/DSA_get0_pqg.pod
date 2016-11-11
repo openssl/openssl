@@ -82,7 +82,7 @@ has been set.
 
 =head1 SEE ALSO
 
-L<dsa(3)>, L<DSA_new(3)>, L<DSA_generate_parameters(3)>, L<DSA_generate_key(3)>,
+L<DSA_new(3)>, L<DSA_new(3)>, L<DSA_generate_parameters(3)>, L<DSA_generate_key(3)>,
 L<DSA_dup_DH(3)>, L<DSA_do_sign(3)>, L<DSA_set_method(3)>, L<DSA_SIG_new(3)>,
 L<DSA_sign(3)>, L<DSA_size(3)>, L<DSA_meth_new(3)>
 

@@ -98,7 +98,7 @@ first added to OpenSSL 1.1.0
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<SSL_CTX_use_certificate(3)>
 
 =head1 COPYRIGHT

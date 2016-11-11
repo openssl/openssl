@@ -147,7 +147,7 @@ about alerts being handled and error messages to the B<bio_err> BIO.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_state_string(3)>,
+L<ssl(7)>, L<SSL_state_string(3)>,
 L<SSL_alert_type_string(3)>
 
 =head1 COPYRIGHT

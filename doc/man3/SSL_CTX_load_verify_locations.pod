@@ -141,7 +141,7 @@ missing default location is still treated as a success.
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<SSL_CTX_set_client_CA_list(3)>,
 L<SSL_get_client_CA_list(3)>,
 L<SSL_CTX_use_certificate(3)>,

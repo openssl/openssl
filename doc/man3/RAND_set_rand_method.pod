@@ -67,7 +67,7 @@ algorithms.
 
 =head1 SEE ALSO
 
-L<rand(3)>, L<engine(3)>
+L<RAND_bytes(3)>, L<ENGINE_by_id(3)>
 
 =head1 COPYRIGHT
 

@@ -30,7 +30,7 @@ DH_free() returns no value.
 
 =head1 SEE ALSO
 
-L<dh(3)>, L<ERR_get_error(3)>,
+L<DH_new(3)>, L<ERR_get_error(3)>,
 L<DH_generate_parameters(3)>,
 L<DH_generate_key(3)>
 
