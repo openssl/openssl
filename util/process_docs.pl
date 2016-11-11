@@ -102,7 +102,7 @@ foreach my $section (sort @{$options{section}}) {
                 if $options{debug};
             unless ($options{"dry-run"}) {
                 @output = `$generate`;
-                map { s|href="http://man\.he\.net/(man\d/[^"]+)(?:\.html)?"|href="../$1.html|g; } @output
+                map { s|href="http://man\.he\.net/(man\d/[^"]+)(?:\.html)?"|href="../$1.html"|g; } @output
                     if $options{type} eq "html";
             }
             print STDERR "DEBUG: Done processing\n" if $options{debug};
