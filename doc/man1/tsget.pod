@@ -184,6 +184,8 @@ example:
 
 =head1 SEE ALSO
 
+=for comment foreign manuals: curl(1)
+
 L<openssl(1)>, L<ts(1)>, L<curl(1)>,
 B<RFC 3161>
 
