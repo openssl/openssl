@@ -120,7 +120,7 @@ parameters can be set to NULL if their value is not required.
 
 =head1 SEE ALSO
 
-L<crypto(3)>,
+L<crypto(7)>,
 L<OCSP_cert_to_id(3)>,
 L<OCSP_request_add1_nonce(3)>,
 L<OCSP_REQUEST_new(3)>,

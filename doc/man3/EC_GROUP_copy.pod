@@ -190,7 +190,7 @@ trinomial or pentanomial respectively. Alternatively in the event of an error a 
 
 =head1 SEE ALSO
 
-L<crypto(3)>, L<ec(3)>, L<EC_GROUP_new(3)>,
+L<crypto(7)>, L<ec(7)>, L<EC_GROUP_new(3)>,
 L<EC_POINT_new(3)>, L<EC_POINT_add(3)>, L<EC_KEY_new(3)>,
 L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 

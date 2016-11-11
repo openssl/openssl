@@ -71,7 +71,7 @@ fails. Otherwise it returns a pointer to the newly allocated structure.
 
 =head1 SEE ALSO
 
-L<dsa(3)>, L<DSA_new(3)>, L<DSA_meth_new(3)>
+L<DSA_new(3)>, L<DSA_new(3)>, L<DSA_meth_new(3)>
 
 =head1 COPYRIGHT
 

@@ -31,8 +31,8 @@ beforehand in order to set the validation status of an SCT first.
 
 =head1 SEE ALSO
 
-L<ct(3)>,
-L<bio(3)>,
+L<ct(7)>,
+L<bio(7)>,
 L<CTLOG_STORE_new(3)>,
 L<SCT_validate(3)>
 

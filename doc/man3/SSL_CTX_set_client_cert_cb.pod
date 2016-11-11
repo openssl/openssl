@@ -86,7 +86,7 @@ and create a new one to return to the previous state.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_CTX_use_certificate(3)>,
+L<ssl(7)>, L<SSL_CTX_use_certificate(3)>,
 L<SSL_CTX_add_extra_chain_cert(3)>,
 L<SSL_get_client_CA_list(3)>,
 L<SSL_clear(3)>, L<SSL_free(3)>

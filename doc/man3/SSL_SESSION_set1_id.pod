@@ -23,7 +23,7 @@ if the supplied session ID length exceeds B<SSL_MAX_SSL_SESSION_ID_LENGTH>.
 
 =head1 SEE ALSO
 
-L<ssl(3)>
+L<ssl(7)>
 
 =head1 HISTORY
 

@@ -62,7 +62,7 @@ The return value points to the certificate chain presented by the peer.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_get_peer_certificate(3)>, L<X509_up_ref(3)>,
+L<ssl(7)>, L<SSL_get_peer_certificate(3)>, L<X509_up_ref(3)>,
 L<X509_chain_up_ref(3)>
 
 =head1 COPYRIGHT

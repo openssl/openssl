@@ -56,7 +56,7 @@ L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<crypto(3)>,
+L<crypto(7)>,
 L<d2i_PKCS8PrivateKey(3)>
 
 =head1 COPYRIGHT

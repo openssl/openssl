@@ -44,7 +44,7 @@ library number.
 
 =head1 SEE ALSO
 
-L<err(3)>, L<ERR_load_strings(3)>
+L<err(7)>, L<ERR_load_strings(3)>
 
 =head1 COPYRIGHT
 

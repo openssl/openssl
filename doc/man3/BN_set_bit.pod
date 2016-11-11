@@ -55,7 +55,7 @@ can be obtained by L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<bn(3)>, L<BN_num_bytes(3)>, L<BN_add(3)>
+L<bn(7)>, L<BN_num_bytes(3)>, L<BN_add(3)>
 
 =head1 COPYRIGHT
 

@@ -74,7 +74,7 @@ there was an error.
 
 =head1 SEE ALSO
 
-L<BIO(3)>,
+L<bio(7)>,
 L<BIO_reset(3)>,
 L<BIO_flush(3)>,
 L<BIO_pop(3)>,

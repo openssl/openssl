@@ -37,7 +37,7 @@ the case of an error, the log list may have been partially loaded.
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<SSL_CTX_set_ct_validation_callback(3)>,
 L<CTLOG_STORE_new(3)>
 

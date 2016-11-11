@@ -64,7 +64,7 @@ The error code, or 0 if there is no error in the queue.
 
 =head1 SEE ALSO
 
-L<err(3)>, L<ERR_error_string(3)>,
+L<err(7)>, L<ERR_error_string(3)>,
 L<ERR_GET_LIB(3)>
 
 =head1 COPYRIGHT

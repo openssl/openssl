@@ -28,7 +28,7 @@ L<d2i_SCT_LIST> and L<i2d_SCT_LIST>.
 
 =head1 SEE ALSO
 
-L<ct(3)>,
+L<ct(7)>,
 L<d2i_SCT_LIST(3)>,
 L<i2d_SCT_LIST(3)>
 

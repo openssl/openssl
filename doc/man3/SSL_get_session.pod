@@ -66,7 +66,7 @@ The return value points to the data of an SSL session.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_free(3)>,
+L<ssl(7)>, L<SSL_free(3)>,
 L<SSL_clear(3)>,
 L<SSL_SESSION_free(3)>
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DECLARE_LHASH_OF,
+LHASH, DECLARE_LHASH_OF,
 OPENSSL_LH_COMPFUNC, OPENSSL_LH_HASHFUNC, OPENSSL_LH_DOALL_FUNC,
 LHASH_DOALL_ARG_FN_TYPE,
 IMPLEMENT_LHASH_HASH_FN, IMPLEMENT_LHASH_COMP_FN,
@@ -10,9 +10,9 @@ lh_TYPE_new, lh_TYPE_free,
 lh_TYPE_insert, lh_TYPE_delete, lh_TYPE_retrieve,
 lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
-=for comment generic
-
 =head1 SYNOPSIS
+
+=for comment generic
 
  #include <openssl/lhash.h>
 
@@ -220,7 +220,7 @@ lh_TYPE_insert() returns B<NULL> both for success and error.
 
 =head1 SEE ALSO
 
-L<lh_stats(3)>
+L<OPENSSL_LH_stats(3)>
 
 =head1 HISTORY
 

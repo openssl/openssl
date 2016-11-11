@@ -38,9 +38,9 @@ PEM_write_SSL_SESSION,
 PEM_write_bio_SSL_SESSION
 - PEM object encoding routines
 
-=for comment generic
-
 =head1 SYNOPSIS
+
+=for comment generic
 
  #include <openssl/pem.h>
 

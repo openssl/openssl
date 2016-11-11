@@ -133,7 +133,7 @@ RFC 2104
 
 =head1 SEE ALSO
 
-L<sha(3)>, L<evp(3)>
+L<SHA1(3)>, L<evp(7)>
 
 =head1 HISTORY
 

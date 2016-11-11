@@ -30,7 +30,7 @@ DSA_bits() returns the number of bits in the key.
 
 =head1 SEE ALSO
 
-L<dsa(3)>, L<DSA_sign(3)>
+L<DSA_new(3)>, L<DSA_sign(3)>
 
 =head1 COPYRIGHT
 

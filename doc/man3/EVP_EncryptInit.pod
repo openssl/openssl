@@ -31,9 +31,9 @@ EVP_aes_256_cbc, EVP_aes_256_ecb, EVP_aes_256_cfb, EVP_aes_256_ofb,
 EVP_aes_128_gcm, EVP_aes_192_gcm, EVP_aes_256_gcm,
 EVP_aes_128_ccm, EVP_aes_192_ccm, EVP_aes_256_ccm - EVP cipher routines
 
-=for comment generic
-
 =head1 SYNOPSIS
+
+=for comment generic
 
  #include <openssl/evp.h>
 
@@ -627,7 +627,7 @@ with a 128-bit key:
 
 =head1 SEE ALSO
 
-L<evp(3)>
+L<evp(7)>
 
 =head1 HISTORY
 

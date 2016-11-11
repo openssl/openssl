@@ -56,7 +56,7 @@ setting.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_shutdown(3)>,
+L<ssl(7)>, L<SSL_shutdown(3)>,
 L<SSL_set_shutdown(3)>, L<SSL_new(3)>,
 L<SSL_clear(3)>, L<SSL_free(3)>
 

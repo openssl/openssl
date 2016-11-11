@@ -148,7 +148,7 @@ EVP_DecodeBlock() returns the length of the data decoded or -1 on error.
 
 =head1 SEE ALSO
 
-L<evp(3)>
+L<evp(7)>
 
 =head1 COPYRIGHT
 
