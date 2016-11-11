@@ -19,6 +19,7 @@ static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
 
 static const unsigned char keylabel[] = "key";
 static const unsigned char ivlabel[] = "iv";
+static const unsigned char finishedlabel[] = "finished";
 
 /*
  * Given a |secret|; a |label| of length |labellen|; and a |hash| of the
@@ -126,6 +127,13 @@ int tls13_derive_iv(SSL *s, const unsigned char *secret, unsigned char *iv,
                              iv, ivlen);
 }
 
+static int tls13_derive_finishedkey(SSL *s, const unsigned char *secret,
+                                 unsigned char *fin, size_t finlen)
+{
+    return tls13_hkdf_expand(s, secret, finishedlabel,
+                             sizeof(finishedlabel) - 1, NULL, fin, finlen);
+}
+
 /*
  * Given the previous secret |prevsecret| and a new input secret |insecret| of
  * length |insecretlen|, generate a new secret and store it in the location
@@ -222,18 +230,34 @@ int tls13_generate_master_secret(SSL *s, unsigned char *out,
 size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
                              unsigned char *out)
 {
-    size_t hashlen;
-    const EVP_MD *md;
+    const EVP_MD *md = ssl_handshake_md(s);
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    size_t hashlen, ret = 0;
+    EVP_PKEY *key = NULL;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
-    /*
-     * TODO(TLS1.3): This is a dummy implementation for now. We need to come
-     * back and fill this in.
-     */
-    md = ssl_handshake_md(s);
-    hashlen = EVP_MD_size(md);
-    memset(out, 0, hashlen);
+    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
+        goto err;
 
-    return hashlen;
+    if (str == s->method->ssl3_enc->server_finished_label)
+        key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
+                                   s->server_finished_secret, hashlen);
+    else
+        key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
+                                   s->client_finished_secret, hashlen);
+
+    if (key == NULL
+            || ctx == NULL
+            || EVP_DigestSignInit(ctx, NULL, md, NULL, key) <= 0
+            || EVP_DigestSignUpdate(ctx, hash, hashlen) <= 0
+            || EVP_DigestSignFinal(ctx, out, &hashlen) <= 0)
+        goto err;
+
+    ret = hashlen;
+ err:
+    EVP_PKEY_free(key);
+    EVP_MD_CTX_free(ctx);
+    return ret;
 }
 
 /*
@@ -276,9 +300,10 @@ int tls13_change_cipher_state(SSL *s, int which)
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char *insecret;
+    unsigned char *finsecret = NULL;
     EVP_CIPHER_CTX *ciph_ctx;
     const EVP_CIPHER *ciph = s->s3->tmp.new_sym_enc;;
-    size_t ivlen, keylen;
+    size_t ivlen, keylen, finsecretlen;
     const unsigned char *label;
     size_t labellen;
 
@@ -314,6 +339,8 @@ int tls13_change_cipher_state(SSL *s, int which)
             || ((which & SSL3_CC_SERVER) && (which & SSL3_CC_READ))) {
         if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
+            finsecret = s->client_finished_secret;
+            finsecretlen = sizeof(s->client_finished_secret);
             label = client_handshake_traffic;
             labellen = sizeof(client_handshake_traffic) - 1;
         } else {
@@ -324,6 +351,8 @@ int tls13_change_cipher_state(SSL *s, int which)
     } else {
         if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
+            finsecret = s->server_finished_secret;
+            finsecretlen = sizeof(s->server_finished_secret);
             label = server_handshake_traffic;
             labellen = sizeof(server_handshake_traffic) - 1;
         } else {
@@ -349,7 +378,10 @@ int tls13_change_cipher_state(SSL *s, int which)
         ivlen = EVP_CIPHER_iv_length(ciph);
 
     if (!tls13_derive_key(s, secret, key, keylen)
-            || !tls13_derive_iv(s, secret, iv, ivlen)) {
+            || !tls13_derive_iv(s, secret, iv, ivlen)
+            || (finsecret != NULL && !tls13_derive_finishedkey(s, secret,
+                                                               finsecret,
+                                                               finsecretlen))) {
         SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
         goto err;
     }
