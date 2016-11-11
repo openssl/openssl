@@ -81,7 +81,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     OPENSSL_cpuid_setup();
     base_inited = 1;
 
-#ifndef OPENSSL_USE_NODELETE
+#if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
 # ifdef DSO_WIN32
     {
         HMODULE handle = NULL;
@@ -604,7 +604,7 @@ int OPENSSL_atexit(void (*handler)(void))
 {
     OPENSSL_INIT_STOP *newhand;
 
-#ifndef OPENSSL_USE_NODELETE
+#if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
     {
         union {
             void *sym;
