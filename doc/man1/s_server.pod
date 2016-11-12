@@ -8,8 +8,13 @@ s_server - SSL/TLS server program
 
 B<openssl> B<s_server>
 [B<-help>]
-[B<-accept port>]
+[B<-port port>]
+[B<-accept val>]
 [B<-naccept count>]
+[B<-unix val>]
+[B<-unlink>]
+[B<-4>]
+[B<-6>]
 [B<-context id>]
 [B<-verify depth>]
 [B<-Verify depth>]
@@ -125,13 +130,33 @@ manual page.
 
 Print out a usage message.
 
-=item B<-accept port>
+=item B<-port port>
 
 The TCP port to listen on for connections. If not specified 4433 is used.
+
+=item B<-accept val>
+
+The optional TCP host and port to listen on for connections. If not specified, *:4433 is used.
 
 =item B<-naccept count>
 
 The server will exit after receiving B<number> connections, default unlimited.
+
+=item B<-unix val>
+
+Unix domain socket to accept on.
+
+=item B<-unlink>
+
+For -unix, unlink existing socket first.
+
+=item B<-4>
+
+Use IPv4 only.
+
+=item B<-6>
+
+Use IPv6 only.
 
 =item B<-context id>
 

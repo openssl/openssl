@@ -567,7 +567,7 @@ const OPTIONS s_client_options[] = {
     {"proxy", OPT_PROXY, 's',
      "Connect to via specified proxy to the real server"},
 #ifdef AF_UNIX
-    {"unix", OPT_UNIX, 's', "Connect over unix domain sockets"},
+    {"unix", OPT_UNIX, 's', "Connect over the specified Unix-domain socket"},
 #endif
     {"4", OPT_4, '-', "Use IPv4 only"},
 #ifdef AF_INET6
