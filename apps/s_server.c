@@ -684,7 +684,7 @@ OPTIONS s_server_options[] = {
     {"port", OPT_PORT, 'p',
      "TCP/IP port to listen on for connections (default is " PORT ")"},
     {"accept", OPT_ACCEPT, 's',
-     "TCP/IP optional host and port to accept on (default is " PORT ")"},
+     "TCP/IP optional host and port to listen on for connections (default is *:" PORT ")"},
 #ifdef AF_UNIX
     {"unix", OPT_UNIX, 's', "Unix domain socket to accept on"},
 #endif

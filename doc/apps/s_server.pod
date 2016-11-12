@@ -8,8 +8,13 @@ s_server - SSL/TLS server program
 
 B<openssl> B<s_server>
 [B<-help>]
-[B<-accept port>]
+[B<-port port>]
+[B<-accept val>]
 [B<-naccept count>]
+[B<-unix val>]
+[B<-unlink>]
+[B<-4>]
+[B<-6>]
 [B<-context id>]
 [B<-verify depth>]
 [B<-Verify depth>]
@@ -69,6 +74,9 @@ B<openssl> B<s_server>
 [B<-quiet>]
 [B<-ssl3>]
 [B<-tls1>]
+[B<-tls1_1>]
+[B<-tls1_2>]
+[B<-tls1_3>]
 [B<-dtls>]
 [B<-dtls1>]
 [B<-dtls1_2>]
@@ -81,6 +89,7 @@ B<openssl> B<s_server>
 [B<-no_tls1>]
 [B<-no_tls1_1>]
 [B<-no_tls1_2>]
+[B<-no_tls1_3>]
 [B<-no_dhe>]
 [B<-bugs>]
 [B<-comp>]
@@ -121,13 +130,33 @@ manual page.
 
 Print out a usage message.
 
-=item B<-accept port>
+=item B<-port port>
 
 The TCP port to listen on for connections. If not specified 4433 is used.
+
+=item B<-accept val>
+
+The optional TCP host and port to listen on for connections. If not specified, *:4433 is used.
 
 =item B<-naccept count>
 
 The server will exit after receiving B<number> connections, default unlimited.
+
+=item B<-unix val>
+
+Unix domain socket to accept on.
+
+=item B<-unlink>
+
+For -unix, unlink existing socket first.
+
+=item B<-4>
+
+Use IPv4 only.
+
+=item B<-6>
+
+Use IPv6 only.
 
 =item B<-context id>
 
@@ -295,7 +324,7 @@ Use the PSK key B<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 
-=item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
+=item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
 
 These options require or disable the use of the specified SSL or TLS protocols.
 By default B<s_server> will negotiate the highest mutually supported protocol

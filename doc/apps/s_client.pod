@@ -10,6 +10,9 @@ B<openssl> B<s_client>
 [B<-help>]
 [B<-connect host:port>]
 [B<-proxy host:port>]
+[B<-unix path>]
+[B<-4>]
+[B<-6>]
 [B<-servername name>]
 [B<-verify depth>]
 [B<-verify_return_error>]
@@ -68,10 +71,12 @@ B<openssl> B<s_client>
 [B<-tls1>]
 [B<-tls1_1>]
 [B<-tls1_2>]
+[B<-tls1_3>]
 [B<-no_ssl3>]
 [B<-no_tls1>]
 [B<-no_tls1_1>]
 [B<-no_tls1_2>]
+[B<-no_tls1_3>]
 [B<-dtls>]
 [B<-dtls1>]
 [B<-dtls1_2>]
@@ -129,6 +134,18 @@ then an attempt is made to connect to the local host on port 4433.
 When used with the B<-connect> flag, the program uses the host and port
 specified with this flag and issues an HTTP CONNECT command to connect
 to the desired server.
+
+=item B<-unix path>
+
+Connect over the specified Unix-domain socket.
+
+=item B<-4>
+
+Use IPv4 only.
+
+=item B<-6>
+
+Use IPv6 only.
 
 =item B<-servername name>
 
@@ -336,7 +353,7 @@ Use the PSK key B<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 
-=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
+=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
 
 These options require or disable the use of the specified SSL or TLS protocols.
 By default B<s_client> will negotiate the highest mutually supported protocol
