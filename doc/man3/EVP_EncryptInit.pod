@@ -29,7 +29,8 @@ EVP_aes_128_cbc, EVP_aes_128_ecb, EVP_aes_128_cfb, EVP_aes_128_ofb,
 EVP_aes_192_cbc, EVP_aes_192_ecb, EVP_aes_192_cfb, EVP_aes_192_ofb,
 EVP_aes_256_cbc, EVP_aes_256_ecb, EVP_aes_256_cfb, EVP_aes_256_ofb,
 EVP_aes_128_gcm, EVP_aes_192_gcm, EVP_aes_256_gcm,
-EVP_aes_128_ccm, EVP_aes_192_ccm, EVP_aes_256_ccm - EVP cipher routines
+EVP_aes_128_ccm, EVP_aes_192_ccm, EVP_aes_256_ccm,
+EVP_chacha20, EVP_chacha20_poly1305 - EVP cipher routines
 
 =head1 SYNOPSIS
 
@@ -399,6 +400,17 @@ the L</GCM and OCB Modes> section below for details.
 AES Counter with CBC-MAC Mode (CCM) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
 CCM mode section below for details.
+
+=item EVP_chacha20()
+
+The ChaCha20 stream cipher. The key length is 256 bits, the IV is 96 bits long.
+
+=item EVP_chacha20_poly1305()
+
+Authenticated encryption with ChaCha20-Poly1305. Like EVP_chacha20() the key is
+256 bits and the IV is 96 bits. This supports additional authenticated
+data (AAD) and produces a 128 bit authentication tag. The L</GCM and OCB modes>
+section below applies.
 
 =back
 
