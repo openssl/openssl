@@ -15,6 +15,9 @@
      https://www.akkadia.org/drepper/SHA-crypt.txt
      [Richard Levitte]
 
+  *) Heartbeat support has been removed; the ABI is changed for now.
+     [Richard Levitte, Rich Salz]
+
  Changes between 1.1.0b and 1.1.0c [xx XXX xxxx]
 
   *) ChaCha20/Poly1305 heap-buffer-overflow
