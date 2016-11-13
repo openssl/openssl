@@ -51,7 +51,8 @@ our $PASSOPT = "";
 
 sub help
 {
-    print STDERR "usage: $ME -newcert|-newreq|-newreq-nodes|-newca|-sign|-verify\n";
+    print STDERR "usage: $ME -newcert|-newreq|-newreq-nodes|-newca|-verify\n";
+    print STDERR "       $ME -sign|-xsign|-signcert|-selfsign [-days days]\n";
     print STDERR "       $ME -pkcs12 [certname]\n";
     print STDERR "       $ME -crl|-revoke cert-filename [reason]\n";
     print STDERR "       $ME -p12mng-new cname [certname]\n";
@@ -191,15 +192,29 @@ sub pkcs12
 # Sign a certificate based on a certificate request
 sub xsign
 {
+    my ($days,$day) = @_;
+    $days = "" unless $days;
+    if ($days eq '-days' and $day) {
+        $days = $days. " ". $day;
+    } elsif ($days !~ /^-days[[:blank:]]+\w+/) {
+        $days = "";
+    }
     $RET = run("$CA $OPENSSL_CONFIG -policy policy_anything"
-            . " -infiles $NEWREQ");
+            . " $days -infiles $NEWREQ");
 }
 
 # Same as above except the certificate is writen to STDOUT
 sub sign
 {
+    my ($days,$day) = @_;
+    $days = "" unless $days;
+    if ($days eq '-days' and $day) {
+        $days = $days. " ". $day;
+    } elsif ($days !~ /^-days[[:blank:]]+\w+/) {
+        $days = "";
+    }
     $RET = run("$CA $OPENSSL_CONFIG -policy policy_anything"
-            . " -out $NEWCERT -infiles $NEWREQ");
+            . " -out $NEWCERT $days -infiles $NEWREQ");
     print "Signed certificate is in $NEWCERT\n" if $RET == 0;
 }
 
@@ -214,11 +229,33 @@ sub signCA
 # Same as sign except it expects a self signed certificate present in newreq.pem
 sub signcert
 {
+    my ($days,$day) = @_;
+    $days = "" unless $days;
+    if ($days eq '-days' and $day) {
+        $days = $days. " ". $day;
+    } elsif ($days !~ /^-days[[:blank:]]+\w+/) {
+        $days = "";
+    }
     $RET = run("$X509 -x509toreq -in $NEWREQ -signkey $NEWREQ"
             . " -out tmp.pem");
-    $RET = run("$CA $OPENSSL_CONFIG -policy policy_anything -out $NEWCERT"
-            . " -infiles tmp.pem") if $RET == 0;
+    $RET = run("$CA $OPENSSL_CONFIG -policy policy_anything"
+            . " -out $NEWCERT $days -infiles tmp.pem") if $RET == 0;
     print "Signed certificate is in $NEWCERT\n" if $RET == 0;
+}
+
+# Create self-signed certificate from key
+sub selfsign
+{
+    my ($days,$day) = @_;
+    $days = "" unless $days;
+    if ($days eq '-days' and $day) {
+        $days = $days. " ". $day;
+    } elsif ($days !~ /^-days[[:blank:]]+\w+/) {
+        $days = "";
+    }
+    $RET = run("$REQ $OPENSSL_CONFIG -new -out $NEWCERT $days"
+            . " -x509 -key $NEWKEY");
+    print "Self-signed certificate is in $NEWCERT\n" if $RET == 0;
 }
 
 # Verify certificates against CA certificate for CATOP 
@@ -277,8 +314,7 @@ sub p12mng_new
         print STDERR "Request (and private key) generation failed\n";
         exit 1;
     }
-    $RET = run("$CA $OPENSSL_CONFIG -out $NEWCERT $DAYS"
-           . " -infiles $NEWREQ");
+    sign($DAYS);
     if ($RET != 0 || ! -f $NEWCERT || -z $NEWCERT) {
         print STDERR "Signing of certificate failed\n";
         exit 1;
@@ -390,13 +426,15 @@ if ($WHAT eq '-newcert' ) {
 } elsif ($WHAT eq '-pkcs12' ) {
     pkcs12($ARGV[0]);
 } elsif ($WHAT eq '-xsign' ) {
-    xsign();
+    xsign($ARGV[0],$ARGV[1]);
 } elsif ($WHAT eq '-sign' ) {
-    sign();
+    sign($ARGV[0],$ARGV[1]);
 } elsif ($WHAT eq '-signCA' ) {
     signCA();
 } elsif ($WHAT eq '-signcert' ) {
-    signcert();
+    signcert($ARGV[0],$ARGV[1]);
+} elsif ($WHAT eq '-selfsign' ) {
+    selfsign($ARGV[0],$ARGV[1]);
 } elsif ($WHAT eq '-verify' ) {
     verify();
 } elsif ($WHAT eq '-p12mng-new' ) {
