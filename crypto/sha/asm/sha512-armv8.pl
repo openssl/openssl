@@ -102,7 +102,7 @@ my ($T0,$T1,$T2)=(@X[($i-8)&15],@X[($i-9)&15],@X[($i-10)&15]);
    $T0=@X[$i+3] if ($i<11);
 
 $code.=<<___	if ($i<16);
-#ifndef	__ARMEB__
+#ifndef	__AARCH64EB__
 	rev	@X[$i],@X[$i]			// $i
 #endif
 ___
