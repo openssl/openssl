@@ -130,21 +130,6 @@ my @fips_cmac_test_list = (
 
 );
 
-# RAND tests, AES version
-
-my @fips_rand_aes_test_list = (
-
-    "RAND (AES)",
-
-    [ "ANSI931_AES128MCT", "fips_rngvs mct" ],
-    [ "ANSI931_AES192MCT", "fips_rngvs mct" ],
-    [ "ANSI931_AES256MCT", "fips_rngvs mct" ],
-    [ "ANSI931_AES128VST", "fips_rngvs vst" ],
-    [ "ANSI931_AES192VST", "fips_rngvs vst" ],
-    [ "ANSI931_AES256VST", "fips_rngvs vst" ]
-
-);
-
 # RAND tests, DES2 version
 
 my @fips_rand_des2_test_list = (
@@ -626,7 +611,6 @@ push @fips_test_list, @fips_sha_test_list       if $fips_enabled{"sha"};
 push @fips_test_list, @fips_drbg_test_list	if $fips_enabled{"drbg"};
 push @fips_test_list, @fips_hmac_test_list      if $fips_enabled{"hmac"};
 push @fips_test_list, @fips_cmac_test_list      if $fips_enabled{"cmac"};
-push @fips_test_list, @fips_rand_aes_test_list  if $fips_enabled{"rand-aes"};
 push @fips_test_list, @fips_rand_des2_test_list if $fips_enabled{"rand-des2"};
 push @fips_test_list, @fips_aes_test_list       if $fips_enabled{"aes"};
 push @fips_test_list, @fips_aes_cfb1_test_list  if $fips_enabled{"aes-cfb1"};
