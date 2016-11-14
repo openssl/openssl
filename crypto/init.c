@@ -503,7 +503,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
     }
 
-    if (!RUN_ONCE(&base, ossl_init_base))
+    if (!base_inited && !RUN_ONCE(&base, ossl_init_base))
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
