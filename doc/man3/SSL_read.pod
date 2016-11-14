@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_read_ex, SSL_read - read bytes from a TLS/SSL connection
+SSL_read_ex, SSL_read, SSL_peek_ex, SSL_peek
+- read bytes from a TLS/SSL connection
 
 =head1 SYNOPSIS
 
