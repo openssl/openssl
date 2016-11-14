@@ -79,6 +79,13 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
         return 0;
     OPENSSL_cpuid_setup();
+
+    /*
+     * BIG FAT WARNING!
+     * Everything needed to be initialized in this function before threads
+     * come along MUST happen before base_inited is set to 1, or we will
+     * see race conditions.
+     */
     base_inited = 1;
 
 #if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
