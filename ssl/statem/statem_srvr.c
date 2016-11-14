@@ -73,13 +73,17 @@ static STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
  * the client. The message type that the client has sent is provided in |mt|.
  * The current state is in |s->statem.hand_state|.
  *
- *  Valid return values are:
- *  1: Success (transition allowed)
- *  0: Error (transition not allowed)
+ * Return values are 1 for success (transition allowed) and  0 on error
+ * (transition not allowed)
  */
 static int ossl_statem_server13_read_transition(SSL *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
+
+    /*
+     * TODO(TLS1.3): This is still based on the TLSv1.2 state machine. Over time
+     * we will update this to look more like real TLSv1.3
+     */
 
     /*
      * Note: There is no case for TLS_ST_BEFORE because at that stage we have
@@ -153,9 +157,8 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
  * client. The message type that the client has sent is provided in |mt|. The
  * current state is in |s->statem.hand_state|.
  *
- *  Valid return values are:
- *  1: Success (transition allowed)
- *  0: Error (transition not allowed)
+ * Return values are 1 for success (transition allowed) and  0 on error
+ * (transition not allowed)
  */
 int ossl_statem_server_read_transition(SSL *s, int mt)
 {
@@ -390,15 +393,15 @@ static int send_certificate_request(SSL *s)
  * ossl_statem_server13_write_transition() works out what handshake state to
  * move to next when a TLSv1.3 server is writing messages to be sent to the
  * client.
- *
- * Return values:
- * WRITE_TRAN_ERROR - an error occurred
- * WRITE_TRAN_CONTINUE - Successful transition, more writing to be done
- * WRITE_TRAN_FINISHED - Successful transition, no more writing to be done
  */
 static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
+
+    /*
+     * TODO(TLS1.3): This is still based on the TLSv1.2 state machine. Over time
+     * we will update this to look more like real TLSv1.3
+     */
 
     /*
      * No case for TLS_ST_BEFORE, because at that stage we have not negotiated
@@ -415,14 +418,12 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SRVR_HELLO:
-        if (s->hit) {
-            if (s->tlsext_ticket_expected)
-                st->hand_state = TLS_ST_SW_SESSION_TICKET;
-            else
-                st->hand_state = TLS_ST_SW_CHANGE;
-        } else {
+        if (s->hit)
+            st->hand_state = s->tlsext_ticket_expected
+                                ? TLS_ST_SW_SESSION_TICKET : TLS_ST_SW_CHANGE;
+        else
             st->hand_state = TLS_ST_SW_CERT;
-        }
+
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT:
@@ -451,11 +452,10 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
             st->hand_state = TLS_ST_OK;
             ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
-        } else if (s->tlsext_ticket_expected) {
-            st->hand_state = TLS_ST_SW_SESSION_TICKET;
-        } else {
-            st->hand_state = TLS_ST_SW_CHANGE;
         }
+
+        st->hand_state = s->tlsext_ticket_expected ? TLS_ST_SW_SESSION_TICKET
+                                                   : TLS_ST_SW_CHANGE;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
@@ -467,9 +467,9 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_FINISHED:
-        if (s->hit) {
+        if (s->hit)
             return WRITE_TRAN_FINISHED;
-        }
+
         st->hand_state = TLS_ST_OK;
         ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
@@ -479,11 +479,6 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
 /*
  * ossl_statem_server_write_transition() works out what handshake state to move
  * to next when the server is writing messages to be sent to the client.
- *
- * Return values:
- * WRITE_TRAN_ERROR - an error occurred
- * WRITE_TRAN_CONTINUE - Successful transition, more writing to be done
- * WRITE_TRAN_FINISHED - Successful transition, no more writing to be done
  */
 WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
 {
@@ -1452,7 +1447,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     /* Check we've got a key_share for TLSv1.3 */
     if (s->version == TLS1_3_VERSION && s->s3->peer_tmp == NULL && !s->hit) {
         /* No suitable share */
-        /* TODO(1.3): Send a HelloRetryRequest */
+        /* TODO(TLS1.3): Send a HelloRetryRequest */
         al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_NO_SUITABLE_KEY_SHARE);
         goto f_err;
@@ -3123,7 +3118,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
      * message
      */
-    if (s->version == TLS1_3_VERSION && !ssl3_digest_cached_records(s, 1)) {
+    if (SSL_IS_TLS13(s) && !ssl3_digest_cached_records(s, 1)) {
         al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
         goto f_err;

@@ -19,6 +19,7 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_SSL,0,reason)
 
 static ERR_STRING_DATA SSL_str_functs[] = {
+    {ERR_FUNC(SSL_F_ADD_CLIENT_KEY_SHARE_EXT), "add_client_key_share_ext"},
     {ERR_FUNC(SSL_F_CHECK_SUITEB_CIPHER_LIST), "check_suiteb_cipher_list"},
     {ERR_FUNC(SSL_F_CT_MOVE_SCTS), "ct_move_scts"},
     {ERR_FUNC(SSL_F_CT_STRICT), "ct_strict"},
@@ -61,6 +62,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "ossl_statem_server_construct_message"},
     {ERR_FUNC(SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION),
      "ossl_statem_server_read_transition"},
+    {ERR_FUNC(SSL_F_PROCESS_KEY_SHARE_EXT), "process_key_share_ext"},
     {ERR_FUNC(SSL_F_READ_STATE_MACHINE), "read_state_machine"},
     {ERR_FUNC(SSL_F_SSL3_CHANGE_CIPHER_STATE), "ssl3_change_cipher_state"},
     {ERR_FUNC(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM),
