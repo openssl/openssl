@@ -2074,6 +2074,7 @@ int ERR_load_SSL_strings(void);
 /* Error codes for the SSL functions. */
 
 /* Function codes. */
+# define SSL_F_ADD_CLIENT_KEY_SHARE_EXT                   438
 # define SSL_F_CHECK_SUITEB_CIPHER_LIST                   331
 # define SSL_F_CT_MOVE_SCTS                               345
 # define SSL_F_CT_STRICT                                  349
@@ -2105,6 +2106,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_OSSL_STATEM_SERVER13_READ_TRANSITION       437
 # define SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE       431
 # define SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION         418
+# define SSL_F_PROCESS_KEY_SHARE_EXT                      439
 # define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SSL3_CHANGE_CIPHER_STATE                   129
 # define SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM              130

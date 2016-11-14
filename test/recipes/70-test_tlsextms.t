@@ -57,9 +57,7 @@ setrmextms(0, 0);
 $proxy->clientflags("-no_tls1_3");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 my $numtests = 9;
-if (!disabled("tls1_3")) {
-    $numtests++;
-}
+$numtests++ if (!disabled("tls1_3"));
 plan tests => $numtests;
 checkmessages(1, "Default extended master secret test", 1, 1, 1);
 

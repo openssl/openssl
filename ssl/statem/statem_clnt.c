@@ -112,13 +112,17 @@ static int key_exchange_expected(SSL *s)
  * server. The message type that the server has sent is provided in |mt|. The
  * current state is in |s->statem.hand_state|.
  *
- *  Return values are:
- *  1: Success (transition allowed)
- *  0: Error (transition not allowed)
+ * Return values are 1 for success (transition allowed) and  0 on error
+ * (transition not allowed)
  */
 static int ossl_statem_client13_read_transition(SSL *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
+
+    /*
+     * TODO(TLS1.3): This is still based on the TLSv1.2 state machine. Over time
+     * we will update this to look more like real TLSv1.3
+     */
 
     /*
      * Note: There is no case for TLS_ST_CW_CLNT_HELLO, because we haven't
@@ -218,9 +222,8 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
  * server. The message type that the server has sent is provided in |mt|. The
  * current state is in |s->statem.hand_state|.
  *
- *  Return values are:
- *  1: Success (transition allowed)
- *  0: Error (transition not allowed)
+ * Return values are 1 for success (transition allowed) and  0 on error
+ * (transition not allowed)
  */
 int ossl_statem_client_read_transition(SSL *s, int mt)
 {
@@ -387,15 +390,15 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
  * ossl_statem_client13_write_transition() works out what handshake state to
  * move to next when the TLSv1.3 client is writing messages to be sent to the
  * server.
- *
- * Return values:
- * WRITE_TRAN_ERROR - an error occurred
- * WRITE_TRAN_CONTINUE - Successful transition, more writing to be done
- * WRITE_TRAN_FINISHED - Successful transition, no more writing to be done
  */
 static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
+
+    /*
+     * TODO(TLS1.3): This is still based on the TLSv1.2 state machine. Over time
+     * we will update this to look more like real TLSv1.3
+     */
 
     /*
      * Note: There are no cases for TLS_ST_BEFORE or TLS_ST_CW_CLNT_HELLO,
@@ -408,18 +411,14 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         return WRITE_TRAN_ERROR;
 
     case TLS_ST_CR_SRVR_DONE:
-        if (s->s3->tmp.cert_req)
-            st->hand_state = TLS_ST_CW_CERT;
-        else
-            st->hand_state = TLS_ST_CW_CHANGE;
+        st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
+                                                    : TLS_ST_CW_CHANGE;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CERT:
         /* If a non-empty Certificate we also send CertificateVerify */
-        if (s->s3->tmp.cert_req == 1)
-            st->hand_state = TLS_ST_CW_CERT_VRFY;
-        else
-            st->hand_state = TLS_ST_CW_CHANGE;
+        st->hand_state = (s->s3->tmp.cert_req == 1) ? TLS_ST_CW_CERT_VRFY
+                                                    : TLS_ST_CW_CHANGE;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CERT_VRFY:
@@ -435,30 +434,23 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
             st->hand_state = TLS_ST_OK;
             ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
-        } else {
-            return WRITE_TRAN_FINISHED;
         }
+        return WRITE_TRAN_FINISHED;
 
     case TLS_ST_CR_FINISHED:
         if (s->hit) {
             st->hand_state = TLS_ST_CW_CHANGE;
             return WRITE_TRAN_CONTINUE;
-        } else {
-            st->hand_state = TLS_ST_OK;
-            ossl_statem_set_in_init(s, 0);
-            return WRITE_TRAN_CONTINUE;
         }
+        st->hand_state = TLS_ST_OK;
+        ossl_statem_set_in_init(s, 0);
+        return WRITE_TRAN_CONTINUE;
     }
 }
 
 /*
  * ossl_statem_client_write_transition() works out what handshake state to
  * move to next when the client is writing messages to be sent to the server.
- *
- * Return values:
- * WRITE_TRAN_ERROR - an error occurred
- * WRITE_TRAN_CONTINUE - Successful transition, more writing to be done
- * WRITE_TRAN_FINISHED - Successful transition, no more writing to be done
  */
 WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
 {

@@ -1048,7 +1048,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
                 break;
             }
         }
-    } else if (s->version >= TLS1_3_VERSION) {
+    } else if (SSL_IS_TLS13(s)) {
         /*
          * TODO(TLS1.3): We always use ECC for TLSv1.3 at the moment. This will
          * change if we implement DH key shares
@@ -1056,7 +1056,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         using_ecc = 1;
     }
 #else
-    if (s->version >= TLS1_3_VERSION) {
+    if (SSL_IS_TLS13(s)) {
         /* Shouldn't happen! */
         SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -1423,57 +1423,57 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
          * now, just send one
          */
         for (i = 0; i < num_curves && sharessent < 1; i++, pcurves += 2) {
-            if (tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
-                unsigned char *encodedPoint = NULL;
-                unsigned int curve_id = 0;
-                EVP_PKEY *key_share_key = NULL;
-                size_t encodedlen;
+            unsigned char *encodedPoint = NULL;
+            unsigned int curve_id = 0;
+            EVP_PKEY *key_share_key = NULL;
+            size_t encodedlen;
 
-                if (s->s3->tmp.pkey != NULL) {
-                    /* Shouldn't happen! */
-                    SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
-                           ERR_R_INTERNAL_ERROR);
-                    return 0;
-                }
+            if (!tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED))
+                continue;
 
-                /* Generate a key for this key_share */
-                curve_id = (pcurves[0] << 8) | pcurves[1];
-                key_share_key = ssl_generate_pkey_curve(curve_id);
-                if (key_share_key == NULL) {
-                    SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_EVP_LIB);
-                    return 0;
-                }
-
-                /* Encode the public key. */
-                encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
-                                                            &encodedPoint);
-                if (encodedlen == 0) {
-                    SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_EC_LIB);
-                    EVP_PKEY_free(key_share_key);
-                    return 0;
-                }
-
-                /* Create KeyShareEntry */
-                if (!WPACKET_put_bytes_u16(pkt, curve_id)
-                        || !WPACKET_sub_memcpy_u16(pkt, encodedPoint,
-                                                   encodedlen)) {
-                    SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
-                           ERR_R_INTERNAL_ERROR);
-                    EVP_PKEY_free(key_share_key);
-                    OPENSSL_free(encodedPoint);
-                    return 0;
-                }
-
-                /*
-                 * TODO(TLS1.3): When changing to send more than one key_share
-                 * we're going to need to be able to save more than one EVP_PKEY
-                 * For now we reuse the existing tmp.pkey
-                 */
-                s->s3->group_id = curve_id;
-                s->s3->tmp.pkey = key_share_key;
-                sharessent++;
-                OPENSSL_free(encodedPoint);
+            if (s->s3->tmp.pkey != NULL) {
+                /* Shouldn't happen! */
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
+                       ERR_R_INTERNAL_ERROR);
+                return 0;
             }
+
+            /* Generate a key for this key_share */
+            curve_id = (pcurves[0] << 8) | pcurves[1];
+            key_share_key = ssl_generate_pkey_curve(curve_id);
+            if (key_share_key == NULL) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_EVP_LIB);
+                return 0;
+            }
+
+            /* Encode the public key. */
+            encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
+                                                        &encodedPoint);
+            if (encodedlen == 0) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_EC_LIB);
+                EVP_PKEY_free(key_share_key);
+                return 0;
+            }
+
+            /* Create KeyShareEntry */
+            if (!WPACKET_put_bytes_u16(pkt, curve_id)
+                    || !WPACKET_sub_memcpy_u16(pkt, encodedPoint, encodedlen)) {
+                SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT,
+                       ERR_R_INTERNAL_ERROR);
+                EVP_PKEY_free(key_share_key);
+                OPENSSL_free(encodedPoint);
+                return 0;
+            }
+
+            /*
+             * TODO(TLS1.3): When changing to send more than one key_share we're
+             * going to need to be able to save more than one EVP_PKEY. For now
+             * we reuse the existing tmp.pkey
+             */
+            s->s3->group_id = curve_id;
+            s->s3->tmp.pkey = key_share_key;
+            sharessent++;
+            OPENSSL_free(encodedPoint);
         }
         if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
@@ -1513,6 +1513,59 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
     }
 
  done:
+    return 1;
+}
+
+/*
+ * Add the key_share extension.
+ *
+ * Returns 1 on success or 0 on failure.
+ */
+static int add_client_key_share_ext(SSL *s, WPACKET *pkt, int *al)
+{
+    unsigned char *encodedPoint;
+    size_t encoded_pt_len = 0;
+    EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
+
+    if (ckey == NULL) {
+        SSLerr(SSL_F_ADD_CLIENT_KEY_SHARE_EXT, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u16(pkt, s->s3->group_id)) {
+        SSLerr(SSL_F_ADD_CLIENT_KEY_SHARE_EXT, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    skey = ssl_generate_pkey(ckey);
+
+    /* Generate encoding of server key */
+    encoded_pt_len = EVP_PKEY_get1_tls_encodedpoint(skey, &encodedPoint);
+    if (encoded_pt_len == 0) {
+        SSLerr(SSL_F_ADD_CLIENT_KEY_SHARE_EXT, ERR_R_EC_LIB);
+        EVP_PKEY_free(skey);
+        return 0;
+    }
+
+    if (!WPACKET_sub_memcpy_u16(pkt, encodedPoint, encoded_pt_len)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_ADD_CLIENT_KEY_SHARE_EXT, ERR_R_INTERNAL_ERROR);
+        EVP_PKEY_free(skey);
+        OPENSSL_free(encodedPoint);
+        return 0;
+    }
+    OPENSSL_free(encodedPoint);
+
+    /* This causes the crypto state to be updated based on the derived keys */
+    s->s3->tmp.pkey = skey;
+    if (ssl_derive(s, skey, ckey, 1) == 0) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_ADD_CLIENT_KEY_SHARE_EXT, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
     return 1;
 }
 
@@ -1649,51 +1702,8 @@ int ssl_add_serverhello_tlsext(SSL *s, WPACKET *pkt, int *al)
     }
 #endif
 
-    if (s->version == TLS1_3_VERSION && !s->hit) {
-        unsigned char *encodedPoint;
-        size_t encoded_pt_len = 0;
-        EVP_PKEY *ckey = NULL, *skey = NULL;
-
-        ckey = s->s3->peer_tmp;
-        if (ckey == NULL) {
-            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
-                || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes_u16(pkt, s->s3->group_id)) {
-            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-
-        skey = ssl_generate_pkey(ckey);
-
-        /* Generate encoding of server key */
-        encoded_pt_len = EVP_PKEY_get1_tls_encodedpoint(skey, &encodedPoint);
-        if (encoded_pt_len == 0) {
-            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_EC_LIB);
-            EVP_PKEY_free(skey);
-            return 0;
-        }
-
-        if (!WPACKET_sub_memcpy_u16(pkt, encodedPoint, encoded_pt_len)
-                || !WPACKET_close(pkt)) {
-            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            EVP_PKEY_free(skey);
-            OPENSSL_free(encodedPoint);
-            return 0;
-        }
-        OPENSSL_free(encodedPoint);
-
-        s->s3->tmp.pkey = skey;
-
-        if (ssl_derive(s, skey, ckey, 1) == 0) {
-            *al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-    }
+    if (SSL_IS_TLS13(s) && !s->hit && !add_client_key_share_ext(s, pkt, al))
+        return 0;
 
     if (!custom_ext_add(s, 1, pkt, al)) {
         SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
@@ -1890,9 +1900,7 @@ static void ssl_check_for_safari(SSL *s, const CLIENTHELLO_MSG *hello)
  * Process the supported_groups extension if present. Returns success if the
  * extension is absent, or if it has been successfully processed.
  *
- * Returns
- * 1 on success
- * 0 on failure
+ * Returns 1 on success or 0 on failure
  */
 static int tls_process_supported_groups(SSL *s, CLIENTHELLO_MSG *hello)
 {
@@ -1926,11 +1934,8 @@ static int tls_process_supported_groups(SSL *s, CLIENTHELLO_MSG *hello)
 /*
  * Checks a list of |groups| to determine if the |group_id| is in it. If it is
  * and |checkallow| is 1 then additionally check if the group is allowed to be
- * used.
- *
- * Returns:
- * 1 if the group is in the list (and allowed if |checkallow| is 1)
- * 0 otherwise
+ * used. Returns 1 if the group is in the list (and allowed if |checkallow| is
+ * 1) or 0 otherwise.
  */
 static int check_in_list(SSL *s, unsigned int group_id,
                          const unsigned char *groups, size_t num_groups,
@@ -1943,6 +1948,7 @@ static int check_in_list(SSL *s, unsigned int group_id,
 
     for (i = 0; i < num_groups; i++, groups += 2) {
         unsigned int share_id = (groups[0] << 8) | (groups[1]);
+
         if (group_id == share_id
                 && (!checkallow || tls_curve_allowed(s, groups,
                                                      SSL_SECOP_CURVE_CHECK))) {
@@ -1950,9 +1956,128 @@ static int check_in_list(SSL *s, unsigned int group_id,
         }
     }
 
-    if (i == num_groups) {
-        /* Not in list */
+    /* If i == num_groups then not in the list */
+    return i < num_groups;
+}
+
+/*
+ * Process a key_share extension received in the ClientHello. |pkt| contains
+ * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
+ * If a failure occurs then |*al| is set to an appropriate alert value.
+ */
+static int process_key_share_ext(SSL *s, PACKET *pkt, int *al)
+{
+    unsigned int group_id;
+    PACKET key_share_list, encoded_pt;
+    const unsigned char *curves;
+    size_t num_curves;
+    int group_nid, found = 0;
+    unsigned int curve_flags;
+
+    /* Sanity check */
+    if (s->s3->peer_tmp != NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
+
+    if (!PACKET_as_length_prefixed_2(pkt, &key_share_list)) {
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
+               SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    while (PACKET_remaining(&key_share_list) > 0) {
+        if (!PACKET_get_net_2(&key_share_list, &group_id)
+                || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
+                || PACKET_remaining(&encoded_pt) == 0) {
+            *al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
+                   SSL_R_LENGTH_MISMATCH);
+            return 0;
+        }
+
+        /*
+         * If we already found a suitable key_share we loop through the
+         * rest to verify the structure, but don't process them.
+         */
+        if (found)
+            continue;
+
+        /* Check if this share is in supported_groups sent from client */
+        if (!tls1_get_curvelist(s, 1, &curves, &num_curves)) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
+                   ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (!check_in_list(s, group_id, curves, num_curves, 0)) {
+            *al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
+                   SSL_R_BAD_KEY_SHARE);
+            return 0;
+        }
+
+        /* Check if this share is for a group we can use */
+        if (!tls1_get_curvelist(s, 0, &curves, &num_curves)) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
+                   ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (!check_in_list(s, group_id, curves, num_curves, 1)) {
+            /* Share not suitable */
+            continue;
+        }
+
+        group_nid = tls1_ec_curve_id2nid(group_id, &curve_flags);
+
+        if (group_nid == 0) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
+                   SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
+            return 0;
+        }
+
+        if ((curve_flags & TLS_CURVE_TYPE) == TLS_CURVE_CUSTOM) {
+            /* Can happen for some curves, e.g. X25519 */
+            EVP_PKEY *key = EVP_PKEY_new();
+
+            if (key == NULL || !EVP_PKEY_set_type(key, group_nid)) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT, ERR_R_EVP_LIB);
+                EVP_PKEY_free(key);
+                return 0;
+            }
+            s->s3->peer_tmp = key;
+        } else {
+            /* Set up EVP_PKEY with named curve as parameters */
+            EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+            if (pctx == NULL
+                    || EVP_PKEY_paramgen_init(pctx) <= 0
+                    || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
+                                                              group_nid) <= 0
+                    || EVP_PKEY_paramgen(pctx, &s->s3->peer_tmp) <= 0) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT, ERR_R_EVP_LIB);
+                EVP_PKEY_CTX_free(pctx);
+                return 0;
+            }
+            EVP_PKEY_CTX_free(pctx);
+            pctx = NULL;
+        }
+        s->s3->group_id = group_id;
+
+        if (!EVP_PKEY_set1_tls_encodedpoint(s->s3->peer_tmp,
+                PACKET_data(&encoded_pt),
+                PACKET_remaining(&encoded_pt))) {
+            *al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT, SSL_R_BAD_ECPOINT);
+            return 0;
+        }
+
+        found = 1;
     }
 
     return 1;
@@ -2313,120 +2438,9 @@ static int ssl_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                  && !(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)) {
             s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
         } else if (currext->type == TLSEXT_TYPE_key_share
-                   && s->version == TLS1_3_VERSION && !s->hit) {
-            unsigned int group_id;
-            PACKET key_share_list, encoded_pt;
-            const unsigned char *curves;
-            size_t num_curves;
-            int group_nid, found = 0;
-            unsigned int curve_flags;
-
-            /* Sanity check */
-            if (s->s3->peer_tmp != NULL) {
-                *al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-
-            if (!PACKET_as_length_prefixed_2(&currext->data, &key_share_list)) {
-                *al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
-                       SSL_R_LENGTH_MISMATCH);
-                return 0;
-            }
-
-            while (PACKET_remaining(&key_share_list) > 0) {
-                if (!PACKET_get_net_2(&key_share_list, &group_id)
-                        || !PACKET_get_length_prefixed_2(&key_share_list,
-                                                         &encoded_pt)
-                        || PACKET_remaining(&encoded_pt) == 0) {
-                    *al = SSL_AD_HANDSHAKE_FAILURE;
-                    SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
-                           SSL_R_LENGTH_MISMATCH);
-                    return 0;
-                }
-
-                /*
-                 * If we already found a suitable key_share we loop through the
-                 * rest to verify the structure, but don't process them.
-                 */
-                if (found)
-                    continue;
-
-                /* Check this share is in supported_groups */
-                if (!tls1_get_curvelist(s, 1, &curves, &num_curves)) {
-                    *al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
-                           ERR_R_INTERNAL_ERROR);
-                    return 0;
-                }
-                if (!check_in_list(s, group_id, curves, num_curves, 0)) {
-                    *al = SSL_AD_HANDSHAKE_FAILURE;
-                    SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
-                           SSL_R_BAD_KEY_SHARE);
-                    return 0;
-                }
-
-                /* Find a share that we can use */
-                if (!tls1_get_curvelist(s, 0, &curves, &num_curves)) {
-                    *al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
-                           ERR_R_INTERNAL_ERROR);
-                    return 0;
-                }
-                if (!check_in_list(s, group_id, curves, num_curves, 1)) {
-                    /* Share not suitable */
-                    continue;
-                }
-
-                group_nid = tls1_ec_curve_id2nid(group_id, &curve_flags);
-
-                if (group_nid == 0) {
-                    *al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
-                           SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
-                    return 0;
-                }
-
-                if ((curve_flags & TLS_CURVE_TYPE) == TLS_CURVE_CUSTOM) {
-                    /* Can happen for some curves, e.g. X25519 */
-                    EVP_PKEY *key = EVP_PKEY_new();
-
-                    if (key == NULL || !EVP_PKEY_set_type(key, group_nid)) {
-                        *al = SSL_AD_INTERNAL_ERROR;
-                        SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT, ERR_R_EVP_LIB);
-                        EVP_PKEY_free(key);
-                        return 0;
-                    }
-                    s->s3->peer_tmp = key;
-                } else {
-                    /* Set up EVP_PKEY with named curve as parameters */
-                    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
-                    if (pctx == NULL
-                        || EVP_PKEY_paramgen_init(pctx) <= 0
-                        || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
-                                                                  group_nid) <= 0
-                        || EVP_PKEY_paramgen(pctx, &s->s3->peer_tmp) <= 0) {
-                        *al = SSL_AD_INTERNAL_ERROR;
-                        SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT, ERR_R_EVP_LIB);
-                        EVP_PKEY_CTX_free(pctx);
-                        return 0;
-                    }
-                    EVP_PKEY_CTX_free(pctx);
-                    pctx = NULL;
-                }
-                s->s3->group_id = group_id;
-
-                if (!EVP_PKEY_set1_tls_encodedpoint(s->s3->peer_tmp,
-                        PACKET_data(&encoded_pt),
-                        PACKET_remaining(&encoded_pt))) {
-                    *al = SSL_AD_DECODE_ERROR;
-                    SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT, SSL_R_BAD_ECPOINT);
-                    return 0;
-                }
-
-                found = 1;
-            }
+                   && SSL_IS_TLS13(s) && !s->hit
+                   && !process_key_share_ext(s, &currext->data, al)) {
+            return 0;
         }
         /*
          * Note: extended master secret extension handled in
@@ -2717,12 +2731,12 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                 && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4)
                 s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
         } else if (type == TLSEXT_TYPE_extended_master_secret &&
-                (SSL_IS_DTLS(s) || s->version < TLS1_3_VERSION)) {
+                (SSL_IS_DTLS(s) || !SSL_IS_TLS13(s))) {
             s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
             if (!s->hit)
                 s->session->flags |= SSL_SESS_FLAG_EXTMS;
         } else if (type == TLSEXT_TYPE_key_share
-                && s->version == TLS1_3_VERSION) {
+                && SSL_IS_TLS13(s)) {
             unsigned int group_id;
             PACKET encoded_pt;
             EVP_PKEY *ckey = s->s3->tmp.pkey, *skey = NULL;
@@ -2752,8 +2766,6 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                 return 0;
             }
 
-            skey = ssl_generate_pkey(ckey);
-
             if (!PACKET_as_length_prefixed_2(&spkt, &encoded_pt)
                     || PACKET_remaining(&encoded_pt) == 0) {
                 *al = SSL_AD_DECODE_ERROR;
@@ -2762,6 +2774,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                 return 0;
             }
 
+            skey = ssl_generate_pkey(ckey);
             if (!EVP_PKEY_set1_tls_encodedpoint(skey, PACKET_data(&encoded_pt),
                                                 PACKET_remaining(&encoded_pt))) {
                 *al = SSL_AD_DECODE_ERROR;
