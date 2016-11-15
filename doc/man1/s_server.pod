@@ -109,6 +109,7 @@ B<openssl> B<s_server>
 [B<-status_verbose>]
 [B<-status_timeout nsec>]
 [B<-status_url url>]
+[B<-status_file file>]
 [B<-alpn protocols>]
 [B<-nextprotoneg protocols>]
 
@@ -500,6 +501,11 @@ Sets the timeout for OCSP response to B<nsec> seconds.
 Sets a fallback responder URL to use if no responder URL is present in the
 server certificate. Without this option an error is returned if the server
 certificate does not contain a responder address.
+
+=item B<-status_file file>
+
+Overrides any OCSP responder URLs from the certificate and always provides the
+OCSP Response stored in the file. The file must be in DER format.
 
 =item B<-alpn protocols>, B<-nextprotoneg protocols>
 
