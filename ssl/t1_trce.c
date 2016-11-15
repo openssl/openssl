@@ -527,11 +527,6 @@ static ssl_trace_tbl ssl_sig_tbl[] = {
     {TLSEXT_signature_gostr34102012_512, "gost2012_512"}
 };
 
-static ssl_trace_tbl ssl_hb_tbl[] = {
-    {1, "peer_allowed_to_send"},
-    {2, "peer_not_allowed_to_send"}
-};
-
 static ssl_trace_tbl ssl_ctype_tbl[] = {
     {1, "rsa_sign"},
     {2, "dss_sign"},
