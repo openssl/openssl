@@ -111,7 +111,7 @@ sub get_records
 
             if (($server && $server_encrypting)
                      || (!$server && $client_encrypting)) {
-                if ($version != VERS_TLS_1_3() && $etm) {
+                if (!TLSProxy::Proxy->is_tls13() && $etm) {
                     $record->decryptETM();
                 } else {
                     $record->decrypt();
@@ -229,7 +229,19 @@ sub decrypt()
     my $data = $self->data;
 
     #Throw away any IVs
-    if ($self->version >= VERS_TLS_1_3()) {
+    if (TLSProxy::Proxy->is_tls13()) {
+        #A TLS1.3 client, when processing the server's initial flight, could
+        #respond with either an encrypted or an unencrypted alert.
+        if ($self->content_type() == RT_ALERT) {
+            #TODO(TLS1.3): Eventually it is sufficient just to check the record
+            #content type. If an alert is encrypted it will have a record
+            #content type of application data. However we haven't done the
+            #record layer changes yet, so it's a bit more complicated. For now
+            #we will additionally check if the data length is 2 (1 byte for
+            #alert level, 1 byte for alert description). If it is, then this is
+            #an unecrypted alert, so don't try to decrypt
+            return $data if (length($data) == 2);
+        }
         #8 bytes for a GCM IV
         $data = substr($data, 8);
         $mactaglen = 16;
