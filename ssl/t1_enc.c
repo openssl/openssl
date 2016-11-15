@@ -477,7 +477,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     /*
      * TODO(TLS1.3): We haven't implemented TLS1.3 key derivation yet. For now
      * we will just force no use of EMS (which adds complications around the
-     * handshake has). This will need to be removed later
+     * handshake hash). This will need to be removed later
      */
     if ((s->session->flags & SSL_SESS_FLAG_EXTMS)
             && SSL_IS_TLS13(s)) {
