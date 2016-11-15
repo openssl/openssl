@@ -1868,6 +1868,24 @@ const char *SSL_COMP_get_name(const COMP_METHOD *comp)
 #endif
 }
 
+const char *SSL_COMP_get0_name(const SSL_COMP *comp)
+{
+#ifndef OPENSSL_NO_COMP
+    return comp->name;
+#else
+    return NULL;
+#endif
+}
+
+int SSL_COMP_get_id(const SSL_COMP *comp)
+{
+#ifndef OPENSSL_NO_COMP
+    return comp->id;
+#else
+    return -1;
+#endif
+}
+
 /* For a cipher return the index corresponding to the certificate type */
 int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
 {

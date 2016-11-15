@@ -403,3 +403,5 @@ SSL_dane_clear_flags                    403	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_get0_cipher                 404	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_get0_id_context             405	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_set1_id                     406	1_1_0	EXIST::FUNCTION:
+SSL_COMP_get_id                         412	1_1_0d	EXIST::FUNCTION:
+SSL_COMP_get0_name                      413	1_1_0d	EXIST::FUNCTION:

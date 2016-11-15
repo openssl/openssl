@@ -1777,6 +1777,8 @@ void SSL_set_tmp_dh_callback(SSL *ssl,
 __owur const COMP_METHOD *SSL_get_current_compression(SSL *s);
 __owur const COMP_METHOD *SSL_get_current_expansion(SSL *s);
 __owur const char *SSL_COMP_get_name(const COMP_METHOD *comp);
+__owur const char *SSL_COMP_get0_name(const SSL_COMP *comp);
+__owur int SSL_COMP_get_id(const SSL_COMP *comp);
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 __owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths);

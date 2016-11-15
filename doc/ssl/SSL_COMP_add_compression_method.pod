@@ -2,13 +2,18 @@
 
 =head1 NAME
 
-SSL_COMP_add_compression_method, SSL_COMP_free_compression_methods - handle SSL/TLS integrated compression methods
+SSL_COMP_add_compression_method, SSL_COMP_get_compression_methods,
+SSL_COMP_get0_name, SSL_COMP_get_id, SSL_COMP_free_compression_methods
+- handle SSL/TLS integrated compression methods
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
+ STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
+ const char *SSL_COMP_get0_name(const SSL_COMP *comp);
+ int SSL_COMP_get_id(const SSL_COMP *comp);
 
 Deprecated:
 
@@ -22,6 +27,13 @@ SSL_COMP_add_compression_method() adds the compression method B<cm> with
 the identifier B<id> to the list of available compression methods. This
 list is globally maintained for all SSL operations within this application.
 It cannot be set for specific SSL_CTX or SSL objects.
+
+SSL_COMP_get_compression_methods() returns a stack of all of the available
+compression methods or NULL on error.
+
+SSL_COMP_get0_name() returns the name of the compression method B<comp>.
+
+SSL_COMP_get_id() returns the id of the compression method B<comp>.
 
 In versions of OpenSSL prior to 1.1.0 SSL_COMP_free_compression_methods() freed
 the internal table of compression methods that were built internally, and
@@ -76,6 +88,13 @@ The operation failed. Check the error queue to find out the reason.
 
 =back
 
+SSL_COMP_get_compression_methods() returns the stack of compressions methods or
+NULL on error.
+
+SSL_COMP_get0_name() returns the name of the compression method or NULL on error.
+
+SSL_COMP_get_id() returns the name of the compression method or -1 on error.
+
 =head1 SEE ALSO
 
 L<ssl(3)>
@@ -83,6 +102,7 @@ L<ssl(3)>
 =head1 HISTORY
 
 SSL_COMP_free_compression_methods() was deprecated in OpenSSL 1.1.0.
+SSL_COMP_get0_name() and SSL_comp_get_id() were added in OpenSSL 1.1.0d.
 
 =head1 COPYRIGHT
 
