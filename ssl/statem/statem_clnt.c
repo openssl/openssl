@@ -179,9 +179,6 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
     }
 
     /* No valid transition found */
-    ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_UNEXPECTED_MESSAGE);
-    SSLerr(SSL_F_OSSL_STATEM_CLIENT13_READ_TRANSITION,
-           SSL_R_UNEXPECTED_MESSAGE);
     return 0;
 }
 
@@ -203,8 +200,11 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
      * Note that after a ClientHello we don't know what version we are going
      * to negotiate yet, so we don't take this branch until later
      */
-    if (s->method->version == TLS1_3_VERSION)
-        return ossl_statem_client13_read_transition(s, mt);
+    if (s->method->version == TLS1_3_VERSION) {
+        if (!ossl_statem_client13_read_transition(s, mt))
+            goto err;
+        return 1;
+    }
 
     switch (st->hand_state) {
     default:
