@@ -9,6 +9,7 @@
 use strict;
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
+use File::Temp qw(tempfile);
 use TLSProxy::Proxy;
 my $test_name = "test_tls13messages";
 setup($test_name);
@@ -28,15 +29,23 @@ plan skip_all => "$test_name needs TLSv1.3 enabled"
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 use constant {
-    DEFAULT_HANDSHAKE => 1
+    DEFAULT_HANDSHAKE => 1,
+    OCSP_HANDSHAKE => 2,
+    RESUME_HANDSHAKE => 4,
+    CLIENT_AUTH_HANDSHAKE => 8,
+    ALL_HANDSHAKES => 15
 };
 
 my @handmessages = (
-    [TLSProxy::Message::MT_CLIENT_HELLO, DEFAULT_HANDSHAKE],
-    [TLSProxy::Message::MT_SERVER_HELLO, DEFAULT_HANDSHAKE],
-    [TLSProxy::Message::MT_CERTIFICATE, DEFAULT_HANDSHAKE],
-    [TLSProxy::Message::MT_FINISHED, DEFAULT_HANDSHAKE],
-    [TLSProxy::Message::MT_FINISHED, DEFAULT_HANDSHAKE],
+    [TLSProxy::Message::MT_CLIENT_HELLO, ALL_HANDSHAKES],
+    [TLSProxy::Message::MT_SERVER_HELLO, ALL_HANDSHAKES],
+    [TLSProxy::Message::MT_CERTIFICATE_REQUEST, CLIENT_AUTH_HANDSHAKE],
+    [TLSProxy::Message::MT_CERTIFICATE, ALL_HANDSHAKES & ~RESUME_HANDSHAKE],
+    [TLSProxy::Message::MT_CERTIFICATE_STATUS, OCSP_HANDSHAKE],
+    [TLSProxy::Message::MT_FINISHED, ALL_HANDSHAKES],
+    [TLSProxy::Message::MT_CERTIFICATE, CLIENT_AUTH_HANDSHAKE],
+    [TLSProxy::Message::MT_CERTIFICATE_VERIFY, CLIENT_AUTH_HANDSHAKE],
+    [TLSProxy::Message::MT_FINISHED, ALL_HANDSHAKES],
     [0, 0]
 );
 
@@ -50,9 +59,37 @@ my $proxy = TLSProxy::Proxy->new(
 sub checkmessages($$);
 
 #Test 1: Check we get all the right messages for a default handshake
+(undef, my $session) = tempfile();
+$proxy->serverconnects(2);
+$proxy->clientflags("-sess_out ".$session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 1;
+plan tests => 4;
 checkmessages(DEFAULT_HANDSHAKE, "Default handshake test");
+
+#Test 2: Resumption handshake
+$proxy->clearClient();
+$proxy->clientflags("-sess_in ".$session);
+$proxy->clientstart();
+checkmessages(RESUME_HANDSHAKE, "Resumption handshake test");
+unlink $session;
+
+#Test 3: A default handshake, but with a CertificateStatus message
+#TODO(TLS1.3): TLS1.3 doesn't actually have CertificateStatus messages. This is
+#a temporary test until such time as we do proper TLS1.3 style certificate
+#status
+$proxy->clear();
+$proxy->clientflags("-status");
+$proxy->serverflags("-status_file "
+                    .srctop_file("test", "recipes", "ocsp-response.der"));
+$proxy->start();
+checkmessages(OCSP_HANDSHAKE, "OCSP handshake test");
+
+#Test 4: A client auth handshake
+$proxy->clear();
+$proxy->clientflags("-cert ".srctop_file("apps", "server.pem"));
+$proxy->serverflags("-Verify 5");
+$proxy->start();
+checkmessages(CLIENT_AUTH_HANDSHAKE, "Client auth handshake test");
 
 sub checkmessages($$)
 {
