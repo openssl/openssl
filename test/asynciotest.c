@@ -297,32 +297,59 @@ int main(int argc, char *argv[])
          * we hit at least one async event in both reading and writing
          */
         for (j = 0; j < 2; j++) {
+            int len;
+
             /*
              * Write some test data. It should never take more than 2 attempts
-             * (the first one might be a retryable fail). A zero return from
-             * SSL_write() is a non-retryable failure, so fail immediately if
-             * we get that.
+             * (the first one might be a retryable fail).
              */
-            for (ret = -1, i = 0; ret < 0 && i < 2 * sizeof(testdata); i++)
-                ret = SSL_write(clientssl, testdata, sizeof(testdata));
-            if (ret <= 0) {
-                printf("Test %d failed: Failed to write app data\n", test);
+            for (ret = -1, i = 0, len = 0; len != sizeof(testdata) && i < 2;
+                i++) {
+                ret = SSL_write(clientssl, testdata + len,
+                    sizeof(testdata) - len);
+                if (ret > 0) {
+                    len += ret;
+                } else {
+                    int ssl_error = SSL_get_error(clientssl, ret);
+
+                    if (ssl_error == SSL_ERROR_SYSCALL ||
+                        ssl_error == SSL_ERROR_SSL) {
+                        printf("Test %d failed: Failed to write app data\n", test);
+                        err = -1;
+                        goto end;
+                    }
+                }
+            }
+            if (len != sizeof(testdata)) {
+                err = -1;
+                printf("Test %d failed: Failed to write all app data\n", test);
                 goto end;
             }
             /*
              * Now read the test data. It may take more attemps here because
              * it could fail once for each byte read, including all overhead
-             * bytes from the record header/padding etc. Fail immediately if we
-             * get a zero return from SSL_read().
+             * bytes from the record header/padding etc.
              */
-            for (ret = -1, i = 0; ret < 0 && i < MAX_ATTEMPTS; i++)
-                ret = SSL_read(serverssl, buf, sizeof(buf));
-            if (ret <= 0) {
-                printf("Test %d failed: Failed to read app data\n", test);
-                goto end;
+            for (ret = -1, i = 0, len = 0; len != sizeof(testdata) &&
+                i < MAX_ATTEMPTS; i++)
+            {
+                ret = SSL_read(serverssl, buf + len, sizeof(buf) - len);
+                if (ret > 0) {
+                    len += ret;
+                } else {
+                    int ssl_error = SSL_get_error(serverssl, ret);
+
+                    if (ssl_error == SSL_ERROR_SYSCALL ||
+                        ssl_error == SSL_ERROR_SSL) {
+                        printf("Test %d failed: Failed to read app data\n", test);
+                        err = -1;
+                        goto end;
+                    }
+                }
             }
-            if (ret != sizeof(testdata)
+            if (len != sizeof(testdata)
                     || memcmp(buf, testdata, sizeof(testdata)) != 0) {
+                err = -1;
                 printf("Test %d failed: Unexpected app data received\n", test);
                 goto end;
             }
