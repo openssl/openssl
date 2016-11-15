@@ -150,8 +150,11 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
 
-    if (s->method->version == TLS1_3_VERSION)
-        return ossl_statem_server13_read_transition(s, mt);
+    if (s->method->version == TLS1_3_VERSION) {
+        if (!ossl_statem_server13_read_transition(s, mt))
+            goto err;
+        return 1;
+    }
 
     switch (st->hand_state) {
     default:
@@ -284,6 +287,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
         break;
     }
 
+ err:
     /* No valid transition found */
     ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_UNEXPECTED_MESSAGE);
     SSLerr(SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION, SSL_R_UNEXPECTED_MESSAGE);
