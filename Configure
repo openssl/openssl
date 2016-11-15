@@ -367,6 +367,7 @@ my @disablables = (
     "fuzz-libfuzzer",
     "fuzz-afl",
     "gost",
+    "heartbeats",
     "hw(-.+)?",
     "idea",
     "makedepend",
@@ -434,6 +435,7 @@ our %disabled = ( # "what"         => "comment"
 		  "external-tests"	=> "default",
 		  "fuzz-libfuzzer"	=> "default",
 		  "fuzz-afl"		=> "default",
+		  "heartbeats"          => "default",
 		  "md2"                 => "default",
                   "msan"                => "default",
 		  "rc5"                 => "default",
@@ -485,8 +487,8 @@ my @disable_cascades = (
 
     "tls"		=> [ @tls ],
 
-    # SRP requires TLSEXT
-    "tlsext"		=> [ "srp" ],
+    # SRP and HEARTBEATS require TLSEXT
+    "tlsext"		=> [ "srp", "heartbeats" ],
 
     "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
 
@@ -504,6 +506,7 @@ my @disable_cascades = (
     "stdio"             => [ "apps", "capieng" ],
     "apps"              => [ "tests" ],
     "comp"		=> [ "zlib" ],
+    sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
 
     sub { !$disabled{"msan"} } => [ "asm" ],
     );
