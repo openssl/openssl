@@ -783,10 +783,6 @@ cause the client to disconnect due to a protocol violation.
 
 Print out some session cache status information.
 
-=item B<B>
-
-Send a heartbeat message to the client (DTLS only)
-
 =item B<k>
 
 Send a key update message to the client (TLSv1.3 only)

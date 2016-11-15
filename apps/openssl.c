@@ -922,9 +922,6 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_GOST
     BIO_puts(bio_out, "GOST\n");
 #endif
-#ifdef OPENSSL_NO_HEARTBEATS
-    BIO_puts(bio_out, "HEARTBEATS\n");
-#endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
 #endif

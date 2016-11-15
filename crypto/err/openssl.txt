@@ -1225,7 +1225,6 @@ SSL_F_DO_DTLS1_WRITE:245:do_dtls1_write
 SSL_F_DO_SSL3_WRITE:104:do_ssl3_write
 SSL_F_DTLS1_BUFFER_RECORD:247:dtls1_buffer_record
 SSL_F_DTLS1_CHECK_TIMEOUT_NUM:318:dtls1_check_timeout_num
-SSL_F_DTLS1_HEARTBEAT:305:*
 SSL_F_DTLS1_HM_FRAGMENT_NEW:623:dtls1_hm_fragment_new
 SSL_F_DTLS1_PREPROCESS_FRAGMENT:288:dtls1_preprocess_fragment
 SSL_F_DTLS1_PROCESS_BUFFERED_RECORDS:424:dtls1_process_buffered_records
@@ -2974,8 +2973,6 @@ SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH:303:ssl session id has bad length
 SSL_R_SSL_SESSION_ID_TOO_LONG:408:ssl session id too long
 SSL_R_SSL_SESSION_VERSION_MISMATCH:210:ssl session version mismatch
 SSL_R_STILL_IN_INIT:121:still in init
-SSL_R_TLS_HEARTBEAT_PEER_DOESNT_ACCEPT:365:peer does not accept heartbeats
-SSL_R_TLS_HEARTBEAT_PENDING:366:heartbeat request already pending
 SSL_R_TLS_ILLEGAL_EXPORTER_LABEL:367:tls illegal exporter label
 SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST:157:tls invalid ecpointformat list
 SSL_R_TOO_MANY_KEY_UPDATES:132:too many key updates
