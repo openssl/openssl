@@ -9,6 +9,11 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Discard support of some obsolete X509.v3 Netscape (NS) extensions.
+     Except nsComment who is still present in openssl.cfg files and co.
+     See the list of these old extensions in doc/man5/x509v3_config.pod 
+     [FDaSilvaYY]
+
   *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
      This changes the size when using the genpkey app when no size is given. It
      fixes an omission in earlier changes that changed all RSA, DSA and DH
