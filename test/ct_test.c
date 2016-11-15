@@ -8,6 +8,7 @@
  */
 
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -548,6 +549,30 @@ static int test_encode_tls_sct()
     EXECUTE_CT_TEST();
 }
 
+/*
+ * Tests that the CT_POLICY_EVAL_CTX default time is approximately now.
+ * Allow +-10 minutes, as it may compensate for clock skew.
+ */
+static int test_default_ct_policy_eval_ctx_time_is_now()
+{
+    int success = 0;
+    CT_POLICY_EVAL_CTX *ct_policy_ctx = CT_POLICY_EVAL_CTX_new();
+    const time_t default_time = CT_POLICY_EVAL_CTX_get_time(ct_policy_ctx) /
+            1000;
+    const time_t time_tolerance = 600;  /* 10 minutes */
+
+    if (fabs(difftime(time(NULL), default_time)) > time_tolerance) {
+        fprintf(stderr,
+                "Default CT_POLICY_EVAL_CTX time is not approximately now.\n");
+        goto end;
+    }
+
+    success = 1;
+end:
+    CT_POLICY_EVAL_CTX_free(ct_policy_ctx);
+    return success;
+}
+
 int main(int argc, char *argv[])
 {
     int result = 0;
@@ -571,6 +596,7 @@ int main(int argc, char *argv[])
     ADD_TEST(test_verify_fails_for_future_sct);
     ADD_TEST(test_decode_tls_sct);
     ADD_TEST(test_encode_tls_sct);
+    ADD_TEST(test_default_ct_policy_eval_ctx_time_is_now);
 
     result = run_tests(argv[0]);
     ERR_print_errors_fp(stderr);
