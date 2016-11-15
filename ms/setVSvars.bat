@@ -178,11 +178,8 @@ exit /b
 :setEnv
 	call:setVar _VS14VC VisualStudio14VC
 	call:setVar _WKITS10 WindowsKits10.0
-	call:setVar _WKITS10VER WindowsKits10Version
-	set PATH=%_VS14VC\Bin%;%PATH%
-	set INCLUDE=%_VS14VC%\include;%_WKITS10%\Include\%_WKITS10VER%\um;%_WKITS10%\Include\%_WKITS10VER%\shared;%_WKITS10%\Include\%_WKITS10VER%\winrt;%_WKITS10%\Include\%_WKITS10VER%\ucrt;
-	set LIB=%_VS14VC%\lib\store\%_VCLibPlat%;%_WKITS10%\lib\%_WKITS10VER%\um\%_VCPlatform%;%_WKITS10%\Lib\%_WKITS10VER%\ucrt\%_VCPlatform%;
-	set LIBPATH=%_WKITS10%\UnionMetadata\Facade;%_VS14VC%\vcpackages;;%_WKITS10%\references\windows.foundation.foundationcontract\1.0.0.0\;;%_WKITS10%\references\windows.foundation.universalapicontract\1.0.0.0\
+	set PATH=%_VS14VCBin%;%PATH%
+	set "LIBPATH=%_WKITS10%UnionMetadata\Facade;%_VS14VC%vcpackages;%_WKITS10%references\windows.foundation.foundationcontract\1.0.0.0\;%_WKITS10%references\windows.foundation.universalapicontract\1.0.0.0\"
 	goto :eof
 
 :end
