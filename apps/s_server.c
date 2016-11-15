@@ -451,6 +451,8 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 /* Structure passed to cert status callback */
 
 typedef struct tlsextstatusctx_st {
+    /* File to load OCSP Response from (or NULL if no file) */
+    char *respin;
     /* Default responder to use */
     char *host, *path, *port;
     int use_ssl;
@@ -458,38 +460,32 @@ typedef struct tlsextstatusctx_st {
     int verbose;
 } tlsextstatusctx;
 
-static tlsextstatusctx tlscstatp = { NULL, NULL, NULL, 0, -1, 0 };
+static tlsextstatusctx tlscstatp = { NULL, NULL, NULL, NULL, 0, -1, 0 };
 
 #ifndef OPENSSL_NO_OCSP
-/*
- * Certificate Status callback. This is called when a client includes a
- * certificate status request extension. This is a simplified version. It
- * examines certificates each time and makes one OCSP responder query for
- * each request. A full version would store details such as the OCSP
- * certificate IDs and minimise the number of OCSP responses by caching them
- * until they were considered "expired".
- */
 
-static int cert_status_cb(SSL *s, void *arg)
+/*
+ * Helper function to get an OCSP_RESPONSE from a responder. This is a
+ * simplified version. It examines certificates each time and makes one OCSP
+ * responder query for each request. A full version would store details such as
+ * the OCSP certificate IDs and minimise the number of OCSP responses by caching
+ * them until they were considered "expired".
+ */
+static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
+                                        OCSP_RESPONSE **resp)
 {
-    tlsextstatusctx *srctx = arg;
     char *host = NULL, *port = NULL, *path = NULL;
     int use_ssl;
-    unsigned char *rspder = NULL;
-    int rspderlen;
     STACK_OF(OPENSSL_STRING) *aia = NULL;
     X509 *x = NULL;
     X509_STORE_CTX *inctx = NULL;
     X509_OBJECT *obj;
     OCSP_REQUEST *req = NULL;
-    OCSP_RESPONSE *resp = NULL;
     OCSP_CERTID *id = NULL;
     STACK_OF(X509_EXTENSION) *exts;
     int ret = SSL_TLSEXT_ERR_NOACK;
     int i;
 
-    if (srctx->verbose)
-        BIO_puts(bio_err, "cert_status: callback called\n");
     /* Build up OCSP query from server certificate */
     x = SSL_get_certificate(s);
     aia = X509_get1_ocsp(x);
@@ -544,28 +540,19 @@ static int cert_status_cb(SSL *s, void *arg)
         if (!OCSP_REQUEST_add_ext(req, ext, -1))
             goto err;
     }
-    resp = process_responder(req, host, path, port, use_ssl, NULL,
+    *resp = process_responder(req, host, path, port, use_ssl, NULL,
                              srctx->timeout);
-    if (!resp) {
+    if (*resp == NULL) {
         BIO_puts(bio_err, "cert_status: error querying responder\n");
         goto done;
     }
-    rspderlen = i2d_OCSP_RESPONSE(resp, &rspder);
-    if (rspderlen <= 0)
-        goto err;
-    SSL_set_tlsext_status_ocsp_resp(s, rspder, rspderlen);
-    if (srctx->verbose) {
-        BIO_puts(bio_err, "cert_status: ocsp response sent:\n");
-        OCSP_RESPONSE_print(bio_err, resp, 2);
-    }
+
     ret = SSL_TLSEXT_ERR_OK;
     goto done;
 
  err:
     ret = SSL_TLSEXT_ERR_ALERT_FATAL;
  done:
-    if (ret != SSL_TLSEXT_ERR_OK)
-        ERR_print_errors(bio_err);
     if (aia) {
         OPENSSL_free(host);
         OPENSSL_free(path);
@@ -574,8 +561,62 @@ static int cert_status_cb(SSL *s, void *arg)
     }
     OCSP_CERTID_free(id);
     OCSP_REQUEST_free(req);
-    OCSP_RESPONSE_free(resp);
     X509_STORE_CTX_free(inctx);
+    return ret;
+}
+
+/*
+ * Certificate Status callback. This is called when a client includes a
+ * certificate status request extension. The response is either obtained from a
+ * file, or from an OCSP responder.
+ */
+static int cert_status_cb(SSL *s, void *arg)
+{
+    tlsextstatusctx *srctx = arg;
+    OCSP_RESPONSE *resp = NULL;
+    unsigned char *rspder = NULL;
+    int rspderlen;
+    int ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+
+    if (srctx->verbose)
+        BIO_puts(bio_err, "cert_status: callback called\n");
+
+    if (srctx->respin != NULL) {
+        BIO *derbio = bio_open_default(srctx->respin, 'r', FORMAT_ASN1);
+        if (derbio == NULL) {
+            BIO_puts(bio_err, "cert_status: Cannot open OCSP response file\n");
+            goto err;
+        }
+        resp = d2i_OCSP_RESPONSE_bio(derbio, NULL);
+        BIO_free(derbio);
+        if (!resp) {
+            BIO_puts(bio_err, "cert_status: Error reading OCSP response\n");
+            goto err;
+        }
+    } else {
+        ret = get_ocsp_resp_from_responder(s, srctx, &resp);
+        if (ret != SSL_TLSEXT_ERR_OK)
+            goto err;
+    }
+
+    rspderlen = i2d_OCSP_RESPONSE(resp, &rspder);
+    if (rspderlen <= 0)
+        goto err;
+
+    SSL_set_tlsext_status_ocsp_resp(s, rspder, rspderlen);
+    if (srctx->verbose) {
+        BIO_puts(bio_err, "cert_status: ocsp response sent:\n");
+        OCSP_RESPONSE_print(bio_err, resp, 2);
+    }
+
+    ret = SSL_TLSEXT_ERR_OK;
+
+ err:
+    if (ret != SSL_TLSEXT_ERR_OK)
+        ERR_print_errors(bio_err);
+
+    OCSP_RESPONSE_free(resp);
+
     return ret;
 }
 #endif
@@ -663,9 +704,9 @@ typedef enum OPTION_choice {
     OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE, OPT_CHAINCAFILE,
     OPT_VERIFYCAFILE, OPT_NBIO, OPT_NBIO_TEST, OPT_IGN_EOF, OPT_NO_IGN_EOF,
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_VERBOSE,
-    OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_MSG, OPT_MSGFILE, OPT_TRACE,
-    OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE, OPT_CRLF,
-    OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
+    OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
+    OPT_TRACE, OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE,
+    OPT_CRLF, OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
     OPT_SSL_CONFIG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
@@ -788,6 +829,8 @@ const OPTIONS s_server_options[] = {
     {"status_timeout", OPT_STATUS_TIMEOUT, 'n',
      "Status request responder timeout"},
     {"status_url", OPT_STATUS_URL, 's', "Status request fallback URL"},
+    {"status_file", OPT_STATUS_FILE, '<',
+     "File containing DER encoded OCSP Response"},
 #endif
 #ifndef OPENSSL_NO_SSL_TRACE
     {"trace", OPT_TRACE, '-', "trace protocol messages"},
@@ -1237,6 +1280,12 @@ int s_server_main(int argc, char *argv[])
                 BIO_printf(bio_err, "Error parsing URL\n");
                 goto end;
             }
+#endif
+            break;
+        case OPT_STATUS_FILE:
+#ifndef OPENSSL_NO_OCSP
+            s_tlsextstatus = 1;
+            tlscstatp.respin = opt_arg();
 #endif
             break;
         case OPT_MSG:
