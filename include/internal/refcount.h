@@ -10,8 +10,11 @@
 # define HEADER_INTERNAL_REFCOUNT_H
 
 # if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
-
 # include <stdatomic.h>
+# define HAVE_C11_ATOMICS
+# endif
+
+# if HAVE_C11_ATOMICS && ATOMIC_INT_LOCK_FREE > 0
 
 #define HAVE_ATOMICS 1
 
@@ -31,7 +34,7 @@ static ossl_inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, void *lock)
     return 1;
 }
 
-# elif defined(__GNUC__) && defined(__ATOMIC_RELAXED)
+# elif defined(__GNUC__) && defined(__ATOMIC_RELAXED) && __GCC_ATOMIC_INT_LOCK_FREE > 0
 
 #define HAVE_ATOMICS 1
 
