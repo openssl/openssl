@@ -1969,8 +1969,8 @@ static int process_key_share_ext(SSL *s, PACKET *pkt, int *al)
 {
     unsigned int group_id;
     PACKET key_share_list, encoded_pt;
-    const unsigned char *curves;
-    size_t num_curves;
+    const unsigned char *clntcurves, *srvrcurves;
+    size_t clnt_num_curves, srvr_num_curves;
     int group_nid, found = 0;
     unsigned int curve_flags;
 
@@ -1985,6 +1985,22 @@ static int process_key_share_ext(SSL *s, PACKET *pkt, int *al)
         *al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
                SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    /* Get our list of supported curves */
+    if (!tls1_get_curvelist(s, 0, &srvrcurves, &srvr_num_curves)) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Get the clients list of supported curves */
+    if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
+               ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -2006,13 +2022,7 @@ static int process_key_share_ext(SSL *s, PACKET *pkt, int *al)
             continue;
 
         /* Check if this share is in supported_groups sent from client */
-        if (!tls1_get_curvelist(s, 1, &curves, &num_curves)) {
-            *al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
-                   ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-        if (!check_in_list(s, group_id, curves, num_curves, 0)) {
+        if (!check_in_list(s, group_id, clntcurves, clnt_num_curves, 0)) {
             *al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
                    SSL_R_BAD_KEY_SHARE);
@@ -2020,13 +2030,7 @@ static int process_key_share_ext(SSL *s, PACKET *pkt, int *al)
         }
 
         /* Check if this share is for a group we can use */
-        if (!tls1_get_curvelist(s, 0, &curves, &num_curves)) {
-            *al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_PROCESS_KEY_SHARE_EXT,
-                   ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-        if (!check_in_list(s, group_id, curves, num_curves, 1)) {
+        if (!check_in_list(s, group_id, srvrcurves, srvr_num_curves, 1)) {
             /* Share not suitable */
             continue;
         }
