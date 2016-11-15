@@ -77,6 +77,7 @@ __owur int tls_get_message_body(SSL *s, size_t *len);
 __owur int dtls_get_message(SSL *s, int *mt, size_t *len);
 
 /* Message construction and processing functions */
+__owur int tls_process_initial_server_flight(SSL *s, int *al);
 __owur MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt);
 __owur int tls_construct_change_cipher_spec(SSL *s, WPACKET *pkt);
