@@ -64,10 +64,7 @@
 #include <openssl/buffer.h>
 
 /*
- * Return values are as per SSL_write(), i.e.
- * >0 The number of read bytes
- *  0 Failure (not retryable)
- * <0 Failure (may be retryable)
+ * Return values are as per SSL_write()
  */
 int ssl23_write_bytes(SSL *s)
 {
@@ -83,7 +80,7 @@ int ssl23_write_bytes(SSL *s)
         if (i <= 0) {
             s->init_off = tot;
             s->init_num = num;
-            return -1;
+            return i;
         }
         s->rwstate = SSL_NOTHING;
         if (i == num)
@@ -95,11 +92,8 @@ int ssl23_write_bytes(SSL *s)
 }
 
 /* return regularly only when we have read (at least) 'n' bytes
- * 
- * Return values are as per SSL_read(), i.e.
- * >0 The number of read bytes
- *  0 Failure (not retryable)
- * <0 Failure (may be retryable)
+ *
+ * Return values are as per SSL_read()
  */
 int ssl23_read_bytes(SSL *s, int n)
 {
@@ -114,7 +108,7 @@ int ssl23_read_bytes(SSL *s, int n)
             j = BIO_read(s->rbio, (char *)&(p[s->packet_length]),
                          n - s->packet_length);
             if (j <= 0)
-                return -1;
+                return j;
             s->rwstate = SSL_NOTHING;
             s->packet_length += j;
             if (s->packet_length >= (unsigned int)n)

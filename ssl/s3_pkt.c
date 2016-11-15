@@ -137,10 +137,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 static int ssl3_get_record(SSL *s);
 
 /*
- * Return values are as per SSL_read(), i.e.
- * >0 The number of read bytes
- *  0 Failure (not retryable)
- * <0 Failure (may be retryable)
+ * Return values are as per SSL_read()
  */
 int ssl3_read_n(SSL *s, int n, int max, int extend)
 {
@@ -269,7 +266,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
             if (s->mode & SSL_MODE_RELEASE_BUFFERS && !SSL_IS_DTLS(s))
                 if (len + left == 0)
                     ssl3_release_read_buffer(s);
-            return -1;
+            return (i);
         }
         left += i;
         /*
@@ -1089,11 +1086,8 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 }
 
 /* if s->s3->wbuf.left != 0, we need to call this
- * 
+ *
  * Return values are as per SSL_write(), i.e.
- * >0 The number of read bytes
- *  0 Failure (not retryable)
- * <0 Failure (may be retryable)
  */
 int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
                        unsigned int len)
@@ -1134,7 +1128,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
                  */
                 wb->left = 0;
             }
-            return -1;
+            return i;
         }
         wb->offset += i;
         wb->left -= i;
