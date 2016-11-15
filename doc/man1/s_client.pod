@@ -763,10 +763,6 @@ End the current SSL connection and exit.
 
 Renegotiate the SSL session (TLSv1.2 and below only).
 
-=item B<B>
-
-Send a heartbeat message to the server (DTLS only)
-
 =item B<k>
 
 Send a key update message to the server (TLSv1.3 only)

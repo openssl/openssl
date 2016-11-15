@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Removed the heartbeat message in DTLS feature, as it has very
+     little usage and doesn't seem to fulfill a valuable purpose.
+     [Richard Levitte]
+
   *) Changed the output of 'openssl {digestname} < file' to display the
      digest name in its output.
      [Richard Levitte]

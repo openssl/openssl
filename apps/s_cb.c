@@ -600,22 +600,6 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         case 23:
             str_content_type = ", ApplicationData";
             break;
-#ifndef OPENSSL_NO_HEARTBEATS
-        case 24:
-            str_details1 = ", Heartbeat";
-
-            if (len > 0) {
-                switch (bp[0]) {
-                case 1:
-                    str_details1 = ", HeartbeatRequest";
-                    break;
-                case 2:
-                    str_details1 = ", HeartbeatResponse";
-                    break;
-                }
-            }
-            break;
-#endif
         }
     }
 
@@ -656,7 +640,6 @@ static STRINT_PAIR tlsext_types[] = {
     {"SRP", TLSEXT_TYPE_srp},
     {"signature algorithms", TLSEXT_TYPE_signature_algorithms},
     {"use SRTP", TLSEXT_TYPE_use_srtp},
-    {"heartbeat", TLSEXT_TYPE_heartbeat},
     {"session ticket", TLSEXT_TYPE_session_ticket},
     {"renegotiation info", TLSEXT_TYPE_renegotiate},
     {"signed certificate timestamps", TLSEXT_TYPE_signed_certificate_timestamp},
