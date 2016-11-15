@@ -313,6 +313,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE),
      "tls_process_client_key_exchange"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_FINISHED), "tls_process_finished"},
+    {ERR_FUNC(SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT),
+     "tls_process_initial_server_flight"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_KEY_EXCHANGE), "tls_process_key_exchange"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET),
      "tls_process_new_session_ticket"},

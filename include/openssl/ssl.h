@@ -2294,6 +2294,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_CLIENT_HELLO                   381
 # define SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE            382
 # define SSL_F_TLS_PROCESS_FINISHED                       364
+# define SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT          442
 # define SSL_F_TLS_PROCESS_KEY_EXCHANGE                   365
 # define SSL_F_TLS_PROCESS_NEW_SESSION_TICKET             366
 # define SSL_F_TLS_PROCESS_NEXT_PROTO                     383

@@ -2186,34 +2186,22 @@ MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
+/*
+ * Perform miscellaneous checks and processing after we have received the
+ * server's initial flight. In TLS1.3 this is after the Server Finished message.
+ * In <=TLS1.2 this is after the ServerDone message.
+ *
+ * Returns 1 on success or 0 on failure.
+ */
+int tls_process_initial_server_flight(SSL *s, int *al)
 {
-    if (PACKET_remaining(pkt) > 0) {
-        /* should contain no data */
-        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE, SSL_R_LENGTH_MISMATCH);
-        ossl_statem_set_error(s);
-        return MSG_PROCESS_ERROR;
-    }
-#ifndef OPENSSL_NO_SRP
-    if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
-        if (SRP_Calc_A_param(s) <= 0) {
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE, SSL_R_SRP_A_CALC);
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-            ossl_statem_set_error(s);
-            return MSG_PROCESS_ERROR;
-        }
-    }
-#endif
-
     /*
      * at this point we check that we have the required stuff from
      * the server
      */
     if (!ssl3_check_cert_and_algorithm(s)) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
-        ossl_statem_set_error(s);
-        return MSG_PROCESS_ERROR;
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        return 0;
     }
 
     /*
@@ -2225,27 +2213,55 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
         int ret;
         ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
         if (ret == 0) {
-            ssl3_send_alert(s, SSL3_AL_FATAL,
-                            SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE);
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE,
+            *al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
+            SSLerr(SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT,
                    SSL_R_INVALID_STATUS_RESPONSE);
-            return MSG_PROCESS_ERROR;
+            return 0;
         }
         if (ret < 0) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE, ERR_R_MALLOC_FAILURE);
-            return MSG_PROCESS_ERROR;
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT,
+                   ERR_R_MALLOC_FAILURE);
+            return 0;
         }
     }
 #ifndef OPENSSL_NO_CT
     if (s->ct_validation_callback != NULL) {
         /* Note we validate the SCTs whether or not we abort on error */
         if (!ssl_validate_ct(s) && (s->verify_mode & SSL_VERIFY_PEER)) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
-            return MSG_PROCESS_ERROR;
+            *al = SSL_AD_HANDSHAKE_FAILURE;
+            return 0;
         }
     }
 #endif
+
+    return 1;
+}
+
+MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
+{
+    int al = SSL_AD_INTERNAL_ERROR;
+
+    if (PACKET_remaining(pkt) > 0) {
+        /* should contain no data */
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+#ifndef OPENSSL_NO_SRP
+    if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
+        if (SRP_Calc_A_param(s) <= 0) {
+            SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE, SSL_R_SRP_A_CALC);
+            goto err;
+        }
+    }
+#endif
+
+    /*
+     * Error queue messages are generated directly by this function
+     */
+    if (!tls_process_initial_server_flight(s, &al))
+        goto err;
 
 #ifndef OPENSSL_NO_SCTP
     /* Only applies to renegotiation */
@@ -2255,6 +2271,11 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
     else
 #endif
         return MSG_PROCESS_FINISHED_READING;
+
+ err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    ossl_statem_set_error(s);
+    return MSG_PROCESS_ERROR;
 }
 
 static int tls_construct_cke_psk_preamble(SSL *s, WPACKET *pkt, int *al)
