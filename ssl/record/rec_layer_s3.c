@@ -178,10 +178,7 @@ const char *SSL_rstate_string(const SSL *s)
 }
 
 /*
- * Return values are as per SSL_read(), i.e.
- *  1 Success
- *  0 Failure (not retryable)
- * <0 Failure (may be retryable)
+ * Return values are as per SSL_read()
  */
 int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
                 size_t *readbytes)
@@ -319,7 +316,7 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
             if (s->mode & SSL_MODE_RELEASE_BUFFERS && !SSL_IS_DTLS(s))
                 if (len + left == 0)
                     ssl3_release_read_buffer(s);
-            return -1;
+            return ret;
         }
         left += bioread;
         /*
@@ -897,10 +894,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 /* if s->s3->wbuf.left != 0, we need to call this
  *
- * Return values are as per SSL_read(), i.e.
- *  1 Success
- *  0 Failure (not retryable)
- * <0 Failure (may be retryable)
+ * Return values are as per SSL_write()
  */
 int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
                        size_t *written)
@@ -955,7 +949,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
                  */
                 SSL3_BUFFER_set_left(&wb[currbuf], 0);
             }
-            return -1;
+            return (i);
         }
         SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
         SSL3_BUFFER_sub_left(&wb[currbuf], tmpwrit);

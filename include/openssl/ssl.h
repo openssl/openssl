@@ -1580,9 +1580,9 @@ __owur int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd,
 __owur int SSL_accept(SSL *ssl);
 __owur int SSL_connect(SSL *ssl);
 __owur int SSL_read(SSL *ssl, void *buf, int num);
-__owur int SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *read);
+__owur int SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
 __owur int SSL_peek(SSL *ssl, void *buf, int num);
-__owur int SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *read);
+__owur int SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
 __owur int SSL_write(SSL *ssl, const void *buf, int num);
 __owur int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
 long SSL_ctrl(SSL *ssl, int cmd, long larg, void *parg);
