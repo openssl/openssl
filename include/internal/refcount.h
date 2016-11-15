@@ -14,9 +14,9 @@
 # define HAVE_C11_ATOMICS
 # endif
 
-# if HAVE_C11_ATOMICS && ATOMIC_INT_LOCK_FREE > 0
+# if defined(HAVE_C11_ATOMICS) && ATOMIC_INT_LOCK_FREE > 0
 
-#define HAVE_ATOMICS 1
+# define HAVE_ATOMICS 1
 
 typedef _Atomic int CRYPTO_REF_COUNT;
 
@@ -36,7 +36,7 @@ static ossl_inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, void *lock)
 
 # elif defined(__GNUC__) && defined(__ATOMIC_RELAXED) && __GCC_ATOMIC_INT_LOCK_FREE > 0
 
-#define HAVE_ATOMICS 1
+# define HAVE_ATOMICS 1
 
 typedef int CRYPTO_REF_COUNT;
 
@@ -58,8 +58,8 @@ static ossl_inline int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
 
 typedef int CRYPTO_REF_COUNT;
 
-#define CRYPTO_UP_REF(val, ret, lock) CRYPTO_atomic_add(val, 1, ret, lock)
-#define CRYPTO_DOWN_REF(val, ret, lock) CRYPTO_atomic_add(val, -1, ret, lock)
+# define CRYPTO_UP_REF(val, ret, lock) CRYPTO_atomic_add(val, 1, ret, lock)
+# define CRYPTO_DOWN_REF(val, ret, lock) CRYPTO_atomic_add(val, -1, ret, lock)
 
 # endif
 #endif
