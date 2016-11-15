@@ -636,7 +636,14 @@ case "$GUESSOS" in
 	else
 	    OUT="linux-x86_64"
 	fi ;;
-  *86-*-linux2) OUT="linux-elf" ;;
+  *86-*-linux2)
+        # On machines where the compiler understands -m32, prefer a
+        # config target that uses it
+        if $CC -m32 -E -x c /dev/null > /dev/null 2>&1; then
+            OUT="linux-x86"
+        else
+            OUT="linux-elf"
+        fi ;;
   *86-*-linux1) OUT="linux-aout" ;;
   *-*-linux?) OUT="linux-generic32" ;;
   sun4[uv]*-*-solaris2)
