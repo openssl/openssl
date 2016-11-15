@@ -98,6 +98,7 @@ sub parse
     if ($server_version == TLSProxy::Record::VERS_TLS_1_3_DRAFT) {
         TLSProxy::Record->server_encrypting(1);
         TLSProxy::Record->client_encrypting(1);
+        TLSProxy::Proxy->is_tls13(1);
     }
 
     print "    Server Version:".$server_version."\n";
