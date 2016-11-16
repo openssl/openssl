@@ -19,6 +19,7 @@ my %conversionforms = (
     # Default conversion forms.  Other series may be added with
     # specific test types as key.
     "*"		=> [ "d", "p" ],
+    "msb"	=> [ "d", "p", "msblob" ],
     );
 sub tconversion {
     my $testtype = shift;
