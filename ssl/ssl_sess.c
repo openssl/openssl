@@ -40,6 +40,8 @@
 #include <openssl/engine.h>
 #include "ssl_locl.h"
 
+static const char g_pending_session_magic = 0;
+
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);
 static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
@@ -503,6 +505,10 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
                                              hello->session_id_len,
                                              &copy);
 
+        if (ret == SSL_magic_pending_session_ptr()) {
+            return -2; /* Retry later */
+        }
+
         if (ret != NULL) {
             s->session_ctx->stats.sess_cb_hit++;
 
@@ -876,6 +882,11 @@ void SSL_SESSION_get0_ticket(const SSL_SESSION *s, const unsigned char **tick,
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
     return s->peer;
+}
+
+SSL_SESSION *SSL_magic_pending_session_ptr(void)
+{
+    return (SSL_SESSION *) &g_pending_session_magic;
 }
 
 int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,

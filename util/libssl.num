@@ -408,3 +408,4 @@ DTLS_get_data_mtu                       408	1_1_1	EXIST::FUNCTION:
 SSL_read_ex                             409	1_1_1	EXIST::FUNCTION:
 SSL_peek_ex                             410	1_1_1	EXIST::FUNCTION:
 SSL_write_ex                            411	1_1_1	EXIST::FUNCTION:
+SSL_magic_pending_session_ptr           412	1_1_1	EXIST::FUNCTION:
