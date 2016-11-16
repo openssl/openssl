@@ -19,6 +19,10 @@
 #include <openssl/kdf.h>
 #include "internal/numbers.h"
 
+#define ENCRYPT     1
+#define DECRYPT     2
+#define INPLACE     4
+
 /* Remove spaces from beginning and end of a string */
 
 static void remove_space(char **pval)
@@ -707,6 +711,8 @@ struct cipher_data {
     size_t key_len;
     unsigned char *iv;
     size_t iv_len;
+    unsigned char *seq;
+    size_t seq_len;
     unsigned char *plaintext;
     size_t plaintext_len;
     unsigned char *ciphertext;
@@ -731,15 +737,9 @@ static int cipher_test_init(struct evp_test *t, const char *alg)
         }
         return 0;
     }
-    cdat = OPENSSL_malloc(sizeof(*cdat));
+    cdat = OPENSSL_zalloc(sizeof(*cdat));
     cdat->cipher = cipher;
-    cdat->enc = -1;
-    cdat->key = NULL;
-    cdat->iv = NULL;
-    cdat->ciphertext = NULL;
-    cdat->plaintext = NULL;
-    cdat->aad = NULL;
-    cdat->tag = NULL;
+    cdat->enc = ENCRYPT | DECRYPT;
     t->data = cdat;
     if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE
         || EVP_CIPHER_mode(cipher) == EVP_CIPH_OCB_MODE
@@ -747,8 +747,6 @@ static int cipher_test_init(struct evp_test *t, const char *alg)
         cdat->aead = EVP_CIPHER_mode(cipher);
     else if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         cdat->aead = -1;
-    else
-        cdat->aead = 0;
 
     return 1;
 }
@@ -772,6 +770,8 @@ static int cipher_test_parse(struct evp_test *t, const char *keyword,
         return test_bin(value, &cdat->key, &cdat->key_len);
     if (strcmp(keyword, "IV") == 0)
         return test_bin(value, &cdat->iv, &cdat->iv_len);
+    if (strcmp(keyword, "Seq") == 0)
+        return test_bin(value, &cdat->seq, &cdat->seq_len);
     if (strcmp(keyword, "Plaintext") == 0)
         return test_bin(value, &cdat->plaintext, &cdat->plaintext_len);
     if (strcmp(keyword, "Ciphertext") == 0)
@@ -784,10 +784,12 @@ static int cipher_test_parse(struct evp_test *t, const char *keyword,
     }
 
     if (strcmp(keyword, "Operation") == 0) {
-        if (strcmp(value, "ENCRYPT") == 0)
-            cdat->enc = 1;
+        if (strcmp(value, "ENCRYPTINPLACE") == 0)
+            cdat->enc = ENCRYPT | INPLACE;
+        else if (strcmp(value, "ENCRYPT") == 0)
+            cdat->enc = ENCRYPT;
         else if (strcmp(value, "DECRYPT") == 0)
-            cdat->enc = 0;
+            cdat->enc = DECRYPT;
         else
             return 0;
         return 1;
@@ -850,7 +852,7 @@ static int cipher_test_enc(struct evp_test *t, int enc,
         goto err;
     err = "INVALID_IV_LENGTH";
     if (cdat->iv) {
-        if (cdat->aead) {
+        if (cdat->aead && cdat->seq == NULL) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
                                      cdat->iv_len, 0))
                 goto err;
@@ -881,8 +883,19 @@ static int cipher_test_enc(struct evp_test *t, int enc,
     if (!EVP_CIPHER_CTX_set_key_length(ctx, cdat->key_len))
         goto err;
     err = "KEY_SET_ERROR";
-    if (!EVP_CipherInit_ex(ctx, NULL, NULL, cdat->key, cdat->iv, -1))
+    if (!EVP_CipherInit_ex(ctx, NULL, NULL, cdat->key, NULL, -1))
         goto err;
+    err = "IV_SET_ERROR";
+    if (cdat->seq != NULL) {
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_FIXED, -1, cdat->iv)
+                || !EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_SEQ_NO,
+                                        cdat->seq_len, cdat->seq))
+            goto err;
+    } else {
+        if (!EVP_CipherInit_ex(ctx, NULL, NULL, NULL, cdat->iv, -1))
+            goto err;
+    }
+
 
     if (!enc && cdat->aead == EVP_CIPH_OCB_MODE) {
         if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
@@ -908,9 +921,9 @@ static int cipher_test_enc(struct evp_test *t, int enc,
     err = "CIPHERUPDATE_ERROR";
     if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &tmplen, in, in_len))
         goto err;
-    if (cdat->aead == EVP_CIPH_CCM_MODE)
+    if (cdat->aead == EVP_CIPH_CCM_MODE || cdat->seq != NULL) {
         tmpflen = 0;
-    else {
+    } else {
         err = "CIPHERFINAL_ERROR";
         if (!EVP_CipherFinal_ex(ctx, tmp + out_misalign + tmplen, &tmpflen))
             goto err;
@@ -921,7 +934,7 @@ static int cipher_test_enc(struct evp_test *t, int enc,
     err = "VALUE_MISMATCH";
     if (check_output(t, out, tmp + out_misalign, out_len))
         goto err;
-    if (enc && cdat->aead) {
+    if (enc && cdat->aead && cdat->seq == NULL) {
         unsigned char rtag[16];
         if (cdat->tag_len > sizeof(rtag)) {
             err = "TAG_LENGTH_INTERNAL_ERROR";
@@ -962,7 +975,7 @@ static int cipher_test_run(struct evp_test *t)
             return 0;
         }
     }
-    if (cdat->aead && !cdat->tag) {
+    if (cdat->aead && !cdat->tag && cdat->seq == NULL) {
         t->err = "NO_TAG";
         return 0;
     }
@@ -979,7 +992,7 @@ static int cipher_test_run(struct evp_test *t)
                              out_misalign ? "misaligned" : "aligned",
                              inp_misalign ? "misaligned" : "aligned");
             }
-            if (cdat->enc) {
+            if ((cdat->enc & ENCRYPT) != 0) {
                 rv = cipher_test_enc(t, 1, out_misalign, inp_misalign);
                 /* Not fatal errors: return */
                 if (rv != 1) {
@@ -988,7 +1001,7 @@ static int cipher_test_run(struct evp_test *t)
                     return 1;
                 }
             }
-            if (cdat->enc != 1) {
+            if ((cdat->enc & DECRYPT) != 0) {
                 rv = cipher_test_enc(t, 0, out_misalign, inp_misalign);
                 /* Not fatal errors: return */
                 if (rv != 1) {
@@ -997,6 +1010,8 @@ static int cipher_test_run(struct evp_test *t)
                     return 1;
                 }
             }
+            if ((cdat->enc & INPLACE) != 0)
+                break;
         }
     }
     t->aux_err = NULL;
