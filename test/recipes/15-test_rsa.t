@@ -35,7 +35,7 @@ ok(run(app([ 'openssl', 'rsa', '-check', '-in', srctop_file('test', 'testrsa.pem
 	 tconversion("rsa", srctop_file("test","testrsa.pem"), "pkey");
      };
      subtest 'rsa conversions -- public key' => sub {
-	 tconversion("rsa", srctop_file("test","testrsapub.pem"), "rsa",
+	 tconversion("msb", srctop_file("test","testrsapub.pem"), "rsa",
 		     "-pubin", "-pubout");
      };
 }

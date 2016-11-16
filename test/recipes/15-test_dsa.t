@@ -34,7 +34,7 @@ ok(run(test(["dsatest", "-app2_1"])), "running dsatest -app2_1");
 	 tconversion("dsa", srctop_file("test","testdsa.pem"), "pkey");
      };
      subtest 'dsa conversions -- public key' => sub {
-	 tconversion("dsa", srctop_file("test","testdsapub.pem"), "dsa",
-		     "-pubin", "-pubout");
+	 tconversion("msb", srctop_file("test","testdsapub.pem"), "dsa",
+		         "-pubin", "-pubout");
      };
 }
