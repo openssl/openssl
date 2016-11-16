@@ -548,7 +548,7 @@ static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
     hnbyte = (RSA_bits(rsa) + 15) >> 4;
     RSA_get0_key(rsa, &n, &e, &d);
     write_lebn(out, e, 4);
-    write_lebn(out, n, -1);
+    write_lebn(out, n, nbyte);
     if (ispub)
         return;
     RSA_get0_factors(rsa, &p, &q);
