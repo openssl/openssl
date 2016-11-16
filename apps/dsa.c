@@ -37,7 +37,7 @@ typedef enum OPTION_choice {
 OPTIONS dsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f', "Input format, DER PEM PVK"},
-    {"outform", OPT_OUTFORM, 'F', "Output format, DER PEM PVK"},
+    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK"},
     {"in", OPT_IN, 's', "Input key"},
     {"out", OPT_OUT, '>', "Output file"},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
@@ -96,8 +96,7 @@ int dsa_main(int argc, char **argv)
             infile = opt_arg();
             break;
         case OPT_OUTFORM:
-            if (!opt_format
-                (opt_arg(), OPT_FMT_PEMDER | OPT_FMT_PVK, &outformat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &outformat))
                 goto opthelp;
             break;
         case OPT_OUT:
