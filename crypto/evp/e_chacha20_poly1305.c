@@ -124,10 +124,10 @@ static int chacha_cipher(EVP_CIPHER_CTX * ctx, unsigned char *out,
 
 static const EVP_CIPHER chacha20 = {
     NID_chacha20,
-    1,                      /* block_size */
-    CHACHA_KEY_SIZE,        /* key_len */
-    CHACHA_CTR_SIZE,        /* iv_len, 128-bit counter in the context */
-    0,                      /* flags */
+    1,                          /* block_size */
+    CHACHA_KEY_SIZE,            /* key_len */
+    CHACHA_CTR_SIZE,            /* iv_len, 128-bit counter in the context */
+    EVP_CIPH_ALWAYS_CALL_INIT,  /* flags */
     chacha_init_key,
     chacha_cipher,
     NULL,
