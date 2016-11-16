@@ -983,11 +983,10 @@ end_of_options:
             BIO_printf(bio_err, "writing new certificates\n");
         for (i = 0; i < sk_X509_num(cert_sk); i++) {
             BIO *Cout = NULL;
-            ASN1_INTEGER *serialNumber = X509_get_serialNumber(x);
+            X509 *xi = sk_X509_value(cert_sk, i);
+            ASN1_INTEGER *serialNumber = X509_get_serialNumber(xi);
             int k;
             char *n;
-
-            x = sk_X509_value(cert_sk, i);
 
             j = ASN1_STRING_length(serialNumber);
             p = (const char *)ASN1_STRING_get0_data(serialNumber);
@@ -1030,8 +1029,8 @@ end_of_options:
                 perror(buf[2]);
                 goto end;
             }
-            write_new_certificate(Cout, x, 0, notext);
-            write_new_certificate(Sout, x, output_der, notext);
+            write_new_certificate(Cout, xi, 0, notext);
+            write_new_certificate(Sout, xi, output_der, notext);
             BIO_free_all(Cout);
         }
 
