@@ -242,8 +242,6 @@ sub decrypt()
             #an unecrypted alert, so don't try to decrypt
             return $data if (length($data) == 2);
         }
-        #8 bytes for a GCM IV
-        $data = substr($data, 8);
         $mactaglen = 16;
     } elsif ($self->version >= VERS_TLS_1_1()) {
         #16 bytes for a standard IV
