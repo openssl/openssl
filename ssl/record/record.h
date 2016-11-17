@@ -230,6 +230,7 @@ __owur int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t
                               size_t *written);
 __owur int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send);
 __owur int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send);
+__owur int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send);
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);

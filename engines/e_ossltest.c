@@ -617,33 +617,46 @@ int ossltest_aes128_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                const unsigned char *in, size_t inl)
 {
-    const size_t datalen = inl - EVP_GCM_TLS_EXPLICIT_IV_LEN
-                           - EVP_GCM_TLS_TAG_LEN;
-    unsigned char *tmpbuf = OPENSSL_malloc(datalen);
+    unsigned char *tmpbuf = OPENSSL_malloc(inl);
 
-    if (tmpbuf == NULL)
+    if (tmpbuf == NULL && inl > 0)
         return -1;
 
     /* Remember what we were asked to encrypt */
-    memcpy(tmpbuf, in + EVP_GCM_TLS_EXPLICIT_IV_LEN, datalen);
+    memcpy(tmpbuf, in, inl);
 
     /* Go through the motions of encrypting it */
     EVP_CIPHER_meth_get_do_cipher(EVP_aes_128_gcm())(ctx, out, in, inl);
 
     /*
-     * Throw it all away and just use the plaintext as the output with empty
-     * IV and tag
+     * Throw it all away and just use the plaintext as the output
      */
-    memset(out, 0, inl);
-    memcpy(out + EVP_GCM_TLS_EXPLICIT_IV_LEN, tmpbuf, datalen);
+    memcpy(out, tmpbuf, inl);
     OPENSSL_free(tmpbuf);
 
-    return 1;
+    return inl;
 }
 
 static int ossltest_aes128_gcm_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
                                     void *ptr)
 {
+    int ret;
+
     /* Pass the ctrl down */
-    return EVP_CIPHER_meth_get_ctrl(EVP_aes_128_gcm())(ctx, type, arg, ptr);
+    ret = EVP_CIPHER_meth_get_ctrl(EVP_aes_128_gcm())(ctx, type, arg, ptr);
+
+    if (ret <= 0)
+        return ret;
+
+    switch(type) {
+    case EVP_CTRL_AEAD_GET_TAG:
+        /* Always give the same tag */
+        memset(ptr, 0, EVP_GCM_TLS_TAG_LEN);
+        break;
+
+    default:
+        break;
+    }
+
+    return 1;
 }
