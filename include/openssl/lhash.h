@@ -133,7 +133,7 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
     } \
     static ossl_inline type *lh_##type##_insert(LHASH_OF(type) *lh, type *d) \
     { \
-        return (type *)OPENSSL_LH_insert((OPENSSL_LHASH *)lh, d); \
+        return (type *)OPENSSL_LH_insert((OPENSSL_LHASH *)lh, (void *)d); \
     } \
     static ossl_inline type *lh_##type##_delete(LHASH_OF(type) *lh, const type *d) \
     { \
