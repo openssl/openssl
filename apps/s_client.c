@@ -1877,12 +1877,12 @@ int s_client_main(int argc, char **argv)
             }
             while (mbuf_len > 3 && mbuf[3] == '-');
             switch ((PROTOCOL_CHOICE) starttls_proto) {
-                case PROTO_LMTP:
-                    BIO_printf(fbio, "LHLO %s\r\n", ehlo);
-                    break;
-                case PROTO_SMTP:
-                    BIO_printf(fbio, "EHLO %s\r\n", ehlo);
-                    break;
+            case PROTO_LMTP:
+                BIO_printf(fbio, "LHLO %s\r\n", ehlo);
+                break;
+            case PROTO_SMTP:
+                BIO_printf(fbio, "EHLO %s\r\n", ehlo);
+                break;
             }
             (void)BIO_flush(fbio);
             /*
