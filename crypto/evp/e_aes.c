@@ -1294,16 +1294,14 @@ static void ctr64_inc(unsigned char *counter)
 static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,c);
+
     switch (type) {
     case EVP_CTRL_INIT:
-        gctx->key_set = 0;
-        gctx->iv_set = 0;
+        memset (gctx, 0, sizeof(*gctx));
         gctx->ivlen = EVP_CIPHER_CTX_iv_length(c);
         gctx->iv = EVP_CIPHER_CTX_iv_noconst(c);
         gctx->taglen = -1;
-        gctx->iv_gen = 0;
         gctx->tls_aad_len = -1;
-        gctx->use_seq_no = 0;
         return 1;
 
     case EVP_CTRL_AEAD_SET_IVLEN:
