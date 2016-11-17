@@ -321,7 +321,8 @@ IF[{- !$disabled{tests} -}]
   # Windows when building shared libraries, since the static libraries share
   # names with the DLL import libraries.
   IF[{- $disabled{shared} || $target{build_scheme}->[1] ne 'windows' -}]
-    PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test
+    PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test \
+                     tls13encryptiontest
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS_NO_INST=poly1305_internal_test
     ENDIF
@@ -341,6 +342,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[x509_internal_test]=x509_internal_test.c testutil.c test_main.c
     INCLUDE[x509_internal_test]=.. ../include
     DEPEND[x509_internal_test]=../libcrypto.a
+
+    SOURCE[tls13encryptiontest]=tls13encryptiontest.c testutil.c test_main.c
+    INCLUDE[tls13encryptiontest]=.. ../include
+    DEPEND[tls13encryptiontest]=../libcrypto ../libssl.a
   ENDIF
 
   IF[{- !$disabled{mdc2} -}]
