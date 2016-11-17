@@ -1118,7 +1118,7 @@ struct ssl_st {
      * If they are not, the connection should be aborted.
      */
     ssl_ct_validation_cb ct_validation_callback;
-    /* User-supplied argument tha tis passed to the ct_validation_callback */
+    /* User-supplied argument that is passed to the ct_validation_callback */
     void *ct_validation_callback_arg;
     /*
      * Consolidated stack of SCTs from all sources.
@@ -1525,8 +1525,8 @@ typedef struct cert_st {
     /*
      * Client authentication signature algorithms, if not set then uses
      * conf_sigalgs. On servers these will be the signature algorithms sent
-     * to the client in a cerificate request for TLS 1.2. On a client this
-     * represents the signature algortithms we are willing to use for client
+     * to the client in a certificate request for TLS 1.2. On a client this
+     * represents the signature algorithms we are willing to use for client
      * authentication.
      */
     unsigned int *client_sigalgs;
