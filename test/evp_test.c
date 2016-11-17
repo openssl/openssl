@@ -351,25 +351,28 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
     if (t->meth) {
         t->ntests++;
         if (t->skip) {
-            t->meth = tmeth;
             t->nskip++;
-            return 1;
+        } else {
+            /* run the test */
+            t->err = NULL;
+            if (t->meth->run_test(t) != 1) {
+                fprintf(stderr, "%s test error line %d\n",
+                        t->meth->name, t->start_line);
+                return 0;
+            }
+            if (!check_test_error(t)) {
+                if (t->err)
+                    ERR_print_errors_fp(stderr);
+                t->errors++;
+            }
         }
-        t->err = NULL;
-        if (t->meth->run_test(t) != 1) {
-            fprintf(stderr, "%s test error line %d\n",
-                    t->meth->name, t->start_line);
-            return 0;
-        }
-        if (!check_test_error(t)) {
-            if (t->err)
-                ERR_print_errors_fp(stderr);
-            t->errors++;
-        }
+        /* clean it up */
         ERR_clear_error();
-        t->meth->cleanup(t);
-        OPENSSL_free(t->data);
-        t->data = NULL;
+        if (t->data != NULL) {
+            t->meth->cleanup(t);
+            OPENSSL_free(t->data);
+            t->data = NULL;
+        }
         OPENSSL_free(t->expected_err);
         t->expected_err = NULL;
         free_expected(t);
@@ -1212,9 +1215,7 @@ static int pkey_test_init(struct evp_test *t, const char *name,
         rv = find_key(&pkey, name, t->public);
     if (!rv)
         rv = find_key(&pkey, name, t->private);
-    if (!rv)
-        return 0;
-    if (!pkey) {
+    if (!rv || pkey == NULL) {
         t->skip = 1;
         return 1;
     }
