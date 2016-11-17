@@ -1876,14 +1876,10 @@ int s_client_main(int argc, char **argv)
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
             }
             while (mbuf_len > 3 && mbuf[3] == '-');
-            switch ((PROTOCOL_CHOICE) starttls_proto) {
-            case PROTO_LMTP:
+            if (starttls_proto == (int)PROTO_LMTP)
                 BIO_printf(fbio, "LHLO %s\r\n", ehlo);
-                break;
-            case PROTO_SMTP:
+            else
                 BIO_printf(fbio, "EHLO %s\r\n", ehlo);
-                break;
-            }
             (void)BIO_flush(fbio);
             /*
              * Wait for multi-line response to end LHLO LMTP or EHLO SMTP
