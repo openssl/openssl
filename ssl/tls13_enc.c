@@ -284,7 +284,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     static const unsigned char server_application_traffic[] =
         "server application traffic secret";
     unsigned char key[EVP_MAX_KEY_LENGTH];
-    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned char *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char *insecret;
     unsigned char *finsecret = NULL;
@@ -306,6 +306,7 @@ int tls13_change_cipher_state(SSL *s, int which)
             }
         }
         ciph_ctx = s->enc_read_ctx;
+        iv = s->read_iv;
 
         RECORD_LAYER_reset_read_sequence(&s->rlayer);
     } else {
@@ -319,6 +320,7 @@ int tls13_change_cipher_state(SSL *s, int which)
             }
         }
         ciph_ctx = s->enc_write_ctx;
+        iv = s->write_iv;
 
         RECORD_LAYER_reset_write_sequence(&s->rlayer);
     }
@@ -357,13 +359,7 @@ int tls13_change_cipher_state(SSL *s, int which)
 
     /* TODO(size_t): convert me */
     keylen = EVP_CIPHER_key_length(ciph);
-
-    if (EVP_CIPHER_mode(ciph) == EVP_CIPH_GCM_MODE)
-        ivlen = EVP_GCM_TLS_FIXED_IV_LEN;
-    else if (EVP_CIPHER_mode(ciph) == EVP_CIPH_CCM_MODE)
-        ivlen = EVP_CCM_TLS_FIXED_IV_LEN;
-    else
-        ivlen = EVP_CIPHER_iv_length(ciph);
+    ivlen = EVP_CIPHER_iv_length(ciph);
 
     if (!tls13_derive_key(s, secret, key, keylen)
             || !tls13_derive_iv(s, secret, iv, ivlen)
@@ -374,40 +370,10 @@ int tls13_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
-    if (EVP_CIPHER_mode(ciph) == EVP_CIPH_GCM_MODE) {
-        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, NULL,
-                               (which & SSL3_CC_WRITE))
-                || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_GCM_SET_IV_FIXED,
-                                        (int)ivlen, iv)) {
-            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_EVP_LIB);
-            goto err;
-        }
-    } else if (EVP_CIPHER_mode(ciph) == EVP_CIPH_CCM_MODE) {
-        int taglen;
-
-        if (s->s3->tmp.new_cipher->algorithm_enc
-                & (SSL_AES128CCM8 | SSL_AES256CCM8))
-            taglen = 8;
-        else
-            taglen = 16;
-        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL,
-                               (which & SSL3_CC_WRITE))
-                || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, 12,
-                                        NULL)
-                || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
-                                        NULL)
-                || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_CCM_SET_IV_FIXED,
-                                        (int)ivlen, iv)
-                || !EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, -1)) {
-            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_EVP_LIB);
-            goto err;
-        }
-    } else {
-        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, iv,
-                               (which & SSL3_CC_WRITE))) {
-            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_EVP_LIB);
-            goto err;
-        }
+    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, NULL,
+                          (which & SSL3_CC_WRITE)) <= 0) {
+        SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_EVP_LIB);
+        goto err;
     }
 
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
@@ -417,14 +383,10 @@ int tls13_change_cipher_state(SSL *s, int which)
         if (ciph->key_len)
             s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
                             key, ciph->key_len, s, s->msg_callback_arg);
-        if (ivlen) {
-            if (EVP_CIPHER_mode(ciph) == EVP_CIPH_GCM_MODE)
-                wh |= TLS1_RT_CRYPTO_FIXED_IV;
-            else
-                wh |= TLS1_RT_CRYPTO_IV;
-            s->msg_callback(2, s->version, wh, iv, ivlen, s,
-                            s->msg_callback_arg);
-        }
+
+        wh |= TLS1_RT_CRYPTO_IV;
+        s->msg_callback(2, s->version, wh, iv, ivlen, s,
+                        s->msg_callback_arg);
     }
 #endif
 
