@@ -356,7 +356,7 @@ IF[{- !$disabled{tests} -}]
   # build
   IF[{- !$disabled{shared} -}]
     PROGRAMS_NO_INST=tls13secretstest
-    SOURCE[tls13secretstest]=tls13secretstest.c testutil.c
+    SOURCE[tls13secretstest]=tls13secretstest.c testutil.c test_main.c
     SOURCE[tls13secretstest]= ../ssl/tls13_enc.c ../ssl/packet.c
     INCLUDE[tls13secretstest]=.. ../include
     DEPEND[tls13secretstest]=../libcrypto ../libssl
