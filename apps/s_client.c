@@ -619,7 +619,8 @@ const OPTIONS s_client_options[] = {
     {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
      "Export len bytes of keying material (default 20)"},
     {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
-    {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
+    {"name", OPT_SMTPHOST, 's',
+     "Hostname to use for \"-starttls lmtp\" or \"-starttls smtp\""},
     {"CRL", OPT_CRL, '<', "CRL file to use"},
     {"crl_download", OPT_CRL_DOWNLOAD, '-', "Download CRL from distribution points"},
     {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default"},
@@ -743,7 +744,8 @@ typedef enum PROTOCOL_choice {
     PROTO_XMPP_SERVER,
     PROTO_CONNECT,
     PROTO_IRC,
-    PROTO_POSTGRES
+    PROTO_POSTGRES,
+    PROTO_LMTP
 } PROTOCOL_CHOICE;
 
 static const OPT_PAIR services[] = {
@@ -756,6 +758,7 @@ static const OPT_PAIR services[] = {
     {"telnet", PROTO_TELNET},
     {"irc", PROTO_IRC},
     {"postgres", PROTO_POSTGRES},
+    {"lmtp", PROTO_LMTP},
     {NULL, 0}
 };
 
@@ -1854,6 +1857,7 @@ int s_client_main(int argc, char **argv)
     switch ((PROTOCOL_CHOICE) starttls_proto) {
     case PROTO_OFF:
         break;
+    case PROTO_LMTP:
     case PROTO_SMTP:
         {
             /*
@@ -1867,14 +1871,24 @@ int s_client_main(int argc, char **argv)
             int foundit = 0;
             BIO *fbio = BIO_new(BIO_f_buffer());
             BIO_push(fbio, sbio);
-            /* wait for multi-line response to end from SMTP */
+            /* Wait for multi-line response to end from LMTP or SMTP */
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
             }
             while (mbuf_len > 3 && mbuf[3] == '-');
-            BIO_printf(fbio, "EHLO %s\r\n", ehlo);
+            switch ((PROTOCOL_CHOICE) starttls_proto) {
+                case PROTO_LMTP:
+                    BIO_printf(fbio, "LHLO %s\r\n", ehlo);
+                    break;
+                case PROTO_SMTP:
+                    BIO_printf(fbio, "EHLO %s\r\n", ehlo);
+                    break;
+            }
             (void)BIO_flush(fbio);
-            /* wait for multi-line response to end EHLO SMTP response */
+            /*
+             * Wait for multi-line response to end LHLO LMTP or EHLO SMTP
+             * response.
+             */
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
                 if (strstr(mbuf, "STARTTLS"))
