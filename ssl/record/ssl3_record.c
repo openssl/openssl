@@ -124,7 +124,7 @@ static int ssl3_record_app_data_waiting(SSL *s)
 /* used only by ssl3_read_bytes */
 int ssl3_get_record(SSL *s)
 {
-    int ssl_major, ssl_minor, al;
+    int al;
     int enc_err, rret, ret = -1;
     int i;
     size_t more, n;
@@ -133,10 +133,11 @@ int ssl3_get_record(SSL *s)
     SSL_SESSION *sess;
     unsigned char *p;
     unsigned char md[EVP_MAX_MD_SIZE];
-    short version;
+    unsigned int version;
     size_t mac_size;
     int imac_size;
     size_t num_recs = 0, max_recs, j;
+    PACKET pkt, sslv2pkt;
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     rbuf = RECORD_LAYER_get_rbuf(&s->rlayer);
@@ -150,6 +151,9 @@ int ssl3_get_record(SSL *s)
         if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
             (RECORD_LAYER_get_packet_length(&s->rlayer)
              < SSL3_RT_HEADER_LENGTH)) {
+            size_t sslv2len;
+            unsigned int type;
+
             rret = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH,
                                SSL3_BUFFER_get_len(rbuf), 0,
                                num_recs == 0 ? 1 : 0, &n);
@@ -158,12 +162,25 @@ int ssl3_get_record(SSL *s)
             RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_BODY);
 
             p = RECORD_LAYER_get_packet(&s->rlayer);
-
+            if (!PACKET_buf_init(&pkt, RECORD_LAYER_get_packet(&s->rlayer),
+                                 RECORD_LAYER_get_packet_length(&s->rlayer))) {
+                al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
+                goto f_err;
+            }
+            sslv2pkt = pkt;
+            if (!PACKET_get_net_2_len(&sslv2pkt, &sslv2len)
+                    || !PACKET_get_1(&sslv2pkt, &type)) {
+                al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
+                goto f_err;
+            }
             /*
              * The first record received by the server may be a V2ClientHello.
              */
             if (s->server && RECORD_LAYER_is_first_record(&s->rlayer)
-                && (p[0] & 0x80) && (p[2] == SSL2_MT_CLIENT_HELLO)) {
+                    && (sslv2len & 0x8000) != 0
+                    && (type == SSL2_MT_CLIENT_HELLO)) {
                 /*
                  *  SSLv2 style record
                  *
@@ -176,7 +193,7 @@ int ssl3_get_record(SSL *s)
                 rr[num_recs].type = SSL3_RT_HANDSHAKE;
                 rr[num_recs].rec_version = SSL2_VERSION;
 
-                rr[num_recs].length = ((p[0] & 0x7f) << 8) | p[1];
+                rr[num_recs].length = sslv2len & 0x7fff;
 
                 if (rr[num_recs].length > SSL3_BUFFER_get_len(rbuf)
                     - SSL2_RT_HEADER_LENGTH) {
@@ -197,16 +214,19 @@ int ssl3_get_record(SSL *s)
                                     s->msg_callback_arg);
 
                 /* Pull apart the header into the SSL3_RECORD */
-                rr[num_recs].type = *(p++);
-                ssl_major = *(p++);
-                ssl_minor = *(p++);
-                version = (ssl_major << 8) | ssl_minor;
+                if (!PACKET_get_1(&pkt, &type)
+                        || !PACKET_get_net_2(&pkt, &version)
+                        || !PACKET_get_net_2_len(&pkt, &rr[num_recs].length)) {
+                    al = SSL_AD_INTERNAL_ERROR;
+                    SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
+                    goto f_err;
+                }
+                rr[num_recs].type = type;
                 rr[num_recs].rec_version = version;
-                n2s(p, rr[num_recs].length);
 
                 /* Lets check version. In TLSv1.3 we ignore this field */
                 if (!s->first_packet && !SSL_IS_TLS13(s)
-                        && version != s->version) {
+                        && version != (unsigned int)s->version) {
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
                     if ((s->version & 0xFF00) == (version & 0xFF00)
                         && !s->enc_write_ctx && !s->write_hash) {
