@@ -284,6 +284,10 @@ now to place in the CRL nextUpdate field.
 
 the number of hours before the next CRL is due.
 
+=item B<-crlsec num>
+
+the number of seconds before the next CRL is due.
+
 =item B<-revoke filename>
 
 a filename containing a certificate to revoke.
@@ -418,8 +422,9 @@ present.
 =item B<default_crl_hours default_crl_days>
 
 the same as the B<-crlhours> and the B<-crldays> options. These
-will only be used if neither command line option is present. At
-least one of these must be present to generate a CRL.
+will only be used if neither command line option is present. If
+neither the command line options nor the configuration file elements
+are present, the CRL won't have a nextUpdate field.
 
 =item B<default_md>
 
