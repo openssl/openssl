@@ -553,7 +553,7 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
 
     /* TODO(size_t): Convert this call */
     i = COMP_compress_block(ssl->compress, wr->data,
-                            SSL3_RT_MAX_COMPRESSED_LENGTH,
+                            (int)(wr->length + SSL3_RT_MAX_COMPRESSED_OVERHEAD),
                             wr->input, (int)wr->length);
     if (i < 0)
         return (0);
