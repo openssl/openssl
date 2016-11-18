@@ -279,6 +279,13 @@ int ssl3_get_record(SSL *s)
                     }
                 }
 
+                if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL
+                        && rr[num_recs].type != SSL3_RT_APPLICATION_DATA) {
+                    SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
+                    al = SSL_AD_UNEXPECTED_MESSAGE;
+                    goto f_err;
+                }
+
                 if (rr[num_recs].length >
                     SSL3_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
                     al = SSL_AD_RECORD_OVERFLOW;
@@ -398,6 +405,7 @@ int ssl3_get_record(SSL *s)
     }
 
     enc_err = s->method->ssl3_enc->enc(s, rr, num_recs, 0);
+
     /*-
      * enc_err is:
      *    0: (in non-constant time) if the record is publically invalid.
@@ -500,6 +508,30 @@ int ssl3_get_record(SSL *s)
             if (!ssl3_do_uncompress(s, &rr[j])) {
                 al = SSL_AD_DECOMPRESSION_FAILURE;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_DECOMPRESSION);
+                goto f_err;
+            }
+        }
+
+        if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL) {
+            size_t end;
+
+            if (rr[j].length == 0) {
+                al = SSL_AD_UNEXPECTED_MESSAGE;
+                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
+                goto f_err;
+            }
+
+            /* Strip trailing padding */
+            for (end = rr[j].length - 1; end > 0 && rr[j].data[end] == 0; end--)
+                continue;
+
+            rr[j].length = end;
+            rr[j].type = rr[j].data[end];
+            if (rr[j].type != SSL3_RT_APPLICATION_DATA
+                    && rr[j].type != SSL3_RT_ALERT
+                    && rr[j].type != SSL3_RT_HANDSHAKE) {
+                al = SSL_AD_UNEXPECTED_MESSAGE;
+                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
                 goto f_err;
             }
         }

@@ -790,8 +790,17 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         unsigned int version = s->version;
         unsigned char *compressdata;
         size_t maxcomplen;
+        unsigned int rectype;
 
         SSL3_RECORD_set_type(&wr[j], type);
+        /*
+         * In TLSv1.3, once encrypting, we always use application data for the
+         * record type
+         */
+        if (SSL_IS_TLS13(s) && s->enc_write_ctx != NULL)
+            rectype = SSL3_RT_APPLICATION_DATA;
+        else
+            rectype = type;
         /*
          * Some servers hang if initial client hello is larger than 256 bytes
          * and record version number > TLS 1.0
@@ -803,7 +812,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         maxcomplen = pipelens[j] + (ssl_allow_compression(s)
                                     ? SSL3_RT_MAX_COMPRESSED_OVERHEAD : 0);
         /* write the header */
-        if (!WPACKET_put_bytes_u8(&pkt[j], type)
+        if (!WPACKET_put_bytes_u8(&pkt[j], rectype)
                 || !WPACKET_put_bytes_u16(&pkt[j], version)
                 || !WPACKET_start_sub_packet_u16(&pkt[j])
                 || (eivlen > 0
@@ -827,6 +836,9 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
         /* first we compress */
         if (s->compress != NULL) {
+            /*
+             * TODO(TLS1.3): Make sure we prevent compression!!!
+             */
             if (!ssl3_do_compress(s, &wr[j])
                     || !WPACKET_allocate_bytes(&pkt[j], wr[j].length, NULL)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, SSL_R_COMPRESSION_FAILURE);
@@ -838,6 +850,18 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                 goto err;
             }
             SSL3_RECORD_reset_input(&wr[j]);
+        }
+
+        if (SSL_IS_TLS13(s) && s->enc_write_ctx != NULL) {
+            if (!WPACKET_put_bytes_u8(&pkt[j], type)) {
+                SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            SSL3_RECORD_add_length(&wr[j], 1);
+            /*
+             * TODO(TLS1.3): Padding goes here. Do we need an API to add this?
+             * For now, use no padding
+             */
         }
 
         /*
@@ -878,7 +902,6 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         SSL3_RECORD_set_data(&wr[j], recordstart);
         SSL3_RECORD_reset_input(&wr[j]);
         SSL3_RECORD_set_length(&wr[j], len);
-
     }
 
     if (s->method->ssl3_enc->enc(s, wr, numpipes, 1) < 1)

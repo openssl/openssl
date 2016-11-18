@@ -2326,6 +2326,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_LENGTH                                 271
 # define SSL_R_BAD_PACKET_LENGTH                          115
 # define SSL_R_BAD_PROTOCOL_VERSION_NUMBER                116
+# define SSL_R_BAD_RECORD_TYPE                            443
 # define SSL_R_BAD_RSA_ENCRYPT                            119
 # define SSL_R_BAD_SIGNATURE                              123
 # define SSL_R_BAD_SRP_A_LENGTH                           347
