@@ -380,6 +380,17 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             !BIO_set_write_buffer_size(dbio, ctx->obuf_size))
             ret = 0;
         break;
+    case BIO_CTRL_PEEK:
+        /* Ensure there's stuff in the input buffer */
+        {
+            char fake_buf[1];
+            (void)buffer_read(b, fake_buf, 0);
+        }
+        if (num > ctx->ibuf_len)
+            num = ctx->ibuf_len;
+        memcpy(ptr, &(ctx->ibuf[ctx->ibuf_off]), num);
+        ret = num;
+        break;
     default:
         if (b->next_bio == NULL)
             return (0);
