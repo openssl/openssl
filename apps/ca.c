@@ -1009,7 +1009,7 @@ end_of_options:
             const int filen_len = 2 * (snl > 0 ? snl : 1) + sizeof(".pem");
             char *n = new_cert + outdirlen;
 
-            if (outdirlen + filen_len >= PATH_MAX - 1) {
+            if (outdirlen + filen_len > PATH_MAX) {
                 BIO_printf(bio_err, "certificate file name too long\n");
                 goto end;
             }
