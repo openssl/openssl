@@ -93,6 +93,7 @@ Command-line parameter generation:
 Code for setting up parameters during server initialization:
 
  SSL_CTX ctx = SSL_CTX_new();
+
  DH *dh_2048 = NULL;
  FILE *paramfile = fopen("dh_param_2048.pem", "r");
 
