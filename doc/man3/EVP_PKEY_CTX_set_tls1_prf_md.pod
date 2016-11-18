@@ -80,15 +80,15 @@ and seed value "seed":
  size_t outlen = sizeof(out);
  pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
  if (EVP_PKEY_derive_init(pctx) <= 0)
-    /* Error */
+     /* Error */
  if (EVP_PKEY_CTX_set_tls1_prf_md(pctx, EVP_sha256()) <= 0)
-    /* Error */
+     /* Error */
  if (EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, "secret", 6) <= 0)
-    /* Error */
+     /* Error */
  if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, "seed", 4) <= 0)
-    /* Error */
+     /* Error */
  if (EVP_PKEY_derive(pctx, out, &outlen) <= 0)
-    /* Error */
+     /* Error */
 
 =head1 SEE ALSO
 

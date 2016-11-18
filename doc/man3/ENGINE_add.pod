@@ -385,17 +385,19 @@ illustrates how to approach this;
  const char *engine_id = "ACME";
  ENGINE_load_builtin_engines();
  e = ENGINE_by_id(engine_id);
- if(!e)
+ if (!e)
      /* the engine isn't available */
      return;
- if(!ENGINE_init(e)) {
+ if (!ENGINE_init(e)) {
      /* the engine couldn't initialise, release 'e' */
      ENGINE_free(e);
      return;
  }
- if(!ENGINE_set_default_RSA(e))
-     /* This should only happen when 'e' can't initialise, but the previous
-      * statement suggests it did. */
+ if (!ENGINE_set_default_RSA(e))
+     /*
+      * This should only happen when 'e' can't initialise, but the previous
+      * statement suggests it did.
+      */
      abort();
  ENGINE_set_default_DSA(e);
  ENGINE_set_default_ciphers(e);
@@ -474,9 +476,9 @@ boolean success or failure.
      ENGINE *e = ENGINE_by_id(engine_id);
      if (!e) return 0;
      while (pre_num--) {
-         if(!ENGINE_ctrl_cmd_string(e, pre_cmds[0], pre_cmds[1], 0)) {
+         if (!ENGINE_ctrl_cmd_string(e, pre_cmds[0], pre_cmds[1], 0)) {
              fprintf(stderr, "Failed command (%s - %s:%s)\n", engine_id,
-                 pre_cmds[0], pre_cmds[1] ? pre_cmds[1] : "(NULL)");
+                     pre_cmds[0], pre_cmds[1] ? pre_cmds[1] : "(NULL)");
              ENGINE_free(e);
              return 0;
          }
@@ -487,13 +489,15 @@ boolean success or failure.
          ENGINE_free(e);
          return 0;
      }
-     /* ENGINE_init() returned a functional reference, so free the structural
-      * reference from ENGINE_by_id(). */
+     /*
+      * ENGINE_init() returned a functional reference, so free the structural
+      * reference from ENGINE_by_id().
+      */
      ENGINE_free(e);
-     while(post_num--) {
-         if(!ENGINE_ctrl_cmd_string(e, post_cmds[0], post_cmds[1], 0)) {
+     while (post_num--) {
+         if (!ENGINE_ctrl_cmd_string(e, post_cmds[0], post_cmds[1], 0)) {
              fprintf(stderr, "Failed command (%s - %s:%s)\n", engine_id,
-                 post_cmds[0], post_cmds[1] ? post_cmds[1] : "(NULL)");
+                     post_cmds[0], post_cmds[1] ? post_cmds[1] : "(NULL)");
              ENGINE_finish(e);
              return 0;
          }

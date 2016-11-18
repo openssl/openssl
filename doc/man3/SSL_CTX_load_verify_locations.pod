@@ -108,7 +108,7 @@ ca1.pem ca2.pem ca3.pem:
  #!/bin/sh
  rm CAfile.pem
  for i in ca1.pem ca2.pem ca3.pem ; do
-   openssl x509 -in $i -text >> CAfile.pem
+     openssl x509 -in $i -text >> CAfile.pem
  done
 
 Prepare the directory /some/where/certs containing several CA certificates

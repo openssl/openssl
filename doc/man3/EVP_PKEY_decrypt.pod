@@ -52,28 +52,29 @@ Decrypt data using OAEP (for RSA keys):
  unsigned char *out, *in;
  size_t outlen, inlen;
  EVP_PKEY *key;
- /* NB: assumes key in, inlen are already set up
+ /*
+  * NB: assumes key in, inlen are already set up
   * and that key is an RSA private key
   */
  ctx = EVP_PKEY_CTX_new(key);
  if (!ctx)
-        /* Error occurred */
+     /* Error occurred */
  if (EVP_PKEY_decrypt_init(ctx) <= 0)
-        /* Error */
+     /* Error */
  if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_OAEP_PADDING) <= 0)
-        /* Error */
+     /* Error */
 
  /* Determine buffer length */
  if (EVP_PKEY_decrypt(ctx, NULL, &outlen, in, inlen) <= 0)
-        /* Error */
+     /* Error */
 
  out = OPENSSL_malloc(outlen);
 
  if (!out)
-        /* malloc failure */
+     /* malloc failure */
 
  if (EVP_PKEY_decrypt(ctx, out, &outlen, in, inlen) <= 0)
-        /* Error */
+     /* Error */
 
  /* Decrypted data is outlen bytes written to buffer out */
 

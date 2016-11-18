@@ -174,7 +174,7 @@ to retrieve a page and copy the result to standard output.
      exit(1);
  }
  BIO_puts(cbio, "GET / HTTP/1.0\n\n");
- for ( ; ; ) {
+ for (;;) {
      len = BIO_read(cbio, tmpbuf, 1024);
      if (len <= 0)
          break;

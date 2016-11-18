@@ -306,43 +306,38 @@ Read a certificate in PEM format from a BIO:
 
  X509 *x;
  x = PEM_read_bio_X509(bp, NULL, 0, NULL);
- if (x == NULL) {
+ if (x == NULL)
      /* Error */
- }
 
 Alternative method:
 
  X509 *x = NULL;
- if (!PEM_read_bio_X509(bp, &x, 0, NULL)) {
+ if (!PEM_read_bio_X509(bp, &x, 0, NULL))
      /* Error */
- }
 
 Write a certificate to a BIO:
 
- if (!PEM_write_bio_X509(bp, x)) {
+ if (!PEM_write_bio_X509(bp, x))
      /* Error */
- }
 
 Write a private key (using traditional format) to a BIO using
 triple DES encryption, the pass phrase is prompted for:
 
- if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL)) {
+ if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL))
      /* Error */
- }
 
 Write a private key (using PKCS#8 format) to a BIO using triple
 DES encryption, using the pass phrase "hello":
 
- if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, "hello")) {
+ if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(),
+                                    NULL, 0, 0, "hello"))
      /* Error */
- }
 
 Read a private key from a BIO using a pass phrase callback:
 
  key = PEM_read_bio_PrivateKey(bp, NULL, pass_cb, "My Private Key");
- if (key == NULL) {
+ if (key == NULL)
      /* Error */
- }
 
 Skeleton pass phrase callback:
 
@@ -432,9 +427,8 @@ The pseudo code to derive the key would look similar to:
 
  memcpy(iv, HexToBin("3F17F5316E2BAC89"), niv);
  rc = EVP_BytesToKey(cipher, md, iv /*salt*/, pword, plen, 1, key, NULL /*iv*/);
- if (rc != nkey) {
+ if (rc != nkey)
      /* Error */
- }
 
  /* On success, use key and iv to initialize the cipher */
 
