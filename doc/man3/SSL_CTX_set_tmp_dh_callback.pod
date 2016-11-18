@@ -84,31 +84,27 @@ supply at least 2048-bit parameters in the callback.
 Setup DH parameters with a key length of 2048 bits. (Error handling
 partly left out.)
 
- Command-line parameter generation:
+Command-line parameter generation:
+
  $ openssl dhparam -out dh_param_2048.pem 2048
 
- Code for setting up parameters during server initialization:
+Code for setting up parameters during server initialization:
 
- ...
  SSL_CTX ctx = SSL_CTX_new();
- ...
 
- /* Set up ephemeral DH parameters. */
  DH *dh_2048 = NULL;
  FILE *paramfile;
  paramfile = fopen("dh_param_2048.pem", "r");
  if (paramfile) {
-   dh_2048 = PEM_read_DHparams(paramfile, NULL, NULL, NULL);
-   fclose(paramfile);
+     dh_2048 = PEM_read_DHparams(paramfile, NULL, NULL, NULL);
+     fclose(paramfile);
  } else {
-   /* Error. */
+     /* Error. */
  }
- if (dh_2048 == NULL) {
-   /* Error. */
- }
- if (SSL_CTX_set_tmp_dh(ctx, dh_2048) != 1) {
-   /* Error. */
- }
+ if (dh_2048 == NULL)
+     /* Error. */
+ if (SSL_CTX_set_tmp_dh(ctx, dh_2048) != 1)
+     /* Error. */
  ...
 
 =head1 RETURN VALUES

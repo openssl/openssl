@@ -190,139 +190,137 @@ The actual name matched in the certificate (which might be a wildcard) is
 retrieved, and must be copied by the application if it is to be retained beyond
 the lifetime of the SSL connection.
 
-  SSL_CTX *ctx;
-  SSL *ssl;
-  int (*verify_cb)(int ok, X509_STORE_CTX *sctx) = NULL;
-  int num_usable = 0;
-  const char *nexthop_domain = "example.com";
-  const char *dane_tlsa_domain = "smtp.example.com";
-  uint8_t usage, selector, mtype;
+ SSL_CTX *ctx;
+ SSL *ssl;
+ int (*verify_cb)(int ok, X509_STORE_CTX *sctx) = NULL;
+ int num_usable = 0;
+ const char *nexthop_domain = "example.com";
+ const char *dane_tlsa_domain = "smtp.example.com";
+ uint8_t usage, selector, mtype;
 
-  if ((ctx = SSL_CTX_new(TLS_client_method())) == NULL)
-    /* handle error */
-  if (SSL_CTX_dane_enable(ctx) <= 0)
-    /* handle error */
+ if ((ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+     /* error */
+ if (SSL_CTX_dane_enable(ctx) <= 0)
+     /* error */
+ if ((ssl = SSL_new(ctx)) == NULL)
+     /* error */
+ if (SSL_dane_enable(ssl, dane_tlsa_domain) <= 0)
+     /* error */
 
-  if ((ssl = SSL_new(ctx)) == NULL)
-    /* handle error */
+ /*
+  * For many applications it is safe to skip DANE-EE(3) namechecks.  Do not
+  * disable the checks unless "unknown key share" attacks pose no risk for
+  * your application.
+  */
+ SSL_dane_set_flags(ssl, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
 
-  if (SSL_dane_enable(ssl, dane_tlsa_domain) <= 0)
-    /* handle error */
+ if (!SSL_add1_host(ssl, nexthop_domain))
+     /* error */
+ SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
 
-  /*
-   * For many applications it is safe to skip DANE-EE(3) namechecks.  Do not
-   * disable the checks unless "unknown key share" attacks pose no risk for
-   * your application.
-   */
-  SSL_dane_set_flags(ssl, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
+ for (... each TLSA record ...) {
+     unsigned char *data;
+     size_t len;
+     int ret;
 
-  if (!SSL_add1_host(ssl, nexthop_domain))
-    /* handle error */
-  SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+     /* set usage, selector, mtype, data, len */
 
-  for (... each TLSA record ...) {
-    unsigned char *data;
-    size_t len;
-    int ret;
+     /*
+      * Opportunistic DANE TLS clients support only DANE-TA(2) or DANE-EE(3).
+      * They treat all other certificate usages, and in particular PKIX-TA(0)
+      * and PKIX-EE(1), as unusable.
+      */
+     switch (usage) {
+     default:
+     case 0:     /* PKIX-TA(0) */
+     case 1:     /* PKIX-EE(1) */
+         continue;
+     case 2:     /* DANE-TA(2) */
+     case 3:     /* DANE-EE(3) */
+         break;
+     }
 
-    /* set usage, selector, mtype, data, len */
+     ret = SSL_dane_tlsa_add(ssl, usage, selector, mtype, data, len);
+     /* free data as appropriate */
 
-    /*
-     * Opportunistic DANE TLS clients support only DANE-TA(2) or DANE-EE(3).
-     * They treat all other certificate usages, and in particular PKIX-TA(0)
-     * and PKIX-EE(1), as unusable.
-     */
-    switch (usage) {
-    default:
-    case 0:     /* PKIX-TA(0) */
-    case 1:     /* PKIX-EE(1) */
-        continue;
-    case 2:     /* DANE-TA(2) */
-    case 3:     /* DANE-EE(3) */
-        break;
-    }
+     if (ret < 0)
+         /* handle SSL library internal error */
+     else if (ret == 0)
+         /* handle unusable TLSA record */
+     else
+         ++num_usable;
+ }
 
-    ret = SSL_dane_tlsa_add(ssl, usage, selector, mtype, data, len);
-    /* free data as appropriate */
+ /*
+  * At this point, the verification mode is still the default SSL_VERIFY_NONE.
+  * Opportunistic DANE clients use unauthenticated TLS when all TLSA records
+  * are unusable, so continue the handshake even if authentication fails.
+  */
+ if (num_usable == 0) {
+     /* Log all records unusable? */
 
-    if (ret < 0)
-        /* handle SSL library internal error */
-    else if (ret == 0)
-        /* handle unusable TLSA record */
-    else
-      ++num_usable;
-  }
+     /* Optionally set verify_cb to a suitable non-NULL callback. */
+     SSL_set_verify(ssl, SSL_VERIFY_NONE, verify_cb);
+ } else {
+     /* At least one usable record.  We expect to verify the peer */
 
-  /*
-   * At this point, the verification mode is still the default SSL_VERIFY_NONE.
-   * Opportunistic DANE clients use unauthenticated TLS when all TLSA records
-   * are unusable, so continue the handshake even if authentication fails.
-   */
-  if (num_usable == 0) {
-    /* Log all records unusable? */
+     /* Optionally set verify_cb to a suitable non-NULL callback. */
 
-    /* Optionally set verify_cb to a suitable non-NULL callback. */
-    SSL_set_verify(ssl, SSL_VERIFY_NONE, verify_cb);
-  } else {
-    /* At least one usable record.  We expect to verify the peer */
+     /*
+      * Below we elect to fail the handshake when peer verification fails.
+      * Alternatively, use the permissive SSL_VERIFY_NONE verification mode,
+      * complete the handshake, check the verification status, and if not
+      * verified disconnect gracefully at the application layer, especially if
+      * application protocol supports informing the server that authentication
+      * failed.
+      */
+     SSL_set_verify(ssl, SSL_VERIFY_PEER, verify_cb);
+ }
 
-    /* Optionally set verify_cb to a suitable non-NULL callback. */
+ /*
+  * Load any saved session for resumption, making sure that the previous
+  * session applied the same security and authentication requirements that
+  * would be expected of a fresh connection.
+  */
 
-    /*
-     * Below we elect to fail the handshake when peer verification fails.
-     * Alternatively, use the permissive SSL_VERIFY_NONE verification mode,
-     * complete the handshake, check the verification status, and if not
-     * verified disconnect gracefully at the application layer, especially if
-     * application protocol supports informing the server that authentication
-     * failed.
-     */
-    SSL_set_verify(ssl, SSL_VERIFY_PEER, verify_cb);
-  }
+ /* Perform SSL_connect() handshake and handle errors here */
 
-  /*
-   * Load any saved session for resumption, making sure that the previous
-   * session applied the same security and authentication requirements that
-   * would be expected of a fresh connection.
-   */
+ if (SSL_session_reused(ssl)) {
+     if (SSL_get_verify_result(ssl) == X509_V_OK) {
+         /*
+          * Resumed session was originally verified, this connection is
+          * authenticated.
+          */
+     } else {
+         /*
+          * Resumed session was not originally verified, this connection is not
+          * authenticated.
+          */
+     }
+ } else if (SSL_get_verify_result(ssl) == X509_V_OK) {
+     const char *peername = SSL_get0_peername(ssl);
+     EVP_PKEY *mspki = NULL;
 
-  /* Perform SSL_connect() handshake and handle errors here */
-
-  if (SSL_session_reused(ssl)) {
-      if (SSL_get_verify_result(ssl) == X509_V_OK) {
-        /*
-         * Resumed session was originally verified, this connection is
-         * authenticated.
-         */
-      } else {
-        /*
-         * Resumed session was not originally verified, this connection is not
-         * authenticated.
-         */
-      }
-  } else if (SSL_get_verify_result(ssl) == X509_V_OK) {
-    const char *peername = SSL_get0_peername(ssl);
-    EVP_PKEY *mspki = NULL;
-
-    int depth = SSL_get0_dane_authority(ssl, NULL, &mspki);
-    if (depth >= 0) {
-        (void) SSL_get0_dane_tlsa(ssl, &usage, &selector, &mtype, NULL, NULL);
-        printf("DANE TLSA %d %d %d %s at depth %d\n", usage, selector, mtype,
-               (mspki != NULL) ? "TA public key verified certificate" :
-               depth ? "matched TA certificate" : "matched EE certificate",
-               depth);
-    }
-    if (peername != NULL) {
-      /* Name checks were in scope and matched the peername */
-      printf("Verified peername: %s\n", peername);
-    }
-  } else {
-    /*
-     * Not authenticated, presumably all TLSA rrs unusable, but possibly a
-     * callback suppressed connection termination despite the presence of
-     * usable TLSA RRs none of which matched.  Do whatever is appropriate for
-     * fresh unauthenticated connections.
-     */
-  }
+     int depth = SSL_get0_dane_authority(ssl, NULL, &mspki);
+     if (depth >= 0) {
+         (void) SSL_get0_dane_tlsa(ssl, &usage, &selector, &mtype, NULL, NULL);
+         printf("DANE TLSA %d %d %d %s at depth %d\n", usage, selector, mtype,
+                (mspki != NULL) ? "TA public key verified certificate" :
+                depth ? "matched TA certificate" : "matched EE certificate",
+                depth);
+     }
+     if (peername != NULL) {
+         /* Name checks were in scope and matched the peername */
+         printf("Verified peername: %s\n", peername);
+     }
+ } else {
+     /*
+      * Not authenticated, presumably all TLSA rrs unusable, but possibly a
+      * callback suppressed connection termination despite the presence of
+      * usable TLSA RRs none of which matched.  Do whatever is appropriate for
+      * fresh unauthenticated connections.
+      */
+ }
 
 =head1 NOTES
 

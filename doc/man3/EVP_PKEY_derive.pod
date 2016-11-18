@@ -57,23 +57,23 @@ Derive shared secret (for example DH or EC keys):
 
  ctx = EVP_PKEY_CTX_new(pkey);
  if (!ctx)
-        /* Error occurred */
+     /* Error occurred */
  if (EVP_PKEY_derive_init(ctx) <= 0)
-        /* Error */
+     /* Error */
  if (EVP_PKEY_derive_set_peer(ctx, peerkey) <= 0)
-        /* Error */
+     /* Error */
 
  /* Determine buffer length */
  if (EVP_PKEY_derive(ctx, NULL, &skeylen) <= 0)
-        /* Error */
+     /* Error */
 
  skey = OPENSSL_malloc(skeylen);
 
  if (!skey)
-        /* malloc failure */
+     /* malloc failure */
 
  if (EVP_PKEY_derive(ctx, skey, &skeylen) <= 0)
-        /* Error */
+     /* Error */
 
  /* Shared secret is skey bytes written to buffer skey */
 

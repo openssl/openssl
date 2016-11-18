@@ -73,7 +73,7 @@ and not IPv4 addresses mapped to IPv6.
 These flags are bit flags, so they are to be combined with the
 C<|> operator, for example:
 
-  BIO_connect(sock, addr, BIO_SOCK_KEEPALIVE | BIO_SOCK_NONBLOCK);
+ BIO_connect(sock, addr, BIO_SOCK_KEEPALIVE | BIO_SOCK_NONBLOCK);
 
 =head1 RETURN VALUES
 

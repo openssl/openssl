@@ -169,7 +169,8 @@ Instead applications should create a BN_GENCB structure using BN_GENCB_new:
 
  BN_GENCB *callback;
  callback = BN_GENCB_new();
- if(!callback) /* handle error */
+ if (!callback)
+     /* error */
  ...
  BN_GENCB_free(callback);
 

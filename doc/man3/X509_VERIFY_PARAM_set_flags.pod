@@ -310,11 +310,11 @@ CRLs from the CRL distribution points extension.
 Enable CRL checking when performing certificate verification during SSL
 connections associated with an B<SSL_CTX> structure B<ctx>:
 
-  X509_VERIFY_PARAM *param;
-  param = X509_VERIFY_PARAM_new();
-  X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
-  SSL_CTX_set1_param(ctx, param);
-  X509_VERIFY_PARAM_free(param);
+ X509_VERIFY_PARAM *param;
+ param = X509_VERIFY_PARAM_new();
+ X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
+ SSL_CTX_set1_param(ctx, param);
+ X509_VERIFY_PARAM_free(param);
 
 =head1 SEE ALSO
 

@@ -23,8 +23,8 @@ B<str> is an array of error string data:
 
  typedef struct ERR_string_data_st
  {
-        unsigned long error;
-        char *string;
+     unsigned long error;
+     char *string;
  } ERR_STRING_DATA;
 
 The error code is generated from the library number and a function and

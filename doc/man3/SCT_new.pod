@@ -18,21 +18,21 @@ SCT_get_source, SCT_set_source
  #include <openssl/ct.h>
 
  typedef enum {
-  CT_LOG_ENTRY_TYPE_NOT_SET = -1,
-  CT_LOG_ENTRY_TYPE_X509 = 0,
-  CT_LOG_ENTRY_TYPE_PRECERT = 1
+     CT_LOG_ENTRY_TYPE_NOT_SET = -1,
+     CT_LOG_ENTRY_TYPE_X509 = 0,
+     CT_LOG_ENTRY_TYPE_PRECERT = 1
  } ct_log_entry_type_t;
 
  typedef enum {
-  SCT_VERSION_NOT_SET = -1,
-  SCT_VERSION_V1 = 0
+     SCT_VERSION_NOT_SET = -1,
+     SCT_VERSION_V1 = 0
  } sct_version_t;
 
  typedef enum {
-  SCT_SOURCE_UNKNOWN,
-  SCT_SOURCE_TLS_EXTENSION,
-  SCT_SOURCE_X509V3_EXTENSION,
-  SCT_SOURCE_OCSP_STAPLED_RESPONSE
+     SCT_SOURCE_UNKNOWN,
+     SCT_SOURCE_TLS_EXTENSION,
+     SCT_SOURCE_X509V3_EXTENSION,
+     SCT_SOURCE_OCSP_STAPLED_RESPONSE
  } sct_source_t;
 
  SCT *SCT_new(void);

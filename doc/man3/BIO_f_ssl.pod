@@ -170,15 +170,15 @@ unencrypted example in L<BIO_s_connect(3)>.
      exit(1);
  }
  if (BIO_do_handshake(sbio) <= 0) {
-        fprintf(stderr, "Error establishing SSL connection\n");
-        ERR_print_errors_fp(stderr);
-        exit(1);
+     fprintf(stderr, "Error establishing SSL connection\n");
+     ERR_print_errors_fp(stderr);
+     exit(1);
  }
 
  /* XXX Could examine ssl here to get connection info */
 
  BIO_puts(sbio, "GET / HTTP/1.0\n\n");
- for ( ; ; ) {
+ for (;;) {
      len = BIO_read(sbio, tmpbuf, 1024);
      if (len <= 0)
          break;
@@ -261,7 +261,7 @@ a client and also echoes the request to standard output.
  BIO_puts(sbio, "\r\nConnection Established\r\nRequest headers:\r\n");
  BIO_puts(sbio, "--------------------------------------------------\r\n");
 
- for ( ; ; ) {
+ for (;;) {
      len = BIO_gets(sbio, tmpbuf, 1024);
      if (len <= 0)
          break;

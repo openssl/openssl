@@ -47,38 +47,38 @@ the result to a new file.
 
  int main(int argc, char **argv)
  {
-    FILE *fp;
-    PKCS12 *p12;
-    if (argc != 5) {
-        fprintf(stderr, "Usage: pkread p12file password newpass opfile\n");
-        return 1;
-    }
-    if ((fp = fopen(argv[1], "rb")) == NULL) {
-        fprintf(stderr, "Error opening file %s\n", argv[1]);
-        return 1;
-    }
-    p12 = d2i_PKCS12_fp(fp, NULL);
-    fclose(fp);
-    if (p12 == NULL) {
-        fprintf(stderr, "Error reading PKCS#12 file\n");
-        ERR_print_errors_fp(stderr);
-        return 1;
-    }
-    if (PKCS12_newpass(p12, argv[2], argv[3]) == 0) {
-        fprintf(stderr, "Error changing password\n");
-        ERR_print_errors_fp(stderr);
-        PKCS12_free(p12);
-        return 1;
-    }
-    if ((fp = fopen(argv[4], "wb")) == NULL) {
-        fprintf(stderr, "Error opening file %s\n", argv[4]);
-        PKCS12_free(p12);
-        return 1;
-    }
-    i2d_PKCS12_fp(fp, p12);
-    PKCS12_free(p12);
-    fclose(fp);
-    return 0;
+     FILE *fp;
+     PKCS12 *p12;
+     if (argc != 5) {
+         fprintf(stderr, "Usage: pkread p12file password newpass opfile\n");
+         return 1;
+     }
+     if ((fp = fopen(argv[1], "rb")) == NULL) {
+         fprintf(stderr, "Error opening file %s\n", argv[1]);
+         return 1;
+     }
+     p12 = d2i_PKCS12_fp(fp, NULL);
+     fclose(fp);
+     if (p12 == NULL) {
+         fprintf(stderr, "Error reading PKCS#12 file\n");
+         ERR_print_errors_fp(stderr);
+         return 1;
+     }
+     if (PKCS12_newpass(p12, argv[2], argv[3]) == 0) {
+         fprintf(stderr, "Error changing password\n");
+         ERR_print_errors_fp(stderr);
+         PKCS12_free(p12);
+         return 1;
+     }
+     if ((fp = fopen(argv[4], "wb")) == NULL) {
+         fprintf(stderr, "Error opening file %s\n", argv[4]);
+         PKCS12_free(p12);
+         return 1;
+     }
+     i2d_PKCS12_fp(fp, p12);
+     PKCS12_free(p12);
+     fclose(fp);
+     return 0;
  }
 
 
