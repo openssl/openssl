@@ -357,6 +357,7 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_BAD_PACKET_LENGTH), "bad packet length"},
     {ERR_REASON(SSL_R_BAD_PROTOCOL_VERSION_NUMBER),
      "bad protocol version number"},
+    {ERR_REASON(SSL_R_BAD_RECORD_TYPE), "bad record type"},
     {ERR_REASON(SSL_R_BAD_RSA_ENCRYPT), "bad rsa encrypt"},
     {ERR_REASON(SSL_R_BAD_SIGNATURE), "bad signature"},
     {ERR_REASON(SSL_R_BAD_SRP_A_LENGTH), "bad srp a length"},

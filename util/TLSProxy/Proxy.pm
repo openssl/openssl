@@ -343,7 +343,7 @@ sub process_packet
         if ($record->flight != $self->flight) {
             next;
         }
-        $packet .= $record->reconstruct_record();
+        $packet .= $record->reconstruct_record($server);
     }
 
     $self->{flight} = $self->{flight} + 1;
