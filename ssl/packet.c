@@ -62,7 +62,8 @@ int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
         if (BUF_MEM_grow(pkt->buf, newlen) == 0)
             return 0;
     }
-    *allocbytes = GETBUF(pkt) + pkt->curr;
+    if (allocbytes != NULL)
+        *allocbytes = GETBUF(pkt) + pkt->curr;
 
     return 1;
 }
@@ -374,6 +375,11 @@ int WPACKET_get_length(WPACKET *pkt, size_t *len)
     *len = pkt->written - pkt->subs->pwritten;
 
     return 1;
+}
+
+unsigned char *WPACKET_get_curr(WPACKET *pkt)
+{
+    return GETBUF(pkt) + pkt->curr;
 }
 
 void WPACKET_cleanup(WPACKET *pkt)
