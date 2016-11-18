@@ -67,11 +67,11 @@ void OPENSSL_LH_free(OPENSSL_LHASH *lh)
     OPENSSL_free(lh);
 }
 
-void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
+void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, const void *data)
 {
     unsigned long hash;
     OPENSSL_LH_NODE *nn, **rn;
-    void *ret;
+    const void *ret;
 
     lh->error = 0;
     if ((lh->up_load <= (lh->num_items * LH_LOAD_MULT / lh->num_nodes)) && !expand(lh))
@@ -97,14 +97,14 @@ void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
         (*rn)->data = data;
         lh->num_replace++;
     }
-    return (ret);
+    return (void *)(ret);
 }
 
 void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data)
 {
     unsigned long hash;
     OPENSSL_LH_NODE *nn, **rn;
-    void *ret;
+    const void *ret;
 
     lh->error = 0;
     rn = getrn(lh, data, &hash);
@@ -125,14 +125,14 @@ void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data)
         (lh->down_load >= (lh->num_items * LH_LOAD_MULT / lh->num_nodes)))
         contract(lh);
 
-    return (ret);
+    return (void *)(ret);
 }
 
 void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
 {
     unsigned long hash;
     OPENSSL_LH_NODE **rn;
-    void *ret;
+    const void *ret;
 
     lh->error = 0;
     rn = getrn(lh, data, &hash);
@@ -144,7 +144,7 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
         ret = (*rn)->data;
         lh->num_retrieve++;
     }
-    return (ret);
+    return (void *)(ret);
 }
 
 static void doall_util_fn(OPENSSL_LHASH *lh, int use_arg,
@@ -166,9 +166,9 @@ static void doall_util_fn(OPENSSL_LHASH *lh, int use_arg,
         while (a != NULL) {
             n = a->next;
             if (use_arg)
-                func_arg(a->data, arg);
+                func_arg((void *)a->data, arg);
             else
-                func(a->data);
+                func((void *)a->data);
             a = n;
         }
     }

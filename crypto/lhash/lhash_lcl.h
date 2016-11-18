@@ -9,7 +9,7 @@
 
 
 struct lhash_node_st {
-    void *data;
+    const void *data;
     struct lhash_node_st *next;
     unsigned long hash;
 };
