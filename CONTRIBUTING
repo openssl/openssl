@@ -50,5 +50,5 @@ acceptance and review process faster:
     test/README for information on the test framework.
 
     6.  New features or changed functionality must include
-    documentation. Please look at the "pod" files in doc/apps, doc/crypto
-    and doc/ssl for examples of our style.
+    documentation. Please look at the "pod" files in doc/man[1357]
+    for examples of our style.
