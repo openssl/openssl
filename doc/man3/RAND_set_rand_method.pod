@@ -37,12 +37,12 @@ API is being used, so this function is no longer recommended.
 
  typedef struct rand_meth_st
  {
-        void (*seed)(const void *buf, int num);
-        int (*bytes)(unsigned char *buf, int num);
-        void (*cleanup)(void);
-        void (*add)(const void *buf, int num, int entropy);
-        int (*pseudorand)(unsigned char *buf, int num);
-        int (*status)(void);
+     void (*seed)(const void *buf, int num);
+     int (*bytes)(unsigned char *buf, int num);
+     void (*cleanup)(void);
+     void (*add)(const void *buf, int num, int entropy);
+     int (*pseudorand)(unsigned char *buf, int num);
+     int (*status)(void);
  } RAND_METHOD;
 
 The components point to method implementations used by (or called by), in order,

@@ -143,7 +143,7 @@ Create an object for B<commonName>:
 Check if an object is B<commonName>
 
  if (OBJ_obj2nid(obj) == NID_commonName)
-        /* Do something */
+     /* Do something */
 
 Create a new NID and initialize an object from it:
 

@@ -122,7 +122,8 @@ or
 
 is called before the read and
 
- callback_ex(b, BIO_CB_READ | BIO_CB_RETURN, data, dlen, 0, 0L, retvalue, readbytes)
+ callback_ex(b, BIO_CB_READ | BIO_CB_RETURN, data, dlen, 0, 0L, retvalue,
+             readbytes)
 
 or
 
@@ -140,7 +141,8 @@ or
 
 is called before the write and
 
- callback_ex(b, BIO_CB_WRITE | BIO_CB_RETURN, data, dlen, 0, 0L, retvalue, written)
+ callback_ex(b, BIO_CB_WRITE | BIO_CB_RETURN, data, dlen, 0, 0L, retvalue,
+             written)
 
 or
 
@@ -158,7 +160,8 @@ or
 
 is called before the operation and
 
- callback_ex(b, BIO_CB_GETS | BIO_CB_RETURN, buf, size, 0, 0L, retvalue, readbytes)
+ callback_ex(b, BIO_CB_GETS | BIO_CB_RETURN, buf, size, 0, 0L, retvalue,
+             readbytes)
 
 or
 

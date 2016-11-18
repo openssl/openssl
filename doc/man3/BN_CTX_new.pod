@@ -51,7 +51,8 @@ replace use of BN_CTX_init with BN_CTX_new instead:
 
  BN_CTX *ctx;
  ctx = BN_CTX_new();
- if(!ctx) /* Handle error */
+ if (!ctx)
+     /* error */
  ...
  BN_CTX_free(ctx);
 

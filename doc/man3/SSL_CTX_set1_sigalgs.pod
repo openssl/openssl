@@ -86,14 +86,14 @@ The use of MD5 as a digest is strongly discouraged due to security weaknesses.
 Set supported signature algorithms to SHA256 with ECDSA and SHA256 with RSA
 using an array:
 
-    const int slist[] = {NID_sha256, EVP_PKEY_EC, NID_sha256, EVP_PKEY_RSA};
+ const int slist[] = {NID_sha256, EVP_PKEY_EC, NID_sha256, EVP_PKEY_RSA};
 
-    SSL_CTX_set1_sigalgs(ctx, slist, 4);
+ SSL_CTX_set1_sigalgs(ctx, slist, 4);
 
 Set supported signature algorithms to SHA256 with ECDSA and SHA256 with RSA
 using a string:
 
-    SSL_CTX_set1_sigalgs_list(ctx, "ECDSA+SHA256:RSA+SHA256");
+ SSL_CTX_set1_sigalgs_list(ctx, "ECDSA+SHA256:RSA+SHA256");
 
 =head1 RETURN VALUES
 

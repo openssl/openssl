@@ -75,25 +75,23 @@ Process all entries:
  int i;
  X509_NAME_ENTRY *e;
 
- for (i = 0; i < X509_NAME_entry_count(nm); i++)
-        {
-        e = X509_NAME_get_entry(nm, i);
-        /* Do something with e */
-        }
+ for (i = 0; i < X509_NAME_entry_count(nm); i++) {
+     e = X509_NAME_get_entry(nm, i);
+     /* Do something with e */
+ }
 
 Process all commonName entries:
 
  int lastpos = -1;
  X509_NAME_ENTRY *e;
 
- for (;;)
-        {
-        lastpos = X509_NAME_get_index_by_NID(nm, NID_commonName, lastpos);
-        if (lastpos == -1)
-                break;
-        e = X509_NAME_get_entry(nm, lastpos);
-        /* Do something with e */
-        }
+ for (;;) {
+     lastpos = X509_NAME_get_index_by_NID(nm, NID_commonName, lastpos);
+     if (lastpos == -1)
+         break;
+     e = X509_NAME_get_entry(nm, lastpos);
+     /* Do something with e */
+ }
 
 =head1 RETURN VALUES
 

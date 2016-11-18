@@ -65,9 +65,9 @@ Load a configuration file and print out any errors and exit (missing file
 considered fatal):
 
  if (CONF_modules_load_file(NULL, NULL, 0) <= 0) {
-    fprintf(stderr, "FATAL: error loading configuration file\n");
-    ERR_print_errors_fp(stderr);
-    exit(1);
+     fprintf(stderr, "FATAL: error loading configuration file\n");
+     ERR_print_errors_fp(stderr);
+     exit(1);
  }
 
 Load default configuration file using the section indicated by "myapp",
@@ -75,9 +75,9 @@ tolerate missing files, but exit on other errors:
 
  if (CONF_modules_load_file(NULL, "myapp",
                             CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0) {
-    fprintf(stderr, "FATAL: error loading configuration file\n");
-    ERR_print_errors_fp(stderr);
-    exit(1);
+     fprintf(stderr, "FATAL: error loading configuration file\n");
+     ERR_print_errors_fp(stderr);
+     exit(1);
  }
 
 Load custom configuration file and section, only print warnings on error,
@@ -85,8 +85,8 @@ missing configuration file ignored:
 
  if (CONF_modules_load_file("/something/app.cnf", "myapp",
                             CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0) {
-    fprintf(stderr, "WARNING: error loading configuration file\n");
-    ERR_print_errors_fp(stderr);
+     fprintf(stderr, "WARNING: error loading configuration file\n");
+     ERR_print_errors_fp(stderr);
  }
 
 Load and parse configuration file manually, custom error handling:
@@ -96,22 +96,22 @@ Load and parse configuration file manually, custom error handling:
  long eline;
  fp = fopen("/somepath/app.cnf", "r");
  if (fp == NULL) {
-    fprintf(stderr, "Error opening configuration file\n");
-    /* Other missing configuration file behaviour */
+     fprintf(stderr, "Error opening configuration file\n");
+     /* Other missing configuration file behaviour */
  } else {
-    cnf = NCONF_new(NULL);
-    if (NCONF_load_fp(cnf, fp, &eline) == 0) {
-        fprintf(stderr, "Error on line %ld of configuration file\n", eline);
-        ERR_print_errors_fp(stderr);
-        /* Other malformed configuration file behaviour */
-    } else if (CONF_modules_load(cnf, "appname", 0) <= 0) {
-      fprintf(stderr, "Error configuring application\n");
-      ERR_print_errors_fp(stderr);
-      /* Other configuration error behaviour */
-    }
-    fclose(fp);
-    NCONF_free(cnf);
-  }
+     cnf = NCONF_new(NULL);
+     if (NCONF_load_fp(cnf, fp, &eline) == 0) {
+         fprintf(stderr, "Error on line %ld of configuration file\n", eline);
+         ERR_print_errors_fp(stderr);
+         /* Other malformed configuration file behaviour */
+     } else if (CONF_modules_load(cnf, "appname", 0) <= 0) {
+         fprintf(stderr, "Error configuring application\n");
+         ERR_print_errors_fp(stderr);
+         /* Other configuration error behaviour */
+     }
+     fclose(fp);
+     NCONF_free(cnf);
+ }
 
 =head1 RETURN VALUES
 
