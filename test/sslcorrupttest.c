@@ -11,6 +11,8 @@
 #include "ssltestlib.h"
 #include "testutil.h"
 
+static int docorrupt = 0;
+
 static void copy_flags(BIO *bio)
 {
     int flags;
@@ -38,7 +40,7 @@ static int tls_corrupt_write(BIO *bio, const char *in, int inl)
     BIO *next = BIO_next(bio);
     char *copy;
 
-    if (in[0] == SSL3_RT_APPLICATION_DATA) {
+    if (docorrupt) {
         copy = BUF_memdup(in, inl);
         TEST_check(copy != NULL);
         /* corrupt last bit of application data */
@@ -186,6 +188,8 @@ static int test_ssl_corrupt(int testidx)
     STACK_OF(SSL_CIPHER) *ciphers;
     const SSL_CIPHER *currcipher;
 
+    docorrupt = 0;
+
     printf("Starting Test %d, %s\n", testidx, cipher_list[testidx]);
 
     if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), &sctx,
@@ -241,6 +245,8 @@ static int test_ssl_corrupt(int testidx)
         ERR_print_errors_fp(stdout);
         goto end;
     }
+
+    docorrupt = 1;
 
     if (SSL_write(client, junk, sizeof(junk)) < 0) {
         printf("Unable to SSL_write\n");

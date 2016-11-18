@@ -116,6 +116,12 @@ sub get_records
                 } else {
                     $record->decrypt();
                 }
+                $record->encrypted(1);
+            }
+
+            if (TLSProxy::Proxy->is_tls13()) {
+                print "  Inner content type: "
+                      .$record_type{$record->content_type()}."\n";
             }
 
             push @record_list, $record;
@@ -188,7 +194,8 @@ sub new
         decrypt_len => $decrypt_len,
         data => $data,
         decrypt_data => $decrypt_data,
-        orig_decrypt_data => $decrypt_data
+        orig_decrypt_data => $decrypt_data,
+        encrypted => 0
     };
 
     return bless $self, $class;
@@ -257,6 +264,13 @@ sub decrypt()
     #Throw away the MAC or TAG
     $data = substr($data, 0, length($data) - $mactaglen);
 
+    if (TLSProxy::Proxy->is_tls13()) {
+        #Get the content type
+        my $content_type = unpack("C", substr($data, length($data) - 1));
+        $self->content_type($content_type);
+        $data = substr($data, 0, length($data) - 1);
+    }
+
     $self->decrypt_data($data);
     $self->decrypt_len(length($data));
 
@@ -267,14 +281,28 @@ sub decrypt()
 sub reconstruct_record
 {
     my $self = shift;
+    my $server = shift;
     my $data;
+    my $tls13_enc = 0;
 
     if ($self->sslv2) {
         $data = pack('n', $self->len | 0x8000);
     } else {
-        $data = pack('Cnn', $self->content_type, $self->version, $self->len);
+        if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
+            $data = pack('Cnn', RT_APPLICATION_DATA, $self->version,
+                         $self->len + 1);
+            $tls13_enc = 1;
+        } else {
+            $data = pack('Cnn', $self->content_type, $self->version,
+                         $self->len);
+        }
+
     }
     $data .= $self->data;
+
+    if ($tls13_enc) {
+        $data .= pack('C', $self->content_type);
+    }
 
     return $data;
 }
@@ -284,11 +312,6 @@ sub flight
 {
     my $self = shift;
     return $self->{flight};
-}
-sub content_type
-{
-    my $self = shift;
-    return $self->{content_type};
 }
 sub sslv2
 {
@@ -346,5 +369,21 @@ sub version
       $self->{version} = shift;
     }
     return $self->{version};
+}
+sub content_type
+{
+    my $self = shift;
+    if (@_) {
+      $self->{content_type} = shift;
+    }
+    return $self->{content_type};
+}
+sub encrypted
+{
+    my $self = shift;
+    if (@_) {
+      $self->{encrypted} = shift;
+    }
+    return $self->{encrypted};
 }
 1;
