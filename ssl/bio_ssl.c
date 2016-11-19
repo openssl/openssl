@@ -103,7 +103,7 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 
     BIO_clear_retry_flags(b);
 
-    ret = SSL_read_ex(ssl, buf, size, readbytes);
+    ret = ssl_read_internal(ssl, buf, size, readbytes);
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
@@ -172,7 +172,7 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 
     BIO_clear_retry_flags(b);
 
-    ret = SSL_write_ex(ssl, buf, size, written);
+    ret = ssl_write_internal(ssl, buf, size, written);
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
