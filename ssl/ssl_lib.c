@@ -1531,38 +1531,16 @@ static int ssl_io_intern(void *vargs)
     return -1;
 }
 
-int SSL_read(SSL *s, void *buf, int num)
-{
-    int ret;
-    size_t readbytes;
-
-    if (num < 0) {
-        SSLerr(SSL_F_SSL_READ, SSL_R_BAD_LENGTH);
-        return -1;
-    }
-
-    ret = SSL_read_ex(s, buf, (size_t)num, &readbytes);
-
-    /*
-     * The cast is safe here because ret should be <= INT_MAX because num is
-     * <= INT_MAX
-     */
-    if (ret > 0)
-        ret = (int)readbytes;
-
-    return ret;
-}
-
-int SSL_read_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
+int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
     if (s->handshake_func == NULL) {
-        SSLerr(SSL_F_SSL_READ_EX, SSL_R_UNINITIALIZED);
+        SSLerr(SSL_F_SSL_READ_INTERNAL, SSL_R_UNINITIALIZED);
         return -1;
     }
 
     if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
         s->rwstate = SSL_NOTHING;
-        return (0);
+        return 0;
     }
 
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
@@ -1583,17 +1561,17 @@ int SSL_read_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
     }
 }
 
-int SSL_peek(SSL *s, void *buf, int num)
+int SSL_read(SSL *s, void *buf, int num)
 {
     int ret;
     size_t readbytes;
 
     if (num < 0) {
-        SSLerr(SSL_F_SSL_PEEK, SSL_R_BAD_LENGTH);
+        SSLerr(SSL_F_SSL_READ, SSL_R_BAD_LENGTH);
         return -1;
     }
 
-    ret = SSL_peek_ex(s, buf, (size_t)num, &readbytes);
+    ret = ssl_read_internal(s, buf, (size_t)num, &readbytes);
 
     /*
      * The cast is safe here because ret should be <= INT_MAX because num is
@@ -1605,15 +1583,24 @@ int SSL_peek(SSL *s, void *buf, int num)
     return ret;
 }
 
-int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
+int SSL_read_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
+{
+    int ret = ssl_read_internal(s, buf, num, readbytes);
+
+    if (ret < 0)
+        ret = 0;
+    return ret;
+}
+
+static int ssl_peek_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
     if (s->handshake_func == NULL) {
-        SSLerr(SSL_F_SSL_PEEK_EX, SSL_R_UNINITIALIZED);
+        SSLerr(SSL_F_SSL_PEEK_INTERNAL, SSL_R_UNINITIALIZED);
         return -1;
     }
 
     if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
-        return (0);
+        return 0;
     }
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
@@ -1633,39 +1620,49 @@ int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
     }
 }
 
-int SSL_write(SSL *s, const void *buf, int num)
+int SSL_peek(SSL *s, void *buf, int num)
 {
     int ret;
-    size_t written;
+    size_t readbytes;
 
     if (num < 0) {
-        SSLerr(SSL_F_SSL_WRITE, SSL_R_BAD_LENGTH);
+        SSLerr(SSL_F_SSL_PEEK, SSL_R_BAD_LENGTH);
         return -1;
     }
 
-    ret = SSL_write_ex(s, buf, (size_t)num, &written);
+    ret = ssl_peek_internal(s, buf, (size_t)num, &readbytes);
 
     /*
      * The cast is safe here because ret should be <= INT_MAX because num is
      * <= INT_MAX
      */
     if (ret > 0)
-        ret = (int)written;
+        ret = (int)readbytes;
 
     return ret;
 }
 
-int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
+
+int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
+{
+    int ret = ssl_peek_internal(s, buf, num, readbytes);
+
+    if (ret < 0)
+        ret = 0;
+    return ret;
+}
+
+int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
 {
     if (s->handshake_func == NULL) {
-        SSLerr(SSL_F_SSL_WRITE_EX, SSL_R_UNINITIALIZED);
+        SSLerr(SSL_F_SSL_WRITE_INTERNAL, SSL_R_UNINITIALIZED);
         return -1;
     }
 
     if (s->shutdown & SSL_SENT_SHUTDOWN) {
         s->rwstate = SSL_NOTHING;
-        SSLerr(SSL_F_SSL_WRITE_EX, SSL_R_PROTOCOL_IS_SHUTDOWN);
-        return (-1);
+        SSLerr(SSL_F_SSL_WRITE_INTERNAL, SSL_R_PROTOCOL_IS_SHUTDOWN);
+        return -1;
     }
 
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
@@ -1684,6 +1681,37 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
     } else {
         return s->method->ssl_write(s, buf, num, written);
     }
+}
+
+int SSL_write(SSL *s, const void *buf, int num)
+{
+    int ret;
+    size_t written;
+
+    if (num < 0) {
+        SSLerr(SSL_F_SSL_WRITE, SSL_R_BAD_LENGTH);
+        return -1;
+    }
+
+    ret = ssl_write_internal(s, buf, (size_t)num, &written);
+
+    /*
+     * The cast is safe here because ret should be <= INT_MAX because num is
+     * <= INT_MAX
+     */
+    if (ret > 0)
+        ret = (int)written;
+
+    return ret;
+}
+
+int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
+{
+    int ret = ssl_write_internal(s, buf, num, written);
+
+    if (ret < 0)
+        ret = 0;
+    return ret;
 }
 
 int SSL_shutdown(SSL *s)
