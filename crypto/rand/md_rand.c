@@ -33,7 +33,7 @@
 # include <openssl/fips.h>
 #endif
 
-#ifdef BN_DEBUG
+#if defined(BN_DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
 # define PREDICT
 #endif
 
@@ -307,7 +307,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
 
 #ifdef PREDICT
     if (rand_predictable) {
-        static unsigned char val = 0;
+        unsigned char val = 0;
 
         for (i = 0; i < num; i++)
             buf[i] = val++;
