@@ -17,32 +17,32 @@
 #include <openssl/bn.h>
 #include "fuzzer.h"
 
+static BN_CTX *ctx;
+static BIGNUM *b1;
+static BIGNUM *b2;
+static BIGNUM *b3;
+static BIGNUM *b4;
+static BIGNUM *b5;
+
 int FuzzerInitialize(int *argc, char ***argv)
 {
+    b1 = BN_new();
+    b2 = BN_new();
+    b3 = BN_new();
+    b4 = BN_new();
+    b5 = BN_new();
+    ctx = BN_CTX_new();
+
     return 1;
 }
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    static BN_CTX *ctx;
-    static BIGNUM *b1;
-    static BIGNUM *b2;
-    static BIGNUM *b3;
-    static BIGNUM *b4;
-    static BIGNUM *b5;
     int success = 0;
     size_t l1 = 0, l2 = 0;
     /* s1 and s2 will be the signs for b1 and b2. */
     int s1 = 0, s2 = 0;
 
-    if (ctx == NULL) {
-        b1 = BN_new();
-        b2 = BN_new();
-        b3 = BN_new();
-        b4 = BN_new();
-        b5 = BN_new();
-        ctx = BN_CTX_new();
-    }
     /* We are going to split the buffer in two, sizes l1 and l2, giving b1 and
      * b2.
      */
@@ -110,4 +110,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
 void FuzzerCleanup(void)
 {
+    BN_free(b1);
+    BN_free(b2);
+    BN_free(b3);
+    BN_free(b4);
+    BN_free(b5);
+    BN_CTX_free(ctx);
 }
