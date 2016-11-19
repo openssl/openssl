@@ -17,11 +17,13 @@
 #include <openssl/bn.h>
 #include "fuzzer.h"
 
-int FuzzerInitialize(int *argc, char ***argv) {
+int FuzzerInitialize(int *argc, char ***argv)
+{
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+{
     static BN_CTX *ctx;
     static BIGNUM *b1;
     static BIGNUM *b2;
