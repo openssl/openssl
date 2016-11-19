@@ -250,3 +250,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     SSL_free(server);
     return 0;
 }
+
+void FuzzerCleanup(void)
+{
+    SSL_CTX_free(ctx);
+}

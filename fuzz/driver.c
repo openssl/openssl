@@ -40,6 +40,8 @@ int main(int argc, char** argv)
         FuzzerTestOneInput(buf, size);
         free(buf);
     }
+
+    FuzzerCleanup();
     return 0;
 }
 
