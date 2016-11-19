@@ -183,11 +183,13 @@ static ASN1_ITEM_EXP *item_type[] = {
     NULL
 };
 
-int FuzzerInitialize(int *argc, char ***argv) {
+int FuzzerInitialize(int *argc, char ***argv)
+{
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+{
     int n;
 
     ASN1_PCTX *pctx = ASN1_PCTX_new();
