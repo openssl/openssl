@@ -1111,7 +1111,7 @@ if ($disabled{"dynamic-engine"}) {
 }
 
 unless ($disabled{"fuzz-libfuzzer"}) {
-    $config{cflags} .= "-fsanitize-coverage=edge,indirect-calls ";
+    $config{cflags} .= "-fsanitize-coverage=edge,indirect-calls,8bit-counters ";
 }
 
 unless ($disabled{asan}) {
