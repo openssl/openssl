@@ -39,6 +39,7 @@
 #include <openssl/ct.h>
 #include <openssl/async.h>
 #include <openssl/kdf.h>
+#include <openssl/store.h>
 
 int err_load_crypto_strings_int(void)
 {
@@ -102,7 +103,8 @@ int err_load_crypto_strings_int(void)
 # endif
         ERR_load_ASYNC_strings() == 0 ||
 #endif
-        ERR_load_KDF_strings() == 0)
+        ERR_load_KDF_strings() == 0 ||
+        ERR_load_STORE_strings() == 0)
         return 0;
 
     return 1;

@@ -169,6 +169,8 @@ typedef struct ctlog_st CTLOG;
 typedef struct ctlog_store_st CTLOG_STORE;
 typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
 
+typedef struct store_info_st STORE_INFO;
+
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
 typedef intmax_t ossl_intmax_t;
