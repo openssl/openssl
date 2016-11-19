@@ -191,6 +191,10 @@ static const uint8_t kRSAPrivateKeyDER[] = {
 
 static SSL_CTX *ctx;
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+extern int rand_predictable;
+#endif
+
 int FuzzerInitialize(int *argc, char ***argv)
 {
     const uint8_t *bufp = kRSAPrivateKeyDER;
@@ -213,6 +217,10 @@ int FuzzerInitialize(int *argc, char ***argv)
     ret = SSL_CTX_use_certificate(ctx, cert);
     OPENSSL_assert(ret == 1);
     X509_free(cert);
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    rand_predictable = 1;
+#endif
 
     return 1;
 }
