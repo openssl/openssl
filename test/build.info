@@ -373,6 +373,11 @@ IF[{- !$disabled{tests} -}]
     SOURCE[siphash_internal_test]=siphash_internal_test.c testutil.c test_main_custom.c
     INCLUDE[siphash_internal_test]=.. ../include ../crypto/include
     DEPEND[siphash_internal_test]=../libcrypto.a
+
+    PROGRAMS_NO_INST=uri_internal_test
+    SOURCE[uri_internal_test]=uri_internal_test.c
+    INCLUDE[uri_internal_test]=.. ../include
+    DEPEND[uri_internal_test]=../libcrypto.a
   ENDIF
 
   IF[{- !$disabled{mdc2} -}]

@@ -1,0 +1,2211 @@
+uri     = http://user@f.q.d.n:8080/foo/bar/cookie.crt?n=2#foo
+scheme  = http
+authority = user@f.q.d.n:8080
+path    = /foo/bar/cookie.crt
+query   = n=2
+fragment = foo
+user    = user
+host    = f.q.d.n
+service = 8080
+
+uri     = file:foo.pem?n=1
+scheme  = file
+path    = foo.pem
+query   = n=1
+
+uri     = bar.pem
+path    = bar.pem
+
+######################################################################
+#
+# Shamelessly stolen from
+# https://github.com/cweb/iri-tests/blob/master/iris.txt
+# Some massaging required, and obviously internationalized ones removed.
+#
+#####
+
+# whitespace now allowed
+baduri  = http://www.example.com/#hello, world
+
+uri     = http://www.example.com/#%c2%a9
+scheme  = http
+authority = www.example.com
+path    = /
+decoded_fragment = ©
+host    = www.example.com
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/#&#xd800;&#xdf00;ss
+
+# Bad percent encoding
+baduri  = http://www.example.com/#%41%a
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/#\&#xd800;\&#x597d;
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/#a\&#xFDD0;
+
+# A fragment can't contain another fragment
+baduri  = http://www.example.com/#asdf#qwer
+
+# A fragment can still not contain another fragment
+baduri  = http://www.example.com/##asdf
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/#a&#x000A;b&#x000D;c&#x0009;d
+
+# backslashes aren't permitted
+baduri  = file:c:\\foo\\bar.html
+
+# neither are pipes
+baduri  =   File:c|////foo\\bar.html
+
+uri     = file:
+scheme  = file
+
+uri     = file:UNChost/path
+scheme  = file
+path    = UNChost/path
+
+baduri  = c:\\foo\\bar
+
+baduri  = C|/foo/bar
+
+baduri  = /C|\\foo\\bar
+
+baduri  = //C|/foo/bar
+
+uri     = //server/file
+authority = server
+path    = /file
+host    = server
+
+baduri  = \\\\server\\file
+
+baduri  = /\\server/file
+
+uri     = file:c:foo/bar.html
+scheme  = file
+path    = c:foo/bar.html
+
+baduri  = file:/\\/\\C:\\\\//foo\\bar.html
+
+uri     = file:///foo/bar.txt
+scheme  = file
+authority = 
+path    = /foo/bar.txt
+host    =
+
+baduri  = FILE:/\\/\\7:\\\\//foo\\bar.html
+
+baduri  = file:filer/home\\me
+
+uri     = file:///C:/foo/../../../bar.html
+scheme  = file
+authority =
+path    = /C:/foo/../../../bar.html
+host    =
+
+baduri  = file:///C:/asdf#\%c2
+
+uri     = file:///home/me
+scheme  = file
+authority =
+path    = /home/me
+host    =
+
+baduri  = file:c:\\foo\\bar.html
+
+baduri  = file:c|//foo\\bar.html
+
+uri     = //
+authority =
+host    =
+
+uri     = ///
+authority =
+path    = /
+host    =
+
+uri     = ///test
+authority =
+path    = /test
+host    =
+
+uri     = file://test
+scheme  = file
+authority = test
+host    = test
+
+uri     = file://localhost/
+scheme  = file
+authority = localhost
+path    = /
+host    = localhost
+
+uri     = file://localhost/test
+scheme  = file
+authority = localhost
+path    = /test
+host    = localhost
+
+baduri  = file:c:\\foo\\bar.html
+
+baduri  =   File:c|////foo\\bar.html
+
+uri     = http://GoOgLe.CoM
+scheme  = http
+authority = GoOgLe.CoM
+host    = GoOgLe.CoM
+
+baduri  = http://Goo%20 goo%7C|.com
+
+# we currently don't parse IRIs
+#uri     = http://GOO&#x00a0;&#x3000;goo.com
+
+# we currently don't parse IRIs
+#uri     = http://GOO&#x200b;&#x2060;&#xfeff;goo.com
+
+# we currently don't parse IRIs
+#uri     = http://www.foo&#x3002;" + "bar.com
+
+# we currently don't parse IRIs
+#uri     = http://&#xfdd0;zyx.com
+
+uri     = http://%ef%b7%90zyx.com
+scheme  = http
+authority = %ef%b7%90zyx.com
+host    = %ef%b7%90zyx.com
+
+# This is bad because it's a fragment after a fragment
+# we currently don't parse IRIs
+#uri     = http://&#xff27;&#xff4f;.com
+
+# we currently don't parse IRIs
+#uri     = http://&#xff05;&#xff14;&#xff11;.com
+
+uri     = http://%ef%bc%85%ef%bc%94%ef%bc%91.com
+scheme  = http
+authority = %ef%bc%85%ef%bc%94%ef%bc%91.com
+host    = %ef%bc%85%ef%bc%94%ef%bc%91.com
+
+# we currently don't parse IRIs
+#uri     = http://&#xff05;&#xff10;&#xff10;.com
+
+uri     = http://%ef%bc%85%ef%bc%90%ef%bc%90.com
+scheme  = http
+authority = %ef%bc%85%ef%bc%90%ef%bc%90.com
+host    = %ef%bc%85%ef%bc%90%ef%bc%90.com
+
+# we currently don't parse IRIs
+#uri     = http://&#x4f60;&#x597d;&#x4f60;&#x597d;
+
+# we currently don't parse IRIs
+#uri     = http://%E4%BD%A0%E5%A5%BD&#x4f60;&#x597d;
+
+# Badly formed percent encoding
+baduri  = http://%zz%66%a
+
+uri     = http://%25
+scheme  = http
+decoded_authority = %
+decoded_host = %
+
+uri     = http://hello%00
+scheme  = http
+authority = hello%00
+host    = hello%00
+
+uri     = http://%30%78%63%30%2e%30%32%35%30.01
+scheme  = http
+decoded_authority = 0xc0.0250.01
+decoded_host = 0xc0.0250.01
+
+uri     = http://%30%78%63%30%2e%30%32%35%30.01%2e
+scheme  = http
+decoded_authority = 0xc0.0250.01.
+decoded_host = 0xc0.0250.01.
+
+# 'g' is not a hex digit
+baduri  = http://%3g%78%63%30%2e%30%32%35%30%2E.01
+
+baduri  = http://192.168.0.1 hello
+
+# we currently don't parse IRIs
+#uri     = http://&#xff10;&#xff38;&#xff43;&#xff10;&#xff0e;&#xff10;&#xff12;&#xff15;&#xff10;&#xff0e;&#xff10;&#xff11;
+
+uri     = http://192.168.0.257
+scheme  = http
+authority = 192.168.0.257
+host    = 192.168.0.257
+
+# square brackets denote IPv6 addresses exclusively.  'google.com'
+# isn't an IPv6 address.
+baduri  = http://[google.com]
+
+# we currently don't parse IRIs
+#uri     = http://&#x0442;(
+
+baduri  = http://go\@ogle.com
+
+uri     = http://go/@ogle.com
+scheme  = http
+authority = go
+path    = /@ogle.com
+host    = go
+
+baduri  = http://www.lookout.net::==80::==443::
+
+baduri  = http://www.lookout.net::80::443
+
+baduri  = http://\
+
+baduri  = http://\\/
+
+baduri  = http://\./
+
+uri     = http:////:@/
+scheme  = http
+authority =
+path    = //:@/
+host    =
+
+baduri  = http://\google.com/foo
+
+baduri  = http://\\google.com/foo
+
+uri     = http:////asdf@/
+scheme  = http
+authority =
+path    = //asdf@/
+host    =
+
+uri     = http:////:81
+scheme  = http
+authority =
+path    = //:81
+host    =
+
+uri     = http://://
+scheme  = http
+authority = :
+path    = //
+host    =
+service =
+
+uri     = http://c:
+scheme  = http
+authority = c:
+host    = c
+service =
+
+uri     = http://xxxx:
+scheme  = http
+authority = xxxx:
+host    = xxxx
+service =
+
+baduri  = http://.:.
+
+uri     = http://////@google.com/
+scheme  = http
+authority =
+path    = ////@google.com/
+host    =
+
+uri     = http://@google.com
+scheme  = http
+authority = @google.com
+user    =
+host    = google.com
+
+# we currently don't parse IRIs
+#uri     = http://fa&#x00DF;.de
+
+# we currently don't parse IRIs
+#uri     = http://&#x03B2;&#x03CC;&#x03BB;&#x03BF;&#x03C2;.com
+
+# we currently don't parse IRIs
+#uri     = http://&#x0DC1;&#x0DCA;&#x200D;&#x0DBB;&#x0DD3;.com
+
+# we currently don't parse IRIs
+#uri     = http://&#x0646;&#x0627;&#x0645;&#x0647;&#x200C;&#x0627;&#x06CC;.com
+
+# we currently don't parse IRIs
+#uri     = http://www.loo&#x0138;out.net
+
+# we currently don't parse IRIs
+#uri     = http://&#x15EF;&#x15EF;&#x15EF;.lookout.net
+
+# we currently don't parse IRIs
+#uri     = http://www.lookout.&#x0441;&#x043E;&#x043C;
+
+# we currently don't parse IRIs
+#uri     = http://www.lookout.net&#xFF1A;80
+
+# we currently don't parse IRIs
+#uri     = http://www&#x2025;lookout.net
+
+# we currently don't parse IRIs
+#uri     = http://www.lookout&#x2027;net
+
+# we currently don't parse IRIs
+#uri     = http://www.loo&#x0138;out.net
+
+# we currently don't parse IRIs
+#uri     = http://www.lookout.net&#x2A74;80
+
+# we currently don't parse IRIs
+#uri     = http://www&#x00A0;.lookout.net
+
+# we currently don't parse IRIs
+#uri     = http://&#x1680;lookout.net
+
+# we currently don't parse IRIs
+#uri     = http://&#x001F;lookout.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#x06DD;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#x180E;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#x2060;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#xFEFF;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#xD83F;&#xDFFE;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#xDEAD;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#xFFFA;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#x2FF0;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#x0341;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#x202E;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#x206B;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#xDB40;&#xDC01;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#xDB40;&#xDC20;out.net
+
+# we currently don't parse IRIs
+#uri     = http://look&#x05BE;out.net
+
+# we currently don't parse IRIs
+#uri     = http://B&#x00FC;cher.de
+
+# we currently don't parse IRIs
+#uri     = http://fa&#x00DF;.de
+
+# we currently don't parse IRIs
+#uri     = http://&#x03B2;&#x03CC;&#x03BB;&#x03BF;&#x03C2;.com
+
+# we currently don't parse IRIs
+#uri     = http://&#x0DC1;&#x0DCA;&#x200D;&#x0DBB;&#x0DD3;.com
+
+# we currently don't parse IRIs
+#uri     = http://&#x0646;&#x0627;&#x0645;&#x0647;&#x200C;&#x0627;&#x06CC;.com
+
+# we currently don't parse IRIs
+#uri     = http://&#x2665;.net
+
+# we currently don't parse IRIs
+#uri     = http://&#x0378;.net
+
+# we currently don't parse IRIs
+#uri     = http://&#x04C0;.com
+
+# we currently don't parse IRIs
+#uri     = http://&#xD87E;&#xDC68;.com
+
+# we currently don't parse IRIs
+#uri     = http://&#x2183;.com
+
+# we currently don't parse IRIs
+#uri     = http://look&#x034F;out.net
+
+uri     = http://gOoGle.com
+scheme  = http
+authority = gOoGle.com
+host    = gOoGle.com
+
+# we currently don't parse IRIs
+#uri     = http://&#x09dc;.com
+
+# we currently don't parse IRIs
+#uri     = http://&#x1E9E;.com
+
+# we currently don't parse IRIs
+#uri     = http://&#x1E9E;.foo.com
+
+uri     = http://-foo.bar.com
+scheme  = http
+authority = -foo.bar.com
+host    = -foo.bar.com
+
+uri     = http://foo-.bar.com
+scheme  = http
+authority = foo-.bar.com
+host    = foo-.bar.com
+
+uri     = http://ab--cd.com
+scheme  = http
+authority = ab--cd.com
+host    = ab--cd.com
+
+uri     = http://xn--0.com
+scheme  = http
+authority = xn--0.com
+host    = xn--0.com
+
+# we currently don't parse IRIs
+#uri     = http://foo&#x0300;.bar.com
+
+# '.' is a perfectly valid reg-name
+uri     = http://.
+scheme  = http
+authority = .
+host    = .
+
+uri     = http://192.168.0.1
+scheme  = http
+authority = 192.168.0.1
+host    = 192.168.0.1
+
+# '0300.0250.00.01' is a perfectly valid reg-name
+uri     = http://0300.0250.00.01
+scheme  = http
+authority = 0300.0250.00.01
+host    = 0300.0250.00.01
+
+# '0xC0.0Xa8.0x0.0x1' is a perfectly valid reg-name
+uri     = http://0xC0.0Xa8.0x0.0x1
+scheme  = http
+authority = 0xC0.0Xa8.0x0.0x1
+host    = 0xC0.0Xa8.0x0.0x1
+
+# ... and so on and so forth
+uri     = http://192.168.9.com
+scheme  = http
+authority = 192.168.9.com
+host    = 192.168.9.com
+
+uri     = http://19a.168.0.1
+scheme  = http
+authority = 19a.168.0.1
+host    = 19a.168.0.1
+
+uri     = http://0308.0250.00.01
+scheme  = http
+authority = 0308.0250.00.01
+host    = 0308.0250.00.01
+
+uri     = http://0xCG.0xA8.0x0.0x1
+scheme  = http
+authority = 0xCG.0xA8.0x0.0x1
+host    = 0xCG.0xA8.0x0.0x1
+
+uri     = http://192
+scheme  = http
+authority = 192
+host    = 192
+
+uri     = http://0xC0a80001
+scheme  = http
+authority = 0xC0a80001
+host    = 0xC0a80001
+
+uri     = http://030052000001
+scheme  = http
+authority = 030052000001
+host    = 030052000001
+
+uri     = http://030052000001
+scheme  = http
+authority = 030052000001
+host    = 030052000001
+
+uri     = http://192.168
+scheme  = http
+authority = 192.168
+host    = 192.168
+
+uri     = http://192.0x00A80001
+scheme  = http
+authority = 192.0x00A80001
+host    = 192.0x00A80001
+
+uri     = http://0xc0.052000001
+scheme  = http
+authority = 0xc0.052000001
+host    = 0xc0.052000001
+
+uri     = http://192.168.1
+scheme = http
+authority = 192.168.1
+host    = 192.168.1
+
+uri     = http://192.168.0.0.1
+scheme = http
+authority = 192.168.0.0.1
+host    = 192.168.0.0.1
+
+uri     = http://192.168.0.1.
+scheme = http
+authority = 192.168.0.1.
+host    = 192.168.0.1.
+
+# Spaces not permitted
+baduri  = http://192.168.0.1. hello
+
+uri     = http://192.168.0.1..
+scheme = http
+authority = 192.168.0.1..
+host    = 192.168.0.1..
+
+uri     = http://192.168..1
+scheme = http
+authority = 192.168..1
+host    = 192.168..1
+
+uri     = http://0x100.0
+scheme = http
+authority = 0x100.0
+host    = 0x100.0
+
+uri     = http://0x100.0.0
+scheme = http
+authority = 0x100.0.0
+host    = 0x100.0.0
+
+uri     = http://0x100.0.0.0
+scheme = http
+authority = 0x100.0.0.0
+host    = 0x100.0.0.0
+
+uri     = http://0.0x100.0.0
+scheme = http
+authority = 0.0x100.0.0
+host    = 0.0x100.0.0
+
+uri     = http://0.0.0x100.0
+scheme = http
+authority = 0.0.0x100.0
+host    = 0.0.0x100.0
+
+uri     = http://0.0.0.0x100
+scheme = http
+authority = 0.0.0.0x100
+host    = 0.0.0.0x100
+
+uri     = http://0.0.0x10000
+scheme = http
+authority = 0.0.0x10000
+host    = 0.0.0x10000
+
+uri     = http://0.0x1000000
+scheme = http
+authority = 0.0x1000000
+host    = 0.0x1000000
+
+uri     = http://0x100000000
+scheme = http
+authority = 0x100000000
+host    = 0x100000000
+
+uri     = http://0xFF.0
+scheme = http
+authority = 0xFF.0
+host    = 0xFF.0
+
+uri     = http://0xFF.0.0
+scheme = http
+authority = 0xFF.0.0
+host    = 0xFF.0.0
+
+uri     = http://0xFF.0.0.0
+scheme = http
+authority = 0xFF.0.0.0
+host    = 0xFF.0.0.0
+
+uri     = http://0.0xFF.0.0
+scheme = http
+authority = 0.0xFF.0.0
+host    = 0.0xFF.0.0
+
+uri     = http://0.0.0xFF.0
+scheme = http
+authority = 0.0.0xFF.0
+host    = 0.0.0xFF.0
+
+uri     = http://0.0.0.0xFF
+scheme = http
+authority = 0.0.0.0xFF
+host    = 0.0.0.0xFF
+
+uri     = http://0.0.0xFFFF
+scheme = http
+authority = 0.0.0xFFFF
+host    = 0.0.0xFFFF
+
+uri     = http://0.0xFFFFFF
+scheme = http
+authority = 0.0xFFFFFF
+host    = 0.0xFFFFFF
+
+uri     = http://0xFFFFFFFF
+scheme = http
+authority = 0xFFFFFFFF
+host    = 0xFFFFFFFF
+
+uri     = http://276.256.0xf1a2.077777
+scheme = http
+authority = 276.256.0xf1a2.077777
+host    = 276.256.0xf1a2.077777
+
+uri     = http://192.168.0.257
+scheme = http
+authority = 192.168.0.257
+host    = 192.168.0.257
+
+uri     = http://192.168.0xa20001
+scheme = http
+authority = 192.168.0xa20001
+host    = 192.168.0xa20001
+
+uri     = http://192.015052000001
+scheme = http
+authority = 192.015052000001
+host    = 192.015052000001
+
+uri     = http://0X12C0a80001
+scheme = http
+authority = 0X12C0a80001
+host    = 0X12C0a80001
+
+uri     = http://276.1.2
+scheme = http
+authority = 276.1.2
+host    = 276.1.2
+
+baduri  = http://192.168.0.1 hello
+
+uri     = http://0000000000000300.0x00000000000000fF.00000000000000001
+scheme = http
+authority = 0000000000000300.0x00000000000000fF.00000000000000001
+host    = 0000000000000300.0x00000000000000fF.00000000000000001
+
+uri     = http://0000000000000300.0xffffffffFFFFFFFF.3022415481470977
+scheme = http
+authority = 0000000000000300.0xffffffffFFFFFFFF.3022415481470977
+host    = 0000000000000300.0xffffffffFFFFFFFF.3022415481470977
+
+uri     = http://00000000000000000001
+scheme = http
+authority = 00000000000000000001
+host    = 00000000000000000001
+
+uri     = http://0000000000000000100000000000000001
+scheme = http
+authority = 0000000000000000100000000000000001
+host    = 0000000000000000100000000000000001
+
+uri     = http://0.0.0.000000000000000000z
+scheme = http
+authority = 0.0.0.000000000000000000z
+host    = 0.0.0.000000000000000000z
+
+uri     = http://0.0.0.100000000000000000z
+scheme = http
+authority = 0.0.0.100000000000000000z
+host    = 0.0.0.100000000000000000z
+
+uri     = http://0.00.0x.0x0
+scheme = http
+authority = 0.00.0x.0x0
+host    = 0.00.0x.0x0
+
+baduri  = http://[
+
+baduri  = http://[:
+
+baduri  = http://]
+
+baduri  = http://:]
+
+baduri  = http://[]
+
+baduri  = http://[:]
+
+baduri  = http://2001:db8::1
+
+baduri  = http://[2001:db8::1
+
+baduri  = http://2001:db8::1]
+
+uri     = http://[::]
+scheme = http
+authority = [::]
+host    = [::]
+
+uri     = http://[::1]
+scheme = http
+authority = [::1]
+host    = [::1]
+
+uri     = http://[1::]
+scheme = http
+authority = [1::]
+host    = [1::]
+
+uri     = http://[::192.168.0.1]
+scheme = http
+authority = [::192.168.0.1]
+host    = [::192.168.0.1]
+
+uri     = http://[::ffff:192.168.0.1]
+scheme = http
+authority = [::ffff:192.168.0.1]
+host    = [::ffff:192.168.0.1]
+
+uri     = http://[000:01:02:003:004:5:6:007]
+scheme = http
+authority = [000:01:02:003:004:5:6:007]
+host    = [000:01:02:003:004:5:6:007]
+
+uri     = http://[A:b:c:DE:fF:0:1:aC]
+scheme = http
+authority = [A:b:c:DE:fF:0:1:aC]
+host    = [A:b:c:DE:fF:0:1:aC]
+
+uri     = http://[1:0:0:2::3:0]
+scheme = http
+authority = [1:0:0:2::3:0]
+host    = [1:0:0:2::3:0]
+
+uri     = http://[1::2:0:0:3:0]
+scheme = http
+authority = [1::2:0:0:3:0]
+host    = [1::2:0:0:3:0]
+
+uri     = http://[::eeee:192.168.0.1]
+scheme = http
+authority = [::eeee:192.168.0.1]
+host    = [::eeee:192.168.0.1]
+
+uri     = http://[2001::192.168.0.1]
+scheme = http
+authority = [2001::192.168.0.1]
+host    = [2001::192.168.0.1]
+
+baduri  = http://[1:2:192.168.0.1:5:6]
+
+baduri  = http://[::ffff:192.1.2]
+
+baduri  = http://[::ffff:0xC0.0Xa8.0x0.0x1]
+
+uri     = http://[0:0::0:0:8]
+scheme = http
+authority = [0:0::0:0:8]
+host    = [0:0::0:0:8]
+
+uri     = http://[2001:db8::1]
+scheme = http
+authority = [2001:db8::1]
+host    = [2001:db8::1]
+
+baduri  = http://[2001::db8::1]
+
+baduri  = http://[2001:db8:::1]
+
+baduri  = http://[:::]
+
+baduri  = http://[2001::.com]
+
+baduri  = http://[::192.168.0.0.1]
+
+baduri  = http://[::ffff:192.168.0.0.1]
+
+baduri  = http://[1:2:3:4:5:6:7:8:9]
+
+baduri  = http://[0:0:0:0:0:0:0:192.168.0.1]
+
+# Everything before the :: matches this ABNF, but not the rest:
+#
+#  *5( h16 ":" ) h16 ] "::"              h16
+#
+baduri  = http://[1:2:3:4:5:6::192.168.0.1]
+
+uri     = http://[1:2:3:4:5:6::8]
+scheme = http
+authority = [1:2:3:4:5:6::8]
+host    = [1:2:3:4:5:6::8]
+
+baduri  = http://[1:2:3:4:5:6:7:8:]
+
+baduri  = http://[1:2:3:4:5:6:192.168.0.1:]
+
+baduri  = http://[-1:2:3:4:5:6:7:8]
+
+baduri  = http://[1::%1]
+
+baduri  = http://[1::%eth0]
+
+baduri  = http://[1::%]
+
+baduri  = http://[%]
+
+baduri  = http://[::%:]
+
+baduri  = http://[:0:0::0:0:8]
+
+baduri  = http://[0:0::0:0:8:]
+
+baduri  = http://[:0:0::0:0:8:]
+
+baduri  = http://[::192.168..1]
+
+baduri  = http://[::1 hello]
+
+uri     = mailto:addr1
+scheme  = mailto
+path    = addr1
+
+uri     = mailto:addr1@foo.com
+scheme  = mailto
+path    = addr1@foo.com
+
+baduri  = mailto:addr1 \t
+
+uri     = mailto:addr1?to=jon
+scheme  = mailto
+path    = addr1
+query   = to=jon
+
+uri     = mailto:addr1,addr2
+scheme  = mailto
+path    = addr1,addr2
+
+baduri  = mailto:addr1, addr2
+
+uri     = mailto:addr1%2caddr2
+scheme  = mailto
+decoded_path = addr1,addr2
+
+# we currently don't parse IRIs
+#uri     = mailto:&#xD800;&#xDF00;
+
+uri     = mailto:addr1?
+scheme  = mailto
+path    = addr1
+query   =
+
+uri     = javascript:
+scheme  = javascript
+
+uri     = JavaScript:Foo
+scheme  = JavaScript
+path    = Foo
+
+uri     = http://www.example.com/././foo
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /././foo
+
+uri     = http://www.example.com/./.foo
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /./.foo
+
+uri     = http://www.example.com/foo/.
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/.
+
+uri     = http://www.example.com/foo/./
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/./
+
+uri     = http://www.example.com/foo/bar/..
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/bar/..
+
+uri     = http://www.example.com/foo/bar/../
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/bar/../
+
+uri     = http://www.example.com/foo/..bar
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/..bar
+
+uri     = http://www.example.com/foo/bar/../ton
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/bar/../ton
+
+uri     = http://www.example.com/foo/bar/../ton/../../a
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/bar/../ton/../../a
+
+uri     = http://www.example.com/foo/../../..
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/../../..
+
+uri     = http://www.example.com/foo/../../../ton
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/../../../ton
+
+uri     = http://www.example.com/foo/%2e
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+decoded_path = /foo/.
+
+baduri  = http://www.example.com/foo/%2e%2
+
+uri     = http://www.example.com/foo/%2e./%2e%2e/.%2e/%2e.bar
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/%2e./%2e%2e/.%2e/%2e.bar
+
+uri     = http://www.example.com////../..
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = ////../..
+
+uri     = http://www.example.com/foo/bar//../..
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/bar//../..
+
+uri     = http://www.example.com/foo/bar//..
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/bar//..
+
+uri     = http://www.example.com/foo/bar/..
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo/bar/..
+
+uri     = http://www.example.com/foo
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo
+
+uri     = http://www.example.com/%20foo
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+decoded_path = / foo
+
+baduri  = http://www.example.com/foo%
+
+baduri  = http://www.example.com/foo%2
+
+baduri  = http://www.example.com/foo%2zbar
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/foo%2&#x00c2;&#x00a9;zbar
+
+uri     = http://www.example.com/foo%41%7a
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+decoded_path = /fooAz
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/foo&#x0009;&#x0091;%91
+
+uri     = http://www.example.com/foo%00%51
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo%00%51
+
+uri     = http://www.example.com/(%28:%3A%29)
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+decoded_path = /((::))
+
+uri     = http://www.example.com/%3A%3a%3C%3c
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+decoded_path = /::<<
+
+baduri  = http://www.example.com/foo\tbar
+
+baduri  = http://www.example.com\\foo\\bar
+
+uri     = http://www.example.com/%7Ffp3%3Eju%3Dduvgw%3Dd
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /%7Ffp3%3Eju%3Dduvgw%3Dd
+
+uri     = http://www.example.com/@asdf%40
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+decoded_path = /@asdf@
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/&#x4f60;&#x597d;&#x4f60;&#x597d;
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/&#xfdd0;zyx
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/&#x2025;/foo
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/&#xDEAD;/foo
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/&#xFEFF;/foo
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/&#x202E;/foo/&#x202D;/bar
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com&#xFF0F;foo/
+
+baduri  = http://www.example.com:as df
+
+baduri  = http://www.example.com:-2
+
+uri     = http://www.example.com:80
+scheme  = http
+authority = www.example.com:80
+host    = www.example.com
+service = 80
+
+uri     = http://www.example.com:8080
+scheme  = http
+authority = www.example.com:8080
+host    = www.example.com
+service = 8080
+
+uri     = http://www.example.com:
+scheme  = http
+authority = www.example.com:
+host    = www.example.com
+service =
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com:&#x1369;
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com:&#xD835;&#xDFD6;
+
+uri     = http://www.example.com/?foo=bar
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /
+query   = foo=bar
+
+# It's perfectly ok for queries to contain question marks
+uri     = http://www.example.com/?as?df
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /
+query   = as?df
+
+baduri  = http://www.example.com/?\%02hello%7f bye
+
+uri     = http://www.example.com/?%40%41123
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /
+decoded_query = @A123
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/?q=&#x4F60;&#x597D;
+
+# we currently don't parse IRIs
+#uri     = http://www.example.com/?q=\&#xd800;\&#xd800;
+
+uri     = http://www.example.com/?q=&lt;asdf&gt;
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /
+query   = q=&lt;asdf&gt;
+
+baduri  = http://www.example.com/?q=\"asdf\"
+
+baduri  = \\\\Another\\path
+
+baduri  = /c:\\foo
+
+baduri  = //c:\\foo
+
+uri     = http://host/
+scheme  = http
+authority = host
+host    = host
+path    = /
+
+uri     = bar
+path    = bar
+
+uri     = ../../../bar.html
+path    = ../../../bar.html
+
+uri     = /../bar.html
+path    = /../bar.html
+
+baduri  = \\\\another\\path
+
+uri     = //c:/foo
+authority = c:
+host    = c
+service =
+path    = /foo
+
+uri     = //localhost/c:/foo
+authority = localhost
+host    = localhost
+path    = /c:/foo
+
+uri     = c:
+scheme  = c
+
+uri     = c:/foo
+scheme  = c
+path    = /foo
+
+baduri  = c:\\foo
+
+uri     = /z:/bar
+path    = /z:/bar
+
+uri     = /bar
+path    = /bar
+
+uri     = //somehost/path
+authority = somehost
+host    = somehost
+path    = /path
+
+baduri  = /\\//somehost/path
+
+uri     = http://another/
+scheme  = http
+authority = another
+host    = another
+path    = /
+
+uri     = http:////another/
+scheme  = http
+authority = 
+host    = 
+path    = //another/
+
+uri     = http:path
+scheme  = http
+path    = path
+
+uri     = http:/path
+scheme  = http
+path    = /path
+
+uri     = HTTP:/path
+scheme  = HTTP
+path    = /path
+
+uri     = https:host2
+scheme  = https
+path    = host2
+
+uri     = htto:/host2
+scheme  = htto
+path    = /host2
+
+uri     = /b/c/d
+path    = /b/c/d
+
+baduri  = \\b\\c\\d
+
+uri     = /b/../c
+path    = /b/../c
+
+baduri  = \\b/../c?x#y
+
+uri     = /b/../c?x#y
+path    = /b/../c
+query   = x
+fragment = y
+
+uri     = b
+path    = b
+
+uri     = bc/de
+path    = bc/de
+
+uri     = bc/de?query#ref
+path    = bc/de
+query   = query
+fragment = ref
+
+uri     = .
+path    = .
+
+uri     = ..
+path    = ..
+
+uri     = ./..
+path    = ./..
+
+uri     = ../.
+path    = ../.
+
+uri     = ././.
+path    = ././.
+
+uri     = ../../../foo
+path    = ../../../foo
+
+uri     = ?foo=bar
+query   = foo=bar
+
+uri     = ?
+query   = 
+
+uri     = ?foo=bar#com
+query   = foo=bar
+fragment = com
+
+uri     = #ref
+fragment = ref
+
+uri     = #
+fragment = 
+
+uri     = #bye
+fragment = bye
+
+uri     = baz.html
+path    = baz.html
+
+uri     = data:baz
+scheme  = data
+path    = baz
+
+uri     = data:/base
+scheme  = data
+path    = /base
+
+uri     = http://host/
+scheme  = http
+authority = host
+host    = host
+path    = /
+
+uri     = http:host
+scheme  = http
+path    = host
+
+uri     = ./asd:fgh
+path    = ./asd:fgh
+
+baduri  = :foo
+
+baduri  =  hello world
+
+uri     = ;foo
+path    = ;foo
+
+uri     = ;/../bar
+path    = ;/../bar
+
+uri     = //another
+authority = another
+host    = another
+
+uri     = //another/path?query#ref
+authority = another
+host    = another
+path    = /path
+query   = query
+fragment = ref
+
+uri     = ///another/path
+authority =
+host    =
+path    = /another/path
+
+baduri  = //Another\\path
+
+uri     = //
+authority =
+host    =
+
+baduri  = \\/another/path
+
+baduri  = /\\Another\\path
+
+uri     = http://iris.test.ing
+scheme  = http
+authority = iris.test.ing
+host    = iris.test.ing
+
+uri     = HTTP://iris.test.ing
+scheme  = HTTP
+authority = iris.test.ing
+host    = iris.test.ing
+
+uri     = http://user:pass@foo:21/bar;par?b#c
+scheme  = http
+authority = user:pass@foo:21
+user    = user
+password = pass
+host    = foo
+service = 21
+path    = /bar;par
+query   = b
+fragment = c
+
+uri     = http:foo.com
+scheme  = http
+path    = foo.com
+
+# we currently don't parse IRIs
+#uri     = &#x0009;   :foo.com   &#x000A;
+
+uri     =  foo.com
+path    = foo.com
+
+# we currently don't parse IRIs
+#uri     = a:&#x0009; foo.com
+
+baduri  = http://f:21/ b ? d # e
+
+uri     = http://f:/c
+scheme  = http
+authority = f:
+host    = f
+service =
+path    = /c
+
+uri     = http://f:0/c
+scheme  = http
+authority = f:0
+host    = f
+service = 0
+path    = /c
+
+uri     = http://f:00000000000000/c
+scheme  = http
+authority = f:00000000000000
+host    = f
+service = 00000000000000
+path    = /c
+
+uri     = http://f:00000000000000000000080/c
+scheme  = http
+authority = f:00000000000000000000080
+host    = f
+service = 00000000000000000000080
+path    = /c
+
+baduri  = http://f:b/c
+
+baduri  = http://f: /c
+
+# we currently don't parse IRIs
+#uri     = http://f:&#x000A;/c
+
+baduri  = http://f:fifty-two/c
+
+uri     = http://f:999999/c
+scheme  = http
+authority = f:999999
+host    = f
+service = 999999
+path    = /c
+
+baduri  = http://f: 21 / b ? d # e
+
+uri     =
+
+# we currently don't parse IRIs
+#uri     =   &#x0009;
+
+baduri  = :foo.com/
+
+baduri  = :foo.com\\
+
+baduri  = :
+
+baduri  = :a
+
+baduri  = :/
+
+baduri  = :\\
+
+baduri  = :#
+
+uri     = #
+fragment =
+
+uri     = #/
+fragment = /
+
+baduri  = #\\
+
+uri     = #;?
+fragment = ;?
+
+uri     = ?
+query   = 
+
+uri     = /
+path    = /
+
+baduri  = :23
+
+uri     = /:23
+path    = /:23
+
+uri     = //
+authority =
+host    =
+
+baduri  = ::
+
+baduri  = ::23
+
+uri     = foo://
+scheme  = foo
+authority =
+host    =
+
+uri     = http://a:b@c:29/d
+scheme  = http
+authority = a:b@c:29
+user    = a
+password = b
+host    = c
+service = 29
+path    = /d
+
+uri     = http::@c:29
+scheme  = http
+path    = :@c:29
+
+baduri  = http://&amp;a:foo(b]c@d:2/
+
+baduri  = http://::@c@d:2
+
+uri     = http://foo.com:b@d/
+scheme  = http
+authority = foo.com:b@d
+user    = foo.com
+password = b
+host    = d
+path    = /
+
+baduri  = http://foo.com/\\@
+
+baduri  = http:\\\\foo.com\\
+
+baduri  = http:\\\\a\\b:c\\d@foo.com\\
+
+uri     = foo:/
+scheme  = foo
+path    = /
+
+uri     = foo:/bar.com/
+scheme  = foo
+path    = /bar.com/
+
+uri     = foo://///////
+scheme  = foo
+authority =
+host    =
+path    = ///////
+
+uri     = foo://///////bar.com/
+scheme  = foo
+authority =
+host    =
+path    = ///////bar.com/
+
+uri     = foo:////://///
+scheme  = foo
+authority =
+host    =
+path    = //://///
+
+uri     = c:/foo
+scheme  = c
+path    = /foo
+
+uri     = //foo/bar
+authority = foo
+host    = foo
+path    = /bar
+
+baduri  = http://foo/path;a??e#f#g
+
+uri     = http://foo/abcd?efgh?ijkl
+scheme  = http
+authority = foo
+host    = foo
+path    = /abcd
+query   = efgh?ijkl
+
+uri     = http://foo/abcd#foo?bar
+scheme  = http
+authority = foo
+host    = foo
+path    = /abcd
+fragment = foo?bar
+
+baduri  = [61:24:74]:98
+
+baduri  = http://[61:27]:98
+
+baduri  = http:[61:27]/:foo
+
+baduri  = http://[1::2]:3:4
+
+baduri  = http://2001::1
+
+baduri  = http://[2001::1
+
+baduri  = http://2001::1]
+
+baduri  = http://2001::1]:80
+
+uri     = http://[2001::1]
+scheme  = http
+authority = [2001::1]
+host    = [2001::1]
+
+uri     = http://[2001::1]:80
+scheme  = http
+authority = [2001::1]:80
+host    = [2001::1]
+service = 80
+
+baduri  = http://[[::]]
+
+uri     = http://user:pass@foo:21/bar;par?b#c
+scheme  = http
+authority = user:pass@foo:21
+user    = user
+password = pass
+host    = foo
+service = 21
+path    = /bar;par
+query   = b
+fragment = c
+
+uri     = http:foo.com
+scheme  = http
+path    = foo.com
+
+# we currently don't parse IRIs
+#uri     = &#x0009;   :foo.com   &#x000A;
+
+uri     =  foo.com
+path    = foo.com
+
+# we currently don't parse IRIs
+#uri     = a:&#x0009; foo.com
+
+baduri  = http://f:21/ b ? d # e
+
+uri     = http://f:/c
+scheme  = http
+authority = f:
+host    = f
+service =
+path    = /c
+
+uri     = http://f:0/c
+scheme  = http
+authority = f:0
+host    = f
+service = 0
+path    = /c
+
+uri     = http://f:00000000000000/c
+scheme  = http
+authority = f:00000000000000
+host    = f
+service = 00000000000000
+path    = /c
+
+uri     = http://f:00000000000000000000080/c
+scheme  = http
+authority = f:00000000000000000000080
+host    = f
+service = 00000000000000000000080
+path    = /c
+
+baduri  = http://f:b/c
+
+baduri  = http://f: /c
+
+# we currently don't parse IRIs
+#uri     = http://f:&#x000A;/c
+
+baduri  = http://f:fifty-two/c
+
+uri     = http://f:999999/c
+scheme  = http
+authority = f:999999
+host    = f
+service = 999999
+path    = /c
+
+baduri  = http://f: 21 / b ? d # e
+
+uri     =
+
+# we currently don't parse IRIs
+#uri     =   &#x0009;
+
+baduri  = :foo.com/
+
+baduri  = :foo.com\\
+
+baduri  = :
+
+baduri  = :a
+
+baduri  = :/
+
+baduri  = :\\
+
+baduri  = :#
+
+uri     = #
+fragment =
+
+uri     = #/
+fragment = /
+
+baduri  = #\\
+
+uri     = #;?
+fragment = ;?
+
+uri     = ?
+query   =
+
+uri     = /
+path    = /
+
+baduri  = :23
+
+uri     = /:23
+path    = /:23
+
+uri     = //
+authority =
+host    =
+
+baduri  = ::
+
+baduri  = ::23
+
+uri     = foo://
+scheme  = foo
+authority =
+host    =
+
+uri     = http://a:b@c:29/d
+scheme  = http
+authority = a:b@c:29
+user    = a
+password = b
+host    = c
+service = 29
+path    = /d
+
+uri     = http::@c:29
+scheme  = http
+path    = :@c:29
+
+# ']' isn't allowed in the userinfo part
+baduri  = http://&amp;a:foo(b]c@d:2/
+
+baduri  = http://::@c@d:2
+
+uri     = http://foo.com:b@d/
+scheme  = http
+authority = foo.com:b@d
+user    = foo.com
+password = b
+host    = d
+path    = /
+
+baduri  = http://foo.com/\\@
+
+baduri  = http:\\\\foo.com\\
+
+baduri  = http:\\\\a\\b:c\\d@foo.com\\
+
+uri     = foo:/
+scheme  = foo
+path    = /
+
+uri     = foo:/bar.com/
+scheme  = foo
+path    = /bar.com/
+
+uri     = foo://///////
+scheme  = foo
+authority =
+host    =
+path    = ///////
+
+uri     = foo://///////bar.com/
+scheme  = foo
+authority =
+host    =
+path    = ///////bar.com/
+
+uri     = foo:////://///
+scheme  = foo
+authority =
+host    =
+path    = //://///
+
+uri     = c:/foo
+scheme  = c
+path    = /foo
+
+uri     = //foo/bar
+authority = foo
+host    = foo
+path    = /bar
+
+baduri  = http://foo/path;a??e#f#g
+
+uri     = http://foo/abcd?efgh?ijkl
+scheme  = http
+authority = foo
+host    = foo
+path    = /abcd
+query   = efgh?ijkl
+
+uri     = http://foo/abcd#foo?bar
+scheme  = http
+authority = foo
+host    = foo
+path    = /abcd
+fragment = foo?bar
+
+baduri  = [61:24:74]:98
+
+baduri  = http://[61:27]:98
+
+baduri  = http:[61:27]/:foo
+
+baduri  = http://[1::2]:3:4
+
+baduri  = http://2001::1
+
+baduri  = http://[2001::1
+
+baduri  = http://2001::1]
+
+baduri  = http://2001::1]:80
+
+uri     = http://[2001::1]
+scheme  = http
+authority = [2001::1]
+host    = [2001::1]
+
+uri     = http://[2001::1]:80
+scheme  = http
+authority = [2001::1]:80
+host    = [2001::1]
+service = 80
+
+baduri  = http://[[::]]
+
+uri     = http://www.google.com/foo?bar=baz#
+scheme  = http
+authority = www.google.com
+host    = www.google.com
+path    = /foo
+query   = bar=baz
+fragment =
+
+baduri  = http://[www.google.com]/
+
+uri     = http:////////user:@google.com:99?foo
+scheme  = http
+authority =
+host    =
+path    = //////user:@google.com:99
+query   = foo
+
+uri     = http://192.0x00A80001
+scheme  = http
+authority = 192.0x00A80001
+host    = 192.0x00A80001
+
+uri     = http://www/foo%2Ehtml
+scheme  = http
+authority = www
+host    = www
+decoded_path = /foo.html
+
+uri     = http://user:pass@/
+scheme  = http
+authority = user:pass@
+user    = user
+password = pass
+host    =
+path    = /
+
+uri     = http://%25DOMAIN:foobar@foodomain.com/
+scheme  = http
+decoded_authority = %DOMAIN:foobar@foodomain.com
+decoded_user = %DOMAIN
+password = foobar
+host    = foodomain.com
+path    = /
+
+baduri  = http:\\\\www.google.com\\foo
+
+# we currently don't parse IRIs
+#uri     = http://www.google.com/asdf#\&#xd800;
+
+uri     = http://foo:80/
+scheme  = http
+authority = foo:80
+host    = foo
+service = 80
+path    = /
+
+uri     = http://foo:81/
+scheme  = http
+authority = foo:81
+host    = foo
+service = 81
+path    = /
+
+uri     = httpa://foo:80/
+scheme  = httpa
+authority = foo:80
+host    = foo
+service = 80
+path    = /
+
+baduri  = http://foo:-80/
+
+uri     = https://foo:443/
+scheme  = https
+authority = foo:443
+host    = foo
+service = 443
+path    = /
+
+uri     = https://foo:80/
+scheme  = https
+authority = foo:80
+host    = foo
+service = 80
+path    = /
+
+uri     = ftp://foo:21/
+scheme  = ftp
+authority = foo:21
+host    = foo
+service = 21
+path    = /
+
+uri     = ftp://foo:80/
+scheme  = ftp
+authority = foo:80
+host    = foo
+service = 80
+path    = /
+
+uri     = gopher://foo:70/
+scheme  = gopher
+authority = foo:70
+host    = foo
+service = 70
+path    = /
+
+uri     = gopher://foo:443/
+scheme  = gopher
+authority = foo:443
+host    = foo
+service = 443
+path    = /
+
+uri     = ws://foo:80/
+scheme  = ws
+authority = foo:80
+host    = foo
+service = 80
+path    = /
+
+uri     = ws://foo:81/
+scheme  = ws
+authority = foo:81
+host    = foo
+service = 81
+path    = /
+
+uri     = ws://foo:443/
+scheme  = ws
+authority = foo:443
+host    = foo
+service = 443
+path    = /
+
+uri     = ws://foo:815/
+scheme  = ws
+authority = foo:815
+host    = foo
+service = 815
+path    = /
+
+uri     = wss://foo:80/
+scheme  = wss
+authority = foo:80
+host    = foo
+service = 80
+path    = /
+
+uri     = wss://foo:81/
+scheme  = wss
+authority = foo:81
+host    = foo
+service = 81
+path    = /
+
+uri     = wss://foo:443/
+scheme  = wss
+authority = foo:443
+host    = foo
+service = 443
+path    = /
+
+uri     = wss://foo:815/
+scheme  = wss
+authority = foo:815
+host    = foo
+service = 815
+path    = /
+
+uri     = http://example.com/
+scheme  = http
+authority = example.com
+host    = example.com
+path    = /
+
+uri     = /
+path    = /
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/re&#x301;sume&#x301;/re&#x301;sume&#x301;.html
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/r&#xE9;sum&#xE9;.html
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/Vi&#xEA;&#x323;tNam.html
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/&#xFB01;?&#xFB01;#&#xFB01;
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/?re&#x301;sume&#x301;#re&#x301;sume&#x301;
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/2&#x2075;?2&#x2075;#2&#x2075;
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/?Vi&#xEA;&#x323;tNam#Vi&#xEA;&#x323;tNam
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/foo?q=&#x2665;
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/&#x1E9B;&#x0323;/?&#x1E9B;&#x0323;#&#x1E9B;&#x0323;
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/&#x212B;/?&#x212B;#&#x212B;
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/&#x1E9B;&#x0323;/?&#x1E9B;&#x0323;#&#x1E9B;&#x0323;
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/&#x1E0B;&#x0323;/?&#x1E0B;&#x0323;#&#x1E0B;&#x0323;
+
+baduri  = http://www.example.com/foo    bar/?   foo   =   bar     #    foohttp://www.example.com/foo    bar/?   foo   =   bar     #    foo
+
+uri     = http://www.example.com/foo%3fbar
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo%3fbar
+
+uri     = http://www.example.com/foo%2fbar
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /foo%2fbar
+
+uri     = %68%74%74%70%3a%2f%2f%77%77%77%2e%65%78%61%6d%70%6c%65%2e%63%6f%6d%2f
+path    = %68%74%74%70%3a%2f%2f%77%77%77%2e%65%78%61%6d%70%6c%65%2e%63%6f%6d%2f
+
+uri     = http%3a%2f%2f%77%77%77%2e%65%78%61%6d%70%6c%65%2e%63%6f%6d%2f
+path    = http%3a%2f%2f%77%77%77%2e%65%78%61%6d%70%6c%65%2e%63%6f%6d%2f
+
+uri     = http://%77%77%77%2e%65%78%61%6d%70%6c%65%2e%63%6f%6d%3a%38%30
+scheme  = http
+decoded_authority = www.example.com:80
+decoded_host = www.example.com:80
+
+uri     = http://%A1%C1.com
+scheme  = http
+authority = %A1%C1.com
+host    = %A1%C1.com
+
+uri     = http://www.example.com/%A1%C1/?foo=%EF%BD%81
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /%A1%C1/
+query   = foo=%EF%BD%81
+
+uri     = http://www.example.com/%EF%BD%81/?foo=%A1%C1
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /%EF%BD%81/
+query   = foo=%A1%C1
+
+# Uunicode characters are ok in IRIs, not in URIs
+baduri  = http://www.example.com/ＦＯＯ/?foo=%A1%C1
+
+baduri  = http://www.example.com/%A1%C1/?foo=ＦＯＯ
+
+baduri  = http://www.example.com/ＦＯＯ/?foo=%A1%C1
+
+uri     = http://www.example.com/D%FCrst
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /D%FCrst
+
+uri     = http://www.example.com/D%C3%BCrst
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /D%C3%BCrst
+
+uri     = http://www.example.com/?D%FCrst
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /
+query   = D%FCrst
+
+uri     = http://www.example.com/?D%C3%BCrst
+scheme  = http
+authority = www.example.com
+host    = www.example.com
+path    = /
+decoded_query = Dürst
+
+uri     = http://user%40example.com
+scheme  = http
+authority = user%40example.com
+host    = user%40example.com
+
+uri     = http://user%3Ainfo%40example.com
+scheme  = http
+authority = user%3Ainfo%40example.com
+decoded_host = user:info@example.com
+
+uri     = http://user@example.com
+scheme  = http
+authority = user@example.com
+user    = user
+host    = example.com
+
+uri     = http://user:info@example.com
+scheme  = http
+authority = user:info@example.com
+user    = user
+password = info
+host    = example.com
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/&#xfdd0;foo
+
+# we currently don't parse IRIs
+#uri     = http://iris.test.ing/&#xfdd0;foo/bar
+
+baduri  = $://iris.test.ing
+
+baduri  = a$://iris.test.ing
+
+baduri  = http://www.example.com/foo    bar/?   foo   =   bar     #    foo
+
+uri     =
+
+# we currently don't parse IRIs
+#uri     =         htt&#x0070;://www.example.com/
+
+# we currently don't parse IRIs
+#uri     =       &#x0066;&#x006f;&#x006f;bar&#x002f;foo&#x003f;bar
