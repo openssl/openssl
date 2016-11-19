@@ -32,3 +32,5 @@ int register_loader_int(SCHEME_LOADER *scheme_loader);
 const SCHEME_LOADER *get_loader_int(const char *scheme);
 int unregister_loader_int(const char *scheme);
 void destroy_loaders_int(void);
+
+extern SCHEME_LOADER store_file_loader;

@@ -55,9 +55,18 @@ STACK_OF(STORE_INFO) *STORE_load(const char *uri,
  * scheme.
  */
 static CRYPTO_ONCE store_init = CRYPTO_ONCE_STATIC_INIT;
+static int store_file_loader_init(void)
+{
+    if (!register_loader_int(&store_file_loader)) {
+        STOREerr(STORE_F_STORE_FILE_LOADER_INIT, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    return 1;
+}
 DEFINE_RUN_ONCE_STATIC(do_store_init)
 {
-    return OPENSSL_init_crypto(0, NULL) && OPENSSL_atexit(destroy_loaders_int);
+    return OPENSSL_init_crypto(0, NULL) && OPENSSL_atexit(destroy_loaders_int)
+        && store_file_loader_init();
 }
 
 int STORE_register_loader(const char *scheme, STORE_loader_fn loader)
