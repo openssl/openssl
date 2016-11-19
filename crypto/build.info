@@ -5,7 +5,8 @@ SOURCE[../libcrypto]=\
         ebcdic.c uid.c o_time.c o_str.c o_dir.c o_fopen.c \
         threads_pthread.c threads_win.c threads_none.c \
         o_init.c o_fips.c mem_sec.c init.c {- $target{cpuid_asm_src} -} \
-        {- $target{uplink_aux_src} -}
+        {- $target{uplink_aux_src} -} \
+        uri.c uri_err.c
 EXTRA=  ../ms/uplink-x86.pl ../ms/uplink.c ../ms/applink.c \
         x86cpuid.pl x86_64cpuid.pl ia64cpuid.S \
         ppccpuid.pl pariscid.pl alphacpuid.pl arm64cpuid.pl armv4cpuid.pl
