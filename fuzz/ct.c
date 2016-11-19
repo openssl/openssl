@@ -16,11 +16,13 @@
 #include <openssl/ct.h>
 #include "fuzzer.h"
 
-int FuzzerInitialize(int *argc, char ***argv) {
+int FuzzerInitialize(int *argc, char ***argv)
+{
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+{
     const uint8_t **pp = &buf;
     unsigned char *der = NULL;
     STACK_OF(SCT) *scts = d2i_SCT_LIST(NULL, pp, len);

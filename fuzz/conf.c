@@ -15,11 +15,13 @@
 #include <openssl/conf.h>
 #include "fuzzer.h"
 
-int FuzzerInitialize(int *argc, char ***argv) {
+int FuzzerInitialize(int *argc, char ***argv)
+{
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+{
     CONF *conf;
     BIO *in;
     long eline;

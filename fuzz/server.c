@@ -191,7 +191,8 @@ static const uint8_t kRSAPrivateKeyDER[] = {
 
 static SSL_CTX *ctx;
 
-int FuzzerInitialize(int *argc, char ***argv) {
+int FuzzerInitialize(int *argc, char ***argv)
+{
     const uint8_t *bufp = kRSAPrivateKeyDER;
     RSA *privkey;
     EVP_PKEY *pkey;
@@ -216,7 +217,8 @@ int FuzzerInitialize(int *argc, char ***argv) {
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+{
     SSL *server;
     BIO *in;
     BIO *out;
