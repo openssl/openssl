@@ -7,47 +7,48 @@
 use strict;
 use warnings;
 use File::Copy;
+use File::Basename qw/basename dirname/;
 
-our ($ME) = ($0 =~ m|/([^/]+)$|);
-our $openssl = "openssl";
+my $ME = basename($0);
+my $openssl = "openssl";
 if(defined $ENV{'OPENSSL'}) {
     $openssl = $ENV{'OPENSSL'};
 } else {
     $ENV{'OPENSSL'} = $openssl;
 }
 
-our $verbose = 1;
+my $verbose = 1;
 
-our $OPENSSL_CONFIG = defined $ENV{'OPENSSL_CONFIG'} ? $ENV{'OPENSSL_CONFIG'} : "";
-our $OPENSSL_CONFIG_P12MNG = "-config /etc/pki/tls/openssl-p12mng.cnf";
-our $CERTTOP = defined $ENV{'CERTTOP'} ? $ENV{'CERTTOP'} : "/etc/pki/p12mng";
-our $DAYS = "-days 365";
-our $CADAYS = "-days 1095";	# 3 years
-our $REQ = "$openssl req";
-our $CA = "$openssl ca";
-our $VERIFY = "$openssl verify";
-our $X509 = "$openssl x509";
-our $PKCS12 = "$openssl pkcs12";
-our $CNAMETXT = "My Certificate";
-our $EXPORTPASS_FILE = "exportpw";
+my $OPENSSL_CONFIG = $ENV{'OPENSSL_CONFIG'} // "";
+my $OPENSSL_CONFIG_P12MNG = "-config /etc/pki/tls/openssl-p12mng.cnf";
+my $CERTTOP = $ENV{'CERTTOP'} // "/etc/pki/p12mng";
+my $DAYS = "-days 365";
+my $CADAYS = "-days 1095";	# 3 years
+my $REQ = "$openssl req";
+my $CA = "$openssl ca";
+my $VERIFY = "$openssl verify";
+my $X509 = "$openssl x509";
+my $PKCS12 = "$openssl pkcs12";
+my $CNAMETXT = "My Certificate";
+my $EXPORTPASS_FILE = "exportpw";
 
 # default openssl.cnf file has setup as per the following
-our $CATOP = defined $ENV{'CATOP'} ? $ENV{'CATOP'} : "./demoCA";
-our $CAKEY = "cakey.pem";
-our $CAREQ = "careq.pem";
-our $CACERT = "cacert.pem";
-our $CACERTDER = "cacert.crt";
-our $CACRL = "crl.pem";
-our $DIRMODE = 0755;
+my $CATOP = $ENV{'CATOP'} // "/etc/pki/CA";
+my $CAKEY = "cakey.pem";
+my $CAREQ = "careq.pem";
+my $CACERT = "cacert.pem";
+my $CACERTDER = "cacert.crt";
+my $CACRL = "crl.pem";
+my $DIRMODE = 0755;
 
-our $NEWKEY = "newkey.pem";
-our $NEWREQ = "newreq.pem";
-our $NEWCERT = "newcert.pem";
-our $NEWP12 = "newcert.p12";
-our $RET = 0;
-our $WHAT = shift @ARGV;
-our $FILE;
-our $PASSOPT = "";
+my $NEWKEY = "newkey.pem";
+my $NEWREQ = "newreq.pem";
+my $NEWCERT = "newcert.pem";
+my $NEWP12 = "newcert.p12";
+my $RET = 0;
+my $WHAT = shift @ARGV;
+my $FILE;
+my $PASSOPT = "";
 
 sub help
 {
@@ -114,7 +115,7 @@ sub run
     return $status >> 8;
 }
 
-# Create a certificate
+# Create a certificate along with a private key
 sub newcert
 {
     $RET = run("$REQ $OPENSSL_CONFIG -new -x509"
@@ -190,32 +191,32 @@ sub pkcs12
 }
 
 # Sign a certificate based on a certificate request
-sub xsign
-{
-    my ($days,$day) = @_;
-    $days = "" unless $days;
-    if ($days eq '-days' and $day) {
-        $days = $days. " ". $day;
-    } elsif ($days !~ /^-days[[:blank:]]+\w+/) {
-        $days = "";
-    }
-    $RET = run("$CA $OPENSSL_CONFIG -policy policy_anything"
-            . " $days -infiles $NEWREQ");
-}
-
-# Same as above except the certificate is writen to STDOUT
 sub sign
 {
     my ($days,$day) = @_;
     $days = "" unless $days;
     if ($days eq '-days' and $day) {
-        $days = $days. " ". $day;
+        $days = join(" ", $days, $day);
     } elsif ($days !~ /^-days[[:blank:]]+\w+/) {
         $days = "";
     }
     $RET = run("$CA $OPENSSL_CONFIG -policy policy_anything"
             . " -out $NEWCERT $days -infiles $NEWREQ");
     print "Signed certificate is in $NEWCERT\n" if $RET == 0;
+}
+
+# Same as above except the certificate is writen to STDOUT
+sub xsign
+{
+    my ($days,$day) = @_;
+    $days = "" unless $days;
+    if ($days eq '-days' and $day) {
+        $days = join(" ", $days, $day);
+    } elsif ($days !~ /^-days[[:blank:]]+\w+/) {
+        $days = "";
+    }
+    $RET = run("$CA $OPENSSL_CONFIG -policy policy_anything"
+            . " $days -infiles $NEWREQ");
 }
 
 # Same as sign except it uses configuration file section v3_ca
@@ -232,7 +233,7 @@ sub signcert
     my ($days,$day) = @_;
     $days = "" unless $days;
     if ($days eq '-days' and $day) {
-        $days = $days. " ". $day;
+        $days = join(" ", $days, $day);
     } elsif ($days !~ /^-days[[:blank:]]+\w+/) {
         $days = "";
     }
@@ -249,7 +250,7 @@ sub selfsign
     my ($days,$day) = @_;
     $days = "" unless $days;
     if ($days eq '-days' and $day) {
-        $days = $days. " ". $day;
+        $days = join(" ", $days, $day);
     } elsif ($days !~ /^-days[[:blank:]]+\w+/) {
         $days = "";
     }
