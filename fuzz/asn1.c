@@ -222,3 +222,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     return 0;
 }
+
+void FuzzerCleanup(void)
+{
+}

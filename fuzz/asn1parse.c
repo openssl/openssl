@@ -33,3 +33,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     (void)ASN1_parse_dump(bio_out, buf, len, 0, 0);
     return 0;
 }
+
+void FuzzerCleanup(void)
+{
+}
