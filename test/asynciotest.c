@@ -85,7 +85,7 @@ static int async_free(BIO *bio)
 static int async_read(BIO *bio, char *out, int outl)
 {
     struct async_ctrs *ctrs;
-    int ret = 0;
+    int ret = -1;
     BIO *next = BIO_next(bio);
 
     if (outl <= 0)
@@ -120,7 +120,7 @@ static int async_read(BIO *bio, char *out, int outl)
 static int async_write(BIO *bio, const char *in, int inl)
 {
     struct async_ctrs *ctrs;
-    int ret = 0;
+    int ret = -1;
     size_t written = 0;
     BIO *next = BIO_next(bio);
 
