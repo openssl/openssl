@@ -631,7 +631,7 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     ret = RSA_generate_key_ex(rsa, rctx->nbits, rctx->pub_exp, pcb);
     BN_GENCB_free(pcb);
     if (ret > 0)
-        EVP_PKEY_assign_RSA(pkey, rsa);
+        EVP_PKEY_assign(pkey, ctx->pmeth->pkey_id, rsa);
     else
         RSA_free(rsa);
     return ret;
