@@ -51,7 +51,7 @@ static int rsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
         RSAerr(RSA_F_RSA_PUB_DECODE, ERR_R_RSA_LIB);
         return 0;
     }
-    EVP_PKEY_assign_RSA(pkey, rsa);
+    EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
     return 1;
 }
 
@@ -72,7 +72,7 @@ static int old_rsa_priv_decode(EVP_PKEY *pkey,
         RSAerr(RSA_F_OLD_RSA_PRIV_DECODE, ERR_R_RSA_LIB);
         return 0;
     }
-    EVP_PKEY_assign_RSA(pkey, rsa);
+    EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
     return 1;
 }
 
@@ -92,7 +92,7 @@ static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
         return 0;
     }
 
-    if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_rsaEncryption), 0,
+    if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(pkey->ameth->pkey_id), 0,
                          V_ASN1_NULL, NULL, rk, rklen)) {
         RSAerr(RSA_F_RSA_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
