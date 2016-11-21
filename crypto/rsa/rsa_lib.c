@@ -152,6 +152,7 @@ void RSA_free(RSA *r)
     BN_clear_free(r->dmp1);
     BN_clear_free(r->dmq1);
     BN_clear_free(r->iqmp);
+    RSA_PSS_PARAMS_free(r->pss);
     BN_BLINDING_free(r->blinding);
     BN_BLINDING_free(r->mt_blinding);
     OPENSSL_free(r->bignum_data);
