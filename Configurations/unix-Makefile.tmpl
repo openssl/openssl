@@ -65,7 +65,7 @@
      sub dependmagic {
          my $target = shift;
 
-         return "$target: \t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
+         return "$target: \n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
      }
      '';
 -}
