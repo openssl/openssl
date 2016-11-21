@@ -451,16 +451,16 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 /* Structure passed to cert status callback */
 
 typedef struct tlsextstatusctx_st {
+    int timeout;
     /* File to load OCSP Response from (or NULL if no file) */
     char *respin;
     /* Default responder to use */
     char *host, *path, *port;
     int use_ssl;
-    int timeout;
     int verbose;
 } tlsextstatusctx;
 
-static tlsextstatusctx tlscstatp = { NULL, NULL, NULL, NULL, 0, -1, 0 };
+static tlsextstatusctx tlscstatp = { -1 };
 
 #ifndef OPENSSL_NO_OCSP
 
@@ -553,7 +553,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
  err:
     ret = SSL_TLSEXT_ERR_ALERT_FATAL;
  done:
-    if (aia) {
+    if (aia != NULL) {
         OPENSSL_free(host);
         OPENSSL_free(path);
         OPENSSL_free(port);
@@ -589,7 +589,7 @@ static int cert_status_cb(SSL *s, void *arg)
         }
         resp = d2i_OCSP_RESPONSE_bio(derbio, NULL);
         BIO_free(derbio);
-        if (!resp) {
+        if (resp == NULL) {
             BIO_puts(bio_err, "cert_status: Error reading OCSP response\n");
             goto err;
         }

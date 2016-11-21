@@ -150,7 +150,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
 
-    if (s->method->version == TLS1_3_VERSION) {
+    if (SSL_IS_TLS13(s)) {
         if (!ossl_statem_server13_read_transition(s, mt))
             goto err;
         return 1;
@@ -422,10 +422,8 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT:
-        if (s->tlsext_status_expected)
-            st->hand_state = TLS_ST_SW_CERT_STATUS;
-        else
-            st->hand_state = TLS_ST_SW_FINISHED;
+            st->hand_state = s->tlsext_status_expected ? TLS_ST_SW_CERT_STATUS
+                                                       : TLS_ST_SW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT_STATUS:
@@ -455,7 +453,7 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
      * to negotiate yet, so we don't take this branch until later
      */
 
-    if (s->method->version == TLS1_3_VERSION)
+    if (SSL_IS_TLS13(s))
         return ossl_statem_server13_write_transition(s);
 
     switch (st->hand_state) {

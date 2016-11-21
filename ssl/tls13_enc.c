@@ -17,16 +17,11 @@
 /* Always filled with zeros */
 static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
 
-static const unsigned char keylabel[] = "key";
-static const unsigned char ivlabel[] = "iv";
-static const unsigned char finishedlabel[] = "finished";
-
 /*
  * Given a |secret|; a |label| of length |labellen|; and a |hash| of the
  * handshake messages, derive a new secret |outlen| bytes long and store it in
- * the location pointed to be |out|. The |hash| value may be NULL.
- *
- * Returns 1 on success  0 on failure.
+ * the location pointed to be |out|. The |hash| value may be NULL. Returns 1 on
+ * success  0 on failure.
  */
 static int tls13_hkdf_expand(SSL *s, const unsigned char *secret,
                              const unsigned char *label, size_t labellen,
@@ -82,9 +77,8 @@ static int tls13_hkdf_expand(SSL *s, const unsigned char *secret,
 /*
  * Given a input secret |insecret| and a |label| of length |labellen|, derive a
  * new |secret|. This will be the length of the current hash output size and
- * will be based on the current state of the handshake hashes.
- *
- * Returns 1 on success  0 on failure.
+ * will be based on the current state of the handshake hashes. Returns 1 on
+ * success  0 on failure.
  */
 int tls13_derive_secret(SSL *s, const unsigned char *insecret,
                         const unsigned char *label, size_t labellen,
@@ -104,25 +98,27 @@ int tls13_derive_secret(SSL *s, const unsigned char *insecret,
 }
 
 /*
- * Given a |secret| generate a |key| of length |keylen| bytes.
- *
- * Returns 1 on success  0 on failure.
+ * Given a |secret| generate a |key| of length |keylen| bytes. Returns 1 on
+ * success  0 on failure.
  */
 int tls13_derive_key(SSL *s, const unsigned char *secret, unsigned char *key,
                      size_t keylen)
 {
+    static const unsigned char keylabel[] = "key";
+
     return tls13_hkdf_expand(s, secret, keylabel, sizeof(keylabel) - 1, NULL,
                              key, keylen);
 }
 
 /*
- * Given a |secret| generate an |iv| of length |ivlen| bytes.
- *
- * Returns 1 on success  0 on failure.
+ * Given a |secret| generate an |iv| of length |ivlen| bytes. Returns 1 on
+ * success  0 on failure.
  */
 int tls13_derive_iv(SSL *s, const unsigned char *secret, unsigned char *iv,
                     size_t ivlen)
 {
+    static const unsigned char ivlabel[] = "iv";
+
     return tls13_hkdf_expand(s, secret, ivlabel, sizeof(ivlabel) - 1, NULL,
                              iv, ivlen);
 }
@@ -130,6 +126,8 @@ int tls13_derive_iv(SSL *s, const unsigned char *secret, unsigned char *iv,
 static int tls13_derive_finishedkey(SSL *s, const unsigned char *secret,
                                  unsigned char *fin, size_t finlen)
 {
+    static const unsigned char finishedlabel[] = "finished";
+
     return tls13_hkdf_expand(s, secret, finishedlabel,
                              sizeof(finishedlabel) - 1, NULL, fin, finlen);
 }
@@ -137,9 +135,7 @@ static int tls13_derive_finishedkey(SSL *s, const unsigned char *secret,
 /*
  * Given the previous secret |prevsecret| and a new input secret |insecret| of
  * length |insecretlen|, generate a new secret and store it in the location
- * pointed to by |outsecret|.
- *
- * Returns 1 on success  0 on failure.
+ * pointed to by |outsecret|. Returns 1 on success  0 on failure.
  */
 static int tls13_generate_secret(SSL *s, const unsigned char *prevsecret,
                                  const unsigned char *insecret,
@@ -183,9 +179,7 @@ static int tls13_generate_secret(SSL *s, const unsigned char *prevsecret,
 
 /*
  * Given an input secret |insecret| of length |insecretlen| generate the early
- * secret.
- *
- * Returns 1 on success  0 on failure.
+ * secret. Returns 1 on success  0 on failure.
  */
 int tls13_generate_early_secret(SSL *s, const unsigned char *insecret,
                                 size_t insecretlen)
@@ -197,9 +191,7 @@ int tls13_generate_early_secret(SSL *s, const unsigned char *insecret,
 /*
  * Given an input secret |insecret| of length |insecretlen| generate the
  * handshake secret. This requires the early secret to already have been
- * generated.
- *
- * Returns 1 on success  0 on failure.
+ * generated. Returns 1 on success  0 on failure.
  */
 int tls13_generate_handshake_secret(SSL *s, const unsigned char *insecret,
                                 size_t insecretlen)
@@ -210,9 +202,8 @@ int tls13_generate_handshake_secret(SSL *s, const unsigned char *insecret,
 
 /*
  * Given the handshake secret |prev| of length |prevlen| generate the master
- * secret and store its length in |*secret_size|
- *
- * Returns 1 on success  0 on failure.
+ * secret and store its length in |*secret_size|. Returns 1 on success  0 on
+ * failure.
  */
 int tls13_generate_master_secret(SSL *s, unsigned char *out,
                                  unsigned char *prev, size_t prevlen,
@@ -223,9 +214,8 @@ int tls13_generate_master_secret(SSL *s, unsigned char *out,
 }
 
 /*
- * Generates the mac for the Finished message.
- *
- * Returns the length of the MAC or 0 on error.
+ * Generates the mac for the Finished message. Returns the length of the MAC or
+ * 0 on error.
  */
 size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
                              unsigned char *out)
@@ -262,9 +252,7 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
 
 /*
  * There isn't really a key block in TLSv1.3, but we still need this function
- * for initialising the cipher and hash.
- *
- * Returns 1 on success or 0 on failure.
+ * for initialising the cipher and hash. Returns 1 on success or 0 on failure.
  */
 int tls13_setup_key_block(SSL *s)
 {
@@ -285,17 +273,16 @@ int tls13_setup_key_block(SSL *s)
     return 1;
 }
 
-const unsigned char client_handshake_traffic[] =
-    "client handshake traffic secret";
-const unsigned char client_application_traffic[] =
-    "client application traffic secret";
-const unsigned char server_handshake_traffic[] =
-    "server handshake traffic secret";
-const unsigned char server_application_traffic[] =
-    "server application traffic secret";
-
 int tls13_change_cipher_state(SSL *s, int which)
 {
+    static const unsigned char client_handshake_traffic[] =
+        "client handshake traffic secret";
+    static const unsigned char client_application_traffic[] =
+        "client application traffic secret";
+    static const unsigned char server_handshake_traffic[] =
+        "server handshake traffic secret";
+    static const unsigned char server_application_traffic[] =
+        "server application traffic secret";
     unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char secret[EVP_MAX_MD_SIZE];
@@ -396,6 +383,7 @@ int tls13_change_cipher_state(SSL *s, int which)
         }
     } else if (EVP_CIPHER_mode(ciph) == EVP_CIPH_CCM_MODE) {
         int taglen;
+
         if (s->s3->tmp.new_cipher->algorithm_enc
                 & (SSL_AES128CCM8 | SSL_AES256CCM8))
             taglen = 8;
