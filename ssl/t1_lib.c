@@ -1029,9 +1029,10 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
     const unsigned char *pcurves = NULL;
     size_t num_curves = 0;
     int using_ecc = 0;
+    int min_version, max_version, reason;
 
     /* See if we support any ECC ciphersuites */
-    if ((s->version >= TLS1_VERSION && s->version <= TLS1_2_VERSION)
+    if ((s->version >= TLS1_VERSION && s->version <= TLS1_3_VERSION)
             || SSL_IS_DTLS(s)) {
         int i;
         unsigned long alg_k, alg_a;
@@ -1043,17 +1044,12 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             alg_k = c->algorithm_mkey;
             alg_a = c->algorithm_auth;
             if ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
-                || (alg_a & SSL_aECDSA)) {
+                || (alg_a & SSL_aECDSA)
+                || c->min_tls >= TLS1_3_VERSION) {
                 using_ecc = 1;
                 break;
             }
         }
-    } else if (SSL_IS_TLS13(s)) {
-        /*
-         * TODO(TLS1.3): We always use ECC for TLSv1.3 at the moment. This will
-         * change if we implement DH key shares
-         */
-        using_ecc = 1;
     }
 #else
     if (SSL_IS_TLS13(s)) {
@@ -1366,9 +1362,15 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
         return 0;
     }
 
+    reason = ssl_get_client_min_max_version(s, &min_version, &max_version);
+    if (reason != 0) {
+        SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, reason);
+        return 0;
+    }
+
     /* TLS1.3 specific extensions */
-    if (SSL_IS_TLS13(s)) {
-        int min_version, max_version, reason, currv;
+    if (!SSL_IS_DTLS(s) && max_version >= TLS1_3_VERSION) {
+        int currv;
         size_t i, sharessent = 0;
 
         /* TODO(TLS1.3): Should we add this extension for versions < TLS1.3? */
@@ -1379,11 +1381,7 @@ int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al)
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return 0;
         }
-        reason = ssl_get_client_min_max_version(s, &min_version, &max_version);
-        if (reason != 0) {
-            SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, reason);
-            return 0;
-        }
+
         /*
          * TODO(TLS1.3): There is some discussion on the TLS list as to wheter
          * we should include versions <TLS1.2. For the moment we do. To be
