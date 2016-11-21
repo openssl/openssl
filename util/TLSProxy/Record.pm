@@ -195,7 +195,8 @@ sub new
         data => $data,
         decrypt_data => $decrypt_data,
         orig_decrypt_data => $decrypt_data,
-        encrypted => 0
+        encrypted => 0,
+        outer_content_type => RT_APPLICATION_DATA
     };
 
     return bless $self, $class;
@@ -289,7 +290,7 @@ sub reconstruct_record
         $data = pack('n', $self->len | 0x8000);
     } else {
         if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
-            $data = pack('Cnn', RT_APPLICATION_DATA, $self->version,
+            $data = pack('Cnn', $self->outer_content_type, $self->version,
                          $self->len + 1);
             $tls13_enc = 1;
         } else {
@@ -385,5 +386,13 @@ sub encrypted
       $self->{encrypted} = shift;
     }
     return $self->{encrypted};
+}
+sub outer_content_type
+{
+    my $self = shift;
+    if (@_) {
+      $self->{outer_content_type} = shift;
+    }
+    return $self->{outer_content_type};
 }
 1;
