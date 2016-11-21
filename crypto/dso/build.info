@@ -2,3 +2,8 @@ LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         dso_dl.c dso_dlfcn.c dso_err.c dso_lib.c \
         dso_openssl.c dso_win32.c dso_vms.c
+
+PREREQUISITE[*.o]=../include/internal/dso_conf.h
+
+DEPEND[../include/internal/dso_conf.h]=../../configdata.pm
+GENERATE[../include/internal/dso_conf.h]=../include/internal/dso_conf.h.in

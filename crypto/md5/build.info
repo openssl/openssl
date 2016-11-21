@@ -16,6 +16,7 @@ ENDRAW[makefile(windows)]
 
 BEGINRAW[Makefile]
 {- $builddir -}/md5-ia64.s: {- $sourcedir -}/asm/md5-ia64.S
+	$(MAKE) include/openssl/opensslconf.h
 	$(CC) $(CFLAGS) -E {- $sourcedir -}/asm/md5-ia64.S | \
 	$(PERL) -ne 's/;\s+/;\n/g; print;' > $@
 

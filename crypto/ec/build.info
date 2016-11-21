@@ -25,5 +25,6 @@ GENERATE[ecp_nistz256-ppc64.s]=asm/ecp_nistz256-ppc64.pl $(PERLASM_SCHEME)
 
 BEGINRAW[Makefile]
 {- $builddir -}/ecp_nistz256-%.S:	{- $sourcedir -}/asm/ecp_nistz256-%.pl
+	$(MAKE) include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile]

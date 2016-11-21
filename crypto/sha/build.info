@@ -64,9 +64,12 @@ BEGINRAW[Makefile(unix)]
 
 # GNU make "catch all"
 {- $builddir -}/sha1-%.S:	{- $sourcedir -}/asm/sha1-%.pl
+	$(MAKE) include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 {- $builddir -}/sha256-%.S:	{- $sourcedir -}/asm/sha512-%.pl
+	$(MAKE) include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 {- $builddir -}/sha512-%.S:	{- $sourcedir -}/asm/sha512-%.pl
+	$(MAKE) include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile(unix)]

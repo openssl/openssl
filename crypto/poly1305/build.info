@@ -17,5 +17,6 @@ INCLUDE[poly1305-mips.o]=..
 
 BEGINRAW[Makefile(unix)]
 {- $builddir -}/poly1305-%.S:	{- $sourcedir -}/asm/poly1305-%.pl
+	$(MAKE) include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile(unix)]
