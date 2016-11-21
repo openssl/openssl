@@ -13,6 +13,8 @@
 #include <openssl/lhash.h>
 #include "internal/bn_int.h"
 #include <openssl/engine.h>
+#include <openssl/evp.h>
+#include "internal/evp_int.h"
 #include "rsa_locl.h"
 
 static const RSA_METHOD *default_RSA_meth = NULL;
@@ -308,4 +310,14 @@ void RSA_set_flags(RSA *r, int flags)
 ENGINE *RSA_get0_engine(const RSA *r)
 {
     return r->engine;
+}
+
+int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2)
+{
+    /* If key type not RSA or RSA-PSS return error */
+    if (ctx != NULL && ctx->pmeth != NULL
+        && ctx->pmeth->pkey_id != EVP_PKEY_RSA
+        && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        return -1;
+     return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, p1, p2);
 }
