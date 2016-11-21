@@ -859,20 +859,27 @@ configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build
       my $generator_incs = join("", map { " -I".$_ } @{$args{generator_incs}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
       my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
+      my $prerequisites = join(" ", @{$args{prerequisites}});
 
+      my $recipe = <<"EOF";
+$args{src}: $args{generator}->[0] $deps
+EOF
+      if ($prerequisites ne "") {
+          $recipe .= <<"EOF";
+	\@\$(MAKE) $prerequisites
+EOF
+      }
       if ($args{src} !~ /\.[sS]$/) {
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
               my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                                    "util", "dofile.pl")),
                                    rel2abs($config{builddir}));
-              return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
+              $recipe .= <<"EOF";
 	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $generator > \$@
 EOF
 	  } else {
-              return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
+              $recipe .= <<"EOF";
 	\$(PERL)$generator_incs $generator > \$@
 EOF
 	  }
@@ -891,28 +898,28 @@ EOF
               # If the target is named foo.S in build.info, we want to
               # end up generating foo.s in two steps.
               if ($args{src} =~ /\.S$/) {
-                   (my $target = $args{src}) =~ s|\.S$|.s|;
-                   return <<"EOF";
-$target: $args{generator}->[0] $deps
+                  (my $target = $args{src}) =~ s|\.S$|.s|;
+                  $recipe .= <<"EOF";
 	( trap "rm -f \$@.*" INT 0; \\
 	  $generator \$@.S; \\
 	  \$(CC) $incs \$(CFLAGS) -E \$@.S | \\
 	  \$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@.i && \\
 	  mv -f \$@.i \$@ )
 EOF
-              }
-              # Otherwise....
-              return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
+              } else {
+                  $recipe .= <<"EOF";
 	$generator \$@
 EOF
-          }
-          return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
+              }
+          } else {
+              $recipe .= <<"EOF";
 	\$(CC) $incs \$(CFLAGS) -E \$< | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
+          }
       }
+
+      return $recipe;
   }
 
   # Should one wonder about the end of the Perl snippet, it's because this
@@ -929,6 +936,7 @@ EOF
                      } ( @{$args{srcs}} );
       my $srcs = join(" ",  @srcs);
       my $deps = join(" ", @srcs, @{$args{deps}});
+      my $prerequisites = join(" ", @{$args{prerequisites}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
       unless ($disabled{zlib}) {
           if ($withargs{zlib_include}) {
@@ -952,6 +960,11 @@ EOF
       my $recipe = <<"EOF";
 $obj$objext: $deps
 EOF
+      if ($prerequisites ne "") {
+          $recipe .= <<"EOF";
+	\@\$(MAKE) $prerequisites
+EOF
+      }
       if (!$disabled{makedepend} && $makedepprog !~ /\/makedepend/) {
           $recipe .= <<"EOF";
 	$cc $incs $cflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs

@@ -541,6 +541,10 @@ configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{bu
       my $generator = join(" ", @{$args{generator}});
       my $generator_incs = join("", map { ' "-I'.$_.'"' } @{$args{generator_incs}});
       my $deps = join(", -\n\t\t", @{$args{generator_deps}}, @{$args{deps}});
+      my $prerequisites = join(" ", @{$args{prerequisites}});
+
+      $prerequisites =
+          $prerequisites eq "" ? "! Nothing to generate" : '$(MMS) ' . $prerequisites;
 
       if ($args{src} !~ /\.[sS]$/) {
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
@@ -549,12 +553,14 @@ configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{bu
                                    rel2abs($config{builddir}));
               return <<"EOF";
 $args{src} : $args{generator}->[0] $deps
+        \@ $prerequisites
 	\$(PERL) "-I\$(BLDDIR)" "-Mconfigdata" $dofile \\
 	    "-o$target{build_file}" $generator > \$@
 EOF
 	  } else {
               return <<"EOF";
 $args{src} : $args{generator}->[0] $deps
+        \@ $prerequisites
 	\$(PERL)$generator_incs $generator > \$@
 EOF
 	  }
@@ -567,6 +573,9 @@ EOF
       my %args = @_;
       my $obj = $args{obj};
       my $deps = join(", -\n\t\t", @{$args{srcs}}, @{$args{deps}});
+      my $prerequisites = join(" ", @{$args{prerequisites}});
+      $prerequisites =
+          $prerequisites eq "" ? "! Nothing to generate" : '$(MMS) ' . $prerequisites;
 
       # Because VMS C isn't very good at combining a /INCLUDE path with
       # #includes having a relative directory (like '#include "../foo.h"),
@@ -618,6 +627,7 @@ EOF
 
       return <<"EOF";
 $obj.OBJ : $deps
+        \@ $prerequisites
         ${before}
         SET DEFAULT $forward
         $incs_on
