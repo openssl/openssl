@@ -144,7 +144,8 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
             if (mt == SSL3_MT_CERTIFICATE_REQUEST) {
                 st->hand_state = TLS_ST_CR_CERT_REQ;
                 return 1;
-            } else if (mt == SSL3_MT_CERTIFICATE) {
+            }
+            if (mt == SSL3_MT_CERTIFICATE) {
                 st->hand_state = TLS_ST_CR_CERT;
                 return 1;
             }
@@ -200,7 +201,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
      * Note that after a ClientHello we don't know what version we are going
      * to negotiate yet, so we don't take this branch until later
      */
-    if (s->method->version == TLS1_3_VERSION) {
+    if (SSL_IS_TLS13(s)) {
         if (!ossl_statem_client13_read_transition(s, mt))
             goto err;
         return 1;
@@ -414,7 +415,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
      * version we are going to negotiate yet, so we don't take this branch until
      * later
      */
-    if (s->method->version == TLS1_3_VERSION)
+    if (SSL_IS_TLS13(s))
         return ossl_statem_client13_write_transition(s);
 
     switch (st->hand_state) {

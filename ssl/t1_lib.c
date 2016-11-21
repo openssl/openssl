@@ -943,7 +943,7 @@ int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op)
 
 static int tls_use_ticket(SSL *s)
 {
-    if (s->options & SSL_OP_NO_TICKET || SSL_IS_TLS13(s))
+    if ((s->options & SSL_OP_NO_TICKET) || SSL_IS_TLS13(s))
         return 0;
     return ssl_security(s, SSL_SECOP_TICKET, 0, 0, NULL);
 }
