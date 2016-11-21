@@ -135,6 +135,7 @@ $code=<<___;
 .align	5
 .bn_mul_mont_int:
 	mr	$rp,r3		; $rp is reassigned
+	li	r3,0
 ___
 $code.=<<___ if ($BNSZ==4);
 	cmpwi	$num,32		; longer key performance is not better
