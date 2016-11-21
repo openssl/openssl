@@ -360,7 +360,7 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 /* allocate and set algorithm ID from EVP_MD, default SHA1 */
 static int rsa_md_to_algor(X509_ALGOR **palg, const EVP_MD *md)
 {
-    if (EVP_MD_type(md) == NID_sha1)
+    if (md == NULL || EVP_MD_type(md) == NID_sha1)
         return 1;
     *palg = X509_ALGOR_new();
     if (*palg == NULL)
@@ -375,7 +375,7 @@ static int rsa_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
     X509_ALGOR *algtmp = NULL;
     ASN1_STRING *stmp = NULL;
     *palg = NULL;
-    if (EVP_MD_type(mgf1md) == NID_sha1)
+    if (mgf1md == NULL || EVP_MD_type(mgf1md) == NID_sha1)
         return 1;
     /* need to embed algorithm ID inside another */
     if (!rsa_md_to_algor(&algtmp, mgf1md))
@@ -408,23 +408,21 @@ static const EVP_MD *rsa_algor_to_md(X509_ALGOR *alg)
 }
 
 /*
- * Convert EVP_PKEY_CTX is PSS mode into corresponding algorithm parameter,
+ * Convert EVP_PKEY_CTX in PSS mode into corresponding algorithm parameter,
  * suitable for setting an AlgorithmIdentifier.
  */
 
-static ASN1_STRING *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
+static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
 {
     const EVP_MD *sigmd, *mgf1md;
-    RSA_PSS_PARAMS *pss = NULL;
-    ASN1_STRING *os = NULL;
     EVP_PKEY *pk = EVP_PKEY_CTX_get0_pkey(pkctx);
-    int saltlen, rv = 0;
+    int saltlen;
     if (EVP_PKEY_CTX_get_signature_md(pkctx, &sigmd) <= 0)
-        goto err;
+        return NULL;
     if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkctx, &mgf1md) <= 0)
-        goto err;
+        return NULL;
     if (!EVP_PKEY_CTX_get_rsa_pss_saltlen(pkctx, &saltlen))
-        goto err;
+        return NULL;
     if (saltlen == -1)
         saltlen = EVP_MD_size(sigmd);
     else if (saltlen == -2) {
@@ -432,7 +430,14 @@ static ASN1_STRING *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
         if (((EVP_PKEY_bits(pk) - 1) & 0x7) == 0)
             saltlen--;
     }
-    pss = RSA_PSS_PARAMS_new();
+
+    return rsa_pss_params_create(sigmd, mgf1md, saltlen);
+}
+
+RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
+                                      const EVP_MD *mgf1md, int saltlen)
+{
+    RSA_PSS_PARAMS *pss = RSA_PSS_PARAMS_new();
     if (pss == NULL)
         goto err;
     if (saltlen != 20) {
@@ -444,18 +449,29 @@ static ASN1_STRING *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
     }
     if (!rsa_md_to_algor(&pss->hashAlgorithm, sigmd))
         goto err;
+    if (mgf1md == NULL)
+            mgf1md = sigmd;
     if (!rsa_md_to_mgf1(&pss->maskGenAlgorithm, mgf1md))
         goto err;
-    /* Finally create string with pss parameter encoding. */
-    if (!ASN1_item_pack(pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS), &os))
-         goto err;
-    rv = 1;
+    return pss;
  err:
     RSA_PSS_PARAMS_free(pss);
-    if (rv)
-        return os;
-    ASN1_STRING_free(os);
     return NULL;
+}
+
+static ASN1_STRING *rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkctx)
+{
+    RSA_PSS_PARAMS *pss = rsa_ctx_to_pss(pkctx);
+    ASN1_STRING *os = NULL;
+    if (pss == NULL)
+        return NULL;
+
+    if (!ASN1_item_pack(pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS), &os)) {
+        ASN1_STRING_free(os);
+        os = NULL;
+    }
+    RSA_PSS_PARAMS_free(pss);
+    return os;
 }
 
 /*
@@ -605,7 +621,7 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
     /* We don't support it */
     if (pad_mode != RSA_PKCS1_PSS_PADDING)
         return 0;
-    os = rsa_ctx_to_pss(pkctx);
+    os = rsa_ctx_to_pss_string(pkctx);
     if (!os)
         return 0;
     X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_PKEY_RSA_PSS), V_ASN1_SEQUENCE, os);
@@ -625,7 +641,7 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
         return 2;
     if (pad_mode == RSA_PKCS1_PSS_PADDING) {
         ASN1_STRING *os1 = NULL;
-        os1 = rsa_ctx_to_pss(pkctx);
+        os1 = rsa_ctx_to_pss_string(pkctx);
         if (!os1)
             return 0;
         /* Duplicate parameters if we have to */
