@@ -391,10 +391,8 @@ int tls13_change_cipher_state(SSL *s, int which)
 #endif
 
     ret = 1;
-
  err:
     OPENSSL_cleanse(secret, sizeof(secret));
     OPENSSL_cleanse(key, sizeof(key));
-    OPENSSL_cleanse(iv, sizeof(iv));
     return ret;
 }
