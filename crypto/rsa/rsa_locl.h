@@ -28,6 +28,8 @@ struct rsa_st {
     BIGNUM *dmp1;
     BIGNUM *dmq1;
     BIGNUM *iqmp;
+    /* If a PSS only key this contains the parameter restrictions */
+    RSA_PSS_PARAMS *pss;
     /* be careful using this if the RSA structure is shared */
     CRYPTO_EX_DATA ex_data;
     CRYPTO_REF_COUNT references;
