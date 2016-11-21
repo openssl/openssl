@@ -65,7 +65,7 @@
      sub dependmagic {
          my $target = shift;
 
-         return "$target: build_generated\n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
+         return "$target: \t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
      }
      '';
 -}
@@ -234,7 +234,6 @@ LANG=C
 {- dependmagic('build_engines'); -}: build_engines_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
 
-build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
 build_engines_nodep: $(ENGINES)
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
