@@ -171,7 +171,7 @@ sub get_messages
                 $recoffset += 4;
                 $payload = "";
                 
-                if ($recoffset < $record->decrypt_len) {
+                if ($recoffset <= $record->decrypt_len) {
                     #Some payload data is present in this record
                     if ($record->decrypt_len - $recoffset >= $messlen) {
                         #We can complete the message with this record
