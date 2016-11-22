@@ -369,6 +369,7 @@ static int state_machine(SSL *s, int server)
             s->hit = 0;
 
             s->s3->tmp.cert_request = 0;
+            s->s3->tmp.cert_req = 0;
 
             if (SSL_IS_DTLS(s)) {
                 st->use_timer = 1;
