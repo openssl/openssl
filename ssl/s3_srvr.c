@@ -506,7 +506,7 @@ int ssl3_accept(SSL *s)
                     * if SSL_VERIFY_CLIENT_ONCE is set, don't request cert
                     * during re-negotiation:
                     */
-                   ((s->session->peer != NULL) &&
+                   (s->s3->tmp.finish_md_len != 0 &&
                     (s->verify_mode & SSL_VERIFY_CLIENT_ONCE)) ||
                    /*
                     * never request cert in anonymous ciphersuites (see
