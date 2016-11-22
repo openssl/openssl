@@ -20,8 +20,6 @@ if(defined $ENV{'OPENSSL'}) {
 my $verbose = 1;
 
 my $OPENSSL_CONFIG = $ENV{'OPENSSL_CONFIG'} // "";
-my $OPENSSL_CONFIG_P12MNG = "-config /etc/pki/tls/openssl-p12mng.cnf";
-my $CERTTOP = $ENV{'CERTTOP'} // "/etc/pki/p12mng";
 my $DAYS = "-days 365";
 my $CADAYS = "-days 1095";	# 3 years
 my $REQ = "$openssl req";
@@ -30,7 +28,6 @@ my $VERIFY = "$openssl verify";
 my $X509 = "$openssl x509";
 my $PKCS12 = "$openssl pkcs12";
 my $CNAMETXT = "My Certificate";
-my $EXPORTPASS_FILE = "exportpw";
 
 # default openssl.cnf file has setup as per the following
 my $CATOP = $ENV{'CATOP'} // "/etc/pki/CA";
@@ -48,16 +45,15 @@ my $NEWP12 = "newcert.p12";
 my $RET = 0;
 my $WHAT = shift @ARGV;
 my $FILE;
-my $PASSOPT = "";
 
 sub help
 {
-    print STDERR "usage: $ME -newcert|-newreq|-newreq-nodes|-newca|-verify\n";
+    print STDERR "usage: $ME -newcert|-newreq|-newreq-nodes|-newca\n";
+    print STDERR "       $ME -verify [cert-file ..]\n";
+    print STDERR "       $ME -showcert|-showreq|-showpkcs12 [cert-file]\n";
     print STDERR "       $ME -sign|-xsign|-signcert|-selfsign [-days days]\n";
     print STDERR "       $ME -pkcs12 [certname]\n";
-    print STDERR "       $ME -crl|-revoke cert-filename [reason]\n";
-    print STDERR "       $ME -p12mng-new cname [certname]\n";
-    print STDERR "       $ME -p12mng-revoke cname [reason]\n";
+    print STDERR "       $ME -crl|-revoke cert-file [reason]\n";
 }
 
 # See if reason for a CRL entry is valid; exit if not.
@@ -138,6 +134,32 @@ sub newreq_nodes
     print "Request is in $NEWREQ, private key is in $NEWKEY\n" if $RET == 0;
 }
 
+# Print contents of a certificate
+sub showcert
+{
+    my $file = shift;
+    my $inform = "";
+    $file = $NEWREQ unless $file;
+    $inform = "-inform der" if -B $file;
+    $RET = run("$X509 -text -noout -in $file $inform");
+}
+
+# Print contents of a CSR
+sub showreq
+{
+    my $file = shift;
+    $file = $NEWREQ unless $file;
+    $RET = run("$REQ -text -noout -in $file");
+}
+
+# Print contents of a PKCS#12
+sub showpkcs12
+{
+    my $file = shift;
+    $file = $NEWP12 unless $file;
+    $RET = run("$PKCS12 -info -in $file -nodes");
+}
+
 # Build a certificate authority(CA)
 sub newca
 {
@@ -185,9 +207,9 @@ sub pkcs12
     $cname = "$CNAMETXT" unless $cname;
     $RET = run("$PKCS12 -in $NEWCERT -inkey $NEWKEY"
             . " -certfile ${CATOP}/$CACERT"
-            . " -out $NEWP12 $PASSOPT"
+            . " -out $NEWP12"
             . " -export -name \"$cname\"");
-    print "PKCS#12 file is in $NEWP12\n" if $RET == 0;
+    print "PKCS#12 is in $NEWP12\n" if $RET == 0;
 }
 
 # Sign a certificate based on a certificate request
@@ -270,83 +292,6 @@ sub verify
     }
 }
 
-# Prepare directory hierarchy for PKCS#12 management
-sub p12mng_prep
-{
-    # create the directory hierarchy
-    unless (-d "$CERTTOP") {
-        mkdir ${CERTTOP}, $DIRMODE;
-        mkdir "${CERTTOP}/certs", $DIRMODE;
-        mkdir "${CERTTOP}/newcerts", $DIRMODE;
-        mkdir "${CERTTOP}/private", $DIRMODE;
-        print "$CERTTOP created.\n";
-    }
-    my ($config_p12mng) = $OPENSSL_CONFIG ? ($OPENSSL_CONFIG =~ m|-config[[:blank:]]+(.+)$|) : ($OPENSSL_CONFIG_P12MNG =~ m|-config[[:blank:]]+(.+)$|);
-    unless (-f $config_p12mng) {
-        print "Please make ${config_p12mng} and run $ME again.\n";
-        print "Hint: putting PKCS#12 export password file '$EXPORTPASS_FILE' in\n"
-            . " ${CERTTOP}/private will ease management.\n";
-        exit 1;
-    }
-}
-
-# Create a cert/key pair and PKCS#12. This is an application example to
-# mass-manage certificates for web client public-key authentication.
-sub p12mng_new
-{
-    p12mng_prep();
-    $OPENSSL_CONFIG = $OPENSSL_CONFIG_P12MNG unless $OPENSSL_CONFIG;
-    my ($cname,$cnametxt) = @_;
-    unless ($cname) {
-        print STDERR "Certificate name is required.\n";
-        exit 1;
-    }
-    $cnametxt = "$CNAMETXT" unless $cnametxt;
-
-    if (-f "${CERTTOP}/certs/${cname}.pem") {
-        print STDERR "Certificate file ${cname}.pem already exists!\n"
-           . "Please run \'$ME -p12mng-revoke $cname\' and try again\n";
-        exit 1;
-    }
-    # create certificates along with a private key
-    chdir "${CERTTOP}/newcerts";
-    newreq_nodes();
-    if ($RET != 0) {
-        print STDERR "Request (and private key) generation failed\n";
-        exit 1;
-    }
-    sign($DAYS);
-    if ($RET != 0 || ! -f $NEWCERT || -z $NEWCERT) {
-        print STDERR "Signing of certificate failed\n";
-        exit 1;
-    }
-    # create a PKCS#12 file from the signed cert and key
-    if (-f "${CERTTOP}/private/${EXPORTPASS_FILE}") {
-        $PASSOPT = "-passout file:${CERTTOP}/private/${EXPORTPASS_FILE}";
-    } else {
-        print "Hint: putting PKCS#12 export password file '$EXPORTPASS_FILE' in\n"
-            . " ${CERTTOP}/private will ease management.\n";
-    }
-    pkcs12($cnametxt);
-    if ($RET != 0) {
-        print STDERR "Creation of PKCS#12 failed\n";
-        exit 1;
-    }
-    # tidy up the keys
-    move($NEWP12,"${CERTTOP}/private/${cname}.p12");
-    move($NEWKEY,"${CERTTOP}/private/${cname}.key");
-    move($NEWCERT,"${CERTTOP}/certs/${cname}.pem");
-    unlink $NEWREQ;
-    my $msg = <<"EOM";
-Keys generated successfully:
-${CERTTOP}/certs/${cname}.pem     public key(signed)
-${CERTTOP}/private/${cname}.key   private key
-${CERTTOP}/private/${cname}.p12   PKCS#12(the bag of above two)
-EOM
-    print $msg. "\n";
-    print "CA public keys are: ${CATOP}/${CACERT}(PEM format), ${CACERTDER}(DER)\n";
-}
-
 # Update Certificate Revocation List
 sub gencrl
 {
@@ -356,8 +301,6 @@ sub gencrl
         exit 1;
     }
     print "Generated CRL is in ${CATOP}/crl/$CACRL\n";
-    # Place what to do after CRL update, e.g.
-    # $RET = run("cd ${CERTTOP} && make");
 }
 
 # Revoke a certificate
@@ -382,29 +325,6 @@ sub revoke
         print STDERR "Failed to revoke $cname\n";
         exit 1;
     }
-}
-
-# Revoke and delete a set of cert, key and PKCS#12 files
-sub p12mng_revoke
-{
-    $OPENSSL_CONFIG = $OPENSSL_CONFIG_P12MNG unless $OPENSSL_CONFIG;
-    my ($cname,$reason) = @_;
-    unless ($cname) {
-        print "Certificate name is required; reason optional.\n";
-        exit 1;
-    }
-    $reason = "" unless defined $reason;
-    unless (-f "${CERTTOP}/certs/${cname}.pem") {
-        print STDERR "No such file ${cname}.pem\n";
-        exit 1;
-    }
-    revoke("${CERTTOP}/certs/${cname}.pem",$reason);
-    # remove the revoked key set
-    run("rm -i ${CERTTOP}/certs/${cname}.pem");
-    run("rm -i ${CERTTOP}/private/${cname}.key");
-    run("rm -i ${CERTTOP}/private/${cname}.p12");
-    print "cname $cname successfully revoked.\n";
-    gencrl();
 }
 
 
@@ -438,14 +358,16 @@ if ($WHAT eq '-newcert' ) {
     selfsign($ARGV[0],$ARGV[1]);
 } elsif ($WHAT eq '-verify' ) {
     verify();
-} elsif ($WHAT eq '-p12mng-new' ) {
-    p12mng_new($ARGV[0],$ARGV[1]);
+} elsif ($WHAT eq '-showcert' ) {
+    showcert($ARGV[0]);
+} elsif ($WHAT eq '-showreq' ) {
+    showreq($ARGV[0]);
+} elsif ($WHAT eq '-showpkcs12' ) {
+    showpkcs12($ARGV[0]);
 } elsif ($WHAT eq '-crl' ) {
     gencrl();
 } elsif ($WHAT eq '-revoke' ) {
     revoke($ARGV[0],$ARGV[1]);
-} elsif ($WHAT eq '-p12mng-revoke' ) {
-    p12mng_revoke($ARGV[0],$ARGV[1]);
 } else {
     print STDERR "Unknown arg \"$WHAT\"\n";
     print STDERR "Use -help for help.\n";
