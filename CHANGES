@@ -368,6 +368,10 @@
      this issue. (CVE-2014-3470)
      [Felix Gröbert, Ivan Fratric, Steve Henson]
 
+  *) Harmonize version and its documentation. -f flag is used to display
+     compilation flags.
+     [mancha <mancha1@zoho.com>]
+
   *) Fix for the attack described in the paper "Recovering OpenSSL
      ECDSA Nonces Using the FLUSH+RELOAD Cache Side-channel Attack"
      by Yuval Yarom and Naomi Benger. Details can be obtained from:
