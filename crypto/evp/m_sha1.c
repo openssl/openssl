@@ -36,10 +36,15 @@ static int ctrl(EVP_MD_CTX *ctx, int cmd, int mslen, void *ms)
     unsigned char padtmp[40];
     unsigned char sha1tmp[SHA_DIGEST_LENGTH];
 
-    SHA_CTX *sha1 = EVP_MD_CTX_md_data(ctx);
+    SHA_CTX *sha1;
 
     if (cmd != EVP_CTRL_SSL3_MASTER_SECRET)
+        return -2;
+
+    if (ctx == NULL)
         return 0;
+
+    sha1 = EVP_MD_CTX_md_data(ctx);
 
     /* SSLv3 client auth handling: see RFC-6101 5.6.8 */
     if (mslen != 48)
