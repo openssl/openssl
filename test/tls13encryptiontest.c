@@ -157,6 +157,7 @@ static int load_record(SSL3_RECORD *rec, size_t recnum, unsigned char **key,
     return 1;
  err:
     OPENSSL_free(*key);
+    *key = NULL;
     OPENSSL_free(ivtmp);
     OPENSSL_free(sq);
     OPENSSL_free(pt);
