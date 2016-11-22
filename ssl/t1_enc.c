@@ -480,7 +480,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
      * handshake hash). This will need to be removed later
      */
     if ((s->session->flags & SSL_SESS_FLAG_EXTMS)
-            && SSL_IS_TLS13(s)) {
+            && !SSL_IS_TLS13(s)) {
         unsigned char hash[EVP_MAX_MD_SIZE * 2];
         size_t hashlen;
         /*
