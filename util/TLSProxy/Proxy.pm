@@ -45,6 +45,7 @@ sub new
         clientflags => "",
         serverconnects => 1,
         serverpid => 0,
+        reneg => 0,
 
         #Public read
         execute => $execute,
@@ -121,6 +122,7 @@ sub clear
     $self->{serverflags} = "";
     $self->{serverconnects} = 1;
     $self->{serverpid} = 0;
+    $self->{reneg} = 0;
 }
 
 sub restart
@@ -205,7 +207,13 @@ sub clientstart
                     or die "Failed to redirect stdout: $!";
                 open(STDERR, ">&STDOUT");
             }
-            my $execcmd = "echo test | ".$self->execute
+            my $echostr;
+            if ($self->reneg()) {
+                $echostr = "R";
+            } else {
+                $echostr = "test";
+            }
+            my $execcmd = "echo ".$echostr." | ".$self->execute
                  ." s_client -engine ossltest -connect "
                  .($self->proxy_addr).":".($self->proxy_port);
             if ($self->cipherc ne "") {
@@ -508,6 +516,7 @@ sub fill_known_data
     }
     return $ret;
 }
+
 sub is_tls13
 {
     my $class = shift;
@@ -516,4 +525,14 @@ sub is_tls13
     }
     return $is_tls13;
 }
+
+sub reneg
+{
+    my $self = shift;
+    if (@_) {
+      $self->{reneg} = shift;
+    }
+    return $self->{reneg};
+}
+
 1;
