@@ -144,7 +144,7 @@ static int async_write(BIO *bio, const char *in, int inl)
             while (PACKET_remaining(&pkt) > 0) {
                 PACKET payload, wholebody;
                 unsigned int contenttype, versionhi, versionlo, data;
-                unsigned int msgtype = 0, negversion;
+                unsigned int msgtype = 0, negversion = 0;
 
                 if (   !PACKET_get_1(&pkt, &contenttype)
                     || !PACKET_get_1(&pkt, &versionhi)
