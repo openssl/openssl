@@ -28,6 +28,7 @@
     !defined(AF_ALG)
 # warning "AFALG ENGINE requires Kernel Headers >= 4.1.0"
 # warning "Skipping Compilation of AFALG engine"
+void engine_load_afalg_int(void);
 void engine_load_afalg_int(void)
 {
 }
