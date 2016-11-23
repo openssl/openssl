@@ -17,15 +17,11 @@
 /* Always filled with zeros */
 static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
 
-static const unsigned char keylabel[] = "key";
-static const unsigned char ivlabel[] = "iv";
-
 /*
  * Given a |secret|; a |label| of length |labellen|; and a |hash| of the
  * handshake messages, derive a new secret |outlen| bytes long and store it in
- * the location pointed to be |out|. The |hash| value may be NULL.
- *
- * Returns 1 on success  0 on failure.
+ * the location pointed to be |out|. The |hash| value may be NULL. Returns 1 on
+ * success  0 on failure.
  */
 static int tls13_hkdf_expand(SSL *s, const unsigned char *secret,
                              const unsigned char *label, size_t labellen,
@@ -81,9 +77,8 @@ static int tls13_hkdf_expand(SSL *s, const unsigned char *secret,
 /*
  * Given a input secret |insecret| and a |label| of length |labellen|, derive a
  * new |secret|. This will be the length of the current hash output size and
- * will be based on the current state of the handshake hashes.
- *
- * Returns 1 on success  0 on failure.
+ * will be based on the current state of the handshake hashes. Returns 1 on
+ * success  0 on failure.
  */
 int tls13_derive_secret(SSL *s, const unsigned char *insecret,
                         const unsigned char *label, size_t labellen,
@@ -103,35 +98,44 @@ int tls13_derive_secret(SSL *s, const unsigned char *insecret,
 }
 
 /*
- * Given a |secret| generate a |key| of length |keylen| bytes.
- *
- * Returns 1 on success  0 on failure.
+ * Given a |secret| generate a |key| of length |keylen| bytes. Returns 1 on
+ * success  0 on failure.
  */
 int tls13_derive_key(SSL *s, const unsigned char *secret, unsigned char *key,
                      size_t keylen)
 {
+    static const unsigned char keylabel[] = "key";
+
     return tls13_hkdf_expand(s, secret, keylabel, sizeof(keylabel) - 1, NULL,
                              key, keylen);
 }
 
 /*
- * Given a |secret| generate an |iv| of length |ivlen| bytes.
- *
- * Returns 1 on success  0 on failure.
+ * Given a |secret| generate an |iv| of length |ivlen| bytes. Returns 1 on
+ * success  0 on failure.
  */
 int tls13_derive_iv(SSL *s, const unsigned char *secret, unsigned char *iv,
                     size_t ivlen)
 {
+    static const unsigned char ivlabel[] = "iv";
+
     return tls13_hkdf_expand(s, secret, ivlabel, sizeof(ivlabel) - 1, NULL,
                              iv, ivlen);
+}
+
+static int tls13_derive_finishedkey(SSL *s, const unsigned char *secret,
+                                 unsigned char *fin, size_t finlen)
+{
+    static const unsigned char finishedlabel[] = "finished";
+
+    return tls13_hkdf_expand(s, secret, finishedlabel,
+                             sizeof(finishedlabel) - 1, NULL, fin, finlen);
 }
 
 /*
  * Given the previous secret |prevsecret| and a new input secret |insecret| of
  * length |insecretlen|, generate a new secret and store it in the location
- * pointed to by |outsecret|.
- *
- * Returns 1 on success  0 on failure.
+ * pointed to by |outsecret|. Returns 1 on success  0 on failure.
  */
 static int tls13_generate_secret(SSL *s, const unsigned char *prevsecret,
                                  const unsigned char *insecret,
@@ -175,9 +179,7 @@ static int tls13_generate_secret(SSL *s, const unsigned char *prevsecret,
 
 /*
  * Given an input secret |insecret| of length |insecretlen| generate the early
- * secret.
- *
- * Returns 1 on success  0 on failure.
+ * secret. Returns 1 on success  0 on failure.
  */
 int tls13_generate_early_secret(SSL *s, const unsigned char *insecret,
                                 size_t insecretlen)
@@ -189,9 +191,7 @@ int tls13_generate_early_secret(SSL *s, const unsigned char *insecret,
 /*
  * Given an input secret |insecret| of length |insecretlen| generate the
  * handshake secret. This requires the early secret to already have been
- * generated.
- *
- * Returns 1 on success  0 on failure.
+ * generated. Returns 1 on success  0 on failure.
  */
 int tls13_generate_handshake_secret(SSL *s, const unsigned char *insecret,
                                 size_t insecretlen)
@@ -202,9 +202,8 @@ int tls13_generate_handshake_secret(SSL *s, const unsigned char *insecret,
 
 /*
  * Given the handshake secret |prev| of length |prevlen| generate the master
- * secret and store its length in |*secret_size|
- *
- * Returns 1 on success  0 on failure.
+ * secret and store its length in |*secret_size|. Returns 1 on success  0 on
+ * failure.
  */
 int tls13_generate_master_secret(SSL *s, unsigned char *out,
                                  unsigned char *prev, size_t prevlen,
@@ -214,4 +213,228 @@ int tls13_generate_master_secret(SSL *s, unsigned char *out,
     return tls13_generate_secret(s, prev, NULL, 0, out);
 }
 
+/*
+ * Generates the mac for the Finished message. Returns the length of the MAC or
+ * 0 on error.
+ */
+size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
+                             unsigned char *out)
+{
+    const EVP_MD *md = ssl_handshake_md(s);
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    size_t hashlen, ret = 0;
+    EVP_PKEY *key = NULL;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
+    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
+        goto err;
+
+    if (str == s->method->ssl3_enc->server_finished_label)
+        key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
+                                   s->server_finished_secret, hashlen);
+    else
+        key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
+                                   s->client_finished_secret, hashlen);
+
+    if (key == NULL
+            || ctx == NULL
+            || EVP_DigestSignInit(ctx, NULL, md, NULL, key) <= 0
+            || EVP_DigestSignUpdate(ctx, hash, hashlen) <= 0
+            || EVP_DigestSignFinal(ctx, out, &hashlen) <= 0)
+        goto err;
+
+    ret = hashlen;
+ err:
+    EVP_PKEY_free(key);
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * There isn't really a key block in TLSv1.3, but we still need this function
+ * for initialising the cipher and hash. Returns 1 on success or 0 on failure.
+ */
+int tls13_setup_key_block(SSL *s)
+{
+    const EVP_CIPHER *c;
+    const EVP_MD *hash;
+    int mac_type = NID_undef;
+
+    s->session->cipher = s->s3->tmp.new_cipher;
+    if (!ssl_cipher_get_evp
+        (s->session, &c, &hash, &mac_type, NULL, NULL, 0)) {
+        SSLerr(SSL_F_TLS13_SETUP_KEY_BLOCK, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
+        return 0;
+    }
+
+    s->s3->tmp.new_sym_enc = c;
+    s->s3->tmp.new_hash = hash;
+
+    return 1;
+}
+
+int tls13_change_cipher_state(SSL *s, int which)
+{
+    static const unsigned char client_handshake_traffic[] =
+        "client handshake traffic secret";
+    static const unsigned char client_application_traffic[] =
+        "client application traffic secret";
+    static const unsigned char server_handshake_traffic[] =
+        "server handshake traffic secret";
+    static const unsigned char server_application_traffic[] =
+        "server application traffic secret";
+    unsigned char key[EVP_MAX_KEY_LENGTH];
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned char secret[EVP_MAX_MD_SIZE];
+    unsigned char *insecret;
+    unsigned char *finsecret = NULL;
+    EVP_CIPHER_CTX *ciph_ctx;
+    const EVP_CIPHER *ciph = s->s3->tmp.new_sym_enc;;
+    size_t ivlen, keylen, finsecretlen;
+    const unsigned char *label;
+    size_t labellen;
+
+    if (which & SSL3_CC_READ) {
+        if (s->enc_read_ctx != NULL) {
+            EVP_CIPHER_CTX_reset(s->enc_read_ctx);
+        } else {
+            s->enc_read_ctx = EVP_CIPHER_CTX_new();
+            if (s->enc_read_ctx == NULL) {
+                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+        }
+        ciph_ctx = s->enc_read_ctx;
+
+        RECORD_LAYER_reset_read_sequence(&s->rlayer);
+    } else {
+        if (s->enc_write_ctx != NULL) {
+            EVP_CIPHER_CTX_reset(s->enc_write_ctx);
+        } else {
+            s->enc_write_ctx = EVP_CIPHER_CTX_new();
+            if (s->enc_write_ctx == NULL) {
+                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+        }
+        ciph_ctx = s->enc_write_ctx;
+
+        RECORD_LAYER_reset_write_sequence(&s->rlayer);
+    }
+
+    if (((which & SSL3_CC_CLIENT) && (which & SSL3_CC_WRITE))
+            || ((which & SSL3_CC_SERVER) && (which & SSL3_CC_READ))) {
+        if (which & SSL3_CC_HANDSHAKE) {
+            insecret = s->handshake_secret;
+            finsecret = s->client_finished_secret;
+            finsecretlen = sizeof(s->client_finished_secret);
+            label = client_handshake_traffic;
+            labellen = sizeof(client_handshake_traffic) - 1;
+        } else {
+            insecret = s->session->master_key;
+            label = client_application_traffic;
+            labellen = sizeof(client_application_traffic) - 1;
+        }
+    } else {
+        if (which & SSL3_CC_HANDSHAKE) {
+            insecret = s->handshake_secret;
+            finsecret = s->server_finished_secret;
+            finsecretlen = sizeof(s->server_finished_secret);
+            label = server_handshake_traffic;
+            labellen = sizeof(server_handshake_traffic) - 1;
+        } else {
+            insecret = s->session->master_key;
+            label = server_application_traffic;
+            labellen = sizeof(server_application_traffic) - 1;
+        }
+    }
+
+    if (!tls13_derive_secret(s, insecret, label, labellen, secret)) {
+        SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /* TODO(size_t): convert me */
+    keylen = EVP_CIPHER_key_length(ciph);
+
+    if (EVP_CIPHER_mode(ciph) == EVP_CIPH_GCM_MODE)
+        ivlen = EVP_GCM_TLS_FIXED_IV_LEN;
+    else if (EVP_CIPHER_mode(ciph) == EVP_CIPH_CCM_MODE)
+        ivlen = EVP_CCM_TLS_FIXED_IV_LEN;
+    else
+        ivlen = EVP_CIPHER_iv_length(ciph);
+
+    if (!tls13_derive_key(s, secret, key, keylen)
+            || !tls13_derive_iv(s, secret, iv, ivlen)
+            || (finsecret != NULL && !tls13_derive_finishedkey(s, secret,
+                                                               finsecret,
+                                                               finsecretlen))) {
+        SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (EVP_CIPHER_mode(ciph) == EVP_CIPH_GCM_MODE) {
+        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, NULL,
+                               (which & SSL3_CC_WRITE))
+                || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_GCM_SET_IV_FIXED,
+                                        (int)ivlen, iv)) {
+            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_EVP_LIB);
+            goto err;
+        }
+    } else if (EVP_CIPHER_mode(ciph) == EVP_CIPH_CCM_MODE) {
+        int taglen;
+
+        if (s->s3->tmp.new_cipher->algorithm_enc
+                & (SSL_AES128CCM8 | SSL_AES256CCM8))
+            taglen = 8;
+        else
+            taglen = 16;
+        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL,
+                               (which & SSL3_CC_WRITE))
+                || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, 12,
+                                        NULL)
+                || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
+                                        NULL)
+                || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_CCM_SET_IV_FIXED,
+                                        (int)ivlen, iv)
+                || !EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, -1)) {
+            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_EVP_LIB);
+            goto err;
+        }
+    } else {
+        if (!EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, iv,
+                               (which & SSL3_CC_WRITE))) {
+            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_EVP_LIB);
+            goto err;
+        }
+    }
+
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+    if (s->msg_callback) {
+        int wh = which & SSL3_CC_WRITE ? TLS1_RT_CRYPTO_WRITE : 0;
+
+        if (ciph->key_len)
+            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
+                            key, ciph->key_len, s, s->msg_callback_arg);
+        if (ivlen) {
+            if (EVP_CIPHER_mode(ciph) == EVP_CIPH_GCM_MODE)
+                wh |= TLS1_RT_CRYPTO_FIXED_IV;
+            else
+                wh |= TLS1_RT_CRYPTO_IV;
+            s->msg_callback(2, s->version, wh, iv, ivlen, s,
+                            s->msg_callback_arg);
+        }
+    }
+#endif
+
+    OPENSSL_cleanse(secret, sizeof(secret));
+    OPENSSL_cleanse(key, sizeof(key));
+    OPENSSL_cleanse(iv, sizeof(iv));
+    return 1;
+
+ err:
+    OPENSSL_cleanse(secret, sizeof(secret));
+    OPENSSL_cleanse(key, sizeof(key));
+    OPENSSL_cleanse(iv, sizeof(iv));
+    return 0;
+}

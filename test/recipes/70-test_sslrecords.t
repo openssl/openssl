@@ -128,6 +128,7 @@ ok(TLSProxy::Message->fail(), "Alert before SSLv2 ClientHello test");
 
 #Test 10: Sending an unrecognised record type in TLS1.2 should fail
 $proxy->clear();
+$proxy->serverflags("-tls1_2");
 $proxy->filter(\&add_unknown_record_type);
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Unrecognised record type in TLS1.2");

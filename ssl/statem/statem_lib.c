@@ -326,11 +326,11 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
 
 MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
 {
-    int al;
+    int al = SSL_AD_INTERNAL_ERROR;
     size_t md_len;
 
     /* If this occurs, we have missed a message */
-    if (!s->s3->change_cipher_spec) {
+    if (!SSL_IS_TLS13(s) && !s->s3->change_cipher_spec) {
         al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_GOT_A_FIN_BEFORE_A_CCS);
         goto f_err;
@@ -365,6 +365,34 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
         memcpy(s->s3->previous_server_finished, s->s3->tmp.peer_finish_md,
                md_len);
         s->s3->previous_server_finished_len = md_len;
+    }
+
+    /*
+     * In TLS1.3 we also have to change cipher state and do any final processing
+     * of the initial server flight (if we are a client)
+     */
+    if (SSL_IS_TLS13(s)) {
+        if (s->server) {
+            if (!s->method->ssl3_enc->change_cipher_state(s,
+                    SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_SERVER_READ)) {
+                SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_CANNOT_CHANGE_CIPHER);
+                goto f_err;
+            }
+        } else {
+            if (!s->method->ssl3_enc->generate_master_secret(s,
+                    s->session->master_key, s->handshake_secret, 0,
+                    &s->session->master_key_length)) {
+                SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_CANNOT_CHANGE_CIPHER);
+                goto f_err;
+            }
+            if (!s->method->ssl3_enc->change_cipher_state(s,
+                    SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
+                SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_CANNOT_CHANGE_CIPHER);
+                goto f_err;
+            }
+            if (!tls_process_initial_server_flight(s, &al))
+                goto f_err;
+        }
     }
 
     return MSG_PROCESS_FINISHED_READING;

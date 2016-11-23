@@ -23,6 +23,8 @@ use TLSProxy::NewSessionTicket;
 my $have_IPv6 = 0;
 my $IP_factory;
 
+my $is_tls13 = 0;
+
 sub new
 {
     my $class = shift;
@@ -103,6 +105,7 @@ sub clearClient
     $self->{record_list} = [];
     $self->{message_list} = [];
     $self->{clientflags} = "";
+    $is_tls13 = 0;
 
     TLSProxy::Message->clear();
     TLSProxy::Record->clear();
@@ -503,5 +506,12 @@ sub fill_known_data
     }
     return $ret;
 }
-
+sub is_tls13
+{
+    my $class = shift;
+    if (@_) {
+      $is_tls13 = shift;
+    }
+    return $is_tls13;
+}
 1;

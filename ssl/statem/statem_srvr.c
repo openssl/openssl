@@ -94,15 +94,15 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
     default:
         break;
 
-    case TLS_ST_SW_SRVR_DONE:
+    case TLS_ST_SW_FINISHED:
         if (s->s3->tmp.cert_request) {
             if (mt == SSL3_MT_CERTIFICATE) {
                 st->hand_state = TLS_ST_SR_CERT;
                 return 1;
             }
         } else {
-            if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-                st->hand_state = TLS_ST_SR_CHANGE;
+            if (mt == SSL3_MT_FINISHED) {
+                st->hand_state = TLS_ST_SR_FINISHED;
                 return 1;
             }
         }
@@ -110,8 +110,8 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
 
     case TLS_ST_SR_CERT:
         if (s->session->peer == NULL) {
-            if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-                st->hand_state = TLS_ST_SR_CHANGE;
+            if (mt == SSL3_MT_FINISHED) {
+                st->hand_state = TLS_ST_SR_FINISHED;
                 return 1;
             }
         } else {
@@ -123,22 +123,8 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_SR_CERT_VRFY:
-        if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-            st->hand_state = TLS_ST_SR_CHANGE;
-            return 1;
-        }
-        break;
-
-    case TLS_ST_SR_CHANGE:
         if (mt == SSL3_MT_FINISHED) {
             st->hand_state = TLS_ST_SR_FINISHED;
-            return 1;
-        }
-        break;
-
-    case TLS_ST_SW_FINISHED:
-        if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-            st->hand_state = TLS_ST_SR_CHANGE;
             return 1;
         }
         break;
@@ -164,8 +150,11 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
 
-    if (s->method->version == TLS1_3_VERSION)
-        return ossl_statem_server13_read_transition(s, mt);
+    if (SSL_IS_TLS13(s)) {
+        if (!ossl_statem_server13_read_transition(s, mt))
+            goto err;
+        return 1;
+    }
 
     switch (st->hand_state) {
     default:
@@ -298,6 +287,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
         break;
     }
 
+ err:
     /* No valid transition found */
     ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_UNEXPECTED_MESSAGE);
     SSLerr(SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION, SSL_R_UNEXPECTED_MESSAGE);
@@ -419,57 +409,31 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
 
     case TLS_ST_SW_SRVR_HELLO:
         if (s->hit)
-            st->hand_state = s->tlsext_ticket_expected
-                                ? TLS_ST_SW_SESSION_TICKET : TLS_ST_SW_CHANGE;
+            st->hand_state = TLS_ST_SW_FINISHED;
+        else if (send_certificate_request(s))
+            st->hand_state = TLS_ST_SW_CERT_REQ;
         else
             st->hand_state = TLS_ST_SW_CERT;
 
         return WRITE_TRAN_CONTINUE;
 
+    case TLS_ST_SW_CERT_REQ:
+        st->hand_state = TLS_ST_SW_CERT;
+        return WRITE_TRAN_CONTINUE;
+
     case TLS_ST_SW_CERT:
-        if (s->tlsext_status_expected) {
-            st->hand_state = TLS_ST_SW_CERT_STATUS;
-            return WRITE_TRAN_CONTINUE;
-        }
-        /* Fall through */
+            st->hand_state = s->tlsext_status_expected ? TLS_ST_SW_CERT_STATUS
+                                                       : TLS_ST_SW_FINISHED;
+        return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT_STATUS:
-        if (send_certificate_request(s)) {
-            st->hand_state = TLS_ST_SW_CERT_REQ;
-            return WRITE_TRAN_CONTINUE;
-        }
-        /* Fall through */
-
-    case TLS_ST_SW_CERT_REQ:
-        st->hand_state = TLS_ST_SW_SRVR_DONE;
-        return WRITE_TRAN_CONTINUE;
-
-    case TLS_ST_SW_SRVR_DONE:
-        return WRITE_TRAN_FINISHED;
-
-    case TLS_ST_SR_FINISHED:
-        if (s->hit) {
-            st->hand_state = TLS_ST_OK;
-            ossl_statem_set_in_init(s, 0);
-            return WRITE_TRAN_CONTINUE;
-        }
-
-        st->hand_state = s->tlsext_ticket_expected ? TLS_ST_SW_SESSION_TICKET
-                                                   : TLS_ST_SW_CHANGE;
-        return WRITE_TRAN_CONTINUE;
-
-    case TLS_ST_SW_SESSION_TICKET:
-        st->hand_state = TLS_ST_SW_CHANGE;
-        return WRITE_TRAN_CONTINUE;
-
-    case TLS_ST_SW_CHANGE:
         st->hand_state = TLS_ST_SW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_FINISHED:
-        if (s->hit)
-            return WRITE_TRAN_FINISHED;
+        return WRITE_TRAN_FINISHED;
 
+    case TLS_ST_SR_FINISHED:
         st->hand_state = TLS_ST_OK;
         ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
@@ -489,7 +453,7 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
      * to negotiate yet, so we don't take this branch until later
      */
 
-    if (s->method->version == TLS1_3_VERSION)
+    if (SSL_IS_TLS13(s))
         return ossl_statem_server13_write_transition(s);
 
     switch (st->hand_state) {
@@ -745,6 +709,20 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
                      sizeof(sctpauthkey), sctpauthkey);
         }
 #endif
+        /*
+         * TODO(TLS1.3): This actually causes a problem. We don't yet know
+         * whether the next record we are going to receive is an unencrypted
+         * alert, or an encrypted handshake message. We're going to need
+         * something clever in the record layer for this.
+         */
+        if (SSL_IS_TLS13(s)) {
+            if (!s->method->ssl3_enc->setup_key_block(s)
+                || !s->method->ssl3_enc->change_cipher_state(s,
+                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_WRITE)
+                || !s->method->ssl3_enc->change_cipher_state(s,
+                        SSL3_CC_HANDSHAKE |SSL3_CHANGE_CIPHER_SERVER_READ))
+            return WORK_ERROR;
+        }
         break;
 
     case TLS_ST_SW_CHANGE:
@@ -787,6 +765,14 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
                      0, NULL);
         }
 #endif
+        if (SSL_IS_TLS13(s)) {
+            if (!s->method->ssl3_enc->generate_master_secret(s,
+                        s->session->master_key, s->handshake_secret, 0,
+                        &s->session->master_key_length)
+                || !s->method->ssl3_enc->change_cipher_state(s,
+                        SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_SERVER_WRITE))
+            return WORK_ERROR;
+        }
         break;
     }
 
@@ -1006,7 +992,7 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
 #endif
         return WORK_FINISHED_CONTINUE;
     }
-
+    return WORK_FINISHED_CONTINUE;
 }
 
 #ifndef OPENSSL_NO_SRP

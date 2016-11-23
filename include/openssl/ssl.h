@@ -2242,6 +2242,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_WRITE_EX                               433
 # define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
+# define SSL_F_TLS13_CHANGE_CIPHER_STATE                  440
+# define SSL_F_TLS13_SETUP_KEY_BLOCK                      441
 # define SSL_F_TLS1_CHANGE_CIPHER_STATE                   209
 # define SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS            341
 # define SSL_F_TLS1_ENC                                   401
@@ -2292,6 +2294,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_CLIENT_HELLO                   381
 # define SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE            382
 # define SSL_F_TLS_PROCESS_FINISHED                       364
+# define SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT          442
 # define SSL_F_TLS_PROCESS_KEY_EXCHANGE                   365
 # define SSL_F_TLS_PROCESS_NEW_SESSION_TICKET             366
 # define SSL_F_TLS_PROCESS_NEXT_PROTO                     383
@@ -2335,6 +2338,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BIO_NOT_SET                                128
 # define SSL_R_BLOCK_CIPHER_PAD_IS_WRONG                  129
 # define SSL_R_BN_LIB                                     130
+# define SSL_R_CANNOT_CHANGE_CIPHER                       109
 # define SSL_R_CA_DN_LENGTH_MISMATCH                      131
 # define SSL_R_CA_KEY_TOO_SMALL                           397
 # define SSL_R_CA_MD_TOO_WEAK                             398

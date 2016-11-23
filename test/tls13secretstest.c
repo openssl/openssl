@@ -162,6 +162,22 @@ const EVP_MD *ssl_handshake_md(SSL *s)
     return EVP_sha256();
 }
 
+void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
+{
+}
+
+void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
+{
+}
+
+int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
+                       const EVP_MD **md, int *mac_pkey_type,
+                       size_t *mac_secret_size, SSL_COMP **comp, int use_etm)
+
+{
+    return 0;
+}
+
 /* End of mocked out code */
 
 static int test_secret(SSL *s, unsigned char *prk,

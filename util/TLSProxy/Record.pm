@@ -11,8 +11,8 @@ use TLSProxy::Proxy;
 
 package TLSProxy::Record;
 
-my $server_ccs_seen = 0;
-my $client_ccs_seen = 0;
+my $server_encrypting = 0;
+my $client_encrypting = 0;
 my $etm = 0;
 
 use constant TLS_RECORD_HEADER_LENGTH => 5;
@@ -36,6 +36,7 @@ my %record_type = (
 
 use constant {
     VERS_TLS_1_4 => 773,
+    VERS_TLS_1_3_DRAFT => 32530,
     VERS_TLS_1_3 => 772,
     VERS_TLS_1_2 => 771,
     VERS_TLS_1_1 => 770,
@@ -108,9 +109,9 @@ sub get_records
                 substr($packet, TLS_RECORD_HEADER_LENGTH, $len_real)
             );
 
-            if (($server && $server_ccs_seen)
-                     || (!$server && $client_ccs_seen)) {
-                if ($version != VERS_TLS_1_3() && $etm) {
+            if (($server && $server_encrypting)
+                     || (!$server && $client_encrypting)) {
+                if (!TLSProxy::Proxy->is_tls13() && $etm) {
                     $record->decryptETM();
                 } else {
                     $record->decrypt();
@@ -133,26 +134,26 @@ sub get_records
 
 sub clear
 {
-    $server_ccs_seen = 0;
-    $client_ccs_seen = 0;
+    $server_encrypting = 0;
+    $client_encrypting = 0;
 }
 
 #Class level accessors
-sub server_ccs_seen
+sub server_encrypting
 {
     my $class = shift;
     if (@_) {
-      $server_ccs_seen = shift;
+      $server_encrypting = shift;
     }
-    return $server_ccs_seen;
+    return $server_encrypting;
 }
-sub client_ccs_seen
+sub client_encrypting
 {
     my $class = shift;
     if (@_) {
-      $client_ccs_seen = shift;
+      $client_encrypting= shift;
     }
-    return $client_ccs_seen;
+    return $client_encrypting;
 }
 #Enable/Disable Encrypt-then-MAC
 sub etm
@@ -228,7 +229,19 @@ sub decrypt()
     my $data = $self->data;
 
     #Throw away any IVs
-    if ($self->version >= VERS_TLS_1_3()) {
+    if (TLSProxy::Proxy->is_tls13()) {
+        #A TLS1.3 client, when processing the server's initial flight, could
+        #respond with either an encrypted or an unencrypted alert.
+        if ($self->content_type() == RT_ALERT) {
+            #TODO(TLS1.3): Eventually it is sufficient just to check the record
+            #content type. If an alert is encrypted it will have a record
+            #content type of application data. However we haven't done the
+            #record layer changes yet, so it's a bit more complicated. For now
+            #we will additionally check if the data length is 2 (1 byte for
+            #alert level, 1 byte for alert description). If it is, then this is
+            #an unecrypted alert, so don't try to decrypt
+            return $data if (length($data) == 2);
+        }
         #8 bytes for a GCM IV
         $data = substr($data, 8);
         $mactaglen = 16;
