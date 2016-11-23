@@ -62,10 +62,6 @@
 
 # define OPENSSL_ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
-/* Temporary TLS1.3 defines until OpenSSL supports these */
-# define TLS1_3_VERSION                  0x0304
-# define SSL_OP_NO_TLSv1_3               0
-
 extern "C++" {
 
 #include <memory>
