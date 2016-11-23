@@ -2190,9 +2190,8 @@ MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
 /*
  * Perform miscellaneous checks and processing after we have received the
  * server's initial flight. In TLS1.3 this is after the Server Finished message.
- * In <=TLS1.2 this is after the ServerDone message.
- *
- * Returns 1 on success or 0 on failure.
+ * In <=TLS1.2 this is after the ServerDone message. Returns 1 on success or 0
+ * on failure.
  */
 int tls_process_initial_server_flight(SSL *s, int *al)
 {

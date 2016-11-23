@@ -293,6 +293,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     size_t ivlen, keylen, finsecretlen;
     const unsigned char *label;
     size_t labellen;
+    int ret = 0;
 
     if (which & SSL3_CC_READ) {
         if (s->enc_read_ctx != NULL) {
@@ -427,14 +428,11 @@ int tls13_change_cipher_state(SSL *s, int which)
     }
 #endif
 
-    OPENSSL_cleanse(secret, sizeof(secret));
-    OPENSSL_cleanse(key, sizeof(key));
-    OPENSSL_cleanse(iv, sizeof(iv));
-    return 1;
+    ret = 1;
 
  err:
     OPENSSL_cleanse(secret, sizeof(secret));
     OPENSSL_cleanse(key, sizeof(key));
     OPENSSL_cleanse(iv, sizeof(iv));
-    return 0;
+    return ret;
 }
