@@ -39,9 +39,8 @@ static const int NUM0 = 100;           /* number of tests */
 static const int NUM1 = 50;            /* additional tests for some functions */
 
 /*
- * Things in boring, not in openssl
+ * Things in boring, not in openssl.  TODO we should add them.
  */
-#define HAVE_HEXDUMP 0
 #define HAVE_BN_PADDED 0
 #define HAVE_BN_SQRT 0
 
@@ -1721,10 +1720,6 @@ static int test_mpi(BN_CTX *ctx)
         if (mpi_len != test->mpi_len
                 || memcmp(test->mpi, scratch, mpi_len) != 0) {
             fprintf(stderr, "MPI test #%u failed:\n", (unsigned)i);
-#if HAVE_HEXDUMP
-            hexdump(stderr, "Expected: ", test.mpi, test.mpi_len);
-            hexdump(stderr, "Got:      ", scratch, mpi_len);
-#endif
             goto err;
         }
 
