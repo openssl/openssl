@@ -553,6 +553,10 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
  err:
     ret = SSL_TLSEXT_ERR_ALERT_FATAL;
  done:
+    /*
+     * If we parsed aia we need to free; otherwise they were copied and we
+     * don't
+     */
     if (aia != NULL) {
         OPENSSL_free(host);
         OPENSSL_free(path);

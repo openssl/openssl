@@ -57,10 +57,7 @@ int main(int argc, char *argv[])
         testresult = 0;
         ctx = SSL_CTX_new(TLS_method());
 
-        /*
-         * This test is testing session tickets for <= TLS1.2. It isn't relevant
-         * for TLS1.3
-         */
+        /* Testing for session tickets <= TLS1.2; not relevant for 1.3 */
         if (ctx == NULL || !SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION))
             goto end;
 
