@@ -139,7 +139,7 @@ sub showcert
 {
     my $file = shift;
     my $inform = "";
-    $file = $NEWREQ unless $file;
+    $file = $NEWCERT unless $file;
     $inform = "-inform der" if -B $file;
     $RET = run("$X509 -text -noout -in $file $inform");
 }
