@@ -1538,6 +1538,10 @@ static int add_client_key_share_ext(SSL *s, WPACKET *pkt, int *al)
     }
 
     skey = ssl_generate_pkey(ckey);
+    if (skey == NULL) {
+        SSLerr(SSL_F_ADD_CLIENT_KEY_SHARE_EXT, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
 
     /* Generate encoding of server key */
     encoded_pt_len = EVP_PKEY_get1_tls_encodedpoint(skey, &encodedPoint);
@@ -2778,6 +2782,11 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
             }
 
             skey = ssl_generate_pkey(ckey);
+            if (skey == NULL) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
             if (!EVP_PKEY_set1_tls_encodedpoint(skey, PACKET_data(&encoded_pt),
                                                 PACKET_remaining(&encoded_pt))) {
                 *al = SSL_AD_DECODE_ERROR;
