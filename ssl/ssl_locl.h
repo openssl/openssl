@@ -1020,7 +1020,10 @@ struct ssl_st {
     int max_proto_version;
     size_t max_cert_list;
     int first_packet;
-    /* what was passed, used for SSLv3/TLS rollback check */
+    /*
+     * What was passed in ClientHello.legacy_version. Used for RSA pre-master
+     * secret and SSLv3/TLS (<=1.2) rollback check
+     */
     int client_version;
     /*
      * If we're using more than one pipeline how should we divide the data
