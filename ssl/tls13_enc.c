@@ -289,7 +289,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     unsigned char *insecret;
     unsigned char *finsecret = NULL;
     EVP_CIPHER_CTX *ciph_ctx;
-    const EVP_CIPHER *ciph = s->s3->tmp.new_sym_enc;;
+    const EVP_CIPHER *ciph = s->s3->tmp.new_sym_enc;
     size_t ivlen, keylen, finsecretlen;
     const unsigned char *label;
     size_t labellen;
