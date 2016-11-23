@@ -61,6 +61,7 @@
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 
+static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt);
 static STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
                                                       PACKET *cipher_suites,
                                                       STACK_OF(SSL_CIPHER)
@@ -408,6 +409,10 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SRVR_HELLO:
+        st->hand_state = TLS_ST_SW_ENCRYPTED_EXTENSIONS;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
         if (s->hit)
             st->hand_state = TLS_ST_SW_FINISHED;
         else if (send_certificate_request(s))
@@ -854,6 +859,11 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
     case TLS_ST_SW_FINISHED:
         *confunc = tls_construct_finished;
         *mt = SSL3_MT_FINISHED;
+        break;
+
+    case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
+        *confunc = tls_construct_encrypted_extensions;
+        *mt = SSL3_MT_ENCRYPTED_EXTENSIONS;
         break;
     }
 
@@ -3353,6 +3363,18 @@ MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 #endif
+
+static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt)
+{
+    /* TODO(TLS1.3): Zero length encrypted extensions message for now */
+    if (!WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_ENCRYPTED_EXTENSIONS, ERR_R_INTERNAL_ERROR);
+        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
 
 #define SSLV2_CIPHER_LEN    3
 

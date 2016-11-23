@@ -59,6 +59,8 @@
 #include <openssl/bn.h>
 #include <openssl/engine.h>
 
+static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt);
+
 static ossl_inline int cert_req_allowed(SSL *s);
 static int key_exchange_expected(SSL *s);
 static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
@@ -135,6 +137,13 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_CR_SRVR_HELLO:
+        if (mt == SSL3_MT_ENCRYPTED_EXTENSIONS) {
+            st->hand_state = TLS_ST_CR_ENCRYPTED_EXTENSIONS;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
         if (s->hit) {
             if (mt == SSL3_MT_FINISHED) {
                 st->hand_state = TLS_ST_CR_FINISHED;
@@ -759,6 +768,9 @@ size_t ossl_statem_client_max_message_size(SSL *s)
 
     case TLS_ST_CR_FINISHED:
         return FINISHED_MAX_LENGTH;
+
+    case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
+        return ENCRYPTED_EXTENSIONS_MAX_LENGTH;
     }
 }
 
@@ -803,6 +815,9 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
 
     case TLS_ST_CR_FINISHED:
         return tls_process_finished(s, pkt);
+
+    case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
+        return tls_process_encrypted_extensions(s, pkt);
     }
 }
 
@@ -3082,6 +3097,26 @@ int tls_construct_next_proto(SSL *s, WPACKET *pkt)
     return 0;
 }
 #endif
+
+static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt)
+{
+    int al = SSL_AD_INTERNAL_ERROR;
+    PACKET extensions;
+
+    /* TODO(TLS1.3): We need to process these extensions. For now ignore them */
+    if (!PACKET_as_length_prefixed_2(pkt, &extensions)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_ENCRYPTED_EXTENSIONS, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+
+    return MSG_PROCESS_CONTINUE_READING;
+
+ err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    ossl_statem_set_error(s);
+    return MSG_PROCESS_ERROR;
+}
 
 int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 {
