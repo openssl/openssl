@@ -172,7 +172,7 @@ err:
     return 0;
 }
 
-static int TestSub(BN_CTX *ctx)
+static int test_sub(BN_CTX *ctx)
 {
     BIGNUM *a, *b, *c;
     int i;
@@ -211,7 +211,7 @@ static int TestSub(BN_CTX *ctx)
 }
 
 
-static int TestDivRecip(BN_CTX *ctx)
+static int test_div_recip(BN_CTX *ctx)
 {
     BIGNUM *a, *b, *c, *d, *e;
     BN_RECP_CTX *recp;
@@ -259,7 +259,7 @@ static int TestDivRecip(BN_CTX *ctx)
 }
 
 
-static int TestMod(BN_CTX *ctx)
+static int test_mod(BN_CTX *ctx)
 {
     BIGNUM *a, *b, *c, *d, *e;
     int i;
@@ -295,7 +295,7 @@ static int TestMod(BN_CTX *ctx)
  * Test constant-time modular exponentiation with 1024-bit inputs, which on
  * x86_64 cause a different code branch to be taken.
  */
-static int TestModexpMont5(BN_CTX *ctx)
+static int test_modexp_mont5(BN_CTX *ctx)
 {
     BIGNUM *a, *p, *m, *d, *e, *b, *n, *c;
     BN_MONT_CTX *mont;
@@ -395,7 +395,7 @@ static int TestModexpMont5(BN_CTX *ctx)
 }
 
 #ifndef OPENSSL_NO_EC2M
-static int TestGF2mAdd(BN_CTX *ctx)
+static int test_gf2m_add(BN_CTX *ctx)
 {
     BIGNUM *a, *b, *c;
     int i, st = 0;
@@ -433,7 +433,7 @@ static int TestGF2mAdd(BN_CTX *ctx)
     return st;
 }
 
-static int TestGF2mMod(BN_CTX *ctx)
+static int test_gf2m_mod(BN_CTX *ctx)
 {
     static int p0[] = { 163, 7, 6, 3, 0, -1 };
     static int p1[] = { 193, 15, 0, -1 };
@@ -477,7 +477,7 @@ static int TestGF2mMod(BN_CTX *ctx)
     return st;
 }
 
-static int TestGF2mModMul(BN_CTX *ctx)
+static int test_gf2m_mul(BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f, *g, *h;
     int i, j, st = 0;
@@ -529,7 +529,7 @@ static int TestGF2mModMul(BN_CTX *ctx)
     return st;
 }
 
-static int TestGF2mModSqr(BN_CTX *ctx)
+static int test_gf2m_sqr(BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d;
     int i, j, st = 0;
@@ -569,7 +569,7 @@ static int TestGF2mModSqr(BN_CTX *ctx)
     return st;
 }
 
-static int TestGF2mModInv(BN_CTX *ctx)
+static int test_gf2m_modinv(BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d;
     int i, j, st = 0;
@@ -607,7 +607,7 @@ static int TestGF2mModInv(BN_CTX *ctx)
     return st;
 }
 
-static int TestGF2mModDiv(BN_CTX *ctx)
+static int test_gf2m_moddiv(BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f;
     int i, j, st = 0;
@@ -651,7 +651,7 @@ static int TestGF2mModDiv(BN_CTX *ctx)
     return st;
 }
 
-static int TestGF2mModExp(BN_CTX *ctx)
+static int test_gf2m_modexp(BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f;
     int i, j, st = 0;
@@ -699,7 +699,7 @@ static int TestGF2mModExp(BN_CTX *ctx)
     return st;
 }
 
-static int TestGF2mModSqrt(BN_CTX *ctx)
+static int test_gf2m_modsqrt(BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f;
     int i, j, st = 0;
@@ -743,7 +743,7 @@ static int TestGF2mModSqrt(BN_CTX *ctx)
     return st;
 }
 
-static int TestGF2mModSolvequad(BN_CTX *ctx)
+static int test_gf2m_modsolvequad(BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d, *e;
     int i, j, s = 0, t, st = 0;
@@ -799,7 +799,7 @@ static int TestGF2mModSolvequad(BN_CTX *ctx)
 }
 #endif
 
-static int TestKronecker(BN_CTX *ctx)
+static int test_kronecker(BN_CTX *ctx)
 {
     BIGNUM *a, *b, *r, *t;
     int i;
@@ -1443,7 +1443,7 @@ err:
     return st;
 }
 
-static int TestBN2BinPadded(BN_CTX *ctx)
+static int test_bn2padded(BN_CTX *ctx)
 {
 #if HAVE_BN_PADDED
     uint8_t zeros[256], out[256], reference[128];
@@ -1529,7 +1529,7 @@ err:
 #endif
 }
 
-static int TestDec2BN(BN_CTX *ctx)
+static int test_dec2bn(BN_CTX *ctx)
 {
     BIGNUM *bn = NULL;
     int st = 0;
@@ -1575,7 +1575,7 @@ err:
     return st;
 }
 
-static int TestHex2BN(BN_CTX *ctx)
+static int test_hex2bn(BN_CTX *ctx)
 {
     BIGNUM *bn = NULL;
     int ret, st = 0;
@@ -1620,7 +1620,7 @@ err:
     return st;
 }
 
-static int TestASC2BN(BN_CTX *ctx)
+static int test_asc2bn(BN_CTX *ctx)
 {
     BIGNUM *bn = BN_new();
     int st = 0;
@@ -1685,7 +1685,7 @@ static const MPITEST kMPITests[] = {
     {"-256", "\x00\x00\x00\x02\x81\x00", 6},
 };
 
-static int TestMPI(BN_CTX *ctx)
+static int test_mpi(BN_CTX *ctx)
 {
     uint8_t scratch[8];
     int i = (int)sizeof(kMPITests) / sizeof(kMPITests[0]);
@@ -1750,7 +1750,7 @@ err:
     return st;
 }
 
-static int TestRand(BN_CTX *ctx)
+static int test_rand(BN_CTX *ctx)
 {
     BIGNUM *bn = BN_new();
     int st = 0;
@@ -1794,7 +1794,7 @@ err:
     return st;
 }
 
-static int TestNegativeZero(BN_CTX *ctx)
+static int test_negzero(BN_CTX *ctx)
 {
     BIGNUM *a = BN_new();
     BIGNUM *b = BN_new();
@@ -1873,7 +1873,7 @@ err:
     return st;
 }
 
-static int TestBadModulus(BN_CTX *ctx)
+static int test_badmod(BN_CTX *ctx)
 {
     BIGNUM *a = BN_new();
     BIGNUM *b = BN_new();
@@ -1958,7 +1958,7 @@ err:
     return st;
 }
 
-static int TestExpModZero(BN_CTX *ctx)
+static int test_expmodzero(BN_CTX *ctx)
 {
     BIGNUM *zero = BN_new();
     BIGNUM *a = BN_new();
@@ -1990,7 +1990,7 @@ err:
     return st;
 }
 
-static int TestSmallPrime(BN_CTX *ctx)
+static int test_smallprime(BN_CTX *ctx)
 {
     static const int kBits = 10;
     BIGNUM *r = BN_new();
@@ -2121,33 +2121,32 @@ static int run(STANZA *s, BN_CTX *ctx)
 }
 
 static BUILTINTEST builtins[] = {
-    {"TestSub", TestSub},
-    {"TestDivRecip", TestDivRecip},
-    {"TestMod", TestMod},
-    {"TestModexpMont5", TestModexpMont5},
-    {"TestKronecker", TestKronecker},
+    {"TestSub", test_sub},
+    {"TestDivRecip", test_div_recip},
+    {"TestMod", test_mod},
+    {"TestModexpMont5", test_modexp_mont5},
+    {"TestKronecker", test_kronecker},
 #ifndef OPENSSL_NO_EC2M
-    {"TestGF2mAdd", TestGF2mAdd},
-    {"TestGF2mMod", TestGF2mMod},
-    {"TestGF2mModMul", TestGF2mModMul},
-    {"TestGF2mModSqr", TestGF2mModSqr},
-    {"TestGF2mModInv", TestGF2mModInv},
-    {"TestGF2mModDiv", TestGF2mModDiv},
-    {"TestGF2mModExp", TestGF2mModExp},
-    {"TestGF2mModSqrt", TestGF2mModSqrt},
-    {"TestGF2mModSolvequad", TestGF2mModSolvequad},
+    {"TestGF2mAdd", test_gf2m_add},
+    {"TestGF2mMod", test_gf2m_mod},
+    {"TestGF2mModMul", test_gf2m_mul},
+    {"TestGF2mModSqr", test_gf2m_sqr},
+    {"TestGF2mModInv", test_gf2m_modinv},
+    {"TestGF2mModDiv", test_gf2m_moddiv},
+    {"TestGF2mModExp", test_gf2m_modexp},
+    {"TestGF2mModSqrt", test_gf2m_modsqrt},
+    {"TestGF2mModSolvequad", test_gf2m_modsolvequad},
 #endif
-    {"TestRand", TestRand},
-    {"TestBN2BinPadded", TestBN2BinPadded},
-    {"TestDec2BN", TestDec2BN},
-    {"TestHex2BN", TestHex2BN},
-    {"TestASC2BN", TestASC2BN},
-    {"TestMPI", TestMPI},
-    {"TestRand", TestRand},
-    {"TestNegativeZero", TestNegativeZero},
-    {"TestBadModulus", TestBadModulus},
-    {"TestExpModZero", TestExpModZero},
-    {"TestSmallPrime", TestSmallPrime}
+    {"TestRand", test_rand},
+    {"TestBN2BinPadded", test_bn2padded},
+    {"TestDec2BN", test_dec2bn},
+    {"TestHex2BN", test_hex2bn},
+    {"TestASC2BN", test_asc2bn},
+    {"TestMPI", test_mpi},
+    {"TestNegativeZero", test_negzero},
+    {"TestBadModulus", test_badmod},
+    {"TestExpModZero", test_expmodzero},
+    {"TestSmallPrime", test_smallprime}
 };
 
 int main(int argc, char *argv[])
