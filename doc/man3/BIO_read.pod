@@ -34,7 +34,8 @@ in B<buf>. Usually this operation will attempt to read a line of data
 from the BIO of maximum length B<size-1>. There are exceptions to this,
 however; for example, BIO_gets() on a digest BIO will calculate and
 return the digest and other BIOs may not support BIO_gets() at all.
-The returned string is always NUL-terminated.
+The returned string is always NUL-terminated and the '\n' is preserved
+if present in the input data.
 
 BIO_write() attempts to write B<len> bytes from B<buf> to BIO B<b>.
 
