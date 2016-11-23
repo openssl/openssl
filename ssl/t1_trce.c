@@ -92,6 +92,7 @@ static ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_CERTIFICATE_VERIFY, "CertificateVerify"},
     {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
     {SSL3_MT_FINISHED, "Finished"},
+    {SSL3_MT_ENCRYPTED_EXTENSIONS, "EncryptedExtensions"},
     {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"}
 };
 
@@ -1281,6 +1282,11 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl,
 
     case SSL3_MT_NEWSESSION_TICKET:
         if (!ssl_print_ticket(bio, indent + 2, msg, msglen))
+            return 0;
+        break;
+
+    case SSL3_MT_ENCRYPTED_EXTENSIONS:
+        if (!ssl_print_extensions(bio, indent + 2, 1, msg, msglen))
             return 0;
         break;
 
