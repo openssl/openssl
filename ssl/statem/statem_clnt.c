@@ -2459,6 +2459,9 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt, int *al)
         goto err;
 
     ckey = ssl_generate_pkey(skey);
+    if (ckey == NULL)
+        goto err;
+
     dh_clnt = EVP_PKEY_get0_DH(ckey);
 
     if (dh_clnt == NULL || ssl_derive(s, ckey, skey, 0) == 0)
@@ -2496,6 +2499,10 @@ static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt, int *al)
     }
 
     ckey = ssl_generate_pkey(skey);
+    if (ckey == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
 
     if (ssl_derive(s, ckey, skey, 0) == 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_EVP_LIB);
