@@ -2258,6 +2258,11 @@ static int tls_construct_cke_dhe(SSL *s, unsigned char **p, int *len, int *al)
         return 0;
     }
     ckey = ssl_generate_pkey(skey);
+    if (ckey == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_DHE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
     dh_clnt = EVP_PKEY_get0_DH(ckey);
 
     if (dh_clnt == NULL || ssl_derive(s, ckey, skey) == 0) {
@@ -2296,6 +2301,10 @@ static int tls_construct_cke_ecdhe(SSL *s, unsigned char **p, int *len, int *al)
     }
 
     ckey = ssl_generate_pkey(skey);
+    if (ckey == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     if (ssl_derive(s, ckey, skey) == 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_EVP_LIB);
