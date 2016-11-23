@@ -1077,8 +1077,6 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
              * wheter to ignore versions <TLS1.2 in supported_versions. At the
              * moment we honour them if present. To be reviewed later
              */
-            if ((int)candidate_vers > s->client_version)
-                s->client_version = candidate_vers;
             if (version_cmp(s, candidate_vers, best_vers) <= 0)
                 continue;
             for (vent = table;
@@ -1299,7 +1297,7 @@ int ssl_get_client_min_max_version(const SSL *s, int *min_version,
 
 /*
  * ssl_set_client_hello_version - Work out what version we should be using for
- * the initial ClientHello.
+ * the initial ClientHello.legacy_version field.
  *
  * @s: client SSL handle.
  *
@@ -1314,6 +1312,12 @@ int ssl_set_client_hello_version(SSL *s)
     if (ret != 0)
         return ret;
 
-    s->client_version = s->version = ver_max;
+    s->version = ver_max;
+
+    /* TLS1.3 always uses TLS1.2 in the legacy_version field */
+    if (!SSL_IS_DTLS(s) && ver_max > TLS1_2_VERSION)
+        ver_max = TLS1_2_VERSION;
+
+    s->client_version = ver_max;
     return 0;
 }
