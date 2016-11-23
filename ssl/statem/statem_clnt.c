@@ -889,7 +889,6 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     SSL_COMP *comp;
 #endif
     SSL_SESSION *sess = s->session;
-    int client_version;
 
     if (!WPACKET_set_max_size(pkt, SSL3_RT_MAX_PLAIN_LENGTH)) {
         /* Should not happen */
@@ -970,8 +969,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
      * For TLS 1.3 we always set the ClientHello version to 1.2 and rely on the
      * supported_versions extension for the real supported versions.
      */
-    client_version = SSL_IS_TLS13(s) ? TLS1_2_VERSION : s->client_version;
-    if (!WPACKET_put_bytes_u16(pkt, client_version)
+    if (!WPACKET_put_bytes_u16(pkt, s->client_version)
             || !WPACKET_memcpy(pkt, s->s3->client_random, SSL3_RANDOM_SIZE)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         return 0;
