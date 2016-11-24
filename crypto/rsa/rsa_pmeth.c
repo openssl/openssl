@@ -671,3 +671,27 @@ const EVP_PKEY_METHOD rsa_pkey_meth = {
     pkey_rsa_ctrl,
     pkey_rsa_ctrl_str
 };
+
+const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
+    EVP_PKEY_RSA_PSS,
+    EVP_PKEY_FLAG_AUTOARGLEN,
+    pkey_rsa_init,
+    pkey_rsa_copy,
+    pkey_rsa_cleanup,
+
+    0, 0,
+
+    0,
+    pkey_rsa_keygen,
+
+    0,
+    pkey_rsa_sign,
+
+    0,
+    pkey_rsa_verify,
+
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+    pkey_rsa_ctrl,
+    pkey_rsa_ctrl_str
+};
