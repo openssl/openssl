@@ -258,6 +258,9 @@ int SSL_extension_supported(unsigned int ext_type)
 #ifdef TLSEXT_TYPE_encrypt_then_mac
     case TLSEXT_TYPE_encrypt_then_mac:
 #endif
+    case TLSEXT_TYPE_key_share:
+    case TLSEXT_TYPE_supported_versions:
+    case TLSEXT_TYPE_extended_master_secret:
         return 1;
     default:
         return 0;
