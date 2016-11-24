@@ -670,6 +670,10 @@ int MAIN(int argc, char **argv)
         ecdh_b[i] = NULL;
     }
 # endif
+# ifndef OPENSSL_NO_RSA
+    for (i = 0; i < RSA_NUM; i++)
+        rsa_key[i] = NULL;
+# endif
 
     if (bio_err == NULL)
         if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -677,12 +681,6 @@ int MAIN(int argc, char **argv)
 
     if (!load_config(bio_err, NULL))
         goto end;
-
-# ifndef OPENSSL_NO_RSA
-    memset(rsa_key, 0, sizeof(rsa_key));
-    for (i = 0; i < RSA_NUM; i++)
-        rsa_key[i] = NULL;
-# endif
 
     if ((buf = (unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL) {
         BIO_printf(bio_err, "out of memory\n");
