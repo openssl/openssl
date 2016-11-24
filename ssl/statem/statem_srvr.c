@@ -1249,8 +1249,9 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
     /* Preserve the raw extensions PACKET for later use */
     extensions = clienthello.extensions;
-    if (!tls_collect_extensions(&extensions, &clienthello.pre_proc_exts,
-                                  &clienthello.num_extensions, &al)) {
+    if (!tls_collect_extensions(s, &extensions, EXT_CLIENT_HELLO,
+                                &clienthello.pre_proc_exts,
+                                &clienthello.num_extensions, &al)) {
         /* SSLerr already been called */
         goto f_err;
     }

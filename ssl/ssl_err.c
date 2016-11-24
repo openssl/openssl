@@ -354,6 +354,7 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_BAD_DIGEST_LENGTH), "bad digest length"},
     {ERR_REASON(SSL_R_BAD_ECC_CERT), "bad ecc cert"},
     {ERR_REASON(SSL_R_BAD_ECPOINT), "bad ecpoint"},
+    {ERR_REASON(SSL_R_BAD_EXTENSION), "bad extension"},
     {ERR_REASON(SSL_R_BAD_HANDSHAKE_LENGTH), "bad handshake length"},
     {ERR_REASON(SSL_R_BAD_HELLO_REQUEST), "bad hello request"},
     {ERR_REASON(SSL_R_BAD_KEY_SHARE), "bad key share"},
