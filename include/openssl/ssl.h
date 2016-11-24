@@ -2270,6 +2270,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE          357
 # define SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY                358
 # define SSL_F_TLS_CONSTRUCT_ENCRYPTED_EXTENSIONS         443
+# define SSL_F_TLS_CONSTRUCT_EXTENSIONS                   447
 # define SSL_F_TLS_CONSTRUCT_FINISHED                     359
 # define SSL_F_TLS_CONSTRUCT_HELLO_REQUEST                373
 # define SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET           428
@@ -2281,6 +2282,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_GET_MESSAGE_BODY                       351
 # define SSL_F_TLS_GET_MESSAGE_HEADER                     387
 # define SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE            445
+# define SSL_F_TLS_PARSE_CLIENTHELLO_RENEGOTIATE          448
+# define SSL_F_TLS_PARSE_CLIENTHELLO_TLSEXT               449
 # define SSL_F_TLS_PARSE_CLIENTHELLO_USE_SRTP             446
 # define SSL_F_TLS_POST_PROCESS_CLIENT_HELLO              378
 # define SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE       384
@@ -2311,6 +2314,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_SKE_ECDHE                      420
 # define SSL_F_TLS_PROCESS_SKE_PSK_PREAMBLE               421
 # define SSL_F_TLS_PROCESS_SKE_SRP                        422
+# define SSL_F_TLS_SCAN_CLIENTHELLO_TLSEXT                450
 # define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 
 /* Reason codes. */
