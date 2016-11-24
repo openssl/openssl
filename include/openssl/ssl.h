@@ -2324,6 +2324,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_DIGEST_LENGTH                          111
 # define SSL_R_BAD_ECC_CERT                               304
 # define SSL_R_BAD_ECPOINT                                306
+# define SSL_R_BAD_EXTENSION                              110
 # define SSL_R_BAD_HANDSHAKE_LENGTH                       332
 # define SSL_R_BAD_HELLO_REQUEST                          105
 # define SSL_R_BAD_KEY_SHARE                              108

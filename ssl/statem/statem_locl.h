@@ -26,6 +26,17 @@
 /* Max should actually be 36 but we are generous */
 #define FINISHED_MAX_LENGTH             64
 
+/* Extension context codes */
+#define EXT_DTLS_ONLY                       0x01
+#define EXT_CLIENT_HELLO                    0x02
+/* Really means TLS1.2 or below */
+#define EXT_TLS1_2_SERVER_HELLO             0x04
+#define EXT_TLS1_3_SERVER_HELLO             0x08
+#define EXT_TLS1_3_ENCRYPTED_EXTENSIONS     0x10
+#define EXT_TLS1_3_HELLO_RETRY_REQUEST      0x20
+#define EXT_TLS1_3_CERTIFICATE              0x40
+#define EXT_TLS1_3_NEW_SESSION_TICKET       0x80
+
 /* Message processing return codes */
 typedef enum {
     /* Something bad happened */
@@ -88,8 +99,8 @@ __owur int tls_construct_finished(SSL *s, WPACKET *pkt);
 __owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst);
 __owur WORK_STATE dtls_wait_for_dry(SSL *s);
 
-int tls_collect_extensions(PACKET *packet, RAW_EXTENSION **res,
-                             size_t *numfound, int *ad);
+int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
+                           RAW_EXTENSION **res, size_t *numfound, int *ad);
 
 /* some client-only functions */
 __owur int tls_construct_client_hello(SSL *s, WPACKET *pkt);
