@@ -24,15 +24,65 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri);
 static int rsa_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
 
+/* Set any parameters associated with pkey */
+static int rsa_param_encode(const EVP_PKEY *pkey,
+                            ASN1_STRING **pstr, int *pstrtype)
+{
+    const RSA *rsa = pkey->pkey.rsa;
+    *pstr = NULL;
+    /* If RSA it's just NULL type */
+    if (pkey->ameth->pkey_id == EVP_PKEY_RSA) {
+        *pstrtype = V_ASN1_NULL;
+        return 1;
+    }
+    /* If no PSS parameters we omit parameters entirely */
+    if (rsa->pss == NULL) {
+        *pstrtype = V_ASN1_UNDEF;
+        return 1;
+    }
+    /* Encode PSS parameters */
+    if (!ASN1_item_pack(rsa->pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS), pstr)) {
+        ASN1_STRING_free(*pstr);
+        *pstr = NULL;
+        return 0;
+    }
+
+    *pstrtype = V_ASN1_SEQUENCE;
+    return 1;
+}
+/* Decode any parameters and set them in RSA structure */
+static int rsa_param_decode(RSA *rsa, const X509_ALGOR *alg)
+{
+    const ASN1_OBJECT *algoid;
+    const void *algp;
+    int algptype;
+
+    X509_ALGOR_get0(&algoid, &algptype, &algp, alg);
+    if (OBJ_obj2nid(algoid) == EVP_PKEY_RSA)
+        return 1;
+    if (algptype == V_ASN1_UNDEF)
+        return 1;
+    if (algptype != V_ASN1_SEQUENCE)
+        return 0;
+    rsa->pss = ASN1_item_unpack(algp, ASN1_ITEM_rptr(RSA_PSS_PARAMS));
+    if (rsa->pss == NULL)
+        return 0;
+    return 1;
+}
+
 static int rsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
     unsigned char *penc = NULL;
     int penclen;
+    ASN1_STRING *str;
+    int strtype;
+    if (!rsa_param_encode(pkey, &str, &strtype))
+        return 0;
     penclen = i2d_RSAPublicKey(pkey->pkey.rsa, &penc);
     if (penclen <= 0)
         return 0;
-    if (X509_PUBKEY_set0_param(pk, OBJ_nid2obj(EVP_PKEY_RSA),
-                               V_ASN1_NULL, NULL, penc, penclen))
+    if (X509_PUBKEY_set0_param(pk, OBJ_nid2obj(pkey->ameth->pkey_id),
+                               strtype, str, penc, penclen))
         return 1;
 
     OPENSSL_free(penc);
@@ -43,12 +93,17 @@ static int rsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 {
     const unsigned char *p;
     int pklen;
+    X509_ALGOR *alg;
     RSA *rsa = NULL;
 
-    if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, NULL, pubkey))
+    if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &alg, pubkey))
         return 0;
     if ((rsa = d2i_RSAPublicKey(NULL, &p, pklen)) == NULL) {
         RSAerr(RSA_F_RSA_PUB_DECODE, ERR_R_RSA_LIB);
+        return 0;
+    }
+    if (!rsa_param_decode(rsa, alg)) {
+        RSA_free(rsa);
         return 0;
     }
     EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
@@ -85,6 +140,10 @@ static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
     unsigned char *rk = NULL;
     int rklen;
+    ASN1_STRING *str;
+    int strtype;
+    if (!rsa_param_encode(pkey, &str, &strtype))
+        return 0;
     rklen = i2d_RSAPrivateKey(pkey->pkey.rsa, &rk);
 
     if (rklen <= 0) {
@@ -93,7 +152,7 @@ static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     }
 
     if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(pkey->ameth->pkey_id), 0,
-                         V_ASN1_NULL, NULL, rk, rklen)) {
+                         strtype, str, rk, rklen)) {
         RSAerr(RSA_F_RSA_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -104,10 +163,23 @@ static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 static int rsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
     const unsigned char *p;
+    RSA *rsa;
     int pklen;
-    if (!PKCS8_pkey_get0(NULL, &p, &pklen, NULL, p8))
+    const X509_ALGOR *alg;
+
+    if (!PKCS8_pkey_get0(NULL, &p, &pklen, &alg, p8))
         return 0;
-    return old_rsa_priv_decode(pkey, &p, pklen);
+    rsa = d2i_RSAPrivateKey(NULL, &p, pklen);
+    if (rsa == NULL) {
+        RSAerr(RSA_F_RSA_PRIV_DECODE, ERR_R_RSA_LIB);
+        return 0;
+    }
+    if (!rsa_param_decode(rsa, alg)) {
+        RSA_free(rsa);
+        return 0;
+    }
+    EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
+    return 1;
 }
 
 static int int_rsa_size(const EVP_PKEY *pkey)
