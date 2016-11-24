@@ -202,16 +202,118 @@ static void int_rsa_free(EVP_PKEY *pkey)
     RSA_free(pkey->pkey.rsa);
 }
 
-static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
+static X509_ALGOR *rsa_mgf1_decode(X509_ALGOR *alg)
 {
+    if (OBJ_obj2nid(alg->algorithm) != NID_mgf1)
+        return NULL;
+    return ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
+                                     alg->parameter);
+}
+
+static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
+                               int indent)
+{
+    int rv = 0;
+    X509_ALGOR *maskHash = NULL;
+    if (!BIO_indent(bp, indent, 128))
+        goto err;
+    if (pss_key) {
+        if (pss == NULL) {
+            if (BIO_puts(bp, "No PSS parameter restrictions\n") <= 0)
+                return 0;
+            return 1;
+        } else {
+            if (BIO_puts(bp, "PSS parameter restrictions:") <= 0)
+                return 0;
+        }
+    } else if (pss == NULL) {
+        if (BIO_puts(bp,"(INVALID PSS PARAMETERS)\n") <= 0)
+            return 0;
+        return 1;
+    }
+    if (BIO_puts(bp, "\n") <= 0)
+        goto err;
+    if (pss_key)
+        indent += 2;
+    if (!BIO_indent(bp, indent, 128))
+        goto err;
+    if (BIO_puts(bp, "Hash Algorithm: ") <= 0)
+        goto err;
+
+    if (pss->hashAlgorithm) {
+        if (i2a_ASN1_OBJECT(bp, pss->hashAlgorithm->algorithm) <= 0)
+            goto err;
+    } else if (BIO_puts(bp, "sha1 (default)") <= 0)
+        goto err;
+
+    if (BIO_puts(bp, "\n") <= 0)
+        goto err;
+
+    if (!BIO_indent(bp, indent, 128))
+        goto err;
+
+    if (BIO_puts(bp, "Mask Algorithm: ") <= 0)
+        goto err;
+    if (pss->maskGenAlgorithm) {
+        if (i2a_ASN1_OBJECT(bp, pss->maskGenAlgorithm->algorithm) <= 0)
+            goto err;
+        if (BIO_puts(bp, " with ") <= 0)
+            goto err;
+        maskHash = rsa_mgf1_decode(pss->maskGenAlgorithm);
+        if (maskHash != NULL) {
+            if (i2a_ASN1_OBJECT(bp, maskHash->algorithm) <= 0)
+                goto err;
+        } else if (BIO_puts(bp, "INVALID") <= 0)
+            goto err;
+    } else if (BIO_puts(bp, "mgf1 with sha1 (default)") <= 0)
+        goto err;
+    BIO_puts(bp, "\n");
+
+    if (!BIO_indent(bp, indent, 128))
+        goto err;
+    if (BIO_printf(bp, "%s Salt Length: 0x", pss_key ? "Minimum" : "") <= 0)
+        goto err;
+    if (pss->saltLength) {
+        if (i2a_ASN1_INTEGER(bp, pss->saltLength) <= 0)
+            goto err;
+    } else if (BIO_puts(bp, "14 (default)") <= 0)
+        goto err;
+    BIO_puts(bp, "\n");
+
+    if (!BIO_indent(bp, indent, 128))
+        goto err;
+    if (BIO_puts(bp, "Trailer Field: 0x") <= 0)
+        goto err;
+    if (pss->trailerField) {
+        if (i2a_ASN1_INTEGER(bp, pss->trailerField) <= 0)
+            goto err;
+    } else if (BIO_puts(bp, "BC (default)") <= 0)
+        goto err;
+    BIO_puts(bp, "\n");
+
+    rv = 1;
+
+ err:
+    X509_ALGOR_free(maskHash);
+    return rv;
+
+}
+
+static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
+{
+    const RSA *x = pkey->pkey.rsa;
     char *str;
     const char *s;
     int ret = 0, mod_len = 0;
+    int is_pss = pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS;
 
     if (x->n != NULL)
         mod_len = BN_num_bits(x->n);
 
     if (!BIO_indent(bp, off, 128))
+        goto err;
+
+    if (BIO_printf(bp, "%s ", is_pss ?  "RSA-PSS" : "RSA") <= 0)
         goto err;
 
     if (priv && x->d) {
@@ -243,29 +345,23 @@ static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
         if (!ASN1_bn_print(bp, "coefficient:", x->iqmp, NULL, off))
             goto err;
     }
+    if (is_pss && !rsa_pss_param_print(bp, 1, x->pss, off))
+        goto err;
     ret = 1;
  err:
-    return (ret);
+    return ret;
 }
 
 static int rsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                          ASN1_PCTX *ctx)
 {
-    return do_rsa_print(bp, pkey->pkey.rsa, indent, 0);
+    return pkey_rsa_print(bp, pkey, indent, 0);
 }
 
 static int rsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                           ASN1_PCTX *ctx)
 {
-    return do_rsa_print(bp, pkey->pkey.rsa, indent, 1);
-}
-
-static X509_ALGOR *rsa_mgf1_decode(X509_ALGOR *alg)
-{
-    if (OBJ_obj2nid(alg->algorithm) != NID_mgf1)
-        return NULL;
-    return ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
-                                     alg->parameter);
+    return pkey_rsa_print(bp, pkey, indent, 1);
 }
 
 static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg)
@@ -289,78 +385,6 @@ static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg)
     return pss;
 }
 
-static int rsa_pss_param_print(BIO *bp, RSA_PSS_PARAMS *pss, int indent)
-{
-    int rv = 0;
-    if (!pss) {
-        if (BIO_puts(bp, " (INVALID PSS PARAMETERS)\n") <= 0)
-            return 0;
-        return 1;
-    }
-    if (BIO_puts(bp, "\n") <= 0)
-        goto err;
-    if (!BIO_indent(bp, indent, 128))
-        goto err;
-    if (BIO_puts(bp, "Hash Algorithm: ") <= 0)
-        goto err;
-
-    if (pss->hashAlgorithm) {
-        if (i2a_ASN1_OBJECT(bp, pss->hashAlgorithm->algorithm) <= 0)
-            goto err;
-    } else if (BIO_puts(bp, "sha1 (default)") <= 0)
-        goto err;
-
-    if (BIO_puts(bp, "\n") <= 0)
-        goto err;
-
-    if (!BIO_indent(bp, indent, 128))
-        goto err;
-
-    if (BIO_puts(bp, "Mask Algorithm: ") <= 0)
-        goto err;
-    if (pss->maskGenAlgorithm) {
-        if (i2a_ASN1_OBJECT(bp, pss->maskGenAlgorithm->algorithm) <= 0)
-            goto err;
-        if (BIO_puts(bp, " with ") <= 0)
-            goto err;
-        if (pss->maskHash) {
-            if (i2a_ASN1_OBJECT(bp, pss->maskHash->algorithm) <= 0)
-                goto err;
-        } else if (BIO_puts(bp, "INVALID") <= 0)
-            goto err;
-    } else if (BIO_puts(bp, "mgf1 with sha1 (default)") <= 0)
-        goto err;
-    BIO_puts(bp, "\n");
-
-    if (!BIO_indent(bp, indent, 128))
-        goto err;
-    if (BIO_puts(bp, "Salt Length: 0x") <= 0)
-        goto err;
-    if (pss->saltLength) {
-        if (i2a_ASN1_INTEGER(bp, pss->saltLength) <= 0)
-            goto err;
-    } else if (BIO_puts(bp, "14 (default)") <= 0)
-        goto err;
-    BIO_puts(bp, "\n");
-
-    if (!BIO_indent(bp, indent, 128))
-        goto err;
-    if (BIO_puts(bp, "Trailer Field: 0x") <= 0)
-        goto err;
-    if (pss->trailerField) {
-        if (i2a_ASN1_INTEGER(bp, pss->trailerField) <= 0)
-            goto err;
-    } else if (BIO_puts(bp, "BC (default)") <= 0)
-        goto err;
-    BIO_puts(bp, "\n");
-
-    rv = 1;
-
- err:
-    return rv;
-
-}
-
 static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
                          const ASN1_STRING *sig, int indent, ASN1_PCTX *pctx)
 {
@@ -368,7 +392,7 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         int rv;
         RSA_PSS_PARAMS *pss;
         pss = rsa_pss_decode(sigalg);
-        rv = rsa_pss_param_print(bp, pss, indent);
+        rv = rsa_pss_param_print(bp, 0, pss, indent);
         RSA_PSS_PARAMS_free(pss);
         if (!rv)
             return 0;
