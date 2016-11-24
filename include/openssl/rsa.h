@@ -512,6 +512,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_F_RSA_PADDING_CHECK_X931                     128
 # define RSA_F_RSA_PRINT                                  115
 # define RSA_F_RSA_PRINT_FP                               116
+# define RSA_F_RSA_PRIV_DECODE                            150
 # define RSA_F_RSA_PRIV_ENCODE                            138
 # define RSA_F_RSA_PSS_TO_CTX                             155
 # define RSA_F_RSA_PUB_DECODE                             139
