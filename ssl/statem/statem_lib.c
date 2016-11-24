@@ -958,6 +958,8 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
         const SSL_METHOD *best_method = NULL;
         PACKET versionslist;
 
+        suppversions->parsed = 1;
+
         if (!PACKET_as_length_prefixed_1(&suppversions->data, &versionslist)) {
             /* Trailing or invalid data? */
             return SSL_R_LENGTH_MISMATCH;
