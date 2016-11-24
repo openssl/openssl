@@ -2280,6 +2280,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE          377
 # define SSL_F_TLS_GET_MESSAGE_BODY                       351
 # define SSL_F_TLS_GET_MESSAGE_HEADER                     387
+# define SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE            445
+# define SSL_F_TLS_PARSE_CLIENTHELLO_USE_SRTP             446
 # define SSL_F_TLS_POST_PROCESS_CLIENT_HELLO              378
 # define SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE       384
 # define SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE             360

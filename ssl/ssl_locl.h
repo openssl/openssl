@@ -1636,8 +1636,12 @@ typedef struct ssl3_comp_st {
 # endif
 
 typedef struct raw_extension_st {
+    /* The type of the extension */
     unsigned int type;
+    /* Raw packet data for the extension */
     PACKET data;
+    /* Set to 1 if we have already parsed the extension or 0 otherwise */
+    int parsed;
 } RAW_EXTENSION;
 
 #define MAX_COMPRESSIONS_SIZE   255
@@ -2067,9 +2071,12 @@ __owur EVP_PKEY *ssl_generate_pkey_curve(int id);
 __owur int tls1_shared_list(SSL *s,
                             const unsigned char *l1, size_t l1len,
                             const unsigned char *l2, size_t l2len, int nmatch);
+__owur int tls_curve_allowed(SSL *s, const unsigned char *curve, int op);
+__owur  int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
+                               size_t *num_curves);
+
 __owur int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al);
 __owur int ssl_add_serverhello_tlsext(SSL *s, WPACKET *pkt, int *al);
-__owur int ssl_parse_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello);
 void ssl_set_default_md(SSL *s);
 __owur int tls1_set_server_sigalgs(SSL *s);
 __owur int ssl_check_clienthello_tlsext_late(SSL *s, int *al);
@@ -2081,7 +2088,6 @@ __owur RAW_EXTENSION *tls_get_extension_by_type(RAW_EXTENSION *exts,
                                                 unsigned int type);
 __owur int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                                       SSL_SESSION **ret);
-__owur int tls_check_client_ems_support(SSL *s, const CLIENTHELLO_MSG *hello);
 
 __owur int tls12_get_sigandhash(WPACKET *pkt, const EVP_PKEY *pk,
                                 const EVP_MD *md);
@@ -2112,7 +2118,6 @@ __owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 __owur int ssl_add_serverhello_renegotiate_ext(SSL *s, WPACKET *pkt);
 __owur int ssl_parse_serverhello_renegotiate_ext(SSL *s, PACKET *pkt, int *al);
-__owur int ssl_parse_clienthello_renegotiate_ext(SSL *s, PACKET *pkt, int *al);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
                               const unsigned char *psig, size_t psiglen);
@@ -2124,7 +2129,6 @@ __owur int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
 void ssl_set_client_disabled(SSL *s);
 __owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op);
 
-__owur int ssl_parse_clienthello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 __owur int ssl_parse_serverhello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 
 __owur int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
