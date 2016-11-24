@@ -27,15 +27,22 @@
 #define FINISHED_MAX_LENGTH             64
 
 /* Extension context codes */
-#define EXT_DTLS_ONLY                       0x01
-#define EXT_CLIENT_HELLO                    0x02
+#define EXT_TLS_ONLY                        0x0001
+#define EXT_DTLS_ONLY                       0x0002
+/* Some extensions may be allowed in DTLS but we don't implement them for it */
+#define EXT_TLS_IMPLEMENTATION_ONLY         0x0004
+/* Most extensions are not defined for SSLv3 but EXT_TYPE_renegotiate is */
+#define EXT_SSL3_ALLOWED                    0x0008
+#define EXT_TLS1_2_AND_BELOW_ONLY           0x0010
+#define EXT_TLS1_3_ONLY                     0x0020
+#define EXT_CLIENT_HELLO                    0x0040
 /* Really means TLS1.2 or below */
-#define EXT_TLS1_2_SERVER_HELLO             0x04
-#define EXT_TLS1_3_SERVER_HELLO             0x08
-#define EXT_TLS1_3_ENCRYPTED_EXTENSIONS     0x10
-#define EXT_TLS1_3_HELLO_RETRY_REQUEST      0x20
-#define EXT_TLS1_3_CERTIFICATE              0x40
-#define EXT_TLS1_3_NEW_SESSION_TICKET       0x80
+#define EXT_TLS1_2_SERVER_HELLO             0x0080
+#define EXT_TLS1_3_SERVER_HELLO             0x0100
+#define EXT_TLS1_3_ENCRYPTED_EXTENSIONS     0x0200
+#define EXT_TLS1_3_HELLO_RETRY_REQUEST      0x0400
+#define EXT_TLS1_3_CERTIFICATE              0x0800
+#define EXT_TLS1_3_NEW_SESSION_TICKET       0x1000
 
 /* Message processing return codes */
 typedef enum {
@@ -141,3 +148,8 @@ __owur MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt);
 #endif
 __owur int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt);
+
+__owur int tls_parse_all_extensions(SSL *s, RAW_EXTENSION *exts, size_t numexts,
+                                    int *al);
+__owur int tls_parse_extension(SSL *s, int type,  RAW_EXTENSION *exts,
+                               size_t numexts, int *al);
