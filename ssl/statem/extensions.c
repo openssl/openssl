@@ -45,6 +45,11 @@ typedef struct {
     unsigned int context;
 } EXTENSION_DEFINITION;
 
+/*
+ * TODO(TLS1.3): Temporarily modified the definitions below to put all TLS1.3
+ * extensions in the ServerHello for now. That needs to be put back to correct
+ * setting once encrypted extensions is working properly.
+ */
 static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_renegotiate,
@@ -62,7 +67,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+        | /*EXT_TLS1_3_ENCRYPTED_EXTENSIONS*/EXT_TLS1_3_SERVER_HELLO
     },
 #ifndef OPENSSL_NO_SRP
     {
@@ -89,7 +94,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL,
         NULL,
         NULL,
-        EXT_CLIENT_HELLO | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+        EXT_CLIENT_HELLO
+        | /*EXT_TLS1_3_ENCRYPTED_EXTENSIONS*/EXT_TLS1_3_SERVER_HELLO
     },
 #endif
     {
@@ -114,7 +120,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL,
         NULL,
         NULL,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_3_CERTIFICATE
+        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
+        | /*EXT_TLS1_3_CERTIFICATE*/EXT_TLS1_3_SERVER_HELLO
     },
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {
@@ -133,7 +140,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+        | /*EXT_TLS1_3_ENCRYPTED_EXTENSIONS*/EXT_TLS1_3_SERVER_HELLO
     },
     {
         TLSEXT_TYPE_use_srtp,
@@ -163,11 +170,14 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL,
         NULL,
         NULL,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_3_CERTIFICATE
+        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
+        | /*EXT_TLS1_3_CERTIFICATE*/EXT_TLS1_3_SERVER_HELLO
     },
     {
         TLSEXT_TYPE_extended_master_secret,
         tls_parse_clienthello_ems,
+        NULL,
+        NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
@@ -365,8 +375,8 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
     return 0;
 }
 
-int tls_parse_all_extensions(SSL *s, RAW_EXTENSION *exts, size_t numexts,
-                             int *al)
+int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
+                             size_t numexts, int *al)
 {
     size_t loop;
 
@@ -437,15 +447,15 @@ int tls_parse_all_extensions(SSL *s, RAW_EXTENSION *exts, size_t numexts,
  * failure. If a failure has occurred then |*al| will also be set to the alert
  * to be sent.
  */
-int tls_parse_extension(SSL *s, int type,  RAW_EXTENSION *exts, size_t numexts,
-                        int *al)
+int tls_parse_extension(SSL *s, int type, int context, RAW_EXTENSION *exts,
+                        size_t numexts, int *al)
 {
     RAW_EXTENSION *ext = tls_get_extension_by_type(exts, numexts, type);
 
     if (ext == NULL)
         return 1;
 
-    return tls_parse_all_extensions(s, ext, 1, al);
+    return tls_parse_all_extensions(s, context, ext, 1, al);
 }
 
 int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
@@ -468,23 +478,27 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     for (loop = 0; loop < OSSL_NELEM(ext_defs); loop++) {
+        int (*construct)(SSL *s, WPACKET *pkt, int *al);
+
         /* Skip if not relevant for our context */
         if ((ext_defs[loop].context & context) == 0)
             continue;
 
-        construct = s->server ? extdef->server_construct
-                              : extdef->client_construct;
+        construct = s->server ? ext_defs[loop].server_construct
+                              : ext_defs[loop].client_construct;
 
         /* Check if this extension is defined for our protocol. If not, skip */
         if ((SSL_IS_DTLS(s)
-                    && (extdef->context & EXT_TLS_IMPLEMENTATION_ONLY) != 0)
+                    && (ext_defs[loop].context & EXT_TLS_IMPLEMENTATION_ONLY)
+                       != 0)
                 || (s->version == SSL3_VERSION
-                        && (extdef->context & EXT_SSL3_ALLOWED) == 0)
+                        && (ext_defs[loop].context & EXT_SSL3_ALLOWED) == 0)
                 || (SSL_IS_TLS13(s)
-                    && (extdef->context & EXT_TLS1_2_AND_BELOW_ONLY) != 0)
+                    && (ext_defs[loop].context & EXT_TLS1_2_AND_BELOW_ONLY)
+                       != 0)
                 || (!SSL_IS_TLS13(s)
-                    && ((extdef->context & EXT_TLS1_3_ONLY) != 0
-                        || (context & EXT_CLIENT_HELLO) != 0))
+                    && (ext_defs[loop].context & EXT_TLS1_3_ONLY) != 0
+                    && (context & EXT_CLIENT_HELLO) == 0)
                 || construct == NULL)
             continue;
 
@@ -492,12 +506,11 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
             return 0;
     }
 
-
     /* Add custom extensions */
     if ((context & EXT_CLIENT_HELLO) != 0) {
         custom_ext_init(&s->cert->cli_ext);
         addcustom = 1;
-    } else if (context & (EXT_TLS1_2_SERVER_HELLO) {
+    } else if ((context & EXT_TLS1_2_SERVER_HELLO) != 0) {
         /*
          * We already initialised the custom extensions during ClientHello
          * parsing.
@@ -508,20 +521,20 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
          */
         addcustom = 1;
     }
+
     if (addcustom && !custom_ext_add(s, s->server, pkt, al)) {
-        SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     if (!WPACKET_close(pkt)) {
-        *sl = SSL_AD_INTERNAL_ERROR;
+        *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     return 1;
 }
-
 
 /*
  * Parse the client's renegotiation binding and abort if it's not right
@@ -534,7 +547,7 @@ static int tls_parse_clienthello_renegotiate(SSL *s, PACKET *pkt, int *al)
     /* Parse the length byte */
     if (!PACKET_get_1(pkt, &ilen)
         || !PACKET_get_bytes(pkt, &data, ilen)) {
-        SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
+        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_RENEGOTIATE,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
@@ -542,7 +555,7 @@ static int tls_parse_clienthello_renegotiate(SSL *s, PACKET *pkt, int *al)
 
     /* Check that the extension matches */
     if (ilen != s->s3->previous_client_finished_len) {
-        SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
+        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_RENEGOTIATE,
                SSL_R_RENEGOTIATION_MISMATCH);
         *al = SSL_AD_HANDSHAKE_FAILURE;
         return 0;
@@ -550,7 +563,7 @@ static int tls_parse_clienthello_renegotiate(SSL *s, PACKET *pkt, int *al)
 
     if (memcmp(data, s->s3->previous_client_finished,
                s->s3->previous_client_finished_len)) {
-        SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
+        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_RENEGOTIATE,
                SSL_R_RENEGOTIATION_MISMATCH);
         *al = SSL_AD_HANDSHAKE_FAILURE;
         return 0;

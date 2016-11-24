@@ -149,7 +149,9 @@ __owur MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt);
 #endif
 __owur int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt);
 
-__owur int tls_parse_all_extensions(SSL *s, RAW_EXTENSION *exts, size_t numexts,
-                                    int *al);
-__owur int tls_parse_extension(SSL *s, int type,  RAW_EXTENSION *exts,
+__owur int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
+                                    size_t numexts, int *al);
+__owur int tls_parse_extension(SSL *s, int type, int context, RAW_EXTENSION *exts,
                                size_t numexts, int *al);
+__owur int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
+                                    int *al);
