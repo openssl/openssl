@@ -40,6 +40,8 @@ typedef struct {
     unsigned int type;
     int (*server_parse)(SSL *s, PACKET *pkt, int *al);
     int (*client_parse)(SSL *s, PACKET *pkt, int *al);
+    int (*server_construct)(SSL *s, WPACKET *pkt, int *al);
+    int (*client_construct)(SSL *s, WPACKET *pkt, int *al);
     unsigned int context;
 } EXTENSION_DEFINITION;
 
@@ -48,12 +50,16 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_renegotiate,
         tls_parse_clienthello_renegotiate,
         NULL,
+        NULL,
+        NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_SSL3_ALLOWED
         | EXT_TLS1_2_AND_BELOW_ONLY
     },
     {
         TLSEXT_TYPE_server_name,
         tls_parse_clienthello_server_name,
+        NULL,
+        NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
         | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
@@ -63,6 +69,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_srp,
         tls_parse_clienthello_srp,
         NULL,
+        NULL,
+        NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
 #endif
@@ -71,11 +79,15 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_ec_point_formats,
         tls_parse_clienthello_ec_pt_formats,
         NULL,
+        NULL,
+        NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
     {
         TLSEXT_TYPE_supported_groups,
         tls_parse_clienthello_supported_groups,
+        NULL,
+        NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
     },
@@ -84,17 +96,23 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_session_ticket,
         tls_parse_clienthello_session_ticket,
         NULL,
+        NULL,
+        NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
     {
         TLSEXT_TYPE_signature_algorithms,
         tls_parse_clienthello_sig_algs,
         NULL,
+        NULL,
+        NULL,
         EXT_CLIENT_HELLO
     },
     {
         TLSEXT_TYPE_status_request,
         tls_parse_clienthello_status_request,
+        NULL,
+        NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_3_CERTIFICATE
     },
@@ -103,12 +121,16 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_next_proto_neg,
         tls_parse_clienthello_npn,
         NULL,
+        NULL,
+        NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
 #endif
     {
         TLSEXT_TYPE_application_layer_protocol_negotiation,
         tls_parse_clienthello_alpn,
+        NULL,
+        NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
         | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
@@ -117,12 +139,16 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_use_srtp,
         tls_parse_clienthello_use_srtp,
         NULL,
+        NULL,
+        NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
         | EXT_TLS1_3_ENCRYPTED_EXTENSIONS | EXT_DTLS_ONLY
     },
     {
         TLSEXT_TYPE_encrypt_then_mac,
         tls_parse_clienthello_etm,
+        NULL,
+        NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
@@ -133,6 +159,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
          * extension. This is an exception to the rule that custom extensions
          * cannot override built in ones.
          */
+        NULL,
+        NULL,
         NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_3_CERTIFICATE
@@ -148,6 +176,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         /* Processed inline as part of version selection */
         NULL,
         NULL,
+        NULL,
+        NULL,
         EXT_CLIENT_HELLO | EXT_TLS_IMPLEMENTATION_ONLY
     },
     {
@@ -155,11 +185,15 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         /* We send this, but don't read it */
         NULL,
         NULL,
+        NULL,
+        NULL,
         EXT_CLIENT_HELLO
     },
     {
         TLSEXT_TYPE_key_share,
         tls_parse_clienthello_key_share,
+        NULL,
+        NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_3_SERVER_HELLO
         | EXT_TLS1_3_HELLO_RETRY_REQUEST | EXT_TLS_IMPLEMENTATION_ONLY
@@ -354,15 +388,33 @@ int tls_parse_all_extensions(SSL *s, RAW_EXTENSION *exts, size_t numexts,
         currext->parsed = 1;
 
         parser = NULL;
-        if (find_extension_definition(s, currext->type, &extdef))
+        if (find_extension_definition(s, currext->type, &extdef)) {
             parser = s->server ? extdef->server_parse : extdef->client_parse;
+
+            /* Check if extension is defined for our protocol. If not, skip */
+            if ((SSL_IS_DTLS(s)
+                        && (extdef->context & EXT_TLS_IMPLEMENTATION_ONLY) != 0)
+                    || (s->version == SSL3_VERSION
+                            && (extdef->context & EXT_SSL3_ALLOWED) == 0)
+                    || (SSL_IS_TLS13(s)
+                        && (extdef->context & EXT_TLS1_2_AND_BELOW_ONLY) != 0)
+                    || (!SSL_IS_TLS13(s)
+                        && (extdef->context & EXT_TLS1_3_ONLY) != 0))
+                continue;
+        }
 
         if (parser == NULL) {
             /*
              * Could be a custom extension. We only allow this if it is a non
-             * resumed session on the server side
+             * resumed session on the server side.
+             * 
+             * TODO(TLS1.3): We only allow old style <=TLS1.2 custom extensions.
+             * We're going to need a new mechanism for TLS1.3 to specify which
+             * messages to add the custom extensions to.
              */
             if ((!s->hit || !s->server)
+                    && (context
+                        & (EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO)) != 0
                     && custom_ext_parse(s, s->server, currext->type,
                                         PACKET_data(&currext->data),
                                         PACKET_remaining(&currext->data),
@@ -371,19 +423,6 @@ int tls_parse_all_extensions(SSL *s, RAW_EXTENSION *exts, size_t numexts,
 
             continue;
         }
-
-        /* Check if this extension is defined for our protocol. If not, skip */
-        if ((SSL_IS_DTLS(s)
-                    && (extdef->context & EXT_TLS_IMPLEMENTATION_ONLY) != 0)
-                || (s->version == SSL3_VERSION
-                        && (extdef->context & EXT_SSL3_ALLOWED) == 0)
-                || (SSL_IS_TLS13(s)
-                    && (extdef->context & EXT_TLS1_2_AND_BELOW_ONLY) != 0)
-                || (!SSL_IS_TLS13(s)
-                    && (extdef->context & EXT_TLS1_3_ONLY) != 0)
-                || (s->server && extdef->server_parse == NULL)
-                || (!s->server && extdef->client_parse == NULL))
-            continue;
 
         if (!parser(s, &currext->data, al))
             return 0;
@@ -407,6 +446,80 @@ int tls_parse_extension(SSL *s, int type,  RAW_EXTENSION *exts, size_t numexts,
         return 1;
 
     return tls_parse_all_extensions(s, ext, 1, al);
+}
+
+int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
+                             int *al)
+{
+    size_t loop;
+    int addcustom = 0;
+
+    if (!WPACKET_start_sub_packet_u16(pkt)
+               /*
+                * If extensions are of zero length then we don't even add the
+                * extensions length bytes to a ClientHello
+                */
+            || ((context & EXT_CLIENT_HELLO) != 0
+               && !WPACKET_set_flags(pkt,
+                                     WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH))) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    for (loop = 0; loop < OSSL_NELEM(ext_defs); loop++) {
+        /* Skip if not relevant for our context */
+        if ((ext_defs[loop].context & context) == 0)
+            continue;
+
+        construct = s->server ? extdef->server_construct
+                              : extdef->client_construct;
+
+        /* Check if this extension is defined for our protocol. If not, skip */
+        if ((SSL_IS_DTLS(s)
+                    && (extdef->context & EXT_TLS_IMPLEMENTATION_ONLY) != 0)
+                || (s->version == SSL3_VERSION
+                        && (extdef->context & EXT_SSL3_ALLOWED) == 0)
+                || (SSL_IS_TLS13(s)
+                    && (extdef->context & EXT_TLS1_2_AND_BELOW_ONLY) != 0)
+                || (!SSL_IS_TLS13(s)
+                    && ((extdef->context & EXT_TLS1_3_ONLY) != 0
+                        || (context & EXT_CLIENT_HELLO) != 0))
+                || construct == NULL)
+            continue;
+
+        if (!construct(s, pkt, al))
+            return 0;
+    }
+
+
+    /* Add custom extensions */
+    if ((context & EXT_CLIENT_HELLO) != 0) {
+        custom_ext_init(&s->cert->cli_ext);
+        addcustom = 1;
+    } else if (context & (EXT_TLS1_2_SERVER_HELLO) {
+        /*
+         * We already initialised the custom extensions during ClientHello
+         * parsing.
+         * 
+         * TODO(TLS1.3): We're going to need a new custom extension mechanism
+         * for TLS1.3, so that custom extensions can specify which of the
+         * multiple message they wish to add themselves to.
+         */
+        addcustom = 1;
+    }
+    if (addcustom && !custom_ext_add(s, s->server, pkt, al)) {
+        SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!WPACKET_close(pkt)) {
+        *sl = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
 }
 
 
