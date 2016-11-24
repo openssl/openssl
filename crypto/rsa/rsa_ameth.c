@@ -292,7 +292,7 @@ static int rsa_pss_param_print(BIO *bp, RSA_PSS_PARAMS *pss, int indent)
 static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
                          const ASN1_STRING *sig, int indent, ASN1_PCTX *pctx)
 {
-    if (OBJ_obj2nid(sigalg->algorithm) == NID_rsassaPss) {
+    if (OBJ_obj2nid(sigalg->algorithm) == EVP_PKEY_RSA_PSS) {
         int rv;
         RSA_PSS_PARAMS *pss;
         pss = rsa_pss_decode(sigalg);
@@ -472,7 +472,7 @@ static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
     const EVP_MD *mgf1md = NULL, *md = NULL;
     RSA_PSS_PARAMS *pss;
     /* Sanity check: make sure it is PSS */
-    if (OBJ_obj2nid(sigalg->algorithm) != NID_rsassaPss) {
+    if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS) {
         RSAerr(RSA_F_RSA_PSS_TO_CTX, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
         return -1;
     }
@@ -554,7 +554,7 @@ static int rsa_cms_verify(CMS_SignerInfo *si)
     nid = OBJ_obj2nid(alg->algorithm);
     if (nid == NID_rsaEncryption)
         return 1;
-    if (nid == NID_rsassaPss)
+    if (nid == EVP_PKEY_RSA_PSS)
         return rsa_pss_to_ctx(NULL, pkctx, alg, NULL);
     /* Workaround for some implementation that use a signature OID */
     if (OBJ_find_sigid_algs(nid, NULL, &nid2)) {
@@ -575,7 +575,7 @@ static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
                            EVP_PKEY *pkey)
 {
     /* Sanity check: make sure it is PSS */
-    if (OBJ_obj2nid(sigalg->algorithm) != NID_rsassaPss) {
+    if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS) {
         RSAerr(RSA_F_RSA_ITEM_VERIFY, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
         return -1;
     }
@@ -608,7 +608,7 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
     os = rsa_ctx_to_pss(pkctx);
     if (!os)
         return 0;
-    X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsassaPss), V_ASN1_SEQUENCE, os);
+    X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_PKEY_RSA_PSS), V_ASN1_SEQUENCE, os);
     return 1;
 }
 #endif
@@ -635,10 +635,10 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
                 ASN1_STRING_free(os1);
                 return 0;
             }
-            X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_rsassaPss),
+            X509_ALGOR_set0(alg2, OBJ_nid2obj(EVP_PKEY_RSA_PSS),
                             V_ASN1_SEQUENCE, os2);
         }
-        X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_rsassaPss),
+        X509_ALGOR_set0(alg1, OBJ_nid2obj(EVP_PKEY_RSA_PSS),
                         V_ASN1_SEQUENCE, os1);
         return 3;
     }
