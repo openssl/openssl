@@ -30,6 +30,9 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_CMAC
     &cmac_asn1_meth,
 #endif
+#ifndef OPENSSL_NO_RSA
+    &rsa_pss_asn1_meth,
+#endif
 #ifndef OPENSSL_NO_DH
     &dhx_asn1_meth,
 #endif

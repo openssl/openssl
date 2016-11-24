@@ -836,3 +836,34 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
      EVP_PKEY_RSA,
      ASN1_PKEY_ALIAS}
 };
+
+const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
+     EVP_PKEY_RSA_PSS,
+     EVP_PKEY_RSA_PSS,
+     ASN1_PKEY_SIGPARAM_NULL,
+
+     "RSA-PSS",
+     "OpenSSL RSA-PSS method",
+
+     rsa_pub_decode,
+     rsa_pub_encode,
+     rsa_pub_cmp,
+     rsa_pub_print,
+
+     rsa_priv_decode,
+     rsa_priv_encode,
+     rsa_priv_print,
+
+     int_rsa_size,
+     rsa_bits,
+     rsa_security_bits,
+
+     0, 0, 0, 0, 0, 0,
+
+     rsa_sig_print,
+     int_rsa_free,
+     rsa_pkey_ctrl,
+     0, 0,
+     rsa_item_verify,
+     rsa_item_sign,
+};
