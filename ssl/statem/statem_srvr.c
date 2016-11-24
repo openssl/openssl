@@ -1173,7 +1173,7 @@ static int tls_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
      * We process the supported_groups extension first so that is done before
      * we get to key_share which needs to use the information in it.
      */
-    if (!tls_parse_extension(s, TLSEXT_TYPE_supported_groups,
+    if (!tls_parse_extension(s, TLSEXT_TYPE_supported_groups, EXT_CLIENT_HELLO,
                              hello->pre_proc_exts, hello->num_extensions, al)) {
         return 0;
     }
@@ -1185,12 +1185,12 @@ static int tls_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                                          hello->num_extensions,
                                          TLSEXT_TYPE_renegotiate) == NULL) {
         *al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
+        SSLerr(SSL_F_TLS_SCAN_CLIENTHELLO_TLSEXT,
                SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
         return 0;
     }
 
-    return tls_parse_all_extensions(s, hello->pre_proc_exts,
+    return tls_parse_all_extensions(s, EXT_CLIENT_HELLO, hello->pre_proc_exts,
                                     hello->num_extensions, al);
 }
 
@@ -1245,7 +1245,7 @@ static int tls_parse_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello)
     }
 
     if (!tls_check_clienthello_tlsext(s)) {
-        SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT, SSL_R_CLIENTHELLO_TLSEXT);
+        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_TLSEXT, SSL_R_CLIENTHELLO_TLSEXT);
         return 0;
     }
 
@@ -1527,6 +1527,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
     /* We need to do this before getting the session */
     if (!tls_parse_extension(s, TLSEXT_TYPE_extended_master_secret,
+                             EXT_CLIENT_HELLO,
                              clienthello.pre_proc_exts,
                              clienthello.num_extensions, &al)) {
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
