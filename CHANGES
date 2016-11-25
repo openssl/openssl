@@ -18,6 +18,9 @@
   *) Heartbeat support has been removed; the ABI is changed for now.
      [Richard Levitte, Rich Salz]
 
+  *) Support for SSL_OP_NO_ENCRYPT_THEN_MAC in SSL_CONF_cmd.
+     [Emilia Käsper]
+
  Changes between 1.1.0b and 1.1.0c [xx XXX xxxx]
 
   *) ChaCha20/Poly1305 heap-buffer-overflow
