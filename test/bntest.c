@@ -18,11 +18,13 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include "testutil.h"
+#include "test_main_custom.h"
 
 /*
  * In bn_lcl.h, bn_expand() is defined as a static ossl_inline function.
  * This is fine in itself, it will end up as an unused static function in
- * the worst case.  However, it referenses bn_expand2(), which is a private
+ * the worst case.  However, it references bn_expand2(), which is a private
  * function in libcrypto and therefore unavailable on some systems.  This
  * may result in a linker error because of unresolved symbols.
  *
@@ -35,8 +37,6 @@ BIGNUM *bn_expand2(BIGNUM *b, int words) { return NULL; }
 #include "../crypto/bn/bn_lcl.h"
 
 #define MAXPAIRS        20
-static const int NUM0 = 100;           /* number of tests */
-static const int NUM1 = 50;            /* additional tests for some functions */
 
 /*
  * Things in boring, not in openssl.  TODO we should add them.
@@ -44,32 +44,32 @@ static const int NUM1 = 50;            /* additional tests for some functions */
 #define HAVE_BN_PADDED 0
 #define HAVE_BN_SQRT 0
 
-typedef struct {
+typedef struct pair_st {
     char *key;
     char *value;
 } PAIR;
 
-typedef struct {
+typedef struct stanza_st {
     int start;
     int numpairs;
     PAIR pairs[MAXPAIRS];
 } STANZA;
 
-typedef struct {
+typedef struct filetest_st {
     const char *name;
-    int (*func)(STANZA *s, BN_CTX *ctx);
-} TEST;
+    int (*func)(STANZA *s);
+} FILETEST;
 
-typedef struct {
-    const char *name;
-    int (*func)(BN_CTX *ctx);
-} BUILTINTEST;
-
-typedef struct {
+typedef struct mpitest_st {
     const char *base10;
     const char *mpi;
     size_t mpi_len;
 } MPITEST;
+
+static const int NUM0 = 100;           /* number of tests */
+static const int NUM1 = 50;            /* additional tests for some functions */
+static FILE *fp;
+static BN_CTX *ctx;
 
 
 /*
@@ -176,13 +176,10 @@ static int rand_neg(void)
 }
 
 
-static int test_sub(BN_CTX *ctx)
+static int test_sub()
 {
     BIGNUM *a, *b, *c;
     int i;
-
-    if (ctx == NULL)
-        return 0;
 
     a = BN_new();
     b = BN_new();
@@ -215,7 +212,7 @@ static int test_sub(BN_CTX *ctx)
 }
 
 
-static int test_div_recip(BN_CTX *ctx)
+static int test_div_recip()
 {
     BIGNUM *a, *b, *c, *d, *e;
     BN_RECP_CTX *recp;
@@ -263,7 +260,7 @@ static int test_div_recip(BN_CTX *ctx)
 }
 
 
-static int test_mod(BN_CTX *ctx)
+static int test_mod()
 {
     BIGNUM *a, *b, *c, *d, *e;
     int i;
@@ -299,7 +296,7 @@ static int test_mod(BN_CTX *ctx)
  * Test constant-time modular exponentiation with 1024-bit inputs, which on
  * x86_64 cause a different code branch to be taken.
  */
-static int test_modexp_mont5(BN_CTX *ctx)
+static int test_modexp_mont5()
 {
     BIGNUM *a, *p, *m, *d, *e, *b, *n, *c;
     BN_MONT_CTX *mont;
@@ -399,13 +396,11 @@ static int test_modexp_mont5(BN_CTX *ctx)
 }
 
 #ifndef OPENSSL_NO_EC2M
-static int test_gf2m_add(BN_CTX *ctx)
+static int test_gf2m_add()
 {
     BIGNUM *a, *b, *c;
     int i, st = 0;
 
-    if (ctx == NULL)
-        return 0;
     a = BN_new();
     b = BN_new();
     c = BN_new();
@@ -437,15 +432,12 @@ static int test_gf2m_add(BN_CTX *ctx)
     return st;
 }
 
-static int test_gf2m_mod(BN_CTX *ctx)
+static int test_gf2m_mod()
 {
     static int p0[] = { 163, 7, 6, 3, 0, -1 };
     static int p1[] = { 193, 15, 0, -1 };
     BIGNUM *a, *b[2], *c, *d, *e;
     int i, j, st = 0;
-
-    if (ctx == NULL)
-        return 0;
 
     a = BN_new();
     b[0] = BN_new();
@@ -481,7 +473,7 @@ static int test_gf2m_mod(BN_CTX *ctx)
     return st;
 }
 
-static int test_gf2m_mul(BN_CTX *ctx)
+static int test_gf2m_mul()
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f, *g, *h;
     int i, j, st = 0;
@@ -533,7 +525,7 @@ static int test_gf2m_mul(BN_CTX *ctx)
     return st;
 }
 
-static int test_gf2m_sqr(BN_CTX *ctx)
+static int test_gf2m_sqr()
 {
     BIGNUM *a, *b[2], *c, *d;
     int i, j, st = 0;
@@ -573,7 +565,7 @@ static int test_gf2m_sqr(BN_CTX *ctx)
     return st;
 }
 
-static int test_gf2m_modinv(BN_CTX *ctx)
+static int test_gf2m_modinv()
 {
     BIGNUM *a, *b[2], *c, *d;
     int i, j, st = 0;
@@ -611,7 +603,7 @@ static int test_gf2m_modinv(BN_CTX *ctx)
     return st;
 }
 
-static int test_gf2m_moddiv(BN_CTX *ctx)
+static int test_gf2m_moddiv()
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f;
     int i, j, st = 0;
@@ -655,7 +647,7 @@ static int test_gf2m_moddiv(BN_CTX *ctx)
     return st;
 }
 
-static int test_gf2m_modexp(BN_CTX *ctx)
+static int test_gf2m_modexp()
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f;
     int i, j, st = 0;
@@ -703,7 +695,7 @@ static int test_gf2m_modexp(BN_CTX *ctx)
     return st;
 }
 
-static int test_gf2m_modsqrt(BN_CTX *ctx)
+static int test_gf2m_modsqrt()
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f;
     int i, j, st = 0;
@@ -747,7 +739,7 @@ static int test_gf2m_modsqrt(BN_CTX *ctx)
     return st;
 }
 
-static int test_gf2m_modsolvequad(BN_CTX *ctx)
+static int test_gf2m_modsolvequad()
 {
     BIGNUM *a, *b[2], *c, *d, *e;
     int i, j, s = 0, t, st = 0;
@@ -803,7 +795,7 @@ static int test_gf2m_modsolvequad(BN_CTX *ctx)
 }
 #endif
 
-static int test_kronecker(BN_CTX *ctx)
+static int test_kronecker()
 {
     BIGNUM *a, *b, *r, *t;
     int i;
@@ -891,7 +883,7 @@ static int test_kronecker(BN_CTX *ctx)
     return st;
 }
 
-static int file_sum(STANZA *s, BN_CTX *ctx)
+static int file_sum(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *b = GetBIGNUM(s, "B");
@@ -1000,7 +992,7 @@ err:
     return st;
 }
 
-static int file_lshift1(STANZA *s, BN_CTX *ctx)
+static int file_lshift1(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *lshift1 = GetBIGNUM(s, "LShift1");
@@ -1052,7 +1044,7 @@ err:
     return st;
 }
 
-static int file_lshift(STANZA *s, BN_CTX *ctx)
+static int file_lshift(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *lshift = GetBIGNUM(s, "LShift");
@@ -1077,7 +1069,7 @@ err:
     return st;
 }
 
-static int file_rshift(STANZA *s, BN_CTX *ctx)
+static int file_rshift(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *rshift = GetBIGNUM(s, "RShift");
@@ -1100,7 +1092,7 @@ err:
     return st;
 }
 
-static int file_square(STANZA *s, BN_CTX *ctx)
+static int file_square(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *square = GetBIGNUM(s, "Square");
@@ -1166,7 +1158,7 @@ err:
     return st;
 }
 
-static int file_product(STANZA *s, BN_CTX *ctx)
+static int file_product(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *b = GetBIGNUM(s, "B");
@@ -1203,7 +1195,7 @@ err:
     return st;
 }
 
-static int file_quotient(STANZA *s, BN_CTX *ctx)
+static int file_quotient(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *b = GetBIGNUM(s, "B");
@@ -1286,7 +1278,7 @@ err:
     return st;
 }
 
-static int file_modmul(STANZA *s, BN_CTX *ctx)
+static int file_modmul(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *b = GetBIGNUM(s, "B");
@@ -1337,7 +1329,7 @@ err:
     return st;
 }
 
-static int file_modexp(STANZA *s, BN_CTX *ctx)
+static int file_modexp(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *e = GetBIGNUM(s, "E");
@@ -1392,7 +1384,7 @@ err:
     return st;
 }
 
-static int file_exp(STANZA *s, BN_CTX *ctx)
+static int file_exp(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *e = GetBIGNUM(s, "E");
@@ -1416,7 +1408,7 @@ err:
     return st;
 }
 
-static int file_modsqrt(STANZA *s, BN_CTX *ctx)
+static int file_modsqrt(STANZA *s)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *p = GetBIGNUM(s, "P");
@@ -1447,7 +1439,7 @@ err:
     return st;
 }
 
-static int test_bn2padded(BN_CTX *ctx)
+static int test_bn2padded()
 {
 #if HAVE_BN_PADDED
     uint8_t zeros[256], out[256], reference[128];
@@ -1533,7 +1525,7 @@ err:
 #endif
 }
 
-static int test_dec2bn(BN_CTX *ctx)
+static int test_dec2bn()
 {
     BIGNUM *bn = NULL;
     int st = 0;
@@ -1579,7 +1571,7 @@ err:
     return st;
 }
 
-static int test_hex2bn(BN_CTX *ctx)
+static int test_hex2bn()
 {
     BIGNUM *bn = NULL;
     int ret, st = 0;
@@ -1624,7 +1616,7 @@ err:
     return st;
 }
 
-static int test_asc2bn(BN_CTX *ctx)
+static int test_asc2bn()
 {
     BIGNUM *bn = BN_new();
     int st = 0;
@@ -1689,7 +1681,7 @@ static const MPITEST kMPITests[] = {
     {"-256", "\x00\x00\x00\x02\x81\x00", 6},
 };
 
-static int test_mpi(BN_CTX *ctx)
+static int test_mpi()
 {
     uint8_t scratch[8];
     int i = (int)sizeof(kMPITests) / sizeof(kMPITests[0]);
@@ -1698,9 +1690,6 @@ static int test_mpi(BN_CTX *ctx)
     BIGNUM *bn = BN_new();
     BIGNUM *bn2 = NULL;
     int st = 0;
-
-    if (ctx == NULL)
-        return 0;
 
     for ( ; --i >= 0; test++) {
         if (!BN_asc2bn(&bn, test->base10)) {
@@ -1750,12 +1739,12 @@ err:
     return st;
 }
 
-static int test_rand(BN_CTX *ctx)
+static int test_rand()
 {
     BIGNUM *bn = BN_new();
     int st = 0;
 
-    if (ctx == NULL || bn == NULL)
+    if (bn == NULL)
         return 0;
 
     /*
@@ -1794,7 +1783,7 @@ err:
     return st;
 }
 
-static int test_negzero(BN_CTX *ctx)
+static int test_negzero()
 {
     BIGNUM *a = BN_new();
     BIGNUM *b = BN_new();
@@ -1873,7 +1862,7 @@ err:
     return st;
 }
 
-static int test_badmod(BN_CTX *ctx)
+static int test_badmod()
 {
     BIGNUM *a = BN_new();
     BIGNUM *b = BN_new();
@@ -1958,15 +1947,12 @@ err:
     return st;
 }
 
-static int test_expmodzero(BN_CTX *ctx)
+static int test_expmodzero()
 {
     BIGNUM *zero = BN_new();
     BIGNUM *a = BN_new();
     BIGNUM *r = BN_new();
     int st = 0;
-
-    if (ctx == NULL)
-        return 0;
 
     if (zero == NULL || a == NULL || r == NULL || !BN_rand(a, 1024, 0, 0))
         goto err;
@@ -1990,7 +1976,7 @@ err:
     return st;
 }
 
-static int test_smallprime(BN_CTX *ctx)
+static int test_smallprime()
 {
     static const int kBits = 10;
     BIGNUM *r = BN_new();
@@ -2031,7 +2017,7 @@ static char *strip_spaces(char *p)
 /*
  * Read next test stanza; return 1 if found, 0 on EOF or error.
  */
-static int readstanza(FILE *fp, STANZA *s, int *linesread)
+static int readstanza(STANZA *s, int *linesread)
 {
     PAIR *pp = s->pairs;
     char *p, *equals, *key, *value;
@@ -2093,123 +2079,104 @@ static void clearstanza(STANZA *s)
     s->start = start;
 }
 
-static const TEST filetests[] = {
-    {"Sum", file_sum},
-    {"LShift1", file_lshift1},
-    {"LShift", file_lshift},
-    {"RShift", file_rshift},
-    {"Square", file_square},
-    {"Product", file_product},
-    {"Quotient", file_quotient},
-    {"ModMul", file_modmul},
-    {"ModExp", file_modexp},
-    {"Exp", file_exp},
-    {"ModSqrt", file_modsqrt},
-};
-
-static int run(STANZA *s, BN_CTX *ctx)
+static int file_test_run(STANZA *s)
 {
+    static const FILETEST filetests[] = {
+        {"Sum", file_sum},
+        {"LShift1", file_lshift1},
+        {"LShift", file_lshift},
+        {"RShift", file_rshift},
+        {"Square", file_square},
+        {"Product", file_product},
+        {"Quotient", file_quotient},
+        {"ModMul", file_modmul},
+        {"ModExp", file_modexp},
+        {"Exp", file_exp},
+        {"ModSqrt", file_modsqrt},
+    };
     int numtests = OSSL_NELEM(filetests);
-    const TEST *tp = filetests;
+    const FILETEST *tp = filetests;
 
     for ( ; --numtests >= 0; tp++) {
         if (findattr(s, tp->name) != NULL)
-            return tp->func(s, ctx);
+            return tp->func(s);
     }
     fprintf(stderr, "Unknown test at %d\n", s->start);
     return 0;
 }
 
-static BUILTINTEST builtins[] = {
-    {"TestSub", test_sub},
-    {"TestDivRecip", test_div_recip},
-    {"TestMod", test_mod},
-    {"TestModexpMont5", test_modexp_mont5},
-    {"TestKronecker", test_kronecker},
-#ifndef OPENSSL_NO_EC2M
-    {"TestGF2mAdd", test_gf2m_add},
-    {"TestGF2mMod", test_gf2m_mod},
-    {"TestGF2mModMul", test_gf2m_mul},
-    {"TestGF2mModSqr", test_gf2m_sqr},
-    {"TestGF2mModInv", test_gf2m_modinv},
-    {"TestGF2mModDiv", test_gf2m_moddiv},
-    {"TestGF2mModExp", test_gf2m_modexp},
-    {"TestGF2mModSqrt", test_gf2m_modsqrt},
-    {"TestGF2mModSolvequad", test_gf2m_modsolvequad},
-#endif
-    {"TestRand", test_rand},
-    {"TestBN2BinPadded", test_bn2padded},
-    {"TestDec2BN", test_dec2bn},
-    {"TestHex2BN", test_hex2bn},
-    {"TestASC2BN", test_asc2bn},
-    {"TestMPI", test_mpi},
-    {"TestNegativeZero", test_negzero},
-    {"TestBadModulus", test_badmod},
-    {"TestExpModZero", test_expmodzero},
-    {"TestSmallPrime", test_smallprime}
-};
-
-int main(int argc, char *argv[])
+static int file_tests()
 {
-    static const char rnd_seed[] =
-        "string to make the random number generator think it has entropy";
-    FILE *fp;
     STANZA s;
-    BN_CTX *ctx = BN_CTX_new();
-    BUILTINTEST *bt = builtins;
-    int linesread = 0, count = 0, st = 0;
-
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-    if (ctx == NULL)
-        goto err;
-    if (argc != 2) {
-        fprintf(stderr, "%s TEST_FILE\n", argv[0]);
-        goto err;
-    }
-
-    /* If not seeded, BN_generate_prime() may fail. */
-    RAND_seed(rnd_seed, sizeof rnd_seed);
-
-    fp = fopen(argv[1], "r");
-    if (fp == NULL) {
-        perror(argv[1]);
-        goto err;
-    }
+    int linesread = 0, result = 0;
 
     /* Read test file. */
-    printf("Running file tests\n");
     memset(&s, 0, sizeof(s));
-    while (!feof(fp) && readstanza(fp, &s, &linesread)) {
+    while (!feof(fp) && readstanza(&s, &linesread)) {
         if (s.numpairs == 0)
             continue;
-        count++;
-        if (!run(&s, ctx)) {
-            fclose(fp);
+        if (!file_test_run(&s)) {
+            if (result == 0)
+                fprintf(stderr, "Test at %d failed\n", s.start);
             goto err;
         }
         clearstanza(&s);
         s.start = linesread;
     }
-    fclose(fp);
-    printf("Ran %d tests from file\n", count);
+    result = 1;
 
-    /* Run built-in tests */
-    printf("Running builtin tests\n");
-    for (count = OSSL_NELEM(builtins); --count >= 0; bt++) {
-        if (!bt->func(ctx)) {
-            fprintf(stderr, "%s failed\n", bt->name);
-            goto err;
-        }
-        printf("%s passed\n", bt->name);
+err:
+    return result;
+}
+
+int test_main(int argc, char *argv[])
+{
+    static const char rnd_seed[] =
+        "If not seeded, BN_generate_prime might fail";
+    int result = 0;
+
+    if (argc != 2) {
+        fprintf(stderr, "%s TEST_FILE\n", argv[0]);
+        return 1;
     }
 
-    st = 1;
-err:
-    BN_CTX_free(ctx);
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks_fp(stderr);
+    ADD_TEST(test_sub);
+    ADD_TEST(test_div_recip);
+    ADD_TEST(test_mod);
+    ADD_TEST(test_modexp_mont5);
+    ADD_TEST(test_kronecker);
+    ADD_TEST(test_rand);
+    ADD_TEST(test_bn2padded);
+    ADD_TEST(test_dec2bn);
+    ADD_TEST(test_hex2bn);
+    ADD_TEST(test_asc2bn);
+    ADD_TEST(test_mpi);
+    ADD_TEST(test_negzero);
+    ADD_TEST(test_badmod);
+    ADD_TEST(test_expmodzero);
+    ADD_TEST(test_smallprime);
+#ifndef OPENSSL_NO_EC2M
+    ADD_TEST(test_gf2m_add);
+    ADD_TEST(test_gf2m_mod);
+    ADD_TEST(test_gf2m_mul);
+    ADD_TEST(test_gf2m_sqr);
+    ADD_TEST(test_gf2m_modinv);
+    ADD_TEST(test_gf2m_moddiv);
+    ADD_TEST(test_gf2m_modexp);
+    ADD_TEST(test_gf2m_modsqrt);
+    ADD_TEST(test_gf2m_modsolvequad);
 #endif
-    EXIT(st == 1 ? 0 : 1);
+    ADD_TEST(file_tests);
+
+    RAND_seed(rnd_seed, sizeof rnd_seed);
+    ctx = BN_CTX_new();
+    TEST_check(ctx != NULL);
+
+    fp = fopen(argv[1], "r");
+    TEST_check(fp != NULL);
+    result = run_tests(argv[0]);
+    fclose(fp);
+
+    BN_CTX_free(ctx);
+    return result;
 }
