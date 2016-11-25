@@ -180,6 +180,8 @@ int tls_parse_client_etm(SSL *s, PACKET *pkt, int *al);
 int tls_parse_client_key_share(SSL *s, PACKET *pkt, int *al);
 int tls_parse_client_ems(SSL *s, PACKET *pkt, int *al);
 
+int tls_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al);
+
 int tls_construct_server_renegotiate(SSL *s, WPACKET *pkt, int *al);
 int tls_construct_server_server_name(SSL *s, WPACKET *pkt, int *al);
 int tls_construct_server_ec_pt_formats(SSL *s, WPACKET *pkt, int *al);
@@ -191,10 +193,32 @@ int tls_construct_server_use_srtp(SSL *s, WPACKET *pkt, int *al);
 int tls_construct_server_etm(SSL *s, WPACKET *pkt, int *al);
 int tls_construct_server_ems(SSL *s, WPACKET *pkt, int *al);
 int tls_construct_server_key_share(SSL *s, WPACKET *pkt, int *al);
-
 /*
  * Not in public headers as this is not an official extension. Only used when
  * SSL_OP_CRYPTOPRO_TLSEXT_BUG is set.
  */
 #define TLSEXT_TYPE_cryptopro_bug      0xfde8
 int tls_construct_server_cryptopro_bug(SSL *s, WPACKET *pkt, int *al);
+
+/* Client Extension processing */
+int tls_parse_server_renegotiate(SSL *s, PACKET *pkt, int *al);
+int tls_parse_server_server_name(SSL *s, PACKET *pkt, int *al);
+#ifndef OPENSSL_NO_EC
+int tls_parse_server_ec_pt_formats(SSL *s, PACKET *pkt, int *al);
+#endif
+int tls_parse_server_session_ticket(SSL *s, PACKET *pkt, int *al);
+int tls_parse_server_status_request(SSL *s, PACKET *pkt, int *al);
+#ifndef OPENSSL_NO_CT
+int tls_parse_server_sct(SSL *s, PACKET *pkt, int *al);
+#endif
+#ifndef OPENSSL_NO_NEXTPROTONEG
+int tls_parse_server_npn(SSL *s, PACKET *pkt, int *al);
+#endif
+int tls_parse_server_alpn(SSL *s, PACKET *pkt, int *al);
+#ifndef OPENSSL_NO_SRTP
+int tls_parse_server_use_srtp(SSL *s, PACKET *pkt, int *al);
+#endif
+int tls_parse_server_etm(SSL *s, PACKET *pkt, int *al);
+int tls_parse_server_ems(SSL *s, PACKET *pkt, int *al);
+int tls_parse_server_key_share(SSL *s, PACKET *pkt, int *al);
+int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt);

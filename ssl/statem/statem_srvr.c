@@ -1062,138 +1062,6 @@ int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
     return 1;
 }
 
-#ifndef OPENSSL_NO_EC
-/*-
- * ssl_check_for_safari attempts to fingerprint Safari using OS X
- * SecureTransport using the TLS extension block in |hello|.
- * Safari, since 10.6, sends exactly these extensions, in this order:
- *   SNI,
- *   elliptic_curves
- *   ec_point_formats
- *
- * We wish to fingerprint Safari because they broke ECDHE-ECDSA support in 10.8,
- * but they advertise support. So enabling ECDHE-ECDSA ciphers breaks them.
- * Sadly we cannot differentiate 10.6, 10.7 and 10.8.4 (which work), from
- * 10.8..10.8.3 (which don't work).
- */
-static void ssl_check_for_safari(SSL *s, const CLIENTHELLO_MSG *hello)
-{
-    unsigned int type;
-    PACKET sni, tmppkt;
-    size_t ext_len;
-
-    static const unsigned char kSafariExtensionsBlock[] = {
-        0x00, 0x0a,             /* elliptic_curves extension */
-        0x00, 0x08,             /* 8 bytes */
-        0x00, 0x06,             /* 6 bytes of curve ids */
-        0x00, 0x17,             /* P-256 */
-        0x00, 0x18,             /* P-384 */
-        0x00, 0x19,             /* P-521 */
-
-        0x00, 0x0b,             /* ec_point_formats */
-        0x00, 0x02,             /* 2 bytes */
-        0x01,                   /* 1 point format */
-        0x00,                   /* uncompressed */
-        /* The following is only present in TLS 1.2 */
-        0x00, 0x0d,             /* signature_algorithms */
-        0x00, 0x0c,             /* 12 bytes */
-        0x00, 0x0a,             /* 10 bytes */
-        0x05, 0x01,             /* SHA-384/RSA */
-        0x04, 0x01,             /* SHA-256/RSA */
-        0x02, 0x01,             /* SHA-1/RSA */
-        0x04, 0x03,             /* SHA-256/ECDSA */
-        0x02, 0x03,             /* SHA-1/ECDSA */
-    };
-
-    /* Length of the common prefix (first two extensions). */
-    static const size_t kSafariCommonExtensionsLength = 18;
-
-    tmppkt = hello->extensions;
-
-    if (!PACKET_forward(&tmppkt, 2)
-        || !PACKET_get_net_2(&tmppkt, &type)
-        || !PACKET_get_length_prefixed_2(&tmppkt, &sni)) {
-        return;
-    }
-
-    if (type != TLSEXT_TYPE_server_name)
-        return;
-
-    ext_len = TLS1_get_client_version(s) >= TLS1_2_VERSION ?
-        sizeof(kSafariExtensionsBlock) : kSafariCommonExtensionsLength;
-
-    s->s3->is_probably_safari = PACKET_equal(&tmppkt, kSafariExtensionsBlock,
-                                             ext_len);
-}
-#endif                          /* !OPENSSL_NO_EC */
-
-/*
- * Process all remaining ClientHello extensions that we collected earlier and
- * haven't already processed.
- *
- * Behaviour upon resumption is extension-specific. If the extension has no
- * effect during resumption, it is parsed (to verify its format) but otherwise
- * ignored. Returns 1 on success and 0 on failure. Upon failure, sets |al| to
- * the appropriate alert.
- */
-static int tls_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
-{
-    /* Reset various flags that might get set by extensions during parsing */
-    s->servername_done = 0;
-    s->tlsext_status_type = -1;
-#ifndef OPENSSL_NO_NEXTPROTONEG
-    s->s3->next_proto_neg_seen = 0;
-#endif
-
-    OPENSSL_free(s->s3->alpn_selected);
-    s->s3->alpn_selected = NULL;
-    s->s3->alpn_selected_len = 0;
-    OPENSSL_free(s->s3->alpn_proposed);
-    s->s3->alpn_proposed = NULL;
-    s->s3->alpn_proposed_len = 0;
-
-#ifndef OPENSSL_NO_EC
-    if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
-        ssl_check_for_safari(s, hello);
-#endif                          /* !OPENSSL_NO_EC */
-
-    /* Clear any signature algorithms extension received */
-    OPENSSL_free(s->s3->tmp.peer_sigalgs);
-    s->s3->tmp.peer_sigalgs = NULL;
-    s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
-
-#ifndef OPENSSL_NO_SRP
-    OPENSSL_free(s->srp_ctx.login);
-    s->srp_ctx.login = NULL;
-#endif
-
-    s->srtp_profile = NULL;
-
-    /*
-     * We process the supported_groups extension first so that is done before
-     * we get to key_share which needs to use the information in it.
-     */
-    if (!tls_parse_extension(s, TLSEXT_TYPE_supported_groups, EXT_CLIENT_HELLO,
-                             hello->pre_proc_exts, hello->num_extensions, al)) {
-        return 0;
-    }
-
-    /* Need RI if renegotiating */
-    if (s->renegotiate
-            && !(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)
-            && tls_get_extension_by_type(hello->pre_proc_exts,
-                                         hello->num_extensions,
-                                         TLSEXT_TYPE_renegotiate) == NULL) {
-        *al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_TLS_SCAN_CLIENTHELLO_TLSEXT,
-               SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-        return 0;
-    }
-
-    return tls_parse_all_extensions(s, EXT_CLIENT_HELLO, hello->pre_proc_exts,
-                                    hello->num_extensions, al);
-}
-
 /*
  * Check the results of extension parsing. Currently just calls the servername
  * callback. Returns 1 for success or 0 for failure.
@@ -1986,7 +1854,9 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
                 */
             || !tls_construct_extensions(s, pkt,
                                          EXT_TLS1_2_SERVER_HELLO
-                                         | EXT_TLS1_3_SERVER_HELLO, &al)) {
+                                         | EXT_TLS1_3_SERVER_HELLO
+                                         | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+                                         | EXT_TLS1_3_CERTIFICATE, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
