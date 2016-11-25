@@ -2064,6 +2064,8 @@ __owur int tls1_set_groups(unsigned char **pext, size_t *pextlen,
                            int *curves, size_t ncurves);
 __owur int tls1_set_groups_list(unsigned char **pext, size_t *pextlen,
                                 const char *str);
+void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
+                         size_t *num_formats);
 __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 __owur EVP_PKEY *ssl_generate_pkey_curve(int id);
 #  endif                        /* OPENSSL_NO_EC */
@@ -2076,18 +2078,17 @@ __owur  int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
                                size_t *num_curves);
 
 __owur int ssl_add_clienthello_tlsext(SSL *s, WPACKET *pkt, int *al);
-__owur int ssl_add_serverhello_tlsext(SSL *s, WPACKET *pkt, int *al);
 void ssl_set_default_md(SSL *s);
 __owur int tls1_set_server_sigalgs(SSL *s);
 __owur int ssl_check_clienthello_tlsext_late(SSL *s, int *al);
 __owur int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt);
 __owur int ssl_prepare_clienthello_tlsext(SSL *s);
-__owur int ssl_prepare_serverhello_tlsext(SSL *s);
 __owur RAW_EXTENSION *tls_get_extension_by_type(RAW_EXTENSION *exts,
                                                 size_t numexts,
                                                 unsigned int type);
 __owur int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                                       SSL_SESSION **ret);
+__owur int tls_use_ticket(SSL *s);
 
 __owur int tls12_get_sigandhash(WPACKET *pkt, const EVP_PKEY *pk,
                                 const EVP_MD *md);
@@ -2116,7 +2117,6 @@ __owur int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *ex,
 
 __owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
-__owur int ssl_add_serverhello_renegotiate_ext(SSL *s, WPACKET *pkt);
 __owur int ssl_parse_serverhello_renegotiate_ext(SSL *s, PACKET *pkt, int *al);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
