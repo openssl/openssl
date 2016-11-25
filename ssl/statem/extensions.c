@@ -31,7 +31,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_renegotiate,
         tls_parse_clienthello_renegotiate,
         NULL,
-        NULL,
+        tls_construct_server_renegotiate,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_SSL3_ALLOWED
         | EXT_TLS1_2_AND_BELOW_ONLY
@@ -40,7 +40,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_server_name,
         tls_parse_clienthello_server_name,
         NULL,
-        NULL,
+        tls_construct_server_server_name,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
         | /*EXT_TLS1_3_ENCRYPTED_EXTENSIONS*/EXT_TLS1_3_SERVER_HELLO
@@ -60,7 +60,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_ec_point_formats,
         tls_parse_clienthello_ec_pt_formats,
         NULL,
-        NULL,
+        tls_construct_server_ec_pt_formats,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
@@ -68,7 +68,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_supported_groups,
         tls_parse_clienthello_supported_groups,
         NULL,
-        NULL,
+        NULL /* TODO(TLS1.3): Need to add this */,
         NULL,
         EXT_CLIENT_HELLO
         | /*EXT_TLS1_3_ENCRYPTED_EXTENSIONS*/EXT_TLS1_3_SERVER_HELLO
@@ -78,7 +78,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_session_ticket,
         tls_parse_clienthello_session_ticket,
         NULL,
-        NULL,
+        tls_construct_server_session_ticket,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
@@ -94,7 +94,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_status_request,
         tls_parse_clienthello_status_request,
         NULL,
-        NULL,
+        tls_construct_server_status_request,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
         | /*EXT_TLS1_3_CERTIFICATE*/EXT_TLS1_3_SERVER_HELLO
@@ -104,7 +104,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_next_proto_neg,
         tls_parse_clienthello_npn,
         NULL,
-        NULL,
+        tls_construct_server_next_proto_neg,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
@@ -113,25 +113,27 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_application_layer_protocol_negotiation,
         tls_parse_clienthello_alpn,
         NULL,
-        NULL,
+        tls_construct_server_alpn,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
         | /*EXT_TLS1_3_ENCRYPTED_EXTENSIONS*/EXT_TLS1_3_SERVER_HELLO
     },
+#ifndef OPENSSL_NO_SRTP
     {
         TLSEXT_TYPE_use_srtp,
         tls_parse_clienthello_use_srtp,
         NULL,
-        NULL,
+        tls_construct_server_use_srtp,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
         | EXT_TLS1_3_ENCRYPTED_EXTENSIONS | EXT_DTLS_ONLY
     },
+#endif
     {
         TLSEXT_TYPE_encrypt_then_mac,
         tls_parse_clienthello_etm,
         NULL,
-        NULL,
+        tls_construct_server_etm,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
@@ -153,7 +155,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_extended_master_secret,
         tls_parse_clienthello_ems,
         NULL,
-        NULL,
+        tls_construct_server_ems,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
@@ -179,11 +181,23 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_key_share,
         tls_parse_clienthello_key_share,
         NULL,
-        NULL,
+        tls_construct_server_key_share,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_3_SERVER_HELLO
         | EXT_TLS1_3_HELLO_RETRY_REQUEST | EXT_TLS_IMPLEMENTATION_ONLY
         | EXT_TLS1_3_ONLY
+    },
+    {
+        /*
+         * Special unsolicited ServerHello extension only used when
+         * SSL_OP_CRYPTOPRO_TLSEXT_BUG is set
+         */
+        TLSEXT_TYPE_cryptopro_bug,
+        NULL,
+        NULL,
+        tls_construct_server_cryptopro_bug,
+        NULL,
+        EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     }
 };
 
@@ -440,15 +454,21 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
     size_t loop;
     int addcustom = 0;
 
+    /*
+     * Normally if something goes wrong during construction its an internal
+     * error. We can always override this later.
+     */
+    *al = SSL_AD_INTERNAL_ERROR;
+
     if (!WPACKET_start_sub_packet_u16(pkt)
                /*
                 * If extensions are of zero length then we don't even add the
-                * extensions length bytes to a ClientHello
+                * extensions length bytes to a ClientHello/ServerHello in SSLv3
                 */
-            || ((context & EXT_CLIENT_HELLO) != 0
+            || ((context & (EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO)) != 0
+               && s->version == SSL3_VERSION
                && !WPACKET_set_flags(pkt,
                                      WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH))) {
-        *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -504,7 +524,6 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     if (!WPACKET_close(pkt)) {
-        *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
         return 0;
     }
