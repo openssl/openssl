@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use Math::BigInt;
 
-my $EXPECTED_FAILURES = 53;
+my $EXPECTED_FAILURES = 6;
 my $failures = 0;
 
 sub bn
@@ -109,6 +109,7 @@ sub evaluate
     } elsif ( defined $s{'ModSqrt'} ) {
         # ModSqrt * ModSqrt = A mod P
         my $modsqrt = bn($s{'ModSqrt'});
+        $modsqrt->bmul($modsqrt);
         my $a = bn($s{'A'});
         my $p = bn($s{'P'});
 
@@ -119,7 +120,8 @@ sub evaluate
         $a->babs();
         $p->babs();
         $a->bmod($p);
-        return if $modsqrt->bmul($modsqrt) == $a;
+        $modsqrt->bmod($p);
+        return if $modsqrt == $a;
         if ($a == $p) {print "equal $p\n"; return;}
     } else {
         print "# Unknown test: ";
