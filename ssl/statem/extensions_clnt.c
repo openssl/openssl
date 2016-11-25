@@ -8,8 +8,603 @@
  */
 
 #include <assert.h>
+#include <openssl/ocsp.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
+
+int tls_construct_client_renegotiate(SSL *s, WPACKET *pkt, int *al)
+{
+    /* Add RI if renegotiating */
+    if (!s->renegotiate)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u8(pkt, s->s3->previous_client_finished,
+                               s->s3->previous_client_finished_len)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_RENEGOTIATE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_client_server_name(SSL *s, WPACKET *pkt, int *al)
+{
+    if (s->tlsext_hostname == NULL)
+        return 1;
+
+    /* Add TLS extension servername to the Client Hello message */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
+               /* Sub-packet for server_name extension */
+            || !WPACKET_start_sub_packet_u16(pkt)
+               /* Sub-packet for servername list (always 1 hostname)*/
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, TLSEXT_NAMETYPE_host_name)
+            || !WPACKET_sub_memcpy_u16(pkt, s->tlsext_hostname,
+                                       strlen(s->tlsext_hostname))
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SERVER_NAME, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+#ifndef OPENSSL_NO_SRP
+int tls_construct_client_srp(SSL *s, WPACKET *pkt, int *al)
+{
+    /* Add SRP username if there is one */
+    if (s->srp_ctx.login == NULL)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_srp)
+               /* Sub-packet for SRP extension */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u8(pkt)
+               /* login must not be zero...internal error if so */
+            || !WPACKET_set_flags(pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)
+            || !WPACKET_memcpy(pkt, s->srp_ctx.login,
+                               strlen(s->srp_ctx.login))
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SRP, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+#ifndef OPENSSL_NO_EC
+static int use_ecc(SSL *s)
+{
+    int using_ecc = 0;
+    int i;
+    unsigned long alg_k, alg_a;
+    STACK_OF(SSL_CIPHER) *cipher_stack = NULL;
+
+    /* See if we support any ECC ciphersuites */
+    if (s->version == SSL3_VERSION)
+        return 0;
+
+
+    cipher_stack = SSL_get_ciphers(s);
+
+    for (i = 0; i < sk_SSL_CIPHER_num(cipher_stack); i++) {
+        const SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
+
+        alg_k = c->algorithm_mkey;
+        alg_a = c->algorithm_auth;
+        if ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
+            || (alg_a & SSL_aECDSA)
+            || c->min_tls >= TLS1_3_VERSION) {
+            using_ecc = 1;
+            break;
+        }
+    }
+
+    return using_ecc;
+}
+
+int tls_construct_client_ec_pt_formats(SSL *s, WPACKET *pkt, int *al)
+{
+    const unsigned char *pformats;
+    size_t num_formats;
+
+    if (!use_ecc(s))
+        return 1;
+
+    /* Add TLS extension ECPointFormats to the ClientHello message */
+
+    tls1_get_formatlist(s, &pformats, &num_formats);
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ec_point_formats)
+               /* Sub-packet for formats extension */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u8(pkt, pformats, num_formats)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_EC_PT_FORMATS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+
+int tls_construct_client_supported_groups(SSL *s, WPACKET *pkt, int *al)
+{
+    const unsigned char *pcurves = NULL, *pcurvestmp;
+    size_t num_curves = 0, i;
+
+    if (!use_ecc(s))
+        return 1;
+
+    /*
+     * Add TLS extension supported_groups to the ClientHello message
+     */
+    /* TODO(TLS1.3): Add support for DHE groups */
+    pcurves = s->tlsext_supportedgroupslist;
+    if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_GROUPS,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    pcurvestmp = pcurves;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_groups)
+               /* Sub-packet for supported_groups extension */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_GROUPS,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    /* Copy curve ID if supported */
+    for (i = 0; i < num_curves; i++, pcurvestmp += 2) {
+        if (tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
+            if (!WPACKET_put_bytes_u8(pkt, pcurvestmp[0])
+                || !WPACKET_put_bytes_u8(pkt, pcurvestmp[1])) {
+                    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_GROUPS,
+                           ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+        }
+    }
+    if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_GROUPS,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+int tls_construct_client_session_ticket(SSL *s, WPACKET *pkt, int *al)
+{
+    size_t ticklen;
+
+    if (!tls_use_ticket(s))
+        return 1;
+
+    if (!s->new_session && s->session != NULL
+            && s->session->tlsext_tick != NULL) {
+        ticklen = s->session->tlsext_ticklen;
+    } else if (s->session && s->tlsext_session_ticket != NULL
+               && s->tlsext_session_ticket->data != NULL) {
+        ticklen = s->tlsext_session_ticket->length;
+        s->session->tlsext_tick = OPENSSL_malloc(ticklen);
+        if (s->session->tlsext_tick == NULL) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SESSION_TICKET,
+                   ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        memcpy(s->session->tlsext_tick,
+               s->tlsext_session_ticket->data, ticklen);
+        s->session->tlsext_ticklen = ticklen;
+    } else {
+        ticklen = 0;
+    }
+
+    if (ticklen == 0 && s->tlsext_session_ticket != NULL &&
+            s->tlsext_session_ticket->data == NULL)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_session_ticket)
+            || !WPACKET_sub_memcpy_u16(pkt, s->session->tlsext_tick, ticklen)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_client_sig_algs(SSL *s, WPACKET *pkt, int *al)
+{
+    size_t salglen;
+    const unsigned char *salg;
+
+    if (!SSL_CLIENT_USE_SIGALGS(s))
+        return 1;
+
+    salglen = tls12_get_psigalgs(s, &salg);
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signature_algorithms)
+               /* Sub-packet for sig-algs extension */
+            || !WPACKET_start_sub_packet_u16(pkt)
+               /* Sub-packet for the actual list */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !tls12_copy_sigalgs(s, pkt, salg, salglen)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SIG_ALGS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+#ifndef OPENSSL_NO_OCSP
+int tls_construct_client_status_request(SSL *s, WPACKET *pkt, int *al)
+{
+    int i;
+
+    if (s->tlsext_status_type != TLSEXT_STATUSTYPE_ocsp)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
+               /* Sub-packet for status request extension */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, TLSEXT_STATUSTYPE_ocsp)
+               /* Sub-packet for the ids */
+            || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    for (i = 0; i < sk_OCSP_RESPID_num(s->tlsext_ocsp_ids); i++) {
+        unsigned char *idbytes;
+        int idlen;
+        OCSP_RESPID *id;
+
+        id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
+        idlen = i2d_OCSP_RESPID(id, NULL);
+        if (idlen <= 0
+                   /* Sub-packet for an individual id */
+                || !WPACKET_sub_allocate_bytes_u16(pkt, idlen, &idbytes)
+                || i2d_OCSP_RESPID(id, &idbytes) != idlen) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST,
+                   ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+    if (!WPACKET_close(pkt)
+            || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (s->tlsext_ocsp_exts) {
+        unsigned char *extbytes;
+        int extlen = i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, NULL);
+
+        if (extlen < 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST,
+                   ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (!WPACKET_allocate_bytes(pkt, extlen, &extbytes)
+                || i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &extbytes)
+                   != extlen) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST,
+                   ERR_R_INTERNAL_ERROR);
+            return 0;
+       }
+    }
+    if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+#ifndef OPENSSL_NO_NEXTPROTONEG
+int tls_construct_client_npn(SSL *s, WPACKET *pkt, int *al)
+{
+    if (s->ctx->next_proto_select_cb == NULL || s->s3->tmp.finish_md_len != 0)
+        return 1;
+
+    /*
+     * The client advertises an empty extension to indicate its support
+     * for Next Protocol Negotiation
+     */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_next_proto_neg)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_NPN, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+int tls_construct_client_alpn(SSL *s, WPACKET *pkt, int *al)
+{
+    s->s3->alpn_sent = 0;
+
+    /*
+     * finish_md_len is non-zero during a renegotiation, so
+     * this avoids sending ALPN during the renegotiation
+     */
+    if (s->alpn_client_proto_list == NULL || s->s3->tmp.finish_md_len != 0)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt,
+                TLSEXT_TYPE_application_layer_protocol_negotiation)
+               /* Sub-packet ALPN extension */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u16(pkt, s->alpn_client_proto_list,
+                                       s->alpn_client_proto_list_len)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_ALPN, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    s->s3->alpn_sent = 1;
+
+    return 1;
+}
+
+
+#ifndef OPENSSL_NO_SRTP
+int tls_construct_client_use_srtp(SSL *s, WPACKET *pkt, int *al)
+{
+    STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = SSL_get_srtp_profiles(s);
+    SRTP_PROTECTION_PROFILE *prof;
+    int i, ct;
+
+    if (clnt == NULL)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_use_srtp)
+               /* Sub-packet for SRTP extension */
+            || !WPACKET_start_sub_packet_u16(pkt)
+               /* Sub-packet for the protection profile list */
+            || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_USE_SRTP, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    ct = sk_SRTP_PROTECTION_PROFILE_num(clnt);
+    for (i = 0; i < ct; i++) {
+        prof = sk_SRTP_PROTECTION_PROFILE_value(clnt, i);
+        if (prof == NULL || !WPACKET_put_bytes_u16(pkt, prof->id)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_USE_SRTP, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+    if (!WPACKET_close(pkt)
+               /* Add an empty use_mki value */
+            || !WPACKET_put_bytes_u8(pkt, 0)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_USE_SRTP, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+int tls_construct_client_etm(SSL *s, WPACKET *pkt, int *al)
+{
+    if (s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_encrypt_then_mac)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_ETM, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+#ifndef OPENSSL_NO_CT
+int tls_construct_client_sct(SSL *s, WPACKET *pkt, int *al)
+{
+    if (s->ct_validation_callback == NULL)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signed_certificate_timestamp)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SCT, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+int tls_construct_client_ems(SSL *s, WPACKET *pkt, int *al)
+{
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_EMS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_client_supported_versions(SSL *s, WPACKET *pkt, int *al)
+{
+    int currv, min_version, max_version, reason;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u8(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_VERSIONS,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    reason = ssl_get_client_min_max_version(s, &min_version, &max_version);
+    if (reason != 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_VERSIONS, reason);
+        return 0;
+    }
+
+    /*
+     * TODO(TLS1.3): There is some discussion on the TLS list as to wheter
+     * we should include versions <TLS1.2. For the moment we do. To be
+     * reviewed later.
+     */
+    for (currv = max_version; currv >= min_version; currv--) {
+        /* TODO(TLS1.3): Remove this first if clause prior to release!! */
+        if (currv == TLS1_3_VERSION) {
+            if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_VERSIONS,
+                       ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        } else if (!WPACKET_put_bytes_u16(pkt, currv)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_VERSIONS,
+                   ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+    if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_VERSIONS,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+
+int tls_construct_client_key_share(SSL *s, WPACKET *pkt, int *al)
+{
+    size_t i, sharessent = 0, num_curves = 0;
+    const unsigned char *pcurves = NULL;
+
+    /* key_share extension */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
+               /* Extension data sub-packet */
+            || !WPACKET_start_sub_packet_u16(pkt)
+               /* KeyShare list sub-packet */
+            || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    pcurves = s->tlsext_supportedgroupslist;
+    if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /*
+     * TODO(TLS1.3): Make the number of key_shares sent configurable. For
+     * now, just send one
+     */
+    for (i = 0; i < num_curves && sharessent < 1; i++, pcurves += 2) {
+        unsigned char *encodedPoint = NULL;
+        unsigned int curve_id = 0;
+        EVP_PKEY *key_share_key = NULL;
+        size_t encodedlen;
+
+        if (!tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED))
+            continue;
+
+        if (s->s3->tmp.pkey != NULL) {
+            /* Shouldn't happen! */
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        /* Generate a key for this key_share */
+        curve_id = (pcurves[0] << 8) | pcurves[1];
+        key_share_key = ssl_generate_pkey_curve(curve_id);
+        if (key_share_key == NULL) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_EVP_LIB);
+            return 0;
+        }
+
+        /* Encode the public key. */
+        encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
+                                                    &encodedPoint);
+        if (encodedlen == 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_EC_LIB);
+            EVP_PKEY_free(key_share_key);
+            return 0;
+        }
+
+        /* Create KeyShareEntry */
+        if (!WPACKET_put_bytes_u16(pkt, curve_id)
+                || !WPACKET_sub_memcpy_u16(pkt, encodedPoint, encodedlen)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+            EVP_PKEY_free(key_share_key);
+            OPENSSL_free(encodedPoint);
+            return 0;
+        }
+
+        /*
+         * TODO(TLS1.3): When changing to send more than one key_share we're
+         * going to need to be able to save more than one EVP_PKEY. For now
+         * we reuse the existing tmp.pkey
+         */
+        s->s3->group_id = curve_id;
+        s->s3->tmp.pkey = key_share_key;
+        sharessent++;
+        OPENSSL_free(encodedPoint);
+    }
+
+    if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_client_padding(SSL *s, WPACKET *pkt, int *al)
+{
+    unsigned char *padbytes;
+    size_t hlen;
+
+    if ((s->options & SSL_OP_TLSEXT_PADDING) == 0)
+        return 1;
+
+    /*
+     * Add padding to workaround bugs in F5 terminators. See
+     * https://tools.ietf.org/html/draft-agl-tls-padding-03 NB: because this
+     * code works out the length of all existing extensions it MUST always
+     * appear last.
+     */
+    if (!WPACKET_get_total_written(pkt, &hlen)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_PADDING, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (hlen > 0xff && hlen < 0x200) {
+        hlen = 0x200 - hlen;
+        if (hlen >= 4)
+            hlen -= 4;
+        else
+            hlen = 0;
+
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_padding)
+                || !WPACKET_sub_allocate_bytes_u16(pkt, hlen, &padbytes)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_PADDING, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        memset(padbytes, 0, hlen);
+    }
+
+    return 1;
+}
 
 /*
  * Parse the server's renegotiation binding and abort if it's not right
@@ -147,6 +742,7 @@ int tls_parse_server_session_ticket(SSL *s, PACKET *pkt, int *al)
     return 1;
 }
 
+#ifndef OPENSSL_NO_OCSP
 int tls_parse_server_status_request(SSL *s, PACKET *pkt, int *al)
 {
     /*
@@ -162,6 +758,7 @@ int tls_parse_server_status_request(SSL *s, PACKET *pkt, int *al)
 
     return 1;
 }
+#endif
 
 
 #ifndef OPENSSL_NO_CT
