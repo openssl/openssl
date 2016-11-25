@@ -1011,18 +1011,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     }
 
     /* TLS extensions */
-    if (ssl_prepare_clienthello_tlsext(s) <= 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
-        return 0;
-    }
-    if (!WPACKET_start_sub_packet_u16(pkt)
-               /*
-                * If extensions are of zero length then we don't even add the
-                * extensions length bytes
-                */
-            || !WPACKET_set_flags(pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH)
-            || !ssl_add_clienthello_tlsext(s, pkt, &al)
-            || !WPACKET_close(pkt)) {
+    if (!tls_construct_extensions(s, pkt, EXT_CLIENT_HELLO, &al)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         return 0;

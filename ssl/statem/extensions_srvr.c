@@ -215,13 +215,14 @@ int tls_parse_client_sig_algs(SSL *s, PACKET *pkt, int *al)
     return 1;
 }
 
+#ifndef OPENSSL_NO_OCSP
 int tls_parse_client_status_request(SSL *s, PACKET *pkt, int *al)
 {
     if (!PACKET_get_1(pkt, (unsigned int *)&s->tlsext_status_type)) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
-#ifndef OPENSSL_NO_OCSP
+
     if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
         const unsigned char *ext_data;
         PACKET responder_id_list, exts;
@@ -297,9 +298,7 @@ int tls_parse_client_status_request(SSL *s, PACKET *pkt, int *al)
                 return 0;
             }
         }
-    } else
-#endif
-    {
+    } else {
         /*
          * We don't know what to do with any other type so ignore it.
          */
@@ -308,6 +307,7 @@ int tls_parse_client_status_request(SSL *s, PACKET *pkt, int *al)
 
     return 1;
 }
+#endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
 int tls_parse_client_npn(SSL *s, PACKET *pkt, int *al)
@@ -949,6 +949,7 @@ int tls_construct_server_session_ticket(SSL *s, WPACKET *pkt, int *al)
     return 1;
 }
 
+#ifndef OPENSSL_NO_OCSP
 int tls_construct_server_status_request(SSL *s, WPACKET *pkt, int *al)
 {
     if (!s->tlsext_status_expected)
@@ -962,6 +963,7 @@ int tls_construct_server_status_request(SSL *s, WPACKET *pkt, int *al)
 
     return 1;
 }
+#endif
 
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
