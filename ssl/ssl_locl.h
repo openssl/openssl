@@ -2117,7 +2117,6 @@ __owur int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *ex,
 
 __owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
-__owur int ssl_parse_serverhello_renegotiate_ext(SSL *s, PACKET *pkt, int *al);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
                               const unsigned char *psig, size_t psiglen);
@@ -2128,8 +2127,6 @@ __owur int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
                                    const unsigned char *sig, EVP_PKEY *pkey);
 void ssl_set_client_disabled(SSL *s);
 __owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op);
-
-__owur int ssl_parse_serverhello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 
 __owur int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
                                  size_t *hashlen);

@@ -2297,6 +2297,9 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PARSE_CLIENT_KEY_SHARE                 445
 # define SSL_F_TLS_PARSE_CLIENT_RENEGOTIATE               448
 # define SSL_F_TLS_PARSE_CLIENT_USE_SRTP                  446
+# define SSL_F_TLS_PARSE_SERVER_KEY_SHARE                 463
+# define SSL_F_TLS_PARSE_SERVER_RENEGOTIATE               464
+# define SSL_F_TLS_PARSE_SERVER_USE_SRTP                  465
 # define SSL_F_TLS_POST_PROCESS_CLIENT_HELLO              378
 # define SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE       384
 # define SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE             360
