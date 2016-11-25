@@ -338,6 +338,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "tls_construct_server_status_request"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_SERVER_USE_SRTP),
      "tls_construct_server_use_srtp"},
+    {ERR_FUNC(SSL_F_TLS_EXT_FINAL_RENEGOTIATE), "tls_ext_final_renegotiate"},
     {ERR_FUNC(SSL_F_TLS_GET_MESSAGE_BODY), "tls_get_message_body"},
     {ERR_FUNC(SSL_F_TLS_GET_MESSAGE_HEADER), "tls_get_message_header"},
     {ERR_FUNC(SSL_F_TLS_PARSE_CLIENTHELLO_TLSEXT),
