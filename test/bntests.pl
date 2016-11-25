@@ -22,8 +22,8 @@ sub bn()
 
 sub evaluate()
 {
-    my ( $lineno ) = shift;
-    my ( %s ) = @_;
+    my $lineno = shift;
+    my %s = @_;
 
     if ( defined $s{'Sum'} ) {
         # Sum = A + B
@@ -71,7 +71,6 @@ sub evaluate()
         $b->bmul($quotient);
         my $rempassed = $remainder == $a->bsub($b) ? 1 : 0;
 
-        # XXX TODO BROKEN
         # Math::BigInt->bdiv() is documented to do floored division,
         # i.e. 1 / -4 = -1, while OpenSSL BN_div does truncated
         # division, i.e. 1 / -4 = 0.  We need to make the operation
@@ -114,18 +113,17 @@ sub evaluate()
         # while Math::BigInt, the result is 2.
         # Math::BigInt does something different with a negative modulus,
         # while OpenSSL's BN and bc treat it like a positive number...
-        my $neq = $a->is_neg();
         $a->babs();
         $p->babs();
         $a->bmod($p);
-        $a->bneg() if $neq;
         return if $modsqrt->bmul($modsqrt) == $a;
+        if ($a == $p) {print "equal $p\n"; return;}
     } else {
         print "Unknown test: ";
     }
     print "# Test (before line $lineno) failed\n";
     foreach ( keys %s ) {
-        print " $_ = $s{$_}\n";
+        print "$_ = $s{$_}\n";
     }
 }
 
@@ -137,7 +135,7 @@ my %stanza = ();
 my $l = 0;
 while ( <$IN> ) {
     $l++;
-    chop;
+    s|\R$||;
     next if /^#/;
     if ( /^$/ ) {
         if ( keys %stanza ) {
