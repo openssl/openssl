@@ -11,6 +11,9 @@ use strict;
 use warnings;
 use Math::BigInt;
 
+my $EXPECTED_FAILURES = 53;
+my $failures = 0;
+
 sub bn()
 {
     my $x = shift;
@@ -119,12 +122,14 @@ sub evaluate()
         return if $modsqrt->bmul($modsqrt) == $a;
         if ($a == $p) {print "equal $p\n"; return;}
     } else {
-        print "Unknown test: ";
+        print "# Unknown test: ";
     }
-    print "# Test (before line $lineno) failed\n";
+    $failures++;
+    print "# #$failures Test (before line $lineno) failed\n";
     foreach ( keys %s ) {
         print "$_ = $s{$_}\n";
     }
+    print "\n";
 }
 
 my $infile = shift || 'bntests.txt';
@@ -152,4 +157,6 @@ while ( <$IN> ) {
     $stanza{$1} = $2;
 };
 &evaluate($l, %stanza) if keys %stanza;
+die "Got $failures, execpted $EXPECTED_FAILURES"
+    if $infile eq 'bntests.txt' and $failures != $EXPECTED_FAILURES;
 close($IN)
