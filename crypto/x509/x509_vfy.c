@@ -308,16 +308,17 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 {
     int i;
+    X509 *issuer, *rv = NULL;
 
     for (i = 0; i < sk_X509_num(sk); i++) {
-        X509 *issuer = sk_X509_value(sk, i);
-
-        if (!ctx->check_issued(ctx, x, issuer))
-            continue;
-        if (x509_check_cert_time(ctx, issuer, -1))
-            return issuer;
+        issuer = sk_X509_value(sk, i);
+        if (ctx->check_issued(ctx, x, issuer)) {
+            rv = issuer;
+            if (x509_check_cert_time(ctx, rv, -1))
+                break;
+        }
     }
-    return NULL;
+    return rv;
 }
 
 /* Given a possible certificate and issuer check them */
