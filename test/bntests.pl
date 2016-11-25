@@ -14,7 +14,7 @@ use Math::BigInt;
 my $EXPECTED_FAILURES = 53;
 my $failures = 0;
 
-sub bn()
+sub bn
 {
     my $x = shift;
     my ($sign, $hex) = ($x =~ /^([+\-]?)(.*)$/);
@@ -23,52 +23,52 @@ sub bn()
     return Math::BigInt->from_hex($sign.$hex);
 }
 
-sub evaluate()
+sub evaluate
 {
     my $lineno = shift;
     my %s = @_;
 
     if ( defined $s{'Sum'} ) {
         # Sum = A + B
-        my $sum = &bn($s{'Sum'});
-        my $a = &bn($s{'A'});
-        my $b = &bn($s{'B'});
+        my $sum = bn($s{'Sum'});
+        my $a = bn($s{'A'});
+        my $b = bn($s{'B'});
         return if $sum == $a + $b;
     } elsif ( defined $s{'LShift1'} ) {
         # LShift1 = A * 2
-        my $lshift1 = &bn($s{'LShift1'});
-        my $a = &bn($s{'A'});
+        my $lshift1 = bn($s{'LShift1'});
+        my $a = bn($s{'A'});
         return if $lshift1 == $a->bmul(2);
     } elsif ( defined $s{'LShift'} ) {
         # LShift = A * 2**N
-        my $lshift = &bn($s{'LShift'});
-        my $a = &bn($s{'A'});
-        my $n = &bn($s{'N'});
+        my $lshift = bn($s{'LShift'});
+        my $a = bn($s{'A'});
+        my $n = bn($s{'N'});
         return if $lshift == $a->blsft($n);
     } elsif ( defined $s{'RShift'} ) {
         # RShift = A / 2**N
-        my $rshift = &bn($s{'RShift'});
-        my $a = &bn($s{'A'});
-        my $n = &bn($s{'N'});
+        my $rshift = bn($s{'RShift'});
+        my $a = bn($s{'A'});
+        my $n = bn($s{'N'});
         return if $rshift == $a->brsft($n);
     } elsif ( defined $s{'Square'} ) {
         # Square = A * A
-        my $square = &bn($s{'Square'});
-        my $a = &bn($s{'A'});
+        my $square = bn($s{'Square'});
+        my $a = bn($s{'A'});
         return if $square == $a->bmul($a);
     } elsif ( defined $s{'Product'} ) {
         # Product = A * B
-        my $product = &bn($s{'Product'});
-        my $a = &bn($s{'A'});
-        my $b = &bn($s{'B'});
+        my $product = bn($s{'Product'});
+        my $a = bn($s{'A'});
+        my $b = bn($s{'B'});
         return if $product == $a->bmul($b);
     } elsif ( defined $s{'Quotient'} ) {
         # Quotient = A / B
         # Remainder = A - B * Quotient
-        my $quotient = &bn($s{'Quotient'});
-        my $remainder = &bn($s{'Remainder'});
-        my $a = &bn($s{'A'});
-        my $b = &bn($s{'B'});
+        my $quotient = bn($s{'Quotient'});
+        my $remainder = bn($s{'Remainder'});
+        my $a = bn($s{'A'});
+        my $b = bn($s{'B'});
 
         # First the remainder test.
         $b->bmul($quotient);
@@ -78,8 +78,8 @@ sub evaluate()
         # i.e. 1 / -4 = -1, while OpenSSL BN_div does truncated
         # division, i.e. 1 / -4 = 0.  We need to make the operation
         # work like OpenSSL's BN_div to be able to verify.
-        $a = &bn($s{'A'});
-        $b = &bn($s{'B'});
+        $a = bn($s{'A'});
+        $b = bn($s{'B'});
         my $neg = $a->is_neg() ? !$b->is_neg() : $b->is_neg();
         $a->babs();
         $b->babs();
@@ -88,29 +88,29 @@ sub evaluate()
         return if $rempassed && $quotient == $a;
     } elsif ( defined $s{'ModMul'} ) {
         # ModMul = (A * B) mod M
-        my $modmul = &bn($s{'ModMul'});
-        my $a = &bn($s{'A'});
-        my $b = &bn($s{'B'});
-        my $m = &bn($s{'M'});
+        my $modmul = bn($s{'ModMul'});
+        my $a = bn($s{'A'});
+        my $b = bn($s{'B'});
+        my $m = bn($s{'M'});
         $a->bmul($b);
         return if $modmul == $a->bmod($m);
     } elsif ( defined $s{'ModExp'} ) {
         # ModExp = (A ** E) mod M
-        my $modexp = &bn($s{'ModExp'});
-        my $a = &bn($s{'A'});
-        my $e = &bn($s{'E'});
-        my $m = &bn($s{'M'});
+        my $modexp = bn($s{'ModExp'});
+        my $a = bn($s{'A'});
+        my $e = bn($s{'E'});
+        my $m = bn($s{'M'});
         return if $modexp == $a->bmodpow($e, $m);
     } elsif ( defined $s{'Exp'} ) {
-        my $exp = &bn($s{'Exp'});
-        my $a = &bn($s{'A'});
-        my $e = &bn($s{'E'});
+        my $exp = bn($s{'Exp'});
+        my $a = bn($s{'A'});
+        my $e = bn($s{'E'});
         return if $exp == $a ** $e;
     } elsif ( defined $s{'ModSqrt'} ) {
         # ModSqrt * ModSqrt = A mod P
-        my $modsqrt = &bn($s{'ModSqrt'});
-        my $a = &bn($s{'A'});
-        my $p = &bn($s{'P'});
+        my $modsqrt = bn($s{'ModSqrt'});
+        my $a = bn($s{'A'});
+        my $p = bn($s{'P'});
 
         # With OpenSSL's BN, the result of -10 % 3 is -1
         # while Math::BigInt, the result is 2.
@@ -144,7 +144,7 @@ while ( <$IN> ) {
     next if /^#/;
     if ( /^$/ ) {
         if ( keys %stanza ) {
-            &evaluate($l, %stanza);
+            evaluate($l, %stanza);
             %stanza = ();
         }
         next;
@@ -156,7 +156,7 @@ while ( <$IN> ) {
     }
     $stanza{$1} = $2;
 };
-&evaluate($l, %stanza) if keys %stanza;
+evaluate($l, %stanza) if keys %stanza;
 die "Got $failures, execpted $EXPECTED_FAILURES"
     if $infile eq 'bntests.txt' and $failures != $EXPECTED_FAILURES;
 close($IN)
