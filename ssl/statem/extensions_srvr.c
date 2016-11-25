@@ -14,7 +14,7 @@
 /*
  * Parse the client's renegotiation binding and abort if it's not right
  */
-int tls_parse_clienthello_renegotiate(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_renegotiate(SSL *s, PACKET *pkt, int *al)
 {
     unsigned int ilen;
     const unsigned char *data;
@@ -22,7 +22,7 @@ int tls_parse_clienthello_renegotiate(SSL *s, PACKET *pkt, int *al)
     /* Parse the length byte */
     if (!PACKET_get_1(pkt, &ilen)
         || !PACKET_get_bytes(pkt, &data, ilen)) {
-        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_RENEGOTIATE,
+        SSLerr(SSL_F_TLS_PARSE_CLIENT_RENEGOTIATE,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
@@ -30,7 +30,7 @@ int tls_parse_clienthello_renegotiate(SSL *s, PACKET *pkt, int *al)
 
     /* Check that the extension matches */
     if (ilen != s->s3->previous_client_finished_len) {
-        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_RENEGOTIATE,
+        SSLerr(SSL_F_TLS_PARSE_CLIENT_RENEGOTIATE,
                SSL_R_RENEGOTIATION_MISMATCH);
         *al = SSL_AD_HANDSHAKE_FAILURE;
         return 0;
@@ -38,7 +38,7 @@ int tls_parse_clienthello_renegotiate(SSL *s, PACKET *pkt, int *al)
 
     if (memcmp(data, s->s3->previous_client_finished,
                s->s3->previous_client_finished_len)) {
-        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_RENEGOTIATE,
+        SSLerr(SSL_F_TLS_PARSE_CLIENT_RENEGOTIATE,
                SSL_R_RENEGOTIATION_MISMATCH);
         *al = SSL_AD_HANDSHAKE_FAILURE;
         return 0;
@@ -49,7 +49,7 @@ int tls_parse_clienthello_renegotiate(SSL *s, PACKET *pkt, int *al)
     return 1;
 }
 
-int tls_parse_clienthello_server_name(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_server_name(SSL *s, PACKET *pkt, int *al)
 {
     unsigned int servname_type;
     PACKET sni, hostname;
@@ -135,7 +135,7 @@ int tls_parse_clienthello_server_name(SSL *s, PACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_SRP
-int tls_parse_clienthello_srp(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_srp(SSL *s, PACKET *pkt, int *al)
 {
     PACKET srp_I;
 
@@ -159,7 +159,7 @@ int tls_parse_clienthello_srp(SSL *s, PACKET *pkt, int *al)
 #endif
 
 #ifndef OPENSSL_NO_EC
-int tls_parse_clienthello_ec_pt_formats(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_ec_pt_formats(SSL *s, PACKET *pkt, int *al)
 {
     PACKET ec_point_format_list;
 
@@ -182,7 +182,7 @@ int tls_parse_clienthello_ec_pt_formats(SSL *s, PACKET *pkt, int *al)
 }
 #endif                          /* OPENSSL_NO_EC */
 
-int tls_parse_clienthello_session_ticket(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_session_ticket(SSL *s, PACKET *pkt, int *al)
 {
     if (s->tls_session_ticket_ext_cb &&
             !s->tls_session_ticket_ext_cb(s, PACKET_data(pkt),
@@ -195,7 +195,7 @@ int tls_parse_clienthello_session_ticket(SSL *s, PACKET *pkt, int *al)
     return 1;
 }
 
-int tls_parse_clienthello_sig_algs(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_sig_algs(SSL *s, PACKET *pkt, int *al)
 {
     PACKET supported_sig_algs;
 
@@ -215,7 +215,7 @@ int tls_parse_clienthello_sig_algs(SSL *s, PACKET *pkt, int *al)
     return 1;
 }
 
-int tls_parse_clienthello_status_request(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_status_request(SSL *s, PACKET *pkt, int *al)
 {
     if (!PACKET_get_1(pkt, (unsigned int *)&s->tlsext_status_type)) {
         *al = SSL_AD_DECODE_ERROR;
@@ -310,7 +310,7 @@ int tls_parse_clienthello_status_request(SSL *s, PACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-int tls_parse_clienthello_npn(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_npn(SSL *s, PACKET *pkt, int *al)
 {
     if (s->s3->tmp.finish_md_len == 0) {
         /*-
@@ -343,7 +343,7 @@ int tls_parse_clienthello_npn(SSL *s, PACKET *pkt, int *al)
  * al: a pointer to the  alert value to send in the event of a failure.
  * returns: 1 on success, 0 on error.
  */
-int tls_parse_clienthello_alpn(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_alpn(SSL *s, PACKET *pkt, int *al)
 {
     PACKET protocol_list, save_protocol_list, protocol;
 
@@ -376,7 +376,7 @@ int tls_parse_clienthello_alpn(SSL *s, PACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_SRTP
-int tls_parse_clienthello_use_srtp(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_use_srtp(SSL *s, PACKET *pkt, int *al)
 {
     SRTP_PROTECTION_PROFILE *sprof;
     STACK_OF(SRTP_PROTECTION_PROFILE) *srvr;
@@ -391,7 +391,7 @@ int tls_parse_clienthello_use_srtp(SSL *s, PACKET *pkt, int *al)
     /* Pull off the length of the cipher suite list  and check it is even */
     if (!PACKET_get_net_2(pkt, &ct)
         || (ct & 1) != 0 || !PACKET_get_sub_packet(pkt, &subpkt, ct)) {
-        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_USE_SRTP,
+        SSLerr(SSL_F_TLS_PARSE_CLIENT_USE_SRTP,
                SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
         *al = SSL_AD_DECODE_ERROR;
         return 0;
@@ -404,7 +404,7 @@ int tls_parse_clienthello_use_srtp(SSL *s, PACKET *pkt, int *al)
 
     while (PACKET_remaining(&subpkt)) {
         if (!PACKET_get_net_2(&subpkt, &id)) {
-            SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_USE_SRTP,
+            SSLerr(SSL_F_TLS_PARSE_CLIENT_USE_SRTP,
                    SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
             *al = SSL_AD_DECODE_ERROR;
             return 0;
@@ -430,7 +430,7 @@ int tls_parse_clienthello_use_srtp(SSL *s, PACKET *pkt, int *al)
      * Now extract the MKI value as a sanity check, but discard it for now
      */
     if (!PACKET_get_1(pkt, &mki_len)) {
-        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_USE_SRTP,
+        SSLerr(SSL_F_TLS_PARSE_CLIENT_USE_SRTP,
                SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
         *al = SSL_AD_DECODE_ERROR;
         return 0;
@@ -438,7 +438,7 @@ int tls_parse_clienthello_use_srtp(SSL *s, PACKET *pkt, int *al)
 
     if (!PACKET_forward(pkt, mki_len)
         || PACKET_remaining(pkt)) {
-        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_USE_SRTP, SSL_R_BAD_SRTP_MKI_VALUE);
+        SSLerr(SSL_F_TLS_PARSE_CLIENT_USE_SRTP, SSL_R_BAD_SRTP_MKI_VALUE);
         *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
@@ -447,7 +447,7 @@ int tls_parse_clienthello_use_srtp(SSL *s, PACKET *pkt, int *al)
 }
 #endif
 
-int tls_parse_clienthello_etm(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_etm(SSL *s, PACKET *pkt, int *al)
 {
     if (!(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC))
         s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
@@ -489,7 +489,7 @@ static int check_in_list(SSL *s, unsigned int group_id,
  * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
  * If a failure occurs then |*al| is set to an appropriate alert value.
  */
-int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_key_share(SSL *s, PACKET *pkt, int *al)
 {
     unsigned int group_id;
     PACKET key_share_list, encoded_pt;
@@ -504,27 +504,27 @@ int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al)
     /* Sanity check */
     if (s->s3->peer_tmp != NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     if (!PACKET_as_length_prefixed_2(pkt, &key_share_list)) {
         *al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
+        SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
 
     /* Get our list of supported curves */
     if (!tls1_get_curvelist(s, 0, &srvrcurves, &srvr_num_curves)) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     /* Get the clients list of supported curves */
     if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -533,7 +533,7 @@ int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al)
                 || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
                 || PACKET_remaining(&encoded_pt) == 0) {
             *al = SSL_AD_HANDSHAKE_FAILURE;
-            SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE,
+            SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE,
                    SSL_R_LENGTH_MISMATCH);
             return 0;
         }
@@ -548,7 +548,7 @@ int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al)
         /* Check if this share is in supported_groups sent from client */
         if (!check_in_list(s, group_id, clntcurves, clnt_num_curves, 0)) {
             *al = SSL_AD_HANDSHAKE_FAILURE;
-            SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
+            SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
             return 0;
         }
 
@@ -562,7 +562,7 @@ int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al)
 
         if (group_nid == 0) {
             *al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE,
+            SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE,
                    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
             return 0;
         }
@@ -573,7 +573,7 @@ int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al)
 
             if (key == NULL || !EVP_PKEY_set_type(key, group_nid)) {
                 *al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE, ERR_R_EVP_LIB);
+                SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE, ERR_R_EVP_LIB);
                 EVP_PKEY_free(key);
                 return 0;
             }
@@ -587,7 +587,7 @@ int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al)
                                                               group_nid) <= 0
                     || EVP_PKEY_paramgen(pctx, &s->s3->peer_tmp) <= 0) {
                 *al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE, ERR_R_EVP_LIB);
+                SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE, ERR_R_EVP_LIB);
                 EVP_PKEY_CTX_free(pctx);
                 return 0;
             }
@@ -600,7 +600,7 @@ int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al)
                 PACKET_data(&encoded_pt),
                 PACKET_remaining(&encoded_pt))) {
             *al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_TLS_PARSE_CLIENTHELLO_KEY_SHARE, SSL_R_BAD_ECPOINT);
+            SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE, SSL_R_BAD_ECPOINT);
             return 0;
         }
 
@@ -611,7 +611,7 @@ int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_EC
-int tls_parse_clienthello_supported_groups(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_supported_groups(SSL *s, PACKET *pkt, int *al)
 {
     PACKET supported_groups_list;
 
@@ -635,7 +635,7 @@ int tls_parse_clienthello_supported_groups(SSL *s, PACKET *pkt, int *al)
 }
 #endif
 
-int tls_parse_clienthello_ems(SSL *s, PACKET *pkt, int *al)
+int tls_parse_client_ems(SSL *s, PACKET *pkt, int *al)
 {
     /* The extension must always be empty */
     if (PACKET_remaining(pkt) != 0) {
