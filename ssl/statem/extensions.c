@@ -29,7 +29,7 @@ typedef struct {
 static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_renegotiate,
-        tls_parse_clienthello_renegotiate,
+        tls_parse_client_renegotiate,
         NULL,
         tls_construct_server_renegotiate,
         NULL,
@@ -38,7 +38,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         TLSEXT_TYPE_server_name,
-        tls_parse_clienthello_server_name,
+        tls_parse_client_server_name,
         NULL,
         tls_construct_server_server_name,
         NULL,
@@ -48,7 +48,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #ifndef OPENSSL_NO_SRP
     {
         TLSEXT_TYPE_srp,
-        tls_parse_clienthello_srp,
+        tls_parse_client_srp,
         NULL,
         NULL,
         NULL,
@@ -58,7 +58,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #ifndef OPENSSL_NO_EC
     {
         TLSEXT_TYPE_ec_point_formats,
-        tls_parse_clienthello_ec_pt_formats,
+        tls_parse_client_ec_pt_formats,
         NULL,
         tls_construct_server_ec_pt_formats,
         NULL,
@@ -66,7 +66,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         TLSEXT_TYPE_supported_groups,
-        tls_parse_clienthello_supported_groups,
+        tls_parse_client_supported_groups,
         NULL,
         NULL /* TODO(TLS1.3): Need to add this */,
         NULL,
@@ -76,7 +76,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #endif
     {
         TLSEXT_TYPE_session_ticket,
-        tls_parse_clienthello_session_ticket,
+        tls_parse_client_session_ticket,
         NULL,
         tls_construct_server_session_ticket,
         NULL,
@@ -84,7 +84,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         TLSEXT_TYPE_signature_algorithms,
-        tls_parse_clienthello_sig_algs,
+        tls_parse_client_sig_algs,
         NULL,
         NULL,
         NULL,
@@ -92,7 +92,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         TLSEXT_TYPE_status_request,
-        tls_parse_clienthello_status_request,
+        tls_parse_client_status_request,
         NULL,
         tls_construct_server_status_request,
         NULL,
@@ -102,7 +102,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {
         TLSEXT_TYPE_next_proto_neg,
-        tls_parse_clienthello_npn,
+        tls_parse_client_npn,
         NULL,
         tls_construct_server_next_proto_neg,
         NULL,
@@ -111,7 +111,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #endif
     {
         TLSEXT_TYPE_application_layer_protocol_negotiation,
-        tls_parse_clienthello_alpn,
+        tls_parse_client_alpn,
         NULL,
         tls_construct_server_alpn,
         NULL,
@@ -121,7 +121,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #ifndef OPENSSL_NO_SRTP
     {
         TLSEXT_TYPE_use_srtp,
-        tls_parse_clienthello_use_srtp,
+        tls_parse_client_use_srtp,
         NULL,
         tls_construct_server_use_srtp,
         NULL,
@@ -131,7 +131,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #endif
     {
         TLSEXT_TYPE_encrypt_then_mac,
-        tls_parse_clienthello_etm,
+        tls_parse_client_etm,
         NULL,
         tls_construct_server_etm,
         NULL,
@@ -153,7 +153,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         TLSEXT_TYPE_extended_master_secret,
-        tls_parse_clienthello_ems,
+        tls_parse_client_ems,
         NULL,
         tls_construct_server_ems,
         NULL,
@@ -179,7 +179,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         TLSEXT_TYPE_key_share,
-        tls_parse_clienthello_key_share,
+        tls_parse_client_key_share,
         NULL,
         tls_construct_server_key_share,
         NULL,

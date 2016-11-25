@@ -157,28 +157,28 @@ __owur int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                                     int *al);
 
 /* Server Extension processing */
-int tls_parse_clienthello_renegotiate(SSL *s, PACKET *pkt, int *al);
-int tls_parse_clienthello_server_name(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_renegotiate(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_server_name(SSL *s, PACKET *pkt, int *al);
 #ifndef OPENSSL_NO_SRP
-int tls_parse_clienthello_srp(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_srp(SSL *s, PACKET *pkt, int *al);
 #endif
 #ifndef OPENSSL_NO_EC
-int tls_parse_clienthello_ec_pt_formats(SSL *s, PACKET *pkt, int *al);
-int tls_parse_clienthello_supported_groups(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_ec_pt_formats(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_supported_groups(SSL *s, PACKET *pkt, int *al);
 #endif
-int tls_parse_clienthello_session_ticket(SSL *s, PACKET *pkt, int *al);
-int tls_parse_clienthello_sig_algs(SSL *s, PACKET *pkt, int *al);
-int tls_parse_clienthello_status_request(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_session_ticket(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_sig_algs(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_status_request(SSL *s, PACKET *pkt, int *al);
 #ifndef OPENSSL_NO_NEXTPROTONEG
-int tls_parse_clienthello_npn(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_npn(SSL *s, PACKET *pkt, int *al);
 #endif
-int tls_parse_clienthello_alpn(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_alpn(SSL *s, PACKET *pkt, int *al);
 #ifndef OPENSSL_NO_SRTP
-int tls_parse_clienthello_use_srtp(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_use_srtp(SSL *s, PACKET *pkt, int *al);
 #endif
-int tls_parse_clienthello_etm(SSL *s, PACKET *pkt, int *al);
-int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al);
-int tls_parse_clienthello_ems(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_etm(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_key_share(SSL *s, PACKET *pkt, int *al);
+int tls_parse_client_ems(SSL *s, PACKET *pkt, int *al);
 
 int tls_construct_server_renegotiate(SSL *s, WPACKET *pkt, int *al);
 int tls_construct_server_server_name(SSL *s, WPACKET *pkt, int *al);
