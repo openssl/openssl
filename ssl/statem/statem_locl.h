@@ -168,7 +168,9 @@ int tls_parse_client_supported_groups(SSL *s, PACKET *pkt, int *al);
 #endif
 int tls_parse_client_session_ticket(SSL *s, PACKET *pkt, int *al);
 int tls_parse_client_sig_algs(SSL *s, PACKET *pkt, int *al);
+#ifndef OPENSSL_NO_OCSP
 int tls_parse_client_status_request(SSL *s, PACKET *pkt, int *al);
+#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
 int tls_parse_client_npn(SSL *s, PACKET *pkt, int *al);
 #endif
@@ -184,12 +186,20 @@ int tls_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al);
 
 int tls_construct_server_renegotiate(SSL *s, WPACKET *pkt, int *al);
 int tls_construct_server_server_name(SSL *s, WPACKET *pkt, int *al);
+#ifndef OPENSSL_NO_EC
 int tls_construct_server_ec_pt_formats(SSL *s, WPACKET *pkt, int *al);
+#endif
 int tls_construct_server_session_ticket(SSL *s, WPACKET *pkt, int *al);
+#ifndef OPENSSL_NO_OCSP
 int tls_construct_server_status_request(SSL *s, WPACKET *pkt, int *al);
+#endif
+#ifndef OPENSSL_NO_NEXTPROTONEG
 int tls_construct_server_next_proto_neg(SSL *s, WPACKET *pkt, int *al);
+#endif
 int tls_construct_server_alpn(SSL *s, WPACKET *pkt, int *al);
+#ifndef OPENSSL_NO_SRTP
 int tls_construct_server_use_srtp(SSL *s, WPACKET *pkt, int *al);
+#endif
 int tls_construct_server_etm(SSL *s, WPACKET *pkt, int *al);
 int tls_construct_server_ems(SSL *s, WPACKET *pkt, int *al);
 int tls_construct_server_key_share(SSL *s, WPACKET *pkt, int *al);
@@ -201,13 +211,44 @@ int tls_construct_server_key_share(SSL *s, WPACKET *pkt, int *al);
 int tls_construct_server_cryptopro_bug(SSL *s, WPACKET *pkt, int *al);
 
 /* Client Extension processing */
+int tls_construct_client_renegotiate(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_client_server_name(SSL *s, WPACKET *pkt, int *al);
+#ifndef OPENSSL_NO_SRP
+int tls_construct_client_srp(SSL *s, WPACKET *pkt, int *al);
+#endif
+#ifndef OPENSSL_NO_EC
+int tls_construct_client_ec_pt_formats(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_client_supported_groups(SSL *s, WPACKET *pkt, int *al);
+#endif
+int tls_construct_client_session_ticket(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_client_sig_algs(SSL *s, WPACKET *pkt, int *al);
+#ifndef OPENSSL_NO_OCSP
+int tls_construct_client_status_request(SSL *s, WPACKET *pkt, int *al);
+#endif
+#ifndef OPENSSL_NO_NEXTPROTONEG
+int tls_construct_client_npn(SSL *s, WPACKET *pkt, int *al);
+#endif
+int tls_construct_client_alpn(SSL *s, WPACKET *pkt, int *al);
+#ifndef OPENSSL_NO_SRTP
+int tls_construct_client_use_srtp(SSL *s, WPACKET *pkt, int *al);
+#endif
+int tls_construct_client_etm(SSL *s, WPACKET *pkt, int *al);
+#ifndef OPENSSL_NO_CT
+int tls_construct_client_sct(SSL *s, WPACKET *pkt, int *al);
+#endif
+int tls_construct_client_ems(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_client_supported_versions(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_client_key_share(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_client_padding(SSL *s, WPACKET *pkt, int *al);
 int tls_parse_server_renegotiate(SSL *s, PACKET *pkt, int *al);
 int tls_parse_server_server_name(SSL *s, PACKET *pkt, int *al);
 #ifndef OPENSSL_NO_EC
 int tls_parse_server_ec_pt_formats(SSL *s, PACKET *pkt, int *al);
 #endif
 int tls_parse_server_session_ticket(SSL *s, PACKET *pkt, int *al);
+#ifndef OPENSSL_NO_OCSP
 int tls_parse_server_status_request(SSL *s, PACKET *pkt, int *al);
+#endif
 #ifndef OPENSSL_NO_CT
 int tls_parse_server_sct(SSL *s, PACKET *pkt, int *al);
 #endif
