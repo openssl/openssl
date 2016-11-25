@@ -1980,15 +1980,20 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
             || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt, &len)
             || (!SSL_IS_TLS13(s)
                 && !WPACKET_put_bytes_u8(pkt, compm))
-            || !ssl_prepare_serverhello_tlsext(s)
-            || !ssl_add_serverhello_tlsext(s, pkt, &al)) {
+               /*
+                * TODO(TLS1.3): For now we add all 1.2 and 1.3 extensions. Later
+                * we will do this based on the actual protocol
+                */
+            || !tls_construct_extensions(s, pkt,
+                                         EXT_TLS1_2_SERVER_HELLO
+                                         | EXT_TLS1_3_SERVER_HELLO, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
     return 1;
  err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
     return 0;
 }
 

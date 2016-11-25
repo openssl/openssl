@@ -179,3 +179,22 @@ int tls_parse_clienthello_use_srtp(SSL *s, PACKET *pkt, int *al);
 int tls_parse_clienthello_etm(SSL *s, PACKET *pkt, int *al);
 int tls_parse_clienthello_key_share(SSL *s, PACKET *pkt, int *al);
 int tls_parse_clienthello_ems(SSL *s, PACKET *pkt, int *al);
+
+int tls_construct_server_renegotiate(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_server_server_name(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_server_ec_pt_formats(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_server_session_ticket(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_server_status_request(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_server_next_proto_neg(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_server_alpn(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_server_use_srtp(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_server_etm(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_server_ems(SSL *s, WPACKET *pkt, int *al);
+int tls_construct_server_key_share(SSL *s, WPACKET *pkt, int *al);
+
+/*
+ * Not in public headers as this is not an official extension. Only used when
+ * SSL_OP_CRYPTOPRO_TLSEXT_BUG is set.
+ */
+#define TLSEXT_TYPE_cryptopro_bug      0xfde8
+int tls_construct_server_cryptopro_bug(SSL *s, WPACKET *pkt, int *al);

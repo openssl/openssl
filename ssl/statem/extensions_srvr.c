@@ -647,3 +647,373 @@ int tls_parse_clienthello_ems(SSL *s, PACKET *pkt, int *al)
 
     return 1;
 }
+
+/*
+ * Process the ALPN extension in a ClientHello.
+ * al: a pointer to the alert value to send in the event of a failure.
+ * returns 1 on success, 0 on error.
+ */
+static int tls1_alpn_handle_client_hello_late(SSL *s, int *al)
+{
+    const unsigned char *selected = NULL;
+    unsigned char selected_len = 0;
+
+    if (s->ctx->alpn_select_cb != NULL && s->s3->alpn_proposed != NULL) {
+        int r = s->ctx->alpn_select_cb(s, &selected, &selected_len,
+                                       s->s3->alpn_proposed,
+                                       (unsigned int)s->s3->alpn_proposed_len,
+                                       s->ctx->alpn_select_cb_arg);
+
+        if (r == SSL_TLSEXT_ERR_OK) {
+            OPENSSL_free(s->s3->alpn_selected);
+            s->s3->alpn_selected = OPENSSL_memdup(selected, selected_len);
+            if (s->s3->alpn_selected == NULL) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                return 0;
+            }
+            s->s3->alpn_selected_len = selected_len;
+#ifndef OPENSSL_NO_NEXTPROTONEG
+            /* ALPN takes precedence over NPN. */
+            s->s3->next_proto_neg_seen = 0;
+#endif
+        } else {
+            *al = SSL_AD_NO_APPLICATION_PROTOCOL;
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+/*
+ * Upon success, returns 1.
+ * Upon failure, returns 0 and sets |al| to the appropriate fatal alert.
+ */
+int ssl_check_clienthello_tlsext_late(SSL *s, int *al)
+{
+    s->tlsext_status_expected = 0;
+
+    /*
+     * If status request then ask callback what to do. Note: this must be
+     * called after servername callbacks in case the certificate has changed,
+     * and must be called after the cipher has been chosen because this may
+     * influence which certificate is sent
+     */
+    if ((s->tlsext_status_type != -1) && s->ctx && s->ctx->tlsext_status_cb) {
+        int ret;
+        CERT_PKEY *certpkey;
+        certpkey = ssl_get_server_send_pkey(s);
+        /* If no certificate can't return certificate status */
+        if (certpkey != NULL) {
+            /*
+             * Set current certificate to one we will use so SSL_get_certificate
+             * et al can pick it up.
+             */
+            s->cert->key = certpkey;
+            ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+            switch (ret) {
+                /* We don't want to send a status request response */
+            case SSL_TLSEXT_ERR_NOACK:
+                s->tlsext_status_expected = 0;
+                break;
+                /* status request response should be sent */
+            case SSL_TLSEXT_ERR_OK:
+                if (s->tlsext_ocsp_resp)
+                    s->tlsext_status_expected = 1;
+                break;
+                /* something bad happened */
+            case SSL_TLSEXT_ERR_ALERT_FATAL:
+            default:
+                *al = SSL_AD_INTERNAL_ERROR;
+                return 0;
+            }
+        }
+    }
+
+    if (!tls1_alpn_handle_client_hello_late(s, al)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+/* Add the server's renegotiation binding */
+int tls_construct_server_renegotiate(SSL *s, WPACKET *pkt, int *al)
+{
+    if (!s->s3->send_connection_binding)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u8(pkt)
+            || !WPACKET_memcpy(pkt, s->s3->previous_client_finished,
+                               s->s3->previous_client_finished_len)
+            || !WPACKET_memcpy(pkt, s->s3->previous_server_finished,
+                               s->s3->previous_server_finished_len)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_RENEGOTIATE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_server_server_name(SSL *s, WPACKET *pkt, int *al)
+{
+    if (s->hit || s->servername_done != 1
+            || s->session->tlsext_hostname == NULL)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_SERVER_NAME, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+#ifndef OPENSSL_NO_EC
+int tls_construct_server_ec_pt_formats(SSL *s, WPACKET *pkt, int *al)
+{
+    unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+    unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+    int using_ecc = (alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA);
+    using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
+    const unsigned char *plist;
+    size_t plistlen;
+
+    if (!using_ecc)
+        return 1;
+
+    tls1_get_formatlist(s, &plist, &plistlen);
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ec_point_formats)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u8(pkt, plist, plistlen)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_EC_PT_FORMATS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+int tls_construct_server_session_ticket(SSL *s, WPACKET *pkt, int *al)
+{
+    if (!s->tlsext_ticket_expected || !tls_use_ticket(s)) {
+        s->tlsext_ticket_expected = 0;
+        return 1;
+    }
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_session_ticket)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_server_status_request(SSL *s, WPACKET *pkt, int *al)
+{
+    if (!s->tlsext_status_expected)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+
+#ifndef OPENSSL_NO_NEXTPROTONEG
+int tls_construct_server_next_proto_neg(SSL *s, WPACKET *pkt, int *al)
+{
+    const unsigned char *npa;
+    unsigned int npalen;
+    int ret;
+    int next_proto_neg_seen = s->s3->next_proto_neg_seen;
+
+    s->s3->next_proto_neg_seen = 0;
+    if (!next_proto_neg_seen || s->ctx->next_protos_advertised_cb == NULL)
+        return 1;
+
+    ret = s->ctx->next_protos_advertised_cb(s, &npa, &npalen,
+                                      s->ctx->next_protos_advertised_cb_arg);
+    if (ret == SSL_TLSEXT_ERR_OK) {
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_next_proto_neg)
+                || !WPACKET_sub_memcpy_u16(pkt, npa, npalen)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_NEXT_PROTO_NEG,
+                   ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        s->s3->next_proto_neg_seen = 1;
+    }
+
+    return 1;
+}
+#endif
+
+int tls_construct_server_alpn(SSL *s, WPACKET *pkt, int *al)
+{
+    if (s->s3->alpn_selected == NULL)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt,
+                TLSEXT_TYPE_application_layer_protocol_negotiation)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u8(pkt, s->s3->alpn_selected,
+                                      s->s3->alpn_selected_len)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_ALPN, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+#ifndef OPENSSL_NO_SRTP
+int tls_construct_server_use_srtp(SSL *s, WPACKET *pkt, int *al)
+{
+    if (s->srtp_profile == NULL)
+        return 1;
+        
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_use_srtp)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u16(pkt, 2)
+            || !WPACKET_put_bytes_u16(pkt, s->srtp_profile->id)
+            || !WPACKET_put_bytes_u8(pkt, 0)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_USE_SRTP, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+int tls_construct_server_etm(SSL *s, WPACKET *pkt, int *al)
+{
+    if ((s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC) == 0)
+        return 1;
+
+    /*
+     * Don't use encrypt_then_mac if AEAD or RC4 might want to disable
+     * for other cases too.
+     */
+    if (s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD
+        || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4
+        || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT
+        || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT12) {
+        s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
+        return 1;
+    }
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_encrypt_then_mac)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_ETM, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_server_ems(SSL *s, WPACKET *pkt, int *al)
+{
+    if ((s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) == 0)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
+            || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_EMS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_server_key_share(SSL *s, WPACKET *pkt, int *al)
+{
+    unsigned char *encodedPoint;
+    size_t encoded_pt_len = 0;
+    EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
+
+    if (s->hit)
+        return 1;
+
+    if (ckey == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u16(pkt, s->s3->group_id)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    skey = ssl_generate_pkey(ckey);
+    if (skey == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_SHARE, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    /* Generate encoding of server key */
+    encoded_pt_len = EVP_PKEY_get1_tls_encodedpoint(skey, &encodedPoint);
+    if (encoded_pt_len == 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_SHARE, ERR_R_EC_LIB);
+        EVP_PKEY_free(skey);
+        return 0;
+    }
+
+    if (!WPACKET_sub_memcpy_u16(pkt, encodedPoint, encoded_pt_len)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        EVP_PKEY_free(skey);
+        OPENSSL_free(encodedPoint);
+        return 0;
+    }
+    OPENSSL_free(encodedPoint);
+
+    /* This causes the crypto state to be updated based on the derived keys */
+    s->s3->tmp.pkey = skey;
+    if (ssl_derive(s, skey, ckey, 1) == 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_server_cryptopro_bug(SSL *s, WPACKET *pkt, int *al)
+{
+    const unsigned char cryptopro_ext[36] = {
+        0xfd, 0xe8,         /* 65000 */
+        0x00, 0x20,         /* 32 bytes length */
+        0x30, 0x1e, 0x30, 0x08, 0x06, 0x06, 0x2a, 0x85,
+        0x03, 0x02, 0x02, 0x09, 0x30, 0x08, 0x06, 0x06,
+        0x2a, 0x85, 0x03, 0x02, 0x02, 0x16, 0x30, 0x08,
+        0x06, 0x06, 0x2a, 0x85, 0x03, 0x02, 0x02, 0x17
+    };
+
+    if (((s->s3->tmp.new_cipher->id & 0xFFFF) != 0x80
+         && (s->s3->tmp.new_cipher->id & 0xFFFF) != 0x81)
+            || (SSL_get_options(s) & SSL_OP_CRYPTOPRO_TLSEXT_BUG) == 0)
+        return 1;
+
+    if (!WPACKET_memcpy(pkt, cryptopro_ext, sizeof(cryptopro_ext))) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_CRYPTOPRO_BUG, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}

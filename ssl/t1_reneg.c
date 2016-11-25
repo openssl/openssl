@@ -11,23 +11,6 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
-/* Add the server's renegotiation binding */
-int ssl_add_serverhello_renegotiate_ext(SSL *s, WPACKET *pkt)
-{
-    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_start_sub_packet_u8(pkt)
-            || !WPACKET_memcpy(pkt, s->s3->previous_client_finished,
-                               s->s3->previous_client_finished_len)
-            || !WPACKET_memcpy(pkt, s->s3->previous_server_finished,
-                               s->s3->previous_server_finished_len)
-            || !WPACKET_close(pkt)
-            || !WPACKET_close(pkt))
-        return 0;
-
-    return 1;
-}
-
 /*
  * Parse the server's renegotiation binding and abort if it's not right
  */
