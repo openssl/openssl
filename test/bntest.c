@@ -71,14 +71,6 @@ typedef struct {
     size_t mpi_len;
 } MPITEST;
 
-static int rand_neg(void)
-{
-    static unsigned int neg = 0;
-    static int sign[8] = { 0, 0, 0, 1, 1, 0, 1, 1 };
-
-    return sign[(neg++) % 8];
-}
-
 
 /*
  * Look for |key| in the stanza and return it or NULL if not found.
@@ -170,6 +162,19 @@ err:
     OPENSSL_free(actstr);
     return 0;
 }
+
+
+/*
+ * Return a "random" flag for if a BN should be negated.
+ */
+static int rand_neg(void)
+{
+    static unsigned int neg = 0;
+    static int sign[8] = { 0, 0, 0, 1, 1, 0, 1, 1 };
+
+    return sign[(neg++) % 8];
+}
+
 
 static int test_sub(BN_CTX *ctx)
 {
@@ -886,7 +891,7 @@ static int test_kronecker(BN_CTX *ctx)
     return st;
 }
 
-static int TestSum(STANZA *s, BN_CTX *ctx)
+static int file_sum(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *b = GetBIGNUM(s, "B");
@@ -995,7 +1000,7 @@ err:
     return st;
 }
 
-static int TestLShift1(STANZA *s, BN_CTX *ctx)
+static int file_lshift1(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *lshift1 = GetBIGNUM(s, "LShift1");
@@ -1047,7 +1052,7 @@ err:
     return st;
 }
 
-static int TestLShift(STANZA *s, BN_CTX *ctx)
+static int file_lshift(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *lshift = GetBIGNUM(s, "LShift");
@@ -1072,7 +1077,7 @@ err:
     return st;
 }
 
-static int TestRShift(STANZA *s, BN_CTX *ctx)
+static int file_rshift(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *rshift = GetBIGNUM(s, "RShift");
@@ -1095,7 +1100,7 @@ err:
     return st;
 }
 
-static int TestSquare(STANZA *s, BN_CTX *ctx)
+static int file_square(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *square = GetBIGNUM(s, "Square");
@@ -1161,7 +1166,7 @@ err:
     return st;
 }
 
-static int TestProduct(STANZA *s, BN_CTX *ctx)
+static int file_product(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *b = GetBIGNUM(s, "B");
@@ -1198,7 +1203,7 @@ err:
     return st;
 }
 
-static int TestQuotient(STANZA *s, BN_CTX *ctx)
+static int file_quotient(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *b = GetBIGNUM(s, "B");
@@ -1281,7 +1286,7 @@ err:
     return st;
 }
 
-static int TestModMul(STANZA *s, BN_CTX *ctx)
+static int file_modmul(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *b = GetBIGNUM(s, "B");
@@ -1332,7 +1337,7 @@ err:
     return st;
 }
 
-static int TestModExp(STANZA *s, BN_CTX *ctx)
+static int file_modexp(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *e = GetBIGNUM(s, "E");
@@ -1387,7 +1392,7 @@ err:
     return st;
 }
 
-static int TestExp(STANZA *s, BN_CTX *ctx)
+static int file_exp(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *e = GetBIGNUM(s, "E");
@@ -1411,7 +1416,7 @@ err:
     return st;
 }
 
-static int TestModSqrt(STANZA *s, BN_CTX *ctx)
+static int file_modsqrt(STANZA *s, BN_CTX *ctx)
 {
     BIGNUM *a = GetBIGNUM(s, "A");
     BIGNUM *p = GetBIGNUM(s, "P");
@@ -2089,17 +2094,17 @@ static void clearstanza(STANZA *s)
 }
 
 static const TEST filetests[] = {
-    {"Sum", TestSum},
-    {"LShift1", TestLShift1},
-    {"LShift", TestLShift},
-    {"RShift", TestRShift},
-    {"Square", TestSquare},
-    {"Product", TestProduct},
-    {"Quotient", TestQuotient},
-    {"ModMul", TestModMul},
-    {"ModExp", TestModExp},
-    {"Exp", TestExp},
-    {"ModSqrt", TestModSqrt},
+    {"Sum", file_sum},
+    {"LShift1", file_lshift1},
+    {"LShift", file_lshift},
+    {"RShift", file_rshift},
+    {"Square", file_square},
+    {"Product", file_product},
+    {"Quotient", file_quotient},
+    {"ModMul", file_modmul},
+    {"ModExp", file_modexp},
+    {"Exp", file_exp},
+    {"ModSqrt", file_modsqrt},
 };
 
 static int run(STANZA *s, BN_CTX *ctx)
