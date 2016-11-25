@@ -14,10 +14,14 @@
 typedef struct {
     /* The ID for the extension */
     unsigned int type;
-    int (*server_parse)(SSL *s, PACKET *pkt, int *al);
-    int (*client_parse)(SSL *s, PACKET *pkt, int *al);
-    int (*server_construct)(SSL *s, WPACKET *pkt, int *al);
-    int (*client_construct)(SSL *s, WPACKET *pkt, int *al);
+    /* Parse extension received by server from client */
+    int (*parse_client_ext)(SSL *s, PACKET *pkt, int *al);
+    /* Parse extension received by client from server */
+    int (*parse_server_ext)(SSL *s, PACKET *pkt, int *al);
+    /* Construct extension sent by server */
+    int (*construct_server_ext)(SSL *s, WPACKET *pkt, int *al);
+    /* Construct extension sent by client */
+    int (*construct_client_ext)(SSL *s, WPACKET *pkt, int *al);
     unsigned int context;
 } EXTENSION_DEFINITION;
 
@@ -30,7 +34,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_renegotiate,
         tls_parse_client_renegotiate,
-        NULL,
+        tls_parse_server_renegotiate,
         tls_construct_server_renegotiate,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_SSL3_ALLOWED
@@ -39,11 +43,11 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_server_name,
         tls_parse_client_server_name,
-        NULL,
+        tls_parse_server_server_name,
         tls_construct_server_server_name,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | /*EXT_TLS1_3_ENCRYPTED_EXTENSIONS*/EXT_TLS1_3_SERVER_HELLO
+        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
     },
 #ifndef OPENSSL_NO_SRP
     {
@@ -59,7 +63,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_ec_point_formats,
         tls_parse_client_ec_pt_formats,
-        NULL,
+        tls_parse_server_ec_pt_formats,
         tls_construct_server_ec_pt_formats,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
@@ -71,13 +75,13 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL /* TODO(TLS1.3): Need to add this */,
         NULL,
         EXT_CLIENT_HELLO
-        | /*EXT_TLS1_3_ENCRYPTED_EXTENSIONS*/EXT_TLS1_3_SERVER_HELLO
+        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
     },
 #endif
     {
         TLSEXT_TYPE_session_ticket,
         tls_parse_client_session_ticket,
-        NULL,
+        tls_parse_server_session_ticket,
         tls_construct_server_session_ticket,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
@@ -93,17 +97,17 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_status_request,
         tls_parse_client_status_request,
-        NULL,
+        tls_parse_server_status_request,
         tls_construct_server_status_request,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | /*EXT_TLS1_3_CERTIFICATE*/EXT_TLS1_3_SERVER_HELLO
+        | EXT_TLS1_3_CERTIFICATE
     },
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {
         TLSEXT_TYPE_next_proto_neg,
         tls_parse_client_npn,
-        NULL,
+        tls_parse_server_npn,
         tls_construct_server_next_proto_neg,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
@@ -112,17 +116,17 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_application_layer_protocol_negotiation,
         tls_parse_client_alpn,
-        NULL,
+        tls_parse_server_alpn,
         tls_construct_server_alpn,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | /*EXT_TLS1_3_ENCRYPTED_EXTENSIONS*/EXT_TLS1_3_SERVER_HELLO
+        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
     },
 #ifndef OPENSSL_NO_SRTP
     {
         TLSEXT_TYPE_use_srtp,
         tls_parse_client_use_srtp,
-        NULL,
+        tls_parse_server_use_srtp,
         tls_construct_server_use_srtp,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
@@ -132,11 +136,12 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_encrypt_then_mac,
         tls_parse_client_etm,
-        NULL,
+        tls_parse_server_etm,
         tls_construct_server_etm,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
+#ifndef OPENSSL_NO_CT
     {
         TLSEXT_TYPE_signed_certificate_timestamp,
         /*
@@ -145,16 +150,17 @@ static const EXTENSION_DEFINITION ext_defs[] = {
          * cannot override built in ones.
          */
         NULL,
-        NULL,
+        tls_parse_server_sct,
         NULL,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | /*EXT_TLS1_3_CERTIFICATE*/EXT_TLS1_3_SERVER_HELLO
+        | EXT_TLS1_3_CERTIFICATE
     },
+#endif
     {
         TLSEXT_TYPE_extended_master_secret,
         tls_parse_client_ems,
-        NULL,
+        tls_parse_server_ems,
         tls_construct_server_ems,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
@@ -180,7 +186,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_key_share,
         tls_parse_client_key_share,
-        NULL,
+        tls_parse_server_key_share,
         tls_construct_server_key_share,
         NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_3_SERVER_HELLO
@@ -277,7 +283,7 @@ static int find_extension_definition(SSL *s, unsigned int type,
 
 /*
  * Gather a list of all the extensions from the data in |packet]. |context|
- * tells us which message this extension is for. The raw extension data is
+ * tells us which message this extension is for. Ttls_parse_server_ec_pt_formatshe raw extension data is
  * stored in |*res| with the number of found extensions in |*numfound|. In the
  * event of an error the alert type to use is stored in |*ad|. We don't actually
  * process the content of the extensions yet, except to check their types.
@@ -288,10 +294,7 @@ static int find_extension_definition(SSL *s, unsigned int type,
  * types, and 0 if the extensions contain duplicates, could not be successfully
  * parsed, or an internal error occurred.
  */
-/*
- * TODO(TLS1.3): Refactor ServerHello extension parsing to use this and then
- * remove tls1_check_duplicate_extensions()
- */
+
 int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
                            RAW_EXTENSION **res, size_t *numfound, int *ad)
 {
@@ -376,7 +379,7 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
         int (*parser)(SSL *s, PACKET *pkt, int *al) = NULL;
 
         if (s->tlsext_debug_cb)
-            s->tlsext_debug_cb(s, 0, currext->type,
+            s->tlsext_debug_cb(s, !s->server, currext->type,
                                PACKET_data(&currext->data),
                                PACKET_remaining(&currext->data),
                                s->tlsext_debug_arg);
@@ -389,7 +392,8 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
 
         parser = NULL;
         if (find_extension_definition(s, currext->type, &extdef)) {
-            parser = s->server ? extdef->server_parse : extdef->client_parse;
+            parser = s->server ? extdef->parse_client_ext
+                               : extdef->parse_server_ext;
 
             /* Check if extension is defined for our protocol. If not, skip */
             if ((SSL_IS_DTLS(s)
@@ -480,8 +484,8 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
         if ((ext_defs[loop].context & context) == 0)
             continue;
 
-        construct = s->server ? ext_defs[loop].server_construct
-                              : ext_defs[loop].client_construct;
+        construct = s->server ? ext_defs[loop].construct_server_ext
+                              : ext_defs[loop].construct_client_ext;
 
         /* Check if this extension is defined for our protocol. If not, skip */
         if ((SSL_IS_DTLS(s)
