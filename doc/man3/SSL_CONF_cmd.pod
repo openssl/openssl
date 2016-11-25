@@ -353,6 +353,10 @@ B<UnsafeLegacyServerConnect> permits the use of unsafe legacy renegotiation
 for OpenSSL clients only. Equivalent to B<SSL_OP_LEGACY_SERVER_CONNECT>.
 Set by default.
 
+B<EncryptThenMac>: use encrypt-then-mac extension, enabled by
+default. Inverse of B<SSL_OP_NO_ENCRYPT_THEN_MAC>: that is,
+B<-EncryptThenMac> is the same as setting B<SSL_OP_NO_ENCRYPT_THEN_MAC>.
+
 =item B<VerifyMode>
 
 The B<value> argument is a comma separated list of flags to set.
