@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use Math::BigInt;
 
-my $EXPECTED_FAILURES = 6;
+my $EXPECTED_FAILURES = 0;
 my $failures = 0;
 
 sub bn
@@ -107,22 +107,14 @@ sub evaluate
         my $e = bn($s{'E'});
         return if $exp == $a ** $e;
     } elsif ( defined $s{'ModSqrt'} ) {
-        # ModSqrt * ModSqrt = A mod P
+        # (ModSqrt * ModSqrt) mod P = A mod P
         my $modsqrt = bn($s{'ModSqrt'});
-        $modsqrt->bmul($modsqrt);
         my $a = bn($s{'A'});
         my $p = bn($s{'P'});
-
-        # With OpenSSL's BN, the result of -10 % 3 is -1
-        # while Math::BigInt, the result is 2.
-        # Math::BigInt does something different with a negative modulus,
-        # while OpenSSL's BN and bc treat it like a positive number...
-        $a->babs();
-        $p->babs();
-        $a->bmod($p);
+        $modsqrt->bmul($modsqrt);
         $modsqrt->bmod($p);
+        $a->bmod($p);
         return if $modsqrt == $a;
-        if ($a == $p) {print "equal $p\n"; return;}
     } else {
         print "# Unknown test: ";
     }
@@ -159,6 +151,6 @@ while ( <$IN> ) {
     $stanza{$1} = $2;
 };
 evaluate($l, %stanza) if keys %stanza;
-die "Got $failures, execpted $EXPECTED_FAILURES"
+die "Got $failures, expected $EXPECTED_FAILURES"
     if $infile eq 'bntests.txt' and $failures != $EXPECTED_FAILURES;
 close($IN)

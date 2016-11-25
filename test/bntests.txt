@@ -10214,7 +10214,7 @@ E = 25
 
 # ModSqrt tests.
 #
-# These test vectors satisfy ModSqrt * ModSqrt = A (mod P) with P a prime.
+# These test vectors satisfy (ModSqrt * ModSqrt) mod P = A mod P with P a prime.
 # ModSqrt is in [0, (P-1)/2].
 
 ModSqrt = 1
