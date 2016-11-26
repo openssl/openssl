@@ -2079,7 +2079,6 @@ __owur  int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
 
 void ssl_set_default_md(SSL *s);
 __owur int tls1_set_server_sigalgs(SSL *s);
-__owur int ssl_check_clienthello_tlsext_late(SSL *s, int *al);
 __owur int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt);
 __owur RAW_EXTENSION *tls_get_extension_by_type(RAW_EXTENSION *exts,
                                                 size_t numexts,
