@@ -144,7 +144,7 @@ while ( <$IN> ) {
         next;
     }
     # Parse 'key = value'
-    if ( ! /([^\s]*)\s*=\s*(.*)/ ) {
+    if ( ! /\s*([^\s]*)\s*=\s*(.*)\s*/ ) {
         print "Skipping $_\n";
         next;
     }
