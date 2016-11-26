@@ -1062,24 +1062,6 @@ int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
     return 1;
 }
 
-/*
- * Parse the extensions in the ClientHello that were collected earlier. Returns
- * 1 for success or 0 for failure.
- */
-static int tls_parse_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello)
-{
-    int al = -1;
-
-
-
-    if (tls_scan_clienthello_tlsext(s, hello, &al) <= 0) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
-        return 0;
-    }
-
-    return 1;
-}
-
 #ifndef OPENSSL_NO_EC
 /*-
  * ssl_check_for_safari attempts to fingerprint Safari using OS X
@@ -1525,9 +1507,11 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 #endif                          /* !OPENSSL_NO_EC */
 
     /* TLS extensions */
-    if (!tls_parse_clienthello_tlsext(s, &clienthello)) {
+    if (!tls_parse_all_extensions(s, EXT_CLIENT_HELLO,
+                                  clienthello.pre_proc_exts,
+                                  clienthello.num_extensions, &al)) {
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_PARSE_TLSEXT);
-        goto err;
+        goto f_err;
     }
 
     /* Check we've got a key_share for TLSv1.3 */
@@ -1711,6 +1695,54 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
+/*
+ * Call the status request callback if needed. Upon success, returns 1.
+ * Upon failure, returns 0 and sets |al| to the appropriate fatal alert.
+ */
+static int tls_handle_status_request(SSL *s, int *al)
+{
+    s->tlsext_status_expected = 0;
+
+    /*
+     * If status request then ask callback what to do. Note: this must be
+     * called after servername callbacks in case the certificate has changed,
+     * and must be called after the cipher has been chosen because this may
+     * influence which certificate is sent
+     */
+    if ((s->tlsext_status_type != -1) && s->ctx && s->ctx->tlsext_status_cb) {
+        int ret;
+        CERT_PKEY *certpkey;
+        certpkey = ssl_get_server_send_pkey(s);
+        /* If no certificate can't return certificate status */
+        if (certpkey != NULL) {
+            /*
+             * Set current certificate to one we will use so SSL_get_certificate
+             * et al can pick it up.
+             */
+            s->cert->key = certpkey;
+            ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+            switch (ret) {
+                /* We don't want to send a status request response */
+            case SSL_TLSEXT_ERR_NOACK:
+                s->tlsext_status_expected = 0;
+                break;
+                /* status request response should be sent */
+            case SSL_TLSEXT_ERR_OK:
+                if (s->tlsext_ocsp_resp)
+                    s->tlsext_status_expected = 1;
+                break;
+                /* something bad happened */
+            case SSL_TLSEXT_ERR_ALERT_FATAL:
+            default:
+                *al = SSL_AD_INTERNAL_ERROR;
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
 WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 {
     int al = SSL_AD_HANDSHAKE_FAILURE;
@@ -1744,8 +1776,10 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
             s->s3->tmp.new_cipher = cipher;
             /* check whether we should disable session resumption */
             if (s->not_resumable_session_cb != NULL)
-                s->session->not_resumable = s->not_resumable_session_cb(s,
-                                                                        ((cipher->algorithm_mkey & (SSL_kDHE | SSL_kECDHE)) != 0));
+                s->session->not_resumable =
+                    s->not_resumable_session_cb(s, ((cipher->algorithm_mkey
+                                                    & (SSL_kDHE | SSL_kECDHE))
+                                                   != 0));
             if (s->session->not_resumable)
                 /* do not send a session ticket */
                 s->tlsext_ticket_expected = 0;
@@ -1773,13 +1807,14 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
          * s->s3->tmp.new_cipher- the new cipher to use.
          */
 
-        /* Handles TLS extensions that we couldn't check earlier */
-        if (s->version >= SSL3_VERSION) {
-            if (!ssl_check_clienthello_tlsext_late(s, &al)) {
-                SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
-                       SSL_R_CLIENTHELLO_TLSEXT);
-                goto f_err;
-            }
+        /*
+         * Call status_request callback if needed. Has to be done after the
+         * certificate callbacks etc above.
+         */
+        if (!tls_handle_status_request(s, &al)) {
+            SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
+                   SSL_R_CLIENTHELLO_TLSEXT);
+            goto f_err;
         }
 
         wst = WORK_MORE_B;
