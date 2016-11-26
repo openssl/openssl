@@ -101,7 +101,7 @@ static int parsedecbn(BIGNUM **out, const char *in)
     return BN_dec2bn(out, in);
 }
 
-static BIGNUM *GetBIGNUM(STANZA *s, const char *attribute)
+static BIGNUM *getBN(STANZA *s, const char *attribute)
 {
     const char *hex;
     BIGNUM *ret = NULL;
@@ -119,9 +119,9 @@ static BIGNUM *GetBIGNUM(STANZA *s, const char *attribute)
     return ret;
 }
 
-static int GetInt(STANZA *s, int *out, const char *attribute)
+static int getint(STANZA *s, int *out, const char *attribute)
 {
-    BIGNUM *ret = GetBIGNUM(s, attribute);
+    BIGNUM *ret = getBN(s, attribute);
     BN_ULONG word;
     int st = 0;
 
@@ -138,8 +138,7 @@ err:
     return st;
 }
 
-static int ExpectBIGNUMsEqual(const char *op,
-                              const BIGNUM *expected, const BIGNUM *actual)
+static int equalBN(const char *op, const BIGNUM *expected, const BIGNUM *actual)
 {
     char *exstr = NULL;
     char *actstr = NULL;
@@ -885,9 +884,9 @@ static int test_kronecker()
 
 static int file_sum(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *b = GetBIGNUM(s, "B");
-    BIGNUM *sum = GetBIGNUM(s, "Sum");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *b = getBN(s, "B");
+    BIGNUM *sum = getBN(s, "Sum");
     BIGNUM *ret = BN_new();
     BN_ULONG b_word;
     int st = 0;
@@ -896,11 +895,11 @@ static int file_sum(STANZA *s)
         goto err;
 
     if (!BN_add(ret, a, b)
-            || !ExpectBIGNUMsEqual("A + B", sum, ret)
+            || !equalBN("A + B", sum, ret)
             || !BN_sub(ret, sum, a)
-            || !ExpectBIGNUMsEqual("Sum - A", b, ret)
+            || !equalBN("Sum - A", b, ret)
             || !BN_sub(ret, sum, b)
-            || !ExpectBIGNUMsEqual("Sum - B", a, ret))
+            || !equalBN("Sum - B", a, ret))
         goto err;
 
     /*
@@ -910,22 +909,22 @@ static int file_sum(STANZA *s)
      */
     if (!BN_copy(ret, a)
             || !BN_add(ret, ret, b)
-            || !ExpectBIGNUMsEqual("A + B (r is a)", sum, ret)
+            || !equalBN("A + B (r is a)", sum, ret)
             || !BN_copy(ret, b)
             || !BN_add(ret, a, ret)
-            || !ExpectBIGNUMsEqual("A + B (r is b)", sum, ret)
+            || !equalBN("A + B (r is b)", sum, ret)
             || !BN_copy(ret, sum)
             || !BN_sub(ret, ret, a)
-            || !ExpectBIGNUMsEqual("Sum - A (r is a)", b, ret)
+            || !equalBN("Sum - A (r is a)", b, ret)
             || !BN_copy(ret, a)
             || !BN_sub(ret, sum, ret)
-            || !ExpectBIGNUMsEqual("Sum - A (r is b)", b, ret)
+            || !equalBN("Sum - A (r is b)", b, ret)
             || !BN_copy(ret, sum)
             || !BN_sub(ret, ret, b)
-            || !ExpectBIGNUMsEqual("Sum - B (r is a)", a, ret)
+            || !equalBN("Sum - B (r is a)", a, ret)
             || !BN_copy(ret, b)
             || !BN_sub(ret, sum, ret)
-            || !ExpectBIGNUMsEqual("Sum - B (r is b)", a, ret))
+            || !equalBN("Sum - B (r is b)", a, ret))
         goto err;
 
     /*
@@ -937,11 +936,11 @@ static int file_sum(STANZA *s)
      */
     if (!BN_is_negative(a) && !BN_is_negative(b) && BN_cmp(a, b) >= 0) {
         if (!BN_uadd(ret, a, b)
-                || !ExpectBIGNUMsEqual("A +u B", sum, ret)
+                || !equalBN("A +u B", sum, ret)
                 || !BN_usub(ret, sum, a)
-                || !ExpectBIGNUMsEqual("Sum -u A", b, ret)
+                || !equalBN("Sum -u A", b, ret)
                 || !BN_usub(ret, sum, b)
-                || !ExpectBIGNUMsEqual("Sum -u B", a, ret))
+                || !equalBN("Sum -u B", a, ret))
             goto err;
         /*
          * Test that the functions work when |r| and |a| point to the same
@@ -950,22 +949,22 @@ static int file_sum(STANZA *s)
          */
         if (!BN_copy(ret, a)
                 || !BN_uadd(ret, ret, b)
-                || !ExpectBIGNUMsEqual("A +u B (r is a)", sum, ret)
+                || !equalBN("A +u B (r is a)", sum, ret)
                 || !BN_copy(ret, b)
                 || !BN_uadd(ret, a, ret)
-                || !ExpectBIGNUMsEqual("A +u B (r is b)", sum, ret)
+                || !equalBN("A +u B (r is b)", sum, ret)
                 || !BN_copy(ret, sum)
                 || !BN_usub(ret, ret, a)
-                || !ExpectBIGNUMsEqual("Sum -u A (r is a)", b, ret)
+                || !equalBN("Sum -u A (r is a)", b, ret)
                 || !BN_copy(ret, a)
                 || !BN_usub(ret, sum, ret)
-                || !ExpectBIGNUMsEqual("Sum -u A (r is b)", b, ret)
+                || !equalBN("Sum -u A (r is b)", b, ret)
                 || !BN_copy(ret, sum)
                 || !BN_usub(ret, ret, b)
-                || !ExpectBIGNUMsEqual("Sum -u B (r is a)", a, ret)
+                || !equalBN("Sum -u B (r is a)", a, ret)
                 || !BN_copy(ret, b)
                 || !BN_usub(ret, sum, ret)
-                || !ExpectBIGNUMsEqual("Sum -u B (r is b)", a, ret))
+                || !equalBN("Sum -u B (r is b)", a, ret))
             goto err;
     }
 
@@ -976,10 +975,10 @@ static int file_sum(STANZA *s)
     if (!BN_is_negative(b) && b_word != (BN_ULONG)-1) {
         if (!BN_copy(ret, a)
                 || !BN_add_word(ret, b_word)
-                || !ExpectBIGNUMsEqual("A + B (word)", sum, ret)
+                || !equalBN("A + B (word)", sum, ret)
                 || !BN_copy(ret, sum)
                 || !BN_sub_word(ret, b_word)
-                || !ExpectBIGNUMsEqual("Sum - B (word)", a, ret))
+                || !equalBN("Sum - B (word)", a, ret))
             goto err;
     }
     st = 1;
@@ -994,8 +993,8 @@ err:
 
 static int file_lshift1(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *lshift1 = GetBIGNUM(s, "LShift1");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *lshift1 = getBN(s, "LShift1");
     BIGNUM *zero = BN_new();
     BIGNUM *ret = BN_new();
     BIGNUM *two = BN_new();
@@ -1010,26 +1009,26 @@ static int file_lshift1(STANZA *s)
 
     if (!BN_set_word(two, 2)
             || !BN_add(ret, a, a)
-            || !ExpectBIGNUMsEqual("A + A", lshift1, ret)
+            || !equalBN("A + A", lshift1, ret)
             || !BN_mul(ret, a, two, ctx)
-            || !ExpectBIGNUMsEqual("A * 2", lshift1, ret)
+            || !equalBN("A * 2", lshift1, ret)
             || !BN_div(ret, remainder, lshift1, two, ctx)
-            || !ExpectBIGNUMsEqual("LShift1 / 2", a, ret)
-            || !ExpectBIGNUMsEqual("LShift1 % 2", zero, remainder)
+            || !equalBN("LShift1 / 2", a, ret)
+            || !equalBN("LShift1 % 2", zero, remainder)
             || !BN_lshift1(ret, a)
-            || !ExpectBIGNUMsEqual("A << 1", lshift1, ret)
+            || !equalBN("A << 1", lshift1, ret)
             || !BN_rshift1(ret, lshift1)
-            || !ExpectBIGNUMsEqual("LShift >> 1", a, ret)
+            || !equalBN("LShift >> 1", a, ret)
             || !BN_rshift1(ret, lshift1)
-            || !ExpectBIGNUMsEqual("LShift >> 1", a, ret))
+            || !equalBN("LShift >> 1", a, ret))
         goto err;
 
     /* Set the LSB to 1 and test rshift1 again. */
     if (!BN_set_bit(lshift1, 0)
             || !BN_div(ret, NULL /* rem */ , lshift1, two, ctx)
-            || !ExpectBIGNUMsEqual("(LShift1 | 1) / 2", a, ret)
+            || !equalBN("(LShift1 | 1) / 2", a, ret)
             || !BN_rshift1(ret, lshift1)
-            || !ExpectBIGNUMsEqual("(LShift | 1) >> 1", a, ret))
+            || !equalBN("(LShift | 1) >> 1", a, ret))
         goto err;
 
     st = 1;
@@ -1046,19 +1045,19 @@ err:
 
 static int file_lshift(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *lshift = GetBIGNUM(s, "LShift");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *lshift = getBN(s, "LShift");
     BIGNUM *ret = BN_new();
     int n = 0;
     int st = 0;
 
-    if (a == NULL || lshift == NULL || ret == NULL || !GetInt(s, &n, "N"))
+    if (a == NULL || lshift == NULL || ret == NULL || !getint(s, &n, "N"))
         goto err;
 
     if (!BN_lshift(ret, a, n)
-            || !ExpectBIGNUMsEqual("A << N", lshift, ret)
+            || !equalBN("A << N", lshift, ret)
             || !BN_rshift(ret, lshift, n)
-            || !ExpectBIGNUMsEqual("A >> N", a, ret))
+            || !equalBN("A >> N", a, ret))
         goto err;
 
     st = 1;
@@ -1071,17 +1070,17 @@ err:
 
 static int file_rshift(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *rshift = GetBIGNUM(s, "RShift");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *rshift = getBN(s, "RShift");
     BIGNUM *ret = BN_new();
     int n = 0;
     int st = 0;
 
-    if (a == NULL || rshift == NULL || ret == NULL || !GetInt(s, &n, "N"))
+    if (a == NULL || rshift == NULL || ret == NULL || !getint(s, &n, "N"))
         goto err;
 
     if (!BN_rshift(ret, a, n)
-            || !ExpectBIGNUMsEqual("A >> N", rshift, ret))
+            || !equalBN("A >> N", rshift, ret))
         goto err;
 
     st = 1;
@@ -1094,8 +1093,8 @@ err:
 
 static int file_square(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *square = GetBIGNUM(s, "Square");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *square = getBN(s, "Square");
     BIGNUM *zero = BN_new();
     BIGNUM *ret = BN_new();
     BIGNUM *remainder = BN_new();
@@ -1109,18 +1108,18 @@ static int file_square(STANZA *s)
     BN_zero(zero);
 
     if (!BN_sqr(ret, a, ctx)
-            || !ExpectBIGNUMsEqual("A^2", square, ret)
+            || !equalBN("A^2", square, ret)
             || !BN_mul(ret, a, a, ctx)
-            || !ExpectBIGNUMsEqual("A * A", square, ret)
+            || !equalBN("A * A", square, ret)
             || !BN_div(ret, remainder, square, a, ctx)
-            || !ExpectBIGNUMsEqual("Square / A", a, ret)
-            || !ExpectBIGNUMsEqual("Square % A", zero, remainder))
+            || !equalBN("Square / A", a, ret)
+            || !equalBN("Square % A", zero, remainder))
         goto err;
 
 #if HAVE_BN_SQRT
     BN_set_negative(a, 0);
     if (!BN_sqrt(ret, square, ctx)
-            || !ExpectBIGNUMsEqual("sqrt(Square)", a, ret))
+            || !equalBN("sqrt(Square)", a, ret))
         goto err;
 
     /* BN_sqrt should fail on non-squares and negative numbers. */
@@ -1160,9 +1159,9 @@ err:
 
 static int file_product(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *b = GetBIGNUM(s, "B");
-    BIGNUM *product = GetBIGNUM(s, "Product");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *b = getBN(s, "B");
+    BIGNUM *product = getBN(s, "Product");
     BIGNUM *ret = BN_new();
     BIGNUM *remainder = BN_new();
     BIGNUM *zero = BN_new();
@@ -1175,13 +1174,13 @@ static int file_product(STANZA *s)
     BN_zero(zero);
 
     if (!BN_mul(ret, a, b, ctx)
-            || !ExpectBIGNUMsEqual("A * B", product, ret)
+            || !equalBN("A * B", product, ret)
             || !BN_div(ret, remainder, product, a, ctx)
-            || !ExpectBIGNUMsEqual("Product / A", b, ret)
-            || !ExpectBIGNUMsEqual("Product % A", zero, remainder)
+            || !equalBN("Product / A", b, ret)
+            || !equalBN("Product % A", zero, remainder)
             || !BN_div(ret, remainder, product, b, ctx)
-            || !ExpectBIGNUMsEqual("Product / B", a, ret)
-            || !ExpectBIGNUMsEqual("Product % B", zero, remainder))
+            || !equalBN("Product / B", a, ret)
+            || !equalBN("Product % B", zero, remainder))
         goto err;
 
     st = 1;
@@ -1197,10 +1196,10 @@ err:
 
 static int file_quotient(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *b = GetBIGNUM(s, "B");
-    BIGNUM *quotient = GetBIGNUM(s, "Quotient");
-    BIGNUM *remainder = GetBIGNUM(s, "Remainder");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *b = getBN(s, "B");
+    BIGNUM *quotient = getBN(s, "Quotient");
+    BIGNUM *remainder = getBN(s, "Remainder");
     BIGNUM *ret = BN_new();
     BIGNUM *ret2 = BN_new();
     BIGNUM *nnmod = BN_new();
@@ -1212,11 +1211,11 @@ static int file_quotient(STANZA *s)
         goto err;
 
     if (!BN_div(ret, ret2, a, b, ctx)
-            || !ExpectBIGNUMsEqual("A / B", quotient, ret)
-            || !ExpectBIGNUMsEqual("A % B", remainder, ret2)
+            || !equalBN("A / B", quotient, ret)
+            || !equalBN("A % B", remainder, ret2)
             || !BN_mul(ret, quotient, b, ctx)
             || !BN_add(ret, ret, remainder)
-            || !ExpectBIGNUMsEqual("Quotient * B + Remainder", a, ret))
+            || !equalBN("Quotient * B + Remainder", a, ret))
         goto err;
 
     /*
@@ -1241,7 +1240,7 @@ static int file_quotient(STANZA *s)
 #endif
             goto err;
         }
-        if (!ExpectBIGNUMsEqual ("A / B (word)", quotient, ret))
+        if (!equalBN ("A / B (word)", quotient, ret))
             goto err;
 
         ret_word = BN_mod_word(a, b_word);
@@ -1262,7 +1261,7 @@ static int file_quotient(STANZA *s)
         if (!BN_copy(nnmod, remainder)
                 || (BN_is_negative(nnmod) && !BN_add(nnmod, nnmod, b))
                 || !BN_nnmod(ret, a, b, ctx)
-                || !ExpectBIGNUMsEqual("A % B (non-negative)", nnmod, ret))
+                || !equalBN("A % B (non-negative)", nnmod, ret))
             goto err;
     }
 
@@ -1280,10 +1279,10 @@ err:
 
 static int file_modmul(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *b = GetBIGNUM(s, "B");
-    BIGNUM *m = GetBIGNUM(s, "M");
-    BIGNUM *mod_mul = GetBIGNUM(s, "ModMul");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *b = getBN(s, "B");
+    BIGNUM *m = getBN(s, "M");
+    BIGNUM *mod_mul = getBN(s, "ModMul");
     BIGNUM *ret = BN_new();
     int st = 0;
 
@@ -1291,7 +1290,7 @@ static int file_modmul(STANZA *s)
         goto err;
 
     if (!BN_mod_mul(ret, a, b, m, ctx)
-            || !ExpectBIGNUMsEqual("A * B (mod M)", mod_mul, ret))
+            || !equalBN("A * B (mod M)", mod_mul, ret))
         goto err;
 
     if (BN_is_odd(m)) {
@@ -1307,7 +1306,7 @@ static int file_modmul(STANZA *s)
                 || !BN_to_montgomery(b_tmp, b_tmp, mont, ctx)
                 || !BN_mod_mul_montgomery(ret, a_tmp, b_tmp, mont, ctx)
                 || !BN_from_montgomery(ret, ret, mont, ctx)
-                || !ExpectBIGNUMsEqual("A * B (mod M) (mont)", mod_mul, ret)) {
+                || !equalBN("A * B (mod M) (mont)", mod_mul, ret)) {
             st = 0;
         } else {
             st = 1;
@@ -1331,10 +1330,10 @@ err:
 
 static int file_modexp(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *e = GetBIGNUM(s, "E");
-    BIGNUM *m = GetBIGNUM(s, "M");
-    BIGNUM *mod_exp = GetBIGNUM(s, "ModExp");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *e = getBN(s, "E");
+    BIGNUM *m = getBN(s, "M");
+    BIGNUM *mod_exp = getBN(s, "ModExp");
     BIGNUM *ret = BN_new();
     BIGNUM *b = NULL, *c = NULL, *d = BN_new();
     int st = 0;
@@ -1343,14 +1342,14 @@ static int file_modexp(STANZA *s)
         goto err;
 
     if (!BN_mod_exp(ret, a, e, m, ctx)
-            || !ExpectBIGNUMsEqual("A ^ E (mod M)", mod_exp, ret))
+            || !equalBN("A ^ E (mod M)", mod_exp, ret))
         goto err;
 
     if (BN_is_odd(m)) {
         if (!BN_mod_exp_mont(ret, a, e, m, ctx, NULL)
-                || !ExpectBIGNUMsEqual("A ^ E (mod M) (mont)", mod_exp, ret)
+                || !equalBN("A ^ E (mod M) (mont)", mod_exp, ret)
                 || !BN_mod_exp_mont_consttime(ret, a, e, m, ctx, NULL)
-                || !ExpectBIGNUMsEqual("A ^ E (mod M) (mont const", mod_exp, ret))
+                || !equalBN("A ^ E (mod M) (mont const", mod_exp, ret))
             goto err;
     }
 
@@ -1386,9 +1385,9 @@ err:
 
 static int file_exp(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *e = GetBIGNUM(s, "E");
-    BIGNUM *exp = GetBIGNUM(s, "Exp");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *e = getBN(s, "E");
+    BIGNUM *exp = getBN(s, "Exp");
     BIGNUM *ret = BN_new();
     int st = 0;
 
@@ -1396,7 +1395,7 @@ static int file_exp(STANZA *s)
         goto err;
 
     if (!BN_exp(ret, a, e, ctx)
-            || !ExpectBIGNUMsEqual("A ^ E", exp, ret))
+            || !equalBN("A ^ E", exp, ret))
         goto err;
 
     st = 1;
@@ -1410,9 +1409,9 @@ err:
 
 static int file_modsqrt(STANZA *s)
 {
-    BIGNUM *a = GetBIGNUM(s, "A");
-    BIGNUM *p = GetBIGNUM(s, "P");
-    BIGNUM *mod_sqrt = GetBIGNUM(s, "ModSqrt");
+    BIGNUM *a = getBN(s, "A");
+    BIGNUM *p = getBN(s, "P");
+    BIGNUM *mod_sqrt = getBN(s, "ModSqrt");
     BIGNUM *ret = BN_new();
     BIGNUM *ret2 = BN_new();
     int st = 0;
@@ -1426,7 +1425,7 @@ static int file_modsqrt(STANZA *s)
         goto err;
 
     if (BN_cmp(ret2, mod_sqrt) != 0
-            && !ExpectBIGNUMsEqual("sqrt(A) (mod P)", mod_sqrt, ret))
+            && !equalBN("sqrt(A) (mod P)", mod_sqrt, ret))
         goto err;
 
     st = 1;
