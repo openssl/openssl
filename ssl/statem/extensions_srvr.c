@@ -673,43 +673,6 @@ int tls_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
 }
 
 /*
- * Process the ALPN extension in a ClientHello.
- * al: a pointer to the alert value to send in the event of a failure.
- * returns 1 on success, 0 on error.
- */
-static int tls1_alpn_handle_client_hello_late(SSL *s, int *al)
-{
-    const unsigned char *selected = NULL;
-    unsigned char selected_len = 0;
-
-    if (s->ctx->alpn_select_cb != NULL && s->s3->alpn_proposed != NULL) {
-        int r = s->ctx->alpn_select_cb(s, &selected, &selected_len,
-                                       s->s3->alpn_proposed,
-                                       (unsigned int)s->s3->alpn_proposed_len,
-                                       s->ctx->alpn_select_cb_arg);
-
-        if (r == SSL_TLSEXT_ERR_OK) {
-            OPENSSL_free(s->s3->alpn_selected);
-            s->s3->alpn_selected = OPENSSL_memdup(selected, selected_len);
-            if (s->s3->alpn_selected == NULL) {
-                *al = SSL_AD_INTERNAL_ERROR;
-                return 0;
-            }
-            s->s3->alpn_selected_len = selected_len;
-#ifndef OPENSSL_NO_NEXTPROTONEG
-            /* ALPN takes precedence over NPN. */
-            s->s3->next_proto_neg_seen = 0;
-#endif
-        } else {
-            *al = SSL_AD_NO_APPLICATION_PROTOCOL;
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
-/*
  * Upon success, returns 1.
  * Upon failure, returns 0 and sets |al| to the appropriate fatal alert.
  */
@@ -752,10 +715,6 @@ int ssl_check_clienthello_tlsext_late(SSL *s, int *al)
                 return 0;
             }
         }
-    }
-
-    if (!tls1_alpn_handle_client_hello_late(s, al)) {
-        return 0;
     }
 
     return 1;
