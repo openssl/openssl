@@ -521,7 +521,13 @@ int tls_parse_client_key_share(SSL *s, PACKET *pkt, int *al)
         return 0;
     }
 
-    /* Get the clients list of supported curves */
+    /*
+     * Get the clients list of supported curves. Note: We rely on the fact
+     * extension parsing happens in order of type. supported_groups has a lower
+     * type than key_share so will have been processed first.
+     * TODO(TLS1.3): We should validate that we actually received
+     * supported_groups!
+     */
     if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PARSE_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
@@ -644,78 +650,6 @@ int tls_parse_client_ems(SSL *s, PACKET *pkt, int *al)
     }
 
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
-
-    return 1;
-}
-
-/*
- * Process all remaining ClientHello extensions that we collected earlier and
- * haven't already processed.
- *
- * Behaviour upon resumption is extension-specific. If the extension has no
- * effect during resumption, it is parsed (to verify its format) but otherwise
- * ignored. Returns 1 on success and 0 on failure. Upon failure, sets |al| to
- * the appropriate alert.
- */
-int tls_scan_clienthello_tlsext(SSL *s, CLIENTHELLO_MSG *hello, int *al)
-{
-    /*
-     * We process the supported_groups extension first so that is done before
-     * we get to key_share which needs to use the information in it.
-     */
-    if (!tls_parse_extension(s, TLSEXT_TYPE_supported_groups, EXT_CLIENT_HELLO,
-                             hello->pre_proc_exts, hello->num_extensions, al)) {
-        return 0;
-    }
-
-    return tls_parse_all_extensions(s, EXT_CLIENT_HELLO, hello->pre_proc_exts,
-                                    hello->num_extensions, al);
-}
-
-/*
- * Upon success, returns 1.
- * Upon failure, returns 0 and sets |al| to the appropriate fatal alert.
- */
-int ssl_check_clienthello_tlsext_late(SSL *s, int *al)
-{
-    s->tlsext_status_expected = 0;
-
-    /*
-     * If status request then ask callback what to do. Note: this must be
-     * called after servername callbacks in case the certificate has changed,
-     * and must be called after the cipher has been chosen because this may
-     * influence which certificate is sent
-     */
-    if ((s->tlsext_status_type != -1) && s->ctx && s->ctx->tlsext_status_cb) {
-        int ret;
-        CERT_PKEY *certpkey;
-        certpkey = ssl_get_server_send_pkey(s);
-        /* If no certificate can't return certificate status */
-        if (certpkey != NULL) {
-            /*
-             * Set current certificate to one we will use so SSL_get_certificate
-             * et al can pick it up.
-             */
-            s->cert->key = certpkey;
-            ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
-            switch (ret) {
-                /* We don't want to send a status request response */
-            case SSL_TLSEXT_ERR_NOACK:
-                s->tlsext_status_expected = 0;
-                break;
-                /* status request response should be sent */
-            case SSL_TLSEXT_ERR_OK:
-                if (s->tlsext_ocsp_resp)
-                    s->tlsext_status_expected = 1;
-                break;
-                /* something bad happened */
-            case SSL_TLSEXT_ERR_ALERT_FATAL:
-            default:
-                *al = SSL_AD_INTERNAL_ERROR;
-                return 0;
-            }
-        }
-    }
 
     return 1;
 }
