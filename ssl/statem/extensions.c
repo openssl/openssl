@@ -21,6 +21,7 @@ static int tls_ext_init_status_request(SSL *s, unsigned int context);
 static int tls_ext_init_npn(SSL *s, unsigned int context);
 #endif
 static int tls_ext_init_alpn(SSL *s, unsigned int context);
+static int tls_ext_final_alpn(SSL *s, unsigned int context, int sent, int *al);
 static int tls_ext_init_sig_algs(SSL *s, unsigned int context);
 #ifndef OPENSSL_NO_SRP
 static int tls_ext_init_srp(SSL *s, unsigned int context);
@@ -163,13 +164,17 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
 #endif
     {
+        /*
+         * Must appear in this list after server_name so that finalisation
+         * happens after server_name callbacks
+         */
         TLSEXT_TYPE_application_layer_protocol_negotiation,
         tls_ext_init_alpn,
         tls_parse_client_alpn,
         tls_parse_server_alpn,
         tls_construct_server_alpn,
         tls_construct_client_alpn,
-        NULL,
+        tls_ext_final_alpn,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
         | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
     },
@@ -782,6 +787,48 @@ static int tls_ext_init_alpn(SSL *s, unsigned int context)
         OPENSSL_free(s->s3->alpn_proposed);
         s->s3->alpn_proposed = NULL;
         s->s3->alpn_proposed_len = 0;
+    }
+
+    return 1;
+}
+
+
+
+/*
+ * Process the ALPN extension in a ClientHello.
+ * al: a pointer to the alert value to send in the event of a failure.
+ * returns 1 on success, 0 on error.
+ */
+static int tls_ext_final_alpn(SSL *s, unsigned int context, int sent, int *al)
+{
+    const unsigned char *selected = NULL;
+    unsigned char selected_len = 0;
+
+    if (!s->server)
+        return 1;
+
+    if (s->ctx->alpn_select_cb != NULL && s->s3->alpn_proposed != NULL) {
+        int r = s->ctx->alpn_select_cb(s, &selected, &selected_len,
+                                       s->s3->alpn_proposed,
+                                       (unsigned int)s->s3->alpn_proposed_len,
+                                       s->ctx->alpn_select_cb_arg);
+
+        if (r == SSL_TLSEXT_ERR_OK) {
+            OPENSSL_free(s->s3->alpn_selected);
+            s->s3->alpn_selected = OPENSSL_memdup(selected, selected_len);
+            if (s->s3->alpn_selected == NULL) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                return 0;
+            }
+            s->s3->alpn_selected_len = selected_len;
+#ifndef OPENSSL_NO_NEXTPROTONEG
+            /* ALPN takes precedence over NPN. */
+            s->s3->next_proto_neg_seen = 0;
+#endif
+        } else {
+            *al = SSL_AD_NO_APPLICATION_PROTOCOL;
+            return 0;
+        }
     }
 
     return 1;
