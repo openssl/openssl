@@ -19,6 +19,9 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_STORE,0,reason)
 
 static ERR_STRING_DATA STORE_str_functs[] = {
+    {ERR_FUNC(STORE_F_FILE_GET_PASS), "file_get_pass"},
+    {ERR_FUNC(STORE_F_FILE_LOAD), "file_load"},
+    {ERR_FUNC(STORE_F_FILE_OPEN), "file_open"},
     {ERR_FUNC(STORE_F_STORE_GET0_LOADER_INT), "store_get0_loader_int"},
     {ERR_FUNC(STORE_F_STORE_INFO_GET1_CERT), "STORE_INFO_get1_CERT"},
     {ERR_FUNC(STORE_F_STORE_INFO_GET1_CRL), "STORE_INFO_get1_CRL"},
@@ -43,17 +46,26 @@ static ERR_STRING_DATA STORE_str_functs[] = {
      "store_register_loader_int"},
     {ERR_FUNC(STORE_F_STORE_UNREGISTER_LOADER_INT),
      "store_unregister_loader_int"},
+    {ERR_FUNC(STORE_F_TRY_DECODE_PARAMS), "try_decode_params"},
     {0, NULL}
 };
 
 static ERR_STRING_DATA STORE_str_reasons[] = {
+    {ERR_REASON(STORE_R_AMBIGUOUS_CONTENT_TYPE), "ambiguous content type"},
     {ERR_REASON(STORE_R_INVALID_SCHEME), "invalid scheme"},
     {ERR_REASON(STORE_R_NOT_A_CERTIFICATE), "not a certificate"},
     {ERR_REASON(STORE_R_NOT_A_CRL), "not a crl"},
     {ERR_REASON(STORE_R_NOT_A_KEY), "not a key"},
     {ERR_REASON(STORE_R_NOT_A_NAME), "not a name"},
     {ERR_REASON(STORE_R_NOT_PARAMETERS), "not parameters"},
+    {ERR_REASON(STORE_R_PATH_MUST_BE_ABSOLUTE), "path must be absolute"},
+    {ERR_REASON(STORE_R_UI_PROCESS_INTERRUPTED_OR_CANCELLED),
+     "ui process interrupted or cancelled"},
     {ERR_REASON(STORE_R_UNREGISTERED_SCHEME), "unregistered scheme"},
+    {ERR_REASON(STORE_R_UNSUPPORTED_CONTENT_TYPE),
+     "unsupported content type"},
+    {ERR_REASON(STORE_R_URI_AUTHORITY_UNSUPPORED),
+     "uri authority unsuppored"},
     {0, NULL}
 };
 

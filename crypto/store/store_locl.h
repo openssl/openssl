@@ -66,3 +66,4 @@ void destroy_loaders_int(void);
  */
 
 int store_init_once(void);
+int store_file_loader_init(void);
