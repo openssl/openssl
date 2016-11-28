@@ -14,6 +14,10 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA OSSL_STORE_str_functs[] = {
+    {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_GET_PASS, 0),
+     "file_get_pass"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_LOAD, 0), "file_load"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_OPEN, 0), "file_open"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT, 0),
      "ossl_store_get0_loader_int"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_OSSL_STORE_INFO_GET1_CERT, 0),
@@ -51,10 +55,14 @@ static const ERR_STRING_DATA OSSL_STORE_str_functs[] = {
      "ossl_store_register_loader_int"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_OSSL_STORE_UNREGISTER_LOADER_INT, 0),
      "ossl_store_unregister_loader_int"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_TRY_DECODE_PARAMS, 0),
+     "try_decode_params"},
     {0, NULL}
 };
 
 static const ERR_STRING_DATA OSSL_STORE_str_reasons[] = {
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE),
+    "ambiguous content type"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_INVALID_SCHEME),
     "invalid scheme"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NOT_A_CERTIFICATE),
@@ -64,8 +72,16 @@ static const ERR_STRING_DATA OSSL_STORE_str_reasons[] = {
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NOT_A_NAME), "not a name"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NOT_PARAMETERS),
     "not parameters"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE),
+    "path must be absolute"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_UI_PROCESS_INTERRUPTED_OR_CANCELLED),
+    "ui process interrupted or cancelled"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_UNREGISTERED_SCHEME),
     "unregistered scheme"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE),
+    "unsupported content type"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_URI_AUTHORITY_UNSUPPORED),
+    "uri authority unsuppored"},
     {0, NULL}
 };
 
