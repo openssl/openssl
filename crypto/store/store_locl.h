@@ -67,3 +67,4 @@ void ossl_store_destroy_loaders_int(void);
  */
 
 int ossl_store_init_once(void);
+int ossl_store_file_loader_init(void);
