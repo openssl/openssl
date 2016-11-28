@@ -89,13 +89,13 @@ static const char *findattr(STANZA *s, const char *key)
 /*
  * Parse BIGNUM, return number of bytes parsed.
  */
-static int parsebn(BIGNUM **out, const char *in)
+static int parseBN(BIGNUM **out, const char *in)
 {
     *out = NULL;
     return BN_hex2bn(out, in);
 }
 
-static int parsedecbn(BIGNUM **out, const char *in)
+static int parsedecBN(BIGNUM **out, const char *in)
 {
     *out = NULL;
     return BN_dec2bn(out, in);
@@ -112,7 +112,7 @@ static BIGNUM *getBN(STANZA *s, const char *attribute)
         return NULL;
     }
 
-    if (parsebn(&ret, hex) != (int)strlen(hex)) {
+    if (parseBN(&ret, hex) != (int)strlen(hex)) {
         fprintf(stderr, "Could not decode '%s'.\n", hex);
         return NULL;
     }
@@ -1529,35 +1529,35 @@ static int test_dec2bn()
     BIGNUM *bn = NULL;
     int st = 0;
 
-    int ret = parsedecbn(&bn, "0");
+    int ret = parsedecBN(&bn, "0");
     if (ret != 1 || !BN_is_zero(bn) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_dec2bn(0) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parsedecbn(&bn, "256");
+    ret = parsedecBN(&bn, "256");
     if (ret != 3 || !BN_is_word(bn, 256) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_dec2bn(256) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parsedecbn(&bn, "-42");
+    ret = parsedecBN(&bn, "-42");
     if (ret != 3 || !BN_abs_is_word(bn, 42) || !BN_is_negative(bn)) {
         fprintf(stderr, "BN_dec2bn(42) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parsedecbn(&bn, "-0");
+    ret = parsedecBN(&bn, "-0");
     if (ret != 2 || !BN_is_zero(bn) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_dec2bn(-0) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parsedecbn(&bn, "42trailing garbage is ignored");
+    ret = parsedecBN(&bn, "42trailing garbage is ignored");
     if (ret != 2 || !BN_abs_is_word(bn, 42)
             || BN_is_negative(bn)) {
         fprintf(stderr, "BN_dec2bn(42trailing...) gave a bad result.\n");
@@ -1575,35 +1575,35 @@ static int test_hex2bn()
     BIGNUM *bn = NULL;
     int ret, st = 0;
 
-    ret = parsebn(&bn, "0");
+    ret = parseBN(&bn, "0");
     if (ret != 1 || !BN_is_zero(bn) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_hex2bn(0) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parsebn(&bn, "256");
+    ret = parseBN(&bn, "256");
     if (ret != 3 || !BN_is_word(bn, 0x256) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_hex2bn(256) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parsebn(&bn, "-42");
+    ret = parseBN(&bn, "-42");
     if (ret != 3 || !BN_abs_is_word(bn, 0x42) || !BN_is_negative(bn)) {
         fprintf(stderr, "BN_hex2bn(-42) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parsebn(&bn, "-0");
+    ret = parseBN(&bn, "-0");
     if (ret != 2 || !BN_is_zero(bn) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_hex2bn(-0) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parsebn(&bn, "abctrailing garbage is ignored");
+    ret = parseBN(&bn, "abctrailing garbage is ignored");
     if (ret != 3 || !BN_is_word(bn, 0xabc) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_hex2bn(abctrail...) gave a bad result.\n");
         goto err;
