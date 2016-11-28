@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdlib.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 
@@ -31,6 +30,7 @@ static int tls_ext_init_etm(SSL *s, unsigned int context);
 static int tls_ext_init_srtp(SSL *s, unsigned int context);
 #endif
 
+/* Structure to define a built-in extension */
 typedef struct {
     /* The ID for the extension */
     unsigned int type;
@@ -57,9 +57,27 @@ typedef struct {
 } EXTENSION_DEFINITION;
 
 /*
- * TODO(TLS1.3): Temporarily modified the definitions below to put all TLS1.3
- * extensions in the ServerHello for now. That needs to be put back to correct
- * setting once encrypted extensions is working properly.
+ * Definitions of all built-in extensions. NOTE: Changes in the number or order
+ * of these extensions should be mirrored with equivalent changes to the indexes
+ * defined in statem_locl.h.
+ * Each extension has an initialiser, a client and
+ * server side parser and a finaliser. The initialiser is called (if the
+ * extension is relevant to the given context) even if we did not see the
+ * extension in the message that we received. The parser functions are only
+ * called if we see the extension in the message. The finalisers are always
+ * called if the initialiser was called.
+ * There are also server and client side constructor functions which are always
+ * called during message construction if the extension is relevant for the
+ * given context.
+ * The initialisation, parsing, finalisation and construction functions are
+ * always called in the order defined in this list. Some extensions may depend
+ * on others having been processed first, so the order of this list is
+ * significant.
+ * The extension context is defined by a series of flags which specify which
+ * messages the extension is relevant to. These flags also specify whether the
+ * extension is relevant to a paricular protocol or protocol version.
+ * 
+ * TODO(TLS1.3): Make sure we have a test to check the consistency of these
  */
 static const EXTENSION_DEFINITION ext_defs[] = {
     {
@@ -241,6 +259,10 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         EXT_CLIENT_HELLO | EXT_TLS_IMPLEMENTATION_ONLY | EXT_TLS1_3_ONLY
     },
     {
+        /*
+         * Must be in this list after supported_groups. We need that to have
+         * been parsed before we do this one.
+         */
         TLSEXT_TYPE_key_share,
         NULL,
         tls_parse_client_key_share,
@@ -281,38 +303,18 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 };
 
 /*
- * Comparison function used in a call to qsort (see tls_collect_extensions()
- * below.)
- * The two arguments |p1| and |p2| are expected to be pointers to RAW_EXTENSIONs
- *
- * Returns:
- *  1 if the type for p1 is greater than p2
- *  0 if the type for p1 and p2 are the same
- * -1 if the type for p1 is less than p2
- */
-static int compare_extensions(const void *p1, const void *p2)
-{
-    const RAW_EXTENSION *e1 = (const RAW_EXTENSION *)p1;
-    const RAW_EXTENSION *e2 = (const RAW_EXTENSION *)p2;
-
-    if (e1->type < e2->type)
-        return -1;
-    else if (e1->type > e2->type)
-        return 1;
-
-    return 0;
-}
-
-/*
  * Verify whether we are allowed to use the extension |type| in the current
  * |context|. Returns 1 to indicate the extension is allowed or unknown or 0 to
- * indicate the extension is not allowed.
+ * indicate the extension is not allowed. If returning 1 then |*found| is set to
+ * 1 if we found a definition for the extension, and |*idx| is set to its index
  */
-static int verify_extension(SSL *s, unsigned int context, unsigned int type)
+static int verify_extension(SSL *s, unsigned int context, unsigned int type,
+                            custom_ext_methods *meths, int *found, size_t *idx)
 {
     size_t i;
+    size_t builtin_num = OSSL_NELEM(ext_defs);
 
-    for (i = 0; i < OSSL_NELEM(ext_defs); i++) {
+    for (i = 0; i < builtin_num; i++) {
         if (type == ext_defs[i].type) {
             /* Check we're allowed to use this extension in this context */
             if ((context & ext_defs[i].context) == 0)
@@ -325,35 +327,42 @@ static int verify_extension(SSL *s, unsigned int context, unsigned int type)
                     return 0;
             }
 
+            *found = 1;
+            *idx = i;
             return 1;
+        }
+    }
+
+    if ((context & (EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO)) == 0) {
+        /*
+         * Custom extensions only apply to <=TLS1.2. This extension is unknown
+         * in this context - we allow it
+         */
+        *found = 0;
+        return 1;
+    }
+
+    /* Check the custom extensions */
+    if (meths != NULL) {
+        for (i = builtin_num; i < builtin_num + meths->meths_count; i++) {
+            if (meths->meths[i - builtin_num].ext_type == type) {
+                *found = 1;
+                *idx = i;
+                return 1;
+            }
         }
     }
 
     /* Unknown extension. We allow it */
+    *found = 0;
     return 1;
 }
 
 /*
- * Finds an extension definition for the give extension |type|.
- * Returns 1 if found and stores the definition in |*def|, or returns 0
- * otherwise.
+ * Check whether the context defined for an extension |extctx| means whether
+ * the extension is relevant for the current context |thisctx| or not. Returns
+ * 1 if the extension is relevant for this context, and 0 otherwise
  */
-static int find_extension_definition(SSL *s, unsigned int type,
-                                     const EXTENSION_DEFINITION **def)
-{
-    size_t i;
-
-    for (i = 0; i < OSSL_NELEM(ext_defs); i++) {
-        if (type == ext_defs[i].type) {
-            *def = &ext_defs[i];
-            return 1;
-        }
-    }
-
-    /* Unknown extension */
-    return 0;
-}
-
 static int extension_is_relevant(SSL *s, unsigned int extctx,
                                  unsigned int thisctx)
 {
@@ -371,26 +380,48 @@ static int extension_is_relevant(SSL *s, unsigned int extctx,
 
 /*
  * Gather a list of all the extensions from the data in |packet]. |context|
- * tells us which message this extension is for. Ttls_parse_server_ec_pt_formatshe raw extension data is
- * stored in |*res| with the number of found extensions in |*numfound|. In the
- * event of an error the alert type to use is stored in |*ad|. We don't actually
- * process the content of the extensions yet, except to check their types.
+ * tells us which message this extension is for. The raw extension data is
+ * stored in |*res|. In the event of an error the alert type to use is stored in
+ * |*al|. We don't actually process the content of the extensions yet, except to
+ * check their types. This function also runs the initialiser functions for all
+ * known extensions (whether we have collected them or not).
  *
  * Per http://tools.ietf.org/html/rfc5246#section-7.4.1.4, there may not be
  * more than one extension of the same type in a ClientHello or ServerHello.
  * This function returns 1 if all extensions are unique and we have parsed their
  * types, and 0 if the extensions contain duplicates, could not be successfully
- * parsed, or an internal error occurred.
+ * collected, or an internal error occurred. We only check duplicates for
+ * extensions that we know about. We ignore others.
  */
-
 int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
-                           RAW_EXTENSION **res, size_t *numfound, int *ad)
+                           RAW_EXTENSION **res, int *al)
 {
     PACKET extensions = *packet;
-    size_t num_extensions = 0, i = 0;
+    size_t i = 0, idx;
+    int found = 0;
+    custom_ext_methods *exts = NULL;
     RAW_EXTENSION *raw_extensions = NULL;
 
-    /* First pass: count the extensions. */
+    /*
+     * Initialise server side custom extensions. Client side is done during
+     * construction of extensions for the ClientHello.
+     */
+    if ((context & EXT_CLIENT_HELLO) != 0) {
+        exts = &s->cert->srv_ext;
+        custom_ext_init(&s->cert->srv_ext);
+    } else if ((context & EXT_TLS1_2_SERVER_HELLO) != 0) {
+        exts = &s->cert->cli_ext;
+    }
+
+    raw_extensions = OPENSSL_zalloc((OSSL_NELEM(ext_defs)
+                                     + (exts != NULL ? exts->meths_count : 0))
+                                     * sizeof(RAW_EXTENSION));
+    if (raw_extensions == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
     while (PACKET_remaining(&extensions) > 0) {
         unsigned int type;
         PACKET extension;
@@ -398,52 +429,24 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
         if (!PACKET_get_net_2(&extensions, &type) ||
             !PACKET_get_length_prefixed_2(&extensions, &extension)) {
             SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_BAD_EXTENSION);
-            *ad = SSL_AD_DECODE_ERROR;
+            *al = SSL_AD_DECODE_ERROR;
             goto err;
         }
-        /* Verify this extension is allowed */
-        if (!verify_extension(s, context, type)) {
+        /*
+         * Verify this extension is allowed. We only check duplicates for
+         * extensions that we recognise.
+         */
+        if (!verify_extension(s, context, type, exts, &found, &idx)
+                || (found == 1
+                    && raw_extensions[idx].present == 1)) {
             SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_BAD_EXTENSION);
-            *ad = SSL_AD_ILLEGAL_PARAMETER;
+            *al = SSL_AD_ILLEGAL_PARAMETER;
             goto err;
         }
-        num_extensions++;
-    }
-
-    if (num_extensions > 0) {
-        raw_extensions = OPENSSL_zalloc(sizeof(*raw_extensions)
-                                        * num_extensions);
-        if (raw_extensions == NULL) {
-            *ad = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-
-        /* Second pass: collect the extensions. */
-        for (i = 0; i < num_extensions; i++) {
-            if (!PACKET_get_net_2(packet, &raw_extensions[i].type) ||
-                !PACKET_get_length_prefixed_2(packet,
-                                              &raw_extensions[i].data)) {
-                /* This should not happen. */
-                *ad = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-        }
-
-        if (PACKET_remaining(packet) != 0) {
-            *ad = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_LENGTH_MISMATCH);
-            goto err;
-        }
-        /* Sort the extensions and make sure there are no duplicates. */
-        qsort(raw_extensions, num_extensions, sizeof(*raw_extensions),
-              compare_extensions);
-        for (i = 1; i < num_extensions; i++) {
-            if (raw_extensions[i - 1].type == raw_extensions[i].type) {
-                *ad = SSL_AD_DECODE_ERROR;
-                goto err;
-            }
+        if (found) {
+            raw_extensions[idx].data = extension;
+            raw_extensions[idx].present = 1;
+            raw_extensions[idx].type = type;
         }
     }
 
@@ -455,20 +458,12 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
         if(ext_defs[i].init_ext != NULL && (ext_defs[i].context & context) != 0
                 && extension_is_relevant(s, ext_defs[i].context, context)
                 && !ext_defs[i].init_ext(s, context)) {
-            *ad = SSL_AD_INTERNAL_ERROR;
+            *al = SSL_AD_INTERNAL_ERROR;
             goto err;
         }
     }
 
-    /*
-     * Initialise server side custom extensions. Client side is done during
-     * construction of extensions for the ClientHello.
-     */
-    if ((context & (EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_3_SERVER_HELLO)) != 0)
-        custom_ext_init(&s->cert->srv_ext);
-
     *res = raw_extensions;
-    *numfound = num_extensions;
     return 1;
 
  err:
@@ -477,86 +472,100 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
 }
 
 /*
- * Runs the parsers for all of the extensions in the given list |exts|, which
- * should have |numexts| extensions in it. The parsers are only run if they are
- * applicable for the given |context| and the parser has not already been run
- * for that extension. Returns 1 on success or 0 on failure. In the event of a
- * failure |*al| is populated with a suitable alert code.
+ * Runs the parser for a given extension with index |idx|. |exts| contains the
+ * list of all parsed extensions previously collected by
+ * tls_collect_extensions(). The parser is only run if it is applicable for the
+ * given |context| and the parser has not already been run. Returns 1 on success
+ * or 0 on failure. In the event of a failure |*al| is populated with a suitable
+ * alert code. If an extension is not present this counted as success.
  */
-static int tls_parse_extension_list(SSL *s, int context, RAW_EXTENSION *exts,
-                                    size_t numexts, int *al)
+int tls_parse_extension(SSL *s, unsigned int idx, int context,
+                        RAW_EXTENSION *exts, int *al)
 {
-    size_t loop;
+    RAW_EXTENSION *currext = &exts[idx];
+    int (*parser)(SSL *s, PACKET *pkt, int *al) = NULL;
 
-    for (loop = 0; loop < numexts; loop++) {
-        RAW_EXTENSION *currext = &exts[loop];
-        const EXTENSION_DEFINITION *extdef = NULL;
-        int (*parser)(SSL *s, PACKET *pkt, int *al) = NULL;
+    /* Skip if the extension is not present */
+    if (!currext->present)
+        return 1;
 
-        if (s->tlsext_debug_cb)
-            s->tlsext_debug_cb(s, !s->server, currext->type,
-                               PACKET_data(&currext->data),
-                               PACKET_remaining(&currext->data),
-                               s->tlsext_debug_arg);
+    if (s->tlsext_debug_cb)
+        s->tlsext_debug_cb(s, !s->server, currext->type,
+                           PACKET_data(&currext->data),
+                           PACKET_remaining(&currext->data),
+                           s->tlsext_debug_arg);
 
-        /* Skip if we've already parsed this extension */
-        if (currext->parsed)
-            continue;
+    /* Skip if we've already parsed this extension */
+    if (currext->parsed)
+        return 1;
 
-        currext->parsed = 1;
+    currext->parsed = 1;
 
-        parser = NULL;
-        if (find_extension_definition(s, currext->type, &extdef)) {
-            parser = s->server ? extdef->parse_client_ext
-                               : extdef->parse_server_ext;
+    if (idx < OSSL_NELEM(ext_defs)) {
+        /* We are handling a built-in extension */
+        const EXTENSION_DEFINITION *extdef = &ext_defs[idx];
 
-            /* Check if extension is defined for our protocol. If not, skip */
-            if (!extension_is_relevant(s, extdef->context, context))
-                continue;
-        }
+        /* Check if extension is defined for our protocol. If not, skip */
+        if (!extension_is_relevant(s, extdef->context, context))
+            return 1;
 
-        if (parser == NULL) {
-            /*
-             * Could be a custom extension. We only allow this if it is a non
-             * resumed session on the server side.
-             * 
-             * TODO(TLS1.3): We only allow old style <=TLS1.2 custom extensions.
-             * We're going to need a new mechanism for TLS1.3 to specify which
-             * messages to add the custom extensions to.
-             */
-            if ((!s->hit || !s->server)
-                    && (context
-                        & (EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO)) != 0
-                    && custom_ext_parse(s, s->server, currext->type,
-                                        PACKET_data(&currext->data),
-                                        PACKET_remaining(&currext->data),
-                                        al) <= 0)
+        parser = s->server ? extdef->parse_client_ext : extdef->parse_server_ext;
+
+        if (parser != NULL) {
+            if (!parser(s, &currext->data, al))
                 return 0;
 
-            continue;
+            return 1;
         }
 
-        if (!parser(s, &currext->data, al))
-            return 0;
+        /*
+         * If the parser is NULL we fall through to the custom extension
+         * processing
+         */
     }
+
+    /*
+     * This is a custom extension. We only allow this if it is a non
+     * resumed session on the server side.
+     *
+     * TODO(TLS1.3): We only allow old style <=TLS1.2 custom extensions.
+     * We're going to need a new mechanism for TLS1.3 to specify which
+     * messages to add the custom extensions to.
+     */
+    if ((!s->hit || !s->server)
+            && (context
+                & (EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO)) != 0
+            && custom_ext_parse(s, s->server, currext->type,
+                                PACKET_data(&currext->data),
+                                PACKET_remaining(&currext->data),
+                                al) <= 0)
+        return 0;
 
     return 1;
 }
 
 /*
  * Parse all remaining extensions that have not yet been parsed. Also calls the
- * finalisation for all extensions at the end. The given extensions must be in
- * order of type (which happens by default during collection). Returns 1 for
- * success or 0 for failure. On failure, |*al| is populated with a suitable
- * alert code.
+ * finalisation for all extensions at the end, whether we collected them or not.
+ * Returns 1 for success or 0 for failure. On failure, |*al| is populated with a
+ * suitable alert code.
  */
-int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
-                             size_t numexts, int *al)
+int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, int *al)
 {
-    size_t loop;
+    size_t loop, numexts = OSSL_NELEM(ext_defs);
 
-    if (!tls_parse_extension_list(s, context, exts, numexts, al))
-        return 0;
+    /* Calculate the number of extensions in the extensions list */
+    if ((context & EXT_CLIENT_HELLO) != 0) {
+        numexts += s->cert->srv_ext.meths_count;
+    } else if ((context & EXT_TLS1_2_SERVER_HELLO) != 0) {
+        numexts += s->cert->cli_ext.meths_count;
+    }
+
+    /* Parse each extension in turn */
+    for (loop = 0; loop < numexts; loop++) {
+        if (!tls_parse_extension(s, loop, context, exts, al))
+            return 0;
+    }
 
     /*
      * Finalise all known extensions relevant to this context, whether we have
@@ -564,56 +573,32 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
      */
     for (loop = 0; loop < OSSL_NELEM(ext_defs); loop++) {
         if(ext_defs[loop].finalise_ext != NULL
-                && (ext_defs[loop].context & context) != 0) {
-            size_t curr;
-
-            /*
-             * Work out whether this extension was sent or not. The sent
-             * extensions in |exts| are sorted by order of type
-             */
-            for (curr = 0; curr < numexts
-                           && exts[curr].type < ext_defs[loop].type; curr++)
-                continue;
-
-            if (!ext_defs[loop].finalise_ext(s, context,
-                    (curr < numexts && exts[curr].type == ext_defs[loop].type),
-                    al))
+                && (ext_defs[loop].context & context) != 0
+                && !ext_defs[loop].finalise_ext(s, context, exts[loop].present,
+                                                al))
             return 0;
-        }
     }
 
     return 1;
 }
 
 /*
- * Find a specific extension by |type| in the list |exts| containing |numexts|
- * extensions, and the parse it immediately. Returns 1 on success, or 0 on
- * failure. If a failure has occurred then |*al| will also be set to the alert
- * to be sent.
+ * Construct all the extensions relevant to the current |context| and write
+ * them to |pkt|. Returns 1 on success or 0 on failure. If a failure occurs then
+ * |al| is populated with a suitable alert code.
  */
-int tls_parse_extension(SSL *s, int type, int context, RAW_EXTENSION *exts,
-                        size_t numexts, int *al)
-{
-    RAW_EXTENSION *ext = tls_get_extension_by_type(exts, numexts, type);
-
-    if (ext == NULL)
-        return 1;
-
-    return tls_parse_extension_list(s, context, ext, 1, al);
-}
-
 int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                              int *al)
 {
     size_t loop;
     int addcustom = 0;
-    int min_version, max_version = 0, reason;
+    int min_version, max_version = 0, reason, tmpal;
 
     /*
-     * Normally if something goes wrong during construction its an internal
+     * Normally if something goes wrong during construction it's an internal
      * error. We can always override this later.
      */
-    *al = SSL_AD_INTERNAL_ERROR;
+    tmpal = SSL_AD_INTERNAL_ERROR;
 
     if (!WPACKET_start_sub_packet_u16(pkt)
                /*
@@ -625,14 +610,14 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                && !WPACKET_set_flags(pkt,
                                      WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
-        return 0;
+        goto err;
     }
 
     if ((context & EXT_CLIENT_HELLO) != 0) {
         reason = ssl_get_client_min_max_version(s, &min_version, &max_version);
         if (reason != 0) {
             SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, reason);
-            return 0;
+            goto err;
         }
     }
 
@@ -652,9 +637,9 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
         addcustom = 1;
     }
 
-    if (addcustom && !custom_ext_add(s, s->server, pkt, al)) {
+    if (addcustom && !custom_ext_add(s, s->server, pkt, &tmpal)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
-        return 0;
+        goto err;
     }
 
     for (loop = 0; loop < OSSL_NELEM(ext_defs); loop++) {
@@ -685,17 +670,29 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                 || construct == NULL)
             continue;
 
-        if (!construct(s, pkt, al))
-            return 0;
+        if (!construct(s, pkt, &tmpal))
+            goto err;
     }
 
     if (!WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
-        return 0;
+        goto err;
     }
 
     return 1;
+
+ err:
+    *al = tmpal;
+    return 0;
 }
+
+/*
+ * Built in extension finalisation and initialisation functions. All initialise
+ * or finalise the associated extension type for the given |context|. For
+ * finalisers |sent| is set to 1 if we saw the extension during parsing, and 0
+ * otherwise. These functions return 1 on success or 0 on failure. In the event
+ * of a failure then |*al| is populated with a suitable error code.
+ */
 
 static int tls_ext_final_renegotiate(SSL *s, unsigned int context, int sent,
                                      int *al)
@@ -724,7 +721,6 @@ static int tls_ext_init_server_name(SSL *s, unsigned int context)
     return 1;
 }
 
-/* Call the servername callback. Returns 1 for success or 0 for failure. */
 static int tls_ext_final_server_name(SSL *s, unsigned int context, int sent,
                                      int *al)
 {
@@ -792,13 +788,6 @@ static int tls_ext_init_alpn(SSL *s, unsigned int context)
     return 1;
 }
 
-
-
-/*
- * Process the ALPN extension in a ClientHello.
- * al: a pointer to the alert value to send in the event of a failure.
- * returns 1 on success, 0 on error.
- */
 static int tls_ext_final_alpn(SSL *s, unsigned int context, int sent, int *al)
 {
     const unsigned char *selected = NULL;

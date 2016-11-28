@@ -522,9 +522,7 @@ int tls_parse_client_key_share(SSL *s, PACKET *pkt, int *al)
     }
 
     /*
-     * Get the clients list of supported curves. Note: We rely on the fact
-     * extension parsing happens in order of type. supported_groups has a lower
-     * type than key_share so will have been processed first.
+     * Get the clients list of supported curves.
      * TODO(TLS1.3): We should validate that we actually received
      * supported_groups!
      */

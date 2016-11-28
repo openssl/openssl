@@ -1036,7 +1036,6 @@ int tls_parse_server_key_share(SSL *s, PACKET *pkt, int *al)
 
 static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
 {
-    size_t num_extensions = 0;
     RAW_EXTENSION *extensions = NULL;
     PACKET extpkt;
 
@@ -1071,7 +1070,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                                             | EXT_TLS1_3_SERVER_HELLO
                                             | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
                                             | EXT_TLS1_3_CERTIFICATE,
-                                &extensions, &num_extensions, al))
+                                &extensions, al))
         return 0;
 
     /*
@@ -1083,8 +1082,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
      */
     if (!(s->options & SSL_OP_LEGACY_SERVER_CONNECT)
             && !(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)
-            && tls_get_extension_by_type(extensions, num_extensions,
-                                         TLSEXT_TYPE_renegotiate) == NULL) {
+            && !extensions[TLSEXT_IDX_renegotiate].present) {
         *al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT,
                SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
@@ -1095,7 +1093,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                                      | EXT_TLS1_3_SERVER_HELLO
                                      | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
                                      | EXT_TLS1_3_CERTIFICATE,
-                                  extensions, num_extensions, al))
+                                  extensions,al))
         return 0;
 
     if (s->hit) {
