@@ -67,9 +67,10 @@ use constant {
     EXT_SESSION_TICKET => 35,
     EXT_SUPPORTED_VERSIONS => 43,
     EXT_KEY_SHARE => 40,
-    # This extension does not exist and isn't recognised by OpenSSL.
-    # We use it to test handling of duplicate extensions.
-    EXT_DUPLICATE_EXTENSION => 1234
+    # This extension is an unofficial extension only ever written by OpenSSL
+    # (i.e. not read), and even then only when enabled. We use it to test
+    # handling of duplicate extensions.
+    EXT_DUPLICATE_EXTENSION => 0xfde8
 };
 
 my $payload = "";

@@ -948,11 +948,9 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
         break;
     }
 
-    suppversions = tls_get_extension_by_type(hello->pre_proc_exts,
-                                             hello->num_extensions,
-                                             TLSEXT_TYPE_supported_versions);
+    suppversions = &hello->pre_proc_exts[TLSEXT_IDX_supported_versions];
 
-    if (suppversions != NULL && !SSL_IS_DTLS(s)) {
+    if (suppversions->present && !SSL_IS_DTLS(s)) {
         unsigned int candidate_vers = 0;
         unsigned int best_vers = 0;
         const SSL_METHOD *best_method = NULL;

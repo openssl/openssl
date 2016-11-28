@@ -1062,7 +1062,6 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                                SSL_SESSION **ret)
 {
     int retv;
-    const unsigned char *etick;
     size_t size;
     RAW_EXTENSION *ticketext;
 
@@ -1077,13 +1076,9 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
     if (s->version <= SSL3_VERSION || !tls_use_ticket(s))
         return 0;
 
-    ticketext = tls_get_extension_by_type(hello->pre_proc_exts,
-                                          hello->num_extensions,
-                                          TLSEXT_TYPE_session_ticket);
-    if (ticketext == NULL)
+    ticketext = &hello->pre_proc_exts[TLSEXT_IDX_session_ticket];
+    if (!ticketext->present)
         return 0;
-
-    ticketext->parsed = 1;
 
     size = PACKET_remaining(&ticketext->data);
     if (size == 0) {
@@ -1103,12 +1098,9 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
          */
         return 2;
     }
-    if (!PACKET_get_bytes(&ticketext->data, &etick, size)) {
-        /* Shouldn't ever happen */
-        return -1;
-    }
-    retv = tls_decrypt_ticket(s, etick, size, hello->session_id,
-                           hello->session_id_len, ret);
+
+    retv = tls_decrypt_ticket(s, PACKET_data(&ticketext->data), size,
+                              hello->session_id, hello->session_id_len, ret);
     switch (retv) {
     case 2:            /* ticket couldn't be decrypted */
         s->tlsext_ticket_expected = 1;
