@@ -22,7 +22,7 @@
     defined(_MSC_VER) && (_MSC_VER >= 1310)
 # include <crtdbg.h>
 # ifdef _NORMAL_BLOCK
-   #define MSVC_MEM_DEBUG
+   #define MSVC_MDEBUG
 # endif
 #endif
 
@@ -101,12 +101,12 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         ret = malloc(num);
     }
 #else
-    #ifndef MSVC_MEM_DEBUG
+# ifndef MSVC_MDEBUG
     osslargused(file); osslargused(line);
     ret = malloc(num);
-    #else
+# else
     ret = _malloc_dbg(num, _NORMAL_BLOCK, file, line);
-    #endif
+# endif
 #endif
 
     return ret;
@@ -145,12 +145,12 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     }
     return realloc(str, num);
 #else
-    #ifndef MSVC_MEM_DEBUG
+# ifndef MSVC_MDEBUG
     osslargused(file); osslargused(line);
     return realloc(str, num);
-    #else
+# else
     return _realloc_dbg(str, num, _NORMAL_BLOCK, file, line);
-    #endif
+# endif
 #endif
 }
 
@@ -197,11 +197,11 @@ void CRYPTO_free(void *str, const char *file, int line)
         free(str);
     }
 #else
-    #ifndef MSVC_MEM_DEBUG
+# ifndef MSVC_MDEBUG
     free(str);
-    #else
+# else
     _free_dbg(str, _NORMAL_BLOCK);
-    #endif
+# endif
 #endif
 }
 
