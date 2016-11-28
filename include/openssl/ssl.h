@@ -2308,6 +2308,9 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_SERVER_SESSION_TICKET        460
 # define SSL_F_TLS_CONSTRUCT_SERVER_STATUS_REQUEST        461
 # define SSL_F_TLS_CONSTRUCT_SERVER_USE_SRTP              462
+# define SSL_F_TLS_EXT_FINAL_                             484
+# define SSL_F_TLS_EXT_FINAL_EC_PT_FORMATS                485
+# define SSL_F_TLS_EXT_FINAL_EMS                          486
 # define SSL_F_TLS_EXT_FINAL_RENEGOTIATE                  483
 # define SSL_F_TLS_GET_MESSAGE_BODY                       351
 # define SSL_F_TLS_GET_MESSAGE_HEADER                     387

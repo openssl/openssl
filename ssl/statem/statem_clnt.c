@@ -1058,13 +1058,14 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 {
     STACK_OF(SSL_CIPHER) *sk;
     const SSL_CIPHER *c;
-    PACKET session_id;
+    PACKET session_id, extpkt;
     size_t session_id_len;
     const unsigned char *cipherchars;
     int i, al = SSL_AD_INTERNAL_ERROR;
     unsigned int compression;
     unsigned int sversion;
     int protverr;
+    RAW_EXTENSION *extensions = NULL;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
 #endif
@@ -1297,17 +1298,34 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 #endif
 
     /* TLS extensions */
-    if (!ssl_parse_serverhello_tlsext(s, pkt)) {
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_PARSE_TLSEXT);
-        goto err;
-    }
-
-    if (PACKET_remaining(pkt) != 0) {
-        /* wrong packet length */
+    if (PACKET_remaining(pkt) == 0) {
+        PACKET_null_init(&extpkt);
+    } else if (!PACKET_as_length_prefixed_2(pkt, &extpkt)) {
         al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_BAD_PACKET_LENGTH);
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_BAD_LENGTH);
         goto f_err;
     }
+
+    /*
+     * TODO(TLS1.3): We give multiple contexts for now until we're ready to
+     * give something more specific
+     */
+
+    if (!tls_collect_extensions(s, &extpkt, EXT_TLS1_2_SERVER_HELLO
+                                            | EXT_TLS1_3_SERVER_HELLO
+                                            | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+                                            | EXT_TLS1_3_CERTIFICATE,
+                                &extensions, &al))
+        goto f_err;
+
+
+    if (!tls_parse_all_extensions(s, EXT_TLS1_2_SERVER_HELLO
+                                     | EXT_TLS1_3_SERVER_HELLO
+                                     | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+                                     | EXT_TLS1_3_CERTIFICATE,
+                                  extensions, &al))
+        goto f_err;
+
 #ifndef OPENSSL_NO_SCTP
     if (SSL_IS_DTLS(s) && s->hit) {
         unsigned char sctpauthkey[64];
@@ -1350,7 +1368,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
     ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }

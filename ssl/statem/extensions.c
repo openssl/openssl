@@ -15,7 +15,14 @@ static int tls_ext_final_renegotiate(SSL *s, unsigned int context, int sent,
 static int tls_ext_init_server_name(SSL *s, unsigned int context);
 static int tls_ext_final_server_name(SSL *s, unsigned int context, int sent,
                                      int *al);
+#ifndef OPENSSL_NO_EC
+static int tls_ext_final_ec_pt_formats(SSL *s, unsigned int context, int sent,
+                                       int *al);
+#endif
+static int tls_ext_init_session_ticket(SSL *s, unsigned int context);
 static int tls_ext_init_status_request(SSL *s, unsigned int context);
+static int tls_ext_final_status_request(SSL *s, unsigned int context, int sent,
+                                        int *al);
 #ifndef OPENSSL_NO_NEXTPROTONEG
 static int tls_ext_init_npn(SSL *s, unsigned int context);
 #endif
@@ -26,6 +33,8 @@ static int tls_ext_init_sig_algs(SSL *s, unsigned int context);
 static int tls_ext_init_srp(SSL *s, unsigned int context);
 #endif
 static int tls_ext_init_etm(SSL *s, unsigned int context);
+static int tls_ext_init_ems(SSL *s, unsigned int context);
+static int tls_ext_final_ems(SSL *s, unsigned int context, int sent, int *al);
 #ifndef OPENSSL_NO_SRTP
 static int tls_ext_init_srtp(SSL *s, unsigned int context);
 #endif
@@ -122,7 +131,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_parse_server_ec_pt_formats,
         tls_construct_server_ec_pt_formats,
         tls_construct_client_ec_pt_formats,
-        NULL,
+        tls_ext_final_ec_pt_formats,
         EXT_CLIENT_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
     {
@@ -138,7 +147,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #endif
     {
         TLSEXT_TYPE_session_ticket,
-        NULL,
+        tls_ext_init_session_ticket,
         tls_parse_client_session_ticket,
         tls_parse_server_session_ticket,
         tls_construct_server_session_ticket,
@@ -164,7 +173,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_parse_server_status_request,
         tls_construct_server_status_request,
         tls_construct_client_status_request,
-        NULL,
+        tls_ext_final_status_request,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
         | EXT_TLS1_3_CERTIFICATE
     },
@@ -239,12 +248,12 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #endif
     {
         TLSEXT_TYPE_extended_master_secret,
-        NULL,
+        tls_ext_init_ems,
         tls_parse_client_ems,
         tls_parse_server_ems,
         tls_construct_server_ems,
         tls_construct_client_ems,
-        NULL,
+        tls_ext_final_ems,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
     },
     {
@@ -697,8 +706,22 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
 static int tls_ext_final_renegotiate(SSL *s, unsigned int context, int sent,
                                      int *al)
 {
-    if (!s->server)
+    if (!s->server) {
+        /*
+         * Check if we can connect to a server that doesn't support safe
+         * renegotiation
+         */
+        if (!(s->options & SSL_OP_LEGACY_SERVER_CONNECT)
+                && !(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)
+                && !sent) {
+            *al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_TLS_EXT_FINAL_RENEGOTIATE,
+                   SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+            return 0;
+        }
+
         return 1;
+    }
 
     /* Need RI if renegotiating */
     if (s->renegotiate
@@ -709,6 +732,7 @@ static int tls_ext_final_renegotiate(SSL *s, unsigned int context, int sent,
                SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
         return 0;
     }
+
 
     return 1;
 }
@@ -726,9 +750,6 @@ static int tls_ext_final_server_name(SSL *s, unsigned int context, int sent,
 {
     int ret = SSL_TLSEXT_ERR_NOACK;
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
-
-    if (!s->server)
-        return 1;
 
     if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0)
         ret = s->ctx->tlsext_servername_callback(s, &altmp,
@@ -756,6 +777,58 @@ static int tls_ext_final_server_name(SSL *s, unsigned int context, int sent,
     }
 }
 
+#ifndef OPENSSL_NO_EC
+static int tls_ext_final_ec_pt_formats(SSL *s, unsigned int context, int sent,
+                                       int *al)
+{
+    unsigned long alg_k, alg_a;
+
+    if (s->server)
+        return 1;
+
+    alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+    alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+
+    /*
+     * If we are client and using an elliptic curve cryptography cipher
+     * suite, then if server returns an EC point formats lists extension it
+     * must contain uncompressed.
+     */
+    if ((s->tlsext_ecpointformatlist != NULL)
+        && (s->tlsext_ecpointformatlist_length > 0)
+        && (s->session->tlsext_ecpointformatlist != NULL)
+        && (s->session->tlsext_ecpointformatlist_length > 0)
+        && ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
+        /* we are using an ECC cipher */
+        size_t i;
+        unsigned char *list;
+        int found_uncompressed = 0;
+        list = s->session->tlsext_ecpointformatlist;
+        for (i = 0; i < s->session->tlsext_ecpointformatlist_length; i++) {
+            if (*(list++) == TLSEXT_ECPOINTFORMAT_uncompressed) {
+                found_uncompressed = 1;
+                break;
+            }
+        }
+        if (!found_uncompressed) {
+            SSLerr(SSL_F_TLS_EXT_FINAL_EC_PT_FORMATS,
+                   SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+#endif
+
+static int tls_ext_init_session_ticket(SSL *s, unsigned int context)
+{
+    if (!s->server)
+        s->tlsext_ticket_expected = 0;
+
+    return 1;
+}
+
 static int tls_ext_init_status_request(SSL *s, unsigned int context)
 {
     if (s->server)
@@ -764,11 +837,27 @@ static int tls_ext_init_status_request(SSL *s, unsigned int context)
     return 1;
 }
 
+static int tls_ext_final_status_request(SSL *s, unsigned int context, int sent,
+                                        int *al)
+{
+    if (s->server)
+        return 1;
+
+    /*
+     * Ensure we get sensible values passed to tlsext_status_cb in the event
+     * that we don't receive a status message
+     */
+    OPENSSL_free(s->tlsext_ocsp_resp);
+    s->tlsext_ocsp_resp = NULL;
+    s->tlsext_ocsp_resplen = 0;
+
+    return 1;
+}
+
 #ifndef OPENSSL_NO_NEXTPROTONEG
 static int tls_ext_init_npn(SSL *s, unsigned int context)
 {
-    if (s->server)
-        s->s3->next_proto_neg_seen = 0;
+    s->s3->next_proto_neg_seen = 0;
 
     return 1;
 }
@@ -776,15 +865,14 @@ static int tls_ext_init_npn(SSL *s, unsigned int context)
 
 static int tls_ext_init_alpn(SSL *s, unsigned int context)
 {
+    OPENSSL_free(s->s3->alpn_selected);
+    s->s3->alpn_selected = NULL;
     if (s->server) {
-        OPENSSL_free(s->s3->alpn_selected);
-        s->s3->alpn_selected = NULL;
         s->s3->alpn_selected_len = 0;
         OPENSSL_free(s->s3->alpn_proposed);
         s->s3->alpn_proposed = NULL;
         s->s3->alpn_proposed_len = 0;
     }
-
     return 1;
 }
 
@@ -844,8 +932,33 @@ static int tls_ext_init_srp(SSL *s, unsigned int context)
 
 static int tls_ext_init_etm(SSL *s, unsigned int context)
 {
-    if (s->server)
-        s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
+    s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
+
+    return 1;
+}
+
+static int tls_ext_init_ems(SSL *s, unsigned int context)
+{
+    if (!s->server)
+        s->s3->flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
+
+    return 1;
+}
+
+static int tls_ext_final_ems(SSL *s, unsigned int context, int sent, int *al)
+{
+    if (!s->server && s->hit) {
+        /*
+         * Check extended master secret extension is consistent with
+         * original session.
+         */
+        if (!(s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) !=
+            !(s->session->flags & SSL_SESS_FLAG_EXTMS)) {
+            *al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_TLS_EXT_FINAL_EMS, SSL_R_INCONSISTENT_EXTMS);
+            return 0;
+        }
+    }
 
     return 1;
 }
