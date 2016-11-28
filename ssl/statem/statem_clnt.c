@@ -1064,6 +1064,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     int i, al = SSL_AD_INTERNAL_ERROR;
     unsigned int compression;
     unsigned int sversion;
+    unsigned int context;
     int protverr;
     RAW_EXTENSION *extensions = NULL;
 #ifndef OPENSSL_NO_COMP
@@ -1306,24 +1307,10 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /*
-     * TODO(TLS1.3): We give multiple contexts for now until we're ready to
-     * give something more specific
-     */
-
-    if (!tls_collect_extensions(s, &extpkt, EXT_TLS1_2_SERVER_HELLO
-                                            | EXT_TLS1_3_SERVER_HELLO
-                                            | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
-                                            | EXT_TLS1_3_CERTIFICATE,
-                                &extensions, &al))
-        goto f_err;
-
-
-    if (!tls_parse_all_extensions(s, EXT_TLS1_2_SERVER_HELLO
-                                     | EXT_TLS1_3_SERVER_HELLO
-                                     | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
-                                     | EXT_TLS1_3_CERTIFICATE,
-                                  extensions, &al))
+    context = SSL_IS_TLS13(s) ? EXT_TLS1_3_SERVER_HELLO
+                              : EXT_TLS1_2_SERVER_HELLO;
+    if (!tls_collect_extensions(s, &extpkt, context, &extensions, &al)
+            || !tls_parse_all_extensions(s, context, extensions, &al))
         goto f_err;
 
 #ifndef OPENSSL_NO_SCTP
@@ -3108,13 +3095,27 @@ static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt)
 {
     int al = SSL_AD_INTERNAL_ERROR;
     PACKET extensions;
+    RAW_EXTENSION *rawexts = NULL;
 
-    /* TODO(TLS1.3): We need to process these extensions. For now ignore them */
     if (!PACKET_as_length_prefixed_2(pkt, &extensions)) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_ENCRYPTED_EXTENSIONS, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
+
+    /*
+     * TODO(TLS1.3): For now we are processing Encrypted Extensions and
+     * Certificate extensions as part of this one message. Later we need to
+     * split out the Certificate extensions into the Certificate message
+     */
+    if (!tls_collect_extensions(s, &extensions,
+                                EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+                                | EXT_TLS1_3_CERTIFICATE, &rawexts, &al)
+            || !tls_parse_all_extensions(s,
+                                         EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+                                         | EXT_TLS1_3_CERTIFICATE,
+                                         rawexts, &al))
+        goto err;
 
     return MSG_PROCESS_CONTINUE_READING;
 
