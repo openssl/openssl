@@ -1315,8 +1315,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     /* Preserve the raw extensions PACKET for later use */
     extensions = clienthello.extensions;
     if (!tls_collect_extensions(s, &extensions, EXT_CLIENT_HELLO,
-                                &clienthello.pre_proc_exts,
-                                &clienthello.num_extensions, &al)) {
+                                &clienthello.pre_proc_exts, &al)) {
         /* SSLerr already been called */
         goto f_err;
     }
@@ -1401,10 +1400,9 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     s->hit = 0;
 
     /* We need to do this before getting the session */
-    if (!tls_parse_extension(s, TLSEXT_TYPE_extended_master_secret,
+    if (!tls_parse_extension(s, TLSEXT_IDX_extended_master_secret,
                              EXT_CLIENT_HELLO,
-                             clienthello.pre_proc_exts,
-                             clienthello.num_extensions, &al)) {
+                             clienthello.pre_proc_exts, &al)) {
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
         goto f_err;
     }
@@ -1508,8 +1506,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
     /* TLS extensions */
     if (!tls_parse_all_extensions(s, EXT_CLIENT_HELLO,
-                                  clienthello.pre_proc_exts,
-                                  clienthello.num_extensions, &al)) {
+                                  clienthello.pre_proc_exts, &al)) {
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_PARSE_TLSEXT);
         goto f_err;
     }

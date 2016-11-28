@@ -1636,13 +1636,38 @@ typedef struct ssl3_comp_st {
 # endif
 
 typedef struct raw_extension_st {
-    /* The type of the extension */
-    unsigned int type;
     /* Raw packet data for the extension */
     PACKET data;
+    /* Set to 1 if the extension is present or 0 otherwise */
+    int present;
     /* Set to 1 if we have already parsed the extension or 0 otherwise */
     int parsed;
+    /* The type of this extension */
+    unsigned int type;
 } RAW_EXTENSION;
+
+/*
+ * Extension index values NOTE: Any updates to these defines should be mirrored
+ * with equivalent updates to ext_defs in extensions.c
+ */
+#define TLSEXT_IDX_renegotiate                                   0
+#define TLSEXT_IDX_server_name                                   1
+#define TLSEXT_IDX_srp                                           2
+#define TLSEXT_IDX_ec_point_formats                              3
+#define TLSEXT_IDX_supported_groups                              4
+#define TLSEXT_IDX_session_ticket                                5
+#define TLSEXT_IDX_signature_algorithms                          6
+#define TLSEXT_IDX_status_request                                7
+#define TLSEXT_IDX_next_proto_neg                                8
+#define TLSEXT_IDX_application_layer_protocol_negotiation        9
+#define TLSEXT_IDX_use_srtp                                     10
+#define TLSEXT_IDX_encrypt_then_mac                             11
+#define TLSEXT_IDX_signed_certificate_timestamp                 12
+#define TLSEXT_IDX_extended_master_secret                       13
+#define TLSEXT_IDX_supported_versions                           14
+#define TLSEXT_IDX_key_share                                    15
+#define TLSEXT_IDX_cryptopro_bug                                16
+#define TLSEXT_IDX_padding                                      17
 
 #define MAX_COMPRESSIONS_SIZE   255
 
@@ -1658,7 +1683,6 @@ typedef struct {
     size_t compressions_len;
     unsigned char compressions[MAX_COMPRESSIONS_SIZE];
     PACKET extensions;
-    size_t num_extensions;
     RAW_EXTENSION *pre_proc_exts;
 } CLIENTHELLO_MSG;
 

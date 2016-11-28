@@ -27,13 +27,17 @@
 #define FINISHED_MAX_LENGTH             64
 
 /* Extension context codes */
+/* This extension is only allowed in TLS */
 #define EXT_TLS_ONLY                        0x0001
+/* This extension is only allowed in DTLS */
 #define EXT_DTLS_ONLY                       0x0002
 /* Some extensions may be allowed in DTLS but we don't implement them for it */
 #define EXT_TLS_IMPLEMENTATION_ONLY         0x0004
 /* Most extensions are not defined for SSLv3 but EXT_TYPE_renegotiate is */
 #define EXT_SSL3_ALLOWED                    0x0008
+/* Extension is only defined for TLS1.2 and above */
 #define EXT_TLS1_2_AND_BELOW_ONLY           0x0010
+/* Extension is only defined for TLS1.3 and above */
 #define EXT_TLS1_3_ONLY                     0x0020
 #define EXT_CLIENT_HELLO                    0x0040
 /* Really means TLS1.2 or below */
@@ -106,9 +110,6 @@ __owur int tls_construct_finished(SSL *s, WPACKET *pkt);
 __owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst);
 __owur WORK_STATE dtls_wait_for_dry(SSL *s);
 
-int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
-                           RAW_EXTENSION **res, size_t *numfound, int *ad);
-
 /* some client-only functions */
 __owur int tls_construct_client_hello(SSL *s, WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt);
@@ -149,10 +150,15 @@ __owur MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt);
 #endif
 __owur int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt);
 
+
+/* Extension processing */
+
+__owur int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
+                                  RAW_EXTENSION **res, int *al);
+__owur int tls_parse_extension(SSL *s, unsigned int idx, int context,
+                               RAW_EXTENSION *exts, int *al);
 __owur int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
-                                    size_t numexts, int *al);
-__owur int tls_parse_extension(SSL *s, int type, int context, RAW_EXTENSION *exts,
-                               size_t numexts, int *al);
+                                    int *al);
 __owur int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                                     int *al);
 
