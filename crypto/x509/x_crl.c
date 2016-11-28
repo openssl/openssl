@@ -213,7 +213,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                 if ((nid == NID_issuing_distribution_point)
                     || (nid == NID_authority_key_identifier)
                     || (nid == NID_delta_crl))
-                    break;;
+                    continue;
                 crl->flags |= EXFLAG_CRITICAL;
                 break;
             }
