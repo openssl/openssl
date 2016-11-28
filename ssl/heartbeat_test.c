@@ -278,7 +278,7 @@ static int test_dtls1_not_bleeding()
 
     fixture.payload = &payload_buf[0];
     fixture.sent_payload_len = payload_buf_len;
-    fixture.expected_return_value = -1;
+    fixture.expected_return_value = 0;
     fixture.expected_payload_len = payload_buf_len;
     fixture.expected_return_payload =
         "Not bleeding, sixteen spaces of padding";
@@ -301,7 +301,7 @@ static int test_dtls1_not_bleeding_empty_payload()
 
     fixture.payload = &payload_buf[0];
     fixture.sent_payload_len = payload_buf_len;
-    fixture.expected_return_value = -1;
+    fixture.expected_return_value = 0;
     fixture.expected_payload_len = payload_buf_len;
     fixture.expected_return_payload = "";
     EXECUTE_HEARTBEAT_TEST();
@@ -370,7 +370,7 @@ static int test_tls1_not_bleeding()
 
     fixture.payload = &payload_buf[0];
     fixture.sent_payload_len = payload_buf_len;
-    fixture.expected_return_value = -1;
+    fixture.expected_return_value = 0;
     fixture.expected_payload_len = payload_buf_len;
     fixture.expected_return_payload =
         "Not bleeding, sixteen spaces of padding";
@@ -393,7 +393,7 @@ static int test_tls1_not_bleeding_empty_payload()
 
     fixture.payload = &payload_buf[0];
     fixture.sent_payload_len = payload_buf_len;
-    fixture.expected_return_value = -1;
+    fixture.expected_return_value = 0;
     fixture.expected_payload_len = payload_buf_len;
     fixture.expected_return_payload = "";
     EXECUTE_HEARTBEAT_TEST();
