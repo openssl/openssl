@@ -266,4 +266,3 @@ int tls_parse_server_use_srtp(SSL *s, PACKET *pkt, int *al);
 int tls_parse_server_etm(SSL *s, PACKET *pkt, int *al);
 int tls_parse_server_ems(SSL *s, PACKET *pkt, int *al);
 int tls_parse_server_key_share(SSL *s, PACKET *pkt, int *al);
-int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt);
