@@ -15,10 +15,12 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_crl");
 
-plan tests => 2;
+plan tests => 3;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 subtest 'crl conversions' => sub {
     tconversion("crl", srctop_file("test","testcrl.pem"));
 };
+
+ok(run(test(['crltest'])));
