@@ -22,6 +22,9 @@ int ERR_load_OSSL_STORE_strings(void);
 /*
  * OSSL_STORE function codes.
  */
+# define OSSL_STORE_F_FILE_GET_PASS                       118
+# define OSSL_STORE_F_FILE_LOAD                           119
+# define OSSL_STORE_F_FILE_OPEN                           120
 # define OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT          100
 # define OSSL_STORE_F_OSSL_STORE_INFO_GET1_CERT           101
 # define OSSL_STORE_F_OSSL_STORE_INFO_GET1_CRL            102
@@ -41,16 +44,22 @@ int ERR_load_OSSL_STORE_strings(void);
 # define OSSL_STORE_F_OSSL_STORE_OPEN_INT                 115
 # define OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT      117
 # define OSSL_STORE_F_OSSL_STORE_UNREGISTER_LOADER_INT    116
+# define OSSL_STORE_F_TRY_DECODE_PARAMS                   121
 
 /*
  * OSSL_STORE reason codes.
  */
+# define OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE              107
 # define OSSL_STORE_R_INVALID_SCHEME                      106
 # define OSSL_STORE_R_NOT_A_CERTIFICATE                   100
 # define OSSL_STORE_R_NOT_A_CRL                           101
 # define OSSL_STORE_R_NOT_A_KEY                           102
 # define OSSL_STORE_R_NOT_A_NAME                          103
 # define OSSL_STORE_R_NOT_PARAMETERS                      104
+# define OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE               108
+# define OSSL_STORE_R_UI_PROCESS_INTERRUPTED_OR_CANCELLED 109
 # define OSSL_STORE_R_UNREGISTERED_SCHEME                 105
+# define OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE            110
+# define OSSL_STORE_R_URI_AUTHORITY_UNSUPPORED            111
 
 #endif
