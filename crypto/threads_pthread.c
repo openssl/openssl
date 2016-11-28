@@ -35,13 +35,13 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-	
+
     if (pthread_mutex_init(lock, &attr) != 0) {
         pthread_mutexattr_destroy(&attr);
         OPENSSL_free(lock);
         return NULL;
     }
-	
+
     pthread_mutexattr_destroy(&attr);
 # endif
 
