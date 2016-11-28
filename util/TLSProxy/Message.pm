@@ -60,13 +60,23 @@ my %message_type = (
 );
 
 use constant {
+    EXT_SERVER_NAME => 0,
     EXT_STATUS_REQUEST => 5,
     EXT_SUPPORTED_GROUPS => 10,
+    EXT_EC_POINT_FORMATS => 11,
+    EXT_SRP => 12,
+    EXT_SIG_ALGS => 13,
+    EXT_USE_SRTP => 14,
+    EXT_ALPN => 16,
+    EXT_SCT => 18,
+    EXT_PADDING => 21,
     EXT_ENCRYPT_THEN_MAC => 22,
     EXT_EXTENDED_MASTER_SECRET => 23,
     EXT_SESSION_TICKET => 35,
-    EXT_SUPPORTED_VERSIONS => 43,
     EXT_KEY_SHARE => 40,
+    EXT_SUPPORTED_VERSIONS => 43,
+    EXT_RENEGOTIATE => 65281,
+    EXT_NPN => 13172,
     # This extension is an unofficial extension only ever written by OpenSSL
     # (i.e. not read), and even then only when enabled. We use it to test
     # handling of duplicate extensions.
@@ -238,6 +248,15 @@ sub create_message
         $message->parse();
     } elsif ($mt == MT_SERVER_HELLO) {
         $message = TLSProxy::ServerHello->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
+    } elsif ($mt == MT_ENCRYPTED_EXTENSIONS) {
+        $message = TLSProxy::EncryptedExtensions->new(
             $server,
             $data,
             [@message_rec_list],

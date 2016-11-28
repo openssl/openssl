@@ -17,6 +17,7 @@ use TLSProxy::Record;
 use TLSProxy::Message;
 use TLSProxy::ClientHello;
 use TLSProxy::ServerHello;
+use TLSProxy::EncryptedExtensions;
 use TLSProxy::ServerKeyExchange;
 use TLSProxy::NewSessionTicket;
 
@@ -153,7 +154,8 @@ sub start
         my $execcmd = $self->execute
             ." s_server -no_comp -rev -engine ossltest -accept "
             .($self->server_port)
-            ." -cert ".$self->cert." -naccept ".$self->serverconnects;
+            ." -cert ".$self->cert." -cert2 ".$self->cert
+            ." -naccept ".$self->serverconnects;
         if ($self->ciphers ne "") {
             $execcmd .= " -cipher ".$self->ciphers;
         }
