@@ -14,14 +14,16 @@
 #include "internal/cryptlib.h"
 
 /*
-* allow Visual Studio 2003 and higher dump possible memory leaks with _CrtDumpMemoryLeaks() API
-* if OPENSSL_NO_CRYPTO_MDEBUG is defined and library local memory debugging functionality is disabled
+* allow Visual Studio 2003 and higher dump possible memory leaks with
+* _CrtDumpMemoryLeaks() API if OPENSSL_NO_CRYPTO_MDEBUG is defined and library
+* local memory debugging functionality is disabled
 */
-#if defined(OPENSSL_NO_CRYPTO_MDEBUG) && defined(_DEBUG) && defined(_MSC_VER) && (_MSC_VER >= 1310)
-#include <crtdbg.h>
-#ifdef _NORMAL_BLOCK
-    #define MSVC_MEM_DEBUG
-#endif
+#if defined(OPENSSL_NO_CRYPTO_MDEBUG) && defined(_DEBUG) && \
+    defined(_MSC_VER) && (_MSC_VER >= 1310)
+# include <crtdbg.h>
+# ifdef _NORMAL_BLOCK
+   #define MSVC_MEM_DEBUG
+# endif
 #endif
 
 /*
@@ -100,10 +102,10 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     }
 #else
     #ifndef MSVC_MEM_DEBUG
-        osslargused(file); osslargused(line);
-        ret = malloc(num);
+    osslargused(file); osslargused(line);
+    ret = malloc(num);
     #else
-        ret = _malloc_dbg(num, _NORMAL_BLOCK, file, line);
+    ret = _malloc_dbg(num, _NORMAL_BLOCK, file, line);
     #endif
 #endif
 
@@ -144,10 +146,10 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     return realloc(str, num);
 #else
     #ifndef MSVC_MEM_DEBUG
-        osslargused(file); osslargused(line);
-        return realloc(str, num);
+    osslargused(file); osslargused(line);
+    return realloc(str, num);
     #else
-        return _realloc_dbg(str, num, _NORMAL_BLOCK, file, line);
+    return _realloc_dbg(str, num, _NORMAL_BLOCK, file, line);
     #endif
 #endif
 }
@@ -196,9 +198,9 @@ void CRYPTO_free(void *str, const char *file, int line)
     }
 #else
     #ifndef MSVC_MEM_DEBUG
-        free(str);
+    free(str);
     #else
-        _free_dbg(str, _NORMAL_BLOCK);
+    _free_dbg(str, _NORMAL_BLOCK);
     #endif
 #endif
 }
