@@ -39,7 +39,9 @@ my $is_default_tls = (disabled("ssl3") && !disabled("tls1") &&
 
 my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
 
+my @all_pre_tls1_3 = ("ssl3", "tls1", "tls1_1", "tls1_2");
 my $no_tls = alldisabled(available_protocols("tls"));
+my $no_pre_tls1_3 = alldisabled(@all_pre_tls1_3);
 my $no_dtls = alldisabled(available_protocols("dtls"));
 my $no_npn = disabled("nextprotoneg");
 my $no_ct = disabled("ct");
@@ -76,6 +78,7 @@ my %skip = (
   "15-certstatus.conf" => $no_tls || $no_ocsp,
   "16-dtls-certstatus.conf" => $no_dtls || $no_ocsp,
   "18-dtls-renegotiate.conf" => $no_dtls,
+  "19-mac-then-encrypt.conf" => $no_pre_tls1_3
 );
 
 foreach my $conf (@conf_files) {
