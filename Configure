@@ -332,6 +332,7 @@ my @disablables = (
     "afalgeng",
     "asan",
     "asm",
+    "apps",
     "async",
     "autoalginit",
     "autoerrinit",
@@ -371,6 +372,7 @@ my @disablables = (
     "heartbeats",
     "hw(-.+)?",
     "idea",
+    "libssl",
     "makedepend",
     "md2",
     "md4",
@@ -508,6 +510,7 @@ my @disable_cascades = (
     "stdio"             => [ "apps", "capieng" ],
     "apps"              => [ "tests" ],
     "comp"		=> [ "zlib" ],
+    "libssl"            => [ "apps" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
 
     sub { !$disabled{"msan"} } => [ "asm" ],
@@ -894,6 +897,12 @@ foreach (sort (keys %disabled))
 		push @{$config{openssl_other_defines}}, "OPENSSL_NO_ENGINE";
 		print " OPENSSL_NO_ENGINE (skip engines)";
 		}
+        elsif (/^libssl$/)
+                {
+                @{$config{dirs}} = grep !/^ssl$/, @{$config{dirs}};
+                @{$config{dirs}} = grep !/^fuzz$/, @{$config{dirs}};
+                @{$config{dirs}} = grep !/^test$/, @{$config{dirs}};
+                }
 	else
 		{
 		my ($WHAT, $what);

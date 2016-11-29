@@ -1,4 +1,8 @@
+IF[{- $config{options} =~ /no-libssl/ -}]
+LIBS=libcrypto
+ELSE
 LIBS=libcrypto libssl
+ENDIF
 ORDINALS[libcrypto]=crypto
 ORDINALS[libssl]=ssl
 INCLUDE[libcrypto]=. crypto/include include
