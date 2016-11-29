@@ -15,6 +15,11 @@
 #include "testutil.h"
 #include "test_main.h"
 
+/*
+ * Based on the test vectors provided in:
+ * https://www.ietf.org/id/draft-thomson-tls-tls13-vectors-01.txt
+ */
+
 struct record_data {
     const char *plaintext;
     const char *ciphertext;
@@ -130,7 +135,7 @@ struct record_data {
 static int load_record(SSL3_RECORD *rec, size_t recnum, unsigned char **key,
                        unsigned char *iv, size_t ivlen, unsigned char *seq)
 {
-    unsigned char *pt = NULL, *sq = NULL, *ivtmp = NULL;;
+    unsigned char *pt = NULL, *sq = NULL, *ivtmp = NULL;
     long ptlen;
 
     *key = OPENSSL_hexstr2buf(refdata[recnum].key, NULL);
@@ -199,6 +204,7 @@ static int test_record(SSL3_RECORD *rec, size_t recnum, int enc)
     OPENSSL_free(refd);
     return ret;
 }
+
 static int test_tls13_encryption(void)
 {
     SSL_CTX *ctx = NULL;
@@ -231,21 +237,20 @@ static int test_tls13_encryption(void)
     }
 
     for (ctr = 0; ctr < OSSL_NELEM(refdata); ctr++) {
-        /*
-         * Load the record, set up the read/write sequences and load the key into
-         * the EVP_CIPHER_CTXs
-         */
+        /* Load the record */
         ivlen = EVP_CIPHER_iv_length(ciph);
         if (!load_record(&rec, ctr, &key, s->read_iv, ivlen,
                          RECORD_LAYER_get_read_sequence(&s->rlayer))) {
             fprintf(stderr, "Failed loading key into EVP_CIPHER_CTX\n");
             goto err;
-         }
+        }
 
+        /* Set up the read/write sequences */
         memcpy(RECORD_LAYER_get_write_sequence(&s->rlayer),
                RECORD_LAYER_get_read_sequence(&s->rlayer), SEQ_NUM_SIZE);
         memcpy(s->write_iv, s->read_iv, ivlen);
 
+        /* Load the key into the EVP_CIPHER_CTXs */
         if (EVP_CipherInit_ex(s->enc_write_ctx, ciph, NULL, key, NULL, 1) <= 0
                 || EVP_CipherInit_ex(s->enc_read_ctx, ciph, NULL, key, NULL, 0)
                    <= 0) {
@@ -258,7 +263,6 @@ static int test_tls13_encryption(void)
             fprintf(stderr, "Failed to encrypt record\n");
             goto err;
         }
-
         if (!test_record(&rec, ctr, 1)) {
             fprintf(stderr, "Record encryption test failed\n");
             goto err;
@@ -269,7 +273,6 @@ static int test_tls13_encryption(void)
             fprintf(stderr, "Failed to decrypt record\n");
             goto err;
         }
-
         if (!test_record(&rec, ctr, 0)) {
             fprintf(stderr, "Record decryption test failed\n");
             goto err;
@@ -287,6 +290,7 @@ static int test_tls13_encryption(void)
 
     fprintf(stderr, "PASS: %"OSSLzu" records tested\n", ctr);
     ret = 1;
+
  err:
     OPENSSL_free(rec.data);
     OPENSSL_free(key);
@@ -294,7 +298,6 @@ static int test_tls13_encryption(void)
     OPENSSL_free(seq);
     SSL_free(s);
     SSL_CTX_free(ctx);
-
     return ret;
 }
 

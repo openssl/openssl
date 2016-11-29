@@ -619,6 +619,7 @@ int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     unsigned char *tmpbuf = OPENSSL_malloc(inl);
 
+    /* OPENSSL_malloc will return NULL if inl == 0 */
     if (tmpbuf == NULL && inl > 0)
         return -1;
 
@@ -628,9 +629,7 @@ int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     /* Go through the motions of encrypting it */
     EVP_CIPHER_meth_get_do_cipher(EVP_aes_128_gcm())(ctx, out, in, inl);
 
-    /*
-     * Throw it all away and just use the plaintext as the output
-     */
+    /* Throw it all away and just use the plaintext as the output */
     memcpy(out, tmpbuf, inl);
     OPENSSL_free(tmpbuf);
 
@@ -640,10 +639,8 @@ int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static int ossltest_aes128_gcm_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
                                     void *ptr)
 {
-    int ret;
-
     /* Pass the ctrl down */
-    ret = EVP_CIPHER_meth_get_ctrl(EVP_aes_128_gcm())(ctx, type, arg, ptr);
+    int ret = EVP_CIPHER_meth_get_ctrl(EVP_aes_128_gcm())(ctx, type, arg, ptr);
 
     if (ret <= 0)
         return ret;
