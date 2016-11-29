@@ -38,6 +38,20 @@ use constant {
     ALL_HANDSHAKES => 31
 };
 
+use constant {
+    #DEFAULT ALSO INCLUDES SESSION_TICKET_SRV_EXTENSION
+    DEFAULT_EXTENSIONS => 0x00000003,
+    SESSION_TICKET_SRV_EXTENSION => 0x00000002,
+    SERVER_NAME_CLI_EXTENSION => 0x00000004,
+    SERVER_NAME_SRV_EXTENSION => 0x00000008,
+    STATUS_REQUEST_CLI_EXTENSION => 0x00000010,
+    STATUS_REQUEST_SRV_EXTENSION => 0x00000020,
+    ALPN_CLI_EXTENSION => 0x00000040,
+    ALPN_SRV_EXTENSION => 0x00000080,
+    SCT_CLI_EXTENSION => 0x00000100,
+    RENEGOTIATE_CLI_EXTENSION => 0x00000200
+};
+
 my @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO, ALL_HANDSHAKES],
     [TLSProxy::Message::MT_SERVER_HELLO, ALL_HANDSHAKES],
@@ -63,6 +77,29 @@ my @handmessages = (
     [0, 0]
 );
 
+my @extensions = (
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME, SERVER_NAME_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST, STATUS_REQUEST_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS, DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS, DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS, DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN, ALPN_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT, SCT_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ENCRYPT_THEN_MAC, DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET, DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SESSION_TICKET, DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE, RENEGOTIATE_CLI_EXTENSION],
+
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_RENEGOTIATE, DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_ENCRYPT_THEN_MAC, DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET, DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SESSION_TICKET, SESSION_TICKET_SRV_EXTENSION],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SERVER_NAME, SERVER_NAME_SRV_EXTENSION],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST, STATUS_REQUEST_SRV_EXTENSION],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_ALPN, ALPN_SRV_EXTENSION],
+    [0,0,0]
+);
+
 my $proxy = TLSProxy::Proxy->new(
     undef,
     cmdstr(app(["openssl"]), display => 1),
@@ -70,7 +107,7 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-sub checkmessages($$);
+sub checkmessages($$$);
 
 #Test 1: Check we get all the right messages for a default handshake
 (undef, my $session) = tempfile();
@@ -78,13 +115,15 @@ $proxy->serverconnects(2);
 $proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 5;
-checkmessages(DEFAULT_HANDSHAKE, "Default handshake test");
+checkmessages(DEFAULT_HANDSHAKE, DEFAULT_EXTENSIONS, "Default handshake test");
 
 #Test 2: Resumption handshake
 $proxy->clearClient();
 $proxy->clientflags("-no_tls1_3 -sess_in ".$session);
 $proxy->clientstart();
-checkmessages(RESUME_HANDSHAKE, "Resumption handshake test");
+checkmessages(RESUME_HANDSHAKE,
+              DEFAULT_EXTENSIONS & ~SESSION_TICKET_SRV_EXTENSION,
+              "Resumption handshake test");
 unlink $session;
 
 #Test 3: A default handshake, but with a CertificateStatus message
@@ -93,33 +132,48 @@ $proxy->clientflags("-no_tls1_3 -status");
 $proxy->serverflags("-status_file "
                     .srctop_file("test", "recipes", "ocsp-response.der"));
 $proxy->start();
-checkmessages(OCSP_HANDSHAKE, "OCSP handshake test");
+checkmessages(OCSP_HANDSHAKE,
+              DEFAULT_EXTENSIONS | STATUS_REQUEST_CLI_EXTENSION
+              | STATUS_REQUEST_SRV_EXTENSION,
+              "OCSP handshake test");
 
 #Test 4: A client auth handshake
 $proxy->clear();
 $proxy->clientflags("-no_tls1_3 -cert ".srctop_file("apps", "server.pem"));
 $proxy->serverflags("-Verify 5");
 $proxy->start();
-checkmessages(CLIENT_AUTH_HANDSHAKE, "Client auth handshake test");
+checkmessages(CLIENT_AUTH_HANDSHAKE, DEFAULT_EXTENSIONS,
+              "Client auth handshake test");
 
 #Test 5: A handshake with a renegotiation
 $proxy->clear();
 $proxy->clientflags("-no_tls1_3");
 $proxy->reneg(1);
 $proxy->start();
-checkmessages(RENEG_HANDSHAKE, "Rengotiation handshake test");
+checkmessages(RENEG_HANDSHAKE, DEFAULT_EXTENSIONS,
+              "Rengotiation handshake test");
 
-sub checkmessages($$)
+sub checkmessages($$$)
 {
-    my ($handtype, $testname) = @_;
+    my ($handtype, $exttype, $testname) = @_;
 
     subtest $testname => sub {
         my $loop = 0;
         my $numtests;
+        my $extcount;
+        my $clienthelloseen = 0;
 
         #First count the number of tests
         for ($numtests = 0; $handmessages[$loop][1] != 0; $loop++) {
             $numtests++ if (($handmessages[$loop][1] & $handtype) != 0);
+        }
+
+        #Add number of extensions we check plus 2 for the number of messages
+        #that contain extensions
+        $numtests += $#extensions + 2;
+        #In a renegotiation we will have double the number of extension tests
+        if (($handtype & RENEG_HANDSHAKE) != 0) {
+            $numtests += $#extensions + 2;
         }
 
         plan tests => $numtests;
@@ -137,11 +191,38 @@ sub checkmessages($$)
             if (!defined $message) {
                 fail("Message type check. Got nothing, expected "
                      .$handmessages[$loop][0]);
+                next;
             } else {
                 ok($message->mt == $handmessages[$loop][0],
                    "Message type check. Got ".$message->mt
                    .", expected ".$handmessages[$loop][0]);
             }
+
+            next if ($message->mt() != TLSProxy::Message::MT_CLIENT_HELLO
+                    && $message->mt() != TLSProxy::Message::MT_SERVER_HELLO
+                    && $message->mt() !=
+                       TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS);
+
+            if ($message->mt() == TLSProxy::Message::MT_CLIENT_HELLO) {
+                #Add renegotiate extension we will expect if renegotiating
+                $exttype |= RENEGOTIATE_CLI_EXTENSION if ($clienthelloseen);
+                $clienthelloseen = 1;
+            }
+             #Now check that we saw the extensions we expected
+             my $msgexts = $message->extension_data();
+             for (my $extloop = 0, $extcount = 0; $extensions[$extloop][2] != 0;
+                                $extloop++) {
+                next if ($message->mt() != $extensions[$extloop][0]);
+                ok (($extensions[$extloop][2] & $exttype) == 0
+                      || defined ($msgexts->{$extensions[$extloop][1]}),
+                    "Extension presence check (Message: ".$message->mt()
+                    ." Extension: ".($extensions[$extloop][2] & $exttype).", "
+                    .$extloop.")");
+                $extcount++ if (($extensions[$extloop][2] & $exttype) != 0);
+             }
+            ok($extcount == keys %$msgexts, "Extensions count mismatch ("
+                                            .$extcount.", ".(keys %$msgexts)
+                                            .")");
         }
     }
 }
