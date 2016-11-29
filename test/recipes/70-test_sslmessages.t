@@ -88,16 +88,12 @@ checkmessages(RESUME_HANDSHAKE, "Resumption handshake test");
 unlink $session;
 
 #Test 3: A default handshake, but with a CertificateStatus message
-#
-#TODO: PR #1932 adds the "-status_file" option below. Once added we can enable
-#this test
-#
-#$proxy->clear();
-#$proxy->clientflags("-no_tls1_3 -status");
-#$proxy->serverflags("-no_ticket -status_file "
-#                    .srctop_file("test", "recipes", "ocsp-response.der"));
-#$proxy->start();
-#checkmessages(OCSP_HANDSHAKE, "OCSP handshake test");
+$proxy->clear();
+$proxy->clientflags("-no_tls1_3 -status");
+$proxy->serverflags("-status_file "
+                    .srctop_file("test", "recipes", "ocsp-response.der"));
+$proxy->start();
+checkmessages(OCSP_HANDSHAKE, "OCSP handshake test");
 
 #Test 4: A client auth handshake
 $proxy->clear();
@@ -112,15 +108,6 @@ $proxy->clientflags("-no_tls1_3");
 $proxy->reneg(1);
 $proxy->start();
 checkmessages(RENEG_HANDSHAKE, "Rengotiation handshake test");
-
-#Test 6: A handshake with a renegotiation and client auth
-$proxy->clear();
-$proxy->clientflags("-no_tls1_3 -cert ".srctop_file("apps", "server.pem"));
-$proxy->serverflags("-Verify 5");
-$proxy->reneg(1);
-$proxy->start();
-checkmessages(RENEG_HANDSHAKE | CLIENT_AUTH_HANDSHAKE,
-              "Renogitation and client auth handshake test");
 
 sub checkmessages($$)
 {
