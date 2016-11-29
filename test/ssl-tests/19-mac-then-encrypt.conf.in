@@ -19,6 +19,7 @@ our @tests = (
         },
         client => {
           "CipherString" => "AES128-SHA",
+          "MaxProtocol" => "TLSv1.2"
         },
         test   => {
           "ExpectedResult" => "Success",
@@ -31,6 +32,7 @@ our @tests = (
         client => {
           "CipherString" => "AES128-SHA",
           "Options" => "-EncryptThenMac",
+          "MaxProtocol" => "TLSv1.2"
         },
         test   => {
           "ExpectedResult" => "Success",
@@ -44,6 +46,7 @@ our @tests = (
         client => {
           "CipherString" => "AES128-SHA",
           "Options" => "-EncryptThenMac",
+          "MaxProtocol" => "TLSv1.2"
         },
         test   => {
           "ExpectedResult" => "Success",
@@ -53,6 +56,7 @@ our @tests = (
         name => "disable-encrypt-then-mac-server-sha2",
         server => {
           "Options" => "-EncryptThenMac",
+          "MaxProtocol" => "TLSv1.2"
         },
         client => {
           "CipherString" => "AES128-SHA256",
@@ -68,6 +72,7 @@ our @tests = (
         client => {
           "CipherString" => "AES128-SHA256",
           "Options" => "-EncryptThenMac",
+          "MaxProtocol" => "TLSv1.2"
         },
         test   => {
           "ExpectedResult" => "Success",
@@ -81,6 +86,7 @@ our @tests = (
         client => {
           "CipherString" => "AES128-SHA256",
           "Options" => "-EncryptThenMac",
+          "MaxProtocol" => "TLSv1.2"
         },
         test   => {
           "ExpectedResult" => "Success",
