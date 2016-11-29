@@ -80,7 +80,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         iv[offset + loop] = staticiv[offset + loop] ^ seq[loop];
 
-    /* TODO(size_t): lenu/lenf should be a size_t but EVP can't support it */
+    /* TODO(size_t): lenu/lenf should be a size_t but EVP doesn't support it */
     if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, send) <= 0
             || EVP_CipherUpdate(ctx, rec->data, &lenu, rec->input,
                                 (unsigned int)rec->length) <= 0
