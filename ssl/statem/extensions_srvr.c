@@ -802,7 +802,7 @@ int tls_construct_server_use_srtp(SSL *s, WPACKET *pkt, int *al)
 {
     if (s->srtp_profile == NULL)
         return 1;
-        
+
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_use_srtp)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_put_bytes_u16(pkt, 2)

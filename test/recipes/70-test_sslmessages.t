@@ -261,7 +261,7 @@ $proxy->start();
 checkhandshake($proxy, recipes::checkhandshake::DEFAULT_HANDSHAKE,
                recipes::checkhandshake::DEFAULT_EXTENSIONS,
               "ALPN handshake test (server)");
-              
+
 #Test 13: ALPN handshake (client and server)
 $proxy->clear();
 $proxy->clientflags("-no_tls1_3 -alpn test");
@@ -334,7 +334,7 @@ $proxy->start();
 checkhandshake($proxy, recipes::checkhandshake::DEFAULT_HANDSHAKE,
                recipes::checkhandshake::DEFAULT_EXTENSIONS,
               "NPN handshake test (server)");
-              
+
 #Test 19: NPN handshake (client and server)
 $proxy->clear();
 $proxy->clientflags("-no_tls1_3 -nextprotoneg test");

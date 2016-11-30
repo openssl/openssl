@@ -213,7 +213,7 @@ $proxy->start();
 checkhandshake($proxy, recipes::checkhandshake::DEFAULT_HANDSHAKE,
                recipes::checkhandshake::DEFAULT_EXTENSIONS,
               "ALPN handshake test (server)");
-              
+
 #Test 12: ALPN handshake (client and server)
 $proxy->clear();
 $proxy->clientflags("-alpn test");
