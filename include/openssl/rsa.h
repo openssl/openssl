@@ -97,9 +97,17 @@ extern "C" {
         RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
                           EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
 
+# define EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, len) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
+                          EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
+
 # define EVP_PKEY_CTX_get_rsa_pss_saltlen(ctx, plen) \
         RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
                           EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN, 0, plen)
+
+# define EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, len) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
+                          EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
 
 # define EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits) \
         RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, \
@@ -111,6 +119,10 @@ extern "C" {
 
 # define  EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, md)  \
         RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
+                          EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)md)
+
+# define  EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(ctx, md)  \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
                           EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)md)
 
 # define  EVP_PKEY_CTX_set_rsa_oaep_md(ctx, md)  \
@@ -132,6 +144,11 @@ extern "C" {
 # define  EVP_PKEY_CTX_get0_rsa_oaep_label(ctx, l)       \
                 EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,  \
                                 EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL, 0, (void *)l)
+
+# define  EVP_PKEY_CTX_rsa_pss_key_digest(ctx, md)  \
+                EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSAi_PSS, \
+                                  EVP_PKEY_OP_TYPE_CRYPT, EVP_PKEY_CTRL_MD, \
+                                  0, (void *)md)
 
 # define EVP_PKEY_CTRL_RSA_PADDING       (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_RSA_PSS_SALTLEN   (EVP_PKEY_ALG_CTRL + 2)
