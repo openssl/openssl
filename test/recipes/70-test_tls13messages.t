@@ -12,17 +12,17 @@ use OpenSSL::Test::Utils;
 use File::Temp qw(tempfile);
 use TLSProxy::Proxy;
 
+my $test_name;
+
 # This block needs to run before 'use lib srctop_dir' directives.
 BEGIN {
-    OpenSSL::Test::setup("no_test_here");
+    $test_name = "test_tls13messages";
+    OpenSSL::Test::setup($test_name);
 }
 
 use lib srctop_dir("test", "recipes");
 
 use recipes::checkhandshake qw(checkhandshake @handmessages @extensions);
-
-my $test_name = "test_tls13messages";
-setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^(VMS|MSWin32)$/;
