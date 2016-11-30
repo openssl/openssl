@@ -580,11 +580,20 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
                                EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
                                EVP_PKEY_CTRL_RSA_MGF1_MD, value);
 
-    if (strcmp(type, "rsa_oaep_md") == 0) {
-        const EVP_MD *md;
-        if ((md = EVP_get_digestbyname(value)) == NULL) {
-            RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_INVALID_DIGEST);
-            return 0;
+    if (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS) {
+
+        if (strcmp(type, "rsa_pss_keygen_mgf1_md") == 0)
+            return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_KEYGEN,
+                                   EVP_PKEY_CTRL_RSA_MGF1_MD, value);
+
+        if (strcmp(type, "rsa_pss_keygen_md") == 0)
+            return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_KEYGEN,
+                                   EVP_PKEY_CTRL_MD, value);
+
+        if (strcmp(type, "rsa_pss_keygen_saltlen") == 0) {
+            int saltlen;
+            saltlen = atoi(value);
+            return EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, saltlen);
         }
     }
 
@@ -606,6 +615,21 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
     }
 
     return -2;
+}
+
+/* Set PSS parameters when generating a key, if necessary */
+static int rsa_set_pss_param(RSA *rsa, EVP_PKEY_CTX *ctx)
+{
+    RSA_PKEY_CTX *rctx = ctx->data;
+    if (ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        return 1;
+    if (rctx->md == NULL && rctx->mgf1md == NULL && rctx->saltlen == -2)
+        return 1;
+    rsa->pss = rsa_pss_params_create(rctx->md, rctx->mgf1md,
+                                     rctx->saltlen == -2 ? 0 : rctx->saltlen);
+    if (rsa->pss == NULL)
+        return 0;
+    return 1;
 }
 
 static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
@@ -633,6 +657,10 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         pcb = NULL;
     ret = RSA_generate_key_ex(rsa, rctx->nbits, rctx->pub_exp, pcb);
     BN_GENCB_free(pcb);
+    if (ret > 0 && !rsa_set_pss_param(rsa, ctx)) {
+        RSA_free(rsa);
+        return 0;
+    }
     if (ret > 0)
         EVP_PKEY_assign(pkey, ctx->pmeth->pkey_id, rsa);
     else
