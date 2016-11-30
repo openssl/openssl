@@ -32,7 +32,7 @@ typedef struct {
     const char *seq;
 } RECORD_DATA;
 
-RECORD_DATA refdata[] = {
+static RECORD_DATA refdata[] = {
     {
         {
             "0800001e001c000a00140012001d001700180019010001010102010301040000"
