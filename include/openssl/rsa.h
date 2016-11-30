@@ -86,12 +86,10 @@ extern "C" {
 # endif
 
 # define EVP_PKEY_CTX_set_rsa_padding(ctx, pad) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, EVP_PKEY_CTRL_RSA_PADDING, \
-                                pad, NULL)
+        RSA_pkey_ctx_ctrl(ctx, -1, EVP_PKEY_CTRL_RSA_PADDING, pad, NULL)
 
 # define EVP_PKEY_CTX_get_rsa_padding(ctx, ppad) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, \
-                                EVP_PKEY_CTRL_GET_RSA_PADDING, 0, ppad)
+        RSA_pkey_ctx_ctrl(ctx, -1, EVP_PKEY_CTRL_GET_RSA_PADDING, 0, ppad)
 
 # define EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, len) \
         RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \

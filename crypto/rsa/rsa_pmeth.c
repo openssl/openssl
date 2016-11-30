@@ -388,6 +388,8 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                     goto bad_pad;
                 if (!rctx->md)
                     rctx->md = EVP_sha1();
+            } else if (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS) {
+                goto bad_pad;
             }
             if (p1 == RSA_PKCS1_OAEP_PADDING) {
                 if (!(ctx->operation & EVP_PKEY_OP_TYPE_CRYPT))
