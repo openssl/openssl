@@ -85,7 +85,7 @@ typedef struct {
  * The extension context is defined by a series of flags which specify which
  * messages the extension is relevant to. These flags also specify whether the
  * extension is relevant to a paricular protocol or protocol version.
- * 
+ *
  * TODO(TLS1.3): Make sure we have a test to check the consistency of these
  */
 static const EXTENSION_DEFINITION ext_defs[] = {
@@ -638,7 +638,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
         /*
          * We already initialised the custom extensions during ClientHello
          * parsing.
-         * 
+         *
          * TODO(TLS1.3): We're going to need a new custom extension mechanism
          * for TLS1.3, so that custom extensions can specify which of the
          * multiple message they wish to add themselves to.

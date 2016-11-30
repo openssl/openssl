@@ -51,7 +51,7 @@ sub parse
         $server_version = TLSProxy::Record::VERS_TLS_1_3;
         TLSProxy::Proxy->is_tls13(1);
     }
-    
+
     my $random = substr($self->data, $ptr, 32);
     $ptr += 32;
     my $session_id_len = 0;
