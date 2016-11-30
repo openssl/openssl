@@ -49,7 +49,10 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
     if (rctx == NULL)
         return 0;
     rctx->nbits = 1024;
-    rctx->pad_mode = RSA_PKCS1_PADDING;
+    if (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
+        rctx->pad_mode = RSA_PKCS1_PSS_PADDING;
+    else
+        rctx->pad_mode = RSA_PKCS1_PADDING;
     rctx->saltlen = -2;
     ctx->data = rctx;
     ctx->keygen_info = rctx->gentmp;
