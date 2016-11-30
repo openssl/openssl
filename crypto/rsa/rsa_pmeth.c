@@ -572,14 +572,10 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
         return ret;
     }
 
-    if (strcmp(type, "rsa_mgf1_md") == 0) {
-        const EVP_MD *md;
-        if ((md = EVP_get_digestbyname(value)) == NULL) {
-            RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_INVALID_DIGEST);
-            return 0;
-        }
-        return EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, md);
-    }
+    if (strcmp(type, "rsa_mgf1_md") == 0)
+        return EVP_PKEY_CTX_md(ctx,
+                               EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
+                               EVP_PKEY_CTRL_RSA_MGF1_MD, value);
 
     if (strcmp(type, "rsa_oaep_md") == 0) {
         const EVP_MD *md;
@@ -587,8 +583,12 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
             RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_INVALID_DIGEST);
             return 0;
         }
-        return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, md);
     }
+
+    if (strcmp(type, "rsa_oaep_md") == 0)
+        return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_TYPE_CRYPT,
+                               EVP_PKEY_CTRL_RSA_OAEP_MD, value);
+
     if (strcmp(type, "rsa_oaep_label") == 0) {
         unsigned char *lab;
         long lablen;
