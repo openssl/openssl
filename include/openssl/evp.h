@@ -1205,6 +1205,8 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
 int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str);
 int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex);
 
+int EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md);
+
 int EVP_PKEY_CTX_get_operation(EVP_PKEY_CTX *ctx);
 void EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen);
 
@@ -1484,6 +1486,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_CTX_CTRL                          137
 # define EVP_F_EVP_PKEY_CTX_CTRL_STR                      150
 # define EVP_F_EVP_PKEY_CTX_DUP                           156
+# define EVP_F_EVP_PKEY_CTX_MD                            168
 # define EVP_F_EVP_PKEY_DECRYPT                           104
 # define EVP_F_EVP_PKEY_DECRYPT_INIT                      138
 # define EVP_F_EVP_PKEY_DECRYPT_OLD                       151
