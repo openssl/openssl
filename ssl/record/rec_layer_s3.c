@@ -788,7 +788,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     memset(wr, 0, sizeof wr);
     for (j = 0; j < numpipes; j++) {
         unsigned int version = s->version;
-        unsigned char *compressdata;
+        unsigned char *compressdata = NULL;
         size_t maxcomplen;
         unsigned int rectype;
 
@@ -809,7 +809,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             && !s->renegotiate && TLS1_get_version(s) > TLS1_VERSION)
             version = TLS1_VERSION;
 
-        maxcomplen = pipelens[j] + (ssl_allow_compression(s)
+        maxcomplen = pipelens[j] + (s->compress != NULL
                                     ? SSL3_RT_MAX_COMPRESSED_OVERHEAD : 0);
         /* write the header */
         if (!WPACKET_put_bytes_u8(&pkt[j], rectype)
