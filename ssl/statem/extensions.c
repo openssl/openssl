@@ -56,9 +56,9 @@ typedef struct extensions_definition_st {
      */
     int (*init)(SSL *s, unsigned int context);
     /* Parse extension sent from client to server */
-    int (*parse_ctos)(SSL *s, PACKET *pkt, int *al);
+    int (*parse_ctos)(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al);
     /* Parse extension send from server to client */
-    int (*parse_stoc)(SSL *s, PACKET *pkt, int *al);
+    int (*parse_stoc)(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al);
     /* Construct extension sent from server to client */
     int (*construct_stoc)(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
                           int *al);
@@ -441,15 +441,18 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
  * Runs the parser for a given extension with index |idx|. |exts| contains the
  * list of all parsed extensions previously collected by
  * tls_collect_extensions(). The parser is only run if it is applicable for the
- * given |context| and the parser has not already been run. Returns 1 on success
- * or 0 on failure. In the event of a failure |*al| is populated with a suitable
- * alert code. If an extension is not present this counted as success.
+ * given |context| and the parser has not already been run. If this is for a
+ * Certificate message, then we also provide the parser with the relevant
+ * Certificate |x| and its position in the |chain| with 0 being the first
+ * Certificate. Returns 1 on success or 0 on failure. In the event of a failure
+ * |*al| is populated with a suitable alert code. If an extension is not present
+ * this counted as success.
  */
 int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
-                        RAW_EXTENSION *exts, int *al)
+                        RAW_EXTENSION *exts, X509 *x, size_t chain, int *al)
 {
     RAW_EXTENSION *currext = &exts[idx];
-    int (*parser)(SSL *s, PACKET *pkt, int *al) = NULL;
+    int (*parser)(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al) = NULL;
 
     /* Skip if the extension is not present */
     if (!currext->present)
@@ -478,7 +481,7 @@ int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
         parser = s->server ? extdef->parse_ctos : extdef->parse_stoc;
 
         if (parser != NULL)
-            return parser(s, &currext->data, al);
+            return parser(s, &currext->data, x, chain, al);
 
         /*
          * If the parser is NULL we fall through to the custom extension
@@ -509,10 +512,13 @@ int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
 /*
  * Parse all remaining extensions that have not yet been parsed. Also calls the
  * finalisation for all extensions at the end, whether we collected them or not.
- * Returns 1 for success or 0 for failure. On failure, |*al| is populated with a
- * suitable alert code.
+ * Returns 1 for success or 0 for failure. If we are working on a Certificate
+ * message then we also pass the Certificate |x| and its position in the
+ * |chain|, with 0 being the first certificate. On failure, |*al| is populated
+ * with a suitable alert code.
  */
-int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, int *al)
+int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, X509 *x,
+                             size_t chain, int *al)
 {
     size_t i, numexts = OSSL_NELEM(ext_defs);
     const EXTENSION_DEFINITION *thisexd;
@@ -526,7 +532,7 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, int *al)
 
     /* Parse each extension in turn */
     for (i = 0; i < numexts; i++) {
-        if (!tls_parse_extension(s, i, context, exts, al))
+        if (!tls_parse_extension(s, i, context, exts, x, chain, al))
             return 0;
     }
 
