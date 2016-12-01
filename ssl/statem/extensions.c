@@ -60,9 +60,10 @@ typedef struct extensions_definition_st {
     /* Parse extension send from server to client */
     int (*parse_stoc)(SSL *s, PACKET *pkt, int *al);
     /* Construct extension sent from server to client */
-    int (*construct_stoc)(SSL *s, WPACKET *pkt, int *al);
+    int (*construct_stoc)(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+                          int *al);
     /* Construct extension sent from client to server */
-    int (*construct_ctos)(SSL *s, WPACKET *pkt, int *al);
+    int (*construct_ctos)(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al);
     /*
      * Finalise extension after parsing. Always called where an extensions was
      * initialised even if the extension was not present. |sent| is set to 1 if
@@ -545,12 +546,15 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, int *al)
 
 /*
  * Construct all the extensions relevant to the current |context| and write
- * them to |pkt|. Returns 1 on success or 0 on failure. If a failure occurs then
- * |al| is populated with a suitable alert code. On a failure construction stops
- * at the first extension to fail to construct.
+ * them to |pkt|. If this is an extension for a Certificate in a Certificate
+ * message, then |x| will be set to the Certificate we are handling, and |chain|
+ * will indicate the position in the chain we are processing (with 0 being the
+ * first in the chain). Returns 1 on success or 0 on failure. If a failure
+ * occurs then |al| is populated with a suitable alert code. On a failure
+ * construction stops at the first extension to fail to construct.
  */
 int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
-                             int *al)
+                             X509 *x, size_t chain, int *al)
 {
     size_t i;
     int addcustom = 0, min_version, max_version = 0, reason, tmpal;
@@ -605,7 +609,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
-        int (*construct)(SSL *s, WPACKET *pkt, int *al);
+        int (*construct)(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al);
 
         /* Skip if not relevant for our context */
         if ((thisexd->context & context) == 0)
@@ -632,7 +636,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                 || construct == NULL)
             continue;
 
-        if (!construct(s, pkt, &tmpal))
+        if (!construct(s, pkt, x, chain, &tmpal))
             goto err;
     }
 

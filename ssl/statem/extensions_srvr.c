@@ -656,7 +656,8 @@ int tls_parse_ctos_ems(SSL *s, PACKET *pkt, int *al)
 /*
  * Add the server's renegotiation binding
  */
-int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+                                   int *al)
 {
     if (!s->s3->send_connection_binding)
         return 1;
@@ -677,7 +678,8 @@ int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, int *al)
     return 1;
 }
 
-int tls_construct_stoc_server_name(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_server_name(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+                                   int *al)
 {
     if (s->hit || s->servername_done != 1
             || s->session->tlsext_hostname == NULL)
@@ -693,7 +695,8 @@ int tls_construct_stoc_server_name(SSL *s, WPACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_EC
-int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, X509 *x,
+                                     size_t chain, int *al)
 {
     unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
     unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
@@ -718,7 +721,8 @@ int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, int *al)
 }
 #endif
 
-int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt, X509 *x,
+                                      size_t chain, int *al)
 {
     if (!s->tlsext_ticket_expected || !tls_use_ticket(s)) {
         s->tlsext_ticket_expected = 0;
@@ -735,7 +739,8 @@ int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_OCSP
-int tls_construct_stoc_status_request(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_status_request(SSL *s, WPACKET *pkt, X509 *x,
+                                     size_t chain, int *al)
 {
     if (!s->tlsext_status_expected)
         return 1;
@@ -750,9 +755,9 @@ int tls_construct_stoc_status_request(SSL *s, WPACKET *pkt, int *al)
 }
 #endif
 
-
 #ifndef OPENSSL_NO_NEXTPROTONEG
-int tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt, X509 *x,
+                                      size_t chain, int *al)
 {
     const unsigned char *npa;
     unsigned int npalen;
@@ -779,7 +784,8 @@ int tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt, int *al)
 }
 #endif
 
-int tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+                            int *al)
 {
     if (s->s3->alpn_selected == NULL)
         return 1;
@@ -800,7 +806,8 @@ int tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_SRTP
-int tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+                                int *al)
 {
     if (s->srtp_profile == NULL)
         return 1;
@@ -819,7 +826,7 @@ int tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt, int *al)
 }
 #endif
 
-int tls_construct_stoc_etm(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_etm(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
 {
     if ((s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC) == 0)
         return 1;
@@ -845,7 +852,7 @@ int tls_construct_stoc_etm(SSL *s, WPACKET *pkt, int *al)
     return 1;
 }
 
-int tls_construct_stoc_ems(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_ems(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
 {
     if ((s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) == 0)
         return 1;
@@ -859,7 +866,8 @@ int tls_construct_stoc_ems(SSL *s, WPACKET *pkt, int *al)
     return 1;
 }
 
-int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+                                 int *al)
 {
 #ifndef OPENSSL_NO_TLS1_3
     unsigned char *encodedPoint;
@@ -915,7 +923,8 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, int *al)
     return 1;
 }
 
-int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, X509 *x,
+                                     size_t chain, int *al)
 {
     const unsigned char cryptopro_ext[36] = {
         0xfd, 0xe8,         /* 65000 */
