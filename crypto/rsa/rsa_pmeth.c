@@ -49,7 +49,7 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
     if (rctx == NULL)
         return 0;
     rctx->nbits = 1024;
-    if (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
+    if (pkey_ctx_is_pss(ctx))
         rctx->pad_mode = RSA_PKCS1_PSS_PADDING;
     else
         rctx->pad_mode = RSA_PKCS1_PADDING;
@@ -388,7 +388,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                     goto bad_pad;
                 if (!rctx->md)
                     rctx->md = EVP_sha1();
-            } else if (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS) {
+            } else if (pkey_ctx_is_pss(ctx)) {
                 goto bad_pad;
             }
             if (p1 == RSA_PKCS1_OAEP_PADDING) {
@@ -582,7 +582,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
                                EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
                                EVP_PKEY_CTRL_RSA_MGF1_MD, value);
 
-    if (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS) {
+    if (pkey_ctx_is_pss(ctx)) {
 
         if (strcmp(type, "rsa_pss_keygen_mgf1_md") == 0)
             return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_KEYGEN,
@@ -623,8 +623,9 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 static int rsa_set_pss_param(RSA *rsa, EVP_PKEY_CTX *ctx)
 {
     RSA_PKEY_CTX *rctx = ctx->data;
-    if (ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+    if (!pkey_ctx_is_pss(ctx))
         return 1;
+    /* If all parameters are default values don't set pss */
     if (rctx->md == NULL && rctx->mgf1md == NULL && rctx->saltlen == -2)
         return 1;
     rsa->pss = rsa_pss_params_create(rctx->md, rctx->mgf1md,
