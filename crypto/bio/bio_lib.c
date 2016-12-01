@@ -269,7 +269,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
     ret = b->method->bread(b, data, dlen, readbytes);
 
     if (ret > 0)
-        b->num_read += (uint64_t)*read;
+        b->num_read += (uint64_t)*readbytes;
 
     if (b->callback != NULL || b->callback_ex != NULL)
         ret = (int)bio_call_callback(b, BIO_CB_READ | BIO_CB_RETURN, data,
