@@ -1912,7 +1912,8 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
             || !tls_construct_extensions(s, pkt,
                                          SSL_IS_TLS13(s)
                                             ? EXT_TLS1_3_SERVER_HELLO
-                                            : EXT_TLS1_2_SERVER_HELLO, &al)) {
+                                            : EXT_TLS1_2_SERVER_HELLO,
+                                         NULL, 0, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -3497,7 +3498,8 @@ static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt)
      * message.
      */
     if (!tls_construct_extensions(s, pkt, EXT_TLS1_3_ENCRYPTED_EXTENSIONS
-                                          | EXT_TLS1_3_CERTIFICATE, &al)) {
+                                          | EXT_TLS1_3_CERTIFICATE,
+                                  NULL, 0, &al)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
         SSLerr(SSL_F_TLS_CONSTRUCT_ENCRYPTED_EXTENSIONS, ERR_R_INTERNAL_ERROR);
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
