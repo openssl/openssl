@@ -74,7 +74,7 @@ $testtype = EMPTY_EXTENSION;
 $direction = CLIENT_TO_SERVER;
 $proxy->filter(\&modify_key_shares_filter);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 17;
+plan tests => 19;
 #TODO(TLS1.3): Actually this should succeed after a HelloRetryRequest - but
 #we've not implemented that yet, so for now we look for a fail
 ok(TLSProxy::Message->fail(), "Empty key_shares");
@@ -188,6 +188,26 @@ $testtype = TRAILING_DATA;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "key_share trailing data in ServerHello");
 
+#Test 18: key_share should not be sent if the client is not capable of
+#         negotiating TLSv1.3
+$proxy->clear();
+$proxy->filter(undef);
+$proxy->clientflags("-no_tls1_3");
+$proxy->start();
+my $clienthello = ${$proxy->message_list}[0];
+ok(TLSProxy::Message->success()
+   && !defined ${$clienthello->extension_data}{TLSProxy::Message::EXT_KEY_SHARE},
+   "No key_share for TLS<=1.2 client");
+$proxy->filter(\&modify_key_shares_filter);
+
+#Test 19: A server not capable of negotiating TLSv1.3 should not attempt to
+#         process a key_share
+$proxy->clear();
+$direction = CLIENT_TO_SERVER;
+$testtype = NO_ACCEPTABLE_KEY_SHARES;
+$proxy->serverflags("-no_tls1_3");
+$proxy->start();
+ok(TLSProxy::Message->success(), "Ignore key_share for TLS<=1.2 server");
 
 sub modify_key_shares_filter
 {
