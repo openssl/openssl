@@ -1011,7 +1011,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     }
 
     /* TLS extensions */
-    if (!tls_construct_extensions(s, pkt, EXT_CLIENT_HELLO, &al)) {
+    if (!tls_construct_extensions(s, pkt, EXT_CLIENT_HELLO, NULL, 0, &al)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         return 0;
