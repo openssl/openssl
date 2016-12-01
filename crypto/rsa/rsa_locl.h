@@ -97,6 +97,9 @@ extern int int_rsa_verify(int dtype, const unsigned char *m,
                           unsigned int m_len, unsigned char *rm,
                           size_t *prm_len, const unsigned char *sigbuf,
                           size_t siglen, RSA *rsa);
+/* Macros to test if a pkey or ctx is for a PSS key */
+#define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
+#define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
 
 RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
                                       const EVP_MD *mgf1md, int saltlen);

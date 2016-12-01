@@ -305,7 +305,6 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
     char *str;
     const char *s;
     int ret = 0, mod_len = 0;
-    int is_pss = pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS;
 
     if (x->n != NULL)
         mod_len = BN_num_bits(x->n);
@@ -313,7 +312,7 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
     if (!BIO_indent(bp, off, 128))
         goto err;
 
-    if (BIO_printf(bp, "%s ", is_pss ?  "RSA-PSS" : "RSA") <= 0)
+    if (BIO_printf(bp, "%s ", pkey_is_pss(pkey) ?  "RSA-PSS" : "RSA") <= 0)
         goto err;
 
     if (priv && x->d) {
@@ -345,7 +344,7 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
         if (!ASN1_bn_print(bp, "coefficient:", x->iqmp, NULL, off))
             goto err;
     }
-    if (is_pss && !rsa_pss_param_print(bp, 1, x->pss, off))
+    if (pkey_is_pss(pkey) && !rsa_pss_param_print(bp, 1, x->pss, off))
         goto err;
     ret = 1;
  err:
