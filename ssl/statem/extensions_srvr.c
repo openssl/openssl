@@ -14,7 +14,8 @@
 /*
  * Parse the client's renegotiation binding and abort if it's not right
  */
-int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+                               int *al)
 {
     unsigned int ilen;
     const unsigned char *data;
@@ -72,7 +73,8 @@ int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, int *al)
  *   extension.
  * - On session reconnect, the servername extension may be absent.
  */
-int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+                               int *al)
 {
     unsigned int servname_type;
     PACKET sni, hostname;
@@ -134,7 +136,7 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_SRP
-int tls_parse_ctos_srp(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_srp(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
 {
     PACKET srp_I;
 
@@ -158,7 +160,8 @@ int tls_parse_ctos_srp(SSL *s, PACKET *pkt, int *al)
 #endif
 
 #ifndef OPENSSL_NO_EC
-int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+                                 int *al)
 {
     PACKET ec_point_format_list;
 
@@ -181,7 +184,8 @@ int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, int *al)
 }
 #endif                          /* OPENSSL_NO_EC */
 
-int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+                                  int *al)
 {
     if (s->tls_session_ticket_ext_cb &&
             !s->tls_session_ticket_ext_cb(s, PACKET_data(pkt),
@@ -194,7 +198,7 @@ int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, int *al)
     return 1;
 }
 
-int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
 {
     PACKET supported_sig_algs;
 
@@ -215,7 +219,8 @@ int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_OCSP
-int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+                                  int *al)
 {
     PACKET responder_id_list, exts;
 
@@ -309,7 +314,7 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, int *al)
 #endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-int tls_parse_ctos_npn(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_npn(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
 {
     /*
      * We shouldn't accept this extension on a
@@ -340,7 +345,7 @@ int tls_parse_ctos_npn(SSL *s, PACKET *pkt, int *al)
  * extension, not including type and length. |al| is a pointer to the alert
  * value to send in the event of a failure. Returns: 1 on success, 0 on error.
  */
-int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
 {
     PACKET protocol_list, save_protocol_list, protocol;
 
@@ -373,7 +378,7 @@ int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_SRTP
-int tls_parse_ctos_use_srtp(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_use_srtp(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
 {
     STACK_OF(SRTP_PROTECTION_PROFILE) *srvr;
     unsigned int ct, mki_len, id;
@@ -443,7 +448,7 @@ int tls_parse_ctos_use_srtp(SSL *s, PACKET *pkt, int *al)
 }
 #endif
 
-int tls_parse_ctos_etm(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_etm(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
 {
     if (!(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC))
         s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
@@ -487,7 +492,8 @@ static int check_in_list(SSL *s, unsigned int group_id,
  * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
  * If a failure occurs then |*al| is set to an appropriate alert value.
  */
-int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+                             int *al)
 {
 #ifndef OPENSSL_NO_TLS1_3
     unsigned int group_id;
@@ -616,7 +622,8 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_EC
-int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+                                    int *al)
 {
     PACKET supported_groups_list;
 
@@ -640,7 +647,7 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, int *al)
 }
 #endif
 
-int tls_parse_ctos_ems(SSL *s, PACKET *pkt, int *al)
+int tls_parse_ctos_ems(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
 {
     /* The extension must always be empty */
     if (PACKET_remaining(pkt) != 0) {

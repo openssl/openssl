@@ -1312,7 +1312,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     context = SSL_IS_TLS13(s) ? EXT_TLS1_3_SERVER_HELLO
                               : EXT_TLS1_2_SERVER_HELLO;
     if (!tls_collect_extensions(s, &extpkt, context, &extensions, &al)
-            || !tls_parse_all_extensions(s, context, extensions, &al))
+            || !tls_parse_all_extensions(s, context, extensions, NULL, 0, &al))
         goto f_err;
 
 #ifndef OPENSSL_NO_SCTP
@@ -3120,7 +3120,7 @@ static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt)
             || !tls_parse_all_extensions(s,
                                          EXT_TLS1_3_ENCRYPTED_EXTENSIONS
                                             | EXT_TLS1_3_CERTIFICATE,
-                                         rawexts, &al))
+                                         rawexts, NULL, 0, &al))
         goto err;
 
     OPENSSL_free(rawexts);
