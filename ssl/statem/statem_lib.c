@@ -317,13 +317,13 @@ static int ssl_add_cert_to_wpacket(SSL *s, WPACKET *pkt, X509 *x, int chain,
 
     len = i2d_X509(x, NULL);
     if (len < 0) {
-        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
+        SSLerr(SSL_F_SSL_ADD_CERT_TO_WPACKET, ERR_R_BUF_LIB);
         *al = SSL_AD_INTERNAL_ERROR;
         return 0;
     }
     if (!WPACKET_sub_allocate_bytes_u24(pkt, len, &outbytes)
             || i2d_X509(x, &outbytes) != len) {
-        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_SSL_ADD_CERT_TO_WPACKET, ERR_R_INTERNAL_ERROR);
         *al = SSL_AD_INTERNAL_ERROR;
         return 0;
     }

@@ -427,12 +427,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT:
-            st->hand_state = s->tlsext_status_expected ? TLS_ST_SW_CERT_STATUS
-                                                       : TLS_ST_SW_FINISHED;
-        return WRITE_TRAN_CONTINUE;
-
-    case TLS_ST_SW_CERT_STATUS:
-        st->hand_state = TLS_ST_SW_FINISHED;
+            st->hand_state = TLS_ST_SW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_FINISHED:
@@ -3464,12 +3459,25 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     return 0;
 }
 
-int tls_construct_cert_status(SSL *s, WPACKET *pkt)
+/*
+ * In TLSv1.3 this is called from the extensions code, otherwise it is used to
+ * create a separate message. Returns 1 on success or 0 on failure.
+ */
+int tls_construct_cert_status_body(SSL *s, WPACKET *pkt)
 {
     if (!WPACKET_put_bytes_u8(pkt, s->tlsext_status_type)
             || !WPACKET_sub_memcpy_u24(pkt, s->tlsext_ocsp_resp,
                                        s->tlsext_ocsp_resplen)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_STATUS, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_cert_status(SSL *s, WPACKET *pkt)
+{
+    if (!tls_construct_cert_status_body(s, pkt)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         return 0;
     }

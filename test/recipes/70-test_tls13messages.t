@@ -43,8 +43,6 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
         checkhandshake::CLIENT_AUTH_HANDSHAKE],
     [TLSProxy::Message::MT_CERTIFICATE,
         checkhandshake::ALL_HANDSHAKES & ~checkhandshake::RESUME_HANDSHAKE],
-    [TLSProxy::Message::MT_CERTIFICATE_STATUS,
-        checkhandshake::OCSP_HANDSHAKE],
     [TLSProxy::Message::MT_FINISHED,
         checkhandshake::ALL_HANDSHAKES],
     [TLSProxy::Message::MT_CERTIFICATE,
@@ -148,7 +146,7 @@ $proxy->clientflags("-status");
 $proxy->serverflags("-status_file "
                     .srctop_file("test", "recipes", "ocsp-response.der"));
 $proxy->start();
-checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
+checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
                | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
                | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
@@ -232,7 +230,7 @@ $proxy->clientflags("-ct");
 $proxy->serverflags("-status_file "
                     .srctop_file("test", "recipes", "ocsp-response.der"));
 $proxy->start();
-checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
+checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
                | checkhandshake::SCT_CLI_EXTENSION
                | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
