@@ -128,7 +128,7 @@ int ssl3_get_record(SSL *s)
     int enc_err, rret, ret = -1;
     int i;
     size_t more, n;
-    SSL3_RECORD *rr;
+    SSL3_RECORD *rr, *thisrr;
     SSL3_BUFFER *rbuf;
     SSL_SESSION *sess;
     unsigned char *p;
@@ -147,6 +147,8 @@ int ssl3_get_record(SSL *s)
     sess = s->session;
 
     do {
+        thisrr = &rr[num_recs];
+
         /* check if we have the header */
         if ((RECORD_LAYER_get_rstate(&s->rlayer) != SSL_ST_READ_BODY) ||
             (RECORD_LAYER_get_packet_length(&s->rlayer)
@@ -190,19 +192,19 @@ int ssl3_get_record(SSL *s)
                  * because it is an SSLv2ClientHello. We keep it using
                  * |num_recs| for the sake of consistency
                  */
-                rr[num_recs].type = SSL3_RT_HANDSHAKE;
-                rr[num_recs].rec_version = SSL2_VERSION;
+                thisrr->type = SSL3_RT_HANDSHAKE;
+                thisrr->rec_version = SSL2_VERSION;
 
-                rr[num_recs].length = sslv2len & 0x7fff;
+                thisrr->length = sslv2len & 0x7fff;
 
-                if (rr[num_recs].length > SSL3_BUFFER_get_len(rbuf)
+                if (thisrr->length > SSL3_BUFFER_get_len(rbuf)
                     - SSL2_RT_HEADER_LENGTH) {
                     al = SSL_AD_RECORD_OVERFLOW;
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
                     goto f_err;
                 }
 
-                if (rr[num_recs].length < MIN_SSL2_RECORD_LEN) {
+                if (thisrr->length < MIN_SSL2_RECORD_LEN) {
                     al = SSL_AD_HANDSHAKE_FAILURE;
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_LENGTH_TOO_SHORT);
                     goto f_err;
@@ -221,13 +223,13 @@ int ssl3_get_record(SSL *s)
                 /* Pull apart the header into the SSL3_RECORD */
                 if (!PACKET_get_1(&pkt, &type)
                         || !PACKET_get_net_2(&pkt, &version)
-                        || !PACKET_get_net_2_len(&pkt, &rr[num_recs].length)) {
+                        || !PACKET_get_net_2_len(&pkt, &thisrr->length)) {
                     al = SSL_AD_INTERNAL_ERROR;
                     SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
                     goto f_err;
                 }
-                rr[num_recs].type = type;
-                rr[num_recs].rec_version = version;
+                thisrr->type = type;
+                thisrr->rec_version = version;
 
                 /* Lets check version. In TLSv1.3 we ignore this field */
                 if (!s->first_packet && !SSL_IS_TLS13(s)
@@ -235,7 +237,7 @@ int ssl3_get_record(SSL *s)
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
                     if ((s->version & 0xFF00) == (version & 0xFF00)
                         && !s->enc_write_ctx && !s->write_hash) {
-                        if (rr->type == SSL3_RT_ALERT) {
+                        if (thisrr->type == SSL3_RT_ALERT) {
                             /*
                              * The record is using an incorrect version number,
                              * but what we've got appears to be an alert. We
@@ -285,13 +287,13 @@ int ssl3_get_record(SSL *s)
                 }
 
                 if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL
-                        && rr[num_recs].type != SSL3_RT_APPLICATION_DATA) {
+                        && thisrr->type != SSL3_RT_APPLICATION_DATA) {
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
                     al = SSL_AD_UNEXPECTED_MESSAGE;
                     goto f_err;
                 }
 
-                if (rr[num_recs].length >
+                if (thisrr->length >
                     SSL3_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
                     al = SSL_AD_RECORD_OVERFLOW;
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
@@ -307,11 +309,11 @@ int ssl3_get_record(SSL *s)
          * Calculate how much more data we need to read for the rest of the
          * record
          */
-        if (rr[num_recs].rec_version == SSL2_VERSION) {
-            more = rr[num_recs].length + SSL2_RT_HEADER_LENGTH
+        if (thisrr->rec_version == SSL2_VERSION) {
+            more = thisrr->length + SSL2_RT_HEADER_LENGTH
                 - SSL3_RT_HEADER_LENGTH;
         } else {
-            more = rr[num_recs].length;
+            more = thisrr->length;
         }
         if (more > 0) {
             /* now s->packet_length == SSL3_RT_HEADER_LENGTH */
@@ -325,43 +327,44 @@ int ssl3_get_record(SSL *s)
         RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_HEADER);
 
         /*
-         * At this point, s->packet_length == SSL3_RT_HEADER_LENGTH + rr->length,
-         * or s->packet_length == SSL2_RT_HEADER_LENGTH + rr->length
-         * and we have that many bytes in s->packet
+         * At this point, s->packet_length == SSL3_RT_HEADER_LENGTH
+         * + thisrr->length, or s->packet_length == SSL2_RT_HEADER_LENGTH
+         * + thisrr->length and we have that many bytes in s->packet
          */
-        if (rr[num_recs].rec_version == SSL2_VERSION) {
-            rr[num_recs].input =
+        if (thisrr->rec_version == SSL2_VERSION) {
+            thisrr->input =
                 &(RECORD_LAYER_get_packet(&s->rlayer)[SSL2_RT_HEADER_LENGTH]);
         } else {
-            rr[num_recs].input =
+            thisrr->input =
                 &(RECORD_LAYER_get_packet(&s->rlayer)[SSL3_RT_HEADER_LENGTH]);
         }
 
         /*
-         * ok, we can now read from 's->packet' data into 'rr' rr->input points
-         * at rr->length bytes, which need to be copied into rr->data by either
-         * the decryption or by the decompression When the data is 'copied' into
-         * the rr->data buffer, rr->input will be pointed at the new buffer
+         * ok, we can now read from 's->packet' data into 'thisrr' thisrr->input
+         * points at thisrr->length bytes, which need to be copied into
+         * thisrr->data by either the decryption or by the decompression When
+         * the data is 'copied' into the thisrr->data buffer, thisrr->input will
+         * be pointed at the new buffer
          */
 
         /*
-         * We now have - encrypted [ MAC [ compressed [ plain ] ] ] rr->length
-         * bytes of encrypted compressed stuff.
+         * We now have - encrypted [ MAC [ compressed [ plain ] ] ]
+         * thisrr->length bytes of encrypted compressed stuff.
          */
 
         /* check is not needed I believe */
-        if (rr[num_recs].length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
+        if (thisrr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
             al = SSL_AD_RECORD_OVERFLOW;
             SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
             goto f_err;
         }
 
-        /* decrypt in place in 'rr->input' */
-        rr[num_recs].data = rr[num_recs].input;
-        rr[num_recs].orig_len = rr[num_recs].length;
+        /* decrypt in place in 'thisrr->input' */
+        thisrr->data = thisrr->input;
+        thisrr->orig_len = thisrr->length;
 
         /* Mark this record as not read by upper layers yet */
-        rr[num_recs].read = 0;
+        thisrr->read = 0;
 
         num_recs++;
 
@@ -369,7 +372,7 @@ int ssl3_get_record(SSL *s)
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         RECORD_LAYER_clear_first_record(&s->rlayer);
     } while (num_recs < max_recs
-             && rr[num_recs - 1].type == SSL3_RT_APPLICATION_DATA
+             && thisrr->type == SSL3_RT_APPLICATION_DATA
              && SSL_USE_EXPLICIT_IV(s)
              && s->enc_read_ctx != NULL
              && (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx))
@@ -392,14 +395,16 @@ int ssl3_get_record(SSL *s)
         mac_size = (size_t)imac_size;
         OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
         for (j = 0; j < num_recs; j++) {
-            if (rr[j].length < mac_size) {
+            thisrr = &rr[j];
+
+            if (thisrr->length < mac_size) {
                 al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_LENGTH_TOO_SHORT);
                 goto f_err;
             }
-            rr[j].length -= mac_size;
-            mac = rr[j].data + rr[j].length;
-            i = s->method->ssl3_enc->mac(s, &rr[j], md, 0 /* not send */ );
+            thisrr->length -= mac_size;
+            mac = thisrr->data + thisrr->length;
+            i = s->method->ssl3_enc->mac(s, thisrr, md, 0 /* not send */ );
             if (i == 0 || CRYPTO_memcmp(md, mac, mac_size) != 0) {
                 al = SSL_AD_BAD_RECORD_MAC;
                 SSLerr(SSL_F_SSL3_GET_RECORD,
@@ -423,11 +428,11 @@ int ssl3_get_record(SSL *s)
         goto f_err;
     }
 #ifdef SSL_DEBUG
-    printf("dec %"OSSLzu"\n", rr->length);
+    printf("dec %"OSSLzu"\n", rr[0].length);
     {
         size_t z;
-        for (z = 0; z < rr->length; z++)
-            printf("%02X%c", rr->data[z], ((z + 1) % 16) ? ' ' : '\n');
+        for (z = 0; z < rr[0].length; z++)
+            printf("%02X%c", rr[0].data[z], ((z + 1) % 16) ? ' ' : '\n');
     }
     printf("\n");
 #endif
@@ -444,16 +449,17 @@ int ssl3_get_record(SSL *s)
         OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
 
         for (j = 0; j < num_recs; j++) {
+            thisrr = &rr[j];
             /*
              * orig_len is the length of the record before any padding was
              * removed. This is public information, as is the MAC in use,
              * therefore we can safely process the record in a different amount
              * of time if it's too short to possibly contain a MAC.
              */
-            if (rr[j].orig_len < mac_size ||
+            if (thisrr->orig_len < mac_size ||
                 /* CBC records must have a padding length byte too. */
                 (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
-                 rr[j].orig_len < mac_size + 1)) {
+                 thisrr->orig_len < mac_size + 1)) {
                 al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_LENGTH_TOO_SHORT);
                 goto f_err;
@@ -467,23 +473,23 @@ int ssl3_get_record(SSL *s)
                  * contents of the padding bytes.
                  */
                 mac = mac_tmp;
-                ssl3_cbc_copy_mac(mac_tmp, &rr[j], mac_size);
-                rr[j].length -= mac_size;
+                ssl3_cbc_copy_mac(mac_tmp, thisrr, mac_size);
+                thisrr->length -= mac_size;
             } else {
                 /*
                  * In this case there's no padding, so |rec->orig_len| equals
                  * |rec->length| and we checked that there's enough bytes for
                  * |mac_size| above.
                  */
-                rr[j].length -= mac_size;
-                mac = &rr[j].data[rr[j].length];
+                thisrr->length -= mac_size;
+                mac = &thisrr->data[thisrr->length];
             }
 
-            i = s->method->ssl3_enc->mac(s, &rr[j], md, 0 /* not send */ );
+            i = s->method->ssl3_enc->mac(s, thisrr, md, 0 /* not send */ );
             if (i == 0 || mac == NULL
                 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
                 enc_err = -1;
-            if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
+            if (thisrr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
                 enc_err = -1;
         }
     }
@@ -503,14 +509,16 @@ int ssl3_get_record(SSL *s)
     }
 
     for (j = 0; j < num_recs; j++) {
-        /* rr[j].length is now just compressed */
+        thisrr = &rr[j];
+
+        /* thisrr->length is now just compressed */
         if (s->expand != NULL) {
-            if (rr[j].length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
+            if (thisrr->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
                 al = SSL_AD_RECORD_OVERFLOW;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_COMPRESSED_LENGTH_TOO_LONG);
                 goto f_err;
             }
-            if (!ssl3_do_uncompress(s, &rr[j])) {
+            if (!ssl3_do_uncompress(s, thisrr)) {
                 al = SSL_AD_DECOMPRESSION_FAILURE;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_DECOMPRESSION);
                 goto f_err;
@@ -520,44 +528,45 @@ int ssl3_get_record(SSL *s)
         if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL) {
             size_t end;
 
-            if (rr[j].length == 0) {
+            if (thisrr->length == 0) {
                 al = SSL_AD_UNEXPECTED_MESSAGE;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
                 goto f_err;
             }
 
             /* Strip trailing padding */
-            for (end = rr[j].length - 1; end > 0 && rr[j].data[end] == 0; end--)
+            for (end = thisrr->length - 1; end > 0 && thisrr->data[end] == 0;
+                 end--)
                 continue;
 
-            rr[j].length = end;
-            rr[j].type = rr[j].data[end];
-            if (rr[j].type != SSL3_RT_APPLICATION_DATA
-                    && rr[j].type != SSL3_RT_ALERT
-                    && rr[j].type != SSL3_RT_HANDSHAKE) {
+            thisrr->length = end;
+            thisrr->type = thisrr->data[end];
+            if (thisrr->type != SSL3_RT_APPLICATION_DATA
+                    && thisrr->type != SSL3_RT_ALERT
+                    && thisrr->type != SSL3_RT_HANDSHAKE) {
                 al = SSL_AD_UNEXPECTED_MESSAGE;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
                 goto f_err;
             }
         }
 
-        if (rr[j].length > SSL3_RT_MAX_PLAIN_LENGTH) {
+        if (thisrr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
             al = SSL_AD_RECORD_OVERFLOW;
             SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
             goto f_err;
         }
 
-        rr[j].off = 0;
+        thisrr->off = 0;
         /*-
          * So at this point the following is true
-         * rr[j].type   is the type of record
-         * rr[j].length == number of bytes in record
-         * rr[j].off    == offset to first valid byte
-         * rr[j].data   == where to take bytes from, increment after use :-).
+         * thisrr->type   is the type of record
+         * thisrr->length == number of bytes in record
+         * thisrr->off    == offset to first valid byte
+         * thisrr->data   == where to take bytes from, increment after use :-).
          */
 
         /* just read a 0 length packet */
-        if (rr[j].length == 0) {
+        if (thisrr->length == 0) {
             RECORD_LAYER_inc_empty_record_count(&s->rlayer);
             if (RECORD_LAYER_get_empty_record_count(&s->rlayer)
                 > MAX_EMPTY_RECORDS) {
