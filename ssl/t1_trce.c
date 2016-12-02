@@ -766,9 +766,11 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
 }
 
 static int ssl_print_extensions(BIO *bio, int indent, int server,
-                                const unsigned char *msg, size_t msglen)
+                                const unsigned char **msgin, size_t *msglenin)
 {
-    size_t extslen;
+    size_t extslen, msglen = *msglenin;
+    const unsigned char *msg = *msgin;
+
     BIO_indent(bio, indent, 80);
     if (msglen == 0) {
         BIO_puts(bio, "No Extensions\n");
@@ -795,6 +797,9 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
         msg += extlen;
         msglen -= extlen + 4;
     }
+
+    *msgin = msg;
+    *msglenin = msglen;
     return 1;
 }
 
@@ -848,7 +853,7 @@ static int ssl_print_client_hello(BIO *bio, SSL *ssl, int indent,
         msglen--;
         len--;
     }
-    if (!ssl_print_extensions(bio, indent, 0, msg, msglen))
+    if (!ssl_print_extensions(bio, indent, 0, &msg, &msglen))
         return 0;
     return 1;
 }
@@ -893,7 +898,7 @@ static int ssl_print_server_hello(BIO *bio, int indent,
         msg++;
         msglen--;
     }
-    if (!ssl_print_extensions(bio, indent, 1, msg, msglen))
+    if (!ssl_print_extensions(bio, indent, 1, &msg, &msglen))
         return 0;
     return 1;
 }
@@ -1089,10 +1094,16 @@ static int ssl_print_certificate(BIO *bio, int indent,
     return 1;
 }
 
-static int ssl_print_certificates(BIO *bio, int indent,
+static int ssl_print_certificates(BIO *bio, SSL *s, int server, int indent,
                                   const unsigned char *msg, size_t msglen)
 {
     size_t clen;
+
+    if (SSL_IS_TLS13(s)
+            && !ssl_print_hexbuf(bio, indent, "context", 1, &msg, &msglen))
+        return 0;
+
+
     if (msglen < 3)
         return 0;
     clen = (msg[0] << 16) | (msg[1] << 8) | msg[2];
@@ -1104,6 +1115,9 @@ static int ssl_print_certificates(BIO *bio, int indent,
     while (clen > 0) {
         if (!ssl_print_certificate(bio, indent + 2, &msg, &clen))
             return 0;
+        if (!ssl_print_extensions(bio, indent + 2, server, &msg, &clen))
+            return 0;
+
     }
     return 1;
 }
@@ -1203,7 +1217,7 @@ static int ssl_print_ticket(BIO *bio, int indent,
     return 1;
 }
 
-static int ssl_print_handshake(BIO *bio, SSL *ssl,
+static int ssl_print_handshake(BIO *bio, SSL *ssl, int server,
                                const unsigned char *msg, size_t msglen,
                                int indent)
 {
@@ -1259,7 +1273,7 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl,
         break;
 
     case SSL3_MT_CERTIFICATE:
-        if (!ssl_print_certificates(bio, indent + 2, msg, msglen))
+        if (!ssl_print_certificates(bio, ssl, server, indent + 2, msg, msglen))
             return 0;
         break;
 
@@ -1288,7 +1302,7 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl,
         break;
 
     case SSL3_MT_ENCRYPTED_EXTENSIONS:
-        if (!ssl_print_extensions(bio, indent + 2, 1, msg, msglen))
+        if (!ssl_print_extensions(bio, indent + 2, 1, &msg, &msglen))
             return 0;
         break;
 
@@ -1338,7 +1352,8 @@ void SSL_trace(int write_p, int version, int content_type,
         }
         break;
     case SSL3_RT_HANDSHAKE:
-        if (!ssl_print_handshake(bio, ssl, msg, msglen, 4))
+        if (!ssl_print_handshake(bio, ssl, ssl->server ? write_p : !write_p,
+                                 msg, msglen, 4))
             BIO_printf(bio, "Message length parse error!\n");
         break;
 
