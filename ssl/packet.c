@@ -63,7 +63,7 @@ int WPACKET_reserve_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
             return 0;
     }
     if (allocbytes != NULL)
-        *allocbytes = GETBUF(pkt) + pkt->curr;
+        *allocbytes = WPACKET_get_curr(pkt);
 
     return 1;
 }
