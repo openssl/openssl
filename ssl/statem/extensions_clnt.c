@@ -776,14 +776,24 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chain,
                                   int *al)
 {
     /*
-     * MUST be empty and only sent if we've requested a status
-     * request message.
+     * MUST only be sent if we've requested a status
+     * request message. In TLS <= 1.2 it must also be empty.
      */
     if (s->tlsext_status_type == TLSEXT_STATUSTYPE_nothing
-            || PACKET_remaining(pkt) > 0) {
+            || (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) > 0)) {
         *al = SSL_AD_UNSUPPORTED_EXTENSION;
         return 0;
     }
+
+    if (SSL_IS_TLS13(s)) {
+        /* We only know how to handle this if it's for the first Certificate in
+         * the chain. We ignore any other repsonses.
+         */
+        if (chain != 0)
+            return 1;
+        return tls_process_cert_status_body(s, pkt, al);
+    }
+
     /* Set flag to expect CertificateStatus message */
     s->tlsext_status_expected = 1;
 
