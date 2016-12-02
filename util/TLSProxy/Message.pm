@@ -268,6 +268,15 @@ sub create_message
             [@message_frag_lens]
         );
         $message->parse();
+    } elsif ($mt == MT_CERTIFICATE) {
+        $message = TLSProxy::Certificate->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
     } elsif ($mt == MT_SERVER_KEY_EXCHANGE) {
         $message = TLSProxy::ServerKeyExchange->new(
             $server,

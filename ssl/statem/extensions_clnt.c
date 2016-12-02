@@ -252,6 +252,10 @@ int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt, X509 *x,
 {
     int i;
 
+    /* This extension isn't defined for client Certificates */
+    if (x != NULL)
+        return 1;
+
     if (s->tlsext_status_type != TLSEXT_STATUSTYPE_ocsp)
         return 1;
 
@@ -416,6 +420,10 @@ int tls_construct_ctos_etm(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
 int tls_construct_ctos_sct(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
 {
     if (s->ct_validation_callback == NULL)
+        return 1;
+
+    /* Not defined for client Certificates */
+    if (x != NULL)
         return 1;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signed_certificate_timestamp)

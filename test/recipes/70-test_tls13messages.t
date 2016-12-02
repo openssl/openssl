@@ -87,10 +87,12 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
     [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_SERVER_NAME,
         checkhandshake::SERVER_NAME_SRV_EXTENSION],
-    [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_STATUS_REQUEST,
-        checkhandshake::STATUS_REQUEST_SRV_EXTENSION],
     [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_ALPN,
         checkhandshake::ALPN_SRV_EXTENSION],
+
+    [TLSProxy::Message::MT_CERTIFICATE, TLSProxy::Message::EXT_STATUS_REQUEST,
+        checkhandshake::STATUS_REQUEST_SRV_EXTENSION],
+
     [0,0,0]
 );
 

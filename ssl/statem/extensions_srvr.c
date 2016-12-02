@@ -224,6 +224,10 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chain,
 {
     PACKET responder_id_list, exts;
 
+    /* Not defined if we get one of these in a client Certificate */
+    if (x != NULL)
+        return 1;
+
     if (!PACKET_get_1(pkt, (unsigned int *)&s->tlsext_status_type)) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
@@ -750,6 +754,9 @@ int tls_construct_stoc_status_request(SSL *s, WPACKET *pkt, X509 *x,
                                      size_t chain, int *al)
 {
     if (!s->tlsext_status_expected)
+        return 1;
+
+    if (SSL_IS_TLS13(s) && chain != 0)
         return 1;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)

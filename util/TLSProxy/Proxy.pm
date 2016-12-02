@@ -18,6 +18,7 @@ use TLSProxy::Message;
 use TLSProxy::ClientHello;
 use TLSProxy::ServerHello;
 use TLSProxy::EncryptedExtensions;
+use TLSProxy::Certificate;
 use TLSProxy::ServerKeyExchange;
 use TLSProxy::NewSessionTicket;
 
