@@ -760,7 +760,18 @@ int tls_construct_stoc_status_request(SSL *s, WPACKET *pkt, X509 *x,
         return 1;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
-            || !WPACKET_put_bytes_u16(pkt, 0)) {
+            || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /*
+     * In TLSv1.3 we include the certificate status itself. In <= TLSv1.2 we
+     * send back an empty extension, with the certificate status appearing as a
+     * separate message
+     */
+    if ((SSL_IS_TLS13(s) && !tls_construct_cert_status_body(s, pkt))
+            || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
         return 0;
     }

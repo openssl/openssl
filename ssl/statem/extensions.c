@@ -22,8 +22,6 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent,
 static int init_session_ticket(SSL *s, unsigned int context);
 #ifndef OPENSSL_NO_OCSP
 static int init_status_request(SSL *s, unsigned int context);
-static int final_status_request(SSL *s, unsigned int context, int sent,
-                                        int *al);
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
 static int init_npn(SSL *s, unsigned int context);
@@ -162,7 +160,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         | EXT_TLS1_3_CERTIFICATE,
         init_status_request, tls_parse_ctos_status_request,
         tls_parse_stoc_status_request, tls_construct_stoc_status_request,
-        tls_construct_ctos_status_request, final_status_request
+        tls_construct_ctos_status_request, NULL
     },
 #else
     INVALID_EXTENSION,
@@ -792,25 +790,17 @@ static int init_session_ticket(SSL *s, unsigned int context)
 #ifndef OPENSSL_NO_OCSP
 static int init_status_request(SSL *s, unsigned int context)
 {
-    if (s->server)
+    if (s->server) {
         s->tlsext_status_type = TLSEXT_STATUSTYPE_nothing;
-
-    return 1;
-}
-
-static int final_status_request(SSL *s, unsigned int context, int sent,
-                                        int *al)
-{
-    if (s->server)
-        return 1;
-
-    /*
-     * Ensure we get sensible values passed to tlsext_status_cb in the event
-     * that we don't receive a status message
-     */
-    OPENSSL_free(s->tlsext_ocsp_resp);
-    s->tlsext_ocsp_resp = NULL;
-    s->tlsext_ocsp_resplen = 0;
+    } else {
+        /*
+         * Ensure we get sensible values passed to tlsext_status_cb in the event
+         * that we don't receive a status message
+         */
+        OPENSSL_free(s->tlsext_ocsp_resp);
+        s->tlsext_ocsp_resp = NULL;
+        s->tlsext_ocsp_resplen = 0;
+    }
 
     return 1;
 }

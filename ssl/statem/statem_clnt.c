@@ -169,17 +169,6 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_CR_CERT:
-        /*
-         * The CertificateStatus message is optional even if
-         * |tlsext_status_expected| is set
-         */
-        if (s->tlsext_status_expected && mt == SSL3_MT_CERTIFICATE_STATUS) {
-            st->hand_state = TLS_ST_CR_CERT_STATUS;
-            return 1;
-        }
-        /* Fall through */
-
-    case TLS_ST_CR_CERT_STATUS:
         if (mt == SSL3_MT_FINISHED) {
             st->hand_state = TLS_ST_CR_FINISHED;
             return 1;
@@ -2191,41 +2180,57 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
+/*
+ * In TLSv1.3 this is called from the extensions code, otherwise it is used to
+ * parse a separate message. Returns 1 on success or 0 on failure. On failure
+ * |*al| is populated with a suitable alert code.
+ */
+int tls_process_cert_status_body(SSL *s, PACKET *pkt, int *al)
 {
-    int al;
     size_t resplen;
     unsigned int type;
 
     if (!PACKET_get_1(pkt, &type)
         || type != TLSEXT_STATUSTYPE_ocsp) {
-        al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, SSL_R_UNSUPPORTED_STATUS_TYPE);
-        goto f_err;
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS_BODY,
+               SSL_R_UNSUPPORTED_STATUS_TYPE);
+        return 0;
     }
     if (!PACKET_get_net_3_len(pkt, &resplen)
         || PACKET_remaining(pkt) != resplen) {
-        al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, SSL_R_LENGTH_MISMATCH);
-        goto f_err;
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS_BODY, SSL_R_LENGTH_MISMATCH);
+        return 0;
     }
     s->tlsext_ocsp_resp = OPENSSL_malloc(resplen);
     if (s->tlsext_ocsp_resp == NULL) {
-        al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, ERR_R_MALLOC_FAILURE);
-        goto f_err;
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS_BODY, ERR_R_MALLOC_FAILURE);
+        return 0;
     }
     if (!PACKET_copy_bytes(pkt, s->tlsext_ocsp_resp, resplen)) {
-        al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, SSL_R_LENGTH_MISMATCH);
-        goto f_err;
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS_BODY, SSL_R_LENGTH_MISMATCH);
+        return 0;
     }
     s->tlsext_ocsp_resplen = resplen;
+
+    return 1;
+}
+    
+
+MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
+{
+    int al;
+
+    if (!tls_process_cert_status_body(s, pkt, &al)) {
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
+        ossl_statem_set_error(s);
+        return MSG_PROCESS_ERROR;
+    }
+
     return MSG_PROCESS_CONTINUE_READING;
- f_err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    ossl_statem_set_error(s);
-    return MSG_PROCESS_ERROR;
 }
 
 /*

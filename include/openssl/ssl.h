@@ -2136,6 +2136,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_WRITE_PENDING                         159
 # define SSL_F_SSL_ADD_CERT_CHAIN                         316
 # define SSL_F_SSL_ADD_CERT_TO_BUF                        319
+# define SSL_F_SSL_ADD_CERT_TO_WPACKET                    493
 # define SSL_F_SSL_ADD_CLIENTHELLO_RENEGOTIATE_EXT        298
 # define SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT                 277
 # define SSL_F_SSL_ADD_CLIENTHELLO_USE_SRTP_EXT           307
@@ -2261,6 +2262,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_COLLECT_EXTENSIONS                     435
 # define SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST          372
 # define SSL_F_TLS_CONSTRUCT_CERT_STATUS                  429
+# define SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY             494
 # define SSL_F_TLS_CONSTRUCT_CHANGE_CIPHER_SPEC           427
 # define SSL_F_TLS_CONSTRUCT_CKE_DHE                      404
 # define SSL_F_TLS_CONSTRUCT_CKE_ECDHE                    405
@@ -2332,6 +2334,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE             360
 # define SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST            361
 # define SSL_F_TLS_PROCESS_CERT_STATUS                    362
+# define SSL_F_TLS_PROCESS_CERT_STATUS_BODY               495
 # define SSL_F_TLS_PROCESS_CERT_VERIFY                    379
 # define SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC             363
 # define SSL_F_TLS_PROCESS_CKE_DHE                        411
