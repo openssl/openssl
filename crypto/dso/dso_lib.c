@@ -324,6 +324,9 @@ DSO *DSO_dsobyaddr(void *addr, int flags)
     char *filename = NULL;
     int len = DSO_pathbyaddr(addr, NULL, 0);
 
+    if (len < 0)
+        return NULL;
+
     filename = OPENSSL_malloc(len);
     if (filename != NULL
             && DSO_pathbyaddr(addr, filename, len) == len)
