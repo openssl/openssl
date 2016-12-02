@@ -73,8 +73,14 @@ sub checkhandshake($$$$)
         if (($handtype & RENEG_HANDSHAKE) != 0) {
             $numtests += $#extensions + 2;
         }
-        #In TLS1.3 there are 3 messages with extensions (and no renegotiations)
-        $numtests += 1 if ($proxy->is_tls13());
+        #In TLS1.3 there are 4 messages with extensions (i.e. 2 extra) and no
+        #renegotiations: 1 ClientHello, 1 ServerHello, 1 EncryptedExtensions,
+        #1 Certificate
+        $numtests += 2 if ($proxy->is_tls13());
+        #Except in Client auth where we have an extra Certificate message, and
+        #one extension gets checked twice (once in each Certificate message)
+        $numtests += 2 if ($proxy->is_tls13()
+                          && ($handtype & CLIENT_AUTH_HANDSHAKE) != 0);
 
         plan tests => $numtests;
 
@@ -101,7 +107,11 @@ sub checkhandshake($$$$)
             next if ($message->mt() != TLSProxy::Message::MT_CLIENT_HELLO
                     && $message->mt() != TLSProxy::Message::MT_SERVER_HELLO
                     && $message->mt() !=
-                       TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS);
+                       TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS
+                    && $message->mt() != TLSProxy::Message::MT_CERTIFICATE);
+
+            next if $message->mt() == TLSProxy::Message::MT_CERTIFICATE
+                    && !TLSProxy::Proxy::is_tls13();
 
             if ($message->mt() == TLSProxy::Message::MT_CLIENT_HELLO) {
                 #Add renegotiate extension we will expect if renegotiating

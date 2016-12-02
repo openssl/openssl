@@ -308,12 +308,139 @@ int tls_construct_change_cipher_spec(SSL *s, WPACKET *pkt)
     return 1;
 }
 
-unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
+/* Add a certificate to the WPACKET */
+static int ssl_add_cert_to_wpacket(SSL *s, WPACKET *pkt, X509 *x, int chain,
+                                   int *al)
 {
+    int len;
+    unsigned char *outbytes;
+
+    len = i2d_X509(x, NULL);
+    if (len < 0) {
+        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
+        *al = SSL_AD_INTERNAL_ERROR;
+        return 0;
+    }
+    if (!WPACKET_sub_allocate_bytes_u24(pkt, len, &outbytes)
+            || i2d_X509(x, &outbytes) != len) {
+        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_INTERNAL_ERROR);
+        *al = SSL_AD_INTERNAL_ERROR;
+        return 0;
+    }
+
+    if (SSL_IS_TLS13(s)
+            && !tls_construct_extensions(s, pkt, EXT_TLS1_3_CERTIFICATE, x,
+                                         chain, al))
+        return 0;
+
+    return 1;
+}
+
+/* Add certificate chain to provided WPACKET */
+static int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk, int *al)
+{
+    int i, chain_count;
+    X509 *x;
+    STACK_OF(X509) *extra_certs;
+    STACK_OF(X509) *chain = NULL;
+    X509_STORE *chain_store;
+    int tmpal = SSL_AD_INTERNAL_ERROR;
+
+    if (cpk == NULL || cpk->x509 == NULL)
+        return 1;
+
+    x = cpk->x509;
+
+    /*
+     * If we have a certificate specific chain use it, else use parent ctx.
+     */
+    if (cpk->chain)
+        extra_certs = cpk->chain;
+    else
+        extra_certs = s->ctx->extra_certs;
+
+    if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || extra_certs)
+        chain_store = NULL;
+    else if (s->cert->chain_store)
+        chain_store = s->cert->chain_store;
+    else
+        chain_store = s->ctx->cert_store;
+
+    if (chain_store) {
+        X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new();
+
+        if (xs_ctx == NULL) {
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        if (!X509_STORE_CTX_init(xs_ctx, chain_store, x, NULL)) {
+            X509_STORE_CTX_free(xs_ctx);
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_X509_LIB);
+            goto err;
+        }
+        /*
+         * It is valid for the chain not to be complete (because normally we
+         * don't include the root cert in the chain). Therefore we deliberately
+         * ignore the error return from this call. We're not actually verifying
+         * the cert - we're just building as much of the chain as we can
+         */
+        (void)X509_verify_cert(xs_ctx);
+        /* Don't leave errors in the queue */
+        ERR_clear_error();
+        chain = X509_STORE_CTX_get0_chain(xs_ctx);
+        i = ssl_security_cert_chain(s, chain, NULL, 0);
+        if (i != 1) {
+#if 0
+            /* Dummy error calls so mkerr generates them */
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_EE_KEY_TOO_SMALL);
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_CA_KEY_TOO_SMALL);
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_CA_MD_TOO_WEAK);
+#endif
+            X509_STORE_CTX_free(xs_ctx);
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
+            goto err;
+        }
+        chain_count = sk_X509_num(chain);
+        for (i = 0; i < chain_count; i++) {
+            x = sk_X509_value(chain, i);
+
+            if (!ssl_add_cert_to_wpacket(s, pkt, x, i, &tmpal)) {
+                X509_STORE_CTX_free(xs_ctx);
+                goto err;
+            }
+        }
+        X509_STORE_CTX_free(xs_ctx);
+    } else {
+        i = ssl_security_cert_chain(s, extra_certs, x, 0);
+        if (i != 1) {
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
+            goto err;
+        }
+        if (!ssl_add_cert_to_wpacket(s, pkt, x, 0, &tmpal))
+            goto err;
+        for (i = 0; i < sk_X509_num(extra_certs); i++) {
+            x = sk_X509_value(extra_certs, i);
+            if (!ssl_add_cert_to_wpacket(s, pkt, x, i + 1, &tmpal))
+                goto err;
+        }
+    }
+    return 1;
+
+ err:
+    *al = tmpal;
+    return 0;
+}
+
+unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk,
+                                     int *al)
+{
+    int tmpal = SSL_AD_INTERNAL_ERROR;
+
     if (!WPACKET_start_sub_packet_u24(pkt)
-            || !ssl_add_cert_chain(s, pkt, cpk)
+            || !ssl_add_cert_chain(s, pkt, cpk, &tmpal)
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN, ERR_R_INTERNAL_ERROR);
+        *al = tmpal;
         return 0;
     }
     return 1;
