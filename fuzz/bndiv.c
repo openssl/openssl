@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 #include "fuzzer.h"
 
 static BN_CTX *ctx;
@@ -32,6 +33,9 @@ int FuzzerInitialize(int *argc, char ***argv)
     b4 = BN_new();
     b5 = BN_new();
     ctx = BN_CTX_new();
+
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+    ERR_get_state();
 
     return 1;
 }
@@ -104,6 +108,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
  done:
     OPENSSL_assert(success);
+    ERR_clear_error();
 
     return 0;
 }

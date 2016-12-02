@@ -16,6 +16,7 @@
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <openssl/rsa.h>
+#include <openssl/err.h>
 #include "fuzzer.h"
 
 static const uint8_t kCertificateDER[] = {
@@ -189,34 +190,29 @@ static const uint8_t kRSAPrivateKeyDER[] = {
     0x98, 0x46, 0x89, 0x82, 0x40,
 };
 
-static SSL_CTX *ctx;
-
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 extern int rand_predictable;
 #endif
+#define ENTROPY_NEEDED 32
+
+/* unused, to avoid warning. */
+static int idx;
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    const uint8_t *bufp = kRSAPrivateKeyDER;
-    RSA *privkey;
-    EVP_PKEY *pkey;
-    int ret;
-    X509 *cert;
+    STACK_OF(SSL_COMP) *comp_methods;
 
-    ctx = SSL_CTX_new(SSLv23_method());
-    privkey = d2i_RSAPrivateKey(NULL, &bufp, sizeof(kRSAPrivateKeyDER));
-    OPENSSL_assert(privkey != NULL);
-    pkey = EVP_PKEY_new();
-    EVP_PKEY_assign_RSA(pkey, privkey);
-    ret = SSL_CTX_use_PrivateKey(ctx, pkey);
-    OPENSSL_assert(ret == 1);
-    EVP_PKEY_free(pkey);
-    bufp = kCertificateDER;
-    cert = d2i_X509(NULL, &bufp, sizeof(kCertificateDER));
-    OPENSSL_assert(cert != NULL);
-    ret = SSL_CTX_use_certificate(ctx, cert);
-    OPENSSL_assert(ret == 1);
-    X509_free(cert);
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
+    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+    ERR_get_state();
+    CRYPTO_free_ex_index(0, -1);
+    idx = SSL_get_ex_data_X509_STORE_CTX_idx();
+    RAND_add("", 1, ENTROPY_NEEDED);
+    RAND_status();
+    RSA_get_default_method();
+    comp_methods = SSL_COMP_get_compression_methods();
+    OPENSSL_sk_sort((OPENSSL_STACK *)comp_methods);
+
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     rand_predictable = 1;
@@ -230,16 +226,37 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     SSL *server;
     BIO *in;
     BIO *out;
-    if (!len) {
+    SSL_CTX *ctx;
+    int ret;
+    RSA *privkey;
+    const uint8_t *bufp = kRSAPrivateKeyDER;
+    EVP_PKEY *pkey;
+    X509 *cert;
+
+    if (len == 0)
         return 0;
-    }
-    /* TODO: make this work for OpenSSL. There's a PREDICT define that may do
-     * the job.
+
+    /*
      * TODO: use the ossltest engine (optionally?) to disable crypto checks.
-     * RAND_reset_for_fuzzing();
      */
 
     /* This only fuzzes the initial flow from the client so far. */
+    ctx = SSL_CTX_new(SSLv23_method());
+    privkey = d2i_RSAPrivateKey(NULL, &bufp, sizeof(kRSAPrivateKeyDER));
+    OPENSSL_assert(privkey != NULL);
+    pkey = EVP_PKEY_new();
+    EVP_PKEY_assign_RSA(pkey, privkey);
+    ret = SSL_CTX_use_PrivateKey(ctx, pkey);
+    OPENSSL_assert(ret == 1);
+    EVP_PKEY_free(pkey);
+
+    bufp = kCertificateDER;
+    cert = d2i_X509(NULL, &bufp, sizeof(kCertificateDER));
+    OPENSSL_assert(cert != NULL);
+    ret = SSL_CTX_use_certificate(ctx, cert);
+    OPENSSL_assert(ret == 1);
+    X509_free(cert);
+
     server = SSL_new(ctx);
     in = BIO_new(BIO_s_mem());
     out = BIO_new(BIO_s_mem());
@@ -256,10 +273,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         }
     }
     SSL_free(server);
+    ERR_clear_error();
+    SSL_CTX_free(ctx);
+
     return 0;
 }
 
 void FuzzerCleanup(void)
 {
-    SSL_CTX_free(ctx);
 }
