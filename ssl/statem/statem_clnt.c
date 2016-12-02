@@ -1371,19 +1371,23 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     const unsigned char *certstart, *certbytes;
     STACK_OF(X509) *sk = NULL;
     EVP_PKEY *pkey = NULL;
+    size_t chain;
+    unsigned int context = 0;
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (!PACKET_get_net_3(pkt, &cert_list_len)
-        || PACKET_remaining(pkt) != cert_list_len) {
+    if ((SSL_IS_TLS13(s) && !PACKET_get_1(pkt, &context))
+            || context != 0
+            || !PACKET_get_net_3(pkt, &cert_list_len)
+            || PACKET_remaining(pkt) != cert_list_len) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-    while (PACKET_remaining(pkt)) {
+    for (chain = 0; PACKET_remaining(pkt); chain++) {
         if (!PACKET_get_net_3(pkt, &cert_len)
             || !PACKET_get_bytes(pkt, &certbytes, cert_len)) {
             al = SSL_AD_DECODE_ERROR;
@@ -1405,6 +1409,23 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
                    SSL_R_CERT_LENGTH_MISMATCH);
             goto f_err;
         }
+
+        if (SSL_IS_TLS13(s)) {
+            RAW_EXTENSION *rawexts = NULL;
+            PACKET extensions;
+
+            if (!PACKET_get_length_prefixed_2(pkt, &extensions)) {
+                al = SSL_AD_DECODE_ERROR;
+                SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, SSL_R_BAD_LENGTH);
+                goto f_err;
+            }
+            if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_CERTIFICATE,
+                                        &rawexts, &al)
+                    || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE,
+                                                 rawexts, x, chain, &al))
+                goto f_err;
+        }
+
         if (!sk_X509_push(sk, x)) {
             SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -2986,11 +3007,19 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
 
 int tls_construct_client_certificate(SSL *s, WPACKET *pkt)
 {
-    if (!ssl3_output_cert_chain(s, pkt,
+    int al;
+
+    /*
+     * TODO(TLS1.3): For now we must put an empty context. Needs to be filled in
+     * later
+     */
+    if ((SSL_IS_TLS13(s) && !WPACKET_put_bytes_u8(pkt, 0))
+            || !ssl3_output_cert_chain(s, pkt,
                                (s->s3->tmp.cert_req == 2) ? NULL
-                                                          : s->cert->key)) {
+                                                          : s->cert->key,
+                                &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
-        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
         return 0;
     }
 
@@ -3108,18 +3137,9 @@ static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    /*
-     * TODO(TLS1.3): For now we are processing Encrypted Extensions and
-     * Certificate extensions as part of this one message. Later we need to
-     * split out the Certificate extensions into the Certificate message
-     */
-    if (!tls_collect_extensions(s, &extensions,
-                                EXT_TLS1_3_ENCRYPTED_EXTENSIONS
-                                    | EXT_TLS1_3_CERTIFICATE,
+    if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
                                 &rawexts, &al)
-            || !tls_parse_all_extensions(s,
-                                         EXT_TLS1_3_ENCRYPTED_EXTENSIONS
-                                            | EXT_TLS1_3_CERTIFICATE,
+            || !tls_parse_all_extensions(s, EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
                                          rawexts, NULL, 0, &al))
         goto err;
 

@@ -1896,7 +1896,6 @@ __owur X509 *ssl_cert_get0_next_certificate(CERT *c, int first);
 void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg);
 
 __owur int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk);
-__owur int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk);
 __owur int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
                                    int ref);
@@ -1952,7 +1951,7 @@ __owur size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t slen,
 __owur int ssl3_finish_mac(SSL *s, const unsigned char *buf, size_t len);
 void ssl3_free_digest_list(SSL *s);
 __owur unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt,
-                                            CERT_PKEY *cpk);
+                                            CERT_PKEY *cpk, int *al);
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
                                             STACK_OF(SSL_CIPHER) *clnt,
                                             STACK_OF(SSL_CIPHER) *srvr);

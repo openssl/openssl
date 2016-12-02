@@ -3143,22 +3143,25 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     unsigned long l, llen;
     const unsigned char *certstart, *certbytes;
     STACK_OF(X509) *sk = NULL;
-    PACKET spkt;
+    PACKET spkt, context;
+    size_t chain;
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
         goto f_err;
     }
 
-    if (!PACKET_get_net_3(pkt, &llen)
-        || !PACKET_get_sub_packet(pkt, &spkt, llen)
-        || PACKET_remaining(pkt) != 0) {
+    /* TODO(TLS1.3): For now we ignore the context. We need to verify this */
+    if ((SSL_IS_TLS13(s) && !PACKET_get_length_prefixed_1(pkt, &context))
+            || !PACKET_get_net_3(pkt, &llen)
+            || !PACKET_get_sub_packet(pkt, &spkt, llen)
+            || PACKET_remaining(pkt) != 0) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
 
-    while (PACKET_remaining(&spkt) > 0) {
+    for (chain = 0; PACKET_remaining(&spkt) > 0; chain++) {
         if (!PACKET_get_net_3(&spkt, &l)
             || !PACKET_get_bytes(&spkt, &certbytes, l)) {
             al = SSL_AD_DECODE_ERROR;
@@ -3179,6 +3182,23 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
                    SSL_R_CERT_LENGTH_MISMATCH);
             goto f_err;
         }
+
+        if (SSL_IS_TLS13(s)) {
+            RAW_EXTENSION *rawexts = NULL;
+            PACKET extensions;
+
+            if (!PACKET_get_length_prefixed_2(&spkt, &extensions)) {
+                al = SSL_AD_DECODE_ERROR;
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, SSL_R_BAD_LENGTH);
+                goto f_err;
+            }
+            if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_CERTIFICATE,
+                                        &rawexts, &al)
+                    || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE,
+                                                 rawexts, x, chain, &al))
+                goto f_err;
+        }
+
         if (!sk_X509_push(sk, x)) {
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
             goto f_err;
@@ -3266,6 +3286,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 int tls_construct_server_certificate(SSL *s, WPACKET *pkt)
 {
     CERT_PKEY *cpk;
+    int al = SSL_AD_INTERNAL_ERROR;
 
     cpk = ssl_get_server_send_pkey(s);
     if (cpk == NULL) {
@@ -3273,8 +3294,14 @@ int tls_construct_server_certificate(SSL *s, WPACKET *pkt)
         return 0;
     }
 
-    if (!ssl3_output_cert_chain(s, pkt, cpk)) {
+    /*
+     * In TLSv1.3 the certificate chain is always preceded by a 0 length context
+     * for the server Certificate message
+     */
+    if ((SSL_IS_TLS13(s) && !WPACKET_put_bytes_u8(pkt, 0))
+            || !ssl3_output_cert_chain(s, pkt, cpk, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
         return 0;
     }
 
@@ -3492,13 +3519,7 @@ static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt)
 {
     int al;
 
-    /*
-     * TODO(TLS1.3): For now we send certificate extensions in with the
-     * encrypted extensions. Later we need to move these to the certificate
-     * message.
-     */
-    if (!tls_construct_extensions(s, pkt, EXT_TLS1_3_ENCRYPTED_EXTENSIONS
-                                          | EXT_TLS1_3_CERTIFICATE,
+    if (!tls_construct_extensions(s, pkt, EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
                                   NULL, 0, &al)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
         SSLerr(SSL_F_TLS_CONSTRUCT_ENCRYPTED_EXTENSIONS, ERR_R_INTERNAL_ERROR);
