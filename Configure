@@ -1110,10 +1110,6 @@ if ($disabled{"dynamic-engine"}) {
         $config{dynamic_engines} = 1;
 }
 
-unless ($disabled{"fuzz-libfuzzer"}) {
-    $config{cflags} .= "-fsanitize-coverage=edge,indirect-calls,8bit-counters ";
-}
-
 unless ($disabled{asan}) {
     $config{cflags} .= "-fsanitize=address ";
 }
