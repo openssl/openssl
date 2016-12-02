@@ -638,7 +638,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     unsigned char *recordstart;
     int i, mac_size, clear = 0;
     size_t prefix_len = 0;
-    int eivlen;
+    int eivlen = 0;
     size_t align = 0;
     SSL3_BUFFER *wb;
     SSL_SESSION *sess;
@@ -748,7 +748,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     } else {
         for (j = 0; j < numpipes; j++) {
             wb = &s->rlayer.wbuf[j];
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
             align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
             align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
@@ -776,11 +776,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             eivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN;
         } else if (mode == EVP_CIPH_CCM_MODE) {
             eivlen = EVP_CCM_TLS_EXPLICIT_IV_LEN;
-        } else {
-            eivlen = 0;
         }
-    } else {
-        eivlen = 0;
     }
 
     totlen = 0;
