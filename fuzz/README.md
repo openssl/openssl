@@ -39,7 +39,8 @@ Configure for fuzzing:
             --with-fuzzer-include=../../svn-work/Fuzzer \
             --with-fuzzer-lib=../../svn-work/Fuzzer/libFuzzer \
             -DPEDANTIC enable-asan enable-ubsan no-shared \
-            -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+            -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
+	    -fsanitize-coverage=edge,indirect-calls,8bit-counters
     $ sudo apt-get install make
     $ LDCMD=clang++ make -j
     $ fuzz/helper.py $FUZZER
