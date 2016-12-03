@@ -42,16 +42,16 @@ matrix:
           env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
         - os: linux
           compiler: gcc-5
-          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers enable-external-tests -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
+          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers enable-external-tests no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="enable-msan"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+          env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           compiler: gcc-5
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
