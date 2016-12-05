@@ -635,6 +635,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 {
     WPACKET pkt[SSL_MAX_PIPELINES];
     SSL3_RECORD wr[SSL_MAX_PIPELINES];
+    WPACKET *thispkt;
+    SSL3_RECORD *thiswr;
     unsigned char *recordstart;
     int i, mac_size, clear = 0;
     size_t prefix_len = 0;
@@ -737,7 +739,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         wpinited = 1;
     } else if (prefix_len) {
         wb = &s->rlayer.wbuf[0];
-        if (!WPACKET_init_static_len(&pkt[0], SSL3_BUFFER_get_buf(wb),
+        if (!WPACKET_init_static_len(&pkt[0],
+                                     SSL3_BUFFER_get_buf(wb),
                                      SSL3_BUFFER_get_len(wb), 0)
                 || !WPACKET_allocate_bytes(&pkt[0], SSL3_BUFFER_get_offset(wb)
                                                     + prefix_len, NULL)) {
@@ -747,15 +750,17 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         wpinited = 1;
     } else {
         for (j = 0; j < numpipes; j++) {
+            thispkt = &pkt[j];
+
             wb = &s->rlayer.wbuf[j];
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
             align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
             align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
 #endif
             SSL3_BUFFER_set_offset(wb, align);
-            if (!WPACKET_init_static_len(&pkt[j], SSL3_BUFFER_get_buf(wb),
+            if (!WPACKET_init_static_len(thispkt, SSL3_BUFFER_get_buf(wb),
                                          SSL3_BUFFER_get_len(wb), 0)
-                    || !WPACKET_allocate_bytes(&pkt[j], align, NULL)) {
+                    || !WPACKET_allocate_bytes(thispkt, align, NULL)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -788,7 +793,10 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         size_t maxcomplen;
         unsigned int rectype;
 
-        SSL3_RECORD_set_type(&wr[j], type);
+        thispkt = &pkt[j];
+        thiswr = &wr[j];
+
+        SSL3_RECORD_set_type(thiswr, type);
         /*
          * In TLSv1.3, once encrypting, we always use application data for the
          * record type
@@ -805,29 +813,32 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             && !s->renegotiate && TLS1_get_version(s) > TLS1_VERSION)
             version = TLS1_VERSION;
 
-        maxcomplen = pipelens[j] + (s->compress != NULL
-                                    ? SSL3_RT_MAX_COMPRESSED_OVERHEAD : 0);
+        maxcomplen = pipelens[j];
+        if (s->compress != NULL)
+            pipelens[j] += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+
         /* write the header */
-        if (!WPACKET_put_bytes_u8(&pkt[j], rectype)
-                || !WPACKET_put_bytes_u16(&pkt[j], version)
-                || !WPACKET_start_sub_packet_u16(&pkt[j])
+        if (!WPACKET_put_bytes_u8(thispkt, rectype)
+                || !WPACKET_put_bytes_u16(thispkt, version)
+                || !WPACKET_start_sub_packet_u16(thispkt)
                 || (eivlen > 0
-                    && !WPACKET_allocate_bytes(&pkt[j], eivlen, NULL))
+                    && !WPACKET_allocate_bytes(thispkt, eivlen, NULL))
                 || (maxcomplen > 0
-                    && !WPACKET_reserve_bytes(&pkt[j], maxcomplen,
+                    && !WPACKET_reserve_bytes(thispkt, maxcomplen,
                                               &compressdata))) {
             SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
         /* lets setup the record stuff. */
-        SSL3_RECORD_set_data(&wr[j], compressdata);
-        SSL3_RECORD_set_length(&wr[j], pipelens[j]);
-        SSL3_RECORD_set_input(&wr[j], (unsigned char *)&buf[totlen]);
+        SSL3_RECORD_set_data(thiswr, compressdata);
+        SSL3_RECORD_set_length(thiswr, pipelens[j]);
+        SSL3_RECORD_set_input(thiswr, (unsigned char *)&buf[totlen]);
         totlen += pipelens[j];
 
         /*
-         * we now 'read' from wr->input, wr->length bytes into wr->data
+         * we now 'read' from thiswr->input, thiswr->length bytes into
+         * thiswr->data
          */
 
         /* first we compress */
@@ -835,13 +846,13 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             /*
              * TODO(TLS1.3): Make sure we prevent compression!!!
              */
-            if (!ssl3_do_compress(s, &wr[j])
-                    || !WPACKET_allocate_bytes(&pkt[j], wr[j].length, NULL)) {
+            if (!ssl3_do_compress(s, thiswr)
+                    || !WPACKET_allocate_bytes(thispkt, thiswr->length, NULL)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, SSL_R_COMPRESSION_FAILURE);
                 goto err;
             }
         } else {
-            if (!WPACKET_memcpy(&pkt[j], wr[j].input, wr[j].length)) {
+            if (!WPACKET_memcpy(thispkt, thiswr->input, thiswr->length)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -849,11 +860,11 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         if (SSL_IS_TLS13(s) && s->enc_write_ctx != NULL) {
-            if (!WPACKET_put_bytes_u8(&pkt[j], type)) {
+            if (!WPACKET_put_bytes_u8(thispkt, type)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            SSL3_RECORD_add_length(&wr[j], 1);
+            SSL3_RECORD_add_length(thiswr, 1);
             /*
              * TODO(TLS1.3): Padding goes here. Do we need an API to add this?
              * For now, use no padding
@@ -861,16 +872,16 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         /*
-         * we should still have the output to wr->data and the input from
-         * wr->input.  Length should be wr->length. wr->data still points in the
-         * wb->buf
+         * we should still have the output to thiswr->data and the input from
+         * wr->input. Length should be thiswr->length. thiswr->data still points
+         * in the wb->buf
          */
 
         if (!SSL_USE_ETM(s) && mac_size != 0) {
             unsigned char *mac;
 
-            if (!WPACKET_allocate_bytes(&pkt[j], mac_size, &mac)
-                    || !s->method->ssl3_enc->mac(s, &wr[j], mac, 1)) {
+            if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
+                    || !s->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -881,23 +892,23 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * This will be at most one cipher block or the tag length if using
          * AEAD. SSL_RT_MAX_CIPHER_BLOCK_SIZE covers either case.
          */
-        if(!WPACKET_reserve_bytes(&pkt[j], SSL_RT_MAX_CIPHER_BLOCK_SIZE,
+        if(!WPACKET_reserve_bytes(thispkt, SSL_RT_MAX_CIPHER_BLOCK_SIZE,
                                   NULL)
                    /*
                     * We also need next the amount of bytes written to this
                     * sub-packet
                     */
-                || !WPACKET_get_length(&pkt[j], &len)) {
+                || !WPACKET_get_length(thispkt, &len)) {
             SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
         /* Get a pointer to the start of this record excluding header */
-        recordstart = WPACKET_get_curr(&pkt[j]) - len;
+        recordstart = WPACKET_get_curr(thispkt) - len;
 
-        SSL3_RECORD_set_data(&wr[j], recordstart);
-        SSL3_RECORD_reset_input(&wr[j]);
-        SSL3_RECORD_set_length(&wr[j], len);
+        SSL3_RECORD_set_data(thiswr, recordstart);
+        SSL3_RECORD_reset_input(thiswr);
+        SSL3_RECORD_set_length(thiswr, len);
     }
 
     if (s->method->ssl3_enc->enc(s, wr, numpipes, 1) < 1)
@@ -906,53 +917,56 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     for (j = 0; j < numpipes; j++) {
         size_t origlen;
 
+        thispkt = &pkt[j];
+        thiswr = &wr[j];
+
         /* Allocate bytes for the encryption overhead */
-        if (!WPACKET_get_length(&pkt[j], &origlen)
+        if (!WPACKET_get_length(thispkt, &origlen)
                    /* Encryption should never shrink the data! */
-                || origlen > wr[j].length
-                || (wr[j].length > origlen
-                    && !WPACKET_allocate_bytes(&pkt[j],
-                                               wr[j].length - origlen, NULL))) {
+                || origlen > thiswr->length
+                || (thiswr->length > origlen
+                    && !WPACKET_allocate_bytes(thispkt,
+                                               thiswr->length - origlen, NULL))) {
             SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         if (SSL_USE_ETM(s) && mac_size != 0) {
             unsigned char *mac;
 
-            if (!WPACKET_allocate_bytes(&pkt[j], mac_size, &mac)
-                    || !s->method->ssl3_enc->mac(s, &wr[j], mac, 1)) {
+            if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
+                    || !s->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            SSL3_RECORD_add_length(&wr[j], mac_size);
+            SSL3_RECORD_add_length(thiswr, mac_size);
         }
 
-        if (!WPACKET_get_length(&pkt[j], &len)
-                || !WPACKET_close(&pkt[j])) {
+        if (!WPACKET_get_length(thispkt, &len)
+                || !WPACKET_close(thispkt)) {
             SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
         if (s->msg_callback) {
-            recordstart = WPACKET_get_curr(&pkt[j]) - len
+            recordstart = WPACKET_get_curr(thispkt) - len
                           - SSL3_RT_HEADER_LENGTH;
             s->msg_callback(1, 0, SSL3_RT_HEADER, recordstart,
                             SSL3_RT_HEADER_LENGTH, s,
                             s->msg_callback_arg);
         }
 
-        if (!WPACKET_finish(&pkt[j])) {
+        if (!WPACKET_finish(thispkt)) {
             SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
         /*
-         * we should now have wr->data pointing to the encrypted data, which is
-         * wr->length long
+         * we should now have thiswr->data pointing to the encrypted data, which
+         * is thiswr->length long
          */
-        SSL3_RECORD_set_type(&wr[j], type); /* not needed but helps for
+        SSL3_RECORD_set_type(thiswr, type); /* not needed but helps for
                                              * debugging */
-        SSL3_RECORD_add_length(&wr[j], SSL3_RT_HEADER_LENGTH);
+        SSL3_RECORD_add_length(thiswr, SSL3_RT_HEADER_LENGTH);
 
         if (create_empty_fragment) {
             /*
@@ -964,13 +978,13 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            *written = SSL3_RECORD_get_length(wr);
+            *written = SSL3_RECORD_get_length(thiswr);
             return 1;
         }
 
         /* now let's set up wb */
         SSL3_BUFFER_set_left(&s->rlayer.wbuf[j],
-                             prefix_len + SSL3_RECORD_get_length(&wr[j]));
+                             prefix_len + SSL3_RECORD_get_length(thiswr));
     }
 
     /*
