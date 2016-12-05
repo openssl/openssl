@@ -262,6 +262,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CERT_STATUS), "tls_construct_cert_status"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY),
      "tls_construct_cert_status_body"},
+    {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CERT_VERIFY), "tls_construct_cert_verify"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CHANGE_CIPHER_SPEC),
      "tls_construct_change_cipher_spec"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CKE_DHE), "tls_construct_cke_dhe"},
