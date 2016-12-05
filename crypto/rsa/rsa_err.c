@@ -77,6 +77,7 @@ static ERR_STRING_DATA RSA_str_functs[] = {
     {ERR_FUNC(RSA_F_RSA_PRINT_FP), "RSA_print_fp"},
     {ERR_FUNC(RSA_F_RSA_PRIV_DECODE), "rsa_priv_decode"},
     {ERR_FUNC(RSA_F_RSA_PRIV_ENCODE), "rsa_priv_encode"},
+    {ERR_FUNC(RSA_F_RSA_PSS_GET_PARAM), "rsa_pss_get_param"},
     {ERR_FUNC(RSA_F_RSA_PSS_TO_CTX), "rsa_pss_to_ctx"},
     {ERR_FUNC(RSA_F_RSA_PUB_DECODE), "rsa_pub_decode"},
     {ERR_FUNC(RSA_F_RSA_SETUP_BLINDING), "RSA_setup_blinding"},

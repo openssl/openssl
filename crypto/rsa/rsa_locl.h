@@ -103,3 +103,5 @@ extern int int_rsa_verify(int dtype, const unsigned char *m,
 
 RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
                                       const EVP_MD *mgf1md, int saltlen);
+int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
+                      const EVP_MD **pmgf1md, int *psaltlen);
