@@ -51,6 +51,7 @@ int ERR_load_OSSL_STORE_strings(void);
  */
 # define OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE              107
 # define OSSL_STORE_R_INVALID_SCHEME                      106
+# define OSSL_STORE_R_IS_NOT_A                            112
 # define OSSL_STORE_R_NOT_A_CERTIFICATE                   100
 # define OSSL_STORE_R_NOT_A_CRL                           101
 # define OSSL_STORE_R_NOT_A_KEY                           102
