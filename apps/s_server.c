@@ -106,8 +106,6 @@ static DH *load_dh_param(const char *dhfile);
 #endif
 static void print_connection_info(SSL *con);
 
-/* static int load_CA(SSL_CTX *ctx, char *file);*/
-
 static const int bufsize = 16 * 1024;
 static int accept_socket = -1;
 
@@ -140,14 +138,13 @@ static const char *session_id_prefix = NULL;
 #ifndef OPENSSL_NO_DTLS
 static int enable_timeouts = 0;
 static long socket_mtu;
-
-#endif
 static int dtlslisten = 0;
+#endif
 
 static int early_data = 0;
 
 #ifndef OPENSSL_NO_PSK
-static char *psk_identity = "Client_identity";
+static const char psk_identity[] = "Client_identity";
 char *psk_key = NULL;           /* by default PSK is not used */
 
 static unsigned int psk_server_cb(SSL *ssl, const char *identity,
@@ -452,7 +449,6 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 }
 
 /* Structure passed to cert status callback */
-
 typedef struct tlsextstatusctx_st {
     int timeout;
     /* File to load OCSP Response from (or NULL if no file) */
@@ -632,7 +628,7 @@ static int cert_status_cb(SSL *s, void *arg)
 /* This is the context that we pass to next_proto_cb */
 typedef struct tlsextnextprotoctx_st {
     unsigned char *data;
-    unsigned int len;
+    size_t len;
 } tlsextnextprotoctx;
 
 static int next_proto_cb(SSL *s, const unsigned char **data,
@@ -978,7 +974,7 @@ int s_server_main(int argc, char *argv[])
     tlsextalpnctx alpn_ctx = { NULL, 0 };
 #ifndef OPENSSL_NO_PSK
     /* by default do not send a PSK identity hint */
-    static char *psk_identity_hint = NULL;
+    char *psk_identity_hint = NULL;
     char *p;
 #endif
 #ifndef OPENSSL_NO_SRP
@@ -1606,22 +1602,16 @@ int s_server_main(int argc, char *argv[])
     }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto_neg_in) {
-        size_t len;
-        next_proto.data = next_protos_parse(&len, next_proto_neg_in);
+        next_proto.data = next_protos_parse(&next_proto.len, next_proto_neg_in);
         if (next_proto.data == NULL)
             goto end;
-        next_proto.len = len;
-    } else {
-        next_proto.data = NULL;
     }
 #endif
     alpn_ctx.data = NULL;
     if (alpn_in) {
-        size_t len;
-        alpn_ctx.data = next_protos_parse(&len, alpn_in);
+        alpn_ctx.data = next_protos_parse(&alpn_ctx.len, alpn_in);
         if (alpn_ctx.data == NULL)
             goto end;
-        alpn_ctx.len = len;
     }
 
     if (crl_file) {
