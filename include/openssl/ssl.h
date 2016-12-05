@@ -2232,6 +2232,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST          372
 # define SSL_F_TLS_CONSTRUCT_CERT_STATUS                  429
 # define SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY             494
+# define SSL_F_TLS_CONSTRUCT_CERT_VERIFY                  496
 # define SSL_F_TLS_CONSTRUCT_CHANGE_CIPHER_SPEC           427
 # define SSL_F_TLS_CONSTRUCT_CKE_DHE                      404
 # define SSL_F_TLS_CONSTRUCT_CKE_ECDHE                    405
