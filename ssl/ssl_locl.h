@@ -967,6 +967,14 @@ struct ssl_st {
     /* client cert? */
     /* This is used to hold the server certificate used */
     struct cert_st /* CERT */ *cert;
+
+    /*
+     * The hash of all messages prior to the CertificateVerify, and the length
+     * of that hash.
+     */
+    unsigned char cert_verify_hash[EVP_MAX_MD_SIZE];
+    size_t cert_verify_hash_len;
+
     /*
      * the session_id_context is used to ensure sessions are only reused in
      * the appropriate context

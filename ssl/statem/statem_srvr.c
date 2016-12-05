@@ -427,6 +427,10 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT:
+        st->hand_state = TLS_ST_SW_CERT_VRFY;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_CERT_VRFY:
         st->hand_state = TLS_ST_SW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
@@ -825,6 +829,12 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
         *confunc = tls_construct_server_certificate;
         *mt = SSL3_MT_CERTIFICATE;
         break;
+
+    case TLS_ST_SW_CERT_VRFY:
+        *confunc = tls_construct_cert_verify;
+        *mt = SSL3_MT_CERTIFICATE_VERIFY;
+        break;
+
 
     case TLS_ST_SW_KEY_EXCH:
         *confunc = tls_construct_server_key_exchange;
@@ -3109,6 +3119,17 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
      * certificate, while we do include it in statem_clnt.c
      */
     sk = NULL;
+
+    /* Save the current hash state for when we receive the CertificateVerify */
+    if (SSL_IS_TLS13(s)
+            && !ssl_handshake_hash(s, s->cert_verify_hash,
+                                   sizeof(s->cert_verify_hash),
+                                   &s->cert_verify_hash_len)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
+
     ret = MSG_PROCESS_CONTINUE_READING;
     goto done;
 
