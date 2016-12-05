@@ -729,6 +729,43 @@ const EVP_PKEY_METHOD rsa_pkey_meth = {
     pkey_rsa_ctrl_str
 };
 
+/*
+ * Called for PSS sign or verify initialisation: checks PSS parameter
+ * sanity and sets any restrictions on key usage.
+ */
+
+static int pkey_pss_init(EVP_PKEY_CTX *ctx)
+{
+    RSA *rsa;
+    RSA_PKEY_CTX *rctx = ctx->data;
+    const EVP_MD *md;
+    const EVP_MD *mgf1md;
+    int min_saltlen;
+    /* Should never happen */
+    if (!pkey_ctx_is_pss(ctx))
+        return 0;
+    rsa = ctx->pkey->pkey.rsa;
+    /* If no restrictions just return */
+    if (rsa->pss == NULL)
+        return 1;
+    /* Get and check parameters */
+    if (!rsa_pss_get_param(rsa->pss, &md, &mgf1md, &min_saltlen))
+        return 0;
+
+    rctx->min_saltlen = min_saltlen;
+
+    /*
+     * Set PSS restrictions as defaults: we can then block any attempt to
+     * use invalid values in pkey_rsa_ctrl
+     */
+
+    rctx->md = md;
+    rctx->mgf1md = mgf1md;
+    rctx->saltlen = min_saltlen;
+
+    return 1;
+}
+
 const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
     EVP_PKEY_RSA_PSS,
     EVP_PKEY_FLAG_AUTOARGLEN,
@@ -741,10 +778,10 @@ const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
     0,
     pkey_rsa_keygen,
 
-    0,
+    pkey_pss_init,
     pkey_rsa_sign,
 
-    0,
+    pkey_pss_init,
     pkey_rsa_verify,
 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
