@@ -53,6 +53,7 @@ static ERR_STRING_DATA STORE_str_functs[] = {
 static ERR_STRING_DATA STORE_str_reasons[] = {
     {ERR_REASON(STORE_R_AMBIGUOUS_CONTENT_TYPE), "ambiguous content type"},
     {ERR_REASON(STORE_R_INVALID_SCHEME), "invalid scheme"},
+    {ERR_REASON(STORE_R_IS_NOT_A), "is not a"},
     {ERR_REASON(STORE_R_NOT_A_CERTIFICATE), "not a certificate"},
     {ERR_REASON(STORE_R_NOT_A_CRL), "not a crl"},
     {ERR_REASON(STORE_R_NOT_A_KEY), "not a key"},

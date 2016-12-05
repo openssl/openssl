@@ -115,6 +115,11 @@ static int file_get_pem_pass(char *buf, int num, int w, void *data)
  *    blob:         The blob of data to match with what this handler
  *                  can use.
  *    len:          The length of the blob.
+ *    handler_ctx:  For a handler marked repeatable, this pointer can
+ *                  be used to create a context for the handler.  IT IS
+ *                  THE HANDLER'S RESPONSIBILITY TO CREATE AND DESTROY
+ *                  THIS CONTEXT APPROPRIATELY, i.e. create on first call
+ *                  and destroy when about to return NULL.
  *    ui_method:    Application UI method for getting a password, pin
  *                  or any other interactive data.
  *    ui_data:      Application data to be passed to ui_method when
@@ -125,20 +130,37 @@ static int file_get_pem_pass(char *buf, int num, int w, void *data)
 typedef STORE_INFO *(*STORE_FILE_try_decode_fn)(const char *pem_name,
                                                 const char *pem_header,
                                                 const unsigned char *blob,
-                                                size_t len,
+                                                size_t len, void **handler_ctx,
                                                 const UI_METHOD *ui_method,
                                                 void *ui_data);
+/*
+ * The eof function should return 1 if there's no more data to be found
+ * with the handler_ctx, otherwise 0.  This is only used when the handler is
+ * marked repeatable.
+ */
+typedef int (*STORE_FILE_eof_fn)(void *handler_ctx);
+/*
+ * The destroy_ctx function is used to destroy the handler_ctx that was
+ * intiated by a repeatable try_decode fuction.  This is only used when
+ * the handler is marked repeatable.
+ */
+typedef void (*STORE_FILE_destroy_ctx_fn)(void **handler_ctx);
 
 typedef struct store_file_handler_st {
     const char *name;
     STORE_FILE_try_decode_fn try_decode;
+    STORE_FILE_eof_fn eof;
+    STORE_FILE_destroy_ctx_fn destroy_ctx;
+
+    /* flags */
+    int repeatable;
 } STORE_FILE_HANDLER;
 
 int pem_check_suffix(const char *pem_str, const char *suffix);
 static STORE_INFO *try_decode_PrivateKey(const char *pem_name,
                                          const char *pem_header,
                                          const unsigned char *blob,
-                                         size_t len,
+                                         size_t len, void **pctx,
                                          const UI_METHOD *ui_method,
                                          void *ui_data)
 {
@@ -182,7 +204,7 @@ static STORE_FILE_HANDLER PrivateKey_handler = {
 static STORE_INFO *try_decode_PUBKEY(const char *pem_name,
                                      const char *pem_header,
                                      const unsigned char *blob, size_t len,
-                                     const UI_METHOD *ui_method,
+                                     void **pctx, const UI_METHOD *ui_method,
                                      void *ui_data)
 {
     STORE_INFO *store_info = NULL;
@@ -206,7 +228,7 @@ static STORE_FILE_HANDLER PUBKEY_handler = {
 static STORE_INFO *try_decode_params(const char *pem_name,
                                      const char *pem_header,
                                      const unsigned char *blob, size_t len,
-                                     const UI_METHOD *ui_method,
+                                     void **pctx, const UI_METHOD *ui_method,
                                      void *ui_data)
 {
     STORE_INFO *store_info = NULL;
@@ -261,7 +283,7 @@ static STORE_FILE_HANDLER params_handler = {
 static STORE_INFO *try_decode_X509Certificate(const char *pem_name,
                                               const char *pem_header,
                                               const unsigned char *blob,
-                                              size_t len,
+                                              size_t len, void **pctx,
                                               const UI_METHOD *ui_method,
                                               void *ui_data)
 {
@@ -303,7 +325,7 @@ static STORE_FILE_HANDLER X509Certificate_handler = {
 static STORE_INFO *try_decode_X509CRL(const char *pem_name,
                                       const char *pem_header,
                                       const unsigned char *blob,
-                                      size_t len,
+                                      size_t len, void **pctx,
                                       const UI_METHOD *ui_method, void *ui_data)
 {
     STORE_INFO *store_info = NULL;
@@ -344,6 +366,10 @@ static const STORE_FILE_HANDLER *file_handlers[] = {
 struct store_loader_ctx_st {
     BIO *file;
     int is_pem;
+
+    /* The following are used when the handler is marked as repeatable */
+    const STORE_FILE_HANDLER *last_handler;
+    void *last_handler_ctx;
 };
 
 static STORE_LOADER_CTX *file_open(const STORE_LOADER *loader, const char *uri,
@@ -418,6 +444,19 @@ static STORE_INFO *file_load(STORE_LOADER_CTX *ctx, const UI_METHOD *ui_method,
     STORE_INFO *result = NULL;
     int matchcount = -1;
 
+    if (ctx->last_handler != NULL) {
+        result = ctx->last_handler->try_decode(NULL, NULL, NULL, 0,
+                                               &ctx->last_handler_ctx,
+                                               ui_method, ui_data);
+
+        if (result != NULL)
+            return result;
+
+        ctx->last_handler->destroy_ctx(&ctx->last_handler_ctx);
+        ctx->last_handler_ctx = NULL;
+        ctx->last_handler = NULL;
+    }
+
     do {
         char *pem_name = NULL;      /* PEM record name */
         char *pem_header = NULL;    /* PEM record header */
@@ -425,8 +464,6 @@ static STORE_INFO *file_load(STORE_LOADER_CTX *ctx, const UI_METHOD *ui_method,
         BUF_MEM *mem = NULL;
         long len = 0;               /* DER encoded data length */
         int r = 0;
-        size_t i = 0;
-        STORE_FILE_try_decode_fn *matching_functions = NULL;
 
         matchcount = -1;
         if (ctx->is_pem) {
@@ -456,59 +493,82 @@ static STORE_INFO *file_load(STORE_LOADER_CTX *ctx, const UI_METHOD *ui_method,
                 }
             }
         } else {
-#if 0                          /* PKCS12 not yet ready */
-            PKCS12 *pkcs12 =NULL;
-#endif
-
             if ((len = asn1_d2i_read_bio(ctx->file, &mem)) < 0)
                 goto err;
 
             data = (unsigned char *)mem->data;
             len = (long)mem->length;
-
-#if 0                          /* PKCS12 not yet ready */
-            /* Try and see if we loaded a PKCS12 */
-            pkcs12 = d2i_PKCS12(NULL, &data, len);
-#endif
         }
 
         result = NULL;
-        matchcount = 0;
-        matching_functions = OPENSSL_zalloc(sizeof(*matching_functions)
-                                            * OSSL_NELEM(file_handlers));
 
-        for (i = 0; i < OSSL_NELEM(file_handlers); i++) {
-            const STORE_FILE_HANDLER *handler = file_handlers[i];
-            STORE_INFO *tmp_result = handler->try_decode(pem_name, pem_header,
-                                                         data, len,
-                                                         ui_method, ui_data);
+        {
+            size_t i = 0;
+            void *handler_ctx = NULL;
+            const STORE_FILE_HANDLER **matching_handlers =
+                OPENSSL_zalloc(sizeof(*matching_handlers)
+                               * OSSL_NELEM(file_handlers));
 
-            if (tmp_result != NULL) {
-                if (matching_functions)
-                    matching_functions[matchcount] = handler->try_decode;
+            if (matching_handlers == NULL) {
+                STOREerr(STORE_F_FILE_LOAD, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
 
-                if (++matchcount == 1) {
-                    result = tmp_result;
-                    tmp_result = NULL;
+            matchcount = 0;
+            for (i = 0; i < OSSL_NELEM(file_handlers); i++) {
+                const STORE_FILE_HANDLER *handler = file_handlers[i];
+                void *tmp_handler_ctx = NULL;
+                STORE_INFO *tmp_result = handler->try_decode(pem_name,
+                                                             pem_header,
+                                                             data, len,
+                                                             &tmp_handler_ctx,
+                                                             ui_method,
+                                                             ui_data);
+
+                if (tmp_result == NULL) {
+                    STOREerr(STORE_F_FILE_LOAD, STORE_R_IS_NOT_A);
+                    ERR_add_error_data(1, handler->name);
                 } else {
-                    /* more than one match => ambiguous, kill any result */
-                    STORE_INFO_free(result);
-                    STORE_INFO_free(tmp_result);
-                    result = NULL;
+                    if (matching_handlers)
+                        matching_handlers[matchcount] = handler;
+
+                    if (handler_ctx)
+                        handler->destroy_ctx(&handler_ctx);
+                    handler_ctx = tmp_handler_ctx;
+
+                    if (++matchcount == 1) {
+                        result = tmp_result;
+                        tmp_result = NULL;
+                    } else {
+                        /* more than one match => ambiguous, kill any result */
+                        STORE_INFO_free(result);
+                        STORE_INFO_free(tmp_result);
+                        if (handler->destroy_ctx != NULL)
+                            handler->destroy_ctx(&handler_ctx);
+                        handler_ctx = NULL;
+                        result = NULL;
+                    }
                 }
             }
-        }
 
-        if (matchcount > 1)
-            STOREerr(STORE_F_FILE_LOAD, STORE_R_AMBIGUOUS_CONTENT_TYPE);
-        if (matchcount == 0)
-            STOREerr(STORE_F_FILE_LOAD, STORE_R_UNSUPPORTED_CONTENT_TYPE);
+            if (matchcount > 1)
+                STOREerr(STORE_F_FILE_LOAD, STORE_R_AMBIGUOUS_CONTENT_TYPE);
+            if (matchcount == 0)
+                STOREerr(STORE_F_FILE_LOAD, STORE_R_UNSUPPORTED_CONTENT_TYPE);
+            else if (matching_handlers[0]->repeatable) {
+                ctx->last_handler = matching_handlers[0];
+                ctx->last_handler_ctx = handler_ctx;
+                mem = NULL;
+                data = NULL;
+            }
+
+            OPENSSL_free(matching_handlers);
+        }
 
         if (result)
             ERR_clear_error();
 
      err:
-        OPENSSL_free(matching_functions);
         OPENSSL_free(pem_name);
         OPENSSL_free(pem_header);
         if (mem == NULL)
@@ -529,11 +589,19 @@ static STORE_INFO *file_load(STORE_LOADER_CTX *ctx, const UI_METHOD *ui_method,
 
 static int file_eof(STORE_LOADER_CTX *ctx)
 {
+    if (ctx->last_handler != NULL
+        && !ctx->last_handler->eof(ctx->last_handler_ctx))
+        return 0;
     return BIO_eof(ctx->file);
 }
 
 static int file_close(STORE_LOADER_CTX *ctx)
 {
+    if (ctx->last_handler != NULL) {
+        ctx->last_handler->destroy_ctx(&ctx->last_handler_ctx);
+        ctx->last_handler_ctx = NULL;
+        ctx->last_handler = NULL;
+    }
     BIO_free_all(ctx->file);
     OPENSSL_free(ctx);
     return 1;

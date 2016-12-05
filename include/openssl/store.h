@@ -227,6 +227,7 @@ int ERR_load_STORE_strings(void);
 /* Reason codes. */
 # define STORE_R_AMBIGUOUS_CONTENT_TYPE                   107
 # define STORE_R_INVALID_SCHEME                           106
+# define STORE_R_IS_NOT_A                                 112
 # define STORE_R_NOT_A_CERTIFICATE                        100
 # define STORE_R_NOT_A_CRL                                101
 # define STORE_R_NOT_A_KEY                                102
