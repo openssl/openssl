@@ -35,12 +35,17 @@ typedef struct {
     const EVP_MD *mgf1md;
     /* PSS salt length */
     int saltlen;
+    /* Minimum salt length or -1 if no PSS parameter restriction */
+    int min_saltlen;
     /* Temp buffer */
     unsigned char *tbuf;
     /* OAEP label */
     unsigned char *oaep_label;
     size_t oaep_labellen;
 } RSA_PKEY_CTX;
+
+/* True if PSS parameters are restricted */
+#define rsa_pss_param(rctx) (rctx->min_saltlen != -1)
 
 static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 {
@@ -54,6 +59,7 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
     else
         rctx->pad_mode = RSA_PKCS1_PADDING;
     rctx->saltlen = -2;
+    rctx->min_saltlen = -1;
     ctx->data = rctx;
     ctx->keygen_info = rctx->gentmp;
     ctx->keygen_info_count = 2;
@@ -415,11 +421,15 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
             return -2;
         }
-        if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN)
+        if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN) {
             *(int *)p2 = rctx->saltlen;
-        else {
+        } else {
             if (p1 < -2)
                 return -2;
+            if (rsa_pss_param(rctx) && p1 < rctx->min_saltlen) {
+                RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_PSS_SALTLEN_TOO_SMALL);
+                return 0;
+            }
             rctx->saltlen = p1;
         }
         return 1;
@@ -456,6 +466,12 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_MD:
         if (!check_padding_md(p2, rctx->pad_mode))
             return 0;
+        if (rsa_pss_param(rctx)) {
+            if (EVP_MD_type(rctx->md) == EVP_MD_type(p2))
+                return 1;
+            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_DIGEST_NOT_ALLOWED);
+            return 0;
+        }
         rctx->md = p2;
         return 1;
 
@@ -475,8 +491,15 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 *(const EVP_MD **)p2 = rctx->mgf1md;
             else
                 *(const EVP_MD **)p2 = rctx->md;
-        } else
+        } else {
+            if (rsa_pss_param(rctx)) {
+                if (EVP_MD_type(rctx->md) == EVP_MD_type(p2))
+                    return 1;
+                RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_MGF1_DIGEST_NOT_ALLOWED);
+                return 0;
+            }
             rctx->mgf1md = p2;
+        }
         return 1;
 
     case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
