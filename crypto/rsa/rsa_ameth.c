@@ -596,42 +596,12 @@ static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
     /* Decode PSS parameters */
     pss = rsa_pss_decode(sigalg);
 
-    if (pss == NULL) {
+    if (!rsa_pss_get_param(pss, &md, &mgf1md, &saltlen)) {
         RSAerr(RSA_F_RSA_PSS_TO_CTX, RSA_R_INVALID_PSS_PARAMETERS);
-        goto err;
-    }
-    mgf1md = rsa_algor_to_md(pss->maskHash);
-    if (!mgf1md)
-        goto err;
-    md = rsa_algor_to_md(pss->hashAlgorithm);
-    if (!md)
-        goto err;
-
-    if (pss->saltLength) {
-        saltlen = ASN1_INTEGER_get(pss->saltLength);
-
-        /*
-         * Could perform more salt length sanity checks but the main RSA
-         * routines will trap other invalid values anyway.
-         */
-        if (saltlen < 0) {
-            RSAerr(RSA_F_RSA_PSS_TO_CTX, RSA_R_INVALID_SALT_LENGTH);
-            goto err;
-        }
-    } else
-        saltlen = 20;
-
-    /*
-     * low-level routines support only trailer field 0xbc (value 1) and
-     * PKCS#1 says we should reject any other value anyway.
-     */
-    if (pss->trailerField && ASN1_INTEGER_get(pss->trailerField) != 1) {
-        RSAerr(RSA_F_RSA_PSS_TO_CTX, RSA_R_INVALID_TRAILER);
         goto err;
     }
 
     /* We have all parameters now set up context */
-
     if (pkey) {
         if (!EVP_DigestVerifyInit(ctx, &pkctx, md, NULL, pkey))
             goto err;
@@ -659,6 +629,38 @@ static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
  err:
     RSA_PSS_PARAMS_free(pss);
     return rv;
+}
+
+int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
+                      const EVP_MD **pmgf1md, int *psaltlen)
+{
+    if (pss == NULL)
+        return 0;
+    *pmd = rsa_algor_to_md(pss->hashAlgorithm);
+    if (*pmd == NULL)
+        return 0;
+    *pmgf1md = rsa_algor_to_md(pss->maskHash);
+    if (*pmgf1md == NULL)
+        return 0;
+    if (pss->saltLength) {
+        *psaltlen = ASN1_INTEGER_get(pss->saltLength);
+        if (*psaltlen < 0) {
+            RSAerr(RSA_F_RSA_PSS_GET_PARAM, RSA_R_INVALID_SALT_LENGTH);
+            return 0;
+        }
+    } else
+        *psaltlen = 20;
+
+    /*
+     * low-level routines support only trailer field 0xbc (value 1) and
+     * PKCS#1 says we should reject any other value anyway.
+     */
+    if (pss->trailerField && ASN1_INTEGER_get(pss->trailerField) != 1) {
+        RSAerr(RSA_F_RSA_PSS_GET_PARAM, RSA_R_INVALID_TRAILER);
+        return 0; 
+    }
+
+    return 1;
 }
 
 #ifndef OPENSSL_NO_CMS
