@@ -550,6 +550,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_R_DATA_TOO_SMALL                             111
 # define RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE                122
 # define RSA_R_DIGEST_DOES_NOT_MATCH                      158
+# define RSA_R_DIGEST_NOT_ALLOWED                         145
 # define RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY                 112
 # define RSA_R_DMP1_NOT_CONGRUENT_TO_D                    124
 # define RSA_R_DMQ1_NOT_CONGRUENT_TO_D                    125
@@ -573,6 +574,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_R_IQMP_NOT_INVERSE_OF_Q                      126
 # define RSA_R_KEY_SIZE_TOO_SMALL                         120
 # define RSA_R_LAST_OCTET_INVALID                         134
+# define RSA_R_MGF1_DIGEST_NOT_ALLOWED                    152
 # define RSA_R_MODULUS_TOO_LARGE                          105
 # define RSA_R_NO_PUBLIC_EXPONENT                         140
 # define RSA_R_NULL_BEFORE_BLOCK_MISSING                  113
@@ -581,6 +583,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE   148
 # define RSA_R_PADDING_CHECK_FAILED                       114
 # define RSA_R_PKCS_DECODING_ERROR                        159
+# define RSA_R_PSS_SALTLEN_TOO_SMALL                      164
 # define RSA_R_P_NOT_PRIME                                128
 # define RSA_R_Q_NOT_PRIME                                129
 # define RSA_R_RSA_OPERATIONS_NOT_SUPPORTED               130
