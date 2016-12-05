@@ -72,30 +72,99 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
     return 1;
 }
 
+/*
+ * Size of the to-be-signed TLS13 data, without the hash size itself:
+ * 64 bytes of value 32, 33 context bytes, 1 byte separator
+ */
+#define TLS13_TBS_START_SIZE            64
+#define TLS13_TBS_PREAMBLE_SIZE         (TLS13_TBS_START_SIZE + 33 + 1)
+
+static int get_cert_verify_tbs_data(SSL *s, unsigned char *tls13tbs,
+                                    void **hdata, size_t *hdatalen)
+{
+    static const char *servercontext = "TLS 1.3, server CertificateVerify";
+    static const char *clientcontext = "TLS 1.3, client CertificateVerify";
+
+    if (SSL_IS_TLS13(s)) {
+        size_t hashlen;
+
+        /* Set the first 64 bytes of to-be-signed data to octet 32 */
+        memset(tls13tbs, 32, TLS13_TBS_START_SIZE);
+        /* This copies the 33 bytes of context plus the 0 separator byte */
+        if (s->statem.hand_state == TLS_ST_CR_CERT_VRFY
+                 || s->statem.hand_state == TLS_ST_SW_CERT_VRFY)
+            strcpy((char *)tls13tbs + TLS13_TBS_START_SIZE, servercontext);
+        else
+            strcpy((char *)tls13tbs + TLS13_TBS_START_SIZE, clientcontext);
+
+        /*
+         * If we're currently reading then we need to use the saved handshake
+         * hash value. We can't use the current handshake hash state because
+         * that includes the CertVerify itself.
+         */
+        if (s->statem.hand_state == TLS_ST_CR_CERT_VRFY
+                || s->statem.hand_state == TLS_ST_SR_CERT_VRFY) {
+            memcpy(tls13tbs + TLS13_TBS_PREAMBLE_SIZE, s->cert_verify_hash,
+                   s->cert_verify_hash_len);
+            hashlen = s->cert_verify_hash_len;
+        } else if (!ssl_handshake_hash(s, tls13tbs + TLS13_TBS_PREAMBLE_SIZE,
+                                       EVP_MAX_MD_SIZE, &hashlen)) {
+            return 0;
+        }
+
+        *hdata = tls13tbs;
+        *hdatalen = TLS13_TBS_PREAMBLE_SIZE + hashlen;
+    } else {
+        size_t retlen;
+
+        retlen = BIO_get_mem_data(s->s3->handshake_buffer, hdata);
+        if (retlen <= 0)
+            return 0;
+        *hdatalen = retlen;
+    }
+
+    return 1;
+}
+
 int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
 {
     EVP_PKEY *pkey;
-    const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
+    const EVP_MD *md;
     EVP_MD_CTX *mctx = NULL;
     unsigned u = 0;
-    long hdatalen = 0;
+    size_t hdatalen = 0;
     void *hdata;
     unsigned char *sig = NULL;
+    unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
+
+    if (s->server) {
+        /* Only happens in TLSv1.3 */
+        /*
+         * TODO(TLS1.3): This needs to change. We should not get this from the
+         * cipher. However, for now, we have not done the work to separate the
+         * certificate type from the ciphersuite
+         */
+        pkey = ssl_get_sign_pkey(s, s->s3->tmp.new_cipher, &md);
+        if (pkey == NULL)
+            goto err;
+    } else {
+        md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
+        pkey = s->cert->key->privatekey;
+    }
 
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    pkey = s->cert->key->privatekey;
 
-    hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
-    if (hdatalen <= 0) {
+    /* Get the data to be signed */
+    if (!get_cert_verify_tbs_data(s, tls13tbs, &hdata, &hdatalen)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    if (SSL_USE_SIGALGS(s)&& !tls12_get_sigandhash(pkt, pkey, md)) {
+    if (SSL_USE_SIGALGS(s) && !tls12_get_sigandhash(pkt, pkey, md)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -158,8 +227,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     unsigned int len;
     X509 *peer;
     const EVP_MD *md = NULL;
-    long hdatalen = 0;
+    size_t hdatalen = 0;
     void *hdata;
+    unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
 
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
@@ -240,8 +310,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
-    if (hdatalen <= 0) {
+    if (!get_cert_verify_tbs_data(s, tls13tbs, &hdata, &hdatalen)) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         al = SSL_AD_INTERNAL_ERROR;
         goto f_err;
@@ -288,7 +357,10 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    ret = MSG_PROCESS_CONTINUE_PROCESSING;
+    if (SSL_IS_TLS13(s))
+        ret = MSG_PROCESS_CONTINUE_READING;
+    else
+        ret = MSG_PROCESS_CONTINUE_PROCESSING;
     if (0) {
  f_err:
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
