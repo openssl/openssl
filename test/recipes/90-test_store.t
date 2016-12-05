@@ -8,7 +8,7 @@
 
 use File::Spec;
 use MIME::Base64;
-use OpenSSL::Test qw(:DEFAULT srctop_file bldtop_file);
+use OpenSSL::Test qw(:DEFAULT srctop_file bldtop_file data_file);
 
 my $test_name = "test_store";
 setup($test_name);
@@ -85,17 +85,12 @@ indir "store_$$" => sub {
                                                             "dummy")])));
         }
         foreach (@generated_files) {
-        SKIP:
-            {
-                skip "PKCS#12 files not currently supported", 3 if m|\.p12$|;
-
-                ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                            $_])));
-                ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                            to_file_uri($_)])));
-                ok(!run(app(["openssl", "storeutl", "-passin", "pass:password",
-                             to_rel_file_uri($_)])));
-            }
+            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
+                        $_])));
+            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
+                        to_file_uri($_)])));
+            ok(!run(app(["openssl", "storeutl", "-passin", "pass:password",
+                         to_rel_file_uri($_)])));
         }
     }
 }, create => 1, cleanup => 1;
@@ -175,6 +170,77 @@ sub init {
                                    "-v2", "aes256", "-v2prf", "hmacWithSHA256",
                                    "-in", $srcfile, "-out", $dstfile]));
                       }, grep(/-key-pkcs8-pbes2-sha256\.pem$/, @generated_files))
+            # *-cert.pem (intermediary for the .p12 inits)
+            && run(app(["openssl", "req", "-x509",
+                        "-config", data_file("ca.cnf"), "-nodes",
+                        "-out", "cacert.pem", "-keyout", "cakey.pem"]))
+            && runall(sub {
+                          my $srckey = shift;
+                          (my $dstfile = $srckey) =~ s|-key-pkcs8\.|-cert.|;
+                          (my $csr = $dstfile) =~ s|\.pem|.csr|;
+
+                          (run(app(["openssl", "req", "-new",
+                                    "-config", data_file("user.cnf"),
+                                    "-key", $srckey, "-out", $csr]))
+                           &&
+                           run(app(["openssl", "x509", "-days", "3650",
+                                    "-CA", "cacert.pem",
+                                    "-CAkey", "cakey.pem",
+                                    "-set_serial", time(), "-req",
+                                    "-in", $csr, "-out", $dstfile])));
+                      }, grep(/-key-pkcs8\.pem$/, @generated_files))
+            # *.p12
+            && runall(sub {
+                          my $dstfile = shift;
+                          my ($type, $certpbe_index, $keypbe_index,
+                              $macalg_index) =
+                              $dstfile =~ m{^(.*)-key-(?|
+                                                # cert and key PBE are same
+                                                ()             #
+                                                ([^-]*-[^-]*)- # key & cert PBE
+                                                ([^-]*)        # MACalg
+                                            |
+                                                # cert and key PBE are not same
+                                                ([^-]*-[^-]*)- # cert PBE
+                                                ([^-]*-[^-]*)- # key PBE
+                                                ([^-]*)        # MACalg
+                                            )\.}x;
+                          if (!$certpbe_index) {
+                              $certpbe_index = $keypbe_index;
+                          }
+                          my $srckey = "$type-key-pkcs8.pem";
+                          my $srccert = "$type-cert.pem";
+                          my %pbes =
+                              (
+                               "sha1-3des" => "pbeWithSHA1And3-KeyTripleDES-CBC",
+                               "md5-des" => "pbeWithMD5AndDES-CBC",
+                               "aes256-cbc" => "AES-256-CBC",
+                              );
+                          my %macalgs =
+                              (
+                               "sha1" => "SHA1",
+                               "sha256" => "SHA256",
+                              );
+                          my $certpbe = $pbes{$certpbe_index};
+                          my $keypbe = $pbes{$keypbe_index};
+                          my $macalg = $macalgs{$macalg_index};
+                          if (!defined($certpbe) || !defined($keypbe)
+                              || !defined($macalg)) {
+                              print STDERR "Cert PBE for $pbe_index not defined\n"
+                                  unless defined $certpbe;
+                              print STDERR "Key PBE for $pbe_index not defined\n"
+                                  unless defined $keypbe;
+                              print STDERR "MACALG for $macalg_index not defined\n"
+                                  unless defined $macalg;
+                              print STDERR "(destination file was $dstfile)\n";
+                              return 0;
+                          }
+                          run(app(["openssl", "pkcs12", "-inkey", $srckey,
+                                   "-in", $srccert, "-passout", "pass:password",
+                                   "-export", "-macalg", $macalg,
+                                   "-certpbe", $certpbe, "-keypbe", $keypbe,
+                                   "-out", $dstfile]));
+                      }, grep(/\.p12/, @generated_files))
             # *.der (the end all init)
             && runall(sub {
                           my $dstfile = shift;
