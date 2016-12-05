@@ -1352,10 +1352,12 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
+    OPENSSL_free(extensions);
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
     ossl_statem_set_error(s);
+    OPENSSL_free(extensions);
     return MSG_PROCESS_ERROR;
 }
 
@@ -3117,11 +3119,13 @@ static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt)
                                          rawexts, &al))
         goto err;
 
+    OPENSSL_free(rawexts);
     return MSG_PROCESS_CONTINUE_READING;
 
  err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
     ossl_statem_set_error(s);
+    OPENSSL_free(rawexts);
     return MSG_PROCESS_ERROR;
 }
 
