@@ -43,6 +43,8 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
         checkhandshake::CLIENT_AUTH_HANDSHAKE],
     [TLSProxy::Message::MT_CERTIFICATE,
         checkhandshake::ALL_HANDSHAKES & ~checkhandshake::RESUME_HANDSHAKE],
+    [TLSProxy::Message::MT_CERTIFICATE_VERIFY,
+        checkhandshake::ALL_HANDSHAKES & ~checkhandshake::RESUME_HANDSHAKE],
     [TLSProxy::Message::MT_FINISHED,
         checkhandshake::ALL_HANDSHAKES],
     [TLSProxy::Message::MT_CERTIFICATE,

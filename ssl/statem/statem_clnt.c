@@ -169,12 +169,18 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_CR_CERT:
+        if (mt == SSL3_MT_CERTIFICATE_VERIFY) {
+            st->hand_state = TLS_ST_CR_CERT_VRFY;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_CR_CERT_VRFY:
         if (mt == SSL3_MT_FINISHED) {
             st->hand_state = TLS_ST_CR_FINISHED;
             return 1;
         }
         break;
-
     }
 
     /* No valid transition found */
@@ -562,6 +568,8 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
 /*
  * Perform any work that needs to be done after sending a message from the
  * client to the server.
+    case TLS_ST_SR_CERT_VRFY:
+        return SSL3_RT_MAX_PLAIN_LENGTH;
  */
 WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
 {
@@ -730,6 +738,9 @@ size_t ossl_statem_client_max_message_size(SSL *s)
     case TLS_ST_CR_CERT:
         return s->max_cert_list;
 
+    case TLS_ST_CR_CERT_VRFY:
+        return SSL3_RT_MAX_PLAIN_LENGTH;
+
     case TLS_ST_CR_CERT_STATUS:
         return SSL3_RT_MAX_PLAIN_LENGTH;
 
@@ -783,6 +794,9 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
 
     case TLS_ST_CR_CERT:
         return tls_process_server_certificate(s, pkt);
+
+    case TLS_ST_CR_CERT_VRFY:
+        return tls_process_cert_verify(s, pkt);
 
     case TLS_ST_CR_CERT_STATUS:
         return tls_process_cert_status(s, pkt);
@@ -1497,8 +1511,18 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     X509_up_ref(x);
     s->session->peer = x;
     s->session->verify_result = s->verify_result;
-
     x = NULL;
+
+    /* Save the current hash state for when we receive the CertificateVerify */
+    if (SSL_IS_TLS13(s)
+            && !ssl_handshake_hash(s, s->cert_verify_hash,
+                                   sizeof(s->cert_verify_hash),
+                                   &s->cert_verify_hash_len)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
+
     ret = MSG_PROCESS_CONTINUE_READING;
     goto done;
 
