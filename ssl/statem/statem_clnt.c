@@ -689,7 +689,7 @@ int ossl_statem_client_construct_message(SSL *s, WPACKET *pkt,
         break;
 
     case TLS_ST_CW_CERT_VRFY:
-        *confunc = tls_construct_client_verify;
+        *confunc = tls_construct_cert_verify;
         *mt = SSL3_MT_CERTIFICATE_VERIFY;
         break;
 
@@ -2837,80 +2837,6 @@ int tls_client_key_exchange_post_work(SSL *s)
  err:
     OPENSSL_clear_free(pms, pmslen);
     s->s3->tmp.pms = NULL;
-    return 0;
-}
-
-int tls_construct_client_verify(SSL *s, WPACKET *pkt)
-{
-    EVP_PKEY *pkey;
-    const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
-    EVP_MD_CTX *mctx = NULL;
-    unsigned u = 0;
-    long hdatalen = 0;
-    void *hdata;
-    unsigned char *sig = NULL;
-
-    mctx = EVP_MD_CTX_new();
-    if (mctx == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-    pkey = s->cert->key->privatekey;
-
-    hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
-    if (hdatalen <= 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    if (SSL_USE_SIGALGS(s)&& !tls12_get_sigandhash(pkt, pkey, md)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-#ifdef SSL_DEBUG
-    fprintf(stderr, "Using client alg %s\n", EVP_MD_name(md));
-#endif
-    sig = OPENSSL_malloc(EVP_PKEY_size(pkey));
-    if (sig == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-    if (!EVP_SignInit_ex(mctx, md, NULL)
-        || !EVP_SignUpdate(mctx, hdata, hdatalen)
-        || (s->version == SSL3_VERSION
-            && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                (int)s->session->master_key_length,
-                                s->session->master_key))
-        || !EVP_SignFinal(mctx, sig, &u, pkey)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_EVP_LIB);
-        goto err;
-    }
-#ifndef OPENSSL_NO_GOST
-    {
-        int pktype = EVP_PKEY_id(pkey);
-        if (pktype == NID_id_GostR3410_2001
-            || pktype == NID_id_GostR3410_2012_256
-            || pktype == NID_id_GostR3410_2012_512)
-            BUF_reverse(sig, NULL, u);
-    }
-#endif
-
-    if (!WPACKET_sub_memcpy_u16(pkt, sig, u)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /* Digest cached records and discard handshake buffer */
-    if (!ssl3_digest_cached_records(s, 0))
-        goto err;
-
-    OPENSSL_free(sig);
-    EVP_MD_CTX_free(mctx);
-    return 1;
- err:
-    OPENSSL_free(sig);
-    EVP_MD_CTX_free(mctx);
-    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
     return 0;
 }
 
