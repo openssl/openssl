@@ -19,8 +19,7 @@ BEGIN {
     $test_name = "test_tls13messages";
     OpenSSL::Test::setup($test_name);
 }
-
-use lib srctop_dir("test", "recipes");
+use lib srctop_dir("test");
 
 use recipes::checkhandshake qw(checkhandshake @handmessages @extensions);
 
