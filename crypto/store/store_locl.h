@@ -92,3 +92,11 @@ void ossl_store_destroy_loaders_int(void);
 
 int ossl_store_init_once(void);
 int ossl_store_file_loader_init(void);
+
+/*-
+ *  'file' scheme stuff
+ *  -------------------
+ */
+
+OSSL_STORE_LOADER_CTX *ossl_store_file_attach_pem_bio_int(BIO *bp);
+int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx);
