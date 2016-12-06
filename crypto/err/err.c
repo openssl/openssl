@@ -103,6 +103,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_PKCS7_LIB, "PKCS7 lib"},
     {ERR_R_X509V3_LIB, "X509V3 lib"},
     {ERR_R_ENGINE_LIB, "ENGINE lib"},
+    {ERR_R_UI_LIB, "UI lib"},
     {ERR_R_ECDSA_LIB, "ECDSA lib"},
 
     {ERR_R_NESTED_ASN1_ERROR, "nested asn1 error"},
