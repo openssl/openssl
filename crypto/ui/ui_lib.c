@@ -647,44 +647,43 @@ int UI_method_set_prompt_constructor(UI_METHOD *method,
     return -1;
 }
 
-int (*UI_method_get_opener(UI_METHOD *method)) (UI *)
+int (*UI_method_get_opener(const UI_METHOD *method)) (UI *)
 {
     if (method != NULL)
         return method->ui_open_session;
     return NULL;
 }
 
-int (*UI_method_get_writer(UI_METHOD *method)) (UI *, UI_STRING *)
+int (*UI_method_get_writer(const UI_METHOD *method)) (UI *, UI_STRING *)
 {
     if (method != NULL)
         return method->ui_write_string;
     return NULL;
 }
 
-int (*UI_method_get_flusher(UI_METHOD *method)) (UI *)
+int (*UI_method_get_flusher(const UI_METHOD *method)) (UI *)
 {
     if (method != NULL)
         return method->ui_flush;
     return NULL;
 }
 
-int (*UI_method_get_reader(UI_METHOD *method)) (UI *, UI_STRING *)
+int (*UI_method_get_reader(const UI_METHOD *method)) (UI *, UI_STRING *)
 {
     if (method != NULL)
         return method->ui_read_string;
     return NULL;
 }
 
-int (*UI_method_get_closer(UI_METHOD *method)) (UI *)
+int (*UI_method_get_closer(const UI_METHOD *method)) (UI *)
 {
     if (method != NULL)
         return method->ui_close_session;
     return NULL;
 }
 
-char *(*UI_method_get_prompt_constructor(UI_METHOD *method)) (UI *,
-                                                              const char *,
-                                                              const char *)
+char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))
+    (UI *, const char *, const char *)
 {
     if (method != NULL)
         return method->ui_construct_prompt;
