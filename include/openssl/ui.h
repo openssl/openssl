@@ -18,6 +18,7 @@
 #   include <openssl/crypto.h>
 #  endif
 #  include <openssl/safestack.h>
+#  include <openssl/pem.h>
 #  include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
@@ -328,6 +329,7 @@ int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
                            int verify);
 int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
                     int verify);
+    UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag);
 
 /* BEGIN ERROR CODES */
 /*
