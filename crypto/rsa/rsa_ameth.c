@@ -24,6 +24,8 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri);
 static int rsa_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
 
+static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg);
+
 /* Set any parameters associated with pkey */
 static int rsa_param_encode(const EVP_PKEY *pkey,
                             ASN1_STRING **pstr, int *pstrtype)
@@ -64,7 +66,7 @@ static int rsa_param_decode(RSA *rsa, const X509_ALGOR *alg)
         return 1;
     if (algptype != V_ASN1_SEQUENCE)
         return 0;
-    rsa->pss = ASN1_item_unpack(algp, ASN1_ITEM_rptr(RSA_PSS_PARAMS));
+    rsa->pss = rsa_pss_decode(alg);
     if (rsa->pss == NULL)
         return 0;
     return 1;
