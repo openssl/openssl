@@ -490,6 +490,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_F_RSA_CHECK_KEY                              123
 # define RSA_F_RSA_CHECK_KEY_EX                           160
 # define RSA_F_RSA_CMS_DECRYPT                            159
+# define RSA_F_RSA_CMS_VERIFY                             158
 # define RSA_F_RSA_ITEM_VERIFY                            148
 # define RSA_F_RSA_METH_DUP                               161
 # define RSA_F_RSA_METH_NEW                               162

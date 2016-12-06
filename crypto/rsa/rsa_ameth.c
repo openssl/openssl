@@ -673,10 +673,15 @@ static int rsa_cms_verify(CMS_SignerInfo *si)
     EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
     CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
     nid = OBJ_obj2nid(alg->algorithm);
-    if (nid == NID_rsaEncryption)
-        return 1;
     if (nid == EVP_PKEY_RSA_PSS)
         return rsa_pss_to_ctx(NULL, pkctx, alg, NULL);
+    /* Only PSS allowed for PSS keys */
+    if (pkey_ctx_is_pss(pkctx)) {
+        RSAerr(RSA_F_RSA_CMS_VERIFY, RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
+        return 0;
+    }
+    if (nid == NID_rsaEncryption)
+        return 1;
     /* Workaround for some implementation that use a signature OID */
     if (OBJ_find_sigid_algs(nid, NULL, &nid2)) {
         if (nid2 == NID_rsaEncryption)
