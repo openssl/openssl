@@ -105,13 +105,17 @@ int ssl3_setup_write_buffer(SSL *s, unsigned int numwpipes, size_t len)
 
     wb = RECORD_LAYER_get_wbuf(&s->rlayer);
     for (currpipe = 0; currpipe < numwpipes; currpipe++) {
-        if (wb[currpipe].buf == NULL) {
-            if ((p = OPENSSL_malloc(len)) == NULL) {
+        SSL3_BUFFER *thiswb = &wb[currpipe];
+
+        if (thiswb->buf == NULL) {
+            p = OPENSSL_malloc(len);
+            if (p == NULL) {
                 s->rlayer.numwpipes = currpipe;
                 goto err;
             }
-            wb[currpipe].buf = p;
-            wb[currpipe].len = len;
+            memset(thiswb, 0, sizeof(SSL3_BUFFER));
+            thiswb->buf = p;
+            thiswb->len = len;
         }
     }
 

@@ -101,8 +101,16 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
         goto end;
     }
 
-    testresult = 1;
+    /*
+     * Calling SSL_clear() first is not required but this tests that SSL_clear()
+     * doesn't leak (when using enable-crypto-mdebug).
+     */
+    if (!SSL_clear(serverssl)) {
+        printf("Unexpected failure from SSL_clear()\n");
+        goto end;
+    }
 
+    testresult = 1;
  end:
     X509_free(chaincert);
     SSL_free(serverssl);
