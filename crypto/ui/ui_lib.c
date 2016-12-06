@@ -581,6 +581,8 @@ UI_METHOD *UI_create_method(const char *name)
  */
 void UI_destroy_method(UI_METHOD *ui_method)
 {
+    if (ui_method->ui_data_destructor != NULL)
+        ui_method->ui_data_destructor(ui_method->ui_data);
     OPENSSL_free(ui_method->name);
     ui_method->name = NULL;
     OPENSSL_free(ui_method);
@@ -647,6 +649,25 @@ int UI_method_set_prompt_constructor(UI_METHOD *method,
     return -1;
 }
 
+int UI_method_set0_data(UI_METHOD *method, void *data)
+{
+    if (method) {
+        method->ui_data = data;
+        return 0;
+    } else
+        return -1;
+}
+
+int UI_method_set_data_destructor(UI_METHOD *method,
+                                  void (*destructor) (void *))
+{
+    if (method) {
+        method->ui_data_destructor = destructor;
+        return 0;
+    } else
+        return -1;
+}
+
 int (*UI_method_get_opener(const UI_METHOD *method)) (UI *)
 {
     if (method != NULL)
@@ -688,6 +709,22 @@ char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))
     if (method != NULL)
         return method->ui_construct_prompt;
     return NULL;
+}
+
+const void *UI_method_get0_data(const UI_METHOD *method)
+{
+    if (method)
+        return method->ui_data;
+    else
+        return NULL;
+}
+
+void (*UI_method_get_data_destructor(const UI_METHOD *method)) (void *)
+{
+    if (method)
+        return method->ui_data_destructor;
+    else
+        return NULL;
 }
 
 enum UI_string_types UI_get_string_type(UI_STRING *uis)
