@@ -245,6 +245,11 @@ void destroy_ui_method(void)
         ui_method = NULL;
     }
 }
+
+const UI_METHOD *get_ui_method(void)
+{
+    return ui_method;
+}
 #endif
 
 int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
