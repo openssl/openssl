@@ -2,6 +2,12 @@
 {
     "DisabledTests" : {
             "*TLS13*":"No TLS1.3 support yet",
+            "DuplicateExtensionClient-TLS1":"OpenSSL, by design, only checks for duplicates of known extensions and ignores others",
+            "DuplicateExtensionServer-TLS1":"OpenSSL, by design, only checks for duplicates of known extensions and ignores others",
+            "DuplicateExtensionClient-TLS11":"OpenSSL, by design, only checks for duplicates of known extensions and ignores others",
+            "DuplicateExtensionServer-TLS11":"OpenSSL, by design, only checks for duplicates of known extensions and ignores others",
+            "DuplicateExtensionServer-TLS12":"OpenSSL, by design, only checks for duplicates of known extensions and ignores others",
+            "DuplicateExtensionClient-TLS12":"OpenSSL, by design, only checks for duplicates of known extensions and ignores others",
             "UnauthenticatedECDH":"Test failure - reason unknown",
             "SkipServerKeyExchange":"Test failure - reason unknown",
             "FragmentAlert-DTLS":"Test failure - reason unknown",
