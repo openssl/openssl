@@ -561,15 +561,17 @@ const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth)
 
 UI_METHOD *UI_create_method(const char *name)
 {
-    UI_METHOD *ui_method = OPENSSL_zalloc(sizeof(*ui_method));
+    UI_METHOD *ui_method = NULL;
 
-    if (ui_method != NULL) {
-        ui_method->name = OPENSSL_strdup(name);
-        if (ui_method->name == NULL) {
-            OPENSSL_free(ui_method);
-            UIerr(UI_F_UI_CREATE_METHOD, ERR_R_MALLOC_FAILURE);
-            return NULL;
-        }
+    if ((ui_method = OPENSSL_zalloc(sizeof(*ui_method))) == NULL
+        || (ui_method->name = OPENSSL_strdup(name)) == NULL
+        || !CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI_METHOD, ui_method,
+                               &ui_method->ex_data)) {
+        if (ui_method)
+            OPENSSL_free(ui_method->name);
+        OPENSSL_free(ui_method);
+        UIerr(UI_F_UI_CREATE_METHOD, ERR_R_MALLOC_FAILURE);
+        return NULL;
     }
     return ui_method;
 }
@@ -581,6 +583,10 @@ UI_METHOD *UI_create_method(const char *name)
  */
 void UI_destroy_method(UI_METHOD *ui_method)
 {
+    if (ui_method == NULL)
+        return;
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_UI_METHOD, ui_method,
+                        &ui_method->ex_data);
     OPENSSL_free(ui_method->name);
     ui_method->name = NULL;
     OPENSSL_free(ui_method);
@@ -647,6 +653,11 @@ int UI_method_set_prompt_constructor(UI_METHOD *method,
     return -1;
 }
 
+int UI_method_set_ex_data(UI_METHOD *method, int idx, void *data)
+{
+    return CRYPTO_set_ex_data(&method->ex_data, idx, data);
+}
+
 int (*UI_method_get_opener(const UI_METHOD *method)) (UI *)
 {
     if (method != NULL)
@@ -688,6 +699,11 @@ char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))
     if (method != NULL)
         return method->ui_construct_prompt;
     return NULL;
+}
+
+const void *UI_method_get_ex_data(const UI_METHOD *method, int idx)
+{
+    return CRYPTO_get_ex_data(&method->ex_data, idx);
 }
 
 enum UI_string_types UI_get_string_type(UI_STRING *uis)

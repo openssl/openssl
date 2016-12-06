@@ -52,6 +52,7 @@ The specific structures are:
     RSA
     ENGINE
     UI
+    UI_METHOD
     BIO
 
 Each is identified by an B<CRYPTO_EX_INDEX_xxx> define in the B<crypto.h>
