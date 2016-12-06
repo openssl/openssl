@@ -307,7 +307,15 @@ static unsigned int _strlen31(const char *str)
 #      undef isxdigit
 #    endif
 #    if defined(_MSC_VER) && !defined(_DLL) && defined(stdin)
-#      if _MSC_VER>=1300
+#      if _MSC_VER>=1400
+#        undef stdin
+#        undef stdout
+#        undef stderr
+         FILE *__acrt_iob_func(unsigned);
+#        define stdin  (__acrt_iob_func(0))
+#        define stdout (__acrt_iob_func(1))
+#        define stderr (__acrt_iob_func(2))
+#      elif _MSC_VER>=1300
 #        undef stdin
 #        undef stdout
 #        undef stderr
