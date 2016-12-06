@@ -39,8 +39,6 @@ void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s)
 
 void RECORD_LAYER_clear(RECORD_LAYER *rl)
 {
-    unsigned int pipes;
-
     rl->rstate = SSL_ST_READ_HEADER;
 
     /*
@@ -62,9 +60,7 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->wpend_buf = NULL;
 
     SSL3_BUFFER_clear(&rl->rbuf);
-    for (pipes = 0; pipes < rl->numwpipes; pipes++)
-        SSL3_BUFFER_clear(&rl->wbuf[pipes]);
-    rl->numwpipes = 0;
+    ssl3_release_write_buffer(rl->s);
     rl->numrpipes = 0;
     SSL3_RECORD_clear(rl->rrec, SSL_MAX_PIPELINES);
 
