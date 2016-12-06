@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/store.h>
 #include "internal/thread_once.h"
+#include "internal/store_int.h"
 #include "store_locl.h"
 
 struct ossl_store_ctx_st {
@@ -406,4 +407,47 @@ char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
     if (info->type == OSSL_STORE_INFO_EMBEDDED)
         return info->_.embedded.pem_name;
     return NULL;
+}
+
+OSSL_STORE_CTX *ossl_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
+                                          void *ui_data)
+{
+    OSSL_STORE_CTX *ctx = NULL;
+    const OSSL_STORE_LOADER *loader = NULL;
+    OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
+
+    if ((loader = ossl_store_get0_loader_int("file")) == NULL
+        || ((loader_ctx = ossl_store_file_attach_pem_bio_int(bp)) == NULL))
+        goto done;
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_ATTACH_PEM_BIO,
+                     ERR_R_MALLOC_FAILURE);
+        goto done;
+    }
+
+    ctx->loader = loader;
+    ctx->loader_ctx = loader_ctx;
+    loader_ctx = NULL;
+    ctx->ui_method = ui_method;
+    ctx->ui_data = ui_data;
+    ctx->post_process = NULL;
+    ctx->post_process_data = NULL;
+
+ done:
+    if (loader_ctx != NULL)
+        /*
+         * We ignore a returned error because we will return NULL anyway in
+         * this case, so if something goes wrong when closing, that'll simply
+         * just add another entry on the error stack.
+         */
+        (void)loader->close(loader_ctx);
+    return ctx;
+}
+
+int ossl_store_detach_pem_bio(OSSL_STORE_CTX *ctx)
+{
+    int loader_ret = ossl_store_file_detach_pem_bio_int(ctx->loader_ctx);
+
+    OPENSSL_free(ctx);
+    return loader_ret;
 }
