@@ -25,6 +25,7 @@
 #include "internal/asn1_int.h"
 #include "internal/o_dir.h"
 #include "internal/cryptlib.h"
+#include "internal/store_int.h"
 #include "store_locl.h"
 
 #include "e_os.h"
@@ -800,6 +801,23 @@ static int file_ctrl(OSSL_STORE_LOADER_CTX *ctx, int cmd, va_list args)
     return ret;
 }
 
+/* Internal function to decode an already opened PEM file */
+OSSL_STORE_LOADER_CTX *ossl_store_file_attach_pem_bio_int(BIO *bp)
+{
+    OSSL_STORE_LOADER_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    if (ctx == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_FILE_ATTACH_PEM_BIO_INT,
+                      ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    ctx->_.file.file = bp;
+    ctx->type = is_pem;
+
+    return ctx;
+}
+
 static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
                                              const char *pem_name,
                                              const char *pem_header,
@@ -1154,6 +1172,12 @@ static int file_close(OSSL_STORE_LOADER_CTX *ctx)
     } else {
         BIO_free_all(ctx->_.file.file);
     }
+    OSSL_STORE_LOADER_CTX_free(ctx);
+    return 1;
+}
+
+int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx)
+{
     OSSL_STORE_LOADER_CTX_free(ctx);
     return 1;
 }
