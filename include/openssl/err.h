@@ -181,6 +181,7 @@ typedef struct err_state_st {
 # define ERR_R_PKCS7_LIB ERR_LIB_PKCS7/* 33 */
 # define ERR_R_X509V3_LIB ERR_LIB_X509V3/* 34 */
 # define ERR_R_ENGINE_LIB ERR_LIB_ENGINE/* 38 */
+# define ERR_R_UI_LIB    ERR_LIB_UI/* 40 */
 # define ERR_R_ECDSA_LIB ERR_LIB_ECDSA/* 42 */
 
 # define ERR_R_NESTED_ASN1_ERROR                 58
