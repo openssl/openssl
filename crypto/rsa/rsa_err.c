@@ -33,6 +33,7 @@ static ERR_STRING_DATA RSA_str_functs[] = {
     {ERR_FUNC(RSA_F_RSA_CHECK_KEY), "RSA_check_key"},
     {ERR_FUNC(RSA_F_RSA_CHECK_KEY_EX), "RSA_check_key_ex"},
     {ERR_FUNC(RSA_F_RSA_CMS_DECRYPT), "rsa_cms_decrypt"},
+    {ERR_FUNC(RSA_F_RSA_CMS_VERIFY), "rsa_cms_verify"},
     {ERR_FUNC(RSA_F_RSA_ITEM_VERIFY), "rsa_item_verify"},
     {ERR_FUNC(RSA_F_RSA_METH_DUP), "RSA_meth_dup"},
     {ERR_FUNC(RSA_F_RSA_METH_NEW), "RSA_meth_new"},
