@@ -2556,7 +2556,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      */
     ret->options |= SSL_OP_NO_COMPRESSION;
 
-    ret->tlsext_status_type = -1;
+    ret->tlsext_status_type = TLSEXT_STATUSTYPE_nothing;
 
     return ret;
  err:

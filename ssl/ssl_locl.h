@@ -1671,6 +1671,12 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_padding
 } TLSEXT_INDEX;
 
+/*
+ * Dummy status type for the status_type extension. Indicates no status type
+ * set
+ */
+#define TLSEXT_STATUSTYPE_nothing  -1
+
 #define MAX_COMPRESSIONS_SIZE   255
 
 typedef struct {
