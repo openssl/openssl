@@ -175,9 +175,8 @@ int RAND_load_file(const char *file, long bytes)
                 /* Interrupted by a signal, resume reading */
                 clearerr(in);
                 continue;
-            } else {
-                break;
             }
+            break;
         }
 
         RAND_add(buf, i, (double)i);
