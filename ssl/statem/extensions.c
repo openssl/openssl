@@ -10,59 +10,63 @@
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 
-static int tls_ext_final_renegotiate(SSL *s, unsigned int context, int sent,
+static int final_renegotiate(SSL *s, unsigned int context, int sent,
                                      int *al);
-static int tls_ext_init_server_name(SSL *s, unsigned int context);
-static int tls_ext_final_server_name(SSL *s, unsigned int context, int sent,
+static int init_server_name(SSL *s, unsigned int context);
+static int final_server_name(SSL *s, unsigned int context, int sent,
                                      int *al);
 #ifndef OPENSSL_NO_EC
-static int tls_ext_final_ec_pt_formats(SSL *s, unsigned int context, int sent,
+static int final_ec_pt_formats(SSL *s, unsigned int context, int sent,
                                        int *al);
 #endif
-static int tls_ext_init_session_ticket(SSL *s, unsigned int context);
-static int tls_ext_init_status_request(SSL *s, unsigned int context);
-static int tls_ext_final_status_request(SSL *s, unsigned int context, int sent,
+static int init_session_ticket(SSL *s, unsigned int context);
+static int init_status_request(SSL *s, unsigned int context);
+static int final_status_request(SSL *s, unsigned int context, int sent,
                                         int *al);
 #ifndef OPENSSL_NO_NEXTPROTONEG
-static int tls_ext_init_npn(SSL *s, unsigned int context);
+static int init_npn(SSL *s, unsigned int context);
 #endif
-static int tls_ext_init_alpn(SSL *s, unsigned int context);
-static int tls_ext_final_alpn(SSL *s, unsigned int context, int sent, int *al);
-static int tls_ext_init_sig_algs(SSL *s, unsigned int context);
+static int init_alpn(SSL *s, unsigned int context);
+static int final_alpn(SSL *s, unsigned int context, int sent, int *al);
+static int init_sig_algs(SSL *s, unsigned int context);
 #ifndef OPENSSL_NO_SRP
-static int tls_ext_init_srp(SSL *s, unsigned int context);
+static int init_srp(SSL *s, unsigned int context);
 #endif
-static int tls_ext_init_etm(SSL *s, unsigned int context);
-static int tls_ext_init_ems(SSL *s, unsigned int context);
-static int tls_ext_final_ems(SSL *s, unsigned int context, int sent, int *al);
+static int init_etm(SSL *s, unsigned int context);
+static int init_ems(SSL *s, unsigned int context);
+static int final_ems(SSL *s, unsigned int context, int sent, int *al);
 #ifndef OPENSSL_NO_SRTP
-static int tls_ext_init_srtp(SSL *s, unsigned int context);
+static int init_srtp(SSL *s, unsigned int context);
 #endif
 
 /* Structure to define a built-in extension */
-typedef struct {
-    /* The ID for the extension */
+typedef struct extensions_definition_st {
+    /* The defined type for the extension */
     unsigned int type;
+    /*
+     * The context that this extension applies to, e.g. what messages and
+     * protocol versions
+     */
+    unsigned int context;
     /*
      * Initialise extension before parsing. Always called for relevant contexts
      * even if extension not present
      */
-    int (*init_ext)(SSL *s, unsigned int context);
-    /* Parse extension received by server from client */
-    int (*parse_client_ext)(SSL *s, PACKET *pkt, int *al);
-    /* Parse extension received by client from server */
-    int (*parse_server_ext)(SSL *s, PACKET *pkt, int *al);
-    /* Construct extension sent by server */
-    int (*construct_server_ext)(SSL *s, WPACKET *pkt, int *al);
-    /* Construct extension sent by client */
-    int (*construct_client_ext)(SSL *s, WPACKET *pkt, int *al);
+    int (*init)(SSL *s, unsigned int context);
+    /* Parse extension sent from client to server */
+    int (*parse_ctos)(SSL *s, PACKET *pkt, int *al);
+    /* Parse extension send from server to client */
+    int (*parse_stoc)(SSL *s, PACKET *pkt, int *al);
+    /* Construct extension sent from server to client */
+    int (*construct_stoc)(SSL *s, WPACKET *pkt, int *al);
+    /* Construct extension sent from client to server */
+    int (*construct_ctos)(SSL *s, WPACKET *pkt, int *al);
     /*
      * Finalise extension after parsing. Always called where an extensions was
      * initialised even if the extension was not present. |sent| is set to 1 if
      * the extension was seen, or 0 otherwise.
      */
-    int (*finalise_ext)(SSL *s, unsigned int context, int sent, int *al);
-    unsigned int context;
+    int (*final)(SSL *s, unsigned int context, int sent, int *al);
 } EXTENSION_DEFINITION;
 
 /*
@@ -91,103 +95,73 @@ typedef struct {
 static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_renegotiate,
-        NULL,
-        tls_parse_client_renegotiate,
-        tls_parse_server_renegotiate,
-        tls_construct_server_renegotiate,
-        tls_construct_client_renegotiate,
-        tls_ext_final_renegotiate,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_SSL3_ALLOWED
-        | EXT_TLS1_2_AND_BELOW_ONLY
+        | EXT_TLS1_2_AND_BELOW_ONLY,
+        NULL, tls_parse_ctos_renegotiate, tls_parse_stoc_renegotiate,
+        tls_construct_stoc_renegotiate, tls_construct_ctos_renegotiate,
+        final_renegotiate
     },
     {
         TLSEXT_TYPE_server_name,
-        tls_ext_init_server_name,
-        tls_parse_client_server_name,
-        tls_parse_server_server_name,
-        tls_construct_server_server_name,
-        tls_construct_client_server_name,
-        tls_ext_final_server_name,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        init_server_name,
+        tls_parse_ctos_server_name, tls_parse_stoc_server_name,
+        tls_construct_stoc_server_name, tls_construct_ctos_server_name,
+        final_server_name
     },
 #ifndef OPENSSL_NO_SRP
     {
         TLSEXT_TYPE_srp,
-        tls_ext_init_srp,
-        tls_parse_client_srp,
-        NULL,
-        NULL,
-        tls_construct_client_srp,
-        NULL,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
+        EXT_CLIENT_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
+        init_srp, tls_parse_ctos_srp, NULL, NULL, tls_construct_ctos_srp, NULL
     },
 #endif
 #ifndef OPENSSL_NO_EC
     {
         TLSEXT_TYPE_ec_point_formats,
-        NULL,
-        tls_parse_client_ec_pt_formats,
-        tls_parse_server_ec_pt_formats,
-        tls_construct_server_ec_pt_formats,
-        tls_construct_client_ec_pt_formats,
-        tls_ext_final_ec_pt_formats,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
+        EXT_CLIENT_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
+        NULL, tls_parse_ctos_ec_pt_formats, tls_parse_stoc_ec_pt_formats,
+        tls_construct_stoc_ec_pt_formats, tls_construct_ctos_ec_pt_formats,
+        final_ec_pt_formats
     },
     {
         TLSEXT_TYPE_supported_groups,
-        NULL,
-        tls_parse_client_supported_groups,
-        NULL,
+        EXT_CLIENT_HELLO | EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        NULL, tls_parse_ctos_supported_groups, NULL,
         NULL /* TODO(TLS1.3): Need to add this */,
-        tls_construct_client_supported_groups,
-        NULL,
-        EXT_CLIENT_HELLO | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+        tls_construct_ctos_supported_groups, NULL
     },
 #endif
     {
         TLSEXT_TYPE_session_ticket,
-        tls_ext_init_session_ticket,
-        tls_parse_client_session_ticket,
-        tls_parse_server_session_ticket,
-        tls_construct_server_session_ticket,
-        tls_construct_client_session_ticket,
-        NULL,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
+        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
+        init_session_ticket, tls_parse_ctos_session_ticket,
+        tls_parse_stoc_session_ticket, tls_construct_stoc_session_ticket,
+        tls_construct_ctos_session_ticket, NULL
     },
     {
         TLSEXT_TYPE_signature_algorithms,
-        tls_ext_init_sig_algs,
-        tls_parse_client_sig_algs,
-        NULL,
-        NULL,
-        tls_construct_client_sig_algs,
-        NULL,
-        EXT_CLIENT_HELLO
+        EXT_CLIENT_HELLO,
+        init_sig_algs, tls_parse_ctos_sig_algs, NULL, NULL,
+        tls_construct_ctos_sig_algs, NULL
     },
 #ifndef OPENSSL_NO_OCSP
     {
         TLSEXT_TYPE_status_request,
-        tls_ext_init_status_request,
-        tls_parse_client_status_request,
-        tls_parse_server_status_request,
-        tls_construct_server_status_request,
-        tls_construct_client_status_request,
-        tls_ext_final_status_request,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | EXT_TLS1_3_CERTIFICATE
+        | EXT_TLS1_3_CERTIFICATE,
+        init_status_request, tls_parse_ctos_status_request,
+        tls_parse_stoc_status_request, tls_construct_stoc_status_request,
+        tls_construct_ctos_status_request, final_status_request
     },
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {
         TLSEXT_TYPE_next_proto_neg,
-        tls_ext_init_npn,
-        tls_parse_client_npn,
-        tls_parse_server_npn,
-        tls_construct_server_next_proto_neg,
-        tls_construct_client_npn,
-        NULL,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
+        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
+        init_npn, tls_parse_ctos_npn, tls_parse_stoc_npn,
+        tls_construct_stoc_next_proto_neg, tls_construct_ctos_npn, NULL
     },
 #endif
     {
@@ -196,76 +170,52 @@ static const EXTENSION_DEFINITION ext_defs[] = {
          * happens after server_name callbacks
          */
         TLSEXT_TYPE_application_layer_protocol_negotiation,
-        tls_ext_init_alpn,
-        tls_parse_client_alpn,
-        tls_parse_server_alpn,
-        tls_construct_server_alpn,
-        tls_construct_client_alpn,
-        tls_ext_final_alpn,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        init_alpn, tls_parse_ctos_alpn, tls_parse_stoc_alpn,
+        tls_construct_stoc_alpn, tls_construct_ctos_alpn, final_alpn
     },
 #ifndef OPENSSL_NO_SRTP
     {
         TLSEXT_TYPE_use_srtp,
-        tls_ext_init_srtp,
-        tls_parse_client_use_srtp,
-        tls_parse_server_use_srtp,
-        tls_construct_server_use_srtp,
-        tls_construct_client_use_srtp,
-        NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS | EXT_DTLS_ONLY
+        | EXT_TLS1_3_ENCRYPTED_EXTENSIONS | EXT_DTLS_ONLY,
+        init_srtp, tls_parse_ctos_use_srtp, tls_parse_stoc_use_srtp,
+        tls_construct_stoc_use_srtp, tls_construct_ctos_use_srtp, NULL
     },
 #endif
     {
         TLSEXT_TYPE_encrypt_then_mac,
-        tls_ext_init_etm,
-        tls_parse_client_etm,
-        tls_parse_server_etm,
-        tls_construct_server_etm,
-        tls_construct_client_etm,
-        NULL,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
+        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
+        init_etm, tls_parse_ctos_etm, tls_parse_stoc_etm,
+        tls_construct_stoc_etm, tls_construct_ctos_etm, NULL
     },
 #ifndef OPENSSL_NO_CT
     {
         TLSEXT_TYPE_signed_certificate_timestamp,
+        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
+        | EXT_TLS1_3_CERTIFICATE,
         NULL,
         /*
          * No server side support for this, but can be provided by a custom
          * extension. This is an exception to the rule that custom extensions
          * cannot override built in ones.
          */
-        NULL,
-        tls_parse_server_sct,
-        NULL,
-        tls_construct_client_sct,
-        NULL,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO
-        | EXT_TLS1_3_CERTIFICATE
+        NULL, tls_parse_stoc_sct, NULL, tls_construct_ctos_sct,  NULL
     },
 #endif
     {
         TLSEXT_TYPE_extended_master_secret,
-        tls_ext_init_ems,
-        tls_parse_client_ems,
-        tls_parse_server_ems,
-        tls_construct_server_ems,
-        tls_construct_client_ems,
-        tls_ext_final_ems,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
+        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
+        init_ems, tls_parse_ctos_ems, tls_parse_stoc_ems,
+        tls_construct_stoc_ems, tls_construct_ctos_ems, final_ems
     },
     {
         TLSEXT_TYPE_supported_versions,
+        EXT_CLIENT_HELLO | EXT_TLS_IMPLEMENTATION_ONLY | EXT_TLS1_3_ONLY,
         NULL,
         /* Processed inline as part of version selection */
-        NULL,
-        NULL,
-        NULL,
-        tls_construct_client_supported_versions,
-        NULL,
-        EXT_CLIENT_HELLO | EXT_TLS_IMPLEMENTATION_ONLY | EXT_TLS1_3_ONLY
+        NULL, NULL, NULL, tls_construct_ctos_supported_versions, NULL
     },
     {
         /*
@@ -273,15 +223,11 @@ static const EXTENSION_DEFINITION ext_defs[] = {
          * been parsed before we do this one.
          */
         TLSEXT_TYPE_key_share,
-        NULL,
-        tls_parse_client_key_share,
-        tls_parse_server_key_share,
-        tls_construct_server_key_share,
-        tls_construct_client_key_share,
-        NULL,
         EXT_CLIENT_HELLO | EXT_TLS1_3_SERVER_HELLO
         | EXT_TLS1_3_HELLO_RETRY_REQUEST | EXT_TLS_IMPLEMENTATION_ONLY
-        | EXT_TLS1_3_ONLY
+        | EXT_TLS1_3_ONLY,
+        NULL, tls_parse_ctos_key_share, tls_parse_stoc_key_share,
+        tls_construct_stoc_key_share, tls_construct_ctos_key_share, NULL
     },
     {
         /*
@@ -289,25 +235,16 @@ static const EXTENSION_DEFINITION ext_defs[] = {
          * SSL_OP_CRYPTOPRO_TLSEXT_BUG is set
          */
         TLSEXT_TYPE_cryptopro_bug,
-        NULL,
-        NULL,
-        NULL,
-        tls_construct_server_cryptopro_bug,
-        NULL,
-        NULL,
-        EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY
+        EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
+        NULL, NULL, NULL, tls_construct_stoc_cryptopro_bug, NULL, NULL
     },
     {
         /* Last in the list because it must be added as the last extension */
         TLSEXT_TYPE_padding,
+        EXT_CLIENT_HELLO,
         NULL,
         /* We send this, but don't read it */
-        NULL,
-        NULL,
-        NULL,
-        tls_construct_client_padding,
-        NULL,
-        EXT_CLIENT_HELLO
+        NULL, NULL, NULL, tls_construct_ctos_padding, NULL
     }
 };
 
@@ -318,26 +255,27 @@ static const EXTENSION_DEFINITION ext_defs[] = {
  * 1 if we found a definition for the extension, and |*idx| is set to its index
  */
 static int verify_extension(SSL *s, unsigned int context, unsigned int type,
-                            custom_ext_methods *meths, int *found, size_t *idx)
+                            custom_ext_methods *meths, RAW_EXTENSION *rawexlist,
+                            RAW_EXTENSION **found)
 {
     size_t i;
     size_t builtin_num = OSSL_NELEM(ext_defs);
+    EXTENSION_DEFINITION *thisext;
 
-    for (i = 0; i < builtin_num; i++) {
-        if (type == ext_defs[i].type) {
+    for (i = 0, thisext = ext_defs; i < builtin_num; i++, thisext++) {
+        if (type == thisext->type) {
             /* Check we're allowed to use this extension in this context */
-            if ((context & ext_defs[i].context) == 0)
+            if ((context & thisext->context) == 0)
                 return 0;
 
             if (SSL_IS_DTLS(s)) {
-                if ((ext_defs[i].context & EXT_TLS_ONLY) != 0)
+                if ((thisext->context & EXT_TLS_ONLY) != 0)
                     return 0;
-            } else if ((ext_defs[i].context & EXT_DTLS_ONLY) != 0) {
+            } else if ((thisext->context & EXT_DTLS_ONLY) != 0) {
                     return 0;
             }
 
-            *found = 1;
-            *idx = i;
+            *found = &rawexlist[i];
             return 1;
         }
     }
@@ -347,7 +285,7 @@ static int verify_extension(SSL *s, unsigned int context, unsigned int type,
          * Custom extensions only apply to <=TLS1.2. This extension is unknown
          * in this context - we allow it
          */
-        *found = 0;
+        *found = NULL;
         return 1;
     }
 
@@ -355,15 +293,14 @@ static int verify_extension(SSL *s, unsigned int context, unsigned int type,
     if (meths != NULL) {
         for (i = builtin_num; i < builtin_num + meths->meths_count; i++) {
             if (meths->meths[i - builtin_num].ext_type == type) {
-                *found = 1;
-                *idx = i;
+                *found = &rawexlist[i];
                 return 1;
             }
         }
     }
 
     /* Unknown extension. We allow it */
-    *found = 0;
+    *found = NULL;
     return 1;
 }
 
@@ -390,16 +327,17 @@ static int extension_is_relevant(SSL *s, unsigned int extctx,
 /*
  * Gather a list of all the extensions from the data in |packet]. |context|
  * tells us which message this extension is for. The raw extension data is
- * stored in |*res|. In the event of an error the alert type to use is stored in
- * |*al|. We don't actually process the content of the extensions yet, except to
- * check their types. This function also runs the initialiser functions for all
- * known extensions (whether we have collected them or not).
+ * stored in |*res| on success. In the event of an error the alert type to use
+ * is stored in |*al|. We don't actually process the content of the extensions
+ * yet, except to check their types. This function also runs the initialiser
+ * functions for all known extensions (whether we have collected them or not).
+ * If successful the caller is responsible for freeing the contents of |*res|.
  *
  * Per http://tools.ietf.org/html/rfc5246#section-7.4.1.4, there may not be
  * more than one extension of the same type in a ClientHello or ServerHello.
  * This function returns 1 if all extensions are unique and we have parsed their
  * types, and 0 if the extensions contain duplicates, could not be successfully
- * collected, or an internal error occurred. We only check duplicates for
+ * found, or an internal error occurred. We only check duplicates for
  * extensions that we know about. We ignore others.
  */
 int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
@@ -410,6 +348,7 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
     int found = 0;
     custom_ext_methods *exts = NULL;
     RAW_EXTENSION *raw_extensions = NULL;
+    EXTENSION_DEFINITION *thisexd;
 
     /*
      * Initialise server side custom extensions. Client side is done during
@@ -424,7 +363,7 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
 
     raw_extensions = OPENSSL_zalloc((OSSL_NELEM(ext_defs)
                                      + (exts != NULL ? exts->meths_count : 0))
-                                     * sizeof(RAW_EXTENSION));
+                                     * sizeof(*raw_extensions));
     if (raw_extensions == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, ERR_R_MALLOC_FAILURE);
@@ -434,6 +373,7 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
     while (PACKET_remaining(&extensions) > 0) {
         unsigned int type;
         PACKET extension;
+        RAW_EXTENSION *thisex;
 
         if (!PACKET_get_net_2(&extensions, &type) ||
             !PACKET_get_length_prefixed_2(&extensions, &extension)) {
@@ -445,17 +385,16 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
          * Verify this extension is allowed. We only check duplicates for
          * extensions that we recognise.
          */
-        if (!verify_extension(s, context, type, exts, &found, &idx)
-                || (found == 1
-                    && raw_extensions[idx].present == 1)) {
+        if (!verify_extension(s, context, type, exts, raw_extensions, &thisex)
+                || (thisex != NULL && thisex->present == 1)) {
             SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_BAD_EXTENSION);
             *al = SSL_AD_ILLEGAL_PARAMETER;
             goto err;
         }
-        if (found) {
-            raw_extensions[idx].data = extension;
-            raw_extensions[idx].present = 1;
-            raw_extensions[idx].type = type;
+        if (thisex != NULL) {
+            thisex->data = extension;
+            thisex->present = 1;
+            thisex->type = type;
         }
     }
 
@@ -463,10 +402,10 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
      * Initialise all known extensions relevant to this context, whether we have
      * found them or not
      */
-    for (i = 0; i < OSSL_NELEM(ext_defs); i++) {
-        if(ext_defs[i].init_ext != NULL && (ext_defs[i].context & context) != 0
-                && extension_is_relevant(s, ext_defs[i].context, context)
-                && !ext_defs[i].init_ext(s, context)) {
+    for (thisexd = ext_defs, i = 0; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
+        if(thisexd->init != NULL && (thisexd->context & context) != 0
+                && extension_is_relevant(s, thisexd->context, context)
+                && !thisexd->init(s, context)) {
             *al = SSL_AD_INTERNAL_ERROR;
             goto err;
         }
@@ -518,14 +457,10 @@ int tls_parse_extension(SSL *s, unsigned int idx, int context,
         if (!extension_is_relevant(s, extdef->context, context))
             return 1;
 
-        parser = s->server ? extdef->parse_client_ext : extdef->parse_server_ext;
+        parser = s->server ? extdef->parse_ctos : extdef->parse_stoc;
 
-        if (parser != NULL) {
-            if (!parser(s, &currext->data, al))
-                return 0;
-
-            return 1;
-        }
+        if (parser != NULL)
+            return parser(s, &currext->data, al);
 
         /*
          * If the parser is NULL we fall through to the custom extension
@@ -561,7 +496,8 @@ int tls_parse_extension(SSL *s, unsigned int idx, int context,
  */
 int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, int *al)
 {
-    size_t loop, numexts = OSSL_NELEM(ext_defs);
+    size_t i, numexts = OSSL_NELEM(ext_defs);
+    EXTENSION_DEFINITION *thisexd;
 
     /* Calculate the number of extensions in the extensions list */
     if ((context & EXT_CLIENT_HELLO) != 0) {
@@ -571,7 +507,7 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, int *al)
     }
 
     /* Parse each extension in turn */
-    for (loop = 0; loop < numexts; loop++) {
+    for (i = 0; i < numexts; i++) {
         if (!tls_parse_extension(s, loop, context, exts, al))
             return 0;
     }
@@ -580,11 +516,10 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, int *al)
      * Finalise all known extensions relevant to this context, whether we have
      * found them or not
      */
-    for (loop = 0; loop < OSSL_NELEM(ext_defs); loop++) {
-        if(ext_defs[loop].finalise_ext != NULL
-                && (ext_defs[loop].context & context) != 0
-                && !ext_defs[loop].finalise_ext(s, context, exts[loop].present,
-                                                al))
+    for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
+        if(thisexd->final != NULL
+                && (thisexd->context & context) != 0
+                && !thisexd->final(s, context, exts[i].present, al))
             return 0;
     }
 
@@ -594,14 +529,15 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, int *al)
 /*
  * Construct all the extensions relevant to the current |context| and write
  * them to |pkt|. Returns 1 on success or 0 on failure. If a failure occurs then
- * |al| is populated with a suitable alert code.
+ * |al| is populated with a suitable alert code. On a failure construction stops
+ * at the first extension to fail to construct.
  */
 int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                              int *al)
 {
-    size_t loop;
-    int addcustom = 0;
-    int min_version, max_version = 0, reason, tmpal;
+    size_t i;
+    int addcustom = 0, min_version, max_version = 0, reason, tmpal;
+    EXTENSION_DEFINITION *thisexd;
 
     /*
      * Normally if something goes wrong during construction it's an internal
@@ -651,29 +587,29 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
         goto err;
     }
 
-    for (loop = 0; loop < OSSL_NELEM(ext_defs); loop++) {
+    for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
         int (*construct)(SSL *s, WPACKET *pkt, int *al);
 
         /* Skip if not relevant for our context */
         if ((ext_defs[loop].context & context) == 0)
             continue;
 
-        construct = s->server ? ext_defs[loop].construct_server_ext
-                              : ext_defs[loop].construct_client_ext;
+        construct = s->server ? thisexd->construct_stoc
+                              : thisexd->construct_ctos;
 
         /* Check if this extension is defined for our protocol. If not, skip */
         if ((SSL_IS_DTLS(s)
-                    && (ext_defs[loop].context & EXT_TLS_IMPLEMENTATION_ONLY)
+                    && (thisexd->context & EXT_TLS_IMPLEMENTATION_ONLY)
                        != 0)
                 || (s->version == SSL3_VERSION
-                        && (ext_defs[loop].context & EXT_SSL3_ALLOWED) == 0)
+                        && (thisexd->context & EXT_SSL3_ALLOWED) == 0)
                 || (SSL_IS_TLS13(s)
-                    && (ext_defs[loop].context & EXT_TLS1_2_AND_BELOW_ONLY)
+                    && (thisexd->context & EXT_TLS1_2_AND_BELOW_ONLY)
                        != 0)
                 || (!SSL_IS_TLS13(s)
-                    && (ext_defs[loop].context & EXT_TLS1_3_ONLY) != 0
+                    && (thisexd->context & EXT_TLS1_3_ONLY) != 0
                     && (context & EXT_CLIENT_HELLO) == 0)
-                || ((ext_defs[loop].context & EXT_TLS1_3_ONLY) != 0
+                || ((thisexd->context & EXT_TLS1_3_ONLY) != 0
                     && (context & EXT_CLIENT_HELLO) != 0
                     && (SSL_IS_DTLS(s) || max_version < TLS1_3_VERSION))
                 || construct == NULL)
@@ -703,7 +639,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
  * of a failure then |*al| is populated with a suitable error code.
  */
 
-static int tls_ext_final_renegotiate(SSL *s, unsigned int context, int sent,
+static int final_renegotiate(SSL *s, unsigned int context, int sent,
                                      int *al)
 {
     if (!s->server) {
@@ -737,7 +673,7 @@ static int tls_ext_final_renegotiate(SSL *s, unsigned int context, int sent,
     return 1;
 }
 
-static int tls_ext_init_server_name(SSL *s, unsigned int context)
+static int init_server_name(SSL *s, unsigned int context)
 {
     if (s->server)
         s->servername_done = 0;
@@ -745,7 +681,7 @@ static int tls_ext_init_server_name(SSL *s, unsigned int context)
     return 1;
 }
 
-static int tls_ext_final_server_name(SSL *s, unsigned int context, int sent,
+static int final_server_name(SSL *s, unsigned int context, int sent,
                                      int *al)
 {
     int ret = SSL_TLSEXT_ERR_NOACK;
@@ -778,7 +714,7 @@ static int tls_ext_final_server_name(SSL *s, unsigned int context, int sent,
 }
 
 #ifndef OPENSSL_NO_EC
-static int tls_ext_final_ec_pt_formats(SSL *s, unsigned int context, int sent,
+static int final_ec_pt_formats(SSL *s, unsigned int context, int sent,
                                        int *al)
 {
     unsigned long alg_k, alg_a;
@@ -794,23 +730,20 @@ static int tls_ext_final_ec_pt_formats(SSL *s, unsigned int context, int sent,
      * suite, then if server returns an EC point formats lists extension it
      * must contain uncompressed.
      */
-    if ((s->tlsext_ecpointformatlist != NULL)
-        && (s->tlsext_ecpointformatlist_length > 0)
-        && (s->session->tlsext_ecpointformatlist != NULL)
-        && (s->session->tlsext_ecpointformatlist_length > 0)
-        && ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
+    if (s->tlsext_ecpointformatlist != NULL
+            && s->tlsext_ecpointformatlist_length > 0
+            && s->session->tlsext_ecpointformatlist != NULL
+            && s->session->tlsext_ecpointformatlist_length > 0
+            && ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
         /* we are using an ECC cipher */
         size_t i;
-        unsigned char *list;
-        int found_uncompressed = 0;
-        list = s->session->tlsext_ecpointformatlist;
+        unsigned char *list = s->session->tlsext_ecpointformatlist;
+
         for (i = 0; i < s->session->tlsext_ecpointformatlist_length; i++) {
-            if (*(list++) == TLSEXT_ECPOINTFORMAT_uncompressed) {
-                found_uncompressed = 1;
+            if (*list++ == TLSEXT_ECPOINTFORMAT_uncompressed)
                 break;
-            }
         }
-        if (!found_uncompressed) {
+        if (i == s->session->tlsext_ecpointformatlist_length) {
             SSLerr(SSL_F_TLS_EXT_FINAL_EC_PT_FORMATS,
                    SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
             return 0;
@@ -821,7 +754,7 @@ static int tls_ext_final_ec_pt_formats(SSL *s, unsigned int context, int sent,
 }
 #endif
 
-static int tls_ext_init_session_ticket(SSL *s, unsigned int context)
+static int init_session_ticket(SSL *s, unsigned int context)
 {
     if (!s->server)
         s->tlsext_ticket_expected = 0;
@@ -829,7 +762,7 @@ static int tls_ext_init_session_ticket(SSL *s, unsigned int context)
     return 1;
 }
 
-static int tls_ext_init_status_request(SSL *s, unsigned int context)
+static int init_status_request(SSL *s, unsigned int context)
 {
     if (s->server)
         s->tlsext_status_type = -1;
@@ -837,7 +770,7 @@ static int tls_ext_init_status_request(SSL *s, unsigned int context)
     return 1;
 }
 
-static int tls_ext_final_status_request(SSL *s, unsigned int context, int sent,
+static int final_status_request(SSL *s, unsigned int context, int sent,
                                         int *al)
 {
     if (s->server)
@@ -855,7 +788,7 @@ static int tls_ext_final_status_request(SSL *s, unsigned int context, int sent,
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-static int tls_ext_init_npn(SSL *s, unsigned int context)
+static int init_npn(SSL *s, unsigned int context)
 {
     s->s3->next_proto_neg_seen = 0;
 
@@ -863,7 +796,7 @@ static int tls_ext_init_npn(SSL *s, unsigned int context)
 }
 #endif
 
-static int tls_ext_init_alpn(SSL *s, unsigned int context)
+static int init_alpn(SSL *s, unsigned int context)
 {
     OPENSSL_free(s->s3->alpn_selected);
     s->s3->alpn_selected = NULL;
@@ -876,7 +809,7 @@ static int tls_ext_init_alpn(SSL *s, unsigned int context)
     return 1;
 }
 
-static int tls_ext_final_alpn(SSL *s, unsigned int context, int sent, int *al)
+static int final_alpn(SSL *s, unsigned int context, int sent, int *al)
 {
     const unsigned char *selected = NULL;
     unsigned char selected_len = 0;
@@ -911,7 +844,7 @@ static int tls_ext_final_alpn(SSL *s, unsigned int context, int sent, int *al)
     return 1;
 }
 
-static int tls_ext_init_sig_algs(SSL *s, unsigned int context)
+static int init_sig_algs(SSL *s, unsigned int context)
 {
     /* Clear any signature algorithms extension received */
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
@@ -921,7 +854,7 @@ static int tls_ext_init_sig_algs(SSL *s, unsigned int context)
 }
 
 #ifndef OPENSSL_NO_SRP
-static int tls_ext_init_srp(SSL *s, unsigned int context)
+static int init_srp(SSL *s, unsigned int context)
 {
     OPENSSL_free(s->srp_ctx.login);
     s->srp_ctx.login = NULL;
@@ -930,14 +863,14 @@ static int tls_ext_init_srp(SSL *s, unsigned int context)
 }
 #endif
 
-static int tls_ext_init_etm(SSL *s, unsigned int context)
+static int init_etm(SSL *s, unsigned int context)
 {
     s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 
     return 1;
 }
 
-static int tls_ext_init_ems(SSL *s, unsigned int context)
+static int init_ems(SSL *s, unsigned int context)
 {
     if (!s->server)
         s->s3->flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
@@ -945,7 +878,7 @@ static int tls_ext_init_ems(SSL *s, unsigned int context)
     return 1;
 }
 
-static int tls_ext_final_ems(SSL *s, unsigned int context, int sent, int *al)
+static int final_ems(SSL *s, unsigned int context, int sent, int *al)
 {
     if (!s->server && s->hit) {
         /*
@@ -964,7 +897,7 @@ static int tls_ext_final_ems(SSL *s, unsigned int context, int sent, int *al)
 }
 
 #ifndef OPENSSL_NO_SRTP
-static int tls_ext_init_srtp(SSL *s, unsigned int context)
+static int init_srtp(SSL *s, unsigned int context)
 {
     if (s->server)
         s->srtp_profile = NULL;

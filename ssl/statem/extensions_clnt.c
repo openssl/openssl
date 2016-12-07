@@ -12,7 +12,7 @@
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 
-int tls_construct_client_renegotiate(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt, int *al)
 {
     /* Add RI if renegotiating */
     if (!s->renegotiate)
@@ -30,7 +30,7 @@ int tls_construct_client_renegotiate(SSL *s, WPACKET *pkt, int *al)
     return 1;
 }
 
-int tls_construct_client_server_name(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_server_name(SSL *s, WPACKET *pkt, int *al)
 {
     if (s->tlsext_hostname == NULL)
         return 1;
@@ -54,7 +54,7 @@ int tls_construct_client_server_name(SSL *s, WPACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_SRP
-int tls_construct_client_srp(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_srp(SSL *s, WPACKET *pkt, int *al)
 {
     /* Add SRP username if there is one */
     if (s->srp_ctx.login == NULL)
@@ -81,8 +81,7 @@ int tls_construct_client_srp(SSL *s, WPACKET *pkt, int *al)
 #ifndef OPENSSL_NO_EC
 static int use_ecc(SSL *s)
 {
-    int using_ecc = 0;
-    int i;
+    int i, end;
     unsigned long alg_k, alg_a;
     STACK_OF(SSL_CIPHER) *cipher_stack = NULL;
 
@@ -90,26 +89,23 @@ static int use_ecc(SSL *s)
     if (s->version == SSL3_VERSION)
         return 0;
 
-
     cipher_stack = SSL_get_ciphers(s);
-
-    for (i = 0; i < sk_SSL_CIPHER_num(cipher_stack); i++) {
+    end = sk_SSL_CIPHER_num(cipher_stack);
+    for (i = 0; i < end; i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
 
         alg_k = c->algorithm_mkey;
         alg_a = c->algorithm_auth;
         if ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
-            || (alg_a & SSL_aECDSA)
-            || c->min_tls >= TLS1_3_VERSION) {
-            using_ecc = 1;
+                || (alg_a & SSL_aECDSA)
+                || c->min_tls >= TLS1_3_VERSION)
             break;
-        }
     }
 
-    return using_ecc;
+    return i < end;
 }
 
-int tls_construct_client_ec_pt_formats(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt, int *al)
 {
     const unsigned char *pformats;
     size_t num_formats;
@@ -118,7 +114,6 @@ int tls_construct_client_ec_pt_formats(SSL *s, WPACKET *pkt, int *al)
         return 1;
 
     /* Add TLS extension ECPointFormats to the ClientHello message */
-
     tls1_get_formatlist(s, &pformats, &num_formats);
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ec_point_formats)
@@ -134,7 +129,7 @@ int tls_construct_client_ec_pt_formats(SSL *s, WPACKET *pkt, int *al)
 }
 
 
-int tls_construct_client_supported_groups(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt, int *al)
 {
     const unsigned char *pcurves = NULL, *pcurvestmp;
     size_t num_curves = 0, i;
@@ -183,7 +178,7 @@ int tls_construct_client_supported_groups(SSL *s, WPACKET *pkt, int *al)
 }
 #endif
 
-int tls_construct_client_session_ticket(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_session_ticket(SSL *s, WPACKET *pkt, int *al)
 {
     size_t ticklen;
 
@@ -222,7 +217,7 @@ int tls_construct_client_session_ticket(SSL *s, WPACKET *pkt, int *al)
     return 1;
 }
 
-int tls_construct_client_sig_algs(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_sig_algs(SSL *s, WPACKET *pkt, int *al)
 {
     size_t salglen;
     const unsigned char *salg;
@@ -231,7 +226,6 @@ int tls_construct_client_sig_algs(SSL *s, WPACKET *pkt, int *al)
         return 1;
 
     salglen = tls12_get_psigalgs(s, &salg);
-
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signature_algorithms)
                /* Sub-packet for sig-algs extension */
             || !WPACKET_start_sub_packet_u16(pkt)
@@ -248,7 +242,7 @@ int tls_construct_client_sig_algs(SSL *s, WPACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_OCSP
-int tls_construct_client_status_request(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt, int *al)
 {
     int i;
 
@@ -266,11 +260,9 @@ int tls_construct_client_status_request(SSL *s, WPACKET *pkt, int *al)
     }
     for (i = 0; i < sk_OCSP_RESPID_num(s->tlsext_ocsp_ids); i++) {
         unsigned char *idbytes;
-        int idlen;
-        OCSP_RESPID *id;
+        OCSP_RESPID *id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
+        int idlen = i2d_OCSP_RESPID(id, NULL);
 
-        id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
-        idlen = i2d_OCSP_RESPID(id, NULL);
         if (idlen <= 0
                    /* Sub-packet for an individual id */
                 || !WPACKET_sub_allocate_bytes_u16(pkt, idlen, &idbytes)
@@ -312,7 +304,7 @@ int tls_construct_client_status_request(SSL *s, WPACKET *pkt, int *al)
 #endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-int tls_construct_client_npn(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_npn(SSL *s, WPACKET *pkt, int *al)
 {
     if (s->ctx->next_proto_select_cb == NULL || s->s3->tmp.finish_md_len != 0)
         return 1;
@@ -331,7 +323,7 @@ int tls_construct_client_npn(SSL *s, WPACKET *pkt, int *al)
 }
 #endif
 
-int tls_construct_client_alpn(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, int *al)
 {
     s->s3->alpn_sent = 0;
 
@@ -359,11 +351,10 @@ int tls_construct_client_alpn(SSL *s, WPACKET *pkt, int *al)
 
 
 #ifndef OPENSSL_NO_SRTP
-int tls_construct_client_use_srtp(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt, int *al)
 {
     STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = SSL_get_srtp_profiles(s);
-    SRTP_PROTECTION_PROFILE *prof;
-    int i, ct;
+    int i, end;
 
     if (clnt == NULL)
         return 1;
@@ -376,9 +367,12 @@ int tls_construct_client_use_srtp(SSL *s, WPACKET *pkt, int *al)
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_USE_SRTP, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    ct = sk_SRTP_PROTECTION_PROFILE_num(clnt);
-    for (i = 0; i < ct; i++) {
-        prof = sk_SRTP_PROTECTION_PROFILE_value(clnt, i);
+
+    end = sk_SRTP_PROTECTION_PROFILE_num(clnt);
+    for (i = 0; i < end; i++) {
+        const SRTP_PROTECTION_PROFILE *prof =
+            sk_SRTP_PROTECTION_PROFILE_value(clnt, i);
+
         if (prof == NULL || !WPACKET_put_bytes_u16(pkt, prof->id)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_USE_SRTP, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -396,7 +390,7 @@ int tls_construct_client_use_srtp(SSL *s, WPACKET *pkt, int *al)
 }
 #endif
 
-int tls_construct_client_etm(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_etm(SSL *s, WPACKET *pkt, int *al)
 {
     if (s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)
         return 1;
@@ -411,7 +405,7 @@ int tls_construct_client_etm(SSL *s, WPACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_CT
-int tls_construct_client_sct(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_sct(SSL *s, WPACKET *pkt, int *al)
 {
     if (s->ct_validation_callback == NULL)
         return 1;
@@ -426,7 +420,7 @@ int tls_construct_client_sct(SSL *s, WPACKET *pkt, int *al)
 }
 #endif
 
-int tls_construct_client_ems(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_ems(SSL *s, WPACKET *pkt, int *al)
 {
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
@@ -437,7 +431,7 @@ int tls_construct_client_ems(SSL *s, WPACKET *pkt, int *al)
     return 1;
 }
 
-int tls_construct_client_supported_versions(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt, int *al)
 {
     int currv, min_version, max_version, reason;
 
@@ -484,7 +478,7 @@ int tls_construct_client_supported_versions(SSL *s, WPACKET *pkt, int *al)
 }
 
 
-int tls_construct_client_key_share(SSL *s, WPACKET *pkt, int *al)
+int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, int *al)
 {
     size_t i, sharessent = 0, num_curves = 0;
     const unsigned char *pcurves = NULL;
@@ -569,7 +563,10 @@ int tls_construct_client_key_share(SSL *s, WPACKET *pkt, int *al)
     return 1;
 }
 
-int tls_construct_client_padding(SSL *s, WPACKET *pkt, int *al)
+#define F5_WORKAROUND_MIN_MSG_LEN   0xff
+#define F5_WORKAROUND_MAX_MSG_LEN   0x200
+
+int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, int *al)
 {
     unsigned char *padbytes;
     size_t hlen;
@@ -580,7 +577,7 @@ int tls_construct_client_padding(SSL *s, WPACKET *pkt, int *al)
     /*
      * Add padding to workaround bugs in F5 terminators. See
      * https://tools.ietf.org/html/draft-agl-tls-padding-03 NB: because this
-     * code works out the length of all existing extensions it MUST always
+     * code calculates the length of all existing extensions it MUST always
      * appear last.
      */
     if (!WPACKET_get_total_written(pkt, &hlen)) {
@@ -588,8 +585,14 @@ int tls_construct_client_padding(SSL *s, WPACKET *pkt, int *al)
         return 0;
     }
 
-    if (hlen > 0xff && hlen < 0x200) {
-        hlen = 0x200 - hlen;
+    if (hlen > F5_WORKAROUND_MIN_MSG_LEN && hlen < F5_WORKAROUND_MAX_MSG_LEN) {
+        /* Calculate the amond of padding we need to add */
+        hlen = F5_WORKAROUND_MAX_MSG_LEN - hlen;
+
+        /*
+         * Take off the size of extension header itself (2 bytes for type and
+         * 2 bytes for length bytes)
+         */
         if (hlen >= 4)
             hlen -= 4;
         else
@@ -609,7 +612,7 @@ int tls_construct_client_padding(SSL *s, WPACKET *pkt, int *al)
 /*
  * Parse the server's renegotiation binding and abort if it's not right
  */
-int tls_parse_server_renegotiate(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, int *al)
 {
     size_t expected_len = s->s3->previous_client_finished_len
         + s->s3->previous_server_finished_len;
@@ -666,7 +669,7 @@ int tls_parse_server_renegotiate(SSL *s, PACKET *pkt, int *al)
     return 1;
 }
 
-int tls_parse_server_server_name(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, int *al)
 {
     if (s->tlsext_hostname == NULL || PACKET_remaining(pkt) > 0) {
         *al = SSL_AD_UNRECOGNIZED_NAME;
@@ -689,7 +692,7 @@ int tls_parse_server_server_name(SSL *s, PACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_EC
-int tls_parse_server_ec_pt_formats(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, int *al)
 {
     unsigned int ecpointformatlist_length;
     PACKET ecptformatlist;
@@ -724,26 +727,28 @@ int tls_parse_server_ec_pt_formats(SSL *s, PACKET *pkt, int *al)
 }
 #endif
 
-int tls_parse_server_session_ticket(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, int *al)
 {
-    if (s->tls_session_ticket_ext_cb &&
+    if (s->tls_session_ticket_ext_cb != NULL &&
         !s->tls_session_ticket_ext_cb(s, PACKET_data(pkt),
                                       PACKET_remaining(pkt),
                                       s->tls_session_ticket_ext_cb_arg)) {
         *al = SSL_AD_INTERNAL_ERROR;
         return 0;
     }
+
     if (!tls_use_ticket(s) || PACKET_remaining(pkt) > 0) {
         *al = SSL_AD_UNSUPPORTED_EXTENSION;
         return 0;
     }
+
     s->tlsext_ticket_expected = 1;
 
     return 1;
 }
 
 #ifndef OPENSSL_NO_OCSP
-int tls_parse_server_status_request(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, int *al)
 {
     /*
      * MUST be empty and only sent if we've requested a status
@@ -762,7 +767,7 @@ int tls_parse_server_status_request(SSL *s, PACKET *pkt, int *al)
 
 
 #ifndef OPENSSL_NO_CT
-int tls_parse_server_sct(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_sct(SSL *s, PACKET *pkt, int *al)
 {
     /*
      * Only take it if we asked for it - i.e if there is no CT validation
@@ -773,10 +778,9 @@ int tls_parse_server_sct(SSL *s, PACKET *pkt, int *al)
         size_t size = PACKET_remaining(pkt);
 
         /* Simply copy it off for later processing */
-        if (s->tlsext_scts != NULL) {
-            OPENSSL_free(s->tlsext_scts);
-            s->tlsext_scts = NULL;
-        }
+        OPENSSL_free(s->tlsext_scts);
+        s->tlsext_scts = NULL;
+
         s->tlsext_scts_len = size;
         if (size > 0) {
             s->tlsext_scts = OPENSSL_malloc(size);
@@ -816,12 +820,13 @@ static int ssl_next_proto_validate(PACKET *pkt)
     return 1;
 }
 
-int tls_parse_server_npn(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_npn(SSL *s, PACKET *pkt, int *al)
 {
     unsigned char *selected;
     unsigned char selected_len;
     PACKET tmppkt;
 
+    /* Check if we are in a renegotiation. If so ignore this extension */
     if (s->s3->tmp.finish_md_len != 0)
         return 1;
 
@@ -830,6 +835,7 @@ int tls_parse_server_npn(SSL *s, PACKET *pkt, int *al)
         *al = SSL_AD_UNSUPPORTED_EXTENSION;
         return 0;
     }
+
     /* The data must be valid */
     tmppkt = *pkt;
     if (!ssl_next_proto_validate(&tmppkt)) {
@@ -844,6 +850,7 @@ int tls_parse_server_npn(SSL *s, PACKET *pkt, int *al)
         *al = SSL_AD_INTERNAL_ERROR;
         return 0;
     }
+
     /*
      * Could be non-NULL if server has sent multiple NPN extensions in
      * a single Serverhello
@@ -863,7 +870,7 @@ int tls_parse_server_npn(SSL *s, PACKET *pkt, int *al)
 }
 #endif
 
-int tls_parse_server_alpn(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, int *al)
 {
     size_t len;
 
@@ -900,17 +907,17 @@ int tls_parse_server_alpn(SSL *s, PACKET *pkt, int *al)
 }
 
 #ifndef OPENSSL_NO_SRTP
-int tls_parse_server_use_srtp(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_use_srtp(SSL *s, PACKET *pkt, int *al)
 {
     unsigned int id, ct, mki;
     int i;
     STACK_OF(SRTP_PROTECTION_PROFILE) *clnt;
     SRTP_PROTECTION_PROFILE *prof;
 
-    if (!PACKET_get_net_2(pkt, &ct)
-        || ct != 2 || !PACKET_get_net_2(pkt, &id)
-        || !PACKET_get_1(pkt, &mki)
-        || PACKET_remaining(pkt) != 0) {
+    if (!PACKET_get_net_2(pkt, &ct) || ct != 2
+            || !PACKET_get_net_2(pkt, &id)
+            || !PACKET_get_1(pkt, &mki)
+            || PACKET_remaining(pkt) != 0) {
         SSLerr(SSL_F_TLS_PARSE_SERVER_USE_SRTP,
                SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
         *al = SSL_AD_DECODE_ERROR;
@@ -924,9 +931,8 @@ int tls_parse_server_use_srtp(SSL *s, PACKET *pkt, int *al)
         return 0;
     }
 
-    clnt = SSL_get_srtp_profiles(s);
-
     /* Throw an error if the server gave us an unsolicited extension */
+    clnt = SSL_get_srtp_profiles(s);
     if (clnt == NULL) {
         SSLerr(SSL_F_TLS_PARSE_SERVER_USE_SRTP, SSL_R_NO_SRTP_PROFILES);
         *al = SSL_AD_DECODE_ERROR;
@@ -954,7 +960,7 @@ int tls_parse_server_use_srtp(SSL *s, PACKET *pkt, int *al)
 }
 #endif
 
-int tls_parse_server_etm(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_etm(SSL *s, PACKET *pkt, int *al)
 {
     /* Ignore if inappropriate ciphersuite */
     if (!(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)
@@ -965,7 +971,7 @@ int tls_parse_server_etm(SSL *s, PACKET *pkt, int *al)
     return 1;
 }
 
-int tls_parse_server_ems(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_ems(SSL *s, PACKET *pkt, int *al)
 {
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
     if (!s->hit)
@@ -974,7 +980,7 @@ int tls_parse_server_ems(SSL *s, PACKET *pkt, int *al)
     return 1;
 }
 
-int tls_parse_server_key_share(SSL *s, PACKET *pkt, int *al)
+int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, int *al)
 {
     unsigned int group_id;
     PACKET encoded_pt;
