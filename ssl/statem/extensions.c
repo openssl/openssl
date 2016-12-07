@@ -652,7 +652,7 @@ static int final_renegotiate(SSL *s, unsigned int context, int sent,
                 && !(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)
                 && !sent) {
             *al = SSL_AD_HANDSHAKE_FAILURE;
-            SSLerr(SSL_F_TLS_EXT_FINAL_RENEGOTIATE,
+            SSLerr(SSL_F_FINAL_RENEGOTIATE,
                    SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
             return 0;
         }
@@ -665,7 +665,7 @@ static int final_renegotiate(SSL *s, unsigned int context, int sent,
             && !(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)
             && !sent) {
         *al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_TLS_EXT_FINAL_RENEGOTIATE,
+        SSLerr(SSL_F_FINAL_RENEGOTIATE,
                SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
         return 0;
     }
@@ -745,7 +745,7 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent,
                 break;
         }
         if (i == s->session->tlsext_ecpointformatlist_length) {
-            SSLerr(SSL_F_TLS_EXT_FINAL_EC_PT_FORMATS,
+            SSLerr(SSL_F_FINAL_EC_PT_FORMATS,
                    SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
             return 0;
         }
@@ -889,7 +889,7 @@ static int final_ems(SSL *s, unsigned int context, int sent, int *al)
         if (!(s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) !=
             !(s->session->flags & SSL_SESS_FLAG_EXTMS)) {
             *al = SSL_AD_HANDSHAKE_FAILURE;
-            SSLerr(SSL_F_TLS_EXT_FINAL_EMS, SSL_R_INCONSISTENT_EXTMS);
+            SSLerr(SSL_F_FINAL_EMS, SSL_R_INCONSISTENT_EXTMS);
             return 0;
         }
     }
