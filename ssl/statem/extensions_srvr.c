@@ -413,7 +413,7 @@ int tls_parse_ctos_use_srtp(SSL *s, PACKET *pkt, int *al)
          * does nothing.
          */
         for (i = 0; i < srtp_pref; i++) {
-            const SRTP_PROTECTION_PROFILE *sprof =
+            SRTP_PROTECTION_PROFILE *sprof =
                 sk_SRTP_PROTECTION_PROFILE_value(srvr, i);
 
             if (sprof->id == id) {
