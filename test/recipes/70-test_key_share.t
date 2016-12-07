@@ -194,9 +194,9 @@ $proxy->clear();
 $proxy->filter(undef);
 $proxy->clientflags("-no_tls1_3");
 $proxy->start();
-my $clienthello = ${$proxy->message_list}[0];
+my $clienthello = $proxy->message_list->[0];
 ok(TLSProxy::Message->success()
-   && !defined ${$clienthello->extension_data}{TLSProxy::Message::EXT_KEY_SHARE},
+   && !defined $clienthello->extension_data->{TLSProxy::Message::EXT_KEY_SHARE},
    "No key_share for TLS<=1.2 client");
 $proxy->filter(\&modify_key_shares_filter);
 
@@ -304,7 +304,7 @@ sub modify_key_shares_filter
                      && $direction == SERVER_TO_CLIENT) {
             my $ext;
             my $key_share =
-                ${$message->extension_data}{TLSProxy::Message::EXT_KEY_SHARE};
+                $message->extension_data->{TLSProxy::Message::EXT_KEY_SHARE};
             $selectedgroupid = unpack("n", $key_share);
 
             if ($testtype == LOOK_ONLY) {
@@ -336,7 +336,7 @@ sub modify_key_shares_filter
                     "EDF83495E80380089F831B94D14B1421", #key_exchange data
                     0x00; #Trailing garbage
             }
-            $message->set_extension( TLSProxy::Message::EXT_KEY_SHARE, $ext);
+            $message->set_extension(TLSProxy::Message::EXT_KEY_SHARE, $ext);
 
             $message->repack();
         }
