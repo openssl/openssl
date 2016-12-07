@@ -23,7 +23,7 @@ int tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt, int *al)
             || !WPACKET_sub_memcpy_u8(pkt, s->s3->previous_client_finished,
                                s->s3->previous_client_finished_len)
             || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_RENEGOTIATE, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_RENEGOTIATE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -46,7 +46,7 @@ int tls_construct_ctos_server_name(SSL *s, WPACKET *pkt, int *al)
                                        strlen(s->tlsext_hostname))
             || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SERVER_NAME, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SERVER_NAME, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -70,7 +70,7 @@ int tls_construct_ctos_srp(SSL *s, WPACKET *pkt, int *al)
                                strlen(s->srp_ctx.login))
             || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SRP, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SRP, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -121,7 +121,7 @@ int tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt, int *al)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_sub_memcpy_u8(pkt, pformats, num_formats)
             || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_EC_PT_FORMATS, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EC_PT_FORMATS, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -143,7 +143,7 @@ int tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt, int *al)
     /* TODO(TLS1.3): Add support for DHE groups */
     pcurves = s->tlsext_supportedgroupslist;
     if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_GROUPS,
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
                ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -153,7 +153,7 @@ int tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt, int *al)
                /* Sub-packet for supported_groups extension */
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u16(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_GROUPS,
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
                ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -162,14 +162,14 @@ int tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt, int *al)
         if (tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
             if (!WPACKET_put_bytes_u8(pkt, pcurvestmp[0])
                 || !WPACKET_put_bytes_u8(pkt, pcurvestmp[1])) {
-                    SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_GROUPS,
+                    SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
                            ERR_R_INTERNAL_ERROR);
                     return 0;
                 }
         }
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_GROUPS,
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
                ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -193,7 +193,7 @@ int tls_construct_ctos_session_ticket(SSL *s, WPACKET *pkt, int *al)
         ticklen = s->tlsext_session_ticket->length;
         s->session->tlsext_tick = OPENSSL_malloc(ticklen);
         if (s->session->tlsext_tick == NULL) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SESSION_TICKET,
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SESSION_TICKET,
                    ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -210,7 +210,7 @@ int tls_construct_ctos_session_ticket(SSL *s, WPACKET *pkt, int *al)
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_session_ticket)
             || !WPACKET_sub_memcpy_u16(pkt, s->session->tlsext_tick, ticklen)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -234,7 +234,7 @@ int tls_construct_ctos_sig_algs(SSL *s, WPACKET *pkt, int *al)
             || !tls12_copy_sigalgs(s, pkt, salg, salglen)
             || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SIG_ALGS, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SIG_ALGS, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -255,7 +255,7 @@ int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt, int *al)
             || !WPACKET_put_bytes_u8(pkt, TLSEXT_STATUSTYPE_ocsp)
                /* Sub-packet for the ids */
             || !WPACKET_start_sub_packet_u16(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     for (i = 0; i < sk_OCSP_RESPID_num(s->tlsext_ocsp_ids); i++) {
@@ -267,14 +267,14 @@ int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt, int *al)
                    /* Sub-packet for an individual id */
                 || !WPACKET_sub_allocate_bytes_u16(pkt, idlen, &idbytes)
                 || i2d_OCSP_RESPID(id, &idbytes) != idlen) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST,
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_STATUS_REQUEST,
                    ERR_R_INTERNAL_ERROR);
             return 0;
         }
     }
     if (!WPACKET_close(pkt)
             || !WPACKET_start_sub_packet_u16(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     if (s->tlsext_ocsp_exts) {
@@ -282,20 +282,20 @@ int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt, int *al)
         int extlen = i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, NULL);
 
         if (extlen < 0) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST,
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_STATUS_REQUEST,
                    ERR_R_INTERNAL_ERROR);
             return 0;
         }
         if (!WPACKET_allocate_bytes(pkt, extlen, &extbytes)
                 || i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &extbytes)
                    != extlen) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST,
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_STATUS_REQUEST,
                    ERR_R_INTERNAL_ERROR);
             return 0;
        }
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -315,7 +315,7 @@ int tls_construct_ctos_npn(SSL *s, WPACKET *pkt, int *al)
      */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_next_proto_neg)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_NPN, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_NPN, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -341,7 +341,7 @@ int tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, int *al)
             || !WPACKET_sub_memcpy_u16(pkt, s->alpn_client_proto_list,
                                        s->alpn_client_proto_list_len)
             || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_ALPN, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_ALPN, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     s->s3->alpn_sent = 1;
@@ -364,7 +364,7 @@ int tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt, int *al)
             || !WPACKET_start_sub_packet_u16(pkt)
                /* Sub-packet for the protection profile list */
             || !WPACKET_start_sub_packet_u16(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_USE_SRTP, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_USE_SRTP, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -374,7 +374,7 @@ int tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt, int *al)
             sk_SRTP_PROTECTION_PROFILE_value(clnt, i);
 
         if (prof == NULL || !WPACKET_put_bytes_u16(pkt, prof->id)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_USE_SRTP, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_USE_SRTP, ERR_R_INTERNAL_ERROR);
             return 0;
         }
     }
@@ -382,7 +382,7 @@ int tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt, int *al)
                /* Add an empty use_mki value */
             || !WPACKET_put_bytes_u8(pkt, 0)
             || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_USE_SRTP, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_USE_SRTP, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -397,7 +397,7 @@ int tls_construct_ctos_etm(SSL *s, WPACKET *pkt, int *al)
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_encrypt_then_mac)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_ETM, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_ETM, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -412,7 +412,7 @@ int tls_construct_ctos_sct(SSL *s, WPACKET *pkt, int *al)
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signed_certificate_timestamp)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SCT, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SCT, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -424,7 +424,7 @@ int tls_construct_ctos_ems(SSL *s, WPACKET *pkt, int *al)
 {
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_EMS, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EMS, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -438,14 +438,14 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt, int *al)
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u8(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_VERSIONS,
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
                ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     reason = ssl_get_client_min_max_version(s, &min_version, &max_version);
     if (reason != 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_VERSIONS, reason);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS, reason);
         return 0;
     }
 
@@ -458,18 +458,18 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt, int *al)
         /* TODO(TLS1.3): Remove this first if clause prior to release!! */
         if (currv == TLS1_3_VERSION) {
             if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_VERSIONS,
+                SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
                        ERR_R_INTERNAL_ERROR);
                 return 0;
             }
         } else if (!WPACKET_put_bytes_u16(pkt, currv)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_VERSIONS,
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
                    ERR_R_INTERNAL_ERROR);
             return 0;
         }
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_SUPPORTED_VERSIONS,
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
                ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -489,13 +489,13 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, int *al)
             || !WPACKET_start_sub_packet_u16(pkt)
                /* KeyShare list sub-packet */
             || !WPACKET_start_sub_packet_u16(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     pcurves = s->tlsext_supportedgroupslist;
     if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -514,7 +514,7 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, int *al)
 
         if (s->s3->tmp.pkey != NULL) {
             /* Shouldn't happen! */
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
             return 0;
         }
 
@@ -522,7 +522,7 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, int *al)
         curve_id = (pcurves[0] << 8) | pcurves[1];
         key_share_key = ssl_generate_pkey_curve(curve_id);
         if (key_share_key == NULL) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_EVP_LIB);
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_EVP_LIB);
             return 0;
         }
 
@@ -530,7 +530,7 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, int *al)
         encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
                                                     &encodedPoint);
         if (encodedlen == 0) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_EC_LIB);
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_EC_LIB);
             EVP_PKEY_free(key_share_key);
             return 0;
         }
@@ -538,7 +538,7 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, int *al)
         /* Create KeyShareEntry */
         if (!WPACKET_put_bytes_u16(pkt, curve_id)
                 || !WPACKET_sub_memcpy_u16(pkt, encodedPoint, encodedlen)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
             EVP_PKEY_free(key_share_key);
             OPENSSL_free(encodedPoint);
             return 0;
@@ -556,7 +556,7 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, int *al)
     }
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -581,7 +581,7 @@ int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, int *al)
      * appear last.
      */
     if (!WPACKET_get_total_written(pkt, &hlen)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_PADDING, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PADDING, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -600,7 +600,7 @@ int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, int *al)
 
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_padding)
                 || !WPACKET_sub_allocate_bytes_u16(pkt, hlen, &padbytes)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_PADDING, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PADDING, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         memset(padbytes, 0, hlen);
@@ -625,7 +625,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, int *al)
 
     /* Parse the length byte */
     if (!PACKET_get_1_len(pkt, &ilen)) {
-        SSLerr(SSL_F_TLS_PARSE_SERVER_RENEGOTIATE,
+        SSLerr(SSL_F_TLS_PARSE_STOC_RENEGOTIATE,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
@@ -633,7 +633,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, int *al)
 
     /* Consistency check */
     if (PACKET_remaining(pkt) != ilen) {
-        SSLerr(SSL_F_TLS_PARSE_SERVER_RENEGOTIATE,
+        SSLerr(SSL_F_TLS_PARSE_STOC_RENEGOTIATE,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
@@ -641,7 +641,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, int *al)
 
     /* Check that the extension matches */
     if (ilen != expected_len) {
-        SSLerr(SSL_F_TLS_PARSE_SERVER_RENEGOTIATE,
+        SSLerr(SSL_F_TLS_PARSE_STOC_RENEGOTIATE,
                SSL_R_RENEGOTIATION_MISMATCH);
         *al = SSL_AD_HANDSHAKE_FAILURE;
         return 0;
@@ -650,7 +650,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, int *al)
     if (!PACKET_get_bytes(pkt, &data, s->s3->previous_client_finished_len)
         || memcmp(data, s->s3->previous_client_finished,
                   s->s3->previous_client_finished_len) != 0) {
-        SSLerr(SSL_F_TLS_PARSE_SERVER_RENEGOTIATE,
+        SSLerr(SSL_F_TLS_PARSE_STOC_RENEGOTIATE,
                SSL_R_RENEGOTIATION_MISMATCH);
         *al = SSL_AD_HANDSHAKE_FAILURE;
         return 0;
@@ -659,7 +659,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, int *al)
     if (!PACKET_get_bytes(pkt, &data, s->s3->previous_server_finished_len)
         || memcmp(data, s->s3->previous_server_finished,
                   s->s3->previous_server_finished_len) != 0) {
-        SSLerr(SSL_F_TLS_PARSE_SERVER_RENEGOTIATE,
+        SSLerr(SSL_F_TLS_PARSE_STOC_RENEGOTIATE,
                SSL_R_RENEGOTIATION_MISMATCH);
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
@@ -919,7 +919,7 @@ int tls_parse_stoc_use_srtp(SSL *s, PACKET *pkt, int *al)
             || !PACKET_get_net_2(pkt, &id)
             || !PACKET_get_1(pkt, &mki)
             || PACKET_remaining(pkt) != 0) {
-        SSLerr(SSL_F_TLS_PARSE_SERVER_USE_SRTP,
+        SSLerr(SSL_F_TLS_PARSE_STOC_USE_SRTP,
                SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
         *al = SSL_AD_DECODE_ERROR;
         return 0;
@@ -927,7 +927,7 @@ int tls_parse_stoc_use_srtp(SSL *s, PACKET *pkt, int *al)
 
     if (mki != 0) {
         /* Must be no MKI, since we never offer one */
-        SSLerr(SSL_F_TLS_PARSE_SERVER_USE_SRTP, SSL_R_BAD_SRTP_MKI_VALUE);
+        SSLerr(SSL_F_TLS_PARSE_STOC_USE_SRTP, SSL_R_BAD_SRTP_MKI_VALUE);
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
     }
@@ -935,7 +935,7 @@ int tls_parse_stoc_use_srtp(SSL *s, PACKET *pkt, int *al)
     /* Throw an error if the server gave us an unsolicited extension */
     clnt = SSL_get_srtp_profiles(s);
     if (clnt == NULL) {
-        SSLerr(SSL_F_TLS_PARSE_SERVER_USE_SRTP, SSL_R_NO_SRTP_PROFILES);
+        SSLerr(SSL_F_TLS_PARSE_STOC_USE_SRTP, SSL_R_NO_SRTP_PROFILES);
         *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
@@ -954,7 +954,7 @@ int tls_parse_stoc_use_srtp(SSL *s, PACKET *pkt, int *al)
         }
     }
 
-    SSLerr(SSL_F_TLS_PARSE_SERVER_USE_SRTP,
+    SSLerr(SSL_F_TLS_PARSE_STOC_USE_SRTP,
            SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
     *al = SSL_AD_DECODE_ERROR;
     return 0;
@@ -990,13 +990,13 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, int *al)
     /* Sanity check */
     if (ckey == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PARSE_SERVER_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     if (!PACKET_get_net_2(pkt, &group_id)) {
         *al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_TLS_PARSE_SERVER_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
+        SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
 
@@ -1006,33 +1006,33 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, int *al)
          * key_share!
          */
         *al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_TLS_PARSE_SERVER_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
+        SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
         return 0;
     }
 
     if (!PACKET_as_length_prefixed_2(pkt, &encoded_pt)
             || PACKET_remaining(&encoded_pt) == 0) {
         *al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_TLS_PARSE_SERVER_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
+        SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
 
     skey = ssl_generate_pkey(ckey);
     if (skey == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PARSE_SERVER_KEY_SHARE, ERR_R_MALLOC_FAILURE);
+        SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     if (!EVP_PKEY_set1_tls_encodedpoint(skey, PACKET_data(&encoded_pt),
                                         PACKET_remaining(&encoded_pt))) {
         *al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_TLS_PARSE_SERVER_KEY_SHARE, SSL_R_BAD_ECPOINT);
+        SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_ECPOINT);
         return 0;
     }
 
     if (ssl_derive(s, ckey, skey, 1) == 0) {
         *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PARSE_SERVER_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         EVP_PKEY_free(skey);
         return 0;
     }
