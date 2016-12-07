@@ -260,7 +260,7 @@ static int verify_extension(SSL *s, unsigned int context, unsigned int type,
 {
     size_t i;
     size_t builtin_num = OSSL_NELEM(ext_defs);
-    EXTENSION_DEFINITION *thisext;
+    const EXTENSION_DEFINITION *thisext;
 
     for (i = 0, thisext = ext_defs; i < builtin_num; i++, thisext++) {
         if (type == thisext->type) {
@@ -344,11 +344,10 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
                            RAW_EXTENSION **res, int *al)
 {
     PACKET extensions = *packet;
-    size_t i = 0, idx;
-    int found = 0;
+    size_t i = 0;
     custom_ext_methods *exts = NULL;
     RAW_EXTENSION *raw_extensions = NULL;
-    EXTENSION_DEFINITION *thisexd;
+    const EXTENSION_DEFINITION *thisexd;
 
     /*
      * Initialise server side custom extensions. Client side is done during
@@ -427,7 +426,7 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
  * or 0 on failure. In the event of a failure |*al| is populated with a suitable
  * alert code. If an extension is not present this counted as success.
  */
-int tls_parse_extension(SSL *s, unsigned int idx, int context,
+int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
                         RAW_EXTENSION *exts, int *al)
 {
     RAW_EXTENSION *currext = &exts[idx];
@@ -497,7 +496,7 @@ int tls_parse_extension(SSL *s, unsigned int idx, int context,
 int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, int *al)
 {
     size_t i, numexts = OSSL_NELEM(ext_defs);
-    EXTENSION_DEFINITION *thisexd;
+    const EXTENSION_DEFINITION *thisexd;
 
     /* Calculate the number of extensions in the extensions list */
     if ((context & EXT_CLIENT_HELLO) != 0) {
@@ -508,7 +507,7 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, int *al)
 
     /* Parse each extension in turn */
     for (i = 0; i < numexts; i++) {
-        if (!tls_parse_extension(s, loop, context, exts, al))
+        if (!tls_parse_extension(s, i, context, exts, al))
             return 0;
     }
 
@@ -537,7 +536,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
 {
     size_t i;
     int addcustom = 0, min_version, max_version = 0, reason, tmpal;
-    EXTENSION_DEFINITION *thisexd;
+    const EXTENSION_DEFINITION *thisexd;
 
     /*
      * Normally if something goes wrong during construction it's an internal
@@ -591,7 +590,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
         int (*construct)(SSL *s, WPACKET *pkt, int *al);
 
         /* Skip if not relevant for our context */
-        if ((ext_defs[loop].context & context) == 0)
+        if ((thisexd->context & context) == 0)
             continue;
 
         construct = s->server ? thisexd->construct_stoc
