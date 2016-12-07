@@ -1078,10 +1078,6 @@ int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
  */
 static void ssl_check_for_safari(SSL *s, const CLIENTHELLO_MSG *hello)
 {
-    unsigned int type;
-    PACKET sni, tmppkt;
-    size_t ext_len;
-
     static const unsigned char kSafariExtensionsBlock[] = {
         0x00, 0x0a,             /* elliptic_curves extension */
         0x00, 0x08,             /* 8 bytes */
@@ -1104,9 +1100,11 @@ static void ssl_check_for_safari(SSL *s, const CLIENTHELLO_MSG *hello)
         0x04, 0x03,             /* SHA-256/ECDSA */
         0x02, 0x03,             /* SHA-1/ECDSA */
     };
-
     /* Length of the common prefix (first two extensions). */
     static const size_t kSafariCommonExtensionsLength = 18;
+    unsigned int type;
+    PACKET sni, tmppkt;
+    size_t ext_len;
 
     tmppkt = hello->extensions;
 
@@ -1694,7 +1692,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
 /*
  * Call the status request callback if needed. Upon success, returns 1.
- * Upon failure, returns 0 and sets |al| to the appropriate fatal alert.
+ * Upon failure, returns 0 and sets |*al| to the appropriate fatal alert.
  */
 static int tls_handle_status_request(SSL *s, int *al)
 {
@@ -1706,10 +1704,11 @@ static int tls_handle_status_request(SSL *s, int *al)
      * and must be called after the cipher has been chosen because this may
      * influence which certificate is sent
      */
-    if ((s->tlsext_status_type != -1) && s->ctx && s->ctx->tlsext_status_cb) {
+    if (s->tlsext_status_type != -1 && s->ctx != NULL
+            && s->ctx->tlsext_status_cb != NULL) {
         int ret;
-        CERT_PKEY *certpkey;
-        certpkey = ssl_get_server_send_pkey(s);
+        CERT_PKEY *certpkey = ssl_get_server_send_pkey(s);
+
         /* If no certificate can't return certificate status */
         if (certpkey != NULL) {
             /*
@@ -1912,8 +1911,8 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
                 && !WPACKET_put_bytes_u8(pkt, compm))
             || !tls_construct_extensions(s, pkt,
                                          SSL_IS_TLS13(s)
-                                         ? EXT_TLS1_3_SERVER_HELLO
-                                         : EXT_TLS1_2_SERVER_HELLO, &al)) {
+                                            ? EXT_TLS1_3_SERVER_HELLO
+                                            : EXT_TLS1_2_SERVER_HELLO, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
     }

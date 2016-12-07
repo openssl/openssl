@@ -593,6 +593,7 @@ static int ssl_print_version(BIO *bio, int indent, const char *name,
                              unsigned int *version)
 {
     int vers;
+
     if (*pmsglen < 2)
         return 0;
     vers = ((*pmsg)[0] << 8) | (*pmsg)[1];
@@ -867,6 +868,7 @@ static int ssl_print_server_hello(BIO *bio, int indent,
 {
     unsigned int cs;
     unsigned int vers;
+
     if (!ssl_print_version(bio, indent, "server_version", &msg, &msglen, &vers))
         return 0;
     if (!ssl_print_random(bio, indent, &msg, &msglen))

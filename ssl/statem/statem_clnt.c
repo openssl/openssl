@@ -1132,7 +1132,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
      * server wants to resume.
      */
     if (s->version >= TLS1_VERSION && !SSL_IS_TLS13(s)
-            && s->tls_session_secret_cb && s->session->tlsext_tick) {
+            && s->tls_session_secret_cb != NULL && s->session->tlsext_tick) {
         const SSL_CIPHER *pref_cipher = NULL;
         /*
          * s->session->master_key_length is a size_t, but this is an int for
@@ -3112,10 +3112,11 @@ static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt)
      */
     if (!tls_collect_extensions(s, &extensions,
                                 EXT_TLS1_3_ENCRYPTED_EXTENSIONS
-                                | EXT_TLS1_3_CERTIFICATE, &rawexts, &al)
+                                    | EXT_TLS1_3_CERTIFICATE,
+                                &rawexts, &al)
             || !tls_parse_all_extensions(s,
                                          EXT_TLS1_3_ENCRYPTED_EXTENSIONS
-                                         | EXT_TLS1_3_CERTIFICATE,
+                                            | EXT_TLS1_3_CERTIFICATE,
                                          rawexts, &al))
         goto err;
 
