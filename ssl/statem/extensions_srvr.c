@@ -694,8 +694,8 @@ int tls_construct_server_ec_pt_formats(SSL *s, WPACKET *pkt, int *al)
 {
     unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
     unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-    int using_ecc = (alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA);
-    using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
+    int using_ecc = ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))
+                    && (s->session->tlsext_ecpointformatlist != NULL);
     const unsigned char *plist;
     size_t plistlen;
 
