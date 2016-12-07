@@ -754,7 +754,8 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, int *al)
      * MUST be empty and only sent if we've requested a status
      * request message.
      */
-    if (s->tlsext_status_type == -1 || PACKET_remaining(pkt) > 0) {
+    if (s->tlsext_status_type == TLSEXT_STATUSTYPE_nothing
+            || PACKET_remaining(pkt) > 0) {
         *al = SSL_AD_UNSUPPORTED_EXTENSION;
         return 0;
     }

@@ -764,7 +764,7 @@ static int init_session_ticket(SSL *s, unsigned int context)
 static int init_status_request(SSL *s, unsigned int context)
 {
     if (s->server)
-        s->tlsext_status_type = -1;
+        s->tlsext_status_type = TLSEXT_STATUSTYPE_nothing;
 
     return 1;
 }

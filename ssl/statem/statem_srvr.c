@@ -1704,7 +1704,7 @@ static int tls_handle_status_request(SSL *s, int *al)
      * and must be called after the cipher has been chosen because this may
      * influence which certificate is sent
      */
-    if (s->tlsext_status_type != -1 && s->ctx != NULL
+    if (s->tlsext_status_type != TLSEXT_STATUSTYPE_nothing && s->ctx != NULL
             && s->ctx->tlsext_status_cb != NULL) {
         int ret;
         CERT_PKEY *certpkey = ssl_get_server_send_pkey(s);

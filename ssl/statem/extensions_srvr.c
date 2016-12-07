@@ -228,7 +228,7 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, int *al)
         /*
          * We don't know what to do with any other type so ignore it.
          */
-        s->tlsext_status_type = -1;
+        s->tlsext_status_type = TLSEXT_STATUSTYPE_nothing;
         return 1;
     }
 

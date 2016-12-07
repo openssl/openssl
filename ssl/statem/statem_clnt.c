@@ -2227,7 +2227,8 @@ int tls_process_initial_server_flight(SSL *s, int *al)
      * |tlsext_ocsp_resplen| values will be set if we actually received a status
      * message, or NULL and -1 otherwise
      */
-    if (s->tlsext_status_type != -1 && s->ctx->tlsext_status_cb != NULL) {
+    if (s->tlsext_status_type != TLSEXT_STATUSTYPE_nothing
+            && s->ctx->tlsext_status_cb != NULL) {
         int ret;
         ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
         if (ret == 0) {
