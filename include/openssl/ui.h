@@ -350,6 +350,7 @@ int ERR_load_UI_strings(void);
 # define UI_F_UI_DUP_VERIFY_STRING                        106
 # define UI_F_UI_GET0_RESULT                              107
 # define UI_F_UI_NEW_METHOD                               104
+# define UI_F_UI_PROCESS                                  113
 # define UI_F_UI_SET_RESULT                               105
 
 /* Reason codes. */
@@ -357,6 +358,7 @@ int ERR_load_UI_strings(void);
 # define UI_R_INDEX_TOO_LARGE                             102
 # define UI_R_INDEX_TOO_SMALL                             103
 # define UI_R_NO_RESULT_BUFFER                            105
+# define UI_R_PROCESSING_ERROR                            107
 # define UI_R_RESULT_TOO_LARGE                            100
 # define UI_R_RESULT_TOO_SMALL                            101
 # define UI_R_UNKNOWN_CONTROL_COMMAND                     106

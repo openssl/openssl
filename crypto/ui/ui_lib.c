@@ -427,9 +427,13 @@ static int print_error(const char *str, size_t len, UI *ui)
 int UI_process(UI *ui)
 {
     int i, ok = 0;
+    const char *state = "processing";
 
-    if (ui->meth->ui_open_session && !ui->meth->ui_open_session(ui))
-        return -1;
+    if (ui->meth->ui_open_session && !ui->meth->ui_open_session(ui)) {
+        state = "opening session";
+        ok = -1;
+        goto err;
+    }
 
     if (ui->flags & UI_FLAG_PRINT_ERRORS)
         ERR_print_errors_cb((int (*)(const char *, size_t, void *))
@@ -440,6 +444,7 @@ int UI_process(UI *ui)
             && !ui->meth->ui_write_string(ui,
                                           sk_UI_STRING_value(ui->strings, i)))
         {
+            state = "writing strings";
             ok = -1;
             goto err;
         }
@@ -451,6 +456,7 @@ int UI_process(UI *ui)
             ok = -2;
             goto err;
         case 0:                /* Errors */
+            state = "flushing";
             ok = -1;
             goto err;
         default:               /* Success */
@@ -467,6 +473,7 @@ int UI_process(UI *ui)
                 ok = -2;
                 goto err;
             case 0:            /* Errors */
+                state = "reading strings";
                 ok = -1;
                 goto err;
             default:           /* Success */
@@ -476,8 +483,16 @@ int UI_process(UI *ui)
         }
     }
  err:
-    if (ui->meth->ui_close_session && !ui->meth->ui_close_session(ui))
-        return -1;
+    if (ui->meth->ui_close_session && !ui->meth->ui_close_session(ui)) {
+        if (state == NULL)
+            state = "closing session";
+        ok = -1;
+    }
+
+    if (ok == -1) {
+        UIerr(UI_F_UI_PROCESS, UI_R_PROCESSING_ERROR);
+        ERR_add_error_data(2, "while ", state);
+    }
     return ok;
 }
 
