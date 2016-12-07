@@ -15,7 +15,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_fuzz");
 
-my @fuzzers = ('asn1', 'asn1parse', 'bignum', 'bndiv', 'conf', 'crl', 'server', 'x509');
+my @fuzzers = ('asn1', 'asn1parse', 'bignum', 'bndiv', 'client', 'conf', 'crl', 'server', 'x509');
 if (!disabled("cms")) {
     push @fuzzers, 'cms';
 }
