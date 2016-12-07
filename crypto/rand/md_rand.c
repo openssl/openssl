@@ -307,7 +307,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
 
 #ifdef PREDICT
     if (rand_predictable) {
-        unsigned char val = 0;
+        unsigned char val = 1;
 
         for (i = 0; i < num; i++)
             buf[i] = val++;
