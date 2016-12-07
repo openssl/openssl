@@ -1642,7 +1642,7 @@ typedef struct raw_extension_st {
     int present;
     /* Set to 1 if we have already parsed the extension or 0 otherwise */
     int parsed;
-    /* The type of this extension */
+    /* The type of this extension, i.e. a TLSEXT_TYPE_* value */
     unsigned int type;
 } RAW_EXTENSION;
 
