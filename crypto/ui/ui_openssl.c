@@ -509,6 +509,15 @@ static int open_console(UI *ui)
             is_a_tty = 0;
         else
 # endif
+# ifdef ENODEV
+            /*
+             * MacOS X returns ENODEV (Operation not supported by device),
+             * which seems appropriate.
+             */
+        if (errno == ENODEV)
+            is_a_tty = 0;
+        else
+# endif
             return 0;
     }
 #endif
