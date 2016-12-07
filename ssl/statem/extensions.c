@@ -349,6 +349,8 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
     RAW_EXTENSION *raw_extensions = NULL;
     const EXTENSION_DEFINITION *thisexd;
 
+    *res = NULL;
+
     /*
      * Initialise server side custom extensions. Client side is done during
      * construction of extensions for the ClientHello.
