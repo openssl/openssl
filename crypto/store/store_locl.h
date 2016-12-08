@@ -23,6 +23,13 @@
 struct ossl_store_info_st {
     int type;
     union {
+        void *data;              /* used internally as generic pointer */
+
+        struct {
+            BUF_MEM *blob;
+            char *pem_name;
+        } embedded;              /* when type == OSSL_STORE_INFO_EMBEDDED */
+
         struct {
             char *name;
             char *desc;
@@ -32,11 +39,27 @@ struct ossl_store_info_st {
         EVP_PKEY *pkey;          /* when type == OSSL_STORE_INFO_PKEY */
         X509 *x509;              /* when type == OSSL_STORE_INFO_CERT */
         X509_CRL *crl;           /* when type == OSSL_STORE_INFO_CRL */
-        void *data;              /* used internally */
     } _;
 };
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
+
+/*
+ * EMBEDDED is a special type of OSSL_STORE_INFO, specially for the file
+ * handlers.  It should never reach a calling application or any engine.
+ * However, it can be used by a FILE_HANDLER's try_decode function to signal
+ * that it has decoded the incoming blob into a new blob, and that the
+ * attempted decoding should be immediately restarted with the new blob, using
+ * the new PEM name.
+ */
+/*
+ * Because this is an internal type, we don't make it public.
+ */
+#define OSSL_STORE_INFO_EMBEDDED       -1
+OSSL_STORE_INFO *ossl_store_info_new_EMBEDDED(const char *new_pem_name,
+                                              BUF_MEM *embedded);
+BUF_MEM *ossl_store_info_get0_EMBEDDED_buffer(OSSL_STORE_INFO *info);
+char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info);
 
 /*-
  *  OSSL_STORE_LOADER stuff
