@@ -349,7 +349,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
     } else
 # endif
     p = fgets(result, maxsize, tty_in);
-    if (!p)
+    if (p == NULL)
         goto error;
     if (feof(tty_in))
         goto error;
