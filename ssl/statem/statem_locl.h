@@ -155,7 +155,7 @@ __owur int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt);
 
 __owur int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
                                   RAW_EXTENSION **res, int *al);
-__owur int tls_parse_extension(SSL *s, unsigned int idx, int context,
+__owur int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
                                RAW_EXTENSION *exts, int *al);
 __owur int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
                                     int *al);
