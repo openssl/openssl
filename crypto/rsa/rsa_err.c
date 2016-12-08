@@ -26,6 +26,7 @@ static ERR_STRING_DATA RSA_str_functs[] = {
     {ERR_FUNC(RSA_F_PKEY_RSA_CTRL), "pkey_rsa_ctrl"},
     {ERR_FUNC(RSA_F_PKEY_RSA_CTRL_STR), "pkey_rsa_ctrl_str"},
     {ERR_FUNC(RSA_F_PKEY_RSA_SIGN), "pkey_rsa_sign"},
+    {ERR_FUNC(RSA_F_PKEY_RSA_VERIFY), "pkey_rsa_verify"},
     {ERR_FUNC(RSA_F_PKEY_RSA_VERIFYRECOVER), "pkey_rsa_verifyrecover"},
     {ERR_FUNC(RSA_F_RSA_ALGOR_TO_MD), "rsa_algor_to_md"},
     {ERR_FUNC(RSA_F_RSA_BUILTIN_KEYGEN), "rsa_builtin_keygen"},
