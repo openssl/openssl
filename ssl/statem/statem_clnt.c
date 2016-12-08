@@ -225,7 +225,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
 
     case TLS_ST_CR_SRVR_HELLO:
         if (s->hit) {
-            if (s->tlsext_ticket_expected) {
+            if (s->ext.ticket_expected) {
                 if (mt == SSL3_MT_NEWSESSION_TICKET) {
                     st->hand_state = TLS_ST_CR_SESSION_TICKET;
                     return 1;
@@ -239,8 +239,8 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
                 st->hand_state = DTLS_ST_CR_HELLO_VERIFY_REQUEST;
                 return 1;
             } else if (s->version >= TLS1_VERSION
-                       && s->tls_session_secret_cb != NULL
-                       && s->session->tlsext_tick != NULL
+                       && s->ext.session_secret_cb != NULL
+                       && s->session->ext.tick != NULL
                        && mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
                 /*
                  * Normally, we can tell if the server is resuming the session
@@ -282,9 +282,9 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
     case TLS_ST_CR_CERT:
         /*
          * The CertificateStatus message is optional even if
-         * |tlsext_status_expected| is set
+         * |ext.status_expected| is set
          */
-        if (s->tlsext_status_expected && mt == SSL3_MT_CERTIFICATE_STATUS) {
+        if (s->ext.status_expected && mt == SSL3_MT_CERTIFICATE_STATUS) {
             st->hand_state = TLS_ST_CR_CERT_STATUS;
             return 1;
         }
@@ -321,7 +321,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_CW_FINISHED:
-        if (s->tlsext_ticket_expected) {
+        if (s->ext.ticket_expected) {
             if (mt == SSL3_MT_NEWSESSION_TICKET) {
                 st->hand_state = TLS_ST_CR_SESSION_TICKET;
                 return 1;
@@ -478,7 +478,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
 #if defined(OPENSSL_NO_NEXTPROTONEG)
         st->hand_state = TLS_ST_CW_FINISHED;
 #else
-        if (!SSL_IS_DTLS(s) && s->s3->next_proto_neg_seen)
+        if (!SSL_IS_DTLS(s) && s->s3->npn_seen)
             st->hand_state = TLS_ST_CW_NEXT_PROTO;
         else
             st->hand_state = TLS_ST_CW_FINISHED;
@@ -872,7 +872,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
          * In the case of EAP-FAST, we can have a pre-shared
          * "ticket" without a session ID.
          */
-        (!sess->session_id_length && !sess->tlsext_tick) ||
+        (!sess->session_id_length && !sess->ext.tick) ||
         (sess->not_resumable)) {
         if (!ssl_get_new_session(s, 0))
             return 0;
@@ -1122,7 +1122,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
      * server wants to resume.
      */
     if (s->version >= TLS1_VERSION && !SSL_IS_TLS13(s)
-            && s->tls_session_secret_cb != NULL && s->session->tlsext_tick) {
+            && s->ext.session_secret_cb != NULL && s->session->ext.tick) {
         const SSL_CIPHER *pref_cipher = NULL;
         /*
          * s->session->master_key_length is a size_t, but this is an int for
@@ -1130,10 +1130,10 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
          */
         int master_key_length;
         master_key_length = sizeof(s->session->master_key);
-        if (s->tls_session_secret_cb(s, s->session->master_key,
+        if (s->ext.session_secret_cb(s, s->session->master_key,
                                      &master_key_length,
                                      NULL, &pref_cipher,
-                                     s->tls_session_secret_cb_arg)
+                                     s->ext.session_secret_cb_arg)
                  && master_key_length > 0) {
             s->session->master_key_length = master_key_length;
             s->session->cipher = pref_cipher ?
@@ -2134,22 +2134,23 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         s->session = new_sess;
     }
 
-    OPENSSL_free(s->session->tlsext_tick);
-    s->session->tlsext_ticklen = 0;
+    OPENSSL_free(s->session->ext.tick);
+    s->session->ext.tick = NULL;
+    s->session->ext.ticklen = 0;
 
-    s->session->tlsext_tick = OPENSSL_malloc(ticklen);
-    if (s->session->tlsext_tick == NULL) {
+    s->session->ext.tick = OPENSSL_malloc(ticklen);
+    if (s->session->ext.tick == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    if (!PACKET_copy_bytes(pkt, s->session->tlsext_tick, ticklen)) {
+    if (!PACKET_copy_bytes(pkt, s->session->ext.tick, ticklen)) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
 
-    s->session->tlsext_tick_lifetime_hint = ticket_lifetime_hint;
-    s->session->tlsext_ticklen = ticklen;
+    s->session->ext.tick_lifetime_hint = ticket_lifetime_hint;
+    s->session->ext.ticklen = ticklen;
     /*
      * There are two ways to detect a resumed ticket session. One is to set
      * an appropriate session ID and then the server must return a match in
@@ -2165,7 +2166,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
      * TODO(size_t): we use sess_len here because EVP_Digest expects an int
      * but s->session->session_id_length is a size_t
      */
-    if (!EVP_Digest(s->session->tlsext_tick, ticklen,
+    if (!EVP_Digest(s->session->ext.tick, ticklen,
                     s->session->session_id, &sess_len,
                     EVP_sha256(), NULL)) {
         SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, ERR_R_EVP_LIB);
@@ -2204,17 +2205,17 @@ int tls_process_cert_status_body(SSL *s, PACKET *pkt, int *al)
         return 0;
     }
     s->tlsext_ocsp_resp = OPENSSL_malloc(resplen);
-    if (s->tlsext_ocsp_resp == NULL) {
+    if (s->ext.ocsp_resp == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS_BODY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    if (!PACKET_copy_bytes(pkt, s->tlsext_ocsp_resp, resplen)) {
+    if (!PACKET_copy_bytes(pkt, s->ext.ocsp_resp, resplen)) {
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS_BODY, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    s->tlsext_ocsp_resplen = resplen;
+    s->ext.ocsp_resplen = resplen;
 
     return 1;
 }
@@ -2251,14 +2252,14 @@ int tls_process_initial_server_flight(SSL *s, int *al)
     }
 
     /*
-     * Call the ocsp status callback if needed. The |tlsext_ocsp_resp| and
-     * |tlsext_ocsp_resplen| values will be set if we actually received a status
+     * Call the ocsp status callback if needed. The |ext.ocsp.resp| and
+     * |ext.ocsp.resp_len| values will be set if we actually received a status
      * message, or NULL and -1 otherwise
      */
-    if (s->tlsext_status_type != TLSEXT_STATUSTYPE_nothing
-            && s->ctx->tlsext_status_cb != NULL) {
-        int ret;
-        ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+    if (s->ext.status_type != TLSEXT_STATUSTYPE_nothing
+            && s->ctx->ext.status_cb != NULL) {
+        int ret = s->ctx->ext.status_cb(s, s->ctx->ext.status_arg);
+
         if (ret == 0) {
             *al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
             SSLerr(SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT,
@@ -3112,10 +3113,10 @@ int tls_construct_next_proto(SSL *s, WPACKET *pkt)
     size_t len, padding_len;
     unsigned char *padding = NULL;
 
-    len = s->next_proto_negotiated_len;
+    len = s->ext.npn_len;
     padding_len = 32 - ((len + 2) % 32);
 
-    if (!WPACKET_sub_memcpy_u8(pkt, s->next_proto_negotiated, len)
+    if (!WPACKET_sub_memcpy_u8(pkt, s->ext.npn, len)
             || !WPACKET_sub_allocate_bytes_u8(pkt, padding_len, &padding)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_NEXT_PROTO, ERR_R_INTERNAL_ERROR);
         goto err;

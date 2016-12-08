@@ -589,7 +589,7 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
     SSL_CTX_set_client_cert_cb(ssl_ctx.get(), ClientCertCallback);
   }
 
-  SSL_CTX_set_next_protos_advertised_cb(
+  SSL_CTX_set_npn_advertised_cb(
       ssl_ctx.get(), NextProtosAdvertisedCallback, NULL);
   if (!config->select_next_proto.empty()) {
     SSL_CTX_set_next_proto_select_cb(ssl_ctx.get(), NextProtoSelectCallback,

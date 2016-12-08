@@ -112,7 +112,7 @@ int tls1_new(SSL *s)
 
 void tls1_free(SSL *s)
 {
-    OPENSSL_free(s->tlsext_session_ticket);
+    OPENSSL_free(s->ext.session_ticket);
     ssl3_free(s);
 }
 
@@ -265,8 +265,8 @@ int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
 {
     size_t pcurveslen = 0;
     if (sess) {
-        *pcurves = s->session->tlsext_supportedgroupslist;
-        pcurveslen = s->session->tlsext_supportedgroupslist_length;
+        *pcurves = s->session->ext.supportedgroups;
+        pcurveslen = s->session->ext.supportedgroups_len;
     } else {
         /* For Suite B mode only include P-256, P-384 */
         switch (tls1_suiteb(s)) {
@@ -285,8 +285,8 @@ int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
             pcurveslen = 2;
             break;
         default:
-            *pcurves = s->tlsext_supportedgroupslist;
-            pcurveslen = s->tlsext_supportedgroupslist_length;
+            *pcurves = s->ext.supportedgroups;
+            pcurveslen = s->ext.supportedgroups_len;
         }
         if (!*pcurves) {
             *pcurves = eccurves_default;
@@ -556,9 +556,9 @@ static int tls1_check_ec_key(SSL *s,
      * If point formats extension present check it, otherwise everything is
      * supported (see RFC4492).
      */
-    if (comp_id && s->session->tlsext_ecpointformatlist) {
-        pformats = s->session->tlsext_ecpointformatlist;
-        num_formats = s->session->tlsext_ecpointformatlist_length;
+    if (comp_id && s->session->ext.ecpointformats) {
+        pformats = s->session->ext.ecpointformats;
+        num_formats = s->session->ext.ecpointformats_len;
         for (i = 0; i < num_formats; i++, pformats++) {
             if (*comp_id == *pformats)
                 break;
@@ -601,9 +601,9 @@ void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
     /*
      * If we have a custom point format list use it otherwise use default
      */
-    if (s->tlsext_ecpointformatlist) {
-        *pformats = s->tlsext_ecpointformatlist;
-        *num_formats = s->tlsext_ecpointformatlist_length;
+    if (s->ext.ecpointformats) {
+        *pformats = s->ext.ecpointformats;
+        *num_formats = s->ext.ecpointformats_len;
     } else {
         *pformats = ecformats_default;
         /* For Suite B we don't support char2 fields */
@@ -749,12 +749,12 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
 
 static const unsigned char tls12_sigalgs[] = {
     tlsext_sigalg(TLSEXT_hash_sha512)
-        tlsext_sigalg(TLSEXT_hash_sha384)
-        tlsext_sigalg(TLSEXT_hash_sha256)
-        tlsext_sigalg(TLSEXT_hash_sha224)
-        tlsext_sigalg(TLSEXT_hash_sha1)
+    tlsext_sigalg(TLSEXT_hash_sha384)
+    tlsext_sigalg(TLSEXT_hash_sha256)
+    tlsext_sigalg(TLSEXT_hash_sha224)
+    tlsext_sigalg(TLSEXT_hash_sha1)
 #ifndef OPENSSL_NO_GOST
-        TLSEXT_hash_gostr3411, TLSEXT_signature_gostr34102001,
+    TLSEXT_hash_gostr3411, TLSEXT_signature_gostr34102001,
     TLSEXT_hash_gostr34112012_256, TLSEXT_signature_gostr34102012_256,
     TLSEXT_hash_gostr34112012_512, TLSEXT_signature_gostr34102012_512
 #endif
@@ -763,9 +763,10 @@ static const unsigned char tls12_sigalgs[] = {
 #ifndef OPENSSL_NO_EC
 static const unsigned char suiteb_sigalgs[] = {
     tlsext_sigalg_ecdsa(TLSEXT_hash_sha256)
-        tlsext_sigalg_ecdsa(TLSEXT_hash_sha384)
+    tlsext_sigalg_ecdsa(TLSEXT_hash_sha384)
 };
 #endif
+
 size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs)
 {
     /*
@@ -1039,7 +1040,7 @@ RAW_EXTENSION *tls_get_extension_by_type(RAW_EXTENSION *exts, size_t numexts,
  *
  * If s->tls_session_secret_cb is set then we are expecting a pre-shared key
  * ciphersuite, in which case we have no use for session tickets and one will
- * never be decrypted, nor will s->tlsext_ticket_expected be set to 1.
+ * never be decrypted, nor will s->ext.ticket_expected be set to 1.
  *
  * Returns:
  *   -1: fatal error, either from parsing or decrypting the ticket.
@@ -1051,12 +1052,12 @@ RAW_EXTENSION *tls_get_extension_by_type(RAW_EXTENSION *exts, size_t numexts,
  *    3: a ticket was successfully decrypted and *ret was set.
  *
  * Side effects:
- *   Sets s->tlsext_ticket_expected to 1 if the server will have to issue
+ *   Sets s->ext.ticket_expected to 1 if the server will have to issue
  *   a new session ticket to the client because the client indicated support
  *   (and s->tls_session_secret_cb is NULL) but the client either doesn't have
  *   a session ticket or we couldn't use the one it gave us, or if
- *   s->ctx->tlsext_ticket_key_cb asked to renew the client's ticket.
- *   Otherwise, s->tlsext_ticket_expected is set to 0.
+ *   s->ctx->ext.ticket_key_cb asked to renew the client's ticket.
+ *   Otherwise, s->ext.ticket_expected is set to 0.
  */
 int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                                SSL_SESSION **ret)
@@ -1066,7 +1067,7 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
     RAW_EXTENSION *ticketext;
 
     *ret = NULL;
-    s->tlsext_ticket_expected = 0;
+    s->ext.ticket_expected = 0;
 
     /*
      * If tickets disabled or not supported by the protocol version
@@ -1086,10 +1087,10 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
          * The client will accept a ticket but doesn't currently have
          * one.
          */
-        s->tlsext_ticket_expected = 1;
+        s->ext.ticket_expected = 1;
         return 1;
     }
-    if (s->tls_session_secret_cb) {
+    if (s->ext.session_secret_cb) {
         /*
          * Indicate that the ticket couldn't be decrypted rather than
          * generating the session from ticket now, trigger
@@ -1103,14 +1104,14 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                               hello->session_id, hello->session_id_len, ret);
     switch (retv) {
     case 2:            /* ticket couldn't be decrypted */
-        s->tlsext_ticket_expected = 1;
+        s->ext.ticket_expected = 1;
         return 2;
 
     case 3:            /* ticket was decrypted */
         return 3;
 
     case 4:            /* ticket decrypted but need to renew */
-        s->tlsext_ticket_expected = 1;
+        s->ext.ticket_expected = 1;
         return 3;
 
     default:           /* fatal error */
@@ -1158,9 +1159,9 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         ret = -2;
         goto err;
     }
-    if (tctx->tlsext_ticket_key_cb) {
+    if (tctx->ext.ticket_key_cb) {
         unsigned char *nctick = (unsigned char *)etick;
-        int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
+        int rv = tctx->ext.ticket_key_cb(s, nctick, nctick + 16,
                                             ctx, hctx, 0);
         if (rv < 0)
             goto err;
@@ -1172,17 +1173,17 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             renew_ticket = 1;
     } else {
         /* Check key name matches */
-        if (memcmp(etick, tctx->tlsext_tick_key_name,
-                   sizeof(tctx->tlsext_tick_key_name)) != 0) {
+        if (memcmp(etick, tctx->ext.tick_key_name,
+                   sizeof(tctx->ext.tick_key_name)) != 0) {
             ret = 2;
             goto err;
         }
-        if (HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key,
-                         sizeof(tctx->tlsext_tick_hmac_key),
+        if (HMAC_Init_ex(hctx, tctx->ext.tick_hmac_key,
+                         sizeof(tctx->ext.tick_hmac_key),
                          EVP_sha256(), NULL) <= 0
             || EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
-                                  tctx->tlsext_tick_aes_key,
-                                  etick + sizeof(tctx->tlsext_tick_key_name)) <=
+                                  tctx->ext.tick_aes_key,
+                                  etick + sizeof(tctx->ext.tick_key_name)) <=
             0) {
             goto err;
         }
