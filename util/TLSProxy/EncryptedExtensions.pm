@@ -82,9 +82,9 @@ sub set_message_contents
         $extensions .= pack("n", length($extdata));
         $extensions .= $extdata;
         if ($key == TLSProxy::Message::EXT_DUPLICATE_EXTENSION) {
-          $extensions .= pack("n", $key);
-          $extensions .= pack("n", length($extdata));
-          $extensions .= $extdata;
+            $extensions .= pack("n", $key);
+            $extensions .= pack("n", length($extdata));
+            $extensions .= $extdata;
         }
     }
 
@@ -98,7 +98,7 @@ sub extension_data
 {
     my $self = shift;
     if (@_) {
-      $self->{extension_data} = shift;
+        $self->{extension_data} = shift;
     }
     return $self->{extension_data};
 }
