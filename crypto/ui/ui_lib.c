@@ -160,7 +160,7 @@ static int general_allocate_boolean(UI *ui,
         UIerr(UI_F_GENERAL_ALLOCATE_BOOLEAN, ERR_R_PASSED_NULL_PARAMETER);
     } else {
         for (p = ok_chars; *p != '\0'; p++) {
-            if (strchr(cancel_chars, *p) != 0) {
+            if (strchr(cancel_chars, *p) != NULL) {
                 UIerr(UI_F_GENERAL_ALLOCATE_BOOLEAN,
                       UI_R_COMMON_OK_AND_CANCEL_CHARACTERS);
             }
