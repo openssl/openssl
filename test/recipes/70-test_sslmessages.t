@@ -163,9 +163,9 @@ $proxy->clear();
 $proxy->clientflags("-no_tls1_3 -status");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-              checkhandshake::DEFAULT_EXTENSIONS
-              | checkhandshake::STATUS_REQUEST_CLI_EXTENSION,
-              "status_request handshake test (client)");
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION,
+               "status_request handshake test (client)");
 
 #Test 4: A status_request handshake (server support only)
 $proxy->clear();
@@ -175,7 +175,7 @@ $proxy->serverflags("-status_file "
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
-              "status_request handshake test (server)");
+               "status_request handshake test (server)");
 
 #Test 5: A status_request handshake (client and server)
 $proxy->clear();
@@ -184,10 +184,10 @@ $proxy->serverflags("-status_file "
                     .srctop_file("test", "recipes", "ocsp-response.der"));
 $proxy->start();
 checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
-              checkhandshake::DEFAULT_EXTENSIONS
-              | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
-              | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
-              "status_request handshake test");
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
+               | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
+               "status_request handshake test");
 
 #Test 6: A client auth handshake
 $proxy->clear();
@@ -214,7 +214,7 @@ $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
                | checkhandshake::SERVER_NAME_CLI_EXTENSION,
-              "Server name handshake test (client)");
+               "Server name handshake test (client)");
 
 #Test 9: Server name handshake (server support only)
 $proxy->clear();
@@ -223,7 +223,7 @@ $proxy->serverflags("-servername testhost");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
-              "Server name handshake test (server)");
+               "Server name handshake test (server)");
 
 #Test 10: Server name handshake (client and server)
 $proxy->clear();
@@ -231,10 +231,10 @@ $proxy->clientflags("-no_tls1_3 -servername testhost");
 $proxy->serverflags("-servername testhost");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-              checkhandshake::DEFAULT_EXTENSIONS
-              | checkhandshake::SERVER_NAME_CLI_EXTENSION
-              | checkhandshake::SERVER_NAME_SRV_EXTENSION,
-              "Server name handshake test");
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::SERVER_NAME_CLI_EXTENSION
+               | checkhandshake::SERVER_NAME_SRV_EXTENSION,
+               "Server name handshake test");
 
 #Test 11: ALPN handshake (client request only)
 $proxy->clear();
@@ -243,7 +243,7 @@ $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
                | checkhandshake::ALPN_CLI_EXTENSION,
-              "ALPN handshake test (client)");
+               "ALPN handshake test (client)");
 
 #Test 12: ALPN handshake (server support only)
 $proxy->clear();
@@ -252,7 +252,7 @@ $proxy->serverflags("-alpn test");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
-              "ALPN handshake test (server)");
+               "ALPN handshake test (server)");
 
 #Test 13: ALPN handshake (client and server)
 $proxy->clear();
@@ -260,10 +260,10 @@ $proxy->clientflags("-no_tls1_3 -alpn test");
 $proxy->serverflags("-alpn test");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-              checkhandshake::DEFAULT_EXTENSIONS
-              | checkhandshake::ALPN_CLI_EXTENSION
-              | checkhandshake::ALPN_SRV_EXTENSION,
-              "ALPN handshake test");
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::ALPN_CLI_EXTENSION
+               | checkhandshake::ALPN_SRV_EXTENSION,
+               "ALPN handshake test");
 
 #Test 14: SCT handshake (client request only)
 $proxy->clear();
@@ -273,11 +273,11 @@ $proxy->serverflags("-status_file "
                     .srctop_file("test", "recipes", "ocsp-response.der"));
 $proxy->start();
 checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
-              checkhandshake::DEFAULT_EXTENSIONS
-              | checkhandshake::SCT_CLI_EXTENSION
-              | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
-              | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
-              "SCT handshake test (client)");
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::SCT_CLI_EXTENSION
+               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
+               | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
+               "SCT handshake test (client)");
 
 #Test 15: SCT handshake (server support only)
 $proxy->clear();
@@ -287,8 +287,8 @@ $proxy->serverflags("-status_file "
                     .srctop_file("test", "recipes", "ocsp-response.der"));
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-              checkhandshake::DEFAULT_EXTENSIONS,
-              "SCT handshake test (server)");
+               checkhandshake::DEFAULT_EXTENSIONS,
+               "SCT handshake test (server)");
 
 #Test 16: SCT handshake (client and server)
 #There is no built-in server side support for this so we are actually also
@@ -301,12 +301,12 @@ $proxy->serverflags("-status_file "
                     ." -serverinfo ".srctop_file("test", "serverinfo.pem"));
 $proxy->start();
 checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
-              checkhandshake::DEFAULT_EXTENSIONS
-              | checkhandshake::SCT_CLI_EXTENSION
-              | checkhandshake::SCT_SRV_EXTENSION
-              | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
-              | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
-              "SCT handshake test");
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::SCT_CLI_EXTENSION
+               | checkhandshake::SCT_SRV_EXTENSION
+               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
+               | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
+               "SCT handshake test");
 
 
 #Test 17: NPN handshake (client request only)
@@ -333,10 +333,10 @@ $proxy->clientflags("-no_tls1_3 -nextprotoneg test");
 $proxy->serverflags("-nextprotoneg test");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::NPN_HANDSHAKE,
-              checkhandshake::DEFAULT_EXTENSIONS
-              | checkhandshake::NPN_CLI_EXTENSION
-              | checkhandshake::NPN_SRV_EXTENSION,
-              "NPN handshake test");
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::NPN_CLI_EXTENSION
+               | checkhandshake::NPN_SRV_EXTENSION,
+               "NPN handshake test");
 
 #Test 20: SRP extension
 #Note: We are not actually going to perform an SRP handshake (TLSProxy does not
@@ -347,6 +347,6 @@ $proxy->clear();
 $proxy->clientflags("-no_tls1_3 -srpuser user -srppass pass:pass");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-              checkhandshake::DEFAULT_EXTENSIONS
-              | checkhandshake::SRP_CLI_EXTENSION,
-              "SRP extension test");
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::SRP_CLI_EXTENSION,
+               "SRP extension test");

@@ -410,7 +410,7 @@ sub proxy_addr
 {
     my $self = shift;
     if (@_) {
-      $self->{proxy_addr} = shift;
+        $self->{proxy_addr} = shift;
     }
     return $self->{proxy_addr};
 }
@@ -418,7 +418,7 @@ sub proxy_port
 {
     my $self = shift;
     if (@_) {
-      $self->{proxy_port} = shift;
+        $self->{proxy_port} = shift;
     }
     return $self->{proxy_port};
 }
@@ -426,7 +426,7 @@ sub server_addr
 {
     my $self = shift;
     if (@_) {
-      $self->{server_addr} = shift;
+        $self->{server_addr} = shift;
     }
     return $self->{server_addr};
 }
@@ -434,7 +434,7 @@ sub server_port
 {
     my $self = shift;
     if (@_) {
-      $self->{server_port} = shift;
+        $self->{server_port} = shift;
     }
     return $self->{server_port};
 }
@@ -442,7 +442,7 @@ sub filter
 {
     my $self = shift;
     if (@_) {
-      $self->{filter} = shift;
+        $self->{filter} = shift;
     }
     return $self->{filter};
 }
@@ -450,7 +450,7 @@ sub cipherc
 {
     my $self = shift;
     if (@_) {
-      $self->{cipherc} = shift;
+        $self->{cipherc} = shift;
     }
     return $self->{cipherc};
 }
@@ -458,7 +458,7 @@ sub ciphers
 {
     my $self = shift;
     if (@_) {
-      $self->{ciphers} = shift;
+        $self->{ciphers} = shift;
     }
     return $self->{ciphers};
 }
@@ -466,7 +466,7 @@ sub serverflags
 {
     my $self = shift;
     if (@_) {
-      $self->{serverflags} = shift;
+        $self->{serverflags} = shift;
     }
     return $self->{serverflags};
 }
@@ -474,7 +474,7 @@ sub clientflags
 {
     my $self = shift;
     if (@_) {
-      $self->{clientflags} = shift;
+        $self->{clientflags} = shift;
     }
     return $self->{clientflags};
 }
@@ -482,7 +482,7 @@ sub serverconnects
 {
     my $self = shift;
     if (@_) {
-      $self->{serverconnects} = shift;
+        $self->{serverconnects} = shift;
     }
     return $self->{serverconnects};
 }
@@ -502,7 +502,7 @@ sub serverpid
 {
     my $self = shift;
     if (@_) {
-      $self->{serverpid} = shift;
+        $self->{serverpid} = shift;
     }
     return $self->{serverpid};
 }
@@ -521,7 +521,7 @@ sub is_tls13
 {
     my $class = shift;
     if (@_) {
-      $is_tls13 = shift;
+        $is_tls13 = shift;
     }
     return $is_tls13;
 }
@@ -530,7 +530,7 @@ sub reneg
 {
     my $self = shift;
     if (@_) {
-      $self->{reneg} = shift;
+        $self->{reneg} = shift;
     }
     return $self->{reneg};
 }
