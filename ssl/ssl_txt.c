@@ -119,18 +119,18 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
     if (BIO_printf(bp, "%s", x->srp_username ? x->srp_username : "None") <= 0)
         goto err;
 #endif
-    if (x->tlsext_tick_lifetime_hint) {
+    if (x->ext.tick_lifetime_hint) {
         if (BIO_printf(bp,
                        "\n    TLS session ticket lifetime hint: %ld (seconds)",
-                       x->tlsext_tick_lifetime_hint) <= 0)
+                       x->ext.tick_lifetime_hint) <= 0)
             goto err;
     }
-    if (x->tlsext_tick) {
+    if (x->ext.tick) {
         if (BIO_puts(bp, "\n    TLS session ticket:\n") <= 0)
             goto err;
         /* TODO(size_t): Convert this call */
         if (BIO_dump_indent
-            (bp, (const char *)x->tlsext_tick, (int)x->tlsext_ticklen, 4)
+            (bp, (const char *)x->ext.tick, (int)x->ext.ticklen, 4)
             <= 0)
             goto err;
     }

@@ -457,11 +457,11 @@ int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
     if (!currext->present)
         return 1;
 
-    if (s->tlsext_debug_cb)
-        s->tlsext_debug_cb(s, !s->server, currext->type,
-                           PACKET_data(&currext->data),
-                           PACKET_remaining(&currext->data),
-                           s->tlsext_debug_arg);
+    if (s->ext.debug_cb)
+        s->ext.debug_cb(s, !s->server, currext->type,
+                        PACKET_data(&currext->data),
+                        PACKET_remaining(&currext->data),
+                        s->ext.debug_arg);
 
     /* Skip if we've already parsed this extension */
     if (currext->parsed)
@@ -714,13 +714,13 @@ static int final_server_name(SSL *s, unsigned int context, int sent,
     int ret = SSL_TLSEXT_ERR_NOACK;
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
 
-    if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0)
-        ret = s->ctx->tlsext_servername_callback(s, &altmp,
-                                                 s->ctx->tlsext_servername_arg);
+    if (s->ctx != NULL && s->ctx->ext.servername_cb != 0)
+        ret = s->ctx->ext.servername_cb(s, &altmp,
+                                        s->ctx->ext.servername_arg);
     else if (s->initial_ctx != NULL
-             && s->initial_ctx->tlsext_servername_callback != 0)
-        ret = s->initial_ctx->tlsext_servername_callback(s, &altmp,
-                                       s->initial_ctx->tlsext_servername_arg);
+             && s->initial_ctx->ext.servername_cb != 0)
+        ret = s->initial_ctx->ext.servername_cb(s, &altmp,
+                                       s->initial_ctx->ext.servername_arg);
 
     switch (ret) {
     case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -757,20 +757,20 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent,
      * suite, then if server returns an EC point formats lists extension it
      * must contain uncompressed.
      */
-    if (s->tlsext_ecpointformatlist != NULL
-            && s->tlsext_ecpointformatlist_length > 0
-            && s->session->tlsext_ecpointformatlist != NULL
-            && s->session->tlsext_ecpointformatlist_length > 0
+    if (s->ext.ecpointformats != NULL
+            && s->ext.ecpointformats_len > 0
+            && s->session->ext.ecpointformats != NULL
+            && s->session->ext.ecpointformats_len > 0
             && ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
         /* we are using an ECC cipher */
         size_t i;
-        unsigned char *list = s->session->tlsext_ecpointformatlist;
+        unsigned char *list = s->session->ext.ecpointformats;
 
-        for (i = 0; i < s->session->tlsext_ecpointformatlist_length; i++) {
+        for (i = 0; i < s->session->ext.ecpointformats_len; i++) {
             if (*list++ == TLSEXT_ECPOINTFORMAT_uncompressed)
                 break;
         }
-        if (i == s->session->tlsext_ecpointformatlist_length) {
+        if (i == s->session->ext.ecpointformats_len) {
             SSLerr(SSL_F_FINAL_EC_PT_FORMATS,
                    SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
             return 0;
@@ -784,7 +784,7 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent,
 static int init_session_ticket(SSL *s, unsigned int context)
 {
     if (!s->server)
-        s->tlsext_ticket_expected = 0;
+        s->ext.ticket_expected = 0;
 
     return 1;
 }
@@ -793,16 +793,34 @@ static int init_session_ticket(SSL *s, unsigned int context)
 static int init_status_request(SSL *s, unsigned int context)
 {
     if (s->server) {
-        s->tlsext_status_type = TLSEXT_STATUSTYPE_nothing;
+        s->ext.status_type = TLSEXT_STATUSTYPE_nothing;
     } else {
         /*
          * Ensure we get sensible values passed to tlsext_status_cb in the event
          * that we don't receive a status message
          */
         OPENSSL_free(s->tlsext_ocsp_resp);
-        s->tlsext_ocsp_resp = NULL;
-        s->tlsext_ocsp_resplen = 0;
+        s->ext.ocsp_resp = NULL;
+        s->ext.ocsp_resplen = 0;
     }
+
+    return 1;
+}
+
+static int final_status_request(SSL *s, unsigned int context, int sent,
+                                        int *al)
+{
+    if (s->server)
+        return 1;
+
+    /*
+     * Ensure we get sensible values passed to ext.status_cb in the event
+     * that we don't receive a status message
+     */
+    OPENSSL_free(s->ext.ocsp.resp);
+    s->ext.ocsp.resp = NULL;
+    s->ext.ocsp.resp_len = 0;
+>>>>>>> Move extension data into sub-structs
 
     return 1;
 }
@@ -811,7 +829,7 @@ static int init_status_request(SSL *s, unsigned int context)
 #ifndef OPENSSL_NO_NEXTPROTONEG
 static int init_npn(SSL *s, unsigned int context)
 {
-    s->s3->next_proto_neg_seen = 0;
+    s->s3->npn_seen = 0;
 
     return 1;
 }
@@ -838,11 +856,11 @@ static int final_alpn(SSL *s, unsigned int context, int sent, int *al)
     if (!s->server)
         return 1;
 
-    if (s->ctx->alpn_select_cb != NULL && s->s3->alpn_proposed != NULL) {
-        int r = s->ctx->alpn_select_cb(s, &selected, &selected_len,
-                                       s->s3->alpn_proposed,
-                                       (unsigned int)s->s3->alpn_proposed_len,
-                                       s->ctx->alpn_select_cb_arg);
+    if (s->ctx->ext.alpn_select_cb != NULL && s->s3->alpn_proposed != NULL) {
+        int r = s->ctx->ext.alpn_select_cb(s, &selected, &selected_len,
+                                           s->s3->alpn_proposed,
+                                           (unsigned int)s->s3->alpn_proposed_len,
+                                           s->ctx->ext.alpn_select_cb_arg);
 
         if (r == SSL_TLSEXT_ERR_OK) {
             OPENSSL_free(s->s3->alpn_selected);
@@ -854,7 +872,7 @@ static int final_alpn(SSL *s, unsigned int context, int sent, int *al)
             s->s3->alpn_selected_len = selected_len;
 #ifndef OPENSSL_NO_NEXTPROTONEG
             /* ALPN takes precedence over NPN. */
-            s->s3->next_proto_neg_seen = 0;
+            s->s3->npn_seen = 0;
 #endif
         } else {
             *al = SSL_AD_NO_APPLICATION_PROTOCOL;

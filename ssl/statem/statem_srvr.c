@@ -255,7 +255,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
 
     case TLS_ST_SR_CHANGE:
 #ifndef OPENSSL_NO_NEXTPROTONEG
-        if (s->s3->next_proto_neg_seen) {
+        if (s->s3->npn_seen) {
             if (mt == SSL3_MT_NEXT_PROTO) {
                 st->hand_state = TLS_ST_SR_NEXT_PROTO;
                 return 1;
@@ -488,7 +488,7 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
 
     case TLS_ST_SW_SRVR_HELLO:
         if (s->hit) {
-            if (s->tlsext_ticket_expected)
+            if (s->ext.ticket_expected)
                 st->hand_state = TLS_ST_SW_SESSION_TICKET;
             else
                 st->hand_state = TLS_ST_SW_CHANGE;
@@ -509,7 +509,7 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT:
-        if (s->tlsext_status_expected) {
+        if (s->ext.status_expected) {
             st->hand_state = TLS_ST_SW_CERT_STATUS;
             return WRITE_TRAN_CONTINUE;
         }
@@ -541,7 +541,7 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
             st->hand_state = TLS_ST_OK;
             ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
-        } else if (s->tlsext_ticket_expected) {
+        } else if (s->ext.ticket_expected) {
             st->hand_state = TLS_ST_SW_SESSION_TICKET;
         } else {
             st->hand_state = TLS_ST_SW_CHANGE;
@@ -1527,7 +1527,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         }
     }
 
-    if (!s->hit && s->version >= TLS1_VERSION && s->tls_session_secret_cb) {
+    if (!s->hit && s->version >= TLS1_VERSION && s->ext.session_secret_cb) {
         const SSL_CIPHER *pref_cipher = NULL;
         /*
          * s->session->master_key_length is a size_t, but this is an int for
@@ -1536,10 +1536,10 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         int master_key_length;
 
         master_key_length = sizeof(s->session->master_key);
-        if (s->tls_session_secret_cb(s, s->session->master_key,
+        if (s->ext.session_secret_cb(s, s->session->master_key,
                                      &master_key_length, ciphers,
                                      &pref_cipher,
-                                     s->tls_session_secret_cb_arg)
+                                     s->ext.session_secret_cb_arg)
                 && master_key_length > 0) {
             s->session->master_key_length = master_key_length;
             s->hit = 1;
@@ -1691,7 +1691,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
  */
 static int tls_handle_status_request(SSL *s, int *al)
 {
-    s->tlsext_status_expected = 0;
+    s->ext.status_expected = 0;
 
     /*
      * If status request then ask callback what to do. Note: this must be
@@ -1699,8 +1699,8 @@ static int tls_handle_status_request(SSL *s, int *al)
      * and must be called after the cipher has been chosen because this may
      * influence which certificate is sent
      */
-    if (s->tlsext_status_type != TLSEXT_STATUSTYPE_nothing && s->ctx != NULL
-            && s->ctx->tlsext_status_cb != NULL) {
+    if (s->ext.status_type != TLSEXT_STATUSTYPE_nothing && s->ctx != NULL
+            && s->ctx->ext.status_cb != NULL) {
         int ret;
         CERT_PKEY *certpkey = ssl_get_server_send_pkey(s);
 
@@ -1711,16 +1711,16 @@ static int tls_handle_status_request(SSL *s, int *al)
              * et al can pick it up.
              */
             s->cert->key = certpkey;
-            ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+            ret = s->ctx->ext.status_cb(s, s->ctx->ext.status_arg);
             switch (ret) {
                 /* We don't want to send a status request response */
             case SSL_TLSEXT_ERR_NOACK:
-                s->tlsext_status_expected = 0;
+                s->ext.status_expected = 0;
                 break;
                 /* status request response should be sent */
             case SSL_TLSEXT_ERR_OK:
-                if (s->tlsext_ocsp_resp)
-                    s->tlsext_status_expected = 1;
+                if (s->ext.ocsp.resp)
+                    s->ext.status_expected = 1;
                 break;
                 /* something bad happened */
             case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -1773,7 +1773,7 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
                                                    != 0));
             if (s->session->not_resumable)
                 /* do not send a session ticket */
-                s->tlsext_ticket_expected = 0;
+                s->ext.ticket_expected = 0;
         } else {
             /* Session-id reuse */
             s->s3->tmp.new_cipher = s->session->cipher;
@@ -3371,9 +3371,9 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
      * Initialize HMAC and cipher contexts. If callback present it does
      * all the work otherwise use generated values from parent ctx.
      */
-    if (tctx->tlsext_ticket_key_cb) {
+    if (tctx->ext.ticket_key_cb) {
         /* if 0 is returned, write an empty ticket */
-        int ret = tctx->tlsext_ticket_key_cb(s, key_name, iv, ctx,
+        int ret = tctx->ext.ticket_key_cb(s, key_name, iv, ctx,
                                              hctx, 1);
 
         if (ret == 0) {
@@ -3400,14 +3400,14 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         if (RAND_bytes(iv, iv_len) <= 0)
             goto err;
         if (!EVP_EncryptInit_ex(ctx, cipher, NULL,
-                                tctx->tlsext_tick_aes_key, iv))
+                                tctx->ext.tick_aes_key, iv))
             goto err;
-        if (!HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key,
-                          sizeof(tctx->tlsext_tick_hmac_key),
+        if (!HMAC_Init_ex(hctx, tctx->ext.tick_hmac_key,
+                          sizeof(tctx->ext.tick_hmac_key),
                           EVP_sha256(), NULL))
             goto err;
-        memcpy(key_name, tctx->tlsext_tick_key_name,
-               sizeof(tctx->tlsext_tick_key_name));
+        memcpy(key_name, tctx->ext.tick_key_name,
+               sizeof(tctx->ext.tick_key_name));
     }
 
     /*
@@ -3465,6 +3465,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
  */
 int tls_construct_cert_status_body(SSL *s, WPACKET *pkt)
 {
+<<<<<<< 3b72dcd5fb4d2c756a830dba1fc34f4a7ae61b73
     if (!WPACKET_put_bytes_u8(pkt, s->tlsext_status_type)
             || !WPACKET_sub_memcpy_u24(pkt, s->tlsext_ocsp_resp,
                                        s->tlsext_ocsp_resplen)) {
@@ -3478,6 +3479,12 @@ int tls_construct_cert_status_body(SSL *s, WPACKET *pkt)
 int tls_construct_cert_status(SSL *s, WPACKET *pkt)
 {
     if (!tls_construct_cert_status_body(s, pkt)) {
+=======
+    if (!WPACKET_put_bytes_u8(pkt, s->ext.status_type)
+            || !WPACKET_sub_memcpy_u24(pkt, s->ext.ocsp.resp,
+                                       s->ext.ocsp.resp_len)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_STATUS, ERR_R_INTERNAL_ERROR);
+>>>>>>> Move extension data into sub-structs
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         return 0;
     }
@@ -3509,12 +3516,12 @@ MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    if (!PACKET_memdup(&next_proto, &s->next_proto_negotiated, &next_proto_len)) {
-        s->next_proto_negotiated_len = 0;
+    if (!PACKET_memdup(&next_proto, &s->ext.npn, &next_proto_len)) {
+        s->ext.npn_len = 0;
         goto err;
     }
 
-    s->next_proto_negotiated_len = (unsigned char)next_proto_len;
+    s->ext.npn_len = (unsigned char)next_proto_len;
 
     return MSG_PROCESS_CONTINUE_READING;
  err:

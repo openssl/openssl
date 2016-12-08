@@ -129,12 +129,12 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->psk_identity = NULL;
 #endif
     dest->ciphers = NULL;
-    dest->tlsext_hostname = NULL;
+    dest->ext.hostname = NULL;
 #ifndef OPENSSL_NO_EC
-    dest->tlsext_ecpointformatlist = NULL;
-    dest->tlsext_supportedgroupslist = NULL;
+    dest->ext.ecpointformats = NULL;
+    dest->ext.supportedgroups = NULL;
 #endif
-    dest->tlsext_tick = NULL;
+    dest->ext.tick = NULL;
 #ifndef OPENSSL_NO_SRP
     dest->srp_username = NULL;
 #endif
@@ -184,37 +184,37 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
         goto err;
     }
 
-    if (src->tlsext_hostname) {
-        dest->tlsext_hostname = OPENSSL_strdup(src->tlsext_hostname);
-        if (dest->tlsext_hostname == NULL) {
+    if (src->ext.hostname) {
+        dest->ext.hostname = OPENSSL_strdup(src->ext.hostname);
+        if (dest->ext.hostname == NULL) {
             goto err;
         }
     }
 #ifndef OPENSSL_NO_EC
-    if (src->tlsext_ecpointformatlist) {
-        dest->tlsext_ecpointformatlist =
-            OPENSSL_memdup(src->tlsext_ecpointformatlist,
-                           src->tlsext_ecpointformatlist_length);
-        if (dest->tlsext_ecpointformatlist == NULL)
+    if (src->ext.ecpointformats) {
+        dest->ext.ecpointformats =
+            OPENSSL_memdup(src->ext.ecpointformats,
+                           src->ext.ecpointformats_len);
+        if (dest->ext.ecpointformats == NULL)
             goto err;
     }
-    if (src->tlsext_supportedgroupslist) {
-        dest->tlsext_supportedgroupslist =
-            OPENSSL_memdup(src->tlsext_supportedgroupslist,
-                           src->tlsext_supportedgroupslist_length);
-        if (dest->tlsext_supportedgroupslist == NULL)
+    if (src->ext.supportedgroups) {
+        dest->ext.supportedgroups =
+            OPENSSL_memdup(src->ext.supportedgroups,
+                           src->ext.supportedgroups_len);
+        if (dest->ext.supportedgroups == NULL)
             goto err;
     }
 #endif
 
     if (ticket != 0) {
-        dest->tlsext_tick =
-            OPENSSL_memdup(src->tlsext_tick, src->tlsext_ticklen);
-        if (dest->tlsext_tick == NULL)
+        dest->ext.tick =
+            OPENSSL_memdup(src->ext.tick, src->ext.ticklen);
+        if (dest->ext.tick == NULL)
             goto err;
     } else {
-        dest->tlsext_tick_lifetime_hint = 0;
-        dest->tlsext_ticklen = 0;
+        dest->ext.tick_lifetime_hint = 0;
+        dest->ext.ticklen = 0;
     }
 
 #ifndef OPENSSL_NO_SRP
@@ -353,7 +353,7 @@ int ssl_get_new_session(SSL *s, int session)
          *     ServerHello extensions, and before recording the session
          *     ID received from the server, so this block is a noop.
          */
-        if (s->tlsext_ticket_expected) {
+        if (s->ext.ticket_expected) {
             ss->session_id_length = 0;
             goto sess_id_done;
         }
@@ -398,9 +398,9 @@ int ssl_get_new_session(SSL *s, int session)
         }
 
  sess_id_done:
-        if (s->tlsext_hostname) {
-            ss->tlsext_hostname = OPENSSL_strdup(s->tlsext_hostname);
-            if (ss->tlsext_hostname == NULL) {
+        if (s->ext.hostname) {
+            ss->ext.hostname = OPENSSL_strdup(s->ext.hostname);
+            if (ss->ext.hostname == NULL) {
                 SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_INTERNAL_ERROR);
                 SSL_SESSION_free(ss);
                 return 0;
@@ -441,7 +441,7 @@ int ssl_get_new_session(SSL *s, int session)
  * Side effects:
  *   - If a session is found then s->session is pointed at it (after freeing an
  *     existing session if need be) and s->verify_result is set from the session.
- *   - Both for new and resumed sessions, s->tlsext_ticket_expected is set to 1
+ *   - Both for new and resumed sessions, s->ext.ticket_expected is set to 1
  *     if the server should issue a new session ticket (to 0 otherwise).
  */
 int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
@@ -456,7 +456,7 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
     if (hello->session_id_len == 0)
         try_session_cache = 0;
 
-    /* sets s->tlsext_ticket_expected */
+    /* sets s->ext.ticket_expected */
     r = tls_get_ticket_from_client(s, hello, &ret);
     switch (r) {
     case -1:                   /* Error during processing */
@@ -635,7 +635,7 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
              * The session was from a ticket, so we should issue a ticket for
              * the new session
              */
-            s->tlsext_ticket_expected = 1;
+            s->ext.ticket_expected = 1;
         }
     }
     if (fatal)
@@ -765,13 +765,15 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     X509_free(ss->peer);
     sk_X509_pop_free(ss->peer_chain, X509_free);
     sk_SSL_CIPHER_free(ss->ciphers);
-    OPENSSL_free(ss->tlsext_hostname);
-    OPENSSL_free(ss->tlsext_tick);
+    OPENSSL_free(ss->ext.hostname);
+    OPENSSL_free(ss->ext.tick);
 #ifndef OPENSSL_NO_EC
-    ss->tlsext_ecpointformatlist_length = 0;
-    OPENSSL_free(ss->tlsext_ecpointformatlist);
-    ss->tlsext_supportedgroupslist_length = 0;
-    OPENSSL_free(ss->tlsext_supportedgroupslist);
+    OPENSSL_free(ss->ext.ecpointformats);
+    ss->ext.ecpointformats = NULL;
+    ss->ext.ecpointformats_len = 0;
+    OPENSSL_free(ss->ext.supportedgroups);
+    ss->ext.supportedgroups = NULL;
+    ss->ext.supportedgroups_len = 0;
 #endif                          /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(ss->psk_identity_hint);
@@ -869,25 +871,25 @@ const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s)
 
 const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s)
 {
-    return s->tlsext_hostname;
+    return s->ext.hostname;
 }
 
 int SSL_SESSION_has_ticket(const SSL_SESSION *s)
 {
-    return (s->tlsext_ticklen > 0) ? 1 : 0;
+    return (s->ext.ticklen > 0) ? 1 : 0;
 }
 
 unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s)
 {
-    return s->tlsext_tick_lifetime_hint;
+    return s->ext.tick_lifetime_hint;
 }
 
 void SSL_SESSION_get0_ticket(const SSL_SESSION *s, const unsigned char **tick,
                              size_t *len)
 {
-    *len = s->tlsext_ticklen;
+    *len = s->ext.ticklen;
     if (tick != NULL)
-        *tick = s->tlsext_tick;
+        *tick = s->ext.tick;
 }
 
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
@@ -927,20 +929,13 @@ long SSL_CTX_get_timeout(const SSL_CTX *s)
 }
 
 int SSL_set_session_secret_cb(SSL *s,
-                              int (*tls_session_secret_cb) (SSL *s,
-                                                            void *secret,
-                                                            int *secret_len,
-                                                            STACK_OF(SSL_CIPHER)
-                                                            *peer_ciphers,
-                                                            const SSL_CIPHER
-                                                            **cipher,
-                                                            void *arg),
+                              tls_session_secret_cb_fn tls_session_secret_cb,
                               void *arg)
 {
     if (s == NULL)
         return (0);
-    s->tls_session_secret_cb = tls_session_secret_cb;
-    s->tls_session_secret_cb_arg = arg;
+    s->ext.session_secret_cb = tls_session_secret_cb;
+    s->ext.session_secret_cb_arg = arg;
     return (1);
 }
 
@@ -949,30 +944,30 @@ int SSL_set_session_ticket_ext_cb(SSL *s, tls_session_ticket_ext_cb_fn cb,
 {
     if (s == NULL)
         return (0);
-    s->tls_session_ticket_ext_cb = cb;
-    s->tls_session_ticket_ext_cb_arg = arg;
+    s->ext.session_ticket_cb = cb;
+    s->ext.session_ticket_cb_arg = arg;
     return (1);
 }
 
 int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 {
     if (s->version >= TLS1_VERSION) {
-        OPENSSL_free(s->tlsext_session_ticket);
-        s->tlsext_session_ticket = NULL;
-        s->tlsext_session_ticket =
+        OPENSSL_free(s->ext.session_ticket);
+        s->ext.session_ticket = NULL;
+        s->ext.session_ticket =
             OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
-        if (s->tlsext_session_ticket == NULL) {
+        if (s->ext.session_ticket == NULL) {
             SSLerr(SSL_F_SSL_SET_SESSION_TICKET_EXT, ERR_R_MALLOC_FAILURE);
             return 0;
         }
 
         if (ext_data) {
-            s->tlsext_session_ticket->length = ext_len;
-            s->tlsext_session_ticket->data = s->tlsext_session_ticket + 1;
-            memcpy(s->tlsext_session_ticket->data, ext_data, ext_len);
+            s->ext.session_ticket->length = ext_len;
+            s->ext.session_ticket->data = s->ext.session_ticket + 1;
+            memcpy(s->ext.session_ticket->data, ext_data, ext_len);
         } else {
-            s->tlsext_session_ticket->length = 0;
-            s->tlsext_session_ticket->data = NULL;
+            s->ext.session_ticket->length = 0;
+            s->ext.session_ticket->data = NULL;
         }
 
         return 1;

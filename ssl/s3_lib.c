@@ -2882,9 +2882,9 @@ void ssl3_clear(SSL *s)
     s->version = SSL3_VERSION;
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
-    OPENSSL_free(s->next_proto_negotiated);
-    s->next_proto_negotiated = NULL;
-    s->next_proto_negotiated_len = 0;
+    OPENSSL_free(s->ext.npn);
+    s->ext.npn = NULL;
+    s->ext.npn_len = 0;
 #endif
 }
 
@@ -2969,8 +2969,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             nid = EC_GROUP_get_curve_name(group);
             if (nid == NID_undef)
                 return 0;
-            return tls1_set_groups(&s->tlsext_supportedgroupslist,
-                                   &s->tlsext_supportedgroupslist_length,
+            return tls1_set_groups(&s->ext.supportedgroups,
+                                   &s->ext.supportedgroups_len,
                                    &nid, 1);
         }
         break;
@@ -2979,8 +2979,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (larg == TLSEXT_NAMETYPE_host_name) {
             size_t len;
 
-            OPENSSL_free(s->tlsext_hostname);
-            s->tlsext_hostname = NULL;
+            OPENSSL_free(s->ext.hostname);
+            s->ext.hostname = NULL;
 
             ret = 1;
             if (parg == NULL)
@@ -2990,7 +2990,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
                 return 0;
             }
-            if ((s->tlsext_hostname = OPENSSL_strdup((char *)parg)) == NULL) {
+            if ((s->ext.hostname = OPENSSL_strdup((char *)parg)) == NULL) {
                 SSLerr(SSL_F_SSL3_CTRL, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
@@ -3000,50 +3000,50 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         }
         break;
     case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
-        s->tlsext_debug_arg = parg;
+        s->ext.debug_arg = parg;
         ret = 1;
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE:
-        ret = s->tlsext_status_type;
+        ret = s->ext.status_type;
         break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE:
-        s->tlsext_status_type = larg;
+        s->ext.status_type = larg;
         ret = 1;
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS:
-        *(STACK_OF(X509_EXTENSION) **)parg = s->tlsext_ocsp_exts;
+        *(STACK_OF(X509_EXTENSION) **)parg = s->ext.ocsp.exts;
         ret = 1;
         break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS:
-        s->tlsext_ocsp_exts = parg;
+        s->ext.ocsp.exts = parg;
         ret = 1;
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS:
-        *(STACK_OF(OCSP_RESPID) **)parg = s->tlsext_ocsp_ids;
+        *(STACK_OF(OCSP_RESPID) **)parg = s->ext.ocsp.ids;
         ret = 1;
         break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS:
-        s->tlsext_ocsp_ids = parg;
+        s->ext.ocsp.ids = parg;
         ret = 1;
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP:
-        *(unsigned char **)parg = s->tlsext_ocsp_resp;
-        if (s->tlsext_ocsp_resplen == 0
-                || s->tlsext_ocsp_resplen > LONG_MAX)
+        *(unsigned char **)parg = s->ext.ocsp.resp;
+        if (s->ext.ocsp.resp_len == 0
+                || s->ext.ocsp.resp_len > LONG_MAX)
             return -1;
-        return (long)s->tlsext_ocsp_resplen;
+        return (long)s->ext.ocsp.resp_len;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
-        OPENSSL_free(s->tlsext_ocsp_resp);
-        s->tlsext_ocsp_resp = parg;
-        s->tlsext_ocsp_resplen = larg;
+        OPENSSL_free(s->ext.ocsp.resp);
+        s->ext.ocsp.resp = parg;
+        s->ext.ocsp.resp_len = larg;
         ret = 1;
         break;
 
@@ -3101,10 +3101,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         {
             unsigned char *clist;
             size_t clistlen;
+
             if (!s->session)
                 return 0;
-            clist = s->session->tlsext_supportedgroupslist;
-            clistlen = s->session->tlsext_supportedgroupslist_length / 2;
+            clist = s->session->ext.supportedgroups;
+            clistlen = s->session->ext.supportedgroups_len / 2;
             if (parg) {
                 size_t i;
                 int *cptr = parg;
@@ -3123,12 +3124,12 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         }
 
     case SSL_CTRL_SET_GROUPS:
-        return tls1_set_groups(&s->tlsext_supportedgroupslist,
-                               &s->tlsext_supportedgroupslist_length, parg, larg);
+        return tls1_set_groups(&s->ext.supportedgroups,
+                               &s->ext.supportedgroups_len, parg, larg);
 
     case SSL_CTRL_SET_GROUPS_LIST:
-        return tls1_set_groups_list(&s->tlsext_supportedgroupslist,
-                                    &s->tlsext_supportedgroupslist_length, parg);
+        return tls1_set_groups_list(&s->ext.supportedgroups,
+                                    &s->ext.supportedgroups_len, parg);
 
     case SSL_CTRL_GET_SHARED_GROUP:
         return tls1_shared_group(s, larg);
@@ -3208,10 +3209,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         {
             SSL_SESSION *sess = s->session;
             const unsigned char **pformat = parg;
-            if (!sess || !sess->tlsext_ecpointformatlist)
+
+            if (sess == NULL || sess->ext.ecpointformats == NULL)
                 return 0;
-            *pformat = sess->tlsext_ecpointformatlist;
-            return (int)sess->tlsext_ecpointformatlist_length;
+            *pformat = sess->ext.ecpointformats;
+            return (int)sess->ext.ecpointformats_len;
         }
 #endif
 
@@ -3234,7 +3236,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
         break;
 #endif
     case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
-        s->tlsext_debug_cb = (void (*)(SSL *, int, int,
+        s->ext.debug_cb = (void (*)(SSL *, int, int,
                                        const unsigned char *, int, void *))fp;
         break;
 
@@ -3306,69 +3308,69 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             nid = EC_GROUP_get_curve_name(group);
             if (nid == NID_undef)
                 return 0;
-            return tls1_set_groups(&ctx->tlsext_supportedgroupslist,
-                                   &ctx->tlsext_supportedgroupslist_length,
+            return tls1_set_groups(&ctx->ext.supportedgroups,
+                                   &ctx->ext.supportedgroups_len,
                                    &nid, 1);
         }
         /* break; */
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
-        ctx->tlsext_servername_arg = parg;
+        ctx->ext.servername_arg = parg;
         break;
     case SSL_CTRL_SET_TLSEXT_TICKET_KEYS:
     case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
         {
             unsigned char *keys = parg;
-            long tlsext_tick_keylen = (sizeof(ctx->tlsext_tick_key_name) +
-                                       sizeof(ctx->tlsext_tick_hmac_key) +
-                                       sizeof(ctx->tlsext_tick_aes_key));
+            long tick_keylen = (sizeof(ctx->ext.tick_key_name) +
+                                sizeof(ctx->ext.tick_hmac_key) +
+                                sizeof(ctx->ext.tick_aes_key));
             if (keys == NULL)
-                return tlsext_tick_keylen;
-            if (larg != tlsext_tick_keylen) {
+                return tick_keylen;
+            if (larg != tick_keylen) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
                 return 0;
             }
             if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
-                memcpy(ctx->tlsext_tick_key_name, keys,
-                       sizeof(ctx->tlsext_tick_key_name));
-                memcpy(ctx->tlsext_tick_hmac_key,
-                       keys + sizeof(ctx->tlsext_tick_key_name),
-                       sizeof(ctx->tlsext_tick_hmac_key));
-                memcpy(ctx->tlsext_tick_aes_key,
-                       keys + sizeof(ctx->tlsext_tick_key_name) +
-                       sizeof(ctx->tlsext_tick_hmac_key),
-                       sizeof(ctx->tlsext_tick_aes_key));
+                memcpy(ctx->ext.tick_key_name, keys,
+                       sizeof(ctx->ext.tick_key_name));
+                memcpy(ctx->ext.tick_hmac_key,
+                       keys + sizeof(ctx->ext.tick_key_name),
+                       sizeof(ctx->ext.tick_hmac_key));
+                memcpy(ctx->ext.tick_aes_key,
+                       keys + sizeof(ctx->ext.tick_key_name) +
+                       sizeof(ctx->ext.tick_hmac_key),
+                       sizeof(ctx->ext.tick_aes_key));
             } else {
-                memcpy(keys, ctx->tlsext_tick_key_name,
-                       sizeof(ctx->tlsext_tick_key_name));
-                memcpy(keys + sizeof(ctx->tlsext_tick_key_name),
-                       ctx->tlsext_tick_hmac_key,
-                       sizeof(ctx->tlsext_tick_hmac_key));
-                memcpy(keys + sizeof(ctx->tlsext_tick_key_name) +
-                       sizeof(ctx->tlsext_tick_hmac_key),
-                       ctx->tlsext_tick_aes_key,
-                       sizeof(ctx->tlsext_tick_aes_key));
+                memcpy(keys, ctx->ext.tick_key_name,
+                       sizeof(ctx->ext.tick_key_name));
+                memcpy(keys + sizeof(ctx->ext.tick_key_name),
+                       ctx->ext.tick_hmac_key,
+                       sizeof(ctx->ext.tick_hmac_key));
+                memcpy(keys + sizeof(ctx->ext.tick_key_name) +
+                       sizeof(ctx->ext.tick_hmac_key),
+                       ctx->ext.tick_aes_key,
+                       sizeof(ctx->ext.tick_aes_key));
             }
             return 1;
         }
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE:
-        return ctx->tlsext_status_type;
+        return ctx->ext.status_type;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE:
-        ctx->tlsext_status_type = larg;
+        ctx->ext.status_type = larg;
         break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
-        ctx->tlsext_status_arg = parg;
+        ctx->ext.status_arg = parg;
         return 1;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG:
-        *(void**)parg = ctx->tlsext_status_arg;
+        *(void**)parg = ctx->ext.status_arg;
         break;
 
     case SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB:
-        *(int (**)(SSL*, void*))parg = ctx->tlsext_status_cb;
+        *(int (**)(SSL*, void*))parg = ctx->ext.status_cb;
         break;
 
 #ifndef OPENSSL_NO_SRP
@@ -3404,13 +3406,13 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_GROUPS:
-        return tls1_set_groups(&ctx->tlsext_supportedgroupslist,
-                               &ctx->tlsext_supportedgroupslist_length,
+        return tls1_set_groups(&ctx->ext.supportedgroups,
+                               &ctx->ext.supportedgroups_len,
                                parg, larg);
 
     case SSL_CTRL_SET_GROUPS_LIST:
-        return tls1_set_groups_list(&ctx->tlsext_supportedgroupslist,
-                                    &ctx->tlsext_supportedgroupslist_length,
+        return tls1_set_groups_list(&ctx->ext.supportedgroups,
+                                    &ctx->ext.supportedgroups_len,
                                     parg);
 #endif
     case SSL_CTRL_SET_SIGALGS:
@@ -3502,15 +3504,15 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
         break;
 #endif
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
-        ctx->tlsext_servername_callback = (int (*)(SSL *, int *, void *))fp;
+        ctx->ext.servername_cb = (int (*)(SSL *, int *, void *))fp;
         break;
 
     case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB:
-        ctx->tlsext_status_cb = (int (*)(SSL *, void *))fp;
+        ctx->ext.status_cb = (int (*)(SSL *, void *))fp;
         break;
 
     case SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB:
-        ctx->tlsext_ticket_key_cb = (int (*)(SSL *, unsigned char *,
+        ctx->ext.ticket_key_cb = (int (*)(SSL *, unsigned char *,
                                              unsigned char *,
                                              EVP_CIPHER_CTX *,
                                              HMAC_CTX *, int))fp;

@@ -116,7 +116,7 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
             return 0;
         }
 
-        if (!PACKET_strndup(&hostname, &s->session->tlsext_hostname)) {
+        if (!PACKET_strndup(&hostname, &s->session->ext.hostname)) {
             *al = TLS1_AD_INTERNAL_ERROR;
             return 0;
         }
@@ -127,9 +127,9 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
          * TODO(openssl-team): if the SNI doesn't match, we MUST
          * fall back to a full handshake.
          */
-        s->servername_done = s->session->tlsext_hostname
-            && PACKET_equal(&hostname, s->session->tlsext_hostname,
-                            strlen(s->session->tlsext_hostname));
+        s->servername_done = s->session->ext.hostname
+            && PACKET_equal(&hostname, s->session->ext.hostname,
+                            strlen(s->session->ext.hostname));
     }
 
     return 1;
@@ -173,8 +173,8 @@ int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
 
     if (!s->hit) {
         if (!PACKET_memdup(&ec_point_format_list,
-                           &s->session->tlsext_ecpointformatlist,
-                           &s->session->tlsext_ecpointformatlist_length)) {
+                           &s->session->ext.ecpointformats,
+                           &s->session->ext.ecpointformats_len)) {
             *al = TLS1_AD_INTERNAL_ERROR;
             return 0;
         }
@@ -187,10 +187,10 @@ int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
 int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                                   int *al)
 {
-    if (s->tls_session_ticket_ext_cb &&
-            !s->tls_session_ticket_ext_cb(s, PACKET_data(pkt),
-                                          PACKET_remaining(pkt),
-                                          s->tls_session_ticket_ext_cb_arg)) {
+    if (s->ext.session_ticket_cb &&
+            !s->ext.session_ticket_cb(s, PACKET_data(pkt),
+                                  PACKET_remaining(pkt),
+                                  s->ext.session_ticket_cb_arg)) {
         *al = TLS1_AD_INTERNAL_ERROR;
         return 0;
     }
@@ -229,16 +229,16 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
     if (x != NULL)
         return 1;
 
-    if (!PACKET_get_1(pkt, (unsigned int *)&s->tlsext_status_type)) {
+    if (!PACKET_get_1(pkt, (unsigned int *)&s->ext.status_type)) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
-    if (s->tlsext_status_type != TLSEXT_STATUSTYPE_ocsp) {
+    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp) {
         /*
          * We don't know what to do with any other type so ignore it.
          */
-        s->tlsext_status_type = TLSEXT_STATUSTYPE_nothing;
+        s->ext.status_type = TLSEXT_STATUSTYPE_nothing;
         return 1;
     }
 
@@ -251,15 +251,15 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
      * We remove any OCSP_RESPIDs from a previous handshake
      * to prevent unbounded memory growth - CVE-2016-6304
      */
-    sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
+    sk_OCSP_RESPID_pop_free(s->ext.ocsp.ids, OCSP_RESPID_free);
     if (PACKET_remaining(&responder_id_list) > 0) {
-        s->tlsext_ocsp_ids = sk_OCSP_RESPID_new_null();
-        if (s->tlsext_ocsp_ids == NULL) {
+        s->ext.ocsp.ids = sk_OCSP_RESPID_new_null();
+        if (s->ext.ocsp.ids == NULL) {
             *al = SSL_AD_INTERNAL_ERROR;
             return 0;
         }
     } else {
-        s->tlsext_ocsp_ids = NULL;
+        s->ext.ocsp.ids = NULL;
     }
 
     while (PACKET_remaining(&responder_id_list) > 0) {
@@ -288,7 +288,7 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
             return 0;
         }
 
-        if (!sk_OCSP_RESPID_push(s->tlsext_ocsp_ids, id)) {
+        if (!sk_OCSP_RESPID_push(s->ext.ocsp.ids, id)) {
             OCSP_RESPID_free(id);
             *al = SSL_AD_INTERNAL_ERROR;
             return 0;
@@ -304,11 +304,11 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
     if (PACKET_remaining(&exts) > 0) {
         const unsigned char *ext_data = PACKET_data(&exts);
 
-        sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
+        sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts,
                                    X509_EXTENSION_free);
-        s->tlsext_ocsp_exts =
+        s->ext.ocsp.exts =
             d2i_X509_EXTENSIONS(NULL, &ext_data, (int)PACKET_remaining(&exts));
-        if (s->tlsext_ocsp_exts == NULL || ext_data != PACKET_end(&exts)) {
+        if (s->ext.ocsp.exts == NULL || ext_data != PACKET_end(&exts)) {
             *al = SSL_AD_DECODE_ERROR;
             return 0;
         }
@@ -339,7 +339,7 @@ int tls_parse_ctos_npn(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
      * Finished message could have been computed.)
      */
     if (s->s3->tmp.finish_md_len == 0)
-        s->s3->next_proto_neg_seen = 1;
+        s->s3->npn_seen = 1;
 
     return 1;
 }
@@ -643,8 +643,8 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, X509 *x,
 
     if (!s->hit
             && !PACKET_memdup(&supported_groups_list,
-                              &s->session->tlsext_supportedgroupslist,
-                              &s->session->tlsext_supportedgroupslist_length)) {
+                              &s->session->ext.supportedgroups,
+                              &s->session->ext.supportedgroups_len)) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
@@ -695,7 +695,7 @@ int tls_construct_stoc_server_name(SSL *s, WPACKET *pkt, X509 *x,
                                    size_t chainidx, int *al)
 {
     if (s->hit || s->servername_done != 1
-            || s->session->tlsext_hostname == NULL)
+            || s->session->ext.hostname == NULL)
         return 1;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
@@ -714,7 +714,7 @@ int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, X509 *x,
     unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
     unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
     int using_ecc = ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))
-                    && (s->session->tlsext_ecpointformatlist != NULL);
+                    && (s->session->ext.ecpointformats != NULL);
     const unsigned char *plist;
     size_t plistlen;
 
@@ -737,8 +737,8 @@ int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, X509 *x,
 int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt, X509 *x,
                                       size_t chainidx, int *al)
 {
-    if (!s->tlsext_ticket_expected || !tls_use_ticket(s)) {
-        s->tlsext_ticket_expected = 0;
+    if (!s->ext.ticket_expected || !tls_use_ticket(s)) {
+        s->ext.ticket_expected = 0;
         return 1;
     }
 
@@ -755,7 +755,7 @@ int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt, X509 *x,
 int tls_construct_stoc_status_request(SSL *s, WPACKET *pkt, X509 *x,
                                      size_t chainidx, int *al)
 {
-    if (!s->tlsext_status_expected)
+    if (!s->ext.status_expected)
         return 1;
 
     if (SSL_IS_TLS13(s) && chainidx != 0)
@@ -789,14 +789,14 @@ int tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt, X509 *x,
     const unsigned char *npa;
     unsigned int npalen;
     int ret;
-    int next_proto_neg_seen = s->s3->next_proto_neg_seen;
+    int npn_seen = s->s3->npn_seen;
 
-    s->s3->next_proto_neg_seen = 0;
-    if (!next_proto_neg_seen || s->ctx->next_protos_advertised_cb == NULL)
+    s->s3->npn_seen = 0;
+    if (!npn_seen || s->ctx->ext.npn_advertised_cb == NULL)
         return 1;
 
-    ret = s->ctx->next_protos_advertised_cb(s, &npa, &npalen,
-                                      s->ctx->next_protos_advertised_cb_arg);
+    ret = s->ctx->ext.npn_advertised_cb(s, &npa, &npalen,
+                                        s->ctx->ext.npn_advertised_cb_arg);
     if (ret == SSL_TLSEXT_ERR_OK) {
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_next_proto_neg)
                 || !WPACKET_sub_memcpy_u16(pkt, npa, npalen)) {
@@ -804,7 +804,7 @@ int tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt, X509 *x,
                    ERR_R_INTERNAL_ERROR);
             return 0;
         }
-        s->s3->next_proto_neg_seen = 1;
+        s->s3->npn_seen = 1;
     }
 
     return 1;

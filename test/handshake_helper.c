@@ -378,16 +378,16 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         parse_protos(extra->server.npn_protocols,
                      &server_ctx_data->npn_protocols,
                      &server_ctx_data->npn_protocols_len);
-        SSL_CTX_set_next_protos_advertised_cb(server_ctx, server_npn_cb,
-                                              server_ctx_data);
+        SSL_CTX_set_npn_advertised_cb(server_ctx, server_npn_cb,
+                                      server_ctx_data);
     }
     if (extra->server2.npn_protocols != NULL) {
         parse_protos(extra->server2.npn_protocols,
                      &server2_ctx_data->npn_protocols,
                      &server2_ctx_data->npn_protocols_len);
         TEST_check(server2_ctx != NULL);
-        SSL_CTX_set_next_protos_advertised_cb(server2_ctx, server_npn_cb,
-                                              server2_ctx_data);
+        SSL_CTX_set_npn_advertised_cb(server2_ctx, server_npn_cb,
+                                      server2_ctx_data);
     }
     if (extra->client.npn_protocols != NULL) {
         parse_protos(extra->client.npn_protocols,

@@ -553,18 +553,21 @@ struct ssl_session_st {
      * implement a maximum cache size.
      */
     struct ssl_session_st *prev, *next;
-    char *tlsext_hostname;
+
+    struct {
+        char *hostname;
 # ifndef OPENSSL_NO_EC
-    size_t tlsext_ecpointformatlist_length;
-    unsigned char *tlsext_ecpointformatlist; /* peer's list */
-    size_t tlsext_supportedgroupslist_length;
-    unsigned char *tlsext_supportedgroupslist; /* peer's list */
+        size_t ecpointformats_len;
+        unsigned char *ecpointformats; /* peer's list */
+        size_t supportedgroups_len;
+        unsigned char *supportedgroups; /* peer's list */
 # endif                         /* OPENSSL_NO_EC */
     /* RFC4507 info */
-    unsigned char *tlsext_tick; /* Session ticket */
-    size_t tlsext_ticklen;      /* Session ticket length */
-    unsigned long tlsext_tick_lifetime_hint; /* Session lifetime hint in
-                                              * seconds */
+        unsigned char *tick; /* Session ticket */
+        size_t ticklen;      /* Session ticket length */
+        /* Session lifetime hint in seconds */
+        unsigned long tick_lifetime_hint;
+    } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
 # endif
@@ -775,22 +778,85 @@ struct ssl_ctx_st {
     ENGINE *client_cert_engine;
 # endif
 
-    /* TLS extensions servername callback */
-    int (*tlsext_servername_callback) (SSL *, int *, void *);
-    void *tlsext_servername_arg;
-    /* RFC 4507 session ticket keys */
-    unsigned char tlsext_tick_key_name[TLSEXT_KEYNAME_LENGTH];
-    unsigned char tlsext_tick_hmac_key[32];
-    unsigned char tlsext_tick_aes_key[32];
-    /* Callback to support customisation of ticket key setting */
-    int (*tlsext_ticket_key_cb) (SSL *ssl,
-                                 unsigned char *name, unsigned char *iv,
-                                 EVP_CIPHER_CTX *ectx, HMAC_CTX *hctx, int enc);
+    /* TLS extensions. */
+    struct {
+        /* TLS extensions servername callback */
+        int (*servername_cb) (SSL *, int *, void *);
+        void *servername_arg;
+        /* RFC 4507 session ticket keys */
+        unsigned char tick_key_name[TLSEXT_KEYNAME_LENGTH];
+        unsigned char tick_hmac_key[32];
+        unsigned char tick_aes_key[32];
+        /* Callback to support customisation of ticket key setting */
+        int (*ticket_key_cb) (SSL *ssl,
+                              unsigned char *name, unsigned char *iv,
+                              EVP_CIPHER_CTX *ectx, HMAC_CTX *hctx, int enc);
 
-    /* certificate status request info */
-    /* Callback for status request */
-    int (*tlsext_status_cb) (SSL *ssl, void *arg);
-    void *tlsext_status_arg;
+        /* certificate status request info */
+        /* Callback for status request */
+        int (*status_cb) (SSL *ssl, void *arg);
+        void *status_arg;
+        /* ext status type used for CSR extension (OCSP Stapling) */
+        int status_type;
+
+# ifndef OPENSSL_NO_EC
+        /* EC extension values inherited by SSL structure */
+        size_t ecpointformats_len;
+        unsigned char *ecpointformats;
+        size_t supportedgroups_len;
+        unsigned char *supportedgroups;
+# endif                         /* OPENSSL_NO_EC */
+
+# ifndef OPENSSL_NO_NEXTPROTONEG
+        /*
+         * ALPN information (we are in the process of transitioning from NPN to
+         * ALPN.)
+         */
+
+        /*-
+         * For a server, this contains a callback function that allows the
+         * server to select the protocol for the connection.
+         *   out: on successful return, this must point to the raw protocol
+         *        name (without the length prefix).
+         *   outlen: on successful return, this contains the length of |*out|.
+         *   in: points to the client's list of supported protocols in
+         *       wire-format.
+         *   inlen: the length of |in|.
+         */
+        int (*alpn_select_cb) (SSL *s,
+                               const unsigned char **out,
+                               unsigned char *outlen,
+                               const unsigned char *in,
+                               unsigned int inlen, void *arg);
+        void *alpn_select_cb_arg;
+
+        /*
+         * For a client, this contains the list of supported protocols in wire
+         * format.
+         */
+        unsigned char *alpn;
+        size_t alpn_len;
+
+        /* Next protocol negotiation information */
+
+        /*
+         * For a server, this contains a callback function by which the set of
+         * advertised protocols can be provided.
+         */
+        int (*npn_advertised_cb) (SSL *s, const unsigned char **buf,
+                                          unsigned int *len, void *arg);
+        void *npn_advertised_cb_arg;
+        /*
+         * For a client, this contains a callback function that selects the next
+         * protocol from the list provided by the server.
+         */
+        int (*npn_select_cb) (SSL *s, unsigned char **out,
+                                     unsigned char *outlen,
+                                     const unsigned char *in,
+                                     unsigned int inlen, void *arg);
+        void *npn_select_cb_arg;
+# endif
+    } ext;
 
 # ifndef OPENSSL_NO_PSK
     unsigned int (*psk_client_callback) (SSL *ssl, const char *hint,
@@ -807,56 +873,6 @@ struct ssl_ctx_st {
     SRP_CTX srp_ctx;            /* ctx for SRP authentication */
 # endif
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
-    /* Next protocol negotiation information */
-
-    /*
-     * For a server, this contains a callback function by which the set of
-     * advertised protocols can be provided.
-     */
-    int (*next_protos_advertised_cb) (SSL *s, const unsigned char **buf,
-                                      unsigned int *len, void *arg);
-    void *next_protos_advertised_cb_arg;
-    /*
-     * For a client, this contains a callback function that selects the next
-     * protocol from the list provided by the server.
-     */
-    int (*next_proto_select_cb) (SSL *s, unsigned char **out,
-                                 unsigned char *outlen,
-                                 const unsigned char *in,
-                                 unsigned int inlen, void *arg);
-    void *next_proto_select_cb_arg;
-# endif
-
-    /*
-     * ALPN information (we are in the process of transitioning from NPN to
-     * ALPN.)
-     */
-
-        /*-
-         * For a server, this contains a callback function that allows the
-         * server to select the protocol for the connection.
-         *   out: on successful return, this must point to the raw protocol
-         *        name (without the length prefix).
-         *   outlen: on successful return, this contains the length of |*out|.
-         *   in: points to the client's list of supported protocols in
-         *       wire-format.
-         *   inlen: the length of |in|.
-         */
-    int (*alpn_select_cb) (SSL *s,
-                           const unsigned char **out,
-                           unsigned char *outlen,
-                           const unsigned char *in,
-                           unsigned int inlen, void *arg);
-    void *alpn_select_cb_arg;
-
-    /*
-     * For a client, this contains the list of supported protocols in wire
-     * format.
-     */
-    unsigned char *alpn_client_proto_list;
-    size_t alpn_client_proto_list_len;
-
     /* Shared DANE context */
     struct dane_ctx_st dane;
 
@@ -867,16 +883,6 @@ struct ssl_ctx_st {
      * basis, depending on the chosen cipher.
      */
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
-# ifndef OPENSSL_NO_EC
-    /* EC extension values inherited by SSL structure */
-    size_t tlsext_ecpointformatlist_length;
-    unsigned char *tlsext_ecpointformatlist;
-    size_t tlsext_supportedgroupslist_length;
-    unsigned char *tlsext_supportedgroupslist;
-# endif                         /* OPENSSL_NO_EC */
-
-    /* ext status type used for CSR extension (OCSP Stapling) */
-    int tlsext_status_type;
 
     CRYPTO_RWLOCK *lock;
 };
@@ -1039,11 +1045,67 @@ struct ssl_st {
     size_t max_send_fragment;
     /* Up to how many pipelines should we use? If 0 then 1 is assumed */
     size_t max_pipelines;
-    /* TLS extension debug callback */
-    void (*tlsext_debug_cb) (SSL *s, int client_server, int type,
-                             const unsigned char *data, int len, void *arg);
-    void *tlsext_debug_arg;
-    char *tlsext_hostname;
+
+    struct {
+        /* TLS extension debug callback */
+        void (*debug_cb) (SSL *s, int client_server, int type,
+                                 const unsigned char *data, int len, void *arg);
+        void *debug_arg;
+        char *hostname;
+        /* certificate status request info */
+        /* Status type or -1 if no status type */
+        int status_type;
+        /* Raw extension data, if seen */
+        unsigned char *scts;
+        /* Length of raw extension data, if seen */
+        uint16_t scts_len;
+        /* Expect OCSP CertificateStatus message */
+        int status_expected;
+
+        struct {
+            /* OCSP status request only */
+            STACK_OF(OCSP_RESPID) *ids;
+            X509_EXTENSIONS *exts;
+            /* OCSP response received or to be sent */
+            unsigned char *resp;
+            size_t resp_len;
+        } ocsp;
+
+        /* RFC4507 session ticket expected to be received or sent */
+        int ticket_expected;
+# ifndef OPENSSL_NO_EC
+        size_t ecpointformats_len;
+        /* our list */
+        unsigned char *ecpointformats;
+        size_t supportedgroups_len;
+        /* our list */
+        unsigned char *supportedgroups;
+# endif                         /* OPENSSL_NO_EC */
+        /* TLS Session Ticket extension override */
+        TLS_SESSION_TICKET_EXT *session_ticket;
+        /* TLS Session Ticket extension callback */
+        tls_session_ticket_ext_cb_fn session_ticket_cb;
+        void *session_ticket_cb_arg;
+        /* TLS pre-shared secret session resumption */
+        tls_session_secret_cb_fn session_secret_cb;
+        void *session_secret_cb_arg;
+        /*
+         * For a client, this contains the list of supported protocols in wire
+         * format.
+         */
+        unsigned char *alpn;
+        size_t alpn_len;
+        /*
+         * Next protocol negotiation. For the client, this is the protocol that
+         * we sent in NextProtocol and is set when handling ServerHello
+         * extensions. For a server, this is the client's selected_protocol from
+         * NextProtocol and is set when handling the NextProtocol message, before
+         * the Finished message.
+         */
+        unsigned char *npn;
+        size_t npn_len;
+    } ext;
+
     /*-
      * no further mod of servername
      * 0 : call the servername extension callback.
@@ -1051,9 +1113,6 @@ struct ssl_st {
      * 2 : don't call servername callback, no ack in server hello
      */
     int servername_done;
-    /* certificate status request info */
-    /* Status type or -1 if no status type */
-    int tlsext_status_type;
 # ifndef OPENSSL_NO_CT
     /*
      * Validates that the SCTs (Signed Certificate Timestamps) are sufficient.
@@ -1067,62 +1126,17 @@ struct ssl_st {
      * Lazily populated by CT_get_peer_scts(SSL*)
      */
     STACK_OF(SCT) *scts;
-    /* Raw extension data, if seen */
-    unsigned char *tlsext_scts;
-    /* Length of raw extension data, if seen */
-    uint16_t tlsext_scts_len;
     /* Have we attempted to find/parse SCTs yet? */
     int scts_parsed;
 # endif
-    /* Expect OCSP CertificateStatus message */
-    int tlsext_status_expected;
-    /* OCSP status request only */
-    STACK_OF(OCSP_RESPID) *tlsext_ocsp_ids;
-    X509_EXTENSIONS *tlsext_ocsp_exts;
-    /* OCSP response received or to be sent */
-    unsigned char *tlsext_ocsp_resp;
-    size_t tlsext_ocsp_resplen;
-    /* RFC4507 session ticket expected to be received or sent */
-    int tlsext_ticket_expected;
-# ifndef OPENSSL_NO_EC
-    size_t tlsext_ecpointformatlist_length;
-    /* our list */
-    unsigned char *tlsext_ecpointformatlist;
-    size_t tlsext_supportedgroupslist_length;
-    /* our list */
-    unsigned char *tlsext_supportedgroupslist;
-# endif                         /* OPENSSL_NO_EC */
-    /* TLS Session Ticket extension override */
-    TLS_SESSION_TICKET_EXT *tlsext_session_ticket;
-    /* TLS Session Ticket extension callback */
-    tls_session_ticket_ext_cb_fn tls_session_ticket_ext_cb;
-    void *tls_session_ticket_ext_cb_arg;
-    /* TLS pre-shared secret session resumption */
-    tls_session_secret_cb_fn tls_session_secret_cb;
-    void *tls_session_secret_cb_arg;
     SSL_CTX *initial_ctx;       /* initial ctx, used to store sessions */
 # ifndef OPENSSL_NO_NEXTPROTONEG
-    /*
-     * Next protocol negotiation. For the client, this is the protocol that
-     * we sent in NextProtocol and is set when handling ServerHello
-     * extensions. For a server, this is the client's selected_protocol from
-     * NextProtocol and is set when handling the NextProtocol message, before
-     * the Finished message.
-     */
-    unsigned char *next_proto_negotiated;
-    size_t next_proto_negotiated_len;
 # endif
 # define session_ctx initial_ctx
     /* What we'll do */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
     /* What's been chosen */
     SRTP_PROTECTION_PROFILE *srtp_profile;
-    /*
-     * For a client, this contains the list of supported protocols in wire
-     * format.
-     */
-    unsigned char *alpn_client_proto_list;
-    size_t alpn_client_proto_list_len;
     /*-
      * 1 if we are renegotiating.
      * 2 if we are a server and are inside a handshake
@@ -1277,7 +1291,7 @@ typedef struct ssl3_state_st {
     /*
      * Set if we saw the Next Protocol Negotiation extension from our peer.
      */
-    int next_proto_neg_seen;
+    int npn_seen;
 # endif
 
     /*
