@@ -1110,6 +1110,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
             goto f_err;
         }
     } else {
+        PACKET_null_init(&session_id);
         session_id_len = 0;
     }
 
