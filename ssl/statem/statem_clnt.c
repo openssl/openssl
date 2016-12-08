@@ -1022,8 +1022,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         s->session->ssl_version = s->version;
         s->session->session_id_length = session_id_len;
         /* session_id_len could be 0 */
-        memcpy(s->session->session_id, PACKET_data(&session_id),
-               session_id_len);
+        if (session_id_len > 0)
+            memcpy(s->session->session_id, PACKET_data(&session_id),
+                   session_id_len);
     }
 
     /* Session version and negotiated protocol version should match */
