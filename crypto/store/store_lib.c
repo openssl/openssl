@@ -343,6 +343,10 @@ void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info)
 {
     if (info != NULL) {
         switch (info->type) {
+        case OSSL_STORE_INFO_EMBEDDED:
+            BUF_MEM_free(info->_.embedded.blob);
+            OPENSSL_free(info->_.embedded.pem_name);
+            break;
         case OSSL_STORE_INFO_NAME:
             OPENSSL_free(info->_.name.name);
             OPENSSL_free(info->_.name.desc);
@@ -364,3 +368,42 @@ void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info)
     }
 }
 
+/* Internal functions */
+OSSL_STORE_INFO *ossl_store_info_new_EMBEDDED(const char *new_pem_name,
+                                              BUF_MEM *embedded)
+{
+    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_EMBEDDED, NULL);
+
+    if (info == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_EMBEDDED,
+                      ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    info->_.embedded.blob = embedded;
+    info->_.embedded.pem_name =
+        new_pem_name == NULL ? NULL : OPENSSL_strdup(new_pem_name);
+
+    if (new_pem_name != NULL && info->_.embedded.pem_name == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_EMBEDDED,
+                      ERR_R_MALLOC_FAILURE);
+        OSSL_STORE_INFO_free(info);
+        info = NULL;
+    }
+
+    return info;
+}
+
+BUF_MEM *ossl_store_info_get0_EMBEDDED_buffer(OSSL_STORE_INFO *info)
+{
+    if (info->type == OSSL_STORE_INFO_EMBEDDED)
+        return info->_.embedded.blob;
+    return NULL;
+}
+
+char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
+{
+    if (info->type == OSSL_STORE_INFO_EMBEDDED)
+        return info->_.embedded.pem_name;
+    return NULL;
+}
