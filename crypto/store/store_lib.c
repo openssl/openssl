@@ -334,6 +334,10 @@ void STORE_INFO_free(STORE_INFO *store_info)
 {
     if (store_info != NULL) {
         switch (store_info->type) {
+        case STORE_INFO_DECODED:
+            BUF_MEM_free(store_info->_.decoded.blob);
+            OPENSSL_free(store_info->_.decoded.pem_name);
+            break;
         case STORE_INFO_NAME:
             OPENSSL_free(store_info->_.name.name);
             OPENSSL_free(store_info->_.name.desc);
@@ -355,3 +359,39 @@ void STORE_INFO_free(STORE_INFO *store_info)
     }
 }
 
+/* Internal functions */
+STORE_INFO *store_info_new_DECODED(const char *new_pem_name, BUF_MEM *decoded)
+{
+    STORE_INFO *info = store_info_new(STORE_INFO_DECODED, NULL);
+
+    if (info == NULL) {
+        STOREerr(STORE_F_STORE_INFO_NEW_DECODED, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    info->_.decoded.blob = decoded;
+    info->_.decoded.pem_name =
+        new_pem_name == NULL ? NULL : OPENSSL_strdup(new_pem_name);
+
+    if (new_pem_name != NULL && info->_.decoded.pem_name == NULL) {
+        STOREerr(STORE_F_STORE_INFO_NEW_DECODED, ERR_R_MALLOC_FAILURE);
+        STORE_INFO_free(info);
+        info = NULL;
+    }
+
+    return info;
+}
+
+BUF_MEM *store_info_get0_DECODED_buffer(STORE_INFO *store_info)
+{
+    if (store_info->type == STORE_INFO_DECODED)
+        return store_info->_.decoded.blob;
+    return NULL;
+}
+
+char *store_info_get0_DECODED_pem_name(STORE_INFO *store_info)
+{
+    if (store_info->type == STORE_INFO_DECODED)
+        return store_info->_.decoded.pem_name;
+    return NULL;
+}

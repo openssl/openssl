@@ -23,6 +23,13 @@
 struct store_info_st {
     int type;
     union {
+        void *data;              /* used internally as generic pointer */
+
+        struct {
+            BUF_MEM *blob;
+            char *pem_name;
+        } decoded;               /* when type == STORE_INFO_DECODED */
+
         struct {
             char *name;
             char *desc;
@@ -32,11 +39,27 @@ struct store_info_st {
         EVP_PKEY *pkey;          /* when type == STORE_INFO_PKEY */
         X509 *x509;              /* when type == STORE_INFO_X509 */
         X509_CRL *crl;           /* when type == STORE_INFO_CRL */
-        void *data;              /* used internally */
     } _;
 };
 
 DEFINE_STACK_OF(STORE_INFO)
+
+/*
+ * DECODED is a special type of STORE_INFO, specially for the file handlers.
+ * It should never reach a calling application or any engine.  However, it
+ * can be used by a STORE_FILE_HANDLER's try_decode function to signal that
+ * it has decoded the incoming blob into a new blob, and that the attempted
+ * decoding should be immediately restarted with the new blob, using the new
+ * PEM name.
+ */
+/*
+ * Because this is an internal type, we don't make it part of the enum that
+ * applications and engines will see.
+ */
+#define STORE_INFO_DECODED     -1
+STORE_INFO *store_info_new_DECODED(const char *new_pem_name, BUF_MEM *decoded);
+BUF_MEM *store_info_get0_DECODED_buffer(STORE_INFO *store_info);
+char *store_info_get0_DECODED_pem_name(STORE_INFO *store_info);
 
 /*-
  *  STORE_LOADER stuff

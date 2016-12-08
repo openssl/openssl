@@ -211,6 +211,7 @@ int ERR_load_STORE_strings(void);
 # define STORE_F_STORE_INFO_GET1_PKEY                     105
 # define STORE_F_STORE_INFO_NEW_CERT                      106
 # define STORE_F_STORE_INFO_NEW_CRL                       107
+# define STORE_F_STORE_INFO_NEW_DECODED                   123
 # define STORE_F_STORE_INFO_NEW_ENDOFDATA                 108
 # define STORE_F_STORE_INFO_NEW_NAME                      109
 # define STORE_F_STORE_INFO_NEW_PARAMS                    110
