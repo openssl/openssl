@@ -6,7 +6,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-package recipes::checkhandshake;
+package checkhandshake;
 
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file srctop_dir bldtop_dir/;
 use OpenSSL::Test::Utils;
