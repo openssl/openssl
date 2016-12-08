@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <internal/thread_once.h>
 #include <internal/dso.h>
+#include <internal/store.h>
 
 static int stopped = 0;
 
@@ -491,6 +492,7 @@ void OPENSSL_cleanup(void)
 #ifndef OPENSSL_NO_ENGINE
     engine_cleanup_int();
 #endif
+    ossl_store_cleanup_int();
     crypto_cleanup_all_ex_data_int();
     bio_cleanup();
     evp_cleanup_int();

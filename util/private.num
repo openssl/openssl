@@ -20,6 +20,17 @@ CRYPTO_EX_new                           datatype
 EVP_PKEY_gen_cb                         datatype
 GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
+OSSL_STORE_CTX                          datatype
+OSSL_STORE_INFO                         datatype
+OSSL_STORE_LOADER                       datatype
+OSSL_STORE_LOADER_CTX                   datatype
+OSSL_STORE_close_fn                     datatype
+OSSL_STORE_ctrl_fn                      datatype
+OSSL_STORE_eof_fn                       datatype
+OSSL_STORE_error_fn                     datatype
+OSSL_STORE_load_fn                      datatype
+OSSL_STORE_open_fn                      datatype
+OSSL_STORE_post_process_info_fn         datatype
 SSL_CTX_keylog_cb_func                  datatype
 SSL_early_cb_fn                         datatype
 SSL_psk_client_cb_func                  datatype
