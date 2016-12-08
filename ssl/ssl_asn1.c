@@ -183,13 +183,13 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     as.peer = in->peer;
 
     ssl_session_sinit(&as.tlsext_hostname, &tlsext_hostname,
-                      in->tlsext_hostname);
-    if (in->tlsext_tick) {
+                      in->ext.hostname);
+    if (in->ext.tick) {
         ssl_session_oinit(&as.tlsext_tick, &tlsext_tick,
-                          in->tlsext_tick, in->tlsext_ticklen);
+                          in->ext.tick, in->ext.ticklen);
     }
-    if (in->tlsext_tick_lifetime_hint > 0)
-        as.tlsext_tick_lifetime_hint = in->tlsext_tick_lifetime_hint;
+    if (in->ext.tick_lifetime_hint > 0)
+        as.tlsext_tick_lifetime_hint = in->ext.tick_lifetime_hint;
 #ifndef OPENSSL_NO_PSK
     ssl_session_sinit(&as.psk_identity_hint, &psk_identity_hint,
                       in->psk_identity_hint);
@@ -315,7 +315,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     /* NB: this defaults to zero which is X509_V_OK */
     ret->verify_result = as->verify_result;
 
-    if (!ssl_session_strndup(&ret->tlsext_hostname, as->tlsext_hostname))
+    if (!ssl_session_strndup(&ret->ext.hostname, as->tlsext_hostname))
         goto err;
 
 #ifndef OPENSSL_NO_PSK
@@ -325,13 +325,13 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         goto err;
 #endif
 
-    ret->tlsext_tick_lifetime_hint = as->tlsext_tick_lifetime_hint;
+    ret->ext.tick_lifetime_hint = as->tlsext_tick_lifetime_hint;
     if (as->tlsext_tick) {
-        ret->tlsext_tick = as->tlsext_tick->data;
-        ret->tlsext_ticklen = as->tlsext_tick->length;
+        ret->ext.tick = as->tlsext_tick->data;
+        ret->ext.ticklen = as->tlsext_tick->length;
         as->tlsext_tick->data = NULL;
     } else {
-        ret->tlsext_tick = NULL;
+        ret->ext.tick = NULL;
     }
 #ifndef OPENSSL_NO_COMP
     if (as->comp_id) {

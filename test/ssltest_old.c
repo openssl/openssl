@@ -1662,14 +1662,12 @@ int main(int argc, char *argv[])
                        "Can't have both -npn_server and -npn_server_reject\n");
             goto end;
         }
-        SSL_CTX_set_next_protos_advertised_cb(s_ctx, cb_server_npn, NULL);
-        SSL_CTX_set_next_protos_advertised_cb(s_ctx2, cb_server_npn, NULL);
+        SSL_CTX_set_npn_advertised_cb(s_ctx, cb_server_npn, NULL);
+        SSL_CTX_set_npn_advertised_cb(s_ctx2, cb_server_npn, NULL);
     }
     if (npn_server_reject) {
-        SSL_CTX_set_next_protos_advertised_cb(s_ctx, cb_server_rejects_npn,
-                                              NULL);
-        SSL_CTX_set_next_protos_advertised_cb(s_ctx2, cb_server_rejects_npn,
-                                              NULL);
+        SSL_CTX_set_npn_advertised_cb(s_ctx, cb_server_rejects_npn, NULL);
+        SSL_CTX_set_npn_advertised_cb(s_ctx2, cb_server_rejects_npn, NULL);
     }
 #endif
 

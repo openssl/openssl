@@ -656,19 +656,23 @@ void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
                                                                unsigned int
                                                                cookie_len));
 # ifndef OPENSSL_NO_NEXTPROTONEG
+#  define SSL_CTX_set_npn_select_cb SSL_CTX_set_next_proto_select_cb
+#  define SSL_CTX_set_npn_advertised_cb SSL_CTX_set_next_protos_advertised_cb
+#  define SSL_get0_npn_negotiated SSL_get0_next_proto_negotiated
 void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s,
                                            int (*cb) (SSL *ssl,
-                                                      const unsigned char
-                                                      **out,
+                                                      const unsigned char **out,
                                                       unsigned int *outlen,
-                                                      void *arg), void *arg);
+                                                      void *arg),
+                                           void *arg);
 void SSL_CTX_set_next_proto_select_cb(SSL_CTX *s,
                                       int (*cb) (SSL *ssl,
                                                  unsigned char **out,
                                                  unsigned char *outlen,
                                                  const unsigned char *in,
                                                  unsigned int inlen,
-                                                 void *arg), void *arg);
+                                                 void *arg),
+                                      void *arg);
 void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
                                     unsigned *len);
 # endif

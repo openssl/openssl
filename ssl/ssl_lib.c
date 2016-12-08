@@ -589,49 +589,46 @@ SSL *SSL_new(SSL_CTX *ctx)
 
     SSL_CTX_up_ref(ctx);
     s->ctx = ctx;
-    s->tlsext_debug_cb = 0;
-    s->tlsext_debug_arg = NULL;
-    s->tlsext_ticket_expected = 0;
-    s->tlsext_status_type = ctx->tlsext_status_type;
-    s->tlsext_status_expected = 0;
-    s->tlsext_ocsp_ids = NULL;
-    s->tlsext_ocsp_exts = NULL;
-    s->tlsext_ocsp_resp = NULL;
-    s->tlsext_ocsp_resplen = 0;
+    s->ext.debug_cb = 0;
+    s->ext.debug_arg = NULL;
+    s->ext.ticket_expected = 0;
+    s->ext.status_type = ctx->ext.status_type;
+    s->ext.status_expected = 0;
+    s->ext.ocsp.ids = NULL;
+    s->ext.ocsp.exts = NULL;
+    s->ext.ocsp.resp = NULL;
+    s->ext.ocsp.resp_len = 0;
     SSL_CTX_up_ref(ctx);
     s->initial_ctx = ctx;
 #ifndef OPENSSL_NO_EC
-    if (ctx->tlsext_ecpointformatlist) {
-        s->tlsext_ecpointformatlist =
-            OPENSSL_memdup(ctx->tlsext_ecpointformatlist,
-                           ctx->tlsext_ecpointformatlist_length);
-        if (!s->tlsext_ecpointformatlist)
+    if (ctx->ext.ecpointformats) {
+        s->ext.ecpointformats =
+            OPENSSL_memdup(ctx->ext.ecpointformats,
+                           ctx->ext.ecpointformats_len);
+        if (!s->ext.ecpointformats)
             goto err;
-        s->tlsext_ecpointformatlist_length =
-            ctx->tlsext_ecpointformatlist_length;
+        s->ext.ecpointformats_len =
+            ctx->ext.ecpointformats_len;
     }
-    if (ctx->tlsext_supportedgroupslist) {
-        s->tlsext_supportedgroupslist =
-            OPENSSL_memdup(ctx->tlsext_supportedgroupslist,
-                           ctx->tlsext_supportedgroupslist_length);
-        if (!s->tlsext_supportedgroupslist)
+    if (ctx->ext.supportedgroups) {
+        s->ext.supportedgroups =
+            OPENSSL_memdup(ctx->ext.supportedgroups,
+                           ctx->ext.supportedgroups_len);
+        if (!s->ext.supportedgroups)
             goto err;
-        s->tlsext_supportedgroupslist_length =
-            ctx->tlsext_supportedgroupslist_length;
+        s->ext.supportedgroups_len = ctx->ext.supportedgroups_len;
     }
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
-    s->next_proto_negotiated = NULL;
+    s->ext.npn = NULL;
 #endif
 
-    if (s->ctx->alpn_client_proto_list) {
-        s->alpn_client_proto_list =
-            OPENSSL_malloc(s->ctx->alpn_client_proto_list_len);
-        if (s->alpn_client_proto_list == NULL)
+    if (s->ctx->ext.alpn) {
+        s->ext.alpn = OPENSSL_malloc(s->ctx->ext.alpn_len);
+        if (s->ext.alpn == NULL)
             goto err;
-        memcpy(s->alpn_client_proto_list, s->ctx->alpn_client_proto_list,
-               s->ctx->alpn_client_proto_list_len);
-        s->alpn_client_proto_list_len = s->ctx->alpn_client_proto_list_len;
+        memcpy(s->ext.alpn, s->ctx->ext.alpn, s->ctx->ext.alpn_len);
+        s->ext.alpn_len = s->ctx->ext.alpn_len;
     }
 
     s->verified_chain = NULL;
@@ -838,7 +835,7 @@ int SSL_dane_enable(SSL *s, const char *basedomain)
      * accepts them and disables host name checks.  To avoid side-effects with
      * invalid input, set the SNI name first.
      */
-    if (s->tlsext_hostname == NULL) {
+    if (s->ext.hostname == NULL) {
         if (!SSL_set_tlsext_host_name(s, basedomain)) {
             SSLerr(SSL_F_SSL_DANE_ENABLE, SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN);
             return -1;
@@ -997,22 +994,22 @@ void SSL_free(SSL *s)
     ssl_cert_free(s->cert);
     /* Free up if allocated */
 
-    OPENSSL_free(s->tlsext_hostname);
+    OPENSSL_free(s->ext.hostname);
     SSL_CTX_free(s->initial_ctx);
 #ifndef OPENSSL_NO_EC
-    OPENSSL_free(s->tlsext_ecpointformatlist);
-    OPENSSL_free(s->tlsext_supportedgroupslist);
+    OPENSSL_free(s->ext.ecpointformats);
+    OPENSSL_free(s->ext.supportedgroups);
 #endif                          /* OPENSSL_NO_EC */
-    sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts, X509_EXTENSION_free);
+    sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 #ifndef OPENSSL_NO_OCSP
-    sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
+    sk_OCSP_RESPID_pop_free(s->ext.ocsp.ids, OCSP_RESPID_free);
 #endif
 #ifndef OPENSSL_NO_CT
     SCT_LIST_free(s->scts);
-    OPENSSL_free(s->tlsext_scts);
+    OPENSSL_free(s->ext.scts);
 #endif
-    OPENSSL_free(s->tlsext_ocsp_resp);
-    OPENSSL_free(s->alpn_client_proto_list);
+    OPENSSL_free(s->ext.ocsp.resp);
+    OPENSSL_free(s->ext.alpn);
 
     sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
 
@@ -1028,7 +1025,7 @@ void SSL_free(SSL *s)
     ASYNC_WAIT_CTX_free(s->waitctx);
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
-    OPENSSL_free(s->next_proto_negotiated);
+    OPENSSL_free(s->ext.npn);
 #endif
 
 #ifndef OPENSSL_NO_SRTP
@@ -2168,15 +2165,15 @@ const char *SSL_get_servername(const SSL *s, const int type)
     if (type != TLSEXT_NAMETYPE_host_name)
         return NULL;
 
-    return s->session && !s->tlsext_hostname ?
-        s->session->tlsext_hostname : s->tlsext_hostname;
+    return s->session && !s->ext.hostname ?
+        s->session->ext.hostname : s->ext.hostname;
 }
 
 int SSL_get_servername_type(const SSL *s)
 {
     if (s->session
-        && (!s->tlsext_hostname ? s->session->
-            tlsext_hostname : s->tlsext_hostname))
+        && (!s->ext.hostname ? s->session->
+            ext.hostname : s->ext.hostname))
         return TLSEXT_NAMETYPE_host_name;
     return -1;
 }
@@ -2251,16 +2248,16 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
 void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
                                     unsigned *len)
 {
-    *data = s->next_proto_negotiated;
+    *data = s->ext.npn;
     if (!*data) {
         *len = 0;
     } else {
-        *len = (unsigned int)s->next_proto_negotiated_len;
+        *len = (unsigned int)s->ext.npn_len;
     }
 }
 
 /*
- * SSL_CTX_set_next_protos_advertised_cb sets a callback that is called when
+ * SSL_CTX_set_npn_advertised_cb sets a callback that is called when
  * a TLS server needs a list of supported protocols for Next Protocol
  * Negotiation. The returned list must be in wire format.  The list is
  * returned by setting |out| to point to it and |outlen| to its length. This
@@ -2269,15 +2266,15 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
  * wishes to advertise. Otherwise, no such extension will be included in the
  * ServerHello.
  */
-void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *ctx,
-                                           int (*cb) (SSL *ssl,
-                                                      const unsigned char
-                                                      **out,
-                                                      unsigned int *outlen,
-                                                      void *arg), void *arg)
+void SSL_CTX_set_npn_advertised_cb(SSL_CTX *ctx,
+                                   int (*cb) (SSL *ssl,
+                                              const unsigned char **out,
+                                              unsigned int *outlen,
+                                              void *arg),
+                                   void *arg)
 {
-    ctx->next_protos_advertised_cb = cb;
-    ctx->next_protos_advertised_cb_arg = arg;
+    ctx->ext.npn_advertised_cb = cb;
+    ctx->ext.npn_advertised_cb_arg = arg;
 }
 
 /*
@@ -2290,15 +2287,16 @@ void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *ctx,
  * select a protocol. It is fatal to the connection if this callback returns
  * a value other than SSL_TLSEXT_ERR_OK.
  */
-void SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx,
-                                      int (*cb) (SSL *s, unsigned char **out,
-                                                 unsigned char *outlen,
-                                                 const unsigned char *in,
-                                                 unsigned int inlen,
-                                                 void *arg), void *arg)
+void SSL_CTX_set_npn_select_cb(SSL_CTX *ctx,
+                               int (*cb) (SSL *s, unsigned char **out,
+                                          unsigned char *outlen,
+                                          const unsigned char *in,
+                                          unsigned int inlen,
+                                          void *arg),
+                               void *arg)
 {
-    ctx->next_proto_select_cb = cb;
-    ctx->next_proto_select_cb_arg = arg;
+    ctx->ext.npn_select_cb = cb;
+    ctx->ext.npn_select_cb_arg = arg;
 }
 #endif
 
@@ -2310,13 +2308,13 @@ void SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx,
 int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
                             unsigned int protos_len)
 {
-    OPENSSL_free(ctx->alpn_client_proto_list);
-    ctx->alpn_client_proto_list = OPENSSL_memdup(protos, protos_len);
-    if (ctx->alpn_client_proto_list == NULL) {
+    OPENSSL_free(ctx->ext.alpn);
+    ctx->ext.alpn = OPENSSL_memdup(protos, protos_len);
+    if (ctx->ext.alpn == NULL) {
         SSLerr(SSL_F_SSL_CTX_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
     }
-    ctx->alpn_client_proto_list_len = protos_len;
+    ctx->ext.alpn_len = protos_len;
 
     return 0;
 }
@@ -2329,13 +2327,13 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
 int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
                         unsigned int protos_len)
 {
-    OPENSSL_free(ssl->alpn_client_proto_list);
-    ssl->alpn_client_proto_list = OPENSSL_memdup(protos, protos_len);
-    if (ssl->alpn_client_proto_list == NULL) {
+    OPENSSL_free(ssl->ext.alpn);
+    ssl->ext.alpn = OPENSSL_memdup(protos, protos_len);
+    if (ssl->ext.alpn == NULL) {
         SSLerr(SSL_F_SSL_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
     }
-    ssl->alpn_client_proto_list_len = protos_len;
+    ssl->ext.alpn_len = protos_len;
 
     return 0;
 }
@@ -2353,8 +2351,8 @@ void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
                                            unsigned int inlen,
                                            void *arg), void *arg)
 {
-    ctx->alpn_select_cb = cb;
-    ctx->alpn_select_cb_arg = arg;
+    ctx->ext.alpn_select_cb = cb;
+    ctx->ext.alpn_select_cb_arg = arg;
 }
 
 /*
@@ -2513,12 +2511,12 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
     /* Setup RFC5077 ticket keys */
-    if ((RAND_bytes(ret->tlsext_tick_key_name,
-                    sizeof(ret->tlsext_tick_key_name)) <= 0)
-        || (RAND_bytes(ret->tlsext_tick_hmac_key,
-                       sizeof(ret->tlsext_tick_hmac_key)) <= 0)
-        || (RAND_bytes(ret->tlsext_tick_aes_key,
-                       sizeof(ret->tlsext_tick_aes_key)) <= 0))
+    if ((RAND_bytes(ret->ext.tick_key_name,
+                    sizeof(ret->ext.tick_key_name)) <= 0)
+        || (RAND_bytes(ret->ext.tick_hmac_key,
+                       sizeof(ret->ext.tick_hmac_key)) <= 0)
+        || (RAND_bytes(ret->ext.tick_aes_key,
+                       sizeof(ret->ext.tick_aes_key)) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
 
 #ifndef OPENSSL_NO_SRP
@@ -2556,7 +2554,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      */
     ret->options |= SSL_OP_NO_COMPRESSION;
 
-    ret->tlsext_status_type = TLSEXT_STATUSTYPE_nothing;
+    ret->ext.status_type = TLSEXT_STATUSTYPE_nothing;
 
     return ret;
  err:
@@ -2629,10 +2627,10 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 
 #ifndef OPENSSL_NO_EC
-    OPENSSL_free(a->tlsext_ecpointformatlist);
-    OPENSSL_free(a->tlsext_supportedgroupslist);
+    OPENSSL_free(a->ext.ecpointformats);
+    OPENSSL_free(a->ext.supportedgroups);
 #endif
-    OPENSSL_free(a->alpn_client_proto_list);
+    OPENSSL_free(a->ext.alpn);
 
     CRYPTO_THREAD_lock_free(a->lock);
 
@@ -4040,9 +4038,9 @@ static int ct_extract_tls_extension_scts(SSL *s)
 {
     int scts_extracted = 0;
 
-    if (s->tlsext_scts != NULL) {
-        const unsigned char *p = s->tlsext_scts;
-        STACK_OF(SCT) *scts = o2i_SCT_LIST(NULL, &p, s->tlsext_scts_len);
+    if (s->ext.scts != NULL) {
+        const unsigned char *p = s->ext.scts;
+        STACK_OF(SCT) *scts = o2i_SCT_LIST(NULL, &p, s->ext.scts_len);
 
         scts_extracted = ct_move_scts(&s->scts, scts, SCT_SOURCE_TLS_EXTENSION);
 
@@ -4070,11 +4068,11 @@ static int ct_extract_ocsp_response_scts(SSL *s)
     STACK_OF(SCT) *scts = NULL;
     int i;
 
-    if (s->tlsext_ocsp_resp == NULL || s->tlsext_ocsp_resplen == 0)
+    if (s->ext.ocsp.resp == NULL || s->ext.ocsp.resp_len == 0)
         goto err;
 
-    p = s->tlsext_ocsp_resp;
-    rsp = d2i_OCSP_RESPONSE(NULL, &p, (int)s->tlsext_ocsp_resplen);
+    p = s->ext.ocsp.resp;
+    rsp = d2i_OCSP_RESPONSE(NULL, &p, (int)s->ext.ocsp.resp_len);
     if (rsp == NULL)
         goto err;
 
