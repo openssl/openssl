@@ -52,6 +52,7 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_TS, 0, 0), "time stamp routines"},
     {ERR_PACK(ERR_LIB_ENGINE, 0, 0), "engine routines"},
     {ERR_PACK(ERR_LIB_OCSP, 0, 0), "OCSP routines"},
+    {ERR_PACK(ERR_LIB_UI, 0, 0), "UI routines"},
     {ERR_PACK(ERR_LIB_FIPS, 0, 0), "FIPS routines"},
     {ERR_PACK(ERR_LIB_CMS, 0, 0), "CMS routines"},
     {ERR_PACK(ERR_LIB_HMAC, 0, 0), "HMAC routines"},
