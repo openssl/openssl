@@ -15,11 +15,15 @@ reason code
 
  int ERR_GET_REASON(unsigned long e);
 
+ int ERR_FATAL_ERROR(unsigned long e);
+
 =head1 DESCRIPTION
 
 The error code returned by ERR_get_error() consists of a library
 number, function code and reason code. ERR_GET_LIB(), ERR_GET_FUNC()
 and ERR_GET_REASON() can be used to extract these.
+
+ERR_FATAL_ERROR() indicates whether a given error code is a fatal error.
 
 The library number and function code describe where the error
 occurred, the reason code is the information about what went wrong.
@@ -33,11 +37,13 @@ B<ERR_R_...> reason codes such as B<ERR_R_MALLOC_FAILURE> are globally
 unique. However, when checking for sub-library specific reason codes,
 be sure to also compare the library number.
 
-ERR_GET_LIB(), ERR_GET_FUNC() and ERR_GET_REASON() are macros.
+ERR_GET_LIB(), ERR_GET_FUNC(), ERR_GET_REASON(), and ERR_FATAL_ERROR()
+ are macros.
 
 =head1 RETURN VALUES
 
-The library number, function code and reason code respectively.
+The library number, function code, reason code, and whether the error
+is fatal, respectively.
 
 =head1 SEE ALSO
 

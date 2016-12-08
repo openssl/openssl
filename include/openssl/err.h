@@ -140,6 +140,7 @@ typedef struct err_state_st {
 # define ERR_GET_LIB(l)          (int)(((l) >> 24L) & 0x0FFL)
 # define ERR_GET_FUNC(l)         (int)(((l) >> 12L) & 0xFFFL)
 # define ERR_GET_REASON(l)       (int)( (l)         & 0xFFFL)
+# define ERR_FATAL_ERROR(l)      (int)( (l)         & ERR_R_FATAL)
 
 /* OS functions */
 # define SYS_F_FOPEN             1
