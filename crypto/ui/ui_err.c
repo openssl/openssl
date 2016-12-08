@@ -21,6 +21,7 @@
 static ERR_STRING_DATA UI_str_functs[] = {
     {ERR_FUNC(UI_F_GENERAL_ALLOCATE_BOOLEAN), "general_allocate_boolean"},
     {ERR_FUNC(UI_F_GENERAL_ALLOCATE_PROMPT), "general_allocate_prompt"},
+    {ERR_FUNC(UI_F_OPEN_CONSOLE), "open_console"},
     {ERR_FUNC(UI_F_UI_CREATE_METHOD), "UI_create_method"},
     {ERR_FUNC(UI_F_UI_CTRL), "UI_ctrl"},
     {ERR_FUNC(UI_F_UI_DUP_ERROR_STRING), "UI_dup_error_string"},
@@ -45,6 +46,8 @@ static ERR_STRING_DATA UI_str_reasons[] = {
     {ERR_REASON(UI_R_RESULT_TOO_LARGE), "result too large"},
     {ERR_REASON(UI_R_RESULT_TOO_SMALL), "result too small"},
     {ERR_REASON(UI_R_UNKNOWN_CONTROL_COMMAND), "unknown control command"},
+    {ERR_REASON(UI_R_UNKNOWN_TTYGET_ERRNO_VALUE),
+     "unknown ttyget errno value"},
     {0, NULL}
 };
 

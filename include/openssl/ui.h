@@ -341,6 +341,7 @@ int ERR_load_UI_strings(void);
 /* Function codes. */
 # define UI_F_GENERAL_ALLOCATE_BOOLEAN                    108
 # define UI_F_GENERAL_ALLOCATE_PROMPT                     109
+# define UI_F_OPEN_CONSOLE                                114
 # define UI_F_UI_CREATE_METHOD                            112
 # define UI_F_UI_CTRL                                     111
 # define UI_F_UI_DUP_ERROR_STRING                         101
@@ -362,6 +363,7 @@ int ERR_load_UI_strings(void);
 # define UI_R_RESULT_TOO_LARGE                            100
 # define UI_R_RESULT_TOO_SMALL                            101
 # define UI_R_UNKNOWN_CONTROL_COMMAND                     106
+# define UI_R_UNKNOWN_TTYGET_ERRNO_VALUE                  108
 
 #  ifdef  __cplusplus
 }
