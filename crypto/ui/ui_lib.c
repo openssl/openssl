@@ -483,7 +483,7 @@ int UI_process(UI *ui)
     }
  err:
     if (ui->meth->ui_close_session != NULL
-        && !ui->meth->ui_close_session(ui) <= 0) {
+        && ui->meth->ui_close_session(ui) <= 0) {
         if (state == NULL)
             state = "closing session";
         ok = -1;
