@@ -131,11 +131,12 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     EVP_PKEY *pkey;
     const EVP_MD *md;
     EVP_MD_CTX *mctx = NULL;
-    unsigned u = 0;
-    size_t hdatalen = 0;
+    EVP_PKEY_CTX *pctx = NULL;
+    size_t hdatalen = 0, siglen = 0;
     void *hdata;
     unsigned char *sig = NULL;
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
+    int pktype;
 
     if (s->server) {
         /* Only happens in TLSv1.3 */
@@ -151,6 +152,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
         pkey = s->cert->key->privatekey;
     }
+    pktype = EVP_PKEY_id(pkey);
 
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL) {
@@ -171,32 +173,50 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
 #ifdef SSL_DEBUG
     fprintf(stderr, "Using client alg %s\n", EVP_MD_name(md));
 #endif
-    sig = OPENSSL_malloc(EVP_PKEY_size(pkey));
+    siglen = EVP_PKEY_size(pkey);
+    sig = OPENSSL_malloc(siglen);
     if (sig == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    if (!EVP_SignInit_ex(mctx, md, NULL)
-        || !EVP_SignUpdate(mctx, hdata, hdatalen)
-        || (s->version == SSL3_VERSION
-            && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                (int)s->session->master_key_length,
-                                s->session->master_key))
-        || !EVP_SignFinal(mctx, sig, &u, pkey)) {
+
+    if (EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey) <= 0
+            || EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
         goto err;
     }
+
+    if (SSL_IS_TLS13(s) && pktype == EVP_PKEY_RSA) {
+        if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
+                   /* -1 here means set saltlen to the digest len */
+                || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
+            goto err;
+        }
+    } else if (s->version == SSL3_VERSION) {
+        if (!EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                             (int)s->session->master_key_length,
+                             s->session->master_key)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
+            goto err;
+        }
+    }
+
+    if (EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
+        goto err;
+    }
+
 #ifndef OPENSSL_NO_GOST
     {
-        int pktype = EVP_PKEY_id(pkey);
         if (pktype == NID_id_GostR3410_2001
             || pktype == NID_id_GostR3410_2012_256
             || pktype == NID_id_GostR3410_2012_512)
-            BUF_reverse(sig, NULL, u);
+            BUF_reverse(sig, NULL, siglen);
     }
 #endif
 
-    if (!WPACKET_sub_memcpy_u16(pkt, sig, u)) {
+    if (!WPACKET_sub_memcpy_u16(pkt, sig, siglen)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -222,25 +242,25 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_GOST
     unsigned char *gost_data = NULL;
 #endif
-    int al, ret = MSG_PROCESS_ERROR;
-    int type = 0, j;
+    int al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
+    int type = 0, j, pktype;
     unsigned int len;
     X509 *peer;
     const EVP_MD *md = NULL;
     size_t hdatalen = 0;
     void *hdata;
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
-
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+    EVP_PKEY_CTX *pctx = NULL;
 
     if (mctx == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
-        al = SSL_AD_INTERNAL_ERROR;
         goto f_err;
     }
 
     peer = s->session->peer;
     pkey = X509_get0_pubkey(peer);
+    pktype = EVP_PKEY_id(pkey);
     type = X509_certificate_type(peer, pkey);
 
     if (!(type & EVP_PKT_SIGN)) {
@@ -271,7 +291,6 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
             }
             rv = tls12_check_peer_sigalg(&md, s, sig, pkey);
             if (rv == -1) {
-                al = SSL_AD_INTERNAL_ERROR;
                 goto f_err;
             } else if (rv == 0) {
                 al = SSL_AD_DECODE_ERROR;
@@ -312,28 +331,24 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 
     if (!get_cert_verify_tbs_data(s, tls13tbs, &hdata, &hdatalen)) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
-        al = SSL_AD_INTERNAL_ERROR;
         goto f_err;
     }
 
 #ifdef SSL_DEBUG
     fprintf(stderr, "Using client verify alg %s\n", EVP_MD_name(md));
 #endif
-    if (!EVP_VerifyInit_ex(mctx, md, NULL)
-        || !EVP_VerifyUpdate(mctx, hdata, hdatalen)) {
+    if (EVP_DigestVerifyInit(mctx, &pctx, md, NULL, pkey) <= 0
+            || EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
-        al = SSL_AD_INTERNAL_ERROR;
         goto f_err;
     }
 #ifndef OPENSSL_NO_GOST
     {
-        int pktype = EVP_PKEY_id(pkey);
         if (pktype == NID_id_GostR3410_2001
             || pktype == NID_id_GostR3410_2012_256
             || pktype == NID_id_GostR3410_2012_512) {
             if ((gost_data = OPENSSL_malloc(len)) == NULL) {
                 SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
-                al = SSL_AD_INTERNAL_ERROR;
                 goto f_err;
             }
             BUF_reverse(gost_data, data, len);
@@ -342,16 +357,22 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 #endif
 
-    if (s->version == SSL3_VERSION
+    if (SSL_IS_TLS13(s) && pktype == EVP_PKEY_RSA) {
+        if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
+                   /* -1 here means set saltlen to the digest len */
+                || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+            goto f_err;
+        }
+    } else if (s->version == SSL3_VERSION
         && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                             (int)s->session->master_key_length,
                             s->session->master_key)) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
-        al = SSL_AD_INTERNAL_ERROR;
         goto f_err;
     }
 
-    if (EVP_VerifyFinal(mctx, data, len, pkey) <= 0) {
+    if (EVP_DigestVerifyFinal(mctx, data, len) <= 0) {
         al = SSL_AD_DECRYPT_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
         goto f_err;
