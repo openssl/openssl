@@ -591,8 +591,8 @@ int UI_method_set_opener(UI_METHOD *method, int (*opener) (UI *ui))
     if (method != NULL) {
         method->ui_open_session = opener;
         return 0;
-    } else
-        return -1;
+    }
+    return -1;
 }
 
 int UI_method_set_writer(UI_METHOD *method,
@@ -601,8 +601,8 @@ int UI_method_set_writer(UI_METHOD *method,
     if (method != NULL) {
         method->ui_write_string = writer;
         return 0;
-    } else
-        return -1;
+    }
+    return -1;
 }
 
 int UI_method_set_flusher(UI_METHOD *method, int (*flusher) (UI *ui))
@@ -610,8 +610,8 @@ int UI_method_set_flusher(UI_METHOD *method, int (*flusher) (UI *ui))
     if (method != NULL) {
         method->ui_flush = flusher;
         return 0;
-    } else
-        return -1;
+    }
+    return -1;
 }
 
 int UI_method_set_reader(UI_METHOD *method,
@@ -620,8 +620,8 @@ int UI_method_set_reader(UI_METHOD *method,
     if (method != NULL) {
         method->ui_read_string = reader;
         return 0;
-    } else
-        return -1;
+    }
+    return -1;
 }
 
 int UI_method_set_closer(UI_METHOD *method, int (*closer) (UI *ui))
@@ -629,8 +629,8 @@ int UI_method_set_closer(UI_METHOD *method, int (*closer) (UI *ui))
     if (method != NULL) {
         method->ui_close_session = closer;
         return 0;
-    } else
-        return -1;
+    }
+    return -1;
 }
 
 int UI_method_set_prompt_constructor(UI_METHOD *method,
@@ -643,48 +643,43 @@ int UI_method_set_prompt_constructor(UI_METHOD *method,
     if (method != NULL) {
         method->ui_construct_prompt = prompt_constructor;
         return 0;
-    } else
-        return -1;
+    }
+    return -1;
 }
 
 int (*UI_method_get_opener(UI_METHOD *method)) (UI *)
 {
     if (method != NULL)
         return method->ui_open_session;
-    else
-        return NULL;
+    return NULL;
 }
 
 int (*UI_method_get_writer(UI_METHOD *method)) (UI *, UI_STRING *)
 {
     if (method != NULL)
         return method->ui_write_string;
-    else
-        return NULL;
+    return NULL;
 }
 
 int (*UI_method_get_flusher(UI_METHOD *method)) (UI *)
 {
     if (method != NULL)
         return method->ui_flush;
-    else
-        return NULL;
+    return NULL;
 }
 
 int (*UI_method_get_reader(UI_METHOD *method)) (UI *, UI_STRING *)
 {
     if (method != NULL)
         return method->ui_read_string;
-    else
-        return NULL;
+    return NULL;
 }
 
 int (*UI_method_get_closer(UI_METHOD *method)) (UI *)
 {
     if (method != NULL)
         return method->ui_close_session;
-    else
-        return NULL;
+    return NULL;
 }
 
 char *(*UI_method_get_prompt_constructor(UI_METHOD *method)) (UI *,
@@ -693,8 +688,7 @@ char *(*UI_method_get_prompt_constructor(UI_METHOD *method)) (UI *,
 {
     if (method != NULL)
         return method->ui_construct_prompt;
-    else
-        return NULL;
+    return NULL;
 }
 
 enum UI_string_types UI_get_string_type(UI_STRING *uis)
