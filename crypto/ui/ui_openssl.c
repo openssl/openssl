@@ -445,13 +445,17 @@ static int open_console(UI *ui)
 #endif
 #ifdef OPENSSL_SYS_VMS
     status = sys$assign(&terminal, &channel, 0, 0);
+
+    /* if there isn't a TT device, something is very wrong */
     if (status != SS$_NORMAL)
         return 0;
-    status =
-        sys$qiow(0, channel, IO$_SENSEMODE, &iosb, 0, 0, tty_orig, 12, 0, 0,
-                 0, 0);
+
+    status = sys$qiow(0, channel, IO$_SENSEMODE, &iosb, 0, 0, tty_orig, 12,
+                      0, 0, 0, 0);
+
+    /* If IO$_SENSEMODE doesn't work, this is not a terminal device */
     if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
-        return 0;
+        is_a_tty = 0;
 #endif
     return 1;
 }
@@ -468,14 +472,15 @@ static int noecho_console(UI *ui)
         return 0;
 #endif
 #ifdef OPENSSL_SYS_VMS
-    tty_new[0] = tty_orig[0];
-    tty_new[1] = tty_orig[1] | TT$M_NOECHO;
-    tty_new[2] = tty_orig[2];
-    status =
-        sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12, 0, 0, 0,
-                 0);
-    if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
-        return 0;
+    if (is_a_tty) {
+        tty_new[0] = tty_orig[0];
+        tty_new[1] = tty_orig[1] | TT$M_NOECHO;
+        tty_new[2] = tty_orig[2];
+        status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
+                          0, 0, 0, 0);
+        if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
+            return 0;
+    }
 #endif
 #if defined(_WIN32) && !defined(_WIN32_WCE)
     if (is_a_tty) {
@@ -499,14 +504,15 @@ static int echo_console(UI *ui)
         return 0;
 #endif
 #ifdef OPENSSL_SYS_VMS
-    tty_new[0] = tty_orig[0];
-    tty_new[1] = tty_orig[1] & ~TT$M_NOECHO;
-    tty_new[2] = tty_orig[2];
-    status =
-        sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12, 0, 0, 0,
-                 0);
-    if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
-        return 0;
+    if (is_a_tty) {
+        tty_new[0] = tty_orig[0];
+        tty_new[1] = tty_orig[1] & ~TT$M_NOECHO;
+        tty_new[2] = tty_orig[2];
+        status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
+                          0, 0, 0, 0);
+        if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
+            return 0;
+    }
 #endif
 #if defined(_WIN32) && !defined(_WIN32_WCE)
     if (is_a_tty) {
@@ -526,6 +532,8 @@ static int close_console(UI *ui)
         fclose(tty_out);
 #ifdef OPENSSL_SYS_VMS
     status = sys$dassgn(channel);
+    if (status != SS$_NORMAL)
+        return 0;
 #endif
     CRYPTO_THREAD_unlock(ui->lock);
 
