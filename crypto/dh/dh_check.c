@@ -92,7 +92,7 @@ int DH_check(const DH *dh, int *ret)
         r = BN_is_prime_ex(t1, BN_prime_checks, ctx, NULL);
         if (r < 0)
             goto err;
-	if (!r)
+        if (!r)
             *ret |= DH_CHECK_P_NOT_SAFE_PRIME;
     }
     ok = 1;
