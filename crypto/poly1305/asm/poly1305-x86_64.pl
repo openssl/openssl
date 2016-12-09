@@ -2014,7 +2014,14 @@ $code.=<<___;
 	ret
 .size	poly1305_blocks_avx2,.-poly1305_blocks_avx2
 ___
+#######################################################################
 if ($avx>2) {
+# On entry we have input length divisible by 64. But since inner loop
+# processes 128 bytes per iteration, cases when length is not divisible
+# by 128 are handled by passing tail 64 bytes to .Ltail_avx2. For this
+# reason stack layout is kept identical to poly1305_blocks_avx2. If not
+# for this tail, we wouldn't have to even allocate stack frame...
+
 my ($R0,$R1,$R2,$R3,$R4, $S1,$S2,$S3,$S4) = map("%ymm$_",(16..24));
 my ($M0,$M1,$M2,$M3,$M4) = map("%ymm$_",(25..29));
 my $PADBIT="%zmm30";
