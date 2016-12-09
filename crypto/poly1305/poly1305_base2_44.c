@@ -67,6 +67,7 @@ int poly1305_init(void *ctx, const unsigned char key[16])
     r0 = U8TOU64(&key[0]) & 0x0ffffffc0fffffff;
     r1 = U8TOU64(&key[8]) & 0x0ffffffc0ffffffc;
 
+    /* break r1:r0 to three 44-bit digits, masks are 1<<44-1 */
     st->r[0] = r0 & 0x0fffffffffff;
     st->r[1] = ((r0 >> 44) | (r1 << 20))  & 0x0fffffffffff;
     st->r[2] = (r1 >> 24);
@@ -104,7 +105,7 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
         m0 = U8TOU64(inp + 0);
         m1 = U8TOU64(inp + 8);
 
-        /* h += m[i] */
+        /* h += m[i], m[i] is broken to 44-bit digits */
         h0 += m0 & 0x0fffffffffff;
         h1 += ((m0 >> 44) | (m1 << 20))  & 0x0fffffffffff;
         h2 +=  (m1 >> 24) + pad;
@@ -117,7 +118,7 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
         /* "lazy" reduction step */
         h0 = (u64)d0 & 0x0fffffffffff;
         h1 = (u64)(d1 += d0 >> 44) & 0x0fffffffffff;
-        h2 = (u64)(d2 += d1 >> 44) & 0x03ffffffffff;
+        h2 = (u64)(d2 += d1 >> 44) & 0x03ffffffffff; /* last digit is 42 bits */
 
         c = (d2 >> 42);
         h0 += c + (c << 2);
@@ -143,7 +144,7 @@ void poly1305_emit(void *ctx, unsigned char mac[16], const u32 nonce[4])
     h1 = st->h[1];
     h2 = st->h[2];
 
-    /* after "lazy" reduction */
+    /* after "lazy" reduction, convert 44+bit digits to 64-bit ones */
     h0 = (u64)(t = (u128)h0 + (h1 << 44));              h1 >>= 20;
     h1 = (u64)(t = (u128)h1 + (h2 << 24) + (t >> 64));  h2 >>= 40;
     h2 += (u64)(t >> 64);
