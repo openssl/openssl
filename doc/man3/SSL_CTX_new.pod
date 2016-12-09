@@ -150,7 +150,7 @@ Use the I<version-flexible> methods instead of the version specific methods.
 If you want to limit the supported protocols for the version flexible
 methods you can use L<SSL_CTX_set_min_proto_version(3)>,
 L<SSL_set_min_proto_version(3)>, L<SSL_CTX_set_max_proto_version(3)> and
-LSSL_set_max_proto_version(3)> functions.
+L<SSL_set_max_proto_version(3)> functions.
 Using these functions it is possible to choose e.g. TLS_server_method()
 and be able to negotiate with all possible clients, but to only
 allow newer protocols like TLS 1.0, TLS 1.1 or TLS 1.2.
