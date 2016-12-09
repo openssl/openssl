@@ -110,9 +110,9 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
         h2 +=  (m1 >> 24) + pad;
 
         /* h *= r "%" p, where "%" stands for "partial remainder" */
-	d0 = ((u128)h0 * r0) + ((u128)h1 * s2) + ((u128)h2 * s1);
-	d1 = ((u128)h0 * r1) + ((u128)h1 * r0) + ((u128)h2 * s2);
-	d2 = ((u128)h0 * r2) + ((u128)h1 * r1) + ((u128)h2 * r0);
+        d0 = ((u128)h0 * r0) + ((u128)h1 * s2) + ((u128)h2 * s1);
+        d1 = ((u128)h0 * r1) + ((u128)h1 * r0) + ((u128)h2 * s2);
+        d2 = ((u128)h0 * r2) + ((u128)h1 * r1) + ((u128)h2 * r0);
 
         /* "lazy" reduction step */
         h0 = (u64)d0 & 0x0fffffffffff;
