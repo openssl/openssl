@@ -20,6 +20,7 @@ $VERSION = "0.8";
                                    perlapp perltest));
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
+                                         data_file
                                          pipe with cmdstr quotify));
 
 =head1 NAME
@@ -50,6 +51,11 @@ This module I<depends> on the environment variables C<$TOP> or C<$SRCTOP>
 and C<$BLDTOP>.  Without one of the combinations it refuses to work.
 See L</ENVIRONMENT> below.
 
+With each test recipe, a parallell data directory with (almost) the same name
+as the recipe is possible in the source directory tree.  For example, for a
+recipe C<$SRCTOP/test/recipes/99-foo.t>, there could be a directory
+C<$SRCTOP/test/recipes/99-foo_data/>.
+
 =cut
 
 use File::Copy;
@@ -57,6 +63,7 @@ use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
                              catdir catfile splitpath catpath devnull abs2rel
                              rel2abs/;
 use File::Path 2.00 qw/rmtree mkpath/;
+use File::Basename;
 
 
 # The name of the test.  This is set by setup() and is used in the other
@@ -565,6 +572,23 @@ sub srctop_file {
 
 =over 4
 
+=item B<data_file LIST, FILENAME>
+
+LIST is a list of directories that make up a path from the data directory
+associated with the test (see L</DESCRIPTION> above) and FILENAME is the name
+of a file located in that directory path.  C<data_file> returns the resulting
+file path as a string, adapted to the local operating system.
+
+=back
+
+=cut
+
+sub data_file {
+    return __data_file(@_);
+}
+
+=over 4
+
 =item B<pipe LIST>
 
 LIST is a list of CODEREFs returned by C<app> or C<test>, from which C<pipe>
@@ -764,6 +788,8 @@ failures will result in a C<BAIL_OUT> at the end of its run.
 =cut
 
 sub __env {
+    (my $recipe_datadir = basename($0)) =~ s/\.t$/_data/i;
+
     $directories{SRCTOP}  = $ENV{SRCTOP} || $ENV{TOP};
     $directories{BLDTOP}  = $ENV{BLDTOP} || $ENV{TOP};
     $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
@@ -772,6 +798,8 @@ sub __env {
     $directories{SRCFUZZ} =                 __srctop_dir("fuzz");
     $directories{BLDTEST} = $ENV{TEST_D} || __bldtop_dir("test");
     $directories{SRCTEST} =                 __srctop_dir("test");
+    $directories{SRCDATA} =                 __srctop_dir("test", "recipes",
+                                                         $recipe_datadir);
     $directories{RESULTS} = $ENV{RESULT_D} || $directories{BLDTEST};
 
     push @direnv, "TOP"       if $ENV{TOP};
@@ -870,6 +898,13 @@ sub __fuzz_file {
     return $f;
 }
 
+sub __data_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    return catfile($directories{SRCDATA},@_,$f);
+}
+
 sub __results_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
@@ -961,6 +996,7 @@ sub __cwd {
 	print STDERR "DEBUG: __cwd(), directories and files:\n";
 	print STDERR "  \$directories{BLDTEST} = \"$directories{BLDTEST}\"\n";
 	print STDERR "  \$directories{SRCTEST} = \"$directories{SRCTEST}\"\n";
+	print STDERR "  \$directories{SRCDATA} = \"$directories{SRCDATA}\"\n";
 	print STDERR "  \$directories{RESULTS} = \"$directories{RESULTS}\"\n";
 	print STDERR "  \$directories{BLDAPPS} = \"$directories{BLDAPPS}\"\n";
 	print STDERR "  \$directories{SRCAPPS} = \"$directories{SRCAPPS}\"\n";
