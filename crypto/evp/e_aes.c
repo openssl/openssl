@@ -44,6 +44,8 @@ typedef struct {
     int iv_gen;                 /* It is OK to generate IVs */
     int tls_aad_len;            /* TLS AAD length */
     ctr128_f ctr;
+    unsigned char seq_no[8];    /* Sequence number to XOR into IV */
+    int use_seq_no;             /* Whether to XOR a sequence number into IV */
 } EVP_AES_GCM_CTX;
 
 typedef struct {
@@ -1292,14 +1294,13 @@ static void ctr64_inc(unsigned char *counter)
 static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,c);
+
     switch (type) {
     case EVP_CTRL_INIT:
-        gctx->key_set = 0;
-        gctx->iv_set = 0;
+        memset (gctx, 0, sizeof(*gctx));
         gctx->ivlen = EVP_CIPHER_CTX_iv_length(c);
         gctx->iv = EVP_CIPHER_CTX_iv_noconst(c);
         gctx->taglen = -1;
-        gctx->iv_gen = 0;
         gctx->tls_aad_len = -1;
         return 1;
 
@@ -1352,13 +1353,50 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         gctx->iv_gen = 1;
         return 1;
 
+    case EVP_CTRL_GCM_SET_SEQ_NO:
+        /*
+         * We will form the IV by XORing together the fixed IV with a sequence
+         * number as used in TLSv1.3
+         */
+        if (arg > 0) {
+            if (arg != sizeof(gctx->seq_no))
+                return 0;
+            memcpy(gctx->seq_no, ptr, sizeof(gctx->seq_no));
+        } else {
+            memset(gctx->seq_no, 0, sizeof(gctx->seq_no));
+        }
+        gctx->use_seq_no = 1;
+        return 1;
+
     case EVP_CTRL_GCM_IV_GEN:
         if (gctx->iv_gen == 0 || gctx->key_set == 0)
             return 0;
-        CRYPTO_gcm128_setiv(&gctx->gcm, gctx->iv, gctx->ivlen);
         if (arg <= 0 || arg > gctx->ivlen)
             arg = gctx->ivlen;
-        memcpy(ptr, gctx->iv + gctx->ivlen - arg, arg);
+        if (gctx->use_seq_no) {
+            /* 12 bytes in a TLSv1.3 GCM IV */
+            unsigned char tmpiv[12];
+            size_t loop;
+            const int seq_no_pad = sizeof(tmpiv) - sizeof(gctx->seq_no);
+
+            if (sizeof(tmpiv) != gctx->ivlen) {
+                /* Should never happen */
+                return 0;
+            }
+            memcpy(tmpiv, gctx->iv, seq_no_pad);
+            for (loop = 0; loop < sizeof(gctx->seq_no); loop++)
+                tmpiv[loop + seq_no_pad] = gctx->iv[loop + seq_no_pad]
+                                           ^ gctx->seq_no[loop];
+            CRYPTO_gcm128_setiv(&gctx->gcm, tmpiv, gctx->ivlen);
+            ctr64_inc(gctx->seq_no);
+            gctx->iv_set = 1;
+            if (ptr != NULL)
+                memcpy(ptr, tmpiv + gctx->ivlen - arg, arg);
+            return 1;
+        }
+        CRYPTO_gcm128_setiv(&gctx->gcm, gctx->iv, gctx->ivlen);
+        if (ptr != NULL)
+            memcpy(ptr, gctx->iv + gctx->ivlen - arg, arg);
         /*
          * Invocation field will be at least 8 bytes in size and so no need
          * to check wrap around or increment more than last 8 bytes.
@@ -1512,26 +1550,44 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,ctx);
     int rv = -1;
+    unsigned char *iv = NULL;
+
     /* Encrypt/decrypt must be performed in place */
     if (out != in
-        || len < (EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN))
+        || len < EVP_GCM_TLS_TAG_LEN
+                 + (gctx->use_seq_no ? 0 : EVP_GCM_TLS_EXPLICIT_IV_LEN))
         return -1;
+
+    /*
+     * If not using a sequence number then we are not TLSv1.3 and we need an
+     * explicit IV.
+     */
+    if (!gctx->use_seq_no)
+        iv = out;
     /*
      * Set IV from start of buffer or generate IV and write to start of
      * buffer.
      */
     if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CIPHER_CTX_encrypting(ctx) ?
                             EVP_CTRL_GCM_IV_GEN : EVP_CTRL_GCM_SET_IV_INV,
-                            EVP_GCM_TLS_EXPLICIT_IV_LEN, out) <= 0)
+                            EVP_GCM_TLS_EXPLICIT_IV_LEN, iv) <= 0)
         goto err;
-    /* Use saved AAD */
-    if (CRYPTO_gcm128_aad(&gctx->gcm, EVP_CIPHER_CTX_buf_noconst(ctx),
-                          gctx->tls_aad_len))
+    /* Use saved AAD (no AAD in TLSv1.3) */
+    if (gctx->tls_aad_len > 0 &&
+            CRYPTO_gcm128_aad(&gctx->gcm, EVP_CIPHER_CTX_buf_noconst(ctx),
+                              gctx->tls_aad_len))
         goto err;
     /* Fix buffer and length to point to payload */
-    in += EVP_GCM_TLS_EXPLICIT_IV_LEN;
-    out += EVP_GCM_TLS_EXPLICIT_IV_LEN;
-    len -= EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+    if (!gctx->use_seq_no) {
+        /*
+         * Not using a sequence number so this isn't TLSv1.3 and we need an
+         * explicit IV.
+         */
+        in += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+        out += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+        len -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
+    }
+    len -= EVP_GCM_TLS_TAG_LEN;
     if (EVP_CIPHER_CTX_encrypting(ctx)) {
         /* Encrypt payload */
         if (gctx->ctr) {
@@ -1572,7 +1628,9 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         out += len;
         /* Finally write tag */
         CRYPTO_gcm128_tag(&gctx->gcm, out, EVP_GCM_TLS_TAG_LEN);
-        rv = len + EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+        rv = len + EVP_GCM_TLS_TAG_LEN;
+        if (!gctx->use_seq_no)
+            rv += EVP_GCM_TLS_EXPLICIT_IV_LEN;
     } else {
         /* Decrypt */
         if (gctx->ctr) {
@@ -1636,7 +1694,7 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (!gctx->key_set)
         return -1;
 
-    if (gctx->tls_aad_len >= 0)
+    if (gctx->tls_aad_len >= 0 || gctx->use_seq_no)
         return aes_gcm_tls_cipher(ctx, out, in, len);
 
     if (!gctx->iv_set)

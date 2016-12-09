@@ -334,6 +334,9 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 /* Set the input buffer lengths to use for a pipelined operation */
 # define         EVP_CTRL_SET_PIPELINE_INPUT_LENS        0x24
 
+/* Set GCM mode to use TLSv1.3 style IVs */
+# define         EVP_CTRL_GCM_SET_SEQ_NO                 0x25
+
 /* Padding modes */
 #define EVP_PADDING_PKCS7       1
 #define EVP_PADDING_ISO7816_4   2
