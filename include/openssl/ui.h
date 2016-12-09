@@ -339,8 +339,11 @@ int ERR_load_UI_strings(void);
 /* Error codes for the UI functions. */
 
 /* Function codes. */
+# define UI_F_CLOSE_CONSOLE                               115
+# define UI_F_ECHO_CONSOLE                                116
 # define UI_F_GENERAL_ALLOCATE_BOOLEAN                    108
 # define UI_F_GENERAL_ALLOCATE_PROMPT                     109
+# define UI_F_NOECHO_CONSOLE                              117
 # define UI_F_OPEN_CONSOLE                                114
 # define UI_F_UI_CREATE_METHOD                            112
 # define UI_F_UI_CTRL                                     111
@@ -362,6 +365,9 @@ int ERR_load_UI_strings(void);
 # define UI_R_PROCESSING_ERROR                            107
 # define UI_R_RESULT_TOO_LARGE                            100
 # define UI_R_RESULT_TOO_SMALL                            101
+# define UI_R_SYSASSIGN_ERROR                             109
+# define UI_R_SYSDASSGN_ERROR                             110
+# define UI_R_SYSQIOW_ERROR                               111
 # define UI_R_UNKNOWN_CONTROL_COMMAND                     106
 # define UI_R_UNKNOWN_TTYGET_ERRNO_VALUE                  108
 
