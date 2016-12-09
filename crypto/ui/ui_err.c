@@ -19,8 +19,11 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_UI,0,reason)
 
 static ERR_STRING_DATA UI_str_functs[] = {
+    {ERR_FUNC(UI_F_CLOSE_CONSOLE), "close_console"},
+    {ERR_FUNC(UI_F_ECHO_CONSOLE), "echo_console"},
     {ERR_FUNC(UI_F_GENERAL_ALLOCATE_BOOLEAN), "general_allocate_boolean"},
     {ERR_FUNC(UI_F_GENERAL_ALLOCATE_PROMPT), "general_allocate_prompt"},
+    {ERR_FUNC(UI_F_NOECHO_CONSOLE), "noecho_console"},
     {ERR_FUNC(UI_F_OPEN_CONSOLE), "open_console"},
     {ERR_FUNC(UI_F_UI_CREATE_METHOD), "UI_create_method"},
     {ERR_FUNC(UI_F_UI_CTRL), "UI_ctrl"},
@@ -45,6 +48,9 @@ static ERR_STRING_DATA UI_str_reasons[] = {
     {ERR_REASON(UI_R_PROCESSING_ERROR), "processing error"},
     {ERR_REASON(UI_R_RESULT_TOO_LARGE), "result too large"},
     {ERR_REASON(UI_R_RESULT_TOO_SMALL), "result too small"},
+    {ERR_REASON(UI_R_SYSASSIGN_ERROR), "sys$assign error"},
+    {ERR_REASON(UI_R_SYSDASSGN_ERROR), "sys$dassgn error"},
+    {ERR_REASON(UI_R_SYSQIOW_ERROR), "sys$qiow error"},
     {ERR_REASON(UI_R_UNKNOWN_CONTROL_COMMAND), "unknown control command"},
     {ERR_REASON(UI_R_UNKNOWN_TTYGET_ERRNO_VALUE),
      "unknown ttyget errno value"},

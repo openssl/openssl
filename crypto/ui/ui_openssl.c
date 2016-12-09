@@ -452,8 +452,14 @@ static int open_console(UI *ui)
     status = sys$assign(&terminal, &channel, 0, 0);
 
     /* if there isn't a TT device, something is very wrong */
-    if (status != SS$_NORMAL)
+    if (status != SS$_NORMAL) {
+        char tmp_num[12];
+
+        BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%%X%08X", status);
+        UIerr(UI_F_OPEN_CONSOLE, UI_R_SYSASSIGN_ERROR);
+        ERR_add_error_data(2, "status=", tmp_num);
         return 0;
+    }
 
     status = sys$qiow(0, channel, IO$_SENSEMODE, &iosb, 0, 0, tty_orig, 12,
                       0, 0, 0, 0);
@@ -483,8 +489,18 @@ static int noecho_console(UI *ui)
         tty_new[2] = tty_orig[2];
         status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
                           0, 0, 0, 0);
-        if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
+        if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL)) {
+            char tmp_num[2][12];
+
+            BIO_snprintf(tmp_num[0], sizeof(tmp_num[0]) - 1, "%%X%08X",
+                         status);
+            BIO_snprintf(tmp_num[1], sizeof(tmp_num[1]) - 1, "%%X%08X",
+                         iosb.iosb$w_value);
+            UIerr(UI_F_NOECHO_CONSOLE, UI_R_SYSQIOW_ERROR);
+            ERR_add_error_data(5, "status=", tmp_num[0],
+                               ",", "iosb.iosb$w_value=", tmp_num[1]);
             return 0;
+        }
     }
 #endif
 #if defined(_WIN32) && !defined(_WIN32_WCE)
@@ -515,8 +531,18 @@ static int echo_console(UI *ui)
         tty_new[2] = tty_orig[2];
         status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
                           0, 0, 0, 0);
-        if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
+        if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL)) {
+            char tmp_num[2][12];
+
+            BIO_snprintf(tmp_num[0], sizeof(tmp_num[0]) - 1, "%%X%08X",
+                         status);
+            BIO_snprintf(tmp_num[1], sizeof(tmp_num[1]) - 1, "%%X%08X",
+                         iosb.iosb$w_value);
+            UIerr(UI_F_ECHO_CONSOLE, UI_R_SYSQIOW_ERROR);
+            ERR_add_error_data(5, "status=", tmp_num[0],
+                               ",", "iosb.iosb$w_value=", tmp_num[1]);
             return 0;
+        }
     }
 #endif
 #if defined(_WIN32) && !defined(_WIN32_WCE)
@@ -537,8 +563,14 @@ static int close_console(UI *ui)
         fclose(tty_out);
 #ifdef OPENSSL_SYS_VMS
     status = sys$dassgn(channel);
-    if (status != SS$_NORMAL)
+    if (status != SS$_NORMAL) {
+        char tmp_num[12];
+
+        BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%%X%08X", status);
+        UIerr(UI_F_CLOSE_CONSOLE, UI_R_SYSDASSGN_ERROR);
+        ERR_add_error_data(2, "status=", tmp_num);
         return 0;
+    }
 #endif
     CRYPTO_THREAD_unlock(ui->lock);
 
