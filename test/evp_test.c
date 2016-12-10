@@ -354,8 +354,7 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
             t->nskip++;
         } else {
             /* run the test */
-            t->err = NULL;
-            if (t->meth->run_test(t) != 1) {
+            if (t->err == NULL && t->meth->run_test(t) != 1) {
                 fprintf(stderr, "%s test error line %d\n",
                         t->meth->name, t->start_line);
                 return 0;
@@ -567,6 +566,7 @@ int main(int argc, char **argv)
         return 1;
     }
     t.in = in;
+    t.err = NULL;
     while (BIO_gets(in, buf, sizeof(buf))) {
         t.line++;
         if (!process_test(&t, buf, 0))
@@ -1234,7 +1234,7 @@ static int pkey_test_init(struct evp_test *t, const char *name,
     if (!kdata->ctx)
         return 0;
     if (keyopinit(kdata->ctx) <= 0)
-        return 0;
+        t->err = "KEYOP_INIT_ERROR";
     return 1;
 }
 
@@ -1260,10 +1260,20 @@ static int pkey_test_ctrl(struct evp_test *t, EVP_PKEY_CTX *pctx,
     if (p != NULL)
         *p++ = 0;
     rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
-    if (p != NULL && rv <= 0 && rv != -2) {
-        /* If p has an OID assume disabled algorithm */
-        if (OBJ_sn2nid(p) != NID_undef || OBJ_ln2nid(p) != NID_undef) {
+    if (rv == -2) {
+        t->err = "PKEY_CTRL_INVALID";
+        rv = 1;
+    } else if (p != NULL && rv <= 0) {
+        /* If p has an OID and lookup fails assume disabled algorithm */
+        int nid = OBJ_sn2nid(p);
+        if (nid == NID_undef)
+             nid = OBJ_ln2nid(p);
+        if ((nid != NID_undef) && EVP_get_digestbynid(nid) == NULL &&
+            EVP_get_cipherbynid(nid) == NULL) {
             t->skip = 1;
+            rv = 1;
+        } else {
+            t->err = "PKEY_CTRL_ERROR";
             rv = 1;
         }
     }
