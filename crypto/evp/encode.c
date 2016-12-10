@@ -58,10 +58,21 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
+#include <openssl/evp.h>
 
+#ifndef CHARSET_EBCDIC
 #define conv_bin2ascii(a)	(data_bin2ascii[(a)&0x3f])
 #define conv_ascii2bin(a)	(data_ascii2bin[(a)&0x7f])
+#else
+/* We assume that PEM encoded files are EBCDIC files
+ * (i.e., printable text files). Convert them here while decoding.
+ * When encoding, output is EBCDIC (text) format again.
+ * (No need for conversion in the conv_bin2ascii macro, as the
+ * underlying textstring data_bin2ascii[] is already EBCDIC)
+ */
+#define conv_bin2ascii(a)	(data_bin2ascii[(a)&0x3f])
+#define conv_ascii2bin(a)	(data_ascii2bin[os_toascii[a]&0x7f])
+#endif
 
 /* 64 char lines
  * pad input with 0
@@ -110,26 +121,22 @@ static unsigned char data_ascii2bin[128]={
 	0x31,0x32,0x33,0xFF,0xFF,0xFF,0xFF,0xFF,
 	};
 
-void EVP_EncodeInit(ctx)
-EVP_ENCODE_CTX *ctx;
+void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 	{
 	ctx->length=48;
 	ctx->num=0;
 	ctx->line_num=0;
 	}
 
-void EVP_EncodeUpdate(ctx,out,outl,in,inl)
-EVP_ENCODE_CTX *ctx;
-unsigned char *out;
-int *outl;
-unsigned char *in;
-int inl;
+void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
+	     unsigned char *in, int inl)
 	{
 	int i,j;
 	unsigned int total=0;
 
 	*outl=0;
 	if (inl == 0) return;
+	OPENSSL_assert(ctx->length <= sizeof ctx->enc_data);
 	if ((ctx->num+inl) < ctx->length)
 		{
 		memcpy(&(ctx->enc_data[ctx->num]),in,inl);
@@ -165,10 +172,7 @@ int inl;
 	*outl=total;
 	}
 
-void EVP_EncodeFinal(ctx,out,outl)
-EVP_ENCODE_CTX *ctx;
-unsigned char *out;
-int *outl;
+void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 	{
 	unsigned int ret=0;
 
@@ -182,9 +186,7 @@ int *outl;
 	*outl=ret;
 	}
 
-int EVP_EncodeBlock(t,f,dlen)
-unsigned char *t,*f;
-int dlen;
+int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 	{
 	int i,ret=0;
 	unsigned long l;
@@ -218,8 +220,7 @@ int dlen;
 	return(ret);
 	}
 
-void EVP_DecodeInit(ctx)
-EVP_ENCODE_CTX *ctx;
+void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
 	{
 	ctx->length=30;
 	ctx->num=0;
@@ -231,12 +232,8 @@ EVP_ENCODE_CTX *ctx;
  *  0 for last line
  *  1 for full line
  */
-int EVP_DecodeUpdate(ctx,out,outl,in,inl)
-EVP_ENCODE_CTX *ctx;
-unsigned char *out;
-int *outl;
-unsigned char *in;
-int inl;
+int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
+	     unsigned char *in, int inl)
 	{
 	int seof= -1,eof=0,rv= -1,ret=0,i,v,tmp,n,ln,tmp2,exp_nl;
 	unsigned char *d;
@@ -262,6 +259,7 @@ int inl;
 		/* only save the good data :-) */
 		if (!B64_NOT_BASE64(v))
 			{
+			OPENSSL_assert(n < sizeof ctx->enc_data);
 			d[n++]=tmp;
 			ln++;
 			}
@@ -281,6 +279,13 @@ int inl;
 			eof++;
 			}
 
+		if (v == B64_CR)
+			{
+			ln = 0;
+			if (exp_nl)
+				continue;
+			}
+
 		/* eoln */
 		if (v == B64_EOLN)
 			{
@@ -296,9 +301,19 @@ int inl;
 		/* If we are at the end of input and it looks like a
 		 * line, process it. */
 		if (((i+1) == inl) && (((n&3) == 0) || eof))
+			{
 			v=B64_EOF;
+			/* In case things were given us in really small
+			   records (so two '=' were given in separate
+			   updates), eof may contain the incorrect number
+			   of ending bytes to skip, so let's redo the count */
+			eof = 0;
+			if (d[n-1] == '=') eof++;
+			if (d[n-2] == '=') eof++;
+			/* There will never be more than two '=' */
+			}
 
-		if ((v == B64_EOF) || (n >= 64))
+		if ((v == B64_EOF && (n&3) == 0) || (n >= 64))
 			{
 			/* This is needed to work correctly on 64 byte input
 			 * lines.  We process the line and then need to
@@ -341,9 +356,7 @@ end:
 	return(rv);
 	}
 
-int EVP_DecodeBlock(t,f,n)
-unsigned char *t,*f;
-int n;
+int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 	{
 	int i,ret=0,a,b,c,d;
 	unsigned long l;
@@ -383,10 +396,7 @@ int n;
 	return(ret);
 	}
 
-int EVP_DecodeFinal(ctx,out,outl)
-EVP_ENCODE_CTX *ctx;
-unsigned char *out;
-int *outl;
+int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 	{
 	int i;
 
@@ -404,9 +414,7 @@ int *outl;
 	}
 
 #ifdef undef
-int EVP_DecodeValid(buf,len)
-unsigned char *buf;
-int len;
+int EVP_DecodeValid(unsigned char *buf, int len)
 	{
 	int i,num=0,bad=0;
 

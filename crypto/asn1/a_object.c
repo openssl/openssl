@@ -58,25 +58,19 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "asn1.h"
-#include "objects.h"
+#include <openssl/buffer.h>
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
 
-/* ASN1err(ASN1_F_ASN1_OBJECT_NEW,ASN1_R_EXPECTING_AN_OBJECT); 
- * ASN1err(ASN1_F_D2I_ASN1_OBJECT,ASN1_R_BAD_OBJECT_HEADER); 
- * ASN1err(ASN1_F_I2T_ASN1_OBJECT,ASN1_R_BAD_OBJECT_HEADER);
- */
-
-int i2d_ASN1_OBJECT(a, pp)
-ASN1_OBJECT *a;
-unsigned char **pp;
+int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
 	{
 	unsigned char *p;
+	int objsize;
 
 	if ((a == NULL) || (a->data == NULL)) return(0);
 
-	if (pp == NULL)
-		return(ASN1_object_size(0,a->length,V_ASN1_OBJECT));
+	objsize = ASN1_object_size(0,a->length,V_ASN1_OBJECT);
+	if (pp == NULL) return objsize;
 
 	p= *pp;
 	ASN1_put_object(&p,0,a->length,V_ASN1_OBJECT,V_ASN1_UNIVERSAL);
@@ -84,17 +78,14 @@ unsigned char **pp;
 	p+=a->length;
 
 	*pp=p;
-	return(a->length);
+	return(objsize);
 	}
 
-int a2d_ASN1_OBJECT(out,olen,buf,num)
-unsigned char *out;
-int olen;
-char *buf;
-int num;
+int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 	{
 	int i,first,len=0,c;
-	char tmp[24],*p;
+	char tmp[24];
+	const char *p;
 	unsigned long l;
 
 	if (num == 0)
@@ -180,119 +171,33 @@ err:
 	return(0);
 	}
 
-int i2t_ASN1_OBJECT(buf,buf_len,a)
-char *buf;
-int buf_len;
-ASN1_OBJECT *a;
-	{
-	int i,idx=0,n=0,len,nid;
-	unsigned long l;
-	unsigned char *p;
-	char *s;
-	char tbuf[32];
+int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a)
+{
+	return OBJ_obj2txt(buf, buf_len, a, 0);
+}
 
-	if (buf_len <= 0) return(0);
-
-	if ((a == NULL) || (a->data == NULL))
-		{
-		buf[0]='\0';
-		return(0);
-		}
-
-	nid=OBJ_obj2nid(a);
-	if (nid == NID_undef)
-		{
-		len=a->length;
-		p=a->data;
-
-		idx=0;
-		l=0;
-		while (idx < a->length)
-			{
-			l|=(p[idx]&0x7f);
-			if (!(p[idx] & 0x80)) break;
-			l<<=7L;
-			idx++;
-			}
-		idx++;
-		i=(int)(l/40);
-		if (i > 2) i=2;
-		l-=(long)(i*40);
-
-		sprintf(tbuf,"%d.%ld",i,l);
-		i=strlen(tbuf);
-		strncpy(buf,tbuf,buf_len);
-		buf_len-=i;
-		buf+=i;
-		n+=i;
-
-		l=0;
-		for (; idx<len; idx++)
-			{
-			l|=p[idx]&0x7f;
-			if (!(p[idx] & 0x80))
-				{
-				sprintf(tbuf,".%ld",l);
-				i=strlen(tbuf);
-				if (buf_len > 0)
-					strncpy(buf,tbuf,buf_len);
-				buf_len-=i;
-				buf+=i;
-				n+=i;
-				l=0;
-				}
-			l<<=7L;
-			}
-		}
-	else
-		{
-		s=(char *)OBJ_nid2ln(nid);
-		if (s == NULL)
-			s=(char *)OBJ_nid2sn(nid);
-		strncpy(buf,s,buf_len);
-		n=strlen(s);
-		}
-	buf[buf_len-1]='\0';
-	return(n);
-	}
-
-int i2a_ASN1_OBJECT(bp,a)
-BIO *bp;
-ASN1_OBJECT *a;
+int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 	{
 	char buf[80];
 	int i;
 
 	if ((a == NULL) || (a->data == NULL))
 		return(BIO_write(bp,"NULL",4));
-	i=i2t_ASN1_OBJECT(buf,80,a);
-	if (i > 80) i=80;
+	i=i2t_ASN1_OBJECT(buf,sizeof buf,a);
+	if (i > sizeof buf) i=sizeof buf;
 	BIO_write(bp,buf,i);
 	return(i);
 	}
 
-ASN1_OBJECT *d2i_ASN1_OBJECT(a, pp, length)
-ASN1_OBJECT **a;
-unsigned char **pp;
-long length; 
-	{
-	ASN1_OBJECT *ret=NULL;
+ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
+	     long length)
+{
 	unsigned char *p;
 	long len;
 	int tag,xclass;
 	int inf,i;
-
-	/* only the ASN1_OBJECTs from the 'table' will have values
-	 * for ->sn or ->ln */
-	if ((a == NULL) || ((*a) == NULL) ||
-		!((*a)->flags & ASN1_OBJECT_FLAG_DYNAMIC))
-		{
-		if ((ret=ASN1_OBJECT_new()) == NULL) return(NULL);
-		}
-	else	ret=(*a);
-
+	ASN1_OBJECT *ret = NULL;
 	p= *pp;
-
 	inf=ASN1_get_object(&p,&len,&tag,&xclass,length);
 	if (inf & 0x80)
 		{
@@ -305,10 +210,36 @@ long length;
 		i=ASN1_R_EXPECTING_AN_OBJECT;
 		goto err;
 		}
+	ret = c2i_ASN1_OBJECT(a, &p, len);
+	if(ret) *pp = p;
+	return ret;
+err:
+	ASN1err(ASN1_F_D2I_ASN1_OBJECT,i);
+	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
+		ASN1_OBJECT_free(ret);
+	return(NULL);
+}
+ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, unsigned char **pp,
+	     long len)
+	{
+	ASN1_OBJECT *ret=NULL;
+	unsigned char *p;
+	int i;
+
+	/* only the ASN1_OBJECTs from the 'table' will have values
+	 * for ->sn or ->ln */
+	if ((a == NULL) || ((*a) == NULL) ||
+		!((*a)->flags & ASN1_OBJECT_FLAG_DYNAMIC))
+		{
+		if ((ret=ASN1_OBJECT_new()) == NULL) return(NULL);
+		}
+	else	ret=(*a);
+
+	p= *pp;
 	if ((ret->data == NULL) || (ret->length < len))
 		{
-		if (ret->data != NULL) Free((char *)ret->data);
-		ret->data=(unsigned char *)Malloc((int)len);
+		if (ret->data != NULL) OPENSSL_free(ret->data);
+		ret->data=(unsigned char *)OPENSSL_malloc(len ? (int)len : 1);
 		ret->flags|=ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 		if (ret->data == NULL)
 			{ i=ERR_R_MALLOC_FAILURE; goto err; }
@@ -330,11 +261,11 @@ err:
 	return(NULL);
 	}
 
-ASN1_OBJECT *ASN1_OBJECT_new()
+ASN1_OBJECT *ASN1_OBJECT_new(void)
 	{
 	ASN1_OBJECT *ret;
 
-	ret=(ASN1_OBJECT *)Malloc(sizeof(ASN1_OBJECT));
+	ret=(ASN1_OBJECT *)OPENSSL_malloc(sizeof(ASN1_OBJECT));
 	if (ret == NULL)
 		{
 		ASN1err(ASN1_F_ASN1_OBJECT_NEW,ERR_R_MALLOC_FAILURE);
@@ -349,31 +280,29 @@ ASN1_OBJECT *ASN1_OBJECT_new()
 	return(ret);
 	}
 
-void ASN1_OBJECT_free(a)
-ASN1_OBJECT *a;
+void ASN1_OBJECT_free(ASN1_OBJECT *a)
 	{
 	if (a == NULL) return;
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS)
 		{
-		if (a->sn != NULL) Free(a->sn);
-		if (a->ln != NULL) Free(a->ln);
+#ifndef CONST_STRICT /* disable purely for compile-time strict const checking. Doing this on a "real" compile will cause memory leaks */
+		if (a->sn != NULL) OPENSSL_free((void *)a->sn);
+		if (a->ln != NULL) OPENSSL_free((void *)a->ln);
+#endif
 		a->sn=a->ln=NULL;
 		}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA)
 		{
-		if (a->data != NULL) Free(a->data);
+		if (a->data != NULL) OPENSSL_free(a->data);
 		a->data=NULL;
 		a->length=0;
 		}
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC)
-		Free((char *)a);
+		OPENSSL_free(a);
 	}
 
-ASN1_OBJECT *ASN1_OBJECT_create(nid,data,len,sn,ln)
-int nid;
-unsigned char *data;
-int len;
-char *sn,*ln;
+ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
+	     const char *sn, const char *ln)
 	{
 	ASN1_OBJECT o;
 
@@ -387,3 +316,5 @@ char *sn,*ln;
 	return(OBJ_dup(&o));
 	}
 
+IMPLEMENT_STACK_OF(ASN1_OBJECT)
+IMPLEMENT_ASN1_SET_OF(ASN1_OBJECT)

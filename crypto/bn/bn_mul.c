@@ -61,40 +61,43 @@
 #include "bn_lcl.h"
 
 #ifdef BN_RECURSION
+/* Karatsuba recursive multiplication algorithm
+ * (cf. Knuth, The Art of Computer Programming, Vol. 2) */
+
 /* r is 2*n2 words in size,
  * a and b are both n2 words in size.
  * n2 must be a power of 2.
  * We multiply and return the result.
  * t must be 2*n2 words in size
- * We calulate
+ * We calculate
  * a[0]*b[0]
  * a[0]*b[0]+a[1]*b[1]+(a[0]-a[1])*(b[1]-b[0])
  * a[1]*b[1]
  */
-void bn_mul_recursive(r,a,b,n2,t)
-BN_ULONG *r,*a,*b;
-int n2;
-BN_ULONG *t;
+void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
+	     BN_ULONG *t)
 	{
 	int n=n2/2,c1,c2;
 	unsigned int neg,zero;
 	BN_ULONG ln,lo,*p;
 
-#ifdef BN_COUNT
-printf(" bn_mul_recursive %d * %d\n",n2,n2);
-#endif
-#ifdef BN_MUL_COMBA
-/*	if (n2 == 4)
+# ifdef BN_COUNT
+	printf(" bn_mul_recursive %d * %d\n",n2,n2);
+# endif
+# ifdef BN_MUL_COMBA
+#  if 0
+	if (n2 == 4)
 		{
 		bn_mul_comba4(r,a,b);
 		return;
 		}
-	else */ if (n2 == 8)
+#  endif
+	if (n2 == 8)
 		{
 		bn_mul_comba8(r,a,b);
 		return; 
 		}
-#endif
+# endif /* BN_MUL_COMBA */
 	if (n2 < BN_MUL_RECURSIVE_SIZE_NORMAL)
 		{
 		/* This should not happen */
@@ -138,7 +141,7 @@ printf(" bn_mul_recursive %d * %d\n",n2,n2);
 		break;
 		}
 
-#ifdef BN_MUL_COMBA
+# ifdef BN_MUL_COMBA
 	if (n == 4)
 		{
 		if (!zero)
@@ -160,7 +163,7 @@ printf(" bn_mul_recursive %d * %d\n",n2,n2);
 		bn_mul_comba8(&(r[n2]),&(a[n]),&(b[n]));
 		}
 	else
-#endif
+# endif /* BN_MUL_COMBA */
 		{
 		p= &(t[n2*2]);
 		if (!zero)
@@ -176,16 +179,16 @@ printf(" bn_mul_recursive %d * %d\n",n2,n2);
 	 * r[32] holds (b[1]*b[1])
 	 */
 
-	c1=bn_add_words(t,r,&(r[n2]),n2);
+	c1=(int)(bn_add_words(t,r,&(r[n2]),n2));
 
 	if (neg) /* if t[32] is negative */
 		{
-		c1-=bn_sub_words(&(t[n2]),t,&(t[n2]),n2);
+		c1-=(int)(bn_sub_words(&(t[n2]),t,&(t[n2]),n2));
 		}
 	else
 		{
 		/* Might have a carry */
-		c1+=bn_add_words(&(t[n2]),&(t[n2]),t,n2);
+		c1+=(int)(bn_add_words(&(t[n2]),&(t[n2]),t,n2));
 		}
 
 	/* t[32] holds (a[0]-a[1])*(b[1]-b[0])+(a[0]*b[0])+(a[1]*b[1])
@@ -193,7 +196,7 @@ printf(" bn_mul_recursive %d * %d\n",n2,n2);
 	 * r[32] holds (b[1]*b[1])
 	 * c1 holds the carry bits
 	 */
-	c1+=bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2);
+	c1+=(int)(bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2));
 	if (c1)
 		{
 		p= &(r[n+n2]);
@@ -217,18 +220,16 @@ printf(" bn_mul_recursive %d * %d\n",n2,n2);
 
 /* n+tn is the word length
  * t needs to be n*4 is size, as does r */
-void bn_mul_part_recursive(r,a,b,tn,n,t)
-BN_ULONG *r,*a,*b;
-int tn,n;
-BN_ULONG *t;
+void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
+	     int n, BN_ULONG *t)
 	{
 	int i,j,n2=n*2;
-	unsigned int c1;
+	int c1,c2,neg,zero;
 	BN_ULONG ln,lo,*p;
 
-#ifdef BN_COUNT
-printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
-#endif
+# ifdef BN_COUNT
+	printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
+# endif
 	if (n < 8)
 		{
 		i=tn+n;
@@ -237,17 +238,54 @@ printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
 		}
 
 	/* r=(a[0]-a[1])*(b[1]-b[0]) */
-	bn_sub_words(t,      a,      &(a[n]),n); /* + */
-	bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
-
-/*	if (n == 4)
+	c1=bn_cmp_words(a,&(a[n]),n);
+	c2=bn_cmp_words(&(b[n]),b,n);
+	zero=neg=0;
+	switch (c1*3+c2)
+		{
+	case -4:
+		bn_sub_words(t,      &(a[n]),a,      n); /* - */
+		bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
+		break;
+	case -3:
+		zero=1;
+		/* break; */
+	case -2:
+		bn_sub_words(t,      &(a[n]),a,      n); /* - */
+		bn_sub_words(&(t[n]),&(b[n]),b,      n); /* + */
+		neg=1;
+		break;
+	case -1:
+	case 0:
+	case 1:
+		zero=1;
+		/* break; */
+	case 2:
+		bn_sub_words(t,      a,      &(a[n]),n); /* + */
+		bn_sub_words(&(t[n]),b,      &(b[n]),n); /* - */
+		neg=1;
+		break;
+	case 3:
+		zero=1;
+		/* break; */
+	case 4:
+		bn_sub_words(t,      a,      &(a[n]),n);
+		bn_sub_words(&(t[n]),&(b[n]),b,      n);
+		break;
+		}
+		/* The zero case isn't yet implemented here. The speedup
+		   would probably be negligible. */
+# if 0
+	if (n == 4)
 		{
 		bn_mul_comba4(&(t[n2]),t,&(t[n]));
 		bn_mul_comba4(r,a,b);
 		bn_mul_normal(&(r[n2]),&(a[n]),tn,&(b[n]),tn);
 		memset(&(r[n2+tn*2]),0,sizeof(BN_ULONG)*(n2-tn*2));
 		}
-	else */ if (n == 8)
+	else
+# endif
+	if (n == 8)
 		{
 		bn_mul_comba8(&(t[n2]),t,&(t[n]));
 		bn_mul_comba8(r,a,b);
@@ -311,15 +349,24 @@ printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
 	 * r[32] holds (b[1]*b[1])
 	 */
 
-	c1=bn_add_words(t,r,&(r[n2]),n2);
-	c1-=bn_sub_words(&(t[n2]),t,&(t[n2]),n2);
+	c1=(int)(bn_add_words(t,r,&(r[n2]),n2));
+
+	if (neg) /* if t[32] is negative */
+		{
+		c1-=(int)(bn_sub_words(&(t[n2]),t,&(t[n2]),n2));
+		}
+	else
+		{
+		/* Might have a carry */
+		c1+=(int)(bn_add_words(&(t[n2]),&(t[n2]),t,n2));
+		}
 
 	/* t[32] holds (a[0]-a[1])*(b[1]-b[0])+(a[0]*b[0])+(a[1]*b[1])
 	 * r[10] holds (a[0]*b[0])
 	 * r[32] holds (b[1]*b[1])
 	 * c1 holds the carry bits
 	 */
-	c1+=bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2);
+	c1+=(int)(bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2));
 	if (c1)
 		{
 		p= &(r[n+n2]);
@@ -329,7 +376,7 @@ printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
 
 		/* The overflow will stop before we over write
 		 * words we should not overwrite */
-		if (ln < c1)
+		if (ln < (BN_ULONG)c1)
 			{
 			do	{
 				p++;
@@ -344,16 +391,14 @@ printf(" bn_mul_part_recursive %d * %d\n",tn+n,tn+n);
 /* a and b must be the same size, which is n2.
  * r needs to be n2 words and t needs to be n2*2
  */
-void bn_mul_low_recursive(r,a,b,n2,t)
-BN_ULONG *r,*a,*b;
-int n2;
-BN_ULONG *t;
+void bn_mul_low_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
+	     BN_ULONG *t)
 	{
 	int n=n2/2;
 
-#ifdef BN_COUNT
-printf(" bn_mul_low_recursive %d * %d\n",n2,n2);
-#endif
+# ifdef BN_COUNT
+	printf(" bn_mul_low_recursive %d * %d\n",n2,n2);
+# endif
 
 	bn_mul_recursive(r,a,b,n,&(t[0]));
 	if (n >= BN_MUL_LOW_RECURSIVE_SIZE_NORMAL)
@@ -377,20 +422,18 @@ printf(" bn_mul_low_recursive %d * %d\n",n2,n2);
  * l is the low words of the output.
  * t needs to be n2*3
  */
-void bn_mul_high(r,a,b,l,n2,t)
-BN_ULONG *r,*a,*b,*l;
-int n2;
-BN_ULONG *t;
+void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
+	     BN_ULONG *t)
 	{
 	int i,n;
 	int c1,c2;
 	int neg,oneg,zero;
 	BN_ULONG ll,lc,*lp,*mp;
 
-#ifdef BN_COUNT
-printf(" bn_mul_high %d * %d\n",n2,n2);
-#endif
-	n=(n2+1)/2;
+# ifdef BN_COUNT
+	printf(" bn_mul_high %d * %d\n",n2,n2);
+# endif
+	n=n2/2;
 
 	/* Calculate (al-ah)*(bh-bl) */
 	neg=zero=0;
@@ -432,14 +475,14 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 	oneg=neg;
 	/* t[10] = (a[0]-a[1])*(b[1]-b[0]) */
 	/* r[10] = (a[1]*b[1]) */
-#ifdef BN_MUL_COMBA
+# ifdef BN_MUL_COMBA
 	if (n == 8)
 		{
 		bn_mul_comba8(&(t[0]),&(r[0]),&(r[n]));
 		bn_mul_comba8(r,&(a[n]),&(b[n]));
 		}
 	else
-#endif
+# endif
 		{
 		bn_mul_recursive(&(t[0]),&(r[0]),&(r[n]),n,&(t[n2]));
 		bn_mul_recursive(r,&(a[n]),&(b[n]),n,&(t[n2]));
@@ -454,7 +497,7 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 	if (l != NULL)
 		{
 		lp= &(t[n2+n]);
-		c1=bn_add_words(lp,&(r[0]),&(l[0]),n);
+		c1=(int)(bn_add_words(lp,&(r[0]),&(l[0]),n));
 		}
 	else
 		{
@@ -463,7 +506,7 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 		}
 
 	if (neg)
-		neg=bn_sub_words(&(t[n2]),lp,&(t[0]),n);
+		neg=(int)(bn_sub_words(&(t[n2]),lp,&(t[0]),n));
 	else
 		{
 		bn_add_words(&(t[n2]),lp,&(t[0]),n);
@@ -498,25 +541,25 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 	if (l != NULL)
 		{
 		lp= &(t[n2]);
-		c1= bn_add_words(lp,&(t[n2+n]),&(l[0]),n);
+		c1= (int)(bn_add_words(lp,&(t[n2+n]),&(l[0]),n));
 		}
 	else
 		{
 		lp= &(t[n2+n]);
 		c1=0;
 		}
-	c1+=bn_add_words(&(t[n2]),lp,  &(r[0]),n);
+	c1+=(int)(bn_add_words(&(t[n2]),lp,  &(r[0]),n));
 	if (oneg)
-		c1-=bn_sub_words(&(t[n2]),&(t[n2]),&(t[0]),n);
+		c1-=(int)(bn_sub_words(&(t[n2]),&(t[n2]),&(t[0]),n));
 	else
-		c1+=bn_add_words(&(t[n2]),&(t[n2]),&(t[0]),n);
+		c1+=(int)(bn_add_words(&(t[n2]),&(t[n2]),&(t[0]),n));
 
-	c2 =bn_add_words(&(r[0]),&(r[0]),&(t[n2+n]),n);
-	c2+=bn_add_words(&(r[0]),&(r[0]),&(r[n]),n);
+	c2 =(int)(bn_add_words(&(r[0]),&(r[0]),&(t[n2+n]),n));
+	c2+=(int)(bn_add_words(&(r[0]),&(r[0]),&(r[n]),n));
 	if (oneg)
-		c2-=bn_sub_words(&(r[0]),&(r[0]),&(t[n]),n);
+		c2-=(int)(bn_sub_words(&(r[0]),&(r[0]),&(t[n]),n));
 	else
-		c2+=bn_add_words(&(r[0]),&(r[0]),&(t[n]),n);
+		c2+=(int)(bn_add_words(&(r[0]),&(r[0]),&(t[n]),n));
 	
 	if (c1 != 0) /* Add starting at r[0], could be +ve or -ve */
 		{
@@ -563,20 +606,23 @@ printf(" bn_mul_high %d * %d\n",n2,n2);
 			}
 		}
 	}
+#endif /* BN_RECURSION */
+
+int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
+	{
+	int top,al,bl;
+	BIGNUM *rr;
+	int ret = 0;
+#if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
+	int i;
+#endif
+#ifdef BN_RECURSION
+	BIGNUM *t;
+	int j,k;
 #endif
 
-int BN_mul(r,a,b,ctx)
-BIGNUM *r,*a,*b;
-BN_CTX *ctx;
-	{
-	int top,i,j,k,al,bl;
-	BIGNUM *t;
-
-	t=NULL;
-	i=j=k=0;
-
 #ifdef BN_COUNT
-printf("BN_mul %d * %d\n",a->top,b->top);
+	printf("BN_mul %d * %d\n",a->top,b->top);
 #endif
 
 	bn_check_top(a);
@@ -585,127 +631,124 @@ printf("BN_mul %d * %d\n",a->top,b->top);
 
 	al=a->top;
 	bl=b->top;
-	r->neg=a->neg^b->neg;
 
 	if ((al == 0) || (bl == 0))
 		{
-		BN_zero(r);
+		if (!BN_zero(r)) goto err;
 		return(1);
 		}
 	top=al+bl;
-#if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
-	if (al == bl)
+
+	BN_CTX_start(ctx);
+	if ((r == a) || (r == b))
 		{
-#  ifdef BN_MUL_COMBA
-/*		if (al == 4)
-			{
-			if (bn_wexpand(r,8) == NULL) return(0);
-			r->top=8;
-			bn_mul_comba4(r->d,a->d,b->d);
-			goto end;
-			}
-		else */ if (al == 8)
-			{
-			if (bn_wexpand(r,16) == NULL) return(0);
-			r->top=16;
-			bn_mul_comba8(r->d,a->d,b->d);
-			goto end;
-			}
-		else
-#  endif
-#ifdef BN_RECURSION
-		if (al < BN_MULL_SIZE_NORMAL)
-#endif
-			{
-			if (bn_wexpand(r,top) == NULL) return(0);
-			r->top=top;
-			bn_mul_normal(r->d,a->d,al,b->d,bl);
-			goto end;
-			}
-#  ifdef BN_RECURSION
-		goto symetric;
-#  endif
-		}
-#endif
-#ifdef BN_RECURSION
-	else if ((al < BN_MULL_SIZE_NORMAL) || (bl < BN_MULL_SIZE_NORMAL))
-		{
-		if (bn_wexpand(r,top) == NULL) return(0);
-		r->top=top;
-		bn_mul_normal(r->d,a->d,al,b->d,bl);
-		goto end;
+		if ((rr = BN_CTX_get(ctx)) == NULL) goto err;
 		}
 	else
+		rr = r;
+	rr->neg=a->neg^b->neg;
+
+#if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
+	i = al-bl;
+#endif
+#ifdef BN_MUL_COMBA
+	if (i == 0)
 		{
-		i=(al-bl);
-		if ((i ==  1) && !BN_get_flags(b,BN_FLG_STATIC_DATA))
+# if 0
+		if (al == 4)
 			{
-			bn_wexpand(b,al);
+			if (bn_wexpand(rr,8) == NULL) goto err;
+			rr->top=8;
+			bn_mul_comba4(rr->d,a->d,b->d);
+			goto end;
+			}
+# endif
+		if (al == 8)
+			{
+			if (bn_wexpand(rr,16) == NULL) goto err;
+			rr->top=16;
+			bn_mul_comba8(rr->d,a->d,b->d);
+			goto end;
+			}
+		}
+#endif /* BN_MUL_COMBA */
+#ifdef BN_RECURSION
+	if ((al >= BN_MULL_SIZE_NORMAL) && (bl >= BN_MULL_SIZE_NORMAL))
+		{
+		if (i == 1 && !BN_get_flags(b,BN_FLG_STATIC_DATA) && bl<b->dmax)
+			{
+#if 0	/* tribute to const-ification, bl<b->dmax above covers for this */
+			if (bn_wexpand(b,al) == NULL) goto err;
+#endif
 			b->d[bl]=0;
 			bl++;
-			goto symetric;
+			i--;
 			}
-		else if ((i ==  -1) && !BN_get_flags(a,BN_FLG_STATIC_DATA))
+		else if (i == -1 && !BN_get_flags(a,BN_FLG_STATIC_DATA) && al<a->dmax)
 			{
-			bn_wexpand(a,bl);
+#if 0	/* tribute to const-ification, al<a->dmax above covers for this */
+			if (bn_wexpand(a,bl) == NULL) goto err;
+#endif
 			a->d[al]=0;
 			al++;
-			goto symetric;
+			i++;
+			}
+		if (i == 0)
+			{
+			/* symmetric and > 4 */
+			/* 16 or larger */
+			j=BN_num_bits_word((BN_ULONG)al);
+			j=1<<(j-1);
+			k=j+j;
+			t = BN_CTX_get(ctx);
+			if (al == j) /* exact multiple */
+				{
+				if (bn_wexpand(t,k*2) == NULL) goto err;
+				if (bn_wexpand(rr,k*2) == NULL) goto err;
+				bn_mul_recursive(rr->d,a->d,b->d,al,t->d);
+				rr->top=top;
+				goto end;
+				}
+#if 0	/* tribute to const-ification, rsa/dsa performance is not affected */
+			else
+				{
+				if (bn_wexpand(a,k) == NULL ) goto err;
+				if (bn_wexpand(b,k) == NULL ) goto err;
+				if (bn_wexpand(t,k*4) == NULL ) goto err;
+				if (bn_wexpand(rr,k*4) == NULL ) goto err;
+				for (i=a->top; i<k; i++)
+					a->d[i]=0;
+				for (i=b->top; i<k; i++)
+					b->d[i]=0;
+				bn_mul_part_recursive(rr->d,a->d,b->d,al-j,j,t->d);
+				}
+			rr->top=top;
+			goto end;
+#endif
 			}
 		}
-#endif
+#endif /* BN_RECURSION */
+	if (bn_wexpand(rr,top) == NULL) goto err;
+	rr->top=top;
+	bn_mul_normal(rr->d,a->d,al,b->d,bl);
 
-	/* asymetric and >= 4 */ 
-	if (bn_wexpand(r,top) == NULL) return(0);
-	r->top=top;
-	bn_mul_normal(r->d,a->d,al,b->d,bl);
-
-#ifdef BN_RECURSION
-	if (0)
-		{
-symetric:
-		/* symetric and > 4 */
-		/* 16 or larger */
-		j=BN_num_bits_word((BN_ULONG)al);
-		j=1<<(j-1);
-		k=j+j;
-		t= &(ctx->bn[ctx->tos]);
-		if (al == j) /* exact multiple */
-			{
-			bn_wexpand(t,k*2);
-			bn_wexpand(r,k*2);
-			bn_mul_recursive(r->d,a->d,b->d,al,t->d);
-			}
-		else
-			{
-			bn_wexpand(a,k);
-			bn_wexpand(b,k);
-			bn_wexpand(t,k*4);
-			bn_wexpand(r,k*4);
-			for (i=a->top; i<k; i++)
-				a->d[i]=0;
-			for (i=b->top; i<k; i++)
-				b->d[i]=0;
-			bn_mul_part_recursive(r->d,a->d,b->d,al-j,j,t->d);
-			}
-		r->top=top;
-		}
-#endif
+#if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
 end:
-	bn_fix_top(r);
-	return(1);
+#endif
+	bn_fix_top(rr);
+	if (r != rr) BN_copy(r,rr);
+	ret=1;
+err:
+	BN_CTX_end(ctx);
+	return(ret);
 	}
 
-void bn_mul_normal(r,a,na,b,nb)
-BN_ULONG *r,*a;
-int na;
-BN_ULONG *b;
-int nb;
+void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 	{
 	BN_ULONG *rr;
 
 #ifdef BN_COUNT
-printf(" bn_mul_normal %d * %d\n",na,nb);
+	printf(" bn_mul_normal %d * %d\n",na,nb);
 #endif
 
 	if (na < nb)
@@ -736,12 +779,10 @@ printf(" bn_mul_normal %d * %d\n",na,nb);
 		}
 	}
 
-void bn_mul_low_normal(r,a,b,n)
-BN_ULONG *r,*a,*b;
-int n;
+void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
 	{
 #ifdef BN_COUNT
-printf(" bn_mul_low_normal %d * %d\n",n,n);
+	printf(" bn_mul_low_normal %d * %d\n",n,n);
 #endif
 	bn_mul_words(r,a,n,b[0]);
 
@@ -759,4 +800,3 @@ printf(" bn_mul_low_normal %d * %d\n",n,n);
 		b+=4;
 		}
 	}
-

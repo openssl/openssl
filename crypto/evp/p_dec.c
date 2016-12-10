@@ -58,27 +58,30 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "rand.h"
-#include "rsa.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/rand.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
-int EVP_PKEY_decrypt(key,ek,ekl,priv)
-unsigned char *key;
-unsigned char *ek;
-int ekl;
-EVP_PKEY *priv;
+int EVP_PKEY_decrypt(unsigned char *key, unsigned char *ek, int ekl,
+	     EVP_PKEY *priv)
 	{
 	int ret= -1;
 	
+#ifndef OPENSSL_NO_RSA
 	if (priv->type != EVP_PKEY_RSA)
 		{
+#endif
 		EVPerr(EVP_F_EVP_PKEY_DECRYPT,EVP_R_PUBLIC_KEY_NOT_RSA);
+#ifndef OPENSSL_NO_RSA
 		goto err;
                 }
 
 	ret=RSA_private_decrypt(ekl,ek,key,priv->pkey.rsa,RSA_PKCS1_PADDING);
 err:
+#endif
 	return(ret);
 	}

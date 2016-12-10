@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "dsa.h"
+#include <openssl/dsa.h>
 
 #define TEST
 #define GENUINE_DSA
@@ -77,8 +77,7 @@ unsigned char seed[20]={
 	0xe0,0x42,0x7d,LAST_VALUE};
 #endif
 
-int cb(p,n)
-int p,n;
+int cb(int p, int n)
 	{
 	char c='*';
 
@@ -104,7 +103,7 @@ main()
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
 	memcpy(seed_buf,seed,20);
-	dsa=DSA_generate_parameters(1024,seed,20,&counter,&h,cb);
+	dsa=DSA_generate_parameters(1024,seed,20,&counter,&h,cb,bio_err);
 
 	if (dsa == NULL)
 		DSA_print(bio_err,dsa,0);

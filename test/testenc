@@ -1,14 +1,14 @@
 #!/bin/sh
 
-testsrc=Makefile.ssl
+testsrc=Makefile
 test=./p
-cmd=../apps/ssleay
+cmd="../util/shlib_wrap.sh ../apps/openssl"
 
 cat $testsrc >$test;
 
 echo cat
-$cmd enc < $test > $test.cipher
-$cmd enc < $test.cipher >$test.clear
+$cmd enc -non-fips-allow < $test > $test.cipher
+$cmd enc -non-fips-allow < $test.cipher >$test.clear
 cmp $test $test.clear
 if [ $? != 0 ]
 then
@@ -17,8 +17,8 @@ else
 	/bin/rm $test.cipher $test.clear
 fi
 echo base64
-$cmd enc -a -e < $test > $test.cipher
-$cmd enc -a -d < $test.cipher >$test.clear
+$cmd enc -non-fips-allow -a -e < $test > $test.cipher
+$cmd enc -non-fips-allow -a -d < $test.cipher >$test.clear
 cmp $test $test.clear
 if [ $? != 0 ]
 then
@@ -27,19 +27,11 @@ else
 	/bin/rm $test.cipher $test.clear
 fi
 
-for i in rc4 \
-	des-cfb des-ede-cfb des-ede3-cfb \
-	des-ofb des-ede-ofb des-ede3-ofb \
-	des-ecb des-ede des-ede3 desx \
-	des-cbc des-ede-cbc des-ede3-cbc \
-	idea-ecb idea-cfb idea-ofb idea-cbc \
-	rc2-ecb rc2-cfb rc2-ofb rc2-cbc \
-	bf-ecb bf-cfb bf-ofb bf-cbc rc4 \
-	cast5-ecb cast5-cfb cast5-ofb cast5-cbc
+for i in `$cmd list-cipher-commands`
 do
 	echo $i
-	$cmd $i -bufsize 113 -e -k test < $test > $test.$i.cipher
-	$cmd $i -bufsize 157 -d -k test < $test.$i.cipher >$test.$i.clear
+	$cmd $i -non-fips-allow -bufsize 113 -e -k test < $test > $test.$i.cipher
+	$cmd $i -non-fips-allow -bufsize 157 -d -k test < $test.$i.cipher >$test.$i.clear
 	cmp $test $test.$i.clear
 	if [ $? != 0 ]
 	then
@@ -49,8 +41,8 @@ do
 	fi
 
 	echo $i base64
-	$cmd $i -bufsize 113 -a -e -k test < $test > $test.$i.cipher
-	$cmd $i -bufsize 157 -a -d -k test < $test.$i.cipher >$test.$i.clear
+	$cmd $i -non-fips-allow -bufsize 113 -a -e -k test < $test > $test.$i.cipher
+	$cmd $i -non-fips-allow -bufsize 157 -a -d -k test < $test.$i.cipher >$test.$i.clear
 	cmp $test $test.$i.clear
 	if [ $? != 0 ]
 	then

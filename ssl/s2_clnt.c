@@ -55,15 +55,69 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
-#include <stdio.h>
-#include "rand.h"
-#include "buffer.h"
-#include "objects.h"
 #include "ssl_locl.h"
-#include "evp.h"
+#ifndef OPENSSL_NO_SSL2
+#include <stdio.h>
+#include <openssl/rand.h>
+#include <openssl/buffer.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
 
-#ifndef NOPROTO
+static SSL_METHOD *ssl2_get_client_method(int ver);
 static int get_server_finished(SSL *s);
 static int get_server_verify(SSL *s);
 static int get_server_hello(SSL *s);
@@ -71,23 +125,11 @@ static int client_hello(SSL *s);
 static int client_master_key(SSL *s);
 static int client_finished(SSL *s);
 static int client_certificate(SSL *s);
-static int ssl_rsa_public_encrypt(CERT *c, int len, unsigned char *from,
+static int ssl_rsa_public_encrypt(SESS_CERT *sc, int len, unsigned char *from,
 	unsigned char *to,int padding);
-#else
-static int get_server_finished();
-static int get_server_verify();
-static int get_server_hello();
-static int client_hello(); 
-static int client_master_key();
-static int client_finished();
-static int client_certificate();
-static int ssl_rsa_public_encrypt();
-#endif
-
 #define BREAK	break
 
-static SSL_METHOD *ssl2_get_client_method(ver)
-int ver;
+static SSL_METHOD *ssl2_get_client_method(int ver)
 	{
 	if (ver == SSL2_VERSION)
 		return(SSLv2_client_method());
@@ -95,32 +137,38 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv2_client_method()
+SSL_METHOD *SSLv2_client_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD SSLv2_client_data;
 
 	if (init)
 		{
-		init=0;
-		memcpy((char *)&SSLv2_client_data,(char *)sslv2_base_method(),
-			sizeof(SSL_METHOD));
-		SSLv2_client_data.ssl_connect=ssl2_connect;
-		SSLv2_client_data.get_ssl_method=ssl2_get_client_method;
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
+
+		if (init)
+			{
+			memcpy((char *)&SSLv2_client_data,(char *)sslv2_base_method(),
+				sizeof(SSL_METHOD));
+			SSLv2_client_data.ssl_connect=ssl2_connect;
+			SSLv2_client_data.get_ssl_method=ssl2_get_client_method;
+			init=0;
+			}
+
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}
 	return(&SSLv2_client_data);
 	}
 
-int ssl2_connect(s)
-SSL *s;
+int ssl2_connect(SSL *s)
 	{
-	unsigned long l=time(NULL);
+	unsigned long l=(unsigned long)time(NULL);
 	BUF_MEM *buf=NULL;
 	int ret= -1;
-	void (*cb)()=NULL;
+	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int new_state,state;
 
-	RAND_seed((unsigned char *)&l,sizeof(l));
+	RAND_add(&l,sizeof(l),0);
 	ERR_clear_error();
 	clear_sys_error();
 
@@ -130,8 +178,8 @@ SSL *s;
 		cb=s->ctx->info_callback;
 
 	/* init things to blank */
-	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s);
 	s->in_handshake++;
+	if (!SSL_in_init(s) || SSL_in_before(s)) SSL_clear(s);
 
 	for (;;)
 		{
@@ -144,6 +192,7 @@ SSL *s;
 		case SSL_ST_BEFORE|SSL_ST_CONNECT:
 		case SSL_ST_OK|SSL_ST_CONNECT:
 
+			s->server=0;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
 			s->version=SSL2_VERSION;
@@ -158,13 +207,16 @@ SSL *s;
 			if (!BUF_MEM_grow(buf,
 				SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER))
 				{
+				if (buf == s->init_buf)
+					buf=NULL;
 				ret= -1;
 				goto end;
 				}
 			s->init_buf=buf;
+			buf=NULL;
 			s->init_num=0;
 			s->state=SSL2_ST_SEND_CLIENT_HELLO_A;
-			s->ctx->sess_connect++;
+			s->ctx->stats.sess_connect++;
 			s->handshake_func=ssl2_connect;
 			BREAK;
 
@@ -247,23 +299,26 @@ SSL *s;
 			break;
 
 		case SSL_ST_OK:
-			BUF_MEM_free(s->init_buf);
-			s->init_buf=NULL;
+			if (s->init_buf != NULL)
+				{
+				BUF_MEM_free(s->init_buf);
+				s->init_buf=NULL;
+				}
 			s->init_num=0;
 		/*	ERR_clear_error();*/
 
 			/* If we want to cache session-ids in the client
-			 * and we sucessfully add the session-id to the
+			 * and we successfully add the session-id to the
 			 * cache, and there is a callback, then pass it out.
 			 * 26/11/96 - eay - only add if not a re-used session.
 			 */
 
 			ssl_update_cache(s,SSL_SESS_CACHE_CLIENT);
-			if (s->hit) s->ctx->sess_hit++;
+			if (s->hit) s->ctx->stats.sess_hit++;
 
 			ret=1;
 			/* s->server=0; */
-			s->ctx->sess_connect_good++;
+			s->ctx->stats.sess_connect_good++;
 
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_DONE,1);
 
@@ -285,18 +340,20 @@ SSL *s;
 		}
 end:
 	s->in_handshake--;
+	if (buf != NULL)
+		BUF_MEM_free(buf);
 	if (cb != NULL) 
 		cb(s,SSL_CB_CONNECT_EXIT,ret);
 	return(ret);
 	}
 
-static int get_server_hello(s)
-SSL *s;
+static int get_server_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p;
 	int i,j;
-	STACK *sk=NULL,*cl;
+	unsigned long len;
+	STACK_OF(SSL_CIPHER) *sk=NULL,*cl, *prio, *allow;
 
 	buf=(unsigned char *)s->init_buf->data;
 	p=buf;
@@ -305,6 +362,7 @@ SSL *s;
 		i=ssl2_read(s,(char *)&(buf[s->init_num]),11-s->init_num);
 		if (i < (11-s->init_num)) 
 			return(ssl2_part_read(s,SSL_F_GET_SERVER_HELLO,i));
+		s->init_num = 11;
 
 		if (*(p++) != SSL2_MT_SERVER_HELLO)
 			{
@@ -319,7 +377,13 @@ SSL *s;
 					SSL_R_PEER_ERROR);
 			return(-1);
 			}
+#ifdef __APPLE_CC__
+		/* The Rhapsody 5.5 (a.k.a. MacOS X) compiler bug
+		 * workaround. <appro@fy.chalmers.se> */
+		s->hit=(i=*(p++))?1:0;
+#else
 		s->hit=(*(p++))?1:0;
+#endif
 		s->s2->tmp.cert_type= *(p++);
 		n2s(p,i);
 		if (i < s->version) s->version=i;
@@ -327,18 +391,24 @@ SSL *s;
 		n2s(p,i); s->s2->tmp.csl=i;
 		n2s(p,i); s->s2->tmp.conn_id_length=i;
 		s->state=SSL2_ST_GET_SERVER_HELLO_B;
-		s->init_num=0;
 		}
 
 	/* SSL2_ST_GET_SERVER_HELLO_B */
-	j=s->s2->tmp.cert_length+s->s2->tmp.csl+s->s2->tmp.conn_id_length
-		- s->init_num;
-	i=ssl2_read(s,(char *)&(buf[s->init_num]),j);
+	len = 11 + (unsigned long)s->s2->tmp.cert_length + (unsigned long)s->s2->tmp.csl + (unsigned long)s->s2->tmp.conn_id_length;
+	if (len > SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER)
+		{
+		SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_MESSAGE_TOO_LONG);
+		return -1;
+		}
+	j = (int)len - s->init_num;
+	i = ssl2_read(s,(char *)&(buf[s->init_num]),j);
 	if (i != j) return(ssl2_part_read(s,SSL_F_GET_SERVER_HELLO,i));
+	if (s->msg_callback)
+		s->msg_callback(0, s->version, 0, buf, (size_t)len, s, s->msg_callback_arg); /* SERVER-HELLO */
 
 	/* things are looking good */
 
-	p=buf;
+	p = buf + 11;
 	if (s->hit)
 		{
 		if (s->s2->tmp.cert_length != 0) 
@@ -371,7 +441,7 @@ SSL *s;
 		*/
 #endif
 
-		/* we need to do this incase we were trying to reuse a 
+		/* we need to do this in case we were trying to reuse a 
 		 * client session but others are already reusing it.
 		 * If this was a new 'blank' session ID, the session-id
 		 * length will still be 0 */
@@ -405,7 +475,7 @@ SSL *s;
 
 		/* load the ciphers */
 		sk=ssl_bytes_to_cipher_list(s,p,s->s2->tmp.csl,
-			&s->session->ciphers);
+					    &s->session->ciphers);
 		p+=s->s2->tmp.csl;
 		if (sk == NULL)
 			{
@@ -414,48 +484,81 @@ SSL *s;
 			return(-1);
 			}
 
-		sk_set_cmp_func(sk,ssl_cipher_ptr_id_cmp);
+		sk_SSL_CIPHER_set_cmp_func(sk,ssl_cipher_ptr_id_cmp);
 
 		/* get the array of ciphers we will accept */
-		cl=ssl_get_ciphers_by_id(s);
+		cl=SSL_get_ciphers(s);
+		sk_SSL_CIPHER_set_cmp_func(cl,ssl_cipher_ptr_id_cmp);
 
+		/*
+		 * If server preference flag set, choose the first
+		 * (highest priority) cipher the server sends, otherwise
+		 * client preference has priority.
+		 */
+		if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
+		    {
+		    prio = sk;
+		    allow = cl;
+		    }
+		else
+		    {
+		    prio = cl;
+		    allow = sk;
+		    }
 		/* In theory we could have ciphers sent back that we
 		 * don't want to use but that does not matter since we
-		 * will check against the list we origionally sent and
+		 * will check against the list we originally sent and
 		 * for performance reasons we should not bother to match
 		 * the two lists up just to check. */
-		for (i=0; i<sk_num(cl); i++)
+		for (i=0; i<sk_SSL_CIPHER_num(prio); i++)
 			{
-			if (sk_find(sk,sk_value(cl,i)) >= 0)
+			if (sk_SSL_CIPHER_find(allow,
+					     sk_SSL_CIPHER_value(prio,i)) >= 0)
 				break;
 			}
 
-		if (i >= sk_num(cl))
+		if (i >= sk_SSL_CIPHER_num(prio))
 			{
 			ssl2_return_error(s,SSL2_PE_NO_CIPHER);
 			SSLerr(SSL_F_GET_SERVER_HELLO,SSL_R_NO_CIPHER_MATCH);
 			return(-1);
 			}
-		s->session->cipher=(SSL_CIPHER *)sk_value(cl,i);
+		s->session->cipher=sk_SSL_CIPHER_value(prio,i);
+
+
+		if (s->session->peer != NULL) /* can't happen*/
+			{
+			ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
+			SSLerr(SSL_F_GET_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+			return(-1);
+			}
+
+		s->session->peer = s->session->sess_cert->peer_key->x509;
+		/* peer_key->x509 has been set by ssl2_set_certificate. */
+		CRYPTO_add(&s->session->peer->references, 1, CRYPTO_LOCK_X509);
 		}
 
-	if ((s->session != NULL) && (s->session->peer != NULL))
-		X509_free(s->session->peer);
-
-	/* hmmm, can we have the problem of the other session with this
-	 * cert, Free's it before we increment the reference count. */
-	CRYPTO_w_lock(CRYPTO_LOCK_X509);
-	s->session->peer=s->session->cert->key->x509;
-	CRYPTO_add(&s->session->peer->references,1,CRYPTO_LOCK_X509);
-	CRYPTO_w_unlock(CRYPTO_LOCK_X509);
-
+	if (s->session->sess_cert == NULL 
+      || s->session->peer != s->session->sess_cert->peer_key->x509)
+		/* can't happen */
+		{
+		ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
+		SSLerr(SSL_F_GET_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+		return(-1);
+		}
+		
 	s->s2->conn_id_length=s->s2->tmp.conn_id_length;
+	if (s->s2->conn_id_length > sizeof s->s2->conn_id)
+		{
+		ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
+		SSLerr(SSL_F_GET_SERVER_HELLO, SSL_R_SSL2_CONNECTION_ID_TOO_LONG);
+		return -1;
+		}
 	memcpy(s->s2->conn_id,p,s->s2->tmp.conn_id_length);
 	return(1);
 	}
 
-static int client_hello(s)
-SSL *s;
+static int client_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
@@ -479,10 +582,10 @@ SSL *s;
 		p=buf;					/* header */
 		d=p+9;					/* data section */
 		*(p++)=SSL2_MT_CLIENT_HELLO;		/* type */
-		s2n(SSL2_CLIENT_VERSION,p);		/* version */
+		s2n(SSL2_VERSION,p);			/* version */
 		n=j=0;
 
-		n=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),d);
+		n=ssl_cipher_list_to_bytes(s,SSL_get_ciphers(s),d,0);
 		d+=n;
 
 		if (n == 0)
@@ -510,7 +613,8 @@ SSL *s;
 		s->s2->challenge_length=SSL2_CHALLENGE_LENGTH;
 		s2n(SSL2_CHALLENGE_LENGTH,p);		/* challenge length */
 		/*challenge id data*/
-		RAND_bytes(s->s2->challenge,SSL2_CHALLENGE_LENGTH);
+		if(RAND_pseudo_bytes(s->s2->challenge,SSL2_CHALLENGE_LENGTH) <= 0)
+			return -1;
 		memcpy(d,s->s2->challenge,SSL2_CHALLENGE_LENGTH);
 		d+=SSL2_CHALLENGE_LENGTH;
 
@@ -522,21 +626,20 @@ SSL *s;
 	return(ssl2_do_write(s));
 	}
 
-static int client_master_key(s)
-SSL *s;
+static int client_master_key(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
 	int clear,enc,karg,i;
 	SSL_SESSION *sess;
-	EVP_CIPHER *c;
-	EVP_MD *md;
+	const EVP_CIPHER *c;
+	const EVP_MD *md;
 
 	buf=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL2_ST_SEND_CLIENT_MASTER_KEY_A)
 		{
 
-		if (!ssl_cipher_get_evp(s->session->cipher,&c,&md))
+		if (!ssl_cipher_get_evp(s->session,&c,&md,NULL))
 			{
 			ssl2_return_error(s,SSL2_PE_NO_CIPHER);
 			SSLerr(SSL_F_CLIENT_MASTER_KEY,SSL_R_PROBLEMS_MAPPING_CIPHER_FUNCTIONS);
@@ -553,16 +656,37 @@ SSL *s;
 		/* make key_arg data */
 		i=EVP_CIPHER_iv_length(c);
 		sess->key_arg_length=i;
-		if (i > 0) RAND_bytes(sess->key_arg,i);
+		if (i > SSL_MAX_KEY_ARG_LENGTH)
+			{
+			ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
+			SSLerr(SSL_F_CLIENT_MASTER_KEY, ERR_R_INTERNAL_ERROR);
+			return -1;
+			}
+		if (i > 0)
+			if(RAND_pseudo_bytes(sess->key_arg,i) <= 0)
+				return -1;
 
 		/* make a master key */
 		i=EVP_CIPHER_key_length(c);
 		sess->master_key_length=i;
-		if (i > 0) RAND_bytes(sess->master_key,i);
+		if (i > 0)
+			{
+			if (i > sizeof sess->master_key)
+				{
+				ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
+				SSLerr(SSL_F_CLIENT_MASTER_KEY, ERR_R_INTERNAL_ERROR);
+				return -1;
+				}
+			if (RAND_bytes(sess->master_key,i) <= 0)
+				{
+				ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
+				return(-1);
+				}
+			}
 
 		if (sess->cipher->algorithm2 & SSL2_CF_8_BYTE_ENC)
 			enc=8;
-		else if (sess->cipher->algorithms & SSL_EXP)
+		else if (SSL_C_IS_EXPORT(sess->cipher))
 			enc=5;
 		else
 			enc=i;
@@ -578,7 +702,7 @@ SSL *s;
 		memcpy(d,sess->master_key,(unsigned int)clear);
 		d+=clear;
 
-		enc=ssl_rsa_public_encrypt(sess->cert,enc,
+		enc=ssl_rsa_public_encrypt(sess->sess_cert,enc,
 			&(sess->master_key[clear]),d,
 			(s->s2->ssl2_rollback)?RSA_SSLV23_PADDING:RSA_PKCS1_PADDING);
 		if (enc <= 0)
@@ -596,6 +720,12 @@ SSL *s;
 		d+=enc;
 		karg=sess->key_arg_length;	
 		s2n(karg,p); /* key arg size */
+		if (karg > sizeof sess->key_arg)
+			{
+			ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
+			SSLerr(SSL_F_CLIENT_MASTER_KEY, ERR_R_INTERNAL_ERROR);
+			return -1;
+			}
 		memcpy(d,sess->key_arg,(unsigned int)karg);
 		d+=karg;
 
@@ -608,8 +738,7 @@ SSL *s;
 	return(ssl2_do_write(s));
 	}
 
-static int client_finished(s)
-SSL *s;
+static int client_finished(SSL *s)
 	{
 	unsigned char *p;
 
@@ -617,6 +746,11 @@ SSL *s;
 		{
 		p=(unsigned char *)s->init_buf->data;
 		*(p++)=SSL2_MT_CLIENT_FINISHED;
+		if (s->s2->conn_id_length > sizeof s->s2->conn_id)
+			{
+			SSLerr(SSL_F_CLIENT_FINISHED, ERR_R_INTERNAL_ERROR);
+			return -1;
+			}
 		memcpy(p,s->s2->conn_id,(unsigned int)s->s2->conn_id_length);
 
 		s->state=SSL2_ST_SEND_CLIENT_FINISHED_B;
@@ -627,18 +761,16 @@ SSL *s;
 	}
 
 /* read the data and then respond */
-static int client_certificate(s)
-SSL *s;
+static int client_certificate(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
 	int i;
 	unsigned int n;
-	int cert_ch_len=0;
+	int cert_ch_len;
 	unsigned char *cert_ch;
 
 	buf=(unsigned char *)s->init_buf->data;
-	cert_ch= &(buf[2]);
 
 	/* We have a cert associated with the SSL, so attach it to
 	 * the session if it does not have one */
@@ -646,9 +778,12 @@ SSL *s;
 	if (s->state == SSL2_ST_SEND_CLIENT_CERTIFICATE_A)
 		{
 		i=ssl2_read(s,(char *)&(buf[s->init_num]),
-			SSL2_MAX_CERT_CHALLENGE_LENGTH+1-s->init_num);
-		if (i<(SSL2_MIN_CERT_CHALLENGE_LENGTH+1-s->init_num))
+			SSL2_MAX_CERT_CHALLENGE_LENGTH+2-s->init_num);
+		if (i<(SSL2_MIN_CERT_CHALLENGE_LENGTH+2-s->init_num))
 			return(ssl2_part_read(s,SSL_F_CLIENT_CERTIFICATE,i));
+		s->init_num += i;
+		if (s->msg_callback)
+			s->msg_callback(0, s->version, 0, buf, (size_t)s->init_num, s, s->msg_callback_arg); /* REQUEST-CERTIFICATE */
 
 		/* type=buf[0]; */
 		/* type eq x509 */
@@ -658,7 +793,6 @@ SSL *s;
 			SSLerr(SSL_F_CLIENT_CERTIFICATE,SSL_R_BAD_AUTHENTICATION_TYPE);
 			return(-1);
 			}
-		cert_ch_len=i-1;
 
 		if ((s->cert == NULL) ||
 			(s->cert->key->x509 == NULL) ||
@@ -669,6 +803,9 @@ SSL *s;
 		else
 			s->state=SSL2_ST_SEND_CLIENT_CERTIFICATE_C;
 		}
+
+	cert_ch = buf + 2;
+	cert_ch_len = s->init_num - 2;
 
 	if (s->state == SSL2_ST_X509_GET_CLIENT_CERTIFICATE)
 		{
@@ -739,11 +876,12 @@ SSL *s;
 		/* ok, now we calculate the checksum
 		 * do it first so we can reuse buf :-) */
 		p=buf;
-		EVP_SignInit(&ctx,s->ctx->rsa_md5);
+		EVP_MD_CTX_init(&ctx);
+		EVP_SignInit_ex(&ctx,s->ctx->rsa_md5, NULL);
 		EVP_SignUpdate(&ctx,s->s2->key_material,
-			(unsigned int)s->s2->key_material_length);
+			       s->s2->key_material_length);
 		EVP_SignUpdate(&ctx,cert_ch,(unsigned int)cert_ch_len);
-		n=i2d_X509(s->session->cert->key->x509,&p);
+		n=i2d_X509(s->session->sess_cert->peer_key->x509,&p);
 		EVP_SignUpdate(&ctx,buf,(unsigned int)n);
 
 		p=buf;
@@ -757,10 +895,10 @@ SSL *s;
 			{
 			/* this is not good.  If things have failed it
 			 * means there so something wrong with the key.
-			 * We will contiune with a 0 length signature
+			 * We will continue with a 0 length signature
 			 */
 			}
-		memset(&ctx,0,sizeof(ctx));
+		EVP_MD_CTX_cleanup(&ctx);
 		s2n(n,p);
 		d+=n;
 
@@ -772,11 +910,10 @@ SSL *s;
 	return(ssl2_do_write(s));
 	}
 
-static int get_server_verify(s)
-SSL *s;
+static int get_server_verify(SSL *s)
 	{
 	unsigned char *p;
-	int i;
+	int i, n, len;
 
 	p=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL2_ST_GET_SERVER_VERIFY_A)
@@ -784,9 +921,9 @@ SSL *s;
 		i=ssl2_read(s,(char *)&(p[s->init_num]),1-s->init_num);
 		if (i < (1-s->init_num)) 
 			return(ssl2_part_read(s,SSL_F_GET_SERVER_VERIFY,i));
+		s->init_num += i;
 
 		s->state= SSL2_ST_GET_SERVER_VERIFY_B;
-		s->init_num=0;
 		if (*p != SSL2_MT_SERVER_VERIFY)
 			{
 			if (p[0] != SSL2_MT_ERROR)
@@ -796,18 +933,27 @@ SSL *s;
 					SSL_R_READ_WRONG_PACKET_TYPE);
 				}
 			else
-				SSLerr(SSL_F_GET_SERVER_VERIFY,
-					SSL_R_PEER_ERROR);
+				{
+				SSLerr(SSL_F_GET_SERVER_VERIFY,SSL_R_PEER_ERROR);
+				/* try to read the error message */
+				i=ssl2_read(s,(char *)&(p[s->init_num]),3-s->init_num);
+				return ssl2_part_read(s,SSL_F_GET_SERVER_VERIFY,i);
+				}
 			return(-1);
 			}
 		}
 	
 	p=(unsigned char *)s->init_buf->data;
-	i=ssl2_read(s,(char *)&(p[s->init_num]),
-		(unsigned int)s->s2->challenge_length-s->init_num);
-	if (i < ((int)s->s2->challenge_length-s->init_num))
+	len = 1 + s->s2->challenge_length;
+	n =  len - s->init_num;
+	i = ssl2_read(s,(char *)&(p[s->init_num]),n);
+	if (i < n)
 		return(ssl2_part_read(s,SSL_F_GET_SERVER_VERIFY,i));
-	if (memcmp(p,s->s2->challenge,(unsigned int)s->s2->challenge_length) != 0)
+	if (s->msg_callback)
+		s->msg_callback(0, s->version, 0, p, len, s, s->msg_callback_arg); /* SERVER-VERIFY */
+	p += 1;
+
+	if (memcmp(p,s->s2->challenge,s->s2->challenge_length) != 0)
 		{
 		ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 		SSLerr(SSL_F_GET_SERVER_VERIFY,SSL_R_CHALLENGE_IS_DIFFERENT);
@@ -816,12 +962,11 @@ SSL *s;
 	return(1);
 	}
 
-static int get_server_finished(s)
-SSL *s;
+static int get_server_finished(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p;
-	int i;
+	int i, n, len;
 
 	buf=(unsigned char *)s->init_buf->data;
 	p=buf;
@@ -830,7 +975,8 @@ SSL *s;
 		i=ssl2_read(s,(char *)&(buf[s->init_num]),1-s->init_num);
 		if (i < (1-s->init_num))
 			return(ssl2_part_read(s,SSL_F_GET_SERVER_FINISHED,i));
-		s->init_num=i;
+		s->init_num += i;
+
 		if (*p == SSL2_MT_REQUEST_CERTIFICATE)
 			{
 			s->state=SSL2_ST_SEND_CLIENT_CERTIFICATE_A;
@@ -844,17 +990,25 @@ SSL *s;
 				SSLerr(SSL_F_GET_SERVER_FINISHED,SSL_R_READ_WRONG_PACKET_TYPE);
 				}
 			else
+				{
 				SSLerr(SSL_F_GET_SERVER_FINISHED,SSL_R_PEER_ERROR);
+				/* try to read the error message */
+				i=ssl2_read(s,(char *)&(p[s->init_num]),3-s->init_num);
+				return ssl2_part_read(s,SSL_F_GET_SERVER_VERIFY,i);
+				}
 			return(-1);
 			}
-		s->state=SSL_ST_OK;
-		s->init_num=0;
+		s->state=SSL2_ST_GET_SERVER_FINISHED_B;
 		}
 
-	i=ssl2_read(s,(char *)&(buf[s->init_num]),
-		SSL2_SSL_SESSION_ID_LENGTH-s->init_num);
-	if (i < (SSL2_SSL_SESSION_ID_LENGTH-s->init_num))
+	len = 1 + SSL2_SSL_SESSION_ID_LENGTH;
+	n = len - s->init_num;
+	i = ssl2_read(s,(char *)&(buf[s->init_num]), n);
+	if (i < n) /* XXX could be shorter than SSL2_SSL_SESSION_ID_LENGTH, that's the maximum */
 		return(ssl2_part_read(s,SSL_F_GET_SERVER_FINISHED,i));
+	s->init_num += i;
+	if (s->msg_callback)
+		s->msg_callback(0, s->version, 0, buf, (size_t)s->init_num, s, s->msg_callback_arg); /* SERVER-FINISHED */
 
 	if (!s->hit) /* new session */
 		{
@@ -863,14 +1017,15 @@ SSL *s;
 		 * or bad things can happen */
 		/* ZZZZZZZZZZZZZ */
 		s->session->session_id_length=SSL2_SSL_SESSION_ID_LENGTH;
-		memcpy(s->session->session_id,p,SSL2_SSL_SESSION_ID_LENGTH);
+		memcpy(s->session->session_id,p+1,SSL2_SSL_SESSION_ID_LENGTH);
 		}
 	else
 		{
 		if (!(s->options & SSL_OP_MICROSOFT_SESS_ID_BUG))
 			{
-			if (memcmp(buf,s->session->session_id,
-				(unsigned int)s->session->session_id_length) != 0)
+			if ((s->session->session_id_length > sizeof s->session->session_id)
+			    || (0 != memcmp(buf + 1, s->session->session_id,
+			                    (unsigned int)s->session->session_id_length)))
 				{
 				ssl2_return_error(s,SSL2_PE_UNDEFINED_ERROR);
 				SSLerr(SSL_F_GET_SERVER_FINISHED,SSL_R_SSL_SESSION_ID_IS_DIFFERENT);
@@ -878,19 +1033,16 @@ SSL *s;
 				}
 			}
 		}
+	s->state = SSL_ST_OK;
 	return(1);
 	}
 
 /* loads in the certificate from the server */
-int ssl2_set_certificate(s, type, len, data)
-SSL *s;
-int type;
-int len;
-unsigned char *data;
+int ssl2_set_certificate(SSL *s, int type, int len, unsigned char *data)
 	{
-	STACK *sk=NULL;
+	STACK_OF(X509) *sk=NULL;
 	EVP_PKEY *pkey=NULL;
-	CERT *c=NULL;
+	SESS_CERT *sc=NULL;
 	int i;
 	X509 *x509=NULL;
 	int ret=0;
@@ -902,8 +1054,7 @@ unsigned char *data;
 		goto err;
 		}
 
-	if (((sk=sk_new_null()) == NULL) ||
-		(!sk_push(sk,(char *)x509)))
+	if ((sk=sk_X509_new_null()) == NULL || !sk_X509_push(sk,x509))
 		{
 		SSLerr(SSL_F_SSL2_SET_CERTIFICATE,ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -916,23 +1067,21 @@ unsigned char *data;
 		SSLerr(SSL_F_SSL2_SET_CERTIFICATE,SSL_R_CERTIFICATE_VERIFY_FAILED);
 		goto err;
 		}
+	ERR_clear_error(); /* but we keep s->verify_result */
+	s->session->verify_result = s->verify_result;
 
-	/* cert for ssl */
-	c=ssl_cert_new();
-	if (c == NULL)
+	/* server's cert for this session */
+	sc=ssl_sess_cert_new();
+	if (sc == NULL)
 		{
 		ret= -1;
 		goto err;
 		}
+	if (s->session->sess_cert) ssl_sess_cert_free(s->session->sess_cert);
+	s->session->sess_cert=sc;
 
-	/* cert for session */
-	if (s->session->cert) ssl_cert_free(s->session->cert);
-	s->session->cert=c;
-
-/*	c->cert_type=type; */
-
-	c->pkeys[SSL_PKEY_RSA_ENC].x509=x509;
-	c->key= &(c->pkeys[SSL_PKEY_RSA_ENC]);
+	sc->peer_pkeys[SSL_PKEY_RSA_ENC].x509=x509;
+	sc->peer_key= &(sc->peer_pkeys[SSL_PKEY_RSA_ENC]);
 
 	pkey=X509_get_pubkey(x509);
 	x509=NULL;
@@ -947,27 +1096,24 @@ unsigned char *data;
 		goto err;
 		}
 
-	if (!ssl_set_cert_type(c,SSL2_CT_X509_CERTIFICATE))
+	if (!ssl_set_peer_cert_type(sc,SSL2_CT_X509_CERTIFICATE))
 		goto err;
 	ret=1;
 err:
-	if (sk != NULL) sk_free(sk);
-	if (x509 != NULL) X509_free(x509);
+	sk_X509_free(sk);
+	X509_free(x509);
+	EVP_PKEY_free(pkey);
 	return(ret);
 	}
 
-static int ssl_rsa_public_encrypt(c, len, from, to, padding)
-CERT *c;
-int len;
-unsigned char *from;
-unsigned char *to;
-int padding;
+static int ssl_rsa_public_encrypt(SESS_CERT *sc, int len, unsigned char *from,
+	     unsigned char *to, int padding)
 	{
 	EVP_PKEY *pkey=NULL;
 	int i= -1;
 
-	if ((c == NULL) || (c->key->x509 == NULL) ||
-		((pkey=X509_get_pubkey(c->key->x509)) == NULL))
+	if ((sc == NULL) || (sc->peer_key->x509 == NULL) ||
+		((pkey=X509_get_pubkey(sc->peer_key->x509)) == NULL))
 		{
 		SSLerr(SSL_F_SSL_RSA_PUBLIC_ENCRYPT,SSL_R_NO_PUBLICKEY);
 		return(-1);
@@ -983,6 +1129,13 @@ int padding;
 	if (i < 0)
 		SSLerr(SSL_F_SSL_RSA_PUBLIC_ENCRYPT,ERR_R_RSA_LIB);
 end:
+	EVP_PKEY_free(pkey);
 	return(i);
 	}
+#else /* !OPENSSL_NO_SSL2 */
 
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
+#endif

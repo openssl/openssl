@@ -56,20 +56,16 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cast.h"
+#include <openssl/cast.h>
 #include "cast_lcl.h"
 
 /* The input and output encrypted as though 64bit ofb mode is being
  * used.  The extra state information to record how much of the
  * 64bit block we have used is contained in *num;
  */
-void CAST_ofb64_encrypt(in, out, length, schedule, ivec, num)
-unsigned char *in;
-unsigned char *out;
-long length;
-CAST_KEY *schedule;
-unsigned char *ivec;
-int *num;
+void CAST_ofb64_encrypt(const unsigned char *in, unsigned char *out,
+			long length, CAST_KEY *schedule, unsigned char *ivec,
+			int *num)
 	{
 	register CAST_LONG v0,v1,t;
 	register int n= *num;
@@ -80,7 +76,7 @@ int *num;
 	unsigned char *iv;
 	int save=0;
 
-	iv=(unsigned char *)ivec;
+	iv=ivec;
 	n2l(iv,v0);
 	n2l(iv,v1);
 	ti[0]=v0;
@@ -105,7 +101,7 @@ int *num;
 		{
 		v0=ti[0];
 		v1=ti[1];
-		iv=(unsigned char *)ivec;
+		iv=ivec;
 		l2n(v0,iv);
 		l2n(v1,iv);
 		}

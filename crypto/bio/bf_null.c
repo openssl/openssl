@@ -59,30 +59,19 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "bio.h"
-#include "evp.h"
+#include <openssl/bio.h>
 
 /* BIO_put and BIO_get both add to the digest,
  * BIO_gets returns the digest */
 
-#ifndef NOPROTO
-static int nullf_write(BIO *h,char *buf,int num);
-static int nullf_read(BIO *h,char *buf,int size);
-static int nullf_puts(BIO *h,char *str);
-static int nullf_gets(BIO *h,char *str,int size);
-static long nullf_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int nullf_write(BIO *h, const char *buf, int num);
+static int nullf_read(BIO *h, char *buf, int size);
+static int nullf_puts(BIO *h, const char *str);
+static int nullf_gets(BIO *h, char *str, int size);
+static long nullf_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int nullf_new(BIO *h);
 static int nullf_free(BIO *data);
-#else
-static int nullf_write();
-static int nullf_read();
-static int nullf_puts();
-static int nullf_gets();
-static long nullf_ctrl();
-static int nullf_new();
-static int nullf_free();
-#endif
-
+static long nullf_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 static BIO_METHOD methods_nullf=
 	{
 	BIO_TYPE_NULL_FILTER,
@@ -94,15 +83,15 @@ static BIO_METHOD methods_nullf=
 	nullf_ctrl,
 	nullf_new,
 	nullf_free,
+	nullf_callback_ctrl,
 	};
 
-BIO_METHOD *BIO_f_null()
+BIO_METHOD *BIO_f_null(void)
 	{
 	return(&methods_nullf);
 	}
 
-static int nullf_new(bi)
-BIO *bi;
+static int nullf_new(BIO *bi)
 	{
 	bi->init=1;
 	bi->ptr=NULL;
@@ -110,8 +99,7 @@ BIO *bi;
 	return(1);
 	}
 
-static int nullf_free(a)
-BIO *a;
+static int nullf_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 /*	a->ptr=NULL;
@@ -120,10 +108,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int nullf_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int nullf_read(BIO *b, char *out, int outl)
 	{
 	int ret=0;
  
@@ -135,10 +120,7 @@ int outl;
 	return(ret);
 	}
 
-static int nullf_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int nullf_write(BIO *b, const char *in, int inl)
 	{
 	int ret=0;
 
@@ -150,11 +132,7 @@ int inl;
 	return(ret);
 	}
 
-static long nullf_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long nullf_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	long ret;
 
@@ -175,19 +153,28 @@ char *ptr;
 	return(ret);
 	}
 
-static int nullf_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static long nullf_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
+		break;
+		}
+	return(ret);
+	}
+
+static int nullf_gets(BIO *bp, char *buf, int size)
 	{
 	if (bp->next_bio == NULL) return(0);
 	return(BIO_gets(bp->next_bio,buf,size));
 	}
 
 
-static int nullf_puts(bp,str)
-BIO *bp;
-char *str;
+static int nullf_puts(BIO *bp, const char *str)
 	{
 	if (bp->next_bio == NULL) return(0);
 	return(BIO_puts(bp->next_bio,str));

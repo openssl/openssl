@@ -1,4 +1,4 @@
-/* crypto/rc2/rc2.org */
+/* crypto/rc2/rc2.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,60 +56,46 @@
  * [including the GNU Public Licence.]
  */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
- *
- * Always modify rc2.org since rc2.h is automatically generated from
- * it during SSLeay configuration.
- *
- * WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
- */
-
 #ifndef HEADER_RC2_H
 #define HEADER_RC2_H
 
-#ifdef  __cplusplus
-extern "C" {
+#ifdef OPENSSL_NO_RC2
+#error RC2 is disabled.
 #endif
 
 #define RC2_ENCRYPT	1
 #define RC2_DECRYPT	0
 
-/* I need to put in a mod for the alpha - eay */
-#define RC2_INT unsigned int
-
+#include <openssl/opensslconf.h> /* RC2_INT */
 #define RC2_BLOCK	8
 #define RC2_KEY_LENGTH	16
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 typedef struct rc2_key_st
 	{
 	RC2_INT data[64];
 	} RC2_KEY;
 
-#ifndef NOPROTO
- 
-void RC2_set_key(RC2_KEY *key, int len, unsigned char *data,int bits);
-void RC2_ecb_encrypt(unsigned char *in,unsigned char *out,RC2_KEY *key,
-	int enc);
+#ifdef OPENSSL_FIPS 
+void private_RC2_set_key(RC2_KEY *key, int len, const unsigned char *data,
+								int bits);
+#endif
+void RC2_set_key(RC2_KEY *key, int len, const unsigned char *data,int bits);
+void RC2_ecb_encrypt(const unsigned char *in,unsigned char *out,RC2_KEY *key,
+		     int enc);
 void RC2_encrypt(unsigned long *data,RC2_KEY *key);
 void RC2_decrypt(unsigned long *data,RC2_KEY *key);
-void RC2_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
+void RC2_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	RC2_KEY *ks, unsigned char *iv, int enc);
-void RC2_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	RC2_KEY *schedule, unsigned char *ivec, int *num, int enc);
-void RC2_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	RC2_KEY *schedule, unsigned char *ivec, int *num);
-
-#else
-
-void RC2_set_key();
-void RC2_ecb_encrypt();
-void RC2_encrypt();
-void RC2_decrypt();
-void RC2_cbc_encrypt();
-void RC2_cfb64_encrypt();
-void RC2_ofb64_encrypt();
-
-#endif
+void RC2_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+		       long length, RC2_KEY *schedule, unsigned char *ivec,
+		       int *num, int enc);
+void RC2_ofb64_encrypt(const unsigned char *in, unsigned char *out,
+		       long length, RC2_KEY *schedule, unsigned char *ivec,
+		       int *num);
 
 #ifdef  __cplusplus
 }

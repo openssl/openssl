@@ -1,9 +1,18 @@
 #!/bin/sh
 
-PATH=../apps:$PATH
+if test "$OSTYPE" = msdosdjgpp; then
+    PATH=../apps\;$PATH
+else
+    PATH=../apps:$PATH
+fi
 export PATH
 
-cmd='../apps/ssleay rsa'
+if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then
+  echo skipping rsa conversion test
+  exit 0
+fi
+
+cmd='../util/shlib_wrap.sh ../apps/openssl rsa'
 
 if [ "$1"x != "x" ]; then
 	t=$1

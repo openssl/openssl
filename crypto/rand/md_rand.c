@@ -55,69 +55,83 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
-
-#include <stdio.h>
-#include "cryptlib.h"
-#include <sys/types.h>
-#include <time.h>
-
-#if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
-#ifndef NO_MD5
-#define USE_MD5_RAND
-#elif !defined(NO_SHA1)
-#define USE_SHA1_RAND
-#elif !defined(NO_MDC2)
-#define USE_MDC2_RAND
-#elif !defined(NO_MD2)
-#define USE_MD2_RAND
-#else
-We need a message digest of some type 
-#endif
-#endif
-
-/* Changed how the state buffer used.  I now attempt to 'wrap' such
- * that I don't run over the same locations the next time  go through
- * the 1023 bytes - many thanks to
- * Robert J. LeBlanc <rjl@renaissoft.com> for his comments
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
  */
 
-#if defined(USE_MD5_RAND)
-#include "md5.h"
-#define MD_DIGEST_LENGTH	MD5_DIGEST_LENGTH
-#define MD_CTX			MD5_CTX
-#define MD_Init(a)		MD5_Init(a)
-#define MD_Update(a,b,c)	MD5_Update(a,b,c)
-#define	MD_Final(a,b)		MD5_Final(a,b)
-#define	MD(a,b,c)		MD5(a,b,c)
-#elif defined(USE_SHA1_RAND)
-#include "sha.h"
-#define MD_DIGEST_LENGTH	SHA_DIGEST_LENGTH
-#define MD_CTX			SHA_CTX
-#define MD_Init(a)		SHA1_Init(a)
-#define MD_Update(a,b,c)	SHA1_Update(a,b,c)
-#define	MD_Final(a,b)		SHA1_Final(a,b)
-#define	MD(a,b,c)		SHA1(a,b,c)
-#elif defined(USE_MDC2_RAND)
-#include "mdc2.h"
-#define MD_DIGEST_LENGTH	MDC2_DIGEST_LENGTH
-#define MD_CTX			MDC2_CTX
-#define MD_Init(a)		MDC2_Init(a)
-#define MD_Update(a,b,c)	MDC2_Update(a,b,c)
-#define	MD_Final(a,b)		MDC2_Final(a,b)
-#define	MD(a,b,c)		MDC2(a,b,c)
-#elif defined(USE_MD2_RAND)
-#include "md2.h"
-#define MD_DIGEST_LENGTH	MD2_DIGEST_LENGTH
-#define MD_CTX			MD2_CTX
-#define MD_Init(a)		MD2_Init(a)
-#define MD_Update(a,b,c)	MD2_Update(a,b,c)
-#define	MD_Final(a,b)		MD2_Final(a,b)
-#define	MD(a,b,c)		MD2(a,b,c)
+#ifdef MD_RAND_DEBUG
+# ifndef NDEBUG
+#   define NDEBUG
+# endif
 #endif
 
-#include "rand.h"
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
 
-/* #define NORAND	1 */
+#include "e_os.h"
+
+#include <openssl/rand.h>
+#include "rand_lcl.h"
+
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/fips.h>
+
+#ifdef BN_DEBUG
+# define PREDICT
+#endif
+
 /* #define PREDICT	1 */
 
 #define STATE_SIZE	1023
@@ -125,50 +139,102 @@ static int state_num=0,state_index=0;
 static unsigned char state[STATE_SIZE+MD_DIGEST_LENGTH];
 static unsigned char md[MD_DIGEST_LENGTH];
 static long md_count[2]={0,0};
+static double entropy=0;
+static int initialized=0;
 
-char *RAND_version="RAND part of SSLeay 0.9.1a 06-Jul-1998";
+static unsigned int crypto_lock_rand = 0; /* may be set only when a thread
+                                           * holds CRYPTO_LOCK_RAND
+                                           * (to prevent double locking) */
+/* access to lockin_thread is synchronized by CRYPTO_LOCK_RAND2 */
+static unsigned long locking_thread = 0; /* valid iff crypto_lock_rand is set */
+
+
+#ifdef PREDICT
+int rand_predictable=0;
+#endif
+
+const char RAND_version[]="RAND" OPENSSL_VERSION_PTEXT;
 
 static void ssleay_rand_cleanup(void);
-static void ssleay_rand_seed(unsigned char *buf, int num);
-static void ssleay_rand_bytes(unsigned char *buf, int num);
+static void ssleay_rand_seed(const void *buf, int num);
+static void ssleay_rand_add(const void *buf, int num, double add_entropy);
+static int ssleay_rand_bytes(unsigned char *buf, int num);
+static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num);
+static int ssleay_rand_status(void);
 
-RAND_METHOD rand_ssleay={
+RAND_METHOD rand_ssleay_meth={
 	ssleay_rand_seed,
 	ssleay_rand_bytes,
 	ssleay_rand_cleanup,
+	ssleay_rand_add,
+	ssleay_rand_pseudo_bytes,
+	ssleay_rand_status
 	}; 
 
-RAND_METHOD *RAND_SSLeay()
+RAND_METHOD *RAND_SSLeay(void)
 	{
-	return(&rand_ssleay);
+	return(&rand_ssleay_meth);
 	}
 
-static void ssleay_rand_cleanup()
+static void ssleay_rand_cleanup(void)
 	{
-	memset(state,0,sizeof(state));
+	OPENSSL_cleanse(state,sizeof(state));
 	state_num=0;
 	state_index=0;
-	memset(md,0,MD_DIGEST_LENGTH);
+	OPENSSL_cleanse(md,MD_DIGEST_LENGTH);
 	md_count[0]=0;
 	md_count[1]=0;
+	entropy=0;
+	initialized=0;
 	}
 
-static void ssleay_rand_seed(buf,num)
-unsigned char *buf;
-int num;
+static void ssleay_rand_add(const void *buf, int num, double add)
 	{
-	int i,j,k,st_idx,st_num;
-	MD_CTX m;
+	int i,j,k,st_idx;
+	long md_c[2];
+	unsigned char local_md[MD_DIGEST_LENGTH];
+	EVP_MD_CTX m;
+	int do_not_lock;
 
-#ifdef NORAND
-	return;
-#endif
+	/*
+	 * (Based on the rand(3) manpage)
+	 *
+	 * The input is chopped up into units of 20 bytes (or less for
+	 * the last block).  Each of these blocks is run through the hash
+	 * function as follows:  The data passed to the hash function
+	 * is the current 'md', the same number of bytes from the 'state'
+	 * (the location determined by in incremented looping index) as
+	 * the current 'block', the new key data 'block', and 'count'
+	 * (which is incremented after each use).
+	 * The result of this is kept in 'md' and also xored into the
+	 * 'state' at the same locations that were used as input into the
+         * hash function.
+	 */
 
-	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+	/* check if we already have the lock */
+	if (crypto_lock_rand)
+		{
+		CRYPTO_r_lock(CRYPTO_LOCK_RAND2);
+		do_not_lock = (locking_thread == CRYPTO_thread_id());
+		CRYPTO_r_unlock(CRYPTO_LOCK_RAND2);
+		}
+	else
+		do_not_lock = 0;
+
+	if (!do_not_lock) CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	st_idx=state_index;
-	st_num=state_num;
 
-	state_index=(state_index+num);
+	/* use our own copies of the counters so that even
+	 * if a concurrent thread seeds with exactly the
+	 * same data and uses the same subarray there's _some_
+	 * difference */
+	md_c[0] = md_count[0];
+	md_c[1] = md_count[1];
+
+	memcpy(local_md, md, sizeof md);
+
+	/* state_index <= state_num <= STATE_SIZE */
+	state_index += num;
 	if (state_index >= STATE_SIZE)
 		{
 		state_index%=STATE_SIZE;
@@ -179,15 +245,24 @@ int num;
 		if (state_index > state_num)
 			state_num=state_index;
 		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+	/* state_index <= state_num <= STATE_SIZE */
 
+	/* state[st_idx], ..., state[(st_idx + num - 1) % STATE_SIZE]
+	 * are what we will use now, but other threads may use them
+	 * as well */
+
+	md_count[1] += (num / MD_DIGEST_LENGTH) + (num % MD_DIGEST_LENGTH > 0);
+
+	if (!do_not_lock) CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+
+	EVP_MD_CTX_init(&m);
 	for (i=0; i<num; i+=MD_DIGEST_LENGTH)
 		{
 		j=(num-i);
 		j=(j > MD_DIGEST_LENGTH)?MD_DIGEST_LENGTH:j;
 
 		MD_Init(&m);
-		MD_Update(&m,md,MD_DIGEST_LENGTH);
+		MD_Update(&m,local_md,MD_DIGEST_LENGTH);
 		k=(st_idx+j)-STATE_SIZE;
 		if (k > 0)
 			{
@@ -198,232 +273,309 @@ int num;
 			MD_Update(&m,&(state[st_idx]),j);
 			
 		MD_Update(&m,buf,j);
-		MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
-		MD_Final(md,&m);
-		md_count[1]++;
+		MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
+		MD_Final(&m,local_md);
+		md_c[1]++;
 
-		buf+=j;
+		buf=(const char *)buf + j;
 
 		for (k=0; k<j; k++)
 			{
-			state[st_idx++]^=md[k];
+			/* Parallel threads may interfere with this,
+			 * but always each byte of the new state is
+			 * the XOR of some previous value of its
+			 * and local_md (itermediate values may be lost).
+			 * Alway using locking could hurt performance more
+			 * than necessary given that conflicts occur only
+			 * when the total seeding is longer than the random
+			 * state. */
+			state[st_idx++]^=local_md[k];
 			if (st_idx >= STATE_SIZE)
-				{
 				st_idx=0;
-				st_num=STATE_SIZE;
-				}
 			}
 		}
-	memset((char *)&m,0,sizeof(m));
+	EVP_MD_CTX_cleanup(&m);
+
+	if (!do_not_lock) CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+	/* Don't just copy back local_md into md -- this could mean that
+	 * other thread's seeding remains without effect (except for
+	 * the incremented counter).  By XORing it we keep at least as
+	 * much entropy as fits into md. */
+	for (k = 0; k < sizeof md; k++)
+		{
+		md[k] ^= local_md[k];
+		}
+	if (entropy < ENTROPY_NEEDED) /* stop counting when we have enough */
+	    entropy += add;
+	if (!do_not_lock) CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+	
+#if !defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32)
+	assert(md_c[1] == md_count[1]);
+#endif
 	}
 
-static void ssleay_rand_bytes(buf,num)
-unsigned char *buf;
-int num;
+static void ssleay_rand_seed(const void *buf, int num)
 	{
+	ssleay_rand_add(buf, num, num);
+	}
+
+static int ssleay_rand_bytes(unsigned char *buf, int num)
+	{
+	static volatile int stirred_pool = 0;
 	int i,j,k,st_num,st_idx;
-	MD_CTX m;
-	static int init=1;
-	unsigned long l;
-#ifdef DEVRANDOM
-	FILE *fh;
+	int num_ceil;
+	int ok;
+	long md_c[2];
+	unsigned char local_md[MD_DIGEST_LENGTH];
+	EVP_MD_CTX m;
+#ifndef GETPID_IS_MEANINGLESS
+	pid_t curr_pid = getpid();
+#endif
+	int do_stir_pool = 0;
+
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode())
+	    {
+	    FIPSerr(FIPS_F_SSLEAY_RAND_BYTES,FIPS_R_NON_FIPS_METHOD);
+	    return 0;
+	    }
 #endif
 
 #ifdef PREDICT
-	{
-	static unsigned char val=0;
+	if (rand_predictable)
+		{
+		static unsigned char val=0;
 
-	for (i=0; i<num; i++)
-		buf[i]=val++;
-	return;
-	}
+		for (i=0; i<num; i++)
+			buf[i]=val++;
+		return(1);
+		}
 #endif
+
+	if (num <= 0)
+		return 1;
+
+	EVP_MD_CTX_init(&m);
+	/* round upwards to multiple of MD_DIGEST_LENGTH/2 */
+	num_ceil = (1 + (num-1)/(MD_DIGEST_LENGTH/2)) * (MD_DIGEST_LENGTH/2);
+
+	/*
+	 * (Based on the rand(3) manpage:)
+	 *
+	 * For each group of 10 bytes (or less), we do the following:
+	 *
+	 * Input into the hash function the local 'md' (which is initialized from
+	 * the global 'md' before any bytes are generated), the bytes that are to
+	 * be overwritten by the random bytes, and bytes from the 'state'
+	 * (incrementing looping index). From this digest output (which is kept
+	 * in 'md'), the top (up to) 10 bytes are returned to the caller and the
+	 * bottom 10 bytes are xored into the 'state'.
+	 * 
+	 * Finally, after we have finished 'num' random bytes for the
+	 * caller, 'count' (which is incremented) and the local and global 'md'
+	 * are fed into the hash function and the results are kept in the
+	 * global 'md'.
+	 */
 
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 
-	if (init)
+	/* prevent ssleay_rand_bytes() from trying to obtain the lock again */
+	CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
+	locking_thread = CRYPTO_thread_id();
+	CRYPTO_w_unlock(CRYPTO_LOCK_RAND2);
+	crypto_lock_rand = 1;
+
+	if (!initialized)
 		{
-		init=0;
-		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
-		/* put in some default random data, we need more than
-		 * just this */
-		RAND_seed((unsigned char *)&m,sizeof(m));
-#ifndef MSDOS
-		l=getpid();
-		RAND_seed((unsigned char *)&l,sizeof(l));
-		l=getuid();
-		RAND_seed((unsigned char *)&l,sizeof(l));
-#endif
-		l=time(NULL);
-		RAND_seed((unsigned char *)&l,sizeof(l));
-
-/* #ifdef DEVRANDOM */
-		/* 
-		 * Use a random entropy pool device.
-		 * Linux 1.3.x and FreeBSD-Current has 
-		 * this. Use /dev/urandom if you can
-		 * as /dev/random will block if it runs out
-		 * of random entries.
+		RAND_poll();
+		initialized = 1;
+		}
+	
+	if (!stirred_pool)
+		do_stir_pool = 1;
+	
+	ok = (entropy >= ENTROPY_NEEDED);
+	if (!ok)
+		{
+		/* If the PRNG state is not yet unpredictable, then seeing
+		 * the PRNG output may help attackers to determine the new
+		 * state; thus we have to decrease the entropy estimate.
+		 * Once we've had enough initial seeding we don't bother to
+		 * adjust the entropy count, though, because we're not ambitious
+		 * to provide *information-theoretic* randomness.
+		 *
+		 * NOTE: This approach fails if the program forks before
+		 * we have enough entropy. Entropy should be collected
+		 * in a separate input pool and be transferred to the
+		 * output pool only when the entropy limit has been reached.
 		 */
-		if ((fh = fopen(DEVRANDOM, "r")) != NULL)
-			{
-			unsigned char tmpbuf[32];
+		entropy -= num;
+		if (entropy < 0)
+			entropy = 0;
+		}
 
-			fread((unsigned char *)tmpbuf,1,32,fh);
-			/* we don't care how many bytes we read,
-			 * we will just copy the 'stack' if there is
-			 * nothing else :-) */
-			fclose(fh);
-			RAND_seed(tmpbuf,32);
-			memset(tmpbuf,0,32);
-			}
-/* #endif */
-#ifdef PURIFY
-		memset(state,0,STATE_SIZE);
-		memset(md,0,MD_DIGEST_LENGTH);
+	if (do_stir_pool)
+		{
+		/* In the output function only half of 'md' remains secret,
+		 * so we better make sure that the required entropy gets
+		 * 'evenly distributed' through 'state', our randomness pool.
+		 * The input function (ssleay_rand_add) chains all of 'md',
+		 * which makes it more suitable for this purpose.
+		 */
+
+		int n = STATE_SIZE; /* so that the complete pool gets accessed */
+		while (n > 0)
+			{
+#if MD_DIGEST_LENGTH > 20
+# error "Please adjust DUMMY_SEED."
 #endif
-		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+#define DUMMY_SEED "...................." /* at least MD_DIGEST_LENGTH */
+			/* Note that the seed does not matter, it's just that
+			 * ssleay_rand_add expects to have something to hash. */
+			ssleay_rand_add(DUMMY_SEED, MD_DIGEST_LENGTH, 0.0);
+			n -= MD_DIGEST_LENGTH;
+			}
+		if (ok)
+			stirred_pool = 1;
 		}
 
 	st_idx=state_index;
 	st_num=state_num;
-	state_index+=num;
-	if (state_index > state_num)
-		state_index=(state_index%state_num);
+	md_c[0] = md_count[0];
+	md_c[1] = md_count[1];
+	memcpy(local_md, md, sizeof md);
 
+	state_index+=num_ceil;
+	if (state_index > state_num)
+		state_index %= state_num;
+
+	/* state[st_idx], ..., state[(st_idx + num_ceil - 1) % st_num]
+	 * are now ours (but other threads may use them too) */
+
+	md_count[0] += 1;
+
+	/* before unlocking, we must clear 'crypto_lock_rand' */
+	crypto_lock_rand = 0;
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
 	while (num > 0)
 		{
+		/* num_ceil -= MD_DIGEST_LENGTH/2 */
 		j=(num >= MD_DIGEST_LENGTH/2)?MD_DIGEST_LENGTH/2:num;
 		num-=j;
 		MD_Init(&m);
-		MD_Update(&m,&(md[MD_DIGEST_LENGTH/2]),MD_DIGEST_LENGTH/2);
-		MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
+#ifndef GETPID_IS_MEANINGLESS
+		if (curr_pid) /* just in the first iteration to save time */
+			{
+			MD_Update(&m,(unsigned char*)&curr_pid,sizeof curr_pid);
+			curr_pid = 0;
+			}
+#endif
+		MD_Update(&m,local_md,MD_DIGEST_LENGTH);
+		MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
 #ifndef PURIFY
 		MD_Update(&m,buf,j); /* purify complains */
 #endif
-		k=(st_idx+j)-st_num;
+		k=(st_idx+MD_DIGEST_LENGTH/2)-st_num;
 		if (k > 0)
 			{
-			MD_Update(&m,&(state[st_idx]),j-k);
+			MD_Update(&m,&(state[st_idx]),MD_DIGEST_LENGTH/2-k);
 			MD_Update(&m,&(state[0]),k);
 			}
 		else
-			MD_Update(&m,&(state[st_idx]),j);
-		MD_Final(md,&m);
+			MD_Update(&m,&(state[st_idx]),MD_DIGEST_LENGTH/2);
+		MD_Final(&m,local_md);
 
-		for (i=0; i<j; i++)
+		for (i=0; i<MD_DIGEST_LENGTH/2; i++)
 			{
+			state[st_idx++]^=local_md[i]; /* may compete with other threads */
 			if (st_idx >= st_num)
 				st_idx=0;
-			state[st_idx++]^=md[i];
-			*(buf++)=md[i+MD_DIGEST_LENGTH/2];
+			if (i < j)
+				*(buf++)=local_md[i+MD_DIGEST_LENGTH/2];
 			}
 		}
 
 	MD_Init(&m);
-	MD_Update(&m,(unsigned char *)&(md_count[0]),sizeof(md_count));
-	md_count[0]++;
+	MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
+	MD_Update(&m,local_md,MD_DIGEST_LENGTH);
+	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	MD_Update(&m,md,MD_DIGEST_LENGTH);
-	MD_Final(md,&m);
-	memset(&m,0,sizeof(m));
+	MD_Final(&m,md);
+	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+
+	EVP_MD_CTX_cleanup(&m);
+	if (ok)
+		return(1);
+	else
+		{
+		RANDerr(RAND_F_SSLEAY_RAND_BYTES,RAND_R_PRNG_NOT_SEEDED);
+		ERR_add_error_data(1, "You need to read the OpenSSL FAQ, "
+			"http://www.openssl.org/support/faq.html");
+		return(0);
+		}
 	}
 
-#ifdef WINDOWS
-#include <windows.h>
-#include <rand.h>
+/* pseudo-random bytes that are guaranteed to be unique but not
+   unpredictable */
+static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num) 
+	{
+	int ret;
+	unsigned long err;
 
-/*****************************************************************************
- * Initialisation function for the SSL random generator.  Takes the contents
- * of the screen as random seed.
- *
- * Created 960901 by Gertjan van Oosten, gertjan@West.NL, West Consulting B.V.
- *
- * Code adapted from
- * <URL:http://www.microsoft.com/kb/developr/win_dk/q97193.htm>;
- * the original copyright message is:
- *
-//   (C) Copyright Microsoft Corp. 1993.  All rights reserved.
-//
-//   You have a royalty-free right to use, modify, reproduce and
-//   distribute the Sample Files (and/or any modified version) in
-//   any way you find useful, provided that you agree that
-//   Microsoft has no warranty obligations or liability for any
-//   Sample Application Files which are modified.
- */
-/*
- * I have modified the loading of bytes via RAND_seed() mechanism since
- * the origional would have been very very CPU intensive since RAND_seed()
- * does an MD5 per 16 bytes of input.  The cost to digest 16 bytes is the same
- * as that to digest 56 bytes.  So under the old system, a screen of
- * 1024*768*256 would have been CPU cost of approximatly 49,000 56 byte MD5
- * digests or digesting 2.7 mbytes.  What I have put in place would
- * be 48 16k MD5 digests, or efectivly 48*16+48 MD5 bytes or 816 kbytes
- * or about 3.5 times as much.
- * - eric 
- */
-void RAND_screen(void)
-{
-  HDC		hScrDC;		/* screen DC */
-  HDC		hMemDC;		/* memory DC */
-  HBITMAP	hBitmap;	/* handle for our bitmap */
-  HBITMAP	hOldBitmap;	/* handle for previous bitmap */
-  BITMAP	bm;		/* bitmap properties */
-  unsigned int	size;		/* size of bitmap */
-  char		*bmbits;	/* contents of bitmap */
-  int		w;		/* screen width */
-  int		h;		/* screen height */
-  int		y;		/* y-coordinate of screen lines to grab */
-  int		n = 16;		/* number of screen lines to grab at a time */
-
-  /* Create a screen DC and a memory DC compatible to screen DC */
-  hScrDC = CreateDC("DISPLAY", NULL, NULL, NULL);
-  hMemDC = CreateCompatibleDC(hScrDC);
-
-  /* Get screen resolution */
-  w = GetDeviceCaps(hScrDC, HORZRES);
-  h = GetDeviceCaps(hScrDC, VERTRES);
-
-  /* Create a bitmap compatible with the screen DC */
-  hBitmap = CreateCompatibleBitmap(hScrDC, w, n);
-
-  /* Select new bitmap into memory DC */
-  hOldBitmap = SelectObject(hMemDC, hBitmap);
-
-  /* Get bitmap properties */
-  GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-  size = (unsigned int)bm.bmWidthBytes * bm.bmHeight * bm.bmPlanes;
-
-  bmbits = Malloc(size);
-  if (bmbits) {
-    /* Now go through the whole screen, repeatedly grabbing n lines */
-    for (y = 0; y < h-n; y += n)
-    	{
-	unsigned char md[MD_DIGEST_LENGTH];
-
-	/* Bitblt screen DC to memory DC */
-	BitBlt(hMemDC, 0, 0, w, n, hScrDC, 0, y, SRCCOPY);
-
-	/* Copy bitmap bits from memory DC to bmbits */
-	GetBitmapBits(hBitmap, size, bmbits);
-
-	/* Get the MD5 of the bitmap */
-	MD(bmbits,size,md);
-
-	/* Seed the random generator with the MD5 digest */
-	RAND_seed(md, MD_DIGEST_LENGTH);
+	ret = RAND_bytes(buf, num);
+	if (ret == 0)
+		{
+		err = ERR_peek_error();
+		if (ERR_GET_LIB(err) == ERR_LIB_RAND &&
+		    ERR_GET_REASON(err) == RAND_R_PRNG_NOT_SEEDED)
+			(void)ERR_get_error();
+		}
+	return (ret);
 	}
 
-    Free(bmbits);
-  }
+static int ssleay_rand_status(void)
+	{
+	int ret;
+	int do_not_lock;
 
-  /* Select old bitmap back into memory DC */
-  hBitmap = SelectObject(hMemDC, hOldBitmap);
+	/* check if we already have the lock
+	 * (could happen if a RAND_poll() implementation calls RAND_status()) */
+	if (crypto_lock_rand)
+		{
+		CRYPTO_r_lock(CRYPTO_LOCK_RAND2);
+		do_not_lock = (locking_thread == CRYPTO_thread_id());
+		CRYPTO_r_unlock(CRYPTO_LOCK_RAND2);
+		}
+	else
+		do_not_lock = 0;
+	
+	if (!do_not_lock)
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+		
+		/* prevent ssleay_rand_bytes() from trying to obtain the lock again */
+		CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
+		locking_thread = CRYPTO_thread_id();
+		CRYPTO_w_unlock(CRYPTO_LOCK_RAND2);
+		crypto_lock_rand = 1;
+		}
+	
+	if (!initialized)
+		{
+		RAND_poll();
+		initialized = 1;
+		}
 
-  /* Clean up */
-  DeleteObject(hBitmap);
-  DeleteDC(hMemDC);
-  DeleteDC(hScrDC);
-}
-#endif
+	ret = entropy >= ENTROPY_NEEDED;
+
+	if (!do_not_lock)
+		{
+		/* before unlocking, we must clear 'crypto_lock_rand' */
+		crypto_lock_rand = 0;
+		
+		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+		}
+	
+	return ret;
+	}

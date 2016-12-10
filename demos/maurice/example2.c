@@ -10,13 +10,13 @@
 #include <stdio.h>
 #include <strings.h>
 
-#include "rsa.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
-#include "err.h"
-#include "pem.h"
-#include "ssl.h"
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
 
 #include "loadkeys.h"
 
@@ -33,7 +33,6 @@ int main()
   	EVP_PKEY *pubKey;
   	EVP_PKEY *privKey;
 	int len;
-	FILE *fp;
 
         ERR_load_crypto_strings();
 
@@ -72,6 +71,5 @@ int main()
 	EVP_PKEY_free(pubKey);
 	free(buf);
 	free(buf2);
+        return 0;
 }
-
-

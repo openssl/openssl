@@ -59,19 +59,17 @@
 /* 11-Sep-92 Andrew Daviel   Support for Silicon Graphics IRIX added */
 /* 06-Apr-92 Luke Brennan    Support for VMS and add extra signal calls */
 
-#ifndef MSDOS
+#if !defined(OPENSSL_SYS_MSDOS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC)) && !defined(OPENSSL_SYS_MACOSX)
 #define TIMES
 #endif
 
 #include <stdio.h>
-#ifndef MSDOS
-#include <unistd.h>
-#else
-#include <io.h>
-extern int exit();
-#endif
+
+#include <openssl/e_os2.h>
+#include OPENSSL_UNISTD_IO
+OPENSSL_DECLARE_EXIT
+
 #include <signal.h>
-#ifndef VMS
 #ifndef _IRIX
 #include <time.h>
 #endif
@@ -79,15 +77,15 @@ extern int exit();
 #include <sys/types.h>
 #include <sys/times.h>
 #endif
-#else /* VMS */
-#include <types.h>
-struct tms {
-	time_t tms_utime;
-	time_t tms_stime;
-	time_t tms_uchild;	/* I dunno...  */
-	time_t tms_uchildsys;	/* so these names are a guess :-) */
-	}
+
+/* Depending on the VMS version, the tms structure is perhaps defined.
+   The __TMS macro will show if it was.  If it wasn't defined, we should
+   undefine TIMES, since that tells the rest of the program how things
+   should be handled.				-- Richard Levitte */
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__TMS)
+#undef TIMES
 #endif
+
 #ifndef TIMES
 #include <sys/timeb.h>
 #endif
@@ -98,16 +96,12 @@ struct tms {
 #include <sys/param.h>
 #endif
 
-#include "rc5.h"
+#include <openssl/rc5.h>
 
 /* The following if from times(3) man page.  It may need to be changed */
 #ifndef HZ
 #ifndef CLK_TCK
-#ifndef VMS
 #define HZ	100.0
-#else /* VMS */
-#define HZ	100.0
-#endif
 #else /* CLK_TCK */
 #define HZ ((double)CLK_TCK)
 #endif
@@ -116,12 +110,7 @@ struct tms {
 #define BUFSIZE	((long)1024)
 long run=0;
 
-#ifndef NOPROTO
 double Time_F(int s);
-#else
-double Time_F();
-#endif
-
 #ifdef SIGALRM
 #if defined(__STDC__) || defined(sgi) || defined(_AIX)
 #define SIGRETTYPE void
@@ -129,14 +118,8 @@ double Time_F();
 #define SIGRETTYPE int
 #endif
 
-#ifndef NOPROTO
 SIGRETTYPE sig_done(int sig);
-#else
-SIGRETTYPE sig_done();
-#endif
-
-SIGRETTYPE sig_done(sig)
-int sig;
+SIGRETTYPE sig_done(int sig)
 	{
 	signal(SIGALRM,sig_done);
 	run=0;
@@ -149,8 +132,7 @@ int sig;
 #define START	0
 #define STOP	1
 
-double Time_F(s)
-int s;
+double Time_F(int s)
 	{
 	double ret;
 #ifdef TIMES
@@ -186,9 +168,7 @@ int s;
 #endif
 	}
 
-int main(argc,argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	long count;
 	static unsigned char buf[BUFSIZE];
@@ -203,7 +183,7 @@ char **argv;
 #endif
 
 #ifndef TIMES
-	printf("To get the most acurate results, try to run this\n");
+	printf("To get the most accurate results, try to run this\n");
 	printf("program when this computer is idle.\n");
 #endif
 
@@ -288,7 +268,7 @@ char **argv;
 	printf("RC5_32/12/16 raw ecb bytes per sec = %12.2f (%9.3fuS)\n",b,8.0e6/b);
 	printf("RC5_32/12/16 cbc     bytes per sec = %12.2f (%9.3fuS)\n",c,8.0e6/c);
 	exit(0);
-#if defined(LINT) || defined(MSDOS)
+#if defined(LINT) || defined(OPENSSL_SYS_MSDOS)
 	return(0);
 #endif
 	}

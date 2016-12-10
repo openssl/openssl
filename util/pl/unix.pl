@@ -38,7 +38,7 @@ $ex_libs="";
 # static library stuff
 $mklib='ar r';
 $mlflags='';
-$ranlib='util/ranlib.sh';
+$ranlib=&which("ranlib") or $ranlib="true";
 $plib='lib';
 $libp=".a";
 $shlibp=".a";
@@ -70,14 +70,32 @@ sub do_lib_rule
 
 sub do_link_rule
 	{
-	local($target,$files,$dep_libs,$libs)=@_;
+	local($target,$files,$dep_libs,$libs,$sha1file,$openssl)=@_;
 	local($ret,$_);
 	
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
-	$ret.="\t\$(LINK) ${efile}$target \$(LFLAGS) $files $libs\n\n";
+	$ret.="\t\$(LINK) ${efile}$target \$(LFLAGS) $files $libs\n";
+	if (defined $sha1file)
+		{
+		$ret.="\t$openssl sha1 -hmac etaonrishdlcupfm -binary $target > $sha1file";
+		}
+	$ret.="\n";
 	return($ret);
+	}
+
+sub which
+	{
+	my ($name)=@_;
+	my $path;
+	foreach $path (split /:/, $ENV{PATH})
+		{
+		if (-x "$path/$name")
+			{
+			return "$path/$name";
+			}
+		}
 	}
 
 1;

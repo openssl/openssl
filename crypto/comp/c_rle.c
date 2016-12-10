@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "objects.h"
-#include "comp.h"
+#include <openssl/objects.h>
+#include <openssl/comp.h>
 
 static int rle_compress_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen);
@@ -17,19 +17,16 @@ static COMP_METHOD rle_method={
 	rle_compress_block,
 	rle_expand_block,
 	NULL,
+	NULL,
 	};
 
-COMP_METHOD *COMP_rle()
+COMP_METHOD *COMP_rle(void)
 	{
 	return(&rle_method);
 	}
 
-static int rle_compress_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-unsigned int olen;
-unsigned char *in;
-unsigned int ilen;
+static int rle_compress_block(COMP_CTX *ctx, unsigned char *out,
+	     unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
 	/* int i; */
 
@@ -44,12 +41,8 @@ unsigned int ilen;
 	return(ilen+1);
 	}
 
-static int rle_expand_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-unsigned int olen;
-unsigned char *in;
-unsigned int ilen;
+static int rle_expand_block(COMP_CTX *ctx, unsigned char *out,
+	     unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
 	int i;
 

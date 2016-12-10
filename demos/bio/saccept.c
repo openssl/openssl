@@ -12,8 +12,8 @@
 
 #include <stdio.h>
 #include <signal.h>
-#include "err.h"
-#include "ssl.h"
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #define CERT_FILE	"server.pem"
 
@@ -45,8 +45,13 @@ char *argv[];
 
 	SSL_load_error_strings();
 
+#ifdef WATT32
+	dbug_init();
+	sock_init();
+#endif
+
 	/* Add ciphers and message digests */
-	SSLeay_add_ssl_algorithms();
+	OpenSSL_add_ssl_algorithms();
 
 	ctx=SSL_CTX_new(SSLv23_server_method());
 	if (!SSL_CTX_use_certificate_file(ctx,CERT_FILE,SSL_FILETYPE_PEM))

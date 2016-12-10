@@ -58,20 +58,17 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/buffer.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
-#ifndef NO_FP_API
-STACK *PEM_X509_INFO_read(fp,sk,cb)
-FILE *fp;
-STACK *sk;
-int (*cb)();
+#ifndef OPENSSL_NO_FP_API
+STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u)
 	{
         BIO *b;
-        STACK *ret;
+        STACK_OF(X509_INFO) *ret;
 
         if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
@@ -79,29 +76,26 @@ int (*cb)();
                 return(0);
 		}
         BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=PEM_X509_INFO_read_bio(b,sk,cb);
+        ret=PEM_X509_INFO_read_bio(b,sk,cb,u);
         BIO_free(b);
         return(ret);
 	}
 #endif
 
-STACK *PEM_X509_INFO_read_bio(bp,sk,cb)
-BIO *bp;
-STACK *sk;
-int (*cb)();
+STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u)
 	{
 	X509_INFO *xi=NULL;
 	char *name=NULL,*header=NULL,**pp;
 	unsigned char *data=NULL,*p;
 	long len,error=0;
 	int ok=0;
-	STACK *ret=NULL;
+	STACK_OF(X509_INFO) *ret=NULL;
 	unsigned int i,raw;
 	char *(*d2i)();
 
 	if (sk == NULL)
 		{
-		if ((ret=sk_new_null()) == NULL)
+		if ((ret=sk_X509_INFO_new_null()) == NULL)
 			{
 			PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -117,7 +111,7 @@ int (*cb)();
 		i=PEM_read_bio(bp,&name,&header,&data,&len);
 		if (i == 0)
 			{
-			error=ERR_GET_REASON(ERR_peek_error());
+			error=ERR_GET_REASON(ERR_peek_last_error());
 			if (error == PEM_R_NO_START_LINE)
 				{
 				ERR_clear_error();
@@ -132,7 +126,18 @@ start:
 			d2i=(char *(*)())d2i_X509;
 			if (xi->x509 != NULL)
 				{
-				if (!sk_push(ret,(char *)xi)) goto err;
+				if (!sk_X509_INFO_push(ret,xi)) goto err;
+				if ((xi=X509_INFO_new()) == NULL) goto err;
+				goto start;
+				}
+			pp=(char **)&(xi->x509);
+			}
+		else if ((strcmp(name,PEM_STRING_X509_TRUSTED) == 0))
+			{
+			d2i=(char *(*)())d2i_X509_AUX;
+			if (xi->x509 != NULL)
+				{
+				if (!sk_X509_INFO_push(ret,xi)) goto err;
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
@@ -143,20 +148,20 @@ start:
 			d2i=(char *(*)())d2i_X509_CRL;
 			if (xi->crl != NULL)
 				{
-				if (!sk_push(ret,(char *)xi)) goto err;
+				if (!sk_X509_INFO_push(ret,xi)) goto err;
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
 			pp=(char **)&(xi->crl);
 			}
 		else
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 			if (strcmp(name,PEM_STRING_RSA) == 0)
 			{
 			d2i=(char *(*)())d2i_RSAPrivateKey;
 			if (xi->x_pkey != NULL) 
 				{
-				if (!sk_push(ret,(char *)xi)) goto err;
+				if (!sk_X509_INFO_push(ret,xi)) goto err;
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
@@ -174,13 +179,13 @@ start:
 			}
 		else
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 			if (strcmp(name,PEM_STRING_DSA) == 0)
 			{
 			d2i=(char *(*)())d2i_DSAPrivateKey;
 			if (xi->x_pkey != NULL) 
 				{
-				if (!sk_push(ret,(char *)xi)) goto err;
+				if (!sk_X509_INFO_push(ret,xi)) goto err;
 				if ((xi=X509_INFO_new()) == NULL) goto err;
 				goto start;
 				}
@@ -211,7 +216,7 @@ start:
 
 				if (!PEM_get_EVP_CIPHER_INFO(header,&cipher))
 					goto err;
-				if (!PEM_do_header(&cipher,data,&len,cb))
+				if (!PEM_do_header(&cipher,data,&len,cb,u))
 					goto err;
 				p=data;
 				if (d2i(pp,&p,len) == NULL)
@@ -232,9 +237,9 @@ start:
 		else	{
 			/* unknown */
 			}
-		if (name != NULL) Free(name);
-		if (header != NULL) Free(header);
-		if (data != NULL) Free(data);
+		if (name != NULL) OPENSSL_free(name);
+		if (header != NULL) OPENSSL_free(header);
+		if (data != NULL) OPENSSL_free(data);
 		name=NULL;
 		header=NULL;
 		data=NULL;
@@ -246,7 +251,7 @@ start:
 	if ((xi->x509 != NULL) || (xi->crl != NULL) ||
 		(xi->x_pkey != NULL) || (xi->enc_data != NULL))
 		{
-		if (!sk_push(ret,(char *)xi)) goto err;
+		if (!sk_X509_INFO_push(ret,xi)) goto err;
 		xi=NULL;
 		}
 	ok=1;
@@ -254,36 +259,30 @@ err:
 	if (xi != NULL) X509_INFO_free(xi);
 	if (!ok)
 		{
-		for (i=0; ((int)i)<sk_num(ret); i++)
+		for (i=0; ((int)i)<sk_X509_INFO_num(ret); i++)
 			{
-			xi=(X509_INFO *)sk_value(ret,i);
+			xi=sk_X509_INFO_value(ret,i);
 			X509_INFO_free(xi);
 			}
-		if (ret != sk) sk_free(ret);
+		if (ret != sk) sk_X509_INFO_free(ret);
 		ret=NULL;
 		}
 		
-	if (name != NULL) Free(name);
-	if (header != NULL) Free(header);
-	if (data != NULL) Free(data);
+	if (name != NULL) OPENSSL_free(name);
+	if (header != NULL) OPENSSL_free(header);
+	if (data != NULL) OPENSSL_free(data);
 	return(ret);
 	}
 
 
 /* A TJH addition */
-int PEM_X509_INFO_write_bio(bp,xi,enc,kstr,klen,cb)
-BIO *bp;
-X509_INFO *xi;
-EVP_CIPHER *enc;
-unsigned char *kstr;
-int klen;
-int (*cb)();
+int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
+	     unsigned char *kstr, int klen, pem_password_cb *cb, void *u)
 	{
 	EVP_CIPHER_CTX ctx;
 	int i,ret=0;
 	unsigned char *data=NULL;
-	char *objstr=NULL;
-#define PEM_BUFSIZE	1024
+	const char *objstr=NULL;
 	char buf[PEM_BUFSIZE];
 	unsigned char *iv=NULL;
 	
@@ -306,7 +305,7 @@ int (*cb)();
 		{
 		if ( (xi->enc_data!=NULL) && (xi->enc_len>0) )
 			{
-			/* copy from wierdo names into more normal things */
+			/* copy from weirdo names into more normal things */
 			iv=xi->enc_cipher.iv;
 			data=(unsigned char *)xi->enc_data;
 			i=xi->enc_len;
@@ -325,9 +324,10 @@ int (*cb)();
 				}
 
 			/* create the right magic header stuff */
+			OPENSSL_assert(strlen(objstr)+23+2*enc->iv_len+13 <= sizeof buf);
 			buf[0]='\0';
 			PEM_proc_type(buf,PEM_TYPE_ENCRYPTED);
-			PEM_dek_info(buf,objstr,8,(char *)iv);
+			PEM_dek_info(buf,objstr,enc->iv_len,(char *)iv);
 
 			/* use the normal code to write things out */
 			i=PEM_write_bio(bp,PEM_STRING_RSA,buf,data,i);
@@ -336,18 +336,18 @@ int (*cb)();
 		else
 			{
 			/* Add DSA/DH */
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 			/* normal optionally encrypted stuff */
 			if (PEM_write_bio_RSAPrivateKey(bp,
 				xi->x_pkey->dec_pkey->pkey.rsa,
-				enc,kstr,klen,cb)<=0)
+				enc,kstr,klen,cb,u)<=0)
 				goto err;
 #endif
 			}
 		}
 
 	/* if we have a certificate then write it out now */
-	if ((xi->x509 != NULL) || (PEM_write_bio_X509(bp,xi->x509) <= 0))
+	if ((xi->x509 != NULL) && (PEM_write_bio_X509(bp,xi->x509) <= 0))
 		goto err;
 
 	/* we are ignoring anything else that is loaded into the X509_INFO
@@ -359,7 +359,7 @@ int (*cb)();
 	ret=1;
 
 err:
-	memset((char *)&ctx,0,sizeof(ctx));
-	memset(buf,0,PEM_BUFSIZE);
+	OPENSSL_cleanse((char *)&ctx,sizeof(ctx));
+	OPENSSL_cleanse(buf,PEM_BUFSIZE);
 	return(ret);
 	}

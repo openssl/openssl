@@ -1,4 +1,5 @@
 /* apps/dh.c */
+/* obsoleted by dhparam.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,22 +57,23 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef OPENSSL_NO_DH
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "bn.h"
-#include "dh.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/dh.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #undef PROG
 #define PROG	dh_main
 
-/* -inform arg	- input format - default PEM (one of DER, TXT or PEM)
+/* -inform arg	- input format - default PEM (DER or PEM)
  * -outform arg - output format - default PEM
  * -in arg	- input file - default stdin
  * -out arg	- output file - default stdout
@@ -81,15 +83,21 @@
  * -C
  */
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int, char **);
+
+int MAIN(int argc, char **argv)
 	{
+#ifndef OPENSSL_NO_ENGINE
+	ENGINE *e = NULL;
+#endif
 	DH *dh=NULL;
 	int i,badops=0,text=0;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,check=0,noout=0,C=0,ret=1;
 	char *infile,*outfile,*prog;
+#ifndef OPENSSL_NO_ENGINE
+	char *engine;
+#endif
 
 	apps_startup();
 
@@ -97,6 +105,12 @@ char **argv;
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
+#ifndef OPENSSL_NO_ENGINE
+	engine=NULL;
+#endif
 	infile=NULL;
 	outfile=NULL;
 	informat=FORMAT_PEM;
@@ -127,6 +141,13 @@ char **argv;
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
 			}
+#ifndef OPENSSL_NO_ENGINE
+		else if (strcmp(*argv,"-engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			engine= *(++argv);
+			}
+#endif
 		else if (strcmp(*argv,"-check") == 0)
 			check=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -150,18 +171,25 @@ char **argv;
 bad:
 		BIO_printf(bio_err,"%s [options] <infile >outfile\n",prog);
 		BIO_printf(bio_err,"where options are\n");
-		BIO_printf(bio_err," -inform arg   input format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -outform arg  output format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -in arg       inout file\n");
+		BIO_printf(bio_err," -inform arg   input format - one of DER PEM\n");
+		BIO_printf(bio_err," -outform arg  output format - one of DER PEM\n");
+		BIO_printf(bio_err," -in arg       input file\n");
 		BIO_printf(bio_err," -out arg      output file\n");
 		BIO_printf(bio_err," -check        check the DH parameters\n");
-		BIO_printf(bio_err," -text         check the DH parameters\n");
+		BIO_printf(bio_err," -text         print a text form of the DH parameters\n");
 		BIO_printf(bio_err," -C            Output C code\n");
 		BIO_printf(bio_err," -noout        no output\n");
+#ifndef OPENSSL_NO_ENGINE
+		BIO_printf(bio_err," -engine e     use engine e, possibly a hardware device.\n");
+#endif
 		goto end;
 		}
 
 	ERR_load_crypto_strings();
+
+#ifndef OPENSSL_NO_ENGINE
+        e = setup_engine(bio_err, engine, 0);
+#endif
 
 	in=BIO_new(BIO_s_file());
 	out=BIO_new(BIO_s_file());
@@ -182,7 +210,15 @@ bad:
 			}
 		}
 	if (outfile == NULL)
+		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef OPENSSL_SYS_VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	else
 		{
 		if (BIO_write_filename(out,outfile) <= 0)
@@ -195,7 +231,7 @@ bad:
 	if	(informat == FORMAT_ASN1)
 		dh=d2i_DHparams_bio(in,NULL);
 	else if (informat == FORMAT_PEM)
-		dh=PEM_read_bio_DHparams(in,NULL,NULL);
+		dh=PEM_read_bio_DHparams(in,NULL,NULL,NULL);
 	else
 		{
 		BIO_printf(bio_err,"bad input format specified\n");
@@ -220,7 +256,7 @@ bad:
 		BN_print(stdout,dh->g);
 		printf("\n");
 		if (dh->length != 0)
-			printf("recomented private length=%ld\n",dh->length);
+			printf("recommended private length=%ld\n",dh->length);
 #endif
 		}
 	
@@ -233,8 +269,8 @@ bad:
 			}
 		if (i & DH_CHECK_P_NOT_PRIME)
 			printf("p value is not prime\n");
-		if (i & DH_CHECK_P_NOT_STRONG_PRIME)
-			printf("p value is not a strong prime\n");
+		if (i & DH_CHECK_P_NOT_SAFE_PRIME)
+			printf("p value is not a safe prime\n");
 		if (i & DH_UNABLE_TO_CHECK_GENERATOR)
 			printf("unable to check the generator value\n");
 		if (i & DH_NOT_SUITABLE_GENERATOR)
@@ -249,10 +285,10 @@ bad:
 
 		len=BN_num_bytes(dh->p);
 		bits=BN_num_bits(dh->p);
-		data=(unsigned char *)Malloc(len);
+		data=(unsigned char *)OPENSSL_malloc(len);
 		if (data == NULL)
 			{
-			perror("Malloc");
+			perror("OPENSSL_malloc");
 			goto end;
 			}
 		l=BN_bn2bin(dh->p,data);
@@ -283,6 +319,7 @@ bad:
 		printf("\tif ((dh->p == NULL) || (dh->g == NULL))\n");
 		printf("\t\treturn(NULL);\n");
 		printf("\treturn(dh);\n\t}\n");
+		OPENSSL_free(data);
 		}
 
 
@@ -298,7 +335,7 @@ bad:
 			}
 		if (!i)
 			{
-			BIO_printf(bio_err,"unable to write DH paramaters\n");
+			BIO_printf(bio_err,"unable to write DH parameters\n");
 			ERR_print_errors(bio_err);
 			goto end;
 			}
@@ -306,7 +343,9 @@ bad:
 	ret=0;
 end:
 	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
+	if (out != NULL) BIO_free_all(out);
 	if (dh != NULL) DH_free(dh);
-	EXIT(ret);
+	apps_shutdown();
+	OPENSSL_EXIT(ret);
 	}
+#endif

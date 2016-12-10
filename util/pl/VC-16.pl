@@ -4,7 +4,6 @@
 
 $ssl=	"ssleay16";
 $crypto="libeay16";
-$RSAref="RSAref16";
 
 $o='\\';
 $cp='copy';
@@ -34,7 +33,7 @@ $lflags="$base_lflags /STACK:20000";
 
 if ($win16)
 	{
-	$cflags.=" -DWINDOWS -DWIN16";
+	$cflags.=" -DOPENSSL_SYSNAME_WIN16";
 	$app_cflag="/Gw /FPi87";
 	$lib_cflag="/Gw";
 	$lib_cflag.=" -D_WINDLL -D_DLL" if $shlib;
@@ -62,7 +61,7 @@ if ($shlib)
 else
 	{ $mlflags=''; }
 
-$app_ex_obj="setargv.obj";
+$app_ex_obj="";
 
 $obj='.obj';
 $ofile="/Fo";
@@ -91,7 +90,7 @@ $des_enc_src='';
 $bf_enc_obj='';
 $bf_enc_src='';
 
-if (!$no_asm)
+if (!$no_asm && !$fips)
 	{
 	if ($asmbits == 32)
 		{
@@ -148,7 +147,7 @@ sub do_lib_rule
 
 sub do_link_rule
 	{
-	local($target,$files,$dep_libs,$libs)=@_;
+	local($target,$files,$dep_libs,$libs,$sha1file,$openssl)=@_;
 	local($ret,$f,$_,@f);
 	
 	$file =~ s/\//$o/g if $o ne '/';
@@ -166,7 +165,12 @@ sub do_link_rule
 		}
 	else
 		{ $ret.="  \$(APP_EX_OBJ) $files"; }
-	$ret.="\n  $target\n\n  $libs\n\n<<\n\n";
+	$ret.="\n  $target\n\n  $libs\n\n<<\n";
+	if (defined $sha1file)
+		{
+		$ret.="  $openssl sha1 -hmac etaonrishdlcupfm -binary $target > $sha1file";
+		}
+	$ret.="\n";
 	return($ret);
 	}
 

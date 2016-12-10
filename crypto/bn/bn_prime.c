@@ -55,48 +55,92 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
-#include "rand.h"
+#include <openssl/rand.h>
 
-/* The quick seive algorithm approach to weeding out primes is
+/* The quick sieve algorithm approach to weeding out primes is
  * Philip Zimmermann's, as implemented in PGP.  I have had a read of
  * his comments and implemented my own version.
  */
 #include "bn_prime.h"
 
-#ifndef NOPROTO
-static int witness(BIGNUM *a, BIGNUM *n, BN_CTX *ctx,BN_CTX *ctx2,
-	BN_MONT_CTX *mont);
+static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
+	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
 static int probable_prime_dh(BIGNUM *rnd, int bits,
-	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
-static int probable_prime_dh_strong(BIGNUM *rnd, int bits,
-	BIGNUM *add, BIGNUM *rem, BN_CTX *ctx);
-#else
-static int witness();
-static int probable_prime();
-static int probable_prime_dh();
-static int probable_prime_dh_strong();
-#endif
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
+static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
 
-BIGNUM *BN_generate_prime(ret,bits,strong,add,rem,callback,cb_arg)
-BIGNUM *ret;
-int bits;
-int strong;
-BIGNUM *add;
-BIGNUM *rem;
-void (*callback)(P_I_I_P); 
-char *cb_arg;
+BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
+	const BIGNUM *add, const BIGNUM *rem,
+	void (*callback)(int,int,void *), void *cb_arg)
 	{
 	BIGNUM *rnd=NULL;
 	BIGNUM t;
+	int found=0;
 	int i,j,c1=0;
 	BN_CTX *ctx;
+	int checks = BN_prime_checks_for_size(bits);
 
+	BN_init(&t);
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
 	if (ret == NULL)
@@ -105,7 +149,6 @@ char *cb_arg;
 		}
 	else
 		rnd=ret;
-	BN_init(&t);
 loop: 
 	/* make a random number and set the top and bottom bits */
 	if (add == NULL)
@@ -114,9 +157,9 @@ loop:
 		}
 	else
 		{
-		if (strong)
+		if (safe)
 			{
-			if (!probable_prime_dh_strong(rnd,bits,add,rem,ctx))
+			if (!probable_prime_dh_safe(rnd,bits,add,rem,ctx))
 				 goto err;
 			}
 		else
@@ -128,176 +171,193 @@ loop:
 	/* if (BN_mod_word(rnd,(BN_ULONG)3) == 1) goto loop; */
 	if (callback != NULL) callback(0,c1++,cb_arg);
 
-	if (!strong)
+	if (!safe)
 		{
-		i=BN_is_prime(rnd,BN_prime_checks,callback,ctx,cb_arg);
+		i=BN_is_prime_fasttest(rnd,checks,callback,ctx,cb_arg,0);
 		if (i == -1) goto err;
 		if (i == 0) goto loop;
 		}
 	else
 		{
-		/* for a strong prime generation,
+		/* for "safe prime" generation,
 		 * check that (p-1)/2 is prime.
 		 * Since a prime is odd, We just
 		 * need to divide by 2 */
 		if (!BN_rshift1(&t,rnd)) goto err;
 
-		for (i=0; i<BN_prime_checks; i++)
+		for (i=0; i<checks; i++)
 			{
-			j=BN_is_prime(rnd,1,callback,ctx,cb_arg);
+			j=BN_is_prime_fasttest(rnd,1,callback,ctx,cb_arg,0);
 			if (j == -1) goto err;
 			if (j == 0) goto loop;
 
-			j=BN_is_prime(&t,1,callback,ctx,cb_arg);
+			j=BN_is_prime_fasttest(&t,1,callback,ctx,cb_arg,0);
 			if (j == -1) goto err;
 			if (j == 0) goto loop;
 
 			if (callback != NULL) callback(2,c1-1,cb_arg);
-			/* We have a strong prime test pass */
+			/* We have a safe prime test pass */
 			}
 		}
 	/* we have a prime :-) */
-	ret=rnd;
+	found = 1;
 err:
-	if ((ret == NULL) && (rnd != NULL)) BN_free(rnd);
+	if (!found && (ret == NULL) && (rnd != NULL)) BN_free(rnd);
 	BN_free(&t);
 	if (ctx != NULL) BN_CTX_free(ctx);
-	return(ret);
+	return(found ? rnd : NULL);
 	}
 
-int BN_is_prime(a,checks,callback,ctx_passed,cb_arg)
-BIGNUM *a;
-int checks;
-void (*callback)(P_I_I_P);
-BN_CTX *ctx_passed;
-char *cb_arg;
+int BN_is_prime(const BIGNUM *a, int checks, void (*callback)(int,int,void *),
+	BN_CTX *ctx_passed, void *cb_arg)
 	{
-	int i,j,c2=0,ret= -1;
-	BIGNUM *check;
-	BN_CTX *ctx=NULL,*ctx2=NULL;
-	BN_MONT_CTX *mont=NULL;
+	return BN_is_prime_fasttest(a, checks, callback, ctx_passed, cb_arg, 0);
+	}
 
+int BN_is_prime_fasttest(const BIGNUM *a, int checks,
+		void (*callback)(int,int,void *),
+		BN_CTX *ctx_passed, void *cb_arg,
+		int do_trial_division)
+	{
+	int i, j, ret = -1;
+	int k;
+	BN_CTX *ctx = NULL;
+	BIGNUM *A1, *A1_odd, *check; /* taken from ctx */
+	BN_MONT_CTX *mont = NULL;
+	const BIGNUM *A = NULL;
+
+	if (BN_cmp(a, BN_value_one()) <= 0)
+		return 0;
+	
+	if (checks == BN_prime_checks)
+		checks = BN_prime_checks_for_size(BN_num_bits(a));
+
+	/* first look for small factors */
 	if (!BN_is_odd(a))
-		return(0);
-	if (ctx_passed != NULL)
-		ctx=ctx_passed;
-	else
-		if ((ctx=BN_CTX_new()) == NULL) goto err;
-
-	if ((ctx2=BN_CTX_new()) == NULL) goto err;
-	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
-
-	check= &(ctx->bn[ctx->tos++]);
-
-	/* Setup the montgomery structure */
-	if (!BN_MONT_CTX_set(mont,a,ctx2)) goto err;
-
-	for (i=0; i<checks; i++)
+		return 0;
+	if (do_trial_division)
 		{
-		if (!BN_rand(check,BN_num_bits(a)-1,0,0)) goto err;
-		j=witness(check,a,ctx,ctx2,mont);
+		for (i = 1; i < NUMPRIMES; i++)
+			if (BN_mod_word(a, primes[i]) == 0) 
+				return 0;
+		if (callback != NULL) callback(1, -1, cb_arg);
+		}
+
+	if (ctx_passed != NULL)
+		ctx = ctx_passed;
+	else
+		if ((ctx=BN_CTX_new()) == NULL)
+			goto err;
+	BN_CTX_start(ctx);
+
+	/* A := abs(a) */
+	if (a->neg)
+		{
+		BIGNUM *t;
+		if ((t = BN_CTX_get(ctx)) == NULL) goto err;
+		BN_copy(t, a);
+		t->neg = 0;
+		A = t;
+		}
+	else
+		A = a;
+	A1 = BN_CTX_get(ctx);
+	A1_odd = BN_CTX_get(ctx);
+	check = BN_CTX_get(ctx);
+	if (check == NULL) goto err;
+
+	/* compute A1 := A - 1 */
+	if (!BN_copy(A1, A))
+		goto err;
+	if (!BN_sub_word(A1, 1))
+		goto err;
+	if (BN_is_zero(A1))
+		{
+		ret = 0;
+		goto err;
+		}
+
+	/* write  A1  as  A1_odd * 2^k */
+	k = 1;
+	while (!BN_is_bit_set(A1, k))
+		k++;
+	if (!BN_rshift(A1_odd, A1, k))
+		goto err;
+
+	/* Montgomery setup for computations mod A */
+	mont = BN_MONT_CTX_new();
+	if (mont == NULL)
+		goto err;
+	if (!BN_MONT_CTX_set(mont, A, ctx))
+		goto err;
+	
+	for (i = 0; i < checks; i++)
+		{
+		if (!BN_pseudo_rand_range(check, A1))
+			goto err;
+		if (!BN_add_word(check, 1))
+			goto err;
+		/* now 1 <= check < A */
+
+		j = witness(check, A, A1, A1_odd, k, ctx, mont);
 		if (j == -1) goto err;
 		if (j)
 			{
 			ret=0;
 			goto err;
 			}
-		if (callback != NULL) callback(1,c2++,cb_arg);
+		if (callback != NULL) callback(1,i,cb_arg);
 		}
 	ret=1;
 err:
-	ctx->tos--;
-	if ((ctx_passed == NULL) && (ctx != NULL))
-		BN_CTX_free(ctx);
-	if (ctx2 != NULL)
-		BN_CTX_free(ctx2);
-	if (mont != NULL) BN_MONT_CTX_free(mont);
-		
-	return(ret);
-	}
-
-#define RECP_MUL_MOD
-
-static int witness(a,n,ctx,ctx2,mont)
-BIGNUM *a;
-BIGNUM *n;
-BN_CTX *ctx,*ctx2;
-BN_MONT_CTX *mont;
-	{
-	int k,i,ret= -1,good;
-	BIGNUM *d,*dd,*tmp,*d1,*d2,*n1;
-	BIGNUM *mont_one,*mont_n1,*mont_a;
-
-	d1= &(ctx->bn[ctx->tos]);
-	d2= &(ctx->bn[ctx->tos+1]);
-	n1= &(ctx->bn[ctx->tos+2]);
-	ctx->tos+=3;
-
-	mont_one= &(ctx2->bn[ctx2->tos]);
-	mont_n1= &(ctx2->bn[ctx2->tos+1]);
-	mont_a= &(ctx2->bn[ctx2->tos+2]);
-	ctx2->tos+=3;
-
-	d=d1;
-	dd=d2;
-	if (!BN_one(d)) goto err;
-	if (!BN_sub(n1,n,d)) goto err; /* n1=n-1; */
-	k=BN_num_bits(n1);
-
-	if (!BN_to_montgomery(mont_one,BN_value_one(),mont,ctx2)) goto err;
-	if (!BN_to_montgomery(mont_n1,n1,mont,ctx2)) goto err;
-	if (!BN_to_montgomery(mont_a,a,mont,ctx2)) goto err;
-
-	BN_copy(d,mont_one);
-	for (i=k-1; i>=0; i--)
+	if (ctx != NULL)
 		{
-		if (	(BN_cmp(d,mont_one) != 0) &&
-			(BN_cmp(d,mont_n1) != 0))
-			good=1;
-		else
-			good=0;
-
-		BN_mod_mul_montgomery(dd,d,d,mont,ctx2);
-		
-		if (good && (BN_cmp(dd,mont_one) == 0))
-			{
-			ret=1;
-			goto err;
-			}
-		if (BN_is_bit_set(n1,i))
-			{
-			BN_mod_mul_montgomery(d,dd,mont_a,mont,ctx2);
-			}
-		else
-			{
-			tmp=d;
-			d=dd;
-			dd=tmp;
-			}
+		BN_CTX_end(ctx);
+		if (ctx_passed == NULL)
+			BN_CTX_free(ctx);
 		}
-	if (BN_cmp(d,mont_one) == 0)
-		i=0;
-	else	i=1;
-	ret=i;
-err:
-	ctx->tos-=3;
-	ctx2->tos-=3;
+	if (mont != NULL)
+		BN_MONT_CTX_free(mont);
+
 	return(ret);
 	}
 
-static int probable_prime(rnd, bits)
-BIGNUM *rnd;
-int bits;
+static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
+	const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont)
+	{
+	if (!BN_mod_exp_mont(w, w, a1_odd, a, ctx, mont)) /* w := w^a1_odd mod a */
+		return -1;
+	if (BN_is_one(w))
+		return 0; /* probably prime */
+	if (BN_cmp(w, a1) == 0)
+		return 0; /* w == -1 (mod a),  'a' is probably prime */
+	while (--k)
+		{
+		if (!BN_mod_mul(w, w, w, a, ctx)) /* w := w^2 mod a */
+			return -1;
+		if (BN_is_one(w))
+			return 1; /* 'a' is composite, otherwise a previous 'w' would
+			           * have been == -1 (mod 'a') */
+		if (BN_cmp(w, a1) == 0)
+			return 0; /* w == -1 (mod a), 'a' is probably prime */
+		}
+	/* If we get here, 'w' is the (a-1)/2-th power of the original 'w',
+	 * and it is neither -1 nor +1 -- so 'a' cannot be prime */
+	return 1;
+	}
+
+static int probable_prime(BIGNUM *rnd, int bits)
 	{
 	int i;
-	MS_STATIC BN_ULONG mods[NUMPRIMES];
-	BN_ULONG delta,d;
+	BN_ULONG mods[NUMPRIMES];
+	BN_ULONG delta,maxdelta;
 
 again:
 	if (!BN_rand(rnd,bits,1,1)) return(0);
 	/* we now have a random number 'rand' to test. */
 	for (i=1; i<NUMPRIMES; i++)
 		mods[i]=BN_mod_word(rnd,(BN_ULONG)primes[i]);
+	maxdelta=BN_MASK2 - primes[NUMPRIMES-1];
 	delta=0;
 	loop: for (i=1; i<NUMPRIMES; i++)
 		{
@@ -305,12 +365,8 @@ again:
 		 * that gcd(rnd-1,primes) == 1 (except for 2) */
 		if (((mods[i]+delta)%primes[i]) <= 1)
 			{
-			d=delta;
 			delta+=2;
-			/* perhaps need to check for overflow of
-			 * delta (but delta can be upto 2^32)
-			 * 21-May-98 eay - added overflow check */
-			if (delta < d) goto again;
+			if (delta > maxdelta) goto again;
 			goto loop;
 			}
 		}
@@ -318,17 +374,14 @@ again:
 	return(1);
 	}
 
-static int probable_prime_dh(rnd, bits, add, rem,ctx)
-BIGNUM *rnd;
-int bits;
-BIGNUM *add;
-BIGNUM *rem;
-BN_CTX *ctx;
+static int probable_prime_dh(BIGNUM *rnd, int bits,
+	const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
 	BIGNUM *t1;
 
-	t1= &(ctx->bn[ctx->tos++]);
+	BN_CTX_start(ctx);
+	if ((t1 = BN_CTX_get(ctx)) == NULL) goto err;
 
 	if (!BN_rand(rnd,bits,0,1)) goto err;
 
@@ -346,7 +399,7 @@ BN_CTX *ctx;
 	loop: for (i=1; i<NUMPRIMES; i++)
 		{
 		/* check that rnd is a prime */
-		if (BN_mod_word(rnd,(BN_LONG)primes[i]) <= 1)
+		if (BN_mod_word(rnd,(BN_ULONG)primes[i]) <= 1)
 			{
 			if (!BN_add(rnd,rnd,add)) goto err;
 			goto loop;
@@ -354,24 +407,22 @@ BN_CTX *ctx;
 		}
 	ret=1;
 err:
-	ctx->tos--;
+	BN_CTX_end(ctx);
 	return(ret);
 	}
 
-static int probable_prime_dh_strong(p, bits, padd, rem,ctx)
-BIGNUM *p;
-int bits;
-BIGNUM *padd;
-BIGNUM *rem;
-BN_CTX *ctx;
+static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
+	const BIGNUM *rem, BN_CTX *ctx)
 	{
 	int i,ret=0;
-	BIGNUM *t1,*qadd=NULL,*q=NULL;
+	BIGNUM *t1,*qadd,*q;
 
 	bits--;
-	t1= &(ctx->bn[ctx->tos++]);
-	q= &(ctx->bn[ctx->tos++]);
-	qadd= &(ctx->bn[ctx->tos++]);
+	BN_CTX_start(ctx);
+	t1 = BN_CTX_get(ctx);
+	q = BN_CTX_get(ctx);
+	qadd = BN_CTX_get(ctx);
+	if (qadd == NULL) goto err;
 
 	if (!BN_rshift1(qadd,padd)) goto err;
 		
@@ -397,8 +448,8 @@ BN_CTX *ctx;
 		/* check that p and q are prime */
 		/* check that for p and q
 		 * gcd(p-1,primes) == 1 (except for 2) */
-		if (	(BN_mod_word(p,(BN_LONG)primes[i]) == 0) ||
-			(BN_mod_word(q,(BN_LONG)primes[i]) == 0))
+		if (	(BN_mod_word(p,(BN_ULONG)primes[i]) == 0) ||
+			(BN_mod_word(q,(BN_ULONG)primes[i]) == 0))
 			{
 			if (!BN_add(p,p,padd)) goto err;
 			if (!BN_add(q,q,qadd)) goto err;
@@ -407,75 +458,6 @@ BN_CTX *ctx;
 		}
 	ret=1;
 err:
-	ctx->tos-=3;
+	BN_CTX_end(ctx);
 	return(ret);
 	}
-
-#if 0
-static int witness(a, n,ctx)
-BIGNUM *a;
-BIGNUM *n;
-BN_CTX *ctx;
-	{
-	int k,i,nb,ret= -1;
-	BIGNUM *d,*dd,*tmp;
-	BIGNUM *d1,*d2,*x,*n1,*inv;
-
-	d1= &(ctx->bn[ctx->tos]);
-	d2= &(ctx->bn[ctx->tos+1]);
-	x=  &(ctx->bn[ctx->tos+2]);
-	n1= &(ctx->bn[ctx->tos+3]);
-	inv=&(ctx->bn[ctx->tos+4]);
-	ctx->tos+=5;
-
-	d=d1;
-	dd=d2;
-	if (!BN_one(d)) goto err;
-	if (!BN_sub(n1,n,d)) goto err; /* n1=n-1; */
-	k=BN_num_bits(n1);
-
-	/* i=BN_num_bits(n); */
-#ifdef RECP_MUL_MOD
-	nb=BN_reciprocal(inv,n,ctx); /**/
-	if (nb == -1) goto err;
-#endif
-
-	for (i=k-1; i>=0; i--)
-		{
-		if (BN_copy(x,d) == NULL) goto err;
-#ifndef RECP_MUL_MOD
-		if (!BN_mod_mul(dd,d,d,n,ctx)) goto err;
-#else
-		if (!BN_mod_mul_reciprocal(dd,d,d,n,inv,nb,ctx)) goto err;
-#endif
-		if (	BN_is_one(dd) &&
-			!BN_is_one(x) &&
-			(BN_cmp(x,n1) != 0))
-			{
-			ret=1;
-			goto err;
-			}
-		if (BN_is_bit_set(n1,i))
-			{
-#ifndef RECP_MUL_MOD
-			if (!BN_mod_mul(d,dd,a,n,ctx)) goto err;
-#else
-			if (!BN_mod_mul_reciprocal(d,dd,a,n,inv,nb,ctx)) goto err; 
-#endif
-			}
-		else
-			{
-			tmp=d;
-			d=dd;
-			dd=tmp;
-			}
-		}
-	if (BN_is_one(d))
-		i=0;
-	else	i=1;
-	ret=i;
-err:
-	ctx->tos-=5;
-	return(ret);
-	}
-#endif

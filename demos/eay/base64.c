@@ -2,8 +2,8 @@
  * getting the data.
  */
 #include <stdio.h>
-#include "bio.h"
-#include "evp.h"
+#include <openssl/bio.h>
+#include <openssl/evp.h>
 
 main()
 	{

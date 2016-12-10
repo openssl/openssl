@@ -59,11 +59,13 @@
 #ifndef HEADER_TLS1_H 
 #define HEADER_TLS1_H 
 
-#include "buffer.h"
+#include <openssl/buffer.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+#define TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES	0
 
 #define TLS1_VERSION			0x0301
 #define TLS1_VERSION_MAJOR		0x03
@@ -75,12 +77,71 @@ extern "C" {
 #define TLS1_AD_ACCESS_DENIED		49	/* fatal */
 #define TLS1_AD_DECODE_ERROR		50	/* fatal */
 #define TLS1_AD_DECRYPT_ERROR		51
-#define TLS1_AD_EXPORT_RESTRICION	60	/* fatal */
+#define TLS1_AD_EXPORT_RESTRICTION	60	/* fatal */
 #define TLS1_AD_PROTOCOL_VERSION	70	/* fatal */
 #define TLS1_AD_INSUFFICIENT_SECURITY	71	/* fatal */
 #define TLS1_AD_INTERNAL_ERROR		80	/* fatal */
-#define TLS1_AD_USER_CANCLED		90
+#define TLS1_AD_USER_CANCELLED		90
 #define TLS1_AD_NO_RENEGOTIATION	100
+
+/* Additional TLS ciphersuites from draft-ietf-tls-56-bit-ciphersuites-00.txt
+ * (available if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES is defined, see
+ * s3_lib.c).  We actually treat them like SSL 3.0 ciphers, which we probably
+ * shouldn't. */
+#define TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5		0x03000060
+#define TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5	0x03000061
+#define TLS1_CK_RSA_EXPORT1024_WITH_DES_CBC_SHA		0x03000062
+#define TLS1_CK_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA	0x03000063
+#define TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_SHA		0x03000064
+#define TLS1_CK_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA	0x03000065
+#define TLS1_CK_DHE_DSS_WITH_RC4_128_SHA		0x03000066
+
+/* AES ciphersuites from RFC3268 */
+
+#define TLS1_CK_RSA_WITH_AES_128_SHA			0x0300002F
+#define TLS1_CK_DH_DSS_WITH_AES_128_SHA			0x03000030
+#define TLS1_CK_DH_RSA_WITH_AES_128_SHA			0x03000031
+#define TLS1_CK_DHE_DSS_WITH_AES_128_SHA		0x03000032
+#define TLS1_CK_DHE_RSA_WITH_AES_128_SHA		0x03000033
+#define TLS1_CK_ADH_WITH_AES_128_SHA			0x03000034
+
+#define TLS1_CK_RSA_WITH_AES_256_SHA			0x03000035
+#define TLS1_CK_DH_DSS_WITH_AES_256_SHA			0x03000036
+#define TLS1_CK_DH_RSA_WITH_AES_256_SHA			0x03000037
+#define TLS1_CK_DHE_DSS_WITH_AES_256_SHA		0x03000038
+#define TLS1_CK_DHE_RSA_WITH_AES_256_SHA		0x03000039
+#define TLS1_CK_ADH_WITH_AES_256_SHA			0x0300003A
+
+/* XXX
+ * Inconsistency alert:
+ * The OpenSSL names of ciphers with ephemeral DH here include the string
+ * "DHE", while elsewhere it has always been "EDH".
+ * (The alias for the list of all such ciphers also is "EDH".)
+ * The specifications speak of "EDH"; maybe we should allow both forms
+ * for everything. */
+#define TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_MD5		"EXP1024-RC4-MD5"
+#define TLS1_TXT_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5	"EXP1024-RC2-CBC-MD5"
+#define TLS1_TXT_RSA_EXPORT1024_WITH_DES_CBC_SHA	"EXP1024-DES-CBC-SHA"
+#define TLS1_TXT_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA	"EXP1024-DHE-DSS-DES-CBC-SHA"
+#define TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_SHA		"EXP1024-RC4-SHA"
+#define TLS1_TXT_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA	"EXP1024-DHE-DSS-RC4-SHA"
+#define TLS1_TXT_DHE_DSS_WITH_RC4_128_SHA		"DHE-DSS-RC4-SHA"
+
+/* AES ciphersuites from RFC3268 */
+#define TLS1_TXT_RSA_WITH_AES_128_SHA			"AES128-SHA"
+#define TLS1_TXT_DH_DSS_WITH_AES_128_SHA		"DH-DSS-AES128-SHA"
+#define TLS1_TXT_DH_RSA_WITH_AES_128_SHA		"DH-RSA-AES128-SHA"
+#define TLS1_TXT_DHE_DSS_WITH_AES_128_SHA		"DHE-DSS-AES128-SHA"
+#define TLS1_TXT_DHE_RSA_WITH_AES_128_SHA		"DHE-RSA-AES128-SHA"
+#define TLS1_TXT_ADH_WITH_AES_128_SHA			"ADH-AES128-SHA"
+
+#define TLS1_TXT_RSA_WITH_AES_256_SHA			"AES256-SHA"
+#define TLS1_TXT_DH_DSS_WITH_AES_256_SHA		"DH-DSS-AES256-SHA"
+#define TLS1_TXT_DH_RSA_WITH_AES_256_SHA		"DH-RSA-AES256-SHA"
+#define TLS1_TXT_DHE_DSS_WITH_AES_256_SHA		"DHE-DSS-AES256-SHA"
+#define TLS1_TXT_DHE_RSA_WITH_AES_256_SHA		"DHE-RSA-AES256-SHA"
+#define TLS1_TXT_ADH_WITH_AES_256_SHA			"ADH-AES256-SHA"
+
 
 #define TLS_CT_RSA_SIGN			1
 #define TLS_CT_DSS_SIGN			2
@@ -107,6 +168,25 @@ extern "C" {
 #define TLS_MD_IV_BLOCK_CONST_SIZE		8
 #define TLS_MD_MASTER_SECRET_CONST		"master secret"
 #define TLS_MD_MASTER_SECRET_CONST_SIZE		13
+
+#ifdef CHARSET_EBCDIC
+#undef TLS_MD_CLIENT_FINISH_CONST
+#define TLS_MD_CLIENT_FINISH_CONST    "\x63\x6c\x69\x65\x6e\x74\x20\x66\x69\x6e\x69\x73\x68\x65\x64"  /*client finished*/
+#undef TLS_MD_SERVER_FINISH_CONST
+#define TLS_MD_SERVER_FINISH_CONST    "\x73\x65\x72\x76\x65\x72\x20\x66\x69\x6e\x69\x73\x68\x65\x64"  /*server finished*/
+#undef TLS_MD_SERVER_WRITE_KEY_CONST
+#define TLS_MD_SERVER_WRITE_KEY_CONST "\x73\x65\x72\x76\x65\x72\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"  /*server write key*/
+#undef TLS_MD_KEY_EXPANSION_CONST
+#define TLS_MD_KEY_EXPANSION_CONST    "\x6b\x65\x79\x20\x65\x78\x70\x61\x6e\x73\x69\x6f\x6e"  /*key expansion*/
+#undef TLS_MD_CLIENT_WRITE_KEY_CONST
+#define TLS_MD_CLIENT_WRITE_KEY_CONST "\x63\x6c\x69\x65\x6e\x74\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"  /*client write key*/
+#undef TLS_MD_SERVER_WRITE_KEY_CONST
+#define TLS_MD_SERVER_WRITE_KEY_CONST "\x73\x65\x72\x76\x65\x72\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"  /*server write key*/
+#undef TLS_MD_IV_BLOCK_CONST
+#define TLS_MD_IV_BLOCK_CONST         "\x49\x56\x20\x62\x6c\x6f\x63\x6b"  /*IV block*/
+#undef TLS_MD_MASTER_SECRET_CONST
+#define TLS_MD_MASTER_SECRET_CONST    "\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"  /*master secret*/
+#endif
 
 #ifdef  __cplusplus
 }

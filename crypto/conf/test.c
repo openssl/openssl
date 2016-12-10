@@ -58,7 +58,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "conf.h"
+#include <openssl/conf.h>
+#include <openssl/err.h>
 
 main()
 	{
@@ -66,7 +67,10 @@ main()
 	long eline;
 	char *s,*s2;
 
-	conf=CONF_load(NULL,"ssleay.conf",&eline);
+#ifdef USE_WIN32
+	CONF_set_default_method(CONF_WIN32);
+#endif
+	conf=CONF_load(NULL,"ssleay.cnf",&eline);
 	if (conf == NULL)
 		{
 		ERR_load_crypto_strings();
@@ -86,6 +90,9 @@ main()
 
 	s=CONF_get_string(conf,"s_client","cipher1");
 	printf("s_client:cipher1=%s\n",(s == NULL)?"NULL":s);
+
+	printf("---------------------------- DUMP ------------------------\n");
+	CONF_dump_fp(conf, stdout);
 
 	exit(0);
 	}

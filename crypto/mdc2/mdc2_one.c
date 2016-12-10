@@ -58,21 +58,19 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "mdc2.h"
+#include <openssl/mdc2.h>
 
-unsigned char *MDC2(d, n, md)
-unsigned char *d;
-unsigned long n;
-unsigned char *md;
+unsigned char *MDC2(const unsigned char *d, unsigned long n, unsigned char *md)
 	{
 	MDC2_CTX c;
 	static unsigned char m[MDC2_DIGEST_LENGTH];
 
 	if (md == NULL) md=m;
-	MDC2_Init(&c);
+	if (!MDC2_Init(&c))
+		return NULL;
 	MDC2_Update(&c,d,n);
         MDC2_Final(md,&c);
-	memset(&c,0,sizeof(c)); /* security consideration */
+	OPENSSL_cleanse(&c,sizeof(c)); /* security consideration */
 	return(md);
 	}
 

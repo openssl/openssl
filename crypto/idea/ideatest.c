@@ -59,7 +59,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "idea.h"
+
+#include "../e_os.h"
+
+#ifdef OPENSSL_NO_IDEA
+int main(int argc, char *argv[])
+{
+    printf("No IDEA support\n");
+    return(0);
+}
+#else
+#include <openssl/idea.h>
 
 unsigned char k[16]={
 	0x00,0x01,0x00,0x02,0x00,0x03,0x00,0x04,
@@ -95,17 +105,9 @@ static unsigned char cfb_cipher64[CFB_TEST_SIZE]={
 	0x3D,0x1E,0xAE,0x47,0xFC,0xCF,0x29,0x0B,*/
 	}; 
 
-#ifndef NOPROTO
 static int cfb64_test(unsigned char *cfb_cipher);
 static char *pt(unsigned char *p);
-#else
-static int cfb64_test();
-static char *pt();
-#endif
-
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,err=0;
 	IDEA_KEY_SCHEDULE key,dkey; 
@@ -167,12 +169,11 @@ char *argv[];
 	else
 		printf("ok\n");
 
-	exit(err);
+	EXIT(err);
 	return(err);
 	}
 
-static int cfb64_test(cfb_cipher)
-unsigned char *cfb_cipher;
+static int cfb64_test(unsigned char *cfb_cipher)
         {
         IDEA_KEY_SCHEDULE eks,dks;
         int err=0,i,n;
@@ -210,8 +211,7 @@ unsigned char *cfb_cipher;
         return(err);
         }
 
-static char *pt(p)
-unsigned char *p;
+static char *pt(unsigned char *p)
 	{
 	static char bufs[10][20];
 	static int bnum=0;
@@ -229,4 +229,4 @@ unsigned char *p;
 	ret[16]='\0';
 	return(ret);
 	}
-	
+#endif

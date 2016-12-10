@@ -58,16 +58,19 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/asn1.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
 
-EVP_PKEY *d2i_PublicKey(type,a,pp,length)
-int type;
-EVP_PKEY **a;
-unsigned char **pp;
-long length;
+EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, unsigned char **pp,
+	     long length)
 	{
 	EVP_PKEY *ret;
 
@@ -85,18 +88,20 @@ long length;
 	ret->type=EVP_PKEY_type(type);
 	switch (ret->type)
 		{
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	case EVP_PKEY_RSA:
-		if ((ret->pkey.rsa=d2i_RSAPublicKey(NULL,pp,length)) == NULL)
+		if ((ret->pkey.rsa=d2i_RSAPublicKey(NULL,
+			(const unsigned char **)pp,length)) == NULL) /* TMP UGLY CAST */
 			{
 			ASN1err(ASN1_F_D2I_PUBLICKEY,ERR_R_ASN1_LIB);
 			goto err;
 			}
 		break;
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	case EVP_PKEY_DSA:
-		if ((ret->pkey.dsa=d2i_DSAPublicKey(NULL,pp,length)) == NULL)
+		if ((ret->pkey.dsa=d2i_DSAPublicKey(NULL,
+			(const unsigned char **)pp,length)) == NULL) /* TMP UGLY CAST */
 			{
 			ASN1err(ASN1_F_D2I_PUBLICKEY,ERR_R_ASN1_LIB);
 			goto err;

@@ -56,118 +56,138 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef OPENSSL_NO_RSA
 #include <stdio.h>
 #include "cryptlib.h"
-#include "rsa.h"
-#include "objects.h"
-#include "asn1_mac.h"
-#include "evp.h"
-#include "x509.h"
+#include <openssl/rsa.h>
+#include <openssl/objects.h>
+#include <openssl/asn1t.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 
 
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 
 typedef struct netscape_pkey_st
 	{
-	ASN1_INTEGER *version;
+	long version;
 	X509_ALGOR *algor;
 	ASN1_OCTET_STRING *private_key;
 	} NETSCAPE_PKEY;
 
-/*
- * ASN1err(ASN1_F_D2I_NETSCAPE_RSA,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_NETSCAPE_RSA,ASN1_R_DECODING_ERROR);
- * ASN1err(ASN1_F_D2I_NETSCAPE_PKEY,ASN1_R_DECODING_ERROR);
- * ASN1err(ASN1_F_NETSCAPE_PKEY_NEW,ASN1_R_DECODING_ERROR);
- */
-#ifndef NOPROTO
-static int i2d_NETSCAPE_PKEY(NETSCAPE_PKEY *a, unsigned char **pp);
-static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY(NETSCAPE_PKEY **a,unsigned char **pp, long length);
-static NETSCAPE_PKEY *NETSCAPE_PKEY_new(void);
-static void NETSCAPE_PKEY_free(NETSCAPE_PKEY *);
-#else
-static int i2d_NETSCAPE_PKEY();
-static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY();
-static NETSCAPE_PKEY *NETSCAPE_PKEY_new();
-static void NETSCAPE_PKEY_free();
-#endif
-
-int i2d_Netscape_RSA(a,pp,cb)
-RSA *a;
-unsigned char **pp;
-int (*cb)();
+typedef struct netscape_encrypted_pkey_st
 	{
-	int i,j,l[6];
-	NETSCAPE_PKEY *pkey;
+	ASN1_OCTET_STRING *os;
+	/* This is the same structure as DigestInfo so use it:
+	 * although this isn't really anything to do with
+	 * digests.
+	 */
+	X509_SIG *enckey;
+	} NETSCAPE_ENCRYPTED_PKEY;
+
+
+ASN1_BROKEN_SEQUENCE(NETSCAPE_ENCRYPTED_PKEY) = {
+	ASN1_SIMPLE(NETSCAPE_ENCRYPTED_PKEY, os, ASN1_OCTET_STRING),
+	ASN1_SIMPLE(NETSCAPE_ENCRYPTED_PKEY, enckey, X509_SIG)
+} ASN1_BROKEN_SEQUENCE_END(NETSCAPE_ENCRYPTED_PKEY)
+
+DECLARE_ASN1_FUNCTIONS_const(NETSCAPE_ENCRYPTED_PKEY)
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(NETSCAPE_ENCRYPTED_PKEY,NETSCAPE_ENCRYPTED_PKEY)
+IMPLEMENT_ASN1_FUNCTIONS_const(NETSCAPE_ENCRYPTED_PKEY)
+
+ASN1_SEQUENCE(NETSCAPE_PKEY) = {
+	ASN1_SIMPLE(NETSCAPE_PKEY, version, LONG),
+	ASN1_SIMPLE(NETSCAPE_PKEY, algor, X509_ALGOR),
+	ASN1_SIMPLE(NETSCAPE_PKEY, private_key, ASN1_OCTET_STRING)
+} ASN1_SEQUENCE_END(NETSCAPE_PKEY)
+
+DECLARE_ASN1_FUNCTIONS_const(NETSCAPE_PKEY)
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(NETSCAPE_PKEY,NETSCAPE_PKEY)
+IMPLEMENT_ASN1_FUNCTIONS_const(NETSCAPE_PKEY)
+
+static RSA *d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
+	     int (*cb)(), int sgckey);
+
+int i2d_Netscape_RSA(const RSA *a, unsigned char **pp, int (*cb)())
+{
+	return i2d_RSA_NET(a, pp, cb, 0);
+}
+
+int i2d_RSA_NET(const RSA *a, unsigned char **pp, int (*cb)(), int sgckey)
+	{
+	int i, j, ret = 0;
+	int rsalen, pkeylen, olen;
+	NETSCAPE_PKEY *pkey = NULL;
+	NETSCAPE_ENCRYPTED_PKEY *enckey = NULL;
 	unsigned char buf[256],*zz;
 	unsigned char key[EVP_MAX_KEY_LENGTH];
 	EVP_CIPHER_CTX ctx;
-	X509_ALGOR *alg=NULL;
-	ASN1_OCTET_STRING os,os2;
-	M_ASN1_I2D_vars(a);
 
 	if (a == NULL) return(0);
 
-#ifdef WIN32
-	r=r; /* shut the damn compiler up :-) */
-#endif
-
-	os.data=os2.data=NULL;
 	if ((pkey=NETSCAPE_PKEY_new()) == NULL) goto err;
-	if (!ASN1_INTEGER_set(pkey->version,0)) goto err;
+	if ((enckey=NETSCAPE_ENCRYPTED_PKEY_new()) == NULL) goto err;
+	pkey->version = 0;
 
-	if (pkey->algor->algorithm != NULL)
-		ASN1_OBJECT_free(pkey->algor->algorithm);
 	pkey->algor->algorithm=OBJ_nid2obj(NID_rsaEncryption);
 	if ((pkey->algor->parameter=ASN1_TYPE_new()) == NULL) goto err;
 	pkey->algor->parameter->type=V_ASN1_NULL;
 
-	l[0]=i2d_RSAPrivateKey(a,NULL);
-	pkey->private_key->length=l[0];
+	rsalen = i2d_RSAPrivateKey(a, NULL);
 
-	os2.length=i2d_NETSCAPE_PKEY(pkey,NULL);
-	l[1]=i2d_ASN1_OCTET_STRING(&os2,NULL);
+	/* Fake some octet strings just for the initial length
+	 * calculation.
+ 	 */
 
-	if ((alg=X509_ALGOR_new()) == NULL) goto err;
-	if (alg->algorithm != NULL)
-		ASN1_OBJECT_free(alg->algorithm);
-	alg->algorithm=OBJ_nid2obj(NID_rc4);
-	if ((alg->parameter=ASN1_TYPE_new()) == NULL) goto err;
-	alg->parameter->type=V_ASN1_NULL;
+	pkey->private_key->length=rsalen;
 
-	l[2]=i2d_X509_ALGOR(alg,NULL);
-	l[3]=ASN1_object_size(1,l[2]+l[1],V_ASN1_SEQUENCE);
+	pkeylen=i2d_NETSCAPE_PKEY(pkey,NULL);
 
-	os.data=(unsigned char *)"private-key";
-	os.length=11;
-	l[4]=i2d_ASN1_OCTET_STRING(&os,NULL);
+	enckey->enckey->digest->length = pkeylen;
 
-	l[5]=ASN1_object_size(1,l[4]+l[3],V_ASN1_SEQUENCE);
+	enckey->os->length = 11;	/* "private-key" */
+
+	enckey->enckey->algor->algorithm=OBJ_nid2obj(NID_rc4);
+	if ((enckey->enckey->algor->parameter=ASN1_TYPE_new()) == NULL) goto err;
+	enckey->enckey->algor->parameter->type=V_ASN1_NULL;
 
 	if (pp == NULL)
 		{
-		if (pkey != NULL) NETSCAPE_PKEY_free(pkey);
-		if (alg != NULL) X509_ALGOR_free(alg);
-		return(l[5]);
+		olen = i2d_NETSCAPE_ENCRYPTED_PKEY(enckey, NULL);
+		NETSCAPE_PKEY_free(pkey);
+		NETSCAPE_ENCRYPTED_PKEY_free(enckey);
+		return olen;
 		}
 
-	if (pkey->private_key->data != NULL)
-		Free((char *)pkey->private_key->data);
-	if ((pkey->private_key->data=(unsigned char *)Malloc(l[0])) == NULL)
+
+	/* Since its RC4 encrypted length is actual length */
+	if ((zz=(unsigned char *)OPENSSL_malloc(rsalen)) == NULL)
 		{
 		ASN1err(ASN1_F_I2D_NETSCAPE_RSA,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-	zz=pkey->private_key->data;
+
+	pkey->private_key->data = zz;
+	/* Write out private key encoding */
 	i2d_RSAPrivateKey(a,&zz);
 
-	if ((os2.data=(unsigned char *)Malloc(os2.length)) == NULL)
+	if ((zz=OPENSSL_malloc(pkeylen)) == NULL)
 		{
 		ASN1err(ASN1_F_I2D_NETSCAPE_RSA,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-	zz=os2.data;
+
+	if (!ASN1_STRING_set(enckey->os, "private-key", -1)) 
+		{
+		ASN1err(ASN1_F_I2D_NETSCAPE_RSA,ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
+	enckey->enckey->digest->data = zz;
 	i2d_NETSCAPE_PKEY(pkey,&zz);
+
+	/* Wipe the private key encoding */
+	OPENSSL_cleanse(pkey->private_key->data, rsalen);
 		
 	if (cb == NULL)
 		cb=EVP_read_pw_string;
@@ -177,92 +197,88 @@ int (*cb)();
 		ASN1err(ASN1_F_I2D_NETSCAPE_RSA,ASN1_R_BAD_PASSWORD_READ);
 		goto err;
 		}
-	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,
-		strlen((char *)buf),1,key,NULL);
-	memset(buf,0,256);
+	i = strlen((char *)buf);
+	/* If the key is used for SGC the algorithm is modified a little. */
+	if(sgckey) {
+		EVP_Digest(buf, i, buf, NULL, EVP_md5(), NULL);
+		memcpy(buf + 16, "SGCKEYSALT", 10);
+		i = 26;
+	}
 
+	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,i,1,key,NULL);
+	OPENSSL_cleanse(buf,256);
+
+	/* Encrypt private key in place */
+	zz = enckey->enckey->digest->data;
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_EncryptInit(&ctx,EVP_rc4(),key,NULL);
-	EVP_EncryptUpdate(&ctx,os2.data,&i,os2.data,os2.length);
-	EVP_EncryptFinal(&ctx,&(os2.data[i]),&j);
+	EVP_EncryptInit_ex(&ctx,EVP_rc4(),NULL,key,NULL);
+	EVP_EncryptUpdate(&ctx,zz,&i,zz,pkeylen);
+	EVP_EncryptFinal_ex(&ctx,zz + i,&j);
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
-	p= *pp;
-	ASN1_put_object(&p,1,l[4]+l[3],V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
-	i2d_ASN1_OCTET_STRING(&os,&p);
-	ASN1_put_object(&p,1,l[2]+l[1],V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
-	i2d_X509_ALGOR(alg,&p);
-	i2d_ASN1_OCTET_STRING(&os2,&p);
-	ret=l[5];
+	ret = i2d_NETSCAPE_ENCRYPTED_PKEY(enckey, pp);
 err:
-	if (os2.data != NULL) Free((char *)os2.data);
-	if (alg != NULL) X509_ALGOR_free(alg);
-	if (pkey != NULL) NETSCAPE_PKEY_free(pkey);
-	r=r;
+	NETSCAPE_ENCRYPTED_PKEY_free(enckey);
+	NETSCAPE_PKEY_free(pkey);
 	return(ret);
 	}
 
-RSA *d2i_Netscape_RSA(a,pp,length,cb)
-RSA **a;
-unsigned char **pp;
-long length;
-int (*cb)();
+
+RSA *d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length, int (*cb)())
+{
+	return d2i_RSA_NET(a, pp, length, cb, 0);
+}
+
+RSA *d2i_RSA_NET(RSA **a, const unsigned char **pp, long length, int (*cb)(), int sgckey)
 	{
 	RSA *ret=NULL;
-	ASN1_OCTET_STRING *os=NULL;
-	ASN1_CTX c;
+	const unsigned char *p, *kp;
+	NETSCAPE_ENCRYPTED_PKEY *enckey = NULL;
 
-	c.pp=pp;
-	c.error=ASN1_R_DECODING_ERROR;
+	p = *pp;
 
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(os,d2i_ASN1_OCTET_STRING);
-	if ((os->length != 11) || (strncmp("private-key",
-		(char *)os->data,os->length) != 0))
-		{
-		ASN1err(ASN1_F_D2I_NETSCAPE_RSA,ASN1_R_PRIVATE_KEY_HEADER_MISSING);
-		ASN1_BIT_STRING_free(os);
-		goto err;
-		}
-	ASN1_BIT_STRING_free(os);
-	c.q=c.p;
-	if ((ret=d2i_Netscape_RSA_2(a,&c.p,c.slen,cb)) == NULL) goto err;
-	c.slen-=(c.p-c.q);
-
-	M_ASN1_D2I_Finish(a,RSA_free,ASN1_F_D2I_NETSCAPE_RSA);
+	enckey = d2i_NETSCAPE_ENCRYPTED_PKEY(NULL, &p, length);
+	if(!enckey) {
+		ASN1err(ASN1_F_D2I_NETSCAPE_RSA,ASN1_R_DECODING_ERROR);
+		return NULL;
 	}
 
-RSA *d2i_Netscape_RSA_2(a,pp,length,cb)
-RSA **a;
-unsigned char **pp;
-long length;
-int (*cb)();
+	if ((enckey->os->length != 11) || (strncmp("private-key",
+		(char *)enckey->os->data,11) != 0))
+		{
+		ASN1err(ASN1_F_D2I_NETSCAPE_RSA,ASN1_R_PRIVATE_KEY_HEADER_MISSING);
+		NETSCAPE_ENCRYPTED_PKEY_free(enckey);
+		return NULL;
+		}
+	if (OBJ_obj2nid(enckey->enckey->algor->algorithm) != NID_rc4)
+		{
+		ASN1err(ASN1_F_D2I_NETSCAPE_RSA_2,ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM);
+		goto err;
+	}
+	kp = enckey->enckey->digest->data;
+	if (cb == NULL)
+		cb=EVP_read_pw_string;
+	if ((ret=d2i_RSA_NET_2(a, enckey->enckey->digest,cb, sgckey)) == NULL) goto err;
+
+	*pp = p;
+
+	err:
+	NETSCAPE_ENCRYPTED_PKEY_free(enckey);
+	return ret;
+
+	}
+
+static RSA *d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
+	     int (*cb)(), int sgckey)
 	{
 	NETSCAPE_PKEY *pkey=NULL;
 	RSA *ret=NULL;
 	int i,j;
-	unsigned char buf[256],*zz;
+	unsigned char buf[256];
+	const unsigned char *zz;
 	unsigned char key[EVP_MAX_KEY_LENGTH];
 	EVP_CIPHER_CTX ctx;
-	X509_ALGOR *alg=NULL;
-	ASN1_OCTET_STRING *os=NULL;
-	ASN1_CTX c;
 
-	c.error=ERR_R_NESTED_ASN1_ERROR;
-	c.pp=pp;
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(alg,d2i_X509_ALGOR);
-	if (OBJ_obj2nid(alg->algorithm) != NID_rc4)
-		{
-		ASN1err(ASN1_F_D2I_NETSCAPE_RSA_2,ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM);
-		goto err;
-		}
-	M_ASN1_D2I_get(os,d2i_ASN1_OCTET_STRING);
-	if (cb == NULL)
-		cb=EVP_read_pw_string;
 	i=cb(buf,256,"Enter Private Key password:",0);
 	if (i != 0)
 		{
@@ -270,14 +286,20 @@ int (*cb)();
 		goto err;
 		}
 
-	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,
-		strlen((char *)buf),1,key,NULL);
-	memset(buf,0,256);
+	i = strlen((char *)buf);
+	if(sgckey){
+		EVP_Digest(buf, i, buf, NULL, EVP_md5(), NULL);
+		memcpy(buf + 16, "SGCKEYSALT", 10);
+		i = 26;
+	}
+		
+	EVP_BytesToKey(EVP_rc4(),EVP_md5(),NULL,buf,i,1,key,NULL);
+	OPENSSL_cleanse(buf,256);
 
 	EVP_CIPHER_CTX_init(&ctx);
-	EVP_DecryptInit(&ctx,EVP_rc4(),key,NULL);
+	EVP_DecryptInit_ex(&ctx,EVP_rc4(),NULL, key,NULL);
 	EVP_DecryptUpdate(&ctx,os->data,&i,os->data,os->length);
-	EVP_DecryptFinal(&ctx,&(os->data[i]),&j);
+	EVP_DecryptFinal_ex(&ctx,&(os->data[i]),&j);
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	os->length=i+j;
 
@@ -295,72 +317,17 @@ int (*cb)();
 		ASN1err(ASN1_F_D2I_NETSCAPE_RSA_2,ASN1_R_UNABLE_TO_DECODE_RSA_KEY);
 		goto err;
 		}
-	if (!asn1_Finish(&c)) goto err;
-	*pp=c.p;
 err:
-	if (pkey != NULL) NETSCAPE_PKEY_free(pkey);
-	if (os != NULL) ASN1_BIT_STRING_free(os);
-	if (alg != NULL) X509_ALGOR_free(alg);
+	NETSCAPE_PKEY_free(pkey);
 	return(ret);
 	}
 
-static int i2d_NETSCAPE_PKEY(a,pp)
-NETSCAPE_PKEY *a;
-unsigned char **pp;
-	{
-	M_ASN1_I2D_vars(a);
+#endif /* OPENSSL_NO_RC4 */
 
+#else /* !OPENSSL_NO_RSA */
 
-	M_ASN1_I2D_len(a->version,	i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len(a->algor,	i2d_X509_ALGOR);
-	M_ASN1_I2D_len(a->private_key,	i2d_ASN1_OCTET_STRING);
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
 
-	M_ASN1_I2D_seq_total();
-
-	M_ASN1_I2D_put(a->version,	i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put(a->algor,	i2d_X509_ALGOR);
-	M_ASN1_I2D_put(a->private_key,	i2d_ASN1_OCTET_STRING);
-
-	M_ASN1_I2D_finish();
-	}
-
-static NETSCAPE_PKEY *d2i_NETSCAPE_PKEY(a,pp,length)
-NETSCAPE_PKEY **a;
-unsigned char **pp;
-long length;
-	{
-	M_ASN1_D2I_vars(a,NETSCAPE_PKEY *,NETSCAPE_PKEY_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->version,d2i_ASN1_INTEGER);
-	M_ASN1_D2I_get(ret->algor,d2i_X509_ALGOR);
-	M_ASN1_D2I_get(ret->private_key,d2i_ASN1_OCTET_STRING);
-	M_ASN1_D2I_Finish(a,NETSCAPE_PKEY_free,ASN1_F_D2I_NETSCAPE_PKEY);
-	}
-
-static NETSCAPE_PKEY *NETSCAPE_PKEY_new()
-	{
-	NETSCAPE_PKEY *ret=NULL;
-	ASN1_CTX c;
-
-	M_ASN1_New_Malloc(ret,NETSCAPE_PKEY);
-	M_ASN1_New(ret->version,ASN1_INTEGER_new);
-	M_ASN1_New(ret->algor,X509_ALGOR_new);
-	M_ASN1_New(ret->private_key,ASN1_OCTET_STRING_new);
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_NETSCAPE_PKEY_NEW);
-	}
-
-static void NETSCAPE_PKEY_free(a)
-NETSCAPE_PKEY *a;
-	{
-	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
-	X509_ALGOR_free(a->algor);
-	ASN1_OCTET_STRING_free(a->private_key);
-	Free((char *)a);
-	}
-
-#endif /* NO_RC4 */
-
+#endif

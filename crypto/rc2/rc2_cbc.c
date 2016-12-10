@@ -56,16 +56,11 @@
  * [including the GNU Public Licence.]
  */
 
-#include "rc2.h"
+#include <openssl/rc2.h>
 #include "rc2_locl.h"
 
-void RC2_cbc_encrypt(in, out, length, ks, iv, encrypt)
-unsigned char *in;
-unsigned char *out;
-long length;
-RC2_KEY *ks;
-unsigned char *iv;
-int encrypt;
+void RC2_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+	     RC2_KEY *ks, unsigned char *iv, int encrypt)
 	{
 	register unsigned long tin0,tin1;
 	register unsigned long tout0,tout1,xor0,xor1;
@@ -138,9 +133,7 @@ int encrypt;
 	tin[0]=tin[1]=0;
 	}
 
-void RC2_encrypt(d,key)
-unsigned long *d;
-RC2_KEY *key;
+void RC2_encrypt(unsigned long *d, RC2_KEY *key)
 	{
 	int i,n;
 	register RC2_INT *p0,*p1;
@@ -185,9 +178,7 @@ RC2_KEY *key;
 	d[1]=(unsigned long)(x2&0xffff)|((unsigned long)(x3&0xffff)<<16L);
 	}
 
-void RC2_decrypt(d,key)
-unsigned long *d;
-RC2_KEY *key;
+void RC2_decrypt(unsigned long *d, RC2_KEY *key)
 	{
 	int i,n;
 	register RC2_INT *p0,*p1;

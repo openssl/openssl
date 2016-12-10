@@ -57,39 +57,39 @@
  */
 
 /* A nice addition from Dr Stephen Henson <shenson@bigfoot.com> to 
- * add the -strparse option which parses nested binarary structures
+ * add the -strparse option which parses nested binary structures
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "err.h"
-#include "evp.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 /* -inform arg	- input format - default PEM (DER or PEM)
  * -in arg	- input file - default stdin
  * -i		- indent the details by depth
  * -offset	- where in the file to start
  * -length	- how many bytes to use
- * -oid file	- extra oid decription file
+ * -oid file	- extra oid description file
  */
 
 #undef PROG
 #define PROG	asn1parse_main
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int, char **);
+
+int MAIN(int argc, char **argv)
 	{
 	int i,badops=0,offset=0,ret=1,j;
 	unsigned int length=0;
 	long num,tmplen;
-	BIO *in=NULL,*out=NULL,*b64=NULL;
-	int informat,indent=0;
-	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL;
+	BIO *in=NULL,*out=NULL,*b64=NULL, *derout = NULL;
+	int informat,indent=0, noout = 0, dump = 0;
+	char *infile=NULL,*str=NULL,*prog,*oidfile=NULL, *derfile=NULL;
 	unsigned char *tmpbuf;
 	BUF_MEM *buf=NULL;
 	STACK *osk=NULL;
@@ -103,12 +103,15 @@ char **argv;
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
 	prog=argv[0];
 	argc--;
 	argv++;
 	if ((osk=sk_new_null()) == NULL)
 		{
-		BIO_printf(bio_err,"Malloc failure\n");
+		BIO_printf(bio_err,"Memory allocation failure\n");
 		goto end;
 		}
 	while (argc >= 1)
@@ -123,10 +126,16 @@ char **argv;
 			if (--argc < 1) goto bad;
 			infile= *(++argv);
 			}
+		else if (strcmp(*argv,"-out") == 0)
+			{
+			if (--argc < 1) goto bad;
+			derfile= *(++argv);
+			}
 		else if (strcmp(*argv,"-i") == 0)
 			{
 			indent=1;
 			}
+		else if (strcmp(*argv,"-noout") == 0) noout = 1;
 		else if (strcmp(*argv,"-oid") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -142,6 +151,16 @@ char **argv;
 			if (--argc < 1) goto bad;
 			length= atoi(*(++argv));
 			if (length == 0) goto bad;
+			}
+		else if (strcmp(*argv,"-dump") == 0)
+			{
+			dump= -1;
+			}
+		else if (strcmp(*argv,"-dlimit") == 0)
+			{
+			if (--argc < 1) goto bad;
+			dump= atoi(*(++argv));
+			if (dump <= 0) goto bad;
 			}
 		else if (strcmp(*argv,"-strparse") == 0)
 			{
@@ -163,11 +182,15 @@ char **argv;
 bad:
 		BIO_printf(bio_err,"%s [options] <infile\n",prog);
 		BIO_printf(bio_err,"where options are\n");
-		BIO_printf(bio_err," -inform arg   input format - one of DER TXT PEM\n");
-		BIO_printf(bio_err," -in arg       inout file\n");
+		BIO_printf(bio_err," -inform arg   input format - one of DER PEM\n");
+		BIO_printf(bio_err," -in arg       input file\n");
+		BIO_printf(bio_err," -out arg      output file (output format is always DER\n");
+		BIO_printf(bio_err," -noout arg    don't produce any output\n");
 		BIO_printf(bio_err," -offset arg   offset into file\n");
-		BIO_printf(bio_err," -length arg   lenth of section in file\n");
+		BIO_printf(bio_err," -length arg   length of section in file\n");
 		BIO_printf(bio_err," -i            indent entries\n");
+		BIO_printf(bio_err," -dump         dump unknown data in hex form\n");
+		BIO_printf(bio_err," -dlimit arg   dump the first arg bytes of unknown data in hex form\n");
 		BIO_printf(bio_err," -oid file     file of extra oid definitions\n");
 		BIO_printf(bio_err," -strparse offset\n");
 		BIO_printf(bio_err,"               a series of these can be used to 'dig' into multiple\n");
@@ -185,6 +208,12 @@ bad:
 		goto end;
 		}
 	BIO_set_fp(out,stdout,BIO_NOCLOSE|BIO_FP_TEXT);
+#ifdef OPENSSL_SYS_VMS
+	{
+	BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+	out = BIO_push(tmpbio, out);
+	}
+#endif
 
 	if (oidfile != NULL)
 		{
@@ -207,6 +236,14 @@ bad:
 			goto end;
 			}
 		}
+
+	if (derfile) {
+		if(!(derout = BIO_new_file(derfile, "wb"))) {
+			BIO_printf(bio_err,"problems opening %s\n",derfile);
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
 
 	if ((buf=BUF_MEM_new()) == NULL) goto end;
 	if (!BUF_MEM_grow(buf,BUFSIZ*8)) goto end; /* Pre-allocate :-) */
@@ -241,6 +278,8 @@ bad:
 		tmplen=num;
 		for (i=0; i<sk_num(osk); i++)
 			{
+			int typ;
+			ASN1_TYPE *atmp;
 			j=atoi(sk_value(osk,i));
 			if (j == 0)
 				{
@@ -249,9 +288,21 @@ bad:
 				}
 			tmpbuf+=j;
 			tmplen-=j;
-			if (d2i_ASN1_TYPE(&at,&tmpbuf,tmplen) == NULL)
+			atmp = at;
+			at = d2i_ASN1_TYPE(NULL,&tmpbuf,tmplen);
+			ASN1_TYPE_free(atmp);
+			if(!at)
 				{
 				BIO_printf(bio_err,"Error parsing structure\n");
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			typ = ASN1_TYPE_get(at);
+			if ((typ == V_ASN1_OBJECT)
+				|| (typ == V_ASN1_NULL))
+				{
+				BIO_printf(bio_err, "Can't parse %s type\n",
+					typ == V_ASN1_NULL ? "NULL" : "OBJECT");
 				ERR_print_errors(bio_err);
 				goto end;
 				}
@@ -263,16 +314,34 @@ bad:
 		num=tmplen;
 		}
 
-	if (length == 0) length=(unsigned int)num;
-	if (!ASN1_parse(out,(unsigned char *)&(str[offset]),length,indent))
+	if (offset >= num)
+		{
+		BIO_printf(bio_err, "Error: offset too large\n");
+		goto end;
+		}
+
+	num -= offset;
+
+	if ((length == 0) || ((long)length > num)) length=(unsigned int)num;
+	if(derout) {
+		if(BIO_write(derout, str + offset, length) != (int)length) {
+			BIO_printf(bio_err, "Error writing output\n");
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+	if (!noout &&
+	    !ASN1_parse_dump(out,(unsigned char *)&(str[offset]),length,
+		    indent,dump))
 		{
 		ERR_print_errors(bio_err);
 		goto end;
 		}
 	ret=0;
 end:
+	BIO_free(derout);
 	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
+	if (out != NULL) BIO_free_all(out);
 	if (b64 != NULL) BIO_free(b64);
 	if (ret != 0)
 		ERR_print_errors(bio_err);
@@ -280,6 +349,7 @@ end:
 	if (at != NULL) ASN1_TYPE_free(at);
 	if (osk != NULL) sk_free(osk);
 	OBJ_cleanup();
-	EXIT(ret);
+	apps_shutdown();
+	OPENSSL_EXIT(ret);
 	}
 

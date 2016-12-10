@@ -1,7 +1,14 @@
 /* serv.cpp  -  Minimal ssleay server for Unix
    30.9.1996, Sampo Kellomaki <sampo@iki.fi> */
 
+
+/* mangled to work with SSLeay-0.9.0b and OpenSSL 0.9.2b
+   Simplified to be even more minimal
+   12/98 - 4/99 Wade Scholine <wades@mail.cybg.com> */
+
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <memory.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -10,16 +17,20 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include "rsa.h"       /* SSLeay stuff */
-#include "crypto.h"
-#include "x509.h"
-#include "pem.h"
-#include "ssl.h"
-#include "err.h"
+#include <openssl/rsa.h>       /* SSLeay stuff */
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
-#define HOME "/usr/users/sampo/sibs/tim/"
-#define CERTF HOME "plain-cert.pem"
-#define KEYF  HOME "plain-key.pem"
+
+/* define HOME to be dir for key and cert files... */
+#define HOME "./"
+/* Make these what you want for cert & key files */
+#define CERTF  HOME "foo-cert.pem"
+#define KEYF  HOME  "foo-cert.pem"
+
 
 #define CHK_NULL(x) if ((x)==NULL) exit (1)
 #define CHK_ERR(err,s) if ((err)==-1) { perror(s); exit(1); }
@@ -32,24 +43,39 @@ void main ()
   int sd;
   struct sockaddr_in sa_serv;
   struct sockaddr_in sa_cli;
-  int client_len;
+  size_t client_len;
   SSL_CTX* ctx;
   SSL*     ssl;
   X509*    client_cert;
   char*    str;
   char     buf [4096];
-
+  SSL_METHOD *meth;
+  
   /* SSL preliminaries. We keep the certificate and key with the context. */
 
   SSL_load_error_strings();
-  ctx = SSL_CTX_new ();   CHK_NULL(ctx);
+  SSLeay_add_ssl_algorithms();
+  meth = SSLv23_server_method();
+  ctx = SSL_CTX_new (meth);
+  if (!ctx) {
+    ERR_print_errors_fp(stderr);
+    exit(2);
+  }
   
-  err = SSL_CTX_use_RSAPrivateKey_file (ctx, KEYF,  SSL_FILETYPE_PEM);
-  CHK_SSL(err);
-  
-  err = SSL_CTX_use_certificate_file   (ctx, CERTF, SSL_FILETYPE_PEM);
-  CHK_SSL(err);
-  
+  if (SSL_CTX_use_certificate_file(ctx, CERTF, SSL_FILETYPE_PEM) <= 0) {
+    ERR_print_errors_fp(stderr);
+    exit(3);
+  }
+  if (SSL_CTX_use_PrivateKey_file(ctx, KEYF, SSL_FILETYPE_PEM) <= 0) {
+    ERR_print_errors_fp(stderr);
+    exit(4);
+  }
+
+  if (!SSL_CTX_check_private_key(ctx)) {
+    fprintf(stderr,"Private key does not match the certificate public key\n");
+    exit(5);
+  }
+
   /* ----------------------------------------------- */
   /* Prepare TCP socket for receiving connections */
 
@@ -92,15 +118,15 @@ void main ()
   if (client_cert != NULL) {
     printf ("Client certificate:\n");
     
-    str = X509_NAME_oneline (X509_get_subject_name (client_cert));
+    str = X509_NAME_oneline (X509_get_subject_name (client_cert), 0, 0);
     CHK_NULL(str);
     printf ("\t subject: %s\n", str);
-    Free (str);
+    OPENSSL_free (str);
     
-    str = X509_NAME_oneline (X509_get_issuer_name  (client_cert));
+    str = X509_NAME_oneline (X509_get_issuer_name  (client_cert), 0, 0);
     CHK_NULL(str);
     printf ("\t issuer: %s\n", str);
-    Free (str);
+    OPENSSL_free (str);
     
     /* We could do all sorts of certificate verification stuff here before
        deallocating the certificate. */

@@ -57,15 +57,15 @@
  */
 
 #include <stdio.h>
-#include "buffer.h"
-#include "rand.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
 #include "ssl_locl.h"
+#include <openssl/buffer.h>
+#include <openssl/rand.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 
-static SSL_METHOD *tls1_get_server_method(ver)
-int ver;
+static SSL_METHOD *tls1_get_server_method(int ver);
+static SSL_METHOD *tls1_get_server_method(int ver)
 	{
 	if (ver == TLS1_VERSION)
 		return(TLSv1_server_method());
@@ -73,18 +73,25 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *TLSv1_server_method()
+SSL_METHOD *TLSv1_server_method(void)
 	{
 	static int init=1;
 	static SSL_METHOD TLSv1_server_data;
 
 	if (init)
 		{
-		init=0;
-		memcpy((char *)&TLSv1_server_data,(char *)tlsv1_base_method(),
-			sizeof(SSL_METHOD));
-		TLSv1_server_data.ssl_accept=ssl3_accept;
-		TLSv1_server_data.get_ssl_method=tls1_get_server_method;
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
+
+		if (init)
+			{
+			memcpy((char *)&TLSv1_server_data,(char *)tlsv1_base_method(),
+				sizeof(SSL_METHOD));
+			TLSv1_server_data.ssl_accept=ssl3_accept;
+			TLSv1_server_data.get_ssl_method=tls1_get_server_method;
+			init=0;
+			}
+			
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
 		}
 	return(&TLSv1_server_data);
 	}

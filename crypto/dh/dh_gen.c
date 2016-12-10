@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dh.h"
+#include <openssl/bn.h>
+#include <openssl/dh.h>
 
 /* We generate DH parameters as follows
  * find a prime q which is prime_len/2 bits long.
@@ -72,22 +72,25 @@
  * Having said all that,
  * there is another special case method for the generators 2, 3 and 5.
  * for 2, p mod 24 == 11
- * for 3, p mod 12 == 5  <<<<< does not work for strong primes.
+ * for 3, p mod 12 == 5  <<<<< does not work for safe primes.
  * for 5, p mod 10 == 3 or 7
  *
  * Thanks to Phil Karn <karn@qualcomm.com> for the pointers about the
  * special generators and for answering some of my questions.
  *
  * I've implemented the second simple method :-).
- * Since DH should be using a strong prime (both p and q are prime),
+ * Since DH should be using a safe prime (both p and q are prime),
  * this generator function can take a very very long time to run.
  */
+/* Actually there is no reason to insist that 'generator' be a generator.
+ * It's just as OK (and in some sense better) to use a generator of the
+ * order-q subgroup.
+ */
 
-DH *DH_generate_parameters(prime_len,generator,callback,cb_arg)
-int prime_len;
-int generator;
-void (*callback)(P_I_I_P);
-char *cb_arg;
+#ifndef OPENSSL_FIPS
+
+DH *DH_generate_parameters(int prime_len, int generator,
+	     void (*callback)(int,int,void *), void *cb_arg)
 	{
 	BIGNUM *p=NULL,*t1,*t2;
 	DH *ret=NULL;
@@ -95,42 +98,58 @@ char *cb_arg;
 	BN_CTX *ctx=NULL;
 
 	ret=DH_new();
+	if (ret == NULL) goto err;
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
-	t1= &(ctx->bn[0]);
-	t2= &(ctx->bn[1]);
-	ctx->tos=2;
+	BN_CTX_start(ctx);
+	t1 = BN_CTX_get(ctx);
+	t2 = BN_CTX_get(ctx);
+	if (t1 == NULL || t2 == NULL) goto err;
 	
+	if (generator <= 1)
+		{
+		DHerr(DH_F_DH_GENERATE_PARAMETERS, DH_R_BAD_GENERATOR);
+		goto err;
+		}
 	if (generator == DH_GENERATOR_2)
 		{
-		BN_set_word(t1,24);
-		BN_set_word(t2,11);
+		if (!BN_set_word(t1,24)) goto err;
+		if (!BN_set_word(t2,11)) goto err;
 		g=2;
 		}
-#ifdef undef  /* does not work for strong primes */
+#if 0 /* does not work for safe primes */
 	else if (generator == DH_GENERATOR_3)
 		{
-		BN_set_word(t1,12);
-		BN_set_word(t2,5);
+		if (!BN_set_word(t1,12)) goto err;
+		if (!BN_set_word(t2,5)) goto err;
 		g=3;
 		}
 #endif
 	else if (generator == DH_GENERATOR_5)
 		{
-		BN_set_word(t1,10);
-		BN_set_word(t2,3);
+		if (!BN_set_word(t1,10)) goto err;
+		if (!BN_set_word(t2,3)) goto err;
 		/* BN_set_word(t3,7); just have to miss
 		 * out on these ones :-( */
 		g=5;
 		}
 	else
+		{
+		/* in the general case, don't worry if 'generator' is a
+		 * generator or not: since we are using safe primes,
+		 * it will generate either an order-q or an order-2q group,
+		 * which both is OK */
+		if (!BN_set_word(t1,2)) goto err;
+		if (!BN_set_word(t2,1)) goto err;
 		g=generator;
+		}
 	
 	p=BN_generate_prime(NULL,prime_len,1,t1,t2,callback,cb_arg);
 	if (p == NULL) goto err;
 	if (callback != NULL) callback(3,0,cb_arg);
 	ret->p=p;
 	ret->g=BN_new();
+	if (ret->g == NULL) goto err;
 	if (!BN_set_word(ret->g,g)) goto err;
 	ok=1;
 err:
@@ -140,7 +159,11 @@ err:
 		ok=0;
 		}
 
-	if (ctx != NULL) BN_CTX_free(ctx);
+	if (ctx != NULL)
+		{
+		BN_CTX_end(ctx);
+		BN_CTX_free(ctx);
+		}
 	if (!ok && (ret != NULL))
 		{
 		DH_free(ret);
@@ -148,3 +171,5 @@ err:
 		}
 	return(ret);
 	}
+
+#endif

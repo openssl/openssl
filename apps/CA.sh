@@ -27,14 +27,16 @@
 # tjh@cryptsoft.com
 #
 
-# default ssleay.cnf file has setup as per the following
+# default openssl.cnf file has setup as per the following
 # demoCA ... where everything is stored
 
+if [ -z "$OPENSSL" ]; then OPENSSL=openssl; fi
+
 DAYS="-days 365"
-REQ="ssleay req $SSLEAY_CONFIG"
-CA="ssleay ca $SSLEAY_CONFIG"
-VERIFY="ssleay verify"
-X509="ssleay x509"
+REQ="$OPENSSL req $SSLEAY_CONFIG"
+CA="$OPENSSL ca $SSLEAY_CONFIG"
+VERIFY="$OPENSSL verify"
+X509="$OPENSSL x509"
 
 CATOP=./demoCA
 CAKEY=./cakey.pem
@@ -49,18 +51,18 @@ case $i in
     ;;
 -newcert) 
     # create a certificate
-    $REQ -new -x509 -keyout newreq.pem -out newreq.pem $DAYS
+    $REQ -new -x509 -keyout newkey.pem -out newcert.pem $DAYS
     RET=$?
-    echo "Certificate (and private key) is in newreq.pem"
+    echo "Certificate is in newcert.pem, private key is in newkey.pem"
     ;;
 -newreq) 
     # create a certificate request
-    $REQ -new -keyout newreq.pem -out newreq.pem $DAYS
+    $REQ -new -keyout newkey.pem -out newreq.pem $DAYS
     RET=$?
-    echo "Request (and private key) is in newreq.pem"
+    echo "Request is in newreq.pem, private key is in newkey.pem"
     ;;
 -newca)     
-    # if explictly asked for or it doesn't exist then setup the directory
+    # if explicitly asked for or it doesn't exist then setup the directory
     # structure that Eric likes to manage things 
     NEW="1"
     if [ "$NEW" -o ! -f ${CATOP}/serial ]; then

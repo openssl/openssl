@@ -62,6 +62,7 @@ sub var_add
 	local($dir,$val)=@_;
 	local(@a,$_,$ret);
 
+	return("") if $no_engine && $dir =~ /\/engine/;
 	return("") if $no_idea && $dir =~ /\/idea/;
 	return("") if $no_rc2  && $dir =~ /\/rc2/;
 	return("") if $no_rc4  && $dir =~ /\/rc4/;
@@ -116,6 +117,7 @@ sub var_add
 	@a=grep(!/(^sha1)|(_sha1$)|(m_dss1$)/,@a) if $no_sha1;
 	@a=grep(!/_mdc2$/,@a) if $no_mdc2;
 
+	@a=grep(!/^engine$/,@a) if $no_engine;
 	@a=grep(!/(^rsa$)|(^genrsa$)|(^req$)|(^ca$)/,@a) if $no_rsa;
 	@a=grep(!/(^dsa$)|(^gendsa$)|(^dsaparam$)/,@a) if $no_dsa;
 	@a=grep(!/^gendsa$/,@a) if $no_sha1;

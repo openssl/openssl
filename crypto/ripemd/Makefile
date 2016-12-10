@@ -1,0 +1,111 @@
+#
+# OpenSSL/crypto/ripemd/Makefile
+#
+
+DIR=    ripemd
+TOP=    ../..
+CC=     cc
+CPP=    $(CC) -E
+INCLUDES=
+CFLAG=-g
+INSTALL_PREFIX=
+OPENSSLDIR=     /usr/local/ssl
+INSTALLTOP=/usr/local/ssl
+MAKEDEPPROG=	makedepend
+MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
+MAKEFILE=       Makefile
+AR=             ar r
+
+RIP_ASM_OBJ=
+
+CFLAGS= $(INCLUDES) $(CFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG)
+
+GENERAL=Makefile
+TEST=rmdtest.c
+APPS=
+
+LIB=$(TOP)/libcrypto.a
+LIBSRC=rmd_dgst.c rmd_one.c
+LIBOBJ=rmd_dgst.o rmd_one.o $(RMD160_ASM_OBJ)
+
+SRC= $(LIBSRC)
+
+EXHEADER= ripemd.h
+HEADER= rmd_locl.h rmdconst.h $(EXHEADER)
+
+ALL=    $(GENERAL) $(SRC) $(HEADER)
+
+top:
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+
+all:    lib
+
+lib:    $(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
+	$(RANLIB) $(LIB) || echo Never mind.
+	@touch lib
+
+# elf
+asm/rm86-elf.s: asm/rmd-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) rmd-586.pl elf $(CFLAGS) > rm86-elf.s)
+
+# a.out
+asm/rm86-out.o: asm/rm86unix.cpp
+	$(CPP) -DOUT asm/rm86unix.cpp | as -o asm/rm86-out.o
+
+# bsdi
+asm/rm86bsdi.o: asm/rm86unix.cpp
+	$(CPP) -DBSDI asm/rm86unix.cpp | sed 's/ :/:/' | as -o asm/rm86bsdi.o
+
+asm/rm86unix.cpp: asm/rmd-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) rmd-586.pl cpp >rm86unix.cpp)
+
+files:
+	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+
+links:
+	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
+	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
+	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
+
+install:
+	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
+	do  \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+	done;
+
+tags:
+	ctags $(SRC)
+
+tests:
+
+lint:
+	lint -DLINT $(INCLUDES) $(SRC)>fluff
+
+depend:
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+
+dclean:
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+
+clean:
+	rm -f asm/rm86unix.cpp asm/*-elf.* *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+
+rmd_dgst.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+rmd_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+rmd_dgst.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+rmd_dgst.o: ../../include/openssl/opensslconf.h
+rmd_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ripemd.h
+rmd_dgst.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+rmd_dgst.o: ../../include/openssl/symhacks.h ../md32_common.h rmd_dgst.c
+rmd_dgst.o: rmd_locl.h rmdconst.h
+rmd_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+rmd_one.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+rmd_one.o: ../../include/openssl/ripemd.h ../../include/openssl/safestack.h
+rmd_one.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+rmd_one.o: rmd_one.c

@@ -13,13 +13,13 @@
 #include <strings.h>
 #include <stdlib.h>
 
-#include "rsa.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
-#include "err.h"
-#include "pem.h"
-#include "ssl.h"
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
 
 #include "loadkeys.h"
 
@@ -72,7 +72,7 @@ void main_encrypt(void)
 
         pubKey[0] = ReadPublicKey(PUBFILE);
 
-	if(!pubKey)
+	if(!pubKey[0])
 	{
            fprintf(stderr,"Error: can't load public key");
            exit(1);
@@ -126,11 +126,11 @@ void main_encrypt(void)
 
 void main_decrypt(void)
 {
-	char buf[512];
+	char buf[520];
 	char ebuf[512];
 	unsigned int buflen;
         EVP_CIPHER_CTX ectx;
-        unsigned char iv[8];
+        unsigned char iv[EVP_MAX_IV_LENGTH];
 	unsigned char *encryptKey; 
 	unsigned int ekeylen; 
 	EVP_PKEY *privateKey;
@@ -164,7 +164,6 @@ void main_decrypt(void)
 
 	read(STDIN, encryptKey, ekeylen);
 	read(STDIN, iv, sizeof(iv));
-
 	EVP_OpenInit(&ectx,
 		   EVP_des_ede3_cbc(), 
 		   encryptKey,
@@ -185,7 +184,6 @@ void main_decrypt(void)
 		}
 
 		EVP_OpenUpdate(&ectx, buf, &buflen, ebuf, readlen);
-
 		write(STDOUT, buf, buflen);
 	}
 

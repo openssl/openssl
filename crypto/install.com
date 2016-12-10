@@ -1,0 +1,138 @@
+$! INSTALL.COM -- Installs the files in a given directory tree
+$!
+$! Author: Richard Levitte <richard@levitte.org>
+$! Time of creation: 22-MAY-1998 10:13
+$!
+$! P1	root of the directory tree
+$!
+$	IF P1 .EQS. ""
+$	THEN
+$	    WRITE SYS$OUTPUT "First argument missing."
+$	    WRITE SYS$OUTPUT "Should be the directory where you want things installed."
+$	    EXIT
+$	ENDIF
+$
+$	ROOT = F$PARSE(P1,"[]A.;0",,,"SYNTAX_ONLY,NO_CONCEAL") - "A.;0"
+$	ROOT_DEV = F$PARSE(ROOT,,,"DEVICE","SYNTAX_ONLY")
+$	ROOT_DIR = F$PARSE(ROOT,,,"DIRECTORY","SYNTAX_ONLY") -
+		   - "[000000." - "][" - "[" - "]"
+$	ROOT = ROOT_DEV + "[" + ROOT_DIR
+$
+$	DEFINE/NOLOG WRK_SSLROOT 'ROOT'.] /TRANS=CONC
+$	DEFINE/NOLOG WRK_SSLVLIB WRK_SSLROOT:[VAX_LIB]
+$	DEFINE/NOLOG WRK_SSLALIB WRK_SSLROOT:[ALPHA_LIB]
+$	DEFINE/NOLOG WRK_SSLINCLUDE WRK_SSLROOT:[INCLUDE]
+$
+$	IF F$PARSE("WRK_SSLROOT:[000000]") .EQS. "" THEN -
+	   CREATE/DIR/LOG WRK_SSLROOT:[000000]
+$	IF F$PARSE("WRK_SSLVLIB:") .EQS. "" THEN -
+	   CREATE/DIR/LOG WRK_SSLVLIB:
+$	IF F$PARSE("WRK_SSLALIB:") .EQS. "" THEN -
+	   CREATE/DIR/LOG WRK_SSLALIB:
+$	IF F$PARSE("WRK_SSLINCLUDE:") .EQS. "" THEN -
+	   CREATE/DIR/LOG WRK_SSLINCLUDE:
+$
+$	SDIRS := ,MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
+		 DES,RC2,RC4,RC5,IDEA,BF,CAST,-
+		 BN,EC,RSA,DSA,DH,DSO,ENGINE,AES,-
+		 BUFFER,BIO,STACK,LHASH,RAND,ERR,OBJECTS,-
+		 EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,-
+		 UI,KRB5
+$	EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,-
+		symhacks.h,ossl_typ.h
+$	EXHEADER_MD2 := md2.h
+$	EXHEADER_MD4 := md4.h
+$	EXHEADER_MD5 := md5.h
+$	EXHEADER_SHA := sha.h
+$	EXHEADER_MDC2 := mdc2.h
+$	EXHEADER_HMAC := hmac.h
+$	EXHEADER_RIPEMD := ripemd.h
+$	EXHEADER_DES := des.h,des_old.h
+$	EXHEADER_RC2 := rc2.h
+$	EXHEADER_RC4 := rc4.h
+$	EXHEADER_RC5 := rc5.h
+$	EXHEADER_IDEA := idea.h
+$	EXHEADER_BF := blowfish.h
+$	EXHEADER_CAST := cast.h
+$	EXHEADER_BN := bn.h
+$	EXHEADER_EC := ec.h
+$	EXHEADER_RSA := rsa.h
+$	EXHEADER_DSA := dsa.h
+$	EXHEADER_DH := dh.h
+$	EXHEADER_DSO := dso.h
+$	EXHEADER_ENGINE := engine.h
+$	EXHEADER_AES := aes.h
+$	EXHEADER_BUFFER := buffer.h
+$	EXHEADER_BIO := bio.h
+$	EXHEADER_STACK := stack.h,safestack.h
+$	EXHEADER_LHASH := lhash.h
+$	EXHEADER_RAND := rand.h
+$	EXHEADER_ERR := err.h
+$	EXHEADER_OBJECTS := objects.h,obj_mac.h
+$	EXHEADER_EVP := evp.h
+$	EXHEADER_ASN1 := asn1.h,asn1_mac.h,asn1t.h
+$	EXHEADER_PEM := pem.h,pem2.h
+$	EXHEADER_X509 := x509.h,x509_vfy.h
+$	EXHEADER_X509V3 := x509v3.h
+$	EXHEADER_CONF := conf.h,conf_api.h
+$	EXHEADER_TXT_DB := txt_db.h
+$	EXHEADER_PKCS7 := pkcs7.h
+$	EXHEADER_PKCS12 := pkcs12.h
+$	EXHEADER_COMP := comp.h
+$	EXHEADER_OCSP := ocsp.h
+$	EXHEADER_UI := ui.h,ui_compat.h
+$	EXHEADER_KRB5 := krb5_asn.h
+$	LIBS := LIBCRYPTO
+$
+$	VEXE_DIR := [-.VAX.EXE.CRYPTO]
+$	AEXE_DIR := [-.AXP.EXE.CRYPTO]
+$
+$	I = 0
+$ LOOP_SDIRS: 
+$	D = F$EDIT(F$ELEMENT(I, ",", SDIRS),"TRIM")
+$	I = I + 1
+$	IF D .EQS. "," THEN GOTO LOOP_SDIRS_END
+$	tmp = EXHEADER_'D'
+$	IF D .EQS. ""
+$	THEN
+$	  COPY 'tmp' WRK_SSLINCLUDE: /LOG
+$	ELSE
+$	  COPY [.'D']'tmp' WRK_SSLINCLUDE: /LOG
+$	ENDIF
+$	SET FILE/PROT=WORLD:RE WRK_SSLINCLUDE:'tmp'
+$	GOTO LOOP_SDIRS
+$ LOOP_SDIRS_END:
+$
+$	I = 0
+$ LOOP_LIB: 
+$	E = F$EDIT(F$ELEMENT(I, ",", LIBS),"TRIM")
+$	I = I + 1
+$	IF E .EQS. "," THEN GOTO LOOP_LIB_END
+$	SET NOON
+$	IF F$SEARCH(VEXE_DIR+E+".OLB") .NES. ""
+$	THEN
+$	  COPY 'VEXE_DIR''E'.OLB WRK_SSLVLIB:'E'.OLB/log
+$	  SET FILE/PROT=W:RE WRK_SSLVLIB:'E'.OLB
+$	ENDIF
+$	! Preparing for the time when we have shareable images
+$	IF F$SEARCH(VEXE_DIR+E+".EXE") .NES. ""
+$	THEN
+$	  COPY 'VEXE_DIR''E'.EXE WRK_SSLVLIB:'E'.EXE/log
+$	  SET FILE/PROT=W:RE WRK_SSLVLIB:'E'.EXE
+$	ENDIF
+$	IF F$SEARCH(AEXE_DIR+E+".OLB") .NES. ""
+$	THEN
+$	  COPY 'AEXE_DIR''E'.OLB WRK_SSLALIB:'E'.OLB/log
+$	  SET FILE/PROT=W:RE WRK_SSLALIB:'E'.OLB
+$	ENDIF
+$	! Preparing for the time when we have shareable images
+$	IF F$SEARCH(AEXE_DIR+E+".EXE") .NES. ""
+$	THEN
+$	  COPY 'AEXE_DIR''E'.EXE WRK_SSLALIB:'E'.EXE/log
+$	  SET FILE/PROT=W:RE WRK_SSLALIB:'E'.EXE
+$	ENDIF
+$	SET ON
+$	GOTO LOOP_LIB
+$ LOOP_LIB_END:
+$
+$	EXIT

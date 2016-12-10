@@ -59,23 +59,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "md2.h"
+#include <openssl/md2.h>
+#include <openssl/opensslv.h>
+#include <openssl/crypto.h>
+#include <openssl/fips.h>
+#include <openssl/err.h>
 
-char *MD2_version="MD2 part of SSLeay 0.9.1a 06-Jul-1998";
+const char MD2_version[]="MD2" OPENSSL_VERSION_PTEXT;
 
 /* Implemented from RFC1319 The MD2 Message-Digest Algorithm
  */
 
 #define UCHAR	unsigned char
 
-#ifndef NOPROTO
-static void md2_block(MD2_CTX *c, unsigned char *d);
-#else
-static void md2_block();
-#endif
-
+static void md2_block(MD2_CTX *c, const unsigned char *d);
 /* The magic S table - I have converted it to hex since it is
- * basicaly just a random byte string. */
+ * basically just a random byte string. */
 static MD2_INT S[256]={
 	0x29, 0x2E, 0x43, 0xC9, 0xA2, 0xD8, 0x7C, 0x01,
 	0x3D, 0x36, 0x54, 0xA1, 0xEC, 0xF0, 0x06, 0x13,
@@ -111,7 +110,7 @@ static MD2_INT S[256]={
 	0xDB, 0x99, 0x8D, 0x33, 0x9F, 0x11, 0x83, 0x14,
 	};
 
-char *MD2_options()
+const char *MD2_options(void)
 	{
 	if (sizeof(MD2_INT) == 1)
 		return("md2(char)");
@@ -119,23 +118,20 @@ char *MD2_options()
 		return("md2(int)");
 	}
 
-void MD2_Init(c)
-MD2_CTX *c;
+FIPS_NON_FIPS_MD_Init(MD2)
 	{
 	c->num=0;
-	memset(c->state,0,MD2_BLOCK*sizeof(MD2_INT));
-	memset(c->cksm,0,MD2_BLOCK*sizeof(MD2_INT));
-	memset(c->data,0,MD2_BLOCK);
+	memset(c->state,0,sizeof c->state);
+	memset(c->cksm,0,sizeof c->cksm);
+	memset(c->data,0,sizeof c->data);
+	return 1;
 	}
 
-void MD2_Update(c, data, len)
-MD2_CTX *c;
-register unsigned char *data;
-unsigned long len;
+int MD2_Update(MD2_CTX *c, const unsigned char *data, unsigned long len)
 	{
 	register UCHAR *p;
 
-	if (len == 0) return;
+	if (len == 0) return 1;
 
 	p=c->data;
 	if (c->num != 0)
@@ -154,7 +150,7 @@ unsigned long len;
 			memcpy(&(p[c->num]),data,(int)len);
 			/* data+=len; */
 			c->num+=(int)len;
-			return;
+			return 1;
 			}
 		}
 	/* we now can process the input data in blocks of MD2_BLOCK
@@ -167,11 +163,10 @@ unsigned long len;
 		}
 	memcpy(p,data,(int)len);
 	c->num=(int)len;
+	return 1;
 	}
 
-static void md2_block(c, d)
-MD2_CTX *c;
-unsigned char *d;
+static void md2_block(MD2_CTX *c, const unsigned char *d)
 	{
 	register MD2_INT t,*sp1,*sp2;
 	register int i,j;
@@ -204,12 +199,10 @@ unsigned char *d;
 		t=(t+i)&0xff;
 		}
 	memcpy(sp1,state,16*sizeof(MD2_INT));
-	memset(state,0,48*sizeof(MD2_INT));
+	OPENSSL_cleanse(state,48*sizeof(MD2_INT));
 	}
 
-void MD2_Final(md, c)
-unsigned char *md;
-MD2_CTX *c;
+int MD2_Final(unsigned char *md, MD2_CTX *c)
 	{
 	int i,v;
 	register UCHAR *cp;
@@ -231,5 +224,6 @@ MD2_CTX *c;
 	for (i=0; i<16; i++)
 		md[i]=(UCHAR)(p1[i]&0xff);
 	memset((char *)&c,0,sizeof(c));
+	return 1;
 	}
 

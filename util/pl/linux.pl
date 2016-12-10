@@ -12,6 +12,8 @@ $rm='/bin/rm -f';
 $cc='gcc';
 if ($debug)
 	{ $cflags="-g2 -ggdb -DREF_CHECK -DCRYPTO_MDEBUG"; }
+elsif ($profile)
+	{ $cflags="-pg -O3"; }
 else
 	{ $cflags="-O3 -fomit-frame-pointer"; }
 
@@ -19,6 +21,8 @@ if (!$no_asm)
 	{
 	$bn_asm_obj='$(OBJ_D)/bn86-elf.o';
 	$bn_asm_src='crypto/bn/asm/bn86unix.cpp';
+	$bnco_asm_obj='$(OBJ_D)/co86-elf.o';
+	$bnco_asm_src='crypto/bn/asm/co86unix.cpp';
 	$des_enc_obj='$(OBJ_D)/dx86-elf.o $(OBJ_D)/yx86-elf.o';
 	$des_enc_src='crypto/des/asm/dx86unix.cpp crypto/des/asm/yx86unix.cpp';
 	$bf_enc_obj='$(OBJ_D)/bx86-elf.o';
@@ -68,13 +72,18 @@ sub do_shlib_rule
 
 sub do_link_rule
 	{
-	local($target,$files,$dep_libs,$libs)=@_;
+	local($target,$files,$dep_libs,$libs,$sha1file,$openssl)=@_;
 	local($ret,$_);
 	
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
-	$ret.="\t\$(LINK) ${efile}$target \$(LFLAGS) $files $libs\n\n";
+	$ret.="\t\$(LINK) ${efile}$target \$(LFLAGS) $files $libs\n";
+	if (defined $sha1file)
+		{
+		$ret.="\t$openssl sha1 -hmac etaonrishdlcupfm -binary $target > $sha1file";
+		}
+	$ret.="\n";
 	return($ret);
 	}
 

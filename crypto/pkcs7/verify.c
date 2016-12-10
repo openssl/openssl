@@ -56,43 +56,50 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "asn1.h"
-#include "bio.h"
-#include "x509.h"
-#include "pem.h"
+#include <string.h>
+#include <openssl/bio.h>
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include "example.h"
 
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 
 BIO *bio_err=NULL;
 BIO *bio_out=NULL;
 
-main(argc,argv)
+int main(argc,argv)
 int argc;
 char *argv[];
 	{
-	X509 *x509,*x;
 	PKCS7 *p7;
-	PKCS7_SIGNED *s;
 	PKCS7_SIGNER_INFO *si;
-	PKCS7_ISSUER_AND_SERIAL *ias;
 	X509_STORE_CTX cert_ctx;
 	X509_STORE *cert_store=NULL;
-	X509_LOOKUP *lookup=NULL;
 	BIO *data,*detached=NULL,*p7bio=NULL;
 	char buf[1024*4];
-	unsigned char *p,*pp;
-	int i,j,printit=0;
-	STACK *sk;
+	char *pp;
+	int i,printit=0;
+	STACK_OF(PKCS7_SIGNER_INFO) *sk;
 
 	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 	bio_out=BIO_new_fp(stdout,BIO_NOCLOSE);
+#ifndef OPENSSL_NO_MD2
 	EVP_add_digest(EVP_md2());
+#endif
+#ifndef OPENSSL_NO_MD5
 	EVP_add_digest(EVP_md5());
+#endif
+#ifndef OPENSSL_NO_SHA1
 	EVP_add_digest(EVP_sha1());
+#endif
+#ifndef OPENSSL_NO_MDC2
 	EVP_add_digest(EVP_mdc2());
+#endif
 
 	data=BIO_new(BIO_s_file());
-again:
+
 	pp=NULL;
 	while (argc > 1)
 		{
@@ -123,7 +130,7 @@ again:
 
 
 	/* Load the PKCS7 object from a file */
-	if ((p7=PEM_read_bio_PKCS7(data,NULL,NULL)) == NULL) goto err;
+	if ((p7=PEM_read_bio_PKCS7(data,NULL,NULL,NULL)) == NULL) goto err;
 
 	/* This stuff is being setup for certificate verification.
 	 * When using SSL, it could be replaced with a 
@@ -168,14 +175,15 @@ again:
 		}
 
 	/* Ok, first we need to, for each subject entry, see if we can verify */
-	for (i=0; i<sk_num(sk); i++)
+	for (i=0; i<sk_PKCS7_SIGNER_INFO_num(sk); i++)
 		{
 		ASN1_UTCTIME *tm;
 		char *str1,*str2;
+		int rc;
 
-		si=(PKCS7_SIGNER_INFO *)sk_value(sk,i);
-		i=PKCS7_dataVerify(cert_store,&cert_ctx,p7bio,p7,si);
-		if (i <= 0)
+		si=sk_PKCS7_SIGNER_INFO_value(sk,i);
+		rc=PKCS7_dataVerify(cert_store,&cert_ctx,p7bio,p7,si);
+		if (rc <= 0)
 			goto err;
 		printf("signer info\n");
 		if ((tm=get_signed_time(si)) != NULL)
@@ -190,7 +198,7 @@ again:
 			BIO_printf(bio_out,"String 1 is %s\n",str1);
 			BIO_printf(bio_out,"String 2 is %s\n",str2);
 			}
-			
+
 		}
 
 	X509_STORE_free(cert_store);
@@ -204,9 +212,7 @@ err:
 	}
 
 /* should be X509 * but we can just have them as char *. */
-int verify_callback(ok, ctx)
-int ok;
-X509_STORE_CTX *ctx;
+int verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
 	char buf[256];
 	X509 *err_cert;

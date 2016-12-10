@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "x509.h"
+#include <openssl/buffer.h>
+#include <openssl/asn1.h>
 
 static  ASN1_METHOD ia5string_meth={
 	(int (*)())	i2d_ASN1_IA5STRING,
@@ -73,12 +73,12 @@ static  ASN1_METHOD bit_string_meth={
 	(char *(*)())	ASN1_STRING_new,
 	(void (*)())	ASN1_STRING_free};
 
-ASN1_METHOD *ASN1_IA5STRING_asn1_meth()
+ASN1_METHOD *ASN1_IA5STRING_asn1_meth(void)
 	{
 	return(&ia5string_meth);
 	}
 
-ASN1_METHOD *ASN1_BIT_STRING_asn1_meth()
+ASN1_METHOD *ASN1_BIT_STRING_asn1_meth(void)
 	{
 	return(&bit_string_meth);
 	}

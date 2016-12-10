@@ -59,51 +59,61 @@
 #include <stdio.h>
 #include <string.h>
 #include "cryptlib.h"
-#include "crypto.h"
-#include "date.h"
+#include <openssl/crypto.h>
 
-char *SSLeay_version(t)
-int t;
+#ifndef NO_WINDOWS_BRAINDEATH
+#include "buildinf.h"
+#endif
+
+const char *SSLeay_version(int t)
 	{
 	if (t == SSLEAY_VERSION)
-		return("SSLeay 0.9.1a 06-Jul-1998");
+		return OPENSSL_VERSION_TEXT;
 	if (t == SSLEAY_BUILT_ON)
 		{
 #ifdef DATE
-		static char buf[sizeof(DATE)+10];
+		static char buf[sizeof(DATE)+11];
 
-		sprintf(buf,"built on %s",DATE);
-        	return(buf);
+		BIO_snprintf(buf,sizeof buf,"built on: %s",DATE);
+		return(buf);
 #else
-		return("build date not available");
+		return("built on: date not available");
 #endif
 		}
 	if (t == SSLEAY_CFLAGS)
 		{
 #ifdef CFLAGS
-		static char buf[sizeof(CFLAGS)+10];
+		static char buf[sizeof(CFLAGS)+11];
 
-		sprintf(buf,"C flags:%s",CFLAGS);
+		BIO_snprintf(buf,sizeof buf,"compiler: %s",CFLAGS);
 		return(buf);
 #else
-		return("C flags not available");
+		return("compiler: information not available");
 #endif
 		}
 	if (t == SSLEAY_PLATFORM)
 		{
 #ifdef PLATFORM
-		static char buf[sizeof(PLATFORM)+10];
+		static char buf[sizeof(PLATFORM)+11];
 
-		sprintf(buf,"Platform:%s",PLATFORM);
+		BIO_snprintf(buf,sizeof buf,"platform: %s", PLATFORM);
 		return(buf);
 #else
-		return("Platform information not available");
+		return("platform: information not available");
+#endif
+		}
+	if (t == SSLEAY_DIR)
+		{
+#ifdef OPENSSLDIR
+		return "OPENSSLDIR: \"" OPENSSLDIR "\"";
+#else
+		return "OPENSSLDIR: N/A";
 #endif
 		}
 	return("not available");
 	}
 
-unsigned long SSLeay()
+unsigned long SSLeay(void)
 	{
 	return(SSLEAY_VERSION_NUMBER);
 	}

@@ -56,165 +56,36 @@
  * [including the GNU Public Licence.]
  */
 
-/* Origional version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
+/* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dsa.h"
-#include "rand.h"
-#include "asn1.h"
-
-/* data has already been hashed (probably with SHA or SHA-1). */
-/*	DSAerr(DSA_F_DSA_SIGN,DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE); */
-
-int DSA_sign(type,dgst,dlen,sig,siglen,dsa)
-int type;
-unsigned char *dgst;
-int dlen;
-unsigned char *sig;	/* out */
-unsigned int *siglen;	/* out */
-DSA *dsa;
-	{
-	BIGNUM *kinv=NULL,*r=NULL;
-	BIGNUM m;
-	BIGNUM xr,s;
-	BN_CTX *ctx=NULL;
-	unsigned char *p;
-	int i,len=0,ret=0,reason=ERR_R_BN_LIB;
-        ASN1_INTEGER rbs,sbs;
-	MS_STATIC unsigned char rbuf[50]; /* assuming r is 20 bytes +extra */
-	MS_STATIC unsigned char sbuf[50]; /* assuming s is 20 bytes +extra */
-
-	BN_init(&m);
-	BN_init(&xr);
-	BN_init(&s);
-
-	i=BN_num_bytes(dsa->q); /* should be 20 */
-	if ((dlen > i) || (dlen > 50))
-		{
-		reason=DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE;
-		goto err;
-		}
-
-	ctx=BN_CTX_new();
-	if (ctx == NULL) goto err;
-
-	if ((dsa->kinv == NULL) || (dsa->r == NULL))
-		{
-		if (!DSA_sign_setup(dsa,ctx,&kinv,&r)) goto err;
-		}
-	else
-		{
-		kinv=dsa->kinv;
-		dsa->kinv=NULL;
-		r=dsa->r;
-		dsa->r=NULL;
-		}
-
-	if (BN_bin2bn(dgst,dlen,&m) == NULL) goto err;
-
-	/* Compute  s = inv(k) (m + xr) mod q */
-	if (!BN_mod_mul(&xr,dsa->priv_key,r,dsa->q,ctx)) goto err;/* s = xr */
-	if (!BN_add(&s, &xr, &m)) goto err;		/* s = m + xr */
-	if (BN_cmp(&s,dsa->q) > 0)
-		BN_sub(&s,&s,dsa->q);
-	if (!BN_mod_mul(&s,&s,kinv,dsa->q,ctx)) goto err;
-
-	/*
-	 * Now create a ASN.1 sequence of the integers R and S.
-	 */
-	rbs.data=rbuf;
-	sbs.data=sbuf;
-	rbs.type = V_ASN1_INTEGER;
-	sbs.type = V_ASN1_INTEGER;
-	rbs.length=BN_bn2bin(r,rbs.data);
-	sbs.length=BN_bn2bin(&s,sbs.data);
-
-	len =i2d_ASN1_INTEGER(&rbs,NULL);
-	len+=i2d_ASN1_INTEGER(&sbs,NULL);
-
-	p=sig;
-	ASN1_put_object(&p,1,len,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
-	i2d_ASN1_INTEGER(&rbs,&p);
-	i2d_ASN1_INTEGER(&sbs,&p);
-	*siglen=(p-sig);
-	ret=1;
-err:
-	if (!ret) DSAerr(DSA_F_DSA_SIGN,reason);
-		
-#if 1 /* do the right thing :-) */
-	if (kinv != NULL) BN_clear_free(kinv);
-	if (r != NULL) BN_clear_free(r);
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/rand.h>
+#include <openssl/asn1.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
 #endif
-	if (ctx != NULL) BN_CTX_free(ctx);
-	BN_clear_free(&m);
-	BN_clear_free(&xr);
-	BN_clear_free(&s);
-	return(ret);
+#include <openssl/fips.h>
+
+DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
+	{
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode() && !(dsa->flags & DSA_FLAG_FIPS_EXTERNAL_METHOD_ALLOW)
+		&& !FIPS_dsa_check(dsa))
+		return NULL;
+#endif
+	return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
 	}
 
-int DSA_sign_setup(dsa,ctx_in,kinvp,rp)
-DSA *dsa;
-BN_CTX *ctx_in;
-BIGNUM **kinvp;
-BIGNUM **rp;
+int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	{
-	BN_CTX *ctx;
-	BIGNUM k,*kinv=NULL,*r=NULL;
-	int ret=0;
-
-	if (ctx_in == NULL)
-		{
-		if ((ctx=BN_CTX_new()) == NULL) goto err;
-		}
-	else
-		ctx=ctx_in;
-
-	BN_init(&k);
-	if ((r=BN_new()) == NULL) goto err;
-	kinv=NULL;
-
-	/* Get random k */
-	for (;;)
-		{
-		if (!BN_rand(&k, BN_num_bits(dsa->q), 1, 0)) goto err;
-		if (BN_cmp(&k,dsa->q) >= 0)
-			BN_sub(&k,&k,dsa->q);
-		if (!BN_is_zero(&k)) break;
-		}
-
-	if ((dsa->method_mont_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
-		{
-		if ((dsa->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dsa->method_mont_p,
-				dsa->p,ctx)) goto err;
-		}
-
-	/* Compute r = (g^k mod p) mod q */
-	if (!BN_mod_exp_mont(r,dsa->g,&k,dsa->p,ctx,
-		(BN_MONT_CTX *)dsa->method_mont_p)) goto err;
-	if (!BN_mod(r,r,dsa->q,ctx)) goto err;
-
-	/* Compute  part of 's = inv(k) (m + xr) mod q' */
-	if ((kinv=BN_mod_inverse(NULL,&k,dsa->q,ctx)) == NULL) goto err;
-
-	if (*kinvp != NULL) BN_clear_free(*kinvp);
-	*kinvp=kinv;
-	kinv=NULL;
-	if (*rp != NULL) BN_clear_free(*rp);
-	*rp=r;
-	ret=1;
-err:
-	if (!ret)
-		{
-		DSAerr(DSA_F_DSA_SIGN_SETUP,ERR_R_BN_LIB);
-		if (kinv != NULL) BN_clear_free(kinv);
-		if (r != NULL) BN_clear_free(r);
-		}
-	if (ctx_in == NULL) BN_CTX_free(ctx);
-	if (kinv != NULL) BN_clear_free(kinv);
-	BN_clear_free(&k);
-	return(ret);
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode() && !(dsa->flags & DSA_FLAG_FIPS_EXTERNAL_METHOD_ALLOW)
+		&& !FIPS_dsa_check(dsa))
+		return 0;
+#endif
+	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
 	}
 

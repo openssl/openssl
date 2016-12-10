@@ -58,11 +58,11 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
-int EVP_add_cipher(c)
-EVP_CIPHER *c;
+int EVP_add_cipher(const EVP_CIPHER *c)
 	{
 	int r;
 
@@ -72,11 +72,10 @@ EVP_CIPHER *c;
 	return(r);
 	}
 
-int EVP_add_digest(md)
-EVP_MD *md;
+int EVP_add_digest(const EVP_MD *md)
 	{
 	int r;
-	char *name;
+	const char *name;
 
 	name=OBJ_nid2sn(md->type);
 	r=OBJ_NAME_add(name,OBJ_NAME_TYPE_MD_METH,(char *)md);
@@ -95,26 +94,30 @@ EVP_MD *md;
 	return(r);
 	}
 
-EVP_CIPHER *EVP_get_cipherbyname(name)
-char *name;
+const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 	{
-	EVP_CIPHER *cp;
+	const EVP_CIPHER *cp;
 
-	cp=(EVP_CIPHER *)OBJ_NAME_get(name,OBJ_NAME_TYPE_CIPHER_METH);
+	cp=(const EVP_CIPHER *)OBJ_NAME_get(name,OBJ_NAME_TYPE_CIPHER_METH);
 	return(cp);
 	}
 
-EVP_MD *EVP_get_digestbyname(name)
-char *name;
+const EVP_MD *EVP_get_digestbyname(const char *name)
 	{
-	EVP_MD *cp;
+	const EVP_MD *cp;
 
-	cp=(EVP_MD *)OBJ_NAME_get(name,OBJ_NAME_TYPE_MD_METH);
+	cp=(const EVP_MD *)OBJ_NAME_get(name,OBJ_NAME_TYPE_MD_METH);
 	return(cp);
 	}
 
-void EVP_cleanup()
+void EVP_cleanup(void)
 	{
 	OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
 	OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
+	/* The above calls will only clean out the contents of the name
+	   hash table, but not the hash table itself.  The following line
+	   does that part.  -- Richard Levitte */
+	OBJ_NAME_cleanup(-1);
+
+	EVP_PBE_cleanup();
 	}

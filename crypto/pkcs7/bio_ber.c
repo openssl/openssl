@@ -59,10 +59,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "evp.h"
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
 
-#ifndef NOPROTO
 static int ber_write(BIO *h,char *buf,int num);
 static int ber_read(BIO *h,char *buf,int size);
 /*static int ber_puts(BIO *h,char *str); */
@@ -70,16 +69,7 @@ static int ber_read(BIO *h,char *buf,int size);
 static long ber_ctrl(BIO *h,int cmd,long arg1,char *arg2);
 static int ber_new(BIO *h);
 static int ber_free(BIO *data);
-#else
-static int ber_write();
-static int ber_read();
-/*static int ber_puts(); */
-/*static int ber_gets(); */
-static long ber_ctrl();
-static int ber_new();
-static int ber_free();
-#endif
-
+static long ber_callback_ctrl(BIO *h,int cmd,void *(*fp)());
 #define BER_BUF_SIZE	(32)
 
 /* This is used to hold the state of the BER objects being read. */
@@ -103,7 +93,7 @@ typedef struct bio_ber_struct
 	/* most of the following are used when doing non-blocking IO */
 	/* reading */
 	long num_left;	/* number of bytes still to read/write in block */
-	int depth;	/* used with idefinite encoding. */
+	int depth;	/* used with indefinite encoding. */
 	int finished;	/* No more read data */
 
 	/* writting */ 
@@ -126,19 +116,19 @@ static BIO_METHOD methods_ber=
 	ber_ctrl,
 	ber_new,
 	ber_free,
+	ber_callback_ctrl,
 	};
 
-BIO_METHOD *BIO_f_ber()
+BIO_METHOD *BIO_f_ber(void)
 	{
 	return(&methods_ber);
 	}
 
-static int ber_new(bi)
-BIO *bi;
+static int ber_new(BIO *bi)
 	{
 	BIO_BER_CTX *ctx;
 
-	ctx=(BIO_BER_CTX *)Malloc(sizeof(BIO_BER_CTX));
+	ctx=(BIO_BER_CTX *)OPENSSL_malloc(sizeof(BIO_BER_CTX));
 	if (ctx == NULL) return(0);
 
 	memset((char *)ctx,0,sizeof(BIO_BER_CTX));
@@ -149,24 +139,21 @@ BIO *bi;
 	return(1);
 	}
 
-static int ber_free(a)
-BIO *a;
+static int ber_free(BIO *a)
 	{
 	BIO_BER_CTX *b;
 
 	if (a == NULL) return(0);
 	b=(BIO_BER_CTX *)a->ptr;
-	memset(a->ptr,0,sizeof(BIO_BER_CTX));
-	Free(a->ptr);
+	OPENSSL_cleanse(a->ptr,sizeof(BIO_BER_CTX));
+	OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;
 	return(1);
 	}
 
-int bio_ber_get_header(bio,ctx)
-BIO *bio;
-BIO_BER_CTX *ctx;
+int bio_ber_get_header(BIO *bio, BIO_BER_CTX *ctx)
 	{
 	char buf[64];
 	int i,j,n;
@@ -236,10 +223,7 @@ BIO_BER_CTX *ctx;
 	if (ret & V_ASN1_CONSTRUCTED)
 	}
 	
-static int ber_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int ber_read(BIO *b, char *out, int outl)
 	{
 	int ret=0,i,n;
 	BIO_BER_CTX *ctx;
@@ -286,10 +270,7 @@ again:
 		}
 	}
 
-static int ber_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int ber_write(BIO *b, char *in, int inl)
 	{
 	int ret=0,n,i;
 	BIO_ENC_CTX *ctx;
@@ -344,11 +325,7 @@ int inl;
 	return(ret);
 	}
 
-static long ber_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long ber_ctrl(BIO *b, int cmd, long num, char *ptr)
 	{
 	BIO *dbio;
 	BIO_ENC_CTX *ctx,*dctx;
@@ -362,7 +339,7 @@ char *ptr;
 	case BIO_CTRL_RESET:
 		ctx->ok=1;
 		ctx->finished=0;
-		EVP_CipherInit(&(ctx->cipher),NULL,NULL,NULL,
+		EVP_CipherInit_ex(&(ctx->cipher),NULL,NULL,NULL,NULL,
 			ctx->cipher.berrypt);
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
@@ -399,7 +376,7 @@ again:
 			{
 			ctx->finished=1;
 			ctx->buf_off=0;
-			ret=EVP_CipherFinal(&(ctx->cipher),
+			ret=EVP_CipherFinal_ex(&(ctx->cipher),
 				(unsigned char *)ctx->buf,
 				&(ctx->buf_len));
 			ctx->ok=(int)ret;
@@ -434,6 +411,20 @@ again:
 	return(ret);
 	}
 
+static long ber_callback_ctrl(BIO *b, int cmd, void *(*fp)())
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
+		break;
+		}
+	return(ret);
+	}
+
 /*
 void BIO_set_cipher_ctx(b,c)
 BIO *b;
@@ -454,12 +445,8 @@ EVP_CIPHER_ctx *c;
 	}
 */
 
-void BIO_set_cipher(b,c,k,i,e)
-BIO *b;
-EVP_CIPHER *c;
-unsigned char *k;
-unsigned char *i;
-int e;
+void BIO_set_cipher(BIO *b, EVP_CIPHER *c, unsigned char *k, unsigned char *i,
+	     int e)
 	{
 	BIO_ENC_CTX *ctx;
 
@@ -471,7 +458,7 @@ int e;
 
 	b->init=1;
 	ctx=(BIO_ENC_CTX *)b->ptr;
-	EVP_CipherInit(&(ctx->cipher),c,k,i,e);
+	EVP_CipherInit_ex(&(ctx->cipher),c,NULL,k,i,e);
 	
 	if (b->callback != NULL)
 		b->callback(b,BIO_CB_CTRL,(char *)c,BIO_CTRL_SET,e,1L);

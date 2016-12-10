@@ -58,193 +58,55 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
-#include "x509.h"
+#include <openssl/asn1t.h>
+#include <openssl/x509.h>
 
-/*
- * ASN1err(ASN1_F_D2I_X509_REQ,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_D2I_X509_REQ_INFO,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_REQ_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_REQ_INFO_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
+/* X509_REQ_INFO is handled in an unusual way to get round
+ * invalid encodings. Some broken certificate requests don't
+ * encode the attributes field if it is empty. This is in
+ * violation of PKCS#10 but we need to tolerate it. We do
+ * this by making the attributes field OPTIONAL then using
+ * the callback to initialise it to an empty STACK. 
+ *
+ * This means that the field will be correctly encoded unless
+ * we NULL out the field.
+ *
+ * As a result we no longer need the req_kludge field because
+ * the information is now contained in the attributes field:
+ * 1. If it is NULL then it's the invalid omission.
+ * 2. If it is empty it is the correct encoding.
+ * 3. If it is not empty then some attributes are present.
+ *
  */
 
-int i2d_X509_REQ_INFO(a,pp)
-X509_REQ_INFO *a;
-unsigned char **pp;
-	{
-	M_ASN1_I2D_vars(a);
+static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+	X509_REQ_INFO *rinf = (X509_REQ_INFO *)*pval;
 
-	M_ASN1_I2D_len(a->version,		i2d_ASN1_INTEGER);
-	M_ASN1_I2D_len(a->subject,		i2d_X509_NAME);
-	M_ASN1_I2D_len(a->pubkey,		i2d_X509_PUBKEY);
+	if(operation == ASN1_OP_NEW_POST) {
+		rinf->attributes = sk_X509_ATTRIBUTE_new_null();
+		if(!rinf->attributes) return 0;
+	}
+	return 1;
+}
 
-	/* this is a *nasty* hack reported to be required to
-	 * allow some CA Software to accept the cert request.
-	 * It is not following the PKCS standards ...
-	 * PKCS#10 pg 5
-	 * attributes [0] IMPLICIT Attibutes
-	 * NOTE: no OPTIONAL ... so it *must* be there
+ASN1_SEQUENCE_enc(X509_REQ_INFO, enc, rinf_cb) = {
+	ASN1_SIMPLE(X509_REQ_INFO, version, ASN1_INTEGER),
+	ASN1_SIMPLE(X509_REQ_INFO, subject, X509_NAME),
+	ASN1_SIMPLE(X509_REQ_INFO, pubkey, X509_PUBKEY),
+	/* This isn't really OPTIONAL but it gets round invalid
+	 * encodings
 	 */
-	if (a->req_kludge) 
-	        {
-	        M_ASN1_I2D_len_IMP_set_opt(a->attributes,i2d_X509_ATTRIBUTE,0);
-		}
-	else
-	        {
-	        M_ASN1_I2D_len_IMP_set(a->attributes,	i2d_X509_ATTRIBUTE,0);
-		}
-	
-	M_ASN1_I2D_seq_total();
-	M_ASN1_I2D_put(a->version,		i2d_ASN1_INTEGER);
-	M_ASN1_I2D_put(a->subject,		i2d_X509_NAME);
-	M_ASN1_I2D_put(a->pubkey,		i2d_X509_PUBKEY);
+	ASN1_IMP_SET_OF_OPT(X509_REQ_INFO, attributes, X509_ATTRIBUTE, 0)
+} ASN1_SEQUENCE_END_enc(X509_REQ_INFO, X509_REQ_INFO)
 
-	/* this is a *nasty* hack reported to be required by some CA's.
-	 * It is not following the PKCS standards ...
-	 * PKCS#10 pg 5
-	 * attributes [0] IMPLICIT Attibutes
-	 * NOTE: no OPTIONAL ... so it *must* be there
-	 */
-	if (a->req_kludge)
-		{
-	        M_ASN1_I2D_put_IMP_set_opt(a->attributes,i2d_X509_ATTRIBUTE,0);
-		}
-	else
-		{
-	        M_ASN1_I2D_put_IMP_set(a->attributes,i2d_X509_ATTRIBUTE,0);
-		}
+IMPLEMENT_ASN1_FUNCTIONS(X509_REQ_INFO)
 
-	M_ASN1_I2D_finish();
-	}
+ASN1_SEQUENCE_ref(X509_REQ, 0, CRYPTO_LOCK_X509_REQ) = {
+	ASN1_SIMPLE(X509_REQ, req_info, X509_REQ_INFO),
+	ASN1_SIMPLE(X509_REQ, sig_alg, X509_ALGOR),
+	ASN1_SIMPLE(X509_REQ, signature, ASN1_BIT_STRING)
+} ASN1_SEQUENCE_END_ref(X509_REQ, X509_REQ)
 
-X509_REQ_INFO *d2i_X509_REQ_INFO(a,pp,length)
-X509_REQ_INFO **a;
-unsigned char **pp;
-long length;
-	{
-	M_ASN1_D2I_vars(a,X509_REQ_INFO *,X509_REQ_INFO_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->version,d2i_ASN1_INTEGER);
-	M_ASN1_D2I_get(ret->subject,d2i_X509_NAME);
-	M_ASN1_D2I_get(ret->pubkey,d2i_X509_PUBKEY);
-
-	/* this is a *nasty* hack to allow for some CA's that
-	 * have been reported as requiring it.
-	 * It is not following the PKCS standards ...
-	 * PKCS#10 pg 5
-	 * attributes [0] IMPLICIT Attibutes
-	 * NOTE: no OPTIONAL ... so it *must* be there
-	 */
-	if (asn1_Finish(&c))
-		ret->req_kludge=1;
-	else
-		{
-		M_ASN1_D2I_get_IMP_set(ret->attributes,d2i_X509_ATTRIBUTE,
-			X509_ATTRIBUTE_free,0);
-		}
-
-	M_ASN1_D2I_Finish(a,X509_REQ_INFO_free,ASN1_F_D2I_X509_REQ_INFO);
-	}
-
-X509_REQ_INFO *X509_REQ_INFO_new()
-	{
-	X509_REQ_INFO *ret=NULL;
-	ASN1_CTX c;
-
-	M_ASN1_New_Malloc(ret,X509_REQ_INFO);
-	M_ASN1_New(ret->version,ASN1_INTEGER_new);
-	M_ASN1_New(ret->subject,X509_NAME_new);
-	M_ASN1_New(ret->pubkey,X509_PUBKEY_new);
-	M_ASN1_New(ret->attributes,sk_new_null);
-	ret->req_kludge=0;
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_X509_REQ_INFO_NEW);
-	}
-	
-void X509_REQ_INFO_free(a)
-X509_REQ_INFO *a;
-	{
-	if (a == NULL) return;
-	ASN1_INTEGER_free(a->version);
-	X509_NAME_free(a->subject);
-	X509_PUBKEY_free(a->pubkey);
-	sk_pop_free(a->attributes,X509_ATTRIBUTE_free);
-	Free((char *)a);
-	}
-
-int i2d_X509_REQ(a,pp)
-X509_REQ *a;
-unsigned char **pp;
-	{
-	M_ASN1_I2D_vars(a);
-	M_ASN1_I2D_len(a->req_info,	i2d_X509_REQ_INFO);
-	M_ASN1_I2D_len(a->sig_alg,	i2d_X509_ALGOR);
-	M_ASN1_I2D_len(a->signature,	i2d_ASN1_BIT_STRING);
-
-	M_ASN1_I2D_seq_total();
-
-	M_ASN1_I2D_put(a->req_info,	i2d_X509_REQ_INFO);
-	M_ASN1_I2D_put(a->sig_alg,	i2d_X509_ALGOR);
-	M_ASN1_I2D_put(a->signature,	i2d_ASN1_BIT_STRING);
-
-	M_ASN1_I2D_finish();
-	}
-
-X509_REQ *d2i_X509_REQ(a,pp,length)
-X509_REQ **a;
-unsigned char **pp;
-long length;
-	{
-	M_ASN1_D2I_vars(a,X509_REQ *,X509_REQ_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->req_info,d2i_X509_REQ_INFO);
-	M_ASN1_D2I_get(ret->sig_alg,d2i_X509_ALGOR);
-	M_ASN1_D2I_get(ret->signature,d2i_ASN1_BIT_STRING);
-	M_ASN1_D2I_Finish(a,X509_REQ_free,ASN1_F_D2I_X509_REQ);
-	}
-
-X509_REQ *X509_REQ_new()
-	{
-	X509_REQ *ret=NULL;
-	ASN1_CTX c;
-
-	M_ASN1_New_Malloc(ret,X509_REQ);
-	ret->references=1;
-	M_ASN1_New(ret->req_info,X509_REQ_INFO_new);
-	M_ASN1_New(ret->sig_alg,X509_ALGOR_new);
-	M_ASN1_New(ret->signature,ASN1_BIT_STRING_new);
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_X509_REQ_NEW);
-	}
-
-void X509_REQ_free(a)
-X509_REQ *a;
-	{
-	int i;
-
-	if (a == NULL) return;
-
-	i=CRYPTO_add(&a->references,-1,CRYPTO_LOCK_X509_REQ);
-#ifdef REF_PRINT
-	REF_PRINT("X509_REQ",a);
-#endif
-	if (i > 0) return;
-#ifdef REF_CHECK
-	if (i < 0)
-		{
-		fprintf(stderr,"X509_REQ_free, bad reference count\n");
-		abort();
-		}
-#endif
-
-	X509_REQ_INFO_free(a->req_info);
-	X509_ALGOR_free(a->sig_alg);
-	ASN1_BIT_STRING_free(a->signature);
-	Free((char *)a);
-	}
-
-
+IMPLEMENT_ASN1_FUNCTIONS(X509_REQ)
+IMPLEMENT_ASN1_DUP_FUNCTION(X509_REQ)

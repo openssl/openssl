@@ -59,14 +59,13 @@
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "rsa.h"
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
 
-RSA *RSA_generate_key(bits, e_value, callback,cb_arg)
-int bits;
-unsigned long e_value;
-void (*callback)(P_I_I_P);
-char *cb_arg;
+#ifndef OPENSSL_FIPS
+
+RSA *RSA_generate_key(int bits, unsigned long e_value,
+	     void (*callback)(int,int,void *), void *cb_arg)
 	{
 	RSA *rsa=NULL;
 	BIGNUM *r0=NULL,*r1=NULL,*r2=NULL,*r3=NULL,*tmp;
@@ -77,11 +76,12 @@ char *cb_arg;
 	if (ctx == NULL) goto err;
 	ctx2=BN_CTX_new();
 	if (ctx2 == NULL) goto err;
-	r0= &(ctx->bn[0]);
-	r1= &(ctx->bn[1]);
-	r2= &(ctx->bn[2]);
-	r3= &(ctx->bn[3]);
-	ctx->tos+=4;
+	BN_CTX_start(ctx);
+	r0 = BN_CTX_get(ctx);
+	r1 = BN_CTX_get(ctx);
+	r2 = BN_CTX_get(ctx);
+	r3 = BN_CTX_get(ctx);
+	if (r3 == NULL) goto err;
 
 	bitsp=(bits+1)/2;
 	bitsq=bits-bitsp;
@@ -97,7 +97,7 @@ char *cb_arg;
 	 * unsigned long can be larger */
 	for (i=0; i<sizeof(unsigned long)*8; i++)
 		{
-		if (e_value & (1<<i))
+		if (e_value & (1UL<<i))
 			BN_set_bit(rsa->e,i);
 		}
 #else
@@ -160,7 +160,7 @@ char *cb_arg;
 		goto err;
 		}
 */
-	rsa->d=(BIGNUM *)BN_mod_inverse(NULL,rsa->e,r0,ctx2);	/* d */
+	rsa->d=BN_mod_inverse(NULL,rsa->e,r0,ctx2);	/* d */
 	if (rsa->d == NULL) goto err;
 
 	/* calculate d mod (p-1) */
@@ -184,6 +184,8 @@ err:
 		RSAerr(RSA_F_RSA_GENERATE_KEY,ERR_LIB_BN);
 		ok=0;
 		}
+	if (ctx != NULL)
+		BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	BN_CTX_free(ctx2);
 	
@@ -196,3 +198,4 @@ err:
 		return(rsa);
 	}
 
+#endif

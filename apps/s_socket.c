@@ -1,4 +1,4 @@
-/* apps/s_socket.c */
+/* apps/s_socket.c -  socket-related functions used by s_client and s_server */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,43 +61,55 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+
+#include <openssl/e_os2.h>
+
+/* With IPv6, it looks like Digital has mixed up the proper order of
+   recursive header file inclusion, resulting in the compiler complaining
+   that u_int isn't defined, but only if _POSIX_C_SOURCE is defined, which
+   is needed to have fileno() declared correctly...  So let's define u_int */
+#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__U_INT)
+#define __U_INT
+typedef unsigned int u_int;
+#endif
+
 #define USE_SOCKETS
 #define NON_MAIN
 #include "apps.h"
 #undef USE_SOCKETS
 #undef NON_MAIN
 #include "s_apps.h"
-#include "ssl.h"
+#include <openssl/ssl.h>
 
-#ifndef NOPROTO
 static struct hostent *GetHostByName(char *name);
-int sock_init(void );
-#else
-static struct hostent *GetHostByName();
-int sock_init();
+#ifdef OPENSSL_SYS_WINDOWS
+static void ssl_sock_cleanup(void);
 #endif
+static int ssl_sock_init(void);
+static int init_client_ip(int *sock,unsigned char ip[4], int port);
+static int init_server(int *sock, int port);
+static int init_server_long(int *sock, int port,char *ip);
+static int do_accept(int acc_sock, int *sock, char **host);
+static int host_ip(char *str, unsigned char ip[4]);
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 #define SOCKET_PROTOCOL	0 /* more microsoft stupidity */
 #else
 #define SOCKET_PROTOCOL	IPPROTO_TCP
 #endif
 
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 static struct WSAData wsa_state;
 static int wsa_init_done=0;
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 static HWND topWnd=0;
 static FARPROC lpTopWndProc=NULL;
 static FARPROC lpTopHookProc=NULL;
 extern HINSTANCE _hInstance;  /* nice global CRT provides */
 
-static LONG FAR PASCAL topHookProc(hwnd,message,wParam,lParam)
-HWND hwnd;
-UINT message;
-WPARAM wParam;
-LPARAM lParam;
+static LONG FAR PASCAL topHookProc(HWND hwnd, UINT message, WPARAM wParam,
+	     LPARAM lParam)
 	{
 	if (hwnd == topWnd)
 		{
@@ -106,7 +118,7 @@ LPARAM lParam;
 		case WM_DESTROY:
 		case WM_CLOSE:
 			SetWindowLong(topWnd,GWL_WNDPROC,(LONG)lpTopWndProc);
-			sock_cleanup();
+			ssl_sock_cleanup();
 			break;
 			}
 		}
@@ -119,30 +131,37 @@ static BOOL CALLBACK enumproc(HWND hwnd,LPARAM lParam)
 	return(FALSE);
 	}
 
-#endif /* WIN32 */
-#endif /* WINDOWS */
+#endif /* OPENSSL_SYS_WIN32 */
+#endif /* OPENSSL_SYS_WINDOWS */
 
-void sock_cleanup()
+#ifdef OPENSSL_SYS_WINDOWS
+static void ssl_sock_cleanup(void)
 	{
-#ifdef WINDOWS
 	if (wsa_init_done)
 		{
 		wsa_init_done=0;
+#ifndef OPENSSL_SYS_WINCE
 		WSACancelBlockingCall();
+#endif
 		WSACleanup();
 		}
-#endif
 	}
+#endif
 
-int sock_init()
+static int ssl_sock_init(void)
 	{
-#ifdef WINDOWS
+#ifdef WATT32
+	extern int _watt_do_exit;
+	_watt_do_exit = 0;
+	if (sock_init())
+		return (0);
+#elif defined(OPENSSL_SYS_WINDOWS)
 	if (!wsa_init_done)
 		{
 		int err;
 	  
 #ifdef SIGINT
-		signal(SIGINT,(void (*)(int))sock_cleanup);
+		signal(SIGINT,(void (*)(int))ssl_sock_cleanup);
 #endif
 		wsa_init_done=1;
 		memset(&wsa_state,0,sizeof(wsa_state));
@@ -153,22 +172,19 @@ int sock_init()
 			return(0);
 			}
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 		EnumTaskWindows(GetCurrentTask(),enumproc,0L);
 		lpTopWndProc=(FARPROC)GetWindowLong(topWnd,GWL_WNDPROC);
 		lpTopHookProc=MakeProcInstance((FARPROC)topHookProc,_hInstance);
 
 		SetWindowLong(topWnd,GWL_WNDPROC,(LONG)lpTopHookProc);
-#endif /* WIN16 */
+#endif /* OPENSSL_SYS_WIN16 */
 		}
-#endif /* WINDOWS */
+#endif /* OPENSSL_SYS_WINDOWS */
 	return(1);
 	}
 
-int init_client(sock, host, port)
-int *sock;
-char *host;
-int port;
+int init_client(int *sock, char *host, int port)
 	{
 	unsigned char ip[4];
 	short p=0;
@@ -181,16 +197,13 @@ int port;
 	return(init_client_ip(sock,ip,port));
 	}
 
-int init_client_ip(sock, ip, port)
-int *sock;
-unsigned char ip[4];
-int port;
+static int init_client_ip(int *sock, unsigned char ip[4], int port)
 	{
 	unsigned long addr;
 	struct sockaddr_in them;
 	int s,i;
 
-	if (!sock_init()) return(0);
+	if (!ssl_sock_init()) return(0);
 
 	memset((char *)&them,0,sizeof(them));
 	them.sin_family=AF_INET;
@@ -205,9 +218,11 @@ int port;
 	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
 	if (s == INVALID_SOCKET) { perror("socket"); return(0); }
 
+#ifndef OPENSSL_SYS_MPE
 	i=0;
 	i=setsockopt(s,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
 	if (i < 0) { perror("keepalive"); return(0); }
+#endif
 
 	if (connect(s,(struct sockaddr *)&them,sizeof(them)) == -1)
 		{ close(s); perror("connect"); return(0); }
@@ -215,75 +230,7 @@ int port;
 	return(1);
 	}
 
-int nbio_sock_error(sock)
-int sock;
-	{
-	int j,i,size;
-
-	size=sizeof(int);
-	i=getsockopt(sock,SOL_SOCKET,SO_ERROR,(char *)&j,&size);
-	if (i < 0)
-		return(1);
-	else
-		return(j);
-	}
-
-int nbio_init_client_ip(sock, ip, port)
-int *sock;
-unsigned char ip[4];
-int port;
-	{
-	unsigned long addr;
-	struct sockaddr_in them;
-	int s,i;
-
-	if (!sock_init()) return(0);
-
-	memset((char *)&them,0,sizeof(them));
-	them.sin_family=AF_INET;
-	them.sin_port=htons((unsigned short)port);
-	addr=	(unsigned long)
-		((unsigned long)ip[0]<<24L)|
-		((unsigned long)ip[1]<<16L)|
-		((unsigned long)ip[2]<< 8L)|
-		((unsigned long)ip[3]);
-	them.sin_addr.s_addr=htonl(addr);
-
-	if (*sock <= 0)
-		{
-		unsigned long l=1;
-
-		s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
-		if (s == INVALID_SOCKET) { perror("socket"); return(0); }
-
-		i=0;
-		i=setsockopt(s,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
-		if (i < 0) { perror("keepalive"); return(0); }
-		*sock=s;
-
-#ifdef FIONBIO
-		BIO_socket_ioctl(s,FIONBIO,&l);
-#endif
-		}
-	else
-		s= *sock;
-
-	i=connect(s,(struct sockaddr *)&them,sizeof(them));
-	if (i == INVALID_SOCKET)
-		{
-		if (BIO_sock_should_retry(i))
-			return(-1);
-		else
-			return(0);
-		}
-	else
-		return(1);
-	}
-
-int do_server(port, ret, cb)
-int port;
-int *ret;
-int (*cb)();
+int do_server(int port, int *ret, int (*cb)(), char *context)
 	{
 	int sock;
 	char *name;
@@ -304,8 +251,8 @@ int (*cb)();
 			SHUTDOWN(accept_socket);
 			return(0);
 			}
-		i=(*cb)(name,sock);
-		if (name != NULL) Free(name);
+		i=(*cb)(name,sock, context);
+		if (name != NULL) OPENSSL_free(name);
 		SHUTDOWN2(sock);
 		if (i < 0)
 			{
@@ -315,16 +262,13 @@ int (*cb)();
 		}
 	}
 
-int init_server_long(sock, port, ip)
-int *sock;
-int port;
-char *ip;
+static int init_server_long(int *sock, int port, char *ip)
 	{
 	int ret=0;
 	struct sockaddr_in server;
 	int s= -1,i;
 
-	if (!sock_init()) return(0);
+	if (!ssl_sock_init()) return(0);
 
 	memset((char *)&server,0,sizeof(server));
 	server.sin_family=AF_INET;
@@ -332,13 +276,25 @@ char *ip;
 	if (ip == NULL)
 		server.sin_addr.s_addr=INADDR_ANY;
 	else
+/* Added for T3E, address-of fails on bit field (beckman@acl.lanl.gov) */
+#ifndef BIT_FIELD_LIMITS
 		memcpy(&server.sin_addr.s_addr,ip,4);
+#else
+		memcpy(&server.sin_addr,ip,4);
+#endif
 	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
 
 	if (s == INVALID_SOCKET) goto err;
+#if defined SOL_SOCKET && defined SO_REUSEADDR
+		{
+		int j = 1;
+		setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
+			   (void *) &j, sizeof j);
+		}
+#endif
 	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)
 		{
-#ifndef WINDOWS
+#ifndef OPENSSL_SYS_WINDOWS
 		perror("bind");
 #endif
 		goto err;
@@ -356,17 +312,12 @@ err:
 	return(ret);
 	}
 
-int init_server(sock,port)
-int *sock;
-int port;
+static int init_server(int *sock, int port)
 	{
 	return(init_server_long(sock, port, NULL));
 	}
 
-int do_accept(acc_sock, sock, host)
-int acc_sock;
-int *sock;
-char **host;
+static int do_accept(int acc_sock, int *sock, char **host)
 	{
 	int ret,i;
 	struct hostent *h1,*h2;
@@ -374,18 +325,23 @@ char **host;
 	int len;
 /*	struct linger ling; */
 
-	if (!sock_init()) return(0);
+	if (!ssl_sock_init()) return(0);
 
-#ifndef WINDOWS
+#ifndef OPENSSL_SYS_WINDOWS
 redoit:
 #endif
 
 	memset((char *)&from,0,sizeof(from));
 	len=sizeof(from);
-	ret=accept(acc_sock,(struct sockaddr *)&from,&len);
+	/* Note: under VMS with SOCKETSHR the fourth parameter is currently
+	 * of type (int *) whereas under other systems it is (void *) if
+	 * you don't have a cast it will choke the compiler: if you do
+	 * have a cast then you can either go for (int *) or (void *).
+	 */
+	ret=accept(acc_sock,(struct sockaddr *)&from,(void *)&len);
 	if (ret == INVALID_SOCKET)
 		{
-#ifdef WINDOWS
+#ifdef OPENSSL_SYS_WINDOWS
 		i=WSAGetLastError();
 		BIO_printf(bio_err,"accept error %d\n",i);
 #else
@@ -427,12 +383,12 @@ redoit:
 		}
 	else
 		{
-		if ((*host=(char *)Malloc(strlen(h1->h_name)+1)) == NULL)
+		if ((*host=(char *)OPENSSL_malloc(strlen(h1->h_name)+1)) == NULL)
 			{
-			perror("Malloc");
+			perror("OPENSSL_malloc");
 			return(0);
 			}
-		strcpy(*host,h1->h_name);
+		BUF_strlcpy(*host,h1->h_name,strlen(h1->h_name)+1);
 
 		h2=GetHostByName(*host);
 		if (h2 == NULL)
@@ -452,11 +408,8 @@ end:
 	return(1);
 	}
 
-int extract_host_port(str,host_ptr,ip,port_ptr)
-char *str;
-char **host_ptr;
-unsigned char *ip;
-short *port_ptr;
+int extract_host_port(char *str, char **host_ptr, unsigned char *ip,
+	     short *port_ptr)
 	{
 	char *h,*p;
 
@@ -480,14 +433,12 @@ err:
 	return(0);
 	}
 
-int host_ip(str,ip)
-char *str;
-unsigned char ip[4];
+static int host_ip(char *str, unsigned char ip[4])
 	{
 	unsigned int in[4]; 
 	int i;
 
-	if (sscanf(str,"%d.%d.%d.%d",&(in[0]),&(in[1]),&(in[2]),&(in[3])) == 4)
+	if (sscanf(str,"%u.%u.%u.%u",&(in[0]),&(in[1]),&(in[2]),&(in[3])) == 4)
 		{
 		for (i=0; i<4; i++)
 			if (in[i] > 255)
@@ -504,7 +455,7 @@ unsigned char ip[4];
 		{ /* do a gethostbyname */
 		struct hostent *he;
 
-		if (!sock_init()) return(0);
+		if (!ssl_sock_init()) return(0);
 
 		he=GetHostByName(str);
 		if (he == NULL)
@@ -528,9 +479,7 @@ err:
 	return(0);
 	}
 
-int extract_port(str,port_ptr)
-char *str;
-short *port_ptr;
+int extract_port(char *str, short *port_ptr)
 	{
 	int i;
 	struct servent *s;
@@ -562,8 +511,7 @@ static struct ghbn_cache_st
 static unsigned long ghbn_hits=0L;
 static unsigned long ghbn_miss=0L;
 
-static struct hostent *GetHostByName(name)
-char *name;
+static struct hostent *GetHostByName(char *name)
 	{
 	struct hostent *ret;
 	int i,lowi=0;
@@ -588,9 +536,12 @@ char *name;
 		ret=gethostbyname(name);
 		if (ret == NULL) return(NULL);
 		/* else add to cache */
-		strncpy(ghbn_cache[lowi].name,name,128);
-		memcpy((char *)&(ghbn_cache[lowi].ent),ret,sizeof(struct hostent));
-		ghbn_cache[lowi].order=ghbn_miss+ghbn_hits;
+		if(strlen(name) < sizeof ghbn_cache[0].name)
+			{
+			strcpy(ghbn_cache[lowi].name,name);
+			memcpy((char *)&(ghbn_cache[lowi].ent),ret,sizeof(struct hostent));
+			ghbn_cache[lowi].order=ghbn_miss+ghbn_hits;
+			}
 		return(ret);
 		}
 	else
@@ -601,69 +552,3 @@ char *name;
 		return(ret);
 		}
 	}
-
-#ifndef MSDOS
-int spawn(argc, argv, in, out)
-int argc;
-char **argv;
-int *in;
-int *out;
-	{
-	int pid;
-#define CHILD_READ	p1[0]
-#define CHILD_WRITE	p2[1]
-#define PARENT_READ	p2[0]
-#define PARENT_WRITE	p1[1]
-	int p1[2],p2[2];
-
-	if ((pipe(p1) < 0) || (pipe(p2) < 0)) return(-1);
-
-	if ((pid=fork()) == 0)
-		{ /* child */
-		if (dup2(CHILD_WRITE,fileno(stdout)) < 0)
-			perror("dup2");
-		if (dup2(CHILD_WRITE,fileno(stderr)) < 0)
-			perror("dup2");
-		if (dup2(CHILD_READ,fileno(stdin)) < 0)
-			perror("dup2");
-		close(CHILD_READ); 
-		close(CHILD_WRITE);
-
-		close(PARENT_READ);
-		close(PARENT_WRITE);
-		execvp(argv[0],argv);
-		perror("child");
-		exit(1);
-		}
-
-	/* parent */
-	*in= PARENT_READ;
-	*out=PARENT_WRITE;
-	close(CHILD_READ);
-	close(CHILD_WRITE);
-	return(pid);
-	}
-#endif /* MSDOS */
-
-
-#ifdef undef
-	/* Turn on synchronous sockets so that we can do a WaitForMultipleObjects
-	 * on sockets */
-	{
-	SOCKET s;
-	int optionValue = SO_SYNCHRONOUS_NONALERT;
-	int err;
-
-	err = setsockopt( 
-	    INVALID_SOCKET, 
-	    SOL_SOCKET, 
-	    SO_OPENTYPE, 
-	    (char *)&optionValue, 
-	    sizeof(optionValue));
-	if (err != NO_ERROR) {
-	/* failed for some reason... */
-		BIO_printf(bio_err, "failed to setsockopt(SO_OPENTYPE, SO_SYNCHRONOUS_ALERT) - %d\n",
-			WSAGetLastError());
-		}
-	}
-#endif

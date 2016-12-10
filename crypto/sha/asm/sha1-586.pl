@@ -1,15 +1,40 @@
 #!/usr/local/bin/perl
 
+# It was noted that Intel IA-32 C compiler generates code which
+# performs ~30% *faster* on P4 CPU than original *hand-coded*
+# SHA1 assembler implementation. To address this problem (and
+# prove that humans are still better than machines:-), the
+# original code was overhauled, which resulted in following
+# performance changes:
+#
+#		compared with original	compared with Intel cc
+#		assembler impl.		generated code
+# Pentium	-25%			+37%
+# PIII/AMD	+8%			+16%
+# P4		+85%(!)			+45%
+#
+# As you can see Pentium came out as looser:-( Yet I reckoned that
+# improvement on P4 outweights the loss and incorporate this
+# re-tuned code to 0.9.7 and later.
+# ----------------------------------------------------------------
+# Those who for any particular reason absolutely must score on
+# Pentium can replace this module with one from 0.9.6 distribution.
+# This "offer" shall be revoked the moment programming interface to
+# this module is changed, in which case this paragraph should be
+# removed.
+# ----------------------------------------------------------------
+#					<appro@fy.chalmers.se>
+
 $normal=0;
 
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
 
-&asm_init($ARGV[0],"sha1-586.pl");
+&asm_init($ARGV[0],"sha1-586.pl",$ARGV[$#ARGV] eq "386");
 
 $A="eax";
-$B="ebx";
-$C="ecx";
+$B="ecx";
+$C="ebx";
 $D="edx";
 $E="edi";
 $T="esi";
@@ -19,7 +44,7 @@ $off=9*4;
 
 @K=(0x5a827999,0x6ed9eba1,0x8f1bbcdc,0xca62c1d6);
 
-&sha1_block("sha1_block_x86");
+&sha1_block_data("sha1_block_asm_data_order");
 
 &asm_finish();
 
@@ -53,11 +78,14 @@ sub X_expand
 	local($in)=@_;
 
 	&comment("First, load the words onto the stack in network byte order");
-	for ($i=0; $i<16; $i++)
+	for ($i=0; $i<16; $i+=2)
 		{
-		&mov("eax",&DWP(($i+0)*4,$in,"",0)) unless $i == 0;
-		&bswap("eax");
-		&mov(&swtmp($i+0),"eax");
+		&mov($A,&DWP(($i+0)*4,$in,"",0));# unless $i == 0;
+		 &mov($B,&DWP(($i+1)*4,$in,"",0));
+		&bswap($A);
+		 &bswap($B);
+		&mov(&swtmp($i+0),$A);
+		 &mov(&swtmp($i+1),$B);
 		}
 
 	&comment("We now have the X array on the stack");
@@ -74,54 +102,21 @@ sub BODY_00_15
 	{
 	local($pos,$K,$X,$n,$a,$b,$c,$d,$e,$f)=@_;
 
-return if $n & 1;
 	&comment("00_15 $n");
 
-	 &mov($f,$c);
-
 	&mov($tmp1,$a);
-	 &xor($f,$d);			# F2
-
-	&rotl($tmp1,5);			# A2
-
-	&and($f,$b);			# F3
-	 &add($tmp1,$e);
-
-	&rotr($b,1);			# B1	<- F
-	 &mov($e,&swtmp($n));		# G1
-
-	&rotr($b,1);			# B1	<- F
-	 &xor($f,$d);			# F4
-
-	&lea($tmp1,&DWP($K,$tmp1,$e,1));
-
-############################
-#	&BODY_40_59( 0,$K[2],$X,42,$A,$B,$C,$D,$E,$T);
-#	&BODY_40_59( 0,$K[2],$X,43,$T,$A,$B,$C,$D,$E);
-$n++;
-	local($n0,$n1,$n2,$n3,$np)=&Na($n);
-	($b,$c,$d,$e,$f,$a)=($a,$b,$c,$d,$e,$f);
-
-	 &mov($f,$c);
-
-	&add($a,$tmp1);		# MOVED DOWN
-	 &xor($f,$d);			# F2
-
-	&mov($tmp1,$a);
-	 &and($f,$b);			# F3
-
-	&rotl($tmp1,5);			# A2
-
-	&add($tmp1,$e);
-	 &mov($e,&swtmp($n));		# G1
-
-	&rotr($b,1);			# B1	<- F
-	 &xor($f,$d);			# F4
-
-	&rotr($b,1);			# B1	<- F
-	 &lea($tmp1,&DWP($K,$tmp1,$e,1));
-
-	&add($f,$tmp1);
+	 &mov($f,$c);			# f to hold F_00_19(b,c,d)
+	&rotl($tmp1,5);			# tmp1=ROTATE(a,5)
+	 &xor($f,$d);
+	&and($f,$b);
+	 &rotr($b,2);			# b=ROTATE(b,30)
+	&add($tmp1,$e);			# tmp1+=e;
+	 &mov($e,&swtmp($n));		# e becomes volatile and
+	 				# is loaded with xi
+	&xor($f,$d);			# f holds F_00_19(b,c,d)
+	 &lea($tmp1,&DWP($K,$tmp1,$e,1));# tmp1+=K_00_19+xi
+	
+	&add($f,$tmp1);			# f+=tmp1
 	}
 
 sub BODY_16_19
@@ -129,66 +124,24 @@ sub BODY_16_19
 	local($pos,$K,$X,$n,$a,$b,$c,$d,$e,$f)=@_;
 	local($n0,$n1,$n2,$n3,$np)=&Na($n);
 
-return if $n & 1;
 	&comment("16_19 $n");
 
- &nop() if ($pos < 0);
-&mov($tmp1,&swtmp($n0));			# X1
- &mov($f,&swtmp($n1));			# X2
-&xor($f,$tmp1);				# X3
- &mov($tmp1,&swtmp($n2));		# X4
-&xor($f,$tmp1);				# X5
- &mov($tmp1,&swtmp($n3));		# X6
-&xor($f,$tmp1);				# X7 - slot
- &mov($tmp1,$c);			# F1
-&rotl($f,1);				# X8 - slot
- &xor($tmp1,$d);			# F2
-&mov(&swtmp($n0),$f);			# X9 - anytime
- &and($tmp1,$b);			# F3
-&lea($f,&DWP($K,$f,$e,1));		# tot=X+K+e
- &xor($tmp1,$d);				# F4
-&mov($e,$a);				# A1
- &add($f,$tmp1);			# tot+=F();
-
-&rotl($e,5);				# A2
-
-&rotr($b,1);				# B1	<- F
- &add($f,$e);				# tot+=a
-
-############################
-#	&BODY_40_59( 0,$K[2],$X,42,$A,$B,$C,$D,$E,$T);
-#	&BODY_40_59( 0,$K[2],$X,43,$T,$A,$B,$C,$D,$E);
-$n++;
-	local($n0,$n1,$n2,$n3,$np)=&Na($n);
-	($b,$c,$d,$e,$f,$a)=($a,$b,$c,$d,$e,$f);
-
-
-&mov($f,&swtmp($n0));			# X1
- &mov($tmp1,&swtmp($n1));		# X2
-&xor($f,$tmp1);				# X3
- &mov($tmp1,&swtmp($n2));		# X4
-&xor($f,$tmp1);				# X5
- &mov($tmp1,&swtmp($n3));		# X6
-&rotr($c,1); #&rotr($b,1);		# B1	<- F # MOVED DOWN
- &xor($f,$tmp1);				# X7 - slot
-&rotl($f,1);				# X8 - slot
- &mov($tmp1,$c);			# F1
-&xor($tmp1,$d);			# F2
- &mov(&swtmp($n0),$f);			# X9 - anytime
-&and($tmp1,$b);			# F3
- &lea($f,&DWP($K,$f,$e,1));		# tot=X+K+e
-
-&xor($tmp1,$d);				# F4
- &mov($e,$a);				# A1
-
-&rotl($e,5);				# A2
-
-&rotr($b,1);				# B1	<- F
- &add($f,$e);				# tot+=a
-
-&rotr($b,1);				# B1	<- F
- &add($f,$tmp1);			# tot+=F();
-
+	&mov($f,&swtmp($n1));		# f to hold Xupdate(xi,xa,xb,xc,xd)
+	 &mov($tmp1,$c);		# tmp1 to hold F_00_19(b,c,d)
+	&xor($f,&swtmp($n0));
+	 &xor($tmp1,$d);
+	&xor($f,&swtmp($n2));
+	 &and($tmp1,$b);		# tmp1 holds F_00_19(b,c,d)
+	&xor($f,&swtmp($n3));		# f holds xa^xb^xc^xd
+	 &rotr($b,2);			# b=ROTATE(b,30)
+	&xor($tmp1,$d);			# tmp1=F_00_19(b,c,d)
+	 &rotl($f,1);			# f=ROATE(f,1)
+	&mov(&swtmp($n0),$f);		# xi=f
+	&lea($f,&DWP($K,$f,$e,1));	# f+=K_00_19+e
+	 &mov($e,$a);			# e becomes volatile
+	&add($f,$tmp1);			# f+=F_00_19(b,c,d)
+	 &rotl($e,5);			# e=ROTATE(a,5)
+	&add($f,$e);			# f+=ROTATE(a,5)
 	}
 
 sub BODY_20_39
@@ -198,42 +151,21 @@ sub BODY_20_39
 	&comment("20_39 $n");
 	local($n0,$n1,$n2,$n3,$np)=&Na($n);
 
-&mov($f,&swtmp($n0));			# X1
- &mov($tmp1,&swtmp($n1));		# X2
-&xor($f,$tmp1);				# X3
- &mov($tmp1,&swtmp($n2));		# X4
-&xor($f,$tmp1);				# X5
- &mov($tmp1,&swtmp($n3));		# X6
-&xor($f,$tmp1);				# X7 - slot
- &mov($tmp1,$b);			# F1
-&rotl($f,1);				# X8 - slot
- &xor($tmp1,$c);			# F2
-&mov(&swtmp($n0),$f);			# X9 - anytime
- &xor($tmp1,$d);			# F3
-
-&lea($f,&DWP($K,$f,$e,1));		# tot=X+K+e
- &mov($e,$a);				# A1
-
-&rotl($e,5);				# A2
-
-if ($n != 79) # last loop	
-	{
-	&rotr($b,1);				# B1	<- F
-	 &add($e,$tmp1);			# tmp1=F()+a
-
-	&rotr($b,1);				# B2	<- F
-	 &add($f,$e);				# tot+=tmp1;
-	}
-else
-	{
-	&add($e,$tmp1);				# tmp1=F()+a
-	 &mov($tmp1,&wparam(0));
-
-	&rotr($b,1);				# B1	<- F
-	 &add($f,$e);				# tot+=tmp1;
-
-	&rotr($b,1);				# B2	<- F
-	}
+	&mov($f,&swtmp($n0));		# f to hold Xupdate(xi,xa,xb,xc,xd)
+	 &mov($tmp1,$b);		# tmp1 to hold F_20_39(b,c,d)
+	&xor($f,&swtmp($n1));
+	 &rotr($b,2);			# b=ROTATE(b,30)
+	&xor($f,&swtmp($n2));
+	 &xor($tmp1,$c);
+	&xor($f,&swtmp($n3));		# f holds xa^xb^xc^xd
+	 &xor($tmp1,$d);		# tmp1 holds F_20_39(b,c,d)
+	&rotl($f,1);			# f=ROTATE(f,1)
+	&mov(&swtmp($n0),$f);		# xi=f
+	&lea($f,&DWP($K,$f,$e,1));	# f+=K_20_39+e
+	 &mov($e,$a);			# e becomes volatile
+	&rotl($e,5);			# e=ROTATE(a,5)
+	 &add($f,$tmp1);		# f+=F_20_39(b,c,d)
+	&add($f,$e);			# f+=ROTATE(a,5)
 	}
 
 sub BODY_40_59
@@ -241,70 +173,27 @@ sub BODY_40_59
 	local($pos,$K,$X,$n,$a,$b,$c,$d,$e,$f)=@_;
 
 	&comment("40_59 $n");
-	return if $n & 1;
 	local($n0,$n1,$n2,$n3,$np)=&Na($n);
 
-&mov($f,&swtmp($n0));			# X1
- &mov($tmp1,&swtmp($n1));		# X2
-&xor($f,$tmp1);				# X3
- &mov($tmp1,&swtmp($n2));		# X4
-&xor($f,$tmp1);				# X5
- &mov($tmp1,&swtmp($n3));		# X6
-&xor($f,$tmp1);				# X7 - slot
- &mov($tmp1,$b);			# F1
-&rotl($f,1);				# X8 - slot
- &or($tmp1,$c);				# F2
-&mov(&swtmp($n0),$f);			# X9 - anytime
- &and($tmp1,$d);			# F3
-
-&lea($f,&DWP($K,$f,$e,1));		# tot=X+K+e
- &mov($e,$b);				# F4
-
-&rotr($b,1);				# B1	<- F
- &and($e,$c);				# F5
-
-&or($tmp1,$e);				# F6
- &mov($e,$a);				# A1
-
-&rotl($e,5);				# A2
-
-&add($tmp1,$e);			# tmp1=F()+a
-
-############################
-#	&BODY_40_59( 0,$K[2],$X,42,$A,$B,$C,$D,$E,$T);
-#	&BODY_40_59( 0,$K[2],$X,43,$T,$A,$B,$C,$D,$E);
-$n++;
-	local($n0,$n1,$n2,$n3,$np)=&Na($n);
-	($b,$c,$d,$e,$f,$a)=($a,$b,$c,$d,$e,$f);
-
- &mov($f,&swtmp($n0));			# X1
-&add($a,$tmp1);				# tot+=tmp1; # moved was add f,tmp1
- &mov($tmp1,&swtmp($n1));		# X2
-&xor($f,$tmp1);				# X3
- &mov($tmp1,&swtmp($n2));		# X4
-&xor($f,$tmp1);				# X5
- &mov($tmp1,&swtmp($n3));		# X6
-&rotr($c,1);				# B2	<- F # moved was rotr b,1
- &xor($f,$tmp1);			# X7 - slot
-&rotl($f,1);				# X8 - slot
- &mov($tmp1,$b);			# F1
-&mov(&swtmp($n0),$f);			# X9 - anytime
- &or($tmp1,$c);				# F2
-&lea($f,&DWP($K,$f,$e,1));		# tot=X+K+e
- &mov($e,$b);				# F4
-&and($tmp1,$d);				# F3
- &and($e,$c);				# F5
-
-&or($tmp1,$e);				# F6
- &mov($e,$a);				# A1
-
-&rotl($e,5);				# A2
-
-&rotr($b,1);				# B1	<- F
- &add($tmp1,$e);			# tmp1=F()+a
-
-&rotr($b,1);				# B2	<- F
- &add($f,$tmp1);			# tot+=tmp1;
+	&mov($f,&swtmp($n0));		# f to hold Xupdate(xi,xa,xb,xc,xd)
+	 &mov($tmp1,$b);		# tmp1 to hold F_40_59(b,c,d)
+	&xor($f,&swtmp($n1));
+	 &or($tmp1,$c);
+	&xor($f,&swtmp($n2));
+	 &and($tmp1,$d);
+	&xor($f,&swtmp($n3));		# f holds xa^xb^xc^xd
+	&rotl($f,1);			# f=ROTATE(f,1)
+	&mov(&swtmp($n0),$f);		# xi=f
+	&lea($f,&DWP($K,$f,$e,1));	# f+=K_40_59+e
+	 &mov($e,$b);			# e becomes volatile and is used
+					# to calculate F_40_59(b,c,d)
+	&rotr($b,2);			# b=ROTATE(b,30)
+	 &and($e,$c);
+	&or($tmp1,$e);			# tmp1 holds F_40_59(b,c,d)		
+	 &mov($e,$a);
+	&rotl($e,5);			# e=ROTATE(a,5)
+	&add($tmp1,$e);			# tmp1+=ROTATE(a,5)
+	&add($f,$tmp1);			# f+=tmp1;
 	}
 
 sub BODY_60_79
@@ -312,7 +201,49 @@ sub BODY_60_79
 	&BODY_20_39(@_);
 	}
 
-sub sha1_block
+sub sha1_block_host
+	{
+	local($name, $sclabel)=@_;
+
+	&function_begin_B($name,"");
+
+	# parameter 1 is the MD5_CTX structure.
+	# A	0
+	# B	4
+	# C	8
+	# D 	12
+	# E 	16
+
+	&mov("ecx",	&wparam(2));
+	 &push("esi");
+	&shl("ecx",6);
+	 &mov("esi",	&wparam(1));
+	&push("ebp");
+	 &add("ecx","esi");	# offset to leave on
+	&push("ebx");
+	 &mov("ebp",	&wparam(0));
+	&push("edi");
+	 &mov($D,	&DWP(12,"ebp","",0));
+	&stack_push(18+9);
+	 &mov($E,	&DWP(16,"ebp","",0));
+	&mov($C,	&DWP( 8,"ebp","",0));
+	 &mov(&swtmp(17),"ecx");
+
+	&comment("First we need to setup the X array");
+
+	for ($i=0; $i<16; $i+=2)
+		{
+		&mov($A,&DWP(($i+0)*4,"esi","",0));# unless $i == 0;
+		 &mov($B,&DWP(($i+1)*4,"esi","",0));
+		&mov(&swtmp($i+0),$A);
+		 &mov(&swtmp($i+1),$B);
+		}
+	&jmp($sclabel);
+	&function_end_B($name);
+	}
+
+
+sub sha1_block_data
 	{
 	local($name)=@_;
 
@@ -325,35 +256,35 @@ sub sha1_block
 	# D 	12
 	# E 	16
 
-	&push("esi");
-	 &push("ebp");
-	&mov("eax",	&wparam(2));
+	&mov("ecx",	&wparam(2));
+	 &push("esi");
+	&shl("ecx",6);
 	 &mov("esi",	&wparam(1));
-	&add("eax",	"esi");	# offset to leave on
-	 &mov("ebp",	&wparam(0));
+	&push("ebp");
+	 &add("ecx","esi");	# offset to leave on
 	&push("ebx");
-	 &sub("eax",	64);
+	 &mov("ebp",	&wparam(0));
 	&push("edi");
-	 &mov($B,	&DWP( 4,"ebp","",0));
-	&stack_push(18);
 	 &mov($D,	&DWP(12,"ebp","",0));
-	&mov($E,	&DWP(16,"ebp","",0));
-	 &mov($C,	&DWP( 8,"ebp","",0));
-	&mov(&swtmp(17),"eax");
+	&stack_push(18+9);
+	 &mov($E,	&DWP(16,"ebp","",0));
+	&mov($C,	&DWP( 8,"ebp","",0));
+	 &mov(&swtmp(17),"ecx");
 
 	&comment("First we need to setup the X array");
-	 &mov("eax",&DWP(0,"esi","",0)); # pulled out of X_expand
 
 	&set_label("start") unless $normal;
 
 	&X_expand("esi");
-	 &mov(&swtmp(16),"esi");
+	 &mov(&wparam(1),"esi");
 
+	&set_label("shortcut", 0, 1);
 	&comment("");
 	&comment("Start processing");
 
 	# odd start
 	&mov($A,	&DWP( 0,"ebp","",0));
+	 &mov($B,	&DWP( 4,"ebp","",0));
 	$X="esp";
 	&BODY_00_15(-2,$K[0],$X, 0,$A,$B,$C,$D,$E,$T);
 	&BODY_00_15( 0,$K[0],$X, 1,$T,$A,$B,$C,$D,$E);
@@ -450,8 +381,7 @@ sub sha1_block
 	# C -> E
 	# D -> T
 
-	# The last 2 have been moved into the last loop
-	# &mov($tmp1,&wparam(0));
+	&mov($tmp1,&wparam(0));
 
 	 &mov($D,	&DWP(12,$tmp1,"",0));
 	&add($D,$B);
@@ -468,24 +398,28 @@ sub sha1_block
 	&add($C,$T);
 
 	 &mov(&DWP( 0,$tmp1,"",0),$A);
-	&mov("esi",&swtmp(16));
-	 &mov(&DWP( 8,$tmp1,"",0),$C);	# This is for looping
+	&mov("esi",&wparam(1));
+	 &mov(&DWP( 8,$tmp1,"",0),$C);
  	&add("esi",64);
 	 &mov("eax",&swtmp(17));
 	&mov(&DWP(16,$tmp1,"",0),$E);
-	 &cmp("eax","esi");
-	&mov(&DWP( 4,$tmp1,"",0),$B);	# This is for looping
-	 &jl(&label("end"));
-	&mov("eax",&DWP(0,"esi","",0));	# Pulled down from 
-	 &jmp(&label("start"));
+	 &cmp("esi","eax");
+	&mov(&DWP( 4,$tmp1,"",0),$B);
+	 &jb(&label("start"));
 
-	&set_label("end");
-	&stack_pop(18);
+	&stack_pop(18+9);
 	 &pop("edi");
 	&pop("ebx");
 	 &pop("ebp");
 	&pop("esi");
 	 &ret();
+
+	# keep a note of shortcut label so it can be used outside
+	# block.
+	my $sclabel = &label("shortcut");
+
 	&function_end_B($name);
+	# Putting this here avoids problems with MASM in debugging mode
+	&sha1_block_host("sha1_block_asm_host_order", $sclabel);
 	}
 

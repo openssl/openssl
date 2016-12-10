@@ -60,9 +60,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-BN_ULONG BN_mod_word(a, w)
-BIGNUM *a;
-BN_ULONG w;
+BN_ULONG BN_mod_word(const BIGNUM *a, BN_ULONG w)
 	{
 #ifndef BN_LLONG
 	BN_ULONG ret=0;
@@ -85,9 +83,7 @@ BN_ULONG w;
 	return((BN_ULONG)ret);
 	}
 
-BN_ULONG BN_div_word(a, w)
-BIGNUM *a;
-BN_ULONG w;
+BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w)
 	{
 	BN_ULONG ret;
 	int i;
@@ -109,9 +105,7 @@ BN_ULONG w;
 	return(ret);
 	}
 
-int BN_add_word(a, w)
-BIGNUM *a;
-BN_ULONG w;
+int BN_add_word(BIGNUM *a, BN_ULONG w)
 	{
 	BN_ULONG l;
 	int i;
@@ -121,7 +115,7 @@ BN_ULONG w;
 		a->neg=0;
 		i=BN_sub_word(a,w);
 		if (!BN_is_zero(a))
-			a->neg=1;
+			a->neg=!(a->neg);
 		return(i);
 		}
 	w&=BN_MASK2;
@@ -129,7 +123,10 @@ BN_ULONG w;
 	i=0;
 	for (;;)
 		{
-		l=(a->d[i]+(BN_ULONG)w)&BN_MASK2;
+		if (i >= a->top)
+			l=w;
+		else
+			l=(a->d[i]+(BN_ULONG)w)&BN_MASK2;
 		a->d[i]=l;
 		if (w > l)
 			w=1;
@@ -142,13 +139,11 @@ BN_ULONG w;
 	return(1);
 	}
 
-int BN_sub_word(a, w)
-BIGNUM *a;
-BN_ULONG w;
+int BN_sub_word(BIGNUM *a, BN_ULONG w)
 	{
 	int i;
 
-	if (a->neg)
+	if (BN_is_zero(a) || a->neg)
 		{
 		a->neg=0;
 		i=BN_add_word(a,w);
@@ -183,20 +178,23 @@ BN_ULONG w;
 	return(1);
 	}
 
-int BN_mul_word(a,w)
-BIGNUM *a;
-BN_ULONG w;
+int BN_mul_word(BIGNUM *a, BN_ULONG w)
 	{
 	BN_ULONG ll;
 
 	w&=BN_MASK2;
 	if (a->top)
 		{
-		ll=bn_mul_words(a->d,a->d,a->top,w);
-		if (ll)
+		if (w == 0)
+			BN_zero(a);
+		else
 			{
-			if (bn_wexpand(a,a->top+1) == NULL) return(0);
-			a->d[a->top++]=ll;
+			ll=bn_mul_words(a->d,a->d,a->top,w);
+			if (ll)
+				{
+				if (bn_wexpand(a,a->top+1) == NULL) return(0);
+				a->d[a->top++]=ll;
+				}
 			}
 		}
 	return(1);

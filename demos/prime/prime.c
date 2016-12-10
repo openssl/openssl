@@ -57,7 +57,8 @@
  */
 
 #include <stdio.h>
-#include "bn.h"    
+#include <stdlib.h>
+#include <openssl/bn.h>    
 
 void callback(type,num)
 int type,num;
@@ -87,8 +88,8 @@ char *argv[];
 		}
 
 	fprintf(stderr,"generate a strong prime\n");
-	rand=BN_generate_prime(num,1,NULL,NULL,callback);
-	/* change the second parameter to 1 for a strong prime */
+        rand=BN_generate_prime(NULL,num,1,NULL,NULL,callback,NULL);
+	/* change the third parameter to 1 for a strong prime */
 	fprintf(stderr,"\n");
 
 	BN_print_fp(stdout,rand);           

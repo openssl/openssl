@@ -57,60 +57,77 @@
  */
 
 #include <stdio.h>
-#include "asn1.h"
-#include "bn.h"
-#include "buffer.h"
-#include "bio.h"
-#ifndef NO_RSA
-#include "rsa.h"
+#include <openssl/asn1.h>
+#include <openssl/bn.h>
+#ifndef OPENSSL_NO_EC
+#include <openssl/ec.h>
 #endif
-#ifdef RSAref
-#include "rsaref.h"
+#include <openssl/buffer.h>
+#include <openssl/bio.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
 #endif
-#ifndef NO_DH
-#include "dh.h"
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
 #endif
-#ifndef NO_DSA
-#include "dsa.h"
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
 #endif
-#include "evp.h"
-#include "objects.h"
-#include "pem.h"
-#include "x509.h"
-#include "conf.h"
-#include "err.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/pem2.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/conf.h>
+#include <openssl/pkcs12.h>
+#include <openssl/rand.h>
+#include <openssl/dso.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
+#include <openssl/ocsp.h>
+#include <openssl/err.h>
+#include <openssl/fips.h>
 
-void ERR_load_crypto_strings()
+void ERR_load_crypto_strings(void)
 	{
-	static int done=0;
-
-	if (done) return;
-	done=1;
-#ifndef NO_ERR
-	ERR_load_ASN1_strings();
+#ifndef OPENSSL_NO_ERR
+	ERR_load_ERR_strings(); /* include error strings for SYSerr */
 	ERR_load_BN_strings();
-	ERR_load_BUF_strings();
-	ERR_load_BIO_strings();
-	ERR_load_CONF_strings();
-#ifndef NO_RSA
-#ifdef RSAref
-	ERR_load_RSAREF_strings();
-#else
+#ifndef OPENSSL_NO_RSA
 	ERR_load_RSA_strings();
 #endif
-#endif
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 	ERR_load_DH_strings();
 #endif
-#ifndef NO_DSA
-	ERR_load_DSA_strings();
-#endif
-	ERR_load_ERR_strings();
 	ERR_load_EVP_strings();
+	ERR_load_BUF_strings();
 	ERR_load_OBJ_strings();
 	ERR_load_PEM_strings();
+#ifndef OPENSSL_NO_DSA
+	ERR_load_DSA_strings();
+#endif
 	ERR_load_X509_strings();
+	ERR_load_ASN1_strings();
+	ERR_load_CONF_strings();
 	ERR_load_CRYPTO_strings();
-	ERR_load_PKCS7_strings();
+#ifndef OPENSSL_NO_EC
+	ERR_load_EC_strings();
+#endif
+	/* skip ERR_load_SSL_strings() because it is not in this library */
+	ERR_load_BIO_strings();
+	ERR_load_PKCS7_strings();	
+	ERR_load_X509V3_strings();
+	ERR_load_PKCS12_strings();
+	ERR_load_RAND_strings();
+	ERR_load_DSO_strings();
+#ifndef OPENSSL_NO_ENGINE
+	ERR_load_ENGINE_strings();
+#endif
+	ERR_load_OCSP_strings();
+	ERR_load_UI_strings();
+#endif
+#ifdef OPENSSL_FIPS
+	ERR_load_FIPS_strings();
 #endif
 	}

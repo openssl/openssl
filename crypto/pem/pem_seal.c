@@ -56,23 +56,18 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef OPENSSL_NO_RSA
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "rand.h"
-#include "objects.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
-int PEM_SealInit(ctx,type,md_type,ek,ekl,iv,pubk,npubk)
-PEM_ENCODE_SEAL_CTX *ctx;
-EVP_CIPHER *type;
-EVP_MD *md_type;
-unsigned char **ek;
-int *ekl;
-unsigned char *iv;
-EVP_PKEY **pubk;
-int npubk;
+int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
+	     unsigned char **ek, int *ekl, unsigned char *iv, EVP_PKEY **pubk,
+	     int npubk)
 	{
 	unsigned char key[EVP_MAX_KEY_LENGTH];
 	int ret= -1;
@@ -89,17 +84,20 @@ int npubk;
 		j=RSA_size(pubk[i]->pkey.rsa);
 		if (j > max) max=j;
 		}
-	s=(char *)Malloc(max*2);
+	s=(char *)OPENSSL_malloc(max*2);
 	if (s == NULL)
 		{
 		PEMerr(PEM_F_PEM_SEALINIT,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
-	EVP_EncodeInit(&(ctx->encode));
-	EVP_SignInit(&(ctx->md),md_type);
+	EVP_EncodeInit(&ctx->encode);
 
-	ret=EVP_SealInit(&(ctx->cipher),type,ek,ekl,iv,pubk,npubk);
+	EVP_MD_CTX_init(&ctx->md);
+	EVP_SignInit(&ctx->md,md_type);
+
+	EVP_CIPHER_CTX_init(&ctx->cipher);
+	ret=EVP_SealInit(&ctx->cipher,type,ek,ekl,iv,pubk,npubk);
 	if (!ret) goto err;
 
 	/* base64 encode the keys */
@@ -113,23 +111,19 @@ int npubk;
 
 	ret=npubk;
 err:
-	if (s != NULL) Free(s);
-	memset(key,0,EVP_MAX_KEY_LENGTH);
+	if (s != NULL) OPENSSL_free(s);
+	OPENSSL_cleanse(key,EVP_MAX_KEY_LENGTH);
 	return(ret);
 	}
 
-void PEM_SealUpdate(ctx,out,outl,in,inl)
-PEM_ENCODE_SEAL_CTX *ctx;
-unsigned char *out;
-int *outl;
-unsigned char *in;
-int inl;
+void PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
+	     unsigned char *in, int inl)
 	{
 	unsigned char buffer[1600];
 	int i,j;
 
 	*outl=0;
-	EVP_SignUpdate(&(ctx->md),in,inl);
+	EVP_SignUpdate(&ctx->md,in,inl);
 	for (;;)
 		{
 		if (inl <= 0) break;
@@ -137,8 +131,8 @@ int inl;
 			i=1200;
 		else
 			i=inl;
-		EVP_EncryptUpdate(&(ctx->cipher),buffer,&j,in,i);
-		EVP_EncodeUpdate(&(ctx->encode),out,&j,buffer,j);
+		EVP_EncryptUpdate(&ctx->cipher,buffer,&j,in,i);
+		EVP_EncodeUpdate(&ctx->encode,out,&j,buffer,j);
 		*outl+=j;
 		out+=j;
 		in+=i;
@@ -146,13 +140,8 @@ int inl;
 		}
 	}
 
-int PEM_SealFinal(ctx,sig,sigl,out,outl,priv)
-PEM_ENCODE_SEAL_CTX *ctx;
-unsigned char *sig;
-int *sigl;
-unsigned char *out;
-int *outl;
-EVP_PKEY *priv;
+int PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
+	     unsigned char *out, int *outl, EVP_PKEY *priv)
 	{
 	unsigned char *s=NULL;
 	int ret=0,j;
@@ -165,27 +154,34 @@ EVP_PKEY *priv;
 		}
 	i=RSA_size(priv->pkey.rsa);
 	if (i < 100) i=100;
-	s=(unsigned char *)Malloc(i*2);
+	s=(unsigned char *)OPENSSL_malloc(i*2);
 	if (s == NULL)
 		{
 		PEMerr(PEM_F_PEM_SEALFINAL,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
-	EVP_EncryptFinal(&(ctx->cipher),s,(int *)&i);
-	EVP_EncodeUpdate(&(ctx->encode),out,&j,s,i);
+	EVP_EncryptFinal_ex(&ctx->cipher,s,(int *)&i);
+	EVP_EncodeUpdate(&ctx->encode,out,&j,s,i);
 	*outl=j;
 	out+=j;
-	EVP_EncodeFinal(&(ctx->encode),out,&j);
+	EVP_EncodeFinal(&ctx->encode,out,&j);
 	*outl+=j;
 
-	if (!EVP_SignFinal(&(ctx->md),s,&i,priv)) goto err;
+	if (!EVP_SignFinal(&ctx->md,s,&i,priv)) goto err;
 	*sigl=EVP_EncodeBlock(sig,s,i);
 
 	ret=1;
 err:
-	memset((char *)&(ctx->md),0,sizeof(ctx->md));
-	memset((char *)&(ctx->cipher),0,sizeof(ctx->cipher));
-	if (s != NULL) Free(s);
+	EVP_MD_CTX_cleanup(&ctx->md);
+	EVP_CIPHER_CTX_cleanup(&ctx->cipher);
+	if (s != NULL) OPENSSL_free(s);
 	return(ret);
 	}
+#else /* !OPENSSL_NO_RSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
+#endif

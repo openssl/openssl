@@ -58,10 +58,10 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "dh.h"
+#include <openssl/bn.h>
+#include <openssl/dh.h>
 
-/* Check that p is a strong prime and
+/* Check that p is a safe prime and
  * if g is 2, 3 or 5, check that is is a suitable generator
  * where
  * for 2, p mod 24 == 11
@@ -70,9 +70,9 @@
  * should hold.
  */
 
-int DH_check(dh,ret)
-DH *dh;
-int *ret;
+#ifndef OPENSSL_FIPS
+
+int DH_check(const DH *dh, int *ret)
 	{
 	int ok=0;
 	BN_CTX *ctx=NULL;
@@ -90,11 +90,13 @@ int *ret;
 		l=BN_mod_word(dh->p,24);
 		if (l != 11) *ret|=DH_NOT_SUITABLE_GENERATOR;
 		}
-/*	else if (BN_is_word(dh->g,DH_GENERATOR_3))
+#if 0
+	else if (BN_is_word(dh->g,DH_GENERATOR_3))
 		{
 		l=BN_mod_word(dh->p,12);
 		if (l != 5) *ret|=DH_NOT_SUITABLE_GENERATOR;
-		}*/
+		}
+#endif
 	else if (BN_is_word(dh->g,DH_GENERATOR_5))
 		{
 		l=BN_mod_word(dh->p,10);
@@ -110,7 +112,7 @@ int *ret;
 		{
 		if (!BN_rshift1(q,dh->p)) goto err;
 		if (!BN_is_prime(q,BN_prime_checks,NULL,ctx,NULL))
-			*ret|=DH_CHECK_P_NOT_STRONG_PRIME;
+			*ret|=DH_CHECK_P_NOT_SAFE_PRIME;
 		}
 	ok=1;
 err:
@@ -118,3 +120,5 @@ err:
 	if (q != NULL) BN_free(q);
 	return(ok);
 	}
+
+#endif

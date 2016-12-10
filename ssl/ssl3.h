@@ -55,11 +55,69 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #ifndef HEADER_SSL3_H 
 #define HEADER_SSL3_H 
 
-#include "buffer.h"
+#ifndef OPENSSL_NO_COMP
+#include <openssl/comp.h>
+#endif
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -98,7 +156,29 @@ extern "C" {
 
 #define SSL3_CK_FZA_DMS_NULL_SHA		0x0300001C
 #define SSL3_CK_FZA_DMS_FZA_SHA			0x0300001D
+#if 0 /* Because it clashes with KRB5, is never used any more, and is safe
+	 to remove according to David Hopwood <david.hopwood@zetnet.co.uk>
+	 of the ietf-tls list */
 #define SSL3_CK_FZA_DMS_RC4_SHA			0x0300001E
+#endif
+
+/*    VRS Additional Kerberos5 entries
+ */
+#define SSL3_CK_KRB5_DES_64_CBC_SHA		0x0300001E
+#define SSL3_CK_KRB5_DES_192_CBC3_SHA		0x0300001F
+#define SSL3_CK_KRB5_RC4_128_SHA		0x03000020
+#define SSL3_CK_KRB5_IDEA_128_CBC_SHA	       	0x03000021
+#define SSL3_CK_KRB5_DES_64_CBC_MD5       	0x03000022
+#define SSL3_CK_KRB5_DES_192_CBC3_MD5       	0x03000023
+#define SSL3_CK_KRB5_RC4_128_MD5	       	0x03000024
+#define SSL3_CK_KRB5_IDEA_128_CBC_MD5 		0x03000025
+
+#define SSL3_CK_KRB5_DES_40_CBC_SHA 		0x03000026
+#define SSL3_CK_KRB5_RC2_40_CBC_SHA 		0x03000027
+#define SSL3_CK_KRB5_RC4_40_SHA	 		0x03000028
+#define SSL3_CK_KRB5_DES_40_CBC_MD5 		0x03000029
+#define SSL3_CK_KRB5_RC2_40_CBC_MD5 		0x0300002A
+#define SSL3_CK_KRB5_RC4_40_MD5	 		0x0300002B
 
 #define SSL3_TXT_RSA_NULL_MD5			"NULL-MD5"
 #define SSL3_TXT_RSA_NULL_SHA			"NULL-SHA"
@@ -135,6 +215,22 @@ extern "C" {
 #define SSL3_TXT_FZA_DMS_FZA_SHA		"FZA-FZA-CBC-SHA"
 #define SSL3_TXT_FZA_DMS_RC4_SHA		"FZA-RC4-SHA"
 
+#define SSL3_TXT_KRB5_DES_64_CBC_SHA		"KRB5-DES-CBC-SHA"
+#define SSL3_TXT_KRB5_DES_192_CBC3_SHA		"KRB5-DES-CBC3-SHA"
+#define SSL3_TXT_KRB5_RC4_128_SHA		"KRB5-RC4-SHA"
+#define SSL3_TXT_KRB5_IDEA_128_CBC_SHA	       	"KRB5-IDEA-CBC-SHA"
+#define SSL3_TXT_KRB5_DES_64_CBC_MD5       	"KRB5-DES-CBC-MD5"
+#define SSL3_TXT_KRB5_DES_192_CBC3_MD5       	"KRB5-DES-CBC3-MD5"
+#define SSL3_TXT_KRB5_RC4_128_MD5		"KRB5-RC4-MD5"
+#define SSL3_TXT_KRB5_IDEA_128_CBC_MD5 		"KRB5-IDEA-CBC-MD5"
+
+#define SSL3_TXT_KRB5_DES_40_CBC_SHA 		"EXP-KRB5-DES-CBC-SHA"
+#define SSL3_TXT_KRB5_RC2_40_CBC_SHA 		"EXP-KRB5-RC2-CBC-SHA"
+#define SSL3_TXT_KRB5_RC4_40_SHA	 	"EXP-KRB5-RC4-SHA"
+#define SSL3_TXT_KRB5_DES_40_CBC_MD5 		"EXP-KRB5-DES-CBC-MD5"
+#define SSL3_TXT_KRB5_RC2_40_CBC_MD5 		"EXP-KRB5-RC2-CBC-MD5"
+#define SSL3_TXT_KRB5_RC4_40_MD5	 	"EXP-KRB5-RC4-MD5"
+
 #define SSL3_SSL_SESSION_ID_LENGTH		32
 #define SSL3_MAX_SSL_SESSION_ID_LENGTH		32
 
@@ -144,7 +240,8 @@ extern "C" {
 #define SSL3_RT_HEADER_LENGTH			5
 
 /* Due to MS stuffing up, this can change.... */
-#if defined(WIN16) || (defined(MSDOS) && !defined(WIN32))
+#if defined(OPENSSL_SYS_WIN16) || \
+	(defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32))
 #define SSL3_RT_MAX_EXTRA			(14000)
 #else
 #define SSL3_RT_MAX_EXTRA			(16384)
@@ -156,24 +253,8 @@ extern "C" {
 #define SSL3_RT_MAX_PACKET_SIZE		(SSL3_RT_MAX_ENCRYPTED_LENGTH+SSL3_RT_HEADER_LENGTH)
 #define SSL3_RT_MAX_DATA_SIZE			(1024*1024)
 
-/* the states that a SSL3_RECORD can be in
- * For SSL_read it goes
- * rbuf->ENCODED	-> read 
- * ENCODED		-> we need to decode everything - call decode_record
- */
- 
-#define SSL3_RS_BLANK			1
-#define SSL3_RS_DATA
-
-#define SSL3_RS_ENCODED			2
-#define SSL3_RS_READ_MORE		3
-#define SSL3_RS_WRITE_MORE
-#define SSL3_RS_PLAIN			3
-#define SSL3_RS_PART_READ		4
-#define SSL3_RS_PART_WRITE		5
-
-#define SSL3_MD_CLIENT_FINISHED_CONST	{0x43,0x4C,0x4E,0x54}
-#define SSL3_MD_SERVER_FINISHED_CONST	{0x53,0x52,0x56,0x52}
+#define SSL3_MD_CLIENT_FINISHED_CONST	"\x43\x4C\x4E\x54"
+#define SSL3_MD_SERVER_FINISHED_CONST	"\x53\x52\x56\x52"
 
 #define SSL3_VERSION			0x0300
 #define SSL3_VERSION_MAJOR		0x03
@@ -202,22 +283,21 @@ extern "C" {
 
 typedef struct ssl3_record_st
 	{
-/*r */	int type;		/* type of record */
-/*  */	/*int state;*/		/* any data in it? */
-/*rw*/	unsigned int length;	/* How many bytes available */
-/*r */	unsigned int off;	/* read/write offset into 'buf' */
-/*rw*/	unsigned char *data;	/* pointer to the record data */
-/*rw*/	unsigned char *input;	/* where the decode bytes are */
-/*r */	unsigned char *comp;	/* only used with decompression - malloc()ed */
+/*r */	int type;               /* type of record */
+/*rw*/	unsigned int length;    /* How many bytes available */
+/*r */	unsigned int off;       /* read/write offset into 'buf' */
+/*rw*/	unsigned char *data;    /* pointer to the record data */
+/*rw*/	unsigned char *input;   /* where the decode bytes are */
+/*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
 	} SSL3_RECORD;
 
 typedef struct ssl3_buffer_st
 	{
-/*r */	int total;		/* used in non-blocking writes */
-/*r */	int wanted;		/* how many more bytes we need */
-/*rw*/	int left;		/* how many bytes left */
-/*rw*/	int offset;		/* where to 'copy from' */
-/*rw*/	unsigned char *buf;	/* SSL3_RT_MAX_PACKET_SIZE bytes */
+	unsigned char *buf;     /* at least SSL3_RT_MAX_PACKET_SIZE bytes,
+	                         * see ssl3_setup_buffers() */
+	size_t len;             /* buffer size */
+	int offset;             /* where to 'copy from' */
+	int left;               /* how many bytes left */
 	} SSL3_BUFFER;
 
 #define SSL3_CT_RSA_SIGN			1
@@ -234,34 +314,7 @@ typedef struct ssl3_buffer_st
 #define SSL3_FLAGS_POP_BUFFER			0x0004
 #define TLS1_FLAGS_TLS_PADDING_BUG		0x0008
 
-#if 0
-#define AD_CLOSE_NOTIFY			0
-#define AD_UNEXPECTED_MESSAGE		1
-#define AD_BAD_RECORD_MAC		2
-#define AD_DECRYPTION_FAILED		3
-#define AD_RECORD_OVERFLOW		4
-#define AD_DECOMPRESSION_FAILURE	5	/* fatal */
-#define AD_HANDSHAKE_FAILURE		6	/* fatal */
-#define AD_NO_CERTIFICATE		7	/* Not under TLS */
-#define AD_BAD_CERTIFICATE		8
-#define AD_UNSUPPORTED_CERTIFICATE	9
-#define AD_CERTIFICATE_REVOKED		10	
-#define AD_CERTIFICATE_EXPIRED		11
-#define AD_CERTIFICATE_UNKNOWN		12
-#define AD_ILLEGAL_PARAMETER		13	/* fatal */
-#define AD_UNKNOWN_CA			14	/* fatal */
-#define AD_ACCESS_DENIED		15	/* fatal */
-#define AD_DECODE_ERROR			16	/* fatal */
-#define AD_DECRYPT_ERROR		17
-#define AD_EXPORT_RESTRICION		18	/* fatal */
-#define AD_PROTOCOL_VERSION		19	/* fatal */
-#define AD_INSUFFICIENT_SECURITY	20	/* fatal */
-#define AD_INTERNAL_ERROR		21	/* fatal */
-#define AD_USER_CANCLED			22
-#define AD_NO_RENEGOTIATION		23
-#endif
-
-typedef struct ssl3_ctx_st
+typedef struct ssl3_state_st
 	{
 	long flags;
 	int delay_buf_pop_ret;
@@ -274,19 +327,29 @@ typedef struct ssl3_ctx_st
 	unsigned char server_random[SSL3_RANDOM_SIZE];
 	unsigned char client_random[SSL3_RANDOM_SIZE];
 
+	/* flags for countermeasure against known-IV weakness */
+	int need_empty_fragments;
+	int empty_fragment_done;
+
 	SSL3_BUFFER rbuf;	/* read IO goes into here */
 	SSL3_BUFFER wbuf;	/* write IO goes into here */
+
 	SSL3_RECORD rrec;	/* each decoded record goes in here */
 	SSL3_RECORD wrec;	/* goes out from here */
-				/* Used by ssl3_read_n to point
-				 * to input data packet */
+
+	/* storage for Alert/Handshake protocol data received but not
+	 * yet processed by ssl3_read_bytes: */
+	unsigned char alert_fragment[2];
+	unsigned int alert_fragment_len;
+	unsigned char handshake_fragment[4];
+	unsigned int handshake_fragment_len;
 
 	/* partial write - check the numbers match */
 	unsigned int wnum;	/* number of bytes sent so far */
 	int wpend_tot;		/* number bytes written */
 	int wpend_type;
 	int wpend_ret;		/* number of bytes submitted */
-	char *wpend_buf;
+	const unsigned char *wpend_buf;
 
 	/* used during startup, digest all incoming/outgoing packets */
 	EVP_MD_CTX finish_dgst1;
@@ -298,10 +361,10 @@ typedef struct ssl3_ctx_st
 
 	int warn_alert;
 	int fatal_alert;
-	/* we alow one fatal and one warning alert to be outstanding,
+	/* we allow one fatal and one warning alert to be outstanding,
 	 * send close alert via the warning alert */
 	int alert_dispatch;
-	char send_alert[2];
+	unsigned char send_alert[2];
 
 	/* This flag is set when we should renegotiate ASAP, basically when
 	 * there is no more data in the read or write buffers */
@@ -312,16 +375,23 @@ typedef struct ssl3_ctx_st
 	int in_read_app_data;
 
 	struct	{
-		/* Actually only needs to be 16+20 for SSLv3 and 12 for TLS */
+		/* actually only needs to be 16+20 */
+		unsigned char cert_verify_md[EVP_MAX_MD_SIZE*2];
+
+		/* actually only need to be 16+20 for SSLv3 and 12 for TLS */
 		unsigned char finish_md[EVP_MAX_MD_SIZE*2];
+		int finish_md_len;
+		unsigned char peer_finish_md[EVP_MAX_MD_SIZE*2];
+		int peer_finish_md_len;
 		
 		unsigned long message_size;
 		int message_type;
 
 		/* used to hold the new cipher we are going to use */
 		SSL_CIPHER *new_cipher;
+#ifndef OPENSSL_NO_DH
 		DH *dh;
-
+#endif
 		/* used when SSL_ST_FLUSH_DATA is entered */
 		int next_state;			
 
@@ -331,23 +401,24 @@ typedef struct ssl3_ctx_st
 		int cert_req;
 		int ctype_num;
 		char ctype[SSL3_CT_NUMBER];
-		STACK *ca_names;
+		STACK_OF(X509_NAME) *ca_names;
 
 		int use_rsa_tmp;
 
 		int key_block_length;
 		unsigned char *key_block;
 
-		EVP_CIPHER *new_sym_enc;
-		EVP_MD *new_hash;
-#ifdef HEADER_COMP_H
-		COMP_METHOD *new_compression;
+		const EVP_CIPHER *new_sym_enc;
+		const EVP_MD *new_hash;
+#ifndef OPENSSL_NO_COMP
+		const SSL_COMP *new_compression;
 #else
 		char *new_compression;
 #endif
 		int cert_request;
 		} tmp;
-	} SSL3_CTX;
+
+	} SSL3_STATE;
 
 /* SSLv3 */
 /*client */
@@ -425,7 +496,7 @@ typedef struct ssl3_ctx_st
 #define SSL3_ST_SW_FINISHED_A		(0x1E0|SSL_ST_ACCEPT)
 #define SSL3_ST_SW_FINISHED_B		(0x1E1|SSL_ST_ACCEPT)
 
-#define SSL3_MT_CLIENT_REQUEST			0
+#define SSL3_MT_HELLO_REQUEST			0
 #define SSL3_MT_CLIENT_HELLO			1
 #define SSL3_MT_SERVER_HELLO			2
 #define SSL3_MT_CERTIFICATE			11

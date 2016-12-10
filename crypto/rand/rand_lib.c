@@ -57,48 +57,136 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-#include <sys/types.h>
 #include <time.h>
-#include "rand.h"
+#include "cryptlib.h"
+#include <openssl/rand.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
+#include <openssl/fips.h>
+#include <openssl/fips_rand.h>
 
-#ifdef NO_RAND
-static RAND_METHOD *rand_meth=NULL;
-#else
-extern RAND_METHOD rand_ssleay;
-static RAND_METHOD *rand_meth= &rand_ssleay;
+#ifndef OPENSSL_NO_ENGINE
+/* non-NULL if default_RAND_meth is ENGINE-provided */
+static ENGINE *funct_ref =NULL;
+#endif
+static const RAND_METHOD *default_RAND_meth = NULL;
+
+int RAND_set_rand_method(const RAND_METHOD *meth)
+	{
+#ifndef OPENSSL_NO_ENGINE
+	if(funct_ref)
+		{
+		ENGINE_finish(funct_ref);
+		funct_ref = NULL;
+		}
+#endif
+	default_RAND_meth = meth;
+	return 1;
+	}
+
+const RAND_METHOD *RAND_get_rand_method(void)
+	{
+	if (!default_RAND_meth)
+		{
+#ifndef OPENSSL_NO_ENGINE
+		ENGINE *e = ENGINE_get_default_RAND();
+		if(e)
+			{
+			default_RAND_meth = ENGINE_get_RAND(e);
+			if(!default_RAND_meth)
+				{
+				ENGINE_finish(e);
+				e = NULL;
+				}
+			}
+		if(e)
+			funct_ref = e;
+		else
+#endif
+#ifdef OPENSSL_FIPS
+			if(FIPS_mode())
+				default_RAND_meth=FIPS_rand_method();
+			else
+#endif
+				default_RAND_meth = RAND_SSLeay();
+		}
+
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode()
+		&& default_RAND_meth != FIPS_rand_check())
+	    {
+	    RANDerr(RAND_F_RAND_GET_RAND_METHOD,RAND_R_NON_FIPS_METHOD);
+	    return 0;
+	    }
+#endif
+	return default_RAND_meth;
+	}
+
+#ifndef OPENSSL_NO_ENGINE
+int RAND_set_rand_engine(ENGINE *engine)
+	{
+	const RAND_METHOD *tmp_meth = NULL;
+	if(engine)
+		{
+		if(!ENGINE_init(engine))
+			return 0;
+		tmp_meth = ENGINE_get_RAND(engine);
+		if(!tmp_meth)
+			{
+			ENGINE_finish(engine);
+			return 0;
+			}
+		}
+	/* This function releases any prior ENGINE so call it first */
+	RAND_set_rand_method(tmp_meth);
+	funct_ref = engine;
+	return 1;
+	}
 #endif
 
-void RAND_set_rand_method(meth)
-RAND_METHOD *meth;
+void RAND_cleanup(void)
 	{
-	rand_meth=meth;
+	const RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->cleanup)
+		meth->cleanup();
+	RAND_set_rand_method(NULL);
 	}
 
-RAND_METHOD *RAND_get_rand_method()
+void RAND_seed(const void *buf, int num)
 	{
-	return(rand_meth);
+	const RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->seed)
+		meth->seed(buf,num);
 	}
 
-void RAND_cleanup()
+void RAND_add(const void *buf, int num, double entropy)
 	{
-	if (rand_meth != NULL)
-		rand_meth->cleanup();
+	const RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->add)
+		meth->add(buf,num,entropy);
 	}
 
-void RAND_seed(buf,num)
-unsigned char *buf;
-int num;
+int RAND_bytes(unsigned char *buf, int num)
 	{
-	if (rand_meth != NULL)
-		rand_meth->seed(buf,num);
+	const RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->bytes)
+		return meth->bytes(buf,num);
+	return(-1);
 	}
 
-void RAND_bytes(buf,num)
-unsigned char *buf;
-int num;
+int RAND_pseudo_bytes(unsigned char *buf, int num)
 	{
-	if (rand_meth != NULL)
-		rand_meth->bytes(buf,num);
+	const RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->pseudorand)
+		return meth->pseudorand(buf,num);
+	return(-1);
 	}
 
+int RAND_status(void)
+	{
+	const RAND_METHOD *meth = RAND_get_rand_method();
+	if (meth && meth->status)
+		return meth->status();
+	return 0;
+	}

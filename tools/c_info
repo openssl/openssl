@@ -5,7 +5,7 @@
 
 for i in $*
 do
-	n=`ssleay x509 -subject -issuer -enddate -noout -in $i`
+	n=`openssl x509 -subject -issuer -enddate -noout -in $i`
 	echo "$i"
 	echo "$n"
 	echo "--------"

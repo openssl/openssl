@@ -8,11 +8,11 @@
 #include <errno.h>
 
 #include "rsa.h"       /* SSLeay stuff */
-#include "crypto.h"
-#include "x509.h"
-#include "pem.h"
-#include "ssl.h"
-#include "err.h"
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #define HOME "/usr/users/sampo/demo/"
 #define CERTF HOME "plain-cert.pem"
@@ -65,12 +65,12 @@ void main ()
     str = X509_NAME_oneline (X509_get_subject_name (client_cert));
     CHK_NULL(str);
     fprintf (log, "\t subject: %s\n", str);
-    Free (str);
+    OPENSSL_free (str);
     
     str = X509_NAME_oneline (X509_get_issuer_name  (client_cert));
     CHK_NULL(str);
     fprintf (log, "\t issuer: %s\n", str);
-    Free (str);
+    OPENSSL_free (str);
     
     /* We could do all sorts of certificate verification stuff here before
        deallocating the certificate. */

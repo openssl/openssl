@@ -58,25 +58,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "md2.h"
+#include <openssl/md2.h>
 
 #define BUFSIZE	1024*16
 
-#ifndef NOPROTO
 void do_fp(FILE *f);
 void pt(unsigned char *md);
 int read(int, void *, unsigned int);
 void exit(int);
-#else
-void do_fp();
-void pt();
-int read();
-void exit();
-#endif
-
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,err=0;
 	FILE *IN;
@@ -105,8 +95,7 @@ char *argv[];
 	return(err);
 	}
 
-void do_fp(f)
-FILE *f;
+void do_fp(FILE *f)
 	{
 	MD2_CTX c;
 	unsigned char md[MD2_DIGEST_LENGTH];
@@ -125,8 +114,7 @@ FILE *f;
 	pt(md);
 	}
 
-void pt(md)
-unsigned char *md;
+void pt(unsigned char *md)
 	{
 	int i;
 

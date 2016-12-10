@@ -59,57 +59,72 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "sha.h"
+
+#include "../e_os.h"
+
+#ifdef OPENSSL_NO_SHA
+int main(int argc, char *argv[])
+{
+    printf("No SHA support\n");
+    return(0);
+}
+#else
+#include <openssl/evp.h>
+#include <openssl/sha.h>
+
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
 
 #undef SHA_0 /* FIPS 180 */
 #define  SHA_1 /* FIPS 180-1 */
 
-char *test[]={
+static char *test[]={
 	"abc",
 	"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
 	NULL,
 	};
 
 #ifdef SHA_0
-char *ret[]={
+static char *ret[]={
 	"0164b8a914cd2a5e74c4f7ff082c4d97f1edf880",
 	"d2516ee1acfa5baf33dfc1c471e438449ef134c8",
 	};
-char *bigret=
+static char *bigret=
 	"3232affa48628a26653b5aaa44541fd90d690603";
 #endif
 #ifdef SHA_1
-char *ret[]={
+static char *ret[]={
 	"a9993e364706816aba3e25717850c26c9cd0d89d",
 	"84983e441c3bd26ebaae4aa1f95129e5e54670f1",
 	};
-char *bigret=
+static char *bigret=
 	"34aa973cd4c4daa4f61eeb2bdbad27316534016f";
 #endif
 
-#ifndef NOPROTO
 static char *pt(unsigned char *md);
-#else
-static char *pt();
-#endif
-
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,err=0;
 	unsigned char **P,**R;
 	static unsigned char buf[1000];
 	char *p,*r;
-	SHA_CTX c;
+	EVP_MD_CTX c;
 	unsigned char md[SHA_DIGEST_LENGTH];
 
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(test[0], test[0], strlen(test[0]));
+	ebcdic2ascii(test[1], test[1], strlen(test[1]));
+#endif
+
+	EVP_MD_CTX_init(&c);
 	P=(unsigned char **)test;
 	R=(unsigned char **)ret;
 	i=1;
 	while (*P != NULL)
 		{
-		p=pt(SHA1(*P,(unsigned long)strlen((char *)*P),NULL));
+		EVP_Digest(*P,(unsigned long)strlen((char *)*P),md,NULL,EVP_sha1(), NULL);
+		p=pt(md);
 		if (strcmp(p,(char *)*R) != 0)
 			{
 			printf("error calculating SHA1 on '%s'\n",*P);
@@ -124,10 +139,13 @@ char *argv[];
 		}
 
 	memset(buf,'a',1000);
-	SHA1_Init(&c);
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(buf, buf, 1000);
+#endif /*CHARSET_EBCDIC*/
+	EVP_DigestInit_ex(&c,EVP_sha1(), NULL);
 	for (i=0; i<1000; i++)
-		SHA1_Update(&c,buf,1000);
-	SHA1_Final(md,&c);
+		EVP_DigestUpdate(&c,buf,1000);
+	EVP_DigestFinal_ex(&c,md,NULL);
 	p=pt(md);
 
 	r=bigret;
@@ -139,12 +157,12 @@ char *argv[];
 		}
 	else
 		printf("test 3 ok\n");
-	exit(err);
+	EXIT(err);
+	EVP_MD_CTX_cleanup(&c);
 	return(0);
 	}
 
-static char *pt(md)
-unsigned char *md;
+static char *pt(unsigned char *md)
 	{
 	int i;
 	static char buf[80];
@@ -153,3 +171,4 @@ unsigned char *md;
 		sprintf(&(buf[i*2]),"%02x",md[i]);
 	return(buf);
 	}
+#endif

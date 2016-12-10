@@ -32,7 +32,7 @@ void GetTSC(unsigned long& tsc)
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "sha.h"
+#include <openssl/sha.h>
 
 extern "C" {
 void sha1_block_x86(SHA_CTX *ctx, unsigned char *buffer,int num);

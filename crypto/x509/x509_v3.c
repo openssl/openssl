@@ -57,34 +57,22 @@
  */
 
 #include <stdio.h>
-#include "stack.h"
+#include <openssl/stack.h>
 #include "cryptlib.h"
-#include "asn1.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
-#ifndef NOPROTO
-static X509_EXTENSION_METHOD *find_by_nid(int nid);
-static int xem_cmp(X509_EXTENSION_METHOD **a, X509_EXTENSION_METHOD **b);
-#else
-static X509_EXTENSION_METHOD *find_by_nid();
-static int xem_cmp();
-#endif
-
-static STACK *extensions=NULL;
-
-int X509v3_get_ext_count(x)
-STACK *x;
+int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x)
 	{
 	if (x == NULL) return(0);
-	return(sk_num(x));
+	return(sk_X509_EXTENSION_num(x));
 	}
 
-int X509v3_get_ext_by_NID(x,nid,lastpos)
-STACK *x;
-int nid;
-int lastpos;
+int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid,
+			  int lastpos)
 	{
 	ASN1_OBJECT *obj;
 
@@ -93,10 +81,8 @@ int lastpos;
 	return(X509v3_get_ext_by_OBJ(x,obj,lastpos));
 	}
 
-int X509v3_get_ext_by_OBJ(sk,obj,lastpos)
-STACK *sk;
-ASN1_OBJECT *obj;
-int lastpos;
+int X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk, ASN1_OBJECT *obj,
+			  int lastpos)
 	{
 	int n;
 	X509_EXTENSION *ex;
@@ -105,20 +91,18 @@ int lastpos;
 	lastpos++;
 	if (lastpos < 0)
 		lastpos=0;
-	n=sk_num(sk);
+	n=sk_X509_EXTENSION_num(sk);
 	for ( ; lastpos < n; lastpos++)
 		{
-		ex=(X509_EXTENSION *)sk_value(sk,lastpos);
+		ex=sk_X509_EXTENSION_value(sk,lastpos);
 		if (OBJ_cmp(ex->object,obj) == 0)
 			return(lastpos);
 		}
 	return(-1);
 	}
 
-int X509v3_get_ext_by_critical(sk,crit,lastpos)
-STACK *sk;
-int crit;
-int lastpos;
+int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
+			       int lastpos)
 	{
 	int n;
 	X509_EXTENSION *ex;
@@ -127,63 +111,57 @@ int lastpos;
 	lastpos++;
 	if (lastpos < 0)
 		lastpos=0;
-	n=sk_num(sk);
+	n=sk_X509_EXTENSION_num(sk);
 	for ( ; lastpos < n; lastpos++)
 		{
-		ex=(X509_EXTENSION *)sk_value(sk,lastpos);
-		if (	(ex->critical && crit) ||
-			(!ex->critical && !crit))
+		ex=sk_X509_EXTENSION_value(sk,lastpos);
+		if (	((ex->critical > 0) && crit) ||
+			((ex->critical <= 0) && !crit))
 			return(lastpos);
 		}
 	return(-1);
 	}
 
-X509_EXTENSION *X509v3_get_ext(x,loc)
-STACK *x;
-int loc;
+X509_EXTENSION *X509v3_get_ext(const STACK_OF(X509_EXTENSION) *x, int loc)
 	{
-	if ((x == NULL) || (sk_num(x) <= loc) || (loc < 0))
-		return(NULL);
+	if (x == NULL || sk_X509_EXTENSION_num(x) <= loc || loc < 0)
+		return NULL;
 	else
-		return((X509_EXTENSION *)sk_value(x,loc));
+		return sk_X509_EXTENSION_value(x,loc);
 	}
 
-X509_EXTENSION *X509v3_delete_ext(x,loc)
-STACK *x;
-int loc;
+X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc)
 	{
 	X509_EXTENSION *ret;
 
-	if ((x == NULL) || (sk_num(x) <= loc) || (loc < 0))
+	if (x == NULL || sk_X509_EXTENSION_num(x) <= loc || loc < 0)
 		return(NULL);
-	ret=(X509_EXTENSION *)sk_delete(x,loc);
+	ret=sk_X509_EXTENSION_delete(x,loc);
 	return(ret);
 	}
 
-STACK *X509v3_add_ext(x,ex,loc)
-STACK **x;
-X509_EXTENSION *ex;
-int loc;
+STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
+					 X509_EXTENSION *ex, int loc)
 	{
 	X509_EXTENSION *new_ex=NULL;
 	int n;
-	STACK *sk=NULL;
+	STACK_OF(X509_EXTENSION) *sk=NULL;
 
 	if ((x != NULL) && (*x == NULL))
 		{
-		if ((sk=sk_new_null()) == NULL)
+		if ((sk=sk_X509_EXTENSION_new_null()) == NULL)
 			goto err;
 		}
 	else
 		sk= *x;
 
-	n=sk_num(sk);
+	n=sk_X509_EXTENSION_num(sk);
 	if (loc > n) loc=n;
 	else if (loc < 0) loc=n;
 
 	if ((new_ex=X509_EXTENSION_dup(ex)) == NULL)
 		goto err2;
-	if (!sk_insert(sk,(char *)new_ex,loc))
+	if (!sk_X509_EXTENSION_insert(sk,new_ex,loc))
 		goto err;
 	if ((x != NULL) && (*x == NULL))
 		*x=sk;
@@ -192,15 +170,12 @@ err:
 	X509err(X509_F_X509V3_ADD_EXT,ERR_R_MALLOC_FAILURE);
 err2:
 	if (new_ex != NULL) X509_EXTENSION_free(new_ex);
-	if (sk != NULL) sk_free(sk);
+	if (sk != NULL) sk_X509_EXTENSION_free(sk);
 	return(NULL);
 	}
 
-X509_EXTENSION *X509_EXTENSION_create_by_NID(ex,nid,crit,data)
-X509_EXTENSION **ex;
-int nid;
-int crit;
-ASN1_OCTET_STRING *data;
+X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex, int nid,
+	     int crit, ASN1_OCTET_STRING *data)
 	{
 	ASN1_OBJECT *obj;
 	X509_EXTENSION *ret;
@@ -216,11 +191,8 @@ ASN1_OCTET_STRING *data;
 	return(ret);
 	}
 
-X509_EXTENSION *X509_EXTENSION_create_by_OBJ(ex,obj,crit,data)
-X509_EXTENSION **ex;
-ASN1_OBJECT *obj;
-int crit;
-ASN1_OCTET_STRING *data;
+X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
+	     ASN1_OBJECT *obj, int crit, ASN1_OCTET_STRING *data)
 	{
 	X509_EXTENSION *ret;
 
@@ -250,9 +222,7 @@ err:
 	return(NULL);
 	}
 
-int X509_EXTENSION_set_object(ex,obj)
-X509_EXTENSION *ex;
-ASN1_OBJECT *obj;
+int X509_EXTENSION_set_object(X509_EXTENSION *ex, ASN1_OBJECT *obj)
 	{
 	if ((ex == NULL) || (obj == NULL))
 		return(0);
@@ -261,149 +231,38 @@ ASN1_OBJECT *obj;
 	return(1);
 	}
 
-int X509_EXTENSION_set_critical(ex,crit)
-X509_EXTENSION *ex;
-int crit;
+int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit)
 	{
 	if (ex == NULL) return(0);
-	ex->critical=(crit)?0xFF:0;
+	ex->critical=(crit)?0xFF:-1;
 	return(1);
 	}
 
-int X509_EXTENSION_set_data(ex,data)
-X509_EXTENSION *ex;
-ASN1_OCTET_STRING *data;
+int X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data)
 	{
 	int i;
 
 	if (ex == NULL) return(0);
-	i=ASN1_OCTET_STRING_set(ex->value,data->data,data->length);
+	i=M_ASN1_OCTET_STRING_set(ex->value,data->data,data->length);
 	if (!i) return(0);
 	return(1);
 	}
 
-ASN1_OBJECT *X509_EXTENSION_get_object(ex)
-X509_EXTENSION *ex;
+ASN1_OBJECT *X509_EXTENSION_get_object(X509_EXTENSION *ex)
 	{
 	if (ex == NULL) return(NULL);
 	return(ex->object);
 	}
 
-ASN1_OCTET_STRING *X509_EXTENSION_get_data(ex)
-X509_EXTENSION *ex;
+ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ex)
 	{
 	if (ex == NULL) return(NULL);
 	return(ex->value);
 	}
 
-int X509_EXTENSION_get_critical(ex)
-X509_EXTENSION *ex;
+int X509_EXTENSION_get_critical(X509_EXTENSION *ex)
 	{
 	if (ex == NULL) return(0);
-	return(ex->critical);
+	if(ex->critical > 0) return 1;
+	return 0;
 	}
-
-int X509v3_data_type_by_OBJ(obj)
-ASN1_OBJECT *obj;
-	{
-	int nid;
-
-	nid=OBJ_obj2nid(obj);
-	if (nid == V_ASN1_UNDEF) return(V_ASN1_UNDEF);
-	return(X509v3_data_type_by_NID(nid));
-	}
-
-int X509v3_data_type_by_NID(nid)
-int nid;
-	{
-	X509_EXTENSION_METHOD *x;
-
-	x=find_by_nid(nid);
-	if (x == NULL)
-		return(V_ASN1_UNDEF);
-	else
-		return(x->data_type);
-	}
-
-int X509v3_pack_type_by_OBJ(obj)
-ASN1_OBJECT *obj;
-	{
-	int nid;
-
-	nid=OBJ_obj2nid(obj);
-	if (nid == NID_undef) return(X509_EXT_PACK_UNKNOWN);
-	return(X509v3_pack_type_by_NID(nid));
-	}
-
-int X509v3_pack_type_by_NID(nid)
-int nid;
-	{
-	X509_EXTENSION_METHOD *x;
-
-	x=find_by_nid(nid);
-	if (x == NULL)
-		return(X509_EXT_PACK_UNKNOWN);
-	else
-		return(x->pack_type);
-	}
-
-static X509_EXTENSION_METHOD *find_by_nid(nid)
-int nid;
-	{
-	X509_EXTENSION_METHOD x;
-	int i;
-
-	x.nid=nid;
-	if (extensions == NULL) return(NULL);
-	i=sk_find(extensions,(char *)&x);
-	if (i < 0)
-		return(NULL);
-	else
-		return((X509_EXTENSION_METHOD *)sk_value(extensions,i));
-	}
-
-static int xem_cmp(a,b)
-X509_EXTENSION_METHOD **a,**b;
-	{
-	return((*a)->nid-(*b)->nid);
-	}
-
-void X509v3_cleanup_extensions()
-	{
-	int i;
-
-	if (extensions != NULL)
-		{
-		for (i=0; i<sk_num(extensions); i++)
-			Free(sk_value(extensions,i));
-		sk_free(extensions);
-		extensions=NULL;
-		}
-	}
-
-int X509v3_add_extension(x)
-X509_EXTENSION_METHOD *x;
-	{
-	X509_EXTENSION_METHOD *newx;
-
-	if (extensions == NULL)
-		{
-		extensions=sk_new(xem_cmp);
-		if (extensions == NULL) goto err;
-		}
-	newx=(X509_EXTENSION_METHOD *)Malloc(sizeof(X509_EXTENSION_METHOD));
-	if (newx == NULL) goto err;
-	newx->nid=x->nid;
-	newx->data_type=x->data_type;
-	newx->pack_type=x->pack_type;
-	if (!sk_push(extensions,(char *)newx))
-		{
-		Free(newx);
-		goto err;
-		}
-	return(1);
-err:
-	X509err(X509_F_X509V3_ADD_EXTENSION,ERR_R_MALLOC_FAILURE);
-	return(0);
-	}
-

@@ -51,6 +51,16 @@ sub main'DWP
 	&get_mem("DWORD",@_);
 	}
 
+sub main'BC
+	{
+	return @_;
+	}
+
+sub main'DWC
+	{
+	return @_;
+	}
+
 sub main'stack_push
 	{
 	local($num)=@_;
@@ -82,6 +92,8 @@ sub get_mem
 		$addr="_$addr";
 		}
 
+	if ($addr =~ /^.+\-.+$/) { $addr="($addr)"; }
+
 	$reg1="$regs{$reg1}" if defined($regs{$reg1});
 	$reg2="$regs{$reg2}" if defined($regs{$reg2});
 	if (($addr ne "") && ($addr ne 0))
@@ -101,6 +113,7 @@ sub get_mem
 		{
 		$ret.="[$reg1$post]"
 		}
+	$ret =~ s/\[\]//;	# in case $addr was the only argument
 	return($ret);
 	}
 
@@ -131,7 +144,10 @@ sub main'jle	{ &out1("jle",@_); }
 sub main'jz	{ &out1("jz",@_); }
 sub main'jge	{ &out1("jge",@_); }
 sub main'jl	{ &out1("jl",@_); }
+sub main'ja	{ &out1("ja",@_); }
+sub main'jae	{ &out1("jae",@_); }
 sub main'jb	{ &out1("jb",@_); }
+sub main'jbe	{ &out1("jbe",@_); }
 sub main'jc	{ &out1("jc",@_); }
 sub main'jnc	{ &out1("jnc",@_); }
 sub main'jnz	{ &out1("jnz",@_); }
@@ -141,9 +157,10 @@ sub main'push	{ &out1("push",@_); $stack+=4; }
 sub main'pop	{ &out1("pop",@_); $stack-=4; }
 sub main'bswap	{ &out1("bswap",@_); &using486(); }
 sub main'not	{ &out1("not",@_); }
-sub main'call	{ &out1("call",'_'.$_[0]); }
+sub main'call	{ &out1("call",($_[0]=~/^\$L/?'':'_').$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
+sub main'movz	{ &out2("movzx",@_); }
 
 sub out2
 	{
@@ -328,10 +345,17 @@ sub main'set_label
 	{
 	if (!defined($label{$_[0]}))
 		{
-		$label{$_[0]}="${label}${_[0]}";
+		$label{$_[0]}="\$${label}${_[0]}";
 		$label++;
 		}
-	push(@out,"$label{$_[0]}:\n");
+	if((defined $_[2]) && ($_[2] == 1))
+		{
+		push(@out,"$label{$_[0]}::\n");
+		}
+	else
+		{
+		push(@out,"$label{$_[0]}:\n");
+		}
 	}
 
 sub main'data_word
@@ -346,3 +370,11 @@ sub out1p
 
 	push(@out,"\t$name\t ".&conv($p1)."\n");
 	}
+
+sub main'picmeup
+	{
+	local($dst,$sym)=@_;
+	&main'lea($dst,&main'DWP($sym));
+	}
+
+sub main'blindpop { &out1("pop",@_); }

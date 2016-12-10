@@ -4,7 +4,7 @@ push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
 require "cbc.pl";
 
-&asm_init($ARGV[0],"bf-586.pl");
+&asm_init($ARGV[0],"bf-586.pl",$ARGV[$#ARGV] eq "386");
 
 $BF_ROUNDS=16;
 $BF_OFF=($BF_ROUNDS+2)*4;

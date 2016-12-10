@@ -61,27 +61,33 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "crypto.h"
-#include "rand.h"
-#include "bio.h"
-#include "err.h"
-#include "dsa.h"
-#ifdef WINDOWS
-#include "../bio/bss_file.c"
-#endif
 
-#ifdef WIN16
+#include "../e_os.h"
+
+#include <openssl/crypto.h>
+#include <openssl/rand.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+
+#ifdef OPENSSL_NO_DSA
+int main(int argc, char *argv[])
+{
+    printf("No DSA support\n");
+    return(0);
+}
+#else
+#include <openssl/dsa.h>
+
+#ifdef OPENSSL_SYS_WIN16
 #define MS_CALLBACK     _far _loadds
 #else
 #define MS_CALLBACK
 #endif
 
-#ifndef NOPROTO
-static void MS_CALLBACK dsa_cb(int p, int n, char *arg);
-#else
-static void MS_CALLBACK dsa_cb();
-#endif
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg);
 
+/* seed, out_p, out_q, out_g are taken from the updated Appendix 5 to
+ * FIPS PUB 186 and also appear in Appendix 5 to FIPS PIB 186-1 */
 static unsigned char seed[20]={
 	0xd5,0x01,0x4e,0x4b,0x60,0xef,0x2b,0xa8,0xb6,0x21,0x1b,0x40,
 	0x62,0xba,0x32,0x24,0xe0,0x42,0x7d,0xd3,
@@ -115,24 +121,34 @@ static unsigned char out_g[]={
 	0xc5,0x72,0xaf,0x53,0xe6,0xd7,0x88,0x02,
 	};
 
+static const unsigned char str1[]="12345678901234567890";
+
+static const char rnd_seed[] = "string to make the random number generator think it has entropy";
+
 static BIO *bio_err=NULL;
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	DSA *dsa=NULL;
 	int counter,ret=0,i,j;
 	unsigned char buf[256];
 	unsigned long h;
+	unsigned char sig[256];
+	unsigned int siglen;
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
+	CRYPTO_malloc_debug_init();
+	CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+
+	ERR_load_crypto_strings();
+	RAND_seed(rnd_seed, sizeof rnd_seed);
+
 	BIO_printf(bio_err,"test generation of DSA parameters\n");
-	BIO_printf(bio_err,"expect '.*' followed by 5 lines of '.'s and '+'s\n");
-	dsa=DSA_generate_parameters(512,seed,20,&counter,&h,dsa_cb,
-		(char *)bio_err);
+
+	dsa=DSA_generate_parameters(512,seed,20,&counter,&h,dsa_cb,bio_err);
 
 	BIO_printf(bio_err,"seed\n");
 	for (i=0; i<20; i+=4)
@@ -179,20 +195,42 @@ char **argv;
 		goto end;
 		}
 
-	ret=1;
+	dsa->flags |= DSA_FLAG_NO_EXP_CONSTTIME;
+	DSA_generate_key(dsa);
+	DSA_sign(0, str1, 20, sig, &siglen, dsa);
+	if (DSA_verify(0, str1, 20, sig, siglen, dsa) == 1)
+		ret=1;
+
+	dsa->flags &= ~DSA_FLAG_NO_EXP_CONSTTIME;
+	DSA_generate_key(dsa);
+	DSA_sign(0, str1, 20, sig, &siglen, dsa);
+	if (DSA_verify(0, str1, 20, sig, siglen, dsa) == 1)
+		ret=1;
+
 end:
 	if (!ret)
 		ERR_print_errors(bio_err);
-	if (bio_err != NULL) BIO_free(bio_err);
 	if (dsa != NULL) DSA_free(dsa);
-	exit(!ret);
+	CRYPTO_cleanup_all_ex_data();
+	ERR_remove_state(0);
+	ERR_free_strings();
+	CRYPTO_mem_leaks(bio_err);
+	if (bio_err != NULL)
+		{
+		BIO_free(bio_err);
+		bio_err = NULL;
+		}
+	EXIT(!ret);
 	return(0);
 	}
 
-static void MS_CALLBACK dsa_cb(p, n, arg)
-int p;
-int n;
-char *arg;
+static int cb_exit(int ec)
+	{
+	EXIT(ec);
+	return(0);		/* To keep some compilers quiet */
+	}
+
+static void MS_CALLBACK dsa_cb(int p, int n, void *arg)
 	{
 	char c='*';
 	static int ok=0,num=0;
@@ -201,14 +239,13 @@ char *arg;
 	if (p == 1) c='+';
 	if (p == 2) { c='*'; ok++; }
 	if (p == 3) c='\n';
-	BIO_write((BIO *)arg,&c,1);
-	BIO_flush((BIO *)arg);
+	BIO_write(arg,&c,1);
+	(void)BIO_flush(arg);
 
 	if (!ok && (p == 0) && (num > 1))
 		{
 		BIO_printf((BIO *)arg,"error in dsatest\n");
-		exit(1);
+		cb_exit(1);
 		}
 	}
-
-
+#endif

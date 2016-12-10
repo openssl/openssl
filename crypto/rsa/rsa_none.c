@@ -58,53 +58,41 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "rsa.h"
-#include "rand.h"
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/rand.h>
 
-int RSA_padding_add_none(to,tlen,from,flen)
-unsigned char *to;
-int tlen;
-unsigned char *from;
-int flen;
+int RSA_padding_add_none(unsigned char *to, int tlen,
+	const unsigned char *from, int flen)
 	{
-	if (flen >= tlen)
+	if (flen > tlen)
 		{
 		RSAerr(RSA_F_RSA_PADDING_ADD_NONE,RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		return(0);
 		}
+
+	if (flen < tlen)
+		{
+		RSAerr(RSA_F_RSA_PADDING_ADD_NONE,RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE);
+		return(0);
+		}
 	
-	*(to++)=0;
 	memcpy(to,from,(unsigned int)flen);
 	return(1);
 	}
 
-int RSA_padding_check_none(to,tlen,from,flen,num)
-unsigned char *to;
-int tlen;
-unsigned char *from;
-int flen;
-int num;
+int RSA_padding_check_none(unsigned char *to, int tlen,
+	const unsigned char *from, int flen, int num)
 	{
-	int j;
 
-	from++;
-	if (flen+1 > tlen)
+	if (flen > tlen)
 		{
 		RSAerr(RSA_F_RSA_PADDING_CHECK_NONE,RSA_R_DATA_TOO_LARGE);
 		return(-1);
 		}
-	if (flen+1 >= num)
-		{
-		RSAerr(RSA_F_RSA_PADDING_CHECK_NONE,RSA_R_BAD_ZERO_BYTE);
-		return(-1);
-		}
 
-	/* scan over padding data */
-	j=flen-1; /* one for type and one for the prepended 0. */
-	memset(to,0,tlen-j);
-	to+=(tlen-j);
-	memcpy(to,from,j);
-	return(j);
+	memset(to,0,tlen-flen);
+	memcpy(to+tlen-flen,from,flen);
+	return(tlen);
 	}
 

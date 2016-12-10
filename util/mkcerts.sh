@@ -1,4 +1,4 @@
-#!bin/sh
+#!/bin/sh
 
 # This script will re-make all the required certs.
 # cd apps
@@ -12,8 +12,8 @@
 #
  
 CAbits=1024
-SSLEAY="../apps/ssleay"
-CONF="-config ../apps/ssleay.cnf"
+SSLEAY="../apps/openssl"
+CONF="-config ../apps/openssl.cnf"
 
 # create pca request.
 echo creating $CAbits bit PCA cert request

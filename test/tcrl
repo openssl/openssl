@@ -1,9 +1,13 @@
 #!/bin/sh
 
-PATH=../apps:$PATH
+if test "$OSTYPE" = msdosdjgpp; then
+    PATH=../apps\;$PATH
+else
+    PATH=../apps:$PATH
+fi
 export PATH
 
-cmd='../apps/ssleay crl'
+cmd='../util/shlib_wrap.sh ../apps/openssl crl'
 
 if [ "$1"x != "x" ]; then
 	t=$1

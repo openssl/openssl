@@ -59,28 +59,17 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "bio.h"
-#include "evp.h"
+#include <openssl/bio.h>
 
-#ifndef NOPROTO
-static int buffer_write(BIO *h,char *buf,int num);
-static int buffer_read(BIO *h,char *buf,int size);
-static int buffer_puts(BIO *h,char *str);
-static int buffer_gets(BIO *h,char *str,int size);
-static long buffer_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int buffer_write(BIO *h, const char *buf,int num);
+static int buffer_read(BIO *h, char *buf, int size);
+static int buffer_puts(BIO *h, const char *str);
+static int buffer_gets(BIO *h, char *str, int size);
+static long buffer_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int buffer_new(BIO *h);
 static int buffer_free(BIO *data);
-#else
-static int buffer_write();
-static int buffer_read();
-static int buffer_puts();
-static int buffer_gets();
-static long buffer_ctrl();
-static int buffer_new();
-static int buffer_free();
-#endif
-
-#define DEFAULT_BUFFER_SIZE	1024
+static long buffer_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+#define DEFAULT_BUFFER_SIZE	4096
 
 static BIO_METHOD methods_buffer=
 	{
@@ -93,24 +82,24 @@ static BIO_METHOD methods_buffer=
 	buffer_ctrl,
 	buffer_new,
 	buffer_free,
+	buffer_callback_ctrl,
 	};
 
-BIO_METHOD *BIO_f_buffer()
+BIO_METHOD *BIO_f_buffer(void)
 	{
 	return(&methods_buffer);
 	}
 
-static int buffer_new(bi)
-BIO *bi;
+static int buffer_new(BIO *bi)
 	{
 	BIO_F_BUFFER_CTX *ctx;
 
-	ctx=(BIO_F_BUFFER_CTX *)Malloc(sizeof(BIO_F_BUFFER_CTX));
+	ctx=(BIO_F_BUFFER_CTX *)OPENSSL_malloc(sizeof(BIO_F_BUFFER_CTX));
 	if (ctx == NULL) return(0);
-	ctx->ibuf=(char *)Malloc(DEFAULT_BUFFER_SIZE);
-	if (ctx->ibuf == NULL) { Free(ctx); return(0); }
-	ctx->obuf=(char *)Malloc(DEFAULT_BUFFER_SIZE);
-	if (ctx->obuf == NULL) { Free(ctx->ibuf); Free(ctx); return(0); }
+	ctx->ibuf=(char *)OPENSSL_malloc(DEFAULT_BUFFER_SIZE);
+	if (ctx->ibuf == NULL) { OPENSSL_free(ctx); return(0); }
+	ctx->obuf=(char *)OPENSSL_malloc(DEFAULT_BUFFER_SIZE);
+	if (ctx->obuf == NULL) { OPENSSL_free(ctx->ibuf); OPENSSL_free(ctx); return(0); }
 	ctx->ibuf_size=DEFAULT_BUFFER_SIZE;
 	ctx->obuf_size=DEFAULT_BUFFER_SIZE;
 	ctx->ibuf_len=0;
@@ -124,26 +113,22 @@ BIO *bi;
 	return(1);
 	}
 
-static int buffer_free(a)
-BIO *a;
+static int buffer_free(BIO *a)
 	{
 	BIO_F_BUFFER_CTX *b;
 
 	if (a == NULL) return(0);
 	b=(BIO_F_BUFFER_CTX *)a->ptr;
-	if (b->ibuf != NULL) Free(b->ibuf);
-	if (b->obuf != NULL) Free(b->obuf);
-	Free(a->ptr);
+	if (b->ibuf != NULL) OPENSSL_free(b->ibuf);
+	if (b->obuf != NULL) OPENSSL_free(b->obuf);
+	OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;
 	return(1);
 	}
 	
-static int buffer_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int buffer_read(BIO *b, char *out, int outl)
 	{
 	int i,num=0;
 	BIO_F_BUFFER_CTX *ctx;
@@ -209,10 +194,7 @@ start:
 	goto start;
 	}
 
-static int buffer_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int buffer_write(BIO *b, const char *in, int inl)
 	{
 	int i,num=0;
 	BIO_F_BUFFER_CTX *ctx;
@@ -285,11 +267,7 @@ start:
 	goto start;
 	}
 
-static long buffer_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	BIO *dbio;
 	BIO_F_BUFFER_CTX *ctx;
@@ -307,6 +285,7 @@ char *ptr;
 		ctx->ibuf_len=0;
 		ctx->obuf_off=0;
 		ctx->obuf_len=0;
+		if (b->next_bio == NULL) return(0);
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
 	case BIO_CTRL_INFO:
@@ -323,19 +302,25 @@ char *ptr;
 	case BIO_CTRL_WPENDING:
 		ret=(long)ctx->obuf_len;
 		if (ret == 0)
+			{
+			if (b->next_bio == NULL) return(0);
 			ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+			}
 		break;
 	case BIO_CTRL_PENDING:
 		ret=(long)ctx->ibuf_len;
 		if (ret == 0)
+			{
+			if (b->next_bio == NULL) return(0);
 			ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+			}
 		break;
 	case BIO_C_SET_BUFF_READ_DATA:
 		if (num > ctx->ibuf_size)
 			{
-			p1=Malloc((int)num);
+			p1=OPENSSL_malloc((int)num);
 			if (p1 == NULL) goto malloc_error;
-			if (ctx->ibuf != NULL) Free(ctx->ibuf);
+			if (ctx->ibuf != NULL) OPENSSL_free(ctx->ibuf);
 			ctx->ibuf=p1;
 			}
 		ctx->ibuf_off=0;
@@ -367,21 +352,21 @@ char *ptr;
 		p2=ctx->obuf;
 		if ((ibs > DEFAULT_BUFFER_SIZE) && (ibs != ctx->ibuf_size))
 			{
-			p1=(char *)Malloc((int)num);
+			p1=(char *)OPENSSL_malloc((int)num);
 			if (p1 == NULL) goto malloc_error;
 			}
 		if ((obs > DEFAULT_BUFFER_SIZE) && (obs != ctx->obuf_size))
 			{
-			p2=(char *)Malloc((int)num);
+			p2=(char *)OPENSSL_malloc((int)num);
 			if (p2 == NULL)
 				{
-				if (p1 != ctx->ibuf) Free(p1);
+				if (p1 != ctx->ibuf) OPENSSL_free(p1);
 				goto malloc_error;
 				}
 			}
 		if (ctx->ibuf != p1)
 			{
-			Free(ctx->ibuf);
+			OPENSSL_free(ctx->ibuf);
 			ctx->ibuf=p1;
 			ctx->ibuf_off=0;
 			ctx->ibuf_len=0;
@@ -389,7 +374,7 @@ char *ptr;
 			}
 		if (ctx->obuf != p2)
 			{
-			Free(ctx->obuf);
+			OPENSSL_free(ctx->obuf);
 			ctx->obuf=p2;
 			ctx->obuf_off=0;
 			ctx->obuf_len=0;
@@ -397,12 +382,14 @@ char *ptr;
 			}
 		break;
 	case BIO_C_DO_STATE_MACHINE:
+		if (b->next_bio == NULL) return(0);
 		BIO_clear_retry_flags(b);
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		BIO_copy_next_retry(b);
 		break;
 
 	case BIO_CTRL_FLUSH:
+		if (b->next_bio == NULL) return(0);
 		if (ctx->obuf_len <= 0)
 			{
 			ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
@@ -432,6 +419,7 @@ fprintf(stderr,"FLUSH [%3d] %3d -> %3d\n",ctx->obuf_off,ctx->obuf_len-ctx->obuf_
 				break;
 				}
 			}
+		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
 	case BIO_CTRL_DUP:
 		dbio=(BIO *)ptr;
@@ -440,6 +428,7 @@ fprintf(stderr,"FLUSH [%3d] %3d -> %3d\n",ctx->obuf_off,ctx->obuf_len-ctx->obuf_
 			ret=0;
 		break;
 	default:
+		if (b->next_bio == NULL) return(0);
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
 		}
@@ -449,10 +438,21 @@ malloc_error:
 	return(0);
 	}
 
-static int buffer_gets(b,buf,size)
-BIO *b;
-char *buf;
-int size;
+static long buffer_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
+		break;
+		}
+	return(ret);
+	}
+
+static int buffer_gets(BIO *b, char *buf, int size)
 	{
 	BIO_F_BUFFER_CTX *ctx;
 	int num=0,i,flag;
@@ -482,7 +482,7 @@ int size;
 			size-=i;
 			ctx->ibuf_len-=i;
 			ctx->ibuf_off+=i;
-			if ((flag) || (i == size))
+			if (flag || size == 0)
 				{
 				*buf='\0';
 				return(num);
@@ -494,6 +494,7 @@ int size;
 			if (i <= 0)
 				{
 				BIO_copy_next_retry(b);
+				*buf='\0';
 				if (i < 0) return((num > 0)?num:i);
 				if (i == 0) return(num);
 				}
@@ -503,10 +504,8 @@ int size;
 		}
 	}
 
-static int buffer_puts(b,str)
-BIO *b;
-char *str;
+static int buffer_puts(BIO *b, const char *str)
 	{
-	return(BIO_write(b,str,strlen(str)));
+	return(buffer_write(b,str,strlen(str)));
 	}
 

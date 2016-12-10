@@ -58,16 +58,19 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "bn.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/asn1.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
 
-EVP_PKEY *d2i_PrivateKey(type,a,pp,length)
-int type;
-EVP_PKEY **a;
-unsigned char **pp;
-long length;
+EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, unsigned char **pp,
+	     long length)
 	{
 	EVP_PKEY *ret;
 
@@ -85,18 +88,20 @@ long length;
 	ret->type=EVP_PKEY_type(type);
 	switch (ret->type)
 		{
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 	case EVP_PKEY_RSA:
-		if ((ret->pkey.rsa=d2i_RSAPrivateKey(NULL,pp,length)) == NULL)
+		if ((ret->pkey.rsa=d2i_RSAPrivateKey(NULL,
+			(const unsigned char **)pp,length)) == NULL) /* TMP UGLY CAST */
 			{
 			ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_ASN1_LIB);
 			goto err;
 			}
 		break;
 #endif
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 	case EVP_PKEY_DSA:
-		if ((ret->pkey.dsa=d2i_DSAPrivateKey(NULL,pp,length)) == NULL)
+		if ((ret->pkey.dsa=d2i_DSAPrivateKey(NULL,
+			(const unsigned char **)pp,length)) == NULL) /* TMP UGLY CAST */
 			{
 			ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_ASN1_LIB);
 			goto err;
@@ -115,3 +120,26 @@ err:
 	return(NULL);
 	}
 
+/* This works like d2i_PrivateKey() except it automatically works out the type */
+
+EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, unsigned char **pp,
+	     long length)
+{
+	STACK_OF(ASN1_TYPE) *inkey;
+	unsigned char *p;
+	int keytype;
+	p = *pp;
+	/* Dirty trick: read in the ASN1 data into a STACK_OF(ASN1_TYPE):
+	 * by analyzing it we can determine the passed structure: this
+	 * assumes the input is surrounded by an ASN1 SEQUENCE.
+	 */
+	inkey = d2i_ASN1_SET_OF_ASN1_TYPE(NULL, &p, length, d2i_ASN1_TYPE, 
+			ASN1_TYPE_free, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
+	/* Since we only need to discern "traditional format" RSA and DSA
+	 * keys we can just count the elements.
+         */
+	if(sk_ASN1_TYPE_num(inkey) == 6) keytype = EVP_PKEY_DSA;
+	else keytype = EVP_PKEY_RSA;
+	sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
+	return d2i_PrivateKey(keytype, a, pp, length);
+}

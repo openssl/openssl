@@ -64,13 +64,9 @@
  * the second.  The second 12 bits will come from the 3rd and half the 4th
  * byte.
  */
-void des_ofb_encrypt(in, out, numbits, length, schedule, ivec)
-unsigned char *in;
-unsigned char *out;
-int numbits;
-long length;
-des_key_schedule schedule;
-des_cblock (*ivec);
+void DES_ofb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
+		     long length, DES_key_schedule *schedule,
+		     DES_cblock *ivec)
 	{
 	register DES_LONG d0,d1,vv0,vv1,v0,v1,n=(numbits+7)/8;
 	register DES_LONG mask0,mask1;
@@ -97,7 +93,7 @@ des_cblock (*ivec);
 		mask1=0x00000000L;
 		}
 
-	iv=(unsigned char *)ivec;
+	iv = &(*ivec)[0];
 	c2l(iv,v0);
 	c2l(iv,v1);
 	ti[0]=v0;
@@ -106,7 +102,7 @@ des_cblock (*ivec);
 		{
 		ti[0]=v0;
 		ti[1]=v1;
-		des_encrypt((DES_LONG *)ti,schedule,DES_ENCRYPT);
+		DES_encrypt1((DES_LONG *)ti,schedule,DES_ENCRYPT);
 		vv0=ti[0];
 		vv1=ti[1];
 		c2ln(in,d0,d1,n);
@@ -131,7 +127,7 @@ des_cblock (*ivec);
 			v1=((v1>>num)|(vv0<<(32-num)))&0xffffffffL;
 			}
 		}
-	iv=(unsigned char *)ivec;
+	iv = &(*ivec)[0];
 	l2c(v0,iv);
 	l2c(v1,iv);
 	v0=v1=d0=d1=ti[0]=ti[1]=vv0=vv1=0;

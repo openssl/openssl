@@ -58,138 +58,72 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "ripemd.h"
+#include <openssl/opensslconf.h>
+#include <openssl/ripemd.h>
 
-#define ULONG	unsigned long
-#define UCHAR	unsigned char
-#define UINT	unsigned int
-
-#ifdef NOCONST
-#define const
+#ifndef RIPEMD160_LONG_LOG2
+#define RIPEMD160_LONG_LOG2 2 /* default to 32 bits */
 #endif
 
-#undef c2nl
-#define c2nl(c,l)	(l =(((unsigned long)(*((c)++)))<<24), \
-			 l|=(((unsigned long)(*((c)++)))<<16), \
-			 l|=(((unsigned long)(*((c)++)))<< 8), \
-			 l|=(((unsigned long)(*((c)++)))    ))
-
-#undef p_c2nl
-#define p_c2nl(c,l,n)	{ \
-			switch (n) { \
-			case 0: l =((unsigned long)(*((c)++)))<<24; \
-			case 1: l|=((unsigned long)(*((c)++)))<<16; \
-			case 2: l|=((unsigned long)(*((c)++)))<< 8; \
-			case 3: l|=((unsigned long)(*((c)++))); \
-				} \
-			}
-
-#undef c2nl_p
-/* NOTE the pointer is not incremented at the end of this */
-#define c2nl_p(c,l,n)	{ \
-			l=0; \
-			(c)+=n; \
-			switch (n) { \
-			case 3: l =((unsigned long)(*(--(c))))<< 8; \
-			case 2: l|=((unsigned long)(*(--(c))))<<16; \
-			case 1: l|=((unsigned long)(*(--(c))))<<24; \
-				} \
-			}
-
-#undef p_c2nl_p
-#define p_c2nl_p(c,l,sc,len) { \
-			switch (sc) \
-				{ \
-			case 0: l =((unsigned long)(*((c)++)))<<24; \
-				if (--len == 0) break; \
-			case 1: l|=((unsigned long)(*((c)++)))<<16; \
-				if (--len == 0) break; \
-			case 2: l|=((unsigned long)(*((c)++)))<< 8; \
-				} \
-			}
-
-#undef nl2c
-#define nl2c(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)    )&0xff))
-
-#undef c2l
-#define c2l(c,l)	(l =(((unsigned long)(*((c)++)))    ), \
-			 l|=(((unsigned long)(*((c)++)))<< 8), \
-			 l|=(((unsigned long)(*((c)++)))<<16), \
-			 l|=(((unsigned long)(*((c)++)))<<24))
-
-#undef p_c2l
-#define p_c2l(c,l,n)	{ \
-			switch (n) { \
-			case 0: l =((unsigned long)(*((c)++))); \
-			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
-			case 2: l|=((unsigned long)(*((c)++)))<<16; \
-			case 3: l|=((unsigned long)(*((c)++)))<<24; \
-				} \
-			}
-
-#undef c2l_p
-/* NOTE the pointer is not incremented at the end of this */
-#define c2l_p(c,l,n)	{ \
-			l=0; \
-			(c)+=n; \
-			switch (n) { \
-			case 3: l =((unsigned long)(*(--(c))))<<16; \
-			case 2: l|=((unsigned long)(*(--(c))))<< 8; \
-			case 1: l|=((unsigned long)(*(--(c)))); \
-				} \
-			}
-
-#undef p_c2l_p
-#define p_c2l_p(c,l,sc,len) { \
-			switch (sc) \
-				{ \
-			case 0: l =((unsigned long)(*((c)++))); \
-				if (--len == 0) break; \
-			case 1: l|=((unsigned long)(*((c)++)))<< 8; \
-				if (--len == 0) break; \
-			case 2: l|=((unsigned long)(*((c)++)))<<16; \
-				} \
-			}
-
-#undef l2c
-#define l2c(l,c)	(*((c)++)=(unsigned char)(((l)    )&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>24)&0xff))
-
-#undef ROTATE
-#if defined(WIN32)
-#define ROTATE(a,n)     _lrotl(a,n)
-#else
-#define ROTATE(a,n)     (((a)<<(n))|(((a)&0xffffffff)>>(32-(n))))
+/*
+ * DO EXAMINE COMMENTS IN crypto/md5/md5_locl.h & crypto/md5/md5_dgst.c
+ * FOR EXPLANATIONS ON FOLLOWING "CODE."
+ *					<appro@fy.chalmers.se>
+ */
+#ifdef RMD160_ASM
+# if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
+#  define ripemd160_block_host_order ripemd160_block_asm_host_order
+# endif
 #endif
 
-/* A nice byte order reversal from Wei Dai <weidai@eskimo.com> */
-#if defined(WIN32)
-/* 5 instructions with rotate instruction, else 9 */
-#define Endian_Reverse32(a) \
-	{ \
-	unsigned long l=(a); \
-	(a)=((ROTATE(l,8)&0x00FF00FF)|(ROTATE(l,24)&0xFF00FF00)); \
-	}
-#else
-/* 6 instructions with rotate instruction, else 8 */
-#define Endian_Reverse32(a) \
-	{ \
-	unsigned long l=(a); \
-	l=(((l&0xFF00FF00)>>8L)|((l&0x00FF00FF)<<8L)); \
-	(a)=ROTATE(l,16L); \
-	}
+void ripemd160_block_host_order (RIPEMD160_CTX *c, const void *p,int num);
+void ripemd160_block_data_order (RIPEMD160_CTX *c, const void *p,int num);
+
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
+#define ripemd160_block_data_order ripemd160_block_host_order
 #endif
 
+#define DATA_ORDER_IS_LITTLE_ENDIAN
+
+#define HASH_LONG               RIPEMD160_LONG
+#define HASH_LONG_LOG2          RIPEMD160_LONG_LOG2
+#define HASH_CTX                RIPEMD160_CTX
+#define HASH_CBLOCK             RIPEMD160_CBLOCK
+#define HASH_LBLOCK             RIPEMD160_LBLOCK
+#define HASH_UPDATE             RIPEMD160_Update
+#define HASH_TRANSFORM          RIPEMD160_Transform
+#define HASH_FINAL              RIPEMD160_Final
+#define HASH_BLOCK_HOST_ORDER   ripemd160_block_host_order
+#define	HASH_MAKE_STRING(c,s)	do {	\
+	unsigned long ll;		\
+	ll=(c)->A; HOST_l2c(ll,(s));	\
+	ll=(c)->B; HOST_l2c(ll,(s));	\
+	ll=(c)->C; HOST_l2c(ll,(s));	\
+	ll=(c)->D; HOST_l2c(ll,(s));	\
+	ll=(c)->E; HOST_l2c(ll,(s));	\
+	} while (0)
+#if !defined(L_ENDIAN) || defined(ripemd160_block_data_order)
+#define HASH_BLOCK_DATA_ORDER   ripemd160_block_data_order
+#endif
+
+#include "md32_common.h"
+
+#if 0
 #define F1(x,y,z)	 ((x)^(y)^(z))
 #define F2(x,y,z)	(((x)&(y))|((~x)&z))
 #define F3(x,y,z)	(((x)|(~y))^(z))
 #define F4(x,y,z)	(((x)&(z))|((y)&(~(z))))
 #define F5(x,y,z)	 ((x)^((y)|(~(z))))
+#else
+/*
+ * Transformed F2 and F4 are courtesy of Wei Dai <weidai@eskimo.com>
+ */
+#define F1(x,y,z)	((x) ^ (y) ^ (z))
+#define F2(x,y,z)	((((y) ^ (z)) & (x)) ^ (z))
+#define F3(x,y,z)	(((~(y)) | (x)) ^ (z))
+#define F4(x,y,z)	((((x) ^ (y)) & (z)) ^ (y))
+#define F5(x,y,z)	(((~(z)) | (y)) ^ (x))
+#endif
 
 #define RIPEMD160_A	0x67452301L
 #define RIPEMD160_B	0xEFCDAB89L
@@ -200,27 +134,27 @@
 #include "rmdconst.h"
 
 #define RIP1(a,b,c,d,e,w,s) { \
-	a+=F1(b,c,d)+X[w]; \
+	a+=F1(b,c,d)+X(w); \
         a=ROTATE(a,s)+e; \
         c=ROTATE(c,10); }
 
 #define RIP2(a,b,c,d,e,w,s,K) { \
-	a+=F2(b,c,d)+X[w]+K; \
+	a+=F2(b,c,d)+X(w)+K; \
         a=ROTATE(a,s)+e; \
         c=ROTATE(c,10); }
 
 #define RIP3(a,b,c,d,e,w,s,K) { \
-	a+=F3(b,c,d)+X[w]+K; \
+	a+=F3(b,c,d)+X(w)+K; \
         a=ROTATE(a,s)+e; \
         c=ROTATE(c,10); }
 
 #define RIP4(a,b,c,d,e,w,s,K) { \
-	a+=F4(b,c,d)+X[w]+K; \
+	a+=F4(b,c,d)+X(w)+K; \
         a=ROTATE(a,s)+e; \
         c=ROTATE(c,10); }
 
 #define RIP5(a,b,c,d,e,w,s,K) { \
-	a+=F5(b,c,d)+X[w]+K; \
+	a+=F5(b,c,d)+X(w)+K; \
         a=ROTATE(a,s)+e; \
         c=ROTATE(c,10); }
 

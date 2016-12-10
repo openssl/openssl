@@ -19,28 +19,28 @@ require "desboth.pl";
 $L="edi";
 $R="esi";
 
-&external_label("des_SPtrans");
-&des_encrypt("des_encrypt",1);
-&des_encrypt("des_encrypt2",0);
-&des_encrypt3("des_encrypt3",1);
-&des_encrypt3("des_decrypt3",0);
-&cbc("des_ncbc_encrypt","des_encrypt","des_encrypt",0,4,5,3,5,-1);
-&cbc("des_ede3_cbc_encrypt","des_encrypt3","des_decrypt3",0,6,7,3,4,5);
+&external_label("DES_SPtrans");
+&DES_encrypt("DES_encrypt1",1);
+&DES_encrypt("DES_encrypt2",0);
+&DES_encrypt3("DES_encrypt3",1);
+&DES_encrypt3("DES_decrypt3",0);
+&cbc("DES_ncbc_encrypt","DES_encrypt1","DES_encrypt1",0,4,5,3,5,-1);
+&cbc("DES_ede3_cbc_encrypt","DES_encrypt3","DES_decrypt3",0,6,7,3,4,5);
 
 &asm_finish();
 
-sub des_encrypt
+sub DES_encrypt
 	{
 	local($name,$do_ip)=@_;
 
-	&function_begin_B($name,"EXTRN   _des_SPtrans:DWORD");
+	&function_begin_B($name,"EXTRN   _DES_SPtrans:DWORD");
 
 	&push("esi");
 	&push("edi");
 
 	&comment("");
 	&comment("Load the 2 words");
-	$ks="ebp";
+	$trans="ebp";
 
 	if ($do_ip)
 		{
@@ -72,7 +72,12 @@ sub des_encrypt
 		&rotl($L,3);
 		}
 
-	&mov(	$ks,		&wparam(1)	);
+	# PIC-ification:-)
+	&picmeup($trans,"DES_SPtrans");
+	#if ($cpp)	{ &picmeup($trans,"DES_SPtrans");   }
+	#else		{ &lea($trans,&DWP("DES_SPtrans")); }
+
+	&mov(	"ecx",	&wparam(1)	);
 	&cmp("ebx","0");
 	&je(&label("start_decrypt"));
 
@@ -80,11 +85,11 @@ sub des_encrypt
 		{
 		&comment("");
 		&comment("Round $i");
-		&D_ENCRYPT($i,$L,$R,$i*2,$ks,"des_SPtrans","eax","ebx","ecx","edx");
+		&D_ENCRYPT($i,$L,$R,$i*2,$trans,"eax","ebx","ecx","edx");
 
 		&comment("");
 		&comment("Round ".sprintf("%d",$i+1));
-		&D_ENCRYPT($i+1,$R,$L,($i+1)*2,$ks,"des_SPtrans","eax","ebx","ecx","edx");
+		&D_ENCRYPT($i+1,$R,$L,($i+1)*2,$trans,"eax","ebx","ecx","edx");
 		}
 	&jmp(&label("end"));
 
@@ -94,10 +99,10 @@ sub des_encrypt
 		{
 		&comment("");
 		&comment("Round $i");
-		&D_ENCRYPT(15-$i,$L,$R,$i*2,$ks,"des_SPtrans","eax","ebx","ecx","edx");
+		&D_ENCRYPT(15-$i,$L,$R,$i*2,$trans,"eax","ebx","ecx","edx");
 		&comment("");
 		&comment("Round ".sprintf("%d",$i-1));
-		&D_ENCRYPT(15-$i+1,$R,$L,($i-1)*2,$ks,"des_SPtrans","eax","ebx","ecx","edx");
+		&D_ENCRYPT(15-$i+1,$R,$L,($i-1)*2,$trans,"eax","ebx","ecx","edx");
 		}
 
 	&set_label("end");
@@ -134,43 +139,36 @@ sub des_encrypt
 
 sub D_ENCRYPT
 	{
-	local($r,$L,$R,$S,$ks,$desSP,$u,$tmp1,$tmp2,$t)=@_;
+	local($r,$L,$R,$S,$trans,$u,$tmp1,$tmp2,$t)=@_;
 
-	 &mov(	$u,		&DWP(&n2a($S*4),$ks,"",0));
+	 &mov(	$u,		&DWP(&n2a($S*4),$tmp2,"",0));
 	&xor(	$tmp1,		$tmp1);
-	 &mov(	$t,		&DWP(&n2a(($S+1)*4),$ks,"",0));
+	 &mov(	$t,		&DWP(&n2a(($S+1)*4),$tmp2,"",0));
 	&xor(	$u,		$R);
+	&xor(	$tmp2,		$tmp2);
 	 &xor(	$t,		$R);
 	&and(	$u,		"0xfcfcfcfc"	);
 	 &and(	$t,		"0xcfcfcfcf"	);
 	&movb(	&LB($tmp1),	&LB($u)	);
 	 &movb(	&LB($tmp2),	&HB($u)	);
 	&rotr(	$t,		4		);
-	&mov(	$ks,		&DWP("      $desSP",$tmp1,"",0));
+	&xor(	$L,		&DWP("     ",$trans,$tmp1,0));
 	 &movb(	&LB($tmp1),	&LB($t)	);
-	&xor(	$L,		$ks);
-	 &mov(	$ks,		&DWP("0x200+$desSP",$tmp2,"",0));
-	&xor(	$L,		$ks); ######
+	 &xor(	$L,		&DWP("0x200",$trans,$tmp2,0));
 	 &movb(	&LB($tmp2),	&HB($t)	);
 	&shr(	$u,		16);
-	 &mov(	$ks,		&DWP("0x100+$desSP",$tmp1,"",0));
-	&xor(	$L,		$ks); ######
+	 &xor(	$L,		&DWP("0x100",$trans,$tmp1,0));
 	 &movb(	&LB($tmp1),	&HB($u)	);
 	&shr(	$t,		16);
-	 &mov(	$ks,		&DWP("0x300+$desSP",$tmp2,"",0));
-	&xor(	$L,		$ks);
-	 &mov(	$ks,		&wparam(1)	);
+	 &xor(	$L,		&DWP("0x300",$trans,$tmp2,0));
 	&movb(	&LB($tmp2),	&HB($t)	);
 	 &and(	$u,		"0xff"	);
 	&and(	$t,		"0xff"	);
-	 &mov(	$tmp1,		&DWP("0x600+$desSP",$tmp1,"",0));
-	&xor(	$L,		$tmp1);
-	 &mov(	$tmp1,		&DWP("0x700+$desSP",$tmp2,"",0));
-	&xor(	$L,		$tmp1);
-	 &mov(	$tmp1,		&DWP("0x400+$desSP",$u,"",0));
-	&xor(	$L,		$tmp1);
-	 &mov(	$tmp1,		&DWP("0x500+$desSP",$t,"",0));
-	&xor(	$L,		$tmp1);
+	 &xor(	$L,		&DWP("0x600",$trans,$tmp1,0));
+	 &xor(	$L,		&DWP("0x700",$trans,$tmp2,0));
+	&mov(	$tmp2,		&wparam(1)	);
+	 &xor(	$L,		&DWP("0x400",$trans,$u,0));
+	 &xor(	$L,		&DWP("0x500",$trans,$t,0));
 	}
 
 sub n2a
@@ -187,6 +185,8 @@ sub R_PERM_OP
 	&mov(	$tt,		$a		);
 	&xor(	$a,		$b		);
 	&and(	$a,		$mask		);
+	# This can never succeed, and besides it is difficult to see what the
+	# idea was - Ben 13 Feb 99
 	if (!$last eq $b)
 		{
 		&xor(	$b,		$a		);

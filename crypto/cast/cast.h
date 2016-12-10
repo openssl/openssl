@@ -63,6 +63,10 @@
 extern "C" {
 #endif
 
+#ifdef OPENSSL_NO_CAST
+#error CAST is disabled.
+#endif
+
 #define CAST_ENCRYPT	1
 #define CAST_DECRYPT	0
 
@@ -74,33 +78,26 @@ extern "C" {
 typedef struct cast_key_st
 	{
 	CAST_LONG data[32];
+	int short_key;	/* Use reduced rounds for short key */
 	} CAST_KEY;
 
-#ifndef NOPROTO
- 
-void CAST_set_key(CAST_KEY *key, int len, unsigned char *data);
-void CAST_ecb_encrypt(unsigned char *in,unsigned char *out,CAST_KEY *key,
-	int enc);
+
+#ifdef OPENSSL_FIPS 
+void private_CAST_set_key(CAST_KEY *key, int len, const unsigned char *data);
+#endif
+void CAST_set_key(CAST_KEY *key, int len, const unsigned char *data);
+void CAST_ecb_encrypt(const unsigned char *in,unsigned char *out,CAST_KEY *key,
+		      int enc);
 void CAST_encrypt(CAST_LONG *data,CAST_KEY *key);
 void CAST_decrypt(CAST_LONG *data,CAST_KEY *key);
-void CAST_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
-	CAST_KEY *ks, unsigned char *iv, int enc);
-void CAST_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	CAST_KEY *schedule, unsigned char *ivec, int *num, int enc);
-void CAST_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	CAST_KEY *schedule, unsigned char *ivec, int *num);
-
-#else
-
-void CAST_set_key();
-void CAST_ecb_encrypt();
-void CAST_encrypt();
-void CAST_decrypt();
-void CAST_cbc_encrypt();
-void CAST_cfb64_encrypt();
-void CAST_ofb64_encrypt();
-
-#endif
+void CAST_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+		      CAST_KEY *ks, unsigned char *iv, int enc);
+void CAST_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+			long length, CAST_KEY *schedule, unsigned char *ivec,
+			int *num, int enc);
+void CAST_ofb64_encrypt(const unsigned char *in, unsigned char *out, 
+			long length, CAST_KEY *schedule, unsigned char *ivec,
+			int *num);
 
 #ifdef  __cplusplus
 }

@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "objects.h"
-#include "comp.h"
+#include <openssl/objects.h>
+#include <openssl/comp.h>
+#include <openssl/err.h>
 
 COMP_METHOD *COMP_zlib(void );
 
-#ifndef ZLIB
-
-static COMP_METHOD zlib_method={
+static COMP_METHOD zlib_method_nozlib={
 	NID_undef,
-	"(null)",
+	"(undef)",
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -18,6 +18,8 @@ static COMP_METHOD zlib_method={
 	NULL,
 	};
 
+#ifndef ZLIB
+#undef ZLIB_SHARED
 #else
 
 #include <zlib.h>
@@ -38,14 +40,45 @@ static COMP_METHOD zlib_method={
 	zlib_compress_block,
 	zlib_expand_block,
 	NULL,
+	NULL,
 	};
 
-static int zlib_compress_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-unsigned int olen;
-unsigned char *in;
-unsigned int ilen;
+/* 
+ * When OpenSSL is built on Windows, we do not want to require that
+ * the ZLIB.DLL be available in order for the OpenSSL DLLs to
+ * work.  Therefore, all ZLIB routines are loaded at run time
+ * and we do not link to a .LIB file.
+ */
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+# include <windows.h>
+#endif /* !(OPENSSL_SYS_WINDOWS || OPENSSL_SYS_WIN32) */
+
+#ifdef ZLIB_SHARED
+#include <openssl/dso.h>
+
+/* Function pointers */
+typedef int (*compress_ft)(Bytef *dest,uLongf *destLen,
+	const Bytef *source, uLong sourceLen);
+typedef int (*inflateEnd_ft)(z_streamp strm);
+typedef int (*inflate_ft)(z_streamp strm, int flush);
+typedef int (*inflateInit__ft)(z_streamp strm,
+	const char * version, int stream_size);
+static compress_ft	p_compress=NULL;
+static inflateEnd_ft	p_inflateEnd=NULL;
+static inflate_ft	p_inflate=NULL;
+static inflateInit__ft	p_inflateInit_=NULL;
+
+static int zlib_loaded = 0;     /* only attempt to init func pts once */
+static DSO *zlib_dso = NULL;
+
+#define compress                p_compress
+#define inflateEnd              p_inflateEnd
+#define inflate                 p_inflate
+#define inflateInit_            p_inflateInit_
+#endif /* ZLIB_SHARED */
+
+static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
+	     unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
 	unsigned long l;
 	int i;
@@ -70,16 +103,15 @@ unsigned int ilen;
 		memcpy(&(out[1]),in,ilen);
 		l=ilen+1;
 		}
-fprintf(stderr,"compress(%4d)->%4d %s\n",ilen,(int)l,(clear)?"clear":"zlib");
+#ifdef DEBUG_ZLIB
+	fprintf(stderr,"compress(%4d)->%4d %s\n",
+		ilen,(int)l,(clear)?"clear":"zlib");
+#endif
 	return((int)l);
 	}
 
-static int zlib_expand_block(ctx,out,olen,in,ilen)
-COMP_CTX *ctx;
-unsigned char *out;
-unsigned int olen;
-unsigned char *in;
-unsigned int ilen;
+static int zlib_expand_block(COMP_CTX *ctx, unsigned char *out,
+	     unsigned int olen, unsigned char *in, unsigned int ilen)
 	{
 	unsigned long l;
 	int i;
@@ -96,15 +128,15 @@ unsigned int ilen;
 		memcpy(out,&(in[1]),ilen-1);
 		l=ilen-1;
 		}
-        fprintf(stderr,"expand  (%4d)->%4d %s\n",ilen,(int)l,in[0]?"zlib":"clear");
+#ifdef DEBUG_ZLIB
+        fprintf(stderr,"expand  (%4d)->%4d %s\n",
+		ilen,(int)l,in[0]?"zlib":"clear");
+#endif
 	return((int)l);
 	}
 
-static int zz_uncompress (dest, destLen, source, sourceLen)
-    Bytef *dest;
-    uLongf *destLen;
-    const Bytef *source;
-    uLong sourceLen;
+static int zz_uncompress (Bytef *dest, uLongf *destLen, const Bytef *source,
+	     uLong sourceLen)
 {
     z_stream stream;
     int err;
@@ -137,8 +169,47 @@ static int zz_uncompress (dest, destLen, source, sourceLen)
 
 #endif
 
-COMP_METHOD *COMP_zlib()
+COMP_METHOD *COMP_zlib(void)
 	{
-	return(&zlib_method);
+	COMP_METHOD *meth = &zlib_method_nozlib;
+
+#ifdef ZLIB_SHARED
+	if (!zlib_loaded)
+		{
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+		zlib_dso = DSO_load(NULL, "ZLIB1", NULL, 0);
+#else
+		zlib_dso = DSO_load(NULL, "z", NULL, 0);
+#endif
+		if (zlib_dso != NULL)
+			{
+			p_compress
+				= (compress_ft) DSO_bind_func(zlib_dso,
+					"compress");
+			p_inflateEnd
+				= (inflateEnd_ft) DSO_bind_func(zlib_dso,
+					"inflateEnd");
+			p_inflate
+				= (inflate_ft) DSO_bind_func(zlib_dso,
+					"inflate");
+			p_inflateInit_
+				= (inflateInit__ft) DSO_bind_func(zlib_dso,
+					"inflateInit_");
+
+			if (p_compress && p_inflateEnd && p_inflate
+				&& p_inflateInit_)
+				zlib_loaded++;
+			}
+		}
+
+#endif
+#ifdef ZLIB_SHARED
+	if (zlib_loaded)
+#endif
+#if defined(ZLIB) || defined(ZLIB_SHARED)
+		meth = &zlib_method;
+#endif
+
+	return(meth);
 	}
 

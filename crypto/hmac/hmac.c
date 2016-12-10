@@ -58,13 +58,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "hmac.h"
+#include <openssl/hmac.h>
+#include "cryptlib.h"
 
-void HMAC_Init(ctx,key,len,md)
-HMAC_CTX *ctx;
-unsigned char *key;
-int len;
-EVP_MD *md;
+#ifndef OPENSSL_FIPS
+
+void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
+		  const EVP_MD *md, ENGINE *impl)
 	{
 	int i,j,reset=0;
 	unsigned char pad[HMAC_MAX_MD_CBLOCK];
@@ -81,49 +81,54 @@ EVP_MD *md;
 		{
 		reset=1;
 		j=EVP_MD_block_size(md);
+		OPENSSL_assert(j <= sizeof ctx->key);
 		if (j < len)
 			{
-			EVP_DigestInit(&ctx->md_ctx,md);
+			EVP_DigestInit_ex(&ctx->md_ctx,md, impl);
 			EVP_DigestUpdate(&ctx->md_ctx,key,len);
-			EVP_DigestFinal(&(ctx->md_ctx),ctx->key,
+			EVP_DigestFinal_ex(&(ctx->md_ctx),ctx->key,
 				&ctx->key_length);
 			}
 		else
 			{
+			OPENSSL_assert(len <= sizeof ctx->key);
 			memcpy(ctx->key,key,len);
-			memset(&(ctx->key[len]),0,sizeof(ctx->key)-len);
 			ctx->key_length=len;
 			}
+		if(ctx->key_length != HMAC_MAX_MD_CBLOCK)
+			memset(&ctx->key[ctx->key_length], 0,
+				HMAC_MAX_MD_CBLOCK - ctx->key_length);
 		}
 
 	if (reset)	
 		{
 		for (i=0; i<HMAC_MAX_MD_CBLOCK; i++)
 			pad[i]=0x36^ctx->key[i];
-		EVP_DigestInit(&ctx->i_ctx,md);
+		EVP_DigestInit_ex(&ctx->i_ctx,md, impl);
 		EVP_DigestUpdate(&ctx->i_ctx,pad,EVP_MD_block_size(md));
 
 		for (i=0; i<HMAC_MAX_MD_CBLOCK; i++)
 			pad[i]=0x5c^ctx->key[i];
-		EVP_DigestInit(&ctx->o_ctx,md);
+		EVP_DigestInit_ex(&ctx->o_ctx,md, impl);
 		EVP_DigestUpdate(&ctx->o_ctx,pad,EVP_MD_block_size(md));
 		}
-
-	memcpy(&ctx->md_ctx,&ctx->i_ctx,sizeof(ctx->i_ctx));
+	EVP_MD_CTX_copy_ex(&ctx->md_ctx,&ctx->i_ctx);
 	}
 
-void HMAC_Update(ctx,data,len)
-HMAC_CTX *ctx;
-unsigned char *data;
-int len;
+void HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
+	       const EVP_MD *md)
 	{
-	EVP_DigestUpdate(&(ctx->md_ctx),data,len);
+	if(key && md)
+	    HMAC_CTX_init(ctx);
+	HMAC_Init_ex(ctx,key,len,md, NULL);
 	}
 
-void HMAC_Final(ctx,md,len)
-HMAC_CTX *ctx;
-unsigned char *md;
-unsigned int *len;
+void HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len)
+	{
+	EVP_DigestUpdate(&ctx->md_ctx,data,len);
+	}
+
+void HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len)
 	{
 	int j;
 	unsigned int i;
@@ -131,35 +136,48 @@ unsigned int *len;
 
 	j=EVP_MD_block_size(ctx->md);
 
-	EVP_DigestFinal(&(ctx->md_ctx),buf,&i);
-	memcpy(&(ctx->md_ctx),&(ctx->o_ctx),sizeof(ctx->o_ctx));
-	EVP_DigestUpdate(&(ctx->md_ctx),buf,i);
-	EVP_DigestFinal(&(ctx->md_ctx),md,len);
+	EVP_DigestFinal_ex(&ctx->md_ctx,buf,&i);
+	EVP_MD_CTX_copy_ex(&ctx->md_ctx,&ctx->o_ctx);
+	EVP_DigestUpdate(&ctx->md_ctx,buf,i);
+	EVP_DigestFinal_ex(&ctx->md_ctx,md,len);
 	}
 
-void HMAC_cleanup(ctx)
-HMAC_CTX *ctx;
+void HMAC_CTX_init(HMAC_CTX *ctx)
 	{
-	memset(ctx,0,sizeof(HMAC_CTX));
+	EVP_MD_CTX_init(&ctx->i_ctx);
+	EVP_MD_CTX_init(&ctx->o_ctx);
+	EVP_MD_CTX_init(&ctx->md_ctx);
 	}
 
-unsigned char *HMAC(evp_md,key,key_len,d,n,md,md_len)
-EVP_MD *evp_md;
-unsigned char *key;
-int key_len;
-unsigned char *d;
-int n;
-unsigned char *md;
-unsigned int *md_len;
+void HMAC_CTX_cleanup(HMAC_CTX *ctx)
+	{
+	EVP_MD_CTX_cleanup(&ctx->i_ctx);
+	EVP_MD_CTX_cleanup(&ctx->o_ctx);
+	EVP_MD_CTX_cleanup(&ctx->md_ctx);
+	memset(ctx,0,sizeof *ctx);
+	}
+
+unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
+		    const unsigned char *d, int n, unsigned char *md,
+		    unsigned int *md_len)
 	{
 	HMAC_CTX c;
 	static unsigned char m[EVP_MAX_MD_SIZE];
 
 	if (md == NULL) md=m;
+	HMAC_CTX_init(&c);
 	HMAC_Init(&c,key,key_len,evp_md);
 	HMAC_Update(&c,d,n);
 	HMAC_Final(&c,md,md_len);
-	HMAC_cleanup(&c);
+	HMAC_CTX_cleanup(&c);
 	return(md);
 	}
 
+void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
+	{
+	EVP_MD_CTX_set_flags(&ctx->i_ctx, flags);
+	EVP_MD_CTX_set_flags(&ctx->o_ctx, flags);
+	EVP_MD_CTX_set_flags(&ctx->md_ctx, flags);
+	}
+
+#endif

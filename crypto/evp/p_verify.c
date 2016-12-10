@@ -58,15 +58,12 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
-#include "x509.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
-int EVP_VerifyFinal(ctx,sigbuf,siglen,pkey)
-EVP_MD_CTX *ctx;
-unsigned char *sigbuf;
-unsigned int siglen;
-EVP_PKEY *pkey;
+int EVP_VerifyFinal(EVP_MD_CTX *ctx, unsigned char *sigbuf,
+	     unsigned int siglen, EVP_PKEY *pkey)
 	{
 	unsigned char m[EVP_MAX_MD_SIZE];
 	unsigned int m_len;
@@ -88,8 +85,10 @@ EVP_PKEY *pkey;
 		EVPerr(EVP_F_EVP_VERIFYFINAL,EVP_R_WRONG_PUBLIC_KEY_TYPE);
 		return(-1);
 		}
-	memcpy(&tmp_ctx,ctx,sizeof(EVP_MD_CTX));
-	EVP_DigestFinal(&tmp_ctx,&(m[0]),&m_len);
+	EVP_MD_CTX_init(&tmp_ctx);
+	EVP_MD_CTX_copy_ex(&tmp_ctx,ctx);     
+	EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len);
+	EVP_MD_CTX_cleanup(&tmp_ctx);
         if (ctx->digest->verify == NULL)
                 {
 		EVPerr(EVP_F_EVP_VERIFYFINAL,EVP_R_NO_VERIFY_FUNCTION_CONFIGURED);

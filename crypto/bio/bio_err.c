@@ -1,137 +1,153 @@
-/* lib/bio/bio_err.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/* crypto/bio/bio_err.c */
+/* ====================================================================
+ * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
  */
+
+/* NOTE: this file was auto generated by the mkerr.pl script: any changes
+ * made to it will be overwritten when the script next updates this file,
+ * only reason strings will be preserved.
+ */
+
 #include <stdio.h>
-#include "err.h"
-#include "bio.h"
+#include <openssl/err.h>
+#include <openssl/bio.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_BIO,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_BIO,0,reason)
+
 static ERR_STRING_DATA BIO_str_functs[]=
 	{
-{ERR_PACK(0,BIO_F_ACPT_STATE,0),	"ACPT_STATE"},
-{ERR_PACK(0,BIO_F_BIO_ACCEPT,0),	"BIO_accept"},
-{ERR_PACK(0,BIO_F_BIO_BER_GET_HEADER,0),	"BIO_BER_GET_HEADER"},
-{ERR_PACK(0,BIO_F_BIO_CTRL,0),	"BIO_ctrl"},
-{ERR_PACK(0,BIO_F_BIO_GETS,0),	"BIO_gets"},
-{ERR_PACK(0,BIO_F_BIO_GET_ACCEPT_SOCKET,0),	"BIO_get_accept_socket"},
-{ERR_PACK(0,BIO_F_BIO_GET_HOST_IP,0),	"BIO_get_host_ip"},
-{ERR_PACK(0,BIO_F_BIO_GET_PORT,0),	"BIO_get_port"},
-{ERR_PACK(0,BIO_F_BIO_NEW,0),	"BIO_new"},
-{ERR_PACK(0,BIO_F_BIO_NEW_FILE,0),	"BIO_new_file"},
-{ERR_PACK(0,BIO_F_BIO_PUTS,0),	"BIO_puts"},
-{ERR_PACK(0,BIO_F_BIO_READ,0),	"BIO_read"},
-{ERR_PACK(0,BIO_F_BIO_SOCK_INIT,0),	"BIO_sock_init"},
-{ERR_PACK(0,BIO_F_BIO_WRITE,0),	"BIO_write"},
-{ERR_PACK(0,BIO_F_BUFFER_CTRL,0),	"BUFFER_CTRL"},
-{ERR_PACK(0,BIO_F_CONN_STATE,0),	"CONN_STATE"},
-{ERR_PACK(0,BIO_F_FILE_CTRL,0),	"FILE_CTRL"},
-{ERR_PACK(0,BIO_F_MEM_WRITE,0),	"MEM_WRITE"},
-{ERR_PACK(0,BIO_F_SOCKS4A_STATE,0),	"SOCKS4A_STATE"},
-{ERR_PACK(0,BIO_F_SSL_NEW,0),	"SSL_NEW"},
-{ERR_PACK(0,BIO_F_WSASTARTUP,0),	"WSASTARTUP"},
-{0,NULL},
+{ERR_FUNC(BIO_F_ACPT_STATE),	"ACPT_STATE"},
+{ERR_FUNC(BIO_F_BIO_ACCEPT),	"BIO_accept"},
+{ERR_FUNC(BIO_F_BIO_BER_GET_HEADER),	"BIO_BER_GET_HEADER"},
+{ERR_FUNC(BIO_F_BIO_CTRL),	"BIO_ctrl"},
+{ERR_FUNC(BIO_F_BIO_GETHOSTBYNAME),	"BIO_gethostbyname"},
+{ERR_FUNC(BIO_F_BIO_GETS),	"BIO_gets"},
+{ERR_FUNC(BIO_F_BIO_GET_ACCEPT_SOCKET),	"BIO_get_accept_socket"},
+{ERR_FUNC(BIO_F_BIO_GET_HOST_IP),	"BIO_get_host_ip"},
+{ERR_FUNC(BIO_F_BIO_GET_PORT),	"BIO_get_port"},
+{ERR_FUNC(BIO_F_BIO_MAKE_PAIR),	"BIO_MAKE_PAIR"},
+{ERR_FUNC(BIO_F_BIO_NEW),	"BIO_new"},
+{ERR_FUNC(BIO_F_BIO_NEW_FILE),	"BIO_new_file"},
+{ERR_FUNC(BIO_F_BIO_NEW_MEM_BUF),	"BIO_new_mem_buf"},
+{ERR_FUNC(BIO_F_BIO_NREAD),	"BIO_nread"},
+{ERR_FUNC(BIO_F_BIO_NREAD0),	"BIO_nread0"},
+{ERR_FUNC(BIO_F_BIO_NWRITE),	"BIO_nwrite"},
+{ERR_FUNC(BIO_F_BIO_NWRITE0),	"BIO_nwrite0"},
+{ERR_FUNC(BIO_F_BIO_PUTS),	"BIO_puts"},
+{ERR_FUNC(BIO_F_BIO_READ),	"BIO_read"},
+{ERR_FUNC(BIO_F_BIO_SOCK_INIT),	"BIO_sock_init"},
+{ERR_FUNC(BIO_F_BIO_WRITE),	"BIO_write"},
+{ERR_FUNC(BIO_F_BUFFER_CTRL),	"BUFFER_CTRL"},
+{ERR_FUNC(BIO_F_CONN_CTRL),	"CONN_CTRL"},
+{ERR_FUNC(BIO_F_CONN_STATE),	"CONN_STATE"},
+{ERR_FUNC(BIO_F_FILE_CTRL),	"FILE_CTRL"},
+{ERR_FUNC(BIO_F_FILE_READ),	"FILE_READ"},
+{ERR_FUNC(BIO_F_LINEBUFFER_CTRL),	"LINEBUFFER_CTRL"},
+{ERR_FUNC(BIO_F_MEM_READ),	"MEM_READ"},
+{ERR_FUNC(BIO_F_MEM_WRITE),	"MEM_WRITE"},
+{ERR_FUNC(BIO_F_SSL_NEW),	"SSL_new"},
+{ERR_FUNC(BIO_F_WSASTARTUP),	"WSASTARTUP"},
+{0,NULL}
 	};
 
 static ERR_STRING_DATA BIO_str_reasons[]=
 	{
-{BIO_R_ACCEPT_ERROR                      ,"accept error"},
-{BIO_R_BAD_FOPEN_MODE                    ,"bad fopen mode"},
-{BIO_R_BAD_HOSTNAME_LOOKUP               ,"bad hostname lookup"},
-{BIO_R_CONNECT_ERROR                     ,"connect error"},
-{BIO_R_ERROR_SETTING_NBIO                ,"error setting nbio"},
-{BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET,"error setting nbio on accepted socket"},
-{BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET,"error setting nbio on accept socket"},
-{BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET ,"gethostbyname addr is not af inet"},
-{BIO_R_INVALID_IP_ADDRESS                ,"invalid ip address"},
-{BIO_R_KEEPALIVE                         ,"keepalive"},
-{BIO_R_NBIO_CONNECT_ERROR                ,"nbio connect error"},
-{BIO_R_NO_ACCEPT_PORT_SPECIFIED          ,"no accept port specified"},
-{BIO_R_NO_HOSTHNAME_SPECIFIED            ,"no hosthname specified"},
-{BIO_R_NO_PORT_DEFINED                   ,"no port defined"},
-{BIO_R_NO_PORT_SPECIFIED                 ,"no port specified"},
-{BIO_R_NULL_PARAMETER                    ,"null parameter"},
-{BIO_R_SOCKS_ID_AND_IDENT_DID_NOT_MATCH  ,"socks id and ident did not match"},
-{BIO_R_SOCKS_REJECTED_CONNECTION         ,"socks rejected connection"},
-{BIO_R_SOCKS_UNABLE_TO_TALK_TO_IDENT_SERVER,"socks unable to talk to ident server"},
-{BIO_R_SOCKS_UNKNOWN_ERROR               ,"socks unknown error"},
-{BIO_R_TAG_MISMATCH                      ,"tag mismatch"},
-{BIO_R_UNABLE_TO_BIND_SOCKET             ,"unable to bind socket"},
-{BIO_R_UNABLE_TO_CREATE_SOCKET           ,"unable to create socket"},
-{BIO_R_UNABLE_TO_LISTEN_SOCKET           ,"unable to listen socket"},
-{BIO_R_UNINITALISED                      ,"uninitalised"},
-{BIO_R_UNSUPPORTED_METHOD                ,"unsupported method"},
-{BIO_R_WSASTARTUP                        ,"wsastartup"},
-{0,NULL},
+{ERR_REASON(BIO_R_ACCEPT_ERROR)          ,"accept error"},
+{ERR_REASON(BIO_R_BAD_FOPEN_MODE)        ,"bad fopen mode"},
+{ERR_REASON(BIO_R_BAD_HOSTNAME_LOOKUP)   ,"bad hostname lookup"},
+{ERR_REASON(BIO_R_BROKEN_PIPE)           ,"broken pipe"},
+{ERR_REASON(BIO_R_CONNECT_ERROR)         ,"connect error"},
+{ERR_REASON(BIO_R_EOF_ON_MEMORY_BIO)     ,"EOF on memory BIO"},
+{ERR_REASON(BIO_R_ERROR_SETTING_NBIO)    ,"error setting nbio"},
+{ERR_REASON(BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET),"error setting nbio on accepted socket"},
+{ERR_REASON(BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET),"error setting nbio on accept socket"},
+{ERR_REASON(BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET),"gethostbyname addr is not af inet"},
+{ERR_REASON(BIO_R_INVALID_ARGUMENT)      ,"invalid argument"},
+{ERR_REASON(BIO_R_INVALID_IP_ADDRESS)    ,"invalid ip address"},
+{ERR_REASON(BIO_R_IN_USE)                ,"in use"},
+{ERR_REASON(BIO_R_KEEPALIVE)             ,"keepalive"},
+{ERR_REASON(BIO_R_NBIO_CONNECT_ERROR)    ,"nbio connect error"},
+{ERR_REASON(BIO_R_NO_ACCEPT_PORT_SPECIFIED),"no accept port specified"},
+{ERR_REASON(BIO_R_NO_HOSTNAME_SPECIFIED) ,"no hostname specified"},
+{ERR_REASON(BIO_R_NO_PORT_DEFINED)       ,"no port defined"},
+{ERR_REASON(BIO_R_NO_PORT_SPECIFIED)     ,"no port specified"},
+{ERR_REASON(BIO_R_NO_SUCH_FILE)          ,"no such file"},
+{ERR_REASON(BIO_R_NULL_PARAMETER)        ,"null parameter"},
+{ERR_REASON(BIO_R_TAG_MISMATCH)          ,"tag mismatch"},
+{ERR_REASON(BIO_R_UNABLE_TO_BIND_SOCKET) ,"unable to bind socket"},
+{ERR_REASON(BIO_R_UNABLE_TO_CREATE_SOCKET),"unable to create socket"},
+{ERR_REASON(BIO_R_UNABLE_TO_LISTEN_SOCKET),"unable to listen socket"},
+{ERR_REASON(BIO_R_UNINITIALIZED)         ,"uninitialized"},
+{ERR_REASON(BIO_R_UNSUPPORTED_METHOD)    ,"unsupported method"},
+{ERR_REASON(BIO_R_WRITE_TO_READ_ONLY_BIO),"write to read only BIO"},
+{ERR_REASON(BIO_R_WSASTARTUP)            ,"WSAStartup"},
+{0,NULL}
 	};
 
 #endif
 
-void ERR_load_BIO_strings()
+void ERR_load_BIO_strings(void)
 	{
-	static int init=1;
+#ifndef OPENSSL_NO_ERR
 
-	if (init)
+	if (ERR_func_error_string(BIO_str_functs[0].error) == NULL)
 		{
-		init=0;
-#ifndef NO_ERR
-		ERR_load_strings(ERR_LIB_BIO,BIO_str_functs);
-		ERR_load_strings(ERR_LIB_BIO,BIO_str_reasons);
-#endif
-
+		ERR_load_strings(0,BIO_str_functs);
+		ERR_load_strings(0,BIO_str_reasons);
 		}
+#endif
 	}

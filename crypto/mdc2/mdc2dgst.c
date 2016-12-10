@@ -59,8 +59,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "des.h"
-#include "mdc2.h"
+#include <openssl/des.h>
+#include <openssl/fips.h>
+#include <openssl/err.h>
+#include <openssl/mdc2.h>
 
 #undef c2l
 #define c2l(c,l)	(l =((DES_LONG)(*((c)++)))    , \
@@ -74,25 +76,17 @@
 			*((c)++)=(unsigned char)(((l)>>16L)&0xff), \
 			*((c)++)=(unsigned char)(((l)>>24L)&0xff))
 
-#ifndef NOPROTO
-static void mdc2_body(MDC2_CTX *c, unsigned char *in, unsigned int len);
-#else
-static void mdc2_body();
-#endif
-
-void MDC2_Init(c)
-MDC2_CTX *c;
+static void mdc2_body(MDC2_CTX *c, const unsigned char *in, unsigned int len);
+FIPS_NON_FIPS_MD_Init(MDC2)
 	{
 	c->num=0;
 	c->pad_type=1;
 	memset(&(c->h[0]),0x52,MDC2_BLOCK);
 	memset(&(c->hh[0]),0x25,MDC2_BLOCK);
+	return 1;
 	}
 
-void MDC2_Update(c,in,len)
-MDC2_CTX *c;
-register unsigned char *in;
-unsigned long len;
+int MDC2_Update(MDC2_CTX *c, const unsigned char *in, unsigned long len)
 	{
 	int i,j;
 
@@ -104,7 +98,7 @@ unsigned long len;
 			/* partial block */
 			memcpy(&(c->data[i]),in,(int)len);
 			c->num+=(int)len;
-			return;
+			return 1;
 			}
 		else
 			{
@@ -125,56 +119,48 @@ unsigned long len;
 		memcpy(&(c->data[0]),&(in[i]),j);
 		c->num=j;
 		}
+	return 1;
 	}
 
-static void mdc2_body(c,in,len)
-MDC2_CTX *c;
-unsigned char *in;
-unsigned int len;
+static void mdc2_body(MDC2_CTX *c, const unsigned char *in, unsigned int len)
 	{
 	register DES_LONG tin0,tin1;
 	register DES_LONG ttin0,ttin1;
 	DES_LONG d[2],dd[2];
-	des_cblock *h,*hh;
-	des_key_schedule k;
+	DES_key_schedule k;
 	unsigned char *p;
 	unsigned int i;
-
-	h= (des_cblock *)&(c->h[0]);
-	hh= (des_cblock *)&(c->hh[0]);
 
 	for (i=0; i<len; i+=8)
 		{
 		c2l(in,tin0); d[0]=dd[0]=tin0;
 		c2l(in,tin1); d[1]=dd[1]=tin1;
-		(*h)[0]=((*h)[0]&0x9f)|0x40;
-		(*hh)[0]=((*hh)[0]&0x9f)|0x20;
+		c->h[0]=(c->h[0]&0x9f)|0x40;
+		c->hh[0]=(c->hh[0]&0x9f)|0x20;
 
-		des_set_odd_parity(h);
-		des_set_key(h,k);
-		des_encrypt((DES_LONG *)d,k,1);
+		DES_set_odd_parity(&c->h);
+		DES_set_key_unchecked(&c->h,&k);
+		DES_encrypt1(d,&k,1);
 
-		des_set_odd_parity(hh);
-		des_set_key(hh,k);
-		des_encrypt((DES_LONG *)dd,k,1);
+		DES_set_odd_parity(&c->hh);
+		DES_set_key_unchecked(&c->hh,&k);
+		DES_encrypt1(dd,&k,1);
 
 		ttin0=tin0^dd[0];
 		ttin1=tin1^dd[1];
 		tin0^=d[0];
 		tin1^=d[1];
 
-		p=(unsigned char *)h;
+		p=c->h;
 		l2c(tin0,p);
 		l2c(ttin1,p);
-		p=(unsigned char *)hh;
+		p=c->hh;
 		l2c(ttin0,p);
 		l2c(tin1,p);
 		}
 	}
 
-void MDC2_Final(md,c)
-unsigned char *md;
-MDC2_CTX *c;
+int MDC2_Final(unsigned char *md, MDC2_CTX *c)
 	{
 	int i,j;
 
@@ -189,6 +175,7 @@ MDC2_CTX *c;
 		}
 	memcpy(md,(char *)c->h,MDC2_BLOCK);
 	memcpy(&(md[MDC2_BLOCK]),(char *)c->hh,MDC2_BLOCK);
+	return 1;
 	}
 
 #undef TEST

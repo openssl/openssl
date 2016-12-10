@@ -57,15 +57,12 @@
  */
 
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include "cryptlib.h"
-#include "crypto.h"
-#include "x509.h"
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
 
-#ifndef NO_STDIO
-int X509_STORE_set_default_paths(ctx)
-X509_STORE *ctx;
+#ifndef OPENSSL_NO_STDIO
+int X509_STORE_set_default_paths(X509_STORE *ctx)
 	{
 	X509_LOOKUP *lookup;
 
@@ -83,10 +80,8 @@ X509_STORE *ctx;
 	return(1);
 	}
 
-int X509_STORE_load_locations(ctx,file,path)
-X509_STORE *ctx;
-char *file;
-char *path;
+int X509_STORE_load_locations(X509_STORE *ctx, const char *file,
+		const char *path)
 	{
 	X509_LOOKUP *lookup;
 
@@ -94,13 +89,15 @@ char *path;
 		{
 		lookup=X509_STORE_add_lookup(ctx,X509_LOOKUP_file());
 		if (lookup == NULL) return(0);
-		X509_LOOKUP_load_file(lookup,file,X509_FILETYPE_PEM);
+		if (X509_LOOKUP_load_file(lookup,file,X509_FILETYPE_PEM) != 1)
+		    return(0);
 		}
 	if (path != NULL)
 		{
 		lookup=X509_STORE_add_lookup(ctx,X509_LOOKUP_hash_dir());
 		if (lookup == NULL) return(0);
-		X509_LOOKUP_add_dir(lookup,path,X509_FILETYPE_PEM);
+		if (X509_LOOKUP_add_dir(lookup,path,X509_FILETYPE_PEM) != 1)
+		    return(0);
 		}
 	if ((path == NULL) && (file == NULL))
 		return(0);

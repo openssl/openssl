@@ -56,61 +56,91 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "bio.h"
-#include "x509.h"
-#include "pem.h"
+#include <string.h>
+#include <openssl/bio.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
 
-main(argc,argv)
+int main(argc,argv)
 int argc;
 char *argv[];
 	{
 	X509 *x509;
-	EVP_PKEY *pkey;
 	PKCS7 *p7;
-	PKCS7 *p7_data;
-	PKCS7_SIGNER_INFO *si;
 	BIO *in;
 	BIO *data,*p7bio;
 	char buf[1024*4];
-	int i,j;
+	int i;
 	int nodetach=1;
+	char *keyfile = NULL;
+	const EVP_CIPHER *cipher=NULL;
+	STACK_OF(X509) *recips=NULL;
 
-	EVP_add_digest(EVP_sha1());
-	EVP_add_cipher(EVP_des_ede3_cbc());
+	OpenSSL_add_all_algorithms();
 
 	data=BIO_new(BIO_s_file());
-again:
-	if (argc > 1)
+	while(argc > 1)
 		{
 		if (strcmp(argv[1],"-nd") == 0)
 			{
 			nodetach=1;
 			argv++; argc--;
-			goto again;
 			}
-		if (!BIO_read_filename(data,argv[1]))
-			goto err;
-		}
-	else
-		BIO_set_fp(data,stdin,BIO_NOCLOSE);
+		else if ((strcmp(argv[1],"-c") == 0) && (argc >= 2)) {
+			if(!(cipher = EVP_get_cipherbyname(argv[2]))) {
+				fprintf(stderr, "Unknown cipher %s\n", argv[2]);
+				goto err;
+			}
+			argc-=2;
+			argv+=2;
+		} else if ((strcmp(argv[1],"-k") == 0) && (argc >= 2)) {
+			keyfile = argv[2];
+			argc-=2;
+			argv+=2;
+			if (!(in=BIO_new_file(keyfile,"r"))) goto err;
+			if (!(x509=PEM_read_bio_X509(in,NULL,NULL,NULL)))
+				goto err;
+			if(!recips) recips = sk_X509_new_null();
+			sk_X509_push(recips, x509);
+			BIO_free(in);
+		} else break;
+	}
 
-	if ((in=BIO_new_file("server.pem","r")) == NULL) goto err;
-	if ((x509=PEM_read_bio_X509(in,NULL,NULL)) == NULL) goto err;
+	if(!recips) {
+		fprintf(stderr, "No recipients\n");
+		goto err;
+	}
+
+	if (!BIO_read_filename(data,argv[1])) goto err;
+
+	p7=PKCS7_new();
+#if 0
 	BIO_reset(in);
 	if ((pkey=PEM_read_bio_PrivateKey(in,NULL,NULL)) == NULL) goto err;
 	BIO_free(in);
-
-	p7=PKCS7_new();
 	PKCS7_set_type(p7,NID_pkcs7_signedAndEnveloped);
 	 
 	if (PKCS7_add_signature(p7,x509,pkey,EVP_sha1()) == NULL) goto err;
-
-	if (!PKCS7_set_cipher(p7,EVP_des_ede3_cbc())) goto err;
-	if (PKCS7_add_recipient(p7,x509) == NULL) goto err;
-
 	/* we may want to add more */
 	PKCS7_add_certificate(p7,x509);
+#else
+	PKCS7_set_type(p7,NID_pkcs7_enveloped);
+#endif
+	if(!cipher)	{
+#ifndef OPENSSL_NO_DES
+		cipher = EVP_des_ede3_cbc();
+#else
+		fprintf(stderr, "No cipher selected\n");
+		goto err;
+#endif
+	}
 
+	if (!PKCS7_set_cipher(p7,cipher)) goto err;
+	for(i = 0; i < sk_X509_num(recips); i++) {
+		if (!PKCS7_add_recipient(p7,sk_X509_value(recips, i))) goto err;
+	}
+	sk_X509_pop_free(recips, X509_free);
 
 	/* Set the content of the signed to 'data' */
 	/* PKCS7_content_new(p7,NID_pkcs7_data); not used in envelope */

@@ -1,11 +1,18 @@
 #!/bin/sh
 
 SH="/bin/sh"
-PATH=../apps:$PATH
+if test "$OSTYPE" = msdosdjgpp; then
+    PATH=./apps\;../apps\;$PATH
+else
+    PATH=../apps:$PATH
+fi
 export SH PATH
 
 SSLEAY_CONFIG="-config CAss.cnf"
 export SSLEAY_CONFIG
+
+OPENSSL="`pwd`/../util/shlib_wrap.sh openssl"
+export OPENSSL
 
 /bin/rm -fr demoCA
 $SH ../apps/CA.sh -newca <<EOF
@@ -23,7 +30,7 @@ if [ $? != 0 ]; then
 fi
 
 
-SSLEAY_CONFIG="-config ../apps/ssleay.cnf"
+SSLEAY_CONFIG="-config ../apps/openssl.cnf"
 export SSLEAY_CONFIG
 $SH ../apps/CA.sh -sign  <<EOF
 y

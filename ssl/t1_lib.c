@@ -57,16 +57,12 @@
  */
 
 #include <stdio.h>
-#include "objects.h"
+#include <openssl/objects.h>
 #include "ssl_locl.h"
 
-char *tls1_version_str="TLSv1 part of SSLeay 0.9.1a 06-Jul-1998";
+const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
 
-#ifndef NO_PROTO
 static long tls1_default_timeout(void);
-#else
-static long tls1_default_timeout();
-#endif
 
 static SSL3_ENC_METHOD TLSv1_enc_data={
 	tls1_enc,
@@ -105,47 +101,48 @@ static SSL_METHOD TLSv1_data= {
 	ssl_bad_method,
 	tls1_default_timeout,
 	&TLSv1_enc_data,
+	ssl_undefined_function,
+	ssl3_callback_ctrl,
+	ssl3_ctx_callback_ctrl,
 	};
 
-static long tls1_default_timeout()
+static long tls1_default_timeout(void)
 	{
 	/* 2 hours, the 24 hours mentioned in the TLSv1 spec
 	 * is way too long for http, the cache would over fill */
 	return(60*60*2);
 	}
 
-SSL_METHOD *tlsv1_base_method()
+SSL_METHOD *tlsv1_base_method(void)
 	{
 	return(&TLSv1_data);
 	}
 
-int tls1_new(s)
-SSL *s;
+int tls1_new(SSL *s)
 	{
 	if (!ssl3_new(s)) return(0);
 	s->method->ssl_clear(s);
 	return(1);
 	}
 
-void tls1_free(s)
-SSL *s;
+void tls1_free(SSL *s)
 	{
 	ssl3_free(s);
 	}
 
-void tls1_clear(s)
-SSL *s;
+void tls1_clear(SSL *s)
 	{
 	ssl3_clear(s);
 	s->version=TLS1_VERSION;
 	}
 
 #if 0
-long tls1_ctrl(s,cmd,larg,parg)
-SSL *s;
-int cmd;
-long larg;
-char *parg;
+long tls1_ctrl(SSL *s, int cmd, long larg, char *parg)
+	{
+	return(0);
+	}
+
+long tls1_callback_ctrl(SSL *s, int cmd, void *(*fp)())
 	{
 	return(0);
 	}

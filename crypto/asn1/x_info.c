@@ -58,15 +58,15 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "asn1_mac.h"
-#include "x509.h"
+#include <openssl/evp.h>
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
 
-X509_INFO *X509_INFO_new()
+X509_INFO *X509_INFO_new(void)
 	{
 	X509_INFO *ret=NULL;
 
-	ret=(X509_INFO *)Malloc(sizeof(X509_INFO));
+	ret=(X509_INFO *)OPENSSL_malloc(sizeof(X509_INFO));
 	if (ret == NULL)
 		{
 		ASN1err(ASN1_F_X509_INFO_NEW,ERR_R_MALLOC_FAILURE);
@@ -84,8 +84,7 @@ X509_INFO *X509_INFO_new()
 	return(ret);
 	}
 
-void X509_INFO_free(x)
-X509_INFO *x;
+void X509_INFO_free(X509_INFO *x)
 	{
 	int i;
 
@@ -107,5 +106,9 @@ X509_INFO *x;
 	if (x->x509 != NULL) X509_free(x->x509);
 	if (x->crl != NULL) X509_CRL_free(x->crl);
 	if (x->x_pkey != NULL) X509_PKEY_free(x->x_pkey);
-	Free((char *)x);
+	if (x->enc_data != NULL) OPENSSL_free(x->enc_data);
+	OPENSSL_free(x);
 	}
+
+IMPLEMENT_STACK_OF(X509_INFO)
+

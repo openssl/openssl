@@ -58,26 +58,22 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1.h"
-#include "asn1_mac.h"
+#include <openssl/asn1.h>
+#include <openssl/asn1_mac.h>
 
-int ASN1_TYPE_set_octetstring(a,data,len)
-ASN1_TYPE *a;
-unsigned char *data;
-int len;
+int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
 	{
 	ASN1_STRING *os;
 
-	if ((os=ASN1_OCTET_STRING_new()) == NULL) return(0);
-	if (!ASN1_OCTET_STRING_set(os,data,len)) return(0);
-	ASN1_TYPE_set(a,V_ASN1_OCTET_STRING,(char *)os);
+	if ((os=M_ASN1_OCTET_STRING_new()) == NULL) return(0);
+	if (!M_ASN1_OCTET_STRING_set(os,data,len)) return(0);
+	ASN1_TYPE_set(a,V_ASN1_OCTET_STRING,os);
 	return(1);
 	}
 
-int ASN1_TYPE_get_octetstring(a,data,max_len)
-ASN1_TYPE *a;
-unsigned char *data;
-int max_len; /* for returned value */
+/* int max_len:  for returned value    */
+int ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data,
+	     int max_len)
 	{
 	int ret,num;
 	unsigned char *p;
@@ -87,8 +83,8 @@ int max_len; /* for returned value */
 		ASN1err(ASN1_F_ASN1_TYPE_GET_OCTETSTRING,ASN1_R_DATA_IS_WRONG);
 		return(-1);
 		}
-	p=ASN1_STRING_data(a->value.octet_string);
-	ret=ASN1_STRING_length(a->value.octet_string);
+	p=M_ASN1_STRING_data(a->value.octet_string);
+	ret=M_ASN1_STRING_length(a->value.octet_string);
 	if (ret < max_len)
 		num=ret;
 	else
@@ -97,11 +93,8 @@ int max_len; /* for returned value */
 	return(ret);
 	}
 
-int ASN1_TYPE_set_int_octetstring(a,num,data,len)
-ASN1_TYPE *a;
-long num;
-unsigned char *data;
-int len;
+int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
+	     int len)
 	{
 	int n,size;
 	ASN1_OCTET_STRING os,*osp;
@@ -122,26 +115,28 @@ int len;
 
 	if ((osp=ASN1_STRING_new()) == NULL) return(0);
 	/* Grow the 'string' */
-	ASN1_STRING_set(osp,NULL,size);
+	if (!ASN1_STRING_set(osp,NULL,size))
+		{
+		ASN1_STRING_free(osp);
+		return(0);
+		}
 
-	ASN1_STRING_length(osp)=size;
-	p=ASN1_STRING_data(osp);
+	M_ASN1_STRING_length_set(osp, size);
+	p=M_ASN1_STRING_data(osp);
 
 	ASN1_put_object(&p,1,n,V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL);
 	  i2d_ASN1_INTEGER(&in,&p);
 	M_i2d_ASN1_OCTET_STRING(&os,&p);
 
-	ASN1_TYPE_set(a,V_ASN1_SEQUENCE,(char *)osp);
+	ASN1_TYPE_set(a,V_ASN1_SEQUENCE,osp);
 	return(1);
 	}
 
 /* we return the actual length..., num may be missing, in which
  * case, set it to zero */
-int ASN1_TYPE_get_int_octetstring(a,num,data,max_len)
-ASN1_TYPE *a;
-long *num;
-unsigned char *data;
-int max_len; /* for returned value */
+/* int max_len:  for returned value    */
+int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
+	     int max_len)
 	{
 	int ret= -1,n;
 	ASN1_INTEGER *ai=NULL;
@@ -154,8 +149,8 @@ int max_len; /* for returned value */
 		{
 		goto err;
 		}
-	p=ASN1_STRING_data(a->value.sequence);
-	length=ASN1_STRING_length(a->value.sequence);
+	p=M_ASN1_STRING_data(a->value.sequence);
+	length=M_ASN1_STRING_length(a->value.sequence);
 
 	c.pp= &p;
 	c.p=p;
@@ -174,21 +169,21 @@ int max_len; /* for returned value */
 	if (num != NULL)
 		*num=ASN1_INTEGER_get(ai);
 
-	ret=ASN1_STRING_length(os);
+	ret=M_ASN1_STRING_length(os);
 	if (max_len > ret)
 		n=ret;
 	else
 		n=max_len;
 
 	if (data != NULL)
-		memcpy(data,ASN1_STRING_data(os),n);
+		memcpy(data,M_ASN1_STRING_data(os),n);
 	if (0)
 		{
 err:
 		ASN1err(ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING,ASN1_R_DATA_IS_WRONG);
 		}
-	if (os != NULL) ASN1_OCTET_STRING_free(os);
-	if (ai != NULL) ASN1_INTEGER_free(ai);
+	if (os != NULL) M_ASN1_OCTET_STRING_free(os);
+	if (ai != NULL) M_ASN1_INTEGER_free(ai);
 	return(ret);
 	}
 

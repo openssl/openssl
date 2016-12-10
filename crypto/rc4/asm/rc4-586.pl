@@ -1,16 +1,37 @@
 #!/usr/local/bin/perl
 
-# define for pentium pro friendly version
+# At some point it became apparent that the original SSLeay RC4
+# assembler implementation performs suboptimaly on latest IA-32
+# microarchitectures. After re-tuning performance has changed as
+# following:
+#
+# Pentium	+0%
+# Pentium III	+17%
+# AMD		+52%(*)
+# P4		+180%(**)
+#
+# (*)	This number is actually a trade-off:-) It's possible to
+#	achieve	+72%, but at the cost of -48% off PIII performance.
+#	In other words code performing further 13% faster on AMD
+#	would perform almost 2 times slower on Intel PIII...
+#	For reference! This code delivers ~80% of rc4-amd64.pl
+#	performance on the same Opteron machine.
+# (**)	This number requires compressed key schedule set up by
+#	RC4_set_key and therefore doesn't apply to 0.9.7 [option for
+#	compressed key schedule is implemented in 0.9.8 and later,
+#	see commentary section in rc4_skey.c for further details].
+#
+#					<appro@fy.chalmers.se>
 
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],"rc4-586.pl");
 
-$tx="eax";
-$ty="ebx";
-$x="ecx";
-$y="edx";
+$x="eax";
+$y="ebx";
+$tx="ecx";
+$ty="edx";
 $in="esi";
 $out="edi";
 $d="ebp";
@@ -31,7 +52,7 @@ sub RC4_loop
 			{
 			 &mov($ty,	&swtmp(2));
 			&cmp($ty,	$in);
-			 &jle(&label("finished"));
+			 &jbe(&label("finished"));
 			&inc($in);
 			}
 		else
@@ -39,27 +60,23 @@ sub RC4_loop
 			&add($ty,	8);
 			 &inc($in);
 			&cmp($ty,	$in);
-			 &jl(&label("finished"));
+			 &jb(&label("finished"));
 			&mov(&swtmp(2),	$ty);
 			}
 		}
 	# Moved out
 	# &mov(	$tx,		&DWP(0,$d,$x,4)) if $p < 0;
 
-	 &add(	$y,		$tx);
-	&and(	$y,		0xff);
-	 &inc(	$x);			# NEXT ROUND 
+	&add(	&LB($y),	&LB($tx));
 	&mov(	$ty,		&DWP(0,$d,$y,4));
 	 # XXX
-	&mov(	&DWP(-4,$d,$x,4),$ty);			# AGI
+	&mov(	&DWP(0,$d,$x,4),$ty);
 	 &add(	$ty,		$tx);
-	&and(	$x,		0xff);	# NEXT ROUND
-	 &and(	$ty,		0xff);
 	&mov(	&DWP(0,$d,$y,4),$tx);
-	 &nop();
-	&mov(	$ty,		&DWP(0,$d,$ty,4));
-	 &mov(	$tx,		&DWP(0,$d,$x,4)) if $p < 1; # NEXT ROUND
-	 # XXX
+	 &and(	$ty,		0xff);
+	 &inc(	&LB($x));			# NEXT ROUND
+	&mov(	$tx,		&DWP(0,$d,$x,4)) if $p < 1; # NEXT ROUND
+	 &mov(	$ty,		&DWP(0,$d,$ty,4));
 
 	if (!$char)
 		{
@@ -88,35 +105,47 @@ sub RC4
 
 	&function_begin_B($name,"");
 
+	&mov($ty,&wparam(1));		# len
+	&cmp($ty,0);
+	&jne(&label("proceed"));
+	&ret();
+	&set_label("proceed");
+
 	&comment("");
 
 	&push("ebp");
 	 &push("ebx");
-	&mov(	$d,	&wparam(0));	# key
-	 &mov(	$ty,	&wparam(1));	# num
 	&push("esi");
-	 &push("edi");
+	 &xor(	$x,	$x);		# avoid partial register stalls
+	&push("edi");
+	 &xor(	$y,	$y);		# avoid partial register stalls
+	&mov(	$d,	&wparam(0));	# key
+	 &mov(	$in,	&wparam(2));
 
-	&mov(	$x,	&DWP(0,$d,"",1));
-	 &mov(	$y,	&DWP(4,$d,"",1));
+	&movb(	&LB($x),	&BP(0,$d,"",1));
+	 &movb(	&LB($y),	&BP(4,$d,"",1));
 
-	&mov(	$in,	&wparam(2));
-	 &inc(	$x);
+	&mov(	$out,	&wparam(3));
+	 &inc(	&LB($x));
 
 	&stack_push(3);	# 3 temp variables
 	 &add(	$d,	8);
-	&and(	$x,		0xff);
+
+	# detect compressed schedule, see commentary section in rc4_skey.c...
+	# in 0.9.7 context ~50 bytes below RC4_CHAR label remain redundant,
+	# as compressed key schedule is set up in 0.9.8 and later.
+	&cmp(&DWP(256,$d),-1);
+	&je(&label("RC4_CHAR"));
 
 	 &lea(	$ty,	&DWP(-8,$ty,$in));
 
 	# check for 0 length input
 
-	&mov(	$out,	&wparam(3));
 	 &mov(	&swtmp(2),	$ty);	# this is now address to exit at
 	&mov(	$tx,	&DWP(0,$d,$x,4));
 
 	 &cmp(	$ty,	$in);
-	&jl(	&label("end")); # less than 8 bytes
+	&jb(	&label("end")); # less than 8 bytes
 
 	&set_label("start");
 
@@ -148,7 +177,7 @@ sub RC4
 	&mov(	&DWP(-4,$out,"",0),	$tx);
 	 &mov(	$tx,		&DWP(0,$d,$x,4));
 	&cmp($in,	$ty);
-	 &jle(&label("start"));
+	 &jbe(&label("start"));
 
 	&set_label("end");
 
@@ -162,10 +191,37 @@ sub RC4
 	&RC4_loop(5,0,1);
 	&RC4_loop(6,1,1);
 
+	&jmp(&label("finished"));
+
+	&align(16);
+	# this is essentially Intel P4 specific codepath, see rc4_skey.c,
+	# and is engaged in 0.9.8 and later context...
+	&set_label("RC4_CHAR");
+
+	&lea	($ty,&DWP(0,$in,$ty));
+	&mov	(&swtmp(2),$ty);
+
+	# strangely enough unrolled loop performs over 20% slower...
+	&set_label("RC4_CHAR_loop");
+		&movz	($tx,&BP(0,$d,$x));
+		&add	(&LB($y),&LB($tx));
+		&movz	($ty,&BP(0,$d,$y));
+		&movb	(&BP(0,$d,$y),&LB($tx));
+		&movb	(&BP(0,$d,$x),&LB($ty));
+		&add	(&LB($ty),&LB($tx));
+		&movz	($ty,&BP(0,$d,$ty));
+		&xorb	(&LB($ty),&BP(0,$in));
+		&movb	(&BP(0,$out),&LB($ty));
+		&inc	(&LB($x));
+		&inc	($in);
+		&inc	($out);
+		&cmp	($in,&swtmp(2));
+	&jb	(&label("RC4_CHAR_loop"));
+
 	&set_label("finished");
 	&dec(	$x);
 	 &stack_pop(3);
-	&mov(	&DWP(-4,$d,"",0),$y);
+	&movb(	&BP(-4,$d,"",0),&LB($y));
 	 &movb(	&BP(-8,$d,"",0),&LB($x));
 
 	&function_end($name);
