@@ -353,8 +353,7 @@ opthelp:
         case OPT_SIGOPT:
             if (sigopts == NULL)
                 sigopts = sk_OPENSSL_STRING_new_null();
-            if (sigopts == NULL
-                || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
+            if (sigopts == NULL || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
                 goto end;
             break;
         case OPT_NOTEXT:
@@ -418,7 +417,7 @@ opthelp:
         case OPT_CRLEXTS:
             crl_ext = opt_arg();
             break;
-        case OPT_CRL_REASON:        /* := REV_CRL_REASON */
+        case OPT_CRL_REASON:   /* := REV_CRL_REASON */
         case OPT_CRL_HOLD:
         case OPT_CRL_COMPROMISE:
         case OPT_CRL_CA_COMPROMISE:
@@ -706,8 +705,7 @@ end_of_options:
                 goto end;
 
             if (verbose)
-                BIO_printf(bio_err,
-                           "Done. %d entries marked as expired\n", i);
+                BIO_printf(bio_err, "Done. %d entries marked as expired\n", i);
         }
     }
 
@@ -739,8 +737,7 @@ end_of_options:
             goto end;
     }
 
-    if (md == NULL
-        && (md = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL)
+    if (md == NULL && (md = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL)
         goto end;
 
     if (strcmp(md, "default") == 0) {
@@ -808,8 +805,7 @@ end_of_options:
         }
 
         if (startdate == NULL) {
-            startdate = NCONF_get_string(conf, section,
-                                         ENV_DEFAULT_STARTDATE);
+            startdate = NCONF_get_string(conf, section, ENV_DEFAULT_STARTDATE);
             if (startdate == NULL)
                 ERR_clear_error();
         }
@@ -836,9 +832,8 @@ end_of_options:
             if (!NCONF_get_number(conf, section, ENV_DEFAULT_DAYS, &days))
                 days = 0;
         }
-        if (enddate == NULL && (days == 0)) {
-            BIO_printf(bio_err,
-                       "cannot lookup how many days to certify for\n");
+        if (enddate == NULL && days == 0) {
+            BIO_printf(bio_err, "cannot lookup how many days to certify for\n");
             goto end;
         }
 
@@ -969,8 +964,7 @@ end_of_options:
                 (void)BIO_flush(bio_err);
                 tmp[0] = '\0';
                 if (fgets(tmp, sizeof(tmp), stdin) == NULL) {
-                    BIO_printf(bio_err,
-                               "CERTIFICATION CANCELED: I/O error\n");
+                    BIO_printf(bio_err, "CERTIFICATION CANCELED: I/O error\n");
                     ret = 0;
                     goto end;
                 }
@@ -1070,8 +1064,7 @@ end_of_options:
             X509V3_set_nconf(&ctx, conf);
             if (!X509V3_EXT_add_nconf(conf, &ctx, crl_ext, NULL)) {
                 BIO_printf(bio_err,
-                           "Error Loading CRL extension section %s\n",
-                           crl_ext);
+                           "Error Loading CRL extension section %s\n", crl_ext);
                 ret = 1;
                 goto end;
             }
@@ -1387,8 +1380,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                    CONF *lconf, unsigned long certopt, unsigned long nameopt,
                    int default_op, int ext_copy, int selfsign)
 {
-    X509_NAME *name = NULL, *CAname = NULL, *subject = NULL, *dn_subject =
-        NULL;
+    X509_NAME *name = NULL, *CAname = NULL, *subject = NULL, *dn_subject = NULL;
     const ASN1_TIME *tm;
     ASN1_STRING *str, *str2;
     ASN1_OBJECT *obj;
@@ -1418,8 +1410,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     }
 
     if (default_op)
-        BIO_printf(bio_err,
-                   "The Subject's Distinguished Name is as follows\n");
+        BIO_printf(bio_err, "The Subject's Distinguished Name is as follows\n");
 
     name = X509_REQ_get_subject_name(req);
     for (i = 0; i < X509_NAME_entry_count(name); i++) {
@@ -1537,8 +1528,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                 if ((j < 0) && (last2 == -1)) {
                     BIO_printf(bio_err,
                                "The %s field does not exist in the CA certificate,\n"
-                               "the 'policy' is misconfigured\n",
-                               cv->name);
+                               "the 'policy' is misconfigured\n", cv->name);
                     goto end;
                 }
                 if (j >= 0) {
@@ -1882,8 +1872,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     return (ok);
 }
 
-static void write_new_certificate(BIO *bp, X509 *x, int output_der,
-                                  int notext)
+static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 {
 
     if (output_der) {
@@ -1999,8 +1988,7 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
      * Now extract the key from the SPKI structure.
      */
 
-    BIO_printf(bio_err,
-               "Check that the SPKAC request matches the signature\n");
+    BIO_printf(bio_err, "Check that the SPKAC request matches the signature\n");
 
     if ((pktmp = NETSCAPE_SPKI_get_pubkey(spki)) == NULL) {
         BIO_printf(bio_err, "error unpacking SPKAC public key\n");
@@ -2540,8 +2528,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
             hold = OBJ_txt2obj(arg_str, 0);
 
             if (!hold) {
-                BIO_printf(bio_err, "invalid object identifier %s\n",
-                           arg_str);
+                BIO_printf(bio_err, "invalid object identifier %s\n", arg_str);
                 goto end;
             }
             if (phold)
