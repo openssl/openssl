@@ -74,8 +74,8 @@ typedef struct extensions_definition_st {
 
 /*
  * Definitions of all built-in extensions. NOTE: Changes in the number or order
- * of these extensions should be mirrored with equivalent changes to the indexes
- * defined in statem_locl.h.
+ * of these extensions should be mirrored with equivalent changes to the 
+ * indexes ( TLSEXT_IDX_* ) defined in ssl_locl.h.
  * Each extension has an initialiser, a client and
  * server side parser and a finaliser. The initialiser is called (if the
  * extension is relevant to the given context) even if we did not see the
@@ -91,7 +91,7 @@ typedef struct extensions_definition_st {
  * significant.
  * The extension context is defined by a series of flags which specify which
  * messages the extension is relevant to. These flags also specify whether the
- * extension is relevant to a paricular protocol or protocol version.
+ * extension is relevant to a particular protocol or protocol version.
  *
  * TODO(TLS1.3): Make sure we have a test to check the consistency of these
  */
