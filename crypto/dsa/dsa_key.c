@@ -59,16 +59,25 @@
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
-#include "sha.h"
-#include "bn.h"
-#include "dsa.h"
-#include "rand.h"
+#ifndef OPENSSL_NO_SHA
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/rand.h>
 
-int DSA_generate_key(dsa)
-DSA *dsa;
+#ifndef OPENSSL_FIPS
+
+static int dsa_builtin_keygen(DSA *dsa);
+
+int DSA_generate_key(DSA *dsa)
+	{
+	if(dsa->meth->dsa_keygen)
+		return dsa->meth->dsa_keygen(dsa);
+	return dsa_builtin_keygen(dsa);
+	}
+
+static int dsa_builtin_keygen(DSA *dsa)
 	{
 	int ok=0;
-	unsigned int i;
 	BN_CTX *ctx=NULL;
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
 
@@ -81,14 +90,9 @@ DSA *dsa;
 	else
 		priv_key=dsa->priv_key;
 
-	i=BN_num_bits(dsa->q);
-	for (;;)
-		{
-		BN_rand(priv_key,i,1,0);
-		if (BN_cmp(priv_key,dsa->q) >= 0)
-			BN_sub(priv_key,priv_key,dsa->q);
-		if (!BN_is_zero(priv_key)) break;
-		}
+	do
+		if (!BN_rand_range(priv_key,dsa->q)) goto err;
+	while (BN_is_zero(priv_key));
 
 	if (dsa->pub_key == NULL)
 		{
@@ -96,8 +100,22 @@ DSA *dsa;
 		}
 	else
 		pub_key=dsa->pub_key;
+	
+	{
+		BIGNUM local_prk;
+		BIGNUM *prk;
 
-	if (!BN_mod_exp(pub_key,dsa->g,priv_key,dsa->p,ctx)) goto err;
+		if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0)
+			{
+			BN_init(&local_prk);
+			prk = &local_prk;
+			BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
+			}
+		else
+			prk = priv_key;
+
+		if (!BN_mod_exp(pub_key,dsa->g,prk,dsa->p,ctx)) goto err;
+	}
 
 	dsa->priv_key=priv_key;
 	dsa->pub_key=pub_key;
@@ -109,4 +127,6 @@ err:
 	if (ctx != NULL) BN_CTX_free(ctx);
 	return(ok);
 	}
+#endif
 
+#endif

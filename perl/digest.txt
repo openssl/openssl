@@ -1,7 +1,0 @@
-MD::new(name) "md2", "md5" etc
-MD::name()
-MD::init()
-MD::update(in)
-MD::final()
-
-

@@ -56,18 +56,28 @@
  * [including the GNU Public Licence.]
  */
 
-#include "idea.h"
-#include "idea_lcl.h"
-
-#ifndef NOPROTO
-static IDEA_INT inverse(unsigned int xin);
-#else
-static IDEA_INT inverse();
+#include <openssl/idea.h>
+#include <openssl/crypto.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
 #endif
 
-void idea_set_encrypt_key(key, ks)
-unsigned char *key;
-IDEA_KEY_SCHEDULE *ks;
+#include "idea_lcl.h"
+
+static IDEA_INT inverse(unsigned int xin);
+
+#ifdef OPENSSL_FIPS
+void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
+	{
+	if (FIPS_mode())
+		FIPS_BAD_ABORT(IDEA)
+	private_idea_set_encrypt_key(key, ks);
+	}
+void private_idea_set_encrypt_key(const unsigned char *key,
+						IDEA_KEY_SCHEDULE *ks)
+#else
+void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
+#endif
 	{
 	int i;
 	register IDEA_INT *kt,*kf,r0,r1,r2;
@@ -101,12 +111,11 @@ IDEA_KEY_SCHEDULE *ks;
 		}
 	}
 
-void idea_set_decrypt_key(ek, dk)
-IDEA_KEY_SCHEDULE *ek;
-IDEA_KEY_SCHEDULE *dk;
+void idea_set_decrypt_key(const IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
 	{
 	int r;
-	register IDEA_INT *fp,*tp,t;
+	register IDEA_INT *tp,t;
+	const IDEA_INT *fp;
 
 	tp= &(dk->data[0][0]);
 	fp= &(ek->data[8][0]);
@@ -133,8 +142,7 @@ IDEA_KEY_SCHEDULE *dk;
 	}
 
 /* taken directly from the 'paper' I'll have a look at it later */
-static IDEA_INT inverse(xin)
-unsigned int xin;
+static IDEA_INT inverse(unsigned int xin)
 	{
 	long n1,n2,q,r,b1,b2,t;
 

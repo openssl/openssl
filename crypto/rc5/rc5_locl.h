@@ -146,11 +146,31 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-#if defined(WIN32)
+#if (defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)) || defined(__ICC)
 #define ROTATE_l32(a,n)     _lrotl(a,n)
 #define ROTATE_r32(a,n)     _lrotr(a,n)
-#else
+#elif defined(__GNUC__) && __GNUC__>=2 && !defined(__STRICT_ANSI__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) && !defined(PEDANTIC)
+# if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
+#  define ROTATE_l32(a,n)	({ register unsigned int ret;	\
+					asm ("roll %%cl,%0"	\
+						: "=r"(ret)	\
+						: "c"(n),"0"(a)	\
+						: "cc");	\
+					ret;			\
+				})
+#  define ROTATE_r32(a,n)	({ register unsigned int ret;	\
+					asm ("rorl %%cl,%0"	\
+						: "=r"(ret)	\
+						: "c"(n),"0"(a)	\
+						: "cc");	\
+					ret;			\
+				})
+# endif
+#endif
+#ifndef ROTATE_l32
 #define ROTATE_l32(a,n)     (((a)<<(n&0x1f))|(((a)&0xffffffff)>>(32-(n&0x1f))))
+#endif
+#ifndef ROTATE_r32
 #define ROTATE_r32(a,n)     (((a)<<(32-(n&0x1f)))|(((a)&0xffffffff)>>(n&0x1f)))
 #endif
 

@@ -1,6 +1,10 @@
 /* cli.cpp  -  Minimal ssleay client for Unix
    30.9.1996, Sampo Kellomaki <sampo@iki.fi> */
 
+/* mangled to work with SSLeay-0.9.0b and OpenSSL 0.9.2b
+   Simplified to be even more minimal
+   12/98 - 4/99 Wade Scholine <wades@mail.cybg.com> */
+
 #include <stdio.h>
 #include <memory.h>
 #include <errno.h>
@@ -10,12 +14,12 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include "rsa.h"       /* SSLeay stuff */
-#include "crypto.h"
-#include "x509.h"
-#include "pem.h"
-#include "ssl.h"
-#include "err.h"
+#include <openssl/crypto.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 
 #define CHK_NULL(x) if ((x)==NULL) exit (1)
 #define CHK_ERR(err,s) if ((err)==-1) { perror(s); exit(1); }
@@ -31,9 +35,14 @@ void main ()
   X509*    server_cert;
   char*    str;
   char     buf [4096];
+  SSL_METHOD *meth;
 
+  SSLeay_add_ssl_algorithms();
+  meth = SSLv2_client_method();
   SSL_load_error_strings();
-  ctx = SSL_CTX_new ();                        CHK_NULL(ctx);
+  ctx = SSL_CTX_new (meth);                        CHK_NULL(ctx);
+
+  CHK_SSL(err);
   
   /* ----------------------------------------------- */
   /* Create a socket and connect to server using normal socket calls. */
@@ -67,15 +76,15 @@ void main ()
   server_cert = SSL_get_peer_certificate (ssl);       CHK_NULL(server_cert);
   printf ("Server certificate:\n");
   
-  str = X509_NAME_oneline (X509_get_subject_name (server_cert));
+  str = X509_NAME_oneline (X509_get_subject_name (server_cert),0,0);
   CHK_NULL(str);
   printf ("\t subject: %s\n", str);
-  Free (str);
+  OPENSSL_free (str);
 
-  str = X509_NAME_oneline (X509_get_issuer_name  (server_cert));
+  str = X509_NAME_oneline (X509_get_issuer_name  (server_cert),0,0);
   CHK_NULL(str);
   printf ("\t issuer: %s\n", str);
-  Free (str);
+  OPENSSL_free (str);
 
   /* We could do all sorts of certificate verification stuff here before
      deallocating the certificate. */
@@ -87,11 +96,10 @@ void main ()
 
   err = SSL_write (ssl, "Hello World!", strlen("Hello World!"));  CHK_SSL(err);
   
-  shutdown (sd, 1);  /* Half close, send EOF to server. */
-  
   err = SSL_read (ssl, buf, sizeof(buf) - 1);                     CHK_SSL(err);
   buf[err] = '\0';
   printf ("Got %d chars:'%s'\n", err, buf);
+  SSL_shutdown (ssl);  /* send SSL/TLS close_notify */
 
   /* Clean up. */
 

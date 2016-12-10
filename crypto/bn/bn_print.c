@@ -59,20 +59,19 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "cryptlib.h"
-#include "buffer.h"
+#include <openssl/buffer.h>
 #include "bn_lcl.h"
 
-static char *Hex="0123456789ABCDEF";
+static const char Hex[]="0123456789ABCDEF";
 
-/* Must 'Free' the returned data */
-char *BN_bn2hex(a)
-BIGNUM *a;
+/* Must 'OPENSSL_free' the returned data */
+char *BN_bn2hex(const BIGNUM *a)
 	{
 	int i,j,v,z=0;
 	char *buf;
 	char *p;
 
-	buf=(char *)Malloc(a->top*BN_BYTES*2+2);
+	buf=(char *)OPENSSL_malloc(a->top*BN_BYTES*2+2);
 	if (buf == NULL)
 		{
 		BNerr(BN_F_BN_BN2HEX,ERR_R_MALLOC_FAILURE);
@@ -80,7 +79,7 @@ BIGNUM *a;
 		}
 	p=buf;
 	if (a->neg) *(p++)='-';
-	if (a->top == 0) *(p++)='0';
+	if (BN_is_zero(a)) *(p++)='0';
 	for (i=a->top-1; i >=0; i--)
 		{
 		for (j=BN_BITS2-8; j >= 0; j-=8)
@@ -100,20 +99,24 @@ err:
 	return(buf);
 	}
 
-/* Must 'Free' the returned data */
-char *BN_bn2dec(a)
-BIGNUM *a;
+/* Must 'OPENSSL_free' the returned data */
+char *BN_bn2dec(const BIGNUM *a)
 	{
-	int i=0,num;
+	int i=0,num, ok = 0;
 	char *buf=NULL;
 	char *p;
 	BIGNUM *t=NULL;
 	BN_ULONG *bn_data=NULL,*lp;
 
+	/* get an upper bound for the length of the decimal integer
+	 * num <= (BN_num_bits(a) + 1) * log(2)
+	 *     <= 3 * BN_num_bits(a) * 0.1001 + log(2) + 1     (rounding error)
+	 *     <= BN_num_bits(a)/10 + BN_num_bits/1000 + 1 + 1 
+	 */
 	i=BN_num_bits(a)*3;
-	num=(i/10+i/1000+3)+1;
-	bn_data=(BN_ULONG *)Malloc((num/BN_DEC_NUM+1)*sizeof(BN_ULONG));
-	buf=(char *)Malloc(num+3);
+	num=(i/10+i/1000+1)+1;
+	bn_data=(BN_ULONG *)OPENSSL_malloc((num/BN_DEC_NUM+1)*sizeof(BN_ULONG));
+	buf=(char *)OPENSSL_malloc(num+3);
 	if ((buf == NULL) || (bn_data == NULL))
 		{
 		BNerr(BN_F_BN_BN2DEC,ERR_R_MALLOC_FAILURE);
@@ -121,16 +124,19 @@ BIGNUM *a;
 		}
 	if ((t=BN_dup(a)) == NULL) goto err;
 
+#define BUF_REMAIN (num+3 - (size_t)(p - buf))
 	p=buf;
 	lp=bn_data;
-	if (t->neg) *(p++)='-';
-	if (t->top == 0)
+	if (BN_is_zero(t))
 		{
 		*(p++)='0';
 		*(p++)='\0';
 		}
 	else
 		{
+		if (BN_is_negative(t))
+			*p++ = '-';
+
 		i=0;
 		while (!BN_is_zero(t))
 			{
@@ -139,26 +145,31 @@ BIGNUM *a;
 			}
 		lp--;
 		/* We now have a series of blocks, BN_DEC_NUM chars
-		 * in length, where the last one needs trucation.
+		 * in length, where the last one needs truncation.
 		 * The blocks need to be reversed in order. */
-		sprintf(p,BN_DEC_FMT1,*lp);
+		BIO_snprintf(p,BUF_REMAIN,BN_DEC_FMT1,*lp);
 		while (*p) p++;
 		while (lp != bn_data)
 			{
 			lp--;
-			sprintf(p,BN_DEC_FMT2,*lp);
+			BIO_snprintf(p,BUF_REMAIN,BN_DEC_FMT2,*lp);
 			while (*p) p++;
 			}
 		}
+	ok = 1;
 err:
-	if (bn_data != NULL) Free(bn_data);
+	if (bn_data != NULL) OPENSSL_free(bn_data);
 	if (t != NULL) BN_free(t);
+	if (!ok && buf)
+		{
+		OPENSSL_free(buf);
+		buf = NULL;
+		}
+
 	return(buf);
 	}
 
-int BN_hex2bn(bn,a)
-BIGNUM **bn;
-char *a;
+int BN_hex2bn(BIGNUM **bn, const char *a)
 	{
 	BIGNUM *ret=NULL;
 	BN_ULONG l=0;
@@ -169,13 +180,13 @@ char *a;
 
 	if (*a == '-') { neg=1; a++; }
 
-	for (i=0; isxdigit(a[i]); i++)
+	for (i=0; isxdigit((unsigned char) a[i]); i++)
 		;
 
 	num=i+neg;
 	if (bn == NULL) return(num);
 
-	/* a is the start of the hex digets, and it is 'i' long */
+	/* a is the start of the hex digits, and it is 'i' long */
 	if (*bn == NULL)
 		{
 		if ((ret=BN_new()) == NULL) return(0);
@@ -189,7 +200,7 @@ char *a;
 	/* i is the number of hex digests; */
 	if (bn_expand(ret,i*4) == NULL) goto err;
 
-	j=i; /* least significate 'hex' */
+	j=i; /* least significant 'hex' */
 	m=0;
 	h=0;
 	while (j > 0)
@@ -214,19 +225,18 @@ char *a;
 		j-=(BN_BYTES*2);
 		}
 	ret->top=h;
-	bn_fix_top(ret);
+	bn_correct_top(ret);
 	ret->neg=neg;
 
 	*bn=ret;
+	bn_check_top(ret);
 	return(num);
 err:
 	if (*bn == NULL) BN_free(ret);
 	return(0);
 	}
 
-int BN_dec2bn(bn,a)
-BIGNUM **bn;
-char *a;
+int BN_dec2bn(BIGNUM **bn, const char *a)
 	{
 	BIGNUM *ret=NULL;
 	BN_ULONG l=0;
@@ -236,14 +246,14 @@ char *a;
 	if ((a == NULL) || (*a == '\0')) return(0);
 	if (*a == '-') { neg=1; a++; }
 
-	for (i=0; isdigit(a[i]); i++)
+	for (i=0; isdigit((unsigned char) a[i]); i++)
 		;
 
 	num=i+neg;
 	if (bn == NULL) return(num);
 
-	/* a is the start of the digets, and it is 'i' long.
-	 * We chop it into BN_DEC_NUM digets at a time */
+	/* a is the start of the digits, and it is 'i' long.
+	 * We chop it into BN_DEC_NUM digits at a time */
 	if (*bn == NULL)
 		{
 		if ((ret=BN_new()) == NULL) return(0);
@@ -275,20 +285,18 @@ char *a;
 		}
 	ret->neg=neg;
 
-	bn_fix_top(ret);
+	bn_correct_top(ret);
 	*bn=ret;
+	bn_check_top(ret);
 	return(num);
 err:
 	if (*bn == NULL) BN_free(ret);
 	return(0);
 	}
 
-#ifndef NO_BIO
-
-#ifndef NO_FP_API
-int BN_print_fp(fp, a)
-FILE *fp;
-BIGNUM *a;
+#ifndef OPENSSL_NO_BIO
+#ifndef OPENSSL_NO_FP_API
+int BN_print_fp(FILE *fp, const BIGNUM *a)
 	{
 	BIO *b;
 	int ret;
@@ -302,15 +310,13 @@ BIGNUM *a;
 	}
 #endif
 
-int BN_print(bp, a)
-BIO *bp;
-BIGNUM *a;
+int BN_print(BIO *bp, const BIGNUM *a)
 	{
 	int i,j,v,z=0;
 	int ret=0;
 
 	if ((a->neg) && (BIO_write(bp,"-",1) != 1)) goto end;
-	if ((a->top == 0) && (BIO_write(bp,"0",1) != 1)) goto end;
+	if (BN_is_zero(a) && (BIO_write(bp,"0",1) != 1)) goto end;
 	for (i=a->top-1; i >=0; i--)
 		{
 		for (j=BN_BITS2-4; j >= 0; j-=4)
@@ -329,5 +335,4 @@ BIGNUM *a;
 end:
 	return(ret);
 	}
-
 #endif

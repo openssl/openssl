@@ -59,26 +59,15 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "bio.h"
+#include <openssl/bio.h>
 
-#ifndef NOPROTO
-static int null_write(BIO *h,char *buf,int num);
-static int null_read(BIO *h,char *buf,int size);
-static int null_puts(BIO *h,char *str);
-static int null_gets(BIO *h,char *str,int size);
-static long null_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int null_write(BIO *h, const char *buf, int num);
+static int null_read(BIO *h, char *buf, int size);
+static int null_puts(BIO *h, const char *str);
+static int null_gets(BIO *h, char *str, int size);
+static long null_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int null_new(BIO *h);
 static int null_free(BIO *data);
-#else
-static int null_write();
-static int null_read();
-static int null_puts();
-static int null_gets();
-static long null_ctrl();
-static int null_new();
-static int null_free();
-#endif
-
 static BIO_METHOD null_method=
 	{
 	BIO_TYPE_NULL,
@@ -90,15 +79,15 @@ static BIO_METHOD null_method=
 	null_ctrl,
 	null_new,
 	null_free,
+	NULL,
 	};
 
-BIO_METHOD *BIO_s_null()
+BIO_METHOD *BIO_s_null(void)
 	{
 	return(&null_method);
 	}
 
-static int null_new(bi)
-BIO *bi;
+static int null_new(BIO *bi)
 	{
 	bi->init=1;
 	bi->num=0;
@@ -106,34 +95,23 @@ BIO *bi;
 	return(1);
 	}
 
-static int null_free(a)
-BIO *a;
+static int null_free(BIO *a)
 	{
 	if (a == NULL) return(0);
 	return(1);
 	}
 	
-static int null_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int null_read(BIO *b, char *out, int outl)
 	{
 	return(0);
 	}
 
-static int null_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int null_write(BIO *b, const char *in, int inl)
 	{
 	return(inl);
 	}
 
-static long null_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	long ret=1;
 
@@ -159,17 +137,12 @@ char *ptr;
 	return(ret);
 	}
 
-static int null_gets(bp,buf,size)
-BIO *bp;
-char *buf;
-int size;
+static int null_gets(BIO *bp, char *buf, int size)
 	{
 	return(0);
 	}
 
-static int null_puts(bp,str)
-BIO *bp;
-char *str;
+static int null_puts(BIO *bp, const char *str)
 	{
 	if (str == NULL) return(0);
 	return(strlen(str));

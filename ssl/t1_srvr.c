@@ -57,15 +57,15 @@
  */
 
 #include <stdio.h>
-#include "buffer.h"
-#include "rand.h"
-#include "objects.h"
-#include "evp.h"
-#include "x509.h"
 #include "ssl_locl.h"
+#include <openssl/buffer.h>
+#include <openssl/rand.h>
+#include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
 
-static SSL_METHOD *tls1_get_server_method(ver)
-int ver;
+static SSL_METHOD *tls1_get_server_method(int ver);
+static SSL_METHOD *tls1_get_server_method(int ver)
 	{
 	if (ver == TLS1_VERSION)
 		return(TLSv1_server_method());
@@ -73,19 +73,8 @@ int ver;
 		return(NULL);
 	}
 
-SSL_METHOD *TLSv1_server_method()
-	{
-	static int init=1;
-	static SSL_METHOD TLSv1_server_data;
-
-	if (init)
-		{
-		init=0;
-		memcpy((char *)&TLSv1_server_data,(char *)tlsv1_base_method(),
-			sizeof(SSL_METHOD));
-		TLSv1_server_data.ssl_accept=ssl3_accept;
-		TLSv1_server_data.get_ssl_method=tls1_get_server_method;
-		}
-	return(&TLSv1_server_data);
-	}
+IMPLEMENT_tls1_meth_func(TLSv1_server_method,
+			ssl3_accept,
+			ssl_undefined_function,
+			tls1_get_server_method)
 

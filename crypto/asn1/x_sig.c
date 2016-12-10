@@ -58,63 +58,12 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "asn1_mac.h"
+#include <openssl/asn1t.h>
+#include <openssl/x509.h>
 
-/*
- * ASN1err(ASN1_F_D2I_X509_SIG,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_SIG_NEW,ERR_R_ASN1_LENGTH_MISMATCH);
- */
+ASN1_SEQUENCE(X509_SIG) = {
+	ASN1_SIMPLE(X509_SIG, algor, X509_ALGOR),
+	ASN1_SIMPLE(X509_SIG, digest, ASN1_OCTET_STRING)
+} ASN1_SEQUENCE_END(X509_SIG)
 
-int i2d_X509_SIG(a,pp)
-X509_SIG *a;
-unsigned char **pp;
-	{
-	M_ASN1_I2D_vars(a);
-
-	M_ASN1_I2D_len(a->algor,	i2d_X509_ALGOR);
-	M_ASN1_I2D_len(a->digest,	i2d_ASN1_OCTET_STRING);
-
-	M_ASN1_I2D_seq_total();
-
-	M_ASN1_I2D_put(a->algor,	i2d_X509_ALGOR);
-	M_ASN1_I2D_put(a->digest,	i2d_ASN1_OCTET_STRING);
-
-	M_ASN1_I2D_finish();
-	}
-
-X509_SIG *d2i_X509_SIG(a,pp,length)
-X509_SIG **a;
-unsigned char **pp;
-long length;
-	{
-	M_ASN1_D2I_vars(a,X509_SIG *,X509_SIG_new);
-
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->algor,d2i_X509_ALGOR);
-	M_ASN1_D2I_get(ret->digest,d2i_ASN1_OCTET_STRING);
-	M_ASN1_D2I_Finish(a,X509_SIG_free,ASN1_F_D2I_X509_SIG);
-	}
-
-X509_SIG *X509_SIG_new()
-	{
-	X509_SIG *ret=NULL;
-	ASN1_CTX c;
-
-	M_ASN1_New_Malloc(ret,X509_SIG);
-	M_ASN1_New(ret->algor,X509_ALGOR_new);
-	M_ASN1_New(ret->digest,ASN1_OCTET_STRING_new);
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_X509_SIG_NEW);
-	}
-
-void X509_SIG_free(a)
-X509_SIG *a;
-	{
-	if (a == NULL) return;
-	X509_ALGOR_free(a->algor);
-	ASN1_OCTET_STRING_free(a->digest);
-	Free((char *)a);
-	}
-
-
+IMPLEMENT_ASN1_FUNCTIONS(X509_SIG)

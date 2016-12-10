@@ -1,9 +1,16 @@
 /* NOCW */
 #include <stdio.h>
+#ifdef _OSD_POSIX
+#ifndef CHARSET_EBCDIC
+#define CHARSET_EBCDIC 1
+#endif
+#endif
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
 
-/* This version of crypt has been developed from my MIT compatable
+/* This version of crypt has been developed from my MIT compatible
  * DES library.
- * The library is available at pub/Crypto/DES at ftp.psy.uq.oz.au
  * Eric Young (eay@cryptsoft.com)
  */
 
@@ -11,7 +18,7 @@
  * I have included directive PARA for shared memory computers.
  * I have included a directive LONGCRYPT to using this routine to cipher
  * passwords with more then 8 bytes like HP-UX 10.x it used. The MAXPLEN
- * definition is the maximum of lenght of password and can changed. I have
+ * definition is the maximum of length of password and can changed. I have
  * defined 24.
  */
 
@@ -51,48 +58,51 @@ static unsigned const char cov_2char[64]={
 0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A
 };
 
-#ifndef NOPROTO
-void fcrypt_body(DES_LONG *out,des_key_schedule ks,
-	DES_LONG Eswap0, DES_LONG Eswap1);
-
-#if defined(PERL5) || defined(__FreeBSD__)
-char *des_crypt(const char *buf,const char *salt);
-#else
-char *crypt(const char *buf,const char *salt);
-#endif
-#else
-void fcrypt_body();
-#if defined(PERL5) || defined(__FreeBSD__)
-char *des_crypt();
-#else
-char *crypt();
-#endif
-#endif
-
-#if defined(PERL5) || defined(__FreeBSD__)
-char *des_crypt(buf,salt)
-#else
-char *crypt(buf,salt)
-#endif
-const char *buf;
-const char *salt;
+char *DES_crypt(const char *buf, const char *salt)
 	{
 	static char buff[14];
 
-	return(des_fcrypt(buf,salt,buff));
+#ifndef CHARSET_EBCDIC
+	return(DES_fcrypt(buf,salt,buff));
+#else
+	char e_salt[2+1];
+	char e_buf[32+1];	/* replace 32 by 8 ? */
+	char *ret;
+
+	/* Copy at most 2 chars of salt */
+	if ((e_salt[0] = salt[0]) != '\0')
+	    e_salt[1] = salt[1];
+
+	/* Copy at most 32 chars of password */
+	strncpy (e_buf, buf, sizeof(e_buf));
+
+	/* Make sure we have a delimiter */
+	e_salt[sizeof(e_salt)-1] = e_buf[sizeof(e_buf)-1] = '\0';
+
+	/* Convert the e_salt to ASCII, as that's what DES_fcrypt works on */
+	ebcdic2ascii(e_salt, e_salt, sizeof e_salt);
+
+	/* Convert the cleartext password to ASCII */
+	ebcdic2ascii(e_buf, e_buf, sizeof e_buf);
+
+	/* Encrypt it (from/to ASCII) */
+	ret = DES_fcrypt(e_buf,e_salt,buff);
+
+	/* Convert the result back to EBCDIC */
+	ascii2ebcdic(ret, ret, strlen(ret));
+	
+	return ret;
+#endif
 	}
 
 
-char *des_fcrypt(buf,salt,ret)
-const char *buf;
-const char *salt;
-char *ret;
+char *DES_fcrypt(const char *buf, const char *salt, char *ret)
 	{
 	unsigned int i,j,x,y;
 	DES_LONG Eswap0,Eswap1;
 	DES_LONG out[2],ll;
-	des_cblock key;
-	des_key_schedule ks;
+	DES_cblock key;
+	DES_key_schedule ks;
 	unsigned char bb[9];
 	unsigned char *b=bb;
 	unsigned char c,u;
@@ -103,12 +113,19 @@ char *ret;
 	 * returns *\0XXXXXXXXX
 	 * The \0 makes the string look like * so the pwd "*" would
 	 * crypt to "*".  This was found when replacing the crypt in
-	 * our shared libraries.  People found that the disbled
-	 * accounts effectivly had no passwd :-(. */
+	 * our shared libraries.  People found that the disabled
+	 * accounts effectively had no passwd :-(. */
+#ifndef CHARSET_EBCDIC
 	x=ret[0]=((salt[0] == '\0')?'A':salt[0]);
 	Eswap0=con_salt[x]<<2;
 	x=ret[1]=((salt[1] == '\0')?'A':salt[1]);
 	Eswap1=con_salt[x]<<6;
+#else
+	x=ret[0]=((salt[0] == '\0')?os_toascii['A']:salt[0]);
+	Eswap0=con_salt[x]<<2;
+	x=ret[1]=((salt[1] == '\0')?os_toascii['A']:salt[1]);
+	Eswap1=con_salt[x]<<6;
+#endif
 
 /* EAY
 r=strlen(buf);
@@ -123,8 +140,8 @@ r=(r+7)/8;
 	for (; i<8; i++)
 		key[i]=0;
 
-	des_set_key((des_cblock *)(key),ks);
-	fcrypt_body(&(out[0]),ks,Eswap0,Eswap1);
+	DES_set_key_unchecked(&key,&ks);
+	fcrypt_body(&(out[0]),&ks,Eswap0,Eswap1);
 
 	ll=out[0]; l2c(ll,b);
 	ll=out[1]; l2c(ll,b);

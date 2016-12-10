@@ -8,9 +8,10 @@
 */
 
 #include <stdio.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <evp.h>
+#include <openssl/evp.h>
 
 #define STDIN     	0
 #define STDOUT    	1
@@ -47,16 +48,17 @@ void do_cipher(char *pw, int operation)
 {
 	char buf[BUFLEN];
 	char ebuf[BUFLEN + 8];
-	unsigned int ebuflen, rc;
+	unsigned int ebuflen; /* rc; */
         unsigned char iv[EVP_MAX_IV_LENGTH], key[EVP_MAX_KEY_LENGTH];
-	unsigned int ekeylen, net_ekeylen; 
+	/* unsigned int ekeylen, net_ekeylen;  */
 	EVP_CIPHER_CTX ectx;
         
 	memcpy(iv, INIT_VECTOR, sizeof(iv));
 
 	EVP_BytesToKey(ALG, EVP_md5(), "salu", pw, strlen(pw), 1, key, iv);
 
-	EVP_CipherInit(&ectx, ALG, key, iv, operation);
+	EVP_CIPHER_CTX_init(&ectx);
+	EVP_CipherInit_ex(&ectx, ALG, NULL, key, iv, operation);
 
 	while(1)
 	{
@@ -78,9 +80,8 @@ void do_cipher(char *pw, int operation)
 		write(STDOUT, ebuf, ebuflen);
 	}
 
-        EVP_CipherFinal(&ectx, ebuf, &ebuflen); 
+        EVP_CipherFinal_ex(&ectx, ebuf, &ebuflen); 
+	EVP_CIPHER_CTX_cleanup(&ectx);
 
 	write(STDOUT, ebuf, ebuflen); 
 }
-
-

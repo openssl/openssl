@@ -57,36 +57,32 @@
  */
 
 #include <stdio.h>
-#include "objects.h"
+#include <openssl/objects.h>
 #include "ssl_locl.h"
 
-static SSL_METHOD *ssl23_get_method(ver)
-int ver;
+static SSL_METHOD *ssl23_get_method(int ver);
+static SSL_METHOD *ssl23_get_method(int ver)
 	{
+#ifndef OPENSSL_NO_SSL2
 	if (ver == SSL2_VERSION)
-		return(SSLv23_method());
-	else if (ver == SSL3_VERSION)
+		return(SSLv2_method());
+	else
+#endif
+#ifndef OPENSSL_NO_SSL3
+	if (ver == SSL3_VERSION)
 		return(SSLv3_method());
-	else if (ver == TLS1_VERSION)
+	else
+#endif
+#ifndef OPENSSL_NO_TLS1
+	if (ver == TLS1_VERSION)
 		return(TLSv1_method());
 	else
+#endif
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv23_method()
-	{
-	static int init=1;
-	static SSL_METHOD SSLv23_data;
-
-	if (init)
-		{
-		init=0;
-		memcpy((char *)&SSLv23_data,(char *)sslv23_base_method(),
-			sizeof(SSL_METHOD));
-		SSLv23_data.ssl_connect=ssl23_connect;
-		SSLv23_data.ssl_accept=ssl23_accept;
-		SSLv23_data.get_ssl_method=ssl23_get_method;
-		}
-	return(&SSLv23_data);
-	}
+IMPLEMENT_ssl23_meth_func(SSLv23_method,
+			ssl23_accept,
+			ssl23_connect,
+			ssl23_get_method)
 

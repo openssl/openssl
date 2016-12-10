@@ -56,10 +56,11 @@
  * [including the GNU Public Licence.]
  */
 
-#include "rc2.h"
+#include <openssl/rc2.h>
 #include "rc2_locl.h"
+#include <openssl/opensslv.h>
 
-char *RC2_version="RC2 part of SSLeay 0.9.1a 06-Jul-1998";
+const char RC2_version[]="RC2" OPENSSL_VERSION_PTEXT;
 
 /* RC2 as implemented frm a posting from
  * Newsgroups: sci.crypt
@@ -69,11 +70,8 @@ char *RC2_version="RC2 part of SSLeay 0.9.1a 06-Jul-1998";
  * Date: 11 Feb 1996 06:45:03 GMT
  */
 
-void RC2_ecb_encrypt(in, out, ks, encrypt)
-unsigned char *in;
-unsigned char *out;
-RC2_KEY *ks;
-int encrypt;
+void RC2_ecb_encrypt(const unsigned char *in, unsigned char *out, RC2_KEY *ks,
+		     int encrypt)
 	{
 	unsigned long l,d[2];
 

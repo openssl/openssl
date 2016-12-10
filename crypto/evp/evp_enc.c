@@ -58,234 +58,289 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
+#include <openssl/evp.h>
+#include <openssl/err.h>
+#include <openssl/rand.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
+#include "evp_locl.h"
 
-char *EVP_version="EVP part of SSLeay 0.9.1a 06-Jul-1998";
+#ifdef OPENSSL_FIPS
+	#define M_do_cipher(ctx, out, in, inl) \
+		EVP_Cipher(ctx,out,in,inl)
+#else
+	#define M_do_cipher(ctx, out, in, inl) \
+		ctx->cipher->do_cipher(ctx,out,in,inl)
+#endif
 
-void EVP_CIPHER_CTX_init(ctx)
-EVP_CIPHER_CTX *ctx;
+const char EVP_version[]="EVP" OPENSSL_VERSION_PTEXT;
+
+EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
 	{
-	memset(ctx,0,sizeof(EVP_CIPHER_CTX));
-	/* ctx->cipher=NULL; */
+	EVP_CIPHER_CTX *ctx=OPENSSL_malloc(sizeof *ctx);
+	if (ctx)
+		EVP_CIPHER_CTX_init(ctx);
+	return ctx;
 	}
 
-void EVP_CipherInit(ctx,data,key,iv,enc)
-EVP_CIPHER_CTX *ctx;
-EVP_CIPHER *data;
-unsigned char *key;
-unsigned char *iv;
-int enc;
+int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+	     const unsigned char *key, const unsigned char *iv, int enc)
 	{
-	if (enc)
-		EVP_EncryptInit(ctx,data,key,iv);
-	else	
-		EVP_DecryptInit(ctx,data,key,iv);
+	if (cipher)
+		EVP_CIPHER_CTX_init(ctx);
+	return EVP_CipherInit_ex(ctx,cipher,NULL,key,iv,enc);
 	}
 
-void EVP_CipherUpdate(ctx,out,outl,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-int *outl;
-unsigned char *in;
-int inl;
-	{
-	if (ctx->encrypt)
-		EVP_EncryptUpdate(ctx,out,outl,in,inl);
-	else	EVP_DecryptUpdate(ctx,out,outl,in,inl);
-	}
-
-int EVP_CipherFinal(ctx,out,outl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-int *outl;
+int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+	     const unsigned char *in, int inl)
 	{
 	if (ctx->encrypt)
-		{
-		EVP_EncryptFinal(ctx,out,outl);
-		return(1);
-		}
-	else	return(EVP_DecryptFinal(ctx,out,outl));
+		return EVP_EncryptUpdate(ctx,out,outl,in,inl);
+	else	return EVP_DecryptUpdate(ctx,out,outl,in,inl);
 	}
 
-void EVP_EncryptInit(ctx,cipher,key,iv)
-EVP_CIPHER_CTX *ctx;
-EVP_CIPHER *cipher;
-unsigned char *key;
-unsigned char *iv;
+int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
-	if (cipher != NULL)
-		ctx->cipher=cipher;
-	ctx->cipher->init(ctx,key,iv,1);
-	ctx->encrypt=1;
-	ctx->buf_len=0;
+	if (ctx->encrypt)
+		return EVP_EncryptFinal_ex(ctx,out,outl);
+	else	return EVP_DecryptFinal_ex(ctx,out,outl);
 	}
 
-void EVP_DecryptInit(ctx,cipher,key,iv)
-EVP_CIPHER_CTX *ctx;
-EVP_CIPHER *cipher;
-unsigned char *key;
-unsigned char *iv;
+int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
-	if (cipher != NULL)
-		ctx->cipher=cipher;
-	ctx->cipher->init(ctx,key,iv,0);
-	ctx->encrypt=0;
-	ctx->buf_len=0;
+	if (ctx->encrypt)
+		return EVP_EncryptFinal(ctx,out,outl);
+	else	return EVP_DecryptFinal(ctx,out,outl);
 	}
 
+int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+	     const unsigned char *key, const unsigned char *iv)
+	{
+	return EVP_CipherInit(ctx, cipher, key, iv, 1);
+	}
 
-void EVP_EncryptUpdate(ctx,out,outl,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-int *outl;
-unsigned char *in;
-int inl;
+int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher, ENGINE *impl,
+		const unsigned char *key, const unsigned char *iv)
+	{
+	return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 1);
+	}
+
+int EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+	     const unsigned char *key, const unsigned char *iv)
+	{
+	return EVP_CipherInit(ctx, cipher, key, iv, 0);
+	}
+
+int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
+	     const unsigned char *key, const unsigned char *iv)
+	{
+	return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 0);
+	}
+
+int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+	     const unsigned char *in, int inl)
 	{
 	int i,j,bl;
 
+	if (inl <= 0)
+		{
+		*outl = 0;
+		return inl == 0;
+		}
+
+	if(ctx->buf_len == 0 && (inl&(ctx->block_mask)) == 0)
+		{
+		if(M_do_cipher(ctx,out,in,inl))
+			{
+			*outl=inl;
+			return 1;
+			}
+		else
+			{
+			*outl=0;
+			return 0;
+			}
+		}
 	i=ctx->buf_len;
 	bl=ctx->cipher->block_size;
-	*outl=0;
-	if ((inl == 0) && (i != bl)) return;
+	OPENSSL_assert(bl <= (int)sizeof(ctx->buf));
 	if (i != 0)
 		{
 		if (i+inl < bl)
 			{
 			memcpy(&(ctx->buf[i]),in,inl);
 			ctx->buf_len+=inl;
-			return;
+			*outl=0;
+			return 1;
 			}
 		else
 			{
 			j=bl-i;
-			if (j != 0) memcpy(&(ctx->buf[i]),in,j);
-			ctx->cipher->do_cipher(ctx,out,ctx->buf,bl);
+			memcpy(&(ctx->buf[i]),in,j);
+			if(!M_do_cipher(ctx,out,ctx->buf,bl)) return 0;
 			inl-=j;
 			in+=j;
 			out+=bl;
-			*outl+=bl;
+			*outl=bl;
 			}
 		}
-	i=inl%bl; /* how much is left */
+	else
+		*outl = 0;
+	i=inl&(bl-1);
 	inl-=i;
 	if (inl > 0)
 		{
-		ctx->cipher->do_cipher(ctx,out,in,inl);
+		if(!M_do_cipher(ctx,out,in,inl)) return 0;
 		*outl+=inl;
 		}
 
 	if (i != 0)
 		memcpy(ctx->buf,&(in[inl]),i);
 	ctx->buf_len=i;
+	return 1;
 	}
 
-void EVP_EncryptFinal(ctx,out,outl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-int *outl;
+int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
-	int i,n,b,bl;
+	int ret;
+	ret = EVP_EncryptFinal_ex(ctx, out, outl);
+	return ret;
+	}
+
+int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+	{
+	int n,ret;
+	unsigned int i, b, bl;
 
 	b=ctx->cipher->block_size;
+	OPENSSL_assert(b <= sizeof ctx->buf);
 	if (b == 1)
 		{
 		*outl=0;
-		return;
+		return 1;
 		}
 	bl=ctx->buf_len;
+	if (ctx->flags & EVP_CIPH_NO_PADDING)
+		{
+		if(bl)
+			{
+			EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX,EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
+			return 0;
+			}
+		*outl = 0;
+		return 1;
+		}
+
 	n=b-bl;
 	for (i=bl; i<b; i++)
 		ctx->buf[i]=n;
-	ctx->cipher->do_cipher(ctx,out,ctx->buf,b);
-	*outl=b;
+	ret=M_do_cipher(ctx,out,ctx->buf,b);
+
+
+	if(ret)
+		*outl=b;
+
+	return ret;
 	}
 
-void EVP_DecryptUpdate(ctx,out,outl,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-int *outl;
-unsigned char *in;
-int inl;
+int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+	     const unsigned char *in, int inl)
 	{
-	int b,bl,n;
-	int keep_last=0;
+	int fix_len;
+	unsigned int b;
 
-	*outl=0;
-	if (inl == 0) return;
+	if (inl <= 0)
+		{
+		*outl = 0;
+		return inl == 0;
+		}
+
+	if (ctx->flags & EVP_CIPH_NO_PADDING)
+		return EVP_EncryptUpdate(ctx, out, outl, in, inl);
 
 	b=ctx->cipher->block_size;
-	if (b > 1)
+	OPENSSL_assert(b <= sizeof ctx->final);
+
+	if(ctx->final_used)
 		{
-		/* Is the input a multiple of the block size? */
-		bl=ctx->buf_len;
-		n=inl+bl;
-		if (n%b == 0)
-			{
-			if (inl < b) /* must be 'just one' buff */
-				{
-				memcpy(&(ctx->buf[bl]),in,inl);
-				ctx->buf_len=b;
-				*outl=0;
-				return;
-				}
-			keep_last=1;
-			inl-=b; /* don't do the last block */
-			}
+		memcpy(out,ctx->final,b);
+		out+=b;
+		fix_len = 1;
 		}
-	EVP_EncryptUpdate(ctx,out,outl,in,inl);
+	else
+		fix_len = 0;
+
+
+	if(!EVP_EncryptUpdate(ctx,out,outl,in,inl))
+		return 0;
 
 	/* if we have 'decrypted' a multiple of block size, make sure
 	 * we have a copy of this last block */
-	if (keep_last)
+	if (b > 1 && !ctx->buf_len)
 		{
-		memcpy(&(ctx->buf[0]),&(in[inl]),b);
-#ifdef DEBUG
-		if (ctx->buf_len != 0)
-			{
-			abort();
-			}
-#endif
-		ctx->buf_len=b;
+		*outl-=b;
+		ctx->final_used=1;
+		memcpy(ctx->final,&out[*outl],b);
 		}
+	else
+		ctx->final_used = 0;
+
+	if (fix_len)
+		*outl += b;
+		
+	return 1;
 	}
 
-int EVP_DecryptFinal(ctx,out,outl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-int *outl;
+int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	{
-	int i,b;
-	int n;
+	int ret;
+	ret = EVP_DecryptFinal_ex(ctx, out, outl);
+	return ret;
+	}
+
+int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+	{
+	int i,n;
+	unsigned int b;
 
 	*outl=0;
 	b=ctx->cipher->block_size;
+	if (ctx->flags & EVP_CIPH_NO_PADDING)
+		{
+		if(ctx->buf_len)
+			{
+			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
+			return 0;
+			}
+		*outl = 0;
+		return 1;
+		}
 	if (b > 1)
 		{
-		if (ctx->buf_len != b)
+		if (ctx->buf_len || !ctx->final_used)
 			{
-			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_WRONG_FINAL_BLOCK_LENGTH);
+			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,EVP_R_WRONG_FINAL_BLOCK_LENGTH);
 			return(0);
 			}
-		EVP_EncryptUpdate(ctx,ctx->buf,&n,ctx->buf,0);
-		if (n != b)
-			return(0);
-		n=ctx->buf[b-1];
-		if (n > b)
+		OPENSSL_assert(b <= sizeof ctx->final);
+		n=ctx->final[b-1];
+		if (n == 0 || n > (int)b)
 			{
-			EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_BAD_DECRYPT);
+			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,EVP_R_BAD_DECRYPT);
 			return(0);
 			}
 		for (i=0; i<n; i++)
 			{
-			if (ctx->buf[--b] != n)
+			if (ctx->final[--b] != n)
 				{
-				EVPerr(EVP_F_EVP_DECRYPTFINAL,EVP_R_BAD_DECRYPT);
+				EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,EVP_R_BAD_DECRYPT);
 				return(0);
 				}
 			}
 		n=ctx->cipher->block_size-n;
 		for (i=0; i<n; i++)
-			out[i]=ctx->buf[i];
+			out[i]=ctx->final[i];
 		*outl=n;
 		}
 	else
@@ -293,11 +348,93 @@ int *outl;
 	return(1);
 	}
 
-void EVP_CIPHER_CTX_cleanup(c)
-EVP_CIPHER_CTX *c;
+void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 	{
-	if ((c->cipher != NULL) && (c->cipher->cleanup != NULL))
-		c->cipher->cleanup(c);
-	memset(c,0,sizeof(EVP_CIPHER_CTX));
+	if (ctx)
+		{
+		EVP_CIPHER_CTX_cleanup(ctx);
+		OPENSSL_free(ctx);
+		}
 	}
 
+int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
+	{
+	if(c->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH) 
+		return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH, keylen, NULL);
+	if(c->key_len == keylen) return 1;
+	if((keylen > 0) && (c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH))
+		{
+		c->key_len = keylen;
+		return 1;
+		}
+	EVPerr(EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH,EVP_R_INVALID_KEY_LENGTH);
+	return 0;
+	}
+
+int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
+	{
+	if (pad) ctx->flags &= ~EVP_CIPH_NO_PADDING;
+	else ctx->flags |= EVP_CIPH_NO_PADDING;
+	return 1;
+	}
+
+int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
+	{
+	if (ctx->cipher->flags & EVP_CIPH_RAND_KEY)
+		return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_RAND_KEY, 0, key);
+	if (RAND_bytes(key, ctx->key_len) <= 0)
+		return 0;
+	return 1;
+	}
+
+#ifndef OPENSSL_NO_ENGINE
+
+#ifdef OPENSSL_FIPS
+
+static int do_evp_enc_engine_full(EVP_CIPHER_CTX *ctx, const EVP_CIPHER **pcipher, ENGINE *impl)
+	{
+	if(impl)
+		{
+		if (!ENGINE_init(impl))
+			{
+			EVPerr(EVP_F_DO_EVP_ENC_ENGINE_FULL, EVP_R_INITIALIZATION_ERROR);
+			return 0;
+			}
+		}
+	else
+		/* Ask if an ENGINE is reserved for this job */
+		impl = ENGINE_get_cipher_engine((*pcipher)->nid);
+	if(impl)
+		{
+		/* There's an ENGINE for this job ... (apparently) */
+		const EVP_CIPHER *c = ENGINE_get_cipher(impl, (*pcipher)->nid);
+		if(!c)
+			{
+			/* One positive side-effect of US's export
+			 * control history, is that we should at least
+			 * be able to avoid using US mispellings of
+			 * "initialisation"? */
+			EVPerr(EVP_F_DO_EVP_ENC_ENGINE_FULL, EVP_R_INITIALIZATION_ERROR);
+			return 0;
+			}
+		/* We'll use the ENGINE's private cipher definition */
+		*pcipher = c;
+		/* Store the ENGINE functional reference so we know
+		 * 'cipher' came from an ENGINE and we need to release
+		 * it when done. */
+		ctx->engine = impl;
+		}
+	else
+		ctx->engine = NULL;
+	return 1;
+	}
+
+void int_EVP_CIPHER_init_engine_callbacks(void)
+	{
+	int_EVP_CIPHER_set_engine_callbacks(
+		ENGINE_finish, do_evp_enc_engine_full);
+	}
+
+#endif
+
+#endif

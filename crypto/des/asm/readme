@@ -8,7 +8,7 @@ assembler for the inner DES routines in libdes :-).
 
 The file to implement in assembler is des_enc.c.  Replace the following
 4 functions
-des_encrypt(DES_LONG data[2],des_key_schedule ks, int encrypt);
+des_encrypt1(DES_LONG data[2],des_key_schedule ks, int encrypt);
 des_encrypt2(DES_LONG data[2],des_key_schedule ks, int encrypt);
 des_encrypt3(DES_LONG data[2],des_key_schedule ks1,ks2,ks3);
 des_decrypt3(DES_LONG data[2],des_key_schedule ks1,ks2,ks3);

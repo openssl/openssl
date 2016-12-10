@@ -62,20 +62,35 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "blowfish.h"
+#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_BF is defined */
 
-char *bf_key[2]={
+#include "../e_os.h"
+
+#ifdef OPENSSL_NO_BF
+int main(int argc, char *argv[])
+{
+    printf("No BF support\n");
+    return(0);
+}
+#else
+#include <openssl/blowfish.h>
+
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
+
+static char *bf_key[2]={
 	"abcdefghijklmnopqrstuvwxyz",
 	"Who is John Galt?"
 	};
 
 /* big endian */
-BF_LONG bf_plain[2][2]={
+static BF_LONG bf_plain[2][2]={
 	{0x424c4f57L,0x46495348L},
 	{0xfedcba98L,0x76543210L}
 	};
 
-BF_LONG bf_cipher[2][2]={
+static BF_LONG bf_cipher[2][2]={
 	{0x324ed0feL,0xf413a203L},
 	{0xcc91732bL,0x8022f684L}
 	};
@@ -216,16 +231,16 @@ static unsigned char ofb64_ok[]={
 	0x63,0xC2,0xCF,0x80,0xDA};
 
 #define KEY_TEST_NUM	25
-unsigned char key_test[KEY_TEST_NUM]={
+static unsigned char key_test[KEY_TEST_NUM]={
 	0xf0,0xe1,0xd2,0xc3,0xb4,0xa5,0x96,0x87,
 	0x78,0x69,0x5a,0x4b,0x3c,0x2d,0x1e,0x0f,
 	0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77,
 	0x88};
 
-unsigned char key_data[8]=
+static unsigned char key_data[8]=
 	{0xFE,0xDC,0xBA,0x98,0x76,0x54,0x32,0x10};
 
-unsigned char key_out[KEY_TEST_NUM][8]={
+static unsigned char key_out[KEY_TEST_NUM][8]={
 	{0xF9,0xAD,0x59,0x7C,0x49,0xDB,0x00,0x5E},
 	{0xE9,0x1D,0x21,0xC1,0xD9,0x61,0xA6,0xD6},
 	{0xE9,0xC2,0xB7,0x0A,0x1B,0xC6,0x5C,0xF3},
@@ -252,17 +267,9 @@ unsigned char key_out[KEY_TEST_NUM][8]={
 	{0x05,0x04,0x4B,0x62,0xFA,0x52,0xD0,0x80},
 	};
 
-#ifndef NOPROTO
 static int test(void );
 static int print_test_data(void );
-#else
-static int test();
-static int print_test_data();
-#endif
-
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int ret;
 
@@ -271,11 +278,14 @@ char *argv[];
 	else
 		ret=test();
 
-	exit(ret);
+#ifdef OPENSSL_SYS_NETWARE
+    if (ret) printf("ERROR: %d\n", ret);
+#endif
+	EXIT(ret);
 	return(0);
 	}
 
-static int print_test_data()
+static int print_test_data(void)
 	{
 	unsigned int i,j;
 
@@ -304,7 +314,7 @@ static int print_test_data()
 		printf("c=");
 		for (j=0; j<8; j++)
 			printf("%02X",key_out[i][j]);
-		printf(" k[%2d]=",i+1);
+		printf(" k[%2u]=",i+1);
 		for (j=0; j<i+1; j++)
 			printf("%02X",key_test[j]);
 		printf("\n");
@@ -342,7 +352,7 @@ static int print_test_data()
 	return(0);
 	}
 
-static int test()
+static int test(void)
 	{
 	unsigned char cbc_in[40],cbc_out[40],iv[8];
 	int i,n,err=0;
@@ -351,9 +361,16 @@ static int test()
 	unsigned char out[8]; 
 	BF_LONG len;
 
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(cbc_data, cbc_data, strlen(cbc_data));
+#endif
+
 	printf("testing blowfish in raw ecb mode\n");
 	for (n=0; n<2; n++)
 		{
+#ifdef CHARSET_EBCDIC
+		ebcdic2ascii(bf_key[n], bf_key[n], strlen(bf_key[n]));
+#endif
 		BF_set_key(&key,strlen(bf_key[n]),(unsigned char *)bf_key[n]);
 
 		data[0]=bf_plain[n][0];
@@ -364,11 +381,11 @@ static int test()
 			printf("BF_encrypt error encrypting\n");
 			printf("got     :");
 			for (i=0; i<2; i++)
-				printf("%08lX ",data[i]);
+				printf("%08lX ",(unsigned long)data[i]);
 			printf("\n");
 			printf("expected:");
 			for (i=0; i<2; i++)
-				printf("%08lX ",bf_cipher[n][i]);
+				printf("%08lX ",(unsigned long)bf_cipher[n][i]);
 			err=1;
 			printf("\n");
 			}
@@ -379,11 +396,11 @@ static int test()
 			printf("BF_encrypt error decrypting\n");
 			printf("got     :");
 			for (i=0; i<2; i++)
-				printf("%08lX ",data[i]);
+				printf("%08lX ",(unsigned long)data[i]);
 			printf("\n");
 			printf("expected:");
 			for (i=0; i<2; i++)
-				printf("%08lX ",bf_plain[n][i]);
+				printf("%08lX ",(unsigned long)bf_plain[n][i]);
 			printf("\n");
 			err=1;
 			}
@@ -431,7 +448,8 @@ static int test()
 		{
 		BF_set_key(&key,n,key_test);
 		BF_ecb_encrypt(key_data,out,&key,BF_ENCRYPT);
-		if (memcmp(out,&(key_out[n-1][0]),8) != 0)
+		/* mips-sgi-irix6.5-gcc  vv  -mabi=64 bug workaround */
+		if (memcmp(out,&(key_out[i=n-1][0]),8) != 0)
 			{
 			printf("blowfish setkey error\n");
 			err=1;
@@ -442,9 +460,9 @@ static int test()
 	len=strlen(cbc_data)+1;
 
 	BF_set_key(&key,16,cbc_key);
-	memset(cbc_in,0,40);
-	memset(cbc_out,0,40);
-	memcpy(iv,cbc_iv,8);
+	memset(cbc_in,0,sizeof cbc_in);
+	memset(cbc_out,0,sizeof cbc_out);
+	memcpy(iv,cbc_iv,sizeof iv);
 	BF_cbc_encrypt((unsigned char *)cbc_data,cbc_out,len,
 		&key,iv,BF_ENCRYPT);
 	if (memcmp(cbc_out,cbc_ok,32) != 0)
@@ -519,3 +537,4 @@ static int test()
 
 	return(err);
 	}
+#endif

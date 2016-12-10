@@ -1,0 +1,1494 @@
+See file ChangeLog.0_9_7-stable_not-in-head for explanations.
+This is the "FIPS"-related part.
+
+
+
+2003-07-27 19:00  ben
+
+	Changed:
+		Configure (1.314.2.85), "Exp", lines: +2 -0
+		Makefile.org (1.154.2.67), "Exp", lines: +12 -3
+		crypto/cryptlib.c (1.32.2.9), "Exp", lines: +5 -0
+		crypto/md32_common.h (1.22.2.4), "Exp", lines: +11 -0
+		crypto/aes/Makefile.ssl (1.4.2.6), "Exp", lines: +2 -1
+		crypto/aes/aes_core.c (1.1.2.4), "Exp", lines: +4 -0
+		crypto/des/des.h (1.40.2.4), "Exp", lines: +1 -1
+		crypto/des/des_old.c (1.11.2.4), "Exp", lines: +1 -1
+		crypto/des/destest.c (1.30.2.6), "Exp", lines: +2 -2
+		crypto/des/ecb3_enc.c (1.8.2.1), "Exp", lines: +1 -3
+		crypto/dsa/Makefile.ssl (1.49.2.5), "Exp", lines: +7 -4
+		crypto/dsa/dsa_ossl.c (1.12.2.4), "Exp", lines: +2 -0
+		crypto/dsa/dsa_sign.c (1.10.2.3), "Exp", lines: +12 -0
+		crypto/dsa/dsa_vrf.c (1.10.2.3), "Exp", lines: +8 -0
+		crypto/engine/engine.h (1.36.2.6), "Exp", lines: +4 -0
+		crypto/err/err.h (1.35.2.3), "Exp", lines: +2 -0
+		crypto/err/err_all.c (1.17.2.2), "Exp", lines: +4 -0
+		crypto/err/openssl.ec (1.11.2.1), "Exp", lines: +1 -0
+		crypto/evp/Makefile.ssl (1.64.2.8), "Exp", lines: +8 -7
+		crypto/evp/c_all.c (1.7.8.7), "Exp", lines: +1 -0
+		crypto/evp/e_aes.c (1.6.2.4), "Exp", lines: +12 -4
+		crypto/evp/e_des3.c (1.8.2.2), "Exp", lines: +1 -1
+		crypto/evp/evp.h (1.86.2.10), "Exp", lines: +2 -0
+		crypto/evp/evp_err.c (1.23.2.1), "Exp", lines: +3 -1
+		crypto/md4/Makefile.ssl (1.6.2.4), "Exp", lines: +7 -4
+		crypto/md5/Makefile.ssl (1.33.2.7), "Exp", lines: +7 -4
+		crypto/rand/Makefile.ssl (1.56.2.4), "Exp", lines: +17 -15
+		crypto/rand/md_rand.c (1.69.2.2), "Exp", lines: +9 -0
+		crypto/rand/rand.h (1.26.2.5), "Exp", lines: +2 -0
+		crypto/rand/rand_err.c (1.6.2.1), "Exp", lines: +3 -1
+		crypto/rand/rand_lib.c (1.15.2.2), "Exp", lines: +11 -0
+		crypto/ripemd/Makefile.ssl (1.25.2.5), "Exp", lines: +7 -2
+		crypto/sha/Makefile.ssl (1.26.2.5), "Exp", lines: +16 -6
+		fips/.cvsignore (1.1.2.1), "Exp", lines: +1 -0
+		fips/Makefile.ssl (1.1.2.1), "Exp", lines: +155 -0
+		fips/fingerprint.sha1 (1.1.2.1), "Exp", lines: +3 -0
+		fips/fips.c (1.1.2.1), "Exp", lines: +74 -0
+		fips/fips.h (1.1.2.1), "Exp", lines: +85 -0
+		fips/fips_check_sha1 (1.1.2.1), "Exp", lines: +7 -0
+		fips/fips_err.c (1.1.2.1), "Exp", lines: +96 -0
+		fips/fips_make_sha1 (1.1.2.1), "Exp", lines: +21 -0
+		fips/lib (1.1.2.1), "Exp", lines: +0 -0
+		fips/aes/.cvsignore (1.1.2.1), "Exp", lines: +4 -0
+		fips/aes/Makefile.ssl (1.1.2.1), "Exp", lines: +95 -0
+		fips/aes/fingerprint.sha1 (1.1.2.1), "Exp", lines: +2 -0
+		fips/aes/fips_aes_core.c (1.1.2.1), "Exp", lines: +1260 -0
+		fips/aes/fips_aes_locl.h (1.1.2.1), "Exp", lines: +85 -0
+		fips/aes/fips_aesavs.c (1.1.2.1), "Exp", lines: +896 -0
+		fips/dsa/.cvsignore (1.1.2.1), "Exp", lines: +2 -0
+		fips/dsa/Makefile.ssl (1.1.2.1), "Exp", lines: +95 -0
+		fips/dsa/fingerprint.sha1 (1.1.2.1), "Exp", lines: +1 -0
+		fips/dsa/fips_dsa_ossl.c (1.1.2.1), "Exp", lines: +366 -0
+		fips/dsa/fips_dsatest.c (1.1.2.1), "Exp", lines: +252 -0
+		fips/rand/.cvsignore (1.1.2.1), "Exp", lines: +2 -0
+		fips/rand/Makefile.ssl (1.1.2.1), "Exp", lines: +94 -0
+		fips/rand/fingerprint.sha1 (1.1.2.1), "Exp", lines: +2 -0
+		fips/rand/fips_rand.c (1.1.2.1), "Exp", lines: +236 -0
+		fips/rand/fips_rand.h (1.1.2.1), "Exp", lines: +55 -0
+		fips/rand/fips_randtest.c (1.1.2.1), "Exp", lines: +348 -0
+		fips/sha1/.cvsignore (1.1.2.1), "Exp", lines: +3 -0
+		fips/sha1/Makefile.ssl (1.1.2.1), "Exp", lines: +94 -0
+		fips/sha1/fingerprint.sha1 (1.1.2.1), "Exp", lines: +3 -0
+		fips/sha1/fips_md32_common.h (1.1.2.1), "Exp", lines: +637 -0
+		fips/sha1/fips_sha1dgst.c (1.1.2.1), "Exp", lines: +76 -0
+		fips/sha1/fips_sha1test.c (1.1.2.1), "Exp", lines: +128 -0
+		fips/sha1/fips_sha_locl.h (1.1.2.1), "Exp", lines: +472 -0
+		fips/sha1/fips_standalone_sha1.c (1.1.2.1), "Exp", lines: +101 -0
+		fips/sha1/standalone.sha1 (1.1.2.1), "Exp", lines: +4 -0
+		test/Makefile.ssl (1.84.2.29), "Exp", lines: +81 -13
+		util/mkerr.pl (1.18.2.4), "Exp", lines: +2 -1
+
+	Unfinished FIPS stuff for review/improvement.
+
+2003-07-27 19:19  ben
+
+	Changed:
+		fips/fips_check_sha1 (1.1.2.2), "Exp", lines: +1 -1
+
+	Use unified diff.
+
+2003-07-27 19:23  ben
+
+	Changed:
+		fips/Makefile.ssl (1.1.2.2), "Exp", lines: +3 -3
+		fips/fingerprint.sha1 (1.1.2.2), "Exp", lines: +2 -1
+		fips/fips_make_sha1 (1.1.2.2), "Exp", lines: +1 -1
+
+	Build in non-FIPS mode.
+
+2003-07-27 23:13  ben
+
+	Changed:
+		Makefile.org (1.154.2.68), "Exp", lines: +1 -1
+		fips/fips_check_sha1 (1.1.2.3), "Exp", lines: +2 -1
+		fips/aes/fips_aesavs.c (1.1.2.2), "Exp", lines: +2 -0
+		fips/dsa/fips_dsa_ossl.c (1.1.2.2), "Exp", lines: +8 -0
+		fips/dsa/fips_dsatest.c (1.1.2.2), "Exp", lines: +2 -1
+		fips/sha1/fingerprint.sha1 (1.1.2.2), "Exp", lines: +1 -1
+		fips/sha1/fips_sha1dgst.c (1.1.2.2), "Exp", lines: +5 -1
+		fips/sha1/fips_standalone_sha1.c (1.1.2.2), "Exp", lines: +2 -0
+		fips/sha1/standalone.sha1 (1.1.2.2), "Exp", lines: +1 -1
+
+	Build when not FIPS.
+
+2003-07-28 11:56  ben
+
+	Changed:
+		fips/dsa/fingerprint.sha1 (1.1.2.2), "Exp", lines: +1 -1
+		fips/sha1/standalone.sha1 (1.1.2.3), "Exp", lines: +1 -1
+
+	New fingerprints.
+
+2003-07-29 16:06  ben
+
+	Changed:
+		fips/aes/fips_aesavs.c (1.1.2.5), "Exp", lines: +295 -303
+
+	Reformat.
+
+2003-07-29 16:34  ben
+
+	Changed:
+		fips/aes/fips_aesavs.c (1.1.2.6), "Exp", lines: +43 -17
+
+	MMT for CFB1
+
+2003-07-29 17:17  ben
+
+	Changed:
+		fips/fips_err_wrapper.c (1.1.2.1), "Exp", lines: +5 -0
+		fips/sha1/sha1hashes.txt (1.1.2.1), "Exp", lines: +342 -0
+		fips/sha1/sha1vectors.txt (1.1.2.1), "Exp", lines: +2293 -0
+
+	Missing files.
+
+2003-07-31 23:30  levitte
+
+	Changed:
+		Makefile.org (1.154.2.71), "Exp", lines: +2 -0
+
+	If FDIRS is to be treated like SDIRS, let's not forget to
+	initialize it in Makefile.org.
+
+2003-07-31 23:41  levitte
+
+	Changed:
+		fips/sha1/fips_sha1test.c (1.1.2.2), "Exp", lines: +3 -3
+
+	No C++ comments in C programs!
+
+2003-08-01 15:07  steve
+
+	Changed:
+		fips/aes/fips_aesavs.c (1.1.2.8), "Exp", lines: +3 -3
+
+	Replace C++ style comments.
+
+2003-08-03 14:22  ben
+
+	Changed:
+		fips/des/fips_desmovs.c (1.1.2.2), "Exp", lines: +55 -37
+
+	Make tests work (CFB1 still doesn't produce the right answers,
+	strangely).
+
+2003-08-08 12:08  levitte
+
+	Changed:
+		fips/des/fips_des_enc.c (1.1.2.2), "Exp", lines: +9 -0
+
+	Avoid clashing with the regular DES functions when not compiling
+	with -DFIPS.  This is basically only visible when building with
+	shared library supoort...
+
+2003-08-11 11:36  levitte
+
+	Deleted:
+		fips/sha1/.cvsignore (1.1.2.2)
+		fips/sha1/Makefile.ssl (1.1.2.3)
+		fips/sha1/fingerprint.sha1 (1.1.2.3)
+		fips/sha1/fips_md32_common.h (1.1.2.2)
+		fips/sha1/fips_sha1dgst.c (1.1.2.3)
+		fips/sha1/fips_sha1test.c (1.1.2.3)
+		fips/sha1/fips_sha_locl.h (1.1.2.2)
+		fips/sha1/fips_standalone_sha1.c (1.1.2.3)
+		fips/sha1/sha1hashes.txt (1.1.2.2)
+		fips/sha1/sha1vectors.txt (1.1.2.2)
+		fips/sha1/standalone.sha1 (1.1.2.4)
+		fips/dsa/.cvsignore (1.1.2.2)
+		fips/dsa/Makefile.ssl (1.1.2.2)
+		fips/dsa/fingerprint.sha1 (1.1.2.3)
+		fips/dsa/fips_dsa_ossl.c (1.1.2.3)
+		fips/dsa/fips_dsatest.c (1.1.2.3)
+		fips/rand/.cvsignore (1.1.2.2)
+		fips/rand/Makefile.ssl (1.1.2.2)
+		fips/rand/fingerprint.sha1 (1.1.2.2)
+		fips/rand/fips_rand.c (1.1.2.2)
+		fips/rand/fips_rand.h (1.1.2.2)
+		fips/rand/fips_randtest.c (1.1.2.2)
+		fips/des/.cvsignore (1.1.2.2)
+		fips/des/Makefile.ssl (1.1.2.3)
+		fips/des/fingerprint.sha1 (1.1.2.2)
+		fips/des/fips_des_enc.c (1.1.2.3)
+		fips/des/fips_des_locl.h (1.1.2.2)
+		fips/des/fips_desmovs.c (1.1.2.3)
+		fips/aes/.cvsignore (1.1.2.2)
+		fips/aes/Makefile.ssl (1.1.2.5)
+		fips/aes/fingerprint.sha1 (1.1.2.2)
+		fips/aes/fips_aes_core.c (1.1.2.2)
+		fips/aes/fips_aes_locl.h (1.1.2.2)
+		fips/aes/fips_aesavs.c (1.1.2.9)
+		fips/.cvsignore (1.1.2.2)
+		fips/Makefile.ssl (1.1.2.6)
+		fips/fingerprint.sha1 (1.1.2.3)
+		fips/fips.c (1.1.2.2)
+		fips/fips.h (1.1.2.2)
+		fips/fips_check_sha1 (1.1.2.4)
+		fips/fips_err.c (1.1.2.2)
+		fips/fips_err_wrapper.c (1.1.2.2)
+		fips/fips_make_sha1 (1.1.2.4)
+		fips/lib (1.1.2.2)
+	Changed:
+		util/libeay.num (1.173.2.16), "Exp", lines: +11 -38
+		util/mkerr.pl (1.18.2.5), "Exp", lines: +1 -2
+		test/Makefile.ssl (1.84.2.31), "Exp", lines: +54 -180
+		crypto/ripemd/Makefile.ssl (1.25.2.6), "Exp", lines: +2 -7
+		crypto/sha/Makefile.ssl (1.26.2.6), "Exp", lines: +6 -16
+		crypto/rand/Makefile.ssl (1.56.2.5), "Exp", lines: +15 -17
+		crypto/rand/md_rand.c (1.69.2.3), "Exp", lines: +0 -9
+		crypto/rand/rand.h (1.26.2.6), "Exp", lines: +0 -2
+		crypto/rand/rand_err.c (1.6.2.2), "Exp", lines: +1 -3
+		crypto/rand/rand_lib.c (1.15.2.3), "Exp", lines: +0 -11
+		crypto/objects/obj_dat.h (1.49.2.18), "Exp", lines: +3 -27
+		crypto/objects/obj_mac.h (1.19.2.18), "Exp", lines: +0 -32
+		crypto/objects/obj_mac.num (1.15.2.14), "Exp", lines: +0 -8
+		crypto/objects/objects.txt (1.20.2.19), "Exp", lines: +0 -11
+		crypto/md4/Makefile.ssl (1.6.2.5), "Exp", lines: +4 -7
+		crypto/md5/Makefile.ssl (1.33.2.8), "Exp", lines: +4 -7
+		crypto/evp/Makefile.ssl (1.64.2.9), "Exp", lines: +7 -8
+		crypto/evp/c_allc.c (1.8.2.6), "Exp", lines: +0 -4
+		crypto/evp/e_aes.c (1.6.2.9), "Exp", lines: +4 -22
+		crypto/evp/e_des.c (1.5.2.5), "Exp", lines: +2 -43
+		crypto/evp/e_des3.c (1.8.2.4), "Exp", lines: +3 -3
+		crypto/evp/evp.h (1.86.2.13), "Exp", lines: +11 -36
+		crypto/evp/evp_err.c (1.23.2.2), "Exp", lines: +1 -3
+		crypto/evp/evp_lib.c (1.6.8.3), "Exp", lines: +0 -24
+		crypto/evp/evp_locl.h (1.7.2.5), "Exp", lines: +2 -11
+		crypto/evp/evp_test.c (1.14.2.12), "Exp", lines: +8 -17
+		crypto/evp/evptests.txt (1.9.2.6), "Exp", lines: +1 -106
+		crypto/dsa/Makefile.ssl (1.49.2.7), "Exp", lines: +6 -10
+		crypto/dsa/dsa_ossl.c (1.12.2.5), "Exp", lines: +0 -2
+		crypto/dsa/dsa_sign.c (1.10.2.4), "Exp", lines: +0 -12
+		crypto/dsa/dsa_vrf.c (1.10.2.4), "Exp", lines: +0 -8
+		crypto/err/Makefile.ssl (1.48.2.5), "Exp", lines: +16 -17
+		crypto/err/err.h (1.35.2.4), "Exp", lines: +0 -2
+		crypto/err/err_all.c (1.17.2.3), "Exp", lines: +0 -4
+		crypto/err/openssl.ec (1.11.2.2), "Exp", lines: +0 -1
+		crypto/des/des.h (1.40.2.5), "Exp", lines: +1 -1
+		crypto/des/des_enc.c (1.11.2.3), "Exp", lines: +0 -4
+		crypto/des/des_old.c (1.11.2.5), "Exp", lines: +1 -1
+		crypto/des/destest.c (1.30.2.7), "Exp", lines: +2 -2
+		crypto/des/ecb3_enc.c (1.8.2.2), "Exp", lines: +3 -1
+		crypto/aes/Makefile.ssl (1.4.2.7), "Exp", lines: +1 -2
+		crypto/aes/aes.h (1.1.2.8), "Exp", lines: +0 -9
+		crypto/aes/aes_cfb.c (1.1.2.8), "Exp", lines: +0 -93
+		crypto/aes/aes_core.c (1.1.2.5), "Exp", lines: +0 -4
+		crypto/cryptlib.c (1.32.2.10), "Exp", lines: +0 -5
+		crypto/md32_common.h (1.22.2.5), "Exp", lines: +0 -11
+		Configure (1.314.2.86), "Exp", lines: +0 -2
+		Makefile.org (1.154.2.72), "Exp", lines: +8 -34
+		TABLE (1.99.2.30), "Exp", lines: +0 -50
+
+	A new branch for FIPS-related changes has been created with the
+	name OpenSSL-fips-0_9_7-stable.
+
+		Since the 0.9.7-stable branch is supposed to be in freeze
+	and should only contain bug corrections, this change removes the
+	FIPS changes from that branch.
+
+2004-05-11 14:44  ben
+
+	Deleted:
+		apps/Makefile.ssl (1.100.2.27)
+		crypto/Makefile.ssl (1.84.2.12)
+		crypto/aes/Makefile.ssl (1.4.2.9)
+		crypto/asn1/Makefile.ssl (1.77.2.7)
+		crypto/bf/Makefile.ssl (1.25.2.6)
+		crypto/bio/Makefile.ssl (1.52.2.4)
+		crypto/bn/Makefile.ssl (1.65.2.9)
+		crypto/buffer/Makefile.ssl (1.32.2.4)
+		crypto/cast/Makefile.ssl (1.31.2.6)
+		crypto/comp/Makefile.ssl (1.32.2.4)
+		crypto/conf/Makefile.ssl (1.38.2.8)
+		crypto/des/Makefile.ssl (1.61.2.13)
+		crypto/dh/Makefile.ssl (1.43.2.5)
+		crypto/dsa/Makefile.ssl (1.49.2.9)
+		crypto/dso/Makefile.ssl (1.11.2.4)
+		crypto/ec/Makefile.ssl (1.7.2.4)
+		crypto/engine/Makefile.ssl (1.30.2.13)
+		crypto/err/Makefile.ssl (1.48.2.7)
+		crypto/evp/Makefile.ssl (1.64.2.12)
+		crypto/hmac/Makefile.ssl (1.33.2.6)
+		crypto/idea/Makefile.ssl (1.20.2.4)
+		crypto/krb5/Makefile.ssl (1.5.2.6)
+		crypto/lhash/Makefile.ssl (1.28.2.4)
+		crypto/md2/Makefile.ssl (1.29.2.5)
+		crypto/md4/Makefile.ssl (1.6.2.7)
+		crypto/md5/Makefile.ssl (1.33.2.10)
+		crypto/mdc2/Makefile.ssl (1.30.2.4)
+		crypto/objects/Makefile.ssl (1.46.2.6)
+		crypto/ocsp/Makefile.ssl (1.19.2.7)
+		crypto/pem/Makefile.ssl (1.51.2.5)
+		crypto/pkcs12/Makefile.ssl (1.37.2.5)
+		crypto/pkcs7/Makefile.ssl (1.47.2.5)
+		crypto/rand/Makefile.ssl (1.56.2.8)
+		crypto/rc2/Makefile.ssl (1.20.2.4)
+		crypto/rc4/Makefile.ssl (1.25.2.6)
+		crypto/rc5/Makefile.ssl (1.22.2.6)
+		crypto/ripemd/Makefile.ssl (1.25.2.9)
+		crypto/rsa/Makefile.ssl (1.53.2.6)
+		crypto/sha/Makefile.ssl (1.26.2.9)
+		crypto/stack/Makefile.ssl (1.28.2.4)
+		crypto/txt_db/Makefile.ssl (1.26.2.4)
+		crypto/ui/Makefile.ssl (1.10.2.6)
+		crypto/x509/Makefile.ssl (1.56.2.5)
+		crypto/x509v3/Makefile.ssl (1.62.2.5)
+		ssl/Makefile.ssl (1.53.2.11)
+		test/Makefile.ssl (1.84.2.36)
+		tools/Makefile.ssl (1.9.2.4)
+	Changed:
+		.cvsignore (1.7.6.2), "Exp", lines: +2 -1
+		Configure (1.314.2.92), "Exp", lines: +38 -8
+		FAQ (1.61.2.31), "Exp", lines: +1 -1
+		INSTALL (1.45.2.9), "Exp", lines: +2 -2
+		INSTALL.W32 (1.30.2.14), "Exp", lines: +9 -4
+		Makefile.org (1.154.2.78), "Exp", lines: +51 -19
+		PROBLEMS (1.4.2.10), "Exp", lines: +2 -2
+		e_os.h (1.56.2.17), "Exp", lines: +20 -1
+		apps/.cvsignore (1.5.8.1), "Exp", lines: +1 -0
+		apps/Makefile (1.1.4.1), "Exp", lines: +1147 -0
+		apps/apps.c (1.49.2.27), "Exp", lines: +0 -10
+		apps/ca.c (1.102.2.31), "Exp", lines: +0 -10
+		apps/dgst.c (1.23.2.10), "Exp", lines: +39 -11
+		apps/openssl.c (1.48.2.9), "Exp", lines: +19 -0
+		crypto/Makefile (1.1.4.1), "Exp", lines: +217 -0
+		crypto/cryptlib.c (1.32.2.11), "Exp", lines: +5 -0
+		crypto/crypto-lib.com (1.53.2.12), "Exp", lines: +1 -1
+		crypto/md32_common.h (1.22.2.6), "Exp", lines: +12 -0
+		crypto/aes/Makefile (1.1.4.1), "Exp", lines: +102 -0
+		crypto/aes/aes.h (1.1.2.9), "Exp", lines: +9 -0
+		crypto/aes/aes_cfb.c (1.1.2.9), "Exp", lines: +93 -0
+		crypto/aes/aes_core.c (1.1.2.6), "Exp", lines: +4 -0
+		crypto/asn1/Makefile (1.1.4.1), "Exp", lines: +1150 -0
+		crypto/bf/Makefile (1.1.4.1), "Exp", lines: +113 -0
+		crypto/bio/Makefile (1.1.4.1), "Exp", lines: +214 -0
+		crypto/bio/bio.h (1.56.2.6), "Exp", lines: +1 -0
+		crypto/bn/Makefile (1.1.4.1), "Exp", lines: +324 -0
+		crypto/bn/bntest.c (1.55.2.4), "Exp", lines: +1 -1
+		crypto/buffer/Makefile (1.1.4.1), "Exp", lines: +92 -0
+		crypto/cast/Makefile (1.1.4.1), "Exp", lines: +118 -0
+		crypto/cast/asm/.cvsignore (1.2.8.1), "Exp", lines: +1 -0
+		crypto/comp/Makefile (1.1.4.1), "Exp", lines: +112 -0
+		crypto/conf/Makefile (1.1.4.1), "Exp", lines: +181 -0
+		crypto/des/Makefile (1.1.4.1), "Exp", lines: +314 -0
+		crypto/des/cfb64ede.c (1.6.2.4), "Exp", lines: +111 -0
+		crypto/des/des.h (1.40.2.6), "Exp", lines: +5 -1
+		crypto/des/des_enc.c (1.11.2.4), "Exp", lines: +8 -0
+		crypto/des/des_old.c (1.11.2.6), "Exp", lines: +1 -1
+		crypto/des/destest.c (1.30.2.8), "Exp", lines: +2 -2
+		crypto/des/ecb3_enc.c (1.8.2.3), "Exp", lines: +1 -3
+		crypto/des/set_key.c (1.18.2.2), "Exp", lines: +4 -0
+		crypto/dh/Makefile (1.1.4.1), "Exp", lines: +131 -0
+		crypto/dsa/Makefile (1.1.4.1), "Exp", lines: +173 -0
+		crypto/dsa/dsa_gen.c (1.19.2.1), "Exp", lines: +4 -1
+		crypto/dsa/dsa_key.c (1.9.2.1), "Exp", lines: +2 -0
+		crypto/dsa/dsa_ossl.c (1.12.2.6), "Exp", lines: +2 -0
+		crypto/dsa/dsa_sign.c (1.10.2.5), "Exp", lines: +12 -0
+		crypto/dsa/dsa_vrf.c (1.10.2.5), "Exp", lines: +8 -0
+		crypto/dso/Makefile (1.1.4.1), "Exp", lines: +140 -0
+		crypto/ec/Makefile (1.1.4.1), "Exp", lines: +126 -0
+		crypto/engine/Makefile (1.1.4.1), "Exp", lines: +536 -0
+		crypto/engine/hw_cryptodev.c (1.1.2.6), "Exp", lines: +6 -2
+		crypto/err/Makefile (1.1.4.1), "Exp", lines: +118 -0
+		crypto/err/err.h (1.35.2.6), "Exp", lines: +2 -0
+		crypto/err/err_all.c (1.17.2.4), "Exp", lines: +4 -0
+		crypto/err/openssl.ec (1.11.2.3), "Exp", lines: +1 -0
+		crypto/evp/Makefile (1.1.4.1), "Exp", lines: +1057 -0
+		crypto/evp/bio_md.c (1.11.2.1), "Exp", lines: +6 -0
+		crypto/evp/c_allc.c (1.8.2.7), "Exp", lines: +8 -0
+		crypto/evp/e_aes.c (1.6.2.10), "Exp", lines: +22 -4
+		crypto/evp/e_des.c (1.5.2.8), "Exp", lines: +36 -3
+		crypto/evp/e_des3.c (1.8.2.7), "Exp", lines: +43 -4
+		crypto/evp/evp.h (1.86.2.15), "Exp", lines: +39 -11
+		crypto/evp/evp_err.c (1.23.2.3), "Exp", lines: +3 -1
+		crypto/evp/evp_lib.c (1.6.8.4), "Exp", lines: +24 -0
+		crypto/evp/evp_locl.h (1.7.2.6), "Exp", lines: +11 -2
+		crypto/evp/evp_test.c (1.14.2.13), "Exp", lines: +17 -8
+		crypto/evp/evptests.txt (1.9.2.7), "Exp", lines: +106 -1
+		crypto/hmac/Makefile (1.1.4.1), "Exp", lines: +99 -0
+		crypto/idea/Makefile (1.1.4.1), "Exp", lines: +89 -0
+		crypto/krb5/Makefile (1.1.4.1), "Exp", lines: +88 -0
+		crypto/lhash/Makefile (1.1.4.1), "Exp", lines: +91 -0
+		crypto/md2/Makefile (1.1.4.1), "Exp", lines: +91 -0
+		crypto/md4/Makefile (1.1.4.1), "Exp", lines: +93 -0
+		crypto/md5/Makefile (1.1.4.1), "Exp", lines: +129 -0
+		crypto/mdc2/Makefile (1.1.4.1), "Exp", lines: +96 -0
+		crypto/objects/Makefile (1.1.4.1), "Exp", lines: +121 -0
+		crypto/objects/obj_dat.h (1.49.2.19), "Exp", lines: +33 -3
+		crypto/objects/obj_mac.h (1.19.2.19), "Exp", lines: +40 -0
+		crypto/objects/obj_mac.num (1.15.2.15), "Exp", lines: +10 -0
+		crypto/objects/objects.txt (1.20.2.20), "Exp", lines: +13 -0
+		crypto/ocsp/Makefile (1.1.4.1), "Exp", lines: +291 -0
+		crypto/pem/Makefile (1.1.4.1), "Exp", lines: +334 -0
+		crypto/pkcs12/Makefile (1.1.4.1), "Exp", lines: +415 -0
+		crypto/pkcs7/Makefile (1.1.4.1), "Exp", lines: +241 -0
+		crypto/rand/Makefile (1.1.4.1), "Exp", lines: +196 -0
+		crypto/rand/md_rand.c (1.69.2.4), "Exp", lines: +9 -0
+		crypto/rand/rand.h (1.26.2.7), "Exp", lines: +3 -0
+		crypto/rand/rand_err.c (1.6.2.3), "Exp", lines: +4 -1
+		crypto/rand/rand_lib.c (1.15.2.4), "Exp", lines: +11 -0
+		crypto/rc2/Makefile (1.1.4.1), "Exp", lines: +89 -0
+		crypto/rc4/Makefile (1.1.4.1), "Exp", lines: +108 -0
+		crypto/rc5/Makefile (1.1.4.1), "Exp", lines: +106 -0
+		crypto/ripemd/Makefile (1.1.4.1), "Exp", lines: +111 -0
+		crypto/rsa/Makefile (1.1.4.1), "Exp", lines: +239 -0
+		crypto/rsa/rsa_eay.c (1.28.2.9), "Exp", lines: +1 -1
+		crypto/rsa/rsa_gen.c (1.8.6.1), "Exp", lines: +3 -0
+		crypto/sha/Makefile (1.1.4.1), "Exp", lines: +118 -0
+		crypto/sha/sha1dgst.c (1.21.2.1), "Exp", lines: +8 -0
+		crypto/stack/Makefile (1.1.4.1), "Exp", lines: +86 -0
+		crypto/txt_db/Makefile (1.1.4.1), "Exp", lines: +86 -0
+		crypto/ui/Makefile (1.1.4.1), "Exp", lines: +115 -0
+		crypto/x509/Makefile (1.1.4.1), "Exp", lines: +592 -0
+		crypto/x509v3/Makefile (1.1.4.1), "Exp", lines: +601 -0
+		fips/Makefile (1.1.4.1), "Exp", lines: +202 -0
+		fips/fingerprint.sha1 (1.1.2.4), "Exp", lines: +4 -4
+		fips/fips.c (1.1.2.3), "Exp", lines: +120 -5
+		fips/fips.h (1.1.2.3), "Exp", lines: +42 -2
+		fips/fips_check_sha1 (1.1.2.5), "Exp", lines: +2 -2
+		fips/fips_err.h (1.1.4.1), "Exp", lines: +117 -0
+		fips/fips_err_wrapper.c (1.1.2.3), "Exp", lines: +4 -2
+		fips/fips_locl.h (1.1.4.1), "Exp", lines: +62 -0
+		fips/fips_make_sha1 (1.1.2.5), "Exp", lines: +9 -6
+		fips/fips_test_suite.c (1.1.4.1), "Exp", lines: +302 -0
+		fips/openssl_fips_fingerprint (1.1.4.1), "Exp", lines: +25 -0
+		fips/aes/Makefile (1.1.4.1), "Exp", lines: +131 -0
+		fips/aes/fingerprint.sha1 (1.1.2.3), "Exp", lines: +3 -2
+		fips/aes/fips_aes_core.c (1.1.2.3), "Exp", lines: +5 -2
+		fips/aes/fips_aes_locl.h (1.1.2.3), "Exp", lines: +0 -0
+		fips/aes/fips_aes_selftest.c (1.1.4.1), "Exp", lines: +112 -0
+		fips/aes/fips_aesavs.c (1.1.2.10), "Exp", lines: +12 -6
+		fips/des/Makefile (1.1.4.1), "Exp", lines: +155 -0
+		fips/des/fingerprint.sha1 (1.1.2.3), "Exp", lines: +5 -2
+		fips/des/fips_des_enc.c (1.1.2.4), "Exp", lines: +16 -3
+		fips/des/fips_des_locl.h (1.1.2.3), "Exp", lines: +1 -1
+		fips/des/fips_des_selftest.c (1.1.4.1), "Exp", lines: +200 -0
+		fips/des/fips_desmovs.c (1.1.2.4), "Exp", lines: +186 -79
+		fips/des/fips_set_key.c (1.1.4.1), "Exp", lines: +415 -0
+		fips/des/asm/fips-dx86-elf.s (1.1.4.1), "Exp", lines: +2697 -0
+		fips/dsa/Makefile (1.1.4.1), "Exp", lines: +159 -0
+		fips/dsa/fingerprint.sha1 (1.1.2.4), "Exp", lines: +3 -1
+		fips/dsa/fips_dsa_gen.c (1.1.4.1), "Exp", lines: +373 -0
+		fips/dsa/fips_dsa_ossl.c (1.1.2.4), "Exp", lines: +16 -3
+		fips/dsa/fips_dsa_selftest.c (1.1.4.1), "Exp", lines: +168 -0
+		fips/dsa/fips_dsatest.c (1.1.2.4), "Exp", lines: +10 -6
+		fips/dsa/fips_dssvs.c (1.1.4.1), "Exp", lines: +306 -0
+		fips/rand/Makefile (1.1.4.1), "Exp", lines: +104 -0
+		fips/rand/fingerprint.sha1 (1.1.2.3), "Exp", lines: +2 -2
+		fips/rand/fips_rand.c (1.1.2.3), "Exp", lines: +60 -10
+		fips/rand/fips_rand.h (1.1.2.3), "Exp", lines: +19 -1
+		fips/rand/fips_randtest.c (1.1.2.3), "Exp", lines: +31 -10
+		fips/rsa/Makefile (1.1.4.1), "Exp", lines: +112 -0
+		fips/rsa/fingerprint.sha1 (1.1.4.1), "Exp", lines: +3 -0
+		fips/rsa/fips_rsa_eay.c (1.1.4.1), "Exp", lines: +735 -0
+		fips/rsa/fips_rsa_gen.c (1.1.4.1), "Exp", lines: +249 -0
+		fips/rsa/fips_rsa_selftest.c (1.1.4.1), "Exp", lines: +207 -0
+		fips/sha1/.cvsignore (1.1.2.3), "Exp", lines: +1 -2
+		fips/sha1/Makefile (1.1.4.1), "Exp", lines: +158 -0
+		fips/sha1/fingerprint.sha1 (1.1.2.4), "Exp", lines: +5 -3
+		fips/sha1/fips_md32_common.h (1.1.2.3), "Exp", lines: +0 -0
+		fips/sha1/fips_sha1_selftest.c (1.1.4.1), "Exp", lines: +97 -0
+		fips/sha1/fips_sha1dgst.c (1.1.2.4), "Exp", lines: +4 -4
+		fips/sha1/fips_sha1test.c (1.1.2.4), "Exp", lines: +17 -0
+		fips/sha1/fips_sha_locl.h (1.1.2.3), "Exp", lines: +7 -0
+		fips/sha1/fips_standalone_sha1.c (1.1.2.4), "Exp", lines: +60 -7
+		fips/sha1/sha1hashes.txt (1.1.2.3), "Exp", lines: +0 -0
+		fips/sha1/sha1vectors.txt (1.1.2.3), "Exp", lines: +0 -0
+		fips/sha1/standalone.sha1 (1.1.2.5), "Exp", lines: +6 -4
+		fips/sha1/asm/sx86-elf.s (1.1.4.1), "Exp", lines: +1568 -0
+		ms/do_masm.bat (1.1.8.2), "Exp", lines: +12 -10
+		ms/do_ms.bat (1.4.8.2), "Exp", lines: +11 -11
+		ms/do_nasm.bat (1.1.8.2), "Exp", lines: +12 -11
+		ms/do_nt.bat (1.2.8.1), "Exp", lines: +4 -4
+		shlib/hpux10-cc.sh (1.3.2.2), "Exp", lines: +3 -3
+		ssl/Makefile (1.1.4.1), "Exp", lines: +1019 -0
+		ssl/s3_clnt.c (1.53.2.16), "Exp", lines: +10 -0
+		ssl/s3_srvr.c (1.85.2.21), "Exp", lines: +9 -0
+		ssl/ssl_cert.c (1.48.2.7), "Exp", lines: +9 -0
+		ssl/ssl_lib.c (1.110.2.12), "Exp", lines: +13 -1
+		ssl/ssltest.c (1.53.2.23), "Exp", lines: +33 -1
+		ssl/t1_enc.c (1.27.2.8), "Exp", lines: +19 -1
+		test/.cvsignore (1.4.8.1), "Exp", lines: +4 -0
+		test/Makefile (1.1.4.1), "Exp", lines: +941 -0
+		test/bctest (1.14.2.1), "Exp", lines: +1 -1
+		test/testenc (1.3.8.1), "Exp", lines: +1 -1
+		test/testfipsssl (1.1.4.1), "Exp", lines: +113 -0
+		tools/Makefile (1.1.4.1), "Exp", lines: +61 -0
+		util/cygwin.sh (1.1.2.5), "Exp", lines: +3 -3
+		util/domd (1.6.2.3), "Exp", lines: +5 -5
+		util/fixNT.sh (1.1.1.2.8.1), "Exp", lines: +3 -3
+		util/libeay.num (1.173.2.19), "Exp", lines: +55 -11
+		util/mk1mf.pl (1.41.2.10), "Exp", lines: +6 -4
+		util/mkdef.pl (1.67.2.7), "Exp", lines: +11 -4
+		util/mkerr.pl (1.18.2.6), "Exp", lines: +2 -1
+		util/mkfiles.pl (1.12.2.1), "Exp", lines: +8 -1
+		util/pod2mantest (1.1.2.7), "Exp", lines: +1 -1
+		util/selftest.pl (1.18.2.1), "Exp", lines: +2 -2
+		util/pl/BC-16.pl (1.2.2.1), "Exp", lines: +1 -1
+		util/pl/BC-32.pl (1.11.2.4), "Exp", lines: +1 -1
+		util/pl/Mingw32.pl (1.12.6.5), "Exp", lines: +1 -1
+		util/pl/OS2-EMX.pl (1.1.2.3), "Exp", lines: +1 -1
+		util/pl/VC-16.pl (1.3.2.1), "Exp", lines: +2 -2
+		util/pl/VC-32.pl (1.11.2.3), "Exp", lines: +2 -2
+		util/pl/VC-CE.pl (1.1.2.5), "Exp", lines: +1 -1
+		util/pl/ultrix.pl (1.2.8.1), "Exp", lines: +1 -1
+
+	Pull FIPS back into stable.
+
+2004-05-12 10:27  levitte
+
+	Changed:
+		apps/Makefile (1.1.4.2), "Exp", lines: +3 -1
+
+	Only check for FIPS signatures when FIPS is enabled.
+
+2004-05-12 10:28  levitte
+
+	Changed:
+		crypto/des/FILES0 (1.1.4.2), "Exp", lines: +1 -1
+
+	Makefile.ssl changed name to Makefile.
+
+2004-05-12 10:28  levitte
+
+	Changed:
+		fips/rand/fips_rand.c (1.1.2.4), "Exp", lines: +5 -1
+
+	Only really build this file when OPENSSL_FIPS is defined.  And oh,
+	let's keep internal variables static.
+
+2004-05-12 10:42  levitte
+
+	Changed:
+		fips/rand/fingerprint.sha1 (1.1.2.4), "Exp", lines: +1 -1
+
+	I forgot to modify the signature for fips_rand.c...
+
+2004-05-12 10:46  levitte
+
+	Changed:
+		fips/rsa/.cvsignore (1.1.4.1), "Exp", lines: +1 -0
+		fips/.cvsignore (1.1.2.3), "Exp", lines: +1 -1
+		fips/aes/.cvsignore (1.1.2.3), "Exp", lines: +0 -3
+		fips/des/.cvsignore (1.1.2.3), "Exp", lines: +0 -2
+		fips/dsa/.cvsignore (1.1.2.3), "Exp", lines: +0 -1
+		fips/rand/.cvsignore (1.1.2.3), "Exp", lines: +0 -1
+
+	Ignore the 'lib' timestamp file.
+
+2004-05-12 12:07  levitte
+
+	Changed:
+		fips/.cvsignore (1.1.2.4), "Exp", lines: +1 -0
+		fips/aes/.cvsignore (1.1.2.4), "Exp", lines: +1 -0
+		fips/des/.cvsignore (1.1.2.4), "Exp", lines: +1 -0
+		fips/dsa/.cvsignore (1.1.2.4), "Exp", lines: +1 -0
+		fips/rand/.cvsignore (1.1.2.4), "Exp", lines: +1 -0
+		fips/rsa/.cvsignore (1.1.4.2), "Exp", lines: +1 -0
+		fips/sha1/.cvsignore (1.1.2.4), "Exp", lines: +1 -0
+
+	Ignore 'Makefile.save'
+
+2004-05-12 16:11  ben
+
+	Changed:
+		crypto/rand/rand.h (1.26.2.8), "Exp", lines: +2 -0
+		crypto/rand/rand_err.c (1.6.2.4), "Exp", lines: +2 -0
+		fips/fingerprint.sha1 (1.1.2.5), "Exp", lines: +1 -1
+		fips/fips.c (1.1.2.4), "Exp", lines: +5 -1
+		fips/rand/fingerprint.sha1 (1.1.2.5), "Exp", lines: +1 -1
+		fips/rand/fips_rand.c (1.1.2.5), "Exp", lines: +29 -0
+
+	Blow up in people's faces if they don't reseed.
+
+2004-05-15 19:51  ben
+
+	Changed:
+		crypto/dh/dh.h (1.23.2.6), "Exp", lines: +1 -0
+		crypto/dh/dh_err.c (1.6.2.3), "Exp", lines: +2 -1
+		crypto/dh/dh_gen.c (1.8.8.2), "Exp", lines: +9 -0
+		fips/fips_test_suite.c (1.1.4.2), "Exp", lines: +4 -3
+		fips/aes/fips_aesavs.c (1.1.2.11), "Exp", lines: +49 -1
+		fips/des/fingerprint.sha1 (1.1.2.4), "Exp", lines: +1 -1
+		fips/des/fips_desmovs.c (1.1.2.5), "Exp", lines: +49 -1
+		fips/des/fips_set_key.c (1.1.4.2), "Exp", lines: +2 -0
+		fips/sha1/fingerprint.sha1 (1.1.2.5), "Exp", lines: +1 -1
+		fips/sha1/fips_md32_common.h (1.1.2.4), "Exp", lines: +3 -0
+		fips/sha1/standalone.sha1 (1.1.2.6), "Exp", lines: +1 -1
+
+	Fix self-tests, ban some things in FIPS mode, fix copyrights.
+
+2004-05-17 06:28  levitte
+
+	Changed:
+		util/mk1mf.pl (1.41.2.11), "Exp", lines: +8 -2
+		util/pl/BC-16.pl (1.2.2.2), "Exp", lines: +9 -4
+		util/pl/BC-32.pl (1.11.2.5), "Exp", lines: +8 -3
+		util/pl/Mingw32.pl (1.12.6.6), "Exp", lines: +7 -2
+		util/pl/OS2-EMX.pl (1.1.2.4), "Exp", lines: +7 -2
+		util/pl/VC-16.pl (1.3.2.2), "Exp", lines: +7 -2
+		util/pl/VC-32.pl (1.11.2.4), "Exp", lines: +7 -2
+		util/pl/VC-CE.pl (1.1.2.6), "Exp", lines: +7 -2
+		util/pl/linux.pl (1.3.6.1), "Exp", lines: +7 -2
+		util/pl/ultrix.pl (1.2.8.2), "Exp", lines: +7 -2
+		util/pl/unix.pl (1.2.8.1), "Exp", lines: +7 -2
+
+	Generate SHA1 files on Windows and other platforms supported by
+	mk1mf.pl, when building in FIPS mode.
+
+		Note: UNTESTED!
+
+2004-05-17 06:30  levitte
+
+	Changed:
+		apps/apps.h (1.44.2.14), "Exp", lines: +3 -0
+		apps/openssl.c (1.48.2.10), "Exp", lines: +9 -5
+
+	Make sure the applications know when we are running in FIPS mode.
+	We can't use the variable in libcrypto, since it's supposedly
+	unknown.
+
+		Note: currently only supported in MONOLITH mode.
+
+2004-05-17 06:31  levitte
+
+	Changed:
+		apps/enc.c (1.35.2.9), "Exp", lines: +10 -1
+
+	When in FIPS mode, use SHA1 to digest the key, rather than MD5, as
+	MD5 isn't a FIPS-approved algorithm.
+
+		Note: this means the user needs to keep track of this, and
+	we need to add support for that...
+
+2004-05-19 16:16  levitte
+
+	Changed:
+		fips/rsa/fingerprint.sha1 (1.1.4.2), "Exp", lines: +2 -2
+		fips/rsa/fips_rsa_eay.c (1.1.4.2), "Exp", lines: +8 -8
+		fips/rsa/fips_rsa_gen.c (1.1.4.2), "Exp", lines: +1 -1
+		fips/dsa/fingerprint.sha1 (1.1.2.5), "Exp", lines: +2 -2
+		fips/dsa/fips_dsa_gen.c (1.1.4.2), "Exp", lines: +2 -2
+		fips/dsa/fips_dsa_ossl.c (1.1.2.5), "Exp", lines: +4 -4
+		fips/aes/fingerprint.sha1 (1.1.2.4), "Exp", lines: +1 -1
+		fips/aes/fips_aes_core.c (1.1.2.4), "Exp", lines: +5 -5
+		crypto/rsa/rsa.h (1.36.2.11), "Exp", lines: +4 -0
+		crypto/aes/aes.h (1.1.2.10), "Exp", lines: +6 -0
+		crypto/dsa/dsa.h (1.26.2.5), "Exp", lines: +4 -0
+
+	Define FIPS_*_SIZE_T for AES, DSA and RSA as well, in preparation
+	for size_t-ification of those algorithms in future version of
+	OpenSSL...
+
+2004-05-27 11:33  levitte
+
+	Changed:
+		makevms.com (1.35.2.3), "Exp", lines: +27 -0
+
+	Copy the FIPS files to the temporary openssl include directory.
+
+2004-05-27 12:04  levitte
+
+	Changed:
+		fips/fips-lib.com (1.1.2.1), "Exp", lines: +1179 -0
+		makevms.com (1.35.2.4), "Exp", lines: +8 -0
+
+	Compile the FIPS directory on VMS as well.  fips-lib.com is
+	essentially a copy of crypto-lib.com, with just a few edits.
+
+2004-05-27 12:07  levitte
+
+	Changed:
+		fips/install.com (1.1.2.1), "Exp", lines: +55 -0
+		install.com (1.4.2.2), "Exp", lines: +6 -6
+
+	Run an installation of FIPS stuff as well.
+
+2004-05-27 12:19  levitte
+
+	Changed:
+		test/maketests.com (1.13.2.5), "Exp", lines: +3 -3
+		apps/makeapps.com (1.18.2.5), "Exp", lines: +3 -3
+
+	Make sure o_str.h is reachable.
+
+2004-06-19 15:15  ben
+
+	Changed:
+		Makefile.org (1.154.2.80), "Exp", lines: +1 -1
+		crypto/dh/dh.h (1.23.2.7), "Exp", lines: +0 -1
+		crypto/dh/dh_check.c (1.6.2.1), "Exp", lines: +4 -0
+		crypto/dh/dh_err.c (1.6.2.4), "Exp", lines: +0 -1
+		crypto/dh/dh_gen.c (1.8.8.3), "Exp", lines: +5 -9
+		crypto/dh/dh_key.c (1.16.2.3), "Exp", lines: +4 -0
+		fips/Makefile (1.1.4.2), "Exp", lines: +13 -14
+		fips/fingerprint.sha1 (1.1.2.6), "Exp", lines: +2 -2
+		fips/fips.h (1.1.2.4), "Exp", lines: +1 -0
+		fips/fips_err.h (1.1.4.2), "Exp", lines: +1 -0
+		fips/fips_make_sha1 (1.1.2.6), "Exp", lines: +3 -0
+		fips/fips_test_suite.c (1.1.4.3), "Exp", lines: +13 -9
+		fips/openssl_fips_fingerprint (1.1.4.2), "Exp", lines: +1 -2
+
+	The version that was actually submitted for FIPS testing.
+
+2004-06-19 15:16  ben
+
+	Changed:
+		fips/dh/Makefile (1.1.2.1), "Exp", lines: +92 -0
+		fips/dh/fingerprint.sha1 (1.1.2.1), "Exp", lines: +3 -0
+		fips/dh/fips_dh_check.c (1.1.2.1), "Exp", lines: +119 -0
+		fips/dh/fips_dh_gen.c (1.1.2.1), "Exp", lines: +182 -0
+		fips/dh/fips_dh_key.c (1.1.2.1), "Exp", lines: +222 -0
+
+	Add Diffie-Hellman to FIPS.
+
+2004-06-19 15:18  ben
+
+	Changed:
+		fips/.cvsignore (1.1.2.5), "Exp", lines: +2 -0
+		fips/dh/.cvsignore (1.1.2.1), "Exp", lines: +1 -0
+
+	Update ignores.
+
+2004-06-21 11:07  levitte
+
+	Changed:
+		fips/aes/Makefile (1.1.4.2), "Exp", lines: +7 -5
+		fips/des/Makefile (1.1.4.2), "Exp", lines: +7 -5
+		fips/dh/Makefile (1.1.2.2), "Exp", lines: +7 -6
+		fips/dsa/Makefile (1.1.4.2), "Exp", lines: +7 -6
+		fips/rsa/Makefile (1.1.4.2), "Exp", lines: +7 -6
+		fips/sha1/Makefile (1.1.4.2), "Exp", lines: +7 -5
+
+	Make sure we don't try to loop over an empty EXHEADER.	In the
+	Makefiles where this was fixed by commenting away code, change it
+	to check for an empty EXHEADER instead, so we have less hassle in a
+	future where EXHEADER changes.
+
+		PR: 900
+
+2004-06-21 20:05  levitte
+
+	Changed:
+		Makefile.org (1.154.2.82), "Exp", lines: +3 -1
+
+	Standard sh doesn't tolerate ! as part of the conditional command.
+
+		PR: 900
+
+2004-06-28 22:33  levitte
+
+	Changed:
+		fips/dh/fips_dh_check.c (1.1.2.2), "Exp", lines: +6 -0
+		fips/dh/fips_dh_gen.c (1.1.2.2), "Exp", lines: +6 -2
+		fips/dh/fips_dh_key.c (1.1.2.2), "Exp", lines: +8 -0
+
+	Make sure the FIPS stuff is only really compiled when in FIPS mode.
+
+2004-07-12 19:59  ben
+
+	Changed:
+		fips/fips_test_suite.c (1.1.4.4), "Exp", lines: +39 -6
+		fips/dh/fingerprint.sha1 (1.1.2.2), "Exp", lines: +3 -3
+
+	Corrected test program.
+
+2004-07-17 14:48  appro
+
+	Changed:
+		fips/des/Makefile (1.1.4.3), "Exp", lines: +1 -1
+
+	Eliminate enforced -g from CFLAGS. It switches off optimization
+	with some compilers, e.g. DEC C.
+
+2004-07-21 19:41  steve
+
+	Changed:
+		crypto/pem/pem_all.c (1.20.2.1), "Exp", lines: +119 -0
+
+	When in FIPS mode write private keys in PKCS#8 and PBES2 format to
+	avoid use of prohibited MD5 algorithm.
+
+2004-07-23 15:20  ben
+
+	Changed:
+		fips/rand/fingerprint.sha1 (1.1.2.7), "Exp", lines: +1 -1
+		fips/rand/fips_rand.c (1.1.2.7), "Exp", lines: +22 -7
+		fips/rand/fips_randtest.c (1.1.2.5), "Exp", lines: +2 -2
+
+	Convert to X9.31.
+
+2004-07-21 19:35  steve
+
+	Changed:
+		fips/fingerprint.sha1 (1.1.2.7), "Exp", lines: +1 -1
+		fips/fips.c (1.1.2.5), "Exp", lines: +3 -3
+		fips/rsa/fingerprint.sha1 (1.1.4.3), "Exp", lines: +1 -1
+		fips/rsa/fips_rsa_selftest.c (1.1.4.2), "Exp", lines: +8 -8
+
+	Avoid compiler warnings.
+
+2004-07-27 02:17  steve
+
+	Changed:
+		fips/fips_test_suite.c (1.1.4.5), "Exp", lines: +9 -8
+
+	Stop compiler warnings.
+
+2004-07-27 02:20  steve
+
+	Changed:
+		crypto/err/err.c (1.51.2.6), "Exp", lines: +1 -0
+
+	Add FIPS name to error library.
+
+2004-07-27 14:22  steve
+
+	Changed:
+		Makefile.org (1.154.2.84), "Exp", lines: +3 -3
+		fips/fips_check_sha1 (1.1.2.6), "Exp", lines: +1 -1
+		fips/openssl_fips_fingerprint (1.1.4.3), "Exp", lines: +1 -1
+
+	Rename libcrypto.sha1 to libcrypto.a.sha1
+
+2004-07-27 20:28  steve
+
+	Changed:
+		ssl/s3_lib.c (1.57.2.11), "Exp", lines: +33 -33
+		ssl/ssl.h (1.126.2.20), "Exp", lines: +1 -0
+		ssl/ssl_ciph.c (1.33.2.9), "Exp", lines: +11 -0
+		ssl/ssl_locl.h (1.47.2.3), "Exp", lines: +2 -1
+
+	New cipher "strength" FIPS which specifies that a cipher suite is
+	FIPS compatible.
+
+		New cipherstring "FIPS" is all FIPS compatible ciphersuites
+	except eNULL.
+
+		Only allow FIPS ciphersuites in FIPS mode.
+
+2004-07-28 04:24  levitte
+
+	Changed:
+		makevms.com (1.35.2.6), "Exp", lines: +2 -2
+
+	From the FIPS directory, darnit!
+
+2004-07-28 15:47  levitte
+
+	Changed:
+		makevms.com (1.35.2.7), "Exp", lines: +5 -1
+
+	Define OPENSSL_FIPS in opensslconf.h if a logical name with the
+	same name is defined.
+
+		Go up one directory level before dealing with FIPS stuff.
+
+2004-07-30 00:26  levitte
+
+	Changed:
+		fips/fips-lib.com (1.1.2.2), "Exp", lines: +3 -3
+
+	We're building crypto stuff, not ssl stuff.  Additionally, we're in
+	the fips subdirectory, not the crypto one...
+
+2004-07-30 16:37  levitte
+
+	Changed:
+		fips/sha1/fingerprint.sha1 (1.1.2.7), "Exp", lines: +2 -2
+		fips/sha1/fips_md32_common.h (1.1.2.6), "Exp", lines: +1 -1
+		fips/sha1/fips_sha_locl.h (1.1.2.5), "Exp", lines: +2 -2
+		fips/sha1/fips_standalone_sha1.c (1.1.2.5), "Exp", lines: +1 -1
+		fips/sha1/standalone.sha1 (1.1.2.8), "Exp", lines: +3 -3
+		ssl/ssl_ciph.c (1.33.2.10), "Exp", lines: +2 -2
+		fips/rsa/fingerprint.sha1 (1.1.4.4), "Exp", lines: +2 -2
+		fips/rsa/fips_rsa_eay.c (1.1.4.3), "Exp", lines: +1 -1
+		fips/rsa/fips_rsa_gen.c (1.1.4.3), "Exp", lines: +1 -1
+		fips/dh/fingerprint.sha1 (1.1.2.3), "Exp", lines: +1 -1
+		fips/dh/fips_dh_gen.c (1.1.2.3), "Exp", lines: +1 -1
+		fips/dsa/fingerprint.sha1 (1.1.2.6), "Exp", lines: +2 -2
+		fips/dsa/fips_dsa_gen.c (1.1.4.3), "Exp", lines: +4 -3
+		fips/dsa/fips_dsa_ossl.c (1.1.2.6), "Exp", lines: +2 -2
+		fips/des/fingerprint.sha1 (1.1.2.5), "Exp", lines: +2 -2
+		fips/des/fips_des_enc.c (1.1.2.5), "Exp", lines: +2 -2
+		fips/des/fips_set_key.c (1.1.4.3), "Exp", lines: +3 -3
+		fips/fingerprint.sha1 (1.1.2.8), "Exp", lines: +2 -2
+		fips/fips.c (1.1.2.6), "Exp", lines: +76 -23
+		fips/fips.h (1.1.2.5), "Exp", lines: +2 -3
+		fips/fips_locl.h (1.1.4.2), "Exp", lines: +7 -2
+		fips/aes/fingerprint.sha1 (1.1.2.5), "Exp", lines: +1 -1
+		fips/aes/fips_aes_core.c (1.1.2.5), "Exp", lines: +1 -1
+		crypto/rand/md_rand.c (1.69.2.5), "Exp", lines: +1 -1
+		crypto/rand/rand_lib.c (1.15.2.5), "Exp", lines: +2 -1
+		crypto/dsa/dsa_sign.c (1.10.2.6), "Exp", lines: +2 -2
+		crypto/dsa/dsa_vrf.c (1.10.2.6), "Exp", lines: +1 -1
+		crypto/pem/pem_all.c (1.20.2.2), "Exp", lines: +2 -2
+		crypto/cryptlib.c (1.32.2.12), "Exp", lines: +122 -6
+		crypto/crypto.h (1.62.2.8), "Exp", lines: +8 -1
+		crypto/md32_common.h (1.22.2.7), "Exp", lines: +2 -2
+
+	To protect FIPS-related global variables, add locking mechanisms
+	around them.
+
+		NOTE: because two new locks are added, this adds potential
+	binary incompatibility with earlier versions in the 0.9.7 series.
+	However, those locks will only ever be touched when FIPS_mode_set()
+	is called and after, thanks to a variable that's only changed from
+	0 to 1 once (when FIPS_mode_set() is called).  So basically, as
+	long as FIPS mode hasn't been engaged explicitely by the calling
+	application, the new locks are treated as if they didn't exist at
+	all, thus not becoming a problem.  Applications that are built or
+	rebuilt to use FIPS functionality will need to be recompiled in any
+	case, thus not being a problem either.
+
+2004-08-02 16:15  levitte
+
+	Changed:
+		crypto/cryptlib.c (1.32.2.13), "Exp", lines: +4 -4
+
+	Let's lock a write lock when changing values, shall we?
+
+		Thanks to Dr Stephen Henson <shenson@drh-consultancy.co.uk>
+	for making me aware of this error.
+
+2004-08-05 20:11  steve
+
+	Changed:
+		fips/fingerprint.sha1 (1.1.2.9), "Exp", lines: +1 -1
+		fips/fips.c (1.1.2.7), "Exp", lines: +1 -1
+
+	Stop compiler giving bogus shadow warning.
+
+2004-08-09 14:13  levitte
+
+	Changed:
+		makevms.com (1.35.2.8), "Exp", lines: +1 -1
+
+	In the fips directory, we use FIPS-LIB.COM, not CRYPTO-LIB.COM...
+
+2004-08-09 14:14  levitte
+
+	Changed:
+		fips/fips-lib.com (1.1.2.3), "Exp", lines: +4 -4
+
+	Correct typos and include directory specifications.
+
+2004-08-10 11:11  levitte
+
+	Changed:
+		fips/fips-lib.com (1.1.2.4), "Exp", lines: +2 -1
+
+	Update the VMS fips library builder with the DH library.
+
+2004-08-10 12:04  levitte
+
+	Changed:
+		fips/rand/fingerprint.sha1 (1.1.2.8), "Exp", lines: +1 -1
+		fips/rand/fips_rand.c (1.1.2.8), "Exp", lines: +7 -1
+
+	With DEC C in ANSI C mode, we need to define _XOPEN_SOURCE_EXTENDED
+	to get struct timeval and gettimeofday().
+
+2004-09-06 16:19  levitte
+
+	Changed:
+		fips/fips.c (1.1.2.8), "Exp", lines: +5 -4
+
+	Replace the bogus checks of n with proper uses of feof(), ferror()
+	and clearerr().
+
+2004-09-06 16:21  levitte
+
+	Changed:
+		fips/sha1/fips_sha_locl.h (1.1.2.6), "Exp", lines: +2 -2
+
+	num is an unsigned long, but since it was transfered from
+	crypto/sha/sha_locl.h, where it is in fact an int, we need to check
+	for less-than-zero as if it was an int...
+
+2004-10-08 12:03  ben
+
+	Changed:
+		fips/fingerprint.sha1 (1.1.2.10), "Exp", lines: +1 -1
+		fips/sha1/fingerprint.sha1 (1.1.2.8), "Exp", lines: +1 -1
+		fips/sha1/standalone.sha1 (1.1.2.9), "Exp", lines: +1 -1
+
+	Update fingerprints.
+
+2004-10-14 07:51  levitte
+
+	Changed:
+		VMS/mkshared.com (1.3.2.1), "Exp", lines: +8 -0
+
+	We need to check for OPENSSL_FIPS when building shared libraries,
+	so we get correct transfer vectors for those functions when
+	required.
+
+2004-10-26 13:47  steve
+
+	Changed:
+		util/mkfiles.pl (1.12.2.2), "Exp", lines: +1 -0
+
+	Add fips/dh directory to mkfiles.pl
+
+2004-10-26 14:17  levitte
+
+	Changed:
+		fips/sha1/Makefile (1.1.4.4), "Exp", lines: +3 -1
+		util/mkfiles.pl (1.12.2.3), "Exp", lines: +1 -0
+		fips/Makefile (1.1.4.5), "Exp", lines: +7 -1
+		crypto/sha/Makefile (1.1.4.4), "Exp", lines: +1 -7
+
+	fips/dh was missing in mkfiles.pl.  make update
+
+2004-10-26 15:01  steve
+
+	Changed:
+		util/mkfiles.pl (1.12.2.4), "Exp", lines: +0 -1
+
+	Only add fips/dh once...
+
+2004-11-01 09:20  levitte
+
+	Changed:
+		fips/rand/fingerprint.sha1 (1.1.2.9), "Exp", lines: +1 -1
+		fips/rand/fips_rand.c (1.1.2.9), "Exp", lines: +3 -1
+
+	Make sure _XOPEN_SOURCE_EXTENDED is correctly defined, and only if
+	not already defined.
+
+2004-12-09 19:03  appro
+
+	vChanged:
+		crypto/Makefile (1.1.4.4), "Exp", lines: +2 -0
+
+	Postpone linking of shared libcrypto in FIPS build.
+
+2004-12-09 19:13  appro
+
+	Changed:
+		fips/fingerprint.sha1 (1.1.2.11), "Exp", lines: +1 -1
+		fips/fips.c (1.1.2.9), "Exp", lines: +13 -1
+		fips/openssl_fips_fingerprint (1.1.4.4), "Exp", lines: +4 -2
+
+	Cygwin specific FIPS fix-ups.
+
+2004-12-09 23:43  appro
+
+	Changed:
+		Configure (1.314.2.100), "Exp", lines: +2 -3
+		crypto/des/des_enc.c (1.11.2.5), "Exp", lines: +2 -2
+
+	Eliminate false dependency on 386 config option is FIPS context.
+	At the same time limit assembler support to ELF platforms [that's
+	what is there, ELF modules].
+
+2004-12-10 12:37  appro
+
+	Changed:
+		Configure (1.314.2.101), "Exp", lines: +10 -3
+		crypto/des/des_enc.c (1.11.2.6), "Exp", lines: +2 -2
+
+	Respect no-asm with fips option and disable FIPS DES assembler in
+	shared context [because it's not PIC].
+
+2004-12-10 14:15  appro
+
+	Changed:
+		fips/sha1/fingerprint.sha1 (1.1.2.10), "Exp", lines: +1 -1
+		fips/sha1/standalone.sha1 (1.1.2.11), "Exp", lines: +1 -1
+		fips/sha1/asm/sx86-elf.s (1.1.4.3), "Exp", lines: +32 -32
+
+	Solaris x86 assembler update.
+
+2004-12-10 17:30  appro
+
+	Changed:
+		fips/fips_check_sha1 (1.1.2.7), "Exp", lines: +1 -1
+		fips/openssl_fips_fingerprint (1.1.4.5), "Exp", lines: +1 -1
+		fips/sha1/Makefile (1.1.4.6), "Exp", lines: +1 -1
+
+	Adapt FIPS sub-tree for mingw.
+
+2005-01-03 18:46  steve
+
+	Changed:
+		fips/rsa/fingerprint.sha1 (1.1.4.5), "Exp", lines: +1 -1
+		fips/rsa/fips_rsa_selftest.c (1.1.4.3), "Exp", lines: +55 -11
+
+	RSA KAT.
+
+2005-01-11 17:54  levitte
+
+	Changed:
+		fips/rsa/fingerprint.sha1 (1.1.4.6), "Exp", lines: +1 -1
+		fips/rsa/fips_rsa_selftest.c (1.1.4.4), "Exp", lines: +2 -2
+
+	Clear signed vs. unsigned conflicts.  Change the fingerprint
+	accordingly.
+
+2005-01-11 19:25  levitte
+
+	Changed:
+		ssl/ssltest.c (1.53.2.24), "Exp", lines: +2 -2
+		fips/rand/fips_randtest.c (1.1.2.6), "Exp", lines: +3 -3
+		fips/sha1/fips_sha1test.c (1.1.2.5), "Exp", lines: +10 -4
+		fips/des/fips_desmovs.c (1.1.2.6), "Exp", lines: +8 -7
+		fips/dsa/fips_dsatest.c (1.1.2.5), "Exp", lines: +2 -2
+		apps/openssl.c (1.48.2.12), "Exp", lines: +1 -1
+		fips/aes/fips_aesavs.c (1.1.2.12), "Exp", lines: +8 -7
+
+	Use EXIT() instead of exit().
+
+2005-01-26 21:00  steve
+
+	Changed:
+		apps/dgst.c (1.23.2.13), "Exp", lines: +10 -0
+		apps/pkcs12.c (1.60.2.13), "Exp", lines: +8 -1
+		crypto/crypto.h (1.62.2.9), "Exp", lines: +49 -0
+		crypto/md32_common.h (1.22.2.9), "Exp", lines: +1 -1
+		crypto/bf/bf_skey.c (1.6.2.1), "Exp", lines: +2 -1
+		crypto/bf/blowfish.h (1.9.2.1), "Exp", lines: +4 -1
+		crypto/cast/c_skey.c (1.5.6.1), "Exp", lines: +3 -1
+		crypto/cast/cast.h (1.7.2.1), "Exp", lines: +4 -1
+		crypto/evp/bio_md.c (1.11.2.3), "Exp", lines: +2 -7
+		crypto/evp/digest.c (1.21.2.7), "Exp", lines: +11 -0
+		crypto/evp/e_aes.c (1.6.2.11), "Exp", lines: +11 -11
+		crypto/evp/e_des.c (1.5.2.9), "Exp", lines: +5 -3
+		crypto/evp/e_des3.c (1.8.2.8), "Exp", lines: +6 -6
+		crypto/evp/evp.h (1.86.2.16), "Exp", lines: +17 -0
+		crypto/evp/evp_enc.c (1.28.2.11), "Exp", lines: +15 -1
+		crypto/evp/evp_err.c (1.23.2.4), "Exp", lines: +6 -1
+		crypto/evp/evp_locl.h (1.7.2.7), "Exp", lines: +17 -2
+		crypto/evp/m_dss.c (1.8.2.1), "Exp", lines: +1 -1
+		crypto/evp/m_md2.c (1.9.2.1), "Exp", lines: +1 -0
+		crypto/evp/m_md4.c (1.8.2.1), "Exp", lines: +1 -0
+		crypto/evp/m_md5.c (1.9.2.1), "Exp", lines: +1 -0
+		crypto/evp/m_mdc2.c (1.9.2.1), "Exp", lines: +1 -0
+		crypto/evp/m_sha.c (1.8.2.2), "Exp", lines: +1 -0
+		crypto/evp/m_sha1.c (1.8.2.1), "Exp", lines: +1 -1
+		crypto/evp/names.c (1.7.2.1), "Exp", lines: +3 -0
+		crypto/hmac/hmac.c (1.12.2.3), "Exp", lines: +7 -0
+		crypto/hmac/hmac.h (1.14.2.2), "Exp", lines: +1 -0
+		crypto/idea/i_skey.c (1.5.6.1), "Exp", lines: +13 -0
+		crypto/idea/idea.h (1.10.2.1), "Exp", lines: +4 -0
+		crypto/md2/md2.h (1.11.2.1), "Exp", lines: +3 -0
+		crypto/md2/md2_dgst.c (1.13.2.4), "Exp", lines: +3 -1
+		crypto/md4/md4.h (1.3.2.1), "Exp", lines: +3 -0
+		crypto/md4/md4_dgst.c (1.2.2.2), "Exp", lines: +1 -1
+		crypto/md5/md5.h (1.10.2.3), "Exp", lines: +3 -0
+		crypto/md5/md5_dgst.c (1.16.2.2), "Exp", lines: +1 -1
+		crypto/mdc2/mdc2.h (1.9.2.1), "Exp", lines: +3 -1
+		crypto/mdc2/mdc2dgst.c (1.13.2.1), "Exp", lines: +3 -1
+		crypto/rc2/rc2.h (1.10.2.1), "Exp", lines: +4 -1
+		crypto/rc2/rc2_skey.c (1.4.6.1), "Exp", lines: +13 -0
+		crypto/rc4/rc4.h (1.10.2.2), "Exp", lines: +3 -0
+		crypto/rc4/rc4_skey.c (1.10.8.2), "Exp", lines: +2 -1
+		crypto/rc5/rc5.h (1.5.2.1), "Exp", lines: +4 -1
+		crypto/rc5/rc5_skey.c (1.4.6.1), "Exp", lines: +14 -0
+		crypto/ripemd/ripemd.h (1.8.2.1), "Exp", lines: +3 -0
+		crypto/ripemd/rmd_dgst.c (1.13.2.2), "Exp", lines: +2 -1
+		crypto/sha/sha.h (1.11.2.2), "Exp", lines: +3 -0
+		crypto/sha/sha_locl.h (1.16.2.3), "Exp", lines: +4 -0
+		crypto/x509/x509_cmp.c (1.22.2.4), "Exp", lines: +7 -1
+		crypto/x509/x509_vfy.c (1.56.2.13), "Exp", lines: +1 -1
+		ssl/s3_clnt.c (1.53.2.18), "Exp", lines: +2 -0
+		ssl/s3_enc.c (1.31.2.9), "Exp", lines: +3 -0
+		ssl/s3_srvr.c (1.85.2.23), "Exp", lines: +2 -0
+		ssl/t1_enc.c (1.27.2.9), "Exp", lines: +2 -0
+
+	FIPS algorithm blocking.
+
+		Non FIPS algorithms are not normally allowed in FIPS mode.
+
+		Any attempt to use them via high level functions will
+	return an error.
+
+		The low level non-FIPS algorithm functions cannot return
+	errors so they produce assertion failures. HMAC also has to give an
+	assertion error because it (erroneously) can't return an error
+	either.
+
+		There are exceptions (such as MD5 in TLS and non
+	cryptographic use of algorithms) and applications can override the
+	blocking and use non FIPS algorithms anyway.
+
+		For low level functions the override is perfomed by
+	prefixing the algorithm initalization function with "private_" for
+	example private_MD5_Init().
+
+		For high level functions an override is performed by
+	setting a flag in the context.
+
+2005-01-27 02:49  steve
+
+	Changed:
+		apps/dgst.c (1.23.2.14), "Exp", lines: +9 -5
+		crypto/crypto.h (1.62.2.10), "Exp", lines: +3 -0
+		crypto/evp/digest.c (1.21.2.8), "Exp", lines: +34 -0
+		crypto/hmac/hmac.c (1.12.2.4), "Exp", lines: +9 -0
+
+	More FIPS algorithm blocking.
+
+		Catch attempted use of non FIPS algorithms with HMAC.
+
+		Give an assertion error for applications that ignore FIPS
+	digest errors.
+
+		Make -non-fips-allow work with dgst and HMAC.
+
+2005-01-28 15:03  steve
+
+	Changed:
+		apps/dgst.c (1.23.2.15), "Exp", lines: +2 -1
+		apps/enc.c (1.35.2.13), "Exp", lines: +38 -4
+		crypto/evp/e_rc4.c (1.11.2.2), "Exp", lines: +1 -0
+		crypto/evp/evp.h (1.86.2.17), "Exp", lines: +3 -0
+		crypto/evp/evp_enc.c (1.28.2.12), "Exp", lines: +60 -15
+		crypto/evp/evp_locl.h (1.7.2.8), "Exp", lines: +1 -0
+		test/testenc (1.3.8.2), "Exp", lines: +8 -8
+
+	Further FIPS algorithm blocking.
+
+		Fixes to cipher blocking and enabling code.
+
+		Add option -non-fips-allow to 'enc' and update testenc.
+
+2005-01-31 02:33  steve
+
+	Changed:
+		ssl/s23_clnt.c (1.20.2.7), "Exp", lines: +16 -0
+		ssl/s23_srvr.c (1.41.2.6), "Exp", lines: +9 -0
+		ssl/s3_clnt.c (1.53.2.19), "Exp", lines: +0 -8
+		ssl/s3_enc.c (1.31.2.10), "Exp", lines: +1 -0
+		ssl/s3_srvr.c (1.85.2.24), "Exp", lines: +0 -8
+		ssl/ssl.h (1.126.2.21), "Exp", lines: +1 -0
+		ssl/ssl_cert.c (1.48.2.10), "Exp", lines: +0 -8
+		ssl/ssl_err.c (1.41.2.4), "Exp", lines: +2 -1
+		ssl/ssl_lib.c (1.110.2.13), "Exp", lines: +8 -9
+		ssl/t1_enc.c (1.27.2.10), "Exp", lines: +0 -18
+
+	Only allow TLS is FIPS mode.
+
+		Remove old FIPS_allow_md5() calls.
+
+2005-02-05 19:24  steve
+
+	Changed:
+		apps/req.c (1.88.2.18), "Exp", lines: +8 -1
+		apps/x509.c (1.67.2.20), "Exp", lines: +8 -1
+
+	In FIPS mode use SHA1 as default digest in x509 and req utilities.
+
+2005-03-15 10:46  appro
+
+	Changed:
+		Makefile.org (1.154.2.96), "Exp", lines: +1 -1
+		crypto/Makefile (1.1.4.6), "Exp", lines: +2 -3
+		fips/Makefile (1.1.4.8), "Exp", lines: +4 -1
+
+	Real Bourne shell doesn't accept ! as in "if ! grep ..." Fix this
+	in crypto/Makefile and make Makefile.org and fips/Makefile more
+	discreet.
+
+2005-03-22 18:29  steve
+
+	Changed:
+		fips/fingerprint.sha1 (1.1.2.12), "Exp", lines: +1 -1
+		fips/fips.c (1.1.2.10), "Exp", lines: +1 -0
+
+	Fix memory leak.
+
+2005-03-27 05:36  steve
+
+	Changed:
+		crypto/evp/e_null.c (1.9.2.1), "Exp", lines: +1 -1
+		ssl/s3_lib.c (1.57.2.13), "Exp", lines: +3 -3
+
+	Allow 'null' cipher and appropriate Kerberos ciphersuites in FIPS
+	mode.
+
+2005-04-14 14:44  steve
+
+	Changed:
+		fips/fipshashes.sha1 (1.1.2.1), "Exp", lines: +29 -0
+		util/checkhash.pl (1.1.2.1), "Exp", lines: +181 -0
+
+	Perl script that checks or rebuilds FIPS hash files. This works on
+	both Unix and Windows.
+
+		Merge all FIPS hash files into a single hash file
+	fips/fips.sha1
+
+2005-04-15 05:27  steve
+
+	Changed:
+		fips/Makefile (1.1.4.9), "Exp", lines: +1 -1
+		fips/aes/Makefile (1.1.4.4), "Exp", lines: +1 -4
+		fips/des/Makefile (1.1.4.6), "Exp", lines: +1 -4
+		fips/dh/Makefile (1.1.2.5), "Exp", lines: +1 -4
+		fips/dsa/Makefile (1.1.4.4), "Exp", lines: +1 -4
+		fips/rand/Makefile (1.1.4.3), "Exp", lines: +1 -4
+		fips/rsa/Makefile (1.1.4.5), "Exp", lines: +1 -4
+		fips/sha1/Makefile (1.1.4.9), "Exp", lines: +1 -7
+
+	Update hash checking in makefiles to use new perl script.
+
+2005-04-17 06:37  steve
+
+	Changed:
+		util/checkhash.pl (1.1.2.2), "Exp", lines: +163 -127
+
+	Modify checkhash.pl so it can be run standalone or included as a
+	funtion in another perl script.
+
+2005-04-17 16:00  appro
+
+	Changed:
+		fips/sha1/Makefile (1.1.4.10), "Exp", lines: +9 -5
+
+	Bring back fips_standalone_sha1.
+
+2005-04-17 16:17  appro
+
+	Deleted:
+		fips/sha1/asm/sx86-elf.s (1.1.4.4)
+	Changed:
+		Configure (1.314.2.114), "Exp", lines: +1 -1
+		fips/fipshashes.sha1 (1.1.2.2), "Exp", lines: +1 -1
+		fips/sha1/Makefile (1.1.4.11), "Exp", lines: +1 -1
+		fips/sha1/standalone.sha1 (1.1.2.13), "Exp", lines: +1 -1
+		fips/sha1/asm/fips-sx86-elf.s (1.1.2.1), "Exp", lines: +1568 -0
+
+	Rename fips/sha1/sx86-elf.s to fips/sha1/fips-sx86-elf.s.
+
+2005-04-17 16:21  steve
+
+	Changed:
+		util/checkhash.pl (1.1.2.3), "Exp", lines: +2 -0
+
+	Return 0 for successful hash check.
+
+2005-04-17 16:54  appro
+
+	Changed:
+		Configure (1.314.2.116), "Exp", lines: +8 -1
+		Makefile.org (1.154.2.99), "Exp", lines: +3 -2
+		crypto/aes/aes_cbc.c (1.1.2.11), "Exp", lines: +2 -0
+		fips/fipshashes.sha1 (1.1.2.4), "Exp", lines: +1 -0
+		fips/aes/Makefile (1.1.4.5), "Exp", lines: +4 -2
+		fips/aes/asm/fips-ax86-elf.s (1.1.2.1), "Exp", lines: +1822 -0
+
+	Throw in fips/aes/asm/fips-ax86-elf.s.
+
+2005-04-17 16:35  appro
+
+	Changed:
+		Configure (1.314.2.115), "Exp", lines: +1 -1
+		fips/fipshashes.sha1 (1.1.2.3), "Exp", lines: +1 -1
+		fips/des/asm/fips-dx86-elf.s (1.1.4.2), "Exp", lines: +108 -98
+
+	Regenerate fips/des/asm/fips-dx86-elf.s with -fPIC flag.
+
+2005-04-17 17:26  appro
+
+	Changed:
+		crypto/cryptlib.c (1.32.2.18), "Exp", lines: +6 -55
+		crypto/crypto.h (1.62.2.11), "Exp", lines: +0 -3
+		fips/fips.c (1.1.2.11), "Exp", lines: +62 -8
+		fips/fips.h (1.1.2.7), "Exp", lines: +2 -3
+		fips/fips_locl.h (1.1.4.3), "Exp", lines: +6 -3
+		fips/fipshashes.sha1 (1.1.2.5), "Exp", lines: +4 -4
+		fips/rand/fips_rand.c (1.1.2.10), "Exp", lines: +3 -1
+		fips/rsa/fips_rsa_gen.c (1.1.4.4), "Exp", lines: +4 -2
+
+	Resolve minor binary compatibility issues in fips.
+
+2005-04-17 18:22  appro
+
+	Changed:
+		fips/fipshashes.sha1 (1.1.2.6), "Exp", lines: +12 -12
+		fips/des/fips_des_locl.h (1.1.2.4), "Exp", lines: +1 -1
+		fips/des/fips_set_key.c (1.1.4.4), "Exp", lines: +2 -2
+		fips/dh/fips_dh_key.c (1.1.2.3), "Exp", lines: +1 -1
+		fips/dsa/fips_dsa_ossl.c (1.1.2.7), "Exp", lines: +1 -1
+		fips/dsa/fips_dsa_selftest.c (1.1.4.2), "Exp", lines: +3 -3
+		fips/rand/fips_rand.c (1.1.2.11), "Exp", lines: +2 -2
+		fips/rand/fips_rand.h (1.1.2.5), "Exp", lines: +1 -1
+		fips/rsa/fips_rsa_eay.c (1.1.4.4), "Exp", lines: +1 -1
+		fips/rsa/fips_rsa_gen.c (1.1.4.5), "Exp", lines: +1 -1
+		fips/rsa/fips_rsa_selftest.c (1.1.4.5), "Exp", lines: +11 -11
+		fips/sha1/fips_sha1_selftest.c (1.1.4.2), "Exp", lines: +1 -1
+		fips/sha1/fips_sha1dgst.c (1.1.2.5), "Exp", lines: +1 -1
+		fips/sha1/standalone.sha1 (1.1.2.14), "Exp", lines: +2 -2
+
+	Minor fips const-ification.
+
+2005-04-18 07:02  steve
+
+	Changed:
+		crypto/bf/bf_skey.c (1.6.2.2), "Exp", lines: +1 -0
+		crypto/cast/c_skey.c (1.5.6.2), "Exp", lines: +1 -0
+		crypto/idea/i_skey.c (1.5.6.2), "Exp", lines: +1 -0
+		crypto/rc2/rc2_skey.c (1.4.6.2), "Exp", lines: +1 -0
+		crypto/rc4/rc4_skey.c (1.10.8.3), "Exp", lines: +1 -0
+		crypto/rc5/rc5_skey.c (1.4.6.2), "Exp", lines: +1 -0
+
+	Pick up definition of FIPS_mode() in fips.h to avoid warnings.
+
+2005-04-18 10:34  steve
+
+	Deleted:
+		fips/fingerprint.sha1 (1.1.2.14)
+		fips/fips_check_sha1 (1.1.2.8)
+		fips/fips_make_sha1 (1.1.2.7)
+		fips/aes/fingerprint.sha1 (1.1.2.7)
+		fips/des/fingerprint.sha1 (1.1.2.6)
+		fips/dh/fingerprint.sha1 (1.1.2.4)
+		fips/dsa/fingerprint.sha1 (1.1.2.7)
+		fips/rand/fingerprint.sha1 (1.1.2.10)
+		fips/rsa/fingerprint.sha1 (1.1.4.7)
+		fips/sha1/fingerprint.sha1 (1.1.2.12)
+	Changed:
+		fips/sha1/Makefile (1.1.4.12), "Exp", lines: +1 -4
+
+	Remove obsolete fingerprint.sha1 files and associated scripts.
+	Delete test in fips/sha1/Makefile: the top level test checks the
+	same files.
+
+2005-04-19 09:11  appro
+
+	Deleted:
+		fips/fipshashes.sha1 (1.1.2.7)
+		fips/sha1/standalone.sha1 (1.1.2.15)
+	Changed:
+		fips/fipshashes.c (1.1.2.1), "Exp", lines: +32 -0
+		util/checkhash.pl (1.1.2.4), "Exp", lines: +7 -4
+
+	Maintain fingerprint hashes as C source.
+
+2005-04-19 09:17  appro
+
+	Changed:
+		util/checkhash.pl (1.1.2.5), "Exp", lines: +1 -1
+
+	Complete the transition C-code hashes.
+
+2005-04-21 19:06  steve
+
+	Changed:
+		apps/openssl.c (1.48.2.13), "Exp", lines: +0 -2
+		fips/fips.c (1.1.2.12), "Exp", lines: +0 -27
+		fips/fips.h (1.1.2.8), "Exp", lines: +0 -2
+		fips/fipshashes.c (1.1.2.2), "Exp", lines: +2 -2
+
+	Remove defunct FIPS_allow_md5() and related functions.
+
+2005-04-22 06:15  appro
+
+	Changed:
+		fips/fips.c (1.1.2.13), "Exp", lines: +3 -3
+		fips/fips_err.h (1.1.4.4), "Exp", lines: +3 -3
+		fips/fipshashes.c (1.1.2.4), "Exp", lines: +2 -2
+
+	Move some variables to .bss.
+

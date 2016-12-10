@@ -15,7 +15,7 @@ if ($debug)
 else
 	{ $cflags="-O2"; }
 
-$cflags.=" -DNOPROTO -DNOCONST -DL_ENDIAN";
+$cflags.=" -std1 -DL_ENDIAN";
 
 if (!$no_asm)
 	{

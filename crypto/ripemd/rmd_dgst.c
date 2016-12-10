@@ -58,27 +58,23 @@
 
 #include <stdio.h>
 #include "rmd_locl.h"
-
-char *RMD160_version="RIPEMD160 part of SSLeay 0.9.1a 06-Jul-1998";
-
-#ifndef NOPROTO
-#  ifdef RMD160_ASM
-     void ripemd160_block_x86(RIPEMD160_CTX *c, unsigned long *p,int num);
-#    define ripemd160_block ripemd160_block_x86
-#  else
-     void ripemd160_block(RIPEMD160_CTX *c, unsigned long *p,int num);
-#  endif
-#else
-#  ifdef RMD160_ASM
-     void ripemd160_block_x86();
-#    define ripemd160_block ripemd160_block_x86
-#  else
-     void ripemd160_block();
-#  endif
+#include <openssl/opensslv.h>
+#include <openssl/err.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
 #endif
 
-void RIPEMD160_Init(c)
-RIPEMD160_CTX *c;
+
+const char RMD160_version[]="RIPE-MD160" OPENSSL_VERSION_PTEXT;
+
+#  ifdef RMD160_ASM
+     void ripemd160_block_x86(RIPEMD160_CTX *c, unsigned long *p,size_t num);
+#    define ripemd160_block ripemd160_block_x86
+#  else
+     void ripemd160_block(RIPEMD160_CTX *c, unsigned long *p,size_t num);
+#  endif
+
+FIPS_NON_FIPS_MD_Init(RIPEMD160)
 	{
 	c->A=RIPEMD160_A;
 	c->B=RIPEMD160_B;
@@ -88,204 +84,48 @@ RIPEMD160_CTX *c;
 	c->Nl=0;
 	c->Nh=0;
 	c->num=0;
+	return 1;
 	}
 
-void RIPEMD160_Update(c, data, len)
-RIPEMD160_CTX *c;
-register unsigned char *data;
-unsigned long len;
+#ifndef ripemd160_block_data_order
+#ifdef X
+#undef X
+#endif
+void ripemd160_block_data_order (RIPEMD160_CTX *ctx, const void *p, size_t num)
 	{
-	register ULONG *p;
-	int sw,sc;
-	ULONG l;
-
-	if (len == 0) return;
-
-	l=(c->Nl+(len<<3))&0xffffffffL;
-	if (l < c->Nl) /* overflow */
-		c->Nh++;
-	c->Nh+=(len>>29);
-	c->Nl=l;
-
-	if (c->num != 0)
-		{
-		p=c->data;
-		sw=c->num>>2;
-		sc=c->num&0x03;
-
-		if ((c->num+len) >= RIPEMD160_CBLOCK)
-			{
-			l= p[sw];
-			p_c2l(data,l,sc);
-			p[sw++]=l;
-			for (; sw<RIPEMD160_LBLOCK; sw++)
-				{
-				c2l(data,l);
-				p[sw]=l;
-				}
-			len-=(RIPEMD160_CBLOCK-c->num);
-
-			ripemd160_block(c,p,64);
-			c->num=0;
-			/* drop through and do the rest */
-			}
-		else
-			{
-			int ew,ec;
-
-			c->num+=(int)len;
-			if ((sc+len) < 4) /* ugly, add char's to a word */
-				{
-				l= p[sw];
-				p_c2l_p(data,l,sc,len);
-				p[sw]=l;
-				}
-			else
-				{
-				ew=(c->num>>2);
-				ec=(c->num&0x03);
-				l= p[sw];
-				p_c2l(data,l,sc);
-				p[sw++]=l;
-				for (; sw < ew; sw++)
-					{ c2l(data,l); p[sw]=l; }
-				if (ec)
-					{
-					c2l_p(data,l,ec);
-					p[sw]=l;
-					}
-				}
-			return;
-			}
-		}
-	/* we now can process the input data in blocks of RIPEMD160_CBLOCK
-	 * chars and save the leftovers to c->data. */
-#ifdef L_ENDIAN
-	if ((((unsigned long)data)%sizeof(ULONG)) == 0)
-		{
-		sw=(int)len/RIPEMD160_CBLOCK;
-		if (sw > 0)
-			{
-			sw*=RIPEMD160_CBLOCK;
-			ripemd160_block(c,(ULONG *)data,sw);
-			data+=sw;
-			len-=sw;
-			}
-		}
-#endif
-	p=c->data;
-	while (len >= RIPEMD160_CBLOCK)
-		{
-#if defined(L_ENDIAN) || defined(B_ENDIAN)
-		if (p != (unsigned long *)data)
-			memcpy(p,data,RIPEMD160_CBLOCK);
-		data+=RIPEMD160_CBLOCK;
-#ifdef B_ENDIAN
-		for (sw=(RIPEMD160_LBLOCK/4); sw; sw--)
-			{
-			Endian_Reverse32(p[0]);
-			Endian_Reverse32(p[1]);
-			Endian_Reverse32(p[2]);
-			Endian_Reverse32(p[3]);
-			p+=4;
-			}
-#endif
+	const unsigned char *data=p;
+	register unsigned MD32_REG_T A,B,C,D,E;
+	unsigned MD32_REG_T a,b,c,d,e,l;
+#ifndef MD32_XARRAY
+	/* See comment in crypto/sha/sha_locl.h for details. */
+	unsigned MD32_REG_T	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
+				XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
+# define X(i)	XX##i
 #else
-		for (sw=(RIPEMD160_LBLOCK/4); sw; sw--)
-			{
-			c2l(data,l); *(p++)=l;
-			c2l(data,l); *(p++)=l;
-			c2l(data,l); *(p++)=l;
-			c2l(data,l); *(p++)=l; 
-			} 
+	RIPEMD160_LONG	XX[16];
+# define X(i)	XX[i]
 #endif
-		p=c->data;
-		ripemd160_block(c,p,64);
-		len-=RIPEMD160_CBLOCK;
-		}
-	sc=(int)len;
-	c->num=sc;
-	if (sc)
+
+	for (;num--;)
 		{
-		sw=sc>>2;	/* words to copy */
-#ifdef L_ENDIAN
-		p[sw]=0;
-		memcpy(p,data,sc);
-#else
-		sc&=0x03;
-		for ( ; sw; sw--)
-			{ c2l(data,l); *(p++)=l; }
-		c2l_p(data,l,sc);
-		*p=l;
-#endif
-		}
-	}
 
-void RIPEMD160_Transform(c,b)
-RIPEMD160_CTX *c;
-unsigned char *b;
-	{
-	ULONG p[16];
-#if !defined(L_ENDIAN)
-	ULONG *q;
-	int i;
-#endif
+	A=ctx->A; B=ctx->B; C=ctx->C; D=ctx->D; E=ctx->E;
 
-#if defined(B_ENDIAN) || defined(L_ENDIAN)
-	memcpy(p,b,64);
-#ifdef B_ENDIAN
-	q=p;
-	for (i=(RIPEMD160_LBLOCK/4); i; i--)
-		{
-		Endian_Reverse32(q[0]);
-		Endian_Reverse32(q[1]);
-		Endian_Reverse32(q[2]);
-		Endian_Reverse32(q[3]);
-		q+=4;
-		}
-#endif
-#else
-	q=p;
-	for (i=(RIPEMD160_LBLOCK/4); i; i--)
-		{
-		ULONG l;
-		c2l(b,l); *(q++)=l;
-		c2l(b,l); *(q++)=l;
-		c2l(b,l); *(q++)=l;
-		c2l(b,l); *(q++)=l; 
-		} 
-#endif
-	ripemd160_block(c,p,64);
-	}
-
-#ifndef RMD160_ASM
-
-void ripemd160_block(ctx, X, num)
-RIPEMD160_CTX *ctx;
-register ULONG *X;
-int num;
-	{
-	register ULONG A,B,C,D,E;
-	ULONG a,b,c,d,e;
-
-	for (;;)
-		{
-		A=ctx->A; B=ctx->B; C=ctx->C; D=ctx->D; E=ctx->E;
-
-	RIP1(A,B,C,D,E,WL00,SL00);
-	RIP1(E,A,B,C,D,WL01,SL01);
-	RIP1(D,E,A,B,C,WL02,SL02);
-	RIP1(C,D,E,A,B,WL03,SL03);
-	RIP1(B,C,D,E,A,WL04,SL04);
-	RIP1(A,B,C,D,E,WL05,SL05);
-	RIP1(E,A,B,C,D,WL06,SL06);
-	RIP1(D,E,A,B,C,WL07,SL07);
-	RIP1(C,D,E,A,B,WL08,SL08);
-	RIP1(B,C,D,E,A,WL09,SL09);
-	RIP1(A,B,C,D,E,WL10,SL10);
-	RIP1(E,A,B,C,D,WL11,SL11);
-	RIP1(D,E,A,B,C,WL12,SL12);
-	RIP1(C,D,E,A,B,WL13,SL13);
+	HOST_c2l(data,l); X( 0)=l;	HOST_c2l(data,l); X( 1)=l;
+	RIP1(A,B,C,D,E,WL00,SL00);	HOST_c2l(data,l); X( 2)=l;
+	RIP1(E,A,B,C,D,WL01,SL01);	HOST_c2l(data,l); X( 3)=l;
+	RIP1(D,E,A,B,C,WL02,SL02);	HOST_c2l(data,l); X( 4)=l;
+	RIP1(C,D,E,A,B,WL03,SL03);	HOST_c2l(data,l); X( 5)=l;
+	RIP1(B,C,D,E,A,WL04,SL04);	HOST_c2l(data,l); X( 6)=l;
+	RIP1(A,B,C,D,E,WL05,SL05);	HOST_c2l(data,l); X( 7)=l;
+	RIP1(E,A,B,C,D,WL06,SL06);	HOST_c2l(data,l); X( 8)=l;
+	RIP1(D,E,A,B,C,WL07,SL07);	HOST_c2l(data,l); X( 9)=l;
+	RIP1(C,D,E,A,B,WL08,SL08);	HOST_c2l(data,l); X(10)=l;
+	RIP1(B,C,D,E,A,WL09,SL09);	HOST_c2l(data,l); X(11)=l;
+	RIP1(A,B,C,D,E,WL10,SL10);	HOST_c2l(data,l); X(12)=l;
+	RIP1(E,A,B,C,D,WL11,SL11);	HOST_c2l(data,l); X(13)=l;
+	RIP1(D,E,A,B,C,WL12,SL12);	HOST_c2l(data,l); X(14)=l;
+	RIP1(C,D,E,A,B,WL13,SL13);	HOST_c2l(data,l); X(15)=l;
 	RIP1(B,C,D,E,A,WL14,SL14);
 	RIP1(A,B,C,D,E,WL15,SL15);
 
@@ -453,83 +293,6 @@ int num;
 	ctx->E=ctx->A+b+C;
 	ctx->A=D;
 
-	X+=16;
-	num-=64;
-	if (num <= 0) break;
-		}
-	}
-#endif
-
-void RIPEMD160_Final(md, c)
-unsigned char *md;
-RIPEMD160_CTX *c;
-	{
-	register int i,j;
-	register ULONG l;
-	register ULONG *p;
-	static unsigned char end[4]={0x80,0x00,0x00,0x00};
-	unsigned char *cp=end;
-
-	/* c->num should definitly have room for at least one more byte. */
-	p=c->data;
-	j=c->num;
-	i=j>>2;
-
-	/* purify often complains about the following line as an
-	 * Uninitialized Memory Read.  While this can be true, the
-	 * following p_c2l macro will reset l when that case is true.
-	 * This is because j&0x03 contains the number of 'valid' bytes
-	 * already in p[i].  If and only if j&0x03 == 0, the UMR will
-	 * occur but this is also the only time p_c2l will do
-	 * l= *(cp++) instead of l|= *(cp++)
-	 * Many thanks to Alex Tang <altitude@cic.net> for pickup this
-	 * 'potential bug' */
-#ifdef PURIFY
-	if ((j&0x03) == 0) p[i]=0;
-#endif
-	l=p[i];
-	p_c2l(cp,l,j&0x03);
-	p[i]=l;
-	i++;
-	/* i is the next 'undefined word' */
-	if (c->num >= RIPEMD160_LAST_BLOCK)
-		{
-		for (; i<RIPEMD160_LBLOCK; i++)
-			p[i]=0;
-		ripemd160_block(c,p,64);
-		i=0;
-		}
-	for (; i<(RIPEMD160_LBLOCK-2); i++)
-		p[i]=0;
-	p[RIPEMD160_LBLOCK-2]=c->Nl;
-	p[RIPEMD160_LBLOCK-1]=c->Nh;
-	ripemd160_block(c,p,64);
-	cp=md;
-	l=c->A; l2c(l,cp);
-	l=c->B; l2c(l,cp);
-	l=c->C; l2c(l,cp);
-	l=c->D; l2c(l,cp);
-	l=c->E; l2c(l,cp);
-
-	/* clear stuff, ripemd160_block may be leaving some stuff on the stack
-	 * but I'm not worried :-) */
-	c->num=0;
-/*	memset((char *)&c,0,sizeof(c));*/
-	}
-
-#ifdef undef
-int printit(l)
-unsigned long *l;
-	{
-	int i,ii;
-
-	for (i=0; i<2; i++)
-		{
-		for (ii=0; ii<8; ii++)
-			{
-			fprintf(stderr,"%08lx ",l[i*8+ii]);
-			}
-		fprintf(stderr,"\n");
 		}
 	}
 #endif

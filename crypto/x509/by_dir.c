@@ -59,13 +59,20 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "cryptlib.h"
-#include "lhash.h"
-#include "x509.h"
-#include "pem.h"
+
+#ifndef NO_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef MAC_OS_pre_X
+# include <stat.h>
+#else
+# include <sys/stat.h>
+#endif
+
+#include <openssl/lhash.h>
+#include <openssl/x509.h>
 
 typedef struct lookup_dir_st
 	{
@@ -76,21 +83,13 @@ typedef struct lookup_dir_st
 	int num_dirs_alloced;
 	} BY_DIR;
 
-#ifndef NOPROTO
-static int dir_ctrl(X509_LOOKUP *ctx,int cmd,char *argp,long argl,char **ret);
+static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
+	char **ret);
 static int new_dir(X509_LOOKUP *lu);
 static void free_dir(X509_LOOKUP *lu);
-static int add_cert_dir(BY_DIR *ctx,char *dir,int type);
+static int add_cert_dir(BY_DIR *ctx,const char *dir,int type);
 static int get_cert_by_subject(X509_LOOKUP *xl,int type,X509_NAME *name,
 	X509_OBJECT *ret);
-#else
-static int dir_ctrl();
-static int new_dir();
-static void free_dir();
-static int add_cert_dir();
-static int get_cert_by_subject();
-#endif
-
 X509_LOOKUP_METHOD x509_dir_lookup=
 	{
 	"Load certs from files in a directory",
@@ -105,21 +104,17 @@ X509_LOOKUP_METHOD x509_dir_lookup=
 	NULL,			/* get_by_alias */
 	};
 
-X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir()
+X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
 	{
 	return(&x509_dir_lookup);
 	}
 
-static int dir_ctrl(ctx,cmd,argp,argl,retp)
-X509_LOOKUP *ctx;
-int cmd;
-long argl;
-char *argp;
-char **retp;
+static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
+	     char **retp)
 	{
 	int ret=0;
 	BY_DIR *ld;
-	char *dir;
+	char *dir = NULL;
 
 	ld=(BY_DIR *)ctx->method_data;
 
@@ -128,16 +123,15 @@ char **retp;
 	case X509_L_ADD_DIR:
 		if (argl == X509_FILETYPE_DEFAULT)
 			{
-			ret=add_cert_dir(ld,X509_get_default_cert_dir(),
-				X509_FILETYPE_PEM);
+			dir=(char *)Getenv(X509_get_default_cert_dir_env());
+			if (dir)
+				ret=add_cert_dir(ld,dir,X509_FILETYPE_PEM);
+			else
+				ret=add_cert_dir(ld,X509_get_default_cert_dir(),
+					X509_FILETYPE_PEM);
 			if (!ret)
 				{
 				X509err(X509_F_DIR_CTRL,X509_R_LOADING_CERT_DIR);
-				}
-			else
-				{
-				dir=(char *)Getenv(X509_get_default_cert_dir_env());
-				ret=add_cert_dir(ld,dir,X509_FILETYPE_PEM);
 				}
 			}
 		else
@@ -147,16 +141,15 @@ char **retp;
 	return(ret);
 	}
 
-static int new_dir(lu)
-X509_LOOKUP *lu;
+static int new_dir(X509_LOOKUP *lu)
 	{
 	BY_DIR *a;
 
-	if ((a=(BY_DIR *)Malloc(sizeof(BY_DIR))) == NULL)
+	if ((a=(BY_DIR *)OPENSSL_malloc(sizeof(BY_DIR))) == NULL)
 		return(0);
 	if ((a->buffer=BUF_MEM_new()) == NULL)
 		{
-		Free(a);
+		OPENSSL_free(a);
 		return(0);
 		}
 	a->num_dirs=0;
@@ -167,36 +160,36 @@ X509_LOOKUP *lu;
 	return(1);
 	}
 
-static void free_dir(lu)
-X509_LOOKUP *lu;
+static void free_dir(X509_LOOKUP *lu)
 	{
 	BY_DIR *a;
 	int i;
 
 	a=(BY_DIR *)lu->method_data;
 	for (i=0; i<a->num_dirs; i++)
-		if (a->dirs[i] != NULL) Free(a->dirs[i]);
-	if (a->dirs != NULL) Free(a->dirs);
-	if (a->dirs_type != NULL) Free(a->dirs_type);
+		if (a->dirs[i] != NULL) OPENSSL_free(a->dirs[i]);
+	if (a->dirs != NULL) OPENSSL_free(a->dirs);
+	if (a->dirs_type != NULL) OPENSSL_free(a->dirs_type);
 	if (a->buffer != NULL) BUF_MEM_free(a->buffer);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
-static int add_cert_dir(ctx,dir, type)
-BY_DIR *ctx;
-char *dir;
-int type;
+static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 	{
 	int j,len;
 	int *ip;
-	char *s,*ss,*p;
+	const char *s,*ss,*p;
 	char **pp;
 
-	if (dir == NULL) return(0);
+	if (dir == NULL || !*dir)
+	    {
+	    X509err(X509_F_ADD_CERT_DIR,X509_R_INVALID_DIRECTORY);
+	    return 0;
+	    }
 
 	s=dir;
 	p=s;
-	for (;;)
+	for (;;p++)
 		{
 		if ((*p == LIST_SEPARATOR_CHAR) || (*p == '\0'))
 			{
@@ -205,14 +198,17 @@ int type;
 			len=(int)(p-ss);
 			if (len == 0) continue;
 			for (j=0; j<ctx->num_dirs; j++)
-				if (strncmp(ctx->dirs[j],ss,(unsigned int)len) == 0)
-					continue;
+				if (strlen(ctx->dirs[j]) == (size_t)len &&
+				    strncmp(ctx->dirs[j],ss,(unsigned int)len) == 0)
+					break;
+			if (j<ctx->num_dirs)
+				continue;
 			if (ctx->num_dirs_alloced < (ctx->num_dirs+1))
 				{
 				ctx->num_dirs_alloced+=10;
-				pp=(char **)Malloc(ctx->num_dirs_alloced*
+				pp=(char **)OPENSSL_malloc(ctx->num_dirs_alloced*
 					sizeof(char *));
-				ip=(int *)Malloc(ctx->num_dirs_alloced*
+				ip=(int *)OPENSSL_malloc(ctx->num_dirs_alloced*
 					sizeof(int));
 				if ((pp == NULL) || (ip == NULL))
 					{
@@ -224,30 +220,26 @@ int type;
 				memcpy(ip,ctx->dirs_type,(ctx->num_dirs_alloced-10)*
 					sizeof(int));
 				if (ctx->dirs != NULL)
-					Free((char *)ctx->dirs);
+					OPENSSL_free(ctx->dirs);
 				if (ctx->dirs_type != NULL)
-					Free((char *)ctx->dirs_type);
+					OPENSSL_free(ctx->dirs_type);
 				ctx->dirs=pp;
 				ctx->dirs_type=ip;
 				}
 			ctx->dirs_type[ctx->num_dirs]=type;
-			ctx->dirs[ctx->num_dirs]=(char *)Malloc((unsigned int)len+1);
+			ctx->dirs[ctx->num_dirs]=(char *)OPENSSL_malloc((unsigned int)len+1);
 			if (ctx->dirs[ctx->num_dirs] == NULL) return(0);
 			strncpy(ctx->dirs[ctx->num_dirs],ss,(unsigned int)len);
 			ctx->dirs[ctx->num_dirs][len]='\0';
 			ctx->num_dirs++;
 			}
 		if (*p == '\0') break;
-		p++;
 		}
 	return(1);
 	}
 
-static int get_cert_by_subject(xl,type,name,ret)
-X509_LOOKUP *xl;
-int type;
-X509_NAME *name;
-X509_OBJECT *ret;
+static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
+	     X509_OBJECT *ret)
 	{
 	BY_DIR *ctx;
 	union	{
@@ -266,7 +258,7 @@ X509_OBJECT *ret;
 	BUF_MEM *b=NULL;
 	struct stat st;
 	X509_OBJECT stmp,*tmp;
-	char *postfix="";
+	const char *postfix="";
 
 	if (name == NULL) return(0);
 
@@ -311,8 +303,38 @@ X509_OBJECT *ret;
 		k=0;
 		for (;;)
 			{
-			sprintf(b->data,"%s/%08lx.%s%d",ctx->dirs[i],h,
-				postfix,k);
+			char c = '/';
+#ifdef OPENSSL_SYS_VMS
+			c = ctx->dirs[i][strlen(ctx->dirs[i])-1];
+			if (c != ':' && c != '>' && c != ']')
+				{
+				/* If no separator is present, we assume the
+				   directory specifier is a logical name, and
+				   add a colon.  We really should use better
+				   VMS routines for merging things like this,
+				   but this will do for now...
+				   -- Richard Levitte */
+				c = ':';
+				}
+			else
+				{
+				c = '\0';
+				}
+#endif
+			if (c == '\0')
+				{
+				/* This is special.  When c == '\0', no
+				   directory separator should be added. */
+				BIO_snprintf(b->data,b->max,
+					"%s%08lx.%s%d",ctx->dirs[i],h,
+					postfix,k);
+				}
+			else
+				{
+				BIO_snprintf(b->data,b->max,
+					"%s%c%08lx.%s%d",ctx->dirs[i],c,h,
+					postfix,k);
+				}
 			k++;
 			if (stat(b->data,&st) < 0)
 				break;
@@ -335,8 +357,9 @@ X509_OBJECT *ret;
 		/* we have added it to the cache so now pull
 		 * it out again */
 		CRYPTO_r_lock(CRYPTO_LOCK_X509_STORE);
-		tmp=(X509_OBJECT *)lh_retrieve(xl->store_ctx->certs,
-			(char *)&stmp);
+		j = sk_X509_OBJECT_find(xl->store_ctx->objs,&stmp);
+		if(j != -1) tmp=sk_X509_OBJECT_value(xl->store_ctx->objs,j);
+		else tmp = NULL;
 		CRYPTO_r_unlock(CRYPTO_LOCK_X509_STORE);
 
 		if (tmp != NULL)

@@ -58,30 +58,36 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "evp.h"
-#include "objects.h"
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 
-int EVP_add_cipher(c)
-EVP_CIPHER *c;
+int EVP_add_cipher(const EVP_CIPHER *c)
 	{
 	int r;
 
-	r=OBJ_NAME_add(OBJ_nid2sn(c->nid),OBJ_NAME_TYPE_CIPHER_METH,(char *)c);
+#ifdef OPENSSL_FIPS
+	OPENSSL_init();
+#endif
+
+	r=OBJ_NAME_add(OBJ_nid2sn(c->nid),OBJ_NAME_TYPE_CIPHER_METH,(const char *)c);
 	if (r == 0) return(0);
-	r=OBJ_NAME_add(OBJ_nid2ln(c->nid),OBJ_NAME_TYPE_CIPHER_METH,(char *)c);
+	r=OBJ_NAME_add(OBJ_nid2ln(c->nid),OBJ_NAME_TYPE_CIPHER_METH,(const char *)c);
 	return(r);
 	}
 
-int EVP_add_digest(md)
-EVP_MD *md;
+int EVP_add_digest(const EVP_MD *md)
 	{
 	int r;
-	char *name;
+	const char *name;
 
+#ifdef OPENSSL_FIPS
+	OPENSSL_init();
+#endif
 	name=OBJ_nid2sn(md->type);
-	r=OBJ_NAME_add(name,OBJ_NAME_TYPE_MD_METH,(char *)md);
+	r=OBJ_NAME_add(name,OBJ_NAME_TYPE_MD_METH,(const char *)md);
 	if (r == 0) return(0);
-	r=OBJ_NAME_add(OBJ_nid2ln(md->type),OBJ_NAME_TYPE_MD_METH,(char *)md);
+	r=OBJ_NAME_add(OBJ_nid2ln(md->type),OBJ_NAME_TYPE_MD_METH,(const char *)md);
 	if (r == 0) return(0);
 
 	if (md->type != md->pkey_type)
@@ -95,26 +101,30 @@ EVP_MD *md;
 	return(r);
 	}
 
-EVP_CIPHER *EVP_get_cipherbyname(name)
-char *name;
+const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 	{
-	EVP_CIPHER *cp;
+	const EVP_CIPHER *cp;
 
-	cp=(EVP_CIPHER *)OBJ_NAME_get(name,OBJ_NAME_TYPE_CIPHER_METH);
+	cp=(const EVP_CIPHER *)OBJ_NAME_get(name,OBJ_NAME_TYPE_CIPHER_METH);
 	return(cp);
 	}
 
-EVP_MD *EVP_get_digestbyname(name)
-char *name;
+const EVP_MD *EVP_get_digestbyname(const char *name)
 	{
-	EVP_MD *cp;
+	const EVP_MD *cp;
 
-	cp=(EVP_MD *)OBJ_NAME_get(name,OBJ_NAME_TYPE_MD_METH);
+	cp=(const EVP_MD *)OBJ_NAME_get(name,OBJ_NAME_TYPE_MD_METH);
 	return(cp);
 	}
 
-void EVP_cleanup()
+void EVP_cleanup(void)
 	{
 	OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
 	OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
+	/* The above calls will only clean out the contents of the name
+	   hash table, but not the hash table itself.  The following line
+	   does that part.  -- Richard Levitte */
+	OBJ_NAME_cleanup(-1);
+
+	EVP_PBE_cleanup();
 	}

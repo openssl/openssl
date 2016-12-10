@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "rsa.h"
+#include <openssl/rsa.h>
 
 /* This is a simple program to generate an RSA private key.  It then
  * saves both the public and private key into a char array, then

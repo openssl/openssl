@@ -1,0 +1,385 @@
+=pod
+
+=head1 NAME
+
+smime - S/MIME utility
+
+=head1 SYNOPSIS
+
+B<openssl> B<smime>
+[B<-encrypt>]
+[B<-decrypt>]
+[B<-sign>]
+[B<-verify>]
+[B<-pk7out>]
+[B<-des>]
+[B<-des3>]
+[B<-rc2-40>]
+[B<-rc2-64>]
+[B<-rc2-128>]
+[B<-aes128>]
+[B<-aes192>]
+[B<-aes256>]
+[B<-camellia128>]
+[B<-camellia192>]
+[B<-camellia256>]
+[B<-in file>]
+[B<-certfile file>]
+[B<-signer file>]
+[B<-recip  file>]
+[B<-inform SMIME|PEM|DER>]
+[B<-passin arg>]
+[B<-inkey file>]
+[B<-out file>]
+[B<-outform SMIME|PEM|DER>]
+[B<-content file>]
+[B<-to addr>]
+[B<-from ad>]
+[B<-subject s>]
+[B<-text>]
+[B<-rand file(s)>]
+[cert.pem]...
+
+=head1 DESCRIPTION
+
+The B<smime> command handles S/MIME mail. It can encrypt, decrypt, sign and
+verify S/MIME messages.
+
+=head1 COMMAND OPTIONS
+
+There are five operation options that set the type of operation to be performed.
+The meaning of the other options varies according to the operation type.
+
+=over 4
+
+=item B<-encrypt>
+
+encrypt mail for the given recipient certificates. Input file is the message
+to be encrypted. The output file is the encrypted mail in MIME format.
+
+=item B<-decrypt>
+
+decrypt mail using the supplied certificate and private key. Expects an
+encrypted mail message in MIME format for the input file. The decrypted mail
+is written to the output file.
+
+=item B<-sign>
+
+sign mail using the supplied certificate and private key. Input file is
+the message to be signed. The signed message in MIME format is written
+to the output file.
+
+=item B<-verify>
+
+verify signed mail. Expects a signed mail message on input and outputs
+the signed data. Both clear text and opaque signing is supported.
+
+=item B<-pk7out>
+
+takes an input message and writes out a PEM encoded PKCS#7 structure.
+
+=item B<-in filename>
+
+the input message to be encrypted or signed or the MIME message to
+be decrypted or verified.
+
+=item B<-inform SMIME|PEM|DER>
+
+this specifies the input format for the PKCS#7 structure. The default
+is B<SMIME> which reads an S/MIME format message. B<PEM> and B<DER>
+format change this to expect PEM and DER format PKCS#7 structures
+instead. This currently only affects the input format of the PKCS#7
+structure, if no PKCS#7 structure is being input (for example with
+B<-encrypt> or B<-sign>) this option has no effect.
+
+=item B<-out filename>
+
+the message text that has been decrypted or verified or the output MIME
+format message that has been signed or verified.
+
+=item B<-outform SMIME|PEM|DER>
+
+this specifies the output format for the PKCS#7 structure. The default
+is B<SMIME> which write an S/MIME format message. B<PEM> and B<DER>
+format change this to write PEM and DER format PKCS#7 structures
+instead. This currently only affects the output format of the PKCS#7
+structure, if no PKCS#7 structure is being output (for example with
+B<-verify> or B<-decrypt>) this option has no effect.
+
+=item B<-content filename>
+
+This specifies a file containing the detached content, this is only
+useful with the B<-verify> command. This is only usable if the PKCS#7
+structure is using the detached signature form where the content is
+not included. This option will override any content if the input format
+is S/MIME and it uses the multipart/signed MIME content type.
+
+=item B<-text>
+
+this option adds plain text (text/plain) MIME headers to the supplied
+message if encrypting or signing. If decrypting or verifying it strips
+off text headers: if the decrypted or verified message is not of MIME 
+type text/plain then an error occurs.
+
+=item B<-CAfile file>
+
+a file containing trusted CA certificates, only used with B<-verify>.
+
+=item B<-CApath dir>
+
+a directory containing trusted CA certificates, only used with
+B<-verify>. This directory must be a standard certificate directory: that
+is a hash of each subject name (using B<x509 -hash>) should be linked
+to each certificate.
+
+=item B<-des -des3 -rc2-40 -rc2-64 -rc2-128 -aes128 -aes192 -aes256 -camellia128 -camellia192 -camellia256>
+
+the encryption algorithm to use. DES (56 bits), triple DES (168 bits),
+40, 64 or 128 bit RC2, 128, 192 or 256 bit AES, or 128, 192 or 256 bit Camellia respectively.  If not
+specified 40 bit RC2 is used. Only used with B<-encrypt>.
+
+=item B<-nointern>
+
+when verifying a message normally certificates (if any) included in
+the message are searched for the signing certificate. With this option
+only the certificates specified in the B<-certfile> option are used.
+The supplied certificates can still be used as untrusted CAs however.
+
+=item B<-noverify>
+
+do not verify the signers certificate of a signed message.
+
+=item B<-nochain>
+
+do not do chain verification of signers certificates: that is don't
+use the certificates in the signed message as untrusted CAs.
+
+=item B<-nosigs>
+
+don't try to verify the signatures on the message.
+
+=item B<-nocerts>
+
+when signing a message the signer's certificate is normally included
+with this option it is excluded. This will reduce the size of the
+signed message but the verifier must have a copy of the signers certificate
+available locally (passed using the B<-certfile> option for example).
+
+=item B<-noattr>
+
+normally when a message is signed a set of attributes are included which
+include the signing time and supported symmetric algorithms. With this
+option they are not included.
+
+=item B<-binary>
+
+normally the input message is converted to "canonical" format which is
+effectively using CR and LF as end of line: as required by the S/MIME
+specification. When this option is present no translation occurs. This
+is useful when handling binary data which may not be in MIME format.
+
+=item B<-nodetach>
+
+when signing a message use opaque signing: this form is more resistant
+to translation by mail relays but it cannot be read by mail agents that
+do not support S/MIME.  Without this option cleartext signing with
+the MIME type multipart/signed is used.
+
+=item B<-certfile file>
+
+allows additional certificates to be specified. When signing these will
+be included with the message. When verifying these will be searched for
+the signers certificates. The certificates should be in PEM format.
+
+=item B<-signer file>
+
+the signers certificate when signing a message. If a message is
+being verified then the signers certificates will be written to this
+file if the verification was successful.
+
+=item B<-recip file>
+
+the recipients certificate when decrypting a message. This certificate
+must match one of the recipients of the message or an error occurs.
+
+=item B<-inkey file>
+
+the private key to use when signing or decrypting. This must match the
+corresponding certificate. If this option is not specified then the
+private key must be included in the certificate file specified with
+the B<-recip> or B<-signer> file.
+
+=item B<-passin arg>
+
+the private key password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+
+=item B<-rand file(s)>
+
+a file or files containing random data used to seed the random number
+generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+Multiple files can be specified separated by a OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
+
+=item B<cert.pem...>
+
+one or more certificates of message recipients: used when encrypting
+a message. 
+
+=item B<-to, -from, -subject>
+
+the relevant mail headers. These are included outside the signed
+portion of a message so they may be included manually. If signing
+then many S/MIME mail clients check the signers certificate's email
+address matches that specified in the From: address.
+
+=back
+
+=head1 NOTES
+
+The MIME message must be sent without any blank lines between the
+headers and the output. Some mail programs will automatically add
+a blank line. Piping the mail directly to sendmail is one way to
+achieve the correct format.
+
+The supplied message to be signed or encrypted must include the
+necessary MIME headers or many S/MIME clients wont display it
+properly (if at all). You can use the B<-text> option to automatically
+add plain text headers.
+
+A "signed and encrypted" message is one where a signed message is
+then encrypted. This can be produced by encrypting an already signed
+message: see the examples section.
+
+This version of the program only allows one signer per message but it
+will verify multiple signers on received messages. Some S/MIME clients
+choke if a message contains multiple signers. It is possible to sign
+messages "in parallel" by signing an already signed message.
+
+The options B<-encrypt> and B<-decrypt> reflect common usage in S/MIME
+clients. Strictly speaking these process PKCS#7 enveloped data: PKCS#7
+encrypted data is used for other purposes.
+
+=head1 EXIT CODES
+
+=over 4
+
+=item 0
+
+the operation was completely successfully.
+
+=item 1 
+
+an error occurred parsing the command options.
+
+=item 2
+
+one of the input files could not be read.
+
+=item 3
+
+an error occurred creating the PKCS#7 file or when reading the MIME
+message.
+
+=item 4
+
+an error occurred decrypting or verifying the message.
+
+=item 5
+
+the message was verified correctly but an error occurred writing out
+the signers certificates.
+
+=back
+
+=head1 EXAMPLES
+
+Create a cleartext signed message:
+
+ openssl smime -sign -in message.txt -text -out mail.msg \
+	-signer mycert.pem
+
+Create and opaque signed message
+
+ openssl smime -sign -in message.txt -text -out mail.msg -nodetach \
+	-signer mycert.pem
+
+Create a signed message, include some additional certificates and
+read the private key from another file:
+
+ openssl smime -sign -in in.txt -text -out mail.msg \
+	-signer mycert.pem -inkey mykey.pem -certfile mycerts.pem
+
+Send a signed message under Unix directly to sendmail, including headers:
+
+ openssl smime -sign -in in.txt -text -signer mycert.pem \
+	-from steve@openssl.org -to someone@somewhere \
+	-subject "Signed message" | sendmail someone@somewhere
+
+Verify a message and extract the signer's certificate if successful:
+
+ openssl smime -verify -in mail.msg -signer user.pem -out signedtext.txt
+
+Send encrypted mail using triple DES:
+
+ openssl smime -encrypt -in in.txt -from steve@openssl.org \
+	-to someone@somewhere -subject "Encrypted message" \
+	-des3 user.pem -out mail.msg
+
+Sign and encrypt mail:
+
+ openssl smime -sign -in ml.txt -signer my.pem -text \
+	| openssl smime -encrypt -out mail.msg \
+	-from steve@openssl.org -to someone@somewhere \
+	-subject "Signed and Encrypted message" -des3 user.pem
+
+Note: the encryption command does not include the B<-text> option because the message
+being encrypted already has MIME headers.
+
+Decrypt mail:
+
+ openssl smime -decrypt -in mail.msg -recip mycert.pem -inkey key.pem
+
+The output from Netscape form signing is a PKCS#7 structure with the
+detached signature format. You can use this program to verify the
+signature by line wrapping the base64 encoded structure and surrounding
+it with:
+
+ -----BEGIN PKCS7-----
+ -----END PKCS7-----
+
+and using the command, 
+
+ openssl smime -verify -inform PEM -in signature.pem -content content.txt
+
+alternatively you can base64 decode the signature and use
+
+ openssl smime -verify -inform DER -in signature.der -content content.txt
+
+Create an encrypted message using 128 bit Camellia:
+
+ openssl smime -encrypt -in plain.txt -camellia128 -out mail.msg cert.pem
+
+=head1 BUGS
+
+The MIME parser isn't very clever: it seems to handle most messages that I've thrown
+at it but it may choke on others.
+
+The code currently will only write out the signer's certificate to a file: if the
+signer has a separate encryption certificate this must be manually extracted. There
+should be some heuristic that determines the correct encryption certificate.
+
+Ideally a database should be maintained of a certificates for each email address.
+
+The code doesn't currently take note of the permitted symmetric encryption
+algorithms as supplied in the SMIMECapabilities signed attribute. this means the
+user has to manually include the correct encryption algorithm. It should store
+the list of permitted ciphers in a database and only use those.
+
+No revocation checking is done on the signer's certificate.
+
+The current code can only handle S/MIME v2 messages, the more complex S/MIME v3
+structures may cause parsing errors.
+
+=cut

@@ -11,7 +11,7 @@
 %two=&loadfile($ARGV[1]);
 
 $line=0;
-foreach $a ("md2","md5","sha","sha1","rc4","des cfb","des cbc","des ede3",
+foreach $a ("md2","md4","md5","sha","sha1","rc4","des cfb","des cbc","des ede3",
 	"idea cfb","idea cbc","rc2 cfb","rc2 cbc","blowfish cbc","cast cbc")
 	{
 	if (defined($one{$a,8}) && defined($two{$a,8}))

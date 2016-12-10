@@ -60,17 +60,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "lhash.h"
-#include "err.h"
-#include "ssl.h"
+#include <openssl/bio.h>
+#include <openssl/lhash.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #undef PROG
 #define PROG	errstr_main
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int, char **);
+
+int MAIN(int argc, char **argv)
 	{
 	int i,ret=0;
 	char buf[256];
@@ -91,12 +91,18 @@ char **argv;
 		out=BIO_new(BIO_s_file());
 		if ((out != NULL) && BIO_set_fp(out,stdout,BIO_NOCLOSE))
 			{
+#ifdef OPENSSL_SYS_VMS
+			{
+			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+			out = BIO_push(tmpbio, out);
+			}
+#endif
 			lh_node_stats_bio((LHASH *)ERR_get_string_table(),out);
 			lh_stats_bio((LHASH *)ERR_get_string_table(),out);
 			lh_node_usage_stats_bio((LHASH *)
 				ERR_get_string_table(),out);
 			}
-		if (out != NULL) BIO_free(out);
+		if (out != NULL) BIO_free_all(out);
 		argc--;
 		argv++;
 		}
@@ -104,7 +110,10 @@ char **argv;
 	for (i=1; i<argc; i++)
 		{
 		if (sscanf(argv[i],"%lx",&l))
-			printf("%s\n",ERR_error_string(l,buf));
+			{
+			ERR_error_string_n(l, buf, sizeof buf);
+			printf("%s\n",buf);
+			}
 		else
 			{
 			printf("%s: bad error code\n",argv[i]);
@@ -112,5 +121,6 @@ char **argv;
 			ret++;
 			}
 		}
-	EXIT(ret);
+	apps_shutdown();
+	OPENSSL_EXIT(ret);
 	}

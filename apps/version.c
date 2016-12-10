@@ -55,23 +55,92 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "evp.h"
-#include "crypto.h"
+#include <openssl/evp.h>
+#include <openssl/crypto.h>
+#include <openssl/bn.h>
+#ifndef OPENSSL_NO_MD2
+# include <openssl/md2.h>
+#endif
+#ifndef OPENSSL_NO_RC4
+# include <openssl/rc4.h>
+#endif
+#ifndef OPENSSL_NO_DES
+# include <openssl/des.h>
+#endif
+#ifndef OPENSSL_NO_IDEA
+# include <openssl/idea.h>
+#endif
+#ifndef OPENSSL_NO_BF
+# include <openssl/blowfish.h>
+#endif
 
 #undef PROG
 #define PROG	version_main
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int, char **);
+
+int MAIN(int argc, char **argv)
 	{
 	int i,ret=0;
-	int cflags=0,version=0,date=0,options=0,platform=0;
+	int cflags=0,version=0,date=0,options=0,platform=0,dir=0;
 
 	apps_startup();
 
@@ -92,8 +161,10 @@ char **argv;
 			options=1;
 		else if (strcmp(argv[i],"-p") == 0)
 			platform=1;
+		else if (strcmp(argv[i],"-d") == 0)
+			dir=1;
 		else if (strcmp(argv[i],"-a") == 0)
-			date=version=cflags=options=platform=1;
+			date=version=cflags=options=platform=dir=1;
 		else
 			{
 			BIO_printf(bio_err,"usage:version -[avbofp]\n");
@@ -102,31 +173,45 @@ char **argv;
 			}
 		}
 
-	if (version) printf("%s\n",SSLeay_version(SSLEAY_VERSION));
+	if (version)
+		{
+		if (SSLeay() == SSLEAY_VERSION_NUMBER)
+			{
+			printf("%s\n",SSLeay_version(SSLEAY_VERSION));
+			}
+		else
+			{
+			printf("%s (Library: %s)\n",
+				OPENSSL_VERSION_TEXT,
+				SSLeay_version(SSLEAY_VERSION));
+			}
+		}
 	if (date)    printf("%s\n",SSLeay_version(SSLEAY_BUILT_ON));
 	if (platform) printf("%s\n",SSLeay_version(SSLEAY_PLATFORM));
 	if (options) 
 		{
-		printf("options:");
+		printf("options:  ");
 		printf("%s ",BN_options());
-#ifndef NO_MD2
+#ifndef OPENSSL_NO_MD2
 		printf("%s ",MD2_options());
 #endif
-#ifndef NO_RC4
+#ifndef OPENSSL_NO_RC4
 		printf("%s ",RC4_options());
 #endif
-#ifndef NO_DES
-		printf("%s ",des_options());
+#ifndef OPENSSL_NO_DES
+		printf("%s ",DES_options());
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 		printf("%s ",idea_options());
 #endif
-#ifndef NO_BLOWFISH
+#ifndef OPENSSL_NO_BF
 		printf("%s ",BF_options());
 #endif
 		printf("\n");
 		}
 	if (cflags)  printf("%s\n",SSLeay_version(SSLEAY_CFLAGS));
+	if (dir)  printf("%s\n",SSLeay_version(SSLEAY_DIR));
 end:
-	EXIT(ret);
+	apps_shutdown();
+	OPENSSL_EXIT(ret);
 	}

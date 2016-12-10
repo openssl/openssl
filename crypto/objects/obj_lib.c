@@ -58,47 +58,51 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "lhash.h"
-#include "objects.h"
-#include "buffer.h"
+#include <openssl/lhash.h>
+#include <openssl/objects.h>
+#include <openssl/buffer.h>
 
-ASN1_OBJECT *OBJ_dup(o)
-ASN1_OBJECT *o;
+ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 	{
 	ASN1_OBJECT *r;
 	int i;
+	char *ln=NULL;
 
 	if (o == NULL) return(NULL);
 	if (!(o->flags & ASN1_OBJECT_FLAG_DYNAMIC))
-		return(o);
+		return((ASN1_OBJECT *)o); /* XXX: ugh! Why? What kind of
+					     duplication is this??? */
 
-	r=(ASN1_OBJECT *)ASN1_OBJECT_new();
+	r=ASN1_OBJECT_new();
 	if (r == NULL)
 		{
 		OBJerr(OBJ_F_OBJ_DUP,ERR_R_ASN1_LIB);
 		return(NULL);
 		}
-	r->data=(unsigned char *)Malloc(o->length);
+	r->data=OPENSSL_malloc(o->length);
 	if (r->data == NULL)
 		goto err;
-	memcpy(r->data,o->data,o->length);
+	if (o->data != NULL)
+		memcpy(r->data,o->data,o->length);
 	r->length=o->length;
 	r->nid=o->nid;
 	r->ln=r->sn=NULL;
 	if (o->ln != NULL)
 		{
 		i=strlen(o->ln)+1;
-		r->ln=(char *)Malloc(i);
+		r->ln=ln=OPENSSL_malloc(i);
 		if (r->ln == NULL) goto err;
-		memcpy(r->ln,o->ln,i);
+		memcpy(ln,o->ln,i);
 		}
 
 	if (o->sn != NULL)
 		{
+		char *s;
+
 		i=strlen(o->sn)+1;
-		r->sn=(char *)Malloc(i);
+		r->sn=s=OPENSSL_malloc(i);
 		if (r->sn == NULL) goto err;
-		memcpy(r->sn,o->sn,i);
+		memcpy(s,o->sn,i);
 		}
 	r->flags=o->flags|(ASN1_OBJECT_FLAG_DYNAMIC|
 		ASN1_OBJECT_FLAG_DYNAMIC_STRINGS|ASN1_OBJECT_FLAG_DYNAMIC_DATA);
@@ -107,16 +111,14 @@ err:
 	OBJerr(OBJ_F_OBJ_DUP,ERR_R_MALLOC_FAILURE);
 	if (r != NULL)
 		{
-		if (r->ln != NULL) Free(r->ln);
-		if (r->data != NULL) Free(r->data);
-		Free(r);
+		if (ln != NULL) OPENSSL_free(ln);
+		if (r->data != NULL) OPENSSL_free(r->data);
+		OPENSSL_free(r);
 		}
 	return(NULL);
 	}
 
-int OBJ_cmp(a,b)
-ASN1_OBJECT *a;
-ASN1_OBJECT *b;
+int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
 	{
 	int ret;
 

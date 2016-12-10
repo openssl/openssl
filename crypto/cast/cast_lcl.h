@@ -56,9 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
-#ifdef WIN32
+
+#include "e_os.h"
+
+#ifdef OPENSSL_SYS_WIN32
 #include <stdlib.h>
 #endif
+
 
 #undef c2l
 #define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
@@ -148,7 +152,7 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-#if defined(WIN32)
+#if defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)
 #define ROTL(a,n)     (_lrotl(a,n))
 #else
 #define ROTL(a,n)     ((((a)<<(n))&0xffffffffL)|((a)>>(32-(n))))
@@ -213,12 +217,11 @@
 	}
 #endif
 
-extern CAST_LONG CAST_S_table0[256];
-extern CAST_LONG CAST_S_table1[256];
-extern CAST_LONG CAST_S_table2[256];
-extern CAST_LONG CAST_S_table3[256];
-extern CAST_LONG CAST_S_table4[256];
-extern CAST_LONG CAST_S_table5[256];
-extern CAST_LONG CAST_S_table6[256];
-extern CAST_LONG CAST_S_table7[256];
-
+extern const CAST_LONG CAST_S_table0[256];
+extern const CAST_LONG CAST_S_table1[256];
+extern const CAST_LONG CAST_S_table2[256];
+extern const CAST_LONG CAST_S_table3[256];
+extern const CAST_LONG CAST_S_table4[256];
+extern const CAST_LONG CAST_S_table5[256];
+extern const CAST_LONG CAST_S_table6[256];
+extern const CAST_LONG CAST_S_table7[256];

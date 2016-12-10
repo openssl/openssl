@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "rc5.h"
+#include <openssl/rc5.h>
 #include "rc5_locl.h"
 
 /* The input and output encrypted as though 64bit cfb mode is being
@@ -64,14 +64,9 @@
  * 64bit block we have used is contained in *num;
  */
 
-void RC5_32_cfb64_encrypt(in, out, length, schedule, ivec, num, encrypt)
-unsigned char *in;
-unsigned char *out;
-long length;
-RC5_32_KEY *schedule;
-unsigned char *ivec;
-int *num;
-int encrypt;
+void RC5_32_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+			  long length, RC5_32_KEY *schedule,
+			  unsigned char *ivec, int *num, int encrypt)
 	{
 	register unsigned long v0,v1,t;
 	register int n= *num;

@@ -58,21 +58,18 @@
 
 #include "des_locl.h"
 
-void des_pcbc_encrypt(input, output, length, schedule, ivec, enc)
-des_cblock (*input);
-des_cblock (*output);
-long length;
-des_key_schedule schedule;
-des_cblock (*ivec);
-int enc;
+void DES_pcbc_encrypt(const unsigned char *input, unsigned char *output,
+		      long length, DES_key_schedule *schedule,
+		      DES_cblock *ivec, int enc)
 	{
 	register DES_LONG sin0,sin1,xor0,xor1,tout0,tout1;
 	DES_LONG tin[2];
-	unsigned char *in,*out,*iv;
+	const unsigned char *in;
+	unsigned char *out,*iv;
 
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	iv=(unsigned char *)ivec;
+	in=input;
+	out=output;
+	iv = &(*ivec)[0];
 
 	if (enc)
 		{
@@ -89,7 +86,7 @@ int enc;
 				c2ln(in,sin0,sin1,length);
 			tin[0]=sin0^xor0;
 			tin[1]=sin1^xor1;
-			des_encrypt((DES_LONG *)tin,schedule,DES_ENCRYPT);
+			DES_encrypt1((DES_LONG *)tin,schedule,DES_ENCRYPT);
 			tout0=tin[0];
 			tout1=tin[1];
 			xor0=sin0^tout0;
@@ -107,7 +104,7 @@ int enc;
 			c2l(in,sin1);
 			tin[0]=sin0;
 			tin[1]=sin1;
-			des_encrypt((DES_LONG *)tin,schedule,DES_DECRYPT);
+			DES_encrypt1((DES_LONG *)tin,schedule,DES_DECRYPT);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			if (length >= 8)

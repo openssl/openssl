@@ -1,11 +1,12 @@
-
+@echo off
 echo start testenc
-path=p:\work\ssleay\ms;%path%
+
+path=..\ms;%path%
 set ssleay=%1%
-set input=p:\work\ssleay\ms\testenc.bat
-set tmp1=p:\work\ssleay\ms\cipher.out
-set out1=p:\work\ssleay\ms\clear.out
-set cmp=perl p:\work\ssleay\ms\cmp.pl
+set input=..\ms\testenc.bat
+set tmp1=..\ms\cipher.out
+set out1=..\ms\clear.out
+set cmp=perl ..\ms\cmp.pl
 
 cd
 call tenc.bat enc

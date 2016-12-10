@@ -60,10 +60,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
-#include "bio.h"
-#include "err.h"
-#include "x509.h"
-#include "pem.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#include <openssl/pem.h>
 
 #undef PROG
 #define PROG	crl_main
@@ -71,41 +72,50 @@
 #undef POSTFIX
 #define	POSTFIX	".rvk"
 
-static char *crl_usage[]={
+static const char *crl_usage[]={
 "usage: crl args\n",
 "\n",
-" -inform arg     - input format - default PEM (one of DER, TXT or PEM)\n",
+" -inform arg     - input format - default PEM (DER or PEM)\n",
 " -outform arg    - output format - default PEM\n",
 " -text           - print out a text format version\n",
 " -in arg         - input file - default stdin\n",
 " -out arg        - output file - default stdout\n",
 " -hash           - print hash value\n",
+" -fingerprint    - print the crl fingerprint\n",
 " -issuer         - print issuer DN\n",
 " -lastupdate     - lastUpdate field\n",
 " -nextupdate     - nextUpdate field\n",
 " -noout          - no CRL output\n",
+" -CAfile  name   - verify CRL using certificates in file \"name\"\n",
+" -CApath  dir    - verify CRL using certificates in \"dir\"\n",
+" -nameopt arg    - various certificate name options\n",
 NULL
 };
 
-#ifndef NOPROTO
 static X509_CRL *load_crl(char *file, int format);
-#else
-static X509_CRL *load_crl();
-#endif
-
 static BIO *bio_out=NULL;
 
-int MAIN(argc, argv)
-int argc;
-char **argv;
+int MAIN(int, char **);
+
+int MAIN(int argc, char **argv)
 	{
+	unsigned long nmflag = 0;
 	X509_CRL *x=NULL;
+	char *CAfile = NULL, *CApath = NULL;
 	int ret=1,i,num,badops=0;
 	BIO *out=NULL;
 	int informat,outformat;
 	char *infile=NULL,*outfile=NULL;
-	int hash=0,issuer=0,lastupdate=0,nextupdate=0,noout=0;
-	char **pp,buf[256];
+	int hash=0,issuer=0,lastupdate=0,nextupdate=0,noout=0,text=0;
+	int fingerprint = 0;
+	const char **pp;
+	X509_STORE *store = NULL;
+	X509_STORE_CTX ctx;
+	X509_LOOKUP *lookup = NULL;
+	X509_OBJECT xobj;
+	EVP_PKEY *pkey;
+	int do_ver = 0;
+	const EVP_MD *md_alg,*digest=EVP_sha1();
 
 	apps_startup();
 
@@ -113,9 +123,20 @@ char **argv;
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
 
+	if (!load_config(bio_err, NULL))
+		goto end;
+
 	if (bio_out == NULL)
 		if ((bio_out=BIO_new(BIO_s_file())) != NULL)
+			{
 			BIO_set_fp(bio_out,stdout,BIO_NOCLOSE);
+#ifdef OPENSSL_SYS_VMS
+			{
+			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+			bio_out = BIO_push(tmpbio, bio_out);
+			}
+#endif
+			}
 
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
@@ -142,10 +163,6 @@ char **argv;
 			if (--argc < 1) goto bad;
 			outformat=str2fmt(*(++argv));
 			}
-		else if (strcmp(*argv,"-text") == 0)
-			{
-			outformat=FORMAT_TEXT;
-			}
 		else if (strcmp(*argv,"-in") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -156,8 +173,29 @@ char **argv;
 			if (--argc < 1) goto bad;
 			outfile= *(++argv);
 			}
+		else if (strcmp(*argv,"-CApath") == 0)
+			{
+			if (--argc < 1) goto bad;
+			CApath = *(++argv);
+			do_ver = 1;
+			}
+		else if (strcmp(*argv,"-CAfile") == 0)
+			{
+			if (--argc < 1) goto bad;
+			CAfile = *(++argv);
+			do_ver = 1;
+			}
+		else if (strcmp(*argv,"-verify") == 0)
+			do_ver = 1;
+		else if (strcmp(*argv,"-text") == 0)
+			text = 1;
 		else if (strcmp(*argv,"-hash") == 0)
 			hash= ++num;
+		else if (strcmp(*argv,"-nameopt") == 0)
+			{
+			if (--argc < 1) goto bad;
+			if (!set_name_ex(&nmflag, *(++argv))) goto bad;
+			}
 		else if (strcmp(*argv,"-issuer") == 0)
 			issuer= ++num;
 		else if (strcmp(*argv,"-lastupdate") == 0)
@@ -166,6 +204,13 @@ char **argv;
 			nextupdate= ++num;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout= ++num;
+		else if (strcmp(*argv,"-fingerprint") == 0)
+			fingerprint= ++num;
+		else if ((md_alg=EVP_get_digestbyname(*argv + 1)))
+			{
+			/* ok */
+			digest=md_alg;
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -176,19 +221,11 @@ char **argv;
 		argv++;
 		}
 
-	if (outformat == FORMAT_TEXT)
-		{
-		num=0;
-		issuer= ++num;
-		lastupdate= ++num;
-		nextupdate= ++num;
-		}
-
 	if (badops)
 		{
 bad:
 		for (pp=crl_usage; (*pp != NULL); pp++)
-			BIO_printf(bio_err,*pp);
+			BIO_printf(bio_err,"%s",*pp);
 		goto end;
 		}
 
@@ -196,40 +233,99 @@ bad:
 	x=load_crl(infile,informat);
 	if (x == NULL) { goto end; }
 
+	if(do_ver) {
+		store = X509_STORE_new();
+		lookup=X509_STORE_add_lookup(store,X509_LOOKUP_file());
+		if (lookup == NULL) goto end;
+		if (!X509_LOOKUP_load_file(lookup,CAfile,X509_FILETYPE_PEM))
+			X509_LOOKUP_load_file(lookup,NULL,X509_FILETYPE_DEFAULT);
+			
+		lookup=X509_STORE_add_lookup(store,X509_LOOKUP_hash_dir());
+		if (lookup == NULL) goto end;
+		if (!X509_LOOKUP_add_dir(lookup,CApath,X509_FILETYPE_PEM))
+			X509_LOOKUP_add_dir(lookup,NULL,X509_FILETYPE_DEFAULT);
+		ERR_clear_error();
+
+		if(!X509_STORE_CTX_init(&ctx, store, NULL, NULL)) {
+			BIO_printf(bio_err,
+				"Error initialising X509 store\n");
+			goto end;
+		}
+
+		i = X509_STORE_get_by_subject(&ctx, X509_LU_X509, 
+					X509_CRL_get_issuer(x), &xobj);
+		if(i <= 0) {
+			BIO_printf(bio_err,
+				"Error getting CRL issuer certificate\n");
+			goto end;
+		}
+		pkey = X509_get_pubkey(xobj.data.x509);
+		X509_OBJECT_free_contents(&xobj);
+		if(!pkey) {
+			BIO_printf(bio_err,
+				"Error getting CRL issuer public key\n");
+			goto end;
+		}
+		i = X509_CRL_verify(x, pkey);
+		EVP_PKEY_free(pkey);
+		if(i < 0) goto end;
+		if(i == 0) BIO_printf(bio_err, "verify failure\n");
+		else BIO_printf(bio_err, "verify OK\n");
+	}
+
 	if (num)
 		{
 		for (i=1; i<=num; i++)
 			{
 			if (issuer == i)
 				{
-				X509_NAME_oneline(x->crl->issuer,buf,256);
-				fprintf(stdout,"issuer= %s\n",buf);
+				print_name(bio_out, "issuer=", X509_CRL_get_issuer(x), nmflag);
 				}
 
 			if (hash == i)
 				{
-				fprintf(stdout,"%08lx\n",
-					X509_NAME_hash(x->crl->issuer));
+				BIO_printf(bio_out,"%08lx\n",
+					X509_NAME_hash(X509_CRL_get_issuer(x)));
 				}
 			if (lastupdate == i)
 				{
-				fprintf(stdout,"lastUpdate=");
-				ASN1_UTCTIME_print(bio_out,x->crl->lastUpdate);
-				fprintf(stdout,"\n");
+				BIO_printf(bio_out,"lastUpdate=");
+				ASN1_TIME_print(bio_out,
+						X509_CRL_get_lastUpdate(x));
+				BIO_printf(bio_out,"\n");
 				}
 			if (nextupdate == i)
 				{
-				fprintf(stdout,"nextUpdate=");
-				if (x->crl->nextUpdate != NULL)
-					ASN1_UTCTIME_print(bio_out,x->crl->nextUpdate);
+				BIO_printf(bio_out,"nextUpdate=");
+				if (X509_CRL_get_nextUpdate(x)) 
+					ASN1_TIME_print(bio_out,
+						X509_CRL_get_nextUpdate(x));
 				else
-					fprintf(stdout,"NONE");
-				fprintf(stdout,"\n");
+					BIO_printf(bio_out,"NONE");
+				BIO_printf(bio_out,"\n");
+				}
+			if (fingerprint == i)
+				{
+				int j;
+				unsigned int n;
+				unsigned char md[EVP_MAX_MD_SIZE];
+
+				if (!X509_CRL_digest(x,digest,md,&n))
+					{
+					BIO_printf(bio_err,"out of memory\n");
+					goto end;
+					}
+				BIO_printf(bio_out,"%s Fingerprint=",
+						OBJ_nid2sn(EVP_MD_type(digest)));
+				for (j=0; j<(int)n; j++)
+					{
+					BIO_printf(bio_out,"%02X%c",md[j],
+						(j+1 == (int)n)
+						?'\n':':');
+					}
 				}
 			}
 		}
-
-	if (noout) goto end;
 
 	out=BIO_new(BIO_s_file());
 	if (out == NULL)
@@ -239,7 +335,15 @@ bad:
 		}
 
 	if (outfile == NULL)
+		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef OPENSSL_SYS_VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	else
 		{
 		if (BIO_write_filename(out,outfile) <= 0)
@@ -249,27 +353,18 @@ bad:
 			}
 		}
 
+	if (text) X509_CRL_print(out, x);
+
+	if (noout) 
+		{
+		ret = 0;
+		goto end;
+		}
+
 	if 	(outformat == FORMAT_ASN1)
 		i=(int)i2d_X509_CRL_bio(out,x);
 	else if (outformat == FORMAT_PEM)
 		i=PEM_write_bio_X509_CRL(out,x);
-	else if (outformat == FORMAT_TEXT)
-		{
-		X509_REVOKED *r;
-		STACK *sk;
-
-		sk=sk_dup(x->crl->revoked);
-		while ((r=(X509_REVOKED *)sk_pop(sk)) != NULL)
-			{
-			fprintf(stdout,"revoked: serialNumber=");
-			i2a_ASN1_INTEGER(out,r->serialNumber);
-			fprintf(stdout," revocationDate=");
-			ASN1_UTCTIME_print(bio_out,r->revocationDate);
-			fprintf(stdout,"\n");
-			}
-		sk_free(sk);
-		i=1;
-		}
 	else	
 		{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
@@ -278,15 +373,19 @@ bad:
 	if (!i) { BIO_printf(bio_err,"unable to write CRL\n"); goto end; }
 	ret=0;
 end:
-	if (out != NULL) BIO_free(out);
-	if (bio_out != NULL) BIO_free(bio_out);
-	if (x != NULL) X509_CRL_free(x);
-	EXIT(ret);
+	BIO_free_all(out);
+	BIO_free_all(bio_out);
+	bio_out=NULL;
+	X509_CRL_free(x);
+	if(store) {
+		X509_STORE_CTX_cleanup(&ctx);
+		X509_STORE_free(store);
+	}
+	apps_shutdown();
+	OPENSSL_EXIT(ret);
 	}
 
-static X509_CRL *load_crl(infile, format)
-char *infile;
-int format;
+static X509_CRL *load_crl(char *infile, int format)
 	{
 	X509_CRL *x=NULL;
 	BIO *in=NULL;
@@ -311,7 +410,7 @@ int format;
 	if 	(format == FORMAT_ASN1)
 		x=d2i_X509_CRL_bio(in,NULL);
 	else if (format == FORMAT_PEM)
-		x=PEM_read_bio_X509_CRL(in,NULL,NULL);
+		x=PEM_read_bio_X509_CRL(in,NULL,NULL,NULL);
 	else	{
 		BIO_printf(bio_err,"bad input format specified for input crl\n");
 		goto end;
@@ -324,7 +423,7 @@ int format;
 		}
 	
 end:
-	if (in != NULL) BIO_free(in);
+	BIO_free(in);
 	return(x);
 	}
 

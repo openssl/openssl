@@ -59,7 +59,7 @@
 /* Code for stacks
  * Author - Eric Young v 1.0
  * 1.2 eay 12-Mar-97 -	Modified sk_find so that it _DOES_ return the
- *			lowest index for the seached item.
+ *			lowest index for the searched item.
  *
  * 1.1 eay - Take from netdb and added to SSLeay
  *
@@ -67,38 +67,35 @@
  */
 #include <stdio.h>
 #include "cryptlib.h"
-#include "stack.h"
+#include <openssl/stack.h>
+#include <openssl/objects.h>
 
 #undef MIN_NODES
 #define MIN_NODES	4
 
-char *STACK_version="STACK part of SSLeay 0.9.1a 06-Jul-1998";
-
-#ifndef NOPROTO
-#define	FP_ICC	(int (*)(const void *,const void *))
-#else
-#define FP_ICC
-#endif
+const char STACK_version[]="Stack" OPENSSL_VERSION_PTEXT;
 
 #include <errno.h>
 
-void sk_set_cmp_func(sk,c)
-STACK *sk;
-int (*c)();
+int (*sk_set_cmp_func(STACK *sk, int (*c)(const char * const *,const char * const *)))
+		(const char * const *, const char * const *)
 	{
+	int (*old)(const char * const *,const char * const *)=sk->comp;
+
 	if (sk->comp != c)
 		sk->sorted=0;
 	sk->comp=c;
+
+	return old;
 	}
 
-STACK *sk_dup(sk)
-STACK *sk;
+STACK *sk_dup(STACK *sk)
 	{
 	STACK *ret;
 	char **s;
 
 	if ((ret=sk_new(sk->comp)) == NULL) goto err;
-	s=(char **)Realloc((char *)ret->data,
+	s=(char **)OPENSSL_realloc((char *)ret->data,
 		(unsigned int)sizeof(char *)*sk->num_alloc);
 	if (s == NULL) goto err;
 	ret->data=s;
@@ -110,19 +107,25 @@ STACK *sk;
 	ret->comp=sk->comp;
 	return(ret);
 err:
+	if(ret)
+		sk_free(ret);
 	return(NULL);
 	}
 
-STACK *sk_new(c)
-int (*c)();
+STACK *sk_new_null(void)
+	{
+	return sk_new((int (*)(const char * const *, const char * const *))0);
+	}
+
+STACK *sk_new(int (*c)(const char * const *, const char * const *))
 	{
 	STACK *ret;
 	int i;
 
-	if ((ret=(STACK *)Malloc(sizeof(STACK))) == NULL)
-		goto err0;
-	if ((ret->data=(char **)Malloc(sizeof(char *)*MIN_NODES)) == NULL)
-		goto err1;
+	if ((ret=(STACK *)OPENSSL_malloc(sizeof(STACK))) == NULL)
+		goto err;
+	if ((ret->data=(char **)OPENSSL_malloc(sizeof(char *)*MIN_NODES)) == NULL)
+		goto err;
 	for (i=0; i<MIN_NODES; i++)
 		ret->data[i]=NULL;
 	ret->comp=c;
@@ -130,22 +133,20 @@ int (*c)();
 	ret->num=0;
 	ret->sorted=0;
 	return(ret);
-err1:
-	Free((char *)ret);
-err0:
+err:
+	if(ret)
+		OPENSSL_free(ret);
 	return(NULL);
 	}
 
-int sk_insert(st,data,loc)
-STACK *st;
-char *data;
-int loc;
+int sk_insert(STACK *st, char *data, int loc)
 	{
 	char **s;
 
+	if(st == NULL) return 0;
 	if (st->num_alloc <= st->num+1)
 		{
-		s=(char **)Realloc((char *)st->data,
+		s=(char **)OPENSSL_realloc((char *)st->data,
 			(unsigned int)sizeof(char *)*st->num_alloc*2);
 		if (s == NULL)
 			return(0);
@@ -161,7 +162,7 @@ int loc;
 
 		f=(char **)st->data;
 		t=(char **)&(st->data[1]);
-		for (i=st->num; i>loc; i--)
+		for (i=st->num; i>=loc; i--)
 			t[i]=f[i];
 			
 #ifdef undef /* no memmove on sunos :-( */
@@ -176,9 +177,7 @@ int loc;
 	return(st->num);
 	}
 
-char *sk_delete_ptr(st,p)
-STACK *st;
-char *p;
+char *sk_delete_ptr(STACK *st, char *p)
 	{
 	int i;
 
@@ -188,14 +187,12 @@ char *p;
 	return(NULL);
 	}
 
-char *sk_delete(st,loc)
-STACK *st;
-int loc;
+char *sk_delete(STACK *st, int loc)
 	{
 	char *ret;
 	int i,j;
 
-	if ((st->num == 0) || (loc < 0) || (loc >= st->num)) return(NULL);
+	if(!st || (loc < 0) || (loc >= st->num)) return NULL;
 
 	ret=st->data[loc];
 	if (loc != st->num-1)
@@ -213,13 +210,12 @@ int loc;
 	return(ret);
 	}
 
-int sk_find(st,data)
-STACK *st;
-char *data;
+static int internal_find(STACK *st, char *data, int ret_val_options)
 	{
 	char **r;
 	int i;
-	int (*comp_func)();
+	int (*comp_func)(const void *,const void *);
+	if(st == NULL) return -1;
 
 	if (st->comp == NULL)
 		{
@@ -228,55 +224,55 @@ char *data;
 				return(i);
 		return(-1);
 		}
-	comp_func=(int (*)())st->comp;
-	if (!st->sorted)
-		{
-		qsort((char *)st->data,st->num,sizeof(char *),FP_ICC comp_func);
-		st->sorted=1;
-		}
+	sk_sort(st);
 	if (data == NULL) return(-1);
-	r=(char **)bsearch(&data,(char *)st->data,
-		st->num,sizeof(char *),FP_ICC comp_func);
+	/* This (and the "qsort" below) are the two places in OpenSSL
+	 * where we need to convert from our standard (type **,type **)
+	 * compare callback type to the (void *,void *) type required by
+	 * bsearch. However, the "data" it is being called(back) with are
+	 * not (type *) pointers, but the *pointers* to (type *) pointers,
+	 * so we get our extra level of pointer dereferencing that way. */
+	comp_func=(int (*)(const void *,const void *))(st->comp);
+	r=(char **)OBJ_bsearch_ex((char *)&data,(char *)st->data,
+		st->num,sizeof(char *),comp_func,ret_val_options);
 	if (r == NULL) return(-1);
-	i=(int)(r-st->data);
-	for ( ; i>0; i--)
-		if ((*st->comp)(&(st->data[i-1]),&data) < 0)
-			break;
-	return(i);
+	return((int)(r-st->data));
 	}
 
-int sk_push(st,data)
-STACK *st;
-char *data;
+int sk_find(STACK *st, char *data)
+	{
+	return internal_find(st, data, OBJ_BSEARCH_FIRST_VALUE_ON_MATCH);
+	}
+int sk_find_ex(STACK *st, char *data)
+	{
+	return internal_find(st, data, OBJ_BSEARCH_VALUE_ON_NOMATCH);
+	}
+
+int sk_push(STACK *st, char *data)
 	{
 	return(sk_insert(st,data,st->num));
 	}
 
-int sk_unshift(st,data)
-STACK *st;
-char *data;
+int sk_unshift(STACK *st, char *data)
 	{
 	return(sk_insert(st,data,0));
 	}
 
-char *sk_shift(st)
-STACK *st;
+char *sk_shift(STACK *st)
 	{
 	if (st == NULL) return(NULL);
 	if (st->num <= 0) return(NULL);
 	return(sk_delete(st,0));
 	}
 
-char *sk_pop(st)
-STACK *st;
+char *sk_pop(STACK *st)
 	{
 	if (st == NULL) return(NULL);
 	if (st->num <= 0) return(NULL);
 	return(sk_delete(st,st->num-1));
 	}
 
-void sk_zero(st)
-STACK *st;
+void sk_zero(STACK *st)
 	{
 	if (st == NULL) return;
 	if (st->num <= 0) return;
@@ -284,9 +280,7 @@ STACK *st;
 	st->num=0;
 	}
 
-void sk_pop_free(st,func)
-STACK *st;
-void (*func)();
+void sk_pop_free(STACK *st, void (*func)(void *))
 	{
 	int i;
 
@@ -297,11 +291,51 @@ void (*func)();
 	sk_free(st);
 	}
 
-void sk_free(st)
-STACK *st;
+void sk_free(STACK *st)
 	{
 	if (st == NULL) return;
-	if (st->data != NULL) Free((char *)st->data);
-	Free((char *)st);
+	if (st->data != NULL) OPENSSL_free(st->data);
+	OPENSSL_free(st);
 	}
 
+int sk_num(const STACK *st)
+{
+	if(st == NULL) return -1;
+	return st->num;
+}
+
+char *sk_value(const STACK *st, int i)
+{
+	if(!st || (i < 0) || (i >= st->num)) return NULL;
+	return st->data[i];
+}
+
+char *sk_set(STACK *st, int i, char *value)
+{
+	if(!st || (i < 0) || (i >= st->num)) return NULL;
+	return (st->data[i] = value);
+}
+
+void sk_sort(STACK *st)
+	{
+	if (st && !st->sorted)
+		{
+		int (*comp_func)(const void *,const void *);
+
+		/* same comment as in sk_find ... previously st->comp was declared
+		 * as a (void*,void*) callback type, but this made the population
+		 * of the callback pointer illogical - our callbacks compare
+		 * type** with type**, so we leave the casting until absolutely
+		 * necessary (ie. "now"). */
+		comp_func=(int (*)(const void *,const void *))(st->comp);
+		qsort(st->data,st->num,sizeof(char *), comp_func);
+		st->sorted=1;
+		}
+	}
+
+int sk_is_sorted(const STACK *st)
+	{
+	if (!st)
+		return 1;
+	return st->sorted;
+	}

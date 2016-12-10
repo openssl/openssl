@@ -1,18 +1,15 @@
 #!/usr/local/bin/perl
 
-# Because the bswapl instruction is not supported for old assembers
-# (it was a new instruction for the 486), I've added .byte xxxx code
-# to put it in.
-# eric 24-Apr-1998
-#
-
-package x86unix;
+package x86unix;	# GAS actually...
 
 $label="L000";
+$const="";
+$constl=0;
 
 $align=($main'aout)?"4":"16";
-$under=($main'aout)?"_":"";
-$com_start=($main'sol)?"/":"#";
+$under=($main'aout or $main'coff)?"_":"";
+$dot=($main'aout)?"":".";
+$com_start="#" if ($main'aout or $main'coff);
 
 sub main'asm_init_output { @out=(); }
 sub main'asm_get_output { return(@out); }
@@ -55,6 +52,24 @@ if ($main'cpp)
 	'edi',	'%edi',
 	'ebp',	'%ebp',
 	'esp',	'%esp',
+
+	'mm0',	'%mm0',
+	'mm1',	'%mm1',
+	'mm2',	'%mm2',
+	'mm3',	'%mm3',
+	'mm4',	'%mm4',
+	'mm5',	'%mm5',
+	'mm6',	'%mm6',
+	'mm7',	'%mm7',
+
+	'xmm0',	'%xmm0',
+	'xmm1',	'%xmm1',
+	'xmm2',	'%xmm2',
+	'xmm3',	'%xmm3',
+	'xmm4',	'%xmm4',
+	'xmm5',	'%xmm5',
+	'xmm6',	'%xmm6',
+	'xmm7',	'%xmm7',
 	);
 
 %reg_val=(
@@ -85,20 +100,40 @@ sub main'DWP
 	local($addr,$reg1,$reg2,$idx)=@_;
 
 	$ret="";
-	$addr =~ s/(^|[+ \t])([A-Za-z_]+)($|[+ \t])/$1$under$2$3/;
+	$addr =~ s/(^|[+ \t])([A-Za-z_]+[A-Za-z0-9_]+)($|[+ \t])/$1$under$2$3/;
 	$reg1="$regs{$reg1}" if defined($regs{$reg1});
 	$reg2="$regs{$reg2}" if defined($regs{$reg2});
 	$ret.=$addr if ($addr ne "") && ($addr ne 0);
 	if ($reg2 ne "")
-		{ $ret.="($reg1,$reg2,$idx)"; }
-	else
+		{
+		if($idx ne "" && $idx != 0)
+		    { $ret.="($reg1,$reg2,$idx)"; }
+		else
+		    { $ret.="($reg1,$reg2)"; }
+	        }
+	elsif ($reg1 ne "")
 		{ $ret.="($reg1)" }
 	return($ret);
+	}
+
+sub main'QWP
+	{
+	return(&main'DWP(@_));
 	}
 
 sub main'BP
 	{
 	return(&main'DWP(@_));
+	}
+
+sub main'BC
+	{
+	return @_;
+	}
+
+sub main'DWC
+	{
+	return @_;
 	}
 
 #sub main'BP
@@ -126,15 +161,17 @@ sub main'shl	{ &out2("sall",@_); }
 sub main'shr	{ &out2("shrl",@_); }
 sub main'xor	{ &out2("xorl",@_); }
 sub main'xorb	{ &out2("xorb",@_); }
-sub main'add	{ &out2("addl",@_); }
+sub main'add	{ &out2($_[0]=~/%[a-d][lh]/?"addb":"addl",@_); }
 sub main'adc	{ &out2("adcl",@_); }
 sub main'sub	{ &out2("subl",@_); }
+sub main'sbb	{ &out2("sbbl",@_); }
 sub main'rotl	{ &out2("roll",@_); }
 sub main'rotr	{ &out2("rorl",@_); }
-sub main'exch	{ &out2("xchg",@_); }
+sub main'exch	{ &out2($_[0]=~/%[a-d][lh]/?"xchgb":"xchgl",@_); }
 sub main'cmp	{ &out2("cmpl",@_); }
 sub main'lea	{ &out2("leal",@_); }
 sub main'mul	{ &out1("mull",@_); }
+sub main'imul	{ &out2("imull",@_); }
 sub main'div	{ &out1("divl",@_); }
 sub main'jmp	{ &out1("jmp",@_); }
 sub main'jmp_ptr { &out1p("jmp",@_); }
@@ -145,19 +182,75 @@ sub main'jnz	{ &out1("jnz",@_); }
 sub main'jz	{ &out1("jz",@_); }
 sub main'jge	{ &out1("jge",@_); }
 sub main'jl	{ &out1("jl",@_); }
+sub main'ja	{ &out1("ja",@_); }
+sub main'jae	{ &out1("jae",@_); }
 sub main'jb	{ &out1("jb",@_); }
+sub main'jbe	{ &out1("jbe",@_); }
 sub main'jc	{ &out1("jc",@_); }
 sub main'jnc	{ &out1("jnc",@_); }
 sub main'jno	{ &out1("jno",@_); }
 sub main'dec	{ &out1("decl",@_); }
-sub main'inc	{ &out1("incl",@_); }
+sub main'inc	{ &out1($_[0]=~/%[a-d][hl]/?"incb":"incl",@_); }
 sub main'push	{ &out1("pushl",@_); $stack+=4; }
 sub main'pop	{ &out1("popl",@_); $stack-=4; }
-sub main'bswap	{ &out1("bswapl",@_); }
+sub main'pushf	{ &out0("pushfl"); $stack+=4; }
+sub main'popf	{ &out0("popfl"); $stack-=4; }
 sub main'not	{ &out1("notl",@_); }
-sub main'call	{ &out1("call",$under.$_[0]); }
+sub main'call	{	my $pre=$under;
+			foreach $i (%label)
+			{ if ($label{$i} eq $_[0]) { $pre=''; last; } }
+			&out1("call",$pre.$_[0]);
+		}
+sub main'call_ptr { &out1p("call",@_); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
+sub main'test	{ &out2("testl",@_); }
+sub main'bt	{ &out2("btl",@_); }
+sub main'leave	{ &out0("leave"); }
+sub main'cpuid	{ &out0(".byte\t0x0f,0xa2"); }
+sub main'rdtsc	{ &out0(".byte\t0x0f,0x31"); }
+sub main'halt	{ &out0("hlt"); }
+sub main'movz	{ &out2("movzbl",@_); }
+sub main'neg	{ &out1("negl",@_); }
+sub main'cld	{ &out0("cld"); }
+
+# SSE2
+sub main'emms	{ &out0("emms"); }
+sub main'movd	{ &out2("movd",@_); }
+sub main'movdqu	{ &out2("movdqu",@_); }
+sub main'movdqa	{ &out2("movdqa",@_); }
+sub main'movdq2q{ &out2("movdq2q",@_); }
+sub main'movq2dq{ &out2("movq2dq",@_); }
+sub main'paddq	{ &out2("paddq",@_); }
+sub main'pmuludq{ &out2("pmuludq",@_); }
+sub main'psrlq	{ &out2("psrlq",@_); }
+sub main'psllq	{ &out2("psllq",@_); }
+sub main'pxor	{ &out2("pxor",@_); }
+sub main'por	{ &out2("por",@_); }
+sub main'pand	{ &out2("pand",@_); }
+sub main'movq	{
+	local($p1,$p2,$optimize)=@_;
+	if ($optimize && $p1=~/^mm[0-7]$/ && $p2=~/^mm[0-7]$/)
+		# movq between mmx registers can sink Intel CPUs
+		{	push(@out,"\tpshufw\t\$0xe4,%$p2,%$p1\n");	}
+	else	{	&out2("movq",@_);				}
+	}
+
+# The bswapl instruction is new for the 486. Emulate if i386.
+sub main'bswap
+	{
+	if ($main'i386)
+		{
+		&main'comment("bswapl @_");
+		&main'exch(main'HB(@_),main'LB(@_));
+		&main'rotr(@_,16);
+		&main'exch(main'HB(@_),main'LB(@_));
+		}
+	else
+		{
+		&out1("bswapl",@_);
+		}
+	}
 
 sub out2
 	{
@@ -247,8 +340,6 @@ sub main'file
 
 	local($tmp)=<<"EOF";
 	.file	"$file.s"
-	.version	"01.01"
-gcc2_compiled.:
 EOF
 	push(@out,$tmp);
 	}
@@ -262,13 +353,17 @@ sub main'function_begin
 
 	local($tmp)=<<"EOF";
 .text
-	.align $align
-.globl $func
+.globl	$func
 EOF
 	push(@out,$tmp);
 	if ($main'cpp)
-		{ $tmp=push(@out,"\tTYPE($func,\@function)\n"); }
-	else	{ $tmp=push(@out,"\t.type\t$func,\@function\n"); }
+		{ $tmp=push(@out,"TYPE($func,\@function)\n"); }
+	elsif ($main'coff)
+		{ $tmp=push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
+	elsif ($main'aout and !$main'pic)
+		{ }
+	else	{ $tmp=push(@out,".type\t$func,\@function\n"); }
+	push(@out,".align\t$align\n");
 	push(@out,"$func:\n");
 	$tmp=<<"EOF";
 	pushl	%ebp
@@ -290,13 +385,17 @@ sub main'function_begin_B
 
 	local($tmp)=<<"EOF";
 .text
-	.align $align
-.globl $func
+.globl	$func
 EOF
 	push(@out,$tmp);
 	if ($main'cpp)
-		{ push(@out,"\tTYPE($func,\@function)\n"); }
-	else	{ push(@out,"\t.type	$func,\@function\n"); }
+		{ push(@out,"TYPE($func,\@function)\n"); }
+	elsif ($main'coff)
+		{ $tmp=push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
+	elsif ($main'aout and !$main'pic)
+		{ }
+	else	{ push(@out,".type	$func,\@function\n"); }
+	push(@out,".align\t$align\n");
 	push(@out,"$func:\n");
 	$stack=4;
 	}
@@ -313,12 +412,15 @@ sub main'function_end
 	popl	%ebx
 	popl	%ebp
 	ret
-.${func}_end:
+${dot}L_${func}_end:
 EOF
 	push(@out,$tmp);
+
 	if ($main'cpp)
-		{ push(@out,"\tSIZE($func,.${func}_end-$func)\n"); }
-	else	{ push(@out,"\t.size\t$func,.${func}_end-$func\n"); }
+		{ push(@out,"SIZE($func,${dot}L_${func}_end-$func)\n"); }
+	elsif ($main'coff or $main'aout)
+                { }
+	else	{ push(@out,".size\t$func,${dot}L_${func}_end-$func\n"); }
 	push(@out,".ident	\"$func\"\n");
 	$stack=0;
 	%label=();
@@ -344,11 +446,13 @@ sub main'function_end_B
 
 	$func=$under.$func;
 
-	push(@out,".${func}_end:\n");
+	push(@out,"${dot}L_${func}_end:\n");
 	if ($main'cpp)
-		{ push(@out,"\tSIZE($func,.${func}_end-$func)\n"); }
-	else	{ push(@out,"\t.size\t$func,.${func}_end-$func\n"); }
-	push(@out,".ident	\"desasm.pl\"\n");
+		{ push(@out,"SIZE($func,${dot}L_${func}_end-$func)\n"); }
+        elsif ($main'coff or $main'aout)
+                { }
+	else	{ push(@out,".size\t$func,${dot}L_${func}_end-$func\n"); }
+	push(@out,".ident	\"$func\"\n");
 	$stack=0;
 	%label=();
 	}
@@ -389,6 +493,12 @@ sub main'swtmp
 
 sub main'comment
 	{
+	if (!defined($com_start) or $main'elf)
+		{	# Regarding $main'elf above...
+			# GNU and SVR4 as'es use different comment delimiters,
+		push(@out,"\n");	# so we just skip ELF comments...
+		return;
+		}
 	foreach (@_)
 		{
 		if (/^\s*$/)
@@ -398,11 +508,17 @@ sub main'comment
 		}
 	}
 
+sub main'public_label
+	{
+	$label{$_[0]}="${under}${_[0]}"	if (!defined($label{$_[0]}));
+	push(@out,".globl\t$label{$_[0]}\n");
+	}
+
 sub main'label
 	{
 	if (!defined($label{$_[0]}))
 		{
-		$label{$_[0]}=".${label}${_[0]}";
+		$label{$_[0]}="${dot}${label}${_[0]}";
 		$label++;
 		}
 	return($label{$_[0]});
@@ -412,18 +528,198 @@ sub main'set_label
 	{
 	if (!defined($label{$_[0]}))
 		{
-		$label{$_[0]}=".${label}${_[0]}";
+		$label{$_[0]}="${dot}${label}${_[0]}";
 		$label++;
 		}
-	push(@out,".align $align\n") if ($_[1] != 0);
+	if ($_[1]!=0)
+		{
+		if ($_[1]>1)	{ main'align($_[1]);		}
+		else		{ push(@out,".align $align\n");	}
+		}
 	push(@out,"$label{$_[0]}:\n");
 	}
 
 sub main'file_end
 	{
+	# try to detect if SSE2 or MMX extensions were used on ELF platform...
+	if ($main'elf && grep {/\b%[x]*mm[0-7]\b|OPENSSL_ia32cap_P\b/i} @out) {
+		local($tmp);
+
+		push (@out,"\n.section\t.bss\n");
+		push (@out,".comm\t${under}OPENSSL_ia32cap_P,4,4\n");
+
+		return;
+	}
+
+	if ($const ne "")
+		{
+		push(@out,".section .rodata\n");
+		push(@out,$const);
+		$const="";
+		}
+	}
+
+sub main'data_byte
+	{
+	push(@out,"\t.byte\t".join(',',@_)."\n");
 	}
 
 sub main'data_word
 	{
-	push(@out,"\t.long $_[0]\n");
+	push(@out,"\t.long\t".join(',',@_)."\n");
 	}
+
+sub main'align
+	{
+	my $val=$_[0],$p2,$i;
+	if ($main'aout) {
+		for ($p2=0;$val!=0;$val>>=1) { $p2++; }
+		$val=$p2-1;
+		$val.=",0x90";
+	}
+	push(@out,".align\t$val\n");
+	}
+
+# debug output functions: puts, putx, printf
+
+sub main'puts
+	{
+	&pushvars();
+	&main'push('$Lstring' . ++$constl);
+	&main'call('puts');
+	$stack-=4;
+	&main'add("esp",4);
+	&popvars();
+
+	$const .= "Lstring$constl:\n\t.string \"@_[0]\"\n";
+	}
+
+sub main'putx
+	{
+	&pushvars();
+	&main'push($_[0]);
+	&main'push('$Lstring' . ++$constl);
+	&main'call('printf');
+	&main'add("esp",8);
+	$stack-=8;
+	&popvars();
+
+	$const .= "Lstring$constl:\n\t.string \"\%X\"\n";
+	}
+
+sub main'printf
+	{
+	$ostack = $stack;
+	&pushvars();
+	for ($i = @_ - 1; $i >= 0; $i--)
+		{
+		if ($i == 0) # change this to support %s format strings
+			{
+			&main'push('$Lstring' . ++$constl);
+			$const .= "Lstring$constl:\n\t.string \"@_[$i]\"\n";
+			}
+		else
+			{
+			if ($_[$i] =~ /([0-9]*)\(%esp\)/)
+				{
+				&main'push(($1 + $stack - $ostack) . '(%esp)');
+				}
+			else
+				{
+				&main'push($_[$i]);
+				}
+			}
+		}
+	&main'call('printf');
+	$stack-=4*@_;
+	&main'add("esp",4*@_);
+	&popvars();
+	}
+
+sub pushvars
+	{
+	&main'pushf();
+	&main'push("edx");
+	&main'push("ecx");
+	&main'push("eax");
+	}
+
+sub popvars
+	{
+	&main'pop("eax");
+	&main'pop("ecx");
+	&main'pop("edx");
+	&main'popf();
+	}
+
+sub main'picmeup
+	{
+	local($dst,$sym)=@_;
+	if ($main'cpp)
+		{
+		local($tmp)=<<___;
+#if (defined(ELF) || defined(SOL)) && defined(PIC)
+	call	1f
+1:	popl	$regs{$dst}
+	addl	\$_GLOBAL_OFFSET_TABLE_+[.-1b],$regs{$dst}
+	movl	$sym\@GOT($regs{$dst}),$regs{$dst}
+#else
+	leal	$sym,$regs{$dst}
+#endif
+___
+		push(@out,$tmp);
+		}
+	elsif ($main'pic && ($main'elf || $main'aout))
+		{
+		&main'call(&main'label("PIC_me_up"));
+		&main'set_label("PIC_me_up");
+		&main'blindpop($dst);
+		&main'add($dst,"\$${under}_GLOBAL_OFFSET_TABLE_+[.-".
+				&main'label("PIC_me_up") . "]");
+		&main'mov($dst,&main'DWP($under.$sym."\@GOT",$dst));
+		}
+	else
+		{
+		&main'lea($dst,&main'DWP($sym));
+		}
+	}
+
+sub main'blindpop { &out1("popl",@_); }
+
+sub main'initseg
+	{
+	local($f)=@_;
+	local($tmp);
+	if ($main'elf)
+		{
+		$tmp=<<___;
+.section	.init
+	call	$under$f
+	jmp	.Linitalign
+.align	$align
+.Linitalign:
+___
+		}
+	elsif ($main'coff)
+		{
+		$tmp=<<___;	# applies to both Cygwin and Mingw
+.section	.ctors
+.long	$under$f
+___
+		}
+	elsif ($main'aout)
+		{
+		local($ctor)="${under}_GLOBAL_\$I\$$f";
+		$tmp=".text\n";
+		$tmp.=".type	$ctor,\@function\n" if ($main'pic);
+		$tmp.=<<___;	# OpenBSD way...
+.globl	$ctor
+.align	2
+$ctor:
+	jmp	$under$f
+___
+		}
+	push(@out,$tmp) if ($tmp);
+	}
+
+1;

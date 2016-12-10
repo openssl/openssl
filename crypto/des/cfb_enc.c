@@ -56,7 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
+#include "e_os.h"
 #include "des_locl.h"
+#include <assert.h>
 
 /* The input and output are loaded in multiples of 8 bits.
  * What this means is that if you hame numbits=12 and length=2
@@ -64,106 +66,128 @@
  * the second.  The second 12 bits will come from the 3rd and half the 4th
  * byte.
  */
-void des_cfb_encrypt(in, out, numbits, length, schedule, ivec, enc)
-unsigned char *in;
-unsigned char *out;
-int numbits;
-long length;
-des_key_schedule schedule;
-des_cblock (*ivec);
-int enc;
+/* Until Aug 1 2003 this function did not correctly implement CFB-r, so it
+ * will not be compatible with any encryption prior to that date. Ben. */
+void DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
+		     long length, DES_key_schedule *schedule, DES_cblock *ivec,
+		     int enc)
 	{
-	register DES_LONG d0,d1,v0,v1,n=(numbits+7)/8;
-	register DES_LONG mask0,mask1;
+	register DES_LONG d0,d1,v0,v1;
 	register unsigned long l=length;
-	register int num=numbits;
+	register int num=numbits/8,n=(numbits+7)/8,i,rem=numbits%8;
 	DES_LONG ti[2];
 	unsigned char *iv;
+#ifndef L_ENDIAN
+	unsigned char ovec[16];
+#else
+	unsigned int  sh[4];
+	unsigned char *ovec=(unsigned char *)sh;
 
-	if (num > 64) return;
-	if (num > 32)
-		{
-		mask0=0xffffffffL;
-		if (num == 64)
-			mask1=mask0;
-		else	mask1=(1L<<(num-32))-1;
-		}
-	else
-		{
-		if (num == 32)
-			mask0=0xffffffffL;
-		else	mask0=(1L<<num)-1;
-		mask1=0x00000000L;
-		}
+	/* I kind of count that compiler optimizes away this assertioni,*/
+	assert (sizeof(sh[0])==4);	/* as this holds true for all,	*/
+					/* but 16-bit platforms...	*/
+					
+#endif
 
-	iv=(unsigned char *)ivec;
+	if (numbits<=0 || numbits > 64) return;
+	iv = &(*ivec)[0];
 	c2l(iv,v0);
 	c2l(iv,v1);
 	if (enc)
 		{
-		while (l >= n)
+		while (l >= (unsigned long)n)
 			{
 			l-=n;
 			ti[0]=v0;
 			ti[1]=v1;
-			des_encrypt((DES_LONG *)ti,schedule,DES_ENCRYPT);
+			DES_encrypt1((DES_LONG *)ti,schedule,DES_ENCRYPT);
 			c2ln(in,d0,d1,n);
 			in+=n;
-			d0=(d0^ti[0])&mask0;
-			d1=(d1^ti[1])&mask1;
+			d0^=ti[0];
+			d1^=ti[1];
 			l2cn(d0,d1,out,n);
 			out+=n;
 			/* 30-08-94 - eay - changed because l>>32 and
 			 * l<<32 are bad under gcc :-( */
-			if (num == 32)
+			if (numbits == 32)
 				{ v0=v1; v1=d0; }
-			else if (num == 64)
+			else if (numbits == 64)
 				{ v0=d0; v1=d1; }
-			else if (num > 32) /* && num != 64 */
+			else
 				{
-				v0=((v1>>(num-32))|(d0<<(64-num)))&0xffffffffL;
-				v1=((d0>>(num-32))|(d1<<(64-num)))&0xffffffffL;
-				}
-			else /* num < 32 */
-				{
-				v0=((v0>>num)|(v1<<(32-num)))&0xffffffffL;
-				v1=((v1>>num)|(d0<<(32-num)))&0xffffffffL;
+#ifndef L_ENDIAN
+				iv=&ovec[0];
+				l2c(v0,iv);
+				l2c(v1,iv);
+				l2c(d0,iv);
+				l2c(d1,iv);
+#else
+				sh[0]=v0, sh[1]=v1, sh[2]=d0, sh[3]=d1;
+#endif
+				if (rem==0)
+					memmove(ovec,ovec+num,8);
+				else
+					for(i=0 ; i < 8 ; ++i)
+						ovec[i]=ovec[i+num]<<rem |
+							ovec[i+num+1]>>(8-rem);
+#ifdef L_ENDIAN
+				v0=sh[0], v1=sh[1];
+#else
+				iv=&ovec[0];
+				c2l(iv,v0);
+				c2l(iv,v1);
+#endif
 				}
 			}
 		}
 	else
 		{
-		while (l >= n)
+		while (l >= (unsigned long)n)
 			{
 			l-=n;
 			ti[0]=v0;
 			ti[1]=v1;
-			des_encrypt((DES_LONG *)ti,schedule,DES_ENCRYPT);
+			DES_encrypt1((DES_LONG *)ti,schedule,DES_ENCRYPT);
 			c2ln(in,d0,d1,n);
 			in+=n;
 			/* 30-08-94 - eay - changed because l>>32 and
 			 * l<<32 are bad under gcc :-( */
-			if (num == 32)
+			if (numbits == 32)
 				{ v0=v1; v1=d0; }
-			else if (num == 64)
+			else if (numbits == 64)
 				{ v0=d0; v1=d1; }
-			else if (num > 32) /* && num != 64 */
+			else
 				{
-				v0=((v1>>(num-32))|(d0<<(64-num)))&0xffffffffL;
-				v1=((d0>>(num-32))|(d1<<(64-num)))&0xffffffffL;
+#ifndef L_ENDIAN
+				iv=&ovec[0];
+				l2c(v0,iv);
+				l2c(v1,iv);
+				l2c(d0,iv);
+				l2c(d1,iv);
+#else
+				sh[0]=v0, sh[1]=v1, sh[2]=d0, sh[3]=d1;
+#endif
+				if (rem==0)
+					memmove(ovec,ovec+num,8);
+				else
+					for(i=0 ; i < 8 ; ++i)
+						ovec[i]=ovec[i+num]<<rem |
+							ovec[i+num+1]>>(8-rem);
+#ifdef L_ENDIAN
+				v0=sh[0], v1=sh[1];
+#else
+				iv=&ovec[0];
+				c2l(iv,v0);
+				c2l(iv,v1);
+#endif
 				}
-			else /* num < 32 */
-				{
-				v0=((v0>>num)|(v1<<(32-num)))&0xffffffffL;
-				v1=((v1>>num)|(d0<<(32-num)))&0xffffffffL;
-				}
-			d0=(d0^ti[0])&mask0;
-			d1=(d1^ti[1])&mask1;
+			d0^=ti[0];
+			d1^=ti[1];
 			l2cn(d0,d1,out,n);
 			out+=n;
 			}
 		}
-	iv=(unsigned char *)ivec;
+	iv = &(*ivec)[0];
 	l2c(v0,iv);
 	l2c(v1,iv);
 	v0=v1=d0=d1=ti[0]=ti[1]=0;

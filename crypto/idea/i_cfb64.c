@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "idea.h"
+#include <openssl/idea.h>
 #include "idea_lcl.h"
 
 /* The input and output encrypted as though 64bit cfb mode is being
@@ -64,14 +64,9 @@
  * 64bit block we have used is contained in *num;
  */
 
-void idea_cfb64_encrypt(in, out, length, schedule, ivec, num, encrypt)
-unsigned char *in;
-unsigned char *out;
-long length;
-IDEA_KEY_SCHEDULE *schedule;
-unsigned char *ivec;
-int *num;
-int encrypt;
+void idea_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+			long length, IDEA_KEY_SCHEDULE *schedule,
+			unsigned char *ivec, int *num, int encrypt)
 	{
 	register unsigned long v0,v1,t;
 	register int n= *num;

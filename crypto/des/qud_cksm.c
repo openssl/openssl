@@ -73,28 +73,32 @@
 /* Got the value MIT uses via brute force :-) 2/10/90 eay */
 #define NOISE	((DES_LONG)83653421L)
 
-DES_LONG des_quad_cksum(input, output, length, out_count, seed)
-des_cblock (*input);
-des_cblock (*output);
-long length;
-int out_count;
-des_cblock (*seed);
+DES_LONG DES_quad_cksum(const unsigned char *input, DES_cblock output[],
+	     long length, int out_count, DES_cblock *seed)
 	{
 	DES_LONG z0,z1,t0,t1;
 	int i;
 	long l;
-	unsigned char *cp;
-	unsigned char *lp;
+	const unsigned char *cp;
+#ifdef _CRAY
+	struct lp_st { int a:32; int b:32; } *lp;
+#else
+	DES_LONG *lp;
+#endif
 
 	if (out_count < 1) out_count=1;
-	lp=(unsigned char *)output;
+#ifdef _CRAY
+	lp = (struct lp_st *) &(output[0])[0];
+#else
+	lp = (DES_LONG *) &(output[0])[0];
+#endif
 
 	z0=Q_B0((*seed)[0])|Q_B1((*seed)[1])|Q_B2((*seed)[2])|Q_B3((*seed)[3]);
 	z1=Q_B0((*seed)[4])|Q_B1((*seed)[5])|Q_B2((*seed)[6])|Q_B3((*seed)[7]);
 
 	for (i=0; ((i<4)&&(i<out_count)); i++)
 		{
-		cp=(unsigned char *)input;
+		cp=input;
 		l=length;
 		while (l > 0)
 			{
@@ -118,25 +122,16 @@ des_cblock (*seed);
 			}
 		if (lp != NULL)
 			{
-			/* I believe I finally have things worked out.
-			 * The MIT library assumes that the checksum
-			 * is one huge number and it is returned in a
-			 * host dependant byte order.
-			 */
-			static DES_LONG ltmp=1;
-			static unsigned char *c=(unsigned char *)&ltmp;
-
-			if (c[0])
-				{
-				l2c(z0,lp);
-				l2c(z1,lp);
-				}
-			else
-				{
-				lp=output[out_count-i-1];
-				l2n(z1,lp);
-				l2n(z0,lp);
-				}
+			/* The MIT library assumes that the checksum is
+			 * composed of 2*out_count 32 bit ints */
+#ifdef _CRAY
+			(*lp).a = z0;
+			(*lp).b = z1;
+			lp++;
+#else
+			*lp++ = z0;
+			*lp++ = z1;
+#endif
 			}
 		}
 	return(z0);

@@ -59,7 +59,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mdc2.h"
+
+#include "../e_os.h"
+
+#if defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_MDC2)
+#define OPENSSL_NO_MDC2
+#endif
+
+#ifdef OPENSSL_NO_MDC2
+int main(int argc, char *argv[])
+{
+    printf("No MDC2 support\n");
+    return(0);
+}
+#else
+#include <openssl/evp.h>
+#include <openssl/mdc2.h>
+
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
 
 static unsigned char pad1[16]={
 	0x42,0xE5,0x0C,0xD2,0x24,0xBA,0xCE,0xBA,
@@ -71,19 +90,22 @@ static unsigned char pad2[16]={
 	0x35,0xD8,0x7A,0xFE,0xAB,0x33,0xBE,0xE2
 	};
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int ret=0;
 	unsigned char md[MDC2_DIGEST_LENGTH];
 	int i;
-	MDC2_CTX c;
+	EVP_MD_CTX c;
 	static char *text="Now is the time for all ";
 
-	MDC2_Init(&c);
-	MDC2_Update(&c,(unsigned char *)text,strlen(text));
-	MDC2_Final(&(md[0]),&c);
+#ifdef CHARSET_EBCDIC
+	ebcdic2ascii(text,text,strlen(text));
+#endif
+
+	EVP_MD_CTX_init(&c);
+	EVP_DigestInit_ex(&c,EVP_mdc2(), NULL);
+	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
+	EVP_DigestFinal_ex(&c,&(md[0]),NULL);
 
 	if (memcmp(md,pad1,MDC2_DIGEST_LENGTH) != 0)
 		{
@@ -98,10 +120,11 @@ char *argv[];
 	else
 		printf("pad1 - ok\n");
 
-	MDC2_Init(&c);
-	c.pad_type=2;
-	MDC2_Update(&c,(unsigned char *)text,strlen(text));
-	MDC2_Final(&(md[0]),&c);
+	EVP_DigestInit_ex(&c,EVP_mdc2(), NULL);
+	/* FIXME: use a ctl function? */
+	((MDC2_CTX *)c.md_data)->pad_type=2;
+	EVP_DigestUpdate(&c,(unsigned char *)text,strlen(text));
+	EVP_DigestFinal_ex(&c,&(md[0]),NULL);
 
 	if (memcmp(md,pad2,MDC2_DIGEST_LENGTH) != 0)
 		{
@@ -116,7 +139,11 @@ char *argv[];
 	else
 		printf("pad2 - ok\n");
 
-	exit(ret);
+	EVP_MD_CTX_cleanup(&c);
+#ifdef OPENSSL_SYS_NETWARE
+    if (ret) printf("ERROR: %d\n", ret);
+#endif
+	EXIT(ret);
 	return(ret);
 	}
-
+#endif

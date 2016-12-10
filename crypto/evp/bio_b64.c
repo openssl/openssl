@@ -59,27 +59,17 @@
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "evp.h"
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
 
-#ifndef NOPROTO
-static int b64_write(BIO *h,char *buf,int num);
-static int b64_read(BIO *h,char *buf,int size);
-/*static int b64_puts(BIO *h,char *str); */
-/*static int b64_gets(BIO *h,char *str,int size); */
-static long b64_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int b64_write(BIO *h, const char *buf, int num);
+static int b64_read(BIO *h, char *buf, int size);
+/*static int b64_puts(BIO *h, const char *str); */
+/*static int b64_gets(BIO *h, char *str, int size); */
+static long b64_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int b64_new(BIO *h);
 static int b64_free(BIO *data);
-#else
-static int b64_write();
-static int b64_read();
-/*static int b64_puts(); */
-/*static int b64_gets(); */
-static long b64_ctrl();
-static int b64_new();
-static int b64_free();
-#endif
-
+static long b64_callback_ctrl(BIO *h,int cmd,bio_info_cb *fp);
 #define B64_BLOCK_SIZE	1024
 #define B64_BLOCK_SIZE2	768
 #define B64_NONE	0
@@ -111,19 +101,19 @@ static BIO_METHOD methods_b64=
 	b64_ctrl,
 	b64_new,
 	b64_free,
+	b64_callback_ctrl,
 	};
 
-BIO_METHOD *BIO_f_base64()
+BIO_METHOD *BIO_f_base64(void)
 	{
 	return(&methods_b64);
 	}
 
-static int b64_new(bi)
-BIO *bi;
+static int b64_new(BIO *bi)
 	{
 	BIO_B64_CTX *ctx;
 
-	ctx=(BIO_B64_CTX *)Malloc(sizeof(BIO_B64_CTX));
+	ctx=(BIO_B64_CTX *)OPENSSL_malloc(sizeof(BIO_B64_CTX));
 	if (ctx == NULL) return(0);
 
 	ctx->buf_len=0;
@@ -140,21 +130,17 @@ BIO *bi;
 	return(1);
 	}
 
-static int b64_free(a)
-BIO *a;
+static int b64_free(BIO *a)
 	{
 	if (a == NULL) return(0);
-	Free(a->ptr);
+	OPENSSL_free(a->ptr);
 	a->ptr=NULL;
 	a->init=0;
 	a->flags=0;
 	return(1);
 	}
 	
-static int b64_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int b64_read(BIO *b, char *out, int outl)
 	{
 	int ret=0,i,ii,j,k,x,n,num,ret_code=0;
 	BIO_B64_CTX *ctx;
@@ -179,6 +165,7 @@ int outl;
 		{
 		i=ctx->buf_len-ctx->buf_off;
 		if (i > outl) i=outl;
+		OPENSSL_assert(ctx->buf_off+i < (int)sizeof(ctx->buf));
 		memcpy(out,&(ctx->buf[ctx->buf_off]),i);
 		ret=i;
 		out+=i;
@@ -197,7 +184,9 @@ int outl;
 	ret_code=0;
 	while (outl > 0)
 		{
-		if (ctx->cont <= 0) break;
+
+		if (ctx->cont <= 0)
+			break;
 
 		i=BIO_read(b->next_bio,&(ctx->tmp[ctx->tmp_len]),
 			B64_BLOCK_SIZE-ctx->tmp_len);
@@ -208,11 +197,21 @@ int outl;
 
 			/* Should be continue next time we are called? */
 			if (!BIO_should_retry(b->next_bio))
+				{
 				ctx->cont=i;
-			/* else we should continue when called again */
-			break;
+				/* If buffer empty break */
+				if(ctx->tmp_len == 0)
+					break;
+				/* Fall through and process what we have */
+				else
+					i = 0;
+				}
+			/* else we retry and add more data to buffer */
+			else
+				break;
 			}
 		i+=ctx->tmp_len;
+		ctx->tmp_len = i;
 
 		/* We need to scan, a line at a time until we
 		 * have a valid line if we are starting. */
@@ -253,8 +252,8 @@ int outl;
 							&(ctx->tmp[0]));
 						for (x=0; x < i; x++)
 							ctx->tmp[x]=p[x];
-						EVP_DecodeInit(&ctx->base64);
 						}
+					EVP_DecodeInit(&ctx->base64);
 					ctx->start=0;
 					break;
 					}
@@ -268,8 +267,12 @@ int outl;
 				 * reading until a new line. */
 				if (p == (unsigned char *)&(ctx->tmp[0]))
 					{
-					ctx->tmp_nl=1;
-					ctx->tmp_len=0;
+					/* Check buffer full */
+					if (i == B64_BLOCK_SIZE)
+						{
+						ctx->tmp_nl=1;
+						ctx->tmp_len=0;
+						}
 					}
 				else if (p != q) /* finished on a '\n' */
 					{
@@ -284,6 +287,11 @@ int outl;
 			else
 				ctx->tmp_len=0;
 			}
+		/* If buffer isn't full and we can retry then
+		 * restart to read in more data.
+		 */
+		else if ((i < B64_BLOCK_SIZE) && (ctx->cont > 0))
+			continue;
 
 		if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)
 			{
@@ -323,8 +331,8 @@ int outl;
 			i=EVP_DecodeUpdate(&(ctx->base64),
 				(unsigned char *)ctx->buf,&ctx->buf_len,
 				(unsigned char *)ctx->tmp,i);
+			ctx->tmp_len = 0;
 			}
-		ctx->cont=i;
 		ctx->buf_off=0;
 		if (i < 0)
 			{
@@ -354,10 +362,7 @@ int outl;
 	return((ret == 0)?ret_code:ret);
 	}
 
-static int b64_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int b64_write(BIO *b, const char *in, int inl)
 	{
 	int ret=inl,n,i;
 	BIO_B64_CTX *ctx;
@@ -387,10 +392,11 @@ int inl;
 		n-=i;
 		}
 	/* at this point all pending data has been written */
+	ctx->buf_off=0;
+	ctx->buf_len=0;
 
 	if ((in == NULL) || (inl <= 0)) return(0);
 
-	ctx->buf_off=0;
 	while (inl > 0)
 		{
 		n=(inl > B64_BLOCK_SIZE)?B64_BLOCK_SIZE:inl;
@@ -400,14 +406,20 @@ int inl;
 			if (ctx->tmp_len > 0)
 				{
 				n=3-ctx->tmp_len;
+				/* There's a teoretical possibility for this */
+				if (n > inl) 
+					n=inl;
 				memcpy(&(ctx->tmp[ctx->tmp_len]),in,n);
 				ctx->tmp_len+=n;
-				n=ctx->tmp_len;
-				if (n < 3)
+				if (ctx->tmp_len < 3)
 					break;
 				ctx->buf_len=EVP_EncodeBlock(
 					(unsigned char *)ctx->buf,
-					(unsigned char *)ctx->tmp,n);
+					(unsigned char *)ctx->tmp,
+					ctx->tmp_len);
+				/* Since we're now done using the temporary
+				   buffer, the length should be 0'd */
+				ctx->tmp_len=0;
 				}
 			else
 				{
@@ -451,11 +463,7 @@ int inl;
 	return(ret);
 	}
 
-static long b64_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	BIO_B64_CTX *ctx;
 	long ret=1;
@@ -479,7 +487,8 @@ char *ptr;
 		break;
 	case BIO_CTRL_WPENDING: /* More to write in buffer */
 		ret=ctx->buf_len-ctx->buf_off;
-		if ((ret == 0) && (ctx->base64.num != 0))
+		if ((ret == 0) && (ctx->encode != B64_NONE)
+			&& (ctx->base64.num != 0))
 			ret=1;
 		else if (ret <= 0)
 			ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
@@ -496,10 +505,7 @@ again:
 			{
 			i=b64_write(b,NULL,0);
 			if (i < 0)
-				{
-				ret=i;
-				break;
-				}
+				return i;
 			}
 		if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)
 			{
@@ -514,7 +520,7 @@ again:
 				goto again;
 				}
 			}
-		else if (ctx->base64.num != 0)
+		else if (ctx->encode != B64_NONE && ctx->base64.num != 0)
 			{
 			ctx->buf_off=0;
 			EVP_EncodeFinal(&(ctx->base64),
@@ -540,6 +546,20 @@ again:
 	case BIO_CTRL_SET:
 	default:
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
+		break;
+		}
+	return(ret);
+	}
+
+static long b64_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+	{
+	long ret=1;
+
+	if (b->next_bio == NULL) return(0);
+	switch (cmd)
+		{
+	default:
+		ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
 		break;
 		}
 	return(ret);

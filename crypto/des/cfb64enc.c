@@ -63,14 +63,9 @@
  * 64bit block we have used is contained in *num;
  */
 
-void des_cfb64_encrypt(in, out, length, schedule, ivec, num, enc)
-unsigned char *in;
-unsigned char *out;
-long length;
-des_key_schedule schedule;
-des_cblock (*ivec);
-int *num;
-int enc;
+void DES_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+		       long length, DES_key_schedule *schedule,
+		       DES_cblock *ivec, int *num, int enc)
 	{
 	register DES_LONG v0,v1;
 	register long l=length;
@@ -78,7 +73,7 @@ int enc;
 	DES_LONG ti[2];
 	unsigned char *iv,c,cc;
 
-	iv=(unsigned char *)ivec;
+	iv = &(*ivec)[0];
 	if (enc)
 		{
 		while (l--)
@@ -87,12 +82,11 @@ int enc;
 				{
 				c2l(iv,v0); ti[0]=v0;
 				c2l(iv,v1); ti[1]=v1;
-				des_encrypt((DES_LONG *)ti,
-					schedule,DES_ENCRYPT);
-				iv=(unsigned char *)ivec;
+				DES_encrypt1(ti,schedule,DES_ENCRYPT);
+				iv = &(*ivec)[0];
 				v0=ti[0]; l2c(v0,iv);
 				v0=ti[1]; l2c(v0,iv);
-				iv=(unsigned char *)ivec;
+				iv = &(*ivec)[0];
 				}
 			c= *(in++)^iv[n];
 			*(out++)=c;
@@ -108,12 +102,11 @@ int enc;
 				{
 				c2l(iv,v0); ti[0]=v0;
 				c2l(iv,v1); ti[1]=v1;
-				des_encrypt((DES_LONG *)ti,
-					schedule,DES_ENCRYPT);
-				iv=(unsigned char *)ivec;
+				DES_encrypt1(ti,schedule,DES_ENCRYPT);
+				iv = &(*ivec)[0];
 				v0=ti[0]; l2c(v0,iv);
 				v0=ti[1]; l2c(v0,iv);
-				iv=(unsigned char *)ivec;
+				iv = &(*ivec)[0];
 				}
 			cc= *(in++);
 			c=iv[n];

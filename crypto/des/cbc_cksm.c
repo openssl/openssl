@@ -58,21 +58,15 @@
 
 #include "des_locl.h"
 
-DES_LONG des_cbc_cksum(input, output, length, schedule, ivec)
-des_cblock (*input);
-des_cblock (*output);
-long length;
-des_key_schedule schedule;
-des_cblock (*ivec);
+DES_LONG DES_cbc_cksum(const unsigned char *in, DES_cblock *output,
+		       long length, DES_key_schedule *schedule,
+		       const_DES_cblock *ivec)
 	{
 	register DES_LONG tout0,tout1,tin0,tin1;
 	register long l=length;
 	DES_LONG tin[2];
-	unsigned char *in,*out,*iv;
-
-	in=(unsigned char *)input;
-	out=(unsigned char *)output;
-	iv=(unsigned char *)ivec;
+	unsigned char *out = &(*output)[0];
+	const unsigned char *iv = &(*ivec)[0];
 
 	c2l(iv,tout0);
 	c2l(iv,tout1);
@@ -88,7 +82,7 @@ des_cblock (*ivec);
 			
 		tin0^=tout0; tin[0]=tin0;
 		tin1^=tout1; tin[1]=tin1;
-		des_encrypt((DES_LONG *)tin,schedule,DES_ENCRYPT);
+		DES_encrypt1((DES_LONG *)tin,schedule,DES_ENCRYPT);
 		/* fix 15/10/91 eay - thanks to keithr@sco.COM */
 		tout0=tin[0];
 		tout1=tin[1];
@@ -99,5 +93,14 @@ des_cblock (*ivec);
 		l2c(tout1,out);
 		}
 	tout0=tin0=tin1=tin[0]=tin[1]=0;
+	/*
+	  Transform the data in tout1 so that it will
+	  match the return value that the MIT Kerberos
+	  mit_des_cbc_cksum API returns.
+	*/
+	tout1 = ((tout1 >> 24L) & 0x000000FF)
+	      | ((tout1 >> 8L)  & 0x0000FF00)
+	      | ((tout1 << 8L)  & 0x00FF0000)
+	      | ((tout1 << 24L) & 0xFF000000);
 	return(tout1);
 	}

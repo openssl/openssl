@@ -56,7 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
-#include "rc2.h"
+#include <openssl/rc2.h>
+#include <openssl/crypto.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 #include "rc2_locl.h"
 
 static unsigned char key_table[256]={
@@ -84,17 +89,29 @@ static unsigned char key_table[256]={
 	0xfe,0x7f,0xc1,0xad,
 	};
 
+#if defined(_MSC_VER) && defined(_ARM_)
+#pragma optimize("g",off)
+#endif
+
 /* It has come to my attention that there are 2 versions of the RC2
  * key schedule.  One which is normal, and anther which has a hook to
  * use a reduced key length.
  * BSAFE uses the 'retarded' version.  What I previously shipped is
  * the same as specifying 1024 for the 'bits' parameter.  Bsafe uses
  * a version where the bits parameter is the same as len*8 */
-void RC2_set_key(key,len,data,bits)
-RC2_KEY *key;
-int len;
-unsigned char *data;
-int bits;
+
+#ifdef OPENSSL_FIPS
+void RC2_set_key(RC2_KEY *key, int len, const unsigned char *data, int bits)
+	{
+	if (FIPS_mode())
+		FIPS_BAD_ABORT(RC2)
+	private_RC2_set_key(key, len, data, bits);
+	}
+void private_RC2_set_key(RC2_KEY *key, int len, const unsigned char *data,
+								int bits)
+#else
+void RC2_set_key(RC2_KEY *key, int len, const unsigned char *data, int bits)
+#endif
 	{
 	int i,j;
 	unsigned char *k;
@@ -140,3 +157,6 @@ int bits;
 		*(ki--)=((k[i]<<8)|k[i-1])&0xffff;
 	}
 
+#if defined(_MSC_VER)
+#pragma optimize("",on)
+#endif

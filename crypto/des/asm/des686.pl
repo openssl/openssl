@@ -46,19 +46,19 @@ EOF
 $L="edi";
 $R="esi";
 
-&des_encrypt("des_encrypt",1);
-&des_encrypt("des_encrypt2",0);
+&DES_encrypt("DES_encrypt1",1);
+&DES_encrypt("DES_encrypt2",0);
 
-&des_encrypt3("des_encrypt3",1);
-&des_encrypt3("des_decrypt3",0);
+&DES_encrypt3("DES_encrypt3",1);
+&DES_encrypt3("DES_decrypt3",0);
 
 &file_end();
 
-sub des_encrypt
+sub DES_encrypt
 	{
 	local($name,$do_ip)=@_;
 
-	&function_begin($name,"EXTRN   _des_SPtrans:DWORD");
+	&function_begin($name,"EXTRN   _DES_SPtrans:DWORD");
 
 	&comment("");
 	&comment("Load the 2 words");
@@ -94,11 +94,11 @@ sub des_encrypt
 		{
 		&comment("");
 		&comment("Round $i");
-		&D_ENCRYPT($L,$R,$i*2,"ebp","des_SPtrans","ecx","edx","eax","ebx");
+		&D_ENCRYPT($L,$R,$i*2,"ebp","DES_SPtrans","ecx","edx","eax","ebx");
 
 		&comment("");
 		&comment("Round ".sprintf("%d",$i+1));
-		&D_ENCRYPT($R,$L,($i+1)*2,"ebp","des_SPtrans","ecx","edx","eax","ebx");
+		&D_ENCRYPT($R,$L,($i+1)*2,"ebp","DES_SPtrans","ecx","edx","eax","ebx");
 		}
 	&jmp(&label("end"));
 
@@ -108,10 +108,10 @@ sub des_encrypt
 		{
 		&comment("");
 		&comment("Round $i");
-		&D_ENCRYPT($L,$R,$i*2,"ebp","des_SPtrans","ecx","edx","eax","ebx");
+		&D_ENCRYPT($L,$R,$i*2,"ebp","DES_SPtrans","ecx","edx","eax","ebx");
 		&comment("");
 		&comment("Round ".sprintf("%d",$i-1));
-		&D_ENCRYPT($R,$L,($i-1)*2,"ebp","des_SPtrans","ecx","edx","eax","ebx");
+		&D_ENCRYPT($R,$L,($i-1)*2,"ebp","DES_SPtrans","ecx","edx","eax","ebx");
 		}
 
 	&set_label("end");

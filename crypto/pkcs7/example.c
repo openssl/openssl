@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
-#include "pkcs7.h"
+#include <string.h>
+#include <openssl/pkcs7.h>
+#include <openssl/asn1_mac.h>
+#include <openssl/x509.h>
 
-int add_signed_time(si)
-PKCS7_SIGNER_INFO *si;
+int add_signed_time(PKCS7_SIGNER_INFO *si)
 	{
 	ASN1_UTCTIME *sign_time;
 
@@ -16,25 +17,19 @@ PKCS7_SIGNER_INFO *si;
 	return(1);
 	}
 
-ASN1_UTCTIME *get_signed_time(si)
-PKCS7_SIGNER_INFO *si;
+ASN1_UTCTIME *get_signed_time(PKCS7_SIGNER_INFO *si)
 	{
 	ASN1_TYPE *so;
-	ASN1_UTCTIME *ut;
 
 	so=PKCS7_get_signed_attribute(si,NID_pkcs9_signingTime);
 	if (so->type == V_ASN1_UTCTIME)
-		{
-		ut=so->value.utctime;
-		}
-	return(ut);
+	    return so->value.utctime;
+	return NULL;
 	}
 	
 static int signed_string_nid= -1;
 
-int add_signed_string(si,str)
-PKCS7_SIGNER_INFO *si;
-char *str;
+void add_signed_string(PKCS7_SIGNER_INFO *si, char *str)
 	{
 	ASN1_OCTET_STRING *os;
 
@@ -43,16 +38,13 @@ char *str;
 		signed_string_nid=
 			OBJ_create("1.2.3.4.5","OID_example","Our example OID");
 	os=ASN1_OCTET_STRING_new();
-	ASN1_OCTET_STRING_set(os,str,strlen(str));
+	ASN1_OCTET_STRING_set(os,(unsigned char*)str,strlen(str));
 	/* When we add, we do not free */
 	PKCS7_add_signed_attribute(si,signed_string_nid,
 		V_ASN1_OCTET_STRING,(char *)os);
 	}
 
-int get_signed_string(si,buf,len)
-PKCS7_SIGNER_INFO *si;
-char *buf;
-int len;
+int get_signed_string(PKCS7_SIGNER_INFO *si, char *buf, int len)
 	{
 	ASN1_TYPE *so;
 	ASN1_OCTET_STRING *os;
@@ -78,19 +70,16 @@ int len;
 	return(0);
 	}
 
-static signed_seq2string_nid= -1;
+static int signed_seq2string_nid= -1;
 /* ########################################### */
-int add_signed_seq2string(si,str1,str2)
-PKCS7_SIGNER_INFO *si;
-char *str1;
-char *str2;
+int add_signed_seq2string(PKCS7_SIGNER_INFO *si, char *str1, char *str2)
+	{
 	/* To add an object of OID 1.9.999, which is a sequence containing
 	 * 2 octet strings */
-	{
 	unsigned char *p;
 	ASN1_OCTET_STRING *os1,*os2;
 	ASN1_STRING *seq;
-	char *data;
+	unsigned char *data;
 	int i,total;
 
 	if (signed_seq2string_nid == -1)
@@ -99,8 +88,8 @@ char *str2;
 
 	os1=ASN1_OCTET_STRING_new();
 	os2=ASN1_OCTET_STRING_new();
-	ASN1_OCTET_STRING_set(os1,str1,strlen(str1));
-	ASN1_OCTET_STRING_set(os2,str1,strlen(str1));
+	ASN1_OCTET_STRING_set(os1,(unsigned char*)str1,strlen(str1));
+	ASN1_OCTET_STRING_set(os2,(unsigned char*)str1,strlen(str1));
 	i =i2d_ASN1_OCTET_STRING(os1,NULL);
 	i+=i2d_ASN1_OCTET_STRING(os2,NULL);
 	total=ASN1_object_size(1,i,V_ASN1_SEQUENCE);
@@ -123,10 +112,7 @@ char *str2;
 	}
 
 /* For this case, I will malloc the return strings */
-int get_signed_seq2string(si,str1,str2)
-PKCS7_SIGNER_INFO *si;
-char **str1;
-char **str2;
+int get_signed_seq2string(PKCS7_SIGNER_INFO *si, char **str1, char **str2)
 	{
 	ASN1_TYPE *so;
 
@@ -135,9 +121,9 @@ char **str2;
 			OBJ_create("1.9.9999","OID_example","Our example OID");
 	/* To retrieve */
 	so=PKCS7_get_signed_attribute(si,signed_seq2string_nid);
-	if (so->type == V_ASN1_SEQUENCE)
+	if (so && (so->type == V_ASN1_SEQUENCE))
 		{
-		ASN1_CTX c;
+		ASN1_const_CTX c;
 		ASN1_STRING *s;
 		long length;
 		ASN1_OCTET_STRING *os1,*os2;
@@ -158,7 +144,7 @@ char **str2;
 			goto err;
 		c.slen-=(c.p-c.q);
 
-		if (!asn1_Finish(&c)) goto err;
+		if (!asn1_const_Finish(&c)) goto err;
 		*str1=malloc(os1->length+1);
 		*str2=malloc(os2->length+1);
 		memcpy(*str1,os1->data,os1->length);
@@ -178,7 +164,7 @@ err:
  * THE OTHER WAY TO DO THINGS
  * #######################################
  */
-X509_ATTRIBUTE *create_time()
+X509_ATTRIBUTE *create_time(void)
 	{
 	ASN1_UTCTIME *sign_time;
 	X509_ATTRIBUTE *ret;
@@ -191,24 +177,19 @@ X509_ATTRIBUTE *create_time()
 	return(ret);
 	}
 
-ASN1_UTCTIME *sk_get_time(sk)
-STACK *sk;
+ASN1_UTCTIME *sk_get_time(STACK_OF(X509_ATTRIBUTE) *sk)
 	{
 	ASN1_TYPE *so;
-	ASN1_UTCTIME *ut;
 	PKCS7_SIGNER_INFO si;
 
 	si.auth_attr=sk;
 	so=PKCS7_get_signed_attribute(&si,NID_pkcs9_signingTime);
 	if (so->type == V_ASN1_UTCTIME)
-		{
-		ut=so->value.utctime;
-		}
-	return(ut);
+	    return so->value.utctime;
+	return NULL;
 	}
 	
-X509_ATTRIBUTE *create_string(si,str)
-char *str;
+X509_ATTRIBUTE *create_string(char *str)
 	{
 	ASN1_OCTET_STRING *os;
 	X509_ATTRIBUTE *ret;
@@ -218,17 +199,14 @@ char *str;
 		signed_string_nid=
 			OBJ_create("1.2.3.4.5","OID_example","Our example OID");
 	os=ASN1_OCTET_STRING_new();
-	ASN1_OCTET_STRING_set(os,str,strlen(str));
+	ASN1_OCTET_STRING_set(os,(unsigned char*)str,strlen(str));
 	/* When we add, we do not free */
 	ret=X509_ATTRIBUTE_create(signed_string_nid,
 		V_ASN1_OCTET_STRING,(char *)os);
 	return(ret);
 	}
 
-int sk_get_string(sk,buf,len)
-STACK *sk;
-char *buf;
-int len;
+int sk_get_string(STACK_OF(X509_ATTRIBUTE) *sk, char *buf, int len)
 	{
 	ASN1_TYPE *so;
 	ASN1_OCTET_STRING *os;
@@ -257,18 +235,15 @@ int len;
 	return(0);
 	}
 
-X509_ATTRIBUTE *add_seq2string(si,str1,str2)
-PKCS7_SIGNER_INFO *si;
-char *str1;
-char *str2;
+X509_ATTRIBUTE *add_seq2string(PKCS7_SIGNER_INFO *si, char *str1, char *str2)
+	{
 	/* To add an object of OID 1.9.999, which is a sequence containing
 	 * 2 octet strings */
-	{
 	unsigned char *p;
 	ASN1_OCTET_STRING *os1,*os2;
 	ASN1_STRING *seq;
 	X509_ATTRIBUTE *ret;
-	char *data;
+	unsigned char *data;
 	int i,total;
 
 	if (signed_seq2string_nid == -1)
@@ -277,8 +252,8 @@ char *str2;
 
 	os1=ASN1_OCTET_STRING_new();
 	os2=ASN1_OCTET_STRING_new();
-	ASN1_OCTET_STRING_set(os1,str1,strlen(str1));
-	ASN1_OCTET_STRING_set(os2,str1,strlen(str1));
+	ASN1_OCTET_STRING_set(os1,(unsigned char*)str1,strlen(str1));
+	ASN1_OCTET_STRING_set(os2,(unsigned char*)str1,strlen(str1));
 	i =i2d_ASN1_OCTET_STRING(os1,NULL);
 	i+=i2d_ASN1_OCTET_STRING(os2,NULL);
 	total=ASN1_object_size(1,i,V_ASN1_SEQUENCE);
@@ -301,10 +276,7 @@ char *str2;
 	}
 
 /* For this case, I will malloc the return strings */
-int sk_get_seq2string(sk,str1,str2)
-STACK *sk;
-char **str1;
-char **str2;
+int sk_get_seq2string(STACK_OF(X509_ATTRIBUTE) *sk, char **str1, char **str2)
 	{
 	ASN1_TYPE *so;
 	PKCS7_SIGNER_INFO si;
@@ -318,7 +290,7 @@ char **str2;
 	so=PKCS7_get_signed_attribute(&si,signed_seq2string_nid);
 	if (so->type == V_ASN1_SEQUENCE)
 		{
-		ASN1_CTX c;
+		ASN1_const_CTX c;
 		ASN1_STRING *s;
 		long length;
 		ASN1_OCTET_STRING *os1,*os2;
@@ -339,7 +311,7 @@ char **str2;
 			goto err;
 		c.slen-=(c.p-c.q);
 
-		if (!asn1_Finish(&c)) goto err;
+		if (!asn1_const_Finish(&c)) goto err;
 		*str1=malloc(os1->length+1);
 		*str2=malloc(os2->length+1);
 		memcpy(*str1,os1->data,os1->length);

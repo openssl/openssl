@@ -58,356 +58,389 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "buffer.h"
-#include "bio.h"
-#include "lhash.h"
+#include <openssl/crypto.h>
 #include "cryptlib.h"
 
-#ifdef CRYPTO_MDEBUG
-static int mh_mode=CRYPTO_MEM_CHECK_ON;
+
+static int allow_customize = 1;      /* we provide flexible functions for */
+static int allow_customize_debug = 1;/* exchanging memory-related functions at
+                                      * run-time, but this must be done
+                                      * before any blocks are actually
+                                      * allocated; or we'll run into huge
+                                      * problems when malloc/free pairs
+                                      * don't match etc. */
+
+
+
+/* the following pointers may be changed as long as 'allow_customize' is set */
+
+static void *(*malloc_func)(size_t)         = malloc;
+static void *default_malloc_ex(size_t num, const char *file, int line)
+	{ return malloc_func(num); }
+static void *(*malloc_ex_func)(size_t, const char *file, int line)
+        = default_malloc_ex;
+
+static void *(*realloc_func)(void *, size_t)= realloc;
+static void *default_realloc_ex(void *str, size_t num,
+        const char *file, int line)
+	{ return realloc_func(str,num); }
+static void *(*realloc_ex_func)(void *, size_t, const char *file, int line)
+        = default_realloc_ex;
+
+static void (*free_func)(void *)            = free;
+
+static void *(*malloc_locked_func)(size_t)  = malloc;
+static void *default_malloc_locked_ex(size_t num, const char *file, int line)
+	{ return malloc_locked_func(num); }
+static void *(*malloc_locked_ex_func)(size_t, const char *file, int line)
+        = default_malloc_locked_ex;
+
+static void (*free_locked_func)(void *)     = free;
+
+
+
+/* may be changed as long as 'allow_customize_debug' is set */
+/* XXX use correct function pointer types */
+#if defined(CRYPTO_MDEBUG) && !defined(OPENSSL_FIPS)
+/* use default functions from mem_dbg.c */
+static void (*malloc_debug_func)(void *,int,const char *,int,int)
+	= CRYPTO_dbg_malloc;
+static void (*realloc_debug_func)(void *,void *,int,const char *,int,int)
+	= CRYPTO_dbg_realloc;
+static void (*free_debug_func)(void *,int) = CRYPTO_dbg_free;
+static void (*set_debug_options_func)(long) = CRYPTO_dbg_set_options;
+static long (*get_debug_options_func)(void) = CRYPTO_dbg_get_options;
+
+static int  (*push_info_func)(const char *info, const char *file, int line)
+	= CRYPTO_dbg_push_info;
+static int  (*pop_info_func)(void)
+	= CRYPTO_dbg_pop_info;
+static int (*remove_all_info_func)(void)
+	= CRYPTO_dbg_remove_all_info;
+
 #else
-static int mh_mode=CRYPTO_MEM_CHECK_OFF;
+/* applications can use CRYPTO_malloc_debug_init() to select above case
+ * at run-time */
+static void (*malloc_debug_func)(void *,int,const char *,int,int) = NULL;
+static void (*realloc_debug_func)(void *,void *,int,const char *,int,int)
+	= NULL;
+static void (*free_debug_func)(void *,int) = NULL;
+static void (*set_debug_options_func)(long) = NULL;
+static long (*get_debug_options_func)(void) = NULL;
+
+
+static int  (*push_info_func)(const char *info, const char *file, int line)
+	= NULL;
+static int  (*pop_info_func)(void) = NULL;
+static int (*remove_all_info_func)(void) = NULL;
+
 #endif
-static unsigned long order=0;
 
-static LHASH *mh=NULL;
 
-typedef struct mem_st
+int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t),
+	void (*f)(void *))
 	{
-	char *addr;
-	int num;
-	char *file;
-	int line;
-	unsigned long order;
-	} MEM;
-
-int CRYPTO_mem_ctrl(mode)
-int mode;
-	{
-	int ret=mh_mode;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-	switch (mode)
-		{
-	case CRYPTO_MEM_CHECK_ON:
-		mh_mode|=CRYPTO_MEM_CHECK_ON;
-		break;
-	case CRYPTO_MEM_CHECK_OFF:
-		mh_mode&= ~CRYPTO_MEM_CHECK_ON;
-		break;
-	case CRYPTO_MEM_CHECK_DISABLE:
-		mh_mode&= ~CRYPTO_MEM_CHECK_ENABLE;
-		break;
-	case CRYPTO_MEM_CHECK_ENABLE:
-		if (mh_mode&CRYPTO_MEM_CHECK_ON)
-			mh_mode|=CRYPTO_MEM_CHECK_ENABLE;
-		break;
-	default:
-		break;
-		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-	return(ret);
-	}
-
-static int mem_cmp(a,b)
-MEM *a,*b;
-	{
-	return(a->addr - b->addr);
-	}
-
-static unsigned long mem_hash(a)
-MEM *a;
-	{
-	unsigned long ret;
-
-	ret=(unsigned long)a->addr;
-
-	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
-	return(ret);
-	}
-
-static char *(*malloc_locked_func)()=(char *(*)())malloc;
-static void (*free_locked_func)()=(void (*)())free;
-static char *(*malloc_func)()=	(char *(*)())malloc;
-static char *(*realloc_func)()=	(char *(*)())realloc;
-static void (*free_func)()=	(void (*)())free;
-
-void CRYPTO_set_mem_functions(m,r,f)
-char *(*m)();
-char *(*r)();
-void (*f)();
-	{
-	if ((m == NULL) || (r == NULL) || (f == NULL)) return;
-	malloc_func=m;
-	realloc_func=r;
+	if (!allow_customize)
+		return 0;
+	if ((m == 0) || (r == 0) || (f == 0))
+		return 0;
+	malloc_func=m; malloc_ex_func=default_malloc_ex;
+	realloc_func=r; realloc_ex_func=default_realloc_ex;
 	free_func=f;
-	malloc_locked_func=m;
+	malloc_locked_func=m; malloc_locked_ex_func=default_malloc_locked_ex;
 	free_locked_func=f;
+	return 1;
 	}
 
-void CRYPTO_set_locked_mem_functions(m,f)
-char *(*m)();
-void (*f)();
+int CRYPTO_set_mem_ex_functions(
+        void *(*m)(size_t,const char *,int),
+        void *(*r)(void *, size_t,const char *,int),
+	void (*f)(void *))
 	{
-	if ((m == NULL) || (f == NULL)) return;
-	malloc_locked_func=m;
+	if (!allow_customize)
+		return 0;
+	if ((m == 0) || (r == 0) || (f == 0))
+		return 0;
+	malloc_func=0; malloc_ex_func=m;
+	realloc_func=0; realloc_ex_func=r;
+	free_func=f;
+	malloc_locked_func=0; malloc_locked_ex_func=m;
 	free_locked_func=f;
+	return 1;
 	}
 
-void CRYPTO_get_mem_functions(m,r,f)
-char *(**m)();
-char *(**r)();
-void (**f)();
+int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*f)(void *))
 	{
-	if (m != NULL) *m=malloc_func;
-	if (r != NULL) *r=realloc_func;
+	if (!allow_customize)
+		return 0;
+	if ((m == NULL) || (f == NULL))
+		return 0;
+	malloc_locked_func=m; malloc_locked_ex_func=default_malloc_locked_ex;
+	free_locked_func=f;
+	return 1;
+	}
+
+int CRYPTO_set_locked_mem_ex_functions(
+        void *(*m)(size_t,const char *,int),
+        void (*f)(void *))
+	{
+	if (!allow_customize)
+		return 0;
+	if ((m == NULL) || (f == NULL))
+		return 0;
+	malloc_locked_func=0; malloc_locked_ex_func=m;
+	free_func=f;
+	return 1;
+	}
+
+int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
+				   void (*r)(void *,void *,int,const char *,int,int),
+				   void (*f)(void *,int),
+				   void (*so)(long),
+				   long (*go)(void))
+	{
+	if (!allow_customize_debug)
+		return 0;
+	malloc_debug_func=m;
+	realloc_debug_func=r;
+	free_debug_func=f;
+	set_debug_options_func=so;
+	get_debug_options_func=go;
+	return 1;
+	}
+
+void CRYPTO_set_mem_info_functions(
+	int  (*push_info_fn)(const char *info, const char *file, int line),
+	int  (*pop_info_fn)(void),
+	int (*remove_all_info_fn)(void))
+	{
+	push_info_func = push_info_fn;
+	pop_info_func = pop_info_fn;
+	remove_all_info_func = remove_all_info_fn;
+	}
+
+void CRYPTO_get_mem_functions(void *(**m)(size_t), void *(**r)(void *, size_t),
+	void (**f)(void *))
+	{
+	if (m != NULL) *m = (malloc_ex_func == default_malloc_ex) ? 
+	                     malloc_func : 0;
+	if (r != NULL) *r = (realloc_ex_func == default_realloc_ex) ? 
+	                     realloc_func : 0;
 	if (f != NULL) *f=free_func;
 	}
 
-void CRYPTO_get_locked_mem_functions(m,f)
-char *(**m)();
-void (**f)();
+void CRYPTO_get_mem_ex_functions(
+        void *(**m)(size_t,const char *,int),
+        void *(**r)(void *, size_t,const char *,int),
+	void (**f)(void *))
 	{
-	if (m != NULL) *m=malloc_locked_func;
+	if (m != NULL) *m = (malloc_ex_func != default_malloc_ex) ?
+	                    malloc_ex_func : 0;
+	if (r != NULL) *r = (realloc_ex_func != default_realloc_ex) ?
+	                    realloc_ex_func : 0;
+	if (f != NULL) *f=free_func;
+	}
+
+void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *))
+	{
+	if (m != NULL) *m = (malloc_locked_ex_func == default_malloc_locked_ex) ? 
+	                     malloc_locked_func : 0;
 	if (f != NULL) *f=free_locked_func;
 	}
 
-char *CRYPTO_malloc_locked(num)
-int num;
+void CRYPTO_get_locked_mem_ex_functions(
+        void *(**m)(size_t,const char *,int),
+        void (**f)(void *))
 	{
-	return(malloc_locked_func(num));
+	if (m != NULL) *m = (malloc_locked_ex_func != default_malloc_locked_ex) ?
+	                    malloc_locked_ex_func : 0;
+	if (f != NULL) *f=free_locked_func;
 	}
 
-void CRYPTO_free_locked(str)
-char *str;
+void CRYPTO_get_mem_debug_functions(void (**m)(void *,int,const char *,int,int),
+				    void (**r)(void *,void *,int,const char *,int,int),
+				    void (**f)(void *,int),
+				    void (**so)(long),
+				    long (**go)(void))
 	{
+	if (m != NULL) *m=malloc_debug_func;
+	if (r != NULL) *r=realloc_debug_func;
+	if (f != NULL) *f=free_debug_func;
+	if (so != NULL) *so=set_debug_options_func;
+	if (go != NULL) *go=get_debug_options_func;
+	}
+
+
+void *CRYPTO_malloc_locked(int num, const char *file, int line)
+	{
+	void *ret = NULL;
+	extern unsigned char cleanse_ctr;
+
+	if (num <= 0) return NULL;
+
+	allow_customize = 0;
+	if (malloc_debug_func != NULL)
+		{
+		allow_customize_debug = 0;
+		malloc_debug_func(NULL, num, file, line, 0);
+		}
+	ret = malloc_locked_ex_func(num,file,line);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         > 0x%p (%d)\n", ret, num);
+#endif
+	if (malloc_debug_func != NULL)
+		malloc_debug_func(ret, num, file, line, 1);
+
+        /* Create a dependency on the value of 'cleanse_ctr' so our memory
+         * sanitisation function can't be optimised out. NB: We only do
+         * this for >2Kb so the overhead doesn't bother us. */
+        if(ret && (num > 2048))
+		((unsigned char *)ret)[0] = cleanse_ctr;
+
+	return ret;
+	}
+
+void CRYPTO_free_locked(void *str)
+	{
+	if (free_debug_func != NULL)
+		free_debug_func(str, 0);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
+#endif
 	free_locked_func(str);
+	if (free_debug_func != NULL)
+		free_debug_func(NULL, 1);
 	}
 
-char *CRYPTO_malloc(num)
-int num;
+void *CRYPTO_malloc(int num, const char *file, int line)
 	{
-	return(malloc_func(num));
+	void *ret = NULL;
+	extern unsigned char cleanse_ctr;
+
+	if (num <= 0) return NULL;
+
+	allow_customize = 0;
+	if (malloc_debug_func != NULL)
+		{
+		allow_customize_debug = 0;
+		malloc_debug_func(NULL, num, file, line, 0);
+		}
+	ret = malloc_ex_func(num,file,line);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         > 0x%p (%d)\n", ret, num);
+#endif
+	if (malloc_debug_func != NULL)
+		malloc_debug_func(ret, num, file, line, 1);
+
+        /* Create a dependency on the value of 'cleanse_ctr' so our memory
+         * sanitisation function can't be optimised out. NB: We only do
+         * this for >2Kb so the overhead doesn't bother us. */
+        if(ret && (num > 2048))
+                ((unsigned char *)ret)[0] = cleanse_ctr;
+
+	return ret;
 	}
 
-char *CRYPTO_realloc(str,num)
-char *str;
-int num;
+void *CRYPTO_realloc(void *str, int num, const char *file, int line)
 	{
-	return(realloc_func(str,num));
+	void *ret = NULL;
+
+	if (str == NULL)
+		return CRYPTO_malloc(num, file, line);
+
+	if (num <= 0) return NULL;
+
+	if (realloc_debug_func != NULL)
+		realloc_debug_func(str, NULL, num, file, line, 0);
+	ret = realloc_ex_func(str,num,file,line);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         | 0x%p -> 0x%p (%d)\n", str, ret, num);
+#endif
+	if (realloc_debug_func != NULL)
+		realloc_debug_func(str, ret, num, file, line, 1);
+
+	return ret;
 	}
 
-void CRYPTO_free(str)
-char *str;
+void *CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
+			   int line)
 	{
+	void *ret = NULL;
+
+	if (str == NULL)
+		return CRYPTO_malloc(num, file, line);
+
+	if (num <= 0) return NULL;
+
+	if (realloc_debug_func != NULL)
+		realloc_debug_func(str, NULL, num, file, line, 0);
+	ret=malloc_ex_func(num,file,line);
+	if(ret)
+		{
+		memcpy(ret,str,old_len);
+		OPENSSL_cleanse(str,old_len);
+		free_func(str);
+		}
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr,
+		"LEVITTE_DEBUG_MEM:         | 0x%p -> 0x%p (%d)\n",
+		str, ret, num);
+#endif
+	if (realloc_debug_func != NULL)
+		realloc_debug_func(str, ret, num, file, line, 1);
+
+	return ret;
+	}
+
+void CRYPTO_free(void *str)
+	{
+	if (free_debug_func != NULL)
+		free_debug_func(str, 0);
+#ifdef LEVITTE_DEBUG_MEM
+	fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
+#endif
 	free_func(str);
+	if (free_debug_func != NULL)
+		free_debug_func(NULL, 1);
 	}
 
-static unsigned long break_order_num=0;
-char *CRYPTO_dbg_malloc(num,file,line)
-int num;
-char *file;
-int line;
+void *CRYPTO_remalloc(void *a, int num, const char *file, int line)
 	{
-	char *ret;
-	MEM *m,*mm;
-
-	if ((ret=malloc_func(num)) == NULL)
-		return(NULL);
-
-	if (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
-		{
-		MemCheck_off();
-		if ((m=(MEM *)Malloc(sizeof(MEM))) == NULL)
-			{
-			Free(ret);
-			MemCheck_on();
-			return(NULL);
-			}
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-		if (mh == NULL)
-			{
-			if ((mh=lh_new(mem_hash,mem_cmp)) == NULL)
-				{
-				Free(ret);
-				Free(m);
-				ret=NULL;
-				goto err;
-				}
-			}
-
-		m->addr=ret;
-		m->file=file;
-		m->line=line;
-		m->num=num;
-		if (order == break_order_num)
-			{
-			/* BREAK HERE */
-			m->order=order;
-			}
-		m->order=order++;
-		if ((mm=(MEM *)lh_insert(mh,(char *)m)) != NULL)
-			{
-			/* Not good, but don't sweat it */
-			Free(mm);
-			}
-err:
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-		MemCheck_on();
-		}
-	return(ret);
-	}
-
-void CRYPTO_dbg_free(addr)
-char *addr;
-	{
-	MEM m,*mp;
-
-	if ((mh_mode & CRYPTO_MEM_CHECK_ENABLE) && (mh != NULL))
-		{
-		MemCheck_off();
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-		m.addr=addr;
-		mp=(MEM *)lh_delete(mh,(char *)&m);
-		if (mp != NULL)
-			Free(mp);
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-		MemCheck_on();
-		}
-	free_func(addr);
-	}
-
-char *CRYPTO_dbg_realloc(addr,num,file,line)
-char *addr;
-int num;
-char *file;
-int line;
-	{
-	char *ret;
-	MEM m,*mp;
-
-	ret=realloc_func(addr,num);
-	if (ret == addr) return(ret);
-
-	if (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
-		{
-		MemCheck_off();
-		if (ret == NULL) return(NULL);
-		m.addr=addr;
-		CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-		mp=(MEM *)lh_delete(mh,(char *)&m);
-		if (mp != NULL)
-			{
-			mp->addr=ret;
-			lh_insert(mh,(char *)mp);
-			}
-		CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-		MemCheck_on();
-		}
-	return(ret);
-	}
-
-char *CRYPTO_remalloc(a,n)
-char *a;
-int n;
-	{
-	if (a != NULL) Free(a);
-	a=(char *)Malloc(n);
+	if (a != NULL) OPENSSL_free(a);
+	a=(char *)OPENSSL_malloc(num);
 	return(a);
 	}
 
-char *CRYPTO_dbg_remalloc(a,n,file,line)
-char *a;
-int n;
-char *file;
-int line;
+void CRYPTO_set_mem_debug_options(long bits)
 	{
-	if (a != NULL) CRYPTO_dbg_free(a);
-	a=(char *)CRYPTO_dbg_malloc(n,file,line);
-	return(a);
+	if (set_debug_options_func != NULL)
+		set_debug_options_func(bits);
 	}
 
-
-typedef struct mem_leak_st
+long CRYPTO_get_mem_debug_options(void)
 	{
-	BIO *bio;
-	int chunks;
-	long bytes;
-	} MEM_LEAK;
-
-static void print_leak(m,l)
-MEM *m;
-MEM_LEAK *l;
-	{
-	char buf[128];
-
-	sprintf(buf,"%5ld file=%s, line=%d, number=%d, address=%08lX\n",
-		m->order,m->file,m->line,m->num,(long)m->addr);
-	BIO_puts(l->bio,buf);
-	l->chunks++;
-	l->bytes+=m->num;
+	if (get_debug_options_func != NULL)
+		return get_debug_options_func();
+	return 0;
 	}
 
-void CRYPTO_mem_leaks(b)
-BIO *b;
+int CRYPTO_push_info_(const char *info, const char *file, int line)
 	{
-	MEM_LEAK ml;
-	char buf[80];
-
-	if (mh == NULL) return;
-	ml.bio=b;
-	ml.bytes=0;
-	ml.chunks=0;
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-	lh_doall_arg(mh,(void (*)())print_leak,(char *)&ml);
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
-	if (ml.chunks != 0)
-		{
-		sprintf(buf,"%ld bytes leaked in %d chunks\n",
-			ml.bytes,ml.chunks);
-		BIO_puts(b,buf);
-		}
-
-#if 0
-	lh_stats_bio(mh,b);
-        lh_node_stats_bio(mh,b);
-        lh_node_usage_stats_bio(mh,b);
-#endif
+	if (push_info_func)
+		return push_info_func(info, file, line);
+	return 1;
 	}
 
-static void (*mem_cb)()=NULL;
-
-static void cb_leak(m,cb)
-MEM *m;
-char *cb;
+int CRYPTO_pop_info(void)
 	{
-	void (*mem_callback)()=(void (*)())cb;
-	mem_callback(m->order,m->file,m->line,m->num,m->addr);
+	if (pop_info_func)
+		return pop_info_func();
+	return 1;
 	}
 
-void CRYPTO_mem_leaks_cb(cb)
-void (*cb)();
+int CRYPTO_remove_all_info(void)
 	{
-	if (mh == NULL) return;
-	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
-	mem_cb=cb;
-	lh_doall_arg(mh,(void (*)())cb_leak,(char *)mem_cb);
-	mem_cb=NULL;
-	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+	if (remove_all_info_func)
+		return remove_all_info_func();
+	return 1;
 	}
-
-#ifndef NO_FP_API
-void CRYPTO_mem_leaks_fp(fp)
-FILE *fp;
-	{
-	BIO *b;
-
-	if (mh == NULL) return;
-	if ((b=BIO_new(BIO_s_file())) == NULL)
-		return;
-	BIO_set_fp(b,fp,BIO_NOCLOSE);
-	CRYPTO_mem_leaks(b);
-	BIO_free(b);
-	}
-#endif
-

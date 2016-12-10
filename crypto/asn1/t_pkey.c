@@ -55,109 +55,135 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * Binary polynomial ECC support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
-#include "bn.h"
-#ifndef NO_RSA
-#include "rsa.h"
+#include <openssl/objects.h>
+#include <openssl/buffer.h>
+#include <openssl/bn.h>
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
 #endif
-#ifndef NO_DH
-#include "dh.h"
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
 #endif
-#ifndef NO_DSA
-#include "dsa.h"
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_EC
+#include <openssl/ec.h>
 #endif
 
-/* DHerr(DH_F_DHPARAMS_PRINT,ERR_R_MALLOC_FAILURE);
- * DSAerr(DSA_F_DSAPARAMS_PRINT,ERR_R_MALLOC_FAILURE);
- */
-
-#ifndef NOPROTO
-static int print(BIO *fp,char *str,BIGNUM *num,
+static int print(BIO *fp,const char *str, const BIGNUM *num,
 		unsigned char *buf,int off);
-#else
-static int print();
+#ifndef OPENSSL_NO_EC
+static int print_bin(BIO *fp, const char *str, const unsigned char *num,
+		size_t len, int off);
 #endif
+#ifndef OPENSSL_NO_RSA
+#ifndef OPENSSL_NO_FP_API
+int RSA_print_fp(FILE *fp, const RSA *x, int off)
+	{
+	BIO *b;
+	int ret;
 
-#ifndef NO_RSA
-#ifndef NO_FP_API
-int RSA_print_fp(fp,x,off)
-FILE *fp;
-RSA *x;
-int off;
-        {
-        BIO *b;
-        int ret;
-
-        if ((b=BIO_new(BIO_s_file())) == NULL)
+	if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
 		RSAerr(RSA_F_RSA_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
+		return(0);
 		}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=RSA_print(b,x,off);
-        BIO_free(b);
-        return(ret);
-        }
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret=RSA_print(b,x,off);
+	BIO_free(b);
+	return(ret);
+	}
 #endif
 
-int RSA_print(bp,x,off)
-BIO *bp;
-RSA *x;
-int off;
+int RSA_print(BIO *bp, const RSA *x, int off)
 	{
-	char str[128],*s;
+	char str[128];
+	const char *s;
 	unsigned char *m=NULL;
-	int i,ret=0;
+	int ret=0, mod_len = 0;
+	size_t buf_len=0, i;
 
-	i=RSA_size(x);
-	m=(unsigned char *)Malloc((unsigned int)i+10);
+	if (x->n)
+		buf_len = (size_t)BN_num_bytes(x->n);
+	if (x->e)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->e)))
+			buf_len = i;
+	if (x->d)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->d)))
+			buf_len = i;
+	if (x->p)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->p)))
+			buf_len = i;
+	if (x->q)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
+			buf_len = i;
+	if (x->dmp1)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->dmp1)))
+			buf_len = i;
+	if (x->dmq1)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->dmq1)))
+			buf_len = i;
+	if (x->iqmp)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->iqmp)))
+			buf_len = i;
+
+	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
 		RSAerr(RSA_F_RSA_PRINT,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
-	if (off)
-		{
-		if (off > 128) off=128;
-		memset(str,' ',off);
-		}
+	if (x->n != NULL)
+		mod_len = BN_num_bits(x->n);
+
 	if (x->d != NULL)
 		{
-		if (off && (BIO_write(bp,str,off) <= 0)) goto err;
-		if (BIO_printf(bp,"Private-Key: (%d bit)\n",BN_num_bits(x->n))
+		if(!BIO_indent(bp,off,128))
+		   goto err;
+		if (BIO_printf(bp,"Private-Key: (%d bit)\n", mod_len)
 			<= 0) goto err;
 		}
 
 	if (x->d == NULL)
-		sprintf(str,"Modulus (%d bit):",BN_num_bits(x->n));
+		BIO_snprintf(str,sizeof str,"Modulus (%d bit):", mod_len);
 	else
-		strcpy(str,"modulus:");
+		BUF_strlcpy(str,"modulus:",sizeof str);
 	if (!print(bp,str,x->n,m,off)) goto err;
 	s=(x->d == NULL)?"Exponent:":"publicExponent:";
-	if (!print(bp,s,x->e,m,off)) goto err;
-	if (!print(bp,"privateExponent:",x->d,m,off)) goto err;
-	if (!print(bp,"prime1:",x->p,m,off)) goto err;
-	if (!print(bp,"prime2:",x->q,m,off)) goto err;
-	if (!print(bp,"exponent1:",x->dmp1,m,off)) goto err;
-	if (!print(bp,"exponent2:",x->dmq1,m,off)) goto err;
-	if (!print(bp,"coefficient:",x->iqmp,m,off)) goto err;
+	if ((x->e != NULL) && !print(bp,s,x->e,m,off))
+		goto err;
+	if ((x->d != NULL) && !print(bp,"privateExponent:",x->d,m,off))
+		goto err;
+	if ((x->p != NULL) && !print(bp,"prime1:",x->p,m,off))
+		goto err;
+	if ((x->q != NULL) && !print(bp,"prime2:",x->q,m,off))
+		goto err;
+	if ((x->dmp1 != NULL) && !print(bp,"exponent1:",x->dmp1,m,off))
+		goto err;
+	if ((x->dmq1 != NULL) && !print(bp,"exponent2:",x->dmq1,m,off))
+		goto err;
+	if ((x->iqmp != NULL) && !print(bp,"coefficient:",x->iqmp,m,off))
+		goto err;
 	ret=1;
 err:
-	if (m != NULL) Free((char *)m);
+	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
-#endif /* NO_RSA */
+#endif /* OPENSSL_NO_RSA */
 
-#ifndef NO_DSA
-#ifndef NO_FP_API
-int DSA_print_fp(fp,x,off)
-FILE *fp;
-DSA *x;
-int off;
+#ifndef OPENSSL_NO_DSA
+#ifndef OPENSSL_NO_FP_API
+int DSA_print_fp(FILE *fp, const DSA *x, int off)
 	{
 	BIO *b;
 	int ret;
@@ -174,43 +200,43 @@ int off;
 	}
 #endif
 
-int DSA_print(bp,x,off)
-BIO *bp;
-DSA *x;
-int off;
+int DSA_print(BIO *bp, const DSA *x, int off)
 	{
-	char str[128];
 	unsigned char *m=NULL;
-	int i,ret=0;
-	BIGNUM *bn=NULL;
+	int ret=0;
+	size_t buf_len=0,i;
 
-	if (x->p != NULL)
-		bn=x->p;
-	else if (x->priv_key != NULL)
-		bn=x->priv_key;
-	else if (x->pub_key != NULL)
-		bn=x->pub_key;
-		
-	/* larger than needed but what the hell :-) */
-	if (bn != NULL)
-		i=BN_num_bytes(bn)*2;
+	if (x->p)
+		buf_len = (size_t)BN_num_bytes(x->p);
 	else
-		i=256;
-	m=(unsigned char *)Malloc((unsigned int)i+10);
+		{
+		DSAerr(DSA_F_DSA_PRINT,DSA_R_MISSING_PARAMETERS);
+		goto err;
+		}
+	if (x->q)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
+			buf_len = i;
+	if (x->g)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->g)))
+			buf_len = i;
+	if (x->priv_key)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->priv_key)))
+			buf_len = i;
+	if (x->pub_key)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->pub_key)))
+			buf_len = i;
+
+	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
 		DSAerr(DSA_F_DSA_PRINT,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
-	if (off)
-		{
-		if (off > 128) off=128;
-		memset(str,' ',off);
-		}
 	if (x->priv_key != NULL)
 		{
-		if (off && (BIO_write(bp,str,off) <= 0)) goto err;
+		if(!BIO_indent(bp,off,128))
+		   goto err;
 		if (BIO_printf(bp,"Private-Key: (%d bit)\n",BN_num_bits(x->p))
 			<= 0) goto err;
 		}
@@ -224,28 +250,338 @@ int off;
 	if ((x->g != NULL) && !print(bp,"G:   ",x->g,m,off)) goto err;
 	ret=1;
 err:
-	if (m != NULL) Free((char *)m);
+	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
-#endif /* !NO_DSA */
+#endif /* !OPENSSL_NO_DSA */
 
-static int print(bp,number,num,buf,off)
-BIO *bp;
-char *number;
-BIGNUM *num;
-unsigned char *buf;
-int off;
+#ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_FP_API
+int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
+	{
+	BIO *b;
+	int ret;
+
+	if ((b=BIO_new(BIO_s_file())) == NULL)
+		{
+		ECerr(EC_F_ECPKPARAMETERS_PRINT_FP,ERR_R_BUF_LIB);
+		return(0);
+		}
+	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	ret = ECPKParameters_print(b, x, off);
+	BIO_free(b);
+	return(ret);
+	}
+
+int EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
+	{
+	BIO *b;
+	int ret;
+ 
+	if ((b=BIO_new(BIO_s_file())) == NULL)
+		{
+		ECerr(EC_F_EC_KEY_PRINT_FP, ERR_R_BIO_LIB);
+		return(0);
+		}
+	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	ret = EC_KEY_print(b, x, off);
+	BIO_free(b);
+	return(ret);
+	}
+#endif
+
+int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
+	{
+	unsigned char *buffer=NULL;
+	size_t	buf_len=0, i;
+	int     ret=0, reason=ERR_R_BIO_LIB;
+	BN_CTX  *ctx=NULL;
+	const EC_POINT *point=NULL;
+	BIGNUM	*p=NULL, *a=NULL, *b=NULL, *gen=NULL,
+		*order=NULL, *cofactor=NULL;
+	const unsigned char *seed;
+	size_t	seed_len=0;
+	
+	static const char *gen_compressed = "Generator (compressed):";
+	static const char *gen_uncompressed = "Generator (uncompressed):";
+	static const char *gen_hybrid = "Generator (hybrid):";
+ 
+	if (!x)
+		{
+		reason = ERR_R_PASSED_NULL_PARAMETER;
+		goto err;
+		}
+
+	if (EC_GROUP_get_asn1_flag(x))
+		{
+		/* the curve parameter are given by an asn1 OID */
+		int nid;
+
+		if (!BIO_indent(bp, off, 128))
+			goto err;
+
+		nid = EC_GROUP_get_curve_name(x);
+		if (nid == 0)
+			goto err;
+
+		if (BIO_printf(bp, "ASN1 OID: %s", OBJ_nid2sn(nid)) <= 0)
+			goto err;
+		if (BIO_printf(bp, "\n") <= 0)
+			goto err;
+		}
+	else
+		{
+		/* explicit parameters */
+		int is_char_two = 0;
+		point_conversion_form_t form;
+		int tmp_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(x));
+
+		if (tmp_nid == NID_X9_62_characteristic_two_field)
+			is_char_two = 1;
+
+		if ((p = BN_new()) == NULL || (a = BN_new()) == NULL ||
+			(b = BN_new()) == NULL || (order = BN_new()) == NULL ||
+			(cofactor = BN_new()) == NULL)
+			{
+			reason = ERR_R_MALLOC_FAILURE;
+			goto err;
+			}
+
+		if (is_char_two)
+			{
+			if (!EC_GROUP_get_curve_GF2m(x, p, a, b, ctx))
+				{
+				reason = ERR_R_EC_LIB;
+				goto err;
+				}
+			}
+		else /* prime field */
+			{
+			if (!EC_GROUP_get_curve_GFp(x, p, a, b, ctx))
+				{
+				reason = ERR_R_EC_LIB;
+				goto err;
+				}
+			}
+
+		if ((point = EC_GROUP_get0_generator(x)) == NULL)
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+		if (!EC_GROUP_get_order(x, order, NULL) || 
+            		!EC_GROUP_get_cofactor(x, cofactor, NULL))
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+		
+		form = EC_GROUP_get_point_conversion_form(x);
+
+		if ((gen = EC_POINT_point2bn(x, point, 
+				form, NULL, ctx)) == NULL)
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+
+		buf_len = (size_t)BN_num_bytes(p);
+		if (buf_len < (i = (size_t)BN_num_bytes(a)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(b)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(gen)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(order)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(cofactor))) 
+			buf_len = i;
+
+		if ((seed = EC_GROUP_get0_seed(x)) != NULL)
+			seed_len = EC_GROUP_get_seed_len(x);
+
+		buf_len += 10;
+		if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+			{
+			reason = ERR_R_MALLOC_FAILURE;
+			goto err;
+			}
+
+		if (!BIO_indent(bp, off, 128))
+			goto err;
+
+		/* print the 'short name' of the field type */
+		if (BIO_printf(bp, "Field Type: %s\n", OBJ_nid2sn(tmp_nid))
+			<= 0)
+			goto err;  
+
+		if (is_char_two)
+			{
+			/* print the 'short name' of the base type OID */
+			int basis_type = EC_GROUP_get_basis_type(x);
+			if (basis_type == 0)
+				goto err;
+
+			if (!BIO_indent(bp, off, 128))
+				goto err;
+
+			if (BIO_printf(bp, "Basis Type: %s\n", 
+				OBJ_nid2sn(basis_type)) <= 0)
+				goto err;
+
+			/* print the polynomial */
+			if ((p != NULL) && !print(bp, "Polynomial:", p, buffer,
+				off))
+				goto err;
+			}
+		else
+			{
+			if ((p != NULL) && !print(bp, "Prime:", p, buffer,off))
+				goto err;
+			}
+		if ((a != NULL) && !print(bp, "A:   ", a, buffer, off)) 
+			goto err;
+		if ((b != NULL) && !print(bp, "B:   ", b, buffer, off))
+			goto err;
+		if (form == POINT_CONVERSION_COMPRESSED)
+			{
+			if ((gen != NULL) && !print(bp, gen_compressed, gen,
+				buffer, off))
+				goto err;
+			}
+		else if (form == POINT_CONVERSION_UNCOMPRESSED)
+			{
+			if ((gen != NULL) && !print(bp, gen_uncompressed, gen,
+				buffer, off))
+				goto err;
+			}
+		else /* form == POINT_CONVERSION_HYBRID */
+			{
+			if ((gen != NULL) && !print(bp, gen_hybrid, gen,
+				buffer, off))
+				goto err;
+			}
+		if ((order != NULL) && !print(bp, "Order: ", order, 
+			buffer, off)) goto err;
+		if ((cofactor != NULL) && !print(bp, "Cofactor: ", cofactor, 
+			buffer, off)) goto err;
+		if (seed && !print_bin(bp, "Seed:", seed, seed_len, off))
+			goto err;
+		}
+	ret=1;
+err:
+	if (!ret)
+ 		ECerr(EC_F_ECPKPARAMETERS_PRINT, reason);
+	if (p) 
+		BN_free(p);
+	if (a) 
+		BN_free(a);
+	if (b)
+		BN_free(b);
+	if (gen)
+		BN_free(gen);
+	if (order)
+		BN_free(order);
+	if (cofactor)
+		BN_free(cofactor);
+	if (ctx)
+		BN_CTX_free(ctx);
+	if (buffer != NULL) 
+		OPENSSL_free(buffer);
+	return(ret);	
+	}
+
+int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
+	{
+	unsigned char *buffer=NULL;
+	size_t	buf_len=0, i;
+	int     ret=0, reason=ERR_R_BIO_LIB;
+	BIGNUM  *pub_key=NULL, *order=NULL;
+	BN_CTX  *ctx=NULL;
+	const EC_GROUP *group;
+	const EC_POINT *public_key;
+	const BIGNUM *priv_key;
+ 
+	if (x == NULL || (group = EC_KEY_get0_group(x)) == NULL)
+		{
+		reason = ERR_R_PASSED_NULL_PARAMETER;
+		goto err;
+		}
+
+	public_key = EC_KEY_get0_public_key(x);
+	if ((pub_key = EC_POINT_point2bn(group, public_key,
+		EC_KEY_get_conv_form(x), NULL, ctx)) == NULL)
+		{
+		reason = ERR_R_EC_LIB;
+		goto err;
+		}
+
+	buf_len = (size_t)BN_num_bytes(pub_key);
+	priv_key = EC_KEY_get0_private_key(x);
+	if (priv_key != NULL)
+		{
+		if ((i = (size_t)BN_num_bytes(priv_key)) > buf_len)
+			buf_len = i;
+		}
+
+	buf_len += 10;
+	if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+		{
+		reason = ERR_R_MALLOC_FAILURE;
+		goto err;
+		}
+
+	if (priv_key != NULL)
+		{
+		if (!BIO_indent(bp, off, 128))
+			goto err;
+		if ((order = BN_new()) == NULL)
+			goto err;
+		if (!EC_GROUP_get_order(group, order, NULL))
+			goto err;
+		if (BIO_printf(bp, "Private-Key: (%d bit)\n", 
+			BN_num_bits(order)) <= 0) goto err;
+		}
+  
+	if ((priv_key != NULL) && !print(bp, "priv:", priv_key, 
+		buffer, off))
+		goto err;
+	if ((pub_key != NULL) && !print(bp, "pub: ", pub_key,
+		buffer, off))
+		goto err;
+	if (!ECPKParameters_print(bp, group, off))
+		goto err;
+	ret=1;
+err:
+	if (!ret)
+ 		ECerr(EC_F_EC_KEY_PRINT, reason);
+	if (pub_key) 
+		BN_free(pub_key);
+	if (order)
+		BN_free(order);
+	if (ctx)
+		BN_CTX_free(ctx);
+	if (buffer != NULL)
+		OPENSSL_free(buffer);
+	return(ret);
+	}
+#endif /* OPENSSL_NO_EC */
+
+static int print(BIO *bp, const char *number, const BIGNUM *num, unsigned char *buf,
+	     int off)
 	{
 	int n,i;
-	char str[128],*neg;
+	const char *neg;
 
 	if (num == NULL) return(1);
-	neg=(num->neg)?"-":"";
-	if (off)
+	neg = (BN_is_negative(num))?"-":"";
+	if(!BIO_indent(bp,off,128))
+		return 0;
+	if (BN_is_zero(num))
 		{
-		if (off > 128) off=128;
-		memset(str,' ',off);
-		if (BIO_write(bp,str,off) <= 0) return(0);
+		if (BIO_printf(bp, "%s 0\n", number) <= 0)
+			return 0;
+		return 1;
 		}
 
 	if (BN_num_bytes(num) <= BN_BYTES)
@@ -270,9 +606,9 @@ int off;
 			{
 			if ((i%15) == 0)
 				{
-				str[0]='\n';
-				memset(&(str[1]),' ',off+4);
-				if (BIO_write(bp,str,off+1+4) <= 0) return(0);
+				if(BIO_puts(bp,"\n") <= 0
+				   || !BIO_indent(bp,off+4,128))
+				    return 0;
 				}
 			if (BIO_printf(bp,"%02x%s",buf[i],((i+1) == n)?"":":")
 				<= 0) return(0);
@@ -282,36 +618,82 @@ int off;
 	return(1);
 	}
 
-#ifndef NO_DH
-#ifndef NO_FP_API
-int DHparams_print_fp(fp,x)
-FILE *fp;
-DH *x;
-        {
-        BIO *b;
-        int ret;
+#ifndef OPENSSL_NO_EC
+static int print_bin(BIO *fp, const char *name, const unsigned char *buf,
+		size_t len, int off)
+	{
+	size_t i;
+	char str[128];
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
+	if (buf == NULL)
+		return 1;
+	if (off)
 		{
-		DHerr(DH_F_DHPARAMS_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
+		if (off > 128)
+			off=128;
+		memset(str,' ',off);
+		if (BIO_write(fp, str, off) <= 0)
+			return 0;
 		}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=DHparams_print(b, x);
-        BIO_free(b);
-        return(ret);
-        }
+
+	if (BIO_printf(fp,"%s", name) <= 0)
+		return 0;
+
+	for (i=0; i<len; i++)
+		{
+		if ((i%15) == 0)
+			{
+			str[0]='\n';
+			memset(&(str[1]),' ',off+4);
+			if (BIO_write(fp, str, off+1+4) <= 0)
+				return 0;
+			}
+		if (BIO_printf(fp,"%02x%s",buf[i],((i+1) == len)?"":":") <= 0)
+			return 0;
+		}
+	if (BIO_write(fp,"\n",1) <= 0)
+		return 0;
+
+	return 1;
+	}
 #endif
 
-int DHparams_print(bp,x)
-BIO *bp;
-DH *x;
+#ifndef OPENSSL_NO_DH
+#ifndef OPENSSL_NO_FP_API
+int DHparams_print_fp(FILE *fp, const DH *x)
+	{
+	BIO *b;
+	int ret;
+
+	if ((b=BIO_new(BIO_s_file())) == NULL)
+		{
+		DHerr(DH_F_DHPARAMS_PRINT_FP,ERR_R_BUF_LIB);
+		return(0);
+		}
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret=DHparams_print(b, x);
+	BIO_free(b);
+	return(ret);
+	}
+#endif
+
+int DHparams_print(BIO *bp, const DH *x)
 	{
 	unsigned char *m=NULL;
-	int reason=ERR_R_BUF_LIB,i,ret=0;
+	int reason=ERR_R_BUF_LIB,ret=0;
+	size_t buf_len=0, i;
 
-	i=BN_num_bytes(x->p);
-	m=(unsigned char *)Malloc((unsigned int)i+10);
+	if (x->p)
+		buf_len = (size_t)BN_num_bytes(x->p);
+	else
+		{
+		reason = ERR_R_PASSED_NULL_PARAMETER;
+		goto err;
+		}
+	if (x->g)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->g)))
+			buf_len = i;
+	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
 		reason=ERR_R_MALLOC_FAILURE;
@@ -325,7 +707,7 @@ DH *x;
 	if (!print(bp,"generator:",x->g,m,4)) goto err;
 	if (x->length != 0)
 		{
-		if (BIO_printf(bp,"    recomented-private-length: %d bits\n",
+		if (BIO_printf(bp,"    recommended-private-length: %d bits\n",
 			(int)x->length) <= 0) goto err;
 		}
 	ret=1;
@@ -334,44 +716,53 @@ DH *x;
 err:
 		DHerr(DH_F_DHPARAMS_PRINT,reason);
 		}
-	if (m != NULL) Free((char *)m);
+	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
 #endif
 
-#ifndef NO_DSA
-#ifndef NO_FP_API
-int DSAparams_print_fp(fp,x)
-FILE *fp;
-DSA *x;
-        {
-        BIO *b;
-        int ret;
+#ifndef OPENSSL_NO_DSA
+#ifndef OPENSSL_NO_FP_API
+int DSAparams_print_fp(FILE *fp, const DSA *x)
+	{
+	BIO *b;
+	int ret;
 
-        if ((b=BIO_new(BIO_s_file())) == NULL)
+	if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
 		DSAerr(DSA_F_DSAPARAMS_PRINT_FP,ERR_R_BUF_LIB);
-                return(0);
+		return(0);
 		}
-        BIO_set_fp(b,fp,BIO_NOCLOSE);
-        ret=DSAparams_print(b, x);
-        BIO_free(b);
-        return(ret);
-        }
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret=DSAparams_print(b, x);
+	BIO_free(b);
+	return(ret);
+	}
 #endif
 
-int DSAparams_print(bp,x)
-BIO *bp;
-DSA *x;
+int DSAparams_print(BIO *bp, const DSA *x)
 	{
 	unsigned char *m=NULL;
-	int reason=ERR_R_BUF_LIB,i,ret=0;
+	int ret=0;
+	size_t buf_len=0,i;
 
-	i=BN_num_bytes(x->p);
-	m=(unsigned char *)Malloc((unsigned int)i+10);
+	if (x->p)
+		buf_len = (size_t)BN_num_bytes(x->p);
+	else
+		{
+		DSAerr(DSA_F_DSAPARAMS_PRINT,DSA_R_MISSING_PARAMETERS);
+		goto err;
+		}
+	if (x->q)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
+			buf_len = i;
+	if (x->g)
+		if (buf_len < (i = (size_t)BN_num_bytes(x->g)))
+			buf_len = i;
+	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
-		reason=ERR_R_MALLOC_FAILURE;
+		DSAerr(DSA_F_DSAPARAMS_PRINT,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
@@ -379,14 +770,70 @@ DSA *x;
 		BN_num_bits(x->p)) <= 0)
 		goto err;
 	if (!print(bp,"p:",x->p,m,4)) goto err;
-	if (!print(bp,"q:",x->q,m,4)) goto err;
-	if (!print(bp,"g:",x->g,m,4)) goto err;
+	if ((x->q != NULL) && !print(bp,"q:",x->q,m,4)) goto err;
+	if ((x->g != NULL) && !print(bp,"g:",x->g,m,4)) goto err;
 	ret=1;
 err:
-	if (m != NULL) Free((char *)m);
-	DSAerr(DSA_F_DSAPARAMS_PRINT,reason);
+	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
 
-#endif /* !NO_DSA */
+#endif /* !OPENSSL_NO_DSA */
 
+#ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_FP_API
+int ECParameters_print_fp(FILE *fp, const EC_KEY *x)
+	{
+	BIO *b;
+	int ret;
+ 
+	if ((b=BIO_new(BIO_s_file())) == NULL)
+		{
+		ECerr(EC_F_ECPARAMETERS_PRINT_FP, ERR_R_BIO_LIB);
+		return(0);
+		}
+	BIO_set_fp(b, fp, BIO_NOCLOSE);
+	ret = ECParameters_print(b, x);
+	BIO_free(b);
+	return(ret);
+	}
+#endif
+
+int ECParameters_print(BIO *bp, const EC_KEY *x)
+	{
+	int     reason=ERR_R_EC_LIB, ret=0;
+	BIGNUM	*order=NULL;
+	const EC_GROUP *group;
+ 
+	if (x == NULL || (group = EC_KEY_get0_group(x)) == NULL)
+		{
+		reason = ERR_R_PASSED_NULL_PARAMETER;;
+		goto err;
+		}
+
+	if ((order = BN_new()) == NULL)
+		{
+		reason = ERR_R_MALLOC_FAILURE;
+		goto err;
+		}
+
+	if (!EC_GROUP_get_order(group, order, NULL))
+		{
+		reason = ERR_R_EC_LIB;
+		goto err;
+		}
+ 
+	if (BIO_printf(bp, "ECDSA-Parameters: (%d bit)\n", 
+		BN_num_bits(order)) <= 0)
+		goto err;
+	if (!ECPKParameters_print(bp, group, 4))
+		goto err;
+	ret=1;
+err:
+	if (order)
+		BN_free(order);
+	ECerr(EC_F_ECPARAMETERS_PRINT, reason);
+	return(ret);
+	}
+  
+#endif

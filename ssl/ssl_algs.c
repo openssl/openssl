@@ -57,46 +57,76 @@
  */
 
 #include <stdio.h>
-#include "objects.h"
-#include "lhash.h"
+#include <openssl/objects.h>
+#include <openssl/lhash.h>
 #include "ssl_locl.h"
 
-void SSLeay_add_ssl_algorithms()
+int SSL_library_init(void)
 	{
-#ifndef NO_DES
+
+#ifndef OPENSSL_NO_DES
 	EVP_add_cipher(EVP_des_cbc());
 	EVP_add_cipher(EVP_des_ede3_cbc());
 #endif
-#ifndef NO_IDEA
+#ifndef OPENSSL_NO_IDEA
 	EVP_add_cipher(EVP_idea_cbc());
 #endif
-#ifndef NO_RC4
-        EVP_add_cipher(EVP_rc4());
+#ifndef OPENSSL_NO_RC4
+	EVP_add_cipher(EVP_rc4());
 #endif  
-#ifndef NO_RC2
-        EVP_add_cipher(EVP_rc2_cbc());
-#endif  
-
-#ifndef NO_MD2
-        EVP_add_digest(EVP_md2());
+#ifndef OPENSSL_NO_RC2
+	EVP_add_cipher(EVP_rc2_cbc());
 #endif
-#ifndef NO_MD5
+#ifndef OPENSSL_NO_AES
+	EVP_add_cipher(EVP_aes_128_cbc());
+	EVP_add_cipher(EVP_aes_192_cbc());
+	EVP_add_cipher(EVP_aes_256_cbc());
+#endif
+
+#ifndef OPENSSL_NO_CAMELLIA
+	EVP_add_cipher(EVP_camellia_128_cbc());
+	EVP_add_cipher(EVP_camellia_256_cbc());
+#endif
+
+#ifndef OPENSSL_NO_SEED
+	EVP_add_cipher(EVP_seed_cbc());
+#endif
+
+#ifndef OPENSSL_NO_MD2
+	EVP_add_digest(EVP_md2());
+#endif
+#ifndef OPENSSL_NO_MD5
 	EVP_add_digest(EVP_md5());
 	EVP_add_digest_alias(SN_md5,"ssl2-md5");
 	EVP_add_digest_alias(SN_md5,"ssl3-md5");
 #endif
-#ifndef NO_SHA1
+#ifndef OPENSSL_NO_SHA
 	EVP_add_digest(EVP_sha1()); /* RSA with sha1 */
 	EVP_add_digest_alias(SN_sha1,"ssl3-sha1");
+	EVP_add_digest_alias(SN_sha1WithRSAEncryption,SN_sha1WithRSA);
 #endif
-#if !defined(NO_SHA1) && !defined(NO_DSA)
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_DSA)
 	EVP_add_digest(EVP_dss1()); /* DSA with sha1 */
+	EVP_add_digest_alias(SN_dsaWithSHA1,SN_dsaWithSHA1_2);
+	EVP_add_digest_alias(SN_dsaWithSHA1,"DSS1");
+	EVP_add_digest_alias(SN_dsaWithSHA1,"dss1");
 #endif
-
+#ifndef OPENSSL_NO_ECDSA
+	EVP_add_digest(EVP_ecdsa());
+#endif
 	/* If you want support for phased out ciphers, add the following */
 #if 0
 	EVP_add_digest(EVP_sha());
 	EVP_add_digest(EVP_dss());
 #endif
+#ifndef OPENSSL_NO_COMP
+	/* This will initialise the built-in compression algorithms.
+	   The value returned is a STACK_OF(SSL_COMP), but that can
+	   be discarded safely */
+	(void)SSL_COMP_get_compression_methods();
+#endif
+	/* initialize cipher/digest methods table */
+	ssl_load_ciphers();
+	return(1);
 	}
 

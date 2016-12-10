@@ -32,7 +32,9 @@ void GetTSC(unsigned long& tsc)
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "ripemd.h"
+#include <openssl/ripemd.h>
+
+#define ripemd160_block_x86 ripemd160_block_asm_host_order
 
 extern "C" {
 void ripemd160_block_x86(RIPEMD160_CTX *ctx, unsigned char *buffer,int num);
@@ -55,8 +57,10 @@ void main(int argc,char *argv[])
 	if (num == 0) num=16;
 	if (num > 250) num=16;
 	numm=num+2;
+#if 0
 	num*=64;
 	numm*=64;
+#endif
 
 	for (j=0; j<6; j++)
 		{
@@ -71,7 +75,7 @@ void main(int argc,char *argv[])
 			GetTSC(e2);
 			ripemd160_block_x86(&ctx,buffer,num);
 			}
-		printf("ripemd160 (%d bytes) %d %d (%.2f)\n",num,
+		printf("ripemd160 (%d bytes) %d %d (%.2f)\n",num*64,
 			e1-s1,e2-s2,(double)((e1-s1)-(e2-s2))/2);
 		}
 	}

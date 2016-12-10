@@ -1,0 +1,6 @@
+lib
+Makefile.save
+*.flc
+semantic.cache
+sx86-elf.s
+s512sse2-elf.s

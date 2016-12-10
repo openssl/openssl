@@ -56,12 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cast.h"
+#include <openssl/cast.h>
 #include "cast_lcl.h"
 
-void CAST_encrypt(data,key)
-CAST_LONG *data;
-CAST_KEY *key;
+void CAST_encrypt(CAST_LONG *data, CAST_KEY *key)
 	{
 	register CAST_LONG l,r,*k,t;
 
@@ -81,18 +79,19 @@ CAST_KEY *key;
 	E_CAST( 9,k,r,l,+,^,-);
 	E_CAST(10,k,l,r,^,-,+);
 	E_CAST(11,k,r,l,-,+,^);
-	E_CAST(12,k,l,r,+,^,-);
-	E_CAST(13,k,r,l,^,-,+);
-	E_CAST(14,k,l,r,-,+,^);
-	E_CAST(15,k,r,l,+,^,-);
+	if(!key->short_key)
+	    {
+	    E_CAST(12,k,l,r,+,^,-);
+	    E_CAST(13,k,r,l,^,-,+);
+	    E_CAST(14,k,l,r,-,+,^);
+	    E_CAST(15,k,r,l,+,^,-);
+	    }
 
 	data[1]=l&0xffffffffL;
 	data[0]=r&0xffffffffL;
 	}
 
-void CAST_decrypt(data,key)
-CAST_LONG *data;
-CAST_KEY *key;
+void CAST_decrypt(CAST_LONG *data, CAST_KEY *key)
 	{
 	register CAST_LONG l,r,*k,t;
 
@@ -100,10 +99,13 @@ CAST_KEY *key;
 	l=data[0];
 	r=data[1];
 
-	E_CAST(15,k,l,r,+,^,-);
-	E_CAST(14,k,r,l,-,+,^);
-	E_CAST(13,k,l,r,^,-,+);
-	E_CAST(12,k,r,l,+,^,-);
+	if(!key->short_key)
+	    {
+	    E_CAST(15,k,l,r,+,^,-);
+	    E_CAST(14,k,r,l,-,+,^);
+	    E_CAST(13,k,l,r,^,-,+);
+	    E_CAST(12,k,r,l,+,^,-);
+	    }
 	E_CAST(11,k,l,r,-,+,^);
 	E_CAST(10,k,r,l,^,-,+);
 	E_CAST( 9,k,l,r,+,^,-);
@@ -121,20 +123,15 @@ CAST_KEY *key;
 	data[0]=r&0xffffffffL;
 	}
 
-void CAST_cbc_encrypt(in, out, length, ks, iv, encrypt)
-unsigned char *in;
-unsigned char *out;
-long length;
-CAST_KEY *ks;
-unsigned char *iv;
-int encrypt;
+void CAST_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+	     CAST_KEY *ks, unsigned char *iv, int enc)
 	{
 	register CAST_LONG tin0,tin1;
 	register CAST_LONG tout0,tout1,xor0,xor1;
 	register long l=length;
 	CAST_LONG tin[2];
 
-	if (encrypt)
+	if (enc)
 		{
 		n2l(iv,tout0);
 		n2l(iv,tout1);

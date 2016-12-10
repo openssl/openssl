@@ -25,7 +25,7 @@ and then you can use the 'DES_PTR' option.
 
 The file options.txt has the options listed for best speed on quite a
 few systems.  Look and the options (UNROLL, PTR, RISC2 etc) and then
-turn on the relevent option in the Makefile
+turn on the relevant option in the Makefile.
 
 There are some special Makefile targets that make life easier.
 make cc		- standard cc build

@@ -1,9 +1,6 @@
 #!/bin/sh
 
-PATH=../apps:$PATH
-export PATH
-
-cmd='../apps/ssleay crl'
+cmd='../util/shlib_wrap.sh ../apps/openssl crl'
 
 if [ "$1"x != "x" ]; then
 	t=$1

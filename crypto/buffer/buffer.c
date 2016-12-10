@@ -58,13 +58,13 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include "buffer.h"
+#include <openssl/buffer.h>
 
-BUF_MEM *BUF_MEM_new()
+BUF_MEM *BUF_MEM_new(void)
 	{
 	BUF_MEM *ret;
 
-	ret=(BUF_MEM *)Malloc(sizeof(BUF_MEM));
+	ret=OPENSSL_malloc(sizeof(BUF_MEM));
 	if (ret == NULL)
 		{
 		BUFerr(BUF_F_BUF_MEM_NEW,ERR_R_MALLOC_FAILURE);
@@ -76,20 +76,20 @@ BUF_MEM *BUF_MEM_new()
 	return(ret);
 	}
 
-void BUF_MEM_free(a)
-BUF_MEM *a;
+void BUF_MEM_free(BUF_MEM *a)
 	{
+	if(a == NULL)
+	    return;
+
 	if (a->data != NULL)
 		{
 		memset(a->data,0,(unsigned int)a->max);
-		Free(a->data);
+		OPENSSL_free(a->data);
 		}
-	Free(a);
+	OPENSSL_free(a);
 	}
 
-int BUF_MEM_grow(str, len)
-BUF_MEM *str;
-int len;
+int BUF_MEM_grow(BUF_MEM *str, int len)
 	{
 	char *ret;
 	unsigned int n;
@@ -101,15 +101,15 @@ int len;
 		}
 	if (str->max >= len)
 		{
-		memset(&(str->data[str->length]),0,len-str->length);
+		memset(&str->data[str->length],0,len-str->length);
 		str->length=len;
 		return(len);
 		}
 	n=(len+3)/3*4;
 	if (str->data == NULL)
-		ret=(char *)Malloc(n);
+		ret=OPENSSL_malloc(n);
 	else
-		ret=(char *)Realloc(str->data,n);
+		ret=OPENSSL_realloc(str->data,n);
 	if (ret == NULL)
 		{
 		BUFerr(BUF_F_BUF_MEM_GROW,ERR_R_MALLOC_FAILURE);
@@ -118,28 +118,46 @@ int len;
 	else
 		{
 		str->data=ret;
-		str->length=len;
 		str->max=n;
+		memset(&str->data[str->length],0,len-str->length);
+		str->length=len;
 		}
 	return(len);
 	}
 
-char *BUF_strdup(str)
-char *str;
+int BUF_MEM_grow_clean(BUF_MEM *str, int len)
 	{
 	char *ret;
-	int n;
+	unsigned int n;
 
-	if (str == NULL) return(NULL);
-
-	n=strlen(str);
-	ret=Malloc(n+1);
-	if (ret == NULL) 
+	if (str->length >= len)
 		{
-		BUFerr(BUF_F_BUF_STRDUP,ERR_R_MALLOC_FAILURE);
-		return(NULL);
+		memset(&str->data[len],0,str->length-len);
+		str->length=len;
+		return(len);
 		}
-	memcpy(ret,str,n+1);
-	return(ret);
+	if (str->max >= len)
+		{
+		memset(&str->data[str->length],0,len-str->length);
+		str->length=len;
+		return(len);
+		}
+	n=(len+3)/3*4;
+	if (str->data == NULL)
+		ret=OPENSSL_malloc(n);
+	else
+		ret=OPENSSL_realloc_clean(str->data,str->max,n);
+	if (ret == NULL)
+		{
+		BUFerr(BUF_F_BUF_MEM_GROW_CLEAN,ERR_R_MALLOC_FAILURE);
+		len=0;
+		}
+	else
+		{
+		str->data=ret;
+		str->max=n;
+		memset(&str->data[str->length],0,len-str->length);
+		str->length=len;
+		}
+	return(len);
 	}
-

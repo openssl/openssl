@@ -61,12 +61,10 @@
 #include "bn_lcl.h"
 
 /* r can == a or b */
-int BN_add(r, a, b)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
+int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	{
-	BIGNUM *tmp;
+	const BIGNUM *tmp;
+	int a_neg = a->neg, ret;
 
 	bn_check_top(a);
 	bn_check_top(b);
@@ -76,10 +74,10 @@ BIGNUM *b;
 	 * -a +  b	b-a
 	 * -a + -b	-(a+b)
 	 */
-	if (a->neg ^ b->neg)
+	if (a_neg ^ b->neg)
 		{
 		/* only one is negative */
-		if (a->neg)
+		if (a_neg)
 			{ tmp=a; a=b; b=tmp; }
 
 		/* we are now a - b */
@@ -97,36 +95,30 @@ BIGNUM *b;
 		return(1);
 		}
 
-	if (a->neg) /* both are neg */
-		r->neg=1;
-	else
-		r->neg=0;
-
-	if (!BN_uadd(r,a,b)) return(0);
-	return(1);
+	ret = BN_uadd(r,a,b);
+	r->neg = a_neg;
+	bn_check_top(r);
+	return ret;
 	}
 
-/* unsigned add of b to a, r must be large enough */
-int BN_uadd(r,a,b)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
+/* unsigned add of b to a */
+int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	{
-	register int i;
-	int max,min;
-	BN_ULONG *ap,*bp,*rp,carry,t1;
-	BIGNUM *tmp;
+	int max,min,dif;
+	BN_ULONG *ap,*bp,*rp,carry,t1,t2;
+	const BIGNUM *tmp;
 
 	bn_check_top(a);
 	bn_check_top(b);
 
 	if (a->top < b->top)
 		{ tmp=a; a=b; b=tmp; }
-	max=a->top;
-	min=b->top;
+	max = a->top;
+	min = b->top;
+	dif = max - min;
 
 	if (bn_wexpand(r,max+1) == NULL)
-		return(0);
+		return 0;
 
 	r->top=max;
 
@@ -134,48 +126,46 @@ BIGNUM *b;
 	ap=a->d;
 	bp=b->d;
 	rp=r->d;
-	carry=0;
 
 	carry=bn_add_words(rp,ap,bp,min);
 	rp+=min;
 	ap+=min;
 	bp+=min;
-	i=min;
 
 	if (carry)
 		{
-		while (i < max)
+		while (dif)
 			{
-			i++;
-			t1= *(ap++);
-			if ((*(rp++)=(t1+1)&BN_MASK2) >= t1)
+			dif--;
+			t1 = *(ap++);
+			t2 = (t1+1) & BN_MASK2;
+			*(rp++) = t2;
+			if (t2)
 				{
 				carry=0;
 				break;
 				}
 			}
-		if ((i >= max) && carry)
+		if (carry)
 			{
-			*(rp++)=1;
+			/* carry != 0 => dif == 0 */
+			*rp = 1;
 			r->top++;
 			}
 		}
-	if (rp != ap)
-		{
-		for (; i<max; i++)
-			*(rp++)= *(ap++);
-		}
-	/* memcpy(rp,ap,sizeof(*ap)*(max-i));*/
-	return(1);
+	if (dif && rp != ap)
+		while (dif--)
+			/* copy remaining words if ap != rp */
+			*(rp++) = *(ap++);
+	r->neg = 0;
+	bn_check_top(r);
+	return 1;
 	}
 
 /* unsigned subtraction of b from a, a must be larger than b. */
-int BN_usub(r, a, b)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
+int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	{
-	int max,min,ret=1;
+	int max,min,dif;
 	register BN_ULONG t1,t2,*ap,*bp,*rp;
 	int i,carry;
 #if defined(IRIX_CC_BUG) && !defined(LINT)
@@ -185,14 +175,16 @@ BIGNUM *b;
 	bn_check_top(a);
 	bn_check_top(b);
 
-	if (a->top < b->top) /* hmm... should not be happening */
+	max = a->top;
+	min = b->top;
+	dif = max - min;
+
+	if (dif < 0)	/* hmm... should not be happening */
 		{
 		BNerr(BN_F_BN_USUB,BN_R_ARG2_LT_ARG3);
 		return(0);
 		}
 
-	max=a->top;
-	min=b->top;
 	if (bn_wexpand(r,max) == NULL) return(0);
 
 	ap=a->d;
@@ -201,7 +193,7 @@ BIGNUM *b;
 
 #if 1
 	carry=0;
-	for (i=0; i<min; i++)
+	for (i = min; i != 0; i--)
 		{
 		t1= *(ap++);
 		t2= *(bp++);
@@ -225,17 +217,20 @@ BIGNUM *b;
 	ap+=min;
 	bp+=min;
 	rp+=min;
-	i=min;
 #endif
 	if (carry) /* subtracted */
 		{
-		while (i < max)
+		if (!dif)
+			/* error: a < b */
+			return 0;
+		while (dif)
 			{
-			i++;
-			t1= *(ap++);
-			t2=(t1-1)&BN_MASK2;
-			*(rp++)=t2;
-			if (t1 > t2) break;
+			dif--;
+			t1 = *(ap++);
+			t2 = (t1-1)&BN_MASK2;
+			*(rp++) = t2;
+			if (t1)
+				break;
 			}
 		}
 #if 0
@@ -245,13 +240,13 @@ BIGNUM *b;
 		{
 		for (;;)
 			{
-			if (i++ >= max) break;
+			if (!dif--) break;
 			rp[0]=ap[0];
-			if (i++ >= max) break;
+			if (!dif--) break;
 			rp[1]=ap[1];
-			if (i++ >= max) break;
+			if (!dif--) break;
 			rp[2]=ap[2];
-			if (i++ >= max) break;
+			if (!dif--) break;
 			rp[3]=ap[3];
 			rp+=4;
 			ap+=4;
@@ -260,18 +255,16 @@ BIGNUM *b;
 #endif
 
 	r->top=max;
-	bn_fix_top(r);
+	r->neg=0;
+	bn_correct_top(r);
 	return(1);
 	}
 
-int BN_sub(r, a, b)
-BIGNUM *r;
-BIGNUM *a;
-BIGNUM *b;
+int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	{
 	int max;
 	int add=0,neg=0;
-	BIGNUM *tmp;
+	const BIGNUM *tmp;
 
 	bn_check_top(a);
 	bn_check_top(b);
@@ -314,6 +307,7 @@ BIGNUM *b;
 		if (!BN_usub(r,a,b)) return(0);
 		r->neg=0;
 		}
+	bn_check_top(r);
 	return(1);
 	}
 

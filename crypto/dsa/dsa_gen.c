@@ -59,28 +59,49 @@
 #undef GENUINE_DSA
 
 #ifdef GENUINE_DSA
-#define HASH    SHA
+/* Parameter generation follows the original release of FIPS PUB 186,
+ * Appendix 2.2 (i.e. use SHA as defined in FIPS PUB 180) */
+#define HASH    EVP_sha()
 #else
-#define HASH    SHA1
+/* Parameter generation follows the updated Appendix 2.2 for FIPS PUB 186,
+ * also Appendix 2.2 of FIPS PUB 186-1 (i.e. use SHA as defined in
+ * FIPS PUB 180-1) */
+#define HASH    EVP_sha1()
 #endif 
+
+#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_SHA is defined */
+
+#ifndef OPENSSL_NO_SHA
 
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
-#include "sha.h"
-#include "bn.h"
-#include "dsa.h"
-#include "rand.h"
+#include <openssl/evp.h>
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/rand.h>
+#include <openssl/sha.h>
 
-DSA *DSA_generate_parameters(bits,seed_in,seed_len,counter_ret,h_ret,callback,
-	cb_arg)
-int bits;
-unsigned char *seed_in;
-int seed_len;
-int *counter_ret;
-unsigned long *h_ret;
-void (*callback)();
-char *cb_arg;
+#ifndef OPENSSL_FIPS
+
+static int dsa_builtin_paramgen(DSA *ret, int bits,
+		unsigned char *seed_in, int seed_len,
+		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+
+int DSA_generate_parameters_ex(DSA *ret, int bits,
+		unsigned char *seed_in, int seed_len,
+		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
+	{
+	if(ret->meth->dsa_paramgen)
+		return ret->meth->dsa_paramgen(ret, bits, seed_in, seed_len,
+				counter_ret, h_ret, cb);
+	return dsa_builtin_paramgen(ret, bits, seed_in, seed_len,
+			counter_ret, h_ret, cb);
+	}
+
+static int dsa_builtin_paramgen(DSA *ret, int bits,
+		unsigned char *seed_in, int seed_len,
+		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
 	{
 	int ok=0;
 	unsigned char seed[SHA_DIGEST_LENGTH];
@@ -91,47 +112,68 @@ char *cb_arg;
 	BN_MONT_CTX *mont=NULL;
 	int k,n=0,i,b,m=0;
 	int counter=0;
-	BN_CTX *ctx=NULL,*ctx2=NULL;
+	int r=0;
+	BN_CTX *ctx=NULL;
 	unsigned int h=2;
-	DSA *ret=NULL;
 
 	if (bits < 512) bits=512;
 	bits=(bits+63)/64*64;
 
+	/* NB: seed_len == 0 is special case: copy generated seed to
+ 	 * seed_in if it is not NULL.
+ 	 */
+	if (seed_len && (seed_len < 20))
+		seed_in = NULL; /* seed buffer too small -- ignore */
+	if (seed_len > 20) 
+		seed_len = 20; /* App. 2.2 of FIPS PUB 186 allows larger SEED,
+		                * but our internal buffers are restricted to 160 bits*/
 	if ((seed_in != NULL) && (seed_len == 20))
+		{
 		memcpy(seed,seed_in,seed_len);
+		/* set seed_in to NULL to avoid it being copied back */
+		seed_in = NULL;
+		}
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
-	if ((ctx2=BN_CTX_new()) == NULL) goto err;
-	if ((ret=DSA_new()) == NULL) goto err;
 
 	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
 
-	r0= &(ctx2->bn[0]);
-	g= &(ctx2->bn[1]);
-	W= &(ctx2->bn[2]);
-	q= &(ctx2->bn[3]);
-	X= &(ctx2->bn[4]);
-	c= &(ctx2->bn[5]);
-	p= &(ctx2->bn[6]);
-	test= &(ctx2->bn[7]);
+	BN_CTX_start(ctx);
+	r0 = BN_CTX_get(ctx);
+	g = BN_CTX_get(ctx);
+	W = BN_CTX_get(ctx);
+	q = BN_CTX_get(ctx);
+	X = BN_CTX_get(ctx);
+	c = BN_CTX_get(ctx);
+	p = BN_CTX_get(ctx);
+	test = BN_CTX_get(ctx);
 
-	BN_lshift(test,BN_value_one(),bits-1);
+	if (!BN_lshift(test,BN_value_one(),bits-1))
+		goto err;
 
 	for (;;)
 		{
-		for (;;)
+		for (;;) /* find q */
 			{
+			int seed_is_random;
+
 			/* step 1 */
-			if (callback != NULL) callback(0,m++,cb_arg);
+			if(!BN_GENCB_call(cb, 0, m++))
+				goto err;
 
 			if (!seed_len)
-				RAND_bytes(seed,SHA_DIGEST_LENGTH);
+				{
+				RAND_pseudo_bytes(seed,SHA_DIGEST_LENGTH);
+				seed_is_random = 1;
+				}
 			else
-				seed_len=0;
-
+				{
+				seed_is_random = 0;
+				seed_len=0; /* use random seed if 'seed_in' turns out to be bad*/
+				}
 			memcpy(buf,seed,SHA_DIGEST_LENGTH);
 			memcpy(buf2,seed,SHA_DIGEST_LENGTH);
+			/* precompute "SEED + 1" for step 7: */
 			for (i=SHA_DIGEST_LENGTH-1; i >= 0; i--)
 				{
 				buf[i]++;
@@ -139,202 +181,145 @@ char *cb_arg;
 				}
 
 			/* step 2 */
-			HASH(seed,SHA_DIGEST_LENGTH,md);
-			HASH(buf,SHA_DIGEST_LENGTH,buf2);
+			EVP_Digest(seed,SHA_DIGEST_LENGTH,md,NULL,HASH, NULL);
+			EVP_Digest(buf,SHA_DIGEST_LENGTH,buf2,NULL,HASH, NULL);
 			for (i=0; i<SHA_DIGEST_LENGTH; i++)
 				md[i]^=buf2[i];
 
 			/* step 3 */
 			md[0]|=0x80;
 			md[SHA_DIGEST_LENGTH-1]|=0x01;
-			if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,q)) abort();
+			if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,q)) goto err;
 
 			/* step 4 */
-			if (DSA_is_prime(q,callback,cb_arg) > 0) break;
+			r = BN_is_prime_fasttest_ex(q, DSS_prime_checks, ctx,
+					seed_is_random, cb);
+			if (r > 0)
+				break;
+			if (r != 0)
+				goto err;
+
 			/* do a callback call */
 			/* step 5 */
 			}
 
-		if (callback != NULL) callback(2,0,cb_arg);
-		if (callback != NULL) callback(3,0,cb_arg);
+		if(!BN_GENCB_call(cb, 2, 0)) goto err;
+		if(!BN_GENCB_call(cb, 3, 0)) goto err;
 
 		/* step 6 */
 		counter=0;
+		/* "offset = 2" */
 
 		n=(bits-1)/160;
 		b=(bits-1)-n*160;
 
 		for (;;)
 			{
+			if ((counter != 0) && !BN_GENCB_call(cb, 0, counter))
+				goto err;
+
 			/* step 7 */
 			BN_zero(W);
+			/* now 'buf' contains "SEED + offset - 1" */
 			for (k=0; k<=n; k++)
 				{
+				/* obtain "SEED + offset + k" by incrementing: */
 				for (i=SHA_DIGEST_LENGTH-1; i >= 0; i--)
 					{
 					buf[i]++;
 					if (buf[i] != 0) break;
 					}
 
-				HASH(buf,SHA_DIGEST_LENGTH,md);
+				EVP_Digest(buf,SHA_DIGEST_LENGTH,md,NULL,HASH, NULL);
 
 				/* step 8 */
-				if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,r0)) abort();
-				BN_lshift(r0,r0,160*k);
-				BN_add(W,W,r0);
+				if (!BN_bin2bn(md,SHA_DIGEST_LENGTH,r0))
+					goto err;
+				if (!BN_lshift(r0,r0,160*k)) goto err;
+				if (!BN_add(W,W,r0)) goto err;
 				}
 
 			/* more of step 8 */
-			BN_mask_bits(W,bits-1);
-			BN_copy(X,W); /* this should be ok */
-			BN_add(X,X,test); /* this should be ok */
+			if (!BN_mask_bits(W,bits-1)) goto err;
+			if (!BN_copy(X,W)) goto err;
+			if (!BN_add(X,X,test)) goto err;
 
 			/* step 9 */
-			BN_lshift1(r0,q);
-			BN_mod(c,X,r0,ctx);
-			BN_sub(r0,c,BN_value_one());
-			BN_sub(p,X,r0);
+			if (!BN_lshift1(r0,q)) goto err;
+			if (!BN_mod(c,X,r0,ctx)) goto err;
+			if (!BN_sub(r0,c,BN_value_one())) goto err;
+			if (!BN_sub(p,X,r0)) goto err;
 
 			/* step 10 */
 			if (BN_cmp(p,test) >= 0)
 				{
 				/* step 11 */
-				if (DSA_is_prime(p,callback,cb_arg) > 0)
-					goto end;
+				r = BN_is_prime_fasttest_ex(p, DSS_prime_checks,
+						ctx, 1, cb);
+				if (r > 0)
+						goto end; /* found it */
+				if (r != 0)
+					goto err;
 				}
 
 			/* step 13 */
 			counter++;
+			/* "offset = offset + n + 1" */
 
 			/* step 14 */
 			if (counter >= 4096) break;
-
-			if (callback != NULL) callback(0,counter,cb_arg);
 			}
 		}
 end:
-	if (callback != NULL) callback(2,1,cb_arg);
+	if(!BN_GENCB_call(cb, 2, 1))
+		goto err;
 
-	/* We now need to gernerate g */
+	/* We now need to generate g */
 	/* Set r0=(p-1)/q */
-        BN_sub(test,p,BN_value_one());
-        BN_div(r0,NULL,test,q,ctx);
+	if (!BN_sub(test,p,BN_value_one())) goto err;
+	if (!BN_div(r0,NULL,test,q,ctx)) goto err;
 
-	BN_set_word(test,h);
-	BN_MONT_CTX_set(mont,p,ctx);
+	if (!BN_set_word(test,h)) goto err;
+	if (!BN_MONT_CTX_set(mont,p,ctx)) goto err;
 
 	for (;;)
 		{
 		/* g=test^r0%p */
-		BN_mod_exp_mont(g,test,r0,p,ctx,mont);
+		if (!BN_mod_exp_mont(g,test,r0,p,ctx,mont)) goto err;
 		if (!BN_is_one(g)) break;
-		BN_add(test,test,BN_value_one());
+		if (!BN_add(test,test,BN_value_one())) goto err;
 		h++;
 		}
 
-	if (callback != NULL) callback(3,1,cb_arg);
+	if(!BN_GENCB_call(cb, 3, 1))
+		goto err;
 
 	ok=1;
 err:
-	if (!ok)
+	if (ok)
 		{
-		if (ret != NULL) DSA_free(ret);
-		}
-	else
-		{
+		if(ret->p) BN_free(ret->p);
+		if(ret->q) BN_free(ret->q);
+		if(ret->g) BN_free(ret->g);
 		ret->p=BN_dup(p);
 		ret->q=BN_dup(q);
 		ret->g=BN_dup(g);
-		if ((m > 1) && (seed_in != NULL)) memcpy(seed_in,seed,20);
+		if (ret->p == NULL || ret->q == NULL || ret->g == NULL)
+			{
+			ok=0;
+			goto err;
+			}
+		if (seed_in != NULL) memcpy(seed_in,seed,20);
 		if (counter_ret != NULL) *counter_ret=counter;
 		if (h_ret != NULL) *h_ret=h;
 		}
-	if (ctx != NULL) BN_CTX_free(ctx);
-	if (ctx != NULL) BN_CTX_free(ctx2);
-	if (mont != NULL) BN_MONT_CTX_free(mont);
-	return(ok?ret:NULL);
-	}
-
-int DSA_is_prime(w, callback,cb_arg)
-BIGNUM *w;
-void (*callback)();
-char *cb_arg;
-	{
-	int ok= -1,j,i,n;
-	BN_CTX *ctx=NULL,*ctx2=NULL;
-	BIGNUM *w_1,*b,*m,*z,*tmp,*mont_1;
-	int a;
-	BN_MONT_CTX *mont=NULL;
-
-	if (!BN_is_bit_set(w,0)) return(0);
-
-	if ((ctx=BN_CTX_new()) == NULL) goto err;
-	if ((ctx2=BN_CTX_new()) == NULL) goto err;
-	if ((mont=BN_MONT_CTX_new()) == NULL) goto err;
-
-	m=   &(ctx2->bn[2]);
-	b=   &(ctx2->bn[3]);
-	z=   &(ctx2->bn[4]);
-	w_1= &(ctx2->bn[5]);
-	tmp= &(ctx2->bn[6]);
-	mont_1= &(ctx2->bn[7]);
-
-	/* step 1 */
-	n=50;
-
-	/* step 2 */
-	if (!BN_sub(w_1,w,BN_value_one())) goto err;
-	for (a=1; !BN_is_bit_set(w_1,a); a++)
-		;
-	if (!BN_rshift(m,w_1,a)) goto err;
-
-	BN_MONT_CTX_set(mont,w,ctx);
-	BN_to_montgomery(mont_1,BN_value_one(),mont,ctx);
-	BN_to_montgomery(w_1,w_1,mont,ctx);
-	for (i=1; i < n; i++)
+	if(ctx)
 		{
-		/* step 3 */
-		BN_rand(b,BN_num_bits(w)-2/*-1*/,0,0);
-		/* BN_set_word(b,0x10001L); */
-
-		/* step 4 */
-		j=0;
-		if (!BN_mod_exp_mont(z,b,m,w,ctx,mont)) goto err;
-
-		if (!BN_to_montgomery(z,z,mont,ctx)) goto err;
-
-		/* step 5 */
-		for (;;)
-			{
-			if (((j == 0) && (BN_cmp(z,mont_1) == 0)) ||
-				(BN_cmp(z,w_1) == 0))
-				break;
-
-			/* step 6 */
-			if ((j > 0) && (BN_cmp(z,mont_1) == 0))
-				{
-				ok=0;
-				goto err;
-				}
-
-			j++;
-			if (j >= a)
-				{
-				ok=0;
-				goto err;
-				}
-
-			if (!BN_mod_mul_montgomery(z,z,z,mont,ctx)) goto err;
-			if (callback != NULL) callback(1,j,cb_arg);
-			}
+		BN_CTX_end(ctx);
+		BN_CTX_free(ctx);
 		}
-
-	ok=1;
-err:
-	if (ok == -1) DSAerr(DSA_F_DSA_IS_PRIME,ERR_R_BN_LIB);
-	BN_CTX_free(ctx);
-	BN_CTX_free(ctx2);
-	
-	return(ok);
+	if (mont != NULL) BN_MONT_CTX_free(mont);
+	return ok;
 	}
-
+#endif
+#endif

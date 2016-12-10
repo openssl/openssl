@@ -1,96 +1,129 @@
-/* lib/conf/conf_err.c */
-/* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/* crypto/conf/conf_err.c */
+/* ====================================================================
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
  */
+
+/* NOTE: this file was auto generated by the mkerr.pl script: any changes
+ * made to it will be overwritten when the script next updates this file,
+ * only reason strings will be preserved.
+ */
+
 #include <stdio.h>
-#include "err.h"
-#include "conf.h"
+#include <openssl/err.h>
+#include <openssl/conf.h>
 
 /* BEGIN ERROR CODES */
-#ifndef NO_ERR
+#ifndef OPENSSL_NO_ERR
+
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_CONF,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_CONF,0,reason)
+
 static ERR_STRING_DATA CONF_str_functs[]=
 	{
-{ERR_PACK(0,CONF_F_CONF_LOAD,0),	"CONF_load"},
-{ERR_PACK(0,CONF_F_STR_COPY,0),	"STR_COPY"},
-{0,NULL},
+{ERR_FUNC(CONF_F_CONF_DUMP_FP),	"CONF_dump_fp"},
+{ERR_FUNC(CONF_F_CONF_LOAD),	"CONF_load"},
+{ERR_FUNC(CONF_F_CONF_LOAD_BIO),	"CONF_load_bio"},
+{ERR_FUNC(CONF_F_CONF_LOAD_FP),	"CONF_load_fp"},
+{ERR_FUNC(CONF_F_CONF_MODULES_LOAD),	"CONF_modules_load"},
+{ERR_FUNC(CONF_F_DEF_LOAD),	"DEF_LOAD"},
+{ERR_FUNC(CONF_F_DEF_LOAD_BIO),	"DEF_LOAD_BIO"},
+{ERR_FUNC(CONF_F_MODULE_INIT),	"MODULE_INIT"},
+{ERR_FUNC(CONF_F_MODULE_LOAD_DSO),	"MODULE_LOAD_DSO"},
+{ERR_FUNC(CONF_F_MODULE_RUN),	"MODULE_RUN"},
+{ERR_FUNC(CONF_F_NCONF_DUMP_BIO),	"NCONF_dump_bio"},
+{ERR_FUNC(CONF_F_NCONF_DUMP_FP),	"NCONF_dump_fp"},
+{ERR_FUNC(CONF_F_NCONF_GET_NUMBER),	"NCONF_get_number"},
+{ERR_FUNC(CONF_F_NCONF_GET_NUMBER_E),	"NCONF_get_number_e"},
+{ERR_FUNC(CONF_F_NCONF_GET_SECTION),	"NCONF_get_section"},
+{ERR_FUNC(CONF_F_NCONF_GET_STRING),	"NCONF_get_string"},
+{ERR_FUNC(CONF_F_NCONF_LOAD),	"NCONF_load"},
+{ERR_FUNC(CONF_F_NCONF_LOAD_BIO),	"NCONF_load_bio"},
+{ERR_FUNC(CONF_F_NCONF_LOAD_FP),	"NCONF_load_fp"},
+{ERR_FUNC(CONF_F_NCONF_NEW),	"NCONF_new"},
+{ERR_FUNC(CONF_F_STR_COPY),	"STR_COPY"},
+{0,NULL}
 	};
 
 static ERR_STRING_DATA CONF_str_reasons[]=
 	{
-{CONF_R_MISSING_CLOSE_SQUARE_BRACKET     ,"missing close square bracket"},
-{CONF_R_MISSING_EQUAL_SIGN               ,"missing equal sign"},
-{CONF_R_NO_CLOSE_BRACE                   ,"no close brace"},
-{CONF_R_UNABLE_TO_CREATE_NEW_SECTION     ,"unable to create new section"},
-{CONF_R_VARIABLE_HAS_NO_VALUE            ,"variable has no value"},
-{0,NULL},
+{ERR_REASON(CONF_R_ERROR_LOADING_DSO)    ,"error loading dso"},
+{ERR_REASON(CONF_R_MISSING_CLOSE_SQUARE_BRACKET),"missing close square bracket"},
+{ERR_REASON(CONF_R_MISSING_EQUAL_SIGN)   ,"missing equal sign"},
+{ERR_REASON(CONF_R_MISSING_FINISH_FUNCTION),"missing finish function"},
+{ERR_REASON(CONF_R_MISSING_INIT_FUNCTION),"missing init function"},
+{ERR_REASON(CONF_R_MODULE_INITIALIZATION_ERROR),"module initialization error"},
+{ERR_REASON(CONF_R_NO_CLOSE_BRACE)       ,"no close brace"},
+{ERR_REASON(CONF_R_NO_CONF)              ,"no conf"},
+{ERR_REASON(CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE),"no conf or environment variable"},
+{ERR_REASON(CONF_R_NO_SECTION)           ,"no section"},
+{ERR_REASON(CONF_R_NO_SUCH_FILE)         ,"no such file"},
+{ERR_REASON(CONF_R_NO_VALUE)             ,"no value"},
+{ERR_REASON(CONF_R_UNABLE_TO_CREATE_NEW_SECTION),"unable to create new section"},
+{ERR_REASON(CONF_R_UNKNOWN_MODULE_NAME)  ,"unknown module name"},
+{ERR_REASON(CONF_R_VARIABLE_HAS_NO_VALUE),"variable has no value"},
+{0,NULL}
 	};
 
 #endif
 
-void ERR_load_CONF_strings()
+void ERR_load_CONF_strings(void)
 	{
-	static int init=1;
+#ifndef OPENSSL_NO_ERR
 
-	if (init)
+	if (ERR_func_error_string(CONF_str_functs[0].error) == NULL)
 		{
-		init=0;
-#ifndef NO_ERR
-		ERR_load_strings(ERR_LIB_CONF,CONF_str_functs);
-		ERR_load_strings(ERR_LIB_CONF,CONF_str_reasons);
-#endif
-
+		ERR_load_strings(0,CONF_str_functs);
+		ERR_load_strings(0,CONF_str_reasons);
 		}
+#endif
 	}

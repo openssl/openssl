@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-/* The new form of this macro (check if the a*b == 0) was sugested by 
+/* The new form of this macro (check if the a*b == 0) was suggested by 
  * Colin Plumb <colin@nyx10.cs.du.edu> */
 /* Removal of the inner if from from Wei Dai 24/4/96 */
 #define idea_mul(r,a,b,ul) \
@@ -67,7 +67,7 @@ if (ul != 0) \
 	r-=((r)>>16); \
 	} \
 else \
-	r=(-(int)a-b+1); /* assuming a or b is 0 and in range */ \
+	r=(-(int)a-b+1); /* assuming a or b is 0 and in range */ 
 
 #ifdef undef
 #define idea_mul(r,a,b,ul,sl) \

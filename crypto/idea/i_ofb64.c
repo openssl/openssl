@@ -56,20 +56,16 @@
  * [including the GNU Public Licence.]
  */
 
-#include "idea.h"
+#include <openssl/idea.h>
 #include "idea_lcl.h"
 
 /* The input and output encrypted as though 64bit ofb mode is being
  * used.  The extra state information to record how much of the
  * 64bit block we have used is contained in *num;
  */
-void idea_ofb64_encrypt(in, out, length, schedule, ivec, num)
-unsigned char *in;
-unsigned char *out;
-long length;
-IDEA_KEY_SCHEDULE *schedule;
-unsigned char *ivec;
-int *num;
+void idea_ofb64_encrypt(const unsigned char *in, unsigned char *out,
+			long length, IDEA_KEY_SCHEDULE *schedule,
+			unsigned char *ivec, int *num)
 	{
 	register unsigned long v0,v1,t;
 	register int n= *num;

@@ -58,23 +58,17 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "md5.h"
+#include <openssl/md5.h>
 
 #define BUFSIZE	1024*16
 
-#ifndef NOPROTO
 void do_fp(FILE *f);
 void pt(unsigned char *md);
+#if !defined(_OSD_POSIX) && !defined(__DJGPP__)
 int read(int, void *, unsigned int);
-#else
-void do_fp();
-void pt();
-int read();
 #endif
 
-int main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 	{
 	int i,err=0;
 	FILE *IN;
@@ -102,8 +96,7 @@ char **argv;
 	exit(err);
 	}
 
-void do_fp(f)
-FILE *f;
+void do_fp(FILE *f)
 	{
 	MD5_CTX c;
 	unsigned char md[MD5_DIGEST_LENGTH];
@@ -123,8 +116,7 @@ FILE *f;
 	pt(md);
 	}
 
-void pt(md)
-unsigned char *md;
+void pt(unsigned char *md)
 	{
 	int i;
 

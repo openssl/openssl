@@ -56,7 +56,12 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cast.h"
+#include <openssl/cast.h>
+#include <openssl/crypto.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 #include "cast_lcl.h"
 #include "cast_s.h"
 
@@ -72,10 +77,7 @@
 #define S6 CAST_S_table6
 #define S7 CAST_S_table7
 
-void CAST_set_key(key,len,data)
-CAST_KEY *key;
-int len;
-unsigned char *data;
+FIPS_NON_FIPS_VCIPHER_Init(CAST)
 	{
 	CAST_LONG x[16];
 	CAST_LONG z[16];
@@ -88,6 +90,10 @@ unsigned char *data;
 	if (len > 16) len=16;
 	for (i=0; i<len; i++)
 		x[i]=data[i];
+	if(len <= 10)
+	    key->short_key=1;
+	else
+	    key->short_key=0;
 
 	K= &k[0];
 	X[0]=((x[ 0]<<24)|(x[ 1]<<16)|(x[ 2]<<8)|x[ 3])&0xffffffffL;

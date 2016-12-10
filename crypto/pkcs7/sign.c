@@ -56,29 +56,38 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "bio.h"
-#include "x509.h"
-#include "pem.h"
+#include <string.h>
+#include <openssl/bio.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
 
-main(argc,argv)
+int main(argc,argv)
 int argc;
 char *argv[];
 	{
 	X509 *x509;
 	EVP_PKEY *pkey;
 	PKCS7 *p7;
-	PKCS7 *p7_data;
 	PKCS7_SIGNER_INFO *si;
 	BIO *in;
 	BIO *data,*p7bio;
 	char buf[1024*4];
-	int i,j;
+	int i;
 	int nodetach=0;
 
+#ifndef OPENSSL_NO_MD2
 	EVP_add_digest(EVP_md2());
+#endif
+#ifndef OPENSSL_NO_MD5
 	EVP_add_digest(EVP_md5());
+#endif
+#ifndef OPENSSL_NO_SHA1
 	EVP_add_digest(EVP_sha1());
+#endif
+#ifndef OPENSSL_NO_MDC2
 	EVP_add_digest(EVP_mdc2());
+#endif
 
 	data=BIO_new(BIO_s_file());
 again:
@@ -97,9 +106,9 @@ again:
 		BIO_set_fp(data,stdin,BIO_NOCLOSE);
 
 	if ((in=BIO_new_file("server.pem","r")) == NULL) goto err;
-	if ((x509=PEM_read_bio_X509(in,NULL,NULL)) == NULL) goto err;
+	if ((x509=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL) goto err;
 	BIO_reset(in);
-	if ((pkey=PEM_read_bio_PrivateKey(in,NULL,NULL)) == NULL) goto err;
+	if ((pkey=PEM_read_bio_PrivateKey(in,NULL,NULL,NULL)) == NULL) goto err;
 	BIO_free(in);
 
 	p7=PKCS7_new();
@@ -108,10 +117,9 @@ again:
 	si=PKCS7_add_signature(p7,x509,pkey,EVP_sha1());
 	if (si == NULL) goto err;
 
-	/* Add some extra attributes */
-	if (!add_signed_time(si)) goto err;
-	if (!add_signed_string(si,"SIGNED STRING")) goto err;
-	if (!add_signed_seq2string(si,"STRING1","STRING2")) goto err;
+	/* If you do this then you get signing time automatically added */
+	PKCS7_add_signed_attribute(si, NID_pkcs9_contentType, V_ASN1_OBJECT,
+						OBJ_nid2obj(NID_pkcs7_data));
 
 	/* we may want to add more */
 	PKCS7_add_certificate(p7,x509);

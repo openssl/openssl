@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 
-/* This version of crypt has been developed from my MIT compatable
+/* This version of crypt has been developed from my MIT compatible
  * DES library.
  * The library is available at pub/Crypto/DES at ftp.psy.uq.oz.au
  * Eric Young (eay@cryptsoft.com)
@@ -77,15 +77,12 @@
 #define HPERM_OP(a,t,n,m) ((t)=((((a)<<(16-(n)))^(a))&(m)),\
 	(a)=(a)^(t)^(t>>(16-(n))))\
 
-void fcrypt_body(out, ks, Eswap0, Eswap1)
-DES_LONG *out;
-des_key_schedule ks;
-DES_LONG Eswap0;
-DES_LONG Eswap1;
+void fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
+		 DES_LONG Eswap1)
 	{
 	register DES_LONG l,r,t,u;
 #ifdef DES_PTR
-	register unsigned char *des_SP=(unsigned char *)des_SPtrans;
+	register const unsigned char *des_SP=(const unsigned char *)DES_SPtrans;
 #endif
 	register DES_LONG *s;
 	register int j;
@@ -100,7 +97,7 @@ DES_LONG Eswap1;
 
 	for (j=0; j<25; j++)
 		{
-#ifdef DES_UNROLL
+#ifndef DES_UNROLL
 		register int i;
 
 		for (i=0; i<32; i+=8)

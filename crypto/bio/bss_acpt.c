@@ -56,20 +56,23 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef NO_SOCK
-
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
-#include "bio.h"
+#include <openssl/bio.h>
 
-/*	BIOerr(BIO_F_WSASTARTUP,BIO_R_WSASTARTUP ); */
+#ifndef OPENSSL_NO_SOCK
 
-#ifdef WIN16
+#ifdef OPENSSL_SYS_WIN16
 #define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
 #else
 #define SOCKET_PROTOCOL IPPROTO_TCP
+#endif
+
+#if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
+/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
+#undef FIONBIO
 #endif
 
 typedef struct bio_accept_st
@@ -89,35 +92,16 @@ typedef struct bio_accept_st
 	BIO *bio_chain;
 	} BIO_ACCEPT;
 
-#ifndef NOPROTO
-static int acpt_write(BIO *h,char *buf,int num);
-static int acpt_read(BIO *h,char *buf,int size);
-static int acpt_puts(BIO *h,char *str);
-static long acpt_ctrl(BIO *h,int cmd,long arg1,char *arg2);
+static int acpt_write(BIO *h, const char *buf, int num);
+static int acpt_read(BIO *h, char *buf, int size);
+static int acpt_puts(BIO *h, const char *str);
+static long acpt_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int acpt_new(BIO *h);
 static int acpt_free(BIO *data);
-#else
-static int acpt_write();
-static int acpt_read();
-static int acpt_puts();
-static long acpt_ctrl();
-static int acpt_new();
-static int acpt_free();
-#endif
-
-#ifndef NOPROTO
 static int acpt_state(BIO *b, BIO_ACCEPT *c);
 static void acpt_close_socket(BIO *data);
 BIO_ACCEPT *BIO_ACCEPT_new(void );
 void BIO_ACCEPT_free(BIO_ACCEPT *a);
-
-#else
-
-static int acpt_state();
-static void acpt_close_socket();
-BIO_ACCEPT *BIO_ACCEPT_new();
-void BIO_ACCEPT_free();
-#endif
 
 #define ACPT_S_BEFORE			1
 #define ACPT_S_GET_ACCEPT_SOCKET	2
@@ -134,15 +118,15 @@ static BIO_METHOD methods_acceptp=
 	acpt_ctrl,
 	acpt_new,
 	acpt_free,
+	NULL,
 	};
 
-BIO_METHOD *BIO_s_accept()
+BIO_METHOD *BIO_s_accept(void)
 	{
 	return(&methods_acceptp);
 	}
 
-static int acpt_new(bi)
-BIO *bi;
+static int acpt_new(BIO *bi)
 	{
 	BIO_ACCEPT *ba;
 
@@ -157,11 +141,11 @@ BIO *bi;
 	return(1);
 	}
 
-BIO_ACCEPT *BIO_ACCEPT_new()
+BIO_ACCEPT *BIO_ACCEPT_new(void)
 	{
 	BIO_ACCEPT *ret;
 
-	if ((ret=(BIO_ACCEPT *)Malloc(sizeof(BIO_ACCEPT))) == NULL)
+	if ((ret=(BIO_ACCEPT *)OPENSSL_malloc(sizeof(BIO_ACCEPT))) == NULL)
 		return(NULL);
 
 	memset(ret,0,sizeof(BIO_ACCEPT));
@@ -170,17 +154,18 @@ BIO_ACCEPT *BIO_ACCEPT_new()
 	return(ret);
 	}
 
-void BIO_ACCEPT_free(a)
-BIO_ACCEPT *a;
+void BIO_ACCEPT_free(BIO_ACCEPT *a)
 	{
-	if (a->param_addr != NULL) Free(a->param_addr);
-	if (a->addr != NULL) Free(a->addr);
+	if(a == NULL)
+	    return;
+
+	if (a->param_addr != NULL) OPENSSL_free(a->param_addr);
+	if (a->addr != NULL) OPENSSL_free(a->addr);
 	if (a->bio_chain != NULL) BIO_free(a->bio_chain);
-	Free(a);
+	OPENSSL_free(a);
 	}
 
-static void acpt_close_socket(bio)
-BIO *bio;
+static void acpt_close_socket(BIO *bio)
 	{
 	BIO_ACCEPT *c;
 
@@ -194,8 +179,7 @@ BIO *bio;
 		}
 	}
 
-static int acpt_free(a)
-BIO *a;
+static int acpt_free(BIO *a)
 	{
 	BIO_ACCEPT *data;
 
@@ -213,9 +197,7 @@ BIO *a;
 	return(1);
 	}
 	
-static int acpt_state(b,c)
-BIO *b;
-BIO_ACCEPT *c;
+static int acpt_state(BIO *b, BIO_ACCEPT *c)
 	{
 	BIO *bio=NULL,*dbio;
 	int s= -1;
@@ -254,8 +236,20 @@ again:
 			c->state=ACPT_S_OK;
 			goto again;
 			}
+		BIO_clear_retry_flags(b);
+		b->retry_reason=0;
 		i=BIO_accept(c->accept_sock,&(c->addr));
+
+		/* -2 return means we should retry */
+		if(i == -2)
+			{
+			BIO_set_retry_special(b);
+			b->retry_reason=BIO_RR_ACCEPT;
+			return -1;
+			}
+
 		if (i < 0) return(i);
+
 		bio=BIO_new_socket(i,BIO_CLOSE);
 		if (bio == NULL) goto err;
 
@@ -306,15 +300,12 @@ err:
 
 	}
 
-static int acpt_read(b,out,outl)
-BIO *b;
-char *out;
-int outl;
+static int acpt_read(BIO *b, char *out, int outl)
 	{
 	int ret=0;
 	BIO_ACCEPT *data;
 
-        BIO_clear_retry_flags(b);
+	BIO_clear_retry_flags(b);
 	data=(BIO_ACCEPT *)b->ptr;
 
 	while (b->next_bio == NULL)
@@ -328,10 +319,7 @@ int outl;
 	return(ret);
 	}
 
-static int acpt_write(b,in,inl)
-BIO *b;
-char *in;
-int inl;
+static int acpt_write(BIO *b, const char *in, int inl)
 	{
 	int ret;
 	BIO_ACCEPT *data;
@@ -350,11 +338,7 @@ int inl;
 	return(ret);
 	}
 
-static long acpt_ctrl(b,cmd,num,ptr)
-BIO *b;
-int cmd;
-long num;
-char *ptr;
+static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
 	{
 	BIO *dbio;
 	int *ip;
@@ -383,7 +367,7 @@ char *ptr;
 				{
 				b->init=1;
 				if (data->param_addr != NULL)
-					Free(data->param_addr);
+					OPENSSL_free(data->param_addr);
 				data->param_addr=BUF_strdup(ptr);
 				}
 			else if (num == 1)
@@ -468,9 +452,7 @@ char *ptr;
 	return(ret);
 	}
 
-static int acpt_puts(bp,str)
-BIO *bp;
-char *str;
+static int acpt_puts(BIO *bp, const char *str)
 	{
 	int n,ret;
 
@@ -479,8 +461,7 @@ char *str;
 	return(ret);
 	}
 
-BIO *BIO_new_accept(str)
-char *str;
+BIO *BIO_new_accept(char *str)
 	{
 	BIO *ret;
 

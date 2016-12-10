@@ -59,9 +59,24 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "ripemd.h"
 
-char *test[]={
+#include "../e_os.h"
+
+#ifdef OPENSSL_NO_RIPEMD
+int main(int argc, char *argv[])
+{
+    printf("No ripemd support\n");
+    return(0);
+}
+#else
+#include <openssl/ripemd.h>
+#include <openssl/evp.h>
+
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
+
+static char *test[]={
 	"",
 	"a",
 	"abc",
@@ -73,7 +88,7 @@ char *test[]={
 	NULL,
 	};
 
-char *ret[]={
+static char *ret[]={
 	"9c1185a5c5e9fc54612808977ee8f548b2258d31",
 	"0bdc9d2d256b3ee9daae347be6f4dc835a467ffe",
 	"8eb208f7e05d987a9b044a8e98c6b087f15a0bfc",
@@ -84,26 +99,24 @@ char *ret[]={
 	"9b752e45573d4b39f4dbd3323cab82bf63326bfb",
 	};
 
-#ifndef NOPROTO
 static char *pt(unsigned char *md);
-#else
-static char *pt();
-#endif
-
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	int i,err=0;
-	unsigned char **P,**R;
+	char **P,**R;
 	char *p;
+	unsigned char md[RIPEMD160_DIGEST_LENGTH];
 
-	P=(unsigned char **)test;
-	R=(unsigned char **)ret;
+	P=test;
+	R=ret;
 	i=1;
 	while (*P != NULL)
 		{
-		p=pt(RIPEMD160(&(P[0][0]),(unsigned long)strlen((char *)*P),NULL));
+#ifdef CHARSET_EBCDIC
+		ebcdic2ascii((char *)*P, (char *)*P, strlen((char *)*P));
+#endif
+		EVP_Digest(&(P[0][0]),strlen((char *)*P),md,NULL,EVP_ripemd160(), NULL);
+		p=pt(md);
 		if (strcmp(p,(char *)*R) != 0)
 			{
 			printf("error calculating RIPEMD160 on '%s'\n",*P);
@@ -116,12 +129,11 @@ char *argv[];
 		R++;
 		P++;
 		}
-	exit(err);
+	EXIT(err);
 	return(0);
 	}
 
-static char *pt(md)
-unsigned char *md;
+static char *pt(unsigned char *md)
 	{
 	int i;
 	static char buf[80];
@@ -130,4 +142,4 @@ unsigned char *md;
 		sprintf(&(buf[i*2]),"%02x",md[i]);
 	return(buf);
 	}
-
+#endif
