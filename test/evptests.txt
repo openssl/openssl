@@ -2773,11 +2773,15 @@ Output = c09d402423cbf233d26cae21f954547bc43fe80fd41360a0336cfdbe9aedad05bef6fd2
 # Illegal RSA key derivation
 Derive = RSA-2048
 Result = KEYOP_INIT_ERROR
+Function = EVP_PKEY_derive_init
+Reason = operation not supported for this keytype
 
 # Invalid ctrl
 Sign = RSA-2048
 Ctrl = rsa_mgf1_md:sha1
 Result = PKEY_CTRL_INVALID
+Function = pkey_rsa_ctrl
+Reason = invalid mgf1 md
 
 # EC tests
 
@@ -3602,6 +3606,10 @@ SharedSecret=4A5D9D5BA4CE2DE1728E3BF480350F25E07E21C947D19E3376F09B3C1E161742
 
 Sign=Alice-25519
 Result = KEYOP_INIT_ERROR
+Function = EVP_PKEY_sign_init
+Reason = operation not supported for this keytype
 
 Verify=Alice-25519
 Result = KEYOP_INIT_ERROR
+Function = EVP_PKEY_verify_init
+Reason = operation not supported for this keytype
