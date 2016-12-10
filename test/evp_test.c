@@ -210,6 +210,10 @@ struct evp_test {
     const char *err, *aux_err;
     /* Expected error value of test */
     char *expected_err;
+    /* Expected error function string */
+    char *func;
+    /* Expected error reason string */
+    char *reason;
     /* Number of tests */
     int ntests;
     /* Error count */
@@ -296,6 +300,10 @@ static void free_expected(struct evp_test *t)
 {
     OPENSSL_free(t->expected_err);
     t->expected_err = NULL;
+    OPENSSL_free(t->func);
+    t->func = NULL;
+    OPENSSL_free(t->reason);
+    t->reason = NULL;
     OPENSSL_free(t->out_expected);
     OPENSSL_free(t->out_received);
     t->out_expected = NULL;
@@ -317,6 +325,9 @@ static void print_expected(struct evp_test *t)
 
 static int check_test_error(struct evp_test *t)
 {
+    unsigned long err;
+    const char *func;
+    const char *reason;
     if (!t->err && !t->expected_err)
         return 1;
     if (t->err && !t->expected_err) {
@@ -335,11 +346,38 @@ static int check_test_error(struct evp_test *t)
                 t->start_line, t->expected_err);
         return 0;
     }
-    if (strcmp(t->err, t->expected_err) == 0)
+
+    if (strcmp(t->err, t->expected_err) != 0) {
+        fprintf(stderr, "Test line %d: expecting %s got %s\n",
+                t->start_line, t->expected_err, t->err);
+        return 0;
+    }
+
+    if (t->func == NULL && t->reason == NULL)
         return 1;
 
-    fprintf(stderr, "Test line %d: expecting %s got %s\n",
-            t->start_line, t->expected_err, t->err);
+    if (t->func == NULL || t->reason == NULL) {
+        fprintf(stderr, "Test line %d: missing function or reason code\n",
+                t->start_line);
+        return 0;
+    }
+
+    err = ERR_peek_error();
+    if (err == 0) {
+        fprintf(stderr, "Test line %d, expected error \"%s:%s\" not set\n",
+                t->start_line, t->func, t->reason);
+        return 0;
+    }
+
+    func = ERR_func_error_string(err);
+    reason = ERR_reason_error_string(err);
+
+    if (strcmp(func, t->func) == 0 && strcmp(reason, t->reason) == 0)
+        return 1;
+
+    fprintf(stderr, "Test line %d: expected error \"%s:%s\", got \"%s:%s\"\n",
+            t->start_line, t->func, t->reason, func, reason);
+
     return 0;
 }
 
@@ -494,7 +532,23 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
             return 0;
         }
         t->expected_err = OPENSSL_strdup(value);
-        if (!t->expected_err)
+        if (t->expected_err == NULL)
+            return 0;
+    } else if (strcmp(keyword, "Function") == 0) {
+        if (t->func != NULL) {
+            fprintf(stderr, "Line %d: multiple function lines\n", t->line);
+            return 0;
+        }
+        t->func = OPENSSL_strdup(value);
+        if (t->func == NULL)
+            return 0;
+    } else if (strcmp(keyword, "Reason") == 0) {
+        if (t->reason != NULL) {
+            fprintf(stderr, "Line %d: multiple reason lines\n", t->line);
+            return 0;
+        }
+        t->reason = OPENSSL_strdup(value);
+        if (t->reason == NULL)
             return 0;
     } else {
         /* Must be test specific line: try to parse it */
