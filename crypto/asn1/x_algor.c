@@ -1,127 +1,93 @@
-/* crypto/asn1/x_algor.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
- *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- * 
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * 
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-
-#include <stdio.h>
-#include "cryptlib.h"
-#include "asn1_mac.h"
-
 /*
- * ASN1err(ASN1_F_D2I_X509_ALGOR,ERR_R_ASN1_LENGTH_MISMATCH);
- * ASN1err(ASN1_F_X509_ALGOR_NEW,ERR_R_EXPECTING_AN_ASN1_SEQUENCE);
- * ASN1err(ASN1_F_D2I_X509_ALGOR,ERR_R_ASN1_LENGTH_MISMATCH);
+ * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
-int i2d_X509_ALGOR(a,pp)
-X509_ALGOR *a;
-unsigned char **pp;
-	{
-	M_ASN1_I2D_vars(a);
+#include <stddef.h>
+#include <openssl/x509.h>
+#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
+#include "internal/evp_int.h"
 
-	M_ASN1_I2D_len(a->algorithm,i2d_ASN1_OBJECT);
-	if (a->parameter != NULL)
-		{ M_ASN1_I2D_len(a->parameter,i2d_ASN1_TYPE); }
+ASN1_SEQUENCE(X509_ALGOR) = {
+        ASN1_SIMPLE(X509_ALGOR, algorithm, ASN1_OBJECT),
+        ASN1_OPT(X509_ALGOR, parameter, ASN1_ANY)
+} ASN1_SEQUENCE_END(X509_ALGOR)
 
-	M_ASN1_I2D_seq_total();
-	M_ASN1_I2D_put(a->algorithm,i2d_ASN1_OBJECT);
-	if (a->parameter != NULL)
-		{ M_ASN1_I2D_put(a->parameter,i2d_ASN1_TYPE); }
+ASN1_ITEM_TEMPLATE(X509_ALGORS) =
+        ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
+ASN1_ITEM_TEMPLATE_END(X509_ALGORS)
 
-	M_ASN1_I2D_finish();
-	}
+IMPLEMENT_ASN1_FUNCTIONS(X509_ALGOR)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(X509_ALGORS, X509_ALGORS, X509_ALGORS)
+IMPLEMENT_ASN1_DUP_FUNCTION(X509_ALGOR)
 
-X509_ALGOR *d2i_X509_ALGOR(a,pp,length)
-X509_ALGOR **a;
-unsigned char **pp;
-long length;
-	{
-	M_ASN1_D2I_vars(a,X509_ALGOR *,X509_ALGOR_new);
+int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
+{
+    if (!alg)
+        return 0;
+    if (ptype != V_ASN1_UNDEF) {
+        if (alg->parameter == NULL)
+            alg->parameter = ASN1_TYPE_new();
+        if (alg->parameter == NULL)
+            return 0;
+    }
+    if (alg) {
+        ASN1_OBJECT_free(alg->algorithm);
+        alg->algorithm = aobj;
+    }
+    if (ptype == 0)
+        return 1;
+    if (ptype == V_ASN1_UNDEF) {
+        ASN1_TYPE_free(alg->parameter);
+        alg->parameter = NULL;
+    } else
+        ASN1_TYPE_set(alg->parameter, ptype, pval);
+    return 1;
+}
 
-	M_ASN1_D2I_Init();
-	M_ASN1_D2I_start_sequence();
-	M_ASN1_D2I_get(ret->algorithm,d2i_ASN1_OBJECT);
-	if (!M_ASN1_D2I_end_sequence())
-		{ M_ASN1_D2I_get(ret->parameter,d2i_ASN1_TYPE); }
-	else
-		{
-		ASN1_TYPE_free(ret->parameter);
-		ret->parameter=NULL;
-		}
-	M_ASN1_D2I_Finish(a,X509_ALGOR_free,ASN1_F_D2I_X509_ALGOR);
-	}
+void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
+                     X509_ALGOR *algor)
+{
+    if (paobj)
+        *paobj = algor->algorithm;
+    if (pptype) {
+        if (algor->parameter == NULL) {
+            *pptype = V_ASN1_UNDEF;
+            return;
+        } else
+            *pptype = algor->parameter->type;
+        if (ppval)
+            *ppval = algor->parameter->value.ptr;
+    }
+}
 
-X509_ALGOR *X509_ALGOR_new()
-	{
-	X509_ALGOR *ret=NULL;
-	ASN1_CTX c;
+/* Set up an X509_ALGOR DigestAlgorithmIdentifier from an EVP_MD */
 
-	M_ASN1_New_Malloc(ret,X509_ALGOR);
-	ret->algorithm=OBJ_nid2obj(NID_undef);
-	ret->parameter=NULL;
-	return(ret);
-	M_ASN1_New_Error(ASN1_F_X509_ALGOR_NEW);
-	}
+void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
+{
+    int param_type;
 
-void X509_ALGOR_free(a)
-X509_ALGOR *a;
-	{
-	if (a == NULL) return;
-	ASN1_OBJECT_free(a->algorithm);
-	ASN1_TYPE_free(a->parameter);
-	Free((char *)a);
-	}
+    if (md->flags & EVP_MD_FLAG_DIGALGID_ABSENT)
+        param_type = V_ASN1_UNDEF;
+    else
+        param_type = V_ASN1_NULL;
 
+    X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_type(md)), param_type, NULL);
+
+}
+
+int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b)
+{
+    int rv;
+    rv = OBJ_cmp(a->algorithm, b->algorithm);
+    if (rv)
+        return rv;
+    if (!a->parameter && !b->parameter)
+        return 0;
+    return ASN1_TYPE_cmp(a->parameter, b->parameter);
+}

@@ -1,0 +1,165 @@
+# -*- mode: perl; -*-
+# Copyright 2016-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+
+## Test version negotiation
+
+use strict;
+use warnings;
+
+package ssltests;
+
+
+our @tests = (
+    {
+        name => "npn-simple",
+        server => { },
+        client => { },
+        test => {
+             "ClientNPNProtocols" => "foo",
+             "ServerNPNProtocols" => "foo",
+             "ExpectedNPNProtocol" => "foo",
+        },
+    },
+    {
+        name => "npn-client-finds-match",
+        server => { },
+        client => { },
+        test => {
+             "ClientNPNProtocols" => "foo,bar",
+             "ServerNPNProtocols" => "baz,bar",
+             "ExpectedNPNProtocol" => "bar",
+        },
+    },
+    {
+        name => "npn-client-honours-server-pref",
+        server => { },
+        client => { },
+        test => {
+             "ClientNPNProtocols" => "foo,bar",
+             "ServerNPNProtocols" => "bar,foo",
+             "ExpectedNPNProtocol" => "bar",
+        },
+    },
+    {
+        name => "npn-client-first-pref-on-mismatch",
+        server => { },
+        client => { },
+        test => {
+             "ClientNPNProtocols" => "foo,bar",
+             "ServerNPNProtocols" => "baz",
+             "ExpectedNPNProtocol" => "foo",
+        },
+    },
+    {
+        name => "npn-no-server-support",
+        server => { },
+        client => { },
+        test => {
+             "ClientNPNProtocols" => "foo",
+             "ExpectedNPNProtocol" => undef,
+        },
+    },
+    {
+        name => "npn-no-client-support",
+        server => { },
+        client => { },
+        test => {
+             "ServerNPNProtocols" => "foo",
+             "ExpectedNPNProtocol" => undef,
+        },
+    },
+    {
+        name => "npn-with-sni-no-context-switch",
+        server => { },
+        server2 => { },
+        client => { },
+        test => {
+             "ClientNPNProtocols" => "foo,bar",
+             "ServerNPNProtocols" => "foo",
+             "Server2NPNProtocols" => "bar",
+             "ServerName" => "server1",
+             "ServerNameCallback" => "IgnoreMismatch",
+             "ExpectedServerName" => "server1",
+             "ExpectedNPNProtocol" => "foo",
+        },
+    },
+    {
+        name => "npn-with-sni-context-switch",
+        server => { },
+        server2 => { },
+        client => { },
+        test => {
+             "ClientNPNProtocols" => "foo,bar",
+             "ServerNPNProtocols" => "foo",
+             "Server2NPNProtocols" => "bar",
+             "ServerName" => "server2",
+             "ServerNameCallback" => "IgnoreMismatch",
+             "ExpectedServerName" => "server2",
+             "ExpectedNPNProtocol" => "bar",
+        },
+    },
+    {
+        name => "npn-selected-sni-server-supports-npn",
+        server => { },
+        server2 => { },
+        client => { },
+        test => {
+             "ClientNPNProtocols" => "foo,bar",
+             "Server2NPNProtocols" => "bar",
+             "ServerName" => "server2",
+             "ServerNameCallback" => "IgnoreMismatch",
+             "ExpectedServerName" => "server2",
+             "ExpectedNPNProtocol" => "bar",
+        },
+    },
+    {
+        name => "npn-selected-sni-server-does-not-support-npn",
+        server => { },
+        server2 => { },
+        client => { },
+        test => {
+             "ClientNPNProtocols" => "foo,bar",
+             "ServerNPNProtocols" => "foo",
+             "ServerName" => "server2",
+             "ServerNameCallback" => "IgnoreMismatch",
+             "ExpectedServerName" => "server2",
+             "ExpectedNPNProtocol" => undef,
+        },
+    },
+    {
+        name => "alpn-preferred-over-npn",
+        server => { },
+        client => { },
+        test => {
+             "ClientALPNProtocols" => "foo",
+             "ClientNPNProtocols" => "bar",
+             "ServerALPNProtocols" => "foo",
+             "ServerNPNProtocols" => "bar",
+             "ExpectedALPNProtocol" => "foo",
+             "ExpectedNPNProtocol" => undef,
+        },
+    },
+    {
+        name => "sni-npn-preferred-over-alpn",
+        server => { },
+        server2 => { },
+        client => { },
+        test => {
+             "ClientALPNProtocols" => "foo",
+             "ClientNPNProtocols" => "bar",
+             "ServerALPNProtocols" => "foo",
+             "Server2NPNProtocols" => "bar",
+             "ServerName" => "server2",
+             "ServerNameCallback" => "IgnoreMismatch",
+             "ExpectedServerName" => "server2",
+             "ExpectedALPNProtocol" => undef,
+             "ExpectedNPNProtocol" => "bar",
+        },
+    },
+);

@@ -1,0 +1,2 @@
+*.der binary
+/fuzz/corpora/** binary
