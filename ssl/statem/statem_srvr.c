@@ -3465,10 +3465,9 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
  */
 int tls_construct_cert_status_body(SSL *s, WPACKET *pkt)
 {
-<<<<<<< 3b72dcd5fb4d2c756a830dba1fc34f4a7ae61b73
-    if (!WPACKET_put_bytes_u8(pkt, s->tlsext_status_type)
-            || !WPACKET_sub_memcpy_u24(pkt, s->tlsext_ocsp_resp,
-                                       s->tlsext_ocsp_resplen)) {
+    if (!WPACKET_put_bytes_u8(pkt, s->ext.status_type)
+            || !WPACKET_sub_memcpy_u24(pkt, s->ext.ocsp.resp,
+                                       s->ext.ocsp.resp_len)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -3479,12 +3478,6 @@ int tls_construct_cert_status_body(SSL *s, WPACKET *pkt)
 int tls_construct_cert_status(SSL *s, WPACKET *pkt)
 {
     if (!tls_construct_cert_status_body(s, pkt)) {
-=======
-    if (!WPACKET_put_bytes_u8(pkt, s->ext.status_type)
-            || !WPACKET_sub_memcpy_u24(pkt, s->ext.ocsp.resp,
-                                       s->ext.ocsp.resp_len)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_STATUS, ERR_R_INTERNAL_ERROR);
->>>>>>> Move extension data into sub-structs
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         return 0;
     }

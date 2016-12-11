@@ -799,28 +799,10 @@ static int init_status_request(SSL *s, unsigned int context)
          * Ensure we get sensible values passed to tlsext_status_cb in the event
          * that we don't receive a status message
          */
-        OPENSSL_free(s->tlsext_ocsp_resp);
-        s->ext.ocsp_resp = NULL;
-        s->ext.ocsp_resplen = 0;
+        OPENSSL_free(s->ext.ocsp.resp);
+        s->ext.ocsp.resp = NULL;
+        s->ext.ocsp.resp_len = 0;
     }
-
-    return 1;
-}
-
-static int final_status_request(SSL *s, unsigned int context, int sent,
-                                        int *al)
-{
-    if (s->server)
-        return 1;
-
-    /*
-     * Ensure we get sensible values passed to ext.status_cb in the event
-     * that we don't receive a status message
-     */
-    OPENSSL_free(s->ext.ocsp.resp);
-    s->ext.ocsp.resp = NULL;
-    s->ext.ocsp.resp_len = 0;
->>>>>>> Move extension data into sub-structs
 
     return 1;
 }

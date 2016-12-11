@@ -843,30 +843,20 @@ struct ssl_ctx_st {
          * For a server, this contains a callback function by which the set of
          * advertised protocols can be provided.
          */
-        int (*npn_advertised_cb) (SSL *s, const unsigned char **buf,
-                                          unsigned int *len, void *arg);
+        SSL_CTX_npn_advertised_cb_func npn_advertised_cb;
         void *npn_advertised_cb_arg;
         /*
          * For a client, this contains a callback function that selects the next
          * protocol from the list provided by the server.
          */
-        int (*npn_select_cb) (SSL *s, unsigned char **out,
-                                     unsigned char *outlen,
-                                     const unsigned char *in,
-                                     unsigned int inlen, void *arg);
+        SSL_CTX_npn_select_cb_func npn_select_cb;
         void *npn_select_cb_arg;
 # endif
     } ext;
 
 # ifndef OPENSSL_NO_PSK
-    unsigned int (*psk_client_callback) (SSL *ssl, const char *hint,
-                                         char *identity,
-                                         unsigned int max_identity_len,
-                                         unsigned char *psk,
-                                         unsigned int max_psk_len);
-    unsigned int (*psk_server_callback) (SSL *ssl, const char *identity,
-                                         unsigned char *psk,
-                                         unsigned int max_psk_len);
+    SSL_psk_client_cb_func psk_client_callback;
+    SSL_psk_server_cb_func psk_server_callback;
 # endif
 
 # ifndef OPENSSL_NO_SRP
@@ -1002,14 +992,8 @@ struct ssl_st {
     /* actual code */
     int error_code;
 # ifndef OPENSSL_NO_PSK
-    unsigned int (*psk_client_callback) (SSL *ssl, const char *hint,
-                                         char *identity,
-                                         unsigned int max_identity_len,
-                                         unsigned char *psk,
-                                         unsigned int max_psk_len);
-    unsigned int (*psk_server_callback) (SSL *ssl, const char *identity,
-                                         unsigned char *psk,
-                                         unsigned int max_psk_len);
+    SSL_psk_client_cb_func psk_client_callback;
+    SSL_psk_server_cb_func psk_server_callback;
 # endif
     SSL_CTX *ctx;
     /* Verified chain of peer */
