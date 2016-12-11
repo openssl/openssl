@@ -159,7 +159,8 @@ void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info);
  */
 
 typedef struct ossl_store_loader_st OSSL_STORE_LOADER;
-OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(const char *scheme);
+OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme);
+const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER *loader);
 const char *OSSL_STORE_LOADER_get0_scheme(const OSSL_STORE_LOADER *loader);
 /* struct ossl_store_loader_ctx_st is defined differently by each loader */
 typedef struct ossl_store_loader_ctx_st OSSL_STORE_LOADER_CTX;
@@ -192,6 +193,14 @@ void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader);
 
 int OSSL_STORE_register_loader(OSSL_STORE_LOADER *loader);
 OSSL_STORE_LOADER *OSSL_STORE_unregister_loader(const char *scheme);
+
+/*-
+ *  Functions to list STORE loaders
+ *  -------------------------------
+ */
+int OSSL_STORE_do_all_loaders(void (*do_function) (const OSSL_STORE_LOADER
+                                                   *loader, void *do_arg),
+                              void *do_arg);
 
 
 /*
