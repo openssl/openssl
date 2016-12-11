@@ -72,6 +72,7 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme);
 /* loader stuff */
 struct ossl_store_loader_st {
     const char *scheme;
+    ENGINE *engine;
     OSSL_STORE_open_fn open;
     OSSL_STORE_ctrl_fn ctrl;
     OSSL_STORE_load_fn load;
