@@ -4331,3 +4331,5 @@ STORE_ctrl                              4274	1_1_1	EXIST::FUNCTION:
 STORE_INFO_get0_NAME_description        4275	1_1_1	EXIST::FUNCTION:
 STORE_INFO_set0_NAME_description        4276	1_1_1	EXIST::FUNCTION:
 STORE_INFO_get1_NAME_description        4277	1_1_1	EXIST::FUNCTION:
+STORE_do_all_loaders                    4278	1_1_1	EXIST::FUNCTION:
+STORE_LOADER_get0_engine                4279	1_1_1	EXIST::FUNCTION:

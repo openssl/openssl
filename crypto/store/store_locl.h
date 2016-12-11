@@ -73,6 +73,7 @@ STORE_LOADER *store_unregister_loader_int(const char *scheme);
 /* loader stuff */
 struct store_loader_st {
     const char *scheme;
+    ENGINE *engine;
     STORE_open_fn open;
     STORE_ctrl_fn ctrl;
     STORE_load_fn load;

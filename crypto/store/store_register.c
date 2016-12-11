@@ -28,7 +28,7 @@ DEFINE_RUN_ONCE_STATIC(do_registry_init)
  *  Functions for manipulating STORE_LOADERs
  */
 
-STORE_LOADER *STORE_LOADER_new(const char *scheme)
+STORE_LOADER *STORE_LOADER_new(ENGINE *e, const char *scheme)
 {
     STORE_LOADER *res = OPENSSL_zalloc(sizeof(*res));
 
@@ -46,8 +46,14 @@ STORE_LOADER *STORE_LOADER_new(const char *scheme)
         return NULL;
     }
 
+    res->engine = e;
     res->scheme = scheme;
     return res;
+}
+
+const ENGINE *STORE_LOADER_get0_engine(const STORE_LOADER *loader)
+{
+    return loader->engine;
 }
 
 const char *STORE_LOADER_get0_scheme(const STORE_LOADER *loader)
@@ -240,4 +246,18 @@ void destroy_loaders_int(void)
     loader_register = NULL;
     CRYPTO_THREAD_lock_free(registry_lock);
     registry_lock = NULL;
+}
+
+/******************************************************************************
+ *
+ *  Functions to list STORE loaders
+ *
+ *****/
+IMPLEMENT_LHASH_DOALL_ARG_CONST(STORE_LOADER, void);
+int STORE_do_all_loaders(void (*do_function) (const STORE_LOADER *loader,
+                                              void *do_arg),
+                         void *do_arg)
+{
+    lh_STORE_LOADER_doall_void(loader_register, do_function, do_arg);
+    return 1;
 }
