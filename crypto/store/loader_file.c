@@ -1041,6 +1041,7 @@ static int file_close(OSSL_STORE_LOADER_CTX *ctx)
 static OSSL_STORE_LOADER file_loader =
     {
         "file",
+        NULL,
         file_open,
         NULL,
         file_load,

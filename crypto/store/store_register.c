@@ -28,7 +28,7 @@ DEFINE_RUN_ONCE_STATIC(do_registry_init)
  *  Functions for manipulating OSSL_STORE_LOADERs
  */
 
-OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(const char *scheme)
+OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme)
 {
     OSSL_STORE_LOADER *res = OPENSSL_zalloc(sizeof(*res));
 
@@ -49,8 +49,14 @@ OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(const char *scheme)
         return NULL;
     }
 
+    res->engine = e;
     res->scheme = scheme;
     return res;
+}
+
+const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER *loader)
+{
+    return loader->engine;
 }
 
 const char *OSSL_STORE_LOADER_get0_scheme(const OSSL_STORE_LOADER *loader)
@@ -256,4 +262,17 @@ void ossl_store_destroy_loaders_int(void)
     loader_register = NULL;
     CRYPTO_THREAD_lock_free(registry_lock);
     registry_lock = NULL;
+}
+
+/*
+ *  Functions to list OSSL_STORE loaders
+ */
+
+IMPLEMENT_LHASH_DOALL_ARG_CONST(OSSL_STORE_LOADER, void);
+int OSSL_STORE_do_all_loaders(void (*do_function) (const OSSL_STORE_LOADER
+                                                   *loader, void *do_arg),
+                              void *do_arg)
+{
+    lh_OSSL_STORE_LOADER_doall_void(loader_register, do_function, do_arg);
+    return 1;
 }
