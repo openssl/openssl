@@ -19,6 +19,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/err.h>
 # include <openssl/engine.h>
 # include <openssl/ssl.h>
+# include <openssl/store.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -258,6 +259,25 @@ static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
     }
 }
 
+struct util_store_cap_data {
+    ENGINE *engine;
+    char **cap_buf;
+    int *cap_size;
+    int ok;
+};
+static void util_store_cap(const OSSL_STORE_LOADER *loader, void *arg)
+{
+    struct util_store_cap_data *ctx = arg;
+
+    if (OSSL_STORE_LOADER_get0_engine(loader) == ctx->engine) {
+        char buf[256];
+        BIO_snprintf(buf, sizeof(buf), "STORE(%s)",
+                     OSSL_STORE_LOADER_get0_scheme(loader));
+        if (!append_buf(ctx->cap_buf, ctx->cap_size, buf))
+            ctx->ok = 0;
+    }
+}
+
 int engine_main(int argc, char **argv)
 {
     int ret = 1, i;
@@ -405,6 +425,18 @@ int engine_main(int argc, char **argv)
                     if (!append_buf(&cap_buf, &cap_size, OBJ_nid2sn(nids[k])))
                         goto end;
  skip_pmeths:
+                {
+                    struct util_store_cap_data store_ctx;
+
+                    store_ctx.engine = e;
+                    store_ctx.cap_buf = &cap_buf;
+                    store_ctx.cap_size = &cap_size;
+                    store_ctx.ok = 1;
+
+                    OSSL_STORE_do_all_loaders(util_store_cap, &store_ctx);
+                    if (!store_ctx.ok)
+                        goto end;
+                }
                 if (cap_buf != NULL && (*cap_buf != '\0'))
                     BIO_printf(out, " [%s]\n", cap_buf);
 
