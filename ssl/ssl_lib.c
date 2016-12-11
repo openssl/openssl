@@ -2267,10 +2267,7 @@ void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
  * ServerHello.
  */
 void SSL_CTX_set_npn_advertised_cb(SSL_CTX *ctx,
-                                   int (*cb) (SSL *ssl,
-                                              const unsigned char **out,
-                                              unsigned int *outlen,
-                                              void *arg),
+                                   SSL_CTX_npn_advertised_cb_func cb,
                                    void *arg)
 {
     ctx->ext.npn_advertised_cb = cb;
@@ -2288,11 +2285,7 @@ void SSL_CTX_set_npn_advertised_cb(SSL_CTX *ctx,
  * a value other than SSL_TLSEXT_ERR_OK.
  */
 void SSL_CTX_set_npn_select_cb(SSL_CTX *ctx,
-                               int (*cb) (SSL *s, unsigned char **out,
-                                          unsigned char *outlen,
-                                          const unsigned char *in,
-                                          unsigned int inlen,
-                                          void *arg),
+                               SSL_CTX_npn_select_cb_func cb,
                                void *arg)
 {
     ctx->ext.npn_select_cb = cb;
@@ -2344,12 +2337,8 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
  * from the client's list of offered protocols.
  */
 void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
-                                int (*cb) (SSL *ssl,
-                                           const unsigned char **out,
-                                           unsigned char *outlen,
-                                           const unsigned char *in,
-                                           unsigned int inlen,
-                                           void *arg), void *arg)
+                                SSL_CTX_alpn_select_cb_func cb,
+                                void *arg)
 {
     ctx->ext.alpn_select_cb = cb;
     ctx->ext.alpn_select_cb_arg = arg;
@@ -3726,46 +3715,22 @@ const char *SSL_get_psk_identity(const SSL *s)
     return (s->session->psk_identity);
 }
 
-void SSL_set_psk_client_callback(SSL *s,
-                                 unsigned int (*cb) (SSL *ssl,
-                                                     const char *hint,
-                                                     char *identity,
-                                                     unsigned int
-                                                     max_identity_len,
-                                                     unsigned char *psk,
-                                                     unsigned int max_psk_len))
+void SSL_set_psk_client_callback(SSL *s, SSL_psk_client_cb_func cb)
 {
     s->psk_client_callback = cb;
 }
 
-void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx,
-                                     unsigned int (*cb) (SSL *ssl,
-                                                         const char *hint,
-                                                         char *identity,
-                                                         unsigned int
-                                                         max_identity_len,
-                                                         unsigned char *psk,
-                                                         unsigned int
-                                                         max_psk_len))
+void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx, SSL_psk_client_cb_func cb)
 {
     ctx->psk_client_callback = cb;
 }
 
-void SSL_set_psk_server_callback(SSL *s,
-                                 unsigned int (*cb) (SSL *ssl,
-                                                     const char *identity,
-                                                     unsigned char *psk,
-                                                     unsigned int max_psk_len))
+void SSL_set_psk_server_callback(SSL *s, SSL_psk_server_cb_func cb)
 {
     s->psk_server_callback = cb;
 }
 
-void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx,
-                                     unsigned int (*cb) (SSL *ssl,
-                                                         const char *identity,
-                                                         unsigned char *psk,
-                                                         unsigned int
-                                                         max_psk_len))
+void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, SSL_psk_server_cb_func cb)
 {
     ctx->psk_server_callback = cb;
 }

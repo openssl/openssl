@@ -2204,18 +2204,18 @@ int tls_process_cert_status_body(SSL *s, PACKET *pkt, int *al)
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS_BODY, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    s->tlsext_ocsp_resp = OPENSSL_malloc(resplen);
-    if (s->ext.ocsp_resp == NULL) {
+    s->ext.ocsp.resp = OPENSSL_malloc(resplen);
+    if (s->ext.ocsp.resp == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS_BODY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    if (!PACKET_copy_bytes(pkt, s->ext.ocsp_resp, resplen)) {
+    if (!PACKET_copy_bytes(pkt, s->ext.ocsp.resp, resplen)) {
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS_BODY, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    s->ext.ocsp_resplen = resplen;
+    s->ext.ocsp.resp_len = resplen;
 
     return 1;
 }
