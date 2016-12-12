@@ -44,7 +44,7 @@ size.
 BUF_MEM_grow_clean() is similar to BUF_MEM_grow() but it sets any free'd
 or additionally-allocated memory to zero.
 
-BUF_reverse() reverses B<size> bytes at B<in> into B<out>.  If B<out>
+BUF_reverse() reverses B<size> bytes at B<in> into B<out>.  If B<in>
 is NULL, the array is reversed in-place.
 
 =head1 RETURN VALUES
