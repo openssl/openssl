@@ -38,7 +38,7 @@ B<openssl> B<pkeyutl>
 The B<pkeyutl> command can be used to perform public key operations using
 any supported algorithm.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

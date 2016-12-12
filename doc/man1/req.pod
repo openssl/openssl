@@ -52,7 +52,7 @@ The B<req> command primarily creates and processes certificate requests
 in PKCS#10 format. It can additionally create self signed certificates
 for use as root CAs for example.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

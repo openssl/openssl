@@ -19,7 +19,7 @@ sequence and prints out the certificates contained in it or takes a
 file of certificates and converts it into a Netscape certificate
 sequence.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

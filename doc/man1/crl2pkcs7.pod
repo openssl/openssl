@@ -21,7 +21,7 @@ The B<crl2pkcs7> command takes an optional CRL and one or more
 certificates and converts them into a PKCS#7 degenerate "certificates
 only" structure.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

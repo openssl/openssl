@@ -62,7 +62,7 @@ and their status.
 
 The options descriptions will be divided into each purpose.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
