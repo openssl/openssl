@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-ERR_GET_LIB, ERR_GET_FUNC, ERR_GET_REASON - get library, function and
-reason code
+ERR_GET_LIB, ERR_GET_FUNC, ERR_GET_REASON, ERR_FATAL_ERROR
+- get information from error codes
 
 =head1 SYNOPSIS
 

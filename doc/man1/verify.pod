@@ -55,7 +55,7 @@ B<openssl> B<verify>
 
 The B<verify> command verifies certificate chains.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

@@ -409,8 +409,8 @@ The ChaCha20 stream cipher. The key length is 256 bits, the IV is 96 bits long.
 
 Authenticated encryption with ChaCha20-Poly1305. Like EVP_chacha20() the key is
 256 bits and the IV is 96 bits. This supports additional authenticated
-data (AAD) and produces a 128 bit authentication tag. The L</GCM and OCB modes>
-section below applies.
+data (AAD) and produces a 128 bit authentication tag. See the
+L</GCM and OCB Modes> section for more information.
 
 =back
 

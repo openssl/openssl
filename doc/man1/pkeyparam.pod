@@ -19,7 +19,7 @@ B<openssl> B<pkeyparam>
 The B<pkey> command processes public or private keys. They can be converted
 between various forms and their components printed out.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

@@ -26,7 +26,7 @@ B<openssl> B<crl>
 
 The B<crl> command processes CRL files in DER or PEM format.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

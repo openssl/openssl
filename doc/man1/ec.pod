@@ -36,7 +36,7 @@ private key format specified in 'SEC 1: Elliptic Curve Cryptography'
 (http://www.secg.org/). To convert an OpenSSL EC private key into the
 PKCS#8 private key format use the B<pkcs8> command.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
