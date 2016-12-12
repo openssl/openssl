@@ -28,7 +28,7 @@ The B<ciphers> command converts textual OpenSSL cipher lists into ordered
 SSL cipher preference lists. It can be used as a test tool to determine
 the appropriate cipherlist.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

@@ -95,7 +95,7 @@ The B<ocsp> command performs many common OCSP tasks. It can be used
 to print out requests and responses, create requests and send queries
 to an OCSP responder and behave like a mini OCSP server itself.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 This command operates as either a client or a server.
 The options are described below, divided into those two modes.

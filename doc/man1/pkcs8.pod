@@ -34,7 +34,7 @@ The B<pkcs8> command processes private keys in PKCS#8 format. It can handle
 both unencrypted PKCS#8 PrivateKeyInfo format and EncryptedPrivateKeyInfo
 format with a variety of PKCS#5 (v1.5 and v2.0) and PKCS#12 algorithms.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
