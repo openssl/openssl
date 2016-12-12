@@ -21,7 +21,7 @@ B<openssl> B<pkcs7>
 
 The B<pkcs7> command processes PKCS#7 files in DER or PEM format.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

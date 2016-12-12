@@ -49,7 +49,7 @@ The B<pkcs12> command allows PKCS#12 files (sometimes referred to as
 PFX files) to be created and parsed. PKCS#12 files are used by several
 programs including Netscape, MSIE and MS Outlook.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 There are a lot of options the meaning of some depends of whether a PKCS#12 file
 is being created or parsed. By default a PKCS#12 file is parsed. A PKCS#12

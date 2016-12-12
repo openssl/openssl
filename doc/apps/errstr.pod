@@ -15,7 +15,7 @@ numerical forms will be available. The B<errstr> utility can be used to
 display the meaning of the hex code. The hex code is the hex digits after the
 second colon.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 None.
 
@@ -32,10 +32,6 @@ can be displayed with:
 to produce the error message:
 
  error:2006D080:BIO routines:BIO_new_file:no such file
-
-=head1 SEE ALSO
-
-L<err(3)>
 
 =head1 COPYRIGHT
 

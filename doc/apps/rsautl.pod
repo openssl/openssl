@@ -29,7 +29,7 @@ B<openssl> B<rsautl>
 The B<rsautl> command can be used to sign, verify, encrypt and decrypt
 data using the RSA algorithm.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

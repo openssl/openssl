@@ -74,7 +74,7 @@ B<openssl> B<smime>
 The B<smime> command handles S/MIME mail. It can encrypt, decrypt, sign and
 verify S/MIME messages.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 There are six operation options that set the type of operation to be performed.
 The meaning of the other options varies according to the operation type.

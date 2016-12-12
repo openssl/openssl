@@ -38,7 +38,7 @@ B<openssl> B<pkeyutl>
 The B<pkeyutl> command can be used to perform public key operations using
 any supported algorithm.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
@@ -126,7 +126,8 @@ derive a shared secret using the peer key.
 Use key derivation function B<algorithm>.  The supported algorithms are
 at present B<TLS1-PRF> and B<HKDF>.
 Note: additional parameters and the KDF output length will normally have to be
-set for this to work.  See L<EVP_PKEY_HKDF(3)> and L<EVP_PKEY_TLS1_PRF(3)>
+set for this to work.
+See L<EVP_PKEY_CTX_set_hkdf_md(3)> and L<EVP_PKEY_CTX_set_tls1_prf_md(3)>
 for the supported string parameters of each algorithm.
 
 =item B<-kdflen length>
@@ -277,7 +278,7 @@ seed consisting of the single byte 0xFF:
 
 L<genpkey(1)>, L<pkey(1)>, L<rsautl(1)>
 L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>,
-L<EVP_PKEY_HKDF(3)>, L<EVP_PKEY_TLS1_PRF(3)>
+L<EVP_PKEY_CTX_set_hkdf_md(3)>, L<EVP_PKEY_CTX_set_tls1_prf_md(3)>
 
 =head1 COPYRIGHT
 

@@ -15,6 +15,7 @@ B<openssl> B<ciphers>
 [B<-tls1>]
 [B<-tls1_1>]
 [B<-tls1_2>]
+[B<-tls1_3>]
 [B<-s>]
 [B<-psk>]
 [B<-srp>]
@@ -27,7 +28,7 @@ The B<ciphers> command converts textual OpenSSL cipher lists into ordered
 SSL cipher preference lists. It can be used as a test tool to determine
 the appropriate cipherlist.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
@@ -68,6 +69,11 @@ L<SSL_CIPHER_description(3)>.
 =item B<-V>
 
 Like B<-v>, but include the official cipher suite values in hex.
+
+=item B<-tls1_3>
+
+In combination with the B<-s> option, list the ciphers which would be used if
+TLSv1.3 were negotiated.
 
 =item B<-tls1_2>
 
@@ -711,7 +717,7 @@ Set security level to 2 and display all ciphers consistent with level 2:
 
 =head1 SEE ALSO
 
-L<s_client(1)>, L<s_server(1)>, L<ssl(3)>
+L<s_client(1)>, L<s_server(1)>, L<ssl(7)>
 
 =head1 HISTORY
 

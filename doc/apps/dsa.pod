@@ -37,7 +37,7 @@ forms and their components printed out. B<Note> This command uses the
 traditional SSLeay compatible format for private key encryption: newer
 applications should use the more secure PKCS#8 format using the B<pkcs8>
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

@@ -104,7 +104,7 @@ B<openssl> B<cms>
 The B<cms> command handles S/MIME v3.1 mail. It can encrypt, decrypt, sign and
 verify, compress and uncompress S/MIME messages.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 There are fourteen operation options that set the type of operation to be
 performed. The meaning of the other options varies according to the operation

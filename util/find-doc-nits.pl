@@ -22,8 +22,8 @@ my $OUT;
 
 my %mandatory_sections =
     ( '*'    => [ 'NAME', 'DESCRIPTION', 'COPYRIGHT' ],
-      1      => [ 'SYNOPSIS', '(COMMAND\s+)?OPTIONS' ],
-      3      => [ 'SYNOPSIS', 'RETURN\s+VALUES' ],
+      1      => [ 'SYNOPSIS', 'OPTIONS' ],
+      3      => [ 'SYNOPSIS', 'RETURN VALUES' ],
       5      => [ ],
       7      => [ ] );
 my %default_sections =
@@ -162,7 +162,7 @@ sub check()
     }
 
     foreach ((@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}})) {
-        print "$id doesn't have a head1 section matching $_\n"
+        print "$id: missing $_ head1 section\n"
             if $contents !~ /^=head1\s+${_}\s*$/m;
     }
 
