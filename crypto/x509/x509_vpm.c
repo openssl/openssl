@@ -289,6 +289,17 @@ unsigned long X509_VERIFY_PARAM_get_flags(X509_VERIFY_PARAM *param)
     return param->flags;
 }
 
+uint32_t X509_VERIFY_PARAM_get_inh_flags(const X509_VERIFY_PARAM *param)
+{
+    return param->inh_flags;
+}
+
+int X509_VERIFY_PARAM_set_inh_flags(X509_VERIFY_PARAM *param, uint32_t flags)
+{
+    param->inh_flags = flags;
+    return 1;
+}
+
 int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose)
 {
     return X509_PURPOSE_set(&param->purpose, purpose);
