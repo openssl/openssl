@@ -1,0 +1,138 @@
+=pod
+
+=head1 NAME
+
+OSSL_STORE_CTX, OSSL_STORE_post_process_info_fn, OSSL_STORE_open,
+OSSL_STORE_ctrl, OSSL_STORE_load, OSSL_STORE_eof, OSSL_STORE_error,
+OSSL_STORE_close - Types and functions to read objects from a URI
+
+=head1 SYNOPSIS
+
+ #include <openssl/store.h>
+ 
+ typedef struct ossl_store_ctx_st OSSL_STORE_CTX;
+
+ typedef OSSL_STORE_INFO *(*OSSL_STORE_post_process_info_fn)(OSSL_STORE_INFO *,
+                                                             void *);
+
+ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
+                                 void *ui_data,
+                                 OSSL_STORE_post_process_info_fn post_process,
+                                 void *post_process_data);
+ int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ... /* args */);
+ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx);
+ int OSSL_STORE_eof(OSSL_STORE_CTX *ctx);
+ int OSSL_STORE_error(OSSL_STORE_CTX *ctx);
+ int OSSL_STORE_close(OSSL_STORE_CTX *ctx);
+
+=head1 DESCRIPTION
+
+These functions help the application to fetch supported objects (see
+L<OSSL_STORE_INFO(3)/SUPPORTED OBJECTS> for information on which those are)
+from a given URI (see L</SUPPORTED SCHEMES> for more information on
+the supported URI schemes).
+The general method to do so is to "open" the URI using OSSL_STORE_open(),
+read each available and supported object using OSSL_STORE_load() as long as
+OSSL_STORE_eof() hasn't been reached, and finish it off with OSSL_STORE_close().
+
+The retrieved information is stored in a B<OSSL_STORE_INFO>, which is further
+described in L<OSSL_STORE_INFO(3)>.
+
+=head2 Types
+
+B<OSSL_STORE_CTX> is a context variable that holds all the internal
+information for OSSL_STORE_open(), OSSL_STORE_load(), OSSL_STORE_eof() and
+OSSL_STORE_close() to work together.
+
+=head2 Functions
+
+OSSL_STORE_open() takes a uri or path B<uri>, password UI method
+B<ui_method> with associated data B<ui_data>, and post processing
+callback B<post_process> with associated data B<post_process_data>,
+opens a channel to the data located at that URI and returns a
+B<OSSL_STORE_CTX> with all necessary internal information.
+The given B<ui_method> and B<ui_data_data> will be reused by all
+functions that use B<OSSL_STORE_CTX> when interaction is needed.
+The given B<post_process> and B<post_process_data> will be reused by
+OSSL_STORE_load() to manipulate or drop the value to be returned.
+
+OSSL_STORE_ctrl() takes a B<OSSL_STORE_CTX>, and command number B<cmd> and
+more arguments not specified here.
+The available command numbers and arguments they each take depends on
+the loader that's used and is documented together with that loader.
+
+OSSL_STORE_load() takes a B<OSSL_STORE_CTX>, tries to load the next available
+object and return it wrapped with  B<OSSL_STORE_INFO>.
+
+OSSL_STORE_eof() takes a B<OSSL_STORE_CTX> and checks if we've reached the end
+of data.
+
+OSSL_STORE_error() takes a B<OSSL_STORE_CTX> and checks if an error occured in
+the last OSSL_STORE_load() call.
+
+OSSL_STORE_close() takes a B<OSSL_STORE_CTX>, closes the channel that was opened
+by OSSL_STORE_open() and frees all other information that was stored in the
+B<OSSL_STORE_CTX>, as well as the B<OSSL_STORE_CTX> itself.
+
+=head1 SUPPORTED SCHEMES
+
+The basic supported scheme is B<file:>.
+Any other scheme can be added dynamically, using
+OSSL_STORE_register_loader().
+
+=head1 NOTES
+
+When unsure whether a given string contains a simple file or directory
+reference, or if it's a full blown URI, the question is how to figure
+that out.
+One way is to try OSSL_STORE_open_file() and if that fails, try
+OSSL_STORE_open().
+The other way is the other way around.
+Either way you choose, there are corner cases,
+F<file:/foo/bar/cookie.txt> might very will be a simple file reference
+on a system that supports the notion of volumes.
+
+This manual won't tell you which way is better, that's up to each
+application developer to decide on their own.
+However, there are some tools that can be used together with
+OSSL_STORE_open() to determine if any failure is caused by an unparsable
+URI, or if it's a different error (such as memory allocation
+failures); if the URI was parsable but the scheme unregistered, the
+top error will have the reason C<OSSL_STORE_R_UNREGISTERED_SCHEME>.
+If you decide to use OSSL_STORE_open() with OSSL_STORE_open_file() as a
+fallback, those reasons can be good tools to decide if the fallback
+should be taken or not.
+
+=head1 RETURN VALUES
+
+OSSL_STORE_open() and OSSL_STORE_load() return a pointer to a B<OSSL_STORE_CTX>
+on success, or B<NULL> on failure.
+
+OSSL_STORE_eof() returns 1 if the end of data has been reached, otherwise
+0.
+
+OSSL_STORE_error() returns 1 if an error occured in a OSSL_STORE_load() call,
+otherwise 0.
+
+OSSL_STORE_ctrl() and OSSL_STORE_close() returns 1 on success, or 0 on failure.
+
+=head1 SEE ALSO
+
+L<ossl_store(7)>, L<OSSL_STORE_INFO(3)>, L<OSSL_STORE_register_loader(3)>
+
+=head1 HISTORY
+
+OSSL_STORE_CTX(), OSSL_STORE_post_process_info_fn(), OSSL_STORE_open(),
+OSSL_STORE_ctrl(), OSSL_STORE_load(), OSSL_STORE_eof() and OSSL_STORE_close()
+were added to OpenSSL 1.1.1.
+
+=head1 COPYRIGHT
+
+Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
