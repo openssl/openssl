@@ -2,17 +2,33 @@
 
 =head1 NAME
 
-X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags, X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose, X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth, X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_auth_level, X509_VERIFY_PARAM_get_auth_level, X509_VERIFY_PARAM_set_time, X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies, X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host, X509_VERIFY_PARAM_set_hostflags, X509_VERIFY_PARAM_get0_peername, X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_set1_ip_asc - X509 verification parameters
+X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags,
+X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags,
+X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose,
+X509_VERIFY_PARAM_get_inh_flags, X509_VERIFY_PARAM_set_inh_flags,
+X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth,
+X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_auth_level,
+X509_VERIFY_PARAM_get_auth_level, X509_VERIFY_PARAM_set_time,
+X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies,
+X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host,
+X509_VERIFY_PARAM_set_hostflags, X509_VERIFY_PARAM_get0_peername,
+X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip,
+X509_VERIFY_PARAM_set1_ip_asc
+- X509 verification parameters
 
 =head1 SYNOPSIS
 
  #include <openssl/x509_vfy.h>
 
  int X509_VERIFY_PARAM_set_flags(X509_VERIFY_PARAM *param,
-                                        unsigned long flags);
+                                 unsigned long flags);
  int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param,
-                                        unsigned long flags);
+                                   unsigned long flags);
  unsigned long X509_VERIFY_PARAM_get_flags(X509_VERIFY_PARAM *param);
+
+ int X509_VERIFY_PARAM_set_inh_flags(X509_VERIFY_PARAM *param,
+                                     uint32_t flags);
+ uint32_t X509_VERIFY_PARAM_get_inh_flags(const X509_VERIFY_PARAM *param);
 
  int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose);
  int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust);
@@ -54,6 +70,11 @@ it with B<flags>. See the B<VERIFICATION FLAGS> section for a complete
 description of values the B<flags> parameter can take.
 
 X509_VERIFY_PARAM_get_flags() returns the flags in B<param>.
+
+X509_VERIFY_PARAM_get_inh_flags() returns the inheritance flags in B<param>
+which specifies how verification flags are copied from one structure to
+another. X509_VERIFY_PARAM_set_inh_flags() sets the inheritance flags.
+See the B<INHERITANCE FLAGS> section for a description of these bits.
 
 X509_VERIFY_PARAM_clear_flags() clears the flags B<flags> in B<param>.
 
@@ -154,6 +175,7 @@ IPv6.  The condensed "::" notation is supported for IPv6 addresses.
 =head1 RETURN VALUES
 
 X509_VERIFY_PARAM_set_flags(), X509_VERIFY_PARAM_clear_flags(),
+X509_VERIFY_PARAM_set_inh_flags(),
 X509_VERIFY_PARAM_set_purpose(), X509_VERIFY_PARAM_set_trust(),
 X509_VERIFY_PARAM_add0_policy() X509_VERIFY_PARAM_set1_policies(),
 X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(),
@@ -162,6 +184,8 @@ X509_VERIFY_PARAM_set1_ip_asc() return 1 for success and 0 for
 failure.
 
 X509_VERIFY_PARAM_get_flags() returns the current verification flags.
+
+X509_VERIFY_PARAM_get_inh_flags() returns the current inheritance flags.
 
 X509_VERIFY_PARAM_set_time() and X509_VERIFY_PARAM_set_depth() do not return
 values.
@@ -241,6 +265,28 @@ has no effect.
 The B<X509_V_FLAG_NO_CHECK_TIME> flag suppresses checking the validity period
 of certificates and CRLs against the current time. If X509_VERIFY_PARAM_set_time()
 is used to specify a verification time, the check is not suppressed.
+
+=head1 INHERITANCE FLAGS
+
+These flags spevify how parameters are "inherited" from one structure to
+another.
+
+If B<X509_VP_FLAG_ONCE> is set then the current setting is zeroed
+after the next call.
+
+If B<X509_VP_FLAG_LOCKED> is set then no values are copied.  This overrides
+all of the following flags.
+
+If B<X509_VP_FLAG_DEFAULT> is set then anything set in the source is copied
+to the destination. Effectively the values in "to" become default values
+which will be used only if nothing new is set in "from".  This is the
+default.
+
+If B<X509_VP_FLAG_OVERWRITE> is set then all value are copied across whether
+they are set or not. Flags is still Ored though.
+
+If B<X509_VP_FLAG_RESET_FLAGS> is set then the flags value is copied instead
+of ORed.
 
 =head1 NOTES
 
