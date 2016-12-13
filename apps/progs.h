@@ -68,6 +68,7 @@ extern int smime_main(int argc, char *argv[]);
 extern int speed_main(int argc, char *argv[]);
 extern int spkac_main(int argc, char *argv[]);
 extern int srp_main(int argc, char *argv[]);
+extern int storeutl_main(int argc, char *argv[]);
 extern int ts_main(int argc, char *argv[]);
 extern int verify_main(int argc, char *argv[]);
 extern int version_main(int argc, char *argv[]);
@@ -117,6 +118,7 @@ extern const OPTIONS smime_options[];
 extern const OPTIONS speed_options[];
 extern const OPTIONS spkac_options[];
 extern const OPTIONS srp_options[];
+extern const OPTIONS storeutl_options[];
 extern const OPTIONS ts_options[];
 extern const OPTIONS verify_options[];
 extern const OPTIONS version_options[];
@@ -202,6 +204,7 @@ static FUNCTION functions[] = {
 #ifndef OPENSSL_NO_SRP
     {FT_general, "srp", srp_main, srp_options},
 #endif
+    {FT_general, "storeutl", storeutl_main, storeutl_options},
 #ifndef OPENSSL_NO_TS
     {FT_general, "ts", ts_main, ts_options},
 #endif

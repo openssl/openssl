@@ -91,6 +91,7 @@ extern "C" {
 # define BIO_CTRL_SET_CALLBACK   14/* opt - set callback function */
 # define BIO_CTRL_GET_CALLBACK   15/* opt - set callback function */
 
+# define BIO_CTRL_PEEK           29/* BIO_f_buffer special */
 # define BIO_CTRL_SET_FILENAME   30/* BIO_s_file special */
 
 /* dgram BIO stuff */
@@ -489,6 +490,7 @@ size_t BIO_ctrl_wpending(BIO *b);
 
 /* For the BIO_f_buffer() type */
 # define BIO_buffer_get_num_lines(b) BIO_ctrl(b,BIO_CTRL_GET,0,NULL)
+# define BIO_buffer_peek(b,s,l) BIO_ctrl(b,BIO_CTRL_PEEK,(l),(s))
 
 /* For BIO_s_bio() */
 # define BIO_set_write_buf_size(b,size) (int)BIO_ctrl(b,BIO_C_SET_WRITE_BUF_SIZE,size,NULL)
