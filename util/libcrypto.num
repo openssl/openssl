@@ -4218,5 +4218,5 @@ BIO_meth_get_write_ex                   4168	1_1_1	EXIST::FUNCTION:
 BIO_meth_set_write_ex                   4169	1_1_1	EXIST::FUNCTION:
 DSO_pathbyaddr                          4170	1_1_0c	EXIST::FUNCTION:
 DSO_dsobyaddr                           4171	1_1_0c	EXIST::FUNCTION:
-CT_POLICY_EVAL_CTX_get_time             4172	1_1_1	EXIST::FUNCTION:CT
-CT_POLICY_EVAL_CTX_set_time             4173	1_1_1	EXIST::FUNCTION:CT
+CT_POLICY_EVAL_CTX_get_time             4172	1_1_0d	EXIST::FUNCTION:CT
+CT_POLICY_EVAL_CTX_set_time             4173	1_1_0d	EXIST::FUNCTION:CT
