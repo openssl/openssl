@@ -1880,14 +1880,15 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
 
         if (SSL_USE_SIGALGS(s)) {
-            const unsigned char *sigalgs;
+            unsigned int sigalg;
             int rv;
-            if (!PACKET_get_bytes(pkt, &sigalgs, 2)) {
+
+            if (!PACKET_get_net_2(pkt, &sigalg)) {
                 al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
                 goto err;
             }
-            rv = tls12_check_peer_sigalg(&md, s, sigalgs, pkey);
+            rv = tls12_check_peer_sigalg(&md, s, sigalg, pkey);
             if (rv == -1) {
                 al = SSL_AD_INTERNAL_ERROR;
                 goto err;
@@ -2026,8 +2027,9 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
         s->s3->tmp.ctype[i] = data[i];
 
     if (SSL_USE_SIGALGS(s)) {
-        if (!PACKET_get_net_2(pkt, &list_len)
-            || !PACKET_get_bytes(pkt, &data, list_len)) {
+        PACKET sigalgs;
+
+        if (!PACKET_get_length_prefixed_2(pkt, &sigalgs)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                    SSL_R_LENGTH_MISMATCH);
@@ -2039,7 +2041,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
             s->s3->tmp.md[i] = NULL;
             s->s3->tmp.valid_flags[i] = 0;
         }
-        if ((list_len & 1) || !tls1_save_sigalgs(s, data, list_len)) {
+        if (!tls1_save_sigalgs(s, &sigalgs)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                    SSL_R_SIGNATURE_ALGORITHMS_ERROR);

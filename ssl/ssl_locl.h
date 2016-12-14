@@ -1243,7 +1243,7 @@ typedef struct ssl3_state_st {
          * algorithms extension for server or as part of a certificate
          * request for client.
          */
-        unsigned char *peer_sigalgs;
+        unsigned int *peer_sigalgs;
         /* Size of above array */
         size_t peer_sigalgslen;
         /* Digest peer uses for signing */
@@ -1512,7 +1512,7 @@ typedef struct cert_st {
      * the client hello as the supported signature algorithms extension. For
      * servers it represents the signature algorithms we are willing to use.
      */
-    unsigned char *conf_sigalgs;
+    unsigned int *conf_sigalgs;
     /* Size of above array */
     size_t conf_sigalgslen;
     /*
@@ -1522,7 +1522,7 @@ typedef struct cert_st {
      * represents the signature algortithms we are willing to use for client
      * authentication.
      */
-    unsigned char *client_sigalgs;
+    unsigned int *client_sigalgs;
     /* Size of above array */
     size_t client_sigalgslen;
     /*
@@ -1682,6 +1682,30 @@ typedef enum tlsext_index_en {
  * set
  */
 #define TLSEXT_STATUSTYPE_nothing  -1
+
+/* Sigalgs values */
+#define TLSEXT_SIGALG_ecdsa_secp256r1_sha256                    0x0403
+#define TLSEXT_SIGALG_ecdsa_secp384r1_sha384                    0x0503
+#define TLSEXT_SIGALG_ecdsa_secp521r1_sha512                    0x0603
+#define TLSEXT_SIGALG_ecdsa_sha1                                0x0203
+#define TLSEXT_SIGALG_rsa_pss_sha256                            0x0804
+#define TLSEXT_SIGALG_rsa_pss_sha384                            0x0805
+#define TLSEXT_SIGALG_rsa_pss_sha512                            0x0806
+#define TLSEXT_SIGALG_rsa_pkcs1_sha256                          0x0401
+#define TLSEXT_SIGALG_rsa_pkcs1_sha384                          0x0501
+#define TLSEXT_SIGALG_rsa_pkcs1_sha512                          0x0601
+#define TLSEXT_SIGALG_rsa_pkcs1_sha1                            0x0201
+#define TLSEXT_SIGALG_dsa_sha256                                0x0402
+#define TLSEXT_SIGALG_dsa_sha384                                0x0502
+#define TLSEXT_SIGALG_dsa_sha512                                0x0602
+#define TLSEXT_SIGALG_dsa_sha1                                  0x0202
+#define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256       0xeeee
+#define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512       0xefef
+#define TLSEXT_SIGALG_gostr34102001_gostr3411                   0xeded
+
+/* A dummy signature value not valid for TLSv1.2 signature algs */
+#define TLSEXT_signature_rsa_pss                                0x0101
+
 
 #define MAX_COMPRESSIONS_SIZE   255
 
@@ -2152,12 +2176,12 @@ __owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
-                              const unsigned char *psig, size_t psiglen);
-__owur int tls1_save_sigalgs(SSL *s, const unsigned char *data, size_t dsize);
+                              const unsigned int *psig, size_t psiglen);
+__owur int tls1_save_sigalgs(SSL *s, PACKET *pkt);
 __owur int tls1_process_sigalgs(SSL *s);
-__owur size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs);
-__owur int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
-                                   const unsigned char *sig, EVP_PKEY *pkey);
+__owur size_t tls12_get_psigalgs(SSL *s, const unsigned int **psigs);
+__owur int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
+                                   EVP_PKEY *pkey);
 void ssl_set_client_disabled(SSL *s);
 __owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op);
 

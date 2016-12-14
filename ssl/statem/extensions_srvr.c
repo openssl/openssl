@@ -204,15 +204,13 @@ int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
     PACKET supported_sig_algs;
 
     if (!PACKET_as_length_prefixed_2(pkt, &supported_sig_algs)
-            || (PACKET_remaining(&supported_sig_algs) % 2) != 0
             || PACKET_remaining(&supported_sig_algs) == 0) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
-    if (!s->hit && !tls1_save_sigalgs(s, PACKET_data(&supported_sig_algs),
-                                      PACKET_remaining(&supported_sig_algs))) {
-        *al = TLS1_AD_INTERNAL_ERROR;
+    if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs)) {
+        *al = TLS1_AD_DECODE_ERROR;
         return 0;
     }
 
