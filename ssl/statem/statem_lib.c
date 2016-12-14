@@ -166,7 +166,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    if (SSL_USE_SIGALGS(s) && !tls12_get_sigandhash(pkt, pkey, md)) {
+    if (SSL_USE_SIGALGS(s) && !tls12_get_sigandhash(s, pkt, pkey, md)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
