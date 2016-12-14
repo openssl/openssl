@@ -2292,8 +2292,9 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
     }
 
     if (SSL_USE_SIGALGS(s)) {
-        const unsigned char *psigs;
+        const unsigned int *psigs;
         size_t nl = tls12_get_psigalgs(s, &psigs);
+
         if (!WPACKET_start_sub_packet_u16(pkt)
                 || !tls12_copy_sigalgs(s, pkt, psigs, nl)
                 || !WPACKET_close(pkt)) {

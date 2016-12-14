@@ -238,7 +238,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
 MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 {
     EVP_PKEY *pkey = NULL;
-    const unsigned char *sig, *data;
+    const unsigned char *data;
 #ifndef OPENSSL_NO_GOST
     unsigned char *gost_data = NULL;
 #endif
@@ -284,12 +284,13 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     {
         if (SSL_USE_SIGALGS(s)) {
             int rv;
+            unsigned int sigalg;
 
-            if (!PACKET_get_bytes(pkt, &sig, 2)) {
+            if (!PACKET_get_net_2(pkt, &sigalg)) {
                 al = SSL_AD_DECODE_ERROR;
                 goto f_err;
             }
-            rv = tls12_check_peer_sigalg(&md, s, sig, pkey);
+            rv = tls12_check_peer_sigalg(&md, s, sigalg, pkey);
             if (rv == -1) {
                 goto f_err;
             } else if (rv == 0) {
