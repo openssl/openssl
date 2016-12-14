@@ -2140,9 +2140,6 @@ __owur  int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
 
 void ssl_set_default_md(SSL *s);
 __owur int tls1_set_server_sigalgs(SSL *s);
-__owur RAW_EXTENSION *tls_get_extension_by_type(RAW_EXTENSION *exts,
-                                                size_t numexts,
-                                                unsigned int type);
 __owur int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                                       SSL_SESSION **ret);
 __owur int tls_use_ticket(SSL *s);

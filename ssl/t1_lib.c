@@ -1046,29 +1046,6 @@ int tls1_set_server_sigalgs(SSL *s)
     return 0;
 }
 
-/*
- * Given a list of extensions that we collected earlier, find one of a given
- * type and return it.
- *
- * |exts| is the set of extensions previously collected.
- * |numexts| is the number of extensions that we have.
- * |type| the type of the extension that we are looking for.
- *
- * Returns a pointer to the found RAW_EXTENSION data, or NULL if not found.
- */
-RAW_EXTENSION *tls_get_extension_by_type(RAW_EXTENSION *exts, size_t numexts,
-                                         unsigned int type)
-{
-    size_t loop;
-
-    for (loop = 0; loop < numexts; loop++) {
-        if (exts[loop].type == type)
-            return &exts[loop];
-    }
-
-    return NULL;
-}
-
 /*-
  * Gets the ticket information supplied by the client if any.
  *
