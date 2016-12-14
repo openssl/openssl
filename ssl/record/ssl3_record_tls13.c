@@ -80,6 +80,17 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         iv[offset + loop] = staticiv[offset + loop] ^ seq[loop];
 
+    /* Increment the sequence counter */
+    for (loop = SEQ_NUM_SIZE; loop > 0; loop--) {
+        ++seq[loop - 1];
+        if (seq[loop - 1] != 0)
+            break;
+    }
+    if (loop == 0) {
+        /* Sequence has wrapped */
+        return -1;
+    }
+
     /* TODO(size_t): lenu/lenf should be a size_t but EVP doesn't support it */
     if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, send) <= 0
             || EVP_CipherUpdate(ctx, rec->data, &lenu, rec->input,
