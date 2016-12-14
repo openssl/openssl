@@ -226,7 +226,7 @@ int tls_construct_ctos_sig_algs(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                 int *al)
 {
     size_t salglen;
-    const unsigned char *salg;
+    const unsigned int *salg;
 
     if (!SSL_CLIENT_USE_SIGALGS(s))
         return 1;
