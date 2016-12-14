@@ -1287,44 +1287,6 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     return ret;
 }
 
-/* Tables to translate from NIDs to TLS v1.2 ids */
-
-typedef struct {
-    int nid;
-    int id;
-} tls12_lookup;
-
-static const tls12_lookup tls12_md[] = {
-    {NID_md5, TLSEXT_hash_md5},
-    {NID_sha1, TLSEXT_hash_sha1},
-    {NID_sha224, TLSEXT_hash_sha224},
-    {NID_sha256, TLSEXT_hash_sha256},
-    {NID_sha384, TLSEXT_hash_sha384},
-    {NID_sha512, TLSEXT_hash_sha512},
-    {NID_id_GostR3411_94, TLSEXT_hash_gostr3411},
-    {NID_id_GostR3411_2012_256, TLSEXT_hash_gostr34112012_256},
-    {NID_id_GostR3411_2012_512, TLSEXT_hash_gostr34112012_512},
-};
-
-static const tls12_lookup tls12_sig[] = {
-    {EVP_PKEY_RSA, TLSEXT_signature_rsa},
-    {EVP_PKEY_DSA, TLSEXT_signature_dsa},
-    {EVP_PKEY_EC, TLSEXT_signature_ecdsa},
-    {NID_id_GostR3410_2001, TLSEXT_signature_gostr34102001},
-    {NID_id_GostR3410_2012_256, TLSEXT_signature_gostr34102012_256},
-    {NID_id_GostR3410_2012_512, TLSEXT_signature_gostr34102012_512}
-};
-
-static int tls12_find_id(int nid, const tls12_lookup *table, size_t tlen)
-{
-    size_t i;
-    for (i = 0; i < tlen; i++) {
-        if (table[i].nid == nid)
-            return table[i].id;
-    }
-    return -1;
-}
-
 int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
                          const EVP_MD *md)
 {
@@ -1350,11 +1312,6 @@ int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
     }
 
     return 0;
-}
-
-int tls12_get_sigid(const EVP_PKEY *pk)
-{
-    return tls12_find_id(EVP_PKEY_id(pk), tls12_sig, OSSL_NELEM(tls12_sig));
 }
 
 typedef struct {
@@ -1829,8 +1786,8 @@ int tls1_set_sigalgs_list(CERT *c, const char *str, int client)
 int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 {
     unsigned int *sigalgs, *sptr;
-    int rhash, rsign;
     size_t i;
+
     if (salglen & 1)
         return 0;
     sigalgs = OPENSSL_malloc(salglen * sizeof(*sigalgs));
@@ -1841,13 +1798,21 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
      * RSA-PKCS1. For now we only allow setting of RSA-PKCS1
      */
     for (i = 0, sptr = sigalgs; i < salglen; i += 2) {
-        rhash = tls12_find_id(*psig_nids++, tls12_md, OSSL_NELEM(tls12_md));
-        rsign = tls12_find_id(*psig_nids++, tls12_sig, OSSL_NELEM(tls12_sig));
+        size_t j;
+        SIGALG_LOOKUP *curr;
+        int md_id = *psig_nids++;
+        int sig_id = *psig_nids++;
 
-        if (rhash == -1 || rsign == -1)
+        for (j = 0, curr = sigalg_lookup_tbl; j < OSSL_NELEM(sigalg_lookup_tbl);
+             j++, curr++) {
+            if (curr->hash == md_id && curr->sig == sig_id && !curr->notls12) {
+                *sptr++ = curr->sigalg;
+                break;
+            }
+        }
+
+        if (j == OSSL_NELEM(sigalg_lookup_tbl))
             goto err;
-        *sptr++ = rhash;
-        *sptr++ = rsign;
     }
 
     if (client) {
