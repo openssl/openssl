@@ -101,6 +101,9 @@ and RORX;
 
 =item bit #64+19 denoting availability of ADCX and ADOX instructions;
 
+=item bit #64+21 denoting availability of VPMADD52[LH]UQ instructions,
+a.k.a. AVX512IFMA extension;
+
 =item bit #64+29 denoting availability of SHA extension;
 
 =item bit #64+30 denoting availability of AVX512BW extension;
@@ -125,7 +128,23 @@ requirements are summarized in below table:
    AVX         | 2.19   | 2.09   | 3.0
    AVX2        | 2.22   | 2.10   | 3.1
    ADCX/ADOX   | 2.23   | 2.10   | 3.3
-   AVX512      | 2.25   | 2.11.8 | 3.6
+   AVX512      | 2.25   | 2.11.8 | see NOTES
+   AVX512IFMA  | 2.26   | 2.11.8 | see NOTES
+
+=head1 NOTES
+
+Even though AVX512 support was implemented in llvm 3.6, compilation of
+assembly modules apparently requires explicit -march flag. But then
+compiler generates processor-specific code, which in turn contradicts
+the mere idea of run-time switch execution facilitated by the variable
+in question. Till the limitation is lifted, it's possible to work around
+the problem by making build procedure use following script:
+
+   #!/bin/sh
+   exec clang -no-integrated-as "$@"
+
+instead of real clang. In which case it doesn't matter which clang
+version is used, as it is GNU assembler version that will be checked.
 
 =head1 COPYRIGHT
 
