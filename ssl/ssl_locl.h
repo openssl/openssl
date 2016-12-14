@@ -1571,9 +1571,8 @@ struct tls_sigalgs_st {
     int sign_nid;
     /* Combined hash and signature NID */
     int signandhash_nid;
-    /* Raw values used in extension */
-    unsigned char rsign;
-    unsigned char rhash;
+    /* Raw value used in extension */
+    unsigned int rsigalg;
 };
 
 # define FP_ICC  (int (*)(const void *,const void *))
@@ -2144,10 +2143,10 @@ __owur int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                                       SSL_SESSION **ret);
 __owur int tls_use_ticket(SSL *s);
 
-__owur int tls12_get_sigandhash(WPACKET *pkt, const EVP_PKEY *pk,
+__owur int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
                                 const EVP_MD *md);
 __owur int tls12_get_sigid(const EVP_PKEY *pk);
-__owur const EVP_MD *tls12_get_hash(unsigned char hash_alg);
+__owur const EVP_MD *tls12_get_hash(int hash_nid);
 void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op);
 
 __owur int tls1_set_sigalgs_list(CERT *c, const char *str, int client);

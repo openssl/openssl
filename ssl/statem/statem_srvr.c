@@ -2222,7 +2222,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             }
             /* send signature algorithm */
             if (SSL_USE_SIGALGS(s)) {
-                if (!tls12_get_sigandhash(pkt, pkey, md)) {
+                if (!tls12_get_sigandhash(s, pkt, pkey, md)) {
                     /* Should never happen */
                     SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                            ERR_R_INTERNAL_ERROR);
