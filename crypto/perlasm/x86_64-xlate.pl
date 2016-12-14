@@ -130,7 +130,7 @@ my %globals;
 		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /^p/ && $' !~ /^(ush|op|insrw)/) { # SSEn
 		$self->{sz} = "";
-	    } elsif ($self->{op} =~ /^v/) { # VEX
+	    } elsif ($self->{op} =~ /^[vk]/) { # VEX or k* such as kmov
 		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /mov[dq]/ && $$line =~ /%xmm/) {
 		$self->{sz} = "";
@@ -229,12 +229,13 @@ my %globals;
 	my	$ret;
 
 	# optional * ----vvv--- appears in indirect jmp/call
-	if ($$line =~ /^(\*?)([^\(,]*)\(([%\w,]+)\)/) {
+	if ($$line =~ /^(\*?)([^\(,]*)\(([%\w,]+)\)((?:{[^}]+})*)/) {
 	    bless $self, $class;
 	    $self->{asterisk} = $1;
 	    $self->{label} = $2;
 	    ($self->{base},$self->{index},$self->{scale})=split(/,/,$3);
 	    $self->{scale} = 1 if (!defined($self->{scale}));
+	    $self->{pred} = $4;
 	    $ret = $self;
 	    $$line = substr($$line,@+[0]); $$line =~ s/^\s+//;
 
@@ -284,12 +285,14 @@ my %globals;
 	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour eq "mingw64");
 
 	    if (defined($self->{index})) {
-		sprintf "%s%s(%s,%%%s,%d)",$self->{asterisk},
-					$self->{label},
+		sprintf "%s%s(%s,%%%s,%d)%s",
+					$self->{asterisk},$self->{label},
 					$self->{base}?"%$self->{base}":"",
-					$self->{index},$self->{scale};
+					$self->{index},$self->{scale},
+					$self->{pred};
 	    } else {
-		sprintf "%s%s(%%%s)",	$self->{asterisk},$self->{label},$self->{base};
+		sprintf "%s%s(%%%s)%s",	$self->{asterisk},$self->{label},
+					$self->{base},$self->{pred};
 	    }
 	} else {
 	    my %szmap = (	b=>"BYTE$PTR",  w=>"WORD$PTR",
@@ -308,17 +311,20 @@ my %globals;
 	    ($mnemonic =~ /^vpbroadcast([qdwb])$/)	&& ($sz=$1)  ||
 	    ($mnemonic =~ /^v(?!perm)[a-z]+[fi]128$/)	&& ($sz="x");
 
+	    $self->{pred}  =~ s/%(k[0-7])/$1/;
+
 	    if (defined($self->{index})) {
-		sprintf "%s[%s%s*%d%s]",$szmap{$sz},
+		sprintf "%s[%s%s*%d%s]%s",$szmap{$sz},
 					$self->{label}?"$self->{label}+":"",
 					$self->{index},$self->{scale},
-					$self->{base}?"+$self->{base}":"";
+					$self->{base}?"+$self->{base}":"",
+					$self->{pred};
 	    } elsif ($self->{base} eq "rip") {
 		sprintf "%s[%s]",$szmap{$sz},$self->{label};
 	    } else {
-		sprintf "%s[%s%s]",$szmap{$sz},
+		sprintf "%s[%s%s]%s",	$szmap{$sz},
 					$self->{label}?"$self->{label}+":"",
-					$self->{base};
+					$self->{base},$self->{pred};
 	    }
 	}
     }
@@ -330,10 +336,11 @@ my %globals;
 	my	$ret;
 
 	# optional * ----vvv--- appears in indirect jmp/call
-	if ($$line =~ /^(\*?)%(\w+)/) {
+	if ($$line =~ /^(\*?)%(\w+)((?:{[^}]+})*)/) {
 	    bless $self,$class;
 	    $self->{asterisk} = $1;
 	    $self->{value} = $2;
+	    $self->{pred} = $3;
 	    $opcode->size($self->size());
 	    $ret = $self;
 	    $$line = substr($$line,@+[0]); $$line =~ s/^\s+//;
@@ -357,8 +364,11 @@ my %globals;
     }
     sub out {
     	my $self = shift;
-	if ($gas)	{ sprintf "%s%%%s",$self->{asterisk},$self->{value}; }
-	else		{ $self->{value}; }
+	if ($gas)	{ sprintf "%s%%%s%s",	$self->{asterisk},
+						$self->{value},
+						$self->{pred}; }
+	else		{ $self->{pred} =~ s/%(k[0-7])/$1/;
+			  $self->{value}.$self->{pred}; }
     }
 }
 { package label;	# pick up labels, which end with :
