@@ -66,7 +66,7 @@ if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 }
 
 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
-	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/) {
+	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)(?:\.([0-9]+))?/) {
 	$avx = ($1>=2.09) + ($1>=2.10) + ($1>=2.12);
 	$avx += 1 if ($1==2.11 && $2>=8);
 }
