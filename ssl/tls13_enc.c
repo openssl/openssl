@@ -330,7 +330,7 @@ int tls13_change_cipher_state(SSL *s, int which)
         if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
             finsecret = s->client_finished_secret;
-            finsecretlen = sizeof(s->client_finished_secret);
+            finsecretlen = EVP_MD_size(ssl_handshake_md(s));
             label = client_handshake_traffic;
             labellen = sizeof(client_handshake_traffic) - 1;
         } else {
@@ -342,7 +342,7 @@ int tls13_change_cipher_state(SSL *s, int which)
         if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
             finsecret = s->server_finished_secret;
-            finsecretlen = sizeof(s->server_finished_secret);
+            finsecretlen = EVP_MD_size(ssl_handshake_md(s));
             label = server_handshake_traffic;
             labellen = sizeof(server_handshake_traffic) - 1;
         } else {
