@@ -40,7 +40,10 @@ Configure for fuzzing:
             --with-fuzzer-lib=../../svn-work/Fuzzer/libFuzzer \
             -DPEDANTIC enable-asan enable-ubsan no-shared \
             -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
-	    -fsanitize-coverage=edge,indirect-calls,8bit-counters
+            -fsanitize-coverage=edge,indirect-calls,8bit-counters \
+            enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment enable-tls1_3 \
+            enable-weak-ssl-ciphers enable-rc5 enable-md2 \
+            enable-ssl3 enable-ssl3-method enable-nextprotoneg
     $ sudo apt-get install make
     $ LDCMD=clang++ make -j
     $ fuzz/helper.py $FUZZER
@@ -58,8 +61,13 @@ AFL
 Configure for fuzzing:
 
     $ sudo apt-get install afl-clang
-    $ CC=afl-clang-fast ./config enable-fuzz-afl no-shared
+    $ CC=afl-clang-fast ./config enable-fuzz-afl no-shared -DPEDANTIC \
+        enable-tls1_3 enable-weak-ssl-ciphers enable-rc5 enable-md2 \
+        enable-ssl3 enable-ssl3-method enable-nextprotoneg \
+        enable-ec_nistp_64_gcc_128
     $ make
+
+The following options can also be enabled: enable-asan, enable-ubsan, enable-msan
 
 Run one of the fuzzers:
 
