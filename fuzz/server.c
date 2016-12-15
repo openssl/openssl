@@ -258,6 +258,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     X509_free(cert);
 
     server = SSL_new(ctx);
+    ret = SSL_set_cipher_list(server, "ALL:eNULL:@SECLEVEL=0");
+    OPENSSL_assert(ret == 1);
     in = BIO_new(BIO_s_mem());
     out = BIO_new(BIO_s_mem());
     SSL_set_bio(server, in, out);
