@@ -963,7 +963,7 @@ static const unsigned char so[6765] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x1C,  /* [ 6753] OBJ_id_ct_xml */
 };
 
-#define NUM_NID 1061
+#define NUM_NID 1062
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2026,9 +2026,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-smime-ct-contentCollection", "id-smime-ct-contentCollection", NID_id_smime_ct_contentCollection, 11, &so[6731]},
     {"id-smime-ct-authEnvelopedData", "id-smime-ct-authEnvelopedData", NID_id_smime_ct_authEnvelopedData, 11, &so[6742]},
     {"id-ct-xml", "id-ct-xml", NID_id_ct_xml, 11, &so[6753]},
+    {"Poly1305", "poly1305", NID_poly1305},
 };
 
-#define NUM_SN 1052
+#define NUM_SN 1053
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2208,6 +2209,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      162,    /* "PBMAC1" */
      127,    /* "PKIX" */
      935,    /* "PSPECIFIED" */
+    1061,    /* "Poly1305" */
       98,    /* "RC2-40-CBC" */
      166,    /* "RC2-64-CBC" */
       37,    /* "RC2-CBC" */
@@ -3084,7 +3086,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      160,    /* "x509Crl" */
 };
 
-#define NUM_LN 1052
+#define NUM_LN 1053
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3866,6 +3868,7 @@ static const unsigned int ln_objs[NUM_LN] = {
       22,    /* "pkcs7-signedData" */
      151,    /* "pkcs8ShroudedKeyBag" */
       47,    /* "pkcs9" */
+    1061,    /* "poly1305" */
      862,    /* "postOfficeBox" */
      861,    /* "postalAddress" */
      661,    /* "postalCode" */
