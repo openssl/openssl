@@ -372,6 +372,12 @@ static int check_test_error(struct evp_test *t)
     func = ERR_func_error_string(err);
     reason = ERR_reason_error_string(err);
 
+    if (func == NULL && reason == NULL) {
+        fprintf(stderr, "Test line %d: expected error \"%s:%s\", no strings available.  Skipping...\n",
+                t->start_line, t->func, t->reason);
+        return 1;
+    }
+
     if (strcmp(func, t->func) == 0 && strcmp(reason, t->reason) == 0)
         return 1;
 
