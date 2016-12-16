@@ -870,7 +870,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     HANDSHAKE_EX_DATA server_ex_data, client_ex_data;
     CTX_DATA client_ctx_data, server_ctx_data, server2_ctx_data;
     HANDSHAKE_RESULT *ret = HANDSHAKE_RESULT_new();
-    int client_turn = 1;
+    int client_turn = 1, client_turn_count = 0;
     connect_phase_t phase = HANDSHAKE;
     handshake_status_t status = HANDSHAKE_RETRY;
     const unsigned char* tick = NULL;
@@ -959,6 +959,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
         switch (status) {
         case HANDSHAKE_SUCCESS:
+            client_turn_count = 0;
             phase = next_phase(test_ctx, phase);
             if (phase == CONNECTION_DONE) {
                 ret->result = SSL_TEST_SUCCESS;
@@ -984,6 +985,16 @@ static HANDSHAKE_RESULT *do_handshake_internal(
             ret->result = SSL_TEST_INTERNAL_ERROR;
             goto err;
         case HANDSHAKE_RETRY:
+            if (client_turn_count++ >= 2000) {
+                /*
+                 * At this point, there's been so many PEER_RETRY in a row
+                 * that it's likely both sides are stuck waiting for a read.
+                 * It's time to give up.
+                 */
+                ret->result = SSL_TEST_INTERNAL_ERROR;
+                goto err;
+            }
+
             /* Continue. */
             client_turn ^= 1;
             break;
