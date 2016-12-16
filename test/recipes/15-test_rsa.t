@@ -24,18 +24,23 @@ ok(run(test(["rsa_test"])), "running rsatest");
 
 ok(run(app([ 'openssl', 'rsa', '-check', '-in', srctop_file('test', 'testrsa.pem'), '-noout'])), "rsa -check");
 
- SKIP: {
-     skip "Skipping rsa conversion test", 3
-	 if disabled("rsa");
+SKIP: {
+    skip "Skipping rsa conversion test", 3
+        if disabled("rsa");
 
-     subtest 'rsa conversions -- private key' => sub {
-	 tconversion("rsa", srctop_file("test","testrsa.pem"));
-     };
-     subtest 'rsa conversions -- private key PKCS#8' => sub {
-	 tconversion("rsa", srctop_file("test","testrsa.pem"), "pkey");
-     };
-     subtest 'rsa conversions -- public key' => sub {
-	 tconversion("msb", srctop_file("test","testrsapub.pem"), "rsa",
-		     "-pubin", "-pubout");
-     };
+    subtest 'rsa conversions -- private key' => sub {
+        tconversion("rsa", srctop_file("test","testrsa.pem"));
+    };
+    subtest 'rsa conversions -- private key PKCS#8' => sub {
+        tconversion("rsa", srctop_file("test","testrsa.pem"), "pkey");
+    };
+ SKIP: {
+        skip "Skipping msblob format rsa conversion test", 1
+            if disabled("dsa");
+
+        subtest 'rsa conversions -- public key' => sub {
+            tconversion("msb", srctop_file("test","testrsapub.pem"), "rsa",
+                        "-pubin", "-pubout");
+        };
+    }
 }
