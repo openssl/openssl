@@ -53,6 +53,7 @@
 # define EVP_PKEY_CMAC   NID_cmac
 # define EVP_PKEY_TLS1_PRF NID_tls1_prf
 # define EVP_PKEY_HKDF   NID_hkdf
+# define EVP_PKEY_POLY1305 NID_poly1305
 
 #ifdef  __cplusplus
 extern "C" {
@@ -396,6 +397,11 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
 # ifndef OPENSSL_NO_EC
 #  define EVP_PKEY_assign_EC_KEY(pkey,eckey) EVP_PKEY_assign((pkey),EVP_PKEY_EC,\
                                         (char *)(eckey))
+# endif
+
+# ifndef OPENSSL_NO_POLY1305
+#  define EVP_PKEY_assign_POLY1305(pkey,polykey) EVP_PKEY_assign((pkey),EVP_PKEY_POLY1305,\
+                                        (char *)(polykey))
 # endif
 
 /* Add some extra combinations */
@@ -904,6 +910,9 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
 void *EVP_PKEY_get0(const EVP_PKEY *pkey);
 const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
+# ifndef OPENSSL_NO_POLY1305
+const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len);
+# endif
 
 # ifndef OPENSSL_NO_RSA
 struct rsa_st;
@@ -1500,6 +1509,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_GET0_DSA                          120
 # define EVP_F_EVP_PKEY_GET0_EC_KEY                       131
 # define EVP_F_EVP_PKEY_GET0_HMAC                         183
+# define EVP_F_EVP_PKEY_GET0_POLY1305                     169
 # define EVP_F_EVP_PKEY_GET0_RSA                          121
 # define EVP_F_EVP_PKEY_KEYGEN                            146
 # define EVP_F_EVP_PKEY_KEYGEN_INIT                       147
@@ -1544,6 +1554,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_EXPECTING_A_DH_KEY                         128
 # define EVP_R_EXPECTING_A_DSA_KEY                        129
 # define EVP_R_EXPECTING_A_EC_KEY                         142
+# define EVP_R_EXPECTING_A_POLY1305_KEY                   164
 # define EVP_R_FIPS_MODE_NOT_SUPPORTED                    167
 # define EVP_R_ILLEGAL_SCRYPT_PARAMETERS                  171
 # define EVP_R_INITIALIZATION_ERROR                       134
