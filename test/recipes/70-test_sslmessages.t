@@ -265,19 +265,23 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                | checkhandshake::ALPN_SRV_EXTENSION,
                "ALPN handshake test");
 
-#Test 14: SCT handshake (client request only)
-$proxy->clear();
-#Note: -ct also sends status_request
-$proxy->clientflags("-no_tls1_3 -ct");
-$proxy->serverflags("-status_file "
-                    .srctop_file("test", "recipes", "ocsp-response.der"));
-$proxy->start();
-checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::SCT_CLI_EXTENSION
-               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
-               | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
-               "SCT handshake test (client)");
+SKIP: {
+    skip "No CT support in this OpenSSL build", 1 if disabled("ct");
+
+    #Test 14: SCT handshake (client request only)
+    $proxy->clear();
+    #Note: -ct also sends status_request
+    $proxy->clientflags("-no_tls1_3 -ct");
+    $proxy->serverflags("-status_file "
+                        .srctop_file("test", "recipes", "ocsp-response.der"));
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::SCT_CLI_EXTENSION
+                   | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
+                   | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
+                   "SCT handshake test (client)");
+}
 
 #Test 15: SCT handshake (server support only)
 $proxy->clear();
@@ -290,23 +294,27 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
                "SCT handshake test (server)");
 
-#Test 16: SCT handshake (client and server)
-#There is no built-in server side support for this so we are actually also
-#testing custom extensions here
-$proxy->clear();
-#Note: -ct also sends status_request
-$proxy->clientflags("-no_tls1_3 -ct");
-$proxy->serverflags("-status_file "
-                    .srctop_file("test", "recipes", "ocsp-response.der")
-                    ." -serverinfo ".srctop_file("test", "serverinfo.pem"));
-$proxy->start();
-checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::SCT_CLI_EXTENSION
-               | checkhandshake::SCT_SRV_EXTENSION
-               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
-               | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
-               "SCT handshake test");
+SKIP: {
+    skip "No CT support in this OpenSSL build", 1 if disabled("ct");
+
+    #Test 16: SCT handshake (client and server)
+    #There is no built-in server side support for this so we are actually also
+    #testing custom extensions here
+    $proxy->clear();
+    #Note: -ct also sends status_request
+    $proxy->clientflags("-no_tls1_3 -ct");
+    $proxy->serverflags("-status_file "
+                        .srctop_file("test", "recipes", "ocsp-response.der")
+                        ." -serverinfo ".srctop_file("test", "serverinfo.pem"));
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::SCT_CLI_EXTENSION
+                   | checkhandshake::SCT_SRV_EXTENSION
+                   | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
+                   | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
+                   "SCT handshake test");
+}
 
 
 #Test 17: NPN handshake (client request only)
