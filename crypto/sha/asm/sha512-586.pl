@@ -32,6 +32,7 @@
 # Sandy Bridge	58	-	35	11.9	11.2
 # Ivy Bridge	50	-	33	11.5	8.17
 # Haswell	46	-	29	11.3	7.66
+# Skylake	40	-	26	13.3	7.25
 # Bulldozer	121	-	50	14.0	13.5
 # VIA Nano	91	-	52	33	14.7
 # Atom		126	-	68	48(***)	14.7
