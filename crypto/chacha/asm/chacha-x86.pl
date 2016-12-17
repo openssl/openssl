@@ -28,6 +28,7 @@
 # Westmere	9.50/+45%	3.35
 # Sandy Bridge	10.5/+47%	3.20
 # Haswell	8.15/+50%	2.83
+# Skylake	7.53/+22%	2.75
 # Silvermont	17.4/+36%	8.35
 # Goldmont	13.4/+40%	4.36
 # Sledgehammer	10.2/+54%
