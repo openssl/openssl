@@ -1027,6 +1027,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, int *al)
                                         PACKET_remaining(&encoded_pt))) {
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_ECPOINT);
+        EVP_PKEY_free(skey);
         return 0;
     }
 
