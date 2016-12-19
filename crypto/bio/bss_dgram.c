@@ -91,7 +91,11 @@ static const BIO_METHOD methods_dgramp = {
 static const BIO_METHOD methods_dgramp_sctp = {
     BIO_TYPE_DGRAM_SCTP,
     "datagram sctp socket",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     dgram_sctp_write,
+    /* TODO: Convert to new style write function */
+    bread_conv,
     dgram_sctp_read,
     dgram_sctp_puts,
     NULL,                       /* dgram_gets, */
