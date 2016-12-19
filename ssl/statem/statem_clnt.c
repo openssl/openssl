@@ -1331,7 +1331,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
                                        sizeof(sctpauthkey),
                                        labelbuffer,
                                        sizeof(labelbuffer), NULL, 0, 0) <= 0)
-            goto err;
+            goto f_err;
 
         BIO_ctrl(SSL_get_wbio(s),
                  BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
