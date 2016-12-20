@@ -435,7 +435,7 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile > $(TOP)/MINFO
 	@set -e; target=files; $(RECURSIVE_BUILD_CMD)
 
-LIBOQS_HEADERS = kex.h kex_rlwe_bcns15.h kex_rlwe_newhope.h kex_lwe_frodo.h rand.h rand_urandom_chacha20.h aes.h
+LIBOQS_HEADERS = aes.h kex_lwe_frodo.h kex_rlwe_newhope.h rand_urandom_aesctr.h common.h kex_rlwe_bcns15.h kex_sidh_cln16.h rand_urandom_chacha20.h kex.h kex_rlwe_msrln16.h rand.h sha3.h
 
 links:
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
