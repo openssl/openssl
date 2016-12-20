@@ -32,7 +32,9 @@ liboqs currently supports the following key exchange mechanisms:
 
 - `RLWE_BCNS15`: key exchange from the ring learning with errors problem (Bos, Costello, Naehrig, Stebila, *IEEE Symposium on Security & Privacy 2015*, [https://eprint.iacr.org/2014/599](https://eprint.iacr.org/2014/599))
 - `RLWE_NEWHOPE`: "NewHope": key exchange from the ring learning with errors problem (Alkim, Ducas, Pöppelmann, Schwabe, *USENIX Security 2016*, [https://eprint.iacr.org/2015/1092](https://eprint.iacr.org/2015/1092)) (using the reference C implementation of NewHope from [https://github.com/tpoeppelmann/newhope](https://github.com/tpoeppelmann/newhope))
+- `RLWE_MSRLN16`: "MSR CLN16": Longa and Naehrig NTT improvements on newhope, [https://www.microsoft.com/en-us/research/wp-content/uploads/2016/05/RLWE-1.pdf](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/05/RLWE-1.pdf)) (using the reference C implementation from [https://www.microsoft.com/en-us/research/project/lattice-cryptography-library/](https://www.microsoft.com/en-us/research/project/lattice-cryptography-library/))
 - `LWE_FRODO_RECOMMENDED`: "Frodo": key exchange from the learning with errors problem (Bos, Costello, Ducas, Mironov, Naehrig, Nikolaenko, Raghunathan, Stebila, *ACM Conference on Computer and Communications Security 2016*, [http://eprint.iacr.org/2016/659](http://eprint.iacr.org/2016/659)); using the "recommended" parameter set
+- `SIDH_CLN16`: "SIDH": key exchange from the supersingular isogeny Diffie-Hellman problem (Costello, Longa, Naehrig, *Crypto 2016*, [https://eprint.iacr.org/2016/413](https://eprint.iacr.org/2016/413)) (using the reference C implementation from [https://www.microsoft.com/en-us/research/project/sidh-library/](https://www.microsoft.com/en-us/research/project/sidh-library/))
 
 ### Ciphersuites
 
@@ -98,7 +100,7 @@ OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) whi
 
 To see the list of supported ciphersuites from OQS, type:
 
-	apps/openssl ciphers OQSKEX-GENERIC:OQSKEX-GENERIC-ECDHE:OQSKEX-RLWE-BCNS15:OQSKEX-RLWE-BCNS15-ECDHE:OQSKEX-RLWE-NEWHOPE:OQSKEX-RLWE-NEWHOPE-ECDHE:OQSKEX-LWE-FRODO-RECOMMENDED:OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE
+	apps/openssl ciphers OQSKEX-GENERIC:OQSKEX-GENERIC-ECDHE:OQSKEX-RLWE-BCNS15:OQSKEX-RLWE-BCNS15-ECDHE:OQSKEX-RLWE-NEWHOPE:OQSKEX-RLWE-NEWHOPE-ECDHE:OQSKEX-RLWE-MSRLN16:OQSKEX-RLWE-MSRLN16-ECDHE:OQSKEX-LWE-FRODO-RECOMMENDED:OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE:OQSKEX-SIDH-CLN16:OQSKEX-SIDH-CLN16-ECDHE
 
 To run a server, we first need to generate a self-signed X.509 certificate.  Run the following command:
 
@@ -112,7 +114,7 @@ When done, type to combine the key and certificate (as required by `s_server`):
 
 To run a basic TLS server with all OQS ciphersuites enabled:
 
-	apps/openssl s_server -cipher OQSKEX-GENERIC:OQSKEX-GENERIC-ECDHE:OQSKEX-RLWE-BCNS15:OQSKEX-RLWE-BCNS15-ECDHE:OQSKEX-RLWE-NEWHOPE:OQSKEX-RLWE-NEWHOPE-ECDHE:OQSKEX-LWE-FRODO-RECOMMENDED:OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE
+	apps/openssl s_server -cipher OQSKEX-GENERIC:OQSKEX-GENERIC-ECDHE:OQSKEX-RLWE-BCNS15:OQSKEX-RLWE-BCNS15-ECDHE:OQSKEX-RLWE-NEWHOPE:OQSKEX-RLWE-NEWHOPE-ECDHE:OQSKEX-RLWE-MSRLN16:OQSKEX-RLWE-MSRLN16-ECDHE:OQSKEX-LWE-FRODO-RECOMMENDED:OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE:OQSKEX-SIDH-CLN16:OQSKEX-SIDH-CLN16-ECDHE
 
 In another terminal window, you can run a TLS client for any or all of the supported ciphersuites, for example:
 
@@ -122,8 +124,12 @@ In another terminal window, you can run a TLS client for any or all of the suppo
 	apps/openssl s_client -cipher OQSKEX-RLWE-BCNS15-ECDHE
 	apps/openssl s_client -cipher OQSKEX-RLWE-NEWHOPE
 	apps/openssl s_client -cipher OQSKEX-RLWE-NEWHOPE-ECDHE
+	apps/openssl s_client -cipher OQSKEX-RLWE-MSRLN16
+	apps/openssl s_client -cipher OQSKEX-RLWE-MSRLN16-ECDHE
 	apps/openssl s_client -cipher OQSKEX-LWE-FRODO-RECOMMENDED
 	apps/openssl s_client -cipher OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE
+	apps/openssl s_client -cipher OQSKEX-SIDH-CLN16
+	apps/openssl s_client -cipher OQSKEX-SIDH-CLN16-ECDHE
 
 Current status and plans
 ------------------------
