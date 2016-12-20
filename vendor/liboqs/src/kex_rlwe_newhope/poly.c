@@ -142,13 +142,13 @@ static void poly_tobytes(unsigned char *r, const poly *p) {
 static void poly_uniform(poly *a, const unsigned char *seed) {
 	unsigned int pos = 0, ctr = 0;
 	uint16_t val;
-	uint64_t state[25];
+	uint64_t state[OQS_SHA3_STATESIZE];
 	unsigned int nblocks = 16;
-	uint8_t buf[2688]; // SHAKE128_RATE * nblocks
+	uint8_t buf[OQS_SHA3_SHAKE128_RATE * 16];
 
-	shake128_absorb(state, seed, NEWHOPE_SEEDBYTES);
+	OQS_SHA3_shake128_absorb(state, seed, NEWHOPE_SEEDBYTES);
 
-	shake128_squeezeblocks((unsigned char *) buf, nblocks, state);
+	OQS_SHA3_shake128_squeezeblocks((unsigned char *) buf, nblocks, state);
 
 	while (ctr < PARAM_N) {
 		val = (buf[pos] | ((uint16_t) buf[pos + 1] << 8)) & 0x3fff; // Specialized for q = 12889
@@ -156,9 +156,9 @@ static void poly_uniform(poly *a, const unsigned char *seed) {
 			a->coeffs[ctr++] = val;
 		}
 		pos += 2;
-		if (pos > SHAKE128_RATE * nblocks - 2) {
+		if (pos > OQS_SHA3_SHAKE128_RATE * nblocks - 2) {
 			nblocks = 1;
-			shake128_squeezeblocks((unsigned char *) buf, nblocks, state);
+			OQS_SHA3_shake128_squeezeblocks((unsigned char *) buf, nblocks, state);
 			pos = 0;
 		}
 	}

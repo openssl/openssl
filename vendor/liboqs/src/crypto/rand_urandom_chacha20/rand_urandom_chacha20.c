@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <strings.h>
 #endif
+#include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <fcntl.h>

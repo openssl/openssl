@@ -44,25 +44,27 @@ matrix:
       - cd astyle/build/gcc && make && export PATH=$(pwd)/bin:$PATH && cd ../../../
   - os: linux
     compiler: gcc
-    env: CC_OQS=gcc-6
+    env: CC_OQS=gcc-6 USE_OPENSSL=1
     addons:
       apt:
         sources:
         - ubuntu-toolchain-r-test
         packages:
         - gcc-6
+        - libssl-dev
     before_install:
       - wget http://downloads.sourceforge.net/project/astyle/astyle/astyle%202.05.1/astyle_2.05.1_linux.tar.gz
       - tar xzf astyle_2.05.1_linux.tar.gz
       - cd astyle/build/gcc && make && export PATH=$(pwd)/bin:$PATH && cd ../../../
   - os: osx
     compiler: clang
-    env: CC_OQS=clang AES_NI=0
+    env: CC_OQS=clang AES_NI=0 USE_OPENSSL=1
     before_install:
-      - brew install astyle  
+      - brew install astyle openssl
 
 script:
   - make
   - make check
   - bash .travis-style-check.sh
   - bash .travis-global-namespace-check.sh
+  - bash .travis-banned-functions-check.sh

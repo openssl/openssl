@@ -1,6 +1,8 @@
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <inttypes.h>
 
 #include <oqs/rand.h>
@@ -12,6 +14,7 @@ struct rand_testcase {
 /* Add new testcases here */
 struct rand_testcase rand_testcases[] = {
 	{ OQS_RAND_alg_urandom_chacha20 },
+	{ OQS_RAND_alg_urandom_aesctr},
 };
 
 #define RAND_TEST_ITERATIONS 10000000L
@@ -69,7 +72,7 @@ static int rand_test_distribution_n(OQS_RAND *rand, unsigned long occurrences[25
 	printf("\n"); \
 }
 
-static int rand_test_distribution_wrapper(enum OQS_RAND_alg_name alg_name, int iterations) {
+static int rand_test_distribution_wrapper(enum OQS_RAND_alg_name alg_name, int iterations, bool quiet) {
 
 	OQS_RAND *rand = OQS_RAND_new(alg_name);
 	if (rand == NULL) {
@@ -77,31 +80,33 @@ static int rand_test_distribution_wrapper(enum OQS_RAND_alg_name alg_name, int i
 		return 0;
 	}
 
-	printf("================================================================================\n");
-	printf("Sample outputs of PRNG %s\n", rand->method_name);
-	printf("================================================================================\n");
+	if (!quiet) {
+		printf("================================================================================\n");
+		printf("Sample outputs of PRNG %s\n", rand->method_name);
+		printf("================================================================================\n");
 
-	uint8_t x[256];
-	OQS_RAND_n(rand, x, 256);
-	PRINT_HEX_STRING("OQS_RAND_n, n = 256", x, 256)
+		uint8_t x[256];
+		OQS_RAND_n(rand, x, 256);
+		PRINT_HEX_STRING("OQS_RAND_n, n = 256", x, 256)
 
-	uint8_t y8 = OQS_RAND_8(rand);
-	PRINT_HEX_STRING("OQS_RAND_8", (uint8_t *) &y8, sizeof(y8));
-	y8 = OQS_RAND_8(rand);
-	PRINT_HEX_STRING("OQS_RAND_8", (uint8_t *) &y8, sizeof(y8));
+		uint8_t y8 = OQS_RAND_8(rand);
+		PRINT_HEX_STRING("OQS_RAND_8", (uint8_t *) &y8, sizeof(y8));
+		y8 = OQS_RAND_8(rand);
+		PRINT_HEX_STRING("OQS_RAND_8", (uint8_t *) &y8, sizeof(y8));
 
-	uint32_t y32 = OQS_RAND_32(rand);
-	PRINT_HEX_STRING("OQS_RAND_32", (uint8_t *) &y32, sizeof(y32));
-	y32 = OQS_RAND_32(rand);
-	PRINT_HEX_STRING("OQS_RAND_32", (uint8_t *) &y32, sizeof(y32));
+		uint32_t y32 = OQS_RAND_32(rand);
+		PRINT_HEX_STRING("OQS_RAND_32", (uint8_t *) &y32, sizeof(y32));
+		y32 = OQS_RAND_32(rand);
+		PRINT_HEX_STRING("OQS_RAND_32", (uint8_t *) &y32, sizeof(y32));
 
-	uint64_t y64 = OQS_RAND_64(rand);
-	PRINT_HEX_STRING("OQS_RAND_64", (uint8_t *) &y64, sizeof(y64));
-	y64 = OQS_RAND_64(rand);
-	PRINT_HEX_STRING("OQS_RAND_64", (uint8_t *) &y64, sizeof(y64));
+		uint64_t y64 = OQS_RAND_64(rand);
+		PRINT_HEX_STRING("OQS_RAND_64", (uint8_t *) &y64, sizeof(y64));
+		y64 = OQS_RAND_64(rand);
+		PRINT_HEX_STRING("OQS_RAND_64", (uint8_t *) &y64, sizeof(y64));
 
-	OQS_RAND_n(rand, x, 256);
-	PRINT_HEX_STRING("OQS_RAND_n, n = 256", x, 256)
+		OQS_RAND_n(rand, x, 256);
+		PRINT_HEX_STRING("OQS_RAND_n, n = 256", x, 256)
+	}
 
 	printf("================================================================================\n");
 	printf("Testing distribution of PRNG %s\n", rand->method_name);
@@ -146,13 +151,33 @@ static int rand_test_distribution_wrapper(enum OQS_RAND_alg_name alg_name, int i
 
 }
 
-int main() {
+int main(int argc, char **argv) {
 
 	int success;
+	bool quiet = false;
+
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] == '-') {
+			if ( strcmp(argv[i], "--quiet") == 0
+			            || strcmp(argv[i], "-q") == 0  ) {
+				quiet = true;
+			} else {
+				printf("Usage: ./test_rand [options]\n");
+				printf("\nOptions:\n");
+				printf("  --quiet, -q\n");
+				printf("    Less verbose output\n");
+				if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "-help") == 0) || (strcmp(argv[i], "--help") == 0)) {
+					return EXIT_SUCCESS;
+				} else {
+					return EXIT_FAILURE;
+				}
+			}
+		}
+	}
 
 	size_t rand_testcases_len = sizeof(rand_testcases) / sizeof(struct rand_testcase);
 	for (size_t i = 0; i < rand_testcases_len; i++) {
-		success = rand_test_distribution_wrapper(rand_testcases[i].alg_name, RAND_TEST_ITERATIONS);
+		success = rand_test_distribution_wrapper(rand_testcases[i].alg_name, RAND_TEST_ITERATIONS, quiet);
 		if (success != 1) {
 			goto err;
 		}

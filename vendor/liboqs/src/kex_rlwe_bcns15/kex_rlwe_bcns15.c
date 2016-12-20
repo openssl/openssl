@@ -1,6 +1,6 @@
 #if defined(WINDOWS)
 #define UNUSED
-// FIXME: __attribute__ fails in VS, is there something else I should define?
+// __attribute__ not supported in VS, is there something else I should define?
 #else
 #define UNUSED __attribute__ ((unused))
 #endif
@@ -14,6 +14,7 @@
 
 #include <oqs/kex.h>
 #include <oqs/rand.h>
+#include <oqs/common.h>
 
 #include "kex_rlwe_bcns15.h"
 #include "local.h"
@@ -54,13 +55,14 @@ OQS_KEX *OQS_KEX_rlwe_bcns15_new(OQS_RAND *rand) {
 int OQS_KEX_rlwe_bcns15_alice_0(OQS_KEX *k, void **alice_priv, uint8_t **alice_msg, size_t *alice_msg_len) {
 
 	int ret;
+	uint32_t *alice_msg_32 = NULL;
 
 	*alice_priv = NULL;
 	*alice_msg = NULL;
 
 	/* allocate public/private key pair */
-	*alice_msg = malloc(1024 * sizeof(uint32_t));
-	if (*alice_msg == NULL) {
+	alice_msg_32 = malloc(1024 * sizeof(uint32_t));
+	if (alice_msg_32 == NULL) {
 		goto err;
 	}
 	*alice_priv = malloc(1024 * sizeof(uint32_t));
@@ -69,7 +71,8 @@ int OQS_KEX_rlwe_bcns15_alice_0(OQS_KEX *k, void **alice_priv, uint8_t **alice_m
 	}
 
 	/* generate public/private key pair */
-	oqs_kex_rlwe_bcns15_generate_keypair(oqs_kex_rlwe_bcns15_a, (uint32_t *) *alice_priv, (uint32_t *) *alice_msg, k->ctx, k->rand);
+	oqs_kex_rlwe_bcns15_generate_keypair(oqs_kex_rlwe_bcns15_a, (uint32_t *) *alice_priv, alice_msg_32, k->ctx, k->rand);
+	*alice_msg = (uint8_t *) alice_msg_32;
 	*alice_msg_len = 1024 * sizeof(uint32_t);
 
 	ret = 1;
@@ -77,8 +80,8 @@ int OQS_KEX_rlwe_bcns15_alice_0(OQS_KEX *k, void **alice_priv, uint8_t **alice_m
 
 err:
 	ret = 0;
-	free(*alice_msg);
-	free(*alice_priv);
+	free(alice_msg_32);
+	OQS_MEM_secure_free(*alice_priv, 1024 * sizeof(uint32_t));
 
 cleanup:
 	return ret;
@@ -89,7 +92,9 @@ int OQS_KEX_rlwe_bcns15_bob(OQS_KEX *k, const uint8_t *alice_msg, const size_t a
 
 	int ret;
 
-	uint8_t *bob_priv = NULL;
+	uint32_t *bob_priv = NULL;
+	uint64_t *key_64 = NULL;
+
 	*bob_msg = NULL;
 	*key = NULL;
 
@@ -106,18 +111,19 @@ int OQS_KEX_rlwe_bcns15_bob(OQS_KEX *k, const uint8_t *alice_msg, const size_t a
 	if (*bob_msg == NULL) {
 		goto err;
 	}
-	*key = malloc(16 * sizeof(uint64_t));
-	if (*key == NULL) {
+	key_64 = malloc(16 * sizeof(uint64_t));
+	if (key_64 == NULL) {
 		goto err;
 	}
 
 	/* generate public/private key pair */
-	oqs_kex_rlwe_bcns15_generate_keypair(oqs_kex_rlwe_bcns15_a, (uint32_t *) bob_priv, (uint32_t *) *bob_msg, k->ctx, k->rand);
+	oqs_kex_rlwe_bcns15_generate_keypair(oqs_kex_rlwe_bcns15_a, bob_priv, (uint32_t *) *bob_msg, k->ctx, k->rand);
 
 	/* generate Bob's response */
 	uint8_t *bob_rec = *bob_msg + 1024 * sizeof(uint32_t);
-	oqs_kex_rlwe_bcns15_compute_key_bob((uint32_t *) alice_msg, (uint32_t *) bob_priv, (uint64_t *) bob_rec, (uint64_t *) *key, k->ctx, k->rand);
+	oqs_kex_rlwe_bcns15_compute_key_bob((uint32_t *) alice_msg, bob_priv, (uint64_t *) bob_rec, key_64, k->ctx, k->rand);
 	*bob_msg_len = 1024 * sizeof(uint32_t) + 16 * sizeof(uint64_t);
+	*key = (uint8_t *) key_64;
 	*key_len = 16 * sizeof(uint64_t);
 
 	ret = 1;
@@ -126,10 +132,10 @@ int OQS_KEX_rlwe_bcns15_bob(OQS_KEX *k, const uint8_t *alice_msg, const size_t a
 err:
 	ret = 0;
 	free(*bob_msg);
-	free(*key);
+	OQS_MEM_secure_free(key_64, 16 * sizeof(uint64_t));
 
 cleanup:
-	free(bob_priv);
+	OQS_MEM_secure_free(bob_priv, 1024 * sizeof(uint32_t));
 
 	return ret;
 
@@ -139,6 +145,8 @@ int OQS_KEX_rlwe_bcns15_alice_1(OQS_KEX *k, const void *alice_priv, const uint8_
 
 	int ret;
 
+	uint64_t *key_64 = NULL;
+
 	*key = NULL;
 
 	if (bob_msg_len != 1024 * sizeof(uint32_t) + 16 * sizeof(uint64_t)) {
@@ -146,14 +154,15 @@ int OQS_KEX_rlwe_bcns15_alice_1(OQS_KEX *k, const void *alice_priv, const uint8_
 	}
 
 	/* allocate session key */
-	*key = malloc(16 * sizeof(uint64_t));
-	if (*key == NULL) {
+	key_64 = malloc(16 * sizeof(uint64_t));
+	if (key_64 == NULL) {
 		goto err;
 	}
 
 	/* generate Alice's session key */
 	const uint8_t *bob_rec = bob_msg + 1024 * sizeof(uint32_t);
-	oqs_kex_rlwe_bcns15_compute_key_alice((uint32_t *)bob_msg, (uint32_t *)alice_priv, (uint64_t *) bob_rec, (uint64_t *) *key, k->ctx);
+	oqs_kex_rlwe_bcns15_compute_key_alice((uint32_t *)bob_msg, (uint32_t *)alice_priv, (uint64_t *) bob_rec, key_64, k->ctx);
+	*key = (uint8_t *) key_64;
 	*key_len = 16 * sizeof(uint64_t);
 
 	ret = 1;
@@ -161,7 +170,7 @@ int OQS_KEX_rlwe_bcns15_alice_1(OQS_KEX *k, const void *alice_priv, const uint8_
 
 err:
 	ret = 0;
-	free(*key);
+	OQS_MEM_secure_free(key_64, 16 * sizeof(uint64_t));
 
 cleanup:
 

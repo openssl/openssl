@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\rand\test_rand.c">
+    <ClCompile Include="..\..\src\crypto\rand\test_rand.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
