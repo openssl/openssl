@@ -381,6 +381,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     unsigned char *buf = NULL, *buf2 = NULL;
     int mret = 1;
     long count = 0, save_count = 0;
@@ -721,6 +722,10 @@ int MAIN(int argc, char **argv)
     oqskex_alice_session_key = NULL;
     oqskex_bob_session_key = NULL;
 # endif
+# ifndef OPENSSL_NO_RSA
+    for (i = 0; i < RSA_NUM; i++)
+        rsa_key[i] = NULL;
+# endif
 
     if (bio_err == NULL)
         if ((bio_err = BIO_new(BIO_s_file())) != NULL)
@@ -728,12 +733,6 @@ int MAIN(int argc, char **argv)
 
     if (!load_config(bio_err, NULL))
         goto end;
-
-# ifndef OPENSSL_NO_RSA
-    memset(rsa_key, 0, sizeof(rsa_key));
-    for (i = 0; i < RSA_NUM; i++)
-        rsa_key[i] = NULL;
-# endif
 
     if ((buf = (unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL) {
         BIO_printf(bio_err, "out of memory\n");
@@ -805,7 +804,7 @@ int MAIN(int argc, char **argv)
                 BIO_printf(bio_err, "no engine given\n");
                 goto end;
             }
-            setup_engine(bio_err, *argv, 0);
+            e = setup_engine(bio_err, *argv, 0);
             /*
              * j will be increased again further down.  We just don't want
              * speed to confuse an engine with an algorithm, especially when
@@ -2748,6 +2747,7 @@ int MAIN(int argc, char **argv)
         free(oqskex_bob_session_key);
 # endif
 
+    release_engine(e);
     apps_shutdown();
     OPENSSL_EXIT(mret);
 }
