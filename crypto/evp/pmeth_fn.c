@@ -68,7 +68,12 @@
         if (ctx->pmeth->flags & EVP_PKEY_FLAG_AUTOARGLEN) \
                 { \
                 size_t pksize = (size_t)EVP_PKEY_size(ctx->pkey); \
-                if (!arg) \
+                if (pksize == 0) \
+                        { \
+                        EVPerr(err, EVP_R_INVALID_KEY); /*ckerr_ignore*/\
+                        return 0; \
+                        } \
+                else if (!arg)                 \
                         { \
                         *arglen = pksize; \
                         return 1; \
