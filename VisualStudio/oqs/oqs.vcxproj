@@ -19,26 +19,58 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\common\common.h" />
+    <ClInclude Include="..\..\src\crypto\aes\aes.h" />
+    <ClInclude Include="..\..\src\crypto\aes\aes_local.h" />
+    <ClInclude Include="..\..\src\crypto\rand\rand.h" />
+    <ClInclude Include="..\..\src\crypto\rand_urandom_aesctr\rand_urandom_aesctr.h" />
+    <ClInclude Include="..\..\src\crypto\rand_urandom_chacha20\rand_urandom_chacha20.h" />
+    <ClInclude Include="..\..\src\crypto\sha3\sha3.h" />
     <ClInclude Include="..\..\src\kex\kex.h" />
+    <ClInclude Include="..\..\src\kex_lwe_frodo\kex_lwe_frodo.h" />
+    <ClInclude Include="..\..\src\kex_lwe_frodo\local.h" />
     <ClInclude Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" />
     <ClInclude Include="..\..\src\kex_rlwe_bcns15\local.h" />
     <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_a.h" />
     <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_table.h" />
     <ClInclude Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" />
     <ClInclude Include="..\..\src\kex_rlwe_newhope\params.h" />
-    <ClInclude Include="..\..\src\rand\rand.h" />
-    <ClInclude Include="..\..\src\rand_urandom_chacha20\rand_urandom_chacha20.h" />
+    <ClInclude Include="..\..\src\kex_rlwe_msrln16\kex_rlwe_msrln16.h" />
+    <ClInclude Include="..\..\src\kex_rlwe_msrln16\LatticeCrypto.h" />
+    <ClInclude Include="..\..\src\kex_rlwe_msrln16\LatticeCrypto_priv.h" />
+    <ClInclude Include="..\..\src\kex_sidh_cln16\kex_sidh_cln16.h" />
+    <ClInclude Include="..\..\src\kex_sidh_cln16\SIDH.h" />
+    <ClInclude Include="..\..\src\kex_sidh_cln16\SIDH_internal.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\common\common.c" />
+    <ClCompile Include="..\..\src\crypto\aes\aes.c" />
+    <ClCompile Include="..\..\src\crypto\aes\aes_c.c" />
+    <ClCompile Include="..\..\src\crypto\aes\aes_ni.c" />
+    <ClCompile Include="..\..\src\crypto\rand\rand.c" />
+    <ClCompile Include="..\..\src\crypto\rand_urandom_aesctr\rand_urandom_aesctr.c" />
+    <ClCompile Include="..\..\src\crypto\rand_urandom_chacha20\rand_urandom_chacha20.c" />
+    <ClCompile Include="..\..\src\crypto\sha3\sha3.c" />
     <ClCompile Include="..\..\src\kex\kex.c" />
+    <ClCompile Include="..\..\src\kex_lwe_frodo\kex_lwe_frodo.c" />
+    <ClCompile Include="..\..\src\kex_lwe_frodo\lwe.c" />
+    <ClCompile Include="..\..\src\kex_lwe_frodo\lwe_noise.c" />
     <ClCompile Include="..\..\src\kex_rlwe_bcns15\fft.c" />
     <ClCompile Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.c" />
     <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe.c" />
     <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe_kex.c" />
     <ClCompile Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.c" />
     <ClCompile Include="..\..\src\kex_rlwe_newhope\newhope.c" />
-    <ClCompile Include="..\..\src\rand\rand.c" />
-    <ClCompile Include="..\..\src\rand_urandom_chacha20\rand_urandom_chacha20.c" />
+    <ClCompile Include="..\..\src\kex_rlwe_msrln16\kex_rlwe_msrln16.c" />
+    <ClCompile Include="..\..\src\kex_rlwe_msrln16\LatticeCrypto_kex.c" />
+    <ClCompile Include="..\..\src\kex_rlwe_msrln16\ntt_constants.c" />
+    <ClCompile Include="..\..\src\kex_sidh_cln16\ec_isogeny.c" />
+    <ClCompile Include="..\..\src\kex_sidh_cln16\fpx.c" />
+    <ClCompile Include="..\..\src\kex_sidh_cln16\kex_sidh_cln16.c" />
+    <ClCompile Include="..\..\src\kex_sidh_cln16\SIDH.c" />
+    <ClCompile Include="..\..\src\kex_sidh_cln16\sidh_kex.c" />
+    <ClCompile Include="..\..\src\kex_sidh_cln16\SIDH_setup.c" />
+    <ClCompile Include="..\..\src\kex_sidh_cln16\validate.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DCFEFB81-4696-45D2-9FCA-351CCFC13C74}</ProjectGuid>
@@ -105,7 +137,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>OQS_RAND_DEFAULT_URANDOM_CHACHA20;OQS_KEX_DEFAULT_BCNS15;CONSTANT_TIME;WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>AES_DISABLE_NI;OQS_RAND_DEFAULT_URANDOM_CHACHA20;OQS_KEX_DEFAULT_BCNS15;CONSTANT_TIME;WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -116,11 +148,18 @@
     <PreBuildEvent>
       <Command>mkdir "$(SolutionDir)include\oqs"
 del /Q "$(SolutionDir)include\oqs\*.*"
-copy "$(SolutionDir)..\src\rand\rand.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\common\common.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\aes\aes.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand\rand.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand_urandom_aesctr\rand_urandom_aesctr.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\sha3\sha3.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex\kex.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"</Command>
+copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_rlwe_msrln16\kex_rlwe_msrln16.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_lwe_frodo\kex_lwe_frodo.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_sidh_cln16\kex_sidh_cln16.h" "$(SolutionDir)include\oqs\"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -140,11 +179,18 @@ copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)i
     <PreBuildEvent>
       <Command>mkdir "$(SolutionDir)include\oqs"
 del /Q "$(SolutionDir)include\oqs\*.*"
-copy "$(SolutionDir)..\src\rand\rand.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\common\common.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\aes\aes.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand\rand.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand_urandom_aesctr\rand_urandom_aesctr.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\sha3\sha3.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex\kex.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"</Command>
+copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_rlwe_msrln16\kex_rlwe_msrln16.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_lwe_frodo\kex_lwe_frodo.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_sidh_cln16\kex_sidh_cln16.h" "$(SolutionDir)include\oqs\"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -155,7 +201,7 @@ copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)i
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>OQS_RAND_DEFAULT_URANDOM_CHACHA20;OQS_KEX_DEFAULT_BCNS15;CONSTANT_TIME;WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>AES_DISABLE_NI;OQS_RAND_DEFAULT_URANDOM_CHACHA20;OQS_KEX_DEFAULT_BCNS15;CONSTANT_TIME;WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)include;</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -168,11 +214,18 @@ copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)i
     <PreBuildEvent>
       <Command>mkdir "$(SolutionDir)include\oqs"
 del /Q "$(SolutionDir)include\oqs\*.*"
-copy "$(SolutionDir)..\src\rand\rand.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\common\common.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\aes\aes.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand\rand.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand_urandom_aesctr\rand_urandom_aesctr.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\sha3\sha3.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex\kex.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"</Command>
+copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_rlwe_msrln16\kex_rlwe_msrln16.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_lwe_frodo\kex_lwe_frodo.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_sidh_cln16\kex_sidh_cln16.h" "$(SolutionDir)include\oqs\"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -196,11 +249,18 @@ copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)i
     <PreBuildEvent>
       <Command>mkdir "$(SolutionDir)include\oqs"
 del /Q "$(SolutionDir)include\oqs\*.*"
-copy "$(SolutionDir)..\src\rand\rand.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\common\common.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\aes\aes.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand\rand.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand_urandom_chacha20\rand_urandom_chacha20.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\rand_urandom_aesctr\rand_urandom_aesctr.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\crypto\sha3\sha3.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex\kex.h" "$(SolutionDir)include\oqs\"
 copy "$(SolutionDir)..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h" "$(SolutionDir)include\oqs\"
-copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"</Command>
+copy "$(SolutionDir)..\src\kex_rlwe_newhope\kex_rlwe_newhope.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_rlwe_msrln16\kex_rlwe_msrln16.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_lwe_frodo\kex_lwe_frodo.h" "$(SolutionDir)include\oqs\"
+copy "$(SolutionDir)..\src\kex_sidh_cln16\kex_sidh_cln16.h" "$(SolutionDir)include\oqs\"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

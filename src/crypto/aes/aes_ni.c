@@ -1,22 +1,26 @@
 #if defined(WINDOWS)
 #define UNUSED
-// FIXME: __attribute__ fails in VS, is there something else I should define?
+// __attribute__ not supported in VS, is there something else I should define?
 #else
 #define UNUSED __attribute__ ((unused))
 #endif
 
 #include <stdint.h>
 #include <stdio.h>
+#include <assert.h>
 
 #ifdef AES_DISABLE_NI
 #include <assert.h>
-void OQS_AES128_load_schedule_ni(UNUSED const uint8_t *key, UNUSED uint8_t *_schedule) {
+void oqs_aes128_load_schedule_ni(UNUSED const uint8_t *key, UNUSED void **_schedule) {
 	assert(0);
 }
-void OQS_AES128_enc_ni(UNUSED const uint8_t *plaintext, UNUSED const uint8_t *_schedule, UNUSED uint8_t *ciphertext) {
+void oqs_aes128_free_schedule_ni(UNUSED void *_schedule) {
 	assert(0);
 }
-void OQS_AES128_dec_ni(UNUSED const uint8_t *ciphertext, UNUSED const uint8_t *_schedule, UNUSED uint8_t *plaintext) {
+void oqs_aes128_enc_ni(UNUSED const uint8_t *plaintext, UNUSED const void *_schedule, UNUSED uint8_t *ciphertext) {
+	assert(0);
+}
+void oqs_aes128_dec_ni(UNUSED const uint8_t *ciphertext, UNUSED const void *_schedule, UNUSED uint8_t *plaintext) {
 	assert(0);
 }
 #else
@@ -38,8 +42,10 @@ static __m128i key_expand(__m128i key, __m128i keygened) {
 
 #define key_exp(k, rcon) key_expand(k, _mm_aeskeygenassist_si128(k, rcon))
 
-void OQS_AES128_load_schedule_ni(const uint8_t *key, uint8_t *_schedule) {
-	__m128i *schedule = (__m128i * )_schedule;
+void oqs_aes128_load_schedule_ni(const uint8_t *key, void **_schedule) {
+	*_schedule = malloc(20 * 16);
+	assert(*_schedule != NULL);
+	__m128i *schedule = (__m128i * )*_schedule;
 	schedule[0]  = _mm_loadu_si128((const __m128i *) key);
 	schedule[1]  = key_exp(schedule[0], 0x01);
 	schedule[2]  = key_exp(schedule[1], 0x02);
@@ -59,7 +65,13 @@ void OQS_AES128_load_schedule_ni(const uint8_t *key, uint8_t *_schedule) {
 	}
 }
 
-void OQS_AES128_enc_ni(const uint8_t *plaintext, const uint8_t *_schedule, uint8_t *ciphertext) {
+void oqs_aes128_free_schedule_ni(void *schedule) {
+	if (schedule != NULL) {
+		free(schedule);
+	}
+}
+
+void oqs_aes128_enc_ni(const uint8_t *plaintext, const void *_schedule, uint8_t *ciphertext) {
 	__m128i *schedule = (__m128i * )_schedule;
 	__m128i m = _mm_loadu_si128((__m128i *) plaintext);
 
@@ -72,7 +84,7 @@ void OQS_AES128_enc_ni(const uint8_t *plaintext, const uint8_t *_schedule, uint8
 	_mm_storeu_si128((__m128i *) ciphertext, m);
 }
 
-void OQS_AES128_dec_ni(const uint8_t *ciphertext, const uint8_t *_schedule, uint8_t *plaintext) {
+void oqs_aes128_dec_ni(const uint8_t *ciphertext, const void *_schedule, uint8_t *plaintext) {
 	__m128i *schedule = (__m128i * )_schedule;
 	__m128i m = _mm_loadu_si128((__m128i *) ciphertext);
 

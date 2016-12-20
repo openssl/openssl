@@ -7,9 +7,10 @@
 
 #include <stdint.h>
 #include <assert.h>
+#include <oqs/sha3.h>
 
-#define SHAKE128_RATE 168
-#define SHA3_256_RATE 136
+#define SHAKE128_RATE OQS_SHA3_SHAKE128_RATE
+#define SHA3_256_RATE OQS_SHA3_SHA3_256_RATE
 #define NROUNDS 24
 #define ROL(a, offset) ((a << offset) ^ (a >> (64-offset)))
 
@@ -334,37 +335,32 @@ static void keccak_absorb(uint64_t *s,
 	unsigned long long i;
 	unsigned char t[200];
 
-	for (i = 0; i < 25; ++i) {
+	for (i = 0; i < 25; ++i)
 		s[i] = 0;
-	}
 
 	while (mlen >= r) {
-		for (i = 0; i < r / 8; ++i) {
+		for (i = 0; i < r / 8; ++i)
 			s[i] ^= load64(m + 8 * i);
-		}
 
 		KeccakF1600_StatePermute(s);
 		mlen -= r;
 		m += r;
 	}
 
-	for (i = 0; i < r; ++i) {
+	for (i = 0; i < r; ++i)
 		t[i] = 0;
-	}
-	for (i = 0; i < mlen; ++i) {
+	for (i = 0; i < mlen; ++i)
 		t[i] = m[i];
-	}
 	t[i] = p;
 	t[r - 1] |= 128;
-	for (i = 0; i < r / 8; ++i) {
+	for (i = 0; i < r / 8; ++i)
 		s[i] ^= load64(t + 8 * i);
-	}
 }
 
 
-static void keccak_squeezeblocks(unsigned char *h, unsigned long long int nblocks,
-                                 uint64_t *s,
-                                 unsigned int r) {
+void OQS_SHA3_keccak_squeezeblocks(unsigned char *h, unsigned long long int nblocks,
+                                   uint64_t *s,
+                                   unsigned int r) {
 	unsigned int i;
 	while (nblocks > 0) {
 		KeccakF1600_StatePermute(s);
@@ -376,22 +372,21 @@ static void keccak_squeezeblocks(unsigned char *h, unsigned long long int nblock
 	}
 }
 
-static void shake128_absorb(uint64_t *s, const unsigned char *input, unsigned int inputByteLen) {
+void OQS_SHA3_shake128_absorb(uint64_t *s, const unsigned char *input, unsigned int inputByteLen) {
 	keccak_absorb(s, SHAKE128_RATE, input, inputByteLen, 0x1F);
 }
 
-static void shake128_squeezeblocks(unsigned char *output, unsigned long long nblocks, uint64_t *s) {
-	keccak_squeezeblocks(output, nblocks, s, SHAKE128_RATE);
+void OQS_SHA3_shake128_squeezeblocks(unsigned char *output, unsigned long long nblocks, uint64_t *s) {
+	OQS_SHA3_keccak_squeezeblocks(output, nblocks, s, SHAKE128_RATE);
 }
 
-static void sha3256(unsigned char *output, const unsigned char *input, unsigned int inputByteLen) {
+void OQS_SHA3_sha3256(unsigned char *output, const unsigned char *input, unsigned int inputByteLen) {
 	uint64_t s[25];
 	unsigned char t[SHA3_256_RATE];
 	int i;
 
 	keccak_absorb(s, SHA3_256_RATE, input, inputByteLen, 0x06);
-	keccak_squeezeblocks(t, 1, s, SHA3_256_RATE);
-	for (i = 0; i < 32; i++) {
+	OQS_SHA3_keccak_squeezeblocks(t, 1, s, SHA3_256_RATE);
+	for (i = 0; i < 32; i++)
 		output[i] = t[i];
-	}
 }

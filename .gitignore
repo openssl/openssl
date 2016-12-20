@@ -39,7 +39,7 @@ include
 *.su
 
 # Generated documentation
-docs
+docs/doxygen
 
 # Backup files
 *~

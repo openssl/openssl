@@ -1,6 +1,8 @@
 #include <stdint.h>
+
+#include <oqs/sha3.h>
+
 #include "precomp.c"
-#include "fips202.c"
 #include "poly.c"
 
 static void encode_a(unsigned char *r, const poly *pk, const unsigned char *seed) {
@@ -94,7 +96,7 @@ static void sharedb(unsigned char *sharedkey, unsigned char *send, const unsigne
 	rec(sharedkey, &v, &c);
 
 #ifndef STATISTICAL_TEST
-	sha3256(sharedkey, sharedkey, 32);
+	OQS_SHA3_sha3256(sharedkey, sharedkey, 32);
 #endif
 }
 
@@ -110,6 +112,6 @@ static void shareda(unsigned char *sharedkey, const poly *sk, const unsigned cha
 	rec(sharedkey, &v, &c);
 
 #ifndef STATISTICAL_TEST
-	sha3256(sharedkey, sharedkey, 32);
+	OQS_SHA3_sha3256(sharedkey, sharedkey, 32);
 #endif
 }

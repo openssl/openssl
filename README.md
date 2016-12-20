@@ -23,10 +23,11 @@ Contents
 
 liboqs currently contains:
 
-- `rand_urandom_chacha20`: pseudorandom number generator seeded from /dev/urandom and expanded using the ChaCha20 stream cipher
 - `kex_rlwe_bcns15`: key exchange from the ring learning with errors problem (Bos, Costello, Naehrig, Stebila, *IEEE Symposium on Security & Privacy 2015*, [https://eprint.iacr.org/2014/599](https://eprint.iacr.org/2014/599))
 - `kex_rlwe_newhope`: "NewHope": key exchange from the ring learning with errors problem (Alkim, Ducas, Pöppelmann, Schwabe, *USENIX Security 2016*, [https://eprint.iacr.org/2015/1092](https://eprint.iacr.org/2015/1092)) (using the reference C implementation of NewHope from [https://github.com/tpoeppelmann/newhope](https://github.com/tpoeppelmann/newhope))
-- `kex_lwe_frodo`: key exchange from the learning with errors problem (Bos, Costello, Ducas, Mironov, Naehrig, Nikolaenko, Raghunathan, Stebila, *ACM Conference on Computer and Communications Security 2016*, [http://eprint.iacr.org/2016/659](http://eprint.iacr.org/2016/659))
+- `kex_rlwe_msrln16`: Microsoft Research implementation of Peikert's ring-LWE key exchange (Longa, Naehrig, *CANS 2016*, [https://eprint.iacr.org/2016/504](https://eprint.iacr.org/2016/504)) (based on the implementation of Alkim, Ducas, Pöppelmann, and Schwabe, with improvements from Longa and Naehrig, see [https://www.microsoft.com/en-us/research/project/lattice-cryptography-library/](https://www.microsoft.com/en-us/research/project/lattice-cryptography-library/))
+- `kex_lwe_frodo`: "Frodo": key exchange from the learning with errors problem (Bos, Costello, Ducas, Mironov, Naehrig, Nikolaenko, Raghunathan, Stebila, *ACM Conference on Computer and Communications Security 2016*, [http://eprint.iacr.org/2016/659](http://eprint.iacr.org/2016/659))
+- `kex_sidh_cln16`: key exchange from the supersingular isogeny Diffie-Hellman problem (Costello, Naehrig, Longa, *CRYPTO 2016*, [https://eprint.iacr.org/2016/413](https://eprint.iacr.org/2016/413)), using the implementation of Microsoft Research [https://www.microsoft.com/en-us/research/project/sidh-library/](https://www.microsoft.com/en-us/research/project/sidh-library/)
 
 Building and Running
 --------------------
@@ -48,6 +49,10 @@ This will generate:
 To run the tests, simply type:
 
 	make check
+
+To run benchmarks, run
+
+	./test_kex --bench
 
 ### Windows
 
@@ -80,45 +85,36 @@ Please contact Douglas Stebila <[stebilad@mcmaster.ca](mailto:stebilad@mcmaster.
 Current status and plans
 ------------------------
 
-Our initial launch was on August 11, 2016, containing a single key exchange algorithm (`kex_rlwe_bcns15`) with a basic test harness.  
+Our initial launch was on August 11, 2016, containing a single key exchange algorithm (`kex_rlwe_bcns15`) with a basic test harness.
 
 Since our initial launch, we have made the following updates:
 
-- Test harness for key exchange algorithms ([pr/2](https://github.com/open-quantum-safe/liboqs/pull/2))
-- Test harness for random number generator ([pr/2](https://github.com/open-quantum-safe/liboqs/pull/2))
-- Integration of liboqs into OpenSSL to enable testing of post-quantum algorithms in TLS connections ([open-quantum-safe/openssl/](https://github.com/open-quantum-safe/openssl/))
+- Test harness for key exchange algorithms and random number generator
+- Integration of liboqs into OpenSSL ([open-quantum-safe/openssl/](https://github.com/open-quantum-safe/openssl/))
 - Licensing liboqs under the MIT license (see below)
-- `kex_lwe_frodo` implementation ([https://eprint.iacr.org/2016/659](https://eprint.iacr.org/2016/659))
+- `kex_lwe_frodo` implementation
 - Building on Windows
 - Use of travis continuous integration system for testing
-- `kex_rlwe_newhope` wrapper around "NewHope" ring-LWE key exchange ([https://eprint.iacr.org/2015/1092](https://eprint.iacr.org/2015/1092))
+- `kex_rlwe_newhope` wrapper
+- `kex_rlwe_msrln16` implementation contributed by Christian Paquin (Microsoft Research)
+- `kex_sidh_cln16` implementation contributed by Christian Paquin (Microsoft Research)
 
-We plan to be making the following updates over the next month:
-
-- `kex_rlwe_bcns15` generalization to multiple security levels
-- `kex_ntru_ees743p1` wrapper around NTRU open source public key encryption ([https://github.com/NTRUOpenSourceProject/ntru-crypto](https://github.com/NTRUOpenSourceProject/ntru-crypto))
-- Benchmarking scripts for key exchange algorithms
-- Detailed Doxygen documentation for existing API and public functions
-- Modular build system
-
-Over the next few months, we plan to be making the following updates:
-
-- Building on more systems, including building of assembly code / optimizations
-- Inclusion of a McEliece-based key exchange method
-- Inclusion of a supersingular isogeny Diffie–Hellman key exchange method
-- Code reviews including static analysis
-- Integration of liboqs into additional application-level protocols.
+Our plans for the next few months can be found in [Milestone 1 - Key exchange](https://github.com/open-quantum-safe/liboqs/projects/2).
 
 In the long term, we are also interested in including post-quantum signature schemes.
 
 License
 -------
 
-liboqs is licensed under the MIT License; see [https://github.com/open-quantum-safe/liboqs/blob/master/LICENSE.txt](LICENSE.txt) for details.  liboqs includes some third party libraries or modules that are licensed differently; the corresponding subfolder contains the license that applies in that case.  In particular:
+liboqs is licensed under the MIT License; see [LICENSE.txt](https://github.com/open-quantum-safe/liboqs/blob/master/LICENSE.txt) for details.  liboqs includes some third party libraries or modules that are licensed differently; the corresponding subfolder contains the license that applies in that case.  In particular:
 
-- `src/kex_rlwe_bcns15`: public domain ([http://unlicense.org](http://unlicense.org))
-- `src/rand_urandom_chacha20/external`: public domain
+- `src/aes/aes.c`: public domain
+- `src/kex_rlwe_bcns15`: public domain ([Unlicense](http://unlicense.org))
+- `src/kex_rlwe_msrln16`: MIT License
+- `src/kex_rlwe_msrln16/external`: public domain ([CC0](http://creativecommons.org/publicdomain/zero/1.0/))
 - `src/kex_rlwe_newhope`: public domain
+- `src/kex_sidh_cln16`: MIT License
+- `src/rand_urandom_chacha20/external`: public domain
 
 Team
 ----
@@ -131,6 +127,7 @@ The Open Quantum Safe project is lead by [Michele Mosca](http://faculty.iqc.uwat
 - Shravan Mishra (University of Waterloo)
 - Christian Paquin (Microsoft Research)
 - Alex Parent (University of Waterloo)
+- Sebastian Verschoor (University of Waterloo)
 
 ### Support
 

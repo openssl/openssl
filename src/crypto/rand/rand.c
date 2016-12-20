@@ -3,12 +3,15 @@
 
 #include <oqs/rand.h>
 #include <oqs/rand_urandom_chacha20.h>
+#include <oqs/rand_urandom_aesctr.h>
 
 OQS_RAND *OQS_RAND_new(enum OQS_RAND_alg_name alg_name) {
 	switch (alg_name) {
 	case OQS_RAND_alg_default:
 	case OQS_RAND_alg_urandom_chacha20:
 		return OQS_RAND_urandom_chacha20_new();
+	case OQS_RAND_alg_urandom_aesctr:
+		return OQS_RAND_urandom_aesctr_new();
 	default:
 		assert(0);
 		return NULL; // avoid the warning of potentialy uninitialized variable in VS

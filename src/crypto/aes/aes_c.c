@@ -209,7 +209,10 @@ static void key_schedule_core(byte *a, int i) {
 
 // Expand the 16-byte key to 11 round keys (176 bytes)
 // http://en.wikipedia.org/wiki/Rijndael_key_schedule#The_key_schedule
-void OQS_AES128_load_schedule_c(const uint8_t *key, uint8_t *schedule) {
+void oqs_aes128_load_schedule_c(const uint8_t *key, void **_schedule) {
+	*_schedule = malloc(16 * 11);
+	assert(*_schedule != NULL);
+	uint8_t *schedule = (uint8_t *) *_schedule;
 	int bytes = 16;           // The count of how many bytes we've created so far
 	int i = 1;                // The rcon iteration value i is set to 1
 	int j;                    // For repeating the second stage 3 times
@@ -231,6 +234,12 @@ void OQS_AES128_load_schedule_c(const uint8_t *key, uint8_t *schedule) {
 			memcpy(schedule + bytes, t, 4);        // This becomes the next 4 bytes in the expanded key
 			bytes += 4;                        // Keep track of how many expanded key bytes we've added
 		}
+	}
+}
+
+void oqs_aes128_free_schedule_c(void *schedule) {
+	if (schedule != NULL) {
+		free(schedule);
 	}
 }
 
@@ -295,7 +304,8 @@ static void mix_cols_inv (byte *state) {
 	mix_col_inv(state + 12);
 }
 
-void OQS_AES128_enc_c(const uint8_t *plaintext, const uint8_t *schedule, uint8_t *ciphertext) {
+void oqs_aes128_enc_c(const uint8_t *plaintext, const void *_schedule, uint8_t *ciphertext) {
+	const uint8_t *schedule = (const uint8_t *) _schedule;
 	int i; // To count the rounds
 
 	// First Round
@@ -316,7 +326,8 @@ void OQS_AES128_enc_c(const uint8_t *plaintext, const uint8_t *schedule, uint8_t
 	xor_round_key(ciphertext, schedule, 10);
 }
 
-void OQS_AES128_dec_c(const uint8_t *ciphertext, const uint8_t *schedule, uint8_t *plaintext) {
+void oqs_aes128_dec_c(const uint8_t *ciphertext, const void *_schedule, uint8_t *plaintext) {
+	const uint8_t *schedule = (const uint8_t *) _schedule;
 	int i; // To count the rounds
 
 	// Reverse the final Round

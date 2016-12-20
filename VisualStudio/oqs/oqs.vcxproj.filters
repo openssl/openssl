@@ -1,93 +1,192 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Source Files\BCNS15">
-      <UniqueIdentifier>{178cf83e-52eb-4ead-a1ca-33558ffd988e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\rand">
-      <UniqueIdentifier>{15505124-034e-4100-a6cb-a32309738b25}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\BCNS15">
-      <UniqueIdentifier>{768db348-be19-4ce5-a6bc-22d81c2c59d3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\rand">
-      <UniqueIdentifier>{65721ee8-a809-4e67-88a8-ad33d6a6a800}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Newhope">
-      <UniqueIdentifier>{d26b84bb-a12a-4229-b619-8ddfdaca9928}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Newhope">
-      <UniqueIdentifier>{9445c3c6-bd2e-4448-8cba-a986ef929d45}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\src\kex\kex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h">
-      <Filter>Header Files\BCNS15</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\rand\rand.h">
-      <Filter>Header Files\rand</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\rand_urandom_chacha20\rand_urandom_chacha20.h">
-      <Filter>Header Files\rand</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_a.h">
-      <Filter>Header Files\BCNS15</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_table.h">
-      <Filter>Header Files\BCNS15</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\kex_rlwe_bcns15\local.h">
-      <Filter>Header Files\BCNS15</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.h">
-      <Filter>Header Files\Newhope</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\kex_rlwe_newhope\params.h">
-      <Filter>Header Files\Newhope</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\src\kex\kex.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\kex_rlwe_bcns15\fft.c">
-      <Filter>Source Files\BCNS15</Filter>
+      <Filter>KEX_BCNS15</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_lwe_frodo\kex_lwe_frodo.c">
+      <Filter>KEX_Frodo</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.c">
-      <Filter>Source Files\BCNS15</Filter>
+      <Filter>KEX_BCNS15</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\rand\rand.c">
-      <Filter>Source Files\rand</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\rand_urandom_chacha20\rand_urandom_chacha20.c">
-      <Filter>Source Files\rand</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe_kex.c">
-      <Filter>Source Files\BCNS15</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe.c">
-      <Filter>Source Files\BCNS15</Filter>
+    <ClCompile Include="..\..\src\kex_rlwe_msrln16\kex_rlwe_msrln16.c">
+      <Filter>KEX_MSR_LN16</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.c">
-      <Filter>Source Files\Newhope</Filter>
+      <Filter>KEX_NewHope</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_msrln16\LatticeCrypto_kex.c">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_lwe_frodo\lwe.c">
+      <Filter>KEX_Frodo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_lwe_frodo\lwe_noise.c">
+      <Filter>KEX_Frodo</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\kex_rlwe_newhope\newhope.c">
-      <Filter>Source Files\Newhope</Filter>
+      <Filter>KEX_NewHope</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_msrln16\ntt_constants.c">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe.c">
+      <Filter>KEX_BCNS15</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe_kex.c">
+      <Filter>KEX_BCNS15</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_cln16\ec_isogeny.c">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_cln16\fpx.c">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_cln16\kex_sidh_cln16.c">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_cln16\SIDH.c">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_cln16\sidh_kex.c">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_cln16\SIDH_setup.c">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_cln16\validate.c">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\common.c">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\aes\aes.c">
+      <Filter>Crypto\AES</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\aes\aes_c.c">
+      <Filter>Crypto\AES</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\aes\aes_ni.c">
+      <Filter>Crypto\AES</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\sha3\sha3.c">
+      <Filter>Crypto\SHA3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\rand\rand.c">
+      <Filter>Crypto\Rand</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\rand_urandom_aesctr\rand_urandom_aesctr.c">
+      <Filter>Crypto\Rand</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\rand_urandom_chacha20\rand_urandom_chacha20.c">
+      <Filter>Crypto\Rand</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex\kex.c">
+      <Filter>KEX</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\kex_lwe_frodo\kex_lwe_frodo.h">
+      <Filter>KEX_Frodo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h">
+      <Filter>KEX_BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_msrln16\kex_rlwe_msrln16.h">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.h">
+      <Filter>KEX_NewHope</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_msrln16\LatticeCrypto.h">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_msrln16\LatticeCrypto_priv.h">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\local.h">
+      <Filter>KEX_BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_lwe_frodo\local.h">
+      <Filter>KEX_Frodo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_newhope\params.h">
+      <Filter>KEX_NewHope</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_table.h">
+      <Filter>KEX_BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_a.h">
+      <Filter>KEX_BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_sidh_cln16\kex_sidh_cln16.h">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_sidh_cln16\SIDH.h">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_sidh_cln16\SIDH_internal.h">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\common.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\aes\aes.h">
+      <Filter>Crypto\AES</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\aes\aes_local.h">
+      <Filter>Crypto\AES</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\sha3\sha3.h">
+      <Filter>Crypto\SHA3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\rand\rand.h">
+      <Filter>Crypto\Rand</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\rand_urandom_aesctr\rand_urandom_aesctr.h">
+      <Filter>Crypto\Rand</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\rand_urandom_chacha20\rand_urandom_chacha20.h">
+      <Filter>Crypto\Rand</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex\kex.h">
+      <Filter>KEX</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{2b7cf696-2f08-4ea3-80c5-0d16a8c70cfa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Crypto">
+      <UniqueIdentifier>{4a3e4a60-250c-46a9-8c6c-c8aecadee154}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Crypto\AES">
+      <UniqueIdentifier>{71c917ec-9181-4b88-bdfc-9611ee1abe9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Crypto\Rand">
+      <UniqueIdentifier>{fd44eb34-2f81-411e-a55f-f279c4b101de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX">
+      <UniqueIdentifier>{3bb6aa76-f294-47a9-bf22-76245c9cb1d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_BCNS15">
+      <UniqueIdentifier>{ab581356-2a96-4211-99e3-f5cecd92eda3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_Frodo">
+      <UniqueIdentifier>{6bfff158-3e78-402f-ba16-e8d315089de8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_MSR_LN16">
+      <UniqueIdentifier>{9f5ed87f-ed1e-47b4-b7e7-1d6648cb88fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_NewHope">
+      <UniqueIdentifier>{d0291785-4232-4264-b1bd-08b7e3f8df5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_SIDH_CLN16">
+      <UniqueIdentifier>{3e550d03-8fd0-4307-ad38-832effa40102}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Crypto\SHA3">
+      <UniqueIdentifier>{a9a0db92-1388-4ea2-b0d5-d61a51581993}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
