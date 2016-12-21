@@ -3291,7 +3291,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
 #endif                          /* OPENSSL_NO_HYBRID_OQSKEX_ECDHE */
 
 #ifndef OPENSSL_NO_OQSKEX
-    /* Cipher FF30 */
+    /* Cipher FF40 */
     {
     1,
     TLS1_TXT_OQSKEX_RLWE_MSRLN16_RSA_WITH_AES_128_GCM_SHA256,
@@ -3307,7 +3307,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
     128,
     },
 
-    /* Cipher FF31 */
+    /* Cipher FF41 */
     {
     1,
     TLS1_TXT_OQSKEX_RLWE_MSRLN16_ECDSA_WITH_AES_128_GCM_SHA256,
@@ -3323,7 +3323,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
     128,
     },
 
-    /* Cipher FF32 */
+    /* Cipher FF42 */
     {
     1,
     TLS1_TXT_OQSKEX_RLWE_MSRLN16_RSA_WITH_AES_256_GCM_SHA384,
@@ -3339,7 +3339,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
     256,
     },
 
-    /* Cipher FF33 */
+    /* Cipher FF43 */
     {
     1,
     TLS1_TXT_OQSKEX_RLWE_MSRLN16_ECDSA_WITH_AES_256_GCM_SHA384,
@@ -3358,7 +3358,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
 #endif                          /* OPENSSL_NO_OQSKEX */
 
 #ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
-     /* Cipher FF34 */
+     /* Cipher FF44 */
      {
      1,
      TLS1_TXT_OQSKEX_RLWE_MSRLN16_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -3374,7 +3374,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
      128,
      },
 
-     /* Cipher FF35 */
+     /* Cipher FF45 */
      {
      1,
      TLS1_TXT_OQSKEX_RLWE_MSRLN16_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
@@ -3390,7 +3390,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
      128,
      },
 
-     /* Cipher FF36 */
+     /* Cipher FF46 */
      {
      1,
      TLS1_TXT_OQSKEX_RLWE_MSRLN16_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
@@ -3406,7 +3406,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
      256,
      },
 
-     /* Cipher FF37 */
+     /* Cipher FF47 */
      {
      1,
      TLS1_TXT_OQSKEX_RLWE_MSRLN16_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
@@ -3425,7 +3425,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
 #endif                          /* OPENSSL_NO_HYBRID_OQSKEX_ECDHE */
 
 #ifndef OPENSSL_NO_OQSKEX
-    /* Cipher FF40 */
+    /* Cipher FF30 */
     {
     1,
     TLS1_TXT_OQSKEX_LWE_FRODO_RECOMMENDED_RSA_WITH_AES_128_GCM_SHA256,
@@ -3441,7 +3441,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
     128,
     },
 
-    /* Cipher FF41 */
+    /* Cipher FF31 */
     {
     1,
     TLS1_TXT_OQSKEX_LWE_FRODO_RECOMMENDED_ECDSA_WITH_AES_128_GCM_SHA256,
@@ -3457,7 +3457,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
     128,
     },
 
-    /* Cipher FF42 */
+    /* Cipher FF32 */
     {
     1,
     TLS1_TXT_OQSKEX_LWE_FRODO_RECOMMENDED_RSA_WITH_AES_256_GCM_SHA384,
@@ -3473,7 +3473,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
     256,
     },
 
-    /* Cipher FF43 */
+    /* Cipher FF33 */
     {
     1,
     TLS1_TXT_OQSKEX_LWE_FRODO_RECOMMENDED_ECDSA_WITH_AES_256_GCM_SHA384,
@@ -3492,7 +3492,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
 #endif                          /* OPENSSL_NO_OQSKEX */
 
 #ifndef OPENSSL_NO_HYBRID_OQSKEX_ECDHE
-     /* Cipher FF44 */
+     /* Cipher FF34 */
      {
      1,
      TLS1_TXT_OQSKEX_LWE_FRODO_RECOMMENDED_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -3508,7 +3508,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
      128,
      },
 
-     /* Cipher FF45 */
+     /* Cipher FF35 */
      {
      1,
      TLS1_TXT_OQSKEX_LWE_FRODO_RECOMMENDED_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
@@ -3524,7 +3524,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
      128,
      },
 
-     /* Cipher FF46 */
+     /* Cipher FF36 */
      {
      1,
      TLS1_TXT_OQSKEX_LWE_FRODO_RECOMMENDED_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
@@ -3540,7 +3540,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[] = {
      256,
      },
 
-     /* Cipher FF47 */
+     /* Cipher FF37 */
      {
      1,
      TLS1_TXT_OQSKEX_LWE_FRODO_RECOMMENDED_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
