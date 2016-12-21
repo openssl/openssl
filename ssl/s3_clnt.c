@@ -1864,6 +1864,7 @@ int ssl3_get_key_exchange(SSL *s)
             goto err;
         }
         if (EC_KEY_set_group(ecdh, ngroup) == 0) {
+            EC_GROUP_free(ngroup);
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_EC_LIB);
             goto err;
         }

@@ -331,7 +331,11 @@ static EX_CLASS_ITEM *def_get_class(int class_index)
                  * from the insert will be NULL
                  */
                 (void)lh_EX_CLASS_ITEM_insert(ex_data, gen);
-                p = gen;
+                p = lh_EX_CLASS_ITEM_retrieve(ex_data, &d);
+                if (p != gen) {
+                    sk_CRYPTO_EX_DATA_FUNCS_free(gen->meth);
+                    OPENSSL_free(gen);
+                }
             }
         }
     }
@@ -499,11 +503,12 @@ static void int_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
     int mx, i;
     EX_CLASS_ITEM *item;
     void *ptr;
+    CRYPTO_EX_DATA_FUNCS *f;
     CRYPTO_EX_DATA_FUNCS **storage = NULL;
     if (ex_data == NULL)
-        return;
+        goto err;
     if ((item = def_get_class(class_index)) == NULL)
-        return;
+        goto err;
     CRYPTO_r_lock(CRYPTO_LOCK_EX_DATA);
     mx = sk_CRYPTO_EX_DATA_FUNCS_num(item->meth);
     if (mx > 0) {
@@ -515,23 +520,23 @@ static void int_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
     }
  skip:
     CRYPTO_r_unlock(CRYPTO_LOCK_EX_DATA);
-    if ((mx > 0) && !storage) {
-        CRYPTOerr(CRYPTO_F_INT_FREE_EX_DATA, ERR_R_MALLOC_FAILURE);
-        return;
-    }
     for (i = 0; i < mx; i++) {
-        if (storage[i] && storage[i]->free_func) {
+        if (storage != NULL)
+            f = storage[i];
+        else {
+            CRYPTO_r_lock(CRYPTO_LOCK_EX_DATA);
+            f = sk_CRYPTO_EX_DATA_FUNCS_value(item->meth, i);
+            CRYPTO_r_unlock(CRYPTO_LOCK_EX_DATA);
+        }
+        if (f != NULL && f->free_func != NULL) {
             ptr = CRYPTO_get_ex_data(ad, i);
-            storage[i]->free_func(obj, ptr, ad, i,
-                                  storage[i]->argl, storage[i]->argp);
+            f->free_func(obj, ptr, ad, i, f->argl, f->argp);
         }
     }
-    if (storage)
-        OPENSSL_free(storage);
-    if (ad->sk) {
-        sk_void_free(ad->sk);
-        ad->sk = NULL;
-    }
+    OPENSSL_free(storage);
+ err:
+    sk_void_free(ad->sk);
+    ad->sk = NULL;
 }
 
 /********************************************************************/
