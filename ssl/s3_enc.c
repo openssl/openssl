@@ -570,17 +570,20 @@ int ssl3_enc(SSL *s, int send)
         if ((bs != 1) && !send)
             return ssl3_cbc_remove_padding(s, rec, bs, mac_size);
     }
-    return (1);
+    return 1;
 }
 
-void ssl3_init_finished_mac(SSL *s)
+int ssl3_init_finished_mac(SSL *s)
 {
     if (s->s3->handshake_buffer)
         BIO_free(s->s3->handshake_buffer);
     if (s->s3->handshake_dgst)
         ssl3_free_digest_list(s);
     s->s3->handshake_buffer = BIO_new(BIO_s_mem());
+    if (s->s3->handshake_buffer == NULL)
+        return 0;
     (void)BIO_set_close(s->s3->handshake_buffer, BIO_CLOSE);
+    return 1;
 }
 
 void ssl3_free_digest_list(SSL *s)
@@ -637,6 +640,10 @@ int ssl3_digest_cached_records(SSL *s)
     for (i = 0; ssl_get_handshake_digest(i, &mask, &md); i++) {
         if ((mask & ssl_get_algorithm2(s)) && md) {
             s->s3->handshake_dgst[i] = EVP_MD_CTX_create();
+            if (s->s3->handshake_dgst[i] == NULL) {
+                SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
 #ifdef OPENSSL_FIPS
             if (EVP_MD_nid(md) == NID_md5) {
                 EVP_MD_CTX_set_flags(s->s3->handshake_dgst[i],

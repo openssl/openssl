@@ -311,7 +311,12 @@ int ssl3_accept(SSL *s)
                     goto end;
                 }
 
-                ssl3_init_finished_mac(s);
+                if (!ssl3_init_finished_mac(s)) {
+                    ret = -1;
+                    s->state = SSL_ST_ERR;
+                    goto end;
+                }
+
                 s->state = SSL3_ST_SR_CLNT_HELLO_A;
                 s->ctx->stats.sess_accept++;
             } else if (!s->s3->send_connection_binding &&
@@ -348,7 +353,11 @@ int ssl3_accept(SSL *s)
             s->state = SSL3_ST_SW_FLUSH;
             s->init_num = 0;
 
-            ssl3_init_finished_mac(s);
+            if (!ssl3_init_finished_mac(s)) {
+                ret = -1;
+                s->state = SSL_ST_ERR;
+                goto end;
+            }
             break;
 
         case SSL3_ST_SW_HELLO_REQ_C:
