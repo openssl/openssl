@@ -404,7 +404,7 @@ int EVP_MD_meth_get_app_datasize(const EVP_MD *md)
 }
 unsigned long EVP_MD_meth_get_flags(const EVP_MD *md)
 {
-    return md->block_size;
+    return md->flags;
 }
 int (*EVP_MD_meth_get_init(const EVP_MD *md))(EVP_MD_CTX *ctx)
 {
