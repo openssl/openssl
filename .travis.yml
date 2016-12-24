@@ -110,7 +110,7 @@ script:
           cd _build;
       fi
     - $make update
-    - $make
+    - $make -j2
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
               sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
