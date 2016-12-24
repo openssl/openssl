@@ -882,8 +882,11 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
             return 0;
         extype = (msg[0] << 8) | msg[1];
         extlen = (msg[2] << 8) | msg[3];
-        if (msglen < extlen + 4)
+        if (msglen < extlen + 4) {
+            BIO_printf(bio, "extensions, extype = %d, extlen = %d\n", extype, (int)extlen);
+            BIO_dump_indent(bio, (const char *)msg, msglen, indent + 2);
             return 0;
+        }
         msg += 4;
         if (!ssl_print_extension(bio, indent + 2, server, mt, extype, msg,
                                  extlen))
