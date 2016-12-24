@@ -688,6 +688,8 @@ SSL *SSL_new(SSL_CTX *ctx)
         goto err;
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
     s->quiet_shutdown = ctx->quiet_shutdown;
+
+    s->ext.max_fragment_len_mode = ctx->ext.max_fragment_len_mode;
     s->max_send_fragment = ctx->max_send_fragment;
     s->split_send_fragment = ctx->split_send_fragment;
     s->max_pipelines = ctx->max_pipelines;

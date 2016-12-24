@@ -357,6 +357,13 @@
 # define SSL_CLIENT_USE_SIGALGS(s)        \
     SSL_CLIENT_USE_TLS1_2_CIPHERS(s)
 
+# define SSL_USE_MAX_FRAGMENT_LENGTH_EXT(s) \
+    (s->session) && \
+    ((s->session->ext.max_fragment_len_mode >= TLSEXT_max_fragment_length_2_TO_9) && \
+     (s->session->ext.max_fragment_len_mode <= TLSEXT_max_fragment_length_2_TO_12))
+# define SSL_GET_MAX_FRAGMENT_LENGTH(s) \
+    (512U << (s->session->ext.max_fragment_len_mode - 1))
+
 # define SSL_READ_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
 # define SSL_WRITE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
 
@@ -558,6 +565,13 @@ struct ssl_session_st {
         /* The ALPN protocol selected for this session */
         unsigned char *alpn_selected;
         size_t alpn_selected_len;
+        /*
+         * Maximum Fragment Length as per RFC 4366.
+         * If this value does not contain RFC 4366 allowed values (1-4) then
+         * either the Maximum Fragment Length Negotiation failed or was not
+         * performed at all.
+         */
+        uint8_t max_fragment_len_mode;
     } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
@@ -669,6 +683,7 @@ typedef struct {
 typedef enum tlsext_index_en {
     TLSEXT_IDX_renegotiate,
     TLSEXT_IDX_server_name,
+    TLSEXT_IDX_max_fragment_length,
     TLSEXT_IDX_srp,
     TLSEXT_IDX_ec_point_formats,
     TLSEXT_IDX_supported_groups,
@@ -895,6 +910,8 @@ struct ssl_ctx_st {
         void *status_arg;
         /* ext status type used for CSR extension (OCSP Stapling) */
         int status_type;
+        /* RFC 4366 Maximum Fragment Length Negotiation */
+        uint8_t max_fragment_len_mode;
 
 # ifndef OPENSSL_NO_EC
         /* EC extension values inherited by SSL structure */
@@ -1244,6 +1261,16 @@ struct ssl_st {
         /* May be sent by a server in HRR. Must be echoed back in ClientHello */
         unsigned char *tls13_cookie;
         size_t tls13_cookie_len;
+        /*
+         * Maximum Fragment Length as per RFC 4366.
+         * If this member contains one of the allowed values (1-4)
+         * then we should include Maximum Fragment Length Negotiation
+         * extension in Client Hello.
+         * Please note that value of this member does not have direct
+         * effect. The actual (binding) value is stored in SSL_SESSION,
+         * as this extension is optional on server side.
+         */
+        uint8_t max_fragment_len_mode;
     } ext;
 
     /*

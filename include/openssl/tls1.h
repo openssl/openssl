@@ -203,6 +203,14 @@ extern "C" {
 # define TLSEXT_curve_P_256                              23
 # define TLSEXT_curve_P_384                              24
 
+/* OpenSSL value to disable maximum fragment length extension */
+# define TLSEXT_max_fragment_length_DISABLED    0
+/* Allowed values for max fragment length extension */
+# define TLSEXT_max_fragment_length_2_TO_9      1
+# define TLSEXT_max_fragment_length_2_TO_10     2
+# define TLSEXT_max_fragment_length_2_TO_11     3
+# define TLSEXT_max_fragment_length_2_TO_12     4
+
 # define TLSEXT_MAXLEN_host_name 255
 
 __owur const char *SSL_get_servername(const SSL *s, const int type);
@@ -235,6 +243,12 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
         SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,\
                 (void *)name)
 
+# define SSL_set_tlsext_max_fragment_length(s, type) \
+SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_MAX_FRAGMENT_LENGTH, type, NULL)
+
+# define SSL_get_tlsext_max_fragment_length(s) \
+SSL_ctrl(s,SSL_CTRL_GET_TLSEXT_MAX_FRAGMENT_LENGTH, 0, NULL)
+
 # define SSL_set_tlsext_debug_callback(ssl, cb) \
         SSL_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_CB,\
                 (void (*)(void))cb)
@@ -265,6 +279,9 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 
 # define SSL_set_tlsext_status_ocsp_resp(ssl, arg, arglen) \
         SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP,arglen,arg)
+
+# define SSL_CTX_set_tlsext_max_fragment_length(ctx, type) \
+SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_MAX_FRAGMENT_LENGTH,type, NULL)
 
 # define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
         SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,\

@@ -257,6 +257,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CTOS_HELLO                   356
 # define SSL_F_TLS_CONSTRUCT_CTOS_KEY_EXCHANGE            357
 # define SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE               470
+# define SSL_F_TLS_CONSTRUCT_CTOS_MAXFRAGMENTLEN          549
 # define SSL_F_TLS_CONSTRUCT_CTOS_NPN                     471
 # define SSL_F_TLS_CONSTRUCT_CTOS_PADDING                 472
 # define SSL_F_TLS_CONSTRUCT_CTOS_PSK                     501
@@ -296,6 +297,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_STOC_HELLO                   376
 # define SSL_F_TLS_CONSTRUCT_STOC_KEY_EXCHANGE            377
 # define SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE               456
+# define SSL_F_TLS_CONSTRUCT_STOC_MAXFRAGMENTLEN          548
 # define SSL_F_TLS_CONSTRUCT_STOC_NEXT_PROTO_NEG          457
 # define SSL_F_TLS_CONSTRUCT_STOC_PSK                     504
 # define SSL_F_TLS_CONSTRUCT_STOC_RENEGOTIATE             458
@@ -551,6 +553,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES           362
 # define SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG      363
 # define SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE            364
+# define SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH       232
 # define SSL_R_SSL3_EXT_INVALID_SERVERNAME                319
 # define SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE           320
 # define SSL_R_SSL3_SESSION_ID_TOO_LONG                   300

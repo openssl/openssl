@@ -1,0 +1,76 @@
+=pod
+
+=head1 NAME
+
+SSL_CTX_set_tlsext_max_fragment_length, SSL_set_tlsext_max_fragment_length, SSL_get_tlsext_max_fragment_length - enable Maximum Fragment Length Negotiation extension
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ long SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, long mode);
+ long SSL_set_tlsext_max_fragment_length(SSL *ssl, long mode);
+
+ long SSL_get_tlsext_max_fragment_length(SSL *ssl);
+
+=head1 DESCRIPTION
+
+SSL_CTX_set_tlsext_max_fragment_length() sets the default maximum fragment
+length negotiation mode via value B<mode> to B<ctx>.
+This setting affects only SSL instances created after this function is called.
+
+SSL_set_tlsext_max_fragment_length() sets the maximum fragment length
+negotiation mode via value B<mode> to B<ssl>.
+This setting affects only SSL sessions created after this function is called.
+
+SSL_get_tlsext_max_fragment_length() gets the maximum fragment length
+negotiated in session B<ssl>.
+
+=head1 NOTES
+
+This extension is optional on server side. If server does not support this
+extension SSL_get_tlsext_max_fragment_length() will return
+TLSEXT_max_fragment_length_DISABLED.
+
+The following modes are available:
+
+=over 4
+
+=item TLSEXT_max_fragment_length_DISABLED
+
+Disables Maximum Fragment Length Negotiation (default).
+
+=item TLSEXT_max_fragment_length_2_TO_9
+
+Sets Maximum Fragment Length to 512.
+
+=item TLSEXT_max_fragment_length_2_TO_10
+
+Sets Maximum Fragment Length to 1024.
+
+=item TLSEXT_max_fragment_length_2_TO_11
+
+Sets Maximum Fragment Length to 2048.
+
+=item TLSEXT_max_fragment_length_2_TO_12
+
+Sets Maximum Fragment Length to 4096.
+
+=back
+
+=head1 RETURN VALUES
+
+SSL_CTX_set_tlsext_max_fragment_length() and SSL_set_tlsext_max_fragment_length() return 0.
+
+SSL_get_tlsext_max_fragment_length() returns Maximum Fragment Length that was
+negotiated for connection B<ssl>.
+
+=head1 SEE ALSO
+
+L<SSL_set_tlsext_max_fragment_length(3)>, L<SSL_CTX_set_tlsext_max_fragment_length(3)>, L<SSL_get_tlsext_max_fragment_length(3)>
+
+=head1 HISTORY
+
+SSL_CTX_set_tlsext_max_fragment_length(), SSL_set_tlsext_max_fragment_length() and SSL_get_tlsext_max_fragment_length() have been added in OpenSSL 1.1.1.
+
+=cut

@@ -135,6 +135,14 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_stoc_server_name, tls_construct_ctos_server_name,
         final_server_name
     },
+    {
+        TLSEXT_TYPE_max_fragment_length,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
+        | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        NULL, tls_parse_ctos_maxfragmentlen, tls_parse_stoc_maxfragmentlen,
+        tls_construct_stoc_maxfragmentlen, tls_construct_ctos_maxfragmentlen,
+        NULL
+    },
 #ifndef OPENSSL_NO_SRP
     {
         TLSEXT_TYPE_srp,
