@@ -2165,10 +2165,9 @@ $code.=<<___;
 
 	################################################################
 	# load input
-	vmovdqu64	16*0($inp),%x#$T0
-	vmovdqu64	16*1($inp),%x#$T1
-	vinserti64x2	\$1,16*2($inp),$T0,$T0
-	vinserti64x2	\$1,16*3($inp),$T1,$T1
+	vmovdqu64	16*0($inp),%z#$T3
+	vmovdqu64	16*4($inp),%z#$T4
+	lea		16*8($inp),$inp
 
 	################################################################
 	# lazy reduction
@@ -2205,50 +2204,51 @@ $code.=<<___;
 	vpaddq		$M3,$D4,$D4		# d3 -> d4
 
 ___
-map(s/%y/%z/,($T4,$T0,$T1,$T2,$T3));
+map(s/%y/%z/,($T4,$T0,$T1,$T2,$T3));		# switch to %zmm domain
 map(s/%y/%z/,($M4,$M0,$M1,$M2,$M3));
+map(s/%y/%z/,($D0,$D1,$D2,$D3,$D4));
+map(s/%y/%z/,($R0,$R1,$R2,$R3,$R4, $S1,$S2,$S3,$S4));
+map(s/%y/%z/,($H0,$H1,$H2,$H3,$H4));
 map(s/%y/%z/,($MASK));
 $code.=<<___;
 	################################################################
-	# load more input
-	vinserti64x2	\$2,16*4($inp),$T0,$T0
-	vinserti64x2	\$2,16*5($inp),$T1,$T1
-	vinserti64x2	\$3,16*6($inp),$T0,$T0
-	vinserti64x2	\$3,16*7($inp),$T1,$T1
-	lea		16*8($inp),$inp
-
-	vpbroadcastq	%x#$MASK,$MASK
-	vpbroadcastq	32(%rcx),$PADBIT
-
-	################################################################
 	# at this point we have 14243444 in $R0-$S4 and 05060708 in
-	# $D0-$D4, and the goal is 1828384858687888 in $R0-$S4
+	# $D0-$D4, ...
 
-	mov		\$0x5555,%eax
-	vpbroadcastq	%x#$D0,$M0		# 0808080808080808
+	vpunpcklqdq	$T4,$T3,$T0	# transpose input
+	vpunpckhqdq	$T4,$T3,$T4
+
+	# ... since input 64-bit lanes are ordered as 73625140, we could
+	# "vperm" it to 76543210 (here and in each loop iteration), *or*
+	# we could just flow along, hence the goal for $R0-$S4 is
+	# 1858286838784888 ...
+
+	mov		\$0b0110011001100110,%eax
+	mov		\$0b1100110011001100,%r8d
+	mov		\$0b0101010101010101,%r9d
+	kmovw		%eax,%k1
+	kmovw		%r8d,%k2
+	kmovw		%r9d,%k3
+
+	vpbroadcastq	%x#$D0,$M0	# 0808080808080808
 	vpbroadcastq	%x#$D1,$M1
 	vpbroadcastq	%x#$D2,$M2
 	vpbroadcastq	%x#$D3,$M3
 	vpbroadcastq	%x#$D4,$M4
-	kmovw		%eax,%k3
-	vpsllq		\$32,$D0,$D0		# 05060708 -> 50607080
-	vpsllq		\$32,$D1,$D1
-	vpsllq		\$32,$D2,$D2
-	vpsllq		\$32,$D3,$D3
-	vpsllq		\$32,$D4,$D4
-___
-map(s/%y/%z/,($D0,$D1,$D2,$D3,$D4));
-$code.=<<___;
-	vinserti64x4	\$1,$R0,$D0,$D0		# 1424344450607080
-	vinserti64x4	\$1,$R1,$D1,$D1
-	vinserti64x4	\$1,$R2,$D2,$D2
-	vinserti64x4	\$1,$R3,$D3,$D3
-	vinserti64x4	\$1,$R4,$D4,$D4
-___
-map(s/%y/%z/,($H0,$H1,$H2,$H3,$H4));
-map(s/%y/%z/,($R0,$R1,$R2,$R3,$R4, $S1,$S2,$S3,$S4));
-$code.=<<___;
-	vpblendmd	$M0,$D0,${R0}{%k3}	# 1828384858687888
+
+	vpexpandd	$D0,${D0}{%k1}	# 05060708 -> -05--06--07--08-
+	vpexpandd	$D1,${D1}{%k1}
+	vpexpandd	$D2,${D2}{%k1}
+	vpexpandd	$D3,${D3}{%k1}
+	vpexpandd	$D4,${D4}{%k1}
+
+	vpexpandd	$R0,${D0}{%k2}	# -05--06--07--08- -> 145-246-347-448-
+	vpexpandd	$R1,${D1}{%k2}
+	vpexpandd	$R2,${D2}{%k2}
+	vpexpandd	$R3,${D3}{%k2}
+	vpexpandd	$R4,${D4}{%k2}
+
+	vpblendmd	$M0,$D0,${R0}{%k3}	# 1858286838784888
 	vpblendmd	$M1,$D1,${R1}{%k3}
 	vpblendmd	$M2,$D2,${R2}{%k3}
 	vpblendmd	$M3,$D3,${R3}{%k3}
@@ -2263,19 +2263,18 @@ $code.=<<___;
 	vpaddd		$R3,$S3,$S3
 	vpaddd		$R4,$S4,$S4
 
-	vpsrldq		\$6,$T0,$T2		# splat input
-	vpsrldq		\$6,$T1,$T3
-	vpunpckhqdq	$T1,$T0,$T4		# 4
-	vpunpcklqdq	$T3,$T2,$T2		# 2:3
-	vpunpcklqdq	$T1,$T0,$T0		# 0:1
+	vpbroadcastq	%x#$MASK,$MASK
+	vpbroadcastq	32(%rcx),$PADBIT	# .L129
 
-	vpsrlq		\$30,$T2,$T3
-	vpsrlq		\$4,$T2,$T2
+	vpsrlq		\$52,$T0,$T2		# splat input
+	vpsllq		\$12,$T4,$T3
+	vporq		$T3,$T2,$T2
 	vpsrlq		\$26,$T0,$T1
+	vpsrlq		\$14,$T4,$T3
 	vpsrlq		\$40,$T4,$T4		# 4
 	vpandq		$MASK,$T2,$T2		# 2
 	vpandq		$MASK,$T0,$T0		# 0
-	#vpandq		$MASK,$T1,$T1		# 1
+	vpandq		$MASK,$T1,$T1		# 1
 	#vpandq		$MASK,$T3,$T3		# 3
 	#vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 
@@ -2315,12 +2314,9 @@ $code.=<<___;
 
 	vpmuludq	$H2,$R1,$D3		# d3 = h2*r1
 	 vpaddq		$H0,$T0,$H0
-	  vmovdqu64	16*0($inp),%x#$M0	# load input
 	vpmuludq	$H2,$R2,$D4		# d4 = h2*r2
-	 vpandq		$MASK,$T1,$T1		# 1, module-scheduled
-	  vmovdqu64	16*1($inp),%x#$M1
 	vpmuludq	$H2,$S3,$D0		# d0 = h2*s3
-	 vpandq		$MASK,$T3,$T3		# 3
+	 vpandq		$MASK,$T3,$T3		# 3, module-scheduled
 	vpmuludq	$H2,$S4,$D1		# d1 = h2*s4
 	 vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 	vpmuludq	$H2,$R0,$D2		# d2 = h2*r0
@@ -2328,8 +2324,9 @@ $code.=<<___;
 	 vpaddq		$H3,$T3,$H3
 	 vpaddq		$H4,$T4,$H4
 
-	  vinserti64x2	\$1,16*2($inp),$M0,$T0
-	  vinserti64x2	\$1,16*3($inp),$M1,$T1
+	  vmovdqu64	16*0($inp),$T3		# load input
+	  vmovdqu64	16*4($inp),$T4
+	  lea		16*8($inp),$inp
 	vpmuludq	$H0,$R3,$M3
 	vpmuludq	$H0,$R4,$M4
 	vpmuludq	$H0,$R0,$M0
@@ -2339,8 +2336,6 @@ $code.=<<___;
 	vpaddq		$M0,$D0,$D0		# d0 += h0*r0
 	vpaddq		$M1,$D1,$D1		# d1 += h0*r1
 
-	  vinserti64x2	\$2,16*4($inp),$T0,$T0
-	  vinserti64x2	\$2,16*5($inp),$T1,$T1
 	vpmuludq	$H1,$R2,$M3
 	vpmuludq	$H1,$R3,$M4
 	vpmuludq	$H1,$S4,$M0
@@ -2350,8 +2345,9 @@ $code.=<<___;
 	vpaddq		$M0,$D0,$D0		# d0 += h1*s4
 	vpaddq		$M2,$D2,$D2		# d2 += h0*r2
 
-	  vinserti64x2	\$3,16*6($inp),$T0,$T0
-	  vinserti64x2	\$3,16*7($inp),$T1,$T1
+	  vpunpcklqdq	$T4,$T3,$T0		# transpose input
+	  vpunpckhqdq	$T4,$T3,$T4
+
 	vpmuludq	$H3,$R0,$M3
 	vpmuludq	$H3,$R1,$M4
 	vpmuludq	$H1,$R0,$M1
@@ -2361,9 +2357,6 @@ $code.=<<___;
 	vpaddq		$M1,$D1,$D1		# d1 += h1*r0
 	vpaddq		$M2,$D2,$D2		# d2 += h1*r1
 
-	  vpsrldq	\$6,$T0,$T2		# splat input
-	  vpsrldq	\$6,$T1,$T3
-	  vpunpckhqdq	$T1,$T0,$T4		# 4
 	vpmuludq	$H4,$S4,$M3
 	vpmuludq	$H4,$R0,$M4
 	vpmuludq	$H3,$S2,$M0
@@ -2375,9 +2368,6 @@ $code.=<<___;
 	vpaddq		$M1,$D1,$D1		# d1 += h3*s3
 	vpaddq		$M2,$D2,$D2		# d2 += h3*s4
 
-	  vpunpcklqdq	$T1,$T0,$T0		# 0:1
-	  vpunpcklqdq	$T3,$T2,$T3		# 2:3
-	  lea		16*8($inp),$inp
 	vpmuludq	$H4,$S1,$M0
 	vpmuludq	$H4,$S2,$M1
 	vpmuludq	$H4,$S3,$M2
@@ -2386,20 +2376,25 @@ $code.=<<___;
 	vpaddq		$M2,$D2,$H2		# h2 = d3 + h4*s3
 
 	################################################################
-	# lazy reduction (interleaved with tail of input splat)
+	# lazy reduction (interleaved with input splat)
+
+	 vpsrlq		\$52,$T0,$T2		# splat input
+	 vpsllq		\$12,$T4,$T3
 
 	vpsrlq		\$26,$D3,$H3
 	vpandq		$MASK,$D3,$D3
 	vpaddq		$H3,$D4,$H4		# h3 -> h4
 
+	 vporq		$T3,$T2,$T2
+
 	vpsrlq		\$26,$H0,$D0
 	vpandq		$MASK,$H0,$H0
 	vpaddq		$D0,$H1,$H1		# h0 -> h1
 
+	 vpandq		$MASK,$T2,$T2		# 2
+
 	vpsrlq		\$26,$H4,$D4
 	vpandq		$MASK,$H4,$H4
-
-	 vpsrlq		\$4,$T3,$T2
 
 	vpsrlq		\$26,$H1,$D1
 	vpandq		$MASK,$H1,$H1
@@ -2409,15 +2404,14 @@ $code.=<<___;
 	vpsllq		\$2,$D4,$D4
 	vpaddq		$D4,$H0,$H0		# h4 -> h0
 
-	 vpandq		$MASK,$T2,$T2		# 2
+	 vpaddq		$T2,$H2,$H2		# modulo-scheduled
 	 vpsrlq		\$26,$T0,$T1
 
 	vpsrlq		\$26,$H2,$D2
 	vpandq		$MASK,$H2,$H2
 	vpaddq		$D2,$D3,$H3		# h2 -> h3
 
-	 vpaddq		$T2,$H2,$H2		# modulo-scheduled
-	 vpsrlq		\$30,$T3,$T3
+	 vpsrlq		\$14,$T4,$T3
 
 	vpsrlq		\$26,$H0,$D0
 	vpandq		$MASK,$H0,$H0
@@ -2430,7 +2424,7 @@ $code.=<<___;
 	vpaddq		$D3,$H4,$H4		# h3 -> h4
 
 	 vpandq		$MASK,$T0,$T0		# 0
-	 #vpandq	$MASK,$T1,$T1		# 1
+	 vpandq		$MASK,$T1,$T1		# 1
 	 #vpandq	$MASK,$T3,$T3		# 3
 	 #vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 
@@ -2443,7 +2437,7 @@ $code.=<<___;
 	# iteration we multiply least significant lane by r^8 and most
 	# significant one by r, that's why table gets shifted...
 
-	vpsrlq		\$32,$R0,$R0		# 0102030405060708
+	vpsrlq		\$32,$R0,$R0		# 0105020603070408
 	vpsrlq		\$32,$R1,$R1
 	vpsrlq		\$32,$R2,$R2
 	vpsrlq		\$32,$S3,$S3
@@ -2465,8 +2459,7 @@ $code.=<<___;
 	vpmuludq	$H2,$S3,$D0		# d0 = h2*s3
 	vpmuludq	$H2,$S4,$D1		# d1 = h2*s4
 	vpmuludq	$H2,$R0,$D2		# d2 = h2*r0
-	 vpandq		$MASK,$T1,$T1		# 1, module-scheduled
-	 vpandq		$MASK,$T3,$T3		# 3
+	 vpandq		$MASK,$T3,$T3		# 3, module-scheduled
 	 vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 	 vpaddq		$H1,$T1,$H1		# accumulate input
 	 vpaddq		$H3,$T3,$H3
@@ -2621,18 +2614,19 @@ $code.=<<___;
 	vmovd		%x#$H2,`4*2-48-64`($ctx)
 	vmovd		%x#$H3,`4*3-48-64`($ctx)
 	vmovd		%x#$H4,`4*4-48-64`($ctx)
+	vzeroall
 ___
 $code.=<<___	if ($win64);
-	vmovdqa		0x50(%r11),%xmm6
-	vmovdqa		0x60(%r11),%xmm7
-	vmovdqa		0x70(%r11),%xmm8
-	vmovdqa		0x80(%r11),%xmm9
-	vmovdqa		0x90(%r11),%xmm10
-	vmovdqa		0xa0(%r11),%xmm11
-	vmovdqa		0xb0(%r11),%xmm12
-	vmovdqa		0xc0(%r11),%xmm13
-	vmovdqa		0xd0(%r11),%xmm14
-	vmovdqa		0xe0(%r11),%xmm15
+	movdqa		0x50(%r11),%xmm6
+	movdqa		0x60(%r11),%xmm7
+	movdqa		0x70(%r11),%xmm8
+	movdqa		0x80(%r11),%xmm9
+	movdqa		0x90(%r11),%xmm10
+	movdqa		0xa0(%r11),%xmm11
+	movdqa		0xb0(%r11),%xmm12
+	movdqa		0xc0(%r11),%xmm13
+	movdqa		0xd0(%r11),%xmm14
+	movdqa		0xe0(%r11),%xmm15
 	lea		0xf8(%r11),%rsp
 .Ldo_avx512_epilogue:
 ___
@@ -2640,7 +2634,6 @@ $code.=<<___	if (!$win64);
 	lea		8(%r11),%rsp
 ___
 $code.=<<___;
-	vzeroupper
 	ret
 .size	poly1305_blocks_avx512,.-poly1305_blocks_avx512
 ___
