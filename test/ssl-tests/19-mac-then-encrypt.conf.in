@@ -11,6 +11,8 @@
 
 package ssltests;
 
+use OpenSSL::Test::Utils;
+
 our @tests = (
     {
         name => "disable-encrypt-then-mac-server-sha",
@@ -52,6 +54,9 @@ our @tests = (
           "ExpectedResult" => "Success",
         },
     },
+);
+
+my @tests_tls1_2 = (
     {
         name => "disable-encrypt-then-mac-server-sha2",
         server => {
@@ -93,3 +98,5 @@ our @tests = (
         },
     },
 );
+
+push @tests, @tests_tls1_2 unless disabled("tls1_2");

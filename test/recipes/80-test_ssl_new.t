@@ -57,6 +57,7 @@ my %conf_dependent_tests = (
   "07-dtls-protocol-version.conf" => !$is_default_dtls,
   "10-resumption.conf" => !$is_default_tls,
   "11-dtls_resumption.conf" => !$is_default_dtls,
+  "19-mac-then-encrypt.conf" => !$is_default_tls,
 );
 
 # Add your test here if it should be skipped for some compile-time
@@ -78,7 +79,7 @@ my %skip = (
   "15-certstatus.conf" => $no_tls || $no_ocsp,
   "16-dtls-certstatus.conf" => $no_dtls || $no_ocsp,
   "18-dtls-renegotiate.conf" => $no_dtls,
-  "19-mac-then-encrypt.conf" => $no_pre_tls1_3
+  "19-mac-then-encrypt.conf" => $no_pre_tls1_3,
 );
 
 foreach my $conf (@conf_files) {
