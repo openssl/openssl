@@ -105,8 +105,9 @@ my $proxy = TLSProxy::Proxy->new(
                       [TLSProxy::Message::MT_CLIENT_HELLO,
                        TLSProxy::Message::EXT_EC_POINT_FORMATS,
                        checkhandshake::DEFAULT_EXTENSIONS]),
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
-        checkhandshake::DEFAULT_EXTENSIONS],
+    (disabled("tls1_2") ? () :
+     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
+         checkhandshake::DEFAULT_EXTENSIONS]),
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
         checkhandshake::ALPN_CLI_EXTENSION],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
