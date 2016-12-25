@@ -1631,8 +1631,9 @@ $code.=<<___	if ($win64);
 .Ldo_avx2_body:
 ___
 $code.=<<___;
-	lea		48+64($ctx),$ctx	# size optimization
 	lea		.Lconst(%rip),%rcx
+	lea		48+64($ctx),$ctx	# size optimization
+	vmovdqa		96(%rcx),$T0		# .Lpermd_avx2
 
 	# expand and copy pre-calculated table to stack
 	vmovdqu		`16*0-64`($ctx),%x#$T2
@@ -1642,36 +1643,28 @@ $code.=<<___;
 	vmovdqu		`16*3-64`($ctx),%x#$D0
 	vmovdqu		`16*4-64`($ctx),%x#$D1
 	vmovdqu		`16*5-64`($ctx),%x#$D2
+	lea		0x90(%rsp),%rax		# size optimization
 	vmovdqu		`16*6-64`($ctx),%x#$D3
-	vpermq		\$0x15,$T2,$T2		# 00003412 -> 12343434
+	vpermd		$T2,$T0,$T2		# 00003412 -> 14243444
 	vmovdqu		`16*7-64`($ctx),%x#$D4
-	vpermq		\$0x15,$T3,$T3
-	vpshufd		\$0xc8,$T2,$T2		# 12343434 -> 14243444
+	vpermd		$T3,$T0,$T3
 	vmovdqu		`16*8-64`($ctx),%x#$MASK
-	vpermq		\$0x15,$T4,$T4
-	vpshufd		\$0xc8,$T3,$T3
+	vpermd		$T4,$T0,$T4
 	vmovdqa		$T2,0x00(%rsp)
-	vpermq		\$0x15,$D0,$D0
-	vpshufd		\$0xc8,$T4,$T4
-	vmovdqa		$T3,0x20(%rsp)
-	vpermq		\$0x15,$D1,$D1
-	vpshufd		\$0xc8,$D0,$D0
-	vmovdqa		$T4,0x40(%rsp)
-	vpermq		\$0x15,$D2,$D2
-	vpshufd		\$0xc8,$D1,$D1
-	vmovdqa		$D0,0x60(%rsp)
-	vpermq		\$0x15,$D3,$D3
-	vpshufd		\$0xc8,$D2,$D2
-	vmovdqa		$D1,0x80(%rsp)
-	vpermq		\$0x15,$D4,$D4
-	vpshufd		\$0xc8,$D3,$D3
-	vmovdqa		$D2,0xa0(%rsp)
-	vpermq		\$0x15,$MASK,$MASK
-	vpshufd		\$0xc8,$D4,$D4
-	vmovdqa		$D3,0xc0(%rsp)
-	vpshufd		\$0xc8,$MASK,$MASK
-	vmovdqa		$D4,0xe0(%rsp)
-	vmovdqa		$MASK,0x100(%rsp)
+	vpermd		$D0,$T0,$D0
+	vmovdqa		$T3,0x20-0x90(%rax)
+	vpermd		$D1,$T0,$D1
+	vmovdqa		$T4,0x40-0x90(%rax)
+	vpermd		$D2,$T0,$D2
+	vmovdqa		$D0,0x60-0x90(%rax)
+	vpermd		$D3,$T0,$D3
+	vmovdqa		$D1,0x80-0x90(%rax)
+	vpermd		$D4,$T0,$D4
+	vmovdqa		$D2,0xa0-0x90(%rax)
+	vpermd		$MASK,$T0,$MASK
+	vmovdqa		$D3,0xc0-0x90(%rax)
+	vmovdqa		$D4,0xe0-0x90(%rax)
+	vmovdqa		$MASK,0x100-0x90(%rax)
 	vmovdqa		64(%rcx),$MASK		# .Lmask26
 
 	################################################################
@@ -1698,7 +1691,6 @@ $code.=<<___;
 	vpand		$MASK,$T3,$T3		# 3
 	vpor		32(%rcx),$T4,$T4	# padbit, yes, always
 
-	lea		0x90(%rsp),%rax		# size optimization
 	vpaddq		$H2,$T2,$H2		# accumulate input
 	sub		\$64,$len
 	jz		.Ltail_avx2
@@ -2055,8 +2047,9 @@ $code.=<<___	if ($win64);
 .Ldo_avx512_body:
 ___
 $code.=<<___;
-	lea		48+64($ctx),$ctx	# size optimization
 	lea		.Lconst(%rip),%rcx
+	lea		48+64($ctx),$ctx	# size optimization
+	vmovdqa		96(%rcx),$T2		# .Lpermd_avx2
 
 	# expand pre-calculated table
 	vmovdqu32	`16*0-64`($ctx),%x#$R0
@@ -2069,33 +2062,23 @@ $code.=<<___;
 	vmovdqu32	`16*6-64`($ctx),%x#$S3
 	vmovdqu32	`16*7-64`($ctx),%x#$R4
 	vmovdqu32	`16*8-64`($ctx),%x#$S4
-	vpermq		\$0x15,$R0,$R0		# 00003412 -> 12343434
+	vpermd		$R0,$T2,$R0		# 00003412 -> 14243444
 	vmovdqa64	64(%rcx),$MASK		# .Lmask26
-	vpermq		\$0x15,$R1,$R1
-	vmovdqa32	128(%rcx),$GATHER	# .Lgather
-	vpermq		\$0x15,$S1,$S1
-	vpshufd		\$0xc8,$R0,$R0		# 12343434 -> 14243444
-	vpermq		\$0x15,$R2,$R2
-	vpshufd		\$0xc8,$R1,$R1
+	vpermd		$R1,$T2,$R1
+	vpermd		$S1,$T2,$S1
+	vpermd		$R2,$T2,$R2
 	vmovdqa32	$R0,0x00(%rsp)		# save in case $len%128 != 0
 	 vpsrlq		\$32,$R0,$T0		# 14243444 -> 01020304
-	vpermq		\$0x15,$S2,$S2
-	vpshufd		\$0xc8,$S1,$S1
+	vpermd		$S2,$T2,$S2
 	vmovdqa32	$R1,0x20(%rsp)
 	 vpsrlq		\$32,$R1,$T1
-	vpermq		\$0x15,$R3,$R3
-	vpshufd		\$0xc8,$R2,$R2
+	vpermd		$R3,$T2,$R3
 	vmovdqa32	$S1,0x40(%rsp)
-	vpermq		\$0x15,$S3,$S3
-	vpshufd		\$0xc8,$S2,$S2
-	vpermq		\$0x15,$R4,$R4
-	vpshufd		\$0xc8,$R3,$R3
+	vpermd		$S3,$T2,$S3
+	vpermd		$R4,$T2,$R4
 	vmovdqa32	$R2,0x60(%rsp)
-	vpermq		\$0x15,$S4,$S4
-	vpshufd		\$0xc8,$S3,$S3
+	vpermd		$S4,$T2,$S4
 	vmovdqa32	$S2,0x80(%rsp)
-	vpshufd		\$0xc8,$R4,$R4
-	vpshufd		\$0xc8,$S4,$S4
 	vmovdqa32	$R3,0xa0(%rsp)
 	vmovdqa32	$S3,0xc0(%rsp)
 	vmovdqa32	$R4,0xe0(%rsp)
@@ -2275,14 +2258,16 @@ $code.=<<___;
 	vpandq		$MASK,$T2,$T2		# 2
 	vpandq		$MASK,$T0,$T0		# 0
 	vpandq		$MASK,$T1,$T1		# 1
-	#vpandq		$MASK,$T3,$T3		# 3
+	vpandq		$MASK,$T3,$T3		# 3
 	#vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 
 	vpaddq		$H2,$T2,$H2		# accumulate input
 	mov		\$0x0f,%eax
 	sub		\$192,$len
 	jbe		.Ltail_avx512
+	jmp		.Loop_avx512
 
+.align	32
 .Loop_avx512:
 	################################################################
 	# ((inp[0]*r^8+inp[ 8])*r^8+inp[16])*r^8
@@ -2316,7 +2301,6 @@ $code.=<<___;
 	 vpaddq		$H0,$T0,$H0
 	vpmuludq	$H2,$R2,$D4		# d4 = h2*r2
 	vpmuludq	$H2,$S3,$D0		# d0 = h2*s3
-	 vpandq		$MASK,$T3,$T3		# 3, module-scheduled
 	vpmuludq	$H2,$S4,$D1		# d1 = h2*s4
 	 vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 	vpmuludq	$H2,$R0,$D2		# d2 = h2*r0
@@ -2425,7 +2409,7 @@ $code.=<<___;
 
 	 vpandq		$MASK,$T0,$T0		# 0
 	 vpandq		$MASK,$T1,$T1		# 1
-	 #vpandq	$MASK,$T3,$T3		# 3
+	 vpandq		$MASK,$T3,$T3		# 3
 	 #vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 
 	sub		\$128,$len
@@ -2459,7 +2443,6 @@ $code.=<<___;
 	vpmuludq	$H2,$S3,$D0		# d0 = h2*s3
 	vpmuludq	$H2,$S4,$D1		# d1 = h2*s4
 	vpmuludq	$H2,$R0,$D2		# d2 = h2*r0
-	 vpandq		$MASK,$T3,$T3		# 3, module-scheduled
 	 vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 	 vpaddq		$H1,$T1,$H1		# accumulate input
 	 vpaddq		$H3,$T3,$H3
@@ -2647,10 +2630,8 @@ $code.=<<___;
 .long	`1<<24`,0,`1<<24`,0,`1<<24`,0,`1<<24`,0
 .Lmask26:
 .long	0x3ffffff,0,0x3ffffff,0,0x3ffffff,0,0x3ffffff,0
-.Lfive:
-.long	5,0,5,0,5,0,5,0
-.Lgather:
-.long	0,8, 32,40, 64,72, 96,104
+.Lpermd_avx2:
+.long	2,2,2,3,2,0,2,1
 ___
 }
 
