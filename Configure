@@ -390,6 +390,7 @@ my @disablables = (
     "rdrand",
     "rfc3779",
     "rmd160",
+    "saw",
     "scrypt",
     "sctp",
     "seed",
@@ -441,6 +442,7 @@ our %disabled = ( # "what"         => "comment"
 		  "md2"                 => "default",
                   "msan"                => "default",
 		  "rc5"                 => "default",
+		  "saw"			=> "default",
 		  "sctp"                => "default",
 		  "ssl-trace"           => "default",
 		  "ssl3"                => "default",
@@ -509,7 +511,7 @@ my @disable_cascades = (
     "apps"              => [ "tests" ],
     "comp"		=> [ "zlib" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
-
+    sub { !$disabled{"saw"} } => [ "asm" ],
     sub { !$disabled{"msan"} } => [ "asm" ],
     );
 
@@ -1309,6 +1311,14 @@ if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; $config
 else                    { $no_user_cflags=1;  }
 if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
 else               { $no_user_defines=1;    }
+
+unless ($disabled{saw})
+	{
+        # Disable optimisation until SAW can handle it
+	$config{cflags} =~ s/-O\S*//g;
+	$target{cflags} =~ s/-O\S*//g;
+	$config{cflags} .= " -emit-llvm ";
+	}
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 

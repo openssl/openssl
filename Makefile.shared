@@ -103,7 +103,7 @@ CALC_VERSIONS=	\
 LINK_APP=	\
   ( $(SET_X);   \
     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
-    LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS) $(LDFLAGS)}"; \
+    LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
@@ -245,7 +245,7 @@ link_dso.darwin:
 	SHLIB_SUFFIX=.dylib; \
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS="$(CFLAGS) `echo $(SHARED_LDFLAGS) | sed s/dynamiclib/bundle/`"; \
+	SHAREDFLAGS="`echo $(SHARED_LDFLAGS) | sed s/dynamiclib/bundle/`"; \
 	$(LINK_SO_DSO)
 link_shlib.darwin:
 	@ $(CALC_VERSIONS); \
@@ -253,7 +253,7 @@ link_shlib.darwin:
 	SHLIB_SUFFIX=.dylib; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS)"; \
+	SHAREDFLAGS="$(SHARED_LDFLAGS)"; \
 	if [ -n "$(LIBVERSION)" ]; then \
 		SHAREDFLAGS="$$SHAREDFLAGS -current_version $(LIBVERSION)"; \
 	fi; \

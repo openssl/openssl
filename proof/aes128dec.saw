@@ -1,0 +1,16 @@
+import "AESTBox.cry";
+
+let {{
+  aesExtract x = aesDecrypt ct key
+    where [ct,key] = split x
+}};
+
+print "Loading OpenSSL implementation";
+aes_imp <- time (load_aig "aes128dec.aig");
+
+print "Bitblasting Cryptol implementation";
+aes_ref <- time (bitblast {{ aesExtract }});
+
+print "Checking equivalence (may take about an hour)";
+res <- time (cec aes_imp aes_ref);
+print res;

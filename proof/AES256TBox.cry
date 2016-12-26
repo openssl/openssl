@@ -1,0 +1,240 @@
+// Translated from: https://github.com/LeventErkok/sbv/blob/ebf80d83d9259fa5ad42d97fdede1ae97323cfa7/Data/SBV/Examples/Crypto/AES.hs
+
+module AESTBox where
+
+type GF28 = [8]
+type Nk = 8
+type Nb = 4
+type Nr = 6 + Nk
+
+type State = [4][Nb * 8]
+type Key = [Nk][Nb * 8]
+type RoundKey = State
+type KS = (RoundKey, [Nr - 1]RoundKey, RoundKey)
+
+gf28Mult : GF28 -> GF28 -> GF28
+gf28Mult x y = pmod (pmult x y) <| x^^8 + x^^4 + x^^3 + x + 1 |>
+
+gf28Pow : GF28 -> [8] -> GF28
+gf28Pow n k =
+  if k == 0 then 1
+  else
+    (if (k && 1) == 1 then gf28Mult n w
+     else w
+       where v = gf28Pow n (k >> 1)
+             w = gf28Mult v v)
+
+//gf28Inverse : GF28 -> GF28
+//gf28Inverse x = gf28Pow x 254
+
+toBytes : [32] -> [4]GF28
+toBytes x = split`{4} x
+
+fromBytes : [4]GF28 -> [32]
+fromBytes xs = join xs
+
+rotR : [4]GF28 -> [2] -> [4]GF28
+rotR xs n = xs >>> n
+
+roundConstants = take`{16} ([0] # [ gf28Pow 2 (k-1) | k <- [1 .. ] ])
+
+sbox = [ 0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67,
+         0x2b, 0xfe, 0xd7, 0xab, 0x76, 0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59,
+         0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0, 0xb7,
+         0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1,
+         0x71, 0xd8, 0x31, 0x15, 0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05,
+         0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75, 0x09, 0x83,
+         0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29,
+         0xe3, 0x2f, 0x84, 0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b,
+         0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf, 0xd0, 0xef, 0xaa,
+         0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c,
+         0x9f, 0xa8, 0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc,
+         0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2, 0xcd, 0x0c, 0x13, 0xec,
+         0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19,
+         0x73, 0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee,
+         0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb, 0xe0, 0x32, 0x3a, 0x0a, 0x49,
+         0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79,
+         0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4,
+         0xea, 0x65, 0x7a, 0xae, 0x08, 0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6,
+         0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a, 0x70,
+         0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9,
+         0x86, 0xc1, 0x1d, 0x9e, 0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e,
+         0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf, 0x8c, 0xa1,
+         0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0,
+         0x54, 0xbb, 0x16]
+
+unsbox = [ unsboxf i sboxit 0 0 | i <- [ 0 .. 255] ]
+  where sboxit = [ (j, i) | i <- [ 0 .. 255] | j <- sbox ]
+        unsboxf n t i d = if i >= (width t) then d
+                          else (if (k == n) then v
+                                else unsboxf n t (i + 1) d
+                                  where (k, v) = t @ i)
+
+addRoundKey : RoundKey -> State -> State
+addRoundKey k s = k ^ s
+
+keyExpansion : Key -> [inf]RoundKey
+keyExpansion key = chop4 keys
+  where keys = key # [nextWord i prev old | i <- [ `Nk ... ] | prev <- drop`{Nk-1} keys | old <- keys]
+        chop4 : {a} [inf]a -> [inf][4]a
+        chop4 xs = split xs
+        subWordRcon : [Nb * 8] -> GF28 -> [Nb * 8]
+        subWordRcon w rc = fromBytes [a ^ rc, b, c, d]
+          where [a, b, c, d] = [ sbox @ i | i <- toBytes w ]
+        nextWord : [8] -> [Nb * 8] -> [Nb * 8] -> [Nb * 8]
+        nextWord i prev old = old ^
+          (if (i % `Nk) == 0 then subWordRcon (join (split`{4} prev <<< 1)) (roundConstants @ (i / `Nk))
+           else if (i % `Nk) == 4 && `Nk > 6 then subWordRcon prev 0
+           else prev)
+
+mETable = [ gf28Mult 0x0E i | i <- [ 0 .. 255 ] ]
+mBTable = [ gf28Mult 0x0B i | i <- [ 0 .. 255 ] ]
+mDTable = [ gf28Mult 0x0D i | i <- [ 0 .. 255 ] ]
+m9Table = [ gf28Mult 0x09 i | i <- [ 0 .. 255 ] ]
+mE i = mETable @ i
+mB i = mBTable @ i
+mD i = mDTable @ i
+m9 i = m9Table @ i
+tables = [ [mE, mB, mD, m9],
+           [m9, mE, mB, mD],
+           [mD, m9, mE, mB],
+           [mB, mD, m9, mE] ]
+
+invMixColumns : State -> State
+invMixColumns state = [ fromBytes ce | ce <- transpose (mmult [ toBytes se | se <- state ]) ]
+  where dollar f x = f x
+        dot f fs =  foldr1 (^) (zipWith dollar f fs)
+        mmult n = [ [ (dot r) ne | ne <- n ] | r <- tables ]
+
+aesEncryptKeySchedule : Key -> KS
+aesEncryptKeySchedule key = (rKeys @ 0, m, rKeys @ `Nr)
+  where rKeys = keyExpansion key
+        m = take`{Nr-1}(tail rKeys)
+
+aesDecryptKeySchedule : Key -> KS
+aesDecryptKeySchedule key = (rKeys @ `Nr, m, rKeys @ 0)
+  where rKeys = keyExpansion key
+        m = [ invMixColumns k | k <- reverse (take`{Nr-1}(tail rKeys)) ]
+
+doRounds : {a, b} (fin b) => (Bit -> State -> a -> State) -> (RoundKey, [b]a, a) -> State -> State
+doRounds rnd (ikey, rkeys, fkey) sIn = rnd True (rs ! 0) fkey
+  where s0 = addRoundKey ikey sIn
+        rs = [s0] # [ rnd False s k | s <- rs | k <- rkeys ]
+
+t0Func : GF28 -> [4]GF28
+t0Func a = [gf28Mult s 2, s, s, gf28Mult s 3] where s = sbox @ a
+t0 = [fromBytes (t0Func a) | a <- [0..255]]
+t1 = [fromBytes (rotR (t0Func a) 1) | a <- [0..255]]
+t2 = [fromBytes (rotR (t0Func a) 2) | a <- [0..255]]
+t3 = [fromBytes (rotR (t0Func a) 3) | a <- [0..255]]
+
+aesRound : Bit -> State -> RoundKey -> State
+aesRound isFinal s key = addRoundKey d key
+  where d = [ f isFinal i | i <- [ 0 .. 3] ]
+        a = [ toBytes se | se <- s ]
+        f b j = if b then
+                  fromBytes [ sbox @ (a @ ((j+0) % 4) @ 0),
+                              sbox @ (a @ ((j+1) % 4) @ 1),
+                              sbox @ (a @ ((j+2) % 4) @ 2),
+                              sbox @ (a @ ((j+3) % 4) @ 3) ]
+                else
+                  e0 ^ e1 ^ e2 ^ e3
+                    where e0 = t0 @ (a @ ((j+0) % 4) @ 0)
+                          e1 = t1 @ (a @ ((j+1) % 4) @ 1)
+                          e2 = t2 @ (a @ ((j+2) % 4) @ 2)
+                          e3 = t3 @ (a @ ((j+3) % 4) @ 3)
+
+
+u0Func : GF28 -> [4]GF28
+u0Func a = [gf28Mult s 0x0E, gf28Mult s 0x09, gf28Mult s 0x0D, gf28Mult s 0x0B] where s = unsbox @ a
+u0 = [fromBytes (u0Func a) | a <- [0..255]]
+u1 = [fromBytes (rotR (u0Func a) 1) | a <- [0..255]]
+u2 = [fromBytes (rotR (u0Func a) 2) | a <- [0..255]]
+u3 = [fromBytes (rotR (u0Func a) 3) | a <- [0..255]]
+
+aesInvRound : Bit -> State -> RoundKey -> State
+aesInvRound isFinal s key = addRoundKey d key
+  where d = [ f isFinal i | i <- [ 0 .. 3] ]
+        a = [ toBytes se | se <- s ]
+        f b j = if b then
+                  fromBytes [ unsbox @ (a @ ((j+0) % 4) @ 0),
+                              unsbox @ (a @ ((j+3) % 4) @ 1),
+                              unsbox @ (a @ ((j+2) % 4) @ 2),
+                              unsbox @ (a @ ((j+1) % 4) @ 3) ]
+                else
+                  e0 ^ e1 ^ e2 ^ e3
+                    where e0 = u0 @ (a @ ((j+0) % 4) @ 0)
+                          e1 = u1 @ (a @ ((j+3) % 4) @ 1)
+                          e2 = u2 @ (a @ ((j+2) % 4) @ 2)
+                          e3 = u3 @ (a @ ((j+1) % 4) @ 3)
+
+aesEncrypt pt key = doRounds aesRound (aesEncryptKeySchedule key) pt
+
+aesDecrypt ct key = doRounds aesInvRound (aesDecryptKeySchedule key) ct
+
+// Test for Nk == 4 (AES128); comment out the next two properties if Nk != 4
+/*
+property t128EncTest = aesEncrypt pt k == [0x69c4e0d8, 0x6a7b0430, 0xd8cdb780, 0x70b4c55a]
+  where pt = [ 0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff ]
+        k = [ 0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f ]
+
+property t128DecTest = aesDecrypt ct k == [0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff]
+  where ct = [ 0x69c4e0d8, 0x6a7b0430, 0xd8cdb780, 0x70b4c55a ]
+        k = [ 0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f ]
+*/
+
+// Test for Nk == 6 (AES192); comment out the next two properties if Nk != 6
+/*
+property t192EncTest = aesEncrypt pt k == [0xdda97ca4, 0x864cdfe0, 0x6eaf70a0, 0xec0d7191]
+  where pt = [0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff]
+        k = [0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f, 0x10111213, 0x14151617]
+
+property t192DecTest = aesDecrypt ct k == [0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff]
+  where ct = [0xdda97ca4, 0x864cdfe0, 0x6eaf70a0, 0xec0d7191]
+        k = [0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f, 0x10111213, 0x14151617]
+*/
+
+// Test for Nk == 8 (AES256); comment out the next two properties if Nk != 8
+property t256EncTest = aesEncrypt pt k == [0x8ea2b7ca, 0x516745bf, 0xeafc4990,0x4b496089]
+  where pt = [0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff]
+        k = [0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f, 0x10111213, 0x14151617, 0x18191a1b, 0x1c1d1e1f]
+
+property t256DecTest = aesDecrypt ct k == [0x00112233, 0x44556677, 0x8899aabb, 0xccddeeff]
+  where ct = [0x8ea2b7ca, 0x516745bf, 0xeafc4990,0x4b496089]
+        k = [0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f, 0x10111213, 0x14151617, 0x18191a1b, 0x1c1d1e1f]
+
+// The top level property that summarizes all earlier test properties.
+
+property AESTests = t256EncTest && t256DecTest
+
+// Checking and proving sboxUnsboxInverse is easy, given its small
+// state space.
+
+property sboxUnsboxInverse (n : [8]) = n == (unsbox @ (sbox @ n))
+
+// Checking keyExpansionInjective is easy; proving this takes minutes/hours.
+// At one time in the past this took under one minute.
+
+property keyExpansionInjective k1 k2 =
+  if k1 != k2
+  then aesEncryptKeySchedule k1 != aesEncryptKeySchedule k2
+  else True
+
+// The standard theorem relating encryption to decryption.  Again, checking
+// this is easy; proving this takes time.
+
+property encDecInverse pt k = (aesDecrypt (aesEncrypt pt k) k) == pt
+
+// Because there are some problems with loading modules in the current
+// cryptol-gen, these definitions are copied from Cryptol.Extras.
+// foldr1 is added for convenience.
+
+foldr : {a,b,n} (fin n) => (a -> b -> b) -> b -> [n]a -> b
+foldr f acc xs = ys ! 0
+  where ys = [acc] # [f x a | a <- ys | x <- reverse xs]
+
+foldr1 : {a, b} (fin b) => (a -> a -> a) -> [1 + b]a -> a
+foldr1 f xs = foldr f (xs @ 0) (tail xs)
+
+zipWith : {a,b,c,n} (a -> b -> c) -> [n]a -> [n]b -> [n]c
+zipWith f xs ys = [f x y | x <- xs | y <- ys]
