@@ -883,6 +883,49 @@ static int test_kronecker()
     return st;
 }
 
+static int test_dh()
+{
+    BIGNUM *add;
+    BIGNUM *rem;
+    BIGNUM *p;
+    BIGNUM *t;
+    int st = 0;
+
+    add = BN_new();
+    rem = BN_new();
+    p = BN_new();
+    t = BN_new();
+
+    if (add == NULL || rem == NULL || p == NULL || t == NULL)
+        goto err;
+
+    if (!BN_set_word(add, 4))
+        goto err;
+
+    if (!BN_set_word(rem, 1))
+        goto err;
+
+    if (!BN_generate_prime_ex(p, 512, 0, add, rem, NULL))
+        goto err;
+
+    if (!BN_mod(t, p, add, ctx))
+        goto err;
+
+    if (BN_get_word(t) != BN_get_word(rem)) {
+        fprintf(stderr, "Prime does not satisfy p %% add == rem\n");
+        goto err;
+    }
+
+    st = 1;
+
+ err:
+    BN_free(add);
+    BN_free(rem);
+    BN_free(p);
+    BN_free(t);
+    return st;
+}
+
 static int file_sum(STANZA *s)
 {
     BIGNUM *a = getBN(s, "A");
@@ -2424,6 +2467,7 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_mod);
     ADD_TEST(test_modexp_mont5);
     ADD_TEST(test_kronecker);
+    ADD_TEST(test_dh);
     ADD_TEST(test_rand);
     ADD_TEST(test_bn2padded);
     ADD_TEST(test_dec2bn);
