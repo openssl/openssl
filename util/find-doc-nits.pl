@@ -85,7 +85,14 @@ sub name_synopsis()
         my $sym;
         $line =~ s/STACK_OF\([^)]+\)/int/g;
         $line =~ s/__declspec\([^)]+\)//;
-        if ( $line =~ /typedef.* (\S+);/ ) {
+        if ( $line =~ /env (\S*)=/ ) {
+            # environment variable env NAME=...
+            $sym = $1;
+        } elsif ( $line =~ /typedef.*\(\*(\S+)\)\(.*/ ) {
+            # a callback function: typedef ... (*NAME)(...
+            $sym = $1;
+        } elsif ( $line =~ /typedef.* (\S+);/ ) {
+            # a simple typedef: typedef ... NAME;
             $sym = $1;
         } elsif ( $line =~ /#define ([A-Za-z0-9_]+)/ ) {
             $sym = $1;
