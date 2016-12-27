@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_CTX_set_generate_session_id, SSL_set_generate_session_id, SSL_has_matching_session_id - manipulate generation of SSL session IDs (server only)
+SSL_CTX_set_generate_session_id, SSL_set_generate_session_id,
+SSL_has_matching_session_id, GEN_SESSION_CB
+- manipulate generation of SSL session IDs (server only)
 
 =head1 SYNOPSIS
 
@@ -123,7 +125,7 @@ same id is already in the cache.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_get_version(3)>
+L<ssl(7)>, L<SSL_get_version(3)>
 
 =head1 COPYRIGHT
 

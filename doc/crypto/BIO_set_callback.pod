@@ -2,16 +2,23 @@
 
 =head1 NAME
 
-BIO_set_callback, BIO_get_callback, BIO_set_callback_arg, BIO_get_callback_arg,
-BIO_debug_callback - BIO callback functions
+BIO_set_callback_ex, BIO_get_callback_ex, BIO_set_callback, BIO_get_callback,
+BIO_set_callback_arg, BIO_get_callback_arg, BIO_debug_callback,
+BIO_callback_fn_ex, BIO_callback_fn
+- BIO callback functions
 
 =head1 SYNOPSIS
 
  #include <openssl/bio.h>
 
-
+ typedef long (*BIO_callback_fn_ex)(BIO *b, int oper, const char *argp,
+                                    size_t len, int argi,
+                                    long argl, int ret, size_t *processed);
  typedef long (*BIO_callback_fn)(BIO *b, int oper, const char *argp, int argi,
                                  long argl, long ret);
+
+ void BIO_set_callback_ex(BIO *b, BIO_callback_fn_ex callback);
+ BIO_callback_fn_ex BIO_get_callback_ex(const BIO *b);
 
  void BIO_set_callback(BIO *b, BIO_callack_fn cb);
  BIO_callack_fn BIO_get_callback(BIO *b);
@@ -23,10 +30,15 @@ BIO_debug_callback - BIO callback functions
 
 =head1 DESCRIPTION
 
-BIO_set_callback() and BIO_get_callback() set and retrieve the BIO callback,
-they are both macros. The callback is called during most high level BIO
-operations. It can be used for debugging purposes to trace operations on
-a BIO or to modify its operation.
+BIO_set_callback_ex() and BIO_get_callback_ex() set and retrieve the BIO
+callback. The callback is called during most high level BIO operations. It can
+be used for debugging purposes to trace operations on a BIO or to modify its
+operation.
+
+BIO_set_callback() and BIO_get_callback() set and retrieve the old format BIO
+callback. New code should not use these functions, but they are retained for
+backwards compatbility. Any callback set via BIO_set_callback_ex() will get
+called in preference to any set by BIO_set_callback().
 
 BIO_set_callback_arg() and BIO_get_callback_arg() are macros which can be
 used to set and retrieve an argument for use in the callback.
@@ -36,8 +48,9 @@ out information relating to each BIO operation. If the callback
 argument is set it is interpreted as a BIO to send the information
 to, otherwise stderr is used.
 
-BIO_callback_fn() is the type of the callback function. The meaning of each
-argument is described below:
+BIO_callback_fn_ex() is the type of the callback function and BIO_callback_fn()
+is the type of the old format callback function. The meaning of each argument
+is described below:
 
 =over
 
@@ -51,10 +64,21 @@ B<oper> is set to the operation being performed. For some operations
 the callback is called twice, once before and once after the actual
 operation, the latter case has B<oper> or'ed with BIO_CB_RETURN.
 
+=item B<len>
+
+The length of the data requested to be read or written. This is only useful if
+B<oper> is BIO_CB_READ, BIO_CB_WRITE or BIO_CB_GETS.
+
 =item B<argp> B<argi> B<argl>
 
 The meaning of the arguments B<argp>, B<argi> and B<argl> depends on
 the value of B<oper>, that is the operation being performed.
+
+=item B<processed>
+
+B<processed> is a pointer to a location which will be updated with the amount of
+data that was actually read or written. Only used for BIO_CB_READ, BIO_CB_WRITE,
+BIO_CB_GETS and BIO_CB_PUTS.
 
 =item B<ret>
 
@@ -80,37 +104,103 @@ function that is called.
 
 =item B<BIO_free(b)>
 
-callback(b, BIO_CB_FREE, NULL, 0L, 0L, 1L) is called before the
-free operation.
+ callback_ex(b, BIO_CB_FREE, NULL, 0, 0, 0L, 1L, NULL)
 
-=item B<BIO_read(b, out, outl)>
+or
 
-callback(b, BIO_CB_READ, out, outl, 0L, 1L) is called before
-the read and callback(b, BIO_CB_READ|BIO_CB_RETURN, out, outl, 0L, retvalue)
+ callback(b, BIO_CB_FREE, NULL, 0L, 0L, 1L)
+
+is called before the free operation.
+
+=item B<BIO_read_ex(b, data, dlen, readbytes)>
+
+ callback_ex(b, BIO_CB_READ, data, dlen, 0, 0L, 1L, readbytes)
+
+or
+
+ callback(b, BIO_CB_READ, data, dlen, 0L, 1L)
+
+is called before the read and
+
+ callback_ex(b, BIO_CB_READ | BIO_CB_RETURN, data, dlen, 0, 0L, retvalue, readbytes)
+
+or
+
+ callback(b, BIO_CB_READ|BIO_CB_RETURN, data, dlen, 0L, retvalue)
+
 after.
 
-=item B<BIO_write(b, in, inl)>
+=item B<BIO_write(b, data, dlen, written)>
 
-callback(b, BIO_CB_WRITE, in, inl, 0L, 1L) is called before
-the write and callback(b, BIO_CB_WRITE|BIO_CB_RETURN, in, inl, 0L, retvalue)
+ callback_ex(b, BIO_CB_WRITE, data, dlen, 0, 0L, 1L, written)
+
+or
+
+ callback(b, BIO_CB_WRITE, datat, dlen, 0L, 1L)
+
+is called before the write and
+
+ callback_ex(b, BIO_CB_WRITE | BIO_CB_RETURN, data, dlen, 0, 0L, retvalue, written)
+
+or
+
+ callback(b, BIO_CB_WRITE|BIO_CB_RETURN, data, dlen, 0L, retvalue)
+
 after.
 
-=item B<BIO_gets(b, out, outl)>
+=item B<BIO_gets(b, buf, size)>
 
-callback(b, BIO_CB_GETS, out, outl, 0L, 1L) is called before
-the operation and callback(b, BIO_CB_GETS|BIO_CB_RETURN, out, outl, 0L, retvalue)
+ callback_ex(b, BIO_CB_GETS, buf, size, 0, 0L, 1, NULL, NULL)
+
+or
+
+ callback(b, BIO_CB_GETS, buf, size, 0L, 1L)
+
+is called before the operation and
+
+ callback_ex(b, BIO_CB_GETS | BIO_CB_RETURN, buf, size, 0, 0L, retvalue, readbytes)
+
+or
+
+ callback(b, BIO_CB_GETS|BIO_CB_RETURN, buf, size, 0L, retvalue)
+
 after.
 
-=item B<BIO_puts(b, in)>
+=item B<BIO_puts(b, buf)>
 
-callback(b, BIO_CB_WRITE, in, 0, 0L, 1L) is called before
-the operation and callback(b, BIO_CB_WRITE|BIO_CB_RETURN, in, 0, 0L, retvalue)
+ callback_ex(b, BIO_CB_PUTS, buf, 0, 0, 0L, 1L, NULL);
+
+or
+
+ callback(b, BIO_CB_PUTS, buf, 0, 0L, 1L)
+
+is called before the operation and
+
+ callback_ex(b, BIO_CB_PUTS | BIO_CB_RETURN, buf, 0, 0, 0L, retvalue, written)
+
+or
+
+ callback(b, BIO_CB_WRITE|BIO_CB_RETURN, buf, 0, 0L, retvalue)
+
 after.
 
 =item B<BIO_ctrl(BIO *b, int cmd, long larg, void *parg)>
 
-callback(b, BIO_CB_CTRL, parg, cmd, larg, 1L) is called before the call and
-callback(b, BIO_CB_CTRL|BIO_CB_RETURN, parg, cmd, larg, ret) after.
+ callback_ex(b, BIO_CB_CTRL, parg, 0, cmd, larg, 1L, NULL)
+
+or
+
+ callback(b, BIO_CB_CTRL, parg, cmd, larg, 1L)
+
+is called before the call and
+
+ callback_ex(b, BIO_CB_CTRL | BIO_CB_RETURN, parg, 0, cmd, larg, ret, NULL)
+
+or
+
+ callback(b, BIO_CB_CTRL|BIO_CB_RETURN, parg, cmd, larg, ret)
+
+after.
 
 =back
 

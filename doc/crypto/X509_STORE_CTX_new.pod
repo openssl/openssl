@@ -11,8 +11,8 @@ X509_STORE_CTX_get0_untrusted, X509_STORE_CTX_set0_untrusted,
 X509_STORE_CTX_get_num_untrusted,
 X509_STORE_CTX_set_default,
 X509_STORE_CTX_set_verify,
-X509_STORE_set_verify,
-X509_STORE_CTX_get_verify - X509_STORE_CTX initialisation
+X509_STORE_CTX_verify_fn
+- X509_STORE_CTX initialisation
 
 =head1 SYNOPSIS
 
@@ -42,10 +42,7 @@ X509_STORE_CTX_get_verify - X509_STORE_CTX initialisation
  int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx);
 
  typedef int (*X509_STORE_CTX_verify_fn)(X509_STORE_CTX *);
- X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx);
  void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx, X509_STORE_CTX_verify_fn verify);
-
- void X509_STORE_set_verify(X509_STORE *ctx, X509_STORE_CTX_verify verify);
 
 =head1 DESCRIPTION
 
@@ -113,12 +110,7 @@ that were used in building the chain following a call to X509_verify_cert().
 
 X509_STORE_CTX_set_verify() provides the capability for overriding the default
 verify function. This function is responsible for verifying chain signatures and
-expiration times. X509_STORE_CTX_get_verify() obtains the current verify
-function being used.
-
-X509_STORE_set_verify() works in the same way as for X509_STORE_CTX_set_verify()
-but sets the default verify function to be used by all X509_STORE_CTX objects
-created for this X509_STORE.
+expiration times.
 
 A verify function is defined as an X509_STORE_CTX_verify type which has the
 following signature:
@@ -160,9 +152,6 @@ X509_STORE_CTX_set_default() returns 1 for success or 0 if an error occurred.
 X509_STORE_CTX_get_num_untrusted() returns the number of untrusted certificates
 used.
 
-X509_STORE_CTX_get_verify() returns the current verify function in use for this
-X509_STORE_CTX.
-
 =head1 SEE ALSO
 
 L<X509_verify_cert(3)>
@@ -172,9 +161,6 @@ L<X509_VERIFY_PARAM_set_flags(3)>
 
 X509_STORE_CTX_set0_crls() was first added to OpenSSL 1.0.0
 X509_STORE_CTX_get_num_untrusted() was first added to OpenSSL 1.1.0
-X509_STORE_set_verify() was first added to OpenSSL 1.1.0. It was previously
-available as a macro X509_STORE_set_verify_func(). This macro still exists but
-simply calls this function.
 
 =head1 COPYRIGHT
 

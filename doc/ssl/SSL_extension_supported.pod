@@ -3,7 +3,8 @@
 =head1 NAME
 
 SSL_extension_supported,
-SSL_CTX_add_client_custom_ext, SSL_CTX_add_server_custom_ext
+SSL_CTX_add_client_custom_ext, SSL_CTX_add_server_custom_ext,
+custom_ext_add_cb, custom_ext_free_cb, custom_ext_parse_cb
 - custom TLS extension handling
 
 =head1 SYNOPSIS
