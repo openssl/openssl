@@ -1,4 +1,4 @@
-all: aes128enc.proof aes128dec.proof aes256enc.proof aes256dec.proof
+all: aes.proof aes128enc.proof aes128dec.proof aes256enc.proof aes256dec.proof
 
 clean:
 	rm -f *.bc *.aig *.proof
