@@ -1,4 +1,4 @@
-all: aes.proof aes128enc.proof aes128dec.proof aes256enc.proof aes256dec.proof
+all: sha1.proof aes.proof aes128enc.proof aes128dec.proof aes256enc.proof aes256dec.proof
 
 clean:
 	rm -f *.bc *.aig *.proof
@@ -19,6 +19,9 @@ aes128dec-wrap.bc: aes128dec-wrap.c
 aes256dec-wrap.bc: aes256dec-wrap.c
 	$(LLVM)/clang -c -emit-llvm -I../include -I$(SAW)/include -o $@ $^
 
+sha1-wrap.bc: sha1-wrap.c
+	$(LLVM)/clang -c -emit-llvm -I../include -I$(SAW)/include -o $@ $^
+
 # note that the .o file is really a .bc if OpenSSL has been built correctly.
 aes128enc.bc: aes128enc-wrap.bc ../crypto/aes/aes_core.o
 	$(LINK) -o aes128enc.bc aes128enc-wrap.bc ../crypto/aes/aes_core.o
@@ -32,6 +35,9 @@ aes128dec.bc: aes128dec-wrap.bc ../crypto/aes/aes_core.o
 aes256dec.bc: aes256dec-wrap.bc ../crypto/aes/aes_core.o
 	$(LINK) -o aes256dec.bc aes256dec-wrap.bc ../crypto/aes/aes_core.o
 
+sha1.bc: sha1-wrap.bc ../crypto/sha/sha1_one.o ../crypto/sha/sha1dgst.o
+	$(LINK) -o sha1.bc $^
+
 aes128enc.aig: aes128enc.bc
 	time $(SAW)/bin/lss aes128enc.bc
 
@@ -43,6 +49,9 @@ aes128dec.aig: aes128dec.bc
 
 aes256dec.aig: aes256dec.bc
 	time $(SAW)/bin/lss aes256dec.bc
+
+sha1.aig: sha1.bc
+	time $(SAW)/bin/lss sha1.bc
 
 aes128enc.proof: aes128enc.aig aes128enc.saw AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/bin/saw aes128enc.saw
@@ -58,4 +67,8 @@ aes128dec.proof: aes128dec.aig aes128dec.saw AESTBox.cry
 
 aes256dec.proof: aes256dec.aig aes256dec.saw AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/bin/saw aes256dec.saw
+	touch aes256dec.proof
+
+sha1.proof: sha1.aig sha1.saw sha1.cry
+	PATH=$(PATH):$(Z3) $(SAW)/bin/saw sha1.saw
 	touch aes256dec.proof
