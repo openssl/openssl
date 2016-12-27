@@ -13,7 +13,9 @@ X509_STORE_CTX_get_check_revocation,
 X509_STORE_CTX_get_check_issued,
 X509_STORE_CTX_get_get_issuer,
 X509_STORE_CTX_get_verify_cb,
-X509_STORE_CTX_set_verify_cb - get and set verification callback
+X509_STORE_CTX_set_verify_cb,
+X509_STORE_CTX_verify_cb
+- get and set verification callback
 
 =head1 SYNOPSIS
 
