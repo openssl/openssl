@@ -480,6 +480,7 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt, int *al)
 
 int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, int *al)
 {
+#ifndef OPENSSL_NO_TLS1_3
     size_t i, sharessent = 0, num_curves = 0;
     const unsigned char *pcurves = NULL;
 
@@ -559,6 +560,7 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, int *al)
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+#endif
 
     return 1;
 }
@@ -983,6 +985,7 @@ int tls_parse_stoc_ems(SSL *s, PACKET *pkt, int *al)
 
 int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, int *al)
 {
+#ifndef OPENSSL_NO_TLS1_3
     unsigned int group_id;
     PACKET encoded_pt;
     EVP_PKEY *ckey = s->s3->tmp.pkey, *skey = NULL;
@@ -1038,6 +1041,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, int *al)
         return 0;
     }
     EVP_PKEY_free(skey);
+#endif
 
     return 1;
 }
