@@ -83,6 +83,10 @@ use constant {
     EXT_DUPLICATE_EXTENSION => 0xfde8
 };
 
+use constant {
+    CIPHER_ADH_AES_128_SHA => 0x03000034
+};
+
 my $payload = "";
 my $messlen = -1;
 my $mt;

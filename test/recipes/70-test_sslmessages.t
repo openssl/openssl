@@ -46,6 +46,9 @@ my $proxy = TLSProxy::Proxy->new(
     [TLSProxy::Message::MT_CERTIFICATE,
         checkhandshake::ALL_HANDSHAKES
         & ~checkhandshake::RESUME_HANDSHAKE],
+    (disabled("ec") ? () :
+                      [TLSProxy::Message::MT_SERVER_KEY_EXCHANGE,
+                          checkhandshake::EC_HANDSHAKE]),
     [TLSProxy::Message::MT_CERTIFICATE_STATUS,
         checkhandshake::OCSP_HANDSHAKE],
     #ServerKeyExchange handshakes not currently supported by TLSProxy
@@ -94,10 +97,14 @@ my $proxy = TLSProxy::Proxy->new(
         checkhandshake::SERVER_NAME_CLI_EXTENSION],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST,
         checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS,
-        checkhandshake::DEFAULT_EXTENSIONS],
+    (disabled("ec") ? () :
+                      [TLSProxy::Message::MT_CLIENT_HELLO,
+                       TLSProxy::Message::EXT_SUPPORTED_GROUPS,
+                       checkhandshake::DEFAULT_EXTENSIONS]),
+    (disabled("ec") ? () :
+                      [TLSProxy::Message::MT_CLIENT_HELLO,
+                       TLSProxy::Message::EXT_EC_POINT_FORMATS,
+                       checkhandshake::DEFAULT_EXTENSIONS]),
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
@@ -135,6 +142,8 @@ my $proxy = TLSProxy::Proxy->new(
         checkhandshake::SCT_SRV_EXTENSION],
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_NPN,
         checkhandshake::NPN_SRV_EXTENSION],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS,
+        checkhandshake::EC_POINT_FORMAT_SRV_EXTENSION],
     [0,0,0]
 );
 
@@ -143,7 +152,7 @@ my $proxy = TLSProxy::Proxy->new(
 $proxy->serverconnects(2);
 $proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 20;
+plan tests => 21;
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
                "Default handshake test");
@@ -358,3 +367,16 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
                | checkhandshake::SRP_CLI_EXTENSION,
                "SRP extension test");
+
+#Test 21: EC handshake
+SKIP: {
+    skip "No EC support in this OpenSSL build", 1 if disabled("ec");
+    $proxy->clear();
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::EC_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::EC_POINT_FORMAT_SRV_EXTENSION,
+                   "EC handshake test");
+}
