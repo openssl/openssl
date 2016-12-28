@@ -25,6 +25,7 @@ my $have_IPv6 = 0;
 my $IP_factory;
 
 my $is_tls13 = 0;
+my $ciphersuite = undef;
 
 sub new
 {
@@ -108,6 +109,7 @@ sub clearClient
     $self->{message_list} = [];
     $self->{clientflags} = "";
     $is_tls13 = 0;
+    $ciphersuite = undef;
 
     TLSProxy::Message->clear();
     TLSProxy::Record->clear();
@@ -533,6 +535,15 @@ sub reneg
         $self->{reneg} = shift;
     }
     return $self->{reneg};
+}
+
+sub ciphersuite
+{
+    my $class = shift;
+    if (@_) {
+        $ciphersuite = shift;
+    }
+    return $ciphersuite;
 }
 
 1;

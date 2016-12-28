@@ -103,6 +103,7 @@ sub parse
     $self->session_id_len($session_id_len);
     $self->session($session);
     $self->ciphersuite($ciphersuite);
+    TLSProxy::Proxy->ciphersuite($ciphersuite);
     $self->comp_meth($comp_meth);
     $self->extension_data(\%extensions);
 

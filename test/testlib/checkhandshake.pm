@@ -23,8 +23,9 @@ use constant {
     CLIENT_AUTH_HANDSHAKE => 8,
     RENEG_HANDSHAKE => 16,
     NPN_HANDSHAKE => 32,
+    EC_HANDSHAKE => 64,
 
-    ALL_HANDSHAKES => 63
+    ALL_HANDSHAKES => 127
 };
 
 use constant {
@@ -43,6 +44,8 @@ use constant {
     NPN_CLI_EXTENSION => 0x00000800,
     NPN_SRV_EXTENSION => 0x00001000,
     SRP_CLI_EXTENSION => 0x00002000,
+    #Client side for ec point formats is a default extension
+    EC_POINT_FORMAT_SRV_EXTENSION => 0x00004000,
 };
 
 our @handmessages = ();
