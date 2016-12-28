@@ -42,9 +42,9 @@ sub parse
 {
     my $self = shift;
 
-    #Minimal SKE parsing. Only supports DHE at the moment (if its not DHE
-    #the parsing data will be trash...which is ok as long as we don't try to
-    #use it)
+    #Minimal SKE parsing. Only supports one known DHE ciphersuite at the moment
+    return if (TLSProxy::Proxy->ciphersuite()
+               != TLSProxy::Message::CIPHER_ADH_AES_128_SHA);
 
     my $p_len = unpack('n', $self->data);
     my $ptr = 2;
