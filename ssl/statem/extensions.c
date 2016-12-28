@@ -92,6 +92,7 @@ typedef struct extensions_definition_st {
  *
  * TODO(TLS1.3): Make sure we have a test to check the consistency of these
  */
+#define INVALID_EXTENSION { 0x10000, 0, NULL, NULL, NULL, NULL, NULL, NULL }
 static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_renegotiate,
@@ -116,6 +117,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         EXT_CLIENT_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
         init_srp, tls_parse_ctos_srp, NULL, NULL, tls_construct_ctos_srp, NULL
     },
+#else
+    INVALID_EXTENSION,
 #endif
 #ifndef OPENSSL_NO_EC
     {
@@ -132,6 +135,9 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL /* TODO(TLS1.3): Need to add this */,
         tls_construct_ctos_supported_groups, NULL
     },
+#else
+    INVALID_EXTENSION,
+    INVALID_EXTENSION,
 #endif
     {
         TLSEXT_TYPE_session_ticket,
@@ -155,6 +161,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_parse_stoc_status_request, tls_construct_stoc_status_request,
         tls_construct_ctos_status_request, final_status_request
     },
+#else
+    INVALID_EXTENSION,
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {
@@ -163,6 +171,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         init_npn, tls_parse_ctos_npn, tls_parse_stoc_npn,
         tls_construct_stoc_next_proto_neg, tls_construct_ctos_npn, NULL
     },
+#else
+    INVALID_EXTENSION,
 #endif
     {
         /*
@@ -183,6 +193,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         init_srtp, tls_parse_ctos_use_srtp, tls_parse_stoc_use_srtp,
         tls_construct_stoc_use_srtp, tls_construct_ctos_use_srtp, NULL
     },
+#else
+    INVALID_EXTENSION,
 #endif
     {
         TLSEXT_TYPE_encrypt_then_mac,
@@ -203,6 +215,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
          */
         NULL, tls_parse_stoc_sct, NULL, tls_construct_ctos_sct,  NULL
     },
+#else
+    INVALID_EXTENSION,
 #endif
     {
         TLSEXT_TYPE_extended_master_secret,
