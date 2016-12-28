@@ -2944,7 +2944,7 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
                                            sizeof(labelbuffer), NULL, 0,
                                            0) <= 0) {
                 ossl_statem_set_error(s);
-                return WORK_ERROR;;
+                return WORK_ERROR;
             }
 
             BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,

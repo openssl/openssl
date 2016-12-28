@@ -656,7 +656,7 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr)
         }
     } else {
         if (frag_len != msg_hdr->msg_len) {
-            return dtls1_reassemble_fragment(s, msg_hdr);;
+            return dtls1_reassemble_fragment(s, msg_hdr);
         }
 
         if (frag_len > dtls1_max_handshake_message_len(s))
