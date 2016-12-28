@@ -2365,7 +2365,7 @@ int s_client_main(int argc, char **argv)
                 /* goto end; */
             }
 
-            sbuf_len -= i;;
+            sbuf_len -= i;
             sbuf_off += i;
             if (sbuf_len <= 0) {
                 read_ssl = 1;
