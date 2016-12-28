@@ -507,7 +507,8 @@ my @disable_cascades = (
 
     "stdio"             => [ "apps", "capieng" ],
     "apps"              => [ "tests" ],
-    "comp"		=> [ "zlib" ],
+    "comp"              => [ "zlib" ],
+    "ec"                => [ "tls1_3" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
 
     sub { !$disabled{"msan"} } => [ "asm" ],
