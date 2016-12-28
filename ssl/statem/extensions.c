@@ -120,7 +120,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #ifndef OPENSSL_NO_EC
     {
         TLSEXT_TYPE_ec_point_formats,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
+        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
         NULL, tls_parse_ctos_ec_pt_formats, tls_parse_stoc_ec_pt_formats,
         tls_construct_stoc_ec_pt_formats, tls_construct_ctos_ec_pt_formats,
         final_ec_pt_formats
