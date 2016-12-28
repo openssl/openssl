@@ -457,6 +457,7 @@ int tls_parse_ctos_etm(SSL *s, PACKET *pkt, int *al)
  * used. Returns 1 if the group is in the list (and allowed if |checkallow| is
  * 1) or 0 otherwise.
  */
+#ifndef OPENSSL_NO_TLS1_3
 static int check_in_list(SSL *s, unsigned int group_id,
                          const unsigned char *groups, size_t num_groups,
                          int checkallow)
@@ -479,6 +480,7 @@ static int check_in_list(SSL *s, unsigned int group_id,
     /* If i == num_groups then not in the list */
     return i < num_groups;
 }
+#endif
 
 /*
  * Process a key_share extension received in the ClientHello. |pkt| contains
@@ -487,6 +489,7 @@ static int check_in_list(SSL *s, unsigned int group_id,
  */
 int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, int *al)
 {
+#ifndef OPENSSL_NO_TLS1_3
     unsigned int group_id;
     PACKET key_share_list, encoded_pt;
     const unsigned char *clntcurves, *srvrcurves;
@@ -607,6 +610,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, int *al)
 
         found = 1;
     }
+#endif
 
     return 1;
 }
@@ -857,6 +861,7 @@ int tls_construct_stoc_ems(SSL *s, WPACKET *pkt, int *al)
 
 int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, int *al)
 {
+#ifndef OPENSSL_NO_TLS1_3
     unsigned char *encodedPoint;
     size_t encoded_pt_len = 0;
     EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
@@ -905,6 +910,7 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, int *al)
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+#endif
 
     return 1;
 }
