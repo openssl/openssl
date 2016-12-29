@@ -62,13 +62,13 @@ die "can't locate x86_64-xlate.pl";
 
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
-	$avx = ($1>=2.19) + ($1>=2.22) + ($1>=2.25);
+	$avx = ($1>=2.19) + ($1>=2.22) + ($1>=2.25) + ($1>=2.26);
 }
 
 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)(?:\.([0-9]+))?/) {
-	$avx = ($1>=2.09) + ($1>=2.10) + ($1>=2.12);
-	$avx += 1 if ($1==2.11 && $2>=8);
+	$avx = ($1>=2.09) + ($1>=2.10) + 2 * ($1>=2.12);
+	$avx += 2 if ($1==2.11 && $2>=8);
 }
 
 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
@@ -177,6 +177,13 @@ $code.=<<___	if ($avx>1);
 	lea	poly1305_blocks_avx2(%rip),%rax
 	bt	\$`5+32`,%r9		# AVX2?
 	cmovc	%rax,%r10
+___
+$code.=<<___	if ($avx>3);
+	mov	\$`(1<<31|1<<21|1<<16)`,%rax
+	shr	\$32,%r9
+	and	%rax,%r9
+	cmp	%rax,%r9
+	je	.Linit_base2_44
 ___
 $code.=<<___;
 	mov	\$0x0ffffffc0fffffff,%rax
@@ -2620,7 +2627,200 @@ $code.=<<___;
 	ret
 .size	poly1305_blocks_avx512,.-poly1305_blocks_avx512
 ___
-}	}
+if ($avx>3) {
+########################################################################
+# VPMADD52 version using 2^44 radix.
+#
+# One can argue that base 2^52 would be more natural. Well, even though
+# some operations would be more natural, one has to recognize couple of
+# things. Base 2^52 doesn't provide advantage over base 2^44 if you look
+# at amount of multiply-n-accumulate operations. Secondly, it makes it
+# impossible to pre-compute multiples of 5 [referred to as s[]/sN in
+# reference implementations], which means that more such operations
+# would have to be performed in inner loop, which in turn makes critical
+# path longer. In other words, even though base 2^44 reduction might
+# look less elegant, overall critical path is actually shorter...
+
+$code.=<<___;
+.type	poly1305_init_base2_44,\@function,3
+.align	32
+poly1305_init_base2_44:
+	xor	%rax,%rax
+	mov	%rax,0($ctx)		# initialize hash value
+	mov	%rax,8($ctx)
+	mov	%rax,16($ctx)
+
+.Linit_base2_44:
+	lea	poly1305_blocks_vpmadd52(%rip),%r10
+	lea	poly1305_emit_base2_44(%rip),%r11
+
+	mov	\$0x0ffffffc0fffffff,%rax
+	mov	\$0x0ffffffc0ffffffc,%rcx
+	and	0($inp),%rax
+	mov	\$0x00000fffffffffff,%r8
+	and	8($inp),%rcx
+	mov	\$0x00000fffffffffff,%r9
+	and	%rax,%r8
+	shrd	\$44,%rcx,%rax
+	mov	%r8,40($ctx)		# r0
+	and	%r9,%rax
+	shr	\$24,%rcx
+	mov	%rax,48($ctx)		# r1
+	lea	(%rax,%rax,4),%rax	# *5
+	mov	%rcx,56($ctx)		# r2
+	shl	\$2,%rax		# magic <<2
+	lea	(%rcx,%rcx,4),%rcx	# *5
+	shl	\$2,%rcx		# magic <<2
+	mov	%rax,24($ctx)		# s1
+	mov	%rcx,32($ctx)		# s2
+___
+$code.=<<___	if ($flavour !~ /elf32/);
+	mov	%r10,0(%rdx)
+	mov	%r11,8(%rdx)
+___
+$code.=<<___	if ($flavour =~ /elf32/);
+	mov	%r10d,0(%rdx)
+	mov	%r11d,4(%rdx)
+___
+$code.=<<___;
+	mov	\$1,%eax
+	ret
+.size	poly1305_init_base2_44,.-poly1305_init_base2_44
+___
+{
+my ($H0,$H1,$H2,$r2r1r0,$r1r0s2,$r0s2s1,$Dlo,$Dhi) = map("%ymm$_",(0..5,16,17));
+my ($T0,$inp_permd,$inp_shift,$PAD) = map("%ymm$_",(18..21));
+my ($reduc_mask,$reduc_rght,$reduc_left) = map("%ymm$_",(22..25));
+
+$code.=<<___;
+.type	poly1305_blocks_vpmadd52,\@function,4
+.align	32
+poly1305_blocks_vpmadd52:
+	shr	\$4,$len
+	jz	.Lno_data_vpmadd52		# too short
+
+	mov		\$7,%r10d
+	mov		\$1,%r11d
+	kmovw		%r10d,%k7
+	lea		.L2_44_inp_permd(%rip),%r10
+	shl		\$40,$padbit
+	kmovw		%r11d,%k1
+
+	vmovq		$padbit,%x#$PAD
+	vmovdqa64	0(%r10),$inp_permd	# .L2_44_inp_permd
+	vmovdqa64	32(%r10),$inp_shift	# .L2_44_inp_shift
+	vpermq		\$0xcf,$PAD,$PAD
+	vmovdqa64	64(%r10),$reduc_mask	# .L2_44_mask
+
+	vmovdqu64	0($ctx),${Dlo}{%k7}{z}		# load hash value
+	vmovdqu64	40($ctx),${r2r1r0}{%k7}{z}	# load keys
+	vmovdqu64	32($ctx),${r1r0s2}{%k7}{z}
+	vmovdqu64	24($ctx),${r0s2s1}{%k7}{z}
+
+	vmovdqa64	96(%r10),$reduc_rght	# .L2_44_shift_rgt
+	vmovdqa64	128(%r10),$reduc_left	# .L2_44_shift_lft
+
+	jmp		.Loop_vpmadd52
+
+.align	32
+.Loop_vpmadd52:
+	vmovdqu32	0($inp),%x#$T0		# load input as ----3210
+	lea		16($inp),$inp
+
+	vpermd		$T0,$inp_permd,$T0	# ----3210 -> --322110
+	vpsrlvq		$inp_shift,$T0,$T0
+	vpandq		$reduc_mask,$T0,$T0
+	vporq		$PAD,$T0,$T0
+
+	vpaddq		$T0,$Dlo,$Dlo		# accumulate input
+
+	vpermq		\$0,$Dlo,${H0}{%k7}{z}	# smash hash value
+	vpermq		\$0b01010101,$Dlo,${H1}{%k7}{z}
+	vpermq		\$0b10101010,$Dlo,${H2}{%k7}{z}
+
+	vpxord		$Dlo,$Dlo,$Dlo
+	vpxord		$Dhi,$Dhi,$Dhi
+
+	vpmadd52luq	$r2r1r0,$H0,$Dlo
+	vpmadd52huq	$r2r1r0,$H0,$Dhi
+
+	vpmadd52luq	$r1r0s2,$H1,$Dlo
+	vpmadd52huq	$r1r0s2,$H1,$Dhi
+
+	vpmadd52luq	$r0s2s1,$H2,$Dlo
+	vpmadd52huq	$r0s2s1,$H2,$Dhi
+
+	vpsrlvq		$reduc_rght,$Dlo,$T0	# 0 in topmost qword
+	vpsllvq		$reduc_left,$Dhi,$Dhi	# 0 in topmost qword
+	vpandq		$reduc_mask,$Dlo,$Dlo
+
+	vpaddq		$T0,$Dhi,$Dhi
+
+	vpermq		\$0b10010011,$Dhi,$Dhi	# 0 in lowest qword
+
+	vpaddq		$Dhi,$Dlo,$Dlo		# note topmost qword :-)
+
+	vpsrlvq		$reduc_rght,$Dlo,$T0	# 0 in topmost word
+	vpandq		$reduc_mask,$Dlo,$Dlo
+
+	vpermq		\$0b10010011,$T0,$T0
+
+	vpaddq		$T0,$Dlo,$Dlo
+
+	vpermq		\$0b10010011,$Dlo,${T0}{%k1}{z}
+
+	vpaddq		$T0,$Dlo,$Dlo
+	vpsllq		\$2,$T0,$T0
+
+	vpaddq		$T0,$Dlo,$Dlo
+
+	dec		$len			# len-=16
+	jnz		.Loop_vpmadd52
+
+	vmovdqu64	$Dlo,0($ctx){%k7}	# store hash value
+
+.Lno_data_vpmadd52:
+	ret
+.size	poly1305_blocks_vpmadd52,.-poly1305_blocks_vpmadd52
+___
+}
+$code.=<<___;
+.type	poly1305_emit_base2_44,\@function,3
+.align	32
+poly1305_emit_base2_44:
+	mov	0($ctx),%r8	# load hash value
+	mov	8($ctx),%r9
+	mov	16($ctx),%r10
+
+	mov	%r9,%rax
+	shr	\$20,%r9
+	shl	\$44,%rax
+	mov	%r10,%rcx
+	shr	\$40,%r10
+	shl	\$24,%rcx
+
+	add	%rax,%r8
+	adc	%rcx,%r9
+	adc	\$0,%r10
+
+	mov	%r8,%rax
+	add	\$5,%r8		# compare to modulus
+	mov	%r9,%rcx
+	adc	\$0,%r9
+	adc	\$0,%r10
+	shr	\$2,%r10	# did 130-bit value overfow?
+	cmovnz	%r8,%rax
+	cmovnz	%r9,%rcx
+
+	add	0($nonce),%rax	# accumulate nonce
+	adc	8($nonce),%rcx
+	mov	%rax,0($mac)	# write result
+	mov	%rcx,8($mac)
+
+	ret
+.size	poly1305_emit_base2_44,.-poly1305_emit_base2_44
+___
+}	}	}
 $code.=<<___;
 .align	64
 .Lconst:
@@ -2632,6 +2832,17 @@ $code.=<<___;
 .long	0x3ffffff,0,0x3ffffff,0,0x3ffffff,0,0x3ffffff,0
 .Lpermd_avx2:
 .long	2,2,2,3,2,0,2,1
+
+.L2_44_inp_permd:
+.long	0,1,1,2,2,3,7,7
+.L2_44_inp_shift:
+.quad	0,12,24,64
+.L2_44_mask:
+.quad	0xfffffffffff,0xfffffffffff,0x3ffffffffff,0xffffffffffffffff
+.L2_44_shift_rgt:
+.quad	44,44,42,64
+.L2_44_shift_lft:
+.quad	8,8,10,64
 ___
 }
 
