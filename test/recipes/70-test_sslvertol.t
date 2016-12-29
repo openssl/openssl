@@ -54,31 +54,42 @@ note("TLS versions we can expect: ", join(", ", @available_tls_versions));
 
 #This file does tests without the supported_versions extension.
 #See 70-test_sslversions.t for tests with supported versions.
+
 #Test 1: Asking for TLS1.4 should pass and negotiate the maximum
 #available TLS version according to configuration below TLS1.3
 my $client_version = TLSProxy::Record::VERS_TLS_1_4;
+my $previous_version = tls_version_below(TLSProxy::Record::VERS_TLS_1_3);
 $proxy->clientflags("-no_tls1_3");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 3;
-my $record = pop @{$proxy->record_list};
-ok((note("Record version received: ".
-         (defined $record ? $record->version() : "none")),
-    TLSProxy::Message->success())
-   && $record->version() == tls_version_below(TLSProxy::Record::VERS_TLS_1_3),
-   "Version tolerance test, below TLS 1.4 and not TLS 1.3");
+SKIP: {
+    skip "There are too few protocols enabled for test 1", 1
+        unless defined $previous_version;
+
+    my $record = pop @{$proxy->record_list};
+    ok((note("Record version received: ".$record->version()),
+        TLSProxy::Message->success())
+       && $record->version() == $previous_version,
+       "Version tolerance test, below TLS 1.4 and not TLS 1.3");
+}
 
 #Test 2: Asking for TLS1.3 with that disabled should succeed and negotiate
 #the highest configured TLS version below that.
 $client_version = TLSProxy::Record::VERS_TLS_1_3;
-$proxy->clear();
-$proxy->clientflags("-no_tls1_3");
-$proxy->start();
-$record = pop @{$proxy->record_list};
-ok((note("Record version received: ".
-         (defined $record ? $record->version() : "none")),
-    TLSProxy::Message->success())
-   && $record->version() == tls_version_below(TLSProxy::Record::VERS_TLS_1_3),
-   "Version tolerance test, max version but not TLS 1.3");
+$previous_version = tls_version_below($client_version);
+SKIP: {
+    skip "There are too few protocols enabled for test 2", 1
+        unless defined $previous_version;
+
+    $proxy->clear();
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->start();
+    my $record = pop @{$proxy->record_list};
+    ok((note("Record version received: ".$record->version()),
+        TLSProxy::Message->success())
+       && $record->version() == $previous_version,
+       "Version tolerance test, max version but not TLS 1.3");
+}
 
 #Test 3: Testing something below SSLv3 should fail.  We must disable TLS 1.3
 #to avoid having the 'supported_versions' extension kick in and override our
@@ -87,7 +98,7 @@ $client_version = TLSProxy::Record::VERS_SSL_3_0 - 1;
 $proxy->clear();
 $proxy->clientflags("-no_tls1_3");
 $proxy->start();
-$record = pop @{$proxy->record_list};
+my $record = pop @{$proxy->record_list};
 ok((note("Record version received: ".
          (defined $record ? $record->version() : "none")),
     TLSProxy::Message->fail()),
