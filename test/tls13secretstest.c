@@ -186,12 +186,19 @@ static int test_secret(SSL *s, unsigned char *prk,
                        const unsigned char *ref_secret,
                        const unsigned char *ref_key, const unsigned char *ref_iv)
 {
-    size_t hashsize = EVP_MD_size(ssl_handshake_md(s));
+    size_t hashsize;
     unsigned char gensecret[EVP_MAX_MD_SIZE];
+    unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned char key[KEYLEN];
     unsigned char iv[IVLEN];
 
-    if (!tls13_derive_secret(s, prk, label, labellen, gensecret)) {
+    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashsize)) {
+        fprintf(stderr, "Failed to get hash\n");
+        return 0;
+    }
+
+    if (!tls13_hkdf_expand(s, prk, label, labellen, hash, gensecret,
+                           hashsize)) {
         fprintf(stderr, "Secret generation failed\n");
         return 0;
     }

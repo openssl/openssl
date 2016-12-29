@@ -23,7 +23,7 @@ static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
  * the location pointed to be |out|. The |hash| value may be NULL. Returns 1 on
  * success  0 on failure.
  */
-static int tls13_hkdf_expand(SSL *s, const unsigned char *secret,
+int tls13_hkdf_expand(SSL *s, const unsigned char *secret,
                              const unsigned char *label, size_t labellen,
                              const unsigned char *hash,
                              unsigned char *out, size_t outlen)
@@ -72,29 +72,6 @@ static int tls13_hkdf_expand(SSL *s, const unsigned char *secret,
     EVP_PKEY_CTX_free(pctx);
 
     return ret == 0;
-}
-
-/*
- * Given a input secret |insecret| and a |label| of length |labellen|, derive a
- * new |secret|. This will be the length of the current hash output size and
- * will be based on the current state of the handshake hashes. Returns 1 on
- * success  0 on failure.
- */
-int tls13_derive_secret(SSL *s, const unsigned char *insecret,
-                        const unsigned char *label, size_t labellen,
-                        unsigned char *secret)
-{
-    unsigned char hash[EVP_MAX_MD_SIZE];
-    size_t hashlen;
-
-    if (!ssl3_digest_cached_records(s, 1))
-        return 0;
-
-    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
-        return 0;
-
-    return tls13_hkdf_expand(s, insecret, label, labellen, hash, secret,
-                             hashlen);
 }
 
 /*
@@ -286,13 +263,15 @@ int tls13_change_cipher_state(SSL *s, int which)
     unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
+    unsigned char hashval[EVP_MAX_MD_SIZE];
+    unsigned char *hash = hashval;
     unsigned char *insecret;
     unsigned char *finsecret = NULL;
     EVP_CIPHER_CTX *ciph_ctx;
     const EVP_CIPHER *ciph = s->s3->tmp.new_sym_enc;
     size_t ivlen, keylen, finsecretlen = 0;
     const unsigned char *label;
-    size_t labellen;
+    size_t labellen, hashlen = 0;
     int ret = 0;
 
     if (which & SSL3_CC_READ) {
@@ -334,9 +313,24 @@ int tls13_change_cipher_state(SSL *s, int which)
             label = client_handshake_traffic;
             labellen = sizeof(client_handshake_traffic) - 1;
         } else {
+            int hashleni;
+
             insecret = s->session->master_key;
             label = client_application_traffic;
             labellen = sizeof(client_application_traffic) - 1;
+            /*
+             * For this we only use the handshake hashes up until the server
+             * Finished hash. We do not include the client's Finished, which is
+             * what ssl_handshake_hash() would give us. Instead we use the
+             * previously saved value.
+             */
+            hash = s->server_finished_hash;
+            hashleni = EVP_MD_CTX_size(s->s3->handshake_dgst);
+            if (hashleni < 0) {
+                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            hashlen = (size_t)hashleni;
         }
     } else {
         if (which & SSL3_CC_HANDSHAKE) {
@@ -352,7 +346,23 @@ int tls13_change_cipher_state(SSL *s, int which)
         }
     }
 
-    if (!tls13_derive_secret(s, insecret, label, labellen, secret)) {
+    if (label != client_application_traffic) {
+        if (!ssl3_digest_cached_records(s, 1)
+                || !ssl_handshake_hash(s, hash, sizeof(hashval), &hashlen)) {
+            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        /*
+         * Save the hash of handshakes up to now for use when we calculate the
+         * client application traffic secret
+         */
+        if (label == server_application_traffic)
+            memcpy(s->server_finished_hash, hash, hashlen);
+    }
+
+    if (!tls13_hkdf_expand(s, insecret, label, labellen, hash, secret,
+                           hashlen)) {
         SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
         goto err;
     }
