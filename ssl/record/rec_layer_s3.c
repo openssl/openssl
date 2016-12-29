@@ -1374,6 +1374,16 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         }
     }
 
+    /*
+     * TODO(TLS1.3): Temporarily we will just ignore NewSessionTicket messages.
+     * Later we will want to process them.
+     */
+    if (!s->server && SSL_IS_TLS13(s) && s->rlayer.handshake_fragment_len >= 4
+            && s->rlayer.handshake_fragment[0] == SSL3_MT_NEWSESSION_TICKET) {
+        SSL3_RECORD_set_read(rr);
+        goto start;
+    }
+
     /*-
      * s->rlayer.handshake_fragment_len == 4  iff  rr->type == SSL3_RT_HANDSHAKE;
      * s->rlayer.alert_fragment_len == 2      iff  rr->type == SSL3_RT_ALERT.
