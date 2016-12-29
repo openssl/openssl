@@ -480,15 +480,15 @@ $code.=<<___;
 	subfc	$t2,$t0,$acc0		# "*0xffff0001"
 	subfe	$t3,$t1,$acc0
 	addc	$acc0,$acc1,$t0		# +=acc[0]<<96 and omit acc[0]
-	 mulld	$t0,$a0,$bi		# lo(a[0]*b[i])
 	adde	$acc1,$acc2,$t1
-	 mulld	$t1,$a1,$bi		# lo(a[1]*b[i])
 	adde	$acc2,$acc3,$t2		# +=acc[0]*0xffff0001
-	 mulld	$t2,$a2,$bi		# lo(a[2]*b[i])
 	adde	$acc3,$acc4,$t3
-	 mulld	$t3,$a3,$bi		# lo(a[3]*b[i])
 	addze	$acc4,$acc5
 
+	mulld	$t0,$a0,$bi		# lo(a[0]*b[i])
+	mulld	$t1,$a1,$bi		# lo(a[1]*b[i])
+	mulld	$t2,$a2,$bi		# lo(a[2]*b[i])
+	mulld	$t3,$a3,$bi		# lo(a[3]*b[i])
 	addc	$acc0,$acc0,$t0		# accumulate low parts of multiplication
 	 mulhdu	$t0,$a0,$bi		# hi(a[0]*b[i])
 	adde	$acc1,$acc1,$t1
@@ -508,8 +508,8 @@ $code.=<<___;
 	adde	$acc2,$acc2,$t1
 	 srdi	$t1,$acc0,32
 	adde	$acc3,$acc3,$t2
-	 li	$acc5,0
 	adde	$acc4,$acc4,$t3
+	li	$acc5,0
 	addze	$acc5,$acc5
 ___
 }
@@ -587,38 +587,38 @@ __ecp_nistz256_sqr_mont:
 	mulhdu	$acc6,$a3,$a2
 
 	addc	$t1,$t1,$t2		# accumulate high parts of multiplication
-	 mulld	$acc0,$a0,$a0		# a[0]*a[0]
 	addze	$t2,$t3			# can't overflow
 
 	addc	$acc3,$acc3,$t0		# accumulate low parts of multiplication
-	 mulhdu	$a0,$a0,$a0
 	adde	$acc4,$acc4,$t1
-	 mulld	$t1,$a1,$a1		# a[1]*a[1]
 	adde	$acc5,$acc5,$t2
-	 mulhdu	$a1,$a1,$a1
 	addze	$acc6,$acc6		# can't overflow
 
 	addc	$acc1,$acc1,$acc1	# acc[1-6]*=2
-	 mulld	$t2,$a2,$a2		# a[2]*a[2]
 	adde	$acc2,$acc2,$acc2
-	 mulhdu	$a2,$a2,$a2
 	adde	$acc3,$acc3,$acc3
-	 mulld	$t3,$a3,$a3		# a[3]*a[3]
 	adde	$acc4,$acc4,$acc4
-	 mulhdu	$a3,$a3,$a3
 	adde	$acc5,$acc5,$acc5
 	adde	$acc6,$acc6,$acc6
 	li	$acc7,0
 	addze	$acc7,$acc7
 
+	mulld	$acc0,$a0,$a0		# a[0]*a[0]
+	mulhdu	$a0,$a0,$a0
+	mulld	$t1,$a1,$a1		# a[1]*a[1]
+	mulhdu	$a1,$a1,$a1
+	mulld	$t2,$a2,$a2		# a[2]*a[2]
+	mulhdu	$a2,$a2,$a2
+	mulld	$t3,$a3,$a3		# a[3]*a[3]
+	mulhdu	$a3,$a3,$a3
 	addc	$acc1,$acc1,$a0		# +a[i]*a[i]
+	 sldi	$t0,$acc0,32
 	adde	$acc2,$acc2,$t1
+	 srdi	$t1,$acc0,32
 	adde	$acc3,$acc3,$a1
 	adde	$acc4,$acc4,$t2
 	adde	$acc5,$acc5,$a2
-	 sldi	$t0,$acc0,32
 	adde	$acc6,$acc6,$t3
-	 srdi	$t1,$acc0,32
 	adde	$acc7,$acc7,$a3
 ___
 for($i=0;$i<3;$i++) {			# reductions, see commentary in
@@ -627,10 +627,10 @@ $code.=<<___;
 	subfc	$t2,$t0,$acc0		# "*0xffff0001"
 	subfe	$t3,$t1,$acc0
 	addc	$acc0,$acc1,$t0		# +=acc[0]<<96 and omit acc[0]
-	adde	$acc1,$acc2,$t1
 	 sldi	$t0,$acc0,32
-	adde	$acc2,$acc3,$t2		# +=acc[0]*0xffff0001
+	adde	$acc1,$acc2,$t1
 	 srdi	$t1,$acc0,32
+	adde	$acc2,$acc3,$t2		# +=acc[0]*0xffff0001
 	addze	$acc3,$t3		# can't overflow
 ___
 }
@@ -640,13 +640,13 @@ $code.=<<___;
 	addc	$acc0,$acc1,$t0		# +=acc[0]<<96 and omit acc[0]
 	adde	$acc1,$acc2,$t1
 	adde	$acc2,$acc3,$t2		# +=acc[0]*0xffff0001
-	li	$t2,0
 	addze	$acc3,$t3		# can't overflow
 
 	addc	$acc0,$acc0,$acc4	# accumulate upper half
 	adde	$acc1,$acc1,$acc5
 	adde	$acc2,$acc2,$acc6
 	adde	$acc3,$acc3,$acc7
+	li	$t2,0
 	addze	$acc4,$t2
 
 	addic	$acc0,$acc0,1		# ret -= modulus
