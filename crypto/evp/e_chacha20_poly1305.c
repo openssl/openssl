@@ -127,7 +127,7 @@ static const EVP_CIPHER chacha20 = {
     1,                      /* block_size */
     CHACHA_KEY_SIZE,        /* key_len */
     CHACHA_CTR_SIZE,        /* iv_len, 128-bit counter in the context */
-    0,                      /* flags */
+    EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT,
     chacha_init_key,
     chacha_cipher,
     NULL,
