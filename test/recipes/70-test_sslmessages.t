@@ -275,7 +275,8 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                "ALPN handshake test");
 
 SKIP: {
-    skip "No CT support in this OpenSSL build", 1 if disabled("ct");
+    skip "No CT and/or EC support in this OpenSSL build", 1
+        if disabled("ct") || disabled("ec");
 
     #Test 14: SCT handshake (client request only)
     $proxy->clear();
@@ -304,7 +305,8 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                "SCT handshake test (server)");
 
 SKIP: {
-    skip "No CT support in this OpenSSL build", 1 if disabled("ct");
+    skip "No CT and/or EC support in this OpenSSL build", 1
+        if disabled("ct") || disabled("ec");
 
     #Test 16: SCT handshake (client and server)
     #There is no built-in server side support for this so we are actually also
