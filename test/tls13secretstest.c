@@ -179,6 +179,11 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
     return 0;
 }
 
+int tls1_alert_code(int code)
+{
+    return code;
+}
+
 /* End of mocked out code */
 
 static int test_secret(SSL *s, unsigned char *prk,
