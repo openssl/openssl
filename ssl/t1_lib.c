@@ -1617,6 +1617,13 @@ int tls1_process_sigalgs(SSL *s)
 
     for (i = 0, sigptr = c->shared_sigalgs;
          i < c->shared_sigalgslen; i++, sigptr++) {
+        /* Ignore PKCS1 based sig algs in TLSv1.3 */
+        if (SSL_IS_TLS13(s)
+                && (sigptr->rsigalg == TLSEXT_SIGALG_rsa_pkcs1_sha1
+                    || sigptr->rsigalg == TLSEXT_SIGALG_rsa_pkcs1_sha256
+                    || sigptr->rsigalg == TLSEXT_SIGALG_rsa_pkcs1_sha384
+                    || sigptr->rsigalg == TLSEXT_SIGALG_rsa_pkcs1_sha512))
+            continue;
         idx = tls12_get_pkey_idx(sigptr->sign_nid);
         if (idx > 0 && pmd[idx] == NULL) {
             md = tls12_get_hash(sigptr->hash_nid);
@@ -1630,10 +1637,11 @@ int tls1_process_sigalgs(SSL *s)
 
     }
     /*
-     * In strict mode leave unset digests as NULL to indicate we can't use
-     * the certificate for signing.
+     * In strict mode or TLS1.3 leave unset digests as NULL to indicate we can't
+     * use the certificate for signing.
      */
-    if (!(s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)) {
+    if (!(s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
+            && !SSL_IS_TLS13(s)) {
         /*
          * Set any remaining keys to default values. NOTE: if alg is not
          * supported it stays as NULL.
