@@ -18,6 +18,7 @@
 #include "ssltestlib.h"
 #include "testutil.h"
 #include "test_main_custom.h"
+#include "e_os.h"
 
 static char *cert = NULL;
 static char *privkey = NULL;
@@ -878,6 +879,126 @@ static int test_ssl_bio_change_wbio(void)
     EXECUTE_TEST(execute_test_ssl_bio, ssl_bio_tear_down);
 }
 
+typedef struct {
+    /* The list of sig algs */
+    const int *list;
+    /* The length of the list */
+    size_t listlen;
+    /* A sigalgs list in string format */
+    const char *liststr;
+    /* Whether setting the list should succeed */
+    int valid;
+    /* Whether creating a connection with the list should succeed */
+    int connsuccess;
+} sigalgs_list;
+
+static const int validlist1[] = {NID_sha256, EVP_PKEY_RSA};
+static const int validlist2[] = {NID_sha256, EVP_PKEY_RSA, NID_sha512, EVP_PKEY_EC};
+static const int validlist3[] = {NID_sha512, EVP_PKEY_EC};
+static const int invalidlist1[] = {NID_undef, EVP_PKEY_RSA};
+static const int invalidlist2[] = {NID_sha256, NID_undef};
+static const int invalidlist3[] = {NID_sha256, EVP_PKEY_RSA, NID_sha256};
+static const int invalidlist4[] = {NID_sha256};
+static const sigalgs_list testsigalgs[] = {
+    {validlist1, OSSL_NELEM(validlist1), NULL, 1, 1},
+    {validlist2, OSSL_NELEM(validlist2), NULL, 1, 1},
+    {validlist3, OSSL_NELEM(validlist3), NULL, 1, 0},
+    {NULL, 0, "RSA+SHA256", 1, 1},
+    {NULL, 0, "RSA+SHA256:ECDSA+SHA512", 1, 1},
+    {NULL, 0, "ECDSA+SHA512", 1, 0},
+    {invalidlist1, OSSL_NELEM(invalidlist1), NULL, 0, 0},
+    {invalidlist2, OSSL_NELEM(invalidlist2), NULL, 0, 0},
+    {invalidlist3, OSSL_NELEM(invalidlist3), NULL, 0, 0},
+    {invalidlist4, OSSL_NELEM(invalidlist4), NULL, 0, 0},
+    {NULL, 0, "RSA", 0, 0},
+    {NULL, 0, "SHA256", 0, 0},
+    {NULL, 0, "RSA+SHA256:SHA256", 0, 0},
+    {NULL, 0, "Invalid", 0, 0}};
+
+static int test_set_sigalgs(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    const sigalgs_list *curr;
+    int testctx;
+
+    /* Should never happen */
+    if ((size_t)idx >= OSSL_NELEM(testsigalgs) * 2)
+        return 0;
+
+    testctx = ((size_t)idx < OSSL_NELEM(testsigalgs));
+    curr = testctx ? &testsigalgs[idx]
+                   : &testsigalgs[idx - OSSL_NELEM(testsigalgs)];
+
+    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
+        printf("Unable to create SSL_CTX pair\n");
+        return 0;
+    }
+
+    if (testctx) {
+        int ret;
+        if (curr->list != NULL)
+            ret = SSL_CTX_set1_sigalgs(cctx, curr->list, curr->listlen);
+        else
+            ret = SSL_CTX_set1_sigalgs_list(cctx, curr->liststr);
+
+        if (!ret) {
+            if (curr->valid)
+                printf("Unexpected failure setting sigalgs in SSL_CTX (%d)\n",
+                       idx);
+            else
+                testresult = 1;
+            goto end;
+        }
+        if (!curr->valid) {
+            printf("Unexpected success setting sigalgs in SSL_CTX (%d)\n", idx);
+            goto end;
+        }
+    }
+
+    if (!create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)) {
+        printf("Unable to create SSL objects\n");
+        goto end;
+    }
+
+    if (!testctx) {
+        int ret;
+
+        if (curr->list != NULL)
+            ret = SSL_set1_sigalgs(clientssl, curr->list, curr->listlen);
+        else
+            ret = SSL_set1_sigalgs_list(clientssl, curr->liststr);
+        if (!ret) {
+            if (curr->valid)
+                printf("Unexpected failure setting sigalgs in SSL (%d)\n", idx);
+            else
+                testresult = 1;
+            goto end;
+        }
+        if (!curr->valid) {
+            printf("Unexpected success setting sigalgs in SSL (%d)\n", idx);
+            goto end;
+        }
+    }
+
+    if (curr->connsuccess != create_ssl_connection(serverssl, clientssl)) {
+        printf("Unexpected return value creating SSL connection (%d)\n", idx);
+        goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 int test_main(int argc, char *argv[])
 {
     int testresult = 1;
@@ -904,6 +1025,7 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_ssl_bio_pop_ssl_bio);
     ADD_TEST(test_ssl_bio_change_rbio);
     ADD_TEST(test_ssl_bio_change_wbio);
+    ADD_ALL_TESTS(test_set_sigalgs, OSSL_NELEM(testsigalgs) * 2);
 
     testresult = run_tests(argv[0]);
 
