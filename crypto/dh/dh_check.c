@@ -13,6 +13,46 @@
 #include "dh_locl.h"
 
 /*-
+ * Check that p and g are suitable enough
+ *
+ * p is odd
+ * 1 < g < p - 1
+ */
+
+int DH_check_params(const DH *dh, int *ret)
+{
+    int ok = 0;
+    BIGNUM *tmp = NULL;
+    BN_CTX *ctx = NULL;
+
+    *ret = 0;
+    ctx = BN_CTX_new();
+    if (ctx == NULL)
+        goto err;
+    BN_CTX_start(ctx);
+    tmp = BN_CTX_get(ctx);
+    if (tmp == NULL)
+        goto err;
+
+    if (!BN_is_odd(dh->p))
+        *ret |= DH_CHECK_P_NOT_PRIME;
+    if (BN_is_negative(dh->g) || BN_is_zero(dh->g) || BN_is_one(dh->g))
+        *ret |= DH_NOT_SUITABLE_GENERATOR;
+    if (BN_copy(tmp, dh->p) == NULL || !BN_sub_word(tmp, 1))
+        goto err;
+    if (BN_cmp(dh->g, tmp) >= 0)
+        *ret |= DH_NOT_SUITABLE_GENERATOR;
+
+    ok = 1;
+ err:
+    if (ctx != NULL) {
+        BN_CTX_end(ctx);
+        BN_CTX_free(ctx);
+    }
+    return (ok);
+}
+
+/*-
  * Check that p is a safe prime and
  * if g is 2, 3 or 5, check that it is a suitable generator
  * where
