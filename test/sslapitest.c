@@ -937,6 +937,12 @@ static int test_set_sigalgs(int idx)
         return 0;
     }
 
+    /*
+     * TODO(TLS1.3): These APIs cannot set TLSv1.3 sig algs so we just test it
+     * for TLSv1.2 for now until we add a new API.
+     */
+    SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION);
+
     if (testctx) {
         int ret;
         if (curr->list != NULL)
