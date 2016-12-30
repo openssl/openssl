@@ -38,6 +38,7 @@ static int final_ems(SSL *s, unsigned int context, int sent, int *al);
 #ifndef OPENSSL_NO_SRTP
 static int init_srtp(SSL *s, unsigned int context);
 #endif
+static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al);
 
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
@@ -152,7 +153,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_signature_algorithms,
         EXT_CLIENT_HELLO,
         init_sig_algs, tls_parse_ctos_sig_algs, NULL, NULL,
-        tls_construct_ctos_sig_algs, NULL
+        tls_construct_ctos_sig_algs, final_sig_algs
     },
 #ifndef OPENSSL_NO_OCSP
     {
@@ -926,3 +927,14 @@ static int init_srtp(SSL *s, unsigned int context)
     return 1;
 }
 #endif
+
+static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al)
+{
+    if (!sent && SSL_IS_TLS13(s)) {
+        *al = TLS13_AD_MISSING_EXTENSION;
+        SSLerr(SSL_F_FINAL_SIG_ALGS, SSL_R_MISSING_SIGALGS_EXTENSION);
+        return 0;
+    }
+
+    return 1;
+}
