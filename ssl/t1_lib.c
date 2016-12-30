@@ -1791,6 +1791,7 @@ int tls1_set_sigalgs_list(CERT *c, const char *str, int client)
     return tls1_set_sigalgs(c, sig.sigalgs, sig.sigalgcnt, client);
 }
 
+/* TODO(TLS1.3): Needs updating to allow setting of TLS1.3 sig algs */
 int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 {
     unsigned int *sigalgs, *sptr;
