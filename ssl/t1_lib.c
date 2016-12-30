@@ -85,7 +85,7 @@ SSL3_ENC_METHOD const TLSv1_3_enc_data = {
     tls13_final_finish_mac,
     TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
-    tls1_alert_code,
+    tls13_alert_code,
     tls1_export_keying_material,
     SSL_ENC_FLAG_SIGALGS | SSL_ENC_FLAG_SHA256_PRF,
     ssl3_set_handshake_header,

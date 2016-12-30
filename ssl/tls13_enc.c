@@ -406,3 +406,11 @@ int tls13_change_cipher_state(SSL *s, int which)
     OPENSSL_cleanse(key, sizeof(key));
     return ret;
 }
+
+int tls13_alert_code(int code)
+{
+    if (code == SSL_AD_MISSING_EXTENSION)
+        return code;
+
+    return tls1_alert_code(code);
+}
