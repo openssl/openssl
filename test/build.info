@@ -273,7 +273,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[bioprinttest]=../libcrypto
 
   SOURCE[sslapitest]=sslapitest.c ssltestlib.c testutil.c test_main_custom.c
-  INCLUDE[sslapitest]=../include
+  INCLUDE[sslapitest]=../include ..
   DEPEND[sslapitest]=../libcrypto ../libssl
 
   SOURCE[dtlstest]=dtlstest.c ssltestlib.c testutil.c test_main_custom.c
