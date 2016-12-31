@@ -30,11 +30,11 @@ Our modifications are **only** for OpenSSL v1.0.2, and appear only on the [OpenS
 
 liboqs currently supports the following key exchange mechanisms:
 
-- `RLWE_BCNS15`: key exchange from the ring learning with errors problem (Bos, Costello, Naehrig, Stebila, *IEEE Symposium on Security & Privacy 2015*, [https://eprint.iacr.org/2014/599](https://eprint.iacr.org/2014/599))
-- `RLWE_NEWHOPE`: "NewHope": key exchange from the ring learning with errors problem (Alkim, Ducas, Pöppelmann, Schwabe, *USENIX Security 2016*, [https://eprint.iacr.org/2015/1092](https://eprint.iacr.org/2015/1092)) (using the reference C implementation of NewHope from [https://github.com/tpoeppelmann/newhope](https://github.com/tpoeppelmann/newhope))
-- `RLWE_MSRLN16`: "MSR CLN16": Longa and Naehrig NTT improvements on newhope, [https://www.microsoft.com/en-us/research/wp-content/uploads/2016/05/RLWE-1.pdf](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/05/RLWE-1.pdf)) (using the reference C implementation from [https://www.microsoft.com/en-us/research/project/lattice-cryptography-library/](https://www.microsoft.com/en-us/research/project/lattice-cryptography-library/))
-- `LWE_FRODO_RECOMMENDED`: "Frodo": key exchange from the learning with errors problem (Bos, Costello, Ducas, Mironov, Naehrig, Nikolaenko, Raghunathan, Stebila, *ACM Conference on Computer and Communications Security 2016*, [http://eprint.iacr.org/2016/659](http://eprint.iacr.org/2016/659)); using the "recommended" parameter set
-- `SIDH_CLN16`: "SIDH": key exchange from the supersingular isogeny Diffie-Hellman problem (Costello, Longa, Naehrig, *Crypto 2016*, [https://eprint.iacr.org/2016/413](https://eprint.iacr.org/2016/413)) (using the reference C implementation from [https://www.microsoft.com/en-us/research/project/sidh-library/](https://www.microsoft.com/en-us/research/project/sidh-library/))
+- `RLWE-BCNS15`: key exchange from the ring learning with errors problem (Bos, Costello, Naehrig, Stebila, *IEEE Symposium on Security & Privacy 2015*, [https://eprint.iacr.org/2014/599](https://eprint.iacr.org/2014/599))
+- `RLWE-NEWHOPE`: "NewHope": key exchange from the ring learning with errors problem (Alkim, Ducas, Pöppelmann, Schwabe, *USENIX Security 2016*, [https://eprint.iacr.org/2015/1092](https://eprint.iacr.org/2015/1092)) (using the reference C implementation of NewHope from [https://github.com/tpoeppelmann/newhope](https://github.com/tpoeppelmann/newhope))
+- `RLWE-MSRLN16`: "MSR CLN16": Longa and Naehrig NTT improvements on NewHope, [https://www.microsoft.com/en-us/research/wp-content/uploads/2016/05/RLWE-1.pdf](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/05/RLWE-1.pdf)) (using the reference C implementation from [https://www.microsoft.com/en-us/research/project/lattice-cryptography-library/](https://www.microsoft.com/en-us/research/project/lattice-cryptography-library/))
+- `LWE-FRODO-RECOMMENDED`: "Frodo": key exchange from the learning with errors problem (Bos, Costello, Ducas, Mironov, Naehrig, Nikolaenko, Raghunathan, Stebila, *ACM Conference on Computer and Communications Security 2016*, [http://eprint.iacr.org/2016/659](http://eprint.iacr.org/2016/659)); using the "recommended" parameter set
+- `SIDH-CLN16`: "SIDH": key exchange from the supersingular isogeny Diffie-Hellman problem (Costello, Longa, Naehrig, *Crypto 2016*, [https://eprint.iacr.org/2016/413](https://eprint.iacr.org/2016/413)) (using the reference C implementation from [https://www.microsoft.com/en-us/research/project/sidh-library/](https://www.microsoft.com/en-us/research/project/sidh-library/))
 
 ### Ciphersuites
 
@@ -49,7 +49,7 @@ For each post-quantum key exchange primitive `X`, there are the following cipher
 - `X-ECDHE-RSA-AES256-GCM-SHA384`
 - `X-ECDHE-ECDSA-AES256-GCM-SHA384`
 
-There is also a "generic" ciphersuite (`X` = `GENERIC`) which uses whichever key exchange primitive is configured as the default key exchange primitive in liboqs.  It is set to `GENERIC` = `RLWE_BCNS15`, but this can be changed.
+There is also a "generic" ciphersuite (`X` = `GENERIC`) which uses whichever key exchange primitive is configured as the default key exchange primitive in liboqs.  It is set to `GENERIC` = `RLWE-BCNS15`, but this can be changed.
 
 
 Building
