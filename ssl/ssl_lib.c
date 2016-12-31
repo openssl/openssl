@@ -2441,8 +2441,12 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
     emask_k |= SSL_kOQSKEX_RLWE_BCNS15;
     mask_k |= SSL_kOQSKEX_RLWE_NEWHOPE;
     emask_k |= SSL_kOQSKEX_RLWE_NEWHOPE;
+    mask_k |= SSL_kOQSKEX_RLWE_MSRLN16;
+    emask_k |= SSL_kOQSKEX_RLWE_MSRLN16;
     mask_k |= SSL_kOQSKEX_LWE_FRODO_RECOMMENDED;
     emask_k |= SSL_kOQSKEX_LWE_FRODO_RECOMMENDED;
+    mask_k |= SSL_kOQSKEX_SIDH_CLN16;
+    emask_k |= SSL_kOQSKEX_SIDH_CLN16;
 #endif
 
 #ifndef OPENSSL_NO_PSK
