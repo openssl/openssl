@@ -1120,6 +1120,8 @@ BLOCK_CIPHER_generic_pack(NID_aes, 128, EVP_CIPH_FLAG_FIPS)
 static int aes_gcm_cleanup(EVP_CIPHER_CTX *c)
 {
     EVP_AES_GCM_CTX *gctx = c->cipher_data;
+    if (gctx == NULL)
+        return 0;
     OPENSSL_cleanse(&gctx->gcm, sizeof(gctx->gcm));
     if (gctx->iv != c->iv)
         OPENSSL_free(gctx->iv);
