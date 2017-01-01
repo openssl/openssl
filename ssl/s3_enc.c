@@ -61,10 +61,10 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     EVP_MD_CTX_set_flags(m5, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
     for (i = 0; (int)i < num; i += MD5_DIGEST_LENGTH) {
         k++;
-        if (k > sizeof buf) {
+        if (k > sizeof(buf)) {
             /* bug: 'buf' is too small for this ciphersuite */
             SSLerr(SSL_F_SSL3_GENERATE_KEY_BLOCK, ERR_R_INTERNAL_ERROR);
-            return 0;
+            goto err;
         }
 
         for (j = 0; j < k; j++)
@@ -225,7 +225,8 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
     memcpy(mac_secret, ms, i);
 
-    EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE));
+    if (!EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE)))
+        goto err2;
 
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
     if (s->msg_callback) {
