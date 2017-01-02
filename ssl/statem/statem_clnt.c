@@ -3012,7 +3012,7 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
 
 int tls_construct_client_certificate(SSL *s, WPACKET *pkt)
 {
-    int al;
+    int al = SSL_AD_INTERNAL_ERROR;
 
     /*
      * TODO(TLS1.3): For now we must put an empty context. Needs to be filled in
