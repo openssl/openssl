@@ -3,7 +3,7 @@
 
 // A wrapper to make OpenSSL's AES work in one pass, like the Cryptol
 // specification.
-int aes_encrypt(const unsigned char *in,
+int aes_decrypt(const unsigned char *in,
                 unsigned char *out,
                 const unsigned char *key) {
   AES_KEY rkey;
@@ -23,7 +23,7 @@ int main() {
   unsigned char *out = malloc(16 * sizeof(unsigned char));
 
   // Run the encryption.
-  aes_encrypt(in, out, key);
+  aes_decrypt(in, out, key);
 
   // Write the symbolic representation of the result into an
   // And-Inverter Graph.
