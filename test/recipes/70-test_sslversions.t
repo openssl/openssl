@@ -87,7 +87,8 @@ $testtype = REVERSE_ORDER_VERSIONS;
 $proxy->start();
 $record = pop @{$proxy->record_list};
 ok(TLSProxy::Message->success()
-   && $record->version() == TLSProxy::Record::VERS_TLS_1_3,
+   && $record->version() == TLSProxy::Record::VERS_TLS_1_0
+   && TLSProxy::Proxy->is_tls13(),
    "Reverse order versions");
 
 #Test 6: no TLSv1.3 or TLSv1.2 version in supported versions extension, but
@@ -106,7 +107,8 @@ $testtype = WITH_TLS1_4;
 $proxy->start();
 $record = pop @{$proxy->record_list};
 ok(TLSProxy::Message->success()
-   && $record->version() == TLSProxy::Record::VERS_TLS_1_3,
+   && $record->version() == TLSProxy::Record::VERS_TLS_1_0
+   && TLSProxy::Proxy->is_tls13(),
    "TLS1.4 in supported versions extension");
 
 sub modify_supported_versions_filter
