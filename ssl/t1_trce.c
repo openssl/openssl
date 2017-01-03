@@ -506,27 +506,25 @@ static ssl_trace_tbl ssl_point_tbl[] = {
     {2, "ansiX962_compressed_char2"}
 };
 
-static ssl_trace_tbl ssl_md_tbl[] = {
-    {TLSEXT_hash_none, "none"},
-    {TLSEXT_hash_md5, "md5"},
-    {TLSEXT_hash_sha1, "sha1"},
-    {TLSEXT_hash_sha224, "sha224"},
-    {TLSEXT_hash_sha256, "sha256"},
-    {TLSEXT_hash_sha384, "sha384"},
-    {TLSEXT_hash_sha512, "sha512"},
-    {TLSEXT_hash_gostr3411, "md_gost94"},
-    {TLSEXT_hash_gostr34112012_256, "md_gost2012_256"},
-    {TLSEXT_hash_gostr34112012_512, "md_gost2012_512"}
-};
-
-static ssl_trace_tbl ssl_sig_tbl[] = {
-    {TLSEXT_signature_anonymous, "anonymous"},
-    {TLSEXT_signature_rsa, "rsa"},
-    {TLSEXT_signature_dsa, "dsa"},
-    {TLSEXT_signature_ecdsa, "ecdsa"},
-    {TLSEXT_signature_gostr34102001, "gost2001"},
-    {TLSEXT_signature_gostr34102012_256, "gost2012_256"},
-    {TLSEXT_signature_gostr34102012_512, "gost2012_512"}
+static ssl_trace_tbl ssl_sigalg_tbl[] = {
+    {TLSEXT_SIGALG_ecdsa_secp256r1_sha256, "ecdsa_secp256r1_sha256"},
+    {TLSEXT_SIGALG_ecdsa_secp384r1_sha384, "ecdsa_secp384r1_sha384"},
+    {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, "ecdsa_secp521r1_sha512"},
+    {TLSEXT_SIGALG_ecdsa_sha1, "ecdsa_sha1"},
+    {TLSEXT_SIGALG_rsa_pss_sha256, "rsa_pss_sha256"},
+    {TLSEXT_SIGALG_rsa_pss_sha384, "rsa_pss_sha384"},
+    {TLSEXT_SIGALG_rsa_pss_sha512, "rsa_pss_sha512"},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha256, "rsa_pkcs1_sha256"},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha384, "rsa_pkcs1_sha384"},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha512, "rsa_pkcs1_sha512"},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha1, "rsa_pkcs1_sha1"},
+    {TLSEXT_SIGALG_dsa_sha256, "dsa_sha256"},
+    {TLSEXT_SIGALG_dsa_sha384, "dsa_sha384"},
+    {TLSEXT_SIGALG_dsa_sha512, "dsa_sha512"},
+    {TLSEXT_SIGALG_dsa_sha1, "dsa_sha1"},
+    {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, "gost2012_256"},
+    {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, "gost2012_512"},
+    {TLSEXT_SIGALG_gostr34102001_gostr3411, "gost2001_gost94"},
 };
 
 static ssl_trace_tbl ssl_ctype_tbl[] = {
@@ -635,10 +633,11 @@ static int ssl_print_signature(BIO *bio, int indent, SSL *s,
         return 0;
     if (SSL_USE_SIGALGS(s)) {
         const unsigned char *p = *pmsg;
+        unsigned int sigalg = (p[0] << 8) | p[1];
+
         BIO_indent(bio, indent, 80);
-        BIO_printf(bio, "Signature Algorithm %s+%s (%d+%d)\n",
-                   ssl_trace_str(p[0], ssl_md_tbl),
-                   ssl_trace_str(p[1], ssl_sig_tbl), p[0], p[1]);
+        BIO_printf(bio, "Signature Algorithm: %s (0x%04x)\n",
+                   ssl_trace_str(sigalg, ssl_sigalg_tbl), sigalg);
         *pmsg += 2;
         *pmsglen -= 2;
     }
@@ -649,6 +648,8 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
                                const unsigned char *ext, size_t extlen)
 {
     size_t xlen, share_len;
+    unsigned int sigalg;
+
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "extension_type=%s(%d), length=%d\n",
                ssl_trace_str(extype, ssl_exts_tbl), extype, (int)extlen);
@@ -681,9 +682,9 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
         ext += 2;
         while (xlen > 0) {
             BIO_indent(bio, indent + 2, 80);
-            BIO_printf(bio, "%s+%s (%d+%d)\n",
-                       ssl_trace_str(ext[0], ssl_md_tbl),
-                       ssl_trace_str(ext[1], ssl_sig_tbl), ext[0], ext[1]);
+            sigalg = (ext[0] << 8) | ext[1];
+            BIO_printf(bio, "%s (0x%04x)\n",
+                       ssl_trace_str(sigalg, ssl_sigalg_tbl), sigalg);
             xlen -= 2;
             ext += 2;
         }
@@ -1125,6 +1126,8 @@ static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
                                   const unsigned char *msg, size_t msglen)
 {
     size_t xlen;
+    unsigned int sigalg;
+
     if (msglen < 1)
         return 0;
     xlen = msg[0];
@@ -1149,9 +1152,9 @@ static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
     BIO_printf(bio, "signature_algorithms (len=%d)\n", (int)xlen);
     while (xlen > 0) {
         BIO_indent(bio, indent + 2, 80);
-        BIO_printf(bio, "%s+%s (%d+%d)\n",
-                   ssl_trace_str(msg[0], ssl_md_tbl),
-                   ssl_trace_str(msg[1], ssl_sig_tbl), msg[0], msg[1]);
+        sigalg = (msg[0] << 8) | msg[1];
+        BIO_printf(bio, "%s (0x%04x)\n",
+                   ssl_trace_str(sigalg, ssl_sigalg_tbl), sigalg);
         xlen -= 2;
         msg += 2;
     }
