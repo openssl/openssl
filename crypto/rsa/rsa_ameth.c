@@ -64,8 +64,10 @@ static int rsa_param_decode(RSA *rsa, const X509_ALGOR *alg)
         return 1;
     if (algptype == V_ASN1_UNDEF)
         return 1;
-    if (algptype != V_ASN1_SEQUENCE)
+    if (algptype != V_ASN1_SEQUENCE) {
+        RSAerr(RSA_F_RSA_PARAM_DECODE, RSA_R_INVALID_PSS_PARAMETERS);
         return 0;
+    }
     rsa->pss = rsa_pss_decode(alg);
     if (rsa->pss == NULL)
         return 0;
