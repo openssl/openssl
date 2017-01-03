@@ -751,32 +751,31 @@ typedef struct sigalg_lookup_st {
     unsigned int sigalg;
     int hash;
     int sig;
-    int notls12;
 } SIGALG_LOOKUP;
 
 SIGALG_LOOKUP sigalg_lookup_tbl[] = {
-    {TLSEXT_SIGALG_ecdsa_secp256r1_sha256, NID_sha256, EVP_PKEY_EC, 0},
-    {TLSEXT_SIGALG_ecdsa_secp384r1_sha384, NID_sha384, EVP_PKEY_EC, 0},
-    {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, NID_sha512, EVP_PKEY_EC, 0},
-    {TLSEXT_SIGALG_ecdsa_sha1, NID_sha1, EVP_PKEY_EC, 0},
+    {TLSEXT_SIGALG_ecdsa_secp256r1_sha256, NID_sha256, EVP_PKEY_EC},
+    {TLSEXT_SIGALG_ecdsa_secp384r1_sha384, NID_sha384, EVP_PKEY_EC},
+    {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, NID_sha512, EVP_PKEY_EC},
+    {TLSEXT_SIGALG_ecdsa_sha1, NID_sha1, EVP_PKEY_EC},
     /*
      * PSS must appear before PKCS1 so that we prefer that when signing where
      * possible
      */
-    {TLSEXT_SIGALG_rsa_pss_sha256, NID_sha256, EVP_PKEY_RSA, 1},
-    {TLSEXT_SIGALG_rsa_pss_sha384, NID_sha384, EVP_PKEY_RSA, 1},
-    {TLSEXT_SIGALG_rsa_pss_sha512, NID_sha512, EVP_PKEY_RSA, 1},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha256, NID_sha256, EVP_PKEY_RSA, 0},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha384, NID_sha384, EVP_PKEY_RSA, 0},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha512, NID_sha512, EVP_PKEY_RSA, 0},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha1, NID_sha1, EVP_PKEY_RSA, 0},
-    {TLSEXT_SIGALG_dsa_sha256, NID_sha256, EVP_PKEY_DSA, 0},
-    {TLSEXT_SIGALG_dsa_sha384, NID_sha384, EVP_PKEY_DSA, 0},
-    {TLSEXT_SIGALG_dsa_sha512, NID_sha512, EVP_PKEY_DSA, 0},
-    {TLSEXT_SIGALG_dsa_sha1, NID_sha1, EVP_PKEY_DSA, 0},
-    {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, NID_id_GostR3411_2012_256, NID_id_GostR3410_2012_256, 0},
-    {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, NID_id_GostR3411_2012_512, NID_id_GostR3410_2012_512, 0},
-    {TLSEXT_SIGALG_gostr34102001_gostr3411, NID_id_GostR3411_94, NID_id_GostR3410_2001, 0}
+    {TLSEXT_SIGALG_rsa_pss_sha256, NID_sha256, EVP_PKEY_RSA},
+    {TLSEXT_SIGALG_rsa_pss_sha384, NID_sha384, EVP_PKEY_RSA},
+    {TLSEXT_SIGALG_rsa_pss_sha512, NID_sha512, EVP_PKEY_RSA},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha256, NID_sha256, EVP_PKEY_RSA},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha384, NID_sha384, EVP_PKEY_RSA},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha512, NID_sha512, EVP_PKEY_RSA},
+    {TLSEXT_SIGALG_rsa_pkcs1_sha1, NID_sha1, EVP_PKEY_RSA},
+    {TLSEXT_SIGALG_dsa_sha256, NID_sha256, EVP_PKEY_DSA},
+    {TLSEXT_SIGALG_dsa_sha384, NID_sha384, EVP_PKEY_DSA},
+    {TLSEXT_SIGALG_dsa_sha512, NID_sha512, EVP_PKEY_DSA},
+    {TLSEXT_SIGALG_dsa_sha1, NID_sha1, EVP_PKEY_DSA},
+    {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, NID_id_GostR3411_2012_256, NID_id_GostR3410_2012_256},
+    {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, NID_id_GostR3411_2012_512, NID_id_GostR3410_2012_512},
+    {TLSEXT_SIGALG_gostr34102001_gostr3411, NID_id_GostR3411_94, NID_id_GostR3410_2001}
 };
 
 static int tls_sigalg_get_hash(unsigned int sigalg)
@@ -861,7 +860,7 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
         return 0;
     }
 #ifndef OPENSSL_NO_EC
-    if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
+    if (pkeyid == EVP_PKEY_EC) {
         unsigned char curve_id[2], comp_id;
         /* Check compression and curve matches extensions */
         if (!tls1_set_ec_id(curve_id, &comp_id, EVP_PKEY_get0_EC_KEY(pkey)))
@@ -1288,9 +1287,9 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
 }
 
 int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
-                         const EVP_MD *md)
+                         const EVP_MD *md, int *ispss)
 {
-    int md_id, sig_id;
+    int md_id, sig_id, tmpispss = 0;
     size_t i;
     SIGALG_LOOKUP *curr;
 
@@ -1303,10 +1302,27 @@ int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
 
     for (i = 0, curr = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
          i++, curr++) {
-        if (curr->hash == md_id && curr->sig == sig_id
-                && (!curr->notls12 || SSL_IS_TLS13(s))) {
+        if (curr->hash == md_id && curr->sig == sig_id) {
+            if (sig_id == EVP_PKEY_RSA) {
+                tmpispss = SIGID_IS_PSS(curr->sigalg);
+                if (!SSL_IS_TLS13(s) && tmpispss) {
+                    size_t j;
+
+                    /*
+                     * Check peer actually sent a PSS sig id - it could have
+                     * been a PKCS1 sig id instead.
+                     */
+                    for (j = 0; j < s->cert->shared_sigalgslen; j++)
+                        if (s->cert->shared_sigalgs[j].rsigalg == curr->sigalg)
+                            break;
+
+                    if (j == s->cert->shared_sigalgslen)
+                        continue;
+                }
+            }
             if (!WPACKET_put_bytes_u16(pkt, curr->sigalg))
                 return 0;
+            *ispss = tmpispss;
             return 1;
         }
     }
@@ -1814,7 +1830,10 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 
         for (j = 0, curr = sigalg_lookup_tbl; j < OSSL_NELEM(sigalg_lookup_tbl);
              j++, curr++) {
-            if (curr->hash == md_id && curr->sig == sig_id && !curr->notls12) {
+            /* Skip setting PSS so we get PKCS1 by default */
+            if (SIGID_IS_PSS(curr->sigalg))
+                continue;
+            if (curr->hash == md_id && curr->sig == sig_id) {
                 *sptr++ = curr->sigalg;
                 break;
             }

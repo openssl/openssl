@@ -1824,9 +1824,11 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
-    int al = -1;
+    int al = -1, ispss = 0;
     long alg_k;
     EVP_PKEY *pkey = NULL;
+    EVP_MD_CTX *md_ctx = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
     PACKET save_param_start, signature;
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
@@ -1865,7 +1867,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         PACKET params;
         int maxsig;
         const EVP_MD *md = NULL;
-        EVP_MD_CTX *md_ctx;
 
         /*
          * |pkt| now points to the beginning of the signature, so the difference
@@ -1896,6 +1897,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                 al = SSL_AD_DECODE_ERROR;
                 goto err;
             }
+            ispss = SIGID_IS_PSS(sigalg);
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
@@ -1936,29 +1938,39 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        if (EVP_VerifyInit_ex(md_ctx, md, NULL) <= 0
-            || EVP_VerifyUpdate(md_ctx, &(s->s3->client_random[0]),
-                                SSL3_RANDOM_SIZE) <= 0
-            || EVP_VerifyUpdate(md_ctx, &(s->s3->server_random[0]),
-                                SSL3_RANDOM_SIZE) <= 0
-            || EVP_VerifyUpdate(md_ctx, PACKET_data(&params),
-                                PACKET_remaining(&params)) <= 0) {
-            EVP_MD_CTX_free(md_ctx);
+        if (EVP_DigestVerifyInit(md_ctx, &pctx, md, NULL, pkey) <= 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
             goto err;
         }
-        /* TODO(size_t): Convert this call */
-        if (EVP_VerifyFinal(md_ctx, PACKET_data(&signature),
-                            (unsigned int)PACKET_remaining(&signature),
-                            pkey) <= 0) {
+        if (ispss) {
+            if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
+                       /* -1 here means set saltlen to the digest len */
+                    || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+                al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
+                goto err;
+            }
+        }
+        if (EVP_DigestVerifyUpdate(md_ctx, &(s->s3->client_random[0]),
+                                   SSL3_RANDOM_SIZE) <= 0
+                || EVP_DigestVerifyUpdate(md_ctx, &(s->s3->server_random[0]),
+                                          SSL3_RANDOM_SIZE) <= 0
+                || EVP_DigestVerifyUpdate(md_ctx, PACKET_data(&params),
+                                          PACKET_remaining(&params)) <= 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
+            goto err;
+        }
+        if (EVP_DigestVerifyFinal(md_ctx, PACKET_data(&signature),
+                                  PACKET_remaining(&signature)) <= 0) {
             /* bad signature */
-            EVP_MD_CTX_free(md_ctx);
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SIGNATURE);
             goto err;
         }
         EVP_MD_CTX_free(md_ctx);
+        md_ctx = NULL;
     } else {
         /* aNULL, aSRP or PSK do not need public keys */
         if (!(s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
@@ -1986,6 +1998,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     if (al != -1)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
     ossl_statem_set_error(s);
+    EVP_MD_CTX_free(md_ctx);
     return MSG_PROCESS_ERROR;
 }
 
