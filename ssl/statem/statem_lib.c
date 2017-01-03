@@ -136,7 +136,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     void *hdata;
     unsigned char *sig = NULL;
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
-    int pktype;
+    int pktype, ispss = 0;
 
     if (s->server) {
         /* Only happens in TLSv1.3 */
@@ -166,7 +166,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    if (SSL_USE_SIGALGS(s) && !tls12_get_sigandhash(s, pkt, pkey, md)) {
+    if (SSL_USE_SIGALGS(s) && !tls12_get_sigandhash(s, pkt, pkey, md, &ispss)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -186,7 +186,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    if (SSL_IS_TLS13(s) && pktype == EVP_PKEY_RSA) {
+    if (ispss) {
         if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
                    /* -1 here means set saltlen to the digest len */
                 || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
@@ -243,7 +243,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     unsigned char *gost_data = NULL;
 #endif
     int al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
-    int type = 0, j, pktype;
+    int type = 0, j, pktype, ispss = 0;
     unsigned int len;
     X509 *peer;
     const EVP_MD *md = NULL;
@@ -297,6 +297,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
                 al = SSL_AD_DECODE_ERROR;
                 goto f_err;
             }
+            ispss = SIGID_IS_PSS(sigalg);
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
@@ -358,7 +359,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 #endif
 
-    if (SSL_IS_TLS13(s) && pktype == EVP_PKEY_RSA) {
+    if (ispss) {
         if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
                    /* -1 here means set saltlen to the digest len */
                 || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
