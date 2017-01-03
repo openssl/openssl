@@ -146,12 +146,12 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->success, "No PSS TLSv1.2 sigalgs");
 
-    #Test 13: Sending only TLSv1.3 PSS sig algs in TLSv1.2 should fail
+    #Test 13: Sending only TLSv1.3 PSS sig algs in TLSv1.2 should succeed
     $proxy->clear();
     $testtype = PSS_ONLY_SIG_ALGS;
-    $proxy->clientflags("-no_tls1_3");
+    $proxy->serverflags("-no_tls1_3");
     $proxy->start();
-    ok(TLSProxy::Message->fail, "PSS only sigalgs in TLSv1.2");
+    ok(TLSProxy::Message->success, "PSS only sigalgs in TLSv1.2");
 
     #Test 14: Sending a valid sig algs list but not including a sig type that
     #         matches the certificate should fail in TLSv1.2

@@ -1703,6 +1703,11 @@ typedef enum tlsext_index_en {
 #define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512       0xefef
 #define TLSEXT_SIGALG_gostr34102001_gostr3411                   0xeded
 
+#define SIGID_IS_PSS(sigid) ((sigid) == TLSEXT_SIGALG_rsa_pss_sha256 \
+                             || (sigid) == TLSEXT_SIGALG_rsa_pss_sha384 \
+                             || (sigid) == TLSEXT_SIGALG_rsa_pss_sha512)
+
+
 /* A dummy signature value not valid for TLSv1.2 signature algs */
 #define TLSEXT_signature_rsa_pss                                0x0101
 
@@ -2147,7 +2152,7 @@ __owur int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
 __owur int tls_use_ticket(SSL *s);
 
 __owur int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
-                                const EVP_MD *md);
+                                const EVP_MD *md, int *ispss);
 __owur const EVP_MD *tls12_get_hash(int hash_nid);
 void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op);
 

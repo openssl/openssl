@@ -1956,6 +1956,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
     unsigned long type;
     const BIGNUM *r[4];
     EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
+    EVP_PKEY_CTX *pctx = NULL;
     size_t paramlen, paramoffset;
 
     if (!WPACKET_get_total_written(pkt, &paramoffset)) {
@@ -2212,7 +2213,8 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
          */
         if (md) {
             unsigned char *sigbytes1, *sigbytes2;
-            unsigned int siglen;
+            size_t siglen;
+            int ispss = 0;
 
             /* Get length of the parameters we have written above */
             if (!WPACKET_get_length(pkt, &paramlen)) {
@@ -2222,7 +2224,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             }
             /* send signature algorithm */
             if (SSL_USE_SIGALGS(s)) {
-                if (!tls12_get_sigandhash(s, pkt, pkey, md)) {
+                if (!tls12_get_sigandhash(s, pkt, pkey, md, &ispss)) {
                     /* Should never happen */
                     SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                            ERR_R_INTERNAL_ERROR);
@@ -2240,14 +2242,29 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
              */
             if (!WPACKET_sub_reserve_bytes_u16(pkt, EVP_PKEY_size(pkey),
                                                &sigbytes1)
-                    || EVP_SignInit_ex(md_ctx, md, NULL) <= 0
-                    || EVP_SignUpdate(md_ctx, &(s->s3->client_random[0]),
-                                      SSL3_RANDOM_SIZE) <= 0
-                    || EVP_SignUpdate(md_ctx, &(s->s3->server_random[0]),
-                                      SSL3_RANDOM_SIZE) <= 0
-                    || EVP_SignUpdate(md_ctx, s->init_buf->data + paramoffset,
-                                      paramlen) <= 0
-                    || EVP_SignFinal(md_ctx, sigbytes1, &siglen, pkey) <= 0
+                    || EVP_DigestSignInit(md_ctx, &pctx, md, NULL, pkey) <= 0) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                       ERR_R_INTERNAL_ERROR);
+                goto f_err;
+            }
+            if (ispss) {
+                if (EVP_PKEY_CTX_set_rsa_padding(pctx,
+                                                 RSA_PKCS1_PSS_PADDING) <= 0
+                           /* -1 here means set saltlen to the digest len */
+                        || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+                    SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                           ERR_R_EVP_LIB);
+                    goto f_err;
+                }
+            }
+            if (EVP_DigestSignUpdate(md_ctx, &(s->s3->client_random[0]),
+                                     SSL3_RANDOM_SIZE) <= 0
+                    || EVP_DigestSignUpdate(md_ctx, &(s->s3->server_random[0]),
+                                            SSL3_RANDOM_SIZE) <= 0
+                    || EVP_DigestSignUpdate(md_ctx,
+                                            s->init_buf->data + paramoffset,
+                                            paramlen) <= 0
+                    || EVP_DigestSignFinal(md_ctx, sigbytes1, &siglen) <= 0
                     || !WPACKET_sub_allocate_bytes_u16(pkt, siglen, &sigbytes2)
                     || sigbytes1 != sigbytes2) {
                 SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
