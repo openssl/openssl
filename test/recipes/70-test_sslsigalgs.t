@@ -42,9 +42,13 @@ use constant {
     PSS_ONLY_SIG_ALGS => 4
 };
 
+#Note: Throughout this test we override the default ciphersuites where TLSv1.2
+#      is expected to ensure that a ServerKeyExchange message is sent that uses
+#      the sigalgs
+
 #Test 1: Default sig algs should succeed
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 14;
+plan tests => 15;
 ok(TLSProxy::Message->success, "Default sigalgs");
 my $testtype;
 
@@ -107,13 +111,14 @@ SKIP: {
     #        should succeed
     $proxy->clear();
     $proxy->serverflags("-no_tls1_3");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA:TLS13-AES-128-GCM-SHA256");
     $proxy->filter(undef);
     $proxy->start();
     ok(TLSProxy::Message->success, "TLSv1.3 client TLSv1.2 server");
 }
 
 SKIP: {
-    skip "TLSv1.2 disabled", 6 if disabled("tls1_2");
+    skip "TLSv1.2 disabled", 7 if disabled("tls1_2");
 
     $proxy->filter(\&sigalgs_filter);
 
@@ -121,6 +126,7 @@ SKIP: {
     $proxy->clear();
     $testtype = NO_SIG_ALGS_EXT;
     $proxy->clientflags("-no_tls1_3");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA:TLS13-AES-128-GCM-SHA256");
     $proxy->start();
     ok(TLSProxy::Message->success, "No TLSv1.2 sigalgs");
 
@@ -128,6 +134,7 @@ SKIP: {
     $proxy->clear();
     $testtype = EMPTY_SIG_ALGS_EXT;
     $proxy->clientflags("-no_tls1_3");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA:TLS13-AES-128-GCM-SHA256");
     $proxy->start();
     ok(TLSProxy::Message->fail, "Empty TLSv1.2 sigalgs");
 
@@ -135,6 +142,7 @@ SKIP: {
     $proxy->clear();
     $testtype = NO_KNOWN_SIG_ALGS;
     $proxy->clientflags("-no_tls1_3");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA:TLS13-AES-128-GCM-SHA256");
     $proxy->start();
     ok(TLSProxy::Message->fail, "No known TLSv1.3 sigalgs");
 
@@ -143,6 +151,7 @@ SKIP: {
     $proxy->clear();
     $testtype = NO_PSS_SIG_ALGS;
     $proxy->clientflags("-no_tls1_3");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA:TLS13-AES-128-GCM-SHA256");
     $proxy->start();
     ok(TLSProxy::Message->success, "No PSS TLSv1.2 sigalgs");
 
@@ -150,13 +159,26 @@ SKIP: {
     $proxy->clear();
     $testtype = PSS_ONLY_SIG_ALGS;
     $proxy->serverflags("-no_tls1_3");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA:TLS13-AES-128-GCM-SHA256");
     $proxy->start();
     ok(TLSProxy::Message->success, "PSS only sigalgs in TLSv1.2");
 
-    #Test 14: Sending a valid sig algs list but not including a sig type that
+    #Test 14: Responding with a sig alg we did not send in TLSv1.2 should fail
+    #         We send rsa_pkcs1_sha256 and respond with rsa_pss_sha256
+    #         TODO(TLS1.3): Add a similar test to the TLSv1.3 section above
+    #         when we have an API capable of configuring the TLSv1.3 sig algs
+    $proxy->clear();
+    $testtype = PSS_ONLY_SIG_ALGS;
+    $proxy->clientflags("-no_tls1_3 -sigalgs RSA+SHA256");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA:TLS13-AES-128-GCM-SHA256");
+    $proxy->start();
+    ok(TLSProxy::Message->fail, "Sigalg we did not send in TLSv1.2");
+
+    #Test 15: Sending a valid sig algs list but not including a sig type that
     #         matches the certificate should fail in TLSv1.2
     $proxy->clear();
     $proxy->clientflags("-no_tls1_3 -sigalgs ECDSA+SHA256");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA:TLS13-AES-128-GCM-SHA256");
     $proxy->filter(undef);
     $proxy->start();
     ok(TLSProxy::Message->fail, "No matching TLSv1.2 sigalgs");
