@@ -221,6 +221,32 @@ sets the salt length to the maximum permissible value. When verifying -2 causes
 the salt length to be automatically determined based on the B<PSS> block
 structure.
 
+=item B<rsa_mgf1_md:digest>
+
+For PSS and OAEP padding sets the MGF1 digest. If the MGF1 digest is not
+explicitly set in PSS mode then the signing digest is used.
+
+=back
+
+=head1 RSA-PSS ALGORITHM
+
+The RSA-PSS algorithm is a restricted version of the RSA algorithm which only
+supports the sign and verify operations with PSS padding. The following
+additional B<pkeyopt> values are supported:
+
+=over 4
+
+=item B<rsa_padding_mode:mode>, B<rsa_pss_saltlen:len>, B<rsa_mgf1_md:digest>
+
+These have the same meaning as the B<RSA> algorithm with some additional
+restrictions. The padding mode can only be set to B<pss> which is the
+default value.
+
+If the key has parameter restrictions than the digest, MGF1
+digest and salt length are set to the values specified in the parameters.
+The digest and MG cannot be changed and the salt length cannot be set to a
+value less than the minimum restriction.
+
 =back
 
 =head1 DSA ALGORITHM
