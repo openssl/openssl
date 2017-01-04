@@ -20,9 +20,11 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent,
                                        int *al);
 #endif
 static int init_session_ticket(SSL *s, unsigned int context);
+#ifndef OPENSSL_NO_OCSP
 static int init_status_request(SSL *s, unsigned int context);
 static int final_status_request(SSL *s, unsigned int context, int sent,
                                         int *al);
+#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
 static int init_npn(SSL *s, unsigned int context);
 #endif
@@ -777,6 +779,7 @@ static int init_session_ticket(SSL *s, unsigned int context)
     return 1;
 }
 
+#ifndef OPENSSL_NO_OCSP
 static int init_status_request(SSL *s, unsigned int context)
 {
     if (s->server)
@@ -801,6 +804,7 @@ static int final_status_request(SSL *s, unsigned int context, int sent,
 
     return 1;
 }
+#endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
 static int init_npn(SSL *s, unsigned int context)
