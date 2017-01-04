@@ -168,36 +168,41 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
                "Resumption handshake test");
 unlink $session;
 
-#Test 3: A status_request handshake (client request only)
-$proxy->clear();
-$proxy->clientflags("-no_tls1_3 -status");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION,
-               "status_request handshake test (client)");
+SKIP: {
+    skip "No OCSP support in this OpenSSL build", 3
+        if disabled("ocsp");
 
-#Test 4: A status_request handshake (server support only)
-$proxy->clear();
-$proxy->clientflags("-no_tls1_3");
-$proxy->serverflags("-status_file "
-                    .srctop_file("test", "recipes", "ocsp-response.der"));
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS,
-               "status_request handshake test (server)");
+    #Test 3: A status_request handshake (client request only)
+    $proxy->clear();
+    $proxy->clientflags("-no_tls1_3 -status");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::STATUS_REQUEST_CLI_EXTENSION,
+                   "status_request handshake test (client)");
 
-#Test 5: A status_request handshake (client and server)
-$proxy->clear();
-$proxy->clientflags("-no_tls1_3 -status");
-$proxy->serverflags("-status_file "
-                    .srctop_file("test", "recipes", "ocsp-response.der"));
-$proxy->start();
-checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
-               | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
-               "status_request handshake test");
+    #Test 4: A status_request handshake (server support only)
+    $proxy->clear();
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->serverflags("-status_file "
+                        .srctop_file("test", "recipes", "ocsp-response.der"));
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS,
+                   "status_request handshake test (server)");
+
+    #Test 5: A status_request handshake (client and server)
+    $proxy->clear();
+    $proxy->clientflags("-no_tls1_3 -status");
+    $proxy->serverflags("-status_file "
+                        .srctop_file("test", "recipes", "ocsp-response.der"));
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::OCSP_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
+                   | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
+                   "status_request handshake test");
+}
 
 #Test 6: A client auth handshake
 $proxy->clear();
@@ -276,8 +281,8 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                "ALPN handshake test");
 
 SKIP: {
-    skip "No CT and/or EC support in this OpenSSL build", 1
-        if disabled("ct") || disabled("ec");
+    skip "No CT, EC or OCSP support in this OpenSSL build", 1
+        if disabled("ct") || disabled("ec") || disabled("ocsp");
 
     #Test 14: SCT handshake (client request only)
     $proxy->clear();
@@ -294,20 +299,25 @@ SKIP: {
                    "SCT handshake test (client)");
 }
 
-#Test 15: SCT handshake (server support only)
-$proxy->clear();
-#Note: -ct also sends status_request
-$proxy->clientflags("-no_tls1_3");
-$proxy->serverflags("-status_file "
-                    .srctop_file("test", "recipes", "ocsp-response.der"));
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS,
-               "SCT handshake test (server)");
+SKIP: {
+    skip "No OCSP support in this OpenSSL build", 1
+        if disabled("ocsp");
+
+    #Test 15: SCT handshake (server support only)
+    $proxy->clear();
+    #Note: -ct also sends status_request
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->serverflags("-status_file "
+                        .srctop_file("test", "recipes", "ocsp-response.der"));
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS,
+                   "SCT handshake test (server)");
+}
 
 SKIP: {
-    skip "No CT and/or EC support in this OpenSSL build", 1
-        if disabled("ct") || disabled("ec");
+    skip "No CT, EC or OCSP support in this OpenSSL build", 1
+        if disabled("ct") || disabled("ec") || disabled("ocsp");
 
     #Test 16: SCT handshake (client and server)
     #There is no built-in server side support for this so we are actually also
