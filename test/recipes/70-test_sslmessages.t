@@ -329,34 +329,39 @@ SKIP: {
 }
 
 
-#Test 17: NPN handshake (client request only)
-$proxy->clear();
-$proxy->clientflags("-no_tls1_3 -nextprotoneg test");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::NPN_CLI_EXTENSION,
-              "NPN handshake test (client)");
+SKIP: {
+    skip "No NPN support in this OpenSSL build", 3
+        if disabled("nextprotoneg");
 
-#Test 18: NPN handshake (server support only)
-$proxy->clear();
-$proxy->clientflags("-no_tls1_3");
-$proxy->serverflags("-nextprotoneg test");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS,
-              "NPN handshake test (server)");
+    #Test 17: NPN handshake (client request only)
+    $proxy->clear();
+    $proxy->clientflags("-no_tls1_3 -nextprotoneg test");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::NPN_CLI_EXTENSION,
+                   "NPN handshake test (client)");
 
-#Test 19: NPN handshake (client and server)
-$proxy->clear();
-$proxy->clientflags("-no_tls1_3 -nextprotoneg test");
-$proxy->serverflags("-nextprotoneg test");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::NPN_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::NPN_CLI_EXTENSION
-               | checkhandshake::NPN_SRV_EXTENSION,
-               "NPN handshake test");
+    #Test 18: NPN handshake (server support only)
+    $proxy->clear();
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->serverflags("-nextprotoneg test");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS,
+                   "NPN handshake test (server)");
+
+    #Test 19: NPN handshake (client and server)
+    $proxy->clear();
+    $proxy->clientflags("-no_tls1_3 -nextprotoneg test");
+    $proxy->serverflags("-nextprotoneg test");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::NPN_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::NPN_CLI_EXTENSION
+                   | checkhandshake::NPN_SRV_EXTENSION,
+                   "NPN handshake test");
+}
 
 #Test 20: SRP extension
 #Note: We are not actually going to perform an SRP handshake (TLSProxy does not
