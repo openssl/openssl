@@ -3012,6 +3012,17 @@ gCwL7Ksyj4posAc721Rv7qmAnShJkSs5DBUyvH4px2WPgXX65G80My/4e8qz5AZJ
 uYV3hp2g6nGDU/ByJ1SIaRNkh2DRIr5nbg/Eg90g/8Mb2pajGWbJqi51rQPeR+HE
 TwIDAQAB
 -----END PUBLIC KEY-----
+# Key with invalid negative minimum salt length
+PublicKey = RSA-PSS-BAD
+-----BEGIN PUBLIC KEY-----
+MIIBJzASBgkqhkiG9w0BAQowBaIDAgH/A4IBDwAwggEKAoIBAQDNAIHqeyrh6gbV
+n3xz2f+5SglhXC5Lp8Y2zvCN01M+wxhVJbAVx2m5mnfWclv5w1Mqm25fZifV+4UW
+B2jT3anL01l0URcX3D0wnS/EfuQfl+Mq23+d2GShxHZ6Zm7NcbwarPXnUX9LOFlP
+6psF5C1a2pkSAIAT5FMWpNm7jtCGuI0odYusr5ItRqhotIXSOcm66w4rZFknEPQr
+LR6gpLSALAvsqzKPimiwBzvbVG/uqYCdKEmRKzkMFTK8finHZY+BdfrkbzQzL/h7
+yrPkBkm5hXeGnaDqcYNT8HInVIhpE2SHYNEivmduD8SD3SD/wxvalqMZZsmqLnWt
+A95H4cRPAgMBAAE=
+-----END PUBLIC KEY-----
 
 # Verify using default parameters
 Verify = RSA-PSS-DEFAULT
@@ -3048,11 +3059,16 @@ Ctrl = digest:sha256
 Result = PKEY_CTRL_ERROR
 
 # Illegal decrypt
-
 Decrypt = RSA-PSS
 Result = KEYOP_INIT_ERROR
 Function = EVP_PKEY_decrypt_init
 Reason = operation not supported for this keytype
+
+# Invalid key: rejected when we try to init
+Verify = RSA-PSS-BAD
+Result = KEYOP_INIT_ERROR
+Function = rsa_pss_get_param
+Reason = invalid salt length
 
 # scrypt tests from draft-josefsson-scrypt-kdf-03
 PBE = scrypt
