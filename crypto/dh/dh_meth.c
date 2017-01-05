@@ -75,7 +75,7 @@ int DH_meth_set1_name(DH_METHOD *dhm, const char *name)
     return 1;
 }
 
-int DH_meth_get_flags(DH_METHOD *dhm)
+int DH_meth_get_flags(const DH_METHOD *dhm)
 {
     return dhm->flags;
 }

@@ -75,7 +75,7 @@ int RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
     return 1;
 }
 
-int RSA_meth_get_flags(RSA_METHOD *meth)
+int RSA_meth_get_flags(const RSA_METHOD *meth)
 {
     return meth->flags;
 }
