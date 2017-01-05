@@ -362,6 +362,7 @@ int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)
     OPENSSL_free(bin);
     return rv;
 }
+
 /* Pass a message digest to a ctrl */
 int EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md)
 {
