@@ -197,6 +197,8 @@ static int test_uint64(const char *value, uint64_t *pr)
 struct evp_test {
     /* file being read */
     BIO *in;
+    /* temp memory BIO for reading in keys */
+    BIO *key;
     /* List of public and private keys */
     struct key_list *private;
     struct key_list *public;
@@ -459,11 +461,36 @@ static int check_unsupported()
     return 0;
 }
 
+
+static int read_key(struct evp_test *t)
+{
+    char tmpbuf[80];
+    if (t->key == NULL)
+        t->key = BIO_new(BIO_s_mem());
+    else if (BIO_reset(t->key) <= 0)
+        return 0;
+    if (t->key == NULL) {
+        fprintf(stderr, "Error allocating key memory BIO\n");
+        return 0;
+    }
+    /* Read to PEM end line and place content in memory BIO */
+    while (BIO_gets(t->in, tmpbuf, sizeof(tmpbuf))) {
+        t->line++;
+        if (BIO_puts(t->key, tmpbuf) <= 0) {
+            fprintf(stderr, "Error writing to key memory BIO\n");
+            return 0;
+        }
+        if (strncmp(tmpbuf, "-----END", 8) == 0)
+            return 1;
+    }
+    fprintf(stderr, "Can't find key end\n");
+    return 0;
+}
+
 static int process_test(struct evp_test *t, char *buf, int verbose)
 {
     char *keyword = NULL, *value = NULL;
     int rv = 0, add_key = 0;
-    long save_pos = 0;
     struct key_list **lst = NULL, *key = NULL;
     EVP_PKEY *pk = NULL;
     const struct evp_test_method *tmeth = NULL;
@@ -472,8 +499,9 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
     if (!parse_line(&keyword, &value, buf))
         return 1;
     if (strcmp(keyword, "PrivateKey") == 0) {
-        save_pos = BIO_tell(t->in);
-        pk = PEM_read_bio_PrivateKey(t->in, NULL, 0, NULL);
+        if (!read_key(t))
+            return 0;
+        pk = PEM_read_bio_PrivateKey(t->key, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading private key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -483,8 +511,9 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         add_key = 1;
     }
     if (strcmp(keyword, "PublicKey") == 0) {
-        save_pos = BIO_tell(t->in);
-        pk = PEM_read_bio_PUBKEY(t->in, NULL, 0, NULL);
+        if (!read_key(t))
+            return 0;
+        pk = PEM_read_bio_PUBKEY(t->key, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading public key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -495,7 +524,6 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
     }
     /* If we have a key add to list */
     if (add_key) {
-        char tmpbuf[80];
         if (find_key(NULL, value, *lst)) {
             fprintf(stderr, "Duplicate key %s\n", value);
             return 0;
@@ -507,15 +535,7 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         key->key = pk;
         key->next = *lst;
         *lst = key;
-        /* Rewind input, read to end and update line numbers */
-        (void)BIO_seek(t->in, save_pos);
-        while (BIO_gets(t->in,tmpbuf, sizeof(tmpbuf))) {
-            t->line++;
-            if (strncmp(tmpbuf, "-----END", 8) == 0)
-                return 1;
-        }
-        fprintf(stderr, "Can't find key end\n");
-        return 0;
+        return 1;
     }
 
     /* See if keyword corresponds to a test start */
@@ -639,6 +659,7 @@ int main(int argc, char **argv)
             t.ntests, t.errors, t.nskip);
     free_key_list(t.public);
     free_key_list(t.private);
+    BIO_free(t.key);
     BIO_free(in);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
