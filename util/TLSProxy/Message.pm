@@ -367,7 +367,7 @@ sub ciphersuite
 }
 
 #Update all the underlying records with the modified data from this message
-#Note: Does not currently support re-encrypting
+#Note: Only supports re-encrypting for TLSv1.3
 sub repack
 {
     my $self = shift;
@@ -410,8 +410,14 @@ sub repack
         #  use an explicit override field instead.)
         $rec->decrypt_len(length($rec->decrypt_data));
         $rec->len($rec->len + length($msgdata) - $old_length);
-        # Don't support re-encryption.
-        $rec->data($rec->decrypt_data);
+        # Only support re-encryption for TLSv1.3.
+        if (TLSProxy::Proxy->is_tls13() && $rec->encrypted()) {
+            #Add content type (1 byte) and 16 tag bytes
+            $rec->data($rec->decrypt_data
+                .pack("C", TLSProxy::Record::RT_HANDSHAKE).("\0"x16));
+        } else {
+            $rec->data($rec->decrypt_data);
+        }
 
         #Update the fragment len in case we changed it above
         ${$self->message_frag_lens}[0] = length($msgdata)
