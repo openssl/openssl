@@ -83,7 +83,7 @@ int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name)
     return 1;
 }
 
-int DSA_meth_get_flags(DSA_METHOD *dsam)
+int DSA_meth_get_flags(const DSA_METHOD *dsam)
 {
     return dsam->flags;
 }
