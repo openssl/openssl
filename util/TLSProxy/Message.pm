@@ -84,7 +84,8 @@ use constant {
 };
 
 use constant {
-    CIPHER_ADH_AES_128_SHA => 0x03000034
+    CIPHER_DHE_RSA_AES_128_SHA => 0x0033,
+    CIPHER_ADH_AES_128_SHA => 0x0034
 };
 
 my $payload = "";
