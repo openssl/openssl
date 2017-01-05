@@ -12,8 +12,8 @@
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 
-int tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
-                                   int *al)
+int tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt, X509 *x,
+                                   size_t chainidx, int *al)
 {
     /* Add RI if renegotiating */
     if (!s->renegotiate)
@@ -31,8 +31,8 @@ int tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
     return 1;
 }
 
-int tls_construct_ctos_server_name(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
-                                   int *al)
+int tls_construct_ctos_server_name(SSL *s, WPACKET *pkt, X509 *x,
+                                   size_t chainidx, int *al)
 {
     if (s->tlsext_hostname == NULL)
         return 1;
@@ -56,7 +56,8 @@ int tls_construct_ctos_server_name(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
 }
 
 #ifndef OPENSSL_NO_SRP
-int tls_construct_ctos_srp(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_construct_ctos_srp(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al)
 {
     /* Add SRP username if there is one */
     if (s->srp_ctx.login == NULL)
@@ -108,7 +109,7 @@ static int use_ecc(SSL *s)
 }
 
 int tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt, X509 *x,
-                                     size_t chain, int *al)
+                                     size_t chainidx, int *al)
 {
     const unsigned char *pformats;
     size_t num_formats;
@@ -132,7 +133,7 @@ int tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt, X509 *x,
 }
 
 int tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt, X509 *x,
-                                        size_t chain, int *al)
+                                        size_t chainidx, int *al)
 {
     const unsigned char *pcurves = NULL, *pcurvestmp;
     size_t num_curves = 0, i;
@@ -182,7 +183,7 @@ int tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt, X509 *x,
 #endif
 
 int tls_construct_ctos_session_ticket(SSL *s, WPACKET *pkt, X509 *x,
-                                      size_t chain, int *al)
+                                      size_t chainidx, int *al)
 {
     size_t ticklen;
 
@@ -221,7 +222,7 @@ int tls_construct_ctos_session_ticket(SSL *s, WPACKET *pkt, X509 *x,
     return 1;
 }
 
-int tls_construct_ctos_sig_algs(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+int tls_construct_ctos_sig_algs(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                 int *al)
 {
     size_t salglen;
@@ -248,7 +249,7 @@ int tls_construct_ctos_sig_algs(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
 
 #ifndef OPENSSL_NO_OCSP
 int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt, X509 *x,
-                                      size_t chain, int *al)
+                                      size_t chainidx, int *al)
 {
     int i;
 
@@ -314,7 +315,8 @@ int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt, X509 *x,
 #endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-int tls_construct_ctos_npn(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_construct_ctos_npn(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al)
 {
     if (s->ctx->next_proto_select_cb == NULL || s->s3->tmp.finish_md_len != 0)
         return 1;
@@ -333,7 +335,7 @@ int tls_construct_ctos_npn(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
 }
 #endif
 
-int tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+int tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                             int *al)
 {
     s->s3->alpn_sent = 0;
@@ -362,7 +364,7 @@ int tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
 
 
 #ifndef OPENSSL_NO_SRTP
-int tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+int tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                 int *al)
 {
     STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = SSL_get_srtp_profiles(s);
@@ -402,7 +404,8 @@ int tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
 }
 #endif
 
-int tls_construct_ctos_etm(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_construct_ctos_etm(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al)
 {
     if (s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)
         return 1;
@@ -417,7 +420,8 @@ int tls_construct_ctos_etm(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
 }
 
 #ifndef OPENSSL_NO_CT
-int tls_construct_ctos_sct(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_construct_ctos_sct(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al)
 {
     if (s->ct_validation_callback == NULL)
         return 1;
@@ -436,7 +440,8 @@ int tls_construct_ctos_sct(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
 }
 #endif
 
-int tls_construct_ctos_ems(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_construct_ctos_ems(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al)
 {
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
@@ -448,7 +453,7 @@ int tls_construct_ctos_ems(SSL *s, WPACKET *pkt, X509 *x, size_t chain, int *al)
 }
 
 int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt, X509 *x,
-                                          size_t chain, int *al)
+                                          size_t chainidx, int *al)
 {
     int currv, min_version, max_version, reason;
 
@@ -494,7 +499,7 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt, X509 *x,
     return 1;
 }
 
-int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                  int *al)
 {
 #ifndef OPENSSL_NO_TLS1_3
@@ -585,7 +590,7 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
 #define F5_WORKAROUND_MIN_MSG_LEN   0xff
 #define F5_WORKAROUND_MAX_MSG_LEN   0x200
 
-int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
+int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                int *al)
 {
     unsigned char *padbytes;
@@ -632,7 +637,7 @@ int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, X509 *x, size_t chain,
 /*
  * Parse the server's renegotiation binding and abort if it's not right
  */
-int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                                int *al)
 {
     size_t expected_len = s->s3->previous_client_finished_len
@@ -690,7 +695,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, X509 *x, size_t chain,
     return 1;
 }
 
-int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                                int *al)
 {
     if (s->tlsext_hostname == NULL || PACKET_remaining(pkt) > 0) {
@@ -714,7 +719,7 @@ int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, X509 *x, size_t chain,
 }
 
 #ifndef OPENSSL_NO_EC
-int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                                  int *al)
 {
     unsigned int ecpointformatlist_length;
@@ -750,7 +755,7 @@ int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, X509 *x, size_t chain,
 }
 #endif
 
-int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                                   int *al)
 {
     if (s->tls_session_ticket_ext_cb != NULL &&
@@ -772,7 +777,7 @@ int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, X509 *x, size_t chain,
 }
 
 #ifndef OPENSSL_NO_OCSP
-int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                                   int *al)
 {
     /*
@@ -789,7 +794,7 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chain,
         /* We only know how to handle this if it's for the first Certificate in
          * the chain. We ignore any other repsonses.
          */
-        if (chain != 0)
+        if (chainidx != 0)
             return 1;
         return tls_process_cert_status_body(s, pkt, al);
     }
@@ -803,7 +808,7 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, X509 *x, size_t chain,
 
 
 #ifndef OPENSSL_NO_CT
-int tls_parse_stoc_sct(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_parse_stoc_sct(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
 {
     /*
      * Only take it if we asked for it - i.e if there is no CT validation
@@ -856,7 +861,7 @@ static int ssl_next_proto_validate(PACKET *pkt)
     return 1;
 }
 
-int tls_parse_stoc_npn(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_parse_stoc_npn(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
 {
     unsigned char *selected;
     unsigned char selected_len;
@@ -906,7 +911,7 @@ int tls_parse_stoc_npn(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
 }
 #endif
 
-int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
 {
     size_t len;
 
@@ -943,7 +948,8 @@ int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
 }
 
 #ifndef OPENSSL_NO_SRTP
-int tls_parse_stoc_use_srtp(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_parse_stoc_use_srtp(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
+                            int *al)
 {
     unsigned int id, ct, mki;
     int i;
@@ -996,7 +1002,7 @@ int tls_parse_stoc_use_srtp(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
 }
 #endif
 
-int tls_parse_stoc_etm(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_parse_stoc_etm(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
 {
     /* Ignore if inappropriate ciphersuite */
     if (!(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)
@@ -1007,7 +1013,7 @@ int tls_parse_stoc_etm(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
     return 1;
 }
 
-int tls_parse_stoc_ems(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
+int tls_parse_stoc_ems(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
 {
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
     if (!s->hit)
@@ -1016,7 +1022,7 @@ int tls_parse_stoc_ems(SSL *s, PACKET *pkt, X509 *x, size_t chain, int *al)
     return 1;
 }
 
-int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chain,
+int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                              int *al)
 {
 #ifndef OPENSSL_NO_TLS1_3
