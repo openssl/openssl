@@ -126,6 +126,11 @@ static int rand_add(const void *buf, int num, double add)
     if (!num)
         return 1;
 
+#ifdef PREDICT
+    if (rand_predictable)
+        return 1;
+#endif
+
     /*
      * (Based on the rand(3) manpage)
      *
