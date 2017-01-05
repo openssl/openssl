@@ -1103,7 +1103,6 @@ static int ssl_print_certificates(BIO *bio, SSL *s, int server, int indent,
             && !ssl_print_hexbuf(bio, indent, "context", 1, &msg, &msglen))
         return 0;
 
-
     if (msglen < 3)
         return 0;
     clen = (msg[0] << 16) | (msg[1] << 8) | msg[2];
