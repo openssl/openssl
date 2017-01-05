@@ -49,8 +49,7 @@ typedef struct {
 
 static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 {
-    RSA_PKEY_CTX *rctx;
-    rctx = OPENSSL_zalloc(sizeof(*rctx));
+    RSA_PKEY_CTX *rctx = OPENSSL_zalloc(sizeof(*rctx));
     if (rctx == NULL)
         return 0;
     rctx->nbits = 1024;
@@ -70,6 +69,7 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 static int pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 {
     RSA_PKEY_CTX *dctx, *sctx;
+
     if (!pkey_rsa_init(dst))
         return 0;
     sctx = src->data;
@@ -95,7 +95,7 @@ static int pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 
 static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
 {
-    if (ctx->tbuf)
+    if (ctx->tbuf != NULL)
         return 1;
     ctx->tbuf = OPENSSL_malloc(EVP_PKEY_size(pk->pkey));
     if (ctx->tbuf == NULL)
@@ -234,6 +234,7 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
     RSA_PKEY_CTX *rctx = ctx->data;
     RSA *rsa = ctx->pkey->pkey.rsa;
     size_t rslen;
+
     if (rctx->md) {
         if (rctx->pad_mode == RSA_PKCS1_PADDING)
             return RSA_verify(EVP_MD_type(rctx->md), tbs, tbslen,
@@ -283,6 +284,7 @@ static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx,
 {
     int ret;
     RSA_PKEY_CTX *rctx = ctx->data;
+
     if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
         int klen = RSA_size(ctx->pkey->pkey.rsa);
         if (!setup_tbuf(rctx, ctx))
@@ -310,6 +312,7 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
 {
     int ret;
     RSA_PKEY_CTX *rctx = ctx->data;
+
     if (rctx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
         int i;
         if (!setup_tbuf(rctx, ctx))
@@ -339,6 +342,7 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
 static int check_padding_md(const EVP_MD *md, int padding)
 {
     int mdnid;
+
     if (!md)
         return 1;
 
@@ -383,6 +387,7 @@ static int check_padding_md(const EVP_MD *md, int padding)
 static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
     RSA_PKEY_CTX *rctx = ctx->data;
+
     switch (type) {
     case EVP_PKEY_CTRL_RSA_PADDING:
         if ((p1 >= RSA_PKCS1_PADDING) && (p1 <= RSA_PKCS1_PSS_PADDING)) {
@@ -554,7 +559,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
                              const char *type, const char *value)
 {
-    if (!value) {
+    if (value == NULL) {
         RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_VALUE_MISSING);
         return 0;
     }
@@ -650,6 +655,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 static int rsa_set_pss_param(RSA *rsa, EVP_PKEY_CTX *ctx)
 {
     RSA_PKEY_CTX *rctx = ctx->data;
+
     if (!pkey_ctx_is_pss(ctx))
         return 1;
     /* If all parameters are default values don't set pss */
@@ -668,6 +674,7 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     RSA_PKEY_CTX *rctx = ctx->data;
     BN_GENCB *pcb;
     int ret;
+
     if (rctx->pub_exp == NULL) {
         rctx->pub_exp = BN_new();
         if (rctx->pub_exp == NULL || !BN_set_word(rctx->pub_exp, RSA_F4))
@@ -745,6 +752,7 @@ static int pkey_pss_init(EVP_PKEY_CTX *ctx)
     const EVP_MD *md;
     const EVP_MD *mgf1md;
     int min_saltlen;
+
     /* Should never happen */
     if (!pkey_ctx_is_pss(ctx))
         return 0;

@@ -31,6 +31,7 @@ static int rsa_param_encode(const EVP_PKEY *pkey,
                             ASN1_STRING **pstr, int *pstrtype)
 {
     const RSA *rsa = pkey->pkey.rsa;
+
     *pstr = NULL;
     /* If RSA it's just NULL type */
     if (pkey->ameth->pkey_id == EVP_PKEY_RSA) {
@@ -80,6 +81,7 @@ static int rsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     int penclen;
     ASN1_STRING *str;
     int strtype;
+
     if (!rsa_param_encode(pkey, &str, &strtype))
         return 0;
     penclen = i2d_RSAPublicKey(pkey->pkey.rsa, &penc);
@@ -146,6 +148,7 @@ static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     int rklen;
     ASN1_STRING *str;
     int strtype;
+
     if (!rsa_param_encode(pkey, &str, &strtype))
         return 0;
     rklen = i2d_RSAPrivateKey(pkey->pkey.rsa, &rk);
@@ -219,6 +222,7 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
 {
     int rv = 0;
     X509_ALGOR *maskHash = NULL;
+
     if (!BIO_indent(bp, indent, 128))
         goto err;
     if (pss_key) {
@@ -393,14 +397,14 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 {
     if (OBJ_obj2nid(sigalg->algorithm) == EVP_PKEY_RSA_PSS) {
         int rv;
-        RSA_PSS_PARAMS *pss;
-        pss = rsa_pss_decode(sigalg);
+        RSA_PSS_PARAMS *pss = rsa_pss_decode(sigalg);
         rv = rsa_pss_param_print(bp, 0, pss, indent);
         RSA_PSS_PARAMS_free(pss);
         if (!rv)
             return 0;
-    } else if (!sig && BIO_puts(bp, "\n") <= 0)
+    } else if (!sig && BIO_puts(bp, "\n") <= 0) {
         return 0;
+    }
     if (sig)
         return X509_signature_dump(bp, sig, indent);
     return 1;
@@ -409,6 +413,7 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     X509_ALGOR *alg = NULL;
+
     switch (op) {
 
     case ASN1_PKEY_CTRL_PKCS7_SIGN:
@@ -479,6 +484,7 @@ static int rsa_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
 {
     X509_ALGOR *algtmp = NULL;
     ASN1_STRING *stmp = NULL;
+
     *palg = NULL;
     if (mgf1md == NULL || EVP_MD_type(mgf1md) == NID_sha1)
         return 1;
@@ -504,6 +510,7 @@ static int rsa_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
 static const EVP_MD *rsa_algor_to_md(X509_ALGOR *alg)
 {
     const EVP_MD *md;
+
     if (!alg)
         return EVP_sha1();
     md = EVP_get_digestbyobj(alg->algorithm);
@@ -522,6 +529,7 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
     const EVP_MD *sigmd, *mgf1md;
     EVP_PKEY *pk = EVP_PKEY_CTX_get0_pkey(pkctx);
     int saltlen;
+
     if (EVP_PKEY_CTX_get_signature_md(pkctx, &sigmd) <= 0)
         return NULL;
     if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkctx, &mgf1md) <= 0)
@@ -543,6 +551,7 @@ RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
                                       const EVP_MD *mgf1md, int saltlen)
 {
     RSA_PSS_PARAMS *pss = RSA_PSS_PARAMS_new();
+
     if (pss == NULL)
         goto err;
     if (saltlen != 20) {
@@ -568,6 +577,7 @@ static ASN1_STRING *rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkctx)
 {
     RSA_PSS_PARAMS *pss = rsa_ctx_to_pss(pkctx);
     ASN1_STRING *os = NULL;
+
     if (pss == NULL)
         return NULL;
 
@@ -592,6 +602,7 @@ static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
     int saltlen;
     const EVP_MD *mgf1md = NULL, *md = NULL;
     RSA_PSS_PARAMS *pss;
+
     /* Sanity check: make sure it is PSS */
     if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS) {
         RSAerr(RSA_F_RSA_PSS_TO_CTX, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
@@ -673,6 +684,7 @@ static int rsa_cms_verify(CMS_SignerInfo *si)
     int nid, nid2;
     X509_ALGOR *alg;
     EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
+
     CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
     nid = OBJ_obj2nid(alg->algorithm);
     if (nid == EVP_PKEY_RSA_PSS)
@@ -721,6 +733,7 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
     X509_ALGOR *alg;
     EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
     ASN1_STRING *os = NULL;
+
     CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
     if (pkctx) {
         if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
@@ -747,6 +760,7 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 {
     int pad_mode;
     EVP_PKEY_CTX *pkctx = EVP_MD_CTX_pkey_ctx(ctx);
+
     if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
         return 0;
     if (pad_mode == RSA_PKCS1_PADDING)
@@ -779,7 +793,7 @@ static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg)
     RSA_OAEP_PARAMS *oaep;
 
     oaep = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(RSA_OAEP_PARAMS),
-                                    alg->parameter);
+                                     alg->parameter);
 
     if (oaep == NULL)
         return NULL;
@@ -804,8 +818,9 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
     int labellen = 0;
     const EVP_MD *mgf1md = NULL, *md = NULL;
     RSA_OAEP_PARAMS *oaep;
+
     pkctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
-    if (!pkctx)
+    if (pkctx == NULL)
         return 0;
     if (!CMS_RecipientInfo_ktri_get0_algs(ri, NULL, NULL, &cmsalg))
         return -1;
@@ -825,14 +840,15 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
     }
 
     mgf1md = rsa_algor_to_md(oaep->maskHash);
-    if (!mgf1md)
+    if (mgf1md == NULL)
         goto err;
     md = rsa_algor_to_md(oaep->hashFunc);
-    if (!md)
+    if (md == NULL)
         goto err;
 
-    if (oaep->pSourceFunc) {
+    if (oaep->pSourceFunc != NULL) {
         X509_ALGOR *plab = oaep->pSourceFunc;
+
         if (OBJ_obj2nid(plab->algorithm) != NID_pSpecified) {
             RSAerr(RSA_F_RSA_CMS_DECRYPT, RSA_R_UNSUPPORTED_LABEL_SOURCE);
             goto err;
@@ -873,6 +889,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     EVP_PKEY_CTX *pkctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
     int pad_mode = RSA_PKCS1_PADDING, rv = 0, labellen;
     unsigned char *label;
+
     CMS_RecipientInfo_ktri_get0_algs(ri, NULL, NULL, &alg);
     if (pkctx) {
         if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
