@@ -1360,7 +1360,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     const unsigned char *certstart, *certbytes;
     STACK_OF(X509) *sk = NULL;
     EVP_PKEY *pkey = NULL;
-    size_t chain;
+    size_t chainidx;
     unsigned int context = 0;
 
     if ((sk = sk_X509_new_null()) == NULL) {
@@ -1376,7 +1376,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
         SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-    for (chain = 0; PACKET_remaining(pkt); chain++) {
+    for (chainidx = 0; PACKET_remaining(pkt); chainidx++) {
         if (!PACKET_get_net_3(pkt, &cert_len)
             || !PACKET_get_bytes(pkt, &certbytes, cert_len)) {
             al = SSL_AD_DECODE_ERROR;
@@ -1411,7 +1411,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
             if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_CERTIFICATE,
                                         &rawexts, &al)
                     || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE,
-                                                 rawexts, x, chain, &al))
+                                                 rawexts, x, chainidx, &al))
                 goto f_err;
         }
 
