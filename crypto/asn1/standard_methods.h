@@ -7,7 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Keep this sorted in type order !! */
+/*
+ * This table MUST be kept in ascening order of the NID each method
+ * represents (corresponding to the pkey_id field) as OBJ_bsearch
+ * is used to search it.
+ */
 static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_RSA
     &rsa_asn1_meths[0],
