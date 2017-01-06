@@ -3,7 +3,8 @@
 =head1 NAME
 
 X509_STORE_CTX_new, X509_STORE_CTX_cleanup, X509_STORE_CTX_free,
-X509_STORE_CTX_init, X509_STORE_CTX_set0_trusted_stack, X509_STORE_CTX_set_cert,
+X509_STORE_CTX_init, X509_STORE_CTX_set0_trusted_stack,
+X509_STORE_CTX_set0_store, X509_STORE_CTX_set_cert,
 X509_STORE_CTX_set0_crls,
 X509_STORE_CTX_get0_chain, X509_STORE_CTX_set0_verified_chain,
 X509_STORE_CTX_get0_param, X509_STORE_CTX_set0_param,
@@ -26,6 +27,7 @@ X509_STORE_CTX_verify_fn
                          X509 *x509, STACK_OF(X509) *chain);
 
  void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
+ void X509_STORE_CTX_set0_store(X509_STORE_CTX *ctx, X509_STORE *store);
 
  void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x);
  STACK_OF(X509) *X509_STORE_CTX_get0_chain(X609_STORE_CTX *ctx);
@@ -72,6 +74,14 @@ B<NULL>.
 X509_STORE_CTX_set0_trusted_stack() sets the set of trusted certificates of
 B<ctx> to B<sk>. This is an alternative way of specifying trusted certificates
 instead of using an B<X509_STORE>.
+
+X509_STORE_CTX_set0_store() sets the certificate store of B<ctx> to
+B<store>.  This is similar to X509_STORE_CTX_set0_trusted_stack() in that
+it allows to specify a different set of trusted certificates to be used,
+but also has other effects since the certificate store is used for
+operations other than looking up certificates and getting issuers, such
+as holding CRLs.  The additional roles performed by the store object
+are described in L<X509_STORE_set_verify_cb_func>.
 
 X509_STORE_CTX_set_cert() sets the certificate to be verified in B<ctx> to
 B<x>.

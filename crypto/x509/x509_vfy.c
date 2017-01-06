@@ -2367,6 +2367,21 @@ void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
     ctx->lookup_certs = lookup_certs_sk;
 }
 
+/*
+ * Set alternative lookup method: a (different) X509_STORE of trusted
+ * certificates.  Similar to X509_STORE_CTX_set0_trusted_stack() but uses
+ * a data structure that admits more efficient lookups.  Since we set
+ * ctx->ctx directly, more than just the trusted certificates are affected.
+ */
+void X509_STORE_CTX_set0_store(X509_STORE_CTX *ctx, X509_STORE *store)
+{
+    ctx->ctx = store;
+    ctx->get_issuer = store->get_issuer != NULL ? store->get_issuer :
+                                                  X509_STORE_CTX_get1_issuer;
+    ctx->lookup_certs = store->lookup_certs != NULL ? store->lookup_certs :
+                                                      X509_STORE_CTX_get1_certs;
+}
+
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 {
     /*
