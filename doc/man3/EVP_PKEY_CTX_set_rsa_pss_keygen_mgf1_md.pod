@@ -31,9 +31,9 @@ but with some restrictions described below.
 =head1 SIGNING AND VERIFICATION
 
 Siging and verification is similar to the B<RSA> algorithm except the
-padding mode is always PSS. If the key used restricts parameters then
+padding mode is always PSS. If the key in use has parameter restrictions then
 the corresponding signature parameters are set to the restrictions:
-for example if the key can only be used with digest SHA256, MGF1 SHA256
+for example, if the key can only be used with digest SHA256, MGF1 SHA256
 and minimum salt length 32 then the digest, MGF1 digest and salt length
 will be set to SHA256, SHA256 and 32 respectively.
 
@@ -42,13 +42,13 @@ returned if an attempt is made to set the padding mode to anything other
 than B<PSS>. It is otherwise similar to the B<RSA> version.
 
 The EVP_PKEY_CTX_set_rsa_pss_saltlen() macro is used to set the salt length.
-If the key is restricted then an error is returned if an attempt is made
-to set the salt below the minimum value. It is otherwise similar to the
-B<RSA> operation except special negative values are not supported.
+If the key has usage restrictionsthen an error is returned if an attempt is
+made to set the salt length below the minimum value. It is otherwise similar
+to the B<RSA> operation except special negative values are not supported.
 
 The EVP_PKEY_CTX_set_signature_md() and EVP_PKEY_CTX_set_rsa_mgf1_md() macros
-are used to set the digest and MGF1 algorithms respectively. If the key is
-restricted then an error is returned if an attempt is made to set the
+are used to set the digest and MGF1 algorithms respectively. If the key has
+usage restrictions then an error is returned if an attempt is made to set the
 digest to anything other than the restricted value. Otherwise these are
 similar to the B<RSA> versions.
 
@@ -58,13 +58,13 @@ As with RSA key generation the EVP_PKEY_CTX_set_rsa_rsa_keygen_bits()
 and EVP_PKEY_CTX_set_rsa_keygen_pubexp() macros are supported for RSA PSS:
 they have exactly the same meaning as for the RSA algorithm.
 
-Optional parameter restrictions can be specified when generating a PSS key
-by default no parameter restrictions are placed on a generate key. If any
-restrictions are set (using the macros described below) then B<all>
-parameters are restricted: e.g. setting a minimum salt length also restricts
-the digest and MGF1 algorithms. If any restrictions are in place then
-they are reflected in the corresponding parameters of the public key
-when (for example) a certificate request is signed.
+Optional parameter restrictions can be specified when generating a PSS key. By
+default no parameter restrictions are placed on the generated key. If any
+restrictions are set (using the macros described below) then B<all> parameters
+are restricted. For example, setting a minimum salt length also restricts the
+digest and MGF1 algorithms. If any restrictions are in place then they are
+reflected in the corresponding parameters of the public key when (for example)
+a certificate request is signed.
 
 EVP_PKEY_CTX_set_rsa_pss_keygen_md() restricts the digest algorithm the
 generated key can use to B<md>.
@@ -89,7 +89,7 @@ L<EVP_PKEY_derive(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
