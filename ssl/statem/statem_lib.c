@@ -354,7 +354,7 @@ static int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk, int *al)
     /*
      * If we have a certificate specific chain use it, else use parent ctx.
      */
-    if (cpk->chain)
+    if (cpk->chain != NULL)
         extra_certs = cpk->chain;
     else
         extra_certs = s->ctx->extra_certs;
@@ -366,7 +366,7 @@ static int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk, int *al)
     else
         chain_store = s->ctx->cert_store;
 
-    if (chain_store) {
+    if (chain_store != NULL) {
         X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new();
 
         if (xs_ctx == NULL) {

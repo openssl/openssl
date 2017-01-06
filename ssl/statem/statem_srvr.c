@@ -427,7 +427,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_CERT:
-            st->hand_state = TLS_ST_SW_FINISHED;
+        st->hand_state = TLS_ST_SW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_FINISHED:
@@ -3139,7 +3139,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     const unsigned char *certstart, *certbytes;
     STACK_OF(X509) *sk = NULL;
     PACKET spkt, context;
-    size_t chain;
+    size_t chainidx;
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
@@ -3156,7 +3156,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    for (chain = 0; PACKET_remaining(&spkt) > 0; chain++) {
+    for (chainidx = 0; PACKET_remaining(&spkt) > 0; chainidx++) {
         if (!PACKET_get_net_3(&spkt, &l)
             || !PACKET_get_bytes(&spkt, &certbytes, l)) {
             al = SSL_AD_DECODE_ERROR;
@@ -3190,7 +3190,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
             if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_CERTIFICATE,
                                         &rawexts, &al)
                     || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE,
-                                                 rawexts, x, chain, &al))
+                                                 rawexts, x, chainidx, &al))
                 goto f_err;
         }
 
