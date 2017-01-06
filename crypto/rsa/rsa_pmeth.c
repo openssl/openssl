@@ -45,7 +45,7 @@ typedef struct {
 } RSA_PKEY_CTX;
 
 /* True if PSS parameters are restricted */
-#define rsa_pss_param(rctx) (rctx->min_saltlen != -1)
+#define rsa_pss_restricted(rctx) (rctx->min_saltlen != -1)
 
 static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 {
@@ -431,7 +431,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         } else {
             if (p1 < -2)
                 return -2;
-            if (rsa_pss_param(rctx) && p1 < rctx->min_saltlen) {
+            if (rsa_pss_restricted(rctx) && p1 < rctx->min_saltlen) {
                 RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_PSS_SALTLEN_TOO_SMALL);
                 return 0;
             }
@@ -471,7 +471,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_MD:
         if (!check_padding_md(p2, rctx->pad_mode))
             return 0;
-        if (rsa_pss_param(rctx)) {
+        if (rsa_pss_restricted(rctx)) {
             if (EVP_MD_type(rctx->md) == EVP_MD_type(p2))
                 return 1;
             RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_DIGEST_NOT_ALLOWED);
@@ -497,7 +497,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             else
                 *(const EVP_MD **)p2 = rctx->md;
         } else {
-            if (rsa_pss_param(rctx)) {
+            if (rsa_pss_restricted(rctx)) {
                 if (EVP_MD_type(rctx->md) == EVP_MD_type(p2))
                     return 1;
                 RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_MGF1_DIGEST_NOT_ALLOWED);
