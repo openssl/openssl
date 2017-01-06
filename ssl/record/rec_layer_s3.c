@@ -1223,7 +1223,8 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     if (type == SSL3_RECORD_get_type(rr)
         || (SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC
-            && type == SSL3_RT_HANDSHAKE && recvd_type != NULL)) {
+            && type == SSL3_RT_HANDSHAKE && recvd_type != NULL
+            && !SSL_IS_TLS13(s))) {
         /*
          * SSL3_RT_APPLICATION_DATA or
          * SSL3_RT_HANDSHAKE or
