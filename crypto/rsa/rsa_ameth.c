@@ -44,11 +44,8 @@ static int rsa_param_encode(const EVP_PKEY *pkey,
         return 1;
     }
     /* Encode PSS parameters */
-    if (!ASN1_item_pack(rsa->pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS), pstr)) {
-        ASN1_STRING_free(*pstr);
-        *pstr = NULL;
+    if (ASN1_item_pack(rsa->pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS), pstr) == NULL)
         return 0;
-    }
 
     *pstrtype = V_ASN1_SEQUENCE;
     return 1;
@@ -493,7 +490,7 @@ static int rsa_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
     /* need to embed algorithm ID inside another */
     if (!rsa_md_to_algor(&algtmp, mgf1md))
         goto err;
-    if (!ASN1_item_pack(algtmp, ASN1_ITEM_rptr(X509_ALGOR), &stmp))
+    if (ASN1_item_pack(algtmp, ASN1_ITEM_rptr(X509_ALGOR), &stmp) == NULL)
          goto err;
     *palg = X509_ALGOR_new();
     if (*palg == NULL)
@@ -578,15 +575,12 @@ RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
 static ASN1_STRING *rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkctx)
 {
     RSA_PSS_PARAMS *pss = rsa_ctx_to_pss(pkctx);
-    ASN1_STRING *os = NULL;
+    ASN1_STRING *os;
 
     if (pss == NULL)
         return NULL;
 
-    if (!ASN1_item_pack(pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS), &os)) {
-        ASN1_STRING_free(os);
-        os = NULL;
-    }
+    os = ASN1_item_pack(pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS), NULL);
     RSA_PSS_PARAMS_free(pss);
     return os;
 }
