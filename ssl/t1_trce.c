@@ -766,9 +766,9 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
 }
 
 static int ssl_print_extensions(BIO *bio, int indent, int server,
-                                const unsigned char **msgin, size_t *msglenin)
+                                const unsigned char **msgin, size_t *msginlen)
 {
-    size_t extslen, msglen = *msglenin;
+    size_t extslen, msglen = *msginlen;
     const unsigned char *msg = *msgin;
 
     BIO_indent(bio, indent, 80);
@@ -799,7 +799,7 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
     }
 
     *msgin = msg;
-    *msglenin = msglen;
+    *msginlen = msglen;
     return 1;
 }
 
