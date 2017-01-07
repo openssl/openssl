@@ -397,6 +397,7 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
     if (OBJ_obj2nid(sigalg->algorithm) == EVP_PKEY_RSA_PSS) {
         int rv;
         RSA_PSS_PARAMS *pss = rsa_pss_decode(sigalg);
+
         rv = rsa_pss_param_print(bp, 0, pss, indent);
         RSA_PSS_PARAMS_free(pss);
         if (!rv)
@@ -659,8 +660,9 @@ int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
             RSAerr(RSA_F_RSA_PSS_GET_PARAM, RSA_R_INVALID_SALT_LENGTH);
             return 0;
         }
-    } else
+    } else {
         *psaltlen = 20;
+    }
 
     /*
      * low-level routines support only trailer field 0xbc (value 1) and
