@@ -111,6 +111,31 @@ hexadecimal value if preceded by B<0x>. Default value is 65537.
 
 =back
 
+=head1 RSA-PSS KEY GENERATION OPTIONS
+
+Note: by default an B<RSA-PSS> key has no parameter restrictions.
+
+=over 4
+
+=item B<rsa_keygen_bits:numbits>, B<rsa_keygen_pubexp:value>
+
+These options have the same meaning as the B<RSA> algorithm.
+
+=item B<rsa_pss_keygen_md:digest>
+
+If set the key is restricted and can only use B<digest> for signing.
+
+=item B<rsa_pss_keygen_mgf1_md:digest>
+
+If set the key is restricted and can only use B<digest> as it's MGF1
+parameter.
+
+=item B<rsa_pss_keygen_saltlen:len>
+
+If set the key is restricted and B<len> specifies the minimum salt length.
+
+=back
+
 =head1 DSA PARAMETER GENERATION OPTIONS
 
 =over 4

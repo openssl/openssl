@@ -358,7 +358,7 @@ int opt_imax(const char *value, intmax_t *result)
 {
     int oerrno = errno;
     intmax_t m;
-    char *endp;
+    char *endp = NULL;
 
     errno = 0;
     m = strtoimax(value, &endp, 0);

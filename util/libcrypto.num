@@ -4222,3 +4222,5 @@ CT_POLICY_EVAL_CTX_get_time             4172	1_1_0d	EXIST::FUNCTION:CT
 CT_POLICY_EVAL_CTX_set_time             4173	1_1_0d	EXIST::FUNCTION:CT
 X509_VERIFY_PARAM_set_inh_flags         4174	1_1_0d	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_inh_flags         4175	1_1_0d	EXIST::FUNCTION:
+EVP_PKEY_CTX_md                         4176	1_1_1	EXIST::FUNCTION:
+RSA_pkey_ctx_ctrl                       4177	1_1_1	EXIST::FUNCTION:RSA

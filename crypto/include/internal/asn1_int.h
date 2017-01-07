@@ -64,6 +64,7 @@ extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2];
+extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
 
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the
