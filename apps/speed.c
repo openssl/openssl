@@ -221,7 +221,7 @@ static int run_benchmark(int async_jobs, int (*loop_function) (void *),
 static double Time_F(int s);
 static void print_message(const char *s, long num, int length, int tm);
 static void pkey_print_message(const char *str, const char *str2,
-                               long num, int bits, int sec);
+                               long num, unsigned int bits, int sec);
 static void print_result(int alg, int run_no, int count, double time_used);
 #ifndef NO_FORK
 static int do_multi(int multi, int size_num);
@@ -1372,7 +1372,7 @@ int speed_main(int argc, char **argv)
     static const struct {
         const char *name;
         unsigned int nid;
-        int bits;
+        unsigned int bits;
     } test_curves[] =
     {
         /* Prime Curves */
@@ -2507,7 +2507,7 @@ int speed_main(int argc, char **argv)
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R1:%ld:%d:%.2f\n"
-                       : "%ld %d bit private RSA's in %.2fs\n",
+                       : "%ld %u bits private RSA's in %.2fs\n",
                        count, rsa_bits[testnum], d);
             rsa_results[testnum][0] = (double)count / d;
             rsa_count = count;
@@ -2533,7 +2533,7 @@ int speed_main(int argc, char **argv)
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R2:%ld:%d:%.2f\n"
-                       : "%ld %d bit public RSA's in %.2fs\n",
+                       : "%ld %u bits public RSA's in %.2fs\n",
                        count, rsa_bits[testnum], d);
             rsa_results[testnum][1] = (double)count / d;
         }
@@ -2576,8 +2576,8 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, DSA_sign_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R3:%ld:%d:%.2f\n"
-                       : "%ld %d bit DSA signs in %.2fs\n",
+                       mr ? "+R3:%ld:%u:%.2f\n"
+                       : "%ld %u bits DSA signs in %.2fs\n",
                        count, dsa_bits[testnum], d);
             dsa_results[testnum][0] = (double)count / d;
             rsa_count = count;
@@ -2602,8 +2602,8 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, DSA_verify_loop, loopargs);
             d = Time_F(STOP);
             BIO_printf(bio_err,
-                       mr ? "+R4:%ld:%d:%.2f\n"
-                       : "%ld %d bit DSA verify in %.2fs\n",
+                       mr ? "+R4:%ld:%u:%.2f\n"
+                       : "%ld %u bits DSA verify in %.2fs\n",
                        count, dsa_bits[testnum], d);
             dsa_results[testnum][1] = (double)count / d;
         }
@@ -2660,8 +2660,8 @@ int speed_main(int argc, char **argv)
                 d = Time_F(STOP);
 
                 BIO_printf(bio_err,
-                           mr ? "+R5:%ld:%d:%.2f\n" :
-                           "%ld %d bit ECDSA signs in %.2fs \n",
+                           mr ? "+R5:%ld:%u:%.2f\n" :
+                           "%ld %u bits ECDSA signs in %.2fs \n",
                            count, test_curves[testnum].bits, d);
                 ecdsa_results[testnum][0] = (double)count / d;
                 rsa_count = count;
@@ -2688,8 +2688,8 @@ int speed_main(int argc, char **argv)
                 count = run_benchmark(async_jobs, ECDSA_verify_loop, loopargs);
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
-                           mr ? "+R6:%ld:%d:%.2f\n"
-                           : "%ld %d bit ECDSA verify in %.2fs\n",
+                           mr ? "+R6:%ld:%u:%.2f\n"
+                           : "%ld %u bits ECDSA verify in %.2fs\n",
                            count, test_curves[testnum].bits, d);
                 ecdsa_results[testnum][1] = (double)count / d;
             }
@@ -2850,7 +2850,7 @@ int speed_main(int argc, char **argv)
             d = Time_F(STOP);
             BIO_printf(bio_err,
                        mr ? "+R7:%ld:%d:%.2f\n" :
-                       "%ld %d-bit ECDH ops in %.2fs\n", count,
+                       "%ld %u-bits ECDH ops in %.2fs\n", count,
                        test_curves[testnum].bits, d);
             ecdh_results[testnum][0] = (double)count / d;
             rsa_count = count;
@@ -2969,9 +2969,8 @@ int speed_main(int argc, char **argv)
                    k, test_curves[k].bits,
                    ecdsa_results[k][0], ecdsa_results[k][1]);
         else
-            printf("%4u bit ecdsa (%s) %8.4fs %8.4fs %8.1f %8.1f\n",
-                   test_curves[k].bits,
-                   test_curves[k].name,
+            printf("%4u bits ecdsa (%s) %8.4fs %8.4fs %8.1f %8.1f\n",
+                   test_curves[k].bits, test_curves[k].name,
                    1.0 / ecdsa_results[k][0], 1.0 / ecdsa_results[k][1],
                    ecdsa_results[k][0], ecdsa_results[k][1]);
     }
@@ -2990,9 +2989,8 @@ int speed_main(int argc, char **argv)
                    ecdh_results[k][0], 1.0 / ecdh_results[k][0]);
 
         else
-            printf("%4u bit ecdh (%s) %8.4fs %8.1f\n",
-                   test_curves[k].bits,
-                   test_curves[k].name,
+            printf("%4u bits ecdh (%s) %8.4fs %8.1f\n",
+                   test_curves[k].bits, test_curves[k].name,
                    1.0 / ecdh_results[k][0], ecdh_results[k][0]);
     }
 #endif
@@ -3053,18 +3051,18 @@ static void print_message(const char *s, long num, int length, int tm)
 }
 
 static void pkey_print_message(const char *str, const char *str2, long num,
-                               int bits, int tm)
+                               unsigned int bits, int tm)
 {
 #ifdef SIGALRM
     BIO_printf(bio_err,
                mr ? "+DTP:%d:%s:%s:%d\n"
-               : "Doing %d bit %s %s's for %ds: ", bits, str, str2, tm);
+               : "Doing %u bits %s %s's for %ds: ", bits, str, str2, tm);
     (void)BIO_flush(bio_err);
     alarm(tm);
 #else
     BIO_printf(bio_err,
                mr ? "+DNP:%ld:%d:%s:%s\n"
-               : "Doing %ld %d bit %s %s's: ", num, bits, str, str2);
+               : "Doing %ld %u bits %s %s's: ", num, bits, str, str2);
     (void)BIO_flush(bio_err);
 #endif
 }
