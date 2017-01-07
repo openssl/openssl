@@ -397,6 +397,7 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
     if (OBJ_obj2nid(sigalg->algorithm) == EVP_PKEY_RSA_PSS) {
         int rv;
         RSA_PSS_PARAMS *pss = rsa_pss_decode(sigalg);
+
         rv = rsa_pss_param_print(bp, 0, pss, indent);
         RSA_PSS_PARAMS_free(pss);
         if (!rv)
