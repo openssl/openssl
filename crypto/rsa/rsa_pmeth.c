@@ -626,8 +626,8 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
                                    EVP_PKEY_CTRL_MD, value);
 
         if (strcmp(type, "rsa_pss_keygen_saltlen") == 0) {
-            int saltlen;
-            saltlen = atoi(value);
+            int saltlen = atoi(value);
+
             return EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, saltlen);
         }
     }
