@@ -161,6 +161,10 @@ typedef struct {
     int resumption_expected;
     /* Expected temporary key type */
     int expected_tmp_key_type;
+    /* Expected server certificate key type */
+    int expected_server_cert_type;
+    /* Expected client certificate key type */
+    int expected_client_cert_type;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);
