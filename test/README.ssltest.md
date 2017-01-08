@@ -89,6 +89,9 @@ handshake.
 
 * ExpectedTmpKeyType - the expected algorithm or curve of server temp key
 
+* ExpectedServerKeyType, ExpectedClientKeyType - the expected algorithm or
+  curve of server or client certificate
+
 ## Configuring the client and server
 
 The client and server configurations can be any valid `SSL_CTX`

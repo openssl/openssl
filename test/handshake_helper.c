@@ -847,6 +847,32 @@ static char *dup_str(const unsigned char *in, size_t len)
     return ret;
 }
 
+static int pkey_type(EVP_PKEY *pkey)
+{
+    int nid = EVP_PKEY_id(pkey);
+
+#ifndef OPENSSL_NO_EC
+    if (nid == EVP_PKEY_EC) {
+        const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+        return EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+    }
+#endif
+    return nid;
+}
+
+static int peer_pkey_type(SSL *s)
+{
+    X509 *x = SSL_get_peer_certificate(s);
+
+    if (x != NULL) {
+        int nid = pkey_type(X509_get0_pubkey(x));
+
+        X509_free(x);
+        return nid;
+    }
+    return NID_undef;
+}
+
 /*
  * Note that |extra| points to the correct client/server configuration
  * within |test_ctx|. When configuring the handshake, general mode settings
@@ -1040,17 +1066,12 @@ static HANDSHAKE_RESULT *do_handshake_internal(
         *session_out = SSL_get1_session(client.ssl);
 
     if (SSL_get_server_tmp_key(client.ssl, &tmp_key)) {
-        int nid = EVP_PKEY_id(tmp_key);
-
-#ifndef OPENSSL_NO_EC
-        if (nid == EVP_PKEY_EC) {
-            EC_KEY *ec = EVP_PKEY_get0_EC_KEY(tmp_key);
-            nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-        }
-#endif
+        ret->tmp_key_type = pkey_type(tmp_key);
         EVP_PKEY_free(tmp_key);
-        ret->tmp_key_type = nid;
     }
+
+    ret->server_cert_type = peer_pkey_type(client.ssl);
+    ret->client_cert_type = peer_pkey_type(server.ssl);
 
     ctx_data_free_data(&server_ctx_data);
     ctx_data_free_data(&server2_ctx_data);

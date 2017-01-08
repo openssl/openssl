@@ -433,17 +433,21 @@ IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, app_data_size)
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, max_fragment_size)
 
 /***********************/
-/* ExpectedTmpKeyType  */
+/* Expected key types  */
 /***********************/
 
-__owur static int parse_expected_tmp_key_type(SSL_TEST_CTX *test_ctx,
-                                              const char *value)
+__owur static int parse_expected_key_type(int *ptype, const char *value)
 {
     int nid;
+    const EVP_PKEY_ASN1_METHOD *ameth;
 
     if (value == NULL)
         return 0;
-    nid = OBJ_sn2nid(value);
+    ameth = EVP_PKEY_asn1_find_str(NULL, value, -1);
+    if (ameth != NULL)
+        EVP_PKEY_asn1_get0_info(&nid, NULL, NULL, NULL, NULL, ameth);
+    else
+        nid = OBJ_sn2nid(value);
     if (nid == NID_undef)
         nid = OBJ_ln2nid(value);
 #ifndef OPENSSL_NO_EC
@@ -452,8 +456,28 @@ __owur static int parse_expected_tmp_key_type(SSL_TEST_CTX *test_ctx,
 #endif
     if (nid == NID_undef)
         return 0;
-    test_ctx->expected_tmp_key_type = nid;
+    *ptype = nid;
     return 1;
+}
+
+__owur static int parse_expected_tmp_key_type(SSL_TEST_CTX *test_ctx,
+                                              const char *value)
+{
+    return parse_expected_key_type(&test_ctx->expected_tmp_key_type, value);
+}
+
+__owur static int parse_expected_server_cert_type(SSL_TEST_CTX *test_ctx,
+                                                  const char *value)
+{
+    return parse_expected_key_type(&test_ctx->expected_server_cert_type,
+                                   value);
+}
+
+__owur static int parse_expected_client_cert_type(SSL_TEST_CTX *test_ctx,
+                                                  const char *value)
+{
+    return parse_expected_key_type(&test_ctx->expected_client_cert_type,
+                                   value);
 }
 
 /*************************************************************/
@@ -481,6 +505,8 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ApplicationData", &parse_test_app_data_size },
     { "MaxFragmentSize", &parse_test_max_fragment_size },
     { "ExpectedTmpKeyType", &parse_expected_tmp_key_type },
+    { "ExpectedServerCertType", &parse_expected_server_cert_type },
+    { "ExpectedClientCertType", &parse_expected_client_cert_type },
 };
 
 /* Nested client options. */

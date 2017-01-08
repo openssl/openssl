@@ -45,6 +45,10 @@ typedef struct handshake_result {
     int server_resumed;
     /* Temporary key type */
     int tmp_key_type;
+    /* server certificate key type */
+    int server_cert_type;
+    /* client certificate key type */
+    int client_cert_type;
 } HANDSHAKE_RESULT;
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void);
