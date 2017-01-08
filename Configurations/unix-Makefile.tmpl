@@ -187,7 +187,7 @@ DSO_LDFLAGS=$(LIB_LDFLAGS)
 BIN_CFLAGS={- $target{bin_cflags} -}
 BIN_CXXFLAGS={- $target{bin_cxxflag} || "" -}
 
-PERL={- $config{perl} -}
+PERL?={- $config{perl} -}
 
 ARFLAGS= {- $target{arflags} -}
 AR=$(CROSS_COMPILE){- $target{ar} || "ar" -} $(ARFLAGS) r
