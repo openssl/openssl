@@ -440,6 +440,7 @@ __owur static int parse_expected_tmp_key_type(SSL_TEST_CTX *test_ctx,
                                               const char *value)
 {
     int nid;
+
     if (value == NULL)
         return 0;
     nid = OBJ_sn2nid(value);

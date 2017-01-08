@@ -1040,8 +1040,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
         *session_out = SSL_get1_session(client.ssl);
 
     if (SSL_get_server_tmp_key(client.ssl, &tmp_key)) {
-        int nid;
-        nid = EVP_PKEY_id(tmp_key);
+        int nid = EVP_PKEY_id(tmp_key);
 #ifndef OPENSSL_NO_EC
         if (nid == EVP_PKEY_EC) {
             EC_KEY *ec = EVP_PKEY_get0_EC_KEY(tmp_key);
