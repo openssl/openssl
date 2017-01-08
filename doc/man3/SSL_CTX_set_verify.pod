@@ -4,19 +4,19 @@
 
 SSL_CTX_set_verify, SSL_set_verify,
 SSL_CTX_set_verify_depth, SSL_set_verify_depth,
-verify_cb
+SSL_verify_cb
 - set peer certificate verification parameters
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- void SSL_CTX_set_verify(SSL_CTX *ctx, int mode, verify_cb verify_callback);
- void SSL_set_verify(SSL *s, int mode, verify_cb verify_callback);
+ void SSL_CTX_set_verify(SSL_CTX *ctx, int mode, SSL_verify_cb verify_callback);
+ void SSL_set_verify(SSL *s, int mode, SSL_verify_cb verify_callback);
  void SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth);
  void SSL_set_verify_depth(SSL *s, int depth);
 
- typedef int (*verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
+ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 
 =head1 DESCRIPTION
 
