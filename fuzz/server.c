@@ -194,6 +194,7 @@ static const uint8_t kRSAPrivateKeyDER[] = {
 };
 
 
+#ifndef OPENSSL_NO_EC
 /*
  *  -----BEGIN EC PRIVATE KEY-----
  *  MHcCAQEEIJLyl7hJjpQL/RhP1x2zS79xdiPJQB683gWeqcqHPeZkoAoGCCqGSM49
@@ -282,7 +283,9 @@ static const char ECDSACertPEM[] = {
     0x2d, 0x45, 0x4e, 0x44, 0x20, 0x43, 0x45, 0x52, 0x54, 0x49, 0x46, 0x49,
     0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d, 0x0a
 };
+#endif
 
+#ifndef OPENSSL_NO_DSA
 /*
  * -----BEGIN DSA PRIVATE KEY-----
  * MIIBuwIBAAKBgQDdkFKzNABLOha7Eqj7004+p5fhtR6bxpujToMmSZTYi8igVVXP
@@ -460,6 +463,7 @@ static const char DSACertPEM[] = {
     0x49, 0x46, 0x49, 0x43, 0x41, 0x54, 0x45, 0x2d, 0x2d, 0x2d, 0x2d, 0x2d,
     0x0a
 };
+#endif
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 extern int rand_predictable;
@@ -481,9 +485,15 @@ int FuzzerInitialize(int *argc, char ***argv)
     RAND_add("", 1, ENTROPY_NEEDED);
     RAND_status();
     RSA_get_default_method();
+#ifndef OPENSSL_NO_DSA
     DSA_get_default_method();
+#endif
+#ifndef OPENSSL_NO_EC
     EC_KEY_get_default_method();
+#endif
+#ifndef OPENSSL_NO_DH
     DH_get_default_method();
+#endif
     comp_methods = SSL_COMP_get_compression_methods();
     OPENSSL_sk_sort((OPENSSL_STACK *)comp_methods);
 
@@ -507,8 +517,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     const uint8_t *bufp;
     EVP_PKEY *pkey;
     X509 *cert;
+#ifndef OPENSSL_NO_EC
     EC_KEY *ecdsakey = NULL;
+#endif
+#ifndef OPENSSL_NO_DSA
     DSA *dsakey = NULL;
+#endif
 
     if (len == 0)
         return 0;
@@ -537,6 +551,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     OPENSSL_assert(ret == 1);
     X509_free(cert);
 
+#ifndef OPENSSL_NO_EC
     /* ECDSA */
     bio_buf = BIO_new(BIO_s_mem());
     OPENSSL_assert((size_t)BIO_write(bio_buf, ECDSAPrivateKeyPEM, sizeof(ECDSAPrivateKeyPEM)) == sizeof(ECDSAPrivateKeyPEM));
@@ -558,7 +573,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     ret = SSL_CTX_use_certificate(ctx, cert);
     OPENSSL_assert(ret == 1);
     X509_free(cert);
+#endif
 
+#ifndef OPENSSL_NO_DSA
     /* DSA */
     bio_buf = BIO_new(BIO_s_mem());
     OPENSSL_assert((size_t)BIO_write(bio_buf, DSAPrivateKeyPEM, sizeof(DSAPrivateKeyPEM)) == sizeof(DSAPrivateKeyPEM));
@@ -580,6 +597,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     ret = SSL_CTX_use_certificate(ctx, cert);
     OPENSSL_assert(ret == 1);
     X509_free(cert);
+#endif
 
     /* TODO: Set up support for SRP and PSK */
 
