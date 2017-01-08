@@ -87,6 +87,8 @@ handshake.
 
 * ExpectedNPNProtocol, ExpectedALPNProtocol - NPN and ALPN expectations.
 
+* ExpectedTmpKeyType - the expected algorithm or curve of server temp key
+
 ## Configuring the client and server
 
 The client and server configurations can be any valid `SSL_CTX`

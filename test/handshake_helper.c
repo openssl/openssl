@@ -879,6 +879,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     const unsigned char *proto = NULL;
     /* API dictates unsigned int rather than size_t. */
     unsigned int proto_len = 0;
+    EVP_PKEY *tmp_key;
 
     memset(&server_ctx_data, 0, sizeof(server_ctx_data));
     memset(&server2_ctx_data, 0, sizeof(server2_ctx_data));
@@ -1037,6 +1038,19 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     if (session_out != NULL)
         *session_out = SSL_get1_session(client.ssl);
+
+    if (SSL_get_server_tmp_key(client.ssl, &tmp_key)) {
+        int nid = EVP_PKEY_id(tmp_key);
+
+#ifndef OPENSSL_NO_EC
+        if (nid == EVP_PKEY_EC) {
+            EC_KEY *ec = EVP_PKEY_get0_EC_KEY(tmp_key);
+            nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+        }
+#endif
+        EVP_PKEY_free(tmp_key);
+        ret->tmp_key_type = nid;
+    }
 
     ctx_data_free_data(&server_ctx_data);
     ctx_data_free_data(&server2_ctx_data);
