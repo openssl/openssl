@@ -198,6 +198,17 @@ static int check_resumption(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return 1;
 }
 
+static int check_tmp_key(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+{
+    if (test_ctx->expected_tmp_key_type == 0
+        || test_ctx->expected_tmp_key_type == result->tmp_key_type)
+        return 1;
+    fprintf(stderr, "Tmp key type mismatch, %s vs %s\n",
+            OBJ_nid2ln(test_ctx->expected_tmp_key_type),
+            OBJ_nid2ln(result->tmp_key_type));
+    return 0;
+}
+
 /*
  * This could be further simplified by constructing an expected
  * HANDSHAKE_RESULT, and implementing comparison methods for
@@ -218,6 +229,7 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 #endif
         ret &= check_alpn(result, test_ctx);
         ret &= check_resumption(result, test_ctx);
+        ret &= check_tmp_key(result, test_ctx);
     }
     return ret;
 }

@@ -159,6 +159,8 @@ typedef struct {
     char *expected_alpn_protocol;
     /* Whether the second handshake is resumed or a full handshake (boolean). */
     int resumption_expected;
+    /* Expected temporary key type */
+    int expected_tmp_key_type;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);

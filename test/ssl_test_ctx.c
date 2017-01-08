@@ -431,6 +431,30 @@ IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, app_data_size)
 
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, max_fragment_size)
 
+/***********************/
+/* ExpectedTmpKeyType  */
+/***********************/
+
+__owur static int parse_expected_tmp_key_type(SSL_TEST_CTX *test_ctx,
+                                              const char *value)
+{
+    int nid;
+
+    if (value == NULL)
+        return 0;
+    nid = OBJ_sn2nid(value);
+    if (nid == NID_undef)
+        nid = OBJ_ln2nid(value);
+#ifndef OPENSSL_NO_EC
+    if (nid == NID_undef)
+        nid = EC_curve_nist2nid(value);
+#endif
+    if (nid == NID_undef)
+        return 0;
+    test_ctx->expected_tmp_key_type = nid;
+    return 1;
+}
+
 /*************************************************************/
 /* Known test options and their corresponding parse methods. */
 /*************************************************************/
@@ -455,6 +479,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ResumptionExpected", &parse_test_resumption_expected },
     { "ApplicationData", &parse_test_app_data_size },
     { "MaxFragmentSize", &parse_test_max_fragment_size },
+    { "ExpectedTmpKeyType", &parse_expected_tmp_key_type },
 };
 
 /* Nested client options. */
