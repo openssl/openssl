@@ -251,7 +251,7 @@ $code.=<<___	if ($avx>2);
 	jc	.LChaCha20_avx512
 ___
 $code.=<<___;
-	test	\$`1<<(41-32)`,%r10d
+	test	\$`1<<9`,%r10d		# check for SSSE3
 	jnz	.LChaCha20_ssse3
 
 	push	%rbx
