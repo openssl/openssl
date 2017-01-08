@@ -187,15 +187,36 @@ static int check_resumption(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return 1;
 }
 
+static int check_key_type(const char *name,int expected_key_type, int key_type)
+{
+    if (expected_key_type == 0 || expected_key_type == key_type)
+        return 1;
+    fprintf(stderr, "%s type mismatch, %s vs %s\n",
+            name, OBJ_nid2ln(expected_key_type),
+            key_type == NID_undef ? "absent" : OBJ_nid2ln(key_type));
+    return 0;
+}
+
 static int check_tmp_key(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (test_ctx->expected_tmp_key_type == 0
-        || test_ctx->expected_tmp_key_type == result->tmp_key_type)
-        return 1;
-    fprintf(stderr, "Tmp key type mismatch, %s vs %s\n",
-            OBJ_nid2ln(test_ctx->expected_tmp_key_type),
-            OBJ_nid2ln(result->tmp_key_type));
-    return 0;
+    return check_key_type("Tmp key", test_ctx->expected_tmp_key_type,
+                          result->tmp_key_type);
+}
+
+static int check_server_cert_type(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_key_type("Server certificate",
+                          test_ctx->expected_server_cert_type,
+                          result->server_cert_type);
+}
+
+static int check_client_cert_type(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_key_type("Client certificate",
+                          test_ctx->expected_client_cert_type,
+                          result->client_cert_type);
 }
 
 /*
@@ -219,6 +240,8 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret &= check_alpn(result, test_ctx);
         ret &= check_resumption(result, test_ctx);
         ret &= check_tmp_key(result, test_ctx);
+        ret &= check_server_cert_type(result, test_ctx);
+        ret &= check_client_cert_type(result, test_ctx);
     }
     return ret;
 }
