@@ -33,7 +33,10 @@ sub generate_tests() {
 		"CipherString" => "ECDHE",
                 "Curves" => $curve
             },
-            test   => { "ExpectedResult" => "Success" },
+            test   => {
+                "ExpectedTmpKeyType" => $curve,
+                "ExpectedResult" => "Success"
+            },
         };
     }
 }
