@@ -21,15 +21,6 @@
 # include <openssl/md5.h>
 # include "internal/evp_int.h"
 
-# ifndef EVP_CIPH_FLAG_AEAD_CIPHER
-#  define EVP_CIPH_FLAG_AEAD_CIPHER       0x200000
-#  define EVP_CTRL_AEAD_TLS1_AAD          0x16
-#  define EVP_CTRL_AEAD_SET_MAC_KEY       0x17
-# endif
-
-/* FIXME: surely this is available elsewhere? */
-# define EVP_RC4_KEY_SIZE                16
-
 typedef struct {
     RC4_KEY ks;
     MD5_CTX head, tail, md;
