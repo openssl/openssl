@@ -1430,7 +1430,12 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                         return -1;
                     }
                 }
+            } else {
+                SSL3_RECORD_set_read(rr);
             }
+        } else {
+            /* Does this ever happen? */
+            SSL3_RECORD_set_read(rr);
         }
         /*
          * we either finished a handshake or ignored the request, now try
