@@ -961,7 +961,7 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
             return 0;
         }
 
-        if (ext_data) {
+        if (ext_data != NULL) {
             s->ext.session_ticket->length = ext_len;
             s->ext.session_ticket->data = s->ext.session_ticket + 1;
             memcpy(s->ext.session_ticket->data, ext_data, ext_len);
