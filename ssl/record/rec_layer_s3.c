@@ -17,10 +17,6 @@
 #include <openssl/rand.h>
 #include "record_locl.h"
 
-#ifndef  EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
-# define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
-#endif
-
 #if     defined(OPENSSL_SMALL_FOOTPRINT) || \
         !(      defined(AES_ASM) &&     ( \
                 defined(__x86_64)       || defined(__x86_64__)  || \
