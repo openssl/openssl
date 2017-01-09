@@ -22,22 +22,6 @@
 #include "internal/constant_time_locl.h"
 #include "internal/evp_int.h"
 
-#ifndef EVP_CIPH_FLAG_AEAD_CIPHER
-# define EVP_CIPH_FLAG_AEAD_CIPHER       0x200000
-# define EVP_CTRL_AEAD_TLS1_AAD          0x16
-# define EVP_CTRL_AEAD_SET_MAC_KEY       0x17
-#endif
-
-#if !defined(EVP_CIPH_FLAG_DEFAULT_ASN1)
-# define EVP_CIPH_FLAG_DEFAULT_ASN1 0
-#endif
-
-#if !defined(EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)
-# define EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0
-#endif
-
-#define TLS1_1_VERSION 0x0302
-
 typedef struct {
     AES_KEY ks;
     SHA256_CTX head, tail, md;
@@ -142,7 +126,7 @@ static void sha256_update(SHA256_CTX *c, const void *data, size_t len)
 # endif
 # define SHA256_Update sha256_update
 
-# if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
+# if !defined(OPENSSL_NO_MULTIBLOCK)
 
 typedef struct {
     unsigned int A[8], B[8], C[8], D[8], E[8], F[8], G[8], H[8];
@@ -819,7 +803,7 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
                 return SHA256_DIGEST_LENGTH;
             }
         }
-# if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
+# if !defined(OPENSSL_NO_MULTIBLOCK)
     case EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE:
         return (int)(5 + 16 + ((arg + 32 + 16) & -16));
     case EVP_CTRL_TLS1_1_MULTIBLOCK_AAD:
