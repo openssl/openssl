@@ -4224,3 +4224,6 @@ X509_VERIFY_PARAM_set_inh_flags         4174	1_1_0d	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_inh_flags         4175	1_1_0d	EXIST::FUNCTION:
 EVP_PKEY_CTX_md                         4176	1_1_1	EXIST::FUNCTION:
 RSA_pkey_ctx_ctrl                       4177	1_1_1	EXIST::FUNCTION:RSA
+UI_method_set_ex_data                   4178	1_1_1	EXIST::FUNCTION:UI
+UI_method_get_ex_data                   4179	1_1_1	EXIST::FUNCTION:UI
+UI_UTIL_wrap_read_pem_callback          4180	1_1_1	EXIST::FUNCTION:UI
