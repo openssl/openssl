@@ -380,3 +380,10 @@ struct evp_pkey_st {
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
+
+/* Pulling defines out of C soure files */
+
+#define EVP_RC4_KEY_SIZE 16
+#ifndef TLS1_1_VERSION
+# define TLS1_1_VERSION   0x0302
+#endif
