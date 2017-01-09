@@ -1032,8 +1032,8 @@ struct ssl_st {
 
     struct {
         /* TLS extension debug callback */
-        void (*debug_cb) (SSL *s, int client_server, int type,
-                                 const unsigned char *data, int len, void *arg);
+        void (*debug_cb)(SSL *s, int client_server, int type,
+                         const unsigned char *data, int len, void *arg);
         void *debug_arg;
         char *hostname;
         /* certificate status request info */
