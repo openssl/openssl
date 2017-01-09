@@ -42,7 +42,7 @@ returned if an attempt is made to set the padding mode to anything other
 than B<PSS>. It is otherwise similar to the B<RSA> version.
 
 The EVP_PKEY_CTX_set_rsa_pss_saltlen() macro is used to set the salt length.
-If the key has usage restrictionsthen an error is returned if an attempt is
+If the key has usage restrictions then an error is returned if an attempt is
 made to set the salt length below the minimum value. It is otherwise similar
 to the B<RSA> operation except special negative values are not supported.
 
