@@ -963,6 +963,7 @@ int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid);
 int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,
                                    const unsigned char *pt, size_t ptlen);
 size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt);
+int EVP_PKEY_external_private_key(EVP_PKEY *pkey);
 
 int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 

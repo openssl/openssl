@@ -302,6 +302,11 @@ int RSA_test_flags(const RSA *r, int flags)
     return r->flags & flags;
 }
 
+int RSA_get_flags(const RSA *r)
+{
+    return r->flags;
+}
+
 void RSA_set_flags(RSA *r, int flags)
 {
     r->flags |= flags;

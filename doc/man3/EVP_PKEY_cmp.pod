@@ -15,6 +15,8 @@ EVP_PKEY_cmp - public key parameter and comparison functions
  int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
  int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);
 
+ int EVP_PKEY_external_private_key(const EVP_PKEY *pkey);
+
 =head1 DESCRIPTION
 
 The function EVP_PKEY_missing_parameters() returns 1 if the public key
@@ -31,6 +33,9 @@ B<a> and B<b>.
 
 The function EVP_PKEY_cmp() compares the public key components and parameters
 (if present) of keys B<a> and B<b>.
+
+The function EVP_PKEY_external_private_key() is used to indicate whether or
+not the private key is stored externally.
 
 =head1 NOTES
 
@@ -55,6 +60,11 @@ failure.
 The function EVP_PKEY_cmp_parameters() and EVP_PKEY_cmp() return 1 if the
 keys match, 0 if they don't match, -1 if the key types are different and
 -2 if the operation is not supported.
+
+The function EVP_PKEY_external_private_key() returns 1 if the flags on the
+b<pkey> indicate the private key is stored externally. Otherwise, 0 is
+returned. The flags checked are B<EC_FLAG_EXT_PKEY>, B<RSA_FLAG_EXT_PKEY> and
+B<RSA_METHOD_FLAG_NO_CHECK>.
 
 =head1 SEE ALSO
 

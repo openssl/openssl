@@ -1,3 +1,4 @@
+
 =pod
 
 =head1 NAME
@@ -105,11 +106,17 @@ point_conversion_forms please see L<EC_POINT_new(3)>.
 
 EC_KEY_set_flags() sets the flags in the B<flags> parameter on the EC_KEY
 object. Any flags that are already set are left set. The flags currently
-defined are EC_FLAG_NON_FIPS_ALLOW and EC_FLAG_FIPS_CHECKED. In
-addition there is the flag EC_FLAG_COFACTOR_ECDH which is specific to ECDH.
+defined are EC_FLAG_NON_FIPS_ALLOW, EC_FLAG_FIPS_CHECKED and EC_FLAG_NO_CHECK.
+In addition there is the flag EC_FLAG_COFACTOR_ECDH which is specific to ECDH.
 EC_KEY_get_flags() returns the current flags that are set for this EC_KEY.
 EC_KEY_clear_flags() clears the flags indicated by the B<flags> parameter; all
 other flags are left in their existing state.
+
+The EC_FLAG_NON_FIPS_ALLOW and EC_FLAG_FIPS_CHECKED flags are obsolete with the
+removal of FIPS support from  OpenSSL 1.1.0. The EC_FLAG_NO_CHECK prevents
+checking the private/public key parts against each other, and is intended to
+be used by ENGINEs that keep private keys in TPMs or other secure memory areas,
+similar to RSA_METHOD_FLAG_NO_CHECK.
 
 EC_KEY_set_asn1_flag() sets the asn1_flag on the underlying EC_GROUP object
 (if set). Refer to L<EC_GROUP_copy(3)> for further information on the

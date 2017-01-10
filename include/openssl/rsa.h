@@ -56,6 +56,7 @@ extern "C" {
  * and that they do not depend on the private key components being present:
  * for example a key stored in external hardware. Without this flag
  * bn_mod_exp gets called when private key components are absent.
+ * This flag works with RSA_METHOD_FLAG_NO_CHECK
  */
 # define RSA_FLAG_EXT_PKEY               0x0020
 
@@ -224,7 +225,12 @@ void RSA_free(RSA *r);
 /* "up" the RSA object's reference count */
 int RSA_up_ref(RSA *r);
 
+/* This gets the flags from the RSA_METHOD */
 int RSA_flags(const RSA *r);
+/* A more meaningful name - as a macro for ABI compat */
+#define RSA_default_flags RSA_flags
+/* This gets the flags from the RSA */
+int RSA_get_flags(const RSA *r);
 
 void RSA_set_default_method(const RSA_METHOD *meth);
 const RSA_METHOD *RSA_get_default_method(void);

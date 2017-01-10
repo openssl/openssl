@@ -4,7 +4,7 @@
 
 RSA_set_default_method, RSA_get_default_method, RSA_set_method,
 RSA_get_method, RSA_PKCS1_OpenSSL, RSA_null_method, RSA_flags,
-RSA_new_method - select RSA method
+RSA_default_flags, RSA_new_method - select RSA method
 
 =head1 SYNOPSIS
 
@@ -23,6 +23,8 @@ RSA_new_method - select RSA method
  RSA_METHOD *RSA_null_method(void);
 
  int RSA_flags(const RSA *rsa);
+
+ int RSA_default_flags(const RSA *rsa);
 
  RSA *RSA_new_method(ENGINE *engine);
 
@@ -62,7 +64,8 @@ RSA key itself is valid and does not have its implementation changed by
 RSA_set_method().
 
 RSA_flags() returns the B<flags> that are set for B<rsa>'s current
-RSA_METHOD. See the BUGS section.
+RSA_METHOD. RSA_default_flags() is an alias of this function. See the
+BUGS section.
 
 RSA_new_method() allocates and initializes an RSA structure so that
 B<engine> will be used for the RSA operations. If B<engine> is NULL, the
@@ -161,8 +164,10 @@ itself, not by the B<flags> value in the RSA_METHOD attached to the RSA key
 (which is what this function returns). If the flags element of an RSA key
 is changed, the changes will be honoured by RSA functionality but will not
 be reflected in the return value of the RSA_flags() function - in effect
-RSA_flags() behaves more like an RSA_default_flags() function (which does
-not currently exist).
+RSA_flags() behaves more like an RSA_default_flags() function (which is
+defined as an alias of RSA_flags).
+
+Use RSA_get_flags() to get the flags from the RSA object.
 
 =head1 SEE ALSO
 

@@ -482,3 +482,24 @@ size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt)
         return 0;
     return rv;
 }
+
+int EVP_PKEY_external_private_key(EVP_PKEY *pkey)
+{
+    /*
+     * Don't check the public/private key, this is mostly for smart
+     * cards, TPMs and other cases where the private key is in a
+     * different process space.
+     */
+#ifndef OPENSSL_NO_RSA
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA
+        && (RSA_default_flags(EVP_PKEY_get0_RSA(pkey)) & RSA_METHOD_FLAG_NO_CHECK
+            || RSA_get_flags(EVP_PKEY_get0_RSA(pkey)) & RSA_FLAG_EXT_PKEY))
+        return 1;
+#endif
+#ifndef OPENSSL_NO_EC
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_EC
+        && EC_KEY_get_flags(EVP_PKEY_get0_EC_KEY(pkey)) & EC_FLAG_EXT_PKEY)
+        return 1;
+#endif
+    return 0;
+}
