@@ -92,8 +92,8 @@ SKIP: {
 }
 
 SKIP: {
-    skip "TLSv1.3 or TLSv1.2 disabled", 2
-        if disabled("tls1_2") || disabled("tls1_3");
+    skip "EC, TLSv1.3 or TLSv1.2 disabled", 2
+        if disabled("tls1_2") || disabled("tls1_3") || disabled("ec");
 
     #Test 7: Sending a valid sig algs list but not including a sig type that
     #        matches the certificate should fail in TLSv1.3. We need TLSv1.2
@@ -118,7 +118,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "TLSv1.2 disabled", 7 if disabled("tls1_2");
+    skip "EC or TLSv1.2 disabled", 7 if disabled("tls1_2") || disabled("ec");
 
     $proxy->filter(\&sigalgs_filter);
 

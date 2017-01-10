@@ -897,19 +897,25 @@ typedef struct {
 } sigalgs_list;
 
 static const int validlist1[] = {NID_sha256, EVP_PKEY_RSA};
+#ifndef OPENSSL_NO_EC
 static const int validlist2[] = {NID_sha256, EVP_PKEY_RSA, NID_sha512, EVP_PKEY_EC};
 static const int validlist3[] = {NID_sha512, EVP_PKEY_EC};
+#endif
 static const int invalidlist1[] = {NID_undef, EVP_PKEY_RSA};
 static const int invalidlist2[] = {NID_sha256, NID_undef};
 static const int invalidlist3[] = {NID_sha256, EVP_PKEY_RSA, NID_sha256};
 static const int invalidlist4[] = {NID_sha256};
 static const sigalgs_list testsigalgs[] = {
     {validlist1, OSSL_NELEM(validlist1), NULL, 1, 1},
+#ifndef OPENSSL_NO_EC
     {validlist2, OSSL_NELEM(validlist2), NULL, 1, 1},
     {validlist3, OSSL_NELEM(validlist3), NULL, 1, 0},
+#endif
     {NULL, 0, "RSA+SHA256", 1, 1},
+#ifndef OPENSSL_NO_EC
     {NULL, 0, "RSA+SHA256:ECDSA+SHA512", 1, 1},
     {NULL, 0, "ECDSA+SHA512", 1, 0},
+#endif
     {invalidlist1, OSSL_NELEM(invalidlist1), NULL, 0, 0},
     {invalidlist2, OSSL_NELEM(invalidlist2), NULL, 0, 0},
     {invalidlist3, OSSL_NELEM(invalidlist3), NULL, 0, 0},
