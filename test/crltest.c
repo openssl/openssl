@@ -19,6 +19,8 @@
 #include "testutil.h"
 #include "test_main.h"
 
+#define PARAM_TIME 1474934400 /* Sep 27th, 2016 */
+
 static const char *kCRLTestRoot[] = {
     "-----BEGIN CERTIFICATE-----\n",
     "MIIDbzCCAlegAwIBAgIJAODri7v0dDUFMA0GCSqGSIb3DQEBCwUAME4xCzAJBgNV\n",
@@ -253,7 +255,11 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
         goto err;
     X509_STORE_CTX_set0_trusted_stack(ctx, roots);
     X509_STORE_CTX_set0_crls(ctx, crls);
-    X509_VERIFY_PARAM_set_time(param, 1474934400 /* Sep 27th, 2016 */);
+    X509_VERIFY_PARAM_set_time(param, PARAM_TIME);
+    if (X509_VERIFY_PARAM_get_time(param) != PARAM_TIME) {
+        fprintf(stderr, "set_time/get_time mismatch.\n");
+        goto err;
+    }
     X509_VERIFY_PARAM_set_depth(param, 16);
     if (flags)
         X509_VERIFY_PARAM_set_flags(param, flags);
