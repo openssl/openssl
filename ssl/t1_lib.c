@@ -735,6 +735,10 @@ static const unsigned int tls12_sigalgs[] = {
     TLSEXT_SIGALG_rsa_pkcs1_sha384,
     TLSEXT_SIGALG_rsa_pkcs1_sha512,
 
+    TLSEXT_SIGALG_ecdsa_sha1,
+    TLSEXT_SIGALG_rsa_pkcs1_sha1,
+    TLSEXT_SIGALG_dsa_sha1,
+
     TLSEXT_SIGALG_dsa_sha256,
     TLSEXT_SIGALG_dsa_sha384,
     TLSEXT_SIGALG_dsa_sha512
