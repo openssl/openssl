@@ -315,6 +315,7 @@ sub clientstart
         print "Waiting for server process to close: "
               .$self->serverpid."\n";
         waitpid( $self->serverpid, 0);
+        die "exit code $? from server process\n" if $? != 0;
     }
     return 1;
 }
