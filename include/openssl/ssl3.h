@@ -256,6 +256,7 @@ extern "C" {
  */
 # define SSL3_CT_NUMBER                  9
 
+/* No longer used as of OpenSSL 1.1.1 */
 # define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS       0x0001
 
 /* Removed from OpenSSL 1.1.0 */

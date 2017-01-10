@@ -86,6 +86,8 @@ struct ossl_statem_st {
     READ_STATE read_state;
     WORK_STATE read_state_work;
     OSSL_HANDSHAKE_STATE hand_state;
+    /* The handshake state requested by an API call (e.g. HelloRequest) */
+    OSSL_HANDSHAKE_STATE request_state;
     int in_init;
     int read_state_first_init;
     /* true when we are actually in SSL_accept() or SSL_connect() */
