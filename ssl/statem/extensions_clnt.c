@@ -318,7 +318,7 @@ int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt, X509 *x,
 int tls_construct_ctos_npn(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                            int *al)
 {
-    if (s->ctx->ext.npn_select_cb == NULL || s->s3->tmp.finish_md_len != 0)
+    if (s->ctx->ext.npn_select_cb == NULL || !SSL_IS_FIRST_HANDSHAKE(s))
         return 1;
 
     /*
@@ -340,11 +340,7 @@ int tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
 {
     s->s3->alpn_sent = 0;
 
-    /*
-     * finish_md_len is non-zero during a renegotiation, so
-     * this avoids sending ALPN during the renegotiation
-     */
-    if (s->ext.alpn == NULL || s->s3->tmp.finish_md_len != 0)
+    if (s->ext.alpn == NULL || !SSL_IS_FIRST_HANDSHAKE(s))
         return 1;
 
     if (!WPACKET_put_bytes_u16(pkt,
@@ -866,7 +862,7 @@ int tls_parse_stoc_npn(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
     PACKET tmppkt;
 
     /* Check if we are in a renegotiation. If so ignore this extension */
-    if (s->s3->tmp.finish_md_len != 0)
+    if (!SSL_IS_FIRST_HANDSHAKE(s))
         return 1;
 
     /* We must have requested it. */

@@ -351,6 +351,13 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
             return 1;
         }
         break;
+
+    case TLS_ST_OK:
+        if (mt == SSL3_MT_HELLO_REQUEST) {
+            st->hand_state = TLS_ST_CR_HELLO_REQ;
+            return 1;
+        }
+        break;
     }
 
  err:
@@ -428,6 +435,13 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
         return WRITE_TRAN_ERROR;
 
     case TLS_ST_OK:
+        if (!s->renegotiate) {
+            /*
+             * We haven't requested a renegotiation ourselves so we must have
+             * received a message from the server. Better read it.
+             */
+            return WRITE_TRAN_FINISHED;
+        }
         /* Renegotiation - fall through */
     case TLS_ST_BEFORE:
         st->hand_state = TLS_ST_CW_CLNT_HELLO;
@@ -515,6 +529,23 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
             ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
         }
+
+    case TLS_ST_CR_HELLO_REQ:
+        /*
+         * If we can renegotiate now then do so, otherwise wait for a more
+         * convenient time.
+         */
+        if (ssl3_renegotiate_check(s, 1)) {
+            if (!tls_setup_handshake(s)) {
+                ossl_statem_set_error(s);
+                return WRITE_TRAN_ERROR;
+            }
+            st->hand_state = TLS_ST_CW_CLNT_HELLO;
+            return WRITE_TRAN_CONTINUE;
+        }
+        st->hand_state = TLS_ST_OK;
+        ossl_statem_set_in_init(s, 0);
+        return WRITE_TRAN_CONTINUE;
     }
 }
 
@@ -819,6 +850,9 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
     case TLS_ST_CR_FINISHED:
         return tls_process_finished(s, pkt);
 
+    case TLS_ST_CR_HELLO_REQ:
+        return tls_process_hello_req(s, pkt);
+
     case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
         return tls_process_encrypted_extensions(s, pkt);
     }
@@ -892,6 +926,9 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
             return 0;
     }
     /* else use the pre-loaded session */
+
+    /* This is a real handshake so make sure we clean it up at the end */
+    s->statem.cleanuphand = 1;
 
     p = s->s3->client_random;
 
@@ -3095,6 +3132,30 @@ int tls_construct_next_proto(SSL *s, WPACKET *pkt)
     return 0;
 }
 #endif
+
+MSG_PROCESS_RETURN tls_process_hello_req(SSL *s, PACKET *pkt)
+{
+    if (PACKET_remaining(pkt) > 0) {
+        /* should contain no data */
+        SSLerr(SSL_F_TLS_PROCESS_HELLO_REQ, SSL_R_LENGTH_MISMATCH);
+        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+        ossl_statem_set_error(s);
+        return MSG_PROCESS_ERROR;
+    }
+
+    /*
+     * This is a historical discrepancy maintained for compatibility
+     * reasons. If a TLS client receives a HelloRequest it will attempt
+     * an abbreviated handshake. However if a DTLS client receives a
+     * HelloRequest it will do a full handshake.
+     */
+    if (SSL_IS_DTLS(s))
+        SSL_renegotiate(s);
+    else
+        SSL_renegotiate_abbreviated(s);
+
+    return MSG_PROCESS_FINISHED_READING;
+}
 
 static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt)
 {
