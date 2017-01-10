@@ -162,6 +162,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_BEFORE:
+    case TLS_ST_OK:
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         if (mt == SSL3_MT_CLIENT_HELLO) {
             st->hand_state = TLS_ST_SR_CLNT_HELLO;
@@ -465,14 +466,18 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
         /* Shouldn't happen */
         return WRITE_TRAN_ERROR;
 
+    case TLS_ST_OK:
+        if (st->request_state == TLS_ST_SW_HELLO_REQ) {
+            /* We must be trying to renegotiate */
+            st->hand_state = TLS_ST_SW_HELLO_REQ;
+            st->request_state = TLS_ST_BEFORE;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
+
     case TLS_ST_BEFORE:
         /* Just go straight to trying to read from the client */
         return WRITE_TRAN_FINISHED;
-
-    case TLS_ST_OK:
-        /* We must be trying to renegotiate */
-        st->hand_state = TLS_ST_SW_HELLO_REQ;
-        return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_HELLO_REQ:
         st->hand_state = TLS_ST_OK;

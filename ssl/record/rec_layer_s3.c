@@ -1390,6 +1390,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     /* If we are a client, check for an incoming 'Hello Request': */
     if ((!s->server) &&
         (s->rlayer.handshake_fragment_len >= 4) &&
+        !SSL_IS_TLS13(s) &&
         (s->rlayer.handshake_fragment[0] == SSL3_MT_HELLO_REQUEST) &&
         (s->session != NULL) && (s->session->cipher != NULL)) {
         s->rlayer.handshake_fragment_len = 0;
@@ -1408,7 +1409,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                             s->msg_callback_arg);
 
         if (SSL_is_init_finished(s) &&
-            !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
             !s->s3->renegotiate) {
             ssl3_renegotiate(s);
             if (ssl3_renegotiate_check(s)) {
@@ -1459,6 +1459,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         SSL_is_init_finished(s) &&
         !s->s3->send_connection_binding &&
         (s->version > SSL3_VERSION) &&
+        !SSL_IS_TLS13(s) &&
         (s->rlayer.handshake_fragment_len >= 4) &&
         (s->rlayer.handshake_fragment[0] == SSL3_MT_CLIENT_HELLO) &&
         (s->session != NULL) && (s->session->cipher != NULL) &&
@@ -1557,15 +1558,17 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     }
 
     /*
-     * Unexpected handshake message (Client Hello, or protocol violation)
+     * Unexpected handshake message (Client Hello, NewSessionTicket (TLS1.3) or
+     * protocol violation)
      */
     if ((s->rlayer.handshake_fragment_len >= 4)
         && !ossl_statem_get_in_handshake(s)) {
-        if (SSL_is_init_finished(s) &&
-            !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
+        if (SSL_is_init_finished(s)) {
             ossl_statem_set_in_init(s, 1);
-            s->renegotiate = 1;
-            s->new_session = 1;
+            if (!SSL_IS_TLS13(s)) {
+                s->renegotiate = 1;
+                s->new_session = 1;
+            }
         }
         i = s->handshake_func(s);
         if (i < 0)
