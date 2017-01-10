@@ -473,6 +473,11 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
             st->request_state = TLS_ST_BEFORE;
             return WRITE_TRAN_CONTINUE;
         }
+        /* Must be an incoming ClientHello */
+        if (!tls_setup_handshake(s)) {
+            ossl_statem_set_error(s);
+            return WRITE_TRAN_ERROR;
+        }
         /* Fall through */
 
     case TLS_ST_BEFORE:
@@ -1151,6 +1156,15 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     PACKET session_id, compression, extensions, cookie;
     static const unsigned char null_compression = 0;
     CLIENTHELLO_MSG clienthello;
+
+    /* Check if this is actually an unexpected renegotiation ClientHello */
+    if (s->renegotiate == 0 && !SSL_IS_FIRST_HANDSHAKE(s)) {
+        s->renegotiate = 1;
+        s->new_session = 1;
+    }
+
+    /* This is a real handshake so make sure we clean it up at the end */
+    s->statem.cleanuphand = 1;
 
     /*
      * First, parse the raw ClientHello data into the CLIENTHELLO_MSG structure.
@@ -1850,7 +1864,6 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
         }
     }
 #endif
-    s->renegotiate = 2;
 
     return WORK_FINISHED_STOP;
  f_err:

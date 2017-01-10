@@ -402,6 +402,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS_PROCESS_ENCRYPTED_EXTENSIONS),
      "tls_process_encrypted_extensions"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_FINISHED), "tls_process_finished"},
+    {ERR_FUNC(SSL_F_TLS_PROCESS_HELLO_REQ), "tls_process_hello_req"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT),
      "tls_process_initial_server_flight"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_KEY_EXCHANGE), "tls_process_key_exchange"},
@@ -419,6 +420,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS_PROCESS_SKE_SRP), "tls_process_ske_srp"},
     {ERR_FUNC(SSL_F_TLS_SCAN_CLIENTHELLO_TLSEXT),
      "tls_scan_clienthello_tlsext"},
+    {ERR_FUNC(SSL_F_TLS_SETUP_HANDSHAKE), "tls_setup_handshake"},
     {ERR_FUNC(SSL_F_USE_CERTIFICATE_CHAIN_FILE),
      "use_certificate_chain_file"},
     {0, NULL}

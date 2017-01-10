@@ -132,6 +132,7 @@ __owur int ssl3_check_cert_and_algorithm(SSL *s);
 #ifndef OPENSSL_NO_NEXTPROTONEG
 __owur int tls_construct_next_proto(SSL *s, WPACKET *pkt);
 #endif
+__owur MSG_PROCESS_RETURN tls_process_hello_req(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt);
 
 /* some server-only functions */

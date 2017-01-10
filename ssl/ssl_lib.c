@@ -3087,7 +3087,7 @@ int SSL_do_handshake(SSL *s)
         return -1;
     }
 
-    s->method->ssl_renegotiate_check(s);
+    s->method->ssl_renegotiate_check(s, 0);
 
     if (SSL_in_init(s) || SSL_in_before(s)) {
         if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
