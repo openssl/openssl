@@ -735,13 +735,17 @@ static const unsigned int tls12_sigalgs[] = {
     TLSEXT_SIGALG_rsa_pkcs1_sha384,
     TLSEXT_SIGALG_rsa_pkcs1_sha512,
 
+#ifndef OPENSSL_NO_EC
     TLSEXT_SIGALG_ecdsa_sha1,
+#endif
     TLSEXT_SIGALG_rsa_pkcs1_sha1,
+#ifndef OPENSSL_NO_DSA
     TLSEXT_SIGALG_dsa_sha1,
 
     TLSEXT_SIGALG_dsa_sha256,
     TLSEXT_SIGALG_dsa_sha384,
     TLSEXT_SIGALG_dsa_sha512
+#endif
 };
 
 #ifndef OPENSSL_NO_EC
@@ -758,10 +762,12 @@ typedef struct sigalg_lookup_st {
 } SIGALG_LOOKUP;
 
 static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
+#ifndef OPENSSL_NO_EC
     {TLSEXT_SIGALG_ecdsa_secp256r1_sha256, NID_sha256, EVP_PKEY_EC},
     {TLSEXT_SIGALG_ecdsa_secp384r1_sha384, NID_sha384, EVP_PKEY_EC},
     {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, NID_sha512, EVP_PKEY_EC},
     {TLSEXT_SIGALG_ecdsa_sha1, NID_sha1, EVP_PKEY_EC},
+#endif
     /*
      * PSS must appear before PKCS1 so that we prefer that when signing where
      * possible
@@ -773,13 +779,17 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {TLSEXT_SIGALG_rsa_pkcs1_sha384, NID_sha384, EVP_PKEY_RSA},
     {TLSEXT_SIGALG_rsa_pkcs1_sha512, NID_sha512, EVP_PKEY_RSA},
     {TLSEXT_SIGALG_rsa_pkcs1_sha1, NID_sha1, EVP_PKEY_RSA},
+#ifndef OPENSSL_NO_DSA
     {TLSEXT_SIGALG_dsa_sha256, NID_sha256, EVP_PKEY_DSA},
     {TLSEXT_SIGALG_dsa_sha384, NID_sha384, EVP_PKEY_DSA},
     {TLSEXT_SIGALG_dsa_sha512, NID_sha512, EVP_PKEY_DSA},
     {TLSEXT_SIGALG_dsa_sha1, NID_sha1, EVP_PKEY_DSA},
+#endif
+#ifndef OPENSSL_NO_GOST
     {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, NID_id_GostR3411_2012_256, NID_id_GostR3410_2012_256},
     {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, NID_id_GostR3411_2012_512, NID_id_GostR3410_2012_512},
     {TLSEXT_SIGALG_gostr34102001_gostr3411, NID_id_GostR3411_94, NID_id_GostR3410_2001}
+#endif
 };
 
 static int tls_sigalg_get_hash(unsigned int sigalg)
