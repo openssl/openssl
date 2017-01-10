@@ -323,6 +323,9 @@ install_sw: all install_dev install_engines install_runtime
 
 uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
 
+doc-nits:
+	$(PERL) util/find-doc-nits.pl -n
+
 install_docs: install_man_docs install_html_docs
 
 uninstall_docs: uninstall_man_docs uninstall_html_docs

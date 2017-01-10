@@ -29,7 +29,7 @@ compiler:
     - gcc
 
 env:
-    - CONFIG_OPTS="" DESTDIR="_install"
+    - CONFIG_OPTS="" DESTDIR="_install" CHECKDOCS="yes"
     - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
     - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
     - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
@@ -110,6 +110,9 @@ script:
           cd _build;
       fi
     - $make update
+    - if [ -n "$CHECKDOCS" ]; then
+          $make doc-nits;
+      fi
     - $make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
