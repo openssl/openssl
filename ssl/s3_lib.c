@@ -3822,7 +3822,7 @@ int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     clear_sys_error();
     if (s->s3->renegotiate)
-        ssl3_renegotiate_check(s);
+        ssl3_renegotiate_check(s, 0);
 
     return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
                                       written);
@@ -3835,7 +3835,7 @@ static int ssl3_read_internal(SSL *s, void *buf, size_t len, int peek,
 
     clear_sys_error();
     if (s->s3->renegotiate)
-        ssl3_renegotiate_check(s);
+        ssl3_renegotiate_check(s, 0);
     s->s3->in_read_app_data = 1;
     ret =
         s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf, len,
@@ -3878,14 +3878,22 @@ int ssl3_renegotiate(SSL *s)
     return (1);
 }
 
-int ssl3_renegotiate_check(SSL *s)
+/*
+ * Check if we are waiting to do a renegotiation and if so whether now is a
+ * good time to do it. If |initok| is true then we are being called from inside
+ * the state machine so ignore the result of SSL_in_init(s). Otherwise we
+ * should not do a renegotiation if SSL_in_init(s) is true. Returns 1 if we
+ * should do a renegotiation now and sets up the state machine for it. Otherwise
+ * returns 0.
+ */
+int ssl3_renegotiate_check(SSL *s, int initok)
 {
     int ret = 0;
 
     if (s->s3->renegotiate) {
         if (!RECORD_LAYER_read_pending(&s->rlayer)
             && !RECORD_LAYER_write_pending(&s->rlayer)
-            && !SSL_in_init(s)) {
+            && (initok || !SSL_in_init(s))) {
             /*
              * if we are the server, and we have sent a 'RENEGOTIATE'
              * message, we need to set the state machine into the renegotiate
@@ -3898,7 +3906,7 @@ int ssl3_renegotiate_check(SSL *s)
             ret = 1;
         }
     }
-    return (ret);
+    return ret;
 }
 
 /*

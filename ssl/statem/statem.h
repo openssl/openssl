@@ -46,8 +46,6 @@ typedef enum {
     MSG_FLOW_UNINITED,
     /* A permanent error with this connection */
     MSG_FLOW_ERROR,
-    /* We are about to renegotiate */
-    MSG_FLOW_RENEGOTIATE,
     /* We are reading messages */
     MSG_FLOW_READING,
     /* We are writing messages */
@@ -92,6 +90,11 @@ struct ossl_statem_st {
     int read_state_first_init;
     /* true when we are actually in SSL_accept() or SSL_connect() */
     int in_handshake;
+    /*
+     * True when are processing a "real" handshake that needs cleaning up (not
+     * just a HelloRequest or similar).
+     */
+    int cleanuphand;
     /* Should we skip the CertificateVerify message? */
     unsigned int no_cert_verify;
     int use_timer;

@@ -322,21 +322,8 @@ int tls_parse_ctos_npn(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
     /*
      * We shouldn't accept this extension on a
      * renegotiation.
-     *
-     * s->new_session will be set on renegotiation, but we
-     * probably shouldn't rely that it couldn't be set on
-     * the initial renegotiation too in certain cases (when
-     * there's some other reason to disallow resuming an
-     * earlier session -- the current code won't be doing
-     * anything like that, but this might change).
-     *
-     * A valid sign that there's been a previous handshake
-     * in this connection is if s->s3->tmp.finish_md_len >
-     * 0.  (We are talking about a check that will happen
-     * in the Hello protocol round, well before a new
-     * Finished message could have been computed.)
      */
-    if (s->s3->tmp.finish_md_len == 0)
+    if (SSL_IS_FIRST_HANDSHAKE(s))
         s->s3->npn_seen = 1;
 
     return 1;
@@ -352,7 +339,7 @@ int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
 {
     PACKET protocol_list, save_protocol_list, protocol;
 
-    if (s->s3->tmp.finish_md_len != 0)
+    if (!SSL_IS_FIRST_HANDSHAKE(s))
         return 1;
 
     if (!PACKET_as_length_prefixed_2(pkt, &protocol_list)

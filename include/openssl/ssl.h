@@ -878,7 +878,8 @@ typedef enum {
     TLS_ST_SW_ENCRYPTED_EXTENSIONS,
     TLS_ST_CR_ENCRYPTED_EXTENSIONS,
     TLS_ST_CR_CERT_VRFY,
-    TLS_ST_SW_CERT_VRFY
+    TLS_ST_SW_CERT_VRFY,
+    TLS_ST_CR_HELLO_REQ
 } OSSL_HANDSHAKE_STATE;
 
 /*
@@ -1647,7 +1648,7 @@ __owur STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
 
 __owur int SSL_do_handshake(SSL *s);
 int SSL_renegotiate(SSL *s);
-__owur int SSL_renegotiate_abbreviated(SSL *s);
+int SSL_renegotiate_abbreviated(SSL *s);
 __owur int SSL_renegotiate_pending(SSL *s);
 int SSL_shutdown(SSL *s);
 
@@ -2344,6 +2345,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE            382
 # define SSL_F_TLS_PROCESS_ENCRYPTED_EXTENSIONS           444
 # define SSL_F_TLS_PROCESS_FINISHED                       364
+# define SSL_F_TLS_PROCESS_HELLO_REQ                      507
 # define SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT          442
 # define SSL_F_TLS_PROCESS_KEY_EXCHANGE                   365
 # define SSL_F_TLS_PROCESS_NEW_SESSION_TICKET             366
@@ -2356,6 +2358,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_SKE_PSK_PREAMBLE               421
 # define SSL_F_TLS_PROCESS_SKE_SRP                        422
 # define SSL_F_TLS_SCAN_CLIENTHELLO_TLSEXT                450
+# define SSL_F_TLS_SETUP_HANDSHAKE                        508
 # define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 
 /* Reason codes. */
