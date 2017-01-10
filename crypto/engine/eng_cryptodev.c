@@ -176,7 +176,9 @@ static struct {
 } ciphers[] = {
     {CRYPTO_ARC4, NID_rc4, 0, 16},
     {CRYPTO_DES_CBC, NID_des_cbc, 8, 8},
+# if !defined(CRYPTO_ALGORITHM_MIN) || defined(CRYPTO_3DES_CBC)
     {CRYPTO_3DES_CBC, NID_des_ede3_cbc, 8, 24},
+# endif
 # if !defined(CRYPTO_ALGORITHM_MIN) || defined(CRYPTO_3DES_ECB)
     {CRYPTO_3DES_ECB, NID_des_ede3_ecb, 0, 24},
 # endif
@@ -1144,7 +1146,7 @@ static int cryptodev_digest_final(EVP_MD_CTX *ctx, unsigned char *md)
         cryp.ses = sess->ses;
         cryp.flags = 0;
         cryp.len = state->mac_len;
-        cryp.src = state->mac_data;
+        cryp.src = (void *)state->mac_data;
         cryp.dst = NULL;
         cryp.mac = (void *)md;
         if (ioctl(state->d_fd, CIOCCRYPT, &cryp) < 0) {
