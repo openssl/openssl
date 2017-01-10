@@ -753,7 +753,7 @@ typedef struct sigalg_lookup_st {
     int sig;
 } SIGALG_LOOKUP;
 
-SIGALG_LOOKUP sigalg_lookup_tbl[] = {
+static SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {TLSEXT_SIGALG_ecdsa_secp256r1_sha256, NID_sha256, EVP_PKEY_EC},
     {TLSEXT_SIGALG_ecdsa_secp384r1_sha384, NID_sha384, EVP_PKEY_EC},
     {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, NID_sha512, EVP_PKEY_EC},
