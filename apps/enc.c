@@ -450,16 +450,21 @@ int enc_main(int argc, char **argv)
             }
 
             if (pbkdf2 == 1) {
-                if (!PKCS5_PBKDF2_HMAC(str, str_len, sptr, sizeof(salt), iter,
+                /* generate key and default iv concatenated in a temporary buffer */
+                unsigned char tmpkeyiv[EVP_MAX_KEY_LENGTH + EVP_MAX_IV_LENGTH];
+                int iKlen = EVP_CIPHER_key_length(cipher);
+                int iVlen = EVP_CIPHER_iv_length(cipher);
+                int iSlen = sptr ? sizeof(salt) : 0;  /* not needed if HASH_UPDATE() is fixed */
+                if (!PKCS5_PBKDF2_HMAC(str, str_len, sptr, iSlen, iter,
                                        dgst,
-                                       EVP_CIPHER_key_length(cipher), key)) {
+                                       iKlen+iVlen, tmpkeyiv)) {
                     BIO_printf(bio_err, "PKCS5_PBKDF2_HMAC failed\n");
                     goto end;
                 }
-                /* should we reject if no IV is given ? */
-                memset(iv, 0, sizeof iv);
-            }
-            else {
+                /* split and move data back to global buffer */
+                memcpy(key, tmpkeyiv, iKlen);
+                memcpy(iv, tmpkeyiv+iKlen, iVlen);
+            } else {
                 if (!EVP_BytesToKey(cipher, dgst, sptr,
                                     (unsigned char *)str,
                                     str_len, 1, key, iv)) {
