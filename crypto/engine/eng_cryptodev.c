@@ -176,12 +176,20 @@ static struct {
 } ciphers[] = {
     {CRYPTO_ARC4, NID_rc4, 0, 16},
     {CRYPTO_DES_CBC, NID_des_cbc, 8, 8},
-# if !defined(CRYPTO_ALGORITHM_MIN) || defined(CRYPTO_3DES_CBC)
+# if defined(CRYPTO_3DES_CBC)
     {CRYPTO_3DES_CBC, NID_des_ede3_cbc, 8, 24},
 # endif
-# if !defined(CRYPTO_ALGORITHM_MIN) || defined(CRYPTO_3DES_ECB)
+
+/*
+ * The marvell-kirkwood armv5 platform doesn't seem to have CRYPTO_3DES_ECB.
+ * Unfortunately, there is no way to detect this, except on BSD, where the
+ * crypto identities are implemented as macros.  All other cryptodev
+ * implementations will be without this one.
+ */
+# if defined(CRYPTO_3DES_ECB)
     {CRYPTO_3DES_ECB, NID_des_ede3_ecb, 0, 24},
 # endif
+
     {CRYPTO_AES_CBC, NID_aes_128_cbc, 16, 16},
     {CRYPTO_AES_CBC, NID_aes_192_cbc, 16, 24},
     {CRYPTO_AES_CBC, NID_aes_256_cbc, 16, 32},
