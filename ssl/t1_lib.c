@@ -757,7 +757,7 @@ typedef struct sigalg_lookup_st {
     int sig;
 } SIGALG_LOOKUP;
 
-static SIGALG_LOOKUP sigalg_lookup_tbl[] = {
+static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {TLSEXT_SIGALG_ecdsa_secp256r1_sha256, NID_sha256, EVP_PKEY_EC},
     {TLSEXT_SIGALG_ecdsa_secp384r1_sha384, NID_sha384, EVP_PKEY_EC},
     {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, NID_sha512, EVP_PKEY_EC},
@@ -785,7 +785,7 @@ static SIGALG_LOOKUP sigalg_lookup_tbl[] = {
 static int tls_sigalg_get_hash(unsigned int sigalg)
 {
     size_t i;
-    SIGALG_LOOKUP *curr;
+    const SIGALG_LOOKUP *curr;
 
     for (i = 0, curr = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
          i++, curr++) {
@@ -799,7 +799,7 @@ static int tls_sigalg_get_hash(unsigned int sigalg)
 static int tls_sigalg_get_sig(unsigned int sigalg)
 {
     size_t i;
-    SIGALG_LOOKUP *curr;
+    const SIGALG_LOOKUP *curr;
 
     for (i = 0, curr = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
          i++, curr++) {
@@ -820,15 +820,15 @@ size_t tls12_get_psigalgs(SSL *s, const unsigned int **psigs)
     switch (tls1_suiteb(s)) {
     case SSL_CERT_FLAG_SUITEB_128_LOS:
         *psigs = suiteb_sigalgs;
-        return sizeof(suiteb_sigalgs);
+        return OSSL_NELEM(suiteb_sigalgs);
 
     case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
         *psigs = suiteb_sigalgs;
-        return 2;
+        return 1;
 
     case SSL_CERT_FLAG_SUITEB_192_LOS:
-        *psigs = suiteb_sigalgs + 2;
-        return 2;
+        *psigs = suiteb_sigalgs + 1;
+        return 1;
     }
 #endif
     /* If server use client authentication sigalgs if not NULL */
@@ -1295,7 +1295,7 @@ int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
 {
     int md_id, sig_id, tmpispss = 0;
     size_t i;
-    SIGALG_LOOKUP *curr;
+    const SIGALG_LOOKUP *curr;
 
     if (md == NULL)
         return 0;
@@ -1819,7 +1819,7 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 
     if (salglen & 1)
         return 0;
-    sigalgs = OPENSSL_malloc(salglen * sizeof(*sigalgs));
+    sigalgs = OPENSSL_malloc((salglen / 2) * sizeof(*sigalgs));
     if (sigalgs == NULL)
         return 0;
     /*
@@ -1828,7 +1828,7 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
      */
     for (i = 0, sptr = sigalgs; i < salglen; i += 2) {
         size_t j;
-        SIGALG_LOOKUP *curr;
+        const SIGALG_LOOKUP *curr;
         int md_id = *psig_nids++;
         int sig_id = *psig_nids++;
 
@@ -1850,11 +1850,11 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
     if (client) {
         OPENSSL_free(c->client_sigalgs);
         c->client_sigalgs = sigalgs;
-        c->client_sigalgslen = salglen;
+        c->client_sigalgslen = salglen / 2;
     } else {
         OPENSSL_free(c->conf_sigalgs);
         c->conf_sigalgs = sigalgs;
-        c->conf_sigalgslen = salglen;
+        c->conf_sigalgslen = salglen / 2;
     }
 
     return 1;
