@@ -20,8 +20,8 @@ UI_UTIL_read_pw_string, UI_UTIL_read_pw,
 
 UI_UTIL_read_pw_string() asks for a passphrase, using B<prompt> as a
 prompt, and stores it in B<buf>.
-The maximum allowed size is given with B<length>, including the ending
-NUL byte.
+The maximum allowed size is given with B<length>, including the
+terminating NUL byte.
 If B<verify> is non-zero, the password will be verified as well.
 
 UI_UTIL_read_pw() does the same as UI_UTIL_read_pw_string(), the
