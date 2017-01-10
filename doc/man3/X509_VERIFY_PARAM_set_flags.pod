@@ -9,6 +9,7 @@ X509_VERIFY_PARAM_get_inh_flags, X509_VERIFY_PARAM_set_inh_flags,
 X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth,
 X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_auth_level,
 X509_VERIFY_PARAM_get_auth_level, X509_VERIFY_PARAM_set_time,
+X509_VERIFY_PARAM_get_time,
 X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies,
 X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host,
 X509_VERIFY_PARAM_set_hostflags, X509_VERIFY_PARAM_get0_peername,
@@ -34,6 +35,7 @@ X509_VERIFY_PARAM_set1_ip_asc
  int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust);
 
  void X509_VERIFY_PARAM_set_time(X509_VERIFY_PARAM *param, time_t t);
+ time_t X509_VERIFY_PARAM_get_time(const X509_VERIFY_PARAM *param);
 
  int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
                                         ASN1_OBJECT *policy);

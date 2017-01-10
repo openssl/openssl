@@ -4227,3 +4227,4 @@ RSA_pkey_ctx_ctrl                       4177	1_1_1	EXIST::FUNCTION:RSA
 UI_method_set_ex_data                   4178	1_1_1	EXIST::FUNCTION:UI
 UI_method_get_ex_data                   4179	1_1_1	EXIST::FUNCTION:UI
 UI_UTIL_wrap_read_pem_callback          4180	1_1_1	EXIST::FUNCTION:UI
+X509_VERIFY_PARAM_get_time              4181	1_1_0d	EXIST::FUNCTION:
