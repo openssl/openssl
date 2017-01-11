@@ -310,7 +310,7 @@ $config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "
 # crypto/ subdirectories to build
 $config{sdirs} = [
     "objects",
-    "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2",
+    "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2", "siphash",
     "des", "aes", "rc2", "rc4", "rc5", "idea", "bf", "cast", "camellia", "seed", "chacha", "modes",
     "bn", "ec", "rsa", "dsa", "dh", "dso", "engine",
     "buffer", "bio", "stack", "lhash", "rand", "err",
@@ -394,6 +394,7 @@ my @disablables = (
     "sctp",
     "seed",
     "shared",
+    "siphash",
     "sock",
     "srp",
     "srtp",

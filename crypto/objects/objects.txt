@@ -1484,3 +1484,5 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
                             : AuthNULL     : auth-null
 # NID for Poly1305
                             : Poly1305     : poly1305
+# NID for SipHash
+                            : SipHash      : siphash

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1195,6 +1195,13 @@ static int mac_test_init(struct evp_test *t, const char *alg)
     } else if (strcmp(alg, "Poly1305") == 0) {
 #ifndef OPENSSL_NO_POLY1305
         type = EVP_PKEY_POLY1305;
+#else
+        t->skip = 1;
+        return 1;
+#endif
+    } else if (strcmp(alg, "SipHash") == 0) {
+#ifndef OPENSSL_NO_SIPHASH
+        type = EVP_PKEY_SIPHASH;
 #else
         t->skip = 1;
         return 1;

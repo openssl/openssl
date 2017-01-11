@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -54,6 +54,7 @@
 # define EVP_PKEY_TLS1_PRF NID_tls1_prf
 # define EVP_PKEY_HKDF   NID_hkdf
 # define EVP_PKEY_POLY1305 NID_poly1305
+# define EVP_PKEY_SIPHASH NID_siphash
 
 #ifdef  __cplusplus
 extern "C" {
@@ -397,6 +398,10 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
 # ifndef OPENSSL_NO_EC
 #  define EVP_PKEY_assign_EC_KEY(pkey,eckey) EVP_PKEY_assign((pkey),EVP_PKEY_EC,\
                                         (char *)(eckey))
+# endif
+# ifndef OPENSSL_NO_SIPHASH
+#  define EVP_PKEY_assign_SIPHASH(pkey,shkey) EVP_PKEY_assign((pkey),EVP_PKEY_SIPHASH,\
+                                        (char *)(shkey))
 # endif
 
 # ifndef OPENSSL_NO_POLY1305
@@ -913,6 +918,9 @@ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
 # ifndef OPENSSL_NO_POLY1305
 const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len);
 # endif
+# ifndef OPENSSL_NO_SIPHASH
+const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len);
+# endif
 
 # ifndef OPENSSL_NO_RSA
 struct rsa_st;
@@ -1184,6 +1192,8 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
 # define EVP_PKEY_CTRL_CIPHER            12
 
 # define EVP_PKEY_CTRL_GET_MD            13
+
+# define EVP_PKEY_CTRL_SET_DIGEST_SIZE   14
 
 # define EVP_PKEY_ALG_CTRL               0x1000
 
@@ -1514,6 +1524,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_GET0_HMAC                         183
 # define EVP_F_EVP_PKEY_GET0_POLY1305                     184
 # define EVP_F_EVP_PKEY_GET0_RSA                          121
+# define EVP_F_EVP_PKEY_GET0_SIPHASH                      172
 # define EVP_F_EVP_PKEY_KEYGEN                            146
 # define EVP_F_EVP_PKEY_KEYGEN_INIT                       147
 # define EVP_F_EVP_PKEY_NEW                               106
@@ -1558,6 +1569,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_EXPECTING_A_DSA_KEY                        129
 # define EVP_R_EXPECTING_A_EC_KEY                         142
 # define EVP_R_EXPECTING_A_POLY1305_KEY                   164
+# define EVP_R_EXPECTING_A_SIPHASH_KEY                    175
 # define EVP_R_FIPS_MODE_NOT_SUPPORTED                    167
 # define EVP_R_ILLEGAL_SCRYPT_PARAMETERS                  171
 # define EVP_R_INITIALIZATION_ERROR                       134

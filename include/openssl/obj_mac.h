@@ -4579,3 +4579,7 @@
 #define SN_poly1305             "Poly1305"
 #define LN_poly1305             "poly1305"
 #define NID_poly1305            1061
+
+#define SN_siphash              "SipHash"
+#define LN_siphash              "siphash"
+#define NID_siphash             1062
