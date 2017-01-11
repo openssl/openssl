@@ -807,7 +807,6 @@ struct ssl_ctx_st {
         unsigned char *supportedgroups;
 # endif                         /* OPENSSL_NO_EC */
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
         /*
          * ALPN information (we are in the process of transitioning from NPN to
          * ALPN.)
@@ -837,6 +836,7 @@ struct ssl_ctx_st {
         unsigned char *alpn;
         size_t alpn_len;
 
+# ifndef OPENSSL_NO_NEXTPROTONEG
         /* Next protocol negotiation information */
 
         /*
