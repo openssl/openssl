@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -255,6 +255,21 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
     ASN1_OCTET_STRING *os = NULL;
     if (pkey->type != EVP_PKEY_POLY1305) {
         EVPerr(EVP_F_EVP_PKEY_GET0_POLY1305, EVP_R_EXPECTING_A_POLY1305_KEY);
+        return NULL;
+    }
+    os = EVP_PKEY_get0(pkey);
+    *len = os->length;
+    return os->data;
+}
+#endif
+
+#ifndef OPENSSL_NO_SIPHASH
+const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
+{
+    ASN1_OCTET_STRING *os = NULL;
+
+    if (pkey->type != EVP_PKEY_SIPHASH) {
+        EVPerr(EVP_F_EVP_PKEY_GET0_SIPHASH, EVP_R_EXPECTING_A_SIPHASH_KEY);
         return NULL;
     }
     os = EVP_PKEY_get0(pkey);
