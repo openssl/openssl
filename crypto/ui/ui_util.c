@@ -85,16 +85,16 @@ static void ui_free_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
 
 static int ui_method_data_index()
 {
-    static int index = -1;
+    static int idx = -1;
 
-    if (index == -1)
-        index = CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_UI_METHOD,
-                                        0, NULL,
-                                        ui_new_method_data,
-                                        ui_dup_method_data,
-                                        ui_free_method_data);
+    if (idx == -1)
+        idx = CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_UI_METHOD,
+                                      0, NULL,
+                                      ui_new_method_data,
+                                      ui_dup_method_data,
+                                      ui_free_method_data);
 
-    return index;
+    return idx;
 }
 
 static int ui_open(UI *ui)
