@@ -95,6 +95,7 @@ static int test_new_ui()
     if (!ok)
         ERR_print_errors_fp(stderr);
 
+    destroy_ui_method();
     return ok;
 }
 
