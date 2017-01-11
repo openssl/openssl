@@ -1716,6 +1716,10 @@ int SSL_shutdown(SSL *s)
 
 int SSL_renegotiate(SSL *s)
 {
+    /* Do nothing in TLS1.3 */
+    if (SSL_IS_TLS13(s))
+        return 1;
+
     if (s->renegotiate == 0)
         s->renegotiate = 1;
 
@@ -1726,6 +1730,10 @@ int SSL_renegotiate(SSL *s)
 
 int SSL_renegotiate_abbreviated(SSL *s)
 {
+    /* Do nothing in TLS1.3 */
+    if (SSL_IS_TLS13(s))
+        return 1;
+
     if (s->renegotiate == 0)
         s->renegotiate = 1;
 
