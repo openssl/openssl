@@ -1,14 +1,68 @@
 #
-# Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-#cipher:key:iv:plaintext:ciphertext:0/1(decrypt/encrypt)
-#aadcipher:key:iv:plaintext:ciphertext:aad:tag:0/1(decrypt/encrypt)
-#digest:::input:output
+# SIPHASH tests - default values: 2,4 rounds, 16-byte mac
+# There are no official test vectors, they are simple vectors 1, 2, 3, etc
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input =
+Output = a3817f04ba25a8e66df67214c7550293
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input = 00
+Output = da87c1d86b99af44347659119b22fc45
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input = 0001
+Output = 8177228da4a45dc7fca38bdef60affe4
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input = 000102
+Output = 9c70b60c5267a94e5f33b6b02985ed51
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input = 00010203
+Output = f88164c12d9c8faf7d0f6e7c7bcd5579
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input = 0001020304
+Output = 1368875980776f8854527a07690e9627
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input = 000102030405
+Output = 14eeca338b208613485ea0308fd7a15e
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input = 00010203040506
+Output = a1f1ebbed8dbc153c0b84aa61ff08239
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input = 0001020304050607
+Output = 3b62a9ba6258f5610f83e264f31497b4
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input = 000102030405060708
+Output = 264499060ad9baabc47f8b02bb6d71ed
+
+MAC = SipHash
+Key = 000102030405060708090A0B0C0D0E0F
+Input = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E
+Output = 5150d1772f50834a503e069a973fbd7c
 
 # BLAKE2 tests, using same inputs as MD5
 # There are no official BLAKE2 test vectors we can use since they all use a key

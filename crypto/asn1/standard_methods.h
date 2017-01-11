@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -45,6 +45,9 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #endif
 #ifndef OPENSSL_NO_POLY1305
     &poly1305_asn1_meth,
+#endif
+#ifndef OPENSSL_NO_SIPHASH
+    &siphash_asn1_meth,
 #endif
 };
 
