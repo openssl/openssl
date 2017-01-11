@@ -450,24 +450,25 @@ int enc_main(int argc, char **argv)
             }
 
             if (pbkdf2 == 1) {
-                /* generate key and default iv concatenated in a temporary buffer */
+                /* generate key and default iv
+                concatenated into a temporary buffer */
                 unsigned char tmpkeyiv[EVP_MAX_KEY_LENGTH + EVP_MAX_IV_LENGTH];
-                int iKlen = EVP_CIPHER_key_length(cipher);
-                int iVlen = EVP_CIPHER_iv_length(cipher);
-                int iSlen = sptr ? sizeof(salt) : 0;  /* not needed if HASH_UPDATE() is fixed */
-                if (!PKCS5_PBKDF2_HMAC(str, str_len, sptr, iSlen, iter,
-                                       dgst,
-                                       iKlen+iVlen, tmpkeyiv)) {
+                int iklen = EVP_CIPHER_key_length(cipher);
+                int ivlen = EVP_CIPHER_iv_length(cipher);
+                /* not needed if HASH_UPDATE() is fixed : */
+                int islen = (sptr != NULL ? sizeof(salt) : 0);
+                if (!PKCS5_PBKDF2_HMAC(str, str_len, sptr, islen,
+                                       iter, dgst, iklen+ivlen, tmpkeyiv)) {
                     BIO_printf(bio_err, "PKCS5_PBKDF2_HMAC failed\n");
                     goto end;
                 }
                 /* split and move data back to global buffer */
-                memcpy(key, tmpkeyiv, iKlen);
-                memcpy(iv, tmpkeyiv+iKlen, iVlen);
+                memcpy(key, tmpkeyiv, iklen);
+                memcpy(iv, tmpkeyiv+iklen, ivlen);
             } else {
                 if (!EVP_BytesToKey(cipher, dgst, sptr,
-                                    (unsigned char *)str,
-                                    str_len, 1, key, iv)) {
+                                    (unsigned char *)str, str_len,
+                                    1, key, iv)) {
                     BIO_printf(bio_err, "EVP_BytesToKey failed\n");
                     goto end;
                 }
