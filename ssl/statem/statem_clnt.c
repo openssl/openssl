@@ -181,6 +181,13 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
             return 1;
         }
         break;
+
+    case TLS_ST_OK:
+        if (mt == SSL3_MT_NEWSESSION_TICKET) {
+            st->hand_state = TLS_ST_CR_SESSION_TICKET;
+            return 1;
+        }
+        break;
     }
 
     /* No valid transition found */
@@ -406,10 +413,15 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         st->hand_state = TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
+    case TLS_ST_CR_SESSION_TICKET:
     case TLS_ST_CW_FINISHED:
         st->hand_state = TLS_ST_OK;
         ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_OK:
+        /* Just go straight to trying to read from the server */
+        return WRITE_TRAN_FINISHED;
     }
 }
 
@@ -845,6 +857,8 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
         return tls_process_change_cipher_spec(s, pkt);
 
     case TLS_ST_CR_SESSION_TICKET:
+        if (SSL_IS_TLS13(s))
+            return tls13_process_new_session_ticket(s, pkt);
         return tls_process_new_session_ticket(s, pkt);
 
     case TLS_ST_CR_FINISHED:
@@ -2255,6 +2269,12 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
  err:
     ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
+}
+
+MSG_PROCESS_RETURN tls13_process_new_session_ticket(SSL *s, PACKET *pkt)
+{
+    /* TODO(TLS1.3): For now we just ignore these. This needs implementing */
+    return MSG_PROCESS_FINISHED_READING;
 }
 
 /*
