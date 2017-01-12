@@ -494,6 +494,33 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt, X509 *x,
     return 1;
 }
 
+/*
+ * Construct a psk_kex_modes extension. We only have two modes we know about
+ * at this stage, so we send both.
+ */
+int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, X509 *x,
+                                     size_t chainidx, int *al)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    /*
+     * TODO(TLS1.3): Do we want this list to be configurable? For now we always
+     * just send both supported modes
+     */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk_kex_modes)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u8(pkt)
+            || !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE_DHE)
+            || !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+#endif
+
+    return 1;
+}
+
 int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                  int *al)
 {

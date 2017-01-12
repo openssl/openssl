@@ -75,6 +75,7 @@ use constant {
     EXT_SESSION_TICKET => 35,
     EXT_KEY_SHARE => 40,
     EXT_SUPPORTED_VERSIONS => 43,
+    EXT_PSK_KEX_MODES => 45,
     EXT_RENEGOTIATE => 65281,
     EXT_NPN => 13172,
     # This extension is an unofficial extension only ever written by OpenSSL

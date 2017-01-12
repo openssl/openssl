@@ -1105,6 +1105,9 @@ struct ssl_st {
          */
         unsigned char *npn;
         size_t npn_len;
+
+        /* The selected PSK key exchange mode */
+        int psk_kex_mode;
     } ext;
 
     /*-
@@ -1680,6 +1683,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_signed_certificate_timestamp,
     TLSEXT_IDX_extended_master_secret,
     TLSEXT_IDX_supported_versions,
+    TLSEXT_IDX_psk_kex_modes,
     TLSEXT_IDX_key_share,
     TLSEXT_IDX_cryptopro_bug,
     TLSEXT_IDX_padding
@@ -1710,6 +1714,17 @@ typedef enum tlsext_index_en {
 #define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256       0xeeee
 #define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512       0xefef
 #define TLSEXT_SIGALG_gostr34102001_gostr3411                   0xeded
+
+/* Known PSK key exchange modes */
+#define TLSEXT_KEX_MODE_KE                                      0x00
+#define TLSEXT_KEX_MODE_KE_DHE                                  0x01
+
+/*
+ * Internal representations of key exchange modes
+ */
+#define TLSEXT_KEX_MODE_FLAG_NONE                               0
+#define TLSEXT_KEX_MODE_FLAG_KE                                 1
+#define TLSEXT_KEX_MODE_FLAG_KE_DHE                             2
 
 #define SIGID_IS_PSS(sigid) ((sigid) == TLSEXT_SIGALG_rsa_pss_sha256 \
                              || (sigid) == TLSEXT_SIGALG_rsa_pss_sha384 \
