@@ -323,9 +323,6 @@ install_sw: all install_dev install_engines install_runtime
 
 uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
 
-doc-nits:
-	$(PERL) util/find-doc-nits.pl -n
-
 install_docs: install_man_docs install_html_docs
 
 uninstall_docs: uninstall_man_docs uninstall_html_docs
@@ -676,6 +673,10 @@ update: generate errors ordinals
 
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1
+
+doc-nits:
+	(cd $(SRCDIR); $(PERL) util/find-doc-nits.pl -n ) >doc-nits
+	if [ -s doc-nits ] ; then cat doc-nits; exit 1; fi
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
