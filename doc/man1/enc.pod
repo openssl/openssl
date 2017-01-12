@@ -28,6 +28,7 @@ B<openssl enc -I<cipher>>
 [B<-z>]
 [B<-md digest>]
 [B<-iter count>]
+[B<-pbkdf2>]
 [B<-p>]
 [B<-P>]
 [B<-bufsize number>]
@@ -115,6 +116,10 @@ The default algorithm is sha-256.
 Use a given number of iterations on the password in deriving the encryption key.
 High values increase the time required to brute-force the resulting file.
 This option enables the use of PBKDF2 algorithm to derive the key.
+
+=item B<-pbkdf2>
+
+Use PBKDF2 algorithm with default iteration count unless otherwise specified.
 
 =item B<-nosalt>
 
