@@ -784,7 +784,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     /* Clear our SSL3_RECORD structures */
     memset(wr, 0, sizeof wr);
     for (j = 0; j < numpipes; j++) {
-        unsigned int version = s->version;
+        unsigned int version = SSL_IS_TLS13(s) ? TLS1_VERSION : s->version;
         unsigned char *compressdata = NULL;
         size_t maxcomplen;
         unsigned int rectype;
@@ -1372,6 +1372,16 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 goto start;     /* fragment was too small */
             }
         }
+    }
+
+    /*
+     * TODO(TLS1.3): Temporarily we will just ignore NewSessionTicket messages.
+     * Later we will want to process them.
+     */
+    if (!s->server && SSL_IS_TLS13(s) && s->rlayer.handshake_fragment_len >= 4
+            && s->rlayer.handshake_fragment[0] == SSL3_MT_NEWSESSION_TICKET) {
+        SSL3_RECORD_set_read(rr);
+        goto start;
     }
 
     /*-

@@ -141,20 +141,23 @@ CERT *ssl_cert_dup(CERT *cert)
 
     /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
-        ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
+        ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen
+                                           * sizeof(*cert->conf_sigalgs));
         if (ret->conf_sigalgs == NULL)
             goto err;
-        memcpy(ret->conf_sigalgs, cert->conf_sigalgs, cert->conf_sigalgslen);
+        memcpy(ret->conf_sigalgs, cert->conf_sigalgs,
+               cert->conf_sigalgslen * sizeof(*cert->conf_sigalgs));
         ret->conf_sigalgslen = cert->conf_sigalgslen;
     } else
         ret->conf_sigalgs = NULL;
 
     if (cert->client_sigalgs) {
-        ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen);
+        ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen
+                                             * sizeof(*cert->client_sigalgs));
         if (ret->client_sigalgs == NULL)
             goto err;
         memcpy(ret->client_sigalgs, cert->client_sigalgs,
-               cert->client_sigalgslen);
+               cert->client_sigalgslen * sizeof(*cert->client_sigalgs));
         ret->client_sigalgslen = cert->client_sigalgslen;
     } else
         ret->client_sigalgs = NULL;

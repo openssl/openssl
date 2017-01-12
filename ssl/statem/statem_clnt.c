@@ -169,12 +169,18 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_CR_CERT:
+        if (mt == SSL3_MT_CERTIFICATE_VERIFY) {
+            st->hand_state = TLS_ST_CR_CERT_VRFY;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_CR_CERT_VRFY:
         if (mt == SSL3_MT_FINISHED) {
             st->hand_state = TLS_ST_CR_FINISHED;
             return 1;
         }
         break;
-
     }
 
     /* No valid transition found */
@@ -562,6 +568,8 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
 /*
  * Perform any work that needs to be done after sending a message from the
  * client to the server.
+    case TLS_ST_SR_CERT_VRFY:
+        return SSL3_RT_MAX_PLAIN_LENGTH;
  */
 WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
 {
@@ -689,7 +697,7 @@ int ossl_statem_client_construct_message(SSL *s, WPACKET *pkt,
         break;
 
     case TLS_ST_CW_CERT_VRFY:
-        *confunc = tls_construct_client_verify;
+        *confunc = tls_construct_cert_verify;
         *mt = SSL3_MT_CERTIFICATE_VERIFY;
         break;
 
@@ -729,6 +737,9 @@ size_t ossl_statem_client_max_message_size(SSL *s)
 
     case TLS_ST_CR_CERT:
         return s->max_cert_list;
+
+    case TLS_ST_CR_CERT_VRFY:
+        return SSL3_RT_MAX_PLAIN_LENGTH;
 
     case TLS_ST_CR_CERT_STATUS:
         return SSL3_RT_MAX_PLAIN_LENGTH;
@@ -783,6 +794,9 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
 
     case TLS_ST_CR_CERT:
         return tls_process_server_certificate(s, pkt);
+
+    case TLS_ST_CR_CERT_VRFY:
+        return tls_process_cert_verify(s, pkt);
 
     case TLS_ST_CR_CERT_STATUS:
         return tls_process_cert_status(s, pkt);
@@ -1497,8 +1511,18 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     X509_up_ref(x);
     s->session->peer = x;
     s->session->verify_result = s->verify_result;
-
     x = NULL;
+
+    /* Save the current hash state for when we receive the CertificateVerify */
+    if (SSL_IS_TLS13(s)
+            && !ssl_handshake_hash(s, s->cert_verify_hash,
+                                   sizeof(s->cert_verify_hash),
+                                   &s->cert_verify_hash_len)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
+
     ret = MSG_PROCESS_CONTINUE_READING;
     goto done;
 
@@ -1800,9 +1824,11 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
-    int al = -1;
+    int al = -1, ispss = 0;
     long alg_k;
     EVP_PKEY *pkey = NULL;
+    EVP_MD_CTX *md_ctx = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
     PACKET save_param_start, signature;
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
@@ -1841,7 +1867,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         PACKET params;
         int maxsig;
         const EVP_MD *md = NULL;
-        EVP_MD_CTX *md_ctx;
 
         /*
          * |pkt| now points to the beginning of the signature, so the difference
@@ -1856,14 +1881,15 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
 
         if (SSL_USE_SIGALGS(s)) {
-            const unsigned char *sigalgs;
+            unsigned int sigalg;
             int rv;
-            if (!PACKET_get_bytes(pkt, &sigalgs, 2)) {
+
+            if (!PACKET_get_net_2(pkt, &sigalg)) {
                 al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
                 goto err;
             }
-            rv = tls12_check_peer_sigalg(&md, s, sigalgs, pkey);
+            rv = tls12_check_peer_sigalg(&md, s, sigalg, pkey);
             if (rv == -1) {
                 al = SSL_AD_INTERNAL_ERROR;
                 goto err;
@@ -1871,6 +1897,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                 al = SSL_AD_DECODE_ERROR;
                 goto err;
             }
+            ispss = SIGID_IS_PSS(sigalg);
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
@@ -1911,29 +1938,39 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        if (EVP_VerifyInit_ex(md_ctx, md, NULL) <= 0
-            || EVP_VerifyUpdate(md_ctx, &(s->s3->client_random[0]),
-                                SSL3_RANDOM_SIZE) <= 0
-            || EVP_VerifyUpdate(md_ctx, &(s->s3->server_random[0]),
-                                SSL3_RANDOM_SIZE) <= 0
-            || EVP_VerifyUpdate(md_ctx, PACKET_data(&params),
-                                PACKET_remaining(&params)) <= 0) {
-            EVP_MD_CTX_free(md_ctx);
+        if (EVP_DigestVerifyInit(md_ctx, &pctx, md, NULL, pkey) <= 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
             goto err;
         }
-        /* TODO(size_t): Convert this call */
-        if (EVP_VerifyFinal(md_ctx, PACKET_data(&signature),
-                            (unsigned int)PACKET_remaining(&signature),
-                            pkey) <= 0) {
+        if (ispss) {
+            if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
+                       /* -1 here means set saltlen to the digest len */
+                    || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+                al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
+                goto err;
+            }
+        }
+        if (EVP_DigestVerifyUpdate(md_ctx, &(s->s3->client_random[0]),
+                                   SSL3_RANDOM_SIZE) <= 0
+                || EVP_DigestVerifyUpdate(md_ctx, &(s->s3->server_random[0]),
+                                          SSL3_RANDOM_SIZE) <= 0
+                || EVP_DigestVerifyUpdate(md_ctx, PACKET_data(&params),
+                                          PACKET_remaining(&params)) <= 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
+            goto err;
+        }
+        if (EVP_DigestVerifyFinal(md_ctx, PACKET_data(&signature),
+                                  PACKET_remaining(&signature)) <= 0) {
             /* bad signature */
-            EVP_MD_CTX_free(md_ctx);
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SIGNATURE);
             goto err;
         }
         EVP_MD_CTX_free(md_ctx);
+        md_ctx = NULL;
     } else {
         /* aNULL, aSRP or PSK do not need public keys */
         if (!(s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
@@ -1961,6 +1998,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     if (al != -1)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
     ossl_statem_set_error(s);
+    EVP_MD_CTX_free(md_ctx);
     return MSG_PROCESS_ERROR;
 }
 
@@ -2002,8 +2040,9 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
         s->s3->tmp.ctype[i] = data[i];
 
     if (SSL_USE_SIGALGS(s)) {
-        if (!PACKET_get_net_2(pkt, &list_len)
-            || !PACKET_get_bytes(pkt, &data, list_len)) {
+        PACKET sigalgs;
+
+        if (!PACKET_get_length_prefixed_2(pkt, &sigalgs)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                    SSL_R_LENGTH_MISMATCH);
@@ -2015,7 +2054,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
             s->s3->tmp.md[i] = NULL;
             s->s3->tmp.valid_flags[i] = 0;
         }
-        if ((list_len & 1) || !tls1_save_sigalgs(s, data, list_len)) {
+        if (!tls1_save_sigalgs(s, &sigalgs)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                    SSL_R_SIGNATURE_ALGORITHMS_ERROR);
@@ -2837,80 +2876,6 @@ int tls_client_key_exchange_post_work(SSL *s)
  err:
     OPENSSL_clear_free(pms, pmslen);
     s->s3->tmp.pms = NULL;
-    return 0;
-}
-
-int tls_construct_client_verify(SSL *s, WPACKET *pkt)
-{
-    EVP_PKEY *pkey;
-    const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
-    EVP_MD_CTX *mctx = NULL;
-    unsigned u = 0;
-    long hdatalen = 0;
-    void *hdata;
-    unsigned char *sig = NULL;
-
-    mctx = EVP_MD_CTX_new();
-    if (mctx == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-    pkey = s->cert->key->privatekey;
-
-    hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
-    if (hdatalen <= 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    if (SSL_USE_SIGALGS(s)&& !tls12_get_sigandhash(pkt, pkey, md)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-#ifdef SSL_DEBUG
-    fprintf(stderr, "Using client alg %s\n", EVP_MD_name(md));
-#endif
-    sig = OPENSSL_malloc(EVP_PKEY_size(pkey));
-    if (sig == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-    if (!EVP_SignInit_ex(mctx, md, NULL)
-        || !EVP_SignUpdate(mctx, hdata, hdatalen)
-        || (s->version == SSL3_VERSION
-            && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                                (int)s->session->master_key_length,
-                                s->session->master_key))
-        || !EVP_SignFinal(mctx, sig, &u, pkey)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_EVP_LIB);
-        goto err;
-    }
-#ifndef OPENSSL_NO_GOST
-    {
-        int pktype = EVP_PKEY_id(pkey);
-        if (pktype == NID_id_GostR3410_2001
-            || pktype == NID_id_GostR3410_2012_256
-            || pktype == NID_id_GostR3410_2012_512)
-            BUF_reverse(sig, NULL, u);
-    }
-#endif
-
-    if (!WPACKET_sub_memcpy_u16(pkt, sig, u)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /* Digest cached records and discard handshake buffer */
-    if (!ssl3_digest_cached_records(s, 0))
-        goto err;
-
-    OPENSSL_free(sig);
-    EVP_MD_CTX_free(mctx);
-    return 1;
- err:
-    OPENSSL_free(sig);
-    EVP_MD_CTX_free(mctx);
-    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
     return 0;
 }
 

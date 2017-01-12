@@ -72,6 +72,332 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
     return 1;
 }
 
+/*
+ * Size of the to-be-signed TLS13 data, without the hash size itself:
+ * 64 bytes of value 32, 33 context bytes, 1 byte separator
+ */
+#define TLS13_TBS_START_SIZE            64
+#define TLS13_TBS_PREAMBLE_SIZE         (TLS13_TBS_START_SIZE + 33 + 1)
+
+static int get_cert_verify_tbs_data(SSL *s, unsigned char *tls13tbs,
+                                    void **hdata, size_t *hdatalen)
+{
+    static const char *servercontext = "TLS 1.3, server CertificateVerify";
+    static const char *clientcontext = "TLS 1.3, client CertificateVerify";
+
+    if (SSL_IS_TLS13(s)) {
+        size_t hashlen;
+
+        /* Set the first 64 bytes of to-be-signed data to octet 32 */
+        memset(tls13tbs, 32, TLS13_TBS_START_SIZE);
+        /* This copies the 33 bytes of context plus the 0 separator byte */
+        if (s->statem.hand_state == TLS_ST_CR_CERT_VRFY
+                 || s->statem.hand_state == TLS_ST_SW_CERT_VRFY)
+            strcpy((char *)tls13tbs + TLS13_TBS_START_SIZE, servercontext);
+        else
+            strcpy((char *)tls13tbs + TLS13_TBS_START_SIZE, clientcontext);
+
+        /*
+         * If we're currently reading then we need to use the saved handshake
+         * hash value. We can't use the current handshake hash state because
+         * that includes the CertVerify itself.
+         */
+        if (s->statem.hand_state == TLS_ST_CR_CERT_VRFY
+                || s->statem.hand_state == TLS_ST_SR_CERT_VRFY) {
+            memcpy(tls13tbs + TLS13_TBS_PREAMBLE_SIZE, s->cert_verify_hash,
+                   s->cert_verify_hash_len);
+            hashlen = s->cert_verify_hash_len;
+        } else if (!ssl_handshake_hash(s, tls13tbs + TLS13_TBS_PREAMBLE_SIZE,
+                                       EVP_MAX_MD_SIZE, &hashlen)) {
+            return 0;
+        }
+
+        *hdata = tls13tbs;
+        *hdatalen = TLS13_TBS_PREAMBLE_SIZE + hashlen;
+    } else {
+        size_t retlen;
+
+        retlen = BIO_get_mem_data(s->s3->handshake_buffer, hdata);
+        if (retlen <= 0)
+            return 0;
+        *hdatalen = retlen;
+    }
+
+    return 1;
+}
+
+int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
+{
+    EVP_PKEY *pkey;
+    const EVP_MD *md;
+    EVP_MD_CTX *mctx = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    size_t hdatalen = 0, siglen = 0;
+    void *hdata;
+    unsigned char *sig = NULL;
+    unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
+    int pktype, ispss = 0;
+
+    if (s->server) {
+        /* Only happens in TLSv1.3 */
+        /*
+         * TODO(TLS1.3): This needs to change. We should not get this from the
+         * cipher. However, for now, we have not done the work to separate the
+         * certificate type from the ciphersuite
+         */
+        pkey = ssl_get_sign_pkey(s, s->s3->tmp.new_cipher, &md);
+        if (pkey == NULL)
+            goto err;
+    } else {
+        md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
+        pkey = s->cert->key->privatekey;
+    }
+    pktype = EVP_PKEY_id(pkey);
+
+    mctx = EVP_MD_CTX_new();
+    if (mctx == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    /* Get the data to be signed */
+    if (!get_cert_verify_tbs_data(s, tls13tbs, &hdata, &hdatalen)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (SSL_USE_SIGALGS(s) && !tls12_get_sigandhash(s, pkt, pkey, md, &ispss)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+#ifdef SSL_DEBUG
+    fprintf(stderr, "Using client alg %s\n", EVP_MD_name(md));
+#endif
+    siglen = EVP_PKEY_size(pkey);
+    sig = OPENSSL_malloc(siglen);
+    if (sig == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    if (EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey) <= 0
+            || EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
+        goto err;
+    }
+
+    if (ispss) {
+        if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
+                   /* -1 here means set saltlen to the digest len */
+                || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
+            goto err;
+        }
+    } else if (s->version == SSL3_VERSION) {
+        if (!EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                             (int)s->session->master_key_length,
+                             s->session->master_key)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
+            goto err;
+        }
+    }
+
+    if (EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
+        goto err;
+    }
+
+#ifndef OPENSSL_NO_GOST
+    {
+        if (pktype == NID_id_GostR3410_2001
+            || pktype == NID_id_GostR3410_2012_256
+            || pktype == NID_id_GostR3410_2012_512)
+            BUF_reverse(sig, NULL, siglen);
+    }
+#endif
+
+    if (!WPACKET_sub_memcpy_u16(pkt, sig, siglen)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /* Digest cached records and discard handshake buffer */
+    if (!ssl3_digest_cached_records(s, 0))
+        goto err;
+
+    OPENSSL_free(sig);
+    EVP_MD_CTX_free(mctx);
+    return 1;
+ err:
+    OPENSSL_free(sig);
+    EVP_MD_CTX_free(mctx);
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+    return 0;
+}
+
+MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
+{
+    EVP_PKEY *pkey = NULL;
+    const unsigned char *data;
+#ifndef OPENSSL_NO_GOST
+    unsigned char *gost_data = NULL;
+#endif
+    int al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
+    int type = 0, j, pktype, ispss = 0;
+    unsigned int len;
+    X509 *peer;
+    const EVP_MD *md = NULL;
+    size_t hdatalen = 0;
+    void *hdata;
+    unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+    EVP_PKEY_CTX *pctx = NULL;
+
+    if (mctx == NULL) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
+        goto f_err;
+    }
+
+    peer = s->session->peer;
+    pkey = X509_get0_pubkey(peer);
+    pktype = EVP_PKEY_id(pkey);
+    type = X509_certificate_type(peer, pkey);
+
+    if (!(type & EVP_PKT_SIGN)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY,
+               SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE);
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        goto f_err;
+    }
+
+    /* Check for broken implementations of GOST ciphersuites */
+    /*
+     * If key is GOST and n is exactly 64, it is bare signature without
+     * length field (CryptoPro implementations at least till CSP 4.0)
+     */
+#ifndef OPENSSL_NO_GOST
+    if (PACKET_remaining(pkt) == 64
+        && EVP_PKEY_id(pkey) == NID_id_GostR3410_2001) {
+        len = 64;
+    } else
+#endif
+    {
+        if (SSL_USE_SIGALGS(s)) {
+            int rv;
+            unsigned int sigalg;
+
+            if (!PACKET_get_net_2(pkt, &sigalg)) {
+                al = SSL_AD_DECODE_ERROR;
+                goto f_err;
+            }
+            rv = tls12_check_peer_sigalg(&md, s, sigalg, pkey);
+            if (rv == -1) {
+                goto f_err;
+            } else if (rv == 0) {
+                al = SSL_AD_DECODE_ERROR;
+                goto f_err;
+            }
+            ispss = SIGID_IS_PSS(sigalg);
+#ifdef SSL_DEBUG
+            fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
+#endif
+        } else {
+            /* Use default digest for this key type */
+            int idx = ssl_cert_type(NULL, pkey);
+            if (idx >= 0)
+                md = s->s3->tmp.md[idx];
+            if (md == NULL) {
+                al = SSL_AD_INTERNAL_ERROR;
+                goto f_err;
+            }
+        }
+
+        if (!PACKET_get_net_2(pkt, &len)) {
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
+            al = SSL_AD_DECODE_ERROR;
+            goto f_err;
+        }
+    }
+    j = EVP_PKEY_size(pkey);
+    if (((int)len > j) || ((int)PACKET_remaining(pkt) > j)
+        || (PACKET_remaining(pkt) == 0)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_WRONG_SIGNATURE_SIZE);
+        al = SSL_AD_DECODE_ERROR;
+        goto f_err;
+    }
+    if (!PACKET_get_bytes(pkt, &data, len)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
+        al = SSL_AD_DECODE_ERROR;
+        goto f_err;
+    }
+
+    if (!get_cert_verify_tbs_data(s, tls13tbs, &hdata, &hdatalen)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
+
+#ifdef SSL_DEBUG
+    fprintf(stderr, "Using client verify alg %s\n", EVP_MD_name(md));
+#endif
+    if (EVP_DigestVerifyInit(mctx, &pctx, md, NULL, pkey) <= 0
+            || EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+        goto f_err;
+    }
+#ifndef OPENSSL_NO_GOST
+    {
+        if (pktype == NID_id_GostR3410_2001
+            || pktype == NID_id_GostR3410_2012_256
+            || pktype == NID_id_GostR3410_2012_512) {
+            if ((gost_data = OPENSSL_malloc(len)) == NULL) {
+                SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
+                goto f_err;
+            }
+            BUF_reverse(gost_data, data, len);
+            data = gost_data;
+        }
+    }
+#endif
+
+    if (ispss) {
+        if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
+                   /* -1 here means set saltlen to the digest len */
+                || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+            goto f_err;
+        }
+    } else if (s->version == SSL3_VERSION
+        && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                            (int)s->session->master_key_length,
+                            s->session->master_key)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+        goto f_err;
+    }
+
+    if (EVP_DigestVerifyFinal(mctx, data, len) <= 0) {
+        al = SSL_AD_DECRYPT_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
+        goto f_err;
+    }
+
+    if (SSL_IS_TLS13(s))
+        ret = MSG_PROCESS_CONTINUE_READING;
+    else
+        ret = MSG_PROCESS_CONTINUE_PROCESSING;
+    if (0) {
+ f_err:
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
+        ossl_statem_set_error(s);
+    }
+    BIO_free(s->s3->handshake_buffer);
+    s->s3->handshake_buffer = NULL;
+    EVP_MD_CTX_free(mctx);
+#ifndef OPENSSL_NO_GOST
+    OPENSSL_free(gost_data);
+#endif
+    return ret;
+}
+
 int tls_construct_finished(SSL *s, WPACKET *pkt)
 {
     size_t finish_md_len;

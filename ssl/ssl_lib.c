@@ -2823,6 +2823,12 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 static int ssl_get_server_cert_index(const SSL *s)
 {
     int idx;
+
+    /*
+     * TODO(TLS1.3): In TLS1.3 the selected certificate is not based on the
+     * ciphersuite. For now though it still is. Our only TLS1.3 ciphersuite
+     * forces the use of an RSA cert. This will need to change.
+     */
     idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
     if (idx == SSL_PKEY_RSA_ENC && !s->cert->pkeys[SSL_PKEY_RSA_ENC].x509)
         idx = SSL_PKEY_RSA_SIGN;

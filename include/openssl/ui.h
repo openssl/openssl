@@ -18,6 +18,7 @@
 #   include <openssl/crypto.h>
 #  endif
 #  include <openssl/safestack.h>
+#  include <openssl/pem.h>
 #  include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
@@ -284,14 +285,15 @@ int UI_method_set_prompt_constructor(UI_METHOD *method,
                                                                   *object_desc,
                                                                   const char
                                                                   *object_name));
-int (*UI_method_get_opener(UI_METHOD *method)) (UI *);
-int (*UI_method_get_writer(UI_METHOD *method)) (UI *, UI_STRING *);
-int (*UI_method_get_flusher(UI_METHOD *method)) (UI *);
-int (*UI_method_get_reader(UI_METHOD *method)) (UI *, UI_STRING *);
-int (*UI_method_get_closer(UI_METHOD *method)) (UI *);
-char *(*UI_method_get_prompt_constructor(UI_METHOD *method)) (UI *,
-                                                              const char *,
-                                                              const char *);
+int UI_method_set_ex_data(UI_METHOD *method, int idx, void *data);
+int (*UI_method_get_opener(const UI_METHOD *method)) (UI *);
+int (*UI_method_get_writer(const UI_METHOD *method)) (UI *, UI_STRING *);
+int (*UI_method_get_flusher(const UI_METHOD *method)) (UI *);
+int (*UI_method_get_reader(const UI_METHOD *method)) (UI *, UI_STRING *);
+int (*UI_method_get_closer(const UI_METHOD *method)) (UI *);
+char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))
+    (UI *, const char *, const char *);
+const void *UI_method_get_ex_data(const UI_METHOD *method, int idx);
 
 /*
  * The following functions are helpers for method writers to access relevant
@@ -327,6 +329,7 @@ int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
                            int verify);
 int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
                     int verify);
+    UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag);
 
 /* BEGIN ERROR CODES */
 /*

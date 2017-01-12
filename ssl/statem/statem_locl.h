@@ -118,7 +118,7 @@ __owur MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt);
 __owur int tls_process_cert_status_body(SSL *s, PACKET *pkt, int *al);
 __owur MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt);
-__owur int tls_construct_client_verify(SSL *s, WPACKET *pkt);
+__owur int tls_construct_cert_verify(SSL *s, WPACKET *pkt);
 __owur WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst);
 __owur int tls_construct_client_certificate(SSL *s, WPACKET *pkt);
 __owur int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey);

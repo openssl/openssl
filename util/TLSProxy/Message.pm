@@ -84,7 +84,8 @@ use constant {
 };
 
 use constant {
-    CIPHER_ADH_AES_128_SHA => 0x03000034
+    CIPHER_DHE_RSA_AES_128_SHA => 0x0033,
+    CIPHER_ADH_AES_128_SHA => 0x0034
 };
 
 my $payload = "";
@@ -277,6 +278,15 @@ sub create_message
             [@message_frag_lens]
         );
         $message->parse();
+    } elsif ($mt == MT_CERTIFICATE_VERIFY) {
+        $message = TLSProxy::CertificateVerify->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
     } elsif ($mt == MT_SERVER_KEY_EXCHANGE) {
         $message = TLSProxy::ServerKeyExchange->new(
             $server,
@@ -357,7 +367,7 @@ sub ciphersuite
 }
 
 #Update all the underlying records with the modified data from this message
-#Note: Does not currently support re-encrypting
+#Note: Only supports re-encrypting for TLSv1.3
 sub repack
 {
     my $self = shift;
@@ -400,8 +410,14 @@ sub repack
         #  use an explicit override field instead.)
         $rec->decrypt_len(length($rec->decrypt_data));
         $rec->len($rec->len + length($msgdata) - $old_length);
-        # Don't support re-encryption.
-        $rec->data($rec->decrypt_data);
+        # Only support re-encryption for TLSv1.3.
+        if (TLSProxy::Proxy->is_tls13() && $rec->encrypted()) {
+            #Add content type (1 byte) and 16 tag bytes
+            $rec->data($rec->decrypt_data
+                .pack("C", TLSProxy::Record::RT_HANDSHAKE).("\0"x16));
+        } else {
+            $rec->data($rec->decrypt_data);
+        }
 
         #Update the fragment len in case we changed it above
         ${$self->message_frag_lens}[0] = length($msgdata)

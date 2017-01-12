@@ -389,6 +389,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data);
 
 int setup_ui_method(void);
 void destroy_ui_method(void);
+const UI_METHOD *get_ui_method(void);
 
 int chopup_args(ARGS *arg, char *buf);
 # ifdef HEADER_X509_H

@@ -103,6 +103,8 @@ extern "C" {
 # define TLS1_AD_INAPPROPRIATE_FALLBACK  86/* fatal */
 # define TLS1_AD_USER_CANCELLED          90
 # define TLS1_AD_NO_RENEGOTIATION        100
+/* TLSv1.3 alerts */
+# define TLS13_AD_MISSING_EXTENSION      109 /* fatal */
 /* codes 110-114 are from RFC3546 */
 # define TLS1_AD_UNSUPPORTED_EXTENSION   110
 # define TLS1_AD_CERTIFICATE_UNOBTAINABLE 111
