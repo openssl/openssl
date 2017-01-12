@@ -4575,3 +4575,7 @@
 #define SN_auth_null            "AuthNULL"
 #define LN_auth_null            "auth-null"
 #define NID_auth_null           1053
+
+#define SN_poly1305             "Poly1305"
+#define LN_poly1305             "poly1305"
+#define NID_poly1305            1061

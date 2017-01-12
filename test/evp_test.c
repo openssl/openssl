@@ -1125,6 +1125,13 @@ static int mac_test_init(struct evp_test *t, const char *alg)
         t->skip = 1;
         return 1;
 #endif
+    } else if (strcmp(alg, "Poly1305") == 0) {
+#ifndef OPENSSL_NO_POLY1305
+        type = EVP_PKEY_POLY1305;
+#else
+        t->skip = 1;
+        return 1;
+#endif
     } else
         return 0;
 
