@@ -9,8 +9,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <openssl/opensslconf.h>
 #include <openssl/err.h>
-#include <openssl/ui.h>
 #include "../apps/apps.h"
 
 #include "testutil.h"
@@ -19,6 +19,9 @@
 /* apps/apps.c depend on these */
 char *default_config_file = NULL;
 BIO *bio_err = NULL;
+
+#ifndef OPENSSL_NO_UI
+# include <openssl/ui.h>
 
 /* Old style PEM password callback */
 static int test_pem_password_cb(char *buf, int size, int rwflag, void *userdata)
@@ -99,14 +102,18 @@ static int test_new_ui()
     return ok;
 }
 
+#endif
+
 int test_main(int argc, char *argv[])
 {
     int ret;
 
     bio_err = dup_bio_err(FORMAT_TEXT);
 
+#ifndef OPENSSL_NO_UI
     ADD_TEST(test_old);
     ADD_TEST(test_new_ui);
+#endif
 
     ret = run_tests(argv[0]);
 
