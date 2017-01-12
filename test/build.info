@@ -5,6 +5,9 @@
          my ($base, $files) = @_;
          return join(" ", map { "$base/$_" } split(/\s+/, $files));
      }
+     our $apps_extra =
+         $config{target} =~ /^vms-/ ? "../apps/vms_term_sock.c" : "";
+     ""
 -}
 IF[{- !$disabled{tests} -}]
   PROGRAMS_NO_INST=\
@@ -316,7 +319,8 @@ IF[{- !$disabled{tests} -}]
     DEPEND[cipher_overhead_test]=../libcrypto ../libssl
   ENDIF
 
-  SOURCE[uitest]=uitest.c testutil.c test_main_custom.c ../apps/apps.c ../apps/opt.c
+  SOURCE[uitest]=uitest.c testutil.c test_main_custom.c \
+    ../apps/apps.c ../apps/opt.c {- $apps_extra -}
   INCLUDE[uitest]=.. ../include
   DEPEND[uitest]=../libcrypto ../libssl
 

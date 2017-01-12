@@ -11,7 +11,24 @@
 #include <string.h>
 #include <openssl/opensslconf.h>
 #include <openssl/err.h>
+
+/*
+ * We know that on VMS, the [.apps] object files are compiled with uppercased
+ * symbols.  We must therefore follow suit, or there will be linking errors.
+ * Additionally, the VMS build does stdio via a socketpair.
+ */
+#ifdef __VMS
+# pragma names save
+# pragma names uppercase, truncated
+
+# include "../apps/vms_term_sock.h"
+#endif
+
 #include "../apps/apps.h"
+
+#ifdef __VMS
+# pragma names restore
+#endif
 
 #include "testutil.h"
 #include "test_main_custom.h"
