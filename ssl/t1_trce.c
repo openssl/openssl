@@ -449,6 +449,7 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_server_authz, "server_authz"},
     {TLSEXT_TYPE_cert_type, "cert_type"},
     {TLSEXT_TYPE_key_share, "key_share"},
+    {TLSEXT_TYPE_psk_kex_modes, "psk_key_exchange_modes"},
     {TLSEXT_TYPE_supported_groups, "supported_groups"},
     {TLSEXT_TYPE_ec_point_formats, "ec_point_formats"},
     {TLSEXT_TYPE_srp, "srp"},
@@ -538,6 +539,11 @@ static ssl_trace_tbl ssl_ctype_tbl[] = {
     {64, "ecdsa_sign"},
     {65, "rsa_fixed_ecdh"},
     {66, "ecdsa_fixed_ecdh"}
+};
+
+static ssl_trace_tbl ssl_psk_kex_modes_tbl[] = {
+    {TLSEXT_KEX_MODE_KE, "psk_ke"},
+    {TLSEXT_KEX_MODE_KE_DHE, "psk_dhe_ke"}
 };
 
 static ssl_trace_tbl ssl_crypto_tbl[] = {
@@ -759,6 +765,15 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
             return 0;
         return ssl_trace_list(bio, indent + 2, ext + 1, xlen, 2,
                               ssl_version_tbl);
+
+    case TLSEXT_TYPE_psk_kex_modes:
+        if (extlen < 1)
+            return 0;
+        xlen = ext[0];
+        if (extlen != xlen + 1)
+            return 0;
+        return ssl_trace_list(bio, indent + 2, ext + 1, xlen, 1,
+                              ssl_psk_kex_modes_tbl);
 
     default:
         BIO_dump_indent(bio, (const char *)ext, extlen, indent + 2);

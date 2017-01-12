@@ -35,6 +35,7 @@ static int init_srp(SSL *s, unsigned int context);
 static int init_etm(SSL *s, unsigned int context);
 static int init_ems(SSL *s, unsigned int context);
 static int final_ems(SSL *s, unsigned int context, int sent, int *al);
+static int init_psk_kex_modes(SSL *s, unsigned int context);
 #ifndef OPENSSL_NO_SRTP
 static int init_srtp(SSL *s, unsigned int context);
 #endif
@@ -233,6 +234,13 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL,
         /* Processed inline as part of version selection */
         NULL, NULL, NULL, tls_construct_ctos_supported_versions, NULL
+    },
+    {
+        /* Must be before key_share */
+        TLSEXT_TYPE_psk_kex_modes,
+        EXT_CLIENT_HELLO | EXT_TLS_IMPLEMENTATION_ONLY | EXT_TLS1_3_ONLY,
+        init_psk_kex_modes, tls_parse_ctos_psk_kex_modes, NULL, NULL,
+        tls_construct_ctos_psk_kex_modes, NULL
     },
     {
         /*
@@ -935,6 +943,13 @@ static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al)
         SSLerr(SSL_F_FINAL_SIG_ALGS, SSL_R_MISSING_SIGALGS_EXTENSION);
         return 0;
     }
+
+    return 1;
+}
+
+static int init_psk_kex_modes(SSL *s, unsigned int context)
+{
+    s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_NONE;
 
     return 1;
 }
