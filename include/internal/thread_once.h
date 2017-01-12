@@ -34,9 +34,12 @@
  * RUN_ONCE - use CRYPTO_THREAD_run_once, and check if the init succeeded
  * @once: pointer to static object of type CRYPTO_ONCE
  * @init: function name that was previously given to DEFINE_RUN_ONCE,
- *        DEFINE_RUN_ONCE_STATIC or DECLARE_RUN_ONCE.
+ *        DEFINE_RUN_ONCE_STATIC or DECLARE_RUN_ONCE.  This function
+ *        must return 1 for success or 0 for failure.
  *
- * The return value is 1 on success or 0 in case of error.
+ * The return value is 1 on success (*) or 0 in case of error.
+ *
+ * (*) by convention, since the init function must return 1 on success.
  */
 #define RUN_ONCE(once, init)                                            \
     (CRYPTO_THREAD_run_once(once, init##_ossl_) ? init##_ossl_ret_ : 0)
