@@ -296,6 +296,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CTOS_NPN), "tls_construct_ctos_npn"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CTOS_PADDING),
      "tls_construct_ctos_padding"},
+    {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES),
+     "tls_construct_ctos_psk_kex_modes"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CTOS_RENEGOTIATE),
      "tls_construct_ctos_renegotiate"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CTOS_SCT), "tls_construct_ctos_sct"},

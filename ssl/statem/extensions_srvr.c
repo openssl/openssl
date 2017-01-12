@@ -479,6 +479,35 @@ static int check_in_list(SSL *s, unsigned int group_id,
 #endif
 
 /*
+ * Process a psk_kex_modes extension received in the ClientHello. |pkt| contains
+ * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
+ * If a failure occurs then |*al| is set to an appropriate alert value.
+ */
+int tls_parse_ctos_psk_kex_modes(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
+                                 int *al)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    PACKET psk_kex_modes;
+    unsigned int mode;
+
+    if (!PACKET_as_length_prefixed_1(pkt, &psk_kex_modes)
+            || PACKET_remaining(&psk_kex_modes) == 0) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    while (PACKET_get_1(&psk_kex_modes, &mode)) {
+        if (mode == TLSEXT_KEX_MODE_KE_DHE)
+            s->ext.psk_kex_mode |= TLSEXT_KEX_MODE_FLAG_KE_DHE;
+        else if (mode == TLSEXT_KEX_MODE_KE)
+            s->ext.psk_kex_mode |= TLSEXT_KEX_MODE_FLAG_KE;
+    }
+#endif
+
+    return 1;
+}
+
+/*
  * Process a key_share extension received in the ClientHello. |pkt| contains
  * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
  * If a failure occurs then |*al| is set to an appropriate alert value.

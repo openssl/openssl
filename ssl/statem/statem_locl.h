@@ -201,6 +201,8 @@ int tls_parse_ctos_etm(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
 int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                              int *al);
 int tls_parse_ctos_ems(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
+int tls_parse_ctos_psk_kex_modes(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
+                                 int *al);
 
 int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, X509 *x,
                                    size_t chainidx, int *al);
@@ -285,6 +287,8 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt, X509 *x,
                                           size_t chainidx, int *al);
 int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                  int *al);
+int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, X509 *x,
+                                     size_t chainidx, int *al);
 int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                int *al);
 int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
