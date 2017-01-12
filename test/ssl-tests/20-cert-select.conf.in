@@ -1,0 +1,87 @@
+# -*- mode: perl; -*-
+
+## SSL test configurations
+
+package ssltests;
+
+use strict;
+use warnings;
+
+use OpenSSL::Test;
+use OpenSSL::Test::Utils qw(anydisabled);
+
+my $dir_sep = $^O ne "VMS" ? "/" : "";
+
+my $server = {
+    "ECDSA.Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}server-ecdsa-cert.pem",
+    "ECDSA.PrivateKey" => "\${ENV::TEST_CERTS_DIR}${dir_sep}server-ecdsa-key.pem",
+    # TODO: add test cases for TLSv1.3
+    "MaxProtocol" => "TLSv1.2"
+};
+
+our @tests = (
+    {
+        name => "ECDSA CipherString Selection",
+        server => $server,
+        client => {
+            "CipherString" => "aECDSA",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "P-256",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "RSA CipherString Selection",
+        server => $server,
+        client => {
+            "CipherString" => "aRSA",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "RSA",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "ECDSA CipherString Selection, no ECDSA certificate",
+        server => { },
+        client => {
+            "CipherString" => "aECDSA"
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+    {
+        name => "ECDSA Signature Algorithm Selection",
+        server => $server,
+        client => {
+            "SignatureAlgorithms" => "ECDSA+SHA256",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "P-256",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "ECDSA Signature Algorithm Selection, no ECDSA certificate",
+        server => { },
+        client => {
+            "SignatureAlgorithms" => "ECDSA+SHA256",
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+    {
+        name => "RSA Signature Algorithm Selection",
+        server => $server,
+        client => {
+            "SignatureAlgorithms" => "RSA+SHA256",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "RSA",
+            "ExpectedResult" => "Success"
+        },
+    }
+);
