@@ -187,7 +187,7 @@ static int check_resumption(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return 1;
 }
 
-static int check_key_type(const char *name,int expected_key_type, int key_type)
+static int check_key_type(const char *name, int expected_key_type, int key_type)
 {
     if (expected_key_type == 0 || expected_key_type == key_type)
         return 1;

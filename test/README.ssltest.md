@@ -89,7 +89,7 @@ handshake.
 
 * ExpectedTmpKeyType - the expected algorithm or curve of server temp key
 
-* ExpectedServerKeyType, ExpectedClientKeyType - the expected algorithm or
+* ExpectedServerCertType, ExpectedClientCertType - the expected algorithm or
   curve of server or client certificate
 
 ## Configuring the client and server
