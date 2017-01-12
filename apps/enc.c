@@ -109,7 +109,7 @@ int enc_main(int argc, char **argv)
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     unsigned char *buff = NULL, salt[PKCS5_SALT_LEN];
     int pbkdf2 = 0;
-    int iter = 1;
+    int iter = 0;
     long n;
     struct doall_enc_ciphers dec;
 #ifdef ZLIB
@@ -265,7 +265,7 @@ int enc_main(int argc, char **argv)
             break;
         case OPT_PBKDF2:
             pbkdf2 = 1;
-            if (iter == 1)    /* do not overwrite a choosen value */
+            if (iter == 0)    /* do not overwrite a choosen value */
                 iter = 10000; /* update to a better default value ? */
             break;
         case OPT_NONE:
@@ -294,6 +294,9 @@ int enc_main(int argc, char **argv)
 
     if (dgst == NULL)
         dgst = EVP_sha256();
+
+    if (iter == 0)
+        iter = 1;
 
     /* It must be large enough for a base64 encoded line */
     if (base64 && bsize < 80)
