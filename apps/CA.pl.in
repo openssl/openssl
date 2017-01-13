@@ -125,7 +125,7 @@ if ($WHAT eq '-newcert' ) {
     print "Cert is in $NEWCERT, private key is in $NEWKEY\n" if $RET == 0;
 } elsif ($WHAT eq '-precert' ) {
     # create a pre-certificate
-    $RET = run("$REQ -new -x509 -precert -keyout $NEWKEY -out $NEWCERT $DAYS");
+    $RET = run("$REQ -x509 -precert -keyout $NEWKEY -out $NEWCERT $DAYS");
     print "Pre-cert is in $NEWCERT, private key is in $NEWKEY\n" if $RET == 0;
 } elsif ($WHAT eq '-newreq' ) {
     # create a certificate request
