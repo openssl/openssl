@@ -460,3 +460,5 @@ SSL_SESSION_set1_master_key             460	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_set_cipher                  461	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_set_protocol_version        462	1_1_1	EXIST::FUNCTION:
 OPENSSL_cipher_name                     463	1_1_1	EXIST::FUNCTION:
+SSL_alloc_buffers                       464	1_1_1	EXIST::FUNCTION:
+SSL_free_buffers                        465	1_1_1	EXIST::FUNCTION:
