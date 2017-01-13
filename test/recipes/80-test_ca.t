@@ -43,7 +43,7 @@ plan tests => 5;
         'verifying new certificate');
 
      $ENV{OPENSSL_CONFIG} = "-config ".srctop_file("test", "Uss.cnf");
-     ok(run(perlapp(["CA.pl", "-newprecert"], stderr => undef)),
+     ok(run(perlapp(["CA.pl", "-precert"], stderr => undef)),
         'creating new pre-certificate');
 }
 
