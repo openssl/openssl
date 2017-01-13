@@ -439,6 +439,18 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_FINISHED;
 
     case TLS_ST_SR_FINISHED:
+        /*
+         * Technically we have finished the handshake at this point, but we're
+         * going to remain "in_init" for now and write out the session ticket
+         * immediately.
+         * TODO(TLS1.3): Perhaps we need to be able to control this behaviour
+         * and give the application the opportunity to delay sending the
+         * session ticket?
+         */
+        st->hand_state = TLS_ST_SW_SESSION_TICKET;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_SESSION_TICKET:
         st->hand_state = TLS_ST_OK;
         ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
@@ -626,7 +638,14 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
-        if (SSL_IS_DTLS(s)) {
+        if (SSL_IS_TLS13(s)) {
+            /*
+             * Actually this is the end of the handshake, but we're going
+             * straight into writing the session ticket out. So we finish off
+             * the handshake, but keep the various buffers active.
+             */
+            return tls_finish_handshake(s, wst, 0);
+        } if (SSL_IS_DTLS(s)) {
             /*
              * We're into the last flight. We don't retransmit the last flight
              * unless we need to, so we don't use the timer
@@ -653,7 +672,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_OK:
-        return tls_finish_handshake(s, wst);
+        return tls_finish_handshake(s, wst, 1);
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -787,6 +806,11 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
                         SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_SERVER_WRITE))
             return WORK_ERROR;
         }
+        break;
+
+    case TLS_ST_SW_SESSION_TICKET:
+        if (SSL_IS_TLS13(s) && statem_flush(s) != 1)
+            return WORK_MORE_A;
         break;
     }
 
@@ -3219,8 +3243,12 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     SSL_CTX *tctx = s->initial_ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char key_name[TLSEXT_KEYNAME_LENGTH];
-    int iv_len;
+    int iv_len, al = SSL_AD_INTERNAL_ERROR;
     size_t macoffset, macendoffset;
+    union {
+        unsigned char age_add_c[sizeof(uint32_t)];
+        uint32_t age_add;
+    } age_add_u;
 
     /* get session encoding length */
     slen_full = i2d_SSL_SESSION(s->session, NULL);
@@ -3313,12 +3341,18 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                sizeof(tctx->ext.tick_key_name));
     }
 
+    if (SSL_IS_TLS13(s) && RAND_bytes(age_add_u.age_add_c,
+                                      sizeof(age_add_u)) <= 0)
+        goto err;
+
     /*
      * Ticket lifetime hint (advisory only): We leave this unspecified
      * for resumed session (for simplicity), and guess that tickets for
      * new sessions will live as long as their sessions.
      */
     if (!WPACKET_put_bytes_u32(pkt, s->hit ? 0 : s->session->timeout)
+            || (SSL_IS_TLS13(s)
+                && !WPACKET_put_bytes_u32(pkt, age_add_u.age_add))
                /* Now the actual ticket data */
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_get_total_written(pkt, &macoffset)
@@ -3345,7 +3379,11 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             || hlen > EVP_MAX_MD_SIZE
             || !WPACKET_allocate_bytes(pkt, hlen, &macdata2)
             || macdata1 != macdata2
-            || !WPACKET_close(pkt)) {
+            || !WPACKET_close(pkt)
+            || (SSL_IS_TLS13(s)
+                && !tls_construct_extensions(s, pkt,
+                                             EXT_TLS1_3_NEW_SESSION_TICKET,
+                                             NULL, 0, &al))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
