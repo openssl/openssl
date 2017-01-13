@@ -126,7 +126,7 @@ const OPTIONS req_options[] = {
      "Cert extension section (override value in config file)"},
     {"reqexts", OPT_REQEXTS, 's',
      "Request extension section (override value in config file)"},
-    {"precert", OPT_PRECERT, '-', "Add a poison extension"},
+    {"precert", OPT_PRECERT, '-', "Add a poison extension (implies -new)"},
     {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -161,8 +161,7 @@ int req_main(int argc, char **argv)
     int pkey_type = -1, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyform = FORMAT_PEM;
     int modulus = 0, multirdn = 0, verify = 0, noout = 0, text = 0;
-    int nodes = 0, newhdr = 0, subject = 0, pubkey = 0;
-    int precert = 0;
+    int nodes = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
     long newkey = -1;
     unsigned long chtype = MBSTRING_ASC, nmflag = 0, reqflag = 0;
     char nmflag_set = 0;
@@ -321,7 +320,7 @@ int req_main(int argc, char **argv)
             req_exts = opt_arg();
             break;
         case OPT_PRECERT:
-            precert = 1;
+            newreq = precert = 1;
             break;
         case OPT_MD:
             if (!opt_md(opt_unknown(), &md_alg))

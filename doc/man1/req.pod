@@ -262,6 +262,8 @@ Transparency logs in order to obtain signed certificate timestamps (SCTs).
 These SCTs can then be embedded into the pre-certificate as an extension, before
 removing the poison and signing the certificate.
 
+This implies the B<-new> flag.
+
 =item B<-utf8>
 
 this option causes field values to be interpreted as UTF8 strings, by
