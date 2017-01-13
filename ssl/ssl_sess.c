@@ -44,6 +44,15 @@ static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);
 static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 
+/*
+ * TODO(TLS1.3): SSL_get_session() and SSL_get1_session() are problematic in
+ * TLS1.3 because, unlike in earlier protocol versions, the session ticket
+ * may not have been sent yet even though a handshake has finished. The session
+ * ticket data could come in sometime later...or even change if multiple session
+ * ticket messages are sent from the server. We need to work out how to deal
+ * with this.
+ */
+
 SSL_SESSION *SSL_get_session(const SSL *ssl)
 /* aka SSL_get0_session; gets 0 objects, just returns a copy of the pointer */
 {
