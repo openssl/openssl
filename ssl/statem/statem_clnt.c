@@ -857,8 +857,6 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
         return tls_process_change_cipher_spec(s, pkt);
 
     case TLS_ST_CR_SESSION_TICKET:
-        if (SSL_IS_TLS13(s))
-            return tls13_process_new_session_ticket(s, pkt);
         return tls_process_new_session_ticket(s, pkt);
 
     case TLS_ST_CR_FINISHED:
@@ -2197,21 +2195,30 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 {
     int al;
     unsigned int ticklen;
-    unsigned long ticket_lifetime_hint;
+    unsigned long ticket_lifetime_hint, add_age;
     unsigned int sess_len;
+    RAW_EXTENSION *exts = NULL;
 
     if (!PACKET_get_net_4(pkt, &ticket_lifetime_hint)
+        || (SSL_IS_TLS13(s) && !PACKET_get_net_4(pkt, &add_age))
         || !PACKET_get_net_2(pkt, &ticklen)
-        || PACKET_remaining(pkt) != ticklen) {
+        || (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) != ticklen)
+        || (SSL_IS_TLS13(s) && (ticklen == 0
+                                || PACKET_remaining(pkt) < ticklen))) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
 
-    /* Server is allowed to change its mind and send an empty ticket. */
+    /*
+     * Server is allowed to change its mind (in <=TLSv1.2) and send an empty
+     * ticket. We already checked this TLSv1.3 case above, so it should never
+     * be 0 here in that instance
+     */
     if (ticklen == 0)
         return MSG_PROCESS_CONTINUE_READING;
 
+    /* TODO(TLS1.3): Is this a suitable test for TLS1.3? */
     if (s->session->session_id_length > 0) {
         int i = s->session_ctx->session_cache_mode;
         SSL_SESSION *new_sess;
@@ -2253,6 +2260,21 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 
     s->session->ext.tick_lifetime_hint = ticket_lifetime_hint;
     s->session->ext.ticklen = ticklen;
+
+    if (SSL_IS_TLS13(s)) {
+        PACKET extpkt;
+
+        if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
+                || !tls_collect_extensions(s, &extpkt,
+                                           EXT_TLS1_3_NEW_SESSION_TICKET,
+                                           &exts, &al)
+                || !tls_parse_all_extensions(s, EXT_TLS1_3_NEW_SESSION_TICKET,
+                                             exts, NULL, 0, &al)) {
+            SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, SSL_R_BAD_EXTENSION);
+            goto f_err;
+        }
+    }
+
     /*
      * There are two ways to detect a resumed ticket session. One is to set
      * an appropriate session ID and then the server must return a match in
@@ -2275,18 +2297,19 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         goto err;
     }
     s->session->session_id_length = sess_len;
+
+    /* This is a standalone message in TLSv1.3, so there is no more to read */
+    if (SSL_IS_TLS13(s)) {
+        ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
+        return MSG_PROCESS_FINISHED_READING;
+    }
+
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
     ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
-}
-
-MSG_PROCESS_RETURN tls13_process_new_session_ticket(SSL *s, PACKET *pkt)
-{
-    /* TODO(TLS1.3): For now we just ignore these. This needs implementing */
-    return MSG_PROCESS_FINISHED_READING;
 }
 
 /*
