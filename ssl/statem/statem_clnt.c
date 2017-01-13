@@ -602,7 +602,7 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
         break;
 
     case TLS_ST_OK:
-        return tls_finish_handshake(s, wst);
+        return tls_finish_handshake(s, wst, 1);
     }
 
     return WORK_FINISHED_CONTINUE;
