@@ -90,6 +90,7 @@ static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
 static BIO *bio_c_out = NULL;
 static int c_quiet = 0;
+static char *sess_out = NULL;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
 #ifndef OPENSSL_NO_OCSP
@@ -779,6 +780,24 @@ static void freeandcopy(char **dest, const char *source)
         *dest = OPENSSL_strdup(source);
 }
 
+static int new_session_cb(SSL *S, SSL_SESSION *sess)
+{
+    BIO *stmp = BIO_new_file(sess_out, "w");
+
+    if (stmp != NULL) {
+        PEM_write_bio_SSL_SESSION(stmp, sess);
+        BIO_free(stmp);
+    } else {
+        BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
+    }
+
+    /*
+     * We always return a "fail" response so that the session gets freed again
+     * because we haven't used the reference.
+     */
+    return 0;
+}
+
 int s_client_main(int argc, char **argv)
 {
     BIO *sbio;
@@ -804,7 +823,7 @@ int s_client_main(int argc, char **argv)
     char *port = OPENSSL_strdup(PORT);
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
-    char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
+    char *sess_in = NULL, *crl_file = NULL, *p;
     char *xmpphost = NULL;
     const char *ehlo = "mail.example.com";
     struct timeval timeout, *timeoutp;
@@ -1674,6 +1693,17 @@ int s_client_main(int argc, char **argv)
         }
     }
 
+    /*
+     * In TLSv1.3 NewSessionTicket messages arrive after the handshake and can
+     * come at any time. Therefore we use a callback to write out the session
+     * when we know about it. This approach works for < TLSv1.3 as well.
+     */
+    if (sess_out) {
+        SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
+                                            | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+        SSL_CTX_sess_set_new_cb(ctx, new_session_cb);
+    }
+
     con = SSL_new(ctx);
     if (sess_in) {
         SSL_SESSION *sess;
@@ -2168,15 +2198,6 @@ int s_client_main(int argc, char **argv)
                                tlsextcbp.ack ? "" : "not ");
                 }
 
-                if (sess_out) {
-                    BIO *stmp = BIO_new_file(sess_out, "w");
-                    if (stmp) {
-                        PEM_write_bio_SSL_SESSION(stmp, SSL_get_session(con));
-                        BIO_free(stmp);
-                    } else
-                        BIO_printf(bio_err, "Error writing session file %s\n",
-                                   sess_out);
-                }
                 if (c_brief) {
                     BIO_puts(bio_err, "CONNECTION ESTABLISHED\n");
                     print_ssl_summary(con);
