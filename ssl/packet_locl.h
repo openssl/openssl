@@ -700,6 +700,15 @@ int WPACKET_close(WPACKET *pkt);
 int WPACKET_finish(WPACKET *pkt);
 
 /*
+ * Iterates through all the sub-packets and writes out their lengths as if they
+ * were being closed. The lengths will be overwritten with the final lengths
+ * when the sub-packets are eventually closed (which may be different if more
+ * data is added to the WPACKET). This function will fail if a sub-packet is of
+ * 0 length and WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH is used.
+ */
+int WPACKET_fill_lengths(WPACKET *pkt);
+
+/*
  * Initialise a new sub-packet. Additionally |lenbytes| of data is preallocated
  * at the start of the sub-packet to store its length once we know it. Don't
  * call this directly. Use the convenience macros below instead.
