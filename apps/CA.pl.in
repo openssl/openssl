@@ -123,7 +123,7 @@ if ($WHAT eq '-newcert' ) {
     # create a certificate
     $RET = run("$REQ -new -x509 -keyout $NEWKEY -out $NEWCERT $DAYS $EXTRA{req}");
     print "Cert is in $NEWCERT, private key is in $NEWKEY\n" if $RET == 0;
-} elsif ($WHAT eq '-newprecert' ) {
+} elsif ($WHAT eq '-precert' ) {
     # create a pre-certificate
     $RET = run("$REQ -new -x509 -precert -keyout $NEWKEY -out $NEWCERT $DAYS");
     print "Pre-cert is in $NEWCERT, private key is in $NEWKEY\n" if $RET == 0;
