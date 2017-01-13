@@ -47,8 +47,12 @@ typedef struct handshake_result {
     int tmp_key_type;
     /* server certificate key type */
     int server_cert_type;
+    /* server signing hash */
+    int server_sign_hash;
     /* client certificate key type */
     int client_cert_type;
+    /* client signing hash */
+    int client_sign_hash;
 } HANDSHAKE_RESULT;
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void);

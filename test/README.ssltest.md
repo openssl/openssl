@@ -92,6 +92,9 @@ handshake.
 * ExpectedServerCertType, ExpectedClientCertType - the expected algorithm or
   curve of server or client certificate
 
+* ExpectedServerSignatureHash, ExpectedClientSignatureHash - the expected
+  signing hash used by server or client certificate
+
 ## Configuring the client and server
 
 The client and server configurations can be any valid `SSL_CTX`
