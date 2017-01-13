@@ -32,7 +32,7 @@ static void (*free_impl)(void *, const char *, int)
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
 static char *md_failstring;
 static long md_count;
-static int md_percent = 100;
+static int md_fail_percent = 0;
 static int md_tracefd = -1;
 static int call_malloc_debug = 1;
 
@@ -89,7 +89,8 @@ void CRYPTO_get_mem_functions(
  * Parse a "malloc failure spec" string.  This likes like a set of fields
  * separated by semicolons.  Each field has a count and an optional failure
  * percentage.  For example:
- *          100;100@25;@100
+ *          100@0;100@25;0@0
+ *    or    100;100@25;0
  * This means 100 mallocs succeed, then next 100 fail 25% of the time, and
  * all remaining (count is zero) succeed.
  */
@@ -104,7 +105,7 @@ static void parseit(void)
     /* Get the count (atol will stop at the @ if there), and percentage */
     md_count = atol(md_failstring);
     atsign = strchr(md_failstring, '@');
-    md_percent = atsign == NULL ? 100 : atoi(atsign + 1);
+    md_fail_percent = atsign == NULL ? 0 : atoi(atsign + 1);
 
     if (semi != NULL)
         md_failstring = semi;
@@ -116,13 +117,13 @@ static void parseit(void)
 static int shouldfail(void)
 {
     int roll = (int)(random() % 100);
-    int shouldfail = roll > md_percent;
+    int shouldfail = roll < md_fail_percent;
     char buff[80];
 
     if (md_tracefd > 0) {
         BIO_snprintf(buff, sizeof(buff),
                      "%c C%ld %%%d R%d\n",
-                     shouldfail ? '-' : '+', md_count, md_percent, roll);
+                     shouldfail ? '-' : '+', md_count, md_fail_percent, roll);
         write(md_tracefd, buff, strlen(buff));
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
         if (shouldfail) {
