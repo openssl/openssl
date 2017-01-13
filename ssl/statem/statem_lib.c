@@ -821,7 +821,12 @@ unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk,
     return 1;
 }
 
-WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
+/*
+ * Tidy up after the end of a handshake. In the case of SCTP this may result
+ * in NBIO events. If |clearbufs| is set then init_buf and the wbio buffer is
+ * freed up as well.
+ */
+WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
 {
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
@@ -834,27 +839,26 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
     }
 #endif
 
-    /* clean a few things up */
-    ssl3_cleanup_key_block(s);
-
-    if (!SSL_IS_DTLS(s)) {
-        /*
-         * We don't do this in DTLS because we may still need the init_buf
-         * in case there are any unexpected retransmits
-         */
-        BUF_MEM_free(s->init_buf);
-        s->init_buf = NULL;
+    if (clearbufs) {
+        if (!SSL_IS_DTLS(s)) {
+            /*
+             * We don't do this in DTLS because we may still need the init_buf
+             * in case there are any unexpected retransmits
+             */
+            BUF_MEM_free(s->init_buf);
+            s->init_buf = NULL;
+        }
+        ssl_free_wbio_buffer(s);
+        s->init_num = 0;
     }
-
-    ssl_free_wbio_buffer(s);
-
-    s->init_num = 0;
 
     if (s->statem.cleanuphand) {
         /* skipped if we just sent a HelloRequest */
         s->renegotiate = 0;
         s->new_session = 0;
         s->statem.cleanuphand = 0;
+
+        ssl3_cleanup_key_block(s);
 
         if (s->server) {
             ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
@@ -886,6 +890,13 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
             dtls1_clear_received_buffer(s);
         }
     }
+
+    /*
+     * If we've not cleared the buffers its because we've got more work to do,
+     * so continue.
+     */
+    if (!clearbufs)
+        return WORK_FINISHED_CONTINUE;
 
     return WORK_FINISHED_STOP;
 }
