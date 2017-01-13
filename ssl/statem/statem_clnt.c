@@ -1003,7 +1003,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     }
 
     /* Session ID */
-    if (s->new_session)
+    if (s->new_session || s->session->ssl_version == TLS1_3_VERSION)
         sess_id_len = 0;
     else
         sess_id_len = s->session->session_id_length;
