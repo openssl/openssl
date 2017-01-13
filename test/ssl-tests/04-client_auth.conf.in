@@ -96,7 +96,9 @@ sub generate_tests() {
                     "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
                     "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem",
                 },
-                test   => { "ExpectedResult" => "Success" },
+                test   => { "ExpectedResult" => "Success",
+                            "ExpectedClientCertType" => "RSA",
+                },
             };
 
             # Handshake with client authentication but without the root certificate.
